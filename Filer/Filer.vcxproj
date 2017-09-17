@@ -140,7 +140,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" $(SolutionDir)\bin</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -421,10 +422,10 @@
     <ClCompile Include="UniqueIDFactory.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\bin\Filer.exe" />
     <None Include="..\HiLib\Gradius.cur" />
     <None Include="..\HiLib\msxml6.tlh" />
     <None Include="..\HiLib\msxml6.tli" />
+    <None Include="..\Release\Filer.exe" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

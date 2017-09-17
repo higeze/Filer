@@ -11,8 +11,8 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="bin">
-      <UniqueIdentifier>{1497c83f-4625-40f2-9609-cf8023f9a086}</UniqueIdentifier>
+    <Filter Include="Release">
+      <UniqueIdentifier>{23fdc6c8-000e-44b9-9991-497e66d8619d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -774,8 +774,8 @@
     <None Include="..\HiLib\Gradius.cur">
       <Filter>HiLib</Filter>
     </None>
-    <None Include="..\bin\Filer.exe">
-      <Filter>bin</Filter>
+    <None Include="..\Release\Filer.exe">
+      <Filter>Release</Filter>
     </None>
   </ItemGroup>
 </Project>
