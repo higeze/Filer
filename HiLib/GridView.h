@@ -3,7 +3,6 @@
 #include "Sheet.h"
 #include "MyGdiPlusHelper.h"
 class IKeyObserver;
-#include "OGLBitmapRenderer.h"
 #include "UnDoReDoManager.h"
 class CBackgroundProperty;
 

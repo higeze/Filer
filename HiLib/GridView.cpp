@@ -12,7 +12,6 @@
 #include "MyPen.h"
 #include "MyColor.h"
 #include "ConsoleTimer.h"
-#include "parallel.h"
 #include "ApplicationProperty.h"
 #include "Tracker.h"
 #include "Cursorer.h"

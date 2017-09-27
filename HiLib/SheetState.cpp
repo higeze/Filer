@@ -22,7 +22,9 @@ IMouseState* IMouseState::KeepState()
 
 IMouseState* IMouseState::OnMouseLeave(CSheet* pSheet, MouseEventArgs& e)
 {
-	static_cast<CGridView*>(pSheet)->GetTimerPtr()->cancel();
+	if (auto p = dynamic_cast<CGridView*>(pSheet)) {
+		p->GetTimerPtr()->cancel();
+	}
 	return ChangeState(pSheet, CDefaultMouseState::State());
 }
 
@@ -54,19 +56,22 @@ bool CDownedMouseState::m_isDblClkTimeExceed;
 
 void CDownedMouseState::Entry(CSheet* pSheet)
 {
-	std::cout<<"CDownedMouseState::Entry"<<std::endl;
-	boost::asio::deadline_timer* pTimer = static_cast<CGridView*>(pSheet)->GetTimerPtr();
-	pTimer->expires_from_now(boost::posix_time::milliseconds(::GetDoubleClickTime()));
-	HWND hWnd = pSheet->GetGridPtr()->m_hWnd;
-	pTimer->async_wait([hWnd](const boost::system::error_code& error)->void{
+	std::cout << "CDownedMouseState::Entry" << std::endl;
+	if (auto p = dynamic_cast<CGridView*>(pSheet)) {
+		boost::asio::deadline_timer* pTimer = p->GetTimerPtr();
+		pTimer->expires_from_now(boost::posix_time::milliseconds(::GetDoubleClickTime()));
+		HWND hWnd = pSheet->GetGridPtr()->m_hWnd;
+		pTimer->async_wait([hWnd](const boost::system::error_code& error)->void {
 
-		if(error == boost::asio::error::operation_aborted){
-			::OutputDebugStringA("timer canceled\r\n");
-		}else{
-			::OutputDebugStringA("timer editcell\r\n");
-			::PostMessage(hWnd,WM_LBUTTONDBLCLKTIMEXCEED,NULL,NULL);
-		}
-	});
+			if (error == boost::asio::error::operation_aborted) {
+				::OutputDebugStringA("timer canceled\r\n");
+			}
+			else {
+				::OutputDebugStringA("timer editcell\r\n");
+				::PostMessage(hWnd, WM_LBUTTONDBLCLKTIMEXCEED, NULL, NULL);
+			}
+		});
+	}
 	m_isDblClkTimeExceed = false;
 }
 
@@ -128,7 +133,9 @@ IMouseState* CUppedMouseState::OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEv
 	if(!roco.IsInvalid()){
 		roco.GetColumnPtr()->Cell(roco.GetRowPtr())->OnLButtonSingleClick(e);
 	}
-	static_cast<CGridView*>(pSheet)->GetTimerPtr()->cancel();
+	if (auto p = dynamic_cast<CGridView*>(pSheet)) {
+		p->GetTimerPtr()->cancel();
+	}
 	return ChangeState(pSheet, CDefaultMouseState::State());
 }
 
@@ -149,7 +156,9 @@ IMouseState* CDblClkedMouseState::OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)
 	if(!roco.IsInvalid()){
 		roco.GetColumnPtr()->Cell(roco.GetRowPtr())->OnLButtonDoubleClick(e);
 	}
-	static_cast<CGridView*>(pSheet)->GetTimerPtr()->cancel();
+	if (auto p = dynamic_cast<CGridView*>(pSheet)) {
+		p->GetTimerPtr()->cancel();
+	}
 	return ChangeState(pSheet, CDefaultMouseState::State());
 }
 IMouseState* CDblClkedMouseState::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)

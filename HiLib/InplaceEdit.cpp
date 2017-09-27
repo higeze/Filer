@@ -102,14 +102,14 @@ LRESULT CInplaceEdit::OnKillFocus(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bH
 
 void CInplaceEdit::OnFinalMessage(HWND hWnd)
 {
-	if(!m_final){m_final();}
+	if(m_final){m_final();}
 	delete this;
 }
 
 LRESULT CInplaceEdit::OnCmdEnChange(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
 //	if(!m_setter._Empty()){m_setter(GetWindowText());}
-	if(!m_changed){m_changed(GetWindowText());}
+	if(m_changed){m_changed(GetWindowText());}
 
 	CClientDC dc(m_hWnd);
 	dc.SelectFont(GetFont());
@@ -134,9 +134,7 @@ LRESULT CInplaceEdit::OnCmdEnChange(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL&
 
 void CInplaceEdit::EndEdit()
 {
-	if(!m_setter){
-		m_setter(GetWindowText());
-	}
+	if(m_setter){m_setter(GetWindowText());}
 	SendMessage(WM_CLOSE,NULL,NULL);	
 }
 
