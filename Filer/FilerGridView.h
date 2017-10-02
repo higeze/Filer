@@ -40,20 +40,24 @@ private:
 	std::vector<std::shared_ptr<CShellFile>> m_vpFile;
 	CDirectoryWatcher m_watcher;
 
-	CComPtr<IContextMenu2> m_pcmNew2;
-	CComPtr<IContextMenu3> m_pcmNew3;
-
-	CComPtr<IContextMenu2> m_pcm2;
-	CComPtr<IContextMenu3> m_pcm3;
-
 	CComPtr<IShellFolder> m_pDesktopShellFolder;
 	std::shared_ptr<CShellFolder> m_spFolder;
 
 	std::wstring m_initPath;
 
+	//For Drag & Drop 
 	CComPtr<IDropTarget> m_pDropTarget;
 	CComPtr<IDropSource> m_pDropSource;
 	CComPtr<IDragSourceHelper> m_pDragSourceHelper;
+
+	//For Context Menu
+	HMENU m_hNewMenu;
+
+	CComPtr<IContextMenu2> m_pcmNew2;
+	CComPtr<IContextMenu3> m_pcmNew3;
+
+	CComPtr<IContextMenu2> m_pcm2;
+	CComPtr<IContextMenu3> m_pcm3;
 
 public:
 	CFilerGridView(std::wstring initPath, std::shared_ptr<CGridViewProperty> spGridViewProrperty);
@@ -69,30 +73,11 @@ public:
 	virtual LRESULT OnCommandPaste(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled) override;
 	virtual LRESULT OnCommandDelete(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled) override;
 
-	virtual LRESULT OnDrawItem(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnMeasureItem(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-
-	virtual LRESULT OnInitMenuPopUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	virtual HRESULT OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	virtual HRESULT OnUAHMeasureMenuItem(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-
-	CMenu m_subNewMenu;
-	HMENU m_hNewMenu;
-	UINT m_itemNumber;
-
-	typedef struct tabAPPENDMENUITEMDATA
-	{
-		UINT nFlags;
-		UINT_PTR nIDNewItem;
-		LPCTSTR lpszNewItem;
-	}APPENDMENUITEMDATA, *LPAPPENDMENUITEMDATA;
-
 
 	virtual void OnKeyDown(KeyEventArgs& e)override;
 	void OnCellLButtonDblClk(CellEventArgs& e);
 	virtual void OnContextMenu(ContextMenuEventArgs& e) override;
-
-
 
 	void Open(std::shared_ptr<CShellFile>& spFile);
 	void OpenFile(std::shared_ptr<CShellFile>& spFile);
@@ -109,6 +94,6 @@ public:
 private:
 	void InsertDefaultRowColumn();
 	void OnShellCommand(LPCSTR lpVerb);
-	void ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl);
+	void ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl, bool hasNew = false);
 	void InvokeShellCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl);
 };
