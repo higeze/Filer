@@ -96,9 +96,15 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 
 			//}
 			LRESULT lResult=0;
+			BOOL bHandled = TRUE;
+			if (m_allMsg) {
+				lResult = m_allMsg(uiMsg, wParam, lParam, bHandled);
+				if (bHandled == TRUE) { return lResult; }
+			}
+
 			auto ret = m_msgMap.equal_range(uiMsg);
 			for(auto iter = ret.first;iter!=ret.second;++iter){
-				BOOL bHandled=TRUE;
+				bHandled=TRUE;
 				lResult=iter->second(uiMsg,wParam,lParam,bHandled);
 				if(bHandled==TRUE){return lResult;}			
 			}

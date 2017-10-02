@@ -149,7 +149,6 @@ typedef std::function<LRESULT(int,LPNMHDR,BOOL&)> FunNtfy;
 class CWnd
 {
 public:
-
 	typedef std::multimap<UINT,FunMsg> MsgMap;
 
 	typedef std::unordered_map<WORD,FunCmd> CmdIDMap;
@@ -162,6 +161,7 @@ public:
 private:
 	//prohibit copy constructor and substitute
 public:
+	FunMsg m_allMsg;
 	MsgMap m_msgMap;
 	CmdIDMap m_cmdidMap;
 	CmdCdMap m_cmdcdMap;
@@ -209,6 +209,25 @@ public:
 	LRESULT OnCommand(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 
 	LRESULT OnNotify(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+
+	BOOL AddAllMsgHandler(UINT uMsg, FunMsg funMsg)
+	{
+		m_allMsg = funMsg;
+		return TRUE;
+	}
+
+	template<class U>
+	BOOL AddAllMsgHandler(LRESULT(U::*memberfunc)(UINT, WPARAM, LPARAM, BOOL&), U* that)
+	{
+		m_allMsg = std::bind(memberfunc, that, phs::_1, phs::_2, phs::_3, phs::_4);
+		return TRUE;
+	}
+
+	BOOL RemoveAllMsgHandler()
+	{
+		m_allMsg = nullptr;
+		return TRUE;
+	}
 
 	BOOL AddMsgHandler(UINT uMsg,FunMsg funMsg)
 	{	

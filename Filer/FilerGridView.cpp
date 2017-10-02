@@ -29,6 +29,8 @@
 
 #include "FileDragger.h"
 
+#include "MyWin32.h"
+
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 UINT CFilerGridView::WM_CHANGED = ::RegisterWindowMessage(L"CFilerGridView::WM_CHANGED");
@@ -45,9 +47,12 @@ CFilerGridView::CFilerGridView(std::wstring initPath, std::shared_ptr<CGridViewP
 	m_cwa
 	.dwExStyle(WS_EX_ACCEPTFILES);
 	AddMsgHandler(CFilerGridView::WM_CHANGED,&CFilerGridView::OnFileChanged,this);
-	AddMsgHandler(WM_INITMENUPOPUP,&CFilerGridView::OnInitMenuPopUp,this);
-	AddMsgHandler(WM_DRAWITEM,&CFilerGridView::OnDrawItem,this);
-	AddMsgHandler(WM_MEASUREITEM,&CFilerGridView::OnMeasureItem,this);
+	AddMsgHandler(WM_INITMENUPOPUP,&CFilerGridView::OnHandleMenuMsg,this);
+	//AddMsgHandler(WM_INITMENUPOPUP,&CFilerGridView::OnInitMenuPopUp,this);
+	//AddMsgHandler(WM_DRAWITEM,&CFilerGridView::OnDrawItem,this);
+	//AddMsgHandler(WM_MEASUREITEM,&CFilerGridView::OnMeasureItem,this);
+	//AddMsgHandler(WM_UAHMEASUREMENUITEM, &CFilerGridView::OnUAHMeasureMenuItem, this);
+
 	AddCmdIDHandler(IDM_CUT,&CFilerGridView::OnCommandCut,this);
 	//They are already assigned in GridView
 	//AddCmdIDHandler(IDM_COPY,&CFilerGridView::OnCommandCopy,this);
@@ -577,70 +582,316 @@ void CFilerGridView::OnContextMenu(ContextMenuEventArgs& e)
 			ShowShellContextMenu(m_hWnd, ptScreen, m_spFolder->GetShellFolderPtr(), vPidl);
 	}
 }
-
+#define SCRATCH_QCM_FIRST 1
+#define SCRATCH_QCM_LAST  0x7FFF
 void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl)
 {
-    CComPtr<IContextMenu> pcm;
-	HRESULT hr=psf->GetUIObjectOf(hWnd, vpIdl.size(),(LPCITEMIDLIST*)(vpIdl.data()),IID_IContextMenu,nullptr,(LPVOID *)&pcm);
-    if(SUCCEEDED(hr)){
-		CMenu menu=CMenu(CreatePopupMenu());
+	//AddAllMsgHandler(&CFilerGridView::OnHandleMenuMsg, this);
 
-		if(!menu.IsNull()){
-			hr = pcm->QueryInterface(IID_PPV_ARGS(&m_pcm3));
-            hr = m_pcm3->QueryContextMenu(menu,0,1,0x7fff,CMF_NORMAL);
 
-            if (SUCCEEDED(hr)){
-                int idCmd=TrackPopupMenu(menu, 
-                                    TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, 
-                                    ptScreen.x, 
-                                    ptScreen.y,
-                                    0,
-                                    hWnd,
-                                    NULL);
+	//New Context Menu
+	CComPtr<IUnknown> puk;
+	//{D969A300-E7FF-11d0-A93B-00A0C90F2719},
+	CLSID clsid = { 0xd969a300, 0xe7ff, 0x11d0,{ 0xa9, 0x3b, 0x00, 0xa0, 0xc9, 0x0f, 0x27, 0x19 } };
+	HRESULT hr = puk.CoCreateInstance(clsid);
+	if (FAILED(hr)) { return; }
+	CComPtr<IShellExtInit> psei;
+	hr = puk->QueryInterface(IID_PPV_ARGS(&psei));
+	if (FAILED(hr)) { return; }
+	hr = psei->Initialize(m_spFolder->GetAbsolutePidl(), NULL, NULL);
+	if (FAILED(hr)) { return; }
+	hr = psei->QueryInterface(IID_PPV_ARGS(&m_pcmNew2));
+	if (FAILED(hr)) { return; }
+	hr = psei->QueryInterface(IID_PPV_ARGS(&m_pcmNew3));
+	if (FAILED(hr)) { return; }
 
-                if (idCmd){
-					CMINVOKECOMMANDINFO cmi = {0};
-                    cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
-                    cmi.hwnd   = hWnd;
-                    cmi.lpVerb = MAKEINTRESOURCEA(idCmd-1);
-                    cmi.nShow        = SW_SHOWNORMAL;
-                    hr=m_pcm3->InvokeCommand((LPCMINVOKECOMMANDINFO)&cmi);
-                }
-            }
-			m_pcm3 = nullptr;
-        }
-    }
+	//Normal Context Menu
+	CComPtr<IContextMenu> pcm;
+	hr = psf->GetUIObjectOf(hWnd, vpIdl.size(), (LPCITEMIDLIST*)(vpIdl.data()), IID_IContextMenu, nullptr, (LPVOID *)&pcm);
+	hr = pcm->QueryInterface(IID_PPV_ARGS(&m_pcm2));
+	if (FAILED(hr)) { return; }
+	hr = pcm->QueryInterface(IID_PPV_ARGS(&m_pcm3));
+	if (FAILED(hr)) { return; }
+
+	//CreateMenu
+	CMenu menu(::CreatePopupMenu());
+	if (menu.IsNull()) { return; }
+
+	hr = m_pcmNew3->QueryContextMenu(menu, 0, SCRATCH_QCM_FIRST, SCRATCH_QCM_LAST, CMF_EXPLORE);
+	if (FAILED(hr)) { return; }
+
+	hr = m_pcm3->QueryContextMenu(menu, 0, menu.GetMenuItemCount() + 1, SCRATCH_QCM_LAST, CMF_DEFAULTONLY | CMF_NORMAL | CMF_EXPLORE | CMF_CANRENAME);
+	if (FAILED(hr)) { return; }
+
+	//
+	int itemCount = menu.GetMenuItemCount();
+	bool isLine(false);
+
+	//Investigate New menu, Seperator
+	for (auto i = itemCount - 1; i != 0; i--) {
+			std::wstring verb;
+			MENUITEMINFO mii = { 0 };
+			mii.cbSize = sizeof(MENUITEMINFO);
+			mii.fMask = MIIM_SUBMENU | MIIM_TYPE;
+			mii.dwTypeData = ::GetBuffer(verb, 256);
+			mii.cch = 256;
+			menu.GetMenuItemInfo(i, TRUE, &mii);
+
+
+
+			//Arrange Separator
+			//Avoid Double Separamter, First Separator
+			if (mii.fType == MFT_SEPARATOR) {
+				if (isLine || i ==0 || i==itemCount-1) {
+					menu.DeleteMenu(i, MF_BYPOSITION);
+				}
+			}
+			isLine = mii.fType == MFT_SEPARATOR;
+
+			//Get Submenu of New
+			if (m_pcmNew3) {
+				if (verb.find(L"V‹Kì¬") != std::wstring::npos) {
+					m_hNewMenu = mii.hSubMenu;
+				}
+			}
+		}
+		int idCmd = menu.TrackPopupMenu(
+			TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON,
+			ptScreen.x,
+			ptScreen.y,
+			m_hWnd);
+
+
+
+		//OnBeforeContextShowMenu(Self, Handle);//TODO NOw
+		if (idCmd){
+		//CMINVOKECOMMANDINFO cmi = {0};
+		//	cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
+		//	cmi.hwnd   = hWnd;
+		//	cmi.lpVerb = MAKEINTRESOURCEA(idCmd-1);
+		//	cmi.nShow        = SW_SHOWNORMAL;
+		//	hr= m_pcm3->InvokeCommand((LPCMINVOKECOMMANDINFO)&cmi);
+			CMINVOKECOMMANDINFOEX info = { 0 };
+			info.cbSize = sizeof(info);
+			info.fMask = /*CMIC_MASK_UNICODE |*/ CMIC_MASK_PTINVOKE;
+			info.hwnd = hWnd;
+			info.lpVerb = MAKEINTRESOURCEA(idCmd - SCRATCH_QCM_FIRST);
+			info.lpVerbW = MAKEINTRESOURCEW(idCmd - SCRATCH_QCM_FIRST);
+			info.nShow = SW_SHOWNORMAL;
+			info.ptInvoke = ptScreen;
+			//std::string str;
+			//m_pcm3->GetCommandString(idCmd, GCS_VERB, NULL, ::GetBuffer(str, 256), 256);
+			//::ReleaseBuffer(str);
+			//info.lpVerb = str.c_str();
+			hr = m_pcm3->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
+			hr= m_pcmNew3->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
+
+			std::string err = ::GetLastErrorString();
+
+		}
+		m_pcmNew2 = nullptr;
+		m_pcmNew3 = nullptr;
+		m_pcm2 = nullptr;
+		m_pcm3 = nullptr;
+		RemoveAllMsgHandler();
+
+
+ //   CComPtr<IContextMenu> pcm;
+	//HRESULT hr=psf->GetUIObjectOf(hWnd, vpIdl.size(),(LPCITEMIDLIST*)(vpIdl.data()),IID_IContextMenu,nullptr,(LPVOID *)&pcm);
+ //   if(SUCCEEDED(hr)){
+	//	CMenu menu=CMenu(CreatePopupMenu());
+
+	//	if(!menu.IsNull()){
+	//		hr = pcm->QueryInterface(IID_PPV_ARGS(&m_pcm3));
+ //           hr = m_pcm3->QueryContextMenu(menu,0,1,0x7fff,CMF_NORMAL);
+
+ //           if (SUCCEEDED(hr)){
+ //               int idCmd=TrackPopupMenu(menu, 
+ //                                   TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, 
+ //                                   ptScreen.x, 
+ //                                   ptScreen.y,
+ //                                   0,
+ //                                   hWnd,
+ //                                   NULL);
+
+//               if (idCmd){
+   //				CMINVOKECOMMANDINFO cmi = {0};
+//                   cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
+//                   cmi.hwnd   = hWnd;
+//                   cmi.lpVerb = MAKEINTRESOURCEA(idCmd-1);
+//                   cmi.nShow        = SW_SHOWNORMAL;
+   //				UINT ui;
+   //				std::string str;
+   //				m_pcm3->GetCommandString(idCmd, 0, &ui, ::GetBuffer(str, 256), 256);
+   //				::ReleaseBuffer(str);
+//                   hr=m_pcm3->InvokeCommand((LPCMINVOKECOMMANDINFO)&cmi);
+//               }
+//           }
+   //		m_pcm3 = nullptr;
+//       }
+//   }
 }
 
-HRESULT CFilerGridView::OnInitMenuPopUp(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
+HRESULT CFilerGridView::OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	if(m_pcm3){
-		return m_pcm3->HandleMenuMsg(uMsg, wParam, lParam);
+	if (wParam == (WPARAM)m_hNewMenu) {
+		if (m_pcmNew3) {
+			LRESULT lres;
+			if (SUCCEEDED(m_pcmNew3->HandleMenuMsg2(uMsg, wParam, lParam, &lres))) {
+				bHandled = TRUE;
+				return lres;
+			}
+		}
+		else if (m_pcmNew2) {
+			if (SUCCEEDED(m_pcmNew2->HandleMenuMsg(uMsg, wParam, lParam))) {
+				bHandled = TRUE;
+				return 0;
+			}
+		}
 	}else{
-		bHandled = FALSE;
-		return -1;
+		if (m_pcm3) {
+			LRESULT lres;
+			if (SUCCEEDED(m_pcm3->HandleMenuMsg2(uMsg, wParam, lParam, &lres))) {
+				bHandled = TRUE;
+				return lres;
+			}
+		}
+		else if (m_pcm2) {
+			if (SUCCEEDED(m_pcm2->HandleMenuMsg(uMsg, wParam, lParam))) {
+				bHandled = TRUE;
+				return 0;
+			}
+		}
 	}
+
+	bHandled = FALSE;
+	return -1;
 }
 
-HRESULT CFilerGridView::OnDrawItem(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
+
+
+//WM_INITMENUPOPUP
+
+
+HRESULT CFilerGridView::OnInitMenuPopUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	if(m_pcm3){
-		return m_pcm3->HandleMenuMsg(uMsg, wParam, lParam);
-	}else{
-		bHandled = FALSE;
-		return -1;
+	m_itemNumber = 0;
+	if (m_subNewMenu) {
+		HMENU hMenu(m_subNewMenu);
+		WPARAM wParamSub = (WPARAM)hMenu;
+		m_pcmNew3->HandleMenuMsg(uMsg, wParamSub, lParam);
+		//m_pcmNew->HandleMenuMsg(uMsg, wParam, lParam);
 	}
+
+	if (m_pcm2) {
+		m_pcm2->HandleMenuMsg(uMsg, wParam, lParam);
+	}
+
+	bHandled = FALSE;
+	return 0;
+
+	//if (m_pcm3) {
+	//	LRESULT lres;
+	//	if (SUCCEEDED(m_pcm3->HandleMenuMsg2(uMsg, wParam, lParam, &lres))) {
+	//		bHandled = TRUE;
+	//		return lres;
+	//	}
+	//}
+	//else if (m_pcm2) {
+	//	if (SUCCEEDED(m_pcm2->HandleMenuMsg(uMsg, wParam, lParam))) {
+	//		bHandled = TRUE;
+	//		return 0;
+	//	}
+	//}
+
+	//bHandled = FALSE;
+	//return -1;
+}
+//WM_UAHMEASUREMENUITEM
+HRESULT CFilerGridView::OnUAHMeasureMenuItem(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	if (m_subNewMenu) {
+		m_pcmNew3->HandleMenuMsg(uMsg, (WPARAM)((HMENU)m_subNewMenu), lParam);
+		//m_pcmNew->HandleMenuMsg(uMsg, wParam, lParam);
+	}
+
+	if (m_pcm2) {
+		m_pcm2->HandleMenuMsg(uMsg, wParam, lParam);
+	}
+
+	std::wstring verb;
+	MENUITEMINFO info = { 0 };
+	info.cbSize = sizeof(MENUITEMINFO);
+	info.fMask = MIIM_STRING | MIIM_ID;
+	info.dwTypeData = ::GetBuffer(verb, 256);
+	info.cch = 256;
+
+	::GetMenuItemInfo(m_subNewMenu, m_itemNumber, TRUE, &info);
+
+	std::wstring itemCaption(info.dwTypeData);
+	UINT itemID(info.wID);
+	bool addFlag(true);
+	if (!itemCaption.empty()) {
+		//OnBeforeContextAddSubItem(itemCaption, itemID, addFlag);//TODO Now
+	}
+	if (!addFlag) {
+		::RemoveMenu(m_subNewMenu, itemID, MF_BYCOMMAND);
+	}
+	m_itemNumber++;
+	bHandled = FALSE;
+	return 0;
 }
 
-HRESULT CFilerGridView::OnMeasureItem(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
+
+HRESULT CFilerGridView::OnMeasureItem(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	if(m_pcm3){
-		return m_pcm3->HandleMenuMsg(uMsg, wParam, lParam);
-	}else{
-		bHandled = FALSE;
-		return -1;
+	MEASUREITEMSTRUCT mis = { 0 };
+	APPENDMENUITEMDATA amd = { 0 };
+	std::wstring itemCaption;
+	UINT itemID;
+	if (!m_subNewMenu.IsNull()) {
+		mis = *((LPMEASUREITEMSTRUCT)lParam);
+		amd = *(LPAPPENDMENUITEMDATA(mis.itemData));
+		itemCaption = amd.lpszNewItem;
+		itemID = mis.itemData;
+
+		m_pcmNew3->HandleMenuMsg(uMsg, wParam, lParam);
 	}
+
+	if (m_pcm2) {
+		bool addFlag = true;
+		if (!itemCaption.empty()) {
+			//OnBeforeContextAddSubItem(itemCaption, itemID, addFlag);//TODO Now
+		}
+		if (!addFlag) {
+			mis.itemHeight = 0;
+			mis.itemWidth = 10;
+			lParam = (LPARAM)(&mis);
+		}
+		m_pcm2->HandleMenuMsg(uMsg, wParam, lParam);
+	}
+	bHandled = TRUE;
+	return 0;
+
 }
+
+HRESULT CFilerGridView::OnDrawItem(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	DRAWITEMSTRUCT dis(*(LPDRAWITEMSTRUCT(lParam)));
+	CRect rc(dis.rcItem);
+
+	if (m_subNewMenu) {
+		if (rc.bottom > rc.top) {
+			m_pcmNew3->HandleMenuMsg(uMsg, wParam, lParam);
+		}
+	}
+	if (m_pcm2) {
+		m_pcm2->HandleMenuMsg(uMsg, wParam, lParam);
+	}
+	bHandled = TRUE;
+	return 0;
+}
+
 
 CFilerGridView::string_type CFilerGridView::GetPath()const
 {

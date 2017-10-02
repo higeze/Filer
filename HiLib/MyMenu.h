@@ -133,5 +133,11 @@ public:
 		return ::TrackPopupMenu(m_hMenu, uFlags, x, y, 0, hWnd, NULL);
 	}
 
+	BOOL DeleteMenu(UINT uPosition, UINT uFlags)
+	{
+		return ::DeleteMenu(m_hMenu, uPosition, uFlags);
+	}
+
 	operator HMENU()const{return m_hMenu;}
+	operator bool()const { return m_hMenu!=NULL; }
 };
