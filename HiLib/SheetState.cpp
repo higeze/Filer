@@ -193,9 +193,15 @@ CSheetState* CSheetState::Tracking()
 	return &state;
 }
 
-CSheetState* CSheetState::Dragging()
+CSheetState* CSheetState::ColumnDragging()
 {
-	static CDraggingState state;
+	static CColumnDraggingState state;
+	return &state;
+}
+
+CSheetState* CSheetState::RowDragging()
+{
+	static CRowDraggingState state;
 	return &state;
 }
 
@@ -395,38 +401,72 @@ CSheetState* CTrackingState::OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e)
 }
 
 
-CSheetState* CDraggingState::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
+CSheetState* CColumnDraggingState::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
 {
-	return pSheet->m_spDragger->OnDragLButtonDown(pSheet, e);
+	return pSheet->m_spColDragger->OnDragLButtonDown(pSheet, e);
 }
-CSheetState* CDraggingState::OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)
+CSheetState* CColumnDraggingState::OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)
 {
-	return pSheet->m_spDragger->OnDragLButtonUp(pSheet, e);		
+	return pSheet->m_spColDragger->OnDragLButtonUp(pSheet, e);		
 }
-CSheetState* CDraggingState::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)
+CSheetState* CColumnDraggingState::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)
 {
-	return pSheet->m_spDragger->OnDragLButtonDblClk(pSheet, e);		
+	return pSheet->m_spColDragger->OnDragLButtonDblClk(pSheet, e);		
 }
-CSheetState* CDraggingState::OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)
+CSheetState* CColumnDraggingState::OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)
 {
-	return CSheetState::Dragging();		
+	return CSheetState::ColumnDragging();		
 }
-CSheetState* CDraggingState::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
+CSheetState* CColumnDraggingState::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
 {
-	return pSheet->m_spDragger->OnDragRButtonDown(pSheet, e);		
+	return pSheet->m_spColDragger->OnDragRButtonDown(pSheet, e);		
 }
-CSheetState* CDraggingState::OnMouseMove(CSheet* pSheet, MouseEventArgs& e)
+CSheetState* CColumnDraggingState::OnMouseMove(CSheet* pSheet, MouseEventArgs& e)
 {
-	return pSheet->m_spDragger->OnDragMouseMove(pSheet, e);		
+	return pSheet->m_spColDragger->OnDragMouseMove(pSheet, e);		
 }
-CSheetState* CDraggingState::OnMouseLeave(CSheet* pSheet, MouseEventArgs& e)
+CSheetState* CColumnDraggingState::OnMouseLeave(CSheet* pSheet, MouseEventArgs& e)
 {
-	return pSheet->m_spDragger->OnDragMouseLeave(pSheet, e);		
+	return pSheet->m_spColDragger->OnDragMouseLeave(pSheet, e);		
 }
-CSheetState* CDraggingState::OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e)
+CSheetState* CColumnDraggingState::OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e)
 {
-	return pSheet->m_spDragger->OnDragSetCursor(pSheet, e);		
+	return pSheet->m_spColDragger->OnDragSetCursor(pSheet, e);		
 }
+
+CSheetState* CRowDraggingState::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
+{
+	return pSheet->m_spRowDragger->OnDragLButtonDown(pSheet, e);
+}
+CSheetState* CRowDraggingState::OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)
+{
+	return pSheet->m_spRowDragger->OnDragLButtonUp(pSheet, e);
+}
+CSheetState* CRowDraggingState::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)
+{
+	return pSheet->m_spRowDragger->OnDragLButtonDblClk(pSheet, e);
+}
+CSheetState* CRowDraggingState::OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)
+{
+	return CSheetState::RowDragging();
+}
+CSheetState* CRowDraggingState::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
+{
+	return pSheet->m_spRowDragger->OnDragRButtonDown(pSheet, e);
+}
+CSheetState* CRowDraggingState::OnMouseMove(CSheet* pSheet, MouseEventArgs& e)
+{
+	return pSheet->m_spRowDragger->OnDragMouseMove(pSheet, e);
+}
+CSheetState* CRowDraggingState::OnMouseLeave(CSheet* pSheet, MouseEventArgs& e)
+{
+	return pSheet->m_spRowDragger->OnDragMouseLeave(pSheet, e);
+}
+CSheetState* CRowDraggingState::OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e)
+{
+	return pSheet->m_spRowDragger->OnDragSetCursor(pSheet, e);
+}
+
 
 
 

@@ -22,6 +22,9 @@ public:
 
 		boost::signals2::signal<void(std::shared_ptr<CShellFolder>&)> FolderChoiced;
 	void OpenFavorites();
+
+	void RowMoved(CMovedEventArgs<RowTag>& e) override;
+
 private:
 	void InsertDefaultRowColumn();
 

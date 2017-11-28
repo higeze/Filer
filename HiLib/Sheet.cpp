@@ -26,14 +26,14 @@ CSheet::CSheet(
 	std::shared_ptr<CCellProperty> spFilterProperty,
 	std::shared_ptr<CCellProperty> spCellProperty,
 	std::shared_ptr<CTracker> spTracker,
-	std::shared_ptr<CDragger> spDragger,
+	std::shared_ptr<CColumnDragger> spDragger,
 	std::shared_ptr<CCursorer> spCursorer,
 	CMenu* pContextMenu)
 	:m_spHeaderProperty(spHeaderProperty),
 	m_spFilterProperty(spFilterProperty),
 	m_spCellProperty(spCellProperty),
 	m_spTracker(spTracker),
-	m_spDragger(spDragger),
+	m_spColDragger(spDragger),
 	m_spCursorer(spCursorer),
 	//m_operation(Operation::None),
 	m_bSelected(false),
@@ -44,15 +44,19 @@ CSheet::CSheet(
 	if(m_spTracker.get()==nullptr){
 		m_spTracker = std::make_shared<CTracker>();
 	}
-	if(m_spDragger.get()==nullptr){
-		m_spDragger = std::make_shared<CDragger>();
+	if(m_spRowDragger.get()==nullptr){
+		m_spRowDragger = std::make_shared<CRowDragger>();
+	}
+	if (m_spColDragger.get() == nullptr) {
+		m_spColDragger = std::make_shared<CColumnDragger>();
 	}
 	if(m_spCursorer.get()==nullptr){
 		m_spCursorer = std::make_shared<CCursorer>();
 	}
 
 	m_mouseObservers.push_back(m_spTracker);
-	m_mouseObservers.push_back(m_spDragger);
+	m_mouseObservers.push_back(m_spRowDragger);
+	m_mouseObservers.push_back(m_spColDragger);
 	m_mouseObservers.push_back(m_spCursorer);
 
 	m_pState = CSheetState::Normal();
@@ -126,14 +130,6 @@ void CSheet::ColumnInserted(CColumnEventArgs& e)
 	PostUpdate(Updates::Invalidate);//
 }
 
-void CSheet::ColumnMoved(CColumnMovedEventArgs& e)
-{
-	PostUpdate(Updates::ColumnVisible);
-	PostUpdate(Updates::Column);
-	//PostUpdate(Updates::Row);
-	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);//
-}
 void CSheet::ColumnErased(CColumnEventArgs& e)
 {
 	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
@@ -537,7 +533,7 @@ void CSheet::MoveColumnImpl(size_type colTo, column_type spFromColumn)
 
 	Erase(m_columnAllDictionary, spFromColumn.get());
 	InsertLeft(m_columnAllDictionary,to,spFromColumn);
-	ColumnMoved(CColumnMovedEventArgs(spFromColumn.get(), from, to));
+	ColumnMoved(CMovedEventArgs<ColTag>(spFromColumn.get(), from, to));
 }
 
 void CSheet::EraseColumnImpl(column_type spColumn)
@@ -853,15 +849,32 @@ CRowColumn CSheet::Point2RowColumn(const CPoint& ptClient)
 	DEBUG_OUTPUT_ROWCOLUMN(roco)
 		return roco;
 }
-	CSheet::size_type CSheet::Y2VisibleRowIndex(coordinates_type y)
-	{
-		return Y2RowIndex(y, m_rowVisibleDictionary);
-	}
 
-	CSheet::size_type CSheet::X2VisibleColumnIndex(coordinates_type x)
-	{
-		return X2ColumnIndex(x, m_columnVisibleDictionary);
-	}
+CSheet::size_type CSheet::Y2AllRowIndex(coordinates_type y)
+{
+	return Y2RowIndex(y, m_rowAllDictionary);
+}
+
+CSheet::size_type CSheet::X2AllColumnIndex(coordinates_type x)
+{
+	return X2ColumnIndex(x, m_columnAllDictionary);
+}
+
+CSheet::size_type CSheet::Y2VisibleRowIndex(coordinates_type y)
+{
+	return Y2RowIndex(y, m_rowVisibleDictionary);
+}
+
+CSheet::size_type CSheet::X2VisibleColumnIndex(coordinates_type x)
+{
+	return X2ColumnIndex(x, m_columnVisibleDictionary);
+}
+
+	std::pair<CSheet::size_type, CSheet::size_type> CSheet::Point2AllIndexes(const CPoint& ptClient)
+{
+	return std::make_pair(Y2AllRowIndex(ptClient.y), X2AllColumnIndex(ptClient.x));
+}
+
 std::pair<CSheet::size_type, CSheet::size_type> CSheet::Point2VisibleIndexes(const CPoint& ptClient)
 {
 	return std::make_pair(Y2VisibleRowIndex(ptClient.y), X2VisibleColumnIndex(ptClient.x));

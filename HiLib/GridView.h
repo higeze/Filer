@@ -42,7 +42,7 @@ public:
 
 	virtual void ColumnInserted(CColumnEventArgs& e)override;
 	virtual void ColumnErased(CColumnEventArgs& e)override;
-	virtual void ColumnMoved(CColumnMovedEventArgs& e)override;
+	virtual void ColumnMoved(CMovedEventArgs<ColTag>& e)override;
 
 
 public:

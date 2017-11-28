@@ -15,6 +15,7 @@ public:
 	~CFavoritesProperty(){};
 
 	std::vector<CFavorite> GetFavorites()const{return m_favorites;}
+	void SetFavorites(std::vector<CFavorite>& favorites) { m_favorites = favorites; }
 
 	FRIEND_SERIALIZER
     template <class Archive>

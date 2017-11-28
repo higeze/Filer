@@ -83,7 +83,8 @@ public:
 
 	static CSheetState* Normal();
 	static CSheetState* Tracking();
-	static CSheetState* Dragging();
+	static CSheetState* ColumnDragging();
+	static CSheetState* RowDragging();
 
 	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)=0;
 	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)=0;
@@ -135,11 +136,29 @@ public:
 
 };
 
-class CDraggingState:public CSheetState
+class CColumnDraggingState:public CSheetState
 {
 public:
-	CDraggingState(){}
-	virtual ~CDraggingState(){}
+	CColumnDraggingState(){}
+	virtual ~CColumnDraggingState(){}
+
+	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
+	virtual CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual CSheetState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e);
+	virtual CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+
+	virtual CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
+	virtual CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+
+};
+
+class CRowDraggingState :public CSheetState
+{
+public:
+	CRowDraggingState() {}
+	virtual ~CRowDraggingState() {}
 
 	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
 	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);

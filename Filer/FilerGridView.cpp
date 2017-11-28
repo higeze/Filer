@@ -368,7 +368,6 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		InsertDefaultRowColumn();
 	}
 
-	try{
 		m_spFolder = spFolder;
 
 		//Clear RowDictionary From 0 to last
@@ -413,10 +412,6 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 			std::dynamic_pointer_cast<CParentMapColumn>(iter->DataPtr)->Clear();
 			iter->DataPtr->SetMeasureValid(false);
 		}
-
-	}catch(...){
-		MessageBox(L"Error on Open", L"Error",MB_ICONWARNING);
-	}
 
 	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::RowVisible);

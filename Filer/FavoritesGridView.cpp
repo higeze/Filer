@@ -173,3 +173,16 @@ void CFavoritesGridView::OnCellLButtonDblClk(CellEventArgs& e)
 		}
 	}
 }
+
+void CFavoritesGridView::RowMoved(CMovedEventArgs<RowTag>& e)
+{
+	std::vector<CFavorite> favorites(m_spFavoritesProp->GetFavorites());
+	auto fromIter = favorites.begin(); std::advance(fromIter, e.m_from);
+	auto temp = *fromIter;
+	favorites.erase(fromIter);
+	auto toIter = favorites.begin(); std::advance(toIter, e.m_to);
+	favorites.insert(toIter, temp);
+	//std::swap(favorites[e.m_from], favorites[e.m_to]);
+	m_spFavoritesProp->SetFavorites(favorites);
+
+}

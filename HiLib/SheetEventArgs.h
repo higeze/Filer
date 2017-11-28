@@ -70,3 +70,17 @@ public:
 		:CColumnEventArgs(pColumn), m_from(from), m_to(to){}
 	virtual ~CColumnMovedEventArgs(){}
 };
+
+template<typename TRC>
+class CMovedEventArgs
+{
+public:
+	typedef int size_type;
+	size_type m_from;
+	size_type m_to;
+	TRC::template Ptr m_ptr;
+public:
+	CMovedEventArgs(TRC::template Ptr ptr, size_type from, size_type to)
+	:m_ptr(ptr), m_from(from), m_to(to){}
+	virtual ~CMovedEventArgs() {}
+};

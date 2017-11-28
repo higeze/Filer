@@ -42,7 +42,7 @@ CGridView::CGridView(
 		std::shared_ptr<int> spDeltaScroll,
 		CMenu* pContextMenu)
 	:m_spBackgroundProperty(spBackgroundProperty), 
-	CSheet(spHeaderProperty,spFilterProperty,spCellProperty,std::make_shared<CTracker>(), std::make_shared<CDragger>(), std::make_shared<CCursorer>(), pContextMenu?pContextMenu:&CGridView::ContextMenu),
+	CSheet(spHeaderProperty,spFilterProperty,spCellProperty,std::make_shared<CTracker>(), std::make_shared<CColumnDragger>(), std::make_shared<CCursorer>(), pContextMenu?pContextMenu:&CGridView::ContextMenu),
 	m_spDeltaScroll(spDeltaScroll)/*,m_ptScroll(0,0)*/,
 		CWnd(),
 		m_iosv(),m_work(m_iosv),m_timer(m_iosv),
@@ -125,11 +125,11 @@ void CGridView::ColumnErased(CColumnEventArgs& e)
 	CSheet::ColumnErased(e);
 	SignalColumnErased(e.m_pColumn);
 }
-void CGridView::ColumnMoved(CColumnMovedEventArgs& e)
+void CGridView::ColumnMoved(CMovedEventArgs<ColTag>& e)
 {
 	//FilterAll();
 	CSheet::ColumnMoved(e);
-	SignalColumnMoved(e.m_pColumn, e.m_from, e.m_to);
+	SignalColumnMoved(e.m_ptr, e.m_from, e.m_to);
 }
 
 void CGridView::OnCellPropertyChanged(CCell* pCell,LPCTSTR lpszProperty)
@@ -1592,8 +1592,8 @@ void CGridView::OnPaint(PaintEventArgs& e)
 	{
 		auto& colDictionary=m_columnAllDictionary.get<IndexTag>();
 		auto& rowVDictionary=m_rowVisibleDictionary.get<IndexTag>();
-		auto dragToAllIndex = m_spDragger->GetDragToAllIndex();
-		auto dragFromAllIndex = m_spDragger->GetDragFromAllIndex();
+		auto dragToAllIndex = m_spColDragger->GetDragToAllIndex();
+		auto dragFromAllIndex = m_spColDragger->GetDragFromAllIndex();
 		if(dragToAllIndex!=COLUMN_INDEX_INVALID && dragToAllIndex!=dragFromAllIndex){
 			coordinates_type x=0;
 			if(dragToAllIndex<=colDictionary.begin()->Index){
