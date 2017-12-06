@@ -142,6 +142,8 @@ public:
 	CColumnDraggingState(){}
 	virtual ~CColumnDraggingState(){}
 
+	static CSheetState* State();
+
 	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
 	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
 	virtual CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
@@ -159,6 +161,8 @@ class CRowDraggingState :public CSheetState
 public:
 	CRowDraggingState() {}
 	virtual ~CRowDraggingState() {}
+
+	static CSheetState* State();
 
 	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
 	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);

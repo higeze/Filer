@@ -22,7 +22,7 @@ class CDC;
 //class CColumnEventArgs;
 //class CColumnMovedEventArgs;
 class CTracker;
-class CColumnDragger;
+template <typename TRCMe, typename TRCYou> class CDragger;
 class CCursorer;
 class IMouseObserver;
 class CSheetState;
@@ -355,7 +355,7 @@ public:
 	//Tag dispatch
 	template<typename TRC, typename TAV> TRC::template Dictionary& GetDictionary() { return nullptr; }
 	template<typename TRC> TRC::template SharedPtr Coordinate2Pointer(coordinates_type coordinate) { return nullptr; }
-	template<typename TRC, typename TAV> int Coordinate2Index(coordinates_type coordinate) { return nullptr; }
+	template<typename TRC, typename TAV> int Coordinate2Index(coordinates_type coordinate) { return 9999; }
 	template<typename TRC, typename TAV> std::pair<int, int> Coordinates2Indexes(CPoint pt) 
 	{ 
 		return std::make_pair(Coordinate2Index<TRC, TAV>(pt.y), Coordinate2Index<TRC, TAV>(pt.y));
@@ -1102,6 +1102,34 @@ template<> inline int CSheet::Coordinate2Index<RowTag, VisTag>(int coordinate)
 	}
 	return index;
 }
+
+template<> inline int CSheet::Coordinate2Index<ColTag, VisTag>(int coordinate)
+{
+	auto ptOrigin = GetOriginPoint();
+
+	auto& dictionary = GetDictionary<ColTag, VisTag>().get<IndexTag>();
+	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
+		[ptOrigin](const ColumnData& rowData, const int& rhs)->bool {
+		if (rowData.Index >= 0) {
+			return max(ptOrigin.x, rowData.DataPtr->GetRight()) < rhs;
+		}
+		else {
+			return rowData.DataPtr->GetRight() < rhs;
+		}
+	});
+	size_type index = 0;
+	if (rowIter == dictionary.end()) {
+		index = boost::prior(rowIter)->Index + 1;
+	}
+	else if (rowIter == dictionary.begin() && rowIter->DataPtr->GetLeft()>coordinate) {
+		index = rowIter->Index - 1;
+	}
+	else {
+		index = rowIter->Index;
+	}
+	return index;
+}
+
 
 template<> inline void CSheet::Moved<RowTag>(CMovedEventArgs<RowTag>& e)
 {

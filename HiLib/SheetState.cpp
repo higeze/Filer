@@ -434,6 +434,14 @@ CSheetState* CColumnDraggingState::OnSetCursor(CSheet* pSheet, SetCursorEventArg
 	return pSheet->m_spColDragger->OnDragSetCursor(pSheet, e);		
 }
 
+CSheetState* CColumnDraggingState::State()
+{
+	static CColumnDraggingState state;
+	return &state;
+}
+
+
+
 CSheetState* CRowDraggingState::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
 {
 	return pSheet->m_spRowDragger->OnDragLButtonDown(pSheet, e);
@@ -465,6 +473,12 @@ CSheetState* CRowDraggingState::OnMouseLeave(CSheet* pSheet, MouseEventArgs& e)
 CSheetState* CRowDraggingState::OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e)
 {
 	return pSheet->m_spRowDragger->OnDragSetCursor(pSheet, e);
+}
+
+CSheetState* CRowDraggingState::State()
+{
+	static CRowDraggingState state;
+	return &state;
 }
 
 
