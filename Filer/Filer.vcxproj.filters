@@ -45,6 +45,9 @@
     <Image Include="GKN_Aerospace.ico">
       <Filter>Resource</Filter>
     </Image>
+    <Image Include="updater.ico">
+      <Filter>Resource</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirectoryWatcher.h">
