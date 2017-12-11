@@ -783,5 +783,8 @@
     <None Include="..\Release\Filer.exe">
       <Filter>Release</Filter>
     </None>
+    <None Include="MyNotification.zip">
+      <Filter>Resource</Filter>
+    </None>
   </ItemGroup>
 </Project>

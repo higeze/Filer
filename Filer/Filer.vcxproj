@@ -428,6 +428,7 @@
     <None Include="..\HiLib\msxml6.tlh" />
     <None Include="..\HiLib\msxml6.tli" />
     <None Include="..\Release\Filer.exe" />
+    <None Include="MyNotification.zip" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
