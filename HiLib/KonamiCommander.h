@@ -4,7 +4,7 @@
 #include "MyPoint.h"
 
 struct KeyEventArgs;
-class CSheetState;
+class ISheetState;
 struct PaintEventArgs;
 
 class CKonamiCommander:public IMouseObserver, public IKeyObserver
@@ -44,16 +44,16 @@ public:
 	}
 	virtual ~CKonamiCommander(){}
 	//IMouseObserver
-	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
 
 	//IKeyObserver
-	virtual CSheetState* OnKeyDown(CGridView* pSheet, KeyEventArgs& e);
+	virtual ISheetState* OnKeyDown(CGridView* pSheet, KeyEventArgs& e);
 
 	virtual void OnPaint(PaintEventArgs& e);
 };

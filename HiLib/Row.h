@@ -6,6 +6,8 @@ class Sheet;
 
 class CRow:public CBand
 {
+public:
+	static const coordinates_type kMinWidth = 2;
 protected:
 	coordinates_type m_height;
 	coordinates_type m_top;
@@ -27,8 +29,11 @@ public:
 
 	virtual void SetVisible(const bool& bVisible, bool notify = true)override;
 	virtual void SetSelected(const bool& bSelected);
-	virtual size_type GetVisibleIndex()const;
-	virtual size_type GetAllIndex()const;
+	template<typename TAV>
+	size_type GetIndex()const
+	{
+		return m_pSheet->Pointer2Index<RowTag, TAV>(this);
+	}
 };
 
 class CGridView;

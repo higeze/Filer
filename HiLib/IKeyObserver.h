@@ -1,7 +1,7 @@
 #pragma once
 
 class CGridView;
-class CSheetState;
+class ISheetState;
 struct KeyEventArgs;
 
 class IKeyObserver
@@ -9,6 +9,6 @@ class IKeyObserver
 public:
 	IKeyObserver(void){}
 	virtual ~IKeyObserver(void){}
-	virtual CSheetState* OnKeyDown(CGridView* pSheet, KeyEventArgs& e)=0;
+	virtual ISheetState* OnKeyDown(CGridView* pSheet, KeyEventArgs& e)=0;
 };
 

@@ -196,7 +196,7 @@ void CParameterCell::OnLButtonDown(MouseEventArgs& e)
 {
 	//Do Nothing
 }
-void CParameterCell::OnLButtonSingleClick(MouseEventArgs& e)
+void CParameterCell::OnLButtonSnglClk(MouseEventArgs& e)
 {
 	//if(!m_bFirstFocus){
 	//	m_bFirstFocus=true;

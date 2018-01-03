@@ -106,8 +106,8 @@ CSize CCell::MeasureSizeWithFixedWidth(CDC* pDC)
 void CCell::SetString(const string_type& str)
 {
 	if(GetString()!=str){
-		//auto allRow = m_pRow->GetAllIndex();
-		//auto allCol = m_pColumn->GetAllIndex();
+		//auto allRow = m_pRow->GetIndex<AllTag>();
+		//auto allCol = m_pColumn->GetIndex<AllTag>();
 		//auto pSheet = m_pSheet;
 		//m_pSheet->GetGridPtr()->GetUndoReDoManagerPtr()->Do(std::make_shared<CFullCommand>(m_pSheet->GetGridPtr(),[pSheet,allRow,allCol,str]()->void{pSheet->AllCell(allRow, allCol)->SetStringNotify(str);}));
 		//m_pSheet->GetGridPtr()->GetUndoReDoManagerPtr()->Do(std::make_shared<CColumnCommand>(m_pSheet->GetGridPtr(), m_pSheet->GetParentColumnPtr(this), [pSheet,allRow,allCol,str]()->void{pSheet->AllCell(allRow, allCol)->SetStringNotify(str);}));

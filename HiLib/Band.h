@@ -3,10 +3,6 @@
 class CSheet;
 class CCell;
 
-/**
- *  CBand
- *  Base class for Row and Column
- */
 class CBand
 {
 public:
@@ -14,14 +10,18 @@ public:
 	typedef int coordinates_type;
 	typedef std::shared_ptr<CCell> cell_type;
 	typedef std::wstring string_type;
+	static const size_type kMaxIndex = 10000;
+	static const size_type kMinIndex = -10;
+	static const size_type kInvalidIndex = -9999;
+	static const coordinates_type kResizeAreaHarfWidth = 4;
 protected:
-	CSheet* m_pSheet; /**< Parent sheet pointer*/
-	bool m_bVisible; /**< Visible or not*/
-	bool m_bSelected; /**< Selected or not*/
-	bool m_bMeasureValid; /**< Measurement for width/height is valid or not*/
-	/**
-	 *  boost::serialization
-	 */
+	//Field
+	CSheet* m_pSheet; // Parent sheet pointer
+	bool m_bVisible; // Visible or not
+	bool m_bSelected; // Selected or not
+	bool m_bMeasureValid; // Measurement for width/height is valid or not
+
+	//boost::serialization
     friend class boost::serialization::access;
 	BOOST_SERIALIZATION_SPLIT_MEMBER();
     template <class Archive>
@@ -38,15 +38,12 @@ protected:
 		m_bMeasureValid = true;//Width or Height are serialized
     }
 public:
-	/**
-	 *  Constructor
-	 */
+	//Constructor
 	CBand(CSheet* pSheet = nullptr)
 		:m_pSheet(pSheet),m_bVisible(true),m_bSelected(false),m_bMeasureValid(false){}
-	/**
-	 *  Destructor
-	 */
+	//Destructor
 	virtual ~CBand(){}
+
 	CBand& ShallowCopy(const CBand& band)
 	{
 		m_pSheet = band.m_pSheet;
@@ -55,54 +52,15 @@ public:
 		m_bMeasureValid = band.m_bMeasureValid;	
 		return *this;
 	}
-	/**
-	 *  Getter for Sheet pointer
-	 */
 	CSheet* GetSheetPtr()const{return m_pSheet;}
-	/**
-	 *  Setter for Sheet pointer
-	 */
 	void SetSheetPtr(CSheet* pSheet){m_pSheet = pSheet;}
-	/**
-	 *  Getter for MeasureValid
-	 */
 	bool GetMeasureValid()const{return m_bMeasureValid;}
-	/**
-	 *  Setter for MeasureValid
-	 */
 	void SetMeasureValid(bool bMeasureValid){m_bMeasureValid = bMeasureValid;}
-	/**
-	 *  Offset from window client
-	 */
 	virtual coordinates_type Offset()const=0;
-	/**
-	 *  Getter for Visible
-	 */
 	virtual bool GetVisible()const{return m_bVisible;}
-	/**
-	 *  Setter for Visible
-	 *  @param notify call propertychanged or not
-	 */
 	virtual void SetVisible(const bool& bVisible, bool notify = true)=0;
-	/**
-	 *  Getter for Selected
-	 */
 	virtual bool GetSelected()const{return m_bSelected;}
-	/**
-	 *  Setter for Selected
-	 */
 	virtual void SetSelected(const bool& bSelected)=0;
-	/**
-	 *  Get Visible index from Sheet
-	 */
-	virtual size_type GetVisibleIndex()const=0;
-	/**
-	 *  Get All index from Sheet
-	 */
-	virtual size_type GetAllIndex()const=0;
-	/**
-	 *  Dragable Trackable
-	 */
 	virtual bool IsDragTrackable()const{return false;}
 };
 

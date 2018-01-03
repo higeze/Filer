@@ -7,11 +7,11 @@
 #include "MyPoint.h"
 #include "KonamiResource.h"
 
-CSheetState* CKonamiCommander::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e){return CSheetState::Normal();}
-CSheetState* CKonamiCommander::OnLButtonUp(CSheet* pSheet, MouseEventArgs& e){return CSheetState::Normal();}
-CSheetState* CKonamiCommander::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e){return CSheetState::Normal();}
-CSheetState* CKonamiCommander::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e){return CSheetState::Normal();}
-CSheetState* CKonamiCommander::OnMouseMove(CSheet* pSheet, MouseEventArgs& e)
+ISheetState* CKonamiCommander::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e){return ISheetState::Normal();}
+ISheetState* CKonamiCommander::OnLButtonUp(CSheet* pSheet, MouseEventArgs& e){return ISheetState::Normal();}
+ISheetState* CKonamiCommander::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e){return ISheetState::Normal();}
+ISheetState* CKonamiCommander::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e){return ISheetState::Normal();}
+ISheetState* CKonamiCommander::OnMouseMove(CSheet* pSheet, MouseEventArgs& e)
 {
 	if(m_konamiOn){
 		if(m_konamiOn){
@@ -34,10 +34,10 @@ CSheetState* CKonamiCommander::OnMouseMove(CSheet* pSheet, MouseEventArgs& e)
 			}
 		}
 	}
-	return CSheetState::Normal();
+	return ISheetState::Normal();
 }
-CSheetState* CKonamiCommander::OnMouseLeave(CSheet* pSheet, MouseEventArgs& e){return CSheetState::Normal();}
-CSheetState* CKonamiCommander::OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e)
+ISheetState* CKonamiCommander::OnMouseLeave(CSheet* pSheet, MouseEventArgs& e){return ISheetState::Normal();}
+ISheetState* CKonamiCommander::OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e)
 {
 	if(m_konamiOn){
 		if(!m_hCursor){
@@ -46,10 +46,10 @@ CSheetState* CKonamiCommander::OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e
 		::SetCursor(m_hCursor);
 		e.Handled = TRUE;
 	}
-	return CSheetState::Normal();
+	return ISheetState::Normal();
 }
 
-CSheetState* CKonamiCommander::OnKeyDown(CGridView* pSheet, KeyEventArgs& e)
+ISheetState* CKonamiCommander::OnKeyDown(CGridView* pSheet, KeyEventArgs& e)
 {
 	m_keys.push_back(e.Char);
 	if(m_keys.size() > m_konami.size()){
@@ -59,7 +59,7 @@ CSheetState* CKonamiCommander::OnKeyDown(CGridView* pSheet, KeyEventArgs& e)
 		m_konamiOn = true;
 	}
 
-	return CSheetState::Normal();
+	return ISheetState::Normal();
 }
 
 void CKonamiCommander::OnPaint(PaintEventArgs& e)

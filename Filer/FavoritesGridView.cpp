@@ -80,7 +80,7 @@ void CFavoritesGridView::OpenFavorites()
 			CIDLPtr pIDL;
 			HRESULT hr = NULL;
 			if(favorite.GetPath() == L""){
-				InsertRow(ROW_INDEX_MAX,std::make_shared<CFavoriteRow>(this, std::make_shared<CShellFolder>(), favorite.GetShortName()));
+				InsertRow(CRow::kMaxIndex,std::make_shared<CFavoriteRow>(this, std::make_shared<CShellFolder>(), favorite.GetShortName()));
 			}else{
 				hr = pDesktop->ParseDisplayName(
 					NULL,
@@ -155,7 +155,7 @@ void CFavoritesGridView::InsertDefaultRowColumn()
 	//IconColumn
 	{
 		auto pColumn = std::make_shared<CFavoritesColumn>(this);
-		InsertColumn(COLUMN_INDEX_MAX,pColumn);
+		InsertColumn(CColumn::kMaxIndex,pColumn);
 	}
 	//NameColumn
 	//{

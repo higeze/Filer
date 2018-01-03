@@ -57,15 +57,15 @@ void CColumn::SetSort(const Sorts& sort)
 		m_pSheet->ColumnPropertyChanged(L"sort");//TODO should be changed to ColumnSortChanged
 	}
 }
-CColumn::size_type CColumn::GetVisibleIndex()const
-{
-	return m_pSheet->ColumnPointer2VisibleIndex(this);
-}
-
-CColumn::size_type CColumn::GetAllIndex()const
-{
-	return m_pSheet->ColumnPointer2AllIndex(this);
-}
+//CColumn::size_type CColumn::GetIndex<VisTag>()const
+//{
+//	return m_pSheet->Pointer2Index<ColTag, VisTag>(this);
+//}
+//
+//CColumn::size_type CColumn::GetIndex<AllTag>()const
+//{
+//	return m_pSheet->Pointer2Index<ColTag, AllTag>(this);
+//}
 
 //bool CColumn::SortPredicate(const CCell& lhs, const CCell& rhs)
 //{
@@ -84,8 +84,8 @@ CParentColumn::CParentColumn(CGridView* pGrid)
 CParentColumn::coordinates_type CParentColumn::Offset()const
 {
 	coordinates_type offset(0);//m_pGrid->GetRect().left is not necessary
-	//if(m_pSheet->Visible() && GetAllIndex()>=0){
-	if(m_pSheet->Visible() && GetVisibleIndex()>=0){
+	//if(m_pSheet->Visible() && GetIndex<AllTag>()>=0){
+	if(m_pSheet->Visible() && GetIndex<VisTag>()>=0){
 		offset-=static_cast<CGridView*>(m_pSheet)->GetHorizontalScrollPos();
 	}
 	return offset;

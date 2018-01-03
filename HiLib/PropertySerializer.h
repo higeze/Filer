@@ -172,13 +172,13 @@ public:
 					pColProperty=std::make_shared<CParentPropertyNameColumn>(pSheet.get());
 					pColValue=std::make_shared<CParentPropertyValueColumn>(pSheet.get());
 
-					pSheet->InsertColumnImpl(CSheet::COLUMN_INDEX_MAX,pColProperty);
-					pSheet->InsertColumnImpl(CSheet::COLUMN_INDEX_MAX,pColValue);
+					pSheet->InsertColumnImpl(CColumn::kMaxIndex,pColProperty);
+					pSheet->InsertColumnImpl(CColumn::kMaxIndex,pColValue);
 				}else{
 					pRow=std::make_shared<CParentRow>(pSheet.get());
 					pSheet->InsertRow(100,pRow);
-					pColProperty=pSheet->AllColumn(0);
-					pColValue=pSheet->AllColumn(1);
+					pColProperty=pSheet->Index2Pointer<ColTag, AllTag>(0);
+					pColValue=pSheet->Index2Pointer<ColTag, AllTag>(1);
 				}
 			
 			}else if(auto pSheet=std::dynamic_pointer_cast<CSheetCell>(spSheet)){
@@ -194,13 +194,13 @@ public:
 					pColProperty=std::make_shared<CChildPropertyNameColumn>(pSheet.get());
 					pColValue=std::make_shared<CChildPropertyValueColumn>(pSheet.get());
 
-					pSheet->InsertColumnImpl(CSheet::COLUMN_INDEX_MAX,pColProperty);
-					pSheet->InsertColumnImpl(CSheet::COLUMN_INDEX_MAX,pColValue);
+					pSheet->InsertColumnImpl(CColumn::kMaxIndex,pColProperty);
+					pSheet->InsertColumnImpl(CColumn::kMaxIndex,pColValue);
 				}else{
 					pRow=std::make_shared<CChildRow>(pSheet.get());
 					pSheet->InsertRow(100,pRow);
-					pColProperty=pSheet->AllColumn(0);
-					pColValue=pSheet->AllColumn(1);
+					pColProperty=pSheet->Index2Pointer<ColTag, AllTag>(0);
+					pColValue=pSheet->Index2Pointer<ColTag, AllTag>(1);
 				}
 			}
 
@@ -317,14 +317,14 @@ public:
 			pColIndex=std::make_shared<CChildPropertyIndexColumn>(spSheetCell.get());
 			pColValue=std::make_shared<CChildPropertyValueColumn>(spSheetCell.get());
 
-			spSheetCell->InsertColumnImpl(CSheet::COLUMN_INDEX_MAX,pColIndex);
-			spSheetCell->InsertColumnImpl(CSheet::COLUMN_INDEX_MAX,pColValue);
+			spSheetCell->InsertColumnImpl(CColumn::kMaxIndex,pColIndex);
+			spSheetCell->InsertColumnImpl(CColumn::kMaxIndex,pColValue);
 			CCellSerializer serializer(spSheetCell,m_spPropSheetCellHeader,m_spPropSheetCellFilter,m_spPropSheetCellCell);
 			for(auto& val : t){
 				spRow=std::make_shared<CChildRow>(spSheetCell.get());
 				spSheetCell->InsertRow(100,spRow);
 				//pColProperty=pSheet->AllColumn(0);
-				pColValue=spSheetCell->AllColumn(1);
+				pColValue=spSheetCell->Index2Pointer<ColTag, AllTag>(1);
 				serializer.SerializeValue(val,spRow.get(),pColValue.get());
 			}
 			CSheet::Cell(pRow, pCol) = spSheetCell;
@@ -405,12 +405,12 @@ public:
 		if(auto spSheet=m_pSheet.lock()){
 			if(!spSheet->Empty()){
 				std::wstring wstrName(lpszName,(lpszName+strlen(lpszName)));
-				auto pCol=spSheet->AllColumn(0);
+				auto pCol=spSheet->Index2Pointer<ColTag, AllTag>(0);
 				for(auto rowIter=spSheet->RowAllBegin(),rowEnd=spSheet->RowAllEnd();rowIter!=rowEnd;++rowIter){
 					auto pCell = CSheet::Cell(rowIter->DataPtr, pCol);
 					if(m_setCellPtr.find(pCell.get()) == m_setCellPtr.end() && pCol->Cell(rowIter->DataPtr.get())->GetString()==wstrName){
 						m_setCellPtr.insert(pCell.get());
-						DeserializeValue(t,rowIter->DataPtr.get(),spSheet->AllColumn(1).get());
+						DeserializeValue(t,rowIter->DataPtr.get(),spSheet->Index2Pointer<ColTag, AllTag>(1).get());
 						break;
 					}
 				}
@@ -470,7 +470,7 @@ public:
 			auto& rowDict = rowAllDict.get<IndexTag>();
 			for(auto rowIter=rowDict.find(0);rowIter!=rowDict.end();rowIter++){
 				T::value_type val;
-				DeserializeValue(val,rowIter->DataPtr.get(),spSheet->AllColumn(1).get());
+				DeserializeValue(val,rowIter->DataPtr.get(),spSheet->Index2Pointer<ColTag, AllTag>(1).get());
 				t.push_back(val);
 			}
 			

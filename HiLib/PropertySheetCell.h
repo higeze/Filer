@@ -22,7 +22,7 @@ public:
 			for(auto i=0;i<row-curRowSize;i++){
 				auto spRow=std::make_shared<CChildRow>(this);
 				InsertRow(100,spRow);
-				auto pColValue=AllColumn(1);
+				auto pColValue= Index2Pointer<ColTag, AllTag>(1);
 
 				CCellSerializer serializer(std::dynamic_pointer_cast<CSheet>(Cell(m_pRow,m_pColumn)),m_spHeaderProperty,m_spFilterProperty,m_spCellProperty);
 				serializer.SerializeValue(std::make_shared<T::value_type>(),spRow.get(),pColValue.get());

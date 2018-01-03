@@ -18,32 +18,32 @@ public:
 	CFileDragger():m_ptDragStart(){}
 	virtual ~CFileDragger(){}
 	
-	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
 
-	virtual CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
 
-	virtual CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
 
-	virtual CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+	virtual ISheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
 
 
-	virtual CSheetState* OnDragLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnDragLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnDragLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnDragRButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnDragMouseMove(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnDragMouseLeave(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnDragSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+	virtual ISheetState* OnDragLButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnDragLButtonUp(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnDragLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnDragRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnDragMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnDragMouseLeave(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnDragSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
 
 
 private:
 
-	CSheetState* OnBeginDrag(CSheet* pSheet, MouseEventArgs& e);
-	CSheetState* OnDrag(CSheet* pSheet, MouseEventArgs& e);
-	CSheetState* OnEndDrag(CSheet* pSheet, MouseEventArgs& e);
+	ISheetState* OnBeginDrag(CSheet* pSheet, MouseEventArgs& e);
+	ISheetState* OnDrag(CSheet* pSheet, MouseEventArgs& e);
+	ISheetState* OnEndDrag(CSheet* pSheet, MouseEventArgs& e);
 private:
 	bool IsDragable(CSheet* pSheet, std::pair<size_type, size_type> visibleIndexes);
 

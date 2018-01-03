@@ -103,7 +103,7 @@ public:
 		:CEditableCell(pSheet,pRow, pColumn,spProperty,pMenu),m_bFirstFocus(false){}
 	virtual ~CParameterCell(){}
 	virtual void OnLButtonDown(MouseEventArgs& e);
-	virtual void OnLButtonSingleClick(MouseEventArgs& e);
+	virtual void OnLButtonSnglClk(MouseEventArgs& e);
 	virtual void OnKillFocus(EventArgs& e);
 
 	virtual bool CanSetStringOnEditing()const override{return false;}

@@ -1,12 +1,13 @@
 #include "RowColumn.h"
 #include "Row.h"
 #include "Column.h"
+#include "Sheet.h"
 
 bool CRowColumn::operator<(const CRowColumn& rhs)const
 {
 	if(m_pRow!=rhs.m_pRow){
-		return m_pRow->GetVisibleIndex()<rhs.m_pRow->GetVisibleIndex();
+		return m_pRow->GetIndex<VisTag>()<rhs.m_pRow->GetIndex<VisTag>();
 	}else{
-		return m_pColumn->GetVisibleIndex()<rhs.m_pColumn->GetVisibleIndex();
+		return m_pColumn->GetIndex<VisTag>()<rhs.m_pColumn->GetIndex<VisTag>();
 	}
 }

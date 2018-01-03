@@ -1,22 +1,22 @@
 #pragma once
 #include "SheetState.h"
 
-class CFileDraggingState:public CSheetState
+class CFileDraggingState:public ISheetState
 {
 public:
-	static CSheetState* FileDragging();
+	static ISheetState* FileDragging();
 public:
 	CFileDraggingState(){}
 	virtual ~CFileDraggingState(){}
 
-	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
 
-	virtual CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+	virtual ISheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
 
 };

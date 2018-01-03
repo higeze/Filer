@@ -6,7 +6,7 @@
 //Pre-Declaration
 class CSheet;
 class CGridView;
-class CSheetState;
+class ISheetState;
 struct EventArgs;
 struct MouseEventArgs;
 struct SetCursorEventArgs;
@@ -29,11 +29,11 @@ private:
 	typedef std::shared_ptr<CColumn> column_type;
 	typedef std::shared_ptr<CRow> row_type;
 
-	static const size_type COLUMN_INDEX_INVALID = 9999;
-	static const size_type COLUMN_INDEX_MAX = 1000;
-	static const size_type COLUMN_INDEX_MIN = -1000;
-	static const coordinates_type MIN_COLUMN_WIDTH=2;
-	static const coordinates_type RESIZE_AREA_HARF_WIDTH=4;
+	//static const size_type COLUMN_INDEX_INVALID = 9999;
+	//static const size_type COLUMN_INDEX_MAX = 1000;
+	//static const size_type COLUMN_INDEX_MIN = -1000;
+	//static const coordinates_type MIN_COLUMN_WIDTH=2;
+	//static const coordinates_type RESIZE_AREA_HARF_WIDTH=4;
 
 private:
 	CRowColumn m_rocoOld;
@@ -48,27 +48,27 @@ public:
 	CRowColumn GetFocusedRowColumn(){return m_rocoFocused;}
 	void SetFocusedRowColumn(CRowColumn roco){m_rocoFocused = roco;}
 	//IMouseObserver
-	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
-	CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
+	ISheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
 	//IKeyObserver
-	CSheetState* OnKeyDown(CGridView* pSheet, KeyEventArgs& e);
+	ISheetState* OnKeyDown(CGridView* pSheet, KeyEventArgs& e);
 
 
-	CSheetState* OnCursorCtrl(CSheet* pSheet, EventArgs& e, CRowColumn roco);
-	CSheetState* OnCursorShift(CSheet* pSheet, EventArgs& e, CRowColumn roco);
-	CSheetState* OnCursor(CSheet* pSheet, EventArgs& e, CRowColumn roco);
-	CSheetState* OnRowCursorCtrl(CSheet* pSheet, EventArgs& e, CRow* pRow);
-	CSheetState* OnRowCursorShift(CSheet* pSheet, EventArgs& e, CRow* pRow);
-	CSheetState* OnRowCursor(CSheet* pSheet, EventArgs& e, CRow* pRow);
-	CSheetState* OnColumnCursorCtrl(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
-	CSheetState* OnColumnCursorShift(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
-	CSheetState* OnColumnCursor(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
-	CSheetState* OnCursorClear(CSheet* pSheet, EventArgs& e);
+	ISheetState* OnCursorCtrl(CSheet* pSheet, EventArgs& e, CRowColumn roco);
+	ISheetState* OnCursorShift(CSheet* pSheet, EventArgs& e, CRowColumn roco);
+	ISheetState* OnCursor(CSheet* pSheet, EventArgs& e, CRowColumn roco);
+	ISheetState* OnRowCursorCtrl(CSheet* pSheet, EventArgs& e, CRow* pRow);
+	ISheetState* OnRowCursorShift(CSheet* pSheet, EventArgs& e, CRow* pRow);
+	ISheetState* OnRowCursor(CSheet* pSheet, EventArgs& e, CRow* pRow);
+	ISheetState* OnColumnCursorCtrl(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
+	ISheetState* OnColumnCursorShift(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
+	ISheetState* OnColumnCursor(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
+	ISheetState* OnCursorClear(CSheet* pSheet, EventArgs& e);
 
 	CRowColumn GetFocusedRowColumn()const{return m_rocoFocused;}
 	CRowColumn GetDoubleFocusedRowColumn()const{return m_rocoDoubleFocused;}
@@ -97,8 +97,8 @@ public:
 	{
 		if(!pBand1 || !pBand2)return;
 		auto& bandDictionary=bandVisibleDictionary.get<IndexTag>();
-		auto beg=min(pBand1->GetVisibleIndex(),pBand2->GetVisibleIndex());
-		auto last=max(pBand1->GetVisibleIndex(),pBand2->GetVisibleIndex());
+		auto beg=min(pBand1->GetIndex<VisTag>(),pBand2->GetIndex<VisTag>());
+		auto last=max(pBand1->GetIndex<VisTag>(),pBand2->GetIndex<VisTag>());
 		for(auto iter=bandDictionary.find(beg),end=bandDictionary.find(last+1);iter!=end;++iter){
 			iter->DataPtr->SetSelected(false);
 		}
@@ -108,8 +108,8 @@ public:
 	{
 		if(!pBand1 || !pBand2)return;
 		auto& bandDictionary=bandVisibleDictionary.get<IndexTag>();
-		auto beg=min(pBand1->GetVisibleIndex(),pBand2->GetVisibleIndex());
-		auto last=max(pBand1->GetVisibleIndex(),pBand2->GetVisibleIndex());
+		auto beg=min(pBand1->GetIndex<VisTag>(),pBand2->GetIndex<VisTag>());
+		auto last=max(pBand1->GetIndex<VisTag>(),pBand2->GetIndex<VisTag>());
 		for(auto iter=bandDictionary.find(beg),end=bandDictionary.find(last+1);iter!=end;++iter){
 			iter->DataPtr->SetSelected(true);
 		}
@@ -162,6 +162,6 @@ class CSheetCellCursorer:public CCursorer
 public:
 	CSheetCellCursorer():CCursorer(){}
 	virtual ~CSheetCellCursorer(){}
-	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
-	virtual CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
+	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
+	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
 };

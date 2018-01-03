@@ -31,7 +31,12 @@ CSheetCell::CSheetCell(
 	std::shared_ptr<CCellProperty> spFilterProperty,
 	std::shared_ptr<CCellProperty> spCellProperty,
 	CMenu* pMenu)
-	:CSheet(spHeaderProperty,spFilterProperty,spCellProperty, std::make_shared<CTracker>(), std::make_shared<CSheetCellDragger>(), std::make_shared<CSheetCellCursorer>()),
+	:CSheet(spHeaderProperty,
+		spFilterProperty,
+		spCellProperty, 
+		std::make_shared<CTracker>(), 
+		std::make_shared<CSheetCellDragger>(), 
+		std::make_shared<CSheetCellCursorer>()),
 	CCell(pSheet,pRow,pColumn,spProperty,pMenu)
 {}
 
@@ -221,7 +226,7 @@ Compares CSheetCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Com
 	for(auto colIter=colDictionary.begin(),colEnd=colDictionary.end();colIter!=colEnd;++colIter){
 		for(auto rowIter=rowDictionary.begin(),rowEnd=rowDictionary.end();rowIter!=rowEnd;++rowIter){
 			auto pCellMe=colIter->DataPtr->Cell(rowIter->DataPtr.get());
-			auto pCellOther=pCell->VisibleCell(rowIter->Index,colIter->Index);
+			auto pCellOther=pCell->Cell<VisTag>(rowIter->Index,colIter->Index);
 			if(pCellOther){
 				auto cellComp = pCellOther->EqualCell(pCellMe.get(), action);//run equal cell to check
 				comp = (comp==Compares::Same && cellComp==Compares::Same)?Compares::Same:Compares::Diff;

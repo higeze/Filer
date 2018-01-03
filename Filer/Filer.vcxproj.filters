@@ -506,6 +506,12 @@
     <ClInclude Include="ShellFolder.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\MouseState.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\SheetStateMachine.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -768,6 +774,9 @@
     </ClCompile>
     <ClCompile Include="ShellFolder.cpp">
       <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\MouseState.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

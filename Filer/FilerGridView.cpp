@@ -281,40 +281,40 @@ void CFilerGridView::InsertDefaultRowColumn()
 	m_rowNameHeader=std::make_shared<CParentHeaderRow>(this);
 	m_rowFilter=std::make_shared<CParentRow>(this);
 
-	InsertRow(-1,m_rowHeader);
-	InsertRow(-1,m_rowNameHeader);
-	InsertRow(-1,m_rowFilter);
+	InsertRow(CRow::kMinIndex, m_rowFilter);
+	InsertRow(CRow::kMinIndex,m_rowNameHeader);
+	InsertRow(CRow::kMinIndex, m_rowHeader);
 
 	//HeaderColumn
 	auto pHeaderColumn=std::make_shared<CParentRowHeaderColumn>(this);
-	InsertColumn(-1,pHeaderColumn);
+	InsertColumn(CColumn::kMinIndex,pHeaderColumn);
 	//IconColumn
 	{
 		auto pColumn = std::make_shared<CFileIconColumn>(this);
-		InsertColumn(COLUMN_INDEX_MAX,pColumn);
+		InsertColumn(CColumn::kMaxIndex,pColumn);
 	}
 	//NameColumn
 	{
 		auto pColumn = std::make_shared<CFileNameColumn>(this);
-		InsertColumn(COLUMN_INDEX_INVALID, pColumn);
+		InsertColumn(CColumn::kMaxIndex, pColumn);
 	}
 
 	//ExtColumn
 	{
 		auto pColumn = std::make_shared<CFileExtColumn>(this);
-		InsertColumn(COLUMN_INDEX_MAX,pColumn);
+		InsertColumn(CColumn::kMaxIndex,pColumn);
 	}
 
 	//SizeColumn
 	{
 		auto pColumn = std::make_shared<CFileSizeColumn>(this);
-		InsertColumn(COLUMN_INDEX_MAX,pColumn);
+		InsertColumn(CColumn::kMaxIndex,pColumn);
 	}
 
 	//GetLastWriteColumn
 	{
 		auto pColumn = std::make_shared<CFileLastWriteColumn>(this);
-		InsertColumn(COLUMN_INDEX_MAX,pColumn);
+		InsertColumn(CColumn::kMaxIndex,pColumn);
 	}
 }
 
@@ -542,10 +542,10 @@ void CFilerGridView::OnContextMenu(ContextMenuEventArgs& e)
 	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
 	auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
 
-	auto maxRow = boost::prior(rowDictionary.end())->DataPtr->GetVisibleIndex();
-	//auto minRow = rowDictionary.begin()->DataPtr->GetVisibleIndex();
-	auto maxCol = boost::prior(colDictionary.end())->DataPtr->GetVisibleIndex();
-	//auto minCol = colDictionary.begin()->DataPtr->GetVisibleIndex();
+	auto maxRow = boost::prior(rowDictionary.end())->DataPtr->GetIndex<VisTag>();
+	//auto minRow = rowDictionary.begin()->DataPtr->GetIndex<VisTag>();
+	auto maxCol = boost::prior(colDictionary.end())->DataPtr->GetIndex<VisTag>();
+	//auto minCol = colDictionary.begin()->DataPtr->GetIndex<VisTag>();
 	CPoint ptScreen(e.Point);
 	ClientToScreen(ptScreen);
 	std::vector<PITEMID_CHILD> vPidl;

@@ -65,7 +65,7 @@ CChildPropertyIndexColumn::cell_type CChildPropertyIndexColumn::FilterCellTempla
 
 CChildPropertyIndexColumn::cell_type CChildPropertyIndexColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),boost::lexical_cast<std::wstring>(pRow->GetAllIndex()));
+	return std::make_shared<CStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),boost::lexical_cast<std::wstring>(pRow->GetIndex<AllTag>()));
 }
 
 CParentPropertyValueColumn::CParentPropertyValueColumn(CGridView* pGrid)

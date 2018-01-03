@@ -5,6 +5,7 @@
 class IKeyObserver;
 #include "UnDoReDoManager.h"
 class CBackgroundProperty;
+class IMouseState;
 
 class CGridView:public CWnd,public CSheet
 {
@@ -25,6 +26,8 @@ protected:
 	row_type m_rowNameHeader; /**< Name Header row */
 	row_type m_rowFilter; /**< Filter row */
 	std::shared_ptr<CUnDoReDoManager> m_spUndoRedoManager; 
+
+	IMouseState* m_pMouseState;
 private:
 	boost::asio::io_service m_iosv;
 	boost::asio::io_service::work m_work;

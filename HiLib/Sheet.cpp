@@ -26,7 +26,7 @@ CSheet::CSheet(
 	std::shared_ptr<CCellProperty> spFilterProperty,
 	std::shared_ptr<CCellProperty> spCellProperty,
 	std::shared_ptr<CTracker> spTracker,
-	std::shared_ptr<CColumnDragger> spDragger,
+	std::shared_ptr<CDragger<ColTag, RowTag>> spDragger,
 	std::shared_ptr<CCursorer> spCursorer,
 	CMenu* pContextMenu)
 	:m_spHeaderProperty(spHeaderProperty),
@@ -45,10 +45,10 @@ CSheet::CSheet(
 		m_spTracker = std::make_shared<CTracker>();
 	}
 	if(m_spRowDragger.get()==nullptr){
-		m_spRowDragger = std::make_shared<CRowDragger>();
+		m_spRowDragger = std::make_shared<CDragger<RowTag, ColTag>>();
 	}
 	if (m_spColDragger.get() == nullptr) {
-		m_spColDragger = std::make_shared<CColumnDragger>();
+		m_spColDragger = std::make_shared<CDragger<ColTag, RowTag>>();
 	}
 	if(m_spCursorer.get()==nullptr){
 		m_spCursorer = std::make_shared<CCursorer>();
@@ -62,7 +62,7 @@ CSheet::CSheet(
 	m_pState = CSheetState::Normal();
 }
 
-std::shared_ptr<CCell> CSheet::Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn)
+std::shared_ptr<CCell>& CSheet::Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn)
 {
 	return spColumn->Cell(spRow.get());
 }
@@ -308,113 +308,6 @@ CSheet::string_type CSheet::GetSheetString()const
 	return str;
 }
 
-CSheet::row_type CSheet::VisibleRow(size_type rowDisp)
-{
-	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
-	auto iter=rowDictionary.find(rowDisp);
-	if(iter!=rowDictionary.end()){
-		return iter->DataPtr;
-	}else{
-		return row_type();
-	}
-}
-
-CSheet::column_type CSheet::VisibleColumn(size_type colDisp)
-{
-	auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
-	auto iter=colDictionary.find(colDisp);
-	if(iter!=colDictionary.end()){
-		return iter->DataPtr;
-	}else{
-		return column_type();
-	}
-}
-
-CSheet::row_type CSheet::AllRow(size_type rowDisp)
-{
-	auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
-	auto iter=rowDictionary.find(rowDisp);
-	if(iter!=rowDictionary.end()){
-		return iter->DataPtr;
-	}else{
-		return row_type();
-	}
-}
-
-CSheet::column_type CSheet::AllColumn(size_type colDisp)
-{
-	auto& colDictionary=m_columnAllDictionary.get<IndexTag>();
-	auto iter=colDictionary.find(colDisp);
-	if(iter!=colDictionary.end()){
-		return iter->DataPtr;
-	}else{
-		return column_type();
-	}
-}
-
-
-CSheet::cell_type CSheet::AllCell(size_type rowDisp, size_type colDisp)
-{
-	auto pRow=AllRow(rowDisp);
-	auto pCol=AllColumn(colDisp);
-	if(pRow && pCol){
-		return pCol->Cell(pRow.get());
-	}else{
-		return cell_type();
-	}
-}
-
-CSheet::cell_type CSheet::VisibleCell(size_type rowDisp, size_type colDisp)
-{
-	auto pRow=VisibleRow(rowDisp);
-	auto pCol=VisibleColumn(colDisp);
-	if(pRow && pCol){
-		return pCol->Cell(pRow.get());
-	}else{
-		return cell_type();
-	}
-}
-
-
-CSheet::size_type CSheet::RowPointer2VisibleIndex(const CRow* pRow)const
-{
-	return Pointer2Index(m_rowVisibleDictionary,pRow);
-}
-
-CSheet::size_type CSheet::RowPointer2AllIndex(const CRow* pRow)const
-{
-	return Pointer2Index(m_rowAllDictionary,pRow);
-}
-CRow* CSheet::RowAllIndex2Pointer(size_type rowAll)const
-{
-	return Index2Pointer(m_rowAllDictionary,rowAll);
-}
-
-CRow* CSheet::RowVisibleIndex2Pointer(size_type rowVisib)const
-{
-	return Index2Pointer(m_rowVisibleDictionary,rowVisib);
-}
-
-CSheet::size_type CSheet::ColumnPointer2AllIndex( const CColumn* pColumn ) const
-{
-	return Pointer2Index(m_columnAllDictionary,pColumn);
-}
-
-CSheet::size_type CSheet::ColumnPointer2VisibleIndex( const CColumn* pColumn ) const
-{
-	return Pointer2Index(m_columnVisibleDictionary,pColumn);
-}
-
-CColumn* CSheet::ColumnVisibleIndex2Pointer(size_type colVisib)const
-{
-	return Index2Pointer(m_columnVisibleDictionary,colVisib);
-}
-
-CColumn* CSheet::ColumnAllIndex2Pointer(size_type colVisib)const
-{
-	return Index2Pointer(m_columnAllDictionary,colVisib);
-}
-
 void CSheet::UpdateRowVisibleDictionary()
 {
 	//OnCursorClear(EventArgs(nullptr));
@@ -522,7 +415,7 @@ void CSheet::ResetFilter()
 
 void CSheet::MoveColumnImpl(size_type colTo, column_type spFromColumn)
 { 
-	int from = spFromColumn->GetAllIndex();
+	int from = spFromColumn->GetIndex<AllTag>();
 	int to = colTo;
 	if(from>=0 && to>=0  && to>from){
 		to--;
@@ -903,14 +796,24 @@ void CSheet::OnLButtonUp(MouseEventArgs& e)
 	m_pState = m_pState->OnLButtonUp(this, e);
 }
 
+void CSheet::OnLButtonSnglClk(MouseEventArgs& e)
+{
+	m_pState = m_pState->OnLButtonSnglClk(this, e);
+}
+
 void CSheet::OnLButtonDblClk(MouseEventArgs& e)
 {
 	m_pState = m_pState->OnLButtonDblClk(this, e);
 }
 
-void CSheet::OnLButtonDblClkTimeExceed(MouseEventArgs& e)
+void CSheet::OnLButtonBeginDrag(MouseEventArgs& e)
 {
-	m_pState = m_pState->OnLButtonDblClkTimeExceed(this, e);
+	m_pState = m_pState->OnLButtonBeginDrag(this, e);
+}
+
+void CSheet::OnLButtonEndDrag(MouseEventArgs& e)
+{
+	m_pState = m_pState->OnLButtonEndDrag(this, e);
 }
 
 void CSheet::OnMouseMove(MouseEventArgs& e)
@@ -948,10 +851,10 @@ void CSheet::SelectRange(CRowColumn roco1, CRowColumn roco2)
 	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
 	auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
 
-	auto	rowBeg=min(roco1.GetRowPtr()->GetVisibleIndex(),roco2.GetRowPtr()->GetVisibleIndex());
-	auto	rowLast=max(roco1.GetRowPtr()->GetVisibleIndex(),roco2.GetRowPtr()->GetVisibleIndex());
-	auto	colBeg=min(roco1.GetColumnPtr()->GetVisibleIndex(),roco2.GetColumnPtr()->GetVisibleIndex());
-	auto	colLast=max(roco1.GetColumnPtr()->GetVisibleIndex(),roco2.GetColumnPtr()->GetVisibleIndex());
+	auto	rowBeg=min(roco1.GetRowPtr()->GetIndex<VisTag>(),roco2.GetRowPtr()->GetIndex<VisTag>());
+	auto	rowLast=max(roco1.GetRowPtr()->GetIndex<VisTag>(),roco2.GetRowPtr()->GetIndex<VisTag>());
+	auto	colBeg=min(roco1.GetColumnPtr()->GetIndex<VisTag>(),roco2.GetColumnPtr()->GetIndex<VisTag>());
+	auto	colLast=max(roco1.GetColumnPtr()->GetIndex<VisTag>(),roco2.GetColumnPtr()->GetIndex<VisTag>());
 
 	for(auto colIter=colDictionary.find(colBeg),colEnd=colDictionary.find(colLast+1);colIter!=colEnd;++colIter){
 		for(auto rowIter=rowDictionary.find(rowBeg),rowEnd=rowDictionary.find(rowLast+1);rowIter!=rowEnd;++rowIter){
@@ -967,10 +870,10 @@ void CSheet::DeselectRange(CRowColumn roco1, CRowColumn roco2)
 	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
 	auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
 
-	auto	rowBeg=min(roco1.GetRowPtr()->GetVisibleIndex(),roco2.GetRowPtr()->GetVisibleIndex());
-	auto	rowLast=max(roco1.GetRowPtr()->GetVisibleIndex(),roco2.GetRowPtr()->GetVisibleIndex());
-	auto	colBeg=min(roco1.GetColumnPtr()->GetVisibleIndex(),roco2.GetColumnPtr()->GetVisibleIndex());
-	auto	colLast=max(roco1.GetColumnPtr()->GetVisibleIndex(),roco2.GetColumnPtr()->GetVisibleIndex());
+	auto	rowBeg=min(roco1.GetRowPtr()->GetIndex<VisTag>(),roco2.GetRowPtr()->GetIndex<VisTag>());
+	auto	rowLast=max(roco1.GetRowPtr()->GetIndex<VisTag>(),roco2.GetRowPtr()->GetIndex<VisTag>());
+	auto	colBeg=min(roco1.GetColumnPtr()->GetIndex<VisTag>(),roco2.GetColumnPtr()->GetIndex<VisTag>());
+	auto	colLast=max(roco1.GetColumnPtr()->GetIndex<VisTag>(),roco2.GetColumnPtr()->GetIndex<VisTag>());
 
 	for(auto colIter=colDictionary.find(colBeg),colEnd=colDictionary.find(colLast+1);colIter!=colEnd;++colIter){
 		for(auto rowIter=rowDictionary.find(rowBeg),rowEnd=rowDictionary.find(rowLast+1);rowIter!=rowEnd;++rowIter){
@@ -1160,10 +1063,10 @@ void CSheet::Clear()
 	m_bFocused = false;
 }
 
-CSheet::size_type CSheet::ColumnVisibleIndex2AllIndex(size_type visibleIndex)
-{
-	return VisibleIndex2AllIndex(visibleIndex, m_columnVisibleDictionary, m_columnAllDictionary);
-}
+//CSheet::size_type CSheet::ColumnVisibleIndex2AllIndex(size_type visibleIndex)
+//{
+//	return VisibleIndex2AllIndex(visibleIndex, m_columnVisibleDictionary, m_columnAllDictionary);
+//}
 
 std::pair<CSheet::size_type,CSheet::size_type> CSheet::GetMinMaxAllRowIndex()const
 {

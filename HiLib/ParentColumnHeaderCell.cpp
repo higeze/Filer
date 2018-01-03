@@ -29,7 +29,7 @@ bool CParentColumnHeaderCell::Filter(const string_type& strFilter)const//Not fil
 CParentColumnHeaderCell::string_type CParentColumnHeaderIndexCell::GetString()const
 {
 	if(m_pColumn->GetVisible()){
-		return boost::lexical_cast<string_type>(m_pColumn->GetVisibleIndex()+1);
+		return boost::lexical_cast<string_type>(m_pColumn->GetIndex<VisTag>()+1);
 	}else{
 		return string_type(L"0");
 	}

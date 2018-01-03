@@ -29,6 +29,7 @@
 #include "FindDlg.h"
 
 #include "TextCell.h"
+#include "MouseState.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -42,11 +43,12 @@ CGridView::CGridView(
 		std::shared_ptr<int> spDeltaScroll,
 		CMenu* pContextMenu)
 	:m_spBackgroundProperty(spBackgroundProperty), 
-	CSheet(spHeaderProperty,spFilterProperty,spCellProperty,std::make_shared<CTracker>(), std::make_shared<CColumnDragger>(), std::make_shared<CCursorer>(), pContextMenu?pContextMenu:&CGridView::ContextMenu),
+	CSheet(spHeaderProperty,spFilterProperty,spCellProperty,std::make_shared<CTracker>(), std::make_shared<CDragger<ColTag, RowTag>>(), std::make_shared<CCursorer>(), pContextMenu?pContextMenu:&CGridView::ContextMenu),
 	m_spDeltaScroll(spDeltaScroll)/*,m_ptScroll(0,0)*/,
-		CWnd(),
-		m_iosv(),m_work(m_iosv),m_timer(m_iosv),
-		m_spUndoRedoManager(std::make_shared<CUnDoReDoManager>())
+	CWnd(),
+	m_iosv(),m_work(m_iosv),m_timer(m_iosv),
+	m_spUndoRedoManager(std::make_shared<CUnDoReDoManager>()),
+	m_pMouseState(CDefaultMouseState::State())
 {
 	m_keyObservers.push_back(m_spCursorer);
 
@@ -129,7 +131,7 @@ void CGridView::ColumnMoved(CMovedEventArgs<ColTag>& e)
 {
 	//FilterAll();
 	CSheet::ColumnMoved(e);
-	SignalColumnMoved(e.m_ptr, e.m_from, e.m_to);
+	SignalColumnMoved((CColumn*)e.m_ptr, e.m_from, e.m_to);
 }
 
 void CGridView::OnCellPropertyChanged(CCell* pCell,LPCTSTR lpszProperty)
@@ -289,15 +291,6 @@ LRESULT CGridView::OnCmdEnChange(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bH
 LRESULT CGridView::OnFilter(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	FilterAll();
-	SubmitUpdate();
-	return 0;
-}
-
-LRESULT CGridView::OnLButtonDblClkTimeExceed(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
-{
-	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	MouseEventArgs e((UINT)wParam,ptClient);
-	CSheet::OnLButtonDblClkTimeExceed(e);
 	SubmitUpdate();
 	return 0;
 }
@@ -726,6 +719,8 @@ LRESULT CGridView::OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	SubmitUpdate();
 	return 0;
 }
+
+
 LRESULT CGridView::OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	SetFocus();
@@ -733,8 +728,7 @@ LRESULT CGridView::OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
 	MouseEventArgs e((UINT)wParam,ptClient);
-	CSheet::OnLButtonDown(e);
-	//PostUpdate(Updates::Scrolls);
+	m_pMouseState = m_pMouseState->OnLButtonDown(this, e);
 	SubmitUpdate();
 	return 0;
 }
@@ -744,7 +738,7 @@ LRESULT CGridView::OnLButtonUp(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
 	MouseEventArgs e((UINT)wParam,ptClient);
-	CSheet::OnLButtonUp(e);
+	m_pMouseState = m_pMouseState->OnLButtonUp(this, e);
 	SubmitUpdate();
 	return 0;
 }
@@ -753,10 +747,29 @@ LRESULT CGridView::OnLButtonDblClk(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& b
 {
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
 	MouseEventArgs e((UINT)wParam,ptClient);
-	CSheet::OnLButtonDblClk(e);
+	m_pMouseState = m_pMouseState->OnLButtonDblClk(this, e);
 	SubmitUpdate();
 	return 0;
 }
+
+LRESULT CGridView::OnLButtonDblClkTimeExceed(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
+	MouseEventArgs e((UINT)wParam, ptClient);
+	m_pMouseState = m_pMouseState->OnLButtonDblClkTimeExceed(this, e);
+	SubmitUpdate();
+	return 0;
+}
+
+LRESULT CGridView::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
+	MouseEventArgs e((UINT)wParam, ptClient);
+	m_pMouseState = m_pMouseState->OnMouseLeave(this, e);
+	SubmitUpdate();
+	return 0;
+}
+
 
 LRESULT CGridView::OnMouseMove(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
@@ -784,15 +797,6 @@ LRESULT CGridView::OnSetCursor(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 		bHandled = FALSE;
 	}
 	//PostUpdate(Updates::Invalidate);
-	SubmitUpdate();
-	return 0;
-}
-
-LRESULT CGridView::OnMouseLeave(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
-{
-	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	MouseEventArgs e((UINT)wParam,ptClient);
-	CSheet::OnMouseLeave(e);
 	SubmitUpdate();
 	return 0;
 }
@@ -834,7 +838,7 @@ void CGridView::OnKeyDown(KeyEventArgs& e)
 
 	for(auto& observer : m_keyObservers){
 		m_pState = observer->OnKeyDown(this, e);
-		if(m_pState != CSheetState::Normal())
+		if(m_pState != ISheetState::Normal())
 		{
 			return;
 		}
@@ -1594,7 +1598,7 @@ void CGridView::OnPaint(PaintEventArgs& e)
 		auto& rowVDictionary=m_rowVisibleDictionary.get<IndexTag>();
 		auto dragToAllIndex = m_spColDragger->GetDragToAllIndex();
 		auto dragFromAllIndex = m_spColDragger->GetDragFromAllIndex();
-		if(dragToAllIndex!=COLUMN_INDEX_INVALID && dragToAllIndex!=dragFromAllIndex){
+		if(dragToAllIndex!=CColumn::kInvalidIndex && dragToAllIndex!=dragFromAllIndex){
 			coordinates_type x=0;
 			if(dragToAllIndex<=colDictionary.begin()->Index){
 				auto pColumn = colDictionary.begin()->DataPtr;
@@ -1603,7 +1607,7 @@ void CGridView::OnPaint(PaintEventArgs& e)
 				auto pColumn = boost::prior(colDictionary.end())->DataPtr;
 				x = pColumn->GetRight();
 			}else{
-				auto pColumn = ColumnAllIndex2Pointer(dragToAllIndex);
+				auto pColumn = Index2Pointer<ColTag, AllTag>(dragToAllIndex);
 				x = pColumn->GetLeft();
 			}
 			coordinates_type y0 = rowVDictionary.begin()->DataPtr->GetTop();
@@ -1952,8 +1956,8 @@ void CGridView::FindNext(const std::wstring& findWord, bool matchCase, bool matc
 		rIter = rowDict.begin();
 		cIter = colDict.begin();
 	}else{
-		rIter = rowDict.find(focused.GetRowPtr()->GetVisibleIndex());
-		cIter = colDict.find(focused.GetColumnPtr()->GetVisibleIndex());
+		rIter = rowDict.find(focused.GetRowPtr()->GetIndex<VisTag>());
+		cIter = colDict.find(focused.GetColumnPtr()->GetIndex<VisTag>());
 		cIter++;
 		if(cIter==colDict.end()){
 			cIter = colDict.begin();
@@ -2024,8 +2028,8 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 		cIter = colDict.rbegin();
 	}else{
 		//In case of reverse_iterator, one iterator plused. Therefore it is necessary to minus.
-		rIter = RowDictionary::reverse_iterator(rowDict.find(focused.GetRowPtr()->GetVisibleIndex()));
-		cIter = ColumnDictionary::reverse_iterator(colDict.find(focused.GetColumnPtr()->GetVisibleIndex()));
+		rIter = RowDictionary::reverse_iterator(rowDict.find(focused.GetRowPtr()->GetIndex<VisTag>()));
+		cIter = ColumnDictionary::reverse_iterator(colDict.find(focused.GetColumnPtr()->GetIndex<VisTag>()));
 		rIter--;
 		cIter--;
 		cIter++;

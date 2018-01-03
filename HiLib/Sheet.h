@@ -5,8 +5,8 @@
 #include "Operation.h"
 #include "SheetEnums.h"
 #include "SheetDictionary.h"
-#include "Row.h"
 #include "SheetEventArgs.h"
+#include "Row.h"
 
 class CCell;
 //class CRow;
@@ -15,17 +15,11 @@ class CCellProperty;
 class CRect;
 class CPoint;
 class CDC;
-//struct CellEventArgs;
-//struct CellContextMenuEventArgs;
-//class CRowEventArgs;
-//class CRowsEventArgs;
-//class CColumnEventArgs;
-//class CColumnMovedEventArgs;
 class CTracker;
 template <typename TRCMe, typename TRCYou> class CDragger;
 class CCursorer;
 class IMouseObserver;
-class CSheetState;
+class ISheetState;
 class CNormalState;
 class CTrackingState;
 class CColumnDraggingState;
@@ -34,13 +28,13 @@ class CSerializeData;
 struct RowTag
 {
 	typedef std::shared_ptr<CRow> SharedPtr;
-	typedef CRow* Ptr;
+	typedef const CRow* Ptr;
 	typedef RowDictionary Dictionary;
 };
 struct ColTag
 {
 	typedef std::shared_ptr<CColumn> SharedPtr;
-	typedef CColumn* Ptr;
+	typedef const CColumn* Ptr;
 	typedef ColumnDictionary Dictionary;
 };
 struct AllTag
@@ -60,70 +54,39 @@ class CSheet:public CUIElement
 {
 //Friend classes
 friend class CTracker;
-friend class CColumnDragger;
+friend class CDragger<ColTag, RowTag>;
 friend class CRowDragger;
 friend class CFileDragger;//TODO
 friend class CCursorer;
-friend class CSheetState;
+friend class ISheetState;
 friend class CNormalState;
 friend class CTrackingState;
 friend class CRowDraggingState;
 friend class CColumnDraggingState;
 friend class CFileDraggingState;//TODO
-
 friend class CSerializeData;
-	/*
-	 *  Typedef
-	 */
 protected:
+	//typedef
 	typedef int size_type;
 	typedef int coordinates_type;
 	typedef std::shared_ptr<CCell> cell_type;
 	typedef std::shared_ptr<CColumn> column_type;
 	typedef std::shared_ptr<CRow> row_type;
 	typedef std::wstring string_type;
-
-	/*
-	 *  Const
-	 */
 public:
-	static const coordinates_type MIN_COLUMN_WIDTH=2;
-	static const coordinates_type RESIZE_AREA_HARF_WIDTH=4;
-	static const size_type COLUMN_INDEX_INVALID = 9999;
-	static const size_type COLUMN_INDEX_MAX = 1000;
-	static const size_type COLUMN_INDEX_MIN = -1000;
-	static const size_type ROW_INDEX_INVALID = 30000;
-	static const size_type ROW_INDEX_MAX = 20000;
-	static const size_type ROW_INDEX_MIN = -20000;
-
-	/*
-	 *  Static data member
-	 */
+	static CMenu ContextMenu; // ContextMenu
 public:
-	static CMenu ContextMenu; /**< ContextMenu */
-
-	/*
-	 *  Static Function
-	 */
-public:
-	/**
-	 *  Simple cell Accessor
-	 */
-	static std::shared_ptr<CCell> Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
-	/**
-	 *  Simple cell Accessor
-	 */
+	//Simple cell Accessor
+	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
 	static std::shared_ptr<CCell>& Cell( CRow* pRow,  CColumn* pColumn);
-	/*
-	 *  Data member
-	 */
 protected:
-	CSheetState* m_pState; /**< State Pattern */
+	ISheetState* m_pState; /**< State Pattern */
 
+	std::shared_ptr<CSheetStateMachine> m_spStateMachine;
 	std::vector<std::shared_ptr<IMouseObserver>> m_mouseObservers; /**< Mouse Observers */
 	std::shared_ptr<CTracker> m_spTracker; /**< Tracker */
-	std::shared_ptr<CColumnDragger> m_spColDragger; /**< Dragger */
-	std::shared_ptr<CRowDragger> m_spRowDragger; /**< Dragger */
+	std::shared_ptr<CDragger<ColTag, RowTag>> m_spColDragger; /**< Dragger */
+	std::shared_ptr<CDragger<RowTag, ColTag>> m_spRowDragger; /**< Dragger */
 	std::shared_ptr<CCursorer> m_spCursorer; /**< Cursor */
 
 	std::set<Updates> m_setUpdate; /**< Set posted update */
@@ -149,14 +112,8 @@ protected:
 
 	CRowColumn m_rocoContextMenu; /**< Store RowColumn of Caller */
 	CRowColumn m_rocoMouse; /** RowColumn where mouse is */
-
-
-
-	/*
-	 *  Signal
-	 */
 public:
-
+	//Signals
 	boost::signals2::signal<void(CellEventArgs&)> CellLButtonDown;
 	boost::signals2::signal<void(CellEventArgs&)> CellLButtonClk;
 	boost::signals2::signal<void(CellEventArgs&)> CellLButtonDblClk;
@@ -167,23 +124,18 @@ public:
 	boost::signals2::signal<void(LPCTSTR)> ColumnPropertyChanged;
 	boost::signals2::signal<void(LPCTSTR)> RowPropertyChanged;
 
-	/**
-	 *  Constructor
-	 */
+	//Constructor
 	CSheet(std::shared_ptr<CCellProperty> spHeaderProperty,
 		std::shared_ptr<CCellProperty> spFilterProperty,
 		std::shared_ptr<CCellProperty> spCellProperty,
 		std::shared_ptr<CTracker> spTracker = std::shared_ptr<CTracker>(),
-		std::shared_ptr<CColumnDragger> spDragger = std::shared_ptr<CColumnDragger>(),
+		std::shared_ptr<CDragger<ColTag, RowTag>> spDragger = std::shared_ptr<CDragger<ColTag, RowTag>>(),
 		std::shared_ptr<CCursorer> spCursorer = std::shared_ptr<CCursorer>(),
 		CMenu* pContextMenu= &CSheet::ContextMenu);
-	/**
-	 *  Destructor
-	 */
+	//Destructor
 	virtual ~CSheet(){}
-	/**
-	 * Getter Setter
-	 */
+	//Getter Setter
+	std::shared_ptr<CSheetStateMachine> GetSheetStateMachine() { return m_spStateMachine; }
 	std::shared_ptr<CCursorer> GetCursorerPtr(){return m_spCursorer;} /**< Cursor */
 	CRowColumn GetMouseRowColumn(){return m_rocoMouse;} /** Getter for Mouse CRowColumn */
 	void SetMouseRowColumn(CRowColumn roco){m_rocoMouse = roco;} /** Setter for Mouse CRowColumn */
@@ -207,12 +159,7 @@ public:
 	virtual void SetSelected(const bool& bSelected){m_bSelected=bSelected;};
 	virtual bool GetFocused()const{return m_bFocused;};
 	//virtual void SetFocused(const bool& bFocused){m_bFocused=bFocused;};
-	/**
-	 * Function
-	 */
-
-
-
+	//Function
 	void SetAllRowMeasureValid(bool valid);
 	void SetAllColumnMeasureValid(bool valid);
 	void SetColumnAllCellMeasureValid(CColumn* pColumn, bool valid);
@@ -259,24 +206,6 @@ public:
 	virtual bool Visible()const;
 
 	//Index-Pointer-Cell Accessor
-	virtual string_type GetSheetString()const;
-	virtual cell_type AllCell(size_type allRow, size_type allCol);
-	virtual cell_type VisibleCell(size_type rowDisp, size_type colDisp);
-	virtual column_type VisibleColumn(size_type colData);
-	virtual row_type VisibleRow(size_type rowDisp);
-	virtual column_type AllColumn(size_type colData);
-	virtual row_type AllRow(size_type rowDisp);
-
-	virtual size_type RowPointer2VisibleIndex(const CRow* pRow)const;
-	virtual size_type RowPointer2AllIndex(const CRow* pRow)const;
-	virtual CRow* RowAllIndex2Pointer(size_type rowAll)const;
-	virtual CRow* RowVisibleIndex2Pointer(size_type rowDisp)const;
-
-	virtual size_type ColumnPointer2VisibleIndex(const CColumn* pColumn)const;
-	virtual size_type ColumnPointer2AllIndex(const CColumn* pColumn)const;
-	virtual CColumn* ColumnVisibleIndex2Pointer(size_type colDisp)const;
-	virtual size_type ColumnVisibleIndex2AllIndex(size_type visibleIndex);
-	virtual CColumn* ColumnAllIndex2Pointer(size_type colDisp)const;
 	virtual void UpdateRowVisibleDictionary();
 	virtual void UpdateColumnVisibleDictionary();
 	virtual void UpdateRowPaintDictionary();
@@ -327,6 +256,7 @@ public:
 	virtual coordinates_type GetRowHeight(CRow* pRow);
 	
 
+	virtual string_type GetSheetString()const;
 
 	virtual CPoint GetOriginPoint();
 	virtual CSize MeasureSize()const;
@@ -338,10 +268,15 @@ public:
 	virtual void OnPaint(PaintEventArgs& e);
 	virtual void OnPaintAll(PaintEventArgs& e);
 	virtual void OnRButtonDown(MouseEventArgs& e);
+
 	virtual void OnLButtonDown(MouseEventArgs& e);
 	virtual void OnLButtonUp(MouseEventArgs& e);
-	//virtual void OnLButtonClk(MouseEventArgs& e);
+	virtual void OnLButtonSnglClk(MouseEventArgs& e);
 	virtual void OnLButtonDblClk(MouseEventArgs& e);
+	virtual void OnLButtonBeginDrag(MouseEventArgs& e);
+	virtual void OnLButtonEndDrag(MouseEventArgs& e);
+
+
 	virtual void OnContextMenu(ContextMenuEventArgs& e);
 	virtual void OnMouseMove(MouseEventArgs& e);
 	virtual void OnMouseLeave(MouseEventArgs& e);
@@ -349,23 +284,51 @@ public:
 	virtual void OnSetFocus(EventArgs& e);
 	virtual void OnKillFocus(EventArgs& e);
 	virtual void OnKeyDown(KeyEventArgs& e){};
-
-	virtual void OnLButtonDblClkTimeExceed(MouseEventArgs& e);
 	
 	//Tag dispatch
 	template<typename TRC, typename TAV> TRC::template Dictionary& GetDictionary() { return nullptr; }
-	template<typename TRC> TRC::template SharedPtr Coordinate2Pointer(coordinates_type coordinate) { return nullptr; }
-	template<typename TRC, typename TAV> int Coordinate2Index(coordinates_type coordinate) { return 9999; }
-	template<typename TRC, typename TAV> std::pair<int, int> Coordinates2Indexes(CPoint pt) 
-	{ 
-		return std::make_pair(Coordinate2Index<TRC, TAV>(pt.y), Coordinate2Index<TRC, TAV>(pt.y));
+	template<typename TAV> std::shared_ptr<CCell> Cell(size_type row, size_type col)
+	{
+		auto pRow = Index2Pointer<RowTag, TAV>(row);
+		auto pCol = Index2Pointer<ColTag, TAV>(col);
+		if (pRow && pCol) {
+			return CSheet::Cell(pRow, pCol);
+		}
+		else {
+			return cell_type();
+		}
 	}
 
-	template<typename TRC, typename TAV> int Pointer2Index(TRC::template SharedPtr pointer)
+	template<typename TRC> TRC::template SharedPtr Coordinate2Pointer(coordinates_type coordinate) { return nullptr; }
+	template<typename TRC> int Point2Coordinate(CPoint pt) { return CBand::kInvalidIndex; }
+
+	template<typename TRC, typename TAV> int Coordinate2Index(coordinates_type coordinate) { return CBand::kInvalidIndex; }
+	template<typename TAV> std::pair<int, int> Coordinates2Indexes(CPoint pt) 
 	{ 
+		return std::make_pair(Coordinate2Index<RowTag, TAV>(pt.y), Coordinate2Index<ColTag, TAV>(pt.y));
+	}
+	template<typename TRC, typename TAV> TRC::template SharetPtr LastPointer()
+	{
+		return boost::prior(GetDictionary<TRC, TAV>().end())->DataPtr;
+	}
+	//template<typename TRC, typename TAV> int Pointer2Index(TRC::template SharedPtr pointer)
+	//{ 
+	//	auto& dic = GetDictionary<TRC, TAV>().get<PointerTag>();
+
+	//	auto iter = dic.find(pointer.get());
+	//	if (iter != dic.end()) {
+	//		return iter->Index;
+	//	}
+	//	else {
+	//		throw std::exception("Sheet::Pointer2Index");
+	//	}
+	//}
+
+	template<typename TRC, typename TAV> int Pointer2Index(TRC::template Ptr pointer)
+	{
 		auto& dic = GetDictionary<TRC, TAV>().get<PointerTag>();
 
-		auto iter = dic.find(pointer.get());
+		auto iter = dic.find(pointer);
 		if (iter != dic.end()) {
 			return iter->Index;
 		}
@@ -405,13 +368,13 @@ public:
 	template<typename TRC> int Vis2AllIndex(int index)
 	{
 		auto p = Index2Pointer<TRC, VisTag>(index);
-		return Pointer2Index<TRC, AllTag>(p);
+		return p->GetIndex<AllTag>();
 	}
 
 	template<typename TRC> int All2VisIndex(int index)
 	{
 		auto p = Index2Pointer<TRC, AllTag>(index);
-		return Pointer2Index<TRC, VisTag>(p);
+		return Pointer2Index<TRC, VisTag>();
 	}
 
 	template<typename TRC> void Moved(CMovedEventArgs<TRC>& e) {  }
@@ -419,7 +382,7 @@ public:
 	template<typename TRC>
 	void MoveImpl(size_type indexTo, TRC::template SharedPtr spFrom)
 	{
-		int from = spFrom->GetAllIndex();
+		int from = spFrom->GetIndex<AllTag>();
 		int to = indexTo;
 		if (from >= 0 && to >= 0 && to>from) {
 			to--;
@@ -431,8 +394,8 @@ public:
 		EraseImpl<TRC>(spFrom);
 		InsertLeftImpl<TRC>(to, spFrom);
 
-		CRow* pRow = nullptr;
-		Moved<TRC>(CMovedEventArgs<TRC>(pRow, from, to));
+		TRC::Ptr p = nullptr;
+		Moved<TRC>(CMovedEventArgs<TRC>(p, from, to));
 
 		//ColumnMoved(CColumnMovedEventArgs(nullptr, from, to));//TODO change to tag dispatch
 		PostUpdate(Updates::RowVisible);
@@ -662,11 +625,11 @@ protected:
 		});
 		size_type row=0;
 		if(rowIter==dictionary.end()){
-			row = boost::prior(rowIter)->DataPtr->GetVisibleIndex() + 1;
+			row = boost::prior(rowIter)->DataPtr->GetIndex<VisTag>() + 1;
 		}else if(rowIter==dictionary.begin() && rowIter->DataPtr->GetTop()>y){
-			row = rowIter->DataPtr->GetVisibleIndex() - 1;
+			row = rowIter->DataPtr->GetIndex<VisTag>() - 1;
 		}else{
-			row = rowIter->DataPtr->GetVisibleIndex();
+			row = rowIter->DataPtr->GetIndex<VisTag>();
 		}
 		return row;
 	}
@@ -688,11 +651,11 @@ protected:
 
 		size_type col=0;
 		if(colIter==dictionary.end()){
-			col = boost::prior(colIter)->DataPtr->GetVisibleIndex() + 1;
+			col = boost::prior(colIter)->DataPtr->GetIndex<VisTag>() + 1;
 		}else if(colIter==dictionary.begin() && colIter->DataPtr->GetLeft()>x){
-			col = colIter->DataPtr->GetVisibleIndex() - 1;
+			col = colIter->DataPtr->GetIndex<VisTag>() - 1;
 		}else{
-			col = colIter->DataPtr->GetVisibleIndex();
+			col = colIter->DataPtr->GetIndex<VisTag>();
 		}
 		return col;
 	}
@@ -984,8 +947,8 @@ protected:
 	{
 		auto& idxDictionary = dictionary.get<IndexTag>();
 
-		auto min = idxDictionary.begin()->DataPtr->GetAllIndex();
-		auto max = boost::prior(idxDictionary.end())->DataPtr->GetAllIndex();
+		auto min = idxDictionary.begin()->DataPtr->GetIndex<AllTag>();
+		auto max = boost::prior(idxDictionary.end())->DataPtr->GetIndex<AllTag>();
 
 		return std::make_pair(min, max);
 	}
@@ -995,8 +958,8 @@ protected:
 	{
 		auto& idxDictionary = dictionary.get<IndexTag>();
 
-		auto min = idxDictionary.begin()->DataPtr->GetVisibleIndex();
-		auto max = boost::prior(idxDictionary.end())->DataPtr->GetVisibleIndex();
+		auto min = idxDictionary.begin()->DataPtr->GetIndex<VisTag>();
+		auto max = boost::prior(idxDictionary.end())->DataPtr->GetIndex<VisTag>();
 
 		return std::make_pair(min, max);
 	}
@@ -1047,10 +1010,14 @@ template<> inline RowTag::SharedPtr CSheet::Coordinate2Pointer<RowTag>(int coord
 	return rowIter->DataPtr;
 }
 
+template<> inline int CSheet::Point2Coordinate<RowTag>(CPoint pt) { return pt.y; }
+template<> inline int CSheet::Point2Coordinate<ColTag>(CPoint pt) { return pt.x; }
+
+
 
 template<> inline int CSheet::Coordinate2Index<RowTag, AllTag>(int coordinate)
 {
-//	return Coordinate2Pointer<RowTag>(coordinate)->GetAllIndex();
+//	return Coordinate2Pointer<RowTag>(coordinate)->GetIndex<AllTag>();
 	auto ptOrigin = GetOriginPoint();
 
 	auto& dictionary = GetDictionary<RowTag, AllTag>().get<IndexTag>();
@@ -1180,7 +1147,7 @@ template<> inline void CSheet::Moved<ColTag>(CMovedEventArgs<ColTag>& e)
 		std::cout<<(boost::format("Display:%1%, Pointer:%2%\r\n")%data.Index%data.DataPtr.get()).str();\
 	});
 #define DEBUG_OUTPUT_ROWCOLUMN(roco) \
-	::OutputDebugStringA((boost::format("Row:%1%, Column:%2%\r\n")%roco.GetRowPtr()->GetVisibleIndex()%roco.GetColumnPtr()->GetVisibleIndex()).str().c_str());
+	::OutputDebugStringA((boost::format("Row:%1%, Column:%2%\r\n")%roco.GetRowPtr()->GetIndex<VisTag>()%roco.GetColumnPtr()->GetIndex<VisTag>()).str().c_str());
 
 #else
 #define DEBUG_OUTPUT_COLUMN_ALL_DICTIONARY

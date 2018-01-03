@@ -37,22 +37,22 @@ void CRow::SetSelected(const bool& bSelected)
 	}
 }
 
-CRow::size_type CRow::GetVisibleIndex()const
-{
-	return m_pSheet->RowPointer2VisibleIndex(this);
-}
-CRow::size_type CRow::GetAllIndex()const
-{
-	return m_pSheet->RowPointer2AllIndex(this);
-}
+//CRow::size_type CRow::GetIndex<VisTag>()const
+//{
+//	return m_pSheet->Pointer2Index<RowTag, VisTag>(this);
+//}
+//CRow::size_type CRow::GetIndex<AllTag>()const
+//{
+//	return m_pSheet->Pointer2Index<RowTag, AllTag>(this);
+//}
 
 CParentRow::CParentRow(CGridView* pGrid):CRow(pGrid){} 
 
 CParentRow::coordinates_type CParentRow::Offset()const
 {
 	coordinates_type offset(static_cast<CGridView*>(m_pSheet)->GetPaintRect().top);
-	//if(m_pSheet->Visible() && GetVisible() && GetAllIndex()>=0){
-	if(m_pSheet->Visible() && GetVisible() && GetVisibleIndex()>=0){
+	//if(m_pSheet->Visible() && GetVisible() && GetIndex<AllTag>()>=0){
+	if(m_pSheet->Visible() && GetVisible() && GetIndex<VisTag>()>=0){
 		offset-=static_cast<CGridView*>(m_pSheet)->GetVerticalScrollPos();
 	}
 	return offset;

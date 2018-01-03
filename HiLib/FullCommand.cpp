@@ -24,7 +24,7 @@ void CDoCommandBase::UnDo()//UnDo have to call last
 	cursorer->SetSelectedRows(m_pGrid, m_prevSelectedRows);
 	cursorer->SetSelectedColumns(m_pGrid, m_prevSelectedColumns);
 	if(!m_prevFocusedRCs.empty() && m_prevFocusedRCs.size()>0){
-		m_pGrid->EnsureVisibleCell(m_pGrid->AllCell(m_prevFocusedRCs[0].Row, m_prevFocusedRCs[0].Column));
+		m_pGrid->EnsureVisibleCell(m_pGrid->Cell<AllTag>(m_prevFocusedRCs[0].Row, m_prevFocusedRCs[0].Column));
 	}
 }
 void CDoCommandBase::ReDo()//UnDo have to call last
@@ -36,7 +36,7 @@ void CDoCommandBase::ReDo()//UnDo have to call last
 	cursorer->SetSelectedRows(m_pGrid, m_prevSelectedRows);
 	cursorer->SetSelectedColumns(m_pGrid, m_prevSelectedColumns);
 	if(!m_prevFocusedRCs.empty() && m_prevFocusedRCs.size()>0){
-		m_pGrid->EnsureVisibleCell(m_pGrid->AllCell(m_prevFocusedRCs[0].Row, m_prevFocusedRCs[0].Column));
+		m_pGrid->EnsureVisibleCell(m_pGrid->Cell<AllTag>(m_prevFocusedRCs[0].Row, m_prevFocusedRCs[0].Column));
 	}
 }
 
@@ -112,7 +112,7 @@ void CColumnsCommand::ReDo()
 MoveColumnCommand::MoveColumnCommand(CGridView* pGrid,int pos, std::shared_ptr<CColumn> spColumn )
 	:CDoCommandBase(pGrid), 
 	m_nextPos(pos), 
-	m_prevPos(spColumn->GetAllIndex()), 
+	m_prevPos(spColumn->GetIndex<AllTag>()), 
 	m_spColumn(spColumn){}
 
 void MoveColumnCommand::Do()
@@ -155,7 +155,7 @@ void InsertColumnCommand::ReDo()
 
 EraseColumnCommand::EraseColumnCommand(CGridView* pGrid, std::shared_ptr<CColumn> spColumn )
 	:CDoCommandBase(pGrid), 
-	m_pos(spColumn->GetAllIndex()), 
+	m_pos(spColumn->GetIndex<AllTag>()), 
 	m_spColumn(spColumn){}
 
 void EraseColumnCommand::Do()

@@ -27,7 +27,7 @@ bool CParentRowHeaderCell::Filter(const string_type& strFilter)const//Not filter
 
 CParentRowHeaderCell::string_type CParentRowHeaderIndexCell::GetString()const
 {
-	return boost::lexical_cast<string_type>(m_pRow->GetVisibleIndex()+1);
+	return boost::lexical_cast<string_type>(m_pRow->GetIndex<VisTag>()+1);
 }
 
 

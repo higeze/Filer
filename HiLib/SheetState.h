@@ -2,177 +2,172 @@
 #include "RowColumn.h"
 #include "MyPoint.h"
 class CSheet;
+class ICursor;
+class ITracker;
+class IDragger;
+
 struct MouseEventArgs;
 struct SetCursorEventArgs;
 
-class IMouseState
-{
-public:
-	IMouseState(){}
-	~IMouseState(){}
-
-	virtual void Entry(CSheet* pSheet){};
-	virtual void Exit(CSheet* pSheet){};
-	virtual IMouseState* ChangeState(CSheet* pSheet, IMouseState* pMouseState);
-	virtual IMouseState* KeepState();
-	virtual IMouseState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)=0;
-	virtual IMouseState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)=0;
-	virtual IMouseState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)=0;
-	virtual IMouseState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)=0;
-	virtual IMouseState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
-};
-
-class CDefaultMouseState:public IMouseState
-{
-public:
-	CDefaultMouseState(){}
-	virtual ~CDefaultMouseState(){}
-	static IMouseState* State();
-	virtual IMouseState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)override;
-};
-
-class CDownedMouseState:public IMouseState
+class CSheetStateMachine
 {
 private:
-	static bool m_isDblClkTimeExceed;
+	std::shared_ptr<ICursor> m_cursor;
+	std::shared_ptr<ITracker> m_rowTracker;
+	std::shared_ptr<ITracker> m_colTracker;
+	std::shared_ptr<IDragger> m_rowDragger;
+	std::shared_ptr<IDragger> m_colDragger;
+	std::shared_ptr<IDragger> m_itemDragger;
+
 public:
-	CDownedMouseState(){}
-	virtual ~CDownedMouseState(){}
-	static IMouseState* State();
-	virtual void Entry(CSheet* pSheet);
-	virtual IMouseState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)override;
+	CSheetStateMachine(
+		std::shared_ptr<ICursor> cursor,
+		std::shared_ptr<ITracker> rowTracker,
+		std::shared_ptr<ITracker> colTracker,
+		std::shared_ptr<IDragger> rowDragger,
+		std::shared_ptr<IDragger> colDragger,
+		std::shared_ptr<IDragger> itemDragger) 
+	:m_cursor(cursor),
+	m_rowTracker(rowTracker),
+	m_colTracker(colTracker),
+	m_rowDragger(rowDragger),
+	m_colDragger(colDragger),
+	m_itemDragger(itemDragger){}
+
+	std::shared_ptr<ICursor> Cursor() { return m_cursor; }
+	std::shared_ptr<ITracker> RowTracker() { return m_rowTracker; }
+	std::shared_ptr<ITracker> ColTracker() { return m_colTracker; }
+	std::shared_ptr<IDragger> RowDragger() { return m_rowDragger; }
+	std::shared_ptr<IDragger> ColDragger() { return m_colDragger; }
+	std::shared_ptr<IDragger> ItemDragger() { return m_itemDragger; }
 };
 
-class CUppedMouseState:public IMouseState
-{
-private:
-	static CPoint m_ptUpped;
-public:
-	CUppedMouseState(){}
-	virtual ~CUppedMouseState(){}
-	static IMouseState* State(CPoint pt = CPoint());
-	virtual IMouseState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)override;
-};
-
-class CDblClkedMouseState:public IMouseState
-{
-public:
-	CDblClkedMouseState(){}
-	virtual ~CDblClkedMouseState(){}
-	static IMouseState* State();
-	virtual IMouseState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)override;
-	virtual IMouseState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)override;
-};
-
-class CSheetState
+class ISheetState
 {
 public:
-	CSheetState(){}
-	virtual ~CSheetState(){}
+	ISheetState(){}
+	virtual ~ISheetState(){}
 
-	static CSheetState* Normal();
-	static CSheetState* Tracking();
-	static CSheetState* ColumnDragging();
-	static CSheetState* RowDragging();
+	virtual void Entry(CSheet* pSheet, MouseEventArgs& e) {}
+	virtual void Exit(CSheet* pSheet, MouseEventArgs& e) {}
+	virtual ISheetState* ChangeState(CSheet* pSheet, IMouseState* pMouseState, MouseEventArgs& e);
+	ISheetState* ISheetState::ChangeState(CSheet* pSheet, IMouseState* pMouseState, MouseEventArgs& e)
+	{
+		this->Exit(pSheet, e);
+		pMouseState->Entry(pSheet, e);
+		return pMouseState;
+	}
 
-	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)=0;
-	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)=0;
-	virtual CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)=0;
-	virtual CSheetState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)=0;
-	virtual CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)=0;
+	ISheetState* IMouseState::KeepState()
+	{
+		return this;
+	}
 
-	virtual CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e)=0;
-	virtual CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e)=0;
+	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)=0;
+	virtual ISheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)=0;
+	virtual ISheetState* OnLButtonSnglClk(CSheet* pSheet, MouseEventArgs& e) = 0;
+	virtual ISheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)=0;
+	virtual ISheetState* OnLButtonBeginDrag(CSheet* pSheet, MouseEventArgs& e) = 0;
+	virtual ISheetState* OnLButtonEndDrag(CSheet* pSheet, MouseEventArgs& e) = 0;
 
-	virtual CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e)=0;
+	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)=0;
+
+	virtual ISheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e)=0;
+	virtual ISheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e)=0;
+
+	virtual ISheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e)=0;
 };
 
-class CNormalState:public CSheetState
+class CNormalState:public ISheetState
 {
 private:
 	CRowColumn m_rocoMouse;
-	IMouseState *m_pMouseState;
 public:
-	CNormalState():m_rocoMouse(),m_pMouseState(CDefaultMouseState::State()){}
+	CNormalState():m_rocoMouse(){}
 	virtual ~CNormalState(){}
 
-	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonSnglClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonBeginDrag(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonEndDrag(CSheet* pSheet, MouseEventArgs& e);
 
-	virtual CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+
+	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+
+	virtual ISheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
 };
 
-class CTrackingState:public CSheetState
+class CTrackingState:public ISheetState
 {
 public:
 	CTrackingState(){}
 	virtual ~CTrackingState(){}
 
-	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonSnglClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonBeginDrag(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonEndDrag(CSheet* pSheet, MouseEventArgs& e);
 
-	virtual CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+
+	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+
+	virtual ISheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
 
 };
 
-class CColumnDraggingState:public CSheetState
+class CColumnDraggingState:public ISheetState
 {
 public:
 	CColumnDraggingState(){}
 	virtual ~CColumnDraggingState(){}
 
-	static CSheetState* State();
+	static ISheetState* State();
 
-	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonSnglClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonBeginDrag(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonEndDrag(CSheet* pSheet, MouseEventArgs& e);
 
-	virtual CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+
+	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+
+	virtual ISheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
 
 };
 
-class CRowDraggingState :public CSheetState
+class CRowDraggingState :public ISheetState
 {
 public:
 	CRowDraggingState() {}
 	virtual ~CRowDraggingState() {}
 
-	static CSheetState* State();
+	static ISheetState* State();
 
-	virtual CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonSnglClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonBeginDrag(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnLButtonEndDrag(CSheet* pSheet, MouseEventArgs& e);
 
-	virtual CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
-	virtual CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+
+	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+
+	virtual ISheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
+	virtual ISheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
 
 };
 

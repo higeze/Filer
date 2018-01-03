@@ -123,8 +123,8 @@ public:
 	virtual void OnContextMenu(ContextMenuEventArgs& e);
 	virtual void OnSetFocus(EventArgs& e);
 
-	virtual void OnLButtonSingleClick(MouseEventArgs& e){/*Do Nothing*/}
-	virtual void OnLButtonDoubleClick(MouseEventArgs& e){/*Do Nothing*/}
+	virtual void OnLButtonSnglClk(MouseEventArgs& e){/*Do Nothing*/}
+	//virtual void OnLButtonDoubleClick(MouseEventArgs& e){/*Do Nothing*/}
 
 	virtual void OnSetCursor(SetCursorEventArgs& e){/*Do Nothing*/}
 
