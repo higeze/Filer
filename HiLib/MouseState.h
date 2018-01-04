@@ -72,3 +72,16 @@ public:
 	virtual IMouseState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)override;
 	virtual IMouseState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)override;
 };
+
+class CDragMouseState :public IMouseState
+{
+public:
+	CDragMouseState() {}
+	virtual ~CDragMouseState() {}
+	static IMouseState* State();
+	virtual void Entry(CSheet* pSheet, MouseEventArgs& e) override;
+	virtual IMouseState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)override;
+	virtual IMouseState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)override;
+	virtual IMouseState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)override;
+	virtual IMouseState* OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)override;
+};

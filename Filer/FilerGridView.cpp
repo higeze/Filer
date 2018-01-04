@@ -53,8 +53,7 @@ CFilerGridView::CFilerGridView(std::wstring initPath, std::shared_ptr<CGridViewP
 	//AddCmdIDHandler(IDM_COPY,&CFilerGridView::OnCommandCopy,this);
 	//AddCmdIDHandler(IDM_PASTE,&CFilerGridView::OnCommandPaste,this);
 	//AddCmdIDHandler(IDM_DELETE,&CFilerGridView::OnCommandDelete,this);
-	m_spFileDragger = std::make_shared<CFileDragger>();
-	m_mouseObservers.push_back(m_spFileDragger);
+	m_spItemDragger = std::make_shared<CFileDragger>();
 
 	CellLButtonDblClk.connect(std::bind(&CFilerGridView::OnCellLButtonDblClk,this,std::placeholders::_1));
 }
@@ -538,13 +537,13 @@ void CFilerGridView::InvokeShellCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShell
 
 void CFilerGridView::OnContextMenu(ContextMenuEventArgs& e)
 {
-	auto visibleIndexes = Point2VisibleIndexes(e.Point);
+	auto visibleIndexes = Coordinates2Indexes<VisTag>(e.Point);
 	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
 	auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
 
-	auto maxRow = boost::prior(rowDictionary.end())->DataPtr->GetIndex<VisTag>();
+	auto maxRow = GetMaxIndex<RowTag, VisTag>();
 	//auto minRow = rowDictionary.begin()->DataPtr->GetIndex<VisTag>();
-	auto maxCol = boost::prior(colDictionary.end())->DataPtr->GetIndex<VisTag>();
+	auto maxCol = GetMaxIndex<ColTag, VisTag>();
 	//auto minCol = colDictionary.begin()->DataPtr->GetIndex<VisTag>();
 	CPoint ptScreen(e.Point);
 	ClientToScreen(ptScreen);

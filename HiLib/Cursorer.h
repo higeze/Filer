@@ -1,6 +1,5 @@
 #pragma once
-#include "IMouseObserver.h"
-#include "IKeyObserver.h"
+
 #include "RowColumn.h"
 #include "Sheet.h"
 //Pre-Declaration
@@ -20,7 +19,7 @@ struct RC
 	size_type Column;
 };
 
-class CCursorer:public IMouseObserver, public IKeyObserver
+class CCursorer
 {
 private:
 	typedef int size_type;
@@ -29,13 +28,6 @@ private:
 	typedef std::shared_ptr<CColumn> column_type;
 	typedef std::shared_ptr<CRow> row_type;
 
-	//static const size_type COLUMN_INDEX_INVALID = 9999;
-	//static const size_type COLUMN_INDEX_MAX = 1000;
-	//static const size_type COLUMN_INDEX_MIN = -1000;
-	//static const coordinates_type MIN_COLUMN_WIDTH=2;
-	//static const coordinates_type RESIZE_AREA_HARF_WIDTH=4;
-
-private:
 	CRowColumn m_rocoOld;
 	CRowColumn m_rocoCurrent;
 	CRowColumn m_rocoAnchor;
@@ -48,27 +40,27 @@ public:
 	CRowColumn GetFocusedRowColumn(){return m_rocoFocused;}
 	void SetFocusedRowColumn(CRowColumn roco){m_rocoFocused = roco;}
 	//IMouseObserver
-	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual ISheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	virtual ISheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
-	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual ISheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
-	virtual ISheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
-	ISheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+	virtual void OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual void OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
+	virtual void OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual void OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
+	virtual void OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual void OnMouseLeave(CSheet* pSheet, MouseEventArgs& e);
+	virtual void OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
 	//IKeyObserver
-	ISheetState* OnKeyDown(CGridView* pSheet, KeyEventArgs& e);
+	virtual void OnKeyDown(CGridView* pSheet, KeyEventArgs& e);
 
 
-	ISheetState* OnCursorCtrl(CSheet* pSheet, EventArgs& e, CRowColumn roco);
-	ISheetState* OnCursorShift(CSheet* pSheet, EventArgs& e, CRowColumn roco);
-	ISheetState* OnCursor(CSheet* pSheet, EventArgs& e, CRowColumn roco);
-	ISheetState* OnRowCursorCtrl(CSheet* pSheet, EventArgs& e, CRow* pRow);
-	ISheetState* OnRowCursorShift(CSheet* pSheet, EventArgs& e, CRow* pRow);
-	ISheetState* OnRowCursor(CSheet* pSheet, EventArgs& e, CRow* pRow);
-	ISheetState* OnColumnCursorCtrl(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
-	ISheetState* OnColumnCursorShift(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
-	ISheetState* OnColumnCursor(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
-	ISheetState* OnCursorClear(CSheet* pSheet, EventArgs& e);
+	virtual void OnCursorCtrl(CSheet* pSheet, EventArgs& e, CRowColumn roco);
+	virtual void OnCursorShift(CSheet* pSheet, EventArgs& e, CRowColumn roco);
+	virtual void OnCursor(CSheet* pSheet, EventArgs& e, CRowColumn roco);
+	virtual void OnRowCursorCtrl(CSheet* pSheet, EventArgs& e, CRow* pRow);
+	virtual void OnRowCursorShift(CSheet* pSheet, EventArgs& e, CRow* pRow);
+	virtual void OnRowCursor(CSheet* pSheet, EventArgs& e, CRow* pRow);
+	virtual void OnColumnCursorCtrl(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
+	virtual void OnColumnCursorShift(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
+	virtual void OnColumnCursor(CSheet* pSheet, EventArgs& e, CColumn* pColumn);
+	virtual void OnCursorClear(CSheet* pSheet, EventArgs& e);
 
 	CRowColumn GetFocusedRowColumn()const{return m_rocoFocused;}
 	CRowColumn GetDoubleFocusedRowColumn()const{return m_rocoDoubleFocused;}
@@ -162,6 +154,6 @@ class CSheetCellCursorer:public CCursorer
 public:
 	CSheetCellCursorer():CCursorer(){}
 	virtual ~CSheetCellCursorer(){}
-	virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
-	virtual ISheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
+	virtual void OnLButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
+	virtual void OnRButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
 };

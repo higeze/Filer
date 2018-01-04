@@ -89,8 +89,6 @@ public:
 	void Drag();
 	BOOL SetDragImage(CIDLPtr pFirstIdl, CComPtr<IDragSourceHelper> pDragSourceHelper, IDataObject *pDataObject);
 
-	std::shared_ptr<CFileDragger> m_spFileDragger;
-
 private:
 	void InsertDefaultRowColumn();
 	void OnShellCommand(LPCSTR lpVerb);

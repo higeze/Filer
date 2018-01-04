@@ -43,15 +43,13 @@ CGridView::CGridView(
 		std::shared_ptr<int> spDeltaScroll,
 		CMenu* pContextMenu)
 	:m_spBackgroundProperty(spBackgroundProperty), 
-	CSheet(spHeaderProperty,spFilterProperty,spCellProperty,std::make_shared<CTracker>(), std::make_shared<CDragger<ColTag, RowTag>>(), std::make_shared<CCursorer>(), pContextMenu?pContextMenu:&CGridView::ContextMenu),
+	CSheet(spHeaderProperty,spFilterProperty,spCellProperty, pContextMenu?pContextMenu:&CGridView::ContextMenu),
 	m_spDeltaScroll(spDeltaScroll)/*,m_ptScroll(0,0)*/,
 	CWnd(),
 	m_iosv(),m_work(m_iosv),m_timer(m_iosv),
 	m_spUndoRedoManager(std::make_shared<CUnDoReDoManager>()),
 	m_pMouseState(CDefaultMouseState::State())
 {
-	m_keyObservers.push_back(m_spCursorer);
-
 	boost::thread th(boost::bind(&boost::asio::io_service::run,&m_iosv));
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
@@ -836,13 +834,8 @@ void CGridView::OnKeyDown(KeyEventArgs& e)
 		break;
 	}
 
-	for(auto& observer : m_keyObservers){
-		m_pState = observer->OnKeyDown(this, e);
-		if(m_pState != ISheetState::Normal())
-		{
-			return;
-		}
-	}
+	CSheet::OnKeyDown(e);
+
 };
 void CGridView::OnContextMenu(ContextMenuEventArgs& e)
 {

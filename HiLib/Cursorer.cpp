@@ -7,11 +7,10 @@
 #include "Column.h"
 #include "Cell.h"
 
-ISheetState* CCursorer::OnCursorCtrl(CSheet* pSheet, EventArgs& e, CRowColumn roco)
+void CCursorer::OnCursorCtrl(CSheet* pSheet, EventArgs& e, CRowColumn roco)
 {
-
 	if(pSheet->Empty()){
-		return ISheetState::Normal();
+		return;
 	}
 	m_rocoOld=m_rocoCurrent;//Old
 	m_rocoCurrent=roco;//Current
@@ -25,22 +24,19 @@ ISheetState* CCursorer::OnCursorCtrl(CSheet* pSheet, EventArgs& e, CRowColumn ro
 	}
 	roco.GetColumnPtr()->Cell(roco.GetRowPtr())->SetSelected(true);//Select
 	OnRowCursorCtrl(pSheet, e, roco.GetRowPtr());
-	return ISheetState::Normal();
 }
 
-ISheetState* CCursorer::OnCursorShift(CSheet* pSheet, EventArgs& e, CRowColumn roco)
+void CCursorer::OnCursorShift(CSheet* pSheet, EventArgs& e, CRowColumn roco)
 {
-
 	m_rocoOld=m_rocoCurrent;//Old
 	m_rocoCurrent=roco;//Current
 	//No Anchor change
 	pSheet->DeselectRange(m_rocoAnchor,m_rocoOld);
 	pSheet->SelectRange(m_rocoAnchor,m_rocoCurrent);
 	OnRowCursorShift(pSheet, e, roco.GetRowPtr());
-	return ISheetState::Normal();
 }
 
-ISheetState* CCursorer::OnCursor(CSheet* pSheet, EventArgs& e, CRowColumn roco)
+void CCursorer::OnCursor(CSheet* pSheet, EventArgs& e, CRowColumn roco)
 {
 
 	if(roco.GetRowPtr()->GetIndex<AllTag>()<0 || roco.GetColumnPtr()->GetIndex<AllTag>()<0){
@@ -61,50 +57,42 @@ ISheetState* CCursorer::OnCursor(CSheet* pSheet, EventArgs& e, CRowColumn roco)
 	//pSheet->DeselectAll();
 	//roco.GetColumnPtr()->Cell(roco.GetRowPtr())->SetSelected(true);//Select
 	OnRowCursor(pSheet, e, roco.GetRowPtr());
-
-	return ISheetState::Normal();
 }
 
-ISheetState* CCursorer::OnRowCursorCtrl(CSheet* pSheet, EventArgs& e, CRow* pRow)
+void CCursorer::OnRowCursorCtrl(CSheet* pSheet, EventArgs& e, CRow* pRow)
 {
 	OnBandCursorCtrl(pSheet, e,pSheet->m_rowVisibleDictionary,pRow,CRowColumn(pRow,pSheet->Index2Pointer<ColTag, VisTag>(0).get()));
-	return ISheetState::Normal();
 }
 
-ISheetState* CCursorer::OnRowCursorShift(CSheet* pSheet, EventArgs& e, CRow* pRow)
+void CCursorer::OnRowCursorShift(CSheet* pSheet, EventArgs& e, CRow* pRow)
 {
 	OnBandCursorShift(pSheet, e,pSheet->m_rowVisibleDictionary,
 		m_rocoOld.GetRowPtr(),m_rocoAnchor.GetRowPtr(),pRow,CRowColumn(pRow,pSheet->Index2Pointer<ColTag, VisTag>(0).get()));
-	return ISheetState::Normal();
 }
 
-ISheetState* CCursorer::OnRowCursor(CSheet* pSheet, EventArgs& e, CRow* pRow)
+void CCursorer::OnRowCursor(CSheet* pSheet, EventArgs& e, CRow* pRow)
 {
 	OnBandCursor(pSheet, e,pSheet->m_rowVisibleDictionary,pRow,CRowColumn(pRow,pSheet->Index2Pointer<ColTag, VisTag>(0).get()));
-	return ISheetState::Normal();
 }
 
-ISheetState* CCursorer::OnColumnCursorCtrl(CSheet* pSheet, EventArgs& e, CColumn* pColumn)
+void CCursorer::OnColumnCursorCtrl(CSheet* pSheet, EventArgs& e, CColumn* pColumn)
 {
 	OnBandCursorCtrl(pSheet, e,pSheet->m_columnVisibleDictionary,pColumn,CRowColumn(pSheet->Index2Pointer<RowTag, VisTag>(0).get(),pColumn));
-	return ISheetState::Normal();
 }
 
-ISheetState* CCursorer::OnColumnCursorShift(CSheet* pSheet, EventArgs& e, CColumn* pColumn)
+void CCursorer::OnColumnCursorShift(CSheet* pSheet, EventArgs& e, CColumn* pColumn)
 {
 	OnBandCursorShift(pSheet, e,pSheet->m_columnVisibleDictionary,
 		m_rocoOld.GetColumnPtr(),m_rocoAnchor.GetColumnPtr(),pColumn,CRowColumn(pSheet->Index2Pointer<RowTag, VisTag>(0).get(),pColumn));
-	return ISheetState::Normal();
 }
 
-ISheetState* CCursorer::OnColumnCursor(CSheet* pSheet, EventArgs& e, CColumn* pColumn)
+void CCursorer::OnColumnCursor(CSheet* pSheet, EventArgs& e, CColumn* pColumn)
 {
 	OnBandCursor(pSheet, e,pSheet->m_columnVisibleDictionary,pColumn,CRowColumn(pSheet->Index2Pointer<RowTag, VisTag>(0).get(),pColumn));
-	return ISheetState::Normal();
 }
 
 
-ISheetState* CCursorer::OnCursorClear(CSheet* pSheet, EventArgs& e)
+void CCursorer::OnCursorClear(CSheet* pSheet, EventArgs& e)
 {
 	m_rocoOld=CRowColumn();//Old
 	m_rocoCurrent=CRowColumn();//Current
@@ -115,13 +103,12 @@ ISheetState* CCursorer::OnCursorClear(CSheet* pSheet, EventArgs& e)
 	m_rocoDoubleFocused=CRowColumn();//DoubleFocus
 	pSheet->DeselectAll();//Select
 	pSheet->UnhotAll();//Hot
-	return ISheetState::Normal();
 }
 
-ISheetState* CCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
+void CCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
 {
 	if(pSheet->Empty()){
-		return ISheetState::Normal();
+		return;
 	}
 	//Get RowColumn from Point
 	auto roco = pSheet->Point2RowColumn(e.Point);
@@ -159,24 +146,24 @@ ISheetState* CCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
 			return OnCursor(pSheet, e,roco);
 		}
 	}
-	return ISheetState::Normal();
 }
-ISheetState* CCursorer::OnLButtonUp(CSheet* pSheet, MouseEventArgs& e){return ISheetState::Normal();}
-ISheetState* CCursorer::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)
+
+void CCursorer::OnLButtonUp(CSheet* pSheet, MouseEventArgs& e){}
+void CCursorer::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)
 {
 	if(pSheet->Empty()){
-		return ISheetState::Normal();
+		return;
 	}
 	auto roco = pSheet->Point2RowColumn(e.Point);
 	if(roco.IsInvalid()){
 		return OnCursorClear(pSheet, EventArgs());
 	}
-	return ISheetState::Normal();
+	return;
 }
-ISheetState* CCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
+void CCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
 {
 	if(pSheet->Empty()){
-		return ISheetState::Normal();
+		return;
 	}
 	//Get RowColumn from Point
 	auto roco = pSheet->Point2RowColumn(e.Point);
@@ -197,16 +184,16 @@ ISheetState* CCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
 			return OnCursor(pSheet, e,roco);
 		}
 	}
-	return ISheetState::Normal();
+	return;
 }
-ISheetState* CCursorer::OnMouseMove(CSheet* pSheet, MouseEventArgs& e){return ISheetState::Normal();}
-ISheetState* CCursorer::OnMouseLeave(CSheet* pSheet, MouseEventArgs& e){return ISheetState::Normal();}
-ISheetState* CCursorer::OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e){return ISheetState::Normal();}
+void CCursorer::OnMouseMove(CSheet* pSheet, MouseEventArgs& e){return;}
+void CCursorer::OnMouseLeave(CSheet* pSheet, MouseEventArgs& e){return;}
+void CCursorer::OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e){return;}
 
-ISheetState* CCursorer::OnKeyDown(CGridView* pSheet, KeyEventArgs& e)
+void CCursorer::OnKeyDown(CGridView* pSheet, KeyEventArgs& e)
 {
 	if(pSheet->Empty()){
-		return ISheetState::Normal();
+		return;
 	}
 	switch (e.Char)
 	{
@@ -259,7 +246,7 @@ ISheetState* CCursorer::OnKeyDown(CGridView* pSheet, KeyEventArgs& e)
 	default:
 		break;
 	}
-	return ISheetState::Normal();
+	return;
 }
 
 std::vector<RC> CCursorer::GetFocusedRCs(CSheet* pSheet)const
@@ -369,10 +356,10 @@ void CCursorer::SetSelectedColumns(CSheet* pSheet, std::vector<column_type> cols
 }
 
 
-ISheetState* CSheetCellCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
+void CSheetCellCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
 {
 	if(pSheet->Empty()){
-		return ISheetState::Normal();
+		return;
 	}
 	//Get RowColumn from Point
 	auto roco = pSheet->Point2RowColumn(e.Point);
@@ -391,13 +378,13 @@ ISheetState* CSheetCellCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e
 		return OnCursor(pSheet, e,roco);
 	}
 
-	return ISheetState::Normal();
+	return;
 }
 
-ISheetState* CSheetCellCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
+void CSheetCellCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
 {
 	if(pSheet->Empty()){
-		return ISheetState::Normal();
+		return;
 	}
 	//Get RowColumn from Point
 	auto roco = pSheet->Point2RowColumn(e.Point);

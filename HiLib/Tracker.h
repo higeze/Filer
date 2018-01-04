@@ -1,24 +1,23 @@
 #pragma once
-#include "IMouseObserver.h"
+
 #include "Column.h"
 
 //Pre-Declaration
 class CSheet;
-class ISheetState;
 struct MouseEventArgs;
 struct SetCursorEventArgs;
 
 class ITracker
 {
 public:
-	virtual void OnDividerDblClk(CSheet* pSheet, MouseEventArgs& e) = 0;
-	virtual void OnBeginTrack(CSheet* pSheet, MouseEventArgs& e) = 0;
-	virtual void OnTrack(CSheet* pSheet, MouseEventArgs& e) = 0;
-	virtual void OnEndTrack(CSheet* pSheet, MouseEventArgs& e) = 0;
+	virtual void OnDividerDblClk(CSheet* pSheet, MouseEventArgs const & e) = 0;
+	virtual void OnBeginTrack(CSheet* pSheet, MouseEventArgs const & e) = 0;
+	virtual void OnTrack(CSheet* pSheet, MouseEventArgs const & e) = 0;
+	virtual void OnEndTrack(CSheet* pSheet, MouseEventArgs const & e) = 0;
 };
 
 template<typename TRC>
-class CTracker:public IMouseObserver
+class CTracker:public ITracker
 {
 private:
 	typedef int size_type;
@@ -32,7 +31,7 @@ private:
 private:
 	size_type m_trackLeftVisib;
 public:
-	CTracker():m_coTrackLeftVisib(CColumn::kInvalidIndex){}
+	CTracker():m_trackLeftVisib(CColumn::kInvalidIndex){}
 	virtual ~CTracker(){}
 
 	//CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
@@ -55,31 +54,32 @@ public:
 	//CSheetState* OnTrackMouseLeave(CSheet* pSheet, MouseEventArgs& e);
 	//CSheetState* OnTrackSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
 
-private:
+public:
 
-	void OnDividerDblClk(CSheet* pSheet, MouseEventArgs& e) override
+	void OnDividerDblClk(CSheet* pSheet, MouseEventArgs const & e) override
 	{
 		auto p = pSheet->Index2Pointer<ColTag, VisTag>(pSheet->Point2Coordinate<TRC>(e.Point));
 		//pSheet->HeaderFitWidth(CColumnEventArgs(p.get()));//TODO
 	}
 
-	void OnBeginTrack(CSheet* pSheet, MouseEventArgs& e) override
+	void OnBeginTrack(CSheet* pSheet, MouseEventArgs const & e) override
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
-		m_coTrackLeftVisib = pSheet->Coordinate2Index<TRC, VisTag>(pSheet->Point2Coordinate<TRC>(e.Point));
+		m_trackLeftVisib = pSheet->Coordinate2Index<TRC, VisTag>(pSheet->Point2Coordinate<TRC>(e.Point));
 	}
 
-	void OnTrack(CSheet* pSheet, MouseEventArgs& e)
+	void OnTrack(CSheet* pSheet, MouseEventArgs const & e) override
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
 		auto p = pSheet->Index2Pointer<ColTag, VisTag>(m_trackLeftVisib);
 		//p->SetWidthWithoutSignal(max(e.Point.x - pCol->GetLeft(), CColumn::kMinWidth));//TODO
 		//pSheet->ColumnHeaderTrack(CColumnEventArgs(pCol.get()));//TODO
 	}
-	ISheetState* OnEndTrack(CSheet* pSheet, MouseEventArgs& e)
+
+	void OnEndTrack(CSheet* pSheet, MouseEventArgs const & e) override
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
-		auto pCol = pSheet->Index2Pointer<ColTag, VisTag>(m_coTrackLeftVisib);
+		auto pCol = pSheet->Index2Pointer<ColTag, VisTag>(m_trackLeftVisib);
 		//pCol->SetWidthWithoutSignal(max(e.Point.x - pCol->GetLeft(), CColumn::kMinWidth));//TODO
 		//pSheet->ColumnHeaderEndTrack(CColumnEventArgs(pCol.get()));//TODO
 	}

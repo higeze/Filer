@@ -222,6 +222,7 @@
     <ClInclude Include="..\HiLib\GridViewProperty.h" />
     <ClInclude Include="..\HiLib\GridViewResource.h" />
     <ClInclude Include="..\HiLib\IDoCommand.h" />
+    <ClInclude Include="..\HiLib\IDragger.h" />
     <ClInclude Include="..\HiLib\IKeyObserver.h" />
     <ClInclude Include="..\HiLib\IMouseObserver.h" />
     <ClInclude Include="..\HiLib\InplaceEdit.h" />
@@ -386,6 +387,7 @@
     <ClCompile Include="..\HiLib\SheetCell.cpp" />
     <ClCompile Include="..\HiLib\SheetDictionary.cpp" />
     <ClCompile Include="..\HiLib\SheetState.cpp" />
+    <ClCompile Include="..\HiLib\SheetStateMachine.cpp" />
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
     <ClCompile Include="..\HiLib\Tracker.cpp" />

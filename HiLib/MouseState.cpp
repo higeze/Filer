@@ -115,7 +115,7 @@ IMouseState* CDownedMouseState::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& 
 IMouseState* CDownedMouseState::OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)
 {
 	m_isDblClkTimeExceed = true;
-	return KeepState();
+	return ChangeState(pSheet, CDragMouseState::State(), e);
 }
 
 IMouseState* CUppedMouseState::State()
@@ -173,6 +173,37 @@ IMouseState* CDblClkedMouseState::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs
 	return KeepState();
 }
 IMouseState* CDblClkedMouseState::OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)
+{
+	return KeepState();
+}
+
+void CDragMouseState::Entry(CSheet* pSheet, MouseEventArgs& e)
+{
+	std::cout << "CDragMouseState::Entry" << std::endl;
+	pSheet->OnLButtonBeginDrag(e);
+}
+
+
+IMouseState* CDragMouseState::State()
+{
+	std::cout << "CDragMouseState::State" << std::endl;
+	static CDragMouseState state;
+	return &state;
+}
+IMouseState* CDragMouseState::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
+{
+	return KeepState();
+}
+IMouseState* CDragMouseState::OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)
+{
+	pSheet->OnLButtonEndDrag(e);
+	return ChangeState(pSheet, CDefaultMouseState::State(), e);
+}
+IMouseState* CDragMouseState::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)
+{
+	return KeepState();
+}
+IMouseState* CDragMouseState::OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEventArgs& e)
 {
 	return KeepState();
 }

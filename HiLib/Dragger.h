@@ -1,30 +1,16 @@
 #pragma once
-#include "IMouseObserver.h"
+#include "IDragger.h"
 #include "Sheet.h"
-#include "SheetState.h"
 
 //Pre-Declaration
 struct MouseEventArgs;
 struct SetCursorEventArgs;
 
-class IDragger
-{
-public:
-	virtual bool IsTarget() = 0;
-	virtual void OnBeginDrag() = 0;
-	virtual void OnDrag() = 0;
-	virtual void OnEndDrag() = 0;
-};
+
 
 template<typename TRCMe, typename TRCYou>
 class CDragger :public IDragger
 {
-private:
-	typedef int size_type;
-	typedef int coordinates_type;
-	//static const coordinates_type MIN_ROW_HIGHT = 2;
-	//static const coordinates_type RESIZE_AREA_HARF_HIGHT = 4;
-
 private:
 	size_type m_dragFromIndex;
 	size_type m_dragToIndex;
@@ -35,60 +21,27 @@ public:
 	size_type GetDragToAllIndex() { return m_dragToIndex; }
 	size_type GetDragFromAllIndex() { return m_dragFromIndex; }
 
-	//CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e)
-	//{
-	//	if (!pSheet->Visible())return CSheetState::Normal();
+	virtual bool IsTarget(CSheet* pSheet, MouseEventArgs const & e) override
+	{
+		auto visIndexes = pSheet->Coordinates2Indexes<VisTag>(e.Point);
+		if (visIndexes.first <= pSheet->GetMaxIndex<RowTag, VisTag>() &&
+			visIndexes.first >= pSheet->GetMinIndex<RowTag, VisTag>() &&
+			visIndexes.second <= pSheet->GetMaxIndex<ColTag, VisTag>() &&
+			visIndexes.second >= pSheet->GetMinIndex<ColTag, VisTag>() &&
+			pSheet->Index2Pointer<TRCMe, VisTag>(visIndexes.first)->IsDragTrackable()) {
+			return true;
+		}else{
+			return false;
+		}
+	}
 
-	//	auto visIndex = pSheet->Coordinate2Index<TRCYou, VisTag>(e.Point.x);
-	//	//If Header except Filter
-	//	if (IsDragable(pSheet, visIndex)) {
-	//		if (e.Flags == MK_LBUTTON) {
-	//			return OnHeaderBeginDrag(pSheet, e);
-	//		}
-	//	}
-	//	return CSheetState::Normal();
-	//}
-	//CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e) { return CSheetState::Normal(); }
-	//CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e) { return CSheetState::Normal(); }
-//	CSheetState* OnDragLButtonDown(CSheet* pSheet, MouseEventArgs& e)
-//	{
-//		return CSheetState::Normal();
-//	}
-//	CSheetState* OnDragLButtonUp(CSheet* pSheet, MouseEventArgs& e)
-//	{
-//		return OnHeaderEndDrag(pSheet, e);
-//	}
-//	CSheetState* OnDragLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)
-//	{
-//		return CSheetState::Normal();
-//	}
-//	CSheetState* OnDragRButtonDown(CSheet* pSheet, MouseEventArgs& e)
-//	{
-//		return CSheetState::Normal();
-//	}
-//	CSheetState* OnDragMouseMove(CSheet* pSheet, MouseEventArgs& e)
-//	{
-//		return OnHeaderDrag(pSheet, e);
-//	}
-//	CSheetState* OnDragMouseLeave(CSheet* pSheet, MouseEventArgs& e)
-//	{
-//		return OnHeaderDrag(pSheet, e);
-//	}
-//	CSheetState* OnDragSetCursor(CSheet* pSheet, SetCursorEventArgs& e)
-//	{
-//		return DraggingState();
-//	}
-//
-//private:
-	//CSheetState* DraggingState() { return nullptr; }
-
-	void OnBeginDrag(CSheet* pSheet, MouseEventArgs& e) override
+	void OnBeginDrag(CSheet* pSheet, MouseEventArgs const & e) override
 	{
 		m_dragFromIndex = pSheet->Coordinate2Index<TRCMe, AllTag>(e.Point.y);
 		m_dragToIndex = CBand::kInvalidIndex;
 	}
 
-	void OnDrag(CSheet* pSheet, MouseEventArgs& e) override
+	void OnDrag(CSheet* pSheet, MouseEventArgs const & e) override
 	{
 		auto visibleIndex = pSheet->Coordinate2Index<TRCMe, VisTag>(e.Point.y);
 
@@ -124,7 +77,7 @@ public:
 		}
 	}
 
-	void OnEndDrag(CSheet* pSheet, MouseEventArgs& e) override
+	void OnEndDrag(CSheet* pSheet, MouseEventArgs const & e) override
 	{
 		if (m_dragToIndex == CBand::kInvalidIndex) {
 
@@ -137,51 +90,24 @@ public:
 		}
 		m_dragFromIndex = CBand::kInvalidIndex;
 		m_dragToIndex = CBand::kInvalidIndex;
-
-		return ISheetState::Normal();
 	}
 
-	//bool IsDragable(CSheet* pSheet, size_type visibleIndex)
-	//{
-	//	if (visibleIndex <= pSheet->GetMaxIndex<TRCYou, VisTag>() &&
-	//		visibleIndex >= pSheet->GetMinIndex<TRCYou, VisTag>() &&
-	//		pSheet->Index2Pointer<TRCYou, VisTag>(visibleIndex)->IsDragTrackable()) {
-	//		return true;
-	//	}
-	//	else {
-	//		return false;
-	//	}
-	//}
 
 };
 
-template<> ISheetState* CDragger<RowTag, ColTag>::DraggingState()
-{
-	return CRowDraggingState::State();
-}
+typedef CDragger<RowTag, ColTag> CRowDragger;
+typedef CDragger<ColTag, RowTag> CColDragger;
 
-template<> ISheetState* CDragger<ColTag, RowTag>::DraggingState()
-{
-	return CColumnDraggingState::State();
-}
-
-//template class CDragger<RowTag, ColTag>;
-//
-//typedef CDragger<RowTag, ColTag> CRowDragger;
-//
-//template class CDragger<ColTag, RowTag>;
-//
-//typedef CDragger<ColTag, RowTag> CColumnDragger;
-
-/*! @class CSheetCellDragger
-    @brief Dragger behavior for CSheetCell
-*/
-class CSheetCellDragger:public CDragger<ColTag, RowTag>
+template<typename TRCMe, typename TRCYou>
+class CSheetCellDragger:public CDragger<TRCMe, TRCYou>
 {
 public:
     /*! Constructor*/
-	CSheetCellDragger():CDragger<ColTag, RowTag>(){}
+	CSheetCellDragger():CDragger(){}
 	virtual ~CSheetCellDragger(){}
 	/*! Do not drag Header for CSheetCell*/
-	virtual ISheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e);
+	virtual void OnMouseMove(CSheet* pSheet, MouseEventArgs const & e) override {}
 };
+
+typedef CSheetCellDragger<RowTag, ColTag> CSheetCellRowDragger;
+typedef CSheetCellDragger<ColTag, RowTag> CSheetCellColDragger;

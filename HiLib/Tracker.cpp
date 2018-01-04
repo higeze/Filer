@@ -2,7 +2,6 @@
 #include "Sheet.h"
 #include "Row.h"
 #include "Column.h"
-#include "SheetState.h"
 #include "SheetEventArgs.h"
 #include "GridView.h"
 

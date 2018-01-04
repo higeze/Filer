@@ -512,6 +512,9 @@
     <ClInclude Include="..\HiLib\SheetStateMachine.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\IDragger.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -776,6 +779,9 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\MouseState.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\SheetStateMachine.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

@@ -8,6 +8,10 @@
 #include "SheetEventArgs.h"
 #include "Row.h"
 
+
+struct CSheetStateMachine;
+class IDragger;
+class ITracker;
 class CCell;
 //class CRow;
 class CColumn;
@@ -15,14 +19,9 @@ class CCellProperty;
 class CRect;
 class CPoint;
 class CDC;
-class CTracker;
 template <typename TRCMe, typename TRCYou> class CDragger;
 class CCursorer;
 class IMouseObserver;
-class ISheetState;
-class CNormalState;
-class CTrackingState;
-class CColumnDraggingState;
 class CSerializeData;
 
 struct RowTag
@@ -53,17 +52,9 @@ const UINT WM_LBUTTONDBLCLKTIMEXCEED = RegisterWindowMessage(L"WM_LBUTTONDBLCLKT
 class CSheet:public CUIElement
 {
 //Friend classes
-friend class CTracker;
 friend class CDragger<ColTag, RowTag>;
-friend class CRowDragger;
 friend class CFileDragger;//TODO
 friend class CCursorer;
-friend class ISheetState;
-friend class CNormalState;
-friend class CTrackingState;
-friend class CRowDraggingState;
-friend class CColumnDraggingState;
-friend class CFileDraggingState;//TODO
 friend class CSerializeData;
 protected:
 	//typedef
@@ -79,15 +70,18 @@ public:
 	//Simple cell Accessor
 	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
 	static std::shared_ptr<CCell>& Cell( CRow* pRow,  CColumn* pColumn);
+
+	std::shared_ptr<ITracker> m_spRowTracker; /**< Tracker */
+	std::shared_ptr<ITracker> m_spColTracker; /**< Tracker */
+	std::shared_ptr<IDragger> m_spRowDragger; /**< Dragger */
+	std::shared_ptr<IDragger> m_spColDragger; /**< Dragger */
+	std::shared_ptr<IDragger> m_spItemDragger; /**< Dragger */
+	std::shared_ptr<CCursorer> m_spCursorer; /**< Cursor */
+
 protected:
-	ISheetState* m_pState; /**< State Pattern */
 
 	std::shared_ptr<CSheetStateMachine> m_spStateMachine;
 	std::vector<std::shared_ptr<IMouseObserver>> m_mouseObservers; /**< Mouse Observers */
-	std::shared_ptr<CTracker> m_spTracker; /**< Tracker */
-	std::shared_ptr<CDragger<ColTag, RowTag>> m_spColDragger; /**< Dragger */
-	std::shared_ptr<CDragger<RowTag, ColTag>> m_spRowDragger; /**< Dragger */
-	std::shared_ptr<CCursorer> m_spCursorer; /**< Cursor */
 
 	std::set<Updates> m_setUpdate; /**< Set posted update */
 
@@ -128,9 +122,6 @@ public:
 	CSheet(std::shared_ptr<CCellProperty> spHeaderProperty,
 		std::shared_ptr<CCellProperty> spFilterProperty,
 		std::shared_ptr<CCellProperty> spCellProperty,
-		std::shared_ptr<CTracker> spTracker = std::shared_ptr<CTracker>(),
-		std::shared_ptr<CDragger<ColTag, RowTag>> spDragger = std::shared_ptr<CDragger<ColTag, RowTag>>(),
-		std::shared_ptr<CCursorer> spCursorer = std::shared_ptr<CCursorer>(),
 		CMenu* pContextMenu= &CSheet::ContextMenu);
 	//Destructor
 	virtual ~CSheet(){}
@@ -490,13 +481,13 @@ public:
 	cell_type Point2Cell(const CPoint& ptClient);
 	CRowColumn Point2RowColumn(const CPoint& ptClient);
 
-	size_type Y2AllRowIndex(coordinates_type y);
-	size_type X2AllColumnIndex(coordinates_type x);
-	size_type Y2VisibleRowIndex(coordinates_type y);
-	size_type X2VisibleColumnIndex(coordinates_type x);
+	//size_type Y2AllRowIndex(coordinates_type y);
+	//size_type X2AllColumnIndex(coordinates_type x);
+	//size_type Y2VisibleRowIndex(coordinates_type y);
+	//size_type X2VisibleColumnIndex(coordinates_type x);
 
-	std::pair<size_type, size_type> Point2AllIndexes(const CPoint& ptClient);
-	std::pair<size_type, size_type> Point2VisibleIndexes(const CPoint& ptClient);
+	//std::pair<size_type, size_type> Point2AllIndexes(const CPoint& ptClient);
+	//std::pair<size_type, size_type> Point2VisibleIndexes(const CPoint& ptClient);
 
 
 	

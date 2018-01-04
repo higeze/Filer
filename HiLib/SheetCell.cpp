@@ -33,10 +33,7 @@ CSheetCell::CSheetCell(
 	CMenu* pMenu)
 	:CSheet(spHeaderProperty,
 		spFilterProperty,
-		spCellProperty, 
-		std::make_shared<CTracker>(), 
-		std::make_shared<CSheetCellDragger>(), 
-		std::make_shared<CSheetCellCursorer>()),
+		spCellProperty), 
 	CCell(pSheet,pRow,pColumn,spProperty,pMenu)
 {}
 

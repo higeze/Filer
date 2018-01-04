@@ -15,7 +15,7 @@
 #include "Tracker.h"
 #include "Dragger.h"
 #include "Cursorer.h"
-#include "SheetState.h"
+#include "SheetStateMachine.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -25,24 +25,21 @@ CSheet::CSheet(
 	std::shared_ptr<CCellProperty> spHeaderProperty,
 	std::shared_ptr<CCellProperty> spFilterProperty,
 	std::shared_ptr<CCellProperty> spCellProperty,
-	std::shared_ptr<CTracker> spTracker,
-	std::shared_ptr<CDragger<ColTag, RowTag>> spDragger,
-	std::shared_ptr<CCursorer> spCursorer,
 	CMenu* pContextMenu)
 	:m_spHeaderProperty(spHeaderProperty),
 	m_spFilterProperty(spFilterProperty),
 	m_spCellProperty(spCellProperty),
-	m_spTracker(spTracker),
-	m_spColDragger(spDragger),
-	m_spCursorer(spCursorer),
-	//m_operation(Operation::None),
+	m_spStateMachine(std::make_shared<CSheetStateMachine>()),
 	m_bSelected(false),
 	m_bFocused(false),
 	m_pContextMenu(pContextMenu?pContextMenu:&CSheet::ContextMenu)
 {
 
-	if(m_spTracker.get()==nullptr){
-		m_spTracker = std::make_shared<CTracker>();
+	if(m_spRowTracker.get()==nullptr){
+		m_spRowTracker = std::make_shared<CTracker<RowTag>>();
+	}
+	if (m_spColTracker.get() == nullptr) {
+		m_spColTracker = std::make_shared<CTracker<ColTag>>();
 	}
 	if(m_spRowDragger.get()==nullptr){
 		m_spRowDragger = std::make_shared<CDragger<RowTag, ColTag>>();
@@ -54,12 +51,6 @@ CSheet::CSheet(
 		m_spCursorer = std::make_shared<CCursorer>();
 	}
 
-	m_mouseObservers.push_back(m_spTracker);
-	m_mouseObservers.push_back(m_spRowDragger);
-	m_mouseObservers.push_back(m_spColDragger);
-	m_mouseObservers.push_back(m_spCursorer);
-
-	m_pState = CSheetState::Normal();
 }
 
 std::shared_ptr<CCell>& CSheet::Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn)
@@ -74,23 +65,23 @@ std::shared_ptr<CCell>& CSheet::Cell( CRow* pRow,  CColumn* pColumn)
 
 void CSheet::SetAllRowMeasureValid(bool valid)
 {
-	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
+	for (auto const & rowData : m_rowAllDictionary) {
 		rowData.DataPtr->SetMeasureValid(valid);
-	});
+	}
 }
 
 void CSheet::SetAllColumnMeasureValid(bool valid)
 {
-	boost::for_each(m_columnAllDictionary,[&](const ColumnData& colData){
+	for (auto const & colData : m_columnAllDictionary) {
 		colData.DataPtr->SetMeasureValid(valid);
-	});
+	}
 }
 
 void CSheet::SetColumnAllCellMeasureValid(CColumn* pColumn, bool valid)
 {
-	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
+	for (auto const & rowData : m_rowAllDictionary) {
 		CSheet::Cell(rowData.DataPtr.get(), pColumn)->SetActMeasureValid(false);
-	});
+	}
 }
 
 void CSheet::CellSizeChanged(CellEventArgs& e)
@@ -118,9 +109,7 @@ void CSheet::CellValueChanged(CellEventArgs& e)
 
 void CSheet::ColumnInserted(CColumnEventArgs& e)
 {
-	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
-		rowData.DataPtr->SetMeasureValid(false);
-	});
+	this->SetAllRowMeasureValid(false);
 
 	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::Column);
@@ -132,9 +121,7 @@ void CSheet::ColumnInserted(CColumnEventArgs& e)
 
 void CSheet::ColumnErased(CColumnEventArgs& e)
 {
-	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
-		rowData.DataPtr->SetMeasureValid(false);
-	});
+	this->SetAllRowMeasureValid(false);
 
 	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::Column);
@@ -154,9 +141,9 @@ void CSheet::ColumnHeaderEndTrack(CColumnEventArgs& e)
 	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
 		e.m_pColumn->Cell(rowData.DataPtr.get())->SetActMeasureValid(false);
 	});
-	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
-		rowData.DataPtr->SetMeasureValid(false);
-	});
+
+	this->SetAllRowMeasureValid(false);
+
 	PostUpdate(Updates::Column);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
@@ -169,9 +156,8 @@ void CSheet::ColumnHeaderFitWidth(CColumnEventArgs& e)
 	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
 		e.m_pColumn->Cell(rowData.DataPtr.get())->SetActMeasureValid(false);
 	});
-	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
-		rowData.DataPtr->SetMeasureValid(false);
-	});
+	this->SetAllColumnMeasureValid(false);
+	
 	PostUpdate(Updates::Column);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
@@ -191,9 +177,8 @@ void CSheet::RowInserted(CRowEventArgs& e)
 
 void CSheet::RowErased(CRowEventArgs& e)
 {
-	boost::for_each(m_columnAllDictionary,[&](const ColumnData& colData){
-		colData.DataPtr->SetMeasureValid(false);
-	});
+	this->SetAllColumnMeasureValid(false);
+
 	PostUpdate(Updates::RowVisible);
 	PostUpdate(Updates::Column);
 	PostUpdate(Updates::Row);
@@ -743,35 +728,35 @@ CRowColumn CSheet::Point2RowColumn(const CPoint& ptClient)
 		return roco;
 }
 
-CSheet::size_type CSheet::Y2AllRowIndex(coordinates_type y)
-{
-	return Y2RowIndex(y, m_rowAllDictionary);
-}
+//CSheet::size_type CSheet::Y2AllRowIndex(coordinates_type y)
+//{
+//	return Y2RowIndex(y, m_rowAllDictionary);
+//}
 
-CSheet::size_type CSheet::X2AllColumnIndex(coordinates_type x)
-{
-	return X2ColumnIndex(x, m_columnAllDictionary);
-}
-
-CSheet::size_type CSheet::Y2VisibleRowIndex(coordinates_type y)
-{
-	return Y2RowIndex(y, m_rowVisibleDictionary);
-}
-
-CSheet::size_type CSheet::X2VisibleColumnIndex(coordinates_type x)
-{
-	return X2ColumnIndex(x, m_columnVisibleDictionary);
-}
-
-	std::pair<CSheet::size_type, CSheet::size_type> CSheet::Point2AllIndexes(const CPoint& ptClient)
-{
-	return std::make_pair(Y2AllRowIndex(ptClient.y), X2AllColumnIndex(ptClient.x));
-}
-
-std::pair<CSheet::size_type, CSheet::size_type> CSheet::Point2VisibleIndexes(const CPoint& ptClient)
-{
-	return std::make_pair(Y2VisibleRowIndex(ptClient.y), X2VisibleColumnIndex(ptClient.x));
-}
+//CSheet::size_type CSheet::X2AllColumnIndex(coordinates_type x)
+//{
+//	return X2ColumnIndex(x, m_columnAllDictionary);
+//}
+//
+//CSheet::size_type CSheet::Y2VisibleRowIndex(coordinates_type y)
+//{
+//	return Y2RowIndex(y, m_rowVisibleDictionary);
+//}
+//
+//CSheet::size_type CSheet::X2VisibleColumnIndex(coordinates_type x)
+//{
+//	return X2ColumnIndex(x, m_columnVisibleDictionary);
+//}
+//
+//	std::pair<CSheet::size_type, CSheet::size_type> CSheet::Point2AllIndexes(const CPoint& ptClient)
+//{
+//	return std::make_pair(Y2AllRowIndex(ptClient.y), X2AllColumnIndex(ptClient.x));
+//}
+//
+//std::pair<CSheet::size_type, CSheet::size_type> CSheet::Point2VisibleIndexes(const CPoint& ptClient)
+//{
+//	return std::make_pair(Y2VisibleRowIndex(ptClient.y), X2VisibleColumnIndex(ptClient.x));
+//}
 
 void CSheet::OnContextMenu(ContextMenuEventArgs& e)
 {
@@ -783,51 +768,51 @@ void CSheet::OnContextMenu(ContextMenuEventArgs& e)
 
 void CSheet::OnRButtonDown(MouseEventArgs& e)
 {
-	m_pState = m_pState->OnRButtonDown(this, e);
+	m_spStateMachine->RButtonDown(this, e);
 }
 
 void CSheet::OnLButtonDown(MouseEventArgs& e)
 {
-	m_pState = m_pState->OnLButtonDown(this, e);
+	m_spStateMachine->LButtonDown(this, e);
 }
 
 void CSheet::OnLButtonUp(MouseEventArgs& e)
 {
-	m_pState = m_pState->OnLButtonUp(this, e);
+	m_spStateMachine->LButtonUp(this, e);
 }
 
 void CSheet::OnLButtonSnglClk(MouseEventArgs& e)
 {
-	m_pState = m_pState->OnLButtonSnglClk(this, e);
+	m_spStateMachine->LButtonSnglClk(this, e);
 }
 
 void CSheet::OnLButtonDblClk(MouseEventArgs& e)
 {
-	m_pState = m_pState->OnLButtonDblClk(this, e);
+	m_spStateMachine->LButtonDblClk(this, e);
 }
 
 void CSheet::OnLButtonBeginDrag(MouseEventArgs& e)
 {
-	m_pState = m_pState->OnLButtonBeginDrag(this, e);
+	m_spStateMachine->LButtonBeginDrag(this, e);
 }
 
 void CSheet::OnLButtonEndDrag(MouseEventArgs& e)
 {
-	m_pState = m_pState->OnLButtonEndDrag(this, e);
+	m_spStateMachine->LButtonEndDrag(this, e);
 }
 
 void CSheet::OnMouseMove(MouseEventArgs& e)
 {
-	m_pState = m_pState->OnMouseMove(this, e);
+	m_spStateMachine->MouseMove(this, e);
 }
 void CSheet::OnSetCursor(SetCursorEventArgs& e)
 {
-	m_pState = m_pState->OnSetCursor(this, e);
+	m_spStateMachine->SetCursor(this, e);
 }
 
 void CSheet::OnMouseLeave(MouseEventArgs& e)
 {
-	m_pState = m_pState->OnMouseLeave(this, e);
+	m_spStateMachine->MouseLeave(this, e);
 }
 
 void CSheet::OnSetFocus(EventArgs& e)
