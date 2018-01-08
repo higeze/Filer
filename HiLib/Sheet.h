@@ -18,29 +18,46 @@ class CColumn;
 class CCellProperty;
 class CRect;
 class CPoint;
+struct XTag;
+struct YTag;
 class CDC;
-template <typename TRCMe, typename TRCYou> class CDragger;
+template <typename TRC, typename TRCYou> class CDragger;
 class CCursorer;
 class IMouseObserver;
 class CSerializeData;
+
+struct ColTag;
 
 struct RowTag
 {
 	typedef std::shared_ptr<CRow> SharedPtr;
 	typedef const CRow* Ptr;
 	typedef RowDictionary Dictionary;
+	typedef YTag Axis;
+	typedef ColTag Other;
 };
 struct ColTag
 {
 	typedef std::shared_ptr<CColumn> SharedPtr;
 	typedef const CColumn* Ptr;
 	typedef ColumnDictionary Dictionary;
+	typedef XTag Axis;
+	typedef RowTag Other;
 };
 struct AllTag
 {};
 struct VisTag
 {};
 
+struct RC
+{
+	RC(int row, int col) :Row(row), Col(col) {}
+	int Row;
+	int Col;
+	template<typename TRC> int Get() const { return CBand::kInvalidIndex; }
+};
+template<> inline int RC::Get<RowTag>() const { return Row; }
+template<> inline int RC::Get<ColTag>() const { return Col; }
 
 const UINT WM_FILTER = RegisterWindowMessage(L"WM_FILTER");
 const UINT WM_EDITCELL = RegisterWindowMessage(L"WM_EDITCELL");
@@ -69,6 +86,7 @@ public:
 public:
 	//Simple cell Accessor
 	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
+	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow);
 	static std::shared_ptr<CCell>& Cell( CRow* pRow,  CColumn* pColumn);
 
 	std::shared_ptr<ITracker> m_spRowTracker; /**< Tracker */
@@ -294,13 +312,25 @@ public:
 	template<typename TRC> int Point2Coordinate(CPoint pt) { return CBand::kInvalidIndex; }
 
 	template<typename TRC, typename TAV> int Coordinate2Index(coordinates_type coordinate) { return CBand::kInvalidIndex; }
+	template<typename TAV> RC Point2Indexes(CPoint pt)
+	{
+		return RC(Coordinate2Index<RowTag, TAV>(pt.y), Coordinate2Index<ColTag, TAV>(pt.x));
+	}
 	template<typename TAV> std::pair<int, int> Coordinates2Indexes(CPoint pt) 
 	{ 
-		return std::make_pair(Coordinate2Index<RowTag, TAV>(pt.y), Coordinate2Index<ColTag, TAV>(pt.y));
+		return std::make_pair(Coordinate2Index<RowTag, TAV>(pt.y), Coordinate2Index<ColTag, TAV>(pt.x));
 	}
-	template<typename TRC, typename TAV> TRC::template SharetPtr LastPointer()
+	template<typename TRC, typename TAV> TRC::template SharedPtr LastPointer()
 	{
 		return boost::prior(GetDictionary<TRC, TAV>().end())->DataPtr;
+	}
+	template<typename TRC, typename TAV> TRC::template SharedPtr ZeroPointer()
+	{
+		return GetDictionary<TRC, TAV>().find(0)->DataPtr;
+	}
+	template<typename TRC, typename TAV> TRC::template SharedPtr FirstPointer()
+	{
+		return GetDictionary<TRC, TAV>().begin()->DataPtr;
 	}
 	//template<typename TRC, typename TAV> int Pointer2Index(TRC::template SharedPtr pointer)
 	//{ 
@@ -342,12 +372,14 @@ public:
 	template<typename TRC, typename TAV> int GetMaxIndex() 
 	{
 		auto& indexDictionary = GetDictionary<TRC, TAV>().get<IndexTag>();
-		return boost::prior(indexDictionary.end())->Index;
+		auto i = boost::prior(indexDictionary.end())->Index;
+		return i;
 	}
 	template<typename TRC, typename TAV> int GetMinIndex()
 	{
 		auto& indexDictionary = GetDictionary<TRC, TAV>().get<IndexTag>();
-		return indexDictionary.begin()->Index;
+		auto i = indexDictionary.begin()->Index;
+		return i;
 	}
 
 	template<typename TRC, typename TAV> std::pair<int, int> GetMinMaxIndexes()
@@ -369,6 +401,30 @@ public:
 	}
 
 	template<typename TRC> void Moved(CMovedEventArgs<TRC>& e) {  }
+	template<typename TRC> void Track(TRC::template SharedPtr& ptr)
+	{
+		PostUpdate(Updates::Column);//TODO
+		PostUpdate(Updates::Row);//TODO
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+	}
+	template<typename TRC> void EndTrack(TRC::template SharedPtr& ptr)
+	{
+		//auto& otherDic = GetDictionary<TRC::Other, AllTag>();
+		//for (const auto& other : otherDic) {
+		//	CSheet::Cell(ptr, other.DataPtr)->SetActMeasureValid(false);
+		//}
+		//for (const auto& other : otherDic) {
+		//	other.DataPtr->SetMeasureValid(false);
+		//}
+
+		PostUpdate(Updates::Column);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+	}
+	template<typename TRC> void FitWidth(TRC::template SharedPtr& e) {  }
+
 
 	template<typename TRC>
 	void MoveImpl(size_type indexTo, TRC::template SharedPtr spFrom)
@@ -1061,11 +1117,40 @@ template<> inline int CSheet::Coordinate2Index<RowTag, VisTag>(int coordinate)
 	return index;
 }
 
+
+
 template<> inline int CSheet::Coordinate2Index<ColTag, VisTag>(int coordinate)
 {
 	auto ptOrigin = GetOriginPoint();
 
 	auto& dictionary = GetDictionary<ColTag, VisTag>().get<IndexTag>();
+	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
+		[ptOrigin](const ColumnData& rowData, const int& rhs)->bool {
+		if (rowData.Index >= 0) {
+			return max(ptOrigin.x, rowData.DataPtr->GetRight()) < rhs;
+		}
+		else {
+			return rowData.DataPtr->GetRight() < rhs;
+		}
+	});
+	size_type index = 0;
+	if (rowIter == dictionary.end()) {
+		index = boost::prior(rowIter)->Index + 1;
+	}
+	else if (rowIter == dictionary.begin() && rowIter->DataPtr->GetLeft()>coordinate) {
+		index = rowIter->Index - 1;
+	}
+	else {
+		index = rowIter->Index;
+	}
+	return index;
+}
+
+template<> inline int CSheet::Coordinate2Index<ColTag, AllTag>(int coordinate)
+{
+	auto ptOrigin = GetOriginPoint();
+
+	auto& dictionary = GetDictionary<ColTag, AllTag>().get<IndexTag>();
 	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
 		[ptOrigin](const ColumnData& rowData, const int& rhs)->bool {
 		if (rowData.Index >= 0) {
@@ -1098,7 +1183,6 @@ template<> inline void CSheet::Moved<ColTag>(CMovedEventArgs<ColTag>& e)
 {
 	ColumnMoved(e);
 }
-
 
 
 

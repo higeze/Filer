@@ -58,6 +58,11 @@ std::shared_ptr<CCell>& CSheet::Cell(const std::shared_ptr<CRow>& spRow, const s
 	return spColumn->Cell(spRow.get());
 }
 
+std::shared_ptr<CCell>& CSheet::Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow)
+{
+	return spColumn->Cell(spRow.get());
+}
+
 std::shared_ptr<CCell>& CSheet::Cell( CRow* pRow,  CColumn* pColumn)
 {
 	return pColumn->Cell(pRow);

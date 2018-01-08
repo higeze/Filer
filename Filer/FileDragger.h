@@ -15,7 +15,7 @@ private:
 private:
 	CPoint m_ptDragStart;
 public:
-	CFileDragger():m_ptDragStart(){}
+	CFileDragger():m_ptDragStart(-1, -1){}
 	virtual ~CFileDragger(){}
 	
 	//virtual ISheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
@@ -45,7 +45,7 @@ public:
 	void OnBeginDrag(CSheet* pSheet, MouseEventArgs const & e) override;
 	void OnDrag(CSheet* pSheet, MouseEventArgs const & e) override;
 	void OnEndDrag(CSheet* pSheet, MouseEventArgs const & e) override;
-	size_type GetDragToAllIndex() override;
-	size_type GetDragFromAllIndex() override;
+	void OnLeaveDrag(CSheet* pSheet, MouseEventArgs const & e) override;
+	void OnPaintDragLine(CSheet* pSheet, const PaintEventArgs & e)override{/*Do Nothing*/}
 
 };

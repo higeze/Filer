@@ -1,6 +1,11 @@
 #pragma once
 #include <Windows.h>
 
+struct XTag
+{};
+struct YTag
+{};
+
 class CPoint:public tagPOINT
 {
 public:
@@ -22,4 +27,11 @@ public:
 	bool operator!=(const CPoint& pt)const
 	{return (x!=pt.x||y!=pt.y);}
 	operator LPPOINT(){return this;}
+	
+	template<typename TXY>
+	LONG Get()const { return 0; }
 };
+
+template<> inline LONG CPoint::Get<XTag>()const { return x; }
+template<> inline LONG CPoint::Get<YTag>()const { return y; }
+

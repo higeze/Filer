@@ -62,6 +62,9 @@ public:
 	virtual bool GetSelected()const{return m_bSelected;}
 	virtual void SetSelected(const bool& bSelected)=0;
 	virtual bool IsDragTrackable()const{return false;}
+	virtual coordinates_type GetLeftTop()const = 0;
+	virtual coordinates_type GetRightBottom()/*TODO*/ = 0;
+	virtual void SetWidthHeightWithoutSignal(const coordinates_type&) = 0;
 };
 
 BOOST_CLASS_EXPORT_KEY(CBand);

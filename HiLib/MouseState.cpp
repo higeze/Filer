@@ -207,3 +207,4 @@ IMouseState* CDragMouseState::OnLButtonDblClkTimeExceed(CSheet* pSheet, MouseEve
 {
 	return KeepState();
 }
+

@@ -313,12 +313,12 @@ void CCursorer::SetFocusedRCs(CSheet* pSheet, std::vector<RC> rcs)
 	auto colMinMax = pSheet->GetMinMaxAllColumnIndex();
 	auto rc = rcs[0];
 	if(rowMinMax.first<=rc.Row && rc.Row<=rowMinMax.second &&
-		colMinMax.first<=rc.Column && rc.Column<=colMinMax.second){
-		auto cell = pSheet->Cell<AllTag>(rc.Row, rc.Column);
-		pSheet->GetCursorerPtr()->SetFocusedRowColumn(CRowColumn(pSheet->Index2Pointer<RowTag, AllTag>(rcs[0].Row).get(), pSheet->Index2Pointer<ColTag, AllTag>(rcs[0].Column).get()));
+		colMinMax.first<=rc.Col && rc.Col<=colMinMax.second){
+		auto cell = pSheet->Cell<AllTag>(rc.Row, rc.Col);
+		pSheet->GetCursorerPtr()->SetFocusedRowColumn(CRowColumn(pSheet->Index2Pointer<RowTag, AllTag>(rcs[0].Row).get(), pSheet->Index2Pointer<ColTag, AllTag>(rcs[0].Col).get()));
 		if( rcs.size()>1 ){
 			if(auto p = std::dynamic_pointer_cast<CSheet>(cell)){
-				p->GetCursorerPtr()->SetFocusedRowColumn(CRowColumn(p->Index2Pointer<RowTag, AllTag>(rcs[1].Row).get(), p->Index2Pointer<ColTag, AllTag>(rcs[1].Column).get()));		
+				p->GetCursorerPtr()->SetFocusedRowColumn(CRowColumn(p->Index2Pointer<RowTag, AllTag>(rcs[1].Row).get(), p->Index2Pointer<ColTag, AllTag>(rcs[1].Col).get()));		
 			}
 		}
 	}
@@ -332,8 +332,8 @@ void CCursorer::SetSelectedRCs(CSheet* pSheet, std::vector<RC> rcs)
 
 	for(auto& rc : rcs){
 		if(rowMinMax.first<=rc.Row && rc.Row<=rowMinMax.second &&
-			colMinMax.first<=rc.Column && rc.Column<=colMinMax.second){
-			pSheet->Cell<AllTag>(rc.Row, rc.Column)->SetSelected(true);
+			colMinMax.first<=rc.Col && rc.Col<=colMinMax.second){
+			pSheet->Cell<AllTag>(rc.Row, rc.Col)->SetSelected(true);
 		}
 	}
 }

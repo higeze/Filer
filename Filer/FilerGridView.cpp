@@ -75,12 +75,39 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 
 		switch(dwEffect){
 		case DROPEFFECT_MOVE:
-			{
-				HRESULT hr = pFileOperation->MoveItems(pDataObj, pDestShellItem);
-				if(FAILED(hr)){ return; }
-				hr = pFileOperation->PerformOperations();
-				if(FAILED(hr)){ return; }
+		{
+			//if folder is same, do not need to move
+			FORMATETC formatetc = { 0 };
+			formatetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLIDLIST);
+			formatetc.ptd = NULL;
+			formatetc.dwAspect = DVASPECT_CONTENT;
+			formatetc.lindex = -1;
+			formatetc.tymed = TYMED_HGLOBAL;
+
+			STGMEDIUM medium;
+			HRESULT hr = pDataObj->GetData(&formatetc, &medium);
+			if (FAILED(hr)) { return; }
+			LPIDA pida = (LPIDA)GlobalLock(medium.hGlobal);
+			CIDLPtr idlFolderPtr(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
+
+			//std::wstring path1;
+			//::SHGetPathFromIDList(idlFolderPtr, ::GetBuffer(path1, MAX_PATH));
+			//::ReleaseBuffer(path1);
+
+			//std::wstring path2;
+			//::SHGetPathFromIDList(m_spFolder->GetAbsolutePidl(), ::GetBuffer(path2, MAX_PATH));
+			//::ReleaseBuffer(path2);
+
+			if (::ILIsEqual(idlFolderPtr, m_spFolder->GetAbsolutePidl())) {
+				//Do nothing
 			}
+			else {
+				HRESULT hr = pFileOperation->MoveItems(pDataObj, pDestShellItem);
+				if (FAILED(hr)) { return; }
+				hr = pFileOperation->PerformOperations();
+				if (FAILED(hr)) { return; }
+			}
+		}
 			break;
 		case DROPEFFECT_COPY:
 			{
@@ -132,44 +159,6 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 		}
 
 	});
-
-	//pDropTarget->Dropped.connect([this](std::string verb, std::vector<CIDLPtr> idlPtrs)->void{
-	//	for each(auto& idlPtr in idlPtrs){
-	//		LPTSTR           lpszFileName;
-	//		TCHAR            szSrcFilePath[256];
-	//		TCHAR            szDestFilePath[256];
-	//			SHGetPathFromIDList(idlPtr, szSrcFilePath);
-
-	//			lpszFileName = PathFindFileName(szSrcFilePath);
-	//			lstrcpy(szDestFilePath, m_spFolder->GetPath().c_str());
-	//			PathAppend(szDestFilePath, lpszFileName);
-
-	//			if (verb == "Move")
-	//				MoveFile(szSrcFilePath, szDestFilePath);
-	//			else if (verb == "Copy")
-	//				CopyFile(szSrcFilePath, szDestFilePath, TRUE);
-	//			else if (verb == "Link") {
-	//				IShellLink   *pShellLink;
-	//				IPersistFile *pPersistFile;
-	//				WCHAR        szLinkPath[256];
-	//				WCHAR        szUnicode[256];
-	//				LPWSTR       lpsz;
-	//		
-	//				CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pShellLink));
-	//				pShellLink->SetPath(szSrcFilePath);
-	//				pShellLink->QueryInterface(IID_PPV_ARGS(&pPersistFile));
-
-	//				lpsz = szDestFilePath;
-
-	//				wsprintfW(szLinkPath, L"%s.lnk", lpsz);
-	//				pPersistFile->Save(szLinkPath, TRUE);
-	//				pPersistFile->Release();
-	//				pShellLink->Release();
-	//			}
-	//			else
-	//				;
-	//			}
-	//});
 	 
 	m_pDropTarget = CComPtr<IDropTarget>(pDropTarget);
 	::RegisterDragDrop(m_hWnd, m_pDropTarget);

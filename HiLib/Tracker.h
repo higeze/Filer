@@ -1,9 +1,11 @@
 #pragma once
-
+#include "Sheet.h"
 #include "Column.h"
 
 //Pre-Declaration
 class CSheet;
+struct RowTag;
+struct ColTag;
 struct MouseEventArgs;
 struct SetCursorEventArgs;
 
@@ -14,6 +16,9 @@ public:
 	virtual void OnBeginTrack(CSheet* pSheet, MouseEventArgs const & e) = 0;
 	virtual void OnTrack(CSheet* pSheet, MouseEventArgs const & e) = 0;
 	virtual void OnEndTrack(CSheet* pSheet, MouseEventArgs const & e) = 0;
+	virtual void OnLeaveTrack(CSheet* pSheet, MouseEventArgs const & e) = 0;
+	virtual void OnSetCursor(CSheet* pSheet, SetCursorEventArgs const & e) = 0;
+	virtual bool IsTarget(CSheet* pSheet, MouseEventArgs const & e) = 0;
 };
 
 template<typename TRC>
@@ -62,25 +67,100 @@ public:
 		//pSheet->HeaderFitWidth(CColumnEventArgs(p.get()));//TODO
 	}
 
+	void OnSetCursor(CSheet* pSheet, SetCursorEventArgs const & e)
+	{
+		CPoint pt;
+		::GetCursorPos(&pt);
+		::ScreenToClient(e.HWnd, &pt);
+		if (IsTarget(pSheet, MouseEventArgs(NULL, pt))) {
+			e.Handled = TRUE;
+			SetSizeCursor(); 
+		}
+	}
+
 	void OnBeginTrack(CSheet* pSheet, MouseEventArgs const & e) override
 	{
-		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
-		m_trackLeftVisib = pSheet->Coordinate2Index<TRC, VisTag>(pSheet->Point2Coordinate<TRC>(e.Point));
+		//e.Handled = TRUE;
+		SetSizeCursor();
 	}
 
 	void OnTrack(CSheet* pSheet, MouseEventArgs const & e) override
 	{
-		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
-		auto p = pSheet->Index2Pointer<ColTag, VisTag>(m_trackLeftVisib);
-		//p->SetWidthWithoutSignal(max(e.Point.x - pCol->GetLeft(), CColumn::kMinWidth));//TODO
-		//pSheet->ColumnHeaderTrack(CColumnEventArgs(pCol.get()));//TODO
+		//e.Handled = TRUE;
+		SetSizeCursor();
+		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
+		p->SetWidthHeightWithoutSignal(max(e.Point.Get<TRC::Axis>() - p->GetLeftTop(), CColumn::kMinWidth));//TODO
+		pSheet->Track<TRC>(p);
 	}
 
 	void OnEndTrack(CSheet* pSheet, MouseEventArgs const & e) override
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
-		auto pCol = pSheet->Index2Pointer<ColTag, VisTag>(m_trackLeftVisib);
-		//pCol->SetWidthWithoutSignal(max(e.Point.x - pCol->GetLeft(), CColumn::kMinWidth));//TODO
-		//pSheet->ColumnHeaderEndTrack(CColumnEventArgs(pCol.get()));//TODO
+		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
+		p->SetWidthHeightWithoutSignal(max(e.Point.Get<TRC::Axis>() - p->GetLeftTop(), CColumn::kMinWidth));//TODO
+		pSheet->EndTrack<TRC>(p);
 	}
+
+	void OnLeaveTrack(CSheet* pSheet, MouseEventArgs const & e) override
+	{
+		//TODO
+		//Should Candel?
+	}
+
+	bool IsTarget(CSheet* pSheet, MouseEventArgs const & e) override
+	{
+		if (!pSheet->Visible()) {
+			return false;
+		}
+		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Point);
+		auto minIdx = pSheet->GetMinIndex<TRC, VisTag>();
+		auto maxIdx = pSheet->GetMaxIndex<TRC, VisTag>();
+
+		//If Header except Filter
+		if (visIndexes.Get<TRC::Other>() < 0) {
+			if (visIndexes.Get<TRC>() < minIdx) {
+				//Out of Left	
+				return false;
+			}
+			else if (visIndexes.Get<TRC>() > maxIdx) {
+				//Out of Right
+				if (e.Point.Get<TRC::Axis>() < pSheet->LastPointer<TRC, VisTag>()->GetRightBottom() + CBand::kResizeAreaHarfWidth) {
+					m_trackLeftVisib = visIndexes.Get<TRC>() - 1;
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else if (e.Point.Get<TRC::Axis>() < (pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC>())->GetLeftTop() + CBand::kResizeAreaHarfWidth)) {
+				m_trackLeftVisib = max(visIndexes.Get<TRC>() - 1, minIdx);
+				return true;
+			}
+			else if ((pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC>())->GetRightBottom() - CBand::kResizeAreaHarfWidth) < e.Point.Get<TRC::Axis>()) {
+				m_trackLeftVisib = min(visIndexes.Get<TRC>(), maxIdx);
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else {
+			return false;
+		}
+	}
+
+private:
+	void SetSizeCursor(){}
+
 };
+
+template<> inline void CTracker<RowTag>::SetSizeCursor()
+{
+	::SetCursor(::LoadCursor(NULL, IDC_SIZENS));
+}
+
+template<> inline void CTracker<ColTag>::SetSizeCursor()
+{
+	::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
+}

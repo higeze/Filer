@@ -2,6 +2,7 @@
 
 class CSheet;
 struct MouseEventArgs;
+struct PaintEventArgs;
 
 class IDragger
 {
@@ -13,6 +14,6 @@ public:
 	virtual void OnBeginDrag(CSheet* pSheet, MouseEventArgs const & e) = 0;
 	virtual void OnDrag(CSheet* pSheet, MouseEventArgs const & e) = 0;
 	virtual void OnEndDrag(CSheet* pSheet, MouseEventArgs const & e) = 0;
-	virtual size_type GetDragToAllIndex() = 0;//TODO
-	virtual size_type GetDragFromAllIndex() = 0;//TODO
+	virtual void OnLeaveDrag(CSheet* pSheet, MouseEventArgs const & e) = 0;
+	virtual void OnPaintDragLine(CSheet* pSheet, PaintEventArgs const & e) = 0;
 };

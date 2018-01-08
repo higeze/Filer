@@ -5,6 +5,9 @@
 #include "SheetEventArgs.h"
 #include "GridView.h"
 
+
+
+
 //CSheetState* CTracker::OnColumnHeaderBeginTrack(CSheet* pSheet, MouseEventArgs& e, size_type col)
 //{
 //	::SetCursor(::LoadCursor(NULL,IDC_SIZEWE));

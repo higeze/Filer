@@ -34,6 +34,11 @@ public:
 	{
 		return m_pSheet->Pointer2Index<RowTag, TAV>(this);
 	}
+	//TODO Refactor
+	virtual coordinates_type GetLeftTop()const override { return GetTop(); }
+	virtual coordinates_type GetRightBottom()/*TODO*/ override { return GetBottom(); }
+	virtual void SetWidthHeightWithoutSignal(const coordinates_type& height) override { SetHeightWithoutSignal(height); }
+
 };
 
 class CGridView;
@@ -50,7 +55,7 @@ class CParentHeaderRow:public CParentRow
 {
 public:
 	CParentHeaderRow(CGridView* pGrid):CParentRow(pGrid){}
-	virtual bool IsDragTrackable()const override{return true;}
+	//virtual bool IsDragTrackable()const override{return true;}
 };
 
 class CSheetCell;
@@ -67,5 +72,5 @@ class CChildHeaderRow:public CChildRow
 {
 public:
 	CChildHeaderRow(CSheetCell* pGrid):CChildRow(pGrid){}
-	virtual bool IsDragTrackable()const override{return true;}
+	//virtual bool IsDragTrackable()const override{return true;}
 };

@@ -1586,41 +1586,43 @@ void CGridView::OnPaint(PaintEventArgs& e)
 	}
 
 	//Paint Column Drag Target Line
-	{
-		auto& colDictionary=m_columnAllDictionary.get<IndexTag>();
-		auto& rowVDictionary=m_rowVisibleDictionary.get<IndexTag>();
-		auto dragToAllIndex = m_spColDragger->GetDragToAllIndex();
-		auto dragFromAllIndex = m_spColDragger->GetDragFromAllIndex();
-		if(dragToAllIndex!=CColumn::kInvalidIndex && dragToAllIndex!=dragFromAllIndex){
-			coordinates_type x=0;
-			if(dragToAllIndex<=colDictionary.begin()->Index){
-				auto pColumn = colDictionary.begin()->DataPtr;
-				x = pColumn->GetLeft();
-			}else if(dragToAllIndex>boost::prior(colDictionary.end())->Index){
-				auto pColumn = boost::prior(colDictionary.end())->DataPtr;
-				x = pColumn->GetRight();
-			}else{
-				auto pColumn = Index2Pointer<ColTag, AllTag>(dragToAllIndex);
-				x = pColumn->GetLeft();
-			}
-			coordinates_type y0 = rowVDictionary.begin()->DataPtr->GetTop();
-			coordinates_type y1 = boost::prior(rowVDictionary.find(0))->DataPtr->GetBottom();
+	m_spRowDragger->OnPaintDragLine(this, e);
+	m_spColDragger->OnPaintDragLine(this, e);
 
-			auto width = m_spHeaderProperty->GetPenPtr()->GetWidth();
-			CPen pen(m_spHeaderProperty->GetPenPtr()->GetPenStyle(),
-				m_spHeaderProperty->GetPenPtr()->GetWidth(),
-				CColor(RGB(255,0,0)));
-			HPEN hPen = e.DCPtr->SelectPen(pen);
+	//{
+	//	auto& colDictionary=m_columnAllDictionary.get<IndexTag>();
+	//	auto& rowVDictionary=m_rowVisibleDictionary.get<IndexTag>();
+	//	auto dragToAllIndex = m_spColDragger->GetDragToAllIndex();
+	//	auto dragFromAllIndex = m_spColDragger->GetDragFromAllIndex();
+	//	if(dragToAllIndex!=CColumn::kInvalidIndex && dragToAllIndex!=dragFromAllIndex){
+	//		coordinates_type x=0;
+	//		if(dragToAllIndex<=colDictionary.begin()->Index){
+	//			auto pColumn = colDictionary.begin()->DataPtr;
+	//			x = pColumn->GetLeft();
+	//		}else if(dragToAllIndex>boost::prior(colDictionary.end())->Index){
+	//			auto pColumn = boost::prior(colDictionary.end())->DataPtr;
+	//			x = pColumn->GetRight();
+	//		}else{
+	//			auto pColumn = Index2Pointer<ColTag, AllTag>(dragToAllIndex);
+	//			x = pColumn->GetLeft();
+	//		}
+	//		coordinates_type y0 = rowVDictionary.begin()->DataPtr->GetTop();
+	//		coordinates_type y1 = boost::prior(rowVDictionary.find(0))->DataPtr->GetBottom();
 
-			e.DCPtr->MoveToEx(x,y0);
-			e.DCPtr->LineTo(x,y1);
+	//		auto width = m_spHeaderProperty->GetPenPtr()->GetWidth();
+	//		CPen pen(m_spHeaderProperty->GetPenPtr()->GetPenStyle(),
+	//			m_spHeaderProperty->GetPenPtr()->GetWidth(),
+	//			CColor(RGB(255,0,0)));
+	//		HPEN hPen = e.DCPtr->SelectPen(pen);
 
-			e.DCPtr->SelectPen(hPen);
-		}
-	}
+	//		e.DCPtr->MoveToEx(x,y0);
+	//		e.DCPtr->LineTo(x,y1);
+
+	//		e.DCPtr->SelectPen(hPen);
+	//	}
+	//}
 
 }
-
 
 LRESULT CGridView::OnCommandSelectAll(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {

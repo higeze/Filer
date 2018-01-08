@@ -10,15 +10,6 @@ struct EventArgs;
 struct MouseEventArgs;
 struct SetCursorEventArgs;
 
-struct RC
-{
-	typedef int size_type;
-	RC(size_type row, size_type col)
-		:Row(row), Column(col){}
-	size_type Row;
-	size_type Column;
-};
-
 class CCursorer
 {
 private:

@@ -77,6 +77,10 @@ public:
 	virtual cell_type FilterCellTemplate( CRow* pRow,  CColumn* pColumn)=0;
 	virtual cell_type CellTemplate( CRow* pRow,  CColumn* pColumn)=0;
 	virtual void InsertNecessaryRows(){};
+	virtual coordinates_type GetLeftTop()const override { return GetLeft(); }
+	virtual coordinates_type GetRightBottom()/*TODO*/ override { return GetRight(); }
+	virtual void SetWidthHeightWithoutSignal(const coordinates_type& width) override { SetWidthWithoutSignal(width); }
+
 };
 
 BOOST_CLASS_EXPORT_KEY(CColumn);
