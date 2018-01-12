@@ -15,6 +15,7 @@
 #include "Tracker.h"
 #include "Dragger.h"
 #include "Cursorer.h"
+#include "Celler.h"
 #include "SheetStateMachine.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
@@ -50,6 +51,10 @@ CSheet::CSheet(
 	if(m_spCursorer.get()==nullptr){
 		m_spCursorer = std::make_shared<CCursorer>();
 	}
+	if (m_spCeller.get() == nullptr) {
+		m_spCeller = std::make_shared<CCeller>();
+	}
+
 
 }
 
@@ -67,6 +72,19 @@ std::shared_ptr<CCell>& CSheet::Cell( CRow* pRow,  CColumn* pColumn)
 {
 	return pColumn->Cell(pRow);
 }
+
+std::shared_ptr<CCell> CSheet::Cell(const CPoint& pt)
+{
+	auto rowPtr = Coordinate2Pointer<RowTag>(pt.y);
+	auto colPtr = Coordinate2Pointer<ColTag>(pt.x);
+	if (rowPtr.get() != nullptr && colPtr.get() != nullptr){
+		return CSheet::Cell(rowPtr, colPtr);
+	}
+	else {
+		return nullptr;
+	}
+}
+
 
 void CSheet::SetAllRowMeasureValid(bool valid)
 {
@@ -765,10 +783,7 @@ CRowColumn CSheet::Point2RowColumn(const CPoint& ptClient)
 
 void CSheet::OnContextMenu(ContextMenuEventArgs& e)
 {
-	if(!Visible())return;
-	auto roco = Point2RowColumn(e.Point);
-	if(roco.IsInvalid())return;
-	roco.GetColumnPtr()->Cell(roco.GetRowPtr())->OnContextMenu(e);
+	m_spStateMachine->ContextMenu(this, e);
 }
 
 void CSheet::OnRButtonDown(MouseEventArgs& e)

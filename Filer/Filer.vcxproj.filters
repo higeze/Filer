@@ -515,6 +515,9 @@
     <ClInclude Include="..\HiLib\IDragger.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\Celler.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -782,6 +785,9 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\SheetStateMachine.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Celler.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

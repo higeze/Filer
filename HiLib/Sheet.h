@@ -12,6 +12,7 @@
 struct CSheetStateMachine;
 class IDragger;
 class ITracker;
+class ICeller;
 class CCell;
 //class CRow;
 class CColumn;
@@ -35,6 +36,7 @@ struct RowTag
 	typedef RowDictionary Dictionary;
 	typedef YTag Axis;
 	typedef ColTag Other;
+	typedef RowData Data;
 };
 struct ColTag
 {
@@ -43,6 +45,7 @@ struct ColTag
 	typedef ColumnDictionary Dictionary;
 	typedef XTag Axis;
 	typedef RowTag Other;
+	typedef ColumnData Data;
 };
 struct AllTag
 {};
@@ -95,6 +98,7 @@ public:
 	std::shared_ptr<IDragger> m_spColDragger; /**< Dragger */
 	std::shared_ptr<IDragger> m_spItemDragger; /**< Dragger */
 	std::shared_ptr<CCursorer> m_spCursorer; /**< Cursor */
+	std::shared_ptr<ICeller> m_spCeller;
 
 protected:
 
@@ -293,6 +297,8 @@ public:
 	virtual void OnSetFocus(EventArgs& e);
 	virtual void OnKillFocus(EventArgs& e);
 	virtual void OnKeyDown(KeyEventArgs& e){};
+
+	std::shared_ptr<CCell> Cell(const CPoint& pt);
 	
 	//Tag dispatch
 	template<typename TRC, typename TAV> TRC::template Dictionary& GetDictionary() { return nullptr; }
@@ -308,7 +314,31 @@ public:
 		}
 	}
 
-	template<typename TRC> TRC::template SharedPtr Coordinate2Pointer(coordinates_type coordinate) { return nullptr; }
+	template<typename TRC> TRC::template SharedPtr Coordinate2Pointer(coordinates_type coordinate)
+	{
+		auto ptOrigin = GetOriginPoint();
+
+		auto& visDic = GetDictionary<TRC, VisTag>().get<IndexTag>();
+		auto iter = std::upper_bound(visDic.begin(), visDic.end(), coordinate,
+			[ptOrigin](const int& c, const TRC::Data & data)->bool {
+			if (data.Index >= 0) {
+				return c<max(ptOrigin.Get<TRC::Axis>(), data.DataPtr->GetLeftTop());
+			}
+			else {
+				return c<data.DataPtr->GetLeftTop();
+			}
+		});
+
+		auto prevIter = boost::prior(iter);
+
+		if (iter == visDic.begin() || (iter == visDic.end() && coordinate > prevIter->DataPtr->GetRightBottom())) {
+			return nullptr;
+		}
+		else {
+			--iter;
+		}
+		return iter->DataPtr;
+	}
 	template<typename TRC> int Point2Coordinate(CPoint pt) { return CBand::kInvalidIndex; }
 
 	template<typename TRC, typename TAV> int Coordinate2Index(coordinates_type coordinate) { return CBand::kInvalidIndex; }
@@ -1031,31 +1061,31 @@ template<> inline ColTag::Dictionary& CSheet::GetDictionary<ColTag, VisTag>()
 	return m_columnVisibleDictionary;
 }
 
-template<> inline RowTag::SharedPtr CSheet::Coordinate2Pointer<RowTag>(int coordinate)
-{
-	auto ptOrigin = GetOriginPoint();
-
-	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
-	auto rowIter = std::upper_bound(rowDictionary.begin(), rowDictionary.end(), coordinate,
-		[ptOrigin](const int& y, const RowData& rowData)->bool {
-		if (rowData.Index >= 0) {
-			return y<max(ptOrigin.y, rowData.DataPtr->GetTop());
-		}
-		else {
-			return y<rowData.DataPtr->GetTop();
-		}
-	});
-
-	auto prevRowIter = boost::prior(rowIter);
-
-	if (rowIter == rowDictionary.begin() || (rowIter == rowDictionary.end() && coordinate>prevRowIter->DataPtr->GetBottom())) {
-		return nullptr;
-	}
-	else {
-		--rowIter;
-	}
-	return rowIter->DataPtr;
-}
+//template<> inline RowTag::SharedPtr CSheet::Coordinate2Pointer<RowTag>(int coordinate)
+//{
+//	auto ptOrigin = GetOriginPoint();
+//
+//	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
+//	auto rowIter = std::upper_bound(rowDictionary.begin(), rowDictionary.end(), coordinate,
+//		[ptOrigin](const int& y, const RowData& rowData)->bool {
+//		if (rowData.Index >= 0) {
+//			return y<max(ptOrigin.y, rowData.DataPtr->GetTop());
+//		}
+//		else {
+//			return y<rowData.DataPtr->GetTop();
+//		}
+//	});
+//
+//	auto prevRowIter = boost::prior(rowIter);
+//
+//	if (rowIter == rowDictionary.begin() || (rowIter == rowDictionary.end() && coordinate>prevRowIter->DataPtr->GetBottom())) {
+//		return nullptr;
+//	}
+//	else {
+//		--rowIter;
+//	}
+//	return rowIter->DataPtr;
+//}
 
 template<> inline int CSheet::Point2Coordinate<RowTag>(CPoint pt) { return pt.y; }
 template<> inline int CSheet::Point2Coordinate<ColTag>(CPoint pt) { return pt.x; }
