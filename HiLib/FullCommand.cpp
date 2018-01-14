@@ -18,7 +18,7 @@ void CDoCommandBase::Do()//Do have to call first
 void CDoCommandBase::UnDo()//UnDo have to call last
 {
 	auto cursorer = m_pGrid->GetCursorerPtr();
-	cursorer->OnCursorClear(m_pGrid, EventArgs());
+	cursorer->OnCursorClear(m_pGrid);
 	cursorer->SetFocusedRCs(m_pGrid, m_prevFocusedRCs);
 	cursorer->SetSelectedRCs(m_pGrid, m_prevSelectedRCs);
 	cursorer->SetSelectedRows(m_pGrid, m_prevSelectedRows);
@@ -30,7 +30,7 @@ void CDoCommandBase::UnDo()//UnDo have to call last
 void CDoCommandBase::ReDo()//UnDo have to call last
 {
 	auto cursorer = m_pGrid->GetCursorerPtr();
-	cursorer->OnCursorClear(m_pGrid, EventArgs());
+	cursorer->OnCursorClear(m_pGrid);
 	cursorer->SetFocusedRCs(m_pGrid, m_prevFocusedRCs);
 	cursorer->SetSelectedRCs(m_pGrid, m_prevSelectedRCs);
 	cursorer->SetSelectedRows(m_pGrid, m_prevSelectedRows);
@@ -118,17 +118,17 @@ MoveColumnCommand::MoveColumnCommand(CGridView* pGrid,int pos, std::shared_ptr<C
 void MoveColumnCommand::Do()
 {
 	CDoCommandBase::Do();
-	m_pGrid->MoveColumnImpl(m_nextPos, m_spColumn);
+	m_pGrid->MoveImpl<ColTag>(m_nextPos, m_spColumn);
 }
 void MoveColumnCommand::UnDo()
 {
 	auto pos = (m_prevPos<m_nextPos)?m_prevPos:m_prevPos+1;
-	m_pGrid->MoveColumnImpl(pos, m_spColumn);
+	m_pGrid->MoveImpl<ColTag>(pos, m_spColumn);
 	CDoCommandBase::UnDo();
 }
 void MoveColumnCommand::ReDo()
 {
-	m_pGrid->MoveColumnImpl(m_nextPos, m_spColumn);
+	m_pGrid->MoveImpl<ColTag>(m_nextPos, m_spColumn);
 	CDoCommandBase::ReDo();
 }
 
@@ -140,16 +140,16 @@ InsertColumnCommand::InsertColumnCommand(CGridView* pGrid,int pos, std::shared_p
 void InsertColumnCommand::Do()
 {
 	CDoCommandBase::Do();
-	m_pGrid->InsertColumnImpl(m_pos, m_spColumn);
+	m_pGrid->InsertImpl<ColTag, AllTag>(m_pos, m_spColumn);
 }
 void InsertColumnCommand::UnDo()
 {
-	m_pGrid->EraseColumnImpl(m_spColumn);
+	m_pGrid->EraseImpl<ColTag>(m_spColumn);
 	CDoCommandBase::UnDo();
 }
 void InsertColumnCommand::ReDo()
 {
-	m_pGrid->InsertColumnImpl(m_pos, m_spColumn);
+	m_pGrid->InsertImpl<ColTag, AllTag>(m_pos, m_spColumn);
 	CDoCommandBase::ReDo();
 }
 
@@ -165,7 +165,7 @@ void EraseColumnCommand::Do()
 }
 void EraseColumnCommand::UnDo()
 {
-	m_pGrid->InsertColumnImpl(m_pos, m_spColumn);
+	m_pGrid->InsertImpl<ColTag, AllTag>(m_pos, m_spColumn);
 	CDoCommandBase::UnDo();
 }
 void EraseColumnCommand::ReDo()

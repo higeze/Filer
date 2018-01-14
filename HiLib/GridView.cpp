@@ -840,8 +840,8 @@ void CGridView::OnKeyDown(KeyEventArgs& e)
 void CGridView::OnContextMenu(ContextMenuEventArgs& e)
 {
 	if(!Visible())return;
-	auto roco = Point2RowColumn(e.Point);
-	if(roco.IsInvalid()){
+	auto cell = Cell(e.Point);
+	if(!cell){
 		CMenu* pMenu = GetContextMenuPtr(); 
 		if(pMenu){
 			CPoint ptScreen(e.Point);
@@ -852,7 +852,7 @@ void CGridView::OnContextMenu(ContextMenuEventArgs& e)
 			pMenu->TrackPopupMenu(0,ptScreen.x,ptScreen.y,hWnd);
 		}
 	}else{
-		roco.GetColumnPtr()->Cell(roco.GetRowPtr())->OnContextMenu(e);
+		cell->OnContextMenu(e);
 	}
 }
 
@@ -1735,7 +1735,7 @@ void CGridView::EnsureVisibleCell(const cell_type& pCell)
 
 void CGridView::Jump(std::shared_ptr<CCell>& spCell)
 {
-	m_spCursorer->OnCursor(this, EventArgs(), CRowColumn(spCell->GetRowPtr(), spCell->GetColumnPtr()));
+	m_spCursorer->OnCursor(spCell);
 	EnsureVisibleCell(spCell);
 	SubmitUpdate();
 }
@@ -1896,7 +1896,7 @@ void CGridView::EraseColumn(column_type spColumn)
 	m_spUndoRedoManager->Do(std::make_shared<EraseColumnCommand>(this, spColumn));
 
 }
-void CGridView::InsertColumn(size_type colTo, column_type spColumn)
+void CGridView::InsertColumn(size_type colTo, column_type spColumn, bool notify)
 {
 	m_spUndoRedoManager->Do(std::make_shared<InsertColumnCommand>(this, colTo, spColumn));
 
@@ -1914,7 +1914,7 @@ void CGridView::FindNext(const std::wstring& findWord, bool matchCase, bool matc
 {
 	//Fiding start from focused cell
 	//If focused cell is invalid(Not focused), MinMax Visible Cell is start point
-	auto focused = m_spCursorer->GetFocusedRowColumn();
+	auto focused = m_spCursorer->GetFocusedCell();
 
 	auto& rowDict = m_rowVisibleDictionary.get<IndexTag>();
 	auto& colDict = m_columnVisibleDictionary.get<IndexTag>();
@@ -1947,12 +1947,12 @@ void CGridView::FindNext(const std::wstring& findWord, bool matchCase, bool matc
 	ColumnDictionary::iterator cIter, cEnd;
 	//Find word from Min to Max
 
-	if(focused.IsInvalid()){
+	if(!focused){
 		rIter = rowDict.begin();
 		cIter = colDict.begin();
 	}else{
-		rIter = rowDict.find(focused.GetRowPtr()->GetIndex<VisTag>());
-		cIter = colDict.find(focused.GetColumnPtr()->GetIndex<VisTag>());
+		rIter = rowDict.find(focused->GetRowPtr()->GetIndex<VisTag>());
+		cIter = colDict.find(focused->GetColumnPtr()->GetIndex<VisTag>());
 		cIter++;
 		if(cIter==colDict.end()){
 			cIter = colDict.begin();
@@ -1966,7 +1966,7 @@ void CGridView::FindNext(const std::wstring& findWord, bool matchCase, bool matc
 	}
 	//Find word from begining to Min
 	//If focused cell is invalid(Not focused), all range is already searched.
-	if(!focused.IsInvalid()){
+	if(!focused){
 		rIter = rowDict.begin();
 		cIter = colDict.begin();
 		rEnd = rowDict.end();
@@ -1985,7 +1985,7 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 {
 	//Fiding start from focused cell
 	//If focused cell is invalid(Not focused), MinMax Visible Cell is start point
-	auto focused = m_spCursorer->GetFocusedRowColumn();
+	auto focused = m_spCursorer->GetFocusedCell();
 
 	auto& rowDict = m_rowVisibleDictionary.get<IndexTag>();
 	auto& colDict = m_columnVisibleDictionary.get<IndexTag>();
@@ -2018,13 +2018,13 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 	ColumnDictionary::reverse_iterator cIter, cEnd;
 	//Find word from Min to Max
 
-	if(focused.IsInvalid()){
+	if(!focused){
 		rIter = rowDict.rbegin();
 		cIter = colDict.rbegin();
 	}else{
 		//In case of reverse_iterator, one iterator plused. Therefore it is necessary to minus.
-		rIter = RowDictionary::reverse_iterator(rowDict.find(focused.GetRowPtr()->GetIndex<VisTag>()));
-		cIter = ColumnDictionary::reverse_iterator(colDict.find(focused.GetColumnPtr()->GetIndex<VisTag>()));
+		rIter = RowDictionary::reverse_iterator(rowDict.find(focused->GetRowPtr()->GetIndex<VisTag>()));
+		cIter = ColumnDictionary::reverse_iterator(colDict.find(focused->GetColumnPtr()->GetIndex<VisTag>()));
 		rIter--;
 		cIter--;
 		cIter++;
@@ -2040,7 +2040,7 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 	}
 	//Find word from begining to Min
 	//If focused cell is invalid(Not focused), all range is already searched.
-	if(!focused.IsInvalid()){
+	if(!focused){
 		rIter = rowDict.rbegin();
 		cIter = colDict.rbegin();
 		rEnd = rowDict.rend();

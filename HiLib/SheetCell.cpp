@@ -199,8 +199,8 @@ Compares CSheetCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Com
 {//TODO check size, fixed and soon
 
 	//if Minus size is difference, all cells are not equal
-	if(MinusSize(m_columnVisibleDictionary)!=pCell->MinusSize(pCell->m_columnVisibleDictionary)||
-		MinusSize(m_rowVisibleDictionary)!=pCell->MinusSize(pCell->m_rowVisibleDictionary)){
+	if(GetMinIndex<ColTag, AllTag>()!=pCell->GetMinIndex<ColTag, AllTag>() ||
+		GetMinIndex<RowTag, AllTag>() !=pCell->GetMinIndex<RowTag, AllTag>()){
 		boost::range::for_each(m_columnVisibleDictionary,[&](const ColumnData& colData){
 			boost::range::for_each(this->m_rowVisibleDictionary,[&](const RowData& rowData){
 				action(CSheet::Cell(rowData.DataPtr, colData.DataPtr).get(), Compares::Diff);
@@ -336,9 +336,9 @@ CMenu* CSheetCell::GetContextMenuPtr()
 void CSheetCell::OnContextMenu(ContextMenuEventArgs& e)
 {
 	if(!Visible())return;
-	auto roco = Point2RowColumn(e.Point);
-	if(!roco.IsInvalid()){
-		roco.GetColumnPtr()->Cell(roco.GetRowPtr())->OnContextMenu(e);
+	auto cell = Cell(e.Point);
+	if(cell){
+		cell->OnContextMenu(e);
 	}else{
 		CCell::OnContextMenu(e);
 	}

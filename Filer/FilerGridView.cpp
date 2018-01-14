@@ -221,8 +221,8 @@ void CFilerGridView::OnKeyDown(KeyEventArgs& e)
 
 	case VK_RETURN:
 		{
-			if(!m_spCursorer->GetFocusedRowColumn().IsInvalid()){
-				if(auto p = dynamic_cast<CFileRow*>(m_spCursorer->GetFocusedRowColumn().GetRowPtr())){
+			if(m_spCursorer->GetFocusedCell()){
+				if(auto p = dynamic_cast<CFileRow*>(m_spCursorer->GetFocusedCell()->GetRowPtr())){
 					auto spFile = p->GetFilePointer();
 					Open(spFile);
 				}

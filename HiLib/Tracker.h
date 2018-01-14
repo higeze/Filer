@@ -89,7 +89,7 @@ public:
 		//e.Handled = TRUE;
 		SetSizeCursor();
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		p->SetWidthHeightWithoutSignal(max(e.Point.Get<TRC::Axis>() - p->GetLeftTop(), CColumn::kMinWidth));//TODO
+		p->SetWidthHeightWithoutSignal((std::max)(e.Point.Get<TRC::Axis>() - p->GetLeftTop(), (LONG)CColumn::kMinWidth));//TODO
 		pSheet->Track<TRC>(p);
 	}
 
@@ -97,7 +97,7 @@ public:
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		p->SetWidthHeightWithoutSignal(max(e.Point.Get<TRC::Axis>() - p->GetLeftTop(), CColumn::kMinWidth));//TODO
+		p->SetWidthHeightWithoutSignal((std::max)(e.Point.Get<TRC::Axis>() - p->GetLeftTop(), (LONG)CColumn::kMinWidth));//TODO
 		pSheet->EndTrack<TRC>(p);
 	}
 
@@ -134,11 +134,11 @@ public:
 				}
 			}
 			else if (e.Point.Get<TRC::Axis>() < (pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC>())->GetLeftTop() + CBand::kResizeAreaHarfWidth)) {
-				m_trackLeftVisib = max(visIndexes.Get<TRC>() - 1, minIdx);
+				m_trackLeftVisib = (std::max)(visIndexes.Get<TRC>() - 1, minIdx);
 				return true;
 			}
 			else if ((pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC>())->GetRightBottom() - CBand::kResizeAreaHarfWidth) < e.Point.Get<TRC::Axis>()) {
-				m_trackLeftVisib = min(visIndexes.Get<TRC>(), maxIdx);
+				m_trackLeftVisib = (std::min)(visIndexes.Get<TRC>(), maxIdx);
 				return true;
 			}
 			else {

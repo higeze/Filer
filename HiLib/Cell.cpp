@@ -357,12 +357,12 @@ void CCell::SetSelected(const bool& selected)
 
 bool CCell::GetFocused()const
 {
-	return m_pSheet->IsFocusedCell(CRowColumn(m_pRow,m_pColumn)) /* || m_pSheet->GetFocused()*/;
+	return m_pSheet->IsFocusedCell(this) /* || m_pSheet->GetFocused()*/;
 }
 
 bool CCell::GetDoubleFocused()const
 {
-	return m_pSheet->IsDoubleFocusedCell(CRowColumn(m_pRow,m_pColumn)) /* || m_pSheet->GetFocused()*/;
+	return m_pSheet->IsDoubleFocusedCell(this) /* || m_pSheet->GetFocused()*/;
 }
 
 

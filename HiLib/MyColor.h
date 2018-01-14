@@ -1,5 +1,6 @@
 #pragma once
 #include <Windows.h>
+#include <algorithm>
 #include <WinGDI.h>
 #include "MyString.h"
 #include "MyFriendSerializer.h"
@@ -17,11 +18,11 @@ public:
 	}
 	virtual ~CRGB(){}
 	int GetR()const{return m_R;}
-	void SetR(int R){m_R=max(min(R,255),0);}
+	void SetR(int R){m_R=(std::max)((std::min)(R,255),0);}
 	int GetG()const{return m_G;}
-	void SetG(int G){m_G=max(min(G,255),0);}
+	void SetG(int G){m_G= (std::max)((std::min)(G,255),0);}
 	int GetB()const{return m_B;}
-	void SetB(int B){m_B=max(min(B,255),0);}
+	void SetB(int B){m_B= (std::max)((std::min)(B,255),0);}
 };
 
 class CHSV
@@ -43,9 +44,9 @@ public:
 		m_H=(H>=0)?H:H+360;
 	}
 	int GetS()const{return m_S;}
-	void SetS(int S){m_S=max(min(S,255),0);}
+	void SetS(int S) { m_S = (std::max)((std::min)(S, 255), 0); }
 	int GetV()const{return m_V;}
-	void SetV(int V){m_V=max(min(V,255),0);}
+	void SetV(int V){m_V= (std::max)((std::min)(V,255),0);}
 
 };
 

@@ -13,8 +13,8 @@ public:
 
 	void Resize(size_type row, size_type col)override
 	{
-		size_type curRowSize = GetPlusRowSize();
-		size_type curColSize = GetPlusColumnSize();
+		size_type curRowSize = GetMaxIndex<RowTag, AllTag>();
+		size_type curColSize = GetMaxIndex<ColTag, AllTag>();
 
 		if(row==curRowSize)return;
 

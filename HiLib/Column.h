@@ -3,12 +3,14 @@
 #include "SheetEnums.h"
 class CCell;
 class CRow;
+struct ColTag;
 class Sheet;
 
 class CColumn:public CBand
 {
 public:
 	static const coordinates_type kMinWidth = 16;
+	typedef ColTag Tag;
 protected:
 	Sorts m_sort; //Indicate sort state
 	coordinates_type m_left; //left position from parent sheet
@@ -54,7 +56,7 @@ public:
 	virtual void SetFilter(const std::wstring& filter){m_filter = filter;}
 	virtual coordinates_type GetWidth();
 	virtual void SetWidth(const coordinates_type& width);
-	virtual void SetWidthWithoutSignal(const coordinates_type& width){m_width=max(width,kMinWidth);}
+	virtual void SetWidthWithoutSignal(const coordinates_type& width){m_width= (std::max)(width,kMinWidth);}
 	virtual coordinates_type GetLeft()const{return  m_left + Offset();}
 	virtual void SetSheetLeft(const coordinates_type left){m_left=left;}
 	virtual void SetSheetLeftWithoutSignal(const coordinates_type left){m_left=left;}

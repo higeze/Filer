@@ -174,7 +174,7 @@ std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
 
 	virtual void MoveColumn(size_type colTo, column_type spFromColumn)override;
 	virtual void EraseColumn(column_type spColumn)override;
-	virtual void InsertColumn(size_type colTo, column_type pColumn)override;
+	virtual void InsertColumn(size_type colTo, column_type pColumn, bool notify = true)override;
 	
 	
 	HGLOBAL GetPaintMetaFileData();

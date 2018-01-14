@@ -164,7 +164,7 @@ public:
 					pSheet->SetHeaderColumnPtr(pColHeader);
 					pSheet->InsertRow(-1,pRowHeader);
 					pSheet->InsertRow(-1,pRowFilter);
-					pSheet->InsertColumnImpl(-1,pColHeader);
+					pSheet->InsertColumn(-1, pColHeader, false);
 
 					pRow=std::make_shared<CParentRow>(pSheet.get());
 					pSheet->InsertRow(100,pRow);
@@ -172,8 +172,8 @@ public:
 					pColProperty=std::make_shared<CParentPropertyNameColumn>(pSheet.get());
 					pColValue=std::make_shared<CParentPropertyValueColumn>(pSheet.get());
 
-					pSheet->InsertColumnImpl(CColumn::kMaxIndex,pColProperty);
-					pSheet->InsertColumnImpl(CColumn::kMaxIndex,pColValue);
+					pSheet->InsertColumn(CColumn::kMaxIndex, pColProperty, false);
+					pSheet->InsertColumn(CColumn::kMaxIndex, pColValue, false);
 				}else{
 					pRow=std::make_shared<CParentRow>(pSheet.get());
 					pSheet->InsertRow(100,pRow);
@@ -194,8 +194,8 @@ public:
 					pColProperty=std::make_shared<CChildPropertyNameColumn>(pSheet.get());
 					pColValue=std::make_shared<CChildPropertyValueColumn>(pSheet.get());
 
-					pSheet->InsertColumnImpl(CColumn::kMaxIndex,pColProperty);
-					pSheet->InsertColumnImpl(CColumn::kMaxIndex,pColValue);
+					pSheet->InsertColumn(CColumn::kMaxIndex, pColProperty, false);
+					pSheet->InsertColumn(CColumn::kMaxIndex, pColValue, false);
 				}else{
 					pRow=std::make_shared<CChildRow>(pSheet.get());
 					pSheet->InsertRow(100,pRow);
@@ -317,8 +317,8 @@ public:
 			pColIndex=std::make_shared<CChildPropertyIndexColumn>(spSheetCell.get());
 			pColValue=std::make_shared<CChildPropertyValueColumn>(spSheetCell.get());
 
-			spSheetCell->InsertColumnImpl(CColumn::kMaxIndex,pColIndex);
-			spSheetCell->InsertColumnImpl(CColumn::kMaxIndex,pColValue);
+			spSheetCell->InsertColumn(CColumn::kMaxIndex, pColIndex, false);
+			spSheetCell->InsertColumn(CColumn::kMaxIndex, pColValue, false);
 			CCellSerializer serializer(spSheetCell,m_spPropSheetCellHeader,m_spPropSheetCellFilter,m_spPropSheetCellCell);
 			for(auto& val : t){
 				spRow=std::make_shared<CChildRow>(spSheetCell.get());

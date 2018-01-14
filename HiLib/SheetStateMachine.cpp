@@ -105,8 +105,8 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		template<class Event>
 		void Action_Normal_LButtonDown(Event const & e)
 		{
-			e.SheetPtr->m_spCursorer->OnLButtonDown(e.SheetPtr, (MouseEventArgs)e.Args);
 			e.SheetPtr->m_spCeller->OnLButtonDown(e.SheetPtr, e.Args);
+			e.SheetPtr->m_spCursorer->OnLButtonDown(e.SheetPtr, (MouseEventArgs)e.Args);
 		}
 
 		template<class Event>
@@ -164,6 +164,7 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		template<class Event>
 		void Action_Normal_KeyDown(Event const & e)
 		{
+			e.SheetPtr->m_spCursorer->OnKeyDown(e.SheetPtr, (KeyEventArgs)e.Args);
 			e.SheetPtr->m_spCeller->OnKeyDown(e.SheetPtr, (KeyEventArgs)e.Args);
 		}
 

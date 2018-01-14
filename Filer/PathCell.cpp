@@ -15,9 +15,9 @@ CPathCell::string_type CPathCell::GetString()const
 CRect CPathCell::GetRect()const
 {
 	return CRect(
-		m_pSheet->GetVisibleZeroColumnPointer()->GetLeft(),
+		m_pSheet->ZeroPointer<ColTag, VisTag>()->GetLeft(),
 		m_pRow->GetTop(),
-		m_pSheet->GetVisibleLastColumnPointer()->GetRight(),
+		m_pSheet->LastPointer<ColTag, VisTag>()->GetRight(),
 		m_pRow->GetBottom());
 }
 
@@ -32,7 +32,7 @@ CSize CPathCell::GetActSize(CDC* pDC)
 {
 	if(m_bActMeasureValid){
 	}else{
-		auto width = m_pSheet->GetVisibleLastColumnPointer()->GetRight() - m_pSheet->GetVisibleZeroColumnPointer()->GetLeft();
+		auto width = m_pSheet->LastPointer<ColTag, VisTag>()->GetRight() - m_pSheet->ZeroPointer<ColTag, VisTag>()->GetLeft();
 		auto fitSize = MeasureSize(pDC);//Call Non-zero width GetFitSize
 		if(fitSize.cx <= width){
 			m_bActMeasureValid = true;
@@ -64,7 +64,7 @@ CSize CPathCell::MeasureContentSizeWithFixedWidth(CDC* pDC)
 {
 	//Calc Content Rect
 	CRect rcCenter(0,0,
-		m_pSheet->GetVisibleLastColumnPointer()->GetRight() - m_pSheet->GetVisibleZeroColumnPointer()->GetLeft(),0);
+		m_pSheet->LastPointer<ColTag, VisTag>()->GetRight() - m_pSheet->ZeroPointer<ColTag, VisTag>()->GetLeft(),0);
 	CRect rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
 	//Calc Content Rect
 	HFONT hFont=(HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());

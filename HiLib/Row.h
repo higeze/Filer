@@ -3,11 +3,13 @@
 
 class CCell;
 class Sheet;
+struct RowTag;
 
 class CRow:public CBand
 {
 public:
 	static const coordinates_type kMinWidth = 2;
+	typedef RowTag Tag;
 protected:
 	coordinates_type m_height;
 	coordinates_type m_top;

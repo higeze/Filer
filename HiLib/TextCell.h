@@ -12,7 +12,7 @@ public:
 	equal_double(double dEpsilon=1e-10):m_dEpsilon(dEpsilon){}
 	bool operator()(const double& dLhs,const double& dRhs)
 	{
-		double dRelativeEpsilon=max(abs(dLhs),abs(dRhs))*m_dEpsilon;
+		double dRelativeEpsilon=(std::max)(abs(dLhs),abs(dRhs))*m_dEpsilon;
 		double dDiff=dLhs-dRhs;
 		return (*((__int64*) & dDiff) & 0x7FFFFFFFFFFFFFFF) <= (*((__int64*)&dRelativeEpsilon));
 	}

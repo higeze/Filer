@@ -78,7 +78,7 @@ public:
 			}
 		}
 
-		m_dragToIndex = max(m_dragToIndex, 0);
+		m_dragToIndex = (std::max)(m_dragToIndex, 0);
 	}
 
 	void OnEndDrag(CSheet* pSheet, MouseEventArgs const & e) override
