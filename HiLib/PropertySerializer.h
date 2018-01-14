@@ -162,21 +162,21 @@ public:
 					pSheet->SetNameHeaderRowPtr(pRowHeader);
 					pSheet->SetFilterRowPtr(pRowFilter);
 					pSheet->SetHeaderColumnPtr(pColHeader);
-					pSheet->InsertRow(-1,pRowHeader);
-					pSheet->InsertRow(-1,pRowFilter);
-					pSheet->InsertColumn(-1, pColHeader, false);
+					pSheet->InsertRow(CRow::kMinIndex,pRowHeader);
+					pSheet->InsertRow(CRow::kMinIndex, pRowFilter);
+					pSheet->InsertColumn(CColumn::kMinIndex, pColHeader);
 
 					pRow=std::make_shared<CParentRow>(pSheet.get());
-					pSheet->InsertRow(100,pRow);
+					pSheet->InsertRow(CRow::kMaxIndex, pRow);
 			
 					pColProperty=std::make_shared<CParentPropertyNameColumn>(pSheet.get());
 					pColValue=std::make_shared<CParentPropertyValueColumn>(pSheet.get());
 
-					pSheet->InsertColumn(CColumn::kMaxIndex, pColProperty, false);
-					pSheet->InsertColumn(CColumn::kMaxIndex, pColValue, false);
+					pSheet->InsertColumn(CColumn::kMaxIndex, pColProperty);
+					pSheet->InsertColumn(CColumn::kMaxIndex, pColValue);
 				}else{
 					pRow=std::make_shared<CParentRow>(pSheet.get());
-					pSheet->InsertRow(100,pRow);
+					pSheet->InsertRow(CRow::kMaxIndex, pRow);
 					pColProperty=pSheet->Index2Pointer<ColTag, AllTag>(0);
 					pColValue=pSheet->Index2Pointer<ColTag, AllTag>(1);
 				}
@@ -186,19 +186,19 @@ public:
 				if(pSheet->Empty()){
 					auto pChildRowHeader=std::make_shared<CChildHeaderRow>(pSheet.get());
 					pSheet->SetHeaderRowPtr(pChildRowHeader);
-					pSheet->InsertRow(-1,pChildRowHeader);
+					pSheet->InsertRow(CRow::kMinIndex,pChildRowHeader);
 
 					pRow=std::make_shared<CChildRow>(pSheet.get());
-					pSheet->InsertRow(100,pRow);
+					pSheet->InsertRow(CColumn::kMaxIndex,pRow);
 			
 					pColProperty=std::make_shared<CChildPropertyNameColumn>(pSheet.get());
 					pColValue=std::make_shared<CChildPropertyValueColumn>(pSheet.get());
 
-					pSheet->InsertColumn(CColumn::kMaxIndex, pColProperty, false);
-					pSheet->InsertColumn(CColumn::kMaxIndex, pColValue, false);
+					pSheet->InsertColumn(CColumn::kMaxIndex, pColProperty);
+					pSheet->InsertColumn(CColumn::kMaxIndex, pColValue);
 				}else{
 					pRow=std::make_shared<CChildRow>(pSheet.get());
-					pSheet->InsertRow(100,pRow);
+					pSheet->InsertRow(CRow::kMaxIndex, pRow);
 					pColProperty=pSheet->Index2Pointer<ColTag, AllTag>(0);
 					pColValue=pSheet->Index2Pointer<ColTag, AllTag>(1);
 				}
@@ -312,17 +312,17 @@ public:
 
 			auto pChildRowHeader=std::make_shared<CChildHeaderRow>(spSheetCell.get());
 			spSheetCell->SetHeaderRowPtr(pChildRowHeader);
-			spSheetCell->InsertRow(-1,pChildRowHeader);
+			spSheetCell->InsertRow(CRow::kMinIndex, pChildRowHeader);
 			
 			pColIndex=std::make_shared<CChildPropertyIndexColumn>(spSheetCell.get());
 			pColValue=std::make_shared<CChildPropertyValueColumn>(spSheetCell.get());
 
-			spSheetCell->InsertColumn(CColumn::kMaxIndex, pColIndex, false);
-			spSheetCell->InsertColumn(CColumn::kMaxIndex, pColValue, false);
+			spSheetCell->InsertColumn(CColumn::kMaxIndex, pColIndex);
+			spSheetCell->InsertColumn(CColumn::kMaxIndex, pColValue);
 			CCellSerializer serializer(spSheetCell,m_spPropSheetCellHeader,m_spPropSheetCellFilter,m_spPropSheetCellCell);
 			for(auto& val : t){
 				spRow=std::make_shared<CChildRow>(spSheetCell.get());
-				spSheetCell->InsertRow(100,spRow);
+				spSheetCell->InsertRow(CRow::kMaxIndex, spRow);
 				//pColProperty=pSheet->AllColumn(0);
 				pColValue=spSheetCell->Index2Pointer<ColTag, AllTag>(1);
 				serializer.SerializeValue(val,spRow.get(),pColValue.get());

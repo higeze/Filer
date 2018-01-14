@@ -22,7 +22,7 @@ CFilerWnd::CFilerWnd()
 	m_uniqueIDFactory(),
 	m_spTab(std::make_shared<CTabCtrl>()),
 	m_spFavoritesView(nullptr),
-	m_gridViewMap(),m_rcWnd(0,0,300,500),
+	m_viewMap(),m_rcWnd(0,0,300,500),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>())
 {
 	m_rca
@@ -102,16 +102,33 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	m_spFavoritesView->FolderChoiced.connect([this](std::shared_ptr<CShellFolder>& spFolder)->void{
 		if(m_spTab->GetItemCount()>0){
 			unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
-
-			auto spFilerGrid= m_gridViewMap.find(id)->second;
-			spFilerGrid->OpenFolder(spFolder);
+			m_spFilerView->OpenFolder(spFolder);
 		}		
 	});
 	m_spFavoritesView->Create(m_hWnd);
-	//CTabCtrol
+
+	//CTabControl
 	m_spTab->Create(m_hWnd);
 	m_spTab->SetFont(*(m_spGridViewProp->m_spPropHeader->GetFontPtr()), TRUE);
 
+	//CFilerGridView
+	m_spFilerView = std::make_shared<CFilerGridView>(m_spGridViewProp);
+	m_spFilerView->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
+	DWORD dwStyle = m_spFilerView->CreateWindowExArgument().dwStyle();
+	m_spFilerView->CreateWindowExArgument().dwStyle(dwStyle | WS_CHILD | WS_VISIBLE);
+	auto spTab = m_spTab;
+	m_spFilerView->FolderChanged.connect([this](std::shared_ptr<CShellFolder>& pFolder) {
+		for (auto i = 0; i<m_spTab->GetItemCount(); i++)
+		{
+			unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
+			if (id == (unsigned int)m_spTab->GetItemParam(i)) {
+				m_spTab->SetItemText(i, pFolder->GetName().c_str());
+				m_viewMap[id] = pFolder->GetPath();
+				break;
+			}
+		}
+	});
+	m_spFilerView->Create(m_spTab->m_hWnd);
 	BOOL dummy =FALSE;
 
 	if(m_vwPath.empty()){
@@ -133,9 +150,7 @@ LRESULT CFilerWnd::OnClose(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled
 	m_rcWnd=CRect(wp.rcNormalPosition);
 	
 	m_spTab->DestroyWindow();
-	for(auto& pair : m_gridViewMap){
-		pair.second->DestroyWindow();
-	}
+	m_spFilerView->DestroyWindow();
 	DestroyWindow();
 	return 0;
 }
@@ -166,16 +181,12 @@ LRESULT CFilerWnd::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
         rcClient.Width() - rcFavoriteClient.Width(), rcClient.Height(),
         SWP_SHOWWINDOW);
 
-	//GridView
+	//FilerGridView
 	CRect rcTabClient = m_spTab->GetClientRect();
 	m_spTab->AdjustRect(FALSE, rcTabClient);
 	rcTabClient.DeflateRect(nPaddingX, nPaddingY);
 
-	for(auto pair : m_gridViewMap){
-		pair.second->MoveWindow(rcTabClient, FALSE);
-	}
-
-	//m_gridViewMap.find((unsigned int)m_spTab->GetCurItemParam())->second->SetWindowPos(HWND_TOP, rcTabClient.left, rcTabClient.top, rcTabClient.Width(),rcTabClient.Height(),SWP_SHOWWINDOW);
+	m_spFilerView->MoveWindow(rcTabClient, FALSE);
 
 	return 0;
 }
@@ -205,26 +216,15 @@ LRESULT CFilerWnd::OnCommandNewTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& 
 	//New id for association
 	unsigned int id = m_uniqueIDFactory.NewID();
 
-	//CTabCtrol
+	//CTabControl
 	int newItem = m_spTab->InsertItem(m_spTab->GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
 
 	//CFilerGridView
-	auto spFilerGrid = std::make_shared<CFilerGridView>(L"", m_spGridViewProp);
-	spFilerGrid->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
-	m_gridViewMap.insert(std::make_pair(id, spFilerGrid));
-	DWORD dwStyle = spFilerGrid->CreateWindowExArgument().dwStyle();
-	spFilerGrid->CreateWindowExArgument().dwStyle(dwStyle | WS_CHILD | WS_VISIBLE);
-	auto spTab = m_spTab;
-	spFilerGrid->FolderChanged.connect([spTab, newItem](std::shared_ptr<CShellFolder>& pFolder){
-		spTab->SetItemText(newItem, pFolder->GetName().c_str());
-	});
-	spFilerGrid->Create(m_spTab->m_hWnd);
+	m_viewMap.insert(std::make_pair(id, L""));
 	BOOL dummy  = TRUE;
 	OnNotifyTabSelChanging(0, NULL, dummy);
 	m_spTab->SetCurSel(newItem);
 	OnNotifyTabSelChange(0,NULL, dummy);
-
-	//BOOL dummy = FALSE;
 	OnSize(0,NULL,NULL,dummy);
 	return 0;
 }
@@ -238,28 +238,11 @@ void CFilerWnd::AddNewView(std::wstring path)
 	int newItem = m_spTab->InsertItem(m_spTab->GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
 
 	//CFilerGridView
-	auto spFilerGrid = std::make_shared<CFilerGridView>(path, m_spGridViewProp);
-	spFilerGrid->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
-	m_gridViewMap.insert(std::make_pair(id, spFilerGrid));
-	DWORD dwStyle = spFilerGrid->CreateWindowExArgument().dwStyle();
-	spFilerGrid->CreateWindowExArgument().dwStyle(dwStyle | WS_CHILD | WS_VISIBLE);
-	auto spTab = m_spTab;
-	spFilerGrid->FolderChanged.connect([spTab, id](std::shared_ptr<CShellFolder>& pFolder){
-		for(auto i=0;i<spTab->GetItemCount();i++)
-		{
-			if(id == (unsigned int)spTab->GetItemParam(i)){
-				spTab->SetItemText(i, pFolder->GetName().c_str());
-				break;
-			}
-		}
-	});
-	spFilerGrid->Create(m_spTab->m_hWnd);
+	m_viewMap.insert(std::make_pair(id, path));
 	BOOL dummy  = TRUE;
 	OnNotifyTabSelChanging(0, NULL, dummy);
 	m_spTab->SetCurSel(newItem);
 	OnNotifyTabSelChange(0,NULL, dummy);
-
-	//BOOL dummy = FALSE;
 	OnSize(0,NULL,NULL,dummy);
 }
 
@@ -270,15 +253,12 @@ LRESULT CFilerWnd::OnCommandCloseTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL
 
 		unsigned int id = (unsigned int)m_spTab->GetItemParam(m_contextMenuTabIndex);
 
-
 		BOOL dummy  = FALSE;
 		OnNotifyTabSelChanging(0, NULL, dummy);
 
 		m_spTab->DeleteItem(m_contextMenuTabIndex);
 		m_spTab->SetCurSel(m_spTab->GetItemCount()-1);
-		m_gridViewMap.find(id)->second->DestroyWindow();
-		m_gridViewMap.erase(id);
-
+		m_viewMap.erase(id);
 
 		OnNotifyTabSelChange(0, NULL, dummy);
 	}
@@ -301,9 +281,9 @@ LRESULT CFilerWnd::OnCommandOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& 
 		L"GridViewProperty",
 		m_spGridViewProp);
 
-	pPropWnd->PropertyChanged.connect([&](const std::wstring& str)->void{
-		for(auto iter = m_gridViewMap.begin();iter!=m_gridViewMap.end();++iter){
-			iter->second->UpdateAll();
+	pPropWnd->PropertyChanged.connect([this](const std::wstring& str)->void{
+		for(auto iter = m_viewMap.begin();iter!= m_viewMap.end();++iter){
+			m_spFilerView->UpdateAll();
 		}
 		m_spFavoritesView->UpdateAll();
 		//SerializeProperty(m_spGridViewProp);
@@ -367,19 +347,16 @@ LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndC
 LRESULT CFilerWnd::OnNotifyTabSelChanging(int, LPNMHDR, BOOL& bHandled)
 {
 	m_prevID = (unsigned int)m_spTab->GetCurItemParam();
-	//unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
-	//m_gridViewMap.find(id)->second->ShowWindow(SW_HIDE);
 	return 0;
 }
 
 LRESULT CFilerWnd::OnNotifyTabSelChange(int, LPNMHDR, BOOL& bHandled)
 {
 	unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
-	m_gridViewMap.find(id)->second->ShowWindow(SW_SHOW);
-	if(id!=m_prevID){
-		auto iter = m_gridViewMap.find(m_prevID);
-		if(iter!=m_gridViewMap.end()){
-			iter->second->ShowWindow(SW_HIDE);
+	if (id != m_prevID) {
+		auto iter = m_viewMap.find(id);
+		if (iter != m_viewMap.end()) {
+			m_spFilerView->SetPath(iter->second);
 		}
 	}
 	return 0;
@@ -404,14 +381,3 @@ LRESULT CFilerWnd::OnNotifyTabRClick(int id, LPNMHDR, BOOL& bHandled)
 
 	return 0;
 }
-//LRESULT CFilerWnd::OnCmdToolOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-//{
-//	CRect rc(0,0,300,500);
-//	m_upPropWnd.reset(new CPropertyWnd(m_spProp->m_spPropHdrs,m_spProp->m_spPropFlts,m_spProp->m_spPropCells,m_spProp));
-//	HWND hWnd=m_upPropWnd->Create(NULL,rc);
-//	m_upPropWnd->CenterWindow();
-//	m_upPropWnd->ShowWindow(SW_SHOW);
-//	m_upPropWnd->UpdateWindow();
-//
-//	return 0;
-//}

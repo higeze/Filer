@@ -17,7 +17,8 @@ private:
 	CRect m_rcWnd;
 	CUniqueIDFactory m_uniqueIDFactory;
 	std::shared_ptr<CTabCtrl> m_spTab;
-	std::map<unsigned int, std::shared_ptr<CFilerGridView>> m_gridViewMap;
+	std::map<unsigned int, std::wstring> m_viewMap;
+	std::shared_ptr<CFilerGridView> m_spFilerView;
 	std::shared_ptr<CFavoritesGridView> m_spFavoritesView;
 
 	unsigned int m_prevID;
@@ -38,6 +39,7 @@ public:
 	virtual ~CFilerWnd();
 	virtual HWND Create(HWND hWndParent);
 private:
+	std::shared_ptr<CShellFolder> GetShellFolderFromPath(const std::wstring& path);
 	//LRESULT OnTabContextMenu(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	void SetContextMenuTabIndex(int index){m_contextMenuTabIndex = index;}
 
@@ -65,8 +67,8 @@ public:
 		}
 		ar("GridViewProperty",m_spGridViewProp);
 		m_vwPath.clear();
-		for(auto pair : m_gridViewMap){
-			m_vwPath.push_back(pair.second->GetPath());
+		for(auto pair : m_viewMap){
+			m_vwPath.push_back(pair.second);
 		}
 		ar("ViewPaths",m_vwPath);
 		ar("FavoritesProperty",m_spFavoritesProp);

@@ -60,7 +60,7 @@ private:
 	CComPtr<IContextMenu3> m_pcm3;
 
 public:
-	CFilerGridView(std::wstring initPath, std::shared_ptr<CGridViewProperty> spGridViewProrperty);
+	CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty);
 	virtual ~CFilerGridView(){}
 	//signal
 	boost::signals2::signal<void(std::shared_ptr<CShellFolder>&)> FolderChanged;

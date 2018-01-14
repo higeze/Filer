@@ -35,14 +35,14 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 UINT CFilerGridView::WM_CHANGED = ::RegisterWindowMessage(L"CFilerGridView::WM_CHANGED");
 
-CFilerGridView::CFilerGridView(std::wstring initPath, std::shared_ptr<CGridViewProperty> spGridViewProrperty)
+CFilerGridView::CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty)
 			:CGridView(			
 			spGridViewProrperty->m_spBackgroundProperty,
 			spGridViewProrperty->m_spPropHeader,
 			spGridViewProrperty->m_spPropCell,
 			spGridViewProrperty->m_spPropCell,
-			spGridViewProrperty->m_spDeltaScroll),
-			m_initPath(initPath)
+			spGridViewProrperty->m_spDeltaScroll)
+			/*m_initPath(initPath)*/
 {
 	m_cwa
 	.dwExStyle(WS_EX_ACCEPTFILES);
@@ -177,12 +177,12 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	CGridView::OnCreate(uMsg,wParam,lParam,bHandled);
 
 	//Open
-	if(!m_initPath.empty()){
-		SetPath(m_initPath);
-	}else{
-		//Open Desktop
-		OpenFolder(std::make_shared<CShellFolder>());
-	}
+	//if(!m_initPath.empty()){
+	//	SetPath(m_initPath);
+	//}else{
+	//	//Open Desktop
+	//	OpenFolder(std::make_shared<CShellFolder>());
+	//}
 	return 0;
 }
 
