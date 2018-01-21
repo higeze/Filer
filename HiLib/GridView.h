@@ -5,7 +5,9 @@
 class IKeyObserver;
 #include "UnDoReDoManager.h"
 class CBackgroundProperty;
-class IMouseState;
+//class IMouseState;
+struct CMouseStateMachine;
+
 
 class CGridView:public CWnd,public CSheet
 {
@@ -26,8 +28,8 @@ protected:
 	row_type m_rowNameHeader; /**< Name Header row */
 	row_type m_rowFilter; /**< Filter row */
 	std::shared_ptr<CUnDoReDoManager> m_spUndoRedoManager; 
-
-	IMouseState* m_pMouseState;
+	std::shared_ptr<CMouseStateMachine> m_pMouseStateMachine;
+	//IMouseState* m_pMouseState;
 private:
 	boost::asio::io_service m_iosv;
 	boost::asio::io_service::work m_work;
@@ -174,7 +176,7 @@ std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
 
 	virtual void MoveColumn(size_type colTo, column_type spFromColumn)override;
 	virtual void EraseColumn(column_type spColumn)override;
-	virtual void InsertColumn(size_type colTo, column_type pColumn, bool notify = true)override;
+	virtual void InsertColumn(size_type colTo, column_type pColumn)override;
 	
 	
 	HGLOBAL GetPaintMetaFileData();

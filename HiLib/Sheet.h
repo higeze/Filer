@@ -7,13 +7,14 @@
 #include "SheetDictionary.h"
 #include "SheetEventArgs.h"
 #include "Row.h"
+#include "Cell.h"
 
 
 struct CSheetStateMachine;
 class IDragger;
 class ITracker;
 class ICeller;
-class CCell;
+//class CCell;
 //class CRow;
 class CColumn;
 class CCellProperty;
@@ -62,21 +63,22 @@ struct RC
 template<> inline int RC::Get<RowTag>() const { return Row; }
 template<> inline int RC::Get<ColTag>() const { return Col; }
 
+//Self defined message
 const UINT WM_FILTER = RegisterWindowMessage(L"WM_FILTER");
 const UINT WM_EDITCELL = RegisterWindowMessage(L"WM_EDITCELL");
 const UINT WM_LBUTTONDBLCLKTIMEXCEED = RegisterWindowMessage(L"WM_LBUTTONDBLCLKTIMEXCEED");
-/**
- *  CSheet
- *  Base class for GridView and SheetCell
- */
+
+
+/********/
+/*CSheet*/
+/********/
 class CSheet:public CUIElement
 {
-//Friend classes
-friend class CDragger<ColTag, RowTag>;
-friend class CFileDragger;//TODO
-friend class CCursorer;
-friend class CSerializeData;
-protected:
+	//Friend classes
+	friend class CFileDragger;//TODO
+	friend class CSerializeData;
+
+public:
 	//typedef
 	typedef int size_type;
 	typedef int coordinates_type;
@@ -84,59 +86,56 @@ protected:
 	typedef std::shared_ptr<CColumn> column_type;
 	typedef std::shared_ptr<CRow> row_type;
 	typedef std::wstring string_type;
+
 public:
-	static CMenu ContextMenu; // ContextMenu
-public:
-	//Simple cell Accessor
+	//static cell Accessor
 	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
 	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow);
 	static std::shared_ptr<CCell>& Cell( CRow* pRow,  CColumn* pColumn);
 
-	std::shared_ptr<ITracker> m_spRowTracker; /**< Tracker */
-	std::shared_ptr<ITracker> m_spColTracker; /**< Tracker */
-	std::shared_ptr<IDragger> m_spRowDragger; /**< Dragger */
-	std::shared_ptr<IDragger> m_spColDragger; /**< Dragger */
-	std::shared_ptr<IDragger> m_spItemDragger; /**< Dragger */
-	std::shared_ptr<CCursorer> m_spCursorer; /**< Cursor */
-	std::shared_ptr<ICeller> m_spCeller;
 
+public:
+	std::shared_ptr<ITracker> m_spRowTracker; // Tracker for Row
+	std::shared_ptr<ITracker> m_spColTracker; // Tracker for Column
+	std::shared_ptr<IDragger> m_spRowDragger; // Dragger for Row
+	std::shared_ptr<IDragger> m_spColDragger; // Dragger for Column
+	std::shared_ptr<IDragger> m_spItemDragger; // Dragger for Item
+	std::shared_ptr<ICeller> m_spCeller; //Celler
+	std::shared_ptr<CCursorer> m_spCursorer; // Cursor
 protected:
-
 	std::shared_ptr<CSheetStateMachine> m_spStateMachine;
-	std::vector<std::shared_ptr<IMouseObserver>> m_mouseObservers; /**< Mouse Observers */
+	std::set<Updates> m_setUpdate; // Set posted update
 
-	std::set<Updates> m_setUpdate; /**< Set posted update */
+	RowDictionary m_rowAllDictionary; // Index-Pointer All Row Dictionary
+	RowDictionary m_rowVisibleDictionary; // Index-Pointer Visible Row Dictionary
+	RowDictionary m_rowPaintDictionary; // Index-Pointer Paint Row Dictionary
 
-	RowDictionary m_rowAllDictionary; /**< Index-Pointer All Row Dictionary */
-	RowDictionary m_rowVisibleDictionary; /**< Index-Pointer Visible Row Dictionary */
-	RowDictionary m_rowPaintDictionary; /**< Index-Pointer Paint Row Dictionary */
+	ColumnDictionary m_columnAllDictionary; // Index-Pointer All Column Dictionary
+	ColumnDictionary m_columnVisibleDictionary; // Index-Pointer Visible Column Dictionary
+	ColumnDictionary m_columnPaintDictionary; // Index-Pointer Paint Column Dictionary
 
-	ColumnDictionary m_columnAllDictionary; /**< Index-Pointer All Column Dictionary */
-	ColumnDictionary m_columnVisibleDictionary; /**< Index-Pointer Visible Column Dictionary */
-	ColumnDictionary m_columnPaintDictionary; /**< Index-Pointer Paint Column Dictionary */
+	std::shared_ptr<CCellProperty> m_spHeaderProperty; // HeaderProperty
+	std::shared_ptr<CCellProperty> m_spFilterProperty; // FilterProperty
+	std::shared_ptr<CCellProperty> m_spCellProperty; // CellProperty
 
-	std::shared_ptr<CCellProperty> m_spHeaderProperty; /**< HeaderProperty */
-	std::shared_ptr<CCellProperty> m_spFilterProperty; /**< FilterProperty */
-	std::shared_ptr<CCellProperty> m_spCellProperty; /**< CellProperty */
+	column_type m_pHeaderColumn; // Header column
+	row_type m_rowHeader; // Header row
 
-	column_type m_pHeaderColumn; /**< Header column */
+	bool m_bSelected; // Selected or not
+	bool m_bFocused; // Focused or not
 
-	row_type m_rowHeader; /**< Header row */
+	CRowColumn m_rocoContextMenu; // Store RowColumn of Caller
 
-	bool m_bSelected; /**< Selected or not */
-	bool m_bFocused; /**< Focused or not */
+public:
+	static CMenu ContextMenu; // ContextMenu
 
-	CRowColumn m_rocoContextMenu; /**< Store RowColumn of Caller */
-	CRowColumn m_rocoMouse; /** RowColumn where mouse is */
 public:
 	//Signals
 	boost::signals2::signal<void(CellEventArgs&)> CellLButtonDown;
 	boost::signals2::signal<void(CellEventArgs&)> CellLButtonClk;
 	boost::signals2::signal<void(CellEventArgs&)> CellLButtonDblClk;
 	boost::signals2::signal<void(CellContextMenuEventArgs&)> CellContextMenu;
-
 	boost::signals2::signal<void(CCell*,LPCTSTR)> CellPropertyChanged;
-
 	boost::signals2::signal<void(LPCTSTR)> ColumnPropertyChanged;
 	boost::signals2::signal<void(LPCTSTR)> RowPropertyChanged;
 
@@ -145,13 +144,13 @@ public:
 		std::shared_ptr<CCellProperty> spFilterProperty,
 		std::shared_ptr<CCellProperty> spCellProperty,
 		CMenu* pContextMenu= &CSheet::ContextMenu);
+
 	//Destructor
 	virtual ~CSheet(){}
+
 	//Getter Setter
 	std::shared_ptr<CSheetStateMachine> GetSheetStateMachine() { return m_spStateMachine; }
 	std::shared_ptr<CCursorer> GetCursorerPtr(){return m_spCursorer;} /**< Cursor */
-	CRowColumn GetMouseRowColumn(){return m_rocoMouse;} /** Getter for Mouse CRowColumn */
-	void SetMouseRowColumn(CRowColumn roco){m_rocoMouse = roco;} /** Setter for Mouse CRowColumn */
 
 	void SetContextMenuRowColumn(const CRowColumn& roco){m_rocoContextMenu = roco;}
 
@@ -159,7 +158,7 @@ public:
 	virtual std::shared_ptr<CCellProperty> GetFilterProperty(){return m_spFilterProperty;} /** Getter for Filter Cell Property */
 	virtual std::shared_ptr<CCellProperty> GetCellProperty(){return m_spCellProperty;} /** Getter for Cell Property */
 
-	ColumnDictionary* GetColumnVisibleDictionaryPtr(){return &m_columnVisibleDictionary;} /** Getter for Visible Column Dictionary */
+	///ColumnDictionary* GetColumnVisibleDictionaryPtr(){return &m_columnVisibleDictionary;} /** Getter for Visible Column Dictionary */
 	RowDictionary& RowAllDictionary(){return m_rowAllDictionary;} /** Getter for All Row Dictionary  */
 
 	virtual column_type GetHeaderColumnPtr()const{return m_pHeaderColumn;} /** Getter for Header Column */
@@ -186,8 +185,8 @@ public:
 	virtual void ColumnErased(CColumnEventArgs& e);
 	virtual void ColumnMoved(CMovedEventArgs<ColTag>& e) {}
 
-	virtual void ColumnHeaderTrack(CColumnEventArgs& e);
-	virtual void ColumnHeaderEndTrack(CColumnEventArgs& e);
+	//virtual void ColumnHeaderTrack(CColumnEventArgs& e);
+	//virtual void ColumnHeaderEndTrack(CColumnEventArgs& e);
 	virtual void ColumnHeaderFitWidth(CColumnEventArgs& e);
 
 	virtual void RowVisibleChanged(CRowEventArgs& e){}
@@ -237,8 +236,10 @@ public:
 
 	virtual void MoveColumn(size_type colTo, column_type spFromColumn){MoveImpl<ColTag>(colTo, spFromColumn);}
 
-	virtual void InsertRow(size_type rowVisib, row_type pRow, bool notify = true);
-	virtual void InsertColumn(size_type colTo, column_type pColumn, bool notify = true);
+	virtual void InsertRow(size_type rowVisib, row_type pRow);
+	virtual void InsertRowNotify(size_type rowVisib, row_type pRow, bool notify = true);
+	virtual void InsertColumn(size_type colTo, column_type pColumn);
+	virtual void InsertColumnNotify(size_type colTo, column_type pColumn, bool notify = true);
 
 	virtual coordinates_type GetColumnInitWidth(CColumn* pColumn);
 	virtual coordinates_type GetColumnFitWidth(CColumn* pColumn);
@@ -263,7 +264,7 @@ public:
 	virtual void OnLButtonSnglClk(MouseEventArgs& e);
 	virtual void OnLButtonDblClk(MouseEventArgs& e);
 	virtual void OnLButtonBeginDrag(MouseEventArgs& e);
-	virtual void OnLButtonEndDrag(MouseEventArgs& e);
+	//virtual void OnLButtonEndDrag(MouseEventArgs& e);
 
 	virtual void OnContextMenu(ContextMenuEventArgs& e);
 	virtual void OnMouseMove(MouseEventArgs& e);
@@ -418,13 +419,19 @@ public:
 	}
 	template<typename TRC> void EndTrack(TRC::template SharedPtr& ptr)
 	{
-		//auto& otherDic = GetDictionary<TRC::Other, AllTag>();
-		//for (const auto& other : otherDic) {
-		//	CSheet::Cell(ptr, other.DataPtr)->SetActMeasureValid(false);
-		//}
-		//for (const auto& other : otherDic) {
-		//	other.DataPtr->SetMeasureValid(false);
-		//}
+		auto& otherDic = GetDictionary<TRC::Other, AllTag>();
+		for (const auto& other : otherDic) {
+			CSheet::Cell(ptr, other.DataPtr)->SetActMeasureValid(false);
+		}
+		for (const auto& other : otherDic) {
+			other.DataPtr->SetMeasureValid(false);
+		}
+
+		//boost::for_each(m_rowAllDictionary, [&](const RowData& rowData) {
+		//	e.m_pColumn->Cell(rowData.DataPtr.get())->SetActMeasureValid(false);
+		//});
+
+		//this->SetAllRowMeasureValid(false);
 
 		PostUpdate(Updates::Column);
 		PostUpdate(Updates::Row);

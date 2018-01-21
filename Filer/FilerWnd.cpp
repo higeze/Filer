@@ -123,10 +123,12 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 			unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
 			if (id == (unsigned int)m_spTab->GetItemParam(i)) {
 				m_spTab->SetItemText(i, pFolder->GetName().c_str());
-				m_viewMap[id] = pFolder->GetPath();
+				m_viewMap[id] = pFolder;
 				break;
 			}
 		}
+		BOOL dummy;
+		OnSize(WM_SIZE, NULL, NULL, dummy);
 	});
 	m_spFilerView->Create(m_spTab->m_hWnd);
 	BOOL dummy =FALSE;
@@ -135,8 +137,25 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		OnCommandNewTab(0,0,NULL,dummy);
 	}else{
 		for(auto path : m_vwPath){
-			AddNewView(path);
+			//ShellFolder
+			std::shared_ptr<CShellFolder> pFolder = CShellFolder::CreateShellFolderFromPath(path);
+			if(pFolder){
+				//New id for association
+				unsigned int id = m_uniqueIDFactory.NewID();
+				//CTabCtrol
+				int newItem = m_spTab->InsertItem(m_spTab->GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetName().c_str(), NULL, (LPARAM)id);
+				//CFilerGridView
+				m_viewMap.insert(std::make_pair(id, pFolder));
+			}
 		}
+		BOOL dummy = TRUE;
+		m_spTab->SetCurSel(0);
+		unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
+		auto iter = m_viewMap.find(id);
+		if (iter != m_viewMap.end()) {
+			m_spFilerView->OpenFolder(iter->second);
+		}
+		OnSize(0, NULL, NULL, dummy);
 	}
 
 	return 0;
@@ -220,7 +239,7 @@ LRESULT CFilerWnd::OnCommandNewTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& 
 	int newItem = m_spTab->InsertItem(m_spTab->GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
 
 	//CFilerGridView
-	m_viewMap.insert(std::make_pair(id, L""));
+	m_viewMap.insert(std::make_pair(id, std::make_shared<CShellFolder>()));
 	BOOL dummy  = TRUE;
 	OnNotifyTabSelChanging(0, NULL, dummy);
 	m_spTab->SetCurSel(newItem);
@@ -238,7 +257,7 @@ void CFilerWnd::AddNewView(std::wstring path)
 	int newItem = m_spTab->InsertItem(m_spTab->GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
 
 	//CFilerGridView
-	m_viewMap.insert(std::make_pair(id, path));
+	m_viewMap.insert(std::make_pair(id, CShellFolder::CreateShellFolderFromPath(path)));
 	BOOL dummy  = TRUE;
 	OnNotifyTabSelChanging(0, NULL, dummy);
 	m_spTab->SetCurSel(newItem);
@@ -356,7 +375,7 @@ LRESULT CFilerWnd::OnNotifyTabSelChange(int, LPNMHDR, BOOL& bHandled)
 	if (id != m_prevID) {
 		auto iter = m_viewMap.find(id);
 		if (iter != m_viewMap.end()) {
-			m_spFilerView->SetPath(iter->second);
+			m_spFilerView->OpenFolder(iter->second);
 		}
 	}
 	return 0;

@@ -140,16 +140,16 @@ InsertColumnCommand::InsertColumnCommand(CGridView* pGrid,int pos, std::shared_p
 void InsertColumnCommand::Do()
 {
 	CDoCommandBase::Do();
-	m_pGrid->InsertImpl<ColTag, AllTag>(m_pos, m_spColumn);
+	m_pGrid->InsertColumnNotify(m_pos, m_spColumn);
 }
 void InsertColumnCommand::UnDo()
 {
-	m_pGrid->EraseImpl<ColTag>(m_spColumn);
+	m_pGrid->EraseColumn(m_spColumn);
 	CDoCommandBase::UnDo();
 }
 void InsertColumnCommand::ReDo()
 {
-	m_pGrid->InsertImpl<ColTag, AllTag>(m_pos, m_spColumn);
+	m_pGrid->InsertColumnNotify(m_pos, m_spColumn);
 	CDoCommandBase::ReDo();
 }
 
@@ -165,7 +165,7 @@ void EraseColumnCommand::Do()
 }
 void EraseColumnCommand::UnDo()
 {
-	m_pGrid->InsertImpl<ColTag, AllTag>(m_pos, m_spColumn);
+	m_pGrid->InsertColumnNotify(m_pos, m_spColumn);
 	CDoCommandBase::UnDo();
 }
 void EraseColumnCommand::ReDo()

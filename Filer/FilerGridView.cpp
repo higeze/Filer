@@ -26,7 +26,6 @@
 
 #include "DropTarget.h"
 #include "DropSource.h"
-
 #include "FileDragger.h"
 
 #include "MyWin32.h"
@@ -176,13 +175,6 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	//Base Create
 	CGridView::OnCreate(uMsg,wParam,lParam,bHandled);
 
-	//Open
-	//if(!m_initPath.empty()){
-	//	SetPath(m_initPath);
-	//}else{
-	//	//Open Desktop
-	//	OpenFolder(std::make_shared<CShellFolder>());
-	//}
 	return 0;
 }
 
@@ -269,40 +261,40 @@ void CFilerGridView::InsertDefaultRowColumn()
 	m_rowNameHeader=std::make_shared<CParentHeaderRow>(this);
 	m_rowFilter=std::make_shared<CParentRow>(this);
 
-	InsertRow(CRow::kMinIndex, m_rowFilter);
-	InsertRow(CRow::kMinIndex,m_rowNameHeader);
-	InsertRow(CRow::kMinIndex, m_rowHeader);
+	InsertRowNotify(CRow::kMinIndex, m_rowFilter);
+	InsertRowNotify(CRow::kMinIndex,m_rowNameHeader);
+	InsertRowNotify(CRow::kMinIndex, m_rowHeader);
 
 	//HeaderColumn
 	auto pHeaderColumn=std::make_shared<CParentRowHeaderColumn>(this);
-	InsertColumn(CColumn::kMinIndex,pHeaderColumn);
+	InsertColumnNotify(CColumn::kMinIndex,pHeaderColumn);
 	//IconColumn
 	{
 		auto pColumn = std::make_shared<CFileIconColumn>(this);
-		InsertColumn(CColumn::kMaxIndex,pColumn);
+		InsertColumnNotify(CColumn::kMaxIndex,pColumn);
 	}
 	//NameColumn
 	{
 		auto pColumn = std::make_shared<CFileNameColumn>(this);
-		InsertColumn(CColumn::kMaxIndex, pColumn);
+		InsertColumnNotify(CColumn::kMaxIndex, pColumn);
 	}
 
 	//ExtColumn
 	{
 		auto pColumn = std::make_shared<CFileExtColumn>(this);
-		InsertColumn(CColumn::kMaxIndex,pColumn);
+		InsertColumnNotify(CColumn::kMaxIndex,pColumn);
 	}
 
 	//SizeColumn
 	{
 		auto pColumn = std::make_shared<CFileSizeColumn>(this);
-		InsertColumn(CColumn::kMaxIndex,pColumn);
+		InsertColumnNotify(CColumn::kMaxIndex,pColumn);
 	}
 
 	//GetLastWriteColumn
 	{
 		auto pColumn = std::make_shared<CFileLastWriteColumn>(this);
-		InsertColumn(CColumn::kMaxIndex,pColumn);
+		InsertColumnNotify(CColumn::kMaxIndex,pColumn);
 	}
 }
 
@@ -352,15 +344,17 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 
 	m_spCursorer->Clear();
 
+	m_rowAllDictionary.erase(m_rowAllDictionary.begin(), m_rowAllDictionary.end());
+	m_columnAllDictionary.erase(m_columnAllDictionary.begin(), m_columnAllDictionary.end());
 	if(Empty()){
 		InsertDefaultRowColumn();
 	}
 
 		m_spFolder = spFolder;
 
-		//Clear RowDictionary From 0 to last
-		auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
-		rowDictionary.erase(rowDictionary.find(0),rowDictionary.end());
+		////Clear RowDictionary From 0 to last
+		//auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
+		//rowDictionary.erase(rowDictionary.find(0), rowDictionary.end());
 
 		//Set up Watcher
 		if(::PathFileExists(m_spFolder->GetPath().c_str())){
@@ -392,14 +386,23 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		}
 
 		//Path change //TODO
-		m_rowHeader->SetMeasureValid(false);
-		m_rowNameHeader->SetMeasureValid(false);
-		m_rowFilter->SetMeasureValid(false);
-
-		for(auto iter=m_columnAllDictionary.begin();iter!=m_columnAllDictionary.end();++iter){
-			std::dynamic_pointer_cast<CParentMapColumn>(iter->DataPtr)->Clear();
-			iter->DataPtr->SetMeasureValid(false);
-		}
+		//m_rowHeader->SetMeasureValid(false);
+		//m_rowNameHeader->SetMeasureValid(false);
+		//m_rowFilter->SetMeasureValid(false);
+		//for (const auto& row : m_rowAllDictionary) {
+		//	row.DataPtr->SetMeasureValid(false);
+		//}
+		//for(const auto& col : m_columnAllDictionary) {
+		//	std::dynamic_pointer_cast<CParentMapColumn>(col.DataPtr)->Clear();
+		//	col.DataPtr->SetMeasureValid(false);
+		//}
+		//for (const auto& row : m_rowAllDictionary) {
+		//	for (const auto& col : m_columnAllDictionary) {
+		//		auto cell = CSheet::Cell(row.DataPtr, col.DataPtr);
+		//		cell->SetActMeasureValid(false);
+		//		cell->SetFitMeasureValid(false);
+		//	}
+		//}
 
 	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::RowVisible);
@@ -724,38 +727,12 @@ CFilerGridView::string_type CFilerGridView::GetPath()const
 
 void CFilerGridView::SetPath(const string_type& path)
 {
-	ULONG         chEaten;
-	ULONG         dwAttributes;
- 
-	CComPtr<IShellFolder> pDesktop;
-	::SHGetDesktopFolder(&pDesktop);
-
-	CIDLPtr pIDL;
-	HRESULT hr = NULL;
-	if(path == L""){
-		hr  =::SHGetSpecialFolderLocation(m_hWnd, CSIDL_PROFILE, &pIDL);
-	}else{
-		hr = pDesktop->ParseDisplayName(
-			NULL,
-			NULL,
-			const_cast<LPWSTR>(path.c_str()),
-			&chEaten,
-			&pIDL,
-			&dwAttributes);
+	std::shared_ptr<CShellFolder> pFolder = CShellFolder::CreateShellFolderFromPath(path);
+	if (pFolder) {
+		OpenFolder(pFolder);
 	}
-	if (SUCCEEDED(hr))
-	{
-		CComPtr<IShellFolder> pFolder, pParentFolder;
-		::SHBindToObject(pDesktop,pIDL,0,IID_IShellFolder,(void**)&pFolder);
-		::SHBindToObject(pDesktop,pIDL.GetPreviousIDLPtr(),0,IID_IShellFolder,(void**)&pParentFolder);
-
-		if(!pFolder){
-			pFolder = pDesktop;
-		}
-		if(!pParentFolder){
-			pParentFolder = pDesktop;
-		}
-		OpenFolder(std::make_shared<CShellFolder>(pFolder,pParentFolder, pIDL));
+	else {
+		//Do nothing
 	}
 }
 

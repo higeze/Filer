@@ -72,7 +72,7 @@ void CSheetCell::ColumnErased(CColumnEventArgs& e)
 
 void CSheetCell::ColumnHeaderEndTrack(CColumnEventArgs& e)
 {
-	CSheet::ColumnHeaderEndTrack(e);
+//	CSheet::ColumnHeaderEndTrack(e);
 	m_pSheet->CellSizeChanged(CellEventArgs(this));
 }
 

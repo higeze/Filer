@@ -29,6 +29,6 @@ struct CSheetStateMachine
 	void KeyDown(CSheet* pSheet, KeyEventArgs& e);
 
 	void LButtonBeginDrag(CSheet * pSheet, MouseEventArgs& e);
-	void LButtonEndDrag(CSheet * pSheet, MouseEventArgs& e);
+	//void LButtonEndDrag(CSheet * pSheet, MouseEventArgs& e);
 
 };

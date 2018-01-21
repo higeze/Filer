@@ -111,10 +111,14 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 
 		}catch(std::exception& ex){
 			::OutputDebugStringA(ex.what());
-			std::string msg =( boost::format(
+			std::string msg = (boost::format(
 				"What:%1%\r\n"
 				"Last Error:%2%\r\n"
-				) % ex.what() % GetLastErrorString()).str();
+				"MSG:%3$04x\r\n"
+				"WPARAM:%4$04x\r\n"
+				"LPARAM:%5$04x"
+			) % ex.what() % GetLastErrorString() %
+				uiMsg % wParam % lParam).str();
 
 			MessageBoxA(m_hWnd, msg.c_str(), "Exception in Message Loop", MB_ICONWARNING);
 		}catch(...){

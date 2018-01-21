@@ -153,25 +153,25 @@ void CSheet::ColumnErased(CColumnEventArgs& e)
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);//
 }
-void CSheet::ColumnHeaderTrack(CColumnEventArgs& e)
-{
-	PostUpdate(Updates::Column);
-	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);//	
-}
-void CSheet::ColumnHeaderEndTrack(CColumnEventArgs& e)
-{
-	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
-		e.m_pColumn->Cell(rowData.DataPtr.get())->SetActMeasureValid(false);
-	});
-
-	this->SetAllRowMeasureValid(false);
-
-	PostUpdate(Updates::Column);
-	PostUpdate(Updates::Row);
-	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);//
-}
+//void CSheet::ColumnHeaderTrack(CColumnEventArgs& e)
+//{
+//	PostUpdate(Updates::Column);
+//	PostUpdate(Updates::Scrolls);
+//	PostUpdate(Updates::Invalidate);//	
+//}
+//void CSheet::ColumnHeaderEndTrack(CColumnEventArgs& e)
+//{
+//	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
+//		e.m_pColumn->Cell(rowData.DataPtr.get())->SetActMeasureValid(false);
+//	});
+//
+//	this->SetAllRowMeasureValid(false);
+//
+//	PostUpdate(Updates::Column);
+//	PostUpdate(Updates::Row);
+//	PostUpdate(Updates::Scrolls);
+//	PostUpdate(Updates::Invalidate);//
+//}
 
 void CSheet::ColumnHeaderFitWidth(CColumnEventArgs& e)
 {
@@ -459,16 +459,26 @@ void CSheet::EraseRows(const std::vector<CRow*>& vpRow)
 	RowsErased(CRowsEventArgs(vpRow));
 }
 
-void CSheet::InsertColumn(size_type allIndex, column_type pColumn, bool notify)
+void CSheet::InsertColumn(size_type allIndex, column_type pColumn)
+{
+	InsertColumnNotify(allIndex, pColumn);
+}
+
+void CSheet::InsertColumnNotify(size_type allIndex, column_type pColumn, bool notify)
 {
 	pColumn->InsertNecessaryRows();
-	InsertImpl<ColTag, AllTag>(allIndex,pColumn);
-	if(notify){
+	InsertImpl<ColTag, AllTag>(allIndex, pColumn);
+	if (notify) {
 		ColumnInserted(CColumnEventArgs(pColumn.get()));
 	}
 }
 
-void CSheet::InsertRow(size_type allIndex, row_type pRow, bool notify)
+void CSheet::InsertRow(size_type allIndex, row_type pRow)
+{
+	InsertRowNotify(allIndex, pRow);
+}
+
+void CSheet::InsertRowNotify(size_type allIndex, row_type pRow, bool notify)
 {
 	InsertImpl<RowTag, AllTag>(allIndex, pRow);
 	if(notify){
@@ -726,10 +736,10 @@ void CSheet::OnLButtonBeginDrag(MouseEventArgs& e)
 	m_spStateMachine->LButtonBeginDrag(this, e);
 }
 
-void CSheet::OnLButtonEndDrag(MouseEventArgs& e)
-{
-	m_spStateMachine->LButtonEndDrag(this, e);
-}
+//void CSheet::OnLButtonEndDrag(MouseEventArgs& e)
+//{
+//	m_spStateMachine->LButtonEndDrag(this, e);
+//}
 
 void CSheet::OnMouseMove(MouseEventArgs& e)
 {
@@ -919,7 +929,7 @@ void CSheet::Clear()
 	m_spCursorer->Clear();
 
 	m_rocoContextMenu=CRowColumn();
-	m_rocoMouse = CRowColumn();
+	//m_rocoMouse = CRowColumn();
 
 	//m_coTrackLeftVisib=COLUMN_INDEX_INVALID;
 

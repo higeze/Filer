@@ -479,9 +479,6 @@
     <ClInclude Include="..\HiLib\SheetEventArgs.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\SheetState.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\TextCell.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -506,9 +503,6 @@
     <ClInclude Include="ShellFolder.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\MouseState.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\SheetStateMachine.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -516,6 +510,9 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\Celler.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\MouseStateMachine.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -760,9 +757,6 @@
     <ClCompile Include="..\HiLib\SheetDictionary.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\SheetState.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\TextCell.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -781,13 +775,13 @@
     <ClCompile Include="ShellFolder.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\MouseState.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\SheetStateMachine.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\Celler.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\MouseStateMachine.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

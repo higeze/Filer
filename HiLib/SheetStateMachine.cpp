@@ -70,10 +70,10 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		LButtonBeginDrag(CSheet* pSheet, MouseEventArgs e) :MouseEvent(pSheet, e) {}
 	};
 
-	struct LButtonEndDrag :public MouseEvent
-	{
-		LButtonEndDrag(CSheet* pSheet, MouseEventArgs e) :MouseEvent(pSheet, e) {}
-	};
+	//struct LButtonEndDrag :public MouseEvent
+	//{
+	//	LButtonEndDrag(CSheet* pSheet, MouseEventArgs e) :MouseEvent(pSheet, e) {}
+	//};
 
 	struct SetCursor
 	{
@@ -88,6 +88,8 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		CSheet* SheetPtr;
 		KeyEventArgs Args;
 	};
+
+	struct Exception{};
 
 	//State
 	struct NormalState :state<> {};
@@ -188,7 +190,7 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		}
 
 		template<class Event>
-		void Action_RowDrag_LButtonEndDrag(Event const & e)
+		void Action_RowDrag_LButtonUp(Event const & e)
 		{
 			e.SheetPtr->m_spRowDragger->OnEndDrag(e.SheetPtr, (MouseEventArgs)e.Args);
 		}
@@ -219,7 +221,7 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		}
 
 		template<class Event>
-		void Action_ColDrag_LButtonEndDrag(Event const & e)
+		void Action_ColDrag_LButtonUp(Event const & e)
 		{
 			e.SheetPtr->m_spColDragger->OnEndDrag(e.SheetPtr, (MouseEventArgs)e.Args);
 		}
@@ -250,7 +252,7 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		}
 
 		template<class Event>
-		void Action_ItemDrag_LButtonEndDrag(Event const & e)
+		void Action_ItemDrag_LButtonUp(Event const & e)
 		{
 			e.SheetPtr->m_spItemDragger->OnEndDrag(e.SheetPtr, (MouseEventArgs)e.Args);
 		}
@@ -263,25 +265,25 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 
 		//Tracker
 		template<class Event>
-		void Action_RowTrack_LButtonBeginDrag(Event const & e)
+		void Action_RowTrack_LButtonDown(Event const & e)
 		{
 			e.SheetPtr->m_spRowTracker->OnBeginTrack(e.SheetPtr, (MouseEventArgs)e.Args);
 		}
 
 		template<class Event>
-		bool Guard_RowTrack_LButtonBeginDrag(Event const & e)
+		bool Guard_RowTrack_LButtonDown(Event const & e)
 		{
 			return e.SheetPtr->m_spRowTracker->IsTarget(e.SheetPtr, (MouseEventArgs)e.Args);
 		}
 
 		template<class Event>
-		void Action_ColTrack_LButtonBeginDrag(Event const & e)
+		void Action_ColTrack_LButtonDown(Event const & e)
 		{
 			e.SheetPtr->m_spColTracker->OnBeginTrack(e.SheetPtr, (MouseEventArgs)e.Args);
 		}
 
 		template<class Event>
-		bool Guard_ColTrack_LButtonBeginDrag(Event const & e)
+		bool Guard_ColTrack_LButtonDown(Event const & e)
 		{
 			return e.SheetPtr->m_spColTracker->IsTarget(e.SheetPtr, (MouseEventArgs)e.Args);
 		}
@@ -293,7 +295,7 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		}
 
 		template<class Event>
-		void Action_RowTrack_LButtonEndDrag(Event const & e)
+		void Action_RowTrack_LButtonUp(Event const & e)
 		{
 			e.SheetPtr->m_spRowTracker->OnEndTrack(e.SheetPtr, (MouseEventArgs)e.Args);
 		}
@@ -311,7 +313,7 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		}
 
 		template<class Event>
-		void Action_ColTrack_LButtonEndDrag(Event const & e)
+		void Action_ColTrack_LButtonUp(Event const & e)
 		{
 			e.SheetPtr->m_spColTracker->OnEndTrack(e.SheetPtr, (MouseEventArgs)e.Args);
 		}
@@ -340,29 +342,34 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 			   row<NormalState,   LButtonBeginDrag, ColDragState,  &Machine_::Action_ColDrag_LButtonBeginDrag,  &Machine_::Guard_ColDrag_LButtonBeginDrag>,
 			   row<NormalState,   LButtonBeginDrag, RowDragState,  &Machine_::Action_RowDrag_LButtonBeginDrag,  &Machine_::Guard_RowDrag_LButtonBeginDrag>,
 			   row<NormalState,   LButtonBeginDrag, ItemDragState, &Machine_::Action_ItemDrag_LButtonBeginDrag, &Machine_::Guard_ItemDrag_LButtonBeginDrag>,
-      		   row<NormalState,   LButtonBeginDrag, RowTrackState, &Machine_::Action_RowTrack_LButtonBeginDrag, &Machine_::Guard_RowTrack_LButtonBeginDrag>,
-       		   row<NormalState,   LButtonBeginDrag, ColTrackState, &Machine_::Action_ColTrack_LButtonBeginDrag, &Machine_::Guard_ColTrack_LButtonBeginDrag>,
-
+      		   row<NormalState,   LButtonDown, RowTrackState, &Machine_::Action_RowTrack_LButtonDown, &Machine_::Guard_RowTrack_LButtonDown>,
+       		   row<NormalState,   LButtonDown, ColTrackState, &Machine_::Action_ColTrack_LButtonDown, &Machine_::Guard_ColTrack_LButtonDown>,
 			
 			a_irow<RowDragState,  MouseMove,                       &Machine_::Action_RowDrag_MouseMove>,
-			 a_row<RowDragState,  LButtonEndDrag,   NormalState,   &Machine_::Action_RowDrag_LButtonEndDrag>,
+			 a_row<RowDragState,  LButtonUp,   NormalState,   &Machine_::Action_RowDrag_LButtonUp>,
 			 a_row<RowDragState,  MouseLeave,       NormalState,   &Machine_::Action_RowDrag_MouseLeave>,
+			  _row<RowDragState,  Exception,   NormalState>,
 			
 			a_irow<ColDragState,  MouseMove,                       &Machine_::Action_ColDrag_MouseMove>,
-			 a_row<ColDragState,  LButtonEndDrag,   NormalState,   &Machine_::Action_ColDrag_LButtonEndDrag>,
+			 a_row<ColDragState, LButtonUp,   NormalState,   &Machine_::Action_ColDrag_LButtonUp>,
  			 a_row<ColDragState,  MouseLeave,       NormalState,   &Machine_::Action_ColDrag_MouseLeave>,
+			_row<ColDragState, Exception, NormalState>,
 			
 			a_irow<ItemDragState, MouseMove,                       &Machine_::Action_ItemDrag_MouseMove>,
-			 a_row<ItemDragState, LButtonEndDrag,   NormalState,   &Machine_::Action_ItemDrag_LButtonEndDrag>,
+			 a_row<ItemDragState, LButtonUp,   NormalState,   &Machine_::Action_ItemDrag_LButtonUp>,
 			 a_row<ItemDragState, MouseLeave,       NormalState,   &Machine_::Action_ItemDrag_MouseLeave>,
+			_row<ItemDragState, Exception, NormalState>,
+
 
 			a_irow<RowTrackState, MouseMove,                       &Machine_::Action_RowTrack_MouseMove>,
-			 a_row<RowTrackState, LButtonEndDrag,   NormalState,   &Machine_::Action_RowTrack_LButtonEndDrag>,
+			 a_row<RowTrackState, LButtonUp,   NormalState,   &Machine_::Action_RowTrack_LButtonUp>,
 			 a_row<RowTrackState, MouseLeave,       NormalState,   &Machine_::Action_RowTrack_MouseLeave>,
+			_row<RowTrackState, Exception, NormalState>,
 
 			a_irow<ColTrackState, MouseMove, &Machine_::Action_ColTrack_MouseMove>,
-			a_row<ColTrackState, LButtonEndDrag, NormalState, &Machine_::Action_ColTrack_LButtonEndDrag>,
-			a_row<ColTrackState, MouseLeave, NormalState, &Machine_::Action_ColTrack_MouseLeave>
+			a_row<ColTrackState, LButtonUp, NormalState, &Machine_::Action_ColTrack_LButtonUp>,
+			a_row<ColTrackState, MouseLeave, NormalState, &Machine_::Action_ColTrack_MouseLeave>,
+			_row<ColTrackState, Exception, NormalState>
 
 
 
@@ -373,6 +380,13 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 
 		template <class FSM, class Event>
 		void no_transition(Event const& e, FSM&, int state){}
+
+		template <class FSM, class Event>
+		void exception_caught(Event const&, FSM& fsm, std::exception& e)
+		{
+			fsm.process_event(Impl::Exception());
+			throw e;
+		}
 
 		CSheetStateMachine * const base;
 		Machine_(CSheetStateMachine * const p) :base(p) {}
@@ -400,7 +414,7 @@ void CSheetStateMachine::RButtonDown(CSheet * pSheet, MouseEventArgs& e) { pImpl
 void CSheetStateMachine::MouseMove(CSheet * pSheet, MouseEventArgs& e) { pImpl->machine.process_event(Impl::MouseMove(pSheet, e)); }
 void CSheetStateMachine::MouseLeave(CSheet * pSheet, MouseEventArgs& e) { pImpl->machine.process_event(Impl::MouseLeave(pSheet, e)); }
 void CSheetStateMachine::LButtonBeginDrag(CSheet * pSheet, MouseEventArgs& e) { pImpl->machine.process_event(Impl::LButtonBeginDrag(pSheet, e)); }
-void CSheetStateMachine::LButtonEndDrag(CSheet * pSheet, MouseEventArgs& e) { pImpl->machine.process_event(Impl::LButtonEndDrag(pSheet, e)); }
+//void CSheetStateMachine::LButtonEndDrag(CSheet * pSheet, MouseEventArgs& e) { pImpl->machine.process_event(Impl::LButtonEndDrag(pSheet, e)); }
 void CSheetStateMachine::SetCursor(CSheet * pSheet, SetCursorEventArgs& e) { pImpl->machine.process_event(Impl::SetCursor(pSheet, e)); }
 void CSheetStateMachine::ContextMenu(CSheet * pSheet, ContextMenuEventArgs& e) { pImpl->machine.process_event(Impl::ContextMenu(pSheet, e)); }
 void CSheetStateMachine::KeyDown(CSheet * pSheet, KeyEventArgs& e) { pImpl->machine.process_event(Impl::KeyDown(pSheet, e)); }

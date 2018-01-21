@@ -29,7 +29,8 @@
 #include "FindDlg.h"
 
 #include "TextCell.h"
-#include "MouseState.h"
+#include "MouseStateMachine.h"
+
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -48,7 +49,7 @@ CGridView::CGridView(
 	CWnd(),
 	m_iosv(),m_work(m_iosv),m_timer(m_iosv),
 	m_spUndoRedoManager(std::make_shared<CUnDoReDoManager>()),
-	m_pMouseState(CDefaultMouseState::State())
+	m_pMouseStateMachine(std::make_shared<CMouseStateMachine>())
 {
 	boost::thread th(boost::bind(&boost::asio::io_service::run,&m_iosv));
 	//RegisterArgs and CreateArgs
@@ -726,7 +727,7 @@ LRESULT CGridView::OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
 	MouseEventArgs e((UINT)wParam,ptClient);
-	m_pMouseState = m_pMouseState->OnLButtonDown(this, e);
+	m_pMouseStateMachine->LButtonDown(this, e);
 	SubmitUpdate();
 	return 0;
 }
@@ -736,7 +737,7 @@ LRESULT CGridView::OnLButtonUp(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
 	MouseEventArgs e((UINT)wParam,ptClient);
-	m_pMouseState = m_pMouseState->OnLButtonUp(this, e);
+	m_pMouseStateMachine->LButtonUp(this, e);
 	SubmitUpdate();
 	return 0;
 }
@@ -745,7 +746,7 @@ LRESULT CGridView::OnLButtonDblClk(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& b
 {
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
 	MouseEventArgs e((UINT)wParam,ptClient);
-	m_pMouseState = m_pMouseState->OnLButtonDblClk(this, e);
+	m_pMouseStateMachine->LButtonDblClk(this, e);
 	SubmitUpdate();
 	return 0;
 }
@@ -754,7 +755,7 @@ LRESULT CGridView::OnLButtonDblClkTimeExceed(UINT uMsg, WPARAM wParam, LPARAM lP
 {
 	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
 	MouseEventArgs e((UINT)wParam, ptClient);
-	m_pMouseState = m_pMouseState->OnLButtonDblClkTimeExceed(this, e);
+	m_pMouseStateMachine->LButtonDblClkTimeExceed(this, e);
 	SubmitUpdate();
 	return 0;
 }
@@ -763,7 +764,7 @@ LRESULT CGridView::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& b
 {
 	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
 	MouseEventArgs e((UINT)wParam, ptClient);
-	m_pMouseState = m_pMouseState->OnMouseLeave(this, e);
+	m_pMouseStateMachine->MouseLeave(this, e);
 	SubmitUpdate();
 	return 0;
 }
@@ -771,7 +772,7 @@ LRESULT CGridView::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& b
 
 LRESULT CGridView::OnMouseMove(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-    //TrackMouseEvent
+	//TrackMouseEvent
     TRACKMOUSEEVENT stTrackMouseEvent;
     stTrackMouseEvent.cbSize = sizeof(stTrackMouseEvent);
     stTrackMouseEvent.dwFlags = TME_LEAVE;
@@ -1896,7 +1897,7 @@ void CGridView::EraseColumn(column_type spColumn)
 	m_spUndoRedoManager->Do(std::make_shared<EraseColumnCommand>(this, spColumn));
 
 }
-void CGridView::InsertColumn(size_type colTo, column_type spColumn, bool notify)
+void CGridView::InsertColumn(size_type colTo, column_type spColumn)
 {
 	m_spUndoRedoManager->Do(std::make_shared<InsertColumnCommand>(this, colTo, spColumn));
 

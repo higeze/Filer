@@ -5,11 +5,13 @@
 #include "MyRect.h"
 #include "FilerGridView.h"
 #include "FavoritesProperty.h"
+#include "ShellFolder.h"
 
 class CFilerGridView;
 class CGridViewProperty;
 //class CFavoritesProperty;
 class CFavoritesGridView;
+class CShellFolder;
 
 class CFilerWnd:public CWnd
 {
@@ -17,7 +19,7 @@ private:
 	CRect m_rcWnd;
 	CUniqueIDFactory m_uniqueIDFactory;
 	std::shared_ptr<CTabCtrl> m_spTab;
-	std::map<unsigned int, std::wstring> m_viewMap;
+	std::map<unsigned int, std::shared_ptr<CShellFolder>> m_viewMap;
 	std::shared_ptr<CFilerGridView> m_spFilerView;
 	std::shared_ptr<CFavoritesGridView> m_spFavoritesView;
 
@@ -68,7 +70,7 @@ public:
 		ar("GridViewProperty",m_spGridViewProp);
 		m_vwPath.clear();
 		for(auto pair : m_viewMap){
-			m_vwPath.push_back(pair.second);
+			m_vwPath.push_back(pair.second->GetPath());
 		}
 		ar("ViewPaths",m_vwPath);
 		ar("FavoritesProperty",m_spFavoritesProp);
