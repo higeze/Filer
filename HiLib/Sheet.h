@@ -409,6 +409,24 @@ public:
 		return Pointer2Index<TRC, VisTag>();
 	}
 
+	template<typename TRC> void FitBandWidth(TRC::template SharedPtr& ptr)
+	{
+		ptr->SetMeasureValid(false);
+		auto& otherDic = GetDictionary<TRC::Other, AllTag>();
+		for(const auto& data : otherDic) {
+			CSheet::Cell(ptr, data.DataPtr)->SetActMeasureValid(false);
+		};
+		auto& myDic = GetDictionary<TRC, AllTag>();
+		for (const auto& data : myDic) {
+			data.DataPtr->SetMeasureValid(false);
+		}
+
+		PostUpdate(Updates::Column);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+	}
+
 	template<typename TRC> void Moved(CMovedEventArgs<TRC>& e) {  }
 	template<typename TRC> void Track(TRC::template SharedPtr& ptr)
 	{

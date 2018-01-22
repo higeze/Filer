@@ -63,8 +63,10 @@ public:
 
 	void OnDividerDblClk(CSheet* pSheet, MouseEventArgs const & e) override
 	{
-		auto p = pSheet->Index2Pointer<ColTag, VisTag>(pSheet->Point2Coordinate<TRC>(e.Point));
-		//pSheet->HeaderFitWidth(CColumnEventArgs(p.get()));//TODO
+		auto ptr = pSheet->Coordinate2Pointer<TRC>(e.Point.Get<TRC::Axis>());
+		if (ptr) {
+			pSheet->FitBandWidth<TRC>(ptr);
+		}
 	}
 
 	void OnSetCursor(CSheet* pSheet, SetCursorEventArgs const & e)

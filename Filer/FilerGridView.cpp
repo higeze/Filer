@@ -344,17 +344,15 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 
 	m_spCursorer->Clear();
 
-	m_rowAllDictionary.erase(m_rowAllDictionary.begin(), m_rowAllDictionary.end());
-	m_columnAllDictionary.erase(m_columnAllDictionary.begin(), m_columnAllDictionary.end());
 	if(Empty()){
 		InsertDefaultRowColumn();
 	}
 
 		m_spFolder = spFolder;
 
-		////Clear RowDictionary From 0 to last
-		//auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
-		//rowDictionary.erase(rowDictionary.find(0), rowDictionary.end());
+		//Clear RowDictionary From 0 to last
+		auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
+		rowDictionary.erase(rowDictionary.find(0), rowDictionary.end());
 
 		//Set up Watcher
 		if(::PathFileExists(m_spFolder->GetPath().c_str())){
@@ -392,10 +390,10 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		//for (const auto& row : m_rowAllDictionary) {
 		//	row.DataPtr->SetMeasureValid(false);
 		//}
-		//for(const auto& col : m_columnAllDictionary) {
-		//	std::dynamic_pointer_cast<CParentMapColumn>(col.DataPtr)->Clear();
-		//	col.DataPtr->SetMeasureValid(false);
-		//}
+		for(const auto& col : m_columnAllDictionary) {
+			std::dynamic_pointer_cast<CParentMapColumn>(col.DataPtr)->Clear();
+			//col.DataPtr->SetMeasureValid(false);
+		}
 		//for (const auto& row : m_rowAllDictionary) {
 		//	for (const auto& col : m_columnAllDictionary) {
 		//		auto cell = CSheet::Cell(row.DataPtr, col.DataPtr);
@@ -406,7 +404,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 
 	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::RowVisible);
-	PostUpdate(Updates::Column);
+	//PostUpdate(Updates::Column);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);

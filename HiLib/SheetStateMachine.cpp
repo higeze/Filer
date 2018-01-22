@@ -114,10 +114,18 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		template<class Event>
 		void Action_Normal_LButtonUp(Event const & e)
 		{
-			e.SheetPtr->m_spCursorer->OnLButtonUp(e.SheetPtr, (MouseEventArgs)e.Args);
-			e.SheetPtr->m_spCeller->OnLButtonUp(e.SheetPtr, e.Args);
+			if (e.SheetPtr->m_spColTracker->IsTarget(e.SheetPtr, (MouseEventArgs)e.Args)) {
+				e.SheetPtr->m_spColTracker->OnDividerDblClk(e.SheetPtr, (MouseEventArgs)e.Args);
+			}
+			else if (e.SheetPtr->m_spRowTracker->IsTarget(e.SheetPtr, (MouseEventArgs)e.Args)) {
+				e.SheetPtr->m_spRowTracker->OnDividerDblClk(e.SheetPtr, (MouseEventArgs)e.Args);
+			}
+			else {
+				e.SheetPtr->m_spCursorer->OnLButtonUp(e.SheetPtr, (MouseEventArgs)e.Args);
+				e.SheetPtr->m_spCeller->OnLButtonUp(e.SheetPtr, e.Args);
+			}
 		}
-
+		
 		template<class Event>
 		void Action_Normal_LButtonSnglClk(Event const & e)
 		{
