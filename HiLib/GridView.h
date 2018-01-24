@@ -114,6 +114,8 @@ public:
 
 
 public:
+	std::shared_ptr<CMouseStateMachine> GetMouseStateMachine() { return m_pMouseStateMachine; }
+	void SetMouseStateMachine(std::shared_ptr<CMouseStateMachine>& machine) { m_pMouseStateMachine = machine; }
 	boost::asio::deadline_timer* GetTimerPtr(){return &m_timer;}
 
 	virtual row_type GetHeaderHeaderRowPtr()const{return m_rowHeaderHeader;}

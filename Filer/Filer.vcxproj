@@ -303,6 +303,7 @@
     <ClInclude Include="FavoriteRow.h" />
     <ClInclude Include="FavoritesColumn.h" />
     <ClInclude Include="FavoritesGridView.h" />
+    <ClInclude Include="FavoritesItemDragger.h" />
     <ClInclude Include="FavoritesProperty.h" />
     <ClInclude Include="FileDragger.h" />
     <ClInclude Include="FileDraggingState.h" />

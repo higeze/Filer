@@ -16,8 +16,9 @@
 #include "ApplicationProperty.h"
 #include "SheetEventArgs.h"
 #include "Cursorer.h"
-extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
+#include "FavoritesItemDragger.h"
 
+extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CFavoritesGridView::CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp)
 			:CGridView(			
@@ -39,6 +40,8 @@ CFavoritesGridView::CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGrid
 		.lpszWindowName(_T("FavoriteGridView"))
 		.dwStyle(WS_CHILD | WS_VISIBLE)
 		.hMenu((HMENU)1233211); 
+
+	m_spItemDragger = std::make_shared<CFavoritesItemDragger>();
 
 	CellLButtonDblClk.connect(std::bind(&CFavoritesGridView::OnCellLButtonDblClk,this,std::placeholders::_1));
 }

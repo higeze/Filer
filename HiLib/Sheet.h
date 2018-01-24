@@ -150,6 +150,7 @@ public:
 
 	//Getter Setter
 	std::shared_ptr<CSheetStateMachine> GetSheetStateMachine() { return m_spStateMachine; }
+	void SetSheetStateMachine(std::shared_ptr<CSheetStateMachine>& machine) { m_spStateMachine = machine; }
 	std::shared_ptr<CCursorer> GetCursorerPtr(){return m_spCursorer;} /**< Cursor */
 
 	void SetContextMenuRowColumn(const CRowColumn& roco){m_rocoContextMenu = roco;}

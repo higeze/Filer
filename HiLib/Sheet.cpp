@@ -796,12 +796,9 @@ void CSheet::SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& 
 
 void CSheet::SelectAll()
 {
-	boost::range::for_each(m_columnAllDictionary,[&](const ColumnData& colData){
-		colData.DataPtr->SetSelected(true);
-	});
-	boost::range::for_each(m_rowAllDictionary,[&](const RowData& rowData){
-		rowData.DataPtr->SetSelected(true);
-	});
+	for (auto iter = m_rowAllDictionary.find(0); iter != m_rowAllDictionary.end(); ++iter) {
+		iter->DataPtr->SetSelected(true);
+	}
 }
 
 void CSheet::DeselectAll()

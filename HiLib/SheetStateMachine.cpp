@@ -390,10 +390,10 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		void no_transition(Event const& e, FSM&, int state){}
 
 		template <class FSM, class Event>
-		void exception_caught(Event const&, FSM& fsm, std::exception& e)
+		void exception_caught(Event const& ev, FSM& fsm, std::exception& ex)
 		{
-			fsm.process_event(Impl::Exception());
-			throw e;
+			(ev.SheetPtr)->SetSheetStateMachine(std::make_shared<CSheetStateMachine>());
+			throw ex;
 		}
 
 		CSheetStateMachine * const base;

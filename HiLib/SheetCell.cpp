@@ -35,7 +35,10 @@ CSheetCell::CSheetCell(
 		spFilterProperty,
 		spCellProperty), 
 	CCell(pSheet,pRow,pColumn,spProperty,pMenu)
-{}
+{
+	m_spRowDragger = std::make_shared<CSheetCellRowDragger>();
+	m_spColDragger = std::make_shared<CSheetCellColDragger>();
+}
 
 void CSheetCell::Resize()
 {

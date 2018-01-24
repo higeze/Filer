@@ -48,12 +48,20 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 
 
 	//State
-	struct NormalState :state<> { };
+	struct NormalState :state<> 
+	{
+		template < class event_t, class fsm_t >
+		void on_entry(event_t const & e, fsm_t & machine)
+		{
+			std::cout << "NormalState" << std::endl;
+		}
+	};
 	struct LButtonDownedState :state<> 
 	{
 		template < class event_t, class fsm_t >
 		void on_entry(event_t const & e, fsm_t & machine)
 		{
+			std::cout << "LButtonDownedState" << std::endl;
 			if (auto p = dynamic_cast<CGridView*>(e.SheetPtr)) {
 				boost::asio::deadline_timer* pTimer = p->GetTimerPtr();
 				pTimer->expires_from_now(boost::posix_time::milliseconds(::GetDoubleClickTime()));
@@ -135,7 +143,8 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
      		 a_row<LButtonDownedState,   MouseLeave,              NormalState,          &Machine_::Action_Any_MouseLeave>,
 			 _row<LButtonDownedState,    Exception,               NormalState>,
 
-			 a_row<LButtonUppedState,    LButtonDblClk,           LButtonDblClkedState, &Machine_::Action_Upped_LButtonDblClk>,
+			 a_row<LButtonUppedState,    LButtonDown,              LButtonDownedState, &Machine_::Action_Normal_LButtonDown>,
+			a_row<LButtonUppedState,    LButtonDblClk,           LButtonDblClkedState, &Machine_::Action_Upped_LButtonDblClk>,
  			 a_row<LButtonUppedState,    LButtonDblClkTimeExceed, NormalState,          &Machine_::Action_Upped_LButtonDblClkTimeExceed>,
 			 a_row<LButtonUppedState,    MouseLeave,              NormalState,          &Machine_::Action_Any_MouseLeave>,
 			_row<LButtonUppedState,      Exception,               NormalState>,
@@ -157,10 +166,10 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		void no_transition(Event const& e, FSM&, int state) {}
 
 		template <class FSM, class Event>
-		void exception_caught(Event const&, FSM& fsm, std::exception& e)
+		void exception_caught(Event const& ev, FSM& fsm, std::exception& ex)
 		{
-			fsm.process_event(Impl::Exception());
-			throw e;
+			((CGridView*)ev.SheetPtr)->SetMouseStateMachine(std::make_shared<CMouseStateMachine>());
+			throw ex;
 		}
 
 		CMouseStateMachine * const base;

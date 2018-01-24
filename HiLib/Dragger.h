@@ -102,7 +102,7 @@ public:
 		m_dragToIndex = CBand::kInvalidIndex;
 	}
 
-	void OnPaintDragLine(CSheet* pSheet, PaintEventArgs const & e)
+	virtual void OnPaintDragLine(CSheet* pSheet, PaintEventArgs const & e)
 	{
 		//auto dragTo = m_spColDragger->GetDragToAllIndex();
 		//auto dragFrom = m_spColDragger->GetDragFromAllIndex();
@@ -129,8 +129,8 @@ public:
 		}
 
 		//Get Right/Bottom Line
-		coordinates_type cooyou0 = pSheet->FirstPointer<TRCYou, AllTag>()->GetLeftTop();
-		coordinates_type cooyou1 = pSheet->ZeroPointer<TRCYou, AllTag>()->GetRightBottom();
+		coordinates_type cooyou0 = GetLineLeftTop(pSheet);
+		coordinates_type cooyou1 = GetLineRightBottom(pSheet);
 
 		//Paint
 		CPen pen(pSheet->GetHeaderProperty()->GetPenPtr()->GetPenStyle(),
@@ -141,10 +141,10 @@ public:
 		e.DCPtr->SelectPen(hPen);
 	}
 
-	void PaintLine(CDC* pDC, coordinates_type coome, coordinates_type cooyou0, coordinates_type cooyou1)
-	{
+	virtual int GetLineLeftTop(CSheet* pSheet) { return pSheet->FirstPointer<TRCYou, AllTag>()->GetLeftTop(); }
+	virtual int GetLineRightBottom(CSheet* pSheet) { return pSheet->ZeroPointer<TRCYou, AllTag>()->GetRightBottom(); }
 
-	}
+	void PaintLine(CDC* pDC, coordinates_type coome, coordinates_type cooyou0, coordinates_type cooyou1) {}
 
 };
 
@@ -173,8 +173,7 @@ public:
     /*! Constructor*/
 	CSheetCellDragger():CDragger(){}
 	virtual ~CSheetCellDragger(){}
-	/*! Do not drag Header for CSheetCell*/
-	virtual void OnMouseMove(CSheet* pSheet, MouseEventArgs const & e) override {}
+	virtual bool IsTarget(CSheet* pSheet, MouseEventArgs const & e) override { return false; }
 };
 
 typedef CSheetCellDragger<RowTag, ColTag> CSheetCellRowDragger;

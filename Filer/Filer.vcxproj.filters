@@ -515,6 +515,9 @@
     <ClInclude Include="..\HiLib\MouseStateMachine.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="FavoritesItemDragger.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
