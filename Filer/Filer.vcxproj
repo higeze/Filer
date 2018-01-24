@@ -175,7 +175,7 @@
     <Image Include="Filer.ico" />
     <Image Include="GKN_Aerospace.ico" />
     <Image Include="small.ico" />
-    <Image Include="updater.ico" />
+    <Image Include="update.ico.ico" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\HiLib\ApplicationProperty.h" />
