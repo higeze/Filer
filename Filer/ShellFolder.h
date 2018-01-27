@@ -11,4 +11,5 @@ public:
 	CShellFolder(CComPtr<IShellFolder> pFolder, CComPtr<IShellFolder> pParentFolder, CIDLPtr absolutePidl);
 
 	CComPtr<IShellFolder>& GetShellFolderPtr() { return m_folder; }
+	std::shared_ptr<CShellFolder> GetParent();
 };

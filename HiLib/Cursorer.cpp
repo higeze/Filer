@@ -164,9 +164,9 @@ void CCursorer::OnKeyDown(CSheet* pSheet, KeyEventArgs& e)
 				}
 				cell=pSheet->Cell<VisTag>(roVisib, coVisib);
 			}
-			if(::GetKeyState(VK_CONTROL)<0){
+			if(::GetKeyState(VK_CONTROL) & 0x8000){
 				OnCursorCtrl(cell);
-			}else if(::GetKeyState(VK_SHIFT)<0){
+			}else if(::GetKeyState(VK_SHIFT) & 0x8000){
 				OnCursorShift(cell);
 			}else{
 				OnCursor(cell);

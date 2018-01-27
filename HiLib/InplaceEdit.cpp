@@ -46,7 +46,7 @@ LRESULT CInplaceEdit::OnSysKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& b
 {
 	switch(wParam){
 	case VK_RETURN:
-		if(::GetKeyState(VK_MENU) & 0x80){
+		if(::GetKeyState(VK_MENU) & 0x8000){
 			m_bAlt=true;
 			SendMessage(WM_CHAR,VK_RETURN,lParam);
 			bHandled=TRUE;

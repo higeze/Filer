@@ -30,6 +30,9 @@ void CCeller::OnLButtonDblClk(CSheet* pSheet, const MouseEventArgs& e)
 	if (cell != nullptr) {
 		cell->OnLButtonDblClk((MouseEventArgs)e);
 	}
+	else {
+		pSheet->OnBkGndLButtondDblClk(e);
+	}
 }
 void CCeller::OnMouseMove(CSheet* pSheet, const MouseEventArgs& e)
 {

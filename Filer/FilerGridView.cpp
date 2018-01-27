@@ -223,16 +223,8 @@ void CFilerGridView::OnKeyDown(KeyEventArgs& e)
 		}
 		break;
 	case VK_BACK:
-		{//TODO Implement Back function in CShellFolder
-			CIDLPtr parentIDL = m_spFolder->GetAbsolutePidl().GetPreviousIDLPtr();
-			CIDLPtr grandParentIDL = parentIDL.GetPreviousIDLPtr();
-			CComPtr<IShellFolder> pGrandParentFolder;
-			m_pDesktopShellFolder->BindToObject(grandParentIDL,0,IID_IShellFolder,(void**)&pGrandParentFolder);
-
-			if(!pGrandParentFolder){
-				pGrandParentFolder = m_pDesktopShellFolder;
-			}
-			OpenFolder(std::make_shared<CShellFolder>(m_spFolder->GetParentShellFolderPtr(), pGrandParentFolder, parentIDL));
+		{
+			OpenFolder(m_spFolder->GetParent());
 		}
 		break;
 	case VK_F7:
@@ -418,6 +410,12 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	SubmitUpdate();
 }
 
+void CFilerGridView::OnBkGndLButtondDblClk(const MouseEventArgs& e)
+{
+	OpenFolder(m_spFolder->GetParent());
+}
+
+
 void CFilerGridView::OnCellLButtonDblClk(CellEventArgs& e)
 {
 	auto pCell = e.CellPtr;
@@ -426,6 +424,8 @@ void CFilerGridView::OnCellLButtonDblClk(CellEventArgs& e)
 		Open(spFile);
 	}
 }
+
+
 
 void CFilerGridView::OnShellCommand(LPCSTR lpVerb)
 {
@@ -603,8 +603,8 @@ void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IS
 		if (FAILED(hr)) { return; }
 		hr = pcm->QueryInterface(IID_PPV_ARGS(&m_pcm3));
 		if (FAILED(hr)) { return; }
-
-		hr = m_pcm3->QueryContextMenu(menu, 0, SCRATCH_QCM_FIRST, SCRATCH_QCM_LAST, CMF_NORMAL);
+		UINT uFlags = (::GetKeyState(VK_SHIFT) & 0x8000) ? CMF_NORMAL | CMF_EXTENDEDVERBS : CMF_NORMAL;
+		hr = m_pcm3->QueryContextMenu(menu, 0, SCRATCH_QCM_FIRST, SCRATCH_QCM_LAST, uFlags);
 		if (FAILED(hr)) { return; }
 
 		//

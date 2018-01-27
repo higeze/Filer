@@ -49,3 +49,20 @@ CShellFolder::CShellFolder() :CShellFile(), m_folder()
 }
 CShellFolder::CShellFolder(CComPtr<IShellFolder> pFolder, CComPtr<IShellFolder> pParentFolder, CIDLPtr absolutePidl)
 	:CShellFile(pParentFolder, absolutePidl), m_folder(pFolder) {}
+
+std::shared_ptr<CShellFolder> CShellFolder::GetParent()
+{
+	CIDLPtr parentIDL = this->GetAbsolutePidl().GetPreviousIDLPtr();
+	CIDLPtr grandParentIDL = parentIDL.GetPreviousIDLPtr();
+	CComPtr<IShellFolder> pGrandParentFolder;
+	//Desktop IShellFolder
+	CComPtr<IShellFolder> pDesktopShellFolder;
+	::SHGetDesktopFolder(&pDesktopShellFolder);
+	pDesktopShellFolder->BindToObject(grandParentIDL, 0, IID_IShellFolder, (void**)&pGrandParentFolder);
+
+	if (!pGrandParentFolder) {
+		pGrandParentFolder = pDesktopShellFolder;
+	}
+	return std::make_shared<CShellFolder>(this->GetParentShellFolderPtr(), pGrandParentFolder, parentIDL);
+
+}

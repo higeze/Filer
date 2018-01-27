@@ -264,6 +264,7 @@ public:
 	virtual void OnLButtonUp(MouseEventArgs& e);
 	virtual void OnLButtonSnglClk(MouseEventArgs& e);
 	virtual void OnLButtonDblClk(MouseEventArgs& e);
+	virtual void OnBkGndLButtondDblClk(const MouseEventArgs& e) {}
 	virtual void OnLButtonBeginDrag(MouseEventArgs& e);
 	//virtual void OnLButtonEndDrag(MouseEventArgs& e);
 

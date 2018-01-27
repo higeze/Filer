@@ -77,6 +77,7 @@ public:
 
 	virtual void OnKeyDown(KeyEventArgs& e)override;
 	void OnCellLButtonDblClk(CellEventArgs& e);
+	virtual void OnBkGndLButtondDblClk(const MouseEventArgs& e) override;
 	virtual void OnContextMenu(ContextMenuEventArgs& e) override;
 
 	void Open(std::shared_ptr<CShellFile>& spFile);
