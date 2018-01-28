@@ -1,4 +1,4 @@
-#include "FileIconStringCell.h"
+#include "FavoriteCell.h"
 #include "MyDC.h"
 #include "Column.h"
 #include "FileRow.h"
@@ -6,16 +6,32 @@
 #include "MySize.h"
 #include "MyFont.h"
 #include "CellProperty.h"
+#include "Favorite.h"
 #include "FavoriteRow.h"
+#include "FavoritesColumn.h"
+#include "ShellFile.h"
 
-CFileIconStringCell::CFileIconStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
+CFavoriteCell::CFavoriteCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
 	:CCell(pSheet, pRow, pColumn, spProperty){}
 
-void CFileIconStringCell::PaintContent(CDC* pDC, CRect rcPaint)
+std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
 {
-	auto pFileRow = static_cast<CFavoriteRow*>(m_pRow);
-	auto spFile = pFileRow->GetFilePointer();
-	CIcon icon = spFile->GetIcon();
+	auto pRow = static_cast<CFavoriteRow*>(m_pRow);
+	auto pCol = static_cast<CFavoritesColumn*>(m_pColumn);
+	return std::make_shared<CShellFile>(pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetPath());
+}
+
+std::wstring CFavoriteCell::GetShortName()
+{
+	auto pRow = static_cast<CFavoriteRow*>(m_pRow);
+	auto pCol = static_cast<CFavoritesColumn*>(m_pColumn);
+	return pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetShortName();
+}
+
+
+void CFavoriteCell::PaintContent(CDC* pDC, CRect rcPaint)
+{
+	CIcon icon = GetShellFile()->GetIcon();
 
 	if(!icon.IsNull()){
 		CRect rc = rcPaint;
@@ -30,7 +46,7 @@ void CFileIconStringCell::PaintContent(CDC* pDC, CRect rcPaint)
 	CFont font;
 	HFONT hFont = NULL;
 	CRect rcContent;
-	std::wstring str = pFileRow->GetName();
+	std::wstring str = GetShortName();
 	int i=0;
 	do{
 		font = CFont(m_spProperty->GetFontPtr()->GetPointSize() - i, m_spProperty->GetFontPtr()->GetFaceName());
@@ -46,12 +62,12 @@ void CFileIconStringCell::PaintContent(CDC* pDC, CRect rcPaint)
 	pDC->SelectFont(hFont);
 }
 
-CSize CFileIconStringCell::MeasureContentSize(CDC* pDC)
+CSize CFavoriteCell::MeasureContentSize(CDC* pDC)
 {
 	return CSize(16, 16);
 }
 
-CSize CFileIconStringCell::MeasureContentSizeWithFixedWidth(CDC* pDC)
+CSize CFavoriteCell::MeasureContentSizeWithFixedWidth(CDC* pDC)
 {
 	return MeasureContentSize(pDC);
 }

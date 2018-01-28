@@ -311,7 +311,7 @@
     <ClInclude Include="FileExtColumn.h" />
     <ClInclude Include="FileIconCell.h" />
     <ClInclude Include="FileIconColumn.h" />
-    <ClInclude Include="FileIconStringCell.h" />
+    <ClInclude Include="FavoriteCell.h" />
     <ClInclude Include="FileLastWriteCell.h" />
     <ClInclude Include="FileLastWriteColumn.h" />
     <ClInclude Include="FileNameCell.h" />
@@ -407,7 +407,7 @@
     <ClCompile Include="FileExtColumn.cpp" />
     <ClCompile Include="FileIconCell.cpp" />
     <ClCompile Include="FileIconColumn.cpp" />
-    <ClCompile Include="FileIconStringCell.cpp" />
+    <ClCompile Include="FavoriteCell.cpp" />
     <ClCompile Include="FileLastWriteCell.cpp" />
     <ClCompile Include="FileLastWriteColumn.cpp" />
     <ClCompile Include="FileNameCell.cpp" />

@@ -1,6 +1,7 @@
 #include "FavoriteRow.h"
-#include "ShellFile.h"
+#include "Sheet.h"
 
+CFavoriteRow::CFavoriteRow(CGridView* pGrid, int orderIndex)
+	:CParentRow(pGrid){}
 
-CFavoriteRow::CFavoriteRow(CGridView* pGrid, std::shared_ptr<CShellFile> spFile, std::wstring& name)
-	:CFileRow(pGrid, spFile), m_name(name){}
+int CFavoriteRow::GetOrderIndex()const { return GetIndex<VisTag>(); }

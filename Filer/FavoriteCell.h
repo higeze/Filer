@@ -1,14 +1,17 @@
 #pragma once
-
 #include "Cell.h"
 
-class CFileIconStringCell:public CCell
+class CShellFile;
+
+class CFavoriteCell:public CCell
 {
 private:
-
 public:
-	CFileIconStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty);
-	virtual ~CFileIconStringCell(){}
+	CFavoriteCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty);
+	virtual ~CFavoriteCell(){}
+
+	std::shared_ptr<CShellFile> GetShellFile();
+	std::wstring GetShortName();
 
 	virtual bool IsComparable()const override{return false;}
 	virtual void PaintContent(CDC* pDC, CRect rcPaint)override;

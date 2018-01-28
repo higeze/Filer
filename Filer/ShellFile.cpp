@@ -1,8 +1,8 @@
 #include "ShellFile.h"
-
 #include "MyIcon.h"
 #include "MyString.h"
 #include "MyCom.h"
+#include "ShellFolder.h"
 
 std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit)
 
@@ -50,109 +50,224 @@ tstring Size2String(ULONGLONG size)
 	return ConvertCommaSeparatedNumber(size);	
 }
 
-CShellFile::CShellFile():m_parentFolder(), m_absolutePidl(), m_icon()
+std::wstring CShellFile::GetPath()
+{
+	if (m_wstrPath.empty()) {
+		CIDLPtr childPidl = m_absolutePidl.GetLastIDLPtr();
+		STRRET strret;
+		m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_FORPARSING, &strret);
+		m_wstrPath = childPidl.STRRET2WSTR(strret);
+	}
+	return m_wstrPath;
+}
+
+std::wstring CShellFile::GetName()
+{
+	if (m_wstrName.empty()) {
+		CIDLPtr childPidl = m_absolutePidl.GetLastIDLPtr();
+		STRRET strret;
+		m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_NORMAL, &strret);
+		m_wstrName = childPidl.STRRET2WSTR(strret);
+	}
+	return m_wstrName;
+}
+
+std::wstring CShellFile::GetExt()
+{
+	if (m_wstrExt.empty()) {
+		m_wstrExt = ::PathFindExtension(GetPath().c_str());
+	}
+	return m_wstrExt;
+}
+
+std::wstring CShellFile::GetTypeName()
+{
+	if (m_wstrType.empty()) {
+		SHFILEINFO sfi = { 0 };
+		::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_TYPENAME);
+		m_wstrType = sfi.szTypeName;
+	}
+	return m_wstrType;
+}
+
+std::wstring CShellFile::GetCreationTime()
+{
+	if (m_wstrCreationTime.empty()) {
+		UpdateWIN32_FIND_DATA();
+	}
+	return m_wstrCreationTime;
+}
+
+std::wstring CShellFile::GetLastAccessTime()
+{
+	if (m_wstrLastAccessTime.empty()) {
+		UpdateWIN32_FIND_DATA();
+	}
+	return m_wstrLastAccessTime;
+}
+
+std::wstring CShellFile::GetLastWriteTime()
+{
+	if (m_wstrLastWriteTime.empty()) {
+		UpdateWIN32_FIND_DATA();
+	}
+	return m_wstrLastWriteTime;
+}
+
+std::wstring CShellFile::GetSizeString()
+{
+	if (m_wstrSize.empty()) {
+		UpdateWIN32_FIND_DATA();
+	}
+	return m_wstrSize;
+}
+
+ULARGE_INTEGER CShellFile::GetSize()
+{
+	if (!m_size.HighPart && !m_size.LowPart) {
+		UpdateWIN32_FIND_DATA();
+	}
+	return m_size;
+}
+
+CIcon CShellFile::GetIcon()
+{
+	if ((HICON)m_icon == NULL) {
+		SHFILEINFO sfi = { 0 };
+		::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+		m_icon = CIcon(sfi.hIcon);
+
+		//CComPtr<IExtractIcon> pEI;
+		//UINT reserved = 0;
+		//LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
+		//HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
+		//if(SUCCEEDED(hr)){
+		//	std::wstring buff;
+		//	::GetBuffer(buff, MAX_PATH);
+		//	UINT flags =0;
+		//	int index = 0;
+		//	hr = pEI->GetIconLocation(GIL_FORSHELL, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
+		//	HICON smallIcon = NULL;
+		//	pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
+		//	m_icon = CIcon(smallIcon);
+		//}
+	}
+	return m_icon;
+}
+
+UINT CShellFile::GetAttributes()
+{
+	if (m_ulAttributes == 0) {
+		auto childPidl = m_absolutePidl.GetLastIDLPtr();
+		m_ulAttributes = SFGAO_CAPABILITYMASK | SFGAO_GHOSTED | SFGAO_LINK | SFGAO_SHARE | SFGAO_FOLDER | SFGAO_FILESYSTEM;
+		m_parentFolder->GetAttributesOf(1, (LPCITEMIDLIST*)&childPidl, &m_ulAttributes);
+	}
+	return m_ulAttributes;
+
+}
+
+void CShellFile::UpdateWIN32_FIND_DATA()
+{
+	auto childPidl = m_absolutePidl.GetLastIDLPtr();
+	WIN32_FIND_DATA wfd = { 0 };
+	if (!FAILED(SHGetDataFromIDList(m_parentFolder, childPidl, SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
+		m_wstrCreationTime = FileTime2String(&wfd.ftCreationTime);
+		m_wstrLastAccessTime = FileTime2String(&wfd.ftLastAccessTime);
+		m_wstrLastWriteTime = FileTime2String(&wfd.ftLastWriteTime);
+		m_fileAttributes = wfd.dwFileAttributes;
+		m_size.LowPart = wfd.nFileSizeLow;
+		m_size.HighPart = wfd.nFileSizeHigh;
+		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			m_wstrSize = L"dir";
+		}
+		else {
+			m_wstrSize = Size2String(m_size.QuadPart);
+		}
+	}
+}
+
+CShellFile::CShellFile() :m_parentFolder(), m_absolutePidl()
 {
 	::SHGetDesktopFolder(&m_parentFolder);
-	//ChildPild
-	CIDLPtr childPidl = m_absolutePidl.GetLastIDLPtr();
-	//Path
-	STRRET strret;
-	m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_FORPARSING,&strret);
-	m_wstrPath=childPidl.STRRET2WSTR(strret);
-	//Name
-	m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_NORMAL,&strret);
-	m_wstrName=childPidl.STRRET2WSTR(strret);
-	//Type, Icon
-	SHFILEINFO sfi={0};
-
-//	::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl,0,&sfi,sizeof(SHFILEINFO),SHGFI_PIDL | SHGFI_TYPENAME | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-	::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl,0,&sfi,sizeof(SHFILEINFO),SHGFI_PIDL | SHGFI_TYPENAME);
-
-	m_wstrType=sfi.szTypeName;
-//	m_icon=CIcon(sfi.hIcon);
-	//Ext
-	m_wstrExt=::PathFindExtension(m_wstrPath.c_str());
-	//if(m_wstrExt.empty() && ::PathIsDirectory(m_wstrPath.c_str())){
-	//	m_wstrExt = L"dir";
-	//}
-	//Win32_find_data
-	WIN32_FIND_DATA wfd={0};
-	if(!FAILED(SHGetDataFromIDList(m_parentFolder, childPidl,SHGDFIL_FINDDATA,&wfd,sizeof(WIN32_FIND_DATA)))){;
-		m_wstrCreationTime=FileTime2String(&wfd.ftCreationTime);
-		m_wstrLastAccessTime=FileTime2String(&wfd.ftLastAccessTime);
-		m_wstrLastWriteTime=FileTime2String(&wfd.ftLastWriteTime);
-		m_fileAttributes = wfd.dwFileAttributes;
-		m_size.LowPart = wfd.nFileSizeLow;
-		m_size.HighPart = wfd.nFileSizeHigh;
-		if(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY){
-			m_wstrSize=L"dir";
-		}else{
-			m_wstrSize=Size2String(m_size.QuadPart);
-		}
-	}
-	//Icon
-	//::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)childPidl, 0, &sfi, sizeof(sfi), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-	//m_icon=CIcon(sfi.hIcon);
-
-	//Attribute
-	m_ulAttributes=SFGAO_CAPABILITYMASK | SFGAO_GHOSTED | SFGAO_LINK | SFGAO_SHARE | SFGAO_FOLDER | SFGAO_FILESYSTEM;
-	LPCITEMIDLIST pIDL(childPidl);
-	m_parentFolder->GetAttributesOf(1,&pIDL,&m_ulAttributes);
+	::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &m_absolutePidl);
 }
 
-CShellFile::CShellFile(CComPtr<IShellFolder> pfolder, CIDLPtr absolutePidl):m_parentFolder(pfolder),m_absolutePidl(absolutePidl),m_icon()
+CShellFile::CShellFile(const std::wstring& path) : m_parentFolder(), m_absolutePidl()
 {
-	//ChildPild
-	CIDLPtr childPidl = m_absolutePidl.GetLastIDLPtr();
-	//Path
-	STRRET strret;
-	m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_FORPARSING,&strret);
-	m_wstrPath=childPidl.STRRET2WSTR(strret);
-	//Name
-	m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_NORMAL,&strret);
-	m_wstrName=childPidl.STRRET2WSTR(strret);
-	//Type, Icon
-	SHFILEINFO sfi={0};
+	CComPtr<IShellFolder> pDesktop;
+	::SHGetDesktopFolder(&pDesktop);
 
-//	::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl,0,&sfi,sizeof(SHFILEINFO),SHGFI_PIDL | SHGFI_TYPENAME | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-	::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl,0,&sfi,sizeof(SHFILEINFO),SHGFI_PIDL | SHGFI_TYPENAME);
-
-	m_wstrType=sfi.szTypeName;
-//	m_icon=CIcon(sfi.hIcon);
-	//Ext
-	m_wstrExt=::PathFindExtension(m_wstrPath.c_str());
-	//if(m_wstrExt.empty() && ::PathIsDirectory(m_wstrPath.c_str())){
-	//	m_wstrExt = L"dir";
-	//}
-	//Win32_find_data
-	WIN32_FIND_DATA wfd={0};
-	if(!FAILED(SHGetDataFromIDList(m_parentFolder, childPidl,SHGDFIL_FINDDATA,&wfd,sizeof(WIN32_FIND_DATA)))){;
-		m_wstrCreationTime=FileTime2String(&wfd.ftCreationTime);
-		m_wstrLastAccessTime=FileTime2String(&wfd.ftLastAccessTime);
-		m_wstrLastWriteTime=FileTime2String(&wfd.ftLastWriteTime);
-		m_fileAttributes = wfd.dwFileAttributes;
-		m_size.LowPart = wfd.nFileSizeLow;
-		m_size.HighPart = wfd.nFileSizeHigh;
-		if(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY){
-			m_wstrSize=L"dir";
-		}else{
-			m_wstrSize=Size2String(m_size.QuadPart);
+	HRESULT hr = 0;
+	if (path == L"") {
+		::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &m_absolutePidl);
+		m_parentFolder = pDesktop;
+	}
+	else {
+		ULONG         chEaten;
+		ULONG         dwAttributes;
+		hr = pDesktop->ParseDisplayName(
+			NULL,
+			NULL,
+			const_cast<LPWSTR>(path.c_str()),
+			&chEaten,
+			&m_absolutePidl,
+			&dwAttributes);
+		if (SUCCEEDED(hr))
+		{
+			::SHBindToObject(pDesktop, m_absolutePidl.GetPreviousIDLPtr(), 0, IID_IShellFolder, (void**)&m_parentFolder);
+			if (!m_parentFolder) {
+				m_parentFolder = pDesktop;
+			}
 		}
 	}
-	//Icon
-	//::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)childPidl, 0, &sfi, sizeof(sfi), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-	//m_icon=CIcon(sfi.hIcon);
-
-	//Attribute
-	m_ulAttributes=SFGAO_CAPABILITYMASK | SFGAO_GHOSTED | SFGAO_LINK | SFGAO_SHARE | SFGAO_FOLDER | SFGAO_FILESYSTEM;
-	LPCITEMIDLIST pIDL(childPidl);
-	m_parentFolder->GetAttributesOf(1,&pIDL,&m_ulAttributes);
-
-	//Icon
-//	m_nIcon=idl.GetIconIndex();
 }
 
-//int CShellFile::GetIconIndex()
-//{return m_nIcon;}
+CShellFile::CShellFile(CComPtr<IShellFolder> pfolder, CIDLPtr absolutePidl)
+	:m_parentFolder(pfolder),m_absolutePidl(absolutePidl){}
+
+bool CShellFile::IsShellFolder()const
+{
+	//Try BindToObject and EnumObjects to identify folder
+	CComPtr<IShellFolder> pDesktop;
+	::SHGetDesktopFolder(&pDesktop);
+	CComPtr<IShellFolder> pFolder;
+	HRESULT hr = S_OK;
+
+	if (m_absolutePidl.m_pIDL->mkid.cb == 0) {
+		pFolder = pDesktop;
+	}
+	else {
+		hr = pDesktop->BindToObject(m_absolutePidl, 0, IID_IShellFolder, (void**)&pFolder);
+	}
+
+	if (SUCCEEDED(hr)) {
+		CComPtr<IEnumIDList> enumIdl;
+		hr = pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl);
+		return SUCCEEDED(hr);
+	}
+	return false;
+
+}
+
+std::shared_ptr<CShellFolder> CShellFile::GetShellFolder()const
+{
+	if (IsShellFolder()) {
+		CComPtr<IShellFolder> pDesktop;
+		::SHGetDesktopFolder(&pDesktop);
+		CComPtr<IShellFolder> pFolder;
+		HRESULT hr = 0;
+		if (m_absolutePidl.m_pIDL->mkid.cb == 0) {
+			pFolder = pDesktop;
+		}
+		else {
+			HRESULT hr = pDesktop->BindToObject(m_absolutePidl, 0, IID_IShellFolder, (void**)&pFolder);
+		}
+		return std::make_shared<CShellFolder>(pFolder, m_parentFolder, m_absolutePidl);
+	}
+	else {
+		return std::shared_ptr<CShellFolder>();
+	}
+}
+
 
 

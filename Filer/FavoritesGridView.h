@@ -3,13 +3,15 @@
 
 class CGridViewProperty;
 class CFavoritesProperty;
-class CShellFolder;
+class CShellFile;
 
 class CFavoritesGridView :
 	public CGridView
 {
 private:
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
+public:
+	boost::signals2::signal<void(std::shared_ptr<CShellFile>&)> FileChosen;
 
 public:
 	CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp);
@@ -20,7 +22,6 @@ public:
 	void OnCellLButtonDblClk(CellEventArgs& e);
 	//virtual void OnContextMenu(ContextMenuEventArgs& e) override;
 
-		boost::signals2::signal<void(std::shared_ptr<CShellFolder>&)> FolderChoiced;
 	void OpenFavorites();
 
 	void RowMoved(CMovedEventArgs<RowTag>& e) override;

@@ -2,11 +2,11 @@
 #include "ParentColumnNameHeaderCell.h"
 #include "FilterCell.h"
 #include "Sheet.h"
-#include "FileIconStringCell.h"
+#include "FavoriteCell.h"
 #include "PathCell.h"
 
-CFavoritesColumn::CFavoritesColumn(CGridView* pGrid)
-		:CParentDefaultMapColumn(pGrid){}
+CFavoritesColumn::CFavoritesColumn(CGridView* pGrid, std::shared_ptr<std::vector<CFavorite>> pFavorites)
+		:CParentDefaultMapColumn(pGrid),m_spFavorites(pFavorites){}
 
 
 CColumn::cell_type CFavoritesColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
@@ -26,5 +26,5 @@ CColumn::cell_type CFavoritesColumn::FilterCellTemplate(CRow* pRow, CColumn* pCo
 
 CColumn::cell_type CFavoritesColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CFileIconStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
+	return std::make_shared<CFavoriteCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 }

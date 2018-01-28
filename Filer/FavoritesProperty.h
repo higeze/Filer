@@ -5,17 +5,17 @@
 class CFavoritesProperty
 {
 private:
-	std::vector<CFavorite> m_favorites;
+	std::shared_ptr<std::vector<CFavorite>> m_favorites;
 
 public:
-	CFavoritesProperty():m_favorites()
+	CFavoritesProperty():m_favorites(std::make_shared<std::vector<CFavorite>>())
 	{
-		m_favorites.push_back(CFavorite(L"",L"Desktop"));
+		m_favorites->push_back(CFavorite(L"",L"DT"));
 	};
 	~CFavoritesProperty(){};
 
-	std::vector<CFavorite> GetFavorites()const{return m_favorites;}
-	void SetFavorites(std::vector<CFavorite>& favorites) { m_favorites = favorites; }
+	std::shared_ptr<std::vector<CFavorite>> GetFavorites()const{return m_favorites;}
+	void SetFavorites(std::shared_ptr<std::vector<CFavorite>>& favorites) { m_favorites = favorites; }
 
 	FRIEND_SERIALIZER
     template <class Archive>

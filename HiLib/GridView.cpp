@@ -1589,7 +1589,7 @@ void CGridView::OnPaint(PaintEventArgs& e)
 	//Paint Column Drag Target Line
 	m_spRowDragger->OnPaintDragLine(this, e);
 	m_spColDragger->OnPaintDragLine(this, e);
-	m_spItemDragger->OnPaintDragLine(this, e);
+	if (m_spItemDragger) { m_spItemDragger->OnPaintDragLine(this, e); }
 
 	//{
 	//	auto& colDictionary=m_columnAllDictionary.get<IndexTag>();

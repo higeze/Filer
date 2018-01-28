@@ -35,16 +35,17 @@ PITEMID_CHILD CIDLPtr::GetNextItemId(PITEMID_CHILD pIdl)
 	}
 }
 
-PITEMID_CHILD CIDLPtr::GetLastItemId(LPITEMIDLIST pIdl)
+PITEMID_CHILD CIDLPtr::GetLastItemId(LPITEMIDLIST pidl)
 {
-	if(pIdl == nullptr){return nullptr;}
-	LPITEMIDLIST pIdl1 = pIdl;
-	LPITEMIDLIST pIdl2 = (LPITEMIDLIST)(((LPBYTE)pIdl)+pIdl->mkid.cb);
-	while(pIdl2->mkid.cb){
-		pIdl1=pIdl2;
-		pIdl2 = (LPITEMIDLIST)(((LPBYTE)pIdl1)+pIdl1->mkid.cb);
-	}
-	return CopyItemIdList(pIdl1);
+	//if(pIdl == nullptr){return nullptr;}
+	//LPITEMIDLIST pIdl1 = pIdl;
+	//LPITEMIDLIST pIdl2 = (LPITEMIDLIST)(((LPBYTE)pIdl)+pIdl->mkid.cb);
+	//while(pIdl2->mkid.cb){
+	//	pIdl1=pIdl2;
+	//	pIdl2 = (LPITEMIDLIST)(((LPBYTE)pIdl1)+pIdl1->mkid.cb);
+	//}
+	//return CopyItemIdList(pIdl1);
+	return ::ILClone(::ILFindLastID(pidl));
 	//return ::ILFindLastID(pIdl);
 }
 

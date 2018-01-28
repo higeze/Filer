@@ -1,16 +1,13 @@
 #pragma once
-#include "FileRow.h"
+#include "Row.h"
 
 class CGridView;
-class CShellFile;
 
-class CFavoriteRow:public CFileRow
+class CFavoriteRow:public CParentRow
 {
-private:
-	std::wstring m_name;
 public:
-	CFavoriteRow(CGridView* pGrid, std::shared_ptr<CShellFile> spFile, std::wstring& name);
+	CFavoriteRow(CGridView* pGrid, int orderIndex);
 	virtual ~CFavoriteRow(){}
-	std::wstring GetName()const{return m_name;}
+	int GetOrderIndex()const;
 };
 

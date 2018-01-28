@@ -99,10 +99,10 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	.dwStyle(WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN | WS_VISIBLE)
 	.hMenu((HMENU)99396);
 
-	m_spFavoritesView->FolderChoiced.connect([this](std::shared_ptr<CShellFolder>& spFolder)->void{
+	m_spFavoritesView->FileChosen.connect([this](std::shared_ptr<CShellFile>& spFile)->void{
 		if(m_spTab->GetItemCount()>0){
-			unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
-			m_spFilerView->OpenFolder(spFolder);
+			//unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
+			m_spFilerView->Open(spFile);
 		}		
 	});
 	m_spFavoritesView->Create(m_hWnd);
@@ -138,7 +138,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	}else{
 		for(auto path : m_vwPath){
 			//ShellFolder
-			std::shared_ptr<CShellFolder> pFolder = CShellFolder::CreateShellFolderFromPath(path);
+			auto pFolder = std::make_shared<CShellFolder>(path);
 			if(pFolder){
 				//New id for association
 				unsigned int id = m_uniqueIDFactory.NewID();
@@ -257,7 +257,7 @@ void CFilerWnd::AddNewView(std::wstring path)
 	int newItem = m_spTab->InsertItem(m_spTab->GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
 
 	//CFilerGridView
-	m_viewMap.insert(std::make_pair(id, CShellFolder::CreateShellFolderFromPath(path)));
+	m_viewMap.insert(std::make_pair(id, std::make_shared<CShellFolder>(path)));
 	BOOL dummy  = TRUE;
 	OnNotifyTabSelChanging(0, NULL, dummy);
 	m_spTab->SetCurSel(newItem);

@@ -292,23 +292,12 @@ void CFilerGridView::InsertDefaultRowColumn()
 
 void CFilerGridView::Open(std::shared_ptr<CShellFile>& spFile)
 {
-	//Try BindToObject and EnumObjects to identify folder
-	CIDLPtr pidl=spFile->GetAbsolutePidl();
-	CComPtr<IShellFolder> pFolder;
-	HRESULT hr = m_pDesktopShellFolder->BindToObject(pidl, 0, IID_IShellFolder, (void**)&pFolder);
-
-	if(SUCCEEDED(hr)){
-		CComPtr<IEnumIDList> enumIdl;
-		hr = pFolder->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS|SHCONTF_INCLUDEHIDDEN|SHCONTF_FOLDERS, &enumIdl);
+	if (spFile->IsShellFolder()) {
+		OpenFolder(spFile->GetShellFolder());
 	}
-
-	if(SUCCEEDED(hr)){
-		auto spFolder = std::make_shared<CShellFolder>(pFolder, m_spFolder->GetShellFolderPtr(), pidl);
-		OpenFolder(spFolder);
-	}else{
+	else {
 		OpenFile(spFile);
 	}
-
 }
 
 void CFilerGridView::OpenFile(std::shared_ptr<CShellFile>& spFile)
@@ -725,7 +714,7 @@ CFilerGridView::string_type CFilerGridView::GetPath()const
 
 void CFilerGridView::SetPath(const string_type& path)
 {
-	std::shared_ptr<CShellFolder> pFolder = CShellFolder::CreateShellFolderFromPath(path);
+	auto pFolder = std::make_shared<CShellFolder>(path);
 	if (pFolder) {
 		OpenFolder(pFolder);
 	}

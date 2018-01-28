@@ -92,9 +92,6 @@
     <ClInclude Include="FileIconColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="FileIconStringCell.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="FileLastWriteCell.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -518,6 +515,9 @@
     <ClInclude Include="FavoritesItemDragger.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="FavoriteCell.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -557,9 +557,6 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FileIconColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileIconStringCell.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FileLastWriteCell.cpp">
@@ -786,6 +783,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\MouseStateMachine.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="FavoriteCell.cpp">
+      <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
