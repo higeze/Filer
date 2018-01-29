@@ -10,6 +10,7 @@
 #include "GridViewProperty.h"
 #include "FavoritesProperty.h"
 #include "FavoritesGridView.h"
+#include "FavoriteRow.h"
 
 #include "FilerProperty.h"
 #include "PropertyWnd.h"
@@ -67,6 +68,7 @@ CFilerWnd::CFilerWnd()
 	AddMsgHandler(WM_KEYDOWN,&CFilerWnd::OnKeyDown,this);
 	AddCmdIDHandler(IDM_NEWTAB,&CFilerWnd::OnCommandNewTab,this);
 	AddCmdIDHandler(IDM_CLOSETAB,&CFilerWnd::OnCommandCloseTab,this);
+	AddCmdIDHandler(IDM_ADDTOFAVORITE, &CFilerWnd::OnCommandAddToFavorite, this);
 
 	AddNtfyHandler(9996,NM_RCLICK , &CFilerWnd::OnNotifyTabRClick, this);
 	AddNtfyHandler(9996,TCN_SELCHANGING, &CFilerWnd::OnNotifyTabSelChanging, this);
@@ -247,6 +249,19 @@ LRESULT CFilerWnd::OnCommandNewTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& 
 	OnSize(0,NULL,NULL,dummy);
 	return 0;
 }
+
+LRESULT CFilerWnd::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	unsigned int id = (unsigned int)m_spTab->GetItemParam(m_contextMenuTabIndex);
+	auto iter = m_viewMap.find(id);
+	if (iter != m_viewMap.end()) {
+		m_spFavoritesProp->GetFavorites()->push_back(CFavorite(iter->second->GetPath(), L""));
+		m_spFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spFavoritesView.get(), m_spFavoritesProp->GetFavorites()->size() - 1));
+		m_spFavoritesView->SubmitUpdate();
+	}
+	return 0;
+}
+
 
 void CFilerWnd::AddNewView(std::wstring path)
 {

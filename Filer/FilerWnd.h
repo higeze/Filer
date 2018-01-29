@@ -52,6 +52,7 @@ private:
 	LRESULT OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnCommandNewTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	LRESULT OnCommandCloseTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
+	LRESULT OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnNotifyTabSelChanging(int id, LPNMHDR, BOOL& bHandled);
 	LRESULT OnNotifyTabSelChange(int id, LPNMHDR, BOOL& bHandled);
 	LRESULT OnNotifyTabRClick(int id, LPNMHDR, BOOL& bHandled);
