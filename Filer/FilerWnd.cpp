@@ -316,9 +316,7 @@ LRESULT CFilerWnd::OnCommandOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& 
 		m_spGridViewProp);
 
 	pPropWnd->PropertyChanged.connect([this](const std::wstring& str)->void{
-		for(auto iter = m_viewMap.begin();iter!= m_viewMap.end();++iter){
-			m_spFilerView->UpdateAll();
-		}
+		m_spFilerView->UpdateAll();
 		m_spFavoritesView->UpdateAll();
 		//SerializeProperty(m_spGridViewProp);
 	});

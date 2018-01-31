@@ -63,9 +63,12 @@ public:
 
 	void OnDividerDblClk(CSheet* pSheet, MouseEventArgs const & e) override
 	{
-		auto ptr = pSheet->Coordinate2Pointer<TRC>(e.Point.Get<TRC::Axis>());
-		if (ptr) {
-			pSheet->FitBandWidth<TRC>(ptr);
+		auto idx = GetTrackLeftTopIndex(pSheet, e);
+		if (idx != CBand::kInvalidIndex) {
+			auto ptr = pSheet->Index2Pointer<TRC, VisTag>(idx);
+			if (ptr) {
+				pSheet->FitBandWidth<TRC>(ptr);
+			}
 		}
 	}
 
@@ -83,6 +86,7 @@ public:
 	void OnBeginTrack(CSheet* pSheet, MouseEventArgs const & e) override
 	{
 		//e.Handled = TRUE;
+		m_trackLeftVisib = GetTrackLeftTopIndex(pSheet, e);
 		SetSizeCursor();
 	}
 
@@ -109,6 +113,48 @@ public:
 		//Should Candel?
 	}
 
+	int GetTrackLeftTopIndex(CSheet* pSheet, MouseEventArgs const & e)
+	{
+		if (!pSheet->Visible()) {
+			return CBand::kInvalidIndex;
+		}
+		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Point);
+		auto minIdx = pSheet->GetMinIndex<TRC, VisTag>();
+		auto maxIdx = pSheet->GetMaxIndex<TRC, VisTag>();
+
+		//If Header except Filter
+		if (visIndexes.Get<TRC::Other>() < 0) {
+			if (visIndexes.Get<TRC>() < minIdx) {
+				//Out of Left	
+				return CBand::kInvalidIndex;
+			}
+			else if (visIndexes.Get<TRC>() > maxIdx) {
+				//Out of Right
+				if (e.Point.Get<TRC::Axis>() < pSheet->LastPointer<TRC, VisTag>()->GetRightBottom() + CBand::kResizeAreaHarfWidth) {
+					return visIndexes.Get<TRC>() - 1;
+				}
+				else
+				{
+					return CBand::kInvalidIndex;
+				}
+			}
+			else if (e.Point.Get<TRC::Axis>() < (pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC>())->GetLeftTop() + CBand::kResizeAreaHarfWidth)) {
+				return (std::max)(visIndexes.Get<TRC>() - 1, minIdx);
+			}
+			else if ((pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC>())->GetRightBottom() - CBand::kResizeAreaHarfWidth) < e.Point.Get<TRC::Axis>()) {
+				return (std::min)(visIndexes.Get<TRC>(), maxIdx);
+			}
+			else {
+				return CBand::kInvalidIndex;
+			}
+		}
+		else {
+			return CBand::kInvalidIndex;
+		}
+
+
+	}
+
 	bool IsTarget(CSheet* pSheet, MouseEventArgs const & e) override
 	{
 		if (!pSheet->Visible()) {
@@ -127,7 +173,7 @@ public:
 			else if (visIndexes.Get<TRC>() > maxIdx) {
 				//Out of Right
 				if (e.Point.Get<TRC::Axis>() < pSheet->LastPointer<TRC, VisTag>()->GetRightBottom() + CBand::kResizeAreaHarfWidth) {
-					m_trackLeftVisib = visIndexes.Get<TRC>() - 1;
+					//m_trackLeftVisib = visIndexes.Get<TRC>() - 1;
 					return true;
 				}
 				else
@@ -136,11 +182,11 @@ public:
 				}
 			}
 			else if (e.Point.Get<TRC::Axis>() < (pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC>())->GetLeftTop() + CBand::kResizeAreaHarfWidth)) {
-				m_trackLeftVisib = (std::max)(visIndexes.Get<TRC>() - 1, minIdx);
+				//m_trackLeftVisib = (std::max)(visIndexes.Get<TRC>() - 1, minIdx);
 				return true;
 			}
 			else if ((pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC>())->GetRightBottom() - CBand::kResizeAreaHarfWidth) < e.Point.Get<TRC::Axis>()) {
-				m_trackLeftVisib = (std::min)(visIndexes.Get<TRC>(), maxIdx);
+				//m_trackLeftVisib = (std::min)(visIndexes.Get<TRC>(), maxIdx);
 				return true;
 			}
 			else {

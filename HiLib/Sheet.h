@@ -416,12 +416,14 @@ public:
 		ptr->SetMeasureValid(false);
 		auto& otherDic = GetDictionary<TRC::Other, AllTag>();
 		for(const auto& data : otherDic) {
+			data.DataPtr->SetMeasureValid(false);
 			CSheet::Cell(ptr, data.DataPtr)->SetActMeasureValid(false);
 		};
-		auto& myDic = GetDictionary<TRC, AllTag>();
-		for (const auto& data : myDic) {
-			data.DataPtr->SetMeasureValid(false);
-		}
+		//auto& myDic = GetDictionary<TRC, AllTag>();
+		//for (const auto& data : myDic) {
+		//	data.DataPtr->SetMeasureValid(false);
+		//}
+		//ptr->SetMeasureValid(false);
 
 		PostUpdate(Updates::Column);
 		PostUpdate(Updates::Row);
@@ -441,10 +443,8 @@ public:
 	{
 		auto& otherDic = GetDictionary<TRC::Other, AllTag>();
 		for (const auto& other : otherDic) {
-			CSheet::Cell(ptr, other.DataPtr)->SetActMeasureValid(false);
-		}
-		for (const auto& other : otherDic) {
 			other.DataPtr->SetMeasureValid(false);
+			CSheet::Cell(ptr, other.DataPtr)->SetActMeasureValid(false);
 		}
 
 		//boost::for_each(m_rowAllDictionary, [&](const RowData& rowData) {
