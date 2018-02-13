@@ -24,7 +24,8 @@ void CDoCommandBase::UnDo()//UnDo have to call last
 	cursorer->SetSelectedRows(m_pGrid, m_prevSelectedRows);
 	cursorer->SetSelectedColumns(m_pGrid, m_prevSelectedColumns);
 	if(!m_prevFocusedRCs.empty() && m_prevFocusedRCs.size()>0){
-		m_pGrid->EnsureVisibleCell(m_pGrid->Cell<AllTag>(m_prevFocusedRCs[0].Row, m_prevFocusedRCs[0].Col));
+		//m_pGrid->EnsureVisibleCell(m_pGrid->Cell<AllTag>(m_prevFocusedRCs[0].Row, m_prevFocusedRCs[0].Col));
+		m_pGrid->PostUpdate(Updates::EnsureVisibleFocusedCell);
 	}
 }
 void CDoCommandBase::ReDo()//UnDo have to call last
@@ -36,7 +37,8 @@ void CDoCommandBase::ReDo()//UnDo have to call last
 	cursorer->SetSelectedRows(m_pGrid, m_prevSelectedRows);
 	cursorer->SetSelectedColumns(m_pGrid, m_prevSelectedColumns);
 	if(!m_prevFocusedRCs.empty() && m_prevFocusedRCs.size()>0){
-		m_pGrid->EnsureVisibleCell(m_pGrid->Cell<AllTag>(m_prevFocusedRCs[0].Row, m_prevFocusedRCs[0].Col));
+		//m_pGrid->EnsureVisibleCell(m_pGrid->Cell<AllTag>(m_prevFocusedRCs[0].Row, m_prevFocusedRCs[0].Col));
+		m_pGrid->PostUpdate(Updates::EnsureVisibleFocusedCell);
 	}
 }
 

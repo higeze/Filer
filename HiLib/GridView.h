@@ -110,6 +110,8 @@ public:
 	virtual void ClearFilter();
 	virtual void FilterAll();
 
+	virtual void Sorted() override;
+
 
 
 

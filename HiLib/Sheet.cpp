@@ -283,13 +283,19 @@ void CSheet::SubmitUpdate()
 
 void CSheet::PostUpdate(Updates type)
 {
-	if(type==Updates::All){
+	if (type == Updates::All) {
 		m_setUpdate.insert(Updates::RowVisible);
+		m_setUpdate.insert(Updates::Row);
 		m_setUpdate.insert(Updates::ColumnVisible);
 		m_setUpdate.insert(Updates::Column);
-		m_setUpdate.insert(Updates::Row);
 		m_setUpdate.insert(Updates::Scrolls);
 		m_setUpdate.insert(Updates::Invalidate);
+	}else if (type == Updates::EnsureVisibleFocusedCell) {
+		m_setUpdate.insert(Updates::RowVisible);
+		m_setUpdate.insert(Updates::Row);
+		m_setUpdate.insert(Updates::ColumnVisible);
+		m_setUpdate.insert(Updates::Column);
+		m_setUpdate.insert(type);
 	}else{
 		m_setUpdate.insert(type);
 	}
@@ -390,6 +396,7 @@ void CSheet::Sort(CColumn* pCol, Sorts sort)
 	}
 	//Update
 	Sorted();
+	
 }
 
 

@@ -7,12 +7,8 @@
 #include "Column.h"
 #include "Cell.h"
 
-
-void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
+void CCursorer::OnCellCursor(std::shared_ptr<CCell>& cell)
 {
-	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
-		return;
-	}
 	m_oldCell = m_currentCell;//Old
 	m_currentCell = cell;//Current
 	m_anchorCell = cell;//Anchor
@@ -25,39 +21,48 @@ void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 	else if (m_focusedCell == cell) {
 		m_doubleFocusedCell = cell;//DoubleFocus
 	}
+}
+
+void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
+{
+	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+		return;
+	}
+	OnCellCursor(cell);
 	OnBandCursor(cell->GetRowPtr());
 }
 
 void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 {
-	m_oldCell=m_currentCell;//Old
-	m_currentCell=cell;//Current
-	m_anchorCell=cell;//Anchor
-	if(m_focusedCell!=cell){
-		if(m_focusedCell != nullptr){m_focusedCell->OnKillFocus(EventArgs());}//Blur
-		m_focusedCell=cell;
-		m_focusedCell->OnSetFocus(EventArgs());//Focus
-		m_doubleFocusedCell = nullptr;//DoubleFocus
-	}else if(m_focusedCell == cell){
-		m_doubleFocusedCell = cell;//DoubleFocus
+	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+		return;
 	}
-	cell->SetSelected(true);//Select
+	OnCellCursor(cell);
 	OnBandCursorCtrl(cell->GetRowPtr());
 }
 
 void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
 {
+	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+		return;
+	}
 	m_oldCell=m_currentCell;//Old
 	m_currentCell=cell;//Current
-	//No Anchor change
-	cell->GetSheetPtr()->SelectRange(m_anchorCell, m_oldCell, false);
-	cell->GetSheetPtr()->SelectRange(m_anchorCell, m_currentCell, true);
 	OnBandCursorShift(m_oldCell->GetRowPtr(), m_anchorCell->GetRowPtr(), cell->GetRowPtr());
+}
+
+void CCursorer::OnCursorCtrlShift(std::shared_ptr<CCell>& cell)
+{
+	m_oldCell = m_currentCell;//Old
+	m_currentCell = cell;//Current
+	OnBandCursorCtrlShift(m_oldCell->GetRowPtr(), m_anchorCell->GetRowPtr(), cell->GetRowPtr());
 }
 
 void CCursorer::OnCursorClear(CSheet* pSheet)
 {
-	if(m_focusedCell){m_focusedCell->OnKillFocus(EventArgs());}//Blur
+	if(m_focusedCell){
+		m_focusedCell->OnKillFocus(EventArgs());//Blur
+	}
 	Clear();
 	pSheet->DeselectAll();//Select
 	pSheet->UnhotAll();//Hot
@@ -71,15 +76,18 @@ void CCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
 	auto cell = pSheet->Cell(e.Point);
 
 	//If out of sheet, reset curosr
-	if(cell.get() == nullptr){
+	if(!cell){
 		return OnCursorClear(pSheet);
 	}
 
 	//Focus, Select
 	if(cell->GetRowPtr()==pSheet->GetHeaderRowPtr().get() && cell->GetColumnPtr()==pSheet->GetHeaderColumnPtr().get()){
 		pSheet->SelectAll();//TODO Make RowColumnHeaderCell
-	}else{
-		if(e.Flags & MK_CONTROL){
+	}
+	else {
+		if (e.Flags & MK_CONTROL && e.Flags & MK_SHIFT) {
+			return OnCursorCtrlShift(cell);
+		}else if (e.Flags & MK_CONTROL) {
 			return OnCursorCtrl(cell);
 		}else if(e.Flags & MK_SHIFT){
 			return OnCursorShift(cell);
@@ -87,18 +95,6 @@ void CCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
 			return OnCursor(cell);
 		}
 	}
-}
-
-void CCursorer::OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e)
-{
-	if(pSheet->Empty()){
-		return;
-	}
-	auto cell = pSheet->Cell(e.Point);
-	if(!cell){
-		return OnCursorClear(pSheet);
-	}
-	return;
 }
 
 void CCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
@@ -117,13 +113,7 @@ void CCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
 	if(cell->GetSelected()){
 		//Do Nothing
 	}else{
-		if(cell->GetColumnPtr() == pSheet->GetHeaderColumnPtr().get()){
-			return OnBandCursor(cell->GetRowPtr());
-		}else if(cell->GetRowPtr() == pSheet->GetHeaderRowPtr().get()){
-			return OnBandCursor(cell->GetColumnPtr());
-		}else{
-			return OnCursor(cell);
-		}
+		return OnCursor(cell);
 	}
 	return;
 }
@@ -171,7 +161,7 @@ void CCursorer::OnKeyDown(CSheet* pSheet, KeyEventArgs& e)
 			}else{
 				OnCursor(cell);
 			}
-			((CGridView*)pSheet)->EnsureVisibleCell(cell);
+			((CGridView*)pSheet)->PostUpdate(Updates::EnsureVisibleFocusedCell);
 			break;
 		}
 	case VK_ESCAPE:

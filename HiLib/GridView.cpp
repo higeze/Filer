@@ -1698,12 +1698,20 @@ void CGridView::UpdateAll()
 	UpdateScrolls();
 }
 
+void CGridView::Sorted()
+{
+	CSheet::Sorted();
+	PostUpdate(Updates::EnsureVisibleFocusedCell);
+}
+
+
 void CGridView::EnsureVisibleCell(const cell_type& pCell)
 {
 	if(!pCell)return;
-
 	UpdateRowVisibleDictionary();
 	UpdateColumnVisibleDictionary();
+	UpdateRow();
+	UpdateColumn();
 
 	auto rcClip(GetPageRect());
 	auto rcCell(pCell->GetRect());
@@ -1738,7 +1746,7 @@ void CGridView::EnsureVisibleCell(const cell_type& pCell)
 void CGridView::Jump(std::shared_ptr<CCell>& spCell)
 {
 	m_spCursorer->OnCursor(spCell);
-	EnsureVisibleCell(spCell);
+	PostUpdate(Updates::EnsureVisibleFocusedCell);
 	SubmitUpdate();
 }
 
@@ -1864,8 +1872,12 @@ void CGridView::SubmitUpdate()
 				UpdateScrolls();
 				break;
 			}
+		case Updates::EnsureVisibleFocusedCell:
+			EnsureVisibleCell(m_spCursorer->GetFocusedCell());
+			break;
 		case Updates::Invalidate:
 			Invalidate();
+			break;
 		default:
 			break;
 		}

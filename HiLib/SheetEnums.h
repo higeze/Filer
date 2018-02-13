@@ -35,6 +35,7 @@ enum class Updates{
 //	RowFitHeight,
 //	RowTop,
 //	ColumnLeft,
+	EnsureVisibleFocusedCell,
 	Scrolls,
 	Invalidate,
 	All

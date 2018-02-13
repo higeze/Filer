@@ -34,17 +34,19 @@ public:
 	//Event handler
 	virtual void OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
 	virtual void OnLButtonUp(CSheet* pSheet, MouseEventArgs& e) {/*Do Nothing*/}
-	virtual void OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
+	virtual void OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e){/*Do Nothing*/}
 	virtual void OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
 	virtual void OnMouseMove(CSheet* pSheet, MouseEventArgs& e) {/*Do Nothing*/ }
 	virtual void OnMouseLeave(CSheet* pSheet, MouseEventArgs& e) {/*Do Nothing*/ }
 	virtual void OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e) {/*Do Nothing*/ }
 	virtual void OnKeyDown(CSheet* pSheet, KeyEventArgs& e);
 
-
+	virtual void OnCellCursor(std::shared_ptr<CCell>& cell);
+	virtual void OnCursor(std::shared_ptr<CCell>& cell);
+	//virtual void OnCursorR(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorCtrl(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorShift(std::shared_ptr<CCell>& cell);
-	virtual void OnCursor(std::shared_ptr<CCell>& cell);
+	virtual void OnCursorCtrlShift(std::shared_ptr<CCell>& cell);
 public:
 	virtual void OnCursorClear(CSheet* pSheet);
 
@@ -67,6 +69,13 @@ public:
 	}
 
 	template<class T>
+	void OnBandCursor(T* pBand)
+	{
+		pBand->GetSheetPtr()->DeselectAll();
+		pBand->SetSelected(true);//Select
+	}
+
+	template<class T>
 	void OnBandCursorCtrl(T* pBand)
 	{
 		pBand->SetSelected(!pBand->GetSelected());//Select
@@ -80,14 +89,20 @@ public:
 	}
 
 	template<class T>
-	void OnBandCursor(T* pBand)
+	void OnBandCursorCtrlShift(T* pOldBand, T* pAnchorBand, T* pBand)
 	{
-		if(pBand->GetSelected()){
-		}else{
-			pBand->GetSheetPtr()->DeselectAll();
-			pBand->SetSelected(true);//Select
-		}
+		pBand->GetSheetPtr()->SelectBandRange(pAnchorBand, pBand, true);
 	}
+
+	//template<class T>
+	//void OnBandCursorR(T* pBand)
+	//{
+	//	if(pBand->GetSelected()){
+	//	}else{
+	//		pBand->GetSheetPtr()->DeselectAll();
+	//		pBand->SetSelected(true);//Select
+	//	}
+	//}
 
 };
 
