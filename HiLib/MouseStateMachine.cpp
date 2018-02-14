@@ -86,6 +86,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template < class event_t, class fsm_t >
 		void on_entry(event_t const & e, fsm_t & machine)
 		{
+			std::cout << "LButtonDragState" << std::endl;
 			e.SheetPtr->OnLButtonBeginDrag((MouseEventArgs)e.Args);
 		}
 	};
@@ -95,7 +96,13 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 	{
 		//Any
 		template<class Event>
-		void Action_Any_MouseLeave(Event const & e)
+		void Action_LButtonUp(Event const & e)
+		{
+			e.SheetPtr->OnLButtonUp((MouseEventArgs)e.Args);
+		}
+
+		template<class Event>
+		void Action_MouseLeave(Event const & e)
 		{
 			if (auto p = dynamic_cast<CGridView*>(e.SheetPtr)) {
 				p->GetTimerPtr()->cancel();
@@ -103,9 +110,8 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 			e.SheetPtr->OnMouseLeave((MouseEventArgs)e.Args);
 		}
 		
-		//Normal
 		template<class Event>
-		void Action_Normal_LButtonDown(Event const & e)
+		void Action_LButtonDown(Event const & e)
 		{
 			e.SheetPtr->OnLButtonDown((MouseEventArgs)e.Args);
 		}
@@ -128,33 +134,37 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 
 		//Drag
 		template<class Event>
-		void Action_LButtonUp(Event const & e)
-		{	
+		void Action_Drag_MouseLeave(Event const & e)
+		{
+			if (auto p = dynamic_cast<CGridView*>(e.SheetPtr)) {
+				p->GetTimerPtr()->cancel();
+			}
 			e.SheetPtr->OnLButtonUp((MouseEventArgs)e.Args);
+			e.SheetPtr->OnMouseLeave((MouseEventArgs)e.Args);
 		}
 
 		struct transition_table :boost::mpl::vector<
 			//     Start                 Event                    Target                Action                                             Guard
-			 a_row<NormalState,          LButtonDown,             LButtonDownedState,   &Machine_::Action_Normal_LButtonDown>,
-			 a_row<NormalState,          MouseLeave,              NormalState,          &Machine_::Action_Any_MouseLeave>,
+			 a_row<NormalState,          LButtonDown,             LButtonDownedState,   &Machine_::Action_LButtonDown>,
+			 a_row<NormalState,          MouseLeave,              NormalState,          &Machine_::Action_MouseLeave>,
 
 			  _row<LButtonDownedState,   LButtonDblClkTimeExceed, LButtonDragState>,
  			 a_row<LButtonDownedState,   LButtonUp,               LButtonUppedState,    &Machine_::Action_LButtonUp>,
-     		 a_row<LButtonDownedState,   MouseLeave,              NormalState,          &Machine_::Action_Any_MouseLeave>,
+     		 a_row<LButtonDownedState,   MouseLeave,              NormalState,          &Machine_::Action_MouseLeave>,
 			 _row<LButtonDownedState,    Exception,               NormalState>,
 
-			 a_row<LButtonUppedState,    LButtonDown,              LButtonDownedState, &Machine_::Action_Normal_LButtonDown>,
+			 a_row<LButtonUppedState,    LButtonDown,              LButtonDownedState, &Machine_::Action_LButtonDown>,
 			a_row<LButtonUppedState,    LButtonDblClk,           LButtonDblClkedState, &Machine_::Action_Upped_LButtonDblClk>,
  			 a_row<LButtonUppedState,    LButtonDblClkTimeExceed, NormalState,          &Machine_::Action_Upped_LButtonDblClkTimeExceed>,
-			 a_row<LButtonUppedState,    MouseLeave,              NormalState,          &Machine_::Action_Any_MouseLeave>,
+			 a_row<LButtonUppedState,    MouseLeave,              NormalState,          &Machine_::Action_MouseLeave>,
 			_row<LButtonUppedState,      Exception,               NormalState>,
 
 			 a_row<LButtonDblClkedState, LButtonUp,               NormalState,          &Machine_::Action_LButtonUp>,
-			 a_row<LButtonDblClkedState, MouseLeave,              NormalState,          &Machine_::Action_Any_MouseLeave>,
+			 a_row<LButtonDblClkedState, MouseLeave,              NormalState,          &Machine_::Action_MouseLeave>,
 			_row<LButtonDblClkedState,   Exception,               NormalState>,
 
 			 a_row<LButtonDragState,     LButtonUp,               NormalState,          &Machine_::Action_LButtonUp>,
-			 a_row<LButtonDragState,     MouseLeave,              NormalState,          &Machine_::Action_Any_MouseLeave>,
+			 a_row<LButtonDragState,     MouseLeave,              NormalState,          &Machine_::Action_Drag_MouseLeave>,
 			_row<LButtonDragState,       Exception,               NormalState>
 
 

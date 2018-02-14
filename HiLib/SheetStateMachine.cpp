@@ -262,6 +262,9 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		template<class Event>
 		void Action_ItemDrag_LButtonUp(Event const & e)
 		{
+			e.SheetPtr->m_spCursorer->OnLButtonUp(e.SheetPtr, (MouseEventArgs)e.Args);
+			e.SheetPtr->m_spCeller->OnLButtonUp(e.SheetPtr, e.Args);
+
 			e.SheetPtr->m_spItemDragger->OnEndDrag(e.SheetPtr, (MouseEventArgs)e.Args);
 		}
 

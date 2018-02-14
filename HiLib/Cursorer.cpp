@@ -29,7 +29,31 @@ void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 		return;
 	}
 	OnCellCursor(cell);
-	OnBandCursor(cell->GetRowPtr());
+
+	cell->GetSheetPtr()->DeselectAll();
+	cell->GetRowPtr()->SetSelected(true);//Select
+}
+
+void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
+{
+	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+		return;
+	}
+	OnCellCursor(cell);
+	m_isDragPossible = true;
+	cell->GetRowPtr()->SetSelected(true);//Select
+}
+
+void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
+{
+	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+		return;
+	}
+	if (m_isDragPossible) {
+		m_isDragPossible = false;
+		cell->GetSheetPtr()->DeselectAll();
+		cell->GetRowPtr()->SetSelected(true);//Select
+	}
 }
 
 void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
@@ -38,7 +62,8 @@ void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 		return;
 	}
 	OnCellCursor(cell);
-	OnBandCursorCtrl(cell->GetRowPtr());
+
+	cell->GetRowPtr()->SetSelected(!cell->GetRowPtr()->GetSelected());//Select
 }
 
 void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
@@ -48,14 +73,17 @@ void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
 	}
 	m_oldCell=m_currentCell;//Old
 	m_currentCell=cell;//Current
-	OnBandCursorShift(m_oldCell->GetRowPtr(), m_anchorCell->GetRowPtr(), cell->GetRowPtr());
+
+	cell->GetSheetPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_oldCell->GetRowPtr(), false);
+	cell->GetSheetPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_currentCell->GetRowPtr(), true);
 }
 
 void CCursorer::OnCursorCtrlShift(std::shared_ptr<CCell>& cell)
 {
 	m_oldCell = m_currentCell;//Old
 	m_currentCell = cell;//Current
-	OnBandCursorCtrlShift(m_oldCell->GetRowPtr(), m_anchorCell->GetRowPtr(), cell->GetRowPtr());
+
+	cell->GetSheetPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_currentCell->GetRowPtr(), true);
 }
 
 void CCursorer::OnCursorClear(CSheet* pSheet)
@@ -92,9 +120,24 @@ void CCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
 		}else if(e.Flags & MK_SHIFT){
 			return OnCursorShift(cell);
 		}else{
-			return OnCursor(cell);
+			return OnCursorDown(cell);
 		}
 	}
+}
+
+void CCursorer::OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)
+{
+	if (pSheet->Empty()) {
+		return;
+	}
+	//auto cell = pSheet->Cell(e.Point);
+
+	////If out of sheet, reset curosr
+	//if (!cell) {
+	//	return OnCursorClear(pSheet);
+	//}
+
+	return OnCursorUp(m_currentCell);
 }
 
 void CCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)

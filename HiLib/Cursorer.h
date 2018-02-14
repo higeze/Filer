@@ -24,8 +24,9 @@ private:
 	std::shared_ptr<CCell> m_anchorCell;
 	std::shared_ptr<CCell> m_focusedCell;
 	std::shared_ptr<CCell> m_doubleFocusedCell;
+	bool m_isDragPossible;
 public:
-	CCursorer(){}
+	CCursorer():m_isDragPossible(false){}
 	virtual ~CCursorer(){}
 	//Getter/Setter
 	std::shared_ptr<CCell> GetFocusedCell(){return m_focusedCell;}
@@ -33,7 +34,7 @@ public:
 	std::shared_ptr<CCell> GetDoubleFocusedCell() { return m_doubleFocusedCell; }
 	//Event handler
 	virtual void OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual void OnLButtonUp(CSheet* pSheet, MouseEventArgs& e) {/*Do Nothing*/}
+	virtual void OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
 	virtual void OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e){/*Do Nothing*/}
 	virtual void OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
 	virtual void OnMouseMove(CSheet* pSheet, MouseEventArgs& e) {/*Do Nothing*/ }
@@ -42,8 +43,9 @@ public:
 	virtual void OnKeyDown(CSheet* pSheet, KeyEventArgs& e);
 
 	virtual void OnCellCursor(std::shared_ptr<CCell>& cell);
+	virtual void OnCursorDown(std::shared_ptr<CCell>& cell);
+	virtual void OnCursorUp(std::shared_ptr<CCell>& cell);
 	virtual void OnCursor(std::shared_ptr<CCell>& cell);
-	//virtual void OnCursorR(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorCtrl(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorShift(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorCtrlShift(std::shared_ptr<CCell>& cell);
@@ -67,43 +69,6 @@ public:
 		m_focusedCell= nullptr;
 		m_doubleFocusedCell = nullptr;
 	}
-
-	template<class T>
-	void OnBandCursor(T* pBand)
-	{
-		pBand->GetSheetPtr()->DeselectAll();
-		pBand->SetSelected(true);//Select
-	}
-
-	template<class T>
-	void OnBandCursorCtrl(T* pBand)
-	{
-		pBand->SetSelected(!pBand->GetSelected());//Select
-	}
-
-	template<class T>
-	void OnBandCursorShift(T* pOldBand, T* pAnchorBand, T* pBand)
-	{
-		pBand->GetSheetPtr()->SelectBandRange(pAnchorBand, pOldBand, false);
-		pBand->GetSheetPtr()->SelectBandRange(pAnchorBand, pBand, true);
-	}
-
-	template<class T>
-	void OnBandCursorCtrlShift(T* pOldBand, T* pAnchorBand, T* pBand)
-	{
-		pBand->GetSheetPtr()->SelectBandRange(pAnchorBand, pBand, true);
-	}
-
-	//template<class T>
-	//void OnBandCursorR(T* pBand)
-	//{
-	//	if(pBand->GetSelected()){
-	//	}else{
-	//		pBand->GetSheetPtr()->DeselectAll();
-	//		pBand->SetSelected(true);//Select
-	//	}
-	//}
-
 };
 
 class CSheetCellCursorer:public CCursorer
