@@ -22,7 +22,7 @@ void CFontCell::PaintContent(CDC* pDC,CRect rcPaint)
 	pDC->SelectFont(hFont);
 }
 
-void CFontCell::OnLButtonClk(MouseEventArgs& e)
+void CFontCell::OnLButtonClk(MouseEvent& e)
 {
 	CHOOSEFONT cf={0};
 	LOGFONT logFont={0};

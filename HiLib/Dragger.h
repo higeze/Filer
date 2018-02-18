@@ -5,8 +5,8 @@
 #include "MyPen.h"
 
 //Pre-Declaration
-struct MouseEventArgs;
-struct SetCursorEventArgs;
+struct MouseEvent;
+struct SetCursorEvent;
 
 
 
@@ -23,7 +23,7 @@ public:
 	size_type GetDragToAllIndex() { return m_dragToIndex; }
 	size_type GetDragFromAllIndex() { return m_dragFromIndex; }
 
-	virtual bool IsTarget(CSheet* pSheet, MouseEventArgs const & e) override
+	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override
 	{
 		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Point);
 		if (visIndexes.Row <= pSheet->GetMaxIndex<RowTag, VisTag>() &&
@@ -37,13 +37,13 @@ public:
 		}
 	}
 
-	void OnBeginDrag(CSheet* pSheet, MouseEventArgs const & e) override
+	void OnBeginDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
 		m_dragFromIndex = pSheet->Point2Indexes<AllTag>(e.Point).Get<TRC>();
 		m_dragToIndex = CBand::kInvalidIndex;
 	}
 
-	void OnDrag(CSheet* pSheet, MouseEventArgs const & e) override
+	void OnDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
 		auto visibleIndex = pSheet->Point2Indexes<VisTag>(e.Point).Get<TRC>();
 
@@ -81,7 +81,7 @@ public:
 		m_dragToIndex = (std::max)(m_dragToIndex, 0);
 	}
 
-	void OnEndDrag(CSheet* pSheet, MouseEventArgs const & e) override
+	void OnEndDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
 		if (m_dragToIndex == CBand::kInvalidIndex) {
 
@@ -96,13 +96,13 @@ public:
 		m_dragToIndex = CBand::kInvalidIndex;
 	}
 
-	void OnLeaveDrag(CSheet* pSheet, MouseEventArgs const & e) override
+	void OnLeaveDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
 		m_dragFromIndex = CBand::kInvalidIndex;
 		m_dragToIndex = CBand::kInvalidIndex;
 	}
 
-	virtual void OnPaintDragLine(CSheet* pSheet, PaintEventArgs const & e)
+	virtual void OnPaintDragLine(CSheet* pSheet, const PaintEvent& e)
 	{
 		//auto dragTo = m_spColDragger->GetDragToAllIndex();
 		//auto dragFrom = m_spColDragger->GetDragFromAllIndex();
@@ -173,7 +173,7 @@ public:
     /*! Constructor*/
 	CSheetCellDragger():CDragger(){}
 	virtual ~CSheetCellDragger(){}
-	virtual bool IsTarget(CSheet* pSheet, MouseEventArgs const & e) override { return false; }
+	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override { return false; }
 };
 
 typedef CSheetCellDragger<RowTag, ColTag> CSheetCellRowDragger;

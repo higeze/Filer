@@ -204,6 +204,7 @@ void CIDLPtr::Attach(LPITEMIDLIST pIDL)
 {
 	if (m_pIDL){
 		CSingletonMalloc::GetInstance()->Free(m_pIDL);
+		m_pIDL = nullptr;
 	}
 	m_pIDL = pIDL;
 }
@@ -214,6 +215,13 @@ LPITEMIDLIST CIDLPtr::Detach()
 	return pTempIDL;
 }
 
+void CIDLPtr::Clear()
+{
+	if (m_pIDL) {
+		CSingletonMalloc::GetInstance()->Free(m_pIDL);
+		m_pIDL = nullptr;
+	}
+}
 //Method
 
 void CIDLPtr::Append(CIDLPtr pidl)

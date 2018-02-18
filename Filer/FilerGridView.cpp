@@ -29,6 +29,7 @@
 #include "FileDragger.h"
 
 #include "MyWin32.h"
+#include "Debug.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -178,7 +179,7 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	return 0;
 }
 
-void CFilerGridView::OnKeyDown(KeyEventArgs& e)
+void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
 {
 	switch (e.Char)
 	{
@@ -329,40 +330,52 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		InsertDefaultRowColumn();
 	}
 
-		m_spFolder = spFolder;
+	m_spFolder = spFolder;
 
-		//Clear RowDictionary From 0 to last
-		auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
-		rowDictionary.erase(rowDictionary.find(0), rowDictionary.end());
-
-		//Set up Watcher
-		if(::PathFileExists(m_spFolder->GetPath().c_str())){
-			if(m_watcher.GetPath()!=m_spFolder->GetPath()){
+	//Clear RowDictionary From 0 to last
+	auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
+	rowDictionary.erase(rowDictionary.find(0), rowDictionary.end());
+	//Set up Watcher
+	try {
+		if (::PathFileExists(m_spFolder->GetPath().c_str()) &&
+			!boost::iequals(m_spFolder->GetExt(), L".zip")){
+			if (m_watcher.GetPath() != m_spFolder->GetPath()) {
 				m_watcher.QuitWatching();
 				m_watcher.SetPath(m_spFolder->GetPath());
 				m_watcher.StartWatching();
 			}
-		}else{
+		}
+		else {
 			m_watcher.QuitWatching();
 			m_watcher.SetPath(L"");
 		}
+	}
+	catch (std::exception& e) {
+		MessageBox(L"Watcher", L"Error", 0);
+		throw e;
+	}
 
+	try {
 		//Enumerate child IDL
-		CComPtr<IEnumIDList> enumIdl;
-		if(SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS|SHCONTF_INCLUDEHIDDEN|SHCONTF_FOLDERS, &enumIdl))){
-			if(enumIdl){
-				for(;;){
 
-					CIDLPtr nextIdl;
-					ULONG ulRet(0);
-					if(SUCCEEDED(enumIdl->Next(1,&nextIdl,&ulRet))){
-						if(nextIdl.IsEmpty()){break;}
-						auto spFile(std::make_shared<CShellFile>(m_spFolder->GetShellFolderPtr(),::ILCombine(m_spFolder->GetAbsolutePidl(), nextIdl)));
-						InsertRow(100,std::make_shared<CFileRow>(this,spFile));
-					}
-				}
+		CComPtr<IEnumIDList> enumIdl;
+		if (SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) &&
+			enumIdl) {
+			CIDLPtr nextIdl;
+			ULONG ulRet(0);
+			while (SUCCEEDED(enumIdl->Next(1, &nextIdl, &ulRet))) {
+				if (!nextIdl) { break; }
+				auto spFile(std::make_shared<CShellFile>(m_spFolder->GetShellFolderPtr(), ::ILCombine(m_spFolder->GetAbsolutePidl(), nextIdl)));
+				InsertRow(CRow::kMaxIndex, std::make_shared<CFileRow>(this, spFile));
+				nextIdl.Clear();
 			}
 		}
+	}
+	catch (std::exception& e) 
+	{
+		MessageBox(L"Enumeration", L"Error", 0);
+		throw e;
+	}
 
 		//Path change //TODO
 		//m_rowHeader->SetMeasureValid(false);
@@ -399,7 +412,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	SubmitUpdate();
 }
 
-void CFilerGridView::OnBkGndLButtondDblClk(const MouseEventArgs& e)
+void CFilerGridView::OnBkGndLButtondDblClk(const LButtonDblClkEvent& e)
 {
 	OpenFolder(m_spFolder->GetParent());
 }
@@ -514,7 +527,7 @@ void CFilerGridView::InvokeShellCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShell
     }
 }
 
-void CFilerGridView::OnContextMenu(ContextMenuEventArgs& e)
+void CFilerGridView::OnContextMenu(const ContextMenuEvent& e)
 {
 	auto visibleIndexes = Coordinates2Indexes<VisTag>(e.Point);
 	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();

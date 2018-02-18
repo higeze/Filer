@@ -30,7 +30,7 @@ CSheet::CSheet(
 	:m_spHeaderProperty(spHeaderProperty),
 	m_spFilterProperty(spFilterProperty),
 	m_spCellProperty(spCellProperty),
-	m_spStateMachine(std::make_shared<CSheetStateMachine>()),
+	m_spStateMachine(std::make_shared<CSheetStateMachine>(this)),
 	m_bSelected(false),
 	m_bFocused(false),
 	m_pContextMenu(pContextMenu?pContextMenu:&CSheet::ContextMenu)
@@ -657,7 +657,7 @@ CRect CSheet::GetCellsRect()
 //
 //	return rcClip;
 //}
-void CSheet::OnPaintAll(PaintEventArgs& e)
+void CSheet::OnPaintAll(const PaintEvent& e)
 {
 	DEBUG_OUTPUT_COLUMN_VISIBLE_DICTIONARY
 
@@ -672,7 +672,7 @@ void CSheet::OnPaintAll(PaintEventArgs& e)
 		}
 	}
 }
-void CSheet::OnPaint(PaintEventArgs& e)
+void CSheet::OnPaint(const PaintEvent& e)
 {
 
 	DEBUG_OUTPUT_COLUMN_VISIBLE_DICTIONARY
@@ -708,77 +708,78 @@ void CSheet::UpdateAll()
 
 }
 
-void CSheet::OnContextMenu(ContextMenuEventArgs& e)
+void CSheet::OnContextMenu(const ContextMenuEvent& e)
 {
-	m_spStateMachine->ContextMenu(this, e);
+	m_spStateMachine->ContextMenu(e);
 }
 
-void CSheet::OnRButtonDown(MouseEventArgs& e)
+void CSheet::OnRButtonDown(const RButtonDownEvent& e)
 {
-	m_spStateMachine->RButtonDown(this, e);
+	m_spStateMachine->RButtonDown(e);
 }
 
-void CSheet::OnLButtonDown(MouseEventArgs& e)
+void CSheet::OnLButtonDown(const LButtonDownEvent& e)
 {
-	m_spStateMachine->LButtonDown(this, e);
+	m_spStateMachine->LButtonDown(e);
 }
 
-void CSheet::OnLButtonUp(MouseEventArgs& e)
+void CSheet::OnLButtonUp(const LButtonUpEvent& e)
 {
-	m_spStateMachine->LButtonUp(this, e);
+	m_spStateMachine->LButtonUp(e);
 }
 
-void CSheet::OnLButtonSnglClk(MouseEventArgs& e)
+void CSheet::OnLButtonClk(const LButtonClkEvent& e)
 {
-	m_spStateMachine->LButtonSnglClk(this, e);
+	m_spStateMachine->LButtonClk(e);
 }
 
-void CSheet::OnLButtonDblClk(MouseEventArgs& e)
+
+void CSheet::OnLButtonSnglClk(const LButtonSnglClkEvent& e)
 {
-	m_spStateMachine->LButtonDblClk(this, e);
+	m_spStateMachine->LButtonSnglClk(e);
 }
 
-void CSheet::OnLButtonBeginDrag(MouseEventArgs& e)
+void CSheet::OnLButtonDblClk(const LButtonDblClkEvent& e)
 {
-	m_spStateMachine->LButtonBeginDrag(this, e);
+	m_spStateMachine->LButtonDblClk(e);
 }
 
-//void CSheet::OnLButtonEndDrag(MouseEventArgs& e)
-//{
-//	m_spStateMachine->LButtonEndDrag(this, e);
-//}
-
-void CSheet::OnMouseMove(MouseEventArgs& e)
+void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e)
 {
-	m_spStateMachine->MouseMove(this, e);
-}
-void CSheet::OnSetCursor(SetCursorEventArgs& e)
-{
-	m_spStateMachine->SetCursor(this, e);
+	m_spStateMachine->LButtonBeginDrag(e);
 }
 
-void CSheet::OnMouseLeave(MouseEventArgs& e)
+void CSheet::OnMouseMove(const MouseMoveEvent& e)
 {
-	m_spStateMachine->MouseLeave(this, e);
+	m_spStateMachine->MouseMove(e);
+}
+void CSheet::OnSetCursor(const SetCursorEvent& e)
+{
+	m_spStateMachine->SetCursor(e);
 }
 
-void CSheet::OnSetFocus(EventArgs& e)
+void CSheet::OnMouseLeave(const MouseLeaveEvent& e)
+{
+	m_spStateMachine->MouseLeave(e);
+}
+
+void CSheet::OnSetFocus(const SetFocusEvent& e)
 {
 	if(!Visible())return;
 	m_spCursorer->OnCursorClear(this);
 	m_bFocused = true;
 }
 
-void CSheet::OnKillFocus(EventArgs& e)
+void CSheet::OnKillFocus(const KillFocusEvent& e)
 {
 	if(!Visible())return;
 	m_spCursorer->OnCursorClear(this);
 	m_bFocused = false;
 }
 
-void CSheet::OnKeyDown(KeyEventArgs& e)
+void CSheet::OnKeyDown(const KeyDownEvent& e)
 {
-	m_spStateMachine->KeyDown(this, e);
+	m_spStateMachine->KeyDown(e);
 }
 
 

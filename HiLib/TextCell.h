@@ -51,7 +51,7 @@ public:
 	//virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
 	virtual CSize MeasureContentSize(CDC* pDC) override;
 	virtual CSize MeasureContentSizeWithFixedWidth(CDC* pDC) override;
-	virtual void OnEdit(EventArgs& e);
+	virtual void OnEdit(const EventArgs& e);
 	virtual bool CanSetStringOnEditing()const{return true;}
 
 	virtual UINT GetFormat()const{ return DT_LEFT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL; }
@@ -81,7 +81,7 @@ public:
 	CEditableCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellProperty> spProperty,CMenu* pMenu=nullptr)
 		:CTextCell(pSheet,pRow, pColumn,spProperty,pMenu){}
 	virtual ~CEditableCell(){}
-	virtual void OnLButtonDown(MouseEventArgs& e);
+	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 };
 
 class CEditableStringCell:public CStringCell
@@ -90,7 +90,7 @@ public:
 	CEditableStringCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty, string_type str,CMenu* pMenu=nullptr)
 		:CStringCell(pSheet,pRow,pColumn,spProperty,str,pMenu){}
 	virtual ~CEditableStringCell(){}
-	virtual void OnLButtonDown(MouseEventArgs& e);
+	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 };
 class CDcmParameter;
 
@@ -102,9 +102,9 @@ public:
 	CParameterCell(CSheet* pSheet=nullptr, CRow* pRow=nullptr, CColumn* pColumn=nullptr,std::shared_ptr<CCellProperty> spProperty=nullptr,CMenu* pMenu=nullptr)
 		:CEditableCell(pSheet,pRow, pColumn,spProperty,pMenu),m_bFirstFocus(false){}
 	virtual ~CParameterCell(){}
-	virtual void OnLButtonDown(MouseEventArgs& e);
-	virtual void OnLButtonSnglClk(MouseEventArgs& e);
-	virtual void OnKillFocus(EventArgs& e);
+	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
+	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override;
+	virtual void OnKillFocus(const KillFocusEvent& e) override;
 
 	virtual bool CanSetStringOnEditing()const override{return false;}
 

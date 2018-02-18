@@ -6,19 +6,19 @@
 class CSheet;
 struct RowTag;
 struct ColTag;
-struct MouseEventArgs;
-struct SetCursorEventArgs;
+struct MouseEvent;
+struct SetCursorEvent;
 
 class ITracker
 {
 public:
-	virtual void OnDividerDblClk(CSheet* pSheet, MouseEventArgs const & e) = 0;
-	virtual void OnBeginTrack(CSheet* pSheet, MouseEventArgs const & e) = 0;
-	virtual void OnTrack(CSheet* pSheet, MouseEventArgs const & e) = 0;
-	virtual void OnEndTrack(CSheet* pSheet, MouseEventArgs const & e) = 0;
-	virtual void OnLeaveTrack(CSheet* pSheet, MouseEventArgs const & e) = 0;
-	virtual void OnSetCursor(CSheet* pSheet, SetCursorEventArgs const & e) = 0;
-	virtual bool IsTarget(CSheet* pSheet, MouseEventArgs const & e) = 0;
+	virtual void OnDividerDblClk(CSheet* pSheet, const MouseEvent& e) = 0;
+	virtual void OnBeginTrack(CSheet* pSheet, const MouseEvent& e) = 0;
+	virtual void OnTrack(CSheet* pSheet, const MouseEvent& e) = 0;
+	virtual void OnEndTrack(CSheet* pSheet, const MouseEvent& e) = 0;
+	virtual void OnLeaveTrack(CSheet* pSheet, const MouseEvent& e) = 0;
+	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) = 0;
+	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) = 0;
 };
 
 template<typename TRC>
@@ -61,7 +61,7 @@ public:
 
 public:
 
-	void OnDividerDblClk(CSheet* pSheet, MouseEventArgs const & e) override
+	void OnDividerDblClk(CSheet* pSheet, const MouseEvent& e) override
 	{
 		auto idx = GetTrackLeftTopIndex(pSheet, e);
 		if (idx != CBand::kInvalidIndex) {
@@ -72,25 +72,25 @@ public:
 		}
 	}
 
-	void OnSetCursor(CSheet* pSheet, SetCursorEventArgs const & e)
+	void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e)
 	{
 		CPoint pt;
 		::GetCursorPos(&pt);
 		::ScreenToClient(e.HWnd, &pt);
-		if (IsTarget(pSheet, MouseEventArgs(NULL, pt))) {
+		if (IsTarget(pSheet, MouseEvent(NULL, pt))) {
 			e.Handled = TRUE;
 			SetSizeCursor(); 
 		}
 	}
 
-	void OnBeginTrack(CSheet* pSheet, MouseEventArgs const & e) override
+	void OnBeginTrack(CSheet* pSheet, const MouseEvent& e) override
 	{
 		//e.Handled = TRUE;
 		m_trackLeftVisib = GetTrackLeftTopIndex(pSheet, e);
 		SetSizeCursor();
 	}
 
-	void OnTrack(CSheet* pSheet, MouseEventArgs const & e) override
+	void OnTrack(CSheet* pSheet, const MouseEvent& e) override
 	{
 		//e.Handled = TRUE;
 		SetSizeCursor();
@@ -99,7 +99,7 @@ public:
 		pSheet->Track<TRC>(p);
 	}
 
-	void OnEndTrack(CSheet* pSheet, MouseEventArgs const & e) override
+	void OnEndTrack(CSheet* pSheet, const MouseEvent& e) override
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
@@ -107,13 +107,13 @@ public:
 		pSheet->EndTrack<TRC>(p);
 	}
 
-	void OnLeaveTrack(CSheet* pSheet, MouseEventArgs const & e) override
+	void OnLeaveTrack(CSheet* pSheet, const MouseEvent& e) override
 	{
 		//TODO
 		//Should Candel?
 	}
 
-	int GetTrackLeftTopIndex(CSheet* pSheet, MouseEventArgs const & e)
+	int GetTrackLeftTopIndex(CSheet* pSheet, const MouseEvent& e)
 	{
 		if (!pSheet->Visible()) {
 			return CBand::kInvalidIndex;
@@ -155,7 +155,7 @@ public:
 
 	}
 
-	bool IsTarget(CSheet* pSheet, MouseEventArgs const & e) override
+	bool IsTarget(CSheet* pSheet, const MouseEvent& e) override
 	{
 		if (!pSheet->Visible()) {
 			return false;

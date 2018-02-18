@@ -130,49 +130,49 @@ CSize CSheetCell::MeasureSizeWithFixedWidth(CDC* pDC)
 	return MeasureSize(pDC);
 }
 
-void CSheetCell::OnLButtonDown(MouseEventArgs& e)
+void CSheetCell::OnLButtonDown(const LButtonDownEvent& e)
 {
 	CCell::OnLButtonDown(e);
 	CSheet::OnLButtonDown(e);
 	SubmitUpdate();
 }
 
-void CSheetCell::OnLButtonUp(MouseEventArgs& e)
+void CSheetCell::OnLButtonUp(const LButtonUpEvent& e)
 {
 	CCell::OnLButtonUp(e);
 	CSheet::OnLButtonUp(e);
 	SubmitUpdate();
 }
 
-void CSheetCell::OnMouseMove(MouseEventArgs& e)
+void CSheetCell::OnMouseMove(const MouseMoveEvent& e)
 {
 	CCell::OnMouseMove(e);
 	CSheet::OnMouseMove(e);
 	SubmitUpdate();
 }
 
-void CSheetCell::OnMouseLeave(MouseEventArgs& e)
+void CSheetCell::OnMouseLeave(const MouseLeaveEvent& e)
 {
 	CCell::OnMouseLeave(e);
 	CSheet::OnMouseLeave(e);
 	SubmitUpdate();
 }
 
-void CSheetCell::OnSetCursor(SetCursorEventArgs& e)
+void CSheetCell::OnSetCursor(const SetCursorEvent& e)
 {
 	CCell::OnSetCursor(e);
 	CSheet::OnSetCursor(e);
 	SubmitUpdate();
 }
 
-void CSheetCell::OnSetFocus(EventArgs& e)
+void CSheetCell::OnSetFocus(const SetFocusEvent& e)
 {
 	CCell::OnSetFocus(e);
 	CSheet::OnSetFocus(e);
 	SubmitUpdate();
 }
 
-void CSheetCell::OnKillFocus(EventArgs& e)
+void CSheetCell::OnKillFocus(const KillFocusEvent& e)
 {
 	CCell::OnKillFocus(e);
 	CSheet::OnKillFocus(e);
@@ -245,7 +245,7 @@ void CSheetCell::PaintContent(CDC* pDC, CRect rcPaint)
 	CRgn rgn;
 	rgn.CreateRectRgnIndirect(rcPaint);
 	pDC->SelectClipRgn(rgn);	
-	CSheet::OnPaint(PaintEventArgs(pDC));
+	CSheet::OnPaint(PaintEvent(pDC));
 	pDC->SelectClipRgn(NULL);
 	//auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
 	//auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
@@ -336,7 +336,8 @@ CMenu* CSheetCell::GetContextMenuPtr()
 	}
 	return &SheetCellContextMenu;
 }
-void CSheetCell::OnContextMenu(ContextMenuEventArgs& e)
+
+void CSheetCell::OnContextMenu(const ContextMenuEvent& e)
 {
 	if(!Visible())return;
 	auto cell = Cell(e.Point);

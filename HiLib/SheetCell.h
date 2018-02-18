@@ -48,20 +48,14 @@ public:
 	virtual void PaintContent(CDC* pDC, CRect rcPaint);
 	
 	//Event
-	virtual void OnLButtonDown(MouseEventArgs& e);
-	virtual void OnLButtonUp(MouseEventArgs& e);
-	virtual void OnLButtonClk(MouseEventArgs& e){/*Do Nothing*/}
-	virtual void OnLButtonDblClk(MouseEventArgs& e){/*Do Nothing*/}
-	virtual void OnMouseMove(MouseEventArgs& e);
-	virtual void OnMouseLeave(MouseEventArgs& e);
-
-	virtual void OnContextMenu(ContextMenuEventArgs& e);
-
-	virtual void OnSetCursor(SetCursorEventArgs& e);
-
-	virtual void OnSetFocus(EventArgs& e);
-	virtual void OnKillFocus(EventArgs& e);
-	virtual void OnKeyDown(KeyEventArgs& e){/*Do Nothing*/};
+	virtual void OnLButtonDown(const LButtonDownEvent& e);
+	virtual void OnLButtonUp(const LButtonUpEvent& e);
+	virtual void OnMouseMove(const MouseMoveEvent& e);
+	virtual void OnMouseLeave(const MouseLeaveEvent& e);
+	virtual void OnContextMenu(const ContextMenuEvent& e);
+	virtual void OnSetCursor(const SetCursorEvent& e);
+	virtual void OnSetFocus(const SetFocusEvent& e);
+	virtual void OnKillFocus(const KillFocusEvent& e);
 	//String
 	virtual string_type GetString()const{return CSheet::GetSheetString();};//TODO for test
 	virtual void SetString(const string_type& str){/*Do Nothing*/};

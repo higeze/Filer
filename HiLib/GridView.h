@@ -94,7 +94,7 @@ protected:
 	virtual LRESULT OnCommandResizeSheetCell(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	virtual std::shared_ptr<CDC> GetClientDCPtr()const;
 
-	virtual void OnContextMenu(ContextMenuEventArgs& e);
+	virtual void OnContextMenu(const ContextMenuEvent& e);
 
 	virtual void OnCellLButtonClk(CellEventArgs& e);
 	virtual void OnCellContextMenu(CellContextMenuEventArgs& e);
@@ -104,8 +104,8 @@ protected:
 	virtual void CGridView::RowVisibleChanged(CRowEventArgs& e) override;
 	virtual void OnRowPropertyChanged(LPCTSTR lpszProperty);
 
-	virtual void OnKeyDown(KeyEventArgs& e);
-	virtual void OnPaintAll(PaintEventArgs& e);
+	virtual void OnKeyDown(const KeyDownEvent& e);
+	virtual void OnPaintAll(const PaintEvent& e);
 public:
 	virtual void ClearFilter();
 	virtual void FilterAll();
@@ -128,7 +128,7 @@ public:
 
 	virtual row_type GetFilterRowPtr()const{return m_rowFilter;}
 	virtual void SetFilterRowPtr(row_type row){m_rowFilter=row;}
-	virtual void OnPaint(PaintEventArgs& e);
+	virtual void OnPaint(const PaintEvent& e);
 	virtual void EnsureVisibleCell(const cell_type& pCell);
 	void Jump(std::shared_ptr<CCell>& spCell);
 	virtual void Clear();

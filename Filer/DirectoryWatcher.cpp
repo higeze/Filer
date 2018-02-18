@@ -3,36 +3,62 @@
 #include "SEHException.h"
 #include "MyWin32.h"
 #include "MyString.h"
+#include "Debug.h"
 
 
-CDirectoryWatcher::CDirectoryWatcher(void):m_hQuitEvent(NULL),m_pWork(nullptr),m_hDir(NULL),m_vData(BUFFER_SIZE, 0)
-{
-}
+CDirectoryWatcher::CDirectoryWatcher(void)
+	:m_hQuitEvent(NULL),m_pWork(nullptr),m_hDir(NULL),m_vData(kBufferSize, 0)
+{}
 
-
-CDirectoryWatcher::~CDirectoryWatcher(void)
-{
-}
+CDirectoryWatcher::~CDirectoryWatcher(void){}
 
 void CDirectoryWatcher::StartWatching()
 {
-	//Create event
-	if(m_hQuitEvent != NULL)::CloseHandle(m_hQuitEvent);
-	m_hQuitEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
-	//Create work
-	if(m_pWork != nullptr)::CloseThreadpoolWork(m_pWork);
-	m_pWork = ::CreateThreadpoolWork(CDirectoryWatcher::WatchDirectoryCallback,(PVOID)this,NULL);
-	//Submit work
-	::SubmitThreadpoolWork(m_pWork);
+	try {
+		//Create event
+		if (m_hQuitEvent != NULL) {
+			if (!::CloseHandle(m_hQuitEvent)) {
+				FILE_LINE_FUNC_TRACE;
+			}
+			m_hQuitEvent = NULL;
+		}
+		//Create event
+		m_hQuitEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		if (m_hQuitEvent == NULL) {
+			FILE_LINE_FUNC_TRACE;
+			return;
+		}
+		//Create work
+		if (m_pWork != nullptr) { ::CloseThreadpoolWork(m_pWork); m_pWork = nullptr; }
+		m_pWork = ::CreateThreadpoolWork(CDirectoryWatcher::WatchDirectoryCallback, (PVOID)this, NULL);
+		if (m_pWork == NULL) {
+			FILE_LINE_FUNC_TRACE;
+			return;
+		}
+		//Submit work
+		::SubmitThreadpoolWork(m_pWork);
+	}
+	catch (std::exception& e) {
+		FILE_LINE_FUNC_TRACE;
+		throw e;
+	}
 }
 
 void CDirectoryWatcher::QuitWatching()
 {
-	if(m_hQuitEvent!=NULL && m_pWork!=nullptr){
-		//Throw quit event
-		::SetEvent(m_hQuitEvent);
-		//Wait for submitted work
-		::WaitForThreadpoolWorkCallbacks(m_pWork,FALSE);
+	try {
+		if (m_hQuitEvent != NULL && m_pWork != nullptr) {
+			//Throw quit event
+			if (!::SetEvent(m_hQuitEvent)) {
+				FILE_LINE_FUNC_TRACE;
+			}
+			//Wait for submitted work
+			::WaitForThreadpoolWorkCallbacks(m_pWork, FALSE);
+		}
+	}
+	catch (std::exception& e) {
+		FILE_LINE_FUNC_TRACE;
+		throw e;
 	}
 
 }

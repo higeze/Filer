@@ -18,7 +18,6 @@ public:
 	bool operator==(const CIDLPtr& idlPtr) const;
 	bool operator!=(const CIDLPtr& idlPtr) const;
 	const CIDLPtr operator + ( const CIDLPtr& pidl ) const;
-	operator bool()const{return m_pIDL!=nullptr;}
 	LPITEMIDLIST* operator&() throw()
 	{
 		return &m_pIDL;
@@ -28,7 +27,9 @@ public:
 	//Attach
 	void Attach(LPITEMIDLIST pIdl);
 	LPITEMIDLIST Detach();
+	void Clear();
 	//Cast
+	operator bool()const { return m_pIDL; }
 	operator LPITEMIDLIST()const{return m_pIDL;}
 	operator LPCITEMIDLIST()const{return m_pIDL;}
 	//Method

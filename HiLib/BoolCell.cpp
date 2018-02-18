@@ -13,7 +13,7 @@ void CBoolCell::PaintContent(CDC* pDC,CRect rcPaint)
 {
 	rcPaint.right=rcPaint.left+rcPaint.Height();
 	m_checkBox.SetRect(rcPaint);
-	m_checkBox.OnPaint(PaintEventArgs(pDC));
+	m_checkBox.OnPaint(PaintEvent(pDC));
 }
 CSize CBoolCell::MeasureSize(CDC* pDC)
 {
@@ -36,7 +36,7 @@ void CBoolCell::SetStringCore(const string_type& str)
 	m_bool = boost::lexical_cast<bool>(str);
 }
 
-void CBoolCell::OnLButtonClk(MouseEventArgs& e)
+void CBoolCell::OnLButtonClk(const LButtonClkEvent& e)
 {
 	SetString(boost::lexical_cast<std::wstring>(!(m_bool)));
 }

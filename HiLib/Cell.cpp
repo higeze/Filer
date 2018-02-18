@@ -264,7 +264,7 @@ void CCell::PaintFocus(CDC* pDC, CRect rcPaint)
 	}
 }
 
-void CCell::OnPaint(PaintEventArgs& e)
+void CCell::OnPaint(const PaintEvent& e)
 {
 	CRect rcClient(GetRect());
 	CRect rcInner(CenterBorder2InnerBorder(rcClient));
@@ -275,24 +275,24 @@ void CCell::OnPaint(PaintEventArgs& e)
 	PaintFocus(e.DCPtr, rcInner);
 }
 
-void CCell::OnLButtonDown(MouseEventArgs& e)
+void CCell::OnLButtonDown(const LButtonDownEvent& e)
 {
 	CUIElement::OnLButtonDown(e);
 	m_pSheet->CellLButtonDown(CellEventArgs(this));
 }
 
-void CCell::OnLButtonUp(MouseEventArgs& e)
+void CCell::OnLButtonUp(const LButtonUpEvent& e)
 {
 	CUIElement::OnLButtonUp(e);
 	SetState(UIElementState::Hot);
 }
 
-void CCell::OnLButtonDblClk(MouseEventArgs& e)
+void CCell::OnLButtonDblClk(const LButtonDblClkEvent& e)
 {
 	m_pSheet->CellLButtonDblClk(CellEventArgs(this));
 }
 
-void CCell::OnContextMenu(ContextMenuEventArgs& e)
+void CCell::OnContextMenu(const ContextMenuEvent& e)
 {
 	CMenu* pMenu = GetContextMenuPtr(); 
 	if(pMenu){//TODO should use GetWnd not GetHWND?
@@ -327,12 +327,12 @@ void CCell::OnContextMenu(ContextMenuEventArgs& e)
 
 	//m_pSheet->CellContextMenu(CellContextMenuEventArgs(this,e.Point));	
 }
-void CCell::OnSetFocus(EventArgs& e)
+void CCell::OnSetFocus(const SetFocusEvent& e)
 {
 	m_pSheet->CellPropertyChanged(this,L"focus");//TODO
 }
 
-void CCell::OnKillFocus(EventArgs& e)
+void CCell::OnKillFocus(const KillFocusEvent& e)
 {
 	m_pSheet->CellPropertyChanged(this,L"focus");//TODO
 }

@@ -19,11 +19,10 @@ public:
 	virtual CSize MeasureSize(CDC* pDC);
 	virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
 
-
 	virtual string_type GetString()const;
 	virtual void SetStringCore(const string_type& str);
 
-	virtual void OnLButtonClk(MouseEventArgs& e);
+	virtual void OnLButtonClk(const LButtonClkEvent& e) override;
 
 	virtual bool IsComparable()const;
 };

@@ -1,10 +1,9 @@
 #pragma once
+#include "UIElement.h"
 #include "IDragger.h"
 #include "MyPoint.h"
 //Pre-Declaration
 class CSheet;
-struct MouseEventArgs;
-struct SetCursorEventArgs;
 
 class CFileDragger:public IDragger
 {
@@ -41,11 +40,11 @@ public:
 
 public:
 
-	bool IsTarget(CSheet* pSheet, MouseEventArgs const & e) override;
-	void OnBeginDrag(CSheet* pSheet, MouseEventArgs const & e) override;
-	void OnDrag(CSheet* pSheet, MouseEventArgs const & e) override;
-	void OnEndDrag(CSheet* pSheet, MouseEventArgs const & e) override;
-	void OnLeaveDrag(CSheet* pSheet, MouseEventArgs const & e) override;
-	void OnPaintDragLine(CSheet* pSheet, const PaintEventArgs & e)override{/*Do Nothing*/}
+	bool IsTarget(CSheet* pSheet, MouseEvent const & e) override;
+	void OnBeginDrag(CSheet* pSheet, MouseEvent const & e) override;
+	void OnDrag(CSheet* pSheet, MouseEvent const & e) override;
+	void OnEndDrag(CSheet* pSheet, MouseEvent const & e) override;
+	void OnLeaveDrag(CSheet* pSheet, MouseEvent const & e) override;
+	void OnPaintDragLine(CSheet* pSheet, const PaintEvent & e)override{/*Do Nothing*/}
 
 };

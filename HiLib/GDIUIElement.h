@@ -50,7 +50,7 @@ public:
 	virtual void Measure(CDC* pDC){}
 	virtual CSize GetMeasuredSize()const{return m_bVisible?m_size:CSize();}
 
-	virtual void OnPaint(PaintEventArgs& e){}
+	virtual void OnPaint(const PaintEvent& e){}
 
 	virtual CGDIUIElement* GetParent()const{return m_pParent;}
 
@@ -74,7 +74,7 @@ public:
 	void SetSetter(std::function<void(const std::wstring&)> setter){m_setter = setter;}
 	
 	virtual void Measure(CDC* pDC);
-	virtual void OnPaint(PaintEventArgs& e);
+	virtual void OnPaint(const PaintEvent& e);
 };
 
 class CTextBlock:public CGDIUIElement
@@ -87,7 +87,7 @@ public:
 	CTextBlock(CGDIUIElement* pParent, std::shared_ptr<CFont> spFont, std::shared_ptr<UINT> spFormat, std::wstring wstrText)
 		:CGDIUIElement(pParent), m_spFont(spFont), m_spFormat(spFormat), m_wstrText(wstrText){}
 	virtual void Measure(CDC* pDC);
-	virtual void OnPaint(PaintEventArgs& e);
+	virtual void OnPaint(const PaintEvent& e);
 	void SetText(const std::wstring& wstrText){m_wstrText = wstrText;}
 };
 
@@ -106,8 +106,8 @@ public:
 	void SetBool(const bool& b){(*m_spbool)=b;}
 
 	virtual void Measure(CDC* pDC);
-	virtual void OnLButtonClk(MouseEventArgs& e);
-	virtual void OnPaint(PaintEventArgs& e);
+	virtual void OnLButtonClk(const MouseEvent& e);
+	virtual void OnPaint(const PaintEvent& e);
 };
 
 #include "SeriesProperty.h"
@@ -127,7 +127,7 @@ public:
 		:CGDIUIElement(pParent), m_getter(getter), m_setter(setter){}
 
 	virtual void Measure(CDC* pDC);
-	virtual void OnPaint(PaintEventArgs& e);
+	virtual void OnPaint(const PaintEvent& e);
 	virtual void SetState(const UIElementState::Type& state)
 	{
 		if(GetState()!=UIElementState::Hot && state == UIElementState::Hot){
@@ -160,14 +160,14 @@ public:
 	
 	std::shared_ptr<std::vector<std::shared_ptr<CGDIUIElement>>> GetChildrenPtr(){return m_children;}
 	
-	virtual void OnLButtonDown(MouseEventArgs& e);
-	virtual void OnLButtonUp(MouseEventArgs& e);
-	virtual void OnMouseMove(MouseEventArgs& e);
+	virtual void OnLButtonDown(const LButtonDownEvent& e);
+	virtual void OnLButtonUp(const LButtonUpEvent& e);
+	virtual void OnMouseMove(const MouseMoveEvent& e);
 //	virtual void OnMouseEnter(MouseEventArgs& e);
-	virtual void OnMouseLeave(MouseEventArgs& e);
+	virtual void OnMouseLeave(const MouseLeaveEvent& e);
 
 //	virtual void OnLButtonClk(MouseEventArgs& e);
-	virtual void OnLButtonDblClk(MouseEventArgs& e);
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e);
 //	std::shared_ptr<std::vector<std::shared_ptr<CGDIUIElement>>> GetChildrenPtr(){return m_children;}
 
 };
@@ -182,7 +182,7 @@ public:
 	void SetOrientation(const Orientation::Type& orientation){m_orientation = orientation;}
 		
 	virtual void Measure(CDC* pDC);
-	virtual void OnPaint(PaintEventArgs& e);
+	virtual void OnPaint(const PaintEvent& e);
 };
 
 //TODO Only Top and Bottom are implemented. Need to implement left and right;
@@ -197,7 +197,7 @@ public:
 	void SetDock(std::shared_ptr<CGDIUIElement> spElem, Dock dock);
 		
 	virtual void Measure(CDC* pDC);
-	virtual void OnPaint(PaintEventArgs& e);
+	virtual void OnPaint(const PaintEvent& e);
 };
 
 
@@ -221,7 +221,7 @@ public:
 		m_size = size;
 	}
 	
-	virtual void OnPaint(PaintEventArgs& e)
+	virtual void OnPaint(const PaintEvent& e)
 	{      
         CDC dc(::CreateCompatibleDC(*e.DCPtr));
         dc.SelectBitmap(m_bitmap);

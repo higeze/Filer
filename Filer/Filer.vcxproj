@@ -208,6 +208,7 @@
     <ClInclude Include="..\HiLib\ConsoleTimer.h" />
     <ClInclude Include="..\HiLib\CShellExtension.h" />
     <ClInclude Include="..\HiLib\Cursorer.h" />
+    <ClInclude Include="..\HiLib\Debug.h" />
     <ClInclude Include="..\HiLib\Dragger.h" />
     <ClInclude Include="..\HiLib\EmptyCell.h" />
     <ClInclude Include="..\HiLib\EventArgs.h" />

@@ -518,6 +518,9 @@
     <ClInclude Include="FavoriteCell.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\Debug.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">

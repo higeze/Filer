@@ -1,34 +1,28 @@
 #pragma
-
+#include "UIElement.h"
 #include <memory>
 
 //Pre-declare
 class CSheet;
-struct MouseEventArgs;
-struct SetCursorEventArgs;
-struct ContextMenuEventArgs;
-struct KeyEventArgs;
 
 struct CSheetStateMachine
 {
-	CSheetStateMachine();
+	CSheetStateMachine(CSheet* pSheet);
 	~CSheetStateMachine();
 
 	struct Impl;
 	std::unique_ptr<Impl> pImpl;
 
-	void LButtonDown(CSheet * pSheet, MouseEventArgs& e);
-	void LButtonUp(CSheet * pSheet, MouseEventArgs& e);
-	void LButtonSnglClk(CSheet * pSheet, MouseEventArgs& e);
-	void LButtonDblClk(CSheet * pSheet, MouseEventArgs& e);
-	void RButtonDown(CSheet * pSheet, MouseEventArgs& e);
-	void ContextMenu(CSheet* pSheet, ContextMenuEventArgs& e);
-	void MouseMove(CSheet * pSheet, MouseEventArgs& e);
-	void MouseLeave(CSheet * pSheet, MouseEventArgs& e);
-	void SetCursor(CSheet * pSheet, SetCursorEventArgs& e);
-	void KeyDown(CSheet* pSheet, KeyEventArgs& e);
-
-	void LButtonBeginDrag(CSheet * pSheet, MouseEventArgs& e);
-	//void LButtonEndDrag(CSheet * pSheet, MouseEventArgs& e);
-
+	void LButtonDown(const LButtonDownEvent& e);
+	void LButtonUp(const LButtonUpEvent& e);
+	void LButtonClk(const LButtonClkEvent& e);
+	void LButtonSnglClk(const LButtonSnglClkEvent& e);
+	void LButtonDblClk(const LButtonDblClkEvent& e);
+	void LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	void RButtonDown(const RButtonDownEvent& e);
+	void ContextMenu(const ContextMenuEvent& e);
+	void MouseMove(const MouseMoveEvent& e);
+	void MouseLeave(const MouseLeaveEvent& e);
+	void SetCursor(const SetCursorEvent& e);
+	void KeyDown(const KeyDownEvent& e);
 };

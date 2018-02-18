@@ -88,7 +88,7 @@ CSize CTextCell::MeasureContentSizeWithFixedWidth(CDC* pDC)
 //	return rcCenter.Size();	
 //}
 
-void CTextCell::OnEdit(EventArgs& e)
+void CTextCell::OnEdit(const EventArgs& e)
 {
 	CRect rcContent(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
 	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
@@ -181,22 +181,22 @@ void CStringCell::SetStringCore(const string_type& str)
 }
 
 
-void CEditableCell::OnLButtonDown(MouseEventArgs& e)
+void CEditableCell::OnLButtonDown(const LButtonDownEvent& e)
 {
 	OnEdit(e);
 }
 
 
-void CEditableStringCell::OnLButtonDown(MouseEventArgs& e)
+void CEditableStringCell::OnLButtonDown(const LButtonDownEvent& e)
 {
 	OnEdit(e);
 }
 
-void CParameterCell::OnLButtonDown(MouseEventArgs& e)
+void CParameterCell::OnLButtonDown(const LButtonDownEvent& e)
 {
 	//Do Nothing
 }
-void CParameterCell::OnLButtonSnglClk(MouseEventArgs& e)
+void CParameterCell::OnLButtonSnglClk(const LButtonSnglClkEvent& e)
 {
 	//if(!m_bFirstFocus){
 	//	m_bFirstFocus=true;
@@ -211,7 +211,7 @@ void CParameterCell::OnLButtonSnglClk(MouseEventArgs& e)
 
 }
 
-void CParameterCell::OnKillFocus(EventArgs& e)
+void CParameterCell::OnKillFocus(const KillFocusEvent& e)
 {
 	m_bFirstFocus=false;
 	CCell::OnKillFocus(e);

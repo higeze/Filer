@@ -2,7 +2,7 @@
 
 HTHEME CGDIUIElement::m_hButtonTheme = NULL; 
 
-void CTextBlock::OnPaint(PaintEventArgs& e)
+void CTextBlock::OnPaint(const PaintEvent& e)
 {
 	if(!m_bVisible)return;
 
@@ -50,7 +50,7 @@ void CBindTextBlock::Measure(CDC* pDC)
 	pDC->SelectFont(hFont);
 }
 
-void CBindTextBlock::OnPaint(PaintEventArgs& e)
+void CBindTextBlock::OnPaint(const PaintEvent& e)
 {
 	if(!m_bVisible || !m_getter)return;
 
@@ -82,7 +82,7 @@ void CCheckBox::Measure(CDC* pDC)
 	m_size.cy = m_widthheight+m_margin.top+m_margin.bottom; 
 }
 
-void CCheckBox::OnPaint(PaintEventArgs& e)
+void CCheckBox::OnPaint(const PaintEvent& e)
 {
 	if(!m_bVisible)return;
 
@@ -138,7 +138,7 @@ void CCheckBox::OnPaint(PaintEventArgs& e)
 
 }
 
-void CCheckBox::OnLButtonClk(MouseEventArgs& e)
+void CCheckBox::OnLButtonClk(const MouseEvent& e)
 {
 	m_setter(!(m_getter()));
 }
@@ -151,7 +151,7 @@ void CLineMark::Measure(CDC* pDC)
 	m_size.cy = 2 * m_markRadius + m_margin.top + m_margin.bottom;
 }
 
-void CLineMark::OnPaint(PaintEventArgs& e)
+void CLineMark::OnPaint(const PaintEvent& e)
 {
 	if(!m_bVisible)return;
 
@@ -175,7 +175,7 @@ void CLineMark::OnPaint(PaintEventArgs& e)
 	e.DCPtr->SelectBrush(hBrush);
 }
 
-void CPanel::OnLButtonDown(MouseEventArgs& e)
+void CPanel::OnLButtonDown(const LButtonDownEvent& e)
 {
 	auto iter = boost::find_if(*m_children,[&](const std::shared_ptr<CGDIUIElement>& spElement)->bool{
 		return !!spElement->GetRect().PtInRect(e.Point);
@@ -184,7 +184,7 @@ void CPanel::OnLButtonDown(MouseEventArgs& e)
 		return (*iter)->OnLButtonDown(e);
 	}
 }
-void CPanel::OnLButtonUp(MouseEventArgs& e)
+void CPanel::OnLButtonUp(const LButtonUpEvent& e)
 {
 	auto iter = boost::find_if(*m_children,[&](const std::shared_ptr<CGDIUIElement>& spElement)->bool{
 		return !!spElement->GetRect().PtInRect(e.Point);
@@ -194,7 +194,7 @@ void CPanel::OnLButtonUp(MouseEventArgs& e)
 	}
 }
 
-void CPanel::OnMouseMove(MouseEventArgs& e)
+void CPanel::OnMouseMove(const MouseMoveEvent& e)
 {
 	auto iter = boost::find_if(*m_children,[&](const std::shared_ptr<CGDIUIElement>& spElement)->bool{
 		return !!spElement->GetRect().PtInRect(e.Point);
@@ -204,18 +204,18 @@ void CPanel::OnMouseMove(MouseEventArgs& e)
 			(*iter)->OnMouseEnter(e);
 			m_currentElement = (*iter);
 		}else if(m_currentElement!=(*iter)){
-			m_currentElement->OnMouseLeave(e);
+			m_currentElement->OnMouseLeave(MouseLeaveEvent(e.Flags, e.Point));
 			(*iter)->OnMouseEnter(e);
 			m_currentElement = (*iter);
 		}
 		(*iter)->OnMouseMove(e);
 	}else{
 		if(m_currentElement){
-			m_currentElement->OnMouseLeave(e);
+			m_currentElement->OnMouseLeave(MouseLeaveEvent(e.Flags, e.Point));
 		}
 	}
 }
-void CPanel::OnMouseLeave(MouseEventArgs& e)
+void CPanel::OnMouseLeave(const MouseLeaveEvent& e)
 {
 	if(m_currentElement){
 		m_currentElement->OnMouseLeave(e);
@@ -224,7 +224,7 @@ void CPanel::OnMouseLeave(MouseEventArgs& e)
 }
 
 
-void CPanel::OnLButtonDblClk(MouseEventArgs& e)
+void CPanel::OnLButtonDblClk(const LButtonDblClkEvent& e)
 {
 	auto iter = boost::find_if(*m_children,[&](const std::shared_ptr<CGDIUIElement>& spElement)->bool{
 		return !!spElement->GetRect().PtInRect(e.Point);
@@ -260,7 +260,7 @@ void CStackPanel::Measure(CDC* pDC)
 	m_size = size;
 }
 
-void CStackPanel::OnPaint(PaintEventArgs& e)
+void CStackPanel::OnPaint(const PaintEvent& e)
 {
 	if(!m_bVisible)return;
 
@@ -353,7 +353,7 @@ void CDockPanel::Measure(CDC* pDC)
 	//m_size = size;
 }
 
-void CDockPanel::OnPaint(PaintEventArgs& e)
+void CDockPanel::OnPaint(const PaintEvent& e)
 {
 	if(!m_bVisible)return;
 

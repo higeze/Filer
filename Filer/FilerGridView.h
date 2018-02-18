@@ -75,10 +75,11 @@ public:
 
 	virtual HRESULT OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
-	virtual void OnKeyDown(KeyEventArgs& e)override;
+	virtual void OnKeyDown(const KeyDownEvent& e)override;
+	virtual void OnBkGndLButtondDblClk(const LButtonDblClkEvent& e) override;
+	virtual void OnContextMenu(const ContextMenuEvent& e) override;
+
 	void OnCellLButtonDblClk(CellEventArgs& e);
-	virtual void OnBkGndLButtondDblClk(const MouseEventArgs& e) override;
-	virtual void OnContextMenu(ContextMenuEventArgs& e) override;
 
 	void Open(std::shared_ptr<CShellFile>& spFile);
 	void OpenFile(std::shared_ptr<CShellFile>& spFile);

@@ -115,21 +115,17 @@ public:
 	virtual void PaintFocus(CDC* pDC, CRect rc);
 	
 	//Event
-	virtual void OnPaint(PaintEventArgs& e);
-	virtual void OnLButtonDown(MouseEventArgs& e);
-	virtual void OnLButtonUp(MouseEventArgs& e);
-	virtual void OnLButtonClk(MouseEventArgs& e){/*Do Nothing*/}
-	virtual void OnLButtonDblClk(MouseEventArgs& e);
-	virtual void OnContextMenu(ContextMenuEventArgs& e);
-	virtual void OnSetFocus(EventArgs& e);
-
-	virtual void OnLButtonSnglClk(MouseEventArgs& e){/*Do Nothing*/}
-	//virtual void OnLButtonDoubleClick(MouseEventArgs& e){/*Do Nothing*/}
-
-	virtual void OnSetCursor(SetCursorEventArgs& e){/*Do Nothing*/}
-
-	virtual void OnKillFocus(EventArgs& e);
-	virtual void OnKeyDown(KeyEventArgs& e){/*Do Nothing*/};
+	virtual void OnPaint(const PaintEvent& e);
+	virtual void OnLButtonDown(const LButtonDownEvent& e);
+	virtual void OnLButtonUp(const LButtonUpEvent& e);
+	//virtual void OnLButtonClk(const LButtonClk& e){/*Do Nothing*/}
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e);
+	virtual void OnContextMenu(const ContextMenuEvent& e);
+	virtual void OnSetFocus(const SetFocusEvent& e);
+	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e){/*Do Nothing*/}
+	virtual void OnSetCursor(const SetCursorEvent& e){/*Do Nothing*/}
+	virtual void OnKillFocus(const KillFocusEvent& e);
+	virtual void OnKeyDown(const KeyDownEvent& e){/*Do Nothing*/};
 	//String
 	virtual string_type GetString()const;
 	virtual string_type GetSortString()const{return GetString();}

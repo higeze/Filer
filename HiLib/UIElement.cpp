@@ -1,19 +1,16 @@
 #include "UIElement.h"
 
-void CUIElement::OnLButtonDown(MouseEventArgs& e)
+void CUIElement::OnLButtonDown(const LButtonDownEvent& e)
 {
 	SetState(UIElementState::Pressed);
 }
 
-void CUIElement::OnLButtonUp(MouseEventArgs& e)
+void CUIElement::OnLButtonUp(const LButtonUpEvent& e)
 {
-	if(m_state==UIElementState::Pressed || m_state==UIElementState::PressedLeave){
-		OnLButtonClk(e);
-	}
 	SetState(UIElementState::Hot);
 }
 
-void CUIElement::OnMouseMove(MouseEventArgs& e)
+void CUIElement::OnMouseMove(const MouseMoveEvent& e)
 {
 	switch(m_state)
 	{
@@ -38,7 +35,7 @@ void CUIElement::OnMouseMove(MouseEventArgs& e)
 	//}
 }
 
-void CUIElement::OnMouseEnter(MouseEventArgs& e)
+void CUIElement::OnMouseEnter(const MouseEvent& e)
 {
 	if(m_state==UIElementState::PressedLeave && e.Flags==MK_LBUTTON){
 		SetState(UIElementState::Pressed);
@@ -47,7 +44,7 @@ void CUIElement::OnMouseEnter(MouseEventArgs& e)
 	}
 }
 
-void CUIElement::OnMouseLeave(MouseEventArgs& e)
+void CUIElement::OnMouseLeave(const MouseLeaveEvent& e)
 {
 	if(m_state==UIElementState::Pressed && e.Flags==MK_LBUTTON){
 		SetState(UIElementState::PressedLeave);	

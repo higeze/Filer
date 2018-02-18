@@ -13,7 +13,7 @@ public:
 
 	void PaintContent(CDC* pDC,CRect rcPaint);
 
-	virtual void OnLButtonClk(MouseEventArgs& e);
+	virtual void OnLButtonClk(MouseEvent& e);
 
 	virtual string_type GetString()const;
 

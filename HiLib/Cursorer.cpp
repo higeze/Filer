@@ -13,9 +13,9 @@ void CCursorer::OnCellCursor(std::shared_ptr<CCell>& cell)
 	m_currentCell = cell;//Current
 	m_anchorCell = cell;//Anchor
 	if (m_focusedCell != cell) {
-		if (m_focusedCell) { m_focusedCell->OnKillFocus(EventArgs()); }//Blur
+		if (m_focusedCell) { m_focusedCell->OnKillFocus(KillFocusEvent()); }//Blur
 		m_focusedCell = cell;
-		m_focusedCell->OnSetFocus(EventArgs());//Focus
+		m_focusedCell->OnSetFocus(SetFocusEvent());//Focus
 		m_doubleFocusedCell = nullptr;//DoubleFocus
 	}
 	else if (m_focusedCell == cell) {
@@ -56,6 +56,18 @@ void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
 	}
 }
 
+void CCursorer::OnCursorLeave(std::shared_ptr<CCell>& cell)
+{
+	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+		return;
+	}
+	if (m_isDragPossible) {
+		m_isDragPossible = false;
+		//cell->GetSheetPtr()->DeselectAll();
+		//cell->GetRowPtr()->SetSelected(true);//Select
+	}
+}
+
 void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 {
 	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
@@ -89,14 +101,14 @@ void CCursorer::OnCursorCtrlShift(std::shared_ptr<CCell>& cell)
 void CCursorer::OnCursorClear(CSheet* pSheet)
 {
 	if(m_focusedCell){
-		m_focusedCell->OnKillFocus(EventArgs());//Blur
+		m_focusedCell->OnKillFocus(KillFocusEvent());//Blur
 	}
 	Clear();
 	pSheet->DeselectAll();//Select
 	pSheet->UnhotAll();//Hot
 }
 
-void CCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
+void CCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
 {
 	if(pSheet->Empty()){
 		return;
@@ -125,22 +137,37 @@ void CCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
 	}
 }
 
-void CCursorer::OnLButtonUp(CSheet* pSheet, MouseEventArgs& e)
+void CCursorer::OnLButtonUp(CSheet* pSheet, const LButtonUpEvent& e)
 {
 	if (pSheet->Empty()) {
 		return;
 	}
 	//auto cell = pSheet->Cell(e.Point);
 
-	////If out of sheet, reset curosr
-	//if (!cell) {
-	//	return OnCursorClear(pSheet);
-	//}
+	//If out of sheet, reset curosr
+	if (!m_currentCell) {
+		return;
+	}
 
 	return OnCursorUp(m_currentCell);
 }
 
-void CCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
+void CCursorer::OnMouseLeave(CSheet* pSheet, const MouseLeaveEvent& e)
+{
+	if (pSheet->Empty()) {
+		return;
+	}
+	//auto cell = pSheet->Cell(e.Point);
+
+	//If out of sheet, reset curosr
+	if (!m_currentCell) {
+		return;
+	}
+
+	return OnCursorLeave(m_currentCell);
+}
+
+void CCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e)
 {
 	if(pSheet->Empty()){
 		return;
@@ -161,7 +188,7 @@ void CCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
 	return;
 }
 
-void CCursorer::OnKeyDown(CSheet* pSheet, KeyEventArgs& e)
+void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 {
 	if(pSheet->Empty()){
 		return;
@@ -326,7 +353,7 @@ void CCursorer::SetSelectedColumns(CSheet* pSheet, std::vector<column_type> cols
 }
 
 
-void CSheetCellCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
+void CSheetCellCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
 {
 	if(pSheet->Empty()){
 		return;
@@ -350,7 +377,7 @@ void CSheetCellCursorer::OnLButtonDown(CSheet* pSheet, MouseEventArgs& e)
 	return;
 }
 
-void CSheetCellCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
+void CSheetCellCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e)
 {
 	if(pSheet->Empty()){
 		return;
@@ -365,7 +392,7 @@ void CSheetCellCursorer::OnRButtonDown(CSheet* pSheet, MouseEventArgs& e)
 	return OnCursor(cell);
 }
 
-void CSheetCellCursorer::OnKeyDown(CSheet* pSheet, KeyEventArgs& e)
+void CSheetCellCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 {
 	if (pSheet->Empty()) {
 		return;

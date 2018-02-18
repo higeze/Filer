@@ -31,7 +31,7 @@ public:
 
 
 
-	virtual void OnLButtonClk(MouseEventArgs& e);
+	virtual void OnLButtonClk(const LButtonClkEvent& e)override;
 
 
 	void PaintSortMark(CDC* pDC,CRect rcPaint);

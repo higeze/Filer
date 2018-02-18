@@ -6,7 +6,7 @@
 #include "FilerGridView.h"
 //#include "FileDraggingState.h"
 
-void CFileDragger::OnBeginDrag(CSheet* pSheet, MouseEventArgs const & e)
+void CFileDragger::OnBeginDrag(CSheet* pSheet, MouseEvent const & e)
 {
 	m_ptDragStart = e.Point;
 	if (auto p = dynamic_cast<CFilerGridView*>(pSheet)) {
@@ -14,7 +14,7 @@ void CFileDragger::OnBeginDrag(CSheet* pSheet, MouseEventArgs const & e)
 	}
 }
 
-void CFileDragger::OnDrag(CSheet* pSheet, MouseEventArgs const & e)
+void CFileDragger::OnDrag(CSheet* pSheet, MouseEvent const & e)
 {
 	//auto distance = std::pow(m_ptDragStart.x-e.Point.x , 2) + std::pow(m_ptDragStart.y-e.Point.y, 2);
 	//if(distance > 100){
@@ -24,18 +24,18 @@ void CFileDragger::OnDrag(CSheet* pSheet, MouseEventArgs const & e)
 	//}
 }
 
-void CFileDragger::OnEndDrag(CSheet* pSheet, MouseEventArgs const & e)
+void CFileDragger::OnEndDrag(CSheet* pSheet, MouseEvent const & e)
 {
 	//Cancel
 }
 
-void CFileDragger::OnLeaveDrag(CSheet* pSheet, MouseEventArgs const & e)
+void CFileDragger::OnLeaveDrag(CSheet* pSheet, MouseEvent const & e)
 {
 	//Reset
 	m_ptDragStart.SetPoint(-1, -1);
 }
 
-bool CFileDragger::IsTarget(CSheet* pSheet, MouseEventArgs const & e)
+bool CFileDragger::IsTarget(CSheet* pSheet, MouseEvent const & e)
 {
 	auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Point);
 	auto maxRow = pSheet->GetMaxIndex<RowTag, VisTag>();

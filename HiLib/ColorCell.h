@@ -13,7 +13,7 @@ public:
 	virtual ~CColorCell(){}
 	CColor GetColor();
 	void PaintBackground(CDC* pDC,CRect rcPaint);
-	virtual void OnLButtonClk(MouseEventArgs& e);
+	virtual void OnLButtonClk(const MouseEvent& e);
 	virtual std::basic_string<TCHAR> GetString()const;
 	virtual bool IsComparable()const{return false;}
 };

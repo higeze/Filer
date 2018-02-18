@@ -21,7 +21,7 @@ void CColorCell::PaintBackground(CDC* pDC,CRect rcPaint)
 	}
 }
 
-void CColorCell::OnLButtonClk(MouseEventArgs& e)
+void CColorCell::OnLButtonClk(const MouseEvent& e)
 {
 	COLORREF CustColors[16];
 	CHOOSECOLOR cc={0};

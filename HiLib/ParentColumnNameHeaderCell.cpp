@@ -109,7 +109,7 @@ CSize CParentColumnNameHeaderCell::MeasureContentSizeWithFixedWidth(CDC* pDC)
 	return size;
 }
 
-void CParentColumnNameHeaderCell::OnLButtonClk(MouseEventArgs& e)
+void CParentColumnNameHeaderCell::OnLButtonClk(const LButtonClkEvent& e)
 {
 	m_pSheet->CellLButtonClk(CellEventArgs(this));
 }

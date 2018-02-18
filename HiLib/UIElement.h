@@ -23,29 +23,29 @@ struct EventArgs
 public:
 	CWnd* WindowPtr;
 	EventArgs(CWnd* pWnd = nullptr):WindowPtr(pWnd){}
-	virtual ~EventArgs(){}
 };
 
 struct KeyEventArgs:public EventArgs
 {
-public:
 	UINT Char;
 	UINT RepeatCount;
 	UINT Flags;
-public:
 	KeyEventArgs(UINT ch,UINT uRepCnt,UINT uFlags)
 		:Char(ch),RepeatCount(uRepCnt),Flags(uFlags){}
-	virtual ~KeyEventArgs(){}
 };
 
-struct PaintEventArgs:public EventArgs
+struct KeyDownEvent :public KeyEventArgs
+{
+	KeyDownEvent(UINT ch, UINT uRepCnt, UINT uFlags):KeyEventArgs(ch, uRepCnt, uFlags){}
+};
+
+struct PaintEvent:public EventArgs
 {
 	CDC* DCPtr;
-	PaintEventArgs(CWnd* pWnd, CDC* pDC)
+	PaintEvent(CWnd* pWnd, CDC* pDC)
 		:EventArgs(pWnd),DCPtr(pDC){}
-	PaintEventArgs(CDC* pDC)
+	PaintEvent(CDC* pDC)
 		:EventArgs(),DCPtr(pDC){}
-	virtual ~PaintEventArgs(){}
 };
 
 //struct OGLPaintEventArgs:public PaintEventArgs
@@ -56,41 +56,102 @@ struct PaintEventArgs:public EventArgs
 //		:PaintEventArgs(pDC),OGLRendererPtr(pOGLRenderer){}
 //};
 
-struct MouseEventArgs:public EventArgs
+struct MouseEvent:public EventArgs
 {
 	UINT Flags;
 	CPoint Point;
-	MouseEventArgs(UINT uFlags,CPoint pt)
+	MouseEvent(UINT uFlags,CPoint pt)
 		:Flags(uFlags),Point(pt){}
-	virtual ~MouseEventArgs(){}
+	virtual ~MouseEvent(){}
 };
 
-struct MouseWheelEventArgs:public MouseEventArgs
+struct LButtonDownEvent :public MouseEvent
+{
+	LButtonDownEvent(UINT uFlags, CPoint pt):MouseEvent(uFlags, pt){}
+};
+
+struct LButtonUpEvent :public MouseEvent
+{
+	LButtonUpEvent(UINT uFlags, CPoint pt):MouseEvent(uFlags, pt) {}
+};
+
+struct LButtonClkEvent :public MouseEvent
+{
+	LButtonClkEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+};
+
+struct LButtonSnglClkEvent :public MouseEvent
+{
+	LButtonSnglClkEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+};
+
+struct LButtonDblClkEvent :public MouseEvent
+{
+	LButtonDblClkEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+};
+
+struct LButtonDblClkTimeExceedEvent :public MouseEvent
+{
+	LButtonDblClkTimeExceedEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+};
+
+struct LButtonBeginDragEvent :public MouseEvent
+{
+	LButtonBeginDragEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+};
+
+struct RButtonDownEvent :public MouseEvent
+{
+	RButtonDownEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+};
+
+struct MouseMoveEvent :public MouseEvent
+{
+	MouseMoveEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+};
+
+struct MouseLeaveEvent :public MouseEvent
+{
+	MouseLeaveEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+};
+
+
+struct MouseWheelEvent:public MouseEvent
 {
 	short Delta;
-	MouseWheelEventArgs(UINT uFlags, short zDelta, CPoint pt)
-		:MouseEventArgs(uFlags, pt),Delta(zDelta){}
-	virtual ~MouseWheelEventArgs(){}
+	MouseWheelEvent(UINT uFlags, short zDelta, CPoint pt)
+		:MouseEvent(uFlags, pt),Delta(zDelta){}
+	virtual ~MouseWheelEvent(){}
 };
 
-struct SetCursorEventArgs:public EventArgs
+struct SetCursorEvent:public EventArgs
 {
 	HWND HWnd;
 	UINT HitTest;
 	BOOL& Handled;
-	SetCursorEventArgs(HWND HWnd, UINT nHitTest, BOOL& Handled)
+	SetCursorEvent(HWND HWnd, UINT nHitTest, BOOL& Handled)
 		:HWnd(HWnd), HitTest(nHitTest), Handled(Handled){}
-	virtual ~SetCursorEventArgs(){}
+	virtual ~SetCursorEvent(){}
+};
+
+struct SetFocusEvent :public EventArgs
+{
+	SetFocusEvent():EventArgs(){}
+};
+
+struct KillFocusEvent :public EventArgs
+{
+	KillFocusEvent() :EventArgs() {}
 };
 
 
-struct ContextMenuEventArgs:public EventArgs
+struct ContextMenuEvent:public EventArgs
 {
 public:
 	CPoint Point;
-	ContextMenuEventArgs(CWnd* pWnd, CPoint pt)
+	ContextMenuEvent(CWnd* pWnd, CPoint pt)
 		:EventArgs(pWnd),Point(pt){}
-	virtual ~ContextMenuEventArgs(){}
+	virtual ~ContextMenuEvent(){}
 };
 
 
@@ -112,16 +173,16 @@ public:
 		}
 	}
 
-	virtual void OnLButtonDown(MouseEventArgs& e);
-	virtual void OnLButtonUp(MouseEventArgs& e);
-	virtual void OnMButtonDown(MouseEventArgs& e){}
-	virtual void OnMButtonUp(MouseEventArgs& e){}
-	virtual void OnMouseMove(MouseEventArgs& e);
-	virtual void OnMouseEnter(MouseEventArgs& e);
-	virtual void OnMouseLeave(MouseEventArgs& e);
-	virtual void OnMouseWheel(MouseWheelEventArgs& e){}
-	virtual void OnLButtonClk(MouseEventArgs& e){}
-	virtual void OnLButtonDblClk(MouseEventArgs& e){}
-	virtual void OnKeyDown(KeyEventArgs& e){}
-	virtual void OnContextMenu(ContextMenuEventArgs& e){}
+	virtual void OnLButtonDown(const LButtonDownEvent& e);
+	virtual void OnLButtonUp(const LButtonUpEvent& e);
+	virtual void OnMButtonDown(const MouseEvent& e){}//TODO
+	virtual void OnMButtonUp(const MouseEvent& e){}//TODO
+	virtual void OnMouseMove(const MouseMoveEvent& e);
+	virtual void OnMouseEnter(const MouseEvent& e);//TODO
+	virtual void OnMouseLeave(const MouseLeaveEvent& e);
+	virtual void OnMouseWheel(const MouseWheelEvent& e){}
+	virtual void OnLButtonClk(const LButtonClkEvent& e){}
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e){}
+	virtual void OnKeyDown(const KeyDownEvent& e){}
+	virtual void OnContextMenu(const ContextMenuEvent& e){}
 };

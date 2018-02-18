@@ -7,8 +7,8 @@ class CCell;
 class CGridView;
 class ISheetState;
 struct EventArgs;
-struct MouseEventArgs;
-struct SetCursorEventArgs;
+struct MouseEvent;
+struct SetCursorEvent;
 
 class CCursorer
 {
@@ -33,18 +33,19 @@ public:
 	void SetFocusedCell(std::shared_ptr<CCell>& cell){m_focusedCell = cell;}
 	std::shared_ptr<CCell> GetDoubleFocusedCell() { return m_doubleFocusedCell; }
 	//Event handler
-	virtual void OnLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual void OnLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	virtual void OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e){/*Do Nothing*/}
-	virtual void OnRButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	virtual void OnMouseMove(CSheet* pSheet, MouseEventArgs& e) {/*Do Nothing*/ }
-	virtual void OnMouseLeave(CSheet* pSheet, MouseEventArgs& e) {/*Do Nothing*/ }
-	virtual void OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e) {/*Do Nothing*/ }
-	virtual void OnKeyDown(CSheet* pSheet, KeyEventArgs& e);
+	virtual void OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e);
+	virtual void OnLButtonUp(CSheet* pSheet, const LButtonUpEvent& e);
+	virtual void OnLButtonDblClk(CSheet* pSheet, const LButtonDblClkEvent& e){/*Do Nothing*/}
+	virtual void OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e);
+	virtual void OnMouseMove(CSheet* pSheet, const MouseMoveEvent& e) {/*Do Nothing*/ }
+	virtual void OnMouseLeave(CSheet* pSheet, const MouseLeaveEvent& e);
+	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) {/*Do Nothing*/ }
+	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e);
 
 	virtual void OnCellCursor(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorDown(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorUp(std::shared_ptr<CCell>& cell);
+	virtual void OnCursorLeave(std::shared_ptr<CCell>& cell);
 	virtual void OnCursor(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorCtrl(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorShift(std::shared_ptr<CCell>& cell);
@@ -76,7 +77,7 @@ class CSheetCellCursorer:public CCursorer
 public:
 	CSheetCellCursorer():CCursorer(){}
 	virtual ~CSheetCellCursorer(){}
-	virtual void OnLButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
-	virtual void OnRButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
-	virtual void OnKeyDown(CSheet* pSheet, KeyEventArgs& e) override;
+	virtual void OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e) override;
+	virtual void OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e) override;
+	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) override;
 };

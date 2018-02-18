@@ -256,25 +256,26 @@ public:
 	virtual CRect GetCellsRect();
 	virtual CRect GetPaintRect()=0;
 	//Event handler
-	virtual void OnPaint(PaintEventArgs& e);
-	virtual void OnPaintAll(PaintEventArgs& e);
-	virtual void OnRButtonDown(MouseEventArgs& e);
+	virtual void OnPaint(const PaintEvent& e);
+	virtual void OnPaintAll(const PaintEvent& e);
+	virtual void OnRButtonDown(const RButtonDownEvent& e);
 
-	virtual void OnLButtonDown(MouseEventArgs& e);
-	virtual void OnLButtonUp(MouseEventArgs& e);
-	virtual void OnLButtonSnglClk(MouseEventArgs& e);
-	virtual void OnLButtonDblClk(MouseEventArgs& e);
-	virtual void OnBkGndLButtondDblClk(const MouseEventArgs& e) {}
-	virtual void OnLButtonBeginDrag(MouseEventArgs& e);
+	virtual void OnLButtonDown(const LButtonDownEvent& e);
+	virtual void OnLButtonUp(const LButtonUpEvent& e);
+	virtual void OnLButtonClk(const LButtonClkEvent& e);
+	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e);
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e);
+	virtual void OnBkGndLButtondDblClk(const LButtonDblClkEvent& e) {}
+	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e);
 	//virtual void OnLButtonEndDrag(MouseEventArgs& e);
 
-	virtual void OnContextMenu(ContextMenuEventArgs& e);
-	virtual void OnMouseMove(MouseEventArgs& e);
-	virtual void OnMouseLeave(MouseEventArgs& e);
-	virtual void OnSetCursor(SetCursorEventArgs& e);
-	virtual void OnSetFocus(EventArgs& e);
-	virtual void OnKillFocus(EventArgs& e);
-	virtual void OnKeyDown(KeyEventArgs& e);
+	virtual void OnContextMenu(const ContextMenuEvent& e);
+	virtual void OnMouseMove(const MouseMoveEvent& e);
+	virtual void OnMouseLeave(const MouseLeaveEvent& e);
+	virtual void OnSetCursor(const SetCursorEvent& e);
+	virtual void OnSetFocus(const SetFocusEvent& e);
+	virtual void OnKillFocus(const KillFocusEvent& e);
+	virtual void OnKeyDown(const KeyDownEvent& e);
 
 	std::shared_ptr<CCell> Cell(const CPoint& pt);
 	

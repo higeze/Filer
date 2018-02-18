@@ -1,7 +1,7 @@
 #pragma once
 #include "stdafx.h"
 
-#define BUFFER_SIZE 1024
+//#define BUFFER_SIZE 1024
 
 //typedef struct _IocpData : OVERLAPPED
 //{
@@ -16,6 +16,7 @@ private:
 	HANDLE m_hQuitEvent;
 	HANDLE m_hDir;
 	PTP_WORK m_pWork;
+	const size_t kBufferSize = 1024;
 
 	std::wstring m_path;
 	std::vector<BYTE> m_vData;

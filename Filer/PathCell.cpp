@@ -100,7 +100,7 @@ CSize CPathCell::MeasureContentSizeWithFixedWidth(CDC* pDC)
 //	}
 //}
 
-void CPathCell::OnPaint(PaintEventArgs& e)
+void CPathCell::OnPaint(const PaintEvent& e)
 {
 	//Paint only when VisibleIndex == 0
 	if(m_pColumn->GetIndex<VisTag>() == 0){

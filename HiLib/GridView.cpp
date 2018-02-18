@@ -49,7 +49,7 @@ CGridView::CGridView(
 	CWnd(),
 	m_iosv(),m_work(m_iosv),m_timer(m_iosv),
 	m_spUndoRedoManager(std::make_shared<CUnDoReDoManager>()),
-	m_pMouseStateMachine(std::make_shared<CMouseStateMachine>())
+	m_pMouseStateMachine(std::make_shared<CMouseStateMachine>(this))
 {
 	boost::thread th(boost::bind(&boost::asio::io_service::run,&m_iosv));
 	//RegisterArgs and CreateArgs
@@ -476,8 +476,8 @@ LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 
 	//m_upBuffDC->SetBkMode(TRANSPARENT);
 
-	PaintEventArgs paintEventArgs(this, m_upBuffDC.get());
-	OnPaint(paintEventArgs);
+	PaintEvent paintEvent(this, m_upBuffDC.get());
+	OnPaint(paintEvent);
 
 	CRgn rgn;
 	rgn.CreateRectRgnIndirect(rcClient);
@@ -713,7 +713,7 @@ LRESULT CGridView::OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	SetFocus();
 	bHandled=false;
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	MouseEventArgs e((UINT)wParam,ptClient);
+	RButtonDownEvent e((UINT)wParam,ptClient);
 	CSheet::OnRButtonDown(e);
 	SubmitUpdate();
 	return 0;
@@ -726,8 +726,8 @@ LRESULT CGridView::OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	SetCapture();
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	MouseEventArgs e((UINT)wParam,ptClient);
-	m_pMouseStateMachine->LButtonDown(this, e);
+	LButtonDownEvent e((UINT)wParam,ptClient);
+	m_pMouseStateMachine->LButtonDown(e);
 	SubmitUpdate();
 	return 0;
 }
@@ -736,8 +736,8 @@ LRESULT CGridView::OnLButtonUp(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 	ReleaseCapture();
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	MouseEventArgs e((UINT)wParam,ptClient);
-	m_pMouseStateMachine->LButtonUp(this, e);
+	LButtonUpEvent e((UINT)wParam,ptClient);
+	m_pMouseStateMachine->LButtonUp(e);
 	SubmitUpdate();
 	return 0;
 }
@@ -745,8 +745,8 @@ LRESULT CGridView::OnLButtonUp(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 LRESULT CGridView::OnLButtonDblClk(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	MouseEventArgs e((UINT)wParam,ptClient);
-	m_pMouseStateMachine->LButtonDblClk(this, e);
+	LButtonDblClkEvent e((UINT)wParam,ptClient);
+	m_pMouseStateMachine->LButtonDblClk(e);
 	SubmitUpdate();
 	return 0;
 }
@@ -754,8 +754,8 @@ LRESULT CGridView::OnLButtonDblClk(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& b
 LRESULT CGridView::OnLButtonDblClkTimeExceed(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
-	MouseEventArgs e((UINT)wParam, ptClient);
-	m_pMouseStateMachine->LButtonDblClkTimeExceed(this, e);
+	LButtonDblClkTimeExceedEvent e((UINT)wParam, ptClient);
+	m_pMouseStateMachine->LButtonDblClkTimeExceed(e);
 	SubmitUpdate();
 	return 0;
 }
@@ -763,8 +763,8 @@ LRESULT CGridView::OnLButtonDblClkTimeExceed(UINT uMsg, WPARAM wParam, LPARAM lP
 LRESULT CGridView::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
-	MouseEventArgs e((UINT)wParam, ptClient);
-	m_pMouseStateMachine->MouseLeave(this, e);
+	MouseLeaveEvent e((UINT)wParam, ptClient);
+	m_pMouseStateMachine->MouseLeave(e);
 	SubmitUpdate();
 	return 0;
 }
@@ -780,7 +780,7 @@ LRESULT CGridView::OnMouseMove(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
     ::TrackMouseEvent( &stTrackMouseEvent );
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	MouseEventArgs e((UINT)wParam,ptClient);
+	MouseMoveEvent e((UINT)wParam,ptClient);
 	CSheet::OnMouseMove(e);
 	PostUpdate(Updates::Invalidate);
 	SubmitUpdate();
@@ -791,7 +791,7 @@ LRESULT CGridView::OnSetCursor(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 {
 	bHandled = FALSE; //Default Handled = FALSE meand Arrow
 	if((UINT)LOWORD(lParam) == HTCLIENT){
-		CSheet::OnSetCursor(SetCursorEventArgs((HWND)wParam, (UINT)LOWORD(lParam), bHandled));
+		CSheet::OnSetCursor(SetCursorEvent((HWND)wParam, (UINT)LOWORD(lParam), bHandled));
 	}else{
 		bHandled = FALSE;
 	}
@@ -802,14 +802,14 @@ LRESULT CGridView::OnSetCursor(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 
 LRESULT CGridView::OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	OnKeyDown(KeyEventArgs(wParam, lParam & 0xFF, lParam>>16 & 0xFF));
+	OnKeyDown(KeyDownEvent(wParam, lParam & 0xFF, lParam>>16 & 0xFF));
 	//PostUpdate(Updates::Scrolls);
 	SubmitUpdate();
 	bHandled = FALSE;
 	return 0;
 }
 
-void CGridView::OnKeyDown(KeyEventArgs& e)
+void CGridView::OnKeyDown(const KeyDownEvent& e)
 {
 	switch (e.Char)
 	{
@@ -838,7 +838,7 @@ void CGridView::OnKeyDown(KeyEventArgs& e)
 	CSheet::OnKeyDown(e);
 
 };
-void CGridView::OnContextMenu(ContextMenuEventArgs& e)
+void CGridView::OnContextMenu(const ContextMenuEvent& e)
 {
 	if(!Visible())return;
 	auto cell = Cell(e.Point);
@@ -861,7 +861,7 @@ LRESULT CGridView::OnContextMenu(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 {
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
 	ScreenToClient(ptClient);//Necessary to convert Client
-	ContextMenuEventArgs e(this, ptClient);
+	ContextMenuEvent e(this, ptClient);
 	OnContextMenu(e);
 	SubmitUpdate();
 	return 0;
@@ -1124,8 +1124,8 @@ LRESULT CGridView::OnCommandPrintScreen(WORD wNotifyCode,WORD wID,HWND hWndCtl,B
 	//Bitmap
 	{
 
-		PaintEventArgs paintEventArgs(&dcBuff);
-		OnPaintAll(paintEventArgs);
+		PaintEvent paintEvent(&dcBuff);
+		OnPaintAll(paintEvent);
 	
 		//Copy Bitmap to Clipboard
 		CClipboard clipboard;
@@ -1290,8 +1290,8 @@ HGLOBAL CGridView::GetPaintMetaFileData()
 	dc.FillRect(GetClientRect(),((HBRUSH)GetStockObject(GRAY_BRUSH)));
 	dc.SetBkMode(TRANSPARENT);
 
-	PaintEventArgs paintEventArgs(&dc);
-	OnPaint(paintEventArgs);
+	PaintEvent paintEvent(&dc);
+	OnPaint(paintEvent);
 
 	hmf = CloseMetaFile(dc);
 
@@ -1324,8 +1324,8 @@ HENHMETAFILE CGridView::GetPaintEnhMetaFileData()
 
 	dcEnhMeta.SetBkMode(TRANSPARENT);
 
-	PaintEventArgs paintEventArgs(&dcEnhMeta);
-	OnPaint(paintEventArgs);
+	PaintEvent paintEvent(&dcEnhMeta);
+	OnPaint(paintEvent);
 
 	return CloseEnhMetaFile(dcEnhMeta);
 }
@@ -1344,8 +1344,8 @@ HENHMETAFILE CGridView::GetAllEnhMetaFileData()
 
 	dcEnhMeta.SetBkMode(TRANSPARENT);
 
-	PaintEventArgs paintEventArgs(&dcEnhMeta);
-	OnPaintAll(paintEventArgs);
+	PaintEvent paintEvent(&dcEnhMeta);
+	OnPaintAll(paintEvent);
 
 	return CloseEnhMetaFile(dcEnhMeta);
 }
@@ -1409,7 +1409,7 @@ LRESULT CGridView::OnCommandReDo(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bH
 }
 
 
-void CGridView::OnPaintAll(PaintEventArgs& e)
+void CGridView::OnPaintAll(const PaintEvent& e)
 {
 	DEBUG_OUTPUT_COLUMN_VISIBLE_DICTIONARY
 
@@ -1443,7 +1443,7 @@ void CGridView::OnPaintAll(PaintEventArgs& e)
 	}
 }
 
-void CGridView::OnPaint(PaintEventArgs& e)
+void CGridView::OnPaint(const PaintEvent& e)
 {
 	//Paint Background
 	CRect rcClient(GetClientRect());

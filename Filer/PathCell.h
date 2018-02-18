@@ -33,7 +33,7 @@ public:
 	 */
 	//virtual void SetString(const string_type& str)override;
 	virtual void SetStringCore(const string_type& str)override;
-	virtual void OnPaint(PaintEventArgs& e)override;
+	virtual void OnPaint(const PaintEvent& e)override;
 
 	/**
 	 *  Comparable or not

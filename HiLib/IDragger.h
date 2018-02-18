@@ -1,8 +1,6 @@
 #pragma once
-
+#include "UIElement.h"
 class CSheet;
-struct MouseEventArgs;
-struct PaintEventArgs;
 
 class IDragger
 {
@@ -10,10 +8,10 @@ protected:
 	typedef int size_type;
 	typedef int coordinates_type;
 public:
-	virtual bool IsTarget(CSheet* pSheet, MouseEventArgs const & e) = 0;
-	virtual void OnBeginDrag(CSheet* pSheet, MouseEventArgs const & e) = 0;
-	virtual void OnDrag(CSheet* pSheet, MouseEventArgs const & e) = 0;
-	virtual void OnEndDrag(CSheet* pSheet, MouseEventArgs const & e) = 0;
-	virtual void OnLeaveDrag(CSheet* pSheet, MouseEventArgs const & e) = 0;
-	virtual void OnPaintDragLine(CSheet* pSheet, PaintEventArgs const & e) = 0;
+	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) = 0;
+	virtual void OnBeginDrag(CSheet* pSheet, const MouseEvent& e) = 0;
+	virtual void OnDrag(CSheet* pSheet, const MouseEvent& e) = 0;
+	virtual void OnEndDrag(CSheet* pSheet, const MouseEvent& e) = 0;
+	virtual void OnLeaveDrag(CSheet* pSheet, const MouseEvent& e) = 0;
+	virtual void OnPaintDragLine(CSheet* pSheet, const PaintEvent& e) = 0;
 };
