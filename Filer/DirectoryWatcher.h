@@ -10,6 +10,14 @@
 //	std::vector<BYTE> vData[BUFFER_SIZE];
 //} IocpData,*PIOCPDATA;
 
+struct closethreadpoolio
+{
+	void operator()(PTP_IO pio)const
+	{
+		::CloseThreadpoolIo(pio);
+	}
+};
+
 class CDirectoryWatcher
 {
 private:

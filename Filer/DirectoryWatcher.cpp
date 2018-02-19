@@ -29,7 +29,9 @@ void CDirectoryWatcher::StartWatching()
 			return;
 		}
 		//Create work
-		if (m_pWork != nullptr) { ::CloseThreadpoolWork(m_pWork); m_pWork = nullptr; }
+		if (m_pWork != nullptr) {
+			::CloseThreadpoolWork(m_pWork); m_pWork = nullptr;
+		}
 		m_pWork = ::CreateThreadpoolWork(CDirectoryWatcher::WatchDirectoryCallback, (PVOID)this, NULL);
 		if (m_pWork == NULL) {
 			FILE_LINE_FUNC_TRACE;
@@ -47,13 +49,22 @@ void CDirectoryWatcher::StartWatching()
 void CDirectoryWatcher::QuitWatching()
 {
 	try {
-		if (m_hQuitEvent != NULL && m_pWork != nullptr) {
+		if (m_hQuitEvent != NULL) {
 			//Throw quit event
 			if (!::SetEvent(m_hQuitEvent)) {
 				FILE_LINE_FUNC_TRACE;
 			}
+			//Close handle
+			if (!::CloseHandle(m_hQuitEvent)) {
+				FILE_LINE_FUNC_TRACE;
+			}
+			m_hQuitEvent = NULL;
+		}
+		if (m_pWork != nullptr) {
 			//Wait for submitted work
 			::WaitForThreadpoolWorkCallbacks(m_pWork, FALSE);
+			::CloseThreadpoolWork(m_pWork);
+			m_pWork = nullptr;
 		}
 	}
 	catch (std::exception& e) {
@@ -92,26 +103,23 @@ void CDirectoryWatcher::WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pInstance,P
 			return;
 		}
 		//Create thread pool
-		PTP_IO pio = ::CreateThreadpoolIo(m_hDir,CDirectoryWatcher::IoCompletionCallback,(PVOID)this,NULL);
+		std::unique_ptr<std::remove_pointer<PTP_IO>::type, closethreadpoolio> pio(::CreateThreadpoolIo(m_hDir,CDirectoryWatcher::IoCompletionCallback,(PVOID)this,NULL));
 		_tprintf(TEXT("Start watching direcotry\n"));
 		//Start observing
-		IoCompletionCallback(NULL,(LPOVERLAPPED)&oi,NO_ERROR,0,pio);
+		IoCompletionCallback(NULL,(LPOVERLAPPED)&oi,NO_ERROR,0,pio.get());
 		//Wait for quit event
 		WaitForSingleObject(m_hQuitEvent,INFINITE);
 		//Cancel task in que
-		WaitForThreadpoolIoCallbacks(pio,TRUE);
+		WaitForThreadpoolIoCallbacks(pio.get(),TRUE);
 		//Close handle
-		::CloseHandle(m_hQuitEvent);m_hQuitEvent = NULL;
-		::CloseThreadpoolWork(m_pWork);m_pWork = nullptr;
-		::CloseHandle(m_hDir);m_hDir = NULL;
-		::CloseThreadpoolIo(pio);
+		::CloseHandle(m_hDir);
+		m_hDir = NULL;
 		_tprintf(TEXT("End watching directory\n"));
 	}catch(std::exception& ex){
-		std::cout<<"Exception CDirectoryWatcher::WatchDirectoryCallback"<<std::endl;
-		MessageBoxA(NULL, ex.what(), "Exception in WatchDirectoryCallback", MB_ICONWARNING);
-		::CloseHandle(m_hQuitEvent);m_hQuitEvent = NULL;
-		::CloseThreadpoolWork(m_pWork);m_pWork = nullptr;
-		::CloseHandle(m_hDir);m_hDir = NULL;
+		FILE_LINE_FUNC_TRACE;
+		::CloseHandle(m_hDir);
+		m_hDir = NULL;
+		QuitWatching();
 	}
 }
 
@@ -178,9 +186,8 @@ void CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVO
 			delete [] (PBYTE)pFileNotifyInfo;
 		}
 	}catch(std::exception& ex){
-		std::cout<<"Exception CDirectoryWatcher::IoCompletionCallback"<<std::endl;
-		MessageBoxA(NULL, ex.what(), "Exception in IoCompletionCallback", MB_ICONWARNING);
-		if(m_hQuitEvent)::SetEvent(m_hQuitEvent);
+		FILE_LINE_FUNC_TRACE;
+		QuitWatching();
 	}
 }
 
