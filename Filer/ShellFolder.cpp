@@ -83,3 +83,8 @@ std::shared_ptr<CShellFolder> CShellFolder::GetParent()
 	return std::make_shared<CShellFolder>(this->GetParentShellFolderPtr(), pGrandParentFolder, parentIDL);
 
 }
+
+std::shared_ptr<CShellFolder> CShellFolder::Clone()const
+{
+	return std::make_shared<CShellFolder>(m_folder, m_parentFolder, m_absolutePidl);
+}

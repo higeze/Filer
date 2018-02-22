@@ -13,4 +13,5 @@ public:
 
 	CComPtr<IShellFolder>& GetShellFolderPtr() { return m_folder; }
 	std::shared_ptr<CShellFolder> GetParent();
+	std::shared_ptr<CShellFolder> Clone()const;
 };

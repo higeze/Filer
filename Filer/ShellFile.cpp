@@ -3,6 +3,7 @@
 #include "MyString.h"
 #include "MyCom.h"
 #include "ShellFolder.h"
+#include <thread>
 
 std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit)
 
@@ -130,27 +131,85 @@ ULARGE_INTEGER CShellFile::GetSize()
 	return m_size;
 }
 
+CIcon CShellFile::GetIconBySHGetFileInfo()
+{
+	SHFILEINFO sfi = { 0 };
+	::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+	return CIcon(sfi.hIcon);
+}
+
+
 CIcon CShellFile::GetIcon()
 {
-	if ((HICON)m_icon == NULL) {
-		SHFILEINFO sfi = { 0 };
-		::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-		m_icon = CIcon(sfi.hIcon);
+	if ((HICON)m_icon == NULL && !m_isAsyncIcon) {
 
-		//CComPtr<IExtractIcon> pEI;
-		//UINT reserved = 0;
-		//LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
-		//HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
-		//if(SUCCEEDED(hr)){
-		//	std::wstring buff;
-		//	::GetBuffer(buff, MAX_PATH);
-		//	UINT flags =0;
-		//	int index = 0;
-		//	hr = pEI->GetIconLocation(GIL_FORSHELL, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
-		//	HICON smallIcon = NULL;
-		//	pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
-		//	m_icon = CIcon(smallIcon);
-		//}
+		if (GetAttributes() & (SFGAO_LINK | SFGAO_GHOSTED | SFGAO_HIDDEN | SFGAO_SHARE) || 
+			!(GetAttributes() & (SFGAO_FILESYSTEM | SFGAO_FILESYSANCESTOR))) {
+			m_icon = GetIconBySHGetFileInfo();
+		}
+		else {
+			CComPtr<IExtractIcon> pEI;
+			UINT reserved = 0;
+			LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
+			HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
+			if (SUCCEEDED(hr)) {
+				std::wstring buff;
+				::GetBuffer(buff, MAX_PATH);
+				UINT flags = 0;
+				int index = 0;
+				hr = pEI->GetIconLocation(GIL_FORSHELL | GIL_ASYNC, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
+				switch (hr) {
+
+				case E_PENDING:
+				{
+					std::cout << "E_PENDING" << std::endl;
+					m_isAsyncIcon = true;
+					std::thread th([this]
+					{
+						CComPtr<IExtractIcon> pEI;
+						UINT reserved = 0;
+						LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
+						HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
+						if (SUCCEEDED(hr)) {
+							std::wstring buff;
+							::GetBuffer(buff, MAX_PATH);
+							UINT flags = 0;
+							int index = 0;
+							hr = pEI->GetIconLocation(GIL_FORSHELL, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
+							HICON smallIcon = NULL;
+							pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
+							m_icon = CIcon(smallIcon);
+						}
+						else {
+							m_icon = GetIconBySHGetFileInfo();
+						}
+						m_isAsyncIcon = false;
+
+					});
+					th.detach();
+				}
+				break;
+				case NOERROR:
+				{
+					HICON smallIcon = NULL;
+					pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
+					if (smallIcon) {
+						m_icon = CIcon(smallIcon);
+					}
+					else {
+						m_icon = GetIconBySHGetFileInfo();
+					}
+				}
+				break;
+				case S_FALSE:
+				{
+					m_icon = GetIconBySHGetFileInfo();
+				}
+				default:
+					break;
+				}
+			}
+		}
 	}
 	return m_icon;
 }
@@ -186,13 +245,13 @@ void CShellFile::UpdateWIN32_FIND_DATA()
 	}
 }
 
-CShellFile::CShellFile() :m_parentFolder(), m_absolutePidl()
+CShellFile::CShellFile() :m_parentFolder(), m_absolutePidl(), m_isAsyncIcon(false)
 {
 	::SHGetDesktopFolder(&m_parentFolder);
 	::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &m_absolutePidl);
 }
 
-CShellFile::CShellFile(const std::wstring& path) : m_parentFolder(), m_absolutePidl()
+CShellFile::CShellFile(const std::wstring& path) : m_parentFolder(), m_absolutePidl(), m_isAsyncIcon(false)
 {
 	CComPtr<IShellFolder> pDesktop;
 	::SHGetDesktopFolder(&pDesktop);
@@ -223,7 +282,7 @@ CShellFile::CShellFile(const std::wstring& path) : m_parentFolder(), m_absoluteP
 }
 
 CShellFile::CShellFile(CComPtr<IShellFolder> pfolder, CIDLPtr absolutePidl)
-	:m_parentFolder(pfolder),m_absolutePidl(absolutePidl){}
+	:m_parentFolder(pfolder),m_absolutePidl(absolutePidl), m_isAsyncIcon(false) {}
 
 bool CShellFile::IsShellFolder()const
 {

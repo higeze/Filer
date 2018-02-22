@@ -66,8 +66,11 @@ CFilerWnd::CFilerWnd()
 	AddMsgHandler(WM_CLOSE,&CFilerWnd::OnClose,this);
 	AddMsgHandler(WM_DESTROY,&CFilerWnd::OnDestroy,this);
 	AddMsgHandler(WM_KEYDOWN,&CFilerWnd::OnKeyDown,this);
+
 	AddCmdIDHandler(IDM_NEWTAB,&CFilerWnd::OnCommandNewTab,this);
+	AddCmdIDHandler(IDM_CLONETAB, &CFilerWnd::OnCommandCloneTab, this);
 	AddCmdIDHandler(IDM_CLOSETAB,&CFilerWnd::OnCommandCloseTab,this);
+	AddCmdIDHandler(IDM_CLOSEALLBUTTHISTAB, &CFilerWnd::OnCommandCloseAllButThisTab, this);
 	AddCmdIDHandler(IDM_ADDTOFAVORITE, &CFilerWnd::OnCommandAddToFavorite, this);
 
 	AddNtfyHandler(9996,NM_RCLICK , &CFilerWnd::OnNotifyTabRClick, this);
@@ -250,6 +253,30 @@ LRESULT CFilerWnd::OnCommandNewTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& 
 	return 0;
 }
 
+LRESULT CFilerWnd::OnCommandCloneTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	//New id for association
+	unsigned int id = m_uniqueIDFactory.NewID();
+	//Cloned id 
+	unsigned int clonedId = (unsigned int)m_spTab->GetItemParam(m_contextMenuTabIndex);
+	std::shared_ptr<CShellFolder> cloneFolder = m_viewMap.find(clonedId)->second->Clone();
+
+	//CTabControl
+	int newItem = m_spTab->InsertItem(m_spTab->GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
+
+	//CFilerGridView
+	m_viewMap.insert(std::make_pair(id, cloneFolder));
+
+	BOOL dummy = TRUE;
+	OnNotifyTabSelChanging(0, NULL, dummy);
+	m_spTab->SetCurSel(newItem);
+	OnNotifyTabSelChange(0, NULL, dummy);
+	OnSize(0, NULL, NULL, dummy);
+	return 0;
+}
+
+
+
 LRESULT CFilerWnd::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
 	unsigned int id = (unsigned int)m_spTab->GetItemParam(m_contextMenuTabIndex);
@@ -261,7 +288,6 @@ LRESULT CFilerWnd::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HWND hWndC
 	}
 	return 0;
 }
-
 
 void CFilerWnd::AddNewView(std::wstring path)
 {
@@ -283,7 +309,6 @@ void CFilerWnd::AddNewView(std::wstring path)
 LRESULT CFilerWnd::OnCommandCloseTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
 	if(m_spTab->GetItemCount()>1){
-		//unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
 
 		unsigned int id = (unsigned int)m_spTab->GetItemParam(m_contextMenuTabIndex);
 
@@ -291,13 +316,37 @@ LRESULT CFilerWnd::OnCommandCloseTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL
 		OnNotifyTabSelChanging(0, NULL, dummy);
 
 		m_spTab->DeleteItem(m_contextMenuTabIndex);
-		m_spTab->SetCurSel(m_spTab->GetItemCount()-1);
+		m_spTab->SetCurSel((std::min)(m_spTab->GetItemCount()-1, m_contextMenuTabIndex));
 		m_viewMap.erase(id);
 
 		OnNotifyTabSelChange(0, NULL, dummy);
+		OnSize(0, NULL, NULL, dummy);
 	}
 	return 0;
 }
+
+LRESULT CFilerWnd::OnCommandCloseAllButThisTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	if (m_spTab->GetItemCount()>1) {
+
+		//Remove larget tab
+		for (auto index = m_spTab->GetItemCount() - 1; index >= 0; index--) {
+			if (index != m_contextMenuTabIndex) {
+				auto id = (unsigned int)m_spTab->GetItemParam(index);
+				m_spTab->DeleteItem(index);
+				m_viewMap.erase(id);
+			}
+		}
+
+		BOOL dummy = FALSE;
+		OnNotifyTabSelChanging(0, NULL, dummy);
+		m_spTab->SetCurSel(0);
+		OnNotifyTabSelChange(0, NULL, dummy);
+		OnSize(0, NULL, NULL, dummy);
+	}
+	return 0;
+}
+
 
 LRESULT CFilerWnd::OnCommandOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {

@@ -7,38 +7,31 @@
 
 
 CDirectoryWatcher::CDirectoryWatcher(void)
-	:m_hQuitEvent(NULL),m_pWork(nullptr),m_hDir(NULL),m_vData(kBufferSize, 0)
+	:m_quitEvent(), m_dir(), m_work(), m_vData(kBufferSize, 0)
 {}
 
-CDirectoryWatcher::~CDirectoryWatcher(void){}
+CDirectoryWatcher::~CDirectoryWatcher(void)
+{
+	QuitWatching();
+}
 
 void CDirectoryWatcher::StartWatching()
 {
 	try {
 		//Create event
-		if (m_hQuitEvent != NULL) {
-			if (!::CloseHandle(m_hQuitEvent)) {
-				FILE_LINE_FUNC_TRACE;
-			}
-			m_hQuitEvent = NULL;
-		}
-		//Create event
-		m_hQuitEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-		if (m_hQuitEvent == NULL) {
+		m_quitEvent.reset(CreateEvent(NULL, TRUE, FALSE, NULL));
+		if (!m_quitEvent) {
 			FILE_LINE_FUNC_TRACE;
 			return;
 		}
 		//Create work
-		if (m_pWork != nullptr) {
-			::CloseThreadpoolWork(m_pWork); m_pWork = nullptr;
-		}
-		m_pWork = ::CreateThreadpoolWork(CDirectoryWatcher::WatchDirectoryCallback, (PVOID)this, NULL);
-		if (m_pWork == NULL) {
+		m_work.reset(::CreateThreadpoolWork(CDirectoryWatcher::WatchDirectoryCallback, (PVOID)this, NULL));
+		if (!m_work) {
 			FILE_LINE_FUNC_TRACE;
 			return;
 		}
 		//Submit work
-		::SubmitThreadpoolWork(m_pWork);
+		::SubmitThreadpoolWork(m_work.get());
 	}
 	catch (std::exception& e) {
 		FILE_LINE_FUNC_TRACE;
@@ -49,22 +42,19 @@ void CDirectoryWatcher::StartWatching()
 void CDirectoryWatcher::QuitWatching()
 {
 	try {
-		if (m_hQuitEvent != NULL) {
+		if (m_quitEvent) {
 			//Throw quit event
-			if (!::SetEvent(m_hQuitEvent)) {
+			if (!::SetEvent(m_quitEvent.get())) {
 				FILE_LINE_FUNC_TRACE;
 			}
 			//Close handle
-			if (!::CloseHandle(m_hQuitEvent)) {
-				FILE_LINE_FUNC_TRACE;
-			}
-			m_hQuitEvent = NULL;
+			m_quitEvent.reset();
 		}
-		if (m_pWork != nullptr) {
+		if (m_work) {
 			//Wait for submitted work
-			::WaitForThreadpoolWorkCallbacks(m_pWork, FALSE);
-			::CloseThreadpoolWork(m_pWork);
-			m_pWork = nullptr;
+			::WaitForThreadpoolWorkCallbacks(m_work.get(), FALSE);
+			//Close
+			m_work.reset();
 		}
 	}
 	catch (std::exception& e) {
@@ -91,34 +81,32 @@ void CDirectoryWatcher::WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pInstance,P
 		OVERLAPPED oi = {0};
 
 		//Create File
-		m_hDir = CreateFile(m_path.c_str(),
+		m_dir.reset(CreateFile(m_path.c_str(),
 								FILE_LIST_DIRECTORY,
 								FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 								NULL,
 								OPEN_EXISTING,
 								FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
-								NULL);
-		if(m_hDir == INVALID_HANDLE_VALUE){
+								NULL));
+		if(m_dir.get() == INVALID_HANDLE_VALUE){
 			throw std::exception("CreateFile == INVALID_HANDLE_VALUE.\n");
 			return;
 		}
 		//Create thread pool
-		std::unique_ptr<std::remove_pointer<PTP_IO>::type, closethreadpoolio> pio(::CreateThreadpoolIo(m_hDir,CDirectoryWatcher::IoCompletionCallback,(PVOID)this,NULL));
+		UniqueIOPtr  pio(::CreateThreadpoolIo(m_dir.get(),CDirectoryWatcher::IoCompletionCallback,(PVOID)this,NULL));
 		_tprintf(TEXT("Start watching direcotry\n"));
 		//Start observing
 		IoCompletionCallback(NULL,(LPOVERLAPPED)&oi,NO_ERROR,0,pio.get());
 		//Wait for quit event
-		WaitForSingleObject(m_hQuitEvent,INFINITE);
+		WaitForSingleObject(m_quitEvent.get(),INFINITE);
 		//Cancel task in que
 		WaitForThreadpoolIoCallbacks(pio.get(),TRUE);
 		//Close handle
-		::CloseHandle(m_hDir);
-		m_hDir = NULL;
+		m_dir.reset();
 		_tprintf(TEXT("End watching directory\n"));
 	}catch(std::exception& ex){
 		FILE_LINE_FUNC_TRACE;
-		::CloseHandle(m_hDir);
-		m_hDir = NULL;
+		m_dir.reset();
 		QuitWatching();
 	}
 }
@@ -152,7 +140,7 @@ void CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVO
 			//Associate iocompletionobject to thread pool
 			StartThreadpoolIo(pio);
 			if(!ReadDirectoryChangesW(
-				m_hDir,
+				m_dir.get(),
 				m_vData.data(),
 				m_vData.size(),
 				FALSE,
@@ -187,6 +175,7 @@ void CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVO
 		}
 	}catch(std::exception& ex){
 		FILE_LINE_FUNC_TRACE;
+		m_dir.get();
 		QuitWatching();
 	}
 }

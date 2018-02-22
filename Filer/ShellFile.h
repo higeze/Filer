@@ -25,9 +25,11 @@ protected:
 	std::wstring m_wstrSize;
 
 	ULARGE_INTEGER m_size;
-	DWORD  m_fileAttributes;
+	DWORD  m_fileAttributes = 0;
 	CIcon m_icon;
-	ULONG m_ulAttributes;
+	ULONG m_ulAttributes = 0;
+
+	bool m_isAsyncIcon = false;
 
 public:
 	CShellFile();
@@ -58,6 +60,8 @@ public:
 	std::shared_ptr<CShellFolder> GetShellFolder()const;
 private:
 	void UpdateWIN32_FIND_DATA();
+
+	CIcon GetIconBySHGetFileInfo();
 
 
 };
