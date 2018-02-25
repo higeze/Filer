@@ -15,7 +15,7 @@ void CFilterCell::SetString(const string_type& str)
 	//Filter cell undo redo is set when Post WM_FILTER
 	if(GetString()!=str){
 		string_type newString = str;
-		boost::asio::deadline_timer* pTimer = static_cast<CGridView*>(m_pSheet)->GetTimerPtr();
+		boost::asio::deadline_timer* pTimer = static_cast<CGridView*>(m_pSheet)->GetFilterTimerPtr();
 		pTimer->expires_from_now(boost::posix_time::milliseconds(500));
 		CCell* pCell = this;
 		HWND hWnd = m_pSheet->GetGridPtr()->m_hWnd;

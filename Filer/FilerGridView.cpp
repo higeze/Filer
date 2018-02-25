@@ -406,10 +406,18 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	if(isUpdate){
 		FilterAll();		
 	}else{
-		ClearFilter();
 		FolderChanged(m_spFolder); 
 	}
+
 	SubmitUpdate();
+
+	if (!isUpdate) {
+		ClearFilter();
+		auto cell = Cell<VisTag>(0, 0);
+		if (cell) {
+			m_spCursorer->OnCursor(cell);
+		}
+	}
 }
 
 void CFilerGridView::OnBkGndLButtondDblClk(const LButtonDblClkEvent& e)

@@ -53,7 +53,10 @@ public:
 	std::wstring GetLastWriteTime();
 	std::wstring GetSizeString();
 	ULARGE_INTEGER GetSize();
-	CIcon GetIcon();
+
+	CIcon GetIcon(bool load = true);
+	//void LoadIcon();
+
 	UINT GetAttributes();
 	//
 	bool IsShellFolder()const;

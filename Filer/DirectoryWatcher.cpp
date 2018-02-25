@@ -3,7 +3,6 @@
 #include "SEHException.h"
 #include "MyWin32.h"
 #include "MyString.h"
-#include "Debug.h"
 
 
 CDirectoryWatcher::CDirectoryWatcher(void)
@@ -42,6 +41,7 @@ void CDirectoryWatcher::StartWatching()
 void CDirectoryWatcher::QuitWatching()
 {
 	try {
+		//Event
 		if (m_quitEvent) {
 			//Throw quit event
 			if (!::SetEvent(m_quitEvent.get())) {
@@ -50,11 +50,19 @@ void CDirectoryWatcher::QuitWatching()
 			//Close handle
 			m_quitEvent.reset();
 		}
+		//Work
 		if (m_work) {
 			//Wait for submitted work
-			::WaitForThreadpoolWorkCallbacks(m_work.get(), FALSE);
+			::WaitForThreadpoolWorkCallbacks(m_work.get(), TRUE);
 			//Close
 			m_work.reset();
+		}
+		//Dir
+		if (m_dir) {
+			if (!::CancelIo(m_dir.get())) {
+				FILE_LINE_FUNC_TRACE;
+			}
+			m_dir.reset();
 		}
 	}
 	catch (std::exception& e) {
@@ -101,12 +109,10 @@ void CDirectoryWatcher::WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pInstance,P
 		WaitForSingleObject(m_quitEvent.get(),INFINITE);
 		//Cancel task in que
 		WaitForThreadpoolIoCallbacks(pio.get(),TRUE);
-		//Close handle
-		m_dir.reset();
+
 		_tprintf(TEXT("End watching directory\n"));
 	}catch(std::exception& ex){
 		FILE_LINE_FUNC_TRACE;
-		m_dir.reset();
 		QuitWatching();
 	}
 }
@@ -175,7 +181,7 @@ void CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVO
 		}
 	}catch(std::exception& ex){
 		FILE_LINE_FUNC_TRACE;
-		m_dir.get();
+		m_work.reset();
 		QuitWatching();
 	}
 }

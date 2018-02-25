@@ -790,6 +790,9 @@
     <ClCompile Include="FavoriteCell.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
+    <ClCompile Include="..\HiLib\ThreadPool.h">
+      <Filter>HiLib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\HiLib\msxml6.tli">

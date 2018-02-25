@@ -10,6 +10,7 @@ public:
 	//Destructor
 	virtual ~CIcon(){}
 	//Cast
+	operator bool()const { return m_pIcon != NULL; }
 	operator HICON()const{return m_pIcon.get();}
 	//IsNull
 	bool IsNull()const{return m_pIcon.get() == NULL;}

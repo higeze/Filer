@@ -392,6 +392,7 @@
     <ClCompile Include="..\HiLib\SheetStateMachine.cpp" />
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
+    <ClCompile Include="..\HiLib\ThreadPool.h" />
     <ClCompile Include="..\HiLib\Tracker.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="..\HiLib\UnDoReDoManager.cpp" />

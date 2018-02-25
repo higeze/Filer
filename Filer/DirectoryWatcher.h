@@ -1,6 +1,6 @@
 #pragma once
 #include "stdafx.h"
-
+#include "Debug.h"
 //#define BUFFER_SIZE 1024
 
 //typedef struct _IocpData : OVERLAPPED
@@ -22,7 +22,9 @@ struct closehandle
 {
 	void operator()(HANDLE handle)const
 	{
-		::CloseHandle(handle);
+		if (!::CloseHandle(handle)) {
+			FILE_LINE_FUNC_TRACE;
+		}
 	}
 
 };

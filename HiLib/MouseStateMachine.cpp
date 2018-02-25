@@ -31,7 +31,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		{
 			std::cout << "LButtonDownedState" << std::endl;
 			if (auto p = dynamic_cast<CGridView*>(machine.m_pSheet)) {
-				boost::asio::deadline_timer* pTimer = p->GetTimerPtr();
+				boost::asio::deadline_timer* pTimer = p->GetFilterTimerPtr();
 				pTimer->expires_from_now(boost::posix_time::milliseconds(::GetDoubleClickTime()));
 				HWND hWnd = p->m_hWnd;
 				pTimer->async_wait([hWnd, e](const boost::system::error_code& error)->void {
@@ -74,7 +74,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		void Action_MouseLeave(Event const & e)
 		{
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
-				p->GetTimerPtr()->cancel();
+				p->GetFilterTimerPtr()->cancel();
 			}
 			m_pSheet->OnMouseLeave(e);
 		}
@@ -97,7 +97,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		{
 			m_pSheet->OnLButtonSnglClk(LButtonSnglClkEvent(e.Flags, e.Point));
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
-				p->GetTimerPtr()->cancel();
+				p->GetFilterTimerPtr()->cancel();
 			}
 		}
 
@@ -106,7 +106,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		void Action_Drag_MouseLeave(Event const & e)
 		{
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
-				p->GetTimerPtr()->cancel();
+				p->GetFilterTimerPtr()->cancel();
 			}
 			//m_pSheet->OnLButtonUp((MouseEventArgs)e.Args);
 			m_pSheet->OnMouseLeave(e);

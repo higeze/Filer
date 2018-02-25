@@ -31,9 +31,15 @@ protected:
 	std::shared_ptr<CMouseStateMachine> m_pMouseStateMachine;
 	//IMouseState* m_pMouseState;
 private:
-	boost::asio::io_service m_iosv;
-	boost::asio::io_service::work m_work;
-	boost::asio::deadline_timer m_timer;
+	boost::asio::io_service m_filterIosv;
+	boost::asio::io_service::work m_filterWork;
+	boost::asio::deadline_timer m_filterTimer;
+
+	boost::asio::io_service m_invalidateIosv;
+	boost::asio::io_service::work m_invalidateWork;
+	boost::asio::deadline_timer m_invalidateTimer;
+
+
 	//std::mutex m_mtx;
 	std::shared_ptr<int> m_spDeltaScroll;
 	std::shared_ptr<CBackgroundProperty> m_spBackgroundProperty;
@@ -118,7 +124,7 @@ public:
 public:
 	std::shared_ptr<CMouseStateMachine> GetMouseStateMachine() { return m_pMouseStateMachine; }
 	void SetMouseStateMachine(std::shared_ptr<CMouseStateMachine>& machine) { m_pMouseStateMachine = machine; }
-	boost::asio::deadline_timer* GetTimerPtr(){return &m_timer;}
+	boost::asio::deadline_timer* GetFilterTimerPtr(){return &m_filterTimer;}
 
 	virtual row_type GetHeaderHeaderRowPtr()const{return m_rowHeaderHeader;}
 	virtual void SetHeaderHeaderRowPtr(row_type row){m_rowHeaderHeader=row;}
@@ -168,6 +174,8 @@ std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
 
 		virtual void UpdateScrolls();
 		virtual void Invalidate();
+		virtual void DeadLineTimerInvalidate();
+
 		//virtual void ColumnErased(CColumnEventArgs& e);
 		virtual void ColumnVisibleChanged(CColumnEventArgs& e);
 		virtual void CellValueChanged(CellEventArgs& e);

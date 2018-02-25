@@ -4,6 +4,9 @@
 #include "MyCom.h"
 #include "ShellFolder.h"
 #include <thread>
+#include "ThreadPool.h"
+
+extern std::unique_ptr<ThreadPool> g_pThreadPool;
 
 std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit)
 
@@ -131,86 +134,136 @@ ULARGE_INTEGER CShellFile::GetSize()
 	return m_size;
 }
 
-CIcon CShellFile::GetIconBySHGetFileInfo()
+//void CShellFile::LoadIcon()
+//{
+//	SHFILEINFO sfi = { 0 };
+//	::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+//	//::SHGetFileInfo(GetPath().c_str(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+//	m_icon = CIcon(sfi.hIcon);
+//}
+
+
+CIcon CShellFile::GetIcon(bool load)
 {
-	SHFILEINFO sfi = { 0 };
-	::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-	return CIcon(sfi.hIcon);
-}
-
-
-CIcon CShellFile::GetIcon()
-{
-	if ((HICON)m_icon == NULL && !m_isAsyncIcon) {
-
-		if (GetAttributes() & (SFGAO_LINK | SFGAO_GHOSTED | SFGAO_HIDDEN | SFGAO_SHARE) || 
-			!(GetAttributes() & (SFGAO_FILESYSTEM | SFGAO_FILESYSANCESTOR))) {
-			m_icon = GetIconBySHGetFileInfo();
-		}
-		else {
-			CComPtr<IExtractIcon> pEI;
-			UINT reserved = 0;
-			LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
-			HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
-			if (SUCCEEDED(hr)) {
-				std::wstring buff;
-				::GetBuffer(buff, MAX_PATH);
-				UINT flags = 0;
-				int index = 0;
-				hr = pEI->GetIconLocation(GIL_FORSHELL | GIL_ASYNC, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
-				switch (hr) {
-
-				case E_PENDING:
-				{
-					std::cout << "E_PENDING" << std::endl;
-					m_isAsyncIcon = true;
-					std::thread th([this]
-					{
-						CComPtr<IExtractIcon> pEI;
-						UINT reserved = 0;
-						LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
-						HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
-						if (SUCCEEDED(hr)) {
-							std::wstring buff;
-							::GetBuffer(buff, MAX_PATH);
-							UINT flags = 0;
-							int index = 0;
-							hr = pEI->GetIconLocation(GIL_FORSHELL, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
-							HICON smallIcon = NULL;
-							pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
-							m_icon = CIcon(smallIcon);
-						}
-						else {
-							m_icon = GetIconBySHGetFileInfo();
-						}
-						m_isAsyncIcon = false;
-
-					});
-					th.detach();
-				}
-				break;
-				case NOERROR:
-				{
-					HICON smallIcon = NULL;
-					pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
-					if (smallIcon) {
-						m_icon = CIcon(smallIcon);
-					}
-					else {
-						m_icon = GetIconBySHGetFileInfo();
-					}
-				}
-				break;
-				case S_FALSE:
-				{
-					m_icon = GetIconBySHGetFileInfo();
-				}
-				default:
-					break;
-				}
-			}
-		}
+	if (!m_icon && load) {
+		SHFILEINFO sfi = { 0 };
+		::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+		//::SHGetFileInfo(GetPath().c_str(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+		m_icon = CIcon(sfi.hIcon);
+		return m_icon;
 	}
+	else {
+		return m_icon;
+	}
+	//if ((HICON)m_icon == NULL && !m_isAsyncIcon) {
+	//	//if (false && !(GetAttributes() & (SFGAO_FILESYSTEM | SFGAO_FILESYSANCESTOR))) {
+	//	//	SHFILEINFO sfi = { 0 };
+	//	//	::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+	//	//	//::SHGetFileInfo(GetPath().c_str(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+	//	//	m_icon = CIcon(sfi.hIcon);
+	//	//}else {
+	//		m_isAsyncIcon = true;
+	//		g_pThreadPool->add([this]
+	//		{
+	//			//if (FAILED(::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED)))
+	//			//	return;
+	//			SHFILEINFO sfi = { 0 };
+	//			::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+	//			//::SHGetFileInfo(GetPath().c_str(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+	//			m_icon = CIcon(sfi.hIcon);
+	//			m_isAsyncIcon = false;
+
+	//			//::CoUninitialize();
+	//			//CComPtr<IExtractIcon> pEI;
+	//			//UINT reserved = 0;
+	//			//LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
+	//			//HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
+	//			//if (SUCCEEDED(hr)) {
+	//			//	std::wstring buff;
+	//			//	::GetBuffer(buff, MAX_PATH);
+	//			//	UINT flags = 0;
+	//			//	int index = 0;
+	//			//	hr = pEI->GetIconLocation(GIL_FORSHELL, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
+	//			//	HICON smallIcon = NULL;
+	//			//	pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
+	//			//	m_icon = CIcon(smallIcon);
+	//			//}
+	//			//else {
+	//			//	m_icon = GetIconBySHGetFileInfo();
+	//			//}
+	//			//m_isAsyncIcon = false;
+
+	//		});
+	//	}
+
+		//if (GetAttributes() & (SFGAO_LINK | SFGAO_GHOSTED | SFGAO_HIDDEN | SFGAO_SHARE) || 
+		//	!(GetAttributes() & (SFGAO_FILESYSTEM | SFGAO_FILESYSANCESTOR))) {
+		//	m_icon = GetIconBySHGetFileInfo();
+		//}
+		//else {
+		//	CComPtr<IExtractIcon> pEI;
+		//	UINT reserved = 0;
+		//	LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
+		//	HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
+		//	if (SUCCEEDED(hr)) {
+		//		std::wstring buff;
+		//		::GetBuffer(buff, MAX_PATH);
+		//		UINT flags = 0;
+		//		int index = 0;
+		//		hr = pEI->GetIconLocation(GIL_FORSHELL | GIL_ASYNC, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
+		//		switch (hr) {
+
+		//		case E_PENDING:
+		//		{
+		//			std::cout << "E_PENDING" << std::endl;
+		//			m_isAsyncIcon = true;
+		//			std::thread th([this]
+		//			{
+		//				CComPtr<IExtractIcon> pEI;
+		//				UINT reserved = 0;
+		//				LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
+		//				HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
+		//				if (SUCCEEDED(hr)) {
+		//					std::wstring buff;
+		//					::GetBuffer(buff, MAX_PATH);
+		//					UINT flags = 0;
+		//					int index = 0;
+		//					hr = pEI->GetIconLocation(GIL_FORSHELL, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
+		//					HICON smallIcon = NULL;
+		//					pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
+		//					m_icon = CIcon(smallIcon);
+		//				}
+		//				else {
+		//					m_icon = GetIconBySHGetFileInfo();
+		//				}
+		//				m_isAsyncIcon = false;
+
+		//			});
+		//			th.detach();
+		//		}
+		//		break;
+		//		case NOERROR:
+		//		{
+		//			HICON smallIcon = NULL;
+		//			pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
+		//			if (smallIcon) {
+		//				m_icon = CIcon(smallIcon);
+		//			}
+		//			else {
+		//				m_icon = GetIconBySHGetFileInfo();
+		//			}
+		//		}
+		//		break;
+		//		case S_FALSE:
+		//		{
+		//			m_icon = GetIconBySHGetFileInfo();
+		//		}
+		//		default:
+		//			break;
+		//		}
+		//	}
+		//}
+	//}
 	return m_icon;
 }
 

@@ -47,11 +47,13 @@ CGridView::CGridView(
 	CSheet(spHeaderProperty,spFilterProperty,spCellProperty, pContextMenu?pContextMenu:&CGridView::ContextMenu),
 	m_spDeltaScroll(spDeltaScroll)/*,m_ptScroll(0,0)*/,
 	CWnd(),
-	m_iosv(),m_work(m_iosv),m_timer(m_iosv),
+	m_filterIosv(),m_filterWork(m_filterIosv),m_filterTimer(m_filterIosv),
+	m_invalidateIosv(), m_invalidateWork(m_invalidateIosv), m_invalidateTimer(m_invalidateIosv),
 	m_spUndoRedoManager(std::make_shared<CUnDoReDoManager>()),
 	m_pMouseStateMachine(std::make_shared<CMouseStateMachine>(this))
 {
-	boost::thread th(boost::bind(&boost::asio::io_service::run,&m_iosv));
+	boost::thread th1(boost::bind(&boost::asio::io_service::run,&m_filterIosv));
+	boost::thread th2(boost::bind(&boost::asio::io_service::run, &m_invalidateIosv));
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
 		.lpszClassName(_T("CGridView"))
@@ -346,6 +348,7 @@ LRESULT CGridView::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 
 LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	std::cout << "OnPaint" << std::endl;
 	CPaintDC dc(m_hWnd);
 	CRect rcClient(GetClientRect());
 
@@ -607,10 +610,24 @@ LRESULT CGridView::OnMouseWheel(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHan
 		}
 	return 0;
 }
+
 void CGridView::Invalidate()
 {
 	InvalidateRect(NULL,FALSE);
 }
+
+void CGridView::DeadLineTimerInvalidate()
+{
+	m_invalidateTimer.expires_from_now(boost::posix_time::milliseconds(30));
+	m_invalidateTimer.async_wait([this](const boost::system::error_code& error)->void {
+
+		if (error == boost::asio::error::operation_aborted) {
+		} else {
+			InvalidateRect(NULL, FALSE);
+		}
+	});
+}
+
 void CGridView::UpdateScrolls()
 {
 	if(!Visible())return;
