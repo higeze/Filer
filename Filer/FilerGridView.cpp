@@ -30,6 +30,8 @@
 
 #include "MyWin32.h"
 #include "Debug.h"
+#include "DirectoryWatcher.h"
+
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -46,7 +48,7 @@ CFilerGridView::CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewPror
 {
 	m_cwa
 	.dwExStyle(WS_EX_ACCEPTFILES);
-	AddMsgHandler(CFilerGridView::WM_CHANGED,&CFilerGridView::OnFileChanged,this);
+	AddMsgHandler(WM_DIRECTORYWATCH,&CFilerGridView::OnDirectoryWatch,this);
 
 	AddCmdIDHandler(IDM_CUT,&CFilerGridView::OnCommandCut,this);
 	//They are already assigned in GridView
@@ -61,6 +63,8 @@ CFilerGridView::CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewPror
 LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	//
+	m_spWatcher = std::make_shared<CDirectoryWatcher>(m_hWnd);
+
 	auto pDropTarget = new CDropTarget(m_hWnd);
 
 	pDropTarget->Dropped.connect([this](IDataObject *pDataObj, DWORD dwEffect)->void{	
@@ -171,12 +175,132 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	::SHGetDesktopFolder(&m_pDesktopShellFolder);
 
 	//Watcher
-	m_watcher.Changed.connect([this]()->void{::PostMessage(m_hWnd, CFilerGridView::WM_CHANGED,NULL,NULL);});
+	//m_spWatcher.Added.connect([this](const std::wstring& fileName)->void{
+	//	Added(fileName);
+	//});
+	//m_spWatcher.Modified.connect([this](const std::wstring& fileName)->void {
+
+	//});
+	//m_spWatcher.Removed.connect([this](const std::wstring& fileName)->void {
+	//});
+	//m_spWatcher.Renamed.connect([this](const std::wstring& oldName, const std::wstring& newName)->void {
+	//});
 
 	//Base Create
 	CGridView::OnCreate(uMsg,wParam,lParam,bHandled);
 
 	return 0;
+}
+void CFilerGridView::Added(const std::wstring& fileName)
+{
+	std::cout << "Added" << std::endl;
+	CIDLPtr pidl;
+	ULONG chEaten;
+	ULONG dwAttributes;
+	m_spFolder->GetShellFolderPtr()->ParseDisplayName(m_hWnd, NULL, const_cast<LPWSTR>(fileName.c_str()), &chEaten, &pidl, &dwAttributes);
+	auto spFile(std::make_shared<CShellFile>(m_spFolder->GetShellFolderPtr(), ::ILCombine(m_spFolder->GetAbsolutePidl(), pidl)));
+	InsertRow(CRow::kMaxIndex, std::make_shared<CFileRow>(this, spFile));
+	//for (const auto& col : m_columnAllDictionary) {
+	//	std::dynamic_pointer_cast<CParentMapColumn>(col.DataPtr)->Clear();
+	//}
+	PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::RowVisible);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+	SortAll();
+	FilterAll();
+	SubmitUpdate();
+
+}
+void CFilerGridView::Modified(const std::wstring& fileName)
+{
+	std::cout << "Modified" << std::endl;
+	auto iter = std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
+		[&](const RowData& data)->bool {
+		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
+			return p->GetFilePointer()->GetName() == fileName;
+		}
+		return false;
+	});
+
+	if (iter == m_rowAllDictionary.end()) {
+		return;
+		//CIDLPtr pidl;
+		//ULONG chEaten;
+		//ULONG dwAttributes;
+		//m_spFolder->GetShellFolderPtr()->ParseDisplayName(m_hWnd, NULL, const_cast<LPWSTR>(fileName.c_str()), &chEaten, &pidl, &dwAttributes);
+		//auto spFile(std::make_shared<CShellFile>(m_spFolder->GetShellFolderPtr(), ::ILCombine(m_spFolder->GetAbsolutePidl(), pidl)));
+		//InsertRow(CRow::kMaxIndex, std::make_shared<CFileRow>(this, spFile));
+	}
+	else if (auto p = std::dynamic_pointer_cast<CFileRow>(iter->DataPtr)) {
+		p->GetFilePointer()->Reset();
+	}
+	PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::RowVisible);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+	SortAll();
+	FilterAll();
+	SubmitUpdate();
+
+}
+void CFilerGridView::Removed(const std::wstring& fileName)
+{
+	std::cout << "Removed" << std::endl;
+	auto iter = std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
+		[&](const RowData& data)->bool {
+		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
+			return p->GetFilePointer()->GetName() == fileName;
+		}
+		return false;
+	});
+
+	if (iter == m_rowAllDictionary.end()) { return; }
+
+	m_rowAllDictionary.erase(iter);
+	for (const auto& col : m_columnAllDictionary) {
+		std::dynamic_pointer_cast<CParentMapColumn>(col.DataPtr)->Clear();
+	}
+
+	m_spCursorer->OnCursorClear(this);
+
+	PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::RowVisible);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+	SortAll();
+	FilterAll();
+	SubmitUpdate();
+
+}
+void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& newName)
+{
+	std::cout << "Renamed" << std::endl;
+	auto iter = std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
+		[&](const RowData& data)->bool {
+		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
+			return p->GetFilePointer()->GetName() == oldName;
+		}
+		return false;
+	});
+
+	if (iter == m_rowAllDictionary.end()) { return; }
+
+	if (auto p = std::dynamic_pointer_cast<CFileRow>(iter->DataPtr)) {
+		p->GetFilePointer()->Reset();
+	}
+	PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::RowVisible);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+	SortAll();
+	FilterAll();
+	SubmitUpdate();
+
 }
 
 void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
@@ -339,15 +463,15 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	try {
 		if (::PathFileExists(m_spFolder->GetPath().c_str()) &&
 			!boost::iequals(m_spFolder->GetExt(), L".zip")){
-			if (m_watcher.GetPath() != m_spFolder->GetPath()) {
-				m_watcher.QuitWatching();
-				m_watcher.SetPath(m_spFolder->GetPath());
-				m_watcher.StartWatching();
+			if (m_spWatcher->GetPath() != m_spFolder->GetPath()) {
+				m_spWatcher->QuitWatching();
+				m_spWatcher->SetPath(m_spFolder->GetPath());
+				m_spWatcher->StartWatching();
 			}
 		}
 		else {
-			m_watcher.QuitWatching();
-			m_watcher.SetPath(L"");
+			m_spWatcher->QuitWatching();
+			m_spWatcher->SetPath(L"");
 		}
 	}
 	catch (std::exception& e) {
@@ -499,16 +623,64 @@ LRESULT CFilerGridView::OnCommandDelete(WORD wNotifyCode,WORD wID,HWND hWndCtl,B
 	return 0;
 }
 
-LRESULT CFilerGridView::OnFileChanged(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
+LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	Sleep(50);
-	//Remove duplicated messages
-	MSG msg;
-	while(::PeekMessage(&msg, m_hWnd, CFilerGridView::WM_CHANGED, CFilerGridView::WM_CHANGED, PM_REMOVE)==TRUE)
-	{
-		std::cout<<"WM_CHANGED Removed"<<std::endl;
+	auto pInfo0 = reinterpret_cast<PFILE_NOTIFY_INFORMATION>(wParam);
+	auto pInfo = pInfo0;
+	while (true) {
+		std::wstring fileName;
+		memcpy(::GetBuffer(fileName, pInfo->FileNameLength / sizeof(wchar_t)), pInfo->FileName, pInfo->FileNameLength);
+		::ReleaseBuffer(fileName);
+
+		switch (pInfo->Action) {
+		case FILE_ACTION_ADDED:
+			std::cout << "FILE_ACTION_ADDED" << std::endl;
+			Added(fileName);
+			break;
+		case FILE_ACTION_MODIFIED:
+			std::cout << "FILE_ACTION_MODIFIED" << std::endl;
+			Modified(fileName);
+			break;
+		case FILE_ACTION_REMOVED:
+			std::cout << "FILE_ACTION_REMOVED" << std::endl;
+			Removed(fileName);
+			break;
+		case FILE_ACTION_RENAMED_NEW_NAME:
+			std::cout << "FILE_ACTION_RENAMED_NEW_NAME" << std::endl;
+			if (!m_oldName.empty()) {
+				Renamed(m_oldName, fileName);
+				m_oldName.clear();
+			}
+			else {
+				FILE_LINE_FUNC_TRACE;
+			}
+			break;
+		case FILE_ACTION_RENAMED_OLD_NAME:
+			std::cout << "FILE_ACTION_RENAMED_OLD_NAME" << std::endl;
+			m_oldName = fileName;
+			break;
+		default:
+			break;
+		}
+
+		if (pInfo->NextEntryOffset == 0) { break; }
+		
+		pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<PBYTE>(pInfo) + pInfo->NextEntryOffset);
 	}
-	OpenFolder(m_spFolder);
+
+
+
+	//Sleep(50);
+	////Remove duplicated messages
+	//MSG msg;
+	//while(::PeekMessage(&msg, m_hWnd, CFilerGridView::WM_CHANGED, CFilerGridView::WM_CHANGED, PM_REMOVE)==TRUE)
+	//{
+	//	std::cout<<"WM_CHANGED Removed"<<std::endl;
+	//}
+	//OpenFolder(m_spFolder);
+	
+	delete [] (PBYTE)pInfo0;
+
 	return 0;
 }
 

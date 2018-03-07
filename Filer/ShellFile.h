@@ -58,6 +58,8 @@ public:
 	//void LoadIcon();
 
 	UINT GetAttributes();
+
+	void Reset();
 	//
 	bool IsShellFolder()const;
 	std::shared_ptr<CShellFolder> GetShellFolder()const;

@@ -22,7 +22,7 @@ void CFileNameCell::SetStringCore(const std::basic_string<TCHAR>& str)
 		m_pSheet->GetGridPtr()->m_hWnd,
 		spFile->GetAbsolutePidl().FindLastID(),
 		str.c_str(),
-		SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN,
+		SHGDN_NORMAL | SHGDN_INFOLDER | SHGDN_FORPARSING,
 		&pIdlNew );
 	if(SUCCEEDED(hRes)){
 		pFileRow->SetFilePointer(std::make_shared<CShellFile>(spFile->GetParentShellFolderPtr(), spFile->GetAbsolutePidl().GetPreviousIDLPtr() + pIdlNew));

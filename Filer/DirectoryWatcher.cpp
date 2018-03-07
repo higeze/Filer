@@ -5,8 +5,8 @@
 #include "MyString.h"
 
 
-CDirectoryWatcher::CDirectoryWatcher(void)
-	:m_quitEvent(), m_dir(), m_work(), m_vData(kBufferSize, 0)
+CDirectoryWatcher::CDirectoryWatcher(HWND hWnd)
+	:m_hWnd(hWnd), m_quitEvent(), m_dir(), m_work(), m_vData(kBufferSize, 0)
 {}
 
 CDirectoryWatcher::~CDirectoryWatcher(void)
@@ -111,7 +111,7 @@ void CDirectoryWatcher::WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pInstance,P
 		WaitForThreadpoolIoCallbacks(pio.get(),TRUE);
 
 		_tprintf(TEXT("End watching directory\n"));
-	}catch(std::exception& ex){
+	}catch(std::exception&){
 		FILE_LINE_FUNC_TRACE;
 		QuitWatching();
 	}
@@ -134,10 +134,8 @@ void CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVO
 		PFILE_NOTIFY_INFORMATION pFileNotifyInfo = nullptr;
 		if(ulBytes > 0)
 		{
-			PFILE_NOTIFY_INFORMATION pfni = (PFILE_NOTIFY_INFORMATION)m_vData.data();
-			SIZE_T cb = sizeof(FILE_NOTIFY_INFORMATION) + pfni->FileNameLength;
-			pFileNotifyInfo = (PFILE_NOTIFY_INFORMATION)new BYTE[cb];
-			CopyMemory((PVOID)pFileNotifyInfo,(CONST PVOID)pfni,cb);
+			pFileNotifyInfo = (PFILE_NOTIFY_INFORMATION)new BYTE[ulBytes];
+			::CopyMemory((PVOID)pFileNotifyInfo,(CONST PVOID)m_vData.data(),ulBytes);
 		}
 		//Keep watching
 		if(pOverlapped)
@@ -168,18 +166,60 @@ void CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVO
 				return;
 			}
 		}
-		if(ulBytes > 0)
-		{
+		if (ulBytes == 0) {
+			FILE_LINE_FUNC_TRACE;
+		}else if(ulBytes > 0){
+
+			::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)pFileNotifyInfo, NULL);
+			//FILE_NOTIFY_INFORMATION* pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(m_vData.data());
+			//while (true) {
+			//	std::wstring oldName;
+			//	std::wstring fileName;
+			//	memcpy(::GetBuffer(fileName, pInfo->FileNameLength / sizeof(wchar_t)), pInfo->FileName, pInfo->FileNameLength);
+
+			//	switch (pInfo->Action) {
+			//	case FILE_ACTION_ADDED:
+			//		Added(fileName);
+			//		break;
+			//	case FILE_ACTION_MODIFIED:
+			//		Modified(fileName);
+			//		break;
+			//	case FILE_ACTION_REMOVED:
+			//		Removed(fileName);
+			//		break;
+			//	case FILE_ACTION_RENAMED_NEW_NAME:
+			//		if (!oldName.empty()) {
+			//			Renamed(oldName, fileName);
+			//			oldName.clear();
+			//		}
+			//		else {
+			//			FILE_LINE_FUNC_TRACE;
+			//		}
+			//		break;
+			//	case FILE_ACTION_RENAMED_OLD_NAME:
+			//		oldName = fileName;
+			//	default:
+			//		break;
+			//	}
+
+			//	if (pInfo->NextEntryOffset == 0) { break; }
+			//	
+			//	pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<unsigned char*>(pInfo) + pInfo->NextEntryOffset);
+			//}
+
+
+			
+			
 			//_bstr_t filename,fullpath;
 			//*(PWSTR)((PBYTE)(pFileNotifyInfo->FileName) + pFileNotifyInfo->FileNameLength) = L'\0';
 			//filename = pFileNotifyInfo->FileName;
 			//fullpath = m_path.c_str();
 			//fullpath += (_bstr_t(TEXT("\\")) + filename);
 			//_tprintf(TEXT("[THREAD:%d] [Changed]%s\n"),GetCurrentThreadId(),(PCTSTR)fullpath);
-			Changed();
-			delete [] (PBYTE)pFileNotifyInfo;
+			//Changed();
+			//delete [] (PBYTE)pFileNotifyInfo;
 		}
-	}catch(std::exception& ex){
+	}catch(std::exception&){
 		FILE_LINE_FUNC_TRACE;
 		m_work.reset();
 		QuitWatching();

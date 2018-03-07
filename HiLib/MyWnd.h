@@ -953,8 +953,8 @@ public:
 		return (long)SendMessage(TTM_GETTOOLCOUNT,0,0);
 	}
 };
-typedef std::tr1::shared_ptr<CToolTipCtrl> ToolTipCtrlPtr;
-typedef std::tr1::shared_ptr<CToolTipCtrl> ToolTipCtrlWeakPtr;
+typedef std::shared_ptr<CToolTipCtrl> ToolTipCtrlPtr;
+typedef std::shared_ptr<CToolTipCtrl> ToolTipCtrlWeakPtr;
 
 
 /************/

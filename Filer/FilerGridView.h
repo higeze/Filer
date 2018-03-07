@@ -4,7 +4,6 @@
 #include "IDLPtr.h"
 #include "Resource.h"
 
-#include "DirectoryWatcher.h"
 #include "GridViewProperty.h"
 
 #include "shobjidl.h"
@@ -16,6 +15,7 @@ class CShellFile;
 class CShellFolder;
 class CFileDragger;
 class CIcon;
+class CDirectoryWatcher;
 //class CDropTarget;
 //class CDropSource;
 
@@ -38,7 +38,7 @@ class CFilerGridView:public CGridView
 private:	
 
 	std::vector<std::shared_ptr<CShellFile>> m_vpFile;
-	CDirectoryWatcher m_watcher;
+	std::shared_ptr<CDirectoryWatcher> m_spWatcher;
 
 	CComPtr<IShellFolder> m_pDesktopShellFolder;
 	std::shared_ptr<CShellFolder> m_spFolder;
@@ -59,6 +59,9 @@ private:
 	CComPtr<IContextMenu2> m_pcm2;
 	CComPtr<IContextMenu3> m_pcm3;
 
+	//For DirectoryWatch
+	std::wstring m_oldName;
+
 public:
 	CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty);
 	virtual ~CFilerGridView(){}
@@ -67,7 +70,7 @@ public:
 	static UINT WM_CHANGED;
 
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnFileChanged(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	virtual LRESULT OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnCommandCut(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	virtual LRESULT OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled) override;
 	virtual LRESULT OnCommandPaste(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled) override;
@@ -92,6 +95,13 @@ public:
 	BOOL SetDragImage(CIDLPtr pFirstIdl, CComPtr<IDragSourceHelper> pDragSourceHelper, IDataObject *pDataObject);
 
 private:
+
+	void Added(const std::wstring& fileName);
+	void Modified(const std::wstring& fileName);
+	void Removed(const std::wstring& fileName);
+	void Renamed(const std::wstring& oldName, const std::wstring& newName);
+
+
 	void InsertDefaultRowColumn();
 	void OnShellCommand(LPCSTR lpVerb);
 	void ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl, bool hasNew = false);

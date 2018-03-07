@@ -70,7 +70,7 @@ std::wstring CShellFile::GetName()
 	if (m_wstrName.empty()) {
 		CIDLPtr childPidl = m_absolutePidl.GetLastIDLPtr();
 		STRRET strret;
-		m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_NORMAL, &strret);
+		m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_NORMAL|SHGDN_INFOLDER|SHGDN_FORPARSING, &strret);
 		m_wstrName = childPidl.STRRET2WSTR(strret);
 	}
 	return m_wstrName;
@@ -379,6 +379,28 @@ std::shared_ptr<CShellFolder> CShellFile::GetShellFolder()const
 	else {
 		return std::shared_ptr<CShellFolder>();
 	}
+}
+
+void CShellFile::Reset()
+{
+	m_wstrPath.clear();
+	m_wstrName.clear();
+	m_wstrExt.clear();
+	m_wstrType.clear();
+	m_wstrCreationTime.clear();
+	m_wstrLastAccessTime.clear();
+	m_wstrLastWriteTime.clear();
+	m_wstrSize.clear();
+
+	m_size.LowPart = 0;
+	m_size.HighPart = 0;
+	m_fileAttributes = 0;
+	m_icon = nullptr;
+	m_ulAttributes = 0;
+
+	bool m_isAsyncIcon = false;
+
+
 }
 
 

@@ -37,6 +37,8 @@ struct closethreadpoolwork
 	}
 };
 
+const UINT WM_DIRECTORYWATCH = RegisterWindowMessage(L"WM_DIRECTORYWATCH");
+
 class CDirectoryWatcher
 {
 private:
@@ -46,6 +48,8 @@ private:
 	const size_t kBufferSize = 1024;
 
 private:
+	HWND m_hWnd;
+
 	UniqueHandlePtr m_quitEvent;
 	UniqueHandlePtr m_dir;
 	UniqueWorkPtr m_work;
@@ -54,10 +58,17 @@ private:
 	std::vector<BYTE> m_vData;
 
 public:
-	CDirectoryWatcher(void);
+	CDirectoryWatcher(HWND m_hWnd);
 	~CDirectoryWatcher(void);
 
-	boost::signals2::signal<void(void)> Changed;
+	//boost::signals2::signal<void(void)> Changed;
+	boost::signals2::signal<void(const std::wstring&)> Added;
+	boost::signals2::signal<void(const std::wstring&)> Removed;
+	boost::signals2::signal<void(const std::wstring&)> Modified;
+	boost::signals2::signal<void(const std::wstring&, const std::wstring&)> Renamed;
+
+
+
 
 	static VOID CALLBACK WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pInstance,LPVOID pvParam,PTP_WORK pWork);
 	static VOID CALLBACK IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVOID pvParam,PVOID pOverlapped,ULONG IoResult,ULONG_PTR ulBytes,PTP_IO pio);

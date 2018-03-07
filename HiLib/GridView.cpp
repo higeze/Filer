@@ -348,7 +348,7 @@ LRESULT CGridView::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 
 LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	std::cout << "OnPaint" << std::endl;
+	//std::cout << "OnPaint" << std::endl;
 	CPaintDC dc(m_hWnd);
 	CRect rcClient(GetClientRect());
 
@@ -1857,38 +1857,38 @@ void CGridView::CellValueChanged(CellEventArgs& e)
 
 void CGridView::SubmitUpdate()
 {
-	boost::for_each(m_setUpdate,[&](const Updates type){
-		switch(type){
+	for (const auto& type : m_setUpdate) {
+		switch (type) {
 		case Updates::RowVisible:
-			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateRowVisibleDictionary")
+		{
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateRowVisibleDictionary")
 				UpdateRowVisibleDictionary();
-			}
-			break;
+		}
+		break;
 		case Updates::ColumnVisible:
-			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateColumnVisibleDictionary")
+		{
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateColumnVisibleDictionary")
 				UpdateColumnVisibleDictionary();
-				break;
-			}
+			break;
+		}
 		case Updates::Column:
-			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateColumn")
+		{
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateColumn")
 				UpdateColumn();
-				break;
-			}
+			break;
+		}
 		case Updates::Row:
-			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateRow")			
+		{
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateRow")
 				UpdateRow();
-				break;
-			}
+			break;
+		}
 		case Updates::Scrolls:
-			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateScrolls")
+		{
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateScrolls")
 				UpdateScrolls();
-				break;
-			}
+			break;
+		}
 		case Updates::EnsureVisibleFocusedCell:
 			EnsureVisibleCell(m_spCursorer->GetFocusedCell());
 			break;
@@ -1898,7 +1898,7 @@ void CGridView::SubmitUpdate()
 		default:
 			break;
 		}
-	});
+	}
 	m_setUpdate.clear();
 }
 

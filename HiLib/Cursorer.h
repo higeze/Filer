@@ -50,6 +50,7 @@ public:
 	virtual void OnCursorCtrl(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorShift(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorCtrlShift(std::shared_ptr<CCell>& cell);
+	//virtual void UpdateCursor();
 public:
 	virtual void OnCursorClear(CSheet* pSheet);
 
