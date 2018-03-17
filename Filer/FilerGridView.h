@@ -16,6 +16,7 @@ class CShellFolder;
 class CFileDragger;
 class CIcon;
 class CDirectoryWatcher;
+class CFileNameColumn;
 //class CDropTarget;
 //class CDropSource;
 
@@ -62,6 +63,10 @@ private:
 	//For DirectoryWatch
 	std::wstring m_oldName;
 
+	//For New
+	bool m_bNewFile = false;
+	std::shared_ptr<CFileNameColumn> m_pNameColumn;
+
 public:
 	CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty);
 	virtual ~CFilerGridView(){}
@@ -93,6 +98,15 @@ public:
 
 	void Drag();
 	BOOL SetDragImage(CIDLPtr pFirstIdl, CComPtr<IDragSourceHelper> pDragSourceHelper, IDataObject *pDataObject);
+
+	RowDictionary::const_iterator FindIfRowIterByFileNameExt(const std::wstring& fileNameExt);
+	//auto iter = std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
+	//	[&](const RowData& data)->bool {
+	//	if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
+	//		return p->GetFilePointer()->GetName() == fileName;
+	//	}
+	//	return false;
+	//});
 
 private:
 

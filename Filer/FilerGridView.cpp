@@ -32,6 +32,7 @@
 #include "Debug.h"
 #include "DirectoryWatcher.h"
 
+#include "FileNameCell.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -191,15 +192,31 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 
 	return 0;
 }
+
+RowDictionary::const_iterator CFilerGridView::FindIfRowIterByFileNameExt(const std::wstring& fileNameExt)
+{
+	return std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
+		[&](const RowData& data)->bool {
+		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
+			return (p->GetFilePointer()->GetName() + p->GetFilePointer()->GetExt()) == fileNameExt;
+		}
+		else {
+			return false;
+		}
+	});
+}
+
+
 void CFilerGridView::Added(const std::wstring& fileName)
 {
-	std::cout << "Added" << std::endl;
+	std::cout << "Added:" << wstr2str(fileName) << std::endl;
 	CIDLPtr pidl;
 	ULONG chEaten;
 	ULONG dwAttributes;
 	m_spFolder->GetShellFolderPtr()->ParseDisplayName(m_hWnd, NULL, const_cast<LPWSTR>(fileName.c_str()), &chEaten, &pidl, &dwAttributes);
 	auto spFile(std::make_shared<CShellFile>(m_spFolder->GetShellFolderPtr(), ::ILCombine(m_spFolder->GetAbsolutePidl(), pidl)));
-	InsertRow(CRow::kMaxIndex, std::make_shared<CFileRow>(this, spFile));
+	auto spRow = std::make_shared<CFileRow>(this, spFile);
+	InsertRow(CRow::kMaxIndex, spRow);
 	//for (const auto& col : m_columnAllDictionary) {
 	//	std::dynamic_pointer_cast<CParentMapColumn>(col.DataPtr)->Clear();
 	//}
@@ -208,21 +225,23 @@ void CFilerGridView::Added(const std::wstring& fileName)
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
+	if (m_bNewFile) {
+		m_spCursorer->OnCursor(CSheet::Cell(spRow, m_pNameColumn));
+		PostUpdate(Updates::EnsureVisibleFocusedCell);
+	}
 	SortAll();
 	FilterAll();
 	SubmitUpdate();
+	if (m_bNewFile) {
+		std::static_pointer_cast<CFileNameCell>(CSheet::Cell(spRow, m_pNameColumn))->OnEdit(EventArgs(this));
+	}
+	m_bNewFile = false;
 
 }
 void CFilerGridView::Modified(const std::wstring& fileName)
 {
-	std::cout << "Modified" << std::endl;
-	auto iter = std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
-		[&](const RowData& data)->bool {
-		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
-			return p->GetFilePointer()->GetName() == fileName;
-		}
-		return false;
-	});
+	std::cout << "Modified" << wstr2str(fileName) << std::endl;
+	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == m_rowAllDictionary.end()) {
 		return;
@@ -248,14 +267,8 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 }
 void CFilerGridView::Removed(const std::wstring& fileName)
 {
-	std::cout << "Removed" << std::endl;
-	auto iter = std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
-		[&](const RowData& data)->bool {
-		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
-			return p->GetFilePointer()->GetName() == fileName;
-		}
-		return false;
-	});
+	std::cout << "Removed" << wstr2str(fileName) << std::endl;
+	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == m_rowAllDictionary.end()) { return; }
 
@@ -278,14 +291,8 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 }
 void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& newName)
 {
-	std::cout << "Renamed" << std::endl;
-	auto iter = std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
-		[&](const RowData& data)->bool {
-		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
-			return p->GetFilePointer()->GetName() == oldName;
-		}
-		return false;
-	});
+	std::cout << "Renamed" << wstr2str(oldName) << "=>"<< wstr2str(newName) <<std::endl;
+	auto iter = FindIfRowIterByFileNameExt(oldName);
 
 	if (iter == m_rowAllDictionary.end()) { return; }
 
@@ -392,8 +399,8 @@ void CFilerGridView::InsertDefaultRowColumn()
 	}
 	//NameColumn
 	{
-		auto pColumn = std::make_shared<CFileNameColumn>(this);
-		InsertColumnNotify(CColumn::kMaxIndex, pColumn);
+		m_pNameColumn = std::make_shared<CFileNameColumn>(this);
+		InsertColumnNotify(CColumn::kMaxIndex, m_pNameColumn);
 	}
 
 	//ExtColumn
@@ -837,6 +844,7 @@ void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IS
 			if (idCmd >= SCRATCH_QCM_NEW) {
 				info.lpVerb = MAKEINTRESOURCEA(idCmd - SCRATCH_QCM_NEW);
 				info.lpVerbW = MAKEINTRESOURCEW(idCmd - SCRATCH_QCM_NEW);
+				m_bNewFile = true;
 				hr = m_pcmNew3->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
 			}
 			else {

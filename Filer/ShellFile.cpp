@@ -70,7 +70,7 @@ std::wstring CShellFile::GetName()
 	if (m_wstrName.empty()) {
 		CIDLPtr childPidl = m_absolutePidl.GetLastIDLPtr();
 		STRRET strret;
-		m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_NORMAL|SHGDN_INFOLDER|SHGDN_FORPARSING, &strret);
+		m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_NORMAL|SHGDN_INFOLDER, &strret);
 		m_wstrName = childPidl.STRRET2WSTR(strret);
 	}
 	return m_wstrName;
