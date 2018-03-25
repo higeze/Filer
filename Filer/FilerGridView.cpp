@@ -198,7 +198,7 @@ RowDictionary::const_iterator CFilerGridView::FindIfRowIterByFileNameExt(const s
 	return std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
 		[&](const RowData& data)->bool {
 		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
-			return (p->GetFilePointer()->GetName() + p->GetFilePointer()->GetExt()) == fileNameExt;
+			return p->GetFilePointer()->GetNameExt() == fileNameExt;
 		}
 		else {
 			return false;
@@ -244,6 +244,7 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == m_rowAllDictionary.end()) {
+		std::cout << "Modified NoMatch" << wstr2str(fileName) << std::endl;
 		return;
 		//CIDLPtr pidl;
 		//ULONG chEaten;
@@ -270,7 +271,10 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 	std::cout << "Removed" << wstr2str(fileName) << std::endl;
 	auto iter = FindIfRowIterByFileNameExt(fileName);
 
-	if (iter == m_rowAllDictionary.end()) { return; }
+	if (iter == m_rowAllDictionary.end()) {
+		std::cout << "Removed NoMatch" << wstr2str(fileName) << std::endl;
+		return;
+	}
 
 	m_rowAllDictionary.erase(iter);
 	for (const auto& col : m_columnAllDictionary) {
@@ -294,7 +298,11 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 	std::cout << "Renamed" << wstr2str(oldName) << "=>"<< wstr2str(newName) <<std::endl;
 	auto iter = FindIfRowIterByFileNameExt(oldName);
 
-	if (iter == m_rowAllDictionary.end()) { return; }
+	if (iter == m_rowAllDictionary.end()) 
+	{
+		std::cout << "Renamed NoMatch" << wstr2str(oldName) << "=>" << wstr2str(newName) << std::endl;
+		return;
+	}
 
 	if (auto p = std::dynamic_pointer_cast<CFileRow>(iter->DataPtr)) {
 		p->GetFilePointer()->Reset();

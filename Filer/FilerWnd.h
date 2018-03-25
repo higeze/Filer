@@ -6,6 +6,7 @@
 #include "FilerGridView.h"
 #include "FavoritesProperty.h"
 #include "ShellFolder.h"
+#include "ApplicationProperty.h"
 
 class CFilerGridView;
 class CGridViewProperty;
@@ -30,6 +31,8 @@ private:
 
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
 
+	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
+
 	int m_contextMenuTabIndex;
 
 public:
@@ -40,6 +43,7 @@ public:
 	//CFilerWnd& operator=(CFilerWnd&&) = default;
 	virtual ~CFilerWnd();
 	virtual HWND Create(HWND hWndParent);
+	std::shared_ptr<CApplicationProperty> GetApplicationProperty() { return m_spApplicationProp; }
 private:
 	std::shared_ptr<CShellFolder> GetShellFolderFromPath(const std::wstring& path);
 	//LRESULT OnTabContextMenu(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -59,7 +63,8 @@ private:
 	LRESULT OnNotifyTabSelChanging(int id, LPNMHDR, BOOL& bHandled);
 	LRESULT OnNotifyTabSelChange(int id, LPNMHDR, BOOL& bHandled);
 	LRESULT OnNotifyTabRClick(int id, LPNMHDR, BOOL& bHandled);
-	LRESULT OnCommandOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
+	LRESULT OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	LRESULT OnCommandGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	LRESULT OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	void AddNewView(std::wstring path);
 public:
@@ -78,6 +83,7 @@ public:
 		}
 		ar("ViewPaths",m_vwPath);
 		ar("FavoritesProperty",m_spFavoritesProp);
+		ar("ApplicationProperty", m_spApplicationProp);
 
     }
 
@@ -91,5 +97,6 @@ public:
 		ar("GridViewProperty",m_spGridViewProp);
 		ar("ViewPaths",m_vwPath);
 		ar("FavoritesProperty",m_spFavoritesProp);
+		ar("ApplicationProperty", m_spApplicationProp);
     }
 };

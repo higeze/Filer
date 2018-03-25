@@ -70,7 +70,7 @@ std::wstring CShellFile::GetName()
 	if (m_wstrName.empty()) {
 		CIDLPtr childPidl = m_absolutePidl.GetLastIDLPtr();
 		STRRET strret;
-		m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_NORMAL|SHGDN_INFOLDER, &strret);
+		m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_NORMAL, &strret);
 		m_wstrName = childPidl.STRRET2WSTR(strret);
 	}
 	return m_wstrName;
@@ -82,6 +82,17 @@ std::wstring CShellFile::GetExt()
 		m_wstrExt = ::PathFindExtension(GetPath().c_str());
 	}
 	return m_wstrExt;
+}
+
+std::wstring CShellFile::GetNameExt()
+{
+	if (m_wstrName.empty()) {
+		CIDLPtr childPidl = m_absolutePidl.GetLastIDLPtr();
+		STRRET strret;
+		m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_FORPARSING | SHGDN_INFOLDER, &strret);
+		m_wstrName = childPidl.STRRET2WSTR(strret);
+	}
+	return m_wstrName;
 }
 
 std::wstring CShellFile::GetTypeName()

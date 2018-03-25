@@ -36,7 +36,8 @@ IDR_MENU_FILER MENU
     }
     POPUP "&Tool"
     {
-        MENUITEM "GridView Option", IDM_OPTION
+		MENUITEM "Application Option", IDM_APPLICATIONOPTION
+		MENUITEM "GridView Option", IDM_GRIDVIEWOPTION
         MENUITEM "Favorites Option", IDM_FAVORITESOPTION
     }
     POPUP "&Help"

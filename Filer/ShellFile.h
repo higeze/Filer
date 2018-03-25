@@ -18,6 +18,7 @@ protected:
 	std::wstring m_wstrPath;
 	std::wstring m_wstrName;
 	std::wstring m_wstrExt;
+	std::wstring m_wstrNameExt;
 	std::wstring m_wstrType;
 	std::wstring m_wstrCreationTime;
 	std::wstring m_wstrLastAccessTime;
@@ -46,6 +47,7 @@ public:
 	std::wstring GetPath();
 	std::wstring GetName();
 	std::wstring GetExt();
+	std::wstring GetNameExt();
 	std::wstring GetTypeName();
 	
 	std::wstring GetCreationTime();

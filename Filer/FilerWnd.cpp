@@ -24,7 +24,8 @@ CFilerWnd::CFilerWnd()
 	m_spTab(std::make_shared<CTabCtrl>()),
 	m_spFavoritesView(nullptr),
 	m_viewMap(),m_rcWnd(0,0,300,500),
-	m_spFavoritesProp(std::make_shared<CFavoritesProperty>())
+	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
+	m_spApplicationProp(std::make_shared<CApplicationProperty>())
 {
 	m_rca
 	.lpszClassName(L"CFilerWnd")
@@ -83,7 +84,8 @@ CFilerWnd::CFilerWnd()
 	//AddCmdIDHandler(IDM_FILE_LOAD,&CDcmListView::OnWndCommandFileLoad,m_upList.get());
 	//AddCmdIDHandler(IDM_EDIT_COPY,&CMultiLineListView::OnCmdEditCopy,(CMultiLineListView*)m_upList.get());
 	//AddCmdIDHandler(IDM_EDIT_SELECTALL,&CMultiLineListView::OnCmdEditSelectAll,(CMultiLineListView*)m_upList.get());
-	AddCmdIDHandler(IDM_OPTION,&CFilerWnd::OnCommandOption,this);
+	AddCmdIDHandler(IDM_APPLICATIONOPTION, &CFilerWnd::OnCommandApplicationOption, this);
+	AddCmdIDHandler(IDM_GRIDVIEWOPTION,&CFilerWnd::OnCommandGridViewOption,this);
 	AddCmdIDHandler(IDM_FAVORITESOPTION,&CFilerWnd::OnCommandFavoritesOption,this);
 	//AddMsgHandler(WM_DROPFILES,&CDcmListView::OnWndDropFiles,m_upList.get());
 
@@ -136,15 +138,24 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		OnSize(WM_SIZE, NULL, NULL, dummy);
 	});
 	m_spFilerView->Create(m_spTab->m_hWnd);
-	BOOL dummy =FALSE;
 
 	if(m_vwPath.empty()){
-		OnCommandNewTab(0,0,NULL,dummy);
-	}else{
-		for(auto path : m_vwPath){
+		//ShellFolder
+		auto pFolder = std::make_shared<CShellFolder>();
+		if (pFolder) {
+			//New id for association
+			unsigned int id = m_uniqueIDFactory.NewID();
+			//CTabCtrol
+			int newItem = m_spTab->InsertItem(m_spTab->GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetName().c_str(), NULL, (LPARAM)id);
+			//CFilerGridView
+			m_viewMap.insert(std::make_pair(id, pFolder));
+		}
+
+	}else {
+		for (auto path : m_vwPath) {
 			//ShellFolder
 			auto pFolder = std::make_shared<CShellFolder>(path);
-			if(pFolder){
+			if (pFolder) {
 				//New id for association
 				unsigned int id = m_uniqueIDFactory.NewID();
 				//CTabCtrol
@@ -153,15 +164,16 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				m_viewMap.insert(std::make_pair(id, pFolder));
 			}
 		}
-		BOOL dummy = TRUE;
-		m_spTab->SetCurSel(0);
-		unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
-		auto iter = m_viewMap.find(id);
-		if (iter != m_viewMap.end()) {
-			m_spFilerView->OpenFolder(iter->second);
-		}
-		OnSize(0, NULL, NULL, dummy);
 	}
+
+	BOOL dummy = TRUE;
+	m_spTab->SetCurSel(0);
+	unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
+	auto iter = m_viewMap.find(id);
+	if (iter != m_viewMap.end()) {
+		m_spFilerView->OpenFolder(iter->second);
+	}
+	OnSize(0, NULL, NULL, dummy);
 
 	return 0;
 }
@@ -347,8 +359,41 @@ LRESULT CFilerWnd::OnCommandCloseAllButThisTab(WORD wNotifyCode, WORD wID, HWND 
 	return 0;
 }
 
+LRESULT CFilerWnd::OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	CRect rc(0, 0, 0, 0);
 
-LRESULT CFilerWnd::OnCommandOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
+	auto pPropWnd = new CPropertyWnd<CApplicationProperty>(
+		m_spGridViewProp->m_spBackgroundProperty,
+		m_spGridViewProp->m_spPropHeader,
+		m_spGridViewProp->m_spPropCell,
+		m_spGridViewProp->m_spPropCell,
+		m_spGridViewProp->m_spPropHeader,
+		m_spGridViewProp->m_spPropCell,
+		m_spGridViewProp->m_spPropCell,
+		m_spGridViewProp->m_spDeltaScroll,
+		L"GridViewProperty",
+		m_spApplicationProp);
+
+	pPropWnd->PropertyChanged.connect([this](const std::wstring& str)->void {
+		m_spFilerView->UpdateAll();
+		m_spFavoritesView->UpdateAll();
+		SerializeProperty(this);
+	});
+
+	pPropWnd->Create(m_hWnd, rc);
+	rc = CRect(pPropWnd->GetGridView()->MeasureSize());
+	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
+	pPropWnd->MoveWindow(0, 0, rc.Width() + ::GetSystemMetrics(SM_CXVSCROLL), min(500, rc.Height() + ::GetSystemMetrics(SM_CYVSCROLL) + 10), FALSE);
+	pPropWnd->CenterWindow();
+	pPropWnd->ShowWindow(SW_SHOW);
+	pPropWnd->UpdateWindow();
+
+	return 0;
+}
+
+
+LRESULT CFilerWnd::OnCommandGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
 	CRect rc(0,0,0,0);
 
@@ -367,18 +412,9 @@ LRESULT CFilerWnd::OnCommandOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& 
 	pPropWnd->PropertyChanged.connect([this](const std::wstring& str)->void{
 		m_spFilerView->UpdateAll();
 		m_spFavoritesView->UpdateAll();
-		//SerializeProperty(m_spGridViewProp);
+		SerializeProperty(this);
 	});
-	//pPropWnd->PropertyChanged.connect([&](const std::wstring& str)->void{
-	//	m_gridView.GetChartColumnPtr()->SetVisible(*(m_spPropDcmDesigner->GetColumnPropertyPtr()->m_visibleChartColumnPtr));
-	//	m_gridView.GetCompareColumnPtr()->SetVisible(*(m_spPropDcmDesigner->GetColumnPropertyPtr()->m_visibleCompareColumnPtr));
-	//	m_gridView.GetLangColumnPtr()->SetVisible(*(m_spPropDcmDesigner->GetColumnPropertyPtr()->m_visibleLangColumnPtr));
-	//	m_gridView.GetTypeGColumnPtr()->SetVisible(*(m_spPropDcmDesigner->GetColumnPropertyPtr()->m_visibleTypeGColumnPtr));
-	//	m_gridView.GetTypeEColumnPtr()->SetVisible(*(m_spPropDcmDesigner->GetColumnPropertyPtr()->m_visibleTypeEColumnPtr));
 
-	//	m_gridView.UpdateAll();
-	//	SerializeProperty(m_spPropDcmDesigner);
-	//});
 	pPropWnd->Create(m_hWnd,rc);
 	rc=CRect(pPropWnd->GetGridView()->MeasureSize());
 	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
@@ -409,7 +445,7 @@ LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndC
 	pPropWnd->PropertyChanged.connect([&](const std::wstring& str)->void{
 		m_spFavoritesView->OpenFavorites();
 		m_spFavoritesView->UpdateAll();
-		//SerializeProperty();
+		SerializeProperty(this);
 	});
 
 	pPropWnd->Create(m_hWnd,rc);

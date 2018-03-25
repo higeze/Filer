@@ -14,7 +14,7 @@
 #define IDM_SAVE                                40001
 #define IDM_OPEN                                40003
 #define IDM_NEW                                 40005
-#define IDM_OPTION                              40008
+#define IDM_GRIDVIEWOPTION                      40008
 #define IDM_FAVORITESOPTION                     40009
 #define IDM_UPDATE                              40010
 #define IDM_CUT                                40011
@@ -29,5 +29,5 @@
 #define IDM_CLONETAB							40019
 #define IDM_CLOSEALLBUTTHISTAB					40020
 #define IDM_ADDTOFAVORITE						40021
-
+#define IDM_APPLICATIONOPTION					40022
 

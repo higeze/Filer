@@ -132,7 +132,12 @@ void CCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
 		}else if(e.Flags & MK_SHIFT){
 			return OnCursorShift(cell);
 		}else{
-			return OnCursorDown(cell);
+			if (cell->GetSelected()) {//Only case of selected cell, behaviour is wrong. up to reset.
+				return OnCursorDown(cell);
+			}
+			else {
+				return OnCursor(cell);
+			}
 		}
 	}
 }

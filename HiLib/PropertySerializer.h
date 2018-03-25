@@ -18,6 +18,7 @@
 #include "MySerializer.h"
 
 #include "PropertySheetCell.h"
+#include <type_traits>
 class CCellSerializer;
 
 
@@ -26,49 +27,35 @@ class CCellSerializer;
 									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
 									!std::is_enum<T>::value &&\
 									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value\
+									!is_shared_ptr<T>::value &&\
+									!std::is_pointer<T>::value\
 									>::type* = 0
-//#define ENABLE_IF_DEFAULT typename std::enable_if<\
-//									!has_serialize<T,CCellSerializer>::value &&\
-//									!has_save<T,CCellSerializer>::value &&\
-//									!std::is_enum<T>::value &&\
-//									!is_shared_ptr<T>::value\
-//									>::type* = 0
 
 #define ENABLE_IF_ENUM typename std::enable_if<\
 									!has_serialize<T,CCellSerializer>::value &&\
 									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
 										std::is_enum<T>::value &&\
 									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value\
+									!is_shared_ptr<T>::value &&\
+									!std::is_pointer<T>::value\
 									>::type* = 0
-//#define ENABLE_IF_ENUM typename std::enable_if<\
-//									!has_serialize<T,CCellSerializer>::value &&\
-//									!has_save<T,CCellSerializer>::value &&\
-//										std::is_enum<T>::value &&\
-//									!is_shared_ptr<T>::value\
-//									>::type* = 0
 
 #define ENABLE_IF_SERIALIZE typename std::enable_if<\
 										has_serialize<T,CCellSerializer>::value &&\
 									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
 									!std::is_enum<T>::value &&\
 									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value\
+									!is_shared_ptr<T>::value &&\
+									!std::is_pointer<T>::value\
 									>::type* = 0
-//#define ENABLE_IF_SERIALIZE typename std::enable_if<\
-//										has_serialize<T,CCellSerializer>::value &&\
-//									!has_save<T,CCellSerializer>::value &&\
-//									!std::is_enum<T>::value &&\
-//									!is_shared_ptr<T>::value\
-//									>::type* = 0
 
 #define ENABLE_IF_VECTOR typename std::enable_if<\
 									!has_serialize<T,CCellSerializer>::value &&\
 									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
 									!std::is_enum<T>::value &&\
 										is_vector<T>::value &&\
-									!is_shared_ptr<T>::value\
+									!is_shared_ptr<T>::value &&\
+									!std::is_pointer<T>::value\
 									>::type* = 0
 
 #define ENABLE_IF_SHARED_PTR typename std::enable_if<\
@@ -76,28 +63,28 @@ class CCellSerializer;
 									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
 									!std::is_enum<T>::value &&\
 									!is_vector<T>::value &&\
-										is_shared_ptr<T>::value \
+										is_shared_ptr<T>::value &&\
+									!std::is_pointer<T>::value\
 									>::type* = 0
-//#define ENABLE_IF_SHARED_PTR typename std::enable_if<\
-//									!has_serialize<T,CCellSerializer>::value &&\
-//									!has_save<T,CCellSerializer>::value &&\
-//									!std::is_enum<T>::value &&\
-//										is_shared_ptr<T>::value \
-//									>::type* = 0
+
+#define ENABLE_IF_PTR typename std::enable_if<\
+									!has_serialize<T,CCellSerializer>::value &&\
+									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
+									!std::is_enum<T>::value &&\
+									!is_vector<T>::value &&\
+									!is_shared_ptr<T>::value &&\
+										std::is_pointer<T>::value\
+									>::type* = 0
+
 
 #define ENABLE_IF_SAVE_LOAD typename std::enable_if<\
 									!has_serialize<T,CCellSerializer>::value &&\
 										(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
 									!std::is_enum<T>::value &&\
 									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value \
+									!is_shared_ptr<T>::value &&\
+									!std::is_pointer<T>::value\
 									>::type* = 0
-//#define ENABLE_IF_SAVE_LOAD typename std::enable_if<\
-//									!has_serialize<T,CCellSerializer>::value &&\
-//										has_save<T,CCellSerializer>::value &&\
-//									!std::is_enum<T>::value &&\
-//									!is_shared_ptr<T>::value \
-//									>::type* = 0
 
 
 class CCellSerializer
@@ -336,6 +323,13 @@ public:
 	void SerializeValue(T& t,CRow* pRow,CColumn* pCol,ENABLE_IF_SHARED_PTR)
 	{
 		SerializeValue(*t,pRow,pCol);
+	}
+
+	//For ptr
+	template<class T>
+	void SerializeValue(T& t, CRow* pRow, CColumn* pCol, ENABLE_IF_PTR)
+	{
+		SerializeValue(*t, pRow, pCol);
 	}
 
 	//For save load
