@@ -198,6 +198,7 @@ RowDictionary::const_iterator CFilerGridView::FindIfRowIterByFileNameExt(const s
 	return std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
 		[&](const RowData& data)->bool {
 		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
+			std::cout << wstr2str(p->GetFilePointer()->GetNameExt()) << std::endl;
 			return p->GetFilePointer()->GetNameExt() == fileNameExt;
 		}
 		else {
@@ -244,7 +245,7 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == m_rowAllDictionary.end()) {
-		std::cout << "Modified NoMatch" << wstr2str(fileName) << std::endl;
+		std::cout << "Modified NoMatch " << wstr2str(fileName) << std::endl;
 		return;
 		//CIDLPtr pidl;
 		//ULONG chEaten;
@@ -272,7 +273,7 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == m_rowAllDictionary.end()) {
-		std::cout << "Removed NoMatch" << wstr2str(fileName) << std::endl;
+		std::cout << "Removed NoMatch " << wstr2str(fileName) <<std::endl;
 		return;
 	}
 
@@ -300,7 +301,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 
 	if (iter == m_rowAllDictionary.end()) 
 	{
-		std::cout << "Renamed NoMatch" << wstr2str(oldName) << "=>" << wstr2str(newName) << std::endl;
+		std::cout << "Renamed NoMatch " << wstr2str(oldName) << "=>" << wstr2str(newName) << std::endl;
 		return;
 	}
 

@@ -86,13 +86,13 @@ std::wstring CShellFile::GetExt()
 
 std::wstring CShellFile::GetNameExt()
 {
-	if (m_wstrName.empty()) {
+	if (m_wstrNameExt.empty()) {
 		CIDLPtr childPidl = m_absolutePidl.GetLastIDLPtr();
 		STRRET strret;
 		m_parentFolder->GetDisplayNameOf(childPidl, SHGDN_FORPARSING | SHGDN_INFOLDER, &strret);
-		m_wstrName = childPidl.STRRET2WSTR(strret);
+		m_wstrNameExt = childPidl.STRRET2WSTR(strret);
 	}
-	return m_wstrName;
+	return m_wstrNameExt;
 }
 
 std::wstring CShellFile::GetTypeName()
@@ -397,6 +397,7 @@ void CShellFile::Reset()
 	m_wstrPath.clear();
 	m_wstrName.clear();
 	m_wstrExt.clear();
+	m_wstrNameExt.clear();
 	m_wstrType.clear();
 	m_wstrCreationTime.clear();
 	m_wstrLastAccessTime.clear();
