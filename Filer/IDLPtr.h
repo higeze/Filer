@@ -1,5 +1,7 @@
 #pragma once
 
+std::wstring STRRET2WSTR(STRRET& strret, LPITEMIDLIST pidl);
+
 class CIDLPtr
 {
 public:

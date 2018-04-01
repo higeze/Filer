@@ -1863,6 +1863,10 @@ void CGridView::SubmitUpdate()
 		{
 			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateRowVisibleDictionary")
 				UpdateRowVisibleDictionary();
+			::OutputDebugStringA("m_rowAllDictionary\r\n");
+			boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
+				::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
+			});
 		}
 		break;
 		case Updates::ColumnVisible:

@@ -88,7 +88,6 @@ CFilerWnd::CFilerWnd()
 	AddCmdIDHandler(IDM_GRIDVIEWOPTION,&CFilerWnd::OnCommandGridViewOption,this);
 	AddCmdIDHandler(IDM_FAVORITESOPTION,&CFilerWnd::OnCommandFavoritesOption,this);
 	//AddMsgHandler(WM_DROPFILES,&CDcmListView::OnWndDropFiles,m_upList.get());
-
 }
 
 CFilerWnd::~CFilerWnd(){}
@@ -125,7 +124,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	m_spFilerView->CreateWindowExArgument().dwStyle(dwStyle | WS_CHILD | WS_VISIBLE);
 	auto spTab = m_spTab;
 	m_spFilerView->FolderChanged.connect([this](std::shared_ptr<CShellFolder>& pFolder) {
-		for (auto i = 0; i<m_spTab->GetItemCount(); i++)
+		for (auto i = 0; i < m_spTab->GetItemCount(); i++)
 		{
 			unsigned int id = (unsigned int)m_spTab->GetCurItemParam();
 			if (id == (unsigned int)m_spTab->GetItemParam(i)) {
@@ -137,6 +136,36 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		BOOL dummy;
 		OnSize(WM_SIZE, NULL, NULL, dummy);
 	});
+	m_spFilerView->AddCustomContextMenu = [&](CMenu& menu){
+		menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
+		MENUITEMINFO mii = { 0 };
+		mii.cbSize = sizeof(MENUITEMINFO);
+		mii.fMask = MIIM_TYPE | MIIM_ID;
+		mii.fType = MFT_STRING;
+		mii.fState = MFS_ENABLED;
+		mii.wID = IDM_ADDTOFAVORITEINGRID;
+		mii.dwTypeData = L"Add to favorite";
+		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+	};
+
+	m_spFilerView->ExecCustomContextMenu = [&](int idCmd, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl)->bool{
+		if (idCmd == IDM_ADDTOFAVORITEINGRID) {
+			for (auto& pIdl : vpIdl) {
+				STRRET strret;
+				psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
+				std::wstring path = STRRET2WSTR(strret, pIdl);
+				m_spFavoritesProp->GetFavorites()->push_back(CFavorite(path, L""));
+				m_spFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spFavoritesView.get(), m_spFavoritesProp->GetFavorites()->size() - 1));
+			}
+			m_spFavoritesView->SubmitUpdate();
+			return true;
+		}
+		else {
+			return false;
+		}
+	};
+
+
 	m_spFilerView->Create(m_spTab->m_hWnd);
 
 	if(m_vwPath.empty()){

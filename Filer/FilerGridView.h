@@ -72,6 +72,8 @@ public:
 	virtual ~CFilerGridView(){}
 	//signal
 	boost::signals2::signal<void(std::shared_ptr<CShellFolder>&)> FolderChanged;
+	std::function<void(CMenu&)> AddCustomContextMenu;
+	std::function<bool(int, CComPtr<IShellFolder>, std::vector<PITEMID_CHILD>)> ExecCustomContextMenu;
 	static UINT WM_CHANGED;
 
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
