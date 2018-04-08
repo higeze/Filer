@@ -297,6 +297,7 @@
     <ClInclude Include="..\HiLib\UnDoReDoManager.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
+    <ClInclude Include="FilerTabGridView.h" />
     <ClInclude Include="DirectoryWatcher.h" />
     <ClInclude Include="DropSource.h" />
     <ClInclude Include="DropTarget.h" />
@@ -417,6 +418,7 @@
     <ClCompile Include="Filer.cpp" />
     <ClCompile Include="FilerGridView.cpp" />
     <ClCompile Include="FileRow.cpp" />
+    <ClCompile Include="FilerTabGridView.cpp" />
     <ClCompile Include="FilerWnd.cpp" />
     <ClCompile Include="FileSizeCell.cpp" />
     <ClCompile Include="FileSizeColumn.cpp" />

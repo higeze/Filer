@@ -10,6 +10,9 @@ public:
 	std::shared_ptr<CCellProperty> m_spPropCell; 
 	std::shared_ptr<int> m_spDeltaScroll;
 
+	std::shared_ptr<CHeaderProperty> GetHeaderProperty() { return m_spPropHeader; }
+
+
 	CGridViewProperty()
 		:m_spPropHeader(std::make_shared<CHeaderProperty>()),
 		m_spBackgroundProperty(std::make_shared<CBackgroundProperty>()),

@@ -102,12 +102,18 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 				if (bHandled == TRUE) { return lResult; }
 			}
 
-			auto ret = m_msgMap.equal_range(uiMsg);
-			for(auto iter = ret.first;iter!=ret.second;++iter){
-				bHandled=TRUE;
-				lResult=iter->second(uiMsg,wParam,lParam,bHandled);
-				if(bHandled==TRUE){return lResult;}			
+			auto iter = m_msgMap.find(uiMsg);
+			if (iter != m_msgMap.end()) {
+				lResult = iter->second(uiMsg, wParam, lParam, bHandled);
+				if (bHandled == TRUE) { return lResult; }
 			}
+
+			//auto ret = m_msgMap.equal_range(uiMsg);
+			//for(auto iter = ret.first;iter!=ret.second;++iter){
+			//	bHandled=TRUE;
+			//	lResult=iter->second(uiMsg,wParam,lParam,bHandled);
+			//	if(bHandled==TRUE){return lResult;}			
+			//}
 
 		}catch(std::exception& ex){
 			::OutputDebugStringA(ex.what());

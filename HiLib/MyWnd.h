@@ -149,7 +149,7 @@ typedef std::function<LRESULT(int,LPNMHDR,BOOL&)> FunNtfy;
 class CWnd
 {
 public:
-	typedef std::multimap<UINT,FunMsg> MsgMap;
+	typedef std::unordered_map<UINT,FunMsg> MsgMap;
 
 	typedef std::unordered_map<WORD,FunCmd> CmdIDMap;
 	typedef std::unordered_map<WORD,FunCmd> CmdCdMap;
@@ -231,17 +231,39 @@ public:
 
 	BOOL AddMsgHandler(UINT uMsg,FunMsg funMsg)
 	{	
-		/*MsgMap::_Pairib pib=*/m_msgMap.insert(MsgMap::value_type(uMsg,funMsg));
-		/*return pib.second;*/
-		return TRUE;
+		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,funMsg));
+		if (!pair.second) {
+			std::cout << (boost::format(
+				"Duplicate "
+				"MSG:%1$04x"
+			) % uMsg).str() << std::endl;
+		}
+		return pair.second;
+	}
+
+	FunMsg GetMsgHandler(UINT uMsg)
+	{
+		auto iter = m_msgMap.find(uMsg);
+		if (iter == m_msgMap.end()) {
+			return nullptr;
+		}
+		else {
+			return iter->second;
+		}
+
 	}
 
 	template<class U>
 	BOOL AddMsgHandler(UINT uMsg,LRESULT(U::*memberfunc)(UINT,WPARAM,LPARAM,BOOL&),U* that)
 	{	
-		/*MsgMap::_Pairib pib=*/m_msgMap.insert(MsgMap::value_type(uMsg,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
-		/*return pib.second;*/
-		return TRUE;
+		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
+		if (!pair.second) {
+			std::cout << (boost::format(
+				"Duplicate "
+				"MSG:%1$04x"
+			) % uMsg).str() << std::endl;
+		}
+		return pair.second;
 	}
 
 	template<class U>
@@ -249,6 +271,12 @@ public:
 	{	
 		EraseMsgHandler(uMsg);
 		return	AddMsgHandler(uMsg,memberfunc,that);
+	}
+
+	BOOL ReplaceMsgHandler(UINT uMsg, FunMsg fun)
+	{
+		EraseMsgHandler(uMsg);
+		return	AddMsgHandler(uMsg, fun);
 	}
 
 	template<class U>

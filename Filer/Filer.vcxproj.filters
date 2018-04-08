@@ -521,6 +521,9 @@
     <ClInclude Include="..\HiLib\Debug.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="FilerTabGridView.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -792,6 +795,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\ThreadPool.h">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="FilerTabGridView.cpp">
+      <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
