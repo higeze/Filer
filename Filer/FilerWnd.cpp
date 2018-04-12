@@ -32,7 +32,7 @@ CFilerWnd::CFilerWnd()
 	//m_spLeftView(std::make_shared<CFilerTabGridView>()),
 	//m_viewMap(),
 	m_rcWnd(0,0,300,500),
-	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
+	//m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>())
 {
 	m_rca
@@ -66,6 +66,7 @@ CFilerWnd::CFilerWnd()
 	AddMsgHandler(WM_SIZE,&CFilerWnd::OnSize,this);
 	AddMsgHandler(WM_CLOSE,&CFilerWnd::OnClose,this);
 	AddMsgHandler(WM_DESTROY,&CFilerWnd::OnDestroy,this);
+	AddMsgHandler(WM_SETFOCUS, &CFilerWnd::OnSetFocus, this);
 	//AddMsgHandler(WM_KEYDOWN,&CFilerWnd::OnKeyDown,this);
 
 	//AddCmdIDHandler(IDM_NEWTAB,&CFilerWnd::OnCommandNewTab,this);
@@ -101,7 +102,7 @@ HWND CFilerWnd::Create(HWND hWndParent)
 LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	//CFavoritesGridView
-	m_spFavoritesView = std::make_shared<CFavoritesGridView>(m_spGridViewProp, m_spFavoritesProp);
+	//m_spFavoritesView = std::make_shared<CFavoritesGridView>(m_spGridViewProp, m_spFavoritesProp);
 	m_spFavoritesView->CreateWindowExArgument()
 	.dwStyle(WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN | WS_VISIBLE)
 	.hMenu((HMENU)99396);
@@ -125,18 +126,29 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	m_spLeftView->OnCreate(WM_CREATE, NULL, NULL, dummy);
 	m_spRightView->OnCreate(WM_CREATE, NULL, NULL, dummy);
 
-	m_spLeftView->AddMsgHandler(WM_SETFOCUS,
-		[this](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT
-	{ m_spCurView = m_spLeftView; return 0; });
+	//m_spLeftView->AddMsgHandler(WM_SETFOCUS,
+	//	[this](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT
+	//{ ::SetFocus(m_spLeftView->GetGridView()->m_hWnd); return 0; });
+
 	m_spLeftView->GetGridView()->AddMsgHandler(WM_SETFOCUS,
 		[this](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT
-	{ m_spCurView = m_spLeftView; return 0; });
-	m_spRightView->AddMsgHandler(WM_SETFOCUS,
-		[this](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT
-	{ m_spCurView = m_spRightView; return 0; });
+	{ 
+		m_spCurView = m_spLeftView;
+		m_spCurView->GetGridView()->InvalidateRect(NULL, FALSE);
+		return 0;
+	});
+
+	//m_spRightView->AddMsgHandler(WM_SETFOCUS,
+	//	[this](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT
+	//{ ::SetFocus(m_spRightView->GetGridView()->m_hWnd); return 0; });
+
 	m_spRightView->GetGridView()->AddMsgHandler(WM_SETFOCUS,
 		[this](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT
-	{ m_spCurView = m_spRightView; return 0; });
+	{
+		m_spCurView = m_spRightView;
+		m_spCurView->GetGridView()->InvalidateRect(NULL, FALSE);
+		return 0;
+	});
 
 
 	auto applyCustomContextMenu = [this](std::shared_ptr<CFilerGridView> spFilerView)->void {
@@ -159,8 +171,8 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 					STRRET strret;
 					psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
 					std::wstring path = STRRET2WSTR(strret, pIdl);
-					m_spFavoritesProp->GetFavorites()->push_back(CFavorite(path, L""));
-					m_spFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spFavoritesView.get(), m_spFavoritesProp->GetFavorites()->size() - 1));
+					m_spFavoritesView->GetFavoritesProp()->GetFavorites()->push_back(CFavorite(path, L""));
+					m_spFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spFavoritesView.get(), m_spFavoritesView->GetFavoritesProp()->GetFavorites()->size() - 1));
 				}
 				m_spFavoritesView->SubmitUpdate();
 				return true;
@@ -229,6 +241,16 @@ LRESULT CFilerWnd::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 
 	return 0;
 }
+
+LRESULT CFilerWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	if (!m_spCurView) { m_spCurView = m_spLeftView; }
+	if(m_spCurView){
+		::SetFocus(m_spCurView->GetGridView()->m_hWnd);
+	}
+	return 0;
+}
+
 
 //LRESULT CFilerWnd::OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 //{
@@ -335,7 +357,7 @@ LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndC
 		m_spGridViewProp->m_spPropCell,
 		m_spGridViewProp->m_spDeltaScroll,
 		L"FavoritesProperty",
-		m_spFavoritesProp);
+		m_spFavoritesView->GetFavoritesProp());
 
 	pPropWnd->PropertyChanged.connect([&](const std::wstring& str)->void{
 		m_spFavoritesView->OpenFavorites();

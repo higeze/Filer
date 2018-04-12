@@ -73,6 +73,7 @@ private:
 	SPBrush m_spBrBackground;
 	SPBrush m_spBrFocused;
 	SPBrush m_spBrSelected;
+	SPBrush m_spBrUnfocusSelected;
 	SPBrush m_spBrChecked;
 
 	//DrawTextPropertyPtr m_spDrawTextProperty;
@@ -94,6 +95,7 @@ public:
 		m_spBrBackground(std::make_shared<CBrush>(RGB(246,246,246))),
 		m_spBrFocused(std::make_shared<CBrush>(RGB(195,224,226))),
 		m_spBrSelected(std::make_shared<CBrush>(RGB(195,224,226)/*RGB(52,152,219)*/)),
+		m_spBrUnfocusSelected(std::make_shared<CBrush>(RGB(224, 224, 224)/*RGB(52,152,219)*/)),
 		m_spBrChecked(std::make_shared<CBrush>(RGB(241,196,15))),
 		//m_spDrawTextProperty(std::make_shared<CDrawTextProperty>(DT_LEFT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL)),
 		m_spPadding(std::make_shared<CRect>(2,2,2,2)){};
@@ -105,6 +107,7 @@ public:
 		SPBrush spBrBackground,
 		SPBrush spBrFocused,
 		SPBrush spBrSelected,
+		SPBrush spBrUnfocusSelected,
 		SPBrush spBrChecked,
 		DrawTextPropertyPtr spDrawTextProperty,
 		SPRect spPadding)
@@ -114,6 +117,7 @@ public:
 		m_spBrBackground(spBrBackground),
 		m_spBrFocused(spBrFocused),
 		m_spBrSelected(spBrSelected),
+		m_spBrUnfocusSelected(spBrUnfocusSelected),
 		m_spBrChecked(spBrChecked),
 		//m_spDrawTextProperty(spDrawTextProperty),
 		m_spPadding(spPadding){};
@@ -126,6 +130,7 @@ public:
 	virtual std::shared_ptr<CBrush> GetBackgroundBrushPtr()const{return m_spBrBackground;}
 	virtual std::shared_ptr<CBrush> GetFocusedBrushPtr()const{return m_spBrFocused;}
 	virtual std::shared_ptr<CBrush> GetSelectedBrushPtr()const{return m_spBrSelected;}
+	virtual std::shared_ptr<CBrush> GetUnfocusSelectedBrushPtr()const { return m_spBrUnfocusSelected; }
 	virtual std::shared_ptr<CBrush> GetCheckedBrushPtr()const{return m_spBrChecked;}
 	//virtual std::shared_ptr<CDrawTextProperty> GetDrawTextPropertyPtr()const{return m_spDrawTextProperty;}
 	//virtual UINT GetFormat()const{return m_spDrawTextProperty->GetFormat();}
@@ -142,6 +147,7 @@ public:
 		ar("BackgroundBrush",m_spBrBackground);
 		ar("FocusedBrush",m_spBrFocused);
 		ar("SelectedBrush",m_spBrSelected);
+		ar("UnfocusSelectedBrush", m_spBrUnfocusSelected);
 		ar("CheckedBrush",m_spBrChecked);
 		//ar("DrawTextProperty",m_spDrawTextProperty);
 		ar("Padding",m_spPadding);
@@ -166,6 +172,7 @@ public:
 		std::make_shared<CBrush>(RGB(239,239,232)),
 		std::make_shared<CBrush>(RGB(195,224,226)),
 		std::make_shared<CBrush>(RGB(195,224,226)),
+		std::make_shared<CBrush>(RGB(195, 224, 226)),
 		std::make_shared<CBrush>(RGB(241,196,15)),
 		std::make_shared<CDrawTextProperty>(DT_LEFT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL),
 		std::make_shared<CRect>(2,2,2,2)),

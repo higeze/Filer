@@ -193,10 +193,15 @@ void CCell::PaintBackground(CDC* pDC, CRect rcPaint)
 		br=*m_spProperty->GetBackgroundBrushPtr();
 	}
 
-	if(GetSelected()){
+	if (GetSelected()) {
 		double alpha = 0.5;
 		CColor cr = br.GetColor();
-		CColor crSelected = m_spProperty->GetSelectedBrushPtr()->GetColor();
+		CColor crSelected;
+		if (::GetFocus() != m_pSheet->GetGridPtr()->m_hWnd) {
+			crSelected = m_spProperty->GetUnfocusSelectedBrushPtr()->GetColor();
+		}else{
+			crSelected = m_spProperty->GetSelectedBrushPtr()->GetColor();
+		}
 		CRGB rgb(cr.GetRGB());
 		CRGB rgbSelected(crSelected.GetRGB());
 		rgb.SetR(static_cast<int>(rgbSelected.GetR()*alpha + rgb.GetR()*(1-alpha))); 

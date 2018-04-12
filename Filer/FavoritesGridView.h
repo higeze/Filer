@@ -1,5 +1,6 @@
 #pragma once
 #include "Gridview.h"
+#include "MyFriendSerializer.h"
 
 class CGridViewProperty;
 class CFavoritesProperty;
@@ -14,8 +15,10 @@ public:
 	boost::signals2::signal<void(std::shared_ptr<CShellFile>&)> FileChosen;
 
 public:
-	CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp);
+	CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty/*, std::shared_ptr<CFavoritesProperty> spFavoritesProp*/);
 	virtual ~CFavoritesGridView(void){}
+
+	std::shared_ptr<CFavoritesProperty>& GetFavoritesProp() { return m_spFavoritesProp; }
 
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 
@@ -28,6 +31,20 @@ public:
 
 private:
 	void InsertDefaultRowColumn();
+
+public:
+	FRIEND_SERIALIZER
+	template <class Archive>
+	void save(Archive& ar)
+	{
+		ar("FavoritesProperty",m_spFavoritesProp);
+	}
+
+	template <class Archive>
+	void load(Archive& ar)
+	{
+		ar("FavoritesProperty",m_spFavoritesProp);
+	}
 
 };
 

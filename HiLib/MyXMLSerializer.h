@@ -193,6 +193,22 @@ public:
 			DeserializeElement(tValue,pElem);
 		}
 	}
+
+	template<class char_type, class T, class U>
+	void operator()(const char_type* lpszName, T& tValue, U& uValue)
+	{
+		std::vector<MSXML2::IXMLDOMElementPtr> vpElem;
+		if (m_pElem) {
+			vpElem = GetChildElementsByTagName(m_pElem, lpszName);
+		}
+		else {
+			vpElem = GetChildElementsByTagName(m_pDoc, lpszName);
+		}
+		if (vpElem.size() == 1) {
+			MSXML2::IXMLDOMElementPtr pElem = vpElem[0];
+			DeserializeElement(tValue, pElem, uValue);
+		}
+	}
 	
 	//For base
 	template<class T>
@@ -255,11 +271,26 @@ public:
 		DeserializeElement(*tValue,pElem);
 	}
 
+	template<class T, class U>
+	void DeserializeElement(T& tValue, MSXML2::IXMLDOMElementPtr pElem, U& uValue, ENABLE_IF_SHARED_PTR)
+	{
+		if (!tValue) {
+			tValue = std::make_shared<T::element_type>(uValue);
+		}
+		DeserializeElement(*tValue, pElem);
+	}
+
 	//For save load
 	template<class T>
 	void DeserializeElement(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_SAVE_LOAD)
 	{
 		tValue.load(CDeserializer(m_pDoc,pElem));
+	}
+
+	template<class T, class U>
+	void DeserializeElement(T& tValue, MSXML2::IXMLDOMElementPtr pElem, U& uValue, ENABLE_IF_SAVE_LOAD)
+	{
+		tValue.load(CDeserializer(m_pDoc, pElem), uValue);
 	}
 
 };

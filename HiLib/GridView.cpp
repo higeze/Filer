@@ -82,6 +82,7 @@ CGridView::CGridView(
 	AddMsgHandler(WM_VSCROLL,&CGridView::OnVScroll,this);
 	AddMsgHandler(WM_HSCROLL,&CGridView::OnHScroll,this);
 	AddMsgHandler(WM_MOUSEWHEEL,&CGridView::OnMouseWheel,this);
+	AddMsgHandler(WM_KILLFOCUS, &CGridView::OnKillFocus, this);
 
 	AddMsgHandler(WM_RBUTTONDOWN,&CGridView::OnRButtonDown,this);
 	AddMsgHandler(WM_LBUTTONDOWN,&CGridView::OnLButtonDown,this);
@@ -508,6 +509,13 @@ LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	dc.SelectClipRgn(NULL);
 	return 0;
 }
+
+LRESULT CGridView::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	InvalidateRect(NULL, FALSE);
+	return 0;
+}
+
 
 LRESULT CGridView::OnVScroll(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {

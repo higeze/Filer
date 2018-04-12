@@ -454,9 +454,16 @@ void CSheet::EraseColumnImpl(column_type spColumn)
 
 void CSheet::EraseRow(CRow* pRow)
 {
+	EraseRowNotify(pRow, true);
+}
+
+void CSheet::EraseRowNotify(CRow* pRow, bool notify)
+{
 	Erase(m_rowAllDictionary, pRow);
 	m_spCursorer->OnCursorClear(this);
-	RowErased(CRowEventArgs(pRow));
+	if (notify) {
+		RowErased(CRowEventArgs(pRow));
+	}
 }
 
 void CSheet::EraseRows(const std::vector<CRow*>& vpRow)

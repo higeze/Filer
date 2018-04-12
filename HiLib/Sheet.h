@@ -233,6 +233,7 @@ public:
 	virtual void EraseColumn(column_type spColumn){EraseColumnImpl(spColumn);}
 	virtual void EraseColumnImpl(column_type spColumn);
 	virtual void EraseRow(CRow* pRow);
+	virtual void EraseRowNotify(CRow* pRow, bool notify = true);
 	virtual void EraseRows(const std::vector<CRow*>& vpRow);
 
 	virtual void MoveColumn(size_type colTo, column_type spFromColumn){MoveImpl<ColTag>(colTo, spFromColumn);}

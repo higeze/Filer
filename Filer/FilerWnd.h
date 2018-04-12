@@ -4,6 +4,7 @@
 #include "MyFriendSerializer.h"
 #include "MyRect.h"
 #include "FilerTabGridView.h"
+#include "FavoritesGridView.h"
 #include "FavoritesProperty.h"
 #include "ShellFolder.h"
 #include "ApplicationProperty.h"
@@ -11,7 +12,7 @@
 class CFilerGridView;
 class CGridViewProperty;
 //class CFavoritesProperty;
-class CFavoritesGridView;
+//class CFavoritesGridView;
 class CShellFolder;
 //class CFilerTabGridView;
 
@@ -38,7 +39,7 @@ private:
 	//int m_contextMenuTabIndex;
 
 	std::shared_ptr<CGridViewProperty> m_spGridViewProp;
-	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
+	//std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
 	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
 
 
@@ -51,6 +52,7 @@ public:
 	virtual ~CFilerWnd();
 	virtual HWND Create(HWND hWndParent);
 	std::shared_ptr<CApplicationProperty> GetApplicationProperty() { return m_spApplicationProp; }
+	std::shared_ptr<CFavoritesGridView>& GetFavoritesView() { return m_spFavoritesView; }
 private:
 	std::shared_ptr<CShellFolder> GetShellFolderFromPath(const std::wstring& path);
 	//LRESULT OnTabContextMenu(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -60,6 +62,7 @@ private:
 	LRESULT OnClose(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnDestroy(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	//LRESULT OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 
 	//LRESULT OnCommandNewTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
@@ -83,15 +86,14 @@ public:
 		if(info == typeid(CSerializer&) || info == typeid(CDeserializer&)){ 
 			ar("WindowRectangle", m_rcWnd);
 		}
+
 		ar("GridViewProperty",m_spGridViewProp);
+
+		ar("FavoritesView", m_spFavoritesView);
+
 		ar("LeftView", m_spLeftView);
 		ar("RightView", m_spRightView);
-		//m_vwPath.clear();
-		//for(auto pair : m_viewMap){
-		//	m_vwPath.push_back(pair.second->GetPath());
-		//}
-		//ar("ViewPaths",m_vwPath);
-		ar("FavoritesProperty",m_spFavoritesProp);
+
 		ar("ApplicationProperty", m_spApplicationProp);
 
     }
@@ -103,22 +105,22 @@ public:
 		if(info == typeid(CSerializer&) || info == typeid(CDeserializer&)){ 
 			ar("WindowRectangle", m_rcWnd);
 		}
+
 		ar("GridViewProperty",m_spGridViewProp);
 
-		ar("LeftView", m_spLeftView);
-		if (!m_spLeftView) { m_spLeftView = std::make_shared<CFilerTabGridView>();}
+		ar("FavoritesView", m_spFavoritesView, m_spGridViewProp);
+		if (!m_spFavoritesView) { m_spFavoritesView = std::make_shared<CFavoritesGridView>(m_spGridViewProp); }
+
+		ar("LeftView", m_spLeftView, m_spGridViewProp);
+		if (!m_spLeftView) { m_spLeftView = std::make_shared<CFilerTabGridView>(m_spGridViewProp);}
 		m_spLeftView->SetParentWnd(this);
-		m_spLeftView->SetGridViewProp(m_spGridViewProp);
 		m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9996);
 		
-		ar("RightView", m_spRightView);
-		if (!m_spRightView) {m_spRightView = std::make_shared<CFilerTabGridView>();}
+		ar("RightView", m_spRightView, m_spGridViewProp);
+		if (!m_spRightView) {m_spRightView = std::make_shared<CFilerTabGridView>(m_spGridViewProp);}
 		m_spRightView->SetParentWnd(this);
-		m_spRightView->SetGridViewProp(m_spGridViewProp);
 		m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9997);
 
-		//ar("ViewPaths",m_vwPath);
-		ar("FavoritesProperty",m_spFavoritesProp);
 		ar("ApplicationProperty", m_spApplicationProp);
     }
 };

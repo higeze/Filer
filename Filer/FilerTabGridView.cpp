@@ -1,9 +1,18 @@
 #include "FilerTabGridView.h"
+#include "FavoritesGridView.h"
+#include "FavoritesProperty.h"
+#include "FilerWnd.h"
+#include "FavoriteRow.h"
 
-CFilerTabGridView::CFilerTabGridView()
+CFilerTabGridView::CFilerTabGridView(std::shared_ptr<CGridViewProperty> spGridViewProp)
+	:m_spFilerView(std::make_shared<CFilerGridView>(spGridViewProp))
 {
 	CreateWindowExArgument()
 		.dwStyle(WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE | TCS_HOTTRACK | TCS_FLATBUTTONS | TCS_MULTILINE);
+
+	//FilerGridView
+	DWORD dwStyle = m_spFilerView->CreateWindowExArgument().dwStyle();
+	m_spFilerView->CreateWindowExArgument().dwStyle(dwStyle | WS_CHILD | WS_VISIBLE);
 
 	AddMsgHandler(WM_CREATE, &CFilerTabGridView::OnCreate, this);
 	AddMsgHandler(WM_SIZE, &CFilerTabGridView::OnSize, this);
@@ -15,18 +24,14 @@ CFilerTabGridView::CFilerTabGridView()
 	AddCmdIDHandler(IDM_CLONETAB, &CFilerTabGridView::OnCommandCloneTab, this);
 	AddCmdIDHandler(IDM_CLOSETAB, &CFilerTabGridView::OnCommandCloseTab, this);
 	AddCmdIDHandler(IDM_CLOSEALLBUTTHISTAB, &CFilerTabGridView::OnCommandCloseAllButThisTab, this);
+	AddCmdIDHandler(IDM_ADDTOFAVORITE, &CFilerTabGridView::OnCommandAddToFavorite, this);
 
 }
 
 LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	//Tab
-	SetFont(*(m_spGridViewProp->GetHeaderProperty()->GetFontPtr()), TRUE);
-
-	//FilerGridView
-	m_spFilerView = std::make_shared<CFilerGridView>(m_spGridViewProp);
-	DWORD dwStyle = m_spFilerView->CreateWindowExArgument().dwStyle();
-	m_spFilerView->CreateWindowExArgument().dwStyle(dwStyle | WS_CHILD | WS_VISIBLE);
+	SetFont(*(m_spFilerView->GetHeaderProperty()->GetFontPtr()), TRUE);
 
 	//Capture KeyDown Msg in FilerView
 	auto fun = m_spFilerView->GetMsgHandler(WM_KEYDOWN);
@@ -54,6 +59,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 		SendMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
 	});
 
+	m_pParentWnd->AddNtfyHandler((UINT_PTR)m_cwa.hMenu(), NM_CLICK, &CFilerTabGridView::OnNotifyTabLClick, this);
 	m_pParentWnd->AddNtfyHandler((UINT_PTR)m_cwa.hMenu(), NM_RCLICK, &CFilerTabGridView::OnNotifyTabRClick, this);
 	m_pParentWnd->AddNtfyHandler((UINT_PTR)m_cwa.hMenu(), TCN_SELCHANGING, &CFilerTabGridView::OnNotifyTabSelChanging, this);
 	m_pParentWnd->AddNtfyHandler((UINT_PTR)m_cwa.hMenu(), TCN_SELCHANGE, &CFilerTabGridView::OnNotifyTabSelChange, this);
@@ -188,6 +194,12 @@ LRESULT CFilerTabGridView::OnNotifyTabSelChange(int, LPNMHDR, BOOL& bHandled)
 	return 0;
 }
 
+LRESULT CFilerTabGridView::OnNotifyTabLClick(int id, LPNMHDR, BOOL& bHandled)
+{
+	::SetFocus(m_spFilerView->m_hWnd);
+	return 0;
+}
+
 LRESULT CFilerTabGridView::OnNotifyTabRClick(int id, LPNMHDR, BOOL& bHandled)
 {
 	CPoint ptScreen;
@@ -286,6 +298,21 @@ LRESULT CFilerTabGridView::OnCommandCloseAllButThisTab(WORD wNotifyCode, WORD wI
 		SetCurSel(0);
 		OnNotifyTabSelChange(0, NULL, dummy);
 		OnSize(0, NULL, NULL, dummy);
+	}
+	return 0;
+}
+
+LRESULT CFilerTabGridView::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	//TODO Bad connection between FilerTabGridView and FavoritesView
+	unsigned int id = (unsigned int)GetItemParam(m_contextMenuTabIndex);
+	auto iter = m_viewMap.find(id);
+	if (iter != m_viewMap.end()) {
+		if(auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)){
+			p->GetFavoritesView()->GetFavoritesProp()->GetFavorites()->push_back(CFavorite(iter->second->GetPath(), L""));
+			p->GetFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetFavoritesView().get(), p->GetFavoritesView()->GetFavoritesProp()->GetFavorites()->size() - 1));
+			p->GetFavoritesView()->SubmitUpdate();
+		}
 	}
 	return 0;
 }

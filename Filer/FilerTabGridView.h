@@ -18,20 +18,20 @@ private:
 	std::map<unsigned int, std::shared_ptr<CShellFolder>> m_viewMap;
 	std::shared_ptr<CFilerGridView> m_spFilerView;
 
-	std::shared_ptr<CGridViewProperty> m_spGridViewProp;
+	//std::shared_ptr<CGridViewProperty> m_spGridViewProp;
 	CWnd* m_pParentWnd;
 
 	unsigned int m_prevID;
 	int m_contextMenuTabIndex;
 
 public:
-	CFilerTabGridView();
+	CFilerTabGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty);
 	virtual ~CFilerTabGridView() {}
 
 	//Getter Setter
 	void SetContextMenuTabIndex(int index) { m_contextMenuTabIndex = index; }
 	std::shared_ptr<CFilerGridView> GetGridView() { return m_spFilerView; }
-	void SetGridViewProp(std::shared_ptr<CGridViewProperty> prop) { m_spGridViewProp = prop;}
+	//void SetGridViewProp(std::shared_ptr<CGridViewProperty> prop) { m_spGridViewProp = prop;}
 	void SetParentWnd(CWnd* pParentWnd) { m_pParentWnd = pParentWnd; }
 
 	//Message
@@ -45,9 +45,11 @@ public:
 	LRESULT OnCommandCloneTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandCloseTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandCloseAllButThisTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	LRESULT OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 
 	LRESULT OnNotifyTabSelChanging(int id, LPNMHDR, BOOL& bHandled);
 	LRESULT OnNotifyTabSelChange(int id, LPNMHDR, BOOL& bHandled);
+	LRESULT OnNotifyTabLClick(int id, LPNMHDR, BOOL& bHandled);
 	LRESULT OnNotifyTabRClick(int id, LPNMHDR, BOOL& bHandled);
 
 private:

@@ -21,14 +21,14 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
-CFavoritesGridView::CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp)
+CFavoritesGridView::CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty/*, std::shared_ptr<CFavoritesProperty> spFavoritesProp*/)
 			:CGridView(			
 			spGridViewProrperty->m_spBackgroundProperty,
 			spGridViewProrperty->m_spPropHeader,
 			spGridViewProrperty->m_spPropCell,
 			spGridViewProrperty->m_spPropCell,
 			spGridViewProrperty->m_spDeltaScroll),
-			m_spFavoritesProp(spFavoritesProp)
+			m_spFavoritesProp(std::make_shared<CFavoritesProperty>())
 {
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()

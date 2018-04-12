@@ -257,6 +257,7 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 	}
 	else if (auto p = std::dynamic_pointer_cast<CFileRow>(iter->DataPtr)) {
 		p->GetFilePointer()->Reset();
+		p->SetMeasureValid(false);
 	}
 	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::RowVisible);
@@ -278,7 +279,7 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 		return;
 	}
 
-	EraseRow(iter->DataPtr.get());
+	EraseRowNotify(iter->DataPtr.get(), false);
 	for (const auto& col : m_columnAllDictionary) {
 		std::dynamic_pointer_cast<CParentMapColumn>(col.DataPtr)->Clear();
 	}
@@ -318,6 +319,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 			p->SetFilePointer(std::make_shared<CShellFile>(
 				p->GetFilePointer()->GetParentShellFolderPtr(), 
 				p->GetFilePointer()->GetAbsolutePidl().GetPreviousIDLPtr() + pIdlNew));
+			p->SetMeasureValid(false);
 			PostUpdate(Updates::ColumnVisible);
 			PostUpdate(Updates::RowVisible);
 			PostUpdate(Updates::Row);
@@ -466,6 +468,7 @@ void CFilerGridView::Open(std::shared_ptr<CShellFile>& spFile)
 	else {
 		OpenFile(spFile);
 	}
+	::SetFocus(m_hWnd);
 }
 
 void CFilerGridView::OpenFile(std::shared_ptr<CShellFile>& spFile)
