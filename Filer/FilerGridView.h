@@ -70,6 +70,8 @@ private:
 public:
 	CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty);
 	virtual ~CFilerGridView(){}
+	//getter
+	std::shared_ptr<CShellFolder>& GetFolder() { return m_spFolder; }
 	//signal
 	boost::signals2::signal<void(std::shared_ptr<CShellFolder>&)> FolderChanged;
 	std::function<void(CMenu&)> AddCustomContextMenu;
@@ -95,6 +97,7 @@ public:
 	void OpenFile(std::shared_ptr<CShellFile>& spFile);
 	void OpenFolder(std::shared_ptr<CShellFolder>& spFolder);
 
+
 	string_type GetPath()const;
 	void SetPath(const string_type& path);
 
@@ -102,16 +105,22 @@ public:
 	BOOL SetDragImage(CIDLPtr pFirstIdl, CComPtr<IDragSourceHelper> pDragSourceHelper, IDataObject *pDataObject);
 
 	RowDictionary::const_iterator FindIfRowIterByFileNameExt(const std::wstring& fileNameExt);
-	//auto iter = std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
-	//	[&](const RowData& data)->bool {
-	//	if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
-	//		return p->GetFilePointer()->GetName() == fileName;
-	//	}
-	//	return false;
-	//});
+
+	bool NewFolder();
+	bool CutToClipboard();
+	bool CopyToClipboard();
+	bool PasteFromClipboard();
+	bool Delete();
+
+	bool CopyTo(CComPtr<IShellItem2> pDestItem);
+	bool MoveTo(CComPtr<IShellItem2> pDestItem);
+
+	std::vector<LPITEMIDLIST> GetSelectedLastPIDLVector();
+	std::vector<LPITEMIDLIST> GetSelectedAbsolutePIDLVector();
 
 private:
 
+	//DirectoryWatch action
 	void Added(const std::wstring& fileName);
 	void Modified(const std::wstring& fileName);
 	void Removed(const std::wstring& fileName);
@@ -119,7 +128,9 @@ private:
 
 
 	void InsertDefaultRowColumn();
-	void OnShellCommand(LPCSTR lpVerb);
+
 	void ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl, bool hasNew = false);
-	void InvokeShellCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl);
+	
+	bool InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf);
+	bool InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl);
 };

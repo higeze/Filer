@@ -22,26 +22,12 @@ class CFilerWnd:public CWnd
 //	static CUniqueIDFactory ControlIDFactory;
 private:
 	CRect m_rcWnd;
+	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
+	std::shared_ptr<CGridViewProperty> m_spGridViewProp;
+	std::shared_ptr<CFavoritesGridView> m_spFavoritesView;
 	std::shared_ptr<CFilerTabGridView> m_spLeftView;
 	std::shared_ptr<CFilerTabGridView> m_spRightView;
 	std::shared_ptr<CFilerTabGridView> m_spCurView;
-
-	std::shared_ptr<CFavoritesGridView> m_spFavoritesView;
-
-	//std::vector<std::wstring> m_vwPath;
-	//std::map<unsigned int, std::shared_ptr<CShellFolder>> m_viewMap;
-	//std::shared_ptr<CTabCtrl> m_spTab1;
-	//std::shared_ptr<CTabCtrl> m_spTab2;
-	//std::shared_ptr<CFilerGridView> m_spFilerView1;
-	//std::shared_ptr<CFilerGridView> m_spFilerView2;
-
-	//unsigned int m_prevID;
-	//int m_contextMenuTabIndex;
-
-	std::shared_ptr<CGridViewProperty> m_spGridViewProp;
-	//std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
-	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
-
 
 public:
 	CFilerWnd();
@@ -63,7 +49,7 @@ private:
 	LRESULT OnDestroy(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	//LRESULT OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	LRESULT OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 
 	//LRESULT OnCommandNewTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	//LRESULT OnCommandCloneTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
@@ -109,15 +95,12 @@ public:
 		ar("GridViewProperty",m_spGridViewProp);
 
 		ar("FavoritesView", m_spFavoritesView, m_spGridViewProp);
-		if (!m_spFavoritesView) { m_spFavoritesView = std::make_shared<CFavoritesGridView>(m_spGridViewProp); }
 
 		ar("LeftView", m_spLeftView, m_spGridViewProp);
-		if (!m_spLeftView) { m_spLeftView = std::make_shared<CFilerTabGridView>(m_spGridViewProp);}
 		m_spLeftView->SetParentWnd(this);
 		m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9996);
 		
 		ar("RightView", m_spRightView, m_spGridViewProp);
-		if (!m_spRightView) {m_spRightView = std::make_shared<CFilerTabGridView>(m_spGridViewProp);}
 		m_spRightView->SetParentWnd(this);
 		m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9997);
 

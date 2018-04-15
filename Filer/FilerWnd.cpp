@@ -2,39 +2,31 @@
 #include "FilerWnd.h"
 #include "FilerGridView.h"
 #include "Resource.h"
-
 #include "ShellFile.h"
 #include "ShellFolder.h"
-
-
 #include "GridViewProperty.h"
 #include "FavoritesProperty.h"
 #include "FavoritesGridView.h"
 #include "FavoriteRow.h"
-
 #include "FilerProperty.h"
 #include "PropertyWnd.h"
-
 #include "FilerTabGridView.h"
 
-
-//#include "PropertyWnd.h"
-
-//CUniqueIDFactory CFilerWnd::ControlIDFactory = CUniqueIDFactory(9996);
-
 CFilerWnd::CFilerWnd()
-	:m_spGridViewProp(std::make_shared<CGridViewProperty>()),
-	//m_uniqueIDFactory(),
-	//m_spTab1(std::make_shared<CTabCtrl>()),
-	//m_spTab2(std::make_shared<CTabCtrl>()),
-	//m_spFavoritesView(nullptr),
-	//m_spLeftView(std::make_shared<CFilerTabGridView>()),
-	//m_spLeftView(std::make_shared<CFilerTabGridView>()),
-	//m_viewMap(),
-	m_rcWnd(0,0,300,500),
-	//m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
-	m_spApplicationProp(std::make_shared<CApplicationProperty>())
+	:m_spApplicationProp(std::make_shared<CApplicationProperty>()),
+	m_rcWnd(0, 0, 300, 500),
+	m_spGridViewProp(std::make_shared<CGridViewProperty>()),
+	m_spFavoritesView(std::make_shared<CFavoritesGridView>(m_spGridViewProp)),
+	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spGridViewProp)),
+	m_spRightView(std::make_shared<CFilerTabGridView>(m_spGridViewProp)),
+	m_spCurView(m_spLeftView)
 {
+	m_spLeftView->SetParentWnd(this);
+	m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9996);
+
+	m_spRightView->SetParentWnd(this);
+	m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9997);
+
 	m_rca
 	.lpszClassName(L"CFilerWnd")
 	.style(CS_VREDRAW | CS_HREDRAW |CS_DBLCLKS)
@@ -54,30 +46,12 @@ CFilerWnd::CFilerWnd()
 	.nHeight(m_rcWnd.Height())
 	.hMenu(NULL); 
 
-	//m_spTab1->CreateWindowExArgument()
-	//.dwStyle(WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN | WS_VISIBLE|TCS_HOTTRACK|TCS_FLATBUTTONS|TCS_MULTILINE)
-	//.hMenu((HMENU)9996);
-
-	//m_spTab2->CreateWindowExArgument()
-	//	.dwStyle(WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE | TCS_HOTTRACK | TCS_FLATBUTTONS | TCS_MULTILINE)
-	//	.hMenu((HMENU)9997);
-
 	AddMsgHandler(WM_CREATE,&CFilerWnd::OnCreate,this);
 	AddMsgHandler(WM_SIZE,&CFilerWnd::OnSize,this);
 	AddMsgHandler(WM_CLOSE,&CFilerWnd::OnClose,this);
 	AddMsgHandler(WM_DESTROY,&CFilerWnd::OnDestroy,this);
 	AddMsgHandler(WM_SETFOCUS, &CFilerWnd::OnSetFocus, this);
 	//AddMsgHandler(WM_KEYDOWN,&CFilerWnd::OnKeyDown,this);
-
-	//AddCmdIDHandler(IDM_NEWTAB,&CFilerWnd::OnCommandNewTab,this);
-	//AddCmdIDHandler(IDM_CLONETAB, &CFilerWnd::OnCommandCloneTab, this);
-	//AddCmdIDHandler(IDM_CLOSETAB,&CFilerWnd::OnCommandCloseTab,this);
-	//AddCmdIDHandler(IDM_CLOSEALLBUTTHISTAB, &CFilerWnd::OnCommandCloseAllButThisTab, this);
-	//AddCmdIDHandler(IDM_ADDTOFAVORITE, &CFilerWnd::OnCommandAddToFavorite, this);
-
-	//AddNtfyHandler(9996,NM_RCLICK , &CFilerWnd::OnNotifyTabRClick, this);
-	//AddNtfyHandler(9996,TCN_SELCHANGING, &CFilerWnd::OnNotifyTabSelChanging, this);
-	//AddNtfyHandler(9996,TCN_SELCHANGE, &CFilerWnd::OnNotifyTabSelChange, this);
 	//AddNtfyHandler(9996,TCN_KEYDOWN, [this](int id,LPNMHDR pnmh,BOOL& bHandled)->LRESULT{
 	//	this->OnKeyDown(WM_KEYDOWN, (WPARAM)((NMTCKEYDOWN*)pnmh)->wVKey, NULL, bHandled);
 	//	return 0;
@@ -89,7 +63,6 @@ CFilerWnd::CFilerWnd()
 	AddCmdIDHandler(IDM_APPLICATIONOPTION, &CFilerWnd::OnCommandApplicationOption, this);
 	AddCmdIDHandler(IDM_GRIDVIEWOPTION,&CFilerWnd::OnCommandGridViewOption,this);
 	AddCmdIDHandler(IDM_FAVORITESOPTION,&CFilerWnd::OnCommandFavoritesOption,this);
-	//AddMsgHandler(WM_DROPFILES,&CDcmListView::OnWndDropFiles,m_upList.get());
 }
 
 CFilerWnd::~CFilerWnd(){}
@@ -102,7 +75,6 @@ HWND CFilerWnd::Create(HWND hWndParent)
 LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	//CFavoritesGridView
-	//m_spFavoritesView = std::make_shared<CFavoritesGridView>(m_spGridViewProp, m_spFavoritesProp);
 	m_spFavoritesView->CreateWindowExArgument()
 	.dwStyle(WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN | WS_VISIBLE)
 	.hMenu((HMENU)99396);
@@ -125,6 +97,26 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	BOOL dummy = FALSE;
 	m_spLeftView->OnCreate(WM_CREATE, NULL, NULL, dummy);
 	m_spRightView->OnCreate(WM_CREATE, NULL, NULL, dummy);
+
+	//Capture KeyDown Msg in FilerView
+	auto fun = m_spLeftView->GetGridView()->GetMsgHandler(WM_KEYDOWN);
+	if (fun) {
+		FunMsg newFun = [this, fun](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
+			OnKeyDown(uMsg, wParam, lParam, bHandled);
+			return fun(uMsg, wParam, lParam, bHandled);
+		};
+		m_spLeftView->GetGridView()->ReplaceMsgHandler(WM_KEYDOWN, newFun);
+	}
+
+	fun = m_spRightView->GetGridView()->GetMsgHandler(WM_KEYDOWN);
+	if (fun) {
+		FunMsg newFun = [this, fun](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
+			OnKeyDown(uMsg, wParam, lParam, bHandled);
+			return fun(uMsg, wParam, lParam, bHandled);
+		};
+		m_spRightView->GetGridView()->ReplaceMsgHandler(WM_KEYDOWN, newFun);
+	}
+
 
 	//m_spLeftView->AddMsgHandler(WM_SETFOCUS,
 	//	[this](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT
@@ -189,6 +181,36 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	auto rcClient = GetClientRect();
 	PostMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
 
+	return 0;
+}
+
+LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	switch (wParam)
+	{
+	case VK_F5:
+		{
+			std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
+			CComPtr<IShellItem2> pDestShellItem;
+
+			HRESULT hr = ::SHCreateItemFromIDList(spOtherView->GetGridView()->GetFolder()->GetAbsolutePidl(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
+			if (FAILED(hr)) { break; }
+			m_spCurView->GetGridView()->CopyTo(pDestShellItem);
+		}
+		break;
+	case VK_F6:
+		{
+			std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
+			CComPtr<IShellItem2> pDestShellItem;
+
+			HRESULT hr = ::SHCreateItemFromIDList(spOtherView->GetGridView()->GetFolder()->GetAbsolutePidl(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
+			if (FAILED(hr)) { break; }
+			m_spCurView->GetGridView()->MoveTo(pDestShellItem);
+		}
+		break;
+	default:
+		break;
+	}
 	return 0;
 }
 

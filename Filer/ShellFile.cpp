@@ -54,7 +54,7 @@ tstring Size2String(ULONGLONG size)
 	return ConvertCommaSeparatedNumber(size);	
 }
 
-std::wstring CShellFile::GetPath()
+std::wstring& CShellFile::GetPath()
 {
 	if (m_wstrPath.empty()) {
 		CIDLPtr childPidl = m_absolutePidl.GetLastIDLPtr();

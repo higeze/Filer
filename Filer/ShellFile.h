@@ -44,7 +44,7 @@ public:
 	CIDLPtr& GetAbsolutePidl(){return m_absolutePidl;}
 
 	//Lazy Evaluation Getter
-	std::wstring GetPath();
+	std::wstring& GetPath();
 	std::wstring GetName();
 	std::wstring GetExt();
 	std::wstring GetNameExt();
