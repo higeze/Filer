@@ -173,9 +173,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Filer.ico" />
-    <Image Include="GKN_Aerospace.ico" />
-    <Image Include="small.ico" />
-    <Image Include="update.ico.ico" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\HiLib\ApplicationProperty.h" />
@@ -438,7 +435,6 @@
     <None Include="..\HiLib\msxml6.tlh" />
     <None Include="..\HiLib\msxml6.tli" />
     <None Include="..\Release\Filer.exe" />
-    <None Include="MyNotification.zip" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

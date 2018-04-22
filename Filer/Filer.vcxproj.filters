@@ -36,16 +36,7 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="small.ico">
-      <Filter>Resource</Filter>
-    </Image>
     <Image Include="Filer.ico">
-      <Filter>Resource</Filter>
-    </Image>
-    <Image Include="GKN_Aerospace.ico">
-      <Filter>Resource</Filter>
-    </Image>
-    <Image Include="update.ico.ico">
       <Filter>Resource</Filter>
     </Image>
   </ItemGroup>
@@ -812,9 +803,6 @@
     </None>
     <None Include="..\Release\Filer.exe">
       <Filter>Release</Filter>
-    </None>
-    <None Include="MyNotification.zip">
-      <Filter>Resource</Filter>
     </None>
   </ItemGroup>
 </Project>

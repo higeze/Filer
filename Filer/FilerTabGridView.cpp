@@ -37,8 +37,12 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 	auto fun = m_spFilerView->GetMsgHandler(WM_KEYDOWN);
 	if (fun) {
 		FunMsg newFun = [this, fun](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
-			OnKeyDown(uMsg, wParam, lParam, bHandled);
-			return fun(uMsg, wParam, lParam, bHandled);
+			LRESULT lr = OnKeyDown(uMsg, wParam, lParam, bHandled);
+			if (bHandled) {
+				return lr;
+			}else{
+				return fun(uMsg, wParam, lParam, bHandled);
+			}
 		};
 		m_spFilerView->ReplaceMsgHandler(WM_KEYDOWN, newFun);
 	}
@@ -143,15 +147,18 @@ LRESULT CFilerTabGridView::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 		if (::GetAsyncKeyState(VK_CONTROL)) {
 			SendMessage(WM_COMMAND, IDM_NEWTAB, NULL);
 		}
+		bHandled = TRUE;
 		break;
 	case 'W':
 		if (::GetAsyncKeyState(VK_CONTROL)) {
 			SendMessage(WM_COMMAND, IDM_CLOSETAB, NULL);
 		}
+		bHandled = TRUE;
 		break;
 	default:
 		break;
 	}
+	bHandled = FALSE;
 	return 0;
 }
 

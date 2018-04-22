@@ -335,6 +335,14 @@ void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
 	case VK_DELETE:
 		Delete();
 		break;
+	case VK_F8:
+		{
+			int okcancel = ::MessageBox(m_hWnd, L"Delete?", L"Delete?", MB_OKCANCEL);
+			if (okcancel == IDOK) {
+				Delete();
+			}
+		}
+		break;
 	case 'A':
 		if(::GetAsyncKeyState(VK_CONTROL)){
 			SendMessage(WM_COMMAND,IDM_SELECTALL,NULL);
@@ -622,6 +630,7 @@ std::vector<LPITEMIDLIST> CFilerGridView::GetSelectedAbsolutePIDLVector()
 
 bool CFilerGridView::CopyTo(CComPtr<IShellItem2> pDestItem)
 {
+
 	auto vPidl = GetSelectedAbsolutePIDLVector();
 	CComPtr<IShellItemArray> pItemAry = nullptr;
 	HRESULT hr = ::SHCreateShellItemArrayFromIDLists(vPidl.size(), (LPCITEMIDLIST*)(vPidl.data()), &pItemAry);

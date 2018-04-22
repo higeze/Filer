@@ -102,8 +102,12 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	auto fun = m_spLeftView->GetGridView()->GetMsgHandler(WM_KEYDOWN);
 	if (fun) {
 		FunMsg newFun = [this, fun](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
-			OnKeyDown(uMsg, wParam, lParam, bHandled);
-			return fun(uMsg, wParam, lParam, bHandled);
+			LRESULT lr = OnKeyDown(uMsg, wParam, lParam, bHandled);
+			if (bHandled) {
+				return lr;
+			}else {
+				return fun(uMsg, wParam, lParam, bHandled);
+			}
 		};
 		m_spLeftView->GetGridView()->ReplaceMsgHandler(WM_KEYDOWN, newFun);
 	}
@@ -111,8 +115,12 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	fun = m_spRightView->GetGridView()->GetMsgHandler(WM_KEYDOWN);
 	if (fun) {
 		FunMsg newFun = [this, fun](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
-			OnKeyDown(uMsg, wParam, lParam, bHandled);
-			return fun(uMsg, wParam, lParam, bHandled);
+			LRESULT lr = OnKeyDown(uMsg, wParam, lParam, bHandled);
+			if (bHandled) {
+				return lr;
+			}else {
+				return fun(uMsg, wParam, lParam, bHandled);
+			}
 		};
 		m_spRightView->GetGridView()->ReplaceMsgHandler(WM_KEYDOWN, newFun);
 	}
@@ -190,27 +198,36 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 	{
 	case VK_F5:
 		{
-			std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
-			CComPtr<IShellItem2> pDestShellItem;
+			int okcancel = ::MessageBox(m_hWnd, L"Copy?", L"Copy?", MB_OKCANCEL);
+			if (okcancel == IDOK) {
+				std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
+				CComPtr<IShellItem2> pDestShellItem;
 
-			HRESULT hr = ::SHCreateItemFromIDList(spOtherView->GetGridView()->GetFolder()->GetAbsolutePidl(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
-			if (FAILED(hr)) { break; }
-			m_spCurView->GetGridView()->CopyTo(pDestShellItem);
+				HRESULT hr = ::SHCreateItemFromIDList(spOtherView->GetGridView()->GetFolder()->GetAbsolutePidl(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
+				if (FAILED(hr)) { break; }
+				m_spCurView->GetGridView()->CopyTo(pDestShellItem);
+			}
+			bHandled = TRUE;
 		}
 		break;
 	case VK_F6:
 		{
-			std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
-			CComPtr<IShellItem2> pDestShellItem;
+			int okcancel = ::MessageBox(m_hWnd, L"Move?", L"Move?", MB_OKCANCEL);
+			if (okcancel == IDOK) {
+				std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
+				CComPtr<IShellItem2> pDestShellItem;
 
-			HRESULT hr = ::SHCreateItemFromIDList(spOtherView->GetGridView()->GetFolder()->GetAbsolutePidl(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
-			if (FAILED(hr)) { break; }
-			m_spCurView->GetGridView()->MoveTo(pDestShellItem);
-		}
+				HRESULT hr = ::SHCreateItemFromIDList(spOtherView->GetGridView()->GetFolder()->GetAbsolutePidl(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
+				if (FAILED(hr)) { break; }
+				m_spCurView->GetGridView()->MoveTo(pDestShellItem);
+			}
+			bHandled = TRUE;
+	}
 		break;
 	default:
 		break;
 	}
+	bHandled = FALSE;
 	return 0;
 }
 
