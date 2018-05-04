@@ -3,13 +3,6 @@
 
 class CFileLastWriteColumn:public CParentDefaultMapColumn
 {
-private:
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, unsigned int version)
-    {
-		ar & boost::serialization::make_nvp("ParentDefaultMapColumn", boost::serialization::base_object<CParentDefaultMapColumn>(*this));
-	}
 public:
 	CFileLastWriteColumn(CGridView* pGrid = nullptr);
 	~CFileLastWriteColumn(void){}

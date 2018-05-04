@@ -1,5 +1,5 @@
 #pragma once
-#include "Sheet_WArchive.h"
+#include "MyFriendSerializer.h"
 class CSheet;
 class CCell;
 
@@ -20,23 +20,22 @@ protected:
 	bool m_bVisible; // Visible or not
 	bool m_bSelected; // Selected or not
 	bool m_bMeasureValid; // Measurement for width/height is valid or not
-
-	//boost::serialization
-    friend class boost::serialization::access;
-	BOOST_SERIALIZATION_SPLIT_MEMBER();
-    template <class Archive>
-    void save(Archive& ar, unsigned int version)const
-    {
-		ar & boost::serialization::make_nvp("visible", m_bVisible);
-    }
-    template <class Archive>
-    void load(Archive& ar, unsigned int version)
-    {
+public:
+	FRIEND_SERIALIZER;
+	template <class Archive>
+	void save(Archive& ar)
+	{
+		ar("visible", m_bVisible);
+	}
+	template <class Archive>
+	void load(Archive& ar)
+	{
 		//TODO m_pSheet = static_cast<sheet_xml_wiarchive&>(ar).GetSheetPtr();
 
-		ar & boost::serialization::make_nvp("visible", m_bVisible);
+		ar("visible", m_bVisible);
 		m_bMeasureValid = true;//Width or Height are serialized
-    }
+	}
+
 public:
 	//Constructor
 	CBand(CSheet* pSheet = nullptr)
@@ -56,15 +55,14 @@ public:
 	void SetSheetPtr(CSheet* pSheet){m_pSheet = pSheet;}
 	bool GetMeasureValid()const{return m_bMeasureValid;}
 	void SetMeasureValid(bool bMeasureValid){m_bMeasureValid = bMeasureValid;}
-	virtual coordinates_type Offset()const=0;
+	virtual coordinates_type Offset()const {return kInvalidIndex;}// = 0;
 	virtual bool GetVisible()const{return m_bVisible;}
-	virtual void SetVisible(const bool& bVisible, bool notify = true)=0;
+	virtual void SetVisible(const bool& bVisible, bool notify = true) {}//=0;
 	virtual bool GetSelected()const{return m_bSelected;}
-	virtual void SetSelected(const bool& bSelected)=0;
+	virtual void SetSelected(const bool& bSelected) {}//=0;
 	virtual bool IsDragTrackable()const{return false;}
-	virtual coordinates_type GetLeftTop()const = 0;
-	virtual coordinates_type GetRightBottom()/*TODO*/ = 0;
-	virtual void SetWidthHeightWithoutSignal(const coordinates_type&) = 0;
+	virtual coordinates_type GetLeftTop()const { return kInvalidIndex; }//= 0;
+	virtual coordinates_type GetRightBottom()/*TODO*/ { return kInvalidIndex; }//= 0;
+	virtual void SetWidthHeightWithoutSignal(const coordinates_type&) {}//= 0;
 };
 
-BOOST_CLASS_EXPORT_KEY(CBand);

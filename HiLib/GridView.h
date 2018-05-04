@@ -3,9 +3,8 @@
 #include "Sheet.h"
 #include "MyGdiPlusHelper.h"
 class IKeyObserver;
-#include "UnDoReDoManager.h"
 class CBackgroundProperty;
-//class IMouseState;
+class CGridViewProperty;
 struct CMouseStateMachine;
 
 
@@ -27,7 +26,6 @@ protected:
 	row_type m_rowHeaderHeader; /**< Header Header row */
 	row_type m_rowNameHeader; /**< Name Header row */
 	row_type m_rowFilter; /**< Filter row */
-	std::shared_ptr<CUnDoReDoManager> m_spUndoRedoManager; 
 	std::shared_ptr<CMouseStateMachine> m_pMouseStateMachine;
 	//IMouseState* m_pMouseState;
 private:
@@ -41,6 +39,7 @@ private:
 
 
 	//std::mutex m_mtx;
+	std::shared_ptr<CGridViewProperty> m_spGridViewProp;
 	std::shared_ptr<int> m_spDeltaScroll;
 	std::shared_ptr<CBackgroundProperty> m_spBackgroundProperty;
 
@@ -58,15 +57,12 @@ public:
 
 public:
 	CGridView(
-			std::shared_ptr<CBackgroundProperty> spBackgroundProperty,
-			std::shared_ptr<CCellProperty> spPropHeader,
-			std::shared_ptr<CCellProperty> spPropFilter,
-			std::shared_ptr<CCellProperty> spPropCell,
-			std::shared_ptr<int> spDeltaScroll,
+			std::shared_ptr<CGridViewProperty> spGridViewProp,
 			CMenu* pContextMenu= &CGridView::ContextMenu);
 	virtual ~CGridView(){}
+
+	std::shared_ptr<CGridViewProperty>& GetGridViewProp() { return m_spGridViewProp; }
 	void SetEditRect(CRect rcEdit){m_spEditRect = std::make_shared<CRect>(rcEdit);}
-	std::shared_ptr<CUnDoReDoManager>& GetUndoReDoManagerPtr(){return m_spUndoRedoManager;}
 protected:
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnClose(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -150,8 +146,6 @@ public:
 	virtual LRESULT OnCommandDelete(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled){return 0;}
 	virtual LRESULT OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	virtual LRESULT OnCommandPaste(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled){return 0;}
-	virtual LRESULT OnCommandUnDo(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
-	virtual LRESULT OnCommandReDo(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	virtual LRESULT OnCommandFind(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	void FindNext(const std::wstring& findWord, bool matchCase, bool matchWholeWord);
 	void FindPrev(const std::wstring& findWord, bool matchCase, bool matchWholeWord);
@@ -185,12 +179,7 @@ std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
 
 		Status SaveGIFWithNewColorTable(Image *pImage,IStream* pIStream,const CLSID* clsidEncoder,DWORD nColors,BOOL fTransparent);
 
-	virtual CColumn* GetParentColumnPtr(CCell* pCell)override;
-
-	virtual void MoveColumn(size_type colTo, column_type spFromColumn)override;
-	virtual void EraseColumn(column_type spColumn)override;
-	virtual void InsertColumn(size_type colTo, column_type pColumn)override;
-	
+	virtual CColumn* GetParentColumnPtr(CCell* pCell)override;	
 	
 	HGLOBAL GetPaintMetaFileData();
 	HENHMETAFILE GetPaintEnhMetaFileData();

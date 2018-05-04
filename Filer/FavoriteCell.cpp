@@ -19,7 +19,12 @@ std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
 	auto pRow = static_cast<CFavoriteRow*>(m_pRow);
 	auto pCol = static_cast<CFavoritesColumn*>(m_pColumn);
 	if (!pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetShellFile()) {
-		pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(std::make_shared<CShellFile>(pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetPath()));
+		if (pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetPath().empty()) {
+			pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(std::make_shared<CShellFile>());
+		}
+		else {
+			pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(std::make_shared<CShellFile>(pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetPath()));
+		}
 	}
 	return pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetShellFile();
 }

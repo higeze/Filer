@@ -9,27 +9,6 @@ class CParentMapColumn:public CParentColumn
 {
 protected:
 	std::unordered_map<CRow*,cell_type> m_mapCell; /**<Map to hold row-cell*/
-	/**
-	 *  boost::serialization
-	 */
-    friend class boost::serialization::access;
-	BOOST_SERIALIZATION_SPLIT_MEMBER();
-  //  template <class Archive>
-  //  void serialize(Archive& ar, unsigned int version)
-  //  {
-		//ar & boost::serialization::make_nvp("ParentColumn", boost::serialization::base_object<CParentColumn>(*this));
-  //  }
-    template <class Archive>
-    void save(Archive& ar, unsigned int version)const
-    {
-		ar & boost::serialization::make_nvp("ParentColumn", boost::serialization::base_object<CParentColumn>(*this));
-    }
-    template <class Archive>
-    void load(Archive& ar, unsigned int version)
-    {
-		ar & boost::serialization::make_nvp("ParentColumn", boost::serialization::base_object<CParentColumn>(*this));
-		m_mapCell.clear();
-    }
 public:
 	/**
 	 *  Constructor
@@ -81,21 +60,8 @@ public:
 	virtual void Clear(){m_mapCell.clear();}
 };
 
-BOOST_CLASS_EXPORT_KEY(CParentMapColumn);
-
 class CParentDefaultMapColumn:public CParentMapColumn
 {
-protected:
-	/**
-	 *  boost::serialization
-	 */
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, unsigned int version)
-    {
-		ar & boost::serialization::make_nvp("ParentMapColumn", boost::serialization::base_object<CParentMapColumn>(*this));
-    }
-
 public:
 	/**
 	 *  Constructor
@@ -120,5 +86,3 @@ public:
 	cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
 
 };
-
-BOOST_CLASS_EXPORT_KEY(CParentDefaultMapColumn);

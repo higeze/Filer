@@ -128,7 +128,7 @@ void CTextCell::PaintBackground(CDC* pDC, CRect rcPaint)
 {
 	if(m_pEdit){
 		CRect rcContent(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
-		CRect rcCurEdit(m_pSheet->GetGridPtr()->GetScreenToClientRect(m_pEdit->GetWindowRect()));
+		CRect rcCurEdit(m_pSheet->GetGridPtr()->ScreenToClientRect(m_pEdit->GetWindowRect()));
 		m_pSheet->GetGridPtr()->SetEditRect(rcContent);
 		if(rcContent!=rcCurEdit){
 			m_pEdit->MoveWindow(rcContent,FALSE);

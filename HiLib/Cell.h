@@ -149,13 +149,4 @@ public:
 	//Clipboard
 	virtual bool IsClipboardCopyable()const{return false;}
 
-private:
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& archive, unsigned int version)
-    {
-    }
-
 };
-
-BOOST_CLASS_EXPORT_KEY(CCell);

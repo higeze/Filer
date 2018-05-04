@@ -34,6 +34,11 @@
 
 #include "FileNameCell.h"
 
+#include "MyMenu.h"
+#include "MenuItem.h"
+#include "ShowHideMenuItem.h"
+
+
 #define SCRATCH_QCM_FIRST 1
 #define SCRATCH_QCM_NEW 600//200,500 are used by system
 #define SCRATCH_QCM_LAST  0x7FFF
@@ -43,12 +48,13 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 UINT CFilerGridView::WM_CHANGED = ::RegisterWindowMessage(L"CFilerGridView::WM_CHANGED");
 
 CFilerGridView::CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty)
-			:CGridView(			
-			spGridViewProrperty->m_spBackgroundProperty,
-			spGridViewProrperty->m_spPropHeader,
-			spGridViewProrperty->m_spPropCell,
-			spGridViewProrperty->m_spPropCell,
-			spGridViewProrperty->m_spDeltaScroll)
+	:CGridView(spGridViewProrperty),
+	m_pRowHeaderColumn(std::make_shared<CParentRowHeaderColumn>(this)),
+	m_pIconColumn(std::make_shared<CFileIconColumn>(this)),
+	m_pNameColumn(std::make_shared<CFileNameColumn>(this)),
+	m_pExtColumn(std::make_shared<CFileExtColumn>(this)),
+	m_pSizeColumn(std::make_shared<CFileSizeColumn>(this)),
+	m_pLastColumn(std::make_shared<CFileLastWriteColumn>(this))
 {
 	m_cwa
 	.dwExStyle(WS_EX_ACCEPTFILES);
@@ -171,6 +177,37 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 
 	//Base Create
 	CGridView::OnCreate(uMsg,wParam,lParam,bHandled);
+
+	//Insert columns
+	if (m_columnAllDictionary.empty()) {
+		auto insertFun = [this](std::shared_ptr<CColumn> col, size_type defaultIndex) {
+			InsertColumnNotify(col->GetSerializedIndex() == CColumn::kInvalidIndex ? defaultIndex : col->GetSerializedIndex(), col, false);
+		};
+		insertFun(m_pRowHeaderColumn, CColumn::kMinIndex);
+		insertFun(m_pIconColumn, CColumn::kMaxIndex);
+		insertFun(m_pNameColumn, CColumn::kMaxIndex);
+		insertFun(m_pExtColumn, CColumn::kMaxIndex);
+		insertFun(m_pSizeColumn, CColumn::kMaxIndex);
+		insertFun(m_pLastColumn, CColumn::kMaxIndex);
+	}
+
+	//Header menu items
+	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
+		IDM_VISIBLEROWHEADERCOLUMN, L"Row", this, m_pRowHeaderColumn.get()));
+	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
+		IDM_VISIBLEICONCOLUMN, L"Icon", this, m_pIconColumn.get()));
+	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
+		IDM_VISIBLENAMECOLUMN, L"Name", this, m_pNameColumn.get()));
+	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
+		IDM_VISIBLEEXTCOLUMN, L"Ext", this, m_pExtColumn.get()));
+	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
+		IDM_VISIBLESIZECOLUMN, L"Size", this, m_pSizeColumn.get()));
+	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
+		IDM_VISIBLELASTCOLUMN, L"Last write", this, m_pLastColumn.get()));
+
+	for (auto& item : m_headerMenuItems) {
+		AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
+	}
 
 	return 0;
 }
@@ -421,43 +458,12 @@ void CFilerGridView::InsertDefaultRowColumn()
 	InsertRowNotify(CRow::kMinIndex,m_rowNameHeader);
 	InsertRowNotify(CRow::kMinIndex, m_rowHeader);
 
-	//HeaderColumn
-	auto pHeaderColumn=std::make_shared<CParentRowHeaderColumn>(this);
-	InsertColumnNotify(CColumn::kMinIndex,pHeaderColumn);
-	//IconColumn
-	{
-		auto pColumn = std::make_shared<CFileIconColumn>(this);
-		InsertColumnNotify(CColumn::kMaxIndex,pColumn);
-	}
-	//NameColumn
-	{
-		m_pNameColumn = std::make_shared<CFileNameColumn>(this);
-		InsertColumnNotify(CColumn::kMaxIndex, m_pNameColumn);
-	}
-
-	//ExtColumn
-	{
-		auto pColumn = std::make_shared<CFileExtColumn>(this);
-		InsertColumnNotify(CColumn::kMaxIndex,pColumn);
-	}
-
-	//SizeColumn
-	{
-		auto pColumn = std::make_shared<CFileSizeColumn>(this);
-		InsertColumnNotify(CColumn::kMaxIndex,pColumn);
-	}
-
-	//GetLastWriteColumn
-	{
-		auto pColumn = std::make_shared<CFileLastWriteColumn>(this);
-		InsertColumnNotify(CColumn::kMaxIndex,pColumn);
-	}
 }
 
 void CFilerGridView::Open(std::shared_ptr<CShellFile>& spFile)
 {
 	if (spFile->IsShellFolder()) {
-		OpenFolder(spFile->GetShellFolder());
+		OpenFolder(spFile->CastShellFolder());
 	}
 	else {
 		OpenFile(spFile);
@@ -847,10 +853,25 @@ void CFilerGridView::OnContextMenu(const ContextMenuEvent& e)
 	auto maxCol = GetMaxIndex<ColTag, VisTag>();
 	//auto minCol = colDictionary.begin()->DataPtr->GetIndex<VisTag>();
 	CPoint ptScreen(e.Point);
+	auto cell = Cell(e.Point);
 	ClientToScreen(ptScreen);
 	std::vector<PITEMID_CHILD> vPidl;
 
-	if(visibleIndexes.first > maxRow ||  visibleIndexes.second > maxCol){
+	if(cell->GetRowPtr() == m_rowHeader.get() || cell->GetRowPtr() == m_rowNameHeader.get()){
+		//CreateMenu
+		CMenu menu(::CreatePopupMenu());
+		if (menu.IsNull()) { return; }
+		for (auto& item : m_headerMenuItems) {
+			menu.InsertMenuItemW(menu.GetMenuItemCount(), TRUE, item.get());
+		}
+		menu.TrackPopupMenu(
+			TPM_LEFTALIGN | TPM_RIGHTBUTTON,
+			ptScreen.x,
+			ptScreen.y,
+			m_hWnd);
+
+
+	}else if(visibleIndexes.first > maxRow ||  visibleIndexes.second > maxCol){
 		CIDLPtr idl = m_spFolder->GetAbsolutePidl().GetPreviousIDLPtr();
 		CComPtr<IShellFolder> pDesktop;
 		::SHGetDesktopFolder(&pDesktop);

@@ -402,7 +402,7 @@ public:
 		if(!::ScreenToClient(m_hWnd,(LPPOINT)lpRect)){return FALSE;};
 		return ::ScreenToClient(m_hWnd,((LPPOINT)lpRect)+1);
 	}
-	CRect GetScreenToClientRect(LPRECT lpRect)
+	CRect ScreenToClientRect(LPRECT lpRect)
 	{
 		if(!::ScreenToClient(m_hWnd,(LPPOINT)lpRect)){return CRect();};
 		::ScreenToClient(m_hWnd,((LPPOINT)lpRect)+1);

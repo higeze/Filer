@@ -4,8 +4,6 @@
 #include "FilterCell.h"
 #include "Sheet.h"
 
-BOOST_CLASS_EXPORT_IMPLEMENT(CCompareColumn);
-
 CCompareColumn::CCompareColumn(CGridView* pGrid)
 	:CParentDefaultMapColumn(pGrid){}
 

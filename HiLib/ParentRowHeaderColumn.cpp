@@ -5,8 +5,6 @@
 #include "Cell.h"
 #include "ParentRowHeaderCell.h"
 
-BOOST_CLASS_EXPORT_IMPLEMENT(CParentRowHeaderColumn);
-
 CParentRowHeaderColumn::cell_type CParentRowHeaderColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CParentRowHeaderCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());

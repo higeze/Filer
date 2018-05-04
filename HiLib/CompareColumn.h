@@ -3,13 +3,6 @@
 
 class CCompareColumn:public CParentDefaultMapColumn
 {
-private:
-	friend class boost::serialization::access;
-	template<class Archive>
-	void serialize(Archive& ar, const unsigned int version)
-	{
-		ar & boost::serialization::make_nvp("ParentDefaultMapColumn", boost::serialization::base_object<CParentDefaultMapColumn>(*this));
-	}
 public:
 	CCompareColumn(CGridView* pGrid = nullptr);
 	virtual ~CCompareColumn(){}
@@ -25,5 +18,3 @@ public:
 	virtual cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual cell_type CellTemplate(CRow* pRow, CColumn* pColumn);
 };
-
-BOOST_CLASS_EXPORT_KEY(CCompareColumn);

@@ -275,9 +275,6 @@
     <ClInclude Include="..\HiLib\GridViewResource.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\IDoCommand.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\IKeyObserver.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -449,9 +446,6 @@
     <ClInclude Include="..\HiLib\Sheet.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\Sheet_WArchive.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\SheetCell.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -474,9 +468,6 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\UIElement.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\UnDoReDoManager.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\UpdateDialog.h">
@@ -513,6 +504,9 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="FilerTabGridView.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ShowHideMenuItem.h">
       <Filter>Filer</Filter>
     </ClInclude>
   </ItemGroup>
@@ -763,9 +757,6 @@
     <ClCompile Include="..\HiLib\UIElement.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\UnDoReDoManager.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -788,6 +779,9 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="FilerTabGridView.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>

@@ -51,6 +51,10 @@ CFilerWnd::CFilerWnd()
 	AddMsgHandler(WM_CLOSE,&CFilerWnd::OnClose,this);
 	AddMsgHandler(WM_DESTROY,&CFilerWnd::OnDestroy,this);
 	AddMsgHandler(WM_SETFOCUS, &CFilerWnd::OnSetFocus, this);
+
+	AddMsgHandler(WM_LBUTTONDOWN, &CFilerWnd::OnLButtonDown, this);
+	AddMsgHandler(WM_LBUTTONUP, &CFilerWnd::OnLButtonUp, this);
+	AddMsgHandler(WM_MOUSEMOVE, &CFilerWnd::OnMouseMove, this);
 	//AddMsgHandler(WM_KEYDOWN,&CFilerWnd::OnKeyDown,this);
 	//AddNtfyHandler(9996,TCN_KEYDOWN, [this](int id,LPNMHDR pnmh,BOOL& bHandled)->LRESULT{
 	//	this->OnKeyDown(WM_KEYDOWN, (WPARAM)((NMTCKEYDOWN*)pnmh)->wVKey, NULL, bHandled);
@@ -186,8 +190,39 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	applyCustomContextMenu(m_spLeftView->GetGridView());
 	applyCustomContextMenu(m_spRightView->GetGridView());
 
-	auto rcClient = GetClientRect();
-	PostMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
+	CRect rcClient = GetClientRect();
+	if (m_rcLeft.left == 0 && m_rcLeft.right == 0 && m_rcLeft.top == 0 && m_rcLeft.bottom == 0) {
+		//Initialize window position
+		CRect rcFavoriteClient = m_spFavoritesView->GetRect();
+		m_spFavoritesView->SetWindowPos(HWND_BOTTOM,
+			rcClient.left, rcClient.top,
+			rcFavoriteClient.Width(), rcClient.Height(),
+			SWP_SHOWWINDOW);
+
+		if (rcClient.Width() >= 800) {
+			m_spLeftView->SetWindowPos(HWND_BOTTOM,
+				rcClient.left + rcFavoriteClient.Width(), rcClient.top,
+				(rcClient.Width() - rcFavoriteClient.Width() - kSplitterWidth) / 2, rcClient.Height(),
+				SWP_SHOWWINDOW);
+			m_spRightView->SetWindowPos(HWND_BOTTOM,
+				rcClient.left + rcFavoriteClient.Width() + kSplitterWidth + (rcClient.Width() - rcFavoriteClient.Width() - kSplitterWidth) / 2, rcClient.top,
+				(rcClient.Width() - rcFavoriteClient.Width()) / 2, rcClient.Height(),
+				SWP_SHOWWINDOW);
+		}
+		else {
+			m_spLeftView->SetWindowPos(HWND_BOTTOM,
+				rcClient.left + rcFavoriteClient.Width(), rcClient.top,
+				rcClient.Width() - rcFavoriteClient.Width(), rcClient.Height(),
+				SWP_SHOWWINDOW);
+			m_spRightView->ShowWindow(SW_HIDE);
+		}
+		CRect rcc(m_spLeftView->GetClientRect());
+		m_rcLeft = ScreenToClientRect(m_spLeftView->GetWindowRect());
+	}
+	else {
+		PostMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
+	}
+
 
 	return 0;
 }
@@ -250,6 +285,60 @@ LRESULT CFilerWnd::OnDestroy(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	return 0;
 }
 
+LRESULT CFilerWnd::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	CPoint pt((short)LOWORD(lParam), (short)HIWORD(lParam));	
+	CRect leftRc(ScreenToClientRect(m_spLeftView->GetWindowRect()));
+
+	m_isSizing = (pt.x >= (leftRc.right)) &&
+		(pt.x <= (leftRc.right + kSplitterWidth));
+
+	if (m_isSizing)
+	{
+		m_ptStart = pt;
+		SetCapture();
+		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
+	}
+
+
+
+	return 0;
+}
+
+LRESULT CFilerWnd::OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) 
+{
+	if (m_isSizing)
+	{
+		m_ptStart.SetPoint(0, 0);
+		ReleaseCapture();
+		m_isSizing = false;
+	}
+	return 0;
+}
+
+LRESULT CFilerWnd::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	CPoint pt((short)LOWORD(lParam), (short)HIWORD(lParam));
+	CRect leftRc(ScreenToClientRect(m_spLeftView->GetWindowRect()));
+
+	if ((pt.x >= (leftRc.right)) &&
+		(pt.x <= (leftRc.right + kSplitterWidth)))
+	{
+		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
+	}
+
+	if (m_isSizing && wParam == MK_LBUTTON)
+	{
+		m_rcLeft = leftRc;
+		m_rcLeft.right += pt.x - m_ptStart.x;
+		m_ptStart = pt;
+		PostMessage(WM_SIZE, 0, 0);
+	}
+
+	return 0;
+}
+
+
 LRESULT CFilerWnd::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	CRect rcClient = GetClientRect();
@@ -261,20 +350,22 @@ LRESULT CFilerWnd::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
         rcFavoriteClient.Width(), rcClient.Height(),
         SWP_SHOWWINDOW);
 
-	if (rcClient.Width() >= 800) {
+	if (rcClient.Width() >= m_rcLeft.Width()) {
 		m_spLeftView->SetWindowPos(HWND_BOTTOM,
-			rcClient.left + rcFavoriteClient.Width(), rcClient.top,
-			(rcClient.Width() - rcFavoriteClient.Width())/2, rcClient.Height(),
+			m_rcLeft.left, m_rcLeft.top, m_rcLeft.Width(), rcClient.Height(),
 			SWP_SHOWWINDOW);
+		m_spLeftView->UpdateWindow();
 		m_spRightView->SetWindowPos(HWND_BOTTOM,
-			rcClient.left + rcFavoriteClient.Width() + (rcClient.Width() - rcFavoriteClient.Width()) / 2, rcClient.top,
-			(rcClient.Width() - rcFavoriteClient.Width()) / 2, rcClient.Height(),
+			m_rcLeft.right + kSplitterWidth, rcClient.top,
+			rcClient.right - (m_rcLeft.right + kSplitterWidth), rcClient.Height(),
 			SWP_SHOWWINDOW);
+		m_spRightView->UpdateWindow();
 	}else{
 		m_spLeftView->SetWindowPos(HWND_BOTTOM,
 			rcClient.left + rcFavoriteClient.Width(), rcClient.top,
 			rcClient.Width() - rcFavoriteClient.Width(), rcClient.Height(),
 			SWP_SHOWWINDOW);
+		m_spLeftView->UpdateWindow();
 		m_spRightView->ShowWindow(SW_HIDE);
 	}
 
@@ -318,14 +409,7 @@ LRESULT CFilerWnd::OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND h
 	CRect rc(0, 0, 0, 0);
 
 	auto pPropWnd = new CPropertyWnd<CApplicationProperty>(
-		m_spGridViewProp->m_spBackgroundProperty,
-		m_spGridViewProp->m_spPropHeader,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spPropHeader,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spDeltaScroll,
+		m_spGridViewProp,
 		L"GridViewProperty",
 		m_spApplicationProp);
 
@@ -353,14 +437,7 @@ LRESULT CFilerWnd::OnCommandGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCt
 	CRect rc(0,0,0,0);
 
 	auto pPropWnd=new CPropertyWnd<CGridViewProperty>(
-		m_spGridViewProp->m_spBackgroundProperty,
-		m_spGridViewProp->m_spPropHeader,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spPropHeader,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spDeltaScroll,
+		m_spGridViewProp,
 		L"GridViewProperty",
 		m_spGridViewProp);
 
@@ -387,14 +464,7 @@ LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndC
 	CRect rc(0,0,0,0);
 
 	auto pPropWnd=new CPropertyWnd<CFavoritesProperty>(
-		m_spGridViewProp->m_spBackgroundProperty,
-		m_spGridViewProp->m_spPropHeader,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spPropHeader,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spPropCell,
-		m_spGridViewProp->m_spDeltaScroll,
+		m_spGridViewProp,
 		L"FavoritesProperty",
 		m_spFavoritesView->GetFavoritesProp());
 

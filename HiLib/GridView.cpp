@@ -30,6 +30,7 @@
 
 #include "TextCell.h"
 #include "MouseStateMachine.h"
+#include "GridViewProperty.h"
 
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
@@ -37,19 +38,16 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 CMenu CGridView::ContextMenu;
 
 CGridView::CGridView(
-		std::shared_ptr<CBackgroundProperty> spBackgroundProperty,
-		std::shared_ptr<CCellProperty> spHeaderProperty,
-		std::shared_ptr<CCellProperty> spFilterProperty,
-		std::shared_ptr<CCellProperty> spCellProperty,
-		std::shared_ptr<int> spDeltaScroll,
+		std::shared_ptr<CGridViewProperty> spGridViewProp,
 		CMenu* pContextMenu)
-	:m_spBackgroundProperty(spBackgroundProperty), 
-	CSheet(spHeaderProperty,spFilterProperty,spCellProperty, pContextMenu?pContextMenu:&CGridView::ContextMenu),
-	m_spDeltaScroll(spDeltaScroll)/*,m_ptScroll(0,0)*/,
+	:
+	m_spGridViewProp(spGridViewProp),
+	m_spBackgroundProperty(spGridViewProp->m_spBackgroundProperty), 
+	CSheet(spGridViewProp->m_spPropHeader,spGridViewProp->m_spPropCell,spGridViewProp->m_spPropCell, pContextMenu?pContextMenu:&CGridView::ContextMenu),
+	m_spDeltaScroll(spGridViewProp->m_spDeltaScroll)/*,m_ptScroll(0,0)*/,
 	CWnd(),
 	m_filterIosv(),m_filterWork(m_filterIosv),m_filterTimer(m_filterIosv),
 	m_invalidateIosv(), m_invalidateWork(m_invalidateIosv), m_invalidateTimer(m_invalidateIosv),
-	m_spUndoRedoManager(std::make_shared<CUnDoReDoManager>()),
 	m_pMouseStateMachine(std::make_shared<CMouseStateMachine>(this))
 {
 	boost::thread th1(boost::bind(&boost::asio::io_service::run,&m_filterIosv));
@@ -487,12 +485,12 @@ LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	rgn.CreateRectRgnIndirect(rcClient);
 	if(m_vertical.IsWindowVisible()){	
 		CRgn rgnVert;
-		rgnVert.CreateRectRgnIndirect(GetScreenToClientRect(m_vertical.GetWindowRect()));
+		rgnVert.CreateRectRgnIndirect(ScreenToClientRect(m_vertical.GetWindowRect()));
 		rgn.CombineRgn(rgnVert,RGN_XOR);
 	}
 	if(m_horizontal.IsWindowVisible()){
 		CRgn rgnHorz;
-		rgnHorz.CreateRectRgnIndirect(GetScreenToClientRect(m_horizontal.GetWindowRect()));
+		rgnHorz.CreateRectRgnIndirect(ScreenToClientRect(m_horizontal.GetWindowRect()));
 		rgn.CombineRgn(rgnHorz,RGN_XOR);
 	}
 	if(m_spEditRect){
@@ -1397,42 +1395,6 @@ LRESULT CGridView::OnCommandResizeSheetCell(WORD wNotifyCode,WORD wID,HWND hWndC
 	return 0;
 }
 
-LRESULT CGridView::OnCommandUnDo(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-{
-	if(m_spUndoRedoManager->GetCanUnDo()){
-		m_spUndoRedoManager->UnDo();
-
-		PostUpdate(Updates::Column);
-		PostUpdate(Updates::ColumnVisible);
-		PostUpdate(Updates::Row);
-		PostUpdate(Updates::RowVisible);
-		PostUpdate(Updates::Scrolls);
-		PostUpdate(Updates::Invalidate);
-		SortAll();
-		FilterAll();
-		SubmitUpdate();
-	}
-	return 0;
-}
-
-LRESULT CGridView::OnCommandReDo(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-{
-	if(m_spUndoRedoManager->GetCanReDo()){
-		m_spUndoRedoManager->ReDo();
-
-		PostUpdate(Updates::Column);
-		PostUpdate(Updates::ColumnVisible);
-		PostUpdate(Updates::Row);
-		PostUpdate(Updates::RowVisible);
-		PostUpdate(Updates::Scrolls);
-		PostUpdate(Updates::Invalidate);
-		SortAll();
-		FilterAll();
-		SubmitUpdate();
-	}
-	return 0;
-}
-
 
 void CGridView::OnPaintAll(const PaintEvent& e)
 {
@@ -1920,29 +1882,11 @@ void CGridView::Clear()
 	m_rowHeaderHeader = row_type();
 	m_rowNameHeader=row_type();
 	m_rowFilter=row_type();
-
-	m_spUndoRedoManager->Clear();
 }
 
 CColumn* CGridView::GetParentColumnPtr(CCell* pCell)
 {
 	return pCell->GetColumnPtr();
-}
-
-void CGridView::MoveColumn(size_type colTo, column_type spFromColumn)
-{
-	m_spUndoRedoManager->Do(std::make_shared<MoveColumnCommand>(this, colTo, spFromColumn));
-}
-
-void CGridView::EraseColumn(column_type spColumn)
-{
-	m_spUndoRedoManager->Do(std::make_shared<EraseColumnCommand>(this, spColumn));
-
-}
-void CGridView::InsertColumn(size_type colTo, column_type spColumn)
-{
-	m_spUndoRedoManager->Do(std::make_shared<InsertColumnCommand>(this, colTo, spColumn));
-
 }
 
 LRESULT CGridView::OnCommandFind(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)

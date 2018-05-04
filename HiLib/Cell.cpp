@@ -17,8 +17,6 @@
 
 CMenu CCell::ContextMenu;
 
-BOOST_CLASS_EXPORT_IMPLEMENT(CCell);
-
 CCell::CCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellProperty> spProperty,CMenu* pContextMenu)
 	:m_pSheet(pSheet),
 	m_pRow(pRow),
@@ -106,13 +104,7 @@ CSize CCell::MeasureSizeWithFixedWidth(CDC* pDC)
 void CCell::SetString(const string_type& str)
 {
 	if(GetString()!=str){
-		//auto allRow = m_pRow->GetIndex<AllTag>();
-		//auto allCol = m_pColumn->GetIndex<AllTag>();
-		//auto pSheet = m_pSheet;
-		//m_pSheet->GetGridPtr()->GetUndoReDoManagerPtr()->Do(std::make_shared<CFullCommand>(m_pSheet->GetGridPtr(),[pSheet,allRow,allCol,str]()->void{pSheet->AllCell(allRow, allCol)->SetStringNotify(str);}));
-		//m_pSheet->GetGridPtr()->GetUndoReDoManagerPtr()->Do(std::make_shared<CColumnCommand>(m_pSheet->GetGridPtr(), m_pSheet->GetParentColumnPtr(this), [pSheet,allRow,allCol,str]()->void{pSheet->AllCell(allRow, allCol)->SetStringNotify(str);}));
-		m_pSheet->GetGridPtr()->GetUndoReDoManagerPtr()->Do(std::make_shared<CColumnsCommand>(m_pSheet->GetGridPtr(), m_pSheet->GetParentColumnPtr(this), [&]()->void{SetStringNotify(str);}));
-	
+		SetStringNotify(str);	
 	}
 }
 

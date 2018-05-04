@@ -15,13 +15,6 @@ private:
 	std::function<string_type(T&)> m_getFunction;
 	std::function<void(T&,string_type)> m_setFunction;
 
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, unsigned int version)
-    {
-		ar & boost::serialization::make_nvp("ParentDefaultMapColumn", boost::serialization::base_object<CParentDefaultMapColumn>(*this));
-		ar & boost::serialization::make_nvp("header",m_header);
-	}
 public:
 	CBindColumn():CParentDefaultMapColumn(){}
 	CBindColumn(CGridView* pGrid, string_type header, std::function<string_type(T&)> getFunction, std::function<void(T&,string_type)> setFunction)

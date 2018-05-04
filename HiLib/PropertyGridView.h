@@ -3,18 +3,14 @@
 
 class CCellProperty;
 class CBackgroundProperty;
+class CGridViewProperty;
 
 class CPropertyGridView:public CGridView
 {
 private:
 
 public:
-	CPropertyGridView(
-			std::shared_ptr<CBackgroundProperty> spBackgroundProperty,
-			std::shared_ptr<CCellProperty> spPropHeader,
-			std::shared_ptr<CCellProperty> spPropFilter,
-			std::shared_ptr<CCellProperty> spPropCell,
-			std::shared_ptr<int> spDeltaScroll);
+	CPropertyGridView(std::shared_ptr<CGridViewProperty> spGridViewProperty);
 	virtual ~CPropertyGridView(){}
 	boost::signals2::signal<void()> PropertyChanged;
 	virtual void EnsureVisibleCell(const cell_type& pCell){}

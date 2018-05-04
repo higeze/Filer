@@ -220,7 +220,6 @@
     <ClInclude Include="..\HiLib\GridView.h" />
     <ClInclude Include="..\HiLib\GridViewProperty.h" />
     <ClInclude Include="..\HiLib\GridViewResource.h" />
-    <ClInclude Include="..\HiLib\IDoCommand.h" />
     <ClInclude Include="..\HiLib\IDragger.h" />
     <ClInclude Include="..\HiLib\IKeyObserver.h" />
     <ClInclude Include="..\HiLib\IMouseObserver.h" />
@@ -286,12 +285,11 @@
     <ClInclude Include="..\HiLib\SheetEnums.h" />
     <ClInclude Include="..\HiLib\SheetEventArgs.h" />
     <ClInclude Include="..\HiLib\SheetStateMachine.h" />
-    <ClInclude Include="..\HiLib\Sheet_WArchive.h" />
+    <ClInclude Include="..\HiLib\ShowHideMenuItem.h" />
     <ClInclude Include="..\HiLib\SingletonMalloc.h" />
     <ClInclude Include="..\HiLib\TextCell.h" />
     <ClInclude Include="..\HiLib\Tracker.h" />
     <ClInclude Include="..\HiLib\UIElement.h" />
-    <ClInclude Include="..\HiLib\UnDoReDoManager.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
     <ClInclude Include="FilerTabGridView.h" />
@@ -388,12 +386,12 @@
     <ClCompile Include="..\HiLib\SheetCell.cpp" />
     <ClCompile Include="..\HiLib\SheetDictionary.cpp" />
     <ClCompile Include="..\HiLib\SheetStateMachine.cpp" />
+    <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp" />
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
     <ClCompile Include="..\HiLib\ThreadPool.h" />
     <ClCompile Include="..\HiLib\Tracker.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
-    <ClCompile Include="..\HiLib\UnDoReDoManager.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="DropSource.cpp" />
     <ClCompile Include="DropTarget.cpp" />

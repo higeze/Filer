@@ -13,5 +13,6 @@ public:
 	cell_type NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
 	cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn)override;
 	cell_type CellTemplate(CRow* pRow, CColumn* pColumn)override;
+
 };
 

@@ -40,22 +40,15 @@ public:
 
 public:
 	CPropertyWnd(
-		std::shared_ptr<CBackgroundProperty> spBackgroundProperty,
-		std::shared_ptr<CCellProperty> spPropHeader,
-		std::shared_ptr<CCellProperty> spPropFilter,
-		std::shared_ptr<CCellProperty> spPropCell,
-		std::shared_ptr<CCellProperty> spPropSheetCellHeader,
-		std::shared_ptr<CCellProperty> spPropSheetCellFilter,
-		std::shared_ptr<CCellProperty> spPropSheetCellCell,
-		std::shared_ptr<int> spDeltaScroll,
+		std::shared_ptr<CGridViewProperty> spGridViewProperty,
 		std::wstring wstrPropertyName,
 		std::shared_ptr<T> prop,
 		bool showDefault = true, bool showApply = true, bool isModal = false)
 		:CWnd(),
-		m_spGrid(std::make_shared<CPropertyGridView>(spBackgroundProperty,spPropHeader,spPropFilter,spPropCell,spDeltaScroll)),
-		m_spPropSheetCellHeader(spPropSheetCellHeader),
-		m_spPropSheetCellFilter(spPropSheetCellFilter),
-		m_spPropSheetCellCell(spPropSheetCellCell),
+		m_spGrid(std::make_shared<CPropertyGridView>(spGridViewProperty)),
+		m_spPropSheetCellHeader(spGridViewProperty->m_spPropHeader),
+		m_spPropSheetCellFilter(spGridViewProperty->m_spPropCell),
+		m_spPropSheetCellCell(spGridViewProperty->m_spPropCell),
 		m_wstrPropertyName(wstrPropertyName),
 		m_prop(prop),
 		m_showDefault(showDefault),

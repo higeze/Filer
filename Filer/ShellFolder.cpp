@@ -52,19 +52,12 @@ CShellFolder::CShellFolder(CComPtr<IShellFolder> pFolder, CComPtr<IShellFolder> 
 CShellFolder::CShellFolder(const std::wstring& path)
 	:CShellFile(path), m_folder()
 {
+	if (!m_absolutePidl.m_pIDL || !m_parentFolder) { m_folder = nullptr; return; }
 	CComPtr<IShellFolder> pDesktop;
 	::SHGetDesktopFolder(&pDesktop);
 
-	HRESULT hr = NULL;
-	if (path == L"") {
-		m_folder = pDesktop;
-	}
-	else {
-		::SHBindToObject(pDesktop, m_absolutePidl, 0, IID_IShellFolder, (void**)&m_folder);
-		if (!m_folder) {
-			m_folder = pDesktop;
-		}
-	}
+	HRESULT hr = ::SHBindToObject(pDesktop, m_absolutePidl, 0, IID_IShellFolder, (void**)&m_folder);
+	if (FAILED(hr)) { m_folder = nullptr; }
 }
 
 std::shared_ptr<CShellFolder> CShellFolder::GetParent()

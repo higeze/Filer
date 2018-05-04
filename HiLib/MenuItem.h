@@ -6,9 +6,11 @@ class CMenuItem
 protected:
 	MENUITEMINFO m_mii;
 public:
-	CMenuItem()
+	CMenuItem(WORD wID = 0)
 	{
-		::ZeroMemory(&m_mii,sizeof(MENUITEMINFO));m_mii.cbSize = sizeof(MENUITEMINFO);
+		::ZeroMemory(&m_mii,sizeof(MENUITEMINFO));
+		m_mii.cbSize = sizeof(MENUITEMINFO);
+		m_mii.wID = wID;
 	}
 	virtual ~CMenuItem(){}
 

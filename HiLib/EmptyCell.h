@@ -36,16 +36,7 @@ public:
 	virtual bool IsClipboardCopyable()const{return true;}
 	virtual std::wstring GetClipboardData()const{return std::wstring();}
 	virtual void SetClipboardData(const std::wstring& source){}
-private:
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& archive, unsigned int version)
-    {
-		archive & boost::serialization::make_nvp("cell",boost::serialization::base_object<CCell>(*this));
-    }
 };
-
-BOOST_CLASS_EXPORT_KEY(CEmptyCell);
 
 class CIncomparableEmptyCell:public CEmptyCell
 {

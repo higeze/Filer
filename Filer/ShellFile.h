@@ -64,7 +64,7 @@ public:
 	void Reset();
 	//
 	bool IsShellFolder()const;
-	std::shared_ptr<CShellFolder> GetShellFolder()const;
+	std::shared_ptr<CShellFolder> CastShellFolder()const;
 private:
 	void UpdateWIN32_FIND_DATA();
 

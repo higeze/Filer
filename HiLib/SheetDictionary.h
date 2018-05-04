@@ -1,6 +1,7 @@
 #pragma once
 class CRow;
 #include "Column.h"
+#include "MyFriendSerializer.h"
 
 struct Data
 {
@@ -10,15 +11,14 @@ struct Data
 	Data(size_type dispIndex = 0)
 		: Index(dispIndex){}
 	virtual ~Data(){}
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, unsigned int version)
-    {
-		ar & boost::serialization::make_nvp("index", Index);
+
+	FRIEND_SERIALIZER
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar("Index", Index);
 	}
 };
-
-BOOST_CLASS_EXPORT_KEY(Data);
 
 struct RowData:public Data
 {
@@ -28,6 +28,14 @@ struct RowData:public Data
 		: Data(dispIndex), DataPtr(rowPtr) {}
 	virtual ~RowData(){}
 	const CRow* Get()const{return DataPtr.get();}
+
+	FRIEND_SERIALIZER
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		Data::serialize(ar);
+		ar("Data", DataPtr);
+	}
 };
 
 struct ColumnData:public Data
@@ -38,16 +46,16 @@ struct ColumnData:public Data
 		: Data(dispIndex), DataPtr(columnPtr) {}
 	virtual ~ColumnData(){}
 	const CColumn* Get()const{return DataPtr.get();}
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, unsigned int version)
-    {
-		ar & boost::serialization::make_nvp("data", boost::serialization::base_object<Data>(*this));
-		ar & boost::serialization::make_nvp("dataptr", DataPtr);
+
+	FRIEND_SERIALIZER
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		Data::serialize(ar);
+		ar("Data", DataPtr);
 	}
 };
 
-BOOST_CLASS_EXPORT_KEY(ColumnData);
 
 struct IndexTag {};
 struct PointerTag {};

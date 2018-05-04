@@ -1,6 +1,7 @@
 #pragma once
 #include "Band.h"
 #include "SheetEnums.h"
+#include "MyFriendSerializer.h"
 class CCell;
 class CRow;
 struct ColTag;
@@ -17,21 +18,35 @@ protected:
 	coordinates_type m_width; //width
 	bool m_isInit; //if init is set, initial width is used
 	std::wstring m_filter; //Filter string
-public:
-	//boost::serialization
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, unsigned int version)
-    {
-		ar & boost::serialization::make_nvp("Band", boost::serialization::base_object<CBand>(*this));
+	size_type m_allIndex = kInvalidIndex;
 
-		ar & boost::serialization::make_nvp("sort", m_sort);
-		ar & boost::serialization::make_nvp("left", m_left);
-		ar & boost::serialization::make_nvp("width", m_width);
+public:
+	FRIEND_SERIALIZER
+	template <class Archive>
+	void save(Archive& ar)
+	{
+		CBand::save(ar);
+
+		ar("sort", m_sort);
+		ar("left", m_left);
+		ar("width", m_width);
 		m_isInit = false;
-		//m_isSerialized = true;
-		ar & boost::serialization::make_nvp("filter", m_filter);
-    }
+		ar("filter", m_filter);
+		m_allIndex = GetIndex<AllTag>();
+		ar("index", m_allIndex);
+	}
+	template <class Archive>
+	void load(Archive& ar)
+	{
+		CBand::load(ar);
+
+		ar("sort", m_sort);
+		ar("left", m_left);
+		ar("width", m_width);
+		m_isInit = false;
+		ar("filter", m_filter);
+		ar("index", m_allIndex);
+	}
 public:
 	//Constructor
 	CColumn(CSheet* pSheet = nullptr)
@@ -52,6 +67,7 @@ public:
 	virtual CColumn* CloneRaw()const{return nullptr;}
 	std::shared_ptr<CColumn> Clone()const{return std::shared_ptr<CColumn>(CloneRaw());}
 
+	virtual size_type GetSerializedIndex()const { return m_allIndex; }
 	virtual std::wstring GetFilter()const{return m_filter;}
 	virtual void SetFilter(const std::wstring& filter){m_filter = filter;}
 	virtual coordinates_type GetWidth();
@@ -74,10 +90,10 @@ public:
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::shared_ptr<CCell> spCellSrc){return false;}
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::wstring source){return false;}
 	virtual void Delete(std::shared_ptr<CCell> spCellDst){}
-	virtual cell_type& Cell(CRow* pRow)=0;
-	virtual cell_type HeaderCellTemplate( CRow* pRow,  CColumn* pColumn)=0;
-	virtual cell_type FilterCellTemplate( CRow* pRow,  CColumn* pColumn)=0;
-	virtual cell_type CellTemplate( CRow* pRow,  CColumn* pColumn)=0;
+	virtual cell_type& Cell(CRow* pRow) { return cell_type(nullptr); }//=0;
+	virtual cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn) { return cell_type(nullptr); }//=0;
+	virtual cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn) { return cell_type(nullptr); }//=0;
+	virtual cell_type CellTemplate(CRow* pRow, CColumn* pColumn) { return cell_type(nullptr); }//=0;
 	virtual void InsertNecessaryRows(){};
 	virtual coordinates_type GetLeftTop()const override { return GetLeft(); }
 	virtual coordinates_type GetRightBottom()/*TODO*/ override { return GetRight(); }
@@ -85,23 +101,12 @@ public:
 
 };
 
-BOOST_CLASS_EXPORT_KEY(CColumn);
-
 class CGridView;
 
 class CParentColumn:public CColumn
 {
 public:
 	static const coordinates_type kMinWidth = 2;
-protected:
-public:
-	//boost::serialization
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, unsigned int version)
-    {
-		ar & boost::serialization::make_nvp("Column", boost::serialization::base_object<CColumn>(*this));
-    }
 public:
 	//Constructor
 	CParentColumn(CGridView* pGrid = nullptr);
@@ -118,8 +123,6 @@ public:
 	virtual cell_type HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
 	virtual cell_type NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
 };
-
-BOOST_CLASS_EXPORT_KEY(CParentColumn);
 
 class CSheetCell;
 

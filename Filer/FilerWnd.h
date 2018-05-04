@@ -21,6 +21,8 @@ class CFilerWnd:public CWnd
 //public:
 //	static CUniqueIDFactory ControlIDFactory;
 private:
+	const int kSplitterWidth = 5;
+
 	CRect m_rcWnd;
 	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
 	std::shared_ptr<CGridViewProperty> m_spGridViewProp;
@@ -39,6 +41,9 @@ public:
 	virtual HWND Create(HWND hWndParent);
 	std::shared_ptr<CApplicationProperty> GetApplicationProperty() { return m_spApplicationProp; }
 	std::shared_ptr<CFavoritesGridView>& GetFavoritesView() { return m_spFavoritesView; }
+	std::shared_ptr<CFilerTabGridView>& GetLeftView() { return m_spLeftView; }
+	std::shared_ptr<CFilerTabGridView>& GetRightView() { return m_spRightView; }
+
 private:
 	std::shared_ptr<CShellFolder> GetShellFolderFromPath(const std::wstring& path);
 	//LRESULT OnTabContextMenu(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -50,6 +55,15 @@ private:
 	LRESULT OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+
+	bool m_isSizing = false;
+	CPoint m_ptStart;
+	CRect m_rcLeft;
+	LRESULT OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+
+
 
 	//LRESULT OnCommandNewTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	//LRESULT OnCommandCloneTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
@@ -73,6 +87,8 @@ public:
 			ar("WindowRectangle", m_rcWnd);
 		}
 
+		ar("LeftViewRect", m_rcLeft);
+
 		ar("GridViewProperty",m_spGridViewProp);
 
 		ar("FavoritesView", m_spFavoritesView);
@@ -91,6 +107,8 @@ public:
 		if(info == typeid(CSerializer&) || info == typeid(CDeserializer&)){ 
 			ar("WindowRectangle", m_rcWnd);
 		}
+
+		ar("LeftViewRect", m_rcLeft);
 
 		ar("GridViewProperty",m_spGridViewProp);
 

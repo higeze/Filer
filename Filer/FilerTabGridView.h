@@ -46,6 +46,7 @@ public:
 	LRESULT OnCommandCloseTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandCloseAllButThisTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	LRESULT OnCommandOpenSameAsOther(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 
 	LRESULT OnNotifyTabSelChanging(int id, LPNMHDR, BOOL& bHandled);
 	LRESULT OnNotifyTabSelChange(int id, LPNMHDR, BOOL& bHandled);
@@ -64,12 +65,14 @@ public:
 			m_vwPath.push_back(pair.second->GetPath());
 		}
 		ar("ViewPaths", m_vwPath);
+		ar("FilerView", m_spFilerView);
 	}
 
 	template <class Archive>
 	void load(Archive& ar)
 	{
 		ar("ViewPaths", m_vwPath);
+		ar("FilerView", m_spFilerView, m_spFilerView->GetGridViewProp());
 	}
 
 

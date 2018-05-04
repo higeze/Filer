@@ -9,8 +9,6 @@
 #include "Cell.h"
 #include "Row.h"
 
-BOOST_CLASS_EXPORT_IMPLEMENT(CParentMapColumn);
-
 CParentMapColumn::cell_type& CParentMapColumn::Cell(CRow* pRow )
 {
 	auto iter=m_mapCell.find(pRow);
@@ -56,8 +54,6 @@ CParentMapColumn::cell_type CParentMapColumn::CellTemplate(CRow* pRow, CColumn* 
 {
 	return std::make_shared<CTextCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 }
-
-BOOST_CLASS_EXPORT_IMPLEMENT(CParentDefaultMapColumn);
 
 CParentDefaultMapColumn::cell_type CParentDefaultMapColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {

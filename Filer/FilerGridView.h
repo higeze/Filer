@@ -7,8 +7,26 @@
 #include "GridViewProperty.h"
 
 #include "shobjidl.h"
+#include "MyFriendSerializer.h"
+#include "ParentRowHeaderColumn.h"
+#include "FileNameColumn.h"
+#include "FileIconColumn.h"
+#include "FileExtColumn.h"
+#include "FileSizeColumn.h"
+#include "FileLastWriteColumn.h"
+#include "MyXMLSerializer.h"
 
 #define WM_UAHMEASUREMENUITEM 0x0094
+
+#define REGISTER_POLYMORPHIC_RELATION(Base, Derived)\
+CSerializer::s_dynamicSerializeMap.insert(\
+	std::make_pair(typeid(Derived).name(), [](CSerializer* se, MSXML2::IXMLDOMElementPtr pElem, void* ptr) {\
+	se->SerializeValue(*(dynamic_cast<Derived*>(static_cast<Base*>(ptr))), pElem);\
+}));\
+CDeserializer::s_dynamicMakeSharedMap.insert(\
+	std::make_pair(typeid(Derived).name(), [this]()->std::shared_ptr<void> {\
+	return std::make_shared<Derived>(this);\
+}))
 
 class CCellEventArgs;
 class CShellFile;
@@ -16,9 +34,7 @@ class CShellFolder;
 class CFileDragger;
 class CIcon;
 class CDirectoryWatcher;
-class CFileNameColumn;
-//class CDropTarget;
-//class CDropSource;
+class CShowHideColumnMenuItem;
 
 namespace FilerColumn{
 	enum Type{
@@ -65,13 +81,23 @@ private:
 
 	//For New
 	bool m_bNewFile = false;
+	//Columns
+	std::shared_ptr<CParentRowHeaderColumn> m_pRowHeaderColumn;
+	std::shared_ptr<CFileIconColumn> m_pIconColumn;
 	std::shared_ptr<CFileNameColumn> m_pNameColumn;
+	std::shared_ptr<CFileExtColumn> m_pExtColumn;
+	std::shared_ptr<CFileSizeColumn> m_pSizeColumn;
+	std::shared_ptr<CFileLastWriteColumn> m_pLastColumn;
+
+	//HeaderMenuItems
+	std::vector<std::shared_ptr<CShowHideColumnMenuItem>> m_headerMenuItems;
 
 public:
 	CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty);
 	virtual ~CFilerGridView(){}
 	//getter
 	std::shared_ptr<CShellFolder>& GetFolder() { return m_spFolder; }
+
 	//signal
 	boost::signals2::signal<void(std::shared_ptr<CShellFolder>&)> FolderChanged;
 	std::function<void(CMenu&)> AddCustomContextMenu;
@@ -133,4 +159,60 @@ private:
 	
 	bool InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf);
 	bool InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl);
+
+public:
+	FRIEND_SERIALIZER
+	template <class Archive>
+	void save(Archive& ar)
+	{
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CParentRowHeaderColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileIconColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn);
+		//CSerializer::s_dynamicSerializeMap.insert(
+		//	std::make_pair(typeid(CParentRowHeaderColumn).name(), [](CSerializer* se, MSXML2::IXMLDOMElementPtr pElem, void* ptr) {
+		//	se->SerializeValue(*(dynamic_cast<CParentRowHeaderColumn*>(static_cast<CColumn*>(ptr))), pElem);
+		//}));
+		//CDeserializer::s_dynamicMakeSharedMap.insert(
+		//	std::make_pair(typeid(CParentRowHeaderColumn).name(), [this]()->std::shared_ptr<void>{
+		//	return std::make_shared<CParentRowHeaderColumn>(this);
+		//}));
+		std::vector<ColumnData> columns;
+		for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+			columns.push_back(*iter);
+		}
+		ar("Columns", columns);
+		//ar("ParentRowHeaderColumn", m_pRowHeaderColumn);
+		//ar("FileIconColumn", m_pIconColumn);
+		//ar("FileNameColumn", m_pNameColumn);
+		//ar("FileExtColumn", m_pExtColumn);
+		//ar("FileSizeColumn",m_pSizeColumn);
+		//ar("FileLastWriteColumn", m_pLastColumn);
+	}
+
+	template <class Archive>
+	void load(Archive& ar)
+	{
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CParentRowHeaderColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileIconColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn);
+		std::vector<ColumnData> columns;
+		ar("Columns", columns);
+		for (auto& col : columns) {
+			col.DataPtr->SetSheetPtr(this);
+			InsertColumnNotify(col.Index, col.DataPtr, false);
+		}
+		//ar("ParentRowHeaderColumn", m_pRowHeaderColumn, this);
+		//ar("FileIconColumn", m_pIconColumn, this);
+		//ar("FileNameColumn", m_pNameColumn, this);
+		//ar("FileExtColumn", m_pExtColumn, this);
+		//ar("FileSizeColumn", m_pSizeColumn, this);
+		//ar("FileLastWriteColumn", m_pLastColumn, this);
+	}
+
 };

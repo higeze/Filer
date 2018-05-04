@@ -7,16 +7,6 @@
  */
 class CParentRowHeaderColumn:public CParentMapColumn
 {
-protected:
-	/**
-	 *  boost::serialization
-	 */
-    friend class boost::serialization::access;
-    template <class Archive>
-    void serialize(Archive& ar, unsigned int version)
-    {
-		ar & boost::serialization::make_nvp("ParentMapColumn", boost::serialization::base_object<CParentMapColumn>(*this));
-    }
 public:
 	/**
 	 *  Constructor
@@ -54,5 +44,3 @@ public:
 	 */
 	virtual cell_type CellTemplate(CRow* pRow, CColumn* pColumn);
 };
-
-BOOST_CLASS_EXPORT_KEY(CParentRowHeaderColumn);

@@ -7,7 +7,6 @@
 /**
  *  CColumn
  */
-BOOST_CLASS_EXPORT_IMPLEMENT(CColumn);
 
 CColumn::coordinates_type CColumn::GetWidth()
 {
@@ -75,7 +74,6 @@ void CColumn::SetSort(const Sorts& sort)
 /**
  *  CParentColumn
  */
-BOOST_CLASS_EXPORT_IMPLEMENT(CParentColumn);
 
 CParentColumn::CParentColumn(CGridView* pGrid)
 	:CColumn(pGrid){} 

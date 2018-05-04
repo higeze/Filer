@@ -1,12 +1,8 @@
 #include "PropertyGridView.h"
+#include "GridViewProperty.h"
 
-CPropertyGridView::CPropertyGridView(
-	std::shared_ptr<CBackgroundProperty> spBackgroundProperty,
-	std::shared_ptr<CCellProperty> spPropHeader,
-	std::shared_ptr<CCellProperty> spPropFilter,
-	std::shared_ptr<CCellProperty> spPropCell,
-	std::shared_ptr<int> spDeltaScroll)
-	:CGridView(spBackgroundProperty,spPropHeader,spPropFilter,spPropCell,spDeltaScroll)
+CPropertyGridView::CPropertyGridView(std::shared_ptr<CGridViewProperty> spGridViewProperty)
+	:CGridView(spGridViewProperty)
 {
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()

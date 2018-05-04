@@ -320,29 +320,18 @@ CShellFile::CShellFile(const std::wstring& path) : m_parentFolder(), m_absoluteP
 	CComPtr<IShellFolder> pDesktop;
 	::SHGetDesktopFolder(&pDesktop);
 
-	HRESULT hr = 0;
-	if (path == L"") {
-		::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &m_absolutePidl);
-		m_parentFolder = pDesktop;
-	}
-	else {
-		ULONG         chEaten;
-		ULONG         dwAttributes;
-		hr = pDesktop->ParseDisplayName(
-			NULL,
-			NULL,
-			const_cast<LPWSTR>(path.c_str()),
-			&chEaten,
-			&m_absolutePidl,
-			&dwAttributes);
-		if (SUCCEEDED(hr))
-		{
-			::SHBindToObject(pDesktop, m_absolutePidl.GetPreviousIDLPtr(), 0, IID_IShellFolder, (void**)&m_parentFolder);
-			if (!m_parentFolder) {
-				m_parentFolder = pDesktop;
-			}
-		}
-	}
+	ULONG         chEaten;
+	ULONG         dwAttributes;
+	HRESULT hr = pDesktop->ParseDisplayName(
+		NULL,
+		NULL,
+		const_cast<LPWSTR>(path.c_str()),
+		&chEaten,
+		&m_absolutePidl,
+		&dwAttributes);
+	if (FAILED(hr)) { m_parentFolder = nullptr; m_absolutePidl = CIDLPtr(); return; }
+	hr = ::SHBindToObject(pDesktop, m_absolutePidl.GetPreviousIDLPtr(), 0, IID_IShellFolder, (void**)&m_parentFolder);
+	if (FAILED(hr)) { m_parentFolder = nullptr; m_absolutePidl = CIDLPtr(); return; }
 }
 
 CShellFile::CShellFile(CComPtr<IShellFolder> pfolder, CIDLPtr absolutePidl)
@@ -372,7 +361,7 @@ bool CShellFile::IsShellFolder()const
 
 }
 
-std::shared_ptr<CShellFolder> CShellFile::GetShellFolder()const
+std::shared_ptr<CShellFolder> CShellFile::CastShellFolder()const
 {
 	if (IsShellFolder()) {
 		CComPtr<IShellFolder> pDesktop;

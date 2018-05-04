@@ -25,7 +25,7 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<CGridViewProperty> spGridVi
 	AddCmdIDHandler(IDM_CLOSETAB, &CFilerTabGridView::OnCommandCloseTab, this);
 	AddCmdIDHandler(IDM_CLOSEALLBUTTHISTAB, &CFilerTabGridView::OnCommandCloseAllButThisTab, this);
 	AddCmdIDHandler(IDM_ADDTOFAVORITE, &CFilerTabGridView::OnCommandAddToFavorite, this);
-
+	AddCmdIDHandler(IDM_OPENSAMEASOTHER, &CFilerTabGridView::OnCommandOpenSameAsOther, this);
 }
 
 LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -90,14 +90,14 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 		for (auto path : m_vwPath) {
 			//ShellFolder
 			auto pFolder = std::make_shared<CShellFolder>(path);
-			if (pFolder) {
-				//New id for association
-				unsigned int id = m_uniqueIDFactory.NewID();
-				//CTabCtrol
-				int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetName().c_str(), NULL, (LPARAM)id);
-				//CFilerGridView
-				m_viewMap.insert(std::make_pair(id, pFolder));
-			}
+			if (!pFolder->GetShellFolderPtr()) { pFolder = std::make_shared<CShellFolder>(); }
+
+			//New id for association
+			unsigned int id = m_uniqueIDFactory.NewID();
+			//CTabCtrol
+			int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetName().c_str(), NULL, (LPARAM)id);
+			//CFilerGridView
+			m_viewMap.insert(std::make_pair(id, pFolder));
 		}
 	}
 
@@ -324,6 +324,29 @@ LRESULT CFilerTabGridView::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HW
 	return 0;
 }
 
+LRESULT CFilerTabGridView::OnCommandOpenSameAsOther(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	//TODO Bad connection between FilerTabGridView and FavoritesView
+	unsigned int id = (unsigned int)GetItemParam(m_contextMenuTabIndex);
+	auto iter = m_viewMap.find(id);
+	if (iter != m_viewMap.end()) {
+		if (auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)) {
+			
+			std::shared_ptr<CFilerTabGridView> otherView;
+
+			if (this == p->GetLeftView().get()) {
+				otherView = p->GetRightView();
+			}
+			else {
+				otherView = p->GetLeftView();
+			}
+			
+			GetGridView()->OpenFolder(otherView->GetGridView()->GetFolder());
+
+		}
+	}
+	return 0;
+}
 
 
 
