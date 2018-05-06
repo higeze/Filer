@@ -67,6 +67,8 @@ CFilerWnd::CFilerWnd()
 	AddCmdIDHandler(IDM_APPLICATIONOPTION, &CFilerWnd::OnCommandApplicationOption, this);
 	AddCmdIDHandler(IDM_GRIDVIEWOPTION,&CFilerWnd::OnCommandGridViewOption,this);
 	AddCmdIDHandler(IDM_FAVORITESOPTION,&CFilerWnd::OnCommandFavoritesOption,this);
+	AddCmdIDHandler(IDM_LEFTVIEWOPTION, &CFilerWnd::OnCommandLeftViewOption, this);
+	AddCmdIDHandler(IDM_RIGHTVIEWOPTION, &CFilerWnd::OnCommandRightViewOption, this);
 }
 
 CFilerWnd::~CFilerWnd(){}
@@ -478,6 +480,43 @@ LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndC
 	rc=CRect(pPropWnd->GetGridView()->MeasureSize());
 	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
 	pPropWnd->MoveWindow(0,0,rc.Width()+::GetSystemMetrics(SM_CXVSCROLL),min(500,rc.Height()+::GetSystemMetrics(SM_CYVSCROLL)+10),FALSE);
+	pPropWnd->CenterWindow();
+	pPropWnd->ShowWindow(SW_SHOW);
+	pPropWnd->UpdateWindow();
+
+	return 0;
+}
+
+LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	return OnCommandViewOption(m_spLeftView);
+}
+
+LRESULT CFilerWnd::OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	return OnCommandViewOption(m_spRightView);
+}
+
+
+LRESULT CFilerWnd::OnCommandViewOption(std::shared_ptr<CFilerTabGridView>& view)
+{
+	CRect rc(0, 0, 0, 0);
+
+	auto pPropWnd = new CPropertyWnd<CFilerTabGridView, std::shared_ptr<CGridViewProperty>>(
+		m_spGridViewProp,
+		L"View",
+		view,
+		m_spGridViewProp);
+
+	pPropWnd->PropertyChanged.connect([&](const std::wstring& str)->void {
+		view->GetGridView()->UpdateAll();
+		SerializeProperty(this);
+	});
+
+	pPropWnd->Create(m_hWnd, rc);
+	rc = CRect(pPropWnd->GetGridView()->MeasureSize());
+	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
+	pPropWnd->MoveWindow(0, 0, rc.Width() + ::GetSystemMetrics(SM_CXVSCROLL), min(500, rc.Height() + ::GetSystemMetrics(SM_CYVSCROLL) + 10), FALSE);
 	pPropWnd->CenterWindow();
 	pPropWnd->ShowWindow(SW_SHOW);
 	pPropWnd->UpdateWindow();

@@ -23,9 +23,13 @@ CSerializer::s_dynamicSerializeMap.insert(\
 	std::make_pair(typeid(Derived).name(), [](CSerializer* se, MSXML2::IXMLDOMElementPtr pElem, void* ptr) {\
 	se->SerializeValue(*(dynamic_cast<Derived*>(static_cast<Base*>(ptr))), pElem);\
 }));\
+CDeserializer::s_dynamicDeserializeMap.insert(\
+	std::make_pair(typeid(Derived).name(), [](CDeserializer* se, MSXML2::IXMLDOMElementPtr pElem, void* ptr) {\
+	se->DeserializeElement(*(dynamic_cast<Derived*>(static_cast<Base*>(ptr))), pElem);\
+}));\
 CDeserializer::s_dynamicMakeSharedMap.insert(\
 	std::make_pair(typeid(Derived).name(), [this]()->std::shared_ptr<void> {\
-	return std::make_shared<Derived>(this);\
+	return std::make_shared<Derived>();\
 }))
 
 class CCellEventArgs;
@@ -82,12 +86,7 @@ private:
 	//For New
 	bool m_bNewFile = false;
 	//Columns
-	std::shared_ptr<CParentRowHeaderColumn> m_pRowHeaderColumn;
-	std::shared_ptr<CFileIconColumn> m_pIconColumn;
 	std::shared_ptr<CFileNameColumn> m_pNameColumn;
-	std::shared_ptr<CFileExtColumn> m_pExtColumn;
-	std::shared_ptr<CFileSizeColumn> m_pSizeColumn;
-	std::shared_ptr<CFileLastWriteColumn> m_pLastColumn;
 
 	//HeaderMenuItems
 	std::vector<std::shared_ptr<CShowHideColumnMenuItem>> m_headerMenuItems;
@@ -145,6 +144,8 @@ public:
 	std::vector<LPITEMIDLIST> GetSelectedAbsolutePIDLVector();
 
 private:
+	//Drag & Drop
+	void Dropped(IDataObject *pDataObj, DWORD dwEffect);
 
 	//DirectoryWatch action
 	void Added(const std::wstring& fileName);
@@ -171,25 +172,12 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn);
-		//CSerializer::s_dynamicSerializeMap.insert(
-		//	std::make_pair(typeid(CParentRowHeaderColumn).name(), [](CSerializer* se, MSXML2::IXMLDOMElementPtr pElem, void* ptr) {
-		//	se->SerializeValue(*(dynamic_cast<CParentRowHeaderColumn*>(static_cast<CColumn*>(ptr))), pElem);
-		//}));
-		//CDeserializer::s_dynamicMakeSharedMap.insert(
-		//	std::make_pair(typeid(CParentRowHeaderColumn).name(), [this]()->std::shared_ptr<void>{
-		//	return std::make_shared<CParentRowHeaderColumn>(this);
-		//}));
+
 		std::vector<ColumnData> columns;
 		for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
 			columns.push_back(*iter);
 		}
 		ar("Columns", columns);
-		//ar("ParentRowHeaderColumn", m_pRowHeaderColumn);
-		//ar("FileIconColumn", m_pIconColumn);
-		//ar("FileNameColumn", m_pNameColumn);
-		//ar("FileExtColumn", m_pExtColumn);
-		//ar("FileSizeColumn",m_pSizeColumn);
-		//ar("FileLastWriteColumn", m_pLastColumn);
 	}
 
 	template <class Archive>
@@ -201,18 +189,23 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn);
+
 		std::vector<ColumnData> columns;
-		ar("Columns", columns);
-		for (auto& col : columns) {
-			col.DataPtr->SetSheetPtr(this);
-			InsertColumnNotify(col.Index, col.DataPtr, false);
+		for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+			columns.push_back(*iter);
 		}
-		//ar("ParentRowHeaderColumn", m_pRowHeaderColumn, this);
-		//ar("FileIconColumn", m_pIconColumn, this);
-		//ar("FileNameColumn", m_pNameColumn, this);
-		//ar("FileExtColumn", m_pExtColumn, this);
-		//ar("FileSizeColumn", m_pSizeColumn, this);
-		//ar("FileLastWriteColumn", m_pLastColumn, this);
+		ar("Columns", columns);
+
+		if (m_columnAllDictionary.empty()) {
+
+			for (auto& col : columns) {
+				if (auto p = std::dynamic_pointer_cast<CFileNameColumn>(col.DataPtr)) {
+					m_pNameColumn = p;
+				}
+				col.DataPtr->SetSheetPtr(this);
+				InsertColumnNotify(col.Index, col.DataPtr, false);
+			}
+		}
 	}
 
 };

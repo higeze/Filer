@@ -19,73 +19,7 @@
 
 #include "PropertySheetCell.h"
 #include <type_traits>
-class CCellSerializer;
-
-
-#define ENABLE_IF_DEFAULT typename std::enable_if<\
-									!has_serialize<T,CCellSerializer>::value &&\
-									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
-									!std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
-
-#define ENABLE_IF_ENUM typename std::enable_if<\
-									!has_serialize<T,CCellSerializer>::value &&\
-									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
-										std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
-
-#define ENABLE_IF_SERIALIZE typename std::enable_if<\
-										has_serialize<T,CCellSerializer>::value &&\
-									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
-									!std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
-
-#define ENABLE_IF_VECTOR typename std::enable_if<\
-									!has_serialize<T,CCellSerializer>::value &&\
-									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
-									!std::is_enum<T>::value &&\
-										is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
-
-#define ENABLE_IF_SHARED_PTR typename std::enable_if<\
-									!has_serialize<T,CCellSerializer>::value &&\
-									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
-									!std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-										is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
-
-#define ENABLE_IF_PTR typename std::enable_if<\
-									!has_serialize<T,CCellSerializer>::value &&\
-									!(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
-									!std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-										std::is_pointer<T>::value\
-									>::type* = 0
-
-
-#define ENABLE_IF_SAVE_LOAD typename std::enable_if<\
-									!has_serialize<T,CCellSerializer>::value &&\
-										(has_save<T,CCellSerializer>::value && has_load<T,CCellSerializer>::value) &&\
-									!std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
-
+#include "SerializerEnableIf.h"
 
 class CCellSerializer
 {
@@ -213,6 +147,7 @@ public:
 	{
 		pCol->Cell(pRow)->SetStringCore(str2wstr(t));
 	}
+
 	//For Color
 	void SerializeValue(CColor& t,CRow* pRow,CColumn* pCol)
 	{
@@ -280,9 +215,38 @@ public:
 		}
 	}
 
+	//For save load
+	template<class T>
+	void SerializeValue(T& t, CRow* pRow, CColumn* pCol, ENABLE_IF_SAVE_LOAD)
+	{
+		if (auto spSheet = m_pSheet.lock()) {
+			std::shared_ptr<CSheetCell> spSheetCell(
+				std::make_shared<CSheetCell>(
+					spSheet.get(),
+					pRow,
+					pCol,
+					spSheet->GetCellProperty(),
+					m_spPropSheetCellHeader,
+					m_spPropSheetCellFilter,
+					m_spPropSheetCellCell));
+
+			pCol->Cell(pRow) = spSheetCell;
+
+			t.save(CCellSerializer(std::dynamic_pointer_cast<CSheet>(spSheetCell), m_spPropSheetCellHeader, m_spPropSheetCellFilter, m_spPropSheetCellCell));
+			spSheetCell->UpdateAll();
+		}
+	}
+
+	//For ptr
+	template<class T>
+	void SerializeValue(T& t, CRow* pRow, CColumn* pCol, ENABLE_IF_PTR)
+	{
+		SerializeValue(*t, pRow, pCol);
+	}
+
 	//For vector
 	template<class T>
-	void SerializeValue(T& t,CRow* pRow,CColumn* pCol,ENABLE_IF_VECTOR)
+	void SerializeValue(std::vector<T>& t,CRow* pRow,CColumn* pCol)
 	{
 		if(auto spSheet=m_pSheet.lock()){
 			std::shared_ptr<CRow> spRow;
@@ -320,38 +284,9 @@ public:
 	}
 	//For shared_ptr
 	template<class T>
-	void SerializeValue(T& t,CRow* pRow,CColumn* pCol,ENABLE_IF_SHARED_PTR)
+	void SerializeValue(std::shared_ptr<T>& t,CRow* pRow,CColumn* pCol)
 	{
 		SerializeValue(*t,pRow,pCol);
-	}
-
-	//For ptr
-	template<class T>
-	void SerializeValue(T& t, CRow* pRow, CColumn* pCol, ENABLE_IF_PTR)
-	{
-		SerializeValue(*t, pRow, pCol);
-	}
-
-	//For save load
-	template<class T>
-	void SerializeValue(T& t,CRow* pRow,CColumn* pCol,ENABLE_IF_SAVE_LOAD)
-	{
-		if(auto spSheet=m_pSheet.lock()){
-			std::shared_ptr<CSheetCell> spSheetCell(
-				std::make_shared<CSheetCell>(
-				spSheet.get(),
-				pRow,
-				pCol,
-				spSheet->GetCellProperty(),
-				m_spPropSheetCellHeader,
-				m_spPropSheetCellFilter,
-				m_spPropSheetCellCell));
-
-			pCol->Cell(pRow)=spSheetCell;
-
-			t.save(CCellSerializer(std::dynamic_pointer_cast<CSheet>(spSheetCell),m_spPropSheetCellHeader,m_spPropSheetCellFilter,m_spPropSheetCellCell));
-			spSheetCell->UpdateAll();
-		}
 	}
 };
 
@@ -412,6 +347,25 @@ public:
 		}
 	}
 
+	template<class char_type, class T, class U>
+	void operator()(const char_type* lpszName, T& t, U& u)
+	{
+		if (auto spSheet = m_pSheet.lock()) {
+			if (!spSheet->Empty()) {
+				std::wstring wstrName(lpszName, (lpszName + strlen(lpszName)));
+				auto pCol = spSheet->Index2Pointer<ColTag, AllTag>(0);
+				for (auto rowIter = spSheet->RowAllBegin(), rowEnd = spSheet->RowAllEnd(); rowIter != rowEnd; ++rowIter) {
+					auto pCell = CSheet::Cell(rowIter->DataPtr, pCol);
+					if (m_setCellPtr.find(pCell.get()) == m_setCellPtr.end() && pCol->Cell(rowIter->DataPtr.get())->GetString() == wstrName) {
+						m_setCellPtr.insert(pCell.get());
+						DeserializeValue(t, rowIter->DataPtr.get(), spSheet->Index2Pointer<ColTag, AllTag>(1).get());
+						break;
+					}
+				}
+			}
+		}
+	}
+
 	//For base
 	template<class T>
 	void DeserializeValue(T& t,CRow* pRow,CColumn* pColumn,ENABLE_IF_DEFAULT)
@@ -454,43 +408,36 @@ public:
 		}
 	}
 
+	//For save load
+	template<class T>
+	void DeserializeValue(T& t, CRow* pRow, CColumn* pColumn, ENABLE_IF_SAVE_LOAD)
+	{
+		if (auto pSheet = std::dynamic_pointer_cast<CSheet>(pColumn->Cell(pRow))) {
+			t.load(CCellDeserializer(pSheet));
+		}
+	}
+
 	//For vector
 	template<class T>
-	void DeserializeValue(T& t,CRow* pRow,CColumn* pColumn,ENABLE_IF_VECTOR)
+	void DeserializeValue(std::vector<T>& t,CRow* pRow,CColumn* pColumn)
 	{
-		t.clear();
+		//t.clear();
 		if(auto spSheet = std::dynamic_pointer_cast<CSheet>(CSheet::Cell(pRow, pColumn))){
 			auto& rowAllDict = spSheet->RowAllDictionary();
 			auto& rowDict = rowAllDict.get<IndexTag>();
 			for(auto rowIter=rowDict.find(0);rowIter!=rowDict.end();rowIter++){
-				T::value_type val;
-				DeserializeValue(val,rowIter->DataPtr.get(),spSheet->Index2Pointer<ColTag, AllTag>(1).get());
-				t.push_back(val);
+				//T val;
+				DeserializeValue(t.at((size_t)std::distance(rowDict.find(0), rowIter)),rowIter->DataPtr.get(),spSheet->Index2Pointer<ColTag, AllTag>(1).get());
+				//t.push_back(val);
 			}
 			
 		}
 	}
 	//For shared_ptr
 	template<class T>
-	void DeserializeValue(T& t,CRow* pRow,CColumn* pColumn,ENABLE_IF_SHARED_PTR)
+	void DeserializeValue(std::shared_ptr<T>& t,CRow* pRow,CColumn* pColumn)
 	{
 		DeserializeValue(*t,pRow,pColumn);
 	}
-
-	//For save load
-	template<class T>
-	void DeserializeValue(T& t,CRow* pRow,CColumn* pColumn,ENABLE_IF_SAVE_LOAD)
-	{
-		if(auto pSheet=std::dynamic_pointer_cast<CSheet>(pColumn->Cell(pRow))){
-			t.load(CCellDeserializer(pSheet));
-		}
-	}
 };
-
-#undef ENABLE_IF_DEFAULT
-#undef ENABLE_IF_ENUM
-#undef ENABLE_IF_SERIALIZE
-#undef ENABLE_IF_VECTOR
-#undef ENABLE_IF_SHARED_PTR
-#undef ENABLE_IF_SAVE_LOAD
 

@@ -39,7 +39,9 @@ IDR_MENU_FILER MENU
 		MENUITEM "Application Option", IDM_APPLICATIONOPTION
 		MENUITEM "GridView Option", IDM_GRIDVIEWOPTION
         MENUITEM "Favorites Option", IDM_FAVORITESOPTION
-    }
+		MENUITEM "LeftView Option", IDM_LEFTVIEWOPTION
+		MENUITEM "RightView Option", IDM_RIGHTVIEWOPTION
+	}
     POPUP "&Help"
     {
         MENUITEM "About", IDM_ABOUTME

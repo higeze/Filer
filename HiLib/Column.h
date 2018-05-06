@@ -10,12 +10,15 @@ class Sheet;
 class CColumn:public CBand
 {
 public:
-	static const coordinates_type kMinWidth = 16;
 	typedef ColTag Tag;
 protected:
 	Sorts m_sort; //Indicate sort state
 	coordinates_type m_left; //left position from parent sheet
 	coordinates_type m_width; //width
+	coordinates_type m_minWidth = 16;
+	coordinates_type m_maxWidth = 300;
+	bool m_isFitAlways = false;
+
 	bool m_isInit; //if init is set, initial width is used
 	std::wstring m_filter; //Filter string
 	size_type m_allIndex = kInvalidIndex;
@@ -30,6 +33,9 @@ public:
 		ar("sort", m_sort);
 		ar("left", m_left);
 		ar("width", m_width);
+		ar("minwidth", m_minWidth);
+		ar("maxwidth", m_maxWidth);
+		ar("fitalways", m_isFitAlways);
 		m_isInit = false;
 		ar("filter", m_filter);
 		m_allIndex = GetIndex<AllTag>();
@@ -43,6 +49,9 @@ public:
 		ar("sort", m_sort);
 		ar("left", m_left);
 		ar("width", m_width);
+		ar("minwidth", m_minWidth);
+		ar("maxwidth", m_maxWidth);
+		ar("fitalways", m_isFitAlways);
 		m_isInit = false;
 		ar("filter", m_filter);
 		ar("index", m_allIndex);
@@ -72,7 +81,7 @@ public:
 	virtual void SetFilter(const std::wstring& filter){m_filter = filter;}
 	virtual coordinates_type GetWidth();
 	virtual void SetWidth(const coordinates_type& width);
-	virtual void SetWidthWithoutSignal(const coordinates_type& width){m_width= (std::max)(width,kMinWidth);}
+	virtual void SetWidthWithoutSignal(const coordinates_type& width);
 	virtual coordinates_type GetLeft()const{return  m_left + Offset();}
 	virtual void SetSheetLeft(const coordinates_type left){m_left=left;}
 	virtual void SetSheetLeftWithoutSignal(const coordinates_type left){m_left=left;}
@@ -90,13 +99,15 @@ public:
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::shared_ptr<CCell> spCellSrc){return false;}
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::wstring source){return false;}
 	virtual void Delete(std::shared_ptr<CCell> spCellDst){}
-	virtual cell_type& Cell(CRow* pRow) { return cell_type(nullptr); }//=0;
-	virtual cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn) { return cell_type(nullptr); }//=0;
-	virtual cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn) { return cell_type(nullptr); }//=0;
-	virtual cell_type CellTemplate(CRow* pRow, CColumn* pColumn) { return cell_type(nullptr); }//=0;
+	virtual cell_type& Cell(CRow* pRow) = 0;
+	virtual cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
+	virtual cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
+	virtual cell_type CellTemplate(CRow* pRow, CColumn* pColumn) = 0;
 	virtual void InsertNecessaryRows(){};
 	virtual coordinates_type GetLeftTop()const override { return GetLeft(); }
 	virtual coordinates_type GetRightBottom()/*TODO*/ override { return GetRight(); }
+	virtual coordinates_type GetMinWidthHeight() override { return m_minWidth; }
+	virtual coordinates_type GetMaxWidthHeight() override { return m_maxWidth; }
 	virtual void SetWidthHeightWithoutSignal(const coordinates_type& width) override { SetWidthWithoutSignal(width); }
 
 };
@@ -105,8 +116,6 @@ class CGridView;
 
 class CParentColumn:public CColumn
 {
-public:
-	static const coordinates_type kMinWidth = 2;
 public:
 	//Constructor
 	CParentColumn(CGridView* pGrid = nullptr);

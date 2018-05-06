@@ -24,11 +24,11 @@ LRESULT CCheckableMenuItem::OnInitMenu(UINT uMsg,WPARAM wParam,LPARAM lParam,BOO
 	return 0;
 }
 
-CShowHideColumnMenuItem::CShowHideColumnMenuItem(WORD wID, const wchar_t* str, CSheet* pSheet, CColumn* pColumn)
-	:CCheckableMenuItem(wID), m_pSheet(pSheet), m_pColumn(pColumn)
+CShowHideColumnMenuItem::CShowHideColumnMenuItem(WORD wID, std::wstring& str, CSheet* pSheet, CColumn* pColumn)
+	:CCheckableMenuItem(wID), m_pSheet(pSheet), m_pColumn(pColumn), m_name(str)
 {
 	m_mii.fMask = MIIM_ID | MIIM_STATE | MIIM_STRING;
-	m_mii.dwTypeData = (LPWSTR)str;
+	m_mii.dwTypeData = (LPWSTR)m_name.c_str();
 	m_mii.fState = GetIsChecked() ? MFS_CHECKED : MFS_UNCHECKED;
 }
 

@@ -509,6 +509,9 @@
     <ClInclude Include="..\HiLib\ShowHideMenuItem.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\SerializerEnableIf.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">

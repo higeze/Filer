@@ -2,6 +2,7 @@
 #include "MyWnd.h"
 #include "PropertySerializer.h"
 #include "PropertyGridView.h"
+#include <type_traits>
 
 #define IDC_BUTTON_DEFAULT						161
 #define IDC_BUTTON_OK							162
@@ -11,7 +12,7 @@
 //class CPropertyGridView;
 class CCellProperty;
 
-template<class T>
+template<class T, class U = std::nullptr_t>
 class CPropertyWnd:public CWnd
 {
 private:
@@ -24,6 +25,7 @@ private:
 	std::shared_ptr<CPropertyGridView> m_spGrid;
 	std::wstring m_wstrPropertyName;
 	std::shared_ptr<T> m_prop;
+	U m_arg1;
 	std::shared_ptr<CCellProperty> m_spPropSheetCellHeader;
 	std::shared_ptr<CCellProperty> m_spPropSheetCellFilter;
 	std::shared_ptr<CCellProperty> m_spPropSheetCellCell;
@@ -43,8 +45,10 @@ public:
 		std::shared_ptr<CGridViewProperty> spGridViewProperty,
 		std::wstring wstrPropertyName,
 		std::shared_ptr<T> prop,
+		U arg1 = nullptr,
 		bool showDefault = true, bool showApply = true, bool isModal = false)
 		:CWnd(),
+		m_arg1(arg1),
 		m_spGrid(std::make_shared<CPropertyGridView>(spGridViewProperty)),
 		m_spPropSheetCellHeader(spGridViewProperty->m_spPropHeader),
 		m_spPropSheetCellFilter(spGridViewProperty->m_spPropCell),
@@ -85,11 +89,23 @@ public:
 
 	std::shared_ptr<CPropertyGridView> GetGridView(){return m_spGrid;}
 
+	template<class X>
+	std::shared_ptr<X> MakeShared(typename std::enable_if<std::is_default_constructible<X>::value>::type* = 0)
+	{
+		return std::make_shared<X>();
+	}
+
+	template<class X>
+	std::shared_ptr<X> MakeShared(typename std::enable_if<!std::is_default_constructible<X>::value>::type* = 0)
+	{
+		return std::make_shared<X>(m_arg1);
+	}
+
 	LRESULT OnCommandDefault(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 	{
 		m_spGrid->Clear();
 		CCellSerializer serializer(m_spGrid,m_spPropSheetCellHeader,m_spPropSheetCellFilter,m_spPropSheetCellCell);
-		serializer.Serialize(m_spGrid,m_wstrPropertyName.c_str(),std::make_shared<T>());
+		serializer.Serialize(m_spGrid, m_wstrPropertyName.c_str(), MakeShared<T>());
 		m_buttonApply.EnableWindow(TRUE);
 		m_spGrid->SubmitUpdate();
 		return 0;

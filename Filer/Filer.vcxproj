@@ -278,6 +278,7 @@
     <ClInclude Include="..\HiLib\Row.h" />
     <ClInclude Include="..\HiLib\RowColumn.h" />
     <ClInclude Include="..\HiLib\SEHException.h" />
+    <ClInclude Include="..\HiLib\SerializerEnableIf.h" />
     <ClInclude Include="..\HiLib\Sheet.h" />
     <ClInclude Include="..\HiLib\SheetCell.h" />
     <ClInclude Include="..\HiLib\SheetCellResource.h" />

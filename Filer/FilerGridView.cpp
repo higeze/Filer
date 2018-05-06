@@ -48,13 +48,7 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 UINT CFilerGridView::WM_CHANGED = ::RegisterWindowMessage(L"CFilerGridView::WM_CHANGED");
 
 CFilerGridView::CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty)
-	:CGridView(spGridViewProrperty),
-	m_pRowHeaderColumn(std::make_shared<CParentRowHeaderColumn>(this)),
-	m_pIconColumn(std::make_shared<CFileIconColumn>(this)),
-	m_pNameColumn(std::make_shared<CFileNameColumn>(this)),
-	m_pExtColumn(std::make_shared<CFileExtColumn>(this)),
-	m_pSizeColumn(std::make_shared<CFileSizeColumn>(this)),
-	m_pLastColumn(std::make_shared<CFileLastWriteColumn>(this))
+	:CGridView(spGridViewProrperty)
 {
 	m_cwa
 	.dwExStyle(WS_EX_ACCEPTFILES);
@@ -72,104 +66,17 @@ CFilerGridView::CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewPror
 
 LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	//Directory watcher
 	m_spWatcher = std::make_shared<CDirectoryWatcher>(m_hWnd);
 
+	//Drag & Drop
+	//DropTarget
 	auto pDropTarget = new CDropTarget(m_hWnd);
-
-	pDropTarget->Dropped.connect([this](IDataObject *pDataObj, DWORD dwEffect)->void{	
-		CComPtr<IShellItem2> pDestShellItem;
-		CComPtr<IFileOperation> pFileOperation;
-
-		HRESULT hr = ::SHCreateItemFromIDList(m_spFolder->GetAbsolutePidl(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
-		if(FAILED(hr)){ return; }
-
-		hr =pFileOperation.CoCreateInstance(CLSID_FileOperation);
-		if(FAILED(hr)){ return; }
-
-		switch(dwEffect){
-		case DROPEFFECT_MOVE:
-		{
-			//if folder is same, do not need to move
-			FORMATETC formatetc = { 0 };
-			formatetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLIDLIST);
-			formatetc.ptd = NULL;
-			formatetc.dwAspect = DVASPECT_CONTENT;
-			formatetc.lindex = -1;
-			formatetc.tymed = TYMED_HGLOBAL;
-
-			STGMEDIUM medium;
-			HRESULT hr = pDataObj->GetData(&formatetc, &medium);
-			if (FAILED(hr)) { return; }
-			LPIDA pida = (LPIDA)GlobalLock(medium.hGlobal);
-			CIDLPtr idlFolderPtr(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
-
-			if (::ILIsEqual(idlFolderPtr, m_spFolder->GetAbsolutePidl())) {
-				//Do nothing
-			}
-			else {
-				HRESULT hr = pFileOperation->MoveItems(pDataObj, pDestShellItem);
-				if (FAILED(hr)) { return; }
-				hr = pFileOperation->PerformOperations();
-				if (FAILED(hr)) { return; }
-			}
-		}
-			break;
-		case DROPEFFECT_COPY:
-			{
-				HRESULT hr = pFileOperation->CopyItems(pDataObj, pDestShellItem);
-				hr = pFileOperation->PerformOperations();
-				if(FAILED(hr)){ return; }
-			}
-			break;
-		case DROPEFFECT_LINK:
-			{
-				FORMATETC formatetc = {0};
-				formatetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLIDLIST);
-				formatetc.ptd      = NULL;
-				formatetc.dwAspect = DVASPECT_CONTENT;
-				formatetc.lindex   = -1;
-				formatetc.tymed    = TYMED_HGLOBAL;
-	
-				STGMEDIUM medium;
-				HRESULT hr = pDataObj->GetData(&formatetc, &medium);
-						if(FAILED(hr)){ return; }
-				LPIDA pida = (LPIDA)GlobalLock(medium.hGlobal);
-				CIDLPtr idlFolderPtr(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida)+(pida)->aoffset[0])));
-				for (UINT i = 0; i < pida->cidl; i++) {
-					CIDLPtr idlChildPtr(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida)+pida->aoffset[1 + i])));
-					CComPtr<IShellLink> pShellLink;
-	
-			
-					pShellLink.CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER);
-					pShellLink->SetIDList(idlFolderPtr + idlChildPtr);
-					CComQIPtr<IPersistFile> pPersistFile(pShellLink);
-
-					std::wstring destPath = m_spFolder->GetPath();
-					WCHAR szSrcPath[MAX_PATH];
-					WCHAR szDestPath[MAX_PATH];
-					::SHGetPathFromIDList(idlFolderPtr + idlChildPtr, szSrcPath);
-					LPTSTR lpszFileName = PathFindFileName(szSrcPath);
-					lstrcpyW(szDestPath, destPath.c_str());
-					PathAppend(szDestPath, lpszFileName);
-
-					wsprintfW(szDestPath, L"%s.lnk", szDestPath);
-					pPersistFile->Save(szDestPath, TRUE);
-				}
-				GlobalUnlock(medium.hGlobal);
-				ReleaseStgMedium(&medium);
-			}
-			break;
-		default:
-			break;
-		}
-
-	});
-	 
+	pDropTarget->Dropped.connect([this](IDataObject *pDataObj, DWORD dwEffect)->void {Dropped(pDataObj, dwEffect); });
 	m_pDropTarget = CComPtr<IDropTarget>(pDropTarget);
 	::RegisterDragDrop(m_hWnd, m_pDropTarget);
-
+	//DropSource
 	m_pDropSource = CComPtr<IDropSource>(new CDropSource);
-
 	m_pDragSourceHelper.CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER);
 
 	//Desktop IShellFolder
@@ -178,38 +85,132 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	//Base Create
 	CGridView::OnCreate(uMsg,wParam,lParam,bHandled);
 
-	//Insert columns
+	//Insert rows
+	m_rowHeader = std::make_shared<CParentHeaderRow>(this);
+	m_rowNameHeader = std::make_shared<CParentHeaderRow>(this);
+	m_rowFilter = std::make_shared<CParentRow>(this);
+
+	InsertRowNotify(CRow::kMinIndex, m_rowFilter, false);
+	InsertRowNotify(CRow::kMinIndex, m_rowNameHeader, false);
+	InsertRowNotify(CRow::kMinIndex, m_rowHeader, false);
+
+	//Insert columns if not initialized
 	if (m_columnAllDictionary.empty()) {
 		auto insertFun = [this](std::shared_ptr<CColumn> col, size_type defaultIndex) {
 			InsertColumnNotify(col->GetSerializedIndex() == CColumn::kInvalidIndex ? defaultIndex : col->GetSerializedIndex(), col, false);
 		};
-		insertFun(m_pRowHeaderColumn, CColumn::kMinIndex);
-		insertFun(m_pIconColumn, CColumn::kMaxIndex);
+
+		insertFun(std::make_shared<CParentRowHeaderColumn>(this), CColumn::kMinIndex);
+		insertFun(std::make_shared<CFileIconColumn>(this), CColumn::kMaxIndex);
+		m_pNameColumn = std::make_shared<CFileNameColumn>(this);
 		insertFun(m_pNameColumn, CColumn::kMaxIndex);
-		insertFun(m_pExtColumn, CColumn::kMaxIndex);
-		insertFun(m_pSizeColumn, CColumn::kMaxIndex);
-		insertFun(m_pLastColumn, CColumn::kMaxIndex);
+		insertFun(std::make_shared<CFileExtColumn>(this), CColumn::kMaxIndex);
+		insertFun(std::make_shared<CFileSizeColumn>(this), CColumn::kMaxIndex);
+		insertFun(std::make_shared<CFileLastWriteColumn>(this), CColumn::kMaxIndex);
 	}
 
 	//Header menu items
-	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
-		IDM_VISIBLEROWHEADERCOLUMN, L"Row", this, m_pRowHeaderColumn.get()));
-	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
-		IDM_VISIBLEICONCOLUMN, L"Icon", this, m_pIconColumn.get()));
-	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
-		IDM_VISIBLENAMECOLUMN, L"Name", this, m_pNameColumn.get()));
-	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
-		IDM_VISIBLEEXTCOLUMN, L"Ext", this, m_pExtColumn.get()));
-	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
-		IDM_VISIBLESIZECOLUMN, L"Size", this, m_pSizeColumn.get()));
-	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
-		IDM_VISIBLELASTCOLUMN, L"Last write", this, m_pLastColumn.get()));
+	for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+		auto cell = CSheet::Cell(m_rowNameHeader, iter->DataPtr);
+		auto str = cell->GetString();
+		m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
+			IDM_VISIBLEROWHEADERCOLUMN + std::distance(m_columnAllDictionary.begin(), iter),
+			Cell(m_rowNameHeader, iter->DataPtr)->GetString(), this, iter->DataPtr.get()));
+	}
 
 	for (auto& item : m_headerMenuItems) {
 		AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
 	}
 
 	return 0;
+}
+
+void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
+{
+	CComPtr<IShellItem2> pDestShellItem;
+	CComPtr<IFileOperation> pFileOperation;
+
+	HRESULT hr = ::SHCreateItemFromIDList(m_spFolder->GetAbsolutePidl(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
+	if (FAILED(hr)) { return; }
+
+	hr = pFileOperation.CoCreateInstance(CLSID_FileOperation);
+	if (FAILED(hr)) { return; }
+
+	switch (dwEffect) {
+	case DROPEFFECT_MOVE:
+	{
+		//if folder is same, do not need to move
+		FORMATETC formatetc = { 0 };
+		formatetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLIDLIST);
+		formatetc.ptd = NULL;
+		formatetc.dwAspect = DVASPECT_CONTENT;
+		formatetc.lindex = -1;
+		formatetc.tymed = TYMED_HGLOBAL;
+
+		STGMEDIUM medium;
+		HRESULT hr = pDataObj->GetData(&formatetc, &medium);
+		if (FAILED(hr)) { return; }
+		LPIDA pida = (LPIDA)GlobalLock(medium.hGlobal);
+		CIDLPtr idlFolderPtr(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
+
+		if (::ILIsEqual(idlFolderPtr, m_spFolder->GetAbsolutePidl())) {
+			//Do nothing
+		} else {
+			HRESULT hr = pFileOperation->MoveItems(pDataObj, pDestShellItem);
+			if (FAILED(hr)) { return; }
+			hr = pFileOperation->PerformOperations();
+			if (FAILED(hr)) { return; }
+		}
+	}
+	break;
+	case DROPEFFECT_COPY:
+	{
+		HRESULT hr = pFileOperation->CopyItems(pDataObj, pDestShellItem);
+		hr = pFileOperation->PerformOperations();
+		if (FAILED(hr)) { return; }
+	}
+	break;
+	case DROPEFFECT_LINK:
+	{
+		FORMATETC formatetc = { 0 };
+		formatetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLIDLIST);
+		formatetc.ptd = NULL;
+		formatetc.dwAspect = DVASPECT_CONTENT;
+		formatetc.lindex = -1;
+		formatetc.tymed = TYMED_HGLOBAL;
+
+		STGMEDIUM medium;
+		HRESULT hr = pDataObj->GetData(&formatetc, &medium);
+		if (FAILED(hr)) { return; }
+		LPIDA pida = (LPIDA)GlobalLock(medium.hGlobal);
+		CIDLPtr idlFolderPtr(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
+		for (UINT i = 0; i < pida->cidl; i++) {
+			CIDLPtr idlChildPtr(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + pida->aoffset[1 + i])));
+			CComPtr<IShellLink> pShellLink;
+
+
+			pShellLink.CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER);
+			pShellLink->SetIDList(idlFolderPtr + idlChildPtr);
+			CComQIPtr<IPersistFile> pPersistFile(pShellLink);
+
+			std::wstring destPath = m_spFolder->GetPath();
+			WCHAR szSrcPath[MAX_PATH];
+			WCHAR szDestPath[MAX_PATH];
+			::SHGetPathFromIDList(idlFolderPtr + idlChildPtr, szSrcPath);
+			LPTSTR lpszFileName = PathFindFileName(szSrcPath);
+			lstrcpyW(szDestPath, destPath.c_str());
+			PathAppend(szDestPath, lpszFileName);
+
+			wsprintfW(szDestPath, L"%s.lnk", szDestPath);
+			pPersistFile->Save(szDestPath, TRUE);
+		}
+		GlobalUnlock(medium.hGlobal);
+		ReleaseStgMedium(&medium);
+	}
+	break;
+	default:
+		break;
+	}
 }
 
 RowDictionary::const_iterator CFilerGridView::FindIfRowIterByFileNameExt(const std::wstring& fileNameExt)
@@ -433,7 +434,6 @@ void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
 				//sei.lpIDList = (LPVOID)(spFile->GetAbsolutePidl().m_pIDL);
 
 				::ShellExecuteEx(&sei);
-
 			}
 		}
 		break;
@@ -772,17 +772,6 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 		
 		pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<PBYTE>(pInfo) + pInfo->NextEntryOffset);
 	}
-
-
-
-	//Sleep(50);
-	////Remove duplicated messages
-	//MSG msg;
-	//while(::PeekMessage(&msg, m_hWnd, CFilerGridView::WM_CHANGED, CFilerGridView::WM_CHANGED, PM_REMOVE)==TRUE)
-	//{
-	//	std::cout<<"WM_CHANGED Removed"<<std::endl;
-	//}
-	//OpenFolder(m_spFolder);
 	
 	delete [] (PBYTE)pInfo0;
 
@@ -870,7 +859,6 @@ void CFilerGridView::OnContextMenu(const ContextMenuEvent& e)
 			ptScreen.y,
 			m_hWnd);
 
-
 	}else if(visibleIndexes.first > maxRow ||  visibleIndexes.second > maxCol){
 		CIDLPtr idl = m_spFolder->GetAbsolutePidl().GetPreviousIDLPtr();
 		CComPtr<IShellFolder> pDesktop;
@@ -882,6 +870,7 @@ void CFilerGridView::OnContextMenu(const ContextMenuEvent& e)
 		}
 		vPidl.push_back(m_spFolder->GetAbsolutePidl().FindLastID());
 		ShowShellContextMenu(m_hWnd, ptScreen, pFolder, vPidl, true);
+
 	}else{
 		for(auto rowIter=rowDictionary.begin(),rowEnd=rowDictionary.end();rowIter!=rowEnd;++rowIter){
 			if(rowIter->DataPtr->GetSelected()){
@@ -1074,13 +1063,6 @@ void CFilerGridView::Drag()
 	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
 	auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
 
-	//int selectedNumber = 0;
-
-	//for(auto rowIter=rowDictionary.begin(),rowEnd=rowDictionary.end();rowIter!=rowEnd;++rowIter){
-	//	if(rowIter->DataPtr->GetSelected()){
-	//		selectedNumber++;
-	//	}
-	//}
 	std::vector<LPITEMIDLIST> vPidl;
 	CIDLPtr pFirstIdl;
 	for(auto rowIter=rowDictionary.begin(),rowEnd=rowDictionary.end();rowIter!=rowEnd;++rowIter){

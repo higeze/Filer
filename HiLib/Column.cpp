@@ -10,16 +10,20 @@
 
 CColumn::coordinates_type CColumn::GetWidth()
 {
-	if(m_isInit){
+	if (m_isInit) {
 		//if(!m_isSerialized){
-			SetWidthWithoutSignal(m_pSheet->GetColumnInitWidth(this));
+		SetWidthWithoutSignal(m_pSheet->GetColumnInitWidth(this));
 		//}
-		m_bMeasureValid=true;	
+		m_bMeasureValid = true;
 		m_isInit = false;
+	}else if(m_isFitAlways){
+		SetWidthWithoutSignal(m_pSheet->GetColumnFitWidth(this));
+		m_bMeasureValid = true;
 	}else if(!m_bMeasureValid){
 		SetWidthWithoutSignal(m_pSheet->GetColumnFitWidth(this));
 		m_bMeasureValid=true;
 	}
+
 	return m_width;
 }
 
@@ -30,6 +34,12 @@ void CColumn::SetWidth(const coordinates_type& width)
 		//m_pSheet->ColumnWidthChanged(CColumnEventArgs(this));
 	}
 }
+
+void CColumn::SetWidthWithoutSignal(const coordinates_type& width) 
+{
+	m_width = (std::max)((std::min)(width, m_maxWidth), m_minWidth);
+}
+
 void CColumn::SetVisible(const bool& bVisible, bool notify)
 {
 	if(m_bVisible!=bVisible){

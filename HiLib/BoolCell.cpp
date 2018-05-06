@@ -36,7 +36,7 @@ void CBoolCell::SetStringCore(const string_type& str)
 	m_bool = boost::lexical_cast<bool>(str);
 }
 
-void CBoolCell::OnLButtonClk(const LButtonClkEvent& e)
+void CBoolCell::OnLButtonDown(const LButtonDownEvent& e)
 {
 	SetString(boost::lexical_cast<std::wstring>(!(m_bool)));
 }

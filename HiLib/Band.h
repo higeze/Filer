@@ -55,14 +55,16 @@ public:
 	void SetSheetPtr(CSheet* pSheet){m_pSheet = pSheet;}
 	bool GetMeasureValid()const{return m_bMeasureValid;}
 	void SetMeasureValid(bool bMeasureValid){m_bMeasureValid = bMeasureValid;}
-	virtual coordinates_type Offset()const {return kInvalidIndex;}// = 0;
+	virtual coordinates_type Offset()const = 0;
 	virtual bool GetVisible()const{return m_bVisible;}
-	virtual void SetVisible(const bool& bVisible, bool notify = true) {}//=0;
+	virtual void SetVisible(const bool& bVisible, bool notify = true) = 0;
 	virtual bool GetSelected()const{return m_bSelected;}
-	virtual void SetSelected(const bool& bSelected) {}//=0;
+	virtual void SetSelected(const bool& bSelected) = 0;
 	virtual bool IsDragTrackable()const{return false;}
-	virtual coordinates_type GetLeftTop()const { return kInvalidIndex; }//= 0;
-	virtual coordinates_type GetRightBottom()/*TODO*/ { return kInvalidIndex; }//= 0;
-	virtual void SetWidthHeightWithoutSignal(const coordinates_type&) {}//= 0;
+	virtual coordinates_type GetLeftTop()const = 0;
+	virtual coordinates_type GetRightBottom()/*TODO*/ = 0;
+	virtual coordinates_type GetMinWidthHeight()/*TODO*/ = 0;
+	virtual coordinates_type GetMaxWidthHeight()/*TODO*/ = 0;
+	virtual void SetWidthHeightWithoutSignal(const coordinates_type&) = 0;
 };
 

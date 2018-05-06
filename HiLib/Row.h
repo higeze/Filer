@@ -8,11 +8,13 @@ struct RowTag;
 class CRow:public CBand
 {
 public:
-	static const coordinates_type kMinWidth = 2;
 	typedef RowTag Tag;
 protected:
 	coordinates_type m_height;
 	coordinates_type m_top;
+	coordinates_type m_minHeight = 2;
+	coordinates_type m_maxHeight = 100;
+
 public:
 	CRow(CSheet* pSheet):CBand(pSheet),m_height(0),m_top(0){}
 	virtual ~CRow(){}
@@ -39,6 +41,8 @@ public:
 	//TODO Refactor
 	virtual coordinates_type GetLeftTop()const override { return GetTop(); }
 	virtual coordinates_type GetRightBottom()/*TODO*/ override { return GetBottom(); }
+	virtual coordinates_type GetMinWidthHeight() override { return m_minHeight; }
+	virtual coordinates_type GetMaxWidthHeight() override { return m_maxHeight; }
 	virtual void SetWidthHeightWithoutSignal(const coordinates_type& height) override { SetHeightWithoutSignal(height); }
 
 };

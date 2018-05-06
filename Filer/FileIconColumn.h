@@ -6,7 +6,7 @@
 class CFileIconColumn:public CParentDefaultMapColumn
 {
 public:
-	CFileIconColumn(CGridView* pGrid);
+	CFileIconColumn(CGridView* pGrid = nullptr);
 	virtual ~CFileIconColumn(void){}
 
 	cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;

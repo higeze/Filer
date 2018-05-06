@@ -8,73 +8,7 @@
 #include "MySerializer.h"
 #include "CDataString.h"
 #include "MyString.h"
-
-
-class CSerializer;
-
-#define ENABLE_IF_DEFAULT typename std::enable_if<\
-									!has_serialize<T,CSerializer>::value &&\
-									!has_save<T,CSerializer>::value &&\
-									!std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
-
-#define ENABLE_IF_ENUM typename std::enable_if<\
-									!has_serialize<T,CSerializer>::value &&\
-									!has_save<T,CSerializer>::value &&\
-										std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
-
-#define ENABLE_IF_SERIALIZE typename std::enable_if<\
-										has_serialize<T,CSerializer>::value &&\
-									!has_save<T,CSerializer>::value &&\
-									!std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
-
-#define ENABLE_IF_VECTOR typename std::enable_if<\
-									!has_serialize<T,CSerializer>::value &&\
-									!has_save<T,CSerializer>::value &&\
-									!std::is_enum<T>::value &&\
-										is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
-
-
-#define ENABLE_IF_SHARED_PTR typename std::enable_if<\
-									!has_serialize<T,CSerializer>::value &&\
-									!has_save<T,CSerializer>::value &&\
-									!std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-										is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
-
-#define ENABLE_IF_PTR typename std::enable_if<\
-									!has_serialize<T,CSerializer>::value &&\
-									!has_save<T,CSerializer>::value &&\
-									!std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-										std::is_pointer<T>::value\
-									>::type* = 0
-
-#define ENABLE_IF_SAVE_LOAD typename std::enable_if<\
-									!has_serialize<T,CSerializer>::value &&\
-										has_save<T,CSerializer>::value &&\
-									!std::is_enum<T>::value &&\
-									!is_vector<T>::value &&\
-									!is_shared_ptr<T>::value &&\
-									!std::is_pointer<T>::value\
-									>::type* = 0
+#include "SerializerEnableIf.h"
 
 class CSerializer{
 private:
@@ -98,16 +32,7 @@ public:
 		} else {
 			m_pDoc->appendChild(pElem);
 		}
-		//auto iter = s_dynamicSerializeMap.find(typeid(tValue).name());
-		//::OutputDebugStringA(typeid(tValue).name());
-		//::OutputDebugStringA("\r\n");
-
-		//if (iter != s_dynamicSerializeMap.end()) {
-		//	iter->second(this, pElem, &tValue);
-		//}else {
-
-			SerializeValue(tValue, pElem);
-		//}
+		SerializeValue(tValue, pElem);
 	}
 
 	//For base
@@ -115,16 +40,7 @@ public:
 	void SerializeValue(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_DEFAULT)
 	{
 		pElem->Puttext(_bstr_t(boost::lexical_cast<std::wstring>(tValue).c_str()));
-		//if (s_dynamicSerializeMap.find(typeid(tValue).name()) != s_dynamicSerializeMap.end()) {
-		//	pElem->setAttribute(_bstr_t(L"typeinfoname"), _bstr_t(typeid(tValue).name()));
-		//}
 	}
-
-	//For std::string
-	//void SerializeValue(std::string& tValue,MSXML2::IXMLDOMElementPtr pElem)
-	//{
-	//	//pElem->Puttext(_bstr_t(str2wstr(tValue).c_str()));
-	//}
 	
 	//For enum
 	template<class T>
@@ -132,40 +48,53 @@ public:
 	{
 		pElem->Puttext(_bstr_t(boost::lexical_cast<std::wstring>(static_cast<int>(tValue)).c_str()));
 	}
+
+	//For ptr
+	template<class T>
+	void SerializeValue(T& tValue, MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_PTR)
+	{
+		SerializeValue(*tValue, pElem);
+	}
 	
 	//For serialize
 	template<class T>
 	void SerializeValue(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_SERIALIZE)
 	{
 		tValue.serialize(CSerializer(m_pDoc,pElem));
-		//if (s_dynamicSerializeMap.find(typeid(tValue).name()) != s_dynamicSerializeMap.end()) {
-		//	pElem->setAttribute(_bstr_t(L"typeinfoname"), _bstr_t(typeid(tValue).name()));
-		//}
 	}
 
-	//For CData
-	//void SerializeValue(CCDataString& tValue,MSXML2::IXMLDOMElementPtr pElem)
-	//{
-	//	//pElem->appendChild(m_pDoc->createCDATASection(_bstr_t(tValue.c_str())));
-	//}
+	//For save load
+	template<class T>
+	void SerializeValue(T& tValue, MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_SAVE_LOAD)
+	{
+		tValue.save(CSerializer(m_pDoc, pElem));
+	}
 
 	//For vector
 	template<class T>
-	void SerializeValue(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_VECTOR)
+	void SerializeValue(std::vector<T>& tValue,MSXML2::IXMLDOMElementPtr pElem)
 	{
-		//MSXML2::IXMLDOMElementPtr pCountElem=m_pDoc->createElement(_bstr_t("count"));
-		//pElem->appendChild(pCountElem);
-		//pCountElem->Puttext(_bstr_t(boost::lexical_cast<std::wstring>(tValue.size()).c_str()));
-
 		for(auto iter=tValue.begin(),end=tValue.end();iter!=end;++iter){
 			MSXML2::IXMLDOMElementPtr pItemElem=m_pDoc->createElement(_bstr_t("item"));
 			pElem->appendChild(pItemElem);
 			SerializeValue(*iter,pItemElem);
 		}
 	}
+
 	//For shared_ptr
 	template<class T>
-	void SerializeValue(T& tValue, MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_SHARED_PTR)
+	void SerializeValue(std::shared_ptr<T>& tValue, MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_ABSTRUCT)
+	{
+		auto iter = s_dynamicSerializeMap.find(typeid(*tValue).name());
+		if (iter != s_dynamicSerializeMap.end()) {
+			pElem->setAttribute(_bstr_t(L"typeinfoname"), _bstr_t(typeid(*tValue).name()));
+			return iter->second(this, pElem, tValue.get());
+		}
+		throw std::exception("No registration for abstruct class");
+	}
+
+	template<class T>
+	void SerializeValue(std::shared_ptr<T>& tValue, MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_NOTABSTRUCT)
 	{
 		auto iter = s_dynamicSerializeMap.find(typeid(*tValue).name());
 		if (iter != s_dynamicSerializeMap.end()) {
@@ -174,20 +103,6 @@ public:
 		} else {
 			SerializeValue(*tValue, pElem);
 		}
-	}
-
-	//For shared_ptr
-	template<class T>
-	void SerializeValue(T& tValue, MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_PTR)
-	{
-		SerializeValue(*tValue, pElem);
-	}
-
-	//For save load
-	template<class T>
-	void SerializeValue(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_SAVE_LOAD)
-	{
-		tValue.save(CSerializer(m_pDoc, pElem));
 	}
 };
 
@@ -202,6 +117,7 @@ public:
 		MSXML2::IXMLDOMElementPtr pElem):m_pDoc(pDoc),m_pElem(pElem){}
 	virtual ~CDeserializer(){}
 
+	static std::map<std::string, std::function<void(CDeserializer*, MSXML2::IXMLDOMElementPtr, void*)>> s_dynamicDeserializeMap;
 	static std::map<std::string, std::function<std::shared_ptr<void>()>> s_dynamicMakeSharedMap;
 
 	//operator()
@@ -243,18 +159,6 @@ public:
 		tValue=boost::lexical_cast<T>(std::wstring(pElem->Gettext()));
 	}
 
-	//For std::string
-	void DeserializeElement(std::string& tValue,MSXML2::IXMLDOMElementPtr pElem)
-	{
-		//tValue=wstr2str(std::wstring(pElem->Gettext()));
-	}
-
-	//For CData
-	void DeserializeElement(CCDataString& tValue,MSXML2::IXMLDOMElementPtr pElem)
-	{
-		//tValue=CCDataString(boost::lexical_cast<std::wstring>(std::wstring(pElem->Gettext())));
-	}
-
 	//For enum
 	template<class T>
 	void DeserializeElement(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_ENUM)
@@ -264,67 +168,22 @@ public:
 
 	//For serialize
 	template<class T>
-	void DeserializeElement(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_SERIALIZE)
+	void DeserializeElement(T& tValue,MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_SERIALIZE)
 	{
 		tValue.serialize(CDeserializer(m_pDoc,pElem));
 	}
 
-	//For vector
-	template<class T>
-	void DeserializeElement(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_VECTOR)
-	{
-		//std::vector<MSXML2::IXMLDOMElementPtr> vpCountElem=GetChildElementsByTagName(pElem,"count");
-		//if(vpCountElem.size()==1){
-			std::vector<MSXML2::IXMLDOMElementPtr> vpItemElem=GetChildElementsByTagName(pElem,"item");
-			//if(boost::lexical_cast<int>(vpCountElem[0]->Gettext())==vpItemElem.size()){
-			if(!vpItemElem.empty()){
-				tValue.resize(vpItemElem.size());
-				for(UINT n=0,nSize=vpItemElem.size();n<nSize;++n){
-					DeserializeElement(tValue[n],vpItemElem[n]);
-				}
-			}
-			//}
-		//}
-	}
-
-	//For shared_ptr
-	template<class T>
-	void DeserializeElement(T& tValue, MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_SHARED_PTR)
-	{
-		_variant_t var = pElem->getAttribute(_bstr_t(L"typeinfoname"));
-		if (var.vt != VT_NULL) {
-			std::string key;
-			::strcpy_s(::GetBuffer(key, 32), 32 * sizeof(char) / sizeof(byte), (_bstr_t)var);
-			::ReleaseBuffer(key);
-			auto iter = s_dynamicMakeSharedMap.find(key);
-			if (iter != s_dynamicMakeSharedMap.end()) {
-				if (!tValue) {
-					tValue = std::static_pointer_cast<T::element_type>(iter->second());
-				}
-				return DeserializeElement(*tValue, pElem);
-			}
-		}
-
-		if (!tValue) {
-			tValue = std::make_shared<T::element_type>();
-		}
-		DeserializeElement(*tValue, pElem);
-	}
-
 	template<class T, class U>
-	void DeserializeElement(T& tValue, MSXML2::IXMLDOMElementPtr pElem, U uValue, ENABLE_IF_SHARED_PTR)
+	void DeserializeElement(T& tValue, MSXML2::IXMLDOMElementPtr pElem, U& uValue, ENABLE_IF_SERIALIZE)
 	{
-		if (!tValue) {
-			tValue = std::make_shared<T::element_type>(uValue);
-		}
-		DeserializeElement(*tValue, pElem);
+		tValue.serialize(CDeserializer(m_pDoc, pElem), uValue);
 	}
 
 	//For save load
 	template<class T>
-	void DeserializeElement(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_SAVE_LOAD)
+	void DeserializeElement(T& tValue, MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_SAVE_LOAD)
 	{
-		tValue.load(CDeserializer(m_pDoc,pElem));
+		tValue.load(CDeserializer(m_pDoc, pElem));
 	}
 
 	template<class T, class U>
@@ -333,24 +192,89 @@ public:
 		tValue.load(CDeserializer(m_pDoc, pElem), uValue);
 	}
 
-};
+	//For vector
+	template<class T>
+	void DeserializeElement(std::vector<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
+	{
+		std::vector<MSXML2::IXMLDOMElementPtr> vpItemElem=GetChildElementsByTagName(pElem,"item");
+		if(!vpItemElem.empty()){
+			tValue.resize(vpItemElem.size());
+			for(UINT n=0,nSize=vpItemElem.size();n<nSize;++n){
+				DeserializeElement(tValue[n],vpItemElem[n]);
+			}
+		}
+	}
 
-//class CDCMXMLDeserializer:public CDeserializer
-//{
-//public:
-//	CDCMXMLDeserializer(MSXML2::IXMLDOMDocumentPtr pDoc,
-//		MSXML2::IXMLDOMElementPtr pElem):CDeserializer(pDoc,pElem){}
-//
-//	//For shared_ptr
-//	template<class T>
-//	void DeserializeElement(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_SHARED_PTR)
-//	{
-//		if(!tValue){
-//			tValue=std::make_shared<T::element_type>();
-//		}
-//		DeserializeElement(*tValue,pElem);
-//	}
-//};
+	//For shared_ptr
+	template<class T>
+	void DeserializeElement(std::shared_ptr<T>& tValue, MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_ABSTRUCT)
+	{
+		_variant_t var = pElem->getAttribute(_bstr_t(L"typeinfoname"));
+		if (var.vt != VT_NULL) {
+
+			std::string key;
+			::strcpy_s(::GetBuffer(key, 32), 32 * sizeof(char) / sizeof(byte), (_bstr_t)var);
+			::ReleaseBuffer(key);
+
+			//Dynamic Make shared
+			auto msIter = s_dynamicMakeSharedMap.find(key);
+			if (msIter != s_dynamicMakeSharedMap.end()) {
+
+				if (!tValue) {
+					tValue = std::static_pointer_cast<T>(msIter->second());
+				}
+
+				//Dynamic Deserialize
+				auto deIter = s_dynamicDeserializeMap.find(key);
+				if (deIter != s_dynamicDeserializeMap.end()) {
+					return deIter->second(this, pElem, tValue.get());
+				}
+			}
+		}
+		throw std::exception("No registration for abstruct class");
+	}
+
+	template<class T>
+	void DeserializeElement(std::shared_ptr<T>& tValue, MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_NOTABSTRUCT)
+	{
+		_variant_t var = pElem->getAttribute(_bstr_t(L"typeinfoname"));
+		if (var.vt != VT_NULL) {
+
+			std::string key;
+			::strcpy_s(::GetBuffer(key, 32), 32 * sizeof(char) / sizeof(byte), (_bstr_t)var);
+			::ReleaseBuffer(key);
+
+			//Dynamic Make shared
+			auto msIter = s_dynamicMakeSharedMap.find(key);
+			if (msIter != s_dynamicMakeSharedMap.end()) {
+
+				if (!tValue) {
+					tValue = std::static_pointer_cast<T>(msIter->second());
+				}
+
+				//Dynamic Deserialize
+				auto deIter = s_dynamicDeserializeMap.find(key);
+				if (deIter != s_dynamicDeserializeMap.end()) {
+					return deIter->second(this, pElem, tValue.get());
+				}
+			}
+		}
+
+		if (!tValue) {
+			tValue = std::make_shared<T>();
+		}
+		DeserializeElement(*tValue, pElem);
+	}
+
+	template<class T, class U>
+	void DeserializeElement(std::shared_ptr<T>& tValue, MSXML2::IXMLDOMElementPtr pElem, U uValue)
+	{
+		if (!tValue) {
+			tValue = std::make_shared<T>(uValue);
+		}
+		DeserializeElement(*tValue, pElem);
+	}
+};
 
 template<class T>
 class CXMLSerializer
@@ -434,10 +358,3 @@ public:
 		deserializer(lpszRootName,tObj);		
 	}
 };
-
-#undef ENABLE_IF_DEFAULT
-#undef ENABLE_IF_ENUM
-#undef ENABLE_IF_SERIALIZE
-#undef ENABLE_IF_VECTOR
-#undef ENABLE_IF_SHARED_PTR
-#undef ENABLE_IF_SAVE_LOAD

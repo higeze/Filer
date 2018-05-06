@@ -21,11 +21,11 @@ class CShowHideColumnMenuItem :public CCheckableMenuItem
 protected:
 	CSheet * m_pSheet;
 	CColumn* m_pColumn;
-
+	std::wstring m_name;
 	void Update();
 
 public:
-	CShowHideColumnMenuItem(WORD wID, const wchar_t* str, CSheet* pSheet, CColumn* pColumn);
+	CShowHideColumnMenuItem(WORD wID, std::wstring& str, CSheet* pSheet, CColumn* pColumn);
 	virtual ~CShowHideColumnMenuItem() {}
 
 	virtual bool GetIsChecked() override;
