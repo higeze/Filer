@@ -491,10 +491,47 @@ void CFilerGridView::OpenFile(std::shared_ptr<CShellFile>& spFile)
 void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
 	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder")
+	
+	m_spCursorer->Clear();
 
 	bool isUpdate = m_spFolder == spFolder;
 
-	m_spCursorer->Clear();
+	//Save and Restore Filter value
+	if (!isUpdate) {
+		//Update Map
+		std::unordered_map<std::shared_ptr<CColumn>, std::wstring> map;
+		bool isAllEmpty = true;
+		for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+			isAllEmpty &= iter->DataPtr->GetFilter().empty();
+			if (!isAllEmpty)break;
+		}
+		if(isAllEmpty){
+			if (m_spFolder) {
+				m_filterMap.erase(m_spFolder->GetPath());
+			}
+		}
+		else{
+			for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+				map.emplace(iter->DataPtr, iter->DataPtr->GetFilter());
+			}
+			if (m_spFolder) {
+				m_filterMap.insert_or_assign(m_spFolder->GetPath(), map);
+			}
+		}
+		//Load Map
+		auto iter = m_filterMap.find(spFolder->GetPath());
+		if (iter != m_filterMap.end()) {
+			//Load filter from map
+			for (auto pr : iter->second) {
+				pr.first->SetFilter(pr.second);
+			}
+		} else {
+			//Clear filter
+			for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+				iter->DataPtr->SetFilter(L"");
+			}
+		}
+	}
 
 	if(Empty()){
 		InsertDefaultRowColumn();
@@ -572,17 +609,18 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
+
+	FilterAll();
 	SortAll();
-	if(isUpdate){
-		FilterAll();		
-	}else{
+	if(!isUpdate){
 		FolderChanged(m_spFolder); 
 	}
 
 	SubmitUpdate();
 
+	//Cursor
 	if (!isUpdate) {
-		ClearFilter();
+		//Cursor
 		auto cell = Cell<VisTag>(0, 0);
 		if (cell) {
 			m_spCursorer->OnCursor(cell);

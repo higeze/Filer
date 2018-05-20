@@ -16,7 +16,7 @@ public:
 	/**
 	 *  Destructor
 	 */
-	virtual ~CFilterCell(){}
+	virtual ~CFilterCell();
 	/**
 	 *  Get string from column property
 	 */

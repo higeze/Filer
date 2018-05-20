@@ -21,26 +21,42 @@ std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()
 
 void CFileIconCell::PaintContent(CDC* pDC, CRect rcPaint)
 {
-	auto spFile = GetShellFile();
-	CIcon icon = spFile->GetIcon(false);
+//	auto spFile = GetShellFile();
+//	CIcon icon = spFile->GetIcon(false);
+//
+//	if (icon) {
+//		CRect rc = rcPaint;
+//		rc.bottom = rc.top + 16;
+//		rc.right = rc.left + 16;
+//		pDC->DrawIconEx(icon, rc, 0, NULL, DI_NORMAL);
+//	}
+//	else {
+//		g_pThreadPool->add([this,spFile]
+//		{
+//			if (spFile->GetIcon(true)) {
+//				m_pSheet->GetGridPtr()->DeadLineTimerInvalidate();
+////				m_pSheet->GetGridPtr()->Invalidate();
+//			}
+//		});
+//	}
 
-	if (icon) {
-		CRect rc = rcPaint;
-		rc.bottom = rc.top + 16;
-		rc.right = rc.left + 16;
-		pDC->DrawIconEx(icon, rc, 0, NULL, DI_NORMAL);
-	}
-	else {
+	auto spFile = GetShellFile();
+	CRect rc = rcPaint;
+	rc.bottom = rc.top + 16;
+	rc.right = rc.left + 16;
+	if (spFile->HasIcon() || spFile->HasIconInCache()) {
+		pDC->DrawIconEx(*spFile->GetIcon(true), rc, 0, NULL, DI_NORMAL);
+	} else {
+		pDC->DrawIconEx(*spFile->GetDefaultIcon(), rc, 0, NULL, DI_NORMAL);
 		g_pThreadPool->add([this,spFile]
 		{
 			if (spFile->GetIcon(true)) {
 				m_pSheet->GetGridPtr()->DeadLineTimerInvalidate();
-//				m_pSheet->GetGridPtr()->Invalidate();
 			}
 		});
-
-
 	}
+
+
 }
 
 CSize CFileIconCell::MeasureContentSize(CDC* pDC)

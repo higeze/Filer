@@ -5,6 +5,12 @@
 #include "Column.h"
 #include "GridView.h"
 
+CFilterCell::~CFilterCell()
+{
+	boost::asio::deadline_timer* pTimer = static_cast<CGridView*>(m_pSheet)->GetFilterTimerPtr();
+	pTimer->cancel();
+}
+
 CFilterCell::string_type CFilterCell::GetString()const
 {
 	return m_pColumn->GetFilter();

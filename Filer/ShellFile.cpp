@@ -8,6 +8,8 @@
 
 extern std::unique_ptr<ThreadPool> g_pThreadPool;
 
+CFileIconCache CShellFile::s_iconCache;
+
 std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit)
 
 {
@@ -154,13 +156,14 @@ ULARGE_INTEGER CShellFile::GetSize()
 //}
 
 
-CIcon CShellFile::GetIcon(bool load)
+std::shared_ptr<CIcon> CShellFile::GetIcon(bool load)
 {
 	if (!m_icon && load) {
-		SHFILEINFO sfi = { 0 };
-		::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-		//::SHGetFileInfo(GetPath().c_str(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-		m_icon = CIcon(sfi.hIcon);
+		//SHFILEINFO sfi = { 0 };
+		//::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+		////::SHGetFileInfo(GetPath().c_str(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+		//m_icon = CIcon(sfi.hIcon);
+		m_icon = s_iconCache.GetIcon(this);
 		return m_icon;
 	}
 	else {
@@ -275,7 +278,11 @@ CIcon CShellFile::GetIcon(bool load)
 		//	}
 		//}
 	//}
-	return m_icon;
+}
+
+std::shared_ptr<CIcon> CShellFile::GetDefaultIcon()
+{
+	return s_iconCache.GetDefaultIcon();
 }
 
 UINT CShellFile::GetAttributes()
@@ -402,6 +409,15 @@ void CShellFile::Reset()
 	bool m_isAsyncIcon = false;
 
 
+}
+
+bool CShellFile::HasIcon()
+{
+	return (bool)m_icon;
+}
+bool CShellFile::HasIconInCache()
+{
+	return s_iconCache.Exist(this);
 }
 
 

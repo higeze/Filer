@@ -293,6 +293,7 @@
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
+    <ClInclude Include="FileIconCache.h" />
     <ClInclude Include="FilerTabGridView.h" />
     <ClInclude Include="DirectoryWatcher.h" />
     <ClInclude Include="DropSource.h" />
@@ -404,6 +405,7 @@
     <ClCompile Include="FileDraggingState.cpp" />
     <ClCompile Include="FileExtCell.cpp" />
     <ClCompile Include="FileExtColumn.cpp" />
+    <ClCompile Include="FileIconCache.cpp" />
     <ClCompile Include="FileIconCell.cpp" />
     <ClCompile Include="FileIconColumn.cpp" />
     <ClCompile Include="FavoriteCell.cpp" />

@@ -512,6 +512,9 @@
     <ClInclude Include="..\HiLib\SerializerEnableIf.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="FileIconCache.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -785,6 +788,9 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="FileIconCache.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>

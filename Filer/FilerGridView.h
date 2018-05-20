@@ -91,6 +91,9 @@ private:
 	//HeaderMenuItems
 	std::vector<std::shared_ptr<CShowHideColumnMenuItem>> m_headerMenuItems;
 
+	//Remember past filter
+	std::unordered_map<std::wstring, std::unordered_map<std::shared_ptr<CColumn>, std::wstring>> m_filterMap;
+
 public:
 	CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty);
 	virtual ~CFilerGridView(){}

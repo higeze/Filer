@@ -2,6 +2,7 @@
 #include "MyString.h"
 #include "MyIcon.h"
 #include "IDLPtr.h"
+#include "FileIconCache.h"
 
 class CShellFolder;
 
@@ -11,6 +12,8 @@ std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit = 3);
 
 class CShellFile
 {
+private:
+	static CFileIconCache s_iconCache;
 protected:
 	CComPtr<IShellFolder> m_parentFolder;
 	CIDLPtr m_absolutePidl;
@@ -27,7 +30,7 @@ protected:
 
 	ULARGE_INTEGER m_size;
 	DWORD  m_fileAttributes = 0;
-	CIcon m_icon;
+	std::shared_ptr<CIcon> m_icon;
 	ULONG m_ulAttributes = 0;
 
 	bool m_isAsyncIcon = false;
@@ -56,7 +59,10 @@ public:
 	std::wstring GetSizeString();
 	ULARGE_INTEGER GetSize();
 
-	CIcon GetIcon(bool load = true);
+	bool HasIcon();
+	bool HasIconInCache();
+	std::shared_ptr<CIcon> GetIcon(bool load = true);
+	std::shared_ptr<CIcon> GetDefaultIcon();
 	//void LoadIcon();
 
 	UINT GetAttributes();
