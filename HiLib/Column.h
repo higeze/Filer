@@ -16,7 +16,7 @@ protected:
 	coordinates_type m_left; //left position from parent sheet
 	coordinates_type m_width; //width
 	coordinates_type m_minWidth = 16;
-	coordinates_type m_maxWidth = 300;
+	coordinates_type m_maxWidth = 1000;
 	bool m_isFitAlways = false;
 
 	bool m_isInit; //if init is set, initial width is used

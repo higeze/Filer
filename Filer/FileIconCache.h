@@ -1,12 +1,15 @@
 #pragma once
+#include "IDLPtr.h"
 
 class CIcon;
 class CShellFile;
+//class CIDLPtr;
 
 class CFileIconCache
 {
 private:
 	std::unordered_map<std::wstring, std::shared_ptr<CIcon>> m_iconMap;
+	std::unordered_map<std::wstring, std::shared_ptr<CIcon>> m_knownIconMap;
 	std::unordered_set<std::wstring> m_ignoreSet;
 	std::shared_ptr<CIcon> m_defaultIcon;
 
