@@ -45,8 +45,6 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
-UINT CFilerGridView::WM_CHANGED = ::RegisterWindowMessage(L"CFilerGridView::WM_CHANGED");
-
 CFilerGridView::CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty)
 	:CGridView(spGridViewProrperty)
 {
@@ -764,7 +762,6 @@ LRESULT CFilerGridView::OnCommandDelete(WORD wNotifyCode,WORD wID,HWND hWndCtl,B
 	Delete();
 	return 0;
 }
-
 
 LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {

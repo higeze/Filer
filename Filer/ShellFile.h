@@ -9,6 +9,22 @@ class CShellFolder;
 tstring FileTime2String(FILETIME *pFileTime);
 tstring Size2String(ULONGLONG size);
 std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit = 3);
+int GetDirSize(std::wstring path, ULONGLONG *pSize);
+
+enum class FileSizeStatus
+{
+	None,
+	Available,
+	Calculating,
+	Unavailable,
+};
+
+enum class FileIconStatus
+{
+	None,
+	Avilable,
+	Loading,
+};
 
 class CShellFile
 {
@@ -26,21 +42,27 @@ protected:
 	std::wstring m_wstrCreationTime;
 	std::wstring m_wstrLastAccessTime;
 	std::wstring m_wstrLastWriteTime;
-	std::wstring m_wstrSize;
 
-	ULARGE_INTEGER m_size;
+	boost::optional<bool> m_isShellFolder = boost::none;
+
+	std::pair<ULARGE_INTEGER, FileSizeStatus> m_size = std::make_pair(ULARGE_INTEGER(), FileSizeStatus::None);
+	std::pair<std::shared_ptr<CIcon>, FileIconStatus> m_icon = std::make_pair(std::shared_ptr<CIcon>(nullptr), FileIconStatus::None);
+
 	DWORD  m_fileAttributes = 0;
-	std::shared_ptr<CIcon> m_icon;
-	ULONG m_ulAttributes = 0;
-
-	bool m_isAsyncIcon = false;
+	ULONG m_sfgao = 0;
 
 public:
+	//Constructor
 	CShellFile();
 	CShellFile(CComPtr<IShellFolder> pfolder, CIDLPtr absolutePidl);
 	CShellFile(const std::wstring& path);
 
-	virtual ~CShellFile(){}
+	//Destructor
+	virtual ~CShellFile() {}
+
+	//Signal
+	boost::signals2::signal<void(CShellFile*)> SignalFileSizeChanged;
+	boost::signals2::signal<void(CShellFile*)> SignalFileIconChanged;
 	
 	//Getter 
 	CComPtr<IShellFolder>& GetParentShellFolderPtr(){return m_parentFolder;}
@@ -56,23 +78,25 @@ public:
 	std::wstring GetCreationTime();
 	std::wstring GetLastAccessTime();
 	std::wstring GetLastWriteTime();
-	std::wstring GetSizeString();
-	ULARGE_INTEGER GetSize();
 
-	bool HasIcon();
+	std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize();
+
+	std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon();
+
 	bool HasIconInCache();
-	std::shared_ptr<CIcon> GetIcon(bool load = true);
-	std::shared_ptr<CIcon> GetDefaultIcon();
-	//void LoadIcon();
+	bool IsDirectory();
+	bool IsShellFolder();
 
-	UINT GetAttributes();
+
+	UINT GetSFGAO();
+	DWORD GetAttributes();
 
 	void Reset();
 	//
-	bool IsShellFolder()const;
-	std::shared_ptr<CShellFolder> CastShellFolder()const;
+	std::shared_ptr<CShellFolder> CastShellFolder();
 private:
 	void UpdateWIN32_FIND_DATA();
+	std::shared_ptr<CIcon> GetDefaultIcon();
 
 	CIcon GetIconBySHGetFileInfo();
 

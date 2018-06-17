@@ -2,9 +2,19 @@
 #include "MyIcon.h"
 #include "ShellFile.h"
 #include "MyCom.h"
+#include <array>
 
 CFileIconCache::CFileIconCache():m_ignoreSet({L".exe", L".ico"})
 {
+	std::array<wchar_t, 64> logicalDrives;
+
+	if (::GetLogicalDriveStrings(64, logicalDrives.data())) {
+		wchar_t* p;
+		for (p = logicalDrives.data(); *p != L'\0';p+=lstrlen(p)+1) {
+			m_knownIconMap.emplace(std::make_pair(*p + std::wstring(L":\\"), std::shared_ptr<CIcon>(nullptr)));
+		}
+	}
+
 	CCoInitializer coinit;
 	CComPtr<IKnownFolderManager> pMgr;
 	HRESULT hr = NULL;
@@ -38,13 +48,11 @@ CFileIconCache::CFileIconCache():m_ignoreSet({L".exe", L".ico"})
 	}
 }
 
-bool CFileIconCache::Exist(CShellFile* file)const
+bool CFileIconCache::Exist(CShellFile* file)
 {
-	std::wstring ext(file->GetExt());
-	if (ext.empty()) { ext = L"dir"; }
 	return
 		m_knownIconMap.find(file->GetPath()) != m_knownIconMap.end() ||
-		m_iconMap.find(ext) != m_iconMap.end();
+		m_iconMap.find((file->GetExt().empty() && file->IsShellFolder())?L"dir":file->GetExt()) != m_iconMap.end();
 }
 
 
@@ -66,8 +74,7 @@ std::shared_ptr<CIcon> CFileIconCache::GetIcon(CShellFile* file)
 
 	//Ext cached folder
 	{
-		std::wstring ext(file->GetExt());
-		if (ext.empty()) { ext = L"dir"; }
+		std::wstring ext((file->GetExt().empty() && file->IsShellFolder()) ? L"dir" : file->GetExt());
 		auto iter = m_iconMap.find(ext);
 		if (iter != m_iconMap.end()) {
 			return iter->second;
@@ -76,7 +83,7 @@ std::shared_ptr<CIcon> CFileIconCache::GetIcon(CShellFile* file)
 			::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)file->GetAbsolutePidl(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
 			auto icon = std::make_shared<CIcon>(sfi.hIcon);
 
-			if (m_ignoreSet.find(ext) == m_ignoreSet.end()) {
+			if (!ext.empty() && m_ignoreSet.find(ext) == m_ignoreSet.end()) {
 				m_iconMap.emplace(ext, icon);
 			}
 			return icon;

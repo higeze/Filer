@@ -2,10 +2,44 @@
 #include "MyWnd.h"
 #include "Sheet.h"
 #include "MyGdiPlusHelper.h"
+#include <queue>
+#include <mutex>
+
 class IKeyObserver;
 class CBackgroundProperty;
 class CGridViewProperty;
 struct CMouseStateMachine;
+
+template<typename Function>
+struct function_traits:public function_traits<decltype(&Function::operator())>{};
+
+template<typename ClassType, typename ReturnType, typename ...Args>
+struct function_traits<ReturnType(ClassType::*)(Args...) const>
+{
+	typedef ReturnType(*pointer)(Args...);
+	typedef std::function<ReturnType(Args...)> function;
+};
+
+template<typename Function>
+typename function_traits<Function>::function to_function(Function & lambda) {
+	return static_cast<typename function_traits<Function>::function>(lambda);
+}
+
+template<typename Lambda>
+size_t getAddress(Lambda lambda) {
+	auto function = new decltype(to_function(lambda))(to_function(lambda));
+	void* func = static_cast<void*>(function);
+	return (size_t)func;
+}
+//
+//template<typename T, typename...U>
+//size_t GetFunctionAddress(std::function<T(U...)> f)
+//{
+//	typedef T(fnType)(U...);
+//	fnType ** fnPointer = f.template target<fnType*>();
+//	return (size_t)*fnPointer;
+//
+//}
 
 
 class CGridView:public CWnd,public CSheet
@@ -28,7 +62,7 @@ protected:
 	row_type m_rowFilter; /**< Filter row */
 	std::shared_ptr<CMouseStateMachine> m_pMouseStateMachine;
 	//IMouseState* m_pMouseState;
-private:
+protected:
 	boost::asio::io_service m_filterIosv;
 	boost::asio::io_service::work m_filterWork;
 	boost::asio::deadline_timer m_filterTimer;
@@ -36,6 +70,8 @@ private:
 	boost::asio::io_service m_invalidateIosv;
 	boost::asio::io_service::work m_invalidateWork;
 	boost::asio::deadline_timer m_invalidateTimer;
+	std::vector<std::function<void()>> m_delayUpdateActions;
+	std::mutex m_delayUpdateMtx;
 
 
 	//std::mutex m_mtx;
@@ -49,6 +85,10 @@ public:
 	boost::signals2::signal<void(CColumn*)> SignalColumnInserted;
 	boost::signals2::signal<void(CColumn*)> SignalColumnErased;
 	boost::signals2::signal<void(CColumn*, size_type, size_type)> SignalColumnMoved;
+	static UINT WM_DELAY_UPDATE;
+	void DelayUpdate(std::function<void()> func = nullptr);
+	void PushDelayUpdateAction(std::function<void()> func);
+	void EraseDelayUpdateAction(std::function<void()> func);
 
 	virtual void ColumnInserted(CColumnEventArgs& e)override;
 	virtual void ColumnErased(CColumnEventArgs& e)override;
@@ -89,6 +129,8 @@ protected:
 
 	virtual LRESULT OnFilter(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnLButtonDblClkTimeExceed(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	virtual LRESULT OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	//void PushDelayUpdateAction(std::function<void()> func) { m_delayUpdateActions.push(func); }
 
 	virtual LRESULT OnCmdEnChange(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 
@@ -169,7 +211,6 @@ std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
 
 		virtual void UpdateScrolls();
 		virtual void Invalidate();
-		virtual void DeadLineTimerInvalidate();
 
 		//virtual void ColumnErased(CColumnEventArgs& e);
 		virtual void ColumnVisibleChanged(CColumnEventArgs& e);

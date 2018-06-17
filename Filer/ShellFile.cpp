@@ -10,6 +10,46 @@ extern std::unique_ptr<ThreadPool> g_pThreadPool;
 
 CFileIconCache CShellFile::s_iconCache;
 
+int GetDirSize(std::wstring path, ULONGLONG *pSize)
+{
+	int res = 0;
+	*pSize = 0;
+
+	WIN32_FIND_DATA findData;
+	HANDLE hFind = FindFirstFile((path + L"\\*").c_str(), &findData);
+	if (hFind == INVALID_HANDLE_VALUE) {
+		goto Error;
+	}
+
+	ULONGLONG size = 0;
+	do {
+		if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			//Ignore "." ".."
+			if (!_tcscmp(_T("."), findData.cFileName) || !_tcscmp(_T(".."), findData.cFileName)) {
+				continue;
+			}
+			std::wstring nextPath(path + L"\\" + findData.cFileName);
+			if (!GetDirSize(nextPath.c_str(), &size)) {
+				goto Error;
+			}
+			*pSize += size;
+		} else {
+			*pSize += ((ULONGLONG)findData.nFileSizeHigh << 32 | findData.nFileSizeLow);
+		}
+
+	} while (FindNextFile(hFind, &findData));
+
+	if (GetLastError() != ERROR_NO_MORE_FILES)
+		goto Error;
+
+	// Succeed
+	res = 1;
+Error:
+	FindClose(hFind);
+	return res;
+}
+
+
 std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit)
 
 {
@@ -131,18 +171,29 @@ std::wstring CShellFile::GetLastWriteTime()
 	return m_wstrLastWriteTime;
 }
 
-std::wstring CShellFile::GetSizeString()
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize()
 {
-	if (m_wstrSize.empty()) {
-		UpdateWIN32_FIND_DATA();
-	}
-	return m_wstrSize;
-}
-
-ULARGE_INTEGER CShellFile::GetSize()
-{
-	if (!m_size.HighPart && !m_size.LowPart) {
-		UpdateWIN32_FIND_DATA();
+	switch (m_size.second) {
+	case FileSizeStatus::None:
+		if (!IsDirectory()) {
+			UpdateWIN32_FIND_DATA();
+			m_size.second = FileSizeStatus::Available;
+		} else {
+			m_size.second = FileSizeStatus::Calculating;
+			g_pThreadPool->add([this] {
+				if (::GetDirSize(GetPath(), &m_size.first.QuadPart)) {
+					m_size.second = FileSizeStatus::Available;
+				} else {
+					m_size.second = FileSizeStatus::Unavailable;
+				}
+				SignalFileSizeChanged(this);
+			});
+		}
+		break;
+	case FileSizeStatus::Available:
+	case FileSizeStatus::Unavailable:
+	case FileSizeStatus::Calculating:
+		break;
 	}
 	return m_size;
 }
@@ -156,128 +207,28 @@ ULARGE_INTEGER CShellFile::GetSize()
 //}
 
 
-std::shared_ptr<CIcon> CShellFile::GetIcon(bool load)
+std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 {
-	if (!m_icon && load) {
-		//SHFILEINFO sfi = { 0 };
-		//::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-		////::SHGetFileInfo(GetPath().c_str(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-		//m_icon = CIcon(sfi.hIcon);
-		m_icon = s_iconCache.GetIcon(this);
-		return m_icon;
+	switch (m_icon.second) {
+	case FileIconStatus::None:
+		if (HasIconInCache()) {
+			m_icon.first = s_iconCache.GetIcon(this);
+			m_icon.second = FileIconStatus::Avilable;
+		} else {
+			m_icon.first = GetDefaultIcon();
+			m_icon.second = FileIconStatus::Loading;
+			g_pThreadPool->add([this] {
+				m_icon.first = s_iconCache.GetIcon(this);
+				m_icon.second = FileIconStatus::Avilable;
+				SignalFileIconChanged(this);
+			});
+		}
+		break;
+	case FileIconStatus::Avilable:
+	case FileIconStatus::Loading:
+		break;
 	}
-	else {
-		return m_icon;
-	}
-	//if ((HICON)m_icon == NULL && !m_isAsyncIcon) {
-	//	//if (false && !(GetAttributes() & (SFGAO_FILESYSTEM | SFGAO_FILESYSANCESTOR))) {
-	//	//	SHFILEINFO sfi = { 0 };
-	//	//	::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-	//	//	//::SHGetFileInfo(GetPath().c_str(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-	//	//	m_icon = CIcon(sfi.hIcon);
-	//	//}else {
-	//		m_isAsyncIcon = true;
-	//		g_pThreadPool->add([this]
-	//		{
-	//			//if (FAILED(::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED)))
-	//			//	return;
-	//			SHFILEINFO sfi = { 0 };
-	//			::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-	//			//::SHGetFileInfo(GetPath().c_str(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-	//			m_icon = CIcon(sfi.hIcon);
-	//			m_isAsyncIcon = false;
-
-	//			//::CoUninitialize();
-	//			//CComPtr<IExtractIcon> pEI;
-	//			//UINT reserved = 0;
-	//			//LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
-	//			//HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
-	//			//if (SUCCEEDED(hr)) {
-	//			//	std::wstring buff;
-	//			//	::GetBuffer(buff, MAX_PATH);
-	//			//	UINT flags = 0;
-	//			//	int index = 0;
-	//			//	hr = pEI->GetIconLocation(GIL_FORSHELL, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
-	//			//	HICON smallIcon = NULL;
-	//			//	pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
-	//			//	m_icon = CIcon(smallIcon);
-	//			//}
-	//			//else {
-	//			//	m_icon = GetIconBySHGetFileInfo();
-	//			//}
-	//			//m_isAsyncIcon = false;
-
-	//		});
-	//	}
-
-		//if (GetAttributes() & (SFGAO_LINK | SFGAO_GHOSTED | SFGAO_HIDDEN | SFGAO_SHARE) || 
-		//	!(GetAttributes() & (SFGAO_FILESYSTEM | SFGAO_FILESYSANCESTOR))) {
-		//	m_icon = GetIconBySHGetFileInfo();
-		//}
-		//else {
-		//	CComPtr<IExtractIcon> pEI;
-		//	UINT reserved = 0;
-		//	LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
-		//	HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
-		//	if (SUCCEEDED(hr)) {
-		//		std::wstring buff;
-		//		::GetBuffer(buff, MAX_PATH);
-		//		UINT flags = 0;
-		//		int index = 0;
-		//		hr = pEI->GetIconLocation(GIL_FORSHELL | GIL_ASYNC, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
-		//		switch (hr) {
-
-		//		case E_PENDING:
-		//		{
-		//			std::cout << "E_PENDING" << std::endl;
-		//			m_isAsyncIcon = true;
-		//			std::thread th([this]
-		//			{
-		//				CComPtr<IExtractIcon> pEI;
-		//				UINT reserved = 0;
-		//				LPITEMIDLIST lastPIDL = m_absolutePidl.FindLastID();
-		//				HRESULT hr = m_parentFolder->GetUIObjectOf(NULL, 1, (LPCITEMIDLIST*)(&lastPIDL), IID_IExtractIcon, &reserved, (LPVOID*)&pEI);
-		//				if (SUCCEEDED(hr)) {
-		//					std::wstring buff;
-		//					::GetBuffer(buff, MAX_PATH);
-		//					UINT flags = 0;
-		//					int index = 0;
-		//					hr = pEI->GetIconLocation(GIL_FORSHELL, (PWSTR)buff.data(), MAX_PATH, &index, &flags);
-		//					HICON smallIcon = NULL;
-		//					pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
-		//					m_icon = CIcon(smallIcon);
-		//				}
-		//				else {
-		//					m_icon = GetIconBySHGetFileInfo();
-		//				}
-		//				m_isAsyncIcon = false;
-
-		//			});
-		//			th.detach();
-		//		}
-		//		break;
-		//		case NOERROR:
-		//		{
-		//			HICON smallIcon = NULL;
-		//			pEI->Extract(buff.data(), index, NULL, &smallIcon, MAKELONG(32, 16));
-		//			if (smallIcon) {
-		//				m_icon = CIcon(smallIcon);
-		//			}
-		//			else {
-		//				m_icon = GetIconBySHGetFileInfo();
-		//			}
-		//		}
-		//		break;
-		//		case S_FALSE:
-		//		{
-		//			m_icon = GetIconBySHGetFileInfo();
-		//		}
-		//		default:
-		//			break;
-		//		}
-		//	}
-		//}
-	//}
+	return m_icon;
 }
 
 std::shared_ptr<CIcon> CShellFile::GetDefaultIcon()
@@ -285,16 +236,25 @@ std::shared_ptr<CIcon> CShellFile::GetDefaultIcon()
 	return s_iconCache.GetDefaultIcon();
 }
 
-UINT CShellFile::GetAttributes()
+UINT CShellFile::GetSFGAO()
 {
-	if (m_ulAttributes == 0) {
+	if (m_sfgao == 0) {
 		auto childPidl = m_absolutePidl.GetLastIDLPtr();
-		m_ulAttributes = SFGAO_CAPABILITYMASK | SFGAO_GHOSTED | SFGAO_LINK | SFGAO_SHARE | SFGAO_FOLDER | SFGAO_FILESYSTEM;
-		m_parentFolder->GetAttributesOf(1, (LPCITEMIDLIST*)&childPidl, &m_ulAttributes);
+		m_sfgao = SFGAO_CAPABILITYMASK | SFGAO_GHOSTED | SFGAO_LINK | SFGAO_SHARE | SFGAO_FOLDER | SFGAO_FILESYSTEM;
+		m_parentFolder->GetAttributesOf(1, (LPCITEMIDLIST*)&childPidl, &m_sfgao);
 	}
-	return m_ulAttributes;
+	return m_sfgao;
 
 }
+
+DWORD CShellFile::GetAttributes()
+{
+	if (m_fileAttributes == 0) {	
+		UpdateWIN32_FIND_DATA();
+	}
+	return m_fileAttributes;
+}
+
 
 void CShellFile::UpdateWIN32_FIND_DATA()
 {
@@ -305,24 +265,24 @@ void CShellFile::UpdateWIN32_FIND_DATA()
 		m_wstrLastAccessTime = FileTime2String(&wfd.ftLastAccessTime);
 		m_wstrLastWriteTime = FileTime2String(&wfd.ftLastWriteTime);
 		m_fileAttributes = wfd.dwFileAttributes;
-		m_size.LowPart = wfd.nFileSizeLow;
-		m_size.HighPart = wfd.nFileSizeHigh;
-		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			m_wstrSize = L"dir";
-		}
-		else {
-			m_wstrSize = Size2String(m_size.QuadPart);
-		}
+		m_size.first.LowPart = wfd.nFileSizeLow;
+		m_size.first.HighPart = wfd.nFileSizeHigh;
+		//if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+		//	m_wstrSize = L"dir";
+		//}
+		//else {
+		//	m_wstrSize = Size2String(m_size.QuadPart);
+		//}
 	}
 }
 
-CShellFile::CShellFile() :m_parentFolder(), m_absolutePidl(), m_isAsyncIcon(false)
+CShellFile::CShellFile() :m_parentFolder(), m_absolutePidl()
 {
 	::SHGetDesktopFolder(&m_parentFolder);
 	::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &m_absolutePidl);
 }
 
-CShellFile::CShellFile(const std::wstring& path) : m_parentFolder(), m_absolutePidl(), m_isAsyncIcon(false)
+CShellFile::CShellFile(const std::wstring& path) : m_parentFolder(), m_absolutePidl()
 {
 	CComPtr<IShellFolder> pDesktop;
 	::SHGetDesktopFolder(&pDesktop);
@@ -342,33 +302,37 @@ CShellFile::CShellFile(const std::wstring& path) : m_parentFolder(), m_absoluteP
 }
 
 CShellFile::CShellFile(CComPtr<IShellFolder> pfolder, CIDLPtr absolutePidl)
-	:m_parentFolder(pfolder),m_absolutePidl(absolutePidl), m_isAsyncIcon(false) {}
+	:m_parentFolder(pfolder),m_absolutePidl(absolutePidl)
+{}
 
-bool CShellFile::IsShellFolder()const
+bool CShellFile::IsShellFolder()
 {
-	//Try BindToObject and EnumObjects to identify folder
-	CComPtr<IShellFolder> pDesktop;
-	::SHGetDesktopFolder(&pDesktop);
-	CComPtr<IShellFolder> pFolder;
-	HRESULT hr = S_OK;
+	if (!m_isShellFolder) {
+		//Try BindToObject and EnumObjects to identify folder
+		CComPtr<IShellFolder> pDesktop;
+		::SHGetDesktopFolder(&pDesktop);
+		CComPtr<IShellFolder> pFolder;
+		HRESULT hr = S_OK;
 
-	if (m_absolutePidl.m_pIDL->mkid.cb == 0) {
-		pFolder = pDesktop;
-	}
-	else {
-		hr = pDesktop->BindToObject(m_absolutePidl, 0, IID_IShellFolder, (void**)&pFolder);
-	}
+		if (m_absolutePidl.m_pIDL->mkid.cb == 0) {
+			pFolder = pDesktop;
+		} else {
+			hr = pDesktop->BindToObject(m_absolutePidl, 0, IID_IShellFolder, (void**)&pFolder);
+		}
 
-	if (SUCCEEDED(hr)) {
-		CComPtr<IEnumIDList> enumIdl;
-		hr = pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl);
-		return SUCCEEDED(hr);
+		if (SUCCEEDED(hr)) {
+			CComPtr<IEnumIDList> enumIdl;
+			hr = pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl);
+			m_isShellFolder =  SUCCEEDED(hr);
+		} else {
+			m_isShellFolder = false;
+		}
 	}
-	return false;
+	return m_isShellFolder.value();
 
 }
 
-std::shared_ptr<CShellFolder> CShellFile::CastShellFolder()const
+std::shared_ptr<CShellFolder> CShellFile::CastShellFolder()
 {
 	if (IsShellFolder()) {
 		CComPtr<IShellFolder> pDesktop;
@@ -398,23 +362,22 @@ void CShellFile::Reset()
 	m_wstrCreationTime.clear();
 	m_wstrLastAccessTime.clear();
 	m_wstrLastWriteTime.clear();
-	m_wstrSize.clear();
+	m_size = std::make_pair(ULARGE_INTEGER(), FileSizeStatus::None);
 
-	m_size.LowPart = 0;
-	m_size.HighPart = 0;
+	m_isShellFolder = boost::none;
+
+	m_size.first.QuadPart = 0;
 	m_fileAttributes = 0;
-	m_icon = nullptr;
-	m_ulAttributes = 0;
-
-	bool m_isAsyncIcon = false;
-
+	m_icon = std::make_pair(std::shared_ptr<CIcon>(nullptr), FileIconStatus::None);
+	m_sfgao = 0;
 
 }
 
-bool CShellFile::HasIcon()
+bool CShellFile::IsDirectory()
 {
-	return (bool)m_icon;
+	return GetAttributes() & FILE_ATTRIBUTE_DIRECTORY;
 }
+
 bool CShellFile::HasIconInCache()
 {
 	return s_iconCache.Exist(this);

@@ -13,50 +13,28 @@ extern std::unique_ptr<ThreadPool> g_pThreadPool;
 CFileIconCell::CFileIconCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
 	:CCell(pSheet, pRow, pColumn, spProperty){}
 
-std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()
+std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()const
 {
 	auto pFileRow = static_cast<CFileRow*>(m_pRow);
-	return pFileRow->GetFilePointer();
+	//It is impossible to plymorphism in constructor, assign signal here.
+	auto spFile =  pFileRow->GetFilePointer();
+	if (spFile->SignalFileIconChanged.empty()) {
+		spFile->SignalFileIconChanged.connect(
+			[this](CShellFile* pFile)->void {
+			m_pSheet->GetGridPtr()->DelayUpdate();
+		});
+	}
+	return spFile;
 }
 
 void CFileIconCell::PaintContent(CDC* pDC, CRect rcPaint)
 {
-//	auto spFile = GetShellFile();
-//	CIcon icon = spFile->GetIcon(false);
-//
-//	if (icon) {
-//		CRect rc = rcPaint;
-//		rc.bottom = rc.top + 16;
-//		rc.right = rc.left + 16;
-//		pDC->DrawIconEx(icon, rc, 0, NULL, DI_NORMAL);
-//	}
-//	else {
-//		g_pThreadPool->add([this,spFile]
-//		{
-//			if (spFile->GetIcon(true)) {
-//				m_pSheet->GetGridPtr()->DeadLineTimerInvalidate();
-////				m_pSheet->GetGridPtr()->Invalidate();
-//			}
-//		});
-//	}
-
 	auto spFile = GetShellFile();
 	CRect rc = rcPaint;
 	rc.bottom = rc.top + 16;
 	rc.right = rc.left + 16;
-	if (spFile->HasIcon() || spFile->HasIconInCache()) {
-		pDC->DrawIconEx(*spFile->GetIcon(true), rc, 0, NULL, DI_NORMAL);
-	} else {
-		pDC->DrawIconEx(*spFile->GetDefaultIcon(), rc, 0, NULL, DI_NORMAL);
-		g_pThreadPool->add([this,spFile]
-		{
-			if (spFile->GetIcon(true)) {
-				m_pSheet->GetGridPtr()->DeadLineTimerInvalidate();
-			}
-		});
-	}
 
-
+	pDC->DrawIconEx(*(spFile->GetIcon().first), rc, 0, NULL, DI_NORMAL);
 }
 
 CSize CFileIconCell::MeasureContentSize(CDC* pDC)

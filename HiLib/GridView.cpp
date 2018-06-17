@@ -34,6 +34,8 @@
 
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
+UINT CGridView::WM_DELAY_UPDATE = ::RegisterWindowMessage(L"CGridView::WM_DELAY_UPDATE");
+
 
 CMenu CGridView::ContextMenu;
 
@@ -94,6 +96,7 @@ CGridView::CGridView(
 	AddMsgHandler(WM_KEYDOWN,&CGridView::OnKeyDown,this);
 	AddMsgHandler(WM_FILTER,&CGridView::OnFilter,this);
 	AddMsgHandler(WM_LBUTTONDBLCLKTIMEXCEED,&CGridView::OnLButtonDblClkTimeExceed,this);
+	AddMsgHandler(WM_DELAY_UPDATE, &CGridView::OnDelayUpdate, this);
 
 	AddCmdCdHandler(EN_CHANGE,&CGridView::OnCmdEnChange,this);
 	AddCmdIDHandler(ID_HD_COMMAND_EDITHEADER,&CGridView::OnCommandEditHeader,this);
@@ -622,17 +625,59 @@ void CGridView::Invalidate()
 	InvalidateRect(NULL,FALSE);
 }
 
-void CGridView::DeadLineTimerInvalidate()
+void CGridView::PushDelayUpdateAction(std::function<void()> func)
 {
+	{
+		std::lock_guard<std::mutex> lock(m_delayUpdateMtx);
+		if (func) { m_delayUpdateActions.push_back(func); }
+	}
+}
+void CGridView::EraseDelayUpdateAction(std::function<void()> func)
+{
+	{
+		std::lock_guard<std::mutex> lock(m_delayUpdateMtx);
+		if (func) {
+			std::remove_if(m_delayUpdateActions.begin(), m_delayUpdateActions.end(), [&](auto f)->bool {
+				return getAddress(f) == getAddress(func);
+			});
+		}
+	}
+}
+
+void CGridView::DelayUpdate(std::function<void()> func)
+{
+	{
+		std::lock_guard<std::mutex> lock(m_delayUpdateMtx);
+		if (func) { m_delayUpdateActions.push_back(func); }
+	}
 	m_invalidateTimer.expires_from_now(boost::posix_time::milliseconds(30));
 	m_invalidateTimer.async_wait([this](const boost::system::error_code& error)->void {
 
 		if (error == boost::asio::error::operation_aborted) {
 		} else {
-			InvalidateRect(NULL, FALSE);
+			PostMessage(WM_DELAY_UPDATE, NULL, NULL);
 		}
 	});
 }
+
+LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	{
+		std::lock_guard<std::mutex> lock(m_delayUpdateMtx);
+		for (auto& func : m_delayUpdateActions) {
+			func();
+		}
+		m_delayUpdateActions.clear();
+	}
+
+	FilterAll();
+	SortAll();
+	//Need to remove EnsureVisibleFocusedCell. Otherwise scroll to 0 when scrolling
+	m_setUpdate.erase(Updates::EnsureVisibleFocusedCell);
+	SubmitUpdate();
+	return 0;
+}
+
 
 void CGridView::UpdateScrolls()
 {

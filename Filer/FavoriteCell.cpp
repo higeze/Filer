@@ -14,7 +14,7 @@
 CFavoriteCell::CFavoriteCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
 	:CFileIconCell(pSheet, pRow, pColumn, spProperty){}
 
-std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
+std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()const
 {
 	auto pRow = static_cast<CFavoriteRow*>(m_pRow);
 	auto pCol = static_cast<CFavoritesColumn*>(m_pColumn);

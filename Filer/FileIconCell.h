@@ -14,5 +14,5 @@ public:
 	virtual void PaintContent(CDC* pDC, CRect rcPaint)override;
 	virtual CSize MeasureContentSize(CDC* pDC) override;
 	virtual CSize MeasureContentSizeWithFixedWidth(CDC* pDC) override;
-	virtual std::shared_ptr<CShellFile> GetShellFile();
+	virtual std::shared_ptr<CShellFile> GetShellFile()const;
 };
