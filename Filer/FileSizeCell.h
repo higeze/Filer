@@ -7,12 +7,14 @@ class CFileSizeCell:public CTextCell
 {
 private:
 	std::function<void()> m_delayUpdateAction;
+	//std::wstring m_size;
+	//std::wstring m_sortSize;
 public:
 	CFileSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty);
 	virtual ~CFileSizeCell(void);
 
-	bool operator<(const CCell& rhs)const;
-	bool operator>(const CCell& rhs)const;
+	//bool operator<(const CFileSizeCell& rhs)const;
+	//bool operator>(const CFileSizeCell& rhs)const;
 
 	virtual bool IsComparable()const override{return false;}
 	virtual string_type GetString()const override;

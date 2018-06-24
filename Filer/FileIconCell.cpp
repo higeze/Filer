@@ -15,16 +15,19 @@ CFileIconCell::CFileIconCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::
 
 std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()const
 {
-	auto pFileRow = static_cast<CFileRow*>(m_pRow);
-	//It is impossible to plymorphism in constructor, assign signal here.
-	auto spFile =  pFileRow->GetFilePointer();
-	if (spFile->SignalFileIconChanged.empty()) {
-		spFile->SignalFileIconChanged.connect(
-			[this](CShellFile* pFile)->void {
-			m_pSheet->GetGridPtr()->DelayUpdate();
-		});
+	if(auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)){
+		//It is impossible to plymorphism in constructor, assign signal here.
+		auto spFile =  pFileRow->GetFilePointer();
+		if (spFile->SignalFileIconChanged.empty()) {
+			spFile->SignalFileIconChanged.connect(
+				[this](CShellFile* pFile)->void {
+				m_pSheet->GetGridPtr()->DelayUpdate();
+			});
+		}
+		return spFile;
+	} else {
+		return nullptr;
 	}
-	return spFile;
 }
 
 void CFileIconCell::PaintContent(CDC* pDC, CRect rcPaint)

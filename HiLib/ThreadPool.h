@@ -37,6 +37,16 @@ public:
 		deque_.pop_front();
 		return true;
 	}
+	bool remove_if(std::function<bool(const T&)> pred) {
+		bool res = false;
+		for (auto iter = deque_.cbegin(); iter != deque_.cend(); ++iter) {
+			if (pred(*iter)) {
+				deque_.erase(iter);
+				res = true;
+			}
+		}	
+		return res;
+	}
 	bool empty() const {
 		return deque_.empty();
 	}
@@ -82,6 +92,10 @@ public:
 		}
 		cv_.notify_all();
 		return true;
+	}
+	bool remove_if(std::function<bool(const std::function<void()>&)> pred) {
+		std::unique_lock<std::mutex> ul(mutex_);
+		return queue_.remove_if(pred);
 	}
 private:
 	std::function<void()> main_ = [this]()

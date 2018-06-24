@@ -9,7 +9,19 @@ class CShellFolder;
 tstring FileTime2String(FILETIME *pFileTime);
 tstring Size2String(ULONGLONG size);
 std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit = 3);
-int GetDirSize(std::wstring path, ULONGLONG *pSize);
+bool GetDirSize(std::wstring path, ULONGLONG *pSize);
+
+struct findclose
+{
+	void operator()(HANDLE handle)const
+	{
+		if (!::FindClose(handle)) {
+			//FILE_LINE_FUNC_TRACE;
+		}
+	}
+
+};
+
 
 enum class FileSizeStatus
 {
@@ -51,6 +63,13 @@ protected:
 	DWORD  m_fileAttributes = 0;
 	ULONG m_sfgao = 0;
 
+	std::unique_ptr<std::thread> m_pSizeThread;
+	std::atomic<bool> m_cancelSizeThread = false;
+
+	std::unique_ptr<std::thread> m_pIconThread;
+	std::atomic<bool> m_cancelIconThread = false;
+
+
 public:
 	//Constructor
 	CShellFile();
@@ -58,7 +77,7 @@ public:
 	CShellFile(const std::wstring& path);
 
 	//Destructor
-	virtual ~CShellFile() {}
+	virtual ~CShellFile();
 
 	//Signal
 	boost::signals2::signal<void(CShellFile*)> SignalFileSizeChanged;

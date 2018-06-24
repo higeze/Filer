@@ -371,16 +371,25 @@ void CSheet::Sort(CColumn* pCol, Sorts sort)
 	//Copy all to vector
 	std::copy(rowDictionary.begin(),rowDictionary.find(0),std::back_inserter(vRowMinusData));
 	std::copy(rowDictionary.find(0),rowDictionary.end(),std::back_inserter(vRowPlusData));
+	::OutputDebugStringA("vRowPlusData\r\n");
+	boost::range::for_each(vRowPlusData, [](const RowData& data) {
+		::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
+	});
 	//Sort
 	switch(sort){
 	case Sorts::Down:
 		std::stable_sort(vRowPlusData.begin(),vRowPlusData.end(),[pCol](const RowData& lhs,const RowData& rhs)->bool{
-			return pCol->Cell(lhs.DataPtr.get())->operator<(*(pCol->Cell(rhs.DataPtr.get())));
+			::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.DataPtr.get()).str().c_str());
+			return _tcsicmp(Cell(lhs.DataPtr.get(), pCol)->GetSortString().c_str(), Cell(rhs.DataPtr.get(), pCol)->GetSortString().c_str())>0;
+			//return pCol->Cell(lhs.DataPtr.get())->operator<(*(pCol->Cell(rhs.DataPtr.get())));
 		});
 		break;
 	case Sorts::Up:
 		std::stable_sort(vRowPlusData.begin(),vRowPlusData.end(),[pCol](const RowData& lhs,const RowData& rhs)->bool{
-			return pCol->Cell(lhs.DataPtr.get())->operator>(*(pCol->Cell(rhs.DataPtr.get())));
+			::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.DataPtr.get()).str().c_str());
+			return _tcsicmp(Cell(lhs.DataPtr.get(), pCol)->GetSortString().c_str(), Cell(rhs.DataPtr.get(), pCol)->GetSortString().c_str())<0;
+
+			//			return pCol->Cell(lhs.DataPtr.get())->operator>(*(pCol->Cell(rhs.DataPtr.get())));
 		});
 		break;
 	default:

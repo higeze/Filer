@@ -4,49 +4,53 @@
 #include "MyCom.h"
 #include "ShellFolder.h"
 #include <thread>
-#include "ThreadPool.h"
+//#include "ThreadPool.h"
+//#include "ThreadHelper.h"
 
-extern std::unique_ptr<ThreadPool> g_pThreadPool;
+//extern std::unique_ptr<ThreadPool> g_pThreadPool;
 
 CFileIconCache CShellFile::s_iconCache;
 
-int GetDirSize(std::wstring path, ULONGLONG *pSize)
+bool GetDirSize(std::wstring path, ULONGLONG *pSize, std::function<bool()> cancel = nullptr)
 {
-	int res = 0;
-	*pSize = 0;
+	try {
+		*pSize = 0;
+		ULONGLONG size = 0;
 
-	WIN32_FIND_DATA findData;
-	HANDLE hFind = FindFirstFile((path + L"\\*").c_str(), &findData);
-	if (hFind == INVALID_HANDLE_VALUE) {
-		goto Error;
-	}
-
-	ULONGLONG size = 0;
-	do {
-		if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			//Ignore "." ".."
-			if (!_tcscmp(_T("."), findData.cFileName) || !_tcscmp(_T(".."), findData.cFileName)) {
-				continue;
-			}
-			std::wstring nextPath(path + L"\\" + findData.cFileName);
-			if (!GetDirSize(nextPath.c_str(), &size)) {
-				goto Error;
-			}
-			*pSize += size;
-		} else {
-			*pSize += ((ULONGLONG)findData.nFileSizeHigh << 32 | findData.nFileSizeLow);
+		WIN32_FIND_DATA findData;
+		std::unique_ptr <std::remove_pointer<HANDLE>::type, findclose> upFind(FindFirstFile((path + L"\\*").c_str(), &findData));
+		if (upFind.get() == INVALID_HANDLE_VALUE) {
+			return false;
 		}
 
-	} while (FindNextFile(hFind, &findData));
+		do {
+			if (cancel && cancel()) {
+				return false;
+			}
 
-	if (GetLastError() != ERROR_NO_MORE_FILES)
-		goto Error;
+			if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+				//Ignore "." ".."
+				if (!_tcscmp(_T("."), findData.cFileName) || !_tcscmp(_T(".."), findData.cFileName)) {
+					continue;
+				}
+				std::wstring nextPath(path + L"\\" + findData.cFileName);
+				if (!GetDirSize(nextPath.c_str(), &size, cancel)) {
+					return false;
+				}
+				*pSize += size;
+			} else {
+				*pSize += ((ULONGLONG)findData.nFileSizeHigh << 32 | findData.nFileSizeLow);
+			}
+		} while (FindNextFile(upFind.get(), &findData));
 
-	// Succeed
-	res = 1;
-Error:
-	FindClose(hFind);
-	return res;
+		if (GetLastError() != ERROR_NO_MORE_FILES) {
+			return false;
+		} else {
+			return true;
+		}
+	} catch (...) {
+		return false;
+	}
 }
 
 
@@ -95,6 +99,54 @@ tstring Size2String(ULONGLONG size)
 {	
 	return ConvertCommaSeparatedNumber(size);	
 }
+
+
+CShellFile::CShellFile() :m_parentFolder(), m_absolutePidl()
+{
+	::SHGetDesktopFolder(&m_parentFolder);
+	::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &m_absolutePidl);
+}
+
+CShellFile::CShellFile(const std::wstring& path) : m_parentFolder(), m_absolutePidl()
+{
+	CComPtr<IShellFolder> pDesktop;
+	::SHGetDesktopFolder(&pDesktop);
+
+	ULONG         chEaten;
+	ULONG         dwAttributes;
+	HRESULT hr = pDesktop->ParseDisplayName(
+		NULL,
+		NULL,
+		const_cast<LPWSTR>(path.c_str()),
+		&chEaten,
+		&m_absolutePidl,
+		&dwAttributes);
+	if (FAILED(hr)) { m_parentFolder = nullptr; m_absolutePidl = CIDLPtr(); return; }
+	hr = ::SHBindToObject(pDesktop, m_absolutePidl.GetPreviousIDLPtr(), 0, IID_IShellFolder, (void**)&m_parentFolder);
+	if (FAILED(hr)) { m_parentFolder = nullptr; m_absolutePidl = CIDLPtr(); return; }
+}
+
+CShellFile::CShellFile(CComPtr<IShellFolder> pfolder, CIDLPtr absolutePidl)
+	:m_parentFolder(pfolder), m_absolutePidl(absolutePidl)
+{}
+
+CShellFile::~CShellFile()
+{
+	if (m_pSizeThread && m_pSizeThread->joinable()) {
+		m_cancelSizeThread = true;
+		m_pSizeThread->join();
+	}
+	if (m_pIconThread && m_pIconThread->joinable()) {
+		m_cancelIconThread = true;
+		m_pIconThread->join();
+	}
+
+	//g_pThreadPool->remove_if([this](const std::function<void()>& fun)->bool {
+	//	return getAddress(m_sizeThreadFun) == getAddress(fun);
+	//});
+
+}
+
 
 std::wstring& CShellFile::GetPath()
 {
@@ -180,14 +232,17 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize()
 			m_size.second = FileSizeStatus::Available;
 		} else {
 			m_size.second = FileSizeStatus::Calculating;
-			g_pThreadPool->add([this] {
-				if (::GetDirSize(GetPath(), &m_size.first.QuadPart)) {
-					m_size.second = FileSizeStatus::Available;
-				} else {
-					m_size.second = FileSizeStatus::Unavailable;
-				}
-				SignalFileSizeChanged(this);
-			});
+			if (!m_pSizeThread) {
+				m_pSizeThread = std::make_unique<std::thread>([this]()->void {
+					if (::GetDirSize(GetPath(), &m_size.first.QuadPart, [this]()->bool {return m_cancelSizeThread; })) {
+						m_size.second = FileSizeStatus::Available;
+					} else {
+						m_size.second = FileSizeStatus::Unavailable;
+					}
+					//::Sleep(1000);
+					SignalFileSizeChanged(this);
+				});
+			}
 		}
 		break;
 	case FileSizeStatus::Available:
@@ -197,15 +252,6 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize()
 	}
 	return m_size;
 }
-
-//void CShellFile::LoadIcon()
-//{
-//	SHFILEINFO sfi = { 0 };
-//	::SHGetFileInfo((LPCTSTR)(LPITEMIDLIST)m_absolutePidl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-//	//::SHGetFileInfo(GetPath().c_str(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-//	m_icon = CIcon(sfi.hIcon);
-//}
-
 
 std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 {
@@ -217,11 +263,13 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 		} else {
 			m_icon.first = GetDefaultIcon();
 			m_icon.second = FileIconStatus::Loading;
-			g_pThreadPool->add([this] {
-				m_icon.first = s_iconCache.GetIcon(this);
-				m_icon.second = FileIconStatus::Avilable;
-				SignalFileIconChanged(this);
-			});
+			if (!m_pIconThread) {
+				m_pIconThread = std::make_unique<std::thread>([this]()->void {
+					m_icon.first = s_iconCache.GetIcon(this);
+					m_icon.second = FileIconStatus::Avilable;
+					SignalFileIconChanged(this);
+				});
+			}
 		}
 		break;
 	case FileIconStatus::Avilable:
@@ -275,35 +323,6 @@ void CShellFile::UpdateWIN32_FIND_DATA()
 		//}
 	}
 }
-
-CShellFile::CShellFile() :m_parentFolder(), m_absolutePidl()
-{
-	::SHGetDesktopFolder(&m_parentFolder);
-	::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &m_absolutePidl);
-}
-
-CShellFile::CShellFile(const std::wstring& path) : m_parentFolder(), m_absolutePidl()
-{
-	CComPtr<IShellFolder> pDesktop;
-	::SHGetDesktopFolder(&pDesktop);
-
-	ULONG         chEaten;
-	ULONG         dwAttributes;
-	HRESULT hr = pDesktop->ParseDisplayName(
-		NULL,
-		NULL,
-		const_cast<LPWSTR>(path.c_str()),
-		&chEaten,
-		&m_absolutePidl,
-		&dwAttributes);
-	if (FAILED(hr)) { m_parentFolder = nullptr; m_absolutePidl = CIDLPtr(); return; }
-	hr = ::SHBindToObject(pDesktop, m_absolutePidl.GetPreviousIDLPtr(), 0, IID_IShellFolder, (void**)&m_parentFolder);
-	if (FAILED(hr)) { m_parentFolder = nullptr; m_absolutePidl = CIDLPtr(); return; }
-}
-
-CShellFile::CShellFile(CComPtr<IShellFolder> pfolder, CIDLPtr absolutePidl)
-	:m_parentFolder(pfolder),m_absolutePidl(absolutePidl)
-{}
 
 bool CShellFile::IsShellFolder()
 {

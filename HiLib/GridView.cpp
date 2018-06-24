@@ -230,11 +230,12 @@ void CGridView::OnCellLButtonClk(CellEventArgs& e)
 void CGridView::SortAll()
 {
 	auto& colDictionary=m_columnAllDictionary.get<IndexTag>();
-	boost::for_each(colDictionary,[&](const ColumnData& colData){
+//	boost::for_each(colDictionary,[&](const ColumnData& colData){
+	for(const auto& colData : colDictionary){
 		if(colData.DataPtr->GetSort()!=Sorts::None){
 			this->Sort(colData.DataPtr.get(),colData.DataPtr->GetSort());
 		}
-	});
+	}
 }
 
 void CGridView::ClearFilter()
@@ -671,7 +672,7 @@ LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 	}
 
 	FilterAll();
-	SortAll();
+	//SortAll();
 	//Need to remove EnsureVisibleFocusedCell. Otherwise scroll to 0 when scrolling
 	m_setUpdate.erase(Updates::EnsureVisibleFocusedCell);
 	SubmitUpdate();
@@ -1874,38 +1875,50 @@ void CGridView::SubmitUpdate()
 {
 	for (const auto& type : m_setUpdate) {
 		switch (type) {
+		case Updates::Sort:
+		{
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Sort")
+			SortAll();
+			break;
+		}
+		case Updates::Filter:
+		{
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Filter")
+			FilterAll();
+			break;
+		}
 		case Updates::RowVisible:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateRowVisibleDictionary")
-				UpdateRowVisibleDictionary();
-			::OutputDebugStringA("m_rowAllDictionary\r\n");
-			boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
-				::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
-			});
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::RowVisible")
+			UpdateRowVisibleDictionary();
+			//::OutputDebugStringA("m_rowAllDictionary\r\n");
+			//boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
+			//	::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
+			//});
+			break;
 		}
-		break;
 		case Updates::ColumnVisible:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateColumnVisibleDictionary")
-				UpdateColumnVisibleDictionary();
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::ColumnVisible")
+			UpdateColumnVisibleDictionary();
 			break;
 		}
 		case Updates::Column:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateColumn")
-				UpdateColumn();
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Column")
+			UpdateColumn();
 			break;
 		}
 		case Updates::Row:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateRow")
-				UpdateRow();
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Row")
+			UpdateRow();
 			break;
 		}
 		case Updates::Scrolls:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateScrolls")
-				UpdateScrolls();
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Scrolls")
+			UpdateScrolls();
 			break;
 		}
 		case Updates::EnsureVisibleFocusedCell:

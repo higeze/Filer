@@ -25,16 +25,12 @@ enum class Compares{
 
 enum class Updates{
 	None,
+	Sort,
+	Filter,
 	RowVisible,
 	ColumnVisible,
 	Column,
 	Row,
-//	ColumnWidth,
-//	ColumnFitWidth,
-//	RowHeight,
-//	RowFitHeight,
-//	RowTop,
-//	ColumnLeft,
 	EnsureVisibleFocusedCell,
 	Scrolls,
 	Invalidate,

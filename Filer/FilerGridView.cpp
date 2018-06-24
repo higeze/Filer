@@ -601,6 +601,8 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		//	}
 		//}
 
+	PostUpdate(Updates::Sort);
+	PostUpdate(Updates::Filter);
 	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::RowVisible);
 	//PostUpdate(Updates::Column);
@@ -608,11 +610,15 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
 
-	FilterAll();
-	SortAll();
 	if(!isUpdate){
 		FolderChanged(m_spFolder); 
 	}
+
+	::OutputDebugStringA("m_rowAllDictionary\r\n");
+	boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
+		::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
+	});
+
 
 	SubmitUpdate();
 
