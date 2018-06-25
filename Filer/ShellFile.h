@@ -63,11 +63,13 @@ protected:
 	DWORD  m_fileAttributes = 0;
 	ULONG m_sfgao = 0;
 
-	std::unique_ptr<std::thread> m_pSizeThread;
+	std::unique_ptr<std::thread> m_pSizeThread = nullptr;
 	std::atomic<bool> m_cancelSizeThread = false;
 
-	std::unique_ptr<std::thread> m_pIconThread;
+	std::unique_ptr<std::thread> m_pIconThread = nullptr;
 	std::atomic<bool> m_cancelIconThread = false;
+
+	//std::mutex m_mtxSize;
 
 
 public:
@@ -99,6 +101,7 @@ public:
 	std::wstring GetLastWriteTime();
 
 	std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize();
+	//void SetSize(ULARGE_INTEGER size, FileSizeStatus status);
 
 	std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon();
 

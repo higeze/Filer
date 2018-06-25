@@ -39,7 +39,8 @@ bool GetDirSize(std::wstring path, ULONGLONG *pSize, std::function<bool()> cance
 				}
 				*pSize += size;
 			} else {
-				*pSize += ((ULONGLONG)findData.nFileSizeHigh << 32 | findData.nFileSizeLow);
+				ULARGE_INTEGER plus = { findData.nFileSizeLow , findData.nFileSizeHigh };
+				*pSize += plus.QuadPart;
 			}
 		} while (FindNextFile(upFind.get(), &findData));
 
@@ -234,10 +235,15 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize()
 			m_size.second = FileSizeStatus::Calculating;
 			if (!m_pSizeThread) {
 				m_pSizeThread = std::make_unique<std::thread>([this]()->void {
-					if (::GetDirSize(GetPath(), &m_size.first.QuadPart, [this]()->bool {return m_cancelSizeThread; })) {
+					ULARGE_INTEGER size;
+					if (::GetDirSize(GetPath(), &size.QuadPart, [this]()->bool {return m_cancelSizeThread; })) {
+						m_size.first = size;
 						m_size.second = FileSizeStatus::Available;
+						//SetSize(size, FileSizeStatus::Available);
 					} else {
+						m_size.first.QuadPart = 0;
 						m_size.second = FileSizeStatus::Unavailable;
+						//SetSize(size, FileSizeStatus::Unavailable);
 					}
 					//::Sleep(1000);
 					SignalFileSizeChanged(this);
