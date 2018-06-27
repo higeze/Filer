@@ -6,9 +6,9 @@
 #include "MySize.h"
 #include "Sheet.h"
 #include "GridView.h"
-#include "ThreadPool.h"
-
-extern std::unique_ptr<ThreadPool> g_pThreadPool;
+//#include "ThreadPool.h"
+//
+//extern std::unique_ptr<ThreadPool> g_pThreadPool;
 
 CFileIconCell::CFileIconCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
 	:CCell(pSheet, pRow, pColumn, spProperty){}

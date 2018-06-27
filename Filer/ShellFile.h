@@ -9,7 +9,8 @@ class CShellFolder;
 tstring FileTime2String(FILETIME *pFileTime);
 tstring Size2String(ULONGLONG size);
 std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit = 3);
-bool GetDirSize(std::wstring path, ULONGLONG *pSize);
+bool GetFileSize(CComPtr<IShellFolder>& parentFolder, CIDLPtr childIDL, ULARGE_INTEGER& size);
+bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<bool()> cancel = nullptr);
 
 struct findclose
 {
@@ -69,7 +70,7 @@ protected:
 	std::unique_ptr<std::thread> m_pIconThread = nullptr;
 	std::atomic<bool> m_cancelIconThread = false;
 
-	//std::mutex m_mtxSize;
+	std::mutex m_mtxSize;
 
 
 public:
@@ -101,6 +102,9 @@ public:
 	std::wstring GetLastWriteTime();
 
 	std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize();
+	std::pair<ULARGE_INTEGER, FileSizeStatus> GetLockSize();
+	void SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus> size);
+
 	//void SetSize(ULARGE_INTEGER size, FileSizeStatus status);
 
 	std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon();

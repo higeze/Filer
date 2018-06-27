@@ -10,6 +10,7 @@ CFileSizeCell::CFileSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::
 	m_delayUpdateAction([this]()->void {
 		m_bFitMeasureValid = false;
 		m_bActMeasureValid = false;
+		m_pSheet->PostUpdate(Updates::Sort);
 		m_pSheet->PostUpdate(Updates::Column);
 		m_pSheet->CellValueChanged(CellEventArgs(this));
 }) {}

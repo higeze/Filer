@@ -11,11 +11,23 @@
 
 CFileIconCache CShellFile::s_iconCache;
 
-bool GetDirSize(std::wstring path, ULONGLONG *pSize, std::function<bool()> cancel = nullptr)
+bool GetFileSize(CComPtr<IShellFolder>& parentFolder, CIDLPtr childIDL, ULARGE_INTEGER& size)
+{
+	WIN32_FIND_DATA wfd = { 0 }; 
+	if (!FAILED(SHGetDataFromIDList(parentFolder, childIDL, SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
+		size.LowPart = wfd.nFileSizeLow;
+		size.HighPart = wfd.nFileSizeHigh;
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<bool()> cancel)
 {
 	try {
-		*pSize = 0;
-		ULONGLONG size = 0;
+		size.QuadPart = 0;
+		ULARGE_INTEGER childSize = { 0 };
 
 		WIN32_FIND_DATA findData;
 		std::unique_ptr <std::remove_pointer<HANDLE>::type, findclose> upFind(FindFirstFile((path + L"\\*").c_str(), &findData));
@@ -34,13 +46,14 @@ bool GetDirSize(std::wstring path, ULONGLONG *pSize, std::function<bool()> cance
 					continue;
 				}
 				std::wstring nextPath(path + L"\\" + findData.cFileName);
-				if (!GetDirSize(nextPath.c_str(), &size, cancel)) {
+				if (!GetDirSize(nextPath.c_str(), childSize, cancel)) {
 					return false;
 				}
-				*pSize += size;
+				size.QuadPart += childSize.QuadPart;
 			} else {
-				ULARGE_INTEGER plus = { findData.nFileSizeLow , findData.nFileSizeHigh };
-				*pSize += plus.QuadPart;
+				childSize.HighPart = findData.nFileSizeHigh;
+				childSize.LowPart = findData.nFileSizeLow;
+				size.QuadPart += childSize.QuadPart;
 			}
 		} while (FindNextFile(upFind.get(), &findData));
 
@@ -134,6 +147,7 @@ CShellFile::CShellFile(CComPtr<IShellFolder> pfolder, CIDLPtr absolutePidl)
 CShellFile::~CShellFile()
 {
 	if (m_pSizeThread && m_pSizeThread->joinable()) {
+		OutputDebugString(L"size thread canceled");
 		m_cancelSizeThread = true;
 		m_pSizeThread->join();
 	}
@@ -224,30 +238,44 @@ std::wstring CShellFile::GetLastWriteTime()
 	return m_wstrLastWriteTime;
 }
 
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetLockSize() 
+{
+	std::lock_guard<std::mutex> lock(m_mtxSize);
+	return m_size;
+}
+
+void CShellFile::SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus> size)
+{
+	std::lock_guard<std::mutex> lock(m_mtxSize);
+	m_size  = size;
+}
+
+
 std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize()
 {
-	switch (m_size.second) {
+	switch (GetLockSize().second) {
 	case FileSizeStatus::None:
 		if (!IsDirectory()) {
-			UpdateWIN32_FIND_DATA();
-			m_size.second = FileSizeStatus::Available;
+			ULARGE_INTEGER size = { 0 };
+			if (::GetFileSize(m_parentFolder, m_absolutePidl.GetLastIDLPtr(), size)) {
+				SetLockSize(std::make_pair(size, FileSizeStatus::Available));
+			} else {
+				SetLockSize(std::make_pair(size, FileSizeStatus::Unavailable));
+			}
 		} else {
-			m_size.second = FileSizeStatus::Calculating;
+			SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
 			if (!m_pSizeThread) {
 				m_pSizeThread = std::make_unique<std::thread>([this]()->void {
-					ULARGE_INTEGER size;
-					if (::GetDirSize(GetPath(), &size.QuadPart, [this]()->bool {return m_cancelSizeThread; })) {
-						m_size.first = size;
-						m_size.second = FileSizeStatus::Available;
-						//SetSize(size, FileSizeStatus::Available);
+					ULARGE_INTEGER size = { 0 };
+					if (::GetDirSize(GetPath(), size, [this]()->bool {return m_cancelSizeThread; })) {
+						SetLockSize(std::make_pair(size, FileSizeStatus::Available));
 					} else {
-						m_size.first.QuadPart = 0;
-						m_size.second = FileSizeStatus::Unavailable;
-						//SetSize(size, FileSizeStatus::Unavailable);
+						SetLockSize(std::make_pair(size, FileSizeStatus::Unavailable));
 					}
-					//::Sleep(1000);
 					SignalFileSizeChanged(this);
 				});
+			} else {
+				OutputDebugString(L"Already run");
 			}
 		}
 		break;
@@ -256,7 +284,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize()
 	case FileSizeStatus::Calculating:
 		break;
 	}
-	return m_size;
+	return GetLockSize();
 }
 
 std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
@@ -319,8 +347,8 @@ void CShellFile::UpdateWIN32_FIND_DATA()
 		m_wstrLastAccessTime = FileTime2String(&wfd.ftLastAccessTime);
 		m_wstrLastWriteTime = FileTime2String(&wfd.ftLastWriteTime);
 		m_fileAttributes = wfd.dwFileAttributes;
-		m_size.first.LowPart = wfd.nFileSizeLow;
-		m_size.first.HighPart = wfd.nFileSizeHigh;
+		//m_size.first.LowPart = wfd.nFileSizeLow;
+		//m_size.first.HighPart = wfd.nFileSizeHigh;
 		//if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 		//	m_wstrSize = L"dir";
 		//}
@@ -387,11 +415,9 @@ void CShellFile::Reset()
 	m_wstrCreationTime.clear();
 	m_wstrLastAccessTime.clear();
 	m_wstrLastWriteTime.clear();
-	m_size = std::make_pair(ULARGE_INTEGER(), FileSizeStatus::None);
+	SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::None));
 
 	m_isShellFolder = boost::none;
-
-	m_size.first.QuadPart = 0;
 	m_fileAttributes = 0;
 	m_icon = std::make_pair(std::shared_ptr<CIcon>(nullptr), FileIconStatus::None);
 	m_sfgao = 0;

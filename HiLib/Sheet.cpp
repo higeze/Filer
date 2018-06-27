@@ -17,6 +17,7 @@
 #include "Cursorer.h"
 #include "Celler.h"
 #include "SheetStateMachine.h"
+//#include <list>
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -367,30 +368,46 @@ void CSheet::ResetColumnSort()
 void CSheet::Sort(CColumn* pCol, Sorts sort)
 {
 	auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
-	std::vector<RowData> vRowMinusData,vRowPlusData;
+	std::vector<std::pair<RowData, std::wstring>> vRowMinusData,vRowPlusData;
 	//Copy all to vector
-	std::copy(rowDictionary.begin(),rowDictionary.find(0),std::back_inserter(vRowMinusData));
-	std::copy(rowDictionary.find(0),rowDictionary.end(),std::back_inserter(vRowPlusData));
+	for (auto iter = rowDictionary.begin(); iter != rowDictionary.find(0); ++iter) {
+		vRowMinusData.emplace_back(*iter, CSheet::Cell(iter->DataPtr.get(), pCol)->GetSortString());
+	}
+	for (auto iter = rowDictionary.find(0); iter != rowDictionary.end(); ++iter) {
+		vRowPlusData.emplace_back(*iter, CSheet::Cell(iter->DataPtr.get(), pCol)->GetSortString());
+	}
+	//std::copy(rowDictionary.begin(),rowDictionary.find(0),std::back_inserter(vRowMinusData));
+	//std::copy(rowDictionary.find(0),rowDictionary.end(),std::back_inserter(vRowPlusData));
 	::OutputDebugStringA("vRowPlusData\r\n");
-	boost::range::for_each(vRowPlusData, [](const RowData& data) {
-		::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
+	boost::range::for_each(vRowPlusData, [](const auto& data) {
+		::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.first.Index %data.first.DataPtr.get()).str().c_str());
 	});
 	//Sort
 	switch(sort){
 	case Sorts::Down:
-		std::stable_sort(vRowPlusData.begin(),vRowPlusData.end(),[pCol](const RowData& lhs,const RowData& rhs)->bool{
-			::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.DataPtr.get()).str().c_str());
-			return _tcsicmp(Cell(lhs.DataPtr.get(), pCol)->GetSortString().c_str(), Cell(rhs.DataPtr.get(), pCol)->GetSortString().c_str())>0;
+		std::stable_sort(vRowPlusData.begin(),vRowPlusData.end(),[pCol](const auto& lhs,const auto& rhs)->bool{
+			::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.first.DataPtr.get()).str().c_str());
+			return _tcsicmp(lhs.second.c_str(), rhs.second.c_str())>0;
 			//return pCol->Cell(lhs.DataPtr.get())->operator<(*(pCol->Cell(rhs.DataPtr.get())));
 		});
+		//std::stable_sort(vRowPlusData.begin(),vRowPlusData.end(),[pCol](const RowData& lhs,const RowData& rhs)->bool{
+		//	::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.DataPtr.get()).str().c_str());
+		//	return _tcsicmp(CSheet::Cell(lhs.DataPtr.get(), pCol)->GetSortString().c_str(), CSheet::Cell(rhs.DataPtr.get(), pCol)->GetSortString().c_str())>0;
+		//	//return pCol->Cell(lhs.DataPtr.get())->operator<(*(pCol->Cell(rhs.DataPtr.get())));
+		//});
 		break;
 	case Sorts::Up:
-		std::stable_sort(vRowPlusData.begin(),vRowPlusData.end(),[pCol](const RowData& lhs,const RowData& rhs)->bool{
-			::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.DataPtr.get()).str().c_str());
-			return _tcsicmp(Cell(lhs.DataPtr.get(), pCol)->GetSortString().c_str(), Cell(rhs.DataPtr.get(), pCol)->GetSortString().c_str())<0;
-
-			//			return pCol->Cell(lhs.DataPtr.get())->operator>(*(pCol->Cell(rhs.DataPtr.get())));
+		std::stable_sort(vRowPlusData.begin(), vRowPlusData.end(), [pCol](const auto& lhs, const auto& rhs)->bool {
+			::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.first.DataPtr.get()).str().c_str());
+			return _tcsicmp(lhs.second.c_str(), rhs.second.c_str())<0;
+			//return pCol->Cell(lhs.DataPtr.get())->operator<(*(pCol->Cell(rhs.DataPtr.get())));
 		});
+		//std::stable_sort(vRowPlusData.begin(),vRowPlusData.end(),[pCol](const RowData& lhs,const RowData& rhs)->bool{
+		//	::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.DataPtr.get()).str().c_str());
+		//	return _tcsicmp(CSheet::Cell(lhs.DataPtr.get(), pCol)->GetSortString().c_str(), CSheet::Cell(rhs.DataPtr.get(), pCol)->GetSortString().c_str())<0;
+
+		//	//			return pCol->Cell(lhs.DataPtr.get())->operator>(*(pCol->Cell(rhs.DataPtr.get())));
+		//});
 		break;
 	default:
 		break;
@@ -398,10 +415,15 @@ void CSheet::Sort(CColumn* pCol, Sorts sort)
 
 	//Copy again
 	m_rowAllDictionary.clear();
-	std::copy(vRowMinusData.begin(),vRowMinusData.end(),std::inserter(m_rowAllDictionary,m_rowAllDictionary.begin()));
+//	std::copy(vRowMinusData.begin(),vRowMinusData.end(),std::inserter(m_rowAllDictionary,m_rowAllDictionary.begin()));
+	for (auto begin = vRowMinusData.begin(), iter = vRowMinusData.begin(), end = vRowMinusData.end(); iter != end; ++iter) {
+		//iter->first.Index = std::distance(begin, iter);
+		m_rowAllDictionary.insert(iter->first);
+	}
+
 	for(auto begin=vRowPlusData.begin(),iter=vRowPlusData.begin(),end=vRowPlusData.end();iter!=end;++iter){
-		iter->Index=iter-begin;
-		m_rowAllDictionary.insert(*iter);
+		iter->first.Index=std::distance(begin, iter);
+		m_rowAllDictionary.insert(iter->first);
 	}
 	//Update
 	Sorted();
