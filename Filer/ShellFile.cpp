@@ -23,6 +23,47 @@ bool GetFileSize(CComPtr<IShellFolder>& parentFolder, CIDLPtr childIDL, ULARGE_I
 	}
 }
 
+bool GetFolderSize(std::shared_ptr<CShellFolder>& pFolder, ULARGE_INTEGER& size, std::function<bool()> cancel)
+{
+	try {
+		//Enumerate child IDL
+		size.QuadPart = 0;
+		ULARGE_INTEGER childSize = { 0 };
+
+		CComPtr<IEnumIDList> enumIdl;
+		if (SUCCEEDED(pFolder->GetShellFolderPtr()->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
+			CIDLPtr nextIdl;
+			ULONG ulRet(0);
+			while (SUCCEEDED(enumIdl->Next(1, &nextIdl, &ulRet))) {
+				if (cancel && cancel()) { return false; }
+				if (!nextIdl) { break; }
+				auto spFile(std::make_shared<CShellFile>(pFolder->GetShellFolderPtr(), ::ILCombine(pFolder->GetAbsolutePidl(), nextIdl)));
+				if (spFile->IsShellFolder()) {
+					if (auto spFolder = spFile->CastShellFolder()) {
+						if (GetFolderSize(spFolder, childSize, cancel)) {
+							size.QuadPart += childSize.QuadPart;
+						} else {
+							return false;
+						}
+					}
+				} else {
+					if (GetFileSize(pFolder->GetShellFolderPtr(), spFile->GetAbsolutePidl().GetLastIDLPtr(), childSize)) {
+						size.QuadPart += childSize.QuadPart;
+					} else {
+						return false;
+					}
+				}
+				nextIdl.Clear();
+			}
+		}
+	} catch (...) {
+		return false;
+	}
+	return true;
+
+}
+
+
 bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<bool()> cancel)
 {
 	try {
@@ -146,12 +187,14 @@ CShellFile::CShellFile(CComPtr<IShellFolder> pfolder, CIDLPtr absolutePidl)
 
 CShellFile::~CShellFile()
 {
-	if (m_pSizeThread && m_pSizeThread->joinable()) {
-		OutputDebugString(L"size thread canceled");
+	if (m_pSizeThread.get() != nullptr && m_pSizeThread->joinable()) {
+		std::wcout << L"CShellFile size thread canceled" << std::endl;
 		m_cancelSizeThread = true;
 		m_pSizeThread->join();
 	}
-	if (m_pIconThread && m_pIconThread->joinable()) {
+	if (m_pIconThread)
+		if(m_pIconThread->joinable()) {
+		std::wcout << L"CShellFile icon thread canceled" << std::endl;
 		m_cancelIconThread = true;
 		m_pIconThread->join();
 	}
@@ -244,10 +287,22 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetLockSize()
 	return m_size;
 }
 
-void CShellFile::SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus> size)
+void CShellFile::SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size)
 {
 	std::lock_guard<std::mutex> lock(m_mtxSize);
 	m_size  = size;
+}
+
+std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetLockIcon()
+{
+	std::lock_guard<std::mutex> lock(m_mtxIcon);
+	return m_icon;
+}
+
+void CShellFile::SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& icon)
+{
+	std::lock_guard<std::mutex> lock(m_mtxIcon);
+	m_icon = icon;
 }
 
 
@@ -255,7 +310,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize()
 {
 	switch (GetLockSize().second) {
 	case FileSizeStatus::None:
-		if (!IsDirectory()) {
+		if (!IsShellFolder()) {
 			ULARGE_INTEGER size = { 0 };
 			if (::GetFileSize(m_parentFolder, m_absolutePidl.GetLastIDLPtr(), size)) {
 				SetLockSize(std::make_pair(size, FileSizeStatus::Available));
@@ -265,15 +320,27 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize()
 		} else {
 			SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
 			if (!m_pSizeThread) {
-				m_pSizeThread = std::make_unique<std::thread>([this]()->void {
-					ULARGE_INTEGER size = { 0 };
-					if (::GetDirSize(GetPath(), size, [this]()->bool {return m_cancelSizeThread; })) {
-						SetLockSize(std::make_pair(size, FileSizeStatus::Available));
-					} else {
-						SetLockSize(std::make_pair(size, FileSizeStatus::Unavailable));
+				auto spFile = shared_from_this();
+				std::weak_ptr<CShellFile> wpFile(spFile);
+				m_pSizeThread.reset(new std::thread([wpFile]()->void {
+					if (auto sp = wpFile.lock()) {
+						ULARGE_INTEGER size = { 0 };
+						if (auto spFolder = sp->CastShellFolder()) {
+							if (::GetFolderSize(spFolder, size,
+								[wpFile]()->bool {
+								if (auto sp = wpFile.lock()) {
+									return sp->GetCancelSizeThread();
+								} else {
+									return true;
+								}})) {
+								sp->SetLockSize(std::make_pair(size, FileSizeStatus::Available));
+							} else {
+									sp->SetLockSize(std::make_pair(size, FileSizeStatus::Unavailable));
+								}
+								sp->SignalFileSizeChanged(wpFile);
+						}
 					}
-					SignalFileSizeChanged(this);
-				});
+				}));
 			} else {
 				OutputDebugString(L"Already run");
 			}
@@ -289,20 +356,21 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize()
 
 std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 {
-	switch (m_icon.second) {
+	switch (GetLockIcon().second) {
 	case FileIconStatus::None:
 		if (HasIconInCache()) {
-			m_icon.first = s_iconCache.GetIcon(this);
-			m_icon.second = FileIconStatus::Avilable;
+			SetLockIcon(std::make_pair( s_iconCache.GetIcon(this), FileIconStatus::Avilable));
 		} else {
-			m_icon.first = GetDefaultIcon();
-			m_icon.second = FileIconStatus::Loading;
+			SetLockIcon(std::make_pair(GetDefaultIcon(), FileIconStatus::Loading));
 			if (!m_pIconThread) {
-				m_pIconThread = std::make_unique<std::thread>([this]()->void {
-					m_icon.first = s_iconCache.GetIcon(this);
-					m_icon.second = FileIconStatus::Avilable;
-					SignalFileIconChanged(this);
-				});
+				auto spFile = shared_from_this();
+				std::weak_ptr<CShellFile> wpFile(spFile);
+				m_pIconThread.reset(new std::thread([wpFile]()->void {
+					if (auto sp = wpFile.lock()) {
+						sp->SetLockIcon(std::make_pair(s_iconCache.GetIcon(sp.get()), FileIconStatus::Avilable));
+						sp->SignalFileIconChanged(wpFile);
+					}
+				}));
 			}
 		}
 		break;
@@ -310,7 +378,7 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 	case FileIconStatus::Loading:
 		break;
 	}
-	return m_icon;
+	return GetLockIcon();
 }
 
 std::shared_ptr<CIcon> CShellFile::GetDefaultIcon()
@@ -388,20 +456,24 @@ bool CShellFile::IsShellFolder()
 std::shared_ptr<CShellFolder> CShellFile::CastShellFolder()
 {
 	if (IsShellFolder()) {
-		CComPtr<IShellFolder> pDesktop;
-		::SHGetDesktopFolder(&pDesktop);
 		CComPtr<IShellFolder> pFolder;
 		HRESULT hr = 0;
 		if (m_absolutePidl.m_pIDL->mkid.cb == 0) {
-			pFolder = pDesktop;
+			if (SUCCEEDED(::SHGetDesktopFolder(&pFolder))) {
+				return std::make_shared<CShellFolder>(pFolder, m_parentFolder, m_absolutePidl);
+			}
+		}else {
+			CComPtr<IShellFolder> pDesktop;
+			if (SUCCEEDED(::SHGetDesktopFolder(&pDesktop))) {
+				if (SUCCEEDED(pDesktop->BindToObject(m_absolutePidl, 0, IID_IShellFolder, (void**)&pFolder))) {
+					return std::make_shared<CShellFolder>(pFolder, m_parentFolder, m_absolutePidl);
+				}
+			}
 		}
-		else {
-			HRESULT hr = pDesktop->BindToObject(m_absolutePidl, 0, IID_IShellFolder, (void**)&pFolder);
-		}
-		return std::make_shared<CShellFolder>(pFolder, m_parentFolder, m_absolutePidl);
+		return nullptr;
 	}
 	else {
-		return std::shared_ptr<CShellFolder>();
+		return nullptr;
 	}
 }
 
@@ -415,13 +487,17 @@ void CShellFile::Reset()
 	m_wstrCreationTime.clear();
 	m_wstrLastAccessTime.clear();
 	m_wstrLastWriteTime.clear();
-	SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::None));
 
-	m_isShellFolder = boost::none;
 	m_fileAttributes = 0;
-	m_icon = std::make_pair(std::shared_ptr<CIcon>(nullptr), FileIconStatus::None);
 	m_sfgao = 0;
 
+	m_pSizeThread.reset();
+	SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::None));
+
+	m_pIconThread.reset();
+	SetLockIcon(std::make_pair(std::shared_ptr<CIcon>(nullptr), FileIconStatus::None));
+
+	m_isShellFolder = boost::none;
 }
 
 bool CShellFile::IsDirectory()

@@ -21,10 +21,14 @@ std::shared_ptr<CShellFile> CFileSizeCell::GetShellFile()const
 		//It is impossible to plymorphism in constructor, assign signal here.
 		auto spFile = pFileRow->GetFilePointer();
 		if (spFile->SignalFileSizeChanged.empty()) {
+			auto spCell = shared_from_this();
+			std::weak_ptr<const CFileSizeCell> wpCell(spCell);
 			spFile->SignalFileSizeChanged.connect(
-				[this](CShellFile* pFile)->void {
-				m_pSheet->GetGridPtr()->PushDelayUpdateAction(m_delayUpdateAction);
-				m_pSheet->GetGridPtr()->DelayUpdate();
+				[wpCell](std::weak_ptr<CShellFile> wpFile)->void {
+				if (auto sp = wpCell.lock()) {
+					sp->GetSheetPtr()->GetGridPtr()->PushDelayUpdateAction(sp->GetDelayUpdateAction());
+					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+				}
 			});
 		}
 		return spFile;
@@ -36,12 +40,12 @@ std::shared_ptr<CShellFile> CFileSizeCell::GetShellFile()const
 
 CFileSizeCell::~CFileSizeCell()
 {
-	//try {
-	//	auto pGrid = m_pSheet->GetGridPtr();
-	//	pGrid->EraseDelayUpdateAction(m_delayUpdateAction);
-	//} catch (...) {
+	try {
+		auto pGrid = m_pSheet->GetGridPtr();
+		pGrid->EraseDelayUpdateAction(m_delayUpdateAction);
+	} catch (...) {
 
-	//}
+	}
 }
 
 //bool CFileSizeCell::operator<(const CFileSizeCell& rhs)const

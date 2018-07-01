@@ -461,7 +461,9 @@ void CFilerGridView::InsertDefaultRowColumn()
 void CFilerGridView::Open(std::shared_ptr<CShellFile>& spFile)
 {
 	if (spFile->IsShellFolder()) {
-		OpenFolder(spFile->CastShellFolder());
+		if (auto spFolder = spFile->CastShellFolder()) {
+			OpenFolder(spFolder);
+		}
 	}
 	else {
 		OpenFile(spFile);

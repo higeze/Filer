@@ -3,7 +3,7 @@
 
 class CShellFile;
 
-class CFileIconCell:public CCell
+class CFileIconCell:public CCell, public std::enable_shared_from_this<CFileIconCell>
 {
 private:
 public:

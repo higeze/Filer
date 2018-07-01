@@ -23,7 +23,6 @@ struct findclose
 
 };
 
-
 enum class FileSizeStatus
 {
 	None,
@@ -39,7 +38,7 @@ enum class FileIconStatus
 	Loading,
 };
 
-class CShellFile
+class CShellFile: public std::enable_shared_from_this<CShellFile>
 {
 private:
 	static CFileIconCache s_iconCache;
@@ -64,13 +63,14 @@ protected:
 	DWORD  m_fileAttributes = 0;
 	ULONG m_sfgao = 0;
 
-	std::unique_ptr<std::thread> m_pSizeThread = nullptr;
+	std::unique_ptr<std::thread> m_pSizeThread;
 	std::atomic<bool> m_cancelSizeThread = false;
 
-	std::unique_ptr<std::thread> m_pIconThread = nullptr;
+	std::unique_ptr<std::thread> m_pIconThread;
 	std::atomic<bool> m_cancelIconThread = false;
 
 	std::mutex m_mtxSize;
+	std::mutex m_mtxIcon;
 
 
 public:
@@ -83,48 +83,46 @@ public:
 	virtual ~CShellFile();
 
 	//Signal
-	boost::signals2::signal<void(CShellFile*)> SignalFileSizeChanged;
-	boost::signals2::signal<void(CShellFile*)> SignalFileIconChanged;
+	boost::signals2::signal<void(std::weak_ptr<CShellFile>)> SignalFileSizeChanged;
+	boost::signals2::signal<void(std::weak_ptr<CShellFile>)> SignalFileIconChanged;
 	
 	//Getter 
 	CComPtr<IShellFolder>& GetParentShellFolderPtr(){return m_parentFolder;}
 	CIDLPtr& GetAbsolutePidl(){return m_absolutePidl;}
+	bool GetCancelSizeThread(){ return m_cancelSizeThread.load(); }
+	bool GetCancelIconThread(){ return m_cancelIconThread.load(); }
 
 	//Lazy Evaluation Getter
 	std::wstring& GetPath();
 	std::wstring GetName();
 	std::wstring GetExt();
 	std::wstring GetNameExt();
-	std::wstring GetTypeName();
-	
+	std::wstring GetTypeName();	
 	std::wstring GetCreationTime();
 	std::wstring GetLastAccessTime();
 	std::wstring GetLastWriteTime();
+	UINT GetSFGAO();
+	DWORD GetAttributes();
 
+	//Size
 	std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize();
 	std::pair<ULARGE_INTEGER, FileSizeStatus> GetLockSize();
-	void SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus> size);
+	void SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size);
 
-	//void SetSize(ULARGE_INTEGER size, FileSizeStatus status);
-
+	//Icon
 	std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon();
+	std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetLockIcon();
+	void SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& icon);
 
 	bool HasIconInCache();
 	bool IsDirectory();
 	bool IsShellFolder();
 
 
-	UINT GetSFGAO();
-	DWORD GetAttributes();
 
 	void Reset();
-	//
 	std::shared_ptr<CShellFolder> CastShellFolder();
 private:
 	void UpdateWIN32_FIND_DATA();
 	std::shared_ptr<CIcon> GetDefaultIcon();
-
-	CIcon GetIconBySHGetFileInfo();
-
-
 };
