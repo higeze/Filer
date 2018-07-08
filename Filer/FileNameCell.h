@@ -9,6 +9,6 @@ public:
 	virtual ~CFileNameCell(){}
 
 	virtual bool IsComparable()const override{return false;}
-	virtual string_type GetString()const override;
+	virtual string_type GetString() override;
 	void SetStringCore(const string_type& str) override;
 };

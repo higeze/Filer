@@ -616,10 +616,10 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		FolderChanged(m_spFolder); 
 	}
 
-	::OutputDebugStringA("m_rowAllDictionary\r\n");
-	boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
-		::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
-	});
+	//::OutputDebugStringA("m_rowAllDictionary\r\n");
+	//boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
+	//	::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
+	//});
 
 
 	SubmitUpdate();

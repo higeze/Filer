@@ -14,6 +14,6 @@ public:
 	CColor GetColor();
 	void PaintBackground(CDC* pDC,CRect rcPaint);
 	virtual void OnLButtonClk(const MouseEvent& e);
-	virtual std::basic_string<TCHAR> GetString()const;
+	virtual std::basic_string<TCHAR> GetString();
 	virtual bool IsComparable()const{return false;}
 };

@@ -57,7 +57,7 @@ public:
 	virtual void OnSetFocus(const SetFocusEvent& e);
 	virtual void OnKillFocus(const KillFocusEvent& e);
 	//String
-	virtual string_type GetString()const{return CSheet::GetSheetString();};//TODO for test
+	virtual string_type GetString(){return CSheet::GetSheetString();};//TODO for test
 	virtual void SetString(const string_type& str){/*Do Nothing*/};
 	virtual bool CSheetCell::Filter(const string_type& strFilter)const;
 	//Compare

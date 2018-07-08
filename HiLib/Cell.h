@@ -53,8 +53,8 @@ public:
 
 	//Operator
 
-	bool operator<(const CCell& rhs)const;
-	bool operator>(const CCell& rhs)const;
+	bool operator<(CCell& rhs);
+	bool operator>(CCell& rhs);
 
 	//Size, Rect method
 	virtual CSize GetInitSize(CDC* pDC);
@@ -127,13 +127,13 @@ public:
 	virtual void OnKillFocus(const KillFocusEvent& e);
 	virtual void OnKeyDown(const KeyDownEvent& e){/*Do Nothing*/};
 	//String
-	virtual string_type GetString()const;
-	virtual string_type GetSortString()const{return GetString();}
+	virtual string_type GetString();
+	virtual string_type GetSortString(){return GetString();}
 
 	virtual void SetString(const string_type& str);
 	virtual void SetStringNotify(const string_type& str);
 	virtual void SetStringCore(const string_type& str){/*Do Nothing*/};
-	virtual bool Filter(const string_type& strFilter)const;
+	virtual bool Filter(const string_type& strFilter);
 
 	//Compare
 	virtual bool IsComparable()const=0;

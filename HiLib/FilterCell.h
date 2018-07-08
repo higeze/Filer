@@ -20,7 +20,7 @@ public:
 	/**
 	 *  Get string from column property
 	 */
-	virtual string_type GetString()const override;
+	virtual string_type GetString() override;
 	/**
 	 *  Set string to column property
 	 */

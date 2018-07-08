@@ -1,7 +1,7 @@
 #include "CompareCell.h"
 #include "Sheet.h"
 
-CCompareCell::string_type CCompareCell::GetString()const
+CCompareCell::string_type CCompareCell::GetString()
 {
 	switch(m_pSheet->CheckEqualRow(m_pRow, m_pSheet->ColumnVisibleZero(), m_pSheet->ColumnVisibleEnd(), [](CCell* pCell, Compares)->void{})){
 	case Compares::Same:

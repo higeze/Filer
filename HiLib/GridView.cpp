@@ -626,31 +626,8 @@ void CGridView::Invalidate()
 	InvalidateRect(NULL,FALSE);
 }
 
-void CGridView::PushDelayUpdateAction(std::function<void()> func)
+void CGridView::DelayUpdate()
 {
-	{
-		std::lock_guard<std::mutex> lock(m_delayUpdateMtx);
-		if (func) { m_delayUpdateActions.push_back(func); }
-	}
-}
-void CGridView::EraseDelayUpdateAction(std::function<void()> func)
-{
-	{
-		std::lock_guard<std::mutex> lock(m_delayUpdateMtx);
-		if (func) {
-			std::remove_if(m_delayUpdateActions.begin(), m_delayUpdateActions.end(), [&](auto f)->bool {
-				return getAddress(f) == getAddress(func);
-			});
-		}
-	}
-}
-
-void CGridView::DelayUpdate(std::function<void()> func)
-{
-	{
-		std::lock_guard<std::mutex> lock(m_delayUpdateMtx);
-		if (func) { m_delayUpdateActions.push_back(func); }
-	}
 	m_invalidateTimer.expires_from_now(boost::posix_time::milliseconds(30));
 	m_invalidateTimer.async_wait([this](const boost::system::error_code& error)->void {
 
@@ -663,14 +640,8 @@ void CGridView::DelayUpdate(std::function<void()> func)
 
 LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	{
-		std::lock_guard<std::mutex> lock(m_delayUpdateMtx);
-		for (auto& func : m_delayUpdateActions) {
-			func();
-		}
-		m_delayUpdateActions.clear();
-	}
-
+	SignalPreDelayUpdate();
+	SignalPreDelayUpdate.disconnect_all_slots();
 	FilterAll();
 	//SortAll();
 	//Need to remove EnsureVisibleFocusedCell. Otherwise scroll to 0 when scrolling

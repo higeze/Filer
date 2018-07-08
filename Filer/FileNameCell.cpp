@@ -6,7 +6,7 @@
 CFileNameCell::CFileNameCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
 	:CParameterCell(pSheet, pRow, pColumn, spProperty){}
 
-std::basic_string<TCHAR> CFileNameCell::GetString()const
+std::basic_string<TCHAR> CFileNameCell::GetString()
 {
 	auto pFileRow = static_cast<CFileRow*>(m_pRow);
 	return pFileRow->GetFilePointer()->GetName();

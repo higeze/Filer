@@ -41,8 +41,8 @@ protected:
 	boost::asio::io_service m_invalidateIosv;
 	boost::asio::io_service::work m_invalidateWork;
 	boost::asio::deadline_timer m_invalidateTimer;
-	std::vector<std::function<void()>> m_delayUpdateActions;
-	std::mutex m_delayUpdateMtx;
+	//std::vector<std::function<void()>> m_delayUpdateActions;
+	//std::mutex m_delayUpdateMtx;
 
 
 	//std::mutex m_mtx;
@@ -56,10 +56,11 @@ public:
 	boost::signals2::signal<void(CColumn*)> SignalColumnInserted;
 	boost::signals2::signal<void(CColumn*)> SignalColumnErased;
 	boost::signals2::signal<void(CColumn*, size_type, size_type)> SignalColumnMoved;
+	boost::signals2::signal<void()> SignalPreDelayUpdate;
 	static UINT WM_DELAY_UPDATE;
-	void DelayUpdate(std::function<void()> func = nullptr);
-	void PushDelayUpdateAction(std::function<void()> func);
-	void EraseDelayUpdateAction(std::function<void()> func);
+	void DelayUpdate();
+	//void PushDelayUpdateAction(std::function<void()> func);
+	//void EraseDelayUpdateAction(std::function<void()> func);
 
 	virtual void ColumnInserted(CColumnEventArgs& e)override;
 	virtual void ColumnErased(CColumnEventArgs& e)override;

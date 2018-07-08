@@ -7,7 +7,7 @@
 #include "MySize.h"
 #include "MyDC.h"
 
-CPathCell::string_type CPathCell::GetString()const
+CPathCell::string_type CPathCell::GetString()
 {
 	return static_cast<CFilerGridView*>(m_pSheet)->GetPath();
 }

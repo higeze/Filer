@@ -45,7 +45,7 @@ public:
 	CParentColumnHeaderStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty,string_type str,CMenu* pMenu=nullptr)
 		:CParentColumnNameHeaderCell(pSheet, pRow, pColumn, spProperty,pMenu),m_strHeader(str){}
 	virtual ~CParentColumnHeaderStringCell(){}
-	virtual string_type GetString()const{return m_strHeader;}
+	virtual string_type GetString(){return m_strHeader;}
 	virtual void SetStringCore(const string_type& str){m_strHeader = str;}
 
 

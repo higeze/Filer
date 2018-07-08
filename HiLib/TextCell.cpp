@@ -170,7 +170,7 @@ Compares CTextCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Comp
 }
 
 
-CStringCell::string_type CStringCell::GetString()const
+CStringCell::string_type CStringCell::GetString()
 {
 	return m_string;
 }

@@ -6,7 +6,7 @@
 CFileExtCell::CFileExtCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
 	:CParameterCell(pSheet, pRow, pColumn, spProperty){}
 
-CFileExtCell::string_type CFileExtCell::GetString()const
+CFileExtCell::string_type CFileExtCell::GetString()
 {
 	auto pFileRow = static_cast<CFileRow*>(m_pRow);
 	return pFileRow->GetFilePointer()->GetExt();

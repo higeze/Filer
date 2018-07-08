@@ -11,7 +11,7 @@ CFilterCell::~CFilterCell()
 	pTimer->cancel();
 }
 
-CFilterCell::string_type CFilterCell::GetString()const
+CFilterCell::string_type CFilterCell::GetString()
 {
 	return m_pColumn->GetFilter();
 }

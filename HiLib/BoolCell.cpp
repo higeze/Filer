@@ -26,7 +26,7 @@ CSize CBoolCell::MeasureSizeWithFixedWidth(CDC* pDC)
 	return MeasureSize(pDC);
 }
 
-CBoolCell::string_type CBoolCell::GetString()const
+CBoolCell::string_type CBoolCell::GetString()
 {
 	return boost::lexical_cast<std::wstring>(m_bool);
 }

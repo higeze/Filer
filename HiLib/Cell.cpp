@@ -30,12 +30,12 @@ CCell::CCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellPr
 	m_bActMeasureValid(false),
 	m_pContextMenu(pContextMenu?pContextMenu:&CCell::ContextMenu){}
 
-bool CCell::operator<(const CCell& rhs)const
+bool CCell::operator<(CCell& rhs)
 {
 	//std::wcout << this->GetSortString() << L"<" << rhs.GetSortString() << std::endl;
 	return _tcsicmp(this->GetSortString().c_str(), rhs.GetSortString().c_str())>0;
 }
-bool CCell::operator>(const CCell& rhs)const
+bool CCell::operator>(CCell& rhs)
 {
 	//std::wcout << this->GetSortString() << L">" << rhs.GetSortString() << std::endl;
 	return _tcsicmp(this->GetSortString().c_str(), rhs.GetSortString().c_str())<0;
@@ -336,7 +336,7 @@ void CCell::OnKillFocus(const KillFocusEvent& e)
 	m_pSheet->CellPropertyChanged(this,L"focus");//TODO
 }
 
-bool CCell::Filter(const string_type& strFilter)const
+bool CCell::Filter(const string_type& strFilter)
 {
 	return boost::algorithm::to_lower_copy(GetString()).find(boost::algorithm::to_lower_copy(strFilter))!=std::wstring::npos;
 }
@@ -411,7 +411,7 @@ std::shared_ptr<CCellProperty> CCell::GetPropertyPtr()
 	return m_spProperty;
 }
 
-CCell::string_type CCell::GetString()const
+CCell::string_type CCell::GetString()
 {
 	return string_type();
 }

@@ -6,27 +6,54 @@
 #include "GridView.h"
 
 CFileSizeCell::CFileSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
-	:CTextCell(pSheet, pRow, pColumn, spProperty),
-	m_delayUpdateAction([this]()->void {
-		m_bFitMeasureValid = false;
-		m_bActMeasureValid = false;
-		m_pSheet->PostUpdate(Updates::Sort);
-		m_pSheet->PostUpdate(Updates::Column);
-		m_pSheet->CellValueChanged(CellEventArgs(this));
-}) {}
-
-std::shared_ptr<CShellFile> CFileSizeCell::GetShellFile()const
+	:CTextCell(pSheet, pRow, pColumn, spProperty)
 {
-	if(auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)){
-		//It is impossible to plymorphism in constructor, assign signal here.
+	//Be careful : It is impossible to plymorphism in constructor, assign signal here.
+	//if (auto pFileRow = dynamic_cast<CFileRow*>(pRow)) {
+	//	auto spFile = pFileRow->GetFilePointer();
+	//	std::weak_ptr<CFileSizeCell> wp(shared_from_this());
+	//	m_conFileSizeChanged = spFile->SignalFileSizeChanged.connect(
+	//		[wp](std::weak_ptr<CShellFile> wpFile)->void {
+	//		if (auto sp = wp.lock()) {
+	//			auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+	//				[wp]()->void {
+	//					if (auto sp = wp.lock()) {
+	//						sp->SetFitMeasureValid(false);
+	//						sp->SetActMeasureValid(false);
+	//						sp->GetSheetPtr()->PostUpdate(Updates::Sort);
+	//						sp->GetSheetPtr()->PostUpdate(Updates::Column);
+	//						sp->GetSheetPtr()->CellValueChanged(CellEventArgs(sp.get()));
+	//					}
+	//				});
+	//			sp->SetDelayUpdateConnection(con);
+	//			sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+	//		}
+	//	});
+	//}
+}
+
+CFileSizeCell::~CFileSizeCell()
+{
+	m_conDelayUpdateAction.disconnect();
+	m_conFileSizeChanged.disconnect();
+}
+
+std::shared_ptr<CShellFile> CFileSizeCell::GetShellFile()
+{
+	if (auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)) {
 		auto spFile = pFileRow->GetFilePointer();
-		if (spFile->SignalFileSizeChanged.empty()) {
-			auto spCell = shared_from_this();
-			std::weak_ptr<const CFileSizeCell> wpCell(spCell);
-			spFile->SignalFileSizeChanged.connect(
-				[wpCell](std::weak_ptr<CShellFile> wpFile)->void {
-				if (auto sp = wpCell.lock()) {
-					sp->GetSheetPtr()->GetGridPtr()->PushDelayUpdateAction(sp->GetDelayUpdateAction());
+		if (!m_conFileSizeChanged.connected()) {
+			std::weak_ptr<CFileSizeCell> wp(shared_from_this());
+			m_conFileSizeChanged = spFile->SignalFileSizeChanged.connect(
+				[wp](std::weak_ptr<CShellFile> wpFile)->void {
+				if (auto sp = wp.lock()) {
+					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+						[wp]()->void {
+						if (auto sp = wp.lock()) {
+							sp->GetSheetPtr()->CellValueChanged(CellEventArgs(sp.get()));
+						}
+					});
+					sp->m_conDelayUpdateAction = con;
 					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 				}
 			});
@@ -37,32 +64,7 @@ std::shared_ptr<CShellFile> CFileSizeCell::GetShellFile()const
 	}
 }
 
-
-CFileSizeCell::~CFileSizeCell()
-{
-	try {
-		auto pGrid = m_pSheet->GetGridPtr();
-		pGrid->EraseDelayUpdateAction(m_delayUpdateAction);
-	} catch (...) {
-
-	}
-}
-
-//bool CFileSizeCell::operator<(const CFileSizeCell& rhs)const
-//{
-//	auto pLhsRow = static_cast<CFileRow*>(m_pRow);
-//	auto pRhsRow = static_cast<CFileRow*>(rhs.GetRowPtr());
-//	return pLhsRow->GetFilePointer()->GetSize().first.QuadPart < pRhsRow->GetFilePointer()->GetSize().first.QuadPart;
-//}
-//
-//bool CFileSizeCell::operator>(const CFileSizeCell& rhs)const
-//{
-//	auto pLhsRow = static_cast<CFileRow*>(m_pRow);
-//	auto pRhsRow = static_cast<CFileRow*>(rhs.GetRowPtr());
-//	return pLhsRow->GetFilePointer()->GetSize().first.QuadPart > pRhsRow->GetFilePointer()->GetSize().first.QuadPart;
-//}
-
-CCell::string_type CFileSizeCell::GetString()const
+CCell::string_type CFileSizeCell::GetString()
 {
 	try {
 		auto spFile = GetShellFile();
@@ -84,7 +86,7 @@ CCell::string_type CFileSizeCell::GetString()const
 	}
 }
 
-CCell::string_type CFileSizeCell::GetSortString()const
+CCell::string_type CFileSizeCell::GetSortString()
 {	
 	try {
 		auto spFile = GetShellFile();

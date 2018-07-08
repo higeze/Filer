@@ -14,5 +14,5 @@ public:
 	virtual ~CFavoriteCell(){}
 
 	virtual void PaintContent(CDC* pDC, CRect rcPaint)override;
-	virtual std::shared_ptr<CShellFile> GetShellFile()const override;
+	virtual std::shared_ptr<CShellFile> GetShellFile()override;
 };

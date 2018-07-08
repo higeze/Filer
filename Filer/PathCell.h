@@ -25,7 +25,7 @@ public:
 	/**
 	 *  Get string from column property
 	 */
-	virtual string_type GetString()const override;
+	virtual string_type GetString() override;
 
 	virtual CRect CPathCell::GetRect()const override;
 	/**

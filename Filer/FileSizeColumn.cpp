@@ -25,7 +25,7 @@ CFileSizeColumn::cell_type CFileSizeColumn::FilterCellTemplate(CRow* pRow, CColu
 
 CFileSizeColumn::cell_type CFileSizeColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	::OutputDebugStringA((boost::format("Col/Pointer:%1%\r\n") % pRow).str().c_str());
+	//::OutputDebugStringA((boost::format("Col/Pointer:%1%\r\n") % pRow).str().c_str());
 	return std::make_shared<CFileSizeCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 }
 

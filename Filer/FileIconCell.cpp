@@ -8,22 +8,45 @@
 #include "GridView.h"
 
 CFileIconCell::CFileIconCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
-	:CCell(pSheet, pRow, pColumn, spProperty){}
+	:CCell(pSheet, pRow, pColumn, spProperty)
+{
+	//Be careful : It is impossible to plymorphism in constructor, assign signal here.
+	//if (auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)) {
+	//	auto spFile = pFileRow->GetFilePointer();
+	//	if (auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)) {
+	//		auto spFile = pFileRow->GetFilePointer();
+	//		std::weak_ptr<const CFileIconCell> wp(shared_from_this());
+	//		m_conIconChanged = spFile->SignalFileIconChanged.connect(
+	//			[wp](std::weak_ptr<CShellFile> wpFile)->void {
+	//			if (auto sp = wp.lock()) {
+	//				sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+	//			}
+	//		});
+	//	}
+	//}
+}
 
-std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()const
+CFileIconCell::~CFileIconCell() 
+{
+	m_conIconChanged.disconnect();
+}
+
+std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()
 {
 	if(auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)){
 		//It is impossible to plymorphism in constructor, assign signal here.
-		auto spFile =  pFileRow->GetFilePointer();
-		if (spFile->SignalFileIconChanged.empty()) {
-			auto spCell(shared_from_this());
-			std::weak_ptr<const CFileIconCell> wpCell(spCell);
-			spFile->SignalFileIconChanged.connect(
-				[wpCell](std::weak_ptr<CShellFile> wpFile)->void {
-				if (auto sp = wpCell.lock()) {
-					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
-				}
-			});
+		auto spFile = pFileRow->GetFilePointer();
+		if (auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)) {
+			auto spFile = pFileRow->GetFilePointer();
+			if (!m_conIconChanged.connected()) {
+				std::weak_ptr<const CFileIconCell> wp(shared_from_this());
+				m_conIconChanged = spFile->SignalFileIconChanged.connect(
+					[wp](std::weak_ptr<CShellFile> wpFile)->void {
+					if (auto sp = wp.lock()) {
+						sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+					}
+				});
+			}
 		}
 		return spFile;
 	} else {

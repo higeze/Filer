@@ -14,5 +14,5 @@ public:
 		return false;
 	}
 
-	virtual string_type GetString()const;
+	virtual string_type GetString();
 };

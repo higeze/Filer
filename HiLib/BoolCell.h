@@ -19,7 +19,7 @@ public:
 	virtual CSize MeasureSize(CDC* pDC);
 	virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
 
-	virtual string_type GetString()const;
+	virtual string_type GetString();
 	virtual void SetStringCore(const string_type& str);
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;

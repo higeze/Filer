@@ -125,6 +125,7 @@ void CSheet::CellValueChanged(CellEventArgs& e)
 	e.CellPtr->GetRowPtr()->SetMeasureValid(false);
 	e.CellPtr->SetFitMeasureValid(false);
 	e.CellPtr->SetActMeasureValid(false);
+	PostUpdate(Updates::Sort);
 	PostUpdate(Updates::Column);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
@@ -378,15 +379,15 @@ void CSheet::Sort(CColumn* pCol, Sorts sort)
 	}
 	//std::copy(rowDictionary.begin(),rowDictionary.find(0),std::back_inserter(vRowMinusData));
 	//std::copy(rowDictionary.find(0),rowDictionary.end(),std::back_inserter(vRowPlusData));
-	::OutputDebugStringA("vRowPlusData\r\n");
-	boost::range::for_each(vRowPlusData, [](const auto& data) {
-		::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.first.Index %data.first.DataPtr.get()).str().c_str());
-	});
+	//::OutputDebugStringA("vRowPlusData\r\n");
+	//boost::range::for_each(vRowPlusData, [](const auto& data) {
+	//	::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.first.Index %data.first.DataPtr.get()).str().c_str());
+	//});
 	//Sort
 	switch(sort){
 	case Sorts::Down:
 		std::stable_sort(vRowPlusData.begin(),vRowPlusData.end(),[pCol](const auto& lhs,const auto& rhs)->bool{
-			::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.first.DataPtr.get()).str().c_str());
+			//::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.first.DataPtr.get()).str().c_str());
 			return _tcsicmp(lhs.second.c_str(), rhs.second.c_str())>0;
 			//return pCol->Cell(lhs.DataPtr.get())->operator<(*(pCol->Cell(rhs.DataPtr.get())));
 		});
@@ -398,7 +399,7 @@ void CSheet::Sort(CColumn* pCol, Sorts sort)
 		break;
 	case Sorts::Up:
 		std::stable_sort(vRowPlusData.begin(), vRowPlusData.end(), [pCol](const auto& lhs, const auto& rhs)->bool {
-			::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.first.DataPtr.get()).str().c_str());
+			//::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.first.DataPtr.get()).str().c_str());
 			return _tcsicmp(lhs.second.c_str(), rhs.second.c_str())<0;
 			//return pCol->Cell(lhs.DataPtr.get())->operator<(*(pCol->Cell(rhs.DataPtr.get())));
 		});

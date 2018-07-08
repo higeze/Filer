@@ -18,7 +18,7 @@ public:
 	virtual ~CBindCell(){}
 	virtual bool IsComparable()const{return false;}
 
-	virtual string_type GetString()const
+	virtual string_type GetString()
 	{
 		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
 		auto pBindColumn = static_cast<CBindColumn<T>*>(m_pColumn);

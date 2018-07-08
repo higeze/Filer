@@ -38,7 +38,7 @@ void CFontCell::OnLButtonClk(MouseEvent& e)
 	}
 }
 
-CFontCell::string_type CFontCell::GetString()const
+CFontCell::string_type CFontCell::GetString()
 {
 	std::wstring wstr;
 	wstr.append(m_font.GetFaceName());

@@ -3,6 +3,8 @@
 #include "MyIcon.h"
 #include "IDLPtr.h"
 #include "FileIconCache.h"
+#include <future>
+#include <chrono>
 
 class CShellFolder;
 
@@ -10,7 +12,9 @@ tstring FileTime2String(FILETIME *pFileTime);
 tstring Size2String(ULONGLONG size);
 std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit = 3);
 bool GetFileSize(CComPtr<IShellFolder>& parentFolder, CIDLPtr childIDL, ULARGE_INTEGER& size);
-bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<bool()> cancel = nullptr);
+//bool GetFolderSize(std::shared_ptr<CShellFolder>& pFolder, ULARGE_INTEGER& size, std::function<void()> checkExit);
+bool GetFolderSize(std::shared_ptr<CShellFolder>& pFolder, ULARGE_INTEGER& size, std::shared_future<void> future);
+bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<void()> cancel);
 
 struct findclose
 {
@@ -64,10 +68,12 @@ protected:
 	ULONG m_sfgao = 0;
 
 	std::unique_ptr<std::thread> m_pSizeThread;
-	std::atomic<bool> m_cancelSizeThread = false;
+	std::promise<void> m_sizePromise;
+	std::shared_future<void> m_sizeFuture;
 
 	std::unique_ptr<std::thread> m_pIconThread;
-	std::atomic<bool> m_cancelIconThread = false;
+	std::promise<void> m_iconPromise;
+	std::shared_future<void> m_iconFuture;
 
 	std::mutex m_mtxSize;
 	std::mutex m_mtxIcon;
@@ -89,8 +95,8 @@ public:
 	//Getter 
 	CComPtr<IShellFolder>& GetParentShellFolderPtr(){return m_parentFolder;}
 	CIDLPtr& GetAbsolutePidl(){return m_absolutePidl;}
-	bool GetCancelSizeThread(){ return m_cancelSizeThread.load(); }
-	bool GetCancelIconThread(){ return m_cancelIconThread.load(); }
+//	bool GetCancelSizeThread(){ return m_cancelSizeThread.load(); }
+//	bool GetCancelIconThread(){ return m_cancelIconThread.load(); }
 
 	//Lazy Evaluation Getter
 	std::wstring& GetPath();

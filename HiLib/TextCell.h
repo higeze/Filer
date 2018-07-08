@@ -71,7 +71,7 @@ public:
 	CStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellProperty> spProperty, string_type str,CMenu* pMenu=nullptr)
 		:CTextCell(pSheet,pRow, pColumn,spProperty,pMenu),m_string(str){}
 	virtual ~CStringCell(){}
-	virtual string_type GetString()const;
+	virtual string_type GetString();
 	virtual void SetStringCore(const string_type& str);
 };
 

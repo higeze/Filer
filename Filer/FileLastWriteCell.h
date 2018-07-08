@@ -8,6 +8,6 @@ public:
 	virtual ~CFileLastWriteCell(void){}
 
 	virtual bool IsComparable()const override{return false;}
-	virtual string_type GetString()const override;
+	virtual string_type GetString() override;
 };
 

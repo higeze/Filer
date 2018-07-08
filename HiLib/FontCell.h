@@ -15,7 +15,7 @@ public:
 
 	virtual void OnLButtonClk(MouseEvent& e);
 
-	virtual string_type GetString()const;
+	virtual string_type GetString();
 
 	virtual bool IsComparable()const{return false;}
 };
