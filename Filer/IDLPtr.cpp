@@ -158,7 +158,7 @@ std::wstring CIDLPtr::STRRET2WSTR(STRRET& strret)const
 //	return std::make_shared<CShellItemId>(ConcatItemIdList(pIdl1->m_pIdl,pIdl2->m_pIdl));
 //}
 
-const CIDLPtr CIDLPtr::operator + ( const CIDLPtr& pidl ) const
+CIDLPtr CIDLPtr::operator + ( const CIDLPtr& pidl ) const
 {
 	if(IsEmpty() && pidl.IsEmpty()){
 		return CIDLPtr();

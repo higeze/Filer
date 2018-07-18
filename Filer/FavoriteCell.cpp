@@ -3,6 +3,7 @@
 #include "Column.h"
 #include "FileRow.h"
 #include "ShellFile.h"
+#include "ShellFolder.h"
 #include "MySize.h"
 #include "MyFont.h"
 #include "CellProperty.h"
@@ -20,10 +21,10 @@ std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
 	auto pCol = static_cast<CFavoritesColumn*>(m_pColumn);
 	if (!pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetShellFile()) {
 		if (pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetPath().empty()) {
-			pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(std::make_shared<CShellFile>());
+			pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(std::make_shared<CShellFolder>());
 		}
 		else {
-			pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(std::make_shared<CShellFile>(pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetPath()));
+			pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(::CreateShExFileFolder(pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetPath()));
 		}
 	}
 	return pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetShellFile();

@@ -49,6 +49,35 @@ CShellFolder::CShellFolder() :CShellFile(), m_folder()
 CShellFolder::CShellFolder(CComPtr<IShellFolder> pFolder, CComPtr<IShellFolder> pParentFolder, CIDLPtr absolutePidl)
 	:CShellFile(pParentFolder, absolutePidl), m_folder(pFolder) {}
 
+
+CShellFolder::~CShellFolder()
+{
+	//std::wcout << L"~CShellFolder " + GetName() << std::endl;
+	try {
+		if (m_pSizeThread && m_pSizeThread->joinable()) {
+			std::wcout << L"CShellFolder::~CShellFolder " + GetFileNameWithoutExt() + L" Size thread canceled" << std::endl;
+			m_sizePromise.set_value();
+			m_pSizeThread->join();
+		}
+		SignalFileSizeChanged.disconnect_all_slots();
+	} catch (...) {
+		std::wcout << L"CShellFolder::~CShellFile Exception" << std::endl;
+		if (m_pSizeThread) m_pSizeThread->detach();
+	}
+}
+
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetLockSize()
+{
+	std::lock_guard<std::mutex> lock(m_mtxSize);
+	return m_size;
+}
+
+void CShellFolder::SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size)
+{
+	std::lock_guard<std::mutex> lock(m_mtxSize);
+	m_size = size;
+}
+
 CShellFolder::CShellFolder(const std::wstring& path)
 	:CShellFile(path), m_folder()
 {
@@ -81,3 +110,112 @@ std::shared_ptr<CShellFolder> CShellFolder::Clone()const
 {
 	return std::make_shared<CShellFolder>(m_folder, m_parentFolder, m_absolutePidl);
 }
+
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize()
+{
+	switch (GetLockSize().second) {
+	case FileSizeStatus::None:
+		SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
+		if (!m_pSizeThread) {
+			//auto spFile = shared_from_this();
+			//std::weak_ptr<CShellFile> wpFile(spFile);
+
+			m_sizeFuture = m_sizePromise.get_future();
+			m_pSizeThread.reset(new std::thread([this]()->void {
+				try {
+					//if (auto sp = wpFile.lock()) {
+						ULARGE_INTEGER size = { 0 };
+						//if (auto spFolder = sp->CastShellFolder()) {
+							if (GetFolderSize(size, m_sizeFuture)) {
+								SetLockSize(std::make_pair(size, FileSizeStatus::Available));
+							} else {
+								SetLockSize(std::make_pair(size, FileSizeStatus::Unavailable));
+							}
+							SignalFileSizeChanged(this);
+						//}
+					//}
+
+				} catch (...) {
+					std::wcout << L"CShellFile::GetSize Exception at size thread" << std::endl;
+				}
+			}));
+		} else {
+			OutputDebugString(L"Already run");
+		}
+		break;
+	case FileSizeStatus::Available:
+	case FileSizeStatus::Unavailable:
+	case FileSizeStatus::Calculating:
+		break;
+	}
+	return GetLockSize();
+}
+
+bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::shared_future<void> future)
+{
+	try {
+		//Enumerate child IDL
+		size.QuadPart = 0;
+		ULARGE_INTEGER childSize = { 0 };
+
+		CComPtr<IEnumIDList> enumIdl;
+		if (SUCCEEDED(m_folder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
+			CIDLPtr nextIdl;
+			ULONG ulRet(0);
+			//while (1) {
+			//	if (future.wait_for(std::chrono::milliseconds(1)) != std::future_status::timeout) {
+			//		std::wcout << "::GetFolderSize canceled" << std::endl;
+			//		return false;
+			//	}
+			//	::Sleep(1000);
+			//}
+
+			while (SUCCEEDED(enumIdl->Next(1, &nextIdl, &ulRet))) {
+				if (future.wait_for(std::chrono::milliseconds(1)) != std::future_status::timeout) {
+					std::wcout << "::GetFolderSize canceled" << std::endl;
+					return false;
+				}
+				if (!nextIdl) { break; }
+
+				auto spFile(::CreateShExFileFolder(GetShellFolderPtr(), GetAbsolutePidl() + nextIdl));
+				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+					if (spFolder->GetFolderSize(childSize, future)) {
+						size.QuadPart += childSize.QuadPart;
+					} else {
+						return false;
+					}
+				} else {
+					if (spFile->GetFileSize(childSize, future)) {
+						size.QuadPart += childSize.QuadPart;
+					} else {
+						return false;
+					}
+				}
+				childSize.QuadPart = 0;
+				nextIdl.Clear();
+			}
+		}
+	} catch (...) {
+		std::wcout << "::GetFolderSize Exception" << std::endl;
+		return false;
+	}
+	return true;
+
+}
+
+
+void CShellFolder::ResetSize()
+{
+	if (m_pSizeThread && m_pSizeThread->joinable()) {
+		std::wcout << L"CShellFolder::ResetIcon Icon thread canceled" << std::endl;
+		m_sizePromise.set_value();
+		m_pSizeThread->join();
+	}
+	m_pSizeThread.reset();
+	m_sizePromise = std::promise<void>();
+	m_sizeFuture = std::future<void>();
+	SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::None));
+}
+
+
+

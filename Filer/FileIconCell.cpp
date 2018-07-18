@@ -41,7 +41,7 @@ std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()
 			if (!m_conIconChanged.connected()) {
 				std::weak_ptr<const CFileIconCell> wp(shared_from_this());
 				m_conIconChanged = spFile->SignalFileIconChanged.connect(
-					[wp](std::weak_ptr<CShellFile> wpFile)->void {
+					[wp](CShellFile* pFile)->void {
 					if (auto sp = wp.lock()) {
 						sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 					}

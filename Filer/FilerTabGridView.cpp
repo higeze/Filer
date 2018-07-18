@@ -53,7 +53,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 		{
 			unsigned int id = (unsigned int)GetCurItemParam();
 			if (id == (unsigned int)GetItemParam(i)) {
-				SetItemText(i, pFolder->GetName().c_str());
+				SetItemText(i, pFolder->GetFileNameWithoutExt().c_str());
 				m_viewMap[id] = pFolder;
 				break;
 			}
@@ -81,7 +81,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 			//New id for association
 			unsigned int id = m_uniqueIDFactory.NewID();
 			//CTabCtrol
-			int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetName().c_str(), NULL, (LPARAM)id);
+			int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetFileNameWithoutExt().c_str(), NULL, (LPARAM)id);
 			//CFilerGridView
 			m_viewMap.insert(std::make_pair(id, pFolder));
 		}
@@ -95,7 +95,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 			//New id for association
 			unsigned int id = m_uniqueIDFactory.NewID();
 			//CTabCtrol
-			int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetName().c_str(), NULL, (LPARAM)id);
+			int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetFileNameWithoutExt().c_str(), NULL, (LPARAM)id);
 			//CFilerGridView
 			m_viewMap.insert(std::make_pair(id, pFolder));
 		}

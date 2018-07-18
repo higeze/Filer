@@ -58,7 +58,7 @@ class CFilerGridView:public CGridView
 {
 private:	
 
-	std::vector<std::shared_ptr<CShellFile>> m_vpFile;
+	//std::vector<std::shared_ptr<CShellFile>> m_vpFile;
 	std::shared_ptr<CDirectoryWatcher> m_spWatcher;
 
 	CComPtr<IShellFolder> m_pDesktopShellFolder;

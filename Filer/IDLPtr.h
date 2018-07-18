@@ -19,7 +19,7 @@ public:
 	CIDLPtr& operator=(const CIDLPtr& idlPtr);
 	bool operator==(const CIDLPtr& idlPtr) const;
 	bool operator!=(const CIDLPtr& idlPtr) const;
-	const CIDLPtr operator + ( const CIDLPtr& pidl ) const;
+	CIDLPtr operator + ( const CIDLPtr& pidl ) const;
 	LPITEMIDLIST* operator&() throw()
 	{
 		return &m_pIDL;

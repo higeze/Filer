@@ -15,16 +15,16 @@ CFileExtCell::string_type CFileExtCell::GetString()
 void CFileExtCell::SetStringCore(const std::basic_string<TCHAR>& str)
 {
 	auto pFileRow = static_cast<CFileRow*>(m_pRow);
-	std::shared_ptr<CShellFile> spFile = pFileRow->GetFilePointer();
+	pFileRow->GetFilePointer()->SetExt(str);
 
-	CIDLPtr pIdlNew;
-	HRESULT hRes = spFile->GetParentShellFolderPtr()->SetNameOf(
-		m_pSheet->GetGridPtr()->m_hWnd,
-		spFile->GetAbsolutePidl().FindLastID(),
-		(spFile->GetName() + str).c_str(),
-		SHGDN_NORMAL | SHGDN_INFOLDER | SHGDN_FORPARSING,
-		&pIdlNew);
-	if (SUCCEEDED(hRes)) {
-		pFileRow->SetFilePointer(std::make_shared<CShellFile>(spFile->GetParentShellFolderPtr(), spFile->GetAbsolutePidl().GetPreviousIDLPtr() + pIdlNew));
-	}
+	//CIDLPtr pIdlNew;
+	//HRESULT hRes = spFile->GetParentShellFolderPtr()->SetNameOf(
+	//	m_pSheet->GetGridPtr()->m_hWnd,
+	//	spFile->GetAbsolutePidl().FindLastID(),
+	//	(spFile->GetFileNameWithoutExt() + str).c_str(),
+	//	SHGDN_NORMAL | SHGDN_INFOLDER | SHGDN_FORPARSING,
+	//	&pIdlNew);
+	//if (SUCCEEDED(hRes)) {
+	//	pFileRow->SetFilePointer(std::make_shared<CShellFile>(spFile->GetParentShellFolderPtr(), spFile->GetAbsolutePidl().GetPreviousIDLPtr() + pIdlNew));
+	//}
 }

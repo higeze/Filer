@@ -1,6 +1,7 @@
 #include "FileIconCache.h"
 #include "MyIcon.h"
 #include "ShellFile.h"
+#include "ShellFolder.h"
 #include "MyCom.h"
 #include <array>
 
@@ -51,8 +52,9 @@ CFileIconCache::CFileIconCache():m_ignoreSet({L".exe", L".ico"})
 bool CFileIconCache::Exist(CShellFile* file)
 {
 	return
-		m_knownIconMap.lock_find(file->GetPath()) != m_knownIconMap.end() ||
-		m_iconMap.lock_find((file->GetExt().empty() && file->IsShellFolder())?L"dir":file->GetExt()) != m_iconMap.end();
+		(m_knownIconMap.lock_find(file->GetPath()) != m_knownIconMap.end()) ||
+		(typeid(*file) == typeid(CShellFolder) && m_iconMap.lock_find(L"dir") != m_iconMap.end()) ||
+		(typeid(*file) == typeid(CShellFile) && m_iconMap.lock_find(file->GetExt()) != m_iconMap.end());
 }
 
 
@@ -73,7 +75,7 @@ std::shared_ptr<CIcon> CFileIconCache::GetIcon(CShellFile* file)
 
 	//Ext cached folder
 	{
-		std::wstring ext((file->GetExt().empty() && file->IsShellFolder()) ? L"dir" : file->GetExt());
+		std::wstring ext((file->GetExt().empty() && typeid(*file)==typeid(CShellFolder)) ? L"dir" : file->GetExt());
 		auto iter = m_iconMap.lock_find(ext);
 		if (iter != m_iconMap.end()) {
 			return iter->second;

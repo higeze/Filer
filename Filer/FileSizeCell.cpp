@@ -1,5 +1,6 @@
 #include "FileSizeCell.h"
 #include "ShellFile.h"
+#include "ShellFolder.h"
 #include "FileRow.h"
 #include "CellProperty.h"
 #include "Sheet.h"
@@ -41,24 +42,27 @@ CFileSizeCell::~CFileSizeCell()
 std::shared_ptr<CShellFile> CFileSizeCell::GetShellFile()
 {
 	if (auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)) {
-		auto spFile = pFileRow->GetFilePointer();
-		if (!m_conFileSizeChanged.connected()) {
-			std::weak_ptr<CFileSizeCell> wp(shared_from_this());
-			m_conFileSizeChanged = spFile->SignalFileSizeChanged.connect(
-				[wp](std::weak_ptr<CShellFile> wpFile)->void {
-				if (auto sp = wp.lock()) {
-					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
-						[wp]()->void {
-						if (auto sp = wp.lock()) {
-							sp->GetSheetPtr()->CellValueChanged(CellEventArgs(sp.get()));
-						}
-					});
-					sp->m_conDelayUpdateAction = con;
-					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
-				}
-			});
+		if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(pFileRow->GetFilePointer())) {
+			if (!m_conFileSizeChanged.connected()) {
+				std::weak_ptr<CFileSizeCell> wp(shared_from_this());
+				m_conFileSizeChanged = spFolder->SignalFileSizeChanged.connect(
+					[wp](CShellFile* pFile)->void {
+					if (auto sp = wp.lock()) {
+						auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+							[wp]()->void {
+							if (auto sp = wp.lock()) {
+								sp->GetSheetPtr()->CellValueChanged(CellEventArgs(sp.get()));
+							}
+						});
+						sp->m_conDelayUpdateAction = con;
+						sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+					}
+				});
+			}
+			return spFolder;
+		} else {
+			return pFileRow->GetFilePointer();
 		}
-		return spFile;
 	} else {
 		return nullptr;
 	}

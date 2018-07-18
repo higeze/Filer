@@ -216,7 +216,7 @@ RowDictionary::const_iterator CFilerGridView::FindIfRowIterByFileNameExt(const s
 	return std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
 		[&](const RowData& data)->bool {
 		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
-			return p->GetFilePointer()->GetNameExt() == fileNameExt;
+			return p->GetFilePointer()->GetFileName() == fileNameExt;
 		}
 		else {
 			return false;
@@ -460,10 +460,8 @@ void CFilerGridView::InsertDefaultRowColumn()
 
 void CFilerGridView::Open(std::shared_ptr<CShellFile>& spFile)
 {
-	if (spFile->IsShellFolder()) {
-		if (auto spFolder = spFile->CastShellFolder()) {
-			OpenFolder(spFolder);
-		}
+	if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+		OpenFolder(spFolder);
 	}
 	else {
 		OpenFile(spFile);
@@ -472,7 +470,7 @@ void CFilerGridView::Open(std::shared_ptr<CShellFile>& spFile)
 }
 
 void CFilerGridView::OpenFile(std::shared_ptr<CShellFile>& spFile)
-{
+	{
 	SHELLEXECUTEINFO	sei = {0};
 	sei.cbSize = sizeof(SHELLEXECUTEINFO);
 	sei.fMask = SEE_MASK_INVOKEIDLIST;
@@ -572,8 +570,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 			ULONG ulRet(0);
 			while (SUCCEEDED(enumIdl->Next(1, &nextIdl, &ulRet))) {
 				if (!nextIdl) { break; }
-				auto spFile(std::make_shared<CShellFile>(m_spFolder->GetShellFolderPtr(), ::ILCombine(m_spFolder->GetAbsolutePidl(), nextIdl)));
-				InsertRow(CRow::kMaxIndex, std::make_shared<CFileRow>(this, spFile));
+				InsertRow(CRow::kMaxIndex, std::make_shared<CFileRow>(this, ::CreateShExFileFolder(m_spFolder->GetShellFolderPtr(), (m_spFolder->GetAbsolutePidl() + nextIdl))));
 				nextIdl.Clear();
 			}
 		}
