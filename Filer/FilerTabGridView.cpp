@@ -88,16 +88,17 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 	}
 	else {
 		for (auto path : m_vwPath) {
-			//ShellFolder
-			auto pFolder = std::make_shared<CShellFolder>(path);
-			if (!pFolder->GetShellFolderPtr()) { pFolder = std::make_shared<CShellFolder>(); }
+			if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFolder::CreateShExFileFolder(path))) {
+				//ShellFolder
+				if (!pFolder->GetShellFolderPtr()) { pFolder = std::make_shared<CShellFolder>(); }
 
-			//New id for association
-			unsigned int id = m_uniqueIDFactory.NewID();
-			//CTabCtrol
-			int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetFileNameWithoutExt().c_str(), NULL, (LPARAM)id);
-			//CFilerGridView
-			m_viewMap.insert(std::make_pair(id, pFolder));
+				//New id for association
+				unsigned int id = m_uniqueIDFactory.NewID();
+				//CTabCtrol
+				int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetFileNameWithoutExt().c_str(), NULL, (LPARAM)id);
+				//CFilerGridView
+				m_viewMap.insert(std::make_pair(id, pFolder));
+			}
 		}
 	}
 
@@ -172,13 +173,15 @@ void CFilerTabGridView::AddNewView(std::wstring path)
 	int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
 
 	//CFilerGridView
-	m_viewMap.insert(std::make_pair(id, std::make_shared<CShellFolder>(path)));
-	BOOL dummy = TRUE;
-	OnNotifyTabSelChanging(0, NULL, dummy);
-	SetCurSel(newItem);
-	OnNotifyTabSelChange(0, NULL, dummy);
-	auto rcClient = GetClientRect();
-	SendMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
+	if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFolder::CreateShExFileFolder(path))) {
+		m_viewMap.insert(std::make_pair(id, pFolder));
+		BOOL dummy = TRUE;
+		OnNotifyTabSelChanging(0, NULL, dummy);
+		SetCurSel(newItem);
+		OnNotifyTabSelChange(0, NULL, dummy);
+		auto rcClient = GetClientRect();
+		SendMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
+	}
 }
 
 

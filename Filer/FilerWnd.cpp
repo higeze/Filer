@@ -240,7 +240,7 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 				std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
 				CComPtr<IShellItem2> pDestShellItem;
 
-				HRESULT hr = ::SHCreateItemFromIDList(spOtherView->GetGridView()->GetFolder()->GetAbsolutePidl(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
+				HRESULT hr = ::SHCreateItemFromIDList(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl().ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
 				if (FAILED(hr)) { break; }
 				m_spCurView->GetGridView()->CopyTo(pDestShellItem);
 			}
@@ -254,7 +254,7 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 				std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
 				CComPtr<IShellItem2> pDestShellItem;
 
-				HRESULT hr = ::SHCreateItemFromIDList(spOtherView->GetGridView()->GetFolder()->GetAbsolutePidl(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
+				HRESULT hr = ::SHCreateItemFromIDList(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl().ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
 				if (FAILED(hr)) { break; }
 				m_spCurView->GetGridView()->MoveTo(pDestShellItem);
 			}

@@ -1,6 +1,6 @@
 #pragma once
 #include "Unknown.h"
-class CIDLPtr;
+class CIDL;
 
 class CDropTarget : public CUnknown<IDropTarget>
 {

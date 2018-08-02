@@ -1,5 +1,5 @@
 #include "DropTarget.h"
-#include "IDLPtr.h"
+#include "IDL.h"
 
 CDropTarget::CDropTarget(HWND hWnd):CUnknown<IDropTarget>(), m_hWnd(hWnd)
 {

@@ -1,24 +1,19 @@
 #pragma once
 #include "MyString.h"
 #include "MyIcon.h"
-#include "IDLPtr.h"
+#include "IDL.h"
 #include "FileIconCache.h"
 #include <future>
 #include <chrono>
 
 class CShellFolder;
 
-std::shared_ptr<CShellFile> CreateShExFileFolder(CComPtr<IShellFolder>& pParentShellFolder, CIDLPtr& absolutePidl);
-std::shared_ptr<CShellFile> CreateShExFileFolder(const std::wstring& path);
-//bool IsShExFolder(CComPtr<IShellFolder>& pParentFolder, CIDLPtr& pidlChild);
-//bool IsShExFolder(CIDLPtr& pidlAbsolute);
-
 tstring FileTime2String(FILETIME *pFileTime);
 tstring Size2String(ULONGLONG size);
 std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit = 3);
-bool GetFileSize(CComPtr<IShellFolder>& parentFolder, CIDLPtr childIDL, ULARGE_INTEGER& size);
+//bool GetFileSize(CComPtr<IShellFolder>& parentFolder, CIDL childIDL, ULARGE_INTEGER& size);
 //bool GetFolderSize(std::shared_ptr<CShellFolder>& pFolder, ULARGE_INTEGER& size, std::function<void()> checkExit);
-bool GetFolderSize(std::shared_ptr<CShellFolder>& pFolder, ULARGE_INTEGER& size, std::shared_future<void> future);
+//bool GetFolderSize(std::shared_ptr<CShellFolder>& pFolder, ULARGE_INTEGER& size, std::shared_future<void> future);
 bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<void()> cancel);
 
 struct findclose
@@ -52,8 +47,10 @@ class CShellFile: public std::enable_shared_from_this<CShellFile>
 private:
 	static CFileIconCache s_iconCache;
 protected:
-	CComPtr<IShellFolder> m_parentFolder;
-	CIDLPtr m_absolutePidl;
+	CComPtr<IShellFolder> m_pParentShellFolder;
+	CIDL m_absoluteIdl;
+	CIDL m_parentIdl;
+	CIDL m_childIdl;
 
 	std::wstring m_wstrPath;
 	std::wstring m_wstrFileName;
@@ -78,9 +75,9 @@ protected:
 
 public:
 	//Constructor
-	CShellFile();
-	CShellFile(CComPtr<IShellFolder> pfolder, CIDLPtr absolutePidl);
-	CShellFile(const std::wstring& path);
+	CShellFile() {}
+	CShellFile(CComPtr<IShellFolder> pParentShellFolder,CIDL parentIdl, CIDL childIdl);
+	//CShellFile(const std::wstring& path);
 
 	//Destructor
 	virtual ~CShellFile();
@@ -89,14 +86,15 @@ public:
 	boost::signals2::signal<void(CShellFile*)> SignalFileIconChanged;
 	
 	//Getter 
-	CComPtr<IShellFolder>& GetParentShellFolderPtr(){return m_parentFolder;}
-	CIDLPtr& GetAbsolutePidl(){return m_absolutePidl;}
+	CComPtr<IShellFolder>& GetParentShellFolderPtr(){return m_pParentShellFolder;}
+	CIDL& GetAbsoluteIdl();
+	CIDL& GetChildIdl();
 
 	//Lazy Evaluation Getter
 	std::wstring& GetPath();
-	std::wstring GetFileNameWithoutExt();
-	std::wstring GetFileName();
-	std::wstring GetExt();
+	virtual std::wstring GetFileNameWithoutExt();
+	virtual std::wstring GetFileName();
+	virtual std::wstring GetExt();
 	std::wstring GetTypeName();	
 	std::wstring GetCreationTime();
 	std::wstring GetLastAccessTime();
@@ -108,7 +106,7 @@ public:
 	void SetExt(const std::wstring& wstrExt);
 
 	//Size
-	bool GetFileSize(ULARGE_INTEGER& size, std::shared_future<void> future);
+	bool GetFileSize(ULARGE_INTEGER& size/*, std::shared_future<void> future*/);
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize();
 
 	//Icon

@@ -1,5 +1,6 @@
 #pragma once
-#include "IDLPtr.h"
+#include "IDL.h"
+#include "KnownFolder.h"
 #include <mutex>
 
 class CIcon;
@@ -52,6 +53,7 @@ public:
 class CFileIconCache
 {
 private:
+	static CKnownFolderManager s_knownFolderManager;
 	lockable_unordered_map<std::wstring, std::shared_ptr<CIcon>> m_iconMap;
 	lockable_unordered_map<std::wstring, std::shared_ptr<CIcon>> m_knownIconMap;
 	std::unordered_set<std::wstring> m_ignoreSet;

@@ -72,16 +72,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\libraries\boost;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\libraries\boost\stage\x86\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)..\..\library\boost;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\libraries\boost;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\libraries\boost\stage\x86\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)..\..\library\boost;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -331,7 +331,8 @@
     <ClInclude Include="FilerWnd.h" />
     <ClInclude Include="FileSizeCell.h" />
     <ClInclude Include="FileSizeColumn.h" />
-    <ClInclude Include="IDLPtr.h" />
+    <ClInclude Include="IDL.h" />
+    <ClInclude Include="KnownFolder.h" />
     <ClInclude Include="MyIcon.h" />
     <ClInclude Include="PathCell.h" />
     <ClInclude Include="resource.h" />
@@ -429,7 +430,8 @@
     <ClCompile Include="FilerWnd.cpp" />
     <ClCompile Include="FileSizeCell.cpp" />
     <ClCompile Include="FileSizeColumn.cpp" />
-    <ClCompile Include="IDLPtr.cpp" />
+    <ClCompile Include="IDL.cpp" />
+    <ClCompile Include="KnownFolder.cpp" />
     <ClCompile Include="MyIcon.cpp" />
     <ClCompile Include="PathCell.cpp" />
     <ClCompile Include="ShellFile.cpp" />

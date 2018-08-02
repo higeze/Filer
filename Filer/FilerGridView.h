@@ -1,7 +1,7 @@
 #pragma once
 
 #include "GridView.h"
-#include "IDLPtr.h"
+#include "IDL.h"
 #include "Resource.h"
 
 #include "GridViewProperty.h"
@@ -130,7 +130,7 @@ public:
 	void SetPath(const string_type& path);
 
 	void Drag();
-	BOOL SetDragImage(CIDLPtr pFirstIdl, CComPtr<IDragSourceHelper> pDragSourceHelper, IDataObject *pDataObject);
+	BOOL SetDragImage(CIDL firstIdl, CComPtr<IDragSourceHelper> pDragSourceHelper, IDataObject *pDataObject);
 
 	RowDictionary::const_iterator FindIfRowIterByFileNameExt(const std::wstring& fileNameExt);
 

@@ -116,9 +116,6 @@
     <ClInclude Include="FileSizeColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="IDLPtr.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="MyIcon.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -518,6 +515,12 @@
     <ClInclude Include="..\HiLib\ThreadHelper.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="IDL.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="KnownFolder.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -587,9 +590,6 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FileSizeColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="IDLPtr.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="MyIcon.cpp">
@@ -794,6 +794,12 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FileIconCache.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="IDL.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="KnownFolder.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>

@@ -24,7 +24,7 @@ std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
 			pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(std::make_shared<CShellFolder>());
 		}
 		else {
-			pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(::CreateShExFileFolder(pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetPath()));
+			pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(CShellFolder::CreateShExFileFolder(pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetPath()));
 		}
 	}
 	return pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetShellFile();
