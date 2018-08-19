@@ -1848,19 +1848,19 @@ void CGridView::SubmitUpdate()
 		switch (type) {
 		case Updates::Sort:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Sort")
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Sort")
 			SortAll();
 			break;
 		}
 		case Updates::Filter:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Filter")
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Filter")
 			FilterAll();
 			break;
 		}
 		case Updates::RowVisible:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::RowVisible")
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::RowVisible")
 			UpdateRowVisibleDictionary();
 			//::OutputDebugStringA("m_rowAllDictionary\r\n");
 			//boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
@@ -1870,25 +1870,25 @@ void CGridView::SubmitUpdate()
 		}
 		case Updates::ColumnVisible:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::ColumnVisible")
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::ColumnVisible")
 			UpdateColumnVisibleDictionary();
 			break;
 		}
 		case Updates::Column:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Column")
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Column")
 			UpdateColumn();
 			break;
 		}
 		case Updates::Row:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Row")
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Row")
 			UpdateRow();
 			break;
 		}
 		case Updates::Scrolls:
 		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Scrolls")
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Scrolls")
 			UpdateScrolls();
 			break;
 		}

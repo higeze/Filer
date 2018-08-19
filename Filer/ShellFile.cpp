@@ -2,11 +2,11 @@
 #include "MyIcon.h"
 #include "MyString.h"
 #include "MyCom.h"
-#include "ShellFolder.h"
+#include "FileIconCache.h"
 #include <thread>
 #include <regex>
 
-CFileIconCache CShellFile::s_iconCache;
+//CFileIconCache CShellFile::s_iconCache;
 
 
 
@@ -399,7 +399,7 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 	switch (GetLockIcon().second) {
 	case FileIconStatus::None:
 		if (HasIconInCache()) {
-			SetLockIcon(std::make_pair( s_iconCache.GetIcon(this), FileIconStatus::Available));
+			SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetIcon(this), FileIconStatus::Available));
 		} else {
 			SetLockIcon(std::make_pair(GetDefaultIcon(), FileIconStatus::Loading));
 			if (!m_pIconThread) {
@@ -408,7 +408,7 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 				m_iconFuture = m_iconPromise.get_future();
 				m_pIconThread.reset(new std::thread([this]()->void {
 					//if (auto sp = wpFile.lock()) {
-						SetLockIcon(std::make_pair(s_iconCache.GetIcon(this), FileIconStatus::Available));
+						SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetIcon(this), FileIconStatus::Available));
 						SignalFileIconChanged(this);
 					//}
 				}));
@@ -424,7 +424,7 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 
 std::shared_ptr<CIcon> CShellFile::GetDefaultIcon()
 {
-	return s_iconCache.GetDefaultIcon();
+	return CFileIconCache::GetInstance()->GetDefaultIcon();
 }
 
 UINT CShellFile::GetSFGAO()
@@ -507,7 +507,7 @@ bool CShellFile::IsDirectory()
 
 bool CShellFile::HasIconInCache()
 {
-	return s_iconCache.Exist(this);
+	return CFileIconCache::GetInstance()->Exist(this);
 }
 
 

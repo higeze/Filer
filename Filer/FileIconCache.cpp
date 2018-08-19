@@ -5,7 +5,7 @@
 #include "MyCom.h"
 #include <array>
 
-CKnownFolderManager CFileIconCache::s_knownFolderManager;
+//CKnownFolderManager CFileIconCache::s_knownFolderManager;
 
 
 CFileIconCache::CFileIconCache():m_ignoreSet({L".exe", L".ico", L".lnk"})
@@ -15,14 +15,14 @@ CFileIconCache::CFileIconCache():m_ignoreSet({L".exe", L".ico", L".lnk"})
 	if (::GetLogicalDriveStrings(64, logicalDrives.data())) {
 		wchar_t* p;
 		for (p = logicalDrives.data(); *p != L'\0';p+=lstrlen(p)+1) {
-			m_knownIconMap.lock_emplace(std::make_pair(*p + std::wstring(L":\\"), std::shared_ptr<CIcon>(nullptr)));
+			m_driveIconMap.lock_emplace(std::make_pair(*p + std::wstring(L":\\"), std::shared_ptr<CIcon>(nullptr)));
 		}
 	}
 
-	std::vector<CKnownFolder> knownFolders(s_knownFolderManager.GetKnownFolders());
-	for (auto kf : knownFolders) {
-		m_knownIconMap.lock_emplace(std::make_pair(kf.GetPath(), std::shared_ptr<CIcon>(nullptr)));
-	}
+	//std::vector<CKnownFolder> knownFolders(s_knownFolderManager.GetKnownFolders());
+	//for (auto kf : knownFolders) {
+	//	m_knownIconMap.lock_emplace(std::make_pair(kf.GetPath(), std::shared_ptr<CIcon>(nullptr)));
+	//}
 
 	//CCoInitializer coinit;
 	//CComPtr<IKnownFolderManager> pMgr;
@@ -60,7 +60,7 @@ CFileIconCache::CFileIconCache():m_ignoreSet({L".exe", L".ico", L".lnk"})
 bool CFileIconCache::Exist(CShellFile* file)
 {
 	return
-		(m_knownIconMap.lock_find(file->GetPath()) != m_knownIconMap.end()) ||
+		(m_driveIconMap.lock_find(file->GetPath()) != m_driveIconMap.end()) ||
 		(typeid(*file) == typeid(CShellFolder) && m_iconMap.lock_find(L"dir") != m_iconMap.end()) ||
 		(typeid(*file) == typeid(CShellFile) && m_iconMap.lock_find(file->GetExt()) != m_iconMap.end());
 }
@@ -70,12 +70,12 @@ std::shared_ptr<CIcon> CFileIconCache::GetIcon(CShellFile* file)
 {
 	//Known folder
 	{
-		auto iter = m_knownIconMap.lock_find(file->GetPath());
-		if (iter != m_knownIconMap.end()) {
+		auto iter = m_driveIconMap.lock_find(file->GetPath());
+		if (iter != m_driveIconMap.end()) {
 			if (!(iter->second)) {
 				SHFILEINFO sfi = { 0 };
 				::SHGetFileInfo((LPCTSTR)file->GetAbsoluteIdl().ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);			
-				m_knownIconMap.lock_insert_or_assign(iter->first, std::make_shared<CIcon>(sfi.hIcon));
+				m_driveIconMap.lock_insert_or_assign(iter->first, std::make_shared<CIcon>(sfi.hIcon));
 			}
 			return iter->second;
 		}

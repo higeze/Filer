@@ -7,13 +7,13 @@ class CConsoleTimer:public boost::timer
 {
 private:
 	HWND m_hWnd;
-	std::string m_strMessage;
+	std::wstring m_strMessage;
 public:
-	CConsoleTimer(const std::string& strMessage)
+	CConsoleTimer(const std::wstring& strMessage)
 		:timer(), m_strMessage(strMessage){}
 	virtual ~CConsoleTimer()
 	{
-		std::cout<<m_strMessage<<" : "<<elapsed()<<std::endl;
+		std::wcout<<m_strMessage<<" : "<<elapsed()<<std::endl;
 	}
 
 };

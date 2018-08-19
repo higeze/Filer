@@ -2,7 +2,7 @@
 #include "MyString.h"
 #include "MyIcon.h"
 #include "IDL.h"
-#include "FileIconCache.h"
+//#include "FileIconCache.h"
 #include <future>
 #include <chrono>
 
@@ -45,7 +45,7 @@ enum class FileIconStatus
 class CShellFile: public std::enable_shared_from_this<CShellFile>
 {
 private:
-	static CFileIconCache s_iconCache;
+//	static CFileIconCache s_iconCache;
 protected:
 	CComPtr<IShellFolder> m_pParentShellFolder;
 	CIDL m_absoluteIdl;
@@ -91,7 +91,7 @@ public:
 	CIDL& GetChildIdl();
 
 	//Lazy Evaluation Getter
-	std::wstring& GetPath();
+	virtual std::wstring& GetPath();
 	virtual std::wstring GetFileNameWithoutExt();
 	virtual std::wstring GetFileName();
 	virtual std::wstring GetExt();
@@ -110,19 +110,19 @@ public:
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize();
 
 	//Icon
-	std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon();
+	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon();
 
 	bool HasIconInCache();
 	bool IsDirectory();
 	virtual void Reset();
 private:
-
 	void UpdateWIN32_FIND_DATA();
 	std::shared_ptr<CIcon> GetDefaultIcon();
 
-	std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetLockIcon();
-	void SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& icon);
-
 	virtual void ResetIcon();
 	virtual void ResetSize();
+
+protected:
+	std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetLockIcon();
+	void SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& icon);
 };

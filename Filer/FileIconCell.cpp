@@ -6,6 +6,7 @@
 #include "MySize.h"
 #include "Sheet.h"
 #include "GridView.h"
+#include "SheetEventArgs.h"
 
 CFileIconCell::CFileIconCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
 	:CCell(pSheet, pRow, pColumn, spProperty)
@@ -34,19 +35,30 @@ CFileIconCell::~CFileIconCell()
 std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()
 {
 	if(auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)){
-		//It is impossible to plymorphism in constructor, assign signal here.
 		auto spFile = pFileRow->GetFilePointer();
-		if (auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)) {
-			auto spFile = pFileRow->GetFilePointer();
-			if (!m_conIconChanged.connected()) {
-				std::weak_ptr<const CFileIconCell> wp(shared_from_this());
-				m_conIconChanged = spFile->SignalFileIconChanged.connect(
-					[wp](CShellFile* pFile)->void {
-					if (auto sp = wp.lock()) {
-						sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
-					}
-				});
-			}
+		if (!m_conIconChanged.connected()) {
+			std::weak_ptr<CFileIconCell> wp(shared_from_this());
+			m_conIconChanged = spFile->SignalFileIconChanged.connect(
+				[wp](CShellFile* pFile)->void {
+				if (auto sp = wp.lock()) {
+					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+						[wp]()->void {
+						if (auto sp = wp.lock()) {
+							sp->GetSheetPtr()->CellValueChanged(CellEventArgs(sp.get()));
+						}
+					});
+					sp->m_conDelayUpdateAction = con;
+					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+				}
+			});
+
+				//m_conIconChanged = spFile->SignalFileIconChanged.connect(
+
+				//	[wp](CShellFile* pFile)->void {
+				//	if (auto sp = wp.lock()) {
+				//		sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+				//	}
+				//});
 		}
 		return spFile;
 	} else {

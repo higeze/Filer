@@ -1,6 +1,5 @@
 #pragma once
 #include "ShellFile.h"
-#include "KnownFolder.h"
 
 class CShellFolder :public CShellFile
 {
@@ -11,21 +10,22 @@ private:
 	std::promise<void> m_sizePromise;
 	std::shared_future<void> m_sizeFuture;
 	std::mutex m_mtxSize;
-	static CKnownFolderManager s_knownFolderManager;
+//	static CKnownFolderManager s_knownFolderManager;
 
 public:
 	//static std::shared_ptr<CShellFolder> CreateShellFolderFromPath(const std::wstring& path);
 	CShellFolder();
-	CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pDhellFolder);
+	//CShellFolder(CIDL& absoluteIDL);
+	CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder);
 	virtual ~CShellFolder();
 
 	//	CShellFolder(const std::wstring& path);
 
 	boost::signals2::signal<void(CShellFile*)> SignalFileSizeChanged;
 
-	std::wstring GetFileNameWithoutExt()override;
-	std::wstring GetFileName()override;
-	std::wstring GetExt()override;
+	virtual std::wstring GetFileNameWithoutExt()override;
+	virtual std::wstring GetFileName()override;
+	virtual std::wstring GetExt()override;
 
 	CComPtr<IShellFolder> GetShellFolderPtr()const { return m_pShellFolder; }
 	std::shared_ptr<CShellFolder> GetParent();
@@ -36,8 +36,11 @@ public:
 
 private:
 	std::pair<ULARGE_INTEGER, FileSizeStatus> GetLockSize();
+
+	virtual void ResetSize();
+
+protected:
 	void SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size);
 	bool GetFolderSize(ULARGE_INTEGER& size, std::shared_future<void> future);
 
-	virtual void ResetSize();
 };

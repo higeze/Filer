@@ -54,7 +54,7 @@ LRESULT CFavoritesGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL&
 
 void CFavoritesGridView::OpenFavorites()
 {
-	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFavorites")
+	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFavorites")
 
 	m_spCursorer->Clear();
 

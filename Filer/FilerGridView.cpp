@@ -488,7 +488,7 @@ void CFilerGridView::OpenFile(std::shared_ptr<CShellFile>& spFile)
 
 void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder")
+	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder")
 	
 	m_spCursorer->Clear();
 
@@ -577,7 +577,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 			}
 		}
 	}
-	catch (std::exception& e) 
+	catch (std::exception&) 
 	{
 		MessageBox(L"Enumeration", L"Error", 0);
 //		throw e;
@@ -875,21 +875,25 @@ bool CFilerGridView::InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, 
 
 void CFilerGridView::OnContextMenu(const ContextMenuEvent& e)
 {
-	auto visibleIndexes = Coordinates2Indexes<VisTag>(e.Point);
-	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
-	auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
-
-	auto maxRow = GetMaxIndex<RowTag, VisTag>();
-	//auto minRow = rowDictionary.begin()->DataPtr->GetIndex<VisTag>();
-	auto maxCol = GetMaxIndex<ColTag, VisTag>();
-	//auto minCol = colDictionary.begin()->DataPtr->GetIndex<VisTag>();
 	CPoint ptScreen(e.Point);
-	auto cell = Cell(e.Point);
 	ClientToScreen(ptScreen);
+	auto cell = Cell(e.Point);
 	std::vector<PITEMID_CHILD> vPidl;
 
-	if(cell->GetRowPtr() == m_rowHeader.get() || cell->GetRowPtr() == m_rowNameHeader.get()){
-		//CreateMenu
+	if (!cell) {
+		//Folder menu
+		CIDL idl = m_spFolder->GetAbsoluteIdl().CloneParentIDL();
+		CComPtr<IShellFolder> pDesktop;
+		::SHGetDesktopFolder(&pDesktop);
+		CComPtr<IShellFolder> pFolder;
+		::SHBindToObject(pDesktop, idl.ptr(), 0, IID_IShellFolder, (void**)&pFolder);
+		if (!pFolder) {
+			pFolder = pDesktop;
+		}
+		vPidl.push_back(m_spFolder->GetAbsoluteIdl().FindLastID());
+		ShowShellContextMenu(m_hWnd, ptScreen, pFolder, vPidl, true);
+	}else if(cell->GetRowPtr() == m_rowHeader.get() || cell->GetRowPtr() == m_rowNameHeader.get()){
+		//Header menu
 		CMenu menu(::CreatePopupMenu());
 		if (menu.IsNull()) { return; }
 		for (auto& item : m_headerMenuItems) {
@@ -900,20 +904,10 @@ void CFilerGridView::OnContextMenu(const ContextMenuEvent& e)
 			ptScreen.x,
 			ptScreen.y,
 			m_hWnd);
-
-	}else if(visibleIndexes.first > maxRow ||  visibleIndexes.second > maxCol){
-		CIDL idl = m_spFolder->GetAbsoluteIdl().CloneParentIDL();
-		CComPtr<IShellFolder> pDesktop;
-		::SHGetDesktopFolder(&pDesktop);
-		CComPtr<IShellFolder> pFolder;
-		::SHBindToObject(pDesktop,idl.ptr(),0,IID_IShellFolder,(void**)&pFolder);
-		if(!pFolder){
-			pFolder = pDesktop;
-		}
-		vPidl.push_back(m_spFolder->GetAbsoluteIdl().FindLastID());
-		ShowShellContextMenu(m_hWnd, ptScreen, pFolder, vPidl, true);
-
 	}else{
+		//Cell menu
+		auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
+		auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
 		for(auto rowIter=rowDictionary.begin(),rowEnd=rowDictionary.end();rowIter!=rowEnd;++rowIter){
 			if(rowIter->DataPtr->GetSelected()){
 				auto spRow=std::dynamic_pointer_cast<CFileRow>(rowIter->DataPtr);
