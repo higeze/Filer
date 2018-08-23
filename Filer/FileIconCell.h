@@ -5,7 +5,7 @@ class CShellFile;
 
 class CFileIconCell:public CCell, public std::enable_shared_from_this<CFileIconCell>
 {
-private:
+protected:
 	mutable boost::signals2::connection m_conDelayUpdateAction;
 	mutable boost::signals2::connection m_conIconChanged;
 public:

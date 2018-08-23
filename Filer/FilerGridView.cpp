@@ -227,7 +227,7 @@ RowDictionary::const_iterator CFilerGridView::FindIfRowIterByFileNameExt(const s
 
 void CFilerGridView::Added(const std::wstring& fileName)
 {
-	std::cout << "Added " << wstr2str(fileName) << std::endl;
+	BOOST_LOG_TRIVIAL(trace) << "Added " << wstr2str(fileName);
 	CIDL idl;
 	ULONG chEaten;
 	ULONG dwAttributes;
@@ -256,17 +256,17 @@ void CFilerGridView::Added(const std::wstring& fileName)
 		m_bNewFile = false;
 	}
 	else {
-		std::cout << "Added FAILED " << wstr2str(fileName) << std::endl;
+		BOOST_LOG_TRIVIAL(trace) << "Added FAILED " << wstr2str(fileName);
 	}
 }
 
 void CFilerGridView::Modified(const std::wstring& fileName)
 {
-	std::cout << "Modified " << wstr2str(fileName) << std::endl;
+	BOOST_LOG_TRIVIAL(trace) << "Modified " << wstr2str(fileName);
 	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == m_rowAllDictionary.end()) {
-		std::cout << "Modified NoMatch " << wstr2str(fileName) << std::endl;
+		BOOST_LOG_TRIVIAL(trace) << "Modified NoMatch " << wstr2str(fileName);
 		return;
 	}
 	else if (auto p = std::dynamic_pointer_cast<CFileRow>(iter->DataPtr)) {
@@ -285,11 +285,11 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 }
 void CFilerGridView::Removed(const std::wstring& fileName)
 {
-	std::cout << "Removed " << wstr2str(fileName) << std::endl;
+	BOOST_LOG_TRIVIAL(trace) << "Removed " << wstr2str(fileName);
 	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == m_rowAllDictionary.end()) {
-		std::cout << "Removed NoMatch " << wstr2str(fileName) <<std::endl;
+		BOOST_LOG_TRIVIAL(trace) << "Removed NoMatch " << wstr2str(fileName);
 		return;
 	}
 
@@ -312,12 +312,12 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 }
 void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& newName)
 {
-	std::cout << "Renamed " << wstr2str(oldName) << "=>"<< wstr2str(newName) <<std::endl;
+	BOOST_LOG_TRIVIAL(trace) << "Renamed " << wstr2str(oldName) << "=>"<< wstr2str(newName);
 	auto iter = FindIfRowIterByFileNameExt(oldName);
 
 	if (iter == m_rowAllDictionary.end()) 
 	{
-		std::cout << "Renamed NoMatch " << wstr2str(oldName) << "=>" << wstr2str(newName) << std::endl;
+		BOOST_LOG_TRIVIAL(trace) << "Renamed NoMatch " << wstr2str(oldName) << "=>" << wstr2str(newName);
 		return;
 	}
 
@@ -344,7 +344,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 			SubmitUpdate();
 		}
 		else {
-			std::cout << "Renamed FAILED " << wstr2str(oldName) << "=>" << wstr2str(newName) << std::endl;
+			BOOST_LOG_TRIVIAL(trace) << "Renamed FAILED " << wstr2str(oldName) << "=>" << wstr2str(newName);
 			return Removed(oldName);
 		}
 	}
@@ -781,19 +781,19 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 
 		switch (pInfo->Action) {
 		case FILE_ACTION_ADDED:
-			std::cout << "FILE_ACTION_ADDED" << std::endl;
+			BOOST_LOG_TRIVIAL(trace) << "FILE_ACTION_ADDED";
 			Added(fileName);
 			break;
 		case FILE_ACTION_MODIFIED:
-			std::cout << "FILE_ACTION_MODIFIED" << std::endl;
+			BOOST_LOG_TRIVIAL(trace) << "FILE_ACTION_MODIFIED";
 			Modified(fileName);
 			break;
 		case FILE_ACTION_REMOVED:
-			std::cout << "FILE_ACTION_REMOVED" << std::endl;
+			BOOST_LOG_TRIVIAL(trace) << "FILE_ACTION_REMOVED";
 			Removed(fileName);
 			break;
 		case FILE_ACTION_RENAMED_NEW_NAME:
-			std::cout << "FILE_ACTION_RENAMED_NEW_NAME" << std::endl;
+			BOOST_LOG_TRIVIAL(trace) << "FILE_ACTION_RENAMED_NEW_NAME";
 			if (!m_oldName.empty()) {
 				Renamed(m_oldName, fileName);
 				m_oldName.clear();
@@ -803,7 +803,7 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 			}
 			break;
 		case FILE_ACTION_RENAMED_OLD_NAME:
-			std::cout << "FILE_ACTION_RENAMED_OLD_NAME" << std::endl;
+			BOOST_LOG_TRIVIAL(trace) << "FILE_ACTION_RENAMED_OLD_NAME";
 			m_oldName = fileName;
 			break;
 		default:

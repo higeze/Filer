@@ -3,6 +3,7 @@
 #include "FavoritesProperty.h"
 #include "FilerWnd.h"
 #include "FavoriteRow.h"
+#include "KnownFolder.h"
 
 CFilerTabGridView::CFilerTabGridView(std::shared_ptr<CGridViewProperty> spGridViewProp)
 	:m_spFilerView(std::make_shared<CFilerGridView>(spGridViewProp))
@@ -76,7 +77,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 
 	if (m_vwPath.empty()) {
 		//ShellFolder
-		auto pFolder = std::make_shared<CShellFolder>();
+		auto pFolder(CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop));
 		if (pFolder) {
 			//New id for association
 			unsigned int id = m_uniqueIDFactory.NewID();
@@ -90,7 +91,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 		for (auto path : m_vwPath) {
 			if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFolder::CreateShExFileFolder(path))) {
 				//ShellFolder
-				if (!pFolder->GetShellFolderPtr()) { pFolder = std::make_shared<CShellFolder>(); }
+				if (!pFolder->GetShellFolderPtr()) { pFolder = CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop); }
 
 				//New id for association
 				unsigned int id = m_uniqueIDFactory.NewID();
@@ -239,7 +240,7 @@ LRESULT CFilerTabGridView::OnCommandNewTab(WORD wNotifyCode, WORD wID, HWND hWnd
 	int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
 
 	//CFilerGridView
-	m_viewMap.insert(std::make_pair(id, std::make_shared<CShellFolder>()));
+	m_viewMap.insert(std::make_pair(id, CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop)));
 	BOOL dummy  = TRUE;
 	OnNotifyTabSelChanging(0, NULL, dummy);
 	SetCurSel(newItem);

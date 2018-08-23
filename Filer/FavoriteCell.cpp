@@ -11,6 +11,8 @@
 #include "FavoriteRow.h"
 #include "FavoritesColumn.h"
 #include "ShellFile.h"
+#include "KnownFolder.h"
+#include "GridView.h"
 
 CFavoriteCell::CFavoriteCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
 	:CFileIconCell(pSheet, pRow, pColumn, spProperty){}
@@ -19,15 +21,34 @@ std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
 {
 	auto pRow = static_cast<CFavoriteRow*>(m_pRow);
 	auto pCol = static_cast<CFavoritesColumn*>(m_pColumn);
-	if (!pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetShellFile()) {
-		if (pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetPath().empty()) {
-			pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(std::make_shared<CShellFolder>());
+	auto order = pRow->GetOrderIndex();
+	if (!pCol->GetFavorites()->at(order).GetShellFile()) {
+		if (pCol->GetFavorites()->at(order).GetPath().empty()) {
+			pCol->GetFavorites()->at(order).SetShellFile(CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop));
 		}
 		else {
-			pCol->GetFavorites()->at(pRow->GetOrderIndex()).SetShellFile(CShellFolder::CreateShExFileFolder(pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetPath()));
+			pCol->GetFavorites()->at(order).SetShellFile(CShellFolder::CreateShExFileFolder(pCol->GetFavorites()->at(order).GetPath()));
 		}
 	}
-	return pCol->GetFavorites()->at(pRow->GetOrderIndex()).GetShellFile();
+	auto spFile = pCol->GetFavorites()->at(order).GetShellFile();
+	if (!m_conIconChanged.connected()) {
+		std::weak_ptr<CFavoriteCell> wp(std::static_pointer_cast<CFavoriteCell>(shared_from_this()));
+		m_conIconChanged = spFile->SignalFileIconChanged.connect(
+			[wp](CShellFile* pFile)->void {
+			if (auto sp = wp.lock()) {
+				auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					[wp]()->void {
+					if (auto sp = wp.lock()) {
+						sp->GetSheetPtr()->CellValueChanged(CellEventArgs(sp.get()));
+					}
+				});
+				sp->m_conDelayUpdateAction = con;
+				sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+			}
+		});
+	}
+
+	return pCol->GetFavorites()->at(order).GetShellFile();
 }
 
 std::wstring CFavoriteCell::GetShortName()

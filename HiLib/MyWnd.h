@@ -233,10 +233,10 @@ public:
 	{	
 		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,funMsg));
 		if (!pair.second) {
-			std::cout << (boost::format(
+			BOOST_LOG_TRIVIAL(trace) << (boost::format(
 				"Duplicate "
 				"MSG:%1$04x"
-			) % uMsg).str() << std::endl;
+			) % uMsg).str();
 		}
 		return pair.second;
 	}
@@ -258,10 +258,10 @@ public:
 	{	
 		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
 		if (!pair.second) {
-			std::cout << (boost::format(
+			BOOST_LOG_TRIVIAL(trace) << (boost::format(
 				"Duplicate "
 				"MSG:%1$04x"
-			) % uMsg).str() << std::endl;
+			) % uMsg).str();
 		}
 		return pair.second;
 	}

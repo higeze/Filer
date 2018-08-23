@@ -128,7 +128,7 @@ void CSheet::CellValueChanged(CellEventArgs& e)
 	PostUpdate(Updates::Sort);
 	PostUpdate(Updates::Column);
 	PostUpdate(Updates::Row);
-	PostUpdate(Updates::Scrolls);
+	//PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
 }
 

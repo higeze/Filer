@@ -32,7 +32,7 @@ public:
 	LPITEMIDLIST Detach();
 	void Clear();
 	//Cast
-	operator bool()const { return (bool)m_pIDL && m_pIDL->mkid.cb != 0; }
+	operator bool()const { return (bool)m_pIDL; }
 	//operator LPITEMIDLIST()const{return m_pIDL;}
 	//operator LPCITEMIDLIST()const{return m_pIDL;}
 	//Method

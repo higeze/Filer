@@ -21,7 +21,8 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template < class event_t, class fsm_t >
 		void on_entry(event_t const & e, fsm_t & machine)
 		{
-			std::cout << "NormalState" << std::endl;
+			
+			BOOST_LOG_TRIVIAL(trace) << "NormalState";
 		}
 	};
 	struct LButtonDownedState :state<> 
@@ -29,7 +30,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template < class event_t, class fsm_t >
 		void on_entry(event_t const & e, fsm_t & machine)
 		{
-			std::cout << "LButtonDownedState" << std::endl;
+			BOOST_LOG_TRIVIAL(trace) << "LButtonDownedState";
 			if (auto p = dynamic_cast<CGridView*>(machine.m_pSheet)) {
 				boost::asio::deadline_timer* pTimer = p->GetFilterTimerPtr();
 				pTimer->expires_from_now(boost::posix_time::milliseconds(::GetDoubleClickTime()));
@@ -37,10 +38,10 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 				pTimer->async_wait([hWnd, e](const boost::system::error_code& error)->void {
 
 					if (error == boost::asio::error::operation_aborted) {
-						std::cout << "timer canceled" << std::endl;
+						BOOST_LOG_TRIVIAL(trace) << "timer canceled";
 					}
 					else {
-						std::cout << "timer editcell" << std::endl;
+						BOOST_LOG_TRIVIAL(trace) << "timer editcell";
 						::PostMessage(hWnd, WM_LBUTTONDBLCLKTIMEXCEED, NULL, MAKELPARAM(e.Point.x, e.Point.y));
 					}
 				});
@@ -54,7 +55,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template < class event_t, class fsm_t >
 		void on_entry(event_t const & e, fsm_t & machine)
 		{
-			std::cout << "LButtonDragState" << std::endl;
+			BOOST_LOG_TRIVIAL(trace) << "LButtonDragState";
 			machine.m_pSheet->OnLButtonBeginDrag(LButtonBeginDragEvent(e.Flags, e.Point));
 		}
 	};

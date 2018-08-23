@@ -351,7 +351,6 @@ LRESULT CGridView::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 
 LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	//std::cout << "OnPaint" << std::endl;
 	CPaintDC dc(m_hWnd);
 	CRect rcClient(GetClientRect());
 

@@ -54,9 +54,10 @@ class CFileIconCache
 private:
 //	static CKnownFolderManager s_knownFolderManager;
 	lockable_unordered_map<std::wstring, std::shared_ptr<CIcon>> m_iconMap;
-	lockable_unordered_map<std::wstring, std::shared_ptr<CIcon>> m_driveIconMap;
+	//lockable_unordered_map<std::wstring, std::shared_ptr<CIcon>> m_driveIconMap;
 	std::unordered_set<std::wstring> m_ignoreSet;
 	std::shared_ptr<CIcon> m_defaultIcon;
+	std::shared_ptr<CIcon> m_folderIcon;
 	std::mutex m_mtx;
 
 public:
@@ -65,6 +66,7 @@ public:
 	bool Exist(CShellFile* file);
 	std::shared_ptr<CIcon> GetIcon(CShellFile* file);
 	std::shared_ptr<CIcon> GetDefaultIcon();
+	std::shared_ptr<CIcon> GetFolderIcon();
 
 	static CFileIconCache* GetInstance()
 	{

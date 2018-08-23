@@ -7,21 +7,21 @@ private:
 	CComPtr<IShellFolder> m_pShellFolder;
 
 	std::unique_ptr<std::thread> m_pSizeThread;
-	std::promise<void> m_sizePromise;
-	std::shared_future<void> m_sizeFuture;
+	std::atomic<bool> m_cancelSize = false;
+	//std::promise<void> m_sizePromise;
+	//std::shared_future<void> m_sizeFuture;
 	std::mutex m_mtxSize;
-//	static CKnownFolderManager s_knownFolderManager;
 
 public:
-	//static std::shared_ptr<CShellFolder> CreateShellFolderFromPath(const std::wstring& path);
-	CShellFolder();
-	//CShellFolder(CIDL& absoluteIDL);
+//	CShellFolder();
 	CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder);
 	virtual ~CShellFolder();
 
 	//	CShellFolder(const std::wstring& path);
 
 	boost::signals2::signal<void(CShellFile*)> SignalFileSizeChanged;
+
+	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon() override;
 
 	virtual std::wstring GetFileNameWithoutExt()override;
 	virtual std::wstring GetFileName()override;
@@ -41,6 +41,6 @@ private:
 
 protected:
 	void SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size);
-	bool GetFolderSize(ULARGE_INTEGER& size, std::shared_future<void> future);
+	bool GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel);
 
 };

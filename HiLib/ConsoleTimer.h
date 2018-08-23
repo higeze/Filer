@@ -13,7 +13,7 @@ public:
 		:timer(), m_strMessage(strMessage){}
 	virtual ~CConsoleTimer()
 	{
-		std::wcout<<m_strMessage<<" : "<<elapsed()<<std::endl;
+		BOOST_LOG_TRIVIAL(trace) <<m_strMessage<<" : "<<elapsed();
 	}
 
 };

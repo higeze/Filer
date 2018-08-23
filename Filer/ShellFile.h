@@ -68,8 +68,8 @@ protected:
 	ULONG m_sfgao = 0;
 
 	std::unique_ptr<std::thread> m_pIconThread;
-	std::promise<void> m_iconPromise;
-	std::shared_future<void> m_iconFuture;
+	//std::promise<void> m_iconPromise;
+	//std::shared_future<void> m_iconFuture;
 	std::mutex m_mtxIcon;
 
 

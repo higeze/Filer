@@ -206,19 +206,24 @@ tstring Size2String(ULONGLONG size)
 
 CShellFile::CShellFile(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl)
 	:m_pParentShellFolder(pParentShellFolder),m_absoluteIdl(parentIdl + childIdl), m_parentIdl(parentIdl), m_childIdl(childIdl)
-{}
+{
+	if (!m_absoluteIdl) {
+		::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, m_absoluteIdl.ptrptr());
+	}
+
+}
 
 CShellFile::~CShellFile()
 {
 	try {
 		if(m_pIconThread && m_pIconThread->joinable()) {
-			std::wcout << L"CShellFile::~CShellFile " + GetFileNameWithoutExt() + L" Icon thread canceled" << std::endl;
-			m_iconPromise.set_value();
+			BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile " + GetFileNameWithoutExt() + L" Icon thread canceled";
+			//m_iconPromise.set_value();
 			m_pIconThread->join();
 		}
 		SignalFileIconChanged.disconnect_all_slots();
 	} catch (...) {
-		std::wcout << L"CShellFile::~CShellFile Exception" << std::endl;
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile Exception";
 		if (m_pIconThread) m_pIconThread->detach();
 	}
 }
@@ -405,7 +410,7 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 			if (!m_pIconThread) {
 				//std::weak_ptr<CShellFile> wpFile(shared_from_this());
 
-				m_iconFuture = m_iconPromise.get_future();
+				//m_iconFuture = m_iconPromise.get_future();
 				m_pIconThread.reset(new std::thread([this]()->void {
 					//if (auto sp = wpFile.lock()) {
 						SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetIcon(this), FileIconStatus::Available));
@@ -467,13 +472,13 @@ void CShellFile::UpdateWIN32_FIND_DATA()
 void CShellFile::ResetIcon()
 {
 	if (m_pIconThread && m_pIconThread->joinable()) {
-		std::wcout << L"CShellFile::~CShellFile Icon thread canceled" << std::endl;
-		m_iconPromise.set_value();
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile Icon thread canceled";
+		//m_iconPromise.set_value();
 		m_pIconThread->join();
 	}
 	m_pIconThread.reset();
-	m_iconPromise = std::promise<void>();
-	m_iconFuture = std::future<void>();
+	//m_iconPromise = std::promise<void>();
+	//m_iconFuture = std::future<void>();
 	SetLockIcon(std::make_pair(std::shared_ptr<CIcon>(nullptr), FileIconStatus::None));
 }
 
