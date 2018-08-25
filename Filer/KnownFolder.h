@@ -4,7 +4,7 @@
 class CKnownDriveBaseFolder:public CShellFolder
 {
 public:
-	CKnownDriveBaseFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder);
+	CKnownDriveBaseFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CKnownDriveBaseFolder() {}
 	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon() override;
 	virtual std::wstring GetFileNameWithoutExt() override;
@@ -16,7 +16,7 @@ class CKnownFolder:public CKnownDriveBaseFolder
 private:
 	CComPtr<IKnownFolder> m_pKnownFolder;
 public:
-	CKnownFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder, CComPtr<IKnownFolder>& pKnownFolder);
+	CKnownFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IKnownFolder>& pKnownFolder, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CKnownFolder(){}
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize() override;
 	virtual std::wstring GetExt() override;
@@ -48,7 +48,7 @@ public:
 class CDriveFolder :public CKnownDriveBaseFolder
 {
 public:
-	CDriveFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder);
+	CDriveFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CDriveFolder() {}
 	virtual std::wstring GetExt() override;
 };

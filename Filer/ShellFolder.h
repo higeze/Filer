@@ -14,7 +14,7 @@ private:
 
 public:
 //	CShellFolder();
-	CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder);
+	CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CShellFolder();
 
 	//	CShellFolder(const std::wstring& path);
@@ -27,7 +27,7 @@ public:
 	virtual std::wstring GetFileName()override;
 	virtual std::wstring GetExt()override;
 
-	CComPtr<IShellFolder> GetShellFolderPtr()const { return m_pShellFolder; }
+	CComPtr<IShellFolder> GetShellFolderPtr();
 	std::shared_ptr<CShellFolder> GetParent();
 	std::shared_ptr<CShellFolder> Clone()const;
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize()override;

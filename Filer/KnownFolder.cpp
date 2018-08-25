@@ -57,8 +57,8 @@ std::wstring CKnownDriveBaseFolder::GetFileName()
 
 
 
-CKnownFolder::CKnownFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder, CComPtr<IKnownFolder>& pKnownFolder)
-	:CKnownDriveBaseFolder(pParentShellFolder, parentIdl, childIdl,pShellFolder), m_pKnownFolder(pKnownFolder){}
+CKnownFolder::CKnownFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IKnownFolder>& pKnownFolder, CComPtr<IShellFolder> pShellFolder)
+	:CKnownDriveBaseFolder(pParentShellFolder, parentIdl, childIdl, pShellFolder), m_pKnownFolder(pKnownFolder){}
 
 KF_CATEGORY CKnownFolder::GetCategory()
 {
@@ -132,7 +132,7 @@ CKnownFolderManager::CKnownFolderManager()
 				CIDL desktopIDL;
 				::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, desktopIDL.ptrptr());
 
-				m_knownFolders.push_back(std::make_shared<CKnownFolder>(pDesktopFolder, CIDL(), desktopIDL, pDesktopFolder, pFolder));
+				m_knownFolders.push_back(std::make_shared<CKnownFolder>(pDesktopFolder, CIDL(), desktopIDL, pFolder, pDesktopFolder));
 			} else if (idl) {
 				auto parentIdl = idl.CloneParentIDL();
 				auto childIdl = idl.CloneLastID();
@@ -146,7 +146,7 @@ CKnownFolderManager::CKnownFolderManager()
 					((parentIdl && SUCCEEDED(pDesktopFolder->BindToObject(parentIdl.ptr(), 0, IID_IShellFolder, (void**)&pParentShellFolder))) ||
 					(!parentIdl && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder)))))
 				{
-					m_knownFolders.push_back(std::make_shared<CKnownFolder>(pParentShellFolder,parentIdl, childIdl, pShellFolder, pFolder));
+					m_knownFolders.push_back(std::make_shared<CKnownFolder>(pParentShellFolder,parentIdl, childIdl, pFolder, pShellFolder));
 				} else {
 					BOOST_LOG_TRIVIAL(trace) <<L"nonenum/"<<kfid.Data1 << kfid.Data2;
 				}
