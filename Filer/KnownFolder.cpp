@@ -14,12 +14,15 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CKnownDriveBaseFolder::GetIcon
 	{
 		SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetDefaultIcon(), FileIconStatus::Loading));
 		if (!m_pIconThread) {
-			//m_iconFuture = m_iconPromise.get_future();
 			m_pIconThread.reset(new std::thread([this]()->void {
-				SHFILEINFO sfi = { 0 };
-				::SHGetFileInfo((LPCTSTR)GetAbsoluteIdl().ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-				SetLockIcon(std::make_pair(std::make_shared<CIcon>(sfi.hIcon), FileIconStatus::Available));
-				SignalFileIconChanged(this);
+				try {
+					SHFILEINFO sfi = { 0 };
+					::SHGetFileInfo((LPCTSTR)GetAbsoluteIdl().ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+					SetLockIcon(std::make_pair(std::make_shared<CIcon>(sfi.hIcon), FileIconStatus::Available));
+					SignalFileIconChanged(this);
+				} catch (...) {
+					BOOST_LOG_TRIVIAL(error) << L"CKnownDriveBaseFolder::GetIcon " + GetFileNameWithoutExt() + L" Icon thread exception";
+				}
 			}));
 		}
 	}
@@ -122,8 +125,8 @@ CKnownFolderManager::CKnownFolderManager()
 			pFolder->GetIDList(KF_FLAG_DEFAULT, idl.ptrptr());
 			KNOWNFOLDERID kfid;
 			pFolder->GetId(&kfid);
-			LPWSTR pPath;
-			pFolder->GetPath(KF_FLAG_DEFAULT, &pPath);
+			//LPWSTR pPath;
+			//pFolder->GetPath(KF_FLAG_DEFAULT, &pPath);
 			KNOWNFOLDERID id;
 			pFolder->GetId(&id);
 			if (id == FOLDERID_Desktop) {
@@ -143,26 +146,20 @@ CKnownFolderManager::CKnownFolderManager()
 
 				if (SUCCEEDED(::SHGetDesktopFolder(&pDesktopFolder)) &&
 					SUCCEEDED(pDesktopFolder->BindToObject(idl.ptr(), 0, IID_IShellFolder, (void**)&pShellFolder)) &&
-					((parentIdl && SUCCEEDED(pDesktopFolder->BindToObject(parentIdl.ptr(), 0, IID_IShellFolder, (void**)&pParentShellFolder))) ||
-					(!parentIdl && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder)))))
+					pShellFolder &&
+					((parentIdl && parentIdl.m_pIDL->mkid.cb && SUCCEEDED(pDesktopFolder->BindToObject(parentIdl.ptr(), 0, IID_IShellFolder, (void**)&pParentShellFolder))) ||
+					((!parentIdl || !parentIdl.m_pIDL->mkid.cb) && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder)))) &&
+					pParentShellFolder)
 				{
 					m_knownFolders.push_back(std::make_shared<CKnownFolder>(pParentShellFolder,parentIdl, childIdl, pFolder, pShellFolder));
 				} else {
-					BOOST_LOG_TRIVIAL(trace) <<L"nonenum/"<<kfid.Data1 << kfid.Data2;
+					BOOST_LOG_TRIVIAL(trace) << L"CKnownFolder::CKnownFolder Non enumerable "
+						<< (boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str();
 				}
 			} else {
-				BOOST_LOG_TRIVIAL(trace) <<L"idlnull/" << kfid.Data1 << kfid.Data2;
+				BOOST_LOG_TRIVIAL(trace) <<L"CKnownFolder::CKnownFolder IDL is null "
+					<< (boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str();
 			}
-			//::ILFree(pidl);
-			//This way couldn't get desktop, computer, etc path as CLSID
-			//LPWSTR pPath;
-			//pFolder->GetPath(NULL, &pPath);
-			//if (pPath) {
-			//	m_knownIconMap.emplace(std::make_pair(std::wstring(pPath), std::shared_ptr<CIcon>(nullptr)));
-			//} else {
-
-			//}
-			//::CoTaskMemFree(pPath);
 		}
 	}
 
@@ -203,77 +200,3 @@ std::shared_ptr<CKnownFolder> CKnownFolderManager::GetKnownFolderById(const KNOW
 		return *iter;
 	}
 }
-
-
-
-
-CDriveFolder::CDriveFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder)
-	:CKnownDriveBaseFolder(pParentShellFolder, parentIdl, childIdl, pShellFolder){}
-
-std::wstring CDriveFolder::GetExt()
-{
-	if (m_wstrExt.empty()) {
-		m_wstrExt = L"drive";
-	}
-	return m_wstrExt;
-}
-
-CDriveManager::CDriveManager()
-{
-	std::array<wchar_t, 64> logicalDrives;
-
-	if (::GetLogicalDriveStrings(64, logicalDrives.data())) {
-		auto desktop(CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop));
-		wchar_t* p;
-		for (p = logicalDrives.data(); *p != L'\0'; p += lstrlen(p) + 1) {
-			CIDL relativeIdl;
-
-			ULONG         chEaten;
-			ULONG         dwAttributes;
-			HRESULT hr = desktop->GetShellFolderPtr()->ParseDisplayName(
-				NULL,
-				NULL,
-				const_cast<LPWSTR>(p),
-				&chEaten,
-				relativeIdl.ptrptr(),
-				&dwAttributes);
-			if (FAILED(hr)) { throw std::exception("CDriveFolderManager::CDriveFolderManager"); }
-			
-			auto idl = desktop->GetAbsoluteIdl() + relativeIdl;
-			auto parentIdl = idl.CloneParentIDL();
-			auto childIdl = idl.CloneLastID();
-
-			CComPtr<IShellFolder> pShellFolder;
-			CComPtr<IShellFolder> pParentShellFolder;
-
-			if (SUCCEEDED(desktop->GetShellFolderPtr()->BindToObject(idl.ptr(), 0, IID_IShellFolder, (void**)&pShellFolder)) &&
-				((parentIdl && SUCCEEDED(desktop->GetShellFolderPtr()->BindToObject(parentIdl.ptr(), 0, IID_IShellFolder, (void**)&pParentShellFolder))) ||
-				(!parentIdl && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder))))) {
-				m_driveFolders.push_back(std::make_shared<CDriveFolder>(pParentShellFolder, parentIdl, childIdl, pShellFolder));
-			} else {
-				BOOST_LOG_TRIVIAL(trace) << L"nonenum";
-			}
-		}
-	}
-}
-
-std::shared_ptr<CDriveFolder> CDriveManager::GetDriveFolderByIDL(CIDL& idl)
-{
-	auto iter = std::find_if(m_driveFolders.begin(), m_driveFolders.end(), [idl](const auto& folder)->bool {return folder->GetAbsoluteIdl() == idl; });
-	if (iter == m_driveFolders.end()) {
-		return nullptr;
-	} else {
-		return *iter;
-	}
-}
-
-std::shared_ptr<CDriveFolder> CDriveManager::GetDriveFolderByPath(const std::wstring& path)
-{
-	auto iter = std::find_if(m_driveFolders.begin(), m_driveFolders.end(), [path](const auto& folder)->bool {return boost::iequals(folder->GetPath(), path); });
-	if (iter == m_driveFolders.end()) {
-		return nullptr;
-	} else {
-		return *iter;
-	}
-}
-

@@ -521,6 +521,12 @@
     <ClInclude Include="KnownFolder.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="DriveFolder.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="ShellZipFolder.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -800,6 +806,12 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="KnownFolder.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="DriveFolder.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="ShellZipFolder.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>

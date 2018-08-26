@@ -302,6 +302,8 @@
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
+    <ClInclude Include="ShellZipFolder.h" />
+    <ClInclude Include="DriveFolder.h" />
     <ClInclude Include="FileIconCache.h" />
     <ClInclude Include="FilerTabGridView.h" />
     <ClInclude Include="DirectoryWatcher.h" />
@@ -404,7 +406,9 @@
     <ClCompile Include="..\HiLib\ThreadPool.h" />
     <ClCompile Include="..\HiLib\Tracker.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
+    <ClCompile Include="ShellZipFolder.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
+    <ClCompile Include="DriveFolder.cpp" />
     <ClCompile Include="DropSource.cpp" />
     <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="Favorite.cpp" />

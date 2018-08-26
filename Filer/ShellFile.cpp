@@ -4,112 +4,6 @@
 #include "MyCom.h"
 #include "FileIconCache.h"
 #include <thread>
-#include <regex>
-
-//CFileIconCache CShellFile::s_iconCache;
-
-
-
-
-
-//
-//bool IsShExFolder(CComPtr<IShellFolder>& pParentFolder, CIDLPtr& pidlChild) 
-//{
-//	CComPtr<IShellFolder> pFolder;
-//	if (SUCCEEDED(pParentFolder->BindToObject(pidlChild, 0, IID_IShellFolder, (void**)&pFolder))) {
-//		CComPtr<IEnumIDList> enumIdl;
-//		return SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl));
-//	}
-//	return false;
-//}
-//
-//bool IsShExFolder(CIDLPtr& pidlAbsolute)
-//{
-//	//Try BindToObject and EnumObjects to identify folder
-//	CComPtr<IShellFolder> pDesktop;
-//	::SHGetDesktopFolder(&pDesktop);
-//	CComPtr<IShellFolder> pFolder;
-//	HRESULT hr = S_OK;
-//
-//	if (pidlAbsolute.m_pIDL->mkid.cb == 0) {
-//		pFolder = pDesktop;
-//	} else {
-//		hr = pDesktop->BindToObject(pidlAbsolute, 0, IID_IShellFolder, (void**)&pFolder);
-//	}
-//
-//	if (SUCCEEDED(hr)) {
-//		CComPtr<IEnumIDList> enumIdl;
-//		hr = pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl);
-//		return SUCCEEDED(hr);
-//	} else {
-//		return false;
-//	}
-//}
-
-//bool GetFileSize(std::shared_ptr<CShellFile>& pFile, ULARGE_INTEGER& size)
-//{
-//	WIN32_FIND_DATA wfd = { 0 }; 
-//	if (!FAILED(::SHGetDataFromIDList(m_parentFolder->GetShellFolderPtr(), m_childIdl.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
-//		size.LowPart = wfd.nFileSizeLow;
-//		size.HighPart = wfd.nFileSizeHigh;
-//		return true;
-//	} else {
-//		return false;
-//	}
-//}
-
-//bool GetFolderSize(std::shared_ptr<CShellFolder>& pFolder, ULARGE_INTEGER& size, std::shared_future<void> future /*bool& cancel*//* std::function<void()> checkExit*/)
-//{
-//	try {
-//		//Enumerate child IDL
-//		size.QuadPart = 0;
-//		ULARGE_INTEGER childSize = { 0 };
-//
-//		CComPtr<IEnumIDList> enumIdl;
-//		if (SUCCEEDED(pFolder->GetShellFolderPtr()->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
-//			CIDL nextIdl;
-//			ULONG ulRet(0);
-//			while (1) {
-//				if (future.wait_for(std::chrono::milliseconds(1)) != std::future_status::timeout) {
-//					std::wcout << "::GetFolderSize canceled" << std::endl;
-//					return false;
-//				}
-//				::Sleep(1000);
-//			}
-//
-//			//while (SUCCEEDED(enumIdl->Next(1, &nextIdl, &ulRet))) {
-//			//	if (future.wait_for(std::chrono::milliseconds(1)) != std::future_status::timeout) {
-//			//		std::wcout << "::GetFolderSize canceled" << std::endl;
-//			//		return false;
-//			//	}
-//			//	if (!nextIdl) { break; }
-//			//	auto spFile(std::make_shared<CShellFile>(pFolder->GetShellFolderPtr(), ::ILCombine(pFolder->GetAbsolutePidl(), nextIdl)));
-//			//	if (spFile->IsShellFolder()) {
-//			//		if (auto spFolder = spFile->CastShellFolder()) {
-//			//			if (GetFolderSize(spFolder, childSize, future)) {
-//			//				size.QuadPart += childSize.QuadPart;
-//			//			} else {
-//			//				return false;
-//			//			}
-//			//		}
-//			//	} else {
-//			//		if (GetFileSize(pFolder->GetShellFolderPtr(), spFile->GetAbsolutePidl().GetLastIDLPtr(), childSize)) {
-//			//			size.QuadPart += childSize.QuadPart;
-//			//		} else {
-//			//			return false;
-//			//		}
-//			//	}
-//			//	nextIdl.Clear();
-//			//}
-//		}
-//	} catch (...) {
-//		std::wcout << "::GetFolderSize Exception" << std::endl;
-//		return false;
-//	}
-//	return true;
-//
-//}
-
 
 bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<void()> checkExit)
 {
@@ -125,10 +19,6 @@ bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<void()> c
 
 		do {
 			checkExit();
-			//if (cancel()) {
-			//	std::wcout << L"GetDirSize canceled" << std::endl;
-			//	return false;
-			//}
 
 			if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 				//Ignore "." ".."
@@ -218,7 +108,6 @@ CShellFile::~CShellFile()
 	try {
 		if(m_pIconThread && m_pIconThread->joinable()) {
 			BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile " + GetFileNameWithoutExt() + L" Icon thread canceled";
-			//m_iconPromise.set_value();
 			m_pIconThread->join();
 		}
 		SignalFileIconChanged.disconnect_all_slots();
@@ -271,15 +160,6 @@ std::wstring CShellFile::GetExt()
 {
 	if (m_wstrExt.empty()) {
 		m_wstrExt = ::PathFindExtension(GetFileName().c_str());
-
-		//auto name(GetFileName());
-		//auto nameWoExt(GetFileNameWithoutExt());
-		//if (name.size() >= nameWoExt.size() &&
-		//	std::equal(std::begin(nameWoExt), std::end(nameWoExt), std::begin(name))) {
-		//	std::copy(std::next(name.begin(), nameWoExt.size()), name.end(), std::back_inserter(m_wstrExt));
-		//} else {
-		//	m_wstrExt = ::PathFindExtension(GetPath().c_str());
-		//}
 	}
 	return m_wstrExt;
 }
@@ -408,14 +288,13 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 		} else {
 			SetLockIcon(std::make_pair(GetDefaultIcon(), FileIconStatus::Loading));
 			if (!m_pIconThread) {
-				//std::weak_ptr<CShellFile> wpFile(shared_from_this());
-
-				//m_iconFuture = m_iconPromise.get_future();
 				m_pIconThread.reset(new std::thread([this]()->void {
-					//if (auto sp = wpFile.lock()) {
+					try {
 						SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetIcon(this), FileIconStatus::Available));
 						SignalFileIconChanged(this);
-					//}
+					} catch (...) {
+						BOOST_LOG_TRIVIAL(error) << L"CShellFile::GetIcon " + GetFileNameWithoutExt() + L" Icon thread exception";
+					}
 				}));
 			}
 		}
@@ -473,12 +352,9 @@ void CShellFile::ResetIcon()
 {
 	if (m_pIconThread && m_pIconThread->joinable()) {
 		BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile Icon thread canceled";
-		//m_iconPromise.set_value();
 		m_pIconThread->join();
 	}
 	m_pIconThread.reset();
-	//m_iconPromise = std::promise<void>();
-	//m_iconFuture = std::future<void>();
 	SetLockIcon(std::make_pair(std::shared_ptr<CIcon>(nullptr), FileIconStatus::None));
 }
 

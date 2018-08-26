@@ -233,7 +233,7 @@ void CFilerGridView::Added(const std::wstring& fileName)
 	ULONG dwAttributes;
 	HRESULT hr = m_spFolder->GetShellFolderPtr()->ParseDisplayName(m_hWnd, NULL, const_cast<LPWSTR>(fileName.c_str()), &chEaten, idl.ptrptr(), &dwAttributes);
 	if (SUCCEEDED(hr) && idl) {
-		auto spFile(std::make_shared<CShellFile>(m_spFolder->GetShellFolderPtr(), m_spFolder->GetAbsoluteIdl(), idl));
+		auto spFile(m_spFolder->CreateShExFileFolder(idl));
 		auto spRow = std::make_shared<CFileRow>(this, spFile);
 		InsertRow(CRow::kMaxIndex, spRow);
 
@@ -330,9 +330,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 			->ParseDisplayName(m_hWnd, NULL, (LPWSTR)newName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
 
 		if (SUCCEEDED(hRes) && newIdl) {
-			p->SetFilePointer(std::make_shared<CShellFile>(
-				p->GetFilePointer()->GetParentShellFolderPtr(), 
-				p->GetFilePointer()->GetAbsoluteIdl().CloneParentIDL(), newIdl));
+			p->SetFilePointer(m_spFolder->CreateShExFileFolder(newIdl));
 			p->SetMeasureValid(false);
 			PostUpdate(Updates::ColumnVisible);
 			PostUpdate(Updates::RowVisible);
