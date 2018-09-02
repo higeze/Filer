@@ -28,7 +28,8 @@ public:
 class CKnownFolderManager
 {
 private:
-	std::vector<std::shared_ptr<CKnownFolder>> m_knownFolders;
+	std::unordered_map<std::wstring, std::shared_ptr<CKnownFolder>> m_knownFolderMap;
+	std::shared_ptr<CKnownFolder> m_desktopFolder;
 public:
 	static CKnownFolderManager* GetInstance()
 	{
@@ -38,9 +39,10 @@ public:
 
 public:
 	CKnownFolderManager();
-	bool IsKnownFolder(CIDL& idl);
-	std::vector<std::shared_ptr<CKnownFolder>> GetKnownFolders()const { return m_knownFolders; }
-	std::shared_ptr<CKnownFolder> GetKnownFolderByIDL(CIDL& idl);
+	//bool IsKnownFolder(CIDL& idl);
+	//std::shared_ptr<CKnownFolder> GetKnownFolderByIDL(CIDL& idl);
 	std::shared_ptr<CKnownFolder> GetKnownFolderByPath(const std::wstring& path);
 	std::shared_ptr<CKnownFolder> GetKnownFolderById(const KNOWNFOLDERID& id);
+	std::shared_ptr<CKnownFolder> GetDesktopFolder();
+
 };

@@ -219,7 +219,7 @@ void CShellFolder::ResetSize()
 
 std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
 {
-
+	boost::timer tim;
 //	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"CreateShExFileFolder")
 
 	CComPtr<IShellFolder> pFolder;
@@ -230,12 +230,12 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
 	std::wstring ext = ::PathFindExtension(path.c_str());
 	if (!childIdl) {
 		return CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop);
-	} else if (auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderByIDL(m_absoluteIdl + childIdl)) {
-		return spKnownFolder;
+	//} else if (auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderByIDL(m_absoluteIdl + childIdl)) {
+	//	return spKnownFolder;
 	} else if (auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderByPath(path)) {
 		return spKnownFolder;
-	} else if (auto spDriveFolder = CDriveManager::GetInstance()->GetDriveFolderByIDL(m_absoluteIdl + childIdl)) {
-		return spDriveFolder;
+	//} else if (auto spDriveFolder = CDriveManager::GetInstance()->GetDriveFolderByIDL(m_absoluteIdl + childIdl)) {
+	//	return spDriveFolder;
 	} else if (auto spDriveFolder = CDriveManager::GetInstance()->GetDriveFolderByPath(path)) {
 		return spDriveFolder;
 	} else if (boost::iequals(ext, ".zip")) {
@@ -245,6 +245,10 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
 		return std::make_shared<CShellFolder>(GetShellFolderPtr(), m_absoluteIdl, childIdl, pFolder);
 	} else {
 		return std::make_shared<CShellFile>(GetShellFolderPtr(), m_absoluteIdl, childIdl);
+	}
+
+	if (tim.elapsed() > 10.0) {
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::CreateShExFileFolder "<< path;
 	}
 }
 

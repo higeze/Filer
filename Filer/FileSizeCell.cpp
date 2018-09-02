@@ -68,6 +68,28 @@ std::shared_ptr<CShellFile> CFileSizeCell::GetShellFile()
 	}
 }
 
+CSize CFileSizeCell::MeasureContentSize(CDC* pDC)
+{
+	//Calc Content Rect
+	HFONT hFont = (HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());
+	CRect rcContent;
+	std::basic_string<TCHAR> str;
+	auto spFile = GetShellFile();
+	auto size = spFile->ReadSize();
+	switch (size.second) {
+	case FileSizeStatus::Available:
+		str = Size2String(size.first.QuadPart);
+	default:
+		str =  L"00,000,000";
+	}
+	if (str.empty()) { str = _T("a"); }
+	pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()), str.size(), rcContent,
+		DT_CALCRECT | GetFormat()&~DT_WORDBREAK, NULL);
+	pDC->SelectFont(hFont);
+	return rcContent.Size();
+}
+
+
 CCell::string_type CFileSizeCell::GetString()
 {
 	try {

@@ -108,6 +108,7 @@ public:
 	//Size
 	bool GetFileSize(ULARGE_INTEGER& size/*, std::shared_future<void> future*/);
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize();
+	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> ReadSize();
 
 	//Icon
 	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon();

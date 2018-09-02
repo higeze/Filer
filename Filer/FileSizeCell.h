@@ -14,6 +14,7 @@ public:
 	virtual ~CFileSizeCell(void);
 
 	virtual bool IsComparable()const override{return false;}
+	virtual CSize MeasureContentSize(CDC* pDC) override;
 	virtual string_type GetString() override;
 	virtual string_type GetSortString() override;
 	virtual UINT GetFormat()const override{ return DT_RIGHT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL; }

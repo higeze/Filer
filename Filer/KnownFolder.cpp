@@ -16,6 +16,7 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CKnownDriveBaseFolder::GetIcon
 		if (!m_pIconThread) {
 			m_pIconThread.reset(new std::thread([this]()->void {
 				try {
+					CCoInitializer coinit(COINIT_APARTMENTTHREADED);
 					SHFILEINFO sfi = { 0 };
 					::SHGetFileInfo((LPCTSTR)GetAbsoluteIdl().ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
 					SetLockIcon(std::make_pair(std::make_shared<CIcon>(sfi.hIcon), FileIconStatus::Available));
@@ -134,8 +135,8 @@ CKnownFolderManager::CKnownFolderManager()
 				::SHGetDesktopFolder(&pDesktopFolder);
 				CIDL desktopIDL;
 				::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, desktopIDL.ptrptr());
-
-				m_knownFolders.push_back(std::make_shared<CKnownFolder>(pDesktopFolder, CIDL(), desktopIDL, pFolder, pDesktopFolder));
+				auto knownFolder = std::make_shared<CKnownFolder>(pDesktopFolder, CIDL(), desktopIDL, pFolder, pDesktopFolder);
+				m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
 			} else if (idl) {
 				auto parentIdl = idl.CloneParentIDL();
 				auto childIdl = idl.CloneLastID();
@@ -151,7 +152,8 @@ CKnownFolderManager::CKnownFolderManager()
 					((!parentIdl || !parentIdl.m_pIDL->mkid.cb) && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder)))) &&
 					pParentShellFolder)
 				{
-					m_knownFolders.push_back(std::make_shared<CKnownFolder>(pParentShellFolder,parentIdl, childIdl, pFolder, pShellFolder));
+					auto knownFolder = std::make_shared<CKnownFolder>(pParentShellFolder, parentIdl, childIdl, pFolder, pShellFolder);
+					m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
 				} else {
 					BOOST_LOG_TRIVIAL(trace) << L"CKnownFolder::CKnownFolder Non enumerable "
 						<< (boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str();
@@ -165,38 +167,46 @@ CKnownFolderManager::CKnownFolderManager()
 
 }
 
-bool CKnownFolderManager::IsKnownFolder(CIDL& idl)
-{
-	return std::find_if(m_knownFolders.begin(), m_knownFolders.end(), [idl](const auto& folder)->bool {return folder->GetAbsoluteIdl() == idl; }) != m_knownFolders.end();
-}
-
-std::shared_ptr<CKnownFolder> CKnownFolderManager::GetKnownFolderByIDL(CIDL& idl)
-{
-	auto iter = std::find_if(m_knownFolders.begin(), m_knownFolders.end(), [idl](const auto& folder)->bool {return folder->GetAbsoluteIdl() == idl; });
-	if (iter == m_knownFolders.end()) {
-		return nullptr;
-	}
-	else {
-		return *iter;
-	}
-}
-
+//bool CKnownFolderManager::IsKnownFolder(CIDL& idl)
+//{
+//	return std::find_if(m_knownFolderMap.begin(), m_knownFolderMap.end(), [idl](const auto& folder)->bool {return folder->GetAbsoluteIdl() == idl; }) != m_knownFolderMap.end();
+//}
+//
+//std::shared_ptr<CKnownFolder> CKnownFolderManager::GetKnownFolderByIDL(CIDL& idl)
+//{
+//	auto iter = std::find_if(m_knownFolderMap.begin(), m_knownFolderMap.end(), [idl](const auto& folder)->bool {return folder->GetAbsoluteIdl() == idl; });
+//	if (iter == m_knownFolderMap.end()) {
+//		return nullptr;
+//	}
+//	else {
+//		return *iter;
+//	}
+//}
+//
 std::shared_ptr<CKnownFolder> CKnownFolderManager::GetKnownFolderByPath(const std::wstring& path)
 {
-	auto iter = std::find_if(m_knownFolders.begin(), m_knownFolders.end(), [path](const auto& folder)->bool {return boost::iequals(folder->GetPath(), path); });
-	if (iter == m_knownFolders.end()) {
+	auto iter = m_knownFolderMap.find(path);
+	if (iter == m_knownFolderMap.end()) {
 		return nullptr;
 	} else {
-		return *iter;
+		return iter->second;
 	}
 }
 
 std::shared_ptr<CKnownFolder> CKnownFolderManager::GetKnownFolderById(const KNOWNFOLDERID& id)
 {
-	auto iter = std::find_if(m_knownFolders.begin(), m_knownFolders.end(), [id](const auto& folder)->bool {return folder->GetId() == id; });
-	if (iter == m_knownFolders.end()) {
+	auto iter = std::find_if(m_knownFolderMap.begin(), m_knownFolderMap.end(), [id](const auto& pair)->bool {return pair.second->GetId() == id; });
+	if (iter == m_knownFolderMap.end()) {
 		return nullptr;
 	} else {
-		return *iter;
+		return iter->second;
 	}
+}
+
+std::shared_ptr<CKnownFolder> CKnownFolderManager::GetDesktopFolder()
+{
+	if (!m_desktopFolder) {
+		m_desktopFolder = GetKnownFolderById(FOLDERID_Desktop);
+	}
+	return m_desktopFolder;
 }

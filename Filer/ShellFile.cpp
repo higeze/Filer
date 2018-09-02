@@ -257,6 +257,11 @@ bool CShellFile::GetFileSize(ULARGE_INTEGER& size/*, std::shared_future<void> fu
 	}
 }
 
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::ReadSize()
+{
+	return m_size;
+}
+
 
 std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize()
 {
@@ -290,6 +295,10 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 			if (!m_pIconThread) {
 				m_pIconThread.reset(new std::thread([this]()->void {
 					try {
+						//SHFILEINFO sfi = { 0 };
+						//::SHGetFileInfo((LPCTSTR)GetAbsoluteIdl().ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+						//SetLockIcon(std::make_pair(std::make_shared<CIcon>(sfi.hIcon), FileIconStatus::Available));
+						CCoInitializer coinit(COINIT_APARTMENTTHREADED);
 						SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetIcon(this), FileIconStatus::Available));
 						SignalFileIconChanged(this);
 					} catch (...) {
