@@ -48,17 +48,16 @@ CSize CCell::GetInitSize(CDC* pDC)
 
 CSize CCell::GetFitSize(CDC* pDC)
 {
-	if(m_bFitMeasureValid){
-	}else{
+	if(!m_bFitMeasureValid){
 		m_fitSize = MeasureSize(pDC);
+		m_bFitMeasureValid = true;
 	}
 	return m_fitSize;
 }
 
 CSize CCell::GetActSize(CDC* pDC)
 {
-	if(m_bActMeasureValid){
-	}else{
+	if(!m_bActMeasureValid){
 		auto width = m_pColumn->GetWidth();
 		auto fitSize = GetFitSize(pDC);
 		if(fitSize.cx <= width){

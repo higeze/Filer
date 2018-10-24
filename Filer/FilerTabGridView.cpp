@@ -77,7 +77,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 
 	if (m_vwPath.empty()) {
 		//ShellFolder
-		auto pFolder(CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop));
+		auto pFolder(CKnownFolderManager::GetInstance()->GetDesktopFolder());
 		if (pFolder) {
 			//New id for association
 			unsigned int id = m_uniqueIDFactory.NewID();
@@ -91,7 +91,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 		for (auto path : m_vwPath) {
 			if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFolder::CreateShExFileFolder(path))) {
 				//ShellFolder
-				if (!pFolder->GetShellFolderPtr()) { pFolder = CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop); }
+				if (!pFolder->GetShellFolderPtr()) { pFolder = CKnownFolderManager::GetInstance()->GetDesktopFolder(); }
 
 				//New id for association
 				unsigned int id = m_uniqueIDFactory.NewID();
@@ -240,7 +240,7 @@ LRESULT CFilerTabGridView::OnCommandNewTab(WORD wNotifyCode, WORD wID, HWND hWnd
 	int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
 
 	//CFilerGridView
-	m_viewMap.insert(std::make_pair(id, CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop)));
+	m_viewMap.insert(std::make_pair(id, CKnownFolderManager::GetInstance()->GetDesktopFolder()));
 	BOOL dummy  = TRUE;
 	OnNotifyTabSelChanging(0, NULL, dummy);
 	SetCurSel(newItem);

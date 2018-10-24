@@ -224,7 +224,7 @@ public:
 	virtual void UpdateRowPaintDictionary();
 	virtual void UpdateColumnPaintDictionary();
 
-	virtual void Sort(CColumn* pCol, Sorts sort);
+	virtual void Sort(CColumn* pCol, Sorts sort, bool postUpdate = true);
 
 	virtual void Filter(size_type colDisp,std::function<bool(const cell_type&)> predicate);
 

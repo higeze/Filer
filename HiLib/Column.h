@@ -2,6 +2,7 @@
 #include "Band.h"
 #include "SheetEnums.h"
 #include "MyFriendSerializer.h"
+
 class CCell;
 class CRow;
 struct ColTag;
@@ -30,6 +31,12 @@ public:
 	{
 		CBand::save(ar);
 
+		//if (auto pGrid = dynamic_cast<CGridView>(m_pSheet)) {
+		//	auto cell = CSheet::Cell(m_pGrid->GetNameHeaderRowPtr(), this);
+		//	if (cell) {
+		//		ar("name", cell->GetString());
+		//	}
+		//}
 		ar("sort", m_sort);
 		ar("left", m_left);
 		ar("width", m_width);

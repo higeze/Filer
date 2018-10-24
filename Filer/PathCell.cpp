@@ -30,8 +30,7 @@ CSize CPathCell::GetFitSize(CDC* pDC)
 
 CSize CPathCell::GetActSize(CDC* pDC)
 {
-	if(m_bActMeasureValid){
-	}else{
+	if(!m_bActMeasureValid){
 		auto width = m_pSheet->LastPointer<ColTag, VisTag>()->GetRight() - m_pSheet->ZeroPointer<ColTag, VisTag>()->GetLeft();
 		auto fitSize = MeasureSize(pDC);//Call Non-zero width GetFitSize
 		if(fitSize.cx <= width){

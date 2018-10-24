@@ -18,6 +18,7 @@
 #include "Celler.h"
 #include "SheetStateMachine.h"
 //#include <list>
+#include <iterator>
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -247,35 +248,38 @@ void CSheet::SubmitUpdate()
 		case Updates::RowVisible:
 			{
 				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateRowVisibleDictionary")
-					UpdateRowVisibleDictionary();
+				UpdateRowVisibleDictionary();
 			}
 			break;
 		case Updates::ColumnVisible:
 			{
 				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateColumnVisibleDictionary")
-					UpdateColumnVisibleDictionary();
+				UpdateColumnVisibleDictionary();
 				break;
 			}
 		case Updates::Column:
 			{
 				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateColumn")
-					UpdateColumn();
+				UpdateColumn();
 				break;
 			}
 		case Updates::Row:
 			{
 				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateRow")	
-					UpdateRow();
+				UpdateRow();
 				break;
 			}
 		case Updates::Scrolls:
 			{
 				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateScrolls")
-					UpdateScrolls();
+				UpdateScrolls();
 				break;
 			}
 		case Updates::Invalidate:
-			Invalidate();
+		{
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateScrolls")
+				Invalidate();
+		}
 		default:
 			break;
 		}
@@ -285,22 +289,33 @@ void CSheet::SubmitUpdate()
 
 void CSheet::PostUpdate(Updates type)
 {
-	if (type == Updates::All) {
+	switch (type) {
+	case Updates::All:
 		m_setUpdate.insert(Updates::RowVisible);
 		m_setUpdate.insert(Updates::Row);
 		m_setUpdate.insert(Updates::ColumnVisible);
 		m_setUpdate.insert(Updates::Column);
 		m_setUpdate.insert(Updates::Scrolls);
 		m_setUpdate.insert(Updates::Invalidate);
-	}else if (type == Updates::EnsureVisibleFocusedCell) {
+		break;
+	case Updates::EnsureVisibleFocusedCell:
 		m_setUpdate.insert(Updates::RowVisible);
 		m_setUpdate.insert(Updates::Row);
 		m_setUpdate.insert(Updates::ColumnVisible);
 		m_setUpdate.insert(Updates::Column);
+		m_setUpdate.insert(Updates::Scrolls);
 		m_setUpdate.insert(type);
-	}else{
+		m_setUpdate.insert(Updates::Invalidate);
+		break;
+	case Updates::Sort:
+		PostUpdate(Updates::RowVisible);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Invalidate);
+	default:
 		m_setUpdate.insert(type);
+		break;
 	}
+
 }
 
 CSheet::string_type CSheet::GetSheetString()const
@@ -366,7 +381,7 @@ void CSheet::ResetColumnSort()
 	}
 }
 
-void CSheet::Sort(CColumn* pCol, Sorts sort)
+void CSheet::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
 {
 	auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
 	std::vector<std::pair<RowData, std::wstring>> vRowMinusData,vRowPlusData;
@@ -377,38 +392,18 @@ void CSheet::Sort(CColumn* pCol, Sorts sort)
 	for (auto iter = rowDictionary.find(0); iter != rowDictionary.end(); ++iter) {
 		vRowPlusData.emplace_back(*iter, CSheet::Cell(iter->DataPtr.get(), pCol)->GetSortString());
 	}
-	//std::copy(rowDictionary.begin(),rowDictionary.find(0),std::back_inserter(vRowMinusData));
-	//std::copy(rowDictionary.find(0),rowDictionary.end(),std::back_inserter(vRowPlusData));
-	//::OutputDebugStringA("vRowPlusData\r\n");
-	//boost::range::for_each(vRowPlusData, [](const auto& data) {
-	//	::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.first.Index %data.first.DataPtr.get()).str().c_str());
-	//});
+
 	//Sort
 	switch(sort){
 	case Sorts::Down:
 		std::stable_sort(vRowPlusData.begin(),vRowPlusData.end(),[pCol](const auto& lhs,const auto& rhs)->bool{
-			//::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.first.DataPtr.get()).str().c_str());
 			return _tcsicmp(lhs.second.c_str(), rhs.second.c_str())>0;
-			//return pCol->Cell(lhs.DataPtr.get())->operator<(*(pCol->Cell(rhs.DataPtr.get())));
 		});
-		//std::stable_sort(vRowPlusData.begin(),vRowPlusData.end(),[pCol](const RowData& lhs,const RowData& rhs)->bool{
-		//	::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.DataPtr.get()).str().c_str());
-		//	return _tcsicmp(CSheet::Cell(lhs.DataPtr.get(), pCol)->GetSortString().c_str(), CSheet::Cell(rhs.DataPtr.get(), pCol)->GetSortString().c_str())>0;
-		//	//return pCol->Cell(lhs.DataPtr.get())->operator<(*(pCol->Cell(rhs.DataPtr.get())));
-		//});
 		break;
 	case Sorts::Up:
 		std::stable_sort(vRowPlusData.begin(), vRowPlusData.end(), [pCol](const auto& lhs, const auto& rhs)->bool {
-			//::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.first.DataPtr.get()).str().c_str());
 			return _tcsicmp(lhs.second.c_str(), rhs.second.c_str())<0;
-			//return pCol->Cell(lhs.DataPtr.get())->operator<(*(pCol->Cell(rhs.DataPtr.get())));
 		});
-		//std::stable_sort(vRowPlusData.begin(),vRowPlusData.end(),[pCol](const RowData& lhs,const RowData& rhs)->bool{
-		//	::OutputDebugStringA((boost::format("Sort/Pointer:%1%\r\n") % rhs.DataPtr.get()).str().c_str());
-		//	return _tcsicmp(CSheet::Cell(lhs.DataPtr.get(), pCol)->GetSortString().c_str(), CSheet::Cell(rhs.DataPtr.get(), pCol)->GetSortString().c_str())<0;
-
-		//	//			return pCol->Cell(lhs.DataPtr.get())->operator>(*(pCol->Cell(rhs.DataPtr.get())));
-		//});
 		break;
 	default:
 		break;
@@ -416,9 +411,7 @@ void CSheet::Sort(CColumn* pCol, Sorts sort)
 
 	//Copy again
 	m_rowAllDictionary.clear();
-//	std::copy(vRowMinusData.begin(),vRowMinusData.end(),std::inserter(m_rowAllDictionary,m_rowAllDictionary.begin()));
 	for (auto begin = vRowMinusData.begin(), iter = vRowMinusData.begin(), end = vRowMinusData.end(); iter != end; ++iter) {
-		//iter->first.Index = std::distance(begin, iter);
 		m_rowAllDictionary.insert(iter->first);
 	}
 
@@ -426,8 +419,11 @@ void CSheet::Sort(CColumn* pCol, Sorts sort)
 		iter->first.Index=std::distance(begin, iter);
 		m_rowAllDictionary.insert(iter->first);
 	}
+
 	//Update
-	Sorted();
+	if (postUpdate) {
+		Sorted();
+	}
 	
 }
 
@@ -537,10 +533,10 @@ CSheet::coordinates_type CSheet::GetColumnInitWidth(CColumn* pColumn)
 	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
 	coordinates_type maxWidth=0;
 	CDC dc(::CreateCompatibleDC(*GetClientDCPtr().get()));	
-	boost::for_each(rowDictionary, [&](const RowData& rowData){
+	for(const auto& rowData : rowDictionary){
 		auto pCell=pColumn->Cell(rowData.DataPtr.get());
 		maxWidth= (std::max)(pCell->GetInitSize(&dc).cx, (LONG)maxWidth);
-	});
+	};
 	return maxWidth;
 }
 
@@ -549,10 +545,10 @@ CSheet::coordinates_type CSheet::GetColumnFitWidth(CColumn* pColumn)
 	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
 	coordinates_type maxWidth=0;
 	CDC dc(::CreateCompatibleDC(*GetClientDCPtr().get()));	
-	boost::for_each(rowDictionary, [&](const RowData& rowData){
+	for(const auto& rowData : rowDictionary){
 		auto pCell=pColumn->Cell(rowData.DataPtr.get());
 		maxWidth= (std::max)(pCell->GetFitSize(&dc).cx, (LONG)maxWidth);
-	});
+	};
 	return maxWidth;
 }
 
@@ -561,10 +557,10 @@ CSheet::coordinates_type CSheet::GetRowHeight(CRow* pRow)
 	auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
 	coordinates_type maxHeight=0;
 	CDC dc(::CreateCompatibleDC(*GetClientDCPtr().get()));	
-	boost::for_each(colDictionary,[&](const ColumnData& colData){
+	for(const auto& colData : colDictionary){
 		auto pCell=colData.DataPtr->Cell(pRow);
 		maxHeight= (std::max)(pCell->GetActSize(&dc).cy, (LONG)maxHeight);
-	});
+	};
 	return maxHeight;
 }
 
@@ -574,12 +570,43 @@ void CSheet::UpdateRow()
 	if(!Visible()){return;}
 
 	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
-	CPoint ptScroll=GetScrollPos();
-	coordinates_type top=m_spCellProperty->GetPenPtr()->GetLeftTopPenWidth();
-	for(auto iter = rowDictionary.begin(),end=rowDictionary.end();iter!=end;++iter){
-		iter->DataPtr->SetTopWithoutSignal(top);
-		top+=iter->DataPtr->GetHeight();
-	}
+	//CPoint ptScroll=GetScrollPos();
+	coordinates_type top = m_spCellProperty->GetPenPtr()->GetLeftTopPenWidth();
+
+	//auto size = rowDictionary.size();
+
+	//std::thread th1([&]()->void{
+	//	for (auto iter = rowDictionary.begin(), end = std::next(rowDictionary.begin(), (int)(size / 2)); iter != end; ++iter) {
+	//		iter->DataPtr->GetHeight();
+	//	}
+	//});
+
+	//std::thread th2([&]()->void {
+	//	for (auto iter = std::next(rowDictionary.begin(), (int)(size / 2)), end = rowDictionary.end(); iter != end; ++iter) {
+	//		iter->DataPtr->GetHeight();
+	//	}
+	//});
+
+	//if(th1.joinable())th1.join();
+	//if(th2.joinable())th2.join();
+
+
+	//if (rowDictionary.size() >= 100) {
+	//	std::thread th1([&]()->void{
+	//		for (auto iter = rowDictionary.begin(), end = std::distance(rowDictionary.end()-std::begin(); iter != end; ++iter) {
+	//			iter->DataPtr->SetTopWithoutSignal(top);
+	//			top += iter->DataPtr->GetHeight();
+	//		}
+	//	});
+
+
+
+	//} else {
+		for (auto iter = rowDictionary.begin(), end = rowDictionary.end(); iter != end; ++iter) {
+			iter->DataPtr->SetTopWithoutSignal(top);
+			top += iter->DataPtr->GetHeight();
+		}
+	//}
 }
 
 void CSheet::UpdateColumn()

@@ -11,6 +11,7 @@
 #include "Row.h"
 #include "Column.h"
 #include "GridView.h"
+#include <algorithm>
 
 CTextCell::~CTextCell()
 {
@@ -38,17 +39,81 @@ void CTextCell::PaintContent(CDC* pDC, CRect rcPaint)
 	pDC->SelectFont(hFont);
 }
 
+CSize CStringSizeCalculater::CalcSize(const std::wstring& str)
+{
+	CSize ret(0, 0);
+	for (const auto& ch : str) {
+		const auto& iter = m_charMap.find(ch);
+		CSize sizeCh(0, 0);
+		if (iter != m_charMap.end()) {
+			sizeCh = iter->second;
+		} else {
+			HFONT hFont = (HFONT)m_pDC->SelectFont(m_pFont->operator HFONT());
+			CRect rcCh;
+			m_pDC->DrawTextExW(const_cast<LPWSTR>(&ch), 1, rcCh,
+				DT_CALCRECT | m_format & ~DT_WORDBREAK, NULL);
+			m_pDC->SelectFont(hFont);
+			sizeCh = rcCh.Size();
+			m_charMap.emplace(ch, sizeCh);
+		}
+		ret.cx += sizeCh.cx;
+		ret.cy = (std::max)(ret.cy, sizeCh.cy);
+	}
+
+	return ret;
+}
+
+CSize CStringSizeCalculater::CalcSizeWithFixedWidth(const std::wstring& str, const LONG& width)
+{
+	std::vector<CSize> ret;
+	ret.emplace_back(0, 0);
+	size_t i = 0;
+
+	for (const auto& ch : str) {
+		const auto& iter = m_charMap.find(ch);
+		CSize sizeCh(0, 0);
+		if (iter != m_charMap.end()) {
+			sizeCh = iter->second;
+		} else {
+			HFONT hFont = (HFONT)m_pDC->SelectFont(m_pFont->operator HFONT());
+			CRect rcCh;
+			m_pDC->DrawTextExW(const_cast<LPWSTR>(&ch), 1, rcCh,
+				DT_CALCRECT | m_format & ~DT_WORDBREAK, NULL);
+			m_pDC->SelectFont(hFont);
+			sizeCh = rcCh.Size();
+			m_charMap.emplace(ch, sizeCh);
+		}
+		if (ret.back().cx + sizeCh.cx > width) {
+			ret.push_back(sizeCh);
+		} else {
+			ret.back().cx += sizeCh.cx;
+			ret.back().cy = (std::max)(ret.back().cy, sizeCh.cy);
+		}
+	}
+
+	return CSize(width, std::accumulate(ret.begin(), ret.end(), 0L, [](LONG y, const CSize& rh)->LONG {return y + rh.cy; }));
+}
+
+
 CSize CTextCell::MeasureContentSize(CDC* pDC)
 {
 	//Calc Content Rect
-	HFONT hFont=(HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());
-	CRect rcContent;
-	std::basic_string<TCHAR> str=GetString();
-	if(str.empty()){str=_T("a");}
-	pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()),str.size(),rcContent,
-		DT_CALCRECT|GetFormat()&~DT_WORDBREAK,NULL);
-	pDC->SelectFont(hFont);
-	return rcContent.Size();
+	//Calculater version
+	auto pCalc = CStringSizeCalculater::GetInstance();
+	pCalc->SetParameter(pDC, m_spProperty->GetFontPtr().get(), GetFormat());
+	std::wstring str=GetString();
+	if(str.empty()){str=L"a";}
+	return pCalc->CalcSize(str);
+
+	////Original version
+	//HFONT hFont=(HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());
+	//CRect rcContent;
+	//std::basic_string<TCHAR> str=GetString();
+	//if(str.empty()){str=_T("a");}
+	//pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()),str.size(),rcContent,
+	//	DT_CALCRECT|GetFormat()&~DT_WORDBREAK,NULL);
+	//pDC->SelectFont(hFont);
+	//return rcContent.Size();
 }
 
 //CSize CTextCell::MeasureSize(CDC* pDC)
@@ -66,15 +131,23 @@ CSize CTextCell::MeasureContentSizeWithFixedWidth(CDC* pDC)
 	//Calc Content Rect
 	CRect rcCenter(0,0,m_pColumn->GetWidth(),0);
 	CRect rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
+
+	auto pCalc = CStringSizeCalculater::GetInstance();
+	pCalc->SetParameter(pDC, m_spProperty->GetFontPtr().get(), GetFormat());
+	std::wstring str = GetString();
+	if (str.empty()) { str = L"a"; }
+	return pCalc->CalcSizeWithFixedWidth(str, rcContent.Width());
+
+
 	//Calc Content Rect
-	HFONT hFont=(HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());
-	rcContent.SetRect(0,0,rcContent.Width(),0);
-	std::basic_string<TCHAR> str=GetString();
-	if(str.empty()){str=_T("a");}
-	pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()),str.size(),rcContent,
-		DT_CALCRECT|GetFormat(),NULL);
-	pDC->SelectFont(hFont);
-	return rcContent.Size();
+	//HFONT hFont=(HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());
+	//rcContent.SetRect(0,0,rcContent.Width(),0);
+	//std::basic_string<TCHAR> str=GetString();
+	//if(str.empty()){str=_T("a");}
+	//pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()),str.size(),rcContent,
+	//	DT_CALCRECT|GetFormat(),NULL);
+	//pDC->SelectFont(hFont);
+	//return rcContent.Size();
 }
 
 //CSize CTextCell::MeasureSizeWithFixedWidth(CDC* pDC)

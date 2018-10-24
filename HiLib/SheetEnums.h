@@ -31,8 +31,8 @@ enum class Updates{
 	ColumnVisible,
 	Column,
 	Row,
-	EnsureVisibleFocusedCell,
 	Scrolls,
+	EnsureVisibleFocusedCell,
 	Invalidate,
 	All
 };

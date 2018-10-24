@@ -7,12 +7,16 @@ class IInplaceEdit;
  */
 class CFilterCell:public CEditableCell
 {
+private :
+	//static std::unique_ptr<boost::asio::io_service> m_pFilterIosv;
+	//static std::unique_ptr<boost::asio::io_service::work> m_pFilterWork;
+	//static std::unique_ptr<boost::asio::deadline_timer> m_pFilterTimer;
+
 public:
 	/**
 	 *  Constructor
 	 */
-	CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellProperty> spProperty,CMenu* pMenu = nullptr)
-		:CEditableCell(pSheet,pRow, pColumn,spProperty,pMenu){}
+	CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty, CMenu* pMenu = nullptr);
 	/**
 	 *  Destructor
 	 */

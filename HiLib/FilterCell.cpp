@@ -5,6 +5,9 @@
 #include "Column.h"
 #include "GridView.h"
 
+CFilterCell::CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty, CMenu* pMenu)
+	:CEditableCell(pSheet, pRow, pColumn, spProperty,pMenu){ }
+
 CFilterCell::~CFilterCell()
 {
 	boost::asio::deadline_timer* pTimer = static_cast<CGridView*>(m_pSheet)->GetFilterTimerPtr();

@@ -88,7 +88,7 @@ void CFavoritesGridView::OpenFavorites()
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
-	SortAll();
+	PostUpdate(Updates::Sort);
 
 	FilterAll();		
 

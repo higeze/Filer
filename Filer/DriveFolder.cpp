@@ -18,7 +18,7 @@ CDriveManager::CDriveManager()
 	std::array<wchar_t, 64> logicalDrives;
 
 	if (::GetLogicalDriveStrings(64, logicalDrives.data())) {
-		auto desktop(CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop));
+		auto desktop(CKnownFolderManager::GetInstance()->GetDesktopFolder());
 		wchar_t* p;
 		for (p = logicalDrives.data(); *p != L'\0'; p += lstrlen(p) + 1) {
 			CIDL relativeIdl;

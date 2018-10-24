@@ -24,7 +24,7 @@ std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
 	auto order = pRow->GetOrderIndex();
 	if (!pCol->GetFavorites()->at(order).GetShellFile()) {
 		if (pCol->GetFavorites()->at(order).GetPath().empty()) {
-			pCol->GetFavorites()->at(order).SetShellFile(CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop));
+			pCol->GetFavorites()->at(order).SetShellFile(CKnownFolderManager::GetInstance()->GetDesktopFolder());
 		}
 		else {
 			pCol->GetFavorites()->at(order).SetShellFile(CShellFolder::CreateShExFileFolder(pCol->GetFavorites()->at(order).GetPath()));

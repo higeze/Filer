@@ -1,5 +1,6 @@
 #pragma once
 #include "Cell.h"
+#include <unordered_map>
 
 class CInplaceEdit;
 
@@ -34,6 +35,36 @@ public:
 			return m_ed(_wtof(lhs.c_str()),_wtof(rhs.c_str()));
 		}
 	}
+};
+
+class CStringSizeCalculater
+{
+private:
+	CDC* m_pDC;
+	CFont* m_pFont;
+	UINT m_format;
+	std::unordered_map<wchar_t, CSize> m_charMap;
+public:
+	CStringSizeCalculater(){}
+	~CStringSizeCalculater(){}
+
+	void SetParameter(CDC* pDC, CFont* pFont, UINT format) 
+	{ 
+		m_pDC = pDC; m_pFont = pFont; m_format = format;
+
+	}
+
+	static CStringSizeCalculater* GetInstance()
+	{
+		static CStringSizeCalculater me;
+		return &me;
+	}
+
+	CSize CalcSize(const std::wstring& str);
+	CSize CalcSizeWithFixedWidth(const std::wstring& str, const LONG& width);
+
+
+
 };
 
 class CTextCell:public CCell

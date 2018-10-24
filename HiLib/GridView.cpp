@@ -108,8 +108,6 @@ CGridView::CGridView(
 	AddCmdIDHandler(IDM_PASTE,&CGridView::OnCommandPaste,this);
 	AddCmdIDHandler(IDM_FIND,&CGridView::OnCommandFind,this);
 
-
-
 	CellLButtonClk.connect(std::bind(&CGridView::OnCellLButtonClk,this,std::placeholders::_1));
 	CellContextMenu.connect(std::bind(&CGridView::OnCellContextMenu,this,std::placeholders::_1));
 
@@ -117,6 +115,13 @@ CGridView::CGridView(
 	ColumnPropertyChanged.connect(std::bind(&CGridView::OnColumnPropertyChanged,this,std::placeholders::_1));
 	RowPropertyChanged.connect(std::bind(&CGridView::OnRowPropertyChanged,this,std::placeholders::_1));
 }
+
+CGridView::~CGridView()
+{
+	m_filterTimer.cancel();
+	m_invalidateTimer.cancel();
+}
+
 
 void CGridView::ColumnInserted(CColumnEventArgs& e)
 {
@@ -227,13 +232,23 @@ void CGridView::OnCellLButtonClk(CellEventArgs& e)
 		SubmitUpdate();
 	}
 }
+
 void CGridView::SortAll()
 {
 	auto& colDictionary=m_columnAllDictionary.get<IndexTag>();
-//	boost::for_each(colDictionary,[&](const ColumnData& colData){
 	for(const auto& colData : colDictionary){
 		if(colData.DataPtr->GetSort()!=Sorts::None){
 			this->Sort(colData.DataPtr.get(),colData.DataPtr->GetSort());
+		}
+	}
+}
+
+void CGridView::SortAllInSubmitUpdate()
+{
+	auto& colDictionary = m_columnAllDictionary.get<IndexTag>();
+	for (const auto& colData : colDictionary) {
+		if (colData.DataPtr->GetSort() != Sorts::None) {
+			this->Sort(colData.DataPtr.get(), colData.DataPtr->GetSort(), false);
 		}
 	}
 }
@@ -353,133 +368,6 @@ LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	CPaintDC dc(m_hWnd);
 	CRect rcClient(GetClientRect());
-
-	//if(*m_spBackgroundProperty->m_usePicture && ::GetFileAttributes(m_spBackgroundProperty->m_picturePath->c_str())!=0xffffffff){
-
-	//	//HANDLE hFile = ::CreateFile(m_spBackgroundProperty->m_picturePath->c_str(),GENERIC_READ,0,NULL,OPEN_EXISTING,0,NULL);
-	//	//DWORD nFileSize=GetFileSize(hFile,NULL);
-	//	//HGLOBAL hMem=GlobalAlloc(GMEM_MOVEABLE,nFileSize);
-	//	//LPVOID pvData=GlobalLock(hMem);
-
-	//	//DWORD nReadByte=0;        
-	//	//::ReadFile(hFile,pvData,nFileSize,&nReadByte,NULL);
- // //  
-	//	//::GlobalUnlock(hMem);
-	//	//::CloseHandle(hFile);
- // //  
-	//	//IStream *iStream=NULL;
-	//	//::CreateStreamOnHGlobal(hMem,TRUE,&iStream);
- // //  
-	//	//IPicture *iPicture;
-	//	//::OleLoadPicture(iStream,nFileSize,FALSE,IID_IPicture,(LPVOID*)&iPicture);
- // //  
-	//	//short type;
-	//	//iPicture->get_Type(&type);
-	//	//OLE_HANDLE hOle = NULL;
-	//	//if(type==PICTYPE_BITMAP){
-	//	//	iPicture->get_Handle(&hOle);
-	//	//}
- // //  
-	//	//HBITMAP hBitmap=(HBITMAP)hOle;
-	//	//HDC hPic = ::CreateCompatibleDC(NULL);  
-	//	//::SelectObject(hPic,hBitmap);
-	//	//BITMAP bitmap;
-	//	//GetObject(hBitmap,sizeof(BITMAP),&bitmap);
- //   Gdiplus::GdiplusStartupInput gdiSI;
- //   ULONG_PTR gdiToken;
-
- //   // GDI+Start
- //   GdiplusStartup( &gdiToken, &gdiSI, NULL );
-
-	//Gdiplus::Bitmap* pBitmap = Gdiplus::Bitmap::FromFile(m_spBackgroundProperty->m_picturePath->c_str());
-	//HDC hPicDC = ::CreateCompatibleDC(NULL);  
-	//HBITMAP hBitmap = NULL;
-	//pBitmap->GetHBITMAP(Gdiplus::Color::Transparent, &hBitmap);
-	//::SelectObject(hPicDC,hBitmap);
-
-
-	//	switch(*m_spBackgroundProperty->m_picturePosition)
-	//	{
-	//		case PicturePositon::Fill:
-	//		{
-	//			double widthRatio = double(rcClient.Width())/double(pBitmap->GetWidth());
-	//			double heightRatio = double(rcClient.Height())/double(pBitmap->GetHeight());
-	//			coordinates_type left,top,width,height;
-	//			if(widthRatio > heightRatio){
-	//				width = static_cast<coordinates_type>(pBitmap->GetWidth()*widthRatio);
-	//				height = static_cast<coordinates_type>(pBitmap->GetHeight()*widthRatio);
-	//			}else{
-	//				width = static_cast<coordinates_type>(pBitmap->GetWidth()*heightRatio);
-	//				height = static_cast<coordinates_type>(pBitmap->GetHeight()*heightRatio);
-	//			}
-	//			left = (rcClient.Width()-width)/2;
-	//			top = (rcClient.Height()-height)/2;
-	//			m_upBuffDC->StretchBlt(left,top,width,height,hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
-	//			break;
-	//		}
-	//		case PicturePositon::Fit:
-	//		{
-	//			double widthRatio = double(rcClient.Width())/double(pBitmap->GetWidth());
-	//			double heightRatio = double(rcClient.Height())/double(pBitmap->GetHeight());
-	//			coordinates_type left,top,width,height;
-	//			if(widthRatio > heightRatio){
-	//				width = static_cast<coordinates_type>(pBitmap->GetWidth()*heightRatio);
-	//				height = static_cast<coordinates_type>(pBitmap->GetHeight()*heightRatio);
-	//			}else{
-	//				width = static_cast<coordinates_type>(pBitmap->GetWidth()*widthRatio);
-	//				height = static_cast<coordinates_type>(pBitmap->GetHeight()*widthRatio);
-	//			}
-	//			left = (rcClient.Width()-width)/2;
-	//			top = (rcClient.Height()-height)/2;
-	//			m_upBuffDC->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-	//			m_upBuffDC->StretchBlt(left,top,width,height,hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
-	//			break;
-	//		}
-	//		case PicturePositon::Stretch:
-	//		{
-	//			m_upBuffDC->StretchBlt(0,0,rcClient.Width(),rcClient.Height(),hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
-	//			break;
-	//		}
-	//		case PicturePositon::Tile:
-	//		{
-	//			int x = ceil(double(rcClient.Width())/double(pBitmap->GetWidth()));
-	//			int y = ceil(double(rcClient.Height())/double(pBitmap->GetHeight()));
-	//			for(int i=0;i<x;i++){
-	//				for(int j=0;j<y;j++){
-	//					m_upBuffDC->BitBlt(pBitmap->GetWidth()*i,pBitmap->GetHeight()*j,pBitmap->GetWidth(),pBitmap->GetHeight(),hPicDC,0,0,SRCCOPY);
-	//				}
-	//			}
-	//			break;
-	//		}
-	//		case PicturePositon::Center:
-	//		{
-	//			int left = (int(rcClient.Width())-int(pBitmap->GetWidth()))*0.5;
-	//			int top = (int(rcClient.Height())-int(pBitmap->GetHeight()))*0.5;
-	//			m_upBuffDC->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-	//			m_upBuffDC->BitBlt(left,top,pBitmap->GetWidth(),pBitmap->GetHeight(),hPicDC,0,0,SRCCOPY);
-	//			break;
-	//		}
-	//		default:
-	//		{
-	//			m_upBuffDC->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-	//			break;
-	//		}
-	//	}
-	//	
-
-	//	//iStream->Release();
-	//	//iPicture->Release();
-	//	//::DeleteObject(hPic);
- //   // GDI+ E
-	//	::DeleteObject(hBitmap);
-	//	::DeleteObject(hPicDC);
-	//	delete pBitmap;
-	//	Gdiplus::GdiplusShutdown( gdiToken );
-	//}else{
-	//	m_upBuffDC->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-	//}
-
-	//m_upBuffDC->SetBkMode(TRANSPARENT);
 
 	PaintEvent paintEvent(this, m_upBuffDC.get());
 	OnPaint(paintEvent);
@@ -1589,6 +1477,21 @@ void CGridView::OnPaint(const PaintEvent& e)
 		}
 	}
 
+	//Paint Focused Line
+	if (::GetFocus() == m_hWnd || m_spEditRect) {
+		CRect rcFocus(rcClient);
+		HPEN hPenOld = e.DCPtr->SelectPen(*(GetGridViewProp()->GetHeaderProperty()->GetFocusedPenPtr()));
+		rcFocus.DeflateRect(CRect(0, 0, 1, 1));
+		e.DCPtr->MoveToEx(rcFocus.left, rcFocus.top);
+		e.DCPtr->LineTo(rcFocus.left, rcFocus.bottom);
+		e.DCPtr->LineTo(rcFocus.right, rcFocus.bottom);
+		e.DCPtr->LineTo(rcFocus.right, rcFocus.top);
+		e.DCPtr->LineTo(rcFocus.left, rcFocus.top);
+		e.DCPtr->SelectPen(hPenOld);
+	}
+
+
+
 	//Paint Column Drag Target Line
 	m_spRowDragger->OnPaintDragLine(this, e);
 	m_spColDragger->OnPaintDragLine(this, e);
@@ -1711,10 +1614,10 @@ void CGridView::Sorted()
 void CGridView::EnsureVisibleCell(const cell_type& pCell)
 {
 	if(!pCell)return;
-	UpdateRowVisibleDictionary();
-	UpdateColumnVisibleDictionary();
-	UpdateRow();
-	UpdateColumn();
+	//UpdateRowVisibleDictionary();
+	//UpdateColumnVisibleDictionary();
+	//UpdateRow();
+	//UpdateColumn();
 
 	auto rcClip(GetPageRect());
 	auto rcCell(pCell->GetRect());
@@ -1742,7 +1645,7 @@ void CGridView::EnsureVisibleCell(const cell_type& pCell)
 	}
 
 	if(vScrollAdd){
-		m_vertical.SetScrollPos(m_vertical.GetScrollPos() + vScrollAdd );
+		m_vertical.SetScrollPos(m_vertical.GetScrollPos() + vScrollAdd);
 	}
 }
 
@@ -1848,7 +1751,7 @@ void CGridView::SubmitUpdate()
 		case Updates::Sort:
 		{
 			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Sort")
-			SortAll();
+			SortAllInSubmitUpdate();
 			break;
 		}
 		case Updates::Filter:
@@ -1892,8 +1795,11 @@ void CGridView::SubmitUpdate()
 			break;
 		}
 		case Updates::EnsureVisibleFocusedCell:
+		{
+			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::EnsureVisibleFocusedCell")
 			EnsureVisibleCell(m_spCursorer->GetFocusedCell());
 			break;
+		}
 		case Updates::Invalidate:
 			Invalidate();
 			break;

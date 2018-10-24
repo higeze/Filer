@@ -60,6 +60,8 @@ CFilerWnd::CFilerWnd()
 	//	this->OnKeyDown(WM_KEYDOWN, (WPARAM)((NMTCKEYDOWN*)pnmh)->wVKey, NULL, bHandled);
 	//	return 0;
 	//});
+	//AddMsgHandler(WM_SETCURSOR, &CKonamiCommander::OnSetCursor, &m_konamiCommander);
+	//AddMsgHandler(WM_PAINT, &CKonamiCommander::OnPaint, &m_konamiCommander);
 
 	//AddCmdIDHandler(IDM_FILE_LOAD,&CDcmListView::OnWndCommandFileLoad,m_upList.get());
 	//AddCmdIDHandler(IDM_EDIT_COPY,&CMultiLineListView::OnCmdEditCopy,(CMultiLineListView*)m_upList.get());
@@ -80,6 +82,9 @@ HWND CFilerWnd::Create(HWND hWndParent)
 
 LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	//Konami
+	//m_konamiCommander.SetHwnd(m_hWnd);
+
 	//CFavoritesGridView
 	m_spFavoritesView->CreateWindowExArgument()
 	.dwStyle(WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN | WS_VISIBLE)
@@ -225,7 +230,6 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		PostMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
 	}
 
-
 	return 0;
 }
 
@@ -264,6 +268,7 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 	default:
 		break;
 	}
+	//m_konamiCommander.OnKeyDown(uMsg, wParam, lParam, bHandled);
 	bHandled = FALSE;
 	return 0;
 }
@@ -336,7 +341,7 @@ LRESULT CFilerWnd::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 		m_ptStart = pt;
 		PostMessage(WM_SIZE, 0, 0);
 	}
-
+	//m_konamiCommander.OnMouseMove(uMsg, wParam, lParam, bHandled);
 	return 0;
 }
 

@@ -17,13 +17,13 @@ CShellFolder::~CShellFolder()
 	//std::wcout << L"~CShellFolder " + GetFileName() << std::endl;
 	try {
 		if (m_pSizeThread && m_pSizeThread->joinable()) {
-			BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFolder " + GetFileNameWithoutExt() + L" Size thread canceled";
+			BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFolder Set Cancel : " + GetPath();
 			m_cancelSize.store(true);
 			m_pSizeThread->join();
 		}
 		SignalFileSizeChanged.disconnect_all_slots();
 	} catch (...) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFile Exception";
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFile Exception Thread detached";
 		if (m_pSizeThread) m_pSizeThread->detach();
 	}
 }
@@ -161,6 +161,10 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize()
 
 bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel)
 {
+	if (cancel.load()) {
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Canceled at top : " + GetPath();
+		return false;
+	}
 	try {
 		//Enumerate child IDL
 		size.QuadPart = 0;
@@ -172,7 +176,7 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel
 			ULONG ulRet(0);
 			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
 				if (cancel.load()) {
-					BOOST_LOG_TRIVIAL(trace) << L"::GetFolderSize canceled";
+					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Canceled in while : " + GetPath();
 					return false;
 				}
 				if (!nextIdl) { break; }
@@ -196,7 +200,7 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel
 			}
 		}
 	} catch (...) {
-		BOOST_LOG_TRIVIAL(trace) << "::GetFolderSize Exception";
+		BOOST_LOG_TRIVIAL(trace) << "Exception CShellFolder::GetFolderSize " << GetPath();
 		return false;
 	}
 	return true;
@@ -228,27 +232,26 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
 	GetShellFolderPtr()->GetDisplayNameOf(childIdl.ptr(), SHGDN_FORPARSING, &strret);
 	std::wstring path =  childIdl.STRRET2WSTR(strret);
 	std::wstring ext = ::PathFindExtension(path.c_str());
+
 	if (!childIdl) {
-		return CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop);
-	//} else if (auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderByIDL(m_absoluteIdl + childIdl)) {
-	//	return spKnownFolder;
+		return CKnownFolderManager::GetInstance()->GetDesktopFolder();
 	} else if (auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderByPath(path)) {
 		return spKnownFolder;
-	//} else if (auto spDriveFolder = CDriveManager::GetInstance()->GetDriveFolderByIDL(m_absoluteIdl + childIdl)) {
-	//	return spDriveFolder;
 	} else if (auto spDriveFolder = CDriveManager::GetInstance()->GetDriveFolderByPath(path)) {
 		return spDriveFolder;
 	} else if (boost::iequals(ext, ".zip")) {
 		return std::make_shared<CShellZipFolder>(GetShellFolderPtr(), m_absoluteIdl, childIdl);
-	} else if (SUCCEEDED(GetShellFolderPtr()->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
-		SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl))) {
+	} else if (
+		::PathIsDirectory(path.c_str()) ||
+		(SUCCEEDED(GetShellFolderPtr()->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
+		SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)))) {
 		return std::make_shared<CShellFolder>(GetShellFolderPtr(), m_absoluteIdl, childIdl, pFolder);
 	} else {
 		return std::make_shared<CShellFile>(GetShellFolderPtr(), m_absoluteIdl, childIdl);
 	}
 
-	if (tim.elapsed() > 10.0) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::CreateShExFileFolder "<< path;
+	if (tim.elapsed() > 0.1) {
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::CreateShExFileFolder Over0.1 "<< path;
 	}
 }
 
@@ -256,7 +259,7 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
 //static
 std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const std::wstring& path)
 {
-	auto desktop(CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Desktop));
+	auto desktop(CKnownFolderManager::GetInstance()->GetDesktopFolder());
 	CIDL relativeIdl;
 
 	ULONG         chEaten;

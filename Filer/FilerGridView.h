@@ -62,7 +62,9 @@ private:
 	std::shared_ptr<CDirectoryWatcher> m_spWatcher;
 
 	CComPtr<IShellFolder> m_pDesktopShellFolder;
+
 	std::shared_ptr<CShellFolder> m_spFolder;
+	std::shared_ptr<CShellFolder> m_spPreviousFolder;
 
 	std::wstring m_initPath;
 

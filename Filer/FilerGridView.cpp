@@ -247,7 +247,7 @@ void CFilerGridView::Added(const std::wstring& fileName)
 			m_spCursorer->OnCursor(CSheet::Cell(spRow, m_pNameColumn));
 			PostUpdate(Updates::EnsureVisibleFocusedCell);
 		}
-		SortAll();
+		PostUpdate(Updates::Sort);
 		FilterAll();
 		SubmitUpdate();
 		if (m_bNewFile) {
@@ -278,7 +278,7 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
-	SortAll();
+	PostUpdate(Updates::Sort);
 	FilterAll();
 	SubmitUpdate();
 
@@ -305,7 +305,8 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
-	SortAll();
+	PostUpdate(Updates::Sort);
+
 	FilterAll();
 	SubmitUpdate();
 
@@ -337,7 +338,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 			PostUpdate(Updates::Row);
 			PostUpdate(Updates::Scrolls);
 			PostUpdate(Updates::Invalidate);
-			SortAll();
+			PostUpdate(Updates::Sort);
 			FilterAll();
 			SubmitUpdate();
 		}
@@ -486,101 +487,100 @@ void CFilerGridView::OpenFile(std::shared_ptr<CShellFile>& spFile)
 
 void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder")
-	
-	m_spCursorer->Clear();
-
-	bool isUpdate = m_spFolder == spFolder;
-
-	//Save and Restore Filter value
-	if (!isUpdate) {
-		//Update Map
-		std::unordered_map<std::shared_ptr<CColumn>, std::wstring> map;
-		bool isAllEmpty = true;
-		for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
-			isAllEmpty &= iter->DataPtr->GetFilter().empty();
-			if (!isAllEmpty)break;
-		}
-		if(isAllEmpty){
-			if (m_spFolder) {
-				m_filterMap.erase(m_spFolder->GetPath());
-			}
-		}
-		else{
-			for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
-				map.emplace(iter->DataPtr, iter->DataPtr->GetFilter());
-			}
-			if (m_spFolder) {
-				m_filterMap.insert_or_assign(m_spFolder->GetPath(), map);
-			}
-		}
-		//Load Map
-		auto iter = m_filterMap.find(spFolder->GetPath());
-		if (iter != m_filterMap.end()) {
-			//Load filter from map
-			for (auto pr : iter->second) {
-				pr.first->SetFilter(pr.second);
-			}
-		} else {
-			//Clear filter
-			for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
-				iter->DataPtr->SetFilter(L"");
-			}
-		}
-	}
-
-	if(Empty()){
-		InsertDefaultRowColumn();
-	}
-
-	m_spFolder = spFolder;
-
-	//Clear RowDictionary From 0 to last
-	auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
-	rowDictionary.erase(rowDictionary.find(0), rowDictionary.end());
-	//Set up Watcher
-	try {
-		if (::PathFileExists(m_spFolder->GetPath().c_str()) &&
-			!boost::iequals(m_spFolder->GetExt(), L".zip")){
-			if (m_spWatcher->GetPath() != m_spFolder->GetPath()) {
-				m_spWatcher->QuitWatching();
-				m_spWatcher->SetPath(m_spFolder->GetPath());
-				m_spWatcher->StartWatching();
-			}
-		}
-		else {
-			m_spWatcher->QuitWatching();
-			m_spWatcher->SetPath(L"");
-		}
-	}
-	catch (std::exception& e) {
-		MessageBox(L"Watcher", L"Error", 0);
-		throw e;
-	}
-
-	try {
-		//Enumerate child IDL
-
-		CComPtr<IEnumIDList> enumIdl;
-		if (SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) &&
-			enumIdl) {
-			CIDL nextIdl;
-			ULONG ulRet(0);
-			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
-				if (!nextIdl) { break; }
-				if (auto spFile = m_spFolder->CreateShExFileFolder(nextIdl)) {
-					InsertRow(CRow::kMaxIndex, std::make_shared<CFileRow>(this, spFile));
-				}
-				nextIdl.Clear();
-			}
-		}
-	}
-	catch (std::exception&) 
+	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Total")
+		bool isUpdate = m_spFolder == spFolder;
 	{
-		MessageBox(L"Enumeration", L"Error", 0);
-//		throw e;
-	}
+		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Pre-Process")
 
+		//Save and Restore Filter value
+		if (!isUpdate) {
+			//Update Map
+			std::unordered_map<std::shared_ptr<CColumn>, std::wstring> map;
+			bool isAllEmpty = true;
+			for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+				isAllEmpty &= iter->DataPtr->GetFilter().empty();
+				if (!isAllEmpty)break;
+			}
+			if (isAllEmpty) {
+				if (m_spFolder) {
+					m_filterMap.erase(m_spFolder->GetPath());
+				}
+			} else {
+				for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+					map.emplace(iter->DataPtr, iter->DataPtr->GetFilter());
+				}
+				if (m_spFolder) {
+					m_filterMap.insert_or_assign(m_spFolder->GetPath(), map);
+				}
+			}
+			//Load Map
+			auto iter = m_filterMap.find(spFolder->GetPath());
+			if (iter != m_filterMap.end()) {
+				//Load filter from map
+				for (auto pr : iter->second) {
+					pr.first->SetFilter(pr.second);
+				}
+			} else {
+				//Clear filter
+				for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+					iter->DataPtr->SetFilter(L"");
+				}
+			}
+			//Update
+			m_spPreviousFolder = m_spFolder;
+			m_spFolder = spFolder;
+		}
+
+		if (Empty()) {
+			InsertDefaultRowColumn();
+		}
+
+		//Clear RowDictionary From 0 to last
+		auto& rowDictionary = m_rowAllDictionary.get<IndexTag>();
+		rowDictionary.erase(rowDictionary.find(0), rowDictionary.end());
+		//Set up Watcher
+		try {
+			if (::PathFileExists(m_spFolder->GetPath().c_str()) &&
+				!boost::iequals(m_spFolder->GetExt(), L".zip")) {
+				if (m_spWatcher->GetPath() != m_spFolder->GetPath()) {
+					m_spWatcher->QuitWatching();
+					m_spWatcher->SetPath(m_spFolder->GetPath());
+					m_spWatcher->StartWatching();
+				}
+			} else {
+				m_spWatcher->QuitWatching();
+				m_spWatcher->SetPath(L"");
+			}
+		} catch (std::exception& e) {
+			MessageBox(L"Watcher", L"Error", 0);
+			throw e;
+		}
+	}
+	{
+		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Enumeration")
+			try {
+			//Enumerate child IDL
+
+			CComPtr<IEnumIDList> enumIdl;
+			if (SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) &&
+				enumIdl) {
+				CIDL nextIdl;
+				ULONG ulRet(0);
+				while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
+					if (!nextIdl) { break; }
+					if (auto spFile = m_spFolder->CreateShExFileFolder(nextIdl)) {
+						InsertRow(CRow::kMaxIndex, std::make_shared<CFileRow>(this, spFile));
+					}
+					nextIdl.Clear();
+				}
+			}
+		} catch (std::exception&) {
+			MessageBox(L"Enumeration", L"Error", 0);
+			//		throw e;
+		}
+	}
+	{
+		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Updating")
 		//Path change //TODO
 		//m_rowHeader->SetMeasureValid(false);
 		//m_rowNameHeader->SetMeasureValid(false);
@@ -588,7 +588,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		//for (const auto& row : m_rowAllDictionary) {
 		//	row.DataPtr->SetMeasureValid(false);
 		//}
-		for(const auto& col : m_columnAllDictionary) {
+		for (const auto& col : m_columnAllDictionary) {
 			std::dynamic_pointer_cast<CParentMapColumn>(col.DataPtr)->Clear();
 			//col.DataPtr->SetMeasureValid(false);
 		}
@@ -600,34 +600,52 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		//	}
 		//}
 
-	PostUpdate(Updates::Sort);
-	PostUpdate(Updates::Filter);
-	PostUpdate(Updates::ColumnVisible);
-	PostUpdate(Updates::RowVisible);
-	//PostUpdate(Updates::Column);
-	PostUpdate(Updates::Row);
-	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);
+		PostUpdate(Updates::Sort);
+		PostUpdate(Updates::Filter);
+		PostUpdate(Updates::ColumnVisible);
+		PostUpdate(Updates::RowVisible);
+		//PostUpdate(Updates::Column);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
 
-	if(!isUpdate){
-		FolderChanged(m_spFolder); 
-	}
-
-	//::OutputDebugStringA("m_rowAllDictionary\r\n");
-	//boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
-	//	::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
-	//});
-
-
-	SubmitUpdate();
-
-	//Cursor
-	if (!isUpdate) {
-		//Cursor
-		auto cell = Cell<VisTag>(0, 0);
-		if (cell) {
-			m_spCursorer->OnCursor(cell);
+		if (!isUpdate) {
+			FolderChanged(m_spFolder);
 		}
+
+		//::OutputDebugStringA("m_rowAllDictionary\r\n");
+		//boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
+		//	::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
+		//});
+
+		//Cursor
+
+		//Clear Cursor
+		m_spCursorer->Clear();
+
+		if (!isUpdate) {
+			//If previous folder is found, set cursor for that.
+			if (m_spPreviousFolder) {
+				auto iter = std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(), [this](const auto& rowData)->bool {
+					if (auto spFileRow = std::dynamic_pointer_cast<CFileRow>(rowData.DataPtr)) {
+						return spFileRow->GetFilePointer()->GetAbsoluteIdl() == m_spPreviousFolder->GetAbsoluteIdl();
+					} else {
+						return false;
+					}
+				});
+
+				if (iter != m_rowAllDictionary.end()) {
+
+					if (auto cell = CSheet::Cell(iter->DataPtr, Index2Pointer<ColTag, VisTag>(0))) {
+						m_spCursorer->OnCursor(cell);
+						PostUpdate(Updates::EnsureVisibleFocusedCell);
+					}
+				}
+			}
+
+		}
+
+		SubmitUpdate();
 	}
 }
 

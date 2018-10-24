@@ -7,7 +7,7 @@
 
 
 
-class IKeyObserver;
+//class IKeyObserver;
 class CBackgroundProperty;
 class CGridViewProperty;
 struct CMouseStateMachine;
@@ -27,7 +27,7 @@ protected:
 	CScrollBar m_horizontal;
 	UPBufferDC m_upBuffDC;
 
-	std::vector<std::shared_ptr<IKeyObserver>> m_keyObservers;
+	//std::vector<std::shared_ptr<IKeyObserver>> m_keyObservers;
 	row_type m_rowHeaderHeader; /**< Header Header row */
 	row_type m_rowNameHeader; /**< Name Header row */
 	row_type m_rowFilter; /**< Filter row */
@@ -71,10 +71,11 @@ public:
 	CGridView(
 			std::shared_ptr<CGridViewProperty> spGridViewProp,
 			CMenu* pContextMenu= &CGridView::ContextMenu);
-	virtual ~CGridView(){}
+	virtual ~CGridView();
 
 	std::shared_ptr<CGridViewProperty>& GetGridViewProp() { return m_spGridViewProp; }
 	void SetEditRect(CRect rcEdit){m_spEditRect = std::make_shared<CRect>(rcEdit);}
+
 protected:
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnClose(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -180,6 +181,7 @@ std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
 	virtual void UpdateAll();
 
 	virtual void SortAll();
+	virtual void SortAllInSubmitUpdate();
 
 		virtual void UpdateScrolls();
 		virtual void Invalidate();

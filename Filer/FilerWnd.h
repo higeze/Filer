@@ -8,6 +8,7 @@
 #include "FavoritesProperty.h"
 #include "ShellFolder.h"
 #include "ApplicationProperty.h"
+//#include "KonamiCommander.h"
 
 class CFilerGridView;
 class CGridViewProperty;
@@ -30,6 +31,8 @@ private:
 	std::shared_ptr<CFilerTabGridView> m_spLeftView;
 	std::shared_ptr<CFilerTabGridView> m_spRightView;
 	std::shared_ptr<CFilerTabGridView> m_spCurView;
+
+	//CKonamiCommander m_konamiCommander;
 
 public:
 	CFilerWnd();
@@ -63,7 +66,8 @@ private:
 	LRESULT OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
-
+	//LRESULT OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	//LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
 	//LRESULT OnCommandNewTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	//LRESULT OnCommandCloneTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);

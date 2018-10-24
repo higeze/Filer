@@ -76,7 +76,7 @@ protected:
 public:
 	//Constructor
 	CShellFile() {}
-	CShellFile(CComPtr<IShellFolder> pParentShellFolder,CIDL parentIdl, CIDL childIdl);
+	CShellFile(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl);
 	//CShellFile(const std::wstring& path);
 
 	//Destructor
