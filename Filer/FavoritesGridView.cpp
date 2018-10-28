@@ -25,6 +25,8 @@ CFavoritesGridView::CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGrid
 			:CGridView(spGridViewProperty),
 			m_spFavoritesProp(std::make_shared<CFavoritesProperty>())
 {
+	m_isFocusable = false;
+
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
 		.lpszClassName(_T("CFavoriteGridView"))
@@ -35,7 +37,10 @@ CFavoritesGridView::CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGrid
 		.lpszClassName(_T("CFavoriteGridView"))
 		.lpszWindowName(_T("FavoriteGridView"))
 		.dwStyle(WS_CHILD | WS_VISIBLE)
+		//.dwExStyle(WS_EX_NOACTIVATE)
 		.hMenu((HMENU)1233211); 
+
+	//AddMsgHandler(WM_MOUSEACTIVATE, &CFavoritesGridView::OnMouseActivate, this);
 
 	m_spItemDragger = std::make_shared<CFavoritesItemDragger>();
 
@@ -50,6 +55,12 @@ LRESULT CFavoritesGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL&
 	//List
 	OpenFavorites();
 	return 0;
+}
+
+LRESULT CFavoritesGridView::OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	bHandled = true;
+	return MA_NOACTIVATE;
 }
 
 void CFavoritesGridView::OpenFavorites()

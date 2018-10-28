@@ -23,6 +23,8 @@ public:
 	typedef std::wstring string_type;
 
 protected:
+	bool m_isFocusable = true;
+
 	CScrollBar m_vertical;
 	CScrollBar m_horizontal;
 	UPBufferDC m_upBuffDC;

@@ -637,7 +637,7 @@ CGridView::coordinates_type CGridView::GetHorizontalScrollPos()const
 
 LRESULT CGridView::OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	SetFocus();
+	if (m_isFocusable) { SetFocus(); }
 	bHandled=false;
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
 	RButtonDownEvent e((UINT)wParam,ptClient);
@@ -649,7 +649,7 @@ LRESULT CGridView::OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 
 LRESULT CGridView::OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	SetFocus();
+	if (m_isFocusable) { SetFocus(); }
 	SetCapture();
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	

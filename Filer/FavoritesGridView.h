@@ -22,6 +22,8 @@ public:
 
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 
+	virtual LRESULT OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+
 	void OnCellLButtonDblClk(CellEventArgs& e);
 	//virtual void OnContextMenu(ContextMenuEventArgs& e) override;
 

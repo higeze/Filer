@@ -242,7 +242,7 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
 	} else if (boost::iequals(ext, ".zip")) {
 		return std::make_shared<CShellZipFolder>(GetShellFolderPtr(), m_absoluteIdl, childIdl);
 	} else if (
-		::PathIsDirectory(path.c_str()) ||
+		//::PathIsDirectory(path.c_str()) ||
 		(SUCCEEDED(GetShellFolderPtr()->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
 		SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)))) {
 		return std::make_shared<CShellFolder>(GetShellFolderPtr(), m_absoluteIdl, childIdl, pFolder);
