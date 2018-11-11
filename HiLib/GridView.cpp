@@ -36,7 +36,6 @@
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 UINT CGridView::WM_DELAY_UPDATE = ::RegisterWindowMessage(L"CGridView::WM_DELAY_UPDATE");
 
-
 CMenu CGridView::ContextMenu;
 
 CGridView::CGridView(
@@ -157,23 +156,25 @@ void CGridView::OnCellPropertyChanged(CCell* pCell,LPCTSTR lpszProperty)
 }
 void CGridView::ColumnVisibleChanged(CColumnEventArgs& e)
 {
-		//PostUpdate(Updates::ColumnVisible);
-		//PostUpdate(Updates::Column);
-		//PostUpdate(Updates::Scrolls);
-		//PostUpdate(Updates::Invalidate);
-		boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
-			rowData.DataPtr->SetMeasureValid(false);
-		});
-		PostUpdate(Updates::ColumnVisible);
-		PostUpdate(Updates::Column);
-		PostUpdate(Updates::Row);
-		PostUpdate(Updates::Scrolls);
-		PostUpdate(Updates::Invalidate);
+	//PostUpdate(Updates::ColumnVisible);
+	//PostUpdate(Updates::Column);
+	//PostUpdate(Updates::Scrolls);
+	//PostUpdate(Updates::Invalidate);
+	for(const auto& rowData : m_rowAllDictionary){
+		rowData.DataPtr->SetMeasureValid(false);
+	}
+	PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::Column);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
 }
 void CGridView::OnColumnPropertyChanged(LPCTSTR lpszProperty)
 {
 	if(_tcsicmp(lpszProperty,L"selected")==0){
-		PostUpdate(Updates::Invalidate);//
+		PostUpdate(Updates::Invalidate);
+	} else if (_tcsicmp(lpszProperty, L"sort")==0) {
+		PostUpdate(Updates::Sort);
 	}
 }
 
@@ -218,11 +219,11 @@ void CGridView::OnCellLButtonClk(CellEventArgs& e)
 		switch(sort){
 			case Sorts::None:
 			case Sorts::Down:
-				Sort(e.CellPtr->GetColumnPtr(),Sorts::Up);//TODO
+				//Sort(e.CellPtr->GetColumnPtr(),Sorts::Up);//TODO
 				pCol->SetSort(Sorts::Up);
 				break;
 			case Sorts::Up:
-				Sort(e.CellPtr->GetColumnPtr(),Sorts::Down);
+				//Sort(e.CellPtr->GetColumnPtr(),Sorts::Down);
 				pCol->SetSort(Sorts::Down);
 				break;
 			default:
@@ -230,16 +231,6 @@ void CGridView::OnCellLButtonClk(CellEventArgs& e)
 				break;
 		}
 		SubmitUpdate();
-	}
-}
-
-void CGridView::SortAll()
-{
-	auto& colDictionary=m_columnAllDictionary.get<IndexTag>();
-	for(const auto& colData : colDictionary){
-		if(colData.DataPtr->GetSort()!=Sorts::None){
-			this->Sort(colData.DataPtr.get(),colData.DataPtr->GetSort());
-		}
 	}
 }
 
@@ -351,7 +342,6 @@ LRESULT CGridView::OnEraseBkGnd(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHan
 
 LRESULT CGridView::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {	
-
 	CRect rcClient(GetClientRect());
 
 	if(m_upBuffDC.get()==nullptr || rcClient.Width()>m_upBuffDC->GetSize().cx || rcClient.Height()>m_upBuffDC->GetSize().cy){
@@ -494,7 +484,6 @@ LRESULT CGridView::OnHScroll(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 
 LRESULT CGridView::OnMouseWheel(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-//	int nScrolled = m_spCellProperty->GetFontPtr()->GetHeight()*GET_WHEEL_DELTA_WPARAM(wParam)/120;
 	int nScrolled = *m_spDeltaScroll*GET_WHEEL_DELTA_WPARAM(wParam)/120;
         if (nScrolled > 0){
             for(int i=0;i<nScrolled;i++){
@@ -527,16 +516,17 @@ void CGridView::DelayUpdate()
 
 LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
+	BOOST_LOG_TRIVIAL(trace) << L"CGridView::OnDelayUpdate";
+
+	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OnDelayUpdate Total")
 	SignalPreDelayUpdate();
 	SignalPreDelayUpdate.disconnect_all_slots();
-	FilterAll();
-	//SortAll();
+	PostUpdate(Updates::Filter);
 	//Need to remove EnsureVisibleFocusedCell. Otherwise scroll to 0 when scrolling
 	m_setUpdate.erase(Updates::EnsureVisibleFocusedCell);
 	SubmitUpdate();
 	return 0;
 }
-
 
 void CGridView::UpdateScrolls()
 {
@@ -623,17 +613,12 @@ void CGridView::SetScrollPos(const CPoint& ptScroll)
 
 CGridView::coordinates_type CGridView::GetVerticalScrollPos()const
 {
-	/*return m_ptScroll.x;*/return m_vertical.GetScrollPos();
+	return m_vertical.GetScrollPos();
 }
 CGridView::coordinates_type CGridView::GetHorizontalScrollPos()const
 {
-	/*return m_ptScroll.y;*/return m_horizontal.GetScrollPos();
+	return m_horizontal.GetScrollPos();
 }
-
-//CRect CGridView::GetRect()const
-//{
-//	return CWnd::GetClientRect();
-//}
 
 LRESULT CGridView::OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
@@ -645,7 +630,6 @@ LRESULT CGridView::OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	SubmitUpdate();
 	return 0;
 }
-
 
 LRESULT CGridView::OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
@@ -1604,24 +1588,12 @@ void CGridView::UpdateAll()
 	UpdateScrolls();
 }
 
-void CGridView::Sorted()
-{
-	CSheet::Sorted();
-	PostUpdate(Updates::EnsureVisibleFocusedCell);
-}
-
-
 void CGridView::EnsureVisibleCell(const cell_type& pCell)
 {
 	if(!pCell)return;
-	//UpdateRowVisibleDictionary();
-	//UpdateColumnVisibleDictionary();
-	//UpdateRow();
-	//UpdateColumn();
 
 	auto rcClip(GetPageRect());
 	auto rcCell(pCell->GetRect());
-	//auto rcTarget(rcCell);
 	LONG hScrollAdd = 0, vScrollAdd = 0;
 
 	//Right has priority (Right can Overwrite ScrollPos)
@@ -1679,21 +1651,6 @@ std::pair<bool, bool> CGridView::GetHorizontalVerticalScrollNecessity()
 	return std::make_pair(bEnableShowHorizontal, bEnableShowVertical);
 }
 
-//CRect CGridView::GetCellsRect()
-//{
-//	CRect rc(CSheet::GetCellsRect());
-//	auto scrollNecessity(GetHorizontalVerticalScrollNecessity());
-//
-//	if(scrollNecessity.first){
-//		rc.bottom += GetSystemMetrics(SM_CYHSCROLL);
-//	}
-//	
-//	if(scrollNecessity.next){
-//		rc.right += GetSystemMetrics(SM_CXVSCROLL);
-//	}
-//	
-//}
-
 CRect CGridView::GetPageRect()
 {
 	CRect rcClient(GetClientRect());
@@ -1721,26 +1678,6 @@ std::shared_ptr<CDC> CGridView::GetClientDCPtr()const
 
 void CGridView::CellValueChanged(CellEventArgs& e)
 {
-	//if(e.CellPtr->GetRowPtr()==GetFilterRowPtr().get())
-	//{
-	//	auto pCell = e.CellPtr;
-	//	auto hWnd = GetGridPtr()->m_hWnd;
-	//	if(!Visible()){return;}
-	//	CSheet::string_type strFilter=pCell->GetString();
-	//	m_timer.expires_from_now(boost::posix_time::milliseconds(500));
-	//	m_timer.async_wait([hWnd,pCell,strFilter](const boost::system::error_code& error)->void{
-
-	//		if(error == boost::asio::error::operation_aborted){
-	//			::OutputDebugStringA("timer canceled\r\n");
-	//		}else if(strFilter==pCell->GetString()){
-	//			::OutputDebugStringA("timer filter\r\n");
-	//			::PostMessage(hWnd,WM_FILTER,NULL,NULL);
-	//		}else{
-	//			::OutputDebugStringA("timer...\r\n");
-	//		}
-	//	});
-	//}
-
 	CSheet::CellValueChanged(e);
 }
 

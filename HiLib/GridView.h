@@ -5,13 +5,9 @@
 #include "ThreadHelper.h"
 #include <queue>
 
-
-
-//class IKeyObserver;
 class CBackgroundProperty;
 class CGridViewProperty;
 struct CMouseStateMachine;
-
 
 class CGridView:public CWnd,public CSheet
 {
@@ -29,12 +25,11 @@ protected:
 	CScrollBar m_horizontal;
 	UPBufferDC m_upBuffDC;
 
-	//std::vector<std::shared_ptr<IKeyObserver>> m_keyObservers;
 	row_type m_rowHeaderHeader; /**< Header Header row */
 	row_type m_rowNameHeader; /**< Name Header row */
 	row_type m_rowFilter; /**< Filter row */
 	std::shared_ptr<CMouseStateMachine> m_pMouseStateMachine;
-	//IMouseState* m_pMouseState;
+
 protected:
 	boost::asio::io_service m_filterIosv;
 	boost::asio::io_service::work m_filterWork;
@@ -43,11 +38,7 @@ protected:
 	boost::asio::io_service m_invalidateIosv;
 	boost::asio::io_service::work m_invalidateWork;
 	boost::asio::deadline_timer m_invalidateTimer;
-	//std::vector<std::function<void()>> m_delayUpdateActions;
-	//std::mutex m_delayUpdateMtx;
 
-
-	//std::mutex m_mtx;
 	std::shared_ptr<CGridViewProperty> m_spGridViewProp;
 	std::shared_ptr<int> m_spDeltaScroll;
 	std::shared_ptr<CBackgroundProperty> m_spBackgroundProperty;
@@ -61,17 +52,13 @@ public:
 	boost::signals2::signal<void()> SignalPreDelayUpdate;
 	static UINT WM_DELAY_UPDATE;
 	void DelayUpdate();
-	//void PushDelayUpdateAction(std::function<void()> func);
-	//void EraseDelayUpdateAction(std::function<void()> func);
 
 	virtual void ColumnInserted(CColumnEventArgs& e)override;
 	virtual void ColumnErased(CColumnEventArgs& e)override;
 	virtual void ColumnMoved(CMovedEventArgs<ColTag>& e)override;
 
-
 public:
-	CGridView(
-			std::shared_ptr<CGridViewProperty> spGridViewProp,
+	CGridView(std::shared_ptr<CGridViewProperty> spGridViewProp,
 			CMenu* pContextMenu= &CGridView::ContextMenu);
 	virtual ~CGridView();
 
@@ -105,7 +92,6 @@ protected:
 	virtual LRESULT OnFilter(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnLButtonDblClkTimeExceed(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	//void PushDelayUpdateAction(std::function<void()> func) { m_delayUpdateActions.push(func); }
 
 	virtual LRESULT OnCmdEnChange(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 
@@ -130,12 +116,6 @@ public:
 	virtual void ClearFilter();
 	virtual void FilterAll();
 
-	virtual void Sorted() override;
-
-
-
-
-public:
 	std::shared_ptr<CMouseStateMachine> GetMouseStateMachine() { return m_pMouseStateMachine; }
 	void SetMouseStateMachine(std::shared_ptr<CMouseStateMachine>& machine) { m_pMouseStateMachine = machine; }
 	boost::asio::deadline_timer* GetFilterTimerPtr(){return &m_filterTimer;}
@@ -166,10 +146,8 @@ public:
 	virtual LRESULT OnCommandFind(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	void FindNext(const std::wstring& findWord, bool matchCase, bool matchWholeWord);
 	void FindPrev(const std::wstring& findWord, bool matchCase, bool matchWholeWord);
-	//virtual void UpdateData(size_type rowData,size_type colData);
 
 	virtual CGridView* GetGridPtr(){return this;};
-	//virtual BOOL InvalidateRect(const LPRECT lpRect,BOOL bErase);
 
 	virtual CPoint GetScrollPos()const;
 	virtual void SetScrollPos(const CPoint& ptScroll);
@@ -178,23 +156,21 @@ public:
 	virtual coordinates_type GetHorizontalScrollPos()const;
 	virtual CRect GetPaintRect();
 	virtual CRect GetPageRect();
-std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
+	std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
 	
 	virtual void UpdateAll();
 
-	virtual void SortAll();
 	virtual void SortAllInSubmitUpdate();
 
-		virtual void UpdateScrolls();
-		virtual void Invalidate();
+	virtual void UpdateScrolls();
+	virtual void Invalidate();
 
-		//virtual void ColumnErased(CColumnEventArgs& e);
-		virtual void ColumnVisibleChanged(CColumnEventArgs& e);
-		virtual void CellValueChanged(CellEventArgs& e);
-		virtual void SubmitUpdate();
+	//virtual void ColumnErased(CColumnEventArgs& e);
+	virtual void ColumnVisibleChanged(CColumnEventArgs& e);
+	virtual void CellValueChanged(CellEventArgs& e);
+	virtual void SubmitUpdate();
 
-
-		Status SaveGIFWithNewColorTable(Image *pImage,IStream* pIStream,const CLSID* clsidEncoder,DWORD nColors,BOOL fTransparent);
+	Status SaveGIFWithNewColorTable(Image *pImage,IStream* pIStream,const CLSID* clsidEncoder,DWORD nColors,BOOL fTransparent);
 
 	virtual CColumn* GetParentColumnPtr(CCell* pCell)override;	
 	

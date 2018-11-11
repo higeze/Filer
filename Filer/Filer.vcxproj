@@ -72,16 +72,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\library\boost;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)..\..\library\boost;$(SolutionDir)..\..\library\boost\boost\python_include;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86\lib;$(SolutionDir)..\..\library\boost\stage\x86\python_libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\library\boost;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)..\..\library\boost;$(SolutionDir)..\..\library\boost\boost\python_include;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86\lib;$(SolutionDir)..\..\library\boost\stage\x86\python_libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -105,6 +105,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Python37.lib;libboost_python37-vc141-mt-sgd-x32-1_67.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -144,6 +145,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Python37.lib;libboost_python37-vc141-mt-sgd-x32-1_67.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>

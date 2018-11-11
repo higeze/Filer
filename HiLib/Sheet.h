@@ -28,8 +28,6 @@ class CCursorer;
 class IMouseObserver;
 class CSerializeData;
 
-struct ColTag;
-
 struct RowTag
 {
 	typedef std::shared_ptr<CRow> SharedPtr;
@@ -39,6 +37,7 @@ struct RowTag
 	typedef ColTag Other;
 	typedef RowData Data;
 };
+
 struct ColTag
 {
 	typedef std::shared_ptr<CColumn> SharedPtr;
@@ -48,8 +47,10 @@ struct ColTag
 	typedef RowTag Other;
 	typedef ColumnData Data;
 };
+
 struct AllTag
 {};
+
 struct VisTag
 {};
 
@@ -68,14 +69,13 @@ const UINT WM_FILTER = RegisterWindowMessage(L"WM_FILTER");
 const UINT WM_EDITCELL = RegisterWindowMessage(L"WM_EDITCELL");
 const UINT WM_LBUTTONDBLCLKTIMEXCEED = RegisterWindowMessage(L"WM_LBUTTONDBLCLKTIMEXCEED");
 
-
 /********/
 /*CSheet*/
 /********/
 class CSheet:public CUIElement
 {
 	//Friend classes
-	friend class CFileDragger;//TODO
+	friend class CFileDragger;
 	friend class CSerializeData;
 
 public:
@@ -159,9 +159,6 @@ public:
 	virtual std::shared_ptr<CCellProperty> GetFilterProperty(){return m_spFilterProperty;} /** Getter for Filter Cell Property */
 	virtual std::shared_ptr<CCellProperty> GetCellProperty(){return m_spCellProperty;} /** Getter for Cell Property */
 
-	///ColumnDictionary* GetColumnVisibleDictionaryPtr(){return &m_columnVisibleDictionary;} /** Getter for Visible Column Dictionary */
-	RowDictionary& RowAllDictionary(){return m_rowAllDictionary;} /** Getter for All Row Dictionary  */
-
 	virtual column_type GetHeaderColumnPtr()const{return m_pHeaderColumn;} /** Getter for Header Column */
 	virtual void SetHeaderColumnPtr(column_type column){m_pHeaderColumn=column;} /** Setter for Header Column */
 
@@ -172,6 +169,7 @@ public:
 	virtual void SetSelected(const bool& bSelected){m_bSelected=bSelected;};
 	virtual bool GetFocused()const{return m_bFocused;};
 	//virtual void SetFocused(const bool& bFocused){m_bFocused=bFocused;};
+
 	//Function
 	void SetAllRowMeasureValid(bool valid);
 	void SetAllColumnMeasureValid(bool valid);
@@ -186,8 +184,6 @@ public:
 	virtual void ColumnErased(CColumnEventArgs& e);
 	virtual void ColumnMoved(CMovedEventArgs<ColTag>& e) {}
 
-	//virtual void ColumnHeaderTrack(CColumnEventArgs& e);
-	//virtual void ColumnHeaderEndTrack(CColumnEventArgs& e);
 	virtual void ColumnHeaderFitWidth(CColumnEventArgs& e);
 
 	virtual void RowVisibleChanged(CRowEventArgs& e){}
@@ -196,7 +192,6 @@ public:
 	virtual void RowsErased(CRowsEventArgs& e);
 	virtual void RowMoved(CMovedEventArgs<RowTag>& e) {}
 
-	virtual void Sorted();
 	virtual void SizeChanged();
 	virtual void Scroll();
 
@@ -223,12 +218,6 @@ public:
 	virtual void UpdateColumnVisibleDictionary();
 	virtual void UpdateRowPaintDictionary();
 	virtual void UpdateColumnPaintDictionary();
-
-	virtual void Sort(CColumn* pCol, Sorts sort, bool postUpdate = true);
-
-	virtual void Filter(size_type colDisp,std::function<bool(const cell_type&)> predicate);
-
-	virtual void ResetFilter();
 
 	virtual void EraseColumn(column_type spColumn){EraseColumnImpl(spColumn);}
 	virtual void EraseColumnImpl(column_type spColumn);
@@ -367,6 +356,7 @@ public:
 		auto iter = dic.find(index);
 		if (iter != dic.end()) {
 			return iter->DataPtr;
+			return iter->DataPtr;
 		}
 		else {
 			return nullptr;
@@ -421,11 +411,6 @@ public:
 			data.DataPtr->SetMeasureValid(false);
 			CSheet::Cell(ptr, data.DataPtr)->SetActMeasureValid(false);
 		};
-		//auto& myDic = GetDictionary<TRC, AllTag>();
-		//for (const auto& data : myDic) {
-		//	data.DataPtr->SetMeasureValid(false);
-		//}
-		//ptr->SetMeasureValid(false);
 
 		PostUpdate(Updates::Column);
 		PostUpdate(Updates::Row);
@@ -449,19 +434,12 @@ public:
 			CSheet::Cell(ptr, other.DataPtr)->SetActMeasureValid(false);
 		}
 
-		//boost::for_each(m_rowAllDictionary, [&](const RowData& rowData) {
-		//	e.m_pColumn->Cell(rowData.DataPtr.get())->SetActMeasureValid(false);
-		//});
-
-		//this->SetAllRowMeasureValid(false);
-
 		PostUpdate(Updates::Column);
 		PostUpdate(Updates::Row);
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
 	}
 	template<typename TRC> void FitWidth(TRC::template SharedPtr& e) {  }
-
 
 	template<typename TRC>
 	void MoveImpl(size_type indexTo, TRC::template SharedPtr spFrom)
@@ -491,7 +469,6 @@ public:
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);//
 	}
-
 
 	template<typename TRC>
 	void EraseImpl(TRC::template SharedPtr erasePtr)
@@ -524,6 +501,7 @@ public:
 			}
 		}
 	}
+
 	template<typename TRC, typename TAV>
 	void InsertImpl(size_type index, TRC::template SharedPtr& pInsert)
 	{
@@ -572,51 +550,6 @@ public:
 		//Insert
 		dict.insert(TRC::Data(index, pInsert));
 	}
-	//template<typename TRC>
-	//void InsertLeftImpl(size_type allIndex, TRC::template SharedPtr pInsert)
-	//{
-	//	auto& dictionary = GetDictionary<TRC, AllTag>();
-	//	auto& ptrDictionary = dictionary.get<PointerTag>();
-	//	auto& idxDictionary = dictionary.get<IndexTag>();
-
-	//	if (allIndex >= 0) {//Plus
-	//		if (allIndex >= GetMaxIndex<TRC, AllTag>()) {
-	//			allIndex = size;
-	//		}
-	//		//Slide right
-	//		auto iterTo = idxDictionary.find(allIndex);
-	//		if (iterTo != idxDictionary.end()) {
-	//			auto iter = idxDictionary.end(); iter--;
-	//			auto end = iterTo; end--;
-	//			for (; iter != end; --iter) {
-	//				auto newdata = *iter;
-	//				newdata.Index++;
-	//				idxDictionary.replace(iter, newdata);
-	//			}
-	//		}
-
-	//	}
-	//	else {//Minus
-	//		size_type size = GetMinIndex<TRC, AllTag>();
-	//		if (allIndex <= (-size - 1)) {
-	//			allIndex = (-size - 1);
-	//		}
-	//		//Slide left
-	//		auto iterTo = idxDictionary.find(allIndex);
-	//		if (iterTo != idxDictionary.end()) {
-	//			auto iter = idxDictionary.begin();
-	//			auto end = iterTo;
-	//			for (; iter != end; ++iter) {
-	//				auto newdata = *iter;
-	//				newdata.Index--;
-	//				idxDictionary.replace(iter, newdata);
-	//			}
-	//		}
-	//		allIndex--;
-	//	}
-	//	//Insert
-	//	dictionary.insert(TRC::Dictionary::value_type(allIndex, pInsert));
-	//}
 	
 	virtual void SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& cell2, bool doSelect);
 	template<class T>
@@ -718,53 +651,11 @@ public:
  *  Template function
  */
 protected:
+	virtual void Sort(CColumn* pCol, Sorts sort, bool postUpdate = true);
 
+	virtual void Filter(size_type colDisp, std::function<bool(const cell_type&)> predicate);
 
-	//template<class T,class U>
-	//void InsertLeft(T& dictionary,size_type allIndex, U& pInsert)
-	//{
-	//	auto& ptrDictionary = dictionary.get<PointerTag>();	
-	//	auto& idxDictionary = dictionary.get<IndexTag>();
-
-
-	//	if(allIndex>=0){//Plus
-	//		size_type size=dictionary.size()-MinusSize(dictionary);
-	//		if(allIndex>=size){
-	//			allIndex=size;
-	//		}
-	//		//Slide right
-	//		auto iterTo=idxDictionary.find(allIndex);
-	//		if(iterTo!=idxDictionary.end()){
-	//			auto iter=idxDictionary.end();iter--;
-	//			auto end=iterTo;end--;
-	//			for(;iter!=end;--iter){
-	//				auto newdata=*iter;
-	//				newdata.Index++;
-	//				idxDictionary.replace(iter,newdata);
-	//			}
-	//		}
-
-	//	}else{//Minus
-	//		size_type size=MinusSize(dictionary);
-	//		if(allIndex<=(-size-1)){
-	//			allIndex=(-size-1);
-	//		}
-	//		//Slide left
-	//		auto iterTo=idxDictionary.find(allIndex);
-	//		if(iterTo!=idxDictionary.end()){
-	//			auto iter=idxDictionary.begin();
-	//			auto end=iterTo;
-	//			for(;iter!=end;++iter){
-	//				auto newdata=*iter;
-	//				newdata.Index--;
-	//				idxDictionary.replace(iter,newdata);
-	//			}
-	//		}
-	//		allIndex--;
-	//	}
-	//	//Insert
-	//	dictionary.insert(T::value_type(allIndex,pInsert));
-	//}
+	virtual void ResetFilter();
 
 	template<class T, class U>
 	void Erase(T& dictionary, U erasePtr)
@@ -929,7 +820,6 @@ template<> inline int CSheet::Point2Coordinate<ColTag>(CPoint pt) { return pt.x;
 
 template<> inline int CSheet::Coordinate2Index<RowTag, AllTag>(int coordinate)
 {
-//	return Coordinate2Pointer<RowTag>(coordinate)->GetIndex<AllTag>();
 	auto ptOrigin = GetOriginPoint();
 
 	auto& dictionary = GetDictionary<RowTag, AllTag>().get<IndexTag>();
@@ -981,8 +871,6 @@ template<> inline int CSheet::Coordinate2Index<RowTag, VisTag>(int coordinate)
 	}
 	return index;
 }
-
-
 
 template<> inline int CSheet::Coordinate2Index<ColTag, VisTag>(int coordinate)
 {

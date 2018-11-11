@@ -65,7 +65,9 @@ LRESULT CFavoritesGridView::OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lPa
 
 void CFavoritesGridView::OpenFavorites()
 {
-	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFavorites")
+	BOOST_LOG_TRIVIAL(trace) << L"CFavoritesGridView::OpenFavorites";
+
+	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFavorites Total")
 
 	m_spCursorer->Clear();
 

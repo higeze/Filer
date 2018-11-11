@@ -1,7 +1,7 @@
 #include "Sheet.h"
 #include "SheetEventArgs.h"
 #include "CellProperty.h"
-//
+
 #include "MyRect.h"
 #include "MyDC.h"
 #include "MyFont.h"
@@ -17,7 +17,7 @@
 #include "Cursorer.h"
 #include "Celler.h"
 #include "SheetStateMachine.h"
-//#include <list>
+
 #include <iterator>
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
@@ -56,8 +56,6 @@ CSheet::CSheet(
 	if (m_spCeller.get() == nullptr) {
 		m_spCeller = std::make_shared<CCeller>();
 	}
-
-
 }
 
 std::shared_ptr<CCell>& CSheet::Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn)
@@ -86,7 +84,6 @@ std::shared_ptr<CCell> CSheet::Cell(const CPoint& pt)
 		return nullptr;
 	}
 }
-
 
 void CSheet::SetAllRowMeasureValid(bool valid)
 {
@@ -142,7 +139,7 @@ void CSheet::ColumnInserted(CColumnEventArgs& e)
 	PostUpdate(Updates::RowVisible);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);//
+	PostUpdate(Updates::Invalidate);
 }
 
 void CSheet::ColumnErased(CColumnEventArgs& e)
@@ -154,40 +151,21 @@ void CSheet::ColumnErased(CColumnEventArgs& e)
 	PostUpdate(Updates::RowVisible);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);//
+	PostUpdate(Updates::Invalidate);
 }
-//void CSheet::ColumnHeaderTrack(CColumnEventArgs& e)
-//{
-//	PostUpdate(Updates::Column);
-//	PostUpdate(Updates::Scrolls);
-//	PostUpdate(Updates::Invalidate);//	
-//}
-//void CSheet::ColumnHeaderEndTrack(CColumnEventArgs& e)
-//{
-//	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
-//		e.m_pColumn->Cell(rowData.DataPtr.get())->SetActMeasureValid(false);
-//	});
-//
-//	this->SetAllRowMeasureValid(false);
-//
-//	PostUpdate(Updates::Column);
-//	PostUpdate(Updates::Row);
-//	PostUpdate(Updates::Scrolls);
-//	PostUpdate(Updates::Invalidate);//
-//}
 
 void CSheet::ColumnHeaderFitWidth(CColumnEventArgs& e)
 {
 	e.m_pColumn->SetMeasureValid(false);
-	boost::for_each(m_rowAllDictionary,[&](const RowData& rowData){
+	for(const auto& rowData : m_rowAllDictionary){
 		e.m_pColumn->Cell(rowData.DataPtr.get())->SetActMeasureValid(false);
-	});
+	}
 	this->SetAllColumnMeasureValid(false);
 	
 	PostUpdate(Updates::Column);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);//
+	PostUpdate(Updates::Invalidate);
 }
 
 void CSheet::RowInserted(CRowEventArgs& e)
@@ -225,12 +203,6 @@ void CSheet::RowsErased(CRowsEventArgs& e)
 	PostUpdate(Updates::Invalidate);//
 }
 
-void CSheet::Sorted()
-{
-	PostUpdate(Updates::RowVisible);
-	PostUpdate(Updates::Row);
-	PostUpdate(Updates::Invalidate);
-}
 void CSheet::SizeChanged()
 {
 	PostUpdate(Updates::Scrolls);
@@ -243,7 +215,7 @@ void CSheet::Scroll()
 
 void CSheet::SubmitUpdate()
 {
-	boost::for_each(m_setUpdate,[&](const Updates type){
+	for(const auto& type : m_setUpdate){
 		switch(type){
 		case Updates::RowVisible:
 			{
@@ -283,7 +255,7 @@ void CSheet::SubmitUpdate()
 		default:
 			break;
 		}
-	});
+	}
 	m_setUpdate.clear();
 }
 
@@ -308,9 +280,12 @@ void CSheet::PostUpdate(Updates type)
 		m_setUpdate.insert(Updates::Invalidate);
 		break;
 	case Updates::Sort:
-		PostUpdate(Updates::RowVisible);
-		PostUpdate(Updates::Row);
-		PostUpdate(Updates::Invalidate);
+		m_setUpdate.insert(Updates::RowVisible);
+		m_setUpdate.insert(Updates::Row);
+		m_setUpdate.insert(type);
+		m_setUpdate.insert(Updates::Invalidate);
+		PostUpdate(Updates::EnsureVisibleFocusedCell);
+		
 	default:
 		m_setUpdate.insert(type);
 		break;
@@ -322,7 +297,7 @@ CSheet::string_type CSheet::GetSheetString()const
 {
 	string_type str;
 
-	boost::range::for_each(m_rowVisibleDictionary,[&](const RowData& rowData){
+	for(const auto& rowData : m_rowVisibleDictionary){
 		bool bFirstLine=true;
 		boost::range::for_each(this->m_columnVisibleDictionary,[&](const ColumnData& colData){
 			auto pCell=colData.DataPtr->Cell(rowData.DataPtr.get());
@@ -334,20 +309,18 @@ CSheet::string_type CSheet::GetSheetString()const
 			str.append(pCell->GetString());
 		});
 		str.append(L"\r\n");
-	});
+	}
 
 	return str;
 }
 
 void CSheet::UpdateRowVisibleDictionary()
 {
-	//OnCursorClear(EventArgs(nullptr));
 	UpdateVisibleDictionary(m_rowAllDictionary,m_rowVisibleDictionary);
 }
 
 void CSheet::UpdateColumnVisibleDictionary()
 {
-	//OnCursorClear(EventArgs(nullptr));
 	UpdateVisibleDictionary(m_columnAllDictionary,m_columnVisibleDictionary);
 }
 
@@ -419,14 +392,7 @@ void CSheet::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
 		iter->first.Index=std::distance(begin, iter);
 		m_rowAllDictionary.insert(iter->first);
 	}
-
-	//Update
-	if (postUpdate) {
-		Sorted();
-	}
-	
 }
-
 
 void CSheet::Filter(size_type colDisp,std::function<bool(const cell_type&)> predicate)
 {
@@ -455,22 +421,6 @@ void CSheet::ResetFilter()
 		colIter->DataPtr->SetVisible(true);		
 	}
 }
-
-//void CSheet::MoveColumnImpl(size_type colTo, column_type spFromColumn)
-//{ 
-//	int from = spFromColumn->GetIndex<AllTag>();
-//	int to = colTo;
-//	if(from>=0 && to>=0  && to>from){
-//		to--;
-//	}
-//	if(from<0 && to<0 && to<from){
-//		to++;
-//	}
-//
-//	Erase(m_columnAllDictionary, spFromColumn.get());
-//	InsertLeft(m_columnAllDictionary,to,spFromColumn);
-//	ColumnMoved(CMovedEventArgs<ColTag>(spFromColumn.get(), from, to));
-//}
 
 void CSheet::EraseColumnImpl(column_type spColumn)
 {
@@ -570,7 +520,6 @@ void CSheet::UpdateRow()
 	if(!Visible()){return;}
 
 	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
-	//CPoint ptScroll=GetScrollPos();
 	coordinates_type top = m_spCellProperty->GetPenPtr()->GetLeftTopPenWidth();
 
 	//auto size = rowDictionary.size();
@@ -708,21 +657,6 @@ CRect CSheet::GetCellsRect()
 	return CRect(left,top,right,bottom);
 }
 
-//CRect CSheet::GetCellsClipRect()
-//{
-//	//Calculate Origin
-//	CPoint ptOrigin(GetOriginPoint());
-//	CRect rcClip(GetRect());
-//
-//	rcClip.left=ptOrigin.x;
-//	rcClip.top=ptOrigin.y;
-//	//CRect rcCells(GetCellsRect());
-//	//CRect rcClip;
-//	//
-//	//rcClip.IntersectRect(rcCells,rcClient);
-//
-//	return rcClip;
-//}
 void CSheet::OnPaintAll(const PaintEvent& e)
 {
 	DEBUG_OUTPUT_COLUMN_VISIBLE_DICTIONARY
@@ -751,8 +685,7 @@ void CSheet::OnPaint(const PaintEvent& e)
 	DEBUG_OUTPUT_COLUMN_PAINT_DICTIONARY
 
 
-		//Paint
-		//e.DCPtr->FillRect(GetCellsClipRect(),*(m_spCellProperty->GetBackgroundBrushPtr()));
+	//Paint
 
 	auto& colDictionary=m_columnPaintDictionary.get<IndexTag>();
 	auto& rowDictionary=m_rowPaintDictionary.get<IndexTag>();
@@ -767,11 +700,8 @@ void CSheet::UpdateAll()
 {
 	UpdateRowVisibleDictionary();//TODO today
 	UpdateColumnVisibleDictionary();
-	//	UpdateFitHeight();
-	//	UpdateFitWidth();
 	UpdateColumn();
 	UpdateRow();
-
 }
 
 void CSheet::OnContextMenu(const ContextMenuEvent& e)
@@ -877,28 +807,28 @@ void CSheet::SelectAll()
 
 void CSheet::DeselectAll()
 {
-	boost::range::for_each(m_columnAllDictionary,[&](const ColumnData& colData){
-		boost::range::for_each(m_rowAllDictionary,[&](const RowData& rowData){
+	for(const auto& colData : m_columnAllDictionary){
+		for(const auto rowData : m_rowAllDictionary){
 			colData.DataPtr->Cell(rowData.DataPtr.get())->SetSelected(false);
-		});
-	});
+		}
+	}
 
-	boost::range::for_each(m_columnAllDictionary,[&](const ColumnData& colData){
+	for (const auto& colData : m_columnAllDictionary) {
 		colData.DataPtr->SetSelected(false);
-	});
+	}
 
-	boost::range::for_each(m_rowAllDictionary,[&](const RowData& rowData){
+	for (const auto rowData : m_rowAllDictionary) {
 		rowData.DataPtr->SetSelected(false);
-	});
+	}
 }
 
 void CSheet::UnhotAll()
 {
-	boost::range::for_each(m_columnAllDictionary,[&](const ColumnData& colData){
-		boost::range::for_each(m_rowAllDictionary,[&](const RowData& rowData){
+	for (const auto& colData : m_columnAllDictionary) {
+		for (const auto rowData : m_rowAllDictionary) {
 			colData.DataPtr->Cell(rowData.DataPtr.get())->SetState(UIElementState::Normal);
-		});
-	});
+		}
+	}
 }
 
 bool CSheet::IsFocusedCell(const CCell* pCell)const

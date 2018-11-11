@@ -487,8 +487,10 @@ void CFilerGridView::OpenFile(std::shared_ptr<CShellFile>& spFile)
 
 void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Total")
-		bool isUpdate = m_spFolder == spFolder;
+	BOOST_LOG_TRIVIAL(trace) << L"CFilerGridView::OpenFolder : " + spFolder->GetFileName();
+
+	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, (L"OpenFolder " + spFolder->GetFileName() + L" Total").c_str())
+	bool isUpdate = m_spFolder == spFolder;
 	{
 		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Pre-Process")
 
