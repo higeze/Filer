@@ -11,6 +11,7 @@ public:
 	virtual bool CanResizeRow()const override{return true;}
 	virtual bool CanResizeColumn()const override{return false;}
 
+	//TODO Not size but index
 	void Resize(size_type row, size_type col)override
 	{
 		size_type curRowSize = GetMaxIndex<RowTag, AllTag>();

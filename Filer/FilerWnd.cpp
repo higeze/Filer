@@ -21,7 +21,8 @@ CFilerWnd::CFilerWnd()
 	m_spFavoritesView(std::make_shared<CFavoritesGridView>(m_spGridViewProp)),
 	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spGridViewProp)),
 	m_spRightView(std::make_shared<CFilerTabGridView>(m_spGridViewProp)),
-	m_spCurView(m_spLeftView)
+	m_spCurView(m_spLeftView),
+	m_spPyExProp(std::make_shared<CPythonExtensionProperty>())
 {
 	m_spLeftView->SetParentWnd(this);
 	m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9996);
@@ -73,6 +74,9 @@ CFilerWnd::CFilerWnd()
 	AddCmdIDHandler(IDM_FAVORITESOPTION,&CFilerWnd::OnCommandFavoritesOption,this);
 	AddCmdIDHandler(IDM_LEFTVIEWOPTION, &CFilerWnd::OnCommandLeftViewOption, this);
 	AddCmdIDHandler(IDM_RIGHTVIEWOPTION, &CFilerWnd::OnCommandRightViewOption, this);
+
+	AddCmdIDHandler(IDM_PYTHONEXTENSIONOPTION, &CFilerWnd::OnCommandPythonExtensionOption, this);
+
 }
 
 CFilerWnd::~CFilerWnd(){}
@@ -179,7 +183,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 
 			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
 
-			for (auto& pyex : m_pyExtensions) {
+			for (auto& pyex : m_spPyExProp->PythonExtensions) {
 				MENUITEMINFO mii = { 0 };
 				mii.cbSize = sizeof(MENUITEMINFO);
 				mii.fMask = MIIM_TYPE | MIIM_ID;
@@ -206,8 +210,8 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				return true;
 			}else if(idCmd > IDM_ADDTOFAVORITEINGRID){
 				try {
-					auto iter = std::find_if(m_pyExtensions.begin(), m_pyExtensions.end(), [idCmd](const auto& pyex)->bool {return pyex.ID == idCmd; });
-					if (iter != m_pyExtensions.end()) {
+					auto iter = std::find_if(m_spPyExProp->PythonExtensions.begin(), m_spPyExProp->PythonExtensions.end(), [idCmd](const auto& pyex)->bool {return pyex.ID == idCmd; });
+					if (iter != m_spPyExProp->PythonExtensions.end()) {
 						using namespace boost::python;
 						Py_SetPythonHome(L"Python37");
 						Py_Initialize();
@@ -577,4 +581,29 @@ LRESULT CFilerWnd::OnCommandViewOption(std::shared_ptr<CFilerTabGridView>& view)
 
 	return 0;
 }
+
+LRESULT CFilerWnd::OnCommandPythonExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	CRect rc(0, 0, 0, 0);
+
+	auto pPropWnd = new CPropertyWnd<CPythonExtensionProperty>(
+		m_spGridViewProp,
+		L"PythonExtensionProperty",
+		m_spPyExProp);
+
+	pPropWnd->PropertyChanged.connect([&](const std::wstring& str)->void {
+		SerializeProperty(this);
+	});
+
+	pPropWnd->Create(m_hWnd, rc);
+	rc = CRect(pPropWnd->GetGridView()->MeasureSize());
+	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
+	pPropWnd->MoveWindow(0, 0, rc.Width() + ::GetSystemMetrics(SM_CXVSCROLL), min(500, rc.Height() + ::GetSystemMetrics(SM_CYVSCROLL) + 10), FALSE);
+	pPropWnd->CenterWindow();
+	pPropWnd->ShowWindow(SW_SHOW);
+	pPropWnd->UpdateWindow();
+
+	return 0;
+}
+
 

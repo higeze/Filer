@@ -425,10 +425,11 @@ public:
 		if(auto spSheet = std::dynamic_pointer_cast<CSheet>(CSheet::Cell(pRow, pColumn))){
 			auto& rowAllDict = spSheet->GetDictionary<RowTag, AllTag>();
 			auto& rowDict = rowAllDict.get<IndexTag>();
+			t.clear();
 			for(auto rowIter=rowDict.find(0);rowIter!=rowDict.end();rowIter++){
-				//T val;
-				DeserializeValue(t.at((size_t)std::distance(rowDict.find(0), rowIter)),rowIter->DataPtr.get(),spSheet->Index2Pointer<ColTag, AllTag>(1).get());
-				//t.push_back(val);
+				T val;
+				DeserializeValue(val,rowIter->DataPtr.get(),spSheet->Index2Pointer<ColTag, AllTag>(1).get());
+				t.push_back(val);
 			}
 			
 		}

@@ -11,6 +11,7 @@ protected:
 public:
 	virtual bool CanResizeRow() const{return false;}
 	virtual bool CanResizeColumn() const{return false;}
+	virtual void AddRow();
 	virtual void Resize();
 	virtual void Resize(size_type row, size_type col){}
 

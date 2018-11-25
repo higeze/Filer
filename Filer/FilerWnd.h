@@ -35,6 +35,19 @@ struct PythonExtension
 	}
 };
 
+struct CPythonExtensionProperty
+{
+public:
+	std::vector<PythonExtension> PythonExtensions;
+
+	FRIEND_SERIALIZER
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar("PythonExtensions", PythonExtensions);
+	}
+};
+
 class CFilerWnd:public CWnd
 {
 //public:
@@ -49,8 +62,7 @@ private:
 	std::shared_ptr<CFilerTabGridView> m_spLeftView;
 	std::shared_ptr<CFilerTabGridView> m_spRightView;
 	std::shared_ptr<CFilerTabGridView> m_spCurView;
-
-	std::vector<PythonExtension> m_pyExtensions;
+	std::shared_ptr<CPythonExtensionProperty> m_spPyExProp;
 	//CKonamiCommander m_konamiCommander;
 
 public:
@@ -96,6 +108,7 @@ private:
 	//LRESULT OnNotifyTabSelChanging(int id, LPNMHDR, BOOL& bHandled);
 	//LRESULT OnNotifyTabSelChange(int id, LPNMHDR, BOOL& bHandled);
 	//LRESULT OnNotifyTabRClick(int id, LPNMHDR, BOOL& bHandled);
+
 	LRESULT OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	LRESULT OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
@@ -103,6 +116,7 @@ private:
 	LRESULT OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandViewOption(std::shared_ptr<CFilerTabGridView>& view);
+	LRESULT OnCommandPythonExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 
 	//void AddNewView(std::wstring path);
 public:
@@ -126,7 +140,7 @@ public:
 
 		ar("ApplicationProperty", m_spApplicationProp);
 
-		ar("PythonExtensions", m_pyExtensions);
+		ar("PythonExtensionProperty", m_spPyExProp);
 
     }
 
@@ -154,7 +168,7 @@ public:
 
 		ar("ApplicationProperty", m_spApplicationProp);
 
-		ar("PythonExtensions", m_pyExtensions);
+		ar("PythonExtensionProperty", m_spPyExProp);
 
 		//{
 		//	PythonExtension pyex;

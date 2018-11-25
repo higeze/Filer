@@ -40,6 +40,15 @@ CSheetCell::CSheetCell(
 	m_spColDragger = std::make_shared<CSheetCellColDragger>();
 }
 
+void CSheetCell::AddRow()
+{
+	if (CanResizeRow() || CanResizeColumn()) {
+		Resize(GetMaxIndex<RowTag, AllTag>() + 1, GetMaxIndex<ColTag, AllTag>());
+	} else {
+
+	}
+}
+
 void CSheetCell::Resize()
 {
 	if(CanResizeRow() || CanResizeColumn()){
@@ -317,22 +326,35 @@ CMenu* CSheetCell::GetContextMenuPtr()
 
 	//Resize
 	if(CanResizeRow() || CanResizeColumn()){
-		//Create Inserted menu
-		auto spMenuItem = std::make_shared<CFunctionMenuItem>();
-		spMenuItem->SetID(IDM_RESIZE_SHEETCELL);
-		spMenuItem->SetMask(MIIM_TYPE|MIIM_ID);
-		spMenuItem->SetType(MFT_STRING);
-		spMenuItem->SetTypeData(L"Resize");
-		spMenuItem->SetFunction([&]()->void{Resize();});
+		//Create Resize menu
+		auto spResizeMenuItem = std::make_shared<CFunctionMenuItem>();
+		spResizeMenuItem->SetID(IDM_RESIZE_SHEETCELL);
+		spResizeMenuItem->SetMask(MIIM_TYPE|MIIM_ID);
+		spResizeMenuItem->SetType(MFT_STRING);
+		spResizeMenuItem->SetTypeData(L"Resize");
+		spResizeMenuItem->SetFunction([&]()->void{Resize();});
 		//Assign command
-		GetGridPtr()->ReplaceCmdIDHandler(spMenuItem->GetID(),
-			[spMenuItem](WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)->HRESULT
-				{return spMenuItem->OnCommand(wNotifyCode,wID,hWndCtl,bHandled);});
+		GetGridPtr()->ReplaceCmdIDHandler(spResizeMenuItem->GetID(),
+			[spResizeMenuItem](WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)->HRESULT
+				{return spResizeMenuItem->OnCommand(wNotifyCode,wID,hWndCtl,bHandled);});
+
+		//Create AddRow menu
+		auto spAddRowMenuItem = std::make_shared<CFunctionMenuItem>();
+		spAddRowMenuItem->SetID(IDM_ADDROW_SHEETCELL);
+		spAddRowMenuItem->SetMask(MIIM_TYPE | MIIM_ID);
+		spAddRowMenuItem->SetType(MFT_STRING);
+		spAddRowMenuItem->SetTypeData(L"Add Row");
+		spAddRowMenuItem->SetFunction([&]()->void {AddRow(); });
+		//Assign command
+		GetGridPtr()->ReplaceCmdIDHandler(spAddRowMenuItem->GetID(),
+			[spAddRowMenuItem](WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)->HRESULT {return spAddRowMenuItem->OnCommand(wNotifyCode, wID, hWndCtl, bHandled); });
+
 		//Insert menu
 		if(SheetCellContextMenu.GetMenuItemCount()>0){
 			SheetCellContextMenu.InsertSeparator(SheetCellContextMenu.GetMenuItemCount(), TRUE);
 		}
-		SheetCellContextMenu.InsertMenuItem(SheetCellContextMenu.GetMenuItemCount(), TRUE, spMenuItem.get());
+		SheetCellContextMenu.InsertMenuItem(SheetCellContextMenu.GetMenuItemCount(), TRUE, spAddRowMenuItem.get());
+		SheetCellContextMenu.InsertMenuItem(SheetCellContextMenu.GetMenuItemCount(), TRUE, spResizeMenuItem.get());
 	}
 	return &SheetCellContextMenu;
 }
