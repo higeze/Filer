@@ -145,7 +145,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Python37.lib;libboost_python37-vc141-mt-sgd-x32-1_67.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Python37.lib;libboost_python37-vc141-mt-s-x32-1_67.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -194,6 +194,7 @@
     <ClInclude Include="..\HiLib\BindPaintColumn.h" />
     <ClInclude Include="..\HiLib\BindRow.h" />
     <ClInclude Include="..\HiLib\BoolCell.h" />
+    <ClInclude Include="..\HiLib\BoostPythonHelper.h" />
     <ClInclude Include="..\HiLib\ButtonState.h" />
     <ClInclude Include="..\HiLib\CDataString.h" />
     <ClInclude Include="..\HiLib\Cell.h" />
@@ -304,6 +305,7 @@
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
+    <ClInclude Include="PathRow.h" />
     <ClInclude Include="ShellZipFolder.h" />
     <ClInclude Include="DriveFolder.h" />
     <ClInclude Include="FileIconCache.h" />
@@ -351,6 +353,7 @@
   <ItemGroup>
     <ClCompile Include="..\HiLib\Band.cpp" />
     <ClCompile Include="..\HiLib\BoolCell.cpp" />
+    <ClCompile Include="..\HiLib\BoostPythonHelper.cpp" />
     <ClCompile Include="..\HiLib\Cell.cpp" />
     <ClCompile Include="..\HiLib\Celler.cpp" />
     <ClCompile Include="..\HiLib\CellStringCommand.cpp" />
@@ -408,6 +411,7 @@
     <ClCompile Include="..\HiLib\ThreadPool.h" />
     <ClCompile Include="..\HiLib\Tracker.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
+    <ClCompile Include="PathRow.cpp" />
     <ClCompile Include="ShellZipFolder.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="DriveFolder.cpp" />

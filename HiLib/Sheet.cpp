@@ -38,22 +38,25 @@ CSheet::CSheet(
 	m_pContextMenu(pContextMenu?pContextMenu:&CSheet::ContextMenu)
 {
 
-	if(m_spRowTracker.get()==nullptr){
+	if(!m_spRowTracker){
 		m_spRowTracker = std::make_shared<CTracker<RowTag>>();
 	}
-	if (m_spColTracker.get() == nullptr) {
+	if (!m_spColTracker) {
 		m_spColTracker = std::make_shared<CTracker<ColTag>>();
 	}
-	if(m_spRowDragger.get()==nullptr){
+	if(!m_spRowDragger){
 		m_spRowDragger = std::make_shared<CDragger<RowTag, ColTag>>();
 	}
-	if (m_spColDragger.get() == nullptr) {
+	if (!m_spColDragger) {
 		m_spColDragger = std::make_shared<CDragger<ColTag, RowTag>>();
 	}
-	if(m_spCursorer.get()==nullptr){
+	if (!m_spItemDragger) {
+		m_spItemDragger = std::make_shared<CNullDragger>();
+	}
+	if(!m_spCursorer){
 		m_spCursorer = std::make_shared<CCursorer>();
 	}
-	if (m_spCeller.get() == nullptr) {
+	if (!m_spCeller) {
 		m_spCeller = std::make_shared<CCeller>();
 	}
 }

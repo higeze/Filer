@@ -11,6 +11,8 @@
 #include "FilerProperty.h"
 #include "PropertyWnd.h"
 #include "FilerTabGridView.h"
+#include "MyFile.h"
+#include "BoostPythonHelper.h"
 
 CFilerWnd::CFilerWnd()
 	:m_spApplicationProp(std::make_shared<CApplicationProperty>()),
@@ -174,6 +176,21 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 			mii.wID = IDM_ADDTOFAVORITEINGRID;
 			mii.dwTypeData = L"Add to favorite";
 			menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
+
+			for (auto& pyex : m_pyExtensions) {
+				MENUITEMINFO mii = { 0 };
+				mii.cbSize = sizeof(MENUITEMINFO);
+				mii.fMask = MIIM_TYPE | MIIM_ID;
+				mii.fType = MFT_STRING;
+				mii.fState = MFS_ENABLED;
+				mii.wID = pyex.ID;
+				mii.dwTypeData = (LPWSTR)pyex.Name.c_str();
+				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+			}
+
+
 		};
 
 		spFilerView->ExecCustomContextMenu = [&](int idCmd, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl)->bool {
@@ -186,6 +203,38 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 					m_spFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spFavoritesView.get(), m_spFavoritesView->GetFavoritesProp()->GetFavorites()->size() - 1));
 				}
 				m_spFavoritesView->SubmitUpdate();
+				return true;
+			}else if(idCmd > IDM_ADDTOFAVORITEINGRID){
+				try {
+					auto iter = std::find_if(m_pyExtensions.begin(), m_pyExtensions.end(), [idCmd](const auto& pyex)->bool {return pyex.ID == idCmd; });
+					if (iter != m_pyExtensions.end()) {
+						using namespace boost::python;
+						Py_SetPythonHome(L"Python37");
+						Py_Initialize();
+
+						boost::python::list li;
+						for (auto& pIdl : vpIdl) {
+							STRRET strret;
+							psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
+							std::wstring path = STRRET2WSTR(strret, pIdl);
+
+							li.append(path);
+						}
+
+						object global_ns = import("__main__").attr("__dict__");
+
+						std::string script = CFile::ReadAllString<char>(iter->ScriptPath);
+						exec(script.c_str(), global_ns, global_ns);
+						object pythonFun = global_ns[iter->FunctionName];
+
+						pythonFun(li);
+					}
+				} catch (boost::python::error_already_set&) {
+
+					MessageBoxA(m_hWnd, parse_python_exception().c_str(), "Python error", MB_OK);
+				} catch (...) {
+					MessageBoxA(m_hWnd, "Error on running Python", "Python error", MB_OK);
+				}
 				return true;
 			}
 			else {

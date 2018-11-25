@@ -38,6 +38,8 @@
 #include "MenuItem.h"
 #include "ShowHideMenuItem.h"
 
+#include "PathRow.h"
+
 
 #define SCRATCH_QCM_FIRST 1
 #define SCRATCH_QCM_NEW 600//200,500 are used by system
@@ -84,7 +86,7 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	CGridView::OnCreate(uMsg,wParam,lParam,bHandled);
 
 	//Insert rows
-	m_rowHeader = std::make_shared<CParentHeaderRow>(this);
+	m_rowHeader = std::make_shared<CPathRow>(this);
 	m_rowNameHeader = std::make_shared<CParentHeaderRow>(this);
 	m_rowFilter = std::make_shared<CParentRow>(this);
 
@@ -487,9 +489,9 @@ void CFilerGridView::OpenFile(std::shared_ptr<CShellFile>& spFile)
 
 void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	BOOST_LOG_TRIVIAL(trace) << L"CFilerGridView::OpenFolder : " + spFolder->GetFileName();
+	BOOST_LOG_TRIVIAL(trace) << "CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetFileName());
 
-	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, (L"OpenFolder " + spFolder->GetFileName() + L" Total").c_str())
+	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Total")
 	bool isUpdate = m_spFolder == spFolder;
 	{
 		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Pre-Process")
@@ -601,6 +603,13 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		//		cell->SetFitMeasureValid(false);
 		//	}
 		//}
+
+		//PathCell
+		auto pPathCell = CSheet::Cell(m_rowHeader, m_pNameColumn);
+		pPathCell->SetFitMeasureValid(false);
+		pPathCell->SetActMeasureValid(false);
+		CellValueChanged(CellEventArgs(pPathCell.get()));
+
 
 		PostUpdate(Updates::Sort);
 		PostUpdate(Updates::Filter);

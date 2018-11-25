@@ -129,26 +129,30 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize()
 {
 	switch (GetLockSize().second) {
 	case FileSizeStatus::None:
-		SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
-		if (!m_pSizeThread) {
-			m_pSizeThread.reset(new std::thread([this]()->void {
-				try {
-					ULARGE_INTEGER size = { 0 };
-					if (GetFolderSize(size, m_cancelSize)) {
-						SetLockSize(std::make_pair(size, FileSizeStatus::Available));
+		if (::PathIsNetworkPath(GetPath().c_str())){
+			SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable));
+		} else {
+			SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
+
+			if (!m_pSizeThread) {
+				m_pSizeThread.reset(new std::thread([this]()->void {
+					try {
+						boost::timer tim;
+
+						ULARGE_INTEGER size = { 0 };
+						if (GetFolderSize(size, m_cancelSize, tim)) {
+							SetLockSize(std::make_pair(size, FileSizeStatus::Available));
+						} else {
+							SetLockSize(std::make_pair(size, FileSizeStatus::Unavailable));
+						}
+						SignalFileSizeChanged(this);
+					} catch (...) {
+						BOOST_LOG_TRIVIAL(trace) << L"CShellFile::GetSize Exception at size thread";
 					}
-					else {
-						SetLockSize(std::make_pair(size, FileSizeStatus::Unavailable));
-					}
-					SignalFileSizeChanged(this);
-				}
-				catch (...) {
-					BOOST_LOG_TRIVIAL(trace) << L"CShellFile::GetSize Exception at size thread";
-				}
-			}));
-		}
-		else {
-			OutputDebugString(L"Already run");
+				}));
+			} else {
+				OutputDebugString(L"Already run");
+			}
 		}
 		break;
 	case FileSizeStatus::Available:
@@ -159,10 +163,13 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize()
 	return GetLockSize();
 }
 
-bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel)
+bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel, boost::timer& tim)
 {
 	if (cancel.load()) {
 		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Canceled at top : " + GetPath();
+		return false;
+	} else if (tim.elapsed() > 0.5) {
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Timer elapsed at top : " + GetPath();
 		return false;
 	}
 	try {
@@ -178,12 +185,15 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel
 				if (cancel.load()) {
 					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Canceled in while : " + GetPath();
 					return false;
+				} else if (tim.elapsed() > 0.5) {
+					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Timer elapsed in while : " + GetPath();
+					return false;
 				}
 				if (!nextIdl) { break; }
 
 				auto spFile(CreateShExFileFolder(nextIdl));
 				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-					if (spFolder->GetFolderSize(childSize, cancel)) {
+					if (spFolder->GetFolderSize(childSize, cancel, tim)) {
 						size.QuadPart += childSize.QuadPart;
 					} else {
 						return false;

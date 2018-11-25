@@ -3,6 +3,7 @@
 
 class CCell;
 class Sheet;
+class CColumn;
 struct RowTag;
 
 class CRow:public CBand
@@ -18,6 +19,10 @@ protected:
 public:
 	CRow(CSheet* pSheet):CBand(pSheet),m_height(0),m_top(0){}
 	virtual ~CRow(){}
+
+	virtual bool HasCell()const { return false; }
+	virtual std::shared_ptr<CCell>& Cell(CColumn* pCol) { throw std::exception("Not implemented"); }
+
 
 	virtual coordinates_type GetHeight();
 	virtual void SetHeight(const coordinates_type& height);

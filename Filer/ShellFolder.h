@@ -1,5 +1,6 @@
 #pragma once
 #include "ShellFile.h"
+#include <boost/timer.hpp>
 
 class CShellFolder :public CShellFile
 {
@@ -41,6 +42,6 @@ private:
 
 protected:
 	void SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size);
-	bool GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel);
+	bool GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel, boost::timer& tim);
 
 };

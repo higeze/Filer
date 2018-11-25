@@ -106,6 +106,7 @@ public:
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::shared_ptr<CCell> spCellSrc){return false;}
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::wstring source){return false;}
 	virtual void Delete(std::shared_ptr<CCell> spCellDst){}
+	virtual bool HasCell()const { return true; }
 	virtual cell_type& Cell(CRow* pRow) = 0;
 	virtual cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
 	virtual cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn) = 0;

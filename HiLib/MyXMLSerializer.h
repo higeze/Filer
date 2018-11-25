@@ -41,7 +41,13 @@ public:
 	{
 		pElem->Puttext(_bstr_t(boost::lexical_cast<std::wstring>(tValue).c_str()));
 	}
-	
+
+	//For string
+	void SerializeValue(std::string& tValue, MSXML2::IXMLDOMElementPtr pElem)
+	{
+		pElem->Puttext(_bstr_t(str2wstr(tValue).c_str()));
+	}
+
 	//For enum
 	template<class T>
 	void SerializeValue(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_ENUM)
@@ -157,6 +163,12 @@ public:
 	void DeserializeElement(T& tValue,MSXML2::IXMLDOMElementPtr pElem,ENABLE_IF_DEFAULT)
 	{
 		tValue=boost::lexical_cast<T>(std::wstring(pElem->Gettext()));
+	}
+
+	//For string
+	void DeserializeElement(std::string& tValue, MSXML2::IXMLDOMElementPtr pElem)
+	{
+		tValue = wstr2str(std::wstring(pElem->Gettext()));
 	}
 
 	//For enum

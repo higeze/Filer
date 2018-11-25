@@ -17,6 +17,24 @@ class CGridViewProperty;
 class CShellFolder;
 //class CFilerTabGridView;
 
+struct PythonExtension
+{
+	UINT ID;
+	std::wstring Name;
+	std::wstring ScriptPath;
+	std::string FunctionName;
+
+	FRIEND_SERIALIZER
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar("ID", ID);
+		ar("Name", Name);
+		ar("ScriptPath", ScriptPath);
+		ar("FunctionName", FunctionName);
+	}
+};
+
 class CFilerWnd:public CWnd
 {
 //public:
@@ -32,6 +50,7 @@ private:
 	std::shared_ptr<CFilerTabGridView> m_spRightView;
 	std::shared_ptr<CFilerTabGridView> m_spCurView;
 
+	std::vector<PythonExtension> m_pyExtensions;
 	//CKonamiCommander m_konamiCommander;
 
 public:
@@ -107,6 +126,8 @@ public:
 
 		ar("ApplicationProperty", m_spApplicationProp);
 
+		ar("PythonExtensions", m_pyExtensions);
+
     }
 
     template <class Archive>
@@ -132,5 +153,25 @@ public:
 		m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9997);
 
 		ar("ApplicationProperty", m_spApplicationProp);
-    }
+
+		ar("PythonExtensions", m_pyExtensions);
+
+		//{
+		//	PythonExtension pyex;
+		//	pyex.ID = IDM_ADDTOFAVORITEINGRID + 1000;
+		//	pyex.Name = L"Pdf Split";
+		//	pyex.ScriptPath = L"C:\\Users\\kuuna\\AppData\\Local\\Programs\\Python\\Python37-32\\pdf.py";
+		//	pyex.FunctionName = "pdf_split";
+		//	m_pyExtensions.push_back(pyex);
+		//}
+		//{
+		//	PythonExtension pyex;
+		//	pyex.ID = IDM_ADDTOFAVORITEINGRID + 1001;
+		//	pyex.Name = L"Pdf Merge";
+		//	pyex.ScriptPath = L"C:\\Users\\kuuna\\AppData\\Local\\Programs\\Python\\Python37-32\\pdf.py";
+		//	pyex.FunctionName = "pdf_merge";
+		//	m_pyExtensions.push_back(pyex);
+		//}
+
+	}
 };

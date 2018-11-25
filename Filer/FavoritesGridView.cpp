@@ -102,11 +102,12 @@ void CFavoritesGridView::OpenFavorites()
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
 	PostUpdate(Updates::Sort);
-
-	FilterAll();		
+	//PostUpdate(Updates::Filter);
+	//FilterAll();		
 
 	SubmitUpdate();
 }
+
 
 void CFavoritesGridView::InsertDefaultRowColumn()
 {

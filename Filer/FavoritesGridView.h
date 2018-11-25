@@ -31,6 +31,8 @@ public:
 
 	void RowMoved(CMovedEventArgs<RowTag>& e) override;
 
+	void FilterAll() override {/*Do nothing*/}
+
 private:
 	void InsertDefaultRowColumn();
 

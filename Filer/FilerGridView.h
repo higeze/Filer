@@ -206,6 +206,8 @@ public:
 			for (auto& col : columns) {
 				if (auto p = std::dynamic_pointer_cast<CFileNameColumn>(col.DataPtr)) {
 					m_pNameColumn = p;
+				} else if (auto p = std::dynamic_pointer_cast<CParentRowHeaderColumn>(col.DataPtr)) {
+					m_pHeaderColumn = p;
 				}
 				col.DataPtr->SetSheetPtr(this);
 				InsertColumnNotify(col.Index, col.DataPtr, false);

@@ -124,13 +124,15 @@ CGridView::~CGridView()
 
 void CGridView::ColumnInserted(CColumnEventArgs& e)
 {
-	FilterAll();
+	//FilterAll();
+	PostUpdate(Updates::Filter);
 	CSheet::ColumnInserted(e);
 	SignalColumnInserted(e.m_pColumn);
 }
 void CGridView::ColumnErased(CColumnEventArgs& e)
 {
-	FilterAll();
+//	FilterAll();
+	PostUpdate(Updates::Filter);
 	CSheet::ColumnErased(e);
 	SignalColumnErased(e.m_pColumn);
 }

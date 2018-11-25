@@ -52,8 +52,8 @@ std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit)
 
 {
 	// TODO depends on locale
-	return boost::lexical_cast<std::wstring>(n);
- /*   bool is_minus = n < 0;
+	//return boost::lexical_cast<std::wstring>(n);
+    bool is_minus = n < 0;
     is_minus ? n *= -1 : 0;
 
     std::wstringstream ss;
@@ -73,7 +73,7 @@ std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit)
 
     std::wstring cs_num = ss_csnum.str();
     std::reverse(cs_num.begin(), cs_num.end());
-    return cs_num;*/
+    return cs_num;
 }
 
 tstring FileTime2String(FILETIME* pFileTime)
