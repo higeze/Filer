@@ -27,6 +27,7 @@ enum class Updates{
 	None,
 	Sort,
 	Filter,
+	Rect,
 	RowVisible,
 	ColumnVisible,
 	Column,

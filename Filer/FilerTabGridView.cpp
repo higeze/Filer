@@ -59,9 +59,19 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 				break;
 			}
 		}
-		//BOOL dummy;
-		CRect rcClient = GetClientRect();
-		SendMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
+
+		int nPaddingX = GetSystemMetrics(SM_CXDLGFRAME);
+		int nPaddingY = GetSystemMetrics(SM_CYDLGFRAME);
+
+		//FilerGridView
+		CRect rcTabClient = GetClientRect();
+		AdjustRect(FALSE, rcTabClient);
+		rcTabClient.DeflateRect(nPaddingX, nPaddingY);
+
+		m_spFilerView->PostUpdate(Updates::Rect);
+		m_spFilerView->SetUpdateRect(rcTabClient);
+
+		//SendMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
 	});
 
 	m_pParentWnd->AddNtfyHandler((UINT_PTR)m_cwa.hMenu(), NM_CLICK, &CFilerTabGridView::OnNotifyTabLClick, this);

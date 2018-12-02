@@ -55,6 +55,8 @@ CFilerGridView::CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewPror
 	AddMsgHandler(WM_DIRECTORYWATCH,&CFilerGridView::OnDirectoryWatch,this);
 
 	AddCmdIDHandler(IDM_CUT,&CFilerGridView::OnCommandCut,this);
+	//AddCmdIDHandler(IDM_COPYTEXT, &CFilerGridView::OnCommandCopyText, this);
+
 	//They are already assigned in GridView
 	//AddCmdIDHandler(IDM_COPY,&CFilerGridView::OnCommandCopy,this);
 	//AddCmdIDHandler(IDM_PASTE,&CFilerGridView::OnCommandPaste,this);
@@ -989,6 +991,18 @@ void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IS
 		hr = m_pcm3->QueryContextMenu(menu, 0, SCRATCH_QCM_FIRST, SCRATCH_QCM_LAST, uFlags);
 		if (FAILED(hr)) { return; }
 
+		//Add Copy Text
+		menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
+		MENUITEMINFO mii = { 0 };
+		mii.cbSize = sizeof(MENUITEMINFO);
+		mii.fMask = MIIM_TYPE | MIIM_ID;
+		mii.fType = MFT_STRING;
+		mii.fState = MFS_ENABLED;
+		mii.wID = IDM_COPYTEXT;
+		mii.dwTypeData = L"Copy Text";
+		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+		//Add Custom menu
 		if (AddCustomContextMenu) {
 			AddCustomContextMenu(menu);
 		}
@@ -1038,7 +1052,10 @@ void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IS
 			info.nShow = SW_SHOWNORMAL;
 			info.ptInvoke = ptScreen;
 
-			if(ExecCustomContextMenu(idCmd, psf, vpIdl)){
+			if (ExecCustomContextMenu(idCmd, psf, vpIdl)) {
+			} else if (idCmd == IDM_COPYTEXT) {
+				BOOL bHandled = FALSE;
+				CGridView::OnCommandCopy(0, idCmd, m_hWnd, bHandled);
 			}else if (idCmd >= SCRATCH_QCM_NEW) {
 				info.lpVerb = MAKEINTRESOURCEA(idCmd - SCRATCH_QCM_NEW);
 				info.lpVerbW = MAKEINTRESOURCEW(idCmd - SCRATCH_QCM_NEW);

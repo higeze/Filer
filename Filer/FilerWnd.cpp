@@ -208,7 +208,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				}
 				m_spFavoritesView->SubmitUpdate();
 				return true;
-			}else if(idCmd > IDM_ADDTOFAVORITEINGRID){
+			}else if(idCmd > 40100){
 				try {
 					auto iter = std::find_if(m_spPyExProp->PythonExtensions.begin(), m_spPyExProp->PythonExtensions.end(), [idCmd](const auto& pyex)->bool {return pyex.ID == idCmd; });
 					if (iter != m_spPyExProp->PythonExtensions.end()) {

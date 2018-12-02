@@ -288,7 +288,10 @@ void CSheet::PostUpdate(Updates type)
 		m_setUpdate.insert(type);
 		m_setUpdate.insert(Updates::Invalidate);
 		PostUpdate(Updates::EnsureVisibleFocusedCell);
-		
+	case Updates::Rect:
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+		m_setUpdate.insert(type);
 	default:
 		m_setUpdate.insert(type);
 		break;

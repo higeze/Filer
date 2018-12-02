@@ -1685,68 +1685,79 @@ void CGridView::CellValueChanged(CellEventArgs& e)
 
 void CGridView::SubmitUpdate()
 {
-	for (const auto& type : m_setUpdate) {
-		switch (type) {
-		case Updates::Sort:
-		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Sort")
-			SortAllInSubmitUpdate();
-			break;
+	//Prevent nest call
+	if (m_isUpdating) {
+		return;
+	} else {
+		m_isUpdating = true;
+		for (const auto& type : m_setUpdate) {
+			switch (type) {
+			case Updates::Sort:
+			{
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Sort")
+					SortAllInSubmitUpdate();
+				break;
+			}
+			case Updates::Filter:
+			{
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Filter")
+					FilterAll();
+				break;
+			}
+			case Updates::Rect:
+			{
+				MoveWindow(GetUpdateRect(), FALSE);
+			}
+			case Updates::RowVisible:
+			{
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::RowVisible")
+					UpdateRowVisibleDictionary();
+				//::OutputDebugStringA("m_rowAllDictionary\r\n");
+				//boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
+				//	::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
+				//});
+				break;
+			}
+			case Updates::ColumnVisible:
+			{
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::ColumnVisible")
+					UpdateColumnVisibleDictionary();
+				break;
+			}
+			case Updates::Column:
+			{
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Column")
+					UpdateColumn();
+				break;
+			}
+			case Updates::Row:
+			{
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Row")
+					UpdateRow();
+				break;
+			}
+			case Updates::Scrolls:
+			{
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Scrolls")
+					UpdateScrolls();
+				break;
+			}
+			case Updates::EnsureVisibleFocusedCell:
+			{
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::EnsureVisibleFocusedCell")
+					EnsureVisibleCell(m_spCursorer->GetFocusedCell());
+				break;
+			}
+			case Updates::Invalidate:
+				Invalidate();
+				break;
+			default:
+				break;
+			}
 		}
-		case Updates::Filter:
-		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Filter")
-			FilterAll();
-			break;
-		}
-		case Updates::RowVisible:
-		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::RowVisible")
-			UpdateRowVisibleDictionary();
-			//::OutputDebugStringA("m_rowAllDictionary\r\n");
-			//boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
-			//	::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
-			//});
-			break;
-		}
-		case Updates::ColumnVisible:
-		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::ColumnVisible")
-			UpdateColumnVisibleDictionary();
-			break;
-		}
-		case Updates::Column:
-		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Column")
-			UpdateColumn();
-			break;
-		}
-		case Updates::Row:
-		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Row")
-			UpdateRow();
-			break;
-		}
-		case Updates::Scrolls:
-		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Scrolls")
-			UpdateScrolls();
-			break;
-		}
-		case Updates::EnsureVisibleFocusedCell:
-		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::EnsureVisibleFocusedCell")
-			EnsureVisibleCell(m_spCursorer->GetFocusedCell());
-			break;
-		}
-		case Updates::Invalidate:
-			Invalidate();
-			break;
-		default:
-			break;
-		}
-	}
 	m_setUpdate.clear();
+	m_isUpdating = false;
+	}
 }
 
 void CGridView::Clear()

@@ -112,6 +112,7 @@ public:
 	//virtual LRESULT OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	virtual LRESULT OnCommandCut(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	virtual LRESULT OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled) override;
+	//virtual LRESULT OnCommandCopyText(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) { return CGridView::OnCommandCopy(wNotifyCode, wID, hWndCtl, bHandled); }
 	virtual LRESULT OnCommandPaste(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled) override;
 	virtual LRESULT OnCommandDelete(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled) override;
 

@@ -24,6 +24,8 @@ protected:
 	CScrollBar m_vertical;
 	CScrollBar m_horizontal;
 	UPBufferDC m_upBuffDC;
+	CRect m_rcUpdateRect;
+	bool m_isUpdating = false;
 
 	row_type m_rowHeaderHeader; /**< Header Header row */
 	row_type m_rowNameHeader; /**< Name Header row */
@@ -64,6 +66,9 @@ public:
 
 	std::shared_ptr<CGridViewProperty>& GetGridViewProp() { return m_spGridViewProp; }
 	void SetEditRect(CRect rcEdit){m_spEditRect = std::make_shared<CRect>(rcEdit);}
+
+	CRect GetUpdateRect()const { return m_rcUpdateRect; }
+	void SetUpdateRect(CRect rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
 
 protected:
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -177,6 +182,7 @@ public:
 	HGLOBAL GetPaintMetaFileData();
 	HENHMETAFILE GetPaintEnhMetaFileData();
 	HENHMETAFILE GetAllEnhMetaFileData();
+
 
 private:
 
