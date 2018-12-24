@@ -99,8 +99,7 @@
       <AdditionalOptions>/Zm500 %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MinimalRebuild>false</MinimalRebuild>
-      <LanguageStandard>
-      </LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -137,8 +136,7 @@
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <AdditionalOptions>/Zm500 %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <LanguageStandard>
-      </LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -286,6 +284,7 @@
     <ClInclude Include="..\HiLib\PropertyWnd.h" />
     <ClInclude Include="..\HiLib\ResizeDlg.h" />
     <ClInclude Include="..\HiLib\resource.h" />
+    <ClInclude Include="..\HiLib\ResourceIDFactory.h" />
     <ClInclude Include="..\HiLib\Row.h" />
     <ClInclude Include="..\HiLib\RowColumn.h" />
     <ClInclude Include="..\HiLib\SEHException.h" />
@@ -305,6 +304,8 @@
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
+    <ClInclude Include="FilerGridViewProperty.h" />
+    <ClInclude Include="FileSizeArgs.h" />
     <ClInclude Include="PathRow.h" />
     <ClInclude Include="ShellZipFolder.h" />
     <ClInclude Include="DriveFolder.h" />
@@ -349,6 +350,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="UniqueIDFactory.h" />
     <ClInclude Include="Unknown.h" />
+    <ClInclude Include="ViewProperty.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\HiLib\Band.cpp" />
@@ -398,6 +400,7 @@
     <ClCompile Include="..\HiLib\ParentRowHeaderColumn.cpp" />
     <ClCompile Include="..\HiLib\PropertyColumn.cpp" />
     <ClCompile Include="..\HiLib\PropertyGridView.cpp" />
+    <ClCompile Include="..\HiLib\ResourceIDFactory.cpp" />
     <ClCompile Include="..\HiLib\Row.cpp" />
     <ClCompile Include="..\HiLib\RowColumn.cpp" />
     <ClCompile Include="..\HiLib\SEHException.cpp" />

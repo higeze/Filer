@@ -271,7 +271,7 @@ void CGridView::FilterAll()
 		iter->DataPtr->SetVisible(true);
 	};
 	//Set Filter
-	for(auto colIter=colDictionary.begin(),colEnd=colDictionary.end();colIter!=colEnd;++colIter){
+	for(auto colIter=colDictionary.find(0),colEnd=colDictionary.end();colIter!=colEnd;++colIter){
 		auto strFilter=colIter->DataPtr->Cell(GetFilterRowPtr().get())->GetString();
 		if(strFilter.empty() || strFilter==string_type(L""))continue;
 		std::vector<string_type> vstrFilter;
@@ -1466,7 +1466,7 @@ void CGridView::OnPaint(const PaintEvent& e)
 	//Paint Focused Line
 	if (::GetFocus() == m_hWnd || m_spEditRect) {
 		CRect rcFocus(rcClient);
-		HPEN hPenOld = e.DCPtr->SelectPen(*(GetGridViewProp()->GetHeaderProperty()->GetFocusedPenPtr()));
+		HPEN hPenOld = e.DCPtr->SelectPen(*(GetGridViewPropPtr()->GetHeaderProperty()->GetFocusedPenPtr()));
 		rcFocus.DeflateRect(CRect(0, 0, 1, 1));
 		e.DCPtr->MoveToEx(rcFocus.left, rcFocus.top);
 		e.DCPtr->LineTo(rcFocus.left, rcFocus.bottom);

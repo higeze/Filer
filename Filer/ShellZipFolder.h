@@ -12,7 +12,7 @@ public:
 	virtual std::wstring GetExt()override;
 
 	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon() override;
-	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize()override;
+	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs)override;
 
 
 };

@@ -31,7 +31,7 @@ public:
 	CComPtr<IShellFolder> GetShellFolderPtr();
 	std::shared_ptr<CShellFolder> GetParent();
 	std::shared_ptr<CShellFolder> Clone()const;
-	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize()override;
+	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs)override;
 	std::shared_ptr<CShellFile> CreateShExFileFolder(CIDL& relativeIdl);
 	static std::shared_ptr<CShellFile> CreateShExFileFolder(const std::wstring& path);
 
@@ -42,6 +42,6 @@ private:
 
 protected:
 	void SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size);
-	bool GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel, boost::timer& tim);
+	bool GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel, boost::timer& tim, int limit);
 
 };

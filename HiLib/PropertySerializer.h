@@ -42,14 +42,14 @@ public:
 		m_spPropSheetCellCell(spPropSheetCellCell){}
 	virtual ~CCellSerializer(){}
 
-	template<class T>
-	void Serialize(std::shared_ptr<CPropertyGridView> pGrid,const TCHAR* lpszRootName,T& t,ENABLE_IF_SERIALIZE)
+	template<class T, typename ENABLE_IF_SERIALIZE>
+	void Serialize(std::shared_ptr<CPropertyGridView> pGrid,const TCHAR* lpszRootName,T& t)
 	{
 		//Serialize
 		t.serialize(*this);
 	}
-	template<class T>
-	void Serialize(std::shared_ptr<CPropertyGridView> pGrid,const TCHAR* lpszRootName,T& t,ENABLE_IF_SAVE_LOAD)
+	template<class T, typename ENABLE_IF_SAVE_LOAD>
+	void Serialize(std::shared_ptr<CPropertyGridView> pGrid,const TCHAR* lpszRootName,T& t)
 	{
 		//Serialize
 		t.save(*this);
@@ -136,8 +136,8 @@ public:
 	}
 
 	//For base
-	template<class T>
-	void SerializeValue(T& t,CRow* pRow,CColumn* pCol,ENABLE_IF_DEFAULT)
+	template<class T, typename ENABLE_IF_DEFAULT>
+	void SerializeValue(T& t,CRow* pRow,CColumn* pCol)
 	{
 		pCol->Cell(pRow)->SetStringCore(boost::lexical_cast<std::wstring>(t));
 	}
@@ -187,15 +187,15 @@ public:
 	}
 
 	//For enum
-	template<class T>
-	void SerializeValue(T& t,CRow* pRow,CColumn* pCol,ENABLE_IF_ENUM)
+	template<class T, typename ENABLE_IF_ENUM>
+	void SerializeValue(T& t,CRow* pRow,CColumn* pCol)
 	{
 		pCol->Cell(pRow)->SetStringCore(boost::lexical_cast<std::wstring>(static_cast<int>(t)));
 	}
 	
 	//For serialize
-	template<class T>
-	void SerializeValue(T& t,CRow* pRow,CColumn* pCol,ENABLE_IF_SERIALIZE)
+	template<class T, typename ENABLE_IF_SERIALIZE>
+	void SerializeValue(T& t,CRow* pRow,CColumn* pCol)
 	{
 		if(auto spSheet=m_pSheet.lock()){
 			std::shared_ptr<CSheetCell> spSheetCell(
@@ -216,8 +216,8 @@ public:
 	}
 
 	//For save load
-	template<class T>
-	void SerializeValue(T& t, CRow* pRow, CColumn* pCol, ENABLE_IF_SAVE_LOAD)
+	template<class T, typename ENABLE_IF_SAVE_LOAD>
+	void SerializeValue(T& t, CRow* pRow, CColumn* pCol)
 	{
 		if (auto spSheet = m_pSheet.lock()) {
 			std::shared_ptr<CSheetCell> spSheetCell(
@@ -238,8 +238,8 @@ public:
 	}
 
 	//For ptr
-	template<class T>
-	void SerializeValue(T& t, CRow* pRow, CColumn* pCol, ENABLE_IF_PTR)
+	template<class T, typename ENABLE_IF_PTR>
+	void SerializeValue(T& t, CRow* pRow, CColumn* pCol)
 	{
 		SerializeValue(*t, pRow, pCol);
 	}
@@ -301,16 +301,16 @@ public:
 	CCellDeserializer(std::shared_ptr<CSheet> pSheet):m_pSheet(pSheet){}
 	virtual ~CCellDeserializer(){}
 
-	template<class T>
-	void Deserialize(const TCHAR* lpszRootName,T& t,ENABLE_IF_SERIALIZE)
+	template<class T, typename ENABLE_IF_SERIALIZE>
+	void Deserialize(const TCHAR* lpszRootName,T& t)
 	{
 		//Deserialize
 		t.serialize(*this);
 		m_setCellPtr.clear();
 	}
 
-	template<class T>
-	void Deserialize(const TCHAR* lpszRootName,T& t,ENABLE_IF_SAVE_LOAD)
+	template<class T, typename ENABLE_IF_SAVE_LOAD>
+	void Deserialize(const TCHAR* lpszRootName,T& t)
 	{
 		//Deserialize
 		t.load(*this);
@@ -322,33 +322,34 @@ public:
 	{
 		Deserialize(lpszRootName,*pT);
 	}
+
 	template<class T>
 	void Deserialize(const TCHAR* lpszRootName,std::shared_ptr<T> pT)
 	{
 		Deserialize(lpszRootName,*pT);
 	}
 
-	template<class char_type,class T>
-	void operator()(const char_type* lpszName,T& t)
-	{
-		if(auto spSheet=m_pSheet.lock()){
-			if(!spSheet->Empty()){
-				std::wstring wstrName(lpszName,(lpszName+strlen(lpszName)));
-				auto pCol=spSheet->Index2Pointer<ColTag, AllTag>(0);
-				for(auto rowIter=spSheet->RowAllBegin(),rowEnd=spSheet->RowAllEnd();rowIter!=rowEnd;++rowIter){
-					auto pCell = CSheet::Cell(rowIter->DataPtr, pCol);
-					if(m_setCellPtr.find(pCell.get()) == m_setCellPtr.end() && pCol->Cell(rowIter->DataPtr.get())->GetString()==wstrName){
-						m_setCellPtr.insert(pCell.get());
-						DeserializeValue(t,rowIter->DataPtr.get(),spSheet->Index2Pointer<ColTag, AllTag>(1).get());
-						break;
-					}
-				}
-			}
-		}
-	}
+	//template<class char_type,class T>
+	//void operator()(const char_type* lpszName,T& t)
+	//{
+	//	if(auto spSheet=m_pSheet.lock()){
+	//		if(!spSheet->Empty()){
+	//			std::wstring wstrName(lpszName,(lpszName+strlen(lpszName)));
+	//			auto pCol=spSheet->Index2Pointer<ColTag, AllTag>(0);
+	//			for(auto rowIter=spSheet->RowAllBegin(),rowEnd=spSheet->RowAllEnd();rowIter!=rowEnd;++rowIter){
+	//				auto pCell = CSheet::Cell(rowIter->DataPtr, pCol);
+	//				if(m_setCellPtr.find(pCell.get()) == m_setCellPtr.end() && pCol->Cell(rowIter->DataPtr.get())->GetString()==wstrName){
+	//					m_setCellPtr.insert(pCell.get());
+	//					DeserializeValue(t,rowIter->DataPtr.get(),spSheet->Index2Pointer<ColTag, AllTag>(1).get());
+	//					break;
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
 
-	template<class char_type, class T, class U>
-	void operator()(const char_type* lpszName, T& t, U& u)
+	template<class char_type, class T, class... U>
+	void operator()(const char_type* lpszName, T& t, U... args)
 	{
 		if (auto spSheet = m_pSheet.lock()) {
 			if (!spSheet->Empty()) {
@@ -367,16 +368,18 @@ public:
 	}
 
 	//For base
-	template<class T>
-	void DeserializeValue(T& t,CRow* pRow,CColumn* pColumn,ENABLE_IF_DEFAULT)
+	template<class T, typename ENABLE_IF_DEFAULT>
+	void DeserializeValue(T& t,CRow* pRow,CColumn* pColumn)
 	{
 		t=boost::lexical_cast<T>(pColumn->Cell(pRow)->GetString());
 	}
+
 	//For std::string boost::lexical_cast couldn't cast std::wstring to std::string
 	void DeserializeValue(std::string& t,CRow* pRow,CColumn* pColumn)
 	{
 		t=wstr2str(pColumn->Cell(pRow)->GetString());
 	}
+
 	//For Color
 	void DeserializeValue(CColor& t,CRow* pRow,CColumn* pColumn)
 	{
@@ -384,6 +387,7 @@ public:
 			t=p->GetColor();
 		}
 	}
+
 	//For Font
 	void DeserializeValue(CFont& t,CRow* pRow,CColumn* pColumn)
 	{
@@ -393,15 +397,15 @@ public:
 		}
 	}	
 	//For enum
-	template<class T>
-	void DeserializeValue(T& t,CRow* pRow,CColumn* pColumn,ENABLE_IF_ENUM)
+	template<class T, typename ENABLE_IF_ENUM>
+	void DeserializeValue(T& t,CRow* pRow,CColumn* pColumn)
 	{
 		t=static_cast<T>(boost::lexical_cast<int>(pColumn->Cell(pRow)->GetString()));
 	}
 	
 	//For serialize
-	template<class T>
-	void DeserializeValue(T& t,CRow* pRow,CColumn* pColumn,ENABLE_IF_SERIALIZE)
+	template<class T, ENABLE_IF_SERIALIZE>
+	void DeserializeValue(T& t,CRow* pRow,CColumn* pColumn)
 	{
 		if(auto pSheet=std::dynamic_pointer_cast<CSheet>(pColumn->Cell(pRow))){
 			t.serialize(CCellDeserializer(pSheet));
@@ -409,8 +413,8 @@ public:
 	}
 
 	//For save load
-	template<class T>
-	void DeserializeValue(T& t, CRow* pRow, CColumn* pColumn, ENABLE_IF_SAVE_LOAD)
+	template<class T, ENABLE_IF_SAVE_LOAD>
+	void DeserializeValue(T& t, CRow* pRow, CColumn* pColumn)
 	{
 		if (auto pSheet = std::dynamic_pointer_cast<CSheet>(pColumn->Cell(pRow))) {
 			t.load(CCellDeserializer(pSheet));

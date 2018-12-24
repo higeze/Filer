@@ -23,8 +23,8 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellZipFolder::GetIcon()
 	return CShellFile::GetIcon();
 }
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellZipFolder::GetSize()
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellZipFolder::GetSize(std::shared_ptr<FileSizeArgs>& spArgs)
 {
-	return CShellFile::GetSize();
+	return CShellFile::GetSize(spArgs);
 }
 

@@ -18,7 +18,7 @@ private:
 public:
 	CKnownFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IKnownFolder>& pKnownFolder, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CKnownFolder(){}
-	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize() override;
+	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs) override;
 	virtual std::wstring GetExt() override;
 
 	KF_CATEGORY GetCategory();

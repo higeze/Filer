@@ -7,6 +7,8 @@
 #include <chrono>
 
 class CShellFolder;
+struct FileSizeArgs;
+
 
 tstring FileTime2String(FILETIME *pFileTime);
 tstring Size2String(ULONGLONG size);
@@ -107,7 +109,7 @@ public:
 
 	//Size
 	bool GetFileSize(ULARGE_INTEGER& size/*, std::shared_future<void> future*/);
-	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize();
+	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs);
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> ReadSize();
 
 	//Icon

@@ -5,33 +5,11 @@
 #include "CellProperty.h"
 #include "Sheet.h"
 #include "GridView.h"
+#include "FileSizeColumn.h"
 
 CFileSizeCell::CFileSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
 	:CTextCell(pSheet, pRow, pColumn, spProperty)
-{
-	//Be careful : It is impossible to plymorphism in constructor, assign signal here.
-	//if (auto pFileRow = dynamic_cast<CFileRow*>(pRow)) {
-	//	auto spFile = pFileRow->GetFilePointer();
-	//	std::weak_ptr<CFileSizeCell> wp(shared_from_this());
-	//	m_conFileSizeChanged = spFile->SignalFileSizeChanged.connect(
-	//		[wp](std::weak_ptr<CShellFile> wpFile)->void {
-	//		if (auto sp = wp.lock()) {
-	//			auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
-	//				[wp]()->void {
-	//					if (auto sp = wp.lock()) {
-	//						sp->SetFitMeasureValid(false);
-	//						sp->SetActMeasureValid(false);
-	//						sp->GetSheetPtr()->PostUpdate(Updates::Sort);
-	//						sp->GetSheetPtr()->PostUpdate(Updates::Column);
-	//						sp->GetSheetPtr()->CellValueChanged(CellEventArgs(sp.get()));
-	//					}
-	//				});
-	//			sp->SetDelayUpdateConnection(con);
-	//			sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
-	//		}
-	//	});
-	//}
-}
+{}
 
 CFileSizeCell::~CFileSizeCell()
 {
@@ -94,7 +72,7 @@ CCell::string_type CFileSizeCell::GetString()
 {
 	try {
 		auto spFile = GetShellFile();
-		auto size = spFile->GetSize();
+		auto size = spFile->GetSize(static_cast<CFileSizeColumn*>(m_pColumn)->GetSizeArgsPtr());
 		switch (size.second) {
 		case FileSizeStatus::None:
 			return L"none";
@@ -116,7 +94,7 @@ CCell::string_type CFileSizeCell::GetSortString()
 {	
 	try {
 		auto spFile = GetShellFile();
-		auto size = spFile->GetSize();
+		auto size = spFile->GetSize(static_cast<CFileSizeColumn*>(m_pColumn)->GetSizeArgsPtr());
 		switch (size.second) {
 		case FileSizeStatus::None:
 			return L"none";

@@ -2,10 +2,14 @@
 
 #include "ParentMapColumn.h"
 
+struct FileSizeArgs;
+
 class CFileSizeColumn:public CParentDefaultMapColumn
 {
+private:
+	std::shared_ptr<FileSizeArgs> m_spSizeArgs;
 public:
-	CFileSizeColumn(CGridView* pGrid = nullptr);
+	CFileSizeColumn(CGridView* pGrid = nullptr, std::shared_ptr<FileSizeArgs> spSizeProp = nullptr);
 	~CFileSizeColumn(void){}
 
 	virtual CColumn& ShallowCopy(const CColumn& column)override
@@ -20,5 +24,7 @@ public:
 	cell_type NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
 	cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn)override;
 	cell_type CellTemplate(CRow* pRow, CColumn* pColumn)override;
+
+	std::shared_ptr<FileSizeArgs> GetSizeArgsPtr() { return m_spSizeArgs; }
 };
 

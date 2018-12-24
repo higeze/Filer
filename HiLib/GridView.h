@@ -64,7 +64,7 @@ public:
 			CMenu* pContextMenu= &CGridView::ContextMenu);
 	virtual ~CGridView();
 
-	std::shared_ptr<CGridViewProperty>& GetGridViewProp() { return m_spGridViewProp; }
+	std::shared_ptr<CGridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	void SetEditRect(CRect rcEdit){m_spEditRect = std::make_shared<CRect>(rcEdit);}
 
 	CRect GetUpdateRect()const { return m_rcUpdateRect; }

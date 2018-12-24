@@ -13,23 +13,24 @@
 #include "FilerTabGridView.h"
 #include "MyFile.h"
 #include "BoostPythonHelper.h"
+#include "ViewProperty.h"
+#include "FavoritesProperty.h"
+#include "ResourceIDFactory.h"
 
 CFilerWnd::CFilerWnd()
-	:m_spApplicationProp(std::make_shared<CApplicationProperty>()),
-	m_rcWnd(0, 0, 300, 500),
+	:m_rcWnd(0, 0, 300, 500), 
+	m_splitterLeft(0),
+	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
 	m_spGridViewProp(std::make_shared<CGridViewProperty>()),
-	m_spFavoritesView(std::make_shared<CFavoritesGridView>(m_spGridViewProp)),
-	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spGridViewProp)),
-	m_spRightView(std::make_shared<CFilerTabGridView>(m_spGridViewProp)),
-	m_spCurView(m_spLeftView),
-	m_spPyExProp(std::make_shared<CPythonExtensionProperty>())
+	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
+	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
+	m_spPyExProp(std::make_shared<CPythonExtensionProperty>()),
+	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spGridViewProp, m_spFilerGridViewProp)),
+	m_spRightView(std::make_shared<CFilerTabGridView>(m_spGridViewProp, m_spFilerGridViewProp)),
+	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(m_spGridViewProp, m_spFavoritesProp)),
+	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(m_spGridViewProp, m_spFavoritesProp)),
+	m_spCurView(m_spLeftView)
 {
-	m_spLeftView->SetParentWnd(this);
-	m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9996);
-
-	m_spRightView->SetParentWnd(this);
-	m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9997);
-
 	m_rca
 	.lpszClassName(L"CFilerWnd")
 	.style(CS_VREDRAW | CS_HREDRAW |CS_DBLCLKS)
@@ -70,13 +71,13 @@ CFilerWnd::CFilerWnd()
 	//AddCmdIDHandler(IDM_EDIT_COPY,&CMultiLineListView::OnCmdEditCopy,(CMultiLineListView*)m_upList.get());
 	//AddCmdIDHandler(IDM_EDIT_SELECTALL,&CMultiLineListView::OnCmdEditSelectAll,(CMultiLineListView*)m_upList.get());
 	AddCmdIDHandler(IDM_APPLICATIONOPTION, &CFilerWnd::OnCommandApplicationOption, this);
+	AddCmdIDHandler(IDM_FILERGRIDVIEWOPTION, &CFilerWnd::OnCommandFilerGridViewOption, this);
 	AddCmdIDHandler(IDM_GRIDVIEWOPTION,&CFilerWnd::OnCommandGridViewOption,this);
 	AddCmdIDHandler(IDM_FAVORITESOPTION,&CFilerWnd::OnCommandFavoritesOption,this);
-	AddCmdIDHandler(IDM_LEFTVIEWOPTION, &CFilerWnd::OnCommandLeftViewOption, this);
-	AddCmdIDHandler(IDM_RIGHTVIEWOPTION, &CFilerWnd::OnCommandRightViewOption, this);
-
 	AddCmdIDHandler(IDM_PYTHONEXTENSIONOPTION, &CFilerWnd::OnCommandPythonExtensionOption, this);
 
+	AddCmdIDHandler(IDM_LEFTVIEWOPTION, &CFilerWnd::OnCommandLeftViewOption, this);
+	AddCmdIDHandler(IDM_RIGHTVIEWOPTION, &CFilerWnd::OnCommandRightViewOption, this);
 }
 
 CFilerWnd::~CFilerWnd(){}
@@ -92,81 +93,50 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	//m_konamiCommander.SetHwnd(m_hWnd);
 
 	//CFavoritesGridView
-	m_spFavoritesView->CreateWindowExArgument()
-	.dwStyle(WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN | WS_VISIBLE)
-	.hMenu((HMENU)99396);
+	auto createFavoritesView = [this](std::shared_ptr<CFavoritesGridView>& spFavoritesView, std::shared_ptr<CFilerTabGridView>& spView, unsigned short id)->void {
+		spFavoritesView->CreateWindowExArgument()
+			.dwStyle(WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE)
+			.hMenu((HMENU)id);
+		spFavoritesView->FileChosen.connect([&](std::shared_ptr<CShellFile>& spFile)->void {
+			spView->GetGridView()->Open(spFile);
+		});
+		spFavoritesView->Create(m_hWnd);
+	};
+	createFavoritesView(m_spLeftFavoritesView, m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFavoritesGridView"));
+	createFavoritesView(m_spRightFavoritesView, m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFavoritesGridView"));
 
-	m_spFavoritesView->FileChosen.connect([this](std::shared_ptr<CShellFile>& spFile)->void{
-		if(m_spCurView->GetItemCount()>0){
-			m_spCurView->GetGridView()->Open(spFile);
-		}		
-	});
-	m_spFavoritesView->Create(m_hWnd);
-	//Left Right View
-	m_spCurView = m_spLeftView;
+	//CFilerTabGridView
+	auto createFilerTabGridView = [this](std::shared_ptr<CFilerTabGridView>& spView, unsigned short id)->void {
+		spView->SetParentWnd(this);
+		m_spLeftView->CreateWindowExArgument().hMenu((HMENU)id);
+		spView->Create(m_hWnd);
+		spView->SubclassWindow(spView->m_hWnd);
+		BOOL dummy = FALSE;
+		spView->OnCreate(WM_CREATE, NULL, NULL, dummy);
+		//Capture KeyDown Msg in FilerView
+		auto fun = spView->GetGridView()->GetMsgHandler(WM_KEYDOWN);
+		if (fun) {
+			FunMsg newFun = [this, fun](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
+				LRESULT lr = OnKeyDown(uMsg, wParam, lParam, bHandled);
+				if (bHandled) {
+					return lr;
+				} else {
+					return fun(uMsg, wParam, lParam, bHandled);
+				}
+			};
+			spView->GetGridView()->ReplaceMsgHandler(WM_KEYDOWN, newFun);
+		}
 
-	m_spLeftView->Create(m_hWnd);
-	m_spRightView->Create(m_hWnd);
-	
-	m_spLeftView->SubclassWindow(m_spLeftView->m_hWnd);
-	m_spRightView->SubclassWindow(m_spRightView->m_hWnd);
+		spView->GetGridView()->AddMsgHandler(WM_SETFOCUS,
+			[&](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
+			m_spCurView = spView;
+			m_spCurView->GetGridView()->InvalidateRect(NULL, FALSE);
+			return 0;
+		});
+	};
 
-	BOOL dummy = FALSE;
-	m_spLeftView->OnCreate(WM_CREATE, NULL, NULL, dummy);
-	m_spRightView->OnCreate(WM_CREATE, NULL, NULL, dummy);
-
-	//Capture KeyDown Msg in FilerView
-	auto fun = m_spLeftView->GetGridView()->GetMsgHandler(WM_KEYDOWN);
-	if (fun) {
-		FunMsg newFun = [this, fun](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
-			LRESULT lr = OnKeyDown(uMsg, wParam, lParam, bHandled);
-			if (bHandled) {
-				return lr;
-			}else {
-				return fun(uMsg, wParam, lParam, bHandled);
-			}
-		};
-		m_spLeftView->GetGridView()->ReplaceMsgHandler(WM_KEYDOWN, newFun);
-	}
-
-	fun = m_spRightView->GetGridView()->GetMsgHandler(WM_KEYDOWN);
-	if (fun) {
-		FunMsg newFun = [this, fun](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
-			LRESULT lr = OnKeyDown(uMsg, wParam, lParam, bHandled);
-			if (bHandled) {
-				return lr;
-			}else {
-				return fun(uMsg, wParam, lParam, bHandled);
-			}
-		};
-		m_spRightView->GetGridView()->ReplaceMsgHandler(WM_KEYDOWN, newFun);
-	}
-
-
-	//m_spLeftView->AddMsgHandler(WM_SETFOCUS,
-	//	[this](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT
-	//{ ::SetFocus(m_spLeftView->GetGridView()->m_hWnd); return 0; });
-
-	m_spLeftView->GetGridView()->AddMsgHandler(WM_SETFOCUS,
-		[this](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT
-	{ 
-		m_spCurView = m_spLeftView;
-		m_spCurView->GetGridView()->InvalidateRect(NULL, FALSE);
-		return 0;
-	});
-
-	//m_spRightView->AddMsgHandler(WM_SETFOCUS,
-	//	[this](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT
-	//{ ::SetFocus(m_spRightView->GetGridView()->m_hWnd); return 0; });
-
-	m_spRightView->GetGridView()->AddMsgHandler(WM_SETFOCUS,
-		[this](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT
-	{
-		m_spCurView = m_spRightView;
-		m_spCurView->GetGridView()->InvalidateRect(NULL, FALSE);
-		return 0;
-	});
-
+	createFilerTabGridView(m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFilerGridView"));
+	createFilerTabGridView(m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFavoritesGridView"));
 
 	auto applyCustomContextMenu = [this](std::shared_ptr<CFilerGridView> spFilerView)->void {
 
@@ -177,7 +147,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 			mii.fMask = MIIM_TYPE | MIIM_ID;
 			mii.fType = MFT_STRING;
 			mii.fState = MFS_ENABLED;
-			mii.wID = IDM_ADDTOFAVORITEINGRID;
+			mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToFavoritesFromItem");
 			mii.dwTypeData = L"Add to favorite";
 			menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
@@ -189,31 +159,37 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				mii.fMask = MIIM_TYPE | MIIM_ID;
 				mii.fType = MFT_STRING;
 				mii.fState = MFS_ENABLED;
-				mii.wID = pyex.ID;
+				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, pyex.Name);
 				mii.dwTypeData = (LPWSTR)pyex.Name.c_str();
 				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 			}
-
-
 		};
 
 		spFilerView->ExecCustomContextMenu = [&](int idCmd, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl)->bool {
-			if (idCmd == IDM_ADDTOFAVORITEINGRID) {
+			if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToFavoritesFromItem")) {
 				for (auto& pIdl : vpIdl) {
 					STRRET strret;
 					psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
 					std::wstring path = STRRET2WSTR(strret, pIdl);
-					m_spFavoritesView->GetFavoritesProp()->GetFavorites()->push_back(CFavorite(path, L""));
-					m_spFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spFavoritesView.get(), m_spFavoritesView->GetFavoritesProp()->GetFavorites()->size() - 1));
+					GetFavoritesPropPtr()->GetFavorites()->push_back(CFavorite(path, L""));
+					m_spLeftFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spLeftFavoritesView.get(), GetFavoritesPropPtr()->GetFavorites()->size() - 1));
+					m_spRightFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spRightFavoritesView.get(), GetFavoritesPropPtr()->GetFavorites()->size() - 1));
 				}
-				m_spFavoritesView->SubmitUpdate();
+				m_spLeftFavoritesView->SubmitUpdate();
+				m_spRightFavoritesView->SubmitUpdate();
 				return true;
-			}else if(idCmd > 40100){
-				try {
-					auto iter = std::find_if(m_spPyExProp->PythonExtensions.begin(), m_spPyExProp->PythonExtensions.end(), [idCmd](const auto& pyex)->bool {return pyex.ID == idCmd; });
-					if (iter != m_spPyExProp->PythonExtensions.end()) {
-						using namespace boost::python;
-						Py_SetPythonHome(L"Python37");
+			}else{
+				auto iter = std::find_if(m_spPyExProp->PythonExtensions.begin(), m_spPyExProp->PythonExtensions.end(),
+					[idCmd](const auto& pyex)->bool
+					{
+						return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, pyex.Name) == idCmd;
+					});
+				if (iter != m_spPyExProp->PythonExtensions.end()) {
+					try {
+
+						if (!m_spPyExProp->PythonHome.empty()) {
+							Py_SetPythonHome(m_spPyExProp->PythonHome.c_str());
+						}
 						Py_Initialize();
 
 						boost::python::list li;
@@ -225,24 +201,22 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 							li.append(path);
 						}
 
-						object global_ns = import("__main__").attr("__dict__");
+						boost::python::object global_ns = boost::python::import("__main__").attr("__dict__");
 
 						std::string script = CFile::ReadAllString<char>(iter->ScriptPath);
-						exec(script.c_str(), global_ns, global_ns);
-						object pythonFun = global_ns[iter->FunctionName];
+						boost::python::exec(script.c_str(), global_ns, global_ns);
+						boost::python::object pythonFun = global_ns[iter->FunctionName];
 
 						pythonFun(li);
+					} catch (boost::python::error_already_set&) {
+						MessageBoxA(m_hWnd, parse_python_exception().c_str(), "Python error", MB_OK);
+					} catch (...) {
+						MessageBoxA(m_hWnd, "Error on running Python", "Python error", MB_OK);
 					}
-				} catch (boost::python::error_already_set&) {
-
-					MessageBoxA(m_hWnd, parse_python_exception().c_str(), "Python error", MB_OK);
-				} catch (...) {
-					MessageBoxA(m_hWnd, "Error on running Python", "Python error", MB_OK);
+					return true;
+				} else {
+					return false;
 				}
-				return true;
-			}
-			else {
-				return false;
 			}
 		};
 	};
@@ -250,34 +224,47 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	applyCustomContextMenu(m_spLeftView->GetGridView());
 	applyCustomContextMenu(m_spRightView->GetGridView());
 
+	//Size
 	CRect rcClient = GetClientRect();
-	if (m_rcLeft.left == 0 && m_rcLeft.right == 0 && m_rcLeft.top == 0 && m_rcLeft.bottom == 0) {
+	if (m_splitterLeft == 0) {
 		//Initialize window position
-		CRect rcFavoriteClient = m_spFavoritesView->GetRect();
-		m_spFavoritesView->SetWindowPos(HWND_BOTTOM,
+		CRect rcFavoriteClient = m_spLeftFavoritesView->GetRect();
+		m_spLeftFavoritesView->SetWindowPos(HWND_BOTTOM,
 			rcClient.left, rcClient.top,
 			rcFavoriteClient.Width(), rcClient.Height(),
 			SWP_SHOWWINDOW);
 
 		if (rcClient.Width() >= 800) {
+			LONG viewWidth = (rcClient.Width() - 2 * rcFavoriteClient.Width() - kSplitterWidth) / 2;
 			m_spLeftView->SetWindowPos(HWND_BOTTOM,
-				rcClient.left + rcFavoriteClient.Width(), rcClient.top,
-				(rcClient.Width() - rcFavoriteClient.Width() - kSplitterWidth) / 2, rcClient.Height(),
+				rcClient.left + rcFavoriteClient.Width(),
+				rcClient.top,
+				viewWidth, rcClient.Height(),
 				SWP_SHOWWINDOW);
+
+			m_spRightFavoritesView->SetWindowPos(HWND_BOTTOM,
+				rcClient.left + rcFavoriteClient.Width() + kSplitterWidth + viewWidth,
+				rcClient.top,
+				rcFavoriteClient.Width(), rcClient.Height(),
+				SWP_SHOWWINDOW);
+
 			m_spRightView->SetWindowPos(HWND_BOTTOM,
-				rcClient.left + rcFavoriteClient.Width() + kSplitterWidth + (rcClient.Width() - rcFavoriteClient.Width() - kSplitterWidth) / 2, rcClient.top,
-				(rcClient.Width() - rcFavoriteClient.Width()) / 2, rcClient.Height(),
+				rcClient.left + rcFavoriteClient.Width() + kSplitterWidth + viewWidth + rcFavoriteClient.Width(),
+				rcClient.top,
+				(rcClient.Width() - 2 * rcFavoriteClient.Width() - kSplitterWidth) / 2, rcClient.Height(),
 				SWP_SHOWWINDOW);
-		}
-		else {
+			m_splitterLeft = rcFavoriteClient.Width() + viewWidth;
+		} else {
 			m_spLeftView->SetWindowPos(HWND_BOTTOM,
 				rcClient.left + rcFavoriteClient.Width(), rcClient.top,
 				rcClient.Width() - rcFavoriteClient.Width(), rcClient.Height(),
 				SWP_SHOWWINDOW);
+			m_spRightFavoritesView->ShowWindow(SW_HIDE);
 			m_spRightView->ShowWindow(SW_HIDE);
+			m_splitterLeft = rcClient.right;
 		}
-		CRect rcc(m_spLeftView->GetClientRect());
-		m_rcLeft = ScreenToClientRect(m_spLeftView->GetWindowRect());
+		//CRect rcLeftView(m_spLeftView->GetClientRect());
+		//m_leftSplit = ScreenToClientRect(m_spLeftView->GetWindowRect());
 	}
 	else {
 		PostMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
@@ -333,6 +320,8 @@ LRESULT CFilerWnd::OnClose(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled
 	GetWindowPlacement(&wp);
 	m_rcWnd=CRect(wp.rcNormalPosition);
 	
+	m_spLeftFavoritesView->DestroyWindow();
+	m_spRightFavoritesView->DestroyWindow();
 	m_spLeftView->DestroyWindow();
 	m_spRightView->DestroyWindow();
 	DestroyWindow();
@@ -359,9 +348,6 @@ LRESULT CFilerWnd::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 		SetCapture();
 		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
 	}
-
-
-
 	return 0;
 }
 
@@ -389,8 +375,7 @@ LRESULT CFilerWnd::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 	if (m_isSizing && wParam == MK_LBUTTON)
 	{
-		m_rcLeft = leftRc;
-		m_rcLeft.right += pt.x - m_ptStart.x;
+		m_splitterLeft += pt.x - m_ptStart.x;
 		m_ptStart = pt;
 		PostMessage(WM_SIZE, 0, 0);
 	}
@@ -404,25 +389,36 @@ LRESULT CFilerWnd::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	CRect rcClient = GetClientRect();
 
 	//Favorites
-	CRect rcFavoriteClient = m_spFavoritesView->GetRect();
-    m_spFavoritesView->SetWindowPos(HWND_BOTTOM,
+	CRect rcFavoriteClient = m_spLeftFavoritesView->GetRect();
+    m_spLeftFavoritesView->SetWindowPos(HWND_BOTTOM,
         rcClient.left , rcClient.top, 
         rcFavoriteClient.Width(), rcClient.Height(),
         SWP_SHOWWINDOW);
 
-	if (rcClient.Width() >= m_rcLeft.Width()) {
+	if (rcClient.Width() >= m_splitterLeft + kSplitterWidth) {
 		m_spLeftView->SetWindowPos(HWND_BOTTOM,
-			m_rcLeft.left, m_rcLeft.top, m_rcLeft.Width(), rcClient.Height(),
+			rcClient.left + rcFavoriteClient.Width(), 
+			rcClient.top,
+			m_splitterLeft-(rcClient.left + rcFavoriteClient.Width()), rcClient.Height(),
 			SWP_SHOWWINDOW);
 		m_spLeftView->UpdateWindow();
+
+		m_spRightFavoritesView->SetWindowPos(HWND_BOTTOM,
+			m_splitterLeft + kSplitterWidth,
+			rcClient.top,
+			rcFavoriteClient.Width(), rcClient.Height(),
+			SWP_SHOWWINDOW);
+
 		m_spRightView->SetWindowPos(HWND_BOTTOM,
-			m_rcLeft.right + kSplitterWidth, rcClient.top,
-			rcClient.right - (m_rcLeft.right + kSplitterWidth), rcClient.Height(),
+			m_splitterLeft + kSplitterWidth + rcFavoriteClient.Width(),
+			rcClient.top,
+			rcClient.right - (m_splitterLeft + kSplitterWidth + rcFavoriteClient.Width()), rcClient.Height(),
 			SWP_SHOWWINDOW);
 		m_spRightView->UpdateWindow();
 	}else{
 		m_spLeftView->SetWindowPos(HWND_BOTTOM,
-			rcClient.left + rcFavoriteClient.Width(), rcClient.top,
+			rcClient.left + rcFavoriteClient.Width(),
+			rcClient.top,
 			rcClient.Width() - rcFavoriteClient.Width(), rcClient.Height(),
 			SWP_SHOWWINDOW);
 		m_spLeftView->UpdateWindow();
@@ -462,148 +458,75 @@ LRESULT CFilerWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 //	return 0;
 //}
 
-
-
 LRESULT CFilerWnd::OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	CRect rc(0, 0, 0, 0);
-
-	auto pPropWnd = new CPropertyWnd<CApplicationProperty>(
-		m_spGridViewProp,
-		L"GridViewProperty",
-		m_spApplicationProp);
-
-	pPropWnd->PropertyChanged.connect([this](const std::wstring& str)->void {
-		m_spLeftView->GetGridView()->UpdateAll();
-		m_spRightView->GetGridView()->UpdateAll();
-		m_spFavoritesView->UpdateAll();
-		SerializeProperty(this);
+	return OnCommandOption<CApplicationProperty>(L"Application Property", m_spApplicationProp,
+		[this](const std::wstring& str)->void {
+			SerializeProperty(this);
 	});
-
-	pPropWnd->Create(m_hWnd, rc);
-	rc = CRect(pPropWnd->GetGridView()->MeasureSize());
-	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
-	pPropWnd->MoveWindow(0, 0, rc.Width() + ::GetSystemMetrics(SM_CXVSCROLL), min(500, rc.Height() + ::GetSystemMetrics(SM_CYVSCROLL) + 10), FALSE);
-	pPropWnd->CenterWindow();
-	pPropWnd->ShowWindow(SW_SHOW);
-	pPropWnd->UpdateWindow();
-
-	return 0;
 }
 
+LRESULT CFilerWnd::OnCommandFilerGridViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	return OnCommandOption<FilerGridViewProperty>(L"FilerGridView Property", m_spFilerGridViewProp,
+		[this](const std::wstring& str)->void {
+		m_spLeftView->GetGridView()->UpdateAll();
+		m_spRightView->GetGridView()->UpdateAll();
+		SerializeProperty(this);
+	});
+}
 
 LRESULT CFilerWnd::OnCommandGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
-	CRect rc(0,0,0,0);
-
-	auto pPropWnd=new CPropertyWnd<CGridViewProperty>(
-		m_spGridViewProp,
-		L"GridViewProperty",
-		m_spGridViewProp);
-
-	pPropWnd->PropertyChanged.connect([this](const std::wstring& str)->void{
+	return OnCommandOption<CGridViewProperty>(L"GridView Property", m_spGridViewProp,
+		[this](const std::wstring& str)->void {
 		m_spLeftView->GetGridView()->UpdateAll();
 		m_spRightView->GetGridView()->UpdateAll();
-		m_spFavoritesView->UpdateAll();
+		m_spLeftFavoritesView->UpdateAll();
+		m_spRightFavoritesView->UpdateAll();
 		SerializeProperty(this);
 	});
-
-	pPropWnd->Create(m_hWnd,rc);
-	rc=CRect(pPropWnd->GetGridView()->MeasureSize());
-	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
-	pPropWnd->MoveWindow(0,0,rc.Width()+::GetSystemMetrics(SM_CXVSCROLL),min(500,rc.Height()+::GetSystemMetrics(SM_CYVSCROLL)+10),FALSE);
-	pPropWnd->CenterWindow();
-	pPropWnd->ShowWindow(SW_SHOW);
-	pPropWnd->UpdateWindow();
-
-	return 0;
 }
 
 LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
-	CRect rc(0,0,0,0);
-
-	auto pPropWnd=new CPropertyWnd<CFavoritesProperty>(
-		m_spGridViewProp,
-		L"FavoritesProperty",
-		m_spFavoritesView->GetFavoritesProp());
-
-	pPropWnd->PropertyChanged.connect([&](const std::wstring& str)->void{
-		m_spFavoritesView->OpenFavorites();
-		m_spFavoritesView->UpdateAll();
+	return OnCommandOption<CFavoritesProperty>(L"Favorites Property", m_spFavoritesProp,
+		[this](const std::wstring& str)->void {
+		m_spLeftFavoritesView->UpdateAll();
+		m_spRightFavoritesView->UpdateAll();
 		SerializeProperty(this);
 	});
-
-	pPropWnd->Create(m_hWnd,rc);
-	rc=CRect(pPropWnd->GetGridView()->MeasureSize());
-	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
-	pPropWnd->MoveWindow(0,0,rc.Width()+::GetSystemMetrics(SM_CXVSCROLL),min(500,rc.Height()+::GetSystemMetrics(SM_CYVSCROLL)+10),FALSE);
-	pPropWnd->CenterWindow();
-	pPropWnd->ShowWindow(SW_SHOW);
-	pPropWnd->UpdateWindow();
-
-	return 0;
-}
-
-LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-	return OnCommandViewOption(m_spLeftView);
-}
-
-LRESULT CFilerWnd::OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-	return OnCommandViewOption(m_spRightView);
-}
-
-
-LRESULT CFilerWnd::OnCommandViewOption(std::shared_ptr<CFilerTabGridView>& view)
-{
-	CRect rc(0, 0, 0, 0);
-
-	auto pPropWnd = new CPropertyWnd<CFilerTabGridView, std::shared_ptr<CGridViewProperty>>(
-		m_spGridViewProp,
-		L"View",
-		view,
-		m_spGridViewProp);
-
-	pPropWnd->PropertyChanged.connect([&](const std::wstring& str)->void {
-		view->GetGridView()->UpdateAll();
-		SerializeProperty(this);
-	});
-
-	pPropWnd->Create(m_hWnd, rc);
-	rc = CRect(pPropWnd->GetGridView()->MeasureSize());
-	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
-	pPropWnd->MoveWindow(0, 0, rc.Width() + ::GetSystemMetrics(SM_CXVSCROLL), min(500, rc.Height() + ::GetSystemMetrics(SM_CYVSCROLL) + 10), FALSE);
-	pPropWnd->CenterWindow();
-	pPropWnd->ShowWindow(SW_SHOW);
-	pPropWnd->UpdateWindow();
-
-	return 0;
 }
 
 LRESULT CFilerWnd::OnCommandPythonExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	CRect rc(0, 0, 0, 0);
-
-	auto pPropWnd = new CPropertyWnd<CPythonExtensionProperty>(
-		m_spGridViewProp,
-		L"PythonExtensionProperty",
-		m_spPyExProp);
-
-	pPropWnd->PropertyChanged.connect([&](const std::wstring& str)->void {
+	return OnCommandOption<CPythonExtensionProperty>(L"Python extension Property", m_spPyExProp,
+		[this](const std::wstring& str)->void {
 		SerializeProperty(this);
 	});
+}
 
-	pPropWnd->Create(m_hWnd, rc);
-	rc = CRect(pPropWnd->GetGridView()->MeasureSize());
-	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
-	pPropWnd->MoveWindow(0, 0, rc.Width() + ::GetSystemMetrics(SM_CXVSCROLL), min(500, rc.Height() + ::GetSystemMetrics(SM_CYVSCROLL) + 10), FALSE);
-	pPropWnd->CenterWindow();
-	pPropWnd->ShowWindow(SW_SHOW);
-	pPropWnd->UpdateWindow();
 
-	return 0;
+LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	return OnCommandOption<CFilerTabGridView, std::shared_ptr<CGridViewProperty>, std::shared_ptr<FilerGridViewProperty>>(
+		L"Left View", m_spLeftView,
+		[this](const std::wstring& str)->void {
+		m_spLeftFavoritesView->UpdateAll();
+		m_spRightFavoritesView->UpdateAll();
+		SerializeProperty(this);
+	}, m_spGridViewProp, m_spFilerGridViewProp);
+}
+
+LRESULT CFilerWnd::OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	return OnCommandOption<CFilerTabGridView, std::shared_ptr<CGridViewProperty>, std::shared_ptr<FilerGridViewProperty>>(
+		L"Right View", m_spRightView,
+		[this](const std::wstring& str)->void {
+		m_spLeftFavoritesView->UpdateAll();
+		m_spRightFavoritesView->UpdateAll();
+		SerializeProperty(this);
+	}, m_spGridViewProp, m_spFilerGridViewProp);
 }
 
 

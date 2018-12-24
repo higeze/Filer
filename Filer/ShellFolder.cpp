@@ -5,6 +5,7 @@
 #include "FileIconCache.h"
 #include "ConsoleTimer.h"
 #include "ApplicationProperty.h"
+#include "FileSizeArgs.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -125,50 +126,52 @@ std::shared_ptr<CShellFolder> CShellFolder::Clone()const
 	return std::make_shared<CShellFolder>(m_pParentShellFolder, m_parentIdl, m_childIdl, m_pShellFolder);
 }
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize()
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(std::shared_ptr<FileSizeArgs>& spArgs)
 {
-	switch (GetLockSize().second) {
-	case FileSizeStatus::None:
-		if (::PathIsNetworkPath(GetPath().c_str())){
-			SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable));
-		} else {
-			SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
+	if (spArgs->NoFolderSize) {
+		SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable));
+	} else if(spArgs->NoFolderSizeOnNetwork && ::PathIsNetworkPath(GetPath().c_str())) {
+		SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable));
+	} else {
+		switch (GetLockSize().second) {
+			case FileSizeStatus::None:
+				SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
 
-			if (!m_pSizeThread) {
-				m_pSizeThread.reset(new std::thread([this]()->void {
-					try {
-						boost::timer tim;
-
-						ULARGE_INTEGER size = { 0 };
-						if (GetFolderSize(size, m_cancelSize, tim)) {
-							SetLockSize(std::make_pair(size, FileSizeStatus::Available));
-						} else {
-							SetLockSize(std::make_pair(size, FileSizeStatus::Unavailable));
+				if (!m_pSizeThread) {
+					auto limit = spArgs->TimeLimitFolderSize ? spArgs->TimeLimitMs : -1;
+					m_pSizeThread.reset(new std::thread([this, limit]()->void {
+						try {
+							boost::timer tim;
+							ULARGE_INTEGER size = { 0 };
+							if (GetFolderSize(size, m_cancelSize, tim, limit)) {
+								SetLockSize(std::make_pair(size, FileSizeStatus::Available));
+							} else {
+								SetLockSize(std::make_pair(size, FileSizeStatus::Unavailable));
+							}
+							SignalFileSizeChanged(this);
+						} catch (...) {
+							BOOST_LOG_TRIVIAL(trace) << L"CShellFile::GetSize Exception at size thread";
 						}
-						SignalFileSizeChanged(this);
-					} catch (...) {
-						BOOST_LOG_TRIVIAL(trace) << L"CShellFile::GetSize Exception at size thread";
-					}
-				}));
-			} else {
-				OutputDebugString(L"Already run");
-			}
+					}));
+				} else {
+					OutputDebugString(L"Already run");
+				}
+				break;
+			case FileSizeStatus::Available:
+			case FileSizeStatus::Unavailable:
+			case FileSizeStatus::Calculating:
+				break;
 		}
-		break;
-	case FileSizeStatus::Available:
-	case FileSizeStatus::Unavailable:
-	case FileSizeStatus::Calculating:
-		break;
 	}
 	return GetLockSize();
 }
 
-bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel, boost::timer& tim)
+bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel, boost::timer& tim, int limit)
 {
 	if (cancel.load()) {
 		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Canceled at top : " + GetPath();
 		return false;
-	} else if (tim.elapsed() > 0.5) {
+	} else if (limit > 0 && tim.elapsed() > limit/1000.0) {
 		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Timer elapsed at top : " + GetPath();
 		return false;
 	}
@@ -185,7 +188,7 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel
 				if (cancel.load()) {
 					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Canceled in while : " + GetPath();
 					return false;
-				} else if (tim.elapsed() > 0.5) {
+				} else if (limit > 0 && tim.elapsed() > limit/1000.0) {
 					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Timer elapsed in while : " + GetPath();
 					return false;
 				}
@@ -193,7 +196,7 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel
 
 				auto spFile(CreateShExFileFolder(nextIdl));
 				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-					if (spFolder->GetFolderSize(childSize, cancel, tim)) {
+					if (spFolder->GetFolderSize(childSize, cancel, tim, limit)) {
 						size.QuadPart += childSize.QuadPart;
 					} else {
 						return false;

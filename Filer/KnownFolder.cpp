@@ -86,13 +86,13 @@ KNOWNFOLDERID CKnownFolder::GetId()
 
 }
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CKnownFolder::GetSize()
+std::pair<ULARGE_INTEGER, FileSizeStatus> CKnownFolder::GetSize(std::shared_ptr<FileSizeArgs>& spArgs)
 {
 	if (m_size.second == FileSizeStatus::None) {
 		if (GetCategory() == KF_CATEGORY_VIRTUAL) {
 			SetLockSize(std::make_pair(ULARGE_INTEGER(), FileSizeStatus::Unavailable));
 		}else {
-			return CShellFolder::GetSize();
+			return CShellFolder::GetSize(spArgs);
 		}
 	}
 	return m_size;

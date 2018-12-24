@@ -4,7 +4,7 @@
 #include "IDL.h"
 #include "Resource.h"
 
-#include "GridViewProperty.h"
+#include "FilerGridViewProperty.h"
 
 #include "shobjidl.h"
 #include "MyFriendSerializer.h"
@@ -18,19 +18,24 @@
 
 #define WM_UAHMEASUREMENUITEM 0x0094
 
-#define REGISTER_POLYMORPHIC_RELATION(Base, Derived)\
-CSerializer::s_dynamicSerializeMap.insert(\
-	std::make_pair(typeid(Derived).name(), [](CSerializer* se, MSXML2::IXMLDOMElementPtr pElem, void* ptr) {\
+#define CLEAR_POLYMORPHIC_RELATION \
+	CSerializer::s_dynamicSerializeMap.clear();\
+	CDeserializer::s_dynamicDeserializeMap.clear();\
+	CDeserializer::s_dynamicMakeSharedMap.clear()
+
+#define REGISTER_POLYMORPHIC_RELATION(Base, Derived, ...)\
+CSerializer::s_dynamicSerializeMap.insert_or_assign(\
+	typeid(Derived).name(), [](CSerializer* se, MSXML2::IXMLDOMElementPtr pElem, void* ptr) {\
 	se->SerializeValue(*(dynamic_cast<Derived*>(static_cast<Base*>(ptr))), pElem);\
-}));\
-CDeserializer::s_dynamicDeserializeMap.insert(\
-	std::make_pair(typeid(Derived).name(), [](CDeserializer* se, MSXML2::IXMLDOMElementPtr pElem, void* ptr) {\
+});\
+CDeserializer::s_dynamicDeserializeMap.insert_or_assign(\
+	typeid(Derived).name(), [](CDeserializer* se, MSXML2::IXMLDOMElementPtr pElem, void* ptr) {\
 	se->DeserializeElement(*(dynamic_cast<Derived*>(static_cast<Base*>(ptr))), pElem);\
-}));\
-CDeserializer::s_dynamicMakeSharedMap.insert(\
-	std::make_pair(typeid(Derived).name(), [this]()->std::shared_ptr<void> {\
-	return std::make_shared<Derived>();\
-}))
+});\
+CDeserializer::s_dynamicMakeSharedMap.insert_or_assign(\
+	typeid(Derived).name(), [this]()->std::shared_ptr<void> {\
+	return std::make_shared<Derived>(__VA_ARGS__);\
+})
 
 class CCellEventArgs;
 class CShellFile;
@@ -58,7 +63,8 @@ class CFilerGridView:public CGridView
 {
 private:	
 
-	//std::vector<std::shared_ptr<CShellFile>> m_vpFile;
+	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
+
 	std::shared_ptr<CDirectoryWatcher> m_spWatcher;
 
 	CComPtr<IShellFolder> m_pDesktopShellFolder;
@@ -97,9 +103,11 @@ private:
 	std::unordered_map<std::wstring, std::unordered_map<std::shared_ptr<CColumn>, std::wstring>> m_filterMap;
 
 public:
-	CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty);
+	//Constructor
+	CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProperty, std::shared_ptr<FilerGridViewProperty> spFilerGridViewProp);
 	virtual ~CFilerGridView(){}
 	//getter
+	std::shared_ptr<FilerGridViewProperty>& GetFilerGridViewPropPtr() { return m_spFilerGridViewProp; }
 	std::shared_ptr<CShellFolder>& GetFolder() { return m_spFolder; }
 
 	//signal
@@ -189,12 +197,14 @@ public:
 	template <class Archive>
 	void load(Archive& ar)
 	{
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CParentRowHeaderColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileIconColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn);
+		//CLEAR_POLYMORPHIC_RELATION;
+
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CParentRowHeaderColumn, this);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileIconColumn, this);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn, this);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn, this);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn, this);
 
 		std::vector<ColumnData> columns;
 		for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
@@ -210,7 +220,7 @@ public:
 				} else if (auto p = std::dynamic_pointer_cast<CParentRowHeaderColumn>(col.DataPtr)) {
 					m_pHeaderColumn = p;
 				}
-				col.DataPtr->SetSheetPtr(this);
+				//col.DataPtr->SetSheetPtr(this);
 				InsertColumnNotify(col.Index, col.DataPtr, false);
 			}
 		}

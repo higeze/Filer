@@ -533,6 +533,18 @@
     <ClInclude Include="PathRow.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="ViewProperty.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSizeArgs.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerGridViewProperty.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ResourceIDFactory.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -825,6 +837,9 @@
     </ClCompile>
     <ClCompile Include="PathRow.cpp">
       <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ResourceIDFactory.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,7 @@
 #include "FavoritesProperty.h"
 #include "ShellFolder.h"
 #include "ApplicationProperty.h"
+#include "ViewProperty.h"
 //#include "KonamiCommander.h"
 
 class CFilerGridView;
@@ -19,7 +20,7 @@ class CShellFolder;
 
 struct PythonExtension
 {
-	UINT ID;
+	//UINT ID;
 	std::wstring Name;
 	std::wstring ScriptPath;
 	std::string FunctionName;
@@ -28,7 +29,7 @@ struct PythonExtension
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar("ID", ID);
+		//ar("ID", ID);
 		ar("Name", Name);
 		ar("ScriptPath", ScriptPath);
 		ar("FunctionName", FunctionName);
@@ -38,12 +39,14 @@ struct PythonExtension
 struct CPythonExtensionProperty
 {
 public:
+	std::wstring PythonHome;
 	std::vector<PythonExtension> PythonExtensions;
 
 	FRIEND_SERIALIZER
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
+		ar("PythonHome", PythonHome);
 		ar("PythonExtensions", PythonExtensions);
 	}
 };
@@ -53,36 +56,48 @@ class CFilerWnd:public CWnd
 //public:
 //	static CUniqueIDFactory ControlIDFactory;
 private:
-	const int kSplitterWidth = 5;
-
 	CRect m_rcWnd;
+
+	const int kSplitterWidth = 5;
+	LONG m_splitterLeft;
+	bool m_isSizing = false;
+	CPoint m_ptStart;
+
+	//Common properties
 	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
 	std::shared_ptr<CGridViewProperty> m_spGridViewProp;
-	std::shared_ptr<CFavoritesGridView> m_spFavoritesView;
+	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
+	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
+	std::shared_ptr<CPythonExtensionProperty> m_spPyExProp;
+	//Windows
+	std::shared_ptr<CFavoritesGridView> m_spLeftFavoritesView;
+	std::shared_ptr<CFavoritesGridView> m_spRightFavoritesView;
+
 	std::shared_ptr<CFilerTabGridView> m_spLeftView;
 	std::shared_ptr<CFilerTabGridView> m_spRightView;
+	
 	std::shared_ptr<CFilerTabGridView> m_spCurView;
-	std::shared_ptr<CPythonExtensionProperty> m_spPyExProp;
+	
 	//CKonamiCommander m_konamiCommander;
 
 public:
+	//Constructor
 	CFilerWnd();
-	//CFilerWnd(const CFilerWnd&) = delete;
-	//CFilerWnd(CFilerWnd&&) = default;
-	//CFilerWnd& operator=(const CFilerWnd&) = delete;
-	//CFilerWnd& operator=(CFilerWnd&&) = default;
 	virtual ~CFilerWnd();
+
 	virtual HWND Create(HWND hWndParent);
-	std::shared_ptr<CApplicationProperty> GetApplicationProperty() { return m_spApplicationProp; }
-	std::shared_ptr<CFavoritesGridView>& GetFavoritesView() { return m_spFavoritesView; }
+	//Getter
+	std::shared_ptr<CApplicationProperty>& GetApplicationProperty() { return m_spApplicationProp; }
+	std::shared_ptr<FilerGridViewProperty>& GetFilerGridViewPropPtr() { return m_spFilerGridViewProp; }
+	std::shared_ptr<CGridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
+	std::shared_ptr<CFavoritesProperty>& GetFavoritesPropPtr() { return m_spFavoritesProp; }
+
+	std::shared_ptr<CFavoritesGridView>& GetLeftFavoritesView() { return m_spLeftFavoritesView; }
+	std::shared_ptr<CFavoritesGridView>& GetRightFavoritesView() { return m_spRightFavoritesView; }
 	std::shared_ptr<CFilerTabGridView>& GetLeftView() { return m_spLeftView; }
 	std::shared_ptr<CFilerTabGridView>& GetRightView() { return m_spRightView; }
 
 private:
-	std::shared_ptr<CShellFolder> GetShellFolderFromPath(const std::wstring& path);
-	//LRESULT OnTabContextMenu(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	//void SetContextMenuTabIndex(int index){m_contextMenuTabIndex = index;}
-
 	LRESULT OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnClose(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnDestroy(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -90,35 +105,43 @@ private:
 	LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 
-	bool m_isSizing = false;
-	CPoint m_ptStart;
-	CRect m_rcLeft;
+
 	LRESULT OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
-	//LRESULT OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	//LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	template<class T, class... Args>
+	LRESULT OnCommandOption(const std::wstring& name, std::shared_ptr<T>& spProp, std::function<void(const std::wstring&)> changed, Args&... args)
+	{
+		auto pPropWnd = new CPropertyWnd<T, Args...>(
+			m_spGridViewProp,
+			name,
+			spProp,
+			args...);
 
-	//LRESULT OnCommandNewTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
-	//LRESULT OnCommandCloneTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	//LRESULT OnCommandCloseTab(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
-	//LRESULT OnCommandCloseAllButThisTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	//LRESULT OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	//LRESULT OnNotifyTabSelChanging(int id, LPNMHDR, BOOL& bHandled);
-	//LRESULT OnNotifyTabSelChange(int id, LPNMHDR, BOOL& bHandled);
-	//LRESULT OnNotifyTabRClick(int id, LPNMHDR, BOOL& bHandled);
+		pPropWnd->PropertyChanged.connect(changed);
+
+		CRect rc(0, 0, 0, 0);
+		pPropWnd->Create(m_hWnd, rc);
+		rc = CRect(pPropWnd->GetGridView()->MeasureSize());
+		AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
+		pPropWnd->MoveWindow(0, 0, rc.Width() + ::GetSystemMetrics(SM_CXVSCROLL), min(500, rc.Height() + ::GetSystemMetrics(SM_CYVSCROLL) + 10), FALSE);
+		pPropWnd->CenterWindow();
+		pPropWnd->ShowWindow(SW_SHOW);
+		pPropWnd->UpdateWindow();
+		
+		return 0;
+	}
 
 	LRESULT OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	LRESULT OnCommandGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
+	LRESULT OnCommandFilerGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
+	LRESULT OnCommandGridViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
+	LRESULT OnCommandPythonExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 
 	LRESULT OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	LRESULT OnCommandViewOption(std::shared_ptr<CFilerTabGridView>& view);
-	LRESULT OnCommandPythonExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 
-	//void AddNewView(std::wstring path);
 public:
 	FRIEND_SERIALIZER
     template <class Archive>
@@ -128,20 +151,19 @@ public:
 		if(info == typeid(CSerializer&) || info == typeid(CDeserializer&)){ 
 			ar("WindowRectangle", m_rcWnd);
 		}
+		ar("LeftSplit", m_splitterLeft);
 
-		ar("LeftViewRect", m_rcLeft);
-
-		ar("GridViewProperty",m_spGridViewProp);
-
-		ar("FavoritesView", m_spFavoritesView);
+		ar("ApplicationProperty", m_spApplicationProp);
+		ar("GridViewProperty", m_spGridViewProp);
+		ar("FilerGridViewProperty",m_spFilerGridViewProp);
+		ar("FavoritesProperty", m_spFavoritesProp);
+		ar("PythonExtensionProperty", m_spPyExProp);
 
 		ar("LeftView", m_spLeftView);
 		ar("RightView", m_spRightView);
 
-		ar("ApplicationProperty", m_spApplicationProp);
-
-		ar("PythonExtensionProperty", m_spPyExProp);
-
+		ar("LeftFavoritesView", m_spLeftFavoritesView);
+		ar("RightFavoritesView", m_spRightFavoritesView);
     }
 
     template <class Archive>
@@ -151,41 +173,18 @@ public:
 		if(info == typeid(CSerializer&) || info == typeid(CDeserializer&)){ 
 			ar("WindowRectangle", m_rcWnd);
 		}
-
-		ar("LeftViewRect", m_rcLeft);
-
-		ar("GridViewProperty",m_spGridViewProp);
-
-		ar("FavoritesView", m_spFavoritesView, m_spGridViewProp);
-
-		ar("LeftView", m_spLeftView, m_spGridViewProp);
-		m_spLeftView->SetParentWnd(this);
-		m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9996);
-		
-		ar("RightView", m_spRightView, m_spGridViewProp);
-		m_spRightView->SetParentWnd(this);
-		m_spLeftView->CreateWindowExArgument().hMenu((HMENU)9997);
+		ar("LeftSplit", m_splitterLeft);
 
 		ar("ApplicationProperty", m_spApplicationProp);
-
+		ar("GridViewProperty", m_spGridViewProp);
+		ar("FilerGridViewProperty",m_spFilerGridViewProp);
+		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("PythonExtensionProperty", m_spPyExProp);
 
-		//{
-		//	PythonExtension pyex;
-		//	pyex.ID = IDM_ADDTOFAVORITEINGRID + 1000;
-		//	pyex.Name = L"Pdf Split";
-		//	pyex.ScriptPath = L"C:\\Users\\kuuna\\AppData\\Local\\Programs\\Python\\Python37-32\\pdf.py";
-		//	pyex.FunctionName = "pdf_split";
-		//	m_pyExtensions.push_back(pyex);
-		//}
-		//{
-		//	PythonExtension pyex;
-		//	pyex.ID = IDM_ADDTOFAVORITEINGRID + 1001;
-		//	pyex.Name = L"Pdf Merge";
-		//	pyex.ScriptPath = L"C:\\Users\\kuuna\\AppData\\Local\\Programs\\Python\\Python37-32\\pdf.py";
-		//	pyex.FunctionName = "pdf_merge";
-		//	m_pyExtensions.push_back(pyex);
-		//}
+		ar("LeftView", m_spLeftView, m_spGridViewProp,  m_spFilerGridViewProp);		
+		ar("RightView", m_spRightView, m_spGridViewProp, m_spFilerGridViewProp);
 
+		ar("LeftFavoritesView", m_spLeftFavoritesView, m_spGridViewProp, m_spFavoritesProp);
+		ar("RightFavoritesView", m_spRightFavoritesView, m_spGridViewProp, m_spFavoritesProp);
 	}
 };

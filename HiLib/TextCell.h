@@ -5,7 +5,7 @@
 class CInplaceEdit;
 
 struct equal_double
-	:public std::binary_function<const double&,const double&,bool>
+//	:public std::binary_function<const double&,const double&,bool>
 {
 private:
 	double m_dEpsilon;
@@ -20,7 +20,7 @@ public:
 };
 
 struct equal_wstring_compare_in_double
-	:public std::binary_function<const std::wstring&,const std::wstring&,bool>
+//	:public std::binary_function<const std::wstring&,const std::wstring&,bool>
 {
 private:
 	equal_double m_ed;

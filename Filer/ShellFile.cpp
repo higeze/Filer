@@ -4,6 +4,7 @@
 #include "MyCom.h"
 #include "FileIconCache.h"
 #include <thread>
+#include "FileSizeArgs.h"
 
 bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<void()> checkExit)
 {
@@ -265,7 +266,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::ReadSize()
 }
 
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize()
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize(std::shared_ptr<FileSizeArgs>& spArgs)
 {
 	switch (m_size.second) {
 	case FileSizeStatus::None:

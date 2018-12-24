@@ -5,8 +5,8 @@
 #include "FileSizeCell.h"
 #include "PathCell.h"
 
-CFileSizeColumn::CFileSizeColumn(CGridView* pGrid)
-		:CParentDefaultMapColumn(pGrid){}
+CFileSizeColumn::CFileSizeColumn(CGridView* pGrid, std::shared_ptr<FileSizeArgs> spSizeProp)
+		:CParentDefaultMapColumn(pGrid), m_spSizeArgs(spSizeProp){}
 
 CFileSizeColumn::cell_type CFileSizeColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {

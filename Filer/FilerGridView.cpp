@@ -47,8 +47,8 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
-CFilerGridView::CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty)
-	:CGridView(spGridViewProrperty)
+CFilerGridView::CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProp, std::shared_ptr<FilerGridViewProperty> spFilerGridViewProp)
+	:CGridView(spGridViewProp), m_spFilerGridViewProp(spFilerGridViewProp)
 {
 	m_cwa
 	.dwExStyle(WS_EX_ACCEPTFILES);
@@ -107,22 +107,22 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 		m_pNameColumn = std::make_shared<CFileNameColumn>(this);
 		insertFun(m_pNameColumn, CColumn::kMaxIndex);
 		insertFun(std::make_shared<CFileExtColumn>(this), CColumn::kMaxIndex);
-		insertFun(std::make_shared<CFileSizeColumn>(this), CColumn::kMaxIndex);
+		insertFun(std::make_shared<CFileSizeColumn>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr), CColumn::kMaxIndex);
 		insertFun(std::make_shared<CFileLastWriteColumn>(this), CColumn::kMaxIndex);
 	}
 
 	//Header menu items
-	for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
-		auto cell = CSheet::Cell(m_rowNameHeader, iter->DataPtr);
-		auto str = cell->GetString();
-		m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
-			IDM_VISIBLEROWHEADERCOLUMN + std::distance(m_columnAllDictionary.begin(), iter),
-			Cell(m_rowNameHeader, iter->DataPtr)->GetString(), this, iter->DataPtr.get()));
-	}
+	//for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+	//	auto cell = CSheet::Cell(m_rowNameHeader, iter->DataPtr);
+	//	auto str = cell->GetString();
+	//	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
+	//		IDM_VISIBLEROWHEADERCOLUMN + std::distance(m_columnAllDictionary.begin(), iter),
+	//		Cell(m_rowNameHeader, iter->DataPtr)->GetString(), this, iter->DataPtr.get()));
+	//}
 
-	for (auto& item : m_headerMenuItems) {
-		AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
-	}
+	//for (auto& item : m_headerMenuItems) {
+	//	AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
+	//}
 
 	return 0;
 }
@@ -925,9 +925,24 @@ void CFilerGridView::OnContextMenu(const ContextMenuEvent& e)
 		//Header menu
 		CMenu menu(::CreatePopupMenu());
 		if (menu.IsNull()) { return; }
+		if (m_headerMenuItems.empty()) {
+			for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+				auto cell = CSheet::Cell(m_rowNameHeader, iter->DataPtr);
+				auto str = cell->GetString();
+				m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
+					IDM_VISIBLEROWHEADERCOLUMN + std::distance(m_columnAllDictionary.begin(), iter),
+					Cell(m_rowNameHeader, iter->DataPtr)->GetString(), this, iter->DataPtr.get()));
+			}
+
+			for (auto& item : m_headerMenuItems) {
+				AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
+			}
+		}
+
 		for (auto& item : m_headerMenuItems) {
 			menu.InsertMenuItemW(menu.GetMenuItemCount(), TRUE, item.get());
 		}
+
 		menu.TrackPopupMenu(
 			TPM_LEFTALIGN | TPM_RIGHTBUTTON,
 			ptScreen.x,

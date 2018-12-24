@@ -3,6 +3,7 @@
 #include "PropertySerializer.h"
 #include "PropertyGridView.h"
 #include <type_traits>
+#include <tuple>
 
 #define IDC_BUTTON_DEFAULT						161
 #define IDC_BUTTON_OK							162
@@ -12,7 +13,7 @@
 //class CPropertyGridView;
 class CCellProperty;
 
-template<class T, class U = std::nullptr_t>
+template<class T, class ...Args>
 class CPropertyWnd:public CWnd
 {
 private:
@@ -25,15 +26,14 @@ private:
 	std::shared_ptr<CPropertyGridView> m_spGrid;
 	std::wstring m_wstrPropertyName;
 	std::shared_ptr<T> m_prop;
-	U m_arg1;
+	std::tuple<Args...> m_args;
 	std::shared_ptr<CCellProperty> m_spPropSheetCellHeader;
 	std::shared_ptr<CCellProperty> m_spPropSheetCellFilter;
 	std::shared_ptr<CCellProperty> m_spPropSheetCellCell;
 
-	bool m_showDefault;
-	bool m_showApply;
-
-	bool m_isModal;
+	bool m_showDefault = true;
+	bool m_showApply = true;
+	bool m_isModal = false;
 public:
 #pragma warning(disable: 4996)
 	boost::signals2::signal<void(const std::wstring&)> PropertyChanged;
@@ -45,19 +45,18 @@ public:
 		std::shared_ptr<CGridViewProperty> spGridViewProperty,
 		std::wstring wstrPropertyName,
 		std::shared_ptr<T> prop,
-		U arg1 = nullptr,
-		bool showDefault = true, bool showApply = true, bool isModal = false)
+		Args... args)
 		:CWnd(),
-		m_arg1(arg1),
+		m_args(args...),
 		m_spGrid(std::make_shared<CPropertyGridView>(spGridViewProperty)),
 		m_spPropSheetCellHeader(spGridViewProperty->m_spPropHeader),
 		m_spPropSheetCellFilter(spGridViewProperty->m_spPropCell),
 		m_spPropSheetCellCell(spGridViewProperty->m_spPropCell),
 		m_wstrPropertyName(wstrPropertyName),
-		m_prop(prop),
-		m_showDefault(showDefault),
-		m_showApply(showApply),
-		m_isModal(isModal)
+		m_prop(prop)//,
+//		m_showDefault(showDefault),
+//		m_showApply(showApply),
+//		m_isModal(isModal)
 	{
 		m_rca
 			.lpszClassName(L"CPropertyWnd")
@@ -98,7 +97,9 @@ public:
 	template<class X>
 	std::shared_ptr<X> MakeShared(typename std::enable_if<!std::is_default_constructible<X>::value>::type* = 0)
 	{
-		return std::make_shared<X>(m_arg1);
+		return  std::apply([](auto&&... args) {
+				return std::make_shared<X>(std::forward<decltype(args)>(args)...);
+			}, m_args);
 	}
 
 	LRESULT OnCommandDefault(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)

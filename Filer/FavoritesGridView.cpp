@@ -21,9 +21,9 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
-CFavoritesGridView::CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGridViewProperty)
+CFavoritesGridView::CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGridViewProperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp)
 			:CGridView(spGridViewProperty),
-			m_spFavoritesProp(std::make_shared<CFavoritesProperty>())
+			m_spFavoritesProp(spFavoritesProp)
 {
 	m_isFocusable = false;
 

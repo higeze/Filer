@@ -25,7 +25,7 @@ private:
 	int m_contextMenuTabIndex;
 
 public:
-	CFilerTabGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty);
+	CFilerTabGridView(std::shared_ptr<CGridViewProperty> spGridViewProp, std::shared_ptr<FilerGridViewProperty> spFilerGridViewProrperty);
 	virtual ~CFilerTabGridView() {}
 
 	//Getter Setter
@@ -72,7 +72,7 @@ public:
 	void load(Archive& ar)
 	{
 		ar("ViewPaths", m_vwPath);
-		ar("FilerView", m_spFilerView, m_spFilerView->GetGridViewProp());
+		ar("FilerView", m_spFilerView, m_spFilerView->GetGridViewPropPtr(), m_spFilerView->GetFilerGridViewPropPtr());
 	}
 
 

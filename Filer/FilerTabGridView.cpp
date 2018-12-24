@@ -5,8 +5,8 @@
 #include "FavoriteRow.h"
 #include "KnownFolder.h"
 
-CFilerTabGridView::CFilerTabGridView(std::shared_ptr<CGridViewProperty> spGridViewProp)
-	:m_spFilerView(std::make_shared<CFilerGridView>(spGridViewProp))
+CFilerTabGridView::CFilerTabGridView(std::shared_ptr<CGridViewProperty> spGridViewProp, std::shared_ptr<FilerGridViewProperty> spFilerGridViewProp)
+	:m_spFilerView(std::make_shared<CFilerGridView>(spGridViewProp, spFilerGridViewProp))
 {
 	CreateWindowExArgument()
 		.dwStyle(WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE | TCS_HOTTRACK | TCS_FLATBUTTONS | TCS_MULTILINE);
@@ -330,9 +330,11 @@ LRESULT CFilerTabGridView::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HW
 	auto iter = m_viewMap.find(id);
 	if (iter != m_viewMap.end()) {
 		if(auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)){
-			p->GetFavoritesView()->GetFavoritesProp()->GetFavorites()->push_back(CFavorite(iter->second->GetPath(), L""));
-			p->GetFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetFavoritesView().get(), p->GetFavoritesView()->GetFavoritesProp()->GetFavorites()->size() - 1));
-			p->GetFavoritesView()->SubmitUpdate();
+			p->GetFavoritesPropPtr()->GetFavorites()->push_back(CFavorite(iter->second->GetPath(), L""));
+			p->GetLeftFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetLeftFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
+			p->GetRightFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetRightFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
+			p->GetLeftFavoritesView()->SubmitUpdate();
+			p->GetRightFavoritesView()->SubmitUpdate();
 		}
 	}
 	return 0;
