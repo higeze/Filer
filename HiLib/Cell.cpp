@@ -22,22 +22,14 @@ CCell::CCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellPr
 	m_pRow(pRow),
 	m_pColumn(pColumn),
 	m_spProperty(spProperty),
-	m_bSelected(false),
-	m_bChecked(false),
-	m_fitSize(),
-	m_actSize(),
-	m_bFitMeasureValid(false),
-	m_bActMeasureValid(false),
 	m_pContextMenu(pContextMenu?pContextMenu:&CCell::ContextMenu){}
 
 bool CCell::operator<(CCell& rhs)
 {
-	//std::wcout << this->GetSortString() << L"<" << rhs.GetSortString() << std::endl;
 	return _tcsicmp(this->GetSortString().c_str(), rhs.GetSortString().c_str())>0;
 }
 bool CCell::operator>(CCell& rhs)
 {
-	//std::wcout << this->GetSortString() << L">" << rhs.GetSortString() << std::endl;
 	return _tcsicmp(this->GetSortString().c_str(), rhs.GetSortString().c_str())<0;
 }
 
@@ -112,10 +104,24 @@ void CCell::SetString(const string_type& str)
 void CCell::SetStringNotify(const string_type& str)
 {
 	SetStringCore(str);
-	m_bFitMeasureValid = false;
-	m_bActMeasureValid = false;
-	m_pSheet->CellValueChanged(CellEventArgs(this));
+	OnPropertyChanged(L"value");
 }
+
+void CCell::OnPropertyChanged(const wchar_t* name)
+{
+	if (!_tcsicmp(L"value", name)) {
+		//Update valid flag
+		m_bFitMeasureValid = false;
+		m_bActMeasureValid = false;
+	} else if (!_tcsicmp(L"size", name)) {
+		m_bActMeasureValid = false;
+	}
+	//Notify to Row, Column and Sheet
+	m_pRow->OnCellPropertyChanged(this, name);
+	m_pColumn->OnCellPropertyChanged(this, name);
+	m_pSheet->OnCellPropertyChanged(this, name);
+}
+
 
 CCell::coordinates_type CCell::GetTop()const
 {
@@ -163,14 +169,6 @@ CRect CCell::InnerBorder2CenterBorder(CRect rcInner)
 	auto outerPenWidth = m_spProperty->GetPenPtr()->GetLeftTopPenWidth();
 	rcInner+=CRect(innerPenWidth,innerPenWidth, outerPenWidth, outerPenWidth);
 	return rcInner;
-}
-
-void CCell::SetState(const UIElementState::Type& state)
-{
-	if(m_state!=state){
-		m_state=state;
-		m_pSheet->CellPropertyChanged(this,L"state");
-	}
 }
 
 void CCell::PaintBackground(CDC* pDC, CRect rcPaint)
@@ -327,12 +325,12 @@ void CCell::OnContextMenu(const ContextMenuEvent& e)
 }
 void CCell::OnSetFocus(const SetFocusEvent& e)
 {
-	m_pSheet->CellPropertyChanged(this,L"focus");//TODO
+	OnPropertyChanged(L"focus");
 }
 
 void CCell::OnKillFocus(const KillFocusEvent& e)
 {
-	m_pSheet->CellPropertyChanged(this,L"focus");//TODO
+	OnPropertyChanged(L"focus");
 }
 
 bool CCell::Filter(const string_type& strFilter)
@@ -349,7 +347,7 @@ void CCell::SetSelected(const bool& selected)
 {
 	if(m_bSelected!=selected){
 		m_bSelected=selected;
-		m_pSheet->CellPropertyChanged(this,L"selected");
+		OnPropertyChanged(L"selected");
 	}
 }
 
@@ -373,7 +371,7 @@ void CCell::SetChecked(const bool& bChecked)
 {
 	if(m_bChecked!=bChecked){
 		m_bChecked=bChecked;
-		m_pSheet->CellPropertyChanged(this,L"checked");
+		OnPropertyChanged(L"checked");
 	}
 }
 
@@ -403,11 +401,6 @@ Compares CCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Compares
 {
 	action(this, Compares::Diff);
 	return Compares::Diff;
-}
-
-std::shared_ptr<CCellProperty> CCell::GetPropertyPtr()
-{
-	return m_spProperty;
 }
 
 CCell::string_type CCell::GetString()

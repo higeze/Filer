@@ -66,5 +66,7 @@ public:
 	virtual coordinates_type GetMinWidthHeight()/*TODO*/ = 0;
 	virtual coordinates_type GetMaxWidthHeight()/*TODO*/ = 0;
 	virtual void SetWidthHeightWithoutSignal(const coordinates_type&) = 0;
+	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) = 0;
+	virtual void OnPropertyChanged(const wchar_t* name) = 0;
 };
 

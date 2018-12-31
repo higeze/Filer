@@ -23,10 +23,11 @@ class CMenu;
 struct CellEventArgs;
 struct CellContextMenuEventArgs;
 
-class CCell:public CUIElement
+class CCell:virtual public CUIElement
 {
 public:
 	static CMenu ContextMenu;
+
 protected:
 	typedef int size_type;
 	typedef int coordinates_type;
@@ -35,64 +36,53 @@ protected:
 	CSheet* m_pSheet;
 	CRow* m_pRow;
 	CColumn* m_pColumn;
-	bool m_bSelected;
-	bool m_bChecked;
-
 	std::shared_ptr<CCellProperty> m_spProperty;
 
-	CSize m_fitSize;
-	CSize m_actSize;
-	bool m_bFitMeasureValid;
-	bool m_bActMeasureValid;
+	bool m_bSelected = false;
+	bool m_bChecked = false;
+
+
+	CSize m_fitSize = CSize();
+	CSize m_actSize = CSize();
+	bool m_bFitMeasureValid = false;
+	bool m_bActMeasureValid = false;
+
+	LineType m_lineType = LineType::MultiLine;
 
 public:
 	//Constructor
 	CCell(CSheet* pSheet = nullptr, CRow* pRow = nullptr, CColumn* pColumn = nullptr, std::shared_ptr<CCellProperty> spProperty = nullptr, CMenu* pContextMenu= &CCell::ContextMenu);
-
+	//Destrucor
 	virtual ~CCell(){}
 
 	//Operator
-
 	bool operator<(CCell& rhs);
 	bool operator>(CCell& rhs);
+	//Accesser
+	CSheet* GetSheetPtr()const { return m_pSheet; }
+	CRow* GetRowPtr()const { return m_pRow; }
+	CColumn* GetColumnPtr()const { return m_pColumn; }
+	LineType GetLineType()const { return m_lineType; }
+	void SetFitMeasureValid(const bool& b) { m_bFitMeasureValid = b; }
+	void SetActMeasureValid(const bool& b) { m_bActMeasureValid = b; }
+	std::shared_ptr<CCellProperty> GetPropertyPtr() { return m_spProperty; }
 
 	//Size, Rect method
 	virtual CSize GetInitSize(CDC* pDC);
-
 	virtual CSize GetFitSize(CDC* pDC);
-
 	virtual CSize GetActSize(CDC* pDC);
-
 	virtual CSize MeasureContentSize(CDC* pDC);
-
 	virtual CSize MeasureContentSizeWithFixedWidth(CDC* pDC);
-
 	virtual CSize MeasureSize(CDC* pDC);
-
 	virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
-
-	void SetFitMeasureValid(const bool& b){m_bFitMeasureValid=b;}
-	
-	void SetActMeasureValid(const bool& b){m_bActMeasureValid=b;}
-
-	virtual coordinates_type GetTop()const;
-	virtual coordinates_type GetLeft()const;
-	virtual CRect GetRect()const;
-
-	//Accesser
-	virtual CSheet* GetSheetPtr()const{return m_pSheet;}
-	virtual CRow* GetRowPtr()const{return m_pRow;}
-	virtual CColumn* GetColumnPtr()const{return m_pColumn;}
-
 	virtual CRect CenterBorder2InnerBorder(CRect rcCenter);
 	virtual CRect InnerBorder2Content(CRect rcInner);
-
 	virtual CRect Content2InnerBorder(CRect rcContent);
 	virtual CRect InnerBorder2CenterBorder(CRect rcInner);
 
-	virtual void SetState(const UIElementState::Type& state);
-	//Property
-	virtual std::shared_ptr<CCellProperty> GetPropertyPtr();
+	virtual coordinates_type GetLeft()const;
+	virtual coordinates_type GetTop()const;
+	virtual CRect GetRect()const;
 
 	//Selected
 	virtual bool GetSelected()const;
@@ -117,15 +107,16 @@ public:
 	//Event
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
+	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) {/*Do Nothing*/ }
 	virtual void OnLButtonUp(const LButtonUpEvent& e);
-	//virtual void OnLButtonClk(const LButtonClk& e){/*Do Nothing*/}
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e);
+
 	virtual void OnContextMenu(const ContextMenuEvent& e);
 	virtual void OnSetFocus(const SetFocusEvent& e);
-	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e){/*Do Nothing*/}
 	virtual void OnSetCursor(const SetCursorEvent& e){/*Do Nothing*/}
 	virtual void OnKillFocus(const KillFocusEvent& e);
 	virtual void OnKeyDown(const KeyDownEvent& e){/*Do Nothing*/};
+
 	//String
 	virtual string_type GetString();
 	virtual string_type GetSortString(){return GetString();}
@@ -149,4 +140,6 @@ public:
 	//Clipboard
 	virtual bool IsClipboardCopyable()const{return false;}
 
+	//Update action
+	virtual void OnPropertyChanged(const wchar_t*) override;
 };

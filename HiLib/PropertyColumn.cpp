@@ -84,12 +84,14 @@ CParentPropertyValueColumn::cell_type CParentPropertyValueColumn::FilterCellTemp
 
 CParentPropertyValueColumn::cell_type CParentPropertyValueColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CEditableStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty(),L"");
+	return std::make_shared<CEditableNoWrapStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty(),L"");
 }
 
 CChildPropertyValueColumn::CChildPropertyValueColumn(CSheetCell* pSheetCell)
 	:CChildIndexColumn(pSheetCell)
-{}
+{
+	m_lineType = LineType::OneLine;
+}
 
 CChildPropertyValueColumn::cell_type CChildPropertyValueColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
@@ -103,5 +105,5 @@ CChildPropertyValueColumn::cell_type CChildPropertyValueColumn::FilterCellTempla
 
 CChildPropertyValueColumn::cell_type CChildPropertyValueColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CEditableStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty(),L"44");
+	return std::make_shared<CEditableNoWrapStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty(),L"44");
 }

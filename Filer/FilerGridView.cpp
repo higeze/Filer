@@ -20,6 +20,7 @@
 #include "SingletonMalloc.h"
 #include "MyPoint.h"
 #include "Cursorer.h"
+#include "Celler.h"
 
 #include "ConsoleTimer.h"
 #include "ApplicationProperty.h"
@@ -608,10 +609,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 
 		//PathCell
 		auto pPathCell = CSheet::Cell(m_rowHeader, m_pNameColumn);
-		pPathCell->SetFitMeasureValid(false);
-		pPathCell->SetActMeasureValid(false);
-		CellValueChanged(CellEventArgs(pPathCell.get()));
-
+		pPathCell->OnPropertyChanged(L"value");
 
 		PostUpdate(Updates::Sort);
 		PostUpdate(Updates::Filter);
@@ -631,8 +629,10 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		//	::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
 		//});
 
-		//Cursor
+		//Celler
+		m_spCeller->Clear();
 
+		//Cursor
 		//Clear Cursor
 		m_spCursorer->Clear();
 

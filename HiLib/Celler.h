@@ -18,6 +18,8 @@ public:
 	//virtual void OnKillFocus(CSheet* pSheet, const EventArgs& e) = 0;
 	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) = 0;
 	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) = 0;
+
+	virtual void Clear() = 0;
 };
 
 class CCeller :public ICeller
@@ -37,4 +39,6 @@ public:
 	//virtual void OnKillFocus(CSheet* pSheet, const EventArgs& e);
 	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) override;
 	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) override;
+	
+	virtual void Clear() override;
 };

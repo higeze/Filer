@@ -23,6 +23,7 @@ protected:
 
 	CScrollBar m_vertical;
 	CScrollBar m_horizontal;
+
 	UPBufferDC m_upBuffDC;
 	CRect m_rcUpdateRect;
 	bool m_isUpdating = false;
@@ -30,6 +31,7 @@ protected:
 	row_type m_rowHeaderHeader; /**< Header Header row */
 	row_type m_rowNameHeader; /**< Name Header row */
 	row_type m_rowFilter; /**< Filter row */
+
 	std::shared_ptr<CMouseStateMachine> m_pMouseStateMachine;
 
 protected:
@@ -60,15 +62,27 @@ public:
 	virtual void ColumnMoved(CMovedEventArgs<ColTag>& e)override;
 
 public:
+	//Constructor
 	CGridView(std::shared_ptr<CGridViewProperty> spGridViewProp,
 			CMenu* pContextMenu= &CGridView::ContextMenu);
+	//Destructor
 	virtual ~CGridView();
+
+	//Getter Setter
 
 	std::shared_ptr<CGridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	void SetEditRect(CRect rcEdit){m_spEditRect = std::make_shared<CRect>(rcEdit);}
-
 	CRect GetUpdateRect()const { return m_rcUpdateRect; }
 	void SetUpdateRect(CRect rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
+	std::shared_ptr<CMouseStateMachine> GetMouseStateMachine() { return m_pMouseStateMachine; }
+	void SetMouseStateMachine(std::shared_ptr<CMouseStateMachine>& machine) { m_pMouseStateMachine = machine; }
+	boost::asio::deadline_timer* GetFilterTimerPtr() { return &m_filterTimer; }
+	virtual row_type GetHeaderHeaderRowPtr()const { return m_rowHeaderHeader; }
+	virtual void SetHeaderHeaderRowPtr(row_type row) { m_rowHeaderHeader = row; }
+	virtual row_type GetNameHeaderRowPtr()const { return m_rowNameHeader; }
+	virtual void SetNameHeaderRowPtr(row_type row) { m_rowNameHeader = row; }
+	virtual row_type GetFilterRowPtr()const { return m_rowFilter; }
+	virtual void SetFilterRowPtr(row_type row) { m_rowFilter = row; }
 
 protected:
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -110,29 +124,12 @@ protected:
 	virtual void OnCellLButtonClk(CellEventArgs& e);
 	virtual void OnCellContextMenu(CellContextMenuEventArgs& e);
 
-	virtual void OnCellPropertyChanged(CCell* pCell,LPCTSTR lpszProperty);
-	virtual void OnColumnPropertyChanged(LPCTSTR lpszProperty);
-	virtual void CGridView::RowVisibleChanged(CRowEventArgs& e) override;
-	virtual void OnRowPropertyChanged(LPCTSTR lpszProperty);
-
 	virtual void OnKeyDown(const KeyDownEvent& e);
 	virtual void OnPaintAll(const PaintEvent& e);
 public:
 	virtual void ClearFilter();
 	virtual void FilterAll();
 
-	std::shared_ptr<CMouseStateMachine> GetMouseStateMachine() { return m_pMouseStateMachine; }
-	void SetMouseStateMachine(std::shared_ptr<CMouseStateMachine>& machine) { m_pMouseStateMachine = machine; }
-	boost::asio::deadline_timer* GetFilterTimerPtr(){return &m_filterTimer;}
-
-	virtual row_type GetHeaderHeaderRowPtr()const{return m_rowHeaderHeader;}
-	virtual void SetHeaderHeaderRowPtr(row_type row){m_rowHeaderHeader=row;}
-
-	virtual row_type GetNameHeaderRowPtr()const{return m_rowNameHeader;}
-	virtual void SetNameHeaderRowPtr(row_type row){m_rowNameHeader=row;}
-
-	virtual row_type GetFilterRowPtr()const{return m_rowFilter;}
-	virtual void SetFilterRowPtr(row_type row){m_rowFilter=row;}
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void EnsureVisibleCell(const cell_type& pCell);
 	void Jump(std::shared_ptr<CCell>& spCell);
@@ -171,8 +168,6 @@ public:
 	virtual void Invalidate();
 
 	//virtual void ColumnErased(CColumnEventArgs& e);
-	virtual void ColumnVisibleChanged(CColumnEventArgs& e);
-	virtual void CellValueChanged(CellEventArgs& e);
 	virtual void SubmitUpdate();
 
 	Status SaveGIFWithNewColorTable(Image *pImage,IStream* pIStream,const CLSID* clsidEncoder,DWORD nColors,BOOL fTransparent);

@@ -60,43 +60,43 @@ void CSheetCell::Resize()
 	}
 }
 
-void CSheetCell::CellSizeChanged(CellEventArgs& e)
+void CSheetCell::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 {
-	CSheet::CellSizeChanged(e);
-	m_pSheet->CellSizeChanged(CellEventArgs(this));
-}
-void CSheetCell::CellValueChanged(CellEventArgs& e)
-{
-	CSheet::CellValueChanged(e);
-	m_pSheet->CellValueChanged(CellEventArgs(this));
+	CSheet::OnCellPropertyChanged(pCell, name);
+
+	if (!_tcsicmp(L"value", name)) {
+		OnPropertyChanged(L"value");
+	} else if (!_tcsicmp(L"size", name)) {
+		OnPropertyChanged(L"size");
+	}
 }
 
 void CSheetCell::ColumnInserted(CColumnEventArgs& e)
 {
 	CSheet::ColumnInserted(e);
-	m_pSheet->CellSizeChanged(CellEventArgs(this));
+	OnPropertyChanged(L"size");
 }
 void CSheetCell::ColumnErased(CColumnEventArgs& e)
 {
 	CSheet::ColumnErased(e);
-	m_pSheet->CellSizeChanged(CellEventArgs(this));
+	OnPropertyChanged(L"size");
 }
 
 void CSheetCell::ColumnHeaderEndTrack(CColumnEventArgs& e)
 {
 //	CSheet::ColumnHeaderEndTrack(e);
-	m_pSheet->CellSizeChanged(CellEventArgs(this));
+	OnPropertyChanged(L"size");
 }
 
 void CSheetCell::RowInserted(CRowEventArgs& e)
 {
 	CSheet::RowInserted(e);
-	m_pSheet->CellSizeChanged(CellEventArgs(this));
+	OnPropertyChanged(L"size");
 }
 void CSheetCell::RowErased(CRowEventArgs& e)
 {
 	CSheet::RowErased(e);
-	m_pSheet->CellSizeChanged(CellEventArgs(this));
+	OnPropertyChanged(L"size");
 }
 
 CSheetCell::coordinates_type CSheetCell::GetTop()const
@@ -153,6 +153,22 @@ void CSheetCell::OnLButtonUp(const LButtonUpEvent& e)
 	SubmitUpdate();
 }
 
+void CSheetCell::OnLButtonClk(const LButtonClkEvent& e)
+{
+	CCell::OnLButtonClk(e);
+	CSheet::OnLButtonClk(e);
+	SubmitUpdate();
+}
+
+
+void CSheetCell::OnLButtonDblClk(const LButtonDblClkEvent& e)
+{
+	CCell::OnLButtonDblClk(e);
+	CSheet::OnLButtonDblClk(e);
+	SubmitUpdate();
+}
+
+
 void CSheetCell::OnMouseMove(const MouseMoveEvent& e)
 {
 	CCell::OnMouseMove(e);
@@ -187,6 +203,14 @@ void CSheetCell::OnKillFocus(const KillFocusEvent& e)
 	CSheet::OnKillFocus(e);
 	SubmitUpdate();
 }
+
+void CSheetCell::OnKeyDown(const KeyDownEvent& e)
+{
+	CCell::OnKeyDown(e);
+	CSheet::OnKeyDown(e);
+	SubmitUpdate();
+}
+
 
 bool CSheetCell::IsComparable()const
 {
@@ -375,4 +399,11 @@ CColumn* CSheetCell::GetParentColumnPtr(CCell* pCell)
 {
 	return m_pSheet->GetParentColumnPtr(this);
 }
+
+void CSheetCell::OnPropertyChanged(const wchar_t* name)
+{
+	CSheet::OnPropertyChanged(name);
+	CCell::OnPropertyChanged(name);
+}
+
 

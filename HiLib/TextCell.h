@@ -85,7 +85,19 @@ public:
 	virtual void OnEdit(const EventArgs& e);
 	virtual bool CanSetStringOnEditing()const{return true;}
 
-	virtual UINT GetFormat()const{ return DT_LEFT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL; }
+	virtual UINT GetFormat()const
+	{
+		switch (GetLineType())
+		{
+		case LineType::None:
+		case LineType::MultiLine:
+			return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_WORDBREAK | DT_EDITCONTROL;
+		case LineType::OneLine:
+			return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_EDITCONTROL;
+		default:
+			return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_WORDBREAK | DT_EDITCONTROL;
+		}
+	}
 
 	virtual bool IsComparable()const;
 	virtual Compares EqualCell(CCell* pCell, std::function<void(CCell*, Compares)> action);
@@ -123,6 +135,19 @@ public:
 	virtual ~CEditableStringCell(){}
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 };
+
+class CEditableNoWrapStringCell :public CEditableStringCell
+{
+public:
+	CEditableNoWrapStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty, string_type str, CMenu* pMenu = nullptr)
+		:CEditableStringCell(pSheet, pRow, pColumn, spProperty, str, pMenu){}
+
+	virtual ~CEditableNoWrapStringCell() {}
+	virtual UINT GetFormat()const override { return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_EDITCONTROL; }
+};
+
+
+
 class CDcmParameter;
 
 class CParameterCell:public CEditableCell

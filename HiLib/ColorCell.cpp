@@ -21,7 +21,7 @@ void CColorCell::PaintBackground(CDC* pDC,CRect rcPaint)
 	}
 }
 
-void CColorCell::OnLButtonClk(const MouseEvent& e)
+void CColorCell::OnLButtonClk(const LButtonClkEvent& e)
 {
 	COLORREF CustColors[16];
 	CHOOSECOLOR cc={0};
@@ -34,7 +34,7 @@ void CColorCell::OnLButtonClk(const MouseEvent& e)
 	if(ChooseColor(&cc)){
 		if(m_color!=cc.rgbResult){
 			m_color=cc.rgbResult;
-			m_pSheet->CellPropertyChanged(this,L"value");
+			OnPropertyChanged(L"value");
 		}
 	}
 }

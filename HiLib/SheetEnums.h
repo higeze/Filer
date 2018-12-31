@@ -1,6 +1,21 @@
 #pragma once
 
 
+enum class LineType
+{
+	None,
+	OneLine,
+	OneLineFitAlways,
+	MultiLine,
+};
+
+enum class SizeType
+{
+	Trackable,
+	Untrackable,
+};
+
+
 /**
  *  Sort
  *  Sort state

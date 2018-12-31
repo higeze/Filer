@@ -49,6 +49,9 @@ public:
 	virtual coordinates_type GetMinWidthHeight() override { return m_minHeight; }
 	virtual coordinates_type GetMaxWidthHeight() override { return m_maxHeight; }
 	virtual void SetWidthHeightWithoutSignal(const coordinates_type& height) override { SetHeightWithoutSignal(height); }
+	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
+	virtual void OnPropertyChanged(const wchar_t* name) override;
+
 
 };
 

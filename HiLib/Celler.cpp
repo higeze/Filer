@@ -83,7 +83,13 @@ void CCeller::OnSetCursor(CSheet* pSheet, const SetCursorEvent& e)
 		cell->OnSetCursor(e);
 	}
 }
+
 void CCeller::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 {
 	//TODO Combine with Curosr
+}
+
+void CCeller::Clear()
+{
+	m_cellUnderMouse.reset();
 }

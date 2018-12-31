@@ -155,6 +155,8 @@ public:
 };
 
 
+
+
 class CUIElement
 {
 protected:
@@ -166,23 +168,23 @@ public:
 	virtual ~CUIElement(){}
 
 	virtual UIElementState::Type GetState()const{return m_state;}
-	virtual void SetState(const UIElementState::Type& state)
-	{
-		if(m_state!=state){
-			m_state=state;
-		}
-	}
+	void SetState(const UIElementState::Type& state);
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnLButtonUp(const LButtonUpEvent& e);
+	virtual void OnLButtonClk(const LButtonClkEvent& e) {}
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) {}
+
 	virtual void OnMButtonDown(const MouseEvent& e){}//TODO
 	virtual void OnMButtonUp(const MouseEvent& e){}//TODO
+
 	virtual void OnMouseMove(const MouseMoveEvent& e);
 	virtual void OnMouseEnter(const MouseEvent& e);//TODO
 	virtual void OnMouseLeave(const MouseLeaveEvent& e);
 	virtual void OnMouseWheel(const MouseWheelEvent& e){}
-	virtual void OnLButtonClk(const LButtonClkEvent& e){}
-	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e){}
+
 	virtual void OnKeyDown(const KeyDownEvent& e){}
 	virtual void OnContextMenu(const ContextMenuEvent& e){}
+
+	virtual void OnPropertyChanged(const wchar_t* name){}
 };

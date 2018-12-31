@@ -39,7 +39,7 @@ std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
 				auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
 					[wp]()->void {
 					if (auto sp = wp.lock()) {
-						sp->GetSheetPtr()->CellValueChanged(CellEventArgs(sp.get()));
+						sp->OnPropertyChanged(L"value");
 					}
 				});
 				sp->m_conDelayUpdateAction = con;

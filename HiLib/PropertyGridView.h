@@ -14,10 +14,10 @@ public:
 	virtual ~CPropertyGridView(){}
 	boost::signals2::signal<void()> PropertyChanged;
 	virtual void EnsureVisibleCell(const cell_type& pCell){}
-	virtual void CellValueChanged(CellEventArgs& e)
+	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 	{
 		this->PropertyChanged();
-		CGridView::CellValueChanged(e);
+		CGridView::OnCellPropertyChanged(pCell, name);
 	}
 };
 

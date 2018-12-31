@@ -2,6 +2,7 @@
 #include "Band.h"
 #include "SheetEnums.h"
 #include "MyFriendSerializer.h"
+#include "SheetEnums.h"
 
 class CCell;
 class CRow;
@@ -18,7 +19,9 @@ protected:
 	coordinates_type m_width; //width
 	coordinates_type m_minWidth = 16;
 	coordinates_type m_maxWidth = 1000;
-	bool m_isFitAlways = false;
+	LineType m_lineType = LineType::None;
+	SizeType m_sizeType = SizeType::Trackable;
+	//bool m_isFitAlways = false;
 
 	bool m_isInit; //if init is set, initial width is used
 	std::wstring m_filter; //Filter string
@@ -42,7 +45,7 @@ public:
 		ar("width", m_width);
 		ar("minwidth", m_minWidth);
 		ar("maxwidth", m_maxWidth);
-		ar("fitalways", m_isFitAlways);
+		ar("linetype", m_lineType);
 		m_isInit = false;
 		ar("filter", m_filter);
 		m_allIndex = GetIndex<AllTag>();
@@ -58,7 +61,7 @@ public:
 		ar("width", m_width);
 		ar("minwidth", m_minWidth);
 		ar("maxwidth", m_maxWidth);
-		ar("fitalways", m_isFitAlways);
+		ar("linetype", m_lineType);
 		m_isInit = false;
 		ar("filter", m_filter);
 		ar("index", m_allIndex);
@@ -117,7 +120,10 @@ public:
 	virtual coordinates_type GetMinWidthHeight() override { return m_minWidth; }
 	virtual coordinates_type GetMaxWidthHeight() override { return m_maxWidth; }
 	virtual void SetWidthHeightWithoutSignal(const coordinates_type& width) override { SetWidthWithoutSignal(width); }
-
+	virtual LineType GetLineType()const { return m_lineType; }
+	virtual SizeType GetSizeType()const { return m_sizeType; }
+	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
+	virtual void OnPropertyChanged(const wchar_t* name);
 };
 
 class CGridView;

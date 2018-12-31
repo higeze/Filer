@@ -121,21 +121,21 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 			  _row<LButtonDownedState,   LButtonDblClkTimeExceedEvent, LButtonDragState>,
  			 a_row<LButtonDownedState,   LButtonUpEvent,               LButtonUppedState,    &Machine_::Action_LButtonUp>,
      		 a_row<LButtonDownedState,   MouseLeaveEvent,              NormalState,          &Machine_::Action_MouseLeave>,
-			 _row<LButtonDownedState,    Exception,               NormalState>,
+			 _row<LButtonDownedState,    Exception,					   NormalState>,
 
-			 a_row<LButtonUppedState,    LButtonDownEvent,              LButtonDownedState, &Machine_::Action_LButtonDown>,
+			 a_row<LButtonUppedState,    LButtonDownEvent,             LButtonDownedState, &Machine_::Action_LButtonDown>,
 			a_row<LButtonUppedState,     LButtonDblClkEvent,           LButtonDblClkedState, &Machine_::Action_Upped_LButtonDblClk>,
  			 a_row<LButtonUppedState,    LButtonDblClkTimeExceedEvent, NormalState,          &Machine_::Action_Upped_LButtonDblClkTimeExceed>,
 			 a_row<LButtonUppedState,    MouseLeaveEvent,              NormalState,          &Machine_::Action_MouseLeave>,
-			_row<LButtonUppedState,      Exception,               NormalState>,
+			_row<LButtonUppedState,      Exception,                    NormalState>,
 
 			 a_row<LButtonDblClkedState, LButtonUpEvent,               NormalState,          &Machine_::Action_LButtonUp>,
 			 a_row<LButtonDblClkedState, MouseLeaveEvent,              NormalState,          &Machine_::Action_MouseLeave>,
-			_row<LButtonDblClkedState,   Exception,               NormalState>,
+			_row<LButtonDblClkedState,   Exception,                    NormalState>,
 
 			 a_row<LButtonDragState,     LButtonUpEvent,               NormalState,          &Machine_::Action_LButtonUp>,
 			 a_row<LButtonDragState,     MouseLeaveEvent,              NormalState,          &Machine_::Action_Drag_MouseLeave>,
-			_row<LButtonDragState,       Exception,               NormalState>
+			_row<LButtonDragState,       Exception,                    NormalState>
 
 
 		> {};

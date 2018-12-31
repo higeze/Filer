@@ -1,7 +1,6 @@
 #include "Sheet.h"
 #include "SheetEventArgs.h"
 #include "CellProperty.h"
-
 #include "MyRect.h"
 #include "MyDC.h"
 #include "MyFont.h"
@@ -109,29 +108,62 @@ void CSheet::SetColumnAllCellMeasureValid(CColumn* pColumn, bool valid)
 	}
 }
 
-void CSheet::CellSizeChanged(CellEventArgs& e)
+void CSheet::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 {
-	e.CellPtr->GetColumnPtr()->SetMeasureValid(false);
-	e.CellPtr->GetRowPtr()->SetMeasureValid(false);
-	e.CellPtr->SetFitMeasureValid(false);
-	e.CellPtr->SetActMeasureValid(false);
-	PostUpdate(Updates::Column);
-	PostUpdate(Updates::Row);
-	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);
+	if (!_tcsicmp(L"value", name)) {
+		PostUpdate(Updates::Sort);
+		PostUpdate(Updates::Column);
+		PostUpdate(Updates::Row);
+		//PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+	} else if (!_tcsicmp(L"state", name)) {
+		PostUpdate(Updates::Sort);
+		PostUpdate(Updates::Column);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+	}else if (!_tcsicmp(L"state", name)) {
+		PostUpdate(Updates::Invalidate);
+	} else if (!_tcsicmp(L"focus", name)) {
+		PostUpdate(Updates::Invalidate);		
+	} else if (!_tcsicmp(L"selected", name)) {
+		PostUpdate(Updates::Invalidate);
+	} else if (!_tcsicmp(L"checked", name)) {
+		PostUpdate(Updates::Invalidate);
+	}
 }
-void CSheet::CellValueChanged(CellEventArgs& e)
+
+void CSheet::OnRowPropertyChanged(CRow* pRow, const wchar_t* name)
 {
-//	e.CellPtr->GetColumnPtr()->SetMeasureValid(false);//TODO value change doesnt change width
-	e.CellPtr->GetRowPtr()->SetMeasureValid(false);
-	e.CellPtr->SetFitMeasureValid(false);
-	e.CellPtr->SetActMeasureValid(false);
-	PostUpdate(Updates::Sort);
-	PostUpdate(Updates::Column);
-	PostUpdate(Updates::Row);
-	//PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);
+	if (_tcsicmp(name, L"selected") == 0) {
+		PostUpdate(Updates::RowVisible);
+		PostUpdate(Updates::Column);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+	} else if (_tcsicmp(name, L"selected") == 0) {
+		PostUpdate(Updates::Invalidate);//
+	}
 }
+
+void CSheet::OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name)
+{
+	if (_tcsicmp(name, L"visible") == 0) {
+		for (const auto& rowData : m_rowAllDictionary) {
+			rowData.DataPtr->SetMeasureValid(false);
+		}
+		PostUpdate(Updates::ColumnVisible);
+		PostUpdate(Updates::Column);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+	} else if (_tcsicmp(name, L"selected") == 0) {
+		PostUpdate(Updates::Invalidate);
+	} else if (_tcsicmp(name, L"sort") == 0) {
+		PostUpdate(Updates::Sort);
+	}
+}
+
 
 void CSheet::ColumnInserted(CColumnEventArgs& e)
 {
@@ -316,7 +348,6 @@ CSheet::string_type CSheet::GetSheetString()const
 		});
 		str.append(L"\r\n");
 	}
-
 	return str;
 }
 
@@ -768,7 +799,7 @@ void CSheet::OnMouseLeave(const MouseLeaveEvent& e)
 void CSheet::OnSetFocus(const SetFocusEvent& e)
 {
 	if(!Visible())return;
-	m_spCursorer->OnCursorClear(this);
+//	m_spCursorer->OnCursorClear(this);
 	m_bFocused = true;
 }
 

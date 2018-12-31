@@ -17,7 +17,7 @@ void CRow::SetHeight(const coordinates_type& height)
 {
 	if(m_height!=height){
 		m_height=height;
-		m_pSheet->RowPropertyChanged(L"height");
+		OnPropertyChanged(L"height");
 	}
 }
 void CRow::SetVisible(const bool& bVisible, bool notify)
@@ -25,7 +25,7 @@ void CRow::SetVisible(const bool& bVisible, bool notify)
 	if(m_bVisible!=bVisible){
 		m_bVisible=bVisible;
 		if(notify){
-			m_pSheet->RowVisibleChanged(CRowEventArgs(this));
+			OnPropertyChanged(L"visible");
 		}
 	}
 }
@@ -33,9 +33,27 @@ void CRow::SetSelected(const bool& bSelected)
 {
 	if(m_bSelected!=bSelected){
 		m_bSelected=bSelected;
-		m_pSheet->RowPropertyChanged(L"selected");
+		OnPropertyChanged(L"selected");
 	}
 }
+
+
+void CRow::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
+{
+	if (!_tcsicmp(L"value", name)) {
+		if (pCell->GetLineType() == LineType::MultiLine) {
+			m_bMeasureValid = false;
+		} else {
+			//Do nothing, Cell value change 
+		}
+	}
+}
+
+void CRow::OnPropertyChanged(const wchar_t* name)
+{
+	m_pSheet->OnRowPropertyChanged(this, name);
+}
+
 
 //CRow::size_type CRow::GetIndex<VisTag>()const
 //{

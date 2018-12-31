@@ -355,7 +355,7 @@ public:
 			if (!spSheet->Empty()) {
 				std::wstring wstrName(lpszName, (lpszName + strlen(lpszName)));
 				auto pCol = spSheet->Index2Pointer<ColTag, AllTag>(0);
-				for (auto rowIter = spSheet->RowAllBegin(), rowEnd = spSheet->RowAllEnd(); rowIter != rowEnd; ++rowIter) {
+				for (auto rowIter = spSheet->Begin<RowTag, AllTag, IndexTag>(), rowEnd = spSheet->End<RowTag, AllTag, IndexTag>(); rowIter != rowEnd; ++rowIter) {
 					auto pCell = CSheet::Cell(rowIter->DataPtr, pCol);
 					if (m_setCellPtr.find(pCell.get()) == m_setCellPtr.end() && pCol->Cell(rowIter->DataPtr.get())->GetString() == wstrName) {
 						m_setCellPtr.insert(pCell.get());

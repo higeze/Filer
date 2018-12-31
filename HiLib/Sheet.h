@@ -72,7 +72,7 @@ const UINT WM_LBUTTONDBLCLKTIMEXCEED = RegisterWindowMessage(L"WM_LBUTTONDBLCLKT
 /********/
 /*CSheet*/
 /********/
-class CSheet:public CUIElement
+class CSheet:virtual public CUIElement
 {
 	//Friend classes
 	friend class CFileDragger;
@@ -92,7 +92,6 @@ public:
 	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
 	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow);
 	static std::shared_ptr<CCell>& Cell( CRow* pRow,  CColumn* pColumn);
-
 
 public:
 	std::shared_ptr<ITracker> m_spRowTracker; // Tracker for Row
@@ -135,9 +134,6 @@ public:
 	boost::signals2::signal<void(CellEventArgs&)> CellLButtonClk;
 	boost::signals2::signal<void(CellEventArgs&)> CellLButtonDblClk;
 	boost::signals2::signal<void(CellContextMenuEventArgs&)> CellContextMenu;
-	boost::signals2::signal<void(CCell*,LPCTSTR)> CellPropertyChanged;
-	boost::signals2::signal<void(LPCTSTR)> ColumnPropertyChanged;
-	boost::signals2::signal<void(LPCTSTR)> RowPropertyChanged;
 
 	//Constructor
 	CSheet(std::shared_ptr<CCellProperty> spHeaderProperty,
@@ -152,19 +148,14 @@ public:
 	std::shared_ptr<CSheetStateMachine> GetSheetStateMachine() { return m_spStateMachine; }
 	void SetSheetStateMachine(std::shared_ptr<CSheetStateMachine>& machine) { m_spStateMachine = machine; }
 	std::shared_ptr<CCursorer> GetCursorerPtr(){return m_spCursorer;} /**< Cursor */
-
 	void SetContextMenuRowColumn(const CRowColumn& roco){m_rocoContextMenu = roco;}
-
 	virtual std::shared_ptr<CCellProperty> GetHeaderProperty(){return m_spHeaderProperty;} /** Getter for Header Cell Property */
 	virtual std::shared_ptr<CCellProperty> GetFilterProperty(){return m_spFilterProperty;} /** Getter for Filter Cell Property */
 	virtual std::shared_ptr<CCellProperty> GetCellProperty(){return m_spCellProperty;} /** Getter for Cell Property */
-
 	virtual column_type GetHeaderColumnPtr()const{return m_pHeaderColumn;} /** Getter for Header Column */
 	virtual void SetHeaderColumnPtr(column_type column){m_pHeaderColumn=column;} /** Setter for Header Column */
-
 	virtual row_type GetHeaderRowPtr()const{return m_rowHeader;} /** Getter for Header Row */
 	virtual void SetHeaderRowPtr(row_type row){m_rowHeader=row;} /** Setter for Header Row */
-
 	virtual bool GetSelected()const{return m_bSelected;};
 	virtual void SetSelected(const bool& bSelected){m_bSelected=bSelected;};
 	virtual bool GetFocused()const{return m_bFocused;};
@@ -176,17 +167,11 @@ public:
 	void SetColumnAllCellMeasureValid(CColumn* pColumn, bool valid);
 
 	//Observer
-	virtual void CellSizeChanged(CellEventArgs& e);
-	virtual void CellValueChanged(CellEventArgs& e);
-
-	virtual void ColumnVisibleChanged(CColumnEventArgs& e){}
 	virtual void ColumnInserted(CColumnEventArgs& e);
 	virtual void ColumnErased(CColumnEventArgs& e);
 	virtual void ColumnMoved(CMovedEventArgs<ColTag>& e) {}
-
 	virtual void ColumnHeaderFitWidth(CColumnEventArgs& e);
 
-	virtual void RowVisibleChanged(CRowEventArgs& e){}
 	virtual void RowInserted(CRowEventArgs& e);
 	virtual void RowErased(CRowEventArgs& e);
 	virtual void RowsErased(CRowsEventArgs& e);
@@ -258,7 +243,6 @@ public:
 	virtual void OnBkGndLButtondDblClk(const LButtonDblClkEvent& e) {}
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e);
 	//virtual void OnLButtonEndDrag(MouseEventArgs& e);
-
 	virtual void OnContextMenu(const ContextMenuEvent& e);
 	virtual void OnMouseMove(const MouseMoveEvent& e);
 	virtual void OnMouseLeave(const MouseLeaveEvent& e);
@@ -268,9 +252,113 @@ public:
 	virtual void OnKeyDown(const KeyDownEvent& e);
 
 	std::shared_ptr<CCell> Cell(const CPoint& pt);
-	
+
+	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name);
+	virtual void OnRowPropertyChanged(CRow* pRow, const wchar_t* name);
+	virtual void OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name);
+
+	virtual void SelectAll();
+	virtual void DeselectAll();
+	virtual void UnhotAll();
+	virtual bool IsFocusedCell(const CCell* pCell)const;
+	virtual bool IsDoubleFocusedCell(const CCell* pCell)const;
+	virtual void Clear();
+	virtual CColumn* GetParentColumnPtr(CCell* pCell) = 0;
+	virtual void Sort(CColumn* pCol, Sorts sort, bool postUpdate = true);
+	virtual void Filter(size_type colDisp, std::function<bool(const cell_type&)> predicate);
+	virtual void ResetFilter();
+
+	Compares CheckEqualRange(RowDictionary::iterator rowBegin, RowDictionary::iterator rowEnd, ColumnDictionary::iterator colBegin, ColumnDictionary::iterator colEnd, std::function<void(CCell*, Compares)> action);
+	Compares CheckEqualRow(CRow* pRow, ColumnDictionary::iterator colBegin, ColumnDictionary::iterator colEnd, std::function<void(CCell*, Compares)> action);
+
+	//Menu
+	CMenu* const m_pContextMenu;
+	virtual CMenu* GetContextMenuPtr() { return m_pContextMenu; }
+
 	//Tag dispatch
 	template<typename TRC, typename TAV> TRC::template Dictionary& GetDictionary() { return nullptr; }
+
+	template<typename TRC, typename TAV, typename TIP>
+	auto Begin()->decltype(GetDictionary <TRC, TAV>().get<TIP>().begin())
+	{
+		return GetDictionary<TRC, TAV>().get<TIP>().begin();
+	}
+
+	template<typename TRC, typename TAV, typename TIP>
+	auto End()->decltype(GetDictionary <TRC, TAV>().get<TIP>().end())
+	{
+		return GetDictionary<TRC, TAV>().get<TIP>().end();
+	}
+
+	template<typename TRC, typename TAV>
+	auto Zero()->decltype(GetDictionary <TRC, TAV>().get<IndexTag>().begin())
+	{
+		return GetDictionary<TRC, TAV>().get<IndexTag>().find(0);
+	}
+
+	//RowDictionary::index<IndexTag>::type::iterator RowAllBegin()
+	//{
+	//	auto& dictionary = m_rowAllDictionary.get<IndexTag>();
+	//	return dictionary.begin();
+	//}
+
+	//RowDictionary::index<IndexTag>::type::iterator RowAllZero()
+	//{
+	//	auto& dictionary = m_rowAllDictionary.get<IndexTag>();
+	//	return dictionary.find(0);
+	//}
+
+	//RowDictionary::index<IndexTag>::type::iterator RowAllEnd()
+	//{
+	//	auto& dictionary = m_rowAllDictionary.get<IndexTag>();
+	//	return dictionary.end();
+	//}
+
+	//ColumnDictionary::index<IndexTag>::type::iterator ColumnAllBegin()
+	//{
+	//	auto& dictionary = m_columnAllDictionary.get<IndexTag>();
+	//	return dictionary.begin();
+	//}
+
+	//ColumnDictionary::index<IndexTag>::type::iterator ColumnAllZero()
+	//{
+	//	auto& dictionary = m_columnAllDictionary.get<IndexTag>();
+	//	return dictionary.find(0);
+	//}
+
+	//ColumnDictionary::index<IndexTag>::type::iterator ColumnAllEnd()
+	//{
+	//	auto& dictionary = m_columnAllDictionary.get<IndexTag>();
+	//	return dictionary.end();
+	//}
+
+	//ColumnDictionary::index<IndexTag>::type::iterator ColumnVisibleBegin()
+	//{
+	//	if (m_columnVisibleDictionary.empty()) {
+	//		UpdateColumnVisibleDictionary();
+	//	}
+	//	auto& dictionary = m_columnVisibleDictionary.get<IndexTag>();
+	//	return dictionary.begin();
+	//}
+
+	//ColumnDictionary::index<IndexTag>::type::iterator ColumnVisibleZero()
+	//{
+	//	if (m_columnVisibleDictionary.empty()) {
+	//		UpdateColumnVisibleDictionary();
+	//	}
+	//	auto& dictionary = m_columnVisibleDictionary.get<IndexTag>();
+	//	return dictionary.find(0);
+	//}
+
+	//ColumnDictionary::index<IndexTag>::type::iterator ColumnVisibleEnd()
+	//{
+	//	if (m_columnVisibleDictionary.empty()) {
+	//		UpdateColumnVisibleDictionary();
+	//	}
+	//	auto& dictionary = m_columnVisibleDictionary.get<IndexTag>();
+	//	return dictionary.end();
+	//}
+
 	template<typename TRC, typename TAV> size_type Size()
 	{
 		return GetDictionary<TRC, TAV>().size();
@@ -431,7 +519,7 @@ public:
 		auto& otherDic = GetDictionary<TRC::Other, AllTag>();
 		for (const auto& other : otherDic) {
 			other.DataPtr->SetMeasureValid(false);
-			CSheet::Cell(ptr, other.DataPtr)->SetActMeasureValid(false);
+			CSheet::Cell(ptr, other.DataPtr)->OnPropertyChanged(L"size");
 		}
 
 		PostUpdate(Updates::Column);
@@ -566,97 +654,12 @@ public:
 		}
 	}
 	
-	virtual void SelectAll();
-	virtual void DeselectAll();
-	virtual void UnhotAll();
-	virtual bool IsFocusedCell(const CCell* pCell)const;
-	virtual bool IsDoubleFocusedCell(const CCell* pCell)const;
 
-	RowDictionary::index<IndexTag>::type::iterator RowAllBegin()
-	{
-		auto& dictionary=m_rowAllDictionary.get<IndexTag>();
-		return dictionary.begin();
-	}
-
-	RowDictionary::index<IndexTag>::type::iterator RowAllZero()
-	{
-		auto& dictionary=m_rowAllDictionary.get<IndexTag>();
-		return dictionary.find(0);
-	}
-
-	RowDictionary::index<IndexTag>::type::iterator RowAllEnd()
-	{
-		auto& dictionary=m_rowAllDictionary.get<IndexTag>();
-		return dictionary.end();
-	}
-
-	ColumnDictionary::index<IndexTag>::type::iterator ColumnAllBegin()
-	{
-		auto& dictionary=m_columnAllDictionary.get<IndexTag>();
-		return dictionary.begin();
-	}
-
-	ColumnDictionary::index<IndexTag>::type::iterator ColumnAllZero()
-	{
-		auto& dictionary=m_columnAllDictionary.get<IndexTag>();
-		return dictionary.find(0);
-	}
-
-	ColumnDictionary::index<IndexTag>::type::iterator ColumnAllEnd()
-	{
-		auto& dictionary=m_columnAllDictionary.get<IndexTag>();
-		return dictionary.end();
-	}
-
-	ColumnDictionary::index<IndexTag>::type::iterator ColumnVisibleBegin()
-	{
-		if(m_columnVisibleDictionary.empty()){
-			UpdateColumnVisibleDictionary();
-		}
-		auto& dictionary=m_columnVisibleDictionary.get<IndexTag>();
-		return dictionary.begin();
-	}
-
-	ColumnDictionary::index<IndexTag>::type::iterator ColumnVisibleZero()
-	{
-		if(m_columnVisibleDictionary.empty()){
-			UpdateColumnVisibleDictionary();
-		}
-		auto& dictionary=m_columnVisibleDictionary.get<IndexTag>();
-		return dictionary.find(0);
-	}
-
-	ColumnDictionary::index<IndexTag>::type::iterator ColumnVisibleEnd()
-	{
-		if(m_columnVisibleDictionary.empty()){
-			UpdateColumnVisibleDictionary();
-		}
-		auto& dictionary=m_columnVisibleDictionary.get<IndexTag>();
-		return dictionary.end();
-	}
-
-	Compares CheckEqualRange(RowDictionary::iterator rowBegin, RowDictionary::iterator rowEnd,ColumnDictionary::iterator colBegin, ColumnDictionary::iterator colEnd, std::function<void(CCell*, Compares)> action);
-	Compares CheckEqualRow(CRow* pRow, ColumnDictionary::iterator colBegin, ColumnDictionary::iterator colEnd, std::function<void(CCell*, Compares)> action);
-	
-	virtual void Clear();
-
-	virtual CColumn* GetParentColumnPtr(CCell* pCell) = 0;
-
-
-	//Menu
-	CMenu* const m_pContextMenu;
-	virtual CMenu* GetContextMenuPtr(){return m_pContextMenu;}
 
 /*
  *  Template function
  */
 protected:
-	virtual void Sort(CColumn* pCol, Sorts sort, bool postUpdate = true);
-
-	virtual void Filter(size_type colDisp, std::function<bool(const cell_type&)> predicate);
-
-	virtual void ResetFilter();
-
 	template<class T, class U>
 	void Erase(T& dictionary, U erasePtr)
 	{
@@ -776,26 +779,6 @@ protected:
 		}
 		std::copy(beginIter,endIter,std::inserter(paintDictionary,paintDictionary.end()));
 	}
-
-	template<class T, class U,class V, class W>
-	void UpdateDisplayVector(T& visibleDictionary, U& displayVector, coordinates_type pageFirst, coordinates_type pageLast, V predFirst, W predLast)
-	{
-		displayVector.clear();
-		auto& dispDictionary = visibleDictionary.get<IndexTag>();
-		//Copy Minus Elements
-		std::copy(dispDictionary.begin(),dispDictionary.find(0),std::back_inserter(displayVector));
-		//Find Displayed Plus Elements
-		auto beginIter=std::upper_bound(dispDictionary.find(0),dispDictionary.end(),pageFirst,predFirst);
-		if(beginIter!=dispDictionary.find(0)){
-			--beginIter;
-		}
-		auto endIter=std::lower_bound(dispDictionary.find(0),dispDictionary.end(),pageLast,predLast);
-		if(endIter!=dispDictionary.end()){
-			++endIter;
-		}
-		std::copy(beginIter,endIter,std::back_inserter(displayVector));
-	}
-
 };
 
 template<> inline RowTag::Dictionary& CSheet::GetDictionary<RowTag, AllTag>()

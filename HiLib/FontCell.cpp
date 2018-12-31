@@ -34,7 +34,7 @@ void CFontCell::OnLButtonClk(MouseEvent& e)
 	if(!ChooseFont(&cf))return;
 	if(memcmp(&m_font.GetLogFont(),&logFont,sizeof(LOGFONT))!=0){
 		m_font=logFont;
-		m_pSheet->CellPropertyChanged(this,L"value");
+		OnPropertyChanged(L"value");
 	}
 }
 

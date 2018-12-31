@@ -16,7 +16,7 @@ CColumn::coordinates_type CColumn::GetWidth()
 		//}
 		m_bMeasureValid = true;
 		m_isInit = false;
-	}else if(m_isFitAlways){
+	}else if(m_lineType == LineType::OneLineFitAlways){
 		SetWidthWithoutSignal(m_pSheet->GetColumnFitWidth(this));
 		m_bMeasureValid = true;
 	}else if(!m_bMeasureValid){
@@ -45,7 +45,7 @@ void CColumn::SetVisible(const bool& bVisible, bool notify)
 	if(m_bVisible!=bVisible){
 		m_bVisible=bVisible;
 		if(notify){
-			m_pSheet->ColumnVisibleChanged(CColumnEventArgs(this));
+			OnPropertyChanged(L"visible");
 		}
 	}
 }
@@ -53,7 +53,7 @@ void CColumn::SetSelected(const bool& bSelected)
 {
 	if(m_bSelected!=bSelected){
 		m_bSelected=bSelected;
-		m_pSheet->ColumnPropertyChanged(L"selected");//TODO should be changed to ColumnSelectedChanged
+		OnPropertyChanged(L"selected");
 	}
 }
 void CColumn::SetSort(const Sorts& sort)
@@ -63,9 +63,27 @@ void CColumn::SetSort(const Sorts& sort)
 	}
 	if(m_sort!=sort){
 		m_sort=sort;
-		m_pSheet->ColumnPropertyChanged(L"sort");//TODO should be changed to ColumnSortChanged
+		OnPropertyChanged(L"sort");
 	}
 }
+
+void CColumn::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
+{
+	if (!_tcsicmp(L"value", name)) {
+		if (GetLineType() == LineType::OneLine || GetLineType() == LineType::OneLineFitAlways || 
+			(GetLineType() == LineType::None && (pCell->GetLineType() == LineType::OneLine || pCell->GetLineType() == LineType::OneLineFitAlways))) {
+			m_bMeasureValid = false;
+		} else {
+			//Do nothing, Cell value change 
+		}
+	}
+}
+
+void CColumn::OnPropertyChanged(const wchar_t* name)
+{
+	m_pSheet->OnColumnPropertyChanged(this, name);
+}
+
 //CColumn::size_type CColumn::GetIndex<VisTag>()const
 //{
 //	return m_pSheet->Pointer2Index<ColTag, VisTag>(this);

@@ -1,6 +1,5 @@
 #include "GridView.h"
 #include "Cell.h"
-//
 #include "CellProperty.h"
 #include "Row.h"
 #include "ParentHeaderCell.h"
@@ -45,7 +44,7 @@ CGridView::CGridView(
 	m_spGridViewProp(spGridViewProp),
 	m_spBackgroundProperty(spGridViewProp->m_spBackgroundProperty), 
 	CSheet(spGridViewProp->m_spPropHeader,spGridViewProp->m_spPropCell,spGridViewProp->m_spPropCell, pContextMenu?pContextMenu:&CGridView::ContextMenu),
-	m_spDeltaScroll(spGridViewProp->m_spDeltaScroll)/*,m_ptScroll(0,0)*/,
+	m_spDeltaScroll(spGridViewProp->m_spDeltaScroll),
 	CWnd(),
 	m_filterIosv(),m_filterWork(m_filterIosv),m_filterTimer(m_filterIosv),
 	m_invalidateIosv(), m_invalidateWork(m_invalidateIosv), m_invalidateTimer(m_invalidateIosv),
@@ -109,10 +108,6 @@ CGridView::CGridView(
 
 	CellLButtonClk.connect(std::bind(&CGridView::OnCellLButtonClk,this,std::placeholders::_1));
 	CellContextMenu.connect(std::bind(&CGridView::OnCellContextMenu,this,std::placeholders::_1));
-
-	CellPropertyChanged.connect(std::bind(&CGridView::OnCellPropertyChanged,this,std::placeholders::_1,std::placeholders::_2));
-	ColumnPropertyChanged.connect(std::bind(&CGridView::OnColumnPropertyChanged,this,std::placeholders::_1));
-	RowPropertyChanged.connect(std::bind(&CGridView::OnRowPropertyChanged,this,std::placeholders::_1));
 }
 
 CGridView::~CGridView()
@@ -120,7 +115,6 @@ CGridView::~CGridView()
 	m_filterTimer.cancel();
 	m_invalidateTimer.cancel();
 }
-
 
 void CGridView::ColumnInserted(CColumnEventArgs& e)
 {
@@ -141,69 +135,6 @@ void CGridView::ColumnMoved(CMovedEventArgs<ColTag>& e)
 	//FilterAll();
 	CSheet::ColumnMoved(e);
 	SignalColumnMoved((CColumn*)e.m_ptr, e.m_from, e.m_to);
-}
-
-void CGridView::OnCellPropertyChanged(CCell* pCell,LPCTSTR lpszProperty)
-{
-	if(_tcsicmp(lpszProperty,L"state")==0){
-		PostUpdate(Updates::Invalidate);//
-	}else if(_tcsicmp(lpszProperty,L"focus")==0){
-		PostUpdate(Updates::Invalidate);//		
-	}else if(_tcsicmp(lpszProperty,L"selected")==0){
-
-		PostUpdate(Updates::Invalidate);//
-	}else if(_tcsicmp(lpszProperty,L"checked")==0){
-		PostUpdate(Updates::Invalidate);//
-	}
-}
-void CGridView::ColumnVisibleChanged(CColumnEventArgs& e)
-{
-	//PostUpdate(Updates::ColumnVisible);
-	//PostUpdate(Updates::Column);
-	//PostUpdate(Updates::Scrolls);
-	//PostUpdate(Updates::Invalidate);
-	for(const auto& rowData : m_rowAllDictionary){
-		rowData.DataPtr->SetMeasureValid(false);
-	}
-	PostUpdate(Updates::ColumnVisible);
-	PostUpdate(Updates::Column);
-	PostUpdate(Updates::Row);
-	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);
-}
-void CGridView::OnColumnPropertyChanged(LPCTSTR lpszProperty)
-{
-	if(_tcsicmp(lpszProperty,L"selected")==0){
-		PostUpdate(Updates::Invalidate);
-	} else if (_tcsicmp(lpszProperty, L"sort")==0) {
-		PostUpdate(Updates::Sort);
-	}
-}
-
-
-void CGridView::RowVisibleChanged(CRowEventArgs& e)
-{
-	//PostUpdate(Updates::RowVisible);
-	//PostUpdate(Updates::Row);
-	//PostUpdate(Updates::Scrolls);
-	//PostUpdate(Updates::Invalidate);//
-
-	//TODO for filtering no measure no width change is better
-	//boost::for_each(m_columnAllDictionary,[&](const ColumnData& colData){
-	//	colData.DataPtr->SetMeasureValid(false);
-	//});
-	PostUpdate(Updates::RowVisible);
-	PostUpdate(Updates::Column);
-	PostUpdate(Updates::Row);
-	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);
-}
-
-void CGridView::OnRowPropertyChanged(LPCTSTR lpszProperty)
-{
-	if(_tcsicmp(lpszProperty,L"selected")==0){
-		PostUpdate(Updates::Invalidate);//
-	}
 }
 
 void CGridView::OnCellContextMenu(CellContextMenuEventArgs& e)
@@ -546,7 +477,6 @@ void CGridView::UpdateScrolls()
 	m_horizontal.SetScrollRange(0,rcCells.Width());
 
 	//Scroll Page
-
 	CRect rcPage(GetPageRect());
 
 	m_vertical.SetScrollPage(rcPage.Height());
@@ -599,7 +529,6 @@ void CGridView::UpdateScrolls()
 	rcHorizontal.top=rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL);
 	rcHorizontal.right-=(m_vertical.IsWindowVisible())?::GetSystemMetrics(SM_CXVSCROLL):0;
 	m_horizontal.MoveWindow(rcHorizontal,TRUE);
-
 }
 
 CPoint CGridView::GetScrollPos()const
@@ -617,6 +546,7 @@ CGridView::coordinates_type CGridView::GetVerticalScrollPos()const
 {
 	return m_vertical.GetScrollPos();
 }
+
 CGridView::coordinates_type CGridView::GetHorizontalScrollPos()const
 {
 	return m_horizontal.GetScrollPos();
@@ -644,6 +574,7 @@ LRESULT CGridView::OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	SubmitUpdate();
 	return 0;
 }
+
 LRESULT CGridView::OnLButtonUp(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	ReleaseCapture();
@@ -749,8 +680,8 @@ void CGridView::OnKeyDown(const KeyDownEvent& e)
 	}
 
 	CSheet::OnKeyDown(e);
+}
 
-};
 void CGridView::OnContextMenu(const ContextMenuEvent& e)
 {
 	if(!Visible())return;
@@ -792,34 +723,6 @@ LRESULT CGridView::OnCommandEditHeader(WORD wNotifyCode,WORD wID,HWND hWndCtl,BO
 	SubmitUpdate();
 	return 0;
 }
-
-//LRESULT CGridView::OnCommandPrintScreen(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-//{
-//	CClientDC dc(m_hWnd);
-//	CPoint ptScroll=GetScrollPos();
-//	SetScrollPos(CPoint(0,0));
-//	CRect rc(MeasureSize());
-//	//Half of Pen is no painted
-//	//auto penWidth(m_spCellProperty->GetPenPtr()->GetWidth());
-//	//rc.DeflateRect((coordinates_type)ceil(penWidth*0.5), (coordinates_type)ceil(penWidth*0.5));
-//	//rc.MoveToXY(0,0);
-//	//DDBitmap
-//	CBufferDC dcBuff(dc,rc);
-//	dcBuff.SetBkMode(TRANSPARENT);
-//
-//	PaintEventArgs paintEventArgs(&dcBuff);
-//	OnPaintAll(paintEventArgs);
-//	
-//	//Copy Bitmap to Clipboard
-//	if(::OpenClipboard(m_hWnd)!=0){
-//		::EmptyClipboard();
-//		::SetClipboardData(CF_BITMAP,dcBuff.GetBitMap());
-//		::CloseClipboard();
-//	}
-//	SetScrollPos(ptScroll);
-//	return 0;
-//}
-
 
 Status CGridView::SaveGIFWithNewColorTable(
   Image *pImage,
@@ -1676,11 +1579,6 @@ CRect CGridView::GetPageRect()
 std::shared_ptr<CDC> CGridView::GetClientDCPtr()const
 {
 	return std::make_shared<CClientDC>(m_hWnd);
-}
-
-void CGridView::CellValueChanged(CellEventArgs& e)
-{
-	CSheet::CellValueChanged(e);
 }
 
 void CGridView::SubmitUpdate()

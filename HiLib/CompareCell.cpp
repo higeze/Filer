@@ -3,7 +3,7 @@
 
 CCompareCell::string_type CCompareCell::GetString()
 {
-	switch(m_pSheet->CheckEqualRow(m_pRow, m_pSheet->ColumnVisibleZero(), m_pSheet->ColumnVisibleEnd(), [](CCell* pCell, Compares)->void{})){
+	switch(m_pSheet->CheckEqualRow(m_pRow, m_pSheet->Zero<ColTag, VisTag>(), m_pSheet->End<ColTag, VisTag, IndexTag>(), [](CCell* pCell, Compares)->void{})){
 	case Compares::Same:
 		return L"Same";
 	case Compares::Diff:

@@ -1,5 +1,13 @@
 #include "UIElement.h"
 
+void CUIElement::SetState(const UIElementState::Type& state)
+{
+	if (m_state != state) {
+		m_state = state;
+		OnPropertyChanged(L"state");
+	}
+}
+
 void CUIElement::OnLButtonDown(const LButtonDownEvent& e)
 {
 	SetState(UIElementState::Pressed);

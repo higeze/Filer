@@ -25,7 +25,8 @@ void CCursorer::OnCellCursor(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 {
-	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+
+	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
 	OnCellCursor(cell);
@@ -36,7 +37,7 @@ void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
 {
-	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
 	OnCellCursor(cell);
@@ -46,7 +47,7 @@ void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
 {
-	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
 	if (m_isDragPossible) {
@@ -58,7 +59,7 @@ void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorLeave(std::shared_ptr<CCell>& cell)
 {
-	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
 	if (m_isDragPossible) {
@@ -70,7 +71,7 @@ void CCursorer::OnCursorLeave(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 {
-	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
 	OnCellCursor(cell);
@@ -80,7 +81,7 @@ void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
 {
-	if (cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
 	m_oldCell=m_currentCell;//Old
