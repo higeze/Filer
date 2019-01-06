@@ -10,13 +10,13 @@ private:
 	mutable boost::signals2::connection m_conFileSizeChanged;
 
 public:
-	CFileSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty);
+	CFileSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty);
 	virtual ~CFileSizeCell(void);
 
 	virtual bool IsComparable()const override{return false;}
-	virtual CSize MeasureContentSize(CDC* pDC) override;
-	virtual string_type GetString() override;
-	virtual string_type GetSortString() override;
+	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite& direct) override;
+	virtual std::wstring GetString() override;
+	virtual std::wstring GetSortString() override;
 	virtual UINT GetFormat()const override{ return DT_RIGHT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL; }
 
 	//virtual void SetDelayUpdateConnection(boost::signals2::connection con)const { m_conDelayUpdateAction = con; }

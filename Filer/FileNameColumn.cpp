@@ -8,22 +8,22 @@
 CFileNameColumn::CFileNameColumn(CGridView* pGrid)
 		:CParentDefaultMapColumn(pGrid){}
 
-CFileNameColumn::cell_type CFileNameColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+CFileNameColumn::std::shared_ptr<CCell> CFileNameColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CPathCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());	
 }
 
-CFileNameColumn::cell_type CFileNameColumn:: NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+CFileNameColumn::std::shared_ptr<CCell> CFileNameColumn:: NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"Name");
 }
 
-CFileNameColumn::cell_type CFileNameColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
+CFileNameColumn::std::shared_ptr<CCell> CFileNameColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CFilterCell>(m_pSheet,pRow,pColumn,m_pSheet->GetFilterProperty());
 }
 
-CFileNameColumn::cell_type CFileNameColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
+CFileNameColumn::std::shared_ptr<CCell> CFileNameColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CFileNameCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 }

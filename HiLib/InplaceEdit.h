@@ -6,7 +6,7 @@ class CRect;
 //class IInplaceEdit
 //{
 //public:
-//	typedef std::basic_string<TCHAR> string_type;
+//	typedef std::basic_string<TCHAR> std::wstring;
 //public:
 //
 //	virtual HWND Create(HWND hWnd,CRect rcClient)=0;
@@ -21,9 +21,9 @@ class CRect;
 //	virtual void SetRect(const CRect& rc) = 0;
 //
 //static IInplaceEdit* CreateInstance(
-//	std::function<string_type()> getter,
-//	std::function<void(const string_type&)> setter,
-//	std::function<void(const string_type&)> changed,
+//	std::function<std::wstring()> getter,
+//	std::function<void(const std::wstring&)> setter,
+//	std::function<void(const std::wstring&)> changed,
 //	std::function<void()> final,
 //	std::shared_ptr<CDrawTextProperty> spDrawTextProperty);
 //};
@@ -32,20 +32,19 @@ class CRect;
 
 class CInplaceEdit:public CEdit
 {
-	typedef std::basic_string<TCHAR> string_type;
 private:
-	std::function<string_type()> m_getter;
-	std::function<void(const string_type&)> m_setter;
-	std::function<void(const string_type&)> m_changed;
+	std::function<std::wstring()> m_getter;
+	std::function<void(const std::wstring&)> m_setter;
+	std::function<void(const std::wstring&)> m_changed;
 	std::function<void()> m_final;
 	UINT m_format;
-	string_type m_strInit;
+	std::wstring m_strInit;
 	bool m_bAlt;
 public:
 	CInplaceEdit(
-		std::function<string_type()> getter,
-		std::function<void(const string_type&)> setter,
-		std::function<void(const string_type&)> changed,
+		std::function<std::wstring()> getter,
+		std::function<void(const std::wstring&)> setter,
+		std::function<void(const std::wstring&)> changed,
 		std::function<void()> final,
 		UINT dwDTFormat);
 	virtual ~CInplaceEdit(){}

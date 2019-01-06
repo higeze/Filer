@@ -11,7 +11,7 @@
 #define IDC_BUTTON_APPLY						164
 
 //class CPropertyGridView;
-class CCellProperty;
+class CellProperty;
 
 template<class T, class ...Args>
 class CPropertyWnd:public CWnd
@@ -27,9 +27,9 @@ private:
 	std::wstring m_wstrPropertyName;
 	std::shared_ptr<T> m_prop;
 	std::tuple<Args...> m_args;
-	std::shared_ptr<CCellProperty> m_spPropSheetCellHeader;
-	std::shared_ptr<CCellProperty> m_spPropSheetCellFilter;
-	std::shared_ptr<CCellProperty> m_spPropSheetCellCell;
+	std::shared_ptr<CellProperty> m_spPropSheetCellHeader;
+	std::shared_ptr<CellProperty> m_spPropSheetCellFilter;
+	std::shared_ptr<CellProperty> m_spPropSheetCellCell;
 
 	bool m_showDefault = true;
 	bool m_showApply = true;

@@ -11,27 +11,27 @@
 CMenu CParentColumnHeaderCell::ContextMenu;
 CMenu CParentDefaultColumnHeaderIndexCell::ContextMenu;
 
-CParentColumnHeaderCell::string_type CParentColumnHeaderCell::GetString()
+std::wstring CParentColumnHeaderCell::GetString()
 {
-	return string_type();
+	return std::wstring();
 }
 
-CParentColumnHeaderCell::string_type CParentColumnHeaderCell::GetSortString()
+std::wstring CParentColumnHeaderCell::GetSortString()
 {
-	return string_type();
+	return std::wstring();
 }
 
-bool CParentColumnHeaderCell::Filter(const string_type& strFilter)const//Not filtered
+bool CParentColumnHeaderCell::Filter(const std::wstring& strFilter)const//Not filtered
 {
 	return true;
 }
 
-CParentColumnHeaderCell::string_type CParentColumnHeaderIndexCell::GetString()
+std::wstring CParentColumnHeaderIndexCell::GetString()
 {
 	if(m_pColumn->GetVisible()){
-		return boost::lexical_cast<string_type>(m_pColumn->GetIndex<VisTag>()+1);
+		return boost::lexical_cast<std::wstring>(m_pColumn->GetIndex<VisTag>()+1);
 	}else{
-		return string_type(L"0");
+		return std::wstring(L"0");
 	}
 }
 

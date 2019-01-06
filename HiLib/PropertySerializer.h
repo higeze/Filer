@@ -26,16 +26,16 @@ class CCellSerializer
 private:
 	std::weak_ptr<CSheet> m_pSheet;
 	CDC* m_pDC;
-	std::shared_ptr<CCellProperty> m_spPropSheetCellHeader;
-	std::shared_ptr<CCellProperty> m_spPropSheetCellFilter;
-	std::shared_ptr<CCellProperty> m_spPropSheetCellCell;
+	std::shared_ptr<CellProperty> m_spPropSheetCellHeader;
+	std::shared_ptr<CellProperty> m_spPropSheetCellFilter;
+	std::shared_ptr<CellProperty> m_spPropSheetCellCell;
 
 public:
 	CCellSerializer(
 		std::shared_ptr<CSheet> pSheet,
-		std::shared_ptr<CCellProperty> spPropSheetCellHeader,
-		std::shared_ptr<CCellProperty> spPropSheetCellFilter,
-		std::shared_ptr<CCellProperty> spPropSheetCellCell)
+		std::shared_ptr<CellProperty> spPropSheetCellHeader,
+		std::shared_ptr<CellProperty> spPropSheetCellFilter,
+		std::shared_ptr<CellProperty> spPropSheetCellCell)
 		:m_pSheet(pSheet),
 		m_spPropSheetCellHeader(spPropSheetCellHeader),
 		m_spPropSheetCellFilter(spPropSheetCellFilter),

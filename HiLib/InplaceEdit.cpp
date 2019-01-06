@@ -5,9 +5,9 @@
 #include "GridViewResource.h"
 
 CInplaceEdit::CInplaceEdit(
-	std::function<string_type()> getter,
-	std::function<void(const string_type&)> setter,
-	std::function<void(const string_type&)> changed,
+	std::function<std::wstring()> getter,
+	std::function<void(const std::wstring&)> setter,
+	std::function<void(const std::wstring&)> changed,
 	std::function<void()> final,
 	UINT dwDTFormat)
 	:m_getter(getter),

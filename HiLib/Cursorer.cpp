@@ -114,7 +114,7 @@ void CCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
 	if(pSheet->Empty()){
 		return;
 	}
-	auto cell = pSheet->Cell(e.Point);
+	auto cell = pSheet->Cell(e.Direct.Pixels2Dips(e.Point));
 
 	//If out of sheet, reset curosr
 	if(!cell){
@@ -179,7 +179,7 @@ void CCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e)
 		return;
 	}
 	//Get RowColumn from Point
-	auto cell = pSheet->Cell(e.Point);
+	auto cell = pSheet->Cell(e.Direct.Pixels2Dips(e.Point));
 
 	if(!cell){
 		return OnCursorClear(pSheet);
@@ -212,8 +212,8 @@ void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 				cell = pSheet->Cell<VisTag>(0, 0);
 			}else{//Move selection
 				cell=m_currentCell;//TODO Low Current or Focused
-				size_type roVisib= cell->GetRowPtr()->GetIndex<VisTag>();
-				size_type coVisib= cell->GetColumnPtr()->GetIndex<VisTag>();
+				int roVisib= cell->GetRowPtr()->GetIndex<VisTag>();
+				int coVisib= cell->GetColumnPtr()->GetIndex<VisTag>();
 				switch(e.Char){
 					case VK_LEFT:
 						coVisib=((std::max)(coVisib-1,0));
@@ -282,9 +282,9 @@ std::vector<RC> CCursorer::GetSelectedRCs(CSheet* pSheet)const
 	//}
 	return selectedRCs;
 }
-std::vector<CSheet::row_type> CCursorer::GetSelectedRows(CSheet* pSheet)const
+std::vector<std::shared_ptr<CRow>> CCursorer::GetSelectedRows(CSheet* pSheet)const
 {
-	std::vector<row_type> selectedRows;
+	std::vector<std::shared_ptr<CRow>> selectedRows;
 	//auto& rowDictionary=pSheet->m_rowVisibleDictionary.get<IndexTag>();
 
 	//for(auto& rowData : rowDictionary){
@@ -294,9 +294,9 @@ std::vector<CSheet::row_type> CCursorer::GetSelectedRows(CSheet* pSheet)const
 	//}
 	return selectedRows;
 }
-std::vector<CSheet::column_type> CCursorer::GetSelectedColumns(CSheet* pSheet)const
+std::vector<std::shared_ptr<CColumn>> CCursorer::GetSelectedColumns(CSheet* pSheet)const
 {
-	std::vector<column_type> selectedCols;
+	std::vector<std::shared_ptr<CColumn>> selectedCols;
 	//auto& colDictionary=pSheet->m_columnVisibleDictionary.get<IndexTag>();
 
 	//for(auto& colData : colDictionary){
@@ -340,7 +340,7 @@ void CCursorer::SetSelectedRCs(CSheet* pSheet, std::vector<RC> rcs)
 	//}
 }
 
-void CCursorer::SetSelectedRows(CSheet* pSheet, std::vector<row_type> rows)
+void CCursorer::SetSelectedRows(CSheet* pSheet, std::vector<std::shared_ptr<CRow>> rows)
 {
 	//if(rows.empty() || rows.size()==0)return;
 
@@ -349,7 +349,7 @@ void CCursorer::SetSelectedRows(CSheet* pSheet, std::vector<row_type> rows)
 	//}
 }
 
-void CCursorer::SetSelectedColumns(CSheet* pSheet, std::vector<column_type> cols)
+void CCursorer::SetSelectedColumns(CSheet* pSheet, std::vector<std::shared_ptr<CColumn>> cols)
 {
 	//if(cols.empty() || cols.size()==0)return;
 
@@ -365,7 +365,7 @@ void CSheetCellCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e
 		return;
 	}
 	//Get RowColumn from Point
-	auto cell = pSheet->Cell(e.Point);
+	auto cell = pSheet->Cell(e.Direct.Pixels2Dips(e.Point));
 
 	if(!cell){
 		return OnCursorClear(pSheet);
@@ -389,7 +389,7 @@ void CSheetCellCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e
 		return;
 	}
 	//Get RowColumn from Point
-	auto cell = pSheet->Cell(e.Point);
+	auto cell = pSheet->Cell(e.Direct.Pixels2Dips(e.Point));
 
 	if(!cell){
 		return OnCursorClear(pSheet);

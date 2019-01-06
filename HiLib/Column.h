@@ -15,17 +15,17 @@ public:
 	typedef ColTag Tag;
 protected:
 	Sorts m_sort; //Indicate sort state
-	coordinates_type m_left; //left position from parent sheet
-	coordinates_type m_width; //width
-	coordinates_type m_minWidth = 16;
-	coordinates_type m_maxWidth = 1000;
+	FLOAT m_left; //left position from parent sheet
+	FLOAT m_width; //width
+	FLOAT m_minWidth = 16;
+	FLOAT m_maxWidth = 1000;
 	LineType m_lineType = LineType::None;
 	SizeType m_sizeType = SizeType::Trackable;
 	//bool m_isFitAlways = false;
 
 	bool m_isInit; //if init is set, initial width is used
 	std::wstring m_filter; //Filter string
-	size_type m_allIndex = kInvalidIndex;
+	int m_allIndex = kInvalidIndex;
 
 public:
 	FRIEND_SERIALIZER
@@ -86,22 +86,22 @@ public:
 	virtual CColumn* CloneRaw()const{return nullptr;}
 	std::shared_ptr<CColumn> Clone()const{return std::shared_ptr<CColumn>(CloneRaw());}
 
-	virtual size_type GetSerializedIndex()const { return m_allIndex; }
+	virtual int GetSerializedIndex()const { return m_allIndex; }
 	virtual std::wstring GetFilter()const{return m_filter;}
 	virtual void SetFilter(const std::wstring& filter){m_filter = filter;}
-	virtual coordinates_type GetWidth();
-	virtual void SetWidth(const coordinates_type& width);
-	virtual void SetWidthWithoutSignal(const coordinates_type& width);
-	virtual coordinates_type GetLeft()const{return  m_left + Offset();}
-	virtual void SetSheetLeft(const coordinates_type left){m_left=left;}
-	virtual void SetSheetLeftWithoutSignal(const coordinates_type left){m_left=left;}
-	virtual coordinates_type GetRight(){return GetLeft() + GetWidth();}
+	virtual FLOAT GetWidth();
+	virtual void SetWidth(const FLOAT& width);
+	virtual void SetWidthWithoutSignal(const FLOAT& width);
+	virtual FLOAT GetLeft()const{return  m_left + Offset();}
+	virtual void SetSheetLeft(const FLOAT left){m_left=left;}
+	virtual void SetSheetLeftWithoutSignal(const FLOAT left){m_left=left;}
+	virtual FLOAT GetRight(){return GetLeft() + GetWidth();}
 	virtual Sorts GetSort()const{return m_sort;};
 	virtual void SetSort(const Sorts& sort);
 	virtual void SetVisible(const bool& bVisible, bool notify = true)override;
 	virtual void SetSelected(const bool& bSelected)override;
 	template<typename TAV>
-	size_type GetIndex()const
+	int GetIndex()const
 	{
 		return m_pSheet->Pointer2Index<ColTag, TAV>(this);
 	}
@@ -110,16 +110,16 @@ public:
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::wstring source){return false;}
 	virtual void Delete(std::shared_ptr<CCell> spCellDst){}
 	virtual bool HasCell()const { return true; }
-	virtual cell_type& Cell(CRow* pRow) = 0;
-	virtual cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
-	virtual cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
-	virtual cell_type CellTemplate(CRow* pRow, CColumn* pColumn) = 0;
+	virtual std::shared_ptr<CCell>& Cell(CRow* pRow) = 0;
+	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
+	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
+	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) = 0;
 	virtual void InsertNecessaryRows(){};
-	virtual coordinates_type GetLeftTop()const override { return GetLeft(); }
-	virtual coordinates_type GetRightBottom()/*TODO*/ override { return GetRight(); }
-	virtual coordinates_type GetMinWidthHeight() override { return m_minWidth; }
-	virtual coordinates_type GetMaxWidthHeight() override { return m_maxWidth; }
-	virtual void SetWidthHeightWithoutSignal(const coordinates_type& width) override { SetWidthWithoutSignal(width); }
+	virtual FLOAT GetLeftTop()const override { return GetLeft(); }
+	virtual FLOAT GetRightBottom()/*TODO*/ override { return GetRight(); }
+	virtual FLOAT GetMinWidthHeight() override { return m_minWidth; }
+	virtual FLOAT GetMaxWidthHeight() override { return m_maxWidth; }
+	virtual void SetWidthHeightWithoutSignal(const FLOAT& width) override { SetWidthWithoutSignal(width); }
 	virtual LineType GetLineType()const { return m_lineType; }
 	virtual SizeType GetSizeType()const { return m_sizeType; }
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
@@ -142,9 +142,9 @@ public:
 	}
 	virtual CParentColumn* CloneRaw()const{return nullptr;}
 	std::shared_ptr<CParentColumn> Clone()const{return std::shared_ptr<CParentColumn>(CloneRaw());}
-	virtual coordinates_type Offset()const;
-	virtual cell_type HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
-	virtual cell_type NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
+	virtual FLOAT Offset()const;
+	virtual std::shared_ptr<CCell> HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
+	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
 };
 
 class CSheetCell;
@@ -156,5 +156,5 @@ public:
 	CChildColumn(CSheetCell* pSheetCell);
 	//Destructor
 	virtual ~CChildColumn(){}
-	virtual coordinates_type Offset()const;
+	virtual FLOAT Offset()const;
 };

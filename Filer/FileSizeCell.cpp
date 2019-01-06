@@ -7,7 +7,7 @@
 #include "GridView.h"
 #include "FileSizeColumn.h"
 
-CFileSizeCell::CFileSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
+CFileSizeCell::CFileSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	:CTextCell(pSheet, pRow, pColumn, spProperty)
 {}
 
@@ -46,11 +46,10 @@ std::shared_ptr<CShellFile> CFileSizeCell::GetShellFile()
 	}
 }
 
-CSize CFileSizeCell::MeasureContentSize(CDC* pDC)
+d2dw::CSizeF CFileSizeCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
 {
 	//Calc Content Rect
-	HFONT hFont = (HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());
-	CRect rcContent;
+	d2dw::CRectF rcContent;
 	std::basic_string<TCHAR> str;
 	auto spFile = GetShellFile();
 	auto size = spFile->ReadSize();
@@ -61,14 +60,12 @@ CSize CFileSizeCell::MeasureContentSize(CDC* pDC)
 		str =  L"00,000,000";
 	}
 	if (str.empty()) { str = _T("a"); }
-	pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()), str.size(), rcContent,
-		DT_CALCRECT | GetFormat()&~DT_WORDBREAK, NULL);
-	pDC->SelectFont(hFont);
+	direct.CalcTextSize(m_spProperty->FontAndColor->Font, str);
 	return rcContent.Size();
 }
 
 
-CCell::string_type CFileSizeCell::GetString()
+std::wstring CFileSizeCell::GetString()
 {
 	try {
 		auto spFile = GetShellFile();
@@ -90,7 +87,7 @@ CCell::string_type CFileSizeCell::GetString()
 	}
 }
 
-CCell::string_type CFileSizeCell::GetSortString()
+std::wstring CFileSizeCell::GetSortString()
 {	
 	try {
 		auto spFile = GetShellFile();

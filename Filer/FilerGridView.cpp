@@ -99,7 +99,7 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 
 	//Insert columns if not initialized
 	if (m_columnAllDictionary.empty()) {
-		auto insertFun = [this](std::shared_ptr<CColumn> col, size_type defaultIndex) {
+		auto insertFun = [this](std::shared_ptr<CColumn> col, int defaultIndex) {
 			InsertColumnNotify(col->GetSerializedIndex() == CColumn::kInvalidIndex ? defaultIndex : col->GetSerializedIndex(), col, false);
 		};
 
@@ -1137,12 +1137,12 @@ HRESULT CFilerGridView::OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam,
 	return 0;
 }
 
-CFilerGridView::string_type CFilerGridView::GetPath()const
+CFilerGridView::std::wstring CFilerGridView::GetPath()const
 {
 	return m_spFolder->GetPath();
 }
 
-void CFilerGridView::SetPath(const string_type& path)
+void CFilerGridView::SetPath(const std::wstring& path)
 {
 	if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFolder::CreateShExFileFolder(path))) {
 		OpenFolder(pFolder);

@@ -5,7 +5,7 @@
 #include "TextCell.h"
 #include "EmptyCell.h"
 
-CChildIndexColumn::cell_type& CChildIndexColumn::Cell(CRow* pRow )
+CChildIndexColumn::std::shared_ptr<CCell>& CChildIndexColumn::Cell(CRow* pRow )
 {
 	auto iter=m_mapCell.find(pRow);
 	if(iter!=m_mapCell.end()){
@@ -19,27 +19,27 @@ CChildIndexColumn::cell_type& CChildIndexColumn::Cell(CRow* pRow )
 	}
 }
 
-CChildIndexColumn::size_type CChildIndexColumn::GetDataSize()const
+CChildIndexColumn::int CChildIndexColumn::GetDataSize()const
 {
 	throw std::exception("CIndexColumn:NotImplemented");
 }
 
-CChildIndexColumn::cell_type CChildIndexColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+CChildIndexColumn::std::shared_ptr<CCell> CChildIndexColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CChildColumnHeaderCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
-CChildIndexColumn::cell_type CChildIndexColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
+CChildIndexColumn::std::shared_ptr<CCell> CChildIndexColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CEmptyCell>(m_pSheet,pRow,pColumn,m_pSheet->GetFilterProperty());
 }
 
-CChildIndexColumn::cell_type CChildIndexColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
+CChildIndexColumn::std::shared_ptr<CCell> CChildIndexColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CTextCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 }
 
-//void CChildIndexColumn::UpdateData(size_type rowData)
+//void CChildIndexColumn::UpdateData(int rowData)
 //{
 //	//m_pHeader=HeaderCellTemplate(m_pSheet->GetNameHeaderRowPtr().get(),this);
 //	//m_vpCell.resize(rowData);

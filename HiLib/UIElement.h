@@ -1,10 +1,7 @@
 #pragma once
-#include "MyRect.h"
-#include "MySize.h"
-#include "MyDC.h"
-#include "MyFont.h"
-#include "MyPen.h"
 #include "MyWnd.h"
+#include "MyPoint.h"
+#include "Direct2DWrite.h"
 
 namespace UIElementState
 {
@@ -41,11 +38,12 @@ struct KeyDownEvent :public KeyEventArgs
 
 struct PaintEvent:public EventArgs
 {
-	CDC* DCPtr;
-	PaintEvent(CWnd* pWnd, CDC* pDC)
-		:EventArgs(pWnd),DCPtr(pDC){}
-	PaintEvent(CDC* pDC)
-		:EventArgs(),DCPtr(pDC){}
+	d2dw::CDirect2DWrite& Direct;
+	//CDC* DCPtr;
+	PaintEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct)
+		:EventArgs(pWnd), Direct(direct){}
+	PaintEvent(d2dw::CDirect2DWrite& direct)
+		:EventArgs(), Direct(direct){}
 };
 
 //struct OGLPaintEventArgs:public PaintEventArgs
@@ -58,79 +56,79 @@ struct PaintEvent:public EventArgs
 
 struct MouseEvent:public EventArgs
 {
+	d2dw::CDirect2DWrite& Direct;
 	UINT Flags;
 	CPoint Point;
-	MouseEvent(UINT uFlags,CPoint pt)
-		:Flags(uFlags),Point(pt){}
+	MouseEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt)
+		:EventArgs(pWnd), Direct(direct), Flags(uFlags),Point(pt){}
 	virtual ~MouseEvent(){}
 };
 
 struct LButtonDownEvent :public MouseEvent
 {
-	LButtonDownEvent(UINT uFlags, CPoint pt):MouseEvent(uFlags, pt){}
+	LButtonDownEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt):MouseEvent(pWnd, direct, uFlags, pt){}
 };
 
 struct LButtonUpEvent :public MouseEvent
 {
-	LButtonUpEvent(UINT uFlags, CPoint pt):MouseEvent(uFlags, pt) {}
+	LButtonUpEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt):MouseEvent(pWnd, direct, uFlags, pt) {}
 };
 
 struct LButtonClkEvent :public MouseEvent
 {
-	LButtonClkEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+	LButtonClkEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
 };
 
 struct LButtonSnglClkEvent :public MouseEvent
 {
-	LButtonSnglClkEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+	LButtonSnglClkEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
 };
 
 struct LButtonDblClkEvent :public MouseEvent
 {
-	LButtonDblClkEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+	LButtonDblClkEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
 };
 
 struct LButtonDblClkTimeExceedEvent :public MouseEvent
 {
-	LButtonDblClkTimeExceedEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+	LButtonDblClkTimeExceedEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
 };
 
 struct LButtonBeginDragEvent :public MouseEvent
 {
-	LButtonBeginDragEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+	LButtonBeginDragEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
 };
 
 struct RButtonDownEvent :public MouseEvent
 {
-	RButtonDownEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+	RButtonDownEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
 };
 
 struct MouseMoveEvent :public MouseEvent
 {
-	MouseMoveEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+	MouseMoveEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
 };
 
 struct MouseLeaveEvent :public MouseEvent
 {
-	MouseLeaveEvent(UINT uFlags, CPoint pt) :MouseEvent(uFlags, pt) {}
+	MouseLeaveEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
 };
 
 
 struct MouseWheelEvent:public MouseEvent
 {
 	short Delta;
-	MouseWheelEvent(UINT uFlags, short zDelta, CPoint pt)
-		:MouseEvent(uFlags, pt),Delta(zDelta){}
+	MouseWheelEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, short zDelta, CPoint pt)
+		:MouseEvent(pWnd, direct, uFlags, pt),Delta(zDelta){}
 	virtual ~MouseWheelEvent(){}
 };
 
 struct SetCursorEvent:public EventArgs
 {
-	HWND HWnd;
 	UINT HitTest;
 	BOOL& Handled;
-	SetCursorEvent(HWND HWnd, UINT nHitTest, BOOL& Handled)
-		:HWnd(HWnd), HitTest(nHitTest), Handled(Handled){}
+	SetCursorEvent(CWnd* pWnd, UINT nHitTest, BOOL& Handled)
+		:EventArgs(pWnd), HitTest(nHitTest), Handled(Handled){}
 	virtual ~SetCursorEvent(){}
 };
 

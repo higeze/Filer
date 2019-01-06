@@ -10,24 +10,24 @@
 
 CMenu CParentRowHeaderCell::ContextMenu;
 
-CParentRowHeaderCell::string_type CParentRowHeaderCell::GetString()
+std::wstring CParentRowHeaderCell::GetString()
 {
-	return string_type();
+	return std::wstring();
 }
 
-CParentRowHeaderCell::string_type CParentRowHeaderCell::GetSortString()
+std::wstring CParentRowHeaderCell::GetSortString()
 {
-	return string_type();
+	return std::wstring();
 }
 
-bool CParentRowHeaderCell::Filter(const string_type& strFilter)const//Not filtered
+bool CParentRowHeaderCell::Filter(const std::wstring& strFilter)const//Not filtered
 {
 	return true;
 }
 
-CParentRowHeaderCell::string_type CParentRowHeaderIndexCell::GetString()
+std::wstring CParentRowHeaderIndexCell::GetString()
 {
-	return boost::lexical_cast<string_type>(m_pRow->GetIndex<VisTag>()+1);
+	return boost::lexical_cast<std::wstring>(m_pRow->GetIndex<VisTag>()+1);
 }
 
 

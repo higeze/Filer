@@ -4,9 +4,6 @@ class CSheet;
 
 class IDragger
 {
-protected:
-	typedef int size_type;
-	typedef int coordinates_type;
 public:
 	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) = 0;
 	virtual void OnBeginDrag(CSheet* pSheet, const MouseEvent& e) = 0;

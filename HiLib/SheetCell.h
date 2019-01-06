@@ -5,15 +5,13 @@
 class CSheetCell:public CSheet,public CCell
 {
 protected:
-	typedef CCell::size_type size_type;
-	typedef CCell::string_type string_type;
-	typedef CCell::coordinates_type coordinates_type;
+
 public:
 	virtual bool CanResizeRow() const{return false;}
 	virtual bool CanResizeColumn() const{return false;}
 	virtual void AddRow();
 	virtual void Resize();
-	virtual void Resize(size_type row, size_type col){}
+	virtual void Resize(int row, int col){}
 
 public:
 	//Constructor
@@ -21,32 +19,32 @@ public:
 		CSheet* pSheet = nullptr,
 		CRow* pRow = nullptr,
 		CColumn* pColumn = nullptr,
-		std::shared_ptr<CCellProperty> spProperty = nullptr,
-		std::shared_ptr<CCellProperty> spHeaderProperty = nullptr,
-		std::shared_ptr<CCellProperty> spFilterProperty = nullptr,
-		std::shared_ptr<CCellProperty> spCellProperty = nullptr,
+		std::shared_ptr<CellProperty> spProperty = nullptr,
+		std::shared_ptr<HeaderProperty> spHeaderProperty = nullptr,
+		std::shared_ptr<CellProperty> spFilterProperty = nullptr,
+		std::shared_ptr<CellProperty> spCellProperty = nullptr,
 		CMenu* pMenu=nullptr);
 	virtual ~CSheetCell(){}
 	static CMenu SheetCellContextMenu;
 	virtual CMenu* GetContextMenuPtr()override;
 	//Property
-	virtual std::shared_ptr<CCellProperty> GetHeaderPropertyPtr();
-	virtual std::shared_ptr<CCellProperty> GetCellPropertyPtr();
+	virtual std::shared_ptr<CellProperty> GetHeaderPropertyPtr();
+	virtual std::shared_ptr<CellProperty> GetCellPropertyPtr();
 	//Rect
-	virtual coordinates_type GetTop()const override;
-	virtual coordinates_type GetLeft()const override;
-	virtual CRect GetRect()const override;
-	virtual CRect GetPaintRect() override;
+	virtual FLOAT GetTop()const override;
+	virtual FLOAT GetLeft()const override;
+	virtual d2dw::CRectF GetRect()const override;
+	virtual d2dw::CRectF GetPaintRect() override;
 
-	virtual CSize MeasureSize(CDC* pDC) override;
-	virtual CSize MeasureSizeWithFixedWidth(CDC* pDC) override;
+	virtual d2dw::CSizeF MeasureSize(d2dw::CDirect2DWrite& direct) override;
+	virtual d2dw::CSizeF MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite& direct) override;
 
 	//virtual void SetFocused(const bool& bFocused);
 	virtual bool GetSelected()const override;
 	virtual void SetSelected(const bool& bSelected) override;
 
 	//Paint
-	virtual void PaintContent(CDC* pDC, CRect rcPaint) override;
+	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint) override;
 	
 	//Event
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
@@ -63,9 +61,9 @@ public:
 
 	virtual void OnKeyDown(const KeyDownEvent& e)  override;
 	//String
-	virtual string_type GetString() override {return CSheet::GetSheetString();};
-	virtual void SetString(const string_type& str)  override {/*Do Nothing*/};
-	virtual bool Filter(const string_type& strFilter)const;
+	virtual std::wstring GetString() override {return CSheet::GetSheetString();};
+	virtual void SetString(const std::wstring& str)  override {/*Do Nothing*/};
+	virtual bool Filter(const std::wstring& strFilter)const;
 	//Compare
 	virtual bool IsComparable()const;
 	virtual Compares EqualCell(CCell* pCell, std::function<void(CCell*, Compares)> action);

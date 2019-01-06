@@ -8,7 +8,7 @@
  *  CColumn
  */
 
-CColumn::coordinates_type CColumn::GetWidth()
+FLOAT CColumn::GetWidth()
 {
 	if (m_isInit) {
 		//if(!m_isSerialized){
@@ -27,7 +27,7 @@ CColumn::coordinates_type CColumn::GetWidth()
 	return m_width;
 }
 
-void CColumn::SetWidth(const coordinates_type& width)
+void CColumn::SetWidth(const FLOAT& width)
 {
 	if(m_width!=width){
 		SetWidthWithoutSignal(width);
@@ -35,7 +35,7 @@ void CColumn::SetWidth(const coordinates_type& width)
 	}
 }
 
-void CColumn::SetWidthWithoutSignal(const coordinates_type& width) 
+void CColumn::SetWidthWithoutSignal(const FLOAT& width) 
 {
 	m_width = (std::max)((std::min)(width, m_maxWidth), m_minWidth);
 }
@@ -84,12 +84,12 @@ void CColumn::OnPropertyChanged(const wchar_t* name)
 	m_pSheet->OnColumnPropertyChanged(this, name);
 }
 
-//CColumn::size_type CColumn::GetIndex<VisTag>()const
+//CColumn::int CColumn::GetIndex<VisTag>()const
 //{
 //	return m_pSheet->Pointer2Index<ColTag, VisTag>(this);
 //}
 //
-//CColumn::size_type CColumn::GetIndex<AllTag>()const
+//CColumn::int CColumn::GetIndex<AllTag>()const
 //{
 //	return m_pSheet->Pointer2Index<ColTag, AllTag>(this);
 //}
@@ -107,9 +107,9 @@ CParentColumn::CParentColumn(CGridView* pGrid)
 	:CColumn(pGrid){} 
 
 
-CParentColumn::coordinates_type CParentColumn::Offset()const
+FLOAT CParentColumn::Offset()const
 {
-	coordinates_type offset(0);//m_pGrid->GetRect().left is not necessary
+	FLOAT offset(0);//m_pGrid->GetRect().left is not necessary
 	//if(m_pSheet->Visible() && GetIndex<AllTag>()>=0){
 	if(m_pSheet->Visible() && GetIndex<VisTag>()>=0){
 		offset-=static_cast<CGridView*>(m_pSheet)->GetHorizontalScrollPos();
@@ -123,10 +123,10 @@ CParentColumn::coordinates_type CParentColumn::Offset()const
 CChildColumn::CChildColumn(CSheetCell* pSheetCell)
 	:CColumn(pSheetCell){} 
 
-CChildColumn::coordinates_type CChildColumn::Offset()const
+FLOAT CChildColumn::Offset()const
 {
 	return static_cast<CSheetCell*>(m_pSheet)->GetLeft()
-			+ (coordinates_type)floor(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->GetPenPtr()->GetWidth()*0.5)
-			+ (coordinates_type)floor(static_cast<CSheetCell*>(m_pSheet)->GetHeaderPropertyPtr()->GetPenPtr()->GetWidth()*0.5)
-			+ static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->GetPadding().left;
+			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
+			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
+			+ static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Padding->left;
 }

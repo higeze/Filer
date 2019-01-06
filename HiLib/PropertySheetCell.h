@@ -12,10 +12,10 @@ public:
 	virtual bool CanResizeColumn()const override{return false;}
 
 	//TODO Not size but index
-	void Resize(size_type row, size_type col)override
+	void Resize(int row, int col)override
 	{
-		size_type curRowSize = GetMaxIndex<RowTag, AllTag>();
-		size_type curColSize = GetMaxIndex<ColTag, AllTag>();
+		int curRowSize = GetMaxIndex<RowTag, AllTag>();
+		int curColSize = GetMaxIndex<ColTag, AllTag>();
 
 		if(row==curRowSize)return;
 
@@ -47,10 +47,10 @@ public:
 		CSheet* pSheet = nullptr,
 		CRow* pRow = nullptr,
 		CColumn* pColumn = nullptr,
-		std::shared_ptr<CCellProperty> spProperty = nullptr,
-		std::shared_ptr<CCellProperty> spHeaderProperty = nullptr,
-		std::shared_ptr<CCellProperty> spFilterProperty = nullptr,
-		std::shared_ptr<CCellProperty> spCellProperty = nullptr,
+		std::shared_ptr<CellProperty> spProperty = nullptr,
+		std::shared_ptr<CellProperty> spHeaderProperty = nullptr,
+		std::shared_ptr<CellProperty> spFilterProperty = nullptr,
+		std::shared_ptr<CellProperty> spCellProperty = nullptr,
 		CMenu* pMenu=nullptr)
 		:CSheetCell(pSheet,pRow,pColumn,spProperty,spHeaderProperty,spFilterProperty,spCellProperty){}
 	virtual ~CPropertySheetCell(){}

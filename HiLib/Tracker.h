@@ -25,16 +25,7 @@ template<typename TRC>
 class CTracker:public ITracker
 {
 private:
-	typedef int size_type;
-	typedef int coordinates_type;
-	//static const size_type COLUMN_INDEX_INVALID = 9999;
-	//static const size_type COLUMN_INDEX_MAX = 1000;
-	//static const size_type COLUMN_INDEX_MIN = -1000;
-	//static const coordinates_type MIN_COLUMN_WIDTH=2;
-	//static const coordinates_type RESIZE_AREA_HARF_WIDTH=4;
-
-private:
-	size_type m_trackLeftVisib;
+	int m_trackLeftVisib;
 public:
 	CTracker():m_trackLeftVisib(CColumn::kInvalidIndex){}
 	virtual ~CTracker(){}
@@ -76,8 +67,8 @@ public:
 	{
 		CPoint pt;
 		::GetCursorPos(&pt);
-		::ScreenToClient(e.HWnd, &pt);
-		if (IsTarget(pSheet, MouseEvent(NULL, pt))) {
+		::ScreenToClient(e.WindowPtr->m_hWnd, &pt);
+		if (IsTarget(pSheet, MouseEvent(e.WindowPtr, *(static_cast<CGridView*>(e.WindowPtr)->GetDirect()), 0,  pt))) {
 			e.Handled = TRUE;
 			SetSizeCursor(); 
 		}
@@ -95,7 +86,7 @@ public:
 		//e.Handled = TRUE;
 		SetSizeCursor();
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		p->SetWidthHeightWithoutSignal((std::max)(e.Point.Get<TRC::Axis>() - p->GetLeftTop(), (LONG)p->GetMinWidthHeight()));//TODO
+		p->SetWidthHeightWithoutSignal((std::max)(e.Point.Get<TRC::Axis>() - p->GetLeftTop(), p->GetMinWidthHeight()));//TODO
 		pSheet->Track<TRC>(p);
 	}
 
@@ -103,7 +94,7 @@ public:
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		p->SetWidthHeightWithoutSignal((std::max)(e.Point.Get<TRC::Axis>() - p->GetLeftTop(), (LONG)p->GetMinWidthHeight()));//TODO
+		p->SetWidthHeightWithoutSignal((std::max)(e.Point.Get<TRC::Axis>() - p->GetLeftTop(), p->GetMinWidthHeight()));//TODO
 		pSheet->EndTrack<TRC>(p);
 	}
 
@@ -118,7 +109,7 @@ public:
 		if (!pSheet->Visible()) {
 			return CBand::kInvalidIndex;
 		}
-		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Point);
+		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Direct.Pixels2Dips(e.Point));
 		auto minIdx = pSheet->GetMinIndex<TRC, VisTag>();
 		auto maxIdx = pSheet->GetMaxIndex<TRC, VisTag>();
 
@@ -160,7 +151,7 @@ public:
 		if (!pSheet->Visible()) {
 			return false;
 		}
-		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Point);
+		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Direct.Pixels2Dips(e.Point));
 		auto minIdx = pSheet->GetMinIndex<TRC, VisTag>();
 		auto maxIdx = pSheet->GetMaxIndex<TRC, VisTag>();
 

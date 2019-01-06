@@ -21,99 +21,73 @@ CTextCell::~CTextCell()
 	}
 }
 
-void CTextCell::PaintContent(CDC* pDC, CRect rcPaint)
+void CTextCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
-	//if(GetFocused()){
-	//	pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
-	//}else if(GetSelected()){
-	//	pDC->SetTextColor(GetSysColor(COLOR_HIGHLIGHTTEXT));
-	//}else if(GetChecked()){
-	//	pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
-	//}else{
-		pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
-	//}
-	HFONT hFont=(HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());
-	string_type str=GetString();
-	//pDC->FillRect(rcPaint,*m_spProperty->GetCheckedBrushPtr());
-	pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()),-1,rcPaint,GetFormat(),NULL);		
-	pDC->SelectFont(hFont);
+	direct.DrawTextLayout(*(m_spProperty->FontAndColor), GetString(), rcPaint);
 }
 
-CSize CStringSizeCalculater::CalcSize(const std::wstring& str)
-{
-	CSize ret(0, 0);
-	for (const auto& ch : str) {
-		const auto& iter = m_charMap.find(ch);
-		CSize sizeCh(0, 0);
-		if (iter != m_charMap.end()) {
-			sizeCh = iter->second;
-		} else {
-			HFONT hFont = (HFONT)m_pDC->SelectFont(m_pFont->operator HFONT());
-			CRect rcCh;
-			m_pDC->DrawTextExW(const_cast<LPWSTR>(&ch), 1, rcCh,
-				DT_CALCRECT | m_format & ~DT_WORDBREAK, NULL);
-			m_pDC->SelectFont(hFont);
-			sizeCh = rcCh.Size();
-			m_charMap.emplace(ch, sizeCh);
-		}
-		ret.cx += sizeCh.cx;
-		ret.cy = (std::max)(ret.cy, sizeCh.cy);
-	}
+//CSize CStringSizeCalculater::CalcSize(const std::wstring& str)
+//{
+//	CSize ret(0, 0);
+//	for (const auto& ch : str) {
+//		const auto& iter = m_charMap.find(ch);
+//		CSize sizeCh(0, 0);
+//		if (iter != m_charMap.end()) {
+//			sizeCh = iter->second;
+//		} else {
+//			HFONT hFont = (HFONT)m_pDC->SelectFont(m_pFont->operator HFONT());
+//			CRect rcCh;
+//			m_pDC->DrawTextExW(const_cast<LPWSTR>(&ch), 1, rcCh,
+//				DT_CALCRECT | m_format & ~DT_WORDBREAK, NULL);
+//			m_pDC->SelectFont(hFont);
+//			sizeCh = rcCh.Size();
+//			m_charMap.emplace(ch, sizeCh);
+//		}
+//		ret.cx += sizeCh.cx;
+//		ret.cy = (std::max)(ret.cy, sizeCh.cy);
+//	}
+//
+//	return ret;
+//}
+//
+//CSize CStringSizeCalculater::CalcSizeWithFixedWidth(const std::wstring& str, const LONG& width)
+//{
+//	std::vector<CSize> ret;
+//	ret.emplace_back(0, 0);
+//	size_t i = 0;
+//
+//	for (const auto& ch : str) {
+//		const auto& iter = m_charMap.find(ch);
+//		CSize sizeCh(0, 0);
+//		if (iter != m_charMap.end()) {
+//			sizeCh = iter->second;
+//		} else {
+//			HFONT hFont = (HFONT)m_pDC->SelectFont(m_pFont->operator HFONT());
+//			CRect rcCh;
+//			m_pDC->DrawTextExW(const_cast<LPWSTR>(&ch), 1, rcCh,
+//				DT_CALCRECT | m_format & ~DT_WORDBREAK, NULL);
+//			m_pDC->SelectFont(hFont);
+//			sizeCh = rcCh.Size();
+//			m_charMap.emplace(ch, sizeCh);
+//		}
+//		if (ret.back().cx + sizeCh.cx > width) {
+//			ret.push_back(sizeCh);
+//		} else {
+//			ret.back().cx += sizeCh.cx;
+//			ret.back().cy = (std::max)(ret.back().cy, sizeCh.cy);
+//		}
+//	}
+//
+//	return CSize(width, std::accumulate(ret.begin(), ret.end(), 0L, [](LONG y, const CSize& rh)->LONG {return y + rh.cy; }));
+//}
 
-	return ret;
-}
 
-CSize CStringSizeCalculater::CalcSizeWithFixedWidth(const std::wstring& str, const LONG& width)
-{
-	std::vector<CSize> ret;
-	ret.emplace_back(0, 0);
-	size_t i = 0;
-
-	for (const auto& ch : str) {
-		const auto& iter = m_charMap.find(ch);
-		CSize sizeCh(0, 0);
-		if (iter != m_charMap.end()) {
-			sizeCh = iter->second;
-		} else {
-			HFONT hFont = (HFONT)m_pDC->SelectFont(m_pFont->operator HFONT());
-			CRect rcCh;
-			m_pDC->DrawTextExW(const_cast<LPWSTR>(&ch), 1, rcCh,
-				DT_CALCRECT | m_format & ~DT_WORDBREAK, NULL);
-			m_pDC->SelectFont(hFont);
-			sizeCh = rcCh.Size();
-			m_charMap.emplace(ch, sizeCh);
-		}
-		if (ret.back().cx + sizeCh.cx > width) {
-			ret.push_back(sizeCh);
-		} else {
-			ret.back().cx += sizeCh.cx;
-			ret.back().cy = (std::max)(ret.back().cy, sizeCh.cy);
-		}
-	}
-
-	return CSize(width, std::accumulate(ret.begin(), ret.end(), 0L, [](LONG y, const CSize& rh)->LONG {return y + rh.cy; }));
-}
-
-
-CSize CTextCell::MeasureContentSize(CDC* pDC)
+d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
 {
 	//Calc Content Rect
-	//Calculater version
-	auto pCalc = CStringSizeCalculater::GetInstance();
-	pCalc->SetParameter(pDC, m_spProperty->GetFontPtr().get(), GetFormat());
-	std::wstring str=GetString();
-	if(str.empty()){str=L"a";}
-	return pCalc->CalcSize(str);
-
-	////Original version
-	//HFONT hFont=(HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());
-	//CRect rcContent;
-	//std::basic_string<TCHAR> str=GetString();
-	//if(str.empty()){str=_T("a");}
-	//pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()),str.size(),rcContent,
-	//	DT_CALCRECT|GetFormat()&~DT_WORDBREAK,NULL);
-	//pDC->SelectFont(hFont);
-	//return rcContent.Size();
+	std::wstring text = GetString();
+	if (text.empty()) { text = L"a"; }
+	return direct.CalcTextSize(m_spProperty->FontAndColor->Font, text);
 }
 
 //CSize CTextCell::MeasureSize(CDC* pDC)
@@ -126,44 +100,20 @@ CSize CTextCell::MeasureContentSize(CDC* pDC)
 //	return rcCenter.Size();	
 //}
 
-CSize CTextCell::MeasureContentSizeWithFixedWidth(CDC* pDC)
+d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
 {
 	//Calc Content Rect
-	CRect rcCenter(0,0,m_pColumn->GetWidth(),0);
-	CRect rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
+	d2dw::CRectF rcCenter(0,0,m_pColumn->GetWidth(),0);
+	d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
 
-	auto pCalc = CStringSizeCalculater::GetInstance();
-	pCalc->SetParameter(pDC, m_spProperty->GetFontPtr().get(), GetFormat());
-	std::wstring str = GetString();
-	if (str.empty()) { str = L"a"; }
-	return pCalc->CalcSizeWithFixedWidth(str, rcContent.Width());
-
-
-	//Calc Content Rect
-	//HFONT hFont=(HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());
-	//rcContent.SetRect(0,0,rcContent.Width(),0);
-	//std::basic_string<TCHAR> str=GetString();
-	//if(str.empty()){str=_T("a");}
-	//pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()),str.size(),rcContent,
-	//	DT_CALCRECT|GetFormat(),NULL);
-	//pDC->SelectFont(hFont);
-	//return rcContent.Size();
+	std::wstring text = GetString();
+	if (text.empty()) { text = L"a"; }
+	return direct.CalcTextSizeWithFixedWidth(m_spProperty->FontAndColor->Font, text, rcContent.Width());
 }
-
-//CSize CTextCell::MeasureSizeWithFixedWidth(CDC* pDC)
-//{
-//	Calc Content Rect
-//	CRect rcContent(MeasureContentSizeWithFixedWidth(pDC));
-//
-//	Calc CenterBorder Rect
-//	CRect rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
-//	m_bActMeasureValid = true;
-//	return rcCenter.Size();	
-//}
 
 void CTextCell::OnEdit(const EventArgs& e)
 {
-	CRect rcContent(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
+	d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
 	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
 	SetState(UIElementState::Hot);//During Editing, Keep Hot
 	m_pEdit = new CInplaceEdit(
@@ -184,9 +134,9 @@ void CTextCell::OnEdit(const EventArgs& e)
 		},
 		GetFormat());
 
-	m_pEdit->Create(m_pSheet->GetGridPtr()->m_hWnd,rcContent);
+	m_pEdit->Create(m_pSheet->GetGridPtr()->m_hWnd, m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(rcContent));
 	m_pEdit->SetWindowText(GetString().c_str());
-	m_pEdit->SetFont(*m_spProperty->GetFontPtr());
+	//m_pEdit->SetFont(*m_spProperty->GetFontPtr());//TODOTODO
 	//CRect rcRect(m_pEdit->GetRect());
 	//CRect rcPadding(m_spProperty->GetPadding());
 	//rcRect.DeflateRect(rcPadding);
@@ -197,17 +147,17 @@ void CTextCell::OnEdit(const EventArgs& e)
 	m_pEdit->ShowWindow(SW_SHOW);
 }
 
-void CTextCell::PaintBackground(CDC* pDC, CRect rcPaint)
+void CTextCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
 	if(m_pEdit){
-		CRect rcContent(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
-		CRect rcCurEdit(m_pSheet->GetGridPtr()->ScreenToClientRect(m_pEdit->GetWindowRect()));
+		d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
+		d2dw::CRectF rcCurEdit(direct.Pixels2Dips(m_pSheet->GetGridPtr()->ScreenToClientRect(m_pEdit->GetWindowRect())));
 		m_pSheet->GetGridPtr()->SetEditRect(rcContent);
 		if(rcContent!=rcCurEdit){
-			m_pEdit->MoveWindow(rcContent,FALSE);
+			m_pEdit->MoveWindow(direct.Dips2Pixels(rcContent),FALSE);
 		}
 	}
-	CCell::PaintBackground(pDC,rcPaint);
+	CCell::PaintBackground(direct, rcPaint);
 }
 	
 bool CTextCell::IsComparable()const{return true;}
@@ -243,12 +193,12 @@ Compares CTextCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Comp
 }
 
 
-CStringCell::string_type CStringCell::GetString()
+std::wstring CStringCell::GetString()
 {
 	return m_string;
 }
 
-void CStringCell::SetStringCore(const string_type& str)
+void CStringCell::SetStringCore(const std::wstring& str)
 {
 	m_string=str;
 }

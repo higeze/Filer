@@ -14,18 +14,18 @@ template<typename TRC, typename TRCYou>
 class CDragger :public IDragger
 {
 private:
-	size_type m_dragFromIndex;
-	size_type m_dragToIndex;
+	int m_dragFromIndex;
+	int m_dragToIndex;
 public:
 	CDragger() :m_dragFromIndex(CBand::kInvalidIndex), m_dragToIndex(CBand::kInvalidIndex) {}
 	virtual ~CDragger() {}
 
-	size_type GetDragToAllIndex() { return m_dragToIndex; }
-	size_type GetDragFromAllIndex() { return m_dragFromIndex; }
+	int GetDragToAllIndex() { return m_dragToIndex; }
+	int GetDragFromAllIndex() { return m_dragFromIndex; }
 
 	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Point);
+		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Direct.Pixels2Dips(e.Point));
 		if (visIndexes.Row <= pSheet->GetMaxIndex<RowTag, VisTag>() &&
 			visIndexes.Row >= pSheet->GetMinIndex<RowTag, VisTag>() &&
 			visIndexes.Col <= pSheet->GetMaxIndex<ColTag, VisTag>() &&
@@ -39,13 +39,13 @@ public:
 
 	void OnBeginDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		m_dragFromIndex = pSheet->Point2Indexes<AllTag>(e.Point).Get<TRC>();
+		m_dragFromIndex = pSheet->Point2Indexes<AllTag>(e.Direct.Pixels2Dips(e.Point)).Get<TRC>();
 		m_dragToIndex = CBand::kInvalidIndex;
 	}
 
 	void OnDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto visibleIndex = pSheet->Point2Indexes<VisTag>(e.Point).Get<TRC>();
+		auto visibleIndex = pSheet->Point2Indexes<VisTag>(e.Direct.Pixels2Dips(e.Point)).Get<TRC>();
 
 		auto visMinMax = pSheet->GetMinMaxIndexes<TRC, VisTag>();
 		auto allMinMax = pSheet->GetMinMaxIndexes<TRC, AllTag>();
@@ -117,7 +117,7 @@ public:
 		//o/max : Right/Bottom
 		//u/min : Left/Top
 		//other : Left
-		coordinates_type coome = 0;
+		FLOAT coome = 0;
 		if (m_dragToIndex > pSheet->GetMaxIndex<TRC, AllTag>()) {
 			coome = pSheet->LastPointer<TRC, AllTag>()->GetRightBottom();
 		}
@@ -129,37 +129,30 @@ public:
 		}
 
 		//Get Right/Bottom Line
-		coordinates_type cooyou0 = GetLineLeftTop(pSheet);
-		coordinates_type cooyou1 = GetLineRightBottom(pSheet);
+		FLOAT cooyou0 = GetLineLeftTop(pSheet);
+		FLOAT cooyou1 = GetLineRightBottom(pSheet);
 
-		//Paint
-		CPen pen(pSheet->GetHeaderProperty()->GetPenPtr()->GetPenStyle(),
-				 pSheet->GetHeaderProperty()->GetPenPtr()->GetWidth(),
-				 CColor(RGB(255, 0, 0)));
-		HPEN hPen = e.DCPtr->SelectPen(pen);
-		PaintLine(e.DCPtr, coome, cooyou0, cooyou1);
-		e.DCPtr->SelectPen(hPen);
+		//Paint DragLine
+		PaintLine(e.Direct, *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);
 	}
 
 	virtual int GetLineLeftTop(CSheet* pSheet) { return pSheet->FirstPointer<TRCYou, AllTag>()->GetLeftTop(); }
 	virtual int GetLineRightBottom(CSheet* pSheet) { return pSheet->ZeroPointer<TRCYou, AllTag>()->GetRightBottom(); }
 
-	void PaintLine(CDC* pDC, coordinates_type coome, coordinates_type cooyou0, coordinates_type cooyou1) {}
+	void PaintLine(d2dw::CDirect2DWrite& direct, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1) {}
 
 };
 
 template <>
-void CDragger<RowTag, ColTag>::PaintLine(CDC* pDC, coordinates_type coome, coordinates_type cooyou0, coordinates_type cooyou1)
+void CDragger<RowTag, ColTag>::PaintLine(d2dw::CDirect2DWrite& direct, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
 {
-	pDC->MoveToEx(cooyou0, coome);
-	pDC->LineTo(cooyou1, coome);
+	direct.DrawSolidLine(line, d2dw::CPointF(cooyou0, coome), d2dw::CPointF(cooyou1, coome));
 }
 
 template <>
-void CDragger<ColTag, RowTag>::PaintLine(CDC* pDC, coordinates_type coome, coordinates_type cooyou0, coordinates_type cooyou1)
+void CDragger<ColTag, RowTag>::PaintLine(d2dw::CDirect2DWrite& direct, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
 {
-	pDC->MoveToEx(coome, cooyou0);
-	pDC->LineTo(coome, cooyou1);
+	direct.DrawSolidLine(line, d2dw::CPointF(coome, cooyou0), d2dw::CPointF(coome, cooyou1));
 }
 
 

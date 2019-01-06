@@ -26,10 +26,10 @@ CSheetCell::CSheetCell(
 	CSheet* pSheet,
 	CRow* pRow,
 	CColumn* pColumn,
-	std::shared_ptr<CCellProperty> spProperty,
-	std::shared_ptr<CCellProperty> spHeaderProperty,
-	std::shared_ptr<CCellProperty> spFilterProperty,
-	std::shared_ptr<CCellProperty> spCellProperty,
+	std::shared_ptr<CellProperty> spProperty,
+	std::shared_ptr<HeaderProperty> spHeaderProperty,
+	std::shared_ptr<CellProperty> spFilterProperty,
+	std::shared_ptr<CellProperty> spCellProperty,
 	CMenu* pMenu)
 	:CSheet(spHeaderProperty,
 		spFilterProperty,
@@ -99,44 +99,44 @@ void CSheetCell::RowErased(CRowEventArgs& e)
 	OnPropertyChanged(L"size");
 }
 
-CSheetCell::coordinates_type CSheetCell::GetTop()const
+FLOAT CSheetCell::GetTop()const
 {
 	return CCell::GetTop();
 }
 
-CSheetCell::coordinates_type CSheetCell::GetLeft()const
+FLOAT CSheetCell::GetLeft()const
 {
 	return CCell::GetLeft();
 }
 
-CRect CSheetCell::GetRect()const
+d2dw::CRectF CSheetCell::GetRect()const
 {
 	return CCell::GetRect();
 }
 
-CRect CSheetCell::GetPaintRect()
+d2dw::CRectF CSheetCell::GetPaintRect()
 {
 	return CCell::GetRect();//TODO
 }
 
-CPoint CSheetCell::GetScrollPos()const
+d2dw::CPointF CSheetCell::GetScrollPos()const
 {
-	return CPoint(0,0);
+	return d2dw::CPointF(0,0);
 }
 
-CSize CSheetCell::MeasureSize(CDC* pDC)
+d2dw::CSizeF CSheetCell::MeasureSize(d2dw::CDirect2DWrite& direct)
 {
 	//Calc Content Rect
-	CRect rcContent(CSheet::MeasureSize());
+	d2dw::CRectF rcContent(CSheet::MeasureSize());
 	//Calc InnerBorder, CenterBorder Rect
-	CRect rcCenter(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
+	d2dw::CRectF rcCenter(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
 
 	return rcCenter.Size();
 }
 
-CSize CSheetCell::MeasureSizeWithFixedWidth(CDC* pDC)
+d2dw::CSizeF CSheetCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
 {
-	return MeasureSize(pDC);
+	return MeasureSize(direct);
 }
 
 void CSheetCell::OnLButtonDown(const LButtonDownEvent& e)
@@ -273,28 +273,20 @@ Compares CSheetCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Com
 	return comp;
 }
 
-void CSheetCell::PaintContent(CDC* pDC, CRect rcPaint)
+void CSheetCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
-	CRgn rgn;
+/*	CRgn rgn;
 	rgn.CreateRectRgnIndirect(rcPaint);
-	pDC->SelectClipRgn(rgn);	
-	CSheet::OnPaint(PaintEvent(pDC));
-	pDC->SelectClipRgn(NULL);
-	//auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
-	//auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
-	//PaintEventArgs e(nullptr,pDC);
-	//for(auto colIter=colDictionary.rbegin(),colEnd=colDictionary.rend();colIter!=colEnd;++colIter){
-	//	for(auto rowIter=rowDictionary.rbegin(),rowEnd=rowDictionary.rend();rowIter!=rowEnd;++rowIter){
-	//		colIter->DataPtr->Cell(rowIter->DataPtr.get())->OnPaint(e);
-	//	}
-	//}
+	pDC->SelectClipRgn(rgn);*/	
+	CSheet::OnPaint(PaintEvent(direct));
+	//pDC->SelectClipRgn(NULL);
 }
 
-std::shared_ptr<CCellProperty> CSheetCell::GetHeaderPropertyPtr()
+std::shared_ptr<CellProperty> CSheetCell::GetHeaderPropertyPtr()
 {
 	return m_spHeaderProperty;
 }
-std::shared_ptr<CCellProperty> CSheetCell::GetCellPropertyPtr()
+std::shared_ptr<CellProperty> CSheetCell::GetCellPropertyPtr()
 {
 	return m_spProperty;
 }
@@ -331,7 +323,7 @@ void CSheetCell::SetSelected(const bool& bSelected)
 	//CSheet::SetSelected(bSelected);
 }
 
-bool CSheetCell::Filter(const string_type& strFilter)const
+bool CSheetCell::Filter(const std::wstring& strFilter)const
 {
 	bool bMatch = false;
 	auto iterCol = boost::find_if(m_columnAllDictionary, [&](const ColumnData& colData)->bool{
@@ -386,7 +378,7 @@ CMenu* CSheetCell::GetContextMenuPtr()
 void CSheetCell::OnContextMenu(const ContextMenuEvent& e)
 {
 	if(!Visible())return;
-	auto cell = Cell(e.Point);
+	auto cell = Cell(d2dw::CPointF(e.Point.x, e.Point.y));//TODOTODO
 	if(cell){
 		cell->OnContextMenu(e);
 	}else{

@@ -9,7 +9,7 @@ class CBindPaintCell:public CCell
 {
 private:
 public:
-	CBindPaintCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
+	CBindPaintCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CCell(pSheet, pRow, pColumn, spProperty){}
 	virtual ~CBindPaintCell(){}
 	virtual bool IsComparable()const{return false;}

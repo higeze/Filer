@@ -4,7 +4,7 @@
 #include "Sheet.h"
 //
 
-CBoolCell::CBoolCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellProperty> spProperty,bool b)
+CBoolCell::CBoolCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,bool b)
 	:CTextCell(pSheet,pRow,pColumn,spProperty),m_bool(b),m_checkBox(NULL,[&]()->bool{return m_bool;},[&](const bool& b)->void{m_bool = b;})
 {
 }
@@ -26,12 +26,12 @@ CSize CBoolCell::MeasureSizeWithFixedWidth(CDC* pDC)
 	return MeasureSize(pDC);
 }
 
-CBoolCell::string_type CBoolCell::GetString()
+CBoolCell::std::wstring CBoolCell::GetString()
 {
 	return boost::lexical_cast<std::wstring>(m_bool);
 }
 
-void CBoolCell::SetStringCore(const string_type& str)
+void CBoolCell::SetStringCore(const std::wstring& str)
 {
 	m_bool = boost::lexical_cast<bool>(str);
 }

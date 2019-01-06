@@ -2,18 +2,16 @@
 #include "TextCell.h"
 #include "MyColor.h"
 
-class CColor;
-
 class CColorCell:public CTextCell
 {
 private:
-	CColor m_color;
+	d2dw::Color m_color;
 public:
-	CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellProperty> spProperty,CColor color);
+	CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,d2dw::Color color);
 	virtual ~CColorCell(){}
 
-	CColor GetColor();
-	virtual void PaintBackground(CDC* pDC, CRect rcPaint) override;
+	d2dw::Color GetColor();
+	virtual void PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint) override;
 	virtual void OnLButtonClk(const LButtonClkEvent& e) override;
 	virtual std::basic_string<TCHAR> GetString() override;
 	virtual bool IsComparable()const override{return false;}

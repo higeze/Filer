@@ -14,7 +14,7 @@
 #include "KnownFolder.h"
 #include "GridView.h"
 
-CFavoriteCell::CFavoriteCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
+CFavoriteCell::CFavoriteCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	:CFileIconCell(pSheet, pRow, pColumn, spProperty){}
 
 std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
@@ -59,30 +59,31 @@ std::wstring CFavoriteCell::GetShortName()
 }
 
 
-void CFavoriteCell::PaintContent(CDC* pDC, CRect rcPaint)
+void CFavoriteCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
 	//Paint Icon
-	CFileIconCell::PaintContent(pDC, rcPaint);
+	CFileIconCell::PaintContent(direct, rcPaint);
 
 	//Paint Text
-	pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
+	//TODOTODO
+	//pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
 
-	//Find font size
-	CFont font;
-	HFONT hFont = NULL;
-	CRect rcContent;
-	std::wstring str = GetShortName();
-	int i = 0;
-	do {
-		font = CFont(m_spProperty->GetFontPtr()->GetPointSize() - i, m_spProperty->GetFontPtr()->GetFaceName());
-		hFont = (HFONT)pDC->SelectFont(font);
-		pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()), str.size(), rcContent,
-			DT_CALCRECT | GetFormat()&~DT_WORDBREAK, NULL);
-		pDC->SelectFont(hFont);
-		i++;
-	} while (rcContent.Width()>16);
-	hFont = (HFONT)pDC->SelectFont(font);
-	//rcPaint.top = rcPaint.bottom - rcContent.Height();
-	pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()), -1, rcPaint, GetFormat(), NULL);
-	pDC->SelectFont(hFont);
+	////Find font size
+	//CFont font;
+	//HFONT hFont = NULL;
+	//CRect rcContent;
+	//std::wstring str = GetShortName();
+	//int i = 0;
+	//do {
+	//	font = CFont(m_spProperty->GetFontPtr()->GetPointSize() - i, m_spProperty->GetFontPtr()->GetFaceName());
+	//	hFont = (HFONT)pDC->SelectFont(font);
+	//	pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()), str.size(), rcContent,
+	//		DT_CALCRECT | GetFormat()&~DT_WORDBREAK, NULL);
+	//	pDC->SelectFont(hFont);
+	//	i++;
+	//} while (rcContent.Width()>16);
+	//hFont = (HFONT)pDC->SelectFont(font);
+	////rcPaint.top = rcPaint.bottom - rcContent.Height();
+	//pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()), -1, rcPaint, GetFormat(), NULL);
+	//pDC->SelectFont(hFont);
 }

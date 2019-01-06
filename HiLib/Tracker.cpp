@@ -8,7 +8,7 @@
 
 
 
-//CSheetState* CTracker::OnColumnHeaderBeginTrack(CSheet* pSheet, MouseEventArgs& e, size_type col)
+//CSheetState* CTracker::OnColumnHeaderBeginTrack(CSheet* pSheet, MouseEventArgs& e, int col)
 //{
 //	::SetCursor(::LoadCursor(NULL,IDC_SIZEWE));
 //	m_coTrackLeftVisib=col;	
@@ -32,7 +32,7 @@
 //	return CSheetState::Normal();
 //}
 //
-//CSheetState* CTracker::OnColumnHeaderDividerDblClk(CSheet* pSheet, MouseEventArgs& e, size_type col)
+//CSheetState* CTracker::OnColumnHeaderDividerDblClk(CSheet* pSheet, MouseEventArgs& e, int col)
 //{
 //	auto& colDictionary=pSheet->m_columnVisibleDictionary.get<IndexTag>();
 //	auto pColumn=pSheet->Index2Pointer<ColTag, VisTag>(col);
@@ -171,7 +171,7 @@
 //
 //CSheetState* CTracker::OnMouseLeave(CSheet* pSheet, MouseEventArgs& e){return CSheetState::Normal();}
 //
-//bool CTracker::IsTrackable(CSheet* pSheet, std::pair<size_type, size_type> visibleIndexes)
+//bool CTracker::IsTrackable(CSheet* pSheet, std::pair<int, int> visibleIndexes)
 //{
 //	auto& rowDictionary = pSheet->m_rowVisibleDictionary.get<IndexTag>();
 //	auto& colDictionary = pSheet->m_columnVisibleDictionary.get<IndexTag>();

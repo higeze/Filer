@@ -4,7 +4,7 @@
 #include "CellProperty.h"
 #include "SheetEventArgs.h"
 
-CBand::coordinates_type CRow::GetHeight()
+FLOAT CRow::GetHeight()
 {
 	if(!m_bMeasureValid){
 		m_height = m_pSheet->GetRowHeight(this);
@@ -13,7 +13,7 @@ CBand::coordinates_type CRow::GetHeight()
 	return m_height;
 }
 
-void CRow::SetHeight(const coordinates_type& height)
+void CRow::SetHeight(const FLOAT& height)
 {
 	if(m_height!=height){
 		m_height=height;
@@ -55,20 +55,20 @@ void CRow::OnPropertyChanged(const wchar_t* name)
 }
 
 
-//CRow::size_type CRow::GetIndex<VisTag>()const
+//CRow::int CRow::GetIndex<VisTag>()const
 //{
 //	return m_pSheet->Pointer2Index<RowTag, VisTag>(this);
 //}
-//CRow::size_type CRow::GetIndex<AllTag>()const
+//CRow::int CRow::GetIndex<AllTag>()const
 //{
 //	return m_pSheet->Pointer2Index<RowTag, AllTag>(this);
 //}
 
 CParentRow::CParentRow(CGridView* pGrid):CRow(pGrid){} 
 
-CParentRow::coordinates_type CParentRow::Offset()const
+FLOAT CParentRow::Offset()const
 {
-	coordinates_type offset(static_cast<CGridView*>(m_pSheet)->GetPaintRect().top);
+	FLOAT offset(static_cast<CGridView*>(m_pSheet)->GetPaintRect().top);
 	//if(m_pSheet->Visible() && GetVisible() && GetIndex<AllTag>()>=0){
 	if(m_pSheet->Visible() && GetVisible() && GetIndex<VisTag>()>=0){
 		offset-=static_cast<CGridView*>(m_pSheet)->GetVerticalScrollPos();
@@ -78,10 +78,10 @@ CParentRow::coordinates_type CParentRow::Offset()const
 
 CChildRow::CChildRow(CSheetCell* pSheetCell):CRow(pSheetCell){} 
 
-CChildRow::coordinates_type CChildRow::Offset()const
+FLOAT CChildRow::Offset()const
 {
 	return static_cast<CSheetCell*>(m_pSheet)->GetTop()
-			+ (coordinates_type)floor(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->GetPenPtr()->GetWidth()*0.5)
-			+ (coordinates_type)floor(static_cast<CSheetCell*>(m_pSheet)->GetHeaderPropertyPtr()->GetPenPtr()->GetWidth()*0.5)
-			+ static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->GetPadding().top;
+			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
+			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
+			+ static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Padding->top;
 }

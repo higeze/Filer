@@ -5,7 +5,7 @@
 #include "Column.h"
 #include "GridView.h"
 
-CFilterCell::CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty, CMenu* pMenu)
+CFilterCell::CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu)
 	:CEditableCell(pSheet, pRow, pColumn, spProperty,pMenu){ }
 
 CFilterCell::~CFilterCell()
@@ -14,16 +14,16 @@ CFilterCell::~CFilterCell()
 	pTimer->cancel();
 }
 
-CFilterCell::string_type CFilterCell::GetString()
+std::wstring CFilterCell::GetString()
 {
 	return m_pColumn->GetFilter();
 }
 
-void CFilterCell::SetString(const string_type& str)
+void CFilterCell::SetString(const std::wstring& str)
 {
 	//Filter cell undo redo is set when Post WM_FILTER
 	if(GetString()!=str){
-		string_type newString = str;
+		std::wstring newString = str;
 		boost::asio::deadline_timer* pTimer = static_cast<CGridView*>(m_pSheet)->GetFilterTimerPtr();
 		pTimer->expires_from_now(boost::posix_time::milliseconds(500));
 		CCell* pCell = this;
@@ -41,22 +41,21 @@ void CFilterCell::SetString(const string_type& str)
 	}
 }
 
-void CFilterCell::SetStringCore(const string_type& str)
+void CFilterCell::SetStringCore(const std::wstring& str)
 {
 	m_pColumn->SetFilter(str);
 }
 
-void CFilterCell::PaintContent(CDC* pDC, CRect rcPaint)
+void CFilterCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
-	HFONT hFont=(HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());
-	string_type str=GetString();
+	std::wstring str=GetString();
 	if(!str.empty()){
-		pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
-		pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()),-1,rcPaint,GetFormat(),NULL);	
+		direct.DrawTextLayout(*(m_spProperty->FontAndColor), str, rcPaint);
 	}else{
 		str = L"Filter items...";
-		pDC->SetTextColor(RGB(210,210,210));
-		pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()),-1,rcPaint,GetFormat()&~DT_WORDBREAK|DT_END_ELLIPSIS,NULL);	
+		d2dw::FontAndColor filterFnC(
+			m_spProperty->FontAndColor->Font.FamilyName, m_spProperty->FontAndColor->Font.Size,
+			210.0f/255,210.0f/255,210.0f/255, 1.0f);
+		direct.DrawTextLayout(filterFnC, str, rcPaint);
 	}
-	pDC->SelectFont(hFont);
 }

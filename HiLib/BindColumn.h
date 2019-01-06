@@ -11,13 +11,13 @@ template<typename T>
 class CBindColumn:public CParentDefaultMapColumn
 {
 private:
-	string_type m_header;
-	std::function<string_type(T&)> m_getFunction;
-	std::function<void(T&,string_type)> m_setFunction;
+	std::wstring m_header;
+	std::function<std::wstring(T&)> m_getFunction;
+	std::function<void(T&,std::wstring)> m_setFunction;
 
 public:
 	CBindColumn():CParentDefaultMapColumn(){}
-	CBindColumn(CGridView* pGrid, string_type header, std::function<string_type(T&)> getFunction, std::function<void(T&,string_type)> setFunction)
+	CBindColumn(CGridView* pGrid, std::wstring header, std::function<std::wstring(T&)> getFunction, std::function<void(T&,std::wstring)> setFunction)
 		:CParentDefaultMapColumn(pGrid),m_header(header), m_getFunction(getFunction),m_setFunction(setFunction){}
 	virtual ~CBindColumn(){}
 	virtual CColumn& ShallowCopy(const CColumn& column)override
@@ -33,20 +33,20 @@ public:
 	virtual CBindColumn* CloneRaw()const{return new CBindColumn<T>(*this);}
 	std::shared_ptr<CBindColumn> Clone()const{return std::shared_ptr<CBindColumn<T>>(CloneRaw());}
 
-	std::function<string_type(T&)> GetGetFunction(){return m_getFunction;}
-	std::function<void(T&,string_type)> GetSetFunction(){return m_setFunction;}
+	std::function<std::wstring(T&)> GetGetFunction(){return m_getFunction;}
+	std::function<void(T&,std::wstring)> GetSetFunction(){return m_setFunction;}
 
-	cell_type NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),m_header);
 	}
 
-	cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn)
+	std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		return std::make_shared<CFilterCell>(m_pSheet,pRow,pColumn,m_pSheet->GetFilterProperty());
 	}
 
-	cell_type CellTemplate(CRow* pRow, CColumn* pColumn)
+	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		return std::make_shared<CBindCell<T>>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 	}
@@ -64,7 +64,7 @@ public:
 
 	std::function<bool(T&)> GetGetCheckedFunction(){return m_getCheckedFunction;}
 
-	cell_type CellTemplate(CRow* pRow, CColumn* pColumn)
+	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		return std::make_shared<CBindRowHeaderCell<T>>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 	}

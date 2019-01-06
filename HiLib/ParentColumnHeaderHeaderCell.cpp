@@ -7,17 +7,17 @@
 #include "MyDC.h"
 #include "CellProperty.h"
 
-CParentColumnHeaderHeaderCell::string_type CParentColumnHeaderHeaderCell::GetString()
+std::wstring CParentColumnHeaderHeaderCell::GetString()
 {
-	return string_type();
+	return std::wstring();
 }
 
-CParentColumnHeaderHeaderCell::string_type CParentColumnHeaderHeaderCell::GetSortString()
+std::wstring CParentColumnHeaderHeaderCell::GetSortString()
 {
-	return string_type();
+	return std::wstring();
 }
 
-bool CParentColumnHeaderHeaderCell::Filter(const string_type& strFilter)const//Not filtered
+bool CParentColumnHeaderHeaderCell::Filter(const std::wstring& strFilter)const//Not filtered
 {
 	return true;
 }

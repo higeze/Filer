@@ -5,7 +5,7 @@
 class CCompareCell:public CTextCell
 {
 public:
-	CCompareCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
+	CCompareCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CTextCell(pSheet,pRow,pColumn,spProperty){}
 	virtual ~CCompareCell(){}
 
@@ -14,5 +14,5 @@ public:
 		return false;
 	}
 
-	virtual string_type GetString();
+	virtual std::wstring GetString();
 };

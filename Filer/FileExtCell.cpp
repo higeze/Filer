@@ -3,16 +3,16 @@
 #include "FileRow.h"
 #include "GridView.h"
 
-CFileExtCell::CFileExtCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
+CFileExtCell::CFileExtCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	:CParameterCell(pSheet, pRow, pColumn, spProperty){}
 
-CFileExtCell::string_type CFileExtCell::GetString()
+std::wstring CFileExtCell::GetString()
 {
 	auto pFileRow = static_cast<CFileRow*>(m_pRow);
 	return pFileRow->GetFilePointer()->GetExt();
 }
 
-void CFileExtCell::SetStringCore(const std::basic_string<TCHAR>& str)
+void CFileExtCell::SetStringCore(const std::wstring& str)
 {
 	auto pFileRow = static_cast<CFileRow*>(m_pRow);
 	pFileRow->GetFilePointer()->SetExt(str);

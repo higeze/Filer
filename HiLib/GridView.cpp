@@ -204,16 +204,16 @@ void CGridView::FilterAll()
 	//Set Filter
 	for(auto colIter=colDictionary.find(0),colEnd=colDictionary.end();colIter!=colEnd;++colIter){
 		auto strFilter=colIter->DataPtr->Cell(GetFilterRowPtr().get())->GetString();
-		if(strFilter.empty() || strFilter==string_type(L""))continue;
-		std::vector<string_type> vstrFilter;
+		if(strFilter.empty() || strFilter==std::wstring(L""))continue;
+		std::vector<std::wstring> vstrFilter;
 		boost::split(vstrFilter,strFilter,boost::is_space());
 		for(auto rowIter=rowDictionary.find(0),rowEnd=rowDictionary.end();rowIter!=rowEnd;++rowIter){
 			if(!rowIter->DataPtr->GetVisible())continue;
 			//Filter
 			auto pCell=colIter->DataPtr->Cell(rowIter->DataPtr.get());
-			boost::for_each(vstrFilter,[&](const string_type& str){
+			boost::for_each(vstrFilter,[&](const std::wstring& str){
 				if(str[0]==L'-' && str.size()>=2){
-					string_type strMinus(str.substr(1));
+					std::wstring strMinus(str.substr(1));
 					if(pCell->Filter(strMinus)){
 						rowIter->DataPtr->SetVisible(false);				
 					}
@@ -240,6 +240,8 @@ LRESULT CGridView::OnFilter(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled
 
 LRESULT CGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	//Direct2DWrite
+	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
 	//Scroll
 	m_vertical.Create(m_hWnd);
 	m_horizontal.Create(m_hWnd);
@@ -290,35 +292,37 @@ LRESULT CGridView::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	CPaintDC dc(m_hWnd);
-	CRect rcClient(GetClientRect());
+	m_pDirect->BeginDraw();
 
-	PaintEvent paintEvent(this, m_upBuffDC.get());
-	OnPaint(paintEvent);
+	OnPaint(PaintEvent(this, *m_pDirect));
 
-	CRgn rgn;
-	rgn.CreateRectRgnIndirect(rcClient);
-	if(m_vertical.IsWindowVisible()){	
-		CRgn rgnVert;
-		rgnVert.CreateRectRgnIndirect(ScreenToClientRect(m_vertical.GetWindowRect()));
-		rgn.CombineRgn(rgnVert,RGN_XOR);
-	}
-	if(m_horizontal.IsWindowVisible()){
-		CRgn rgnHorz;
-		rgnHorz.CreateRectRgnIndirect(ScreenToClientRect(m_horizontal.GetWindowRect()));
-		rgn.CombineRgn(rgnHorz,RGN_XOR);
-	}
-	if(m_spEditRect){
-		CRgn rgnEdit;
-		rgnEdit.CreateRectRgnIndirect(*m_spEditRect);
-		rgn.CombineRgn(rgnEdit,RGN_XOR);
-		m_spEditRect = nullptr;
-	}
-	dc.SelectClipRgn(rgn);
-	dc.BitBlt(rcClient.left,rcClient.top,
-		rcClient.Width(),
-		rcClient.Height(),
-		*m_upBuffDC.get(),0,0,SRCCOPY);
-	dc.SelectClipRgn(NULL);
+	m_pDirect->EndDraw();
+
+	//TODOTODO
+	//CRgn rgn;
+	//rgn.CreateRectRgnIndirect(rcClient);
+	//if(m_vertical.IsWindowVisible()){	
+	//	CRgn rgnVert;
+	//	rgnVert.CreateRectRgnIndirect(ScreenToClientRect(m_vertical.GetWindowRect()));
+	//	rgn.CombineRgn(rgnVert,RGN_XOR);
+	//}
+	//if(m_horizontal.IsWindowVisible()){
+	//	CRgn rgnHorz;
+	//	rgnHorz.CreateRectRgnIndirect(ScreenToClientRect(m_horizontal.GetWindowRect()));
+	//	rgn.CombineRgn(rgnHorz,RGN_XOR);
+	//}
+	//if(m_spEditRect){
+	//	CRgn rgnEdit;
+	//	rgnEdit.CreateRectRgnIndirect(*m_spEditRect);
+	//	rgn.CombineRgn(rgnEdit,RGN_XOR);
+	//	m_spEditRect = nullptr;
+	//}
+	//dc.SelectClipRgn(rgn);
+	//dc.BitBlt(rcClient.left,rcClient.top,
+	//	rcClient.Width(),
+	//	rcClient.Height(),
+	//	*m_upBuffDC.get(),0,0,SRCCOPY);
+	//dc.SelectClipRgn(NULL);
 	return 0;
 }
 
@@ -469,18 +473,18 @@ void CGridView::UpdateScrolls()
 	CRect rcClient(GetClientRect());
 
 	//Origin
-	CPoint ptOrigin(GetOriginPoint());
+	d2dw::CPointF ptOrigin(GetOriginPoint());
 
 	//Scroll Range
-	CRect rcCells(GetCellsRect());
-	m_vertical.SetScrollRange(0,rcCells.Height());
+	d2dw::CRectF rcCells(GetCellsRect());
+	m_vertical.SetScrollRange(0,m_pDirect->Dips2PixelsY(rcCells.Height()));
 	m_horizontal.SetScrollRange(0,rcCells.Width());
 
 	//Scroll Page
-	CRect rcPage(GetPageRect());
+	d2dw::CRectF rcPage(GetPageRect());
 
-	m_vertical.SetScrollPage(rcPage.Height());
-	m_horizontal.SetScrollPage(rcPage.Width());
+	m_vertical.SetScrollPage(m_pDirect->Dips2PixelsY(rcPage.Height()));
+	m_horizontal.SetScrollPage(m_pDirect->Dips2PixelsX(rcPage.Width()));
 
 	//EnableShow Vertical
 	SCROLLINFO si={0};
@@ -542,12 +546,12 @@ void CGridView::SetScrollPos(const CPoint& ptScroll)
 	m_vertical.SetScrollPos(ptScroll.y);
 }
 
-CGridView::coordinates_type CGridView::GetVerticalScrollPos()const
+FLOAT CGridView::GetVerticalScrollPos()const
 {
 	return m_vertical.GetScrollPos();
 }
 
-CGridView::coordinates_type CGridView::GetHorizontalScrollPos()const
+FLOAT CGridView::GetHorizontalScrollPos()const
 {
 	return m_horizontal.GetScrollPos();
 }
@@ -557,7 +561,7 @@ LRESULT CGridView::OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	if (m_isFocusable) { SetFocus(); }
 	bHandled=false;
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	RButtonDownEvent e((UINT)wParam,ptClient);
+	RButtonDownEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
 	CSheet::OnRButtonDown(e);
 	SubmitUpdate();
 	return 0;
@@ -569,7 +573,7 @@ LRESULT CGridView::OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	SetCapture();
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	LButtonDownEvent e((UINT)wParam,ptClient);
+	LButtonDownEvent e(this, *m_pDirect, (UINT)wParam,ptClient);
 	m_pMouseStateMachine->LButtonDown(e);
 	SubmitUpdate();
 	return 0;
@@ -580,7 +584,7 @@ LRESULT CGridView::OnLButtonUp(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 	ReleaseCapture();
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	LButtonUpEvent e((UINT)wParam,ptClient);
+	LButtonUpEvent e(this, *m_pDirect, (UINT)wParam,ptClient);
 	m_pMouseStateMachine->LButtonUp(e);
 	SubmitUpdate();
 	return 0;
@@ -589,7 +593,7 @@ LRESULT CGridView::OnLButtonUp(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 LRESULT CGridView::OnLButtonDblClk(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	LButtonDblClkEvent e((UINT)wParam,ptClient);
+	LButtonDblClkEvent e(this, *m_pDirect, (UINT)wParam,ptClient);
 	m_pMouseStateMachine->LButtonDblClk(e);
 	SubmitUpdate();
 	return 0;
@@ -598,7 +602,7 @@ LRESULT CGridView::OnLButtonDblClk(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& b
 LRESULT CGridView::OnLButtonDblClkTimeExceed(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
-	LButtonDblClkTimeExceedEvent e((UINT)wParam, ptClient);
+	LButtonDblClkTimeExceedEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
 	m_pMouseStateMachine->LButtonDblClkTimeExceed(e);
 	SubmitUpdate();
 	return 0;
@@ -607,7 +611,7 @@ LRESULT CGridView::OnLButtonDblClkTimeExceed(UINT uMsg, WPARAM wParam, LPARAM lP
 LRESULT CGridView::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
-	MouseLeaveEvent e((UINT)wParam, ptClient);
+	MouseLeaveEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
 	m_pMouseStateMachine->MouseLeave(e);
 	SubmitUpdate();
 	return 0;
@@ -624,7 +628,7 @@ LRESULT CGridView::OnMouseMove(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
     ::TrackMouseEvent( &stTrackMouseEvent );
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	MouseMoveEvent e((UINT)wParam,ptClient);
+	MouseMoveEvent e(this, *m_pDirect, (UINT)wParam,ptClient);
 	CSheet::OnMouseMove(e);
 	PostUpdate(Updates::Invalidate);
 	SubmitUpdate();
@@ -635,7 +639,7 @@ LRESULT CGridView::OnSetCursor(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 {
 	bHandled = FALSE; //Default Handled = FALSE meand Arrow
 	if((UINT)LOWORD(lParam) == HTCLIENT){
-		CSheet::OnSetCursor(SetCursorEvent((HWND)wParam, (UINT)LOWORD(lParam), bHandled));
+		CSheet::OnSetCursor(SetCursorEvent(this, (UINT)LOWORD(lParam), bHandled));
 	}else{
 		bHandled = FALSE;
 	}
@@ -685,7 +689,7 @@ void CGridView::OnKeyDown(const KeyDownEvent& e)
 void CGridView::OnContextMenu(const ContextMenuEvent& e)
 {
 	if(!Visible())return;
-	auto cell = Cell(e.Point);
+	auto cell = Cell(m_pDirect->Pixels2Dips(e.Point));
 	if(!cell){
 		CMenu* pMenu = GetContextMenuPtr(); 
 		if(pMenu){
@@ -925,246 +929,246 @@ Status CGridView::SaveGIFWithNewColorTable(
 
     return stat;
 }
-LRESULT CGridView::OnCommandPrintScreen(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-{
-	CPoint ptScroll=GetScrollPos();
-	SetScrollPos(CPoint(0,0));
-	CSize sz(MeasureSize());
-	CClientDC dc(m_hWnd);
+//LRESULT CGridView::OnCommandPrintScreen(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
+//{
+//	CPoint ptScroll=GetScrollPos();
+//	SetScrollPos(CPoint(0,0));
+//	CSize sz(MeasureSize());
+//	CClientDC dc(m_hWnd);
+//
+//	CBufferDC dcBuff(dc, sz.cx, sz.cy);
+//
+//	d2dw::CRectF rcPaint = GetPaintRect();
+//
+//	dcBuff.SetBkMode(TRANSPARENT);
+//	//Bitmap
+//	{
+//
+//		PaintEvent paintEvent(&dcBuff);
+//		OnPaintAll(paintEvent);
+//	
+//		//Copy Bitmap to Clipboard
+//		CClipboard clipboard;
+//		if(clipboard.Open(m_hWnd)!=0){
+//			clipboard.Empty();
+//			clipboard.SetData(CF_BITMAP,dcBuff.GetBitMap());
+//			clipboard.Close();
+//		}
+//	}
+//
+//	//JPEG,PNG,GIF
+//	{
+//		//Initialize GDI+
+//		GdiplusStartupInput gdiplusStartupInput;
+//		ULONG_PTR gdiplusToken;
+//		GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+//		{
+//			auto hWnd = m_hWnd;
+//			std::function<void(HBITMAP,LPCTSTR,LPCTSTR)> setNonRegisteredTypeToClipboard =  [hWnd,this](HBITMAP hBitmap, LPCTSTR mimetype, LPCTSTR format)->void 
+//			{
+//				IStream* pIStream = NULL;
+//				if(::CreateStreamOnHGlobal(NULL, TRUE, (LPSTREAM*)&pIStream)!=S_OK){
+//					throw std::exception("Error on OnCommandPrintScreen");
+//				}
+//
+//				CLSID clsid;	
+//
+//				Bitmap bitmap(hBitmap, (HPALETTE)GetStockObject(DEFAULT_PALETTE));
+//
+//				if (GdiplusHelper::GetEncoderClsid(mimetype, &clsid) < 0){
+//					throw std::exception("Error on OnCommandPrintScreen");
+//				}
+//
+//				//Status status = SaveGIFWithNewColorTable(&bitmap,
+//				//						  pIStream,
+//				//						  &clsid,
+//				//						  256,
+//				//						  FALSE);
+//				Status status;
+//
+//
+//				if(_tcsicmp(mimetype, L"image/jpeg")==0){
+//					EncoderParameters encs[1];
+//					ULONG quality = 80;
+//					encs->Count = 1;
+//
+//					encs->Parameter[0].Guid = EncoderQuality;
+//					encs->Parameter[0].NumberOfValues = 1;
+//					encs->Parameter[0].Type = EncoderParameterValueTypeLong;
+//					encs->Parameter[0].Value = &quality;
+//					status = bitmap.Save(pIStream, &clsid, encs);
+//				}else if(_tcsicmp(mimetype, L"image/tiff")==0){
+//					EncoderParameters encs[2];
+//					ULONG depth = 24;
+//					ULONG compression = EncoderValueCompressionLZW;
+//					encs->Count = 2;
+//
+//					encs->Parameter[0].Guid = EncoderColorDepth;
+//					encs->Parameter[0].NumberOfValues = 1;
+//					encs->Parameter[0].Type = EncoderParameterValueTypeLong;
+//					encs->Parameter[0].Value = &depth;
+//
+//					encs->Parameter[1].Guid = EncoderCompression;
+//					encs->Parameter[1].NumberOfValues = 1;
+//					encs->Parameter[1].Type = EncoderParameterValueTypeLong;
+//					encs->Parameter[1].Value = &compression;
+//
+//
+//					status = bitmap.Save(pIStream, &clsid, encs);
+//				}else{
+//					status = bitmap.Save(pIStream, &clsid, NULL);
+//				}
+//
+//				if(status != Status::Ok){
+//					pIStream->Release();
+//					throw std::exception("Error on OnCommandPrintScreen");
+//				}
+//
+//				HGLOBAL hGlobal = NULL;
+//				if(::GetHGlobalFromStream(pIStream, &hGlobal)!=S_OK){
+//					pIStream->Release();
+//					throw std::exception("Error on OnCommandPrintScreen");
+//				}
+//
+//				//Copy to Clipboard
+//				CClipboard clipboard;
+//				if(clipboard.Open(hWnd)!=0){
+//					//::EmptyClipboard();
+//					if(_tcsicmp(mimetype, L"image/tiff")==0){
+//						clipboard.SetData(CF_TIFF, hGlobal);
+//					}else{
+//						clipboard.SetData(::RegisterClipboardFormat(format), hGlobal);
+//					}
+//					clipboard.Close();
+//				}
+//				pIStream->Release();
+//			};
+//
+//			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/jpeg", L"JFIF");
+//			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/png", L"PNG");
+//			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/gif", L"GIF");
+//			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/tiff", L"TIFF");
+//		}
+//		//Terminate GDI+
+//		GdiplusShutdown(gdiplusToken);
+//	}
+//
+//	//EnhMetaFile
+//	{
+//		//SIZEL lt;
+//		//SIZEL rb;
+//		//lt.cx = -rcPaint.left;
+//		//lt.cy = -rcPaint.top;
+//		//rb.cx = sz.cx + rcPaint.left;
+//		//rb.cy = sz.cy + rcPaint.top;
+//		//DPtoHIMETRIC(&lt);
+//		//DPtoHIMETRIC(&rb);
+//		//auto rcEnhMeta = CRect(lt.cx, lt.cy, rb.cx, rb.cy);
+//		//SIZEL          sizel;
+//		//sizel.cx = sz.cx;
+//		//sizel.cy = sz.cy;
+//		//DPtoHIMETRIC(&sizel);
+//		//auto rcEnhMeta=CRect(0,0,sizel.cx,sizel.cy);
+//
+//		//CDC dcEnhMeta((HDC)CreateEnhMetaFile(dc,NULL,rcEnhMeta,L"DcmDesigner"));
+//
+//		//dcEnhMeta.SetBkMode(TRANSPARENT);
+//
+//		//PaintEventArgs paintEventArgs(&dcEnhMeta);
+//		//OnPaintAll(paintEventArgs);
+//		
+//		HENHMETAFILE hEmf = GetAllEnhMetaFileData();
+//
+//		//Copy EnhMetaFile to Clipboard
+//		CClipboard clipboard;
+//		if(clipboard.Open(m_hWnd)!=0){
+//			//::EmptyClipboard();
+//			clipboard.SetData(CF_ENHMETAFILE,hEmf);
+//			clipboard.Close();
+//		}
+//	}
+//
+//	SetScrollPos(ptScroll);
+//	return 0;
+//}
 
-	CBufferDC dcBuff(dc, sz.cx, sz.cy);
-
-	CRect rcPaint = GetPaintRect();
-
-	dcBuff.SetBkMode(TRANSPARENT);
-	//Bitmap
-	{
-
-		PaintEvent paintEvent(&dcBuff);
-		OnPaintAll(paintEvent);
-	
-		//Copy Bitmap to Clipboard
-		CClipboard clipboard;
-		if(clipboard.Open(m_hWnd)!=0){
-			clipboard.Empty();
-			clipboard.SetData(CF_BITMAP,dcBuff.GetBitMap());
-			clipboard.Close();
-		}
-	}
-
-	//JPEG,PNG,GIF
-	{
-		//Initialize GDI+
-		GdiplusStartupInput gdiplusStartupInput;
-		ULONG_PTR gdiplusToken;
-		GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-		{
-			auto hWnd = m_hWnd;
-			std::function<void(HBITMAP,LPCTSTR,LPCTSTR)> setNonRegisteredTypeToClipboard =  [hWnd,this](HBITMAP hBitmap, LPCTSTR mimetype, LPCTSTR format)->void 
-			{
-				IStream* pIStream = NULL;
-				if(::CreateStreamOnHGlobal(NULL, TRUE, (LPSTREAM*)&pIStream)!=S_OK){
-					throw std::exception("Error on OnCommandPrintScreen");
-				}
-
-				CLSID clsid;	
-
-				Bitmap bitmap(hBitmap, (HPALETTE)GetStockObject(DEFAULT_PALETTE));
-
-				if (GdiplusHelper::GetEncoderClsid(mimetype, &clsid) < 0){
-					throw std::exception("Error on OnCommandPrintScreen");
-				}
-
-				//Status status = SaveGIFWithNewColorTable(&bitmap,
-				//						  pIStream,
-				//						  &clsid,
-				//						  256,
-				//						  FALSE);
-				Status status;
-
-
-				if(_tcsicmp(mimetype, L"image/jpeg")==0){
-					EncoderParameters encs[1];
-					ULONG quality = 80;
-					encs->Count = 1;
-
-					encs->Parameter[0].Guid = EncoderQuality;
-					encs->Parameter[0].NumberOfValues = 1;
-					encs->Parameter[0].Type = EncoderParameterValueTypeLong;
-					encs->Parameter[0].Value = &quality;
-					status = bitmap.Save(pIStream, &clsid, encs);
-				}else if(_tcsicmp(mimetype, L"image/tiff")==0){
-					EncoderParameters encs[2];
-					ULONG depth = 24;
-					ULONG compression = EncoderValueCompressionLZW;
-					encs->Count = 2;
-
-					encs->Parameter[0].Guid = EncoderColorDepth;
-					encs->Parameter[0].NumberOfValues = 1;
-					encs->Parameter[0].Type = EncoderParameterValueTypeLong;
-					encs->Parameter[0].Value = &depth;
-
-					encs->Parameter[1].Guid = EncoderCompression;
-					encs->Parameter[1].NumberOfValues = 1;
-					encs->Parameter[1].Type = EncoderParameterValueTypeLong;
-					encs->Parameter[1].Value = &compression;
-
-
-					status = bitmap.Save(pIStream, &clsid, encs);
-				}else{
-					status = bitmap.Save(pIStream, &clsid, NULL);
-				}
-
-				if(status != Status::Ok){
-					pIStream->Release();
-					throw std::exception("Error on OnCommandPrintScreen");
-				}
-
-				HGLOBAL hGlobal = NULL;
-				if(::GetHGlobalFromStream(pIStream, &hGlobal)!=S_OK){
-					pIStream->Release();
-					throw std::exception("Error on OnCommandPrintScreen");
-				}
-
-				//Copy to Clipboard
-				CClipboard clipboard;
-				if(clipboard.Open(hWnd)!=0){
-					//::EmptyClipboard();
-					if(_tcsicmp(mimetype, L"image/tiff")==0){
-						clipboard.SetData(CF_TIFF, hGlobal);
-					}else{
-						clipboard.SetData(::RegisterClipboardFormat(format), hGlobal);
-					}
-					clipboard.Close();
-				}
-				pIStream->Release();
-			};
-
-			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/jpeg", L"JFIF");
-			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/png", L"PNG");
-			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/gif", L"GIF");
-			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/tiff", L"TIFF");
-		}
-		//Terminate GDI+
-		GdiplusShutdown(gdiplusToken);
-	}
-
-	//EnhMetaFile
-	{
-		//SIZEL lt;
-		//SIZEL rb;
-		//lt.cx = -rcPaint.left;
-		//lt.cy = -rcPaint.top;
-		//rb.cx = sz.cx + rcPaint.left;
-		//rb.cy = sz.cy + rcPaint.top;
-		//DPtoHIMETRIC(&lt);
-		//DPtoHIMETRIC(&rb);
-		//auto rcEnhMeta = CRect(lt.cx, lt.cy, rb.cx, rb.cy);
-		//SIZEL          sizel;
-		//sizel.cx = sz.cx;
-		//sizel.cy = sz.cy;
-		//DPtoHIMETRIC(&sizel);
-		//auto rcEnhMeta=CRect(0,0,sizel.cx,sizel.cy);
-
-		//CDC dcEnhMeta((HDC)CreateEnhMetaFile(dc,NULL,rcEnhMeta,L"DcmDesigner"));
-
-		//dcEnhMeta.SetBkMode(TRANSPARENT);
-
-		//PaintEventArgs paintEventArgs(&dcEnhMeta);
-		//OnPaintAll(paintEventArgs);
-		
-		HENHMETAFILE hEmf = GetAllEnhMetaFileData();
-
-		//Copy EnhMetaFile to Clipboard
-		CClipboard clipboard;
-		if(clipboard.Open(m_hWnd)!=0){
-			//::EmptyClipboard();
-			clipboard.SetData(CF_ENHMETAFILE,hEmf);
-			clipboard.Close();
-		}
-	}
-
-	SetScrollPos(ptScroll);
-	return 0;
-}
-
-HGLOBAL CGridView::GetPaintMetaFileData()
-{
-	HMETAFILE      hmf;
-	HGLOBAL        hglobal;
-	LPMETAFILEPICT lpmf;
-	SIZEL          sizel;
-	CSize sz(GetClientRect().Size());
-
-	CDC dc((HDC)CreateMetaFile(NULL));
-
-	SetMapMode(dc, MM_ANISOTROPIC);
-	SetWindowOrgEx(dc, 0, 0, NULL);
-	SetWindowExtEx(dc, sz.cx, sz.cy, NULL);
-
-	//Draw
-	dc.FillRect(GetClientRect(),((HBRUSH)GetStockObject(GRAY_BRUSH)));
-	dc.SetBkMode(TRANSPARENT);
-
-	PaintEvent paintEvent(&dc);
-	OnPaint(paintEvent);
-
-	hmf = CloseMetaFile(dc);
-
-	sizel.cx = sz.cx;
-	sizel.cy = sz.cy;
-	DPtoHIMETRIC(&sizel);
-
-	hglobal = GlobalAlloc(GPTR, sizeof(METAFILEPICT));
-	lpmf = (LPMETAFILEPICT)GlobalLock(hglobal);
-	lpmf->hMF = hmf;
-	lpmf->mm = MM_ANISOTROPIC;
-	lpmf->xExt = sizel.cx;
-	lpmf->yExt = sizel.cy;
-	GlobalUnlock(hglobal);
-
-	return hglobal;
-}
-
-HENHMETAFILE CGridView::GetPaintEnhMetaFileData()
-{
-	CSize sz(GetClientRect().Size());
-	CClientDC dc(m_hWnd);
-	SIZEL sizel;
-	sizel.cx = sz.cx;
-	sizel.cy = sz.cy;
-	DPtoHIMETRIC(&sizel);
-	auto rcEnhMeta=CRect(0,0,sizel.cx,sizel.cy);
-
-	CDC dcEnhMeta((HDC)CreateEnhMetaFile(dc,NULL,rcEnhMeta,L"DcmDesigner"));
-
-	dcEnhMeta.SetBkMode(TRANSPARENT);
-
-	PaintEvent paintEvent(&dcEnhMeta);
-	OnPaint(paintEvent);
-
-	return CloseEnhMetaFile(dcEnhMeta);
-}
-
-HENHMETAFILE CGridView::GetAllEnhMetaFileData()
-{
-	CSize sz(MeasureSize());
-	CClientDC dc(m_hWnd);
-	SIZEL sizel;
-	sizel.cx = sz.cx;
-	sizel.cy = sz.cy;
-	DPtoHIMETRIC(&sizel);
-	auto rcEnhMeta=CRect(0,0,sizel.cx,sizel.cy);
-
-	CDC dcEnhMeta((HDC)CreateEnhMetaFile(dc,NULL,rcEnhMeta,L"DcmDesigner"));
-
-	dcEnhMeta.SetBkMode(TRANSPARENT);
-
-	PaintEvent paintEvent(&dcEnhMeta);
-	OnPaintAll(paintEvent);
-
-	return CloseEnhMetaFile(dcEnhMeta);
-}
+//HGLOBAL CGridView::GetPaintMetaFileData()
+//{
+//	HMETAFILE      hmf;
+//	HGLOBAL        hglobal;
+//	LPMETAFILEPICT lpmf;
+//	SIZEL          sizel;
+//	CSize sz(GetClientRect().Size());
+//
+//	CDC dc((HDC)CreateMetaFile(NULL));
+//
+//	SetMapMode(dc, MM_ANISOTROPIC);
+//	SetWindowOrgEx(dc, 0, 0, NULL);
+//	SetWindowExtEx(dc, sz.cx, sz.cy, NULL);
+//
+//	//Draw
+//	dc.FillRect(GetClientRect(),((HBRUSH)GetStockObject(GRAY_BRUSH)));
+//	dc.SetBkMode(TRANSPARENT);
+//
+//	PaintEvent paintEvent(&dc);
+//	OnPaint(paintEvent);
+//
+//	hmf = CloseMetaFile(dc);
+//
+//	sizel.cx = sz.cx;
+//	sizel.cy = sz.cy;
+//	DPtoHIMETRIC(&sizel);
+//
+//	hglobal = GlobalAlloc(GPTR, sizeof(METAFILEPICT));
+//	lpmf = (LPMETAFILEPICT)GlobalLock(hglobal);
+//	lpmf->hMF = hmf;
+//	lpmf->mm = MM_ANISOTROPIC;
+//	lpmf->xExt = sizel.cx;
+//	lpmf->yExt = sizel.cy;
+//	GlobalUnlock(hglobal);
+//
+//	return hglobal;
+//}
+//
+//HENHMETAFILE CGridView::GetPaintEnhMetaFileData()
+//{
+//	CSize sz(GetClientRect().Size());
+//	CClientDC dc(m_hWnd);
+//	SIZEL sizel;
+//	sizel.cx = sz.cx;
+//	sizel.cy = sz.cy;
+//	DPtoHIMETRIC(&sizel);
+//	auto rcEnhMeta=CRect(0,0,sizel.cx,sizel.cy);
+//
+//	CDC dcEnhMeta((HDC)CreateEnhMetaFile(dc,NULL,rcEnhMeta,L"DcmDesigner"));
+//
+//	dcEnhMeta.SetBkMode(TRANSPARENT);
+//
+//	PaintEvent paintEvent(&dcEnhMeta);
+//	OnPaint(paintEvent);
+//
+//	return CloseEnhMetaFile(dcEnhMeta);
+//}
+//
+//HENHMETAFILE CGridView::GetAllEnhMetaFileData()
+//{
+//	CSize sz(MeasureSize());
+//	CClientDC dc(m_hWnd);
+//	SIZEL sizel;
+//	sizel.cx = sz.cx;
+//	sizel.cy = sz.cy;
+//	DPtoHIMETRIC(&sizel);
+//	auto rcEnhMeta=CRect(0,0,sizel.cx,sizel.cy);
+//
+//	CDC dcEnhMeta((HDC)CreateEnhMetaFile(dc,NULL,rcEnhMeta,L"DcmDesigner"));
+//
+//	dcEnhMeta.SetBkMode(TRANSPARENT);
+//
+//	PaintEvent paintEvent(&dcEnhMeta);
+//	OnPaintAll(paintEvent);
+//
+//	return CloseEnhMetaFile(dcEnhMeta);
+//}
 
 LRESULT CGridView::OnCommandDeleteColumn(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
@@ -1189,145 +1193,146 @@ LRESULT CGridView::OnCommandResizeSheetCell(WORD wNotifyCode,WORD wID,HWND hWndC
 }
 
 
-void CGridView::OnPaintAll(const PaintEvent& e)
-{
-	DEBUG_OUTPUT_COLUMN_VISIBLE_DICTIONARY
-
-	if(!Visible())return;
-
-	auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
-	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
-	//Check
-	CheckEqualRange(rowDictionary.begin(),rowDictionary.end(), colDictionary.find(0), colDictionary.end(),
-		[](CCell* pCell, Compares comp)->void{
-			switch(comp){
-			case Compares::Diff:
-			case Compares::DiffNE:
-				pCell->SetChecked(true);
-				break;
-			case Compares::Same:
-				pCell->SetChecked(false);
-				break;
-			default:
-				pCell->SetChecked(true);
-				break;
-			}
-		});
-
-	//Paint
-
-	for(auto colIter=colDictionary.rbegin(),colEnd=colDictionary.rend();colIter!=colEnd;++colIter){
-		for(auto rowIter=rowDictionary.rbegin(),rowEnd=rowDictionary.rend();rowIter!=rowEnd;++rowIter){
-			colIter->DataPtr->Cell(rowIter->DataPtr.get())->OnPaint(e);
-		}
-	}
-}
+//void CGridView::OnPaintAll(const PaintEvent& e)
+//{
+//	DEBUG_OUTPUT_COLUMN_VISIBLE_DICTIONARY
+//
+//	if(!Visible())return;
+//
+//	auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
+//	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
+//	//Check
+//	CheckEqualRange(rowDictionary.begin(),rowDictionary.end(), colDictionary.find(0), colDictionary.end(),
+//		[](CCell* pCell, Compares comp)->void{
+//			switch(comp){
+//			case Compares::Diff:
+//			case Compares::DiffNE:
+//				pCell->SetChecked(true);
+//				break;
+//			case Compares::Same:
+//				pCell->SetChecked(false);
+//				break;
+//			default:
+//				pCell->SetChecked(true);
+//				break;
+//			}
+//		});
+//
+//	//Paint
+//
+//	for(auto colIter=colDictionary.rbegin(),colEnd=colDictionary.rend();colIter!=colEnd;++colIter){
+//		for(auto rowIter=rowDictionary.rbegin(),rowEnd=rowDictionary.rend();rowIter!=rowEnd;++rowIter){
+//			colIter->DataPtr->Cell(rowIter->DataPtr.get())->OnPaint(e);
+//		}
+//	}
+//}
 
 void CGridView::OnPaint(const PaintEvent& e)
 {
-	//Paint Background
 	CRect rcClient(GetClientRect());
-	if(*m_spBackgroundProperty->m_usePicture && ::GetFileAttributes(m_spBackgroundProperty->m_picturePath->c_str())!=0xffffffff){
+	////Paint Background
+	//if(*m_spBackgroundProperty->m_usePicture && ::GetFileAttributes(m_spBackgroundProperty->m_picturePath->c_str())!=0xffffffff){
 
-		Gdiplus::GdiplusStartupInput gdiSI;
-		ULONG_PTR gdiToken;
+	//	Gdiplus::GdiplusStartupInput gdiSI;
+	//	ULONG_PTR gdiToken;
 
-		// GDI+Start
-		GdiplusStartup( &gdiToken, &gdiSI, NULL );
+	//	// GDI+Start
+	//	GdiplusStartup( &gdiToken, &gdiSI, NULL );
 
-		Gdiplus::Bitmap* pBitmap = Gdiplus::Bitmap::FromFile(m_spBackgroundProperty->m_picturePath->c_str());
-		HDC hPicDC = ::CreateCompatibleDC(NULL);  
-		HBITMAP hBitmap = NULL;
-		pBitmap->GetHBITMAP(Gdiplus::Color::Transparent, &hBitmap);
-		::SelectObject(hPicDC,hBitmap);
+	//	Gdiplus::Bitmap* pBitmap = Gdiplus::Bitmap::FromFile(m_spBackgroundProperty->m_picturePath->c_str());
+	//	HDC hPicDC = ::CreateCompatibleDC(NULL);  
+	//	HBITMAP hBitmap = NULL;
+	//	pBitmap->GetHBITMAP(Gdiplus::Color::Transparent, &hBitmap);
+	//	::SelectObject(hPicDC,hBitmap);
 
 
-		switch(*m_spBackgroundProperty->m_picturePosition)
-		{
-			case PicturePositon::Fill:
-			{
-				double widthRatio = double(rcClient.Width())/double(pBitmap->GetWidth());
-				double heightRatio = double(rcClient.Height())/double(pBitmap->GetHeight());
-				coordinates_type left,top,width,height;
-				if(widthRatio > heightRatio){
-					width = static_cast<coordinates_type>(pBitmap->GetWidth()*widthRatio);
-					height = static_cast<coordinates_type>(pBitmap->GetHeight()*widthRatio);
-				}else{
-					width = static_cast<coordinates_type>(pBitmap->GetWidth()*heightRatio);
-					height = static_cast<coordinates_type>(pBitmap->GetHeight()*heightRatio);
-				}
-				left = (rcClient.Width()-width)/2;
-				top = (rcClient.Height()-height)/2;
-				e.DCPtr->StretchBlt(left,top,width,height,hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
-				break;
-			}
-			case PicturePositon::Fit:
-			{
-				double widthRatio = double(rcClient.Width())/double(pBitmap->GetWidth());
-				double heightRatio = double(rcClient.Height())/double(pBitmap->GetHeight());
-				coordinates_type left,top,width,height;
-				if(widthRatio > heightRatio){
-					width = static_cast<coordinates_type>(pBitmap->GetWidth()*heightRatio);
-					height = static_cast<coordinates_type>(pBitmap->GetHeight()*heightRatio);
-				}else{
-					width = static_cast<coordinates_type>(pBitmap->GetWidth()*widthRatio);
-					height = static_cast<coordinates_type>(pBitmap->GetHeight()*widthRatio);
-				}
-				left = (rcClient.Width()-width)/2;
-				top = (rcClient.Height()-height)/2;
-				e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-				e.DCPtr->StretchBlt(left,top,width,height,hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
-				break;
-			}
-			case PicturePositon::Stretch:
-			{
-				e.DCPtr->StretchBlt(0,0,rcClient.Width(),rcClient.Height(),hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
-				break;
-			}
-			case PicturePositon::Tile:
-			{
-				int x = static_cast<int>(ceil(double(rcClient.Width())/double(pBitmap->GetWidth())));
-				int y = static_cast<int>(ceil(double(rcClient.Height())/double(pBitmap->GetHeight())));
-				for(int i=0;i<x;i++){
-					for(int j=0;j<y;j++){
-						e.DCPtr->BitBlt(pBitmap->GetWidth()*i,pBitmap->GetHeight()*j,pBitmap->GetWidth(),pBitmap->GetHeight(),hPicDC,0,0,SRCCOPY);
-					}
-				}
-				break;
-			}
-			case PicturePositon::Center:
-			{
-				int left = static_cast<int>((int(rcClient.Width())-int(pBitmap->GetWidth()))*0.5);
-				int top = static_cast<int>((int(rcClient.Height())-int(pBitmap->GetHeight()))*0.5);
-				e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-				e.DCPtr->BitBlt(left,top,pBitmap->GetWidth(),pBitmap->GetHeight(),hPicDC,0,0,SRCCOPY);
-				break;
-			}
-			default:
-			{
-				e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-				break;
-			}
-		}
-		
+	//	switch(*m_spBackgroundProperty->m_picturePosition)
+	//	{
+	//		case PicturePositon::Fill:
+	//		{
+	//			double widthRatio = double(rcClient.Width())/double(pBitmap->GetWidth());
+	//			double heightRatio = double(rcClient.Height())/double(pBitmap->GetHeight());
+	//			FLOAT left,top,width,height;
+	//			if(widthRatio > heightRatio){
+	//				width = static_cast<FLOAT>(pBitmap->GetWidth()*widthRatio);
+	//				height = static_cast<FLOAT>(pBitmap->GetHeight()*widthRatio);
+	//			}else{
+	//				width = static_cast<FLOAT>(pBitmap->GetWidth()*heightRatio);
+	//				height = static_cast<FLOAT>(pBitmap->GetHeight()*heightRatio);
+	//			}
+	//			left = (rcClient.Width()-width)/2;
+	//			top = (rcClient.Height()-height)/2;
+	//			e.DCPtr->StretchBlt(left,top,width,height,hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
+	//			break;
+	//		}
+	//		case PicturePositon::Fit:
+	//		{
+	//			double widthRatio = double(rcClient.Width())/double(pBitmap->GetWidth());
+	//			double heightRatio = double(rcClient.Height())/double(pBitmap->GetHeight());
+	//			FLOAT left,top,width,height;
+	//			if(widthRatio > heightRatio){
+	//				width = static_cast<FLOAT>(pBitmap->GetWidth()*heightRatio);
+	//				height = static_cast<FLOAT>(pBitmap->GetHeight()*heightRatio);
+	//			}else{
+	//				width = static_cast<FLOAT>(pBitmap->GetWidth()*widthRatio);
+	//				height = static_cast<FLOAT>(pBitmap->GetHeight()*widthRatio);
+	//			}
+	//			left = (rcClient.Width()-width)/2;
+	//			top = (rcClient.Height()-height)/2;
+	//			e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
+	//			e.DCPtr->StretchBlt(left,top,width,height,hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
+	//			break;
+	//		}
+	//		case PicturePositon::Stretch:
+	//		{
+	//			e.DCPtr->StretchBlt(0,0,rcClient.Width(),rcClient.Height(),hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
+	//			break;
+	//		}
+	//		case PicturePositon::Tile:
+	//		{
+	//			int x = static_cast<int>(ceil(double(rcClient.Width())/double(pBitmap->GetWidth())));
+	//			int y = static_cast<int>(ceil(double(rcClient.Height())/double(pBitmap->GetHeight())));
+	//			for(int i=0;i<x;i++){
+	//				for(int j=0;j<y;j++){
+	//					e.DCPtr->BitBlt(pBitmap->GetWidth()*i,pBitmap->GetHeight()*j,pBitmap->GetWidth(),pBitmap->GetHeight(),hPicDC,0,0,SRCCOPY);
+	//				}
+	//			}
+	//			break;
+	//		}
+	//		case PicturePositon::Center:
+	//		{
+	//			int left = static_cast<int>((int(rcClient.Width())-int(pBitmap->GetWidth()))*0.5);
+	//			int top = static_cast<int>((int(rcClient.Height())-int(pBitmap->GetHeight()))*0.5);
+	//			e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
+	//			e.DCPtr->BitBlt(left,top,pBitmap->GetWidth(),pBitmap->GetHeight(),hPicDC,0,0,SRCCOPY);
+	//			break;
+	//		}
+	//		default:
+	//		{
+	//			e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
+	//			break;
+	//		}
+	//	}
+	//	
 
-		//iStream->Release();
-		//iPicture->Release();
-		//::DeleteObject(hPic);
-    // GDI+ E
-		::DeleteObject(hBitmap);
-		::DeleteObject(hPicDC);
-		delete pBitmap;
-		Gdiplus::GdiplusShutdown( gdiToken );
-	}else{
-		e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-	}
+	//	//iStream->Release();
+	//	//iPicture->Release();
+	//	//::DeleteObject(hPic);
+ //   // GDI+ E
+	//	::DeleteObject(hBitmap);
+	//	::DeleteObject(hPicDC);
+	//	delete pBitmap;
+	//	Gdiplus::GdiplusShutdown( gdiToken );
+	//}else{
+	//	e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
+	//}
 
-	e.DCPtr->SetBkMode(TRANSPARENT);
+	//e.DCPtr->SetBkMode(TRANSPARENT);
 
-	DEBUG_OUTPUT_COLUMN_VISIBLE_DICTIONARY
+	//DEBUG_OUTPUT_COLUMN_VISIBLE_DICTIONARY
 
 	if(!Visible())return;
+
 	//Update PaintDictionary
 	UpdateRowPaintDictionary();
 	UpdateColumnPaintDictionary();
@@ -1335,25 +1340,25 @@ void CGridView::OnPaint(const PaintEvent& e)
 	DEBUG_OUTPUT_COLUMN_PAINT_DICTIONARY
 		
 	//Check
-	{
-		auto& colDictionary=m_columnAllDictionary.get<IndexTag>();//Should be all
-		auto& rowDictionary=m_rowPaintDictionary.get<IndexTag>();
-		CheckEqualRange(rowDictionary.begin(),rowDictionary.end(), colDictionary.find(0), colDictionary.end(),
-			[](CCell* pCell, Compares comp)->void{
-				switch(comp){
-				case Compares::Diff:
-				case Compares::DiffNE:
-					pCell->SetChecked(true);
-					break;
-				case Compares::Same:
-					pCell->SetChecked(false);
-					break;
-				default:
-					pCell->SetChecked(true);
-					break;
-				}
-			});
-	}
+	//{
+	//	auto& colDictionary=m_columnAllDictionary.get<IndexTag>();//Should be all
+	//	auto& rowDictionary=m_rowPaintDictionary.get<IndexTag>();
+	//	CheckEqualRange(rowDictionary.begin(),rowDictionary.end(), colDictionary.find(0), colDictionary.end(),
+	//		[](CCell* pCell, Compares comp)->void{
+	//			switch(comp){
+	//			case Compares::Diff:
+	//			case Compares::DiffNE:
+	//				pCell->SetChecked(true);
+	//				break;
+	//			case Compares::Same:
+	//				pCell->SetChecked(false);
+	//				break;
+	//			default:
+	//				pCell->SetChecked(true);
+	//				break;
+	//			}
+	//		});
+	//}
 
 	//Paint
 	{
@@ -1368,15 +1373,15 @@ void CGridView::OnPaint(const PaintEvent& e)
 
 	//Paint Focused Line
 	if (::GetFocus() == m_hWnd || m_spEditRect) {
-		CRect rcFocus(rcClient);
-		HPEN hPenOld = e.DCPtr->SelectPen(*(GetGridViewPropPtr()->GetHeaderProperty()->GetFocusedPenPtr()));
-		rcFocus.DeflateRect(CRect(0, 0, 1, 1));
-		e.DCPtr->MoveToEx(rcFocus.left, rcFocus.top);
-		e.DCPtr->LineTo(rcFocus.left, rcFocus.bottom);
-		e.DCPtr->LineTo(rcFocus.right, rcFocus.bottom);
-		e.DCPtr->LineTo(rcFocus.right, rcFocus.top);
-		e.DCPtr->LineTo(rcFocus.left, rcFocus.top);
-		e.DCPtr->SelectPen(hPenOld);
+		d2dw::CRectF rcFocus(m_pDirect->Pixels2Dips(rcClient));
+		rcFocus.DeflateRect(1.0f, 1.0f);
+		m_pDirect->DrawSolidRectangle(*(m_spHeaderProperty->FocusedLine), rcFocus);
+		//e.DCPtr->MoveToEx(rcFocus.left, rcFocus.top);
+		//e.DCPtr->LineTo(rcFocus.left, rcFocus.bottom);
+		//e.DCPtr->LineTo(rcFocus.right, rcFocus.bottom);
+		//e.DCPtr->LineTo(rcFocus.right, rcFocus.top);
+		//e.DCPtr->LineTo(rcFocus.left, rcFocus.top);
+		//e.DCPtr->SelectPen(hPenOld);
 	}
 
 
@@ -1392,7 +1397,7 @@ void CGridView::OnPaint(const PaintEvent& e)
 	//	auto dragToAllIndex = m_spColDragger->GetDragToAllIndex();
 	//	auto dragFromAllIndex = m_spColDragger->GetDragFromAllIndex();
 	//	if(dragToAllIndex!=CColumn::kInvalidIndex && dragToAllIndex!=dragFromAllIndex){
-	//		coordinates_type x=0;
+	//		FLOAT x=0;
 	//		if(dragToAllIndex<=colDictionary.begin()->Index){
 	//			auto pColumn = colDictionary.begin()->DataPtr;
 	//			x = pColumn->GetLeft();
@@ -1403,8 +1408,8 @@ void CGridView::OnPaint(const PaintEvent& e)
 	//			auto pColumn = Index2Pointer<ColTag, AllTag>(dragToAllIndex);
 	//			x = pColumn->GetLeft();
 	//		}
-	//		coordinates_type y0 = rowVDictionary.begin()->DataPtr->GetTop();
-	//		coordinates_type y1 = boost::prior(rowVDictionary.find(0))->DataPtr->GetBottom();
+	//		FLOAT y0 = rowVDictionary.begin()->DataPtr->GetTop();
+	//		FLOAT y1 = boost::prior(rowVDictionary.find(0))->DataPtr->GetBottom();
 
 	//		auto width = m_spHeaderProperty->GetPenPtr()->GetWidth();
 	//		CPen pen(m_spHeaderProperty->GetPenPtr()->GetPenStyle(),
@@ -1493,7 +1498,7 @@ void CGridView::UpdateAll()
 	UpdateScrolls();
 }
 
-void CGridView::EnsureVisibleCell(const cell_type& pCell)
+void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 {
 	if(!pCell)return;
 
@@ -1533,16 +1538,16 @@ void CGridView::Jump(std::shared_ptr<CCell>& spCell)
 	SubmitUpdate();
 }
 
-CRect CGridView::GetPaintRect()
+d2dw::CRectF CGridView::GetPaintRect()
 {
-	return GetClientRect();
+	return m_pDirect->Pixels2Dips(GetClientRect());
 }
 
 std::pair<bool, bool> CGridView::GetHorizontalVerticalScrollNecessity()
 {
-	CRect rcClient(GetClientRect());
-	CRect rcCells(GetCellsRect());
-	CPoint ptOrigin(GetOriginPoint());
+	d2dw::CRectF rcClient(m_pDirect->Pixels2Dips(GetClientRect()));
+	d2dw::CRectF rcCells(GetCellsRect());
+	d2dw::CPointF ptOrigin(GetOriginPoint());
 	//First
 	bool bEnableShowHorizontal = rcCells.right > rcClient.right || rcCells.left < ptOrigin.x ;
 	bool bEnableShowVertical = rcCells.bottom > rcClient.bottom || rcCells.top < ptOrigin.y;
@@ -1556,11 +1561,11 @@ std::pair<bool, bool> CGridView::GetHorizontalVerticalScrollNecessity()
 	return std::make_pair(bEnableShowHorizontal, bEnableShowVertical);
 }
 
-CRect CGridView::GetPageRect()
+d2dw::CRectF CGridView::GetPageRect()
 {
-	CRect rcClient(GetClientRect());
-	CRect rcCells(GetCellsRect());
-	CPoint ptOrigin(GetOriginPoint());
+	d2dw::CRectF rcClient(m_pDirect->Pixels2Dips(GetClientRect()));
+	d2dw::CRectF rcCells(GetCellsRect());
+	d2dw::CPointF ptOrigin(GetOriginPoint());
 	//First
 	bool bEnableShowVertical = rcCells.bottom > rcClient.bottom || rcCells.top < ptOrigin.y;
 	bool bEnableShowHorizontal = rcCells.right > rcClient.right || rcCells.left < ptOrigin.x ;
@@ -1571,7 +1576,7 @@ CRect CGridView::GetPageRect()
 	bEnableShowVertical = rcCells.bottom > (rcClient.bottom - (bEnableShowHorizontal?GetSystemMetrics(SM_CYHSCROLL):0)) || rcCells.top < ptOrigin.y;
 	bEnableShowHorizontal = rcCells.right > (rcClient.right - (bEnableShowVertical?GetSystemMetrics(SM_CXVSCROLL):0)) || rcCells.left < ptOrigin.x;
 
-	return CRect(ptOrigin.x, ptOrigin.y,
+	return d2dw::CRectF(ptOrigin.x, ptOrigin.y,
 		rcClient.right - (bEnableShowVertical?GetSystemMetrics(SM_CXVSCROLL):0),
 		rcClient.bottom - (bEnableShowHorizontal?GetSystemMetrics(SM_CYHSCROLL):0));
 }
@@ -1604,7 +1609,7 @@ void CGridView::SubmitUpdate()
 			}
 			case Updates::Rect:
 			{
-				MoveWindow(GetUpdateRect(), FALSE);
+				MoveWindow(m_pDirect->Dips2Pixels(GetUpdateRect()), FALSE);
 			}
 			case Updates::RowVisible:
 			{
@@ -1661,9 +1666,9 @@ void CGridView::SubmitUpdate()
 void CGridView::Clear()
 {
 	CSheet::Clear();
-	m_rowHeaderHeader = row_type();
-	m_rowNameHeader=row_type();
-	m_rowFilter=row_type();
+	m_rowHeaderHeader = std::shared_ptr<CRow>();
+	m_rowNameHeader=std::shared_ptr<CRow>();
+	m_rowFilter=std::shared_ptr<CRow>();
 }
 
 CColumn* CGridView::GetParentColumnPtr(CCell* pCell)

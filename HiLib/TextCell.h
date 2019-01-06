@@ -37,51 +37,51 @@ public:
 	}
 };
 
-class CStringSizeCalculater
-{
-private:
-	CDC* m_pDC;
-	CFont* m_pFont;
-	UINT m_format;
-	std::unordered_map<wchar_t, CSize> m_charMap;
-public:
-	CStringSizeCalculater(){}
-	~CStringSizeCalculater(){}
-
-	void SetParameter(CDC* pDC, CFont* pFont, UINT format) 
-	{ 
-		m_pDC = pDC; m_pFont = pFont; m_format = format;
-
-	}
-
-	static CStringSizeCalculater* GetInstance()
-	{
-		static CStringSizeCalculater me;
-		return &me;
-	}
-
-	CSize CalcSize(const std::wstring& str);
-	CSize CalcSizeWithFixedWidth(const std::wstring& str, const LONG& width);
-
-
-
-};
+//class CStringSizeCalculater
+//{
+//private:
+//	CDC* m_pDC;
+//	CFont* m_pFont;
+//	UINT m_format;
+//	std::unordered_map<wchar_t, CSize> m_charMap;
+//public:
+//	CStringSizeCalculater(){}
+//	~CStringSizeCalculater(){}
+//
+//	void SetParameter(CDC* pDC, CFont* pFont, UINT format) 
+//	{ 
+//		m_pDC = pDC; m_pFont = pFont; m_format = format;
+//
+//	}
+//
+//	static CStringSizeCalculater* GetInstance()
+//	{
+//		static CStringSizeCalculater me;
+//		return &me;
+//	}
+//
+//	CSize CalcSize(const std::wstring& str);
+//	CSize CalcSizeWithFixedWidth(const std::wstring& str, const LONG& width);
+//
+//
+//
+//};
 
 class CTextCell:public CCell
 {
 protected:
 	CInplaceEdit* m_pEdit;
 public:
-	CTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty, CMenu* pMenu = nullptr)
+	CTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr)
 		:CCell(pSheet,pRow, pColumn,spProperty,pMenu),m_pEdit(NULL){}
 	virtual ~CTextCell();
-	virtual void PaintContent(CDC* pDC, CRect rcPaint);
-	virtual void PaintBackground(CDC* pDC, CRect rc);
+	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint);
+	virtual void PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint);
 
 	//virtual CSize MeasureSize(CDC* pDC);
 	//virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
-	virtual CSize MeasureContentSize(CDC* pDC) override;
-	virtual CSize MeasureContentSizeWithFixedWidth(CDC* pDC) override;
+	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite& direct) override;
+	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct) override;
 	virtual void OnEdit(const EventArgs& e);
 	virtual bool CanSetStringOnEditing()const{return true;}
 
@@ -109,19 +109,19 @@ public:
 class CStringCell:public CTextCell
 {
 protected:
-	string_type m_string;
+	std::wstring m_string;
 public:
-	CStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellProperty> spProperty, string_type str,CMenu* pMenu=nullptr)
+	CStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty, std::wstring str,CMenu* pMenu=nullptr)
 		:CTextCell(pSheet,pRow, pColumn,spProperty,pMenu),m_string(str){}
 	virtual ~CStringCell(){}
-	virtual string_type GetString();
-	virtual void SetStringCore(const string_type& str);
+	virtual std::wstring GetString();
+	virtual void SetStringCore(const std::wstring& str);
 };
 
 class CEditableCell:public CTextCell
 {
 public:
-	CEditableCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellProperty> spProperty,CMenu* pMenu=nullptr)
+	CEditableCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CMenu* pMenu=nullptr)
 		:CTextCell(pSheet,pRow, pColumn,spProperty,pMenu){}
 	virtual ~CEditableCell(){}
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
@@ -130,7 +130,7 @@ public:
 class CEditableStringCell:public CStringCell
 {
 public:
-	CEditableStringCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty, string_type str,CMenu* pMenu=nullptr)
+	CEditableStringCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, std::wstring str,CMenu* pMenu=nullptr)
 		:CStringCell(pSheet,pRow,pColumn,spProperty,str,pMenu){}
 	virtual ~CEditableStringCell(){}
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
@@ -139,7 +139,7 @@ public:
 class CEditableNoWrapStringCell :public CEditableStringCell
 {
 public:
-	CEditableNoWrapStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty, string_type str, CMenu* pMenu = nullptr)
+	CEditableNoWrapStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, std::wstring str, CMenu* pMenu = nullptr)
 		:CEditableStringCell(pSheet, pRow, pColumn, spProperty, str, pMenu){}
 
 	virtual ~CEditableNoWrapStringCell() {}
@@ -155,7 +155,7 @@ class CParameterCell:public CEditableCell
 private:
 	bool m_bFirstFocus;
 public:
-	CParameterCell(CSheet* pSheet=nullptr, CRow* pRow=nullptr, CColumn* pColumn=nullptr,std::shared_ptr<CCellProperty> spProperty=nullptr,CMenu* pMenu=nullptr)
+	CParameterCell(CSheet* pSheet=nullptr, CRow* pRow=nullptr, CColumn* pColumn=nullptr,std::shared_ptr<CellProperty> spProperty=nullptr,CMenu* pMenu=nullptr)
 		:CEditableCell(pSheet,pRow, pColumn,spProperty,pMenu),m_bFirstFocus(false){}
 	virtual ~CParameterCell(){}
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;

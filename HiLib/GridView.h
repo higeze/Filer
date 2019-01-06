@@ -5,7 +5,8 @@
 #include "ThreadHelper.h"
 #include <queue>
 
-class CBackgroundProperty;
+class CDirect2DWrite;
+class BackgroundProperty;
 class CGridViewProperty;
 struct CMouseStateMachine;
 
@@ -13,11 +14,6 @@ class CGridView:public CWnd,public CSheet
 {
 public:
 	static CMenu ContextMenu;
-
-public:
-	typedef int size_type;
-	typedef std::wstring string_type;
-
 protected:
 	bool m_isFocusable = true;
 
@@ -25,14 +21,16 @@ protected:
 	CScrollBar m_horizontal;
 
 	UPBufferDC m_upBuffDC;
-	CRect m_rcUpdateRect;
+	d2dw::CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
 
-	row_type m_rowHeaderHeader; /**< Header Header row */
-	row_type m_rowNameHeader; /**< Name Header row */
-	row_type m_rowFilter; /**< Filter row */
+	std::shared_ptr<CRow> m_rowHeaderHeader; /**< Header Header row */
+	std::shared_ptr<CRow> m_rowNameHeader; /**< Name Header row */
+	std::shared_ptr<CRow> m_rowFilter; /**< Filter row */
 
 	std::shared_ptr<CMouseStateMachine> m_pMouseStateMachine;
+
+	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
 
 protected:
 	boost::asio::io_service m_filterIosv;
@@ -45,14 +43,14 @@ protected:
 
 	std::shared_ptr<CGridViewProperty> m_spGridViewProp;
 	std::shared_ptr<int> m_spDeltaScroll;
-	std::shared_ptr<CBackgroundProperty> m_spBackgroundProperty;
+	std::shared_ptr<BackgroundProperty> m_spBackgroundProperty;
 
-	std::shared_ptr<CRect> m_spEditRect;
+	std::shared_ptr<d2dw::CRectF> m_spEditRect;
 public:
 
 	boost::signals2::signal<void(CColumn*)> SignalColumnInserted;
 	boost::signals2::signal<void(CColumn*)> SignalColumnErased;
-	boost::signals2::signal<void(CColumn*, size_type, size_type)> SignalColumnMoved;
+	boost::signals2::signal<void(CColumn*, int, int)> SignalColumnMoved;
 	boost::signals2::signal<void()> SignalPreDelayUpdate;
 	static UINT WM_DELAY_UPDATE;
 	void DelayUpdate();
@@ -69,20 +67,20 @@ public:
 	virtual ~CGridView();
 
 	//Getter Setter
-
+	std::shared_ptr<d2dw::CDirect2DWrite>& GetDirect() { return m_pDirect; }
 	std::shared_ptr<CGridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
-	void SetEditRect(CRect rcEdit){m_spEditRect = std::make_shared<CRect>(rcEdit);}
-	CRect GetUpdateRect()const { return m_rcUpdateRect; }
-	void SetUpdateRect(CRect rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
+	void SetEditRect(d2dw::CRectF rcEdit){m_spEditRect = std::make_shared<d2dw::CRectF>(rcEdit);}
+	d2dw::CRectF GetUpdateRect()const { return m_rcUpdateRect; }
+	void SetUpdateRect(d2dw::CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
 	std::shared_ptr<CMouseStateMachine> GetMouseStateMachine() { return m_pMouseStateMachine; }
 	void SetMouseStateMachine(std::shared_ptr<CMouseStateMachine>& machine) { m_pMouseStateMachine = machine; }
 	boost::asio::deadline_timer* GetFilterTimerPtr() { return &m_filterTimer; }
-	virtual row_type GetHeaderHeaderRowPtr()const { return m_rowHeaderHeader; }
-	virtual void SetHeaderHeaderRowPtr(row_type row) { m_rowHeaderHeader = row; }
-	virtual row_type GetNameHeaderRowPtr()const { return m_rowNameHeader; }
-	virtual void SetNameHeaderRowPtr(row_type row) { m_rowNameHeader = row; }
-	virtual row_type GetFilterRowPtr()const { return m_rowFilter; }
-	virtual void SetFilterRowPtr(row_type row) { m_rowFilter = row; }
+	virtual std::shared_ptr<CRow> GetHeaderHeaderRowPtr()const { return m_rowHeaderHeader; }
+	virtual void SetHeaderHeaderRowPtr(std::shared_ptr<CRow> row) { m_rowHeaderHeader = row; }
+	virtual std::shared_ptr<CRow> GetNameHeaderRowPtr()const { return m_rowNameHeader; }
+	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_rowNameHeader = row; }
+	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_rowFilter; }
+	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_rowFilter = row; }
 
 protected:
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -131,7 +129,7 @@ public:
 	virtual void FilterAll();
 
 	virtual void OnPaint(const PaintEvent& e);
-	virtual void EnsureVisibleCell(const cell_type& pCell);
+	virtual void EnsureVisibleCell(const std::shared_ptr<CCell>& pCell);
 	void Jump(std::shared_ptr<CCell>& spCell);
 	virtual void Clear();
 
@@ -151,13 +149,13 @@ public:
 
 	virtual CGridView* GetGridPtr(){return this;};
 
-	virtual CPoint GetScrollPos()const;
+	virtual CPoint GetScrollPos()const override;
 	virtual void SetScrollPos(const CPoint& ptScroll);
 
-	virtual coordinates_type GetVerticalScrollPos()const;
-	virtual coordinates_type GetHorizontalScrollPos()const;
-	virtual CRect GetPaintRect();
-	virtual CRect GetPageRect();
+	virtual FLOAT GetVerticalScrollPos()const;
+	virtual FLOAT GetHorizontalScrollPos()const;
+	virtual d2dw::CRectF GetPaintRect();
+	virtual d2dw::CRectF GetPageRect();
 	std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
 	
 	virtual void UpdateAll();

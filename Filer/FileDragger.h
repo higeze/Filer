@@ -10,8 +10,8 @@ class CSheet;
 class CFileDragger:public IDragger
 {
 private:
-	typedef int size_type;
-	typedef int coordinates_type;
+	typedef int int;
+	typedef int FLOAT;
 
 private:
 	CPoint m_ptDragStart;

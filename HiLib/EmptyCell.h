@@ -5,7 +5,7 @@ class CEmptyCell:public CCell
 {
 public:
 	CEmptyCell(CSheet* pSheet = nullptr, CRow* pRow = nullptr, CColumn* pColumn = nullptr,
-		std::shared_ptr<CCellProperty> spProperty = nullptr)
+		std::shared_ptr<CellProperty> spProperty = nullptr)
 		:CCell(pSheet, pRow, pColumn, spProperty){}
 	virtual ~CEmptyCell(){}
 	
@@ -41,7 +41,7 @@ public:
 class CIncomparableEmptyCell:public CEmptyCell
 {
 public:
-	CIncomparableEmptyCell(CSheet* pSheet = nullptr, CRow* pRow = nullptr, CColumn* pColumn = nullptr, std::shared_ptr<CCellProperty> spProperty = nullptr)
+	CIncomparableEmptyCell(CSheet* pSheet = nullptr, CRow* pRow = nullptr, CColumn* pColumn = nullptr, std::shared_ptr<CellProperty> spProperty = nullptr)
 		:CEmptyCell(pSheet, pRow, pColumn, spProperty){}
 	virtual ~CIncomparableEmptyCell(){}
 	

@@ -5,20 +5,17 @@
 #include "Sheet.h"
 #include "GridView.h"
 
-CColorCell::CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellProperty> spProperty,CColor color)
+CColorCell::CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,d2dw::Color color)
 	:CTextCell(pSheet,pRow,pColumn,spProperty),
 	m_color(color){}
 
 
-CColor CColorCell::GetColor(){return m_color;}
+d2dw::Color CColorCell::GetColor(){return m_color;}
 
-void CColorCell::PaintBackground(CDC* pDC,CRect rcPaint)
+void CColorCell::PaintBackground(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint)
 {
-	CBrush br(m_color);
-	pDC->FillRect(rcPaint,br);
-	if(GetFocused()){
-		pDC->DrawFocusRect(rcPaint);
-	}
+	d2dw::SolidFill colorFill(m_color.r, m_color.g, m_color.b, m_color.a);
+	direct.FillSolidRectangle(colorFill, rcPaint);
 }
 
 void CColorCell::OnLButtonClk(const LButtonClkEvent& e)
@@ -27,25 +24,27 @@ void CColorCell::OnLButtonClk(const LButtonClkEvent& e)
 	CHOOSECOLOR cc={0};
 	cc.lStructSize=sizeof(CHOOSECOLOR);
 	cc.hwndOwner=m_pSheet->GetGridPtr()->m_hWnd;
-
-	cc.rgbResult=m_color;
+	COLORREF rgb = RGB(m_color.r * 255, m_color.g * 255, m_color.b * 255);
+	cc.rgbResult=rgb;
 	cc.lpCustColors=CustColors;
 	cc.Flags=CC_FULLOPEN|CC_RGBINIT;
 	if(ChooseColor(&cc)){
-		if(m_color!=cc.rgbResult){
-			m_color=cc.rgbResult;
+		if(rgb!=cc.rgbResult){
+			m_color.r = GetRValue(cc.rgbResult)/255.0f;
+			m_color.g = GetGValue(cc.rgbResult)/255.0f;
+			m_color.b = GetBValue(cc.rgbResult)/255.0f;
 			OnPropertyChanged(L"value");
 		}
 	}
 }
 
-std::basic_string<TCHAR> CColorCell::GetString()
+std::wstring CColorCell::GetString()
 {
 	std::wstring wstr(L"RGB:");
-	wstr.append(boost::lexical_cast<std::wstring>((int)m_color.GetR()));
+	wstr.append(boost::lexical_cast<std::wstring>((int)(m_color.r * 255)));
 	wstr.append(L", ");
-	wstr.append(boost::lexical_cast<std::wstring>((int)m_color.GetG()));
+	wstr.append(boost::lexical_cast<std::wstring>((int)(m_color.g * 255)));
 	wstr.append(L", ");
-	wstr.append(boost::lexical_cast<std::wstring>((int)m_color.GetB()));
+	wstr.append(boost::lexical_cast<std::wstring>((int)(m_color.b * 255)));
 	return wstr;
 }

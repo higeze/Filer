@@ -12,27 +12,27 @@ public:
 	/**
 	 *  Constructor
 	 */
-	CPathCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellProperty> spProperty,CMenu* pMenu = nullptr)
+	CPathCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CMenu* pMenu = nullptr)
 		:CEditableCell(pSheet,pRow, pColumn,spProperty,pMenu){}
 	/**
 	 *  Destructor
 	 */
 	virtual ~CPathCell(void){}
-	CSize GetFitSize(CDC* pDC)override;
-	CSize GetActSize(CDC* pDC)override;
+	d2dw::CSizeF GetFitSize(d2dw::CDirect2DWrite& direct)override;
+	d2dw::CSizeF GetActSize(d2dw::CDirect2DWrite& direct)override;
 	//CSize MeasureContentSize(CDC* pDC)override;
-	CSize MeasureContentSizeWithFixedWidth(CDC* pDC)override;
+	d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)override;
 	/**
 	 *  Get string from column property
 	 */
-	virtual string_type GetString() override;
+	virtual std::wstring GetString() override;
 
-	virtual CRect CPathCell::GetRect()const override;
+	virtual d2dw::CRectF CPathCell::GetRect()const override;
 	/**
 	 *  Set string to column property
 	 */
-	//virtual void SetString(const string_type& str)override;
-	virtual void SetStringCore(const string_type& str)override;
+	//virtual void SetString(const std::wstring& str)override;
+	virtual void SetStringCore(const std::wstring& str)override;
 	virtual void OnPaint(const PaintEvent& e)override;
 
 	/**

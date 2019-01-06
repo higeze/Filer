@@ -6,14 +6,10 @@ class CCell;
 class CBand
 {
 public:
-	typedef int size_type;
-	typedef int coordinates_type;
-	typedef std::shared_ptr<CCell> cell_type;
-	typedef std::wstring string_type;
-	static const size_type kMaxIndex = 10000;
-	static const size_type kMinIndex = -10;
-	static const size_type kInvalidIndex = -9999;
-	static const coordinates_type kResizeAreaHarfWidth = 4;
+	static const int kMaxIndex = 10000;
+	static const int kMinIndex = -10;
+	static const int kInvalidIndex = -9999;
+	inline static const FLOAT kResizeAreaHarfWidth = 4.0f;
 protected:
 	//Field
 	CSheet* m_pSheet; // Parent sheet pointer
@@ -55,17 +51,17 @@ public:
 	void SetSheetPtr(CSheet* pSheet){m_pSheet = pSheet;}
 	bool GetMeasureValid()const{return m_bMeasureValid;}
 	void SetMeasureValid(bool bMeasureValid){m_bMeasureValid = bMeasureValid;}
-	virtual coordinates_type Offset()const = 0;
+	virtual FLOAT Offset()const = 0;
 	virtual bool GetVisible()const{return m_bVisible;}
 	virtual void SetVisible(const bool& bVisible, bool notify = true) = 0;
 	virtual bool GetSelected()const{return m_bSelected;}
 	virtual void SetSelected(const bool& bSelected) = 0;
 	virtual bool IsDragTrackable()const{return false;}
-	virtual coordinates_type GetLeftTop()const = 0;
-	virtual coordinates_type GetRightBottom()/*TODO*/ = 0;
-	virtual coordinates_type GetMinWidthHeight()/*TODO*/ = 0;
-	virtual coordinates_type GetMaxWidthHeight()/*TODO*/ = 0;
-	virtual void SetWidthHeightWithoutSignal(const coordinates_type&) = 0;
+	virtual FLOAT GetLeftTop()const = 0;
+	virtual FLOAT GetRightBottom()/*TODO*/ = 0;
+	virtual FLOAT GetMinWidthHeight()/*TODO*/ = 0;
+	virtual FLOAT GetMaxWidthHeight()/*TODO*/ = 0;
+	virtual void SetWidthHeightWithoutSignal(const FLOAT&) = 0;
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) = 0;
 	virtual void OnPropertyChanged(const wchar_t* name) = 0;
 };

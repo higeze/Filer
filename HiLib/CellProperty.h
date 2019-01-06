@@ -1,11 +1,12 @@
 #pragma once
-#include "MyFont.h"
-#include "MyColor.h"
-#include "MyBrush.h"
-#include "MyRect.h"
-#include "MyPen.h"
+#include "Direct2DWrite.h"
+//#include "MyFont.h"
+//#include "MyColor.h"
+//#include "MyBrush.h"
+//#include "MyRect.h"
+//#include "MyPen.h"
 
-#include "MyFriendSerializer.h"
+//#include "MyFriendSerializer.h"
 
 enum class PicturePositon
 {
@@ -16,20 +17,20 @@ enum class PicturePositon
 	Center
 };
 
-class CBackgroundProperty
+class BackgroundProperty
 {
 public:
-	std::shared_ptr<CBrush> m_brush;
+	std::shared_ptr<d2dw::SolidFill> m_brush;
 	std::shared_ptr<bool> m_usePicture;
 	std::shared_ptr<std::wstring> m_picturePath;
 	std::shared_ptr<PicturePositon> m_picturePosition;
 
-	CBackgroundProperty()
-		:m_brush(std::make_shared<CBrush>(RGB(246, 246, 246))),//asbestos
+	BackgroundProperty()
+		:m_brush(std::make_shared<d2dw::SolidFill>(246.0f/255, 246.0f/255, 246.0f/255, 1.0f)),//asbestos
 		m_usePicture(std::make_shared<bool>(false)),
 		m_picturePath(std::make_shared<std::wstring>()),
 		m_picturePosition(std::make_shared<PicturePositon>(PicturePositon::Center)){}
-	virtual ~CBackgroundProperty(){}
+	virtual ~BackgroundProperty(){}
 
 	FRIEND_SERIALIZER
 
@@ -43,158 +44,151 @@ public:
     }
 };
 
-class CDrawTextProperty
+//class CDrawTextProperty
+//{
+//public:
+//	UINT m_uFormat;
+//	CDrawTextProperty():m_uFormat(0){}
+//	CDrawTextProperty(UINT uFormat/*,DRAWTEXTPARAMS dtp*/):m_uFormat(uFormat)/*,m_dtp(dtp)*/{}
+//	virtual ~CDrawTextProperty(){}
+//	//DRAWTEXTPARAMS m_dtp;
+//	UINT GetFormat()const{return m_uFormat;}
+//	//DRAWTEXTPARAMS GetDrawTextParams()const{return m_dtp;}
+//
+//	FRIEND_SERIALIZER
+//    template <class Archive>
+//    void serialize(Archive& ar)
+//    {
+//        ar("Format",m_uFormat);
+//    }
+//
+//};
+//typedef std::shared_ptr<CDrawTextProperty> DrawTextPropertyPtr;
+
+class CellProperty
 {
 public:
-	UINT m_uFormat;
-	CDrawTextProperty():m_uFormat(0){}
-	CDrawTextProperty(UINT uFormat/*,DRAWTEXTPARAMS dtp*/):m_uFormat(uFormat)/*,m_dtp(dtp)*/{}
-	virtual ~CDrawTextProperty(){}
-	//DRAWTEXTPARAMS m_dtp;
-	UINT GetFormat()const{return m_uFormat;}
-	//DRAWTEXTPARAMS GetDrawTextParams()const{return m_dtp;}
-
-	FRIEND_SERIALIZER
-    template <class Archive>
-    void serialize(Archive& ar)
-    {
-        ar("Format",m_uFormat);
-    }
-
-};
-typedef std::shared_ptr<CDrawTextProperty> DrawTextPropertyPtr;
-
-class CCellProperty
-{
-private:
-	SPFont m_spFont;
-	SPPen m_spPen;
-	SPPen m_spPenFocused;
-	SPBrush m_spBrBackground;
-	SPBrush m_spBrFocused;
-	SPBrush m_spBrSelected;
-	SPBrush m_spBrUnfocusSelected;
-	SPBrush m_spBrChecked;
-
-	//DrawTextPropertyPtr m_spDrawTextProperty;
-	SPRect m_spPadding;
+	std::shared_ptr<d2dw::FontAndColor> FontAndColor;
+	std::shared_ptr<d2dw::SolidLine> Line;
+	std::shared_ptr<d2dw::SolidLine> FocusedLine;
+	std::shared_ptr<d2dw::SolidFill> NormalFill;
+	std::shared_ptr<d2dw::SolidFill> FocusedFill;
+	std::shared_ptr<d2dw::SolidFill> SelectedFill;
+	std::shared_ptr<d2dw::SolidFill> UnfocusSelectedFill;
+	std::shared_ptr<d2dw::SolidFill> HotFill;
+	std::shared_ptr<d2dw::CRectF> Padding;
 
 public:
-	CCellProperty()
-		//:m_spFont(std::make_shared<CFont>(8,L"Arial")),
-		//m_spPen(std::make_shared<CPen>(PS_SOLID,2,RGB(150,150,150))),
-		//m_spBrBackground(std::make_shared<CBrush>(RGB(255,255,255))),
-		//m_spBrFocused(std::make_shared<CBrush>(RGB(195,224,226))),
-		//m_spBrSelected(std::make_shared<CBrush>(RGB(0,128,255))),
-		//m_spBrChecked(std::make_shared<CBrush>(RGB(255,255,0))),
+	CellProperty()
+		:FontAndColor(std::make_shared<d2dw::FontAndColor>(L"Meiryo UI", 9.0f,  0.0f, 0.0f, 0.0f, 1.0f)),
+		Line(std::make_shared<d2dw::SolidLine>(221.0f/255, 206.0f/255, 188.0f/255, 1.0f, 1.0f)),
+		FocusedLine(std::make_shared<d2dw::SolidLine>(22.0f/255, 160.0f/255, 133.0f/255, 1.0f, 1.0f)),
+		NormalFill(std::make_shared<d2dw::SolidFill>(246.0f/255, 246.0f/255, 246.0f/255, 1.0f)),
+		FocusedFill(std::make_shared<d2dw::SolidFill>(195.0f/255, 224.0f/255, 226.0f/255, 1.0f)),
+		SelectedFill(std::make_shared<d2dw::SolidFill>(195.0f/255, 224.0f/255, 226.0f/255, 0.3f)),
+		UnfocusSelectedFill(std::make_shared<d2dw::SolidFill>(224.0f/255, 224.0f/255, 224.0f/255, 0.3f)),
+		HotFill(std::make_shared<d2dw::SolidFill>(0.0f, 0.0f, 0.0f, 0.2f)),
+		//m_spBrChecked(std::make_shared<CBrush>(RGB(241,196,15))),
 		//m_spDrawTextProperty(std::make_shared<CDrawTextProperty>(DT_LEFT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL)),
-		//m_spPadding(std::make_shared<CRect>(2,2,2,2)){};
-		:m_spFont(std::make_shared<CFont>(9,L"Meiryo UI")),
-		m_spPen(std::make_shared<CPen>(PS_SOLID,1,RGB(221,206,188))),
-		m_spPenFocused(std::make_shared<CPen>(PS_SOLID, 1, RGB(22, 160, 133))),
-		m_spBrBackground(std::make_shared<CBrush>(RGB(246,246,246))),
-		m_spBrFocused(std::make_shared<CBrush>(RGB(195,224,226))),
-		m_spBrSelected(std::make_shared<CBrush>(RGB(195,224,226)/*RGB(52,152,219)*/)),
-		m_spBrUnfocusSelected(std::make_shared<CBrush>(RGB(224, 224, 224)/*RGB(52,152,219)*/)),
-		m_spBrChecked(std::make_shared<CBrush>(RGB(241,196,15))),
-		//m_spDrawTextProperty(std::make_shared<CDrawTextProperty>(DT_LEFT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL)),
-		m_spPadding(std::make_shared<CRect>(2,2,2,2)){};
+		Padding(std::make_shared<d2dw::CRectF>(2.0f,2.0f,2.0f,2.0f)){};
 
-	CCellProperty(
-		SPFont spFont,
-		SPPen spPen,
-		SPPen spPenFocused,
-		SPBrush spBrBackground,
-		SPBrush spBrFocused,
-		SPBrush spBrSelected,
-		SPBrush spBrUnfocusSelected,
-		SPBrush spBrChecked,
-		DrawTextPropertyPtr spDrawTextProperty,
-		SPRect spPadding)
-		:m_spFont(spFont),
-		m_spPen(spPen),
-		m_spPenFocused(spPenFocused),
-		m_spBrBackground(spBrBackground),
-		m_spBrFocused(spBrFocused),
-		m_spBrSelected(spBrSelected),
-		m_spBrUnfocusSelected(spBrUnfocusSelected),
-		m_spBrChecked(spBrChecked),
-		//m_spDrawTextProperty(spDrawTextProperty),
-		m_spPadding(spPadding){};
+	CellProperty(
+		std::shared_ptr<d2dw::FontAndColor> fontAndColor,
+		std::shared_ptr<d2dw::SolidLine> line,
+		std::shared_ptr<d2dw::SolidLine> focusedLine,
+		std::shared_ptr<d2dw::SolidFill> normalFill,
+		std::shared_ptr<d2dw::SolidFill> focusedFill,
+		std::shared_ptr<d2dw::SolidFill> selectedFill,
+		std::shared_ptr<d2dw::SolidFill> unfocusSelectedFill,
+		std::shared_ptr<d2dw::SolidFill> hotFill,
+		std::shared_ptr<d2dw::CRectF> padding)
+		:FontAndColor(fontAndColor),
+		Line(line),
+		FocusedLine(focusedLine),
+		NormalFill(normalFill),
+		FocusedFill(focusedFill),
+		SelectedFill(selectedFill),
+		UnfocusSelectedFill(unfocusSelectedFill),
+		HotFill(hotFill),
 
-	virtual ~CCellProperty(){}
+		Padding(padding){};
 
-	virtual std::shared_ptr<CFont> GetFontPtr()const{return m_spFont;}
-	virtual std::shared_ptr<CPen> GetPenPtr()const{return m_spPen;}
-	virtual std::shared_ptr<CPen> GetFocusedPenPtr()const{return m_spPenFocused;}
-	virtual std::shared_ptr<CBrush> GetBackgroundBrushPtr()const{return m_spBrBackground;}
-	virtual std::shared_ptr<CBrush> GetFocusedBrushPtr()const{return m_spBrFocused;}
-	virtual std::shared_ptr<CBrush> GetSelectedBrushPtr()const{return m_spBrSelected;}
-	virtual std::shared_ptr<CBrush> GetUnfocusSelectedBrushPtr()const { return m_spBrUnfocusSelected; }
-	virtual std::shared_ptr<CBrush> GetCheckedBrushPtr()const{return m_spBrChecked;}
-	//virtual std::shared_ptr<CDrawTextProperty> GetDrawTextPropertyPtr()const{return m_spDrawTextProperty;}
-	//virtual UINT GetFormat()const{return m_spDrawTextProperty->GetFormat();}
-	virtual CRect GetPadding()const{return *m_spPadding;}
-	virtual std::shared_ptr<CRect> GetPaddingPtr(){return m_spPadding;}
+	virtual ~CellProperty(){}
 
-	FRIEND_SERIALIZER
+	//virtual std::shared_ptr<CFont> GetFontPtr()const{return m_spFont;}
+	//virtual std::shared_ptr<CPen> GetPenPtr()const{return m_spPen;}
+	//virtual std::shared_ptr<CPen> GetFocusedPenPtr()const{return m_spPenFocused;}
+	//virtual std::shared_ptr<CBrush> GetBackgroundBrushPtr()const{return m_spBrBackground;}
+	//virtual std::shared_ptr<CBrush> GetFocusedBrushPtr()const{return m_spBrFocused;}
+	//virtual std::shared_ptr<CBrush> GetSelectedBrushPtr()const{return m_spBrSelected;}
+	//virtual std::shared_ptr<CBrush> GetUnfocusSelectedBrushPtr()const { return m_spBrUnfocusSelected; }
+	//virtual std::shared_ptr<CBrush> GetCheckedBrushPtr()const{return m_spBrChecked;}
+	////virtual std::shared_ptr<CDrawTextProperty> GetDrawTextPropertyPtr()const{return m_spDrawTextProperty;}
+	////virtual UINT GetFormat()const{return m_spDrawTextProperty->GetFormat();}
+	//virtual CRect GetPadding()const{return *m_spPadding;}
+	//virtual std::shared_ptr<CRect> GetPaddingPtr(){return m_spPadding;}
+
+//	FRIEND_SERIALIZER
 	template <class Archive>
     void serialize(Archive& ar)
     {
-		ar("Font",m_spFont);
-		ar("Pen",m_spPen);
-		ar("FocusedPen",m_spPenFocused);
-		ar("BackgroundBrush",m_spBrBackground);
-		ar("FocusedBrush",m_spBrFocused);
-		ar("SelectedBrush",m_spBrSelected);
-		ar("UnfocusSelectedBrush", m_spBrUnfocusSelected);
-		ar("CheckedBrush",m_spBrChecked);
+		ar("FontAndColor",FontAndColor);
+		ar("Line",Line);
+		ar("FocusedLine",FocusedLine);
+		ar("NormalFill",NormalFill);
+		ar("FocusedFill",FocusedFill);
+		ar("SelectedFill",SelectedFill);
+		ar("UnfocusSelectedFill", UnfocusSelectedFill);
+		ar("HotFill", HotFill);
+		//ar("CheckedBrush",m_spBrChecked);
 		//ar("DrawTextProperty",m_spDrawTextProperty);
-		ar("Padding",m_spPadding);
+		ar("Padding",Padding);
     }
 
 };
 
-typedef std::shared_ptr<CCellProperty> CellPropertyPtr;
+//typedef std::shared_ptr<CellProperty> CellPropertyPtr;
 
-class CHeaderProperty:public CCellProperty
+struct HeaderProperty:public CellProperty
 {
-private:
-	CColor m_crTop;
-	CColor m_crBottom;
+public:
+	std::shared_ptr<d2dw::SolidLine> DragLine;
+
+	//	CColor m_crTop;
+//	CColor m_crBottom;
 public:
 	//CHeaderProperty():CCellProperty(),m_crTop(RGB(206,185,205)),m_crBottom(RGB(233,158,231)){}
-	CHeaderProperty():
-	  CCellProperty(
-		std::make_shared<CFont>(9,L"Meiryo UI"),
-		std::make_shared<CPen>(PS_SOLID,1,RGB(211,206,188)),
-		std::make_shared<CPen>(PS_SOLID, 1, RGB(22, 160, 133)),
-		std::make_shared<CBrush>(RGB(239,239,232)),
-		std::make_shared<CBrush>(RGB(195,224,226)),
-		std::make_shared<CBrush>(RGB(195,224,226)),
-		std::make_shared<CBrush>(RGB(195, 224, 226)),
-		std::make_shared<CBrush>(RGB(241,196,15)),
-		std::make_shared<CDrawTextProperty>(DT_LEFT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL),
-		std::make_shared<CRect>(2,2,2,2)),
-		m_crTop(RGB(232,232,232)),m_crBottom(RGB(232,232,242)){}
-	virtual ~CHeaderProperty(){}
-	CColor GetTopColor()const
-	{
-		return m_crTop;
-	}
-	CColor GetBottomColor()const
-	{
-		return m_crBottom;
-	}
+	HeaderProperty()
+		:CellProperty(
+		std::make_shared<d2dw::FontAndColor>(L"Meiryo UI", 9.0f, 0.0f, 0.0f, 0.0f, 1.0f),
+		std::make_shared<d2dw::SolidLine>(211.0f / 255, 206.0f / 255, 188.0f / 255, 1.0f, 1.0f),
+		std::make_shared<d2dw::SolidLine>(22.0f / 255, 160.0f / 255, 133.0f / 255, 1.0f, 1.0f),
+		std::make_shared<d2dw::SolidFill>(239.0f / 239, 246.0f / 255, 232.0f / 255, 1.0f),
+		std::make_shared<d2dw::SolidFill>(195.0f / 255, 224.0f / 255, 226.0f / 255, 1.0f),
+		std::make_shared<d2dw::SolidFill>(195.0f / 255, 224.0f / 255, 226.0f / 255, 1.0f),
+		std::make_shared<d2dw::SolidFill>(241.0f / 255, 196.0f / 255, 15.0f / 255, 1.0f),
+		std::make_shared<d2dw::SolidFill>(0.0f, 0.0f, 0.0f, 0.2f),
+		std::make_shared<d2dw::CRectF>(2.0f, 2.0f, 2.0f, 2.0f)),
+		DragLine(std::make_shared<d2dw::SolidLine>(1.0f, 0.0f, 0.0f, 1.0f, 1.0f)){};
+//		m_crTop(RGB(232,232,232)),m_crBottom(RGB(232,232,242)){}
+	virtual ~HeaderProperty(){}
+	//CColor GetTopColor()const
+	//{
+	////	return m_crTop;
+	//}
+	//CColor GetBottomColor()const
+	//{
+	//	return m_crBottom;
+	//}
 
 	FRIEND_SERIALIZER
     template <class Archive>
     void serialize(Archive& ar)
     {
-		CCellProperty::serialize(ar);
-		ar("TopColor",m_crTop);
-		ar("BottomColor",m_crBottom);
+		CellProperty::serialize(ar);
+		//ar("TopColor",m_crTop);
+		//ar("BottomColor",m_crBottom);
     }
 };
 
-typedef std::shared_ptr<CHeaderProperty> HeadersPropertyPtr;
+//typedef std::shared_ptr<CHeaderProperty> HeadersPropertyPtr;

@@ -5,10 +5,8 @@ class CColumn;
 
 class CRowColumn
 {
-public:
-	typedef int size_type;
 private:
-	static const size_type invalid_dataindex=-100;
+	static const int invalid_dataindex=-100;
 	CRow* m_pRow;
 	CColumn* m_pColumn;
 public:
@@ -39,7 +37,7 @@ public:
 	bool operator<(const CRowColumn& rhs)const;
 
 	bool IsInvalid()const{return (m_pRow==nullptr || m_pColumn==nullptr);}
-	//bool IsInRange(size_type r0,size_type c0,size_type r1,size_type c1)const
+	//bool IsInRange(int r0,int c0,int r1,int c1)const
 	//{
 	//	return (r0<=m_pRow)&&(m_pRow<=r1)&&(c0<=m_pColumn)&&(m_pColumn<=c1);
 	//

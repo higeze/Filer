@@ -1,0 +1,380 @@
+#include "Direct2DWrite.h"
+
+namespace d2dw
+{
+
+	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd) {}
+
+
+	CComPtr<ID2D1Factory>& CDirect2DWrite::GetD2D1Factory()
+	{
+		if (!m_pD2D1Factory) {
+			if (FAILED(
+				::D2D1CreateFactory(
+					D2D1_FACTORY_TYPE_SINGLE_THREADED,
+					__uuidof(ID2D1Factory),
+					(void**)&m_pD2D1Factory))) {
+				throw std::exception(FILELINEFUNCTION);
+			}
+		}
+		return m_pD2D1Factory;
+	}
+
+	CComPtr<IDWriteFactory>& CDirect2DWrite::GetDWriteFactory()
+	{
+		if (!m_pDWriteFactory) {
+			if (FAILED(
+				::DWriteCreateFactory(
+					DWRITE_FACTORY_TYPE_SHARED,
+					__uuidof(IDWriteFactory),
+					(IUnknown**)&m_pDWriteFactory))) {
+				throw std::exception(FILELINEFUNCTION);
+			}
+		}
+		return m_pDWriteFactory;
+	}
+
+	CComPtr<ID2D1HwndRenderTarget>& CDirect2DWrite::GetHwndRenderTarget()
+	{
+		if (!m_pHwndRenderTarget) {
+			RECT rect;
+			::GetClientRect(m_hWnd, &rect);
+			D2D1_SIZE_U size = D2D1::Size<UINT>(rect.right, rect.bottom);
+			if (FAILED(
+				GetD2D1Factory()->CreateHwndRenderTarget(
+					D2D1::RenderTargetProperties(),
+					D2D1::HwndRenderTargetProperties(m_hWnd, size),
+					&m_pHwndRenderTarget))) {
+				throw std::exception(FILELINEFUNCTION);
+			}
+		}
+		return m_pHwndRenderTarget;
+	}
+
+	CComPtr<ID2D1SolidColorBrush>& CDirect2DWrite::GetColorBrush(const Color& color)
+	{
+		auto iter = m_solidColorBrushMap.find(color);
+		if (iter != m_solidColorBrushMap.end()) {
+			return iter->second;
+		} else {
+			CComPtr<ID2D1SolidColorBrush> pBrush;
+			if (FAILED(GetHwndRenderTarget()->CreateSolidColorBrush(color, &pBrush))) {
+				throw std::exception(FILELINEFUNCTION);
+			} else {
+				auto ret = m_solidColorBrushMap.emplace(color, pBrush);
+				return ret.first->second;
+			}
+		}
+	}
+
+	CComPtr<IDWriteTextFormat>& CDirect2DWrite::GetTextFormat(const Font& font)
+	{
+		auto iter = m_textFormatMap.find(font);
+		if (iter != m_textFormatMap.end()) {
+			return iter->second;
+		} else {
+			CComPtr<IDWriteTextFormat> pTextFormat;
+			if (FAILED(GetDWriteFactory()->CreateTextFormat(
+				font.FamilyName.c_str(),
+				nullptr,
+				DWRITE_FONT_WEIGHT_REGULAR,
+				DWRITE_FONT_STYLE_NORMAL,
+				DWRITE_FONT_STRETCH_NORMAL,
+				font.Size,
+				L"en-us",
+				&pTextFormat))){
+				throw std::exception(FILELINEFUNCTION);
+			} else {
+				pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+				pTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING::DWRITE_WORD_WRAPPING_CHARACTER);
+				auto ret = m_textFormatMap.emplace(font, pTextFormat);
+				return ret.first->second;
+			}
+		}
+	}
+
+	CSizeF CDirect2DWrite::CalcTextSize(const Font& font, const std::wstring& text)
+	{
+		auto fontIter = m_charMap.find(font);
+		if (fontIter == m_charMap.end()) {
+			m_charMap.emplace(font, std::unordered_map<wchar_t, CSizeF>());
+			fontIter = m_charMap.find(font);
+		}
+
+		CSizeF textSize( 0.0f, 0.0f );
+		for (const auto& ch : text) {
+			const auto& iter = fontIter->second.find(ch);
+			CSizeF charSize( 0.0f, 0.0f );
+			if (iter != fontIter->second.end()) {
+				charSize = iter->second;
+			} else {
+				DWRITE_TEXT_METRICS charMetrics;
+				CComPtr<IDWriteTextLayout> pTextLayout = NULL;
+				GetDWriteFactory()->CreateTextLayout(
+					(&ch), 1, GetTextFormat(font),
+					FLT_MAX, FLT_MAX, &pTextLayout);
+				pTextLayout->GetMetrics(&charMetrics);
+				charSize.width = charMetrics.widthIncludingTrailingWhitespace;
+				charSize.height = charMetrics.height;
+				fontIter->second.emplace(ch, charSize);
+			}
+			textSize.width += charSize.width;
+			textSize.height = (std::max)(textSize.height, charSize.height);
+		}
+
+		return textSize;
+	}
+
+	CSizeF CDirect2DWrite::CalcTextSizeWithFixedWidth(const Font& font, const std::wstring& text, const FLOAT width)
+	{
+		auto fontIter = m_charMap.find(font);
+		if (fontIter == m_charMap.end()) {
+			m_charMap.emplace(font, std::unordered_map<wchar_t, CSizeF>());
+			fontIter = m_charMap.find(font);
+		}
+
+		std::vector<D2D1_SIZE_F> lineSizes;
+		lineSizes.emplace_back(D2D1_SIZE_F{0.0f, 0.0f});
+
+		for (const auto& ch : text) {
+			const auto& iter = fontIter->second.find(ch);
+			CSizeF charSize{ 0.0f, 0.0f };
+			if (iter != fontIter->second.end()){
+				charSize = iter->second;
+			} else {
+				DWRITE_TEXT_METRICS charMetrics;
+				CComPtr<IDWriteTextLayout> pTextLayout = NULL;
+				GetDWriteFactory()->CreateTextLayout(
+					(&ch), 1, GetTextFormat(font),
+					FLT_MAX, FLT_MAX, &pTextLayout);
+				pTextLayout->GetMetrics(&charMetrics);
+				charSize.width = charMetrics.widthIncludingTrailingWhitespace;
+				charSize.height = charMetrics.height;
+				fontIter->second.emplace(ch, charSize);
+			}
+			if (lineSizes.back().width + charSize.width > width) {
+				lineSizes.push_back(charSize);
+			} else {
+				lineSizes.back().width += charSize.width;
+				lineSizes.back().height = (std::max)(lineSizes.back().height, charSize.height);
+			}
+		}
+
+		return D2D1::SizeF(width, std::accumulate(lineSizes.begin(), lineSizes.end(), 0.0f, [](FLOAT height, const CSizeF& rhs)->FLOAT {return height + rhs.height; }));
+	}
+
+	void CDirect2DWrite::BeginDraw() 
+	{
+		GetHwndRenderTarget()->BeginDraw(); 
+	}
+
+	void CDirect2DWrite::ClearSolid(const SolidFill& fill)
+	{
+		GetHwndRenderTarget()->Clear(fill.Color);
+	}
+
+	void CDirect2DWrite::EndDraw()
+	{
+		HRESULT hr = GetHwndRenderTarget()->EndDraw();
+		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET) {
+			Clear();
+		}
+	}
+
+
+	void CDirect2DWrite::DrawSolidLine(const SolidLine& line, const D2D1_POINT_2F& p0, const D2D1_POINT_2F& p1)
+	{
+		GetHwndRenderTarget()->DrawLine(p0, p1, GetColorBrush(line.Color),line.Width);
+	}
+
+	void CDirect2DWrite::DrawTextLayout(const FontAndColor& fnc, const std::wstring& text, const D2D1_POINT_2F& origin, const D2D1_SIZE_F& size)
+	{
+		CComPtr<IDWriteTextLayout> pTextLayout = NULL;
+		GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(fnc.Font), size.width, size.height, &pTextLayout);
+		GetHwndRenderTarget()->DrawTextLayout(origin, pTextLayout, GetColorBrush(fnc.Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
+	}
+
+	void CDirect2DWrite::DrawTextLayout(const FontAndColor& fnc, const std::wstring& text, const CRectF& rect)
+	{
+		DrawTextLayout(fnc, text, rect.LeftTop(), rect.Size());
+	}
+
+	void CDirect2DWrite::DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rect)
+	{
+		GetHwndRenderTarget()->DrawRectangle(rect, GetColorBrush(line.Color), line.Width);
+	}
+
+	void CDirect2DWrite::FillSolidRectangle(const SolidFill& fill, const D2D1_RECT_F& rect)
+	{
+		GetHwndRenderTarget()->FillRectangle(rect, GetColorBrush(fill.Color));
+	}
+
+
+
+
+
+
+	//CComPtr<ID2D1DCRenderTarget> CDirect2DWrite::GetDcRenderTarget()
+	//{
+	//	if (!m_pDCRenderTarget) {
+	//		D2D1_RENDER_TARGET_PROPERTIES props =
+	//			D2D1::RenderTargetProperties(
+	//				D2D1_RENDER_TARGET_TYPE_DEFAULT,
+	//				D2D1::PixelFormat(
+	//					DXGI_FORMAT_B8G8R8A8_UNORM,
+	//					D2D1_ALPHA_MODE_IGNORE),
+	//				0.0F, 0.0F,
+	//				D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE
+	//			);
+	//		if (FAILED(GetD2D1Factory()->CreateDCRenderTarget(
+	//			&props, &m_pDCRenderTarget))){
+	//			throw std::exception(FILELINEFUNCTION);
+	//		}
+	//	}
+	//	return m_pDCRenderTarget;
+	//}
+
+	//	if (pGradientBrush == NULL) {
+	//		static const D2D1_GRADIENT_STOP stops[] =
+	//		{
+	//			 {   0.0f,  { 0.0f, 1.0f, 1.0f, 1.0f }  },
+	//			 {   1.0f,  { 0.0f, 0.0f, 1.0f, 0.5f }  },
+	//		};
+	//		hr = GetHwndRenderTarget()->CreateGradientStopCollection(
+	//			stops, sizeof(stops) / sizeof(D2D1_GRADIENT_STOP), &pGradientStops);
+	//		if (!SUCCEEDED(hr)) return hr;
+	//		hr = GetHwndRenderTarget()->CreateLinearGradientBrush(    //©[30] 
+	//			D2D1::LinearGradientBrushProperties(
+	//				D2D1::Point2F(100.0F, 120.0F),
+	//				D2D1::Point2F(100.0F, 270.0F)),
+	//			D2D1::BrushProperties(),
+	//			pGradientStops,
+	//			&pGradientBrush);
+	//		if (!SUCCEEDED(hr)) return hr;
+	//	}
+
+	//	if (m_pHwndRenderTarget->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED)
+	//		return;
+
+	//	RECT rect;
+	//	::GetClientRect(hWnd, &rect);
+	//	GetHwndRenderTarget()->Resize(D2D1::SizeU(rect.right, rect.bottom));
+
+
+	//	GetHwndRenderTarget()->BeginDraw();  //©[35] 
+
+	//	GetHwndRenderTarget()->Clear(D2D1::ColorF(1.0F, 1.0F, 1.0F));
+
+	//	D2D1_ELLIPSE ellipse1 =
+	//		D2D1::Ellipse(D2D1::Point2F(120.0F, 120.0F), 100.0F, 100.0F);
+	//	GetHwndRenderTarget()->DrawEllipse(ellipse1, pGreenBrush, 10.0F);
+
+	//	D2D1_RECT_F rect1 =
+	//		D2D1::RectF(100.0F, 50.0F, 300.0F, 100.F);
+	//	GetHwndRenderTarget()->FillRectangle(&rect1, pBlueBrush);
+
+	//	D2D1_RECT_F rect2 =
+	//		D2D1::RectF(100.0F, 120.0F, 250.0F, 270.F);
+	//	GetHwndRenderTarget()->FillRectangle(&rect2, pGradientBrush);
+
+	//	GetHwndRenderTarget()->EndDraw();
+	//}
+
+	//HRESULT CDirect2DWrite::CreateDeviceResourcesAlt()
+	//{
+	//	HRESULT hr = S_OK;
+
+	//	if (pGreenBrush == NULL) {
+	//		hr = GetDcRenderTarget()->CreateSolidColorBrush(
+	//			D2D1::ColorF(0.0F, 1.0F, 0.0F), &pGreenBrush);
+	//		if (!SUCCEEDED(hr)) return hr;
+	//	}
+	//	if (pBlueBrush == NULL) {
+	//		hr = GetDcRenderTarget()->CreateSolidColorBrush(
+	//			D2D1::ColorF(0.0F, 0.0F, 1.0F, 0.5F), &pBlueBrush);
+	//		if (!SUCCEEDED(hr)) return hr;
+	//	}
+	//	if (pGradientBrush == NULL) {
+	//		static const D2D1_GRADIENT_STOP stops[] =
+	//		{
+	//			 {   0.0f,  { 0.0f, 1.0f, 1.0f, 1.0f }  },
+	//			 {   1.0f,  { 0.0f, 0.0f, 1.0f, 0.5f }  },
+	//		};
+	//		hr = GetDcRenderTarget()->CreateGradientStopCollection(
+	//			stops, sizeof(stops) / sizeof(D2D1_GRADIENT_STOP), &pGradientStops);
+	//		if (!SUCCEEDED(hr)) return hr;
+	//		hr = GetDcRenderTarget()->CreateLinearGradientBrush(
+	//			D2D1::LinearGradientBrushProperties(
+	//				D2D1::Point2F(100.0F, 120.0F),
+	//				D2D1::Point2F(100.0F, 270.0F)),
+	//			D2D1::BrushProperties(),
+	//			pGradientStops,
+	//			&pGradientBrush);
+	//		if (!SUCCEEDED(hr)) return hr;
+	//	}
+
+	//	if (!m_pTextFormat) {
+	//		hr = GetDWriteFactory()->CreateTextFormat(
+	//			L"Arial",
+	//			nullptr,
+	//			DWRITE_FONT_WEIGHT_REGULAR,
+	//			DWRITE_FONT_STYLE_NORMAL,
+	//			DWRITE_FONT_STRETCH_NORMAL,
+	//			ConvertPointSizeToDIP(12.0f),
+	//			L"en-us",
+	//			&m_pTextFormat);
+	//		m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+	//	}
+
+	//	DWRITE_TEXT_METRICS textMetrics;
+	//	FLOAT minWidth;
+	//	if (!m_pTextLayout) {
+	//		D2D1_SIZE_F sizeRT = { 0.0f,0.0f };
+	//		const wchar_t* pStr = L"Direct Write Sample with DC";
+	//		GetDWriteFactory()->CreateTextLayout(pStr, _tcslen(pStr), m_pTextFormat,
+	//			FLT_MAX, FLT_MAX, &m_pTextLayout);
+	//		m_pTextLayout->GetMetrics(&textMetrics);
+	//		m_pTextLayout->DetermineMinWidth(&minWidth);
+	//		//m_pTextLayout->SetMaxWidth(minWidth);
+	//		//m_pTextLayout->SetMaxHeight(textMetrics.height);
+	//	}
+
+	//	return hr;
+	//}
+
+	//void CDirect2DWrite::RenderAlt(HDC hDC, LPRECT pRect)
+	//{
+	//	HRESULT hr;
+
+	//	hr = CreateDeviceResourcesAlt();
+	//	if (!SUCCEEDED(hr)) return;
+
+	//	hr = GetDcRenderTarget()->BindDC(hDC, pRect);
+
+	//	GetDcRenderTarget()->BeginDraw();
+	//	GetDcRenderTarget()->SetTransform(D2D1::IdentityMatrix());
+	//	GetDcRenderTarget()->Clear(D2D1::ColorF(1.0F, 1.0F, 1.0F));  //©[63] 
+
+	//	D2D1_ELLIPSE ellipse1 =
+	//		D2D1::Ellipse(D2D1::Point2F(120.0F, 120.0F), 100.0F, 100.0F);
+	//	GetDcRenderTarget()->DrawEllipse(ellipse1, pGreenBrush, 10.0F);
+
+	//	D2D1_RECT_F rect1 =
+	//		D2D1::RectF(100.0F, 50.0F, 300.0F, 100.F);
+	//	GetDcRenderTarget()->FillRectangle(&rect1, pBlueBrush);
+
+	//	D2D1_RECT_F rect2 =
+	//		D2D1::RectF(100.0F, 120.0F, 250.0F, 270.F);
+	//	GetDcRenderTarget()->FillRectangle(&rect2, pGradientBrush);
+
+	//	D2D1::Point2F ptOrigin = { 0.0f, 0.0f };
+	//	GetDcRenderTarget()->DrawTextLayout(ptOrigin, m_pTextLayout, pBlueBrush);
+
+
+
+
+
+	//	GetDcRenderTarget()->EndDraw();
+	//}
+
+}

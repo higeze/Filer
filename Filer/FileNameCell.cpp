@@ -3,10 +3,10 @@
 #include "FileRow.h"
 #include "GridView.h"
 
-CFileNameCell::CFileNameCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
+CFileNameCell::CFileNameCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	:CParameterCell(pSheet, pRow, pColumn, spProperty){}
 
-std::basic_string<TCHAR> CFileNameCell::GetString()
+std::wstring CFileNameCell::GetString()
 {
 	auto pFileRow = static_cast<CFileRow*>(m_pRow);
 	return pFileRow->GetFilePointer()->GetFileNameWithoutExt();

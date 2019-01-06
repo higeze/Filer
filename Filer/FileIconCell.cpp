@@ -8,7 +8,7 @@
 #include "GridView.h"
 #include "SheetEventArgs.h"
 
-CFileIconCell::CFileIconCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty)
+CFileIconCell::CFileIconCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	:CCell(pSheet, pRow, pColumn, spProperty)
 {
 	//Be careful : It is impossible to plymorphism in constructor, assign signal here.
@@ -66,22 +66,23 @@ std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()
 	}
 }
 
-void CFileIconCell::PaintContent(CDC* pDC, CRect rcPaint)
+void CFileIconCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
-	auto spFile = GetShellFile();
-	CRect rc = rcPaint;
-	rc.bottom = rc.top + 16;
-	rc.right = rc.left + 16;
+	//TODOTODO
+	//auto spFile = GetShellFile();
+	//CRect rc = rcPaint;
+	//rc.bottom = rc.top + 16;
+	//rc.right = rc.left + 16;
 
-	pDC->DrawIconEx(*(spFile->GetIcon().first), rc, 0, NULL, DI_NORMAL);
+	//pDC->DrawIconEx(*(spFile->GetIcon().first), rc, 0, NULL, DI_NORMAL);
 }
 
-CSize CFileIconCell::MeasureContentSize(CDC* pDC)
+d2dw::CSizeF CFileIconCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
 {
-	return CSize(16, 16);
+	return d2dw::CSizeF(16.0f, 16.0f);
 }
 
-CSize CFileIconCell::MeasureContentSizeWithFixedWidth(CDC* pDC)
+d2dw::CSizeF CFileIconCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
 {
-	return MeasureContentSize(pDC);
+	return MeasureContentSize(direct);
 }

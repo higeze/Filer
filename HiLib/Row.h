@@ -11,10 +11,10 @@ class CRow:public CBand
 public:
 	typedef RowTag Tag;
 protected:
-	coordinates_type m_height;
-	coordinates_type m_top;
-	coordinates_type m_minHeight = 2;
-	coordinates_type m_maxHeight = 100;
+	FLOAT m_height;
+	FLOAT m_top;
+	FLOAT m_minHeight = 2;
+	FLOAT m_maxHeight = 100;
 
 public:
 	CRow(CSheet* pSheet):CBand(pSheet),m_height(0),m_top(0){}
@@ -24,31 +24,31 @@ public:
 	virtual std::shared_ptr<CCell>& Cell(CColumn* pCol) { throw std::exception("Not implemented"); }
 
 
-	virtual coordinates_type GetHeight();
-	virtual void SetHeight(const coordinates_type& height);
-	virtual void SetHeightWithoutSignal(const coordinates_type& height){m_height=height;}
+	virtual FLOAT GetHeight();
+	virtual void SetHeight(const FLOAT& height);
+	virtual void SetHeightWithoutSignal(const FLOAT& height){m_height=height;}
 
-	virtual coordinates_type GetTop()const{return m_top+Offset();}
-	//virtual coordinates_type GetTop()const{return m_top;}
-	virtual void SetTop(const coordinates_type& top){m_top=top;}//TODO low setter
-	virtual void SetTopWithoutSignal(const coordinates_type& top){m_top=top;}//TODO low setter
+	virtual FLOAT GetTop()const{return m_top+Offset();}
+	//virtual FLOAT GetTop()const{return m_top;}
+	virtual void SetTop(const FLOAT& top){m_top=top;}//TODO low setter
+	virtual void SetTopWithoutSignal(const FLOAT& top){m_top=top;}//TODO low setter
 
-	virtual coordinates_type GetBottom()const{return m_top+m_height+Offset();}
-	//virtual coordinates_type GetBottom()const{return m_top+m_height;}//TODO low setter
+	virtual FLOAT GetBottom()const{return m_top+m_height+Offset();}
+	//virtual FLOAT GetBottom()const{return m_top+m_height;}//TODO low setter
 
 	virtual void SetVisible(const bool& bVisible, bool notify = true)override;
 	virtual void SetSelected(const bool& bSelected);
 	template<typename TAV>
-	size_type GetIndex()const
+	int GetIndex()const
 	{
 		return m_pSheet->Pointer2Index<RowTag, TAV>(this);
 	}
 	//TODO Refactor
-	virtual coordinates_type GetLeftTop()const override { return GetTop(); }
-	virtual coordinates_type GetRightBottom()/*TODO*/ override { return GetBottom(); }
-	virtual coordinates_type GetMinWidthHeight() override { return m_minHeight; }
-	virtual coordinates_type GetMaxWidthHeight() override { return m_maxHeight; }
-	virtual void SetWidthHeightWithoutSignal(const coordinates_type& height) override { SetHeightWithoutSignal(height); }
+	virtual FLOAT GetLeftTop()const override { return GetTop(); }
+	virtual FLOAT GetRightBottom()/*TODO*/ override { return GetBottom(); }
+	virtual FLOAT GetMinWidthHeight() override { return m_minHeight; }
+	virtual FLOAT GetMaxWidthHeight() override { return m_maxHeight; }
+	virtual void SetWidthHeightWithoutSignal(const FLOAT& height) override { SetHeightWithoutSignal(height); }
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name) override;
 
@@ -62,7 +62,7 @@ class CParentRow:public CRow
 public:
 	CParentRow(CGridView* pGrid);
 	virtual ~CParentRow(){}
-	virtual coordinates_type Offset()const;
+	virtual FLOAT Offset()const;
 };
 
 class CParentHeaderRow:public CParentRow
@@ -79,7 +79,7 @@ class CChildRow:public CRow
 public:
 	CChildRow(CSheetCell* pSheetCell);
 	virtual ~CChildRow(){}
-	virtual coordinates_type Offset()const;
+	virtual FLOAT Offset()const;
 };
 
 class CChildHeaderRow:public CChildRow

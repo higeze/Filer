@@ -17,7 +17,8 @@ class ICeller;
 //class CCell;
 //class CRow;
 class CColumn;
-class CCellProperty;
+struct HeaderProperty;
+class CellProperty;
 class CRect;
 class CPoint;
 struct XTag;
@@ -77,16 +78,6 @@ class CSheet:virtual public CUIElement
 	//Friend classes
 	friend class CFileDragger;
 	friend class CSerializeData;
-
-public:
-	//typedef
-	typedef int size_type;
-	typedef int coordinates_type;
-	typedef std::shared_ptr<CCell> cell_type;
-	typedef std::shared_ptr<CColumn> column_type;
-	typedef std::shared_ptr<CRow> row_type;
-	typedef std::wstring string_type;
-
 public:
 	//static cell Accessor
 	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
@@ -113,12 +104,12 @@ protected:
 	ColumnDictionary m_columnVisibleDictionary; // Index-Pointer Visible Column Dictionary
 	ColumnDictionary m_columnPaintDictionary; // Index-Pointer Paint Column Dictionary
 
-	std::shared_ptr<CCellProperty> m_spHeaderProperty; // HeaderProperty
-	std::shared_ptr<CCellProperty> m_spFilterProperty; // FilterProperty
-	std::shared_ptr<CCellProperty> m_spCellProperty; // CellProperty
+	std::shared_ptr<HeaderProperty> m_spHeaderProperty; // HeaderProperty
+	std::shared_ptr<CellProperty> m_spFilterProperty; // FilterProperty
+	std::shared_ptr<CellProperty> m_spCellProperty; // CellProperty
 
-	column_type m_pHeaderColumn; // Header column
-	row_type m_rowHeader; // Header row
+	std::shared_ptr<CColumn> m_pHeaderColumn; // Header column
+	std::shared_ptr<CRow> m_rowHeader; // Header row
 
 	bool m_bSelected; // Selected or not
 	bool m_bFocused; // Focused or not
@@ -136,9 +127,9 @@ public:
 	boost::signals2::signal<void(CellContextMenuEventArgs&)> CellContextMenu;
 
 	//Constructor
-	CSheet(std::shared_ptr<CCellProperty> spHeaderProperty,
-		std::shared_ptr<CCellProperty> spFilterProperty,
-		std::shared_ptr<CCellProperty> spCellProperty,
+	CSheet(std::shared_ptr<HeaderProperty> spHeaderProperty,
+		std::shared_ptr<CellProperty> spFilterProperty,
+		std::shared_ptr<CellProperty> spCellProperty,
 		CMenu* pContextMenu= &CSheet::ContextMenu);
 
 	//Destructor
@@ -149,13 +140,13 @@ public:
 	void SetSheetStateMachine(std::shared_ptr<CSheetStateMachine>& machine) { m_spStateMachine = machine; }
 	std::shared_ptr<CCursorer> GetCursorerPtr(){return m_spCursorer;} /**< Cursor */
 	void SetContextMenuRowColumn(const CRowColumn& roco){m_rocoContextMenu = roco;}
-	virtual std::shared_ptr<CCellProperty> GetHeaderProperty(){return m_spHeaderProperty;} /** Getter for Header Cell Property */
-	virtual std::shared_ptr<CCellProperty> GetFilterProperty(){return m_spFilterProperty;} /** Getter for Filter Cell Property */
-	virtual std::shared_ptr<CCellProperty> GetCellProperty(){return m_spCellProperty;} /** Getter for Cell Property */
-	virtual column_type GetHeaderColumnPtr()const{return m_pHeaderColumn;} /** Getter for Header Column */
-	virtual void SetHeaderColumnPtr(column_type column){m_pHeaderColumn=column;} /** Setter for Header Column */
-	virtual row_type GetHeaderRowPtr()const{return m_rowHeader;} /** Getter for Header Row */
-	virtual void SetHeaderRowPtr(row_type row){m_rowHeader=row;} /** Setter for Header Row */
+	virtual std::shared_ptr<HeaderProperty> GetHeaderProperty(){return m_spHeaderProperty;} /** Getter for Header Cell Property */
+	virtual std::shared_ptr<CellProperty> GetFilterProperty(){return m_spFilterProperty;} /** Getter for Filter Cell Property */
+	virtual std::shared_ptr<CellProperty> GetCellProperty(){return m_spCellProperty;} /** Getter for Cell Property */
+	virtual std::shared_ptr<CColumn> GetHeaderColumnPtr()const{return m_pHeaderColumn;} /** Getter for Header Column */
+	virtual void SetHeaderColumnPtr(std::shared_ptr<CColumn> column){m_pHeaderColumn=column;} /** Setter for Header Column */
+	virtual std::shared_ptr<CRow> GetHeaderRowPtr()const{return m_rowHeader;} /** Getter for Header Row */
+	virtual void SetHeaderRowPtr(std::shared_ptr<CRow> row){m_rowHeader=row;} /** Setter for Header Row */
 	virtual bool GetSelected()const{return m_bSelected;};
 	virtual void SetSelected(const bool& bSelected){m_bSelected=bSelected;};
 	virtual bool GetFocused()const{return m_bFocused;};
@@ -204,32 +195,31 @@ public:
 	virtual void UpdateRowPaintDictionary();
 	virtual void UpdateColumnPaintDictionary();
 
-	virtual void EraseColumn(column_type spColumn){EraseColumnImpl(spColumn);}
-	virtual void EraseColumnImpl(column_type spColumn);
+	virtual void EraseColumn(std::shared_ptr<CColumn> spColumn){EraseColumnImpl(spColumn);}
+	virtual void EraseColumnImpl(std::shared_ptr<CColumn> spColumn);
 	virtual void EraseRow(CRow* pRow);
-	virtual void EraseRowNotify(CRow* pRow, bool notify = true);
-	virtual void EraseRows(const std::vector<CRow*>& vpRow);
+	virtual void EraseRowNotify(CRow* pRow, bool notify = true);	virtual void EraseRows(const std::vector<CRow*>& vpRow);
 
-	virtual void MoveColumn(size_type colTo, column_type spFromColumn){MoveImpl<ColTag>(colTo, spFromColumn);}
+	virtual void MoveColumn(int colTo, std::shared_ptr<CColumn> spFromColumn){MoveImpl<ColTag>(colTo, spFromColumn);}
 
-	virtual void InsertRow(size_type rowVisib, row_type pRow);
-	virtual void InsertRowNotify(size_type rowVisib, row_type pRow, bool notify = true);
-	virtual void InsertColumn(size_type colTo, column_type pColumn);
-	virtual void InsertColumnNotify(size_type colTo, column_type pColumn, bool notify = true);
+	virtual void InsertRow(int rowVisib, std::shared_ptr<CRow> pRow);
+	virtual void InsertRowNotify(int rowVisib, std::shared_ptr<CRow> pRow, bool notify = true);
+	virtual void InsertColumn(int colTo, std::shared_ptr<CColumn> pColumn);
+	virtual void InsertColumnNotify(int colTo, std::shared_ptr<CColumn> pColumn, bool notify = true);
 
-	virtual coordinates_type GetColumnInitWidth(CColumn* pColumn);
-	virtual coordinates_type GetColumnFitWidth(CColumn* pColumn);
+	virtual FLOAT GetColumnInitWidth(CColumn* pColumn);
+	virtual FLOAT GetColumnFitWidth(CColumn* pColumn);
 
-	virtual coordinates_type GetRowHeight(CRow* pRow);
+	virtual FLOAT GetRowHeight(CRow* pRow);
 
-	virtual string_type GetSheetString()const;
+	virtual std::wstring GetSheetString()const;
 
-	virtual CPoint GetOriginPoint();
-	virtual CSize MeasureSize()const;
+	virtual d2dw::CPointF GetOriginPoint();
+	virtual d2dw::CSizeF MeasureSize()const;
 
-	virtual CRect GetRect()const;
-	virtual CRect GetCellsRect();
-	virtual CRect GetPaintRect()=0;
+	virtual d2dw::CRectF GetRect()const;
+	virtual d2dw::CRectF GetCellsRect();
+	virtual d2dw::CRectF GetPaintRect()=0;
 	//Event handler
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnPaintAll(const PaintEvent& e);
@@ -251,7 +241,7 @@ public:
 	virtual void OnKillFocus(const KillFocusEvent& e);
 	virtual void OnKeyDown(const KeyDownEvent& e);
 
-	std::shared_ptr<CCell> Cell(const CPoint& pt);
+	std::shared_ptr<CCell> Cell(const d2dw::CPointF& pt);
 
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name);
 	virtual void OnRowPropertyChanged(CRow* pRow, const wchar_t* name);
@@ -265,7 +255,7 @@ public:
 	virtual void Clear();
 	virtual CColumn* GetParentColumnPtr(CCell* pCell) = 0;
 	virtual void Sort(CColumn* pCol, Sorts sort, bool postUpdate = true);
-	virtual void Filter(size_type colDisp, std::function<bool(const cell_type&)> predicate);
+	virtual void Filter(int colDisp, std::function<bool(const std::shared_ptr<CCell>&)> predicate);
 	virtual void ResetFilter();
 
 	Compares CheckEqualRange(RowDictionary::iterator rowBegin, RowDictionary::iterator rowEnd, ColumnDictionary::iterator colBegin, ColumnDictionary::iterator colEnd, std::function<void(CCell*, Compares)> action);
@@ -359,11 +349,11 @@ public:
 	//	return dictionary.end();
 	//}
 
-	template<typename TRC, typename TAV> size_type Size()
+	template<typename TRC, typename TAV> int Size()
 	{
 		return GetDictionary<TRC, TAV>().size();
 	}
-	template<typename TAV> std::shared_ptr<CCell> Cell(size_type row, size_type col)
+	template<typename TAV> std::shared_ptr<CCell> Cell(int row, int col)
 	{
 		auto pRow = Index2Pointer<RowTag, TAV>(row);
 		auto pCol = Index2Pointer<ColTag, TAV>(col);
@@ -371,11 +361,11 @@ public:
 			return CSheet::Cell(pRow, pCol);
 		}
 		else {
-			return cell_type();
+			return std::shared_ptr<CCell>();
 		}
 	}
 
-	template<typename TRC> TRC::template SharedPtr Coordinate2Pointer(coordinates_type coordinate)
+	template<typename TRC> TRC::template SharedPtr Coordinate2Pointer(FLOAT coordinate)
 	{
 		auto ptOrigin = GetOriginPoint();
 
@@ -383,7 +373,7 @@ public:
 		auto iter = std::upper_bound(visDic.begin(), visDic.end(), coordinate,
 			[ptOrigin](const int& c, const TRC::Data & data)->bool {
 			if (data.Index >= 0) {
-				return c<(std::max)(ptOrigin.Get<TRC::Axis>(), (LONG)data.DataPtr->GetLeftTop());
+				return c<(std::max)(ptOrigin.Get<TRC::Axis>(), data.DataPtr->GetLeftTop());
 			}
 			else {
 				return c<data.DataPtr->GetLeftTop();
@@ -400,14 +390,14 @@ public:
 		}
 		return iter->DataPtr;
 	}
-	template<typename TRC> int Point2Coordinate(CPoint pt) { return CBand::kInvalidIndex; }
+	template<typename TRC> FLOAT Point2Coordinate(d2dw::CPointF pt) { return CBand::kInvalidIndex; }
 
-	template<typename TRC, typename TAV> int Coordinate2Index(coordinates_type coordinate) { return CBand::kInvalidIndex; }
-	template<typename TAV> RC Point2Indexes(CPoint pt)
+	template<typename TRC, typename TAV> int Coordinate2Index(FLOAT coordinate) { return CBand::kInvalidIndex; }
+	template<typename TAV> RC Point2Indexes(d2dw::CPointF pt)
 	{
 		return RC(Coordinate2Index<RowTag, TAV>(pt.y), Coordinate2Index<ColTag, TAV>(pt.x));
 	}
-	template<typename TAV> std::pair<int, int> Coordinates2Indexes(CPoint pt) 
+	template<typename TAV> std::pair<int, int> Coordinates2Indexes(d2dw::CPointF pt)
 	{ 
 		return std::make_pair(Coordinate2Index<RowTag, TAV>(pt.y), Coordinate2Index<ColTag, TAV>(pt.x));
 	}
@@ -530,7 +520,7 @@ public:
 	template<typename TRC> void FitWidth(TRC::template SharedPtr& e) {  }
 
 	template<typename TRC>
-	void MoveImpl(size_type indexTo, TRC::template SharedPtr spFrom)
+	void MoveImpl(int indexTo, TRC::template SharedPtr spFrom)
 	{
 		int from = spFrom->GetIndex<AllTag>();
 		int to = indexTo;
@@ -591,7 +581,7 @@ public:
 	}
 
 	template<typename TRC, typename TAV>
-	void InsertImpl(size_type index, TRC::template SharedPtr& pInsert)
+	void InsertImpl(int index, TRC::template SharedPtr& pInsert)
 	{
 		auto& dict = GetDictionary<TRC, TAV>();
 		auto& ptrDict = dict.get<PointerTag>();
@@ -617,7 +607,7 @@ public:
 			}
 		}
 		else {//Minus
-			size_type min = (std::min)(GetMinIndex<TRC, TAV>(), -1);
+			int min = (std::min)(GetMinIndex<TRC, TAV>(), -1);
 			if (min == CBand::kInvalidIndex) {
 				index = -1;
 			}else if (index < min) {
@@ -761,7 +751,7 @@ protected:
 	}
 
 	template<class T, class U, class V>
-	void UpdatePaintDictionary(T& visibleDictionary, T& paintDictionary, coordinates_type pageFirst, coordinates_type pageLast, U predFirst, V predLast)
+	void UpdatePaintDictionary(T& visibleDictionary, T& paintDictionary, FLOAT pageFirst, FLOAT pageLast, U predFirst, V predLast)
 	{
 		paintDictionary.clear();
 
@@ -798,10 +788,10 @@ template<> inline ColTag::Dictionary& CSheet::GetDictionary<ColTag, VisTag>()
 	return m_columnVisibleDictionary;
 }
 
-template<> inline int CSheet::Point2Coordinate<RowTag>(CPoint pt) { return pt.y; }
-template<> inline int CSheet::Point2Coordinate<ColTag>(CPoint pt) { return pt.x; }
+template<> inline FLOAT CSheet::Point2Coordinate<RowTag>(d2dw::CPointF pt) { return pt.y; }
+template<> inline FLOAT CSheet::Point2Coordinate<ColTag>(d2dw::CPointF pt) { return pt.x; }
 
-template<> inline int CSheet::Coordinate2Index<RowTag, AllTag>(int coordinate)
+template<> inline int CSheet::Coordinate2Index<RowTag, AllTag>(FLOAT coordinate)
 {
 	auto ptOrigin = GetOriginPoint();
 
@@ -809,13 +799,13 @@ template<> inline int CSheet::Coordinate2Index<RowTag, AllTag>(int coordinate)
 	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
 		[ptOrigin](const RowData& rowData, const int& rhs)->bool {
 		if (rowData.Index >= 0) {
-			return (std::max)(ptOrigin.y, (LONG)rowData.DataPtr->GetBottom()) < rhs;
+			return (std::max)(ptOrigin.y, rowData.DataPtr->GetBottom()) < rhs;
 		}
 		else {
 			return rowData.DataPtr->GetBottom() < rhs;
 		}
 	});
-	size_type index = 0;
+	int index = 0;
 	if (rowIter == dictionary.end()) {
 		index = boost::prior(rowIter)->Index + 1;
 	}
@@ -828,7 +818,7 @@ template<> inline int CSheet::Coordinate2Index<RowTag, AllTag>(int coordinate)
 	return index;
 }
 
-template<> inline int CSheet::Coordinate2Index<RowTag, VisTag>(int coordinate)
+template<> inline int CSheet::Coordinate2Index<RowTag, VisTag>(FLOAT coordinate)
 {
 	auto ptOrigin = GetOriginPoint();
 
@@ -836,13 +826,13 @@ template<> inline int CSheet::Coordinate2Index<RowTag, VisTag>(int coordinate)
 	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
 		[ptOrigin](const RowData& rowData, const int& rhs)->bool {
 		if (rowData.Index >= 0) {
-			return (std::max)(ptOrigin.y, (LONG)rowData.DataPtr->GetBottom()) < rhs;
+			return (std::max)(ptOrigin.y, rowData.DataPtr->GetBottom()) < rhs;
 		}
 		else {
 			return rowData.DataPtr->GetBottom() < rhs;
 		}
 	});
-	size_type index = 0;
+	int index = 0;
 	if (rowIter == dictionary.end()) {
 		index = boost::prior(rowIter)->Index + 1;
 	}
@@ -855,7 +845,7 @@ template<> inline int CSheet::Coordinate2Index<RowTag, VisTag>(int coordinate)
 	return index;
 }
 
-template<> inline int CSheet::Coordinate2Index<ColTag, VisTag>(int coordinate)
+template<> inline int CSheet::Coordinate2Index<ColTag, VisTag>(FLOAT coordinate)
 {
 	auto ptOrigin = GetOriginPoint();
 
@@ -863,13 +853,13 @@ template<> inline int CSheet::Coordinate2Index<ColTag, VisTag>(int coordinate)
 	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
 		[ptOrigin](const ColumnData& rowData, const int& rhs)->bool {
 		if (rowData.Index >= 0) {
-			return (std::max)(ptOrigin.x, (LONG)rowData.DataPtr->GetRight()) < rhs;
+			return (std::max)(ptOrigin.x, rowData.DataPtr->GetRight()) < rhs;
 		}
 		else {
 			return rowData.DataPtr->GetRight() < rhs;
 		}
 	});
-	size_type index = 0;
+	int index = 0;
 	if (rowIter == dictionary.end()) {
 		index = boost::prior(rowIter)->Index + 1;
 	}
@@ -882,7 +872,7 @@ template<> inline int CSheet::Coordinate2Index<ColTag, VisTag>(int coordinate)
 	return index;
 }
 
-template<> inline int CSheet::Coordinate2Index<ColTag, AllTag>(int coordinate)
+template<> inline int CSheet::Coordinate2Index<ColTag, AllTag>(FLOAT coordinate)
 {
 	auto ptOrigin = GetOriginPoint();
 
@@ -890,13 +880,13 @@ template<> inline int CSheet::Coordinate2Index<ColTag, AllTag>(int coordinate)
 	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
 		[ptOrigin](const ColumnData& rowData, const int& rhs)->bool {
 		if (rowData.Index >= 0) {
-			return (std::max)(ptOrigin.x, (LONG)rowData.DataPtr->GetRight()) < rhs;
+			return (std::max)(ptOrigin.x, rowData.DataPtr->GetRight()) < rhs;
 		}
 		else {
 			return rowData.DataPtr->GetRight() < rhs;
 		}
 	});
-	size_type index = 0;
+	int index = 0;
 	if (rowIter == dictionary.end()) {
 		index = boost::prior(rowIter)->Index + 1;
 	}

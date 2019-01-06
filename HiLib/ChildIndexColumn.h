@@ -4,13 +4,13 @@
 class CChildIndexColumn:public CChildColumn
 {
 private:
-	std::unordered_map<CRow*,cell_type> m_mapCell;
+	std::unordered_map<CRow*,std::shared_ptr<CCell>> m_mapCell;
 public:
 	CChildIndexColumn(CSheetCell* pSheet):CChildColumn(pSheet){}
 	virtual ~CChildIndexColumn(){}
-	virtual cell_type& Cell(CRow* pRow);
-	virtual size_type GetDataSize()const;
-	virtual cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn);
-	virtual cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn);
-	virtual cell_type CellTemplate(CRow* pRow, CColumn* pColumn);
+	virtual std::shared_ptr<CCell>& Cell(CRow* pRow);
+	virtual int GetDataSize()const;
+	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn);
+	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn);
+	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn);
 };

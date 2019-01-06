@@ -15,9 +15,9 @@ public:
 	virtual CFileNameColumn* CloneRaw()const{return new CFileNameColumn(*this);}
 	std::shared_ptr<CFileNameColumn> Clone()const{return std::shared_ptr<CFileNameColumn>(CloneRaw());}
 
-	cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
-	cell_type NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
-	cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn)override;
-	cell_type CellTemplate(CRow* pRow, CColumn* pColumn)override;
+	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
+	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
+	std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)override;
+	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)override;
 };
 

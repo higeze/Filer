@@ -137,8 +137,8 @@ public:
 	void OpenFolder(std::shared_ptr<CShellFolder>& spFolder);
 
 
-	string_type GetPath()const;
-	void SetPath(const string_type& path);
+	std::wstring GetPath()const;
+	void SetPath(const std::wstring& path);
 
 	void Drag();
 	BOOL SetDragImage(CIDL firstIdl, CComPtr<IDragSourceHelper> pDragSourceHelper, IDataObject *pDataObject);

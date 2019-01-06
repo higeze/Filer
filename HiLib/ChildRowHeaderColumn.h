@@ -8,6 +8,6 @@ public:
 	CChildRowHeaderColumn(CSheetCell* pSheetCell):CChildIndexColumn(pSheetCell){}
 	virtual ~CChildRowHeaderColumn(){}
 
-	virtual cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn);
-	virtual cell_type CellTemplate(CRow* pRow, CColumn* pColumn);
+	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn);
+	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn);
 };

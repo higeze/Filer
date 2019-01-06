@@ -13,12 +13,6 @@ struct SetCursorEvent;
 class CCursorer
 {
 private:
-	typedef int size_type;
-	typedef int coordinates_type;
-	typedef std::shared_ptr<CCell> cell_type;
-	typedef std::shared_ptr<CColumn> column_type;
-	typedef std::shared_ptr<CRow> row_type;
-
 	std::shared_ptr<CCell> m_oldCell;
 	std::shared_ptr<CCell> m_currentCell;
 	std::shared_ptr<CCell> m_anchorCell;
@@ -56,12 +50,12 @@ public:
 
 	std::vector<RC> GetFocusedRCs(CSheet* pSheet)const;
 	std::vector<RC> GetSelectedRCs(CSheet* pSheet)const;
-	std::vector<row_type> GetSelectedRows(CSheet* pSheet)const;
-	std::vector<column_type> GetSelectedColumns(CSheet* pSheet)const;
+	std::vector<std::shared_ptr<CRow>> GetSelectedRows(CSheet* pSheet)const;
+	std::vector<std::shared_ptr<CColumn>> GetSelectedColumns(CSheet* pSheet)const;
 	void SetFocusedRCs(CSheet* pSheet, std::vector<RC> rcs);
 	void SetSelectedRCs(CSheet* pSheet, std::vector<RC> rocos);
-	void SetSelectedRows(CSheet* pSheet, std::vector<row_type> rcs);
-	void SetSelectedColumns(CSheet* pSheet, std::vector<column_type> cols);
+	void SetSelectedRows(CSheet* pSheet, std::vector<std::shared_ptr<CRow>> rcs);
+	void SetSelectedColumns(CSheet* pSheet, std::vector<std::shared_ptr<CColumn>> cols);
 
 	void Clear()
 	{

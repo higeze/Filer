@@ -5,18 +5,18 @@
 class CGridViewProperty
 {
 public:
-	std::shared_ptr<CBackgroundProperty> m_spBackgroundProperty;
-	std::shared_ptr<CHeaderProperty> m_spPropHeader; 
-	std::shared_ptr<CCellProperty> m_spPropCell; 
+	std::shared_ptr<BackgroundProperty> m_spBackgroundProperty;
+	std::shared_ptr<HeaderProperty> m_spPropHeader; 
+	std::shared_ptr<CellProperty> m_spPropCell; 
 	std::shared_ptr<int> m_spDeltaScroll;
 
-	std::shared_ptr<CHeaderProperty> GetHeaderProperty() { return m_spPropHeader; }
+	std::shared_ptr<HeaderProperty> GetHeaderProperty() { return m_spPropHeader; }
 
 
 	CGridViewProperty()
-		:m_spPropHeader(std::make_shared<CHeaderProperty>()),
-		m_spBackgroundProperty(std::make_shared<CBackgroundProperty>()),
-		m_spPropCell(std::make_shared<CCellProperty>()),
+		:m_spPropHeader(std::make_shared<HeaderProperty>()),
+		m_spBackgroundProperty(std::make_shared<BackgroundProperty>()),
+		m_spPropCell(std::make_shared<CellProperty>()),
 		m_spDeltaScroll(std::make_shared<int>(30))
 	{
 	

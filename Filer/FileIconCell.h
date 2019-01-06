@@ -9,12 +9,12 @@ protected:
 	mutable boost::signals2::connection m_conDelayUpdateAction;
 	mutable boost::signals2::connection m_conIconChanged;
 public:
-	CFileIconCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CCellProperty> spProperty);
+	CFileIconCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty);
 	virtual ~CFileIconCell();
 
 	virtual bool IsComparable()const override{return false;}
-	virtual void PaintContent(CDC* pDC, CRect rcPaint)override;
-	virtual CSize MeasureContentSize(CDC* pDC) override;
-	virtual CSize MeasureContentSizeWithFixedWidth(CDC* pDC) override;
+	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)override;
+	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite& direct) override;
+	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct) override;
 	virtual std::shared_ptr<CShellFile> GetShellFile();
 };

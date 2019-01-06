@@ -14,29 +14,29 @@ Sorts CParentColumnNameHeaderCell::GetSort()const
 	return m_pColumn->GetSort();
 }
 
-void CParentColumnNameHeaderCell::PaintContent(CDC* pDC,CRect rcPaint)
+void CParentColumnNameHeaderCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
 	switch(GetSort()){
 	case Sorts::Up:
 	case Sorts::Down:
 		{
-			CRect rcText(rcPaint);
+			d2dw::CRectF rcText(rcPaint);
 			rcText.right-=TRIANGLE_WIDTH+TRIANGLE_MARGIN.left+TRIANGLE_MARGIN.right;
-			CTextCell::PaintContent(pDC,rcText);
-			CRect rcSort(rcPaint);
+			CTextCell::PaintContent(direct,rcText);
+			d2dw::CRectF rcSort(rcPaint);
 			rcSort.left=rcText.right;
-			PaintSortMark(pDC,rcSort);
+			PaintSortMark(direct,rcSort);
 			break;
 		}
 	default:
-		CTextCell::PaintContent(pDC,rcPaint);
+		CTextCell::PaintContent(direct,rcPaint);
 		break;
 	}
 }
 
-void CParentColumnNameHeaderCell::PaintSortMark(CDC* pDC,CRect rcPaint)
+void CParentColumnNameHeaderCell::PaintSortMark(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
-	std::array<CPoint,3> arPoint;
+	std::array<d2dw::CPointF,3> arPoint;
 
 	switch(GetSort()){
 	case Sorts::Down:
@@ -60,7 +60,7 @@ void CParentColumnNameHeaderCell::PaintSortMark(CDC* pDC,CRect rcPaint)
 		return;
 		break;
 	}
-	CPoint ptTopRight=rcPaint.TopLeft();
+	d2dw::CPointF ptTopRight=rcPaint.LeftTop();
 	for(auto iter=arPoint.begin(),end=arPoint.end();iter!=end;++iter){
 		*iter+=ptTopRight;
 	}

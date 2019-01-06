@@ -8,7 +8,7 @@
 class CParentMapColumn:public CParentColumn
 {
 protected:
-	std::unordered_map<CRow*,cell_type> m_mapCell; /**<Map to hold row-cell*/
+	std::unordered_map<CRow*,std::shared_ptr<CCell>> m_mapCell; /**<Map to hold row-cell*/
 public:
 	/**
 	 *  Constructor
@@ -35,27 +35,27 @@ public:
 	/**
 	 *  Cell accessor
 	 */
-	virtual cell_type& Cell(CRow* pRow )override;
+	virtual std::shared_ptr<CCell>& Cell(CRow* pRow )override;
 	/**
 	 *  Header Cell Template
 	 */
-	virtual cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
+	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
 	/**
 	 *  Header Header Cell Template
 	 */
-	virtual cell_type HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
+	virtual std::shared_ptr<CCell> HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
 	/**
 	 *  Name Header Cell Template
 	 */
-	virtual cell_type NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
+	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
 	/**
 	 *  Filter Cell Template
 	 */
-	virtual cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn)override;
+	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)override;
 	/**
 	 *  Cell Template
 	 */
-	virtual cell_type CellTemplate(CRow* pRow, CColumn* pColumn)override;
+	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)override;
 
 	virtual void Clear(){m_mapCell.clear();}
 };
@@ -83,6 +83,6 @@ public:
 	/**
 	 *  Header Cell Template
 	 */
-	cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
+	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
 
 };

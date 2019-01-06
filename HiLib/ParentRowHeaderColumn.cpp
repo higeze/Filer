@@ -5,27 +5,27 @@
 #include "Cell.h"
 #include "ParentRowHeaderCell.h"
 
-CParentRowHeaderColumn::cell_type CParentRowHeaderColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+CParentRowHeaderColumn::std::shared_ptr<CCell> CParentRowHeaderColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CParentRowHeaderCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
-CParentRowHeaderColumn::cell_type CParentRowHeaderColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+CParentRowHeaderColumn::std::shared_ptr<CCell> CParentRowHeaderColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CParentRowHeaderCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
-CParentRowHeaderColumn::cell_type CParentRowHeaderColumn::HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+CParentRowHeaderColumn::std::shared_ptr<CCell> CParentRowHeaderColumn::HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CParentRowHeaderCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
-CParentRowHeaderColumn::cell_type CParentRowHeaderColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
+CParentRowHeaderColumn::std::shared_ptr<CCell> CParentRowHeaderColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CParentRowHeaderCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
-CParentRowHeaderColumn::cell_type CParentRowHeaderColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
+CParentRowHeaderColumn::std::shared_ptr<CCell> CParentRowHeaderColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CParentRowHeaderIndexCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }

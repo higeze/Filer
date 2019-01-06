@@ -15,9 +15,9 @@ public:
 	virtual CFileLastWriteColumn* CloneRaw()const{return new CFileLastWriteColumn(*this);}
 	virtual std::shared_ptr<CFileLastWriteColumn> Clone()const{return std::shared_ptr<CFileLastWriteColumn>(CloneRaw());}
 
-	virtual cell_type HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
-	virtual cell_type NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
-	virtual cell_type FilterCellTemplate(CRow* pRow, CColumn* pColumn)override;
-	virtual cell_type CellTemplate(CRow* pRow, CColumn* pColumn)override;
+	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
+	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;
+	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)override;
+	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)override;
 };
 

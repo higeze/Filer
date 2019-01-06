@@ -13,7 +13,7 @@ class EventArgs
 {
 public:
 	typedef IWnd window_type;
-	typedef int size_type;
+	typedef int int;
 public:
 	window_type* m_pWnd;
 	EventArgs(window_type* pWnd):m_pWnd(pWnd){}
@@ -37,10 +37,10 @@ public:
 class CellEventArgs:public EventArgs
 {
 public:
-	typedef CCell cell_type;
+	typedef CCell std::shared_ptr<CCell>;
 public:
-	cell_type* m_pCell;
-	CellEventArgs(window_type* pWnd,cell_type* pCell):EventArgs(pWnd),m_pCell(pCell){}
+	std::shared_ptr<CCell>* m_pCell;
+	CellEventArgs(window_type* pWnd,std::shared_ptr<CCell>* pCell):EventArgs(pWnd),m_pCell(pCell){}
 	virtual ~CellEventArgs(){}
 };
 
@@ -48,7 +48,7 @@ class CellContextMenuEventArgs:public CellEventArgs
 {
 public:
 	CPoint m_ptClient;
-	CellContextMenuEventArgs(window_type* pWnd,cell_type* pCell,CPoint ptClient)
+	CellContextMenuEventArgs(window_type* pWnd,std::shared_ptr<CCell>* pCell,CPoint ptClient)
 		:CellEventArgs(pWnd,pCell),m_ptClient(ptClient){}
 	virtual CellContextMenuEventArgs(){}
 };

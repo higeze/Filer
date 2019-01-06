@@ -7,60 +7,54 @@
 #include "MyDC.h"
 
 
-CPathCell::string_type CPathCell::GetString()
+std::wstring CPathCell::GetString()
 {
 	return static_cast<CFilerGridView*>(m_pSheet)->GetPath();
 }
 
-CRect CPathCell::GetRect()const
+d2dw::CRectF CPathCell::GetRect()const
 {
-	return CRect(
+	return d2dw::CRectF(
 		m_pSheet->ZeroPointer<ColTag, VisTag>()->GetLeft(),
 		m_pRow->GetTop(),
 		m_pSheet->LastPointer<ColTag, VisTag>()->GetRight(),
 		m_pRow->GetBottom());
 }
 
-CSize CPathCell::GetFitSize(CDC* pDC)
+d2dw::CSizeF CPathCell::GetFitSize(d2dw::CDirect2DWrite& direct)
 {
-	CCell::GetFitSize(pDC);
-	m_fitSize.cx = 0;//Zero Width
+	CCell::GetFitSize(direct);
+	m_fitSize.width = 0;//Zero Width
 	return m_fitSize;
 }
 
-CSize CPathCell::GetActSize(CDC* pDC)
+d2dw::CSizeF CPathCell::GetActSize(d2dw::CDirect2DWrite& direct)
 {
 	if(!m_bActMeasureValid){
 		auto width = m_pSheet->LastPointer<ColTag, VisTag>()->GetRight() - m_pSheet->ZeroPointer<ColTag, VisTag>()->GetLeft();
-		auto fitSize = MeasureSize(pDC); (pDC);
-		if(fitSize.cx <= width){
-			m_actSize.cx = width;
-			m_actSize.cy = fitSize.cy;
+		auto fitSize = MeasureSize(direct);
+		if(fitSize.width <= width){
+			m_actSize.width = width;
+			m_actSize.height = fitSize.height;
 			m_bActMeasureValid = true;
 		}else{
-			m_actSize = MeasureSizeWithFixedWidth(pDC);
+			m_actSize = MeasureSizeWithFixedWidth(direct);
 			m_bActMeasureValid = true;
 		}
 	}
 	return m_actSize;
 }
 
-CSize CPathCell::MeasureContentSizeWithFixedWidth(CDC* pDC)
+d2dw::CSizeF CPathCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
 {
 	//Calc Content Rect
-	CRect rcCenter(0,0,
+	d2dw::CRectF rcCenter(0,0,
 		m_pSheet->LastPointer<ColTag, VisTag>()->GetRight() - m_pSheet->ZeroPointer<ColTag, VisTag>()->GetLeft(),0);
-	CRect rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
+	d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
 	//Calc Content Rect
-	HFONT hFont=(HFONT)pDC->SelectFont(*m_spProperty->GetFontPtr());
-	rcContent.SetRect(0,0,rcContent.Width(),0);
 	std::basic_string<TCHAR> str=GetString();
 	if(str.empty()){str=_T("a");}
-	pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()),str.size(),rcContent,
-		DT_CALCRECT|GetFormat(),NULL);
-	pDC->SelectFont(hFont);
-	//rcContent.right = rcContent.left;//Zero width
-	return rcContent.Size();
+	return direct.CalcTextSizeWithFixedWidth(m_spProperty->FontAndColor->Font, str, rcContent.Width());
 }
 
 void CPathCell::OnPaint(const PaintEvent& e)
@@ -68,7 +62,7 @@ void CPathCell::OnPaint(const PaintEvent& e)
 	CCell::OnPaint(e);
 }
 
-void CPathCell::SetStringCore(const string_type& str)
+void CPathCell::SetStringCore(const std::wstring& str)
 {
 	static_cast<CFilerGridView*>(m_pSheet)->SetPath(str);
 }

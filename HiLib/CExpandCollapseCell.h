@@ -6,7 +6,7 @@ class CExpandCollapseCell:public CCell
 private:
 	bool m_isExpanded;
 public:
-	CExpandCollapseCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CCellProperty> spProperty)
+	CExpandCollapseCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty)
 		:CCell(pSheet, pRow, pColumn, spProperty), m_isExpanded(true){}
 	virtual ~CExpandCollapseCell(){}
 };
