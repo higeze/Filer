@@ -56,7 +56,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		void on_entry(event_t const & e, fsm_t & machine)
 		{
 			BOOST_LOG_TRIVIAL(trace) << "LButtonDragState";
-			machine.m_pSheet->OnLButtonBeginDrag(LButtonBeginDragEvent(e.Flags, e.Point));
+			machine.m_pSheet->OnLButtonBeginDrag(LButtonBeginDragEvent(e.WindowPtr, e.Direct, e.Flags, e.Point));
 		}
 	};
 
@@ -67,7 +67,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template<class Event>
 		void Action_LButtonUp(Event const & e)
 		{
-			m_pSheet->OnLButtonClk(LButtonClkEvent(e.Flags, e.Point));
+			m_pSheet->OnLButtonClk(LButtonClkEvent(e.WindowPtr, e.Direct, e.Flags, e.Point));
 			m_pSheet->OnLButtonUp(e);
 		}
 
@@ -96,7 +96,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template<class Event>
 		void Action_Upped_LButtonDblClkTimeExceed(Event const & e)
 		{
-			m_pSheet->OnLButtonSnglClk(LButtonSnglClkEvent(e.Flags, e.Point));
+			m_pSheet->OnLButtonSnglClk(LButtonSnglClkEvent(e.WindowPtr, e.Direct, e.Flags, e.Point));
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
 				p->GetFilterTimerPtr()->cancel();
 			}

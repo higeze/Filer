@@ -65,25 +65,20 @@ void CFavoriteCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPa
 	CFileIconCell::PaintContent(direct, rcPaint);
 
 	//Paint Text
-	//TODOTODO
-	//pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
 
-	////Find font size
-	//CFont font;
-	//HFONT hFont = NULL;
-	//CRect rcContent;
-	//std::wstring str = GetShortName();
-	//int i = 0;
-	//do {
-	//	font = CFont(m_spProperty->GetFontPtr()->GetPointSize() - i, m_spProperty->GetFontPtr()->GetFaceName());
-	//	hFont = (HFONT)pDC->SelectFont(font);
-	//	pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()), str.size(), rcContent,
-	//		DT_CALCRECT | GetFormat()&~DT_WORDBREAK, NULL);
-	//	pDC->SelectFont(hFont);
-	//	i++;
-	//} while (rcContent.Width()>16);
-	//hFont = (HFONT)pDC->SelectFont(font);
-	////rcPaint.top = rcPaint.bottom - rcContent.Height();
-	//pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()), -1, rcPaint, GetFormat(), NULL);
-	//pDC->SelectFont(hFont);
+	//Find font size
+	std::wstring str = GetShortName();
+	d2dw::CFontF font = m_spProperty->FontAndColor->Font;
+	d2dw::CSizeF size = direct.CalcTextSize(font, str);
+
+	while (size.width > direct.Pixels2DipsX(16)){
+		font.Size -= 1.0f;
+		size = direct.CalcTextSize(font, str);
+	}
+	font.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
+	font.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR;
+	rcPaint.right = rcPaint.left + direct.Pixels2DipsX(16);
+	rcPaint.bottom = rcPaint.top + direct.Pixels2DipsY(16);
+
+	direct.DrawTextLayout(d2dw::FontAndColor(font, m_spProperty->FontAndColor->Color), str, rcPaint);
 }

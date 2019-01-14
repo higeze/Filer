@@ -13,7 +13,7 @@ FLOAT CRow::GetHeight()
 	return m_height;
 }
 
-void CRow::SetHeight(const FLOAT& height)
+void CRow::SetHeight(const FLOAT height)
 {
 	if(m_height!=height){
 		m_height=height;

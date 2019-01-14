@@ -5,28 +5,29 @@
 //
 
 CBoolCell::CBoolCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,bool b)
-	:CTextCell(pSheet,pRow,pColumn,spProperty),m_bool(b),m_checkBox(NULL,[&]()->bool{return m_bool;},[&](const bool& b)->void{m_bool = b;})
+	:CTextCell(pSheet,pRow,pColumn,spProperty),m_bool(b)//,m_checkBox(NULL,[&]()->bool{return m_bool;},[&](const bool& b)->void{m_bool = b;})
 {
 }
 
-void CBoolCell::PaintContent(CDC* pDC,CRect rcPaint)
+void CBoolCell::PaintContent(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint)
 {
-	rcPaint.right=rcPaint.left+rcPaint.Height();
-	m_checkBox.SetRect(rcPaint);
-	m_checkBox.OnPaint(PaintEvent(pDC));
+	//TODOTODO
+	//rcPaint.right=rcPaint.left+rcPaint.Height();
+	//m_checkBox.SetRect(rcPaint);
+	//m_checkBox.OnPaint(PaintEvent(pDC));
 }
-CSize CBoolCell::MeasureSize(CDC* pDC)
+d2dw::CSizeF CBoolCell::MeasureSize(d2dw::CDirect2DWrite& direct)
 {
-	CRect rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(CRect(0,0,5,5))));
+	d2dw::CRectF rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(d2dw::CRectF(0,0,5,5))));
 	return rcCenter.Size();	
 }
 
-CSize CBoolCell::MeasureSizeWithFixedWidth(CDC* pDC)
+d2dw::CSizeF CBoolCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
 {
-	return MeasureSize(pDC);
+	return MeasureSize(direct);
 }
 
-CBoolCell::std::wstring CBoolCell::GetString()
+std::wstring CBoolCell::GetString()
 {
 	return boost::lexical_cast<std::wstring>(m_bool);
 }

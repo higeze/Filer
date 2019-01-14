@@ -9,11 +9,13 @@ CInplaceEdit::CInplaceEdit(
 	std::function<void(const std::wstring&)> setter,
 	std::function<void(const std::wstring&)> changed,
 	std::function<void()> final,
+	CFont font,
 	UINT dwDTFormat)
 	:m_getter(getter),
 	m_setter(setter),
 	m_changed(changed),
 	m_final(final),
+	m_font(font),
 	m_format(dwDTFormat),
 	m_bAlt(false),
 	m_strInit(getter())
@@ -41,6 +43,14 @@ CInplaceEdit::CInplaceEdit(
 	AddMsgHandler(WM_KILLFOCUS,&CInplaceEdit::OnKillFocus,this);
 	AddCmdCdHandler(EN_CHANGE,&CInplaceEdit::OnCmdEnChange,this);	
 }
+
+HWND CInplaceEdit::Create(HWND hWnd, RECT& rcClient)
+{
+	HWND hWndRet = CEdit::Create(hWnd, rcClient);
+	SetFont(m_font);
+	return hWndRet;
+}
+
 
 LRESULT CInplaceEdit::OnSysKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {

@@ -9,6 +9,7 @@
 #include "CDataString.h"
 #include "MyString.h"
 #include "SerializerEnableIf.h"
+#include "CellProperty.h"
 
 class CSerializer{
 private:

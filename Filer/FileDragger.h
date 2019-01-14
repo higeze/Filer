@@ -10,10 +10,6 @@ class CSheet;
 class CFileDragger:public IDragger
 {
 private:
-	typedef int int;
-	typedef int FLOAT;
-
-private:
 	CPoint m_ptDragStart;
 public:
 	CFileDragger():m_ptDragStart(-1, -1){}

@@ -42,17 +42,17 @@ void CParentColumnNameHeaderCell::PaintSortMark(d2dw::CDirect2DWrite& direct, d2
 	case Sorts::Down:
 		{
 			int top=(rcPaint.Height()-TRIANGLE_HEIGHT)/2;
-			arPoint[0]=CPoint(TRIANGLE_MARGIN.left,top);
-			arPoint[1]=CPoint(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH/2,top+TRIANGLE_HEIGHT);
-			arPoint[2]=CPoint(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH,top);
+			arPoint[0]= d2dw::CPointF(TRIANGLE_MARGIN.left,top);
+			arPoint[1]= d2dw::CPointF(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH/2,top+TRIANGLE_HEIGHT);
+			arPoint[2]= d2dw::CPointF(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH,top);
 			break;
 		}
 	case Sorts::Up:
 		{
 			int bottom=(rcPaint.Height()-TRIANGLE_HEIGHT)/2+TRIANGLE_HEIGHT;
-			arPoint[0]=CPoint(TRIANGLE_MARGIN.left,bottom);
-			arPoint[1]=CPoint(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH/2,bottom-TRIANGLE_HEIGHT);
-			arPoint[2]=CPoint(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH,bottom);
+			arPoint[0]= d2dw::CPointF(TRIANGLE_MARGIN.left,bottom);
+			arPoint[1]= d2dw::CPointF(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH/2,bottom-TRIANGLE_HEIGHT);
+			arPoint[2]= d2dw::CPointF(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH,bottom);
 			break;
 		}
 
@@ -64,47 +64,48 @@ void CParentColumnNameHeaderCell::PaintSortMark(d2dw::CDirect2DWrite& direct, d2
 	for(auto iter=arPoint.begin(),end=arPoint.end();iter!=end;++iter){
 		*iter+=ptTopRight;
 	}
-	HPEN hPen=pDC->SelectPen((HPEN)::GetStockObject(WHITE_PEN));
-	HBRUSH hBr = pDC->SelectBrush((HBRUSH)::GetStockObject(LTGRAY_BRUSH));
-	::Polygon(*pDC,&arPoint[0],3);
-	pDC->SelectPen(hPen);
-	pDC->SelectBrush(hBr);
+	//TODOTODO
+	//HPEN hPen=pDC->SelectPen((HPEN)::GetStockObject(WHITE_PEN));
+	//HBRUSH hBr = pDC->SelectBrush((HBRUSH)::GetStockObject(LTGRAY_BRUSH));
+	//::Polygon(*pDC,&arPoint[0],3);
+	//pDC->SelectPen(hPen);
+	//pDC->SelectBrush(hBr);
 
 }
 
-CSize CParentColumnNameHeaderCell::GetSortSize()const
+d2dw::CSizeF CParentColumnNameHeaderCell::GetSortSize()const
 {
 	switch(GetSort()){
 	case Sorts::Up:
 	case Sorts::Down:
-		return CSize(TRIANGLE_WIDTH+TRIANGLE_MARGIN.left+TRIANGLE_MARGIN.right,
+		return d2dw::CSizeF(TRIANGLE_WIDTH+TRIANGLE_MARGIN.left+TRIANGLE_MARGIN.right,
 					TRIANGLE_HEIGHT+TRIANGLE_MARGIN.top+TRIANGLE_MARGIN.bottom);
 		break;
 	default:
-		return CSize();
+		return d2dw::CSizeF();
 		break;
 	}
 
 }
 
-CSize CParentColumnNameHeaderCell::MeasureContentSize(CDC* pDC)
+d2dw::CSizeF CParentColumnNameHeaderCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
 {
-	CSize size = CTextCell::MeasureContentSize(pDC);
-	CSize sizeTri = GetSortSize();
+	d2dw::CSizeF size = CTextCell::MeasureContentSize(direct);
+	d2dw::CSizeF sizeTri = GetSortSize();
 
-	size.cx += sizeTri.cx;
-	size.cy = max(size.cy, sizeTri.cy);
+	size.width += sizeTri.width;
+	size.height = (std::max)(size.height, sizeTri.height);
 
 	return size;
 }
 
-CSize CParentColumnNameHeaderCell::MeasureContentSizeWithFixedWidth(CDC* pDC)
+d2dw::CSizeF CParentColumnNameHeaderCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
 {
-	CSize size = CTextCell::MeasureContentSizeWithFixedWidth(pDC);
-	CSize sizeTri = GetSortSize();
+	d2dw::CSizeF size = CTextCell::MeasureContentSizeWithFixedWidth(direct);
+	d2dw::CSizeF sizeTri = GetSortSize();
 
-	size.cx += sizeTri.cx;
-	size.cy = max(size.cy, sizeTri.cy);
+	size.width += sizeTri.width;
+	size.height = (std::max)(size.height, sizeTri.height);
 
 	return size;
 }

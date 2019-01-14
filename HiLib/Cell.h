@@ -101,16 +101,16 @@ public:
 	
 	//Event
 	virtual void OnPaint(const PaintEvent& e);
-	virtual void OnLButtonDown(const LButtonDownEvent& e);
-	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) {/*Do Nothing*/ }
-	virtual void OnLButtonUp(const LButtonUpEvent& e);
-	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e);
+	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
+	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override {/*Do Nothing*/ }
+	virtual void OnLButtonUp(const LButtonUpEvent& e) override;
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override;
 
-	virtual void OnContextMenu(const ContextMenuEvent& e);
+	virtual void OnContextMenu(const ContextMenuEvent& e) override;
 	virtual void OnSetFocus(const SetFocusEvent& e);
 	virtual void OnSetCursor(const SetCursorEvent& e){/*Do Nothing*/}
 	virtual void OnKillFocus(const KillFocusEvent& e);
-	virtual void OnKeyDown(const KeyDownEvent& e){/*Do Nothing*/};
+	virtual void OnKeyDown(const KeyDownEvent& e) override {/*Do Nothing*/};
 
 	//String
 	virtual std::wstring GetString();

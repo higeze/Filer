@@ -21,6 +21,7 @@ private:
 	//std::shared_ptr<CGridViewProperty> m_spGridViewProp;
 	CWnd* m_pParentWnd;
 
+	CFont m_font;
 	unsigned int m_prevID;
 	int m_contextMenuTabIndex;
 

@@ -20,20 +20,21 @@
 #include "PropertySheetCell.h"
 #include <type_traits>
 #include "SerializerEnableIf.h"
+#include "CellProperty.h"
 
 class CCellSerializer
 {
 private:
 	std::weak_ptr<CSheet> m_pSheet;
 	CDC* m_pDC;
-	std::shared_ptr<CellProperty> m_spPropSheetCellHeader;
+	std::shared_ptr<HeaderProperty> m_spPropSheetCellHeader;
 	std::shared_ptr<CellProperty> m_spPropSheetCellFilter;
 	std::shared_ptr<CellProperty> m_spPropSheetCellCell;
 
 public:
 	CCellSerializer(
 		std::shared_ptr<CSheet> pSheet,
-		std::shared_ptr<CellProperty> spPropSheetCellHeader,
+		std::shared_ptr<HeaderProperty> spPropSheetCellHeader,
 		std::shared_ptr<CellProperty> spPropSheetCellFilter,
 		std::shared_ptr<CellProperty> spPropSheetCellCell)
 		:m_pSheet(pSheet),
@@ -149,29 +150,29 @@ public:
 	}
 
 	//For Color
-	void SerializeValue(CColor& t,CRow* pRow,CColumn* pCol)
-	{
-		if(auto spSheet=m_pSheet.lock()){
-			pCol->Cell(pRow)=std::make_shared<CColorCell>(
-				spSheet.get(),
-				pRow,
-				pCol,
-				spSheet->GetCellProperty(),
-				t);
-		}
-	}
-	//For Font
-	void SerializeValue(CFont& t,CRow* pRow,CColumn* pCol)
-	{
-		if(auto spSheet=m_pSheet.lock()){
-			pCol->Cell(pRow)=std::make_shared<CFontCell>(
-				spSheet.get(),
-				pRow,
-				pCol,
-				spSheet->GetCellProperty(),
-				t);
-		}
-	}
+	//TODOTODO void SerializeValue(CColor& t,CRow* pRow,CColumn* pCol)
+	//{
+	//	if(auto spSheet=m_pSheet.lock()){
+	//		pCol->Cell(pRow)=std::make_shared<CColorCell>(
+	//			spSheet.get(),
+	//			pRow,
+	//			pCol,
+	//			spSheet->GetCellProperty(),
+	//			t);
+	//	}
+	//}
+	////For Font
+	//TODOTODO void SerializeValue(CFont& t,CRow* pRow,CColumn* pCol)
+	//{
+	//	if(auto spSheet=m_pSheet.lock()){
+	//		pCol->Cell(pRow)=std::make_shared<CFontCell>(
+	//			spSheet.get(),
+	//			pRow,
+	//			pCol,
+	//			spSheet->GetCellProperty(),
+	//			t);
+	//	}
+	//}
 
 	//For bool
 	void SerializeValue(bool& t,CRow* pRow,CColumn* pCol)
@@ -381,21 +382,21 @@ public:
 	}
 
 	//For Color
-	void DeserializeValue(CColor& t,CRow* pRow,CColumn* pColumn)
-	{
-		if(auto p=std::dynamic_pointer_cast<CColorCell>(pColumn->Cell(pRow))){
-			t=p->GetColor();
-		}
-	}
+	//TODOTODO void DeserializeValue(CColor& t,CRow* pRow,CColumn* pColumn)
+	//{
+	//	if(auto p=std::dynamic_pointer_cast<CColorCell>(pColumn->Cell(pRow))){
+	//		t=p->GetColor();
+	//	}
+	//}
 
 	//For Font
-	void DeserializeValue(CFont& t,CRow* pRow,CColumn* pColumn)
-	{
-		if(auto p=std::dynamic_pointer_cast<CFontCell>(pColumn->Cell(pRow))){
-			t=p->GetFont();
-//			t.Create();
-		}
-	}	
+//TODOTODO	void DeserializeValue(CFont& t,CRow* pRow,CColumn* pColumn)
+//	{
+//		if(auto p=std::dynamic_pointer_cast<CFontCell>(pColumn->Cell(pRow))){
+//			t=p->GetFont();
+////			t.Create();
+//		}
+//	}	
 	//For enum
 	template<class T, typename ENABLE_IF_ENUM>
 	void DeserializeValue(T& t,CRow* pRow,CColumn* pColumn)

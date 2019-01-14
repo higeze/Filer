@@ -4,8 +4,9 @@
 #include "ChildColumnHeaderCell.h"
 #include "TextCell.h"
 #include "EmptyCell.h"
+#include "CellProperty.h"
 
-CChildIndexColumn::std::shared_ptr<CCell>& CChildIndexColumn::Cell(CRow* pRow )
+std::shared_ptr<CCell>& CChildIndexColumn::Cell(CRow* pRow )
 {
 	auto iter=m_mapCell.find(pRow);
 	if(iter!=m_mapCell.end()){
@@ -19,22 +20,22 @@ CChildIndexColumn::std::shared_ptr<CCell>& CChildIndexColumn::Cell(CRow* pRow )
 	}
 }
 
-CChildIndexColumn::int CChildIndexColumn::GetDataSize()const
+int CChildIndexColumn::GetDataSize()const
 {
 	throw std::exception("CIndexColumn:NotImplemented");
 }
 
-CChildIndexColumn::std::shared_ptr<CCell> CChildIndexColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CChildIndexColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CChildColumnHeaderCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
-CChildIndexColumn::std::shared_ptr<CCell> CChildIndexColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CChildIndexColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CEmptyCell>(m_pSheet,pRow,pColumn,m_pSheet->GetFilterProperty());
 }
 
-CChildIndexColumn::std::shared_ptr<CCell> CChildIndexColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CChildIndexColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CTextCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 }

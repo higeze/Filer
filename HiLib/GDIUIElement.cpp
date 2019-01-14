@@ -4,19 +4,19 @@ HTHEME CGDIUIElement::m_hButtonTheme = NULL;
 
 void CTextBlock::OnPaint(const PaintEvent& e)
 {
-	if(!m_bVisible)return;
+	//if(!m_bVisible)return;
 
-	HFONT hFont = e.DCPtr->SelectFont(*m_spFont);
+	//HFONT hFont = e.DCPtr->SelectFont(*m_spFont);
 
-	CRect rc(GetRect());
-	rc.DeflateRect(m_margin);
-	//e.DCPtr->Rectangle(rc);
-	if(m_spFont->GetEscapement() == 900){
-		rc.SetRect(rc.left,rc.bottom,rc.left+rc.Height(),rc.top);
-	}
-	e.DCPtr->DrawTextExW(const_cast<LPWSTR>(m_wstrText.c_str()),-1,rc,*m_spFormat,NULL);
+	//CRect rc(GetRect());
+	//rc.DeflateRect(m_margin);
+	////e.DCPtr->Rectangle(rc);
+	//if(m_spFont->GetEscapement() == 900){
+	//	rc.SetRect(rc.left,rc.bottom,rc.left+rc.Height(),rc.top);
+	//}
+	//e.DCPtr->DrawTextExW(const_cast<LPWSTR>(m_wstrText.c_str()),-1,rc,*m_spFormat,NULL);
 
-	e.DCPtr->SelectFont(hFont);
+	//e.DCPtr->SelectFont(hFont);
 }
 
 void CTextBlock::Measure(CDC* pDC)

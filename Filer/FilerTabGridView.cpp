@@ -32,7 +32,8 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<CGridViewProperty> spGridVi
 LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	//Tab
-	SetFont(*(m_spFilerView->GetHeaderProperty()->GetFontPtr()), TRUE);
+	m_font = m_spFilerView->GetHeaderProperty()->FontAndColor->Font.GetGDIFont();
+	SetFont(m_font, TRUE);
 
 	//Capture KeyDown Msg in FilerView
 	auto fun = m_spFilerView->GetMsgHandler(WM_KEYDOWN);
@@ -69,7 +70,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 		rcTabClient.DeflateRect(nPaddingX, nPaddingY);
 
 		m_spFilerView->PostUpdate(Updates::Rect);
-		m_spFilerView->SetUpdateRect(rcTabClient);
+		m_spFilerView->SetUpdateRect(m_spFilerView->GetDirect()->Pixels2Dips(rcTabClient));
 
 		//SendMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
 	});

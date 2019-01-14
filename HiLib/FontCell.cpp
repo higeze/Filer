@@ -8,11 +8,11 @@
 #include "Column.h"
 #include "GridView.h"
 
-CFontCell::CFontCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,d2dw::Font font)
+CFontCell::CFontCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,d2dw::CFontF font)
 	:CTextCell(pSheet,pRow,pColumn,spProperty),
 	m_font(font){}
 
-d2dw::Font CFontCell::GetFont(){return m_font;}
+d2dw::CFontF CFontCell::GetFont(){return m_font;}
 
 void CFontCell::PaintContent(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint)
 {

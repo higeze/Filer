@@ -17,7 +17,7 @@ protected:
 	Sorts m_sort; //Indicate sort state
 	FLOAT m_left; //left position from parent sheet
 	FLOAT m_width; //width
-	FLOAT m_minWidth = 16;
+	FLOAT m_minWidth = 2;
 	FLOAT m_maxWidth = 1000;
 	LineType m_lineType = LineType::None;
 	SizeType m_sizeType = SizeType::Trackable;
@@ -90,8 +90,8 @@ public:
 	virtual std::wstring GetFilter()const{return m_filter;}
 	virtual void SetFilter(const std::wstring& filter){m_filter = filter;}
 	virtual FLOAT GetWidth();
-	virtual void SetWidth(const FLOAT& width);
-	virtual void SetWidthWithoutSignal(const FLOAT& width);
+	virtual void SetWidth(const FLOAT width);
+	virtual void SetWidthWithoutSignal(const FLOAT width);
 	virtual FLOAT GetLeft()const{return  m_left + Offset();}
 	virtual void SetSheetLeft(const FLOAT left){m_left=left;}
 	virtual void SetSheetLeftWithoutSignal(const FLOAT left){m_left=left;}
@@ -119,7 +119,7 @@ public:
 	virtual FLOAT GetRightBottom()/*TODO*/ override { return GetRight(); }
 	virtual FLOAT GetMinWidthHeight() override { return m_minWidth; }
 	virtual FLOAT GetMaxWidthHeight() override { return m_maxWidth; }
-	virtual void SetWidthHeightWithoutSignal(const FLOAT& width) override { SetWidthWithoutSignal(width); }
+	virtual void SetWidthHeightWithoutSignal(const FLOAT width) override { SetWidthWithoutSignal(width); }
 	virtual LineType GetLineType()const { return m_lineType; }
 	virtual SizeType GetSizeType()const { return m_sizeType; }
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;

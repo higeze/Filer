@@ -25,8 +25,8 @@ public:
 
 
 	virtual FLOAT GetHeight();
-	virtual void SetHeight(const FLOAT& height);
-	virtual void SetHeightWithoutSignal(const FLOAT& height){m_height=height;}
+	virtual void SetHeight(const FLOAT height);
+	virtual void SetHeightWithoutSignal(const FLOAT height){m_height=height;}
 
 	virtual FLOAT GetTop()const{return m_top+Offset();}
 	//virtual FLOAT GetTop()const{return m_top;}
@@ -48,7 +48,7 @@ public:
 	virtual FLOAT GetRightBottom()/*TODO*/ override { return GetBottom(); }
 	virtual FLOAT GetMinWidthHeight() override { return m_minHeight; }
 	virtual FLOAT GetMaxWidthHeight() override { return m_maxHeight; }
-	virtual void SetWidthHeightWithoutSignal(const FLOAT& height) override { SetHeightWithoutSignal(height); }
+	virtual void SetWidthHeightWithoutSignal(const FLOAT height) override { SetHeightWithoutSignal(height); }
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name) override;
 

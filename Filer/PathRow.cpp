@@ -3,6 +3,7 @@
 #include "Sheet.h"
 #include "PathCell.h"
 #include "ParentRowHeaderCell.h"
+#include "CellProperty.h"
 
 
 std::shared_ptr<CCell>& CPathRow::Cell(CColumn* pCol)

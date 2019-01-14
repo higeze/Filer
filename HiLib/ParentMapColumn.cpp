@@ -8,8 +8,9 @@
 #include "FilterCell.h"
 #include "Cell.h"
 #include "Row.h"
+#include "CellProperty.h"
 
-CParentMapColumn::std::shared_ptr<CCell>& CParentMapColumn::Cell(CRow* pRow )
+std::shared_ptr<CCell>& CParentMapColumn::Cell(CRow* pRow )
 {
 	//TODO Sheet should check if Row or Column hasCell and get Cell.
 
@@ -37,32 +38,32 @@ CParentMapColumn::std::shared_ptr<CCell>& CParentMapColumn::Cell(CRow* pRow )
 	}
 }
 
-CParentMapColumn::std::shared_ptr<CCell> CParentMapColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CParentMapColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CParentColumnHeaderIndexCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
-CParentMapColumn::std::shared_ptr<CCell> CParentMapColumn::HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CParentMapColumn::HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CParentColumnHeaderHeaderCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
-CParentMapColumn::std::shared_ptr<CCell> CParentMapColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CParentMapColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CParentColumnNameHeaderCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
-CParentMapColumn::std::shared_ptr<CCell> CParentMapColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CParentMapColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CFilterCell>(m_pSheet,pRow,pColumn,m_pSheet->GetFilterProperty());
 }
 
-CParentMapColumn::std::shared_ptr<CCell> CParentMapColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CParentMapColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CTextCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 }
 
-CParentDefaultMapColumn::std::shared_ptr<CCell> CParentDefaultMapColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CParentDefaultMapColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CParentDefaultColumnHeaderIndexCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }

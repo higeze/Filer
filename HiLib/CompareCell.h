@@ -9,10 +9,10 @@ public:
 		:CTextCell(pSheet,pRow,pColumn,spProperty){}
 	virtual ~CCompareCell(){}
 
-	virtual bool IsComparable()const
+	virtual bool IsComparable()const override
 	{
 		return false;
 	}
 
-	virtual std::wstring GetString();
+	virtual std::wstring GetString() override;
 };

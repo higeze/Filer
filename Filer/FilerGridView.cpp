@@ -906,7 +906,7 @@ void CFilerGridView::OnContextMenu(const ContextMenuEvent& e)
 {
 	CPoint ptScreen(e.Point);
 	ClientToScreen(ptScreen);
-	auto cell = Cell(e.Point);
+	auto cell = Cell(GetDirect()->Pixels2Dips(e.Point));
 	std::vector<PITEMID_CHILD> vPidl;
 
 	if (!cell) {
@@ -1137,7 +1137,7 @@ HRESULT CFilerGridView::OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam,
 	return 0;
 }
 
-CFilerGridView::std::wstring CFilerGridView::GetPath()const
+std::wstring CFilerGridView::GetPath()const
 {
 	return m_spFolder->GetPath();
 }

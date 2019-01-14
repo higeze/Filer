@@ -28,7 +28,7 @@ public:
 	static CMenu SheetCellContextMenu;
 	virtual CMenu* GetContextMenuPtr()override;
 	//Property
-	virtual std::shared_ptr<CellProperty> GetHeaderPropertyPtr();
+	virtual std::shared_ptr<HeaderProperty> GetHeaderPropertyPtr();
 	virtual std::shared_ptr<CellProperty> GetCellPropertyPtr();
 	//Rect
 	virtual FLOAT GetTop()const override;
@@ -50,6 +50,7 @@ public:
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override;
 	virtual void OnLButtonClk(const LButtonClkEvent& e) override;
+	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override;
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override;
 
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;

@@ -123,7 +123,6 @@ protected:
 	virtual void OnCellContextMenu(CellContextMenuEventArgs& e);
 
 	virtual void OnKeyDown(const KeyDownEvent& e);
-	virtual void OnPaintAll(const PaintEvent& e);
 public:
 	virtual void ClearFilter();
 	virtual void FilterAll();
@@ -138,7 +137,6 @@ public:
 
 public:
 
-	virtual LRESULT OnCommandPrintScreen(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	virtual LRESULT OnCommandSelectAll(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	virtual LRESULT OnCommandDelete(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled){return 0;}
 	virtual LRESULT OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);

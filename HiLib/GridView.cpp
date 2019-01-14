@@ -38,30 +38,30 @@ UINT CGridView::WM_DELAY_UPDATE = ::RegisterWindowMessage(L"CGridView::WM_DELAY_
 CMenu CGridView::ContextMenu;
 
 CGridView::CGridView(
-		std::shared_ptr<CGridViewProperty> spGridViewProp,
-		CMenu* pContextMenu)
+	std::shared_ptr<CGridViewProperty> spGridViewProp,
+	CMenu* pContextMenu)
 	:
 	m_spGridViewProp(spGridViewProp),
-	m_spBackgroundProperty(spGridViewProp->m_spBackgroundProperty), 
-	CSheet(spGridViewProp->m_spPropHeader,spGridViewProp->m_spPropCell,spGridViewProp->m_spPropCell, pContextMenu?pContextMenu:&CGridView::ContextMenu),
+	m_spBackgroundProperty(spGridViewProp->m_spBackgroundProperty),
+	CSheet(spGridViewProp->m_spPropHeader, spGridViewProp->m_spPropCell, spGridViewProp->m_spPropCell, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
 	m_spDeltaScroll(spGridViewProp->m_spDeltaScroll),
 	CWnd(),
-	m_filterIosv(),m_filterWork(m_filterIosv),m_filterTimer(m_filterIosv),
+	m_filterIosv(), m_filterWork(m_filterIosv), m_filterTimer(m_filterIosv),
 	m_invalidateIosv(), m_invalidateWork(m_invalidateIosv), m_invalidateTimer(m_invalidateIosv),
 	m_pMouseStateMachine(std::make_shared<CMouseStateMachine>(this))
 {
-	boost::thread th1(boost::bind(&boost::asio::io_service::run,&m_filterIosv));
+	boost::thread th1(boost::bind(&boost::asio::io_service::run, &m_filterIosv));
 	boost::thread th2(boost::bind(&boost::asio::io_service::run, &m_invalidateIosv));
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
 		.lpszClassName(_T("CGridView"))
 		.style(CS_DBLCLKS)
 		.hCursor(::LoadCursor(NULL, IDC_ARROW))
-		.hbrBackground((HBRUSH)(COLOR_3DFACE+1));
+		.hbrBackground((HBRUSH)(COLOR_3DFACE + 1));
 	CreateWindowExArgument()
 		.lpszClassName(_T("CGridView"))
 		.lpszWindowName(_T("GridView"))
-		.dwStyle(WS_CHILD | WS_VISIBLE)
+		.dwStyle(WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN)
 		.hMenu((HMENU)123321); 
 	//Scroll
 	m_vertical.CreateWindowExArgument()
@@ -278,11 +278,11 @@ LRESULT CGridView::OnEraseBkGnd(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHan
 LRESULT CGridView::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {	
 	CRect rcClient(GetClientRect());
-
-	if(m_upBuffDC.get()==nullptr || rcClient.Width()>m_upBuffDC->GetSize().cx || rcClient.Height()>m_upBuffDC->GetSize().cy){
-		CClientDC dc(m_hWnd);
-		m_upBuffDC.reset(new CBufferDC(dc,rcClient.Width(),rcClient.Height()));	
-	}
+	m_pDirect->GetHwndRenderTarget()->Resize(D2D1_SIZE_U{ (UINT)rcClient.Width(), (UINT)rcClient.Height() });
+	//if(m_upBuffDC.get()==nullptr || rcClient.Width()>m_upBuffDC->GetSize().cx || rcClient.Height()>m_upBuffDC->GetSize().cy){
+	//	CClientDC dc(m_hWnd);
+	//	m_upBuffDC.reset(new CBufferDC(dc,rcClient.Width(),rcClient.Height()));	
+	//}
 	SizeChanged();
 	SubmitUpdate();
 	return 0;
@@ -293,24 +293,27 @@ LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	CPaintDC dc(m_hWnd);
 	m_pDirect->BeginDraw();
+	m_pDirect->GetHwndRenderTarget()->SetTransform(D2D1::Matrix3x2F::Identity());
+
+	//CRect rcClip = GetClientRect();
+	//if(m_vertical.IsWindowVisible()){	
+	//	rcClip.right -= m_vertical.GetWindowRect().Width();
+	//}
+	//if(m_horizontal.IsWindowVisible()){
+	//	rcClip.bottom -= m_horizontal.GetWindowRect().Height();
+	//}
+	//m_pDirect->GetHwndRenderTarget()->PushAxisAlignedClip(m_pDirect->Pixels2Dips(rcClip), D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+
+
+	m_pDirect->ClearSolid(*(m_spGridViewProp->m_spBackgroundProperty->m_brush));
 
 	OnPaint(PaintEvent(this, *m_pDirect));
+
+	//m_pDirect->GetHwndRenderTarget()->PopAxisAlignedClip();
 
 	m_pDirect->EndDraw();
 
 	//TODOTODO
-	//CRgn rgn;
-	//rgn.CreateRectRgnIndirect(rcClient);
-	//if(m_vertical.IsWindowVisible()){	
-	//	CRgn rgnVert;
-	//	rgnVert.CreateRectRgnIndirect(ScreenToClientRect(m_vertical.GetWindowRect()));
-	//	rgn.CombineRgn(rgnVert,RGN_XOR);
-	//}
-	//if(m_horizontal.IsWindowVisible()){
-	//	CRgn rgnHorz;
-	//	rgnHorz.CreateRectRgnIndirect(ScreenToClientRect(m_horizontal.GetWindowRect()));
-	//	rgn.CombineRgn(rgnHorz,RGN_XOR);
-	//}
 	//if(m_spEditRect){
 	//	CRgn rgnEdit;
 	//	rgnEdit.CreateRectRgnIndirect(*m_spEditRect);
@@ -473,7 +476,7 @@ void CGridView::UpdateScrolls()
 	CRect rcClient(GetClientRect());
 
 	//Origin
-	d2dw::CPointF ptOrigin(GetOriginPoint());
+	//d2dw::CPointF ptOrigin(GetOriginPoint());
 
 	//Scroll Range
 	d2dw::CRectF rcCells(GetCellsRect());
@@ -525,11 +528,11 @@ void CGridView::UpdateScrolls()
 	CRect rcHorizontal(rcClient);
 
 	rcVertical.left=rcClient.right-::GetSystemMetrics(SM_CXVSCROLL);
-	rcVertical.top=ptOrigin.y;
+	rcVertical.top=0;
 	rcVertical.bottom-=(m_horizontal.IsWindowVisible())?::GetSystemMetrics(SM_CYHSCROLL):0;
 	m_vertical.MoveWindow(rcVertical,TRUE);
 
-	rcHorizontal.left=ptOrigin.x;
+	rcHorizontal.left=0;
 	rcHorizontal.top=rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL);
 	rcHorizontal.right-=(m_vertical.IsWindowVisible())?::GetSystemMetrics(SM_CXVSCROLL):0;
 	m_horizontal.MoveWindow(rcHorizontal,TRUE);

@@ -106,6 +106,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Python37.lib;libboost_python37-vc141-mt-sgd-x32-1_67.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -149,6 +152,9 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -226,7 +232,6 @@
     <ClInclude Include="..\HiLib\FontCell.h" />
     <ClInclude Include="..\HiLib\FullCommand.h" />
     <ClInclude Include="..\HiLib\FunctionMenuItem.h" />
-    <ClInclude Include="..\HiLib\GDIUIElement.h" />
     <ClInclude Include="..\HiLib\GridView.h" />
     <ClInclude Include="..\HiLib\GridViewProperty.h" />
     <ClInclude Include="..\HiLib\GridViewResource.h" />
@@ -288,6 +293,7 @@
     <ClInclude Include="..\HiLib\ResourceIDFactory.h" />
     <ClInclude Include="..\HiLib\Row.h" />
     <ClInclude Include="..\HiLib\RowColumn.h" />
+    <ClInclude Include="..\HiLib\Scroll.h" />
     <ClInclude Include="..\HiLib\SEHException.h" />
     <ClInclude Include="..\HiLib\SerializerEnableIf.h" />
     <ClInclude Include="..\HiLib\Sheet.h" />
@@ -372,7 +378,6 @@
     <ClCompile Include="..\HiLib\FilterCell.cpp" />
     <ClCompile Include="..\HiLib\FontCell.cpp" />
     <ClCompile Include="..\HiLib\FullCommand.cpp" />
-    <ClCompile Include="..\HiLib\GDIUIElement.cpp" />
     <ClCompile Include="..\HiLib\GridView.cpp" />
     <ClCompile Include="..\HiLib\GridViewProperty.cpp" />
     <ClCompile Include="..\HiLib\InplaceEdit.cpp" />

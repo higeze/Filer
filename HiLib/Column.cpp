@@ -27,7 +27,7 @@ FLOAT CColumn::GetWidth()
 	return m_width;
 }
 
-void CColumn::SetWidth(const FLOAT& width)
+void CColumn::SetWidth(const FLOAT width)
 {
 	if(m_width!=width){
 		SetWidthWithoutSignal(width);
@@ -35,7 +35,7 @@ void CColumn::SetWidth(const FLOAT& width)
 	}
 }
 
-void CColumn::SetWidthWithoutSignal(const FLOAT& width) 
+void CColumn::SetWidthWithoutSignal(const FLOAT width) 
 {
 	m_width = (std::max)((std::min)(width, m_maxWidth), m_minWidth);
 }

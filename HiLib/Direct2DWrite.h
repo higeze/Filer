@@ -5,6 +5,7 @@
 #pragma comment (lib, "D2d1.lib")
 #include <dwrite.h>
 #pragma comment (lib, "dwrite.lib")
+#include <wincodec.h>
 //#include <wrl/client.h>
 //using namespace Microsoft::WRL;
 #include "atlcomcli.h"
@@ -14,6 +15,7 @@
 
 #include "MyPoint.h"
 #include "MyRect.h"
+#include "MyFont.h"
 
 #define FILELINEFUNCTION (boost::format("File:%1%, Line:%2%, Func:%3%") % ::PathFindFileNameA(__FILE__) % __LINE__ % __FUNCTION__).str().c_str()
 
@@ -24,29 +26,17 @@ namespace d2dw
 {
 	struct CPointF :public D2D1_POINT_2F
 	{
-		CPointF() :D2D1_POINT_2F{ 0.0f } {}
-		CPointF(FLOAT a, FLOAT b) :D2D1_POINT_2F{ a, b } {}
-		void SetPoint(FLOAT a, FLOAT b) { x = a; y = b; }
-		void Offset(LONG xOffset, LONG yOffset) { x += xOffset; y += yOffset; }
-		void Offset(CPointF pt) { x += pt.x; y += pt.y; }
-		CPointF operator -() const { return CPointF(-x, -y); }
-		CPointF operator +(CPointF pt) const
-		{
-			return CPointF(x + pt.x, y + pt.y);
-		}
-		CPointF operator -(CPointF pt) const
-		{
-			return CPointF(x - pt.x, y - pt.y);
-		}
-		CPointF& operator +=(const CPointF& pt)
-		{
-			x += pt.x; y += pt.y; return *this;
-		}
+		CPointF();
+		CPointF(FLOAT a, FLOAT b);
 
-		bool operator!=(const CPointF& pt)const
-		{
-			return (x != pt.x || y != pt.y);
-		}
+		void SetPoint(FLOAT a, FLOAT b);
+		void Offset(LONG xOffset, LONG yOffset);
+		void Offset(CPointF& pt);
+		CPointF operator -() const;
+		CPointF operator +(CPointF pt) const;
+		CPointF operator -(CPointF pt) const;
+		CPointF& operator +=(const CPointF& pt);
+		bool operator!=(const CPointF& pt)const;
 
 		template<typename TXY>
 		FLOAT Get()const { return 0; }
@@ -64,12 +54,10 @@ namespace d2dw
 
 	struct CSizeF :public D2D1_SIZE_F
 	{
-		CSizeF(FLOAT w = 0.0f, FLOAT h = 0.0f) :D2D1_SIZE_F{ w, h } {}
-		CSizeF(const D2D1_SIZE_F& size)
-		{
-			width = size.width;
-			height = size.height;
-		}
+		CSizeF();
+		CSizeF(FLOAT w, FLOAT h);
+		CSizeF(const D2D1_SIZE_F& size);
+
 		template <class Archive>
 		void serialize(Archive& ar)
 		{
@@ -80,91 +68,35 @@ namespace d2dw
 
 	struct CRectF :public D2D1_RECT_F
 	{
-		CRectF() :D2D1_RECT_F{ 0.0f} {}
-		CRectF(FLOAT l, FLOAT t, FLOAT r, FLOAT b) :D2D1_RECT_F{ l,t,r,b } {}
-		CRectF(CSizeF size) :D2D1_RECT_F{ 0, 0, size.width, size.height } {}
+		CRectF();
+		CRectF(FLOAT l, FLOAT t, FLOAT r, FLOAT b);
+		CRectF(const CSizeF& size);
 
-		void SetRect(FLOAT l, FLOAT t, FLOAT r, FLOAT b)
-		{
-			left = l; top = t; right = r; bottom = b;
-		}
-		void MoveToX(int x) { right = x + right - left; left = x; }
-		void MoveToY(int y) { bottom = y + bottom - top; top = y; }
-		void MoveToXY(int x, int y)
-		{
-			right += x - left;
-			bottom += y - top;
-			left = x;
-			top = y;
-		}
-		void MoveToXY(CPointF pt)
-		{
-			MoveToXY(pt.x, pt.y);
-		}
-		void OffsetRect(FLOAT x, FLOAT y) { left += x; right += x; top += y; bottom += y; }
-		void OffsetRect(CPointF pt) { OffsetRect(pt.x, pt.y); }
-
-		FLOAT Width()const { return right - left; }
-		FLOAT Height()const { return bottom - top; }
-
-		void InflateRect(FLOAT x, FLOAT y) { left -= x; right += x; top -= y; bottom += y; }
-		void DeflateRect(FLOAT x, FLOAT y) { left += x; right -= x; top += y; bottom -= y; }
-		bool PtInRect(CPointF pt) const { return pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom; }
-		CPointF LeftTop() const { return CPointF(left, top); }
-		CPointF CenterPoint() const
-		{
-			return CPointF((left + right) / 2, (top + bottom) / 2);
-		}
-
-		CSizeF Size() const
-		{
-			return CSizeF(Width(), Height());
-		}
-
-		void InflateRect(CRectF rc)
-		{
-			left -= rc.left;
-			top -= rc.top;
-			right += rc.right;
-			bottom += rc.bottom;
-		}
-		void DeflateRect(CRectF rc)
-		{
-			left += rc.left;
-			top += rc.top;
-			right -= rc.right;
-			bottom -= rc.bottom;
-		}
-
+		void SetRect(FLOAT l, FLOAT t, FLOAT r, FLOAT b);
+		void MoveToX(int x);
+		void MoveToY(int y);
+		void MoveToXY(int x, int y);
+		void MoveToXY(const CPointF& pt);
+		void OffsetRect(FLOAT x, FLOAT y);
+		void OffsetRect(const CPointF& pt);
+		FLOAT Width()const;
+		FLOAT Height()const;
+		void InflateRect(FLOAT x, FLOAT y);
+		void DeflateRect(FLOAT x, FLOAT y);
+		void InflateRect(const CRectF& rc);
+		void DeflateRect(const CRectF& rc);
+		bool PtInRect(const CPointF& pt) const;
+		CPointF LeftTop() const;
+		CPointF CenterPoint() const;
+		CSizeF Size() const;
 		//bool IntersectRect(LPCRECT lpRect1, LPCRECT lpRect2) { return ::IntersectRect(this, lpRect1, lpRect2); }
-
-		CRectF operator+(CRectF rc)const
-		{
-			CRectF ret(*this);
-			ret.InflateRect(rc);
-			return ret;
-		}
-		CRectF& operator+=(CRectF rc)
-		{
-			this->InflateRect(rc);
-			return *this;
-		}
-
-		CRectF operator-(CRectF rc)const
-		{
-			CRectF ret(*this);
-			ret.DeflateRect(rc);
-			return ret;
-		}
-		CRectF& operator-=(CRectF rc)
-		{
-			this->DeflateRect(rc);
-			return *this;
-		}
-		bool operator==(const CRectF& rc)const { return left == rc.left && top == rc.top && right == rc.right && bottom == rc.bottom; }
-		bool operator!=(const CRectF& rc)const { return !operator==(rc); }
+		CRectF operator+(CRectF rc)const;
+		CRectF& operator+=(CRectF rc);
+		CRectF operator-(CRectF rc)const;
+		CRectF& operator-=(CRectF rc);
+		bool operator==(const CRectF& rc)const;
+		bool operator!=(const CRectF& rc)const;
 		//void operator &=(const CRectF& rect) { ::IntersectRect(this, this, &rect); }
-
 		template <class Archive>
 		void serialize(Archive& ar)
 		{
@@ -175,31 +107,16 @@ namespace d2dw
 		}
 	};
 
-	struct Color :public D2D1::ColorF
+	struct CColorF :public D2D1::ColorF
 	{
 	public:
-		Color() :D2D1::ColorF(0.0F, 0.0f, 0.0f, 0.0f) {}
-		Color(FLOAT r, FLOAT g, FLOAT b, FLOAT a = 1.0f) :D2D1::ColorF(r, g, b, a) {}
+		CColorF();
+		CColorF(FLOAT r, FLOAT g, FLOAT b, FLOAT a = 1.0f);
 
-		bool operator==(const Color& rhs) const
-		{
-			return r == rhs.r && g == rhs.g && b == rhs.b && a == rhs.b;
-		}
+		bool operator==(const CColorF& rhs) const;
+		bool operator!=(const CColorF& rhs) const;
 
-		bool operator!=(const Color& rhs) const
-		{
-			return !operator==(rhs);
-		}
-
-		std::size_t GetHashCode() const
-		{
-			std::size_t seed = 0;
-			boost::hash_combine(seed, std::hash<decltype(r)>()(r));
-			boost::hash_combine(seed, std::hash<decltype(g)>()(g));
-			boost::hash_combine(seed, std::hash<decltype(b)>()(b));
-			boost::hash_combine(seed, std::hash<decltype(a)>()(a));
-			return seed;
-		}
+		std::size_t GetHashCode() const;
 
 		template <class Archive>
 		void serialize(Archive& ar)
@@ -215,10 +132,11 @@ namespace d2dw
 namespace std
 {
 	template <>
-	struct hash<d2dw::Color>
+	struct hash<d2dw::CColorF>
 	{
-		std::size_t operator() (d2dw::Color const & key) const
+		std::size_t operator() (d2dw::CColorF const & key) const
 		{
+//			BOOST_LOG_TRIVIAL(trace) << L"Color" << key.GetHashCode();
 			return key.GetHashCode();
 		}
 	};
@@ -226,62 +144,21 @@ namespace std
 
 namespace d2dw
 {
-	struct SolidLine
+	struct CFontF
 	{
 	public:
-		SolidLine(FLOAT r, FLOAT g, FLOAT b, FLOAT a, FLOAT w)
-			:Color(r, g, b, a), Width(w){ }
-		Color Color;
-		FLOAT Width;
+		CFontF(const std::wstring& familyName = L"Meiryo UI", FLOAT size = 12.0f);
 
-		template <class Archive>
-		void serialize(Archive& ar)
-		{
-			ar("Color", Color);
-			ar("Width", Width);
-		}
-	};
-
-	struct SolidFill
-	{
-	public:
-		SolidFill(FLOAT r, FLOAT g, FLOAT b, FLOAT a)
-			:Color(r, g, b, a){}
-		Color Color;
-
-		template <class Archive>
-		void serialize(Archive& ar)
-		{
-			ar("Color", Color);
-		}
-	};
-}
-
-namespace d2dw
-{
-	struct Font
-	{
-	public:
 		std::wstring FamilyName;
 		FLOAT Size;
+		DWRITE_TEXT_ALIGNMENT TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_LEADING;
+		DWRITE_PARAGRAPH_ALIGNMENT ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
 
-		bool operator==(const Font& rhs) const
-		{
-			return FamilyName == rhs.FamilyName && Size == rhs.Size;
-		}
+		bool operator==(const CFontF& rhs) const;
+		bool operator!=(const CFontF& rhs) const;
 
-		bool operator!=(const Font& rhs) const
-		{
-			return !operator==(rhs);
-		}
-
-		std::size_t GetHashCode() const
-		{
-			std::size_t seed = 0;
-			boost::hash_combine(seed, std::hash<decltype(FamilyName)>()(FamilyName));
-			boost::hash_combine(seed, std::hash<decltype(Size)>()(Size));
-			return seed;
-		}
+		CFont GetGDIFont() const;
+		std::size_t GetHashCode() const;
 
 		template <class Archive>
 		void serialize(Archive& ar)
@@ -295,24 +172,58 @@ namespace d2dw
 namespace std
 {
 	template <>
-	struct hash<d2dw::Font>
+	struct hash<d2dw::CFontF>
 	{
-		std::size_t operator() (d2dw::Font const & key) const
+		std::size_t operator() (d2dw::CFontF const & key) const
 		{
+			//			BOOST_LOG_TRIVIAL(trace) << L"Font" <<key.GetHashCode();
 			return key.GetHashCode();
 		}
 	};
 }
 
+
 namespace d2dw
 {
+	struct SolidLine
+	{
+	public:
+		SolidLine(FLOAT r = 1.0f, FLOAT g = 1.0f, FLOAT b = 1.0f, FLOAT a = 1.0f, FLOAT w = 1.0f)
+			:Color(r, g, b, a), Width(w){ }
+		CColorF Color;
+		FLOAT Width;
+
+		template <class Archive>
+		void serialize(Archive& ar)
+		{
+			ar("Color", Color);
+			ar("Width", Width);
+		}
+	};
+
+	struct SolidFill
+	{
+	public:
+		SolidFill(FLOAT r = 1.0f, FLOAT g = 1.0f, FLOAT b = 1.0f, FLOAT a = 1.0f)
+			:Color(r, g, b, a){}
+		CColorF Color;
+
+		template <class Archive>
+		void serialize(Archive& ar)
+		{
+			ar("Color", Color);
+		}
+	};
+
 	struct FontAndColor
 	{
 	public:
-		FontAndColor(const std::wstring& familyName, const FLOAT size, FLOAT r, FLOAT g, FLOAT b, FLOAT a)
+		FontAndColor(const CFontF& font, const CColorF& color)
+			:Font(font), Color(color){}
+		FontAndColor(const std::wstring& familyName = L"Meiryo", const FLOAT size = 9.0f, FLOAT r = 1.0f, FLOAT g = 1.0f, FLOAT b = 1.0f, FLOAT a = 1.0f)
 			:Font{familyName, size}, Color(r, g, b, a){}
-		Font Font;
-		Color Color;
+		CFontF Font;
+		CColorF Color;
 
 		template <class Archive>
 		void serialize(Archive& ar)
@@ -334,14 +245,16 @@ namespace d2dw{
 		CComPtr<ID2D1Factory> m_pD2D1Factory = NULL;
 		CComPtr<IDWriteFactory> m_pDWriteFactory = NULL;
 		CComPtr<ID2D1HwndRenderTarget> m_pHwndRenderTarget = NULL;
+		CComPtr<IWICImagingFactory> m_pWICImagingFactory = NULL;
+		//CComPtr<IWICFormatConverter> m_pWICFormatConverter = NULL;
 
 
-		std::unordered_map<Color, CComPtr<ID2D1SolidColorBrush>> m_solidColorBrushMap;
-		std::unordered_map<Font, CComPtr<IDWriteTextFormat>> m_textFormatMap;
-		std::unordered_map<Font, std::unordered_map<wchar_t, CSizeF>> m_charMap;
+		std::unordered_map<CColorF, CComPtr<ID2D1SolidColorBrush>> m_solidColorBrushMap;
+		std::unordered_map<CFontF, CComPtr<IDWriteTextFormat>> m_textFormatMap;
+		std::unordered_map<CFontF, std::unordered_map<wchar_t, CSizeF>> m_charMap;
 
-
-
+		FLOAT m_xPixels2Dips = 0.0f;
+		FLOAT m_yPixels2Dips = 0.0f;
 
 	public:
 		CDirect2DWrite(HWND hWnd);
@@ -350,9 +263,12 @@ namespace d2dw{
 
 		CComPtr<ID2D1Factory>& GetD2D1Factory();
 		CComPtr<IDWriteFactory>& GetDWriteFactory();
+		CComPtr<IWICImagingFactory>& GetWICImagingFactory();
+		//CComPtr<IWICFormatConverter>& GetWICFormatConverter();
+
 		CComPtr<ID2D1HwndRenderTarget>& GetHwndRenderTarget();
-		CComPtr<ID2D1SolidColorBrush>& GetColorBrush(const Color& color);
-		CComPtr<IDWriteTextFormat>& GetTextFormat(const Font& font);
+		CComPtr<ID2D1SolidColorBrush>& GetColorBrush(const CColorF& color);
+		CComPtr<IDWriteTextFormat>& GetTextFormat(const CFontF& font);
 
 		void BeginDraw();
 		void ClearSolid(const SolidFill& fill);
@@ -363,72 +279,84 @@ namespace d2dw{
 		void DrawTextLayout(const FontAndColor& fnc, const std::wstring& text, const CRectF& rect);
 		void DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rect);
 		void FillSolidRectangle(const SolidFill& fill, const D2D1_RECT_F& rect);
+		void DrawIcon(HICON hIcon, d2dw::CRectF& rect);
 
-		CSizeF CalcTextSize(const Font& font, const std::wstring& text);
-		CSizeF CalcTextSizeWithFixedWidth(const Font& font, const std::wstring& text, const FLOAT width);
+		CSizeF CalcTextSize(const CFontF& font, const std::wstring& text);
+		CSizeF CalcTextSizeWithFixedWidth(const CFontF& font, const std::wstring& text, const FLOAT width);
+
 
 		FLOAT Pixels2DipsX(int x)
 		{
-			CPointF dpi(96.0f, 96.0f);
-			GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-			return x * 96.0f / dpi.x;
+			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
+				CPointF dpi(96.0f, 96.0f);
+				GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
+				m_xPixels2Dips = 96.0f / dpi.x;
+				m_yPixels2Dips = 96.0f / dpi.y;
+			}
+			return x * m_xPixels2Dips;
 		}
 
 		FLOAT Pixels2DipsY(int y)
 		{
-			CPointF dpi(96.0f, 96.0f);
-			GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-			return y * 96.0f / dpi.y;
+			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
+				CPointF dpi(96.0f, 96.0f);
+				GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
+				m_xPixels2Dips = 96.0f / dpi.x;
+				m_yPixels2Dips = 96.0f / dpi.y;
+			}
+			return y * m_yPixels2Dips;
 		}
 
 		int Dips2PixelsX(FLOAT x)
 		{
-			CPointF dpi(96.0f, 96.0f);
-			GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-			return x * dpi.x / 96.0f;
+			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
+				CPointF dpi(96.0f, 96.0f);
+				GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
+				m_xPixels2Dips = 96.0f / dpi.x;
+				m_yPixels2Dips = 96.0f / dpi.y;
+			}
+			return x / m_xPixels2Dips;
 		}
 
 		int Dips2PixelsY(FLOAT y)
 		{
-			CPointF dpi(96.0f, 96.0f);
-			GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-			return y * dpi.y / 96.0f;
+			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
+				CPointF dpi(96.0f, 96.0f);
+				GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
+				m_xPixels2Dips = 96.0f / dpi.x;
+				m_yPixels2Dips = 96.0f / dpi.y;
+			}
+			return y / m_yPixels2Dips;
 		}
 
 		CPointF Pixels2Dips(CPoint pt)
 		{
-			CPointF dpi(96.0f, 96.0f);
-			GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-			return CPointF(pt.x * 96.0f / dpi.x, pt.y * 96.0f / dpi.y);
+			return CPointF(Pixels2DipsX(pt.x), Pixels2DipsY(pt.y));
 		}
 
 		CPoint Dips2Pixels(CPointF pt)
 		{
-			CPointF dpi(96.0f, 96.0f);
-			GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-			return CPoint(pt.x * dpi.x / 96.0f, pt.y * dpi.y / 96.0f);
+			return CPoint(Dips2PixelsX(pt.x), Dips2PixelsY(pt.y));
 		}
 
 		CRectF Pixels2Dips(CRect rc)
 		{
-			CPointF dpi(96.0f, 96.0f);
-			GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-			return CRectF(rc.left * 96.0f / dpi.x, rc.top * 96.0f / dpi.y, rc.right * 96.0f / dpi.x, rc.bottom * 96.0f / dpi.y);
+			return CRectF(Pixels2DipsX(rc.left), Pixels2DipsY(rc.top),
+						  Pixels2DipsX(rc.right), Pixels2DipsY(rc.bottom));
 		}
 
 		CRect Dips2Pixels(CRectF rc)
 		{
-			CPointF dpi(96.0f, 96.0f);
-			GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-			return CRect(rc.left * dpi.x / 96.0f, rc.top * dpi.y / 96.0f, rc.right * dpi.x / 96.0f, rc.bottom * dpi.y / 96.0f);
+			return CRect(Dips2PixelsX(rc.left), Dips2PixelsY(rc.top),
+				Dips2PixelsX(rc.right), Dips2PixelsY(rc.bottom));
 		}
 
-		FLOAT Points2Dips(int points)
+		static FLOAT Points2Dips(int points)
 		{
 			return points / 72.0f * 96.0f;
 		}
 
-		int Dips2Points(FLOAT dips)
+		static int Dips2Points(FLOAT dips)
 		{
 			return dips * 72.0f / 96.0f;
 		}
@@ -437,11 +365,15 @@ namespace d2dw{
 		{
 			m_pD2D1Factory = nullptr;
 			m_pDWriteFactory = nullptr;
+			m_pWICImagingFactory = nullptr;
 			m_pHwndRenderTarget = nullptr;
 
 			m_solidColorBrushMap.clear();
 			m_textFormatMap.clear();
 			m_charMap.clear();
+
+			m_xPixels2Dips = 0.0f;
+			m_yPixels2Dips = 0.0f;
 		}
 
 	};

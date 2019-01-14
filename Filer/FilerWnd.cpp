@@ -16,6 +16,7 @@
 #include "ViewProperty.h"
 #include "FavoritesProperty.h"
 #include "ResourceIDFactory.h"
+#include "CellProperty.h"
 
 CFilerWnd::CFilerWnd()
 	:m_rcWnd(0, 0, 300, 500), 
@@ -228,7 +229,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	CRect rcClient = GetClientRect();
 	if (m_splitterLeft == 0) {
 		//Initialize window position
-		CRect rcFavoriteClient = m_spLeftFavoritesView->GetRect();
+		CRect rcFavoriteClient = m_spLeftFavoritesView->GetDirect()->Dips2Pixels(m_spLeftFavoritesView->GetRect());
 		m_spLeftFavoritesView->SetWindowPos(HWND_BOTTOM,
 			rcClient.left, rcClient.top,
 			rcFavoriteClient.Width(), rcClient.Height(),
@@ -389,7 +390,7 @@ LRESULT CFilerWnd::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	CRect rcClient = GetClientRect();
 
 	//Favorites
-	CRect rcFavoriteClient = m_spLeftFavoritesView->GetRect();
+	CRect rcFavoriteClient = m_spLeftFavoritesView->GetDirect()->Dips2Pixels(m_spLeftFavoritesView->GetRect());
     m_spLeftFavoritesView->SetWindowPos(HWND_BOTTOM,
         rcClient.left , rcClient.top, 
         rcFavoriteClient.Width(), rcClient.Height(),

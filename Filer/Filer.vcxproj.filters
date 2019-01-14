@@ -260,9 +260,6 @@
     <ClInclude Include="..\HiLib\FunctionMenuItem.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\GDIUIElement.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\GridView.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -548,6 +545,9 @@
     <ClInclude Include="..\HiLib\Direct2DWrite.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\Scroll.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -677,9 +677,6 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\FullCommand.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\GDIUIElement.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\GridView.cpp">

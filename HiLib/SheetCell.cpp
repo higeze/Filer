@@ -119,9 +119,9 @@ d2dw::CRectF CSheetCell::GetPaintRect()
 	return CCell::GetRect();//TODO
 }
 
-d2dw::CPointF CSheetCell::GetScrollPos()const
+CPoint CSheetCell::GetScrollPos()const
 {
-	return d2dw::CPointF(0,0);
+	return CPoint(0,0);
 }
 
 d2dw::CSizeF CSheetCell::MeasureSize(d2dw::CDirect2DWrite& direct)
@@ -157,6 +157,13 @@ void CSheetCell::OnLButtonClk(const LButtonClkEvent& e)
 {
 	CCell::OnLButtonClk(e);
 	CSheet::OnLButtonClk(e);
+	SubmitUpdate();
+}
+
+void CSheetCell::OnLButtonSnglClk(const LButtonSnglClkEvent& e)
+{
+	CCell::OnLButtonSnglClk(e);
+	CSheet::OnLButtonSnglClk(e);
 	SubmitUpdate();
 }
 
@@ -282,7 +289,7 @@ void CSheetCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint
 	//pDC->SelectClipRgn(NULL);
 }
 
-std::shared_ptr<CellProperty> CSheetCell::GetHeaderPropertyPtr()
+std::shared_ptr<HeaderProperty> CSheetCell::GetHeaderPropertyPtr()
 {
 	return m_spHeaderProperty;
 }
@@ -378,7 +385,7 @@ CMenu* CSheetCell::GetContextMenuPtr()
 void CSheetCell::OnContextMenu(const ContextMenuEvent& e)
 {
 	if(!Visible())return;
-	auto cell = Cell(d2dw::CPointF(e.Point.x, e.Point.y));//TODOTODO
+	auto cell = Cell(static_cast<CGridView*>(e.WindowPtr)->GetDirect()->Pixels2Dips(e.Point));
 	if(cell){
 		cell->OnContextMenu(e);
 	}else{

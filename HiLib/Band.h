@@ -61,7 +61,7 @@ public:
 	virtual FLOAT GetRightBottom()/*TODO*/ = 0;
 	virtual FLOAT GetMinWidthHeight()/*TODO*/ = 0;
 	virtual FLOAT GetMaxWidthHeight()/*TODO*/ = 0;
-	virtual void SetWidthHeightWithoutSignal(const FLOAT&) = 0;
+	virtual void SetWidthHeightWithoutSignal(const FLOAT widthheight) = 0;
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) = 0;
 	virtual void OnPropertyChanged(const wchar_t* name) = 0;
 };

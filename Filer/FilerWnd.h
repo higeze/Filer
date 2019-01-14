@@ -9,6 +9,7 @@
 #include "ShellFolder.h"
 #include "ApplicationProperty.h"
 #include "ViewProperty.h"
+#include "CellProperty.h"
 //#include "KonamiCommander.h"
 
 class CFilerGridView;
@@ -123,7 +124,7 @@ private:
 
 		CRect rc(0, 0, 0, 0);
 		pPropWnd->Create(m_hWnd, rc);
-		rc = CRect(pPropWnd->GetGridView()->MeasureSize());
+		rc = CRect(pPropWnd->GetGridView()->GetDirect()->Dips2Pixels(pPropWnd->GetGridView()->MeasureSize()));
 		AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
 		pPropWnd->MoveWindow(0, 0, rc.Width() + ::GetSystemMetrics(SM_CXVSCROLL), min(500, rc.Height() + ::GetSystemMetrics(SM_CYVSCROLL) + 10), FALSE);
 		pPropWnd->CenterWindow();

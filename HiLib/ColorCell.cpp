@@ -5,12 +5,12 @@
 #include "Sheet.h"
 #include "GridView.h"
 
-CColorCell::CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,d2dw::Color color)
+CColorCell::CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,d2dw::CColorF color)
 	:CTextCell(pSheet,pRow,pColumn,spProperty),
 	m_color(color){}
 
 
-d2dw::Color CColorCell::GetColor(){return m_color;}
+d2dw::CColorF CColorCell::GetColor(){return m_color;}
 
 void CColorCell::PaintBackground(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint)
 {

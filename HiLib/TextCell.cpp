@@ -132,16 +132,16 @@ void CTextCell::OnEdit(const EventArgs& e)
 			spCell->m_pEdit=NULL;
 			spCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 		},
+		m_spProperty->FontAndColor->Font.GetGDIFont(),
 		GetFormat());
 
 	m_pEdit->Create(m_pSheet->GetGridPtr()->m_hWnd, m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(rcContent));
 	m_pEdit->SetWindowText(GetString().c_str());
-	//m_pEdit->SetFont(*m_spProperty->GetFontPtr());//TODOTODO
-	//CRect rcRect(m_pEdit->GetRect());
-	//CRect rcPadding(m_spProperty->GetPadding());
-	//rcRect.DeflateRect(rcPadding);
-	//m_pEdit->SetRect(rcRect);
-	//m_pEdit->SetMargins(2,2);
+	CRect rcRect(m_pEdit->GetRect());
+	CRect rcPadding(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)));
+	rcRect.DeflateRect(rcPadding);
+	m_pEdit->SetRect(rcRect);
+	m_pEdit->SetMargins(2,2);
 	m_pEdit->SetFocus();
 	m_pEdit->SetSel(0,-1);
 	m_pEdit->ShowWindow(SW_SHOW);

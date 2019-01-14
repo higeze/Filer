@@ -51,7 +51,7 @@ d2dw::CSizeF CCell::GetActSize(d2dw::CDirect2DWrite& direct)
 		if(fitSize.width <= width){
 			m_bActMeasureValid = true;
 			m_actSize.width = width;
-			m_actSize.width = m_fitSize.width;
+			m_actSize.height = m_fitSize.height;
 		}else{
 			m_actSize = MeasureSizeWithFixedWidth(direct);
 		}
@@ -139,9 +139,8 @@ d2dw::CRectF CCell::GetRect()const
 
 d2dw::CRectF CCell::CenterBorder2InnerBorder(d2dw::CRectF rcCenter)
 {
-	auto innerPenWidth = m_spProperty->Line->Width*0.5;
-	auto outerPenWidth = m_spProperty->Line->Width*0.5;
-	rcCenter-= d2dw::CRectF(innerPenWidth,innerPenWidth, outerPenWidth, outerPenWidth);//TODOTODO
+	auto halfLineWidth = m_spProperty->Line->Width*0.5;
+	rcCenter-= d2dw::CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
 	return rcCenter;
 }
 
@@ -160,9 +159,8 @@ d2dw::CRectF CCell::Content2InnerBorder(d2dw::CRectF rcContent)
 d2dw::CRectF CCell::InnerBorder2CenterBorder(d2dw::CRectF rcInner)
 {
 	//Calc CenterBorder Rect 
-	auto innerPenWidth = m_spProperty->Line->Width*0.5;
-	auto outerPenWidth = m_spProperty->Line->Width*0.5;
-	rcInner += d2dw::CRectF(innerPenWidth,innerPenWidth, outerPenWidth, outerPenWidth);//TODOTODO
+	auto halfLineWidth = m_spProperty->Line->Width*0.5;
+	rcInner += d2dw::CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
 	return rcInner;
 }
 

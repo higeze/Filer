@@ -3,6 +3,7 @@
 #include "Row.h"
 #include "PropertySerializer.h"
 #include "SheetEventArgs.h"
+#include "CellProperty.h"
 
 template<typename T>
 class CPropertySheetCell:public CSheetCell
@@ -48,7 +49,7 @@ public:
 		CRow* pRow = nullptr,
 		CColumn* pColumn = nullptr,
 		std::shared_ptr<CellProperty> spProperty = nullptr,
-		std::shared_ptr<CellProperty> spHeaderProperty = nullptr,
+		std::shared_ptr<HeaderProperty> spHeaderProperty = nullptr,
 		std::shared_ptr<CellProperty> spFilterProperty = nullptr,
 		std::shared_ptr<CellProperty> spCellProperty = nullptr,
 		CMenu* pMenu=nullptr)

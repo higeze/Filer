@@ -171,6 +171,7 @@ public:
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnLButtonUp(const LButtonUpEvent& e);
 	virtual void OnLButtonClk(const LButtonClkEvent& e) {}
+	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) {}
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) {}
 
 	virtual void OnMButtonDown(const MouseEvent& e){}//TODO

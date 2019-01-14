@@ -5,12 +5,12 @@
 class CColorCell:public CTextCell
 {
 private:
-	d2dw::Color m_color;
+	d2dw::CColorF m_color;
 public:
-	CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,d2dw::Color color);
+	CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,d2dw::CColorF color);
 	virtual ~CColorCell(){}
 
-	d2dw::Color GetColor();
+	d2dw::CColorF GetColor();
 	virtual void PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint) override;
 	virtual void OnLButtonClk(const LButtonClkEvent& e) override;
 	virtual std::basic_string<TCHAR> GetString() override;

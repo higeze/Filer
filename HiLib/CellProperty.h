@@ -80,14 +80,14 @@ public:
 
 public:
 	CellProperty()
-		:FontAndColor(std::make_shared<d2dw::FontAndColor>(L"Meiryo UI", 9.0f,  0.0f, 0.0f, 0.0f, 1.0f)),
+		:FontAndColor(std::make_shared<d2dw::FontAndColor>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9.0f),  0.0f, 0.0f, 0.0f, 1.0f)),
 		Line(std::make_shared<d2dw::SolidLine>(221.0f/255, 206.0f/255, 188.0f/255, 1.0f, 1.0f)),
 		FocusedLine(std::make_shared<d2dw::SolidLine>(22.0f/255, 160.0f/255, 133.0f/255, 1.0f, 1.0f)),
 		NormalFill(std::make_shared<d2dw::SolidFill>(246.0f/255, 246.0f/255, 246.0f/255, 1.0f)),
-		FocusedFill(std::make_shared<d2dw::SolidFill>(195.0f/255, 224.0f/255, 226.0f/255, 1.0f)),
-		SelectedFill(std::make_shared<d2dw::SolidFill>(195.0f/255, 224.0f/255, 226.0f/255, 0.3f)),
+		FocusedFill(std::make_shared<d2dw::SolidFill>(0.0f/255, 224.0f/255, 226.0f/255, 1.0f)),
+		SelectedFill(std::make_shared<d2dw::SolidFill>(195.0f/255, 224.0f/255, 226.0f/255, 0.35f)),
 		UnfocusSelectedFill(std::make_shared<d2dw::SolidFill>(224.0f/255, 224.0f/255, 224.0f/255, 0.3f)),
-		HotFill(std::make_shared<d2dw::SolidFill>(0.0f, 0.0f, 0.0f, 0.2f)),
+		HotFill(std::make_shared<d2dw::SolidFill>(1.0f, 1.0f, 1.0f, 0.3f)),
 		//m_spBrChecked(std::make_shared<CBrush>(RGB(241,196,15))),
 		//m_spDrawTextProperty(std::make_shared<CDrawTextProperty>(DT_LEFT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL)),
 		Padding(std::make_shared<d2dw::CRectF>(2.0f,2.0f,2.0f,2.0f)){};
@@ -160,14 +160,14 @@ public:
 	//CHeaderProperty():CCellProperty(),m_crTop(RGB(206,185,205)),m_crBottom(RGB(233,158,231)){}
 	HeaderProperty()
 		:CellProperty(
-		std::make_shared<d2dw::FontAndColor>(L"Meiryo UI", 9.0f, 0.0f, 0.0f, 0.0f, 1.0f),
+		std::make_shared<d2dw::FontAndColor>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9.0f), 0.0f, 0.0f, 0.0f, 1.0f),
 		std::make_shared<d2dw::SolidLine>(211.0f / 255, 206.0f / 255, 188.0f / 255, 1.0f, 1.0f),
 		std::make_shared<d2dw::SolidLine>(22.0f / 255, 160.0f / 255, 133.0f / 255, 1.0f, 1.0f),
-		std::make_shared<d2dw::SolidFill>(239.0f / 239, 246.0f / 255, 232.0f / 255, 1.0f),
+		std::make_shared<d2dw::SolidFill>(239.0f / 255, 239.0f / 255, 232.0f / 255, 1.0f),
 		std::make_shared<d2dw::SolidFill>(195.0f / 255, 224.0f / 255, 226.0f / 255, 1.0f),
-		std::make_shared<d2dw::SolidFill>(195.0f / 255, 224.0f / 255, 226.0f / 255, 1.0f),
-		std::make_shared<d2dw::SolidFill>(241.0f / 255, 196.0f / 255, 15.0f / 255, 1.0f),
-		std::make_shared<d2dw::SolidFill>(0.0f, 0.0f, 0.0f, 0.2f),
+		std::make_shared<d2dw::SolidFill>(195.0f / 255, 224.0f / 255, 226.0f / 255, 0.3f),
+		std::make_shared<d2dw::SolidFill>(241.0f / 255, 196.0f / 255, 15.0f / 255, 0.3f),
+		std::make_shared<d2dw::SolidFill>(1.0f, 1.0f, 1.0f, 0.3f),
 		std::make_shared<d2dw::CRectF>(2.0f, 2.0f, 2.0f, 2.0f)),
 		DragLine(std::make_shared<d2dw::SolidLine>(1.0f, 0.0f, 0.0f, 1.0f, 1.0f)){};
 //		m_crTop(RGB(232,232,232)),m_crBottom(RGB(232,232,242)){}

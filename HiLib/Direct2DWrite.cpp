@@ -2,7 +2,184 @@
 
 namespace d2dw
 {
+	//CPointF
+	CPointF::CPointF() :D2D1_POINT_2F{ 0.0f } {}
+	CPointF::CPointF(FLOAT a, FLOAT b) :D2D1_POINT_2F{ a, b } {}
+	void CPointF::SetPoint(FLOAT a, FLOAT b) { x = a; y = b; }
+	void CPointF::Offset(LONG xOffset, LONG yOffset) { x += xOffset; y += yOffset; }
+	void CPointF::Offset(CPointF& pt) { x += pt.x; y += pt.y; }
+	CPointF CPointF::operator -() const { return CPointF(-x, -y); }
+	CPointF CPointF::operator +(CPointF pt) const
+	{
+		return CPointF(x + pt.x, y + pt.y);
+	}
+	CPointF CPointF::operator -(CPointF pt) const
+	{
+		return CPointF(x - pt.x, y - pt.y);
+	}
+	CPointF& CPointF::operator +=(const CPointF& pt)
+	{
+		x += pt.x; y += pt.y; return *this;
+	}
 
+	bool CPointF::operator!=(const CPointF& pt)const
+	{
+		return (x != pt.x || y != pt.y);
+	}
+
+	//CSizeF
+	CSizeF::CSizeF() :D2D1_SIZE_F{ 0.0f } {}
+	CSizeF::CSizeF(FLOAT w, FLOAT h) :D2D1_SIZE_F{ w, h } {}
+	CSizeF::CSizeF(const D2D1_SIZE_F& size)
+	{
+		width = size.width;
+		height = size.height;
+	}
+
+	//CRectF
+	CRectF::CRectF() :D2D1_RECT_F{ 0.0f } {}
+	CRectF::CRectF(FLOAT l, FLOAT t, FLOAT r, FLOAT b) :D2D1_RECT_F{ l,t,r,b } {}
+	CRectF::CRectF(const CSizeF& size) :D2D1_RECT_F{ 0, 0, size.width, size.height } {}
+	void CRectF::SetRect(FLOAT l, FLOAT t, FLOAT r, FLOAT b)
+	{
+		left = l; top = t; right = r; bottom = b;
+	}
+	void CRectF::MoveToX(int x) { right = x + right - left; left = x; }
+	void CRectF::MoveToY(int y) { bottom = y + bottom - top; top = y; }
+	void CRectF::MoveToXY(int x, int y)
+	{
+		right += x - left;
+		bottom += y - top;
+		left = x;
+		top = y;
+	}
+	void CRectF::MoveToXY(const CPointF& pt)
+	{
+		MoveToXY(pt.x, pt.y);
+	}
+	void CRectF::OffsetRect(FLOAT x, FLOAT y) { left += x; right += x; top += y; bottom += y; }
+	void CRectF::OffsetRect(const CPointF& pt) { OffsetRect(pt.x, pt.y); }
+
+	FLOAT CRectF::Width()const { return right - left; }
+	FLOAT CRectF::Height()const { return bottom - top; }
+
+	void CRectF::InflateRect(FLOAT x, FLOAT y) { left -= x; right += x; top -= y; bottom += y; }
+	void CRectF::DeflateRect(FLOAT x, FLOAT y) { left += x; right -= x; top += y; bottom -= y; }
+	bool CRectF::PtInRect(const CPointF& pt) const { return pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom; }
+	CPointF CRectF::LeftTop() const { return CPointF(left, top); }
+	CPointF CRectF::CenterPoint() const
+	{
+		return CPointF((left + right) / 2, (top + bottom) / 2);
+	}
+
+	CSizeF CRectF::Size() const
+	{
+		return CSizeF(Width(), Height());
+	}
+
+	void CRectF::InflateRect(const CRectF& rc)
+	{
+		left -= rc.left;
+		top -= rc.top;
+		right += rc.right;
+		bottom += rc.bottom;
+	}
+	void CRectF::DeflateRect(const CRectF& rc)
+	{
+		left += rc.left;
+		top += rc.top;
+		right -= rc.right;
+		bottom -= rc.bottom;
+	}
+
+	//bool IntersectRect(LPCRECT lpRect1, LPCRECT lpRect2) { return ::IntersectRect(this, lpRect1, lpRect2); }
+
+	CRectF CRectF::operator+(CRectF rc)const
+	{
+		CRectF ret(*this);
+		ret.InflateRect(rc);
+		return ret;
+	}
+	CRectF& CRectF::operator+=(CRectF rc)
+	{
+		this->InflateRect(rc);
+		return *this;
+	}
+
+	CRectF CRectF::operator-(CRectF rc)const
+	{
+		CRectF ret(*this);
+		ret.DeflateRect(rc);
+		return ret;
+	}
+	CRectF& CRectF::operator-=(CRectF rc)
+	{
+		this->DeflateRect(rc);
+		return *this;
+	}
+	bool CRectF::operator==(const CRectF& rc)const { return left == rc.left && top == rc.top && right == rc.right && bottom == rc.bottom; }
+	bool CRectF::operator!=(const CRectF& rc)const { return !operator==(rc); }
+	//void operator &=(const CRectF& rect) { ::IntersectRect(this, this, &rect); }
+
+	//CColor
+	CColorF::CColorF() :D2D1::ColorF(1.0F, 1.0f, 1.0f, 1.0f) {}
+	CColorF::CColorF(FLOAT r, FLOAT g, FLOAT b, FLOAT a) :D2D1::ColorF(r, g, b, a) {}
+
+	bool CColorF::operator==(const CColorF& rhs) const
+	{
+		return r == rhs.r && g == rhs.g && b == rhs.b && a == rhs.a;
+	}
+
+	bool CColorF::operator!=(const CColorF& rhs) const
+	{
+		return !operator==(rhs);
+	}
+
+	std::size_t CColorF::GetHashCode() const
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, std::hash<decltype(r)>()(r));
+		boost::hash_combine(seed, std::hash<decltype(g)>()(g));
+		boost::hash_combine(seed, std::hash<decltype(b)>()(b));
+		boost::hash_combine(seed, std::hash<decltype(a)>()(a));
+		return seed;
+	}
+
+	//CFontF
+	CFontF::CFontF(const std::wstring& familyName, FLOAT size)
+		:FamilyName(familyName), Size(size){}
+
+	bool CFontF::operator==(const CFontF& rhs) const
+	{
+		return FamilyName == rhs.FamilyName && Size == rhs.Size && TextAlignment == rhs.TextAlignment && ParagraphAlignment == rhs.ParagraphAlignment;
+	}
+
+	bool CFontF::operator!=(const CFontF& rhs) const
+	{
+		return !operator==(rhs);
+	}
+
+	CFont CFontF::GetGDIFont() const
+	{
+		return CFont(CDirect2DWrite::Dips2Points(Size), FamilyName);
+	}
+
+	std::size_t CFontF::GetHashCode() const
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, std::hash<decltype(FamilyName)>()(FamilyName));
+		boost::hash_combine(seed, std::hash<decltype(Size)>()(Size));
+		boost::hash_combine(seed, std::hash<decltype(TextAlignment)>()(TextAlignment));
+		boost::hash_combine(seed, std::hash<decltype(ParagraphAlignment)>()(ParagraphAlignment));
+		return seed;
+	}
+
+
+
+
+
+
+	//CDirect2DWrite
 	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd) {}
 
 
@@ -34,6 +211,31 @@ namespace d2dw
 		return m_pDWriteFactory;
 	}
 
+	CComPtr<IWICImagingFactory>& CDirect2DWrite::GetWICImagingFactory()
+	{
+		if (!m_pWICImagingFactory) {
+			if (FAILED(
+				m_pWICImagingFactory.CoCreateInstance(
+					CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER))) {
+				throw std::exception(FILELINEFUNCTION);
+			}
+		}
+		return m_pWICImagingFactory;
+	}
+
+	//CComPtr<IWICFormatConverter>& CDirect2DWrite::GetWICFormatConverter()
+	//{
+	//	if (!m_pWICFormatConverter) {
+	//		if (FAILED(
+	//			GetWICImagingFactory()->CreateFormatConverter(&m_pWICFormatConverter))) {
+	//			throw std::exception(FILELINEFUNCTION);
+	//		}
+	//	}
+	//	return m_pWICFormatConverter;
+	//}
+
+
+
 	CComPtr<ID2D1HwndRenderTarget>& CDirect2DWrite::GetHwndRenderTarget()
 	{
 		if (!m_pHwndRenderTarget) {
@@ -51,7 +253,7 @@ namespace d2dw
 		return m_pHwndRenderTarget;
 	}
 
-	CComPtr<ID2D1SolidColorBrush>& CDirect2DWrite::GetColorBrush(const Color& color)
+	CComPtr<ID2D1SolidColorBrush>& CDirect2DWrite::GetColorBrush(const CColorF& color)
 	{
 		auto iter = m_solidColorBrushMap.find(color);
 		if (iter != m_solidColorBrushMap.end()) {
@@ -67,7 +269,7 @@ namespace d2dw
 		}
 	}
 
-	CComPtr<IDWriteTextFormat>& CDirect2DWrite::GetTextFormat(const Font& font)
+	CComPtr<IDWriteTextFormat>& CDirect2DWrite::GetTextFormat(const CFontF& font)
 	{
 		auto iter = m_textFormatMap.find(font);
 		if (iter != m_textFormatMap.end()) {
@@ -85,15 +287,17 @@ namespace d2dw
 				&pTextFormat))){
 				throw std::exception(FILELINEFUNCTION);
 			} else {
-				pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+				pTextFormat->SetTextAlignment(font.TextAlignment);
 				pTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING::DWRITE_WORD_WRAPPING_CHARACTER);
+				pTextFormat->SetParagraphAlignment(font.ParagraphAlignment);
+				//pTextFormat->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM, font.Size, font.Size*0.8f);
 				auto ret = m_textFormatMap.emplace(font, pTextFormat);
 				return ret.first->second;
 			}
 		}
 	}
 
-	CSizeF CDirect2DWrite::CalcTextSize(const Font& font, const std::wstring& text)
+	CSizeF CDirect2DWrite::CalcTextSize(const CFontF& font, const std::wstring& text)
 	{
 		auto fontIter = m_charMap.find(font);
 		if (fontIter == m_charMap.end()) {
@@ -125,7 +329,7 @@ namespace d2dw
 		return textSize;
 	}
 
-	CSizeF CDirect2DWrite::CalcTextSizeWithFixedWidth(const Font& font, const std::wstring& text, const FLOAT width)
+	CSizeF CDirect2DWrite::CalcTextSizeWithFixedWidth(const CFontF& font, const std::wstring& text, const FLOAT width)
 	{
 		auto fontIter = m_charMap.find(font);
 		if (fontIter == m_charMap.end()) {
@@ -202,11 +406,47 @@ namespace d2dw
 	void CDirect2DWrite::DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rect)
 	{
 		GetHwndRenderTarget()->DrawRectangle(rect, GetColorBrush(line.Color), line.Width);
+		//GetHwndRenderTarget()->DrawLine(CPointF(rect.left, rect.top), CPointF(rect.right, rect.top), GetColorBrush(line.Color), line.Width);
+		//GetHwndRenderTarget()->DrawLine(CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom), GetColorBrush(line.Color), line.Width);
+		//GetHwndRenderTarget()->DrawLine(CPointF(rect.right, rect.bottom), CPointF(rect.left, rect.bottom), GetColorBrush(line.Color), line.Width);
+		//GetHwndRenderTarget()->DrawLine(CPointF(rect.left, rect.bottom), CPointF(rect.left, rect.top), GetColorBrush(line.Color), line.Width);
+
 	}
 
 	void CDirect2DWrite::FillSolidRectangle(const SolidFill& fill, const D2D1_RECT_F& rect)
 	{
 		GetHwndRenderTarget()->FillRectangle(rect, GetColorBrush(fill.Color));
+	}
+
+	void CDirect2DWrite::DrawIcon(HICON hIcon, d2dw::CRectF& rect)
+	{
+		CComPtr<IWICBitmap> pWICBitmap;
+		if (FAILED(GetWICImagingFactory()->CreateBitmapFromHICON(hIcon, &pWICBitmap))) {
+			throw std::exception(FILELINEFUNCTION);
+		}
+		//if (FAILED(GetWICFormatConverter()->Initialize(pWICBitmap, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeMedianCut))) {
+		//	throw std::exception(FILELINEFUNCTION);
+		//}
+		CComPtr<IWICFormatConverter> pWICFormatConverter;
+		if (FAILED(GetWICImagingFactory()->CreateFormatConverter(&pWICFormatConverter))) {
+			throw std::exception(FILELINEFUNCTION);
+		}
+		if (FAILED(pWICFormatConverter->Initialize(pWICBitmap, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeMedianCut))) {
+			throw std::exception(FILELINEFUNCTION);
+		}
+
+		D2D1_BITMAP_PROPERTIES bitmapProps;
+		bitmapProps.dpiX = 96.0f;
+		bitmapProps.dpiY = 96.0f;
+		bitmapProps.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		bitmapProps.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+
+		CComPtr<ID2D1Bitmap> pBitmap;
+		if (FAILED(GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, &bitmapProps, &pBitmap))) {
+			throw std::exception(FILELINEFUNCTION);
+		}
+
+		GetHwndRenderTarget()->DrawBitmap(pBitmap, rect);
 	}
 
 

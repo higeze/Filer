@@ -1,6 +1,5 @@
 #pragma once
 #include "TextCell.h"
-#include "GDIUIElement.h"
 
 
 /**
@@ -10,14 +9,14 @@ class CBoolCell:public CTextCell
 {
 private:
 	bool m_bool;
-	CCheckBox m_checkBox;
+//	CCheckBox m_checkBox;
 public:
 	CBoolCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,bool b);
 	virtual ~CBoolCell(){}
 
-	virtual void PaintContent(CDC* pDC,CRect rcPaint);
-	virtual CSize MeasureSize(CDC* pDC);
-	virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
+	virtual void PaintContent(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint) override;
+	virtual d2dw::CSizeF MeasureSize(d2dw::CDirect2DWrite& direct) override;
+	virtual d2dw::CSizeF MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite& direct) override;
 
 	virtual std::wstring GetString();
 	virtual void SetStringCore(const std::wstring& str);

@@ -4,6 +4,7 @@
 #include "PropertyGridView.h"
 #include <type_traits>
 #include <tuple>
+#include "CellProperty.h"
 
 #define IDC_BUTTON_DEFAULT						161
 #define IDC_BUTTON_OK							162
@@ -11,7 +12,7 @@
 #define IDC_BUTTON_APPLY						164
 
 //class CPropertyGridView;
-class CellProperty;
+//class CellProperty;
 
 template<class T, class ...Args>
 class CPropertyWnd:public CWnd
@@ -27,7 +28,7 @@ private:
 	std::wstring m_wstrPropertyName;
 	std::shared_ptr<T> m_prop;
 	std::tuple<Args...> m_args;
-	std::shared_ptr<CellProperty> m_spPropSheetCellHeader;
+	std::shared_ptr<HeaderProperty> m_spPropSheetCellHeader;
 	std::shared_ptr<CellProperty> m_spPropSheetCellFilter;
 	std::shared_ptr<CellProperty> m_spPropSheetCellCell;
 
@@ -190,9 +191,6 @@ public:
 			m_buttonApply.Create(m_hWnd,CRect(0,0,50,20));
 		}
 
-		CCellSerializer serializer(m_spGrid,m_spPropSheetCellHeader,m_spPropSheetCellFilter,m_spPropSheetCellCell);
-		serializer.Serialize(m_spGrid,m_wstrPropertyName.c_str(),m_prop);
-
 		m_spGrid->PropertyChanged.connect(
 			[&](){
 				if(m_buttonApply.IsWindow()){
@@ -202,6 +200,11 @@ public:
 		);
 
 		m_spGrid->Create(m_hWnd);
+
+		//Serializer have to be called after Creation, because Direct2DWrite is necessary
+		CCellSerializer serializer(m_spGrid, m_spPropSheetCellHeader, m_spPropSheetCellFilter, m_spPropSheetCellCell);
+		serializer.Serialize(m_spGrid, m_wstrPropertyName.c_str(), m_prop);
+
 		m_spGrid->SubmitUpdate();
 		return 0;
 	}

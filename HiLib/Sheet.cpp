@@ -677,7 +677,7 @@ d2dw::CRectF CSheet::GetRect()const
 
 d2dw::CRectF CSheet::GetCellsRect()
 {
-	d2dw::CPointF ptScroll(GetScrollPos());
+	d2dw::CPointF ptScroll(GetGridPtr()->GetDirect()->Pixels2Dips(GetScrollPos()));
 	auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
 	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
 

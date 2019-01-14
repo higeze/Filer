@@ -5,6 +5,7 @@
 #include "Column.h"
 #include "MySize.h"
 #include "MyDC.h"
+#include "CellProperty.h"
 
 
 std::wstring CPathCell::GetString()
