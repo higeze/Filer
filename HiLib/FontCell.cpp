@@ -14,31 +14,29 @@ CFontCell::CFontCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr
 
 d2dw::CFontF CFontCell::GetFont(){return m_font;}
 
-void CFontCell::PaintContent(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint)
+void CFontCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
-	//TODOTODO
-	//HFONT hFont=(HFONT)pDC->SelectFont(m_font);
-	//std::wstring str=GetString();
-	//pDC->DrawTextEx(const_cast<LPTSTR>(str.c_str()),-1,rcPaint,GetFormat(),NULL);		
-	//pDC->SelectFont(hFont);
+	d2dw::FontAndColor fac(m_font, d2dw::CColorF(0.0f, 0.0f, 0.0f, 1.0f));
+	direct.DrawTextLayout(fac, GetString(), rcPaint);
 }
 
 void CFontCell::OnLButtonClk(MouseEvent& e)
 {
-	//TODOTODO
-	//CHOOSEFONT cf={0};
-	//LOGFONT logFont={0};
-	//memcpy(&logFont,&m_font.GetLogFont(),sizeof(LOGFONT));
-	//cf.lStructSize=sizeof(CHOOSEFONT);
-	//cf.hwndOwner=m_pSheet->GetGridPtr()->m_hWnd;
-	//cf.lpLogFont=&logFont;
-	//cf.Flags=CF_SCREENFONTS|CF_INITTOLOGFONTSTRUCT;
-	//if(!ChooseFont(&cf))return;
-	//if(memcmp(&m_font.GetLogFont(),&logFont,sizeof(LOGFONT))!=0){
-	//	
-	//	m_font=logFont;
-	//	OnPropertyChanged(L"value");
-	//}
+	CHOOSEFONT cf={0};
+	LOGFONT logFont={0};
+	CFont gdifont = m_font.GetGDIFont();
+	memcpy(&logFont,&gdifont.GetLogFont(),sizeof(LOGFONT));
+	cf.lStructSize=sizeof(CHOOSEFONT);
+	cf.hwndOwner=m_pSheet->GetGridPtr()->m_hWnd;
+	cf.lpLogFont=&logFont;
+	cf.Flags=CF_SCREENFONTS|CF_INITTOLOGFONTSTRUCT;
+	if(!ChooseFont(&cf))return;
+	if(memcmp(&gdifont.GetLogFont(),&logFont,sizeof(LOGFONT))!=0){
+		//TODO bold italic
+		m_font.FamilyName = logFont.lfFaceName;
+		m_font.Size = (float)logFont.lfHeight;
+		OnPropertyChanged(L"value");
+	}
 }
 
 std::wstring CFontCell::GetString()

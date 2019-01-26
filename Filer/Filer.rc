@@ -18,10 +18,9 @@ IDR_MENU_FILER MENU
 {
     POPUP "&File"
     {
-        MENUITEM "New(&N)", IDM_NEW
-        MENUITEM "Open(&O)", IDM_OPEN
+		MENUITEM "Save(&O)\tCtrl+S", IDM_SAVE
         MENUITEM SEPARATOR
-        MENUITEM "Exit(&X)", IDM_EXIT
+        MENUITEM "Exit(&X)\tAlt+F4", IDM_EXIT
     }
     POPUP "&Edit"
     {

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "FileExtColumn.h"
 #include "ParentColumnNameHeaderCell.h"
 #include "FilterCell.h"

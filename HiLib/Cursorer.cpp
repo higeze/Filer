@@ -7,19 +7,20 @@
 #include "Column.h"
 #include "Cell.h"
 
-void CCursorer::OnCellCursor(std::shared_ptr<CCell>& cell)
+void CCursorer::UpdateCursor(std::shared_ptr<CCell>& cell, bool old, bool current, bool anchor, bool focus)
 {
-	m_oldCell = m_currentCell;//Old
-	m_currentCell = cell;//Current
-	m_anchorCell = cell;//Anchor
-	if (m_focusedCell != cell) {
-		if (m_focusedCell) { m_focusedCell->OnKillFocus(KillFocusEvent()); }//Blur
-		m_focusedCell = cell;
-		m_focusedCell->OnSetFocus(SetFocusEvent());//Focus
-		m_doubleFocusedCell = nullptr;//DoubleFocus
-	}
-	else if (m_focusedCell == cell) {
-		m_doubleFocusedCell = cell;//DoubleFocus
+	if (old) { m_oldCell = m_currentCell; }//Old
+	if (current) { m_currentCell = cell; }//Current
+	if (anchor) { m_anchorCell = cell; }//Anchor
+	if (focus) {
+		if (m_focusedCell != cell) {
+			if (m_focusedCell) { m_focusedCell->OnKillFocus(KillFocusEvent()); }//Blur
+			m_focusedCell = cell;
+			m_focusedCell->OnSetFocus(SetFocusEvent());//Focus
+			m_doubleFocusedCell = nullptr;//DoubleFocus
+		} else if (m_focusedCell == cell) {
+			m_doubleFocusedCell = cell;//DoubleFocus
+		}
 	}
 }
 
@@ -29,8 +30,8 @@ void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
-	OnCellCursor(cell);
-
+	
+	UpdateCursor(cell);
 	cell->GetSheetPtr()->DeselectAll();
 	cell->GetRowPtr()->SetSelected(true);//Select
 }
@@ -40,7 +41,8 @@ void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
 	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
-	OnCellCursor(cell);
+
+	UpdateCursor(cell);
 	m_isDragPossible = true;
 	cell->GetRowPtr()->SetSelected(true);//Select
 }
@@ -50,6 +52,7 @@ void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
 	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
+
 	if (m_isDragPossible) {
 		m_isDragPossible = false;
 		cell->GetSheetPtr()->DeselectAll();
@@ -74,7 +77,7 @@ void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
-	OnCellCursor(cell);
+	UpdateCursor(cell);
 
 	cell->GetRowPtr()->SetSelected(!cell->GetRowPtr()->GetSelected());//Select
 }
@@ -84,6 +87,7 @@ void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
 	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
+	UpdateCursor(cell, true, true, false, true);
 	m_oldCell=m_currentCell;//Old
 	m_currentCell=cell;//Current
 
@@ -93,9 +97,11 @@ void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorCtrlShift(std::shared_ptr<CCell>& cell)
 {
-	m_oldCell = m_currentCell;//Old
-	m_currentCell = cell;//Current
-
+	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>() < 0 || cell->GetColumnPtr()->GetIndex<AllTag>() < 0) {
+		return;
+	}
+	
+	UpdateCursor(cell, true, true, false, true);
 	cell->GetSheetPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_currentCell->GetRowPtr(), true);
 }
 

@@ -11,10 +11,34 @@ CBoolCell::CBoolCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr
 
 void CBoolCell::PaintContent(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint)
 {
-	//TODOTODO
-	//rcPaint.right=rcPaint.left+rcPaint.Height();
-	//m_checkBox.SetRect(rcPaint);
-	//m_checkBox.OnPaint(PaintEvent(pDC));
+//TODO store ptrs
+	d2dw::SolidLine line(0.0, 0.0, 0.0, 1.0, 1.0);
+	rcPaint.right=rcPaint.left+rcPaint.Height();
+	direct.DrawSolidRectangle(line, rcPaint);
+	if (m_bool) {
+		CComPtr<ID2D1PathGeometry> pPathGeo;
+		direct.GetD2D1Factory()->CreatePathGeometry(&pPathGeo);
+		CComPtr<ID2D1GeometrySink> pGeoSink;
+		pPathGeo->Open(&pGeoSink);
+		d2dw::CPointF lt = rcPaint.LeftTop();
+		std::array<d2dw::CPointF, 6> pts;
+		pts[0].SetPoint(lt.x + 2, lt.y + 6);
+		pts[1].SetPoint(lt.x + 2, lt.y + 8);
+		pts[2].SetPoint(lt.x + 6, lt.y + 12);
+		pts[3].SetPoint(lt.x + 11, lt.y + 4);
+		pts[4].SetPoint(lt.x + 11, lt.y + 1);
+		pts[5].SetPoint(lt.x + 6, lt.y + 8);
+		pGeoSink->BeginFigure(pts[0], D2D1_FIGURE_BEGIN_FILLED);
+		for (auto i = 1; i < pts.size(); i++) {
+			pGeoSink->AddLine(pts[i]);
+		}
+		pGeoSink->EndFigure(D2D1_FIGURE_END_CLOSED);
+		pGeoSink->Close();
+		d2dw::SolidFill fill(0.0, 0.0, 0.0, 1.0);
+		direct.FillSolidGeometry(fill, pPathGeo);
+	}
+
+
 }
 d2dw::CSizeF CBoolCell::MeasureSize(d2dw::CDirect2DWrite& direct)
 {

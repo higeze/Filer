@@ -1,3 +1,4 @@
+//#include "stdafx.h"
 #include "Direct2DWrite.h"
 
 namespace d2dw
@@ -235,20 +236,43 @@ namespace d2dw
 	//}
 
 
-
+#ifdef USE_ID2D1DCRenderTarget
+	CComPtr<ID2D1DCRenderTarget>& CDirect2DWrite::GetHwndRenderTarget()
+#else
 	CComPtr<ID2D1HwndRenderTarget>& CDirect2DWrite::GetHwndRenderTarget()
+#endif
 	{
+
 		if (!m_pHwndRenderTarget) {
+#ifdef USE_ID2D1DCRenderTarget
+			D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
+				D2D1_RENDER_TARGET_TYPE_DEFAULT,
+				D2D1::PixelFormat(
+					DXGI_FORMAT_B8G8R8A8_UNORM,
+					D2D1_ALPHA_MODE_IGNORE),
+				0,
+				0,
+				D2D1_RENDER_TARGET_USAGE_NONE,
+				D2D1_FEATURE_LEVEL_DEFAULT
+			);
+
+			if (FAILED(GetD2D1Factory()->CreateDCRenderTarget(&props, &m_pHwndRenderTarget))) {
+				throw std::exception(FILELINEFUNCTION);
+			}
+#else
 			RECT rect;
 			::GetClientRect(m_hWnd, &rect);
 			D2D1_SIZE_U size = D2D1::Size<UINT>(rect.right, rect.bottom);
 			if (FAILED(
 				GetD2D1Factory()->CreateHwndRenderTarget(
 					D2D1::RenderTargetProperties(),
+					//D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE,
+					//	D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
 					D2D1::HwndRenderTargetProperties(m_hWnd, size),
 					&m_pHwndRenderTarget))) {
 				throw std::exception(FILELINEFUNCTION);
 			}
+#endif
 		}
 		return m_pHwndRenderTarget;
 	}
@@ -366,11 +390,23 @@ namespace d2dw
 
 		return D2D1::SizeF(width, std::accumulate(lineSizes.begin(), lineSizes.end(), 0.0f, [](FLOAT height, const CSizeF& rhs)->FLOAT {return height + rhs.height; }));
 	}
-
-	void CDirect2DWrite::BeginDraw() 
+#ifdef USE_ID2D1DCRenderTarget
+	void CDirect2DWrite::BeginDraw(HDC hDC, const RECT& rc) 
 	{
+		m_hDC = hDC;
+		GetHwndRenderTarget()->BindDC(hDC, &rc);
+		GetHwndRenderTarget()->SetTransform(D2D1::Matrix3x2F::Identity());
 		GetHwndRenderTarget()->BeginDraw(); 
+
 	}
+#else
+	void CDirect2DWrite::BeginDraw()
+	{
+		GetHwndRenderTarget()->SetTransform(D2D1::Matrix3x2F::Identity());
+		GetHwndRenderTarget()->BeginDraw();
+
+	}
+#endif
 
 	void CDirect2DWrite::ClearSolid(const SolidFill& fill)
 	{
@@ -383,12 +419,18 @@ namespace d2dw
 		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET) {
 			Clear();
 		}
+#ifdef USE_ID2D1DCRenderTarget
+		for (auto& fun : m_gdifuncs) {
+			fun();
+		}
+		m_gdifuncs.clear();
+#endif
 	}
 
 
 	void CDirect2DWrite::DrawSolidLine(const SolidLine& line, const D2D1_POINT_2F& p0, const D2D1_POINT_2F& p1)
 	{
-		GetHwndRenderTarget()->DrawLine(p0, p1, GetColorBrush(line.Color),line.Width);
+		GetHwndRenderTarget()->DrawLine(LayoutRound(p0), LayoutRound(p1), GetColorBrush(line.Color),line.Width);
 	}
 
 	void CDirect2DWrite::DrawTextLayout(const FontAndColor& fnc, const std::wstring& text, const D2D1_POINT_2F& origin, const D2D1_SIZE_F& size)
@@ -403,30 +445,64 @@ namespace d2dw
 		DrawTextLayout(fnc, text, rect.LeftTop(), rect.Size());
 	}
 
-	void CDirect2DWrite::DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rect)
+	void CDirect2DWrite::DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rc)
 	{
-		GetHwndRenderTarget()->DrawRectangle(rect, GetColorBrush(line.Color), line.Width);
-		//GetHwndRenderTarget()->DrawLine(CPointF(rect.left, rect.top), CPointF(rect.right, rect.top), GetColorBrush(line.Color), line.Width);
-		//GetHwndRenderTarget()->DrawLine(CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom), GetColorBrush(line.Color), line.Width);
-		//GetHwndRenderTarget()->DrawLine(CPointF(rect.right, rect.bottom), CPointF(rect.left, rect.bottom), GetColorBrush(line.Color), line.Width);
-		//GetHwndRenderTarget()->DrawLine(CPointF(rect.left, rect.bottom), CPointF(rect.left, rect.top), GetColorBrush(line.Color), line.Width);
+		auto rect = LayoutRound(rc);
+
+		//GetHwndRenderTarget()->DrawRectangle(LayoutRound(rect), GetColorBrush(line.Color), line.Width);
+		GetHwndRenderTarget()->DrawLine(CPointF(rect.left, rect.top), CPointF(rect.right, rect.top), GetColorBrush(line.Color), line.Width);
+		GetHwndRenderTarget()->DrawLine(CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom), GetColorBrush(line.Color), line.Width);
+		GetHwndRenderTarget()->DrawLine(CPointF(rect.right, rect.bottom), CPointF(rect.left, rect.bottom), GetColorBrush(line.Color), line.Width);
+		GetHwndRenderTarget()->DrawLine(CPointF(rect.left, rect.bottom), CPointF(rect.left, rect.top), GetColorBrush(line.Color), line.Width);
 
 	}
 
 	void CDirect2DWrite::FillSolidRectangle(const SolidFill& fill, const D2D1_RECT_F& rect)
 	{
-		GetHwndRenderTarget()->FillRectangle(rect, GetColorBrush(fill.Color));
+		GetHwndRenderTarget()->FillRectangle(LayoutRound(rect), GetColorBrush(fill.Color));
+	}
+
+	void CDirect2DWrite::DrawSolidGeometry(const SolidLine& line, CComPtr<ID2D1PathGeometry>& path)
+	{
+		GetHwndRenderTarget()->DrawGeometry(path, GetColorBrush(line.Color), line.Width);
+	}
+	void CDirect2DWrite::FillSolidGeometry(const SolidFill& fill, CComPtr<ID2D1PathGeometry>& path)
+	{
+		GetHwndRenderTarget()->FillGeometry(path, GetColorBrush(fill.Color));
 	}
 
 	void CDirect2DWrite::DrawIcon(HICON hIcon, d2dw::CRectF& rect)
 	{
+
+#ifndef USE_ID2D1DCRenderTarget
+		//CRect rc = Dips2Pixels(rect);
+		//HDC hDC = GetDC(NULL);
+		//HDC hMemDC = CreateCompatibleDC(hDC);
+		//HBITMAP hMemBmp = CreateCompatibleBitmap(hDC, rc.Width(), rc.Height());
+		//HBITMAP hResultBmp = NULL;
+		//HGDIOBJ hOrgBMP = SelectObject(hMemDC, hMemBmp);
+
+		//DrawIconEx(hMemDC, 0, 0, hIcon, rc.Width(), rc.Height(), 0, NULL, DI_NORMAL);
+
+		//hResultBmp = hMemBmp;
+		//hMemBmp = NULL;
+
+		//SelectObject(hMemDC, hOrgBMP);
+		//DeleteDC(hMemDC);
+		//ReleaseDC(NULL, hDC);
+
+		//CComPtr<IWICBitmap> pWICBitmap;
+		//if (FAILED(GetWICImagingFactory()->CreateBitmapFromHBITMAP(hResultBmp, 0, WICBitmapAlphaChannelOption::WICBitmapUseAlpha, &pWICBitmap))) {
+		//	throw std::exception(FILELINEFUNCTION);
+		//}
+		//::DeleteObject(hResultBmp);
+
+
+
 		CComPtr<IWICBitmap> pWICBitmap;
 		if (FAILED(GetWICImagingFactory()->CreateBitmapFromHICON(hIcon, &pWICBitmap))) {
 			throw std::exception(FILELINEFUNCTION);
 		}
-		//if (FAILED(GetWICFormatConverter()->Initialize(pWICBitmap, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeMedianCut))) {
-		//	throw std::exception(FILELINEFUNCTION);
-		//}
 		CComPtr<IWICFormatConverter> pWICFormatConverter;
 		if (FAILED(GetWICImagingFactory()->CreateFormatConverter(&pWICFormatConverter))) {
 			throw std::exception(FILELINEFUNCTION);
@@ -434,19 +510,46 @@ namespace d2dw
 		if (FAILED(pWICFormatConverter->Initialize(pWICBitmap, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeMedianCut))) {
 			throw std::exception(FILELINEFUNCTION);
 		}
-
-		D2D1_BITMAP_PROPERTIES bitmapProps;
-		bitmapProps.dpiX = 96.0f;
-		bitmapProps.dpiY = 96.0f;
-		bitmapProps.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
-		bitmapProps.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
-
-		CComPtr<ID2D1Bitmap> pBitmap;
-		if (FAILED(GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, &bitmapProps, &pBitmap))) {
+		double dpix = 96.0f, dpiy = 96.0f;
+		if (FAILED(pWICFormatConverter->GetResolution(&dpix, &dpiy))) {
 			throw std::exception(FILELINEFUNCTION);
 		}
 
+		D2D1_BITMAP_PROPERTIES bitmapProps;
+		//bitmapProps.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
+		bitmapProps.dpiX = (FLOAT)dpix;
+		bitmapProps.dpiY = (FLOAT)dpiy;
+		bitmapProps.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		bitmapProps.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+		//bitmapProps.colorContext = nullptr;
+
+		CComPtr<ID2D1Bitmap> pBitmap;
+		HRESULT hr = GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
+		if (FAILED(hr)) {
+			BOOST_LOG_TRIVIAL(trace) << L"Failed";
+			BOOST_LOG_TRIVIAL(trace) << boost::format("%08X") % hIcon;
+			BOOST_LOG_TRIVIAL(trace) << boost::format("%08X") % hr;
+
+			throw std::exception(FILELINEFUNCTION);
+		}
+
+		//CComPtr<ID2D1Bitmap> pBitmap;
+		//HRESULT hr = GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap);
+		//if (FAILED(hr)) {
+		//		BOOST_LOG_TRIVIAL(trace) << L"Failed";
+		//		BOOST_LOG_TRIVIAL(trace) << boost::format("%08X") % hIcon;
+		//		BOOST_LOG_TRIVIAL(trace) << boost::format("%08X") % hr;
+		//	throw std::exception(FILELINEFUNCTION);
+		//}
 		GetHwndRenderTarget()->DrawBitmap(pBitmap, rect);
+#else
+
+		CRect rc = Dips2Pixels(rect);
+		m_gdifuncs.push_back([this, rc, hIcon]()->void{
+			::DrawIconEx(m_hDC, rc.left, rc.top, hIcon, rc.Width(), rc.Height(), 0, NULL, DI_NORMAL);
+		});
+#endif
+
 	}
 
 

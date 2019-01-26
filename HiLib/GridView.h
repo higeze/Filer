@@ -4,6 +4,10 @@
 #include "MyGdiPlusHelper.h"
 #include "ThreadHelper.h"
 #include <queue>
+//
+//#include "D2DWindow.h"
+//#include "D2DWindowControl.h"
+//#include "D2DMisc.h"
 
 class CDirect2DWrite;
 class BackgroundProperty;
@@ -13,6 +17,9 @@ struct CMouseStateMachine;
 class CGridView:public CWnd,public CSheet
 {
 public:
+
+//	V4::D2DTextbox* m_pTextBox = nullptr;
+
 	static CMenu ContextMenu;
 protected:
 	bool m_isFocusable = true;

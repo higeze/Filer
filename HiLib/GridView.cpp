@@ -30,6 +30,7 @@
 #include "TextCell.h"
 #include "MouseStateMachine.h"
 #include "GridViewProperty.h"
+#include "ResourceIDFactory.h"
 
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
@@ -62,7 +63,7 @@ CGridView::CGridView(
 		.lpszClassName(_T("CGridView"))
 		.lpszWindowName(_T("GridView"))
 		.dwStyle(WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN)
-		.hMenu((HMENU)123321); 
+		.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"PropertyGridView"));
 	//Scroll
 	m_vertical.CreateWindowExArgument()
 		.dwStyle(SBS_RIGHTALIGN|SBS_VERT|WS_CHILD|WS_VISIBLE)
@@ -152,11 +153,9 @@ void CGridView::OnCellLButtonClk(CellEventArgs& e)
 		switch(sort){
 			case Sorts::None:
 			case Sorts::Down:
-				//Sort(e.CellPtr->GetColumnPtr(),Sorts::Up);//TODO
 				pCol->SetSort(Sorts::Up);
 				break;
 			case Sorts::Up:
-				//Sort(e.CellPtr->GetColumnPtr(),Sorts::Down);
 				pCol->SetSort(Sorts::Down);
 				break;
 			default:
@@ -252,6 +251,10 @@ LRESULT CGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled
 	m_vertical.SetScrollPos(0);
 	m_horizontal.SetScrollPos(0);
 
+	//V4::FRectF rc2(0, 0, 400, 400);
+	//m_pTextBox = new V4::D2DTextbox(nullptr);
+	//m_pTextBox->CreateWindow(nullptr, nullptr, rc2, V4::STAT::VISIBLE, L"txtbox");
+
 	return 0;
 }
 
@@ -278,11 +281,14 @@ LRESULT CGridView::OnEraseBkGnd(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHan
 LRESULT CGridView::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {	
 	CRect rcClient(GetClientRect());
+#ifndef USE_ID2D1DCRenderTarget
 	m_pDirect->GetHwndRenderTarget()->Resize(D2D1_SIZE_U{ (UINT)rcClient.Width(), (UINT)rcClient.Height() });
-	//if(m_upBuffDC.get()==nullptr || rcClient.Width()>m_upBuffDC->GetSize().cx || rcClient.Height()>m_upBuffDC->GetSize().cy){
-	//	CClientDC dc(m_hWnd);
-	//	m_upBuffDC.reset(new CBufferDC(dc,rcClient.Width(),rcClient.Height()));	
-	//}
+#else
+	if (m_upBuffDC.get() == nullptr || rcClient.Width() > m_upBuffDC->GetSize().cx || rcClient.Height() > m_upBuffDC->GetSize().cy) {
+		CClientDC dc(m_hWnd);
+		m_upBuffDC.reset(new CBufferDC(dc, rcClient.Width(), rcClient.Height()));
+	}
+#endif
 	SizeChanged();
 	SubmitUpdate();
 	return 0;
@@ -292,9 +298,14 @@ LRESULT CGridView::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	CPaintDC dc(m_hWnd);
+#ifdef USE_ID2D1DCRenderTarget
+	CRect rcClient(GetClientRect());
+	m_pDirect->BeginDraw(m_upBuffDC->GetHDC(), rcClient);
+#else
 	m_pDirect->BeginDraw();
-	m_pDirect->GetHwndRenderTarget()->SetTransform(D2D1::Matrix3x2F::Identity());
+#endif
 
+	//Because of CLIPCHILD, No region clip necessary
 	//CRect rcClip = GetClientRect();
 	//if(m_vertical.IsWindowVisible()){	
 	//	rcClip.right -= m_vertical.GetWindowRect().Width();
@@ -304,7 +315,6 @@ LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	//}
 	//m_pDirect->GetHwndRenderTarget()->PushAxisAlignedClip(m_pDirect->Pixels2Dips(rcClip), D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 
-
 	m_pDirect->ClearSolid(*(m_spGridViewProp->m_spBackgroundProperty->m_brush));
 
 	OnPaint(PaintEvent(this, *m_pDirect));
@@ -312,20 +322,16 @@ LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	//m_pDirect->GetHwndRenderTarget()->PopAxisAlignedClip();
 
 	m_pDirect->EndDraw();
-
-	//TODOTODO
-	//if(m_spEditRect){
-	//	CRgn rgnEdit;
-	//	rgnEdit.CreateRectRgnIndirect(*m_spEditRect);
-	//	rgn.CombineRgn(rgnEdit,RGN_XOR);
-	//	m_spEditRect = nullptr;
-	//}
-	//dc.SelectClipRgn(rgn);
-	//dc.BitBlt(rcClient.left,rcClient.top,
-	//	rcClient.Width(),
-	//	rcClient.Height(),
-	//	*m_upBuffDC.get(),0,0,SRCCOPY);
-	//dc.SelectClipRgn(NULL);
+#ifdef USE_ID2D1DCRenderTarget
+	CRgn rgn;
+	rgn.CreateRectRgnIndirect(rcClient);
+	dc.SelectClipRgn(rgn);
+	dc.BitBlt(rcClient.left, rcClient.top,
+		rcClient.Width(),
+		rcClient.Height(),
+		*m_upBuffDC.get(), 0, 0, SRCCOPY);
+	dc.SelectClipRgn(NULL);
+#endif
 	return 0;
 }
 
@@ -653,6 +659,8 @@ LRESULT CGridView::OnSetCursor(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 
 LRESULT CGridView::OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+//	m_pTextBox->WndProc(nullptr, uMsg, wParam, lParam);
+
 	OnKeyDown(KeyDownEvent(wParam, lParam & 0xFF, lParam>>16 & 0xFF));
 	//PostUpdate(Updates::Scrolls);
 	SubmitUpdate();
@@ -731,207 +739,207 @@ LRESULT CGridView::OnCommandEditHeader(WORD wNotifyCode,WORD wID,HWND hWndCtl,BO
 	return 0;
 }
 
-Status CGridView::SaveGIFWithNewColorTable(
-  Image *pImage,
-  IStream* pIStream,
-  const CLSID* clsidEncoder,
-  DWORD nColors,
-  BOOL fTransparent
-)
-{
-    Status stat = GenericError;
-
-    // GIF codec supports 256 colors maximum.
-    if (nColors > 256)
-        nColors = 256;
-    if (nColors < 2)
-        nColors = 2;
-
-    // Make a new 8-BPP pixel indexed bitmap that is the same size as the source image.
-    DWORD   dwWidth = pImage->GetWidth();
-    DWORD   dwHeight = pImage->GetHeight();
-
-    // Always use PixelFormat8BPPIndexed, because that is the color table
-    // based interface to the GIF codec.
-    Bitmap  bitmap(dwWidth, dwHeight, PixelFormat8bppIndexed);
-
-    stat = bitmap.GetLastStatus();
-
-    if (stat != Ok)
-        return stat;        // No point in continuing.
-
-    // Allocate the new color table.
-    DWORD   dwSizeColorPalette;
-    dwSizeColorPalette = sizeof(ColorPalette);      // Size of core structure.
-    dwSizeColorPalette += sizeof(ARGB)*(nColors-1);   // The other entries.
-
-    // Allocate some raw space to back the ColorPalette structure pointer.
-    ColorPalette *ppal = (ColorPalette *)new BYTE[dwSizeColorPalette];
-    if (ppal == NULL) return OutOfMemory;
-
-    ZeroMemory(ppal, dwSizeColorPalette);
-
-    // Initialize a new color table with entries that are determined by
-    // some optimal palette finding algorithm; for demonstration 
-    // purposes, just do a grayscale. 
-    if (fTransparent)
-        ppal->Flags = PaletteFlagsHasAlpha;
-    else
-        ppal->Flags = 0; 
-    ppal->Flags |= PaletteFlagsGrayScale;
-    ppal->Count = nColors;
-    for (UINT i = 0; i < nColors; i++)
-    {
-        int Alpha = 0xFF;       // Colors are opaque by default.
-        int Intensity = i*0xFF/(nColors-1); // even distribution 
-
-        // The GIF encoder makes the first entry in the palette with a
-        // zero alpha the "transparent" color in the GIF.
-        // For demonstration purposes, the first one is picked arbitrarily.
-
-        if ( i == 0 && fTransparent) // Make this color index...
-            Alpha = 0;          // Transparent
-        
-        // Create a gray scale for demonstration purposes.
-        // Otherwise, use your favorite color reduction algorithm
-        // and an optimum palette for that algorithm generated here.
-        // For example, a color histogram, or a median cut palette.
-        ppal->Entries[i] = Color::MakeARGB( Alpha, 
-                                            Intensity, 
-                                            Intensity, 
-                                            Intensity );
-    }
-
-    // Set the palette into the new Bitmap object.
-    bitmap.SetPalette(ppal);
-
-
-    // Use GetPixel below to pull out the color data of Image.
-    // Because GetPixel isn't defined on an Image, make a copy in a Bitmap 
-    // instead. Make a new Bitmap that is the same size of the image that
-    // you want to export. Otherwise, you might try to interpret the native 
-    // pixel format of the image by using a LockBits call.
-    // Use PixelFormat32BppARGB so that you can wrap a Graphics around it.
-    Bitmap BmpCopy(dwWidth, dwHeight, PixelFormat32bppARGB); 
-    stat = BmpCopy.GetLastStatus();
-    if (stat == Ok)
-    {
-        Graphics g(&BmpCopy);
-
-        // Transfer the Image to the Bitmap.
-        stat = g.DrawImage(pImage, 0, 0, dwWidth, dwHeight);
-
-        // g goes out of scope here and cleans up.
-    }
-
-    if (stat != Ok)
-    {
-        delete [] (LPBYTE) ppal;
-        ppal = NULL;
-        return stat;
-    }
-
-    // Lock the whole of the bitmap for writing.
-    BitmapData  bitmapData;
-    Rect        rect(0, 0, dwWidth, dwHeight);
-
-    stat = bitmap.LockBits(
-      &rect,
-      ImageLockModeWrite,
-      PixelFormat8bppIndexed,
-      &bitmapData);
-
-    if (stat == Ok)
-    {
-        // Write to the temporary buffer provided by LockBits.
-        // Copy the pixels from the source image in this loop.
-        // Because you want an index, convert RGB to the appropriate
-        // palette index here.
-        BYTE *pixels;
-        if (bitmapData.Stride > 0)
-            pixels = (BYTE*) bitmapData.Scan0;
-        else
-            // If the Stride is negative, Scan0 points to the last             // scanline in the buffer.
-            // To normalize the loop, obtain the start of the buffer,
-            // which is located (Height-1) scanlines previous.
-            pixels = (BYTE*) bitmapData.Scan0 + bitmapData.Stride*(dwHeight-1);
-        UINT stride = abs(bitmapData.Stride);
-
-        // Top-down and bottom-up is not relevant to this algorithm.
-
-        for(UINT row = 0; row < dwHeight; ++row)
-        {
-          for(UINT col = 0; col < dwWidth; ++col)
-          {
-              // Map palette indexes for a grayscale.
-              // If you use some other technique to color convert,
-              // put your favorite color reduction algorithm here.
-              Color     pixel;
-              UINT      i8BppPixel = row * stride + col;
-
-              BmpCopy.GetPixel(col, row, &pixel);
-
-              // Use luminance/chrominance conversion to get grayscale.
-              // Basically, turn the image into black and white TV: YCrCb.
-              // You do not have to to calculate Cr or Cb because you 
-              // throw away the color anyway.
-              // Y = Red * 0.299 + Green * 0.587 + Blue * 0.114
-
-              // This expression is best as integer math for performance,
-              // however, because GetPixel listed earlier is the slowest 
-              // part of this loop, the expression is left as 
-              // floating point for clarity.
-              double luminance = (pixel.GetRed() * 0.299) +
-                                (pixel.GetGreen() * 0.587) +
-                                (pixel.GetBlue() * 0.114);
-
-              // Gray scale is an intensity map from black to white.
-              // Compute the index to the gray scale entry that  
-              // approximates the luminance, and then round the index.      
-              // Also, constrain the index choices by the number of colors to do
-              pixels[i8BppPixel] = (BYTE)(luminance * (nColors-1)/255 +0.5);
-          }
-        }
-    // To commit the changes, unlock the portion of the bitmap.  
-        stat = bitmap.UnlockBits(&bitmapData);
-    }
-
-    // If destination work was successful, see whether the source was successful.
-    if (stat == Ok) stat = BmpCopy.GetLastStatus();
-
-    // See whether the code has been successful to this point.
-    if (stat == Ok)
-    {
-    // Write it out to the disk.
-		//EncoderParameters encs[3];
-		//ULONG depth = 8;
-		//ULONG compression = EncoderValueCompressionLZW;
-		//ULONG quality = 0;
-		//encs->Count = 3;
-		//encs->Parameter[0].Guid = EncoderCompression;
-		//encs->Parameter[0].NumberOfValues = 1;
-		//encs->Parameter[0].Type = EncoderParameterValueTypeLong;
-		//encs->Parameter[0].Value = &compression;
-
-		//encs->Parameter[1].Guid = EncoderColorDepth;
-		//encs->Parameter[1].NumberOfValues = 1;
-		//encs->Parameter[1].Type = EncoderParameterValueTypeLong;
-		//encs->Parameter[1].Value = &depth;
-
-		//encs->Parameter[2].Guid = EncoderQuality;
-		//encs->Parameter[2].NumberOfValues = 1;
-		//encs->Parameter[2].Type = EncoderParameterValueTypeLong;
-		//encs->Parameter[2].Value = &quality;
-        stat =  bitmap.Save(pIStream, clsidEncoder, NULL);
-    }
-
-    // Clean up after yourself.
-    delete [] (LPBYTE) ppal;
-    ppal = NULL;
-    // BmpCopy goes away on its own when it falls out of scope.
-
-    return stat;
-}
+//Status CGridView::SaveGIFWithNewColorTable(
+//  Image *pImage,
+//  IStream* pIStream,
+//  const CLSID* clsidEncoder,
+//  DWORD nColors,
+//  BOOL fTransparent
+//)
+//{
+//    Status stat = GenericError;
+//
+//    // GIF codec supports 256 colors maximum.
+//    if (nColors > 256)
+//        nColors = 256;
+//    if (nColors < 2)
+//        nColors = 2;
+//
+//    // Make a new 8-BPP pixel indexed bitmap that is the same size as the source image.
+//    DWORD   dwWidth = pImage->GetWidth();
+//    DWORD   dwHeight = pImage->GetHeight();
+//
+//    // Always use PixelFormat8BPPIndexed, because that is the color table
+//    // based interface to the GIF codec.
+//    Bitmap  bitmap(dwWidth, dwHeight, PixelFormat8bppIndexed);
+//
+//    stat = bitmap.GetLastStatus();
+//
+//    if (stat != Ok)
+//        return stat;        // No point in continuing.
+//
+//    // Allocate the new color table.
+//    DWORD   dwSizeColorPalette;
+//    dwSizeColorPalette = sizeof(ColorPalette);      // Size of core structure.
+//    dwSizeColorPalette += sizeof(ARGB)*(nColors-1);   // The other entries.
+//
+//    // Allocate some raw space to back the ColorPalette structure pointer.
+//    ColorPalette *ppal = (ColorPalette *)new BYTE[dwSizeColorPalette];
+//    if (ppal == NULL) return OutOfMemory;
+//
+//    ZeroMemory(ppal, dwSizeColorPalette);
+//
+//    // Initialize a new color table with entries that are determined by
+//    // some optimal palette finding algorithm; for demonstration 
+//    // purposes, just do a grayscale. 
+//    if (fTransparent)
+//        ppal->Flags = PaletteFlagsHasAlpha;
+//    else
+//        ppal->Flags = 0; 
+//    ppal->Flags |= PaletteFlagsGrayScale;
+//    ppal->Count = nColors;
+//    for (UINT i = 0; i < nColors; i++)
+//    {
+//        int Alpha = 0xFF;       // Colors are opaque by default.
+//        int Intensity = i*0xFF/(nColors-1); // even distribution 
+//
+//        // The GIF encoder makes the first entry in the palette with a
+//        // zero alpha the "transparent" color in the GIF.
+//        // For demonstration purposes, the first one is picked arbitrarily.
+//
+//        if ( i == 0 && fTransparent) // Make this color index...
+//            Alpha = 0;          // Transparent
+//        
+//        // Create a gray scale for demonstration purposes.
+//        // Otherwise, use your favorite color reduction algorithm
+//        // and an optimum palette for that algorithm generated here.
+//        // For example, a color histogram, or a median cut palette.
+//        ppal->Entries[i] = Color::MakeARGB( Alpha, 
+//                                            Intensity, 
+//                                            Intensity, 
+//                                            Intensity );
+//    }
+//
+//    // Set the palette into the new Bitmap object.
+//    bitmap.SetPalette(ppal);
+//
+//
+//    // Use GetPixel below to pull out the color data of Image.
+//    // Because GetPixel isn't defined on an Image, make a copy in a Bitmap 
+//    // instead. Make a new Bitmap that is the same size of the image that
+//    // you want to export. Otherwise, you might try to interpret the native 
+//    // pixel format of the image by using a LockBits call.
+//    // Use PixelFormat32BppARGB so that you can wrap a Graphics around it.
+//    Bitmap BmpCopy(dwWidth, dwHeight, PixelFormat32bppARGB); 
+//    stat = BmpCopy.GetLastStatus();
+//    if (stat == Ok)
+//    {
+//        Graphics g(&BmpCopy);
+//
+//        // Transfer the Image to the Bitmap.
+//        stat = g.DrawImage(pImage, 0, 0, dwWidth, dwHeight);
+//
+//        // g goes out of scope here and cleans up.
+//    }
+//
+//    if (stat != Ok)
+//    {
+//        delete [] (LPBYTE) ppal;
+//        ppal = NULL;
+//        return stat;
+//    }
+//
+//    // Lock the whole of the bitmap for writing.
+//    BitmapData  bitmapData;
+//    CRect        rect(0, 0, dwWidth, dwHeight);
+//
+//    stat = bitmap.LockBits(
+//      &rect,
+//      ImageLockModeWrite,
+//      PixelFormat8bppIndexed,
+//      &bitmapData);
+//
+//    if (stat == Ok)
+//    {
+//        // Write to the temporary buffer provided by LockBits.
+//        // Copy the pixels from the source image in this loop.
+//        // Because you want an index, convert RGB to the appropriate
+//        // palette index here.
+//        BYTE *pixels;
+//        if (bitmapData.Stride > 0)
+//            pixels = (BYTE*) bitmapData.Scan0;
+//        else
+//            // If the Stride is negative, Scan0 points to the last             // scanline in the buffer.
+//            // To normalize the loop, obtain the start of the buffer,
+//            // which is located (Height-1) scanlines previous.
+//            pixels = (BYTE*) bitmapData.Scan0 + bitmapData.Stride*(dwHeight-1);
+//        UINT stride = abs(bitmapData.Stride);
+//
+//        // Top-down and bottom-up is not relevant to this algorithm.
+//
+//        for(UINT row = 0; row < dwHeight; ++row)
+//        {
+//          for(UINT col = 0; col < dwWidth; ++col)
+//          {
+//              // Map palette indexes for a grayscale.
+//              // If you use some other technique to color convert,
+//              // put your favorite color reduction algorithm here.
+//              Color     pixel;
+//              UINT      i8BppPixel = row * stride + col;
+//
+//              BmpCopy.GetPixel(col, row, &pixel);
+//
+//              // Use luminance/chrominance conversion to get grayscale.
+//              // Basically, turn the image into black and white TV: YCrCb.
+//              // You do not have to to calculate Cr or Cb because you 
+//              // throw away the color anyway.
+//              // Y = Red * 0.299 + Green * 0.587 + Blue * 0.114
+//
+//              // This expression is best as integer math for performance,
+//              // however, because GetPixel listed earlier is the slowest 
+//              // part of this loop, the expression is left as 
+//              // floating point for clarity.
+//              double luminance = (pixel.GetRed() * 0.299) +
+//                                (pixel.GetGreen() * 0.587) +
+//                                (pixel.GetBlue() * 0.114);
+//
+//              // Gray scale is an intensity map from black to white.
+//              // Compute the index to the gray scale entry that  
+//              // approximates the luminance, and then round the index.      
+//              // Also, constrain the index choices by the number of colors to do
+//              pixels[i8BppPixel] = (BYTE)(luminance * (nColors-1)/255 +0.5);
+//          }
+//        }
+//    // To commit the changes, unlock the portion of the bitmap.  
+//        stat = bitmap.UnlockBits(&bitmapData);
+//    }
+//
+//    // If destination work was successful, see whether the source was successful.
+//    if (stat == Ok) stat = BmpCopy.GetLastStatus();
+//
+//    // See whether the code has been successful to this point.
+//    if (stat == Ok)
+//    {
+//    // Write it out to the disk.
+//		//EncoderParameters encs[3];
+//		//ULONG depth = 8;
+//		//ULONG compression = EncoderValueCompressionLZW;
+//		//ULONG quality = 0;
+//		//encs->Count = 3;
+//		//encs->Parameter[0].Guid = EncoderCompression;
+//		//encs->Parameter[0].NumberOfValues = 1;
+//		//encs->Parameter[0].Type = EncoderParameterValueTypeLong;
+//		//encs->Parameter[0].Value = &compression;
+//
+//		//encs->Parameter[1].Guid = EncoderColorDepth;
+//		//encs->Parameter[1].NumberOfValues = 1;
+//		//encs->Parameter[1].Type = EncoderParameterValueTypeLong;
+//		//encs->Parameter[1].Value = &depth;
+//
+//		//encs->Parameter[2].Guid = EncoderQuality;
+//		//encs->Parameter[2].NumberOfValues = 1;
+//		//encs->Parameter[2].Type = EncoderParameterValueTypeLong;
+//		//encs->Parameter[2].Value = &quality;
+//        stat =  bitmap.Save(pIStream, clsidEncoder, NULL);
+//    }
+//
+//    // Clean up after yourself.
+//    delete [] (LPBYTE) ppal;
+//    ppal = NULL;
+//    // BmpCopy goes away on its own when it falls out of scope.
+//
+//    return stat;
+//}
 //LRESULT CGridView::OnCommandPrintScreen(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 //{
 //	CPoint ptScroll=GetScrollPos();

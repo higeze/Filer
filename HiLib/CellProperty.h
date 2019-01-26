@@ -166,7 +166,7 @@ public:
 		std::make_shared<d2dw::SolidFill>(239.0f / 255, 239.0f / 255, 232.0f / 255, 1.0f),
 		std::make_shared<d2dw::SolidFill>(195.0f / 255, 224.0f / 255, 226.0f / 255, 1.0f),
 		std::make_shared<d2dw::SolidFill>(195.0f / 255, 224.0f / 255, 226.0f / 255, 0.3f),
-		std::make_shared<d2dw::SolidFill>(241.0f / 255, 196.0f / 255, 15.0f / 255, 0.3f),
+		std::make_shared<d2dw::SolidFill>(224.0f / 255, 224.0f / 255, 224.0f / 255, 0.3f),
 		std::make_shared<d2dw::SolidFill>(1.0f, 1.0f, 1.0f, 0.3f),
 		std::make_shared<d2dw::CRectF>(2.0f, 2.0f, 2.0f, 2.0f)),
 		DragLine(std::make_shared<d2dw::SolidLine>(1.0f, 0.0f, 0.0f, 1.0f, 1.0f)){};

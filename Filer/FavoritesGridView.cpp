@@ -1,4 +1,4 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "FavoritesGridView.h"
 #include "FavoritesProperty.h"
 #include "GridViewProperty.h"

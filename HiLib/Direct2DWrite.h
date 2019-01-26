@@ -1,7 +1,7 @@
 #pragma once
 
-#include <D2d1.h>
-#include <D2d1helper.h>
+#include <d2d1_1.h>
+#include <D2d1_1helper.h>
 #pragma comment (lib, "D2d1.lib")
 #include <dwrite.h>
 #pragma comment (lib, "dwrite.lib")
@@ -18,6 +18,8 @@
 #include "MyFont.h"
 
 #define FILELINEFUNCTION (boost::format("File:%1%, Line:%2%, Func:%3%") % ::PathFindFileNameA(__FILE__) % __LINE__ % __FUNCTION__).str().c_str()
+
+#define USE_ID2D1DCRenderTarget
 
 struct XTag;
 struct YTag;
@@ -151,6 +153,7 @@ namespace d2dw
 
 		std::wstring FamilyName;
 		FLOAT Size;
+
 		DWRITE_TEXT_ALIGNMENT TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_LEADING;
 		DWRITE_PARAGRAPH_ALIGNMENT ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
 
@@ -204,8 +207,11 @@ namespace d2dw
 	struct SolidFill
 	{
 	public:
-		SolidFill(FLOAT r = 1.0f, FLOAT g = 1.0f, FLOAT b = 1.0f, FLOAT a = 1.0f)
+		SolidFill(const CColorF& color)
+			:Color(color){}
+		SolidFill(const FLOAT r = 1.0f, const FLOAT g = 1.0f, const FLOAT b = 1.0f, const FLOAT a = 1.0f)
 			:Color(r, g, b, a){}
+
 		CColorF Color;
 
 		template <class Archive>
@@ -244,7 +250,14 @@ namespace d2dw{
 		HWND m_hWnd;
 		CComPtr<ID2D1Factory> m_pD2D1Factory = NULL;
 		CComPtr<IDWriteFactory> m_pDWriteFactory = NULL;
+
+#ifdef USE_ID2D1DCRenderTarget
+		CComPtr<ID2D1DCRenderTarget> m_pHwndRenderTarget = NULL;
+		HDC m_hDC;
+		std::vector<std::function<void()>> m_gdifuncs;
+#else
 		CComPtr<ID2D1HwndRenderTarget> m_pHwndRenderTarget = NULL;
+#endif
 		CComPtr<IWICImagingFactory> m_pWICImagingFactory = NULL;
 		//CComPtr<IWICFormatConverter> m_pWICFormatConverter = NULL;
 
@@ -265,12 +278,20 @@ namespace d2dw{
 		CComPtr<IDWriteFactory>& GetDWriteFactory();
 		CComPtr<IWICImagingFactory>& GetWICImagingFactory();
 		//CComPtr<IWICFormatConverter>& GetWICFormatConverter();
-
+#ifdef USE_ID2D1DCRenderTarget
+		CComPtr<ID2D1DCRenderTarget>& GetHwndRenderTarget();
+#else
 		CComPtr<ID2D1HwndRenderTarget>& GetHwndRenderTarget();
+#endif
 		CComPtr<ID2D1SolidColorBrush>& GetColorBrush(const CColorF& color);
 		CComPtr<IDWriteTextFormat>& GetTextFormat(const CFontF& font);
-
+#ifdef USE_ID2D1DCRenderTarget
+		void BeginDraw(HDC hDC, const RECT& rc);
+#else
 		void BeginDraw();
+
+#endif
+
 		void ClearSolid(const SolidFill& fill);
 		void EndDraw();
 
@@ -279,10 +300,28 @@ namespace d2dw{
 		void DrawTextLayout(const FontAndColor& fnc, const std::wstring& text, const CRectF& rect);
 		void DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rect);
 		void FillSolidRectangle(const SolidFill& fill, const D2D1_RECT_F& rect);
+		void DrawSolidGeometry(const SolidLine& line, CComPtr<ID2D1PathGeometry>& path);
+		void FillSolidGeometry(const SolidFill& fill, CComPtr<ID2D1PathGeometry>& path);
 		void DrawIcon(HICON hIcon, d2dw::CRectF& rect);
 
 		CSizeF CalcTextSize(const CFontF& font, const std::wstring& text);
 		CSizeF CalcTextSizeWithFixedWidth(const CFontF& font, const std::wstring& text, const FLOAT width);
+
+		FLOAT LayoutRound(FLOAT value, FLOAT unit = 0.5f)
+		{
+			auto ret = static_cast<int>(std::round(value / unit));
+			return (ret % 2 == 0) ? (ret - 1)*unit : ret*unit;
+		}
+
+		D2D1_POINT_2F LayoutRound(const D2D1_POINT_2F& pt, FLOAT unit = 0.5f)
+		{
+			return D2D1_POINT_2F{ LayoutRound(pt.x), LayoutRound(pt.y) };
+		}
+
+		D2D1_RECT_F LayoutRound(const D2D1_RECT_F& rc, FLOAT unit = 0.5f)
+		{
+			return D2D1_RECT_F{ LayoutRound(rc.left), LayoutRound(rc.top), LayoutRound(rc.right), LayoutRound(rc.bottom) };
+		}
 
 
 		FLOAT Pixels2DipsX(int x)

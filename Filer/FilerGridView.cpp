@@ -125,6 +125,7 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	//	AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
 	//}
 
+
 	return 0;
 }
 
@@ -364,13 +365,19 @@ void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
 		}
 		break;
 	case 'X':
-		CutToClipboard();
+		if (::GetAsyncKeyState(VK_CONTROL)) {
+			CutToClipboard();
+		}
 		break;
 	case 'C':
-		CopyToClipboard();
+		if (::GetAsyncKeyState(VK_CONTROL)) {
+			CopyToClipboard();
+		}
 		break;
 	case 'V':
-		PasteFromClipboard();
+		if (::GetAsyncKeyState(VK_CONTROL)) {
+			PasteFromClipboard();
+		}
 		break;
 	case VK_DELETE:
 		Delete();

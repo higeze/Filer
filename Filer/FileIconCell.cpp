@@ -45,15 +45,17 @@ std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()
 
 void CFileIconCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
+
 	auto spFile = GetShellFile();
 	d2dw::CRectF rc = rcPaint;
 	rc.bottom = rc.top + direct.Pixels2DipsY(16);
 	rc.right = rc.left + direct.Pixels2DipsX(16);
-	
+
 	try {
 		direct.DrawIcon(spFile->GetIcon().first->operator HICON(), rc);
-	}catch(...){}
-	//pDC->DrawIconEx(*(spFile->GetIcon().first), rc, 0, NULL, DI_NORMAL);
+	} catch (...) {
+		BOOST_LOG_TRIVIAL(trace) << FILELINEFUNCTION;
+	}
 }
 
 d2dw::CSizeF CFileIconCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)

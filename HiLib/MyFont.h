@@ -96,6 +96,7 @@ public:
 	LONG Point2Height(const int& nPoint,HWND hWnd=NULL)const
 	{
 		HDC hDC=GetDC(hWnd);
+		auto p = ::GetDeviceCaps(hDC, LOGPIXELSY);
 		LONG lHeight=::MulDiv(nPoint,::GetDeviceCaps(hDC,LOGPIXELSY),72);
 		::ReleaseDC(NULL,hDC);
 		return lHeight;

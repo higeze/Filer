@@ -64,13 +64,11 @@ void CParentColumnNameHeaderCell::PaintSortMark(d2dw::CDirect2DWrite& direct, d2
 	for(auto iter=arPoint.begin(),end=arPoint.end();iter!=end;++iter){
 		*iter+=ptTopRight;
 	}
-	//TODOTODO
-	//HPEN hPen=pDC->SelectPen((HPEN)::GetStockObject(WHITE_PEN));
-	//HBRUSH hBr = pDC->SelectBrush((HBRUSH)::GetStockObject(LTGRAY_BRUSH));
-	//::Polygon(*pDC,&arPoint[0],3);
-	//pDC->SelectPen(hPen);
-	//pDC->SelectBrush(hBr);
-
+	//TODO Fill Geometry
+	d2dw::SolidLine line(0.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	direct.DrawSolidLine(line, arPoint[0], arPoint[1]);
+	direct.DrawSolidLine(line, arPoint[1], arPoint[2]);
+	direct.DrawSolidLine(line, arPoint[2], arPoint[0]);
 }
 
 d2dw::CSizeF CParentColumnNameHeaderCell::GetSortSize()const

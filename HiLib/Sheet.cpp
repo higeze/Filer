@@ -117,8 +117,8 @@ void CSheet::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 		PostUpdate(Updates::Row);
 		//PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
-	} else if (!_tcsicmp(L"state", name)) {
-		PostUpdate(Updates::Sort);
+	} else if (!_tcsicmp(L"size", name)) {
+		//PostUpdate(Updates::Sort);
 		PostUpdate(Updates::Column);
 		PostUpdate(Updates::Row);
 		PostUpdate(Updates::Scrolls);

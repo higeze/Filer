@@ -134,6 +134,9 @@ private:
 		return 0;
 	}
 
+	LRESULT OnCommandSave(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	LRESULT OnCommandExit(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+
 	LRESULT OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandFilerGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	LRESULT OnCommandGridViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);

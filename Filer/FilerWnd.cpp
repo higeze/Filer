@@ -68,7 +68,9 @@ CFilerWnd::CFilerWnd()
 	//AddMsgHandler(WM_SETCURSOR, &CKonamiCommander::OnSetCursor, &m_konamiCommander);
 	//AddMsgHandler(WM_PAINT, &CKonamiCommander::OnPaint, &m_konamiCommander);
 
-	//AddCmdIDHandler(IDM_FILE_LOAD,&CDcmListView::OnWndCommandFileLoad,m_upList.get());
+	AddCmdIDHandler(IDM_SAVE,&CFilerWnd::OnCommandSave,this);
+	AddCmdIDHandler(IDM_EXIT, &CFilerWnd::OnCommandExit, this);
+
 	//AddCmdIDHandler(IDM_EDIT_COPY,&CMultiLineListView::OnCmdEditCopy,(CMultiLineListView*)m_upList.get());
 	//AddCmdIDHandler(IDM_EDIT_SELECTALL,&CMultiLineListView::OnCmdEditSelectAll,(CMultiLineListView*)m_upList.get());
 	AddCmdIDHandler(IDM_APPLICATIONOPTION, &CFilerWnd::OnCommandApplicationOption, this);
@@ -278,6 +280,24 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 {
 	switch (wParam)
 	{
+	case 'S':
+		{
+			if (::GetAsyncKeyState(VK_CONTROL)) {
+				BOOL dummy;
+				OnCommandSave(0, 0, 0, dummy);
+				bHandled = TRUE;
+			}
+		}
+		break;
+	case VK_F4:
+		{
+			if (::GetAsyncKeyState(VK_MENU)) {
+				BOOL dummy;
+				OnCommandExit(0, 0, 0, dummy);
+				bHandled = TRUE;
+			}
+		}
+		break;
 	case VK_F5:
 		{
 			int okcancel = ::MessageBox(m_hWnd, L"Copy?", L"Copy?", MB_OKCANCEL);
@@ -439,25 +459,19 @@ LRESULT CFilerWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 }
 
 
-//LRESULT CFilerWnd::OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
-//{
-//	switch (wParam)
-//	{
-//	case 'T':
-//		if(::GetAsyncKeyState(VK_CONTROL)){
-//			SendMessage(WM_COMMAND,IDM_NEWTAB, NULL);
-//		}
-//		break;
-//	case 'W':
-//		if(::GetAsyncKeyState(VK_CONTROL)){
-//			SendMessage(WM_COMMAND,IDM_CLOSETAB, NULL);
-//		}
-//		break;
-//	default:
-//		break;
-//	}
-//	return 0;
-//}
+LRESULT CFilerWnd::OnCommandSave(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	SerializeProperty(this);
+	return 0;
+}
+
+LRESULT CFilerWnd::OnCommandExit(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	BOOL dummy = FALSE;
+	OnClose(WM_CLOSE, NULL, NULL, dummy);
+	return 0;
+}
+
 
 LRESULT CFilerWnd::OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {

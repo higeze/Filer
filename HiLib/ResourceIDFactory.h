@@ -48,11 +48,12 @@ class CResourceIDFactory
 private:
 	NameIDMap m_nameIdMap;
 	std::unordered_map<ResourceType, Resource> m_resourceMap;
+
+	unsigned short GetNewID(const ResourceType& type);
 public:
 	CResourceIDFactory();
 
 	unsigned short GetID(const ResourceType& type, const std::wstring& name);
-	unsigned short GetNewID(const ResourceType& type);
 
 	static CResourceIDFactory* GetInstance()
 	{

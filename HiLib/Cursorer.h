@@ -36,7 +36,7 @@ public:
 	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) {/*Do Nothing*/ }
 	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e);
 
-	virtual void OnCellCursor(std::shared_ptr<CCell>& cell);
+
 	virtual void OnCursorDown(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorUp(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorLeave(std::shared_ptr<CCell>& cell);
@@ -45,6 +45,9 @@ public:
 	virtual void OnCursorShift(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorCtrlShift(std::shared_ptr<CCell>& cell);
 	//virtual void UpdateCursor();
+private:
+	virtual void UpdateCursor(std::shared_ptr<CCell>& cell, bool old  = true, bool current = true, bool anchor = true, bool focus = true);
+
 public:
 	virtual void OnCursorClear(CSheet* pSheet);
 

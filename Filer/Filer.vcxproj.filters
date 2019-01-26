@@ -14,6 +14,12 @@
     <Filter Include="Release">
       <UniqueIdentifier>{23fdc6c8-000e-44b9-9991-497e66d8619d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HiLib\NewFilter1">
+      <UniqueIdentifier>{84f59c2a-ef5b-4632-9163-8d70e4819e2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D2DTextBox">
+      <UniqueIdentifier>{cce17a06-89bc-4334-81bb-ab715ac5fcf1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -546,6 +552,9 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\Scroll.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\IBridgeTSFInterface.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>

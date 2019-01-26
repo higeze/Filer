@@ -59,7 +59,7 @@ LRESULT CKonamiCommander::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 
 LRESULT CKonamiCommander::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	//TODOTODO
+	//TODOLOW
 	//CPaintDC dc(m_hWnd);
 	//if(m_konamiOn && !m_mousePath.empty()){
 	//	auto cr = CColor(RGB(64,170,239));//Summer Sky

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "PathCell.h"
 #include "FilerGridView.h"
 #include "Row.h"

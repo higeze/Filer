@@ -1,5 +1,6 @@
 #include "PropertyGridView.h"
 #include "GridViewProperty.h"
+#include "ResourceIDFactory.h"
 
 CPropertyGridView::CPropertyGridView(std::shared_ptr<CGridViewProperty> spGridViewProperty)
 	:CGridView(spGridViewProperty)
@@ -13,8 +14,7 @@ CPropertyGridView::CPropertyGridView(std::shared_ptr<CGridViewProperty> spGridVi
 	CreateWindowExArgument()
 		.lpszClassName(_T("CPropertyGridView"))
 		.lpszWindowName(_T("PropertyGridView"))
-		.dwStyle(WS_CHILD | WS_VISIBLE)
-		.hMenu((HMENU)1233215); 
+		.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"PropertyGridView"));
 }
 
 

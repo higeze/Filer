@@ -32,7 +32,7 @@ CInplaceEdit::CInplaceEdit(
 	
 	m_cwa.lpszWindowName(L"InplaceEdit")
 	.lpszClassName(L"CInplaceEdit")
-	.dwStyle(WS_CHILD|/*WS_BORDER|*//*WS_VSCROLL|WS_HSCROLL|*/ES_LEFT|ES_MULTILINE/*|ES_AUTOHSCROLL*/|ES_AUTOVSCROLL)//Use ES_AUTOHSCROLL avoid word break during typing
+	.dwStyle(WS_CLIPSIBLINGS|WS_CHILD|/*WS_BORDER|*//*WS_VSCROLL|WS_HSCROLL|*/ES_LEFT|ES_MULTILINE/*|ES_AUTOHSCROLL*/|ES_AUTOVSCROLL)//Use ES_AUTOHSCROLL avoid word break during typing
 	.hMenu((HMENU)IDC_INPLACEEDIT);//TODO specify EditControl ID
 
 	AddMsgHandler(WM_KEYDOWN,&CInplaceEdit::OnKeyDown,this);

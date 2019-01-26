@@ -49,19 +49,21 @@ std::shared_ptr<CShellFile> CFileSizeCell::GetShellFile()
 d2dw::CSizeF CFileSizeCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
 {
 	//Calc Content Rect
-	d2dw::CRectF rcContent;
+//	d2dw::CRectF rcContent;
 	std::basic_string<TCHAR> str;
 	auto spFile = GetShellFile();
 	auto size = spFile->ReadSize();
 	switch (size.second) {
 	case FileSizeStatus::Available:
 		str = Size2String(size.first.QuadPart);
+		break;
 	default:
 		str =  L"00,000,000";
+		break;
 	}
 	if (str.empty()) { str = _T("a"); }
-	direct.CalcTextSize(m_spProperty->FontAndColor->Font, str);
-	return rcContent.Size();
+	return direct.CalcTextSize(m_spProperty->FontAndColor->Font, str);
+	//return rcContent.Size();
 }
 
 

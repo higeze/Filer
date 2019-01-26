@@ -188,7 +188,8 @@ void CCell::PaintLine(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 void CCell::PaintFocus(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
 	if(GetFocused()){
-		rcPaint.DeflateRect(1.0f, 1.0f);
+		auto halfLineWidth = m_spProperty->Line->Width*0.5;
+		rcPaint.DeflateRect(halfLineWidth, halfLineWidth);
 		direct.DrawSolidRectangle(*(m_spProperty->FocusedLine), rcPaint);
 	}
 }

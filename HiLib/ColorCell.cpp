@@ -9,17 +9,17 @@ CColorCell::CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_p
 	:CTextCell(pSheet,pRow,pColumn,spProperty),
 	m_color(color){}
 
-
 d2dw::CColorF CColorCell::GetColor(){return m_color;}
 
 void CColorCell::PaintBackground(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint)
 {
-	d2dw::SolidFill colorFill(m_color.r, m_color.g, m_color.b, m_color.a);
+	d2dw::SolidFill colorFill(m_color);
 	direct.FillSolidRectangle(colorFill, rcPaint);
 }
 
 void CColorCell::OnLButtonClk(const LButtonClkEvent& e)
 {
+	//TODO use Custom Choose Color
 	COLORREF CustColors[16];
 	CHOOSECOLOR cc={0};
 	cc.lStructSize=sizeof(CHOOSECOLOR);

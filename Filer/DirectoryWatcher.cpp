@@ -1,4 +1,4 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include "DirectoryWatcher.h"
 #include "SEHException.h"
 #include "MyWin32.h"

@@ -113,7 +113,7 @@ d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& d
 
 void CTextCell::OnEdit(const EventArgs& e)
 {
-	d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
+	CRect rc(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(CenterBorder2InnerBorder(GetRect())));
 	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
 	SetState(UIElementState::Hot);//During Editing, Keep Hot
 	m_pEdit = new CInplaceEdit(
@@ -135,13 +135,13 @@ void CTextCell::OnEdit(const EventArgs& e)
 		m_spProperty->FontAndColor->Font.GetGDIFont(),
 		GetFormat());
 
-	m_pEdit->Create(m_pSheet->GetGridPtr()->m_hWnd, m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(rcContent));
+	m_pEdit->Create(m_pSheet->GetGridPtr()->m_hWnd, rc);
 	m_pEdit->SetWindowText(GetString().c_str());
 	CRect rcRect(m_pEdit->GetRect());
 	CRect rcPadding(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)));
 	rcRect.DeflateRect(rcPadding);
 	m_pEdit->SetRect(rcRect);
-	m_pEdit->SetMargins(2,2);
+	//m_pEdit->SetMargins(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)).left, m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)).right);
 	m_pEdit->SetFocus();
 	m_pEdit->SetSel(0,-1);
 	m_pEdit->ShowWindow(SW_SHOW);
