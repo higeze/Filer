@@ -5,10 +5,11 @@
 #include "FileLastWriteCell.h"
 #include "Sheet.h"
 #include "CellProperty.h"
+#include "FileSizeArgs.h"
 
 
-CFileLastWriteColumn::CFileLastWriteColumn(CGridView* pGrid)
-	:CParentDefaultMapColumn(pGrid){}
+CFileLastWriteColumn::CFileLastWriteColumn(CGridView* pGrid, std::shared_ptr<FileTimeArgs> spTimeProp)
+	:CParentDefaultMapColumn(pGrid), m_spTimeArgs(spTimeProp){}
 
 std::shared_ptr<CCell> CFileLastWriteColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {

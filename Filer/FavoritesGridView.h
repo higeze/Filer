@@ -33,6 +33,8 @@ public:
 
 	void FilterAll() override {/*Do nothing*/}
 
+	void Reload();
+
 private:
 	void InsertDefaultRowColumn();
 

@@ -26,8 +26,9 @@ protected:
 
 	CScrollBar m_vertical;
 	CScrollBar m_horizontal;
-
+#ifdef USE_ID2D1DCRenderTarget
 	UPBufferDC m_upBuffDC;
+#endif
 	d2dw::CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
 

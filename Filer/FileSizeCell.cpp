@@ -1,11 +1,11 @@
 #include "FileSizeCell.h"
+#include "FileSizeColumn.h"
 #include "ShellFile.h"
 #include "ShellFolder.h"
 #include "FileRow.h"
 #include "CellProperty.h"
 #include "Sheet.h"
 #include "GridView.h"
-#include "FileSizeColumn.h"
 
 CFileSizeCell::CFileSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	:CTextCell(pSheet, pRow, pColumn, spProperty)

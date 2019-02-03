@@ -23,6 +23,11 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellZipFolder::GetIcon()
 	return CShellFile::GetIcon();
 }
 
+std::pair<FILETIME, FileTimeStatus> CShellZipFolder::GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs)
+{
+	return CShellFile::GetLastWriteTime(spArgs);
+}
+
 std::pair<ULARGE_INTEGER, FileSizeStatus> CShellZipFolder::GetSize(std::shared_ptr<FileSizeArgs>& spArgs)
 {
 	return CShellFile::GetSize(spArgs);

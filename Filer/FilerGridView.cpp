@@ -109,7 +109,7 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 		insertFun(m_pNameColumn, CColumn::kMaxIndex);
 		insertFun(std::make_shared<CFileExtColumn>(this), CColumn::kMaxIndex);
 		insertFun(std::make_shared<CFileSizeColumn>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr), CColumn::kMaxIndex);
-		insertFun(std::make_shared<CFileLastWriteColumn>(this), CColumn::kMaxIndex);
+		insertFun(std::make_shared<CFileLastWriteColumn>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr), CColumn::kMaxIndex);
 	}
 
 	//Header menu items

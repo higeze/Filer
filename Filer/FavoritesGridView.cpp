@@ -134,3 +134,10 @@ void CFavoritesGridView::RowMoved(CMovedEventArgs<RowTag>& e)
 	auto toIter = favorites->begin(); std::advance(toIter, e.m_to);
 	favorites->insert(toIter, temp);
 }
+
+void CFavoritesGridView::Reload()
+{
+	for (auto iter = m_spFavoritesProp->GetFavorites()->begin(); iter != m_spFavoritesProp->GetFavorites()->end();++iter) {
+		iter->SetShellFile(nullptr);
+	}
+}

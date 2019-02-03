@@ -8,6 +8,7 @@
 
 class CShellFolder;
 struct FileSizeArgs;
+struct FileTimeArgs;
 
 
 tstring FileTime2String(FILETIME *pFileTime);
@@ -44,6 +45,15 @@ enum class FileIconStatus
 	Loading,
 };
 
+enum class FileTimeStatus
+{
+	None,
+	Available,
+	AvailableLoading,
+	Loading,
+	Unavailable,
+};
+
 class CShellFile: public std::enable_shared_from_this<CShellFile>
 {
 private:
@@ -59,10 +69,13 @@ protected:
 	std::wstring m_wstrFileNameWithoutExt;
 	std::wstring m_wstrExt;
 	std::wstring m_wstrType;
-	std::wstring m_wstrCreationTime;
-	std::wstring m_wstrLastAccessTime;
-	std::wstring m_wstrLastWriteTime;
+	//std::wstring m_wstrCreationTime;
+	//std::wstring m_wstrLastAccessTime;
+	//std::wstring m_wstrLastWriteTime;
 
+	std::pair<FILETIME, FileTimeStatus> m_creationTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
+	std::pair<FILETIME, FileTimeStatus> m_lastAccessTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
+	std::pair<FILETIME, FileTimeStatus> m_lastWriteTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
 	std::pair<ULARGE_INTEGER, FileSizeStatus> m_size = std::make_pair(ULARGE_INTEGER(), FileSizeStatus::None);
 	std::pair<std::shared_ptr<CIcon>, FileIconStatus> m_icon = std::make_pair(std::shared_ptr<CIcon>(nullptr), FileIconStatus::None);
 
@@ -98,14 +111,18 @@ public:
 	virtual std::wstring GetFileName();
 	virtual std::wstring GetExt();
 	std::wstring GetTypeName();	
-	std::wstring GetCreationTime();
-	std::wstring GetLastAccessTime();
-	std::wstring GetLastWriteTime();
+	//std::wstring GetCreationTime();
+	//std::wstring GetLastAccessTime();
+	//std::wstring GetLastWriteTime();
 	UINT GetSFGAO();
 	DWORD GetAttributes();
 
 	void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt);
 	void SetExt(const std::wstring& wstrExt);
+
+	//LastWrite
+	bool GetFileLastWriteTime(FILETIME& time);
+	virtual std::pair<FILETIME, FileTimeStatus> GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs);
 
 	//Size
 	bool GetFileSize(ULARGE_INTEGER& size/*, std::shared_future<void> future*/);

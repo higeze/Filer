@@ -212,29 +212,29 @@ std::wstring CShellFile::GetTypeName()
 	return m_wstrType;
 }
 
-std::wstring CShellFile::GetCreationTime()
-{
-	if (m_wstrCreationTime.empty()) {
-		UpdateWIN32_FIND_DATA();
-	}
-	return m_wstrCreationTime;
-}
-
-std::wstring CShellFile::GetLastAccessTime()
-{
-	if (m_wstrLastAccessTime.empty()) {
-		UpdateWIN32_FIND_DATA();
-	}
-	return m_wstrLastAccessTime;
-}
-
-std::wstring CShellFile::GetLastWriteTime()
-{
-	if (m_wstrLastWriteTime.empty()) {
-		UpdateWIN32_FIND_DATA();
-	}
-	return m_wstrLastWriteTime;
-}
+//std::wstring CShellFile::GetCreationTime()
+//{
+//	if (m_wstrCreationTime.empty()) {
+//		UpdateWIN32_FIND_DATA();
+//	}
+//	return m_wstrCreationTime;
+//}
+//
+//std::wstring CShellFile::GetLastAccessTime()
+//{
+//	if (m_wstrLastAccessTime.empty()) {
+//		UpdateWIN32_FIND_DATA();
+//	}
+//	return m_wstrLastAccessTime;
+//}
+//
+//std::wstring CShellFile::GetLastWriteTime()
+//{
+//	if (m_wstrLastWriteTime.empty()) {
+//		UpdateWIN32_FIND_DATA();
+//	}
+//	return m_wstrLastWriteTime;
+//}
 
 std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetLockIcon()
 {
@@ -246,6 +246,18 @@ void CShellFile::SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& 
 {
 	std::lock_guard<std::mutex> lock(m_mtxIcon);
 	m_icon = icon;
+}
+
+bool CShellFile::GetFileLastWriteTime(FILETIME& time)
+{
+	WIN32_FIND_DATA wfd = { 0 };
+	if (!FAILED(::SHGetDataFromIDList(m_pParentShellFolder, m_childIdl.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
+		time = wfd.ftLastWriteTime;
+		return true;
+	} else {
+		time = FILETIME{ 0 };
+		return false;
+	}
 }
 
 bool CShellFile::GetFileSize(ULARGE_INTEGER& size/*, std::shared_future<void> future*/)
@@ -285,6 +297,21 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize(std::shared_ptr<Fi
 		break;
 	}
 	return m_size;
+}
+
+std::pair<FILETIME, FileTimeStatus> CShellFile::GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs)
+{
+	switch (m_lastWriteTime.second) {
+	case FileTimeStatus::None:
+	{
+		UpdateWIN32_FIND_DATA();
+	}
+	break;
+	case FileTimeStatus::Available:
+	case FileTimeStatus::Unavailable:
+		break;
+	}
+	return m_lastWriteTime;
 }
 
 std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
@@ -345,18 +372,10 @@ void CShellFile::UpdateWIN32_FIND_DATA()
 {
 	WIN32_FIND_DATA wfd = { 0 };
 	if (!FAILED(::SHGetDataFromIDList(m_pParentShellFolder, m_childIdl.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
-		m_wstrCreationTime = FileTime2String(&wfd.ftCreationTime);
-		m_wstrLastAccessTime = FileTime2String(&wfd.ftLastAccessTime);
-		m_wstrLastWriteTime = FileTime2String(&wfd.ftLastWriteTime);
+		m_creationTime = std::make_pair(wfd.ftCreationTime, FileTimeStatus::Available);
+		m_lastAccessTime = std::make_pair(wfd.ftLastAccessTime, FileTimeStatus::Available);
+		m_lastWriteTime = std::make_pair(wfd.ftLastWriteTime, FileTimeStatus::Available);
 		m_fileAttributes = wfd.dwFileAttributes;
-		//m_size.first.LowPart = wfd.nFileSizeLow;
-		//m_size.first.HighPart = wfd.nFileSizeHigh;
-		//if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-		//	m_wstrSize = L"dir";
-		//}
-		//else {
-		//	m_wstrSize = Size2String(m_size.QuadPart);
-		//}
 	}
 }
 
@@ -382,9 +401,9 @@ void CShellFile::Reset()
 	m_wstrFileName.clear();
 	m_wstrExt.clear();
 	m_wstrType.clear();
-	m_wstrCreationTime.clear();
-	m_wstrLastAccessTime.clear();
-	m_wstrLastWriteTime.clear();
+	m_creationTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
+	m_lastAccessTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
+	m_lastWriteTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
 
 	m_fileAttributes = 0;
 	m_sfgao = 0;

@@ -118,6 +118,7 @@ public:
 
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+
 	//virtual LRESULT OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	virtual LRESULT OnCommandCut(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	virtual LRESULT OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled) override;
@@ -205,7 +206,7 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn, this);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn, this);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn, this);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn, this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
 
 		std::vector<ColumnData> columns;
 		for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {

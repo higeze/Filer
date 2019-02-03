@@ -60,6 +60,7 @@ CFilerWnd::CFilerWnd()
 	AddMsgHandler(WM_LBUTTONDOWN, &CFilerWnd::OnLButtonDown, this);
 	AddMsgHandler(WM_LBUTTONUP, &CFilerWnd::OnLButtonUp, this);
 	AddMsgHandler(WM_MOUSEMOVE, &CFilerWnd::OnMouseMove, this);
+	AddMsgHandler(WM_DEVICECHANGE, &CFilerWnd::OnDeviceChange, this);
 	//AddMsgHandler(WM_KEYDOWN,&CFilerWnd::OnKeyDown,this);
 	//AddNtfyHandler(9996,TCN_KEYDOWN, [this](int id,LPNMHDR pnmh,BOOL& bHandled)->LRESULT{
 	//	this->OnKeyDown(WM_KEYDOWN, (WPARAM)((NMTCKEYDOWN*)pnmh)->wVKey, NULL, bHandled);
@@ -457,6 +458,14 @@ LRESULT CFilerWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 	}
 	return 0;
 }
+
+LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_spLeftFavoritesView->Reload();
+	m_spRightFavoritesView->Reload();
+	return 0;
+}
+
 
 
 LRESULT CFilerWnd::OnCommandSave(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
