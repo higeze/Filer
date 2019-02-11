@@ -36,6 +36,7 @@ CSheetCell::CSheetCell(
 		spCellProperty), 
 	CCell(pSheet,pRow,pColumn,spProperty,pMenu)
 {
+	m_lineType = LineType::OneLine;
 	m_spRowDragger = std::make_shared<CSheetCellRowDragger>();
 	m_spColDragger = std::make_shared<CSheetCellColDragger>();
 }

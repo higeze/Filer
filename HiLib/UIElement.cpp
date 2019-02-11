@@ -54,6 +54,7 @@ void CUIElement::OnMouseEnter(const MouseEvent& e)
 
 void CUIElement::OnMouseLeave(const MouseLeaveEvent& e)
 {
+
 	if(m_state==UIElementState::Pressed && e.Flags==MK_LBUTTON){
 		SetState(UIElementState::PressedLeave);	
 	}else{

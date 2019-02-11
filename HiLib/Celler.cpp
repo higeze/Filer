@@ -90,6 +90,11 @@ void CCeller::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 	//TODO Combine with Curosr
 }
 
+void CCeller::OnClear()
+{
+	Clear();
+}
+
 void CCeller::Clear()
 {
 	m_cellUnderMouse.reset();

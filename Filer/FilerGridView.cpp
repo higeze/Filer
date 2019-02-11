@@ -40,6 +40,7 @@
 #include "ShowHideMenuItem.h"
 
 #include "PathRow.h"
+#include "KnownFolder.h"
 
 
 #define SCRATCH_QCM_FIRST 1
@@ -305,6 +306,7 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 	}
 
 	m_spCursorer->OnCursorClear(this);
+	m_spCeller->OnClear();
 
 	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::RowVisible);
@@ -713,25 +715,171 @@ std::vector<LPITEMIDLIST> CFilerGridView::GetSelectedAbsolutePIDLVector()
 	return vPidl;
 }
 
-bool CFilerGridView::CopyTo(CComPtr<IShellItem2> pDestItem)
+bool CFilerGridView::SetIncrementalCopy(CComPtr<IFileOperation>& pFileOperation, std::vector<std::shared_ptr<CShellFile>>& spSrcFiles, std::shared_ptr<CShellFolder>& spDestFolder)
 {
+	//auto p = std::dynamic_pointer_cast<CShellFolder>(pSrc);
+	//if (p && !boost::iequals(pSrc->GetExt(), ".zip")) {
+
+	//	CComPtr<IEnumIDList> enumIdl;
+	//	if (SUCCEEDED(p->GetShellFolderPtr()->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
+	//		CIDL nextIdl;
+	//		ULONG ulRet(0);
+	//		while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
+	//			if (!nextIdl) { break; }
+	//			auto spFile(p->CreateShExFileFolder(nextIdl));
+	//			AddIncrementalAbsolutePIDLVector(spFile, pDest, vPidl);
+	//		}
+	//	}
+	//} else {
+	//	std::wstring relativePath;
+	//	if (::PathRelativePathTo(::GetBuffer(relativePath, MAX_PATH), m_spFolder->GetPath().c_str(), FILE_ATTRIBUTE_DIRECTORY, pSrc->GetPath().c_str(), 0)) {
+	//		::ReleaseBuffer(relativePath);
+
+	//		std::wstring otherAbsPath;
+	//		if (::PathCombine(::GetBuffer(otherAbsPath, MAX_PATH), pDest->GetPath().c_str(), relativePath.c_str())) {
+	//			::ReleaseBuffer(otherAbsPath);
+	//			if (!::PathFileExists(otherAbsPath.c_str())) {
+	//				vPidl.push_back(pSrc->GetAbsoluteIdl().m_pIDL);
+	//			} else {
+	//				std::shared_ptr<CShellFile> spOtherFile = pDest->CreateShExFileFolder(pSrc->);
+	//				FILETIME time = { 0 }, timeOther = { 0 };
+	//				pSrc->GetFileLastWriteTime(time);
+	//				spOtherFile->GetFileLastWriteTime(timeOther);
+	//				ULARGE_INTEGER uli = { time.dwLowDateTime, time.dwHighDateTime };
+	//				ULARGE_INTEGER otherUli = { timeOther.dwLowDateTime, timeOther.dwHighDateTime };
+	//				if (uli.QuadPart > otherUli.QuadPart) {
+	//					vPidl.push_back(pSrc->GetAbsoluteIdl().m_pIDL);
+	//				}
+
+	//			}
+	//		}
+	//	}
+	//}
+
+	bool hasItems = false;
+	std::vector<LPITEMIDLIST> vPidl;
+
+	for (auto& spSrcFile : spSrcFiles) {
+
+		//Check existance
+		ULONG chEaten = 0;
+		ULONG dwAttributes = 0;
+		CIDL childIdl;
+		if (SUCCEEDED(spDestFolder->GetShellFolderPtr()->ParseDisplayName(
+			NULL,
+			NULL,
+			const_cast<LPWSTR>(spSrcFile->GetFileName().c_str()),
+			&chEaten,
+			childIdl.ptrptr(),
+			&dwAttributes))) {//Exist
+			auto spDestFile = spDestFolder->CreateShExFileFolder(childIdl);
+			//		if (::PathFileExists(spOtherFile->GetPath().c_str())) {//Exist
+			auto& tySrc = typeid(*spSrcFile);
+			auto& tyDest = typeid(*spDestFile);
+			if (tySrc == typeid(CKnownFolder) || tyDest == typeid(CKnownFolder)) {//Known Folder
+				//Do Nothing
+			} else if (tySrc == typeid(CShellFolder) && tyDest == typeid(CShellFolder)) { //Normal Folder
+				auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spSrcFile);
+				if (auto spDestFileFolder = std::dynamic_pointer_cast<CShellFolder>(spDestFile)) {
+
+					CComPtr<IEnumIDList> enumIdl;
+					if (SUCCEEDED(spFolder->GetShellFolderPtr()->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
+						CIDL nextIdl;
+						ULONG ulRet(0);
+						std::vector<std::shared_ptr<CShellFile>> files;
+						while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
+							if (!nextIdl) { break; }
+							files.push_back(spFolder->CreateShExFileFolder(nextIdl));
+						}
+						hasItems |= SetIncrementalCopy(pFileOperation, files, spDestFileFolder);
+					}
+				} else {
+					MessageBox(L"Err", L"Err", MB_OK);
+				}
+			} else {//File, ZipFile
+				FILETIME timeSrc = { 0 }, timeDest = { 0 };
+				spSrcFile->GetFileLastWriteTime(timeSrc);
+				spDestFile->GetFileLastWriteTime(timeDest);
+				ULARGE_INTEGER uliSrc = { timeSrc.dwLowDateTime, timeSrc.dwHighDateTime };
+				ULARGE_INTEGER uliOther = { timeDest.dwLowDateTime, timeDest.dwHighDateTime };
+				if (uliSrc.QuadPart > uliOther.QuadPart) {
+					vPidl.push_back(spSrcFile->GetAbsoluteIdl().m_pIDL);
+				}
+			}
+			//} else {
+			//	vPidl.push_back(pSrc->GetAbsoluteIdl().m_pIDL);
+			//}
+		} else {//Not Exist		
+			vPidl.push_back(spSrcFile->GetAbsoluteIdl().m_pIDL);
+		}
+	}
+
+	if(!vPidl.empty()){
+		hasItems = true;
+
+		CComPtr<IShellItem2> pDestShellItem;
+		if (FAILED(::SHCreateItemFromIDList(spDestFolder->GetAbsoluteIdl().ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem)))) {
+			return false;
+		}
+		CComPtr<IShellItemArray> pItemAry = nullptr;
+		if (FAILED(SHCreateShellItemArrayFromIDLists(vPidl.size(), (LPCITEMIDLIST*)(vPidl.data()), &pItemAry))){
+			return false;
+		}
+		if (FAILED(pFileOperation->CopyItems(pItemAry, pDestShellItem))) {
+			return false;
+		}
+	}
+	return hasItems;
+}
+
+bool CFilerGridView::CopyIncrementalSelectedFilesTo(std::shared_ptr<CShellFolder>& pDest)
+{
+	CComPtr<IFileOperation> pFileOperation = nullptr;
+	if (FAILED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {
+		return false;
+	}
+
+	std::vector<std::shared_ptr<CShellFile>> selectedFiles;
+	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
+	for (auto rowIter = rowDictionary.begin(), rowEnd = rowDictionary.end(); rowIter != rowEnd; ++rowIter) {
+		if (rowIter->DataPtr->GetSelected()) {
+			if (auto spRow = std::dynamic_pointer_cast<CFileRow>(rowIter->DataPtr)) {
+				selectedFiles.push_back(spRow->GetFilePointer());
+			}
+		}
+	}
+
+	if (SetIncrementalCopy(pFileOperation, selectedFiles, pDest)) {
+		return SUCCEEDED(pFileOperation->PerformOperations());
+	} else {
+		return false;
+	}
+
+}
+
+
+bool CFilerGridView::CopySelectedFilesTo(std::shared_ptr<CShellFolder>& pDest)
+{
+	CComPtr<IShellItem2> pDestShellItem;
+	HRESULT hr = ::SHCreateItemFromIDList(pDest->GetAbsoluteIdl().ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
+	if (FAILED(hr)) { return false; }
 
 	auto vPidl = GetSelectedAbsolutePIDLVector();
 	CComPtr<IShellItemArray> pItemAry = nullptr;
-	HRESULT hr = ::SHCreateShellItemArrayFromIDLists(vPidl.size(), (LPCITEMIDLIST*)(vPidl.data()), &pItemAry);
+	hr = ::SHCreateShellItemArrayFromIDLists(vPidl.size(), (LPCITEMIDLIST*)(vPidl.data()), &pItemAry);
 	if (FAILED(hr)) { return false;}
 
 	CComPtr<IFileOperation> pFileOperation;
 
 	hr = pFileOperation.CoCreateInstance(CLSID_FileOperation);
 	if (FAILED(hr)) { return false; }
-	hr = pFileOperation->CopyItems(pItemAry, pDestItem);
+	hr = pFileOperation->CopyItems(pItemAry, pDestShellItem);
 	if (FAILED(hr)) { return false; }
 	hr = pFileOperation->PerformOperations();
 	return SUCCEEDED(hr);
 }
 
-bool CFilerGridView::MoveTo(CComPtr<IShellItem2> pDestItem)
+bool CFilerGridView::MoveSelectedFilesTo(CComPtr<IShellItem2> pDestItem)
 {
 	auto vPidl = GetSelectedAbsolutePIDLVector();
 	CComPtr<IShellItemArray> pItemAry = nullptr;

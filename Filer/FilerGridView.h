@@ -153,11 +153,13 @@ public:
 	bool PasteFromClipboard();
 	bool Delete();
 
-	bool CopyTo(CComPtr<IShellItem2> pDestItem);
-	bool MoveTo(CComPtr<IShellItem2> pDestItem);
+	bool CopySelectedFilesTo(std::shared_ptr<CShellFolder>& pDest);
+	bool CopyIncrementalSelectedFilesTo(std::shared_ptr<CShellFolder>& pDest);
+	bool MoveSelectedFilesTo(CComPtr<IShellItem2> pDestItem);
 
 	std::vector<LPITEMIDLIST> GetSelectedLastPIDLVector();
 	std::vector<LPITEMIDLIST> GetSelectedAbsolutePIDLVector();
+	bool SetIncrementalCopy(CComPtr<IFileOperation>& pFileOperation, std::vector<std::shared_ptr<CShellFile>>& spSrcFiles, std::shared_ptr<CShellFolder>& spDestFolder);
 
 private:
 	//Drag & Drop

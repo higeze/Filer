@@ -95,15 +95,12 @@ void CFavoritesGridView::OpenFavorites()
 		MessageBox(L"Error on Open", L"Error",MB_ICONWARNING);
 	}
 
+	PostUpdate(Updates::Sort);
 	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::RowVisible);
 	PostUpdate(Updates::Column);
 	PostUpdate(Updates::Row);
-	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
-	PostUpdate(Updates::Sort);
-	//PostUpdate(Updates::Filter);
-	//FilterAll();		
 
 	SubmitUpdate();
 }
@@ -140,4 +137,13 @@ void CFavoritesGridView::Reload()
 	for (auto iter = m_spFavoritesProp->GetFavorites()->begin(); iter != m_spFavoritesProp->GetFavorites()->end();++iter) {
 		iter->SetShellFile(nullptr);
 	}
+	PostUpdate(Updates::Sort);
+	PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::RowVisible);
+	PostUpdate(Updates::Column);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Invalidate);
+
+	SubmitUpdate();
+
 }
