@@ -1,6 +1,7 @@
 #pragma once
 #include "MyWnd.h"
 #include "MyFont.h"
+class CGridView;
 class CDrawTextProperty;
 class CRect;
 
@@ -34,6 +35,7 @@ class CRect;
 class CInplaceEdit:public CEdit
 {
 private:
+	CGridView* m_pGrid;
 	std::function<std::wstring()> m_getter;
 	std::function<void(const std::wstring&)> m_setter;
 	std::function<void(const std::wstring&)> m_changed;
@@ -44,6 +46,7 @@ private:
 	bool m_bAlt;
 public:
 	CInplaceEdit(
+		CGridView* pGrid,
 		std::function<std::wstring()> getter,
 		std::function<void(const std::wstring&)> setter,
 		std::function<void(const std::wstring&)> changed,

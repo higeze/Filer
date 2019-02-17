@@ -97,7 +97,7 @@ CGridView::CGridView(
 	AddMsgHandler(WM_LBUTTONDBLCLKTIMEXCEED,&CGridView::OnLButtonDblClkTimeExceed,this);
 	AddMsgHandler(WM_DELAY_UPDATE, &CGridView::OnDelayUpdate, this);
 
-	AddCmdCdHandler(EN_CHANGE,&CGridView::OnCmdEnChange,this);
+	//AddCmdCdHandler(EN_CHANGE,&CGridView::OnCmdEnChange,this);
 	AddCmdIDHandler(ID_HD_COMMAND_EDITHEADER,&CGridView::OnCommandEditHeader,this);
 	AddCmdIDHandler(ID_HD_COMMAND_DELETECOLUMN,&CGridView::OnCommandDeleteColumn,this);
 
@@ -224,11 +224,11 @@ void CGridView::FilterAll()
 	}
 }
 
-LRESULT CGridView::OnCmdEnChange(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-{
-	::SendMessage(hWndCtl,WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),NULL);
-	return 0;
-}
+//LRESULT CGridView::OnCmdEnChange(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
+//{
+//	::SendMessage(hWndCtl,WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),NULL);
+//	return 0;
+//}
 
 LRESULT CGridView::OnFilter(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
@@ -1383,7 +1383,7 @@ void CGridView::OnPaint(const PaintEvent& e)
 	}
 
 	//Paint Focused Line
-	if (::GetFocus() == m_hWnd || m_spEditRect) {
+	if (::GetFocus() == m_hWnd || ::GetFocus() == ::FindWindowEx(m_hWnd, NULL, L"CInplaceEdit",L"InplaceEdit")) {
 		d2dw::CRectF rcFocus(m_pDirect->Pixels2Dips(rcClient));
 		rcFocus.DeflateRect(1.0f, 1.0f);
 		m_pDirect->DrawSolidRectangle(*(m_spHeaderProperty->FocusedLine), rcFocus);

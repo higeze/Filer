@@ -292,6 +292,12 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 		return TRUE;
 	}
 
+	BOOL CWnd::EraseCmdCdHandler(WORD wCd)
+	{
+		m_cmdcdMap.erase(wCd);
+		return TRUE;
+	}
+
 	BOOL CWnd::EraseNtfyHandler(UINT_PTR upID,UINT uCode)
 	{
 		m_ntfyMap.erase(MAKELONG(upID,uCode));

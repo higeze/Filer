@@ -117,6 +117,7 @@ void CTextCell::OnEdit(const EventArgs& e)
 	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
 	SetState(UIElementState::Hot);//During Editing, Keep Hot
 	m_pEdit = new CInplaceEdit(
+		m_pSheet->GetGridPtr(),
 		[spCell]() -> std::basic_string<TCHAR>{
 			return spCell->GetString();
 		},
@@ -152,7 +153,7 @@ void CTextCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPai
 	if(m_pEdit){
 		d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
 		d2dw::CRectF rcCurEdit(direct.Pixels2Dips(m_pSheet->GetGridPtr()->ScreenToClientRect(m_pEdit->GetWindowRect())));
-		m_pSheet->GetGridPtr()->SetEditRect(rcContent);
+		//m_pSheet->GetGridPtr()->SetEditRect(rcContent);
 		if(rcContent!=rcCurEdit){
 			m_pEdit->MoveWindow(direct.Dips2Pixels(rcContent),FALSE);
 		}

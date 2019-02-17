@@ -1,17 +1,19 @@
 
 #include "InplaceEdit.h"
 #include "CellProperty.h"
-
+#include "GridView.h"
 #include "GridViewResource.h"
 
 CInplaceEdit::CInplaceEdit(
+	CGridView* pGrid,
 	std::function<std::wstring()> getter,
 	std::function<void(const std::wstring&)> setter,
 	std::function<void(const std::wstring&)> changed,
 	std::function<void()> final,
 	CFont font,
 	UINT dwDTFormat)
-	:m_getter(getter),
+	:m_pGrid(pGrid),
+	m_getter(getter),
 	m_setter(setter),
 	m_changed(changed),
 	m_final(final),
@@ -41,7 +43,7 @@ CInplaceEdit::CInplaceEdit(
 
 	//AddMsgHandler(WM_CHAR,&CInplaceEdit::OnChar,this);
 	AddMsgHandler(WM_KILLFOCUS,&CInplaceEdit::OnKillFocus,this);
-	AddCmdCdHandler(EN_CHANGE,&CInplaceEdit::OnCmdEnChange,this);	
+	pGrid->ReplaceCmdCdHandler(EN_CHANGE, &CInplaceEdit::OnCmdEnChange, this);
 }
 
 HWND CInplaceEdit::Create(HWND hWnd, RECT& rcClient)

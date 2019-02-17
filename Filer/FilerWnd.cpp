@@ -12,11 +12,14 @@
 #include "PropertyWnd.h"
 #include "FilerTabGridView.h"
 #include "MyFile.h"
-#include "BoostPythonHelper.h"
 #include "ViewProperty.h"
 #include "FavoritesProperty.h"
 #include "ResourceIDFactory.h"
 #include "CellProperty.h"
+
+#ifdef USE_PYTHON_EXTENSION
+#include "BoostPythonHelper.h"
+#endif
 
 CFilerWnd::CFilerWnd()
 	:m_rcWnd(0, 0, 300, 500), 
@@ -25,7 +28,10 @@ CFilerWnd::CFilerWnd()
 	m_spGridViewProp(std::make_shared<CGridViewProperty>()),
 	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
+#ifdef USE_PYTHON_EXTENSION
 	m_spPyExProp(std::make_shared<CPythonExtensionProperty>()),
+#endif
+	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
 	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spGridViewProp, m_spFilerGridViewProp)),
 	m_spRightView(std::make_shared<CFilerTabGridView>(m_spGridViewProp, m_spFilerGridViewProp)),
 	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(m_spGridViewProp, m_spFavoritesProp)),
@@ -78,8 +84,10 @@ CFilerWnd::CFilerWnd()
 	AddCmdIDHandler(IDM_FILERGRIDVIEWOPTION, &CFilerWnd::OnCommandFilerGridViewOption, this);
 	AddCmdIDHandler(IDM_GRIDVIEWOPTION,&CFilerWnd::OnCommandGridViewOption,this);
 	AddCmdIDHandler(IDM_FAVORITESOPTION,&CFilerWnd::OnCommandFavoritesOption,this);
+#ifdef USE_PYTHON_EXTENSION
 	AddCmdIDHandler(IDM_PYTHONEXTENSIONOPTION, &CFilerWnd::OnCommandPythonExtensionOption, this);
-
+#endif
+	AddCmdIDHandler(IDM_EXEEXTENSIONOPTION, &CFilerWnd::OnCommandExeExtensionOption, this);
 	AddCmdIDHandler(IDM_LEFTVIEWOPTION, &CFilerWnd::OnCommandLeftViewOption, this);
 	AddCmdIDHandler(IDM_RIGHTVIEWOPTION, &CFilerWnd::OnCommandRightViewOption, this);
 }
@@ -143,7 +151,6 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	createFilerTabGridView(m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFavoritesGridView"));
 
 	auto applyCustomContextMenu = [this](std::shared_ptr<CFilerGridView> spFilerView)->void {
-
 		spFilerView->AddCustomContextMenu = [&](CMenu& menu) {
 			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
 			MENUITEMINFO mii = { 0 };
@@ -155,6 +162,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 			mii.dwTypeData = L"Add to favorite";
 			menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
+#ifdef USE_PYTHON_EXTENSION
 			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
 
 			for (auto& pyex : m_spPyExProp->PythonExtensions) {
@@ -167,8 +175,21 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				mii.dwTypeData = (LPWSTR)pyex.Name.c_str();
 				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 			}
-		};
+#endif
+			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
 
+			for (auto& ex : m_spExeExProp->ExeExtensions) {
+				MENUITEMINFO mii = { 0 };
+				mii.cbSize = sizeof(MENUITEMINFO);
+				mii.fMask = MIIM_TYPE | MIIM_ID;
+				mii.fType = MFT_STRING;
+				mii.fState = MFS_ENABLED;
+				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, ex.Name);
+				mii.dwTypeData = (LPWSTR)ex.Name.c_str();
+				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+			}
+
+		};
 		spFilerView->ExecCustomContextMenu = [&](int idCmd, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl)->bool {
 			if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToFavoritesFromItem")) {
 				for (auto& pIdl : vpIdl) {
@@ -182,12 +203,94 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				m_spLeftFavoritesView->SubmitUpdate();
 				m_spRightFavoritesView->SubmitUpdate();
 				return true;
-			}else{
+			} else {
+				auto iter = std::find_if(m_spExeExProp->ExeExtensions.begin(), m_spExeExProp->ExeExtensions.end(),
+					[idCmd](const auto& exeex)->bool {
+					return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, exeex.Name) == idCmd;
+				});
+				if (iter != m_spExeExProp->ExeExtensions.end()) {
+					try {
+
+						std::vector<std::wstring> filePaths;
+						for (auto& pIdl : vpIdl) {
+							STRRET strret;
+							psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
+							filePaths.emplace_back(L"\"" + STRRET2WSTR(strret, pIdl) + L"\"");
+						}
+
+						std::wstring fileMultiPath = boost::join(filePaths, L" ");
+
+						//%SinglePath%
+						//%MultiPath%
+						//%Directory%
+						//%SinglePathWoExt%
+						std::wstring parameter = iter->Parameter;
+
+						boost::algorithm::replace_all(parameter, L"%SinglePath%", filePaths[0]);
+						boost::algorithm::replace_all(parameter, L"%MultiPath%", fileMultiPath);
+						boost::algorithm::replace_all(parameter, L"%Directory%", ::PathFindDirectory(filePaths[0].c_str()));
+						std::wstring singlePathWoExt = filePaths[0];
+						::PathRemoveExtension(::GetBuffer(singlePathWoExt, MAX_PATH));
+						::ReleaseBuffer(singlePathWoExt);
+						boost::algorithm::replace_all(parameter, L"%SinglePathWoExt%", singlePathWoExt );	
+							
+						std::wstring cmdline = L"\"" + iter->Path + L"\" " + parameter;
+
+						HANDLE hRead, hWrite;
+						SECURITY_ATTRIBUTES sa = { 0 };
+						sa.nLength = sizeof(sa);
+						sa.lpSecurityDescriptor = 0;
+						sa.bInheritHandle = TRUE;
+						if (!::CreatePipe(&hRead, &hWrite, &sa, 0)) {
+							return false;
+						}
+						do {
+							STARTUPINFO si = { 0 };
+							si.cb = sizeof(si);
+							si.dwFlags = STARTF_USESTDHANDLES;
+							si.wShowWindow = SW_HIDE;
+							si.hStdOutput = hWrite;
+							si.hStdError = hWrite;
+
+							PROCESS_INFORMATION pi = { 0 };
+							DWORD len = 0;
+							BOOST_LOG_TRIVIAL(trace) << L"CreateProcess: "<< cmdline;
+
+							if (!::CreateProcess(NULL, const_cast<LPWSTR>(cmdline.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) break;
+							if (!::WaitForInputIdle(pi.hProcess, INFINITE) != 0)break;
+							if (::WaitForSingleObject(pi.hProcess, INFINITE) != WAIT_OBJECT_0)break;
+
+							DWORD exitCode = 0;
+							if (!::GetExitCodeProcess(pi.hProcess, &exitCode))break;
+							BOOST_LOG_TRIVIAL(trace) << L"ExitCode: " << exitCode;
+
+							::CloseHandle(pi.hThread);
+							::CloseHandle(pi.hProcess);
+
+							if (!::PeekNamedPipe(hRead, NULL, 0, NULL, &len, NULL))break;
+							std::string buff;
+							if (len > 0 && ReadFile(hRead, (LPVOID)::GetBuffer(buff, len), len, &len, NULL)) {
+								::ReleaseBuffer(buff);
+								BOOST_LOG_TRIVIAL(trace) << L"Output: " << buff;
+							}
+
+						} while (0);
+
+						::CloseHandle(hRead);
+						::CloseHandle(hWrite);
+					} catch (...) {
+						throw;
+					}
+				return true;
+			} else {
+					return false;
+				}
+
+#ifdef USE_PYTHON_EXTENSION
 				auto iter = std::find_if(m_spPyExProp->PythonExtensions.begin(), m_spPyExProp->PythonExtensions.end(),
-					[idCmd](const auto& pyex)->bool
-					{
-						return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, pyex.Name) == idCmd;
-					});
+					[idCmd](const auto& pyex)->bool {
+					return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, pyex.Name) == idCmd;
+				});
 				if (iter != m_spPyExProp->PythonExtensions.end()) {
 					try {
 
@@ -221,6 +324,9 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				} else {
 					return false;
 				}
+#else
+				return false;
+#endif
 			}
 		};
 	};
@@ -529,9 +635,19 @@ LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndC
 	});
 }
 
+#ifdef USE_PYTHON_EXTENSION
 LRESULT CFilerWnd::OnCommandPythonExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
 	return OnCommandOption<CPythonExtensionProperty>(L"Python extension Property", m_spPyExProp,
+		[this](const std::wstring& str)->void {
+		SerializeProperty(this);
+	});
+}
+#endif
+
+LRESULT CFilerWnd::OnCommandExeExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	return OnCommandOption<ExeExtensionProperty>(L"Exe extension Property", m_spExeExProp,
 		[this](const std::wstring& str)->void {
 		SerializeProperty(this);
 	});

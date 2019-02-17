@@ -298,6 +298,8 @@ namespace d2dw{
 		void DrawSolidLine(const SolidLine& line, const D2D1_POINT_2F& p0, const D2D1_POINT_2F& p1);
 		void DrawTextLayout(const FontAndColor& fnc, const std::wstring& text, const D2D1_POINT_2F& origin, const D2D1_SIZE_F& size);
 		void DrawTextLayout(const FontAndColor& fnc, const std::wstring& text, const CRectF& rect);
+		void DrawTextInRect(const FontAndColor& fnc, const std::wstring& text, const CRectF& rect);
+
 		void DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rect);
 		void FillSolidRectangle(const SolidFill& fill, const D2D1_RECT_F& rect);
 		void DrawSolidGeometry(const SolidLine& line, CComPtr<ID2D1PathGeometry>& path);

@@ -394,6 +394,7 @@ namespace d2dw
 	void CDirect2DWrite::BeginDraw(HDC hDC, const RECT& rc) 
 	{
 		m_hDC = hDC;
+		::SetBkMode(m_hDC, TRANSPARENT);
 		GetHwndRenderTarget()->BindDC(hDC, &rc);
 		GetHwndRenderTarget()->SetTransform(D2D1::Matrix3x2F::Identity());
 		GetHwndRenderTarget()->BeginDraw(); 
@@ -443,6 +444,50 @@ namespace d2dw
 	void CDirect2DWrite::DrawTextLayout(const FontAndColor& fnc, const std::wstring& text, const CRectF& rect)
 	{
 		DrawTextLayout(fnc, text, rect.LeftTop(), rect.Size());
+	}
+
+	void CDirect2DWrite::DrawTextInRect(const FontAndColor& fnc, const std::wstring& text, const CRectF& rect)
+	{
+#ifdef USE_ID2D1DCRenderTarget
+	m_gdifuncs.push_back([this,fnc, rect, text]()->void {
+		//Paint Text
+		::SetTextColor(m_hDC, GetSysColor(COLOR_WINDOWTEXT));
+
+		//Find font size
+		CFont font;
+		HFONT hFont = NULL;
+		CRect rcContent;
+		int i = 0;
+		do {
+			font = CFont(CDirect2DWrite::Dips2Points(fnc.Font.Size) - i, fnc.Font.FamilyName);
+			hFont = (HFONT)::SelectObject(m_hDC, (HGDIOBJ)(font.operator HFONT()));
+			DrawTextEx(m_hDC, const_cast<LPTSTR>(text.c_str()), text.size(), rcContent,
+				DT_CALCRECT | DT_CENTER | DT_VCENTER, NULL);
+			::SelectObject(m_hDC, hFont);
+			i++;
+		} while (rcContent.Width() > 16);
+		hFont = (HFONT)::SelectObject(m_hDC, (HGDIOBJ)(font.operator HFONT()));
+		//rcPaint.top = rcPaint.bottom - rcContent.Height();
+		::DrawTextEx(m_hDC, const_cast<LPTSTR>(text.c_str()), -1, Dips2Pixels(rect), DT_CENTER | DT_VCENTER, NULL);
+		::SelectObject(m_hDC, (HGDIOBJ)hFont);
+	});
+
+#elif
+		d2dw::CFontF font = m_spProperty->FontAndColor->Font;
+		d2dw::CSizeF size = direct.CalcTextSize(font, str);
+
+		while (size.width > direct.Pixels2DipsX(16)) {
+			font.Size -= 1.0f;
+			size = direct.CalcTextSize(font, str);
+		}
+		font.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
+		font.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR;
+		rcPaint.right = rcPaint.left + direct.Pixels2DipsX(16);
+		rcPaint.bottom = rcPaint.top + direct.Pixels2DipsY(16);
+
+		direct.DrawTextLayout(d2dw::FontAndColor(font, m_spProperty->FontAndColor->Color), str, rcPaint);
+#endif
+
 	}
 
 	void CDirect2DWrite::DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rc)

@@ -65,20 +65,21 @@ void CFavoriteCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPa
 	CFileIconCell::PaintContent(direct, rcPaint);
 
 	//Paint Text
+	direct.DrawTextInRect(*(m_spProperty->FontAndColor) , GetShortName(), rcPaint);
 
 	//Find font size
-	std::wstring str = GetShortName();
-	d2dw::CFontF font = m_spProperty->FontAndColor->Font;
-	d2dw::CSizeF size = direct.CalcTextSize(font, str);
+	//std::wstring str = GetShortName();
+	//d2dw::CFontF font = m_spProperty->FontAndColor->Font;
+	//d2dw::CSizeF size = direct.CalcTextSize(font, str);
 
-	while (size.width > direct.Pixels2DipsX(16)){
-		font.Size -= 1.0f;
-		size = direct.CalcTextSize(font, str);
-	}
-	font.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
-	font.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR;
-	rcPaint.right = rcPaint.left + direct.Pixels2DipsX(16);
-	rcPaint.bottom = rcPaint.top + direct.Pixels2DipsY(16);
+	//while (size.width > direct.Pixels2DipsX(16)){
+	//	font.Size -= 1.0f;
+	//	size = direct.CalcTextSize(font, str);
+	//}
+	//font.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
+	//font.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR;
+	//rcPaint.right = rcPaint.left + direct.Pixels2DipsX(16);
+	//rcPaint.bottom = rcPaint.top + direct.Pixels2DipsY(16);
 
-	direct.DrawTextLayout(d2dw::FontAndColor(font, m_spProperty->FontAndColor->Color), str, rcPaint);
+	//direct.DrawTextLayout(d2dw::FontAndColor(font, m_spProperty->FontAndColor->Color), str, rcPaint);
 }

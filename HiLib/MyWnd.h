@@ -310,7 +310,13 @@ public:
 		CmdIDMap::_Pairib pib=m_cmdcdMap.insert(CmdCdMap::value_type(wCd,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
 		return pib.second;
 	}
-	
+
+	template<class U>
+	BOOL ReplaceCmdCdHandler(WORD wCd, LRESULT(U::*memberfunc)(WORD, WORD, HWND, BOOL&), U* that)
+	{
+		EraseCmdCdHandler(wCd);
+		return	AddCmdCdHandler(wCd, memberfunc, that);
+	}
 
 	template<class U>
 	BOOL AddNtfyHandler(UINT_PTR upID,UINT uCode,LRESULT(U::*memberfunc)(int,LPNMHDR,BOOL&),U* that)
@@ -331,6 +337,8 @@ public:
 	BOOL EraseMsgHandler(UINT uMsg);
 
 	BOOL EraseCmdIDHandler(WORD wID);
+
+	BOOL EraseCmdCdHandler(WORD wCd);
 
 	BOOL EraseNtfyHandler(UINT_PTR upID,UINT uCode);
 /*

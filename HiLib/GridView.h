@@ -53,7 +53,7 @@ protected:
 	std::shared_ptr<int> m_spDeltaScroll;
 	std::shared_ptr<BackgroundProperty> m_spBackgroundProperty;
 
-	std::shared_ptr<d2dw::CRectF> m_spEditRect;
+	//std::shared_ptr<d2dw::CRectF> m_spEditRect;
 public:
 
 	boost::signals2::signal<void(CColumn*)> SignalColumnInserted;
@@ -77,7 +77,7 @@ public:
 	//Getter Setter
 	std::shared_ptr<d2dw::CDirect2DWrite>& GetDirect() { return m_pDirect; }
 	std::shared_ptr<CGridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
-	void SetEditRect(d2dw::CRectF rcEdit){m_spEditRect = std::make_shared<d2dw::CRectF>(rcEdit);}
+	//void SetEditRect(d2dw::CRectF rcEdit){m_spEditRect = std::make_shared<d2dw::CRectF>(rcEdit);}
 	d2dw::CRectF GetUpdateRect()const { return m_rcUpdateRect; }
 	void SetUpdateRect(d2dw::CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
 	std::shared_ptr<CMouseStateMachine> GetMouseStateMachine() { return m_pMouseStateMachine; }
@@ -118,7 +118,7 @@ protected:
 	virtual LRESULT OnLButtonDblClkTimeExceed(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
-	virtual LRESULT OnCmdEnChange(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
+	//virtual LRESULT OnCmdEnChange(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 
 	virtual LRESULT OnCommandEditHeader(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	virtual LRESULT OnCommandDeleteColumn(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
