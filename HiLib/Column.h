@@ -19,7 +19,7 @@ protected:
 	FLOAT m_width; //width
 	FLOAT m_minWidth = 2;
 	FLOAT m_maxWidth = 1000;
-	LineType m_lineType = LineType::None;
+	//LineType m_lineType = LineType::None;
 	SizeType m_sizeType = SizeType::Trackable;
 	//bool m_isFitAlways = false;
 
@@ -45,7 +45,6 @@ public:
 		ar("width", m_width);
 		ar("minwidth", m_minWidth);
 		ar("maxwidth", m_maxWidth);
-		ar("linetype", m_lineType);
 		m_isInit = false;
 		ar("filter", m_filter);
 		m_allIndex = GetIndex<AllTag>();
@@ -61,7 +60,6 @@ public:
 		ar("width", m_width);
 		ar("minwidth", m_minWidth);
 		ar("maxwidth", m_maxWidth);
-		ar("linetype", m_lineType);
 		m_isInit = false;
 		ar("filter", m_filter);
 		ar("index", m_allIndex);
@@ -120,7 +118,8 @@ public:
 	virtual FLOAT GetMinWidthHeight() override { return m_minWidth; }
 	virtual FLOAT GetMaxWidthHeight() override { return m_maxWidth; }
 	virtual void SetWidthHeightWithoutSignal(const FLOAT width) override { SetWidthWithoutSignal(width); }
-	virtual LineType GetLineType()const { return m_lineType; }
+	//virtual LineType GetLineType()const { return m_lineType; }
+	virtual SizingType GetSizingType()const override { return SizingType::None; }
 	virtual SizeType GetSizeType()const { return m_sizeType; }
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name);

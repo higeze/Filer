@@ -43,11 +43,13 @@ CInplaceEdit::CInplaceEdit(
 
 	//AddMsgHandler(WM_CHAR,&CInplaceEdit::OnChar,this);
 	AddMsgHandler(WM_KILLFOCUS,&CInplaceEdit::OnKillFocus,this);
-	pGrid->ReplaceCmdCdHandler(EN_CHANGE, &CInplaceEdit::OnCmdEnChange, this);
+	m_pGrid->ReplaceCmdCdHandler(EN_CHANGE, &CInplaceEdit::OnCmdEnChange, this);
+
 }
 
 HWND CInplaceEdit::Create(HWND hWnd, RECT& rcClient)
 {
+	m_pGrid->SetEditPtr(this);
 	HWND hWndRet = CEdit::Create(hWnd, rcClient);
 	SetFont(m_font);
 	return hWndRet;
@@ -115,6 +117,7 @@ LRESULT CInplaceEdit::OnKillFocus(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bH
 void CInplaceEdit::OnFinalMessage(HWND hWnd)
 {
 	if(m_final){m_final();}
+	m_pGrid->SetEditPtr(nullptr);
 	delete this;
 }
 

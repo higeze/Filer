@@ -33,3 +33,35 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellZipFolder::GetSize(std::shared_p
 	return CShellFile::GetSize(spArgs);
 }
 
+bool CShellZipFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel, boost::timer& tim, int limit)
+{
+	if (cancel.load()) {
+		BOOST_LOG_TRIVIAL(trace) << L"CShellZipFolder::GetFolderSize Canceled at top : " + GetPath();
+		return false;
+	} else if (limit > 0 && tim.elapsed() > limit / 1000.0) {
+		BOOST_LOG_TRIVIAL(trace) << L"CShellZipFolder::GetFolderSize Timer elapsed at top : " + GetPath();
+		return false;
+	}
+	if (CShellFile::GetFileSize(size)) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool CShellZipFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& cancel, boost::timer& tim, int limit)
+{
+	if (cancel.load()) {
+		BOOST_LOG_TRIVIAL(trace) << L"CShellZipFolder::GetFolderLastWriteTime Canceled at top : " + GetPath();
+		return true;
+	} else if (limit > 0 && tim.elapsed() > limit / 1000.0) {
+		BOOST_LOG_TRIVIAL(trace) << L"CShellZipFolder::GetFolderLastWriteTime Timer elapsed at top : " + GetPath();
+		return true;
+	}
+	if (!CShellFile::GetFileLastWriteTime(time)) {
+		time = FILETIME{ 0 };
+	}
+	return true;
+}
+
+

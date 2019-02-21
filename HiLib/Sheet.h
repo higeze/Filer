@@ -484,10 +484,11 @@ public:
 	template<typename TRC> void FitBandWidth(TRC::template SharedPtr& ptr)
 	{
 		ptr->SetMeasureValid(false);
+		ptr->SetWidthHeightWithoutSignal(0.0f);
 		auto& otherDic = GetDictionary<TRC::Other, AllTag>();
-		for(const auto& data : otherDic) {
-			data.DataPtr->SetMeasureValid(false);
-			CSheet::Cell(ptr, data.DataPtr)->SetActMeasureValid(false);
+		for(const auto& other : otherDic) {
+			other.DataPtr->SetMeasureValid(false);
+			CSheet::Cell(ptr, other.DataPtr)->SetActMeasureValid(false);
 		};
 
 		PostUpdate(Updates::Column);

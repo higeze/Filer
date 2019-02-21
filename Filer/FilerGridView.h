@@ -63,7 +63,6 @@ class CFilerGridView:public CGridView
 {
 private:	
 
-
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 
 	std::shared_ptr<CDirectoryWatcher> m_spWatcher;

@@ -26,5 +26,6 @@ public:
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)override;
 
 	std::shared_ptr<FileSizeArgs> GetSizeArgsPtr() { return m_spSizeArgs; }
+	virtual SizingType GetSizingType()const { return SizingType::Fit; }
 };
 

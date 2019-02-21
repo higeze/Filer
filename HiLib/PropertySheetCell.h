@@ -36,7 +36,7 @@ public:
 				EraseRow(iter->DataPtr.get());
 			}
 		}
-		OnPropertyChanged(L"size");
+		OnPropertyChanged(L"value");
 		SubmitUpdate();
 
 		//Column is not resizable

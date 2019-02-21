@@ -1,4 +1,7 @@
 #include "BoostPythonHelper.h"
+
+#ifdef USE_PYTHON_EXTENSION
+
 #include <iostream>
 #include <boost/python.hpp>
 #include <Python.h>
@@ -107,3 +110,5 @@ std::string parse_python_exception()
 	return ret;
 
 }
+
+#endif

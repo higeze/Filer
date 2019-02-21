@@ -36,7 +36,7 @@ CSheetCell::CSheetCell(
 		spCellProperty), 
 	CCell(pSheet,pRow,pColumn,spProperty,pMenu)
 {
-	m_lineType = LineType::OneLine;
+	//m_lineType = LineType::Both;
 	m_spRowDragger = std::make_shared<CSheetCellRowDragger>();
 	m_spColDragger = std::make_shared<CSheetCellColDragger>();
 }
@@ -64,40 +64,40 @@ void CSheetCell::Resize()
 void CSheetCell::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 {
 	CSheet::OnCellPropertyChanged(pCell, name);
-
-	if (!_tcsicmp(L"value", name)) {
-		OnPropertyChanged(L"value");
-	} else if (!_tcsicmp(L"size", name)) {
-		OnPropertyChanged(L"size");
-	}
+	OnPropertyChanged(name);
+	//if (!_tcsicmp(L"value", name)) {
+	//	OnPropertyChanged(L"value");
+	//} else if (!_tcsicmp(L"size", name)) {
+	//	OnPropertyChanged(L"size");
+	//}
 }
 
 void CSheetCell::ColumnInserted(CColumnEventArgs& e)
 {
 	CSheet::ColumnInserted(e);
-	OnPropertyChanged(L"size");
+	OnPropertyChanged(L"value");
 }
 void CSheetCell::ColumnErased(CColumnEventArgs& e)
 {
 	CSheet::ColumnErased(e);
-	OnPropertyChanged(L"size");
+	OnPropertyChanged(L"value");
 }
 
-void CSheetCell::ColumnHeaderEndTrack(CColumnEventArgs& e)
-{
-//	CSheet::ColumnHeaderEndTrack(e);
-	OnPropertyChanged(L"size");
-}
+//void CSheetCell::ColumnHeaderEndTrack(CColumnEventArgs& e)
+//{
+////	CSheet::ColumnHeaderEndTrack(e);
+//	OnPropertyChanged(L"size");
+//}
 
 void CSheetCell::RowInserted(CRowEventArgs& e)
 {
 	CSheet::RowInserted(e);
-	OnPropertyChanged(L"size");
+	OnPropertyChanged(L"value");
 }
 void CSheetCell::RowErased(CRowEventArgs& e)
 {
 	CSheet::RowErased(e);
-	OnPropertyChanged(L"size");
+	OnPropertyChanged(L"value");
 }
 
 FLOAT CSheetCell::GetTop()const

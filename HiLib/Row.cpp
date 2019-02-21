@@ -40,8 +40,9 @@ void CRow::SetSelected(const bool& bSelected)
 
 void CRow::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 {
-	if (!_tcsicmp(L"value", name)) {
-		if (pCell->GetLineType() == LineType::MultiLine) {
+	if (!_tcsicmp(L"value", name) /*|| !_tcsicmp(L"size", name)*/) {
+		if (GetSizingType() == SizingType::Depend || GetSizingType() == SizingType::Fit ||
+			(GetSizingType() == SizingType::None && (pCell->GetRowSizingType() == SizingType::Depend || pCell->GetRowSizingType() == SizingType::Fit))) {
 			m_bMeasureValid = false;
 		} else {
 			//Do nothing, Cell value change 

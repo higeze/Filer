@@ -3,6 +3,7 @@
 #include "SheetCell.h"
 #include "CellProperty.h"
 #include "SheetEventArgs.h"
+#include "SheetEnums.h"
 
 /**
  *  CColumn
@@ -11,19 +12,24 @@
 FLOAT CColumn::GetWidth()
 {
 	if (m_isInit) {
-		//if(!m_isSerialized){
 		SetWidthWithoutSignal(m_pSheet->GetColumnInitWidth(this));
-		//}
 		m_bMeasureValid = true;
 		m_isInit = false;
-	}else if(m_lineType == LineType::OneLineFitAlways){
-		SetWidthWithoutSignal(m_pSheet->GetColumnFitWidth(this));
+	} else if (!m_bMeasureValid) {
+		switch (GetSizingType()) {
+		case SizingType::Fit:
+			SetWidthWithoutSignal(m_pSheet->GetColumnFitWidth(this));
+			break;
+		case SizingType::Depend:
+			SetWidthWithoutSignal((std::max)(m_width, m_pSheet->GetColumnFitWidth(this)));
+			break;
+		case SizingType::Independ:
+		default:
+			SetWidthWithoutSignal(m_pSheet->GetColumnFitWidth(this));
+			break;
+		}
 		m_bMeasureValid = true;
-	}else if(!m_bMeasureValid){
-		SetWidthWithoutSignal(m_pSheet->GetColumnFitWidth(this));
-		m_bMeasureValid=true;
 	}
-
 	return m_width;
 }
 
@@ -69,9 +75,9 @@ void CColumn::SetSort(const Sorts& sort)
 
 void CColumn::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 {
-	if (!_tcsicmp(L"value", name)) {
-		if (GetLineType() == LineType::OneLine || GetLineType() == LineType::OneLineFitAlways || 
-			(GetLineType() == LineType::None && (pCell->GetLineType() == LineType::OneLine || pCell->GetLineType() == LineType::OneLineFitAlways))) {
+	if (!_tcsicmp(L"value", name) /*|| !_tcsicmp(L"size", name)*/) {
+		if (GetSizingType() == SizingType::Depend || GetSizingType() == SizingType::Fit ||
+			(GetSizingType() == SizingType::None && (pCell->GetColSizingType() == SizingType::Depend || pCell->GetColSizingType() == SizingType::Fit))) {
 			m_bMeasureValid = false;
 		} else {
 			//Do nothing, Cell value change 

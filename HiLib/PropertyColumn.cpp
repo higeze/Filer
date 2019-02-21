@@ -90,9 +90,7 @@ std::shared_ptr<CCell> CParentPropertyValueColumn::CellTemplate(CRow* pRow, CCol
 
 CChildPropertyValueColumn::CChildPropertyValueColumn(CSheetCell* pSheetCell)
 	:CChildIndexColumn(pSheetCell)
-{
-	m_lineType = LineType::OneLine;
-}
+{}
 
 std::shared_ptr<CCell> CChildPropertyValueColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {

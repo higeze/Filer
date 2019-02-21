@@ -42,7 +42,7 @@ protected:
 	bool m_bFitMeasureValid = false;
 	bool m_bActMeasureValid = false;
 
-	LineType m_lineType = LineType::MultiLine;
+	//LineType m_lineType = LineType::MultiLine;
 
 public:
 	//Constructor
@@ -57,7 +57,9 @@ public:
 	CSheet* GetSheetPtr()const { return m_pSheet; }
 	CRow* GetRowPtr()const { return m_pRow; }
 	CColumn* GetColumnPtr()const { return m_pColumn; }
-	LineType GetLineType()const { return m_lineType; }
+	//LineType GetLineType()const { return m_lineType; }
+	virtual SizingType GetRowSizingType()const { return SizingType::Fit; }
+	virtual SizingType GetColSizingType()const { return SizingType::Independ; }
 	void SetFitMeasureValid(const bool& b) { m_bFitMeasureValid = b; }
 	void SetActMeasureValid(const bool& b) { m_bActMeasureValid = b; }
 	std::shared_ptr<CellProperty> GetPropertyPtr() { return m_spProperty; }

@@ -7,10 +7,7 @@
 #include "CellProperty.h"
 
 CFileSizeColumn::CFileSizeColumn(CGridView* pGrid, std::shared_ptr<FileSizeArgs> spSizeProp)
-		:CParentDefaultMapColumn(pGrid), m_spSizeArgs(spSizeProp)
-{
-	m_lineType = LineType::OneLineFitAlways;
-}
+		:CParentDefaultMapColumn(pGrid), m_spSizeArgs(spSizeProp){}
 
 std::shared_ptr<CCell> CFileSizeColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {

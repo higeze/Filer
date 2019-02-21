@@ -1,5 +1,6 @@
 #pragma once
 #include "MyFriendSerializer.h"
+#include "SheetEnums.h"
 class CSheet;
 class CCell;
 
@@ -64,5 +65,6 @@ public:
 	virtual void SetWidthHeightWithoutSignal(const FLOAT widthheight) = 0;
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) = 0;
 	virtual void OnPropertyChanged(const wchar_t* name) = 0;
+	virtual SizingType GetSizingType()const = 0;
 };
 

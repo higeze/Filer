@@ -40,6 +40,7 @@ public:
 	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn);
+	virtual SizingType GetSizingType()const override { return SizingType::Depend; }
 };
 
 class CChildPropertyValueColumn:public CChildIndexColumn
@@ -50,4 +51,5 @@ public:
 	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn);
+	virtual SizingType GetSizingType()const override { return SizingType::Depend; }
 };

@@ -87,7 +87,7 @@ public:
 		//e.Handled = TRUE;
 		SetSizeCursor();
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		p->SetWidthHeightWithoutSignal((std::max)(e.Direct.Pixels2Dips(e.Point).Get<TRC::Axis>() - p->GetLeftTop(), p->GetMinWidthHeight()));//TODO
+		p->SetWidthHeightWithoutSignal(e.Direct.Pixels2Dips(e.Point).Get<TRC::Axis>() - p->GetLeftTop());
 		pSheet->Track<TRC>(p);
 	}
 
@@ -95,7 +95,7 @@ public:
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		p->SetWidthHeightWithoutSignal((std::max)(e.Direct.Pixels2Dips(e.Point).Get<TRC::Axis>() - p->GetLeftTop(), p->GetMinWidthHeight()));//TODO
+		p->SetWidthHeightWithoutSignal(e.Direct.Pixels2Dips(e.Point).Get<TRC::Axis>() - p->GetLeftTop());
 		pSheet->EndTrack<TRC>(p);
 	}
 

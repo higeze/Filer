@@ -1,13 +1,22 @@
 #pragma once
 
 
-enum class LineType
+enum class SizingType
 {
 	None,
-	OneLine,
-	OneLineFitAlways,
-	MultiLine,
+	Fit,
+	Depend,
+	Independ,
 };
+
+//enum class LineType
+//{
+//	None,
+//	OneLine,
+//	OneLineFitAlways,
+//	MultiLine,
+//	Both,
+//};
 
 enum class SizeType
 {

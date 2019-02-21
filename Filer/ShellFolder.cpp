@@ -296,6 +296,7 @@ bool CShellFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& can
 		if (SUCCEEDED(GetShellFolderPtr()->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
 			CIDL nextIdl;
 			ULONG ulRet(0);
+			std::vector<std::shared_ptr<CShellFolder>> folders;
 			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
 				if (cancel.load()) {
 					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderLastWriteTime Canceled in while : " + GetPath();
@@ -310,9 +311,7 @@ bool CShellFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& can
 				auto spFile(CreateShExFileFolder(nextIdl));
 				FILETIME childTime = { 0 };
 				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-					if (!spFolder->GetFolderLastWriteTime(childTime, cancel, tim, limit)) {
-						childTime = { 0 };
-					}
+					folders.push_back(spFolder);
 				} else {
 					if (!spFile->GetFileLastWriteTime(childTime)) {
 						childTime = { 0 };
@@ -323,16 +322,25 @@ bool CShellFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& can
 					ULARGE_INTEGER latest = { time.dwLowDateTime, time.dwHighDateTime };
 					ULARGE_INTEGER child = { childTime.dwLowDateTime, childTime.dwHighDateTime };
 					latest = latest.QuadPart > child.QuadPart ? latest : child;
-					//if (latest.QuadPart > child.QuadPart) {
-					//	latest = latest;
-					//} else {
-					//	latest = child;
-					//}
 					time = FILETIME{ latest.LowPart, latest.HighPart };
 				}
 
 				nextIdl.Clear();
 			}
+
+			for (auto spFolder : folders) {
+				FILETIME childTime = { 0 };
+				if (!spFolder->GetFolderLastWriteTime(childTime, cancel, tim, limit)) {
+					childTime = { 0 };
+				}
+				if (childTime.dwLowDateTime || childTime.dwHighDateTime) {
+					ULARGE_INTEGER latest = { time.dwLowDateTime, time.dwHighDateTime };
+					ULARGE_INTEGER child = { childTime.dwLowDateTime, childTime.dwHighDateTime };
+					latest = latest.QuadPart > child.QuadPart ? latest : child;
+					time = FILETIME{ latest.LowPart, latest.HighPart };
+				}
+			}
+
 		}
 	} catch (...) {
 		BOOST_LOG_TRIVIAL(trace) << "Exception CShellFolder::GetFolderLastWriteTime " << GetPath();

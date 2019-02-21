@@ -51,6 +51,7 @@ public:
 	virtual void SetWidthHeightWithoutSignal(const FLOAT height) override { SetHeightWithoutSignal(height); }
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name) override;
+	virtual SizingType GetSizingType()const override { return SizingType::None; }
 
 
 };

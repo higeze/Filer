@@ -13,6 +13,7 @@ class CDirect2DWrite;
 class BackgroundProperty;
 class CGridViewProperty;
 struct CMouseStateMachine;
+class CInplaceEdit;
 
 class CGridView:public CWnd,public CSheet
 {
@@ -20,8 +21,10 @@ public:
 
 //	V4::D2DTextbox* m_pTextBox = nullptr;
 
+
 	static CMenu ContextMenu;
 protected:
+	CInplaceEdit* m_pEdit = nullptr;
 	bool m_isFocusable = true;
 
 	CScrollBar m_vertical;
@@ -89,6 +92,7 @@ public:
 	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_rowNameHeader = row; }
 	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_rowFilter; }
 	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_rowFilter = row; }
+	void SetEditPtr(CInplaceEdit* pEdit) { m_pEdit = pEdit; }
 
 protected:
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);

@@ -31,6 +31,7 @@
 #include "MouseStateMachine.h"
 #include "GridViewProperty.h"
 #include "ResourceIDFactory.h"
+#include "InplaceEdit.h"
 
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
@@ -1383,7 +1384,7 @@ void CGridView::OnPaint(const PaintEvent& e)
 	}
 
 	//Paint Focused Line
-	if (::GetFocus() == m_hWnd || ::GetFocus() == ::FindWindowEx(m_hWnd, NULL, L"CInplaceEdit",L"InplaceEdit")) {
+	if (::GetFocus() == m_hWnd || (m_pEdit && ::GetFocus() == m_pEdit->m_hWnd)) {
 		d2dw::CRectF rcFocus(m_pDirect->Pixels2Dips(rcClient));
 		rcFocus.DeflateRect(1.0f, 1.0f);
 		m_pDirect->DrawSolidRectangle(*(m_spHeaderProperty->FocusedLine), rcFocus);

@@ -41,6 +41,7 @@
 
 #include "PathRow.h"
 #include "KnownFolder.h"
+#include "InplaceEdit.h"
 
 
 #define SCRATCH_QCM_FIRST 1
@@ -507,6 +508,10 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	bool isUpdate = m_spFolder == spFolder;
 	{
 		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Pre-Process")
+
+		if (m_pEdit) {
+			::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);
+		}
 
 		//Save and Restore Filter value
 		if (!isUpdate) {

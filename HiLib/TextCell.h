@@ -87,14 +87,9 @@ public:
 
 	virtual UINT GetFormat()const
 	{
-		switch (GetLineType())
-		{
-		case LineType::None:
-		case LineType::MultiLine:
-			return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_WORDBREAK | DT_EDITCONTROL;
-		case LineType::OneLine:
+		if (GetRowSizingType() == SizingType::Depend && GetColSizingType() == SizingType::Depend) {
 			return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_EDITCONTROL;
-		default:
+		} else {
 			return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_WORDBREAK | DT_EDITCONTROL;
 		}
 	}
