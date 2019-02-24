@@ -5,8 +5,8 @@
 #include "FavoriteRow.h"
 #include "KnownFolder.h"
 
-CFilerTabGridView::CFilerTabGridView(std::shared_ptr<CGridViewProperty> spGridViewProp, std::shared_ptr<FilerGridViewProperty> spFilerGridViewProp)
-	:m_spFilerView(std::make_shared<CFilerGridView>(spGridViewProp, spFilerGridViewProp))
+CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
+	:m_spFilerView(std::make_shared<CFilerGridView>(spFilerGridViewProp))
 {
 	CreateWindowExArgument()
 		.dwStyle(WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE | TCS_HOTTRACK | TCS_FLATBUTTONS | TCS_MULTILINE);
@@ -84,8 +84,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 		return 0;
 	});
 
-	m_spFilerView->Create(m_hWnd);
-
+	//Tabs
 	if (m_vwPath.empty()) {
 		//ShellFolder
 		auto pFolder(CKnownFolderManager::GetInstance()->GetDesktopFolder());
@@ -113,17 +112,26 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 			}
 		}
 	}
-
 	SetCurSel(0);
+
+	//FilerGridView
+	//Size
+	int nPaddingX = GetSystemMetrics(SM_CXDLGFRAME);
+	int nPaddingY = GetSystemMetrics(SM_CYDLGFRAME);
+	CRect rcTabClient = GetClientRect();
+	AdjustRect(FALSE, rcTabClient);
+	rcTabClient.DeflateRect(nPaddingX, nPaddingY);
+	//Create
+	m_spFilerView->Create(m_hWnd, rcTabClient);
+	//Open
 	unsigned int id = (unsigned int)GetCurItemParam();
 	auto iter = m_viewMap.find(id);
 	if (iter != m_viewMap.end()) {
 		m_spFilerView->OpenFolder(iter->second);
 	}
-	//BOOL dummy = TRUE;
-	//InvalidateRect(NULL, TRUE);
-	auto rcClient = GetClientRect();
-	PostMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
+
+	//auto rcClient = GetClientRect();
+	//PostMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
 
 	return 0;
 }
@@ -175,7 +183,6 @@ LRESULT CFilerTabGridView::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 	return 0;
 }
 
-
 void CFilerTabGridView::AddNewView(std::wstring path)
 {
 	//New id for association
@@ -195,8 +202,6 @@ void CFilerTabGridView::AddNewView(std::wstring path)
 		SendMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
 	}
 }
-
-
 
 LRESULT CFilerTabGridView::OnNotifyTabSelChanging(int, LPNMHDR, BOOL& bHandled)
 {
@@ -281,7 +286,6 @@ LRESULT CFilerTabGridView::OnCommandCloneTab(WORD wNotifyCode, WORD wID, HWND hW
 	OnSize(0, NULL, NULL, dummy);
 	return 0;
 }
-
 
 LRESULT CFilerTabGridView::OnCommandCloseTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {

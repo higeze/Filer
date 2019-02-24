@@ -50,8 +50,8 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
-CFilerGridView::CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProp, std::shared_ptr<FilerGridViewProperty> spFilerGridViewProp)
-	:CGridView(spGridViewProp), m_spFilerGridViewProp(spFilerGridViewProp)
+CFilerGridView::CFilerGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
+	:CGridView(std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp))
 {
 	m_cwa
 	.dwExStyle(WS_EX_ACCEPTFILES);

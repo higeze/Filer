@@ -43,16 +43,16 @@ public:
 
 public:
 	CPropertyWnd(
-		std::shared_ptr<CGridViewProperty> spGridViewProperty,
+		std::shared_ptr<GridViewProperty> spGridViewProperty,
 		std::wstring wstrPropertyName,
 		std::shared_ptr<T> prop,
 		Args... args)
 		:CWnd(),
 		m_args(args...),
 		m_spGrid(std::make_shared<CPropertyGridView>(spGridViewProperty)),
-		m_spPropSheetCellHeader(spGridViewProperty->m_spPropHeader),
-		m_spPropSheetCellFilter(spGridViewProperty->m_spPropCell),
-		m_spPropSheetCellCell(spGridViewProperty->m_spPropCell),
+		m_spPropSheetCellHeader(spGridViewProperty->HeaderPropPtr),
+		m_spPropSheetCellFilter(spGridViewProperty->CellPropPtr),
+		m_spPropSheetCellCell(spGridViewProperty->CellPropPtr),
 		m_wstrPropertyName(wstrPropertyName),
 		m_prop(prop)//,
 //		m_showDefault(showDefault),

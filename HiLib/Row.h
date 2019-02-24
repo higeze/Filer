@@ -23,18 +23,18 @@ public:
 	virtual bool HasCell()const { return false; }
 	virtual std::shared_ptr<CCell>& Cell(CColumn* pCol) { throw std::exception("Not implemented"); }
 
-
+	virtual FLOAT GetDefaultHeight();
 	virtual FLOAT GetHeight();
 	virtual void SetHeight(const FLOAT height);
 	virtual void SetHeightWithoutSignal(const FLOAT height){m_height=height;}
 
-	virtual FLOAT GetTop()const{return m_top+Offset();}
-	//virtual FLOAT GetTop()const{return m_top;}
+	//virtual FLOAT GetTop()const{return m_top+Offset();}
+	virtual FLOAT GetTop()const{return m_top;}
 	virtual void SetTop(const FLOAT& top){m_top=top;}//TODO low setter
-	virtual void SetTopWithoutSignal(const FLOAT& top){m_top=top;}//TODO low setter
+	virtual void SetTopWithoutSignal(const FLOAT& top){m_top=top;}
 
-	virtual FLOAT GetBottom()const{return m_top+m_height+Offset();}
-	//virtual FLOAT GetBottom()const{return m_top+m_height;}//TODO low setter
+	//virtual FLOAT GetBottom()const{return m_top+m_height+Offset();}
+	virtual FLOAT GetBottom()const{return m_top + m_height;}
 
 	virtual void SetVisible(const bool& bVisible, bool notify = true)override;
 	virtual void SetSelected(const bool& bSelected);
@@ -63,7 +63,7 @@ class CParentRow:public CRow
 public:
 	CParentRow(CGridView* pGrid);
 	virtual ~CParentRow(){}
-	virtual FLOAT Offset()const;
+	virtual FLOAT Offset()const { return 0; }
 };
 
 class CParentHeaderRow:public CParentRow
@@ -80,7 +80,7 @@ class CChildRow:public CRow
 public:
 	CChildRow(CSheetCell* pSheetCell);
 	virtual ~CChildRow(){}
-	virtual FLOAT Offset()const;
+	virtual FLOAT Offset()const { return 0; }
 };
 
 class CChildHeaderRow:public CChildRow

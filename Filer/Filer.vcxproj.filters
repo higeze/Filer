@@ -557,6 +557,9 @@
     <ClInclude Include="..\HiLib\IBridgeTSFInterface.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="FileTimeArgs.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -689,9 +692,6 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\GridView.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\GridViewProperty.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\InplaceEdit.cpp">

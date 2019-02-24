@@ -62,9 +62,6 @@ namespace FilerColumn{
 class CFilerGridView:public CGridView
 {
 private:	
-
-	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
-
 	std::shared_ptr<CDirectoryWatcher> m_spWatcher;
 
 	CComPtr<IShellFolder> m_pDesktopShellFolder;
@@ -104,10 +101,10 @@ private:
 
 public:
 	//Constructor
-	CFilerGridView(std::shared_ptr<CGridViewProperty> spGridViewProperty, std::shared_ptr<FilerGridViewProperty> spFilerGridViewProp);
+	CFilerGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp);
 	virtual ~CFilerGridView(){}
 	//getter
-	std::shared_ptr<FilerGridViewProperty>& GetFilerGridViewPropPtr() { return m_spFilerGridViewProp; }
+	std::shared_ptr<FilerGridViewProperty> GetFilerGridViewPropPtr() { return std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp); }
 	std::shared_ptr<CShellFolder>& GetFolder() { return m_spFolder; }
 
 	//signal

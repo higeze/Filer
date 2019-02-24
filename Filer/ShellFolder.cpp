@@ -6,6 +6,7 @@
 #include "ConsoleTimer.h"
 #include "ApplicationProperty.h"
 #include "FileSizeArgs.h"
+#include "FileTimeArgs.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 

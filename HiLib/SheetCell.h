@@ -90,4 +90,6 @@ public:
 	virtual SizingType GetRowSizingType()const { return SizingType::Depend; }
 	virtual SizingType GetColSizingType()const { return SizingType::Depend; }
 
+	virtual void UpdateRow()override;
+
 };

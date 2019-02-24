@@ -4,6 +4,16 @@
 #include "CellProperty.h"
 #include "SheetEventArgs.h"
 
+
+
+FLOAT CRow::GetDefaultHeight()
+{
+	if (!m_bMeasureValid) {
+		m_height = 15.240f;
+	}
+	return m_height;
+}
+
 FLOAT CRow::GetHeight()
 {
 	if(!m_bMeasureValid){
@@ -67,22 +77,22 @@ void CRow::OnPropertyChanged(const wchar_t* name)
 
 CParentRow::CParentRow(CGridView* pGrid):CRow(pGrid){} 
 
-FLOAT CParentRow::Offset()const
-{
-	FLOAT offset(static_cast<CGridView*>(m_pSheet)->GetPaintRect().top);
-	//if(m_pSheet->Visible() && GetVisible() && GetIndex<AllTag>()>=0){
-	if(m_pSheet->Visible() && GetVisible() && GetIndex<VisTag>()>=0){
-		offset-=static_cast<CGridView*>(m_pSheet)->GetVerticalScrollPos();
-	}
-	return offset;
-}
-
+//FLOAT CParentRow::Offset()const
+//{
+//	 FLOAT offset(static_cast<CGridView*>(m_pSheet)->GetPaintRect().top);
+//	//if(m_pSheet->Visible() && GetVisible() && GetIndex<AllTag>()>=0){
+//	if(m_pSheet->Visible() && GetVisible() && GetIndex<VisTag>()>=0){
+//		offset-=static_cast<CGridView*>(m_pSheet)->GetVerticalScrollPos();
+//	}
+//	return offset;
+//}
+//
 CChildRow::CChildRow(CSheetCell* pSheetCell):CRow(pSheetCell){} 
-
-FLOAT CChildRow::Offset()const
-{
-	return static_cast<CSheetCell*>(m_pSheet)->GetTop()
-			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
-			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
-			+ static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Padding->top;
-}
+//
+//FLOAT CChildRow::Offset()const
+//{
+//	return static_cast<CSheetCell*>(m_pSheet)->GetTop()
+//			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
+//			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
+//			+ static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Padding->top;
+//}

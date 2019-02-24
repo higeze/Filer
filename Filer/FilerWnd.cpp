@@ -25,18 +25,17 @@ CFilerWnd::CFilerWnd()
 	:m_rcWnd(0, 0, 300, 500), 
 	m_splitterLeft(0),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
-	m_spGridViewProp(std::make_shared<CGridViewProperty>()),
 	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
-#ifdef USE_PYTHON_EXTENSION
-	m_spPyExProp(std::make_shared<CPythonExtensionProperty>()),
-#endif
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
-	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spGridViewProp, m_spFilerGridViewProp)),
-	m_spRightView(std::make_shared<CFilerTabGridView>(m_spGridViewProp, m_spFilerGridViewProp)),
-	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(m_spGridViewProp, m_spFavoritesProp)),
-	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(m_spGridViewProp, m_spFavoritesProp)),
+	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp)),
+	m_spRightView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp)),
+	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(m_spFilerGridViewProp, m_spFavoritesProp)),
+	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spCurView(m_spLeftView)
+#ifdef USE_PYTHON_EXTENSION
+	,m_spPyExProp(std::make_shared<CPythonExtensionProperty>())
+#endif
 {
 	m_rca
 	.lpszClassName(L"CFilerWnd")
@@ -82,14 +81,13 @@ CFilerWnd::CFilerWnd()
 	//AddCmdIDHandler(IDM_EDIT_SELECTALL,&CMultiLineListView::OnCmdEditSelectAll,(CMultiLineListView*)m_upList.get());
 	AddCmdIDHandler(IDM_APPLICATIONOPTION, &CFilerWnd::OnCommandApplicationOption, this);
 	AddCmdIDHandler(IDM_FILERGRIDVIEWOPTION, &CFilerWnd::OnCommandFilerGridViewOption, this);
-	AddCmdIDHandler(IDM_GRIDVIEWOPTION,&CFilerWnd::OnCommandGridViewOption,this);
 	AddCmdIDHandler(IDM_FAVORITESOPTION,&CFilerWnd::OnCommandFavoritesOption,this);
-#ifdef USE_PYTHON_EXTENSION
-	AddCmdIDHandler(IDM_PYTHONEXTENSIONOPTION, &CFilerWnd::OnCommandPythonExtensionOption, this);
-#endif
 	AddCmdIDHandler(IDM_EXEEXTENSIONOPTION, &CFilerWnd::OnCommandExeExtensionOption, this);
 	AddCmdIDHandler(IDM_LEFTVIEWOPTION, &CFilerWnd::OnCommandLeftViewOption, this);
 	AddCmdIDHandler(IDM_RIGHTVIEWOPTION, &CFilerWnd::OnCommandRightViewOption, this);
+#ifdef USE_PYTHON_EXTENSION
+	AddCmdIDHandler(IDM_PYTHONEXTENSIONOPTION, &CFilerWnd::OnCommandPythonExtensionOption, this);
+#endif
 }
 
 CFilerWnd::~CFilerWnd(){}
@@ -104,24 +102,96 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	//Konami
 	//m_konamiCommander.SetHwnd(m_hWnd);
 
+	//Size
+	CRect rcClient = GetClientRect();
+	CRect rcLeftFavorites, rcRightFavorites, rcLeftGrid, rcRightGrid;
+	d2dw::CDirect2DWrite direct(m_hWnd);
+	auto favoriteWidth = direct.Pixels2DipsX(
+		m_spFilerGridViewProp->CellPropPtr->Line->Width * 2 + //def:GridLine=0.5*2, CellLine=0.5*2
+		m_spFilerGridViewProp->CellPropPtr->Padding->left + //def:2
+		m_spFilerGridViewProp->CellPropPtr->Padding->right + //def:2
+		16.0);
+	rcLeftFavorites.SetRect(
+		rcClient.left, rcClient.top,
+		rcClient.left + favoriteWidth, rcClient.bottom);
+	if (m_splitterLeft == 0) {//Initial = No serialize
+
+		if (rcClient.Width() >= 800) {
+			LONG viewWidth = (rcClient.Width() - 2 * favoriteWidth - kSplitterWidth) / 2;
+			rcLeftGrid.SetRect(
+				rcClient.left + favoriteWidth,
+				rcClient.top,
+				rcClient.left + favoriteWidth + viewWidth,
+				rcClient.bottom);
+
+			rcRightFavorites.SetRect(
+				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth,
+				rcClient.top,
+				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth + favoriteWidth,
+				rcClient.bottom);
+
+			rcRightGrid.SetRect(
+				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth + favoriteWidth,
+				rcClient.top,
+				rcClient.right, 
+				rcClient.bottom);
+			m_splitterLeft = favoriteWidth + viewWidth;
+		} else {
+			rcLeftGrid.SetRect(
+				rcClient.left + favoriteWidth, 
+				rcClient.top,
+				rcClient.right,
+				rcClient.bottom);
+			m_splitterLeft = rcClient.right;
+		}
+	} else {
+		if (rcClient.Width() >= m_splitterLeft + kSplitterWidth) {
+			rcLeftGrid.SetRect(
+				rcClient.left + favoriteWidth,
+				rcClient.top,
+				m_splitterLeft,
+				rcClient.bottom);
+
+			rcRightFavorites.SetRect(
+				m_splitterLeft + kSplitterWidth,
+				rcClient.top,
+				m_splitterLeft + kSplitterWidth + favoriteWidth,
+				rcClient.bottom);
+
+			rcRightGrid.SetRect(
+				m_splitterLeft + kSplitterWidth + favoriteWidth,
+				rcClient.top,
+				rcClient.right,// - (m_splitterLeft + kSplitterWidth + favoriteWidth), 
+				rcClient.bottom);
+		} else {
+			rcLeftGrid.SetRect(
+				rcClient.left + favoriteWidth,
+				rcClient.top,
+				rcClient.right, 
+				rcClient.bottom);
+		}
+	}
+
 	//CFavoritesGridView
-	auto createFavoritesView = [this](std::shared_ptr<CFavoritesGridView>& spFavoritesView, std::shared_ptr<CFilerTabGridView>& spView, unsigned short id)->void {
+	auto createFavoritesView = [this](std::shared_ptr<CFavoritesGridView>& spFavoritesView, std::shared_ptr<CFilerTabGridView>& spView, unsigned short id, CRect& rc)->void {
 		spFavoritesView->CreateWindowExArgument()
-			.dwStyle(WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE)
+			.dwStyle(spFavoritesView->CreateWindowExArgument().dwStyle() | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | (rc.operator bool() ? WS_VISIBLE : 0))
 			.hMenu((HMENU)id);
 		spFavoritesView->FileChosen.connect([&](std::shared_ptr<CShellFile>& spFile)->void {
 			spView->GetGridView()->Open(spFile);
 		});
-		spFavoritesView->Create(m_hWnd);
+		spFavoritesView->Create(m_hWnd, rc);
 	};
-	createFavoritesView(m_spLeftFavoritesView, m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFavoritesGridView"));
-	createFavoritesView(m_spRightFavoritesView, m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFavoritesGridView"));
+	createFavoritesView(m_spLeftFavoritesView, m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFavoritesGridView"), rcLeftFavorites);
+	createFavoritesView(m_spRightFavoritesView, m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFavoritesGridView"), rcRightFavorites);
 
 	//CFilerTabGridView
-	auto createFilerTabGridView = [this](std::shared_ptr<CFilerTabGridView>& spView, unsigned short id)->void {
+	auto createFilerTabGridView = [this](std::shared_ptr<CFilerTabGridView>& spView, unsigned short id, CRect& rc)->void {
 		spView->SetParentWnd(this);
-		m_spLeftView->CreateWindowExArgument().hMenu((HMENU)id);
-		spView->Create(m_hWnd);
+		spView->CreateWindowExArgument()
+			.dwStyle(spView->CreateWindowExArgument().dwStyle() | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | (rc.operator bool() ? WS_VISIBLE : 0))
+			.hMenu((HMENU)id);
+		spView->Create(m_hWnd, rc);
 		spView->SubclassWindow(spView->m_hWnd);
 		BOOL dummy = FALSE;
 		spView->OnCreate(WM_CREATE, NULL, NULL, dummy);
@@ -147,8 +217,8 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		});
 	};
 
-	createFilerTabGridView(m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFilerGridView"));
-	createFilerTabGridView(m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFavoritesGridView"));
+	createFilerTabGridView(m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFilerGridView"), rcLeftGrid);
+	createFilerTabGridView(m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFilerGridView"), rcRightGrid);
 
 	auto applyCustomContextMenu = [this](std::shared_ptr<CFilerGridView> spFilerView)->void {
 		spFilerView->AddCustomContextMenu = [&](CMenu& menu) {
@@ -334,52 +404,6 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	applyCustomContextMenu(m_spLeftView->GetGridView());
 	applyCustomContextMenu(m_spRightView->GetGridView());
 
-	//Size
-	CRect rcClient = GetClientRect();
-	if (m_splitterLeft == 0) {
-		//Initialize window position
-		CRect rcFavoriteClient = m_spLeftFavoritesView->GetDirect()->Dips2Pixels(m_spLeftFavoritesView->GetRect());
-		m_spLeftFavoritesView->SetWindowPos(HWND_BOTTOM,
-			rcClient.left, rcClient.top,
-			rcFavoriteClient.Width(), rcClient.Height(),
-			SWP_SHOWWINDOW);
-
-		if (rcClient.Width() >= 800) {
-			LONG viewWidth = (rcClient.Width() - 2 * rcFavoriteClient.Width() - kSplitterWidth) / 2;
-			m_spLeftView->SetWindowPos(HWND_BOTTOM,
-				rcClient.left + rcFavoriteClient.Width(),
-				rcClient.top,
-				viewWidth, rcClient.Height(),
-				SWP_SHOWWINDOW);
-
-			m_spRightFavoritesView->SetWindowPos(HWND_BOTTOM,
-				rcClient.left + rcFavoriteClient.Width() + kSplitterWidth + viewWidth,
-				rcClient.top,
-				rcFavoriteClient.Width(), rcClient.Height(),
-				SWP_SHOWWINDOW);
-
-			m_spRightView->SetWindowPos(HWND_BOTTOM,
-				rcClient.left + rcFavoriteClient.Width() + kSplitterWidth + viewWidth + rcFavoriteClient.Width(),
-				rcClient.top,
-				(rcClient.Width() - 2 * rcFavoriteClient.Width() - kSplitterWidth) / 2, rcClient.Height(),
-				SWP_SHOWWINDOW);
-			m_splitterLeft = rcFavoriteClient.Width() + viewWidth;
-		} else {
-			m_spLeftView->SetWindowPos(HWND_BOTTOM,
-				rcClient.left + rcFavoriteClient.Width(), rcClient.top,
-				rcClient.Width() - rcFavoriteClient.Width(), rcClient.Height(),
-				SWP_SHOWWINDOW);
-			m_spRightFavoritesView->ShowWindow(SW_HIDE);
-			m_spRightView->ShowWindow(SW_HIDE);
-			m_splitterLeft = rcClient.right;
-		}
-		//CRect rcLeftView(m_spLeftView->GetClientRect());
-		//m_leftSplit = ScreenToClientRect(m_spLeftView->GetWindowRect());
-	}
-	else {
-		PostMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
-	}
-
 	return 0;
 }
 
@@ -518,7 +542,6 @@ LRESULT CFilerWnd::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 	return 0;
 }
 
-
 LRESULT CFilerWnd::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	CRect rcClient = GetClientRect();
@@ -579,8 +602,6 @@ LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 	return 0;
 }
 
-
-
 LRESULT CFilerWnd::OnCommandSave(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
 	SerializeProperty(this);
@@ -613,18 +634,6 @@ LRESULT CFilerWnd::OnCommandFilerGridViewOption(WORD wNotifyCode, WORD wID, HWND
 	});
 }
 
-LRESULT CFilerWnd::OnCommandGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-{
-	return OnCommandOption<CGridViewProperty>(L"GridView Property", m_spGridViewProp,
-		[this](const std::wstring& str)->void {
-		m_spLeftView->GetGridView()->UpdateAll();
-		m_spRightView->GetGridView()->UpdateAll();
-		m_spLeftFavoritesView->UpdateAll();
-		m_spRightFavoritesView->UpdateAll();
-		SerializeProperty(this);
-	});
-}
-
 LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
 	return OnCommandOption<CFavoritesProperty>(L"Favorites Property", m_spFavoritesProp,
@@ -633,6 +642,36 @@ LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndC
 		m_spRightFavoritesView->UpdateAll();
 		SerializeProperty(this);
 	});
+}
+
+LRESULT CFilerWnd::OnCommandExeExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	return OnCommandOption<ExeExtensionProperty>(L"Exe extension Property", m_spExeExProp,
+		[this](const std::wstring& str)->void {
+		SerializeProperty(this);
+	});
+}
+
+LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	return OnCommandOption<CFilerTabGridView, std::shared_ptr<FilerGridViewProperty>>(
+		L"Left View", m_spLeftView,
+		[this](const std::wstring& str)->void {
+		m_spLeftFavoritesView->UpdateAll();
+		m_spRightFavoritesView->UpdateAll();
+		SerializeProperty(this);
+	}, m_spFilerGridViewProp);
+}
+
+LRESULT CFilerWnd::OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	return OnCommandOption<CFilerTabGridView, std::shared_ptr<FilerGridViewProperty>>(
+		L"Right View", m_spRightView,
+		[this](const std::wstring& str)->void {
+		m_spLeftFavoritesView->UpdateAll();
+		m_spRightFavoritesView->UpdateAll();
+		SerializeProperty(this);}, 
+		m_spFilerGridViewProp);
 }
 
 #ifdef USE_PYTHON_EXTENSION
@@ -644,36 +683,5 @@ LRESULT CFilerWnd::OnCommandPythonExtensionOption(WORD wNotifyCode, WORD wID, HW
 	});
 }
 #endif
-
-LRESULT CFilerWnd::OnCommandExeExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-	return OnCommandOption<ExeExtensionProperty>(L"Exe extension Property", m_spExeExProp,
-		[this](const std::wstring& str)->void {
-		SerializeProperty(this);
-	});
-}
-
-
-LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-	return OnCommandOption<CFilerTabGridView, std::shared_ptr<CGridViewProperty>, std::shared_ptr<FilerGridViewProperty>>(
-		L"Left View", m_spLeftView,
-		[this](const std::wstring& str)->void {
-		m_spLeftFavoritesView->UpdateAll();
-		m_spRightFavoritesView->UpdateAll();
-		SerializeProperty(this);
-	}, m_spGridViewProp, m_spFilerGridViewProp);
-}
-
-LRESULT CFilerWnd::OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
-{
-	return OnCommandOption<CFilerTabGridView, std::shared_ptr<CGridViewProperty>, std::shared_ptr<FilerGridViewProperty>>(
-		L"Right View", m_spRightView,
-		[this](const std::wstring& str)->void {
-		m_spLeftFavoritesView->UpdateAll();
-		m_spRightFavoritesView->UpdateAll();
-		SerializeProperty(this);
-	}, m_spGridViewProp, m_spFilerGridViewProp);
-}
 
 

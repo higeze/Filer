@@ -7,7 +7,7 @@
 #include "ShellFolder.h"
 
 class CFilerGridView;
-class CGridViewProperty;
+struct GridViewProperty;
 class CShellFolder;
 
 class CFilerTabGridView :public CTabCtrl
@@ -18,7 +18,6 @@ private:
 	std::map<unsigned int, std::shared_ptr<CShellFolder>> m_viewMap;
 	std::shared_ptr<CFilerGridView> m_spFilerView;
 
-	//std::shared_ptr<CGridViewProperty> m_spGridViewProp;
 	CWnd* m_pParentWnd;
 
 	CFont m_font;
@@ -26,13 +25,12 @@ private:
 	int m_contextMenuTabIndex;
 
 public:
-	CFilerTabGridView(std::shared_ptr<CGridViewProperty> spGridViewProp, std::shared_ptr<FilerGridViewProperty> spFilerGridViewProrperty);
+	CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty);
 	virtual ~CFilerTabGridView() {}
 
 	//Getter Setter
 	void SetContextMenuTabIndex(int index) { m_contextMenuTabIndex = index; }
 	std::shared_ptr<CFilerGridView> GetGridView() { return m_spFilerView; }
-	//void SetGridViewProp(std::shared_ptr<CGridViewProperty> prop) { m_spGridViewProp = prop;}
 	void SetParentWnd(CWnd* pParentWnd) { m_pParentWnd = pParentWnd; }
 
 	//Message
@@ -73,7 +71,7 @@ public:
 	void load(Archive& ar)
 	{
 		ar("ViewPaths", m_vwPath);
-		ar("FilerView", m_spFilerView, m_spFilerView->GetGridViewPropPtr(), m_spFilerView->GetFilerGridViewPropPtr());
+		ar("FilerView", m_spFilerView, m_spFilerView->GetFilerGridViewPropPtr());
 	}
 
 

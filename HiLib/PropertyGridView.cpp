@@ -2,7 +2,7 @@
 #include "GridViewProperty.h"
 #include "ResourceIDFactory.h"
 
-CPropertyGridView::CPropertyGridView(std::shared_ptr<CGridViewProperty> spGridViewProperty)
+CPropertyGridView::CPropertyGridView(std::shared_ptr<GridViewProperty> spGridViewProperty)
 	:CGridView(spGridViewProperty)
 {
 	//RegisterArgs and CreateArgs

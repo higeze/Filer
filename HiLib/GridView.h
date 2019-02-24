@@ -11,7 +11,7 @@
 
 class CDirect2DWrite;
 class BackgroundProperty;
-class CGridViewProperty;
+struct GridViewProperty;
 struct CMouseStateMachine;
 class CInplaceEdit;
 
@@ -29,9 +29,6 @@ protected:
 
 	CScrollBar m_vertical;
 	CScrollBar m_horizontal;
-#ifdef USE_ID2D1DCRenderTarget
-	UPBufferDC m_upBuffDC;
-#endif
 	d2dw::CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
 
@@ -52,11 +49,9 @@ protected:
 	boost::asio::io_service::work m_invalidateWork;
 	boost::asio::deadline_timer m_invalidateTimer;
 
-	std::shared_ptr<CGridViewProperty> m_spGridViewProp;
+	std::shared_ptr<GridViewProperty> m_spGridViewProp;
 	std::shared_ptr<int> m_spDeltaScroll;
 	std::shared_ptr<BackgroundProperty> m_spBackgroundProperty;
-
-	//std::shared_ptr<d2dw::CRectF> m_spEditRect;
 public:
 
 	boost::signals2::signal<void(CColumn*)> SignalColumnInserted;
@@ -72,15 +67,15 @@ public:
 
 public:
 	//Constructor
-	CGridView(std::shared_ptr<CGridViewProperty> spGridViewProp,
-			CMenu* pContextMenu= &CGridView::ContextMenu);
+	CGridView(
+		std::shared_ptr<GridViewProperty>& spGridViewProp,
+		CMenu* pContextMenu= &CGridView::ContextMenu);
 	//Destructor
 	virtual ~CGridView();
 
 	//Getter Setter
 	std::shared_ptr<d2dw::CDirect2DWrite>& GetDirect() { return m_pDirect; }
-	std::shared_ptr<CGridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
-	//void SetEditRect(d2dw::CRectF rcEdit){m_spEditRect = std::make_shared<d2dw::CRectF>(rcEdit);}
+	std::shared_ptr<GridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	d2dw::CRectF GetUpdateRect()const { return m_rcUpdateRect; }
 	void SetUpdateRect(d2dw::CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
 	std::shared_ptr<CMouseStateMachine> GetMouseStateMachine() { return m_pMouseStateMachine; }
@@ -172,6 +167,7 @@ public:
 
 	virtual void SortAllInSubmitUpdate();
 
+	virtual void UpdateRow()override;
 	virtual void UpdateScrolls();
 	virtual void Invalidate();
 
@@ -187,7 +183,10 @@ public:
 	HENHMETAFILE GetAllEnhMetaFileData();
 
 
-private:
+#ifdef USE_ID2D1DCRenderTarget
+protected:
+	UPBufferDC m_upBuffDC;
+#endif
 
 
 };

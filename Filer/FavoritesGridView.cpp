@@ -21,7 +21,7 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
-CFavoritesGridView::CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGridViewProperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp)
+CFavoritesGridView::CFavoritesGridView(std::shared_ptr<GridViewProperty> spGridViewProperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp)
 			:CGridView(spGridViewProperty),
 			m_spFavoritesProp(spFavoritesProp)
 {
@@ -36,9 +36,7 @@ CFavoritesGridView::CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGrid
 	CreateWindowExArgument()
 		.lpszClassName(_T("CFavoriteGridView"))
 		.lpszWindowName(_T("FavoriteGridView"))
-		.dwStyle(WS_CHILD | WS_VISIBLE)
-		//.dwExStyle(WS_EX_NOACTIVATE)
-		.hMenu((HMENU)1233211); 
+		.dwStyle(WS_CHILD);
 
 	//AddMsgHandler(WM_MOUSEACTIVATE, &CFavoritesGridView::OnMouseActivate, this);
 

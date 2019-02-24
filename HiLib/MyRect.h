@@ -53,6 +53,10 @@ public:
 	void OffsetRect(LONG lX,LONG lY){::OffsetRect(this,lX,lY);}
 	void OffsetRect(CPoint pt){::OffsetRect(this,pt.x,pt.y);}
 
+	operator bool()
+	{
+		return left && right && top && bottom;
+	}
 	operator LPRECT(){return this;}
 	operator LPCRECT() const{return this;};
 

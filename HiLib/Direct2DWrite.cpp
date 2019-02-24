@@ -184,13 +184,13 @@ namespace d2dw
 	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd) {}
 
 
-	CComPtr<ID2D1Factory>& CDirect2DWrite::GetD2D1Factory()
+	CComPtr<ID2D1Factory1>& CDirect2DWrite::GetD2D1Factory()
 	{
 		if (!m_pD2D1Factory) {
 			if (FAILED(
 				::D2D1CreateFactory(
 					D2D1_FACTORY_TYPE_SINGLE_THREADED,
-					__uuidof(ID2D1Factory),
+					__uuidof(ID2D1Factory1),
 					(void**)&m_pD2D1Factory))) {
 				throw std::exception(FILELINEFUNCTION);
 			}
@@ -198,13 +198,13 @@ namespace d2dw
 		return m_pD2D1Factory;
 	}
 
-	CComPtr<IDWriteFactory>& CDirect2DWrite::GetDWriteFactory()
+	CComPtr<IDWriteFactory1>& CDirect2DWrite::GetDWriteFactory()
 	{
 		if (!m_pDWriteFactory) {
 			if (FAILED(
 				::DWriteCreateFactory(
 					DWRITE_FACTORY_TYPE_SHARED,
-					__uuidof(IDWriteFactory),
+					__uuidof(IDWriteFactory1),
 					(IUnknown**)&m_pDWriteFactory))) {
 				throw std::exception(FILELINEFUNCTION);
 			}
@@ -323,31 +323,55 @@ namespace d2dw
 
 	CSizeF CDirect2DWrite::CalcTextSize(const CFontF& font, const std::wstring& text)
 	{
-		auto fontIter = m_charMap.find(font);
-		if (fontIter == m_charMap.end()) {
-			m_charMap.emplace(font, std::unordered_map<wchar_t, CSizeF>());
-			fontIter = m_charMap.find(font);
-		}
+		//auto fontIter = m_charMap.find(font);
+		//if (fontIter == m_charMap.end()) {
+		//	m_charMap.emplace(font, std::unordered_map<wchar_t, CSizeF>());
+		//	fontIter = m_charMap.find(font);
+		//}
 
 		CSizeF textSize( 0.0f, 0.0f );
-		for (const auto& ch : text) {
-			const auto& iter = fontIter->second.find(ch);
-			CSizeF charSize( 0.0f, 0.0f );
-			if (iter != fontIter->second.end()) {
-				charSize = iter->second;
-			} else {
-				DWRITE_TEXT_METRICS charMetrics;
-				CComPtr<IDWriteTextLayout> pTextLayout = NULL;
-				GetDWriteFactory()->CreateTextLayout(
-					(&ch), 1, GetTextFormat(font),
-					FLT_MAX, FLT_MAX, &pTextLayout);
-				pTextLayout->GetMetrics(&charMetrics);
-				charSize.width = charMetrics.widthIncludingTrailingWhitespace;
-				charSize.height = charMetrics.height;
-				fontIter->second.emplace(ch, charSize);
-			}
-			textSize.width += charSize.width;
-			textSize.height = (std::max)(textSize.height, charSize.height);
+		//for (const auto& ch : text) {
+		//	const auto& iter = fontIter->second.find(ch);
+		//  CSizeF charSize( 0.0f, 0.0f );
+		//	if (iter != fontIter->second.end()) {
+		//		charSize = iter->second;
+		//	} else {
+		//		CComPtr<IDWriteTextLayout> pTextLayout = NULL;
+		//		GetDWriteFactory()->CreateTextLayout(
+		//			(&ch), 1, GetTextFormat(font),
+		//			FLT_MAX, FLT_MAX, &pTextLayout);
+		//		CComQIPtr<IDWriteTextLayout1> pTextLayout1(pTextLayout);
+		//		pTextLayout1->SetCharacterSpacing(0.0f, 0.0f, 0.0f, DWRITE_TEXT_RANGE{ 0, text.size() });
+		//		pTextLayout1->SetPairKerning(FALSE, DWRITE_TEXT_RANGE{ 0, text.size() });
+
+		//		DWRITE_TEXT_METRICS charMetrics;
+		//		pTextLayout1->GetMetrics(&charMetrics);
+		//		charSize.width = charMetrics.width;
+		//		charSize.height = charMetrics.height;
+		//		fontIter->second.emplace(ch, charSize);
+		//	}
+		//	textSize.width += charSize.width;
+		//	textSize.height = (std::max)(textSize.height, charSize.height);
+		//}
+
+		{
+			CComPtr<IDWriteTextLayout> pTextLayout = NULL;
+			GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(font), FLT_MAX, FLT_MAX, &pTextLayout);
+			CComQIPtr<IDWriteTextLayout1> pTextLayout1(pTextLayout);
+			//DWRITE_TEXT_METRICS charMetrics;
+			//pTextLayout->GetMetrics(&charMetrics);
+			//textSize.width = charMetrics.width;
+			//textSize.height = charMetrics.height;
+			pTextLayout1->SetCharacterSpacing(0.0f, 0.0f, 0.0f, DWRITE_TEXT_RANGE{ 0, text.size() });
+			pTextLayout1->SetPairKerning(FALSE, DWRITE_TEXT_RANGE{ 0, text.size() });
+			DWRITE_TEXT_METRICS charMetrics1;
+			pTextLayout1->GetMetrics(&charMetrics1);
+			textSize.width = charMetrics1.width;
+			textSize.height = charMetrics1.height;
+
+			//if (abs(textSize.width - charMetrics.width) > 0.0001) {
+			//	auto a = textSize.height;
+			//}
 		}
 
 		return textSize;

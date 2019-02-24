@@ -2,7 +2,7 @@
 #include "Gridview.h"
 #include "MyFriendSerializer.h"
 
-class CGridViewProperty;
+struct GridViewProperty;
 class CFavoritesProperty;
 class CShellFile;
 
@@ -15,7 +15,7 @@ public:
 	boost::signals2::signal<void(std::shared_ptr<CShellFile>&)> FileChosen;
 
 public:
-	CFavoritesGridView(std::shared_ptr<CGridViewProperty> spGridViewProrperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp);
+	CFavoritesGridView(std::shared_ptr<GridViewProperty> spGridViewProrperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp);
 	virtual ~CFavoritesGridView(void){}
 
 	std::shared_ptr<CFavoritesProperty>& GetFavoritesProp() { return m_spFavoritesProp; }

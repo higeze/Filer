@@ -1,3 +1,4 @@
+#include <olectl.h>
 #include "GridView.h"
 #include "Cell.h"
 #include "CellProperty.h"
@@ -21,7 +22,6 @@
 #include "MyClipboard.h"
 #include "SheetEventArgs.h"
 
-#include <olectl.h>
 
 #include "FullCommand.h"
 
@@ -40,13 +40,13 @@ UINT CGridView::WM_DELAY_UPDATE = ::RegisterWindowMessage(L"CGridView::WM_DELAY_
 CMenu CGridView::ContextMenu;
 
 CGridView::CGridView(
-	std::shared_ptr<CGridViewProperty> spGridViewProp,
+	std::shared_ptr<GridViewProperty>& spGridViewProp,
 	CMenu* pContextMenu)
 	:
 	m_spGridViewProp(spGridViewProp),
-	m_spBackgroundProperty(spGridViewProp->m_spBackgroundProperty),
-	CSheet(spGridViewProp->m_spPropHeader, spGridViewProp->m_spPropCell, spGridViewProp->m_spPropCell, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
-	m_spDeltaScroll(spGridViewProp->m_spDeltaScroll),
+	m_spBackgroundProperty(spGridViewProp->BackgroundPropPtr),
+	CSheet(spGridViewProp->HeaderPropPtr, spGridViewProp->CellPropPtr, spGridViewProp->CellPropPtr, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
+	m_spDeltaScroll(spGridViewProp->DeltaScrollPtr),
 	CWnd(),
 	m_filterIosv(), m_filterWork(m_filterIosv), m_filterTimer(m_filterIosv),
 	m_invalidateIosv(), m_invalidateWork(m_invalidateIosv), m_invalidateTimer(m_invalidateIosv),
@@ -63,7 +63,7 @@ CGridView::CGridView(
 	CreateWindowExArgument()
 		.lpszClassName(_T("CGridView"))
 		.lpszWindowName(_T("GridView"))
-		.dwStyle(WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN)
+		.dwStyle(WS_CHILD | WS_CLIPCHILDREN)
 		.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"PropertyGridView"));
 	//Scroll
 	m_vertical.CreateWindowExArgument()
@@ -316,7 +316,7 @@ LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	//}
 	//m_pDirect->GetHwndRenderTarget()->PushAxisAlignedClip(m_pDirect->Pixels2Dips(rcClip), D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 
-	m_pDirect->ClearSolid(*(m_spGridViewProp->m_spBackgroundProperty->m_brush));
+	m_pDirect->ClearSolid(*(m_spGridViewProp->BackgroundPropPtr->m_brush));
 
 	OnPaint(PaintEvent(this, *m_pDirect));
 
@@ -382,6 +382,7 @@ LRESULT CGridView::OnVScroll(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	}
 	m_vertical.SetScrollPos(si.nPos);
 	Scroll();
+	PostUpdate(Updates::Row);
 	SubmitUpdate();
 	return 0;
 }
@@ -473,6 +474,43 @@ LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 	m_setUpdate.erase(Updates::EnsureVisibleFocusedCell);
 	SubmitUpdate();
 	return 0;
+}
+
+void CGridView::UpdateRow()
+{
+	if (!Visible()) { return; }
+
+	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
+	FLOAT top = m_spCellProperty->Line->Width * 0.5f;
+
+	d2dw::CRectF rcPage(m_pDirect->Pixels2Dips(GetClientRect()));
+	d2dw::CPointF ptOrigin(GetOriginPoint());
+	rcPage.left = ptOrigin.x;
+	rcPage.top = ptOrigin.y;
+	FLOAT scrollPos = GetVerticalScrollPos();
+
+	std::function<bool(FLOAT, FLOAT, FLOAT, FLOAT)> isPaint = [](FLOAT min, FLOAT max, FLOAT top, FLOAT bottom)->bool {
+		return (top > min && top < max) ||
+			(bottom > min && bottom < max);
+	};
+
+
+	for (auto iter = rowDictionary.begin(), end = rowDictionary.find(0); iter != end; ++iter) {
+		iter->DataPtr->SetTopWithoutSignal(top);
+		top += iter->DataPtr->GetHeight();
+	}
+
+	top -= scrollPos;
+	for (auto iter = rowDictionary.find(0), end = rowDictionary.end(); iter != end; ++iter) {
+		iter->DataPtr->SetTopWithoutSignal(top);
+		FLOAT defaultHeight = iter->DataPtr->GetDefaultHeight();
+		FLOAT bottom = top + defaultHeight;
+		if (isPaint(rcPage.top, rcPage.bottom, top, bottom)) {
+			top += iter->DataPtr->GetHeight();
+		} else {
+			top += defaultHeight;
+		}
+	}
 }
 
 void CGridView::UpdateScrolls()

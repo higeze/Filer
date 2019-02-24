@@ -13,7 +13,7 @@
 //#include "KonamiCommander.h"
 
 class CFilerGridView;
-class CGridViewProperty;
+struct FilerGridViewProperty;
 //class CFavoritesProperty;
 //class CFavoritesGridView;
 class CShellFolder;
@@ -88,11 +88,8 @@ public:
 
 class CFilerWnd:public CWnd
 {
-//public:
-//	static CUniqueIDFactory ControlIDFactory;
 private:
 	CRect m_rcWnd;
-
 	const int kSplitterWidth = 5;
 	LONG m_splitterLeft;
 	bool m_isSizing = false;
@@ -100,12 +97,8 @@ private:
 
 	//Common properties
 	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
-	std::shared_ptr<CGridViewProperty> m_spGridViewProp;
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
-#ifdef USE_PYTHON_EXTENSION
-	std::shared_ptr<CPythonExtensionProperty> m_spPyExProp;
-#endif
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
 
 	//Windows
@@ -128,7 +121,6 @@ public:
 	//Getter
 	std::shared_ptr<CApplicationProperty>& GetApplicationProperty() { return m_spApplicationProp; }
 	std::shared_ptr<FilerGridViewProperty>& GetFilerGridViewPropPtr() { return m_spFilerGridViewProp; }
-	std::shared_ptr<CGridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	std::shared_ptr<CFavoritesProperty>& GetFavoritesPropPtr() { return m_spFavoritesProp; }
 
 	std::shared_ptr<CFavoritesGridView>& GetLeftFavoritesView() { return m_spLeftFavoritesView; }
@@ -145,8 +137,6 @@ private:
 	LRESULT OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
-
-
 	LRESULT OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
@@ -155,7 +145,7 @@ private:
 	LRESULT OnCommandOption(const std::wstring& name, std::shared_ptr<T>& spProp, std::function<void(const std::wstring&)> changed, Args&... args)
 	{
 		auto pPropWnd = new CPropertyWnd<T, Args...>(
-			m_spGridViewProp,
+			m_spFilerGridViewProp,
 			name,
 			spProp,
 			args...);
@@ -179,11 +169,7 @@ private:
 
 	LRESULT OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandFilerGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
-	LRESULT OnCommandGridViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
-#ifdef USE_PYTHON_EXTENSION
-	LRESULT OnCommandPythonExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-#endif
 	LRESULT OnCommandExeExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
@@ -200,19 +186,18 @@ public:
 		ar("LeftSplit", m_splitterLeft);
 
 		ar("ApplicationProperty", m_spApplicationProp);
-		ar("GridViewProperty", m_spGridViewProp);
 		ar("FilerGridViewProperty",m_spFilerGridViewProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
-#ifdef USE_PYTHON_EXTENSION
-		ar("PythonExtensionProperty", m_spPyExProp);
-#endif
 		ar("ExeExtensionProperty", m_spExeExProp);
 		ar("LeftView", m_spLeftView);
 		ar("RightView", m_spRightView);
 
 		ar("LeftFavoritesView", m_spLeftFavoritesView);
 		ar("RightFavoritesView", m_spRightFavoritesView);
-    }
+#ifdef USE_PYTHON_EXTENSION
+		ar("PythonExtensionProperty", m_spPyExProp);
+#endif
+	}
 
     template <class Archive>
     void load(Archive& ar)
@@ -224,17 +209,23 @@ public:
 		ar("LeftSplit", m_splitterLeft);
 
 		ar("ApplicationProperty", m_spApplicationProp);
-		ar("GridViewProperty", m_spGridViewProp);
 		ar("FilerGridViewProperty",m_spFilerGridViewProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
+		ar("ExeExtensionProperty", m_spExeExProp);
+		ar("LeftView", m_spLeftView, m_spFilerGridViewProp);
+		ar("RightView", m_spRightView, m_spFilerGridViewProp);
+
+		ar("LeftFavoritesView", m_spLeftFavoritesView, m_spFilerGridViewProp, m_spFavoritesProp);
+		ar("RightFavoritesView", m_spRightFavoritesView, m_spFilerGridViewProp, m_spFavoritesProp);
 #ifdef USE_PYTHON_EXTENSION
 		ar("PythonExtensionProperty", m_spPyExProp);
 #endif
-		ar("ExeExtensionProperty", m_spExeExProp);
-		ar("LeftView", m_spLeftView, m_spGridViewProp,  m_spFilerGridViewProp);
-		ar("RightView", m_spRightView, m_spGridViewProp, m_spFilerGridViewProp);
-
-		ar("LeftFavoritesView", m_spLeftFavoritesView, m_spGridViewProp, m_spFavoritesProp);
-		ar("RightFavoritesView", m_spRightFavoritesView, m_spGridViewProp, m_spFavoritesProp);
 	}
+
+#ifdef USE_PYTHON_EXTENSION
+private:
+	std::shared_ptr<CPythonExtensionProperty> m_spPyExProp;
+	LRESULT OnCommandPythonExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+#endif
+
 };

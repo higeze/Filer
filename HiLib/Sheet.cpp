@@ -531,7 +531,7 @@ FLOAT CSheet::GetColumnFitWidth(CColumn* pColumn)
 {
 	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
 	FLOAT maxWidth=0;
-	CDC dc(::CreateCompatibleDC(*GetClientDCPtr().get()));	
+	//CDC dc(::CreateCompatibleDC(*GetClientDCPtr().get()));	
 	for(const auto& rowData : rowDictionary){
 		auto pCell=pColumn->Cell(rowData.DataPtr.get());
 		maxWidth= (std::max)(pCell->GetFitSize(*(GetGridPtr()->GetDirect())).width, maxWidth);
@@ -548,50 +548,6 @@ FLOAT CSheet::GetRowHeight(CRow* pRow)
 		maxHeight= (std::max)(pCell->GetActSize(*(GetGridPtr()->GetDirect())).height, maxHeight);
 	};
 	return maxHeight;
-}
-
-
-void CSheet::UpdateRow()
-{
-	if(!Visible()){return;}
-
-	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
-	FLOAT top = m_spCellProperty->Line->Width/2.0f;
-
-	//auto size = rowDictionary.size();
-
-	//std::thread th1([&]()->void{
-	//	for (auto iter = rowDictionary.begin(), end = std::next(rowDictionary.begin(), (int)(size / 2)); iter != end; ++iter) {
-	//		iter->DataPtr->GetHeight();
-	//	}
-	//});
-
-	//std::thread th2([&]()->void {
-	//	for (auto iter = std::next(rowDictionary.begin(), (int)(size / 2)), end = rowDictionary.end(); iter != end; ++iter) {
-	//		iter->DataPtr->GetHeight();
-	//	}
-	//});
-
-	//if(th1.joinable())th1.join();
-	//if(th2.joinable())th2.join();
-
-
-	//if (rowDictionary.size() >= 100) {
-	//	std::thread th1([&]()->void{
-	//		for (auto iter = rowDictionary.begin(), end = std::distance(rowDictionary.end()-std::begin(); iter != end; ++iter) {
-	//			iter->DataPtr->SetTopWithoutSignal(top);
-	//			top += iter->DataPtr->GetHeight();
-	//		}
-	//	});
-
-
-
-	//} else {
-		for (auto iter = rowDictionary.begin(), end = rowDictionary.end(); iter != end; ++iter) {
-			iter->DataPtr->SetTopWithoutSignal(top);
-			top += iter->DataPtr->GetHeight();
-		}
-	//}
 }
 
 void CSheet::UpdateColumn()

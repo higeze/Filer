@@ -3,7 +3,7 @@
 #include <d2d1_1.h>
 #include <D2d1_1helper.h>
 #pragma comment (lib, "D2d1.lib")
-#include <dwrite.h>
+#include <dwrite_1.h>
 #pragma comment (lib, "dwrite.lib")
 #include <wincodec.h>
 //#include <wrl/client.h>
@@ -248,8 +248,8 @@ namespace d2dw{
 	{
 	private:
 		HWND m_hWnd;
-		CComPtr<ID2D1Factory> m_pD2D1Factory = NULL;
-		CComPtr<IDWriteFactory> m_pDWriteFactory = NULL;
+		CComPtr<ID2D1Factory1> m_pD2D1Factory = NULL;
+		CComPtr<IDWriteFactory1> m_pDWriteFactory = NULL;
 
 #ifdef USE_ID2D1DCRenderTarget
 		CComPtr<ID2D1DCRenderTarget> m_pHwndRenderTarget = NULL;
@@ -274,8 +274,8 @@ namespace d2dw{
 		CDirect2DWrite(const CDirect2DWrite&) = delete;
 		CDirect2DWrite& operator=(const CDirect2DWrite&) = delete;
 
-		CComPtr<ID2D1Factory>& GetD2D1Factory();
-		CComPtr<IDWriteFactory>& GetDWriteFactory();
+		CComPtr<ID2D1Factory1>& GetD2D1Factory();
+		CComPtr<IDWriteFactory1>& GetDWriteFactory();
 		CComPtr<IWICImagingFactory>& GetWICImagingFactory();
 		//CComPtr<IWICFormatConverter>& GetWICFormatConverter();
 #ifdef USE_ID2D1DCRenderTarget

@@ -172,7 +172,7 @@ public:
 	virtual void Scroll();
 
 	//Update
-	virtual void UpdateRow();
+	virtual void UpdateRow() = 0;
 	virtual void UpdateColumn();
 	virtual void UpdateScrolls(){}
 	virtual void Invalidate(){}
