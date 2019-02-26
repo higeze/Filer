@@ -19,5 +19,6 @@ public:
 		this->PropertyChanged();
 		CGridView::OnCellPropertyChanged(pCell, name);
 	}
+
 };
 

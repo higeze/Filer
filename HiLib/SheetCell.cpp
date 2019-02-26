@@ -413,16 +413,16 @@ void CSheetCell::UpdateRow()
 
 	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
 	FLOAT top = GetTop() +
-		m_spCellProperty->Line->Width*0.5f +
+		m_spCellProperty->Line->Width * 0.5f * 2.0f +
 		GetPropertyPtr()->Padding->top;
 
-	d2dw::CRectF rcPaint(GetGridPtr()->GetPaintRect());
+//	d2dw::CRectF rcPaint(GetGridPtr()->GetPaintRect());
 //	FLOAT scrollPos = GetGridPtr()->GetVerticalScrollPos();
 
-	std::function<bool(FLOAT, FLOAT, FLOAT, FLOAT)> isPaint = [](FLOAT min, FLOAT max, FLOAT top, FLOAT bottom)->bool {
-		return (top > min && top < max) ||
-			(bottom > min && bottom < max);
-	};
+	//std::function<bool(FLOAT, FLOAT, FLOAT, FLOAT)> isPaint = [](FLOAT min, FLOAT max, FLOAT top, FLOAT bottom)->bool {
+	//	return (top > min && top < max) ||
+	//		(bottom > min && bottom < max);
+	//};
 
 	//	return static_cast<CSheetCell*>(m_pSheet)->GetTop()
 	//			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
@@ -431,13 +431,21 @@ void CSheetCell::UpdateRow()
 
 	for (auto iter = rowDictionary.begin(), end = rowDictionary.end(); iter != end; ++iter) {
 		iter->DataPtr->SetTopWithoutSignal(top);
-		FLOAT defaultHeight = iter->DataPtr->GetDefaultHeight();
-		FLOAT bottom = top + defaultHeight;
-		if (isPaint(rcPaint.top, rcPaint.bottom, top, bottom)) {
-			top += iter->DataPtr->GetHeight();
-		} else {
-			top += defaultHeight;
+		//FLOAT defaultHeight = iter->DataPtr->GetDefaultHeight();
+		//FLOAT bottom = top + defaultHeight;
+		//if (isPaint(rcPaint.top, rcPaint.bottom, top, bottom)) {
+		auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
+		for (auto& colData : colDictionary) {
+			std::shared_ptr<CCell> pCell = CSheet::Cell(iter->DataPtr, colData.DataPtr);
+			if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
+				pSheetCell->UpdateAll();
+			}
 		}
+		top += iter->DataPtr->GetHeight();
+
+		//} else {
+		//	top += defaultHeight;
+		//}
 	}
 	//}
 }

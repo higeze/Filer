@@ -52,6 +52,7 @@ protected:
 	std::shared_ptr<GridViewProperty> m_spGridViewProp;
 	std::shared_ptr<int> m_spDeltaScroll;
 	std::shared_ptr<BackgroundProperty> m_spBackgroundProperty;
+	bool m_isVirtualPage = true;
 public:
 
 	boost::signals2::signal<void(CColumn*)> SignalColumnInserted;

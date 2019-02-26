@@ -145,6 +145,16 @@ public:
 			::EnableWindow(GetParent(), FALSE);
 		}
 
+		//Size
+		CRect rc = GetClientRect();
+		CRect rcBtnDefault, rcBtnOK, rcBtnCancel, rcBtnApply, rcGrid;
+		rcBtnDefault.SetRect(rc.left + 3, rc.bottom - 25, rc.left + 3 + 52, rc.bottom - 25 + 22);
+		rcBtnApply.SetRect(rc.right - 60, rc.bottom - 25, rc.right - 60 + 52, rc.bottom - 25 + 22);
+		rcBtnOK.SetRect(rc.right - 170, rc.bottom - 25, rc.right - 170 + 52, rc.bottom - 25 + 22);
+		rcBtnCancel.SetRect(rc.right - 115, rc.bottom - 25, rc.right - 115 + 52, rc.bottom - 25 + 22);
+
+		rcGrid.SetRect(rc.left, rc.top, rc.right, rc.bottom - 30);
+
 		//Default button
 		if(m_showDefault){
 			m_buttonDefault.CreateWindowExArgument()
@@ -154,7 +164,7 @@ public:
 				.dwStyle(WS_CHILD | WS_VISIBLE | BP_PUSHBUTTON);
 		
 			m_buttonDefault.RegisterClassExArgument().lpszClassName(WC_BUTTON);
-			m_buttonDefault.Create(m_hWnd,CRect(0,0,50,20));
+			m_buttonDefault.Create(m_hWnd,rcBtnDefault);
 		}
 
 		//OK button
@@ -165,8 +175,7 @@ public:
 			.dwStyle(WS_CHILD | WS_VISIBLE | BP_PUSHBUTTON);
 		
 		m_buttonOK.RegisterClassExArgument().lpszClassName(WC_BUTTON);
-
-		m_buttonOK.Create(m_hWnd,CRect(0,0,50,20));
+		m_buttonOK.Create(m_hWnd, rcBtnOK);
 
 		//Cancel button
 		m_buttonCancel.CreateWindowExArgument()
@@ -176,8 +185,7 @@ public:
 			.dwStyle(WS_CHILD | WS_VISIBLE | BP_PUSHBUTTON);
 		
 		m_buttonCancel.RegisterClassExArgument().lpszClassName(WC_BUTTON);
-
-		m_buttonCancel.Create(m_hWnd,CRect(0,0,50,20));
+		m_buttonCancel.Create(m_hWnd,rcBtnCancel);
 
 		//Apply button
 		if(m_showApply){
@@ -188,7 +196,7 @@ public:
 				.dwStyle(WS_CHILD | WS_VISIBLE | BP_PUSHBUTTON | WS_DISABLED);
 		
 			m_buttonApply.RegisterClassExArgument().lpszClassName(WC_BUTTON);
-			m_buttonApply.Create(m_hWnd,CRect(0,0,50,20));
+			m_buttonApply.Create(m_hWnd,rcBtnApply);
 		}
 
 		m_spGrid->PropertyChanged.connect(
@@ -199,6 +207,8 @@ public:
 			}
 		);
 
+		m_spGrid->CreateWindowExArgument()
+			.dwStyle(m_spGrid->CreateWindowExArgument().dwStyle() | WS_VISIBLE);
 		m_spGrid->Create(m_hWnd);
 
 		//Serializer have to be called after Creation, because Direct2DWrite is necessary

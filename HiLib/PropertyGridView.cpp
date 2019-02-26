@@ -5,6 +5,8 @@
 CPropertyGridView::CPropertyGridView(std::shared_ptr<GridViewProperty> spGridViewProperty)
 	:CGridView(spGridViewProperty)
 {
+	//No virtual
+	m_isVirtualPage = false;
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
 		.lpszClassName(_T("CPropertyGridView"))
@@ -16,5 +18,6 @@ CPropertyGridView::CPropertyGridView(std::shared_ptr<GridViewProperty> spGridVie
 		.lpszWindowName(_T("PropertyGridView"))
 		.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"PropertyGridView"));
 }
+
 
 

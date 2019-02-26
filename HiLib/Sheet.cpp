@@ -630,10 +630,39 @@ d2dw::CRectF CSheet::GetRect()const
 	return rc;
 }
 
+FLOAT CSheet::GetCellsHeight()
+{
+	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
+
+	if (Size<RowTag, VisTag>() == 0 || GetMaxIndex<RowTag, VisTag>() < 0) {
+		return 0.0f;
+	}
+
+	FLOAT top = rowDictionary.find(0)->DataPtr->GetTop();
+	FLOAT bottom = boost::prior(rowDictionary.end())->DataPtr->GetBottom();
+
+	return bottom - top;
+
+}
+
+FLOAT CSheet::GetCellsWidth()
+{
+	auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
+
+	if (Size<ColTag, VisTag>() == 0 || GetMaxIndex<ColTag, VisTag>() < 0) {
+		return 0.0f;
+	}
+
+	FLOAT left = colDictionary.find(0)->DataPtr->GetLeft();
+	FLOAT right = boost::prior(colDictionary.end())->DataPtr->GetRight();
+
+	return right - left;
+}
+
+
 
 d2dw::CRectF CSheet::GetCellsRect()
 {
-	d2dw::CPointF ptScroll(GetGridPtr()->GetDirect()->Pixels2Dips(GetScrollPos()));
 	auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
 	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
 

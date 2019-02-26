@@ -218,6 +218,8 @@ public:
 	virtual d2dw::CSizeF MeasureSize()const;
 
 	virtual d2dw::CRectF GetRect()const;
+	virtual FLOAT GetCellsHeight();
+	virtual FLOAT GetCellsWidth();
 	virtual d2dw::CRectF GetCellsRect();
 	virtual d2dw::CRectF GetPaintRect()=0;
 	//Event handler
