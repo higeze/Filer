@@ -304,6 +304,8 @@ void CSheet::PostUpdate(Updates type)
 		m_setUpdate.insert(Updates::ColumnVisible);
 		m_setUpdate.insert(Updates::Column);
 		m_setUpdate.insert(Updates::Scrolls);
+		m_setUpdate.insert(Updates::Sort);
+		m_setUpdate.insert(Updates::Filter);
 		m_setUpdate.insert(Updates::Invalidate);
 		break;
 	case Updates::EnsureVisibleFocusedCell:

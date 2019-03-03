@@ -62,7 +62,7 @@ d2dw::CSizeF CFileSizeCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
 		break;
 	}
 	if (str.empty()) { str = _T("a"); }
-	return direct.CalcTextSize(m_spProperty->FontAndColor->Font, str);
+	return direct.CalcTextSize(*(m_spProperty->Format), str);
 	//return rcContent.Size();
 }
 

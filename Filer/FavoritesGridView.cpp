@@ -18,12 +18,14 @@
 #include "SheetEventArgs.h"
 #include "Cursorer.h"
 #include "FavoritesItemDragger.h"
+#include "FilerWnd.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
-CFavoritesGridView::CFavoritesGridView(std::shared_ptr<GridViewProperty> spGridViewProperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp)
+CFavoritesGridView::CFavoritesGridView(CFilerWnd* pWnd, std::shared_ptr<GridViewProperty> spGridViewProperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp)
 			:CGridView(spGridViewProperty),
-			m_spFavoritesProp(spFavoritesProp)
+			m_spFavoritesProp(spFavoritesProp),
+			m_pFilerWnd(pWnd)
 {
 	m_isFocusable = false;
 
@@ -116,7 +118,10 @@ void CFavoritesGridView::InsertDefaultRowColumn()
 void CFavoritesGridView::OnCellLButtonDblClk(CellEventArgs& e)
 {
 	if(auto p = dynamic_cast<CFavoriteCell*>(e.CellPtr)){
-		FileChosen(p->GetShellFile());
+		auto pFile = p->GetShellFile();
+		if (pFile != nullptr && typeid(*pFile) != typeid(CShellInvalidFile)) {
+			FileChosen(p->GetShellFile());
+		}
 	}
 }
 
@@ -133,15 +138,8 @@ void CFavoritesGridView::RowMoved(CMovedEventArgs<RowTag>& e)
 void CFavoritesGridView::Reload()
 {
 	for (auto iter = m_spFavoritesProp->GetFavorites()->begin(); iter != m_spFavoritesProp->GetFavorites()->end();++iter) {
-		iter->SetShellFile(nullptr);
+		((*iter))->SetShellFile(nullptr);
 	}
-	PostUpdate(Updates::Sort);
-	PostUpdate(Updates::ColumnVisible);
-	PostUpdate(Updates::RowVisible);
-	PostUpdate(Updates::Column);
-	PostUpdate(Updates::Row);
-	PostUpdate(Updates::Invalidate);
-
+	PostUpdate(Updates::All);
 	SubmitUpdate();
-
 }

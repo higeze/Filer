@@ -5,20 +5,23 @@
 struct GridViewProperty;
 class CFavoritesProperty;
 class CShellFile;
+class CFilerWnd;
 
 class CFavoritesGridView :
 	public CGridView
 {
 private:
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
+	CFilerWnd* m_pFilerWnd;
 public:
 	boost::signals2::signal<void(std::shared_ptr<CShellFile>&)> FileChosen;
 
 public:
-	CFavoritesGridView(std::shared_ptr<GridViewProperty> spGridViewProrperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp);
+	CFavoritesGridView(CFilerWnd* pWnd, std::shared_ptr<GridViewProperty> spGridViewProrperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp);
 	virtual ~CFavoritesGridView(void){}
 
 	std::shared_ptr<CFavoritesProperty>& GetFavoritesProp() { return m_spFavoritesProp; }
+	CFilerWnd* GetFilerWndPtr() { return m_pFilerWnd; }
 
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 

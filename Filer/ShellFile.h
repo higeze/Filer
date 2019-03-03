@@ -56,8 +56,6 @@ enum class FileTimeStatus
 
 class CShellFile: public std::enable_shared_from_this<CShellFile>
 {
-private:
-//	static CFileIconCache s_iconCache;
 protected:
 	CComPtr<IShellFolder> m_pParentShellFolder;
 	CIDL m_absoluteIdl;
@@ -69,9 +67,6 @@ protected:
 	std::wstring m_wstrFileNameWithoutExt;
 	std::wstring m_wstrExt;
 	std::wstring m_wstrType;
-	//std::wstring m_wstrCreationTime;
-	//std::wstring m_wstrLastAccessTime;
-	//std::wstring m_wstrLastWriteTime;
 
 	std::pair<FILETIME, FileTimeStatus> m_creationTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
 	std::pair<FILETIME, FileTimeStatus> m_lastAccessTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
@@ -83,11 +78,7 @@ protected:
 	ULONG m_sfgao = 0;
 
 	std::unique_ptr<std::thread> m_pIconThread;
-	//std::promise<void> m_iconPromise;
-	//std::shared_future<void> m_iconFuture;
 	std::mutex m_mtxIcon;
-
-
 public:
 	//Constructor
 	CShellFile() {}
@@ -113,7 +104,6 @@ public:
 	std::wstring GetTypeName();	
 	//std::wstring GetCreationTime();
 	//std::wstring GetLastAccessTime();
-	//std::wstring GetLastWriteTime();
 	UINT GetSFGAO();
 	DWORD GetAttributes();
 
@@ -135,14 +125,29 @@ public:
 	bool HasIconInCache();
 	bool IsDirectory();
 	virtual void Reset();
+
 private:
 	void UpdateWIN32_FIND_DATA();
-	std::shared_ptr<CIcon> GetDefaultIcon();
-
 	virtual void ResetIcon();
 	virtual void ResetSize();
 
 protected:
+	std::shared_ptr<CIcon> GetDefaultIcon();
 	std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetLockIcon();
 	void SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& icon);
 };
+
+
+class CShellInvalidFile :public CShellFile
+{
+public:
+	//Constructor
+	CShellInvalidFile() {}
+
+	//Destructor
+	virtual ~CShellInvalidFile(){}
+
+	//Icon
+	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon()override;
+};
+

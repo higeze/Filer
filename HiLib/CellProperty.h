@@ -68,7 +68,7 @@ public:
 class CellProperty
 {
 public:
-	std::shared_ptr<d2dw::FontAndColor> FontAndColor;
+	std::shared_ptr<d2dw::FormatF> Format;
 	std::shared_ptr<d2dw::SolidLine> Line;
 	std::shared_ptr<d2dw::SolidLine> FocusedLine;
 	std::shared_ptr<d2dw::SolidFill> NormalFill;
@@ -80,7 +80,7 @@ public:
 
 public:
 	CellProperty()
-		:FontAndColor(std::make_shared<d2dw::FontAndColor>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9.0f),  0.0f, 0.0f, 0.0f, 1.0f)),
+		:Format(std::make_shared<d2dw::FormatF>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9.0f),  0.0f, 0.0f, 0.0f, 1.0f)),
 		Line(std::make_shared<d2dw::SolidLine>(221.0f/255, 206.0f/255, 188.0f/255, 1.0f, 1.0f)),
 		FocusedLine(std::make_shared<d2dw::SolidLine>(22.0f/255, 160.0f/255, 133.0f/255, 1.0f, 1.0f)),
 		NormalFill(std::make_shared<d2dw::SolidFill>(246.0f/255, 246.0f/255, 246.0f/255, 1.0f)),
@@ -93,7 +93,7 @@ public:
 		Padding(std::make_shared<d2dw::CRectF>(2.0f,2.0f,2.0f,2.0f)){};
 
 	CellProperty(
-		std::shared_ptr<d2dw::FontAndColor> fontAndColor,
+		std::shared_ptr<d2dw::FormatF> fontAndColor,
 		std::shared_ptr<d2dw::SolidLine> line,
 		std::shared_ptr<d2dw::SolidLine> focusedLine,
 		std::shared_ptr<d2dw::SolidFill> normalFill,
@@ -102,7 +102,7 @@ public:
 		std::shared_ptr<d2dw::SolidFill> unfocusSelectedFill,
 		std::shared_ptr<d2dw::SolidFill> hotFill,
 		std::shared_ptr<d2dw::CRectF> padding)
-		:FontAndColor(fontAndColor),
+		:Format(fontAndColor),
 		Line(line),
 		FocusedLine(focusedLine),
 		NormalFill(normalFill),
@@ -132,7 +132,7 @@ public:
 	template <class Archive>
     void serialize(Archive& ar)
     {
-		ar("FontAndColor",FontAndColor);
+		ar("Format",Format);
 		ar("Line",Line);
 		ar("FocusedLine",FocusedLine);
 		ar("NormalFill",NormalFill);
@@ -160,7 +160,7 @@ public:
 	//CHeaderProperty():CCellProperty(),m_crTop(RGB(206,185,205)),m_crBottom(RGB(233,158,231)){}
 	HeaderProperty()
 		:CellProperty(
-		std::make_shared<d2dw::FontAndColor>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9.0f), 0.0f, 0.0f, 0.0f, 1.0f),
+		std::make_shared<d2dw::FormatF>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9.0f), 0.0f, 0.0f, 0.0f, 1.0f),
 		std::make_shared<d2dw::SolidLine>(211.0f / 255, 206.0f / 255, 188.0f / 255, 1.0f, 1.0f),
 		std::make_shared<d2dw::SolidLine>(22.0f / 255, 160.0f / 255, 133.0f / 255, 1.0f, 1.0f),
 		std::make_shared<d2dw::SolidFill>(239.0f / 255, 239.0f / 255, 232.0f / 255, 1.0f),

@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <tuple>
 #include "CellProperty.h"
+#include "GridViewProperty.h"
 
 #define IDC_BUTTON_DEFAULT						161
 #define IDC_BUTTON_OK							162
@@ -37,8 +38,8 @@ private:
 	bool m_isModal = false;
 public:
 #pragma warning(disable: 4996)
-	boost::signals2::signal<void(const std::wstring&)> PropertyChanged;
-	boost::signals2::signal<void()> WindowClose;
+	boost::signals2::signal<void(const std::wstring&)> SignalPropertyChanged;
+	boost::signals2::signal<void(CPropertyWnd<T, Args...>* pWnd)> SignalClose;
 #pragma warning(default: 4996)
 
 public:
@@ -117,7 +118,7 @@ public:
 	{
 		CCellDeserializer deserializer(m_spGrid);
 		deserializer.Deserialize(m_wstrPropertyName.c_str(),m_prop);
-		PropertyChanged(m_wstrPropertyName);
+		SignalPropertyChanged(m_wstrPropertyName);
 		SendMessage(WM_CLOSE,NULL,NULL);
 		return 0;
 	}
@@ -127,7 +128,7 @@ public:
 		CCellDeserializer deserializer(m_spGrid);
 		deserializer.Deserialize(m_wstrPropertyName.c_str(),m_prop);
 		m_spGrid->UpdateAll();
-		PropertyChanged(m_wstrPropertyName);
+		SignalPropertyChanged(m_wstrPropertyName);
 		m_buttonApply.EnableWindow(FALSE);
 		return 0;
 	}
@@ -209,7 +210,7 @@ public:
 
 		m_spGrid->CreateWindowExArgument()
 			.dwStyle(m_spGrid->CreateWindowExArgument().dwStyle() | WS_VISIBLE);
-		m_spGrid->Create(m_hWnd);
+		m_spGrid->Create(m_hWnd, rcGrid);
 
 		//Serializer have to be called after Creation, because Direct2DWrite is necessary
 		CCellSerializer serializer(m_spGrid, m_spPropSheetCellHeader, m_spPropSheetCellFilter, m_spPropSheetCellCell);
@@ -225,7 +226,7 @@ public:
 		if(m_isModal && GetParent()){
 			::EnableWindow(GetParent(), TRUE);
 		}
-		WindowClose();
+		SignalClose(this);
 		m_spGrid->DestroyWindow();
 		DestroyWindow();
 		return 0;

@@ -23,7 +23,7 @@ CTextCell::~CTextCell()
 
 void CTextCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
-	direct.DrawTextLayout(*(m_spProperty->FontAndColor), GetString(), rcPaint);
+	direct.DrawTextLayout(*(m_spProperty->Format), GetString(), rcPaint);
 }
 
 //CSize CStringSizeCalculater::CalcSize(const std::wstring& str)
@@ -87,7 +87,7 @@ d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
 	//Calc Content Rect
 	std::wstring text = GetString();
 	if (text.empty()) { text = L"a"; }
-	return direct.CalcTextSize(m_spProperty->FontAndColor->Font, text);
+	return direct.CalcTextSize(*(m_spProperty->Format), text);
 }
 
 //CSize CTextCell::MeasureSize(CDC* pDC)
@@ -108,7 +108,7 @@ d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& d
 
 	std::wstring text = GetString();
 	if (text.empty()) { text = L"a"; }
-	return direct.CalcTextSizeWithFixedWidth(m_spProperty->FontAndColor->Font, text, rcContent.Width());
+	return direct.CalcTextSizeWithFixedWidth(*(m_spProperty->Format), text, rcContent.Width());
 }
 
 void CTextCell::OnEdit(const EventArgs& e)
@@ -133,7 +133,7 @@ void CTextCell::OnEdit(const EventArgs& e)
 			spCell->m_pEdit=NULL;
 			spCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 		},
-		m_spProperty->FontAndColor->Font.GetGDIFont(),
+		m_spProperty->Format->Font.GetGDIFont(),
 		GetFormat());
 
 	m_pEdit->Create(m_pSheet->GetGridPtr()->m_hWnd, rc);

@@ -6,7 +6,7 @@
 #include "PathCell.h"
 #include "CellProperty.h"
 
-CFavoritesColumn::CFavoritesColumn(CGridView* pGrid, std::shared_ptr<std::vector<CFavorite>> pFavorites)
+CFavoritesColumn::CFavoritesColumn(CGridView* pGrid, std::shared_ptr<std::vector<std::shared_ptr<CFavorite>>> pFavorites)
 		:CParentDefaultMapColumn(pGrid),m_spFavorites(pFavorites){}
 
 

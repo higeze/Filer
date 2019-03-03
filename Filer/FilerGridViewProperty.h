@@ -11,7 +11,7 @@ struct FilerGridViewProperty:public GridViewProperty
 
 	FilerGridViewProperty():GridViewProperty()
 	{
-		SizeCellPropPtr->FontAndColor->Font.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_TRAILING;
+		SizeCellPropPtr->Format->Alignment.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_TRAILING;
 	}
 	virtual ~FilerGridViewProperty(){}
 

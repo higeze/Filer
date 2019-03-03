@@ -115,7 +115,7 @@ CShellFile::~CShellFile()
 		}
 		SignalFileIconChanged.disconnect_all_slots();
 	} catch (...) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile Exception";
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile Exception Icon thread detached";
 		if (m_pIconThread) m_pIconThread->detach();
 	}
 }
@@ -421,6 +421,19 @@ bool CShellFile::HasIconInCache()
 {
 	return CFileIconCache::GetInstance()->Exist(this);
 }
+
+std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellInvalidFile::GetIcon()
+{
+	switch (GetLockIcon().second) {
+	case FileIconStatus::None:
+		SetLockIcon(std::make_pair(GetDefaultIcon(), FileIconStatus::Available));
+		break;
+	default:
+		break;
+	}
+	return GetLockIcon();
+}
+
 
 
 

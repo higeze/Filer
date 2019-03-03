@@ -50,11 +50,11 @@ void CFilterCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPain
 {
 	std::wstring str=GetString();
 	if(!str.empty()){
-		direct.DrawTextLayout(*(m_spProperty->FontAndColor), str, rcPaint);
+		direct.DrawTextLayout(*(m_spProperty->Format), str, rcPaint);
 	}else{
 		str = L"Filter items...";
-		d2dw::FontAndColor filterFnC(
-			m_spProperty->FontAndColor->Font.FamilyName, m_spProperty->FontAndColor->Font.Size,
+		d2dw::FormatF filterFnC(
+			m_spProperty->Format->Font.FamilyName, m_spProperty->Format->Font.Size,
 			210.0f/255,210.0f/255,210.0f/255, 1.0f);
 		direct.DrawTextLayout(filterFnC, str, rcPaint);
 	}

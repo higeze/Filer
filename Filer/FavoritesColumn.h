@@ -8,12 +8,12 @@ class CFavorite;
 class CFavoritesColumn:public CParentDefaultMapColumn
 {
 private:
-	std::shared_ptr<std::vector<CFavorite>> m_spFavorites;
+	std::shared_ptr<std::vector<std::shared_ptr<CFavorite>>> m_spFavorites;
 public:
-	CFavoritesColumn(CGridView* pGrid, std::shared_ptr<std::vector<CFavorite>> pFavorites);
+	CFavoritesColumn(CGridView* pGrid, std::shared_ptr<std::vector<std::shared_ptr<CFavorite>>> pFavorites);
 	virtual ~CFavoritesColumn(void){}
 	//Getter
-	std::shared_ptr<std::vector<CFavorite>> GetFavorites() { return m_spFavorites; }
+	std::shared_ptr<std::vector<std::shared_ptr<CFavorite>>> GetFavorites() { return m_spFavorites; }
 
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;

@@ -23,14 +23,20 @@ CShellFolder::~CShellFolder()
 			BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFolder Size thread join : " + GetPath();
 			m_pSizeThread->join();
 		}
+		SignalFileSizeChanged.disconnect_all_slots();
+	} catch (...) {
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFile Exception Size thread detached";
+		if (m_pSizeThread) m_pSizeThread->detach();
+	}
+
+	try{
 		if (m_pTimeThread && m_pTimeThread->joinable()) {
 			BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFolder Time thread join : " + GetPath();
 			m_pTimeThread->join();
 		}
-		SignalFileSizeChanged.disconnect_all_slots();
+		SignalTimeChanged.disconnect_all_slots();
 	} catch (...) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFile Exception Thread detached";
-		if (m_pSizeThread) m_pSizeThread->detach();
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFile Exception Time thread detached";
 		if (m_pTimeThread) m_pTimeThread->detach();
 	}
 }
@@ -414,11 +420,12 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const std::wstrin
 		&chEaten,
 		relativeIdl.ptrptr(),
 		&dwAttributes);
-	if (FAILED(hr)) {
-		return desktop;
-	}
 
-	return desktop->CreateShExFileFolder(relativeIdl);
+	if (FAILED(hr)) {//Not Exist
+		return std::make_shared<CShellInvalidFile>();
+	} else {
+		return desktop->CreateShExFileFolder(relativeIdl);
+	}
 }
 
 

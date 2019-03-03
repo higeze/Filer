@@ -10,6 +10,7 @@
 #include "ApplicationProperty.h"
 #include "ViewProperty.h"
 #include "CellProperty.h"
+#include "PropertyWnd.h"
 //#include "KonamiCommander.h"
 
 class CFilerGridView;
@@ -90,6 +91,7 @@ class CFilerWnd:public CWnd
 {
 private:
 	CRect m_rcWnd;
+	CRect m_rcPropWnd;
 	const int kSplitterWidth = 5;
 	LONG m_splitterLeft;
 	bool m_isSizing = false;
@@ -141,29 +143,6 @@ private:
 	LRESULT OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
-	template<class T, class... Args>
-	LRESULT OnCommandOption(const std::wstring& name, std::shared_ptr<T>& spProp, std::function<void(const std::wstring&)> changed, Args&... args)
-	{
-		auto pPropWnd = new CPropertyWnd<T, Args...>(
-			m_spFilerGridViewProp,
-			name,
-			spProp,
-			args...);
-
-		pPropWnd->PropertyChanged.connect(changed);
-
-		CRect rc(0, 0, 0, 0);
-		pPropWnd->Create(m_hWnd, rc);
-		rc = pPropWnd->GetGridView()->GetDirect()->Dips2Pixels(pPropWnd->GetGridView()->GetRect());
-		::AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, TRUE, 0);
-		pPropWnd->MoveWindow(0, 0, rc.Width() + ::GetSystemMetrics(SM_CXVSCROLL), min(500, rc.Height() + ::GetSystemMetrics(SM_CYVSCROLL) + 10), FALSE);
-		pPropWnd->CenterWindow();
-		pPropWnd->ShowWindow(SW_SHOW);
-		pPropWnd->UpdateWindow();
-		
-		return 0;
-	}
-
 	LRESULT OnCommandSave(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandExit(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 
@@ -175,6 +154,32 @@ private:
 	LRESULT OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 
 public:
+	template<class T, class... Args>
+	LRESULT OnCommandOption(const std::wstring& name, std::shared_ptr<T>& spProp, std::function<void(const std::wstring&)> changed, Args&... args)
+	{
+		auto pPropWnd = new CPropertyWnd<T, Args...>(
+			m_spFilerGridViewProp,
+			name,
+			spProp,
+			args...);
+
+		pPropWnd->SignalPropertyChanged.connect(changed);
+		pPropWnd->SignalClose.connect([this](CPropertyWnd<T, Args...>* pWnd)->void{
+			WINDOWPLACEMENT wp = { 0 };
+			wp.length = sizeof(WINDOWPLACEMENT);
+			pWnd->GetWindowPlacement(&wp);
+			m_rcPropWnd = CRect(wp.rcNormalPosition);
+		});
+
+
+		pPropWnd->Create(m_hWnd, m_rcPropWnd);
+		pPropWnd->CenterWindow();
+		pPropWnd->ShowWindow(SW_SHOW);
+		pPropWnd->UpdateWindow();
+
+		return 0;
+	}
+
 	FRIEND_SERIALIZER
     template <class Archive>
     void save(Archive& ar)
@@ -182,6 +187,7 @@ public:
         const type_info& info = typeid(ar);
 		if(info == typeid(CSerializer&) || info == typeid(CDeserializer&)){ 
 			ar("WindowRectangle", m_rcWnd);
+			ar("PropertyWindowRectangle", m_rcPropWnd);
 		}
 		ar("LeftSplit", m_splitterLeft);
 
@@ -205,6 +211,7 @@ public:
         const type_info& info = typeid(ar);
 		if(info == typeid(CSerializer&) || info == typeid(CDeserializer&)){ 
 			ar("WindowRectangle", m_rcWnd);
+			ar("PropertyWindowRectangle", m_rcPropWnd);
 		}
 		ar("LeftSplit", m_splitterLeft);
 
@@ -215,8 +222,8 @@ public:
 		ar("LeftView", m_spLeftView, m_spFilerGridViewProp);
 		ar("RightView", m_spRightView, m_spFilerGridViewProp);
 
-		ar("LeftFavoritesView", m_spLeftFavoritesView, m_spFilerGridViewProp, m_spFavoritesProp);
-		ar("RightFavoritesView", m_spRightFavoritesView, m_spFilerGridViewProp, m_spFavoritesProp);
+		ar("LeftFavoritesView", m_spLeftFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
+		ar("RightFavoritesView", m_spRightFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
 #ifdef USE_PYTHON_EXTENSION
 		ar("PythonExtensionProperty", m_spPyExProp);
 #endif

@@ -23,6 +23,7 @@
 
 CFilerWnd::CFilerWnd()
 	:m_rcWnd(0, 0, 300, 500), 
+	m_rcPropWnd(0, 0, 300, 400),
 	m_splitterLeft(0),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
 	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
@@ -30,8 +31,8 @@ CFilerWnd::CFilerWnd()
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
 	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp)),
 	m_spRightView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp)),
-	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(m_spFilerGridViewProp, m_spFavoritesProp)),
-	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(m_spFilerGridViewProp, m_spFavoritesProp)),
+	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
+	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spCurView(m_spLeftView)
 #ifdef USE_PYTHON_EXTENSION
 	,m_spPyExProp(std::make_shared<CPythonExtensionProperty>())
@@ -266,7 +267,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 					STRRET strret;
 					psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
 					std::wstring path = STRRET2WSTR(strret, pIdl);
-					GetFavoritesPropPtr()->GetFavorites()->push_back(CFavorite(path, L""));
+					GetFavoritesPropPtr()->GetFavorites()->push_back(std::make_shared<CFavorite>(path, L""));
 					m_spLeftFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spLeftFavoritesView.get(), GetFavoritesPropPtr()->GetFavorites()->size() - 1));
 					m_spRightFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spRightFavoritesView.get(), GetFavoritesPropPtr()->GetFavorites()->size() - 1));
 				}
@@ -638,8 +639,9 @@ LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndC
 {
 	return OnCommandOption<CFavoritesProperty>(L"Favorites Property", m_spFavoritesProp,
 		[this](const std::wstring& str)->void {
-		m_spLeftFavoritesView->UpdateAll();
-		m_spRightFavoritesView->UpdateAll();
+		m_spLeftFavoritesView->Reload();
+		m_spRightFavoritesView->Reload();
+		InvalidateRect(NULL, FALSE);
 		SerializeProperty(this);
 	});
 }

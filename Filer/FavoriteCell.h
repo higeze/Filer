@@ -15,4 +15,5 @@ public:
 
 	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)override;
 	virtual std::shared_ptr<CShellFile> GetShellFile()override;
+	virtual void OnContextMenu(const ContextMenuEvent& e) override;
 };

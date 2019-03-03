@@ -107,6 +107,9 @@ public:
 	std::shared_ptr<FilerGridViewProperty> GetFilerGridViewPropPtr() { return std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp); }
 	std::shared_ptr<CShellFolder>& GetFolder() { return m_spFolder; }
 
+	virtual bool HasSheetCell()override { return false; }
+	virtual bool IsVirtualPage()override { return true; }
+
 	//signal
 	boost::signals2::signal<void(std::shared_ptr<CShellFolder>&)> FolderChanged;
 	std::function<void(CMenu&)> AddCustomContextMenu;

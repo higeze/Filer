@@ -172,6 +172,8 @@ public:
 	virtual void Scroll();
 
 	//Update
+	virtual bool HasSheetCell(){ return false; }
+	virtual bool IsVirtualPage() { return false; }
 	virtual void UpdateRow() = 0;
 	virtual void UpdateColumn();
 	virtual void UpdateScrolls(){}

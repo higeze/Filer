@@ -32,7 +32,7 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	//Tab
-	m_font = m_spFilerView->GetHeaderProperty()->FontAndColor->Font.GetGDIFont();
+	m_font = m_spFilerView->GetHeaderProperty()->Format->Font.GetGDIFont();
 	SetFont(m_font, TRUE);
 
 	//Capture KeyDown Msg in FilerView
@@ -335,7 +335,7 @@ LRESULT CFilerTabGridView::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HW
 	auto iter = m_viewMap.find(id);
 	if (iter != m_viewMap.end()) {
 		if(auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)){
-			p->GetFavoritesPropPtr()->GetFavorites()->push_back(CFavorite(iter->second->GetPath(), L""));
+			p->GetFavoritesPropPtr()->GetFavorites()->push_back(std::make_shared<CFavorite>(iter->second->GetPath(), L""));
 			p->GetLeftFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetLeftFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
 			p->GetRightFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetRightFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
 			p->GetLeftFavoritesView()->SubmitUpdate();

@@ -6,7 +6,7 @@ CPropertyGridView::CPropertyGridView(std::shared_ptr<GridViewProperty> spGridVie
 	:CGridView(spGridViewProperty)
 {
 	//No virtual
-	m_isVirtualPage = false;
+	//m_isVirtualPage = false;
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
 		.lpszClassName(_T("CPropertyGridView"))

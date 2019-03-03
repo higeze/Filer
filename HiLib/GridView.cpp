@@ -494,37 +494,50 @@ void CGridView::UpdateRow()
 			(bottom > min && bottom < max);
 	};
 
+	//Minus Cells
 	for (auto iter = rowDictionary.begin(), end = rowDictionary.find(0); iter != end; ++iter) {
 		iter->DataPtr->SetTopWithoutSignal(top);
 		top += iter->DataPtr->GetHeight();
 	}
 
+	//Plus Cells
 	top -= scrollPos;
 	for (auto iter = rowDictionary.find(0), end = rowDictionary.end(); iter != end; ++iter) {
-		if (m_isVirtualPage) {
+		if (IsVirtualPage()) {
 			iter->DataPtr->SetTopWithoutSignal(top);
 			FLOAT defaultHeight = iter->DataPtr->GetDefaultHeight();
 			FLOAT bottom = top + defaultHeight;
 			if (isPaint(rcPage.top, rcPage.bottom, top, bottom)) {
+				if (HasSheetCell()) {
+					auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
+					for (auto& colData : colDictionary) {
+						std::shared_ptr<CCell> pCell = CSheet::Cell(iter->DataPtr, colData.DataPtr);
+						if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
+							pSheetCell->UpdateAll();
+						}
+					}
+				}
 				top += iter->DataPtr->GetHeight();
 			} else {
 				top += defaultHeight;
 			}
 		} else {
 			iter->DataPtr->SetTopWithoutSignal(top);
-			auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
-			for (auto& colData : colDictionary) {
-				std::shared_ptr<CCell> pCell = CSheet::Cell(iter->DataPtr, colData.DataPtr);
-				if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
-					pSheetCell->UpdateAll();
+			if (HasSheetCell()) {
+				auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
+				for (auto& colData : colDictionary) {
+					std::shared_ptr<CCell> pCell = CSheet::Cell(iter->DataPtr, colData.DataPtr);
+					if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
+						pSheetCell->UpdateAll();
+					}
 				}
 			}
 			top += iter->DataPtr->GetHeight();
 		}
 	}
 
-	if (m_isVirtualPage) {
-		//Scroll Virtical Range
+	//Scroll Virtical Range
+	if (IsVirtualPage()) {
 		m_vertical.SetScrollRange(0, m_pDirect->Dips2PixelsY(GetCellsHeight()));
 	}
 

@@ -16,7 +16,7 @@ d2dw::CFontF CFontCell::GetFont(){return m_font;}
 
 void CFontCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
-	d2dw::FontAndColor fac(m_font, d2dw::CColorF(0.0f, 0.0f, 0.0f, 1.0f));
+	d2dw::FormatF fac(m_font, d2dw::CColorF(0.0f, 0.0f, 0.0f, 1.0f), d2dw::CAlignmentF());
 	direct.DrawTextLayout(fac, GetString(), rcPaint);
 }
 

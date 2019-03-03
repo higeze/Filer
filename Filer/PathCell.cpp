@@ -55,7 +55,7 @@ d2dw::CSizeF CPathCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& d
 	//Calc Content Rect
 	std::basic_string<TCHAR> str=GetString();
 	if(str.empty()){str=_T("a");}
-	return direct.CalcTextSizeWithFixedWidth(m_spProperty->FontAndColor->Font, str, rcContent.Width());
+	return direct.CalcTextSizeWithFixedWidth(*(m_spProperty->Format), str, rcContent.Width());
 }
 
 void CPathCell::OnPaint(const PaintEvent& e)

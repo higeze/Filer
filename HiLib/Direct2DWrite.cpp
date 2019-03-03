@@ -152,7 +152,7 @@ namespace d2dw
 
 	bool CFontF::operator==(const CFontF& rhs) const
 	{
-		return FamilyName == rhs.FamilyName && Size == rhs.Size && TextAlignment == rhs.TextAlignment && ParagraphAlignment == rhs.ParagraphAlignment;
+		return FamilyName == rhs.FamilyName && Size == rhs.Size;
 	}
 
 	bool CFontF::operator!=(const CFontF& rhs) const
@@ -170,8 +170,49 @@ namespace d2dw
 		std::size_t seed = 0;
 		boost::hash_combine(seed, std::hash<decltype(FamilyName)>()(FamilyName));
 		boost::hash_combine(seed, std::hash<decltype(Size)>()(Size));
+		return seed;
+	}
+
+	//CAlignmentF
+	CAlignmentF::CAlignmentF(const DWRITE_TEXT_ALIGNMENT& textAlignment, const DWRITE_PARAGRAPH_ALIGNMENT& paragraphAlignment)
+	:TextAlignment(textAlignment), ParagraphAlignment(paragraphAlignment){}
+
+	bool CAlignmentF::operator==(const CAlignmentF& rhs) const
+	{
+		return TextAlignment == rhs.TextAlignment && ParagraphAlignment == rhs.ParagraphAlignment;
+	}
+
+	bool CAlignmentF::operator!=(const CAlignmentF& rhs) const
+	{
+		return !operator==(rhs);
+	}
+
+	std::size_t CAlignmentF::GetHashCode() const
+	{
+		std::size_t seed = 0;
 		boost::hash_combine(seed, std::hash<decltype(TextAlignment)>()(TextAlignment));
 		boost::hash_combine(seed, std::hash<decltype(ParagraphAlignment)>()(ParagraphAlignment));
+		return seed;
+	}
+
+	//Format
+	bool FormatF::operator==(const FormatF& rhs) const
+	{
+		return Font == rhs.Font && Color == rhs.Color && Alignment == rhs.Alignment;
+	}
+
+	bool FormatF::operator!=(const FormatF& rhs) const
+	{
+		return !operator==(rhs);
+	}
+
+	std::size_t FormatF::GetHashCode() const
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, std::hash<decltype(Font)>()(Font));
+		boost::hash_combine(seed, std::hash<decltype(Color)>()(Color));
+		boost::hash_combine(seed, std::hash<decltype(Alignment)>()(Alignment));
+
 		return seed;
 	}
 
@@ -293,35 +334,35 @@ namespace d2dw
 		}
 	}
 
-	CComPtr<IDWriteTextFormat>& CDirect2DWrite::GetTextFormat(const CFontF& font)
+	CComPtr<IDWriteTextFormat>& CDirect2DWrite::GetTextFormat(const FormatF& format)
 	{
-		auto iter = m_textFormatMap.find(font);
+		auto iter = m_textFormatMap.find(format);
 		if (iter != m_textFormatMap.end()) {
 			return iter->second;
 		} else {
 			CComPtr<IDWriteTextFormat> pTextFormat;
 			if (FAILED(GetDWriteFactory()->CreateTextFormat(
-				font.FamilyName.c_str(),
+				format.Font.FamilyName.c_str(),
 				nullptr,
 				DWRITE_FONT_WEIGHT_REGULAR,
 				DWRITE_FONT_STYLE_NORMAL,
 				DWRITE_FONT_STRETCH_NORMAL,
-				font.Size,
+				format.Font.Size,
 				L"en-us",
 				&pTextFormat))){
 				throw std::exception(FILELINEFUNCTION);
 			} else {
-				pTextFormat->SetTextAlignment(font.TextAlignment);
+				pTextFormat->SetTextAlignment(format.Alignment.TextAlignment);
 				pTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING::DWRITE_WORD_WRAPPING_CHARACTER);
-				pTextFormat->SetParagraphAlignment(font.ParagraphAlignment);
+				pTextFormat->SetParagraphAlignment(format.Alignment.ParagraphAlignment);
 				//pTextFormat->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM, font.Size, font.Size*0.8f);
-				auto ret = m_textFormatMap.emplace(font, pTextFormat);
+				auto ret = m_textFormatMap.emplace(format, pTextFormat);
 				return ret.first->second;
 			}
 		}
 	}
 
-	CSizeF CDirect2DWrite::CalcTextSize(const CFontF& font, const std::wstring& text)
+	CSizeF CDirect2DWrite::CalcTextSize(const FormatF& format, const std::wstring& text)
 	{
 		//auto fontIter = m_charMap.find(font);
 		//if (fontIter == m_charMap.end()) {
@@ -356,7 +397,7 @@ namespace d2dw
 
 		{
 			CComPtr<IDWriteTextLayout> pTextLayout = NULL;
-			GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(font), FLT_MAX, FLT_MAX, &pTextLayout);
+			GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(format), FLT_MAX, FLT_MAX, &pTextLayout);
 			CComQIPtr<IDWriteTextLayout1> pTextLayout1(pTextLayout);
 			//DWRITE_TEXT_METRICS charMetrics;
 			//pTextLayout->GetMetrics(&charMetrics);
@@ -377,12 +418,12 @@ namespace d2dw
 		return textSize;
 	}
 
-	CSizeF CDirect2DWrite::CalcTextSizeWithFixedWidth(const CFontF& font, const std::wstring& text, const FLOAT width)
+	CSizeF CDirect2DWrite::CalcTextSizeWithFixedWidth(const FormatF& format, const std::wstring& text, const FLOAT width)
 	{
-		auto fontIter = m_charMap.find(font);
+		auto fontIter = m_charMap.find(format);
 		if (fontIter == m_charMap.end()) {
-			m_charMap.emplace(font, std::unordered_map<wchar_t, CSizeF>());
-			fontIter = m_charMap.find(font);
+			m_charMap.emplace(format, std::unordered_map<wchar_t, CSizeF>());
+			fontIter = m_charMap.find(format);
 		}
 
 		std::vector<D2D1_SIZE_F> lineSizes;
@@ -397,7 +438,7 @@ namespace d2dw
 				DWRITE_TEXT_METRICS charMetrics;
 				CComPtr<IDWriteTextLayout> pTextLayout = NULL;
 				GetDWriteFactory()->CreateTextLayout(
-					(&ch), 1, GetTextFormat(font),
+					(&ch), 1, GetTextFormat(format),
 					FLT_MAX, FLT_MAX, &pTextLayout);
 				pTextLayout->GetMetrics(&charMetrics);
 				charSize.width = charMetrics.widthIncludingTrailingWhitespace;
@@ -458,22 +499,22 @@ namespace d2dw
 		GetHwndRenderTarget()->DrawLine(LayoutRound(p0), LayoutRound(p1), GetColorBrush(line.Color),line.Width);
 	}
 
-	void CDirect2DWrite::DrawTextLayout(const FontAndColor& fnc, const std::wstring& text, const D2D1_POINT_2F& origin, const D2D1_SIZE_F& size)
+	void CDirect2DWrite::DrawTextLayout(const FormatF& format, const std::wstring& text, const D2D1_POINT_2F& origin, const D2D1_SIZE_F& size)
 	{
 		CComPtr<IDWriteTextLayout> pTextLayout = NULL;
-		GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(fnc.Font), size.width, size.height, &pTextLayout);
-		GetHwndRenderTarget()->DrawTextLayout(origin, pTextLayout, GetColorBrush(fnc.Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
+		GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(format), size.width, size.height, &pTextLayout);
+		GetHwndRenderTarget()->DrawTextLayout(origin, pTextLayout, GetColorBrush(format.Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
 	}
 
-	void CDirect2DWrite::DrawTextLayout(const FontAndColor& fnc, const std::wstring& text, const CRectF& rect)
+	void CDirect2DWrite::DrawTextLayout(const FormatF& format, const std::wstring& text, const CRectF& rect)
 	{
-		DrawTextLayout(fnc, text, rect.LeftTop(), rect.Size());
+		DrawTextLayout(format, text, rect.LeftTop(), rect.Size());
 	}
 
-	void CDirect2DWrite::DrawTextInRect(const FontAndColor& fnc, const std::wstring& text, const CRectF& rect)
+	void CDirect2DWrite::DrawTextInRect(const FormatF& format, const std::wstring& text, const CRectF& rect)
 	{
 #ifdef USE_ID2D1DCRenderTarget
-	m_gdifuncs.push_back([this,fnc, rect, text]()->void {
+	m_gdifuncs.push_back([this,format, rect, text]()->void {
 		//Paint Text
 		::SetTextColor(m_hDC, GetSysColor(COLOR_WINDOWTEXT));
 
@@ -483,7 +524,7 @@ namespace d2dw
 		CRect rcContent;
 		int i = 0;
 		do {
-			font = CFont(CDirect2DWrite::Dips2Points(fnc.Font.Size) - i, fnc.Font.FamilyName);
+			font = CFont(CDirect2DWrite::Dips2Points(format.Font.Size) - i, format.Font.FamilyName);
 			hFont = (HFONT)::SelectObject(m_hDC, (HGDIOBJ)(font.operator HFONT()));
 			DrawTextEx(m_hDC, const_cast<LPTSTR>(text.c_str()), text.size(), rcContent,
 				DT_CALCRECT | DT_CENTER | DT_VCENTER, NULL);
@@ -497,19 +538,19 @@ namespace d2dw
 	});
 
 #elif
-		d2dw::CFontF font = m_spProperty->FontAndColor->Font;
-		d2dw::CSizeF size = direct.CalcTextSize(font, str);
+		d2dw::FormatF format(m_spProperty->Font, m_spProperty->Color, m_spProperty->Alignment);
+		d2dw::CSizeF size = direct.CalcTextSize(format, str);
 
 		while (size.width > direct.Pixels2DipsX(16)) {
-			font.Size -= 1.0f;
-			size = direct.CalcTextSize(font, str);
+			format.font.Size -= 1.0f;
+			size = direct.CalcTextSize(format, str);
 		}
-		font.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
-		font.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR;
+		format.Alignment.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
+		format.Alignment.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR;
 		rcPaint.right = rcPaint.left + direct.Pixels2DipsX(16);
 		rcPaint.bottom = rcPaint.top + direct.Pixels2DipsY(16);
 
-		direct.DrawTextLayout(d2dw::FontAndColor(font, m_spProperty->FontAndColor->Color), str, rcPaint);
+		direct.DrawTextLayout(format, str, rcPaint);
 #endif
 
 	}
