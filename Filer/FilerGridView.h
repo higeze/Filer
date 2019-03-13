@@ -184,7 +184,6 @@ public:
 	void save(Archive& ar)
 	{
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CParentRowHeaderColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileIconColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);
@@ -203,7 +202,6 @@ public:
 		//CLEAR_POLYMORPHIC_RELATION;
 
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CParentRowHeaderColumn, this);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileIconColumn, this);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn, this);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn, this);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);

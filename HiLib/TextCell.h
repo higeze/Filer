@@ -75,9 +75,11 @@ public:
 	CTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr)
 		:CCell(pSheet,pRow, pColumn,spProperty,pMenu),m_pEdit(NULL){}
 	virtual ~CTextCell();
+
 	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint);
 	virtual void PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint);
 
+	void SetEditPtr(CInplaceEdit* pEdit) { m_pEdit = pEdit; }
 	//virtual CSize MeasureSize(CDC* pDC);
 	//virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
 	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite& direct) override;

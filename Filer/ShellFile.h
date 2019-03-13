@@ -89,7 +89,7 @@ public:
 	virtual ~CShellFile();
 
 	//Signal
-	boost::signals2::signal<void(CShellFile*)> SignalFileIconChanged;
+	//boost::signals2::signal<void(CShellFile*)> SignalFileIconChanged;
 	
 	//Getter 
 	CComPtr<IShellFolder>& GetParentShellFolderPtr(){return m_pParentShellFolder;}
@@ -120,7 +120,7 @@ public:
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> ReadSize();
 
 	//Icon
-	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon();
+	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction);
 
 	bool HasIconInCache();
 	bool IsDirectory();
@@ -148,6 +148,6 @@ public:
 	virtual ~CShellInvalidFile(){}
 
 	//Icon
-	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon()override;
+	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction)override;
 };
 

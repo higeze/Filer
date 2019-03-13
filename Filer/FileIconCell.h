@@ -7,7 +7,7 @@ class CFileIconCell:public CCell, public std::enable_shared_from_this<CFileIconC
 {
 protected:
 	mutable boost::signals2::connection m_conDelayUpdateAction;
-	mutable boost::signals2::connection m_conIconChanged;
+//	mutable boost::signals2::connection m_conIconChanged;
 public:
 	CFileIconCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty);
 	virtual ~CFileIconCell();

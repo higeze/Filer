@@ -59,6 +59,9 @@ namespace d2dw
 		CSizeF();
 		CSizeF(FLOAT w, FLOAT h);
 		CSizeF(const D2D1_SIZE_F& size);
+		bool operator==(const CSizeF& rhs) const;
+		bool operator!=(const CSizeF& rhs) const;
+		std::size_t GetHashCode() const;
 
 		template <class Archive>
 		void serialize(Archive& ar)
@@ -129,6 +132,20 @@ namespace d2dw
 		}
 	};
 }
+
+namespace std
+{
+	template <>
+	struct hash<d2dw::CSizeF>
+	{
+		std::size_t operator() (d2dw::CSizeF const & key) const
+		{
+			//			BOOST_LOG_TRIVIAL(trace) << L"Color" << key.GetHashCode();
+			return key.GetHashCode();
+		}
+	};
+}
+
 
 namespace std
 {
@@ -297,7 +314,29 @@ namespace std
 }
 
 
+
+
 namespace d2dw{
+
+	struct StrSizeHash
+	{
+		inline std::size_t operator()(const std::pair<std::wstring, CSizeF>& key)const
+		{
+			std::size_t seed = 0;
+			boost::hash_combine(seed, std::hash<decltype(key.first)>()(key.first));
+			boost::hash_combine(seed, std::hash<decltype(key.second)>()(key.second));
+			return seed;
+
+		}
+	};
+
+	struct StrSizeEqual
+	{
+		inline std::size_t operator()(const std::pair<std::wstring, CSizeF>& left, const std::pair<std::wstring, CSizeF>& right)const
+		{
+			return left.first == right.first && left.second == right.second;
+		}
+	};
 
 	class CDirect2DWrite
 	{
@@ -319,7 +358,9 @@ namespace d2dw{
 
 		std::unordered_map<CColorF, CComPtr<ID2D1SolidColorBrush>> m_solidColorBrushMap;
 		std::unordered_map<FormatF, CComPtr<IDWriteTextFormat>> m_textFormatMap;
-		std::unordered_map<FormatF, std::unordered_map<wchar_t, CSizeF>> m_charMap;
+		//std::unordered_map<FormatF, std::unordered_map<wchar_t, CSizeF>> m_charMap;
+		std::unordered_map<FormatF, std::unordered_map<std::pair<std::wstring, CSizeF>, CComPtr<IDWriteTextLayout>, StrSizeHash, StrSizeEqual>> m_textLayoutMap;
+		std::unordered_map<FormatF, FLOAT> m_defaultHeightMap;
 
 		FLOAT m_xPixels2Dips = 0.0f;
 		FLOAT m_yPixels2Dips = 0.0f;
@@ -333,20 +374,19 @@ namespace d2dw{
 		CComPtr<IDWriteFactory1>& GetDWriteFactory();
 		CComPtr<IWICImagingFactory>& GetWICImagingFactory();
 		//CComPtr<IWICFormatConverter>& GetWICFormatConverter();
+
 #ifdef USE_ID2D1DCRenderTarget
 		CComPtr<ID2D1DCRenderTarget>& GetHwndRenderTarget();
+		void BeginDraw(HDC hDC, const RECT& rc);
 #else
 		CComPtr<ID2D1HwndRenderTarget>& GetHwndRenderTarget();
+		void BeginDraw();
 #endif
 		CComPtr<ID2D1SolidColorBrush>& GetColorBrush(const CColorF& color);
 		CComPtr<IDWriteTextFormat>& GetTextFormat(const FormatF& fca);
-#ifdef USE_ID2D1DCRenderTarget
-		void BeginDraw(HDC hDC, const RECT& rc);
-#else
-		void BeginDraw();
-
-#endif
-
+		CComPtr<IDWriteTextLayout>& GetTextLayout(const FormatF& format, const std::wstring& text, const CSizeF& size);
+		FLOAT GetDefaultHeight(const FormatF& format);
+		void ClearTextLayoutMap() { m_textLayoutMap.clear(); }
 		void ClearSolid(const SolidFill& fill);
 		void EndDraw();
 
@@ -435,6 +475,17 @@ namespace d2dw{
 			return CPoint(Dips2PixelsX(pt.x), Dips2PixelsY(pt.y));
 		}
 
+		CSizeF Pixels2Dips(CSize sz)
+		{
+			return CSizeF(Pixels2DipsX(sz.cx), Pixels2DipsY(sz.cy));
+		}
+
+		CSize Dips2Pixels(CSizeF sz)
+		{
+			return CSize(Dips2PixelsX(sz.width), Dips2PixelsY(sz.height));
+		}
+
+
 		CRectF Pixels2Dips(CRect rc)
 		{
 			return CRectF(Pixels2DipsX(rc.left), Pixels2DipsY(rc.top),
@@ -466,7 +517,8 @@ namespace d2dw{
 
 			m_solidColorBrushMap.clear();
 			m_textFormatMap.clear();
-			m_charMap.clear();
+			m_textLayoutMap.clear();
+			m_defaultHeightMap.clear();
 
 			m_xPixels2Dips = 0.0f;
 			m_yPixels2Dips = 0.0f;

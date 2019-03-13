@@ -2,7 +2,7 @@
 #include "ParentColumnNameHeaderCell.h"
 #include "FilterCell.h"
 #include "Sheet.h"
-#include "FileNameCell.h"
+#include "FileIconNameCell.h"
 #include "PathCell.h"
 #include "CellProperty.h"
 
@@ -26,5 +26,5 @@ std::shared_ptr<CCell> CFileNameColumn::FilterCellTemplate(CRow* pRow, CColumn* 
 
 std::shared_ptr<CCell> CFileNameColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CFileNameCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
+	return std::make_shared<CFileIconNameCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 }

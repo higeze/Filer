@@ -113,7 +113,7 @@ d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& d
 
 void CTextCell::OnEdit(const EventArgs& e)
 {
-	CRect rc(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(CenterBorder2InnerBorder(GetRect())));
+	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(InnerBorder2Content(CenterBorder2InnerBorder(GetRect()))));
 	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
 	SetState(UIElementState::Hot);//During Editing, Keep Hot
 	m_pEdit = new CInplaceEdit(
@@ -136,26 +136,26 @@ void CTextCell::OnEdit(const EventArgs& e)
 		m_spProperty->Format->Font.GetGDIFont(),
 		GetFormat());
 
-	m_pEdit->Create(m_pSheet->GetGridPtr()->m_hWnd, rc);
+	m_pEdit->Create(m_pSheet->GetGridPtr()->m_hWnd, rcEdit);
 	m_pEdit->SetWindowText(GetString().c_str());
-	CRect rcRect(m_pEdit->GetRect());
-	CRect rcPadding(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)));
-	rcRect.DeflateRect(rcPadding);
-	m_pEdit->SetRect(rcRect);
-	//m_pEdit->SetMargins(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)).left, m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)).right);
+	rcEdit.MoveToXY(0, 0);
+	//	CRect rcRect(m_pEdit->GetRect());
+	//	CRect rcPadding(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)));
+	//	rcEdit.DeflateRect(rcPadding);
+	m_pEdit->SetRect(rcEdit);
+	//	m_pEdit->SetMargins(0, 0);// m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)).left, m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)).right);
 	m_pEdit->SetFocus();
-	m_pEdit->SetSel(0,-1);
+	m_pEdit->SetSel(0, -1);
 	m_pEdit->ShowWindow(SW_SHOW);
 }
 
 void CTextCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
 	if(m_pEdit){
-		d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
-		d2dw::CRectF rcCurEdit(direct.Pixels2Dips(m_pSheet->GetGridPtr()->ScreenToClientRect(m_pEdit->GetWindowRect())));
-		//m_pSheet->GetGridPtr()->SetEditRect(rcContent);
-		if(rcContent!=rcCurEdit){
-			m_pEdit->MoveWindow(direct.Dips2Pixels(rcContent),FALSE);
+		d2dw::CRectF rcText(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
+		d2dw::CRectF rcEdit(direct.Pixels2Dips(m_pSheet->GetGridPtr()->ScreenToClientRect(m_pEdit->GetWindowRect())));
+		if(rcText!=rcEdit){
+			m_pEdit->MoveWindow(direct.Dips2Pixels(rcText),FALSE);
 		}
 	}
 	CCell::PaintBackground(direct, rcPaint);

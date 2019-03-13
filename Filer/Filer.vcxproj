@@ -338,7 +338,7 @@
     <ClInclude Include="FavoriteCell.h" />
     <ClInclude Include="FileLastWriteCell.h" />
     <ClInclude Include="FileLastWriteColumn.h" />
-    <ClInclude Include="FileNameCell.h" />
+    <ClInclude Include="FileIconNameCell.h" />
     <ClInclude Include="FileNameColumn.h" />
     <ClInclude Include="Filer.h" />
     <ClInclude Include="FilerGridView.h" />
@@ -440,7 +440,7 @@
     <ClCompile Include="FavoriteCell.cpp" />
     <ClCompile Include="FileLastWriteCell.cpp" />
     <ClCompile Include="FileLastWriteColumn.cpp" />
-    <ClCompile Include="FileNameCell.cpp" />
+    <ClCompile Include="FileIconNameCell.cpp" />
     <ClCompile Include="FileNameColumn.cpp" />
     <ClCompile Include="Filer.cpp" />
     <ClCompile Include="FilerGridView.cpp" />

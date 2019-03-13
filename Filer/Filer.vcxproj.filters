@@ -92,9 +92,6 @@
     <ClInclude Include="FileLastWriteColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="FileNameCell.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="FileNameColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -557,6 +554,9 @@
     <ClInclude Include="FileTimeArgs.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="FileIconNameCell.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -602,9 +602,6 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FileLastWriteColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileNameCell.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FileNameColumn.cpp">
@@ -843,6 +840,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\Direct2DWrite.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="FileIconNameCell.cpp">
+      <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

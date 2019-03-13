@@ -113,7 +113,6 @@ CShellFile::~CShellFile()
 			BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile " + GetFileNameWithoutExt() + L" Icon thread canceled";
 			m_pIconThread->join();
 		}
-		SignalFileIconChanged.disconnect_all_slots();
 	} catch (...) {
 		BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile Exception Icon thread detached";
 		if (m_pIconThread) m_pIconThread->detach();
@@ -314,7 +313,7 @@ std::pair<FILETIME, FileTimeStatus> CShellFile::GetLastWriteTime(std::shared_ptr
 	return m_lastWriteTime;
 }
 
-std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
+std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon(std::function<void(CShellFile*)>& changedAction)
 {
 	switch (GetLockIcon().second) {
 	case FileIconStatus::None:
@@ -323,14 +322,11 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon()
 		} else {
 			SetLockIcon(std::make_pair(GetDefaultIcon(), FileIconStatus::Loading));
 			if (!m_pIconThread) {
-				m_pIconThread.reset(new std::thread([this]()->void {
+				m_pIconThread.reset(new std::thread([this, changedAction]()->void {
 					try {
-						//SHFILEINFO sfi = { 0 };
-						//::SHGetFileInfo((LPCTSTR)GetAbsoluteIdl().ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-						//SetLockIcon(std::make_pair(std::make_shared<CIcon>(sfi.hIcon), FileIconStatus::Available));
 						CCoInitializer coinit(COINIT_APARTMENTTHREADED);
 						SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetIcon(this), FileIconStatus::Available));
-						SignalFileIconChanged(this);
+						changedAction(this);
 					} catch (...) {
 						BOOST_LOG_TRIVIAL(error) << L"CShellFile::GetIcon " + GetFileNameWithoutExt() + L" Icon thread exception";
 					}
@@ -422,7 +418,7 @@ bool CShellFile::HasIconInCache()
 	return CFileIconCache::GetInstance()->Exist(this);
 }
 
-std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellInvalidFile::GetIcon()
+std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellInvalidFile::GetIcon(std::function<void(CShellFile*)>& changedAction)
 {
 	switch (GetLockIcon().second) {
 	case FileIconStatus::None:

@@ -36,6 +36,23 @@ namespace d2dw
 		width = size.width;
 		height = size.height;
 	}
+	bool CSizeF::operator==(const CSizeF& rhs) const
+	{
+		return width == rhs.width && height == rhs.height;
+	}
+
+	bool CSizeF::operator!=(const CSizeF& rhs) const
+	{
+		return !operator==(rhs);
+	}
+
+	std::size_t CSizeF::GetHashCode() const
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, std::hash<decltype(width)>()(width));
+		boost::hash_combine(seed, std::hash<decltype(height)>()(height));
+		return seed;
+	}
 
 	//CRectF
 	CRectF::CRectF() :D2D1_RECT_F{ 0.0f } {}
@@ -265,17 +282,6 @@ namespace d2dw
 		return m_pWICImagingFactory;
 	}
 
-	//CComPtr<IWICFormatConverter>& CDirect2DWrite::GetWICFormatConverter()
-	//{
-	//	if (!m_pWICFormatConverter) {
-	//		if (FAILED(
-	//			GetWICImagingFactory()->CreateFormatConverter(&m_pWICFormatConverter))) {
-	//			throw std::exception(FILELINEFUNCTION);
-	//		}
-	//	}
-	//	return m_pWICFormatConverter;
-	//}
-
 
 #ifdef USE_ID2D1DCRenderTarget
 	CComPtr<ID2D1DCRenderTarget>& CDirect2DWrite::GetHwndRenderTarget()
@@ -362,98 +368,65 @@ namespace d2dw
 		}
 	}
 
+	CComPtr<IDWriteTextLayout>& CDirect2DWrite::GetTextLayout(const FormatF& format, const std::wstring& text, const CSizeF& size)
+	{
+		auto mapIter = m_textLayoutMap.find(format);
+		if (mapIter == m_textLayoutMap.end()) {
+			m_textLayoutMap.emplace(format, std::unordered_map<std::pair<std::wstring, CSizeF>, CComPtr<IDWriteTextLayout>, StrSizeHash, StrSizeEqual>());
+			mapIter = m_textLayoutMap.find(format);
+		}
+
+		auto layoutIter = mapIter->second.find(std::make_pair(text, size));
+		if (layoutIter != mapIter->second.end()) {
+			return layoutIter->second;
+		} else {
+			CComPtr<IDWriteTextLayout> pTextLayout = NULL;
+			if (FAILED(GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(format), size.width, size.height, &pTextLayout))) {
+				throw std::exception(FILELINEFUNCTION);
+			} else {
+				auto ret = mapIter->second.emplace(std::make_pair(text, size), pTextLayout);
+				return ret.first->second;
+			}
+		}
+	}
+
+	FLOAT CDirect2DWrite::GetDefaultHeight(const FormatF& format)
+	{
+		auto iter = m_defaultHeightMap.find(format);
+		if (iter != m_defaultHeightMap.end()) {
+			return iter->second;
+		} else {
+			auto ret = m_defaultHeightMap.emplace(format, CalcTextSize(format, L"A").height);
+			return ret.first->second;
+		}
+	}
+
 	CSizeF CDirect2DWrite::CalcTextSize(const FormatF& format, const std::wstring& text)
 	{
-		//auto fontIter = m_charMap.find(font);
-		//if (fontIter == m_charMap.end()) {
-		//	m_charMap.emplace(font, std::unordered_map<wchar_t, CSizeF>());
-		//	fontIter = m_charMap.find(font);
-		//}
-
 		CSizeF textSize( 0.0f, 0.0f );
-		//for (const auto& ch : text) {
-		//	const auto& iter = fontIter->second.find(ch);
-		//  CSizeF charSize( 0.0f, 0.0f );
-		//	if (iter != fontIter->second.end()) {
-		//		charSize = iter->second;
-		//	} else {
-		//		CComPtr<IDWriteTextLayout> pTextLayout = NULL;
-		//		GetDWriteFactory()->CreateTextLayout(
-		//			(&ch), 1, GetTextFormat(font),
-		//			FLT_MAX, FLT_MAX, &pTextLayout);
-		//		CComQIPtr<IDWriteTextLayout1> pTextLayout1(pTextLayout);
-		//		pTextLayout1->SetCharacterSpacing(0.0f, 0.0f, 0.0f, DWRITE_TEXT_RANGE{ 0, text.size() });
-		//		pTextLayout1->SetPairKerning(FALSE, DWRITE_TEXT_RANGE{ 0, text.size() });
-
-		//		DWRITE_TEXT_METRICS charMetrics;
-		//		pTextLayout1->GetMetrics(&charMetrics);
-		//		charSize.width = charMetrics.width;
-		//		charSize.height = charMetrics.height;
-		//		fontIter->second.emplace(ch, charSize);
-		//	}
-		//	textSize.width += charSize.width;
-		//	textSize.height = (std::max)(textSize.height, charSize.height);
-		//}
-
-		{
-			CComPtr<IDWriteTextLayout> pTextLayout = NULL;
-			GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(format), FLT_MAX, FLT_MAX, &pTextLayout);
-			CComQIPtr<IDWriteTextLayout1> pTextLayout1(pTextLayout);
-			//DWRITE_TEXT_METRICS charMetrics;
-			//pTextLayout->GetMetrics(&charMetrics);
-			//textSize.width = charMetrics.width;
-			//textSize.height = charMetrics.height;
-			pTextLayout1->SetCharacterSpacing(0.0f, 0.0f, 0.0f, DWRITE_TEXT_RANGE{ 0, text.size() });
-			pTextLayout1->SetPairKerning(FALSE, DWRITE_TEXT_RANGE{ 0, text.size() });
-			DWRITE_TEXT_METRICS charMetrics1;
-			pTextLayout1->GetMetrics(&charMetrics1);
-			textSize.width = charMetrics1.width;
-			textSize.height = charMetrics1.height;
-
-			//if (abs(textSize.width - charMetrics.width) > 0.0001) {
-			//	auto a = textSize.height;
-			//}
-		}
+		CComQIPtr<IDWriteTextLayout1> pTextLayout1(GetTextLayout(format, text, CSizeF(FLT_MAX, FLT_MAX)));
+		pTextLayout1->SetCharacterSpacing(0.0f, 0.0f, 0.0f, DWRITE_TEXT_RANGE{ 0, text.size() });
+		pTextLayout1->SetPairKerning(FALSE, DWRITE_TEXT_RANGE{ 0, text.size() });
+		DWRITE_TEXT_METRICS charMetrics;
+		pTextLayout1->GetMetrics(&charMetrics);
+		textSize.width = charMetrics.width;
+		textSize.height = charMetrics.height;
 
 		return textSize;
 	}
 
 	CSizeF CDirect2DWrite::CalcTextSizeWithFixedWidth(const FormatF& format, const std::wstring& text, const FLOAT width)
 	{
-		auto fontIter = m_charMap.find(format);
-		if (fontIter == m_charMap.end()) {
-			m_charMap.emplace(format, std::unordered_map<wchar_t, CSizeF>());
-			fontIter = m_charMap.find(format);
-		}
+		CSizeF textSize(0.0f, 0.0f);
+		CComQIPtr<IDWriteTextLayout1> pTextLayout1(GetTextLayout(format, text, CSizeF(width, FLT_MAX)));
+		pTextLayout1->SetCharacterSpacing(0.0f, 0.0f, 0.0f, DWRITE_TEXT_RANGE{ 0, text.size() });
+		pTextLayout1->SetPairKerning(FALSE, DWRITE_TEXT_RANGE{ 0, text.size() });
+		DWRITE_TEXT_METRICS charMetrics;
+		pTextLayout1->GetMetrics(&charMetrics);
+		textSize.width = charMetrics.width;
+		textSize.height = charMetrics.height;
 
-		std::vector<D2D1_SIZE_F> lineSizes;
-		lineSizes.emplace_back(D2D1_SIZE_F{0.0f, 0.0f});
-
-		for (const auto& ch : text) {
-			const auto& iter = fontIter->second.find(ch);
-			CSizeF charSize{ 0.0f, 0.0f };
-			if (iter != fontIter->second.end()){
-				charSize = iter->second;
-			} else {
-				DWRITE_TEXT_METRICS charMetrics;
-				CComPtr<IDWriteTextLayout> pTextLayout = NULL;
-				GetDWriteFactory()->CreateTextLayout(
-					(&ch), 1, GetTextFormat(format),
-					FLT_MAX, FLT_MAX, &pTextLayout);
-				pTextLayout->GetMetrics(&charMetrics);
-				charSize.width = charMetrics.widthIncludingTrailingWhitespace;
-				charSize.height = charMetrics.height;
-				fontIter->second.emplace(ch, charSize);
-			}
-			if (lineSizes.back().width + charSize.width > width) {
-				lineSizes.push_back(charSize);
-			} else {
-				lineSizes.back().width += charSize.width;
-				lineSizes.back().height = (std::max)(lineSizes.back().height, charSize.height);
-			}
-		}
-
-		return D2D1::SizeF(width, std::accumulate(lineSizes.begin(), lineSizes.end(), 0.0f, [](FLOAT height, const CSizeF& rhs)->FLOAT {return height + rhs.height; }));
+		return textSize;
 	}
 #ifdef USE_ID2D1DCRenderTarget
 	void CDirect2DWrite::BeginDraw(HDC hDC, const RECT& rc) 
@@ -501,9 +474,7 @@ namespace d2dw
 
 	void CDirect2DWrite::DrawTextLayout(const FormatF& format, const std::wstring& text, const D2D1_POINT_2F& origin, const D2D1_SIZE_F& size)
 	{
-		CComPtr<IDWriteTextLayout> pTextLayout = NULL;
-		GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(format), size.width, size.height, &pTextLayout);
-		GetHwndRenderTarget()->DrawTextLayout(origin, pTextLayout, GetColorBrush(format.Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
+		GetHwndRenderTarget()->DrawTextLayout(origin, GetTextLayout(format, text, size), GetColorBrush(format.Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
 	}
 
 	void CDirect2DWrite::DrawTextLayout(const FormatF& format, const std::wstring& text, const CRectF& rect)
@@ -661,173 +632,5 @@ namespace d2dw
 #endif
 
 	}
-
-
-
-
-
-
-	//CComPtr<ID2D1DCRenderTarget> CDirect2DWrite::GetDcRenderTarget()
-	//{
-	//	if (!m_pDCRenderTarget) {
-	//		D2D1_RENDER_TARGET_PROPERTIES props =
-	//			D2D1::RenderTargetProperties(
-	//				D2D1_RENDER_TARGET_TYPE_DEFAULT,
-	//				D2D1::PixelFormat(
-	//					DXGI_FORMAT_B8G8R8A8_UNORM,
-	//					D2D1_ALPHA_MODE_IGNORE),
-	//				0.0F, 0.0F,
-	//				D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE
-	//			);
-	//		if (FAILED(GetD2D1Factory()->CreateDCRenderTarget(
-	//			&props, &m_pDCRenderTarget))){
-	//			throw std::exception(FILELINEFUNCTION);
-	//		}
-	//	}
-	//	return m_pDCRenderTarget;
-	//}
-
-	//	if (pGradientBrush == NULL) {
-	//		static const D2D1_GRADIENT_STOP stops[] =
-	//		{
-	//			 {   0.0f,  { 0.0f, 1.0f, 1.0f, 1.0f }  },
-	//			 {   1.0f,  { 0.0f, 0.0f, 1.0f, 0.5f }  },
-	//		};
-	//		hr = GetHwndRenderTarget()->CreateGradientStopCollection(
-	//			stops, sizeof(stops) / sizeof(D2D1_GRADIENT_STOP), &pGradientStops);
-	//		if (!SUCCEEDED(hr)) return hr;
-	//		hr = GetHwndRenderTarget()->CreateLinearGradientBrush(    //©[30] 
-	//			D2D1::LinearGradientBrushProperties(
-	//				D2D1::Point2F(100.0F, 120.0F),
-	//				D2D1::Point2F(100.0F, 270.0F)),
-	//			D2D1::BrushProperties(),
-	//			pGradientStops,
-	//			&pGradientBrush);
-	//		if (!SUCCEEDED(hr)) return hr;
-	//	}
-
-	//	if (m_pHwndRenderTarget->CheckWindowState() & D2D1_WINDOW_STATE_OCCLUDED)
-	//		return;
-
-	//	RECT rect;
-	//	::GetClientRect(hWnd, &rect);
-	//	GetHwndRenderTarget()->Resize(D2D1::SizeU(rect.right, rect.bottom));
-
-
-	//	GetHwndRenderTarget()->BeginDraw();  //©[35] 
-
-	//	GetHwndRenderTarget()->Clear(D2D1::ColorF(1.0F, 1.0F, 1.0F));
-
-	//	D2D1_ELLIPSE ellipse1 =
-	//		D2D1::Ellipse(D2D1::Point2F(120.0F, 120.0F), 100.0F, 100.0F);
-	//	GetHwndRenderTarget()->DrawEllipse(ellipse1, pGreenBrush, 10.0F);
-
-	//	D2D1_RECT_F rect1 =
-	//		D2D1::RectF(100.0F, 50.0F, 300.0F, 100.F);
-	//	GetHwndRenderTarget()->FillRectangle(&rect1, pBlueBrush);
-
-	//	D2D1_RECT_F rect2 =
-	//		D2D1::RectF(100.0F, 120.0F, 250.0F, 270.F);
-	//	GetHwndRenderTarget()->FillRectangle(&rect2, pGradientBrush);
-
-	//	GetHwndRenderTarget()->EndDraw();
-	//}
-
-	//HRESULT CDirect2DWrite::CreateDeviceResourcesAlt()
-	//{
-	//	HRESULT hr = S_OK;
-
-	//	if (pGreenBrush == NULL) {
-	//		hr = GetDcRenderTarget()->CreateSolidColorBrush(
-	//			D2D1::ColorF(0.0F, 1.0F, 0.0F), &pGreenBrush);
-	//		if (!SUCCEEDED(hr)) return hr;
-	//	}
-	//	if (pBlueBrush == NULL) {
-	//		hr = GetDcRenderTarget()->CreateSolidColorBrush(
-	//			D2D1::ColorF(0.0F, 0.0F, 1.0F, 0.5F), &pBlueBrush);
-	//		if (!SUCCEEDED(hr)) return hr;
-	//	}
-	//	if (pGradientBrush == NULL) {
-	//		static const D2D1_GRADIENT_STOP stops[] =
-	//		{
-	//			 {   0.0f,  { 0.0f, 1.0f, 1.0f, 1.0f }  },
-	//			 {   1.0f,  { 0.0f, 0.0f, 1.0f, 0.5f }  },
-	//		};
-	//		hr = GetDcRenderTarget()->CreateGradientStopCollection(
-	//			stops, sizeof(stops) / sizeof(D2D1_GRADIENT_STOP), &pGradientStops);
-	//		if (!SUCCEEDED(hr)) return hr;
-	//		hr = GetDcRenderTarget()->CreateLinearGradientBrush(
-	//			D2D1::LinearGradientBrushProperties(
-	//				D2D1::Point2F(100.0F, 120.0F),
-	//				D2D1::Point2F(100.0F, 270.0F)),
-	//			D2D1::BrushProperties(),
-	//			pGradientStops,
-	//			&pGradientBrush);
-	//		if (!SUCCEEDED(hr)) return hr;
-	//	}
-
-	//	if (!m_pTextFormat) {
-	//		hr = GetDWriteFactory()->CreateTextFormat(
-	//			L"Arial",
-	//			nullptr,
-	//			DWRITE_FONT_WEIGHT_REGULAR,
-	//			DWRITE_FONT_STYLE_NORMAL,
-	//			DWRITE_FONT_STRETCH_NORMAL,
-	//			ConvertPointSizeToDIP(12.0f),
-	//			L"en-us",
-	//			&m_pTextFormat);
-	//		m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-	//	}
-
-	//	DWRITE_TEXT_METRICS textMetrics;
-	//	FLOAT minWidth;
-	//	if (!m_pTextLayout) {
-	//		D2D1_SIZE_F sizeRT = { 0.0f,0.0f };
-	//		const wchar_t* pStr = L"Direct Write Sample with DC";
-	//		GetDWriteFactory()->CreateTextLayout(pStr, _tcslen(pStr), m_pTextFormat,
-	//			FLT_MAX, FLT_MAX, &m_pTextLayout);
-	//		m_pTextLayout->GetMetrics(&textMetrics);
-	//		m_pTextLayout->DetermineMinWidth(&minWidth);
-	//		//m_pTextLayout->SetMaxWidth(minWidth);
-	//		//m_pTextLayout->SetMaxHeight(textMetrics.height);
-	//	}
-
-	//	return hr;
-	//}
-
-	//void CDirect2DWrite::RenderAlt(HDC hDC, LPRECT pRect)
-	//{
-	//	HRESULT hr;
-
-	//	hr = CreateDeviceResourcesAlt();
-	//	if (!SUCCEEDED(hr)) return;
-
-	//	hr = GetDcRenderTarget()->BindDC(hDC, pRect);
-
-	//	GetDcRenderTarget()->BeginDraw();
-	//	GetDcRenderTarget()->SetTransform(D2D1::IdentityMatrix());
-	//	GetDcRenderTarget()->Clear(D2D1::ColorF(1.0F, 1.0F, 1.0F));  //©[63] 
-
-	//	D2D1_ELLIPSE ellipse1 =
-	//		D2D1::Ellipse(D2D1::Point2F(120.0F, 120.0F), 100.0F, 100.0F);
-	//	GetDcRenderTarget()->DrawEllipse(ellipse1, pGreenBrush, 10.0F);
-
-	//	D2D1_RECT_F rect1 =
-	//		D2D1::RectF(100.0F, 50.0F, 300.0F, 100.F);
-	//	GetDcRenderTarget()->FillRectangle(&rect1, pBlueBrush);
-
-	//	D2D1_RECT_F rect2 =
-	//		D2D1::RectF(100.0F, 120.0F, 250.0F, 270.F);
-	//	GetDcRenderTarget()->FillRectangle(&rect2, pGradientBrush);
-
-	//	D2D1::Point2F ptOrigin = { 0.0f, 0.0f };
-	//	GetDcRenderTarget()->DrawTextLayout(ptOrigin, m_pTextLayout, pBlueBrush);
-
-
-
-
-
-	//	GetDcRenderTarget()->EndDraw();
-	//}
 
 }

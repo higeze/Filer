@@ -12,32 +12,12 @@ CFileIconCell::CFileIconCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::
 	:CCell(pSheet, pRow, pColumn, spProperty)
 {}
 
-CFileIconCell::~CFileIconCell() 
-{
-	m_conIconChanged.disconnect();
-}
+CFileIconCell::~CFileIconCell() {}
 
 std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()
 {
 	if(auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)){
-		auto spFile = pFileRow->GetFilePointer();
-		if (!m_conIconChanged.connected()) {
-			std::weak_ptr<CFileIconCell> wp(shared_from_this());
-			m_conIconChanged = spFile->SignalFileIconChanged.connect(
-				[wp](CShellFile* pFile)->void {
-				if (auto sp = wp.lock()) {
-					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
-						[wp]()->void {
-						if (auto sp = wp.lock()) {
-							sp->OnPropertyChanged(L"value");
-						}
-					});
-					sp->m_conDelayUpdateAction = con;
-					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
-				}
-			});
-		}
-		return spFile;
+		return pFileRow->GetFilePointer();
 	} else {
 		return nullptr;
 	}
@@ -51,11 +31,21 @@ void CFileIconCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPa
 	rc.bottom = rc.top + direct.Pixels2DipsY(16);
 	rc.right = rc.left + direct.Pixels2DipsX(16);
 
-	try {
-		direct.DrawIcon(spFile->GetIcon().first->operator HICON(), rc);
-	} catch (...) {
-		BOOST_LOG_TRIVIAL(trace) << FILELINEFUNCTION;
-	}
+	std::weak_ptr<CFileIconCell> wp(shared_from_this());
+	std::function<void(CShellFile*)> changedAction = [wp](CShellFile* pFile)->void {
+		if (auto sp = wp.lock()) {
+			auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+				[wp]()->void {
+				if (auto sp = wp.lock()) {
+					sp->OnPropertyChanged(L"value");
+				}
+			});
+			sp->m_conDelayUpdateAction = con;
+			sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+		}
+	};
+
+	direct.DrawIcon(spFile->GetIcon(changedAction).first->operator HICON(), rc);
 }
 
 d2dw::CSizeF CFileIconCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)

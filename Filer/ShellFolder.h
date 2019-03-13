@@ -25,7 +25,7 @@ public:
 	boost::signals2::signal<void(CShellFile*)> SignalFileSizeChanged;
 	boost::signals2::signal<void(CShellFile*)> SignalTimeChanged;
 
-	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon() override;
+	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction) override;
 
 	virtual std::wstring GetFileNameWithoutExt()override;
 	virtual std::wstring GetFileName()override;
@@ -49,6 +49,6 @@ protected:
 	void SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size);
 	void SetLockLastWriteTime(std::pair<FILETIME, FileTimeStatus>& time);
 	virtual bool GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel, boost::timer& tim, int limit);
-	virtual bool GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& cancel, boost::timer& tim, int limit);
+	virtual bool GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& cancel, boost::timer& tim, int limit, bool ignoreFolderTime);
 
 };

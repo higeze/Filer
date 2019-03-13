@@ -9,7 +9,11 @@
 FLOAT CRow::GetDefaultHeight()
 {
 	if (!m_bMeasureValid) {
-		m_height = 15.240f;
+		m_height = 
+			m_pSheet->GetGridPtr()->GetDirect()->GetDefaultHeight(*(m_pSheet->GetCellProperty()->Format)) +
+			m_pSheet->GetCellProperty()->Line->Width*0.5 + 
+			m_pSheet->GetCellProperty()->Padding->top + 
+			m_pSheet->GetCellProperty()->Padding->bottom;
 	}
 	return m_height;
 }

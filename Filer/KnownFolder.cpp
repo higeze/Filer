@@ -7,20 +7,20 @@ CKnownDriveBaseFolder::CKnownDriveBaseFolder(CComPtr<IShellFolder> pParentShellF
 	:CShellFolder(pParentShellFolder, parentIdl, childIdl, pShellFolder){}
 
 
-std::pair<std::shared_ptr<CIcon>, FileIconStatus> CKnownDriveBaseFolder::GetIcon()
+std::pair<std::shared_ptr<CIcon>, FileIconStatus> CKnownDriveBaseFolder::GetIcon(std::function<void(CShellFile*)>& changedAction)
 {
 	switch (GetLockIcon().second) {
 	case FileIconStatus::None:
 	{
 		SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetDefaultIcon(), FileIconStatus::Loading));
 		if (!m_pIconThread) {
-			m_pIconThread.reset(new std::thread([this]()->void {
+			m_pIconThread.reset(new std::thread([this, changedAction]()->void {
 				try {
 					CCoInitializer coinit(COINIT_APARTMENTTHREADED);
 					SHFILEINFO sfi = { 0 };
 					::SHGetFileInfo((LPCTSTR)GetAbsoluteIdl().ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
 					SetLockIcon(std::make_pair(std::make_shared<CIcon>(sfi.hIcon), FileIconStatus::Available));
-					SignalFileIconChanged(this);
+					changedAction(this);
 				} catch (...) {
 					BOOST_LOG_TRIVIAL(error) << L"CKnownDriveBaseFolder::GetIcon " + GetFileNameWithoutExt() + L" Icon thread exception";
 				}

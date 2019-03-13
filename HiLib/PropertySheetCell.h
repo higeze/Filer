@@ -4,6 +4,8 @@
 #include "PropertySerializer.h"
 #include "SheetEventArgs.h"
 #include "CellProperty.h"
+#include "MyMPL.h"
+#include <memory>
 
 template<typename T>
 class CPropertySheetCell:public CSheetCell
@@ -13,6 +15,7 @@ public:
 	virtual bool CanResizeColumn()const override{return false;}
 
 	//TODO Not size but index
+
 	void Resize(int row, int col)override
 	{
 		int curRowSize = GetMaxIndex<RowTag, AllTag>();
@@ -27,7 +30,7 @@ public:
 				auto pColValue= Index2Pointer<ColTag, AllTag>(1);
 
 				CCellSerializer serializer(std::dynamic_pointer_cast<CSheet>(Cell(m_pRow,m_pColumn)),m_spHeaderProperty,m_spFilterProperty,m_spCellProperty);
-				serializer.SerializeValue(std::make_shared<T>(),spRow.get(),pColValue.get());
+				serializer.SerializeValue(CreateInstance<T>(),spRow.get(),pColValue.get());
 			}
 		}else if(CanResizeRow() && row<curRowSize && row>0){
 			for(auto i=0;i<curRowSize-row;i++){

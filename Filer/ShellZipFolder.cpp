@@ -18,9 +18,9 @@ std::wstring CShellZipFolder::GetExt()
 	return CShellFile::GetExt();
 }
 
-std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellZipFolder::GetIcon()
+std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellZipFolder::GetIcon(std::function<void(CShellFile*)>& changedAction)
 {
-	return CShellFile::GetIcon();
+	return CShellFile::GetIcon(changedAction);
 }
 
 std::pair<FILETIME, FileTimeStatus> CShellZipFolder::GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs)
@@ -49,7 +49,7 @@ bool CShellZipFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& can
 	}
 }
 
-bool CShellZipFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& cancel, boost::timer& tim, int limit)
+bool CShellZipFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& cancel, boost::timer& tim, int limit, bool ignoreFolderTime)
 {
 	if (cancel.load()) {
 		BOOST_LOG_TRIVIAL(trace) << L"CShellZipFolder::GetFolderLastWriteTime Canceled at top : " + GetPath();

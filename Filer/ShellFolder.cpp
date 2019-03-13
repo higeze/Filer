@@ -75,7 +75,7 @@ void CShellFolder::SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size)
 	m_size = size;
 }
 
-std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFolder::GetIcon()
+std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFolder::GetIcon(std::function<void(CShellFile*)>& changedAction)
 {
 	if (GetLockIcon().second == FileIconStatus::None) {
 		SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetFolderIcon(), FileIconStatus::Available));
@@ -195,18 +195,18 @@ std::pair<FILETIME, FileTimeStatus> CShellFolder::GetLastWriteTime(std::shared_p
 	case FileTimeStatus::None:
 	{
 		FILETIME time = { 0 };
-		if (CShellFile::GetFileLastWriteTime(time)) {
+		if (!spArgs->IgnoreFolderTime, CShellFile::GetFileLastWriteTime(time)) {
 			SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::AvailableLoading));
 		} else {
 			SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::Loading));
 		}
 		if (!m_pTimeThread) {
 			auto limit = spArgs->TimeLimitFolderLastWrite ? spArgs->TimeLimitMs : -1;
-			m_pTimeThread.reset(new std::thread([this, limit]()->void {
+			m_pTimeThread.reset(new std::thread([this, limit, ignoreFolderTime = spArgs->IgnoreFolderTime]()->void {
 				try {
 					boost::timer tim;
 					FILETIME time = { 0 };
-					if (GetFolderLastWriteTime(time, m_cancelThread, tim, limit) && (time.dwLowDateTime || time.dwHighDateTime)) {
+					if (GetFolderLastWriteTime(time, m_cancelThread, tim, limit, ignoreFolderTime) && (time.dwLowDateTime || time.dwHighDateTime)) {
 						SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::Available));
 					} else {
 						SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::Unavailable));
@@ -283,9 +283,9 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel
 
 }
 
-bool CShellFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& cancel, boost::timer& tim, int limit)
+bool CShellFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& cancel, boost::timer& tim, int limit, bool ignoreFolderTime)
 {
-	if (CShellFile::GetFileLastWriteTime(time)) {
+	if (!ignoreFolderTime && CShellFile::GetFileLastWriteTime(time)) {
 	} else {
 		time = FILETIME{ 0 };
 	}
@@ -337,7 +337,7 @@ bool CShellFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& can
 
 			for (auto spFolder : folders) {
 				FILETIME childTime = { 0 };
-				if (!spFolder->GetFolderLastWriteTime(childTime, cancel, tim, limit)) {
+				if (!spFolder->GetFolderLastWriteTime(childTime, cancel, tim, limit, ignoreFolderTime)) {
 					childTime = { 0 };
 				}
 				if (childTime.dwLowDateTime || childTime.dwHighDateTime) {

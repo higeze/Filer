@@ -432,7 +432,7 @@ public:
 			auto& rowDict = rowAllDict.get<IndexTag>();
 			t.clear();
 			for(auto rowIter=rowDict.find(0);rowIter!=rowDict.end();rowIter++){
-				T val;
+				auto val = CreateInstance<T>();
 				DeserializeValue(val,rowIter->DataPtr.get(),spSheet->Index2Pointer<ColTag, AllTag>(1).get());
 				t.push_back(val);
 			}

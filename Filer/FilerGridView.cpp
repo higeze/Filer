@@ -9,7 +9,7 @@
 #include "FileRow.h"
 #include "FileNameColumn.h"
 #include "FileSizeColumn.h"
-#include "FileIconColumn.h"
+//#include "FileIconColumn.h"
 #include "FileExtColumn.h"
 #include "FileLastWriteColumn.h"
 #include "shlwapi.h"
@@ -33,7 +33,7 @@
 #include "Debug.h"
 #include "DirectoryWatcher.h"
 
-#include "FileNameCell.h"
+#include "FileIconNameCell.h"
 
 #include "MyMenu.h"
 #include "MenuItem.h"
@@ -106,7 +106,7 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 		};
 
 		insertFun(std::make_shared<CParentRowHeaderColumn>(this), CColumn::kMinIndex);
-		insertFun(std::make_shared<CFileIconColumn>(this), CColumn::kMaxIndex);
+		//insertFun(std::make_shared<CFileIconColumn>(this), CColumn::kMaxIndex);
 		m_pNameColumn = std::make_shared<CFileNameColumn>(this);
 		insertFun(m_pNameColumn, CColumn::kMaxIndex);
 		insertFun(std::make_shared<CFileExtColumn>(this), CColumn::kMaxIndex);
@@ -259,7 +259,7 @@ void CFilerGridView::Added(const std::wstring& fileName)
 		FilterAll();
 		SubmitUpdate();
 		if (m_bNewFile) {
-			std::static_pointer_cast<CFileNameCell>(CSheet::Cell(spRow, m_pNameColumn))->OnEdit(EventArgs(this));
+			std::static_pointer_cast<CFileIconNameCell>(CSheet::Cell(spRow, m_pNameColumn))->OnEdit(EventArgs(this));
 		}
 		m_bNewFile = false;
 	}
@@ -423,7 +423,7 @@ void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
 	case VK_F2:
 		{
 			if (m_spCursorer->GetFocusedCell()) {
-				std::static_pointer_cast<CFileNameCell>(CSheet::Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(EventArgs(this));
+				std::static_pointer_cast<CFileIconNameCell>(CSheet::Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(EventArgs(this));
 			}
 		}
 		break;
@@ -508,6 +508,10 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	bool isUpdate = m_spFolder == spFolder;
 	{
 		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Pre-Process")
+
+		if (!isUpdate) {
+			m_pDirect->ClearTextLayoutMap();
+		}
 
 		if (m_pEdit) {
 			::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);

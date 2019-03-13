@@ -6,7 +6,7 @@ class CKnownDriveBaseFolder:public CShellFolder
 public:
 	CKnownDriveBaseFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CKnownDriveBaseFolder() {}
-	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon() override;
+	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction) override;
 	virtual std::wstring GetFileNameWithoutExt() override;
 	virtual std::wstring GetFileName() override;
 };
