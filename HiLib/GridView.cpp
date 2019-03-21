@@ -1,4 +1,5 @@
 #include <olectl.h>
+#include <numeric>
 #include "GridView.h"
 #include "Cell.h"
 #include "CellProperty.h"
@@ -464,77 +465,93 @@ void CGridView::DelayUpdate()
 
 LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	BOOST_LOG_TRIVIAL(trace) << L"CGridView::OnDelayUpdate";
+	//BOOST_LOG_TRIVIAL(trace) << L"CGridView::OnDelayUpdate";
 
-	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OnDelayUpdate Total")
-	SignalPreDelayUpdate();
-	SignalPreDelayUpdate.disconnect_all_slots();
-	PostUpdate(Updates::Filter);
-	//Need to remove EnsureVisibleFocusedCell. Otherwise scroll to 0 when scrolling
-	m_setUpdate.erase(Updates::EnsureVisibleFocusedCell);
-	SubmitUpdate();
+	//CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OnDelayUpdate Total")
+	//SignalPreDelayUpdate();
+	//SignalPreDelayUpdate.disconnect_all_slots();
+	//PostUpdate(Updates::Filter);
+	////Need to remove EnsureVisibleFocusedCell. Otherwise scroll to 0 when scrolling
+	//m_setUpdate.erase(Updates::EnsureVisibleFocusedCell);
+	//SubmitUpdate();
 	return 0;
 }
 
-void CGridView::UpdateRow()
+FLOAT CGridView::UpdateHeadersRow(FLOAT top)
 {
-	if (!Visible()) { return; }
-
 	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
-	FLOAT top = m_spCellProperty->Line->Width * 0.5f;
-
-	d2dw::CRectF rcPage(m_pDirect->Pixels2Dips(GetClientRect()));
-	d2dw::CPointF ptOrigin(GetOriginPoint());
-	rcPage.left = ptOrigin.x;
-	rcPage.top = ptOrigin.y;
-	FLOAT scrollPos = GetVerticalScrollPos();
-
-	std::function<bool(FLOAT, FLOAT, FLOAT, FLOAT)> isPaint = [](FLOAT min, FLOAT max, FLOAT top, FLOAT bottom)->bool {
-		return (top > min && top < max) ||
-			(bottom > min && bottom < max);
-	};
 
 	//Minus Cells
 	for (auto iter = rowDictionary.begin(), end = rowDictionary.find(0); iter != end; ++iter) {
 		iter->DataPtr->SetTopWithoutSignal(top);
 		top += iter->DataPtr->GetHeight();
 	}
+	return top;
+}
 
+
+FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
+{
+	//Helper functions
+	std::function<bool(FLOAT, FLOAT, FLOAT, FLOAT)> isInPage = [](FLOAT min, FLOAT max, FLOAT top, FLOAT bottom)->bool {
+		return (top > min && top < max) ||
+			(bottom > min && bottom < max);
+	};
 	//Plus Cells
-	top -= scrollPos;
-	for (auto iter = rowDictionary.find(0), end = rowDictionary.end(); iter != end; ++iter) {
+	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
+	for (auto rowIter = rowDictionary.find(0), rowEnd = rowDictionary.end(); rowIter != rowEnd; ++rowIter) {
 		if (IsVirtualPage()) {
-			iter->DataPtr->SetTopWithoutSignal(top);
-			FLOAT defaultHeight = iter->DataPtr->GetDefaultHeight();
+			rowIter->DataPtr->SetTopWithoutSignal(top);
+			FLOAT defaultHeight = rowIter->DataPtr->GetDefaultHeight();
 			FLOAT bottom = top + defaultHeight;
-			if (isPaint(rcPage.top, rcPage.bottom, top, bottom)) {
+			if (isInPage(pageTop, pageBottom, top, bottom)) {
 				if (HasSheetCell()) {
 					auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
 					for (auto& colData : colDictionary) {
-						std::shared_ptr<CCell> pCell = CSheet::Cell(iter->DataPtr, colData.DataPtr);
+						std::shared_ptr<CCell> pCell = CSheet::Cell(rowIter->DataPtr, colData.DataPtr);
 						if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
 							pSheetCell->UpdateAll();
 						}
 					}
 				}
-				top += iter->DataPtr->GetHeight();
+				top += rowIter->DataPtr->GetHeight();
 			} else {
 				top += defaultHeight;
 			}
 		} else {
-			iter->DataPtr->SetTopWithoutSignal(top);
+			rowIter->DataPtr->SetTopWithoutSignal(top);
 			if (HasSheetCell()) {
 				auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
 				for (auto& colData : colDictionary) {
-					std::shared_ptr<CCell> pCell = CSheet::Cell(iter->DataPtr, colData.DataPtr);
+					std::shared_ptr<CCell> pCell = CSheet::Cell(rowIter->DataPtr, colData.DataPtr);
 					if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
 						pSheetCell->UpdateAll();
 					}
 				}
 			}
-			top += iter->DataPtr->GetHeight();
+			top += rowIter->DataPtr->GetHeight();
 		}
 	}
+	return top;
+}
+
+void CGridView::UpdateRow()
+{
+	if (!Visible()) { return; }
+
+	FLOAT top = m_spCellProperty->Line->Width * 0.5f;
+
+	//Headers
+	top = UpdateHeadersRow(top);
+
+	//Page
+	d2dw::CRectF rcPage(m_pDirect->Pixels2Dips(GetClientRect()));
+	rcPage.top = top;
+	FLOAT pageHeight = rcPage.Height();
+	FLOAT scrollPos = GetVerticalScrollPos();
+
+	//Cells
+	top = UpdateCellsRow(top - scrollPos, rcPage.top, rcPage.bottom);
 
 	//Scroll Virtical Range
 	if (IsVirtualPage()) {
@@ -809,448 +826,6 @@ LRESULT CGridView::OnCommandEditHeader(WORD wNotifyCode,WORD wID,HWND hWndCtl,BO
 	return 0;
 }
 
-//Status CGridView::SaveGIFWithNewColorTable(
-//  Image *pImage,
-//  IStream* pIStream,
-//  const CLSID* clsidEncoder,
-//  DWORD nColors,
-//  BOOL fTransparent
-//)
-//{
-//    Status stat = GenericError;
-//
-//    // GIF codec supports 256 colors maximum.
-//    if (nColors > 256)
-//        nColors = 256;
-//    if (nColors < 2)
-//        nColors = 2;
-//
-//    // Make a new 8-BPP pixel indexed bitmap that is the same size as the source image.
-//    DWORD   dwWidth = pImage->GetWidth();
-//    DWORD   dwHeight = pImage->GetHeight();
-//
-//    // Always use PixelFormat8BPPIndexed, because that is the color table
-//    // based interface to the GIF codec.
-//    Bitmap  bitmap(dwWidth, dwHeight, PixelFormat8bppIndexed);
-//
-//    stat = bitmap.GetLastStatus();
-//
-//    if (stat != Ok)
-//        return stat;        // No point in continuing.
-//
-//    // Allocate the new color table.
-//    DWORD   dwSizeColorPalette;
-//    dwSizeColorPalette = sizeof(ColorPalette);      // Size of core structure.
-//    dwSizeColorPalette += sizeof(ARGB)*(nColors-1);   // The other entries.
-//
-//    // Allocate some raw space to back the ColorPalette structure pointer.
-//    ColorPalette *ppal = (ColorPalette *)new BYTE[dwSizeColorPalette];
-//    if (ppal == NULL) return OutOfMemory;
-//
-//    ZeroMemory(ppal, dwSizeColorPalette);
-//
-//    // Initialize a new color table with entries that are determined by
-//    // some optimal palette finding algorithm; for demonstration 
-//    // purposes, just do a grayscale. 
-//    if (fTransparent)
-//        ppal->Flags = PaletteFlagsHasAlpha;
-//    else
-//        ppal->Flags = 0; 
-//    ppal->Flags |= PaletteFlagsGrayScale;
-//    ppal->Count = nColors;
-//    for (UINT i = 0; i < nColors; i++)
-//    {
-//        int Alpha = 0xFF;       // Colors are opaque by default.
-//        int Intensity = i*0xFF/(nColors-1); // even distribution 
-//
-//        // The GIF encoder makes the first entry in the palette with a
-//        // zero alpha the "transparent" color in the GIF.
-//        // For demonstration purposes, the first one is picked arbitrarily.
-//
-//        if ( i == 0 && fTransparent) // Make this color index...
-//            Alpha = 0;          // Transparent
-//        
-//        // Create a gray scale for demonstration purposes.
-//        // Otherwise, use your favorite color reduction algorithm
-//        // and an optimum palette for that algorithm generated here.
-//        // For example, a color histogram, or a median cut palette.
-//        ppal->Entries[i] = Color::MakeARGB( Alpha, 
-//                                            Intensity, 
-//                                            Intensity, 
-//                                            Intensity );
-//    }
-//
-//    // Set the palette into the new Bitmap object.
-//    bitmap.SetPalette(ppal);
-//
-//
-//    // Use GetPixel below to pull out the color data of Image.
-//    // Because GetPixel isn't defined on an Image, make a copy in a Bitmap 
-//    // instead. Make a new Bitmap that is the same size of the image that
-//    // you want to export. Otherwise, you might try to interpret the native 
-//    // pixel format of the image by using a LockBits call.
-//    // Use PixelFormat32BppARGB so that you can wrap a Graphics around it.
-//    Bitmap BmpCopy(dwWidth, dwHeight, PixelFormat32bppARGB); 
-//    stat = BmpCopy.GetLastStatus();
-//    if (stat == Ok)
-//    {
-//        Graphics g(&BmpCopy);
-//
-//        // Transfer the Image to the Bitmap.
-//        stat = g.DrawImage(pImage, 0, 0, dwWidth, dwHeight);
-//
-//        // g goes out of scope here and cleans up.
-//    }
-//
-//    if (stat != Ok)
-//    {
-//        delete [] (LPBYTE) ppal;
-//        ppal = NULL;
-//        return stat;
-//    }
-//
-//    // Lock the whole of the bitmap for writing.
-//    BitmapData  bitmapData;
-//    CRect        rect(0, 0, dwWidth, dwHeight);
-//
-//    stat = bitmap.LockBits(
-//      &rect,
-//      ImageLockModeWrite,
-//      PixelFormat8bppIndexed,
-//      &bitmapData);
-//
-//    if (stat == Ok)
-//    {
-//        // Write to the temporary buffer provided by LockBits.
-//        // Copy the pixels from the source image in this loop.
-//        // Because you want an index, convert RGB to the appropriate
-//        // palette index here.
-//        BYTE *pixels;
-//        if (bitmapData.Stride > 0)
-//            pixels = (BYTE*) bitmapData.Scan0;
-//        else
-//            // If the Stride is negative, Scan0 points to the last             // scanline in the buffer.
-//            // To normalize the loop, obtain the start of the buffer,
-//            // which is located (Height-1) scanlines previous.
-//            pixels = (BYTE*) bitmapData.Scan0 + bitmapData.Stride*(dwHeight-1);
-//        UINT stride = abs(bitmapData.Stride);
-//
-//        // Top-down and bottom-up is not relevant to this algorithm.
-//
-//        for(UINT row = 0; row < dwHeight; ++row)
-//        {
-//          for(UINT col = 0; col < dwWidth; ++col)
-//          {
-//              // Map palette indexes for a grayscale.
-//              // If you use some other technique to color convert,
-//              // put your favorite color reduction algorithm here.
-//              Color     pixel;
-//              UINT      i8BppPixel = row * stride + col;
-//
-//              BmpCopy.GetPixel(col, row, &pixel);
-//
-//              // Use luminance/chrominance conversion to get grayscale.
-//              // Basically, turn the image into black and white TV: YCrCb.
-//              // You do not have to to calculate Cr or Cb because you 
-//              // throw away the color anyway.
-//              // Y = Red * 0.299 + Green * 0.587 + Blue * 0.114
-//
-//              // This expression is best as integer math for performance,
-//              // however, because GetPixel listed earlier is the slowest 
-//              // part of this loop, the expression is left as 
-//              // floating point for clarity.
-//              double luminance = (pixel.GetRed() * 0.299) +
-//                                (pixel.GetGreen() * 0.587) +
-//                                (pixel.GetBlue() * 0.114);
-//
-//              // Gray scale is an intensity map from black to white.
-//              // Compute the index to the gray scale entry that  
-//              // approximates the luminance, and then round the index.      
-//              // Also, constrain the index choices by the number of colors to do
-//              pixels[i8BppPixel] = (BYTE)(luminance * (nColors-1)/255 +0.5);
-//          }
-//        }
-//    // To commit the changes, unlock the portion of the bitmap.  
-//        stat = bitmap.UnlockBits(&bitmapData);
-//    }
-//
-//    // If destination work was successful, see whether the source was successful.
-//    if (stat == Ok) stat = BmpCopy.GetLastStatus();
-//
-//    // See whether the code has been successful to this point.
-//    if (stat == Ok)
-//    {
-//    // Write it out to the disk.
-//		//EncoderParameters encs[3];
-//		//ULONG depth = 8;
-//		//ULONG compression = EncoderValueCompressionLZW;
-//		//ULONG quality = 0;
-//		//encs->Count = 3;
-//		//encs->Parameter[0].Guid = EncoderCompression;
-//		//encs->Parameter[0].NumberOfValues = 1;
-//		//encs->Parameter[0].Type = EncoderParameterValueTypeLong;
-//		//encs->Parameter[0].Value = &compression;
-//
-//		//encs->Parameter[1].Guid = EncoderColorDepth;
-//		//encs->Parameter[1].NumberOfValues = 1;
-//		//encs->Parameter[1].Type = EncoderParameterValueTypeLong;
-//		//encs->Parameter[1].Value = &depth;
-//
-//		//encs->Parameter[2].Guid = EncoderQuality;
-//		//encs->Parameter[2].NumberOfValues = 1;
-//		//encs->Parameter[2].Type = EncoderParameterValueTypeLong;
-//		//encs->Parameter[2].Value = &quality;
-//        stat =  bitmap.Save(pIStream, clsidEncoder, NULL);
-//    }
-//
-//    // Clean up after yourself.
-//    delete [] (LPBYTE) ppal;
-//    ppal = NULL;
-//    // BmpCopy goes away on its own when it falls out of scope.
-//
-//    return stat;
-//}
-//LRESULT CGridView::OnCommandPrintScreen(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-//{
-//	CPoint ptScroll=GetScrollPos();
-//	SetScrollPos(CPoint(0,0));
-//	CSize sz(MeasureSize());
-//	CClientDC dc(m_hWnd);
-//
-//	CBufferDC dcBuff(dc, sz.cx, sz.cy);
-//
-//	d2dw::CRectF rcPaint = GetPaintRect();
-//
-//	dcBuff.SetBkMode(TRANSPARENT);
-//	//Bitmap
-//	{
-//
-//		PaintEvent paintEvent(&dcBuff);
-//		OnPaintAll(paintEvent);
-//	
-//		//Copy Bitmap to Clipboard
-//		CClipboard clipboard;
-//		if(clipboard.Open(m_hWnd)!=0){
-//			clipboard.Empty();
-//			clipboard.SetData(CF_BITMAP,dcBuff.GetBitMap());
-//			clipboard.Close();
-//		}
-//	}
-//
-//	//JPEG,PNG,GIF
-//	{
-//		//Initialize GDI+
-//		GdiplusStartupInput gdiplusStartupInput;
-//		ULONG_PTR gdiplusToken;
-//		GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-//		{
-//			auto hWnd = m_hWnd;
-//			std::function<void(HBITMAP,LPCTSTR,LPCTSTR)> setNonRegisteredTypeToClipboard =  [hWnd,this](HBITMAP hBitmap, LPCTSTR mimetype, LPCTSTR format)->void 
-//			{
-//				IStream* pIStream = NULL;
-//				if(::CreateStreamOnHGlobal(NULL, TRUE, (LPSTREAM*)&pIStream)!=S_OK){
-//					throw std::exception("Error on OnCommandPrintScreen");
-//				}
-//
-//				CLSID clsid;	
-//
-//				Bitmap bitmap(hBitmap, (HPALETTE)GetStockObject(DEFAULT_PALETTE));
-//
-//				if (GdiplusHelper::GetEncoderClsid(mimetype, &clsid) < 0){
-//					throw std::exception("Error on OnCommandPrintScreen");
-//				}
-//
-//				//Status status = SaveGIFWithNewColorTable(&bitmap,
-//				//						  pIStream,
-//				//						  &clsid,
-//				//						  256,
-//				//						  FALSE);
-//				Status status;
-//
-//
-//				if(_tcsicmp(mimetype, L"image/jpeg")==0){
-//					EncoderParameters encs[1];
-//					ULONG quality = 80;
-//					encs->Count = 1;
-//
-//					encs->Parameter[0].Guid = EncoderQuality;
-//					encs->Parameter[0].NumberOfValues = 1;
-//					encs->Parameter[0].Type = EncoderParameterValueTypeLong;
-//					encs->Parameter[0].Value = &quality;
-//					status = bitmap.Save(pIStream, &clsid, encs);
-//				}else if(_tcsicmp(mimetype, L"image/tiff")==0){
-//					EncoderParameters encs[2];
-//					ULONG depth = 24;
-//					ULONG compression = EncoderValueCompressionLZW;
-//					encs->Count = 2;
-//
-//					encs->Parameter[0].Guid = EncoderColorDepth;
-//					encs->Parameter[0].NumberOfValues = 1;
-//					encs->Parameter[0].Type = EncoderParameterValueTypeLong;
-//					encs->Parameter[0].Value = &depth;
-//
-//					encs->Parameter[1].Guid = EncoderCompression;
-//					encs->Parameter[1].NumberOfValues = 1;
-//					encs->Parameter[1].Type = EncoderParameterValueTypeLong;
-//					encs->Parameter[1].Value = &compression;
-//
-//
-//					status = bitmap.Save(pIStream, &clsid, encs);
-//				}else{
-//					status = bitmap.Save(pIStream, &clsid, NULL);
-//				}
-//
-//				if(status != Status::Ok){
-//					pIStream->Release();
-//					throw std::exception("Error on OnCommandPrintScreen");
-//				}
-//
-//				HGLOBAL hGlobal = NULL;
-//				if(::GetHGlobalFromStream(pIStream, &hGlobal)!=S_OK){
-//					pIStream->Release();
-//					throw std::exception("Error on OnCommandPrintScreen");
-//				}
-//
-//				//Copy to Clipboard
-//				CClipboard clipboard;
-//				if(clipboard.Open(hWnd)!=0){
-//					//::EmptyClipboard();
-//					if(_tcsicmp(mimetype, L"image/tiff")==0){
-//						clipboard.SetData(CF_TIFF, hGlobal);
-//					}else{
-//						clipboard.SetData(::RegisterClipboardFormat(format), hGlobal);
-//					}
-//					clipboard.Close();
-//				}
-//				pIStream->Release();
-//			};
-//
-//			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/jpeg", L"JFIF");
-//			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/png", L"PNG");
-//			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/gif", L"GIF");
-//			setNonRegisteredTypeToClipboard(dcBuff.GetBitMap(), L"image/tiff", L"TIFF");
-//		}
-//		//Terminate GDI+
-//		GdiplusShutdown(gdiplusToken);
-//	}
-//
-//	//EnhMetaFile
-//	{
-//		//SIZEL lt;
-//		//SIZEL rb;
-//		//lt.cx = -rcPaint.left;
-//		//lt.cy = -rcPaint.top;
-//		//rb.cx = sz.cx + rcPaint.left;
-//		//rb.cy = sz.cy + rcPaint.top;
-//		//DPtoHIMETRIC(&lt);
-//		//DPtoHIMETRIC(&rb);
-//		//auto rcEnhMeta = CRect(lt.cx, lt.cy, rb.cx, rb.cy);
-//		//SIZEL          sizel;
-//		//sizel.cx = sz.cx;
-//		//sizel.cy = sz.cy;
-//		//DPtoHIMETRIC(&sizel);
-//		//auto rcEnhMeta=CRect(0,0,sizel.cx,sizel.cy);
-//
-//		//CDC dcEnhMeta((HDC)CreateEnhMetaFile(dc,NULL,rcEnhMeta,L"DcmDesigner"));
-//
-//		//dcEnhMeta.SetBkMode(TRANSPARENT);
-//
-//		//PaintEventArgs paintEventArgs(&dcEnhMeta);
-//		//OnPaintAll(paintEventArgs);
-//		
-//		HENHMETAFILE hEmf = GetAllEnhMetaFileData();
-//
-//		//Copy EnhMetaFile to Clipboard
-//		CClipboard clipboard;
-//		if(clipboard.Open(m_hWnd)!=0){
-//			//::EmptyClipboard();
-//			clipboard.SetData(CF_ENHMETAFILE,hEmf);
-//			clipboard.Close();
-//		}
-//	}
-//
-//	SetScrollPos(ptScroll);
-//	return 0;
-//}
-
-//HGLOBAL CGridView::GetPaintMetaFileData()
-//{
-//	HMETAFILE      hmf;
-//	HGLOBAL        hglobal;
-//	LPMETAFILEPICT lpmf;
-//	SIZEL          sizel;
-//	CSize sz(GetClientRect().Size());
-//
-//	CDC dc((HDC)CreateMetaFile(NULL));
-//
-//	SetMapMode(dc, MM_ANISOTROPIC);
-//	SetWindowOrgEx(dc, 0, 0, NULL);
-//	SetWindowExtEx(dc, sz.cx, sz.cy, NULL);
-//
-//	//Draw
-//	dc.FillRect(GetClientRect(),((HBRUSH)GetStockObject(GRAY_BRUSH)));
-//	dc.SetBkMode(TRANSPARENT);
-//
-//	PaintEvent paintEvent(&dc);
-//	OnPaint(paintEvent);
-//
-//	hmf = CloseMetaFile(dc);
-//
-//	sizel.cx = sz.cx;
-//	sizel.cy = sz.cy;
-//	DPtoHIMETRIC(&sizel);
-//
-//	hglobal = GlobalAlloc(GPTR, sizeof(METAFILEPICT));
-//	lpmf = (LPMETAFILEPICT)GlobalLock(hglobal);
-//	lpmf->hMF = hmf;
-//	lpmf->mm = MM_ANISOTROPIC;
-//	lpmf->xExt = sizel.cx;
-//	lpmf->yExt = sizel.cy;
-//	GlobalUnlock(hglobal);
-//
-//	return hglobal;
-//}
-//
-//HENHMETAFILE CGridView::GetPaintEnhMetaFileData()
-//{
-//	CSize sz(GetClientRect().Size());
-//	CClientDC dc(m_hWnd);
-//	SIZEL sizel;
-//	sizel.cx = sz.cx;
-//	sizel.cy = sz.cy;
-//	DPtoHIMETRIC(&sizel);
-//	auto rcEnhMeta=CRect(0,0,sizel.cx,sizel.cy);
-//
-//	CDC dcEnhMeta((HDC)CreateEnhMetaFile(dc,NULL,rcEnhMeta,L"DcmDesigner"));
-//
-//	dcEnhMeta.SetBkMode(TRANSPARENT);
-//
-//	PaintEvent paintEvent(&dcEnhMeta);
-//	OnPaint(paintEvent);
-//
-//	return CloseEnhMetaFile(dcEnhMeta);
-//}
-//
-//HENHMETAFILE CGridView::GetAllEnhMetaFileData()
-//{
-//	CSize sz(MeasureSize());
-//	CClientDC dc(m_hWnd);
-//	SIZEL sizel;
-//	sizel.cx = sz.cx;
-//	sizel.cy = sz.cy;
-//	DPtoHIMETRIC(&sizel);
-//	auto rcEnhMeta=CRect(0,0,sizel.cx,sizel.cy);
-//
-//	CDC dcEnhMeta((HDC)CreateEnhMetaFile(dc,NULL,rcEnhMeta,L"DcmDesigner"));
-//
-//	dcEnhMeta.SetBkMode(TRANSPARENT);
-//
-//	PaintEvent paintEvent(&dcEnhMeta);
-//	OnPaintAll(paintEvent);
-//
-//	return CloseEnhMetaFile(dcEnhMeta);
-//}
-
 LRESULT CGridView::OnCommandDeleteColumn(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
 	if(!m_rocoContextMenu.IsInvalid()){
@@ -1273,146 +848,11 @@ LRESULT CGridView::OnCommandResizeSheetCell(WORD wNotifyCode,WORD wID,HWND hWndC
 	return 0;
 }
 
-
-//void CGridView::OnPaintAll(const PaintEvent& e)
-//{
-//	DEBUG_OUTPUT_COLUMN_VISIBLE_DICTIONARY
-//
-//	if(!Visible())return;
-//
-//	auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
-//	auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
-//	//Check
-//	CheckEqualRange(rowDictionary.begin(),rowDictionary.end(), colDictionary.find(0), colDictionary.end(),
-//		[](CCell* pCell, Compares comp)->void{
-//			switch(comp){
-//			case Compares::Diff:
-//			case Compares::DiffNE:
-//				pCell->SetChecked(true);
-//				break;
-//			case Compares::Same:
-//				pCell->SetChecked(false);
-//				break;
-//			default:
-//				pCell->SetChecked(true);
-//				break;
-//			}
-//		});
-//
-//	//Paint
-//
-//	for(auto colIter=colDictionary.rbegin(),colEnd=colDictionary.rend();colIter!=colEnd;++colIter){
-//		for(auto rowIter=rowDictionary.rbegin(),rowEnd=rowDictionary.rend();rowIter!=rowEnd;++rowIter){
-//			colIter->DataPtr->Cell(rowIter->DataPtr.get())->OnPaint(e);
-//		}
-//	}
-//}
-
 void CGridView::OnPaint(const PaintEvent& e)
 {
+	if (!Visible())return;
+
 	CRect rcClient(GetClientRect());
-	////Paint Background
-	//if(*m_spBackgroundProperty->m_usePicture && ::GetFileAttributes(m_spBackgroundProperty->m_picturePath->c_str())!=0xffffffff){
-
-	//	Gdiplus::GdiplusStartupInput gdiSI;
-	//	ULONG_PTR gdiToken;
-
-	//	// GDI+Start
-	//	GdiplusStartup( &gdiToken, &gdiSI, NULL );
-
-	//	Gdiplus::Bitmap* pBitmap = Gdiplus::Bitmap::FromFile(m_spBackgroundProperty->m_picturePath->c_str());
-	//	HDC hPicDC = ::CreateCompatibleDC(NULL);  
-	//	HBITMAP hBitmap = NULL;
-	//	pBitmap->GetHBITMAP(Gdiplus::Color::Transparent, &hBitmap);
-	//	::SelectObject(hPicDC,hBitmap);
-
-
-	//	switch(*m_spBackgroundProperty->m_picturePosition)
-	//	{
-	//		case PicturePositon::Fill:
-	//		{
-	//			double widthRatio = double(rcClient.Width())/double(pBitmap->GetWidth());
-	//			double heightRatio = double(rcClient.Height())/double(pBitmap->GetHeight());
-	//			FLOAT left,top,width,height;
-	//			if(widthRatio > heightRatio){
-	//				width = static_cast<FLOAT>(pBitmap->GetWidth()*widthRatio);
-	//				height = static_cast<FLOAT>(pBitmap->GetHeight()*widthRatio);
-	//			}else{
-	//				width = static_cast<FLOAT>(pBitmap->GetWidth()*heightRatio);
-	//				height = static_cast<FLOAT>(pBitmap->GetHeight()*heightRatio);
-	//			}
-	//			left = (rcClient.Width()-width)/2;
-	//			top = (rcClient.Height()-height)/2;
-	//			e.DCPtr->StretchBlt(left,top,width,height,hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
-	//			break;
-	//		}
-	//		case PicturePositon::Fit:
-	//		{
-	//			double widthRatio = double(rcClient.Width())/double(pBitmap->GetWidth());
-	//			double heightRatio = double(rcClient.Height())/double(pBitmap->GetHeight());
-	//			FLOAT left,top,width,height;
-	//			if(widthRatio > heightRatio){
-	//				width = static_cast<FLOAT>(pBitmap->GetWidth()*heightRatio);
-	//				height = static_cast<FLOAT>(pBitmap->GetHeight()*heightRatio);
-	//			}else{
-	//				width = static_cast<FLOAT>(pBitmap->GetWidth()*widthRatio);
-	//				height = static_cast<FLOAT>(pBitmap->GetHeight()*widthRatio);
-	//			}
-	//			left = (rcClient.Width()-width)/2;
-	//			top = (rcClient.Height()-height)/2;
-	//			e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-	//			e.DCPtr->StretchBlt(left,top,width,height,hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
-	//			break;
-	//		}
-	//		case PicturePositon::Stretch:
-	//		{
-	//			e.DCPtr->StretchBlt(0,0,rcClient.Width(),rcClient.Height(),hPicDC,0,0,pBitmap->GetWidth(),pBitmap->GetHeight(),SRCCOPY);
-	//			break;
-	//		}
-	//		case PicturePositon::Tile:
-	//		{
-	//			int x = static_cast<int>(ceil(double(rcClient.Width())/double(pBitmap->GetWidth())));
-	//			int y = static_cast<int>(ceil(double(rcClient.Height())/double(pBitmap->GetHeight())));
-	//			for(int i=0;i<x;i++){
-	//				for(int j=0;j<y;j++){
-	//					e.DCPtr->BitBlt(pBitmap->GetWidth()*i,pBitmap->GetHeight()*j,pBitmap->GetWidth(),pBitmap->GetHeight(),hPicDC,0,0,SRCCOPY);
-	//				}
-	//			}
-	//			break;
-	//		}
-	//		case PicturePositon::Center:
-	//		{
-	//			int left = static_cast<int>((int(rcClient.Width())-int(pBitmap->GetWidth()))*0.5);
-	//			int top = static_cast<int>((int(rcClient.Height())-int(pBitmap->GetHeight()))*0.5);
-	//			e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-	//			e.DCPtr->BitBlt(left,top,pBitmap->GetWidth(),pBitmap->GetHeight(),hPicDC,0,0,SRCCOPY);
-	//			break;
-	//		}
-	//		default:
-	//		{
-	//			e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-	//			break;
-	//		}
-	//	}
-	//	
-
-	//	//iStream->Release();
-	//	//iPicture->Release();
-	//	//::DeleteObject(hPic);
- //   // GDI+ E
-	//	::DeleteObject(hBitmap);
-	//	::DeleteObject(hPicDC);
-	//	delete pBitmap;
-	//	Gdiplus::GdiplusShutdown( gdiToken );
-	//}else{
-	//	e.DCPtr->FillRect(rcClient,*(m_spBackgroundProperty->m_brush));
-	//}
-
-	//e.DCPtr->SetBkMode(TRANSPARENT);
-
-	//DEBUG_OUTPUT_COLUMN_VISIBLE_DICTIONARY
-
-	if(!Visible())return;
 
 	//Update PaintDictionary
 	UpdateRowPaintDictionary();
@@ -1420,27 +860,6 @@ void CGridView::OnPaint(const PaintEvent& e)
 
 	DEBUG_OUTPUT_COLUMN_PAINT_DICTIONARY
 		
-	//Check
-	//{
-	//	auto& colDictionary=m_columnAllDictionary.get<IndexTag>();//Should be all
-	//	auto& rowDictionary=m_rowPaintDictionary.get<IndexTag>();
-	//	CheckEqualRange(rowDictionary.begin(),rowDictionary.end(), colDictionary.find(0), colDictionary.end(),
-	//		[](CCell* pCell, Compares comp)->void{
-	//			switch(comp){
-	//			case Compares::Diff:
-	//			case Compares::DiffNE:
-	//				pCell->SetChecked(true);
-	//				break;
-	//			case Compares::Same:
-	//				pCell->SetChecked(false);
-	//				break;
-	//			default:
-	//				pCell->SetChecked(true);
-	//				break;
-	//			}
-	//		});
-	//}
-
 	//Paint
 	{
 		auto& colDictionary=m_columnPaintDictionary.get<IndexTag>();
@@ -1457,54 +876,12 @@ void CGridView::OnPaint(const PaintEvent& e)
 		d2dw::CRectF rcFocus(m_pDirect->Pixels2Dips(rcClient));
 		rcFocus.DeflateRect(1.0f, 1.0f);
 		m_pDirect->DrawSolidRectangle(*(m_spHeaderProperty->FocusedLine), rcFocus);
-		//e.DCPtr->MoveToEx(rcFocus.left, rcFocus.top);
-		//e.DCPtr->LineTo(rcFocus.left, rcFocus.bottom);
-		//e.DCPtr->LineTo(rcFocus.right, rcFocus.bottom);
-		//e.DCPtr->LineTo(rcFocus.right, rcFocus.top);
-		//e.DCPtr->LineTo(rcFocus.left, rcFocus.top);
-		//e.DCPtr->SelectPen(hPenOld);
 	}
-
-
 
 	//Paint Column Drag Target Line
 	m_spRowDragger->OnPaintDragLine(this, e);
 	m_spColDragger->OnPaintDragLine(this, e);
 	if (m_spItemDragger) { m_spItemDragger->OnPaintDragLine(this, e); }
-
-	//{
-	//	auto& colDictionary=m_columnAllDictionary.get<IndexTag>();
-	//	auto& rowVDictionary=m_rowVisibleDictionary.get<IndexTag>();
-	//	auto dragToAllIndex = m_spColDragger->GetDragToAllIndex();
-	//	auto dragFromAllIndex = m_spColDragger->GetDragFromAllIndex();
-	//	if(dragToAllIndex!=CColumn::kInvalidIndex && dragToAllIndex!=dragFromAllIndex){
-	//		FLOAT x=0;
-	//		if(dragToAllIndex<=colDictionary.begin()->Index){
-	//			auto pColumn = colDictionary.begin()->DataPtr;
-	//			x = pColumn->GetLeft();
-	//		}else if(dragToAllIndex>boost::prior(colDictionary.end())->Index){
-	//			auto pColumn = boost::prior(colDictionary.end())->DataPtr;
-	//			x = pColumn->GetRight();
-	//		}else{
-	//			auto pColumn = Index2Pointer<ColTag, AllTag>(dragToAllIndex);
-	//			x = pColumn->GetLeft();
-	//		}
-	//		FLOAT y0 = rowVDictionary.begin()->DataPtr->GetTop();
-	//		FLOAT y1 = boost::prior(rowVDictionary.find(0))->DataPtr->GetBottom();
-
-	//		auto width = m_spHeaderProperty->GetPenPtr()->GetWidth();
-	//		CPen pen(m_spHeaderProperty->GetPenPtr()->GetPenStyle(),
-	//			m_spHeaderProperty->GetPenPtr()->GetWidth(),
-	//			CColor(RGB(255,0,0)));
-	//		HPEN hPen = e.DCPtr->SelectPen(pen);
-
-	//		e.DCPtr->MoveToEx(x,y0);
-	//		e.DCPtr->LineTo(x,y1);
-
-	//		e.DCPtr->SelectPen(hPen);
-	//	}
-	//}
-
 }
 
 LRESULT CGridView::OnCommandSelectAll(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
@@ -1514,23 +891,14 @@ LRESULT CGridView::OnCommandSelectAll(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOO
 	return 0;
 }
 
-
 LRESULT CGridView::OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
 	//TODO High
 	std::wstring strCopy;
 
-	//if(m_setrocoSelected.empty()){
-	//	return 0;
-	//}else if(m_setrocoSelected.size()==1){
-	//	auto iterRoCo=m_setrocoSelected.begin();
-	//	auto pCell=iterRoCo->GetColumnPtr()->Cell(iterRoCo->GetRowPtr());
-	//	if(auto p=std::dynamic_pointer_cast<CSheetCell>(pCell)){
-	//		strCopy=p->GetSheetString();
-	//	}else{
-	//		strCopy=pCell->GetString();
-	//	}
-	//}else{
+	if(m_spCursorer->GetSelectedRows(this).empty()){
+		return 0;
+	}else{
 		auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
 		auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
 
@@ -1553,7 +921,7 @@ LRESULT CGridView::OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bH
 				strCopy.append(L"\r\n");
 			}
 		}
-	//}
+	}
 	//
 	HGLOBAL hGlobal=::GlobalAlloc(GHND|GMEM_SHARE,(strCopy.size()+1)*sizeof(wchar_t));
 	wchar_t* strMem=(wchar_t*)::GlobalLock(hGlobal);
@@ -1583,32 +951,91 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 {
 	if(!pCell)return;
 
-	auto rcClip(GetPageRect());
+	//Page
+	d2dw::CRectF rcPage(GetPageRect());
+
+	if (IsVirtualPage()) {
+		//Helper functions
+		std::function<bool(FLOAT, FLOAT, FLOAT, FLOAT)> isAllInPage = [](FLOAT min, FLOAT max, FLOAT top, FLOAT bottom)->bool {
+			return (top > min && top < max) &&
+				(bottom > min && bottom < max);
+		};
+		//Dictionary
+		auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
+
+		FLOAT pageHeight = rcPage.Height();
+		FLOAT scrollPos = GetVerticalScrollPos();
+
+		//Check if in page
+		if (isAllInPage(rcPage.top, rcPage.bottom, m_spCursorer->GetFocusedCell()->GetRowPtr()->GetTop(), m_spCursorer->GetFocusedCell()->GetRowPtr()->GetBottom())) {
+			//Do nothing
+		//Larget than bottom
+		} else if (m_spCursorer->GetFocusedCell()->GetRowPtr()->GetBottom() > rcPage.bottom) {
+			FLOAT top = rcPage.top;
+			FLOAT height = 0.0f;
+			FLOAT scroll = 0.0f;
+			for (auto iter = rowDictionary.find(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), zero = rowDictionary.find(0), end = std::prev(rowDictionary.find(0)); iter != end; --iter) {
+				height += iter->DataPtr->GetHeight();
+				if (height >= pageHeight) {
+					//Plus Cells
+					FLOAT heightToFocus = std::accumulate(rowDictionary.find(0), std::next(rowDictionary.find(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>())), 0.0f,
+						[](const FLOAT& acc, const RowData& data)->FLOAT { return acc + data.DataPtr->GetDefaultHeight(); });
+					scroll = heightToFocus - pageHeight;
+					break;
+				} else if (iter == zero) {
+					scroll = 0.0f;
+					break;
+				}
+			}
+			m_vertical.SetScrollPos(m_pDirect->Dips2PixelsY(scroll));
+			
+			top = UpdateCellsRow(top - scroll, rcPage.top, rcPage.bottom);
+			//Scroll Virtical Range
+			if (IsVirtualPage()) {
+				m_vertical.SetScrollRange(0, m_pDirect->Dips2PixelsY(GetCellsHeight()));
+			}
+			//Smaller than top
+		} else if (m_spCursorer->GetFocusedCell()->GetRowPtr()->GetTop() < rcPage.top) {
+			FLOAT top = rcPage.top;
+			FLOAT scroll = std::accumulate(rowDictionary.find(0), rowDictionary.find(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), 0.0f,
+				[](const FLOAT& acc, const RowData& data)->FLOAT{ return acc + data.DataPtr->GetDefaultHeight(); });
+
+			m_vertical.SetScrollPos(m_pDirect->Dips2PixelsY(scroll));
+			
+			top = UpdateCellsRow(top - scroll, rcPage.top, rcPage.bottom);
+			//Scroll Virtical Range
+			if (IsVirtualPage()) {
+				m_vertical.SetScrollRange(0, m_pDirect->Dips2PixelsY(GetCellsHeight()));
+			}
+		}
+	} else {
+		auto rcCell(pCell->GetRect());
+		LONG vScrollAdd = 0;
+		//Bottom has priority (Bottom can Overwrite ScrollPos)
+
+		if (rcCell.bottom > rcPage.bottom) {
+			vScrollAdd = rcCell.bottom - rcPage.bottom;
+		} else if (rcCell.top < rcPage.top) {
+			vScrollAdd = (std::max)(rcCell.top - rcPage.top, rcCell.bottom - rcPage.bottom);
+		}
+
+		if (vScrollAdd) {
+			m_vertical.SetScrollPos(m_vertical.GetScrollPos() + vScrollAdd);
+		}
+	}
 	auto rcCell(pCell->GetRect());
-	LONG hScrollAdd = 0, vScrollAdd = 0;
+	LONG hScrollAdd = 0;
 
 	//Right has priority (Right can Overwrite ScrollPos)
-	
-	if(rcCell.right>rcClip.right){
-		hScrollAdd = rcCell.right - rcClip.right;	
-	}else if(rcCell.left<rcClip.left){
-		hScrollAdd = max(rcCell.left - rcClip.left, rcCell.right - rcClip.right);		
+
+	if (rcCell.right > rcPage.right) {
+		hScrollAdd = rcCell.right - rcPage.right;
+	} else if (rcCell.left < rcPage.left) {
+		hScrollAdd = (std::max)(rcCell.left - rcPage.left, rcCell.right - rcPage.right);
 	}
 
-	if(hScrollAdd){
-		m_horizontal.SetScrollPos(m_horizontal.GetScrollPos() + hScrollAdd );
-	}
-
-	//Bottom has priority (Bottom can Overwrite ScrollPos)
-	
-	if(rcCell.bottom>rcClip.bottom){
-		vScrollAdd = rcCell.bottom - rcClip.bottom;
-	}else if(rcCell.top<rcClip.top){
-		vScrollAdd = max(rcCell.top - rcClip.top, rcCell.bottom - rcClip.bottom);
-	}
-
-	if(vScrollAdd){
-		m_vertical.SetScrollPos(m_vertical.GetScrollPos() + vScrollAdd);
+	if (hScrollAdd) {
+		m_horizontal.SetScrollPos(m_horizontal.GetScrollPos() + hScrollAdd);
 	}
 }
 
@@ -1696,10 +1123,6 @@ void CGridView::SubmitUpdate()
 			{
 				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::RowVisible")
 					UpdateRowVisibleDictionary();
-				//::OutputDebugStringA("m_rowAllDictionary\r\n");
-				//boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
-				//	::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
-				//});
 				break;
 			}
 			case Updates::ColumnVisible:

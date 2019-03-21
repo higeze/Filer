@@ -581,6 +581,29 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 			throw e;
 		}
 	}
+	//{
+	//	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Just Enumeration")
+	//		try {
+	//		//Enumerate child IDL
+
+	//		CComPtr<IEnumIDList> enumIdl;
+	//		if (SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) &&
+	//			enumIdl) {
+	//			CIDL nextIdl;
+	//			ULONG ulRet(0);
+	//			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
+	//				if (!nextIdl) { break; }
+	//				//if (auto spFile = m_spFolder->CreateShExFileFolder(nextIdl)) {
+	//				//	InsertRow(CRow::kMaxIndex, std::make_shared<CFileRow>(this, spFile));
+	//				//}
+	//				nextIdl.Clear();
+	//			}
+	//		}
+	//	} catch (std::exception&) {
+	//		MessageBox(L"Enumeration", L"Error", 0);
+	//		//		throw e;
+	//	}
+	//}
 	{
 		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Enumeration")
 			try {
@@ -642,11 +665,6 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 			FolderChanged(m_spFolder);
 		}
 
-		//::OutputDebugStringA("m_rowAllDictionary\r\n");
-		//boost::range::for_each(m_rowAllDictionary, [](const RowData& data) {
-		//	::OutputDebugStringA((boost::format("Display:%1%, Pointer:%2%\r\n") % data.Index%data.DataPtr.get()).str().c_str());
-		//});
-
 		//Celler
 		m_spCeller->Clear();
 
@@ -655,6 +673,8 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		m_spCursorer->Clear();
 
 		if (!isUpdate) {
+			m_vertical.SetScrollPos(0);
+
 			//If previous folder is found, set cursor for that.
 			if (m_spPreviousFolder) {
 				auto iter = std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(), [this](const auto& rowData)->bool {

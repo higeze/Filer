@@ -557,6 +557,9 @@
     <ClInclude Include="FileIconNameCell.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\Console.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -843,6 +846,9 @@
     </ClCompile>
     <ClCompile Include="FileIconNameCell.cpp">
       <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Console.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

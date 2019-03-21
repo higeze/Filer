@@ -217,6 +217,7 @@
     <ClInclude Include="..\HiLib\CompareCell.h" />
     <ClInclude Include="..\HiLib\CompareColumn.h" />
     <ClInclude Include="..\HiLib\CompareColumnHeaderCell.h" />
+    <ClInclude Include="..\HiLib\Console.h" />
     <ClInclude Include="..\HiLib\ConsoleTimer.h" />
     <ClInclude Include="..\HiLib\CShellExtension.h" />
     <ClInclude Include="..\HiLib\Cursorer.h" />
@@ -374,6 +375,7 @@
     <ClCompile Include="..\HiLib\Column.cpp" />
     <ClCompile Include="..\HiLib\CompareCell.cpp" />
     <ClCompile Include="..\HiLib\CompareColumn.cpp" />
+    <ClCompile Include="..\HiLib\Console.cpp" />
     <ClCompile Include="..\HiLib\CShellExtension.cpp" />
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
     <ClCompile Include="..\HiLib\Direct2DWrite.cpp" />

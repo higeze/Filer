@@ -2,6 +2,9 @@
 
 #include "MyRect.h"
 #include "MyFriendSerializer.h"
+#include "Console.h"
+
+extern CConsole g_console;
 
 class CApplicationProperty
 {
@@ -17,11 +20,40 @@ public:
 	virtual ~CApplicationProperty(){}
 
 	FRIEND_SERIALIZER
-    template <class Archive>
-    void serialize(Archive& ar)
-    {
-		//ar("OnlyOneInstance",m_bOnlyOneInstance);
-		//ar("CheckUpdateOnCreate",m_bCheckUpdateOnCreate);
-		ar("Debug",m_bDebug);
-    }
+
+	template <class Archive>
+	void save(Archive& ar)
+	{
+		ar("Debug", m_bDebug);
+		//const type_info& info = typeid(ar);
+		//if (info == typeid(CCellDeserializer&)) {
+		//	if (m_bDebug) {
+		//		if (!g_console.IsOpen()) {
+		//			g_console.Alloc();
+		//		}
+		//	} else {
+		//		if (g_console.IsOpen()) {
+		//			g_console.Free();
+		//		}
+		//	}
+		//}
+	}
+
+	template <class Archive>
+	void load(Archive& ar)
+	{
+		ar("Debug", m_bDebug);
+		if (m_bDebug) {
+			if (!g_console.IsOpen()) {
+				g_console.Alloc();
+			}
+		}else{
+			//if (g_console.IsOpen()) {
+			//	g_console.Free();
+			//}
+		}
+	}
+
+
+
 };

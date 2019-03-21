@@ -168,6 +168,8 @@ public:
 	virtual void SortAllInSubmitUpdate();
 
 	virtual void UpdateRow()override;
+	virtual FLOAT UpdateHeadersRow(FLOAT top);
+	virtual FLOAT UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom);
 	virtual void UpdateScrolls();
 	virtual void Invalidate();
 
