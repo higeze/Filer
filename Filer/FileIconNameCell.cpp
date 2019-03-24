@@ -53,7 +53,7 @@ void CFileIconNameCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF 
 			auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
 				[wp]()->void {
 				if (auto sp = wp.lock()) {
-					sp->OnPropertyChanged(L"value");
+					//sp->OnPropertyChanged(L"value");
 				}
 			});
 			sp->m_conDelayUpdateAction = con;

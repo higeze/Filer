@@ -465,15 +465,19 @@ void CGridView::DelayUpdate()
 
 LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	//BOOST_LOG_TRIVIAL(trace) << L"CGridView::OnDelayUpdate";
+	BOOST_LOG_TRIVIAL(trace) << L"CGridView::OnDelayUpdate";
 
-	//CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OnDelayUpdate Total")
-	//SignalPreDelayUpdate();
-	//SignalPreDelayUpdate.disconnect_all_slots();
-	//PostUpdate(Updates::Filter);
-	////Need to remove EnsureVisibleFocusedCell. Otherwise scroll to 0 when scrolling
-	//m_setUpdate.erase(Updates::EnsureVisibleFocusedCell);
-	//SubmitUpdate();
+	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OnDelayUpdate Total")
+	SignalPreDelayUpdate();
+	SignalPreDelayUpdate.disconnect_all_slots();
+	PostUpdate(Updates::Filter);
+	//Need to remove EnsureVisibleFocusedCell. Otherwise scroll to 0 when scrolling
+	//if (m_ensuredScroll == m_vertical.GetScrollPos()) {
+	//	m_setUpdate.insert(Updates::EnsureVisibleFocusedCell);
+	//} else {
+		m_setUpdate.erase(Updates::EnsureVisibleFocusedCell);
+//	}
+	SubmitUpdate();
 	return 0;
 }
 
@@ -499,12 +503,18 @@ FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
 	};
 	//Plus Cells
 	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
-	for (auto rowIter = rowDictionary.find(0), rowEnd = rowDictionary.end(); rowIter != rowEnd; ++rowIter) {
+	for (auto rowIter = rowDictionary.find(0), rowEnd = rowDictionary.end(), prevRowIter = std::prev(rowIter) ; rowIter != rowEnd; ++rowIter) {
+		
 		if (IsVirtualPage()) {
 			rowIter->DataPtr->SetTopWithoutSignal(top);
+	
 			FLOAT defaultHeight = rowIter->DataPtr->GetDefaultHeight();
 			FLOAT bottom = top + defaultHeight;
 			if (isInPage(pageTop, pageBottom, top, bottom)) {
+				if (!isInPage(pageTop, pageBottom, prevRowIter->DataPtr->GetTop(), prevRowIter->DataPtr->GetBottom())) {
+					top = prevRowIter->DataPtr->GetTop() + prevRowIter->DataPtr->GetHeight();
+					rowIter->DataPtr->SetTopWithoutSignal(top);
+				}
 				if (HasSheetCell()) {
 					auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
 					for (auto& colData : colDictionary) {
@@ -518,6 +528,7 @@ FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
 			} else {
 				top += defaultHeight;
 			}
+			std::cout << top << std::endl;
 		} else {
 			rowIter->DataPtr->SetTopWithoutSignal(top);
 			if (HasSheetCell()) {
@@ -531,6 +542,7 @@ FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
 			}
 			top += rowIter->DataPtr->GetHeight();
 		}
+		prevRowIter = rowIter;
 	}
 	return top;
 }
@@ -644,12 +656,12 @@ void CGridView::SetScrollPos(const CPoint& ptScroll)
 
 FLOAT CGridView::GetVerticalScrollPos()const
 {
-	return m_vertical.GetScrollPos();
+	return m_pDirect->Pixels2DipsY(m_vertical.GetScrollPos());
 }
 
 FLOAT CGridView::GetHorizontalScrollPos()const
 {
-	return m_horizontal.GetScrollPos();
+	return m_pDirect->Pixels2DipsX(m_horizontal.GetScrollPos());
 }
 
 LRESULT CGridView::OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
@@ -971,13 +983,11 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 			//Do nothing
 		//Larget than bottom
 		} else if (m_spCursorer->GetFocusedCell()->GetRowPtr()->GetBottom() > rcPage.bottom) {
-			FLOAT top = rcPage.top;
 			FLOAT height = 0.0f;
 			FLOAT scroll = 0.0f;
 			for (auto iter = rowDictionary.find(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), zero = rowDictionary.find(0), end = std::prev(rowDictionary.find(0)); iter != end; --iter) {
 				height += iter->DataPtr->GetHeight();
 				if (height >= pageHeight) {
-					//Plus Cells
 					FLOAT heightToFocus = std::accumulate(rowDictionary.find(0), std::next(rowDictionary.find(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>())), 0.0f,
 						[](const FLOAT& acc, const RowData& data)->FLOAT { return acc + data.DataPtr->GetDefaultHeight(); });
 					scroll = heightToFocus - pageHeight;
@@ -987,25 +997,43 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 					break;
 				}
 			}
-			m_vertical.SetScrollPos(m_pDirect->Dips2PixelsY(scroll));
-			
-			top = UpdateCellsRow(top - scroll, rcPage.top, rcPage.bottom);
+			scroll = std::ceilf(scroll);
+			m_ensuredScroll = scroll;
+
+			FLOAT top = UpdateCellsRow(rcPage.top - scroll, rcPage.top, rcPage.bottom);
 			//Scroll Virtical Range
 			if (IsVirtualPage()) {
-				m_vertical.SetScrollRange(0, m_pDirect->Dips2PixelsY(GetCellsHeight()));
+				SCROLLINFO si = { 0 };
+				si.cbSize = sizeof(SCROLLINFO);
+				si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
+				si.nMin = 0;
+				si.nMax = m_pDirect->Dips2PixelsY(GetCellsHeight());
+				si.nPage = m_pDirect->Dips2PixelsY(rcPage.Height());
+				si.nPos = m_pDirect->Dips2PixelsY(scroll);
+				m_vertical.SetScrollInfo(&si);
+			} else {
+				m_vertical.SetScrollPos(m_pDirect->Dips2PixelsY(scroll));
 			}
 			//Smaller than top
 		} else if (m_spCursorer->GetFocusedCell()->GetRowPtr()->GetTop() < rcPage.top) {
-			FLOAT top = rcPage.top;
 			FLOAT scroll = std::accumulate(rowDictionary.find(0), rowDictionary.find(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), 0.0f,
 				[](const FLOAT& acc, const RowData& data)->FLOAT{ return acc + data.DataPtr->GetDefaultHeight(); });
+			scroll = std::floorf(scroll);
+			m_ensuredScroll = scroll;
 
-			m_vertical.SetScrollPos(m_pDirect->Dips2PixelsY(scroll));
-			
-			top = UpdateCellsRow(top - scroll, rcPage.top, rcPage.bottom);
+			FLOAT top = UpdateCellsRow(rcPage.top - scroll, rcPage.top, rcPage.bottom);
 			//Scroll Virtical Range
 			if (IsVirtualPage()) {
-				m_vertical.SetScrollRange(0, m_pDirect->Dips2PixelsY(GetCellsHeight()));
+				SCROLLINFO si = { 0 };
+				si.cbSize = sizeof(SCROLLINFO);
+				si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
+				si.nMin = 0;
+				si.nMax = m_pDirect->Dips2PixelsY(GetCellsHeight());
+				si.nPage = m_pDirect->Dips2PixelsY(rcPage.Height());
+				si.nPos = m_pDirect->Dips2PixelsY(scroll);
+				m_vertical.SetScrollInfo(&si);
+			} else {
+				m_vertical.SetScrollPos(m_pDirect->Dips2PixelsY(scroll));
 			}
 		}
 	} else {

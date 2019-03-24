@@ -29,6 +29,8 @@ protected:
 
 	CScrollBar m_vertical;
 	CScrollBar m_horizontal;
+	int m_ensuredScroll = -1;
+
 	d2dw::CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
 
