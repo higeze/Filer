@@ -59,3 +59,17 @@ void CFilterCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPain
 		direct.DrawTextLayout(filterFnC, str, rcPaint);
 	}
 }
+
+void CFilterCell::OnPropertyChanged(const wchar_t* name)
+{
+	if (!_tcsicmp(L"value", name)) {
+		//Update valid flag
+		m_bFitMeasureValid = false;
+		m_bActMeasureValid = false;
+	} else if (!_tcsicmp(L"size", name)) {
+		m_bActMeasureValid = false;
+	}
+	//Notify to Row, Column and Sheet
+	m_pRow->OnCellPropertyChanged(this, name);
+	m_pColumn->OnCellPropertyChanged(this, name);
+}

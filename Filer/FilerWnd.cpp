@@ -291,19 +291,21 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 
 						std::wstring fileMultiPath = boost::join(filePaths, L" ");
 
-						//%SinglePath%
-						//%MultiPath%
-						//%Directory%
-						//%SinglePathWoExt%
 						std::wstring parameter = iter->Parameter;
 
+						std::wstring singlePathUnQuo = filePaths[0];
+						::PathUnquoteSpaces(::GetBuffer(singlePathUnQuo, MAX_PATH));
+						::ReleaseBuffer(singlePathUnQuo);
+
+						std::wstring singlePathWoExtUnQuo = singlePathUnQuo;
+						::PathRemoveExtension(::GetBuffer(singlePathWoExtUnQuo, MAX_PATH));
+						::ReleaseBuffer(singlePathWoExtUnQuo);
+
 						boost::algorithm::replace_all(parameter, L"%SinglePath%", filePaths[0]);
+						boost::algorithm::replace_all(parameter, L"%SinglePathUnQuo%", singlePathUnQuo);
 						boost::algorithm::replace_all(parameter, L"%MultiPath%", fileMultiPath);
-						boost::algorithm::replace_all(parameter, L"%Directory%", ::PathFindDirectory(filePaths[0].c_str()));
-						std::wstring singlePathWoExt = filePaths[0];
-						::PathRemoveExtension(::GetBuffer(singlePathWoExt, MAX_PATH));
-						::ReleaseBuffer(singlePathWoExt);
-						boost::algorithm::replace_all(parameter, L"%SinglePathWoExt%", singlePathWoExt );	
+						boost::algorithm::replace_all(parameter, L"%DirectoryUnQuo%", ::PathFindDirectory(singlePathUnQuo.c_str()));
+						boost::algorithm::replace_all(parameter, L"%SinglePathWoExtUnQuo%", singlePathWoExtUnQuo );	
 							
 						std::wstring cmdline = L"\"" + iter->Path + L"\" " + parameter;
 

@@ -495,16 +495,17 @@ namespace d2dw
 		CRect rcContent;
 		int i = 0;
 		do {
+			rcContent = Dips2Pixels(rect);
 			font = CFont(CDirect2DWrite::Dips2Points(format.Font.Size) - i, format.Font.FamilyName);
 			hFont = (HFONT)::SelectObject(m_hDC, (HGDIOBJ)(font.operator HFONT()));
 			DrawTextEx(m_hDC, const_cast<LPTSTR>(text.c_str()), text.size(), rcContent,
-				DT_CALCRECT | DT_CENTER | DT_VCENTER, NULL);
+				DT_CALCRECT | DT_CENTER | DT_VCENTER | DT_NOPREFIX | DT_EDITCONTROL | DT_WORDBREAK, NULL);
 			::SelectObject(m_hDC, hFont);
 			i++;
-		} while (rcContent.Width() > 16);
+		} while (rcContent.Width() > rect.Width() || rcContent.Height() > rect.Height());
 		hFont = (HFONT)::SelectObject(m_hDC, (HGDIOBJ)(font.operator HFONT()));
 		//rcPaint.top = rcPaint.bottom - rcContent.Height();
-		::DrawTextEx(m_hDC, const_cast<LPTSTR>(text.c_str()), -1, Dips2Pixels(rect), DT_CENTER | DT_VCENTER, NULL);
+		::DrawTextEx(m_hDC, const_cast<LPTSTR>(text.c_str()), -1, Dips2Pixels(rect), DT_CENTER | DT_VCENTER | DT_NOPREFIX | DT_EDITCONTROL | DT_WORDBREAK, NULL);
 		::SelectObject(m_hDC, (HGDIOBJ)hFont);
 	});
 

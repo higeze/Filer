@@ -503,18 +503,15 @@ FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
 	};
 	//Plus Cells
 	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
-	for (auto rowIter = rowDictionary.find(0), rowEnd = rowDictionary.end(), prevRowIter = std::prev(rowIter) ; rowIter != rowEnd; ++rowIter) {
+	for (auto rowIter = rowDictionary.find(0), rowEnd = rowDictionary.end(),rowNextIter = std::next(rowIter) ; rowIter != rowEnd; ++rowIter, ++rowNextIter) {
 		
 		if (IsVirtualPage()) {
 			rowIter->DataPtr->SetTopWithoutSignal(top);
 	
 			FLOAT defaultHeight = rowIter->DataPtr->GetDefaultHeight();
 			FLOAT bottom = top + defaultHeight;
-			if (isInPage(pageTop, pageBottom, top, bottom)) {
-				if (!isInPage(pageTop, pageBottom, prevRowIter->DataPtr->GetTop(), prevRowIter->DataPtr->GetBottom())) {
-					top = prevRowIter->DataPtr->GetTop() + prevRowIter->DataPtr->GetHeight();
-					rowIter->DataPtr->SetTopWithoutSignal(top);
-				}
+			if (isInPage(pageTop, pageBottom, top, top + defaultHeight) ||
+				(rowNextIter!=rowEnd && isInPage(pageTop, pageBottom, bottom, bottom + rowNextIter->DataPtr->GetDefaultHeight()))){
 				if (HasSheetCell()) {
 					auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
 					for (auto& colData : colDictionary) {
@@ -528,7 +525,7 @@ FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
 			} else {
 				top += defaultHeight;
 			}
-			std::cout << top << std::endl;
+			//std::cout << top << std::endl;
 		} else {
 			rowIter->DataPtr->SetTopWithoutSignal(top);
 			if (HasSheetCell()) {
@@ -542,7 +539,7 @@ FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
 			}
 			top += rowIter->DataPtr->GetHeight();
 		}
-		prevRowIter = rowIter;
+//		prevRowIter = rowIter;
 	}
 	return top;
 }
@@ -961,7 +958,7 @@ void CGridView::UpdateAll()
 
 void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 {
-	if(!pCell)return;
+	if(!pCell || !pCell->GetRowPtr()->GetVisible())return;
 
 	//Page
 	d2dw::CRectF rcPage(GetPageRect());

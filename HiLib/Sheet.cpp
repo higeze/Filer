@@ -136,20 +136,23 @@ void CSheet::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 
 void CSheet::OnRowPropertyChanged(CRow* pRow, const wchar_t* name)
 {
-	if (_tcsicmp(name, L"selected") == 0) {
+	if (!_tcsicmp(name, L"selected")) {
 		PostUpdate(Updates::RowVisible);
 		PostUpdate(Updates::Column);
 		PostUpdate(Updates::Row);
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
-	} else if (_tcsicmp(name, L"selected") == 0) {
+	} else if (_tcsicmp(name, L"visible") == 0) {
+		PostUpdate(Updates::RowVisible);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);//
 	}
 }
 
 void CSheet::OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name)
 {
-	if (_tcsicmp(name, L"visible") == 0) {
+	if (!_tcsicmp(name, L"visible")) {
 		for (const auto& rowData : m_rowAllDictionary) {
 			rowData.DataPtr->SetMeasureValid(false);
 		}
@@ -158,9 +161,9 @@ void CSheet::OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name)
 		PostUpdate(Updates::Row);
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
-	} else if (_tcsicmp(name, L"selected") == 0) {
+	} else if (!_tcsicmp(name, L"selected")) {
 		PostUpdate(Updates::Invalidate);
-	} else if (_tcsicmp(name, L"sort") == 0) {
+	} else if (!_tcsicmp(name, L"sort")) {
 		PostUpdate(Updates::Sort);
 	}
 }
