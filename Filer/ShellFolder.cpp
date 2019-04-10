@@ -87,13 +87,9 @@ std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFolder::GetIcon(std::fun
 std::wstring CShellFolder::GetFileNameWithoutExt()
 {
 	if (m_wstrFileNameWithoutExt.empty()) {
-		if(::PathIsDirectory(GetPath().c_str()) || GetPath()[0] == L':'){
-			STRRET strret;
-			m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
-			m_wstrFileNameWithoutExt = m_childIdl.STRRET2WSTR(strret);
-		} else {
-			return CShellFile::GetFileNameWithoutExt();
-		}
+		STRRET strret;
+		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
+		m_wstrFileNameWithoutExt = m_childIdl.STRRET2WSTR(strret);
 	}
 	return m_wstrFileNameWithoutExt;
 }
@@ -101,13 +97,9 @@ std::wstring CShellFolder::GetFileNameWithoutExt()
 std::wstring CShellFolder::GetFileName()
 {
 	if (m_wstrFileName.empty()) {
-		if (::PathIsDirectory(GetPath().c_str()) || GetPath()[0] == L':') {
-			STRRET strret;
-			m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
-			m_wstrFileName = m_childIdl.STRRET2WSTR(strret);
-		} else {
-			return CShellFile::GetFileName();
-		}
+		STRRET strret;
+		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
+		m_wstrFileName = m_childIdl.STRRET2WSTR(strret);
 	}
 	return m_wstrFileName;
 }
@@ -115,11 +107,7 @@ std::wstring CShellFolder::GetFileName()
 std::wstring CShellFolder::GetExt()
 {
 	if (m_wstrExt.empty()) {
-		if (::PathIsDirectory(GetPath().c_str()) ||  std::wstring(::PathFindFileName(GetPath().c_str()))[0] == L':') {
-			m_wstrExt = L"";
-		} else {
-			return CShellFile::GetExt();
-		}
+		m_wstrExt = L"folder";
 	}
 	return m_wstrExt;
 }
@@ -386,12 +374,14 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
 		return CKnownFolderManager::GetInstance()->GetDesktopFolder();
 	} else if (auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderByPath(path)) {
 		return spKnownFolder;
+	} else if (path[0] == L':'){
+		return std::make_shared<CShellFile>(GetShellFolderPtr(), m_absoluteIdl, childIdl);
 	} else if (auto spDriveFolder = CDriveManager::GetInstance()->GetDriveFolderByPath(path)) {
 		return spDriveFolder;
 	} else if (boost::iequals(ext, ".zip")) {
 		return std::make_shared<CShellZipFolder>(GetShellFolderPtr(), m_absoluteIdl, childIdl);
 	} else if (
-		//::PathIsDirectory(path.c_str()) ||
+		//Do not use ::PathIsDirectory(path.c_str()), because it's slower
 		(SUCCEEDED(GetShellFolderPtr()->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
 		SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)))) {
 		return std::make_shared<CShellFolder>(GetShellFolderPtr(), m_absoluteIdl, childIdl, pFolder);

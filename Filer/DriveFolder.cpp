@@ -15,8 +15,14 @@ std::wstring CDriveFolder::GetExt()
 
 CDriveManager::CDriveManager()
 {
-	std::array<wchar_t, 64> logicalDrives;
+	Reload();
+}
 
+void CDriveManager::Reload()
+{
+	m_driveFolders.clear();
+	std::array<wchar_t, 64> logicalDrives;
+	
 	if (::GetLogicalDriveStrings(64, logicalDrives.data())) {
 		auto desktop(CKnownFolderManager::GetInstance()->GetDesktopFolder());
 		wchar_t* p;
@@ -50,6 +56,7 @@ CDriveManager::CDriveManager()
 			}
 		}
 	}
+
 }
 
 std::shared_ptr<CDriveFolder> CDriveManager::GetDriveFolderByIDL(CIDL& idl)

@@ -33,6 +33,7 @@
 #include "GridViewProperty.h"
 #include "ResourceIDFactory.h"
 #include "InplaceEdit.h"
+#include "Scroll.h"
 
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
@@ -51,7 +52,8 @@ CGridView::CGridView(
 	CWnd(),
 	m_filterIosv(), m_filterWork(m_filterIosv), m_filterTimer(m_filterIosv),
 	m_invalidateIosv(), m_invalidateWork(m_invalidateIosv), m_invalidateTimer(m_invalidateIosv),
-	m_pMouseStateMachine(std::make_shared<CMouseStateMachine>(this))
+	m_pMouseStateMachine(std::make_shared<CMouseStateMachine>(this)),
+	m_pVScroll(std::make_unique<d2dw::CScroll>(this))
 {
 	boost::thread th1(boost::bind(&boost::asio::io_service::run, &m_filterIosv));
 	boost::thread th2(boost::bind(&boost::asio::io_service::run, &m_invalidateIosv));
@@ -67,9 +69,6 @@ CGridView::CGridView(
 		.dwStyle(WS_CHILD | WS_CLIPCHILDREN)
 		.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"PropertyGridView"));
 	//Scroll
-	m_vertical.CreateWindowExArgument()
-		.dwStyle(SBS_RIGHTALIGN|SBS_VERT|WS_CHILD|WS_VISIBLE)
-		.hMenu((HMENU)1234);
 	m_horizontal.CreateWindowExArgument()
 		.dwStyle(SBS_BOTTOMALIGN|SBS_HORZ|WS_CHILD|WS_VISIBLE)
 		.hMenu((HMENU)12345);
@@ -244,13 +243,9 @@ LRESULT CGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled
 	//Direct2DWrite
 	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
 	//Scroll
-	m_vertical.Create(m_hWnd);
 	m_horizontal.Create(m_hWnd);
-	m_vertical.SetScrollPage(0);
 	m_horizontal.SetScrollPage(0);
-	m_vertical.SetScrollRange(0,0);
 	m_horizontal.SetScrollRange(0,0);
-	m_vertical.SetScrollPos(0);
 	m_horizontal.SetScrollPos(0);
 
 	//V4::FRectF rc2(0, 0, 400, 400);
@@ -262,7 +257,6 @@ LRESULT CGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled
 
 LRESULT CGridView::OnClose(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	m_vertical.DestroyWindow();
 	m_horizontal.DestroyWindow();
 	DestroyWindow();
 	return 0;
@@ -307,23 +301,13 @@ LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	m_pDirect->BeginDraw();
 #endif
 
-	//Because of CLIPCHILD, No region clip necessary
-	//CRect rcClip = GetClientRect();
-	//if(m_vertical.IsWindowVisible()){	
-	//	rcClip.right -= m_vertical.GetWindowRect().Width();
-	//}
-	//if(m_horizontal.IsWindowVisible()){
-	//	rcClip.bottom -= m_horizontal.GetWindowRect().Height();
-	//}
-	//m_pDirect->GetHwndRenderTarget()->PushAxisAlignedClip(m_pDirect->Pixels2Dips(rcClip), D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-
 	m_pDirect->ClearSolid(*(m_spGridViewProp->BackgroundPropPtr->m_brush));
-
-	OnPaint(PaintEvent(this, *m_pDirect));
-
-	//m_pDirect->GetHwndRenderTarget()->PopAxisAlignedClip();
+	PaintEvent e(this, *m_pDirect);
+	OnPaint(e);
+	m_pVScroll->OnPaint(e);
 
 	m_pDirect->EndDraw();
+
 #ifdef USE_ID2D1DCRenderTarget
 	CRgn rgn;
 	rgn.CreateRectRgnIndirect(rcClient);
@@ -346,45 +330,45 @@ LRESULT CGridView::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 LRESULT CGridView::OnVScroll(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	SetFocus();
+	//SetFocus();
 
-	SCROLLINFO si={0};
-	si.cbSize=sizeof(SCROLLINFO);
-	si.fMask=SIF_ALL;
-	m_vertical.GetScrollInfo(&si);
-	int nPos=si.nPos;
-	switch(LOWORD(wParam)){
-	case SB_TOP:
-		si.nPos=si.nMin;
-		break;
-	case SB_BOTTOM:
-		si.nPos=si.nMax;
-		break;
-	case SB_LINEUP:
-		si.nPos-=1;
-		break;
-	case SB_LINEDOWN:
-		si.nPos+=1;
-		break;
-	case SB_PAGEUP:
-		si.nPos-=si.nPage;
-		break;
-	case SB_PAGEDOWN:
-		si.nPos+=si.nPage;
-		break;
-	case SB_THUMBPOSITION:
-		si.nPos=si.nPos;
-		break;
-	case SB_THUMBTRACK:
-		si.nPos=si.nTrackPos;
-		break;
-	default:
-		break;
-	}
-	m_vertical.SetScrollPos(si.nPos);
-	Scroll();
-	PostUpdate(Updates::Row);
-	SubmitUpdate();
+	//SCROLLINFO si={0};
+	//si.cbSize=sizeof(SCROLLINFO);
+	//si.fMask=SIF_ALL;
+	//m_vertical.GetScrollInfo(&si);
+	//int nPos=si.nPos;
+	//switch(LOWORD(wParam)){
+	//case SB_TOP:
+	//	si.nPos=si.nMin;
+	//	break;
+	//case SB_BOTTOM:
+	//	si.nPos=si.nMax;
+	//	break;
+	//case SB_LINEUP:
+	//	si.nPos-=*(m_spGridViewProp->DeltaScrollPtr);
+	//	break;
+	//case SB_LINEDOWN:
+	//	si.nPos+= *(m_spGridViewProp->DeltaScrollPtr);
+	//	break;
+	//case SB_PAGEUP:
+	//	si.nPos-=si.nPage;
+	//	break;
+	//case SB_PAGEDOWN:
+	//	si.nPos+=si.nPage;
+	//	break;
+	//case SB_THUMBPOSITION:
+	//	si.nPos=si.nPos;
+	//	break;
+	//case SB_THUMBTRACK:
+	//	si.nPos=si.nTrackPos;
+	//	break;
+	//default:
+	//	break;
+	//}
+	//m_vertical.SetScrollPos(si.nPos);
+	//Scroll();
+	//PostUpdate(Updates::Row);
+	//SubmitUpdate();
 	return 0;
 }
 
@@ -405,10 +389,10 @@ LRESULT CGridView::OnHScroll(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		si.nPos=si.nMax;
 		break;
 	case SB_LINELEFT:
-		si.nPos-=1;
+		si.nPos-= *(m_spGridViewProp->DeltaScrollPtr);
 		break;
 	case SB_LINERIGHT:
-		si.nPos+=1;
+		si.nPos+= *(m_spGridViewProp->DeltaScrollPtr);
 		break;
 	case SB_PAGELEFT:
 		si.nPos-=si.nPage;
@@ -433,16 +417,7 @@ LRESULT CGridView::OnHScroll(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 
 LRESULT CGridView::OnMouseWheel(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	int nScrolled = *m_spDeltaScroll*GET_WHEEL_DELTA_WPARAM(wParam)/120;
-        if (nScrolled > 0){
-            for(int i=0;i<nScrolled;i++){
-                PostMessage(WM_VSCROLL, SB_LINEUP, 0);
-			}
-		}else{
-            for(int i=0;i>nScrolled;i--){
-                PostMessage(WM_VSCROLL, SB_LINEDOWN, 0);
-			}
-		}
+	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() + *(m_spGridViewProp->DeltaScrollPtr) * GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
 	return 0;
 }
 
@@ -564,7 +539,7 @@ void CGridView::UpdateRow()
 
 	//Scroll Virtical Range
 	if (IsVirtualPage()) {
-		m_vertical.SetScrollRange(0, m_pDirect->Dips2PixelsY(GetCellsHeight()));
+		m_pVScroll->SetScrollRange(0, m_pDirect->Dips2PixelsY(GetCellsHeight()));
 	}
 
 }
@@ -581,33 +556,20 @@ void CGridView::UpdateScrolls()
 
 	//Scroll Range
 	d2dw::CRectF rcCells(GetCellsRect());
-	m_vertical.SetScrollRange(0,m_pDirect->Dips2PixelsY(rcCells.Height()));
+	m_pVScroll->SetScrollRange(0, m_pDirect->Dips2PixelsY(rcCells.Height()));
 	m_horizontal.SetScrollRange(0,rcCells.Width());
 
 	//Scroll Page
 	d2dw::CRectF rcPage(GetPageRect());
 
-	m_vertical.SetScrollPage(m_pDirect->Dips2PixelsY(rcPage.Height()));
+	m_pVScroll->SetScrollPage(m_pDirect->Dips2PixelsY(rcPage.Height()));
 	m_horizontal.SetScrollPage(m_pDirect->Dips2PixelsX(rcPage.Width()));
 
-	//EnableShow Vertical
-	SCROLLINFO si={0};
-	si.cbSize=sizeof(SCROLLINFO);
-	si.fMask=SIF_RANGE|SIF_PAGE|SIF_POS;
-	m_vertical.GetScrollInfo(&si);
-		
-	if(si.nMax<=(int)si.nPage){
-		if(m_vertical.IsWindowEnabled()){
-			m_vertical.EnableWindow(FALSE);
-			m_vertical.ShowWindow(SW_HIDE);
-		}
-	}else{
-		if(!m_vertical.IsWindowEnabled()){
-			m_vertical.EnableWindow(TRUE);
-			m_vertical.ShowWindow(SW_SHOW);			
-		}
-	}
+	//EnableShow Vertical		
+	m_pVScroll->SetVisible(m_pVScroll->GetScrollRange().second >= m_pVScroll->GetScrollPage());
+
 	//EnableShow Horizontal
+	SCROLLINFO si = { 0 };
 	si.cbSize=sizeof(SCROLLINFO);
 	si.fMask=SIF_RANGE|SIF_PAGE|SIF_POS;
 	m_horizontal.GetScrollInfo(&si);
@@ -631,29 +593,29 @@ void CGridView::UpdateScrolls()
 	rcVertical.left=rcClient.right-::GetSystemMetrics(SM_CXVSCROLL);
 	rcVertical.top=0;
 	rcVertical.bottom-=(m_horizontal.IsWindowVisible())?::GetSystemMetrics(SM_CYHSCROLL):0;
-	m_vertical.MoveWindow(rcVertical,TRUE);
+	m_pVScroll->SetRect(m_pDirect->Pixels2Dips(rcVertical));
 
 	rcHorizontal.left=0;
 	rcHorizontal.top=rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL);
-	rcHorizontal.right-=(m_vertical.IsWindowVisible())?::GetSystemMetrics(SM_CXVSCROLL):0;
+	rcHorizontal.right-=(m_pVScroll->GetVisible())?::GetSystemMetrics(SM_CXVSCROLL):0;
 	m_horizontal.MoveWindow(rcHorizontal,TRUE);
 
 }
 
 CPoint CGridView::GetScrollPos()const
 {
-	return CPoint(m_horizontal.GetScrollPos(),m_vertical.GetScrollPos());
+	return CPoint(m_horizontal.GetScrollPos(), m_pVScroll->GetScrollPos());
 }
 
 void CGridView::SetScrollPos(const CPoint& ptScroll)
 {
 	m_horizontal.SetScrollPos(ptScroll.x);
-	m_vertical.SetScrollPos(ptScroll.y);
+	m_pVScroll->SetScrollPos(ptScroll.y);
 }
 
 FLOAT CGridView::GetVerticalScrollPos()const
 {
-	return m_pDirect->Pixels2DipsY(m_vertical.GetScrollPos());
+	return m_pVScroll->GetScrollPos();
 }
 
 FLOAT CGridView::GetHorizontalScrollPos()const
@@ -995,42 +957,32 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 				}
 			}
 			scroll = std::ceilf(scroll);
-			m_ensuredScroll = scroll;
+			//m_ensuredScroll = scroll;
 
 			FLOAT top = UpdateCellsRow(rcPage.top - scroll, rcPage.top, rcPage.bottom);
 			//Scroll Virtical Range
 			if (IsVirtualPage()) {
-				SCROLLINFO si = { 0 };
-				si.cbSize = sizeof(SCROLLINFO);
-				si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
-				si.nMin = 0;
-				si.nMax = m_pDirect->Dips2PixelsY(GetCellsHeight());
-				si.nPage = m_pDirect->Dips2PixelsY(rcPage.Height());
-				si.nPos = m_pDirect->Dips2PixelsY(scroll);
-				m_vertical.SetScrollInfo(&si);
+				m_pVScroll->SetScrollRange(0, GetCellsHeight());
+				m_pVScroll->SetScrollPage(rcPage.Height());
+				m_pVScroll->SetScrollPos(scroll);
 			} else {
-				m_vertical.SetScrollPos(m_pDirect->Dips2PixelsY(scroll));
+				m_pVScroll->SetScrollPos(scroll);
 			}
 			//Smaller than top
 		} else if (m_spCursorer->GetFocusedCell()->GetRowPtr()->GetTop() < rcPage.top) {
 			FLOAT scroll = std::accumulate(rowDictionary.find(0), rowDictionary.find(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), 0.0f,
 				[](const FLOAT& acc, const RowData& data)->FLOAT{ return acc + data.DataPtr->GetDefaultHeight(); });
 			scroll = std::floorf(scroll);
-			m_ensuredScroll = scroll;
+			//m_ensuredScroll = scroll;
 
 			FLOAT top = UpdateCellsRow(rcPage.top - scroll, rcPage.top, rcPage.bottom);
 			//Scroll Virtical Range
 			if (IsVirtualPage()) {
-				SCROLLINFO si = { 0 };
-				si.cbSize = sizeof(SCROLLINFO);
-				si.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
-				si.nMin = 0;
-				si.nMax = m_pDirect->Dips2PixelsY(GetCellsHeight());
-				si.nPage = m_pDirect->Dips2PixelsY(rcPage.Height());
-				si.nPos = m_pDirect->Dips2PixelsY(scroll);
-				m_vertical.SetScrollInfo(&si);
+				m_pVScroll->SetScrollRange(0, GetCellsHeight());
+				m_pVScroll->SetScrollPage(rcPage.Height());
+				m_pVScroll->SetScrollPos(scroll);
 			} else {
-				m_vertical.SetScrollPos(m_pDirect->Dips2PixelsY(scroll));
+				m_pVScroll->SetScrollPos(scroll);
 			}
 		}
 	} else {
@@ -1045,7 +997,7 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 		}
 
 		if (vScrollAdd) {
-			m_vertical.SetScrollPos(m_vertical.GetScrollPos() + vScrollAdd);
+			m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() + vScrollAdd);
 		}
 	}
 	auto rcCell(pCell->GetRect());
@@ -1357,3 +1309,30 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 	MessageBox((L"\"" + findWord + L"\" is not found!").c_str(), L"Find",MB_OK); 
 
 }
+
+//void CGridView::OnLButtonDown(const LButtonDownEvent& e)
+//{
+//	if (m_pVScroll->GetRect().PtInRect(m_pDirect->Pixels2Dips(e.Point))) {
+//		m_pVScroll->OnLButtonDown(e);
+//	} else {
+//		CSheet::OnLButtonDown(e);
+//	}
+//}
+//void CGridView::OnLButtonUp(const LButtonUpEvent& e)
+//{
+//	if (m_pVScroll->GetRect().PtInRect(m_pDirect->Pixels2Dips(e.Point))) {
+//		m_pVScroll->OnLButtonUp(e);
+//	} else {
+//		CSheet::OnLButtonUp(e);
+//	}
+//}
+//void CGridView::OnMouseMove(const MouseMoveEvent& e)
+//{
+//	if (m_pVScroll->GetRect().PtInRect(m_pDirect->Pixels2Dips(e.Point))) {
+//		m_pVScroll->OnMouseMove(e);
+//	} else {
+//		CSheet::OnMouseMove(e);
+//	}
+//
+//}
+

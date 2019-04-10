@@ -23,6 +23,7 @@ public:
 
 public:
 	CDriveManager();
+	void Reload();
 	std::shared_ptr<CDriveFolder> GetDriveFolderByIDL(CIDL& idl);
 	std::shared_ptr<CDriveFolder> GetDriveFolderByPath(const std::wstring& path);
 };

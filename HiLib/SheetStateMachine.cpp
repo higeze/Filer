@@ -5,6 +5,7 @@
 #include "Celler.h"
 #include "SheetEventArgs.h"
 #include "Sheet.h"
+#include "Scroll.h"
 
 #include <boost\msm\front\state_machine_def.hpp>
 #include <boost\msm\back\state_machine.hpp>
@@ -21,6 +22,8 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 	struct NormalState :state<> {};
 	struct RowTrackState :state<> {};
 	struct ColTrackState :state<> {};
+	struct VScrlDragState :state<> {};
+	struct HScrlDragState :state<> {};
 	struct RowDragState :state<> {};
 	struct ColDragState :state<> {};
 	struct ItemDragState :state<> {};
@@ -108,6 +111,37 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		{
 			m_pSheet->m_spCursorer->OnKeyDown(m_pSheet, e);
 			m_pSheet->m_spCeller->OnKeyDown(m_pSheet, e);
+		}
+		//VScrlDrag
+		FLOAT m_startDrag = 0.f;
+		template<class Event>
+		void Action_VScrlDrag_LButtonDown(Event const & e)
+		{
+			m_startDrag = e.Direct.Pixels2DipsY(e.Point.y);
+		}
+
+		template<class Event>
+		bool Guard_VScrlDrag_LButtonDown(Event const & e)
+		{
+			return static_cast<CGridView*>(m_pSheet)->m_pVScroll->GetThumbRect().PtInRect(e.Direct.Pixels2Dips(e.Point));
+		}
+
+		template<class Event>
+		void Action_VScrlDrag_LButtonUp(Event const & e)
+		{
+			m_startDrag = 0.f;
+		}
+
+		template<class Event>
+		void Action_VScrlDrag_MouseMove(Event const & e)
+		{
+			auto pGrid = static_cast<CGridView*>(m_pSheet);
+			pGrid->m_pVScroll->SetScrollPos(
+				pGrid->m_pVScroll->GetScrollPos() +
+				(e.Direct.Pixels2DipsY(e.Point.y) - m_startDrag) *
+				(pGrid->m_pVScroll->GetScrollRange().second - pGrid->m_pVScroll->GetScrollRange().first) /
+				pGrid->m_pVScroll->GetRect().Height());
+			m_startDrag = e.Direct.Pixels2DipsY(e.Point.y);
 		}
 
 		//RowDrag
@@ -283,11 +317,16 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 			a_irow<NormalState,   SetCursorEvent,                       &Machine_::Action_Normal_SetCursor>,
 			a_irow<NormalState,   KeyDownEvent,                         &Machine_::Action_Normal_KeyDown>,
 
+			   row<NormalState,   LButtonDownEvent,      VScrlDragState,&Machine_::Action_VScrlDrag_LButtonDown,   &Machine_::Guard_VScrlDrag_LButtonDown>,
+			   //row<NormalState,   LButtonDownEvent,      HScrlDragState,&Machine_::Action_HScrollDrag_LButtonDown,   &Machine_::Guard_HScrollDrag_LButtonDown>,
 			   row<NormalState,   LButtonBeginDragEvent, ColDragState,  &Machine_::Action_ColDrag_LButtonBeginDrag,  &Machine_::Guard_ColDrag_LButtonBeginDrag>,
 			   row<NormalState,   LButtonBeginDragEvent, RowDragState,  &Machine_::Action_RowDrag_LButtonBeginDrag,  &Machine_::Guard_RowDrag_LButtonBeginDrag>,
 			   row<NormalState,   LButtonBeginDragEvent, ItemDragState, &Machine_::Action_ItemDrag_LButtonBeginDrag, &Machine_::Guard_ItemDrag_LButtonBeginDrag>,
       		   row<NormalState,   LButtonDownEvent, RowTrackState, &Machine_::Action_RowTrack_LButtonDown, &Machine_::Guard_RowTrack_LButtonDown>,
        		   row<NormalState,   LButtonDownEvent, ColTrackState, &Machine_::Action_ColTrack_LButtonDown, &Machine_::Guard_ColTrack_LButtonDown>,
+			
+			a_irow<VScrlDragState, MouseMoveEvent, &Machine_::Action_VScrlDrag_MouseMove>,
+			a_row<VScrlDragState,  LButtonUpEvent, NormalState, &Machine_::Action_VScrlDrag_LButtonUp>,
 			
 			a_irow<RowDragState,  MouseMoveEvent,                       &Machine_::Action_RowDrag_MouseMove>,
 			 a_row<RowDragState,  LButtonUpEvent,   NormalState,   &Machine_::Action_RowDrag_LButtonUp>,

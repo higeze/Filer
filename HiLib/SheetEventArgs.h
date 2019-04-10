@@ -1,5 +1,8 @@
 #pragma once
 
+class CCell;
+class CRow;
+class CColumn;
 
 /**
  *  CellEventArgs

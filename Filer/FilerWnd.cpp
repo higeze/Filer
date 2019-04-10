@@ -16,6 +16,7 @@
 #include "FavoritesProperty.h"
 #include "ResourceIDFactory.h"
 #include "CellProperty.h"
+#include "DriveFolder.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -600,6 +601,7 @@ LRESULT CFilerWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 
 LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
+	CDriveManager::GetInstance()->Reload();
 	m_spLeftFavoritesView->Reload();
 	m_spRightFavoritesView->Reload();
 	return 0;

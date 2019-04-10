@@ -42,6 +42,7 @@
 #include "PathRow.h"
 #include "KnownFolder.h"
 #include "InplaceEdit.h"
+#include "Scroll.h"
 
 
 #define SCRATCH_QCM_FIRST 1
@@ -276,20 +277,29 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 	if (iter == m_rowAllDictionary.end()) {
 		BOOST_LOG_TRIVIAL(trace) << "Modified NoMatch " << wstr2str(fileName);
 		return;
-	}
-	else if (auto p = std::dynamic_pointer_cast<CFileRow>(iter->DataPtr)) {
-		p->GetFilePointer()->Reset();
-		p->SetMeasureValid(false);
-	}
-	PostUpdate(Updates::ColumnVisible);
-	PostUpdate(Updates::RowVisible);
-	PostUpdate(Updates::Row);
-	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);
-	PostUpdate(Updates::Sort);
-	FilterAll();
-	SubmitUpdate();
+	}else if (auto p = std::dynamic_pointer_cast<CFileRow>(iter->DataPtr)) {
+		//Because ItemIdList includes, size, last write time, etc., it is necessary to get new one.
+		ULONG chEaten;
+		ULONG dwAttributes;
+		CIDL newIdl;
+		HRESULT hRes = p->GetFilePointer()->GetParentShellFolderPtr()
+			->ParseDisplayName(m_hWnd, NULL, (LPWSTR)fileName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
 
+		if (SUCCEEDED(hRes) && newIdl) {
+			p->SetFilePointer(m_spFolder->CreateShExFileFolder(newIdl));
+			p->SetMeasureValid(false);
+			PostUpdate(Updates::ColumnVisible);
+			PostUpdate(Updates::RowVisible);
+			PostUpdate(Updates::Row);
+			PostUpdate(Updates::Scrolls);
+			PostUpdate(Updates::Invalidate);
+			PostUpdate(Updates::Sort);
+			FilterAll();
+			SubmitUpdate();
+		} else {
+			BOOST_LOG_TRIVIAL(trace) << "Modified FAILED " << wstr2str(fileName);
+		}
+	}
 }
 void CFilerGridView::Removed(const std::wstring& fileName)
 {
@@ -353,7 +363,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 		}
 		else {
 			BOOST_LOG_TRIVIAL(trace) << "Renamed FAILED " << wstr2str(oldName) << "=>" << wstr2str(newName);
-			return Removed(oldName);
+			//return Removed(oldName);
 		}
 	}
 }
@@ -673,7 +683,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		m_spCursorer->Clear();
 
 		if (!isUpdate) {
-			m_vertical.SetScrollPos(0);
+			m_pVScroll->SetScrollPos(0);
 
 			//If previous folder is found, set cursor for that.
 			if (m_spPreviousFolder) {
@@ -1028,7 +1038,7 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 		pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<PBYTE>(pInfo) + pInfo->NextEntryOffset);
 	}
 	
-	delete [] (PBYTE)pInfo0;
+	//delete [] (PBYTE)pInfo0;
 
 	return 0;
 }

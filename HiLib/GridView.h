@@ -4,6 +4,8 @@
 #include "MyGdiPlusHelper.h"
 #include "ThreadHelper.h"
 #include <queue>
+
+
 //
 //#include "D2DWindow.h"
 //#include "D2DWindowControl.h"
@@ -14,6 +16,10 @@ class BackgroundProperty;
 struct GridViewProperty;
 struct CMouseStateMachine;
 class CInplaceEdit;
+namespace d2dw
+{
+	class CScroll;
+}
 
 class CGridView:public CWnd,public CSheet
 {
@@ -21,15 +27,16 @@ public:
 
 //	V4::D2DTextbox* m_pTextBox = nullptr;
 
+	std::unique_ptr<d2dw::CScroll> m_pVScroll;
 
 	static CMenu ContextMenu;
 protected:
 	CInplaceEdit* m_pEdit = nullptr;
 	bool m_isFocusable = true;
 
-	CScrollBar m_vertical;
+	//CScrollBar m_vertical;
 	CScrollBar m_horizontal;
-	int m_ensuredScroll = -1;
+	//int m_ensuredScroll = -1;
 
 	d2dw::CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
@@ -73,7 +80,7 @@ public:
 		std::shared_ptr<GridViewProperty>& spGridViewProp,
 		CMenu* pContextMenu= &CGridView::ContextMenu);
 	//Destructor
-	virtual ~CGridView();
+	~CGridView();
 
 	//Getter Setter
 	std::shared_ptr<d2dw::CDirect2DWrite>& GetDirect() { return m_pDirect; }
@@ -131,7 +138,11 @@ protected:
 	virtual void OnCellLButtonClk(CellEventArgs& e);
 	virtual void OnCellContextMenu(CellContextMenuEventArgs& e);
 
-	virtual void OnKeyDown(const KeyDownEvent& e);
+	//virtual void OnLButtonDown(const LButtonDownEvent& e) override;
+	//virtual void OnLButtonUp(const LButtonUpEvent& e) override;
+	//virtual void OnMouseMove(const MouseMoveEvent& e) override;
+
+	virtual void OnKeyDown(const KeyDownEvent& e) override;
 public:
 	virtual void ClearFilter();
 	virtual void FilterAll();

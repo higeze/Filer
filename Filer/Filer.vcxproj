@@ -411,6 +411,7 @@
     <ClCompile Include="..\HiLib\ResourceIDFactory.cpp" />
     <ClCompile Include="..\HiLib\Row.cpp" />
     <ClCompile Include="..\HiLib\RowColumn.cpp" />
+    <ClCompile Include="..\HiLib\Scroll.cpp" />
     <ClCompile Include="..\HiLib\SEHException.cpp" />
     <ClCompile Include="..\HiLib\Sheet.cpp" />
     <ClCompile Include="..\HiLib\SheetCell.cpp" />

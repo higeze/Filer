@@ -150,12 +150,12 @@ void CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVO
 				FALSE,
 				FILE_NOTIFY_CHANGE_FILE_NAME   | 
 				FILE_NOTIFY_CHANGE_DIR_NAME    | 
-				FILE_NOTIFY_CHANGE_ATTRIBUTES  |  
+				//FILE_NOTIFY_CHANGE_ATTRIBUTES  |  
 				FILE_NOTIFY_CHANGE_SIZE        |  
 				FILE_NOTIFY_CHANGE_LAST_WRITE  |
-				FILE_NOTIFY_CHANGE_LAST_ACCESS |
-				FILE_NOTIFY_CHANGE_CREATION    |
-				FILE_NOTIFY_CHANGE_SECURITY,    
+				//FILE_NOTIFY_CHANGE_LAST_ACCESS |
+				//FILE_NOTIFY_CHANGE_SECURITY    |
+				FILE_NOTIFY_CHANGE_CREATION    ,
 				NULL,
 				(LPOVERLAPPED)pOverlapped,
 				NULL)){
@@ -171,53 +171,8 @@ void CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVO
 		}else if(ulBytes > 0){
 
 			::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)pFileNotifyInfo, NULL);
-			//FILE_NOTIFY_INFORMATION* pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(m_vData.data());
-			//while (true) {
-			//	std::wstring oldName;
-			//	std::wstring fileName;
-			//	memcpy(::GetBuffer(fileName, pInfo->FileNameLength / sizeof(wchar_t)), pInfo->FileName, pInfo->FileNameLength);
 
-			//	switch (pInfo->Action) {
-			//	case FILE_ACTION_ADDED:
-			//		Added(fileName);
-			//		break;
-			//	case FILE_ACTION_MODIFIED:
-			//		Modified(fileName);
-			//		break;
-			//	case FILE_ACTION_REMOVED:
-			//		Removed(fileName);
-			//		break;
-			//	case FILE_ACTION_RENAMED_NEW_NAME:
-			//		if (!oldName.empty()) {
-			//			Renamed(oldName, fileName);
-			//			oldName.clear();
-			//		}
-			//		else {
-			//			FILE_LINE_FUNC_TRACE;
-			//		}
-			//		break;
-			//	case FILE_ACTION_RENAMED_OLD_NAME:
-			//		oldName = fileName;
-			//	default:
-			//		break;
-			//	}
-
-			//	if (pInfo->NextEntryOffset == 0) { break; }
-			//	
-			//	pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<unsigned char*>(pInfo) + pInfo->NextEntryOffset);
-			//}
-
-
-			
-			
-			//_bstr_t filename,fullpath;
-			//*(PWSTR)((PBYTE)(pFileNotifyInfo->FileName) + pFileNotifyInfo->FileNameLength) = L'\0';
-			//filename = pFileNotifyInfo->FileName;
-			//fullpath = m_path.c_str();
-			//fullpath += (_bstr_t(TEXT("\\")) + filename);
-			//_tprintf(TEXT("[THREAD:%d] [Changed]%s\n"),GetCurrentThreadId(),(PCTSTR)fullpath);
-			//Changed();
-			//delete [] (PBYTE)pFileNotifyInfo;
+			delete [] (PBYTE)pFileNotifyInfo;
 		}
 	}catch(std::exception&){
 		FILE_LINE_FUNC_TRACE;

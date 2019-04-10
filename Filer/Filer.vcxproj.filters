@@ -850,6 +850,9 @@
     <ClCompile Include="..\HiLib\Console.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
+    <ClCompile Include="..\HiLib\Scroll.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\HiLib\msxml6.tli">
