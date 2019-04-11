@@ -112,37 +112,82 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 			m_pSheet->m_spCursorer->OnKeyDown(m_pSheet, e);
 			m_pSheet->m_spCeller->OnKeyDown(m_pSheet, e);
 		}
+		
 		//VScrlDrag
-		FLOAT m_startDrag = 0.f;
+		FLOAT m_startDragV = 0.f;
 		template<class Event>
 		void Action_VScrlDrag_LButtonDown(Event const & e)
 		{
-			m_startDrag = e.Direct.Pixels2DipsY(e.Point.y);
+			m_startDragV = e.Direct.Pixels2DipsY(e.Point.y);
 		}
 
 		template<class Event>
 		bool Guard_VScrlDrag_LButtonDown(Event const & e)
 		{
-			return static_cast<CGridView*>(m_pSheet)->m_pVScroll->GetThumbRect().PtInRect(e.Direct.Pixels2Dips(e.Point));
+			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
+				return p->m_pVScroll->GetThumbRect().PtInRect(e.Direct.Pixels2Dips(e.Point));
+			} else {
+				return false;
+			}
 		}
 
 		template<class Event>
 		void Action_VScrlDrag_LButtonUp(Event const & e)
 		{
-			m_startDrag = 0.f;
+			m_startDragV = 0.f;
 		}
 
 		template<class Event>
 		void Action_VScrlDrag_MouseMove(Event const & e)
 		{
-			auto pGrid = static_cast<CGridView*>(m_pSheet);
-			pGrid->m_pVScroll->SetScrollPos(
-				pGrid->m_pVScroll->GetScrollPos() +
-				(e.Direct.Pixels2DipsY(e.Point.y) - m_startDrag) *
-				(pGrid->m_pVScroll->GetScrollRange().second - pGrid->m_pVScroll->GetScrollRange().first) /
-				pGrid->m_pVScroll->GetRect().Height());
-			m_startDrag = e.Direct.Pixels2DipsY(e.Point.y);
+			if (auto p = dynamic_cast<CGridView*>(m_pSheet)){
+				p->m_pVScroll->SetScrollPos(
+					p->m_pVScroll->GetScrollPos() +
+					(e.Direct.Pixels2DipsY(e.Point.y) - m_startDragV) *
+					p->m_pVScroll->GetScrollDistance() /
+					p->m_pVScroll->GetRect().Height());
+					m_startDragV = e.Direct.Pixels2DipsY(e.Point.y);
+			}
 		}
+
+		//HScrlDrag
+		FLOAT m_startDragH = 0.f;
+		template<class Event>
+		void Action_HScrlDrag_LButtonDown(Event const & e)
+		{
+			m_startDragH = e.Direct.Pixels2DipsX(e.Point.x);
+		}
+
+		template<class Event>
+		bool Guard_HScrlDrag_LButtonDown(Event const & e)
+		{
+			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
+				return p->m_pHScroll->GetThumbRect().PtInRect(e.Direct.Pixels2Dips(e.Point));
+			} else {
+				return false;
+			}
+		}
+
+		template<class Event>
+		void Action_HScrlDrag_LButtonUp(Event const & e)
+		{
+			m_startDragH = 0.f;
+		}
+
+		template<class Event>
+		void Action_HScrlDrag_MouseMove(Event const & e)
+		{
+			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
+				p->m_pHScroll->SetScrollPos(
+					p->m_pHScroll->GetScrollPos() +
+					(e.Direct.Pixels2DipsX(e.Point.x) - m_startDragH) *
+					p->m_pHScroll->GetScrollDistance() /
+					p->m_pHScroll->GetRect().Width());
+				m_startDragH = e.Direct.Pixels2DipsX(e.Point.x);
+			}
+		}
+
+
 
 		//RowDrag
 		template<class Event>
@@ -318,7 +363,7 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 			a_irow<NormalState,   KeyDownEvent,                         &Machine_::Action_Normal_KeyDown>,
 
 			   row<NormalState,   LButtonDownEvent,      VScrlDragState,&Machine_::Action_VScrlDrag_LButtonDown,   &Machine_::Guard_VScrlDrag_LButtonDown>,
-			   //row<NormalState,   LButtonDownEvent,      HScrlDragState,&Machine_::Action_HScrollDrag_LButtonDown,   &Machine_::Guard_HScrollDrag_LButtonDown>,
+			   row<NormalState,   LButtonDownEvent,      HScrlDragState,&Machine_::Action_HScrlDrag_LButtonDown,   &Machine_::Guard_HScrlDrag_LButtonDown>,
 			   row<NormalState,   LButtonBeginDragEvent, ColDragState,  &Machine_::Action_ColDrag_LButtonBeginDrag,  &Machine_::Guard_ColDrag_LButtonBeginDrag>,
 			   row<NormalState,   LButtonBeginDragEvent, RowDragState,  &Machine_::Action_RowDrag_LButtonBeginDrag,  &Machine_::Guard_RowDrag_LButtonBeginDrag>,
 			   row<NormalState,   LButtonBeginDragEvent, ItemDragState, &Machine_::Action_ItemDrag_LButtonBeginDrag, &Machine_::Guard_ItemDrag_LButtonBeginDrag>,
@@ -327,7 +372,10 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 			
 			a_irow<VScrlDragState, MouseMoveEvent, &Machine_::Action_VScrlDrag_MouseMove>,
 			a_row<VScrlDragState,  LButtonUpEvent, NormalState, &Machine_::Action_VScrlDrag_LButtonUp>,
-			
+
+			a_irow<HScrlDragState, MouseMoveEvent, &Machine_::Action_HScrlDrag_MouseMove>,
+			a_row<HScrlDragState, LButtonUpEvent, NormalState, &Machine_::Action_HScrlDrag_LButtonUp>,
+
 			a_irow<RowDragState,  MouseMoveEvent,                       &Machine_::Action_RowDrag_MouseMove>,
 			 a_row<RowDragState,  LButtonUpEvent,   NormalState,   &Machine_::Action_RowDrag_LButtonUp>,
 			 a_row<RowDragState,  MouseLeaveEvent,       NormalState,   &Machine_::Action_RowDrag_MouseLeave>,

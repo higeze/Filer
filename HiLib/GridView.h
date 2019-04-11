@@ -18,7 +18,8 @@ struct CMouseStateMachine;
 class CInplaceEdit;
 namespace d2dw
 {
-	class CScroll;
+	class CVScroll;
+	class CHScroll;
 }
 
 class CGridView:public CWnd,public CSheet
@@ -27,7 +28,8 @@ public:
 
 //	V4::D2DTextbox* m_pTextBox = nullptr;
 
-	std::unique_ptr<d2dw::CScroll> m_pVScroll;
+	std::unique_ptr<d2dw::CVScroll> m_pVScroll;
+	std::unique_ptr<d2dw::CHScroll> m_pHScroll;
 
 	static CMenu ContextMenu;
 protected:
@@ -35,7 +37,7 @@ protected:
 	bool m_isFocusable = true;
 
 	//CScrollBar m_vertical;
-	CScrollBar m_horizontal;
+	//CScrollBar m_horizontal;
 	//int m_ensuredScroll = -1;
 
 	d2dw::CRectF m_rcUpdateRect;
@@ -105,8 +107,6 @@ protected:
 	virtual LRESULT OnEraseBkGnd(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnVScroll(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnHScroll(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnMouseWheel(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
