@@ -15,6 +15,7 @@ namespace d2dw
 		std::pair<FLOAT, FLOAT> m_range = std::make_pair(0.0f, 0.0f);
 		FLOAT m_pos = 0.0f;
 		CRectF m_rect;
+		const FLOAT kMargin = 4.f;
 
 		SolidFill m_backgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 0.4f);
 		SolidFill m_foregroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 0.9f);

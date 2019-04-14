@@ -345,6 +345,29 @@ bool CShellFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& can
 
 }
 
+void CShellFolder::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt) 
+{
+	CIDL idlNew;
+	if (SUCCEEDED(m_pParentShellFolder->SetNameOf(
+		NULL,
+		m_childIdl.ptr(),
+		wstrNameWoExt.c_str(),
+		SHGDN_FORPARSING | SHGDN_INFOLDER,
+		idlNew.ptrptr()))) {
+
+		m_childIdl = idlNew;
+		m_absoluteIdl = m_parentIdl + idlNew;
+
+		Reset();
+	}
+}
+
+void CShellFolder::SetExt(const std::wstring& wstrExt)
+{
+	//Do nothing
+}
+
+
 //void CShellFolder::ResetSize()
 //{
 //	if (m_pSizeThread && m_pSizeThread->joinable()) {

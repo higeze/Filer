@@ -64,4 +64,15 @@ bool CShellZipFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& 
 	return true;
 }
 
+void CShellZipFolder::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt)
+{
+	return CShellFile::SetFileNameWithoutExt(wstrNameWoExt);
+}
+
+void CShellZipFolder::SetExt(const std::wstring& wstrExt)
+{
+	return CShellFile::SetExt(wstrExt);
+}
+
+
 

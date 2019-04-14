@@ -314,7 +314,8 @@ LRESULT CGridView::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 LRESULT CGridView::OnMouseWheel(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() + *(m_spGridViewProp->DeltaScrollPtr) * GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - *(m_spGridViewProp->DeltaScrollPtr) * GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+	SubmitUpdate();
 	return 0;
 }
 
@@ -446,7 +447,7 @@ void CGridView::UpdateScrolls()
 	if(!Visible())return;
 
 	//Client
-	CRect rcClient(GetClientRect());
+	d2dw::CRectF rcClient(m_pDirect->Pixels2Dips(GetClientRect()));
 
 	//Origin
 	//d2dw::CPointF ptOrigin(GetOriginPoint());
@@ -469,18 +470,23 @@ void CGridView::UpdateScrolls()
 	m_pHScroll->SetVisible(m_pHScroll->GetScrollDistance() > m_pHScroll->GetScrollPage());
 
 	//Position scroll
-	CRect rcVertical(rcClient);
-	CRect rcHorizontal(rcClient);
+	d2dw::CRectF rcVertical;
+	d2dw::CRectF rcHorizontal;
+	FLOAT lineHalfWidth = m_spCellProperty->Line->Width * 0.5f;
 
-	rcVertical.left=rcClient.right-::GetSystemMetrics(SM_CXVSCROLL);
-	rcVertical.top=0;
-	rcVertical.bottom-=(m_pHScroll->GetVisible())?::GetSystemMetrics(SM_CYHSCROLL):0;
-	m_pVScroll->SetRect(m_pDirect->Pixels2Dips(rcVertical));
+	rcVertical.left = rcClient.right - ::GetSystemMetrics(SM_CXVSCROLL) - lineHalfWidth;
+	rcVertical.top = rcClient.top + lineHalfWidth;
+	rcVertical.right = rcClient.right - lineHalfWidth;
+	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetVisible()?(::GetSystemMetrics(SM_CYHSCROLL) + lineHalfWidth) : lineHalfWidth);
+	m_pVScroll->SetRect(rcVertical);
 
-	rcHorizontal.left=0;
-	rcHorizontal.top=rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL);
-	rcHorizontal.right-=(m_pVScroll->GetVisible())?::GetSystemMetrics(SM_CXVSCROLL):0;
-	m_pHScroll->SetRect(m_pDirect->Pixels2Dips(rcHorizontal));
+	auto a = m_pHScroll->GetVisible() ? (::GetSystemMetrics(SM_CYHSCROLL) + lineHalfWidth) : lineHalfWidth;
+
+	rcHorizontal.left= rcClient.left + lineHalfWidth;
+	rcHorizontal.top = rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
+	rcHorizontal.right = rcClient.right - (m_pVScroll->GetVisible()?(::GetSystemMetrics(SM_CXVSCROLL) + lineHalfWidth) : lineHalfWidth);
+	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
+	m_pHScroll->SetRect(rcHorizontal);
 
 }
 

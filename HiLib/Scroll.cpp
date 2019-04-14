@@ -32,9 +32,9 @@ namespace d2dw
 	{
 		return
 			CRectF(
-				m_rect.left,
+				m_rect.left + kMargin,
 				(std::max)(m_rect.top + m_rect.Height() * GetScrollPos() / GetScrollDistance(), m_rect.top),
-				m_rect.right,
+				m_rect.right - kMargin,
 				(std::min)(m_rect.top + m_rect.Height() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), m_rect.bottom));
 	}
 
@@ -43,9 +43,9 @@ namespace d2dw
 		return
 			CRectF(
 				(std::max)(m_rect.left + m_rect.Width() * GetScrollPos() / GetScrollDistance(), m_rect.left),
-				m_rect.top,
+				m_rect.top + kMargin,
 				(std::min)(m_rect.left + m_rect.Width() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), m_rect.right),
-				m_rect.bottom);
+				m_rect.bottom - kMargin);
 	}
 
 	void CVScroll::OnPropertyChanged(const wchar_t* name)
