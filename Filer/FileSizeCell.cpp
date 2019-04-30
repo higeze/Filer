@@ -14,33 +14,12 @@ CFileSizeCell::CFileSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::
 CFileSizeCell::~CFileSizeCell()
 {
 	m_conDelayUpdateAction.disconnect();
-	m_conFileSizeChanged.disconnect();
 }
 
 std::shared_ptr<CShellFile> CFileSizeCell::GetShellFile()
 {
 	if (auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)) {
-		if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(pFileRow->GetFilePointer())) {
-			if (!m_conFileSizeChanged.connected()) {
-				std::weak_ptr<CFileSizeCell> wp(shared_from_this());
-				m_conFileSizeChanged = spFolder->SignalFileSizeChanged.connect(
-					[wp](CShellFile* pFile)->void {
-					if (auto sp = wp.lock()) {
-						auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
-							[wp]()->void {
-							if (auto sp = wp.lock()) {
-								sp->OnPropertyChanged(L"value");
-							}
-						});
-						sp->m_conDelayUpdateAction = con;
-						sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
-					}
-				});
-			}
-			return spFolder;
-		} else {
-			return pFileRow->GetFilePointer();
-		}
+		return pFileRow->GetFilePointer();
 	} else {
 		return nullptr;
 	}
@@ -71,7 +50,20 @@ std::wstring CFileSizeCell::GetString()
 {
 	try {
 		auto spFile = GetShellFile();
-		auto size = spFile->GetSize(static_cast<CFileSizeColumn*>(m_pColumn)->GetSizeArgsPtr());
+		std::weak_ptr<CFileSizeCell> wp(shared_from_this());
+		auto changed = [wp]()->void {
+			if (auto sp = wp.lock()) {
+				auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					[wp]()->void {
+					if (auto sp = wp.lock()) {
+						sp->OnPropertyChanged(L"value");
+					}
+				});
+				sp->m_conDelayUpdateAction = con;
+				sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+			}
+		};
+		auto size = spFile->GetSize(static_cast<CFileSizeColumn*>(m_pColumn)->GetSizeArgsPtr(), changed);
 		switch (size.second) {
 		case FileSizeStatus::None:
 			return L"none";
@@ -93,7 +85,20 @@ std::wstring CFileSizeCell::GetSortString()
 {	
 	try {
 		auto spFile = GetShellFile();
-		auto size = spFile->GetSize(static_cast<CFileSizeColumn*>(m_pColumn)->GetSizeArgsPtr());
+		std::weak_ptr<CFileSizeCell> wp(shared_from_this());
+		auto changed = [wp]()->void {
+			if (auto sp = wp.lock()) {
+				auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					[wp]()->void {
+					if (auto sp = wp.lock()) {
+						sp->OnPropertyChanged(L"value");
+					}
+				});
+				sp->m_conDelayUpdateAction = con;
+				sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+			}
+		};
+		auto size = spFile->GetSize(static_cast<CFileSizeColumn*>(m_pColumn)->GetSizeArgsPtr(), changed);
 		switch (size.second) {
 		case FileSizeStatus::None:
 			return L"none";

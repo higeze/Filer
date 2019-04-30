@@ -48,16 +48,11 @@ CGridView::CGridView(
 	m_spGridViewProp(spGridViewProp),
 	m_spBackgroundProperty(spGridViewProp->BackgroundPropPtr),
 	CSheet(spGridViewProp->HeaderPropPtr, spGridViewProp->CellPropPtr, spGridViewProp->CellPropPtr, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
-	m_spDeltaScroll(spGridViewProp->DeltaScrollPtr),
 	CWnd(),
-	m_filterIosv(), m_filterWork(m_filterIosv), m_filterTimer(m_filterIosv),
-	m_invalidateIosv(), m_invalidateWork(m_invalidateIosv), m_invalidateTimer(m_invalidateIosv),
 	m_pMouseStateMachine(std::make_shared<CMouseStateMachine>(this)),
-	m_pVScroll(std::make_unique<d2dw::CVScroll>(this)),
-	m_pHScroll(std::make_unique<d2dw::CHScroll>(this))
+	m_pVScroll(std::make_unique<d2dw::CVScroll>(this, spGridViewProp->VScrollPropPtr)),
+	m_pHScroll(std::make_unique<d2dw::CHScroll>(this, spGridViewProp->HScrollPropPtr))
 {
-	boost::thread th1(boost::bind(&boost::asio::io_service::run, &m_filterIosv));
-	boost::thread th2(boost::bind(&boost::asio::io_service::run, &m_invalidateIosv));
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
 		.lpszClassName(_T("CGridView"))
@@ -107,11 +102,7 @@ CGridView::CGridView(
 	CellContextMenu.connect(std::bind(&CGridView::OnCellContextMenu,this,std::placeholders::_1));
 }
 
-CGridView::~CGridView()
-{
-	m_filterTimer.cancel();
-	m_invalidateTimer.cancel();
-}
+CGridView::~CGridView(){}
 
 void CGridView::ColumnInserted(CColumnEventArgs& e)
 {
@@ -314,7 +305,7 @@ LRESULT CGridView::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 LRESULT CGridView::OnMouseWheel(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - *(m_spGridViewProp->DeltaScrollPtr) * GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetScrollDelta() * GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
 	SubmitUpdate();
 	return 0;
 }
@@ -326,14 +317,9 @@ void CGridView::Invalidate()
 
 void CGridView::DelayUpdate()
 {
-	m_invalidateTimer.expires_from_now(boost::posix_time::milliseconds(30));
-	m_invalidateTimer.async_wait([this](const boost::system::error_code& error)->void {
-
-		if (error == boost::asio::error::operation_aborted) {
-		} else {
-			PostMessage(WM_DELAY_UPDATE, NULL, NULL);
-		}
-	});
+	m_invalidateTimer.run([this] {
+		PostMessage(WM_DELAY_UPDATE, NULL, NULL);
+	}, std::chrono::milliseconds(30));
 }
 
 LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -477,14 +463,14 @@ void CGridView::UpdateScrolls()
 	rcVertical.left = rcClient.right - ::GetSystemMetrics(SM_CXVSCROLL) - lineHalfWidth;
 	rcVertical.top = rcClient.top + lineHalfWidth;
 	rcVertical.right = rcClient.right - lineHalfWidth;
-	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetVisible()?(::GetSystemMetrics(SM_CYHSCROLL) + lineHalfWidth) : lineHalfWidth);
+	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetVisible()?(m_pHScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
 	m_pVScroll->SetRect(rcVertical);
 
 	auto a = m_pHScroll->GetVisible() ? (::GetSystemMetrics(SM_CYHSCROLL) + lineHalfWidth) : lineHalfWidth;
 
 	rcHorizontal.left= rcClient.left + lineHalfWidth;
 	rcHorizontal.top = rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
-	rcHorizontal.right = rcClient.right - (m_pVScroll->GetVisible()?(::GetSystemMetrics(SM_CXVSCROLL) + lineHalfWidth) : lineHalfWidth);
+	rcHorizontal.right = rcClient.right - (m_pVScroll->GetVisible()?(m_pVScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
 	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
 	m_pHScroll->SetRect(rcHorizontal);
 

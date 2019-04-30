@@ -4,6 +4,7 @@
 #include "MyGdiPlusHelper.h"
 #include "ThreadHelper.h"
 #include <queue>
+#include "DeadlineTimer.h"
 
 
 //
@@ -52,13 +53,7 @@ protected:
 	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
 
 protected:
-	boost::asio::io_service m_filterIosv;
-	boost::asio::io_service::work m_filterWork;
-	boost::asio::deadline_timer m_filterTimer;
-
-	boost::asio::io_service m_invalidateIosv;
-	boost::asio::io_service::work m_invalidateWork;
-	boost::asio::deadline_timer m_invalidateTimer;
+	CDeadlineTimer m_invalidateTimer;
 
 	std::shared_ptr<GridViewProperty> m_spGridViewProp;
 	std::shared_ptr<int> m_spDeltaScroll;
@@ -91,7 +86,6 @@ public:
 	void SetUpdateRect(d2dw::CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
 	std::shared_ptr<CMouseStateMachine> GetMouseStateMachine() { return m_pMouseStateMachine; }
 	void SetMouseStateMachine(std::shared_ptr<CMouseStateMachine>& machine) { m_pMouseStateMachine = machine; }
-	boost::asio::deadline_timer* GetFilterTimerPtr() { return &m_filterTimer; }
 	virtual std::shared_ptr<CRow> GetHeaderHeaderRowPtr()const { return m_rowHeaderHeader; }
 	virtual void SetHeaderHeaderRowPtr(std::shared_ptr<CRow> row) { m_rowHeaderHeader = row; }
 	virtual std::shared_ptr<CRow> GetNameHeaderRowPtr()const { return m_rowNameHeader; }

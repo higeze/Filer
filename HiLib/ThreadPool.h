@@ -1,123 +1,67 @@
 #pragma once
-#include <deque>
+
 #include <vector>
-#include <functional>
+#include <queue>
+#include <memory>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <cassert>
-#include "MyCom.h"
+#include <future>
+#include <functional>
+#include <stdexcept>
 
-
-template <typename T> class Queue
+class CThreadPool
 {
 public:
-	Queue(size_t size)
-		: size_(size)
-	{}
-	bool put(T&& data) {
-		if (size_ <= deque_.size()) {
-			return false;
-		}
-		deque_.emplace_back(std::move(data));
-		return true;
-	}
-	bool put(const T& data) {
-		if (size_ <= deque_.size()) {
-			return false;
-		}
-		deque_.emplace_back(data);
-		return true;
-	}
-	bool get(T& data) {
-		if (deque_.empty()) {
-			return false;
-		}
-		data = std::move(deque_.front());
-		deque_.pop_front();
-		return true;
-	}
-	bool remove_if(std::function<bool(const T&)> pred) {
-		bool res = false;
-		for (auto iter = deque_.cbegin(); iter != deque_.cend(); ++iter) {
-			if (pred(*iter)) {
-				deque_.erase(iter);
-				res = true;
-			}
-		}	
-		return res;
-	}
-	bool empty() const {
-		return deque_.empty();
+	CThreadPool(size_t);
+	~CThreadPool();
+
+	template<class F, class... Args>
+	auto enqueue(F&& f, Args&&... args)
+		->std::future<typename std::result_of<F(Args...)>::type>;
+
+	static CThreadPool* GetInstance()
+	{
+		static CThreadPool pool(16);
+		return &pool;
 	}
 private:
-	size_t size_;
-	std::deque<T> deque_;
+	// need to keep track of threads so we can join them
+	std::vector< std::thread > workers;
+	// the task queue
+	std::queue< std::function<void()> > tasks;
+	// active thread count
+	std::atomic<int> activeCount = 0;
+
+	// synchronization
+	std::mutex queue_mutex;
+	std::condition_variable condition;
+	bool stop;
 };
 
-class ThreadPool
+
+// add new work item to the pool
+template<class F, class... Args>
+auto CThreadPool::enqueue(F&& f, Args&&... args)
+-> std::future<typename std::result_of<F(Args...)>::type>
 {
-public:
-	ThreadPool(size_t threadCount, size_t queueSize)
-		: isTerminationRequested_(false)
-		, queue_(queueSize)
+	using return_type = typename std::result_of<F(Args...)>::type;
+
+	auto task = std::make_shared< std::packaged_task<return_type()> >(
+		std::bind(std::forward<F>(f), std::forward<Args>(args)...)
+		);
+
+	std::future<return_type> res = task->get_future();
 	{
-		for (size_t n = 0; n < threadCount; n++) {
-			threads_.emplace_back(std::thread(main_));
-		}
+		std::unique_lock<std::mutex> lock(queue_mutex);
+
+		// don't allow enqueueing after stopping the pool
+		if (stop)
+			throw std::runtime_error("enqueue on stopped ThreadPool");
+
+		tasks.emplace([task]() { (*task)(); });
 	}
-	~ThreadPool() {
-		{
-			std::unique_lock<std::mutex> ul(mutex_);
-			isTerminationRequested_ = true;
-		}
-		cv_.notify_all();
-		const size_t size = threads_.size();
-		for (size_t n = 0; n < size; n++) {
-			threads_.at(n).join();
-		}
-	}
-	bool add(std::function<void()> &&func) {
-		{
-			std::unique_lock<std::mutex> ul(mutex_);
-			if (!queue_.put(std::move(func))) { return false; }
-		}
-		cv_.notify_all();
-		return true;
-	}
-	bool add(const std::function<void()> &func) {
-		{
-			std::unique_lock<std::mutex> ul(mutex_);
-			if (!queue_.put(func)) { return false; }
-		}
-		cv_.notify_all();
-		return true;
-	}
-	bool remove_if(std::function<bool(const std::function<void()>&)> pred) {
-		std::unique_lock<std::mutex> ul(mutex_);
-		return queue_.remove_if(pred);
-	}
-private:
-	std::function<void()> main_ = [this]()
-	{
-		CCoInitializer(COINIT_APARTMENTTHREADED);
-		while (1) {
-			std::function<void()> func;
-			{
-				std::unique_lock<std::mutex> ul(mutex_);
-				while (queue_.empty()) {
-					if (isTerminationRequested_) { return; }
-					cv_.wait(ul);
-				}
-				const bool result = queue_.get(func);
-				assert(result);
-			}
-			func();
-		}
-	};
-	bool isTerminationRequested_;
-	Queue<std::function<void()>> queue_;
-	std::mutex mutex_;
-	std::condition_variable cv_;
-	std::vector<std::thread> threads_;
-};
+	condition.notify_one();
+	return res;
+}
+

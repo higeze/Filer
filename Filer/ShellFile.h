@@ -93,8 +93,8 @@ public:
 	
 	//Getter 
 	CComPtr<IShellFolder>& GetParentShellFolderPtr(){return m_pParentShellFolder;}
-	CIDL& GetAbsoluteIdl();
-	CIDL& GetChildIdl();
+	CIDL& GetAbsoluteIdl() { return m_absoluteIdl; }
+	CIDL& GetChildIdl() { return m_childIdl; }
 
 	//Lazy Evaluation Getter
 	virtual std::wstring& GetPath();
@@ -112,11 +112,13 @@ public:
 
 	//LastWrite
 	bool GetFileLastWriteTime(FILETIME& time);
-	virtual std::pair<FILETIME, FileTimeStatus> GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs);
+	static bool GetFileLastWriteTime(FILETIME& time, const CComPtr<IShellFolder>& pParentFolder, const CIDL& relativeIdl);
+	virtual std::pair<FILETIME, FileTimeStatus> GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed = nullptr);
 
 	//Size
 	bool GetFileSize(ULARGE_INTEGER& size/*, std::shared_future<void> future*/);
-	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs);
+	static bool GetFileSize(ULARGE_INTEGER& size, const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& childIdl);
+	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed = nullptr);
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> ReadSize();
 
 	//Icon

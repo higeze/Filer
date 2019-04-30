@@ -1,6 +1,7 @@
 #pragma once
 #include "Direct2DWrite.h"
 #include "UIElement.h"
+#include "GridViewProperty.h"
 
 class CGridView;
 
@@ -15,15 +16,16 @@ namespace d2dw
 		std::pair<FLOAT, FLOAT> m_range = std::make_pair(0.0f, 0.0f);
 		FLOAT m_pos = 0.0f;
 		CRectF m_rect;
-		const FLOAT kMargin = 4.f;
 
-		SolidFill m_backgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 0.4f);
-		SolidFill m_foregroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 0.9f);
+		std::shared_ptr<ScrollProperty> m_spScrollProp;
+
 
 	public:
-		CScrollBase(CGridView* pGrid);
+		CScrollBase(CGridView* pGrid, const std::shared_ptr<ScrollProperty>& spScrollProp);
 		virtual ~CScrollBase() = default;
 
+		FLOAT GetScrollBandWidth()const { return m_spScrollProp->BandWidth; }
+		FLOAT GetScrollDelta()const { return m_spScrollProp->DeltaScroll; }
 		FLOAT GetScrollPage()const { return m_page; }
 		std::pair<FLOAT, FLOAT> GetScrollRange()const { return m_range; }
 		FLOAT GetScrollDistance()const { return m_range.second - m_range.first; }
@@ -43,20 +45,12 @@ namespace d2dw
 		void SetVisible(bool visible) { m_visible = visible; }
 		virtual void OnPaint(const PaintEvent& e);
 		virtual CRectF GetThumbRect()const = 0;
-
-		template <class Archive>
-		void serialize(Archive& ar)
-		{
-			ar("BackgroundFill", m_backgroundFill);
-			ar("ForegroundFill", m_foregroundFill);
-		}
-
 	};
 
 	class CVScroll :public CScrollBase
 	{
 	public:
-		CVScroll(CGridView* pGrid):CScrollBase(pGrid){}
+		CVScroll(CGridView* pGrid, const std::shared_ptr<ScrollProperty>& spScrollProp):CScrollBase(pGrid, spScrollProp){}
 		virtual ~CVScroll() = default;
 		virtual CRectF GetThumbRect()const override;
 		virtual void OnPropertyChanged(const wchar_t* name) override;
@@ -65,7 +59,7 @@ namespace d2dw
 	class CHScroll :public CScrollBase
 	{
 	public:
-		CHScroll(CGridView* pGrid) :CScrollBase(pGrid) {}
+		CHScroll(CGridView* pGrid, const std::shared_ptr<ScrollProperty>& spScrollProp) :CScrollBase(pGrid, spScrollProp) {}
 		virtual ~CHScroll() = default;
 		virtual CRectF GetThumbRect()const override;
 		virtual void OnPropertyChanged(const wchar_t* name) override;

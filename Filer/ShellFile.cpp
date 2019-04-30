@@ -119,17 +119,6 @@ CShellFile::~CShellFile()
 	}
 }
 
-CIDL& CShellFile::GetAbsoluteIdl()
-{
-	return m_absoluteIdl;
-}
-
-CIDL& CShellFile::GetChildIdl()
-{
-	return m_childIdl;
-}
-
-
 std::wstring& CShellFile::GetPath()
 {
 	if (m_wstrPath.empty()) {
@@ -249,8 +238,14 @@ void CShellFile::SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& 
 
 bool CShellFile::GetFileLastWriteTime(FILETIME& time)
 {
+	return CShellFile::GetFileLastWriteTime(time, GetParentShellFolderPtr(), GetChildIdl());
+}
+
+//static
+bool CShellFile::GetFileLastWriteTime(FILETIME& time, const CComPtr<IShellFolder>& pParentFolder, const CIDL& relativeIdl)
+{
 	WIN32_FIND_DATA wfd = { 0 };
-	if (!FAILED(::SHGetDataFromIDList(m_pParentShellFolder, m_childIdl.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
+	if (!FAILED(::SHGetDataFromIDList(pParentFolder, relativeIdl.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
 		time = wfd.ftLastWriteTime;
 		return true;
 	} else {
@@ -259,10 +254,18 @@ bool CShellFile::GetFileLastWriteTime(FILETIME& time)
 	}
 }
 
+
 bool CShellFile::GetFileSize(ULARGE_INTEGER& size/*, std::shared_future<void> future*/)
 {
+	return CShellFile::GetFileSize(size, m_pParentShellFolder, m_childIdl);
+}
+
+
+//static
+bool CShellFile::GetFileSize(ULARGE_INTEGER& size, const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& childIdl)
+{
 	WIN32_FIND_DATA wfd = { 0 };
-	if (!FAILED(::SHGetDataFromIDList(m_pParentShellFolder, m_childIdl.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
+	if (!FAILED(::SHGetDataFromIDList(pParentShellFolder, childIdl.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
 		size.LowPart = wfd.nFileSizeLow;
 		size.HighPart = wfd.nFileSizeHigh;
 		return true;
@@ -277,7 +280,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::ReadSize()
 }
 
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize(std::shared_ptr<FileSizeArgs>& spArgs)
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
 {
 	switch (m_size.second) {
 	case FileSizeStatus::None:
@@ -298,7 +301,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize(std::shared_ptr<Fi
 	return m_size;
 }
 
-std::pair<FILETIME, FileTimeStatus> CShellFile::GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs)
+std::pair<FILETIME, FileTimeStatus> CShellFile::GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
 {
 	switch (m_lastWriteTime.second) {
 	case FileTimeStatus::None:

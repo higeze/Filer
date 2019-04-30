@@ -8,11 +8,7 @@
 CFilterCell::CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu)
 	:CEditableCell(pSheet, pRow, pColumn, spProperty,pMenu){ }
 
-CFilterCell::~CFilterCell()
-{
-	boost::asio::deadline_timer* pTimer = static_cast<CGridView*>(m_pSheet)->GetFilterTimerPtr();
-	pTimer->cancel();
-}
+CFilterCell::~CFilterCell(){}
 
 std::wstring CFilterCell::GetString()
 {
@@ -24,20 +20,12 @@ void CFilterCell::SetString(const std::wstring& str)
 	//Filter cell undo redo is set when Post WM_FILTER
 	if(GetString()!=str){
 		std::wstring newString = str;
-		boost::asio::deadline_timer* pTimer = static_cast<CGridView*>(m_pSheet)->GetFilterTimerPtr();
-		pTimer->expires_from_now(boost::posix_time::milliseconds(500));
 		CCell* pCell = this;
 		HWND hWnd = m_pSheet->GetGridPtr()->m_hWnd;
-		pTimer->async_wait([hWnd,pCell,newString](const boost::system::error_code& error)->void{
-
-			if(error == boost::asio::error::operation_aborted){
-				::OutputDebugStringA("timer canceled\r\n");
-			}else{
-				::OutputDebugStringA("timer filter\r\n");
-				pCell->CCell::SetString(newString);	
-				::PostMessage(hWnd,WM_FILTER,NULL,NULL);
-			}
-		});
+		m_deadlinetimer.run([hWnd, pCell, newString] {
+			pCell->CCell::SetString(newString);	
+			::PostMessage(hWnd,WM_FILTER,NULL,NULL);
+		}, std::chrono::milliseconds(200));
 	}
 }
 

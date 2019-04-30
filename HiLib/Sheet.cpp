@@ -287,10 +287,10 @@ void CSheet::SubmitUpdate()
 				break;
 			}
 		case Updates::Invalidate:
-		{
-			CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateScrolls")
+			{
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Invalidate")
 				Invalidate();
-		}
+			}
 		default:
 			break;
 		}

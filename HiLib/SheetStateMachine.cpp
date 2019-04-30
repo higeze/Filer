@@ -125,7 +125,7 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		bool Guard_VScrlDrag_LButtonDown(Event const & e)
 		{
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
-				return p->m_pVScroll->GetThumbRect().PtInRect(e.Direct.Pixels2Dips(e.Point));
+				return p->m_pVScroll->GetVisible() && p->m_pVScroll->GetThumbRect().PtInRect(e.Direct.Pixels2Dips(e.Point));
 			} else {
 				return false;
 			}
@@ -162,7 +162,7 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		bool Guard_HScrlDrag_LButtonDown(Event const & e)
 		{
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
-				return p->m_pHScroll->GetThumbRect().PtInRect(e.Direct.Pixels2Dips(e.Point));
+				return p->m_pHScroll->GetVisible() && p->m_pHScroll->GetThumbRect().PtInRect(e.Direct.Pixels2Dips(e.Point));
 			} else {
 				return false;
 			}

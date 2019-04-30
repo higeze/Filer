@@ -19,27 +19,27 @@ CFileLastWriteCell::~CFileLastWriteCell()
 std::shared_ptr<CShellFile> CFileLastWriteCell::GetShellFile()
 {
 	if (auto pFileRow = dynamic_cast<CFileRow*>(m_pRow)) {
-		if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(pFileRow->GetFilePointer())) {
-			if (!m_conLastWriteChanged.connected()) {
-				std::weak_ptr<CFileLastWriteCell> wp(shared_from_this());
-				m_conLastWriteChanged = spFolder->SignalFileSizeChanged.connect(
-					[wp](CShellFile* pFile)->void {
-					if (auto sp = wp.lock()) {
-						auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
-							[wp]()->void {
-							if (auto sp = wp.lock()) {
-								sp->OnPropertyChanged(L"value");
-							}
-						});
-						sp->m_conDelayUpdateAction = con;
-						sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
-					}
-				});
-			}
-			return spFolder;
-		} else {
+		//if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(pFileRow->GetFilePointer())) {
+		//	if (!m_conLastWriteChanged.connected()) {
+		//		std::weak_ptr<CFileLastWriteCell> wp(shared_from_this());
+		//		m_conLastWriteChanged = spFolder->SignalFileSizeChanged.connect(
+		//			[wp](CShellFile* pFile)->void {
+		//			if (auto sp = wp.lock()) {
+		//				auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+		//					[wp]()->void {
+		//					if (auto sp = wp.lock()) {
+		//						sp->OnPropertyChanged(L"value");
+		//					}
+		//				});
+		//				sp->m_conDelayUpdateAction = con;
+		//				sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+		//			}
+		//		});
+		//	}
+		//	return spFolder;
+		//} else {
 			return pFileRow->GetFilePointer();
-		}
+		//}
 	} else {
 		return nullptr;
 	}
@@ -49,7 +49,21 @@ std::wstring CFileLastWriteCell::GetString()
 {
 	try {
 		auto spFile = GetShellFile();
-		auto time = spFile->GetLastWriteTime(static_cast<CFileLastWriteColumn*>(m_pColumn)->GetTimeArgsPtr());
+		std::weak_ptr<CFileLastWriteCell> wp(shared_from_this());
+		auto changed = [wp]()->void {
+			if (auto sp = wp.lock()) {
+				auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					[wp]()->void {
+					if (auto sp = wp.lock()) {
+						sp->OnPropertyChanged(L"value");
+					}
+				});
+				sp->m_conDelayUpdateAction = con;
+				sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+			}
+		};
+
+		auto time = spFile->GetLastWriteTime(static_cast<CFileLastWriteColumn*>(m_pColumn)->GetTimeArgsPtr(), changed);
 		switch (time.second) {
 		case FileTimeStatus::None:
 			return L"-";

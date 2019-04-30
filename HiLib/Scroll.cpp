@@ -7,7 +7,8 @@
 
 namespace d2dw
 {
-	CScrollBase::CScrollBase(CGridView* pGrid) :CUIElement(), m_pGrid(pGrid){}
+	CScrollBase::CScrollBase(CGridView* pGrid, const std::shared_ptr<ScrollProperty>& spScrollProp)
+		:CUIElement(), m_pGrid(pGrid), m_spScrollProp(spScrollProp){}
 
 
 	void CScrollBase::SetScrollPos(const FLOAT pos)
@@ -23,29 +24,29 @@ namespace d2dw
 	{
 		if (!GetVisible())return;
 		//Draw background
-		e.Direct.FillSolidRectangle(m_backgroundFill, GetRect());
+		e.Direct.FillSolidRectangle(m_spScrollProp->BackgroundFill, GetRect());
 		//Draw thumb
-		e.Direct.FillSolidRectangle(m_foregroundFill, GetThumbRect());
+		e.Direct.FillSolidRectangle(m_spScrollProp->ForegroundFill, GetThumbRect());
 	}
 
 	CRectF CVScroll::GetThumbRect()const
 	{
 		return
 			CRectF(
-				m_rect.left + kMargin,
-				(std::max)(m_rect.top + m_rect.Height() * GetScrollPos() / GetScrollDistance(), m_rect.top),
-				m_rect.right - kMargin,
-				(std::min)(m_rect.top + m_rect.Height() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), m_rect.bottom));
+				m_rect.left + m_spScrollProp->ThumbMargin.left,
+				(std::max)(m_rect.top + m_rect.Height() * GetScrollPos() / GetScrollDistance(), m_rect.top + m_spScrollProp->ThumbMargin.top),
+				m_rect.right - m_spScrollProp->ThumbMargin.right,
+				(std::min)(m_rect.top + m_rect.Height() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), m_rect.bottom - m_spScrollProp->ThumbMargin.bottom));
 	}
 
 	CRectF CHScroll::GetThumbRect()const
 	{
 		return
 			CRectF(
-				(std::max)(m_rect.left + m_rect.Width() * GetScrollPos() / GetScrollDistance(), m_rect.left),
-				m_rect.top + kMargin,
-				(std::min)(m_rect.left + m_rect.Width() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), m_rect.right),
-				m_rect.bottom - kMargin);
+				(std::max)(m_rect.left + m_rect.Width() * GetScrollPos() / GetScrollDistance(), m_rect.left + m_spScrollProp->ThumbMargin.left),
+				m_rect.top + m_spScrollProp->ThumbMargin.top,
+				(std::min)(m_rect.left + m_rect.Width() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), m_rect.right - m_spScrollProp->ThumbMargin.right),
+				m_rect.bottom - m_spScrollProp->ThumbMargin.bottom);
 	}
 
 	void CVScroll::OnPropertyChanged(const wchar_t* name)

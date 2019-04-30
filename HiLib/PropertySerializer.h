@@ -289,6 +289,12 @@ public:
 	{
 		SerializeValue(*t,pRow,pCol);
 	}
+	//For unique_ptr
+	template<class T>
+	void SerializeValue(std::unique_ptr<T>& t, CRow* pRow, CColumn* pCol)
+	{
+		SerializeValue(*t, pRow, pCol);
+	}
 };
 
 
@@ -444,6 +450,13 @@ public:
 	void DeserializeValue(std::shared_ptr<T>& t,CRow* pRow,CColumn* pColumn)
 	{
 		DeserializeValue(*t,pRow,pColumn);
+	}
+
+	//For unique_ptr
+	template<class T>
+	void DeserializeValue(std::unique_ptr<T>& t, CRow* pRow, CColumn* pColumn)
+	{
+		DeserializeValue(*t, pRow, pColumn);
 	}
 };
 

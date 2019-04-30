@@ -221,6 +221,7 @@
     <ClInclude Include="..\HiLib\ConsoleTimer.h" />
     <ClInclude Include="..\HiLib\CShellExtension.h" />
     <ClInclude Include="..\HiLib\Cursorer.h" />
+    <ClInclude Include="..\HiLib\DeadlineTimer.h" />
     <ClInclude Include="..\HiLib\Direct2DWrite.h" />
     <ClInclude Include="..\HiLib\Debug.h" />
     <ClInclude Include="..\HiLib\Dragger.h" />
@@ -378,6 +379,7 @@
     <ClCompile Include="..\HiLib\Console.cpp" />
     <ClCompile Include="..\HiLib\CShellExtension.cpp" />
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
+    <ClCompile Include="..\HiLib\DeadlineTimer.cpp" />
     <ClCompile Include="..\HiLib\Direct2DWrite.cpp" />
     <ClCompile Include="..\HiLib\FilterCell.cpp" />
     <ClCompile Include="..\HiLib\FontCell.cpp" />
@@ -420,6 +422,7 @@
     <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp" />
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
+    <ClCompile Include="..\HiLib\ThreadPool.cpp" />
     <ClCompile Include="..\HiLib\ThreadPool.h" />
     <ClCompile Include="..\HiLib\Tracker.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />

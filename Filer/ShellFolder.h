@@ -7,11 +7,11 @@ class CShellFolder :public CShellFile
 private:
 	CComPtr<IShellFolder> m_pShellFolder;
 
-	std::unique_ptr<std::thread> m_pSizeThread;
-	std::unique_ptr<std::thread> m_pTimeThread;
-	std::atomic<bool> m_cancelThread = false;
-	//std::promise<void> m_sizePromise;
-	//std::shared_future<void> m_sizeFuture;
+	std::shared_ptr<bool> m_spCancelThread = std::make_shared<bool>(false);
+
+	std::future<std::pair<ULARGE_INTEGER, FileSizeStatus>> m_futureSize;
+	std::future<std::pair<FILETIME, FileTimeStatus>> m_futureTime;
+
 	std::mutex m_mtxSize;
 	std::mutex m_mtxTime;
 
@@ -20,10 +20,6 @@ public:
 	CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CShellFolder();
 
-	//	CShellFolder(const std::wstring& path);
-
-	boost::signals2::signal<void(CShellFile*)> SignalFileSizeChanged;
-	boost::signals2::signal<void(CShellFile*)> SignalTimeChanged;
 
 	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction) override;
 
@@ -38,11 +34,17 @@ public:
 	CComPtr<IShellFolder> GetShellFolderPtr();
 	std::shared_ptr<CShellFolder> GetParent();
 	std::shared_ptr<CShellFolder> Clone()const;
-	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs)override;
-	virtual std::pair<FILETIME, FileTimeStatus> GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs)override;
+	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed = nullptr)override;
+	virtual std::pair<FILETIME, FileTimeStatus> GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed = nullptr)override;
 	std::shared_ptr<CShellFile> CreateShExFileFolder(CIDL& relativeIdl);
+	static std::shared_ptr<CShellFile> CreateShExFileFolder(const CComPtr<IShellFolder>& pShellFolder, const CIDL& parentIdl, const CIDL& childIdl);
 	static std::shared_ptr<CShellFile> CreateShExFileFolder(const std::wstring& path);
-
+	static bool GetFolderLastWriteTime(FILETIME& time, const std::shared_ptr<bool>& cancel,
+		const CComPtr<IShellFolder>& pParentFolder, const CComPtr<IShellFolder>& pFolder, const CIDL& relativeIdl, const std::wstring& path,
+		boost::timer& tim, int limit, bool ignoreFolderTime);
+	static bool GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<bool>& cancel,
+		const CComPtr<IShellFolder>& pFolder, const std::wstring& path,
+		const boost::timer& tim, const int limit);
 private:
 	std::pair<FILETIME, FileTimeStatus> GetLockLastWriteTime();
 	std::pair<ULARGE_INTEGER, FileSizeStatus> GetLockSize();
@@ -52,7 +54,5 @@ private:
 protected:
 	void SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size);
 	void SetLockLastWriteTime(std::pair<FILETIME, FileTimeStatus>& time);
-	virtual bool GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel, boost::timer& tim, int limit);
-	virtual bool GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& cancel, boost::timer& tim, int limit, bool ignoreFolderTime);
 
 };

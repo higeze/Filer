@@ -7,6 +7,7 @@
 #include "ApplicationProperty.h"
 #include "FileSizeArgs.h"
 #include "FileTimeArgs.h"
+#include "ThreadPool.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -16,29 +17,32 @@ CShellFolder::CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parent
 
 CShellFolder::~CShellFolder()
 {
-	//std::wcout << L"~CShellFolder " + GetFileName() << std::endl;
-	try {
-		m_cancelThread.store(true);
-		if (m_pSizeThread && m_pSizeThread->joinable()) {
-			BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFolder Size thread join : " + GetPath();
-			m_pSizeThread->join();
-		}
-		SignalFileSizeChanged.disconnect_all_slots();
-	} catch (...) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFile Exception Size thread detached";
-		if (m_pSizeThread) m_pSizeThread->detach();
-	}
+	*m_spCancelThread = true;
 
-	try{
-		if (m_pTimeThread && m_pTimeThread->joinable()) {
-			BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFolder Time thread join : " + GetPath();
-			m_pTimeThread->join();
-		}
-		SignalTimeChanged.disconnect_all_slots();
-	} catch (...) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFile Exception Time thread detached";
-		if (m_pTimeThread) m_pTimeThread->detach();
-	}
+	//std::wcout << L"~CShellFolder " + GetFileName() << std::endl;
+	//try {
+	//	m_cancelThread.store(true);
+	//	if (m_pSizeThread && m_pSizeThread->joinable()) {
+	//		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFolder Size thread join : " + GetPath();
+	//		m_pSizeThread->join();
+	//	}
+	//	SignalFileSizeChanged.disconnect_all_slots();
+	//} catch (...) {
+	//	BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFile Exception Size thread detached";
+	//	if (m_pSizeThread) m_pSizeThread->detach();
+	//}
+
+
+	//try{
+	//	if (m_pTimeThread && m_pTimeThread->joinable()) {
+	//		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFolder Time thread join : " + GetPath();
+	//		m_pTimeThread->join();
+	//	}
+	//	SignalTimeChanged.disconnect_all_slots();
+	//} catch (...) {
+	//	BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFile Exception Time thread detached";
+	//	if (m_pTimeThread) m_pTimeThread->detach();
+	//}
 }
 
 CComPtr<IShellFolder> CShellFolder::GetShellFolderPtr()
@@ -137,7 +141,7 @@ std::shared_ptr<CShellFolder> CShellFolder::Clone()const
 	return std::make_shared<CShellFolder>(m_pParentShellFolder, m_parentIdl, m_childIdl, m_pShellFolder);
 }
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(std::shared_ptr<FileSizeArgs>& spArgs)
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
 {
 	if (spArgs->NoFolderSize) {
 		SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable));
@@ -146,191 +150,234 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(std::shared_ptr<
 	} else {
 		switch (GetLockSize().second) {
 			case FileSizeStatus::None:
-				SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
-
-				if (!m_pSizeThread) {
+				{
+					SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
 					auto limit = spArgs->TimeLimitFolderSize ? spArgs->TimeLimitMs : -1;
-					m_pSizeThread.reset(new std::thread([this, limit]()->void {
+					m_futureSize = CThreadPool::GetInstance()->enqueue([](std::shared_ptr<bool> spCancelThread, CComPtr<IShellFolder> pShellFolder, CIDL folderIdl, std::wstring path, int limit, std::function<void()> sizeChanged) {
 						try {
 							boost::timer tim;
 							ULARGE_INTEGER size = { 0 };
-							if (GetFolderSize(size, m_cancelThread, tim, limit)) {
-								SetLockSize(std::make_pair(size, FileSizeStatus::Available));
+							if (CShellFolder::GetFolderSize(size, spCancelThread, pShellFolder, path, tim, limit)) {
+								if (sizeChanged) { sizeChanged(); }
+								return std::make_pair(size, FileSizeStatus::Available);
 							} else {
-								SetLockSize(std::make_pair(size, FileSizeStatus::Unavailable));
+								if (sizeChanged) { sizeChanged(); }
+								return std::make_pair(size, FileSizeStatus::Unavailable);
 							}
-							SignalFileSizeChanged(this);
 						} catch (...) {
 							BOOST_LOG_TRIVIAL(trace) << L"CShellFile::GetSize Exception at size thread";
-						}
-					}));
-				} else {
-					OutputDebugString(L"Already run");
+							return std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable);
+						}					
+					}, m_spCancelThread, GetShellFolderPtr(), GetAbsoluteIdl(), GetPath(), limit, changed);
+				}
+				break;
+			case FileSizeStatus::Calculating:
+				{
+					if (m_futureSize.valid()) {
+						SetLockSize(m_futureSize.get());
+					}
 				}
 				break;
 			case FileSizeStatus::Available:
 			case FileSizeStatus::Unavailable:
-			case FileSizeStatus::Calculating:
 				break;
 		}
 	}
 	return GetLockSize();
 }
 
-std::pair<FILETIME, FileTimeStatus> CShellFolder::GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs)
+std::pair<FILETIME, FileTimeStatus> CShellFolder::GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
 {
 	switch (GetLockLastWriteTime().second) {
 	case FileTimeStatus::None:
-	{
-		FILETIME time = { 0 };
-		if (!spArgs->IgnoreFolderTime, CShellFile::GetFileLastWriteTime(time)) {
-			SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::AvailableLoading));
-		} else {
-			SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::Loading));
-		}
-		if (!m_pTimeThread) {
+		{
+			FILETIME time = { 0 };
+			if (!spArgs->IgnoreFolderTime, CShellFile::GetFileLastWriteTime(time)) {
+				SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::AvailableLoading));
+			} else {
+				SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::Loading));
+			}
 			auto limit = spArgs->TimeLimitFolderLastWrite ? spArgs->TimeLimitMs : -1;
-			m_pTimeThread.reset(new std::thread([this, limit, ignoreFolderTime = spArgs->IgnoreFolderTime]()->void {
+			m_futureTime = CThreadPool::GetInstance()->enqueue([](std::shared_ptr<bool> spCancelThread, 
+				CComPtr<IShellFolder> pParentFolder, CComPtr<IShellFolder> pFolder, CIDL relativeIdl, std::wstring path,
+				int limit, bool ignoreFolderTime, std::function<void()> timeChanged) {
 				try {
 					boost::timer tim;
 					FILETIME time = { 0 };
-					if (GetFolderLastWriteTime(time, m_cancelThread, tim, limit, ignoreFolderTime) && (time.dwLowDateTime || time.dwHighDateTime)) {
-						SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::Available));
+					if (GetFolderLastWriteTime(time, spCancelThread, pParentFolder, pFolder, relativeIdl, path, tim, limit, ignoreFolderTime) && (time.dwLowDateTime || time.dwHighDateTime)) {
+						timeChanged();
+						return std::make_pair(time, FileTimeStatus::Available);
 					} else {
-						SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::Unavailable));
+						timeChanged();
+						return std::make_pair(time, FileTimeStatus::Unavailable);
 					}
-					SignalTimeChanged(this);
 				} catch (...) {
 					BOOST_LOG_TRIVIAL(trace) << L"CShellFile::GetLastWriteTime Exception at time thread";
+					return std::make_pair(FILETIME{ 0 }, FileTimeStatus::Unavailable);
 				}
-			}));
-		} else {
-			OutputDebugString(L"Already run");
+			}, m_spCancelThread, GetParentShellFolderPtr(), GetShellFolderPtr(), GetChildIdl(), GetPath(), limit, spArgs->IgnoreFolderTime, changed);
 		}
-	}
+		break;
+	case FileTimeStatus::Loading:
+	case FileTimeStatus::AvailableLoading:
+		{
+			if (m_futureTime.valid()) {
+				SetLockLastWriteTime(m_futureTime.get());
+			}
+		}
 		break;
 	case FileTimeStatus::Available:
 	case FileTimeStatus::Unavailable:
-	case FileTimeStatus::Loading:
+
 		break;
 	}
 	return GetLockLastWriteTime();
 }
 
-bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, std::atomic<bool>& cancel, boost::timer& tim, int limit)
-{
-	if (cancel.load()) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Canceled at top : " + GetPath();
+//static
+bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<bool>& cancel, 
+	const CComPtr<IShellFolder>& pFolder, const std::wstring& path, 
+	const boost::timer& tim, const int limit)
+{	
+	if (*cancel) {
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Canceled at top : " + path;
 		return false;
 	} else if (limit > 0 && tim.elapsed() > limit/1000.0) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Timer elapsed at top : " + GetPath();
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize TimeElapsed at top : " + path;
 		return false;
 	}
+
 	try {
 		//Enumerate child IDL
 		size.QuadPart = 0;
 		ULARGE_INTEGER childSize = { 0 };
-
 		CComPtr<IEnumIDList> enumIdl;
-		if (SUCCEEDED(GetShellFolderPtr()->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
-			CIDL nextIdl;
+		if (SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
+			CIDL childIdl;
 			ULONG ulRet(0);
-			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
-				if (cancel.load()) {
-					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Canceled in while : " + GetPath();
+			while (SUCCEEDED(enumIdl->Next(1, childIdl.ptrptr(), &ulRet))) {
+				if (*cancel) {
+					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Canceled in while : " + path;
 					return false;
 				} else if (limit > 0 && tim.elapsed() > limit/1000.0) {
-					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize Timer elapsed in while : " + GetPath();
+					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderSize TimeElapsed in while : " + path;
 					return false;
 				}
-				if (!nextIdl) { break; }
 
-				auto spFile(CreateShExFileFolder(nextIdl));
-				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-					if (spFolder->GetFolderSize(childSize, cancel, tim, limit)) {
-						size.QuadPart += childSize.QuadPart;
-					} else {
-						return false;
-					}
+				if (!childIdl) {
+					break; 
 				} else {
-					if (spFile->GetFileSize(childSize)) {
-						size.QuadPart += childSize.QuadPart;
+					STRRET childStrret;
+					pFolder->GetDisplayNameOf(childIdl.ptr(), SHGDN_FORPARSING, &childStrret);
+					std::wstring childPath = childIdl.STRRET2WSTR(childStrret);
+					std::wstring childExt = ::PathFindExtension(childPath.c_str());
+
+					CComPtr<IShellFolder> pChidFolder;
+					CComPtr<IEnumIDList> childEnumIdl;
+					if (!boost::iequals(childExt, ".zip") &&
+						SUCCEEDED(pFolder->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pChidFolder)) &&
+						SUCCEEDED(pChidFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &childEnumIdl))) {
+						if (CShellFolder::GetFolderSize(childSize, cancel,
+							pChidFolder, childPath,
+							tim, limit)) {
+							size.QuadPart += childSize.QuadPart;
+						} else {
+							return false;
+						}
 					} else {
-						return false;
+						if (CShellFile::GetFileSize(childSize, pFolder, childIdl)) {
+							size.QuadPart += childSize.QuadPart;
+						} else {
+							return false;
+						}
 					}
+					childSize.QuadPart = 0;
+					childIdl.Clear();
 				}
-				childSize.QuadPart = 0;
-				nextIdl.Clear();
 			}
 		}
 	} catch (...) {
-		BOOST_LOG_TRIVIAL(trace) << "Exception CShellFolder::GetFolderSize " << GetPath();
+		BOOST_LOG_TRIVIAL(trace) << "Exception CShellFolder::GetFolderSize " << path;
 		return false;
 	}
 	return true;
-
 }
 
-bool CShellFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& cancel, boost::timer& tim, int limit, bool ignoreFolderTime)
+bool CShellFolder::GetFolderLastWriteTime(FILETIME& time, const std::shared_ptr<bool>& cancel,
+	const CComPtr<IShellFolder>& pParentFolder, const CComPtr<IShellFolder>& pFolder, const CIDL& relativeIdl, const std::wstring& path,
+	boost::timer& tim, int limit, bool ignoreFolderTime)
 {
-	if (!ignoreFolderTime && CShellFile::GetFileLastWriteTime(time)) {
+	if (!ignoreFolderTime && CShellFile::GetFileLastWriteTime(time, pParentFolder, relativeIdl )) {
 	} else {
 		time = FILETIME{ 0 };
 	}
 
-	if (cancel.load()) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderLastWriteTime Canceled at top : " + GetPath();
+	if (*cancel) {
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderLastWriteTime Canceled at top : " + path;
 		return true;
 	} else if (limit > 0 && tim.elapsed() > limit / 1000.0) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderLastWriteTime Timer elapsed at top : " + GetPath();
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderLastWriteTime TimeElapsed at top : " + path;
 		return true;
 	}
 	try {
 		//Enumerate child IDL
 		CComPtr<IEnumIDList> enumIdl;
-		if (SUCCEEDED(GetShellFolderPtr()->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
-			CIDL nextIdl;
+		if (SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
+			CIDL childIdl;
 			ULONG ulRet(0);
-			std::vector<std::shared_ptr<CShellFolder>> folders;
-			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
-				if (cancel.load()) {
-					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderLastWriteTime Canceled in while : " + GetPath();
+			std::vector<std::tuple<CComPtr<IShellFolder>, CIDL, std::wstring>> folders;
+			while (SUCCEEDED(enumIdl->Next(1, childIdl.ptrptr(), &ulRet))) {
+				if (*cancel) {
+					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderLastWriteTime Canceled in while : " + path;
 					return true;
 				} else if (limit > 0 && tim.elapsed() > limit / 1000.0) {
-					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderLastWriteTime Timer elapsed in while : " + GetPath();
+					BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::GetFolderLastWriteTime TimeElapsed in while : " + path;
 					return true;
 				}
 
-				if (!nextIdl) { break; }
-
-				auto spFile(CreateShExFileFolder(nextIdl));
-				FILETIME childTime = { 0 };
-				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-					folders.push_back(spFolder);
+				if (!childIdl) {
+					break;
 				} else {
-					if (!spFile->GetFileLastWriteTime(childTime)) {
-						childTime = { 0 };
+					FILETIME childTime = { 0 };
+					STRRET childStrret;
+					pFolder->GetDisplayNameOf(childIdl.ptr(), SHGDN_FORPARSING, &childStrret);
+					std::wstring childPath = childIdl.STRRET2WSTR(childStrret);
+					std::wstring childExt = ::PathFindExtension(childPath.c_str());
+
+					CComPtr<IShellFolder> pChidFolder;
+					CComPtr<IEnumIDList> childEnumIdl;
+					if (!boost::iequals(childExt, ".zip") &&
+						SUCCEEDED(pFolder->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pChidFolder)) &&
+						SUCCEEDED(pChidFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &childEnumIdl))) {
+						folders.emplace_back(std::make_tuple(pChidFolder, childIdl, childPath));
+					} else {
+						if (!CShellFile::GetFileLastWriteTime(childTime, pFolder, childIdl)) {
+							childTime = { 0 };
+						}
 					}
-				}
 
-				if (childTime.dwLowDateTime || childTime.dwHighDateTime) {
-					ULARGE_INTEGER latest = { time.dwLowDateTime, time.dwHighDateTime };
-					ULARGE_INTEGER child = { childTime.dwLowDateTime, childTime.dwHighDateTime };
-					latest = latest.QuadPart > child.QuadPart ? latest : child;
-					time = FILETIME{ latest.LowPart, latest.HighPart };
-				}
+					if (childTime.dwLowDateTime || childTime.dwHighDateTime) {
+						ULARGE_INTEGER latest = { time.dwLowDateTime, time.dwHighDateTime };
+						ULARGE_INTEGER child = { childTime.dwLowDateTime, childTime.dwHighDateTime };
+						latest = latest.QuadPart > child.QuadPart ? latest : child;
+						time = FILETIME{ latest.LowPart, latest.HighPart };
+					}
 
-				nextIdl.Clear();
+					childIdl.Clear();
+				}
 			}
 
-			for (auto spFolder : folders) {
-				FILETIME childTime = { 0 };
-				if (!spFolder->GetFolderLastWriteTime(childTime, cancel, tim, limit, ignoreFolderTime)) {
-					childTime = { 0 };
+			for (auto childFolderArg : folders) {
+				FILETIME grandchildTime = { 0 };
+				if (!GetFolderLastWriteTime(grandchildTime, cancel,
+					pFolder, std::get<0>(childFolderArg), std::get<1>(childFolderArg), std::get<2>(childFolderArg),
+					tim, limit, ignoreFolderTime)) {
+					grandchildTime = { 0 };
 				}
-				if (childTime.dwLowDateTime || childTime.dwHighDateTime) {
+
+				if (grandchildTime.dwLowDateTime || grandchildTime.dwHighDateTime) {
 					ULARGE_INTEGER latest = { time.dwLowDateTime, time.dwHighDateTime };
-					ULARGE_INTEGER child = { childTime.dwLowDateTime, childTime.dwHighDateTime };
+					ULARGE_INTEGER child = { grandchildTime.dwLowDateTime, grandchildTime.dwHighDateTime };
 					latest = latest.QuadPart > child.QuadPart ? latest : child;
 					time = FILETIME{ latest.LowPart, latest.HighPart };
 				}
@@ -338,7 +385,7 @@ bool CShellFolder::GetFolderLastWriteTime(FILETIME& time, std::atomic<bool>& can
 
 		}
 	} catch (...) {
-		BOOST_LOG_TRIVIAL(trace) << "Exception CShellFolder::GetFolderLastWriteTime " << GetPath();
+		BOOST_LOG_TRIVIAL(trace) << "Exception CShellFolder::GetFolderLastWriteTime " << path;
 		return false;
 	}
 	return true;
@@ -383,39 +430,45 @@ void CShellFolder::SetExt(const std::wstring& wstrExt)
 
 std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
 {
+	return CreateShExFileFolder(GetShellFolderPtr(), GetAbsoluteIdl(), childIdl);
+}
+
+//static
+std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const CComPtr<IShellFolder>& pShellFolder, const CIDL& parentIdl, const CIDL& childIdl)
+{
 	boost::timer tim;
-//	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"CreateShExFileFolder")
 
 	CComPtr<IShellFolder> pFolder;
-	CComPtr<IEnumIDList> enumIdl;	
+	CComPtr<IEnumIDList> enumIdl;
 	STRRET strret;
-	GetShellFolderPtr()->GetDisplayNameOf(childIdl.ptr(), SHGDN_FORPARSING, &strret);
-	std::wstring path =  childIdl.STRRET2WSTR(strret);
+	pShellFolder->GetDisplayNameOf(childIdl.ptr(), SHGDN_FORPARSING, &strret);
+	std::wstring path = childIdl.STRRET2WSTR(strret);
 	std::wstring ext = ::PathFindExtension(path.c_str());
 
 	if (!childIdl) {
 		return CKnownFolderManager::GetInstance()->GetDesktopFolder();
 	} else if (auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderByPath(path)) {
 		return spKnownFolder;
-	} else if (path[0] == L':'){
-		return std::make_shared<CShellFile>(GetShellFolderPtr(), m_absoluteIdl, childIdl);
+	} else if (path[0] == L':') {
+		return std::make_shared<CShellFile>(pShellFolder, parentIdl, childIdl);
 	} else if (auto spDriveFolder = CDriveManager::GetInstance()->GetDriveFolderByPath(path)) {
 		return spDriveFolder;
 	} else if (boost::iequals(ext, ".zip")) {
-		return std::make_shared<CShellZipFolder>(GetShellFolderPtr(), m_absoluteIdl, childIdl);
+		return std::make_shared<CShellZipFolder>(pShellFolder, parentIdl, childIdl);
 	} else if (
 		//Do not use ::PathIsDirectory(path.c_str()), because it's slower
-		(SUCCEEDED(GetShellFolderPtr()->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
-		SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)))) {
-		return std::make_shared<CShellFolder>(GetShellFolderPtr(), m_absoluteIdl, childIdl, pFolder);
+		(SUCCEEDED(pShellFolder->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
+			SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)))) {
+		return std::make_shared<CShellFolder>(pShellFolder, parentIdl, childIdl, pFolder);
 	} else {
-		return std::make_shared<CShellFile>(GetShellFolderPtr(), m_absoluteIdl, childIdl);
+		return std::make_shared<CShellFile>(pShellFolder, parentIdl, childIdl);
 	}
 
 	if (tim.elapsed() > 0.1) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::CreateShExFileFolder Over0.1 "<< path;
+		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::CreateShExFileFolder Over0.1 " << path;
 	}
 }
+
 
 
 //static

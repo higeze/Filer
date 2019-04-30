@@ -1,16 +1,16 @@
 #pragma once
 #include "TextCell.h"
+#include "DeadlineTimer.h"
 
 class IInplaceEdit;
+
 /**
  *  Filter Cell
  */
 class CFilterCell:public CEditableCell
 {
 private :
-	//static std::unique_ptr<boost::asio::io_service> m_pFilterIosv;
-	//static std::unique_ptr<boost::asio::io_service::work> m_pFilterWork;
-	//static std::unique_ptr<boost::asio::deadline_timer> m_pFilterTimer;
+	CDeadlineTimer m_deadlinetimer;
 
 public:
 	CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr);
