@@ -19,8 +19,6 @@
 
 #define FILELINEFUNCTION (boost::format("File:%1%, Line:%2%, Func:%3%") % ::PathFindFileNameA(__FILE__) % __LINE__ % __FUNCTION__).str().c_str()
 
-#define USE_ID2D1DCRenderTarget
-
 struct XTag;
 struct YTag;
 
@@ -338,6 +336,8 @@ namespace d2dw{
 		}
 	};
 
+	class CFileIconCache;
+
 	class CDirect2DWrite
 	{
 	private:
@@ -345,13 +345,7 @@ namespace d2dw{
 		CComPtr<ID2D1Factory1> m_pD2D1Factory = NULL;
 		CComPtr<IDWriteFactory1> m_pDWriteFactory = NULL;
 
-#ifdef USE_ID2D1DCRenderTarget
-		CComPtr<ID2D1DCRenderTarget> m_pHwndRenderTarget = NULL;
-		HDC m_hDC;
-		std::vector<std::function<void()>> m_gdifuncs;
-#else
 		CComPtr<ID2D1HwndRenderTarget> m_pHwndRenderTarget = NULL;
-#endif
 		CComPtr<IWICImagingFactory> m_pWICImagingFactory = NULL;
 		//CComPtr<IWICFormatConverter> m_pWICFormatConverter = NULL;
 
@@ -365,23 +359,23 @@ namespace d2dw{
 		FLOAT m_xPixels2Dips = 0.0f;
 		FLOAT m_yPixels2Dips = 0.0f;
 
+		std::unique_ptr<CFileIconCache> m_pIconCache;
+
 	public:
 		CDirect2DWrite(HWND hWnd);
+		~CDirect2DWrite();
 		CDirect2DWrite(const CDirect2DWrite&) = delete;
 		CDirect2DWrite& operator=(const CDirect2DWrite&) = delete;
+
+		std::unique_ptr<CFileIconCache>& GetIconCachePtr() { return m_pIconCache; }
 
 		CComPtr<ID2D1Factory1>& GetD2D1Factory();
 		CComPtr<IDWriteFactory1>& GetDWriteFactory();
 		CComPtr<IWICImagingFactory>& GetWICImagingFactory();
 		//CComPtr<IWICFormatConverter>& GetWICFormatConverter();
 
-#ifdef USE_ID2D1DCRenderTarget
-		CComPtr<ID2D1DCRenderTarget>& GetHwndRenderTarget();
-		void BeginDraw(HDC hDC, const RECT& rc);
-#else
 		CComPtr<ID2D1HwndRenderTarget>& GetHwndRenderTarget();
 		void BeginDraw();
-#endif
 		CComPtr<ID2D1SolidColorBrush>& GetColorBrush(const CColorF& color);
 		CComPtr<IDWriteTextFormat>& GetTextFormat(const FormatF& fca);
 		CComPtr<IDWriteTextLayout>& GetTextLayout(const FormatF& format, const std::wstring& text, const CSizeF& size);
@@ -400,6 +394,7 @@ namespace d2dw{
 		void DrawSolidGeometry(const SolidLine& line, CComPtr<ID2D1PathGeometry>& path);
 		void FillSolidGeometry(const SolidFill& fill, CComPtr<ID2D1PathGeometry>& path);
 		void DrawIcon(HICON hIcon, d2dw::CRectF& rect);
+		void DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap, const CRectF& rect);
 
 		CSizeF CalcTextSize(const FormatF& format, const std::wstring& text);
 		CSizeF CalcTextSizeWithFixedWidth(const FormatF& fca, const std::wstring& text, const FLOAT width);

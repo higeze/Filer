@@ -4,6 +4,7 @@
 #include "MyFile.h"
 #include "MyAutoUpdater.h"
 #include "UpdateResource.h"
+#include <thread>
 
 extern HWND g_hDlgModeless;
 extern CAutoUpdater updater;
@@ -154,7 +155,8 @@ private:
 		CButton button(::GetDlgItem(m_hWnd, IDOK));
 		button.EnableWindow(FALSE);
 
-		boost::thread th(std::bind(&CUpdateDialog::RunUpdate, this));
+		std::thread th(std::bind(&CUpdateDialog::RunUpdate, this));
+		th.detach();
 		return TRUE;
 	}
 

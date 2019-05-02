@@ -72,13 +72,11 @@ protected:
 	std::pair<FILETIME, FileTimeStatus> m_lastAccessTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
 	std::pair<FILETIME, FileTimeStatus> m_lastWriteTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
 	std::pair<ULARGE_INTEGER, FileSizeStatus> m_size = std::make_pair(ULARGE_INTEGER(), FileSizeStatus::None);
-	std::pair<std::shared_ptr<CIcon>, FileIconStatus> m_icon = std::make_pair(std::shared_ptr<CIcon>(nullptr), FileIconStatus::None);
+	//std::pair<std::shared_ptr<CIcon>, FileIconStatus> m_icon = std::make_pair(std::shared_ptr<CIcon>(nullptr), FileIconStatus::None);
 
 	DWORD  m_fileAttributes = 0;
 	ULONG m_sfgao = 0;
 
-	std::unique_ptr<std::thread> m_pIconThread;
-	std::mutex m_mtxIcon;
 public:
 	//Constructor
 	CShellFile() {}
@@ -87,9 +85,6 @@ public:
 
 	//Destructor
 	virtual ~CShellFile();
-
-	//Signal
-	//boost::signals2::signal<void(CShellFile*)> SignalFileIconChanged;
 	
 	//Getter 
 	CComPtr<IShellFolder>& GetParentShellFolderPtr(){return m_pParentShellFolder;}
@@ -122,21 +117,22 @@ public:
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> ReadSize();
 
 	//Icon
-	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction);
+	//virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction);
 
-	bool HasIconInCache();
+	//bool HasIconInCache();
 	bool IsDirectory();
 	virtual void Reset();
 
 private:
 	void UpdateWIN32_FIND_DATA();
-	virtual void ResetIcon();
+	//virtual void ResetIcon();
 	virtual void ResetSize();
+	virtual void ResetTime();
 
 protected:
 	std::shared_ptr<CIcon> GetDefaultIcon();
-	std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetLockIcon();
-	void SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& icon);
+	//std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetLockIcon();
+	//void SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& icon);
 };
 
 
@@ -150,6 +146,6 @@ public:
 	virtual ~CShellInvalidFile(){}
 
 	//Icon
-	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction)override;
+//	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction)override;
 };
 

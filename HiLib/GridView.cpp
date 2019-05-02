@@ -252,14 +252,7 @@ LRESULT CGridView::OnEraseBkGnd(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHan
 LRESULT CGridView::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {	
 	CRect rcClient(GetClientRect());
-#ifndef USE_ID2D1DCRenderTarget
 	m_pDirect->GetHwndRenderTarget()->Resize(D2D1_SIZE_U{ (UINT)rcClient.Width(), (UINT)rcClient.Height() });
-#else
-	if (m_upBuffDC.get() == nullptr || rcClient.Width() > m_upBuffDC->GetSize().cx || rcClient.Height() > m_upBuffDC->GetSize().cy) {
-		CClientDC dc(m_hWnd);
-		m_upBuffDC.reset(new CBufferDC(dc, rcClient.Width(), rcClient.Height()));
-	}
-#endif
 	SizeChanged();
 	SubmitUpdate();
 	return 0;
@@ -269,12 +262,7 @@ LRESULT CGridView::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	CPaintDC dc(m_hWnd);
-#ifdef USE_ID2D1DCRenderTarget
-	CRect rcClient(GetClientRect());
-	m_pDirect->BeginDraw(m_upBuffDC->GetHDC(), rcClient);
-#else
 	m_pDirect->BeginDraw();
-#endif
 
 	m_pDirect->ClearSolid(*(m_spGridViewProp->BackgroundPropPtr->m_brush));
 	PaintEvent e(this, *m_pDirect);
@@ -283,17 +271,6 @@ LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	m_pHScroll->OnPaint(e);
 
 	m_pDirect->EndDraw();
-
-#ifdef USE_ID2D1DCRenderTarget
-	CRgn rgn;
-	rgn.CreateRectRgnIndirect(rcClient);
-	dc.SelectClipRgn(rgn);
-	dc.BitBlt(rcClient.left, rcClient.top,
-		rcClient.Width(),
-		rcClient.Height(),
-		*m_upBuffDC.get(), 0, 0, SRCCOPY);
-	dc.SelectClipRgn(NULL);
-#endif
 	return 0;
 }
 

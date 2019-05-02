@@ -116,9 +116,6 @@
     <ClInclude Include="FileSizeColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="MyIcon.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="PathCell.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -506,14 +503,8 @@
     <ClInclude Include="..\HiLib\SerializerEnableIf.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="FileIconCache.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\ThreadHelper.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="IDL.h">
-      <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="KnownFolder.h">
       <Filter>Filer</Filter>
@@ -561,6 +552,15 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\DeadlineTimer.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\FileIconCache.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\IDL.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\MyIcon.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -629,9 +629,6 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FileSizeColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="MyIcon.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="PathCell.cpp">
@@ -820,12 +817,6 @@
     <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="FileIconCache.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="IDL.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="KnownFolder.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
@@ -860,6 +851,15 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\ThreadPool.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\FileIconCache.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\IDL.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\MyIcon.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

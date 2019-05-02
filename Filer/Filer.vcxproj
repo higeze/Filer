@@ -228,6 +228,7 @@
     <ClInclude Include="..\HiLib\EmptyCell.h" />
     <ClInclude Include="..\HiLib\EventArgs.h" />
     <ClInclude Include="..\HiLib\FileDragger.h" />
+    <ClInclude Include="..\HiLib\FileIconCache.h" />
     <ClInclude Include="..\HiLib\FilterCell.h" />
     <ClInclude Include="..\HiLib\FindDlg.h" />
     <ClInclude Include="..\HiLib\FindDlgResource.h" />
@@ -238,6 +239,7 @@
     <ClInclude Include="..\HiLib\GridViewProperty.h" />
     <ClInclude Include="..\HiLib\GridViewResource.h" />
     <ClInclude Include="..\HiLib\IBridgeTSFInterface.h" />
+    <ClInclude Include="..\HiLib\IDL.h" />
     <ClInclude Include="..\HiLib\IDragger.h" />
     <ClInclude Include="..\HiLib\IKeyObserver.h" />
     <ClInclude Include="..\HiLib\IMouseObserver.h" />
@@ -259,6 +261,7 @@
     <ClInclude Include="..\HiLib\MyFriendSerializer.h" />
     <ClInclude Include="..\HiLib\MyGdiObj.h" />
     <ClInclude Include="..\HiLib\MyGdiplusHelper.h" />
+    <ClInclude Include="..\HiLib\MyIcon.h" />
     <ClInclude Include="..\HiLib\MyInternet.h" />
     <ClInclude Include="..\HiLib\MyMenu.h" />
     <ClInclude Include="..\HiLib\MyMPL.h" />
@@ -320,7 +323,6 @@
     <ClInclude Include="PathRow.h" />
     <ClInclude Include="ShellZipFolder.h" />
     <ClInclude Include="DriveFolder.h" />
-    <ClInclude Include="FileIconCache.h" />
     <ClInclude Include="FilerTabGridView.h" />
     <ClInclude Include="DirectoryWatcher.h" />
     <ClInclude Include="DropSource.h" />
@@ -349,9 +351,7 @@
     <ClInclude Include="FilerWnd.h" />
     <ClInclude Include="FileSizeCell.h" />
     <ClInclude Include="FileSizeColumn.h" />
-    <ClInclude Include="IDL.h" />
     <ClInclude Include="KnownFolder.h" />
-    <ClInclude Include="MyIcon.h" />
     <ClInclude Include="PathCell.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ShellContextMenu.h" />
@@ -381,10 +381,12 @@
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
     <ClCompile Include="..\HiLib\DeadlineTimer.cpp" />
     <ClCompile Include="..\HiLib\Direct2DWrite.cpp" />
+    <ClCompile Include="..\HiLib\FileIconCache.cpp" />
     <ClCompile Include="..\HiLib\FilterCell.cpp" />
     <ClCompile Include="..\HiLib\FontCell.cpp" />
     <ClCompile Include="..\HiLib\FullCommand.cpp" />
     <ClCompile Include="..\HiLib\GridView.cpp" />
+    <ClCompile Include="..\HiLib\IDL.cpp" />
     <ClCompile Include="..\HiLib\InplaceEdit.cpp" />
     <ClCompile Include="..\HiLib\KonamiCommander.cpp" />
     <ClCompile Include="..\HiLib\MouseStateMachine.cpp" />
@@ -394,6 +396,7 @@
     <ClCompile Include="..\HiLib\MyDlg.cpp" />
     <ClCompile Include="..\HiLib\MyFile.cpp" />
     <ClCompile Include="..\HiLib\MyGdiplusHelper.cpp" />
+    <ClCompile Include="..\HiLib\MyIcon.cpp" />
     <ClCompile Include="..\HiLib\MyInternet.cpp" />
     <ClCompile Include="..\HiLib\MyPen.cpp" />
     <ClCompile Include="..\HiLib\MyString.cpp" />
@@ -440,7 +443,6 @@
     <ClCompile Include="FileDraggingState.cpp" />
     <ClCompile Include="FileExtCell.cpp" />
     <ClCompile Include="FileExtColumn.cpp" />
-    <ClCompile Include="FileIconCache.cpp" />
     <ClCompile Include="FileIconCell.cpp" />
     <ClCompile Include="FileIconColumn.cpp" />
     <ClCompile Include="FavoriteCell.cpp" />
@@ -455,9 +457,7 @@
     <ClCompile Include="FilerWnd.cpp" />
     <ClCompile Include="FileSizeCell.cpp" />
     <ClCompile Include="FileSizeColumn.cpp" />
-    <ClCompile Include="IDL.cpp" />
     <ClCompile Include="KnownFolder.cpp" />
-    <ClCompile Include="MyIcon.cpp" />
     <ClCompile Include="PathCell.cpp" />
     <ClCompile Include="ShellFile.cpp" />
     <ClCompile Include="ShellFolder.cpp" />

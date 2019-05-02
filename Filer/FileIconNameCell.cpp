@@ -4,6 +4,7 @@
 #include "GridView.h"
 #include "CellProperty.h"
 #include "InplaceEdit.h"
+#include "FileIconCache.h"
 
 CFileIconNameCell::CFileIconNameCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	:CParameterCell(pSheet, pRow, pColumn, spProperty){}
@@ -48,12 +49,12 @@ void CFileIconNameCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF 
 	rcIcon.MoveToXY(rcPaint.left, rcPaint.top);
 
 	std::weak_ptr<CFileIconNameCell> wp(shared_from_this());
-	std::function<void(CShellFile*)> changedAction = [wp](CShellFile* pFile)->void {
+	std::function<void()> updated = [wp]()->void {
 		if (auto sp = wp.lock()) {
 			auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
 				[wp]()->void {
 				if (auto sp = wp.lock()) {
-					//sp->OnPropertyChanged(L"value");
+					sp->OnPropertyChanged(L"value");
 				}
 			});
 			sp->m_conDelayUpdateAction = con;
@@ -61,7 +62,7 @@ void CFileIconNameCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF 
 		}
 	};
 
-	direct.DrawIcon(spFile->GetIcon(changedAction).first->operator HICON(), rcIcon);
+	direct.DrawBitmap(direct.GetIconCachePtr()->GetFileIconBitmap(spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetExt(), updated), rcIcon);
 
 	//Space
 	FLOAT space = m_spProperty->Padding->left + m_spProperty->Padding->right;

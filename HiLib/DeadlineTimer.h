@@ -1,6 +1,5 @@
 #pragma once
 #include <mutex>
-#include <thread>
 #include <chrono>
 #include <condition_variable>
 #include <atomic>
@@ -12,7 +11,6 @@ private:
 	std::mutex m_mtx;
 	std::condition_variable m_cv;
 	std::future<void> m_future;
-	//std::thread m_thread;
 	std::function<void()> m_action;
 	std::atomic<bool> m_stop;
 	std::atomic<bool> m_running;

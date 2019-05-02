@@ -18,10 +18,10 @@ std::wstring CShellZipFolder::GetExt()
 	return CShellFile::GetExt();
 }
 
-std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellZipFolder::GetIcon(std::function<void(CShellFile*)>& changedAction)
-{
-	return CShellFile::GetIcon(changedAction);
-}
+//std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellZipFolder::GetIcon(std::function<void(CShellFile*)>& changedAction)
+//{
+//	return CShellFile::GetIcon(changedAction);
+//}
 
 std::pair<FILETIME, FileTimeStatus> CShellZipFolder::GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
 {

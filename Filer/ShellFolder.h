@@ -21,7 +21,7 @@ public:
 	virtual ~CShellFolder();
 
 
-	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction) override;
+//	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction) override;
 
 	virtual std::wstring GetFileNameWithoutExt()override;
 	virtual std::wstring GetFileName()override;
@@ -48,8 +48,6 @@ public:
 private:
 	std::pair<FILETIME, FileTimeStatus> GetLockLastWriteTime();
 	std::pair<ULARGE_INTEGER, FileSizeStatus> GetLockSize();
-
-	//virtual void ResetSize();
 
 protected:
 	void SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size);

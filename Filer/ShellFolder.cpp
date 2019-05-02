@@ -18,31 +18,6 @@ CShellFolder::CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parent
 CShellFolder::~CShellFolder()
 {
 	*m_spCancelThread = true;
-
-	//std::wcout << L"~CShellFolder " + GetFileName() << std::endl;
-	//try {
-	//	m_cancelThread.store(true);
-	//	if (m_pSizeThread && m_pSizeThread->joinable()) {
-	//		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFolder Size thread join : " + GetPath();
-	//		m_pSizeThread->join();
-	//	}
-	//	SignalFileSizeChanged.disconnect_all_slots();
-	//} catch (...) {
-	//	BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFile Exception Size thread detached";
-	//	if (m_pSizeThread) m_pSizeThread->detach();
-	//}
-
-
-	//try{
-	//	if (m_pTimeThread && m_pTimeThread->joinable()) {
-	//		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFolder Time thread join : " + GetPath();
-	//		m_pTimeThread->join();
-	//	}
-	//	SignalTimeChanged.disconnect_all_slots();
-	//} catch (...) {
-	//	BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::~CShellFile Exception Time thread detached";
-	//	if (m_pTimeThread) m_pTimeThread->detach();
-	//}
 }
 
 CComPtr<IShellFolder> CShellFolder::GetShellFolderPtr()
@@ -78,14 +53,14 @@ void CShellFolder::SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size)
 	std::lock_guard<std::mutex> lock(m_mtxSize);
 	m_size = size;
 }
-
-std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFolder::GetIcon(std::function<void(CShellFile*)>& changedAction)
-{
-	if (GetLockIcon().second == FileIconStatus::None) {
-		SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetFolderIcon(), FileIconStatus::Available));
-	}
-	return GetLockIcon();
-}
+//
+//std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFolder::GetIcon(std::function<void(CShellFile*)>& changedAction)
+//{
+//	if (GetLockIcon().second == FileIconStatus::None) {
+//		SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetFolderIcon(), FileIconStatus::Available));
+//	}
+//	return GetLockIcon();
+//}
 
 
 std::wstring CShellFolder::GetFileNameWithoutExt()
@@ -413,20 +388,6 @@ void CShellFolder::SetExt(const std::wstring& wstrExt)
 {
 	//Do nothing
 }
-
-
-//void CShellFolder::ResetSize()
-//{
-//	if (m_pSizeThread && m_pSizeThread->joinable()) {
-//		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::ResetIcon Icon thread canceled";
-//		//m_sizePromise.set_value();
-//		m_cancelThread.store(true);
-//		m_pSizeThread->join();
-//	}
-//	m_pSizeThread.reset();
-//	m_cancelThread.store(false);
-//	SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::None));
-//}
 
 std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
 {

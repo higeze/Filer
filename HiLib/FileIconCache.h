@@ -1,6 +1,8 @@
 #pragma once
 #include "IDL.h"
+#include "Direct2DWrite.h"
 #include <mutex>
+#include <unordered_set>
 
 class CIcon;
 class CShellFile;
@@ -49,29 +51,26 @@ public:
 
 };
 
-class CFileIconCache
+namespace d2dw
 {
-private:
-//	static CKnownFolderManager s_knownFolderManager;
-	lockable_unordered_map<std::wstring, std::shared_ptr<CIcon>> m_iconMap;
-	//lockable_unordered_map<std::wstring, std::shared_ptr<CIcon>> m_driveIconMap;
-	std::unordered_set<std::wstring> m_ignoreSet;
-	std::shared_ptr<CIcon> m_defaultIcon;
-	std::shared_ptr<CIcon> m_folderIcon;
-	std::mutex m_mtx;
 
-public:
-	CFileIconCache();
-
-	bool Exist(CShellFile* file);
-	std::shared_ptr<CIcon> GetIcon(CShellFile* file);
-	std::shared_ptr<CIcon> GetDefaultIcon();
-	std::shared_ptr<CIcon> GetFolderIcon();
-
-	static CFileIconCache* GetInstance()
+	class CFileIconCache
 	{
-		static CFileIconCache fileIconCache;
-		return &fileIconCache;
-	}
+	private:
+		CDirect2DWrite* m_pDirect;
+		std::unordered_set<std::wstring> m_excludeExtSet;
+		lockable_unordered_map<std::wstring, CComPtr<ID2D1Bitmap>> m_extMap;
+		lockable_unordered_map <std::wstring, CComPtr<ID2D1Bitmap>> m_pathMap;
+		CComPtr<ID2D1Bitmap> m_defaultIconBmp;
+		CIcon GetIcon(const CIDL& absoluteIDL);
+		CComPtr<ID2D1Bitmap> GetBitmapFromIcon(const CIcon& icon);
 
-};
+	public:
+		CFileIconCache(CDirect2DWrite* pDirect);
+		CFileIconCache() = default;
+
+		CComPtr<ID2D1Bitmap> GetFileIconBitmap(const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated = nullptr);
+		CComPtr<ID2D1Bitmap> GetDefaultIconBitmap();
+	};
+
+}

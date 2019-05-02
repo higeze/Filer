@@ -3,7 +3,6 @@
 #include "MyString.h"
 #include "MyCom.h"
 #include "FileIconCache.h"
-#include <thread>
 #include "FileSizeArgs.h"
 
 bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<void()> checkExit)
@@ -106,18 +105,7 @@ CShellFile::CShellFile(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl,
 
 }
 
-CShellFile::~CShellFile()
-{
-	try {
-		if(m_pIconThread && m_pIconThread->joinable()) {
-			BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile " + GetFileNameWithoutExt() + L" Icon thread canceled";
-			m_pIconThread->join();
-		}
-	} catch (...) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile Exception Icon thread detached";
-		if (m_pIconThread) m_pIconThread->detach();
-	}
-}
+CShellFile::~CShellFile() = default;
 
 std::wstring& CShellFile::GetPath()
 {
@@ -223,18 +211,18 @@ std::wstring CShellFile::GetTypeName()
 //	}
 //	return m_wstrLastWriteTime;
 //}
-
-std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetLockIcon()
-{
-	std::lock_guard<std::mutex> lock(m_mtxIcon);
-	return m_icon;
-}
-
-void CShellFile::SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& icon)
-{
-	std::lock_guard<std::mutex> lock(m_mtxIcon);
-	m_icon = icon;
-}
+//
+//std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetLockIcon()
+//{
+//	std::lock_guard<std::mutex> lock(m_mtxIcon);
+//	return m_icon;
+//}
+//
+//void CShellFile::SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& icon)
+//{
+//	std::lock_guard<std::mutex> lock(m_mtxIcon);
+//	m_icon = icon;
+//}
 
 bool CShellFile::GetFileLastWriteTime(FILETIME& time)
 {
@@ -316,39 +304,6 @@ std::pair<FILETIME, FileTimeStatus> CShellFile::GetLastWriteTime(std::shared_ptr
 	return m_lastWriteTime;
 }
 
-std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetIcon(std::function<void(CShellFile*)>& changedAction)
-{
-	switch (GetLockIcon().second) {
-	case FileIconStatus::None:
-		if (HasIconInCache()) {
-			SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetIcon(this), FileIconStatus::Available));
-		} else {
-			SetLockIcon(std::make_pair(GetDefaultIcon(), FileIconStatus::Loading));
-			if (!m_pIconThread) {
-				m_pIconThread.reset(new std::thread([this, changedAction]()->void {
-					try {
-						CCoInitializer coinit(COINIT_APARTMENTTHREADED);
-						SetLockIcon(std::make_pair(CFileIconCache::GetInstance()->GetIcon(this), FileIconStatus::Available));
-						changedAction(this);
-					} catch (...) {
-						BOOST_LOG_TRIVIAL(error) << L"CShellFile::GetIcon " + GetFileNameWithoutExt() + L" Icon thread exception";
-					}
-				}));
-			}
-		}
-		break;
-	case FileIconStatus::Available:
-	case FileIconStatus::Loading:
-		break;
-	}
-	return GetLockIcon();
-}
-
-std::shared_ptr<CIcon> CShellFile::GetDefaultIcon()
-{
-	return CFileIconCache::GetInstance()->GetDefaultIcon();
-}
-
 UINT CShellFile::GetSFGAO()
 {
 	if (m_sfgao == 0) {
@@ -378,19 +333,16 @@ void CShellFile::UpdateWIN32_FIND_DATA()
 	}
 }
 
-void CShellFile::ResetIcon()
-{
-	if (m_pIconThread && m_pIconThread->joinable()) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFile::~CShellFile Icon thread canceled";
-		m_pIconThread->join();
-	}
-	m_pIconThread.reset();
-	SetLockIcon(std::make_pair(std::shared_ptr<CIcon>(nullptr), FileIconStatus::None));
-}
-
 void CShellFile::ResetSize()
 {
 	m_size = std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::None);
+}
+
+void CShellFile::ResetTime()
+{
+	m_creationTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
+	m_lastAccessTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
+	m_lastWriteTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
 }
 
 void CShellFile::Reset()
@@ -408,8 +360,9 @@ void CShellFile::Reset()
 	m_fileAttributes = 0;
 	m_sfgao = 0;
 
-	ResetIcon();
+//	ResetIcon();
 	ResetSize();
+	ResetTime();
 }
 
 bool CShellFile::IsDirectory()
@@ -417,22 +370,22 @@ bool CShellFile::IsDirectory()
 	return GetAttributes() & FILE_ATTRIBUTE_DIRECTORY;
 }
 
-bool CShellFile::HasIconInCache()
-{
-	return CFileIconCache::GetInstance()->Exist(this);
-}
-
-std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellInvalidFile::GetIcon(std::function<void(CShellFile*)>& changedAction)
-{
-	switch (GetLockIcon().second) {
-	case FileIconStatus::None:
-		SetLockIcon(std::make_pair(GetDefaultIcon(), FileIconStatus::Available));
-		break;
-	default:
-		break;
-	}
-	return GetLockIcon();
-}
+//bool CShellFile::HasIconInCache()
+//{
+//	return CFileIconCache::GetInstance()->Exist(this);
+//}
+//
+//std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellInvalidFile::GetIcon(std::function<void(CShellFile*)>& changedAction)
+//{
+//	switch (GetLockIcon().second) {
+//	case FileIconStatus::None:
+//		SetLockIcon(std::make_pair(GetDefaultIcon(), FileIconStatus::Available));
+//		break;
+//	default:
+//		break;
+//	}
+//	return GetLockIcon();
+//}
 
 
 

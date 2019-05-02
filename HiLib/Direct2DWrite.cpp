@@ -1,5 +1,6 @@
 //#include "stdafx.h"
 #include "Direct2DWrite.h"
+#include "FileIconCache.h"
 
 namespace d2dw
 {
@@ -239,7 +240,8 @@ namespace d2dw
 
 
 	//CDirect2DWrite
-	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd) {}
+	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd), m_pIconCache(std::make_unique<CFileIconCache>(this)) {}
+	CDirect2DWrite::~CDirect2DWrite() = default;
 
 
 	CComPtr<ID2D1Factory1>& CDirect2DWrite::GetD2D1Factory()
@@ -247,7 +249,7 @@ namespace d2dw
 		if (!m_pD2D1Factory) {
 			if (FAILED(
 				::D2D1CreateFactory(
-					D2D1_FACTORY_TYPE_SINGLE_THREADED,
+					D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_MULTI_THREADED,
 					__uuidof(ID2D1Factory1),
 					(void**)&m_pD2D1Factory))) {
 				throw std::exception(FILELINEFUNCTION);
@@ -261,7 +263,7 @@ namespace d2dw
 		if (!m_pDWriteFactory) {
 			if (FAILED(
 				::DWriteCreateFactory(
-					DWRITE_FACTORY_TYPE_SHARED,
+					DWRITE_FACTORY_TYPE::DWRITE_FACTORY_TYPE_SHARED,
 					__uuidof(IDWriteFactory1),
 					(IUnknown**)&m_pDWriteFactory))) {
 				throw std::exception(FILELINEFUNCTION);
@@ -283,30 +285,10 @@ namespace d2dw
 	}
 
 
-#ifdef USE_ID2D1DCRenderTarget
-	CComPtr<ID2D1DCRenderTarget>& CDirect2DWrite::GetHwndRenderTarget()
-#else
 	CComPtr<ID2D1HwndRenderTarget>& CDirect2DWrite::GetHwndRenderTarget()
-#endif
 	{
 
 		if (!m_pHwndRenderTarget) {
-#ifdef USE_ID2D1DCRenderTarget
-			D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
-				D2D1_RENDER_TARGET_TYPE_DEFAULT,
-				D2D1::PixelFormat(
-					DXGI_FORMAT_B8G8R8A8_UNORM,
-					D2D1_ALPHA_MODE_IGNORE),
-				0,
-				0,
-				D2D1_RENDER_TARGET_USAGE_NONE,
-				D2D1_FEATURE_LEVEL_DEFAULT
-			);
-
-			if (FAILED(GetD2D1Factory()->CreateDCRenderTarget(&props, &m_pHwndRenderTarget))) {
-				throw std::exception(FILELINEFUNCTION);
-			}
-#else
 			RECT rect;
 			::GetClientRect(m_hWnd, &rect);
 			D2D1_SIZE_U size = D2D1::Size<UINT>(rect.right, rect.bottom);
@@ -319,7 +301,6 @@ namespace d2dw
 					&m_pHwndRenderTarget))) {
 				throw std::exception(FILELINEFUNCTION);
 			}
-#endif
 		}
 		return m_pHwndRenderTarget;
 	}
@@ -428,24 +409,12 @@ namespace d2dw
 
 		return textSize;
 	}
-#ifdef USE_ID2D1DCRenderTarget
-	void CDirect2DWrite::BeginDraw(HDC hDC, const RECT& rc) 
-	{
-		m_hDC = hDC;
-		::SetBkMode(m_hDC, TRANSPARENT);
-		GetHwndRenderTarget()->BindDC(hDC, &rc);
-		GetHwndRenderTarget()->SetTransform(D2D1::Matrix3x2F::Identity());
-		GetHwndRenderTarget()->BeginDraw(); 
-
-	}
-#else
 	void CDirect2DWrite::BeginDraw()
 	{
 		GetHwndRenderTarget()->SetTransform(D2D1::Matrix3x2F::Identity());
 		GetHwndRenderTarget()->BeginDraw();
 
 	}
-#endif
 
 	void CDirect2DWrite::ClearSolid(const SolidFill& fill)
 	{
@@ -458,12 +427,6 @@ namespace d2dw
 		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET) {
 			Clear();
 		}
-#ifdef USE_ID2D1DCRenderTarget
-		for (auto& fun : m_gdifuncs) {
-			fun();
-		}
-		m_gdifuncs.clear();
-#endif
 	}
 
 
@@ -484,47 +447,17 @@ namespace d2dw
 
 	void CDirect2DWrite::DrawTextInRect(const FormatF& format, const std::wstring& text, const CRectF& rect)
 	{
-#ifdef USE_ID2D1DCRenderTarget
-	m_gdifuncs.push_back([this,format, rect, text]()->void {
-		//Paint Text
-		::SetTextColor(m_hDC, GetSysColor(COLOR_WINDOWTEXT));
+		d2dw::FormatF tmpFormat(format);
+		d2dw::CSizeF size = CalcTextSize(tmpFormat, text);
 
-		//Find font size
-		CFont font;
-		HFONT hFont = NULL;
-		CRect rcContent;
-		int i = 0;
-		do {
-			rcContent = Dips2Pixels(rect);
-			font = CFont(CDirect2DWrite::Dips2Points(format.Font.Size) - i, format.Font.FamilyName);
-			hFont = (HFONT)::SelectObject(m_hDC, (HGDIOBJ)(font.operator HFONT()));
-			DrawTextEx(m_hDC, const_cast<LPTSTR>(text.c_str()), text.size(), rcContent,
-				DT_CALCRECT | DT_CENTER | DT_VCENTER | DT_NOPREFIX | DT_EDITCONTROL | DT_WORDBREAK, NULL);
-			::SelectObject(m_hDC, hFont);
-			i++;
-		} while (rcContent.Width() > rect.Width() || rcContent.Height() > rect.Height());
-		hFont = (HFONT)::SelectObject(m_hDC, (HGDIOBJ)(font.operator HFONT()));
-		//rcPaint.top = rcPaint.bottom - rcContent.Height();
-		::DrawTextEx(m_hDC, const_cast<LPTSTR>(text.c_str()), -1, Dips2Pixels(rect), DT_CENTER | DT_VCENTER | DT_NOPREFIX | DT_EDITCONTROL | DT_WORDBREAK, NULL);
-		::SelectObject(m_hDC, (HGDIOBJ)hFont);
-	});
-
-#elif
-		d2dw::FormatF format(m_spProperty->Font, m_spProperty->Color, m_spProperty->Alignment);
-		d2dw::CSizeF size = direct.CalcTextSize(format, str);
-
-		while (size.width > direct.Pixels2DipsX(16)) {
-			format.font.Size -= 1.0f;
-			size = direct.CalcTextSize(format, str);
+		while (size.width > rect.Width()) {
+			tmpFormat.Font.Size -= 1.0f;
+			size = CalcTextSize(tmpFormat, text);
 		}
-		format.Alignment.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
-		format.Alignment.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR;
-		rcPaint.right = rcPaint.left + direct.Pixels2DipsX(16);
-		rcPaint.bottom = rcPaint.top + direct.Pixels2DipsY(16);
+		tmpFormat.Alignment.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
+		tmpFormat.Alignment.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER;
 
-		direct.DrawTextLayout(format, str, rcPaint);
-#endif
-
+		DrawTextLayout(tmpFormat, text, rect);
 	}
 
 	void CDirect2DWrite::DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rc)
@@ -555,31 +488,6 @@ namespace d2dw
 
 	void CDirect2DWrite::DrawIcon(HICON hIcon, d2dw::CRectF& rect)
 	{
-
-#ifndef USE_ID2D1DCRenderTarget
-		//CRect rc = Dips2Pixels(rect);
-		//HDC hDC = GetDC(NULL);
-		//HDC hMemDC = CreateCompatibleDC(hDC);
-		//HBITMAP hMemBmp = CreateCompatibleBitmap(hDC, rc.Width(), rc.Height());
-		//HBITMAP hResultBmp = NULL;
-		//HGDIOBJ hOrgBMP = SelectObject(hMemDC, hMemBmp);
-
-		//DrawIconEx(hMemDC, 0, 0, hIcon, rc.Width(), rc.Height(), 0, NULL, DI_NORMAL);
-
-		//hResultBmp = hMemBmp;
-		//hMemBmp = NULL;
-
-		//SelectObject(hMemDC, hOrgBMP);
-		//DeleteDC(hMemDC);
-		//ReleaseDC(NULL, hDC);
-
-		//CComPtr<IWICBitmap> pWICBitmap;
-		//if (FAILED(GetWICImagingFactory()->CreateBitmapFromHBITMAP(hResultBmp, 0, WICBitmapAlphaChannelOption::WICBitmapUseAlpha, &pWICBitmap))) {
-		//	throw std::exception(FILELINEFUNCTION);
-		//}
-		//::DeleteObject(hResultBmp);
-
-
 
 		CComPtr<IWICBitmap> pWICBitmap;
 		if (FAILED(GetWICImagingFactory()->CreateBitmapFromHICON(hIcon, &pWICBitmap))) {
@@ -624,14 +532,11 @@ namespace d2dw
 		//	throw std::exception(FILELINEFUNCTION);
 		//}
 		GetHwndRenderTarget()->DrawBitmap(pBitmap, rect);
-#else
+	}
 
-		CRect rc = Dips2Pixels(rect);
-		m_gdifuncs.push_back([this, rc, hIcon]()->void{
-			::DrawIconEx(m_hDC, rc.left, rc.top, hIcon, rc.Width(), rc.Height(), 0, NULL, DI_NORMAL);
-		});
-#endif
-
+	void CDirect2DWrite::DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap, const CRectF& rect)
+	{
+		GetHwndRenderTarget()->DrawBitmap(pBitmap, rect);
 	}
 
 }

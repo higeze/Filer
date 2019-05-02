@@ -191,10 +191,4 @@ public:
 	HENHMETAFILE GetPaintEnhMetaFileData();
 	HENHMETAFILE GetAllEnhMetaFileData();
 
-#ifdef USE_ID2D1DCRenderTarget
-protected:
-	UPBufferDC m_upBuffDC;
-#endif
-
-
 };
