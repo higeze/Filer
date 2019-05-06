@@ -850,9 +850,6 @@
     <ClCompile Include="..\HiLib\DeadlineTimer.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\ThreadPool.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\FileIconCache.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>

@@ -99,9 +99,6 @@ private:
 	//Remember past filter
 	std::unordered_map<std::wstring, std::unordered_map<std::shared_ptr<CColumn>, std::wstring>> m_filterMap;
 
-	//For open mode flag to keep ensurevisiblecell after open
-	bool m_isOpenMode = false;
-
 public:
 	//Constructor
 	CFilerGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp);

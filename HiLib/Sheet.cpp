@@ -330,6 +330,10 @@ void CSheet::PostUpdate(Updates type)
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
 		m_setUpdate.insert(type);
+	case Updates::Filter:
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+		m_setUpdate.insert(type);
 	default:
 		m_setUpdate.insert(type);
 		break;

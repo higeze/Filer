@@ -370,6 +370,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 
 void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
 {
+	m_keepEnsureVisibleFocusedCell = false;
 	switch (e.Char)
 	{
 	case 'R':
@@ -699,6 +700,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 
 					if (auto cell = CSheet::Cell(iter->DataPtr, Index2Pointer<ColTag, VisTag>(0))) {
 						m_spCursorer->OnCursor(cell);
+						m_keepEnsureVisibleFocusedCell = true;
 						PostUpdate(Updates::EnsureVisibleFocusedCell);
 					}
 				}
@@ -1379,7 +1381,7 @@ BOOL CFilerGridView::SetDragImage(CIDL firstIdl, CComPtr<IDragSourceHelper> pDra
 	POINT       pt = {0, 0};
 	SIZE        size = {32, 32};
 
-	SHGetFileInfo((LPCTSTR)firstIdl.ptr(), 0, &fileInfo, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_LARGEICON);
+	SHGetFileInfo((LPCTSTR)firstIdl.ptr(), 0, &fileInfo, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_LARGEICON | SHGFI_ADDOVERLAYS);
 
 
 	//CClientDC dc(m_hWnd);

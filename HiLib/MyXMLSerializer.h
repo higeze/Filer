@@ -301,7 +301,6 @@ public:
 					const char_type* lpszRootName,
 					T& tObj)
 	{
-		CCoInitializer coinit;
 		MSXML2::IXMLDOMDocumentPtr pDoc;
 		throw_if_failed(pDoc.CreateInstance("Msxml2.DOMDocument.6.0"));
 		throw_if_failed(pDoc->put_async(VARIANT_FALSE));
@@ -321,7 +320,6 @@ public:
 					const char_type* lpszRootName,
 					T& tObj)
 	{
-		CCoInitializer coinit;
 		MSXML2::IXMLDOMDocumentPtr pDoc;
 		throw_if_failed(pDoc.CreateInstance("Msxml2.DOMDocument.6.0"));
 		throw_if_failed(pDoc->put_async(VARIANT_FALSE));
@@ -336,7 +334,6 @@ public:
 	template<class char_type>
 	MSXML2::IXMLDOMDocumentPtr Serialize(const char_type* lpszRootName, T& tObj)
 	{
-		CCoInitializer coinit;
 		MSXML2::IXMLDOMDocumentPtr pDoc;
 		throw_if_failed(pDoc.CreateInstance("Msxml2.DOMDocument.6.0"));
 		throw_if_failed(pDoc->put_async(VARIANT_FALSE));
@@ -354,7 +351,6 @@ public:
 	//template<class char_type>
 	//MSXML2::IXMLDOMElementPtr Serialize(MSXML2::IXMLDOMDocumentPtr pDoc,const char_type* lpszRootName, T& tObj)
 	//{
-	//	CCoInitializer coinit;
 	//	MSXML2::IXMLDOMElementPtr pElem=pDoc->createElement(_bstr_t(lpszRootName));
 	//	//Serialize
 	//	CSerializer serializer(pDoc,pElem);

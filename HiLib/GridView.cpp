@@ -46,7 +46,6 @@ CGridView::CGridView(
 	CMenu* pContextMenu)
 	:
 	m_spGridViewProp(spGridViewProp),
-	m_spBackgroundProperty(spGridViewProp->BackgroundPropPtr),
 	CSheet(spGridViewProp->HeaderPropPtr, spGridViewProp->CellPropPtr, spGridViewProp->CellPropPtr, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
 	CWnd(),
 	m_pMouseStateMachine(std::make_shared<CMouseStateMachine>(this)),
@@ -197,7 +196,7 @@ void CGridView::FilterAll()
 			if(!rowIter->DataPtr->GetVisible())continue;
 			//Filter
 			auto pCell=colIter->DataPtr->Cell(rowIter->DataPtr.get());
-			boost::for_each(vstrFilter,[&](const std::wstring& str){
+			for(const auto& str : vstrFilter){
 				if(str[0]==L'-' && str.size()>=2){
 					std::wstring strMinus(str.substr(1));
 					if(pCell->Filter(strMinus)){
@@ -206,16 +205,10 @@ void CGridView::FilterAll()
 				}else if(!(pCell->Filter(str))){
 					rowIter->DataPtr->SetVisible(false);
 				}
-			});
+			}
 		}		
 	}
 }
-
-//LRESULT CGridView::OnCmdEnChange(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-//{
-//	::SendMessage(hWndCtl,WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),NULL);
-//	return 0;
-//}
 
 LRESULT CGridView::OnFilter(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
@@ -282,6 +275,7 @@ LRESULT CGridView::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 LRESULT CGridView::OnMouseWheel(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	m_keepEnsureVisibleFocusedCell = false;
 	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetScrollDelta() * GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
 	SubmitUpdate();
 	return 0;
@@ -296,7 +290,7 @@ void CGridView::DelayUpdate()
 {
 	m_invalidateTimer.run([this] {
 		PostMessage(WM_DELAY_UPDATE, NULL, NULL);
-	}, std::chrono::milliseconds(30));
+	}, std::chrono::milliseconds(50));
 }
 
 LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -307,12 +301,12 @@ LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 	SignalPreDelayUpdate();
 	SignalPreDelayUpdate.disconnect_all_slots();
 	PostUpdate(Updates::Filter);
-	//Need to remove EnsureVisibleFocusedCell. Otherwise scroll to 0 when scrolling
-	//if (m_ensuredScroll == m_vertical.GetScrollPos()) {
-	//	m_setUpdate.insert(Updates::EnsureVisibleFocusedCell);
-	//} else {
+
+	if (m_keepEnsureVisibleFocusedCell) {
+		PostUpdate(Updates::EnsureVisibleFocusedCell);
+	} else {
 		m_setUpdate.erase(Updates::EnsureVisibleFocusedCell);
-//	}
+	}
 	SubmitUpdate();
 	return 0;
 }
@@ -401,6 +395,9 @@ void CGridView::UpdateRow()
 	//Scroll Virtical Range
 	if (IsVirtualPage()) {
 		m_pVScroll->SetScrollRange(0, m_pDirect->Dips2PixelsY(GetCellsHeight()));
+		if (scrollPos != GetVerticalScrollPos()) {
+			UpdateRow();
+		}
 	}
 
 }
@@ -476,6 +473,7 @@ FLOAT CGridView::GetHorizontalScrollPos()const
 
 LRESULT CGridView::OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	m_keepEnsureVisibleFocusedCell = false;
 	if (m_isFocusable) { SetFocus(); }
 	bHandled=false;
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
@@ -487,6 +485,7 @@ LRESULT CGridView::OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 
 LRESULT CGridView::OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	m_keepEnsureVisibleFocusedCell = false;
 	if (m_isFocusable) { SetFocus(); }
 	SetCapture();
 
@@ -799,7 +798,6 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 				}
 			}
 			scroll = std::ceilf(scroll);
-			//m_ensuredScroll = scroll;
 
 			FLOAT top = UpdateCellsRow(rcPage.top - scroll, rcPage.top, rcPage.bottom);
 			//Scroll Virtical Range
@@ -815,7 +813,6 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 			FLOAT scroll = std::accumulate(rowDictionary.find(0), rowDictionary.find(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), 0.0f,
 				[](const FLOAT& acc, const RowData& data)->FLOAT{ return acc + data.DataPtr->GetDefaultHeight(); });
 			scroll = std::floorf(scroll);
-			//m_ensuredScroll = scroll;
 
 			FLOAT top = UpdateCellsRow(rcPage.top - scroll, rcPage.top, rcPage.bottom);
 			//Scroll Virtical Range

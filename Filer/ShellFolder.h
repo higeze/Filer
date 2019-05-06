@@ -1,6 +1,7 @@
 #pragma once
 #include "ShellFile.h"
 #include <boost/timer.hpp>
+#include <chrono>
 
 class CShellFolder :public CShellFile
 {
@@ -14,6 +15,9 @@ private:
 
 	std::mutex m_mtxSize;
 	std::mutex m_mtxTime;
+
+	static std::unordered_map<std::wstring, std::shared_ptr<CShellFile>> s_fileCache;
+	static std::chrono::system_clock::time_point s_cacheTime;
 
 public:
 //	CShellFolder();

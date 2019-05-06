@@ -34,9 +34,9 @@ namespace d2dw
 		CSizeF GetSize()const { return CSizeF(m_rect.Width(), m_rect.Height()); }
 		bool GetVisible()const { return m_visible; }
 
-		void SetScrollPage(const FLOAT page) { m_page = page; }
-		void SetScrollRange(const FLOAT min, FLOAT max) { m_range.first = min; m_range.second = max; }
 		void SetScrollPos(const FLOAT pos);
+		void SetScrollPage(const FLOAT page);
+		void SetScrollRange(const FLOAT min, FLOAT max);
 		void SetRect(const CRectF& rect){ m_rect = rect; }
 		void SetRect(const FLOAT left, const FLOAT top, const FLOAT right, const FLOAT bottom) 
 		{

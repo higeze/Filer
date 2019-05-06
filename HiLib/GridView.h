@@ -26,9 +26,6 @@ namespace d2dw
 class CGridView:public CWnd,public CSheet
 {
 public:
-
-//	V4::D2DTextbox* m_pTextBox = nullptr;
-
 	std::unique_ptr<d2dw::CVScroll> m_pVScroll;
 	std::unique_ptr<d2dw::CHScroll> m_pHScroll;
 
@@ -36,10 +33,6 @@ public:
 protected:
 	CInplaceEdit* m_pEdit = nullptr;
 	bool m_isFocusable = true;
-
-	//CScrollBar m_vertical;
-	//CScrollBar m_horizontal;
-	//int m_ensuredScroll = -1;
 
 	d2dw::CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
@@ -56,8 +49,6 @@ protected:
 	CDeadlineTimer m_invalidateTimer;
 
 	std::shared_ptr<GridViewProperty> m_spGridViewProp;
-	std::shared_ptr<int> m_spDeltaScroll;
-	std::shared_ptr<BackgroundProperty> m_spBackgroundProperty;
 public:
 
 	boost::signals2::signal<void(CColumn*)> SignalColumnInserted;

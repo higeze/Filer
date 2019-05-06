@@ -11,6 +11,10 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
+std::unordered_map<std::wstring, std::shared_ptr<CShellFile>> CShellFolder::s_fileCache;
+std::chrono::system_clock::time_point CShellFolder::s_cacheTime = std::chrono::system_clock::now();
+
+
 CShellFolder::CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder)
 	:CShellFile(pParentShellFolder, parentIdl, childIdl), m_pShellFolder(pShellFolder) {}
 
@@ -148,7 +152,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(std::shared_ptr<
 				break;
 			case FileSizeStatus::Calculating:
 				{
-					if (m_futureSize.valid()) {
+					if (m_futureSize.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 						SetLockSize(m_futureSize.get());
 					}
 				}
@@ -196,7 +200,7 @@ std::pair<FILETIME, FileTimeStatus> CShellFolder::GetLastWriteTime(std::shared_p
 	case FileTimeStatus::Loading:
 	case FileTimeStatus::AvailableLoading:
 		{
-			if (m_futureTime.valid()) {
+			if (m_futureTime.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 				SetLockLastWriteTime(m_futureTime.get());
 			}
 		}
@@ -397,7 +401,6 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
 //static
 std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const CComPtr<IShellFolder>& pShellFolder, const CIDL& parentIdl, const CIDL& childIdl)
 {
-	boost::timer tim;
 
 	CComPtr<IShellFolder> pFolder;
 	CComPtr<IEnumIDList> enumIdl;
@@ -406,27 +409,39 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const CComPtr<ISh
 	std::wstring path = childIdl.STRRET2WSTR(strret);
 	std::wstring ext = ::PathFindExtension(path.c_str());
 
-	if (!childIdl) {
-		return CKnownFolderManager::GetInstance()->GetDesktopFolder();
-	} else if (auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderByPath(path)) {
-		return spKnownFolder;
-	} else if (path[0] == L':') {
-		return std::make_shared<CShellFile>(pShellFolder, parentIdl, childIdl);
-	} else if (auto spDriveFolder = CDriveManager::GetInstance()->GetDriveFolderByPath(path)) {
-		return spDriveFolder;
-	} else if (boost::iequals(ext, ".zip")) {
-		return std::make_shared<CShellZipFolder>(pShellFolder, parentIdl, childIdl);
-	} else if (
-		//Do not use ::PathIsDirectory(path.c_str()), because it's slower
-		(SUCCEEDED(pShellFolder->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
-			SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)))) {
-		return std::make_shared<CShellFolder>(pShellFolder, parentIdl, childIdl, pFolder);
-	} else {
-		return std::make_shared<CShellFile>(pShellFolder, parentIdl, childIdl);
+	if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - s_cacheTime).count() > 600) {
+		BOOST_LOG_TRIVIAL(trace) << "CShellFolder::CreateShExFileFolder Cache count:" << s_fileCache.size();
+		s_cacheTime = std::chrono::system_clock::now();
+		if (s_fileCache.size() > 10000) {
+			s_fileCache.clear();
+		}
 	}
 
-	if (tim.elapsed() > 0.1) {
-		BOOST_LOG_TRIVIAL(trace) << L"CShellFolder::CreateShExFileFolder Over0.1 " << path;
+	if (auto iter = s_fileCache.find(path); iter != s_fileCache.end()) {
+		iter->second->Reset();
+		return iter->second;
+	} else {
+		std::shared_ptr<CShellFile> pFile;
+		if (!childIdl) {
+			pFile = CKnownFolderManager::GetInstance()->GetDesktopFolder();
+		} else if (auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderByPath(path)) {
+			pFile = spKnownFolder;
+		} else if (path[0] == L':') {
+			pFile = std::make_shared<CShellFile>(pShellFolder, parentIdl, childIdl);
+		} else if (auto spDriveFolder = CDriveManager::GetInstance()->GetDriveFolderByPath(path)) {
+			pFile = spDriveFolder;
+		} else if (boost::iequals(ext, ".zip")) {
+			pFile = std::make_shared<CShellZipFolder>(pShellFolder, parentIdl, childIdl);
+		} else if (
+			//Do not use ::PathIsDirectory(path.c_str()), because it's slower
+			(SUCCEEDED(pShellFolder->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
+				SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)))) {
+			pFile = std::make_shared<CShellFolder>(pShellFolder, parentIdl, childIdl, pFolder);
+		} else {
+			pFile = std::make_shared<CShellFile>(pShellFolder, parentIdl, childIdl);
+		}
+		s_fileCache.emplace(path, pFile);
+		return pFile;
 	}
 }
 

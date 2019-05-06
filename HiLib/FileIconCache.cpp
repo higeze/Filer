@@ -57,7 +57,6 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetFileIconBitmap(const CIDL& absoluteIDL, 
 		} else {
 			m_extMap.lock_emplace(std::make_pair(ext, GetDefaultIconBitmap()));
 			CThreadPool::GetInstance()->enqueue([this](const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated) {
-				CCoInitializer coinit(COINIT_APARTMENTTHREADED);
 				CComPtr<ID2D1Bitmap> pBitmap = GetBitmapFromIcon(GetIcon(absoluteIDL));
 				m_extMap.lock_insert_or_assign(ext, std::move(pBitmap));
 				if (updated) {
@@ -72,7 +71,6 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetFileIconBitmap(const CIDL& absoluteIDL, 
 		} else {
 			m_pathMap.lock_emplace(std::make_pair(path, GetDefaultIconBitmap()));
 			CThreadPool::GetInstance()->enqueue([this](const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated) {
-				CCoInitializer coinit(COINIT_APARTMENTTHREADED);
 				CComPtr<ID2D1Bitmap> pBitmap = GetBitmapFromIcon(GetIcon(absoluteIDL));
 				m_pathMap.lock_insert_or_assign(path, std::move(pBitmap));
 				if (updated) {

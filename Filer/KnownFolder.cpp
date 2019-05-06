@@ -82,7 +82,6 @@ std::wstring CKnownFolder::GetExt()
 
 CKnownFolderManager::CKnownFolderManager()
 {
-	CCoInitializer coinit;
 	CComPtr<IKnownFolderManager> pMgr;
 	if (FAILED(pMgr.CoCreateInstance(CLSID_KnownFolderManager, NULL, CLSCTX_INPROC_SERVER))) { return; }
 	KNOWNFOLDERID* pknownid;

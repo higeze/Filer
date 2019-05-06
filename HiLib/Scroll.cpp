@@ -13,12 +13,29 @@ namespace d2dw
 
 	void CScrollBase::SetScrollPos(const FLOAT pos)
 	{
-		FLOAT newPos = (std::max)((std::min)(pos, m_range.second - m_page), m_range.first);
+		FLOAT newPos = std::clamp(pos, m_range.first, (std::max)(m_range.second - m_page, m_range.first));
 		if (m_pos != newPos) {
 			m_pos = newPos;
 			OnPropertyChanged(L"pos");
 		}
 	}
+
+	void CScrollBase::SetScrollPage(const FLOAT page) 
+	{ 
+		if (m_page != page) {
+			m_page = page;
+			SetScrollPos(GetScrollPos());//Need clamp
+		}
+	}
+	
+	void CScrollBase::SetScrollRange(const FLOAT min, FLOAT max)
+	{
+		if (m_range.first != min || m_range.second != max) {
+			m_range.first = min; m_range.second = max;
+			SetScrollPos(GetScrollPos());//Need clamp
+		}
+	}
+
 
 	void CScrollBase::OnPaint(const PaintEvent& e)
 	{

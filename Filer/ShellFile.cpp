@@ -352,15 +352,10 @@ void CShellFile::Reset()
 	m_wstrFileName.clear();
 	m_wstrExt.clear();
 	m_wstrType.clear();
-	m_size = std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::None);
-	m_creationTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
-	m_lastAccessTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
-	m_lastWriteTime = std::make_pair(FILETIME{ 0 }, FileTimeStatus::None);
 
 	m_fileAttributes = 0;
 	m_sfgao = 0;
 
-//	ResetIcon();
 	ResetSize();
 	ResetTime();
 }

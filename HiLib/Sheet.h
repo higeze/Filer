@@ -116,6 +116,9 @@ protected:
 
 	CRowColumn m_rocoContextMenu; // Store RowColumn of Caller
 
+	//For open mode flag to keep ensurevisiblecell after open
+	bool m_keepEnsureVisibleFocusedCell = false;
+
 public:
 	static CMenu ContextMenu; // ContextMenu
 
