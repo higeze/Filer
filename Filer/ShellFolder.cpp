@@ -11,8 +11,8 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
-std::unordered_map<std::wstring, std::shared_ptr<CShellFile>> CShellFolder::s_fileCache;
-std::chrono::system_clock::time_point CShellFolder::s_cacheTime = std::chrono::system_clock::now();
+//std::unordered_map<std::pair<std::wstring, CIDL>, std::shared_ptr<CShellFile>, ShellFileHash, ShellFileEqual> CShellFolder::s_fileCache;
+//std::chrono::system_clock::time_point CShellFolder::s_cacheTime = std::chrono::system_clock::now();
 
 
 CShellFolder::CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder)
@@ -170,8 +170,7 @@ std::pair<FILETIME, FileTimeStatus> CShellFolder::GetLastWriteTime(std::shared_p
 	switch (GetLockLastWriteTime().second) {
 	case FileTimeStatus::None:
 		{
-			FILETIME time = { 0 };
-			if (!spArgs->IgnoreFolderTime, CShellFile::GetFileLastWriteTime(time)) {
+			if (FILETIME time = { 0 }; !spArgs->IgnoreFolderTime && CShellFile::GetFileLastWriteTime(time)) {
 				SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::AvailableLoading));
 			} else {
 				SetLockLastWriteTime(std::make_pair(time, FileTimeStatus::Loading));
@@ -409,18 +408,18 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const CComPtr<ISh
 	std::wstring path = childIdl.STRRET2WSTR(strret);
 	std::wstring ext = ::PathFindExtension(path.c_str());
 
-	if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - s_cacheTime).count() > 600) {
-		BOOST_LOG_TRIVIAL(trace) << "CShellFolder::CreateShExFileFolder Cache count:" << s_fileCache.size();
-		s_cacheTime = std::chrono::system_clock::now();
-		if (s_fileCache.size() > 10000) {
-			s_fileCache.clear();
-		}
-	}
+	//if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - s_cacheTime).count() > 600) {
+	//	BOOST_LOG_TRIVIAL(trace) << "CShellFolder::CreateShExFileFolder Cache count:" << s_fileCache.size();
+	//	s_cacheTime = std::chrono::system_clock::now();
+	//	if (s_fileCache.size() > 10000) {
+	//		s_fileCache.clear();
+	//	}
+	//}
 
-	if (auto iter = s_fileCache.find(path); iter != s_fileCache.end()) {
-		iter->second->Reset();
-		return iter->second;
-	} else {
+	//if (auto iter = s_fileCache.find(std::make_pair(path, childIdl)); iter != s_fileCache.end()) {
+	//	iter->second->Reset();
+	//	return iter->second;
+	//} else {
 		std::shared_ptr<CShellFile> pFile;
 		if (!childIdl) {
 			pFile = CKnownFolderManager::GetInstance()->GetDesktopFolder();
@@ -440,9 +439,9 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const CComPtr<ISh
 		} else {
 			pFile = std::make_shared<CShellFile>(pShellFolder, parentIdl, childIdl);
 		}
-		s_fileCache.emplace(path, pFile);
+		//s_fileCache.emplace(std::make_pair(path, childIdl), pFile);
 		return pFile;
-	}
+	//}
 }
 
 

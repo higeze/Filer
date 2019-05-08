@@ -363,7 +363,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 		}
 		else {
 			BOOST_LOG_TRIVIAL(trace) << "Renamed FAILED " << wstr2str(oldName) << "=>" << wstr2str(newName);
-			//return Removed(oldName);
+			return Removed(oldName);
 		}
 	}
 }

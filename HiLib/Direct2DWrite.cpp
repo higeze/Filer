@@ -539,4 +539,22 @@ namespace d2dw
 		GetHwndRenderTarget()->DrawBitmap(pBitmap, rect);
 	}
 
+	void CDirect2DWrite::Clear()
+	{
+		m_pD2D1Factory = nullptr;
+		m_pDWriteFactory = nullptr;
+		m_pWICImagingFactory = nullptr;
+		m_pHwndRenderTarget = nullptr;
+
+		m_solidColorBrushMap.clear();
+		m_textFormatMap.clear();
+		m_textLayoutMap.clear();
+		m_defaultHeightMap.clear();
+
+		m_xPixels2Dips = 0.0f;
+		m_yPixels2Dips = 0.0f;
+
+		m_pIconCache->Clear();
+	}
+
 }

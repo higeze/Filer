@@ -82,6 +82,13 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetFileIconBitmap(const CIDL& absoluteIDL, 
 	}
 }
 
+void CFileIconCache::Clear()
+{
+	m_extMap.clear();
+	m_pathMap.clear();
+	m_defaultIconBmp.Release();
+}
+
 //CComPtr<ID2D1Bitmap> CFileIconCache::GetDriveIconBitmap(const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext)
 //{
 //	if (auto iter = m_driveMap.lock_find(path); iter != m_driveMap.end()) {

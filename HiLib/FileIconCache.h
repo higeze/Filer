@@ -71,6 +71,7 @@ namespace d2dw
 
 		CComPtr<ID2D1Bitmap> GetFileIconBitmap(const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated = nullptr);
 		CComPtr<ID2D1Bitmap> GetDefaultIconBitmap();
+		void Clear();
 	};
 
 }

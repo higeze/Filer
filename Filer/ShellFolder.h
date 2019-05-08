@@ -3,6 +3,26 @@
 #include <boost/timer.hpp>
 #include <chrono>
 
+struct ShellFileHash
+{
+	inline std::size_t operator()(const std::pair<std::wstring, CIDL>& key)const
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, std::hash<decltype(key.first)>()(key.first));
+		return seed;
+	}
+};
+
+struct ShellFileEqual
+{
+	inline std::size_t operator()(const std::pair<std::wstring, CIDL>& left, const std::pair<std::wstring, CIDL>& right)const
+	{
+		return left.first == right.first && ::ILIsEqual(left.second.ptr(), right.second.ptr());
+	}
+};
+
+
+
 class CShellFolder :public CShellFile
 {
 private:
@@ -16,8 +36,8 @@ private:
 	std::mutex m_mtxSize;
 	std::mutex m_mtxTime;
 
-	static std::unordered_map<std::wstring, std::shared_ptr<CShellFile>> s_fileCache;
-	static std::chrono::system_clock::time_point s_cacheTime;
+	//static std::unordered_map<std::pair<std::wstring, CIDL>, std::shared_ptr<CShellFile>, ShellFileHash, ShellFileEqual> s_fileCache;
+	//static std::chrono::system_clock::time_point s_cacheTime;
 
 public:
 //	CShellFolder();

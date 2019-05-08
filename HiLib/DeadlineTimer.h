@@ -13,9 +13,9 @@ private:
 	std::future<void> m_future;
 	std::function<void()> m_action;
 	std::atomic<bool> m_stop;
-	std::atomic<bool> m_running;
+	//std::atomic<bool> m_running;
 public:
-	CDeadlineTimer() :m_stop(false), m_running(false) {}
+	CDeadlineTimer() :m_stop(false)/*, m_running(false)*/ {}
 	~CDeadlineTimer() { stop(); }
 
 	void run(std::function<void()> action, const std::chrono::milliseconds& ms);
