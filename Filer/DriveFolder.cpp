@@ -59,6 +59,12 @@ void CDriveManager::Reload()
 
 }
 
+bool CDriveManager::Exist(const std::wstring& path)
+{
+	auto iter = std::find_if(m_driveFolders.begin(), m_driveFolders.end(), [path](const auto& folder)->bool {return boost::iequals(folder->GetPath(), path); });
+	return iter != m_driveFolders.end();
+}
+
 std::shared_ptr<CDriveFolder> CDriveManager::GetDriveFolderByIDL(CIDL& idl)
 {
 	auto iter = std::find_if(m_driveFolders.begin(), m_driveFolders.end(), [idl](const auto& folder)->bool {return folder->GetAbsoluteIdl() == idl; });

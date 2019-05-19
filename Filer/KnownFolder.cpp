@@ -151,6 +151,12 @@ CKnownFolderManager::CKnownFolderManager()
 //	}
 //}
 //
+bool CKnownFolderManager::Exist(const std::wstring& path)
+{
+	auto iter = m_knownFolderMap.find(path);
+	return iter != m_knownFolderMap.end();
+}
+
 std::shared_ptr<CKnownFolder> CKnownFolderManager::GetKnownFolderByPath(const std::wstring& path)
 {
 	auto iter = m_knownFolderMap.find(path);

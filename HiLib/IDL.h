@@ -1,7 +1,5 @@
 #pragma once
 
-std::wstring STRRET2WSTR(STRRET& strret, LPITEMIDLIST pidl);
-
 class CIDL
 {
 public:
@@ -24,7 +22,9 @@ public:
 	virtual ~CIDL();
 	//Ptr
 	LPITEMIDLIST ptr() { return m_pIDL; }
-	LPCITEMIDLIST ptr() const { return m_pIDL; }
+//	LPITEMIDLIST ptr() const { return m_pIDL; }
+	const LPITEMIDLIST ptr() const { return m_pIDL; }
+
 	LPITEMIDLIST* ptrptr() {return &m_pIDL; }
 	LPCITEMIDLIST* ptrptr() const { return (LPCITEMIDLIST*)(&m_pIDL); }
 	//Attach

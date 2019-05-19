@@ -83,7 +83,7 @@ LRESULT CInplaceEdit::OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHan
 	switch(wParam){
 	case VK_RETURN:
 		::SetFocus(::GetParent(m_hWnd));//This function delete this as result
-		bHandled=TRUE;		
+		bHandled = TRUE;
 		break;
 	case VK_TAB:
 	//case VK_PRIOR:

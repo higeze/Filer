@@ -8,12 +8,9 @@
 #include "FileSizeArgs.h"
 #include "FileTimeArgs.h"
 #include "ThreadPool.h"
+#include "ShellFileFactory.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
-
-//std::unordered_map<std::pair<std::wstring, CIDL>, std::shared_ptr<CShellFile>, ShellFileHash, ShellFileEqual> CShellFolder::s_fileCache;
-//std::chrono::system_clock::time_point CShellFolder::s_cacheTime = std::chrono::system_clock::now();
-
 
 CShellFolder::CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder)
 	:CShellFile(pParentShellFolder, parentIdl, childIdl), m_pShellFolder(pShellFolder) {}
@@ -112,7 +109,8 @@ std::shared_ptr<CShellFolder> CShellFolder::GetParent()
 	if (!pGrandParentFolder) {
 		pGrandParentFolder = pDesktopShellFolder;
 	}
-	return std::make_shared<CShellFolder>(pGrandParentFolder, grandParentIDL, parentIDL.CloneLastID(), pParentFolder);
+	return std::static_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pGrandParentFolder, grandParentIDL, parentIDL.CloneLastID()));
+	//return std::make_shared<CShellFolder>(pGrandParentFolder, grandParentIDL, parentIDL.CloneLastID(), pParentFolder);
 }
 
 std::shared_ptr<CShellFolder> CShellFolder::Clone()const
@@ -394,82 +392,5 @@ void CShellFolder::SetExt(const std::wstring& wstrExt)
 
 std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
 {
-	return CreateShExFileFolder(GetShellFolderPtr(), GetAbsoluteIdl(), childIdl);
+	return CShellFileFactory::GetInstance()->CreateShellFilePtr(GetShellFolderPtr(), GetAbsoluteIdl(), childIdl);
 }
-
-//static
-std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const CComPtr<IShellFolder>& pShellFolder, const CIDL& parentIdl, const CIDL& childIdl)
-{
-
-	CComPtr<IShellFolder> pFolder;
-	CComPtr<IEnumIDList> enumIdl;
-	STRRET strret;
-	pShellFolder->GetDisplayNameOf(childIdl.ptr(), SHGDN_FORPARSING, &strret);
-	std::wstring path = childIdl.STRRET2WSTR(strret);
-	std::wstring ext = ::PathFindExtension(path.c_str());
-
-	//if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - s_cacheTime).count() > 600) {
-	//	BOOST_LOG_TRIVIAL(trace) << "CShellFolder::CreateShExFileFolder Cache count:" << s_fileCache.size();
-	//	s_cacheTime = std::chrono::system_clock::now();
-	//	if (s_fileCache.size() > 10000) {
-	//		s_fileCache.clear();
-	//	}
-	//}
-
-	//if (auto iter = s_fileCache.find(std::make_pair(path, childIdl)); iter != s_fileCache.end()) {
-	//	iter->second->Reset();
-	//	return iter->second;
-	//} else {
-		std::shared_ptr<CShellFile> pFile;
-		if (!childIdl) {
-			pFile = CKnownFolderManager::GetInstance()->GetDesktopFolder();
-		} else if (auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderByPath(path)) {
-			pFile = spKnownFolder;
-		} else if (path[0] == L':') {
-			pFile = std::make_shared<CShellFile>(pShellFolder, parentIdl, childIdl);
-		} else if (auto spDriveFolder = CDriveManager::GetInstance()->GetDriveFolderByPath(path)) {
-			pFile = spDriveFolder;
-		} else if (boost::iequals(ext, ".zip")) {
-			pFile = std::make_shared<CShellZipFolder>(pShellFolder, parentIdl, childIdl);
-		} else if (
-			//Do not use ::PathIsDirectory(path.c_str()), because it's slower
-			(SUCCEEDED(pShellFolder->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
-				SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)))) {
-			pFile = std::make_shared<CShellFolder>(pShellFolder, parentIdl, childIdl, pFolder);
-		} else {
-			pFile = std::make_shared<CShellFile>(pShellFolder, parentIdl, childIdl);
-		}
-		//s_fileCache.emplace(std::make_pair(path, childIdl), pFile);
-		return pFile;
-	//}
-}
-
-
-
-//static
-std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const std::wstring& path)
-{
-	auto desktop(CKnownFolderManager::GetInstance()->GetDesktopFolder());
-	CIDL relativeIdl;
-
-	ULONG         chEaten;
-	ULONG         dwAttributes;
-	HRESULT hr = desktop->GetShellFolderPtr()->ParseDisplayName(
-		NULL,
-		NULL,
-		const_cast<LPWSTR>(path.c_str()),
-		&chEaten,
-		relativeIdl.ptrptr(),
-		&dwAttributes);
-
-	if (FAILED(hr)) {//Not Exist
-		return std::make_shared<CShellInvalidFile>();
-	} else {
-		return desktop->CreateShExFileFolder(relativeIdl);
-	}
-}
-
-
-
-
-

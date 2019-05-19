@@ -309,6 +309,7 @@
     <ClInclude Include="..\HiLib\SheetEnums.h" />
     <ClInclude Include="..\HiLib\SheetEventArgs.h" />
     <ClInclude Include="..\HiLib\SheetStateMachine.h" />
+    <ClInclude Include="..\HiLib\ShellFunction.h" />
     <ClInclude Include="..\HiLib\ShowHideMenuItem.h" />
     <ClInclude Include="..\HiLib\SingletonMalloc.h" />
     <ClInclude Include="..\HiLib\TextCell.h" />
@@ -321,6 +322,7 @@
     <ClInclude Include="FileSizeArgs.h" />
     <ClInclude Include="FileTimeArgs.h" />
     <ClInclude Include="PathRow.h" />
+    <ClInclude Include="ShellFileFactory.h" />
     <ClInclude Include="ShellZipFolder.h" />
     <ClInclude Include="DriveFolder.h" />
     <ClInclude Include="FilerTabGridView.h" />
@@ -422,6 +424,7 @@
     <ClCompile Include="..\HiLib\SheetCell.cpp" />
     <ClCompile Include="..\HiLib\SheetDictionary.cpp" />
     <ClCompile Include="..\HiLib\SheetStateMachine.cpp" />
+    <ClCompile Include="..\HiLib\ShellFunction.cpp" />
     <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp" />
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
@@ -429,6 +432,7 @@
     <ClCompile Include="..\HiLib\Tracker.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="PathRow.cpp" />
+    <ClCompile Include="ShellFileFactory.cpp" />
     <ClCompile Include="ShellZipFolder.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="DriveFolder.cpp" />

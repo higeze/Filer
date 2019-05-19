@@ -18,6 +18,7 @@
 #include "FavoritesGridView.h"
 #include "PropertyWnd.h"
 #include "Filer.h"
+#include "ShellFileFactory.h"
 
 
 CFavoriteCell::CFavoriteCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
@@ -29,7 +30,7 @@ std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
 	auto pCol = static_cast<CFavoritesColumn*>(m_pColumn);
 	auto order = pRow->GetOrderIndex();
 	if (!pCol->GetFavorites()->at(order)->GetShellFile()) {
-		pCol->GetFavorites()->at(order)->SetShellFile(CShellFolder::CreateShExFileFolder(pCol->GetFavorites()->at(order)->GetPath()));
+		pCol->GetFavorites()->at(order)->SetShellFile(CShellFileFactory::GetInstance()->CreateShellFilePtr(pCol->GetFavorites()->at(order)->GetPath()));
 	}
 	return pCol->GetFavorites()->at(order)->GetShellFile();
 }
@@ -48,7 +49,7 @@ void CFavoriteCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPa
 	CFileIconCell::PaintContent(direct, rcPaint);
 
 	//Paint Text
-	direct.DrawTextInRect(*(m_spProperty->Format) , GetShortName(), rcPaint);
+	direct.DrawTextInRect(*(m_spProperty->Format) , GetShortName(), Content2InnerBorder(rcPaint));
 }
 
 void CFavoriteCell::OnContextMenu(const ContextMenuEvent& e)

@@ -4,6 +4,7 @@
 #include "FilerWnd.h"
 #include "FavoriteRow.h"
 #include "KnownFolder.h"
+#include "ShellFileFactory.h"
 
 CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
 	:m_spFilerView(std::make_shared<CFilerGridView>(spFilerGridViewProp))
@@ -99,7 +100,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 	}
 	else {
 		for (auto path : m_vwPath) {
-			if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFolder::CreateShExFileFolder(path))) {
+			if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(path))) {
 				//ShellFolder
 				if (!pFolder->GetShellFolderPtr()) { pFolder = CKnownFolderManager::GetInstance()->GetDesktopFolder(); }
 
@@ -192,7 +193,7 @@ void CFilerTabGridView::AddNewView(std::wstring path)
 	int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
 
 	//CFilerGridView
-	if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFolder::CreateShExFileFolder(path))) {
+	if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(path))) {
 		m_viewMap.insert(std::make_pair(id, pFolder));
 		BOOL dummy = TRUE;
 		OnNotifyTabSelChanging(0, NULL, dummy);

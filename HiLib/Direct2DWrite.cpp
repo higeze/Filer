@@ -450,7 +450,7 @@ namespace d2dw
 		d2dw::FormatF tmpFormat(format);
 		d2dw::CSizeF size = CalcTextSize(tmpFormat, text);
 
-		while (size.width > rect.Width()) {
+		while (size.width > rect.Width() || size.height > rect.Height()) {
 			tmpFormat.Font.Size -= 1.0f;
 			size = CalcTextSize(tmpFormat, text);
 		}

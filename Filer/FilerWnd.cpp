@@ -17,6 +17,7 @@
 #include "ResourceIDFactory.h"
 #include "CellProperty.h"
 #include "DriveFolder.h"
+#include "ShellFunction.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -267,7 +268,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				for (auto& pIdl : vpIdl) {
 					STRRET strret;
 					psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
-					std::wstring path = STRRET2WSTR(strret, pIdl);
+					std::wstring path = shell::STRRET2WSTR(strret, pIdl);
 					GetFavoritesPropPtr()->GetFavorites()->push_back(std::make_shared<CFavorite>(path, L""));
 					m_spLeftFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spLeftFavoritesView.get(), GetFavoritesPropPtr()->GetFavorites()->size() - 1));
 					m_spRightFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spRightFavoritesView.get(), GetFavoritesPropPtr()->GetFavorites()->size() - 1));
@@ -287,7 +288,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 						for (auto& pIdl : vpIdl) {
 							STRRET strret;
 							psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
-							filePaths.emplace_back(L"\"" + STRRET2WSTR(strret, pIdl) + L"\"");
+							filePaths.emplace_back(L"\"" + shell::STRRET2WSTR(strret, pIdl) + L"\"");
 						}
 
 						std::wstring fileMultiPath = boost::join(filePaths, L" ");
@@ -438,7 +439,7 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 			int okcancel = ::MessageBox(m_hWnd, L"Copy?", L"Copy?", MB_OKCANCEL);
 			if (okcancel == IDOK) {
 				std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
-				m_spCurView->GetGridView()->CopySelectedFilesTo(spOtherView->GetGridView()->GetFolder());
+				m_spCurView->GetGridView()->CopySelectedFilesTo(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl());
 			}
 			bHandled = TRUE;
 		}
@@ -448,11 +449,7 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 			int okcancel = ::MessageBox(m_hWnd, L"Move?", L"Move?", MB_OKCANCEL);
 			if (okcancel == IDOK) {
 				std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
-				CComPtr<IShellItem2> pDestShellItem;
-
-				HRESULT hr = ::SHCreateItemFromIDList(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl().ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
-				if (FAILED(hr)) { break; }
-				m_spCurView->GetGridView()->MoveSelectedFilesTo(pDestShellItem);
+				m_spCurView->GetGridView()->MoveSelectedFilesTo(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl());
 			}
 			bHandled = TRUE;
 		}
@@ -462,7 +459,7 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 			int okcancel = ::MessageBox(m_hWnd, L"Incremental Copy?", L"Incremental Copy?", MB_OKCANCEL);
 			if (okcancel == IDOK) {
 				std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
-				m_spCurView->GetGridView()->CopyIncrementalSelectedFilesTo(spOtherView->GetGridView()->GetFolder());
+				m_spCurView->GetGridView()->CopyIncrementalSelectedFilesTo(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl());
 			}
 			bHandled = TRUE;
 

@@ -41,6 +41,7 @@ public:
 	CKnownFolderManager();
 	//bool IsKnownFolder(CIDL& idl);
 	//std::shared_ptr<CKnownFolder> GetKnownFolderByIDL(CIDL& idl);
+	bool Exist(const std::wstring& path);
 	std::shared_ptr<CKnownFolder> GetKnownFolderByPath(const std::wstring& path);
 	std::shared_ptr<CKnownFolder> GetKnownFolderById(const KNOWNFOLDERID& id);
 	std::shared_ptr<CKnownFolder> GetDesktopFolder();

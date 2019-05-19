@@ -11,8 +11,8 @@ struct FileSizeArgs;
 struct FileTimeArgs;
 
 
-tstring FileTime2String(FILETIME *pFileTime);
-tstring Size2String(ULONGLONG size);
+std::wstring FileTime2String(FILETIME *pFileTime);
+std::wstring Size2String(ULONGLONG size);
 std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit = 3);
 //bool GetFileSize(CComPtr<IShellFolder>& parentFolder, CIDL childIDL, ULARGE_INTEGER& size);
 //bool GetFolderSize(std::shared_ptr<CShellFolder>& pFolder, ULARGE_INTEGER& size, std::function<void()> checkExit);

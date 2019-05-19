@@ -152,13 +152,23 @@ public:
 	bool PasteFromClipboard();
 	bool Delete();
 
-	bool CopySelectedFilesTo(std::shared_ptr<CShellFolder>& pDest);
-	bool CopyIncrementalSelectedFilesTo(std::shared_ptr<CShellFolder>& pDest);
-	bool MoveSelectedFilesTo(CComPtr<IShellItem2> pDestItem);
+	static bool CopyFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcIDLs);
+	static bool MoveFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcIDLs);
+
+	bool CopySelectedFilesTo(const CIDL& destIDL);
+	bool CopyIncrementalSelectedFilesTo(const CIDL& destIDL);
+	bool MoveSelectedFilesTo(const CIDL& destIDL);
 
 	std::vector<LPITEMIDLIST> GetSelectedLastPIDLVector();
 	std::vector<LPITEMIDLIST> GetSelectedAbsolutePIDLVector();
-	bool SetIncrementalCopy(CComPtr<IFileOperation>& pFileOperation, std::vector<std::shared_ptr<CShellFile>>& spSrcFiles, std::shared_ptr<CShellFolder>& spDestFolder);
+	static bool CFilerGridView::SetIncrementalCopy(
+		const CComPtr<IFileOperation>& pFileOperation,
+		const CComPtr<IShellFolder>& pSrcFolder,
+		const CIDL& srcIDL,
+		const std::vector<CIDL>& srcChildIDLs,
+		const CComPtr<IShellFolder>& pDestFolder,
+		const CIDL& destIDL);
+	//bool SetIncrementalCopy(CComPtr<IFileOperation>& pFileOperation, std::vector<std::shared_ptr<CShellFile>>& spSrcFiles, std::shared_ptr<CShellFolder>& spDestFolder);
 
 private:
 	//Drag & Drop

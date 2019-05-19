@@ -563,6 +563,12 @@
     <ClInclude Include="..\HiLib\MyIcon.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="ShellFileFactory.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ShellFunction.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -857,6 +863,12 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\MyIcon.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="ShellFileFactory.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ShellFunction.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

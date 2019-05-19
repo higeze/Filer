@@ -1,34 +1,7 @@
 #include "IDL.h"
-
 #include "SingletonMalloc.h"
 #include "MyCom.h"
-
-std::wstring STRRET2WSTR(STRRET& strret, LPITEMIDLIST pidl)
-{
-	int nLength;
-	LPSTR lpmstr;
-	WCHAR wcRet[MAX_PATH] = { 0 };
-	switch (strret.uType) {
-	case STRRET_WSTR:
-		return std::wstring(strret.pOleStr);
-		break;
-	case STRRET_OFFSET:
-		lpmstr = (LPSTR)(((char*)pidl) + strret.uOffset);
-		nLength = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpmstr, -1, NULL, 0);
-		::MultiByteToWideChar(CP_THREAD_ACP, 0, lpmstr, -1, wcRet, nLength);
-		break;
-	case STRRET_CSTR:
-		lpmstr = strret.cStr;
-		nLength = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpmstr, -1, NULL, 0);
-		::MultiByteToWideChar(CP_THREAD_ACP, 0, lpmstr, -1, wcRet, nLength);
-		//::wcscpy_s(wcRet,wcslen(wcRet),(LPCWSTR)strret.cStr);
-		break;
-	default:
-		break;
-	}
-	return std::wstring(wcRet);
-}
-
+#include "ShellFunction.h"
 
 //Static member functions
 LPITEMIDLIST CIDL::CreateItemIdList(UINT uSize)
@@ -162,7 +135,7 @@ LPITEMIDLIST CIDL::GetItemIdList(LPCWSTR lpwstrPath)
 
 std::wstring CIDL::STRRET2WSTR(STRRET& strret)const
 {
-	return ::STRRET2WSTR(strret, m_pIDL);
+	return shell::STRRET2WSTR(strret, m_pIDL);
 }
 
 CIDL CIDL::operator + ( const CIDL& idl ) const
