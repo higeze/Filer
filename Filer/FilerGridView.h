@@ -152,6 +152,7 @@ public:
 	bool PasteFromClipboard();
 	bool Delete();
 
+	static bool CopyIncrementalFiles(const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	static bool CopyFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcIDLs);
 	static bool MoveFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcIDLs);
 
@@ -168,6 +169,13 @@ public:
 		const std::vector<CIDL>& srcChildIDLs,
 		const CComPtr<IShellFolder>& pDestFolder,
 		const CIDL& destIDL);
+	static std::vector<std::pair<CIDL, std::vector<CIDL>>> GetIncrementalIDLs(
+		const CComPtr<IShellFolder>& pSrcFolder,
+		const CIDL& srcIDL,
+		const std::vector<CIDL>& srcChildIDLs,
+		const CComPtr<IShellFolder>& pDestFolder,
+		const CIDL& destIDL);
+
 	//bool SetIncrementalCopy(CComPtr<IFileOperation>& pFileOperation, std::vector<std::shared_ptr<CShellFile>>& spSrcFiles, std::shared_ptr<CShellFolder>& spDestFolder);
 
 private:
