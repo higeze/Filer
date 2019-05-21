@@ -762,14 +762,23 @@ std::vector<LPITEMIDLIST> CFilerGridView::GetSelectedAbsolutePIDLVector()
 
 //static
 std::vector<std::pair<CIDL, std::vector<CIDL>>> CFilerGridView::GetIncrementalIDLs(
-	const CComPtr<IShellFolder>& pSrcFolder,
 	const CIDL& srcIDL,
 	const std::vector<CIDL>& srcChildIDLs,
-	const CComPtr<IShellFolder>& pDestFolder,
 	const CIDL& destIDL)
 {
 	std::vector<std::pair<CIDL, std::vector<CIDL>>> idlPairs;
 	std::vector<CIDL> idls;
+
+	CComPtr<IShellFolder> pDesktopFolder;
+	::SHGetDesktopFolder(&pDesktopFolder);
+	CComPtr<IShellFolder> pSrcFolder;
+	CComPtr<IShellFolder> pDestFolder;
+	if (FAILED(pDesktopFolder->BindToObject(srcIDL.ptr(), 0, IID_IShellFolder, (void**)&pSrcFolder))) {
+		throw std::exception(FILE_LINE_FUNC);
+	}
+	if (FAILED(pDesktopFolder->BindToObject(destIDL.ptr(), 0, IID_IShellFolder, (void**)&pDestFolder))) {
+		throw std::exception(FILE_LINE_FUNC);
+	}
 
 	for (auto& srcChildIDL : srcChildIDLs) {
 
@@ -821,9 +830,9 @@ std::vector<std::pair<CIDL, std::vector<CIDL>>> CFilerGridView::GetIncrementalID
 					if (!nextIDL) { break; }
 					srcItemChildIDLs.push_back(nextIDL);
 				}
-				auto itemIdlPairs =  GetIncrementalIDLs(
-					pSrcItemFolder, srcIDL + srcChildIDL, srcItemChildIDLs,
-					pDestItemFolder, destIDL + destChildIDL);
+				auto itemIdlPairs = GetIncrementalIDLs(
+					srcIDL + srcChildIDL, srcItemChildIDLs,
+					destIDL + destChildIDL);
 				std::copy(std::begin(itemIdlPairs), std::end(itemIdlPairs), std::back_inserter(idlPairs));
 			} else {
 				//File
@@ -953,20 +962,7 @@ bool CFilerGridView::CopyIncrementalFiles(const CIDL& destIDL, const CIDL& srcID
 		return false;
 	}
 
-	CComPtr<IShellFolder> pDesktopFolder;
-	::SHGetDesktopFolder(&pDesktopFolder);
-	CComPtr<IShellFolder> pSrcFolder;
-	CComPtr<IShellFolder> pDestFolder;
-	if (FAILED(pDesktopFolder->BindToObject(srcIDL.ptr(), 0, IID_IShellFolder, (void**)&pSrcFolder))) {
-		return false;
-	}
-	if (FAILED(pDesktopFolder->BindToObject(destIDL.ptr(), 0, IID_IShellFolder, (void**)&pDestFolder))) {
-		return false;
-	}
-
-	auto idlPairs = GetIncrementalIDLs(
-		pSrcFolder, srcIDL, srcChildIDLs,
-		pDestFolder, destIDL);
+	auto idlPairs = GetIncrementalIDLs(srcIDL, srcChildIDLs, destIDL);
 	
 	if (!idlPairs.empty()) {
 		for (auto& pair : idlPairs) {
@@ -1044,7 +1040,7 @@ bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 			}
 		}
 	}
-
+	std::exception_ptr ep;
 	CThreadPool::GetInstance()->enqueue(&CFilerGridView::CopyIncrementalFiles, destIDL, m_spFolder->GetAbsoluteIdl(), srcChildIDLs);
 	return true;
 }

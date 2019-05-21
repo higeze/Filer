@@ -448,14 +448,15 @@ namespace d2dw
 	void CDirect2DWrite::DrawTextInRect(const FormatF& format, const std::wstring& text, const CRectF& rect)
 	{
 		d2dw::FormatF tmpFormat(format);
+		tmpFormat.Alignment.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
+		tmpFormat.Alignment.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER;
+
 		d2dw::CSizeF size = CalcTextSize(tmpFormat, text);
 
 		while (size.width > rect.Width() || size.height > rect.Height()) {
 			tmpFormat.Font.Size -= 1.0f;
 			size = CalcTextSize(tmpFormat, text);
 		}
-		tmpFormat.Alignment.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
-		tmpFormat.Alignment.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER;
 
 		DrawTextLayout(tmpFormat, text, rect);
 	}

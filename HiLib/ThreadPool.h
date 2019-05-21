@@ -1,4 +1,6 @@
 #pragma once
+#include "Debug.h"
+#include "MyWin32.h"
 
 #include <vector>
 #include <queue>
@@ -38,22 +40,29 @@ public:
 			[this] {
 			CCoInitializer coinit;
 			for (;;) {
-				std::function<void()> task;
+				try {
+					std::function<void()> task;
 
-				{
-					std::unique_lock<std::mutex> lock(this->queue_mutex);
-					this->condition.wait(lock,
-						[this] { return this->stop || !this->tasks.empty(); });
-					if (this->stop && this->tasks.empty())
-						return;
-					task = std::move(this->tasks.front());
-					this->tasks.pop();
+					{
+						std::unique_lock<std::mutex> lock(this->queue_mutex);
+						this->condition.wait(lock,
+							[this] { return this->stop || !this->tasks.empty(); });
+						if (this->stop && this->tasks.empty())
+							return;
+						task = std::move(this->tasks.front());
+						this->tasks.pop();
+					}
+					activeCount++;
+					task();
+					activeCount--;
+				} catch (std::exception& ex) {
+					std::string msg = (boost::format(
+						"What:%1%\r\n"
+						"Last Error:%2%\r\n"
+					) % ex.what() % GetLastErrorString()).str();
+
+					::MessageBoxA(nullptr, msg.c_str(), "Exception in Thread Pool task", MB_ICONWARNING);
 				}
-				activeCount++;
-				//BOOST_LOG_TRIVIAL(trace) << L"CThreadPool Thread Start Active Count:" << activeCount.load();
-				task();
-				activeCount--;
-				//BOOST_LOG_TRIVIAL(trace) << L"CThreadPool Thread End Active Count:" << activeCount.load();
 			}
 		}
 		);
