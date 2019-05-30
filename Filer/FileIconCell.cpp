@@ -44,7 +44,6 @@ void CFileIconCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPa
 			sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 		}
 	};
-
 	direct.DrawBitmap(direct.GetIconCachePtr()->GetFileIconBitmap(spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetExt(), updated), rc);
 }
 

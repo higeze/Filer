@@ -144,7 +144,7 @@ public:
 };
 
 
-
+//Editable, 
 class CDcmParameter;
 
 class CParameterCell:public CEditableCell

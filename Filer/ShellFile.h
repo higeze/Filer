@@ -145,6 +145,11 @@ public:
 	//Destructor
 	virtual ~CShellInvalidFile(){}
 
+	virtual std::wstring& GetPath() override{ return m_wstrPath; }
+	virtual std::wstring GetFileNameWithoutExt()override { return m_wstrFileNameWithoutExt; }
+	virtual std::wstring GetFileName() override { return m_wstrFileName; }
+	virtual std::wstring GetExt() override { return m_wstrExt; }
+
 	//Icon
 //	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction)override;
 };

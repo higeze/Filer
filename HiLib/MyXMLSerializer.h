@@ -11,6 +11,25 @@
 #include "SerializerEnableIf.h"
 #include "CellProperty.h"
 
+#define CLEAR_POLYMORPHIC_RELATION \
+	CSerializer::s_dynamicSerializeMap.clear();\
+	CDeserializer::s_dynamicDeserializeMap.clear();\
+	CDeserializer::s_dynamicMakeSharedMap.clear()
+
+#define REGISTER_POLYMORPHIC_RELATION(Base, Derived, ...)\
+CSerializer::s_dynamicSerializeMap.insert_or_assign(\
+	typeid(Derived).name(), [](CSerializer* se, MSXML2::IXMLDOMElementPtr pElem, void* ptr) {\
+	se->SerializeValue(*(dynamic_cast<Derived*>(static_cast<Base*>(ptr))), pElem);\
+});\
+CDeserializer::s_dynamicDeserializeMap.insert_or_assign(\
+	typeid(Derived).name(), [](CDeserializer* se, MSXML2::IXMLDOMElementPtr pElem, void* ptr) {\
+	se->DeserializeElement(*(dynamic_cast<Derived*>(static_cast<Base*>(ptr))), pElem);\
+});\
+CDeserializer::s_dynamicMakeSharedMap.insert_or_assign(\
+	typeid(Derived).name(), [this]()->std::shared_ptr<void> {\
+	return std::make_shared<Derived>(__VA_ARGS__);\
+})
+
 class CSerializer{
 private:
 	MSXML2::IXMLDOMDocumentPtr m_pDoc;

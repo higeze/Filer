@@ -2,6 +2,28 @@
 #include "CellProperty.h"
 #include "Direct2DWrite.h"
 
+
+struct ProgressProperty
+{
+public:
+	d2dw::FormatF Format = d2dw::FormatF();
+
+	d2dw::SolidLine Border = d2dw::SolidLine(230.f / 255.f, 230.f / 255.f, 230.f / 255.f, 1.0f);
+	d2dw::SolidFill BackgroundFill = d2dw::SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
+	d2dw::SolidFill ForegroundFill = d2dw::SolidFill(0.f / 255.f, 200.f / 255.f, 0.f / 255.f, 1.0f);
+
+	FRIEND_SERIALIZER
+		template <class Archive>
+	void serialize(Archive& ar)
+	{
+		ar("Border", Border);
+		ar("BackgroundFill", BackgroundFill);
+		ar("ForegroundFill", ForegroundFill);
+	}
+
+};
+
+
 struct ScrollProperty
 {
 public:

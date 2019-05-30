@@ -9,7 +9,6 @@
 #include "FileRow.h"
 #include "FileNameColumn.h"
 #include "FileSizeColumn.h"
-//#include "FileIconColumn.h"
 #include "FileExtColumn.h"
 #include "FileLastWriteColumn.h"
 #include "shlwapi.h"
@@ -48,6 +47,8 @@
 #include "ThreadPool.h"
 
 #include "ShellFunction.h"
+#include "IncrementalCopyWnd.h"
+#include "ProgressBar.h"
 
 #define SCRATCH_QCM_FIRST 1
 #define SCRATCH_QCM_NEW 600//200,500 are used by system
@@ -56,26 +57,21 @@
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CFilerGridView::CFilerGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
-	:CGridView(std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp))
+	:CFilerGridViewBase(spFilerGridViewProp)
 {
 	m_cwa
 	.dwExStyle(WS_EX_ACCEPTFILES);
+
 	AddMsgHandler(WM_DIRECTORYWATCH,&CFilerGridView::OnDirectoryWatch,this);
 
-	AddCmdIDHandler(IDM_CUT,&CFilerGridView::OnCommandCut,this);
-	//AddCmdIDHandler(IDM_COPYTEXT, &CFilerGridView::OnCommandCopyText, this);
-
-	//They are already assigned in GridView
-	//AddCmdIDHandler(IDM_COPY,&CFilerGridView::OnCommandCopy,this);
-	//AddCmdIDHandler(IDM_PASTE,&CFilerGridView::OnCommandPaste,this);
-	//AddCmdIDHandler(IDM_DELETE,&CFilerGridView::OnCommandDelete,this);
 	m_spItemDragger = std::make_shared<CFileDragger>();
-
-	CellLButtonDblClk.connect(std::bind(&CFilerGridView::OnCellLButtonDblClk,this,std::placeholders::_1));
 }
 
 LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	//Base Create
+	CFilerGridViewBase::OnCreate(uMsg, wParam, lParam, bHandled);
+
 	//Directory watcher
 	m_spWatcher = std::make_shared<CDirectoryWatcher>(m_hWnd);
 
@@ -88,12 +84,6 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	//DropSource
 	m_pDropSource = CComPtr<IDropSource>(new CDropSource);
 	m_pDragSourceHelper.CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER);
-
-	//Desktop IShellFolder
-	::SHGetDesktopFolder(&m_pDesktopShellFolder);
-
-	//Base Create
-	CGridView::OnCreate(uMsg,wParam,lParam,bHandled);
 
 	//Insert rows
 	m_rowHeader = std::make_shared<CPathRow>(this);
@@ -131,8 +121,6 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	//for (auto& item : m_headerMenuItems) {
 	//	AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
 	//}
-
-
 	return 0;
 }
 
@@ -223,20 +211,6 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 		break;
 	}
 }
-
-RowDictionary::const_iterator CFilerGridView::FindIfRowIterByFileNameExt(const std::wstring& fileNameExt)
-{
-	return std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
-		[&](const RowData& data)->bool {
-		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
-			return p->GetFilePointer()->GetFileName() == fileNameExt;
-		}
-		else {
-			return false;
-		}
-	});
-}
-
 
 void CFilerGridView::Added(const std::wstring& fileName)
 {
@@ -382,24 +356,6 @@ void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
 			OpenFolder(m_spFolder);
 		}
 		break;
-	case 'X':
-		if (::GetAsyncKeyState(VK_CONTROL)) {
-			CutToClipboard();
-		}
-		break;
-	case 'C':
-		if (::GetAsyncKeyState(VK_CONTROL)) {
-			CopyToClipboard();
-		}
-		break;
-	case 'V':
-		if (::GetAsyncKeyState(VK_CONTROL)) {
-			PasteFromClipboard();
-		}
-		break;
-	case VK_DELETE:
-		Delete();
-		break;
 	case VK_F8:
 		{
 			int okcancel = ::MessageBox(m_hWnd, L"Delete?", L"Delete?", MB_OKCANCEL);
@@ -471,7 +427,7 @@ void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
 		break;
 	}
 
-	CGridView::OnKeyDown(e);
+	CFilerGridViewBase::OnKeyDown(e);
 };
 
 void CFilerGridView::InsertDefaultRowColumn()
@@ -496,23 +452,6 @@ void CFilerGridView::Open(std::shared_ptr<CShellFile>& spFile)
 		OpenFile(spFile);
 	}
 	::SetFocus(m_hWnd);
-}
-
-void CFilerGridView::OpenFile(std::shared_ptr<CShellFile>& spFile)
-{
-	SHELLEXECUTEINFO	sei = {0};
-	sei.cbSize = sizeof(SHELLEXECUTEINFO);
-	sei.fMask = SEE_MASK_INVOKEIDLIST;
-	sei.hwnd = m_hWnd;
-	sei.lpVerb = NULL;
-	sei.lpFile = NULL;
-	sei.lpParameters = NULL;
-	sei.lpDirectory = NULL;
-	sei.nShow = SW_SHOWNORMAL;
-	sei.hInstApp = NULL;
-	sei.lpIDList = (LPVOID)(spFile->GetAbsoluteIdl().ptr());
-
-	::ShellExecuteEx(&sei);
 }
 
 void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
@@ -760,277 +699,9 @@ std::vector<LPITEMIDLIST> CFilerGridView::GetSelectedAbsolutePIDLVector()
 	return vPidl;
 }
 
-//static
-std::vector<std::pair<CIDL, std::vector<CIDL>>> CFilerGridView::GetIncrementalIDLs(
-	const CIDL& srcIDL,
-	const std::vector<CIDL>& srcChildIDLs,
-	const CIDL& destIDL)
-{
-	std::vector<std::pair<CIDL, std::vector<CIDL>>> idlPairs;
-	std::vector<CIDL> idls;
-
-	CComPtr<IShellFolder> pDesktopFolder;
-	::SHGetDesktopFolder(&pDesktopFolder);
-	CComPtr<IShellFolder> pSrcFolder;
-	CComPtr<IShellFolder> pDestFolder;
-	if (FAILED(pDesktopFolder->BindToObject(srcIDL.ptr(), 0, IID_IShellFolder, (void**)&pSrcFolder))) {
-		throw std::exception(FILE_LINE_FUNC);
-	}
-	if (FAILED(pDesktopFolder->BindToObject(destIDL.ptr(), 0, IID_IShellFolder, (void**)&pDestFolder))) {
-		throw std::exception(FILE_LINE_FUNC);
-	}
-
-	for (auto& srcChildIDL : srcChildIDLs) {
-
-		//Check existance
-		ULONG chEaten = 0;
-		ULONG dwAttributes = 0;
-		CIDL destChildIDL;
-		auto srcTuple = shell::GetPathNameExt(pSrcFolder, srcChildIDL.ptr());
-		if (SUCCEEDED(pDestFolder->ParseDisplayName(
-			NULL,
-			NULL,
-			const_cast<LPWSTR>(std::get<1>(srcTuple).c_str()),
-			&chEaten,
-			destChildIDL.ptrptr(),
-			&dwAttributes)) && destChildIDL) {//Exist
-
-			auto destTuple = shell::GetPathNameExt(pDestFolder, destChildIDL.ptr());
-
-			CComPtr<IShellFolder> pDestItemFolder;
-			CComPtr<IEnumIDList> destEnumIDL;
-			CComPtr<IShellFolder> pSrcItemFolder;
-			CComPtr<IEnumIDList> srcEnumIDL;
-
-			if (CKnownFolderManager::GetInstance()->Exist(std::get<0>(srcTuple)) ||
-				CKnownFolderManager::GetInstance()->Exist(std::get<0>(destTuple)) ||
-				CDriveManager::GetInstance()->Exist(std::get<0>(srcTuple)) ||
-				CDriveManager::GetInstance()->Exist(std::get<0>(destTuple))) {
-				//Do Nothing
-			} else if (boost::iequals(std::get<2>(destTuple), ".zip")) {
-				//File
-				FILETIME srcTime = shell::GetLastWriteTime(pSrcFolder, srcChildIDL.ptr());
-				FILETIME destTime = shell::GetLastWriteTime(pDestFolder, destChildIDL.ptr());
-				ULARGE_INTEGER srcUli = { srcTime.dwLowDateTime, srcTime.dwHighDateTime };
-				ULARGE_INTEGER destUli = { destTime.dwLowDateTime, destTime.dwHighDateTime };
-				if (srcUli.QuadPart > destUli.QuadPart) {
-					idls.push_back(srcIDL + srcChildIDL);
-				}
-			} else if (
-				//Do not use ::PathIsDirectory(path.c_str()), because it's slower
-				SUCCEEDED(pDestFolder->BindToObject(destChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pDestItemFolder)) &&
-				SUCCEEDED(pDestItemFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &destEnumIDL)) &&
-				SUCCEEDED(pSrcFolder->BindToObject(srcChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pSrcItemFolder)) &&
-				SUCCEEDED(pSrcItemFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &srcEnumIDL))) {
-				//Folder
-				CIDL nextIDL;
-				ULONG ulRet(0);
-				std::vector<CIDL> srcItemChildIDLs;
-				while (SUCCEEDED(srcEnumIDL->Next(1, nextIDL.ptrptr(), &ulRet))) {
-					if (!nextIDL) { break; }
-					srcItemChildIDLs.push_back(nextIDL);
-				}
-				auto itemIdlPairs = GetIncrementalIDLs(
-					srcIDL + srcChildIDL, srcItemChildIDLs,
-					destIDL + destChildIDL);
-				std::copy(std::begin(itemIdlPairs), std::end(itemIdlPairs), std::back_inserter(idlPairs));
-			} else {
-				//File
-				FILETIME srcTime = shell::GetLastWriteTime(pSrcFolder, srcChildIDL.ptr());
-				FILETIME destTime = shell::GetLastWriteTime(pDestFolder, destChildIDL.ptr());
-				ULARGE_INTEGER srcUli = { srcTime.dwLowDateTime, srcTime.dwHighDateTime };
-				ULARGE_INTEGER destUli = { destTime.dwLowDateTime, destTime.dwHighDateTime };
-				if (srcUli.QuadPart > destUli.QuadPart) {
-					idls.push_back(srcIDL + srcChildIDL);
-				}
-			}
-		} else {
-			idls.push_back(srcIDL + srcChildIDL);
-		}
-	}
-
-	if (!idls.empty()) {
-		idlPairs.push_back(std::make_pair(destIDL, idls));
-	}
-	return idlPairs;
-}
-
-
-//static
-bool CFilerGridView::SetIncrementalCopy(
-	const CComPtr<IFileOperation>& pFileOperation,
-	const CComPtr<IShellFolder>& pSrcFolder,
-	const CIDL& srcIDL,
-	const std::vector<CIDL>& srcChildIDLs,
-	const CComPtr<IShellFolder>& pDestFolder,
-	const CIDL& destIDL)
-{
-	bool hasItems = false;
-	std::vector<LPITEMIDLIST> vPidl;
-
-	for (auto& srcChildIDL : srcChildIDLs) {
-
-		//Check existance
-		ULONG chEaten = 0;
-		ULONG dwAttributes = 0;
-		CIDL destChildIDL;
-		auto srcTuple = shell::GetPathNameExt(pSrcFolder, srcChildIDL.ptr());
-		if (SUCCEEDED(pDestFolder->ParseDisplayName(
-			NULL,
-			NULL,
-			const_cast<LPWSTR>(std::get<1>(srcTuple).c_str()),
-			&chEaten,
-			destChildIDL.ptrptr(),
-			&dwAttributes)) && destChildIDL) {//Exist
-
-			auto destTuple = shell::GetPathNameExt(pDestFolder, destChildIDL.ptr());
-
-			CComPtr<IShellFolder> pDestItemFolder;
-			CComPtr<IEnumIDList> destEnumIDL;
-			CComPtr<IShellFolder> pSrcItemFolder;
-			CComPtr<IEnumIDList> srcEnumIDL;
-
-			if (CKnownFolderManager::GetInstance()->Exist(std::get<0>(srcTuple)) ||
-				CKnownFolderManager::GetInstance()->Exist(std::get<0>(destTuple)) ||
-				CDriveManager::GetInstance()->Exist(std::get<0>(srcTuple)) ||
-				CDriveManager::GetInstance()->Exist(std::get<0>(destTuple))) {
-				//Do Nothing
-			} else if (boost::iequals(std::get<2>(destTuple), ".zip")) {
-				//File
-				FILETIME srcTime = shell::GetLastWriteTime(pSrcFolder, srcChildIDL.ptr());
-				FILETIME destTime = shell::GetLastWriteTime(pDestFolder, destChildIDL.ptr());
-				ULARGE_INTEGER srcUli = { srcTime.dwLowDateTime, srcTime.dwHighDateTime };
-				ULARGE_INTEGER destUli = { destTime.dwLowDateTime, destTime.dwHighDateTime };
-				if (srcUli.QuadPart > destUli.QuadPart) {
-					vPidl.push_back((srcIDL + srcChildIDL).ptr());
-				}
-			} else if (
-				//Do not use ::PathIsDirectory(path.c_str()), because it's slower
-				SUCCEEDED(pDestFolder->BindToObject(destChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pDestItemFolder)) &&
-				SUCCEEDED(pDestItemFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &destEnumIDL)) &&
-				SUCCEEDED(pSrcFolder->BindToObject(srcChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pSrcItemFolder)) &&
-				SUCCEEDED(pSrcItemFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &srcEnumIDL))) {
-				//Folder
-				CIDL nextIDL;
-				ULONG ulRet(0);
-				std::vector<CIDL> srcItemChildIDLs;
-				while (SUCCEEDED(srcEnumIDL->Next(1, nextIDL.ptrptr(), &ulRet))) {
-					if (!nextIDL) { break; }
-					srcItemChildIDLs.push_back(nextIDL);
-				}
-				hasItems |= SetIncrementalCopy(pFileOperation,
-					pSrcItemFolder, srcIDL + srcChildIDL, srcItemChildIDLs,
-					pDestItemFolder, destIDL + destChildIDL );
-			} else {
-				//File
-				FILETIME srcTime = shell::GetLastWriteTime(pSrcFolder, srcChildIDL.ptr());
-				FILETIME destTime = shell::GetLastWriteTime(pDestFolder, destChildIDL.ptr());
-				ULARGE_INTEGER srcUli = { srcTime.dwLowDateTime, srcTime.dwHighDateTime };
-				ULARGE_INTEGER destUli = { destTime.dwLowDateTime, destTime.dwHighDateTime };
-				if (srcUli.QuadPart > destUli.QuadPart) {
-					vPidl.push_back((srcIDL + srcChildIDL).ptr());
-				}
-			}
-		} else {
-			vPidl.push_back((srcIDL + srcChildIDL).ptr());
-		}
-	}
-
-	if(!vPidl.empty()){
-		hasItems = true;
-
-		CComPtr<IShellItem2> pDestShellItem;
-		if (FAILED(::SHCreateItemFromIDList(destIDL.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem)))) {
-			return false;
-		}
-		CComPtr<IShellItemArray> pItemAry = nullptr;
-		if (FAILED(SHCreateShellItemArrayFromIDLists(vPidl.size(), (LPCITEMIDLIST*)(vPidl.data()), &pItemAry))){
-			return false;
-		}
-		if (FAILED(pFileOperation->CopyItems(pItemAry, pDestShellItem))) {
-			return false;
-		}
-	}
-	return hasItems;
-}
-
-//static
-bool CFilerGridView::CopyIncrementalFiles(const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-{
-	CComPtr<IFileOperation> pFileOperation = nullptr;
-	if (FAILED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {
-		return false;
-	}
-
-	auto idlPairs = GetIncrementalIDLs(srcIDL, srcChildIDLs, destIDL);
-	
-	if (!idlPairs.empty()) {
-		for (auto& pair : idlPairs) {
-			std::vector<LPITEMIDLIST> pidls;
-			std::transform(std::begin(pair.second), std::end(pair.second), std::back_inserter(pidls), [](const CIDL& x) {return x.ptr(); });
-
-			CComPtr<IShellItem2> pDestShellItem;
-			if (FAILED(::SHCreateItemFromIDList(pair.first.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem)))) {
-				return false;
-			}
-			CComPtr<IShellItemArray> pItemAry = nullptr;
-			if (FAILED(SHCreateShellItemArrayFromIDLists(pidls.size(), (LPCITEMIDLIST*)(pidls.data()), &pItemAry))) {
-				return false;
-			}
-			if (FAILED(pFileOperation->CopyItems(pItemAry, pDestShellItem))) {
-				return false;
-			}
-		}
-		return SUCCEEDED(pFileOperation->PerformOperations());
-	} else {
-		return false;
-	}
-}
-
-//static
-bool CFilerGridView::CopyFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcIDLs)
-{
-	CComPtr<IShellItem2> pDestItem;
-	HRESULT hr = ::SHCreateItemFromIDList(destIDL.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestItem));
-	if (FAILED(hr)) { return false; }
-
-	CComPtr<IShellItemArray> pSrcItemAry = nullptr;
-	hr = ::SHCreateShellItemArrayFromIDLists(srcIDLs.size(), (LPCITEMIDLIST*)(srcIDLs.data()), &pSrcItemAry);
-	if (FAILED(hr)) { return false; }
-
-	CComPtr<IFileOperation> pFileOperation;
-
-	hr = pFileOperation.CoCreateInstance(CLSID_FileOperation);
-	if (FAILED(hr)) { return false; }
-	hr = pFileOperation->CopyItems(pSrcItemAry, pDestItem);
-	if (FAILED(hr)) { return false; }
-	hr = pFileOperation->PerformOperations();
-	return SUCCEEDED(hr);
-}
-
-//static
-bool CFilerGridView::MoveFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcIDLs)
-{
-	CComPtr<IShellItem2> pDestItem;
-	HRESULT hr = ::SHCreateItemFromIDList(destIDL.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestItem));
-	if (FAILED(hr)) { return false; }
-
-	CComPtr<IShellItemArray> pSrcItemAry = nullptr;
-	hr = ::SHCreateShellItemArrayFromIDLists(srcIDLs.size(), (LPCITEMIDLIST*)(srcIDLs.data()), &pSrcItemAry);
-	if (FAILED(hr)) { return false; }
-
-	CComPtr<IFileOperation> pFileOperation;
-
-	hr = pFileOperation.CoCreateInstance(CLSID_FileOperation);
-	if (FAILED(hr)) { return false; }
-	hr = pFileOperation->MoveItems(pSrcItemAry, pDestItem);
-	if (FAILED(hr)) { return false; }
-	hr = pFileOperation->PerformOperations();
-	return SUCCEEDED(hr);
-}
-
 bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 {
+	//GetSelectedChildIDL
 	std::vector<CIDL> srcChildIDLs;
 	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
 	for (auto rowIter = rowDictionary.begin(), rowEnd = rowDictionary.end(); rowIter != rowEnd; ++rowIter) {
@@ -1040,20 +711,26 @@ bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 			}
 		}
 	}
-	std::exception_ptr ep;
-	CThreadPool::GetInstance()->enqueue(&CFilerGridView::CopyIncrementalFiles, destIDL, m_spFolder->GetAbsoluteIdl(), srcChildIDLs);
+	auto pPrgWnd = new CIncrementalCopyWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
+		destIDL, m_spFolder->GetAbsoluteIdl(), srcChildIDLs);
+
+	pPrgWnd->Create(m_hWnd, CRect(0, 0, 400, 600));
+	pPrgWnd->CenterWindow();
+	pPrgWnd->ShowWindow(SW_SHOW);
+	pPrgWnd->UpdateWindow();
+
 	return true;
 }
 
 bool CFilerGridView::CopySelectedFilesTo(const CIDL& destIDL)
 {
-	CThreadPool::GetInstance()->enqueue(&CFilerGridView::CopyFiles, destIDL, GetSelectedAbsolutePIDLVector());
+	CThreadPool::GetInstance()->enqueue(&shell::CopyFiles, destIDL, GetSelectedAbsolutePIDLVector());
 	return true;
 }
 
 bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 {
-	CThreadPool::GetInstance()->enqueue(&CFilerGridView::MoveFiles, destIDL, GetSelectedAbsolutePIDLVector());
+	CThreadPool::GetInstance()->enqueue(&shell::MoveFiles, destIDL, GetSelectedAbsolutePIDLVector());
 	return true;
 }
 
@@ -1091,28 +768,6 @@ bool CFilerGridView::PasteFromClipboard()
 bool CFilerGridView::Delete()
 {
 	return InvokeNormalShellContextmenuCommand(m_hWnd, "Delete", m_spFolder->GetShellFolderPtr(), GetSelectedLastPIDLVector());
-}
-
-LRESULT CFilerGridView::OnCommandCut(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-{
-	CutToClipboard();
-	return 0;
-}
-
-LRESULT CFilerGridView::OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-{
-	CopyToClipboard();
-	return 0;
-}
-LRESULT CFilerGridView::OnCommandPaste(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-{
-	PasteFromClipboard();
-	return 0;
-}
-LRESULT CFilerGridView::OnCommandDelete(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
-{
-	Delete();
-	return 0;
 }
 
 LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
@@ -1160,6 +815,7 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 		pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<PBYTE>(pInfo) + pInfo->NextEntryOffset);
 	}
 	
+	//Do not delete since caller delete this by himself
 	//delete [] (PBYTE)pInfo0;
 
 	return 0;

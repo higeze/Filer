@@ -50,8 +50,10 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetBitmapFromIcon(const CIcon& icon)
 }
 
 CComPtr<ID2D1Bitmap> CFileIconCache::GetFileIconBitmap(const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated)
-{ 
-	if (!ext.empty() && m_excludeExtSet.find(ext) == m_excludeExtSet.end()) {
+{
+	if (!absoluteIDL || path.empty()) {
+		return GetDefaultIconBitmap();
+	}else if (!ext.empty() && m_excludeExtSet.find(ext) == m_excludeExtSet.end()) {
 		if (auto iter = m_extMap.lock_find(ext); iter != m_extMap.end()) {
 			return iter->second;
 		} else {

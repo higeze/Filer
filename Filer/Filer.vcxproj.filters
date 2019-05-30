@@ -569,6 +569,21 @@
     <ClInclude Include="..\HiLib\ShellFunction.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\ProgressBar.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerGridViewBase.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="CheckableFileGrid.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="IncrementalCopyWnd.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileIconPathCell.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -870,6 +885,21 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\ShellFunction.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ThreadPool.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ProgressBar.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="FilerGridViewBase.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="CheckableFileGrid.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="IncrementalCopyWnd.cpp">
+      <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

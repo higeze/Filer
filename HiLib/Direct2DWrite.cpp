@@ -537,7 +537,9 @@ namespace d2dw
 
 	void CDirect2DWrite::DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap, const CRectF& rect)
 	{
-		GetHwndRenderTarget()->DrawBitmap(pBitmap, rect);
+		if (pBitmap) {
+			GetHwndRenderTarget()->DrawBitmap(pBitmap, rect);
+		}
 	}
 
 	void CDirect2DWrite::Clear()
