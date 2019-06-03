@@ -459,6 +459,14 @@ public:
 		}
 	}
 
+	CPoint GetCursorPosInClient()
+	{
+		CPoint pt;
+		::GetCursorPos(&pt);
+		::ScreenToClient(m_hWnd, &pt);
+		return pt;
+	}
+
 
 };
 /*****************/

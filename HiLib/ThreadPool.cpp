@@ -1,4 +1,5 @@
 #include "ThreadPool.h"
+#include "SEHException.h"
 
 // the constructor just launches some amount of workers
 CThreadPool::CThreadPool(size_t threads)
@@ -7,7 +8,10 @@ CThreadPool::CThreadPool(size_t threads)
 	for (size_t i = 0; i < threads; ++i)
 		workers.emplace_back(
 			[this] {
+		//CoInitialize
 		CCoInitializer coinit;
+		//Catch SEH exception as CEH
+		_set_se_translator(CSEHException::TransferSEHtoCEH);
 		for (;;) {
 			try {
 				std::function<void()> task;

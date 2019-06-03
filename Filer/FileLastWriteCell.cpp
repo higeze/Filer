@@ -63,13 +63,13 @@ std::wstring CFileLastWriteCell::GetString()
 			}
 		};
 
-		auto time = spFile->GetLastWriteTime(static_cast<CFileLastWriteColumn*>(m_pColumn)->GetTimeArgsPtr(), changed);
-		switch (time.second) {
+		auto times = spFile->GetFileTimes(static_cast<CFileLastWriteColumn*>(m_pColumn)->GetTimeArgsPtr(), changed);
+		switch (times.second) {
 		case FileTimeStatus::None:
 			return L"-";
 		case FileTimeStatus::Available:
 		case FileTimeStatus::AvailableLoading:
-			return FileTime2String(&(time.first));
+			return shell::FileTime2String(&(times.first.LastWriteTime));
 		case FileTimeStatus::Loading:
 			return L"...";
 		case FileTimeStatus::Unavailable:

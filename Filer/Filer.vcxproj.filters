@@ -584,6 +584,9 @@
     <ClInclude Include="FileIconPathCell.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\ThreadPool.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -829,9 +832,6 @@
     <ClCompile Include="FavoriteCell.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\ThreadPool.h">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="FilerTabGridView.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
@@ -886,9 +886,6 @@
     <ClCompile Include="..\HiLib\ShellFunction.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\ThreadPool.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\ProgressBar.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -900,6 +897,9 @@
     </ClCompile>
     <ClCompile Include="IncrementalCopyWnd.cpp">
       <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ThreadPool.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

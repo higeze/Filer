@@ -1,6 +1,7 @@
 #pragma
 #include "UIElement.h"
 #include <memory>
+#include <boost\msm\front\state_machine_def.hpp>
 
 //Pre-declare
 class CSheet;

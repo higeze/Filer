@@ -11,6 +11,7 @@ namespace UIElementState
 		Hot,
 		Pressed,
 		PressedLeave,
+		Dragged,
 		Disabled
 	};
 }

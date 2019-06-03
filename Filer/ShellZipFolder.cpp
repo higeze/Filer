@@ -23,9 +23,9 @@ std::wstring CShellZipFolder::GetExt()
 //	return CShellFile::GetIcon(changedAction);
 //}
 
-std::pair<FILETIME, FileTimeStatus> CShellZipFolder::GetLastWriteTime(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
+std::pair<FileTimes, FileTimeStatus> CShellZipFolder::GetFileTimes(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
 {
-	return CShellFile::GetLastWriteTime(spArgs);
+	return CShellFile::GetFileTimes(spArgs);
 }
 
 std::pair<ULARGE_INTEGER, FileSizeStatus> CShellZipFolder::GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)

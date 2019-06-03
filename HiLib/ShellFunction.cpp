@@ -1,6 +1,55 @@
 #include "ShellFunction.h"
 #include "Debug.h"
 
+
+std::wstring shell::ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit)
+
+{
+	// TODO depends on locale
+	//return boost::lexical_cast<std::wstring>(n);
+	bool is_minus = n < 0;
+	is_minus ? n *= -1 : 0;
+
+	std::wstringstream ss;
+	ss << n;
+	std::wstring snum = ss.str();
+	std::reverse(snum.begin(), snum.end());
+	std::wstringstream  ss_csnum;
+	for (int i = 0, len = snum.length(); i <= len;) {
+		ss_csnum << snum.substr(i, separate_digit);
+		if ((i += separate_digit) >= len)
+			break;
+		ss_csnum << ',';
+	}
+	if (is_minus) {
+		ss_csnum << '-';
+	}
+
+	std::wstring cs_num = ss_csnum.str();
+	std::reverse(cs_num.begin(), cs_num.end());
+	return cs_num;
+}
+
+std::wstring shell::FileTime2String(FILETIME* pFileTime)
+{
+	FILETIME ft;
+	SYSTEMTIME st;
+
+	FileTimeToLocalFileTime(pFileTime, &ft);
+	FileTimeToSystemTime(&ft, &st);
+	tstring str;
+	wsprintf(GetBuffer(str, 16), L"%04d/%02d/%02d %02d:%02d",
+		st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute);
+	ReleaseBuffer(str);
+	return str;
+
+}
+
+std::wstring shell::Size2String(ULONGLONG size)
+{
+	return ConvertCommaSeparatedNumber(size);
+}
+
 std::wstring shell::STRRET2WSTR(STRRET& strret, LPITEMIDLIST pidl)
 {
 	int nLength;
@@ -41,13 +90,25 @@ std::tuple<std::wstring, std::wstring, std::wstring> shell::GetPathNameExt(const
 	return std::make_tuple(path, name, ext);
 }
 
-FILETIME shell::GetLastWriteTime(const CComPtr<IShellFolder>& pParentFolder, const LPITEMIDLIST& relativeIDL)
+std::optional<FileTimes> shell::GetFileTimes(const CComPtr<IShellFolder>& pParentFolder, const CIDL& relativeIDL)
 {
 	WIN32_FIND_DATA wfd = { 0 };
-	if (!FAILED(::SHGetDataFromIDList(pParentFolder, relativeIDL, SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
-		return  wfd.ftLastWriteTime;
+	if (SUCCEEDED(::SHGetDataFromIDList(pParentFolder, relativeIDL.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
+		return  FileTimes(wfd.ftCreationTime, wfd.ftLastAccessTime, wfd.ftLastWriteTime);
 	} else {
-		return FILETIME{ 0 };
+		return std::nullopt;
+	}
+}
+
+bool shell::GetFileSize(ULARGE_INTEGER& size, const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& childIdl)
+{
+	WIN32_FIND_DATA wfd = { 0 };
+	if (!FAILED(::SHGetDataFromIDList(pParentShellFolder, childIdl.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
+		size.LowPart = wfd.nFileSizeLow;
+		size.HighPart = wfd.nFileSizeHigh;
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -73,8 +134,8 @@ void shell::CheckIncrementalIDL(
 		&dwAttributes)) && destChildIDL) {//Exist
 
 		auto fileFun = [&]()->void {
-			FILETIME srcTime = shell::GetLastWriteTime(pSrcFolder, srcChildIDL.ptr());
-			FILETIME destTime = shell::GetLastWriteTime(pDestFolder, destChildIDL.ptr());
+			FILETIME srcTime = shell::GetFileTimes(pSrcFolder, srcChildIDL.ptr()).value_or(FileTimes()).LastWriteTime;
+			FILETIME destTime = shell::GetFileTimes(pDestFolder, destChildIDL.ptr()).value_or(FileTimes()).LastWriteTime;
 			ULARGE_INTEGER srcUli = { srcTime.dwLowDateTime, srcTime.dwHighDateTime };
 			ULARGE_INTEGER destUli = { destTime.dwLowDateTime, destTime.dwHighDateTime };
 			if (srcUli.QuadPart > destUli.QuadPart) {

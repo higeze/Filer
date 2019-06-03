@@ -4,6 +4,18 @@
 #include <ShlObj.h>
 #include <boost/algorithm/string.hpp>
 #include "MyString.h"
+#include <optional>
+
+
+struct FileTimes
+{
+	FileTimes(){}
+	FileTimes(const FILETIME& creationTime, const FILETIME& lastAccessTime, const FILETIME& lastWriteTime)
+		:CreationTime(creationTime), LastAccessTime(lastAccessTime), LastWriteTime(lastWriteTime){}
+	FILETIME CreationTime = { 0 };
+	FILETIME LastAccessTime = { 0 };
+	FILETIME LastWriteTime = { 0 };
+};
 
 namespace shell
 {
@@ -44,11 +56,18 @@ namespace shell
 		}
 	};
 
+	std::wstring FileTime2String(FILETIME *pFileTime);
+	std::wstring Size2String(ULONGLONG size);
+	std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit = 3);
+
+	bool GetFileSize(ULARGE_INTEGER& size, const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& childIdl);
+
+
 
 
 	std::wstring STRRET2WSTR(STRRET& strret, LPITEMIDLIST pidl);
 	std::tuple<std::wstring, std::wstring, std::wstring> GetPathNameExt(const CComPtr<IShellFolder>& pParentFolder, const LPITEMIDLIST& relativeIDL);
-	FILETIME GetLastWriteTime(const CComPtr<IShellFolder>& pParentFolder, const LPITEMIDLIST& relativeIDL);
+	std::optional<FileTimes> GetFileTimes(const CComPtr<IShellFolder>& pParentFolder, const CIDL& relativeIDL);
 
 	template<typename T>
 	auto RunFunctionEachFileFolderVirtual(
@@ -126,6 +145,12 @@ namespace shell
 		const CComPtr<IShellFolder>& pFolder,
 		const CComPtr<IEnumIDList>& pEnum,
 		const std::function<void(int)>& read);
+
+	//void SearchFolder(
+	//	const CIDL& srcIDL,
+	//	const std::function<void()>& searchCount,
+	//	const std::function<void(const CIDL&)> find
+	//);
 
 //	CComPtr<IShellFolder> GetParentShellFolderByIDL(const CIDL& absIDL);
 

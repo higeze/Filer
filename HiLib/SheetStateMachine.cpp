@@ -22,8 +22,40 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 	struct NormalState :state<> {};
 	struct RowTrackState :state<> {};
 	struct ColTrackState :state<> {};
-	struct VScrlDragState :state<> {};
-	struct HScrlDragState :state<> {};
+	struct VScrlDragState :state<> 
+	{
+		template < class event_t, class fsm_t >
+		void on_entry(event_t const & e, fsm_t & machine)
+		{
+			if (auto p = dynamic_cast<CGridView*>(machine.m_pSheet)) {
+				p->m_pVScroll->SetState(UIElementState::Dragged);
+			}
+		}
+		template < class event_t, class fsm_t >
+		void on_exit(event_t const & e, fsm_t & machine)
+		{
+			if (auto p = dynamic_cast<CGridView*>(machine.m_pSheet)) {
+				p->m_pVScroll->SetState(UIElementState::Normal);
+			}
+		}
+	};
+	struct HScrlDragState :state<>
+	{
+		template < class event_t, class fsm_t >
+		void on_entry(event_t const & e, fsm_t & machine)
+		{
+			if (auto p = dynamic_cast<CGridView*>(machine.m_pSheet)) {
+				p->m_pHScroll->SetState(UIElementState::Dragged);
+			}
+		}
+		template < class event_t, class fsm_t >
+		void on_exit(event_t const & e, fsm_t & machine)
+		{
+			if (auto p = dynamic_cast<CGridView*>(machine.m_pSheet)) {
+				p->m_pHScroll->SetState(UIElementState::Normal);
+			}
+		}
+	};
 	struct RowDragState :state<> {};
 	struct ColDragState :state<> {};
 	struct ItemDragState :state<> {};
@@ -429,6 +461,7 @@ CSheetStateMachine::CSheetStateMachine(CSheet* pSheet) :pImpl(new Impl(this, pSh
 {
 	pImpl->m_machine.start();
 }
+
 CSheetStateMachine::~CSheetStateMachine() {}
 
 void CSheetStateMachine::LButtonDown(const LButtonDownEvent& e) { pImpl->m_machine.process_event(e); }

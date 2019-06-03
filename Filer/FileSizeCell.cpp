@@ -34,7 +34,7 @@ d2dw::CSizeF CFileSizeCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
 	auto size = spFile->ReadSize();
 	switch (size.second) {
 	case FileSizeStatus::Available:
-		str = Size2String(size.first.QuadPart);
+		str = shell::Size2String(size.first.QuadPart);
 		break;
 	default:
 		str =  L"00,000,000";
@@ -68,7 +68,7 @@ std::wstring CFileSizeCell::GetString()
 		case FileSizeStatus::None:
 			return L"none";
 		case FileSizeStatus::Available:
-			return Size2String(size.first.QuadPart);
+			return shell::Size2String(size.first.QuadPart);
 		case FileSizeStatus::Calculating:
 			return L"...";
 		case FileSizeStatus::Unavailable:
