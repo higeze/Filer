@@ -587,6 +587,9 @@
     <ClInclude Include="..\HiLib\ThreadPool.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="FileIconPathColumn.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -900,6 +903,12 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\ThreadPool.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="FileIconPathCell.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="FileIconPathColumn.cpp">
+      <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

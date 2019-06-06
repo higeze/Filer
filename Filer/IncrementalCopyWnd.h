@@ -42,6 +42,8 @@ private:
 		shell::IdlHash, shell::IdlEqual> m_idlMap;
 
 public:
+	static UINT WM_INCREMENTMAX;
+	static UINT WM_INCREMENTVALUE;
 	static UINT WM_ADDITEM;
 	CIncrementalCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
@@ -57,6 +59,8 @@ public:
 	LRESULT OnDestroy(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnIncrementMax(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnIncrementValue(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnAddItem(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	void OnFinalMessage(HWND hWnd);
 };

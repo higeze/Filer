@@ -16,6 +16,7 @@ CThreadPool::CThreadPool(size_t threads)
 			try {
 				std::function<void()> task;
 
+
 				{
 					std::unique_lock<std::mutex> lock(this->queue_mutex);
 					this->condition.wait(lock,
@@ -34,7 +35,13 @@ CThreadPool::CThreadPool(size_t threads)
 					"Last Error:%2%\r\n"
 				) % ex.what() % GetLastErrorString()).str();
 
-				::MessageBoxA(nullptr, msg.c_str(), "Exception in Thread Pool task", MB_ICONWARNING);
+				::MessageBoxA(nullptr, msg.c_str(), "Exception in Thread Pool", MB_ICONWARNING);
+			} catch (...) {
+				std::string msg = (boost::format(
+					"Last Error:%2%\r\n"
+				) % GetLastErrorString()).str();
+
+				MessageBoxA(nullptr, msg.c_str(), "Unknown Exception in Thread Pool", MB_ICONWARNING);
 			}
 		}
 	}

@@ -8,6 +8,7 @@
 #include "ParentRowHeaderColumn.h"
 #include "FileRow.h"
 #include "FileNameColumn.h"
+#include "FileIconPathColumn.h"
 #include "FileSizeColumn.h"
 #include "FileExtColumn.h"
 #include "FileLastWriteColumn.h"
@@ -82,7 +83,7 @@ LRESULT CCheckableFileGrid::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 
 		insertFun(std::make_shared<CParentRowHeaderColumn>(this), CColumn::kMinIndex);
 		//insertFun(std::make_shared<CFileIconColumn>(this), CColumn::kMaxIndex);
-		m_pNameColumn = std::make_shared<CFileNameColumn>(this);
+		m_pNameColumn = std::make_shared<CFileIconPathColumn>(this);
 		insertFun(m_pNameColumn, CColumn::kMaxIndex);
 		insertFun(std::make_shared<CFileExtColumn>(this), CColumn::kMaxIndex);
 		insertFun(std::make_shared<CFileSizeColumn>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr), CColumn::kMaxIndex);

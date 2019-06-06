@@ -9,7 +9,7 @@ public:
 	//}> m_spIDL
 public:
 	//Constructor
-	CIDL(LPITEMIDLIST pIdl=nullptr);
+	explicit CIDL(LPITEMIDLIST pIdl=nullptr);
 	CIDL(LPCWSTR lpszPath);
 	CIDL(const CIDL& idlPtr);
 	//Operator

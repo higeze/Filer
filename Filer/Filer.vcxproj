@@ -326,6 +326,7 @@
     <ClInclude Include="FilerGridViewProperty.h" />
     <ClInclude Include="FileSizeArgs.h" />
     <ClInclude Include="FileTimeArgs.h" />
+    <ClInclude Include="FileIconPathColumn.h" />
     <ClInclude Include="PathRow.h" />
     <ClInclude Include="IncrementalCopyWnd.h" />
     <ClInclude Include="ShellFileFactory.h" />
@@ -438,7 +439,9 @@
     <ClCompile Include="..\HiLib\ThreadPool.cpp" />
     <ClCompile Include="..\HiLib\Tracker.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
+    <ClCompile Include="FileIconPathCell.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />
+    <ClCompile Include="FileIconPathColumn.cpp" />
     <ClCompile Include="FilerGridViewBase.cpp" />
     <ClCompile Include="PathRow.cpp" />
     <ClCompile Include="IncrementalCopyWnd.cpp" />

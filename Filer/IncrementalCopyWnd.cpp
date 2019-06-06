@@ -7,6 +7,8 @@
 #include "ShellFileFactory.h"
 #include "ResourceIDFactory.h"
 
+UINT CIncrementalCopyWnd::WM_INCREMENTMAX = ::RegisterWindowMessage(L"CIncrementalCopyWnd::WM_INCREMENTMAX");
+UINT CIncrementalCopyWnd::WM_INCREMENTVALUE = ::RegisterWindowMessage(L"CIncrementalCopyWnd::WM_INCREMENTVALUE");
 UINT CIncrementalCopyWnd::WM_ADDITEM = ::RegisterWindowMessage(L"CIncrementalCopyWnd::WM_ADDITEM");
 
 CIncrementalCopyWnd::CIncrementalCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
@@ -37,6 +39,8 @@ CIncrementalCopyWnd::CIncrementalCopyWnd(std::shared_ptr<FilerGridViewProperty>&
 	AddMsgHandler(WM_CLOSE, &CIncrementalCopyWnd::OnClose, this);
 	AddMsgHandler(WM_DESTROY, &CIncrementalCopyWnd::OnDestroy, this);
 	AddMsgHandler(WM_PAINT, &CIncrementalCopyWnd::OnPaint, this);
+	AddMsgHandler(WM_INCREMENTMAX, &CIncrementalCopyWnd::OnIncrementMax, this);
+	AddMsgHandler(WM_INCREMENTVALUE, &CIncrementalCopyWnd::OnIncrementValue, this);
 	AddMsgHandler(WM_ADDITEM, &CIncrementalCopyWnd::OnAddItem, this);
 
 	AddCmdIDHandler(CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"Copy"), &CIncrementalCopyWnd::OnCommandCopy, this);
@@ -138,15 +142,13 @@ LRESULT CIncrementalCopyWnd::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, 
 
 	CThreadPool::GetInstance()->enqueue([this]()->void {
 		std::function<void(int)> readMax = [this](int count)->void {
-			GetProgressBarPtr()->AddMax(count);
-			InvalidateRect(NULL, FALSE);
+			SendMessage(WM_INCREMENTMAX, NULL, NULL);
 		};
 		std::function<void(int, const CIDL&, const CIDL&)> readValue = [this](int count, const CIDL& destIDL, const CIDL& srcIDL)->void {
-			GetProgressBarPtr()->AddValue(count);
+			SendMessage(WM_INCREMENTVALUE, NULL, NULL);
 			if (destIDL && srcIDL) {
 				AddItem(destIDL, srcIDL);
 			}
-			InvalidateRect(NULL, FALSE);
 		};
 
 		GetProgressBarPtr()->SetMin(0);
@@ -233,8 +235,24 @@ LRESULT CIncrementalCopyWnd::OnAddItem(UINT uMsg, WPARAM wParam, LPARAM lParam, 
 		shell::DesktopBindToShellFolder(m_newIDL.CloneParentIDL()),
 		m_newIDL.CloneParentIDL(),
 		m_newIDL.CloneLastID()));
+	InvalidateRect(NULL, FALSE);
 	return 0;
 }
+
+LRESULT CIncrementalCopyWnd::OnIncrementMax(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_pProgressbar->IncrementMax();
+	InvalidateRect(NULL, FALSE);
+	return 0;
+}
+
+LRESULT CIncrementalCopyWnd::OnIncrementValue(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_pProgressbar->IncrementValue();
+	InvalidateRect(NULL, FALSE);
+	return 0;
+}
+
 
 void CIncrementalCopyWnd::AddItem(const CIDL& destIDL, const CIDL srcIDL)
 {

@@ -14,41 +14,41 @@ namespace d2dw
 
 		CRectF m_rect;
 		
-		FLOAT m_min = 0.0f;
-		FLOAT m_max = 100.0f;
-		FLOAT m_value = 0.0f;
+		int m_min = 0.0f;
+		int m_max = 100.0f;
+		int m_value = 0.0f;
 
 		std::shared_ptr<ProgressProperty> m_spProgressProp;
 	public:
 		CProgressBar(CWnd* pWnd, const std::shared_ptr<ProgressProperty>& spProgressProp);
 		virtual ~CProgressBar() = default;
 
-		FLOAT GetMax()const { return m_max; }
-		void AddMax(FLOAT i)
+		int GetMax()const { return m_max; }
+		void IncrementMax()
 		{
-			m_max += i;
+			m_max ++;
 		}
-		void SetMax(FLOAT max) 
+		void SetMax(int max) 
 		{
 			if (m_max != max) {
 				m_max = max;
 				m_value = (std::min)(m_max, m_value);
 			}
 		}
-		FLOAT GetMin()const { return m_min; }
-		void SetMin(FLOAT min)
+		int GetMin()const { return m_min; }
+		void SetMin(int min)
 		{
 			if (m_min != min) {
 				m_min = min;
 				m_value = (std::max)(m_min, m_value);
 			}
 		}
-		FLOAT GetValue()const { return m_value; }
-		void AddValue(FLOAT i)
+		int GetValue()const { return m_value; }
+		void IncrementValue()
 		{
-			m_value += i;
+			m_value ++;
 		}
-		void SetValue(FLOAT value)
+		void SetValue(int value)
 		{
 			if (m_value != value) {
 				m_value = std::clamp(value, m_min, m_max);

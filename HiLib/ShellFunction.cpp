@@ -134,11 +134,9 @@ void shell::CheckIncrementalIDL(
 		&dwAttributes)) && destChildIDL) {//Exist
 
 		auto fileFun = [&]()->void {
-			FILETIME srcTime = shell::GetFileTimes(pSrcFolder, srcChildIDL.ptr()).value_or(FileTimes()).LastWriteTime;
-			FILETIME destTime = shell::GetFileTimes(pDestFolder, destChildIDL.ptr()).value_or(FileTimes()).LastWriteTime;
-			ULARGE_INTEGER srcUli = { srcTime.dwLowDateTime, srcTime.dwHighDateTime };
-			ULARGE_INTEGER destUli = { destTime.dwLowDateTime, destTime.dwHighDateTime };
-			if (srcUli.QuadPart > destUli.QuadPart) {
+			FILETIME srcTime = shell::GetFileTimes(pSrcFolder, srcChildIDL).value_or(FileTimes()).LastWriteTime;
+			FILETIME destTime = shell::GetFileTimes(pDestFolder, destChildIDL).value_or(FileTimes()).LastWriteTime;
+			if (::CompareFileTime(&srcTime, &destTime) >= 0) {
 				read(1, destIDL, (srcIDL + srcChildIDL));
 			} else {
 				read(1, CIDL(), CIDL());
