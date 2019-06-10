@@ -539,9 +539,6 @@
     <ClInclude Include="..\HiLib\Scroll.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\IBridgeTSFInterface.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="FileTimeArgs.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -588,6 +585,12 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="FileIconPathColumn.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerGridViewWnd.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="SearchWnd.h">
       <Filter>Filer</Filter>
     </ClInclude>
   </ItemGroup>
@@ -908,6 +911,12 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FileIconPathColumn.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="FilerGridViewWnd.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="SearchWnd.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>

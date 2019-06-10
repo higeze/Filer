@@ -49,6 +49,7 @@
 #include "ShellFunction.h"
 #include "IncrementalCopyWnd.h"
 #include "ProgressBar.h"
+#include "SearchWnd.h"
 
 #define SCRATCH_QCM_FIRST 1
 #define SCRATCH_QCM_NEW 600//200,500 are used by system
@@ -713,6 +714,7 @@ bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 	}
 	auto pPrgWnd = new CIncrementalCopyWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
 		destIDL, m_spFolder->GetAbsoluteIdl(), srcChildIDLs);
+	pPrgWnd->SetIsDeleteOnFinalMessage(true);
 
 	pPrgWnd->Create(m_hWnd, CRect(0, 0, 400, 600));
 	pPrgWnd->CenterWindow();
@@ -1189,4 +1191,16 @@ BOOL CFilerGridView::SetDragImage(CIDL firstIdl, CComPtr<IDragSourceHelper> pDra
 	HRESULT hr = pDragSourceHelper->InitializeFromBitmap(&dragImage, pDataObject);
 
 	return hr == S_OK;
+}
+
+LRESULT CFilerGridView::OnCommandFind(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	auto pPrgWnd = new CSearchWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp), m_spFolder->GetAbsoluteIdl());
+	pPrgWnd->SetIsDeleteOnFinalMessage(true);
+
+	pPrgWnd->Create(m_hWnd, CRect(0, 0, 400, 600));
+	pPrgWnd->CenterWindow();
+	pPrgWnd->ShowWindow(SW_SHOW);
+	pPrgWnd->UpdateWindow();
+	return 0;
 }

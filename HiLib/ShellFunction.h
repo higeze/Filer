@@ -61,9 +61,7 @@ namespace shell
 	std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit = 3);
 
 	bool GetFileSize(ULARGE_INTEGER& size, const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& childIdl);
-
-
-
+	std::wstring GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL);
 
 	std::wstring STRRET2WSTR(STRRET& strret, LPITEMIDLIST pidl);
 	std::tuple<std::wstring, std::wstring, std::wstring> GetPathNameExt(const CComPtr<IShellFolder>& pParentFolder, const LPITEMIDLIST& relativeIDL);
@@ -100,64 +98,138 @@ namespace shell
 
 	CComPtr<IShellFolder> DesktopBindToShellFolder(const CIDL& idl);
 
-	void CheckIncrementalIDL(
+	void FindIncrementalOne(
+		const CIDL& srcParentIDL,
+		const CIDL& srcChildIDL,
+		const CIDL& destParentIDL,
+		const std::function<void()> countup,
+		const std::function<void(const CIDL&, const CIDL&)>& find);
+
+	void FindIncrementalOne(
 		const CComPtr<IShellFolder>& pSrcFolder,
 		const CIDL& srcIDL,
 		const CIDL& srcChildIDL,
 		const CComPtr<IShellFolder>& pDestFolder,
 		const CIDL& destIDL,
-		const std::function<void(int, const CIDL&, const CIDL&)>& read);
+		const std::function<void()> countup,
+		const std::function<void(const CIDL&, const CIDL&)>& find);
 
-	void GetIncrementalIDLs(
-		const CIDL& srcIDL,
-		const std::vector<CIDL>& srcChildIDLs,
-		const CIDL& destIDL,
-		const std::function<void(int, const CIDL&, const CIDL&)>& read);
 
-	void GetIncrementalIDLs(
-		const CComPtr<IShellFolder>& pSrcFolder,
-		const CIDL& srcIDL,
-		const std::vector<CIDL>& srcChildIDLs,
-		const CComPtr<IShellFolder>& pDestFolder,
-		const CIDL& destIDL,
-		const std::function<void(int, const CIDL&, const CIDL&)>& read);
-
-	void GetIncrementalIDLs(
-		const CComPtr<IShellFolder>& pSrcFolder,
-		const CComPtr<IEnumIDList>& pEnum,
-		const CIDL& srcIDL,
-		const CComPtr<IShellFolder>& pDestFolder,
-		const CIDL& destIDL,
-		const std::function<void(int, const CIDL&, const CIDL&)>& read);
-
-	int GetFileCount(
-		const CIDL& srcIDL,
-		const CIDL& srcChildIDL,
-		const std::function<void(int)>& read);
-
-	int GetFileCount(
-		const CComPtr<IShellFolder>& pSrcFolder,
-		const CIDL& srcIDL,
-		const CIDL& srcChildIDL,
-		const std::function<void(int)>& read);
-
-	int GetEnumCount(
-		const CComPtr<IShellFolder>& pFolder,
-		const CComPtr<IEnumIDList>& pEnum,
-		const std::function<void(int)>& read);
-
-	//void SearchFolder(
+	//void CheckIncrementalIDL(
+	//	const CComPtr<IShellFolder>& pSrcFolder,
 	//	const CIDL& srcIDL,
-	//	const std::function<void()>& searchCount,
-	//	const std::function<void(const CIDL&)> find
-	//);
+	//	const CIDL& srcChildIDL,
+	//	const CComPtr<IShellFolder>& pDestFolder,
+	//	const CIDL& destIDL,
+	//	const std::function<void(int, const CIDL&, const CIDL&)>& read);
+
+	//void GetIncrementalIDLs(
+	//	const CIDL& srcIDL,
+	//	const std::vector<CIDL>& srcChildIDLs,
+	//	const CIDL& destIDL,
+	//	const std::function<void(int, const CIDL&, const CIDL&)>& read);
+
+	//void GetIncrementalIDLs(
+	//	const CComPtr<IShellFolder>& pSrcFolder,
+	//	const CIDL& srcIDL,
+	//	const std::vector<CIDL>& srcChildIDLs,
+	//	const CComPtr<IShellFolder>& pDestFolder,
+	//	const CIDL& destIDL,
+	//	const std::function<void(int, const CIDL&, const CIDL&)>& read);
+
+	//void GetIncrementalIDLs(
+	//	const CComPtr<IShellFolder>& pSrcFolder,
+	//	const CComPtr<IEnumIDList>& pEnum,
+	//	const CIDL& srcIDL,
+	//	const CComPtr<IShellFolder>& pDestFolder,
+	//	const CIDL& destIDL,
+	//	const std::function<void(int, const CIDL&, const CIDL&)>& read);
+
+
+
+	//int GetFileCount(
+	//	const CComPtr<IShellFolder>& pSrcFolder,
+	//	const CIDL& srcIDL,
+	//	const CIDL& srcChildIDL,
+	//	const std::function<void(int)>& read);
+
+	//int GetEnumCount(
+	//	const CComPtr<IShellFolder>& pFolder,
+	//	const CComPtr<IEnumIDList>& pEnum,
+	//	const std::function<void(int)>& read);
+
+	void CountFileOne(
+		const CIDL& parentIDL,
+		const CIDL& childIDL,
+		const std::function<void()>& countup);
+	
+	void CountFileOne(
+		const CComPtr<IShellFolder>& pParentFolder,
+		const CIDL& parentIDL,
+		const CIDL& childIDL,
+		const std::function<void()>& countup);
+
+	void CountFileInFolder(
+		const CComPtr<IShellFolder>& pFolder,
+		const CComPtr<IEnumIDList>& pEnumIDL,
+		const CIDL& idl,
+		const std::function<void()>& countup);
+
+	void CountFileInFolder(
+		const CIDL& srcIDL,
+		const std::function<void()>& countup);
+
+	void SearchFileInFolder(
+		const std::wstring& search,
+		const CIDL& srcIDL,
+		const std::function<void()>& countup,
+		const std::function<void(const CIDL&)> find);
+
+	void SearchOne(
+		const std::wstring& search,
+		const CComPtr<IShellFolder>& pParentFolder,
+		const CIDL& parentIDL,
+		const CIDL& childIDL,
+		const std::function<void()>& countup,
+		const std::function<void(const CIDL&)> find);
+
 
 //	CComPtr<IShellFolder> GetParentShellFolderByIDL(const CIDL& absIDL);
 
 	bool CopyFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcIDLs);
 	bool MoveFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcIDLs);
 
+	enum class FileType
+	{
+		None,
+		File,
+		Zip,
+		Folder,
+		Virtual
+	};
 
 
+	struct ParsedFileType
+	{
+		//Constructor/Destructor
+		ParsedFileType() = default;
+		~ParsedFileType() = default;
+		//No Copy
+		ParsedFileType(const ParsedFileType&) = delete;
+		ParsedFileType& operator=(const ParsedFileType&) = delete;
+		//Move
+		ParsedFileType(ParsedFileType&&) = default;
+		ParsedFileType& operator=(ParsedFileType&&) = default;
+		//Field
+		FileType FileType;
+		std::wstring FilePath;
+		std::wstring FileName;
+		std::wstring FileExt;
+		CComPtr<IShellFolder> ShellFolderPtr;
+		CComPtr<IEnumIDList> EnumIDLPtr;
+	};
 
+	ParsedFileType ParseFileType(
+		const CComPtr<IShellFolder>& pParentFolder,
+		const CIDL& childIDL);
 };

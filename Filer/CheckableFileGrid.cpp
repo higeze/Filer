@@ -1,4 +1,5 @@
 #include "CheckableFileGrid.h"
+#include "FilerGridView.h"
 
 #include "ShellFile.h"
 #include "ShellFolder.h"
@@ -50,6 +51,7 @@
 #include "ShellFunction.h"
 #include "IncrementalCopyWnd.h"
 #include "ProgressBar.h"
+#include "ResourceIDFactory.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -147,6 +149,57 @@ void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 		m_spCursorer->Clear();
 
 		SubmitUpdate();
+}
+
+void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)
+{
+	auto pCell = e.CellPtr;
+	if (auto p = dynamic_cast<CFileRow*>(e.CellPtr->GetRowPtr())) {
+		auto spFile = p->GetFilePointer();
+		Open(spFile);
+	}
+}
+
+
+void CCheckableFileGrid::Open(std::shared_ptr<CShellFile>& spFile)
+{
+	if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+		OpenFolder(spFolder);
+	} else {
+		OpenFile(spFile);
+	}
+	::SetFocus(m_hWnd);
+}
+
+void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
+{
+	auto pPrgWnd = new CFilerGridView(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
+
+	pPrgWnd->RegisterClassExArgument()
+		.lpszClassName(L"CFilerGridViewWnd")
+		.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
+		.hCursor(::LoadCursor(NULL, IDC_ARROW))
+		.hCursor(::LoadCursor(NULL, IDC_ARROW))
+		.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
+
+	pPrgWnd->CreateWindowExArgument()
+		.lpszClassName(_T("CFilerGridViewWnd"))
+		.lpszWindowName(spFolder->GetFileName().c_str())
+		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE)
+		.dwExStyle(WS_EX_ACCEPTFILES)
+		.hMenu(NULL);
+
+	pPrgWnd->FolderChanged.connect([pPrgWnd](std::shared_ptr<CShellFolder>& pFolder) {
+		pPrgWnd->SetWindowTextW(pFolder->GetFileName().c_str());
+	});
+
+	pPrgWnd->SetIsDeleteOnFinalMessage(true);
+
+	pPrgWnd->Create(m_hWnd, CRect(0, 0, 300, 500));
+	pPrgWnd->OpenFolder(spFolder);
+	pPrgWnd->CenterWindow();
+	pPrgWnd->ShowWindow(SW_SHOW);
+	pPrgWnd->UpdateWindow();
 }
 
 

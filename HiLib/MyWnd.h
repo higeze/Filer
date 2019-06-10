@@ -159,6 +159,7 @@ public:
 //	typedef std::tr1::unordered_map<UINT,FunNtfy> NtfyCdMap;
 
 private:
+	bool m_isDeleteOnFinalMessage = false;
 	//prohibit copy constructor and substitute
 public:
 	FunMsg m_allMsg;
@@ -194,13 +195,19 @@ public:
 
 	void SetCreateWindowExArgument();
 	void SetRegisterClassExArgument();
+	void SetIsDeleteOnFinalMessage(bool val) { m_isDeleteOnFinalMessage = val; }
 
 	CreateWindowExArg& CreateWindowExArgument(){return m_cwa;}
 	RegisterClassExArg& RegisterClassExArgument(){return m_rca;}
 	virtual HWND Create(HWND hWndParent);
 	virtual HWND Create(HWND hWndParent,RECT& rc);
 
-	virtual void OnFinalMessage(HWND hWnd){}
+	virtual void OnFinalMessage(HWND hWnd)
+	{
+		if (m_isDeleteOnFinalMessage) {
+			delete this;
+		}
+	}
 
 	static LRESULT CALLBACK StartWndProc(HWND hWnd,UINT uiMsg,WPARAM wParam,LPARAM lParam);
 

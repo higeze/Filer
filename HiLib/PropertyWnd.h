@@ -60,6 +60,8 @@ public:
 //		m_showApply(showApply),
 //		m_isModal(isModal)
 	{
+		SetIsDeleteOnFinalMessage(true);
+
 		m_rca
 			.lpszClassName(L"CPropertyWnd")
 			.style(CS_VREDRAW | CS_HREDRAW)
@@ -235,11 +237,6 @@ public:
 	LRESULT OnDestroy(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	{
 		return 0;
-	}
-
-	void OnFinalMessage(HWND hWnd)
-	{
-		delete this;
 	}
 
 	LRESULT OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)

@@ -1,8 +1,9 @@
-
 #include "InplaceEdit.h"
 #include "CellProperty.h"
 #include "GridView.h"
 #include "GridViewResource.h"
+#include "ResourceIDFactory.h"
+
 
 CInplaceEdit::CInplaceEdit(
 	CGridView* pGrid,
@@ -35,7 +36,7 @@ CInplaceEdit::CInplaceEdit(
 	m_cwa.lpszWindowName(L"InplaceEdit")
 	.lpszClassName(L"CInplaceEdit")
 	.dwStyle(WS_CLIPSIBLINGS|WS_CHILD|/*WS_BORDER|*//*WS_VSCROLL|WS_HSCROLL|*/ES_LEFT|ES_MULTILINE/*|ES_AUTOHSCROLL*/|ES_AUTOVSCROLL)//Use ES_AUTOHSCROLL avoid word break during typing
-	.hMenu((HMENU)IDC_INPLACEEDIT);//TODO specify EditControl ID
+	.hMenu((HMENU)(HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"InplaceEdit"));
 
 	AddMsgHandler(WM_KEYDOWN,&CInplaceEdit::OnKeyDown,this);
 	AddMsgHandler(WM_SYSKEYDOWN,&CInplaceEdit::OnSysKeyDown,this);

@@ -29,7 +29,7 @@ CIncrementalCopyWnd::CIncrementalCopyWnd(std::shared_ptr<FilerGridViewProperty>&
 	if (m_isModal)dwStyle |= WS_POPUP;
 
 	m_cwa
-		.lpszWindowName(L"IncrementalCopyWnd")
+		.lpszWindowName(L"Incremental Copy")
 		.lpszClassName(L"CIncrementalCopyWnd")
 		.dwStyle(dwStyle);
 
@@ -141,14 +141,22 @@ LRESULT CIncrementalCopyWnd::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, 
 	//Start comparison
 
 	CThreadPool::GetInstance()->enqueue([this]()->void {
-		std::function<void(int)> readMax = [this](int count)->void {
-			SendMessage(WM_INCREMENTMAX, NULL, NULL);
+		std::function<void()> readMax = [this]()->void {
+			PostMessage(WM_INCREMENTMAX, NULL, NULL);
 		};
-		std::function<void(int, const CIDL&, const CIDL&)> readValue = [this](int count, const CIDL& destIDL, const CIDL& srcIDL)->void {
-			SendMessage(WM_INCREMENTVALUE, NULL, NULL);
-			if (destIDL && srcIDL) {
-				AddItem(destIDL, srcIDL);
+		std::function<void()> readValue = [this]()->void {
+			PostMessage(WM_INCREMENTVALUE, NULL, NULL);
+		};
+		std::function<void(const CIDL&, const CIDL&)> find = [this](const CIDL& destIDL, const CIDL& srcIDL)->void {
+			auto iter = m_idlMap.find(destIDL);
+			if (iter != m_idlMap.end()) {
+				iter->second.push_back(srcIDL);
+			} else {
+				m_idlMap.insert(std::make_pair(destIDL, std::vector<CIDL>{srcIDL}));
 			}
+			//This should be Send Message to syncro
+			m_newIDL = srcIDL;
+			SendMessage(WM_ADDITEM, NULL, NULL);
 		};
 
 		GetProgressBarPtr()->SetMin(0);
@@ -157,12 +165,14 @@ LRESULT CIncrementalCopyWnd::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, 
 
 		auto fileCount = CThreadPool::GetInstance()->enqueue([srcIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, readMax]()->void{
 			for (const auto& childIDL : srcChildIDLs) {
-				shell::GetFileCount(srcIDL, childIDL, readMax);
+				shell::CountFileOne(srcIDL, childIDL, readMax);
 			}
 		});
 
-		auto incremental = CThreadPool::GetInstance()->enqueue([srcIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, destIDL = m_destIDL, readValue]()->void {
-			shell::GetIncrementalIDLs(srcIDL, srcChildIDLs, destIDL, readValue);
+		auto incremental = CThreadPool::GetInstance()->enqueue([srcParentIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, destParentIDL = m_destIDL, readValue, find]()->void {
+			for (const auto& srcChildIDL : srcChildIDLs) {
+				shell::FindIncrementalOne(srcParentIDL, srcChildIDL, destParentIDL, readValue, find);
+			}
 		});
 
 		fileCount.get();
@@ -194,12 +204,6 @@ LRESULT CIncrementalCopyWnd::OnDestroy(UINT uiMsg, WPARAM wParam, LPARAM lParam,
 {
 	return 0;
 }
-
-void CIncrementalCopyWnd::OnFinalMessage(HWND hWnd)
-{
-	delete this;
-}
-
 
 LRESULT CIncrementalCopyWnd::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
@@ -254,15 +258,15 @@ LRESULT CIncrementalCopyWnd::OnIncrementValue(UINT uMsg, WPARAM wParam, LPARAM l
 }
 
 
-void CIncrementalCopyWnd::AddItem(const CIDL& destIDL, const CIDL srcIDL)
-{
-	auto iter = m_idlMap.find(destIDL);
-	if (iter != m_idlMap.end()) {
-		iter->second.push_back(srcIDL);
-	} else {
-		m_idlMap.insert(std::make_pair(destIDL, std::vector<CIDL>{srcIDL}));
-	}
-	m_newIDL = srcIDL;
-	SendMessage(WM_ADDITEM, NULL, NULL);
-}
+//void CIncrementalCopyWnd::AddItem(const CIDL& destIDL, const CIDL srcIDL)
+//{
+//	auto iter = m_idlMap.find(destIDL);
+//	if (iter != m_idlMap.end()) {
+//		iter->second.push_back(srcIDL);
+//	} else {
+//		m_idlMap.insert(std::make_pair(destIDL, std::vector<CIDL>{srcIDL}));
+//	}
+//	m_newIDL = srcIDL;
+//	SendMessage(WM_ADDITEM, NULL, NULL);
+//}
 

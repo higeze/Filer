@@ -238,7 +238,6 @@
     <ClInclude Include="..\HiLib\GridView.h" />
     <ClInclude Include="..\HiLib\GridViewProperty.h" />
     <ClInclude Include="..\HiLib\GridViewResource.h" />
-    <ClInclude Include="..\HiLib\IBridgeTSFInterface.h" />
     <ClInclude Include="..\HiLib\IDL.h" />
     <ClInclude Include="..\HiLib\IDragger.h" />
     <ClInclude Include="..\HiLib\IKeyObserver.h" />
@@ -324,11 +323,13 @@
     <ClInclude Include="FileIconPathCell.h" />
     <ClInclude Include="FilerGridViewBase.h" />
     <ClInclude Include="FilerGridViewProperty.h" />
+    <ClInclude Include="FilerGridViewWnd.h" />
     <ClInclude Include="FileSizeArgs.h" />
     <ClInclude Include="FileTimeArgs.h" />
     <ClInclude Include="FileIconPathColumn.h" />
     <ClInclude Include="PathRow.h" />
     <ClInclude Include="IncrementalCopyWnd.h" />
+    <ClInclude Include="SearchWnd.h" />
     <ClInclude Include="ShellFileFactory.h" />
     <ClInclude Include="ShellZipFolder.h" />
     <ClInclude Include="DriveFolder.h" />
@@ -443,8 +444,10 @@
     <ClCompile Include="CheckableFileGrid.cpp" />
     <ClCompile Include="FileIconPathColumn.cpp" />
     <ClCompile Include="FilerGridViewBase.cpp" />
+    <ClCompile Include="FilerGridViewWnd.cpp" />
     <ClCompile Include="PathRow.cpp" />
     <ClCompile Include="IncrementalCopyWnd.cpp" />
+    <ClCompile Include="SearchWnd.cpp" />
     <ClCompile Include="ShellFileFactory.cpp" />
     <ClCompile Include="ShellZipFolder.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />

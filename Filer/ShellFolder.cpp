@@ -333,14 +333,6 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 
 					times.LastWriteTime = ::CompareFileTime(&times.LastWriteTime, &childTimes.LastWriteTime) >= 0 ?
 						times.LastWriteTime : childTimes.LastWriteTime;
-
-					//if (childTimes.LastWriteTime.dwLowDateTime || childTimes.LastWriteTime.dwHighDateTime) {
-					//	ULARGE_INTEGER latest = { times.LastWriteTime.dwLowDateTime, times.LastWriteTime.dwHighDateTime };
-					//	ULARGE_INTEGER child = { childTimes.LastWriteTime.dwLowDateTime, childTimes.LastWriteTime.dwHighDateTime };
-					//	latest = latest.QuadPart > child.QuadPart ? latest : child;
-					//	times.LastWriteTime = FILETIME{ latest.LowPart, latest.HighPart };
-					//}
-
 					childIdl.Clear();
 				}
 			}
@@ -351,13 +343,6 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 
 				times.LastWriteTime = ::CompareFileTime(&times.LastWriteTime, &grandchildTime.LastWriteTime) >= 0 ?
 					times.LastWriteTime : grandchildTime.LastWriteTime;
-
-				//if (grandchildTime.dwLowDateTime || grandchildTime.dwHighDateTime) {
-				//	ULARGE_INTEGER latest = { time.dwLowDateTime, time.dwHighDateTime };
-				//	ULARGE_INTEGER child = { grandchildTime.dwLowDateTime, grandchildTime.dwHighDateTime };
-				//	latest = latest.QuadPart > child.QuadPart ? latest : child;
-				//	time = FILETIME{ latest.LowPart, latest.HighPart };
-				//}
 			}
 
 		}

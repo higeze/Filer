@@ -50,6 +50,38 @@ std::wstring shell::Size2String(ULONGLONG size)
 	return ConvertCommaSeparatedNumber(size);
 }
 
+std::wstring shell::GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL)
+{
+	STRRET strret{ 0 };
+	if (SUCCEEDED(pParentFolder->GetDisplayNameOf(childIDL.ptr(), SHGDN_FORPARSING, &strret))) {
+		int lengch;
+		LPSTR lpstr;
+		WCHAR awc[MAX_PATH] = { 0 };
+		switch (strret.uType) {
+		case STRRET_WSTR:
+			return std::wstring(strret.pOleStr);
+			break;
+		case STRRET_OFFSET:
+			lpstr = (LPSTR)(((char*)childIDL.ptr()) + strret.uOffset);
+			lengch = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, NULL, 0);
+			::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, awc, lengch);
+			return std::wstring(awc);
+			break;
+		case STRRET_CSTR:
+			lpstr = strret.cStr;
+			lengch = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, NULL, 0);
+			::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, awc, lengch);
+			return std::wstring(awc);
+			break;
+		default:
+			return std::wstring();
+			break;
+		}
+	}
+	return std::wstring();
+}
+
+
 std::wstring shell::STRRET2WSTR(STRRET& strret, LPITEMIDLIST pidl)
 {
 	int nLength;
@@ -112,102 +144,128 @@ bool shell::GetFileSize(ULARGE_INTEGER& size, const CComPtr<IShellFolder>& pPare
 	}
 }
 
-void shell::CheckIncrementalIDL(
-	const CComPtr<IShellFolder>& pSrcFolder,
-	const CIDL& srcIDL,
+void shell::FindIncrementalOne(
+	const CIDL& srcParentIDL,
 	const CIDL& srcChildIDL,
-	const CComPtr<IShellFolder>& pDestFolder,
-	const CIDL& destIDL,
-	const std::function<void(int, const CIDL&, const CIDL&)>& read)
+	const CIDL& destParentIDL,
+	const std::function<void()> countup,
+	const std::function<void(const CIDL&, const CIDL&)>& find)
 {
+	CComPtr<IShellFolder> pSrcParentFolder = shell::DesktopBindToShellFolder(srcParentIDL);
+	CComPtr<IShellFolder> pDestParentFolder = shell::DesktopBindToShellFolder(destParentIDL);
+	return FindIncrementalOne(pSrcParentFolder, srcParentIDL, srcChildIDL,
+		pDestParentFolder, destParentIDL, countup, find);
+}
+
+void shell::FindIncrementalOne(
+	const CComPtr<IShellFolder>& pSrcParentFolder,
+	const CIDL& srcParentIDL,
+	const CIDL& srcChildIDL,
+	const CComPtr<IShellFolder>& pDestParentFolder,
+	const CIDL& destParentIDL,
+	const std::function<void()> countup,
+	const std::function<void(const CIDL&, const CIDL&)>& find)
+{
+	ParsedFileType pft = shell::ParseFileType(pSrcParentFolder, srcChildIDL);
+
 	ULONG chEaten = 0;
 	ULONG dwAttributes = 0;
 	CIDL destChildIDL;
-	auto srcTuple = shell::GetPathNameExt(pSrcFolder, srcChildIDL.ptr());
 
-	if (SUCCEEDED(pDestFolder->ParseDisplayName(
+	if (SUCCEEDED(pDestParentFolder->ParseDisplayName(
 		NULL,
 		NULL,
-		const_cast<LPWSTR>(std::get<1>(srcTuple).c_str()),
+		const_cast<LPWSTR>(pft.FileName.c_str()),
 		&chEaten,
 		destChildIDL.ptrptr(),
 		&dwAttributes)) && destChildIDL) {//Exist
 
-		auto fileFun = [&]()->void {
-			FILETIME srcTime = shell::GetFileTimes(pSrcFolder, srcChildIDL).value_or(FileTimes()).LastWriteTime;
-			FILETIME destTime = shell::GetFileTimes(pDestFolder, destChildIDL).value_or(FileTimes()).LastWriteTime;
-			if (::CompareFileTime(&srcTime, &destTime) >= 0) {
-				read(1, destIDL, (srcIDL + srcChildIDL));
-			} else {
-				read(1, CIDL(), CIDL());
+		switch (pft.FileType) {
+		case FileType::File:
+		case FileType::Zip:
+		{
+			FILETIME srcTime = shell::GetFileTimes(pSrcParentFolder, srcChildIDL).value_or(FileTimes()).LastWriteTime;
+			FILETIME destTime = shell::GetFileTimes(pDestParentFolder, destChildIDL).value_or(FileTimes()).LastWriteTime;
+			if (::CompareFileTime(&srcTime, &destTime) > 0) {
+				find(destParentIDL, (srcParentIDL + srcChildIDL));
 			}
-		};
-
-		auto dirFun = [&](const CComPtr<IShellFolder>& pSrcItemFolder, const CComPtr<IEnumIDList>& pSrcItemEnum)->void {
-			CComPtr<IShellFolder> pDestItemFolder;
-			if (SUCCEEDED(pDestFolder->BindToObject(destChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pDestItemFolder))) {
-				shell::GetIncrementalIDLs(
-					pSrcItemFolder,
-					pSrcItemEnum,
-					srcIDL + srcChildIDL,
-					pDestItemFolder,
-					destIDL + destChildIDL,
-					read);
+		}
+		break;
+		case FileType::Folder:
+		{
+			CComPtr<IShellFolder> pDestChildFolder;
+			if (SUCCEEDED(pDestParentFolder->BindToObject(destChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pDestChildFolder))) {
+				CIDL srcGrandchildIDL;
+				ULONG ulRet(0);
+				while (SUCCEEDED(pft.EnumIDLPtr->Next(1, srcGrandchildIDL.ptrptr(), &ulRet))) {
+					if (srcGrandchildIDL) {
+						shell::FindIncrementalOne(pft.ShellFolderPtr, srcParentIDL + srcChildIDL, srcGrandchildIDL,
+							pDestChildFolder, destParentIDL + destChildIDL, countup, find);
+					} else {
+						break;
+					}
+				}
 			}
-			read(1, CIDL(), CIDL());
-		};
-
-		auto virFun = [&]()->void {
-			read(1, CIDL(), CIDL());
-		};
-
-		shell::RunFunctionEachFileFolderVirtual<void>(pSrcFolder, srcChildIDL, fileFun, dirFun, virFun);
+		}
+			break;
+		case FileType::Virtual:
+		case FileType::None:
+		default:
+			break;
+		}
+		countup();
 	} else {
-		auto fileFun = [&]()->void {
-			read(1, destIDL, srcIDL + srcChildIDL);
-		};
-		auto dirFun = [&](const CComPtr<IShellFolder>& pSrcItemFolder, const CComPtr<IEnumIDList>& pSrcItemEnum)->void {
-			shell::GetEnumCount(pSrcItemFolder, pSrcItemEnum, [read](int i)->void{read(i, CIDL(), CIDL()); });
-			read(1, destIDL, srcIDL + srcChildIDL);
-		};
-		auto virFun = [&]()->void {
-			read(1, CIDL(), CIDL());
-		};
-
-		shell::RunFunctionEachFileFolderVirtual<void>(pSrcFolder, srcChildIDL, fileFun, dirFun, virFun);
+		switch (pft.FileType) {
+		case FileType::File:
+		case FileType::Zip:
+		{
+			find(destParentIDL, (srcParentIDL + srcChildIDL));
+		}
+		break;
+		case FileType::Folder:
+		{
+			shell::CountFileInFolder(pft.ShellFolderPtr, pft.EnumIDLPtr, srcChildIDL, countup);
+			find(destParentIDL, (srcParentIDL + srcChildIDL));
+		}
+		break;
+		case FileType::Virtual:
+		case FileType::None:
+		default:
+			break;
+		}
+		countup();
 	}
 }
 
+//void shell::GetIncrementalIDLs(
+//	const CComPtr<IShellFolder>& pSrcFolder,
+//	const CComPtr<IEnumIDList>& pEnum,
+//	const CIDL& srcIDL,
+//	const CComPtr<IShellFolder>& pDestFolder,
+//	const CIDL& destIDL,
+//	const std::function<void(int, const CIDL&, const CIDL&)>& read)
+//{
+//	CIDL srcChildIDL;
+//	ULONG ulRet(0);
+//	while (SUCCEEDED(pEnum->Next(1, srcChildIDL.ptrptr(), &ulRet))) {
+//		if (!srcChildIDL) { break; }
+//		shell::CheckIncrementalIDL(pSrcFolder, srcIDL, srcChildIDL, pDestFolder, destIDL, read);
+//	}
+//}
 
-void shell::GetIncrementalIDLs(
-	const CComPtr<IShellFolder>& pSrcFolder,
-	const CComPtr<IEnumIDList>& pEnum,
-	const CIDL& srcIDL,
-	const CComPtr<IShellFolder>& pDestFolder,
-	const CIDL& destIDL,
-	const std::function<void(int, const CIDL&, const CIDL&)>& read)
-{
-	CIDL srcChildIDL;
-	ULONG ulRet(0);
-	while (SUCCEEDED(pEnum->Next(1, srcChildIDL.ptrptr(), &ulRet))) {
-		if (!srcChildIDL) { break; }
-		shell::CheckIncrementalIDL(pSrcFolder, srcIDL, srcChildIDL, pDestFolder, destIDL, read);
-	}
-}
-
-void shell::GetIncrementalIDLs(
-	const CComPtr<IShellFolder>& pSrcFolder,
-	const CIDL& srcIDL,
-	const std::vector<CIDL>& srcChildIDLs,
-	const CComPtr<IShellFolder>& pDestFolder,
-	const CIDL& destIDL,
-	const std::function<void(int, const CIDL&, const CIDL&)>& read)
-{
-	for (const auto& srcChildIDL : srcChildIDLs) {
-		if (!srcChildIDL) { break; }
-		shell::CheckIncrementalIDL(pSrcFolder, srcIDL, srcChildIDL, pDestFolder, destIDL, read);
-	}
-}
+//void shell::GetIncrementalIDLs(
+//	const CComPtr<IShellFolder>& pSrcFolder,
+//	const CIDL& srcIDL,
+//	const std::vector<CIDL>& srcChildIDLs,
+//	const CComPtr<IShellFolder>& pDestFolder,
+//	const CIDL& destIDL,
+//	const std::function<void(int, const CIDL&, const CIDL&)>& read)
+//{
+//	for (const auto& srcChildIDL : srcChildIDLs) {
+//		if (!srcChildIDL) { break; }
+//		shell::CheckIncrementalIDL(pSrcFolder, srcIDL, srcChildIDL, pDestFolder, destIDL, read);
+//	}
+//}
 
 CComPtr<IShellFolder> shell::DesktopBindToShellFolder(const CIDL& idl)
 {
@@ -218,122 +276,167 @@ CComPtr<IShellFolder> shell::DesktopBindToShellFolder(const CIDL& idl)
 
 	CComPtr<IShellFolder> pFolder;
 
-	if (FAILED(pDesktopFolder->BindToObject(idl.ptr(), 0, IID_IShellFolder, (void**)&pFolder))) {
-		if (CIDL desktopIDL; SUCCEEDED(::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, desktopIDL.ptrptr())) && ::ILIsEqual(idl.ptr(), desktopIDL.ptr())) {
-			pFolder = pDesktopFolder;
-		} else {
-			throw std::exception(FILE_LINE_FUNC);
-		}
+if (FAILED(pDesktopFolder->BindToObject(idl.ptr(), 0, IID_IShellFolder, (void**)&pFolder))) {
+	if (CIDL desktopIDL; SUCCEEDED(::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, desktopIDL.ptrptr())) && ::ILIsEqual(idl.ptr(), desktopIDL.ptr())) {
+		pFolder = pDesktopFolder;
+	} else {
+		throw std::exception(FILE_LINE_FUNC);
 	}
-	return pFolder;
+}
+return pFolder;
 }
 
 
-void shell::GetIncrementalIDLs(
-	const CIDL& srcIDL,
-	const std::vector<CIDL>& srcChildIDLs,
-	const CIDL& destIDL,
-	const std::function<void(int, const CIDL&, const CIDL&)>& read)
+//void shell::GetIncrementalIDLs(
+//	const CIDL& srcIDL,
+//	const std::vector<CIDL>& srcChildIDLs,
+//	const CIDL& destIDL,
+//	const std::function<void(int, const CIDL&, const CIDL&)>& read)
+//{
+//	std::vector<std::pair<CIDL, std::vector<CIDL>>> idlPairs;
+//	std::vector<CIDL> idls;
+//
+//	CComPtr<IShellFolder> pSrcFolder = shell::DesktopBindToShellFolder(srcIDL);
+//	CComPtr<IShellFolder> pDestFolder = shell::DesktopBindToShellFolder(destIDL);
+//
+//	return shell::GetIncrementalIDLs(
+//		pSrcFolder,
+//		srcIDL,
+//		srcChildIDLs,
+//		pDestFolder,
+//		destIDL, read);
+//}
+
+
+//
+//int shell::GetEnumCount(
+//	const CComPtr<IShellFolder>& pFolder,
+//	const CComPtr<IEnumIDList>& pEnum,
+//	const std::function<void(int)>& read)
+//{
+//	int count = 0;
+//
+//	auto fileFun = [&]()->void {
+//		count++;
+//		read(1);
+//	};
+//
+//	auto dirFun = [&](const CComPtr<IShellFolder>& pSrcItemFolder, const CComPtr<IEnumIDList>& pSrcItemEnum)->void {
+//		count += GetEnumCount(pSrcItemFolder, pSrcItemEnum, read);
+//		read(1);
+//	};
+//
+//	auto virFun = [&]()->void {
+//		count++;
+//		read(1);
+//	};
+//
+//	CIDL childIDL;
+//	ULONG ulRet(0);
+//	while (SUCCEEDED(pEnum->Next(1, childIDL.ptrptr(), &ulRet))) {
+//
+//		if (childIDL) {
+//			shell::RunFunctionEachFileFolderVirtual<void>(pFolder, childIDL, fileFun, dirFun, virFun);
+//		} else {
+//			break;
+//		}
+//	}
+//	return count;
+//}
+
+//int shell::GetFileCount(
+//	const CComPtr<IShellFolder>& pSrcFolder,
+//	const CIDL& srcIDL,
+//	const CIDL& srcChildIDL,
+//	const std::function<void(int)>& read)
+//{
+//	int count = 0;
+//
+//	auto fileFun = [&]()->void {
+//		count++;
+//		read(1);
+//	};
+//
+//	auto dirFun = [&](const CComPtr<IShellFolder>& pSrcItemFolder, const CComPtr<IEnumIDList>& pSrcItemEnum)->void {
+//		count += GetEnumCount(pSrcItemFolder, pSrcItemEnum, read);
+//		read(1);
+//	};
+//
+//	auto virFun = [&]()->void {
+//		count++;
+//		read(1);
+//	};
+//
+//	shell::RunFunctionEachFileFolderVirtual<void>(pSrcFolder, srcChildIDL, fileFun, dirFun, virFun);
+//
+//	return count;
+//}
+
+
+
+
+void shell::CountFileOne(
+	const CComPtr<IShellFolder>& pParentFolder,
+	const CIDL& parentIDL,
+	const CIDL& childIDL,
+	const std::function<void()>& countup)
 {
-	std::vector<std::pair<CIDL, std::vector<CIDL>>> idlPairs;
-	std::vector<CIDL> idls;
+	ParsedFileType pft = shell::ParseFileType(pParentFolder, childIDL);
 
-	CComPtr<IShellFolder> pSrcFolder = shell::DesktopBindToShellFolder(srcIDL);
-	CComPtr<IShellFolder> pDestFolder = shell::DesktopBindToShellFolder(destIDL);
-
-	return shell::GetIncrementalIDLs(
-		pSrcFolder, 
-		srcIDL, 
-		srcChildIDLs,
-		pDestFolder,
-		destIDL, read);
+	switch (pft.FileType) {
+	case FileType::File:
+	case FileType::Zip:
+		break;
+	case FileType::Folder:
+		shell::CountFileInFolder(pft.ShellFolderPtr, pft.EnumIDLPtr, parentIDL + childIDL, countup);
+		break;
+	case FileType::Virtual:
+	case FileType::None:
+	default:
+		break;
+	}
+	countup();
 }
 
-int shell::GetEnumCount(
+
+void shell::CountFileOne(
+	const CIDL& parentIDL,
+	const CIDL& childIDL,
+	const std::function<void()>& countup)
+{
+	CComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
+	return shell::CountFileOne(pParentFolder, parentIDL, childIDL, countup);
+}
+
+void shell::CountFileInFolder(
 	const CComPtr<IShellFolder>& pFolder,
-	const CComPtr<IEnumIDList>& pEnum,
-	const std::function<void(int)>& read)
+	const CComPtr<IEnumIDList>& pEnumIDL,
+	const CIDL& idl,
+	const std::function<void()>& countup)
 {
-	int count = 0;
-
-	auto fileFun = [&]()->void {
-		count++;
-		read(1);
-	};
-
-	auto dirFun = [&](const CComPtr<IShellFolder>& pSrcItemFolder, const CComPtr<IEnumIDList>& pSrcItemEnum)->void {
-		count += GetEnumCount(pSrcItemFolder, pSrcItemEnum, read);
-		read(1);
-	};
-
-	auto virFun = [&]()->void {
-		count++;
-		read(1);
-	};
-
 	CIDL childIDL;
 	ULONG ulRet(0);
-	while (SUCCEEDED(pEnum->Next(1, childIDL.ptrptr(), &ulRet))) {
-
+	while (SUCCEEDED(pEnumIDL->Next(1, childIDL.ptrptr(), &ulRet))) {
 		if (childIDL) {
-			shell::RunFunctionEachFileFolderVirtual<void>(pFolder, childIDL, fileFun, dirFun, virFun);
+			shell::CountFileOne(pFolder, idl, childIDL, countup);
 		} else {
 			break;
 		}
 	}
-	return count;
 }
 
-int shell::GetFileCount(
-	const CComPtr<IShellFolder>& pSrcFolder,
+void shell::CountFileInFolder(
 	const CIDL& srcIDL,
-	const CIDL& srcChildIDL,
-	const std::function<void(int)>& read)
+	const std::function<void()>& countup)
 {
-	int count = 0;
-
-	auto fileFun = [&]()->void {
-		count++;
-		read(1);
-	};
-
-	auto dirFun = [&](const CComPtr<IShellFolder>& pSrcItemFolder, const CComPtr<IEnumIDList>& pSrcItemEnum)->void {
-		count += GetEnumCount(pSrcItemFolder, pSrcItemEnum, read);
-		read(1);
-	};
-
-	auto virFun = [&]()->void {
-		count++;
-		read(1);
-	};
-
-	shell::RunFunctionEachFileFolderVirtual<void>(pSrcFolder, srcChildIDL, fileFun, dirFun, virFun);
-
-	return count;
-}
-
-
-int shell::GetFileCount(
-	const CIDL& srcIDL,
-	const CIDL& srcChildIDL,
-	const std::function<void(int)>& read)
-{
-	CComPtr<IShellFolder> pDesktopFolder;
-	if (FAILED(::SHGetDesktopFolder(&pDesktopFolder))) {
-		throw std::exception(FILE_LINE_FUNC);
+	CComPtr<IShellFolder> pSrcFolder = shell::DesktopBindToShellFolder(srcIDL);
+	CComPtr<IEnumIDList> pEnumIDL;
+	if (SUCCEEDED(pSrcFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pEnumIDL))) {
+		shell::CountFileInFolder(pSrcFolder, pEnumIDL, srcIDL, countup);
 	}
 
-	CComPtr<IShellFolder> pSrcFolder;
-	if (FAILED(pDesktopFolder->BindToObject(srcIDL.ptr(), 0, IID_IShellFolder, (void**)&pSrcFolder))) {
-		if (CIDL desktopIDL; FAILED(::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, desktopIDL.ptrptr())) || !::ILIsEqual(srcIDL.ptr(), desktopIDL.ptr())) {
-			return 0;
-		} else {
-			pSrcFolder = pDesktopFolder;
-		}
-	}
-
-	return shell::GetFileCount(pSrcFolder, srcIDL, srcChildIDL, read);
 }
+
 
 //CComPtr<IShellFolder> shell::GetParentShellFolderByIDL(const CIDL& absIDL)
 //{
@@ -382,6 +485,98 @@ bool shell::MoveFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcI
 	return SUCCEEDED(hr);
 }
 
+void shell::SearchFileInFolder(
+	const std::wstring& search,
+	const CIDL& srcIDL,
+	const std::function<void()>& countup,
+	const std::function<void(const CIDL&)> find
+)
+{
+	CComPtr<IShellFolder> pSrcFolder = shell::DesktopBindToShellFolder(srcIDL);
+	CComPtr<IEnumIDList> pEnumIDL;
+	if(SUCCEEDED(pSrcFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pEnumIDL))){
+		CIDL childIDL;
+		ULONG ulRet(0);
+		while (SUCCEEDED(pEnumIDL->Next(1, childIDL.ptrptr(), &ulRet))) {
 
+			if (childIDL) {
+				SearchOne(search, pSrcFolder, srcIDL, childIDL, countup, find);
+			} else {
+				break;
+			}
+		}
+	}
+}
 
+void shell::SearchOne(
+	const std::wstring& search,
+	const CComPtr<IShellFolder>& pParentFolder,
+	const CIDL& parentIDL,
+	const CIDL& childIDL,
+	const std::function<void()>& countup,
+	const std::function<void(const CIDL&)> find
+)
+{
+	ParsedFileType pft = shell::ParseFileType(pParentFolder, childIDL);
+	if (!boost::algorithm::ifind_first(pft.FileName, search).empty()) {
+		find(parentIDL + childIDL);
+	}
+
+	switch (pft.FileType) {
+	case FileType::File:
+	case FileType::Zip:
+		break;
+	case FileType::Folder:
+	{
+		CIDL nextIDL;
+		ULONG ulRet(0);
+		while (SUCCEEDED(pft.EnumIDLPtr->Next(1, nextIDL.ptrptr(), &ulRet))) {
+			if (nextIDL) {
+				shell::SearchOne(search, pft.ShellFolderPtr, parentIDL + childIDL, nextIDL, countup, find);
+			} else {
+				break;
+			}
+		}
+	}
+		break;
+	case FileType::Virtual:
+	case FileType::None:
+	default:
+		break;
+	}
+	countup();
+
+}
+
+shell::ParsedFileType shell::ParseFileType(
+	const CComPtr<IShellFolder>& pParentFolder,
+	const CIDL& childIDL)
+{
+	ParsedFileType ret;
+	ret.FilePath = shell::GetDisplayNameOf(pParentFolder, childIDL);
+	if (ret.FilePath.empty()) {
+		ret.FileType = FileType::None;
+		return ret;
+	} else {
+		ret.FileName = ::PathFindFileName(ret.FilePath.c_str());
+		ret.FileExt = ::PathFindExtension(ret.FilePath.c_str());
+
+		if (ret.FilePath[0] == L':') {
+			//Virtual
+			ret.FileType = FileType::Virtual;
+		} else if (boost::iequals(ret.FileExt, ".zip")) {
+			//Zip
+			ret.FileType = FileType::Zip;
+		} else if (
+			SUCCEEDED(pParentFolder->BindToObject(childIDL.ptr(), 0, IID_IShellFolder, (void**)&ret.ShellFolderPtr)) &&
+			SUCCEEDED(ret.ShellFolderPtr->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &ret.EnumIDLPtr))) {
+			//Folder
+			ret.FileType = FileType::Folder;
+		} else {
+			//File
+			ret.FileType = FileType::File;
+		}
+		return ret;
+	}
+}
 

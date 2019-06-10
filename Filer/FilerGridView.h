@@ -48,9 +48,15 @@ public:
 	virtual LRESULT OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
+
+	LRESULT OnCommandFind(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
+
+
+
 	virtual void OnKeyDown(const KeyDownEvent& e)override;
 	virtual void OnContextMenu(const ContextMenuEvent& e) override;
 	virtual void OnBkGndLButtondDblClk(const LButtonDblClkEvent& e) override;
+
 	virtual void OnCellLButtonDblClk(CellEventArgs& e);
 
 	void Open(std::shared_ptr<CShellFile>& spFile);
