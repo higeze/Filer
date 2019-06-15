@@ -2,11 +2,43 @@
 #include "MyIcon.h"
 #include "MyCom.h"
 #include "ThreadPool.h"
+#include <VersionHelpers.h>
+#include <ntddkbd.h>
 
 using namespace d2dw;
 
+
+BOOL GetOSVersion(OSVERSIONINFOEX* os)
+{
+	HMODULE hMod;
+	typedef void (WINAPI *RtlGetVersion_FUNC)(OSVERSIONINFOEX*);
+	RtlGetVersion_FUNC func;
+
+	hMod = LoadLibrary(TEXT("ntdll.dll"));
+	if (hMod) {
+		func = (RtlGetVersion_FUNC)GetProcAddress(hMod, "RtlGetVersion");
+		if (func == 0) {
+			FreeLibrary(hMod);
+			return FALSE;
+		}
+		ZeroMemory(os, sizeof(*os));
+		os->dwOSVersionInfoSize = sizeof(*os);
+		func(os);
+
+	} else
+		return FALSE;
+	FreeLibrary(hMod);
+	return TRUE;
+}
+
+
 CFileIconCache::CFileIconCache(CDirect2DWrite* pDirect)
-	:m_pDirect(pDirect), m_excludeExtSet({L".exe", L".ico", L".lnk", L"known", L"drive"}){}
+	:m_pDirect(pDirect), m_excludeExtSet({L".exe", L".ico", L".lnk", L"known", L"drive"})
+{
+	//OSVERSIONINFOEX os;
+	//::GetOSVersion(&os);
+	//m_isWin10 = os.dwMajorVersion == 10;
+}
 
 CIcon CFileIconCache::GetIcon(const CIDL& absoluteIDL)
 {
@@ -28,21 +60,22 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetBitmapFromIcon(const CIcon& icon)
 	if (FAILED(pWICFormatConverter->Initialize(pWICBitmap, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeMedianCut))) {
 		throw std::exception(FILELINEFUNCTION);
 	}
-	double dpix = 96.0f, dpiy = 96.0f;
-	if (FAILED(pWICFormatConverter->GetResolution(&dpix, &dpiy))) {
-		throw std::exception(FILELINEFUNCTION);
-	}
+	//double dpix = 96.0f, dpiy = 96.0f;
+	//if (FAILED(pWICFormatConverter->GetResolution(&dpix, &dpiy))) {
+	//	throw std::exception(FILELINEFUNCTION);
+	//}
 
-	D2D1_BITMAP_PROPERTIES bitmapProps;
-	//bitmapProps.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
-	bitmapProps.dpiX = (FLOAT)dpix;
-	bitmapProps.dpiY = (FLOAT)dpiy;
-	bitmapProps.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	bitmapProps.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
-	//bitmapProps.colorContext = nullptr;
+	//D2D1_BITMAP_PROPERTIES bitmapProps;
+	////bitmapProps.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
+	//bitmapProps.dpiX = (FLOAT)dpix;
+	//bitmapProps.dpiY = (FLOAT)dpiy;
+	//bitmapProps.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	//bitmapProps.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+	////bitmapProps.colorContext = nullptr;
 
 	CComPtr<ID2D1Bitmap> pBitmap;
-	HRESULT hr = m_pDirect->GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
+//	HRESULT hr = m_pDirect->GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
+	HRESULT hr = m_pDirect->GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICFormatConverter, nullptr, &pBitmap);
 	if (FAILED(hr)) {
 		throw std::exception(FILELINEFUNCTION);
 	}
@@ -53,7 +86,7 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetFileIconBitmap(const CIDL& absoluteIDL, 
 {
 	if (!absoluteIDL || path.empty()) {
 		return GetDefaultIconBitmap();
-	}else if (!ext.empty() && m_excludeExtSet.find(ext) == m_excludeExtSet.end()) {
+	} else if (!ext.empty() && m_excludeExtSet.find(ext) == m_excludeExtSet.end()) {
 		if (auto iter = m_extMap.lock_find(ext); iter != m_extMap.end()) {
 			return iter->second;
 		} else {

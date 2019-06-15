@@ -12,6 +12,7 @@ template<typename Key, typename Value>
 class lockable_unordered_map : public std::unordered_map<Key, Value>
 {
 private:
+
 	std::mutex m_mtx;
 public:
 
@@ -57,6 +58,7 @@ namespace d2dw
 	class CFileIconCache
 	{
 	private:
+		bool m_isWin10;
 		CDirect2DWrite* m_pDirect;
 		std::unordered_set<std::wstring> m_excludeExtSet;
 		lockable_unordered_map<std::wstring, CComPtr<ID2D1Bitmap>> m_extMap;
