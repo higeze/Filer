@@ -59,8 +59,7 @@ public:
 
 	virtual void OnCellLButtonDblClk(CellEventArgs& e);
 
-	void Open(std::shared_ptr<CShellFile>& spFile);
-	void OpenFolder(std::shared_ptr<CShellFolder>& spFolder);
+	virtual void OpenFolder(std::shared_ptr<CShellFolder>& spFolder) override;
 
 	std::wstring GetPath()const;
 	void SetPath(const std::wstring& path);

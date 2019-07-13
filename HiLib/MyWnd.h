@@ -240,10 +240,10 @@ public:
 	{	
 		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,funMsg));
 		if (!pair.second) {
-			BOOST_LOG_TRIVIAL(trace) << (boost::format(
+			spdlog::info((boost::format(
 				"Duplicate "
 				"MSG:%1$04x"
-			) % uMsg).str();
+			) % uMsg).str());
 		}
 		return pair.second;
 	}
@@ -265,10 +265,10 @@ public:
 	{	
 		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
 		if (!pair.second) {
-			BOOST_LOG_TRIVIAL(trace) << (boost::format(
+			spdlog::info((boost::format(
 				"Duplicate "
 				"MSG:%1$04x"
-			) % uMsg).str();
+			) % uMsg).str());
 		}
 		return pair.second;
 	}
@@ -388,6 +388,7 @@ public:
 				rcWnd.Width(),rcWnd.Height(),FALSE);
 		
 	}
+
 	HMENU GetMenu(){return ::GetMenu(m_hWnd);}
 	BOOL ShowWindow(int nCmdShow){return ::ShowWindow(m_hWnd,nCmdShow);}
 	BOOL UpdateWindow(){return ::UpdateWindow(m_hWnd);}
@@ -473,6 +474,22 @@ public:
 		::ScreenToClient(m_hWnd, &pt);
 		return pt;
 	}
+
+	LONG_PTR GetWidowLongPtr(int nIndex)
+	{
+		return ::GetWindowLongPtr(m_hWnd, nIndex);
+	}
+
+	HWND GetAncestorByStyle(DWORD style)
+	{
+		HWND hWnd = m_hWnd;
+		do{
+			hWnd = ::GetParent(hWnd);
+		} while (!(hWnd == NULL || (::GetWindowLongPtr(hWnd, GWL_STYLE) & style) == style));
+		
+		return hWnd;
+	}
+
 
 
 };

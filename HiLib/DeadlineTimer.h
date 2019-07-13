@@ -19,6 +19,8 @@ public:
 	~CDeadlineTimer() { stop(); }
 
 	void run(std::function<void()> action, const std::chrono::milliseconds& ms);
+	void runperiodic(std::function<void()> action, const std::chrono::milliseconds& ms);
+
 	void stop();
 };
 

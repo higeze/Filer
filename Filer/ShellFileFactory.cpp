@@ -22,12 +22,12 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<
 	}
 
 	if (path.empty()) {
-		BOOST_LOG_TRIVIAL(trace) << "CShellFileFactory::CreateShellFilePtr No Path";
+		spdlog::info("CShellFileFactory::CreateShellFilePtr No Path");
 		return nullptr;
 	}
 
 	if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - s_cacheTime).count() > 600) {
-		BOOST_LOG_TRIVIAL(trace) << "CShellFileFactory::CreateShellFilePtr Cache count:" << s_fileCache.size();
+		spdlog::info("CShellFileFactory::CreateShellFilePtr Cache count:" + s_fileCache.size());
 		s_cacheTime = std::chrono::system_clock::now();
 		if (s_fileCache.size() > 10000) {
 			s_fileCache.clear();

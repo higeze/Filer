@@ -215,7 +215,7 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 
 void CFilerGridView::Added(const std::wstring& fileName)
 {
-	BOOST_LOG_TRIVIAL(trace) << "Added " << wstr2str(fileName);
+	spdlog::info("Added " + wstr2str(fileName));
 	CIDL idl;
 	ULONG chEaten;
 	ULONG dwAttributes;
@@ -244,17 +244,17 @@ void CFilerGridView::Added(const std::wstring& fileName)
 		m_bNewFile = false;
 	}
 	else {
-		BOOST_LOG_TRIVIAL(trace) << "Added FAILED " << wstr2str(fileName);
+		spdlog::info("Added FAILED " + wstr2str(fileName));
 	}
 }
 
 void CFilerGridView::Modified(const std::wstring& fileName)
 {
-	BOOST_LOG_TRIVIAL(trace) << "Modified " << wstr2str(fileName);
+	spdlog::info("Modified " + wstr2str(fileName));
 	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == m_rowAllDictionary.end()) {
-		BOOST_LOG_TRIVIAL(trace) << "Modified NoMatch " << wstr2str(fileName);
+		spdlog::info("Modified NoMatch " + wstr2str(fileName));
 		return;
 	}else if (auto p = std::dynamic_pointer_cast<CFileRow>(iter->DataPtr)) {
 		//Because ItemIdList includes, size, last write time, etc., it is necessary to get new one.
@@ -276,17 +276,17 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 			FilterAll();
 			SubmitUpdate();
 		} else {
-			BOOST_LOG_TRIVIAL(trace) << "Modified FAILED " << wstr2str(fileName);
+			spdlog::info("Modified FAILED " + wstr2str(fileName));
 		}
 	}
 }
 void CFilerGridView::Removed(const std::wstring& fileName)
 {
-	BOOST_LOG_TRIVIAL(trace) << "Removed " << wstr2str(fileName);
+	spdlog::info("Removed " + wstr2str(fileName));
 	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == m_rowAllDictionary.end()) {
-		BOOST_LOG_TRIVIAL(trace) << "Removed NoMatch " << wstr2str(fileName);
+		spdlog::info("Removed NoMatch " + wstr2str(fileName));
 		return;
 	}
 
@@ -311,12 +311,12 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 }
 void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& newName)
 {
-	BOOST_LOG_TRIVIAL(trace) << "Renamed " << wstr2str(oldName) << "=>"<< wstr2str(newName);
+	spdlog::info("Renamed " + wstr2str(oldName) + "=>"+ wstr2str(newName));
 	auto iter = FindIfRowIterByFileNameExt(oldName);
 
 	if (iter == m_rowAllDictionary.end()) 
 	{
-		BOOST_LOG_TRIVIAL(trace) << "Renamed NoMatch " << wstr2str(oldName) << "=>" << wstr2str(newName);
+		spdlog::info("Renamed NoMatch " + wstr2str(oldName) + "=>" + wstr2str(newName));
 		return;
 	}
 
@@ -341,7 +341,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 			SubmitUpdate();
 		}
 		else {
-			BOOST_LOG_TRIVIAL(trace) << "Renamed FAILED " << wstr2str(oldName) << "=>" << wstr2str(newName);
+			spdlog::info("Renamed FAILED " + wstr2str(oldName) + "=>" + wstr2str(newName));
 			return Removed(oldName);
 		}
 	}
@@ -376,16 +376,16 @@ void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
 		}
 		break;
 
-	case VK_RETURN:
-		{
-			if(m_spCursorer->GetFocusedCell()){
-				if(auto p = dynamic_cast<CFileRow*>(m_spCursorer->GetFocusedCell()->GetRowPtr())){
-					auto spFile = p->GetFilePointer();
-					Open(spFile);
-				}
-			}
+	//case VK_RETURN:
+	//	{
+	//		if(m_spCursorer->GetFocusedCell()){
+	//			if(auto p = dynamic_cast<CFileRow*>(m_spCursorer->GetFocusedCell()->GetRowPtr())){
+	//				auto spFile = p->GetFilePointer();
+	//				Open(spFile);
+	//			}
+	//		}
 
-		}
+	//	}
 		break;
 	case VK_BACK:
 		{
@@ -444,25 +444,14 @@ void CFilerGridView::InsertDefaultRowColumn()
 
 }
 
-void CFilerGridView::Open(std::shared_ptr<CShellFile>& spFile)
-{
-	if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-		OpenFolder(spFolder);
-	}
-	else {
-		OpenFile(spFile);
-	}
-	::SetFocus(m_hWnd);
-}
-
 void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	BOOST_LOG_TRIVIAL(trace) << "CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetFileName());
+	spdlog::info("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetFileName()));
 
-	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Total")
+	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder Total")
 	bool isUpdate = m_spFolder == spFolder;
 	{
-		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Pre-Process")
+		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder Pre-Process")
 
 		if (!isUpdate) {
 			m_pDirect->ClearTextLayoutMap();
@@ -560,7 +549,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	//	}
 	//}
 	{
-		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Enumeration")
+		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder Enumeration")
 			try {
 			//Enumerate child IDL
 
@@ -583,7 +572,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		}
 	}
 	{
-		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Updating")
+		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder Updating")
 		//Path change //TODO
 		//m_rowHeader->SetMeasureValid(false);
 		//m_rowNameHeader->SetMeasureValid(false);
@@ -712,11 +701,19 @@ bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 			}
 		}
 	}
+
 	auto pPrgWnd = new CIncrementalCopyWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
 		destIDL, m_spFolder->GetAbsoluteIdl(), srcChildIDLs);
 	pPrgWnd->SetIsDeleteOnFinalMessage(true);
 
-	pPrgWnd->Create(m_hWnd, CRect(0, 0, 400, 600));
+	HWND hWnd = NULL;
+	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+		hWnd = m_hWnd;
+	} else {
+		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	}
+
+	pPrgWnd->Create(hWnd, CRect(0, 0, 400, 600));
 	pPrgWnd->CenterWindow();
 	pPrgWnd->ShowWindow(SW_SHOW);
 	pPrgWnd->UpdateWindow();
@@ -783,19 +780,19 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 
 		switch (pInfo->Action) {
 		case FILE_ACTION_ADDED:
-			BOOST_LOG_TRIVIAL(trace) << "FILE_ACTION_ADDED";
+			spdlog::info("FILE_ACTION_ADDED");
 			Added(fileName);
 			break;
 		case FILE_ACTION_MODIFIED:
-			BOOST_LOG_TRIVIAL(trace) << "FILE_ACTION_MODIFIED";
+			spdlog::info("FILE_ACTION_MODIFIED");
 			Modified(fileName);
 			break;
 		case FILE_ACTION_REMOVED:
-			BOOST_LOG_TRIVIAL(trace) << "FILE_ACTION_REMOVED";
+			spdlog::info("FILE_ACTION_REMOVED");
 			Removed(fileName);
 			break;
 		case FILE_ACTION_RENAMED_NEW_NAME:
-			BOOST_LOG_TRIVIAL(trace) << "FILE_ACTION_RENAMED_NEW_NAME";
+			spdlog::info("FILE_ACTION_RENAMED_NEW_NAME");
 			if (!m_oldName.empty()) {
 				Renamed(m_oldName, fileName);
 				m_oldName.clear();
@@ -805,7 +802,7 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 			}
 			break;
 		case FILE_ACTION_RENAMED_OLD_NAME:
-			BOOST_LOG_TRIVIAL(trace) << "FILE_ACTION_RENAMED_OLD_NAME";
+			spdlog::info("FILE_ACTION_RENAMED_OLD_NAME");
 			m_oldName = fileName;
 			break;
 		default:
@@ -1198,7 +1195,14 @@ LRESULT CFilerGridView::OnCommandFind(WORD wNotifyCode, WORD wID, HWND hWndCtl, 
 	auto pPrgWnd = new CSearchWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp), m_spFolder->GetAbsoluteIdl());
 	pPrgWnd->SetIsDeleteOnFinalMessage(true);
 
-	pPrgWnd->Create(m_hWnd, CRect(0, 0, 400, 600));
+	HWND hWnd = NULL;
+	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+		hWnd = m_hWnd;
+	} else {
+		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	}
+
+	pPrgWnd->Create(hWnd, CRect(0, 0, 400, 600));
 	pPrgWnd->CenterWindow();
 	pPrgWnd->ShowWindow(SW_SHOW);
 	pPrgWnd->UpdateWindow();

@@ -43,15 +43,15 @@ public:
 	void load(Archive& ar)
 	{
 		ar("Debug", m_bDebug);
-		if (m_bDebug) {
-			if (!g_console.IsOpen()) {
-				g_console.Alloc();
-			}
-		}else{
-			//if (g_console.IsOpen()) {
-			//	g_console.Free();
-			//}
-		}
+		//if (m_bDebug) {
+		//	if (!g_console.IsOpen()) {
+		//		g_console.Alloc();
+		//	}
+		//}else{
+		//	//if (g_console.IsOpen()) {
+		//	//	g_console.Free();
+		//	//}
+		//}
 	}
 
 

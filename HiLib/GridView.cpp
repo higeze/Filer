@@ -226,6 +226,11 @@ LRESULT CGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled
 
 LRESULT CGridView::OnClose(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	
+	if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
+		::SetForegroundWindow(hWnd);
+	}
+
 	DestroyWindow();
 	return 0;
 }
@@ -295,9 +300,9 @@ void CGridView::DelayUpdate()
 
 LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	BOOST_LOG_TRIVIAL(trace) << L"CGridView::OnDelayUpdate";
+	spdlog::info("CGridView::OnDelayUpdate");
 
-	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OnDelayUpdate Total")
+	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OnDelayUpdate Total")
 	SignalPreDelayUpdate();
 	SignalPreDelayUpdate.disconnect_all_slots();
 	PostUpdate(Updates::Filter);
@@ -921,13 +926,13 @@ void CGridView::SubmitUpdate()
 			switch (type) {
 			case Updates::Sort:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Sort")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Sort")
 					SortAllInSubmitUpdate();
 				break;
 			}
 			case Updates::Filter:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Filter")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Filter")
 					FilterAll();
 				break;
 			}
@@ -937,37 +942,37 @@ void CGridView::SubmitUpdate()
 			}
 			case Updates::RowVisible:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::RowVisible")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::RowVisible")
 					UpdateRowVisibleDictionary();
 				break;
 			}
 			case Updates::ColumnVisible:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::ColumnVisible")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::ColumnVisible")
 					UpdateColumnVisibleDictionary();
 				break;
 			}
 			case Updates::Column:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Column")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Column")
 					UpdateColumn();
 				break;
 			}
 			case Updates::Row:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Row")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Row")
 					UpdateRow();
 				break;
 			}
 			case Updates::Scrolls:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::Scrolls")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Scrolls")
 					UpdateScrolls();
 				break;
 			}
 			case Updates::EnsureVisibleFocusedCell:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Updates::EnsureVisibleFocusedCell")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::EnsureVisibleFocusedCell")
 					EnsureVisibleCell(m_spCursorer->GetFocusedCell());
 				break;
 			}

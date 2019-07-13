@@ -22,7 +22,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template < class event_t, class fsm_t >
 		void on_entry(event_t const & e, fsm_t & machine)
 		{
-			BOOST_LOG_TRIVIAL(trace) << "NormalState";
+			spdlog::info("NormalState");
 		}
 	};
 
@@ -31,11 +31,11 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template < class event_t, class fsm_t >
 		void on_entry(event_t const & e, fsm_t & machine)
 		{
-			BOOST_LOG_TRIVIAL(trace) << "LButtonDownedState";
+			spdlog::info("LButtonDownedState");
 			if (auto p = dynamic_cast<CGridView*>(machine.m_pSheet)) {
 				HWND hWnd = p->m_hWnd;				
 				machine.m_deadlineTimer.run([hWnd, e] {
-					BOOST_LOG_TRIVIAL(trace) << "timer editcell";
+					spdlog::info("timer editcell");
 					::PostMessage(hWnd, WM_LBUTTONDBLCLKTIMEXCEED, NULL, MAKELPARAM(e.Point.x, e.Point.y));
 				}, std::chrono::milliseconds(::GetDoubleClickTime()));
 			}
@@ -48,7 +48,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template < class event_t, class fsm_t >
 		void on_entry(event_t const & e, fsm_t & machine)
 		{
-			BOOST_LOG_TRIVIAL(trace) << "LButtonDragState";
+			spdlog::info("LButtonDragState");
 			machine.m_pSheet->OnLButtonBeginDrag(LButtonBeginDragEvent(e.WindowPtr, e.Direct, e.Flags, e.Point));
 		}
 	};

@@ -123,12 +123,12 @@ CKnownFolderManager::CKnownFolderManager()
 					auto knownFolder = std::make_shared<CKnownFolder>(pParentShellFolder, parentIdl, childIdl, pFolder, pShellFolder);
 					m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
 				} else {
-					BOOST_LOG_TRIVIAL(trace) << L"CKnownFolder::CKnownFolder Non enumerable "
-						<< (boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str();
+					spdlog::info("CKnownFolder::CKnownFolder Non enumerable " +
+						(boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str());
 				}
 			} else {
-				BOOST_LOG_TRIVIAL(trace) <<L"CKnownFolder::CKnownFolder IDL is null "
-					<< (boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str();
+				spdlog::info("CKnownFolder::CKnownFolder IDL is null " +
+					(boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str());
 			}
 		}
 	}

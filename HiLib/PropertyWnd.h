@@ -229,6 +229,13 @@ public:
 			::EnableWindow(GetParent(), TRUE);
 		}
 		SignalClose(this);
+
+		//Foreground Owner window
+		if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
+			::SetForegroundWindow(hWnd);
+		}
+
+		//Destroy
 		m_spGrid->DestroyWindow();
 		DestroyWindow();
 		return 0;

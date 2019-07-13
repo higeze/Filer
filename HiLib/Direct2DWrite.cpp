@@ -517,21 +517,13 @@ namespace d2dw
 		CComPtr<ID2D1Bitmap> pBitmap;
 		HRESULT hr = GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
 		if (FAILED(hr)) {
-			BOOST_LOG_TRIVIAL(trace) << L"Failed";
-			BOOST_LOG_TRIVIAL(trace) << boost::format("%08X") % hIcon;
-			BOOST_LOG_TRIVIAL(trace) << boost::format("%08X") % hr;
+			spdlog::info("Failed");
+			spdlog::info((boost::format("%08X") % hIcon).str());
+			spdlog::info((boost::format("%08X") % hr).str());
 
 			throw std::exception(FILELINEFUNCTION);
 		}
 
-		//CComPtr<ID2D1Bitmap> pBitmap;
-		//HRESULT hr = GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap);
-		//if (FAILED(hr)) {
-		//		BOOST_LOG_TRIVIAL(trace) << L"Failed";
-		//		BOOST_LOG_TRIVIAL(trace) << boost::format("%08X") % hIcon;
-		//		BOOST_LOG_TRIVIAL(trace) << boost::format("%08X") % hr;
-		//	throw std::exception(FILELINEFUNCTION);
-		//}
 		GetHwndRenderTarget()->DrawBitmap(pBitmap, rect);
 	}
 

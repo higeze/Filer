@@ -52,7 +52,7 @@ void CDriveManager::Reload()
 				(!parentIdl && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder))))) {
 				m_driveFolders.push_back(std::make_shared<CDriveFolder>(pParentShellFolder, parentIdl, childIdl, pShellFolder));
 			} else {
-				BOOST_LOG_TRIVIAL(trace) << L"nonenum";
+				spdlog::info("nonenum");
 			}
 		}
 	}

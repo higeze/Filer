@@ -192,11 +192,14 @@ LRESULT CIncrementalCopyWnd::OnClose(UINT uiMsg, WPARAM wParam, LPARAM lParam, B
 	if (m_isModal && GetParent()) {
 		::EnableWindow(GetParent(), TRUE);
 	}
+	//Foreground Owner window
+	if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
+		::SetForegroundWindow(hWnd);
+	}
 	//Destroy
+	m_pFileGrid->DestroyWindow();
 	DestroyWindow();
 
-	//Focus parent wnd
-	::SetFocus(::GetParent(m_hWnd));
 	return 0;
 }
 
@@ -240,6 +243,7 @@ LRESULT CIncrementalCopyWnd::OnAddItem(UINT uMsg, WPARAM wParam, LPARAM lParam, 
 		m_newIDL.CloneParentIDL(),
 		m_newIDL.CloneLastID()));
 	InvalidateRect(NULL, FALSE);
+	//m_periodicTimer.runperiodic([this](){InvalidateRect(NULL, FALSE); }, std::chrono::milliseconds(50));
 	return 0;
 }
 
@@ -247,6 +251,7 @@ LRESULT CIncrementalCopyWnd::OnIncrementMax(UINT uMsg, WPARAM wParam, LPARAM lPa
 {
 	m_pProgressbar->IncrementMax();
 	InvalidateRect(NULL, FALSE);
+	//m_periodicTimer.runperiodic([this](){InvalidateRect(NULL, FALSE); }, std::chrono::milliseconds(50));
 	return 0;
 }
 
@@ -254,6 +259,7 @@ LRESULT CIncrementalCopyWnd::OnIncrementValue(UINT uMsg, WPARAM wParam, LPARAM l
 {
 	m_pProgressbar->IncrementValue();
 	InvalidateRect(NULL, FALSE);
+	//m_periodicTimer.runperiodic([this](){InvalidateRect(NULL, FALSE); }, std::chrono::milliseconds(50));
 	return 0;
 }
 

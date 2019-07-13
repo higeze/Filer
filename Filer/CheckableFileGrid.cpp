@@ -160,17 +160,6 @@ void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)
 	}
 }
 
-
-void CCheckableFileGrid::Open(std::shared_ptr<CShellFile>& spFile)
-{
-	if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-		OpenFolder(spFolder);
-	} else {
-		OpenFile(spFile);
-	}
-	::SetFocus(m_hWnd);
-}
-
 void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
 	auto pPrgWnd = new CFilerGridView(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
@@ -179,13 +168,12 @@ void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		.lpszClassName(L"CFilerGridViewWnd")
 		.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
 		.hCursor(::LoadCursor(NULL, IDC_ARROW))
-		.hCursor(::LoadCursor(NULL, IDC_ARROW))
 		.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
 
 	pPrgWnd->CreateWindowExArgument()
 		.lpszClassName(_T("CFilerGridViewWnd"))
 		.lpszWindowName(spFolder->GetFileName().c_str())
-		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE)
+		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
 		.dwExStyle(WS_EX_ACCEPTFILES)
 		.hMenu(NULL);
 
@@ -193,13 +181,22 @@ void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		pPrgWnd->SetWindowTextW(pFolder->GetFileName().c_str());
 	});
 
+
 	pPrgWnd->SetIsDeleteOnFinalMessage(true);
 
-	pPrgWnd->Create(m_hWnd, CRect(0, 0, 300, 500));
+	HWND hWnd = NULL;
+	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+		hWnd = m_hWnd;
+	} else {
+		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	}
+
+	pPrgWnd->Create(hWnd, CRect(0, 0, 300, 500));
 	pPrgWnd->OpenFolder(spFolder);
 	pPrgWnd->CenterWindow();
 	pPrgWnd->ShowWindow(SW_SHOW);
 	pPrgWnd->UpdateWindow();
+	//pPrgWnd->SetForceForegroundWindow();
 }
 
 

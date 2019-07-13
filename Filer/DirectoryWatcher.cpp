@@ -84,7 +84,7 @@ VOID CALLBACK CDirectoryWatcher::WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pI
 void CDirectoryWatcher::WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pInstance,PTP_WORK pWork)
 {
 	try{
-		BOOST_LOG_TRIVIAL(trace) << "IoCompletionCallback";
+		spdlog::info("IoCompletionCallback");
 		//PCTSTR pDir = (PCTSTR)pvParam;
 		OVERLAPPED oi = {0};
 
@@ -102,7 +102,7 @@ void CDirectoryWatcher::WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pInstance,P
 		}
 		//Create thread pool
 		UniqueIOPtr  pio(::CreateThreadpoolIo(m_dir.get(),CDirectoryWatcher::IoCompletionCallback,(PVOID)this,NULL));
-		BOOST_LOG_TRIVIAL(trace) << "Start watching direcotry";
+		spdlog::info("Start watching direcotry");
 		//Start observing
 		IoCompletionCallback(NULL,(LPOVERLAPPED)&oi,NO_ERROR,0,pio.get());
 		//Wait for quit event
@@ -110,7 +110,7 @@ void CDirectoryWatcher::WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pInstance,P
 		//Cancel task in que
 		WaitForThreadpoolIoCallbacks(pio.get(),TRUE);
 
-		BOOST_LOG_TRIVIAL(trace) << "End watching directory";
+		spdlog::info("End watching directory");
 	}catch(std::exception&){
 		FILE_LINE_FUNC_TRACE;
 		QuitWatching();
@@ -130,7 +130,7 @@ VOID CALLBACK CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pIns
 void CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVOID pOverlapped,ULONG IoResult,ULONG_PTR ulBytes,PTP_IO pio)
 {
 	try{
-		BOOST_LOG_TRIVIAL(trace) << "IoCompletionCallback";
+		spdlog::info("IoCompletionCallback");
 		PFILE_NOTIFY_INFORMATION pFileNotifyInfo = nullptr;
 		if(ulBytes > 0)
 		{
@@ -140,7 +140,7 @@ void CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVO
 		//Keep watching
 		if(pOverlapped)
 		{
-			BOOST_LOG_TRIVIAL(trace) << "ReadDirectoryChangesW";
+			spdlog::info("ReadDirectoryChangesW");
 			//Associate iocompletionobject to thread pool
 			StartThreadpoolIo(pio);
 			if(!ReadDirectoryChangesW(

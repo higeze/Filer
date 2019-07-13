@@ -135,17 +135,16 @@ void CFilerGridViewBase::OnKeyDown(const KeyDownEvent& e)
 	//	}
 	//	break;
 
-	//case VK_RETURN:
-	//{
-	//	if (m_spCursorer->GetFocusedCell()) {
-	//		if (auto p = dynamic_cast<CFileRow*>(m_spCursorer->GetFocusedCell()->GetRowPtr())) {
-	//			auto spFile = p->GetFilePointer();
-	//			Open(spFile);
-	//		}
-	//	}
-
-	//}
-	//break;
+	case VK_RETURN:
+	{
+		if (m_spCursorer->GetFocusedCell()) {
+			if (auto p = dynamic_cast<CFileRow*>(m_spCursorer->GetFocusedCell()->GetRowPtr())) {
+				auto spFile = p->GetFilePointer();
+				Open(spFile);
+			}
+		}
+	}
+	break;
 	//case VK_BACK:
 	//{
 	//	OpenFolder(m_spFolder->GetParent());
@@ -208,6 +207,16 @@ void CFilerGridViewBase::OnCellLButtonDblClk(CellEventArgs& e)
 		auto spFile = p->GetFilePointer();
 		OpenFile(spFile);
 	}
+}
+
+void CFilerGridViewBase::Open(std::shared_ptr<CShellFile>& spFile)
+{
+	if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+		OpenFolder(spFolder);
+	} else {
+		OpenFile(spFile);
+	}
+	::SetFocus(m_hWnd);
 }
 
 

@@ -27,8 +27,7 @@ public:
 //	virtual void OnKeyDown(const KeyDownEvent& e)override;
 //	virtual void OnContextMenu(const ContextMenuEvent& e) override;
 	virtual void OnCellLButtonDblClk(CellEventArgs& e)override;
-	void Open(std::shared_ptr<CShellFile>& spFile);
-	void OpenFolder(std::shared_ptr<CShellFolder>& spFile);
+	virtual void OpenFolder(std::shared_ptr<CShellFolder>& spFile) override;
 
 
 

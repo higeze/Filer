@@ -56,7 +56,9 @@ public:
 	virtual void OnKeyDown(const KeyDownEvent& e)override;
 
 	virtual void OnCellLButtonDblClk(CellEventArgs& e);
-	void OpenFile(std::shared_ptr<CShellFile>& spFile);
+	virtual void Open(std::shared_ptr<CShellFile>& spFile);
+	virtual void OpenFile(std::shared_ptr<CShellFile>& spFile);
+	virtual void OpenFolder(std::shared_ptr<CShellFolder>& spFile) = 0;
 
 	RowDictionary::const_iterator FindIfRowIterByFileNameExt(const std::wstring& fileNameExt);
 

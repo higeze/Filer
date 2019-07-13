@@ -208,11 +208,14 @@ LRESULT CSearchWnd::OnCommandClose(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOO
 
 LRESULT CSearchWnd::OnClose(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	//Destroy
-	DestroyWindow();
+	//Foreground Owner window
+	if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
+		::SetForegroundWindow(hWnd);
+	}
 
-	//Focus parent wnd
-	::SetFocus(::GetParent(m_hWnd));
+	//Destroy
+	m_pFileGrid->DestroyWindow();
+	DestroyWindow();
 	return 0;
 }
 

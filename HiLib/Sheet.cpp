@@ -258,37 +258,37 @@ void CSheet::SubmitUpdate()
 		switch(type){
 		case Updates::RowVisible:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateRowVisibleDictionary")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateRowVisibleDictionary")
 				UpdateRowVisibleDictionary();
 			}
 			break;
 		case Updates::ColumnVisible:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateColumnVisibleDictionary")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateColumnVisibleDictionary")
 				UpdateColumnVisibleDictionary();
 				break;
 			}
 		case Updates::Column:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateColumn")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateColumn")
 				UpdateColumn();
 				break;
 			}
 		case Updates::Row:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateRow")	
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateRow")	
 				UpdateRow();
 				break;
 			}
 		case Updates::Scrolls:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"UpdateScrolls")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "UpdateScrolls")
 				UpdateScrolls();
 				break;
 			}
 		case Updates::Invalidate:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"Invalidate")
+				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Invalidate")
 				Invalidate();
 			}
 		default:

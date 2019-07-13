@@ -138,7 +138,6 @@ namespace std
 	{
 		std::size_t operator() (d2dw::CSizeF const & key) const
 		{
-			//			BOOST_LOG_TRIVIAL(trace) << L"Color" << key.GetHashCode();
 			return key.GetHashCode();
 		}
 	};
@@ -152,7 +151,6 @@ namespace std
 	{
 		std::size_t operator() (d2dw::CColorF const & key) const
 		{
-//			BOOST_LOG_TRIVIAL(trace) << L"Color" << key.GetHashCode();
 			return key.GetHashCode();
 		}
 	};
@@ -190,7 +188,6 @@ namespace std
 	{
 		std::size_t operator() (d2dw::CFontF const & key) const
 		{
-			//			BOOST_LOG_TRIVIAL(trace) << L"Font" <<key.GetHashCode();
 			return key.GetHashCode();
 		}
 	};
@@ -228,7 +225,6 @@ namespace std
 	{
 		std::size_t operator() (d2dw::CAlignmentF const & key) const
 		{
-			//			BOOST_LOG_TRIVIAL(trace) << L"Font" <<key.GetHashCode();
 			return key.GetHashCode();
 		}
 	};
@@ -305,7 +301,6 @@ namespace std
 	{
 		std::size_t operator() (d2dw::FormatF const & key) const
 		{
-			//			BOOST_LOG_TRIVIAL(trace) << L"Font" <<key.GetHashCode();
 			return key.GetHashCode();
 		}
 	};

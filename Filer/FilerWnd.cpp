@@ -97,11 +97,21 @@ CFilerWnd::~CFilerWnd(){}
 
 HWND CFilerWnd::Create(HWND hWndParent)
 {
-	return CWnd::Create(hWndParent, m_rcWnd);
+	HWND hWnd = CWnd::Create(hWndParent, m_rcWnd);
+	//WINDOWPLACEMENT wp = { 0 };
+	//wp.length = sizeof(WINDOWPLACEMENT);
+	//wp.rcNormalPosition = m_rcWnd;
+	//::SetWindowPlacement(m_hWnd, &wp);
+	return hWnd;
 }
 
 LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	WINDOWPLACEMENT wp = { 0 };
+	wp.length = sizeof(WINDOWPLACEMENT);
+	wp.rcNormalPosition = m_rcWnd;
+	::SetWindowPlacement(m_hWnd, &wp);
+
 	//Konami
 	//m_konamiCommander.SetHwnd(m_hWnd);
 
@@ -329,7 +339,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 
 							PROCESS_INFORMATION pi = { 0 };
 							DWORD len = 0;
-							BOOST_LOG_TRIVIAL(trace) << L"CreateProcess: "<< cmdline;
+							spdlog::info("CreateProcess: {}", wstr2str(cmdline));
 
 							if (!::CreateProcess(NULL, const_cast<LPWSTR>(cmdline.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) break;
 							if (!::WaitForInputIdle(pi.hProcess, INFINITE) != 0)break;
@@ -337,7 +347,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 
 							DWORD exitCode = 0;
 							if (!::GetExitCodeProcess(pi.hProcess, &exitCode))break;
-							BOOST_LOG_TRIVIAL(trace) << L"ExitCode: " << exitCode;
+							spdlog::info("ExitCode: {}", exitCode);
 
 							::CloseHandle(pi.hThread);
 							::CloseHandle(pi.hProcess);
@@ -346,7 +356,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 							std::string buff;
 							if (len > 0 && ReadFile(hRead, (LPVOID)::GetBuffer(buff, len), len, &len, NULL)) {
 								::ReleaseBuffer(buff);
-								BOOST_LOG_TRIVIAL(trace) << L"Output: " << buff;
+								spdlog::info("Output: {}", buff);
 							}
 
 						} while (0);

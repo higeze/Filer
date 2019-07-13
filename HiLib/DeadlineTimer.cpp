@@ -26,6 +26,25 @@ void CDeadlineTimer::run(std::function<void()> action, const std::chrono::millis
 	}
 }
 
+void CDeadlineTimer::runperiodic(std::function<void()> action, const std::chrono::milliseconds& ms)
+{
+	if (m_future.valid() && m_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+		std::lock_guard<std::mutex> guard(m_mtx);
+		m_action = action;
+	} else {
+		m_action = action;
+		m_future = CThreadPool::GetInstance()->enqueue([this, ms] {
+			std::this_thread::sleep_for(ms);
+			std::lock_guard<std::mutex> guard(m_mtx);
+			if (m_action && !m_stop.load()) {
+				spdlog::info("runperiodic");
+				m_action();
+			}
+			return;
+		});
+	}
+}
+
 void CDeadlineTimer::stop()
 {
 	if (m_future.valid() && m_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {

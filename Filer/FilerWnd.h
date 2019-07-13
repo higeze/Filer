@@ -171,8 +171,14 @@ public:
 			m_rcPropWnd = CRect(wp.rcNormalPosition);
 		});
 
+		HWND hWnd = NULL;
+		if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+			hWnd = m_hWnd;
+		} else {
+			hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+		}
 
-		pPropWnd->Create(m_hWnd, m_rcPropWnd);
+		pPropWnd->Create(hWnd, m_rcPropWnd);
 		pPropWnd->CenterWindow();
 		pPropWnd->ShowWindow(SW_SHOW);
 		pPropWnd->UpdateWindow();

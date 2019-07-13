@@ -7,13 +7,13 @@ class CConsoleTimer:public boost::timer
 {
 private:
 	HWND m_hWnd;
-	std::wstring m_strMessage;
+	std::string m_strMessage;
 public:
-	CConsoleTimer(const std::wstring& strMessage)
+	CConsoleTimer(const std::string& strMessage)
 		:timer(), m_strMessage(strMessage){}
 	virtual ~CConsoleTimer()
 	{
-		BOOST_LOG_TRIVIAL(trace) <<m_strMessage<<" : "<<elapsed();
+		spdlog::info(m_strMessage + " : " + std::to_string(elapsed()));
 	}
 
 };

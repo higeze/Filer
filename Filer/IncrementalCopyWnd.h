@@ -3,6 +3,7 @@
 #include "Direct2DWrite.h"
 #include "FilerGridViewProperty.h"
 #include "ShellFunction.h"
+#include "DeadlineTimer.h"
 
 //#define IDC_BUTTON_OK							162
 //#define IDC_BUTTON_CANCEL						163
@@ -37,6 +38,8 @@ private:
 	CIDL m_destIDL;
 
 	CIDL m_newIDL;
+
+	CDeadlineTimer m_periodicTimer;
 
 	std::unordered_map<CIDL, std::vector<CIDL>,
 		shell::IdlHash, shell::IdlEqual> m_idlMap;
