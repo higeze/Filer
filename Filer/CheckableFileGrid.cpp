@@ -54,12 +54,15 @@
 #include "ResourceIDFactory.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
+extern HWND g_main;
 
 CCheckableFileGrid::CCheckableFileGrid(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
 	:CFilerGridViewBase(spFilerGridViewProp)
 {
 	m_cwa
 		.dwExStyle(WS_EX_ACCEPTFILES);
+
+//	AddMsgHandler(WM_ACTIVATE, &CCheckableFileGrid::OnActivate, this);
 
 //	CellLButtonDblClk.connect(std::bind(&CFilerGridView::OnCellLButtonDblClk, this, std::placeholders::_1));
 }
@@ -162,27 +165,26 @@ void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)
 
 void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	auto pPrgWnd = new CFilerGridView(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
+	auto pWnd = new CFilerGridView(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
 
-	pPrgWnd->RegisterClassExArgument()
+	pWnd->RegisterClassExArgument()
 		.lpszClassName(L"CFilerGridViewWnd")
 		.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
 		.hCursor(::LoadCursor(NULL, IDC_ARROW))
 		.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
 
-	pPrgWnd->CreateWindowExArgument()
+	pWnd->CreateWindowExArgument()
 		.lpszClassName(_T("CFilerGridViewWnd"))
 		.lpszWindowName(spFolder->GetFileName().c_str())
 		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
 		.dwExStyle(WS_EX_ACCEPTFILES)
 		.hMenu(NULL);
 
-	pPrgWnd->FolderChanged.connect([pPrgWnd](std::shared_ptr<CShellFolder>& pFolder) {
-		pPrgWnd->SetWindowTextW(pFolder->GetFileName().c_str());
+	pWnd->FolderChanged.connect([pWnd](std::shared_ptr<CShellFolder>& pFolder) {
+		pWnd->SetWindowTextW(pFolder->GetFileName().c_str());
 	});
 
-
-	pPrgWnd->SetIsDeleteOnFinalMessage(true);
+	pWnd->SetIsDeleteOnFinalMessage(true);
 
 	HWND hWnd = NULL;
 	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
@@ -191,13 +193,14 @@ void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
 	}
 
-	pPrgWnd->Create(hWnd, CRect(0, 0, 300, 500));
-	pPrgWnd->OpenFolder(spFolder);
-	pPrgWnd->CenterWindow();
-	pPrgWnd->ShowWindow(SW_SHOW);
-	pPrgWnd->UpdateWindow();
-	//pPrgWnd->SetForceForegroundWindow();
+	pWnd->Create(hWnd, CRect(0, 0, 300, 500));
+	pWnd->OpenFolder(spFolder);
+	pWnd->CenterWindow();
+	pWnd->ShowWindow(SW_SHOW);
+	pWnd->UpdateWindow();
 }
+
+
 
 
 

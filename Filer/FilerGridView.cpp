@@ -1192,8 +1192,8 @@ BOOL CFilerGridView::SetDragImage(CIDL firstIdl, CComPtr<IDragSourceHelper> pDra
 
 LRESULT CFilerGridView::OnCommandFind(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	auto pPrgWnd = new CSearchWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp), m_spFolder->GetAbsoluteIdl());
-	pPrgWnd->SetIsDeleteOnFinalMessage(true);
+	auto pWnd = new CSearchWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp), m_spFolder->GetAbsoluteIdl());
+	pWnd->SetIsDeleteOnFinalMessage(true);
 
 	HWND hWnd = NULL;
 	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
@@ -1202,9 +1202,9 @@ LRESULT CFilerGridView::OnCommandFind(WORD wNotifyCode, WORD wID, HWND hWndCtl, 
 		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
 	}
 
-	pPrgWnd->Create(hWnd, CRect(0, 0, 400, 600));
-	pPrgWnd->CenterWindow();
-	pPrgWnd->ShowWindow(SW_SHOW);
-	pPrgWnd->UpdateWindow();
+	pWnd->Create(hWnd, CRect(0, 0, 400, 600));
+	pWnd->CenterWindow();
+	pWnd->ShowWindow(SW_SHOW);
+	pWnd->UpdateWindow();
 	return 0;
 }

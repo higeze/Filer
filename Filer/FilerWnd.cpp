@@ -52,7 +52,7 @@ CFilerWnd::CFilerWnd()
 	m_cwa
 	.lpszWindowName(L"FilerWnd") 
 	.lpszClassName(L"CFilerWnd")
-	.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN)
+	.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN )
 	.x(m_rcWnd.left)
 	.y(m_rcWnd.top)
 	.nWidth(m_rcWnd.Width())
@@ -192,6 +192,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 			.hMenu((HMENU)id);
 		spFavoritesView->FileChosen.connect([&](std::shared_ptr<CShellFile>& spFile)->void {
 			spView->GetGridView()->Open(spFile);
+			spView->GetGridView()->SetFocus();
 		});
 		spFavoritesView->Create(m_hWnd, rc);
 	};

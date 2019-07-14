@@ -264,15 +264,3 @@ LRESULT CIncrementalCopyWnd::OnIncrementValue(UINT uMsg, WPARAM wParam, LPARAM l
 }
 
 
-//void CIncrementalCopyWnd::AddItem(const CIDL& destIDL, const CIDL srcIDL)
-//{
-//	auto iter = m_idlMap.find(destIDL);
-//	if (iter != m_idlMap.end()) {
-//		iter->second.push_back(srcIDL);
-//	} else {
-//		m_idlMap.insert(std::make_pair(destIDL, std::vector<CIDL>{srcIDL}));
-//	}
-//	m_newIDL = srcIDL;
-//	SendMessage(WM_ADDITEM, NULL, NULL);
-//}
-

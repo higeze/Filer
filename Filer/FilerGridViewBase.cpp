@@ -57,7 +57,6 @@ CFilerGridViewBase::CFilerGridViewBase(std::shared_ptr<FilerGridViewProperty>& s
 {
 	m_cwa.dwExStyle(WS_EX_ACCEPTFILES);
 
-	//AddMsgHandler(WM_DIRECTORYWATCH, &CFilerGridViewBase::OnDirectoryWatch, this);
 	AddCmdIDHandler(IDM_CUT, &CFilerGridViewBase::OnCommandCut, this);
 
 	//They are already assigned in GridView
@@ -216,9 +215,7 @@ void CFilerGridViewBase::Open(std::shared_ptr<CShellFile>& spFile)
 	} else {
 		OpenFile(spFile);
 	}
-	::SetFocus(m_hWnd);
 }
-
 
 void CFilerGridViewBase::OpenFile(std::shared_ptr<CShellFile>& spFile)
 {
@@ -236,8 +233,6 @@ void CFilerGridViewBase::OpenFile(std::shared_ptr<CShellFile>& spFile)
 
 	::ShellExecuteEx(&sei);
 }
-
-
 
 bool CFilerGridViewBase::CutToClipboard()
 {
@@ -294,4 +289,5 @@ LRESULT CFilerGridViewBase::OnCommandDelete(WORD wNotifyCode, WORD wID, HWND hWn
 	Delete();
 	return 0;
 }
+
 
