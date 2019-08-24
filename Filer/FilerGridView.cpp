@@ -526,7 +526,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		}
 	}
 	//{
-	//	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, L"OpenFolder Just Enumeration")
+	//	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder Test Cold OneByOne Enumeration")
 	//		try {
 	//		//Enumerate child IDL
 
@@ -534,13 +534,9 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	//		if (SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) &&
 	//			enumIdl) {
 	//			CIDL nextIdl;
-	//			ULONG ulRet(0);
-	//			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
+	//			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), NULL))) {
 	//				if (!nextIdl) { break; }
-	//				//if (auto spFile = m_spFolder->CreateShExFileFolder(nextIdl)) {
-	//				//	InsertRow(CRow::kMaxIndex, std::make_shared<CFileRow>(this, spFile));
-	//				//}
-	//				nextIdl.Clear();
+	//				//nextIdl.Clear();
 	//			}
 	//		}
 	//	} catch (std::exception&) {
@@ -548,6 +544,171 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	//		//		throw e;
 	//	}
 	//}
+
+	//{
+	//	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder Test OneByOne Enumeration")
+	//	try {
+	//		//Enumerate child IDL
+	//		int count = 0;
+	//		CComPtr<IEnumIDList> enumIdl;
+	//		if (SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) &&
+	//			enumIdl) {
+	//			CIDL nextIdl;
+	//			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), NULL))) {
+	//				if (!nextIdl) {
+	//					break; 
+	//				} else {
+	//					count++;
+	//				}
+	//				nextIdl.Clear();
+	//			}
+	//		}
+	//		spdlog::info(std::to_string(count));
+	//	} catch (std::exception&) {
+	//		MessageBox(L"Enumeration", L"Error", 0);
+	//		//		throw e;
+	//	}
+	//}
+	//{
+	//	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder Test Thousand Enumeration")
+	//		try {
+	//		//Enumerate child IDL
+	//		int count = 0;
+	//		CComPtr<IEnumIDList> enumIdl;
+	//		if (SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) &&
+	//			enumIdl) {
+	//			std::array<LPITEMIDLIST, 1000> nextIdls = { nullptr };
+	//			ULONG celtFetched(0);
+	//			while (true){
+	//				HRESULT hRes = enumIdl->Next(1000, nextIdls.data(), &celtFetched);
+	//				if (hRes == S_OK) {
+	//					//for (auto i = 0; i < celtFetched; i++) {
+	//					//	::ILFree(nextIdls[i]);
+	//					//}
+	//					count += celtFetched;
+
+	//				} else if (hRes == S_FALSE) {
+	//					//for (auto i = 0; i < celtFetched; i++) {
+	//					//	::ILFree(nextIdls[i]);
+	//					//}
+	//					count += celtFetched;
+	//					break;
+	//				} else {
+	//					break;
+	//				}
+	//				//std::fill_n(nextIdls, 1000, nullptr);
+	//			}
+	//		}
+	//		spdlog::info(std::to_string(count));
+	//	} catch (std::exception&) {
+	//		MessageBox(L"Enumeration", L"Error", 0);
+	//		//		throw e;
+	//	}
+	//}
+
+	//{
+	//	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder Test OneByOne DisplayName")
+	//		try {
+	//		//Enumerate child IDL
+	//		int count = 0;
+	//		CComPtr<IEnumIDList> enumIdl;
+	//		std::wstring path;
+	//		if (SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) &&
+	//			enumIdl) {
+	//			CIDL nextIdl;
+	//			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), NULL))) {
+	//				if (!nextIdl) {
+	//					break;
+	//				} else {
+	//					path = shell::GetDisplayNameOf(m_spFolder->GetShellFolderPtr(), nextIdl);
+	//					count++;
+	//				}
+	//				nextIdl.Clear();
+	//			}
+	//		}
+	//		spdlog::info(std::to_string(count));
+	//	} catch (std::exception&) {
+	//		MessageBox(L"Enumeration", L"Error", 0);
+	//		//		throw e;
+	//	}
+	//}
+
+	//{
+	//	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder Test OneByOne SFGAO only")
+	//		try {
+	//		//Enumerate child IDL
+	//		int count = 0;
+	//		CComPtr<IEnumIDList> enumIdl;
+
+	//		std::wstring path;
+	//		if (SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) &&
+	//			enumIdl) {
+	//			CIDL nextIdl;
+	//			CComPtr<IShellFolder> pFolder;
+	//			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), NULL))) {
+	//				if (!nextIdl) {
+	//					break;
+	//				} else {
+	//					CComPtr<IShellFolder> pFolder;
+	//					CComPtr<IEnumIDList> childenumIdl;
+	//					ULONG sfgao = SFGAO_FOLDER | SFGAO_BROWSABLE;
+	//					m_spFolder->GetShellFolderPtr()->GetAttributesOf(1, (LPCITEMIDLIST*)(nextIdl.ptrptr()), &sfgao);
+	//					//if (
+	//					//	//Do not use ::PathIsDirectory(path.c_str()), because it's slower
+	//					//	(
+	//					//		sfgao & (SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_BROWSABLE) == (SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_BROWSABLE) &&
+	//					//		SUCCEEDED(m_spFolder->GetShellFolderPtr()->BindToObject(nextIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
+	//					//		SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &childenumIdl)))) {
+	//					//}
+	//					count++;
+	//				}
+	//				nextIdl.Clear();
+	//			}
+	//		}
+	//		spdlog::info(std::to_string(count));
+	//	} catch (std::exception&) {
+	//		MessageBox(L"Enumeration", L"Error", 0);
+	//		//		throw e;
+	//	}
+	//}
+
+	//{
+	//	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder Test OneByOne Bind")
+	//		try {
+	//		//Enumerate child IDL
+	//		int count = 0;
+	//		CComPtr<IEnumIDList> enumIdl;
+
+	//		std::wstring path;
+	//		if (SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) &&
+	//			enumIdl) {
+	//			CIDL nextIdl;
+	//			CComPtr<IShellFolder> pFolder;
+	//			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), NULL))) {
+	//				if (!nextIdl) {
+	//					break;
+	//				} else {
+	//					CComPtr<IShellFolder> pFolder;
+	//					CComPtr<IEnumIDList> childenumIdl;
+
+	//					if (
+	//						//Do not use ::PathIsDirectory(path.c_str()), because it's slower
+	//						(SUCCEEDED(m_spFolder->GetShellFolderPtr()->BindToObject(nextIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
+	//							SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &childenumIdl)))) {
+	//					}
+	//					count++;
+	//				}
+	//				nextIdl.Clear();
+	//			}
+	//		}
+	//		spdlog::info(std::to_string(count));
+	//	} catch (std::exception&) {
+	//		MessageBox(L"Enumeration", L"Error", 0);
+	//		//		throw e;
+	//	}
+	//}
+
+
 	{
 		CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFolder Enumeration")
 			try {

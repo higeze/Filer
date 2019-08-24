@@ -38,6 +38,8 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<
 		iter->second->Reset();
 		return iter->second;
 	} else {
+		ULONG sfgao = SFGAO_FOLDER/* | SFGAO_BROWSABLE*/;
+
 		std::shared_ptr<CShellFile> pFile;
 		if (!childIdl) {
 			pFile = CKnownFolderManager::GetInstance()->GetDesktopFolder();
@@ -49,15 +51,15 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<
 			pFile = spDriveFolder;
 		} else if (boost::iequals(ext, ".zip")) {
 			pFile = std::make_shared<CShellZipFolder>(pParentFolder, parentIdl, childIdl);
-		} else if (
-			//Do not use ::PathIsDirectory(path.c_str()), because it's slower
-			(SUCCEEDED(pParentFolder->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
-				SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)))) {
-			pFile = std::make_shared<CShellFolder>(pParentFolder, parentIdl, childIdl, pFolder);
+		} else if (pParentFolder->GetAttributesOf(1, (LPCITEMIDLIST*)(childIdl.ptrptr()), &sfgao), (sfgao & SFGAO_FOLDER) == (SFGAO_FOLDER/* | SFGAO_BROWSABLE*/)){
+			////Do not use ::PathIsDirectory(path.c_str()), because it's slower
+			//(SUCCEEDED(pParentFolder->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
+			//	SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)))) {
+			pFile = std::make_shared<CShellFolder>(pParentFolder, parentIdl, childIdl, nullptr);
 		} else {
 			pFile = std::make_shared<CShellFile>(pParentFolder, parentIdl, childIdl);
 		}
-		s_fileCache.emplace(std::make_tuple(path, pParentFolder, childIdl), pFile);
+		//s_fileCache.emplace(std::make_tuple(path, pParentFolder, childIdl), pFile);
 		return pFile;
 	}
 }
