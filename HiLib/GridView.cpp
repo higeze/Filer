@@ -712,9 +712,27 @@ LRESULT CGridView::OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bH
 {
 	//TODO High
 	std::wstring strCopy;
+	bool SelectModeRow = true;
+	bool IncludesHeader = true;
 
-	if(m_spCursorer->GetSelectedRows(this).empty()){
-		return 0;
+	if(SelectModeRow){
+		auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
+		auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
+
+		for (auto rowIter = rowDictionary.begin(), rowEnd = rowDictionary.end(); rowIter != rowEnd; ++rowIter) {
+			if (rowIter->DataPtr->GetSelected() || (IncludesHeader && rowIter->DataPtr->GetIndex<VisTag>()<0)) {
+				for (auto colIter = colDictionary.begin(), colBegin = colDictionary.begin(), colEnd = colDictionary.end(); colIter != colEnd; ++colIter) {
+					auto pCell = colIter->DataPtr->Cell(rowIter->DataPtr.get());
+					strCopy.append(pCell->GetString());
+					if (std::next(colIter) == colDictionary.end()) {
+						strCopy.append(L"\r\n");
+					} else {
+						strCopy.append(L"\t");
+					}
+				}
+
+			}
+		}
 	}else{
 		auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
 		auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();

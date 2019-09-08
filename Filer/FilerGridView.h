@@ -58,7 +58,7 @@ public:
 	virtual void OnBkGndLButtondDblClk(const LButtonDblClkEvent& e) override;
 
 	virtual void OnCellLButtonDblClk(CellEventArgs& e);
-
+	virtual void Reload();
 	virtual void OpenFolder(std::shared_ptr<CShellFolder>& spFolder) override;
 
 	std::wstring GetPath()const;

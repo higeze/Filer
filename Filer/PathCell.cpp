@@ -8,9 +8,18 @@
 #include "CellProperty.h"
 
 
+bool CPathCell::IsLeftestCell()const
+{
+	return m_pColumn->GetIndex<AllTag>() == 0;
+}
+
 std::wstring CPathCell::GetString()
 {
-	return static_cast<CFilerGridView*>(m_pSheet)->GetPath();
+	if (IsLeftestCell()) {
+		return static_cast<CFilerGridView*>(m_pSheet)->GetPath();
+	} else {
+		return std::wstring();
+	}
 }
 
 d2dw::CRectF CPathCell::GetRect()const
@@ -60,7 +69,9 @@ d2dw::CSizeF CPathCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& d
 
 void CPathCell::OnPaint(const PaintEvent& e)
 {
-	CCell::OnPaint(e);
+	if(IsLeftestCell()){
+		CCell::OnPaint(e);
+	}
 }
 
 void CPathCell::SetStringCore(const std::wstring& str)

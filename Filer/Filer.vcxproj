@@ -327,6 +327,7 @@
     <ClInclude Include="FileSizeArgs.h" />
     <ClInclude Include="FileTimeArgs.h" />
     <ClInclude Include="FileIconPathColumn.h" />
+    <ClInclude Include="KnownFolderManager.h" />
     <ClInclude Include="PathRow.h" />
     <ClInclude Include="IncrementalCopyWnd.h" />
     <ClInclude Include="SearchWnd.h" />

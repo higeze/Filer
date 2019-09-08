@@ -291,13 +291,13 @@ std::vector<RC> CCursorer::GetSelectedRCs(CSheet* pSheet)const
 std::vector<std::shared_ptr<CRow>> CCursorer::GetSelectedRows(CSheet* pSheet)const
 {
 	std::vector<std::shared_ptr<CRow>> selectedRows;
-	//auto& rowDictionary=pSheet->m_rowVisibleDictionary.get<IndexTag>();
+	auto& rowDictionary=pSheet->GetDictionary<RowTag, VisTag>();
 
-	//for(auto& rowData : rowDictionary){
-	//	if(rowData.DataPtr->GetSelected()){
-	//		selectedRows.push_back(rowData.DataPtr);
-	//	}
-	//}
+	for(auto& rowData : rowDictionary){
+		if(rowData.DataPtr->GetSelected()){
+			selectedRows.push_back(rowData.DataPtr);
+		}
+	}
 	return selectedRows;
 }
 std::vector<std::shared_ptr<CColumn>> CCursorer::GetSelectedColumns(CSheet* pSheet)const

@@ -86,10 +86,11 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 	});
 
 	//Tabs
-	if (m_vwPath.empty()) {
-		//ShellFolder
-		auto pFolder(CKnownFolderManager::GetInstance()->GetDesktopFolder());
-		if (pFolder) {
+	for (auto path : m_vwPath) {
+		if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(path))) {
+			//ShellFolder
+			//if (!pFolder->GetShellFolderPtr()) { pFolder = CKnownFolderManager::GetInstance()->GetDesktopFolder(); }
+
 			//New id for association
 			unsigned int id = m_uniqueIDFactory.NewID();
 			//CTabCtrol
@@ -98,21 +99,18 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 			m_viewMap.insert(std::make_pair(id, pFolder));
 		}
 	}
-	else {
-		for (auto path : m_vwPath) {
-			if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(path))) {
-				//ShellFolder
-				if (!pFolder->GetShellFolderPtr()) { pFolder = CKnownFolderManager::GetInstance()->GetDesktopFolder(); }
 
-				//New id for association
-				unsigned int id = m_uniqueIDFactory.NewID();
-				//CTabCtrol
-				int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetFileNameWithoutExt().c_str(), NULL, (LPARAM)id);
-				//CFilerGridView
-				m_viewMap.insert(std::make_pair(id, pFolder));
-			}
-		}
+	if (m_viewMap.empty()) {
+		//ShellFolder
+		auto pFolder(CKnownFolderManager::GetInstance()->GetDesktopFolder());
+		//New id for association
+		unsigned int id = m_uniqueIDFactory.NewID();
+		//CTabCtrol
+		int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetFileNameWithoutExt().c_str(), NULL, (LPARAM)id);
+		//CFilerGridView
+		m_viewMap.insert(std::make_pair(id, pFolder));
 	}
+
 	SetCurSel(0);
 
 	//FilerGridView

@@ -205,7 +205,9 @@ namespace shell
 		File,
 		Zip,
 		Folder,
-		Virtual
+		Virtual,
+		Known,
+		Drive
 	};
 
 
@@ -229,7 +231,8 @@ namespace shell
 		CComPtr<IEnumIDList> EnumIDLPtr;
 	};
 
-	ParsedFileType ParseFileType(
+	ParsedFileType ParseFileTypeSimple(
 		const CComPtr<IShellFolder>& pParentFolder,
 		const CIDL& childIDL);
+
 };

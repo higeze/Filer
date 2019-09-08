@@ -21,7 +21,7 @@ void CParentColumnNameHeaderCell::PaintContent(d2dw::CDirect2DWrite& direct, d2d
 	case Sorts::Down:
 		{
 			d2dw::CRectF rcText(rcPaint);
-			rcText.right-=TRIANGLE_WIDTH+TRIANGLE_MARGIN.left+TRIANGLE_MARGIN.right;
+			rcText.right = (std::max)(rcText.left,  rcText.right - (TRIANGLE_WIDTH+TRIANGLE_MARGIN.left+TRIANGLE_MARGIN.right));
 			CTextCell::PaintContent(direct,rcText);
 			d2dw::CRectF rcSort(rcPaint);
 			rcSort.left=rcText.right;

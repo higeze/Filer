@@ -6,65 +6,58 @@
 #include "DriveFolder.h"
 #include <chrono>
 #include <functional>
+#include "ShellFunction.h"
 
-std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<IShellFolder>& pParentFolder, const CIDL& parentIdl, const CIDL& childIdl)
+shell::ParsedFileType CShellFileFactory::ParseFileType(
+	const CComPtr<IShellFolder>& pParentFolder,
+	const CIDL& childIDL)
 {
-
-	CComPtr<IShellFolder> pFolder;
-	CComPtr<IEnumIDList> enumIdl;
-	STRRET strret;
-	std::wstring path;
-	std::wstring ext;
-	if (SUCCEEDED(pParentFolder->GetDisplayNameOf(childIdl.ptr(), SHGDN_FORPARSING, &strret)))
-	{
-		path = childIdl.STRRET2WSTR(strret);
-		ext = ::PathFindExtension(path.c_str());
-	}
-
-	if (path.empty()) {
-		spdlog::info("CShellFileFactory::CreateShellFilePtr No Path");
-		return nullptr;
-	}
-
-	if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - s_cacheTime).count() > 600) {
-		spdlog::info("CShellFileFactory::CreateShellFilePtr Cache count:" + s_fileCache.size());
-		s_cacheTime = std::chrono::system_clock::now();
-		if (s_fileCache.size() > 10000) {
-			s_fileCache.clear();
-		}
-	}
-
-	if (auto iter = s_fileCache.find(std::make_tuple(path, pParentFolder, childIdl)); iter != s_fileCache.end()) {
-		iter->second->Reset();
-		return iter->second;
+	shell::ParsedFileType ret;
+	ret.FilePath = shell::GetDisplayNameOf(pParentFolder, childIDL);
+	if (ret.FilePath.empty()) {
+		ret.FileType = shell::FileType::None;
 	} else {
-		ULONG sfgao = SFGAO_FOLDER/* | SFGAO_BROWSABLE*/;
-
-		std::shared_ptr<CShellFile> pFile;
-		if (!childIdl) {
-			pFile = CKnownFolderManager::GetInstance()->GetDesktopFolder();
-		} else if (auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderByPath(path)) {
-			pFile = spKnownFolder;
-		} else if (path[0] == L':') {
-			pFile = std::make_shared<CShellFile>(pParentFolder, parentIdl, childIdl);
-		} else if (auto spDriveFolder = CDriveManager::GetInstance()->GetDriveFolderByPath(path)) {
-			pFile = spDriveFolder;
-		} else if (boost::iequals(ext, ".zip")) {
-			pFile = std::make_shared<CShellZipFolder>(pParentFolder, parentIdl, childIdl);
-		} else if (pParentFolder->GetAttributesOf(1, (LPCITEMIDLIST*)(childIdl.ptrptr()), &sfgao), (sfgao & SFGAO_FOLDER) == (SFGAO_FOLDER/* | SFGAO_BROWSABLE*/)){
-			////Do not use ::PathIsDirectory(path.c_str()), because it's slower
-			//(SUCCEEDED(pParentFolder->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pFolder)) &&
-			//	SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)))) {
-			pFile = std::make_shared<CShellFolder>(pParentFolder, parentIdl, childIdl, nullptr);
+		ret.FileName = ::PathFindFileName(ret.FilePath.c_str());
+		ret.FileExt = ::PathFindExtension(ret.FilePath.c_str());
+		SFGAOF sfgao = SFGAO_FOLDER;
+		if (CKnownFolderManager::GetInstance()->Exist(ret.FilePath)) {
+			ret.FileType = shell::FileType::Known;
+		} else if (ret.FilePath[0] == L':') {
+			ret.FileType = shell::FileType::Virtual;
+		} else if (CDriveManager::GetInstance()->Exist(ret.FilePath)) {
+			ret.FileType = shell::FileType::Drive;
+		} else if (boost::iequals(ret.FileExt, ".zip")) {
+			ret.FileType = shell::FileType::Zip;
+		} else if (pParentFolder->GetAttributesOf(1, (LPCITEMIDLIST*)(childIDL.ptrptr()), &sfgao), (sfgao & SFGAO_FOLDER) == SFGAO_FOLDER) {
+			ret.FileType = shell::FileType::Folder;
 		} else {
-			pFile = std::make_shared<CShellFile>(pParentFolder, parentIdl, childIdl);
+			ret.FileType = shell::FileType::File;
 		}
-		//s_fileCache.emplace(std::make_tuple(path, pParentFolder, childIdl), pFile);
-		return pFile;
 	}
+	return ret;
 }
 
 
+std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<IShellFolder>& pParentFolder, const CIDL& parentIdl, const CIDL& childIdl)
+{
+	auto parsed = ParseFileType(pParentFolder, childIdl);
+	switch (parsed.FileType) {
+	case shell::FileType::Drive:
+		return CDriveManager::GetInstance()->GetDriveFolderByPath(parsed.FilePath);
+	case shell::FileType::Known:
+		return CKnownFolderManager::GetInstance()->GetKnownFolderByPath(parsed.FilePath);
+	case shell::FileType::Folder:
+		return std::make_shared<CShellFolder>(pParentFolder, parentIdl, childIdl);
+	case shell::FileType::Zip:
+		return std::make_shared<CShellZipFolder>(pParentFolder, parentIdl, childIdl);
+	case shell::FileType::Virtual:
+	case shell::FileType::File:
+		return std::make_shared<CShellFile>(pParentFolder, parentIdl, childIdl);
+	case shell::FileType::None:
+	default:
+		return std::make_shared<CShellInvalidFile>();
+	}
+}
 
 //static
 std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const std::wstring& path)

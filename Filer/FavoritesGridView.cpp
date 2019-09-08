@@ -137,10 +137,10 @@ void CFavoritesGridView::RowMoved(CMovedEventArgs<RowTag>& e)
 
 void CFavoritesGridView::Reload()
 {
+	for (auto iter = m_spFavoritesProp->GetFavorites()->begin(); iter != m_spFavoritesProp->GetFavorites()->end(); ++iter) {
+		((*iter))->SetShellFile(nullptr);
+	}
 	OpenFavorites();
-	//for (auto iter = m_spFavoritesProp->GetFavorites()->begin(); iter != m_spFavoritesProp->GetFavorites()->end();++iter) {
-	//	((*iter))->SetShellFile(nullptr);
-	//}
 	//PostUpdate(Updates::All);
 	//SubmitUpdate();
 }

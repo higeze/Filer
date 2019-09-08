@@ -43,7 +43,7 @@ void CColumn::SetWidth(const FLOAT width)
 
 void CColumn::SetWidthWithoutSignal(const FLOAT width) 
 {
-	m_width = (std::max)((std::min)(width, m_maxWidth), m_minWidth);
+	m_width = std::clamp(width, m_minWidth, m_maxWidth);
 }
 
 void CColumn::SetVisible(const bool& bVisible, bool notify)

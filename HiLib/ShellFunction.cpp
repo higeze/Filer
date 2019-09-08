@@ -1,7 +1,6 @@
 #include "ShellFunction.h"
 #include "Debug.h"
 
-
 std::wstring shell::ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit)
 
 {
@@ -53,32 +52,36 @@ std::wstring shell::Size2String(ULONGLONG size)
 std::wstring shell::GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL)
 {
 	STRRET strret{ 0 };
+	std::wstring ret;
 	if (SUCCEEDED(pParentFolder->GetDisplayNameOf(childIDL.ptr(), SHGDN_FORPARSING, &strret))) {
-		int lengch;
-		LPSTR lpstr;
-		WCHAR awc[MAX_PATH] = { 0 };
-		switch (strret.uType) {
-		case STRRET_WSTR:
-			return std::wstring(strret.pOleStr);
-			break;
-		case STRRET_OFFSET:
-			lpstr = (LPSTR)(((char*)childIDL.ptr()) + strret.uOffset);
-			lengch = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, NULL, 0);
-			::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, awc, lengch);
-			return std::wstring(awc);
-			break;
-		case STRRET_CSTR:
-			lpstr = strret.cStr;
-			lengch = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, NULL, 0);
-			::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, awc, lengch);
-			return std::wstring(awc);
-			break;
-		default:
-			return std::wstring();
-			break;
-		}
+		StrRetToBufW(&strret, childIDL.ptr(), ::GetBuffer(ret, 256), 256);
+		::ReleaseBuffer(ret);
+		return ret;
+		//int lengch;
+		//LPSTR lpstr;
+		//WCHAR awc[MAX_PATH] = { 0 };
+		//switch (strret.uType) {
+		//case STRRET_WSTR:
+		//	return std::wstring(strret.pOleStr);
+		//	break;
+		//case STRRET_OFFSET:
+		//	lpstr = (LPSTR)(((char*)childIDL.ptr()) + strret.uOffset);
+		//	lengch = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, NULL, 0);
+		//	::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, awc, lengch);
+		//	return std::wstring(awc);
+		//	break;
+		//case STRRET_CSTR:
+		//	lpstr = strret.cStr;
+		//	lengch = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, NULL, 0);
+		//	::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, awc, lengch);
+		//	return std::wstring(awc);
+		//	break;
+		//default:
+		//	return std::wstring();
+		//	break;
+		//}
 	}
-	return std::wstring();
+	return ret;
 }
 
 
@@ -166,7 +169,7 @@ void shell::FindIncrementalOne(
 	const std::function<void()> countup,
 	const std::function<void(const CIDL&, const CIDL&)>& find)
 {
-	ParsedFileType pft = shell::ParseFileType(pSrcParentFolder, srcChildIDL);
+	ParsedFileType pft = shell::ParseFileTypeSimple(pSrcParentFolder, srcChildIDL);
 
 	ULONG chEaten = 0;
 	ULONG dwAttributes = 0;
@@ -381,7 +384,7 @@ void shell::CountFileOne(
 	const CIDL& childIDL,
 	const std::function<void()>& countup)
 {
-	ParsedFileType pft = shell::ParseFileType(pParentFolder, childIDL);
+	ParsedFileType pft = shell::ParseFileTypeSimple(pParentFolder, childIDL);
 
 	switch (pft.FileType) {
 	case FileType::File:
@@ -517,7 +520,7 @@ void shell::SearchOne(
 	const std::function<void(const CIDL&)> find
 )
 {
-	ParsedFileType pft = shell::ParseFileType(pParentFolder, childIDL);
+	ParsedFileType pft = shell::ParseFileTypeSimple(pParentFolder, childIDL);
 	if (!boost::algorithm::ifind_first(pft.FileName, search).empty()) {
 		find(parentIDL + childIDL);
 	}
@@ -548,7 +551,7 @@ void shell::SearchOne(
 
 }
 
-shell::ParsedFileType shell::ParseFileType(
+shell::ParsedFileType shell::ParseFileTypeSimple(
 	const CComPtr<IShellFolder>& pParentFolder,
 	const CIDL& childIDL)
 {
@@ -579,4 +582,7 @@ shell::ParsedFileType shell::ParseFileType(
 		return ret;
 	}
 }
+
+
+
 

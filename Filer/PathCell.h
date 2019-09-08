@@ -35,6 +35,8 @@ public:
 	virtual void SetStringCore(const std::wstring& str)override;
 	virtual void OnPaint(const PaintEvent& e)override;
 
+	virtual bool IsLeftestCell()const;
+
 	/**
 	 *  Comparable or not
 	 */

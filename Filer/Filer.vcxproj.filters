@@ -563,9 +563,6 @@
     <ClInclude Include="ShellFileFactory.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\ShellFunction.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\ProgressBar.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -592,6 +589,12 @@
     </ClInclude>
     <ClInclude Include="SearchWnd.h">
       <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="KnownFolderManager.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ShellFunction.h">
+      <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -889,9 +892,6 @@
     <ClCompile Include="ShellFileFactory.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\ShellFunction.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\ProgressBar.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -918,6 +918,9 @@
     </ClCompile>
     <ClCompile Include="SearchWnd.cpp">
       <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ShellFunction.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

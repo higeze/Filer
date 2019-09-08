@@ -17,7 +17,7 @@ protected:
 	Sorts m_sort; //Indicate sort state
 	FLOAT m_left; //left position from parent sheet
 	FLOAT m_width; //width
-	FLOAT m_minWidth = 2;
+	FLOAT m_minWidth = 10;
 	FLOAT m_maxWidth = 1000;
 	//LineType m_lineType = LineType::None;
 	SizeType m_sizeType = SizeType::Trackable;

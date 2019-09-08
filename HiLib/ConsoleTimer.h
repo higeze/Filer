@@ -18,6 +18,9 @@ public:
 
 };
 
+#define CONSOLETIMER(message) \
+	CConsoleTimer consoleTimer(message);\
+
 #define CONSOLETIMER_IF(cond, message) \
 	std::unique_ptr<CConsoleTimer> upConsoleTimer;\
 	if(cond)upConsoleTimer.reset(new CConsoleTimer(message));
