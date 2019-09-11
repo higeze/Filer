@@ -366,7 +366,7 @@ void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
 		{
 			int okcancel = ::MessageBox(m_hWnd, L"Delete?", L"Delete?", MB_OKCANCEL);
 			if (okcancel == IDOK) {
-				Delete();
+				DeleteSelectedFiles();
 			}
 		}
 		break;
@@ -701,6 +701,12 @@ bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 	return true;
 }
 
+bool CFilerGridView::DeleteSelectedFiles()
+{
+	CThreadPool::GetInstance()->enqueue(&shell::DeleteFiles, GetSelectedAbsolutePIDLVector());
+	return true;
+}
+
 
 bool CFilerGridView::NewFolder()
 {
@@ -732,10 +738,6 @@ bool CFilerGridView::PasteFromClipboard()
 	return InvokeNormalShellContextmenuCommand(m_hWnd, "Paste", pFolder, vPidl);
 }
 
-bool CFilerGridView::Delete()
-{
-	return InvokeNormalShellContextmenuCommand(m_hWnd, "Delete", m_spFolder->GetShellFolderPtr(), GetSelectedLastPIDLVector());
-}
 
 LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {

@@ -65,7 +65,8 @@ public:
 	virtual bool CutToClipboard();
 	virtual bool CopyToClipboard();
 	virtual bool PasteFromClipboard();
-	virtual bool Delete();
+	virtual bool DeleteSelectedFiles(){ return false; }
+
 protected:
 	virtual void InsertDefaultRowColumn();
 

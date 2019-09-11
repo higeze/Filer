@@ -488,6 +488,25 @@ bool shell::MoveFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcI
 	return SUCCEEDED(hr);
 }
 
+bool shell::DeleteFiles(const std::vector<LPITEMIDLIST>& srcIDLs)
+{
+	CComPtr<IShellItemArray> pSrcItemAry = nullptr;
+	HRESULT hr = ::SHCreateShellItemArrayFromIDLists(srcIDLs.size(), (LPCITEMIDLIST*)(srcIDLs.data()), &pSrcItemAry);
+	if (FAILED(hr)) { return false; }
+
+	CComPtr<IFileOperation> pFileOperation;
+
+	hr = pFileOperation.CoCreateInstance(CLSID_FileOperation);
+	if (FAILED(hr)) { return false; }
+	hr = pFileOperation->DeleteItems(pSrcItemAry);
+	if (FAILED(hr)) { return false; }
+	hr = pFileOperation->PerformOperations();
+	return SUCCEEDED(hr);
+}
+
+
+
+
 void shell::SearchFileInFolder(
 	const std::wstring& search,
 	const CIDL& srcIDL,

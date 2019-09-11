@@ -198,6 +198,7 @@ namespace shell
 
 	bool CopyFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcIDLs);
 	bool MoveFiles(const CIDL& destIDL, const std::vector<LPITEMIDLIST>& srcIDLs);
+	bool DeleteFiles(const std::vector<LPITEMIDLIST>& srcIDLs);
 
 	enum class FileType
 	{

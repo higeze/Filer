@@ -113,7 +113,7 @@ void CFilerGridViewBase::OnKeyDown(const KeyDownEvent& e)
 		}
 		break;
 	case VK_DELETE:
-		Delete();
+		DeleteSelectedFiles();
 		break;
 	//case VK_F8:
 	//{
@@ -262,12 +262,6 @@ bool CFilerGridViewBase::PasteFromClipboard()
 	//return InvokeNormalShellContextmenuCommand(m_hWnd, "Paste", pFolder, vPidl);
 }
 
-bool CFilerGridViewBase::Delete()
-{
-	return false;//TODOTODO
-	//return InvokeNormalShellContextmenuCommand(m_hWnd, "Delete", m_spFolder->GetShellFolderPtr(), GetSelectedLastPIDLVector());
-}
-
 LRESULT CFilerGridViewBase::OnCommandCut(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
 	CutToClipboard();
@@ -286,7 +280,7 @@ LRESULT CFilerGridViewBase::OnCommandPaste(WORD wNotifyCode, WORD wID, HWND hWnd
 }
 LRESULT CFilerGridViewBase::OnCommandDelete(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	Delete();
+	DeleteSelectedFiles();
 	return 0;
 }
 

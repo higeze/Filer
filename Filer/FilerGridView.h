@@ -69,6 +69,7 @@ public:
 	bool CopySelectedFilesTo(const CIDL& destIDL);
 	bool CopyIncrementalSelectedFilesTo(const CIDL& destIDL);
 	bool MoveSelectedFilesTo(const CIDL& destIDL);
+	virtual bool DeleteSelectedFiles() override;
 
 	std::vector<LPITEMIDLIST> GetSelectedLastPIDLVector();
 	std::vector<LPITEMIDLIST> GetSelectedAbsolutePIDLVector();
@@ -76,7 +77,6 @@ public:
 	virtual bool CutToClipboard() override;
 	virtual bool CopyToClipboard() override;
 	virtual bool PasteFromClipboard() override;
-	virtual bool Delete() override;
 
 	//Drag & Drop
 	void Drag();
