@@ -19,7 +19,6 @@ struct FileTimes
 
 namespace shell
 {
-
 	struct IdlHash
 	{
 		inline std::size_t operator()(const CIDL& key)const
@@ -115,49 +114,6 @@ namespace shell
 		const std::function<void(const CIDL&, const CIDL&)>& find);
 
 
-	//void CheckIncrementalIDL(
-	//	const CComPtr<IShellFolder>& pSrcFolder,
-	//	const CIDL& srcIDL,
-	//	const CIDL& srcChildIDL,
-	//	const CComPtr<IShellFolder>& pDestFolder,
-	//	const CIDL& destIDL,
-	//	const std::function<void(int, const CIDL&, const CIDL&)>& read);
-
-	//void GetIncrementalIDLs(
-	//	const CIDL& srcIDL,
-	//	const std::vector<CIDL>& srcChildIDLs,
-	//	const CIDL& destIDL,
-	//	const std::function<void(int, const CIDL&, const CIDL&)>& read);
-
-	//void GetIncrementalIDLs(
-	//	const CComPtr<IShellFolder>& pSrcFolder,
-	//	const CIDL& srcIDL,
-	//	const std::vector<CIDL>& srcChildIDLs,
-	//	const CComPtr<IShellFolder>& pDestFolder,
-	//	const CIDL& destIDL,
-	//	const std::function<void(int, const CIDL&, const CIDL&)>& read);
-
-	//void GetIncrementalIDLs(
-	//	const CComPtr<IShellFolder>& pSrcFolder,
-	//	const CComPtr<IEnumIDList>& pEnum,
-	//	const CIDL& srcIDL,
-	//	const CComPtr<IShellFolder>& pDestFolder,
-	//	const CIDL& destIDL,
-	//	const std::function<void(int, const CIDL&, const CIDL&)>& read);
-
-
-
-	//int GetFileCount(
-	//	const CComPtr<IShellFolder>& pSrcFolder,
-	//	const CIDL& srcIDL,
-	//	const CIDL& srcChildIDL,
-	//	const std::function<void(int)>& read);
-
-	//int GetEnumCount(
-	//	const CComPtr<IShellFolder>& pFolder,
-	//	const CComPtr<IEnumIDList>& pEnum,
-	//	const std::function<void(int)>& read);
-
 	void CountFileOne(
 		const CIDL& parentIDL,
 		const CIDL& childIDL,
@@ -228,12 +184,17 @@ namespace shell
 		std::wstring FilePath;
 		std::wstring FileName;
 		std::wstring FileExt;
-		CComPtr<IShellFolder> ShellFolderPtr;
-		CComPtr<IEnumIDList> EnumIDLPtr;
+		//CComPtr<IShellFolder> ShellFolderPtr;
+		//CComPtr<IEnumIDList> EnumIDLPtr;
 	};
 
 	ParsedFileType ParseFileTypeSimple(
 		const CComPtr<IShellFolder>& pParentFolder,
 		const CIDL& childIDL);
+
+	ParsedFileType ParseFileType(
+		const CComPtr<IShellFolder>& pParentFolder,
+		const CIDL& childIDL);
+
 
 };

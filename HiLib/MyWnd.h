@@ -201,6 +201,8 @@ public:
 	RegisterClassExArg& RegisterClassExArgument(){return m_rca;}
 	virtual HWND Create(HWND hWndParent);
 	virtual HWND Create(HWND hWndParent,RECT& rc);
+	virtual HWND CreateOnCenterOfParent(HWND hWndParent, SIZE& size);
+
 
 	virtual void OnFinalMessage(HWND hWnd)
 	{

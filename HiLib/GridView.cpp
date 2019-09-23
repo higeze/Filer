@@ -302,7 +302,7 @@ LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 {
 	spdlog::info("CGridView::OnDelayUpdate");
 
-	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OnDelayUpdate Total")
+	CONSOLETIMER("OnDelayUpdate Total");
 	SignalPreDelayUpdate();
 	SignalPreDelayUpdate.disconnect_all_slots();
 	PostUpdate(Updates::Filter);
@@ -944,13 +944,13 @@ void CGridView::SubmitUpdate()
 			switch (type) {
 			case Updates::Sort:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Sort")
+				CONSOLETIMER("Updates::Sort");
 					SortAllInSubmitUpdate();
 				break;
 			}
 			case Updates::Filter:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Filter")
+				CONSOLETIMER("Updates::Filter");
 					FilterAll();
 				break;
 			}
@@ -960,37 +960,37 @@ void CGridView::SubmitUpdate()
 			}
 			case Updates::RowVisible:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::RowVisible")
+				CONSOLETIMER("Updates::RowVisible");
 					UpdateRowVisibleDictionary();
 				break;
 			}
 			case Updates::ColumnVisible:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::ColumnVisible")
+				CONSOLETIMER("Updates::ColumnVisible");
 					UpdateColumnVisibleDictionary();
 				break;
 			}
 			case Updates::Column:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Column")
+				CONSOLETIMER("Updates::Column");
 					UpdateColumn();
 				break;
 			}
 			case Updates::Row:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Row")
+				CONSOLETIMER("Updates::Row");
 					UpdateRow();
 				break;
 			}
 			case Updates::Scrolls:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::Scrolls")
+				CONSOLETIMER("Updates::Scrolls");
 					UpdateScrolls();
 				break;
 			}
 			case Updates::EnsureVisibleFocusedCell:
 			{
-				CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "Updates::EnsureVisibleFocusedCell")
+				CONSOLETIMER("Updates::EnsureVisibleFocusedCell");
 					EnsureVisibleCell(m_spCursorer->GetFocusedCell());
 				break;
 			}

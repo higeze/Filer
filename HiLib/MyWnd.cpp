@@ -176,6 +176,39 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 
 		return CWnd::Create(hWndParent);
 	}
+
+	HWND CWnd::CreateOnCenterOfParent(HWND hWndParent, SIZE& size)
+	{
+		CRect rcParent;
+		if (hWndParent == nullptr) {
+			CPoint ptScreen;
+			::GetCursorPos(ptScreen);
+			HMONITOR hMonitor = ::MonitorFromPoint(ptScreen, MONITOR_DEFAULTTONULL);
+			MONITORINFO mi = { 0 };
+			mi.cbSize = sizeof(MONITORINFO);
+			::GetMonitorInfo(hMonitor, &mi);
+
+			if (mi.dwFlags & MONITORINFOF_PRIMARY) {
+				rcParent = mi.rcWork;
+				//::SystemParametersInfo(SPI_GETWORKAREA, NULL, &rcParent, NULL);
+			} else {
+				rcParent = mi.rcWork;
+			}
+
+
+		} else {
+			::GetWindowRect(hWndParent, rcParent);
+		}
+
+		m_cwa
+			.x(rcParent.left + (rcParent.Width() - size.cx) / 2)
+			.y(rcParent.top + (rcParent.Height() - size.cy) / 2)
+			.nWidth(size.cx).nHeight(size.cy);
+
+		return CWnd::Create(hWndParent);
+	}
+
+
 	LRESULT CALLBACK CWnd::StartWndProc(HWND hWnd,UINT uiMsg,WPARAM wParam,LPARAM lParam)
 	{
 

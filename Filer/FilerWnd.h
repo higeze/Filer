@@ -178,8 +178,7 @@ public:
 			hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
 		}
 
-		pPropWnd->Create(hWnd, m_rcPropWnd);
-		pPropWnd->CenterWindow();
+		pPropWnd->CreateOnCenterOfParent(hWnd, m_rcPropWnd.Size());
 		pPropWnd->ShowWindow(SW_SHOW);
 		pPropWnd->UpdateWindow();
 

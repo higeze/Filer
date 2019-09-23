@@ -5,6 +5,7 @@
 #include "FavoriteRow.h"
 #include "KnownFolder.h"
 #include "ShellFileFactory.h"
+#include "Debug.h"
 
 CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
 	:m_spFilerView(std::make_shared<CFilerGridView>(spFilerGridViewProp))
@@ -32,6 +33,42 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 
 LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
+	m_selectedIndex.Changed.connect([this](const NotifyChangedEventArgs<int>& e)->void {
+		SetCurSel(std::clamp(m_selectedIndex.get(), 0, GetItemCount() - 1));
+		if (m_spFilerView->IsWindow()) {
+			m_spFilerView->OpenFolder(m_folders[m_selectedIndex.get()]);
+		}
+		BOOL dummy = FALSE;
+		OnSize(0, NULL, NULL, dummy);
+	});
+
+	m_folders.VectorChanged.connect([this](const NotifyVectorChangedEventArgs<std::shared_ptr<CShellFolder>>& e)->void {
+		switch (e.Action) {
+		case NotifyVectorChangedAction::Add:
+		{
+			for (auto& item : e.NewItems) {
+				InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, e.NewItems[0]->GetFileNameWithoutExt().c_str(), NULL, NULL);
+			}
+		}
+		break;
+		case NotifyVectorChangedAction::Move:
+			break;
+		case NotifyVectorChangedAction::Remove:
+		{
+			for (int i = e.OldStartingIndex + e.OldItems.size() - 1; i >= e.OldStartingIndex; i--) {
+				DeleteItem(i);
+			}
+		}
+		break;
+
+		case NotifyVectorChangedAction::Replace:
+		case NotifyVectorChangedAction::Reset:
+		default:
+			break;
+		}
+
+	});
+
 	//Tab
 	m_font = m_spFilerView->GetHeaderProperty()->Format->Font.GetGDIFont();
 	SetFont(m_font, TRUE);
@@ -52,16 +89,8 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 
 	//Folder Changed
 	m_spFilerView->FolderChanged.connect([this](std::shared_ptr<CShellFolder>& pFolder) {
-		for (auto i = 0; i < GetItemCount(); i++)
-		{
-			unsigned int id = (unsigned int)GetCurItemParam();
-			if (id == (unsigned int)GetItemParam(i)) {
-				SetItemText(i, pFolder->GetFileNameWithoutExt().c_str());
-				m_viewMap[id] = pFolder;
-				break;
-			}
-		}
-
+		m_folders[GetCurSel()] = pFolder;
+		SetItemText(GetCurSel(), m_folders[GetCurSel()]->GetFileNameWithoutExt().c_str());
 		int nPaddingX = GetSystemMetrics(SM_CXDLGFRAME);
 		int nPaddingY = GetSystemMetrics(SM_CYDLGFRAME);
 
@@ -72,8 +101,6 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 
 		m_spFilerView->PostUpdate(Updates::Rect);
 		m_spFilerView->SetUpdateRect(m_spFilerView->GetDirect()->Pixels2Dips(rcTabClient));
-
-		//SendMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
 	});
 
 	m_pParentWnd->AddNtfyHandler((UINT_PTR)m_cwa.hMenu(), NM_CLICK, &CFilerTabGridView::OnNotifyTabLClick, this);
@@ -87,31 +114,19 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 
 	//Tabs
 	for (auto path : m_vwPath) {
-		if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(path))) {
-			//ShellFolder
-			//if (!pFolder->GetShellFolderPtr()) { pFolder = CKnownFolderManager::GetInstance()->GetDesktopFolder(); }
-
-			//New id for association
-			unsigned int id = m_uniqueIDFactory.NewID();
-			//CTabCtrol
-			int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetFileNameWithoutExt().c_str(), NULL, (LPARAM)id);
-			//CFilerGridView
-			m_viewMap.insert(std::make_pair(id, pFolder));
+		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
+		if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+			m_folders.notify_push_back(spFolder);
+		} else {
+			m_folders.notify_push_back(CKnownFolderManager::GetInstance()->GetDesktopFolder());
 		}
 	}
 
-	if (m_viewMap.empty()) {
-		//ShellFolder
-		auto pFolder(CKnownFolderManager::GetInstance()->GetDesktopFolder());
-		//New id for association
-		unsigned int id = m_uniqueIDFactory.NewID();
-		//CTabCtrol
-		int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, pFolder->GetFileNameWithoutExt().c_str(), NULL, (LPARAM)id);
-		//CFilerGridView
-		m_viewMap.insert(std::make_pair(id, pFolder));
+	if (m_folders.empty()) {
+		m_folders.notify_push_back(CKnownFolderManager::GetInstance()->GetDesktopFolder());
 	}
 
-	SetCurSel(0);
+	SetCurSel(std::clamp(m_selectedIndex.get(), 0, GetItemCount() -1));
 
 	//FilerGridView
 	//Size
@@ -123,14 +138,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 	//Create
 	m_spFilerView->Create(m_hWnd, rcTabClient);
 	//Open
-	unsigned int id = (unsigned int)GetCurItemParam();
-	auto iter = m_viewMap.find(id);
-	if (iter != m_viewMap.end()) {
-		m_spFilerView->OpenFolder(iter->second);
-	}
-
-	//auto rcClient = GetClientRect();
-	//PostMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
+	m_spFilerView->OpenFolder(m_folders[GetCurSel()]);
 
 	return 0;
 }
@@ -144,18 +152,19 @@ LRESULT CFilerTabGridView::OnClose(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOO
 
 LRESULT CFilerTabGridView::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	int width = LOWORD(lParam);
-	int height = HIWORD(lParam);
-	bHandled = FALSE;
-	int nPaddingX = GetSystemMetrics(SM_CXDLGFRAME);
-	int nPaddingY = GetSystemMetrics(SM_CYDLGFRAME);
+	if (m_spFilerView->IsWindow()) {
+		//int width = LOWORD(lParam);
+		//int height = HIWORD(lParam);
+		int nPaddingX = GetSystemMetrics(SM_CXDLGFRAME);
+		int nPaddingY = GetSystemMetrics(SM_CYDLGFRAME);
 
-	//FilerGridView
-	CRect rcTabClient = GetClientRect();
-	AdjustRect(FALSE, rcTabClient);
-	rcTabClient.DeflateRect(nPaddingX, nPaddingY);
+		//FilerGridView
+		CRect rcTabClient = GetClientRect();
+		AdjustRect(FALSE, rcTabClient);
+		rcTabClient.DeflateRect(nPaddingX, nPaddingY);
 
-	m_spFilerView->MoveWindow(rcTabClient, FALSE);
+		m_spFilerView->MoveWindow(rcTabClient, FALSE);
+	}
 	return 0;
 }
 
@@ -182,41 +191,14 @@ LRESULT CFilerTabGridView::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 	return 0;
 }
 
-void CFilerTabGridView::AddNewView(std::wstring path)
-{
-	//New id for association
-	unsigned int id = m_uniqueIDFactory.NewID();
-
-	//CTabCtrol
-	int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
-
-	//CFilerGridView
-	if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(path))) {
-		m_viewMap.insert(std::make_pair(id, pFolder));
-		BOOL dummy = TRUE;
-		OnNotifyTabSelChanging(0, NULL, dummy);
-		SetCurSel(newItem);
-		OnNotifyTabSelChange(0, NULL, dummy);
-		auto rcClient = GetClientRect();
-		SendMessage(WM_SIZE, (WPARAM)SIZE_RESTORED, MAKELPARAM(rcClient.Width(), rcClient.Height()));
-	}
-}
-
 LRESULT CFilerTabGridView::OnNotifyTabSelChanging(int, LPNMHDR, BOOL& bHandled)
 {
-	m_prevID = (unsigned int)GetCurItemParam();
 	return 0;
 }
 
 LRESULT CFilerTabGridView::OnNotifyTabSelChange(int, LPNMHDR, BOOL& bHandled)
 {
-	unsigned int id = (unsigned int)GetCurItemParam();
-	if (id != m_prevID) {
-		auto iter = m_viewMap.find(id);
-		if (iter != m_viewMap.end()) {
-			m_spFilerView->OpenFolder(iter->second);
-		}
-	}
+	m_selectedIndex.notify_set(GetCurSel());
 	return 0;
 }
 
@@ -248,39 +230,26 @@ LRESULT CFilerTabGridView::OnNotifyTabRClick(int id, LPNMHDR, BOOL& bHandled)
 
 LRESULT CFilerTabGridView::OnCommandNewTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	//New id for association
-	unsigned int id = m_uniqueIDFactory.NewID();
-
-	//CTabControl
-	int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
-
-	//CFilerGridView
-	m_viewMap.insert(std::make_pair(id, CKnownFolderManager::GetInstance()->GetDesktopFolder()));
-	BOOL dummy  = TRUE;
+	BOOL dummy = FALSE;
 	OnNotifyTabSelChanging(0, NULL, dummy);
-	SetCurSel(newItem);
-	OnNotifyTabSelChange(0,NULL, dummy);
-	OnSize(0,NULL,NULL,dummy);
+
+	m_folders.notify_push_back(CKnownFolderManager::GetInstance()->GetDesktopFolder());
+
+	SetCurSel(GetItemCount() - 1);
+	OnNotifyTabSelChange(0, NULL, dummy);
+	OnSize(0, NULL, NULL, dummy);
+
 	return 0;
 }
 
 LRESULT CFilerTabGridView::OnCommandCloneTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	//New id for association
-	unsigned int id = m_uniqueIDFactory.NewID();
-	//Cloned id 
-	unsigned int clonedId = (unsigned int)GetItemParam(m_contextMenuTabIndex);
-	std::shared_ptr<CShellFolder> cloneFolder = m_viewMap.find(clonedId)->second->Clone();
-
-	//CTabControl
-	int newItem = InsertItem(GetItemCount(), TCIF_PARAM | TCIF_TEXT, L"N/A", NULL, (LPARAM)id);
-
-	//CFilerGridView
-	m_viewMap.insert(std::make_pair(id, cloneFolder));
-
-	BOOL dummy = TRUE;
+	BOOL dummy = FALSE;
 	OnNotifyTabSelChanging(0, NULL, dummy);
-	SetCurSel(newItem);
+
+	m_folders.notify_push_back(m_folders[m_contextMenuTabIndex]->Clone());
+
+	SetCurSel(GetItemCount() - 1);
 	OnNotifyTabSelChange(0, NULL, dummy);
 	OnSize(0, NULL, NULL, dummy);
 	return 0;
@@ -289,16 +258,12 @@ LRESULT CFilerTabGridView::OnCommandCloneTab(WORD wNotifyCode, WORD wID, HWND hW
 LRESULT CFilerTabGridView::OnCommandCloseTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
 	if(GetItemCount()>1){
-
-		unsigned int id = (unsigned int)GetItemParam(m_contextMenuTabIndex);
-
-		BOOL dummy  = FALSE;
+		BOOL dummy = FALSE;
 		OnNotifyTabSelChanging(0, NULL, dummy);
 
-		DeleteItem(m_contextMenuTabIndex);
-		SetCurSel((std::min)(GetItemCount()-1, m_contextMenuTabIndex));
-		m_viewMap.erase(id);
+		m_folders.notify_erase(m_folders.begin() + m_contextMenuTabIndex);
 
+		SetCurSel((std::min)(GetItemCount() - 1, m_contextMenuTabIndex));
 		OnNotifyTabSelChange(0, NULL, dummy);
 		OnSize(0, NULL, NULL, dummy);
 	}
@@ -308,18 +273,14 @@ LRESULT CFilerTabGridView::OnCommandCloseTab(WORD wNotifyCode, WORD wID, HWND hW
 LRESULT CFilerTabGridView::OnCommandCloseAllButThisTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
 	if (GetItemCount()>1) {
-
-		//Remove larget tab
-		for (auto index = GetItemCount() - 1; index >= 0; index--) {
-			if (index != m_contextMenuTabIndex) {
-				auto id = (unsigned int)GetItemParam(index);
-				DeleteItem(index);
-				m_viewMap.erase(id);
-			}
-		}
-
 		BOOL dummy = FALSE;
 		OnNotifyTabSelChanging(0, NULL, dummy);
+
+		//Erase larger tab
+		m_folders.notify_erase(m_folders.begin() + (m_contextMenuTabIndex + 1), m_folders.end());
+		//Erase smaller tab
+		m_folders.notify_erase(m_folders.begin(), m_folders.begin() + m_contextMenuTabIndex);
+
 		SetCurSel(0);
 		OnNotifyTabSelChange(0, NULL, dummy);
 		OnSize(0, NULL, NULL, dummy);
@@ -330,16 +291,12 @@ LRESULT CFilerTabGridView::OnCommandCloseAllButThisTab(WORD wNotifyCode, WORD wI
 LRESULT CFilerTabGridView::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
 	//TODO Bad connection between FilerTabGridView and FavoritesView
-	unsigned int id = (unsigned int)GetItemParam(m_contextMenuTabIndex);
-	auto iter = m_viewMap.find(id);
-	if (iter != m_viewMap.end()) {
-		if(auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)){
-			p->GetFavoritesPropPtr()->GetFavorites()->push_back(std::make_shared<CFavorite>(iter->second->GetPath(), L""));
-			p->GetLeftFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetLeftFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
-			p->GetRightFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetRightFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
-			p->GetLeftFavoritesView()->SubmitUpdate();
-			p->GetRightFavoritesView()->SubmitUpdate();
-		}
+	if(auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)){
+		p->GetFavoritesPropPtr()->GetFavorites()->push_back(std::make_shared<CFavorite>(m_folders[m_contextMenuTabIndex]->GetPath(), L""));
+		p->GetLeftFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetLeftFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
+		p->GetRightFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetRightFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
+		p->GetLeftFavoritesView()->SubmitUpdate();
+		p->GetRightFavoritesView()->SubmitUpdate();
 	}
 	return 0;
 }
@@ -347,23 +304,19 @@ LRESULT CFilerTabGridView::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HW
 LRESULT CFilerTabGridView::OnCommandOpenSameAsOther(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
 	//TODO Bad connection between FilerTabGridView and FavoritesView
-	unsigned int id = (unsigned int)GetItemParam(m_contextMenuTabIndex);
-	auto iter = m_viewMap.find(id);
-	if (iter != m_viewMap.end()) {
-		if (auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)) {
+	if (auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)) {
 			
-			std::shared_ptr<CFilerTabGridView> otherView;
+		std::shared_ptr<CFilerTabGridView> otherView;
 
-			if (this == p->GetLeftView().get()) {
-				otherView = p->GetRightView();
-			}
-			else {
-				otherView = p->GetLeftView();
-			}
-			
-			GetGridView()->OpenFolder(otherView->GetGridView()->GetFolder());
-
+		if (this == p->GetLeftView().get()) {
+			otherView = p->GetRightView();
 		}
+		else {
+			otherView = p->GetLeftView();
+		}
+			
+		GetGridView()->OpenFolder(otherView->GetGridView()->GetFolder());
+
 	}
 	return 0;
 }

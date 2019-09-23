@@ -19,6 +19,8 @@
 #include "Cursorer.h"
 #include "FavoritesItemDragger.h"
 #include "FilerWnd.h"
+#include "Celler.h"
+#include "Debug.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -67,32 +69,43 @@ void CFavoritesGridView::OpenFavorites()
 {
 	spdlog::info("CFavoritesGridView::OpenFavorites");
 
-	CONSOLETIMER_IF(g_spApplicationProperty->m_bDebug, "OpenFavorites Total")
+	CONSOLETIMER("OpenFavorites Total");
+	{
+		CONSOLETIMER("OpenFavorites Pre-Process");
 
-	m_spCursorer->Clear();
+		//Direct2DWrite
+		m_pDirect->ClearTextLayoutMap();
+		//Celler
+		m_spCeller->Clear();
 
-	if(Empty()){
-		InsertDefaultRowColumn();
+		//Cursor
+		m_spCursorer->Clear();
+
+		if (Empty()) {
+			InsertDefaultRowColumn();
+		}
+		//Clear RowDictionary From 0 to last
+		auto& rowDictionary = m_rowAllDictionary.get<IndexTag>();
+		rowDictionary.erase(rowDictionary.begin(), rowDictionary.end());
 	}
 
-	try{
+	{
+		CONSOLETIMER("OpenFavorites Enumeration");
 
-		//Clear RowDictionary From 0 to last
-		auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
-		rowDictionary.erase(rowDictionary.begin(),rowDictionary.end());
+		try {
+			//Enumerate favorites
+			for (size_t i = 0; i < m_spFavoritesProp->GetFavorites()->size(); i++) {
+				InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(this, i));
+			}
 
-		//Enumerate child IDL
-		for(size_t i = 0; i < m_spFavoritesProp->GetFavorites()->size(); i++) {
-			InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(this, i));
+			for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+				std::dynamic_pointer_cast<CParentMapColumn>(iter->DataPtr)->Clear();
+				iter->DataPtr->SetMeasureValid(false);
+			}
+
+		} catch (...) {
+			throw std::exception(FILE_LINE_FUNC);
 		}
-
-		for(auto iter=m_columnAllDictionary.begin();iter!=m_columnAllDictionary.end();++iter){
-			std::dynamic_pointer_cast<CParentMapColumn>(iter->DataPtr)->Clear();
-			iter->DataPtr->SetMeasureValid(false);
-		}
-
-	}catch(...){
-		MessageBox(L"Error on Open", L"Error",MB_ICONWARNING);
 	}
 
 	PostUpdate(Updates::Sort);

@@ -453,14 +453,22 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
 	spdlog::info("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetFileName()));
 
-	CONSOLETIMER("OpenFolder Total")
+	CONSOLETIMER("OpenFolder Total");
 	bool isUpdate = m_spFolder == spFolder;
 	{
-		CONSOLETIMER("OpenFolder Pre-Process")
-
+		CONSOLETIMER("OpenFolder Pre-Process");
+		
+		//Direct2DWrite
 		if (!isUpdate) {
 			m_pDirect->ClearTextLayoutMap();
 		}
+		//Celler
+		m_spCeller->Clear();
+
+		//Cursor
+		m_spCursorer->Clear();
+
+
 
 		if (m_pEdit) {
 			::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);
@@ -532,7 +540,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	}
 
 	{
-		CONSOLETIMER("OpenFolder Enumeration")
+		CONSOLETIMER("OpenFolder Enumeration");
 			try {
 			//Enumerate child IDL
 
@@ -550,13 +558,12 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 				}
 			}
 		} catch (std::exception&) {
-			MessageBox(L"Enumeration", L"Error", 0);
-			//		throw e;
+			throw std::exception(FILE_LINE_FUNC);
 		}
 	}
 
 	{
-		CONSOLETIMER("OpenFolder Updating")
+		CONSOLETIMER("OpenFolder Updating");
 		for (const auto& col : m_columnAllDictionary) {
 			std::dynamic_pointer_cast<CParentMapColumn>(col.DataPtr)->Clear();
 		}
@@ -577,13 +584,6 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		if (!isUpdate) {
 			FolderChanged(m_spFolder);
 		}
-
-		//Celler
-		m_spCeller->Clear();
-
-		//Cursor
-		//Clear Cursor
-		m_spCursorer->Clear();
 
 		if (!isUpdate) {
 			m_pVScroll->SetScrollPos(0);
@@ -681,8 +681,7 @@ bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
 	}
 
-	pPrgWnd->Create(hWnd, CRect(0, 0, 400, 600));
-	pPrgWnd->CenterWindow();
+	pPrgWnd->CreateOnCenterOfParent(hWnd, CSize(400, 600));
 	pPrgWnd->ShowWindow(SW_SHOW);
 	pPrgWnd->UpdateWindow();
 
@@ -1172,8 +1171,7 @@ LRESULT CFilerGridView::OnCommandFind(WORD wNotifyCode, WORD wID, HWND hWndCtl, 
 		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
 	}
 
-	pWnd->Create(hWnd, CRect(0, 0, 400, 600));
-	pWnd->CenterWindow();
+	pWnd->CreateOnCenterOfParent(hWnd, CSize(400, 600));
 	pWnd->ShowWindow(SW_SHOW);
 	pWnd->UpdateWindow();
 	return 0;

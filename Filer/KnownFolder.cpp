@@ -77,81 +77,105 @@ std::wstring CKnownFolder::GetExt()
 
 
 
-
-
+#include "ThreadSafeKnownFolderManager.h"
 
 CKnownFolderManager::CKnownFolderManager()
 {
 	CComPtr<IKnownFolderManager> pMgr;
 	if (FAILED(pMgr.CoCreateInstance(CLSID_KnownFolderManager, NULL, CLSCTX_INPROC_SERVER))) { return; }
-	KNOWNFOLDERID* pknownid;
-	UINT count(0);
-	if (FAILED(pMgr->GetFolderIds(&pknownid, &count))) { return; }
-	for (UINT i = 0; i < count; i++) {
+	CComPtr<IShellFolder> pDesktopFolder;
+	::SHGetDesktopFolder(&pDesktopFolder);
+
+	auto& idIdlMap = shell::CThreadSafeKnownFolderManager::GetInstance()->GetIdIdlMap();
+	for (auto& pair : idIdlMap) {
 		CComPtr<IKnownFolder> pFolder;
-		if (SUCCEEDED(pMgr->GetFolder(pknownid[i], &pFolder))) {
-			CIDL idl;
-			pFolder->GetIDList(KF_FLAG_DEFAULT, idl.ptrptr());
-			KNOWNFOLDERID kfid;
-			pFolder->GetId(&kfid);
-			//LPWSTR pPath;
-			//pFolder->GetPath(KF_FLAG_DEFAULT, &pPath);
-			KNOWNFOLDERID id;
-			pFolder->GetId(&id);
-			if (id == FOLDERID_Desktop) {
-				CComPtr<IShellFolder> pDesktopFolder;
-				::SHGetDesktopFolder(&pDesktopFolder);
-				CIDL desktopIDL;
-				::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, desktopIDL.ptrptr());
-				auto knownFolder = std::make_shared<CKnownFolder>(pDesktopFolder, CIDL(), desktopIDL, pFolder, pDesktopFolder);
+		if (SUCCEEDED(pMgr->GetFolder(std::get<0>(pair.second), &pFolder))) {
+			if (std::get<0>(pair.second) == FOLDERID_Desktop) {
+				auto knownFolder = std::make_shared<CKnownFolder>(pDesktopFolder, CIDL(), std::get<1>(pair.second), pFolder, pDesktopFolder);
 				m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
-			} else if (idl) {
-				auto parentIdl = idl.CloneParentIDL();
-				auto childIdl = idl.CloneLastID();
-				
+			} else if (std::get<1>(pair.second)) {
+				auto parentIdl = std::get<1>(pair.second).CloneParentIDL();
+				auto childIdl = std::get<1>(pair.second).CloneLastID();
+
 				CComPtr<IShellFolder> pDesktopFolder;
 				CComPtr<IShellFolder> pShellFolder;
 				CComPtr<IShellFolder> pParentShellFolder;
 
 				if (SUCCEEDED(::SHGetDesktopFolder(&pDesktopFolder)) &&
-					SUCCEEDED(pDesktopFolder->BindToObject(idl.ptr(), 0, IID_IShellFolder, (void**)&pShellFolder)) &&
+					SUCCEEDED(pDesktopFolder->BindToObject(std::get<1>(pair.second).ptr(), 0, IID_IShellFolder, (void**)&pShellFolder)) &&
 					pShellFolder &&
 					((parentIdl && parentIdl.m_pIDL->mkid.cb && SUCCEEDED(pDesktopFolder->BindToObject(parentIdl.ptr(), 0, IID_IShellFolder, (void**)&pParentShellFolder))) ||
 					((!parentIdl || !parentIdl.m_pIDL->mkid.cb) && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder)))) &&
-					pParentShellFolder)
-				{
+					pParentShellFolder) {
 					auto knownFolder = std::make_shared<CKnownFolder>(pParentShellFolder, parentIdl, childIdl, pFolder, pShellFolder);
 					m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
 				} else {
 					spdlog::info("CKnownFolder::CKnownFolder Non enumerable " +
-						(boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str());
+						(boost::format("%1$08x-%2$04x") % std::get<0>(pair.second).Data1 % std::get<0>(pair.second).Data2).str());
 				}
 			} else {
 				spdlog::info("CKnownFolder::CKnownFolder IDL is null " +
-					(boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str());
+					(boost::format("%1$08x-%2$04x") % std::get<0>(pair.second).Data1 % std::get<0>(pair.second).Data2).str());
 			}
 		}
+
+
 	}
+
+	//CComPtr<IKnownFolderManager> pMgr;
+	//if (FAILED(pMgr.CoCreateInstance(CLSID_KnownFolderManager, NULL, CLSCTX_INPROC_SERVER))) { return; }
+	//KNOWNFOLDERID* pknownid;
+	//UINT count(0);
+	//if (FAILED(pMgr->GetFolderIds(&pknownid, &count))) { return; }
+	//for (UINT i = 0; i < count; i++) {
+	//	CComPtr<IKnownFolder> pFolder;
+	//	if (SUCCEEDED(pMgr->GetFolder(pknownid[i], &pFolder))) {
+	//		CIDL idl;
+	//		pFolder->GetIDList(KF_FLAG_DEFAULT, idl.ptrptr());
+	//		KNOWNFOLDERID kfid;
+	//		pFolder->GetId(&kfid);
+	//		//LPWSTR pPath;
+	//		//pFolder->GetPath(KF_FLAG_DEFAULT, &pPath);
+	//		KNOWNFOLDERID id;
+	//		pFolder->GetId(&id);
+	//		if (id == FOLDERID_Desktop) {
+	//			CComPtr<IShellFolder> pDesktopFolder;
+	//			::SHGetDesktopFolder(&pDesktopFolder);
+	//			CIDL desktopIDL;
+	//			::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, desktopIDL.ptrptr());
+	//			auto knownFolder = std::make_shared<CKnownFolder>(pDesktopFolder, CIDL(), desktopIDL, pFolder, pDesktopFolder);
+	//			m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
+	//		} else if (idl) {
+	//			auto parentIdl = idl.CloneParentIDL();
+	//			auto childIdl = idl.CloneLastID();
+	//			
+	//			CComPtr<IShellFolder> pDesktopFolder;
+	//			CComPtr<IShellFolder> pShellFolder;
+	//			CComPtr<IShellFolder> pParentShellFolder;
+
+	//			if (SUCCEEDED(::SHGetDesktopFolder(&pDesktopFolder)) &&
+	//				SUCCEEDED(pDesktopFolder->BindToObject(idl.ptr(), 0, IID_IShellFolder, (void**)&pShellFolder)) &&
+	//				pShellFolder &&
+	//				((parentIdl && parentIdl.m_pIDL->mkid.cb && SUCCEEDED(pDesktopFolder->BindToObject(parentIdl.ptr(), 0, IID_IShellFolder, (void**)&pParentShellFolder))) ||
+	//				((!parentIdl || !parentIdl.m_pIDL->mkid.cb) && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder)))) &&
+	//				pParentShellFolder)
+	//			{
+	//				auto knownFolder = std::make_shared<CKnownFolder>(pParentShellFolder, parentIdl, childIdl, pFolder, pShellFolder);
+	//				m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
+	//			} else {
+	//				spdlog::info("CKnownFolder::CKnownFolder Non enumerable " +
+	//					(boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str());
+	//			}
+	//		} else {
+	//			spdlog::info("CKnownFolder::CKnownFolder IDL is null " +
+	//				(boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str());
+	//		}
+	//	}
+	//}
 
 }
 
-//bool CKnownFolderManager::IsKnownFolder(CIDL& idl)
-//{
-//	return std::find_if(m_knownFolderMap.begin(), m_knownFolderMap.end(), [idl](const auto& folder)->bool {return folder->GetAbsoluteIdl() == idl; }) != m_knownFolderMap.end();
-//}
-//
-//std::shared_ptr<CKnownFolder> CKnownFolderManager::GetKnownFolderByIDL(CIDL& idl)
-//{
-//	auto iter = std::find_if(m_knownFolderMap.begin(), m_knownFolderMap.end(), [idl](const auto& folder)->bool {return folder->GetAbsoluteIdl() == idl; });
-//	if (iter == m_knownFolderMap.end()) {
-//		return nullptr;
-//	}
-//	else {
-//		return *iter;
-//	}
-//}
-//
-bool CKnownFolderManager::Exist(const std::wstring& path)
+bool CKnownFolderManager::IsExist(const std::wstring& path)const
 {
 	auto iter = m_knownFolderMap.find(path);
 	return iter != m_knownFolderMap.end();

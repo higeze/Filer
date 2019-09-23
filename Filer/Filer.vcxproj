@@ -278,6 +278,7 @@
     <ClInclude Include="..\HiLib\MyWnd.h" />
     <ClInclude Include="..\HiLib\MyXMLSerializer.h" />
     <ClInclude Include="..\HiLib\ObservableContainer.h" />
+    <ClInclude Include="..\HiLib\observable_vector.h" />
     <ClInclude Include="..\HiLib\Operation.h" />
     <ClInclude Include="..\HiLib\ParentColumnHeaderCell.h" />
     <ClInclude Include="..\HiLib\ParentColumnHeaderHeaderCell.h" />
@@ -315,6 +316,8 @@
     <ClInclude Include="..\HiLib\TextCell.h" />
     <ClInclude Include="..\HiLib\ThreadHelper.h" />
     <ClInclude Include="..\HiLib\ThreadPool.h" />
+    <ClInclude Include="..\HiLib\ThreadSafeDriveFolderManager.h" />
+    <ClInclude Include="..\HiLib\ThreadSafeKnownFolderManager.h" />
     <ClInclude Include="..\HiLib\Tracker.h" />
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
@@ -439,6 +442,8 @@
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
     <ClCompile Include="..\HiLib\ThreadPool.cpp" />
+    <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp" />
+    <ClCompile Include="..\HiLib\ThreadSafeKnownFolderManagaer.cpp" />
     <ClCompile Include="..\HiLib\Tracker.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="FileIconPathCell.cpp" />

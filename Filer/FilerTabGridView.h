@@ -6,6 +6,9 @@
 #include "FilerGridView.h"
 #include "ShellFolder.h"
 
+#include "observable_vector.h"
+
+
 class CFilerGridView;
 struct GridViewProperty;
 class CShellFolder;
@@ -15,13 +18,16 @@ class CFilerTabGridView :public CTabCtrl
 private:
 	CUniqueIDFactory m_uniqueIDFactory;
 	std::vector<std::wstring> m_vwPath;
-	std::map<unsigned int, std::shared_ptr<CShellFolder>> m_viewMap;
 	std::shared_ptr<CFilerGridView> m_spFilerView;
+
+	observable_vector<std::shared_ptr<CShellFolder>> m_folders;
+	observable<int> m_selectedIndex = -1;
+
 
 	CWnd* m_pParentWnd;
 
 	CFont m_font;
-	unsigned int m_prevID;
+	//unsigned int m_prevSelectedIndex;
 	int m_contextMenuTabIndex;
 
 public:
@@ -53,17 +59,18 @@ public:
 	LRESULT OnNotifyTabRClick(int id, LPNMHDR, BOOL& bHandled);
 
 private:
-	void AddNewView(std::wstring path);
+	//void AddNewTab(const std::wstring& path);
+	//void AddNewTab(const std::shared_ptr<CShellFile>& spFile);
 public:
 	FRIEND_SERIALIZER
 	template <class Archive>
 	void save(Archive& ar)
 	{
 		m_vwPath.clear();
-		for (auto pair : m_viewMap) {
-			m_vwPath.push_back(pair.second->GetPath());
-		}
+		std::transform(m_folders.begin(), m_folders.end(), std::back_inserter(m_vwPath),
+			[](auto spFolder)->std::wstring {return spFolder->GetPath(); });
 		ar("ViewPaths", m_vwPath);
+		ar("SelectedIndex", m_selectedIndex);
 		ar("FilerView", m_spFilerView);
 	}
 
@@ -71,6 +78,7 @@ public:
 	void load(Archive& ar)
 	{
 		ar("ViewPaths", m_vwPath);
+		ar("SelectedIndex", m_selectedIndex);
 		ar("FilerView", m_spFilerView, m_spFilerView->GetFilerGridViewPropPtr());
 	}
 

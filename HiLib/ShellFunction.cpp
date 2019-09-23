@@ -1,5 +1,7 @@
 #include "ShellFunction.h"
 #include "Debug.h"
+#include "ThreadSafeKnownFolderManager.h"
+#include "ThreadSafeDriveFolderManager.h"
 
 std::wstring shell::ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit)
 
@@ -169,7 +171,7 @@ void shell::FindIncrementalOne(
 	const std::function<void()> countup,
 	const std::function<void(const CIDL&, const CIDL&)>& find)
 {
-	ParsedFileType pft = shell::ParseFileTypeSimple(pSrcParentFolder, srcChildIDL);
+	ParsedFileType pft = shell::ParseFileType(pSrcParentFolder, srcChildIDL);
 
 	ULONG chEaten = 0;
 	ULONG dwAttributes = 0;
@@ -196,21 +198,29 @@ void shell::FindIncrementalOne(
 		break;
 		case FileType::Folder:
 		{
-			CComPtr<IShellFolder> pDestChildFolder;
-			if (SUCCEEDED(pDestParentFolder->BindToObject(destChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pDestChildFolder))) {
-				CIDL srcGrandchildIDL;
-				ULONG ulRet(0);
-				while (SUCCEEDED(pft.EnumIDLPtr->Next(1, srcGrandchildIDL.ptrptr(), &ulRet))) {
-					if (srcGrandchildIDL) {
-						shell::FindIncrementalOne(pft.ShellFolderPtr, srcParentIDL + srcChildIDL, srcGrandchildIDL,
-							pDestChildFolder, destParentIDL + destChildIDL, countup, find);
-					} else {
-						break;
+			CComPtr<IShellFolder> pSrcChildShellFolder;
+			CComPtr<IEnumIDList> pSrcChildEnumIDL;
+			if (SUCCEEDED(pSrcParentFolder->BindToObject(srcChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pSrcChildShellFolder)) &&
+				SUCCEEDED(pSrcChildShellFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pSrcChildEnumIDL))) {
+
+				CComPtr<IShellFolder> pDestChildFolder;
+				if (SUCCEEDED(pDestParentFolder->BindToObject(destChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pDestChildFolder))) {
+					CIDL srcGrandchildIDL;
+					ULONG ulRet(0);
+					while (SUCCEEDED(pSrcChildEnumIDL->Next(1, srcGrandchildIDL.ptrptr(), &ulRet))) {
+						if (srcGrandchildIDL) {
+							shell::FindIncrementalOne(pSrcChildShellFolder, srcParentIDL + srcChildIDL, srcGrandchildIDL,
+								pDestChildFolder, destParentIDL + destChildIDL, countup, find);
+						} else {
+							break;
+						}
 					}
 				}
 			}
 		}
 			break;
+		case FileType::Known:
+		case FileType::Drive:
 		case FileType::Virtual:
 		case FileType::None:
 		default:
@@ -227,10 +237,18 @@ void shell::FindIncrementalOne(
 		break;
 		case FileType::Folder:
 		{
-			shell::CountFileInFolder(pft.ShellFolderPtr, pft.EnumIDLPtr, srcChildIDL, countup);
-			find(destParentIDL, (srcParentIDL + srcChildIDL));
+			CComPtr<IShellFolder> pSrcChildShellFolder;
+			CComPtr<IEnumIDList> pSrcChildEnumIDL;
+			if (SUCCEEDED(pSrcParentFolder->BindToObject(srcChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pSrcChildShellFolder)) &&
+				SUCCEEDED(pSrcChildShellFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pSrcChildEnumIDL))) {
+
+				shell::CountFileInFolder(pSrcChildShellFolder, pSrcChildEnumIDL, srcChildIDL, countup);
+				find(destParentIDL, (srcParentIDL + srcChildIDL));
+			}
 		}
 		break;
+		case FileType::Known:
+		case FileType::Drive:
 		case FileType::Virtual:
 		case FileType::None:
 		default:
@@ -384,15 +402,24 @@ void shell::CountFileOne(
 	const CIDL& childIDL,
 	const std::function<void()>& countup)
 {
-	ParsedFileType pft = shell::ParseFileTypeSimple(pParentFolder, childIDL);
+	ParsedFileType pft = shell::ParseFileType(pParentFolder, childIDL);
 
 	switch (pft.FileType) {
 	case FileType::File:
 	case FileType::Zip:
 		break;
 	case FileType::Folder:
-		shell::CountFileInFolder(pft.ShellFolderPtr, pft.EnumIDLPtr, parentIDL + childIDL, countup);
+	{
+		CComPtr<IShellFolder> pChildShellFolder;
+		CComPtr<IEnumIDList> pChildEnumIDL;
+		if (SUCCEEDED(pParentFolder->BindToObject(childIDL.ptr(), 0, IID_IShellFolder, (void**)&pChildShellFolder)) &&
+			SUCCEEDED(pChildShellFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pChildEnumIDL))) {
+			shell::CountFileInFolder(pChildShellFolder, pChildEnumIDL, parentIDL + childIDL, countup);
+		}
+	}
 		break;
+	case FileType::Known:
+	case FileType::Drive:
 	case FileType::Virtual:
 	case FileType::None:
 	default:
@@ -539,7 +566,7 @@ void shell::SearchOne(
 	const std::function<void(const CIDL&)> find
 )
 {
-	ParsedFileType pft = shell::ParseFileTypeSimple(pParentFolder, childIDL);
+	ParsedFileType pft = shell::ParseFileType(pParentFolder, childIDL);
 	if (!boost::algorithm::ifind_first(pft.FileName, search).empty()) {
 		find(parentIDL + childIDL);
 	}
@@ -550,17 +577,25 @@ void shell::SearchOne(
 		break;
 	case FileType::Folder:
 	{
-		CIDL nextIDL;
-		ULONG ulRet(0);
-		while (SUCCEEDED(pft.EnumIDLPtr->Next(1, nextIDL.ptrptr(), &ulRet))) {
-			if (nextIDL) {
-				shell::SearchOne(search, pft.ShellFolderPtr, parentIDL + childIDL, nextIDL, countup, find);
-			} else {
-				break;
+		CComPtr<IShellFolder> pChildShellFolder;
+		CComPtr<IEnumIDList> pChildEnumIDL;
+		if (SUCCEEDED(pParentFolder->BindToObject(childIDL.ptr(), 0, IID_IShellFolder, (void**)&pChildShellFolder)) &&
+			SUCCEEDED(pChildShellFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pChildEnumIDL))) {
+
+			CIDL nextIDL;
+			ULONG ulRet(0);
+			while (SUCCEEDED(pChildEnumIDL->Next(1, nextIDL.ptrptr(), &ulRet))) {
+				if (nextIDL) {
+					shell::SearchOne(search, pChildShellFolder, parentIDL + childIDL, nextIDL, countup, find);
+				} else {
+					break;
+				}
 			}
 		}
 	}
 		break;
+	case FileType::Known:
+	case FileType::Drive:
 	case FileType::Virtual:
 	case FileType::None:
 	default:
@@ -570,37 +605,70 @@ void shell::SearchOne(
 
 }
 
-shell::ParsedFileType shell::ParseFileTypeSimple(
+//shell::ParsedFileType shell::ParseFileTypeSimple(
+//	const CComPtr<IShellFolder>& pParentFolder,
+//	const CIDL& childIDL)
+//{
+//	ParsedFileType ret;
+//	ret.FilePath = shell::GetDisplayNameOf(pParentFolder, childIDL);
+//	if (ret.FilePath.empty()) {
+//		ret.FileType = FileType::None;
+//		return ret;
+//	} else {
+//		ret.FileName = ::PathFindFileName(ret.FilePath.c_str());
+//		ret.FileExt = ::PathFindExtension(ret.FilePath.c_str());
+//
+//		if (ret.FilePath[0] == L':') {
+//			//Virtual
+//			ret.FileType = FileType::Virtual;
+//		} else if (boost::iequals(ret.FileExt, ".zip")) {
+//			//Zip
+//			ret.FileType = FileType::Zip;
+//		} else if (
+//
+//			CComPtr<IShellFolder> pShellFolder;
+//			CComPtr<IEnumIDList> pEnumIDL;
+//			SUCCEEDED(pParentFolder->BindToObject(childIDL.ptr(), 0, IID_IShellFolder, (void**)&pShellFolder)) &&
+//			SUCCEEDED(pShellFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pEnumIDL))) {
+//			//Folder
+//			ret.FileType = FileType::Folder;
+//		} else {
+//			//File
+//			ret.FileType = FileType::File;
+//		}
+//		return ret;
+//	}
+//}
+
+shell::ParsedFileType shell::ParseFileType(
 	const CComPtr<IShellFolder>& pParentFolder,
 	const CIDL& childIDL)
 {
-	ParsedFileType ret;
+	shell::ParsedFileType ret;
 	ret.FilePath = shell::GetDisplayNameOf(pParentFolder, childIDL);
 	if (ret.FilePath.empty()) {
-		ret.FileType = FileType::None;
-		return ret;
+		ret.FileType = shell::FileType::None;
 	} else {
 		ret.FileName = ::PathFindFileName(ret.FilePath.c_str());
 		ret.FileExt = ::PathFindExtension(ret.FilePath.c_str());
-
-		if (ret.FilePath[0] == L':') {
-			//Virtual
-			ret.FileType = FileType::Virtual;
+		SFGAOF sfgao = SFGAO_FOLDER;
+		if (shell::CThreadSafeKnownFolderManager::GetInstance()->IsExist(ret.FilePath)) {
+			ret.FileType = shell::FileType::Known;
+		} else if (ret.FilePath[0] == L':') {
+			ret.FileType = shell::FileType::Virtual;
+		} else if (shell::CThreadSafeDriveFolderManager::GetInstance()->IsExist(ret.FilePath)) {
+			ret.FileType = shell::FileType::Drive;
 		} else if (boost::iequals(ret.FileExt, ".zip")) {
-			//Zip
-			ret.FileType = FileType::Zip;
-		} else if (
-			SUCCEEDED(pParentFolder->BindToObject(childIDL.ptr(), 0, IID_IShellFolder, (void**)&ret.ShellFolderPtr)) &&
-			SUCCEEDED(ret.ShellFolderPtr->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &ret.EnumIDLPtr))) {
-			//Folder
-			ret.FileType = FileType::Folder;
+			ret.FileType = shell::FileType::Zip;
+		} else if (pParentFolder->GetAttributesOf(1, (LPCITEMIDLIST*)(childIDL.ptrptr()), &sfgao), (sfgao & SFGAO_FOLDER) == SFGAO_FOLDER) {
+			ret.FileType = shell::FileType::Folder;
 		} else {
-			//File
-			ret.FileType = FileType::File;
+			ret.FileType = shell::FileType::File;
 		}
-		return ret;
 	}
+	return ret;
 }
+
 
 
 

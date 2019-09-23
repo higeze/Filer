@@ -7,6 +7,8 @@
 #include <chrono>
 #include <functional>
 #include "ShellFunction.h"
+#include "ThreadSafeKnownFolderManager.h"
+#include "ThreadSafeDriveFolderManager.h"
 
 shell::ParsedFileType CShellFileFactory::ParseFileType(
 	const CComPtr<IShellFolder>& pParentFolder,
@@ -20,11 +22,11 @@ shell::ParsedFileType CShellFileFactory::ParseFileType(
 		ret.FileName = ::PathFindFileName(ret.FilePath.c_str());
 		ret.FileExt = ::PathFindExtension(ret.FilePath.c_str());
 		SFGAOF sfgao = SFGAO_FOLDER;
-		if (CKnownFolderManager::GetInstance()->Exist(ret.FilePath)) {
+		if (shell::CThreadSafeKnownFolderManager::GetInstance()->IsExist(ret.FilePath)) {
 			ret.FileType = shell::FileType::Known;
 		} else if (ret.FilePath[0] == L':') {
 			ret.FileType = shell::FileType::Virtual;
-		} else if (CDriveManager::GetInstance()->Exist(ret.FilePath)) {
+		} else if (shell::CThreadSafeDriveFolderManager::GetInstance()->IsExist(ret.FilePath)) {
 			ret.FileType = shell::FileType::Drive;
 		} else if (boost::iequals(ret.FileExt, ".zip")) {
 			ret.FileType = shell::FileType::Zip;

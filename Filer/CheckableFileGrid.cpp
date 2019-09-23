@@ -193,9 +193,8 @@ void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
 	}
 
-	pWnd->Create(hWnd, CRect(0, 0, 300, 500));
+	pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 500));
 	pWnd->OpenFolder(spFolder);
-	pWnd->CenterWindow();
 	pWnd->ShowWindow(SW_SHOW);
 	pWnd->UpdateWindow();
 }
