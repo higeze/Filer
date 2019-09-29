@@ -155,11 +155,12 @@ public:
 		}
 		d2dw::CPointF ptDips = e.Direct.Pixels2Dips(e.Point);
 		auto visIndexes = pSheet->Point2Indexes<VisTag>(ptDips);
+		auto other = pSheet->Coordinate2Pointer<TRC::Other>(ptDips.Get<TRC::OtherAxis>());
 		auto minIdx = pSheet->GetMinIndex<TRC, VisTag>();
 		auto maxIdx = pSheet->GetMaxIndex<TRC, VisTag>();
 
 		//If Header except Filter
-		if (visIndexes.Get<TRC::Other>() < 0) {
+		if (visIndexes.Get<TRC::Other>() < 0 && (other==nullptr || other->IsTrackable())) {
 			if (visIndexes.Get<TRC>() < minIdx) {
 				//Out of Left	
 				return false;

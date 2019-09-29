@@ -45,7 +45,7 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<
 	auto parsed = ParseFileType(pParentFolder, childIdl);
 	switch (parsed.FileType) {
 	case shell::FileType::Drive:
-		return CDriveManager::GetInstance()->GetDriveFolderByPath(parsed.FilePath);
+		return CDriveFolderManager::GetInstance()->GetDriveFolderByPath(parsed.FilePath);
 	case shell::FileType::Known:
 		return CKnownFolderManager::GetInstance()->GetKnownFolderByPath(parsed.FilePath);
 	case shell::FileType::Folder:

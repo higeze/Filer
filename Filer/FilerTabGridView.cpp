@@ -204,7 +204,7 @@ LRESULT CFilerTabGridView::OnNotifyTabSelChange(int, LPNMHDR, BOOL& bHandled)
 
 LRESULT CFilerTabGridView::OnNotifyTabLClick(int id, LPNMHDR, BOOL& bHandled)
 {
-	//::SetFocus(m_spFilerView->m_hWnd);
+	::SetFocus(m_spFilerView->m_hWnd);
 	return 0;
 }
 

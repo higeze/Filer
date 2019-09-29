@@ -10,21 +10,21 @@ public:
 };
 
 
-class CDriveManager
+class CDriveFolderManager
 {
 private:
 	std::vector<std::shared_ptr<CDriveFolder>> m_driveFolders;
 public:
-	static CDriveManager* GetInstance()
+	static CDriveFolderManager* GetInstance()
 	{
-		static CDriveManager mgr;
+		static CDriveFolderManager mgr;
 		return &mgr;
 	}
 
 public:
-	CDriveManager();
-	void Reload();
-	bool Exist(const std::wstring& path);
+	CDriveFolderManager();
+	void Update();
+	bool IsExist(const std::wstring& path);
 	std::shared_ptr<CDriveFolder> GetDriveFolderByIDL(CIDL& idl);
 	std::shared_ptr<CDriveFolder> GetDriveFolderByPath(const std::wstring& path);
 };

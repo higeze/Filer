@@ -54,6 +54,8 @@ public:
 	virtual SizingType GetSizingType()const override { return SizingType::None; }
 
 
+
+
 };
 
 class CGridView;
@@ -63,14 +65,13 @@ class CParentRow:public CRow
 public:
 	CParentRow(CGridView* pGrid);
 	virtual ~CParentRow(){}
-	virtual FLOAT Offset()const { return 0; }
 };
 
 class CParentHeaderRow:public CParentRow
 {
 public:
-	CParentHeaderRow(CGridView* pGrid):CParentRow(pGrid){}
-	//virtual bool IsDragTrackable()const override{return true;}
+	using CParentRow::CParentRow;
+	virtual bool IsTrackable()const override { return true; }
 };
 
 class CSheetCell;
@@ -80,12 +81,10 @@ class CChildRow:public CRow
 public:
 	CChildRow(CSheetCell* pSheetCell);
 	virtual ~CChildRow(){}
-	virtual FLOAT Offset()const { return 0; }
 };
 
 class CChildHeaderRow:public CChildRow
 {
 public:
 	CChildHeaderRow(CSheetCell* pGrid):CChildRow(pGrid){}
-	//virtual bool IsDragTrackable()const override{return true;}
 };

@@ -20,6 +20,7 @@
 #include "ShellFunction.h"
 #include "Direct2DWrite.h"
 #include "FileIconCache.h"
+#include "ThreadSafeDriveFolderManager.h"
 
 
 #ifdef USE_PYTHON_EXTENSION
@@ -614,7 +615,7 @@ LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 {
 	//m_spLeftView->GetGridView()->GetDirect()->GetIconCachePtr()->Clear();
 	//m_spRightView->GetGridView()->GetDirect()->GetIconCachePtr()->Clear();
-	CDriveManager::GetInstance()->Reload();
+	CDriveFolderManager::GetInstance()->Update();
 	m_spLeftFavoritesView->Reload();
 	m_spRightFavoritesView->Reload();
 	m_spLeftView->GetGridView()->Reload();

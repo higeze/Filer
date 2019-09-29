@@ -12,13 +12,11 @@ namespace shell
 		std::lock_guard<std::mutex> lock(m_mtx);
 		m_knownFolderIdIdlMap.clear();
 
-		CComPtr<IShellFolder> pDesktopFolder;
-		::SHGetDesktopFolder(&pDesktopFolder);
-
 		CComPtr<IKnownFolderManager> pMgr;
 		if (FAILED(pMgr.CoCreateInstance(CLSID_KnownFolderManager, NULL, CLSCTX_INPROC_SERVER))) { return; }
 
-
+		CComPtr<IShellFolder> pDesktopFolder;
+		::SHGetDesktopFolder(&pDesktopFolder);
 
 		KNOWNFOLDERID* pknownid;
 		UINT count(0);

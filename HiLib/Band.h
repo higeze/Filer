@@ -52,12 +52,12 @@ public:
 	void SetSheetPtr(CSheet* pSheet){m_pSheet = pSheet;}
 	bool GetMeasureValid()const{return m_bMeasureValid;}
 	void SetMeasureValid(bool bMeasureValid){m_bMeasureValid = bMeasureValid;}
-	virtual FLOAT Offset()const = 0;
 	virtual bool GetVisible()const{return m_bVisible;}
 	virtual void SetVisible(const bool& bVisible, bool notify = true) = 0;
 	virtual bool GetSelected()const{return m_bSelected;}
 	virtual void SetSelected(const bool& bSelected) = 0;
 	virtual bool IsDragTrackable()const{return false;}
+	virtual bool IsTrackable()const { return false; }
 	virtual FLOAT GetLeftTop()const = 0;
 	virtual FLOAT GetRightBottom()/*TODO*/ = 0;
 	virtual FLOAT GetMinWidthHeight()/*TODO*/ = 0;

@@ -35,6 +35,7 @@ struct RowTag
 	typedef const CRow* Ptr;
 	typedef RowDictionary Dictionary;
 	typedef YTag Axis;
+	typedef XTag OtherAxis;
 	typedef ColTag Other;
 	typedef RowData Data;
 };
@@ -45,6 +46,7 @@ struct ColTag
 	typedef const CColumn* Ptr;
 	typedef ColumnDictionary Dictionary;
 	typedef XTag Axis;
+	typedef YTag OtherAxis;
 	typedef RowTag Other;
 	typedef ColumnData Data;
 };

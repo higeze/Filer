@@ -123,6 +123,9 @@ public:
 	virtual SizeType GetSizeType()const { return m_sizeType; }
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name);
+
+	virtual FLOAT Offset()const = 0;
+
 };
 
 class CGridView;

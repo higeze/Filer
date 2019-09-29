@@ -113,7 +113,12 @@ void CFilerGridViewBase::OnKeyDown(const KeyDownEvent& e)
 		}
 		break;
 	case VK_DELETE:
-		DeleteSelectedFiles();
+	{
+		int okcancel = ::MessageBox(m_hWnd, L"Delete?", L"Delete?", MB_OKCANCEL);
+		if (okcancel == IDOK) {
+			DeleteSelectedFiles();
+		}
+	}
 		break;
 	//case VK_F8:
 	//{

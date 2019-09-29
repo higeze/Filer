@@ -16,4 +16,5 @@ public:
 
 	virtual bool HasCell()const override{ return true; }
 	virtual std::shared_ptr<CCell>& Cell(CColumn* pCol) override;
+	virtual bool IsTrackable()const override { return false; }
 };
