@@ -65,7 +65,7 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<
 std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const std::wstring& path)
 {
 	auto desktop(CKnownFolderManager::GetInstance()->GetDesktopFolder());
-	CIDL relativeIdl;
+	CIDL absIdl;
 
 	ULONG         chEaten;
 	ULONG         dwAttributes;
@@ -74,12 +74,15 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const std::wst
 		NULL,
 		const_cast<LPWSTR>(path.c_str()),
 		&chEaten,
-		relativeIdl.ptrptr(),
+		absIdl.ptrptr(),
 		&dwAttributes);
 
 	if (FAILED(hr)) {//Not Exist
 		return std::make_shared<CShellInvalidFile>();
 	} else {
-		return desktop->CreateShExFileFolder(relativeIdl);
+		CIDL parentIDL = absIdl.CloneParentIDL();
+		CComPtr<IShellFolder>  pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
+
+		return CreateShellFilePtr(pParentFolder, parentIDL, absIdl.CloneLastID());
 	}
 }

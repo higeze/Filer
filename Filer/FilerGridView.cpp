@@ -526,12 +526,10 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 				!boost::iequals(m_spFolder->GetExt(), L".zip")) {
 				if (m_spWatcher->GetPath() != m_spFolder->GetPath()) {
 					m_spWatcher->QuitWatching();
-					m_spWatcher->SetPath(m_spFolder->GetPath());
-					m_spWatcher->StartWatching();
+					m_spWatcher->StartWatching(m_spFolder->GetPath());
 				}
 			} else {
 				m_spWatcher->QuitWatching();
-				m_spWatcher->SetPath(L"");
 			}
 		} catch (std::exception& e) {
 			MessageBox(L"Watcher", L"Error", 0);

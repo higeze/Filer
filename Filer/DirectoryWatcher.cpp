@@ -3,10 +3,11 @@
 #include "SEHException.h"
 #include "MyWin32.h"
 #include "MyString.h"
+#include "ThreadPool.h"
 
 
 CDirectoryWatcher::CDirectoryWatcher(HWND hWnd)
-	:m_hWnd(hWnd), m_quitEvent(), m_dir(), m_work(), m_vData(kBufferSize, 0)
+	:m_hWnd(hWnd), m_pQuitEvent(), m_vData(kBufferSize, 0)
 {}
 
 CDirectoryWatcher::~CDirectoryWatcher(void)
@@ -14,26 +15,22 @@ CDirectoryWatcher::~CDirectoryWatcher(void)
 	QuitWatching();
 }
 
-void CDirectoryWatcher::StartWatching()
+void CDirectoryWatcher::StartWatching(const std::wstring& path)
 {
 	try {
 		//Create event
-		m_quitEvent.reset(CreateEvent(NULL, TRUE, FALSE, NULL));
-		if (!m_quitEvent) {
+		m_pQuitEvent.reset(CreateEvent(NULL, TRUE, FALSE, NULL));
+		if (!m_pQuitEvent) {
 			FILE_LINE_FUNC_TRACE;
 			return;
 		}
-		//Create work
-		m_work.reset(::CreateThreadpoolWork(CDirectoryWatcher::WatchDirectoryCallback, (PVOID)this, NULL));
-		if (!m_work) {
-			FILE_LINE_FUNC_TRACE;
-			return;
-		}
-		//Submit work
-		::SubmitThreadpoolWork(m_work.get());
+
+		//Create watch thread
+		m_futureWatch = CThreadPool::GetInstance()->enqueue(&CDirectoryWatcher::WatchDirectory, this, path);
 	}
 	catch (std::exception& e) {
 		FILE_LINE_FUNC_TRACE;
+		QuitWatching();
 		throw e;
 	}
 }
@@ -42,28 +39,21 @@ void CDirectoryWatcher::QuitWatching()
 {
 	try {
 		//Event
-		if (m_quitEvent) {
+		if (m_pQuitEvent) {
 			//Throw quit event
-			if (!::SetEvent(m_quitEvent.get())) {
+			if (!::SetEvent(m_pQuitEvent.get())) {
 				FILE_LINE_FUNC_TRACE;
 			}
 			//Close handle
-			m_quitEvent.reset();
+			m_pQuitEvent.reset();
 		}
 		//Work
-		if (m_work) {
-			//Wait for submitted work
-			::WaitForThreadpoolWorkCallbacks(m_work.get(), TRUE);
-			//Close
-			m_work.reset();
+		//Release thread
+		if (m_futureWatch.valid() && m_futureWatch.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+			m_futureWatch.get();
 		}
-		//Dir
-		if (m_dir) {
-			if (!::CancelIo(m_dir.get())) {
-				FILE_LINE_FUNC_TRACE;
-			}
-			m_dir.reset();
-		}
+		//Path
+		m_path.clear();
 	}
 	catch (std::exception& e) {
 		FILE_LINE_FUNC_TRACE;
@@ -72,112 +62,106 @@ void CDirectoryWatcher::QuitWatching()
 
 }
 
-VOID CALLBACK CDirectoryWatcher::WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pInstance,LPVOID pvParam,PTP_WORK pWork)
-{
-	//Catch SEH exception as CEH
-	_set_se_translator (CSEHException::TransferSEHtoCEH);
-
-	auto that = reinterpret_cast<CDirectoryWatcher*>(pvParam);
-	return that->WatchDirectoryCallback(pInstance, pWork);
-}
-
-void CDirectoryWatcher::WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pInstance,PTP_WORK pWork)
+void CDirectoryWatcher::WatchDirectory(const std::wstring& path)
 {
 	try{
-		spdlog::info("IoCompletionCallback");
-		//PCTSTR pDir = (PCTSTR)pvParam;
-		OVERLAPPED oi = {0};
+		spdlog::info("Start CDirectoryWatcher::WatchDirectoryCallback");
 
 		//Create File
-		m_dir.reset(CreateFile(m_path.c_str(),
+		m_path = path;
+		UniqueHandlePtr pDir(::CreateFileW(m_path.c_str(),
 								FILE_LIST_DIRECTORY,
 								FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 								NULL,
 								OPEN_EXISTING,
 								FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
 								NULL));
-		if(m_dir.get() == INVALID_HANDLE_VALUE){
-			throw std::exception("CreateFile == INVALID_HANDLE_VALUE.\n");
-			return;
+		if(pDir.get() == INVALID_HANDLE_VALUE){
+			throw std::exception(FILE_LINE_FUNC);//TODODO
 		}
-		//Create thread pool
-		UniqueIOPtr  pio(::CreateThreadpoolIo(m_dir.get(),CDirectoryWatcher::IoCompletionCallback,(PVOID)this,NULL));
-		spdlog::info("Start watching direcotry");
-		//Start observing
-		IoCompletionCallback(NULL,(LPOVERLAPPED)&oi,NO_ERROR,0,pio.get());
-		//Wait for quit event
-		WaitForSingleObject(m_quitEvent.get(),INFINITE);
-		//Cancel task in que
-		WaitForThreadpoolIoCallbacks(pio.get(),TRUE);
 
-		spdlog::info("End watching directory");
+		//Associate IoComp with hDir
+		UniqueHandlePtr pIocp(::CreateIoCompletionPort(pDir.get(), NULL, COMPKEY_DIR, 0));
+		if (pIocp.get() == INVALID_HANDLE_VALUE) {
+			throw std::exception(FILE_LINE_FUNC);//TODODO
+		}
+
+		//Start thread;
+		std::future<void> futureCallback(CThreadPool::GetInstance()->enqueue(&CDirectoryWatcher::IoCompletionCallback, this, pIocp.get(), pDir.get()));
+
+		//Start observer
+		OVERLAPPED overlapped = { 0 };
+		::PostQueuedCompletionStatus(pIocp.get(), 0, COMPKEY_DIR, (LPOVERLAPPED)&overlapped);
+
+		//Wait for quit event
+		WaitForSingleObject(m_pQuitEvent.get(),INFINITE);
+
+		//Terminate observer
+		::PostQueuedCompletionStatus(pIocp.get(), 0, COMPKEY_QUIT, nullptr);
+		//Terminate thread
+		futureCallback.get();
+
+		spdlog::info("End CDirectoryWatcher::WatchDirectoryCallback");
 	}catch(std::exception&){
 		FILE_LINE_FUNC_TRACE;
-		QuitWatching();
 	}
 }
 
-VOID CALLBACK CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVOID pvParam,PVOID pOverlapped,ULONG IoResult,ULONG_PTR ulBytes,PTP_IO pio)
-{
-	//Catch SEH exception as CEH
-	_set_se_translator (CSEHException::TransferSEHtoCEH);
-
-	auto that = reinterpret_cast<CDirectoryWatcher*>(pvParam);
-	return that->IoCompletionCallback(pInstance, pOverlapped, IoResult, ulBytes, pio);
-
-}
-
-void CDirectoryWatcher::IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVOID pOverlapped,ULONG IoResult,ULONG_PTR ulBytes,PTP_IO pio)
+void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 {
 	try{
-		spdlog::info("IoCompletionCallback");
-		PFILE_NOTIFY_INFORMATION pFileNotifyInfo = nullptr;
-		if(ulBytes > 0)
-		{
-			pFileNotifyInfo = (PFILE_NOTIFY_INFORMATION)new BYTE[ulBytes];
-			::CopyMemory((PVOID)pFileNotifyInfo,(CONST PVOID)m_vData.data(),ulBytes);
-		}
-		//Keep watching
-		if(pOverlapped)
-		{
-			spdlog::info("ReadDirectoryChangesW");
-			//Associate iocompletionobject to thread pool
-			StartThreadpoolIo(pio);
-			if(!ReadDirectoryChangesW(
-				m_dir.get(),
-				m_vData.data(),
-				m_vData.size(),
-				FALSE,
-				FILE_NOTIFY_CHANGE_FILE_NAME   | 
-				FILE_NOTIFY_CHANGE_DIR_NAME    | 
-				FILE_NOTIFY_CHANGE_ATTRIBUTES  |  
-				FILE_NOTIFY_CHANGE_SIZE        |  
-				FILE_NOTIFY_CHANGE_LAST_WRITE  |
-				//FILE_NOTIFY_CHANGE_LAST_ACCESS |
-				//FILE_NOTIFY_CHANGE_SECURITY    |
-				FILE_NOTIFY_CHANGE_CREATION    ,
-				NULL,
-				(LPOVERLAPPED)pOverlapped,
-				NULL)){
-				throw std::exception(
-					("ReadDirectoryChangesW FAILED\r\n"  
-					  "Last Error:" + GetLastErrorString() +
-					  "Path:" + wstr2str(m_path) + "\r\n").c_str());
-				return;
+		spdlog::info("Start CDirectoryWatcher::IoCompletionCallback");
+
+		while (true) {
+			DWORD dwBytes = 0L;
+			ULONG_PTR ulCompKey = 0L;
+			LPOVERLAPPED pOverlapped = nullptr;
+			::GetQueuedCompletionStatus(hIocp, &dwBytes, &ulCompKey, &pOverlapped, INFINITE);
+
+			if (ulCompKey == COMPKEY_QUIT) {
+				break;
 			}
-		}
-		if (ulBytes == 0) {
-			FILE_LINE_FUNC_TRACE;
-		}else if(ulBytes > 0){
 
-			::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)pFileNotifyInfo, NULL);
+			PFILE_NOTIFY_INFORMATION pFileNotifyInfo = nullptr;
+			if (dwBytes > 0) {
+				pFileNotifyInfo = (PFILE_NOTIFY_INFORMATION)new BYTE[dwBytes];
+				::CopyMemory((PVOID)pFileNotifyInfo, (CONST PVOID)m_vData.data(), dwBytes);
+			}
 
-			delete [] (PBYTE)pFileNotifyInfo;
+			//Keep watching
+			if (pOverlapped) {
+				spdlog::info("ReadDirectoryChangesW");
+				//Associate iocompletionobject to thread pool
+				if (!ReadDirectoryChangesW(
+					hDir,
+					m_vData.data(),
+					m_vData.size(),
+					TRUE,
+					FILE_NOTIFY_CHANGE_FILE_NAME |
+					FILE_NOTIFY_CHANGE_DIR_NAME |
+					FILE_NOTIFY_CHANGE_ATTRIBUTES |
+					FILE_NOTIFY_CHANGE_SIZE |
+					FILE_NOTIFY_CHANGE_LAST_WRITE |
+					//FILE_NOTIFY_CHANGE_LAST_ACCESS |
+					//FILE_NOTIFY_CHANGE_SECURITY    |
+					FILE_NOTIFY_CHANGE_CREATION,
+					NULL,
+					(LPOVERLAPPED)pOverlapped,
+					NULL)) {
+					throw std::exception(
+						("ReadDirectoryChangesW FAILED\r\n"
+							"Last Error:" + GetLastErrorString() +
+							"Path:" + wstr2str(m_path) + "\r\n").c_str());
+				}
+			}
+
+			if (dwBytes > 0) {
+				::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)pFileNotifyInfo, NULL);
+				delete[](PBYTE)pFileNotifyInfo;
+			}
 		}
 	}catch(std::exception&){
 		FILE_LINE_FUNC_TRACE;
-		m_work.reset();
-		QuitWatching();
 	}
 }
 

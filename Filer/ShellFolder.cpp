@@ -98,18 +98,8 @@ std::shared_ptr<CShellFolder> CShellFolder::GetParent()
 {
 	CIDL parentIDL = m_absoluteIdl.CloneParentIDL();
 	CIDL grandParentIDL = parentIDL.CloneParentIDL();
-	CComPtr<IShellFolder> pParentFolder;
-	CComPtr<IShellFolder> pGrandParentFolder;
-	CComPtr<IShellFolder> pDesktopShellFolder;
-	::SHGetDesktopFolder(&pDesktopShellFolder);
-	pDesktopShellFolder->BindToObject(parentIDL.ptr(), 0, IID_IShellFolder, (void**)&pParentFolder);
-	pDesktopShellFolder->BindToObject(grandParentIDL.ptr(), 0, IID_IShellFolder, (void**)&pGrandParentFolder);
-	if (!pParentFolder) {
-		pParentFolder = pDesktopShellFolder;
-	}
-	if (!pGrandParentFolder) {
-		pGrandParentFolder = pDesktopShellFolder;
-	}
+	CComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
+	CComPtr<IShellFolder> pGrandParentFolder = shell::DesktopBindToShellFolder(grandParentIDL);
 	return std::static_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pGrandParentFolder, grandParentIDL, parentIDL.CloneLastID()));
 	//return std::make_shared<CShellFolder>(pGrandParentFolder, grandParentIDL, parentIDL.CloneLastID(), pParentFolder);
 }
