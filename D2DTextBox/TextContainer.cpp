@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "text_stdafx.h"
 #include "TextContainer.h"
 using namespace TSF;
 //----------------------------------------------------------------

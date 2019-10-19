@@ -1,6 +1,4 @@
-﻿#include "Direct2DWrite.h"
-
-#pragma once
+﻿#pragma once
 
 #ifdef _USRDLL
 #define DLLEXPORT extern "C" __declspec( dllexport )

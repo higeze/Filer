@@ -1,13 +1,16 @@
-﻿#include "stdafx.h"
+﻿#include "text_stdafx.h"
 #include "D2DWindow.h"
 #include "D2DWindowControl.h"
 #include "d2dapi.h"
+#include "Selection.h"
 
 #include "gdi32.h"
 #include <Shellapi.h>
 
 #include "MoveTarget.h"
 #include <random>
+
+#include "CellProperty.h"
 #define CLASSNAME L"D2DWindow"
 
 using namespace V4;
@@ -15,6 +18,11 @@ using namespace GDI32;
 
 
 std::wstring D2DWindow::appinfo_;
+
+namespace V4
+{
+	Selection g_selection;
+};
 
 
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -28,7 +36,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			CREATESTRUCT* st = (CREATESTRUCT*)lParam;
 			
 			::SetWindowLongPtr( hWnd, GWL_USERDATA,(LONG) st->lpCreateParams ); // GWL_USERDATA must be set here.
-
 
 			SetFocus(hWnd);
 
@@ -46,7 +53,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			HDC hdc = BeginPaint(hWnd, &ps);					
 			ID2D1RenderTarget* cxt = d->cxt_.cxt;			
 			
-			SelectResource( d->res_ );
+			//SelectResource( d->res_ );
 
 			cxt->BeginDraw();
 			D2D1_MATRIX_3X2_F mat = Matrix3x2F::Identity();
@@ -323,8 +330,8 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 		
 		case WM_DESTROY:
 		{			
-			d->WndProc( message, wParam,lParam );
-			return DefWindowProc(hWnd, message, wParam, lParam);
+			return d->WndProc( message, wParam,lParam );
+			//return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
 		default :
@@ -375,7 +382,13 @@ int D2DWindow::SecurityId(bool bNew)
 	return sec_id;
 }
 
-D2DWindow::D2DWindow():capture_obj_(256),capture_pt_(256)
+D2DWindow::D2DWindow(
+	std::shared_ptr<CellProperty> spProp,
+	std::function<std::wstring()> getter,
+	std::function<void(const std::wstring&)> setter,
+	std::function<void(const std::wstring&)> changed,
+	std::function<void()> final)
+	:capture_obj_(256),capture_pt_(256),m_spProp(spProp), m_getter(getter), m_setter(setter), m_changed(changed), m_final(final), m_strInit(getter())
 {
 	
 	WNDCLASSEX wcx;
@@ -389,7 +402,7 @@ void D2DWindow::Clear()
 {
 	// All object are cleared.
 
-	ResourceCreate(false); 
+	//ResourceCreate(false); 
 
 	while ( !capture_obj_.empty())
 		capture_obj_.pop();
@@ -403,32 +416,32 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 	_ASSERT( parent );
 
 
-	if ( img_cnt > 0 )
-	{		
-		for( int i = 0; i < img_cnt; i++ )
-		{
-			UINT id = img_resource_id[i];
-			BitmapBank_[id] = nullptr;
-		}
-	}
+	//if ( img_cnt > 0 )
+	//{		
+	//	for( int i = 0; i < img_cnt; i++ )
+	//	{
+	//		UINT id = img_resource_id[i];
+	//		BitmapBank_[id] = nullptr;
+	//	}
+	//}
 
 	dwWSSTYLE |=WS_CLIPCHILDREN;
 
 	HWND h = parent;
-	HWND h2 = parent;
+	//HWND h2 = parent;
 
-	while( h )
-	{
-		h2 = h;
-		h = ::GetParent(h2);
-	}
+	//while( h )
+	//{
+	//	h2 = h;
+	//	h = ::GetParent(h2);
+	//}
 
-	hMainFrame_ = h2;
+	//hMainFrame_ = h2;
 
-	if( rc.top == rc.bottom )
-		rc.bottom = rc.top+1;
-	if (rc.right == rc.left)
-		rc.right = rc.left+ 1;
+	//if( rc.top == rc.bottom )
+	//	rc.bottom = rc.top+1;
+	//if (rc.right == rc.left)
+	//	rc.right = rc.left+ 1;
 	
 	hWnd_ =  ::CreateWindowExW( dwWSEXSTYLE, CLASSNAME, L"", dwWSSTYLE, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, parent, NULL, ::GetModuleHandle(0), this ); 	
 
@@ -454,21 +467,47 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 
 	}
 
-	cxt_.cxtt.Init( cxt_,DEFAULTFONT_HEIGHT_JP, DEFAULTFONT_JP ); // default font, default font size
+	cxt_.cxtt.Init( cxt_,m_spProp->Format->Font.Size, m_spProp->Format->Font.FamilyName.c_str()); // default font, default font size
 
-	res_ = ResourceAllocate( cxt_.cxt, SingletonD2DInstance::Init().wrfactory, hWnd_ );
-	SelectResource( res_ );
+	//res_ = ResourceAllocate( cxt_.cxt, SingletonD2DInstance::Init().wrfactory, hWnd_ );
+	//SelectResource( res_ );
 	
-	DragAcceptFiles( hWnd_, TRUE );
+	//DragAcceptFiles( hWnd_, TRUE );
 
 	redraw_ = 0;
 	roundpaint_obj_ = nullptr;
 
-	if ( OnCreate )
-		OnCreate( this );
+	// craete TSF tool
+	//	D2DTextbox::CreateInputControl(this);
+	// create top control
+	D2DTopControls* cs = new D2DTopControls();
+	cs->CreateWindow(this, VISIBLE, L"first layer");
+	//cs->auto_resize_ = false;
+
+	g_selection.ctrls = cs; // do nothing
+
+	// create sample control
+	//FRectF rc(0, 0, FSizeF(400, 400));
+	//Test* t = new Test();
+	//t->CreateWindow(parent, cs, rc, VISIBLE, NONAME);
+	FRectF rcText(0, 0, rc.right-rc.left, rc.bottom-rc.top);
+	FRectFBoxModel rcModel(rcText);
+	rcModel.BoderWidth_ = 1.f;
+	rcModel.Margin_.Set(0.f);
+	rcModel.Padding_.Set(2.5f);//(linewidth/2+padding)
+
+	D2DTextbox* txtbox = new D2DTextbox(hWnd_, V4::D2DTextbox::MULTILINE, m_changed);
+	txtbox->SetStat(V4::STAT::BORDER);
+	txtbox->CreateWindow(this, cs, rcModel, VISIBLE, L"txtbox");
+	//txtbox->auto_resize_ = false;
+	txtbox->SetText(m_strInit.c_str());
+	//TODO txtbox->SetFont();
+
 
 	// OnCreateで各子コントロールを作成後にサイズの調整が必要
 	SendMessage(hWnd_, WM_SIZE,0,MAKELPARAM(rc.right-rc.left,rc.bottom-rc.top));
+	SetCapture(txtbox);
+	txtbox->StatActive(true);
 	return hWnd_;
 
 }
@@ -477,7 +516,6 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT ret = 0;
-
 
 	auto children = children_.get();
 
@@ -503,19 +541,45 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 			if ( children )
 				children->WndProc(this,message,wParam,lParam);
 
-			ResourceRelease( res_ );
+			//ResourceRelease( res_ );
 		}					
 		else if ( wParam == 1 )
 		{
-			res_ = ResourceAllocate( cxt_.cxt, SingletonD2DInstance::Init().wrfactory, hWnd_ );
-			SelectResource( res_ );
+			//res_ = ResourceAllocate( cxt_.cxt, SingletonD2DInstance::Init().wrfactory, hWnd_ );
+			//SelectResource( res_ );
 
 			if ( children )
 				children->WndProc(this,message,wParam,lParam);
 		}
-	}
-	else if ( !capture_obj_.empty() && message < WM_D2D_EV_FIRST )
-	{
+	} else if (children && (message == WM_SYSKEYDOWN || message == WM_KEYDOWN ) && (wParam == VK_RETURN ) && !(::GetKeyState(VK_MENU) & 0x8000)) {
+		//Do not send message to children
+		::SetFocus(::GetParent(hWnd_));
+		return 0;
+	} else if (children && (message == WM_KEYDOWN) && (wParam == VK_TAB)) {
+		//Do not send message to children
+		::SetFocus(::GetParent(hWnd_));
+		return 0;
+	} else if (children && (message == WM_KEYDOWN) && (wParam == VK_ESCAPE)) {
+		//Back to initial string
+		if (auto p = std::dynamic_pointer_cast<V4::D2DTextbox>(children_->controls_[0])) {
+			p->SetText(m_strInit.c_str());
+		}
+		::SetFocus(::GetParent(hWnd_));//This function delete this as result
+		return 0;
+	} else if (message == WM_NCDESTROY) {
+		m_final();
+		::OutputDebugStringA("WM_NCDESTROY");
+		delete this;
+		return 0;
+	} else if (message == WM_KILLFOCUS) {
+		if (auto p = std::dynamic_pointer_cast<V4::D2DTextbox>(children_->controls_[0])) {
+			m_setter(p->GetText());
+		}
+		::OutputDebugStringA("WM_KILLFOCUS");
+		SendMessage(hWnd_, WM_CLOSE, NULL, NULL);
+		auto a = 3;
+		a += 4;
+	} else if ( !capture_obj_.empty() && message < WM_D2D_EV_FIRST ) {
 		auto obj1 = capture_obj_.top();
 	
 		auto r = obj1->WndProc( this, message, wParam, lParam ); 
@@ -546,7 +610,6 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 		ATLTRACE(L"death object removed cnt=%d\n", death_objects_.size());
 		death_objects_.clear();
 	}
-	
 	else if (children &&  message != WM_MOUSEMOVE)
 	{		
 		children->WndProc(this,message,wParam,lParam);
@@ -555,7 +618,6 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 	{		
 		children->WndProc(this,message,wParam,lParam);
 	}
-	
 	
 	switch( message )
 	{		
@@ -574,16 +636,20 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 		case WM_DESTROY:
 		{
-			children_->DestroyControl();
-			children_ = NULL;
+			::OutputDebugStringA("WM_DESTROY");
+			if (children_) {
+				children_->DestroyControl();
+				children_ = NULL;
+			}
 
 			Clear();
 
 			if ( OnDestroy )
 				OnDestroy( this );
 
-			cxt_.DestroyAll();
-			ResourceRelease( res_ );
+			if(cxt_)
+				cxt_.DestroyAll();
+			//ResourceRelease( res_ );
 		}
 		break;
 		
@@ -595,7 +661,7 @@ void D2DWindow::SetCapture(D2DCaptureObject* p,  FPointF* pt, D2DMat* mat )
 {
 	if ( capture_obj_.empty())
 	{
-		::SetCapture( hWnd_ );
+		//::SetCapture( hWnd_ );
 		
 	}
 	::SetFocus( hWnd_ );
@@ -693,7 +759,7 @@ D2DCaptureObject* D2DWindow::ReleaseCapture()
 
 	if ( capture_obj_.empty())
 	{		
-		::ReleaseCapture();
+		//::ReleaseCapture();
 	}
 
 	::SetFocus( hWnd );

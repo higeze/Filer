@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+﻿#include "text_stdafx.h"
 #include "TextLayout.h"
 #include "D2DContextNew.h"
 #include "D2DContextEx.h"
@@ -11,6 +11,8 @@ static LPCWSTR __password = L"**************************************************
 
 CTextLayout::CTextLayout()
 {
+	::OutputDebugStringA("Construct\r\n");
+
 	prgLines_ = NULL;
 	nLineCnt_ = 0;
 	str_ = NULL;
@@ -22,6 +24,8 @@ CTextLayout::CTextLayout()
 }
 CTextLayout::~CTextLayout()
 {
+	::OutputDebugStringA("Destruct\r\n");
+
 	Clear();
 }
 
@@ -68,8 +72,12 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 	}
 			
 	// 行数分のLINEINFOを作成, 文字0でもLINEINFOは１つ作成
-	prgLines_ = new LINEINFO[max(1,nLineCnt_)];
-	
+	::OutputDebugStringA((boost::format("New:%1%\r\n") % (std::max)((UINT)1, nLineCnt_)).str().c_str());
+
+	prgLines_ = new LINEINFO[(std::max)((UINT)1, nLineCnt_)];
+	::OutputDebugStringA((boost::format("This:%1%\r\n") % this).str().c_str());
+	::OutputDebugStringA((boost::format("Ptr:%1%\r\n") % prgLines_).str().c_str());
+
     // Count character of each line.　文字単位にPOS,LEN,RECTを取得
    
 	int nCurrentLine = -1;
@@ -513,7 +521,9 @@ BOOL CTextLayout::RectFromCharPos(UINT nPos, FRectF *prc)
 			break;
 		}
 	}
-	
+	::OutputDebugStringA((boost::format("This:%1%\r\n") % this).str().c_str());
+	::OutputDebugStringA((boost::format("Ptr:%1%\r\n") % prgLines_).str().c_str());
+
 	UINT pos = nPos - prgLines_[current_rowno].nPos;
 
 	if ( pos <= (UINT)prgLines_[current_rowno].nCnt && prgLines_[current_rowno].nCnt )
@@ -693,9 +703,14 @@ UINT CTextLayout::FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst)
 
 void CTextLayout::Clear()
 {
+	::OutputDebugStringA("Clear\r\n");
+	::OutputDebugStringA((boost::format("This:%1%\r\n") % this).str().c_str());
+	::OutputDebugStringA((boost::format("Ptr:%1%\r\n") % prgLines_).str().c_str());
+
+
     if (prgLines_)
     {
-        for (UINT i = 0; i < nLineCnt_; i++)
+        for (UINT i = 0; i < (std::max)((UINT)1, nLineCnt_); i++)
         {
             if (prgLines_[i].prgCharInfo)
             {

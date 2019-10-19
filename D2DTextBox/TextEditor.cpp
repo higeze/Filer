@@ -1,6 +1,6 @@
-﻿#include "stdafx.h"
-#include "tsf\TextEditor.h"
-#include "tsf\TextStoreACP.h"
+﻿#include "text_stdafx.h"
+#include "TextEditor.h"
+#include "TextStoreACP.h"
 #include "D2DWindow.h"
 
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
@@ -355,6 +355,7 @@ BOOL CTextEditor::InsertAtSelection(LPCWSTR psz)
 	LONG acs = ct_->nSelStart_;
 	LONG ecs = ct_->nSelEnd_;
 	pTextStore_->OnTextChange(acs, lOldSelEnd, ecs);
+	m_changed(ct_->GetTextBuffer());
 
 
 
@@ -381,6 +382,8 @@ BOOL CTextEditor::DeleteAtSelection(BOOL fBack)
 		LONG ecs = ct_->nSelEnd_;
 
         pTextStore_->OnTextChange(ecs, ecs + 1, ecs);
+		m_changed(ct_->GetTextBuffer());
+
     }
 	 
     if (fBack && (ct_->nSelStart_ > 0))
@@ -393,6 +396,7 @@ BOOL CTextEditor::DeleteAtSelection(BOOL fBack)
 
 		LONG acs = ct_->nSelStart_;
         pTextStore_->OnTextChange(acs, acs + 1, acs );
+		m_changed(ct_->GetTextBuffer());
         pTextStore_->OnSelectionChange();
     }
 
@@ -417,6 +421,7 @@ BOOL CTextEditor::DeleteSelection()
 	LONG acs = ct_->nSelStart_;
 
     pTextStore_->OnTextChange(acs, nSelOldEnd, acs);
+	m_changed(ct_->GetTextBuffer());
     pTextStore_->OnSelectionChange();
 
     return TRUE;
@@ -442,6 +447,7 @@ void CTextEditor::Render(D2DContext& cxt )
 
 	if ( layout_.bRecalc_ )
 	{
+		::OutputDebugStringA((boost::format("TextBuff:%1%, TextLen:%2%\r\n") % ct_->GetTextBuffer() % ct_->GetTextLength()).str().c_str());
 		layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_, zCaretPos, ct_->nStartCharPos_, cxt.text);
 		layout_.bRecalc_ = false;
 	}
@@ -466,6 +472,7 @@ void CTextEditor::CalcRender(D2DContext& cxt )
 {
 	int x = 0;
 	
+	::OutputDebugStringA((boost::format("TextBuff:%1%, TextLen:%2%\r\n") % ct_->GetTextBuffer() % ct_->GetTextLength()).str().c_str());
 	layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_,0, x, cxt.text);	
 
 	layout_.bRecalc_ = false;

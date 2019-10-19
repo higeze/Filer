@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+﻿#include "text_stdafx.h"
 #include "D2DWindow.h"
 #include "D2DWindowControl.h"
 #include "gdi32.h"

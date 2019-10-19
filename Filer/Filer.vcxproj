@@ -179,6 +179,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="..\D2DTextBox\Direct2dTemplate.rc" />
     <ResourceCompile Include="..\HiLib\FindDlg.rc" />
     <ResourceCompile Include="..\HiLib\Konami.rc" />
     <ResourceCompile Include="..\HiLib\SheetCell.rc" />
@@ -186,9 +187,44 @@
     <ResourceCompile Include="Filer.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\HiLib\Direct2dTemplate.ico" />
+    <Image Include="..\HiLib\small.ico" />
+    <Image Include="..\HiLib\title_btn.png" />
     <Image Include="Filer.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\Downloads\D2DWindowMaster\D2DWindow-master\projects\Direct2dTemplate\Direct2dTemplate\common_stdafx.h" />
+    <ClInclude Include="..\..\..\..\..\Downloads\D2DWindowMaster\D2DWindow-master\projects\Direct2dTemplate\Direct2dTemplate\controlhandle.h" />
+    <ClInclude Include="..\D2DTextBox\D2DApi.h" />
+    <ClInclude Include="..\D2DTextBox\D2DCharRect.h" />
+    <ClInclude Include="..\D2DTextBox\D2DContextEx.h" />
+    <ClInclude Include="..\D2DTextBox\D2DContextNew.h" />
+    <ClInclude Include="..\D2DTextBox\d2dmatome.h" />
+    <ClInclude Include="..\D2DTextBox\D2DMisc.h" />
+    <ClInclude Include="..\D2DTextBox\d2dmisc2.h" />
+    <ClInclude Include="..\D2DTextBox\D2DResource.h" />
+    <ClInclude Include="..\D2DTextBox\d2dwindow.h" />
+    <ClInclude Include="..\D2DTextBox\d2dwindowcontrol.h" />
+    <ClInclude Include="..\D2DTextBox\D2DWindowMessage.h" />
+    <ClInclude Include="..\D2DTextBox\D2DWindowMessageStruct.h" />
+    <ClInclude Include="..\D2DTextBox\Direct2dTemplate.h" />
+    <ClInclude Include="..\D2DTextBox\DisplayAttribute.h" />
+    <ClInclude Include="..\D2DTextBox\faststack.h" />
+    <ClInclude Include="..\D2DTextBox\fstring.h" />
+    <ClInclude Include="..\D2DTextBox\gdi32.h" />
+    <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h" />
+    <ClInclude Include="..\D2DTextBox\ItemLoopArray.h" />
+    <ClInclude Include="..\D2DTextBox\MoveTarget.h" />
+    <ClInclude Include="..\D2DTextBox\resource.h" />
+    <ClInclude Include="..\D2DTextBox\Selection.h" />
+    <ClInclude Include="..\D2DTextBox\text_stdafx.h" />
+    <ClInclude Include="..\D2DTextBox\stringstream.h" />
+    <ClInclude Include="..\D2DTextBox\targetver.h" />
+    <ClInclude Include="..\D2DTextBox\TextContainer.h" />
+    <ClInclude Include="..\D2DTextBox\TextEditor.h" />
+    <ClInclude Include="..\D2DTextBox\TextLayout.h" />
+    <ClInclude Include="..\D2DTextBox\TextStoreACP.h" />
+    <ClInclude Include="..\D2DTextBox\undo.h" />
     <ClInclude Include="..\HiLib\ApplicationProperty.h" />
     <ClInclude Include="..\HiLib\atlpartial.h" />
     <ClInclude Include="..\HiLib\Band.h" />
@@ -378,6 +414,22 @@
     <ClInclude Include="ViewProperty.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\D2DTextBox\D2DApi.cpp" />
+    <ClCompile Include="..\D2DTextBox\D2DApiEx.cpp" />
+    <ClCompile Include="..\D2DTextBox\D2DContextEx.cpp" />
+    <ClCompile Include="..\D2DTextBox\D2DResource.cpp" />
+    <ClCompile Include="..\D2DTextBox\D2DWindow.cpp" />
+    <ClCompile Include="..\D2DTextBox\D2DWindowControl.cpp" />
+    <ClCompile Include="..\D2DTextBox\D2DWindowDeveloping.cpp" />
+    <ClCompile Include="..\D2DTextBox\D2DWindowListbox.cpp" />
+    <ClCompile Include="..\D2DTextBox\D2DWindowTextboxTSF.cpp" />
+    <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />
+    <ClCompile Include="..\D2DTextBox\text_stdafx.cpp" />
+    <ClCompile Include="..\D2DTextBox\TextContainer.cpp" />
+    <ClCompile Include="..\D2DTextBox\TextEditor.cpp" />
+    <ClCompile Include="..\D2DTextBox\TextLayout.cpp" />
+    <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp" />
+    <ClCompile Include="..\D2DTextBox\undo.cpp" />
     <ClCompile Include="..\HiLib\Band.cpp" />
     <ClCompile Include="..\HiLib\BoolCell.cpp" />
     <ClCompile Include="..\HiLib\BoostPythonHelper.cpp" />

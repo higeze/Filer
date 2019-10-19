@@ -1,11 +1,9 @@
 ﻿#pragma once
-
+#include "text_stdafx.h"
 #include "D2DMisc.h"
 #include "D2DApi.h"
-#include "fstring.h"
-#include <comutil.h>
-#include <d2d1_1.h>
-#include <dwrite_1.h>
+#include <dxgi1_2.h>
+
 
 namespace V4 
 {
@@ -208,7 +206,7 @@ class D2DError
 	public :
 		explicit D2DError( HRESULT hr, LPCWSTR msg, UINT line, LPCSTR fnm):hr_(hr),msg_(msg),line_(line),fnm_(fnm )
 		{
-//			TRACE(L"%s :%d行 HR=%x %s\n", (LPCWSTR)fnm_, line_,hr_,(LPCWSTR)msg_);		
+			TRACE(L"%s :%d行 HR=%x %s\n", (LPCWSTR)fnm_, line_,hr_,(LPCWSTR)msg_);		
 		}
 
 	public :
@@ -233,7 +231,7 @@ inline HRESULT NoThrowIfFailed(HRESULT hr)
     if (FAILED(hr))
     {
         // Set a breakpoint on this line to catch Win32 API errors.
-//		TRACE( L"NoThrowIfFailed %x\n", hr );        
+		TRACE( L"NoThrowIfFailed %x\n", hr );        
     }
 
 	return hr;

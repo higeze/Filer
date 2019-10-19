@@ -59,6 +59,7 @@ class CTextContainer;
 class CTextEditor 
 {
 	public:
+		std::function<void(const std::wstring&)> m_changed;
 		CTextEditor();
 		virtual ~CTextEditor(); 
     
@@ -186,6 +187,7 @@ class CTextEditorCtrl : public CTextEditor
 
 // mainframe.cpp‚É‚ ‚é
 CTextEditorCtrl* GetTextEditorCtrl(); 
+CTextEditorCtrl* GetTextEditorCtrl2(HWND hWnd);
 
 
 

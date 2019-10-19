@@ -1,7 +1,10 @@
-﻿#include "stdafx.h"
+﻿#include "text_stdafx.h"
 #include "D2DContextEx.h"
+#include <d3d11.h>
+#include <dxgi1_2.h>
+#include "D2DApi.h"
 
-#pragma comment(lib,"D2DApi.lib")
+//#pragma comment(lib,"D2DApi.lib")
 
 static LARGE_INTEGER __s_frequency_;
 

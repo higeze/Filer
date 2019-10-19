@@ -1,6 +1,10 @@
 #pragma once
 #include "Cell.h"
 #include <unordered_map>
+#include "D2DWindow.h"
+#include "D2DWindowControl.h"
+#include "msxml6.tlh"
+
 
 class CInplaceEdit;
 
@@ -70,7 +74,8 @@ public:
 class CTextCell:public CCell
 {
 protected:
-	CInplaceEdit* m_pEdit;
+	//CInplaceEdit* m_pEdit;
+	V4::D2DWindow* m_pEdit;
 public:
 	CTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr)
 		:CCell(pSheet,pRow, pColumn,spProperty,pMenu),m_pEdit(NULL){}
@@ -79,7 +84,7 @@ public:
 	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint);
 	virtual void PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint);
 
-	void SetEditPtr(CInplaceEdit* pEdit) { m_pEdit = pEdit; }
+	void SetEditPtr(V4::D2DWindow* pEdit) { m_pEdit = pEdit; }
 	//virtual CSize MeasureSize(CDC* pDC);
 	//virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
 	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite& direct) override;

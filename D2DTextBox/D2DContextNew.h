@@ -1,5 +1,5 @@
 #pragma once
-#include "common_stdafx.h"
+
 #include "D2DMisc.h"
 
 namespace V4

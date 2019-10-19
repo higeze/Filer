@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "text_stdafx.h"
 #include "undo.h"
 
 // 2016/4/2, not implement

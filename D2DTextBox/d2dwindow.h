@@ -19,6 +19,7 @@
 #define DEAD( stat ) (stat&STAT::DEAD)
 #define BORDER( stat ) (stat&STAT::BORDER)
 
+class CellProperty;
 
 
 
@@ -65,10 +66,23 @@ namespace Inner {
 enum MOUSE_MODE { NONE,MOVE,RESIZE,COLUM_RESIZE,ROW_RESIZE,CHILD_CTRL };
 //enum OBJ_STATUS { NONE=0,SELECT=0x1,CAPTURED=0x2 };
 
+
 class D2DWindow
 {
+public:
+	std::shared_ptr<CellProperty> m_spProp;
+	std::function<std::wstring()> m_getter;
+	std::function<void(const std::wstring&)> m_setter;
+	std::function<void(const std::wstring&)> m_changed;
+	std::function<void()> m_final;
+	std::wstring m_strInit;
 	public :
-		D2DWindow();
+		D2DWindow(
+			std::shared_ptr<CellProperty> spProp,
+			std::function<std::wstring()> getter,
+			std::function<void(const std::wstring&)> setter,
+			std::function<void(const std::wstring&)> changed,
+			std::function<void()> final);
 		//virtual ~D2DWindow(){ Clear(); }
 
 		HWND CreateD2DWindow( DWORD WSEX_STYLE, HWND parent, DWORD WS_STYLE, RECT rc, UINT* img_resource_id=nullptr, int img_cnt=0 );		
