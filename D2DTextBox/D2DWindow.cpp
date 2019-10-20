@@ -36,12 +36,11 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			CREATESTRUCT* st = (CREATESTRUCT*)lParam;
 			
 			::SetWindowLongPtr( hWnd, GWL_USERDATA,(LONG) st->lpCreateParams ); // GWL_USERDATA must be set here.
+			D2DWindow* d = (D2DWindow*)::GetWindowLongPtr(hWnd, GWL_USERDATA);
+			
+			d->m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(hWnd);
 
 			SetFocus(hWnd);
-
-			#if _DEBUG
-			::remove("capture_reki.txt");
-			#endif
 
 			return 0; // DefWindowProc(hWnd, message, wParam, lParam);
 		}		
@@ -97,39 +96,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 					it++;
 			}
 
-#ifdef BOXMODELTEST
-{
-	auto cxttemp = d->cxt_;
-	FRectFBoxModel rcx(200,200,FSizeF(100,100));
-
-	rcx.Margin_.Set(10);
-	rcx.BoderWidth_ = 10;
-	rcx.Padding_.Set(0); 
-
-	{
-		auto rc1 = rcx.GetBorderRect();
-	
-		D2DRectFilter filter(d->cxt_, rc1 );
-
-		auto rcb = rcx.GetBorderRect();
-
-		auto rcc = rcx.GetContentRect();
-
-		d->cxt_.cxt->FillRectangle( rcc, cxttemp.ltgray );	
-		d->cxt_.cxt->DrawRectangle( rcb, cxttemp.black, 1 );
-	}
-
-	{
-		
-		auto rc1 = rcx.GetMarginRect();
-		D2DRectFilter filter(d->cxt_, rc1 );
-	
-		d->cxt_.cxt->FillRectangle( rc1, cxttemp.transparent );	
-		d->cxt_.cxt->DrawRectangle( rc1, cxttemp.black, 1 );
-	}
-}
-#endif
-
 			if (d->redraw_)
 			{
 				InvalidateRect(hWnd, NULL, FALSE);
@@ -143,19 +109,17 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			{
 				d->WndProc( WM_D2D_RESTRUCT_RENDERTARGET, 0,0 ); // RenderTargetにリンクしている物はすべてリリース
 
-				d->ResourceCreate(false);
-
 				// ディスプレイの解像度を変更したり、ディスプレイ アダプターを取り外したりすると、デバイスが消失する可能性があります
+
+				d->m_pDirect->Clear();
+
+
 				d->cxt_.DestroyRenderTargetResource();
 
-				#ifdef USE_ID2D1DEVICECONTEXT
-					d->cxt_.CreateDeviceContextRenderTarget( hWnd );
-				#else
-					d->cxt_.CreateHwndRenderTarget( hWnd );
-				#endif
+				d->cxt_.cxt = d->m_pDirect->GetHwndRenderTarget();
+				
 				d->cxt_.CreateRenderTargetResource( d->cxt_.cxt );
 
-				d->ResourceCreate(true);
 				d->WndProc( WM_D2D_RESTRUCT_RENDERTARGET, 1,0 );// RenderTargetに再リンク
 
 				InvalidateRect(hWnd, NULL, FALSE);
@@ -188,40 +152,12 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			auto bl = ( d->cxt_.cxt != NULL );		
 			if ( bl )
 			{
-				#ifdef USE_ID2D1DEVICECONTEXT
-				{					
-					UINT cx = d->cxt_.RenderSize_.width;
-					UINT cy = d->cxt_.RenderSize_.height;
-
-					UINT ncx = LOWORD(lParam);
-					UINT ncy = HIWORD(lParam);
-
-					// 大きい場合と小さすぎる場合に再作成
-					if ( cx < ncx || cy < ncy ||  ncx < (cx * 0.5) ||  ncy < (cy * 0.5)  )
-					{
-
-						// capture時めーっセージが回らないかもしれない
-			TRACE( L"%d %d %d %d %x\n" , cx, ncx, cy, ncy, d->GetCapture());
-
-						d->WndProc( WM_D2D_RESTRUCT_RENDERTARGET, 0,0 ); // RenderTargetにリンクしている物はすべてリリース
-						d->ResourceCreate(false);
-
-						d->cxt_.DestroyRenderTargetResource();
-						d->cxt_.CreateDeviceContextRenderTarget( hWnd );
-						d->cxt_.CreateRenderTargetResource( d->cxt_.cxt );
-						
-						d->ResourceCreate(true);
-						d->WndProc( WM_D2D_RESTRUCT_RENDERTARGET, 1,0 );// RenderTargetに再リンク
-					}
-				}
-				#else
 				{
 					CComPtr<ID2D1HwndRenderTarget> trgt;
 					auto hr = d->cxt_.cxt->QueryInterface( &trgt );												
 					if ( HR(hr))				
 						trgt->Resize( D2D1::SizeU( LOWORD(lParam), HIWORD(lParam) ));
 				}
-				#endif
 
 				d->WndProc( message, wParam,lParam );
 			}
@@ -402,8 +338,6 @@ void D2DWindow::Clear()
 {
 	// All object are cleared.
 
-	//ResourceCreate(false); 
-
 	while ( !capture_obj_.empty())
 		capture_obj_.pop();
 	
@@ -415,51 +349,23 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 	_ASSERT( dwWSSTYLE & WS_CHILD );
 	_ASSERT( parent );
 
-
-	//if ( img_cnt > 0 )
-	//{		
-	//	for( int i = 0; i < img_cnt; i++ )
-	//	{
-	//		UINT id = img_resource_id[i];
-	//		BitmapBank_[id] = nullptr;
-	//	}
-	//}
-
 	dwWSSTYLE |=WS_CLIPCHILDREN;
 
 	HWND h = parent;
-	//HWND h2 = parent;
-
-	//while( h )
-	//{
-	//	h2 = h;
-	//	h = ::GetParent(h2);
-	//}
-
-	//hMainFrame_ = h2;
-
-	//if( rc.top == rc.bottom )
-	//	rc.bottom = rc.top+1;
-	//if (rc.right == rc.left)
-	//	rc.right = rc.left+ 1;
 	
-	hWnd_ =  ::CreateWindowExW( dwWSEXSTYLE, CLASSNAME, L"", dwWSSTYLE, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, parent, NULL, ::GetModuleHandle(0), this ); 	
+	m_hWnd =  ::CreateWindowExW( dwWSEXSTYLE, CLASSNAME, L"", dwWSSTYLE, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, parent, NULL, ::GetModuleHandle(0), this ); 	
 
 	try 
 	{
 		cxt_.Init( SingletonD2DInstance::Init() );
 
-		#ifdef USE_ID2D1DEVICECONTEXT
-			cxt_.CreateDeviceContextRenderTarget( hWnd_ );
-		#else
-			cxt_.CreateHwndRenderTarget( hWnd_ );
-		#endif
+		//cxt_.CreateHwndRenderTarget( m_hWnd );
+		cxt_.cxt = m_pDirect->GetHwndRenderTarget();
 
 		cxt_.CreateRenderTargetResource( cxt_.cxt );
 		cxt_.CreateResourceOpt();
+//		ResourceCreate(true);
 
-
-		ResourceCreate(true);
 	}
 	catch( D2DError er)
 	{
@@ -469,34 +375,23 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 
 	cxt_.cxtt.Init( cxt_,m_spProp->Format->Font.Size, m_spProp->Format->Font.FamilyName.c_str()); // default font, default font size
 
-	//res_ = ResourceAllocate( cxt_.cxt, SingletonD2DInstance::Init().wrfactory, hWnd_ );
-	//SelectResource( res_ );
-	
-	//DragAcceptFiles( hWnd_, TRUE );
-
 	redraw_ = 0;
 	roundpaint_obj_ = nullptr;
 
-	// craete TSF tool
-	//	D2DTextbox::CreateInputControl(this);
 	// create top control
 	D2DTopControls* cs = new D2DTopControls();
 	cs->CreateWindow(this, VISIBLE, L"first layer");
-	//cs->auto_resize_ = false;
 
 	g_selection.ctrls = cs; // do nothing
 
-	// create sample control
-	//FRectF rc(0, 0, FSizeF(400, 400));
-	//Test* t = new Test();
-	//t->CreateWindow(parent, cs, rc, VISIBLE, NONAME);
+	// create textbox control
 	FRectF rcText(0, 0, rc.right-rc.left, rc.bottom-rc.top);
 	FRectFBoxModel rcModel(rcText);
 	rcModel.BoderWidth_ = 1.f;
 	rcModel.Margin_.Set(0.f);
 	rcModel.Padding_.Set(2.5f);//(linewidth/2+padding)
 
-	D2DTextbox* txtbox = new D2DTextbox(hWnd_, V4::D2DTextbox::MULTILINE, m_changed);
+	D2DTextbox* txtbox = new D2DTextbox(m_hWnd, V4::D2DTextbox::MULTILINE, m_changed);
 	txtbox->SetStat(V4::STAT::BORDER);
 	txtbox->CreateWindow(this, cs, rcModel, VISIBLE, L"txtbox");
 	//txtbox->auto_resize_ = false;
@@ -505,10 +400,10 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 
 
 	// OnCreateで各子コントロールを作成後にサイズの調整が必要
-	SendMessage(hWnd_, WM_SIZE,0,MAKELPARAM(rc.right-rc.left,rc.bottom-rc.top));
+	SendMessage(m_hWnd, WM_SIZE,0,MAKELPARAM(rc.right-rc.left,rc.bottom-rc.top));
 	SetCapture(txtbox);
 	txtbox->StatActive(true);
-	return hWnd_;
+	return m_hWnd;
 
 }
 
@@ -525,8 +420,6 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		children->WndProc(this,WM_PAINT,wParam,lParam);
 
-		if ( tooltip_.IsShow())
-			tooltip_.Draw();
 		if (roundpaint_obj_ )
 			roundpaint_obj_->WndProc(this, message, wParam, lParam);
 	}
@@ -540,31 +433,27 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			if ( children )
 				children->WndProc(this,message,wParam,lParam);
-
-			//ResourceRelease( res_ );
 		}					
 		else if ( wParam == 1 )
 		{
-			//res_ = ResourceAllocate( cxt_.cxt, SingletonD2DInstance::Init().wrfactory, hWnd_ );
-			//SelectResource( res_ );
 
 			if ( children )
 				children->WndProc(this,message,wParam,lParam);
 		}
 	} else if (children && (message == WM_SYSKEYDOWN || message == WM_KEYDOWN ) && (wParam == VK_RETURN ) && !(::GetKeyState(VK_MENU) & 0x8000)) {
 		//Do not send message to children
-		::SetFocus(::GetParent(hWnd_));
+		::SetFocus(::GetParent(m_hWnd));
 		return 0;
 	} else if (children && (message == WM_KEYDOWN) && (wParam == VK_TAB)) {
 		//Do not send message to children
-		::SetFocus(::GetParent(hWnd_));
+		::SetFocus(::GetParent(m_hWnd));
 		return 0;
 	} else if (children && (message == WM_KEYDOWN) && (wParam == VK_ESCAPE)) {
 		//Back to initial string
 		if (auto p = std::dynamic_pointer_cast<V4::D2DTextbox>(children_->controls_[0])) {
 			p->SetText(m_strInit.c_str());
 		}
-		::SetFocus(::GetParent(hWnd_));//This function delete this as result
+		::SetFocus(::GetParent(m_hWnd));//This function delete this as result
 		return 0;
 	} else if (message == WM_NCDESTROY) {
 		m_final();
@@ -576,7 +465,7 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 			m_setter(p->GetText());
 		}
 		::OutputDebugStringA("WM_KILLFOCUS");
-		SendMessage(hWnd_, WM_CLOSE, NULL, NULL);
+		SendMessage(m_hWnd, WM_CLOSE, NULL, NULL);
 		auto a = 3;
 		a += 4;
 	} else if ( !capture_obj_.empty() && message < WM_D2D_EV_FIRST ) {
@@ -664,39 +553,8 @@ void D2DWindow::SetCapture(D2DCaptureObject* p,  FPointF* pt, D2DMat* mat )
 		//::SetCapture( hWnd_ );
 		
 	}
-	::SetFocus( hWnd_ );
-	
+	::SetFocus( m_hWnd );
 
-	#ifdef _DEBUG
-	{
-		/*V2::File cf;
-		int a = cf.OpenWrite( L"capture_reki.txt", false, V2::File::TYP::ASCII );
-		cf.SeekToEnd();
-	
-
-		if ( dynamic_cast<D2DControl*>(p) )
-		{
-			FString s = FString::Format(L"SetCapture %x %s", p, ((D2DControl*) p)->name_.c_str());
-			cf.WriteString( s, true );
-			ATLTRACE( L"%s\n", s.c_str() );
-		}
-		else 	
-		{
-			FString s = FString::Format(L"SetCapture %x %s", p, L"---" );
-			cf.WriteString(s, true);
-			ATLTRACE(L"%s\n", s.c_str());
-		}
-
-		if (!capture_obj_.empty() && p == capture_obj_.top())
-		{
-			cf.WriteString(L"却下", true);
-			ATLTRACE(L"%s\n", L"却下");
-		}
-
-
-		cf.Close();*/
-	}
-	#endif
 
 	if (capture_obj_.empty() )
 		capture_obj_.push(p);
@@ -710,13 +568,6 @@ void D2DWindow::SetCapture(D2DCaptureObject* p,  FPointF* pt, D2DMat* mat )
 
 	if ( mat )
 		capture_matrix_ = *mat;
-
-	//auto pw = dynamic_cast<D2DControls*>(p);// dynamic_cast<D2DCaptureWindow*>(p);
-	//if ( pw )
-	//{
-	//	// vectorの順番を変更する
-	//	pw->MeToLast();
-	//}
 }
 D2DCaptureObject* D2DWindow::ReleaseCapture()
 {
@@ -724,34 +575,10 @@ D2DCaptureObject* D2DWindow::ReleaseCapture()
 	roundpaint_obj_ = nullptr;
 
 	
-	if ( dynamic_cast<D2DButton*>(p) )
-	{
+	if (dynamic_cast<D2DButton*>(p)) {
 		int a = 0;
-
 	}
-
-
-#ifdef _DEBUG
-	{
-		/*V2::File cf;
-		cf.OpenWrite(L"capture_reki.txt", false, V2::File::TYP::ASCII);
-		cf.SeekToEnd();
-
-		if (dynamic_cast<D2DControl*>(p))
-		{
-			FString s = FString::Format(L"ReleaseCapture %x %s", p, ((D2DControl*) p)->name_.c_str());
-			cf.WriteString(s, true);
-			ATLTRACE(L"%s\n", s.c_str());
-		}
-		else
-		{
-			FString s = FString::Format(L"ReleaseCapture %x %s", p, L"---");
-			cf.WriteString(s, true);
-			ATLTRACE(L"%s\n", s.c_str());
-		}
-		cf.Close();*/
-	}
-#endif
+	
 
 	capture_obj_.pop();		
 
@@ -764,14 +591,7 @@ D2DCaptureObject* D2DWindow::ReleaseCapture()
 
 	::SetFocus( hWnd );
 	redraw_ = 1;
-	
 
-//auto pw = dynamic_cast<D2DControls*>(p);// dynamic_cast<D2DCaptureWindow*>(p);
-//if ( pw )
-//{
-//	// vectorの順番を変更する
-//	pw->MeToOrg();
-//}
 
 	return p;
 }
@@ -782,73 +602,6 @@ void V4::SetCursor( HCURSOR h )
 	{	
 		::SetCursor( h );
 	}
-}
-void Inner::ToolTip::Set( D2DControl*p, LPCWSTR str )
-{ 
-	str_ = str; ctrl_ = p; 
-	
-	isShow_ = true;
-	
-	::GetCursorPos(&pt_); // マウスの位置
-
-	ScreenToClient(ctrl_->parent_->hWnd_, &pt_ );
-
-
-	rc_.SetRect(0,0,200,30);
-
-	rc_.Offset( pt_.x, pt_.y+20 ); // 20 cursorの高さサイズ
-
-}
-
-void Inner::ToolTip::Draw()
-{
-	FPoint pt;
-	::GetCursorPos(&pt);
-	ScreenToClient(ctrl_->parent_->hWnd_, &pt );
-
-	if ( pt.x == pt_.x && pt.y == pt_.y )
-	{	
-		auto cxt = ctrl_->parent_->cxt_;
-		D2DMatrix mat(cxt);
-		mat.PushTransform();
-
-		mat._31 = 0;
-		mat._32 = 0;
-
-		mat.SetTransform();
-
-		cxt.SetAntiAlias(false );
-
-
-		FSizeF sz = CalcText( cxt.cxtt.textformat, str_, str_.length() );
-
-		FRectF rc;
-		rc.SetPoint( rc_.LeftTop());
-		rc.SetSize(sz);		
-		rc.InflateRect(3,3);		
-		
-		FRectFBoxModel rcm = rc;
-		
-		rcm.Padding_.Set(3);
-
-		xassert( cxt.tooltip );
-		DrawFillRect(cxt,rcm.GetBorderRect(),cxt.black, cxt.tooltip,1);
-	
-		DrawCenterText( cxt, cxt.black,rcm.GetContentRect(), str_, str_.length(), 0 );
-
-
-		cxt.SetAntiAlias(true );
-
-		mat.PopTransform();
-	}
-	else
-		Show(false);
-
-}
-void D2DWindow::ShowToolTip( D2DControl* p, LPCWSTR message )
-{
-	tooltip_.Set( p, message );	
-
 }
 
 DWORD D2DRGBADWORD_CONV(D2D1_COLOR_F clr)
@@ -861,71 +614,21 @@ DWORD D2DRGBADWORD_CONV(D2D1_COLOR_F clr)
 	return D2DRGBADWORD(r,g,b,a );
 }
 
-ID2D1SolidColorBrush* D2DWindow::GetSolidColor(D2D1_COLOR_F clr)
+
+CComPtr<ID2D1SolidColorBrush> D2DWindow::GetSolidColor(D2D1_COLOR_F clr)
 {
-	DWORD d = D2DRGBADWORD_CONV(clr );
+	auto pBrush = m_pDirect->GetColorBrush(d2dw::CColorF(clr.r, clr.g, clr.b, clr.a));
+	return pBrush.p;
 
-	auto& it = SolidColorBank_.find(d);
-	if (it != SolidColorBank_.end())
-		return it->second;
+	//DWORD d = D2DRGBADWORD_CONV(clr);
 
-	auto r = MakeBrsuh(cxt_, clr).Detach();
-	SolidColorBank_[d] = r;
-	return r;
-}
-bool D2DWindow::GetResourceImage( UINT id, ID2D1Bitmap** bmp )
-{
-	auto it = BitmapBank_.find(id);
-	if ( it != BitmapBank_.end())
-	{
-		*bmp = it->second;
-		(*bmp)->AddRef();
-		return true;
-	}
-	*bmp = nullptr;
-	return false;
-}
+	//auto& it = SolidColorBank_.find(d);
+	//if (it != SolidColorBank_.end())
+	//	return it->second;
 
-void D2DWindow::ResourceCreate(bool bCreate)
-{
-	if ( !bCreate )
-	{
-		ULONG cn;
-		for( auto& it : SolidColorBank_ )
-		{
-			cn = it.second->Release();
-			_ASSERT( cn == 0 );
-
-
-		}
-		for( auto& it : BitmapBank_ )
-		{			
-			cn = it.second->Release();
-			_ASSERT(cn == 0);
-		}
-		
-		// after this, recreate RenderTarget.	
-	}
-	else
-	{
-		for (auto& it : SolidColorBank_)
-		{
-			DWORD dw = it.first;
-			auto clr = D2DRGBA(dw);
-			SolidColorBank_[ dw ] = MakeBrsuh( cxt_, clr ).Detach();
-		}
-
-		for (auto& it : BitmapBank_)
-		{
-			DWORD id = it.first;
-			
-			CComPtr<ID2D1Bitmap> bmp;
-			if ( V4::LoadResourceImage(cxt_, L"PNG", id, &bmp))
-			{
-				BitmapBank_[ id ] =  bmp.Detach();
-			}
-		}
-	}
+	//auto r = MakeBrsuh(cxt_, clr).Detach();
+	//SolidColorBank_[d] = r;
+	//return r;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
 CHDL ControlHandle::handle_ = 800; // initial value

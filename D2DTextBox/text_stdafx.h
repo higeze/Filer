@@ -55,7 +55,7 @@
 
 
 
-#define USE_ID2D1DEVICECONTEXT
+//#define USE_ID2D1DEVICECONTEXT
 
 //#include "msxml6.tlh"
 

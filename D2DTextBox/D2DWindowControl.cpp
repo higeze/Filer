@@ -711,7 +711,7 @@ LRESULT D2DButton::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lPa
 					if ( parent_control_ )
 					{
 						//parent_control_->WndProc( parent_, WM_D2D_BUTTON_CLICK, id_,(LPARAM)this);
-						::SendMessage( d->hWnd_, WM_D2D_BUTTON_CLICK, id_,(LPARAM)this);
+						::SendMessage( d->m_hWnd, WM_D2D_BUTTON_CLICK, id_,(LPARAM)this);
 
 					}
 					// after sending message.
@@ -777,7 +777,7 @@ LRESULT D2DButton::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lPa
 				if ( parent_control_ )
 				{
 					//parent_control_->WndProc( parent_, WM_D2D_BUTTON_CLICK, id_,(LPARAM)this);
-					::SendMessage( d->hWnd_, WM_D2D_BUTTON_CLICK, id_,(LPARAM)this);
+					::SendMessage( d->m_hWnd, WM_D2D_BUTTON_CLICK, id_,(LPARAM)this);
 					ret = 1;
 				}
 			}
@@ -1469,7 +1469,7 @@ LRESULT  D2DSlider::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 				float off2 = (pt.x - prev.x) / rc_.GetContentRect().Width()*100.0f;
 				pos_ = min( 100, max( 0, pos_ + off2));
 				
-				PostMessage( parent_->hWnd_, WM_D2D_EVSLIDER_CHEANGED, (WPARAM)this, (LPARAM)&pos_ );
+				PostMessage( parent_->m_hWnd, WM_D2D_EVSLIDER_CHEANGED, (WPARAM)this, (LPARAM)&pos_ );
 
 				d->redraw_ = 1;
 				ret = 1;
@@ -2432,7 +2432,7 @@ LRESULT D2DSheetWindow::WndProcNormal(D2DWindow* d, UINT message, WPARAM wParam,
 		
 		
 		RECT rc;
-		::GetClientRect(d->hWnd_,&rc);
+		::GetClientRect(d->m_hWnd,&rc);
 
 		FRectF rc11(0,0,rc.right,rc.bottom);
 		DrawFill( cxt, rc11, cxt.white );
@@ -2969,7 +2969,7 @@ void D2DMessageBox::DoModal( D2DControl* parent, LPCWSTR msg, LPCWSTR title, int
 	xassert( parent );
 	
 	
-	HWND hWnd = parent->parent_->hWnd_;
+	HWND hWnd = parent->parent_->m_hWnd;
 
 	RECT rc;
 	GetClientRect( hWnd, &rc );
@@ -3462,7 +3462,7 @@ const D2DMessageBox* MessageBox( D2DControl* p, LPCWSTR msg, LPCWSTR title, int 
 	
 	std::function<void(D2DMessageBox*,int)>  f = [](D2DMessageBox* p,int result)
 	{
-		::SendMessage( p->parent_->hWnd_, WM_D2D_MESSAGEBOX_CLOSED, (WPARAM)result, (LPARAM)p );
+		::SendMessage( p->parent_->m_hWnd, WM_D2D_MESSAGEBOX_CLOSED, (WPARAM)result, (LPARAM)p );
 	};
 	
 	mb->onclose_ = f;
@@ -4058,98 +4058,10 @@ void D2DTopControls::CreateResource(bool bCreate)
 
 	if ( bCreate )
 	{
-		back_.br = parent_->GetSolidColor( back_.color );
+		back_.br = parent_->GetSolidColor(back_.color);
+
+//		back_.br = parent_->m_pDirect->GetColorBrush(d2dw::CColorF(0.f, 0.f, 0.f, 1.f));
 	}		
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void D2DCheckbox::OnCreate()
-{
-	clr_fore_ = COLOR_DEF_FORE;
-}
-LRESULT D2DCheckbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	LRESULT ret = 0;
-
-
-	if ( !IsThroughMessage(message))
-		return 0;
-
-	switch (message )
-	{
-		case WM_PAINT:
-		{
-			D2DContext& cxt = d->cxt_;
-			D2DMatrix mat(cxt);
-			mat.PushTransform();
-			mat_ = mat; // 親コントロールが原点
-			mat.Offset( rc_.left, rc_.top );
-			{
-				// 自座標　左上が(0,0)となる
-				FRectF rc1 = rc_.ZeroRect();
-				//D2DRectFilter f(cxt, rc1);		
-
-				if (BORDER(stat_))
-					DrawFillRect(cxt, rc1,cxt.black,cxt.ltgray,1);
-				
-
-				rc1.left += rc1.Height() + 2;
-				V4::DrawCenterText( cxt.cxtt, cxt.black, rc1, name_, name_.length(), 0 );
-				
-				
-
-				{
-					FRectF rcb(0,0,rc1.Height(),rc1.Height());
-					if ( bl_ )
-					{					
-						
-						float off = ((rcb.Width() - 13) / 2);
-						DrawRect(cxt,rcb,cxt.black,1);
-						
-						auto br2 = MakeBrsuh(cxt, clr_fore_);
-						mat.Offset( off, off );
-						V4::DrawCheckMark( cxt, br2 );
-					}
-					else
-					{
-						DrawRect(cxt,rcb,cxt.black,1);
-					}
-			}
-			}
-			mat.PopTransform();
-		}
-		break;
-		case WM_LBUTTONDOWN:
-		{
-			FPointF pt = mat_.DPtoLP( FPointF(lParam));
-			if ( rc_.PtInRect( pt ) )
-			{
-				FRectF rc1 = rc_;
-				rc1.right = rc1.left + rc1.Height();
-				
-				if ( rc1.PtInRect(pt))
-				{
-					bl_ = !bl_;
-					d->SetCapture(this);
-					ret = 1;
-				}
-			}
-		}
-		break;
-		case WM_LBUTTONUP:
-		{
-			if ( d->GetCapture() == this )
-			{
-				d->ReleaseCapture();
-				
-
-				if ( onclick_ )
-					onclick_(this );
-			}
-		}
-		break;
-	}
-
-	return ret;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -4362,7 +4274,7 @@ void D2DMessageDialogbox::OnCreate()
 {
 	// Centering this in Window.
 	RECT grc;
-	::GetClientRect(parent_->hWnd_, &grc);
+	::GetClientRect(parent_->m_hWnd, &grc);
 	int x = (grc.left + grc.right) / 2;
 	int y = (grc.top + grc.bottom) / 2;
 

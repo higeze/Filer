@@ -516,10 +516,10 @@ int D2DTextbox::OnKeyDown(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lPar
 	switch( wParam )
 	{
 		case 'C':		
-			ret =  (heldControl && Clipboard( d->hWnd_, L'C' ) ? 1 : 0 );
+			ret =  (heldControl && Clipboard( d->m_hWnd, L'C' ) ? 1 : 0 );
 		break;
 		case 'X':		
-			ret =  (heldControl && Clipboard( d->hWnd_, L'C' ) ? 1 : 0 );
+			ret =  (heldControl && Clipboard( d->m_hWnd, L'C' ) ? 1 : 0 );
 			if ( ct_.nSelEnd_ > ct_.nSelStart_ )
 			{
 				ct_.RemoveText( ct_.nSelStart_, ct_.nSelEnd_-ct_.nSelStart_ );
@@ -527,12 +527,12 @@ int D2DTextbox::OnKeyDown(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lPar
 			}
 		break;
 		case 'V':
-			ret =  (heldControl && Clipboard( d->hWnd_, L'V' ) ? 1 : 0 );			 
+			ret =  (heldControl && Clipboard( d->m_hWnd, L'V' ) ? 1 : 0 );			 
 		break;
 		case 'Z':
 		break;
 		case VK_INSERT:				
-			ret =  (heldShift && Clipboard( d->hWnd_, L'V' ) ? 1 : 0 );
+			ret =  (heldShift && Clipboard( d->m_hWnd, L'V' ) ? 1 : 0 );
 		break;
 		case VK_RETURN:
 		case VK_TAB:			
@@ -1146,7 +1146,7 @@ CTextEditorCtrl* GetTextEditorCtrl2(HWND hWnd)
 
 void D2DTextbox::CreateInputControl(D2DWindow* parent)
 {	
-	HWND hWnd = parent->hWnd_;
+	HWND hWnd = parent->m_hWnd;
 	
 	if ( s_text_inputctrl.find( hWnd ) == s_text_inputctrl.end())
 	{

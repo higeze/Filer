@@ -35,16 +35,7 @@ void D2DContext::Init(SingletonD2DInstance& ins )
 {
 	insins = &ins;
 }
-void D2DContext::CreateHwndRenderTarget( HWND hWnd )
-{
-	ID2D1Factory1* factory = insins->factory;		
-	CComPtr<ID2D1HwndRenderTarget> temp;
 
-	THROWIFFAILED(factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hWnd, D2D1::SizeU(1, 1), D2D1_PRESENT_OPTIONS_NONE), &temp), L"D2DContext::CreateHwndRenderTarget");
-		
-	auto hr= temp.p->QueryInterface( &cxt );
-	xassert(HR(hr));
-}
 void D2DContext::CreateRenderTargetResource( ID2D1RenderTarget* rt )
 {
 	// D2DWindow::CreateD2DWindowのタイミングで実行
@@ -108,32 +99,26 @@ void D2DContext::CreateResourceOpt()
 }
 void D2DContext::DestroyRenderTargetResource()
 {
-	UINT a = cxt.p->AddRef()-1;
-	cxt.p->Release();
-	xassert( a == 1 );
+	//UINT a = cxt.p->AddRef()-1;
+	//cxt.p->Release();
+	//xassert( a == 1 );
 
-	cxt.Release();
-#ifdef USE_ID2D1DEVICECONTEXT
-	a = dxgiSwapChain.p->AddRef()-1;
-	dxgiSwapChain.p->Release();
-	xassert( a == 1 );
-	
-	dxgiSwapChain.Release();
-#endif
-	ltgray.Release();
-	black.Release();
-	white.Release();
-	red.Release();
-	gray.Release();
-	bluegray.Release();
-	transparent.Release();
-	halftone.Release();
-	halftoneRed.Release();
-	tooltip.Release();
+	//cxt.Release();
 
-	basegray.Release();
-	basegray_line.Release();
-	basetext.Release();
+	//ltgray.Release();
+	//black.Release();
+	//white.Release();
+	//red.Release();
+	//gray.Release();
+	//bluegray.Release();
+	//transparent.Release();
+	//halftone.Release();
+	//halftoneRed.Release();
+	//tooltip.Release();
+
+	//basegray.Release();
+	//basegray_line.Release();
+	//basetext.Release();
 
 }
 void D2DContext::DestroyAll()
@@ -207,114 +192,7 @@ UINT D2DContextText::GetLineMetric( const D2D1_SIZE_F& sz, IDWriteTextFormat* fm
     tl->GetMetrics(&textMetrics);
 	return textMetrics.lineCount;
 }
-void D2DContext::CreateDeviceContextRenderTarget( HWND hWnd )
-{
-#ifdef USE_ID2D1DEVICECONTEXT
-	RECT rc;
-	GetClientRect(hWnd, &rc);
 
-	if ( rc.top >= rc.bottom )
-		rc.bottom = rc.top + 1;
-
-	_ASSERT( rc.left != rc.right );
-	_ASSERT( rc.top != rc.bottom );
-
-
-//	UINT width = ::GetSystemMetrics( SM_CXFULLSCREEN );
-//	UINT height = ::GetSystemMetrics( SM_CYFULLSCREEN );
-
-	UINT width = max(100, (UINT)(rc.right*1.5));
-	UINT height = max(100, (UINT)(rc.bottom*1.5));
-
-//	UINT width = max(800, (UINT)(rc.right));
-//	UINT height = max(800, (UINT)(rc.bottom));
-
-	CComPtr<ID2D1DeviceContext> d2d1DeviceContext;
-	CComPtr<IDXGISwapChain1> dxgiSwapChain1;
-	CComPtr<ID2D1Factory1> d2d1Factory = insins->factory;
-
-	CComPtr<ID2D1Device> d2d1Device;
-	CComPtr<ID2D1Bitmap1> d2d1Bitmap;
-
-	CComPtr<ID3D11DeviceContext> d3d11DeviceContext;
-	CComPtr<ID3D11Device> d3d11Device;
-	CComPtr<IDXGISurface> dxgiSurface;
-	CComPtr<IDXGIAdapter> dxgiAdapter;
-	CComPtr<IDXGIFactory2> dxgiFactory;
-	CComPtr<IDXGIDevice1> dxgiDevice;
-
-	UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT; 
-	
-	UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
- 
-	D3D_FEATURE_LEVEL returnedFeatureLevel;
-
-	D3D_FEATURE_LEVEL featureLevels[] =
-	{
-		D3D_FEATURE_LEVEL_11_1,
-		D3D_FEATURE_LEVEL_11_0,
-		D3D_FEATURE_LEVEL_10_1,
-		D3D_FEATURE_LEVEL_10_0,
-		D3D_FEATURE_LEVEL_9_3,
-		D3D_FEATURE_LEVEL_9_2,
-		D3D_FEATURE_LEVEL_9_1
-	};
-
-
-	THROWIFFAILED( D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, creationFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION,
-					&d3d11Device, &returnedFeatureLevel, &d3d11DeviceContext),L"CreateDeviceContextRenderTarget");
-
-
-	THROWIFFAILED(d3d11Device->QueryInterface(&dxgiDevice),L"CreateDeviceContextRenderTarget");
-	THROWIFFAILED(d2d1Factory->CreateDevice(dxgiDevice.p, &d2d1Device),L"CreateDeviceContextRenderTarget");
-	THROWIFFAILED(d2d1Device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &d2d1DeviceContext),L"CreateDeviceContextRenderTarget");
-	THROWIFFAILED(dxgiDevice->GetAdapter(&dxgiAdapter),L"CreateDeviceContextRenderTarget");
-	THROWIFFAILED(dxgiAdapter->GetParent(IID_PPV_ARGS(&dxgiFactory)),L"CreateDeviceContextRenderTarget");
-
-	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {0};
-	swapChainDesc.Width = width;
-	swapChainDesc.Height = height;
-	swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	swapChainDesc.Stereo = false;
-	swapChainDesc.SampleDesc.Count = 1;
-	swapChainDesc.SampleDesc.Quality = 0;
-	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.BufferCount = 2;
-	swapChainDesc.Scaling = DXGI_SCALING_NONE;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-	swapChainDesc.Flags = 0;
-
-	THROWIFFAILED(dxgiFactory->CreateSwapChainForHwnd(d3d11Device,
-													hWnd,
-													&swapChainDesc,
-													nullptr,
-													nullptr,
-													&dxgiSwapChain1),L"!!CreateSwapChainForHwnd"); // Resource解放忘れがあるとここで落ちる。
-	
-	xassert( dxgiSwapChain1 );
-
-	THROWIFFAILED(dxgiDevice->SetMaximumFrameLatency(1),L"CreateDeviceContextRenderTarget");
-	THROWIFFAILED(dxgiSwapChain1->GetBuffer(0, IID_PPV_ARGS(&dxgiSurface)),L"CreateDeviceContextRenderTarget");
-
-	auto bmp_property = D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW, D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE));
-	THROWIFFAILED(d2d1DeviceContext->CreateBitmapFromDxgiSurface(dxgiSurface.p, &bmp_property, &d2d1Bitmap),L"CreateDeviceContextRenderTarget");
-	d2d1DeviceContext->SetTarget(d2d1Bitmap.p);
-
-	auto sz = d2d1Bitmap->GetSize();
-
-	_ASSERT( sz.width == width  );
-	_ASSERT( sz.height == height  );
-	//////////////////////////////////////////////////////////////////////////////////////////////
-
-	RenderSize_.width = width;
-	RenderSize_.height = height;
-
-	d2d1DeviceContext->QueryInterface(&cxt);
-
-	dxgiSwapChain = dxgiSwapChain1;
-#endif
-
-}
 HRESULT D2DContext::CreateFont(LPCWSTR fontnm, float height, IDWriteTextFormat** ret )
 {
 	return wfactory->CreateTextFormat( fontnm,0, DWRITE_FONT_WEIGHT_NORMAL,DWRITE_FONT_STYLE_NORMAL,DWRITE_FONT_STRETCH_NORMAL,height,L"", ret );	

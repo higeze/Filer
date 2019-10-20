@@ -19,7 +19,7 @@
 CTextCell::~CTextCell()
 {
 	if(m_pEdit){
-		SendMessage(m_pEdit->hWnd_,WM_CLOSE,0,0);
+		SendMessage(m_pEdit->m_hWnd,WM_CLOSE,0,0);
 		m_pEdit = nullptr;
 	}
 }
@@ -254,10 +254,10 @@ void CTextCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPai
 {
 	if(m_pEdit){
 		CRect rcCell(direct.Dips2Pixels(GetRect()));
-		CRect rcEdit; ::GetWindowRect(m_pEdit->hWnd_, &rcEdit);
+		CRect rcEdit; ::GetWindowRect(m_pEdit->m_hWnd, &rcEdit);
 		rcEdit = m_pSheet->GetGridPtr()->ScreenToClientRect(rcEdit);
 		if(rcCell!=rcEdit){
-			::MoveWindow(m_pEdit->hWnd_, rcCell.left, rcCell.top, rcCell.Width(), rcCell.Height(), FALSE);
+			::MoveWindow(m_pEdit->m_hWnd, rcCell.left, rcCell.top, rcCell.Width(), rcCell.Height(), FALSE);
 		}
 	}
 	CCell::PaintBackground(direct, rcPaint);

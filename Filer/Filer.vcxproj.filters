@@ -671,9 +671,6 @@
     <ClInclude Include="..\D2DTextBox\d2dwindowcontrol.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\d2dwindow.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DResource.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -711,6 +708,9 @@
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\Downloads\D2DWindowMaster\D2DWindow-master\projects\Direct2dTemplate\Direct2dTemplate\controlhandle.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\D2DWindow.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
   </ItemGroup>

@@ -203,7 +203,7 @@
     <ClInclude Include="..\D2DTextBox\D2DMisc.h" />
     <ClInclude Include="..\D2DTextBox\d2dmisc2.h" />
     <ClInclude Include="..\D2DTextBox\D2DResource.h" />
-    <ClInclude Include="..\D2DTextBox\d2dwindow.h" />
+    <ClInclude Include="..\D2DTextBox\D2DWindow.h" />
     <ClInclude Include="..\D2DTextBox\d2dwindowcontrol.h" />
     <ClInclude Include="..\D2DTextBox\D2DWindowMessage.h" />
     <ClInclude Include="..\D2DTextBox\D2DWindowMessageStruct.h" />

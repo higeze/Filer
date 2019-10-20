@@ -11,6 +11,8 @@
 #include "ControlHandle.h"
 //#include "msxmlex6.h"
 #include "faststack.h"
+#include "Direct2DWrite.h"
+
 #undef CreateWindow
 
 
@@ -41,27 +43,6 @@ class D2DCaptureObject
 		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam) = 0;
 };
 
-namespace Inner {
-
-	class ToolTip
-	{
-		public :
-			ToolTip():isShow_(false){};
-
-			bool IsShow(){ return isShow_; }
-			void Set( D2DControl*p, LPCWSTR str );
-			void Show(bool bShow){ isShow_ = bShow; }
-			void Draw();
-		private :
-			FString str_;
-			FRectF rc_;
-			bool isShow_;
-			D2DControl* ctrl_;
-			GDI32::FPoint pt_;
-	};
-
-};
-
 // Object mode
 enum MOUSE_MODE { NONE,MOVE,RESIZE,COLUM_RESIZE,ROW_RESIZE,CHILD_CTRL };
 //enum OBJ_STATUS { NONE=0,SELECT=0x1,CAPTURED=0x2 };
@@ -76,6 +57,8 @@ public:
 	std::function<void(const std::wstring&)> m_changed;
 	std::function<void()> m_final;
 	std::wstring m_strInit;
+	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
+
 	public :
 		D2DWindow(
 			std::shared_ptr<CellProperty> spProp,
@@ -83,13 +66,10 @@ public:
 			std::function<void(const std::wstring&)> setter,
 			std::function<void(const std::wstring&)> changed,
 			std::function<void()> final);
-		//virtual ~D2DWindow(){ Clear(); }
+		virtual ~D2DWindow(){ Clear(); }
 
 		HWND CreateD2DWindow( DWORD WSEX_STYLE, HWND parent, DWORD WS_STYLE, RECT rc, UINT* img_resource_id=nullptr, int img_cnt=0 );		
 		LRESULT WndProc(UINT message, WPARAM wParam, LPARAM lParam);
-
-		
-		
 
 		void SetCapture(D2DCaptureObject* p, FPointF* pt=NULL, D2DMat* mat=NULL );
 		D2DCaptureObject* ReleaseCapture();
@@ -115,13 +95,8 @@ public:
 		static int SecurityId(bool bNew);
 		
 		void Clear();
-		void ShowToolTip( D2DControl* p, LPCWSTR message );
 
-		bool GetResourceImage( UINT id, ID2D1Bitmap** bmp );
-
-
-
-		HWND hWnd_;
+		HWND m_hWnd;
 		HWND hMainFrame_;	
 		D2DContext cxt_;
 		D2DRES res_;
@@ -141,17 +116,13 @@ public:
 		ControlHandle chandle_;
 		static std::wstring appinfo_;
 
-		void ResourceCreate( bool bCreate );		
-		ID2D1SolidColorBrush* GetSolidColor(D2D1_COLOR_F clr);
-	protected :
+		CComPtr<ID2D1SolidColorBrush> GetSolidColor(D2D1_COLOR_F clr);
 
-		std::map<DWORD,ID2D1SolidColorBrush*> SolidColorBank_;
-		std::map<DWORD, ID2D1Bitmap*> BitmapBank_;
+	protected :
 		
 	protected :
 		FPointF capture_pt_;
 		FRectFBoxModel capture_rect_;
-		Inner::ToolTip tooltip_;
 
 		D2DCaptureObject* roundpaint_obj_;
 		

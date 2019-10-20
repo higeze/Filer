@@ -61,10 +61,6 @@ struct D2DContext : public D2DContextBase
 
 	
 	operator ID2D1RenderTarget*() const{ return cxt.p; } 
-#ifdef USE_ID2D1DEVICECONTEXT
-	CComPtr<IDXGISwapChain1> dxgiSwapChain;
-	D2D1_SIZE_U RenderSize_;
-#endif
 
 	CComPtr<ID2D1SolidColorBrush> ltgray;
 	CComPtr<ID2D1SolidColorBrush> black;
@@ -93,11 +89,8 @@ struct D2DContext : public D2DContextBase
 	void Destroy();
 
 	void Init(SingletonD2DInstance& ins);
-	void CreateHwndRenderTarget( HWND hWnd );
-	void CreateDeviceContextRenderTarget( HWND hWnd );
-	void CreateResourceOpt();
 
-	void CreateDeviceContextRenderTargetTest( HWND hWnd, UINT width );
+	void CreateResourceOpt();
 
 	void CreateRenderTargetResource( ID2D1RenderTarget* t );
 	void DestroyRenderTargetResource();
@@ -109,37 +102,6 @@ struct D2DContext : public D2DContextBase
 
 	HRESULT CreateFont(LPCWSTR fontnm, float height, IDWriteTextFormat** ret );
 };
-
-///////////////////////////////////////////////////////
-// application初期設定後に自由に設定できる。
-// 各クラスのコンストラクタ内の設定で参照される。
-// 変更すれば、その後作成時に変更された色になる。
-///////////////////////////////////////////////////////
-//struct ColorBank
-//{
-//	static CComPtr<ID2D1SolidColorBrush> SolidColorBrush( D2DContext& cxt, LPCWSTR name, D2D1_COLOR_F defaultColor ); // 同じnameが存在しない場合のみ、defaultColorが適用される。
-//
-//	private :
-//		static std::map<std::wstring, CComPtr<ID2D1SolidColorBrush>> bank_;
-//};
-
-//struct D2DColor
-//{
-//	D2DColor( D2DContext& cxt, ColorF& clr )
-//	{
-//		cxt.cxt->CreateSolidColorBrush( clr, &Brush );
-//	}
-//	D2DColor( D2DContext& cxt, float r, float g, float b, float a )
-//	{
-//		cxt.cxt->CreateSolidColorBrush( D2RGBA(r,g,b,a), &Brush );
-//	}	
-//	operator ID2D1Brush*()
-//	{		
-//		return Brush;
-//	}
-//
-//	CComPtr<ID2D1SolidColorBrush> Brush;
-//};
 
 struct D2DRectFilter
 {

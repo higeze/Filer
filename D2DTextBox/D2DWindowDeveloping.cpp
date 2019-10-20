@@ -394,7 +394,7 @@ LRESULT D2DDropedPack::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM
 					pm.object = this;
 					pm.stat = D2D_OBJECT_UPDATE::TYP::TRY_NEWPARENT;
 
-					::SendMessage(d->hWnd_,WM_D2D_OBJECT_UPDATE,0,(LPARAM)&pm);
+					::SendMessage(d->m_hWnd,WM_D2D_OBJECT_UPDATE,0,(LPARAM)&pm);
 					ret = 1;
 					bl = false;
 
@@ -407,7 +407,7 @@ LRESULT D2DDropedPack::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM
 						hostage_->OnHostage(this,false);
 
 						// もうD2DDropedPackは役割を終えたのでメモリから消す
-						::PostMessage(d->hWnd_,WM_D2D_OBJECT_SUICIDE,0,(LPARAM)this);
+						::PostMessage(d->m_hWnd,WM_D2D_OBJECT_SUICIDE,0,(LPARAM)this);
 				
 					}
 				}

@@ -13,6 +13,7 @@
 #include "ControlHandle.h"
 //#include "msxmlex6.h"
 #include "faststack.h"
+#include "TextEditor.h"
 
 
 #undef CreateWindow
@@ -94,7 +95,7 @@ class D2DControl : public D2DCaptureObject
 	protected :
 		virtual void OnCreate(){}
 
-		LRESULT SendMessage( UINT msg, WPARAM w,LPARAM l ){ return ::SendMessage( parent_->hWnd_, msg, w, l ); }
+		LRESULT SendMessage( UINT msg, WPARAM w,LPARAM l ){ return ::SendMessage( parent_->m_hWnd, msg, w, l ); }
 		void InnerCreateWindow(D2DWindow* parent, D2DControls* pacontrol, const FRectFBoxModel& rc, int stat, LPCWSTR name, int controlid);
 
 	protected :
@@ -361,193 +362,7 @@ class D2DScrollbar : public D2DControl
 		
 };
 
-//class D2DListboxItem : public D2DCaptureObject
-//{
-//	public :
-//		D2DListboxItem(){};
-//		virtual ~D2DListboxItem(){};
-//		
-//		// Datagridで使用
-//		virtual void DrawBegin( D2DContext& cxt, FSizeF& sz ){};
-//		virtual void DrawEnd( D2DContext& cxt, FSizeF& sz ){};
-//
-//
-//		virtual void Draw( D2DContext& cxt, FSizeF& sz, int stat, void* etc );
-//		virtual float TitleHeight(){ return 0; }
-//
-//		virtual D2DListboxItem* Clone();
-//		
-//		virtual void BindImage( D2DContextText& cxt, FSizeF& sz );
-//		virtual void OnCreate( D2DControls* parent ){};
-//		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam){ return 0; } // OnSelectedItem時, captureされる。動作
-//		
-//		void* GetData(){ return data_.data; }
-//	public :
-//		struct BindData {
-//			void* data;
-//			ID2D1SolidColorBrush* color_mouse_move_back;
-//			ID2D1SolidColorBrush* color_selected_back;
-//			ID2D1SolidColorBrush* color_selected_text;
-//		};
-//		virtual void Bind( D2DWindow* win, BindData& data );
-//
-//
-//	protected :
-//		//void* data_; // D2DListboxItemではFStringを想定
-//		//CComPtr<IDWriteTextLayout> layout_;
-//
-//		
-//
-//		BindData data_;
-//		
-//
-//		SingleLineText stext_;
-//};
 
-//// Multilineでスクロールバーを表示するにはborder=1,padding>15にすること
-//class D2DListbox : public D2DControls
-//{
-//	friend class D2DCombobox;
-//	public :
-//		D2DListbox();
-//		virtual ~D2DListbox();
-//		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
-//
-//		virtual void CreateWindow( D2DWindow* parent, D2DControls* pacontrol, FRectFBoxModel rc, int stat, float item_min_height, D2DListboxItem* template_item, LPCWSTR name, int id=-1 );
-//		virtual void UpdateScrollbar(D2DScrollbar* bar);
-//
-//		void DrawContent( D2DContext& cxt, int cnt, float cx, float cy, float offy, void* etc=NULL );
-//
-//		void DrawContentTest( D2DContext& cxt, int cnt, float cx, float itemHeight, float offy );
-//
-//		void ShowWindow( bool bShow );
-//		void Clear();
-//
-//		
-//		void SetDataEx( std::shared_ptr<LONG_PTR> data, UINT cnt );
-//
-//		LONG_PTR* GetData(){ return serial_content_data_; }
-//		
-//		int SelectedIdx(){ return selected_idx_; }
-//		UINT Size(){ return data_cnt_; }
-//		void SetItemHeight( UINT id, float height );
-//		void OnActive( bool bActive );
-//		
-//
-//		void UnSelectAll();
-//		bool IsShowScrollbarV();
-//		virtual void OnCreate();
-//
-//		// FString を表示する場合、256行まで
-//		void AddString( LPCWSTR str );
-//		void ClearString();
-//		void UpdateString( int idx, LPCWSTR str );
-//		void RemoveString( int idx );
-//		FString GetString( int idx );
-//		
-//
-//		// Key-Value型
-//		int  AddKeyValue( LPCWSTR key, LPCWSTR value );
-//		FString GetValue( LPCWSTR key );
-//		int GetKeyIdx( LPCWSTR key );
-//		void ClearValue();
-//		void UpdateValue( LPCWSTR key, LPCWSTR str );
-//		void RemoveValue( LPCWSTR key );
-//		FString Getkey( int idx );
-//
-//	protected :
-//		void SetData( LONG_PTR* datahead, UINT cnt ); // Listbox内はシリアルなデータを++,--でAccessする。
-//		void OnItemSelected( const FPointF& pt, bool& bCombobox );
-//		void OnItemMouseFloat( const FPointF& pt );
-//		void FStringClear();
-//		void Expand();
-//
-//		int CalcdiNEx( float offy, float& h2 );
-//		int CalcIdx( const FPointF& mousept );
-//
-//		int float_idx_;
-//		int selected_idx_;
-//		D2DScrollbar* bar_;
-//		int idivN_;
-//		
-//		std::shared_ptr<LONG_PTR> buffer_data_;
-//		V4::ItemLoopArray loopitems_;
-//		std::vector<D2DListboxItem*> Items_; // 表示クラス
-//		std::vector<float> ItemsHeight_;
-//
-//
-//		float item_min_height_;
-//		UINT buffer_size_;
-//
-//		LONG_PTR* serial_content_data_;
-//		UINT data_cnt_;
-//
-//		std::shared_ptr<LONG_PTR> data_fstring_; // only FString data.
-//
-//		std::map<FString,int> keymap_;
-//		//std::unordered_map<BStr,int> keymap_;
-//
-//		/*CComPtr<ID2D1SolidColorBrush> color_mouse_move_;
-//		CComPtr<ID2D1SolidColorBrush> color_selected_;*/
-//
-//	public :
-//		std::function<bool(D2DListbox*,int,D2DListboxItem*)> onselected_changed_;
-//		OnWndProcExtDelegate OnWndProcExt_;
-//};
-
-//class D2DCombobox : public D2DControls
-//{
-//	public :
-//		D2DCombobox();
-//		virtual ~D2DCombobox();
-//		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
-//		virtual void CreateWindow( D2DWindow* parent, D2DControls* pacontrol, FRectFBoxModel rc, int stat,D2DListboxItem* template_item,FSizeF btnSize, LPCWSTR name, int id=-1 );
-//		void Clear();
-//		void SetData( LONG_PTR* datahead, UINT cnt );
-//		virtual void StatActive(bool bActive);
-//		//virtual LRESULT KeyProc(D2DControl* sender, UINT message, WPARAM wParam, LPARAM lParam);
-//
-//		int SelectedIdx(){ return selected_idx_; } //lb_->SelectedIdx(); }
-//		void SetSelectedIdx( int idx );
-//		FString GetText();
-//		
-//		int  AddKeyValue( LPCWSTR key, LPCWSTR txt ){ return lb_->AddKeyValue(key,txt); }
-//
-//		virtual void OnCreate();
-//
-//		D2DListbox* GetListbox(){ return lb_; }
-//		std::function<void(D2DCombobox* cmb, int)> onselected_changed_;
-//
-//		MSXML2::IXMLDOMNodePtr targetNode_;
-//		OnWndProcExtDelegate OnWndProcExt_;
-//	protected :	
-//		float view_height_;
-//		FSizeF btnSize_;
-//		
-//		D2DListbox* lb_;
-//		D2DButton* btn_;
-//		int selected_idx_;
-//		D2DListboxItem* head_;
-//		bool bMouseEnter_;
-//		CComPtr<ID2D1PathGeometry> btn_path_;
-//		
-//		D2D1_COLOR_F clr_border_;
-//		D2D1_COLOR_F clr_float_select_;
-//		D2D1_COLOR_F clr_selected_;
-//
-//
-//
-//	protected :
-//
-//		void Escape(D2DWindow* d);
-//
-//		void ComboButtonClick(D2DButton* btn);
-//		bool bShowListbox_;
-//	
-//	protected :
-//		bool OnSelectedChanged( D2DListbox*,int idx );
-//
-//};
 
 struct D2DStaticColor
 {
@@ -556,9 +371,6 @@ struct D2DStaticColor
 	ID2D1Brush* wakucolor;
 	ID2D1Brush* active_wakucolor;
 };
-#ifndef TEXTBOXTEST
-
-// The Multiline with scrollba must be "padding.r >= 15".
 
 class D2DTextbox : public D2DControl, public IBridgeTSFInterface
 {
@@ -660,58 +472,6 @@ class D2DTextbox : public D2DControl, public IBridgeTSFInterface
 		std::shared_ptr<D2DScrollbar> scbar_; // vertical scrollbar
 		D2DMat matEx_; 
 };
-
-//// Textboxに右キーのオプションを追加、キャプションも追加
-//class D2DTextboxEx : public D2DControls
-//{
-//	public :			
-//		D2DTextboxEx(){};
-//		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
-//		//void CreateWindow( D2DWindow* parent, D2DControls* pacontrol, const FRectFBoxModel& rc, int stat, LPCWSTR name, int id=-1 );
-//		virtual void OnCreate();
-//
-//		float CaptionHeight_;
-//	protected :
-//			
-//		static LRESULT TabFunction(D2DTextbox* tx,UINT key);
-//		static LRESULT FloatMenuTest(D2DTextboxEx* tx,FPointF pt);
-//	protected :
-//		D2DTextbox* tx_;
-//			
-//		FString CaptionTitle_;
-//		std::function<LRESULT(D2DTextboxEx* tx,FPointF pt)> floatmenu_;
-//
-//};
-#endif
-
-class D2DCheckbox : public D2DControl
-{
-	public :
-		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
-		virtual void OnCreate();
-
-
-		bool IsCheck(){ return bl_; }
-		void SetCheck(bool bl){ bl_ = bl; }
-
-		std::function<void (D2DCheckbox*)> onclick_;
-	private :
-		bool bl_;
-		D2D1_COLOR_F clr_fore_;
-
-
-};
-
-
-
-
-
-
-
-
-
-
-
 
 class D2DStatic : public D2DControl
 {
