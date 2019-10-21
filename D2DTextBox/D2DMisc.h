@@ -25,11 +25,11 @@ using namespace D2D1;
 
 #define ROUND(x) ((int)(x+0.5f))
 //#define HWND2HINSTANCE(hwnd)	((HINSTANCE)::GetWindowLongPtr( hwnd, GWL_HINSTANCE ))
-#define D2RGBA(r,g,b,a) ColorF(r/255.0f, g/255.0f, b/255.0f, a/255.0f ) //  薄い(0) <- A <- 濃い(255)
-#define D2RGB(r,g,b) ColorF(r/255.0f, g/255.0f, b/255.0f, 1.0f )
+#define D2RGBA(r,g,b,a) d2dw::CColorF(r/255.0f, g/255.0f, b/255.0f, a/255.0f ) //  薄い(0) <- A <- 濃い(255)
+#define D2RGB(r,g,b) d2dw::CColorF(r/255.0f, g/255.0f, b/255.0f, 1.0f )
 
 #define D2DRGBADWORD(R,G,B,A) (DWORD)((R<<24)+(G<<16)+(B<<8)+A)
-#define D2DRGBA(dw) ColorF(((dw&0xFF000000)>>24)/255.0f, ((dw&0x00FF0000)>>16)/255.0f, ((dw&0xFF00)>>8)/255.0f, (dw&0xFF)/255.0f )
+#define D2DRGBA(dw) d2dw::CColorF(((dw&0xFF000000)>>24)/255.0f, ((dw&0x00FF0000)>>16)/255.0f, ((dw&0xFF00)>>8)/255.0f, (dw&0xFF)/255.0f )
 
 //
 // D2DMisc.h helper library

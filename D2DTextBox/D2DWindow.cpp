@@ -52,23 +52,14 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			HDC hdc = BeginPaint(hWnd, &ps);					
 			ID2D1RenderTarget* cxt = d->cxt_.cxt;			
 			
-			//SelectResource( d->res_ );
-
 			cxt->BeginDraw();
 			D2D1_MATRIX_3X2_F mat = Matrix3x2F::Identity();
 
-			//mat._11 = mat._11*2.3; 
-			//mat._22 = mat._22*2.3;
 
 			cxt->SetTransform(mat);
 			cxt->Clear(ColorF(ColorF::White));
 
 			d->WndProc( message, wParam, lParam ); // All objects is drawned.
-
-					
-			//D2DImage img;
-			//img.id = 0;
-			//DrawBitmap( d->cxt_.cxt, img, FRectF(100+0,100+0,100+48,100+48));
 
 			// CAPTURE OBJECTは最後に表示 
 			// Comobox内のListboxなど
@@ -114,11 +105,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				d->m_pDirect->Clear();
 
 
-				d->cxt_.DestroyRenderTargetResource();
-
 				d->cxt_.cxt = d->m_pDirect->GetHwndRenderTarget();
 				
-				d->cxt_.CreateRenderTargetResource( d->cxt_.cxt );
+				//d->cxt_.CreateRenderTargetResource( d->cxt_.cxt ); //TODOTODO
 
 				d->WndProc( WM_D2D_RESTRUCT_RENDERTARGET, 1,0 );// RenderTargetに再リンク
 
@@ -132,14 +121,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
 			}
 
-
-
 			EndPaint(hWnd, &ps);
-
-			#ifdef USE_ID2D1DEVICECONTEXT
-				d->cxt_.dxgiSwapChain->Present(1, 0);
-			#endif
-
 			return 0;
 		}
 		break;
@@ -355,25 +337,70 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 	
 	m_hWnd =  ::CreateWindowExW( dwWSEXSTYLE, CLASSNAME, L"", dwWSSTYLE, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, parent, NULL, ::GetModuleHandle(0), this ); 	
 
-	try 
-	{
-		cxt_.Init( SingletonD2DInstance::Init() );
+	cxt_.Init();
 
-		//cxt_.CreateHwndRenderTarget( m_hWnd );
-		cxt_.cxt = m_pDirect->GetHwndRenderTarget();
+	cxt_.insins = new SingletonD2DInstance();
+	cxt_.insins->factory = m_pDirect->GetD2D1Factory();
+	cxt_.insins->wrfactory = m_pDirect->GetDWriteFactory();
+	cxt_.insins->text = m_pDirect->GetTextFormat(*(m_spProp->Format));
 
-		cxt_.CreateRenderTargetResource( cxt_.cxt );
-		cxt_.CreateResourceOpt();
-//		ResourceCreate(true);
+	cxt_.cxt = m_pDirect->GetHwndRenderTarget();
 
-	}
-	catch( D2DError er)
-	{
-		throw er;
+	cxt_.black = m_pDirect->GetColorBrush(D2RGB(0, 0, 0));
+	cxt_.white = m_pDirect->GetColorBrush(D2RGB(255, 255, 255));
+	cxt_.gray = m_pDirect->GetColorBrush(D2RGB(192, 192, 192));
+	cxt_.red = m_pDirect->GetColorBrush(D2RGB(255, 0, 0));
+	cxt_.ltgray = m_pDirect->GetColorBrush(D2RGB(230, 230, 230));
+	cxt_.bluegray = m_pDirect->GetColorBrush(D2RGB(113, 113, 130));
+	cxt_.transparent = m_pDirect->GetColorBrush(D2RGBA(0, 0, 0, 0));
+	cxt_.halftone = m_pDirect->GetColorBrush(D2RGBA(113, 113, 130, 100));
+	cxt_.halftoneRed = m_pDirect->GetColorBrush(D2RGBA(250, 113, 130, 150));
+	cxt_.tooltip = m_pDirect->GetColorBrush(D2RGBA(255, 242, 0, 255));
+	cxt_.basegray = m_pDirect->GetColorBrush(D2RGBA(241, 243, 246, 255));
+	cxt_.basegray_line = m_pDirect->GetColorBrush(D2RGBA(201, 203, 205, 255));
+	cxt_.basetext = m_pDirect->GetColorBrush(D2RGBA(90, 92, 98, 255));
 
-	}
+	float dashes[] = { 2.0f };
 
-	cxt_.cxtt.Init( cxt_,m_spProp->Format->Font.Size, m_spProp->Format->Font.FamilyName.c_str()); // default font, default font size
+	m_pDirect->GetD2D1Factory()->CreateStrokeStyle(
+		D2D1::StrokeStyleProperties(
+			D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_ROUND, D2D1_LINE_JOIN_MITER,
+			10.0f,
+			D2D1_DASH_STYLE_CUSTOM,
+			0.0f),
+		dashes, ARRAYSIZE(dashes),
+		&cxt_.dot2_
+	);
+
+	float dashes2[] = { 4.0f };
+	m_pDirect->GetD2D1Factory()->CreateStrokeStyle(
+		D2D1::StrokeStyleProperties(
+			D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_ROUND, D2D1_LINE_JOIN_MITER,
+			10.0f,
+			D2D1_DASH_STYLE_CUSTOM,
+			0.0f),
+		dashes2, ARRAYSIZE(dashes2),
+		&cxt_.dot4_
+	);
+
+	cxt_.text = cxt_.insins->text;
+	cxt_.wfactory = cxt_.insins->wrfactory;
+
+	cxt_.cxtt.line_height = 0;
+	cxt_.cxtt.xoff = 0;
+	cxt_.cxtt.cxt = &cxt_;
+	cxt_.cxtt.wrfactory = cxt_.insins->wrfactory;
+
+	CComPtr<IDWriteTextLayout> tl;
+	cxt_.cxtt.textformat = m_pDirect->GetTextFormat(*(m_spProp->Format));
+	cxt_.wfactory->CreateTextLayout(L"T", 1, cxt_.cxtt.textformat, 1000, 1000, &tl);
+
+	DWRITE_HIT_TEST_METRICS mt;
+
+	float y;
+	tl->HitTestTextPosition(0, true, &cxt_.cxtt.xoff, &y, &mt);
+
+	cxt_.cxtt.line_height = mt.height;
 
 	redraw_ = 0;
 	roundpaint_obj_ = nullptr;
@@ -394,9 +421,8 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 	D2DTextbox* txtbox = new D2DTextbox(m_hWnd, V4::D2DTextbox::MULTILINE, m_changed);
 	txtbox->SetStat(V4::STAT::BORDER);
 	txtbox->CreateWindow(this, cs, rcModel, VISIBLE, L"txtbox");
-	//txtbox->auto_resize_ = false;
 	txtbox->SetText(m_strInit.c_str());
-	//TODO txtbox->SetFont();
+	txtbox->SetFont(m_pDirect->GetTextFormat(*(m_spProp->Format)));
 
 
 	// OnCreateで各子コントロールを作成後にサイズの調整が必要
@@ -532,13 +558,6 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 			}
 
 			Clear();
-
-			if ( OnDestroy )
-				OnDestroy( this );
-
-			if(cxt_)
-				cxt_.DestroyAll();
-			//ResourceRelease( res_ );
 		}
 		break;
 		
@@ -575,9 +594,9 @@ D2DCaptureObject* D2DWindow::ReleaseCapture()
 	roundpaint_obj_ = nullptr;
 
 	
-	if (dynamic_cast<D2DButton*>(p)) {
-		int a = 0;
-	}
+	//if (dynamic_cast<D2DButton*>(p)) {
+	//	int a = 0;
+	//}
 	
 
 	capture_obj_.pop();		
@@ -617,18 +636,7 @@ DWORD D2DRGBADWORD_CONV(D2D1_COLOR_F clr)
 
 CComPtr<ID2D1SolidColorBrush> D2DWindow::GetSolidColor(D2D1_COLOR_F clr)
 {
-	auto pBrush = m_pDirect->GetColorBrush(d2dw::CColorF(clr.r, clr.g, clr.b, clr.a));
-	return pBrush.p;
-
-	//DWORD d = D2DRGBADWORD_CONV(clr);
-
-	//auto& it = SolidColorBank_.find(d);
-	//if (it != SolidColorBank_.end())
-	//	return it->second;
-
-	//auto r = MakeBrsuh(cxt_, clr).Detach();
-	//SolidColorBank_[d] = r;
-	//return r;
+	return m_pDirect->GetColorBrush(d2dw::CColorF(clr.r, clr.g, clr.b, clr.a));
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
 CHDL ControlHandle::handle_ = 800; // initial value

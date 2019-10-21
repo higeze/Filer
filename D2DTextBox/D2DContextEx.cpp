@@ -11,154 +11,12 @@ static LARGE_INTEGER __s_frequency_;
 
 namespace V4{
 
-SingletonD2DInstance& SingletonD2DInstance::Init()
+
+void D2DContext::Init()
 {
-	static SingletonD2DInstance st;
-		
-	if ( st.factory.p == NULL )
-	{
-		// Exeにつき１回の実行
-
-		D2D1_FACTORY_OPTIONS options;	
-		options.debugLevel = D2D1_DEBUG_LEVEL_NONE;
-		THROWIFFAILED( D2D1CreateFactory( D2D1_FACTORY_TYPE_SINGLE_THREADED,__uuidof(ID2D1Factory1),&options,(void**)&st.factory ), L"SingletonD2DInstance::Init()");
-		THROWIFFAILED( DWriteCreateFactory( DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory1), reinterpret_cast<IUnknown**>(&st.wrfactory)), L"SingletonD2DInstance::Init()");
-		THROWIFFAILED( st.wrfactory->CreateTextFormat(DEFAULTFONT, 0, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, DEFAULTFONT_HEIGHT, L"", &st.text), L"SingletonD2DInstance::Init()");
-
-
-		
-	}
-
-	return st;
-}
-void D2DContext::Init(SingletonD2DInstance& ins )
-{
-	insins = &ins;
-}
-
-void D2DContext::CreateRenderTargetResource( ID2D1RenderTarget* rt )
-{
-	// D2DWindow::CreateD2DWindowのタイミングで実行
-	// D2DWindow::WM_SIZEのタイミングで実行
-
-	rt->CreateSolidColorBrush( D2RGB(0,0,0), &black );
-	rt->CreateSolidColorBrush( D2RGB(255,255,255), &white );
-	rt->CreateSolidColorBrush( D2RGB(192,192,192), &gray );
-	rt->CreateSolidColorBrush( D2RGB(255,0,0), &red );
-	rt->CreateSolidColorBrush( D2RGB(230,230,230), &ltgray);
-	rt->CreateSolidColorBrush( D2RGB(113,113,130), &bluegray);
-	rt->CreateSolidColorBrush( D2RGBA(0, 0, 0, 0), &transparent);
-
-	rt->CreateSolidColorBrush( D2RGBA(113,113,130,100), &halftone); 
-	rt->CreateSolidColorBrush( D2RGBA(250,113,130,150), &halftoneRed);
-
-	rt->CreateSolidColorBrush( D2RGBA(255,242,0,255), &tooltip);
-
-	rt->CreateSolidColorBrush(D2RGBA(241, 243, 246, 255), &basegray);
-	rt->CreateSolidColorBrush(D2RGBA(201, 203, 205, 255), &basegray_line);
-	rt->CreateSolidColorBrush(D2RGBA(90,92,98, 255), &basetext);
-
-
-	// DestroyRenderTargetResourceを忘れないこと
-}
-void D2DContext::CreateResourceOpt()
-{
-	// RenderTargetとは関係ないリソース作成
-	
-	
-	ID2D1Factory* factory = insins->factory;		
-	
-	float dashes[] = {2.0f};
-
-	factory->CreateStrokeStyle(
-	D2D1::StrokeStyleProperties(
-		D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_ROUND, D2D1_LINE_JOIN_MITER,
-		10.0f,
-		D2D1_DASH_STYLE_CUSTOM,
-		0.0f),
-		dashes, ARRAYSIZE(dashes),
-		&dot2_
-	);
-
-	float dashes2[] = {4.0f};
-	factory->CreateStrokeStyle(
-	D2D1::StrokeStyleProperties(
-		D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_ROUND, D2D1_LINE_JOIN_MITER,
-		10.0f,
-		D2D1_DASH_STYLE_CUSTOM,
-		0.0f),
-		dashes2, ARRAYSIZE(dashes2),
-		&dot4_
-	);
-
-	text = insins->text.p;
-	wfactory = insins->wrfactory.p;
-
 	QueryPerformanceFrequency( &__s_frequency_ );
-
-}
-void D2DContext::DestroyRenderTargetResource()
-{
-	//UINT a = cxt.p->AddRef()-1;
-	//cxt.p->Release();
-	//xassert( a == 1 );
-
-	//cxt.Release();
-
-	//ltgray.Release();
-	//black.Release();
-	//white.Release();
-	//red.Release();
-	//gray.Release();
-	//bluegray.Release();
-	//transparent.Release();
-	//halftone.Release();
-	//halftoneRed.Release();
-	//tooltip.Release();
-
-	//basegray.Release();
-	//basegray_line.Release();
-	//basetext.Release();
-
-}
-void D2DContext::DestroyAll()
-{
-	// OnDestroyのタイミングで実行
-
-	DestroyRenderTargetResource();
-
-	dot2_.Release();
-	dot4_.Release();
 }
 
-void D2DContextText::Init(D2DContext& cxt1, float height, LPCWSTR fontname )
-{	
-	line_height = 0;
-	xoff = 0;
-	cxt = &cxt1;
-	wrfactory = cxt1.insins->wrfactory;
-
-	textformat.Release();
-	if ( HR(cxt1.insins->wrfactory->CreateTextFormat(fontname,0, DWRITE_FONT_WEIGHT_NORMAL,DWRITE_FONT_STYLE_NORMAL,DWRITE_FONT_STRETCH_NORMAL,height,L"",&textformat)))
-	{
-		CComPtr<IDWriteTextLayout> tl;
-		cxt->wfactory->CreateTextLayout( L"T",1, textformat, 1000, 1000, &tl );
-		
-		DWRITE_HIT_TEST_METRICS mt;
-	
-		float y;
-		tl->HitTestTextPosition( 0, true,&xoff,&y,&mt );
-
-		line_height = mt.height;
-
-
-		/*DWRITE_TEXT_METRICS tm;
-		GetLineMetric( FSizeF(1000,1000), L"T", 1, tm );
-
-		temp_font_height_ = tm.height;*/
-
-	}
-}
 UINT D2DContextText::GetLineMetrics( const D2D1_SIZE_F& sz,  LPCWSTR str, int len, DWRITE_TEXT_METRICS& textMetrics, std::vector<DWRITE_LINE_METRICS>& lineMetrics )
 {
 	CComPtr<IDWriteTextLayout> textlayout;
@@ -373,52 +231,52 @@ FString FStringV( _variant_t& s )
 	return s.bstrVal;
 }
 
-bool CreateBitmapPartBrush( D2DContext& cxtbase, const FSizeF& size, DrawFunction drawfunc, OUT ID2D1BitmapBrush **ppBitmapBrush )
-{
-	// 画面のbitmapを作成、画面のハードコピー, FillRectで表示(0,0から引きつめられる)
-	// cxtのリソースをすべて再作成する必要あり。
-	
-	D2DContext cxt;
-	ID2D1RenderTarget* pRenderTarget = cxtbase.cxt;
-    CComPtr<ID2D1BitmapRenderTarget> pCompatibleRenderTarget;
-    
-	// create cmpati render target.
-	HRESULT hr = pRenderTarget->CreateCompatibleRenderTarget( size, &pCompatibleRenderTarget );
-
-    if (SUCCEEDED(hr))
-    {
-        if (SUCCEEDED(hr))
-        {
-            pCompatibleRenderTarget->BeginDraw();
-			{
-				// change rendertarget.
-
-				D2D1_MATRIX_3X2_F mat = Matrix3x2F::Identity();
-				pCompatibleRenderTarget->SetTransform(mat);
-
-				cxt.cxt = pCompatibleRenderTarget;
-
-				drawfunc( cxt );
-			}
-            pCompatibleRenderTarget->EndDraw();
-
-			// Create bitmap
-            CComPtr<ID2D1Bitmap> pGridBitmap;
-            hr = pCompatibleRenderTarget->GetBitmap(&pGridBitmap);
-            if (SUCCEEDED(hr))
-            {
-                // Choose the tiling mode for the bitmap brush.
-                D2D1_BITMAP_BRUSH_PROPERTIES brushProperties =
-                    D2D1::BitmapBrushProperties(D2D1_EXTEND_MODE_WRAP, D2D1_EXTEND_MODE_WRAP);
-
-                // Create the bitmap brush.
-                hr = pRenderTarget->CreateBitmapBrush(pGridBitmap, brushProperties, ppBitmapBrush);
-            }
-        }
-    }
-
-    return ( hr == S_OK );
-}
+//bool CreateBitmapPartBrush( D2DContext& cxtbase, const FSizeF& size, DrawFunction drawfunc, OUT ID2D1BitmapBrush **ppBitmapBrush )
+//{
+//	// 画面のbitmapを作成、画面のハードコピー, FillRectで表示(0,0から引きつめられる)
+//	// cxtのリソースをすべて再作成する必要あり。
+//	
+//	D2DContext cxt;
+//	ID2D1RenderTarget* pRenderTarget = cxtbase.cxt;
+//    CComPtr<ID2D1BitmapRenderTarget> pCompatibleRenderTarget;
+//    
+//	// create cmpati render target.
+//	HRESULT hr = pRenderTarget->CreateCompatibleRenderTarget( size, &pCompatibleRenderTarget );
+//
+//    if (SUCCEEDED(hr))
+//    {
+//        if (SUCCEEDED(hr))
+//        {
+//            pCompatibleRenderTarget->BeginDraw();
+//			{
+//				// change rendertarget.
+//
+//				D2D1_MATRIX_3X2_F mat = Matrix3x2F::Identity();
+//				pCompatibleRenderTarget->SetTransform(mat);
+//
+//				cxt.cxt = pCompatibleRenderTarget;
+//
+//				drawfunc( cxt );
+//			}
+//            pCompatibleRenderTarget->EndDraw();
+//
+//			// Create bitmap
+//            CComPtr<ID2D1Bitmap> pGridBitmap;
+//            hr = pCompatibleRenderTarget->GetBitmap(&pGridBitmap);
+//            if (SUCCEEDED(hr))
+//            {
+//                // Choose the tiling mode for the bitmap brush.
+//                D2D1_BITMAP_BRUSH_PROPERTIES brushProperties =
+//                    D2D1::BitmapBrushProperties(D2D1_EXTEND_MODE_WRAP, D2D1_EXTEND_MODE_WRAP);
+//
+//                // Create the bitmap brush.
+//                hr = pRenderTarget->CreateBitmapBrush(pGridBitmap, brushProperties, ppBitmapBrush);
+//            }
+//        }
+//    }
+//
+//    return ( hr == S_OK );
+//}
 
 
 

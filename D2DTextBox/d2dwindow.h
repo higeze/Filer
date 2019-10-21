@@ -59,6 +59,29 @@ public:
 	std::wstring m_strInit;
 	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
 
+	HWND m_hWnd;
+	HWND hMainFrame_;
+	D2DContext cxt_;
+	D2DRES res_;
+	int redraw_;
+	D2DMat capture_matrix_;
+
+	std::map<void*, int> mts_;
+	std::shared_ptr<D2DControls> children_;
+	faststack<D2DCaptureObject*> capture_obj_;
+	std::vector<D2DControl*> drag_accepters_;
+	std::vector< std::shared_ptr<D2DControl>> death_objects_;
+
+
+	ControlHandle chandle_;
+	static std::wstring appinfo_;
+
+	CComPtr<ID2D1SolidColorBrush> GetSolidColor(D2D1_COLOR_F clr);
+
+
+	std::shared_ptr<d2dw::CDirect2DWrite>& GetDirectPtr() { return  m_pDirect; }
+
+
 	public :
 		D2DWindow(
 			std::shared_ptr<CellProperty> spProp,
@@ -96,36 +119,11 @@ public:
 		
 		void Clear();
 
-		HWND m_hWnd;
-		HWND hMainFrame_;	
-		D2DContext cxt_;
-		D2DRES res_;
-		int redraw_;
-		D2DMat capture_matrix_;
-
-		
-		std::function<void(D2DWindow*)> OnCreate;
-		std::function<void(D2DWindow*)> OnDestroy;
-		std::map<void*,int> mts_;
-		std::shared_ptr<D2DControls> children_;
-		faststack<D2DCaptureObject*> capture_obj_;
-		std::vector<D2DControl*> drag_accepters_;
-		std::vector< std::shared_ptr<D2DControl>> death_objects_;
-		
-
-		ControlHandle chandle_;
-		static std::wstring appinfo_;
-
-		CComPtr<ID2D1SolidColorBrush> GetSolidColor(D2D1_COLOR_F clr);
-
-	protected :
-		
 	protected :
 		FPointF capture_pt_;
 		FRectFBoxModel capture_rect_;
 
 		D2DCaptureObject* roundpaint_obj_;
-		
 };
 
 };

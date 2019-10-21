@@ -16,9 +16,6 @@ struct SingletonD2DInstance
 	CComPtr<IDWriteFactory1> wrfactory;
 	CComPtr<ID2D1Factory1>  factory;
 	CComPtr<IDWriteTextFormat> text; // IDWriteTextFormat1 is from Win8.1.
-
-	static SingletonD2DInstance& Init();
-
 };
 
 #define STOCKSIZE 16
@@ -26,7 +23,6 @@ struct D2DContext;
 
 struct D2DContextText
 {
-	void Init(D2DContext& inshw,  float height, LPCWSTR fontname );
 	D2DContext* cxt;
 
 	
@@ -44,22 +40,10 @@ struct D2DContextText
 	float line_height;	// １行表示の高さ
 
 };
+
 struct D2DContext : public D2DContextBase
 {	
-	/*
-	struct D2DContextBase
-	{
-		CComPtr<ID2D1RenderTarget>  cxt;
-		IDWriteTextFormat* text;
-		IDWriteFactory* wfactory;
-	};
-	*/
-	
-	
-
 	SingletonD2DInstance* insins;
-
-	
 	operator ID2D1RenderTarget*() const{ return cxt.p; } 
 
 	CComPtr<ID2D1SolidColorBrush> ltgray;
@@ -85,17 +69,7 @@ struct D2DContext : public D2DContextBase
 
 	LPVOID free_space;
 
-	void Init(SingletonD2DInstance& ins, HWND hWnd );
-	void Destroy();
-
-	void Init(SingletonD2DInstance& ins);
-
-	void CreateResourceOpt();
-
-	void CreateRenderTargetResource( ID2D1RenderTarget* t );
-	void DestroyRenderTargetResource();
-
-	void DestroyAll();
+	void Init();
 
 	void SetAntiAlias(bool bl){ cxt->SetAntialiasMode( bl ? D2D1_ANTIALIAS_MODE_PER_PRIMITIVE:D2D1_ANTIALIAS_MODE_ALIASED);} 
 
@@ -219,8 +193,8 @@ CComPtr<ID2D1SolidColorBrush> MakeBrsuh( D2DContext& cxt, D2D1_COLOR_F clr );
 
 
 // bitmap　使ってない ///////////////////////////////////////////////////////////////////////////////////////////////////
-typedef std::function<void (D2DContext& cxt)> DrawFunction;
-bool CreateBitmapPartBrush( D2DContext& cxt, const FSizeF& size, DrawFunction drawfunc, OUT ID2D1BitmapBrush **ppBitmapBrush );
+//typedef std::function<void (D2DContext& cxt)> DrawFunction;
+//bool CreateBitmapPartBrush( D2DContext& cxt, const FSizeF& size, DrawFunction drawfunc, OUT ID2D1BitmapBrush **ppBitmapBrush );
 
 
 //以下 TSFのために追加 /////////////////////////////////////////////////////////////////////
