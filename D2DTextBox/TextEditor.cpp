@@ -447,8 +447,17 @@ void CTextEditor::Render(D2DContext& cxt )
 
 	if ( layout_.bRecalc_ )
 	{
-		::OutputDebugStringA((boost::format("TextBuff:%1%, TextLen:%2%\r\n") % ct_->GetTextBuffer() % ct_->GetTextLength()).str().c_str());
+		::OutputDebugStringA((boost::format("SizeX:%1%, SizeY:%2%\r\n") % ct_->view_size_.cx % ct_->view_size_.cy).str().c_str());
 		layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_, zCaretPos, ct_->nStartCharPos_, cxt.text);
+		CRect rc;
+		::GetWindowRect(hWnd_, &rc);
+		CPoint pt(rc.TopLeft());
+		::ScreenToClient(::GetParent(hWnd_), &pt);
+
+		if (layout_.tm_.height + 6 > rc.Height()) {
+			::MoveWindow(hWnd_, pt.x, pt.y, ct_->view_size_.cx + 6, (std::max)((LONG)(layout_.tm_.height + 6), rc.Height()), FALSE);
+		}
+
 		layout_.bRecalc_ = false;
 	}
 		
@@ -474,7 +483,6 @@ void CTextEditor::CalcRender(D2DContext& cxt )
 	
 	::OutputDebugStringA((boost::format("TextBuff:%1%, TextLen:%2%\r\n") % ct_->GetTextBuffer() % ct_->GetTextLength()).str().c_str());
 	layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_,0, x, cxt.text);	
-
 	layout_.bRecalc_ = false;
 }
 

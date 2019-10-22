@@ -206,6 +206,8 @@ void CTextCell::OnEdit(const EventArgs& e)
 	);
 	HWND hwnd = m_pEdit->CreateD2DWindow(0, e.WindowPtr->m_hWnd, WS_CHILD | WS_VISIBLE, rcEdit, id, _countof(id));
 
+	//::MoveWindow(hwnd, rcEdit.left, rcEdit.top, rcEdit.Width(), rcEdit.Height() + 30, TRUE);
+
 	//auto IdleMessage = [](HWND hwnd, UINT msg, UINT_PTR id, DWORD time) {
 	//	if (IDLE_TIMER_ID == id)
 	//		SendMessage(hwnd, WM_D2D_IDLE, 0, 0);
@@ -257,7 +259,7 @@ void CTextCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPai
 		CRect rcEdit; ::GetWindowRect(m_pEdit->m_hWnd, &rcEdit);
 		rcEdit = m_pSheet->GetGridPtr()->ScreenToClientRect(rcEdit);
 		if(rcCell!=rcEdit){
-			::MoveWindow(m_pEdit->m_hWnd, rcCell.left, rcCell.top, rcCell.Width(), rcCell.Height(), FALSE);
+			//::MoveWindow(m_pEdit->m_hWnd, rcCell.left, rcCell.top, rcCell.Width(), rcCell.Height(), FALSE);
 		}
 	}
 	CCell::PaintBackground(direct, rcPaint);

@@ -33,41 +33,12 @@ LPCWSTR regexpre[] = {
 
 namespace V4 {
 
-D2DTextbox::D2DTextbox(CTextEditorCtrl* ctrl)
-{
-	if (!ctrl)
-	{
-		ctrl = TSF::GetTextEditorCtrl();
-	}
-	
-
-	clr_border_ = ColorF(ColorF::Black);
-	clr_fore_ = ColorF(ColorF::Black);
-	clr_back_ = ColorF(ColorF::White);
-	clr_active_border_ = ColorF(ColorF::Blue);
-
-	typ_ = TYP::SINGLELINE;
-	ct_.bSingleLine_ = true;
-	ctrl_ = ctrl;
-	bActive_ = false;
-	bUpdateScbar_ = false;
-	fmt_ = NULL;
-	
-	ct_.LimitCharCnt_ = 65500;
-	font_height_ = 0;	
-}
-
 D2DTextbox::D2DTextbox(HWND hWnd,TYP typ, std::function<void(const std::wstring&)> changed)
 	:m_changed(changed)
 {
-
-	//if (!ctrl)
-	//{
 	ctrl_ = new TSF::CTextEditorCtrl();
 	ctrl_->Create(hWnd);
 	ctrl_->m_changed = m_changed;
-	//}
-
 
 	if ( typ & RIGHT || typ & CENTER || typ & VCENTER )
 		typ = (D2DTextbox::TYP)(typ | TYP::SINGLELINE);
@@ -79,7 +50,6 @@ D2DTextbox::D2DTextbox(HWND hWnd,TYP typ, std::function<void(const std::wstring&
 
 
 	typ_ = typ;
-	//ctrl_ = ctrl;
 	bActive_ = false;
 	bUpdateScbar_ = false;
 	fmt_ = NULL;
@@ -221,18 +191,8 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 						mat.PushTransform(); // 3
 						int len = ct_.GetTextLength();
 			
-						if ( len && !bActive_ )
-						{	
-							if ( typ_ & MULTILINE )
-								cxt.cxt->DrawTextLayout(offpt_, text_layout_, textcolor );
-							else
-							{
-								float yoff = ( rccnt.Height()-font_height_ ) / 2.0f; // vcenter
-								mat.Offset(0,yoff );
-								cxt.cxt->DrawTextLayout(offpt_, text_layout_, textcolor );
-							}
-						}
-						else if( ctrl_->GetContainer() == &ct_ && bActive_ )
+
+						if( ctrl_->GetContainer() == &ct_ && bActive_ )
 						{
 							ctrl_->mat_ = mat_;
 							
@@ -328,28 +288,12 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 			
 			switch( message )
 			{
-				case WM_LBUTTONDOWN:
-				{
-					//FPointF pt = mat_.DPtoLP( FPointF(lParam));		
-					//					
-					//
-					//if ( rc_.GetContentRect().PtInRect(pt) )
-					//{						
-					//	d->SetCapture( this, &pt );
-
-					//	StatActive(true);
-					//	ret = 1;	
-					//				
-					//}
-					//else if ( d->GetCapture() == this )
-					//{
-					//	d->ReleaseCapture();
-					//	StatActive(false);
-
-					//	ret = LRESULT_SEND_MESSAGE_TO_OTHER_OBJECTS;
-					//}
-				}
-				break;
+			case WM_SIZE:
+			{
+				rc_.SetSize(LOWORD(lParam), HIWORD(lParam));
+				ctrl_->Reset(ctrl_->bri_);
+			}
+			break;
 				case WM_KEYDOWN:
 				{			
 					ret = OnKeyDown(d,message,wParam,lParam);
@@ -357,30 +301,15 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 					if ( ret )
 						return ret;
 
-					ret = parent_control_->KeyProc(this,WM_KEYDOWN,wParam,lParam );
-
-					if ( ret )
-						return ret;
 				}
 				break;
-				case WM_RBUTTONUP:
-				{
-					ret = parent_control_->WndProc(d,WM_D2D_TEXTBOX_FLOAT_MENU,wParam,lParam ); // parent_controlはbproecssをFALSEにすること
-					if ( ret )
-						return ret;
-				}
-				break;
-
 
 			}
-
-
-
 
 			if ( scbar_ && 0 != scbar_->WndProc(d,message,wParam,lParam ) )
 				return 1;
 
-			if (ctrl_->GetContainer() != &ct_ || d->GetCapture() != this)
+			if (ctrl_->GetContainer() != &ct_ /*|| d->GetCapture() != this*/)
 				return ret;
 
 			int bAddTabCount = 0;
@@ -412,7 +341,7 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 				if ( wParam == VK_RETURN && bl )
 					scbar_->info_.rowno++;
 			}
-			else if (message == WM_MOUSEMOVE && d->GetCapture() == this && ret == 0)
+			else if (message == WM_MOUSEMOVE /*&& d->GetCapture() == this*/ && ret == 0)
 			{
 				// mouse auto sctoll.
 				bool bl = TryTrimingScrollbar();
@@ -725,8 +654,6 @@ int D2DTextbox::InsertText( LPCWSTR str, int pos, int strlen)
 
 	CalcRender(true);
 
-
-
 	return 0;
 
 }
@@ -811,7 +738,7 @@ void D2DTextbox::StatActive( bool bActive )
 	
 	if ( bActive )
 	{
-		xassert( parent_->GetCapture() == this );
+		//xassert( parent_->GetCapture() == this );
 
 		ctrl_->Password((typ_ & PASSWORD) != 0);
 
@@ -871,26 +798,6 @@ FString D2DTextbox::GetText()
 	return FString( ct_.GetTextBuffer());  // null terminate	
 }
 
-D2DTextbox* D2DTextbox::Clone(D2DControls* pacontrol)
-{
-	D2DTextbox* ret = new D2DTextbox( ctrl_ );
-
-	ret->typ_ = typ_;
-	ret->bActive_ = bActive_;
-	
-	ret->text_layout_ = text_layout_;
-	ret->clr_fore_ = clr_fore_;
-	ret->clr_back_ = clr_back_;
-	ret->bUpdateScbar_ = bUpdateScbar_;
-	ret->ct_.bSingleLine_ = ct_.bSingleLine_;
-	ret->ct_.LimitCharCnt_ = ct_.LimitCharCnt_;
-
-	if ( pacontrol )
-		ret->CreateWindow( parent_, pacontrol, rc_, stat_, name_ );
-
-	
-	return ret;
-}
 
 void D2DTextbox::SetSize( const FSizeF& sz )
 {
@@ -1107,10 +1014,6 @@ UINT D2DTextbox::RowCount( bool all )
 }; // namespace V4
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// UNIVERSAL APP do not have HWND. so, POPUPWINDOW is not exists.
-
-std::map<HWND,TSF::CTextEditorCtrl*> D2DTextbox::s_text_inputctrl;
-
 
 static ITfKeystrokeMgr *g_pKeystrokeMgr	= NULL;
 TfClientId g_TfClientId	= TF_CLIENTID_NULL;
@@ -1124,40 +1027,6 @@ ITfThreadMgr* g_pThreadMgr = NULL;
 ITfThreadMgr2* g_pThreadMgr = NULL;
 #endif
 
-
-namespace TSF {
-CTextEditorCtrl* GetTextEditorCtrl()
-{
-	auto it = D2DTextbox::s_text_inputctrl.begin();
-	return it->second; 
-}
-
-CTextEditorCtrl* GetTextEditorCtrl2(HWND hWnd)
-{
-	auto it = D2DTextbox::s_text_inputctrl.find( hWnd );
-	if ( it != D2DTextbox::s_text_inputctrl.end())
-	{		
-		return it->second;
-	}
-	return nullptr;
-}
-
-};
-
-void D2DTextbox::CreateInputControl(D2DWindow* parent)
-{	
-	HWND hWnd = parent->m_hWnd;
-	
-	if ( s_text_inputctrl.find( hWnd ) == s_text_inputctrl.end())
-	{
-		auto ctrl = new TSF::CTextEditorCtrl();
-		s_text_inputctrl[hWnd] = ctrl;
-
-		ctrl->Create( hWnd );	
-	}
-		
-
-}
 // STATIC
 bool D2DTextbox::AppTSFInit()
 {
@@ -1181,12 +1050,6 @@ Exit:
 void D2DTextbox::AppTSFExit()
 {
 	UninitDisplayAttrbute();
-
-	{
-		for( auto& it : s_text_inputctrl )
-			delete it.second;
-		s_text_inputctrl.clear();
-	}
 
 
 	if ( g_pThreadMgr )

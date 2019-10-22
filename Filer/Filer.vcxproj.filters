@@ -37,21 +37,12 @@
     <ResourceCompile Include="..\HiLib\Update.rc">
       <Filter>HiLib</Filter>
     </ResourceCompile>
-    <ResourceCompile Include="..\D2DTextBox\Direct2dTemplate.rc">
-      <Filter>D2DTextBox</Filter>
-    </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Filer.ico">
       <Filter>Resource</Filter>
     </Image>
-    <Image Include="..\HiLib\Direct2dTemplate.ico">
-      <Filter>D2DTextBox</Filter>
-    </Image>
     <Image Include="..\HiLib\small.ico">
-      <Filter>D2DTextBox</Filter>
-    </Image>
-    <Image Include="..\HiLib\title_btn.png">
       <Filter>D2DTextBox</Filter>
     </Image>
   </ItemGroup>
@@ -659,9 +650,6 @@
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\Direct2dTemplate.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DWindowMessageStruct.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -672,9 +660,6 @@
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DResource.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\d2dmisc2.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DMisc.h">
@@ -1061,12 +1046,6 @@
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\D2DWindowTextboxTSF.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\D2DWindowListbox.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\D2DWindowDeveloping.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\D2DWindowControl.cpp">

@@ -192,50 +192,14 @@ void TestDrawFillRectEx( D2DContext& cxt,const D2D1_RECT_F& rc, ID2D1Brush* waku
 CComPtr<ID2D1SolidColorBrush> MakeBrsuh( D2DContext& cxt, D2D1_COLOR_F clr );
 
 
-// bitmap　使ってない ///////////////////////////////////////////////////////////////////////////////////////////////////
-//typedef std::function<void (D2DContext& cxt)> DrawFunction;
-//bool CreateBitmapPartBrush( D2DContext& cxt, const FSizeF& size, DrawFunction drawfunc, OUT ID2D1BitmapBrush **ppBitmapBrush );
 
 
 //以下 TSFのために追加 /////////////////////////////////////////////////////////////////////
-void InvertRect(D2DContext& cxt, FRectF* rc );
 
 bool DrawCaret(D2DContext& cxt, const FRectF& rc );
 
 ////////////////////////////////////////////////////////////////////////////////////////
  
- 
-            
-
-
-
 };
 
-namespace V4{
 
-///////////////////////////////////////////////////////////////////////////////////
-// センターテキスト表示、フォント作成、layoutから表示するので早い
-////////////////////////////////////////////////////////////////////////////////////
-class D2DStringLayout
-{
-	public :
-		D2DStringLayout(){}
-
-	public :
-		CComPtr<IDWriteTextLayout> tl_;
-		FPointF pt_;
-
-	public :
-		bool CreateCenterText( D2DContextBase& cxt, const FRectF& rc, LPCWSTR str, int len, int align );
-		DWRITE_TEXT_METRICS GetMetrics();
-		void Draw( D2DContext& cxt, ID2D1Brush* br );
-
-		bool IsFirst(){ return ( tl_ == nullptr ); }
-		void Clear(){ tl_.Release(); }
-
-	public :
-		static D2DContextBase CreateFont( D2DContext& cxt, LPCWSTR fontname, float height, DWRITE_FONT_WEIGHT bold=DWRITE_FONT_WEIGHT_NORMAL );
-
-};
-
-};

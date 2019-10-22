@@ -100,7 +100,7 @@ class CTextLayout
 		bool bPassword_;
 		int StarCharPos_;
 		IDWriteTextLayout* DWTextLayout_;
-
+public:
 		DWRITE_TEXT_METRICS tm_;		
 };
 

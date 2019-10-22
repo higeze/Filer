@@ -229,6 +229,9 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 		{
 		
 			DWTextLayout_->GetMetrics(&tm_);
+			::OutputDebugStringA((boost::format("Rect:%1%, %2%, %3%, %4%") % tm_.left%  tm_.top%  tm_.width % tm_.height).str().c_str());
+
+
 		}
 
 		return TRUE;

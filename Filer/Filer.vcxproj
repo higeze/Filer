@@ -179,7 +179,6 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\D2DTextBox\Direct2dTemplate.rc" />
     <ResourceCompile Include="..\HiLib\FindDlg.rc" />
     <ResourceCompile Include="..\HiLib\Konami.rc" />
     <ResourceCompile Include="..\HiLib\SheetCell.rc" />
@@ -187,9 +186,7 @@
     <ResourceCompile Include="Filer.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\HiLib\Direct2dTemplate.ico" />
     <Image Include="..\HiLib\small.ico" />
-    <Image Include="..\HiLib\title_btn.png" />
     <Image Include="Filer.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -201,13 +198,11 @@
     <ClInclude Include="..\D2DTextBox\D2DContextNew.h" />
     <ClInclude Include="..\D2DTextBox\d2dmatome.h" />
     <ClInclude Include="..\D2DTextBox\D2DMisc.h" />
-    <ClInclude Include="..\D2DTextBox\d2dmisc2.h" />
     <ClInclude Include="..\D2DTextBox\D2DResource.h" />
     <ClInclude Include="..\D2DTextBox\D2DWindow.h" />
     <ClInclude Include="..\D2DTextBox\d2dwindowcontrol.h" />
     <ClInclude Include="..\D2DTextBox\D2DWindowMessage.h" />
     <ClInclude Include="..\D2DTextBox\D2DWindowMessageStruct.h" />
-    <ClInclude Include="..\D2DTextBox\Direct2dTemplate.h" />
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h" />
     <ClInclude Include="..\D2DTextBox\faststack.h" />
     <ClInclude Include="..\D2DTextBox\fstring.h" />
@@ -420,8 +415,6 @@
     <ClCompile Include="..\D2DTextBox\D2DResource.cpp" />
     <ClCompile Include="..\D2DTextBox\D2DWindow.cpp" />
     <ClCompile Include="..\D2DTextBox\D2DWindowControl.cpp" />
-    <ClCompile Include="..\D2DTextBox\D2DWindowDeveloping.cpp" />
-    <ClCompile Include="..\D2DTextBox\D2DWindowListbox.cpp" />
     <ClCompile Include="..\D2DTextBox\D2DWindowTextboxTSF.cpp" />
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />
     <ClCompile Include="..\D2DTextBox\text_stdafx.cpp" />

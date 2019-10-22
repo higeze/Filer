@@ -102,7 +102,7 @@ class CTextEditor
 		D2D1_MATRIX_3X2_F mat_;
 
 		void SetFocus();
-	protected :	
+
 		
 		void Reset( IBridgeTSFInterface* rect_size );
 	
