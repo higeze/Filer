@@ -19,12 +19,6 @@ using namespace GDI32;
 
 std::wstring D2DWindow::appinfo_;
 
-//namespace V4
-//{
-//	Selection g_selection;
-//};
-
-
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	D2DWindow* d = (D2DWindow*)::GetWindowLongPtr( hWnd, GWL_USERDATA );
@@ -39,6 +33,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			D2DWindow* d = (D2DWindow*)::GetWindowLongPtr(hWnd, GWL_USERDATA);
 			
 			d->m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(hWnd);
+			d->cxt_.m_pDirect = d->m_pDirect;
 
 			SetFocus(hWnd);
 
@@ -50,42 +45,12 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 		{
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hWnd, &ps);					
-			ID2D1RenderTarget* cxt = d->cxt_.cxt;			
 			
-			cxt->BeginDraw();
-			//D2D1_MATRIX_3X2_F mat = Matrix3x2F::Identity();
+			d->cxt_.m_pDirect->BeginDraw();
 
-
-			//cxt->SetTransform(mat);
-			cxt->Clear(ColorF(ColorF::White));
+			d->cxt_.m_pDirect->GetHwndRenderTarget()->Clear(ColorF(ColorF::White));
 
 			d->WndProc( message, wParam, lParam ); // All objects is drawned.
-
-			// CAPTURE OBJECTは最後に表示 
-			// Comobox内のListboxなど
-			//int cap_cnt = d->capture_obj_.size();
-			//if ( cap_cnt )
-			//{
-			//	auto p = d->capture_obj_.head();
-			//	for( int i = 0; i < cap_cnt; i++ )
-			//	{
-			//		p[i]->WndProc( d, WM_D2D_PAINT, wParam, lParam );
-			//	}
-			//}
-
-
-			// ここがアニメーションの計算場所
-			//for(auto it = d->mts_.begin(); it!=d->mts_.end(); )
-			//{					
-			//	bool isend;
-			//	MoveTargetEx* mtx = (MoveTargetEx*)it->first;
-			//	mtx->UIFire(d, isend);
-
-			//	if (isend)
-			//		d->mts_.erase(it++); // set map流のerase方法らしい			
-			//	else
-			//		it++;
-			//}
 
 			if (d->redraw_)
 			{
@@ -93,33 +58,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				d->redraw_ = 0;
 			}
 
-
-			auto hr = NoThrowIfFailed(cxt->EndDraw());
-
-			if ( D2DERR_RECREATE_TARGET == hr )
-			{
-				d->WndProc( WM_D2D_RESTRUCT_RENDERTARGET, 0,0 ); // RenderTargetにリンクしている物はすべてリリース
-
-				// ディスプレイの解像度を変更したり、ディスプレイ アダプターを取り外したりすると、デバイスが消失する可能性があります
-
-				d->m_pDirect->Clear();
-
-
-				d->cxt_.cxt = d->m_pDirect->GetHwndRenderTarget();
-				
-				//d->cxt_.CreateRenderTargetResource( d->cxt_.cxt ); //TODOTODO
-
-				d->WndProc( WM_D2D_RESTRUCT_RENDERTARGET, 1,0 );// RenderTargetに再リンク
-
-				InvalidateRect(hWnd, NULL, FALSE);
-			}
-			else if ( hr != S_OK )
-			{
-				// 88990015 リソースが誤ったレンダターゲットを使用
-				
-				D2DError( hr, L"EndDraw error", __LINE__, __FILE__ );
-
-			}
+			d->cxt_.m_pDirect->EndDraw();
 
 			EndPaint(hWnd, &ps);
 			return 0;
@@ -129,22 +68,24 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			return 1;
 		break;
 		case WM_SIZE :
-		{		
-			// CComPtrの参照数にきをくばること
-			auto bl = ( d->cxt_.cxt != NULL );		
-			if ( bl )
-			{
-				{
-					d->m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
-					//CComPtr<ID2D1HwndRenderTarget> trgt;
-					//auto hr = d->cxt_.cxt->											
-					//if ( HR(hr))				
-					//	trgt->Resize( D2D1::SizeU( LOWORD(lParam), HIWORD(lParam) ));
-				}
+		{
+			CRect rc;
+			::GetClientRect(d->m_hWnd, &rc);
+			::OutputDebugStringA((boost::format("Size SizeX:%1%, SizeY:%2%\r\n") % rc.Width() % rc.Height()).str().c_str());
 
-				d->WndProc( message, wParam,lParam );
+			d->m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(rc.Width(), rc.Height()));
+			if (d->m_pTxtbox) {
+				CRect rcContent(rc);
+				d->m_pTxtbox->ctrl_->ct_->rc_.left = 2.5;
+				d->m_pTxtbox->ctrl_->ct_->rc_.top = 2.5;
+				d->m_pTxtbox->ctrl_->ct_->rc_.right = rcContent.Width() - 2.5;
+				d->m_pTxtbox->ctrl_->ct_->rc_.bottom = rcContent.Height() - 2.5;
+
+				d->m_pTxtbox->ctrl_->ct_->view_size_.cx = rcContent.Width() - 5;
+				d->m_pTxtbox->ctrl_->ct_->view_size_.cy = rcContent.Height() - 5;
 			}
-					
+
+			d->WndProc( message, wParam,lParam );
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
@@ -321,12 +262,6 @@ D2DWindow::~D2DWindow() { Clear(); }
 
 void D2DWindow::Clear()
 {
-	// All object are cleared.
-
-	//while ( !capture_obj_.empty())
-	//	capture_obj_.pop();
-	
-//	children_ = NULL;
 }
 
 HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE, RECT rc, UINT* img_resource_id, int img_cnt )
@@ -341,13 +276,9 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 	m_hWnd =  ::CreateWindowExW( dwWSEXSTYLE, CLASSNAME, L"", dwWSSTYLE, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, parent, NULL, ::GetModuleHandle(0), this ); 	
 
 	cxt_.Init();
+	cxt_.pWindow = this;
 
-	cxt_.insins = new SingletonD2DInstance();
-	cxt_.insins->factory = m_pDirect->GetD2D1Factory();
-	cxt_.insins->wrfactory = m_pDirect->GetDWriteFactory();
-	cxt_.insins->text = m_pDirect->GetTextFormat(*(m_spProp->Format));
-
-	cxt_.cxt = m_pDirect->GetHwndRenderTarget();
+	cxt_.textformat = m_pDirect->GetTextFormat(*(m_spProp->Format));
 
 	cxt_.black = m_pDirect->GetColorBrush(D2RGB(0, 0, 0));
 	cxt_.white = m_pDirect->GetColorBrush(D2RGB(255, 255, 255));
@@ -386,34 +317,19 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 		&cxt_.dot4_
 	);
 
-	cxt_.text = cxt_.insins->text;
-	cxt_.wfactory = cxt_.insins->wrfactory;
+	cxt_.line_height = 0;
+	cxt_.xoff = 0;
 
-	cxt_.cxtt.line_height = 0;
-	cxt_.cxtt.xoff = 0;
-	cxt_.cxtt.cxt = &cxt_;
-	cxt_.cxtt.wrfactory = cxt_.insins->wrfactory;
-
-	CComPtr<IDWriteTextLayout> tl;
-	cxt_.cxtt.textformat = m_pDirect->GetTextFormat(*(m_spProp->Format));
-	cxt_.wfactory->CreateTextLayout(L"T", 1, cxt_.cxtt.textformat, 1000, 1000, &tl);
+	CComPtr<IDWriteTextLayout> tl = cxt_.m_pDirect->GetTextLayout(*(m_spProp->Format), L"T", d2dw::CSizeF(1000.f, 1000.f));
 
 	DWRITE_HIT_TEST_METRICS mt;
 
 	float y;
-	tl->HitTestTextPosition(0, true, &cxt_.cxtt.xoff, &y, &mt);
+	tl->HitTestTextPosition(0, true, &cxt_.xoff, &y, &mt);
 
-	cxt_.cxtt.line_height = mt.height;
+	cxt_.line_height = mt.height;
 
 	redraw_ = 0;
-//	roundpaint_obj_ = nullptr;
-
-	// create top control
-	//D2DTopControls* cs = nullptr;
-	//D2DTopControls* cs = new D2DTopControls();
-	//cs->CreateWindow(this, VISIBLE, L"first layer");
-
-	//g_selection.ctrls = cs; // do nothing
 
 	// create textbox control
 	FRectF rcText(0, 0, rc.right-rc.left, rc.bottom-rc.top);
@@ -431,7 +347,6 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 
 	// OnCreateで各子コントロールを作成後にサイズの調整が必要
 	SendMessage(m_hWnd, WM_SIZE,0,MAKELPARAM(rc.right-rc.left,rc.bottom-rc.top));
-	//SetCapture(m_pTxtbox.get());
 	m_pTxtbox->StatActive(true);
 	return m_hWnd;
 
@@ -447,9 +362,6 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 	if ( message == WM_PAINT  && m_pTxtbox)
 	{
 		m_pTxtbox->WndProc(this,WM_PAINT,wParam,lParam);
-
-		//if (roundpaint_obj_ )
-		//	roundpaint_obj_->WndProc(this, message, wParam, lParam);
 	}
 	else if (message == WM_SIZE && m_pTxtbox)
 	{
@@ -493,37 +405,6 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 		auto a = 3;
 		a += 4;
 	} 
-	//else if ( !capture_obj_.empty() && message < WM_D2D_EV_FIRST ) {
-	//	auto obj1 = capture_obj_.top();
-	//
-	//	auto r = obj1->WndProc( this, message, wParam, lParam ); 
-
-	//	if ( r == LRESULT_SEND_MESSAGE_TO_OTHER_OBJECTS && message == WM_LBUTTONDOWN && m_pTxtbox)
-	//		r = m_pTxtbox->WndProc(this,message,wParam,lParam);
-
-	//	
-	//	if ( message==WM_MOUSEMOVE  )
-	//	{		
-	//		auto dropobject = (D2DControl*)obj1;
-
-	//		auto rcxx = dropobject->GetRect();
-
-	//		int a = WM_D2D_DROPOBJECT_SEARCH_ACCEPTOR;
-	//			
-	//		// dropされるobjectをどこへ落とすか
-	//		for( auto& it : drag_accepters_ )
-	//		{
-	//			int ra = (it)->WndProc( this, WM_D2D_DROPOBJECT_SEARCH_ACCEPTOR, (WPARAM)dropobject, 0 );
-	//			if ( ra )
-	//				break;
-	//		}
-	//	}
-	//}
-	//else if (WM_D2D_IDLE == message && capture_obj_.empty() && death_objects_.size())
-	//{
-	//	ATLTRACE(L"death object removed cnt=%d\n", death_objects_.size());
-	//	death_objects_.clear();
-	//}
 	else if (m_pTxtbox &&  message != WM_MOUSEMOVE)
 	{		
 		m_pTxtbox->WndProc(this,message,wParam,lParam);
@@ -531,8 +412,7 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 	else if (m_pTxtbox &&  message==WM_MOUSEMOVE )
 	{		
 		m_pTxtbox->WndProc(this,message,wParam,lParam);
-	}
-	
+	}	
 	switch( message )
 	{		
 		// 状態変化しやすい命令はデフォルトで必ずリドローさせる。WM_MOUSEMOVEは適宜、リドローさせる。
@@ -553,7 +433,6 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 			::OutputDebugStringA("WM_DESTROY");
 			if (m_pTxtbox) {
 				m_pTxtbox->DestroyControl();
-				//children_ = NULL;
 			}
 
 			Clear();
@@ -563,39 +442,6 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	return ret;
 }
-
-//void D2DWindow::SetCapture(D2DCaptureObject* p,  FPointF* pt, D2DMat* mat )
-//{
-//	::SetFocus( m_hWnd );
-//
-//	if (capture_obj_.empty() )
-//		capture_obj_.push(p);
-//	else if ( p != capture_obj_.top())
-//		capture_obj_.push(p);
-//
-//	if ( pt )
-//		capture_pt_ = *pt; //.push(*pt);
-//	else
-//		capture_pt_ = (FPointF(0,0));
-//
-//	if ( mat )
-//		capture_matrix_ = *mat;
-//}
-//D2DCaptureObject* D2DWindow::ReleaseCapture()
-//{
-//	auto p = capture_obj_.top();
-//	roundpaint_obj_ = nullptr;
-//	
-//	capture_obj_.pop();		
-//
-//	HWND hWnd = ::GetCapture();
-//
-//	::SetFocus( hWnd );
-//	redraw_ = 1;
-//
-//
-//	return p;
-//}
 
 void V4::SetCursor( HCURSOR h )
 {

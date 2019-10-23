@@ -135,9 +135,9 @@ DLLEXPORT void WINAPI CreateTraiangle( ID2D1Factory* factory, int type, float cx
 
 struct D2DContextBase
 {	
-	CComPtr<ID2D1RenderTarget>  cxt;
-	IDWriteTextFormat* text;
-	IDWriteFactory* wfactory;
+//	CComPtr<ID2D1RenderTarget>  cxt;
+//	IDWriteTextFormat* text;
+//	IDWriteFactory* wfactory;
 };
 
 DLLEXPORT void WINAPI D2DrawCenterText( D2DContextBase& cxt, ID2D1Brush* clr, const FRectF& rc, LPCWSTR str, int len, int align );

@@ -447,30 +447,36 @@ void CTextEditor::Render(D2DContext& cxt )
 
 	if ( layout_.bRecalc_ )
 	{
-		::OutputDebugStringA((boost::format("SizeX:%1%, SizeY:%2%\r\n") % ct_->view_size_.cx % ct_->view_size_.cy).str().c_str());
-		layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_, zCaretPos, ct_->nStartCharPos_, cxt.text);
 		CRect rc;
 		::GetWindowRect(hWnd_, &rc);
 		CPoint pt(rc.TopLeft());
 		::ScreenToClient(::GetParent(hWnd_), &pt);
 
-		if (layout_.tm_.height + 6 > rc.Height()) {
-			::MoveWindow(hWnd_, pt.x, pt.y, ct_->view_size_.cx + 6, (std::max)((LONG)(layout_.tm_.height + 6), rc.Height()), FALSE);
+		::OutputDebugStringA((boost::format("First SizeX:%1%, SizeY:%2%\r\n") % ct_->view_size_.cx % ct_->view_size_.cy).str().c_str());
+		layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_, zCaretPos, ct_->nStartCharPos_, cxt.textformat);
+
+		if (layout_.tm_.height + 5 > rc.Height()) {
+			::MoveWindow(hWnd_, pt.x, pt.y, ct_->view_size_.cx + 5, (std::max)((LONG)(layout_.tm_.height + 5), rc.Height()), FALSE);
+			//ct_->view_size_.cy = (std::max)((LONG)(layout_.tm_.height + 5), rc.Height());
+			::OutputDebugStringA((boost::format("Move SizeX:%1%, SizeY:%2%\r\n") % ct_->view_size_.cx % ct_->view_size_.cy).str().c_str());
+			::OutputDebugStringA((boost::format("Move RectX:%1%, RectY:%2%\r\n") % ct_->rc_.Width() % ct_->rc_.Height()).str().c_str());
+			layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_, zCaretPos, ct_->nStartCharPos_, cxt.textformat);
+
 		}
 
 		layout_.bRecalc_ = false;
 	}
 		
-	D2DMatrix mat( cxt );				
-	mat.PushTransform();
-	mat.Offset( ct_->offpt_.x, ct_->offpt_.y );
+	//D2DMatrix mat( cxt );				
+	//mat.PushTransform();
+	//mat.Offset( ct_->offpt_.x, ct_->offpt_.y );
 
 	int selstart = (int)ct_->nSelStart_ - ct_->nStartCharPos_;
 	int selend = (int)ct_->nSelEnd_ - ct_->nStartCharPos_;
 
 	layout_.Render(cxt, ct_->rc_, ct_->GetTextBuffer(), ct_->GetTextLength(), selstart, selend,ct_->bSelTrail_,pCompositionRenderInfo_, nCompositionRenderInfo_);
 
-	mat.PopTransform();
+	//mat.PopTransform();
 }
 //----------------------------------------------------------------
 //
@@ -481,8 +487,8 @@ void CTextEditor::CalcRender(D2DContext& cxt )
 {
 	int x = 0;
 	
-	::OutputDebugStringA((boost::format("TextBuff:%1%, TextLen:%2%\r\n") % ct_->GetTextBuffer() % ct_->GetTextLength()).str().c_str());
-	layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_,0, x, cxt.text);	
+	//::OutputDebugStringA((boost::format("TextBuff:%1%, TextLen:%2%\r\n") % ct_->GetTextBuffer() % ct_->GetTextLength()).str().c_str());
+	layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_,0, x, cxt.textformat);	
 	layout_.bRecalc_ = false;
 }
 
@@ -519,7 +525,7 @@ void CTextEditor::Reset( IBridgeTSFInterface* bi )
 	if ( bi )
 	{
 		FRectFBoxModel rc1 = bi->GetClientRectEx();
-		FRectF rc = rc1.GetContentRect().ZeroRect();
+		FRectF rc = rc1.GetContentRect();// .ZeroRect();
 
 		ct_->rc_ = rc;
 

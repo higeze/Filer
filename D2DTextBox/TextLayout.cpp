@@ -3,6 +3,8 @@
 #include "D2DContextNew.h"
 #include "D2DContextEx.h"
 #include "D2DCharRect.h"
+#include "D2DWindow.h"
+#include "CellProperty.h"
 using namespace V4;
 using namespace TSF;
 
@@ -154,7 +156,7 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 	{		
 		LPCWSTR str = ( bPassword_ ? __password : psz );
 
-		CreateTextLayout ct(cxt.wfactory, str, nCnt, fmt, sz, bSingleLine_);
+		CreateTextLayout ct(cxt.m_pDirect->GetDWriteFactory(), str, nCnt, fmt, sz, bSingleLine_);
 
 		StarCharPos = ct.Create( StarCharPos, zCaret, &DWTextLayout_ ); //★TextLayout_
 
@@ -229,7 +231,7 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 		{
 		
 			DWTextLayout_->GetMetrics(&tm_);
-			::OutputDebugStringA((boost::format("Rect:%1%, %2%, %3%, %4%") % tm_.left%  tm_.top%  tm_.width % tm_.height).str().c_str());
+			//::OutputDebugStringA((boost::format("Rect:%1%, %2%, %3%, %4%") % tm_.left%  tm_.top%  tm_.width % tm_.height).str().c_str());
 
 
 		}
@@ -302,12 +304,18 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
 	const COMPOSITIONRENDERINFO *pCompositionRenderInfo, UINT nCompositionRenderInfo)
 {
 	{
-		_ASSERT( rc.left == 0 );
-		_ASSERT( rc.top == 0 );
+		//_ASSERT( rc.left == 0 );
+		//_ASSERT( rc.top == 0 );
 		
 		_ASSERT( DWTextLayout_ );
+//		::OutputDebugStringA((boost::format("Pt X:%1%, Y:%2%\r\n") % rc.left % rc.top).str().c_str());
+		DWRITE_TEXT_METRICS tm;
+		DWTextLayout_->GetMetrics(&tm);
+		::OutputDebugStringA((boost::format("Rect %1%, %2%\, %3%\, %4%, %5%, %6%\r\n") % rc.left % rc.top % rc.right % rc.bottom % rc.Width() % rc.Height()).str().c_str());
+		::OutputDebugStringA((boost::format("TM %1%, %2%\, %3%\, %4%, %5%, %6%\r\n") % tm.left % tm.top % tm.width % tm.height % tm.layoutWidth % tm.layoutHeight).str().c_str());
 
-		cxt.cxt->DrawTextLayout( FPointF(), DWTextLayout_, cxt.black ); // D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
+		//cxt.m_pDirect->GetHwndRenderTarget()->DrawTextLayout( D2D1::Point2F(rc.left, rc.top), DWTextLayout_, cxt.black ); // D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
+		cxt.m_pDirect->DrawTextLayout(*(cxt.pWindow->m_spProp->Format), psz, d2dw::CRectF(rc.left,rc.top, rc.right, rc.bottom));
 	}
 
     // Render selection,caret
@@ -344,7 +352,7 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
                     for (int j = nSelStartInLine; j < nSelEndInLine; j++)
                     {
 						auto br = MakeBrsuh(cxt, selected_halftone_color_ );
-						cxt.cxt->FillRectangle( prgLines_[r].prgCharInfo[j].rc, br ); // SELECTED 色でfill, セレクトされた時のハーフトン塗り
+						cxt.m_pDirect->GetHwndRenderTarget()->FillRectangle( prgLines_[r].prgCharInfo[j].rc, br ); // SELECTED 色でfill, セレクトされた時のハーフトン塗り
                     }
 
 					bool blast = bTrail;
@@ -456,8 +464,10 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
 								//Polyline(hdc, pts, 2);
 								
 
+								auto pt0 = pts[0]; pt0.Offset(rc.left, rc.top);
+								auto pt1 = pts[1]; pt1.Offset(rc.left, rc.top);
 
-								cxt.cxt->DrawLine( pts[0], pts[1], cxt.black );     
+								cxt.m_pDirect->GetHwndRenderTarget()->DrawLine( pt0, pt1, cxt.black );
 							}
 						}
 					}
@@ -485,13 +495,13 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
 				
 
 		// Caret表示
-		DrawCaret(cxt, xcaret.Get()); 
+		DrawCaret(cxt, xcaret.Get().Offset(rc.left, rc.top)); 
 
     }
     else
     {
 		// 文字がない場合Caret表示
-		DrawCaret(cxt, rcSelCaret);
+		DrawCaret(cxt, rcSelCaret.Offset(rc.left, rc.top));
     }
 
     return TRUE;

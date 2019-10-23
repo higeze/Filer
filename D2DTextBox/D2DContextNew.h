@@ -157,102 +157,102 @@ namespace V4
 	///////////////////////////////////////////////////////////////
 	// D2DMat with stack
 
-	class D2DMatrix : public D2DMat
-	{
-		public :
-			
-			D2DMatrix( const D2D1_MATRIX_3X2_F& m ):D2DMat(m),st_i_(0){}
-			//D2DMatrix( D2DContext& cxt ):g_(cxt.cxt),st_i_(0){}
-			D2DMatrix( ID2D1RenderTarget* g ):g_(g),st_i_(0){}
+	//class D2DMatrix : public D2DMat
+	//{
+	//	public :
+	//		
+	//		D2DMatrix( const D2D1_MATRIX_3X2_F& m ):D2DMat(m),st_i_(0){}
+	//		//D2DMatrix( D2DContext& cxt ):g_(cxt.cxt),st_i_(0){}
+	//		D2DMatrix( ID2D1RenderTarget* g ):g_(g),st_i_(0){}
 
-			void Push()
-			{
-				_ASSERT( st_i_ < 4 );
-				stack_[st_i_++] = *this;
-			}
+	//		void Push()
+	//		{
+	//			_ASSERT( st_i_ < 4 );
+	//			stack_[st_i_++] = *this;
+	//		}
 
-			void Pop()
-			{
-				_ASSERT( st_i_ > 0 );
-				*this = stack_[--st_i_];
-			}
-			D2DMatrix& operator = ( const D2D1_MATRIX_3X2_F& mat )
-			{
-				_11 = mat._11; _21 = mat._21;
-				_12 = mat._12; _22 = mat._22;
-				_31 = mat._31; _32 = mat._32;
-				return *this;
-			}
+	//		void Pop()
+	//		{
+	//			_ASSERT( st_i_ > 0 );
+	//			*this = stack_[--st_i_];
+	//		}
+	//		D2DMatrix& operator = ( const D2D1_MATRIX_3X2_F& mat )
+	//		{
+	//			_11 = mat._11; _21 = mat._21;
+	//			_12 = mat._12; _22 = mat._22;
+	//			_31 = mat._31; _32 = mat._32;
+	//			return *this;
+	//		}
 
-			void PushTransformInCaputre(const D2DMat& mat )
-			{				
-				g_->SetTransform( &mat );
-				PushTransform();				
-			}
-			D2DMatrix& GetTransform()
-			{			
-				g_->GetTransform( this );					
-				return *this;
-			}
+	//		void PushTransformInCaputre(const D2DMat& mat )
+	//		{				
+	//			g_->SetTransform( &mat );
+	//			PushTransform();				
+	//		}
+	//		D2DMatrix& GetTransform()
+	//		{			
+	//			g_->GetTransform( this );					
+	//			return *this;
+	//		}
 
-			D2DMatrix& PushTransform()
-			{			
-				g_->GetTransform( this );
-				Push();			
-				return *this;
-			}
-			void PopTransform()
-			{
-				Pop();			
-				g_->SetTransform( *this );			
-			}
-			D2DMatrix& Offset( const FRectF& rc )
-			{
-				return Offset( rc.left, rc.top );
-			}
-			D2DMatrix& Offset( float cx, float cy )
-			{
-				// _31,_32に小数点を付けない。96DPI時に線が太くなる場合があるため。
-				float cx1 = static_cast<int>(cx);
-				float cy1 = static_cast<int>(cy);
-								
-				D2DMat::Offset(cx1,cy1);
-				g_->SetTransform( *this );
-				return *this;
-			}
-			D2DMatrix& Scale( float scx, float scy )
-			{
-				_11 = _11 * scx;
-				_22 = _22 * scy;
-				g_->SetTransform( *this );
-				return *this;
+	//		D2DMatrix& PushTransform()
+	//		{			
+	//			g_->GetTransform( this );
+	//			Push();			
+	//			return *this;
+	//		}
+	//		void PopTransform()
+	//		{
+	//			Pop();			
+	//			g_->SetTransform( *this );			
+	//		}
+	//		D2DMatrix& Offset( const FRectF& rc )
+	//		{
+	//			return Offset( rc.left, rc.top );
+	//		}
+	//		D2DMatrix& Offset( float cx, float cy )
+	//		{
+	//			// _31,_32に小数点を付けない。96DPI時に線が太くなる場合があるため。
+	//			float cx1 = static_cast<int>(cx);
+	//			float cy1 = static_cast<int>(cy);
+	//							
+	//			D2DMat::Offset(cx1,cy1);
+	//			g_->SetTransform( *this );
+	//			return *this;
+	//		}
+	//		D2DMatrix& Scale( float scx, float scy )
+	//		{
+	//			_11 = _11 * scx;
+	//			_22 = _22 * scy;
+	//			g_->SetTransform( *this );
+	//			return *this;
 
-			}
-			void SetTransform()
-			{
-				g_->SetTransform( *this );
-			}
-			void ReplaceTransform(const D2D1_MATRIX_3X2_F& mat)
-			{
-				this->operator=( mat );
-				g_->SetTransform( *this );
-			}
-			void NewTransform(const D2D1_MATRIX_3X2_F& mat)
-			{
-				this->operator=( mat );
-				g_->SetTransform( *this );
-			}
-			void Multi( const D2D1_MATRIX_3X2_F &a )
-			{
-				D2DMat::Multi( *this, *this, a );
-				g_->SetTransform( *this );
-			}
+	//		}
+	//		void SetTransform()
+	//		{
+	//			g_->SetTransform( *this );
+	//		}
+	//		void ReplaceTransform(const D2D1_MATRIX_3X2_F& mat)
+	//		{
+	//			this->operator=( mat );
+	//			g_->SetTransform( *this );
+	//		}
+	//		void NewTransform(const D2D1_MATRIX_3X2_F& mat)
+	//		{
+	//			this->operator=( mat );
+	//			g_->SetTransform( *this );
+	//		}
+	//		void Multi( const D2D1_MATRIX_3X2_F &a )
+	//		{
+	//			D2DMat::Multi( *this, *this, a );
+	//			g_->SetTransform( *this );
+	//		}
 
-		protected :
-			int st_i_;
-			D2D1_MATRIX_3X2_F stack_[4]; // 4個あれば十分だと思う。
-			ID2D1RenderTarget* g_;
-	};
+	//	protected :
+	//		int st_i_;
+	//		D2D1_MATRIX_3X2_F stack_[4]; // 4個あれば十分だと思う。
+	//		ID2D1RenderTarget* g_;
+	//};
 };
 
 namespace V4

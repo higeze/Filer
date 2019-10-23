@@ -67,11 +67,8 @@ public:
 	D2DContext cxt_;
 	D2DRES res_;
 	int redraw_;
-	//D2DMat capture_matrix_;
 
 	std::map<void*, int> mts_;
-	//std::shared_ptr<D2DControls> children_;
-	//faststack<D2DCaptureObject*> capture_obj_;
 	std::vector<D2DControl*> drag_accepters_;
 	std::vector< std::shared_ptr<D2DControl>> death_objects_;
 
@@ -96,37 +93,9 @@ public:
 
 		HWND CreateD2DWindow( DWORD WSEX_STYLE, HWND parent, DWORD WS_STYLE, RECT rc, UINT* img_resource_id=nullptr, int img_cnt=0 );		
 		LRESULT WndProc(UINT message, WPARAM wParam, LPARAM lParam);
-
-		//void SetCapture(D2DCaptureObject* p, FPointF* pt=NULL, D2DMat* mat=NULL );
-		//D2DCaptureObject* ReleaseCapture();
-		//D2DCaptureObject* GetCapture(){ return ( !capture_obj_.empty() ? capture_obj_.top() : NULL); }
-		//FPointF CapturePoint( const FPointF& pt )
-		//{ 
-		//	FPointF p = capture_pt_;
-		//	capture_pt_ = pt;			
-		//	return p; 
-		//}
-		//FRectFBoxModel CaptureRect( const FRectFBoxModel& rc )
-		//{ 
-		//	FRectFBoxModel p = capture_rect_;
-		//	capture_rect_ = rc;			
-		//	return p; 
-		//}
-		//D2DMat CaptureMat(){ return capture_matrix_; }
-
-
-		//void RoundPaint(D2DCaptureObject* p ){ roundpaint_obj_ = p; } // for FloatMenu
-
-		//bool CaptureIsInclude(D2DCaptureObject* p){ return capture_obj_.include( p ); }
 		static int SecurityId(bool bNew);
 		
 		void Clear();
-
-	protected :
-		//FPointF capture_pt_;
-		//FRectFBoxModel capture_rect_;
-
-		//D2DCaptureObject* roundpaint_obj_;
 };
 
 };

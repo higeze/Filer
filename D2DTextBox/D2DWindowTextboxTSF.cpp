@@ -65,7 +65,7 @@ void D2DTextbox::CreateWindow( D2DWindow* parent, D2DControls* pacontrol, const 
 	if ( fmt_ )
 	{
 		CComPtr<IDWriteTextLayout> tl;		
-		if ( S_OK == parent_->cxt_.wfactory->CreateTextLayout( L"T", 1, fmt_, 1000,1000,  &tl ))
+		if ( S_OK == parent_->cxt_.m_pDirect->GetDWriteFactory()->CreateTextLayout( L"T", 1, fmt_, 1000,1000,  &tl ))
 		{
 			DWRITE_HIT_TEST_METRICS mt;
 			float y = 0, xoff=0;
@@ -76,7 +76,7 @@ void D2DTextbox::CreateWindow( D2DWindow* parent, D2DControls* pacontrol, const 
 	}
 	else
 	{
-		font_height_ = parent->cxt_.cxtt.line_height;
+		font_height_ = parent->cxt_.line_height;
 
 	}
 	 
@@ -117,20 +117,20 @@ void D2DTextbox::CalcRender(bool bLayoutUpdate)
 	{
 		IDWriteTextFormat* old = NULL;
 
-		old = parent_->cxt_.text;
-		parent_->cxt_.text = fmt_;
+		old = parent_->cxt_.textformat;
+		parent_->cxt_.textformat = fmt_;
 
 		ctrl_->SetContainer( &ct_, this ); 
-		ctrl_->mat_ = mat_;	
+		//ctrl_->mat_ = mat_;	
 		ctrl_->CalcRender( parent_->cxt_ );
 
 
-		parent_->cxt_.text = old;
+		parent_->cxt_.textformat = old;
 	}
 	else
 	{
 		ctrl_->SetContainer( &ct_, this ); 
-		ctrl_->mat_ = mat_;	
+		//ctrl_->mat_ = mat_;	
 		ctrl_->CalcRender( parent_->cxt_ );
 	}
 
@@ -154,47 +154,46 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 	{
 		case WM_PAINT:
 		{
-			D2DContext& cxt = d->cxt_;										
-			D2DMatrix mat( cxt );		
+			//D2DMatrix mat( cxt );		
 
 			FRectF rccnt = rc_.GetContentRect();
 		
-			mat.PushTransform(); // 0
-			mat_ = mat;
+			//mat.PushTransform(); // 0
+			//mat_ = mat;
 
 
 			FRectF rc1 = rc_.GetBorderRect(); 
 		
-			D2DRectFilter f(cxt, rc1);
+			D2DRectFilter f(d->cxt_, rc1);
 
 			{
-				auto br1 = MakeBrsuh( cxt, clr_back_ );
-				DrawFill(cxt,rc1,br1 );// 裏面
+				auto br1 = MakeBrsuh( d->cxt_, clr_back_ );
+				DrawFill(d->cxt_.m_pDirect->GetHwndRenderTarget(),rc1,br1 );// 裏面
 			}
 			
-			auto wakucolor = MakeBrsuh( cxt,clr_border_ );
-			auto forecolor = MakeBrsuh( cxt,clr_fore_ );
+			auto wakucolor = MakeBrsuh( d->cxt_,clr_border_ );
+			auto forecolor = MakeBrsuh( d->cxt_,clr_fore_ );
 
-			ID2D1Brush* textcolor = ( stat_&READONLY ? cxt.bluegray.p : forecolor.p );
+			ID2D1Brush* textcolor = ( stat_&READONLY ? d->cxt_.bluegray.p : forecolor.p );
 			
-			mat.PushTransform(); // 1
+			//mat.PushTransform(); // 1
 			{			
-				mat.Offset( rccnt.left + LEFT_MARGIN , rccnt.top );		
-				mat.PushTransform(); // 2
+				//mat.Offset( rccnt.left + LEFT_MARGIN , rccnt.top );		
+				//mat.PushTransform(); // 2
 				{
 					float hh = ( scbar_.get()==nullptr ? 0.0 : RowHeight() *  scbar_->info_.rowno);
 
-					mat.Offset( 0, -hh ); 
-					matEx_ = mat;
+					//mat.Offset( 0, -hh ); 
+					//matEx_ = mat;
 
 					{		
-						mat.PushTransform(); // 3
+						//mat.PushTransform(); // 3
 						int len = ct_.GetTextLength();
 			
 
 						if( ctrl_->GetContainer() == &ct_ && bActive_ )
 						{
-							ctrl_->mat_ = mat_;
+							//ctrl_->mat_ = mat_;
 							
 							// on editting, bActive_ is true.
 
@@ -202,58 +201,58 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 							float oldheight;
 
 							if ( fmt_ == NULL )
-								fmt_ = parent_->cxt_.text;
+								fmt_ = parent_->cxt_.textformat;
 							else
 							{
-								old = parent_->cxt_.text;
-								parent_->cxt_.text = fmt_;
-								oldheight = parent_->cxt_.cxtt.line_height;
-								parent_->cxt_.cxtt.line_height = font_height_;
+								old = parent_->cxt_.textformat;
+								parent_->cxt_.textformat = fmt_;
+								oldheight = parent_->cxt_.line_height;
+								parent_->cxt_.line_height = font_height_;
 							}
 					
 							if ( !(typ_ & MULTILINE) )
 							{
 								float yoff = ( rccnt.Height()-font_height_ ) / 2.0f; // vcenter
-								mat.Offset(0,yoff );	
+								//mat.Offset(0,yoff );	
 							}
 						
 							ret = ctrl_->WndProc( d, WM_PAINT, wParam, lParam );
 
 							if ( old )
 							{
-								parent_->cxt_.text = old;
-								parent_->cxt_.cxtt.line_height = oldheight;
+								parent_->cxt_.textformat = old;
+								parent_->cxt_.line_height = oldheight;
 
 							}
-							wakucolor = MakeBrsuh( cxt, clr_active_border_ ); 
+							wakucolor = MakeBrsuh( d->cxt_, clr_active_border_ ); 
 						}					
-						mat.PopTransform(); // 3
+						//mat.PopTransform(); // 3
 					}			
 				}
-				mat.PopTransform(); // 2
+				//mat.PopTransform(); // 2
 			}
 
 			if ( scbar_ )
 			{
 				//FRectF rccc = scbar_->GetRect();				
-				mat.Offset( -LEFT_MARGIN , -rc_.Padding_.t );	
+//				mat.Offset( -LEFT_MARGIN , -rc_.Padding_.t );	
 				scbar_->WndProc(d,WM_PAINT,wParam,lParam);
 			}
 
-			mat.PopTransform(); // 1
+//			mat.PopTransform(); // 1
 
 			//if ( stat_ & BORDER )
 			//{
 				//D2DRectFilter f(cxt, rc1);
-				DrawFillRect( cxt, rc1, wakucolor, cxt.transparent,1.0f );
+				DrawFillRect( d->cxt_, rc1, wakucolor, d->cxt_.transparent,1.0f );
 			//}
 
 			if ( stat_ & DISABLE )
 			{
-				DrawFill( cxt, rc1, cxt.halftone );
+				DrawFill( d->cxt_.m_pDirect->GetHwndRenderTarget(), rc1, d->cxt_.halftone );
 			}
 
-			mat.PopTransform();	//0	
+//			mat.PopTransform();	//0	
 
 			if ( bUpdateScbar_ )
 			{
@@ -684,15 +683,15 @@ void D2DTextbox::ActiveSw()
 {	
 	IDWriteTextFormat* old = NULL;
 	if ( fmt_ == NULL )
-		fmt_ = parent_->cxt_.text;
+		fmt_ = parent_->cxt_.textformat;
 	else
 	{
-		old = parent_->cxt_.text;
-		parent_->cxt_.text = fmt_;
+		old = parent_->cxt_.textformat;
+		parent_->cxt_.textformat = fmt_;
 	}
 
 	ctrl_->SetContainer( &ct_, this ); 
-	ctrl_->mat_ = mat_;	
+	//ctrl_->mat_ = mat_;	
 	ctrl_->CalcRender( parent_->cxt_ );
 
 	{
@@ -719,7 +718,7 @@ void D2DTextbox::ActiveSw()
 	}
 
 	if ( old )
-		parent_->cxt_.text = old;
+		parent_->cxt_.textformat = old;
 
 
 	if ( scbar_ )
@@ -727,7 +726,7 @@ void D2DTextbox::ActiveSw()
 		UpdateScrollbar( scbar_.get() );
 
 		float hh = ( ct_.bSingleLine_? 0.0 : RowHeight() *  scbar_->info_.rowno);
-		ctrl_->mat_._32 -= hh;
+		//ctrl_->mat_._32 -= hh;
 	}
 }
 
@@ -748,7 +747,7 @@ void D2DTextbox::StatActive( bool bActive )
 		if ( scbar_ )
 		{
 			float hh = ( ct_.bSingleLine_? 0.0 : RowHeight() *  scbar_->info_.rowno);
-			ctrl_->mat_._32 -= hh;
+			//ctrl_->mat_._32 -= hh;
 		}
 
 		ctrl_->SetFocus();

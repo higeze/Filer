@@ -410,7 +410,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\D2DTextBox\D2DApi.cpp" />
-    <ClCompile Include="..\D2DTextBox\D2DApiEx.cpp" />
     <ClCompile Include="..\D2DTextBox\D2DContextEx.cpp" />
     <ClCompile Include="..\D2DTextBox\D2DResource.cpp" />
     <ClCompile Include="..\D2DTextBox\D2DWindow.cpp" />

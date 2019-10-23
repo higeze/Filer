@@ -264,10 +264,10 @@ LRESULT D2DControls::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM l
 		case WM_PAINT:
 		{						
 			D2DContext& cxt = d->cxt_;
-			D2DMatrix mat(cxt);		
-			mat_ = mat.PushTransform();
-			mat.Offset( -scrollbar_off_.width, -scrollbar_off_.height );
-			mat.Offset( rc_.left, rc_.top );
+			//D2DMatrix mat(cxt);		
+			//mat_ = mat.PushTransform();
+			//mat.Offset( -scrollbar_off_.width, -scrollbar_off_.height );
+			//mat.Offset( rc_.left, rc_.top );
 
 			if ( (stat_ & BORDER) )
 			{				
@@ -286,7 +286,7 @@ LRESULT D2DControls::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM l
 				SendMessageReverseAll(d,message,wParam,lParam);	
 
 
-			mat.PopTransform();
+//			mat.PopTransform();
 		}
 		break;		
 		
@@ -634,15 +634,15 @@ void D2DStatic::SetText( LPCWSTR str, int align )
 	if ( align > -1 )
 		alignment_ = align;
 
-	SetFont( parent_->cxt_.cxtt.textformat );
+	SetFont( parent_->cxt_.textformat );
 }
 void D2DStatic::SetFont( IDWriteTextFormat* fmt )
 {
 	FRectF rc = rc_.GetContentRect(); //Zero(); 
 	rc = rc.ZeroRect();
-	rc.left += 5;
+	//rc.left += 5;
 	xassert( alignment_ == 0 ||alignment_ == 1 ||alignment_ == 2 );
-	stext_.CreateLayoutEx( parent_->cxt_.cxtt,fmt, rc, name_, lstrlen(name_), alignment_ ); // 単行のみ
+	//stext_.CreateLayoutEx( parent_->cxt_.cxtt,fmt, rc, name_, lstrlen(name_), alignment_ ); // 単行のみ
 }
 
 LRESULT D2DStatic::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
@@ -656,25 +656,17 @@ LRESULT D2DStatic::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lPa
 		case WM_PAINT:
 		{
 			auto cxt = d->cxt_;
-			D2DMatrix mat( cxt );				
-			mat.PushTransform();
-			mat_ = mat;
-
-			//FRectF rc1 = rc_.GetBorderRect(); //.ZeroRect();
-			//D2DRectFilter f(d->cxt_, rc1);
-
-			//if ( stat_ & BORDER )
-			//{				
-			//	DrawFillRect( d->cxt_, rc1, d->cxt_.black, d->cxt_.transparent,   1.0f );
-			//}
+			//D2DMatrix mat( cxt );				
+			//mat.PushTransform();
+			//mat_ = mat;
 
 			FRectF rccnt = rc_.GetContentRect();
-			mat.Offset( rccnt.left, rccnt.top );	
+			//mat.Offset( rccnt.left, rccnt.top );	
 
 			auto br = MakeBrsuh(cxt,brush_fore_);
-			stext_.DrawText( cxt, br );
+			//stext_.DrawText( cxt, br );
 
-			mat.PopTransform();
+			//mat.PopTransform();
 			
 		}
 		break;
@@ -696,238 +688,238 @@ LRESULT D2DStatic::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lPa
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void D2DTopControls::CreateWindow(D2DWindow* d, int stat, LPCWSTR name, int id )
-{
-	CreateWindow(d,NULL,FRectFBoxModel(0,0,-1,-1),stat,name,id );
-
-}
-void D2DTopControls::CreateWindow(D2DWindow* d, D2DControls* pacontrol, const FRectFBoxModel& rc, int stat, LPCWSTR name, int id )
-{
-	xassert( pacontrol == NULL );
-	D2DControls::CreateWindow(d, pacontrol, rc, stat, name, id);
-	
-	zoom_ =1.0f;
-	bAutoSize_ = true;
-
-	back_.br = nullptr;
-	back_.color = D2RGB(255,255,255 );
-	guid_ = FString::NewGuid();
-	
-	CreateResource(true);
-	
-}
-FRectF D2DTopControls::CalcAutoSize( const GDI32::FSize& sz )
-{
-	FRectF rc = rc_;
-
-	if ( calc_auto_size_ )
-		rc = calc_auto_size_( rc, sz );
-	else
-	{
-		rc.SetSize(sz);
-	}
-	return rc;
-}
-void D2DTopControls::OnCreate()
-{
-	WndProc(parent_,WM_D2D_APP_ON_CREATE, 0,0);		
-}
-
-void D2DTopControls::BackColor(D2D1_COLOR_F clr)
-{
-	back_.color = clr;
-	back_.br = MakeBrsuh(parent_->cxt_, back_.color);
-
-}
-
-LRESULT D2DTopControls::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	LRESULT ret = 0;
-
-	if ( !IsThroughMessage(message))
-		return 0;
-
-	switch( message )
-	{
-		case WM_D2D_RESTRUCT_RENDERTARGET:
-			CreateResource( wParam == 1);
-			SendMessageAll(d, message, wParam, lParam);
-			return 0;
-		break;
-		case WM_DESTROY:			
-			SendMessageAll(d, message, wParam, lParam);
-			Clear();
-			return 0;
-		break;						
-	}
-	
-
-
-	D2DMatrix mat(d->cxt_);
-	mat.PushTransform();
-	mat.Offset( -scrollbar_off_.width, -scrollbar_off_.height );
-	mat.Offset( rc_.left, rc_.top );
-
-	mat._11 = zoom_ ;
-	mat._22 = zoom_ ;
-	
-	mat.SetTransform();
-
-	mat_ = mat; // 自座標のマット
-
-	FPointF pt21 = mat.DPtoLP( FPointF(lParam));
-
-	switch( message )
-	{
-		case WM_PAINT:
-		{			
-			D2DContext& cxt = d->cxt_;
-
-			auto rcx = rc_.ZeroRect();
-			
-			D2DRectFilter f(cxt, rcx );
-
-			
-			DrawFill(cxt,rcx, (ID2D1Brush*)back_.br);
-
-			SendMessageReverseAll(d,message,wParam,lParam);	
-
-		}
-		break;	
-		case WM_D2D_JS_ERROR:
-		{
-			error_msg_ = (BSTR)lParam;
-
-			ret = 1;
-			
-
-		}
-		break;
-		
-		case WM_LBUTTONDOWN:		
-		{
-			if (ENABLE(stat_))
-			{
-				if ( rc_.ZeroPtInRect(pt21)) //if ( rc_.ZeroRect().PtInRect( pt21 ))
-					SendMessageAll(d,message,wParam,lParam);
-				else
-					SendMessageAll(d,WM_D2D_NCLBUTTONDOWN,wParam,lParam);
-			}
-		}
-		break;
-		case WM_LBUTTONDBLCLK:
-		{
-			if (ENABLE(stat_))
-			{
-				if ( rc_.ZeroPtInRect(pt21)) //if ( rc_.ZeroRect().PtInRect( pt21 ))
-					SendMessageAll(d,message,wParam,lParam);
-			}
-		}
-		break;
-		case WM_RBUTTONDOWN:
-		case WM_RBUTTONUP:		
-		case WM_LBUTTONUP:
-		{
-			if (ENABLE(stat_))
-			{
-				if ( rc_.ZeroPtInRect(pt21)) //if ( rc_.ZeroRect().PtInRect( pt21 ))
-					SendMessageAll(d,message,wParam,lParam);
-			}
-		}
-		break;
-		case WM_MOUSEMOVE:
-		{
-			if (ENABLE(stat_))
-			{
-				//if ( rc_.ZeroRect().PtInRect( pt21 ))
-
-				if ( rc_.ZeroPtInRect(pt21))
-				{
-					if ( !mouse_enter_ )
-					{
-						wParam = wParam | MK_F_MOUSE_ENTER;
-						mouse_enter_ = true;
-					}
-					SendMessageAll(d,message,wParam,lParam);
-				
-				}
-				else if ( mouse_enter_ )
-				{
-					wParam = wParam | MK_F_MOUSE_LEAVE;
-					SendMessageAll(d,message,wParam,lParam);				
-					mouse_enter_ = false;
-				}
-			}
-		}
-		break;
-		case WM_SIZE:
-		{
-			if ( bAutoSize_ )
-			{
-				rc_ = CalcAutoSize(GDI32::FSize(lParam));
-			}
-			
-			SendMessageAll(d,message,wParam,lParam);		
-		}
-		break;
-		case WM_DESTROY:
-			SendMessageAll(d,message,wParam,lParam);		
-		break;
-
-	
-		case WM_D2D_GET_CONTROLS:
-		{
-			if ( id_ == wParam )
-			{
-				D2DControls** p = (D2DControls**)lParam;
-				*p = this;
-				ret = 1;
-			}
-			else if (ENABLE(stat_))
-				SendMessageAll(d,message,wParam,lParam);
-		}
-		break;
-		case WM_D2D_TEST:
-//			V4::MessageBox(this,L"hoi",L"hoi", MB_OK ); 
-			ret = 1;
-		break;
-		case WM_D2D_RESTRUCT_RENDERTARGET:
-		{
-			CreateResource(wParam == 1);
-
-			SendMessageAll(d, message, wParam, lParam);
-		}
-		break;
-
-
-
-		default:
-			if (ENABLE(stat_))
-				ret = SendMessageAll(d,message,wParam,lParam);	
-
-			if ( message <= WM_D2D_APP_USER )
-			{
-				if ( OnWndProcExt_ )
-					ret = OnWndProcExt_(this,message,wParam,lParam);
-			}
-
-				
-	}
-
-	mat.PopTransform();
-	return ret;
-}
-void D2DTopControls::CreateResource(bool bCreate)
-{
-	back_.br.Release();
-
-	if ( bCreate )
-	{
-		back_.br = parent_->GetSolidColor(back_.color);
-
-//		back_.br = parent_->m_pDirect->GetColorBrush(d2dw::CColorF(0.f, 0.f, 0.f, 1.f));
-	}		
-}
+//void D2DTopControls::CreateWindow(D2DWindow* d, int stat, LPCWSTR name, int id )
+//{
+//	CreateWindow(d,NULL,FRectFBoxModel(0,0,-1,-1),stat,name,id );
+//
+//}
+//void D2DTopControls::CreateWindow(D2DWindow* d, D2DControls* pacontrol, const FRectFBoxModel& rc, int stat, LPCWSTR name, int id )
+//{
+//	xassert( pacontrol == NULL );
+//	D2DControls::CreateWindow(d, pacontrol, rc, stat, name, id);
+//	
+//	zoom_ =1.0f;
+//	bAutoSize_ = true;
+//
+//	back_.br = nullptr;
+//	back_.color = D2RGB(255,255,255 );
+//	guid_ = FString::NewGuid();
+//	
+//	CreateResource(true);
+//	
+//}
+//FRectF D2DTopControls::CalcAutoSize( const GDI32::FSize& sz )
+//{
+//	FRectF rc = rc_;
+//
+//	if ( calc_auto_size_ )
+//		rc = calc_auto_size_( rc, sz );
+//	else
+//	{
+//		rc.SetSize(sz);
+//	}
+//	return rc;
+//}
+//void D2DTopControls::OnCreate()
+//{
+//	WndProc(parent_,WM_D2D_APP_ON_CREATE, 0,0);		
+//}
+//
+//void D2DTopControls::BackColor(D2D1_COLOR_F clr)
+//{
+//	back_.color = clr;
+//	back_.br = MakeBrsuh(parent_->cxt_, back_.color);
+//
+//}
+//
+//LRESULT D2DTopControls::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
+//{
+//	LRESULT ret = 0;
+//
+//	if ( !IsThroughMessage(message))
+//		return 0;
+//
+//	switch( message )
+//	{
+//		case WM_D2D_RESTRUCT_RENDERTARGET:
+//			CreateResource( wParam == 1);
+//			SendMessageAll(d, message, wParam, lParam);
+//			return 0;
+//		break;
+//		case WM_DESTROY:			
+//			SendMessageAll(d, message, wParam, lParam);
+//			Clear();
+//			return 0;
+//		break;						
+//	}
+//	
+//
+//
+//	D2DMatrix mat(d->cxt_);
+//	//mat.PushTransform();
+//	//mat.Offset( -scrollbar_off_.width, -scrollbar_off_.height );
+//	//mat.Offset( rc_.left, rc_.top );
+//
+//	//mat._11 = zoom_ ;
+//	//mat._22 = zoom_ ;
+//	//
+//	//mat.SetTransform();
+//
+//	//mat_ = mat; // 自座標のマット
+//
+//	FPointF pt21 = mat.DPtoLP( FPointF(lParam));
+//
+//	switch( message )
+//	{
+//		case WM_PAINT:
+//		{			
+//			D2DContext& cxt = d->cxt_;
+//
+//			auto rcx = rc_.ZeroRect();
+//			
+//			D2DRectFilter f(cxt, rcx );
+//
+//			
+//			DrawFill(cxt.insins->m_pDirect->GetHwndRenderTarget(),rcx, (ID2D1Brush*)back_.br);
+//
+//			SendMessageReverseAll(d,message,wParam,lParam);	
+//
+//		}
+//		break;	
+//		case WM_D2D_JS_ERROR:
+//		{
+//			error_msg_ = (BSTR)lParam;
+//
+//			ret = 1;
+//			
+//
+//		}
+//		break;
+//		
+//		case WM_LBUTTONDOWN:		
+//		{
+//			if (ENABLE(stat_))
+//			{
+//				if ( rc_.ZeroPtInRect(pt21)) //if ( rc_.ZeroRect().PtInRect( pt21 ))
+//					SendMessageAll(d,message,wParam,lParam);
+//				else
+//					SendMessageAll(d,WM_D2D_NCLBUTTONDOWN,wParam,lParam);
+//			}
+//		}
+//		break;
+//		case WM_LBUTTONDBLCLK:
+//		{
+//			if (ENABLE(stat_))
+//			{
+//				if ( rc_.ZeroPtInRect(pt21)) //if ( rc_.ZeroRect().PtInRect( pt21 ))
+//					SendMessageAll(d,message,wParam,lParam);
+//			}
+//		}
+//		break;
+//		case WM_RBUTTONDOWN:
+//		case WM_RBUTTONUP:		
+//		case WM_LBUTTONUP:
+//		{
+//			if (ENABLE(stat_))
+//			{
+//				if ( rc_.ZeroPtInRect(pt21)) //if ( rc_.ZeroRect().PtInRect( pt21 ))
+//					SendMessageAll(d,message,wParam,lParam);
+//			}
+//		}
+//		break;
+//		case WM_MOUSEMOVE:
+//		{
+//			if (ENABLE(stat_))
+//			{
+//				//if ( rc_.ZeroRect().PtInRect( pt21 ))
+//
+//				if ( rc_.ZeroPtInRect(pt21))
+//				{
+//					if ( !mouse_enter_ )
+//					{
+//						wParam = wParam | MK_F_MOUSE_ENTER;
+//						mouse_enter_ = true;
+//					}
+//					SendMessageAll(d,message,wParam,lParam);
+//				
+//				}
+//				else if ( mouse_enter_ )
+//				{
+//					wParam = wParam | MK_F_MOUSE_LEAVE;
+//					SendMessageAll(d,message,wParam,lParam);				
+//					mouse_enter_ = false;
+//				}
+//			}
+//		}
+//		break;
+//		case WM_SIZE:
+//		{
+//			if ( bAutoSize_ )
+//			{
+//				rc_ = CalcAutoSize(GDI32::FSize(lParam));
+//			}
+//			
+//			SendMessageAll(d,message,wParam,lParam);		
+//		}
+//		break;
+//		case WM_DESTROY:
+//			SendMessageAll(d,message,wParam,lParam);		
+//		break;
+//
+//	
+//		case WM_D2D_GET_CONTROLS:
+//		{
+//			if ( id_ == wParam )
+//			{
+//				D2DControls** p = (D2DControls**)lParam;
+//				*p = this;
+//				ret = 1;
+//			}
+//			else if (ENABLE(stat_))
+//				SendMessageAll(d,message,wParam,lParam);
+//		}
+//		break;
+//		case WM_D2D_TEST:
+////			V4::MessageBox(this,L"hoi",L"hoi", MB_OK ); 
+//			ret = 1;
+//		break;
+//		case WM_D2D_RESTRUCT_RENDERTARGET:
+//		{
+//			CreateResource(wParam == 1);
+//
+//			SendMessageAll(d, message, wParam, lParam);
+//		}
+//		break;
+//
+//
+//
+//		default:
+//			if (ENABLE(stat_))
+//				ret = SendMessageAll(d,message,wParam,lParam);	
+//
+//			if ( message <= WM_D2D_APP_USER )
+//			{
+//				if ( OnWndProcExt_ )
+//					ret = OnWndProcExt_(this,message,wParam,lParam);
+//			}
+//
+//				
+//	}
+//
+////	mat.PopTransform();
+//	return ret;
+//}
+//void D2DTopControls::CreateResource(bool bCreate)
+//{
+//	back_.br.Release();
+//
+//	if ( bCreate )
+//	{
+//		back_.br = parent_->GetSolidColor(back_.color);
+//
+////		back_.br = parent_->m_pDirect->GetColorBrush(d2dw::CColorF(0.f, 0.f, 0.f, 1.f));
+//	}		
+//}
 
 
 #pragma region  D2DScrollbar
@@ -1000,8 +992,8 @@ LRESULT D2DScrollbar::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM 
 		auto cxt = d->cxt_;
 		info_.rc = rc_.GetContentRect();
 
-		cxt.cxt->GetTransform(&mat_);
-		DrawScrollbar(cxt.cxt, info_);
+		cxt.m_pDirect->GetHwndRenderTarget()->GetTransform(&mat_);
+		DrawScrollbar(cxt.m_pDirect->GetHwndRenderTarget(), info_);
 	}
 	break;
 

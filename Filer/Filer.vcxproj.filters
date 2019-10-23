@@ -1060,9 +1060,6 @@
     <ClCompile Include="..\D2DTextBox\D2DContextEx.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
-    <ClCompile Include="..\D2DTextBox\D2DApiEx.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
     <ClCompile Include="..\D2DTextBox\D2DApi.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>

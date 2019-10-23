@@ -508,10 +508,10 @@ class FRectFBoxModel : public FRectF
 		FRectF GetContentRect() const
 		{
 			FRectF rc;
-			rc.left = left+Margin_.l+BoderWidth_+Padding_.l;
-			rc.top = top+Margin_.t+BoderWidth_+Padding_.t;
-			rc.right = right-Margin_.r-BoderWidth_-Padding_.r;
-			rc.bottom = bottom-Margin_.b-BoderWidth_-Padding_.b;
+			rc.left = left + Margin_.l+BoderWidth_ / 2.f +Padding_.l;
+			rc.top = top + Margin_.t+ BoderWidth_ / 2.f +Padding_.t;
+			rc.right = right - Margin_.r- BoderWidth_ / 2.f -Padding_.r;
+			rc.bottom = bottom - Margin_.b- BoderWidth_ / 2.f -Padding_.b;
 			return rc;
 		}
 		FRectF GetPaddingRect() const

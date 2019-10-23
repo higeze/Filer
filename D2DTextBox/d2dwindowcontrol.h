@@ -162,34 +162,34 @@ struct SolidColor
 // Controlsの親玉、D2DWindowの第一Controls
 //
 /////////////////////////////////////////////////////////////
-class D2DTopControls : public D2DControls
-{
-	public :
-		D2DTopControls(){}
-		virtual ~D2DTopControls(){}
-		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
-		virtual void CreateWindow(D2DWindow* parent, D2DControls* must_be_null, const FRectFBoxModel& rc, int stat, LPCWSTR name, int id=-1  );
-		void CreateWindow(D2DWindow* d, int stat, LPCWSTR name, int id=-1 );
-		
-		void CreateResource(bool bCreate);
-
-		virtual void OnCreate();
-		virtual void BackColor(D2D1_COLOR_F clr);
-
-		std::function<FRectF(FRectF, GDI32::FSize)> calc_auto_size_;
-		
-
-		OnWndProcExtDelegate OnWndProcExt_;
-	protected :
-		FRectF CalcAutoSize( const GDI32::FSize& sz );
-
-		FString error_msg_;
-		float zoom_;
-		bool bAutoSize_;
-		
-		SolidColor back_;
-		
-};
+//class D2DTopControls : public D2DControls
+//{
+//	public :
+//		D2DTopControls(){}
+//		virtual ~D2DTopControls(){}
+//		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
+//		virtual void CreateWindow(D2DWindow* parent, D2DControls* must_be_null, const FRectFBoxModel& rc, int stat, LPCWSTR name, int id=-1  );
+//		void CreateWindow(D2DWindow* d, int stat, LPCWSTR name, int id=-1 );
+//		
+//		void CreateResource(bool bCreate);
+//
+//		virtual void OnCreate();
+//		virtual void BackColor(D2D1_COLOR_F clr);
+//
+//		std::function<FRectF(FRectF, GDI32::FSize)> calc_auto_size_;
+//		
+//
+//		OnWndProcExtDelegate OnWndProcExt_;
+//	protected :
+//		FRectF CalcAutoSize( const GDI32::FSize& sz );
+//
+//		FString error_msg_;
+//		float zoom_;
+//		bool bAutoSize_;
+//		
+//		SolidColor back_;
+//		
+//};
 
 class D2DScrollbar : public D2DControl
 {
@@ -307,7 +307,7 @@ class D2DTextbox : public D2DControl, public IBridgeTSFInterface
 		BOOL Clipboard( HWND hwnd, TCHAR ch );
 		int TabCountCurrentRow();
 		bool TryTrimingScrollbar();
-	private :
+	public :
 		TYP typ_;
 		bool bActive_;
 
@@ -353,7 +353,7 @@ class D2DStatic : public D2DControl
 
 	private :
 		
-		SingleLineText stext_;
+		//SingleLineText stext_;
 		int alignment_;
 };
 
