@@ -65,6 +65,8 @@ public:
 	
 	void InflateRect(int x,int y){::InflateRect(this, x, y);}
 	void DeflateRect(int x,int y){::InflateRect(this, -x, -y);}
+	void InflateRect(int x) { ::InflateRect(this, x, x); }
+	void DeflateRect(int x) { ::InflateRect(this, -x, -x); }
 	BOOL PtInRect(POINT pt){return ::PtInRect(this,pt);}
 	CPoint& TopLeft(){return *((CPoint*)this);}
 	const CPoint& TopLeft()const{return *((CPoint*)this);}

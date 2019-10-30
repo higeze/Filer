@@ -195,7 +195,6 @@
     <ClInclude Include="..\D2DTextBox\D2DApi.h" />
     <ClInclude Include="..\D2DTextBox\D2DCharRect.h" />
     <ClInclude Include="..\D2DTextBox\D2DContextEx.h" />
-    <ClInclude Include="..\D2DTextBox\D2DContextNew.h" />
     <ClInclude Include="..\D2DTextBox\d2dmatome.h" />
     <ClInclude Include="..\D2DTextBox\D2DMisc.h" />
     <ClInclude Include="..\D2DTextBox\D2DResource.h" />

@@ -11,7 +11,7 @@ CTextContainer::CTextContainer()
     psz_ = NULL;
     nBufferSize_ = 0;
     nTextSize_ = 0;
-	nSelStart_ = nSelEnd_ = 0;
+//	nSelStart_ = nSelEnd_ = 0;
 	LimitCharCnt_ = 65500;
 	bSingleLine_ = true;
 	view_size_ = {0,0};
@@ -166,8 +166,8 @@ Exit:
     return TRUE;
 }
 
-void CTextContainer::CaretLast()
-{
-	nSelStart_ = nSelEnd_ = GetTextLength();
-
-}
+//void CTextContainer::CaretLast()
+//{
+//	nSelStart_ = nSelEnd_ = GetTextLength();
+//
+//}

@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "D2DContextEx.h"
-#include "D2Dcontextnew.h"
 #include "ItemLoopArray.h"
 #include "D2DWindowMessage.h"
 #include "D2DWindowMessageStruct.h"
@@ -63,14 +62,14 @@ public:
 	std::unique_ptr<D2DTextbox> m_pTxtbox;
 
 	HWND m_hWnd;
-	HWND hMainFrame_;
+//	HWND hMainFrame_;
 	D2DContext cxt_;
-	D2DRES res_;
+//	D2DRES res_;
 	int redraw_;
 
-	std::map<void*, int> mts_;
-	std::vector<D2DControl*> drag_accepters_;
-	std::vector< std::shared_ptr<D2DControl>> death_objects_;
+	//std::map<void*, int> mts_;
+	//std::vector<D2DControl*> drag_accepters_;
+	//std::vector< std::shared_ptr<D2DControl>> death_objects_;
 
 
 	ControlHandle chandle_;

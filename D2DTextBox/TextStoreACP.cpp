@@ -532,10 +532,10 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
 	::OffsetRect( prc, Round(rcClient.left), Round(rcClient.top) );
 
 
-  	D2DMat m( _pEditor->mat_ );
+ // 	D2DMat m( _pEditor->mat_ );
 
-	auto xrc = m.LPtoDP( FRectF(*prc) );
-	*prc = xrc.GetRECT();
+	//auto xrc = m.LPtoDP( FRectF(*prc) );
+	//*prc = xrc.GetRECT();
 
 
     ClientToScreen(_pEditor->GetWnd(), (POINT *)&prc->left);
@@ -557,9 +557,9 @@ STDAPI CTextStore::GetScreenExt(TsViewCookie vcView, RECT *prc)
 {
 	*prc = _pEditor->bri_->GetClientRect().GetRECT();
 
-	D2DMat m( _pEditor->mat_);
-	auto xrc = m.LPtoDP( FRectF(*prc) );
-	*prc = xrc.GetRECT();
+	//D2DMat m( _pEditor->mat_);
+	//auto xrc = m.LPtoDP( FRectF(*prc) );
+	//*prc = xrc.GetRECT();
 
     ClientToScreen(_pEditor->GetWnd(), (POINT *)&prc->left);
     ClientToScreen(_pEditor->GetWnd(), (POINT *)&prc->right);

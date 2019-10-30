@@ -113,72 +113,7 @@ d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& d
 	if (text.empty()) { text = L"a"; }
 	return direct.CalcTextSizeWithFixedWidth(*(m_spProperty->Format), text, rcContent.Width());
 }
-
-#define IDLE_TIME (5*1000)
-#define IDLE_TIMER_ID 99
 #define IDB_PNG1	131
-
-struct D2DMainFrame
-{
-	CComPtr<IDWriteFactory> wrfactory;
-	CComPtr<ID2D1Factory>  factory;
-	CComPtr<IDWriteTextFormat> textformat;
-	CComPtr<ID2D1HwndRenderTarget> cxt;
-
-	CComPtr<ID2D1SolidColorBrush> br[4];
-	CComPtr<ID2D1SolidColorBrush> black, white;
-
-	//FRectF btn[3];
-	UINT btnStat;
-	LPCWSTR title;
-
-	enum COLORS { MOUSE_FLOAT, CLOSEBTN, ACTIVECAPTION, CLOSE_MOUSE_FLOAT };
-};
-
-//static D2DMainFrame __s_d2dmainframe = { 0 };
-//void D2DInitial(HWND hWnd1, std::shared_ptr<d2dw::CDirect2DWrite>& pDirect, std::shared_ptr<CellProperty>& pProp)
-//{
-//	if (__s_d2dmainframe.cxt == nullptr) {
-//		HRESULT hr;
-//		//D2D1_FACTORY_OPTIONS options;
-//		//options.debugLevel = D2D1_DEBUG_LEVEL_NONE;
-//		//hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), &options, (void**)&__s_d2dmainframe.factory);
-//		//_ASSERT(hr == S_OK);
-//
-//		//hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&__s_d2dmainframe.wrfactory));
-//		//_ASSERT(hr == S_OK);
-//
-//		__s_d2dmainframe.textformat = pDirect->GetTextFormat(*(pProp->Format));
-//
-//		//hr = __s_d2dmainframe.wrfactory->CreateTextFormat(L"Arial", 0, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 14, L"", &__s_d2dmainframe.textformat);
-//		//_ASSERT(hr == S_OK);
-//
-//		__s_d2dmainframe.cxt = pDirect->GetHwndRenderTarget();
-//		//hr = __s_d2dmainframe.factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hWnd1, D2D1::SizeU(1, 1), D2D1_PRESENT_OPTIONS_NONE), &__s_d2dmainframe.cxt);
-//		//_ASSERT(hr == S_OK);
-//
-//		__s_d2dmainframe.black = pDirect->GetColorBrush(d2dw::CColorF(0.f, 0.f, 0.f, 1.f));
-//		__s_d2dmainframe.white = pDirect->GetColorBrush(d2dw::CColorF(1.f, 1.f, 1.f, 1.f));
-//		//__s_d2dmainframe.cxt->CreateSolidColorBrush(ColorF(ColorF::Black), &__s_d2dmainframe.black);
-//		//__s_d2dmainframe.cxt->CreateSolidColorBrush(ColorF(ColorF::White), &__s_d2dmainframe.white);
-//		__s_d2dmainframe.cxt->CreateSolidColorBrush(D2RGBA(54, 101, 179, 255), &__s_d2dmainframe.br[D2DMainFrame::MOUSE_FLOAT]);
-//		__s_d2dmainframe.cxt->CreateSolidColorBrush(D2RGBA(199, 80, 80, 255), &__s_d2dmainframe.br[D2DMainFrame::CLOSEBTN]);
-//		__s_d2dmainframe.cxt->CreateSolidColorBrush(D2RGBA(144, 169, 184, 255), &__s_d2dmainframe.br[D2DMainFrame::ACTIVECAPTION]);
-//		__s_d2dmainframe.cxt->CreateSolidColorBrush(D2RGBA(224, 67, 67, 255), &__s_d2dmainframe.br[D2DMainFrame::CLOSE_MOUSE_FLOAT]);
-//
-//		//st.btn[0] = FRectF(0, 0, 26, 20); // MINI BUTTON
-//		//st.btn[1] = FRectF(0, 0, 27, 20); // MAX BUTTON
-//		//st.btn[2] = FRectF(0, 0, 45, 20); // CLOSE BUTTON
-//
-//		__s_d2dmainframe.btnStat = 0;
-//
-//		//st.title = WINDOW_TITLE;
-//
-//		//__s_d2dmainframe.factory.Release();
-//		//__s_d2dmainframe.wrfactory.Release();
-//	}
-//
-//}
 
 void CTextCell::OnEdit(const EventArgs& e)
 {

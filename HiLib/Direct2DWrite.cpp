@@ -84,6 +84,8 @@ namespace d2dw
 
 	void CRectF::InflateRect(FLOAT x, FLOAT y) { left -= x; right += x; top -= y; bottom += y; }
 	void CRectF::DeflateRect(FLOAT x, FLOAT y) { left += x; right -= x; top += y; bottom -= y; }
+	void CRectF::InflateRect(FLOAT x) { left -= x; right += x; top -= x; bottom += x; }
+	void CRectF::DeflateRect(FLOAT x) { left += x; right -= x; top += x; bottom -= x; }
 	bool CRectF::PtInRect(const CPointF& pt) const { return pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom; }
 	CPointF CRectF::LeftTop() const { return CPointF(left, top); }
 	CPointF CRectF::CenterPoint() const

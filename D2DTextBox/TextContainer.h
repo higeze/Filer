@@ -20,13 +20,13 @@ class CTextContainer
 
 		UINT GetTextLength() {return nTextSize_;}
 		const WCHAR *GetTextBuffer() {return psz_;}
-		void CaretLast();
+//		void CaretLast();
 		void Clear();
 
 	public :
-		int nSelStart_, nSelEnd_;
+//		int nSelStart_, nSelEnd_;
 		bool bSelTrail_;
-		V4::FRectF rc_;
+//		V4::FRectF rc_;
 
 		SIZE view_size_;
 

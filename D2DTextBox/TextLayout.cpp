@@ -1,6 +1,5 @@
 ﻿#include "text_stdafx.h"
 #include "TextLayout.h"
-#include "D2DContextNew.h"
 #include "D2DContextEx.h"
 #include "D2DCharRect.h"
 #include "D2DWindow.h"
@@ -21,13 +20,10 @@ CTextLayout::CTextLayout()
 	row_width_ = 0;
 	bPassword_ = false;
 	bRecalc_ = true;
-	DWTextLayout_ = nullptr;
 	selected_halftone_color_ = D2RGBA(0,140,255,100);
 }
 CTextLayout::~CTextLayout()
 {
-	::OutputDebugStringA("Destruct\r\n");
-
 	Clear();
 }
 
@@ -39,8 +35,6 @@ CTextLayout::~CTextLayout()
 
 BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE& sz, bool bSingleLine, int zCaret, int& StarCharPos,IDWriteTextFormat* fmt)
 {
-//TRACE( L"CTextLayout::Layout\n" );
-
 	Clear();
 	bSingleLine_ = bSingleLine;
 
@@ -58,15 +52,17 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 		{
 			switch (psz[i])
 			{
-				case 0x0d:
-				case 0x0a:                
-					if (bNewLine)
+				case 0x0d://CR
+				case 0x0a://LF                
+					if (bNewLine) {
 						nLineCnt_++;
+					}
 					bNewLine = TRUE;
 					break;
 				default:
-					if (bNewLine)
+					if (bNewLine) {
 						nLineCnt_++;
+					}
 					bNewLine = FALSE;
 					break;
 			}
@@ -74,11 +70,8 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 	}
 			
 	// 行数分のLINEINFOを作成, 文字0でもLINEINFOは１つ作成
-	::OutputDebugStringA((boost::format("New:%1%\r\n") % (std::max)((UINT)1, nLineCnt_)).str().c_str());
 
 	prgLines_ = new LINEINFO[(std::max)((UINT)1, nLineCnt_)];
-	::OutputDebugStringA((boost::format("This:%1%\r\n") % this).str().c_str());
-	::OutputDebugStringA((boost::format("Ptr:%1%\r\n") % prgLines_).str().c_str());
 
     // Count character of each line.　文字単位にPOS,LEN,RECTを取得
    
@@ -87,8 +80,6 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 	prgLines_[0].nCnt = 0;
 	prgLines_[0].prgCharInfo = nullptr;
 	
-
-
 	// prgLines_ の設定
 	{
 		UINT crlf = 0;
@@ -98,8 +89,8 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 		{
 			switch (psz[i])
 			{
-				case 0x0d:
-				case 0x0a:
+				case 0x0d://CR
+				case 0x0a://LF
 					nNewLine++;
 
 					if (nNewLine == 2)
@@ -136,34 +127,18 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 		}
 	}
 
-//#ifdef TEXTBOXTEST
-//	for (UINT i = 0; i < nLineCnt_; i++)
-//	{
-//		TRACE( L"prgLines_ %d %d\n", prgLines_[i].nPos, prgLines_[i].nCnt );
-//	}
-//#endif
-
-    //TEXTMETRIC tm;
-    //GetTextMetricsEx(hdc,fmt, &tm);
-    //nLineHeight_ = tm.tmHeight + tm.tmExternalLeading; // equal to ascent+descent+linegap.
-
-
-
-	if ( DWTextLayout_ )
-		DWTextLayout_->Release();
-
-
 	{		
-		LPCWSTR str = ( bPassword_ ? __password : psz );
+		//LPCWSTR str = psz;
 
-		CreateTextLayout ct(cxt.m_pDirect->GetDWriteFactory(), str, nCnt, fmt, sz, bSingleLine_);
+		//CreateTextLayout(psz_ + zStartPos, len_ - zStartPos, fmt_, sz_.width, sz_.height, layout)
+		//CComPtr<IDWriteTextLayout> dwtextlayout;
+		//CreateTextLayout ct(cxt.m_pDirect->GetDWriteFactory(), str, zCaret, fmt, sz, bSingleLine_);
+		//StarCharPos = ct.Create( StarCharPos, zCaret, &dwtextlayout); //★TextLayout_
 
-		StarCharPos = ct.Create( StarCharPos, zCaret, &DWTextLayout_ ); //★TextLayout_
-
-		StarCharPos_ = StarCharPos;
+		StarCharPos_ = 0;
 			
-		CharsRectF cr( DWTextLayout_, false );
-
+		CharsRectF cr( cxt.pWindow->m_pDirect->GetTextLayout(*(cxt.pWindow->m_spProp->Format), std::wstring(psz).substr(StarCharPos), d2dw::CSizeF(sz.cx, sz.cy)), false );
+		
 		int slen = nCnt;
 		int len;
 
@@ -192,14 +167,14 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 					for (col = 0; col < nCnt ; col++)
 					{ 				
 						FRectF rc = prcs[rcIdx++];
-						prgLines_[r].prgCharInfo[col].rc = rc;
+						prgLines_[r].prgCharInfo[col].rc = rc.Offset(2.5, 2.5);
 					}
 
 					// 行の最後の処理				
 					{
 						FRectF rc = prgLines_[r].prgCharInfo[col-1].rc;
 						rc.left = rc.right; //前の文字の右端を左端として、rectを作成
-						prgLines_[r].prgCharInfo[col].rc = rc;
+						prgLines_[r].prgCharInfo[col].rc = rc;//No more offset
 						rcIdx++;
 					}
 				}
@@ -210,7 +185,7 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 
 					xassert( rc.left == rc.right );
 
-					prgLines_[r].prgCharInfo[0].rc = rc;
+					prgLines_[r].prgCharInfo[0].rc = rc.Offset(2.5, 2.5);
 
 					xassert( prgLines_[r].nCnt == 0 );
 				}
@@ -225,15 +200,6 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 			{
 				row_width_ += prgLines_[0].prgCharInfo[col].rc.Width();
 			}
-		}
-
-
-		{
-		
-			DWTextLayout_->GetMetrics(&tm_);
-			//::OutputDebugStringA((boost::format("Rect:%1%, %2%, %3%, %4%") % tm_.left%  tm_.top%  tm_.width % tm_.height).str().c_str());
-
-
 		}
 
 		return TRUE;
@@ -303,23 +269,17 @@ class CaretRect
 BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCnt, int nSelStart, int nSelEnd,bool bTrail,
 	const COMPOSITIONRENDERINFO *pCompositionRenderInfo, UINT nCompositionRenderInfo)
 {
-	{
-		//_ASSERT( rc.left == 0 );
-		//_ASSERT( rc.top == 0 );
-		
-		_ASSERT( DWTextLayout_ );
-//		::OutputDebugStringA((boost::format("Pt X:%1%, Y:%2%\r\n") % rc.left % rc.top).str().c_str());
-		DWRITE_TEXT_METRICS tm;
-		DWTextLayout_->GetMetrics(&tm);
-		::OutputDebugStringA((boost::format("Rect %1%, %2%\, %3%\, %4%, %5%, %6%\r\n") % rc.left % rc.top % rc.right % rc.bottom % rc.Width() % rc.Height()).str().c_str());
-		::OutputDebugStringA((boost::format("TM %1%, %2%\, %3%\, %4%, %5%, %6%\r\n") % tm.left % tm.top % tm.width % tm.height % tm.layoutWidth % tm.layoutHeight).str().c_str());
+		//cxt.pWindow->m_pDirect->GetTextLayout(*(cxt.pWindow->m_spProp->Format), psz, d2dw::CSizeF(rc.Width(), rc.Height()))->GetMetrics(&tm_);
+		//::OutputDebugStringA((boost::format("Rect %1%, %2%, %3%\, %4%, %5%, %6%\r\n") % rc.left % rc.top % rc.right % rc.bottom % rc.Width() % rc.Height()).str().c_str());
+		//::OutputDebugStringA((boost::format("TM %1%, %2%, %3%\, %4%, %5%, %6%\r\n") % tm_.left % tm_.top % tm_.width % tm_.height % tm_.layoutWidth % tm_.layoutHeight).str().c_str());
+		//HRESULT hr = cxt.pWindow->m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(rc.Width()*5, rc.Height()));
+		//::OutputDebugStringA((boost::format("HR %1$#x \r\n") % hr).str().c_str());
 
 		//cxt.m_pDirect->GetHwndRenderTarget()->DrawTextLayout( D2D1::Point2F(rc.left, rc.top), DWTextLayout_, cxt.black ); // D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
-		cxt.m_pDirect->DrawTextLayout(*(cxt.pWindow->m_spProp->Format), psz, d2dw::CRectF(rc.left,rc.top, rc.right, rc.bottom));
-	}
+		cxt.pWindow->m_pDirect->DrawTextLayout(*(cxt.pWindow->m_spProp->Format), psz, d2dw::CRectF(rc.left,rc.top, rc.right, rc.bottom));
 
     // Render selection,caret
-    FRectF rcSelCaret(0,0,1.0f, (float)nLineHeight_);
+    FRectF rcSelCaret(rc.left, rc.top, rc.left + 1.0f, rc.top + (float)nLineHeight_);
 
 	CaretRect xcaret(bTrail);
 
@@ -351,8 +311,11 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
                 {
                     for (int j = nSelStartInLine; j < nSelEndInLine; j++)
                     {
-						auto br = MakeBrsuh(cxt, selected_halftone_color_ );
-						cxt.m_pDirect->GetHwndRenderTarget()->FillRectangle( prgLines_[r].prgCharInfo[j].rc, br ); // SELECTED 色でfill, セレクトされた時のハーフトン塗り
+						//auto br = MakeBrsuh(cxt, selected_halftone_color_ );
+						//cxt.pWindow->m_pDirect->GetHwndRenderTarget()->FillRectangle( prgLines_[r].prgCharInfo[j].rc, br ); // SELECTED 色でfill, セレクトされた時のハーフトン塗り
+						//D2RGBA(0, 140, 255, 100);
+						
+						cxt.pWindow->m_pDirect->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)), prgLines_[r].prgCharInfo[j].rc);
                     }
 
 					bool blast = bTrail;
@@ -464,10 +427,10 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
 								//Polyline(hdc, pts, 2);
 								
 
-								auto pt0 = pts[0]; pt0.Offset(rc.left, rc.top);
-								auto pt1 = pts[1]; pt1.Offset(rc.left, rc.top);
+								//auto pt0 = pts[0]; pt0.Offset(rc.left, rc.top);
+								//auto pt1 = pts[1]; pt1.Offset(rc.left, rc.top);
 
-								cxt.m_pDirect->GetHwndRenderTarget()->DrawLine( pt0, pt1, cxt.black );
+								cxt.pWindow->m_pDirect->GetHwndRenderTarget()->DrawLine( pts[0], pts[1], cxt.black );
 							}
 						}
 					}
@@ -480,8 +443,8 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
 		if ( xcaret.empty() )
 		{
 			//次行の文字なし先頭列
-			rcSelCaret.left = 0;
-			rcSelCaret.right = 1;
+			rcSelCaret.left = rc.left;
+			rcSelCaret.right = rc.left + 1;
 
 			rcSelCaret.Offset( 0, nLineHeight_*nLineCnt_ );			
 			xcaret.Push(rcSelCaret, nLineCnt_, 0, 0);
@@ -495,13 +458,13 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
 				
 
 		// Caret表示
-		DrawCaret(cxt, xcaret.Get().Offset(rc.left, rc.top)); 
+		DrawCaret(cxt, xcaret.Get()); 
 
     }
     else
     {
 		// 文字がない場合Caret表示
-		DrawCaret(cxt, rcSelCaret.Offset(rc.left, rc.top));
+		DrawCaret(cxt, rcSelCaret);
     }
 
     return TRUE;
@@ -534,8 +497,6 @@ BOOL CTextLayout::RectFromCharPos(UINT nPos, FRectF *prc)
 			break;
 		}
 	}
-	::OutputDebugStringA((boost::format("This:%1%\r\n") % this).str().c_str());
-	::OutputDebugStringA((boost::format("Ptr:%1%\r\n") % prgLines_).str().c_str());
 
 	UINT pos = nPos - prgLines_[current_rowno].nPos;
 
@@ -717,10 +678,6 @@ UINT CTextLayout::FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst)
 void CTextLayout::Clear()
 {
 	::OutputDebugStringA("Clear\r\n");
-	::OutputDebugStringA((boost::format("This:%1%\r\n") % this).str().c_str());
-	::OutputDebugStringA((boost::format("Ptr:%1%\r\n") % prgLines_).str().c_str());
-
-
     if (prgLines_)
     {
         for (UINT i = 0; i < (std::max)((UINT)1, nLineCnt_); i++)
@@ -734,21 +691,4 @@ void CTextLayout::Clear()
 		prgLines_ = NULL;
     }
     nLineCnt_ = 0;
-
-	if ( DWTextLayout_ )
-	{
-		DWTextLayout_->Release();
-		DWTextLayout_ = nullptr;
-	}
-}
-
-bool CTextLayout::GetTextLayout( IDWriteTextLayout** q )
-{
-	_ASSERT((*q) == nullptr);
-	if ( HR(DWTextLayout_->QueryInterface(q)))
-	{
-		(*q)->AddRef();
-		return true;
-	}
-	return false;
 }

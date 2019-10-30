@@ -140,6 +140,7 @@ class FPointF : public D2D1_POINT_2F
 			y += offy;
 		}
 };
+
 class FRectF : public D2D1_RECT_F
 {
 	public :

@@ -32,7 +32,7 @@ public :
 	}
 	void Start(D2DWindow* d)
 	{
-		d->mts_[this]=0;
+//		d->mts_[this]=0;
 		
 		st_time_ = TimeGetTime();
 		

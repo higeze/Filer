@@ -8,28 +8,8 @@
 namespace V4 
 {
 
-
-
-// SingletonD2DInstanceは独立した存在なので、HWNDに関わるリソースはもたない。
-//struct SingletonD2DInstance
-//{
-//
-////	CComPtr<IDWriteFactory1> wrfactory;
-////	CComPtr<ID2D1Factory1>  factory;
-//	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
-//	CComPtr<IDWriteTextFormat> text; // IDWriteTextFormat1 is from Win8.1.
-//};
-
 #define STOCKSIZE 16
 struct D2DContext;
-
-//struct D2DContextText
-//{
-//	D2DContext* cxt;
-//
-//	
-//
-//};
 
 class D2DWindow;
 
@@ -37,11 +17,6 @@ class D2DWindow;
 struct D2DContext : public D2DContextBase
 {	
 	V4::D2DWindow* pWindow;
-	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
-	//CComPtr<IDWriteTextFormat> text; // IDWriteTextFormat1 is from Win8.1.
-
-	//SingletonD2DInstance* insins;
-	//operator ID2D1RenderTarget*() const{ return cxt.p; } 
 
 	CComPtr<ID2D1SolidColorBrush> ltgray;
 	CComPtr<ID2D1SolidColorBrush> black;
@@ -61,14 +36,11 @@ struct D2DContext : public D2DContextBase
 	CComPtr<ID2D1StrokeStyle> dot4_;
 	CComPtr<ID2D1StrokeStyle> dot2_;
 
-	//CComPtr<ID2D1Factory1> factory(){ return insins->factory; }
-	//D2DContextText cxtt;
-
 	LPVOID free_space;
 
 	void Init();
 
-	void SetAntiAlias(bool bl){ m_pDirect->GetHwndRenderTarget()->SetAntialiasMode( bl ? D2D1_ANTIALIAS_MODE_PER_PRIMITIVE:D2D1_ANTIALIAS_MODE_ALIASED);} 
+//	void SetAntiAlias(bool bl){ pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode( bl ? D2D1_ANTIALIAS_MODE_PER_PRIMITIVE:D2D1_ANTIALIAS_MODE_ALIASED);}
 
 
 	HRESULT CreateFont(LPCWSTR fontnm, float height, IDWriteTextFormat** ret );
@@ -81,72 +53,43 @@ struct D2DContext : public D2DContextBase
 	UINT GetLineMetric(const D2D1_SIZE_F& sz, IDWriteTextFormat* fmt, LPCWSTR str, int len, DWRITE_TEXT_METRICS& textMetrics);
 
 	CComPtr<IDWriteTextFormat> textformat;
-	//CComPtr<IDWriteFactory1> wrfactory;
-
 	float xoff;			// １行表示の左端の余幅
 	float line_height;	// １行表示の高さ
 
 
 };
-
-struct D2DRectFilter
-{
-	D2DRectFilter(D2DContext& cxt1, const FRectF& rc ):cxt(cxt1)
-	{
-		cxt.m_pDirect->GetHwndRenderTarget()->PushAxisAlignedClip( rc, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE );
-		cnt = 1;
-	}
-
-	D2DRectFilter(D2DContext& cxt1, FRectF&& rc ):cxt(cxt1)
-	{
-		cxt.m_pDirect->GetHwndRenderTarget()->PushAxisAlignedClip( std::move(rc), D2D1_ANTIALIAS_MODE_PER_PRIMITIVE );
-		cnt = 1;
-	}
-
-	~D2DRectFilter()
-	{
-		if ( cnt == 1 )
-			cxt.m_pDirect->GetHwndRenderTarget()->PopAxisAlignedClip();
-	}
-	void Off()
-	{		
-		if ( cnt == 1 )
-		{
-			cxt.m_pDirect->GetHwndRenderTarget()->PopAxisAlignedClip();
-			cnt = 0;
-		}
-	}
-
-	private :
-		D2DContext& cxt;
-		int cnt;
-};
-struct D2DRectFilterType1
-{
-	D2DRectFilterType1(D2DContext& cxt1, FRectF rc ):cxt(cxt1)
-	{
-		rc.left--; rc.top--;
-		cxt.m_pDirect->GetHwndRenderTarget()->PushAxisAlignedClip( rc, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE );
-	}
-	~D2DRectFilterType1()
-	{
-		cxt.m_pDirect->GetHwndRenderTarget()->PopAxisAlignedClip();
-	}
-
-	private :
-		D2DContext& cxt;
-};
-
-//struct SingleLineText
+//
+//struct D2DRectFilter
 //{
-//	FPointF ptLineText;
-//	CComPtr<IDWriteTextLayout> textlayout;
+//	D2DRectFilter(D2DContext& cxt1, const FRectF& rc ):cxt(cxt1)
+//	{
+//		//cxt.m_pDirect->GetHwndRenderTarget()->PushAxisAlignedClip( rc, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE );
+//		//cnt = 1;
+//	}
 //
-//	void CreateLayout(D2DContextText& cxt, const FRectF& rc, LPCWSTR str, int len, int align );
+//	D2DRectFilter(D2DContext& cxt1, FRectF&& rc ):cxt(cxt1)
+//	{
+//		//cxt.m_pDirect->GetHwndRenderTarget()->PushAxisAlignedClip( std::move(rc), D2D1_ANTIALIAS_MODE_PER_PRIMITIVE );
+//		//cnt = 1;
+//	}
 //
-//	void CreateLayoutEx(D2DContext& cxt,IDWriteTextFormat* fmt, const FRectF& rc, LPCWSTR str, int len, int align );
+//	~D2DRectFilter()
+//	{
+//		//if ( cnt == 1 )
+//		//	cxt.m_pDirect->GetHwndRenderTarget()->PopAxisAlignedClip();
+//	}
+//	void Off()
+//	{		
+//		//if ( cnt == 1 )
+//		//{
+//		//	cxt.m_pDirect->GetHwndRenderTarget()->PopAxisAlignedClip();
+//		//	cnt = 0;
+//		//}
+//	}
 //
-//	void DrawText(D2DContext& cxt, ID2D1Brush* foreclr );
+//	private :
+//		D2DContext& cxt;
+//		int cnt;
 //};
 ///////////////////////////////////////////////////////////////////////////////////////////
 class D2DError 
@@ -195,13 +138,8 @@ FPointF FPointFV( _variant_t& cx,_variant_t& cy );
 FString FStringV( _variant_t& s );
 
 
-//void DrawCenterText( D2DContextText& cxt, ID2D1Brush* clr, FRectF& rc, LPCWSTR str, int len,int align  );
 void DrawFillRect( D2DContext& cxt,const D2D1_RECT_F& rc, ID2D1Brush* wakuclr,ID2D1Brush* fillclr, float width );
-//void DrawFillRectTypeS( D2DContext& cxt, const D2D1_RECT_F& rc, ID2D1Brush* fillclr );
-//
-//void TestDrawFillRectEx( D2DContext& cxt,const D2D1_RECT_F& rc, ID2D1Brush* wakuclr,ID2D1Brush* fillclr );
-
-CComPtr<ID2D1SolidColorBrush> MakeBrsuh( D2DContext& cxt, D2D1_COLOR_F clr );
+//CComPtr<ID2D1SolidColorBrush> MakeBrsuh( D2DContext& cxt, D2D1_COLOR_F clr );
 
 
 

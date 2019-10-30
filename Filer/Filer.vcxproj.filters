@@ -668,9 +668,6 @@
     <ClInclude Include="..\D2DTextBox\d2dmatome.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\D2DContextNew.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DContextEx.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>

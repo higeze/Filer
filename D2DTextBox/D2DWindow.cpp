@@ -33,7 +33,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			D2DWindow* d = (D2DWindow*)::GetWindowLongPtr(hWnd, GWL_USERDATA);
 			
 			d->m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(hWnd);
-			d->cxt_.m_pDirect = d->m_pDirect;
 
 			SetFocus(hWnd);
 
@@ -46,9 +45,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			PAINTSTRUCT ps;
 			HDC hdc = BeginPaint(hWnd, &ps);					
 			
-			d->cxt_.m_pDirect->BeginDraw();
+			d->m_pDirect->BeginDraw();
 
-			d->cxt_.m_pDirect->GetHwndRenderTarget()->Clear(ColorF(ColorF::White));
+			d->m_pDirect->GetHwndRenderTarget()->Clear(ColorF(ColorF::White));
 
 			d->WndProc( message, wParam, lParam ); // All objects is drawned.
 
@@ -58,7 +57,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				d->redraw_ = 0;
 			}
 
-			d->cxt_.m_pDirect->EndDraw();
+			d->m_pDirect->EndDraw();
 
 			EndPaint(hWnd, &ps);
 			return 0;
@@ -73,7 +72,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			::GetClientRect(d->m_hWnd, &rc);
 			::OutputDebugStringA((boost::format("Size SizeX:%1%, SizeY:%2%\r\n") % rc.Width() % rc.Height()).str().c_str());
 
-			d->m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(rc.Width(), rc.Height()));
+			d->m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
 			if (d->m_pTxtbox) {
 				CRect rcContent(rc);
 				d->m_pTxtbox->ctrl_->ct_->rc_.left = 2.5;
@@ -320,7 +319,7 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 	cxt_.line_height = 0;
 	cxt_.xoff = 0;
 
-	CComPtr<IDWriteTextLayout> tl = cxt_.m_pDirect->GetTextLayout(*(m_spProp->Format), L"T", d2dw::CSizeF(1000.f, 1000.f));
+	CComPtr<IDWriteTextLayout> tl = m_pDirect->GetTextLayout(*(m_spProp->Format), L"T", d2dw::CSizeF(1000.f, 1000.f));
 
 	DWRITE_HIT_TEST_METRICS mt;
 
@@ -338,9 +337,9 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 	rcModel.Margin_.Set(0.f);
 	rcModel.Padding_.Set(m_spProp->Padding->left);
 
-	m_pTxtbox.reset(new D2DTextbox(m_hWnd, V4::D2DTextbox::MULTILINE, m_changed));
+	m_pTxtbox.reset(new D2DTextbox(this, V4::D2DTextbox::MULTILINE, m_changed));
 	m_pTxtbox->SetStat(V4::STAT::BORDER);
-	m_pTxtbox->CreateWindow(this, nullptr, rcModel, VISIBLE, L"txtbox");
+	m_pTxtbox->CreateWindow(this, rcModel, VISIBLE, L"txtbox");
 	m_pTxtbox->SetText(m_strInit.c_str());
 	m_pTxtbox->SetFont(m_pDirect->GetTextFormat(*(m_spProp->Format)));
 

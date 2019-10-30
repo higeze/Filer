@@ -59,8 +59,14 @@ class CTextContainer;
 class CTextEditor 
 {
 	public:
+		int m_selStart = 0;
+		int m_selEnd = 0;
+
+
 		std::function<void(const std::wstring&)> m_changed;
-		CTextEditor();
+		D2DWindow* m_pWindow;
+
+		CTextEditor(D2DWindow* pWindow);
 		virtual ~CTextEditor(); 
     
 		void SetContainer( CTextContainer* ct ){ ct_ = ct; }
@@ -80,8 +86,8 @@ class CTextEditor
 
 		void Render(V4::D2DContext& hdc);
 		void CalcRender(V4::D2DContext& hdc);
-		int GetSelectionStart() {return ct_->nSelStart_;}
-		int GetSelectionEnd() {return ct_->nSelEnd_;}
+		int GetSelectionStart() {return m_selStart;}
+		int GetSelectionEnd() {return m_selEnd;}
 
 		
 		HWND GetWnd() {return hWnd_;}
@@ -95,6 +101,7 @@ class CTextEditor
 		int CurrentCaretPos();
 		void ClearCompositionRenderInfo();
 		BOOL AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIBUTE *pda);
+		void OnTextChange(const std::wstring& text);
 
 
 		CTextContainer* ct_;
@@ -160,6 +167,7 @@ class CTextEditSink : public ITfTextEditSink
 class CTextEditorCtrl : public CTextEditor
 {
 	public :
+		CTextEditorCtrl(D2DWindow* pWindow):CTextEditor(pWindow){}
 		HWND Create(HWND hwndParent);
 
 		LRESULT  WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam);

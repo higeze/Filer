@@ -70,6 +70,7 @@ class CellProperty
 public:
 	std::shared_ptr<d2dw::FormatF> Format;
 	std::shared_ptr<d2dw::SolidLine> Line;
+	std::shared_ptr<d2dw::SolidLine> EditLine;
 	std::shared_ptr<d2dw::SolidLine> FocusedLine;
 	std::shared_ptr<d2dw::SolidFill> NormalFill;
 	std::shared_ptr<d2dw::SolidFill> FocusedFill;
@@ -82,6 +83,7 @@ public:
 	CellProperty()
 		:Format(std::make_shared<d2dw::FormatF>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9.0f),  0.0f, 0.0f, 0.0f, 1.0f)),
 		Line(std::make_shared<d2dw::SolidLine>(221.0f/255, 206.0f/255, 188.0f/255, 1.0f, 1.0f)),
+		EditLine(std::make_shared<d2dw::SolidLine>(0.0f/255, 0.0f/255, 255.0f/255, 1.0f, 1.0f)),
 		FocusedLine(std::make_shared<d2dw::SolidLine>(22.0f/255, 160.0f/255, 133.0f/255, 1.0f, 1.0f)),
 		NormalFill(std::make_shared<d2dw::SolidFill>(246.0f/255, 246.0f/255, 246.0f/255, 1.0f)),
 		FocusedFill(std::make_shared<d2dw::SolidFill>(0.0f/255, 224.0f/255, 226.0f/255, 1.0f)),
@@ -95,6 +97,7 @@ public:
 	CellProperty(
 		std::shared_ptr<d2dw::FormatF> fontAndColor,
 		std::shared_ptr<d2dw::SolidLine> line,
+		std::shared_ptr<d2dw::SolidLine> editLine,
 		std::shared_ptr<d2dw::SolidLine> focusedLine,
 		std::shared_ptr<d2dw::SolidFill> normalFill,
 		std::shared_ptr<d2dw::SolidFill> focusedFill,
@@ -104,6 +107,7 @@ public:
 		std::shared_ptr<d2dw::CRectF> padding)
 		:Format(fontAndColor),
 		Line(line),
+		EditLine(editLine),
 		FocusedLine(focusedLine),
 		NormalFill(normalFill),
 		FocusedFill(focusedFill),
@@ -134,6 +138,7 @@ public:
     {
 		ar("Format",Format);
 		ar("Line",Line);
+		ar("EditLine", EditLine);
 		ar("FocusedLine",FocusedLine);
 		ar("NormalFill",NormalFill);
 		ar("FocusedFill",FocusedFill);
@@ -162,6 +167,7 @@ public:
 		:CellProperty(
 		std::make_shared<d2dw::FormatF>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9.0f), 0.0f, 0.0f, 0.0f, 1.0f),
 		std::make_shared<d2dw::SolidLine>(211.0f / 255, 206.0f / 255, 188.0f / 255, 1.0f, 1.0f),
+		std::make_shared<d2dw::SolidLine>(0.0f / 255, 0.0f / 255, 255.0f / 255, 1.0f, 1.0f),
 		std::make_shared<d2dw::SolidLine>(22.0f / 255, 160.0f / 255, 133.0f / 255, 1.0f, 1.0f),
 		std::make_shared<d2dw::SolidFill>(239.0f / 255, 239.0f / 255, 232.0f / 255, 1.0f),
 		std::make_shared<d2dw::SolidFill>(195.0f / 255, 224.0f / 255, 226.0f / 255, 1.0f),

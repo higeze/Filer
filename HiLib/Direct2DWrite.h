@@ -86,6 +86,8 @@ namespace d2dw
 		FLOAT Height()const;
 		void InflateRect(FLOAT x, FLOAT y);
 		void DeflateRect(FLOAT x, FLOAT y);
+		void CRectF::InflateRect(FLOAT x);
+		void CRectF::DeflateRect(FLOAT x);
 		void InflateRect(const CRectF& rc);
 		void DeflateRect(const CRectF& rc);
 		bool PtInRect(const CPointF& pt) const;

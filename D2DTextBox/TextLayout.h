@@ -99,7 +99,7 @@ class CTextLayout
 		bool bSingleLine_;
 		bool bPassword_;
 		int StarCharPos_;
-		IDWriteTextLayout* DWTextLayout_;
+//		IDWriteTextLayout* DWTextLayout_;
 public:
 		DWRITE_TEXT_METRICS tm_;		
 };

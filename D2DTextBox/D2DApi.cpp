@@ -6,7 +6,6 @@
 #include "D2DApi.h"
 #include "D2DMisc.h"
 #include "D2DResource.h"
-#include "D2DContextNew.h"
 #include "FString.h"
 
 #pragma comment(lib,"dwrite.lib") 
@@ -575,20 +574,20 @@ DLLEXPORT void WINAPI DrawScrollbar( ID2D1RenderTarget* cxt, D2DScrollbarInfo& i
 		// Upper button
 		FRectF rc = ScrollbarRect( info, 1 );
 				
-		D2DMat mat;
-		cxt->GetTransform( &mat );				
+		//D2DMat mat;
+		//cxt->GetTransform( &mat );				
 
-		cxt->SetTransform( mat.CalcOffset( info.rc.left+3, info.rc.top+5 ) );				
+		//cxt->SetTransform( mat.CalcOffset( info.rc.left+3, info.rc.top+5 ) );				
 		FillArrow( cxt, rc.CenterPt(), ( info.stat & D2DScrollbarInfo::ONBTN1 ? br2 : br1b ), 0 );		
 		
 
-		cxt->SetTransform( mat.CalcOffset( info.rc.left+3, info.rc.bottom-10 ) );				
+		//cxt->SetTransform( mat.CalcOffset( info.rc.left+3, info.rc.bottom-10 ) );				
 
 		// Lower button
 		rc = ScrollbarRect( info, 2 );		
 		FillArrow( cxt, rc.CenterPt(), ( info.stat & D2DScrollbarInfo::ONBTN2 ? br2 : br1b ), 2 );		
 
-		cxt->SetTransform( &mat ); // 戻す
+		//cxt->SetTransform( &mat ); // 戻す
 
 
 
@@ -610,19 +609,19 @@ DLLEXPORT void WINAPI DrawScrollbar( ID2D1RenderTarget* cxt, D2DScrollbarInfo& i
 		// left side button
 		FRectF rc = ScrollbarRect( info, 1 );
 				
-		D2DMat mat;
-		cxt->GetTransform( &mat );				
+		//D2DMat mat;
+		//cxt->GetTransform( &mat );				
 
-		cxt->SetTransform( mat.CalcOffset( info.rc.left+5, info.rc.top+5 ) );				
+		//cxt->SetTransform( mat.CalcOffset( info.rc.left+5, info.rc.top+5 ) );				
 		FillArrow( cxt, rc.CenterPt(), ( info.stat & D2DScrollbarInfo::ONBTN1 ? br2 : br1b ), 3 );		
 		
-		cxt->SetTransform( mat.CalcOffset( info.rc.right-10, info.rc.top+5 ) );				
+		//cxt->SetTransform( mat.CalcOffset( info.rc.right-10, info.rc.top+5 ) );				
 
 		// right side button
 		rc = ScrollbarRect( info, 2 );		
 		FillArrow( cxt, rc.CenterPt(), ( info.stat & D2DScrollbarInfo::ONBTN2 ? br2 : br1b ), 1 );		
 
-		cxt->SetTransform( &mat ); // 戻す
+		//cxt->SetTransform( &mat ); // 戻す
 
 		// Thumb button
 		rc = ScrollbarRect( info, 3 );

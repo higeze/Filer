@@ -2,6 +2,7 @@
 #include "TextEditor.h"
 #include "TextStoreACP.h"
 #include "D2DWindow.h"
+#include "CellProperty.h"
 
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
 extern ITfThreadMgr2* g_pThreadMgr;
@@ -12,7 +13,8 @@ extern TfClientId g_TfClientId;
 
 using namespace TSF;
 
-CTextEditor::CTextEditor() 
+CTextEditor::CTextEditor(D2DWindow* pWindow) 
+	:m_pWindow(pWindow)
 {
     pTextStore_ = NULL;    
 	ct_ = NULL;
@@ -140,8 +142,8 @@ void CTextEditor::MoveSelection(int nSelStart, int nSelEnd, bool bTrail)
     if (nSelEnd >= nTextLength)
         nSelEnd = nTextLength;
 
-    ct_->nSelStart_ = nSelStart; 
-    ct_->nSelEnd_ = nSelEnd;
+    m_selStart = nSelStart; 
+    m_selEnd = nSelEnd;
 
 	ct_->bSelTrail_ = bTrail;
 
@@ -159,10 +161,10 @@ void CTextEditor::MoveSelectionNext()
 {
     int nTextLength = (int)ct_->GetTextLength();
 
-	int zCaretPos = (ct_->bSelTrail_ ? ct_->nSelEnd_ : ct_->nSelStart_ );
+	int zCaretPos = (ct_->bSelTrail_ ? m_selEnd : m_selStart );
 	zCaretPos = min(nTextLength, zCaretPos+1); // 1:次の文字
 
-    ct_->nSelStart_ = ct_->nSelEnd_ = zCaretPos;
+    m_selStart = m_selEnd = zCaretPos;
     pTextStore_->OnSelectionChange();
 }
 
@@ -174,10 +176,10 @@ void CTextEditor::MoveSelectionNext()
 
 void CTextEditor::MoveSelectionPrev()
 {
-	int zCaretPos = (ct_->bSelTrail_ ? ct_->nSelEnd_ : ct_->nSelStart_ );
+	int zCaretPos = (ct_->bSelTrail_ ? m_selEnd : m_selStart );
 	zCaretPos = max(0, zCaretPos-1);
 
-    ct_->nSelEnd_ = ct_->nSelStart_ = zCaretPos;
+    m_selEnd = m_selStart = zCaretPos;
     pTextStore_->OnSelectionChange();
 }
 
@@ -222,12 +224,12 @@ BOOL CTextEditor::MoveSelectionUpDown(BOOL bUp, bool bShiftKey )
 
 	if ( bUp )
 	{
-		if (!layout_.RectFromCharPos(ct_->nSelStart_, &rc))
+		if (!layout_.RectFromCharPos(m_selStart, &rc))
 			return FALSE;
 	}
 	else
 	{
-		if (!layout_.RectFromCharPos(ct_->nSelEnd_, &rc))
+		if (!layout_.RectFromCharPos(m_selEnd, &rc))
 		{
 			//MoveSelectionNext();
 			return false;
@@ -248,14 +250,14 @@ BOOL CTextEditor::MoveSelectionUpDown(BOOL bUp, bool bShiftKey )
         pt.y = rc.bottom + ((rc.bottom - rc.top) / 2);
     }
 
-	UINT nSel = bUp ? ct_->nSelEnd_ : ct_->nSelStart_ ;
+	UINT nSel = bUp ? m_selEnd : m_selStart ;
 
 	// 文字間の場合
 	if ( MoveSelectionAtPoint(pt) ) 
 	{				
 		if ( bShiftKey )
 		{
-			UINT nSel2 = bUp ? ct_->nSelStart_ : ct_->nSelEnd_ ;
+			UINT nSel2 = bUp ? m_selStart : m_selEnd ;
 			MoveSelection(nSel, nSel2,!bUp );
 		}
 		
@@ -267,7 +269,7 @@ BOOL CTextEditor::MoveSelectionUpDown(BOOL bUp, bool bShiftKey )
 	{
 		if ( bShiftKey )
 		{
-			UINT nSel2 = bUp ? ct_->nSelStart_ : ct_->nSelEnd_ ;
+			UINT nSel2 = bUp ? m_selStart : m_selEnd ;
 			MoveSelection(nSel, nSel2,!bUp );
 		}
 		
@@ -292,15 +294,15 @@ BOOL CTextEditor::MoveSelectionToLineFirstEnd(BOOL bFirst, bool bShiftKey)
     {
 		// when pushed VK_HOME
 		ct_->nStartCharPos_ = 0;
-		nSel2 = ct_->nSelEnd_;
-        nSel = layout_.FineFirstEndCharPosInLine(ct_->nSelStart_, TRUE);
+		nSel2 = m_selEnd;
+        nSel = layout_.FineFirstEndCharPosInLine(m_selStart, TRUE);
     }
     else
     {
         // when pushed VK_END
 		ct_->nStartCharPos_ = 0;
-		nSel2 = ct_->nSelStart_;
-		nSel = layout_.FineFirstEndCharPosInLine(ct_->nSelEnd_, FALSE);
+		nSel2 = m_selStart;
+		nSel = layout_.FineFirstEndCharPosInLine(m_selEnd, FALSE);
     }
 
     if (nSel != (UINT)-1)
@@ -339,25 +341,26 @@ BOOL CTextEditor::InsertAtSelection(LPCWSTR psz)
 {
 	layout_.bRecalc_ = true;
 
-    LONG lOldSelEnd = ct_->nSelEnd_;
-    if (!ct_->RemoveText(ct_->nSelStart_, ct_->nSelEnd_ - ct_->nSelStart_))
+    LONG lOldSelEnd = m_selEnd;
+    if (!ct_->RemoveText(m_selStart, m_selEnd - m_selStart))
         return FALSE;
 
 	UINT nrCnt;
-    if (!ct_->InsertText(ct_->nSelStart_, psz, lstrlen(psz), nrCnt))
+    if (!ct_->InsertText(m_selStart, psz, lstrlen(psz), nrCnt))
         return FALSE;
 
-    //ct_->nSelStart_ += nrCnt; // lstrlen(psz);
-	ct_->nSelStart_ += lstrlen(psz);
-    ct_->nSelEnd_ = ct_->nSelStart_;
+    //m_selStart += nrCnt; // lstrlen(psz);
+	m_selStart += lstrlen(psz);
+    m_selEnd = m_selStart;
 
     
-	LONG acs = ct_->nSelStart_;
-	LONG ecs = ct_->nSelEnd_;
+	LONG acs = m_selStart;
+	LONG ecs = m_selEnd;
 	pTextStore_->OnTextChange(acs, lOldSelEnd, ecs);
+	OnTextChange(ct_->GetTextBuffer());
 	m_changed(ct_->GetTextBuffer());
 
-
+	
 
     pTextStore_->OnSelectionChange();
     return TRUE;
@@ -373,29 +376,31 @@ BOOL CTextEditor::DeleteAtSelection(BOOL fBack)
 {
 	layout_.bRecalc_ = true;
 
-    if (!fBack && (ct_->nSelEnd_ < (int)ct_->GetTextLength()))
+    if (!fBack && (m_selEnd < (int)ct_->GetTextLength()))
     {
-        if (!ct_->RemoveText(ct_->nSelEnd_, 1))
+        if (!ct_->RemoveText(m_selEnd, 1))
             return FALSE;
 
 		
-		LONG ecs = ct_->nSelEnd_;
+		LONG ecs = m_selEnd;
 
         pTextStore_->OnTextChange(ecs, ecs + 1, ecs);
+		OnTextChange(ct_->GetTextBuffer());
 		m_changed(ct_->GetTextBuffer());
 
     }
 	 
-    if (fBack && (ct_->nSelStart_ > 0))
+    if (fBack && (m_selStart > 0))
     {
-        if (!ct_->RemoveText(ct_->nSelStart_ - 1, 1))
+        if (!ct_->RemoveText(m_selStart - 1, 1))
             return FALSE;
 
-        ct_->nSelStart_--;
-        ct_->nSelEnd_ = ct_->nSelStart_;
+        m_selStart--;
+        m_selEnd = m_selStart;
 
-		LONG acs = ct_->nSelStart_;
+		LONG acs = m_selStart;
         pTextStore_->OnTextChange(acs, acs + 1, acs );
+		OnTextChange(ct_->GetTextBuffer());
 		m_changed(ct_->GetTextBuffer());
         pTextStore_->OnSelectionChange();
     }
@@ -413,18 +418,43 @@ BOOL CTextEditor::DeleteSelection()
 {
 	layout_.bRecalc_ = true;
 
-    ULONG nSelOldEnd = ct_->nSelEnd_;
-    ct_->RemoveText(ct_->nSelStart_, ct_->nSelEnd_ - ct_->nSelStart_);
+    ULONG nSelOldEnd = m_selEnd;
+    ct_->RemoveText(m_selStart, m_selEnd - m_selStart);
 
-    ct_->nSelEnd_ = ct_->nSelStart_;
+    m_selEnd = m_selStart;
 
-	LONG acs = ct_->nSelStart_;
+	LONG acs = m_selStart;
 
     pTextStore_->OnTextChange(acs, nSelOldEnd, acs);
+	OnTextChange(ct_->GetTextBuffer());
 	m_changed(ct_->GetTextBuffer());
     pTextStore_->OnSelectionChange();
 
     return TRUE;
+}
+
+void CTextEditor::OnTextChange(const std::wstring& text)
+{
+	CRect rcClient;
+	::GetClientRect(hWnd_, &rcClient);
+	d2dw::CRectF rcContent(m_pWindow->m_pDirect->Pixels2Dips(rcClient));
+	rcContent.DeflateRect(m_pWindow->m_spProp->Line->Width*0.5f);
+	rcContent.DeflateRect(*(m_pWindow->m_spProp->Padding));
+
+	d2dw::CSizeF szNewContent(m_pWindow->m_pDirect->CalcTextSizeWithFixedWidth(*(m_pWindow->m_spProp->Format), text, rcContent.Width()));
+	d2dw::CRectF rcNewContent(szNewContent);
+	rcNewContent.InflateRect(*(m_pWindow->m_spProp->Padding));
+	rcNewContent.InflateRect(m_pWindow->m_spProp->Line->Width*0.5f);
+	CRect rcNewClient(m_pWindow->m_pDirect->Dips2Pixels(rcNewContent));
+
+	if (rcNewClient.Height() > rcClient.Height()) {
+		CRect rc;
+		::GetWindowRect(hWnd_, &rc);
+		CPoint pt(rc.TopLeft());
+		::ScreenToClient(::GetParent(hWnd_), &pt);
+		::MoveWindow(hWnd_, pt.x, pt.y, rc.Width(), rcNewClient.Height(), TRUE);
+	}
+
 }
  
 //----------------------------------------------------------------
@@ -434,7 +464,7 @@ BOOL CTextEditor::DeleteSelection()
 //----------------------------------------------------------------
 int CTextEditor::CurrentCaretPos()
 {
-	return (ct_->bSelTrail_ ? ct_->nSelEnd_ : ct_->nSelStart_ );
+	return (ct_->bSelTrail_ ? m_selEnd : m_selStart );
 }
 //----------------------------------------------------------------
 //
@@ -443,27 +473,11 @@ int CTextEditor::CurrentCaretPos()
 //----------------------------------------------------------------
 void CTextEditor::Render(D2DContext& cxt )
 {	
-	int zCaretPos = CurrentCaretPos(); //(ct_->bSelTrail_ ? ct_->nSelEnd_ : ct_->nSelStart_ );
+	int zCaretPos = CurrentCaretPos(); //(ct_->bSelTrail_ ? m_selEnd : m_selStart );
 
 	if ( layout_.bRecalc_ )
 	{
-		CRect rc;
-		::GetWindowRect(hWnd_, &rc);
-		CPoint pt(rc.TopLeft());
-		::ScreenToClient(::GetParent(hWnd_), &pt);
-
-		::OutputDebugStringA((boost::format("First SizeX:%1%, SizeY:%2%\r\n") % ct_->view_size_.cx % ct_->view_size_.cy).str().c_str());
 		layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_, zCaretPos, ct_->nStartCharPos_, cxt.textformat);
-
-		if (layout_.tm_.height + 5 > rc.Height()) {
-			::MoveWindow(hWnd_, pt.x, pt.y, ct_->view_size_.cx + 5, (std::max)((LONG)(layout_.tm_.height + 5), rc.Height()), FALSE);
-			//ct_->view_size_.cy = (std::max)((LONG)(layout_.tm_.height + 5), rc.Height());
-			::OutputDebugStringA((boost::format("Move SizeX:%1%, SizeY:%2%\r\n") % ct_->view_size_.cx % ct_->view_size_.cy).str().c_str());
-			::OutputDebugStringA((boost::format("Move RectX:%1%, RectY:%2%\r\n") % ct_->rc_.Width() % ct_->rc_.Height()).str().c_str());
-			layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_, zCaretPos, ct_->nStartCharPos_, cxt.textformat);
-
-		}
-
 		layout_.bRecalc_ = false;
 	}
 		
@@ -471,8 +485,8 @@ void CTextEditor::Render(D2DContext& cxt )
 	//mat.PushTransform();
 	//mat.Offset( ct_->offpt_.x, ct_->offpt_.y );
 
-	int selstart = (int)ct_->nSelStart_ - ct_->nStartCharPos_;
-	int selend = (int)ct_->nSelEnd_ - ct_->nStartCharPos_;
+	int selstart = (int)m_selStart - ct_->nStartCharPos_;
+	int selend = (int)m_selEnd - ct_->nStartCharPos_;
 
 	layout_.Render(cxt, ct_->rc_, ct_->GetTextBuffer(), ct_->GetTextLength(), selstart, selend,ct_->bSelTrail_,pCompositionRenderInfo_, nCompositionRenderInfo_);
 
@@ -524,18 +538,18 @@ void CTextEditor::Reset( IBridgeTSFInterface* bi )
 	
 	if ( bi )
 	{
-		FRectFBoxModel rc1 = bi->GetClientRectEx();
-		FRectF rc = rc1.GetContentRect();// .ZeroRect();
+		//FRectFBoxModel rc1 = bi->GetClientRectEx();
+		//FRectF rc = rc1.GetContentRect();// .ZeroRect();
 
-		ct_->rc_ = rc;
+		//ct_->rc_ = rc;
 
 		//ct_->rc_.left = 0;
 		//ct_->rc_.top = 0;
 		//ct_->rc_.right= rc.right - rc.left; 
 		//ct_->rc_.bottom= rc.bottom - rc.top;
 
-		ct_->view_size_.cx = (LONG)(rc.right - rc.left);
-		ct_->view_size_.cy = (LONG)(rc.bottom - rc.top);
+		//ct_->view_size_.cx = (LONG)(rc.right - rc.left);
+		//ct_->view_size_.cy = (LONG)(rc.bottom - rc.top);
 
 		
 	}
@@ -847,7 +861,7 @@ void CTextEditorCtrl::OnLButtonDown(WPARAM wParam, LPARAM lParam)
     }
 	else
 	{
-		int end = ct_->nSelEnd_;
+		int end = m_selEnd;
 		MoveSelection( end, end, true);
 
 	}
