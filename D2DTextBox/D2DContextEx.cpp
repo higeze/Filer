@@ -2,7 +2,6 @@
 #include "D2DContextEx.h"
 #include <d3d11.h>
 #include <dxgi1_2.h>
-#include "D2DApi.h"
 #include "D2DWindow.h"
 
 
@@ -56,46 +55,35 @@ HRESULT D2DContext::CreateFont(LPCWSTR fontnm, float height, IDWriteTextFormat**
 	return pWindow->m_pDirect->GetDWriteFactory()->CreateTextFormat( fontnm,0, DWRITE_FONT_WEIGHT_NORMAL,DWRITE_FONT_STYLE_NORMAL,DWRITE_FONT_STRETCH_NORMAL,height,L"", ret );
 }
 
-void DrawFillRect( D2DContext& cxt, const D2D1_RECT_F& rc, ID2D1Brush* wakuclr,ID2D1Brush* fillclr, float width )
-{
-	_ASSERT( width > 0 );
-		
-	//DrawFillRectEx( cxt.cxt, rc, wakuclr, fillclr, width );// Line is FillRectangle.
 
-	DRAWFillRect(cxt.pWindow->m_pDirect->GetHwndRenderTarget(), rc, wakuclr, fillclr, width);
-}
+	///TSF////////////////////////////////////////////////////////////////////////////////////////////
 
-///TSF////////////////////////////////////////////////////////////////////////////////////////////
+	static bool bCaret = false;
+	static LARGE_INTEGER gtm, pregtm;
 
-static bool bCaret = false;
-static LARGE_INTEGER gtm,pregtm;
-
-// activeを黒色から即スタート
-void CaretActive()
-{
-	bCaret = true;
-	QueryPerformanceCounter(&pregtm);
-}
-bool DrawCaret(D2DContext& cxt, const FRectF& rc )
-{
-	QueryPerformanceCounter(&gtm);
-						
-	float zfps = (float)(gtm.QuadPart-pregtm.QuadPart) / (float)__s_frequency_.QuadPart;
-
-	if  ( zfps  > 0.4f )
+	// activeを黒色から即スタート
+	void CaretActive()
 	{
-		pregtm = gtm;
-		bCaret = !bCaret;
+		bCaret = true;
+		QueryPerformanceCounter(&pregtm);
 	}
-	else
-	{	
-		cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-		cxt.pWindow->m_pDirect->GetHwndRenderTarget()->FillRectangle( rc, ( bCaret ? cxt.black : cxt.white ));
-		cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode( D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-	}
+	bool DrawCaret(D2DContext& cxt, const FRectF& rc)
+	{
+		QueryPerformanceCounter(&gtm);
 
-	return true;
-}
+		float zfps = (float)(gtm.QuadPart - pregtm.QuadPart) / (float)__s_frequency_.QuadPart;
+
+		if (zfps > 0.4f) {
+			pregtm = gtm;
+			bCaret = !bCaret;
+		} else {
+			cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+			cxt.pWindow->m_pDirect->GetHwndRenderTarget()->FillRectangle(rc, (bCaret ? cxt.black : cxt.white));
+			cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+		}
+
+		return true;
+	}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 

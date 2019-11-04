@@ -528,8 +528,8 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
 
 
 // 候補ダイアログボックスの位置
-	FRectF rcClient = _pEditor->bri_->GetClientRectEx().GetContentRect();
-	::OffsetRect( prc, Round(rcClient.left), Round(rcClient.top) );
+	d2dw::CRectF rcContent = _pEditor->bri_->GetContentRect();
+	::OffsetRect( prc, Round(rcContent.left), Round(rcContent.top) );
 
 
  // 	D2DMat m( _pEditor->mat_ );
@@ -555,14 +555,14 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
 
 STDAPI CTextStore::GetScreenExt(TsViewCookie vcView, RECT *prc)
 {
-	*prc = _pEditor->bri_->GetClientRect().GetRECT();
+	//*prc = _pEditor->bri_->GetClientRect().GetRECT();
 
-	//D2DMat m( _pEditor->mat_);
-	//auto xrc = m.LPtoDP( FRectF(*prc) );
-	//*prc = xrc.GetRECT();
+	////D2DMat m( _pEditor->mat_);
+	////auto xrc = m.LPtoDP( FRectF(*prc) );
+	////*prc = xrc.GetRECT();
 
-    ClientToScreen(_pEditor->GetWnd(), (POINT *)&prc->left);
-    ClientToScreen(_pEditor->GetWnd(), (POINT *)&prc->right);
+ //   ClientToScreen(_pEditor->GetWnd(), (POINT *)&prc->left);
+ //   ClientToScreen(_pEditor->GetWnd(), (POINT *)&prc->right);
     return E_NOTIMPL;
 }
 

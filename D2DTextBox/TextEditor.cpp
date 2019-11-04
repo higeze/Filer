@@ -1,5 +1,6 @@
 ﻿#include "text_stdafx.h"
 #include "TextEditor.h"
+#include "d2dwindowcontrol.h"
 #include "TextStoreACP.h"
 #include "D2DWindow.h"
 #include "CellProperty.h"
@@ -13,8 +14,8 @@ extern TfClientId g_TfClientId;
 
 using namespace TSF;
 
-CTextEditor::CTextEditor(D2DWindow* pWindow) 
-	:m_pWindow(pWindow)
+CTextEditor::CTextEditor(D2DTextbox* pTxtbox) 
+	:m_pTxtbox(pTxtbox)
 {
     pTextStore_ = NULL;    
 	ct_ = NULL;
@@ -28,7 +29,6 @@ CTextEditor::CTextEditor(D2DWindow* pWindow)
 CTextEditor::~CTextEditor() 
 {
     UninitTSF();
-	
 }
 
 //----------------------------------------------------------------
@@ -435,17 +435,14 @@ BOOL CTextEditor::DeleteSelection()
 
 void CTextEditor::OnTextChange(const std::wstring& text)
 {
-	CRect rcClient;
-	::GetClientRect(hWnd_, &rcClient);
-	d2dw::CRectF rcContent(m_pWindow->m_pDirect->Pixels2Dips(rcClient));
-	rcContent.DeflateRect(m_pWindow->m_spProp->Line->Width*0.5f);
-	rcContent.DeflateRect(*(m_pWindow->m_spProp->Padding));
+	d2dw::CRectF rcClient(m_pTxtbox->GetClientRect());
+	d2dw::CRectF rcContent(m_pTxtbox->GetContentRect());
 
-	d2dw::CSizeF szNewContent(m_pWindow->m_pDirect->CalcTextSizeWithFixedWidth(*(m_pWindow->m_spProp->Format), text, rcContent.Width()));
+	d2dw::CSizeF szNewContent(m_pTxtbox->m_pWnd->m_pDirect->CalcTextSizeWithFixedWidth(*(m_pTxtbox->m_pProp->Format), text, rcContent.Width()));
 	d2dw::CRectF rcNewContent(szNewContent);
-	rcNewContent.InflateRect(*(m_pWindow->m_spProp->Padding));
-	rcNewContent.InflateRect(m_pWindow->m_spProp->Line->Width*0.5f);
-	CRect rcNewClient(m_pWindow->m_pDirect->Dips2Pixels(rcNewContent));
+	rcNewContent.InflateRect(*(m_pTxtbox->m_pProp->Padding));
+	rcNewContent.InflateRect(m_pTxtbox->m_pProp->Line->Width*0.5f);
+	CRect rcNewClient(m_pTxtbox->m_pWnd->m_pDirect->Dips2Pixels(rcNewContent));
 
 	if (rcNewClient.Height() > rcClient.Height()) {
 		CRect rc;
@@ -477,7 +474,8 @@ void CTextEditor::Render(D2DContext& cxt )
 
 	if ( layout_.bRecalc_ )
 	{
-		layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_, zCaretPos, ct_->nStartCharPos_, cxt.textformat);
+
+		layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), m_pTxtbox->GetContentRect().Size(), ct_->bSingleLine_, zCaretPos, ct_->nStartCharPos_, cxt.textformat);
 		layout_.bRecalc_ = false;
 	}
 		
@@ -488,7 +486,7 @@ void CTextEditor::Render(D2DContext& cxt )
 	int selstart = (int)m_selStart - ct_->nStartCharPos_;
 	int selend = (int)m_selEnd - ct_->nStartCharPos_;
 
-	layout_.Render(cxt, ct_->rc_, ct_->GetTextBuffer(), ct_->GetTextLength(), selstart, selend,ct_->bSelTrail_,pCompositionRenderInfo_, nCompositionRenderInfo_);
+	layout_.Render(cxt, m_pTxtbox->GetContentRect() , ct_->GetTextBuffer(), ct_->GetTextLength(), selstart, selend,ct_->bSelTrail_,pCompositionRenderInfo_, nCompositionRenderInfo_);
 
 	//mat.PopTransform();
 }
@@ -502,7 +500,8 @@ void CTextEditor::CalcRender(D2DContext& cxt )
 	int x = 0;
 	
 	//::OutputDebugStringA((boost::format("TextBuff:%1%, TextLen:%2%\r\n") % ct_->GetTextBuffer() % ct_->GetTextLength()).str().c_str());
-	layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), ct_->view_size_, ct_->bSingleLine_,0, x, cxt.textformat);	
+	d2dw::CSizeF size(m_pTxtbox->GetContentRect().Size());
+	layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), size, ct_->bSingleLine_,0, x, cxt.textformat);	
 	layout_.bRecalc_ = false;
 }
 

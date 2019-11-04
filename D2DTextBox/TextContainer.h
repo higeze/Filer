@@ -10,6 +10,8 @@ namespace TSF {
 
 class CTextContainer
 {
+private:
+	std::wstring m_text;
 	public:
 		CTextContainer(); 
 		virtual ~CTextContainer();
@@ -18,17 +20,17 @@ class CTextContainer
 		BOOL RemoveText(int nPos, UINT nCnt);
 		BOOL GetText(int nPos, WCHAR *psz, UINT nBuffSize);
 
-		UINT GetTextLength() {return nTextSize_;}
-		const WCHAR *GetTextBuffer() {return psz_;}
+		UINT GetTextLength() {return m_text.size();}
+		const WCHAR *GetTextBuffer() {return m_text.data();}
 //		void CaretLast();
 		void Clear();
 
 	public :
 //		int nSelStart_, nSelEnd_;
 		bool bSelTrail_;
-//		V4::FRectF rc_;
+		//V4::FRectF rc_;
 
-		SIZE view_size_;
+		//SIZE view_size_;
 
 		bool bSingleLine_;
 		UINT LimitCharCnt_;
@@ -38,10 +40,10 @@ class CTextContainer
 	private:
 		BOOL EnsureBuffer(UINT nNewTextSize);
 	
-		WCHAR* psz_;
+//		WCHAR* psz_;
 
-		UINT nBufferSize_;
-		UINT nTextSize_;
+//		UINT nBufferSize_;
+//		UINT nTextSize_;
 
 	
 };

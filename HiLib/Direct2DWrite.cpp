@@ -536,6 +536,54 @@ namespace d2dw
 		}
 	}
 
+	std::vector<CRectF> CDirect2DWrite::CalcCharRects(const FormatF& format, const std::wstring& text, const CSizeF& size)
+	{
+		if (text.empty()) {
+			return std::vector<CRectF>();
+		} else {
+			auto pLayout = GetTextLayout(format, text, size);
+			std::vector<CRectF> rects(text.size(), d2dw::CRectF());
+			for (auto i = 0; i < rects.size(); i++) {
+				float x, y;
+				DWRITE_HIT_TEST_METRICS tm;
+				pLayout->HitTestTextPosition(i, false, &x, &y, &tm);
+				rects[i].SetRect(tm.left, tm.top, tm.left + tm.width, tm.top + tm.height);
+			}
+			return rects;
+		}
+
+		//float x, y;
+		//{
+		//	DWRITE_HIT_TEST_METRICS tm;
+		//	layout_->HitTestTextPosition(0, false, &x, &y, &tm);
+		//	line_height_ = tm.height;
+		//}
+
+		//cnt_ = slen;
+		//rects_ = new FRectF[cnt_];
+		//ZeroMemory(rects_, sizeof(FRectF)*cnt_);
+		//int r = 0;
+		//for (size_t i = 0; i < text.size(); i++) {
+		//	float x1, y1;
+		//	DWRITE_HIT_TEST_METRICS tm;
+
+		//	pLayout->HitTestTextPosition(i, false, &x1, &y1, &tm);
+
+
+		//	if (bSingleLine_ && y1 != y)
+		//		break;
+
+		//	rects_[i].SetRect(tm.left, tm.top, FSizeF(tm.width, tm.height));
+
+		//	r++;
+		//}
+
+		//*plen = r;
+
+		//return rects_;
+	}
+
+
 	void CDirect2DWrite::Clear()
 	{
 		m_pD2D1Factory = nullptr;

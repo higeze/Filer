@@ -7,7 +7,6 @@
 #include "TextContainer.h"	// CTextContainer
 #include "IBridgeTSFInterface.h"
 #include "gdi32.h"
-#include "ControlHandle.h"
 //#include "msxmlex6.h"
 #include "faststack.h"
 #include "Direct2DWrite.h"
@@ -62,17 +61,9 @@ public:
 	std::unique_ptr<D2DTextbox> m_pTxtbox;
 
 	HWND m_hWnd;
-//	HWND hMainFrame_;
 	D2DContext cxt_;
-//	D2DRES res_;
 	int redraw_;
 
-	//std::map<void*, int> mts_;
-	//std::vector<D2DControl*> drag_accepters_;
-	//std::vector< std::shared_ptr<D2DControl>> death_objects_;
-
-
-	ControlHandle chandle_;
 	static std::wstring appinfo_;
 
 	CComPtr<ID2D1SolidColorBrush> GetSolidColor(D2D1_COLOR_F clr);

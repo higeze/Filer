@@ -4,4 +4,3 @@
 #include "D2DWindowControl.h"
 #include "gdi32.h"
 #include "MoveTarget.h"
-#include "Selection.h"

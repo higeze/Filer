@@ -1,4 +1,5 @@
 ﻿#include "text_stdafx.h"
+#include "D2DWindow.h"
 #include "D2DWindowControl.h"
 #include "TextEditor.h"
 #include "TextLayout.h"
@@ -32,13 +33,11 @@ LPCWSTR regexpre[] = {
 	L"[0-9]{2,4}[./ ]{1}[0-9]{1,2}[./ ]{1}[0-9]{1,4}"// 日付用 
 };
 
-namespace V4 {
-
-D2DTextbox::D2DTextbox(D2DWindow* pWindow,TYP typ, std::function<void(const std::wstring&)> changed)
-	:m_changed(changed)
+D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::shared_ptr<CellProperty>& pProp, TYP typ, std::function<void(const std::wstring&)> changed)
+:m_pWnd(pWnd), m_pProp(pProp), m_changed(changed)
 {
-	ctrl_ = new TSF::CTextEditorCtrl(pWindow);
-	ctrl_->Create(pWindow->m_hWnd);
+	ctrl_ = new TSF::CTextEditorCtrl(this);
+	ctrl_->Create(pWnd->m_hWnd);
 	ctrl_->m_changed = m_changed;
 
 	if ( typ & RIGHT || typ & CENTER || typ & VCENTER )
@@ -53,9 +52,10 @@ D2DTextbox::D2DTextbox(D2DWindow* pWindow,TYP typ, std::function<void(const std:
 	ct_.LimitCharCnt_ = 65500;	
 
 }
-void D2DTextbox::CreateWindow( D2DWindow* parent, const FRectFBoxModel& rc, int stat, LPCWSTR name, int id )
+
+void D2DTextbox::CreateWindow( D2DWindow* parent, const FRectFBoxModel& rc, int stat, LPCWSTR name)
 {
-	D2DControl::CreateWindow( parent,rc,stat,name, id );
+	D2DControl::CreateWindow( parent,rc,stat,name);
 	
 	if ( fmt_ )
 	{
@@ -74,23 +74,6 @@ void D2DTextbox::CreateWindow( D2DWindow* parent, const FRectFBoxModel& rc, int 
 		font_height_ = parent->cxt_.line_height;
 
 	}
-	 
-	//// 右隅のPadding へスクロールバー
-	//if ( 15 <= rc.Padding_.r )
-	//{	
-	//	if ( typ_ & TYP::MULTILINE )
-	//	{	
-	//		float h = rc.GetContentRect().Height();	// v or hの判断にしか使われない。wm_sizeでのサイズで決まる。		
-	//		float w = rc.Padding_.r;
-
-	//		FRectFBoxModel rcscb(rc_.GetContentRect().Width(), 0, FSizeF(w, h));
-	//		scbar_ = std::shared_ptr<D2DScrollbar>(new D2DScrollbar());
-	//		scbar_->CreateWindowEx(parent_, this, rcscb, VISIBLE | ALWAYSDRAW, NONAME);
-	//		scbar_->SetTotalSize(1);
-	//	}
-	//}
-
-
 	SetText(L"");
 }
 IDWriteTextFormat* D2DTextbox::GetFormat()
@@ -125,7 +108,6 @@ void D2DTextbox::CalcRender(bool bLayoutUpdate)
 	else
 	{
 		ctrl_->SetContainer( &ct_, this ); 
-		//ctrl_->mat_ = mat_;	
 		ctrl_->CalcRender( parent_->cxt_ );
 	}
 }
@@ -141,139 +123,20 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 	{
 		case WM_PAINT:
 		{
-			CRect rc;
-			::GetClientRect(d->m_hWnd, &rc);
-			d2dw::CRectF rcClient(d->m_pDirect->Pixels2Dips(rc));
-			d2dw::CRectF rcInner(rcClient); rcInner.DeflateRect(d->m_spProp->Line->Width*0.5);
-			d2dw::CRectF rcContent(rcInner); rcContent.DeflateRect(*(d->m_spProp->Padding));
-
 			//PaintBackground(e.Direct, rcInner);
 			{
-				d->m_pDirect->FillSolidRectangle(*(d->m_spProp->NormalFill), rcClient);
+				d->m_pDirect->FillSolidRectangle(*(d->m_spProp->NormalFill), GetClientRect());
 			}
 			//PaintLine(e.Direct, rcClient);
 			{
-				d->m_pDirect->GetHwndRenderTarget()->DrawRectangle(rcClient, d->m_pDirect->GetColorBrush(d->m_spProp->EditLine->Color), d->m_spProp->Line->Width);
+				d->m_pDirect->GetHwndRenderTarget()->DrawRectangle(GetClientRect(), d->m_pDirect->GetColorBrush(d->m_spProp->EditLine->Color), d->m_spProp->Line->Width);
 			}
 			//PaintContent(e.Direct, rcContent);
 			{
-				ctrl_->ct_->rc_ = rcContent;
-				ctrl_->ct_->view_size_.cx = rcContent.Width();
-				ctrl_->ct_->view_size_.cy = rcContent.Height();
 				ctrl_->WndProc(d, WM_PAINT, wParam, lParam);
 			}
 			d->redraw_ = 1;
 		}
-
-	//		{
-	//			//D2DMatrix mat( cxt );		
-
-	//			FRectF rccnt = rc_.GetContentRect();
-
-	//			//mat.PushTransform(); // 0
-	//			//mat_ = mat;
-
-
-	//			FRectF rc1 = rc_.GetBorderRect();
-
-	//			//D2DRectFilter f(d->cxt_, rc1);
-
-	//			{
-	//				auto br1 = d->GetSolidColor(clr_back_);
-	//				DrawFill(d->m_pDirect->GetHwndRenderTarget(), rc1, br1);// 裏面
-	//			}
-
-	//			auto wakucolor = d->GetSolidColor(clr_border_);
-	//			auto forecolor = d->GetSolidColor(clr_fore_);
-
-	//			ID2D1Brush* textcolor = (stat_&READONLY ? d->cxt_.bluegray.p : forecolor.p);
-
-	//			//mat.PushTransform(); // 1
-	//			{
-	//				//mat.Offset( rccnt.left + LEFT_MARGIN , rccnt.top );		
-	//				//mat.PushTransform(); // 2
-	//				{
-	//					//float hh = (scbar_.get() == nullptr ? 0.0 : RowHeight() *  scbar_->info_.rowno);
-
-	//					//mat.Offset( 0, -hh ); 
-	//					//matEx_ = mat;
-
-	//					{
-	//						//mat.PushTransform(); // 3
-	//						int len = ct_.GetTextLength();
-
-
-	//						if (ctrl_->GetContainer() == &ct_ && bActive_) {
-	//							//ctrl_->mat_ = mat_;
-
-	//							// on editting, bActive_ is true.
-
-	//							IDWriteTextFormat* old = NULL;
-	//							float oldheight;
-
-	//							if (fmt_ == NULL)
-	//								fmt_ = parent_->cxt_.textformat;
-	//							else {
-	//								old = parent_->cxt_.textformat;
-	//								parent_->cxt_.textformat = fmt_;
-	//								oldheight = parent_->cxt_.line_height;
-	//								parent_->cxt_.line_height = font_height_;
-	//							}
-
-	//							//if (!(typ_ & MULTILINE)) {
-	//							//	float yoff = (rccnt.Height() - font_height_) / 2.0f; // vcenter
-	//							//	//mat.Offset(0,yoff );	
-	//							//}
-
-	//							ret = ctrl_->WndProc(d, WM_PAINT, wParam, lParam);
-
-	//							if (old) {
-	//								parent_->cxt_.textformat = old;
-	//								parent_->cxt_.line_height = oldheight;
-
-	//							}
-	//							wakucolor = d->GetSolidColor(clr_active_border_);
-	//						}
-	//						//mat.PopTransform(); // 3
-	//					}
-	//				}
-	//				//mat.PopTransform(); // 2
-	//			}
-
-	////			if (scbar_) {
-	////				//FRectF rccc = scbar_->GetRect();				
-	//////				mat.Offset( -LEFT_MARGIN , -rc_.Padding_.t );	
-	////				scbar_->WndProc(d, WM_PAINT, wParam, lParam);
-	////			}
-
-	//			//			mat.PopTransform(); // 1
-
-	//						//if ( stat_ & BORDER )
-	//						//{
-	//							//D2DRectFilter f(cxt, rc1);
-	//			DrawFillRect(d->cxt_, rc1, wakucolor, d->cxt_.transparent, 1.0f);
-	//			//}
-
-	//			//if (stat_ & DISABLE) {
-	//			//	DrawFill(d->m_pDirect->GetHwndRenderTarget(), rc1, d->cxt_.halftone);
-	//			//}
-
-	//			//			mat.PopTransform();	//0	
-
-	//			//if (bUpdateScbar_) {
-	//			//	if (TryTrimingScrollbar())
-	//			//		scbar_->info_.rowno = 0;
-	//			//	d->redraw_ = 1;
-	//			//	bUpdateScbar_ = false;
-	//			//}
-
-	//			if (bActive_) {
-	//				d->redraw_ = 1;
-	//			}
-	//		}
-
-
-	//	}
 		break;
 		default :
 		{	
@@ -308,9 +171,6 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 
 			}
 
-			//if ( scbar_ && 0 != scbar_->WndProc(d,message,wParam,lParam ) )
-			//	return 1;
-
 			if (ctrl_->GetContainer() != &ct_ /*|| d->GetCapture() != this*/)
 				return ret;
 
@@ -334,88 +194,11 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 			// add tab
 			for( int i = 0; i < bAddTabCount; i++ )
 				OnKeyDown(d,WM_KEYDOWN,(WPARAM)L'\t',0);
-
-			//// scroll
-			//if ( message == WM_KEYDOWN && (wParam == VK_DOWN || wParam == VK_UP || wParam == VK_RETURN ) )
-			//{
-			//	bool bl = TryTrimingScrollbar();				
-
-			//	if ( wParam == VK_RETURN && bl )
-			//		scbar_->info_.rowno++;
-			//}
-			//else if (message == WM_MOUSEMOVE /*&& d->GetCapture() == this*/ && ret == 0)
-			//{
-			//	// mouse auto sctoll.
-			//	bool bl = TryTrimingScrollbar();
-			//}
 		}
 		break;	
 	}
 	return ret; 
 }
-
-
-//bool D2DTextbox::TryTrimingScrollbar()
-//{
-//	if ( scbar_ == nullptr ) return false;
-//	if ( ctrl_->ct_ == nullptr ) return false;
-//
-//	FRectF rc;
-//	int pos = ctrl_->CurrentCaretPos();				
-//	int rowno = scbar_->info_.rowno;
-//	float cy;
-//
-//	if ( rowno )
-//	{
-//		while(1)
-//		{
-//			cy = RowHeight() *  scbar_->info_.rowno;
-//			ctrl_->GetLayout()->RectFromCharPos( pos, &rc );	
-//					
-//			if ( rc.top < cy )
-//				scbar_->info_.rowno--;
-//			else
-//				break;
-//		}
-//	}
-//
-//	while(1)
-//	{
-//		cy = RowHeight() *  scbar_->info_.rowno + rc_.GetContentRect().Height();
-//		if ( ctrl_->GetLayout()->RectFromCharPos( pos, &rc ))
-//		{		
-//			if ( rc.bottom > (cy-RowHeight()) )
-//				scbar_->info_.rowno++;
-//			else
-//				break;
-//		}
-//		else
-//			break;
-//	}
-//	
-//	bool ret = (rowno != scbar_->info_.rowno);
-//
-//	if ( ret )
-//	{
-//		// Thumbボタンの位置調整
-//
-//		scbar_->SetTotalSize(RowHeight()*RowCount(true));
-//
-//		FRectF rc = scbar_->info_.rc;
-//		FRectF rcb = scbar_->info_.thumb_rc; // 真ん中のボタン
-//
-//		float h2 = scbar_->info_.button_height; // 上下のボタン
-//		float h = rc.Height() - h2*2 - rcb.Height(); // thumbの移動範囲
-//
-//		int cnt = RowCount(true)-RowCount(false);
-//		if ( cnt )
-//			scbar_->info_.position = scbar_->info_.rowno * h / cnt;
-//
-//	}
-//
-//
-//	return ret;
-//}
 
 int D2DTextbox::TabCountCurrentRow()
 {
@@ -695,7 +478,6 @@ void D2DTextbox::ActiveSw()
 	}
 
 	ctrl_->SetContainer( &ct_, this ); 
-	//ctrl_->mat_ = mat_;	
 	ctrl_->CalcRender( parent_->cxt_ );
 
 	{
@@ -723,36 +505,18 @@ void D2DTextbox::ActiveSw()
 
 	if ( old )
 		parent_->cxt_.textformat = old;
-
-
-	//if ( scbar_ )
-	//{
-	//	UpdateScrollbar( scbar_.get() );
-
-	//	float hh = ( ct_.bSingleLine_? 0.0 : RowHeight() *  scbar_->info_.rowno);
-	//	//ctrl_->mat_._32 -= hh;
-	//}
 }
 
-void CaretActive(); // D2DContextEx.cpp
 void D2DTextbox::StatActive( bool bActive )
 {
 	// captureは上位層で操作
 	
 	if ( bActive )
 	{
-		//xassert( parent_->GetCapture() == this );
-
 		ctrl_->Password((typ_ & PASSWORD) != 0);
 
 		CalcRender(true);
 		bActive_ = true;
-
-		//if ( scbar_ )
-		//{
-		//	float hh = ( ct_.bSingleLine_? 0.0 : RowHeight() *  scbar_->info_.rowno);
-		//	//ctrl_->mat_._32 -= hh;
-		//}
 
 		ctrl_->SetFocus();
 		V4::CaretActive(); // D2DContextEx.cpp
@@ -774,25 +538,35 @@ void D2DTextbox::StatActive( bool bActive )
 	}
 }
 
-FRectF D2DTextbox::GetClientRect()
+d2dw::CRectF D2DTextbox::GetClientRect() const
 {
-	return rc_;
+	CRect rcClient;
+	::GetClientRect(m_pWnd->m_hWnd, &rcClient);
+	return m_pWnd->m_pDirect->Pixels2Dips(rcClient);
 }
 
-FRectFBoxModel D2DTextbox::GetClientRectEx()
+d2dw::CRectF D2DTextbox::GetContentRect() const
 {
-	// 変換ダイアログの表示位置 -> CTextStore::GetTextExt
-	FRectFBoxModel x = rc_;
-	
-
-	if ( this->typ_ == TYP::SINGLELINE || this->typ_ == TYP::PASSWORD )
-	{
-		// 26:標準フォント高で微調整
-		x.Offset(0, (rc_.Height()- 26)/2+2 ); // ???
-	}
-
-	return x;
+	d2dw::CRectF rcContent(GetClientRect());
+	rcContent.DeflateRect(m_pWnd->m_spProp->Line->Width*0.5f);
+	rcContent.DeflateRect(*(m_pWnd->m_spProp->Padding));
+	return rcContent;
 }
+
+//FRectFBoxModel D2DTextbox::GetClientRectEx()
+//{
+//	// 変換ダイアログの表示位置 -> CTextStore::GetTextExt
+//	FRectFBoxModel x = rc_;
+//	
+//
+//	if ( this->typ_ == TYP::SINGLELINE || this->typ_ == TYP::PASSWORD )
+//	{
+//		// 26:標準フォント高で微調整
+//		x.Offset(0, (rc_.Height()- 26)/2+2 ); // ???
+//	}
+//
+//	return x;
+//}
 FString D2DTextbox::GetText()
 {	
 	return FString( ct_.GetTextBuffer());  // null terminate	
@@ -807,9 +581,6 @@ void D2DTextbox::SetSize( const FSizeF& sz )
 void D2DTextbox::SetRect( const FRectF& rc )
 {
 	rc_ = rc;
-
-	//if ( scbar_ )
-	//	scbar_->WndProc( parent_,WM_SIZE,0,0);
 }
 
 // Tab文字　可
@@ -825,195 +596,6 @@ void D2DTextbox::TabEnable()
 		return 0;
 	};
 }
-
-//-------------------------------------------------------------------------------------------------------------------
-//
-//
-//
-//-------------------------------------------------------------------------------------------------------------------
-CharsRectF::CharsRectF(IDWriteTextLayout* tx, bool bSingle  )
-{
-	layout_ = tx;
-	cnt_ = 0;
-	rects_ = NULL;
-	line_height_ = 0;
-	bSingleLine_ = bSingle;
-}
-void CharsRectF::Clear()
-{
-	delete [] rects_;
-	cnt_ = 0;
-	line_height_ = 0;
-}
-FRectF* CharsRectF::calc(const FSizeF&  sz, LPCWSTR str, int slen, int* plen)
-{
-	float x, y;
-	{				
-		DWRITE_HIT_TEST_METRICS tm;
-		layout_->HitTestTextPosition(0, false, &x, &y, &tm);
-		line_height_ = tm.height;		
-	}
-	
-	cnt_ = slen;
-	rects_ = new FRectF[cnt_];
-	ZeroMemory( rects_, sizeof(FRectF)*cnt_ );
-
-	int r = 0;
-	for (int i = 0; i < slen; i++)
-	{
-		float x1,y1;
-		DWRITE_HIT_TEST_METRICS tm;
-
-		layout_->HitTestTextPosition(i, false, &x1, &y1, &tm);
-
-
-		if ( bSingleLine_ && y1 != y )
-			break;
-
-		rects_[i].SetRect(tm.left, tm.top, FSizeF(tm.width, tm.height));
-
-		r++;
-	}
-
-	*plen = r;
-	
-	return rects_;
-
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////
-int CreateTextLayout::Create( int zStartPos, int zCaretPos, IDWriteTextLayout** layout)
-{
-	if ( IsSibleLine_ )
-		return CreateSingleTextLayout(zStartPos,zCaretPos,layout);
-	else
-		return CreateMultiTextLayout(zStartPos,zCaretPos,layout);
-}
-int CreateTextLayout::CreateMultiTextLayout( int zStartPos, int zCaretPos, IDWriteTextLayout** layout)
-{
-	if ( HR(fc_->CreateTextLayout( psz_+zStartPos, len_-zStartPos, fmt_, sz_.width, sz_.height, layout )))
-	{
-		
-		LPCWSTR x = L"TABWIDTH";
-		CComPtr<IDWriteTextLayout> tl;
-		if ( HR(fc_->CreateTextLayout( x, TAB_WIDTH_4CHAR, fmt_, 1000, sz_.height,  &tl )))
-		{
-			DWRITE_TEXT_METRICS t;
-			tl->GetMetrics(&t);
-			
-			(*layout)->SetIncrementalTabStop( t.width ); //タブの距離設定 tab is 4 chars
-		}
-	}
-
-	return 0;
-}
-
-int CreateTextLayout::CreateSingleTextLayout( int zStartPos, int zCaretPos, IDWriteTextLayout** layout)
-{
-	int viewlen = 0;
-	float width9999 = 9999;
-	int off = 0;
-
-	// 表示可能文字数を算出する。
-	if ( len_ && (int)len_ - zStartPos >= 0)
-	{
-		CComPtr<IDWriteTextLayout> temp;
-		auto hr = fc_->CreateTextLayout( psz_+zStartPos, len_-zStartPos, fmt_, width9999, sz_.height, &temp );
-
-		float wd = 0;
-		const float triming = 21.0f;	// ???
-		for (UINT i = 0; i < len_; i++)
-		{
-			float x1=0,y1=0;
-			DWRITE_HIT_TEST_METRICS tm;
-			hr = temp->HitTestTextPosition(i, false, &x1, &y1, &tm);
-		
-			if ( (wd+triming) > sz_.width )
-				break;
-
-			wd += tm.width;
-
-			viewlen = i+1;
-		}
-
-		// キャレットから先頭文字の位置を算出
-	}
-
-	if ( len_ > 0 && viewlen == 0 )
-		viewlen = 1;
-
-	
-	{
-		off = 0;
-		if ( len_ && zStartPos<=(int)len_)
-		{
-			SingleLineCaret sc( zStartPos,len_, viewlen, zCaretPos-zStartPos );
-				
-			sc.CaretOff(-1);
-			sc.CaretOff(1);
-
-			off = sc.zS();
-		}
-		int len = max(0, (int)len_-off );
-
-		auto hr = fc_->CreateTextLayout( psz_+off, len, fmt_, width9999, sz_.height, layout );
-
-		_ASSERT(hr == S_OK);
-	}
-	
-	return off;
-
-}
-
-//void D2DTextbox::UpdateScrollbar(D2DScrollbar* bar)
-//{
-//	// 行数のカウントする
-//	scbar_->SetTotalSize(RowHeight()*RowCount(true));
-//	
-//	FRectF rc = bar->info_.rc;
-//	float h2 = bar->info_.button_height; // 上下のボタン
-//	FRectF rcb = bar->info_.thumb_rc; // 真ん中のボタン
-//
-//	float rowheight = RowHeight();
-//
-//	float h = rc.Height() - h2*2 - rcb.Height(); // thumbの移動範囲
-//	
-//	UINT cnt = RowCount(true);
-//	if ( cnt )
-//	{
-//		cnt = cnt -RowCount(false);
-//		if ( cnt )
-//			bar->info_.rowno = (UINT)((bar->info_.position / h)*cnt); 
-//	}
-//
-//		
-//}
-//float D2DTextbox::RowHeight()
-//{
-//	return font_height_;
-//}
-//UINT D2DTextbox::RowCount( bool all )
-//{
-//	UINT cnt = 0;
-//	if ( all )
-//	{
-//		// 折り返しも含めた行数, 表示されない部分を含めた行数		
-//		auto x = ctrl_->GetLayout()->GetViewLineCount();
-//
-//		return x;
-//	}
-//	else
-//	{
-//		// 表示される行数
-//		
-//		FRectF rc = rc_.GetContentRect();
-//		auto x = (UINT)(rc.Height() / RowHeight()); 	
-//		return x;
-//	}
-//}
-}; // namespace V4
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 static ITfKeystrokeMgr *g_pKeystrokeMgr	= NULL;
 TfClientId g_TfClientId	= TF_CLIENTID_NULL;

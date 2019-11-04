@@ -33,7 +33,7 @@ CTextLayout::~CTextLayout()
 // Calc layout 行数の把握と文字単位にPOS,LEN,RECTを取得
 //----------------------------------------------------------------
 
-BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE& sz, bool bSingleLine, int zCaret, int& StarCharPos,IDWriteTextFormat* fmt)
+BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const d2dw::CSizeF& sz, bool bSingleLine, int zCaret, int& StarCharPos,IDWriteTextFormat* fmt)
 {
 	Clear();
 	bSingleLine_ = bSingleLine;
@@ -137,15 +137,25 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 
 		StarCharPos_ = 0;
 			
-		CharsRectF cr( cxt.pWindow->m_pDirect->GetTextLayout(*(cxt.pWindow->m_spProp->Format), std::wstring(psz).substr(StarCharPos), d2dw::CSizeF(sz.cx, sz.cy)), false );
+//		CharsRectF cr( cxt.pWindow->m_pDirect->GetTextLayout(*(cxt.pWindow->m_spProp->Format), std::wstring(psz).substr(StarCharPos), sz, false );
+
 		
 		int slen = nCnt;
-		int len;
+//		int len;
 
 		// 文字文のRECT取得
-		FRectF* prcs = cr.calc( sz, NULL, slen, &len );
+		std::vector<d2dw::CRectF> charRects = cxt.pWindow->m_pDirect->CalcCharRects(*(cxt.pWindow->m_spProp->Format), std::wstring(psz).substr(StarCharPos), sz);
+		if (charRects.empty()) {
+			auto pLayout = cxt.pWindow->m_pDirect->GetTextLayout(*(cxt.pWindow->m_spProp->Format), std::wstring(psz).substr(StarCharPos), sz);
+			float x, y;
+			DWRITE_HIT_TEST_METRICS tm;
+			pLayout->HitTestTextPosition(0, false, &x, &y, &tm);
+			nLineHeight_ = tm.height;
+		} else {
+			nLineHeight_ = charRects[0].Height();
+		}
+		//FRectF* prcs = cr.calc( sz, NULL, slen, &len );
 
-		nLineHeight_ = cr.LineHeight();
 			
 
 		// prgLines_[lineno].prgCharInfo[col].rc の設定
@@ -166,7 +176,7 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 					UINT col;
 					for (col = 0; col < nCnt ; col++)
 					{ 				
-						FRectF rc = prcs[rcIdx++];
+						FRectF rc = charRects[rcIdx++];
 						prgLines_[r].prgCharInfo[col].rc = rc.Offset(2.5, 2.5);
 					}
 
@@ -181,7 +191,7 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const SIZE&
 				else // 空行
 				{
 					prgLines_[r].prgCharInfo = new CHARINFO[1];				
-					FRectF rc = prcs[rcIdx++];
+					FRectF rc = charRects[rcIdx++];
 
 					xassert( rc.left == rc.right );
 

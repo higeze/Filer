@@ -395,6 +395,7 @@ namespace d2dw{
 
 		CSizeF CalcTextSize(const FormatF& format, const std::wstring& text);
 		CSizeF CalcTextSizeWithFixedWidth(const FormatF& fca, const std::wstring& text, const FLOAT width);
+		std::vector<CRectF> CDirect2DWrite::CalcCharRects(const FormatF& format, const std::wstring& text, const CSizeF& size);
 
 		FLOAT LayoutRound(FLOAT value, FLOAT unit = 0.5f)
 		{

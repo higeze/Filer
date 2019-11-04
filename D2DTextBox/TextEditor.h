@@ -64,9 +64,9 @@ class CTextEditor
 
 
 		std::function<void(const std::wstring&)> m_changed;
-		D2DWindow* m_pWindow;
+		D2DTextbox* m_pTxtbox;
 
-		CTextEditor(D2DWindow* pWindow);
+		CTextEditor(D2DTextbox* pTxtbox);
 		virtual ~CTextEditor(); 
     
 		void SetContainer( CTextContainer* ct ){ ct_ = ct; }
@@ -167,7 +167,7 @@ class CTextEditSink : public ITfTextEditSink
 class CTextEditorCtrl : public CTextEditor
 {
 	public :
-		CTextEditorCtrl(D2DWindow* pWindow):CTextEditor(pWindow){}
+		CTextEditorCtrl(D2DTextbox* pTextbox):CTextEditor(pTextbox){}
 		HWND Create(HWND hwndParent);
 
 		LRESULT  WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam);
@@ -194,8 +194,8 @@ class CTextEditorCtrl : public CTextEditor
 };
 
 // mainframe.cpp‚É‚ ‚é
-CTextEditorCtrl* GetTextEditorCtrl(); 
-CTextEditorCtrl* GetTextEditorCtrl2(HWND hWnd);
+//CTextEditorCtrl* GetTextEditorCtrl(); 
+//CTextEditorCtrl* GetTextEditorCtrl2(HWND hWnd);
 
 
 

@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "text_stdafx.h"
 #include "D2DMisc.h"
-#include "D2DApi.h"
 #include <dxgi1_2.h>
 #include "Direct2DWrite.h"
 
@@ -14,7 +13,7 @@ struct D2DContext;
 class D2DWindow;
 
 
-struct D2DContext : public D2DContextBase
+struct D2DContext
 {	
 	V4::D2DWindow* pWindow;
 
@@ -58,39 +57,7 @@ struct D2DContext : public D2DContextBase
 
 
 };
-//
-//struct D2DRectFilter
-//{
-//	D2DRectFilter(D2DContext& cxt1, const FRectF& rc ):cxt(cxt1)
-//	{
-//		//cxt.m_pDirect->GetHwndRenderTarget()->PushAxisAlignedClip( rc, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE );
-//		//cnt = 1;
-//	}
-//
-//	D2DRectFilter(D2DContext& cxt1, FRectF&& rc ):cxt(cxt1)
-//	{
-//		//cxt.m_pDirect->GetHwndRenderTarget()->PushAxisAlignedClip( std::move(rc), D2D1_ANTIALIAS_MODE_PER_PRIMITIVE );
-//		//cnt = 1;
-//	}
-//
-//	~D2DRectFilter()
-//	{
-//		//if ( cnt == 1 )
-//		//	cxt.m_pDirect->GetHwndRenderTarget()->PopAxisAlignedClip();
-//	}
-//	void Off()
-//	{		
-//		//if ( cnt == 1 )
-//		//{
-//		//	cxt.m_pDirect->GetHwndRenderTarget()->PopAxisAlignedClip();
-//		//	cnt = 0;
-//		//}
-//	}
-//
-//	private :
-//		D2DContext& cxt;
-//		int cnt;
-//};
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 class D2DError 
 {
@@ -128,7 +95,7 @@ inline HRESULT NoThrowIfFailed(HRESULT hr)
 	return hr;
 }
 
-
+void CaretActive(); // D2DContextEx.cpp
 
 //////////////////////////////////////////////////////////////////////////////////////
 // Variant
@@ -138,10 +105,7 @@ FPointF FPointFV( _variant_t& cx,_variant_t& cy );
 FString FStringV( _variant_t& s );
 
 
-void DrawFillRect( D2DContext& cxt,const D2D1_RECT_F& rc, ID2D1Brush* wakuclr,ID2D1Brush* fillclr, float width );
-//CComPtr<ID2D1SolidColorBrush> MakeBrsuh( D2DContext& cxt, D2D1_COLOR_F clr );
-
-
+//void DrawFillRect( D2DContext& cxt,const D2D1_RECT_F& rc, ID2D1Brush* wakuclr,ID2D1Brush* fillclr, float width );
 
 
 //以下 TSFのために追加 /////////////////////////////////////////////////////////////////////

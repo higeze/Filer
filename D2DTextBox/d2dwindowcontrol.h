@@ -9,16 +9,13 @@
 #include "TextContainer.h"	// CTextContainer
 #include "IBridgeTSFInterface.h"
 #include "gdi32.h"
-#include "ControlHandle.h"
 //#include "msxmlex6.h"
 #include "faststack.h"
 #include "TextEditor.h"
+#include "CellProperty.h"
 
 
 #undef CreateWindow
-
-//#define COLOR_MOUSE_MOVE D2RGBA(153,217,234,255)
-//#define COLOR_SELECTED D2RGBA(132,137,227,100)
 
 
 #define COLOR_DEF_FLOAT_SELECT	D2RGBA(54,101,179,100)
@@ -47,7 +44,7 @@ class D2DControl : public D2DCaptureObject
 
 		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam) = 0;
 
-		virtual void CreateWindow( D2DWindow* parent, const FRectFBoxModel& rc, int stat, LPCWSTR name, int local_id=-1 );
+		virtual void CreateWindow( D2DWindow* parent, const FRectFBoxModel& rc, int stat, LPCWSTR name);
 		
 		int Stat( int new_stat);
 
@@ -76,9 +73,6 @@ class D2DControl : public D2DCaptureObject
 
 		virtual void OnHostage( D2DControls* p, bool block ){}
 	
-		
-		CHDL GetCHDL() const { return chdl_; } // Get Control Handle
-//		D2DMat Matrix() const { return mat_; }
 		FString GetName() const { return name_; }		
 		int GetID() const { return id_; }
 		
@@ -86,7 +80,6 @@ class D2DControl : public D2DCaptureObject
 		void SetGuid( LPCWSTR id ){ guid_ = id; }
 	public :
 		D2DWindow* parent_;				
-//		D2DControls* parent_control_;
 		void* target_;
 		bool auto_resize_;
 
@@ -94,13 +87,11 @@ class D2DControl : public D2DCaptureObject
 		virtual void OnCreate(){}
 
 		LRESULT SendMessage( UINT msg, WPARAM w,LPARAM l ){ return ::SendMessage( parent_->m_hWnd, msg, w, l ); }
-		void InnerCreateWindow(D2DWindow* parent, const FRectFBoxModel& rc, int stat, LPCWSTR name, int controlid);
+		void InnerCreateWindow(D2DWindow* parent, const FRectFBoxModel& rc, int stat, LPCWSTR name);
 
 	protected :
-//		D2DMat mat_; 		
 		int stat_;
 		FRectFBoxModel rc_;
-		CHDL chdl_;
 		FString name_;
 		int id_;
 		std::wstring guid_;	
@@ -111,33 +102,6 @@ struct SolidColor
 	D2D1_COLOR_F color;
 	CComPtr<ID2D1SolidColorBrush> br;
 };
-
-//
-//class D2DScrollbar : public D2DControl
-//{
-//	public :
-//		D2DScrollbar();
-//		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
-//		virtual void OnCreate();
-//
-//		// Textboxで使用
-//		void CreateWindowEx(D2DWindow* parent, D2DControl* target, const FRectFBoxModel& rc, int stat, LPCWSTR name, int id=-1 );
-//
-//		float OffsetOnBtn( int typ );
-//		void SetTotalSize( float size );
-//
-//		void Show( bool visible );
-//		void Clear();
-//		
-//		virtual void SetRect(const FRectF& rc) 
-//		{ 
-//			rc_ = rc; 
-//		}
-//		
-//		D2DScrollbarInfo info_;
-//		D2DControl* target_control_;		
-//		
-//};
 
 struct D2DStaticColor
 {
@@ -152,26 +116,27 @@ class D2DTextbox : public D2DControl, public IBridgeTSFInterface
 	public :
 
 		std::function<void(const std::wstring&)> m_changed;
+		D2DWindow* m_pWnd;
+		std::shared_ptr<CellProperty> m_pProp;
 
 		static bool AppTSFInit();
 		static void AppTSFExit();
-		//static void CreateInputControl(D2DWindow* parent);
-		//static std::map<HWND,TSF::CTextEditorCtrl*> s_text_inputctrl;
 
 		enum TYP { SINGLELINE=0x1, MULTILINE=0x2, PASSWORD=0x4, RIGHT=0x8, CENTER=0x10,VCENTER=0x20 };
 
-		D2DTextbox(D2DWindow* pWindow, TYP typ, std::function<void(const std::wstring&)> changed);
+		D2DTextbox(D2DWindow* pWindow, const std::shared_ptr<CellProperty>& pProp, TYP typ, std::function<void(const std::wstring&)> changed);
 		~D2DTextbox() { delete ctrl_; }
 	public :
 		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
-		void CreateWindow( D2DWindow* parent, const FRectFBoxModel& rc, int stat, LPCWSTR name, int id=-1 );
+		void CreateWindow( D2DWindow* parent, const FRectFBoxModel& rc, int stat, LPCWSTR name);
 
 		virtual void SetRect( const FRectF& rc );
 
 		// IBridgeInterface///////////////////////////////////////////
 		virtual IDWriteTextFormat* GetFormat();
-		FRectF GetClientRect();
-		virtual FRectFBoxModel GetClientRectEx();
+		d2dw::CRectF GetClientRect() const;
+		d2dw::CRectF GetContentRect() const;
+		//virtual FRectFBoxModel GetClientRectEx();
 
 
 		// functions ////////////////////////////////////////
@@ -192,14 +157,7 @@ class D2DTextbox : public D2DControl, public IBridgeTSFInterface
 		void TabEnable();
 		void ActiveSw();
 
-		//virtual D2DTextbox* Clone(D2DControls* pacontrol);
-
 		std::wstring FilterInputString( LPCWSTR s, UINT len );
-
-		// scroll //////////////////////////////////////////////
-		//float RowHeight();
-		//UINT RowCount( bool all );
-		//virtual void UpdateScrollbar(D2DScrollbar* bar);
 
 		///////////////////////////////////////////////////////////////////
 		std::function<HRESULT(D2DTextbox*,UINT,WPARAM,LPARAM)> EventMessageHanler_;
@@ -212,14 +170,7 @@ class D2DTextbox : public D2DControl, public IBridgeTSFInterface
 		std::function<bool(D2DTextbox*,const FString&)> OnValidation_;
 
 		virtual void StatActive(bool bActive);
-
-		//OnWndProcExtDelegate OnWndProcExt_;
 	public :
-		//D2D1_COLOR_F clr_fore_;
-		//D2D1_COLOR_F clr_back_;
-		//D2D1_COLOR_F clr_border_;
-		//D2D1_COLOR_F clr_active_border_;
-		
 	protected :
 		void CalcRender( bool bLayoutUpdate );
 
@@ -228,7 +179,6 @@ class D2DTextbox : public D2DControl, public IBridgeTSFInterface
 		int OnKeyDown(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam);
 		BOOL Clipboard( HWND hwnd, TCHAR ch );
 		int TabCountCurrentRow();
-		//bool TryTrimingScrollbar();
 	public :
 		TYP typ_;
 		bool bActive_;
@@ -242,42 +192,7 @@ class D2DTextbox : public D2DControl, public IBridgeTSFInterface
 		
 		CComPtr<IDWriteTextFormat> fmt_;
 		CComPtr<IDWriteTextLayout> text_layout_;
-
-		//std::shared_ptr<D2DScrollbar> scbar_; // vertical scrollbar
-//		D2DMat matEx_; 
 };
-
-//class D2DStatic : public D2DControl
-//{
-//	public :
-//		D2DStatic():alignment_(0)
-//		{
-//			brush_fore_ = ColorF(ColorF::Black);
-//			brush_back_ = ColorF(ColorF::White);
-//		
-//		}
-//		void CreateWindow( D2DWindow* parent, D2DControls* pacontrol, const FRectFBoxModel& rc, int stat, LPCWSTR name, int id=-1 );
-//		
-//		void CreateWindow( D2DWindow* parent, D2DControls* pacontrol, const FRectFBoxModel& rc, LPCWSTR name );
-//
-//		virtual LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
-//		
-//		
-//		
-//		FString GetText(){ return name_; }
-//		void SetText( LPCWSTR str, int align=-1 );
-//		void SetAlignment( int md ){ alignment_ = md; }
-//
-//		void SetFont( IDWriteTextFormat* fmt );
-//	public :
-//		D2D1_COLOR_F brush_fore_;
-//		D2D1_COLOR_F brush_back_;
-//
-//	private :
-//		
-//		//SingleLineText stext_;
-//		int alignment_;
-//};
 
 void SetCursor( HCURSOR h );
 

@@ -623,9 +623,6 @@
     <ClInclude Include="..\D2DTextBox\stringstream.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\Selection.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\resource.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -644,9 +641,6 @@
     <ClInclude Include="..\D2DTextBox\fstring.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\faststack.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -659,9 +653,6 @@
     <ClInclude Include="..\D2DTextBox\d2dwindowcontrol.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\D2DResource.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DMisc.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -669,12 +660,6 @@
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DContextEx.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\D2DCharRect.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\D2DApi.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\undo.h">
@@ -687,9 +672,6 @@
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\Downloads\D2DWindowMaster\D2DWindow-master\projects\Direct2dTemplate\Direct2dTemplate\common_stdafx.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Downloads\D2DWindowMaster\D2DWindow-master\projects\Direct2dTemplate\Direct2dTemplate\controlhandle.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DWindow.h">
@@ -1051,13 +1033,7 @@
     <ClCompile Include="..\D2DTextBox\D2DWindow.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
-    <ClCompile Include="..\D2DTextBox\D2DResource.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
     <ClCompile Include="..\D2DTextBox\D2DContextEx.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\D2DApi.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\undo.cpp">

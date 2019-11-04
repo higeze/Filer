@@ -1,7 +1,6 @@
 ﻿#include "text_stdafx.h"
 #include "D2DWindow.h"
 #include "D2DWindowControl.h"
-#include "d2dapi.h"
 #include "Selection.h"
 
 #include "gdi32.h"
@@ -68,22 +67,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 		break;
 		case WM_SIZE :
 		{
-			CRect rc;
-			::GetClientRect(d->m_hWnd, &rc);
-			::OutputDebugStringA((boost::format("Size SizeX:%1%, SizeY:%2%\r\n") % rc.Width() % rc.Height()).str().c_str());
-
 			d->m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
-			if (d->m_pTxtbox) {
-				CRect rcContent(rc);
-				d->m_pTxtbox->ctrl_->ct_->rc_.left = 2.5;
-				d->m_pTxtbox->ctrl_->ct_->rc_.top = 2.5;
-				d->m_pTxtbox->ctrl_->ct_->rc_.right = rcContent.Width() - 2.5;
-				d->m_pTxtbox->ctrl_->ct_->rc_.bottom = rcContent.Height() - 2.5;
-
-				d->m_pTxtbox->ctrl_->ct_->view_size_.cx = rcContent.Width() - 5;
-				d->m_pTxtbox->ctrl_->ct_->view_size_.cy = rcContent.Height() - 5;
-			}
-
 			d->WndProc( message, wParam,lParam );
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
@@ -337,7 +321,7 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 	rcModel.Margin_.Set(0.f);
 	rcModel.Padding_.Set(m_spProp->Padding->left);
 
-	m_pTxtbox.reset(new D2DTextbox(this, V4::D2DTextbox::MULTILINE, m_changed));
+	m_pTxtbox.reset(new D2DTextbox(this, m_spProp, V4::D2DTextbox::MULTILINE, m_changed));
 	m_pTxtbox->SetStat(V4::STAT::BORDER);
 	m_pTxtbox->CreateWindow(this, rcModel, VISIBLE, L"txtbox");
 	m_pTxtbox->SetText(m_strInit.c_str());
@@ -465,42 +449,3 @@ CComPtr<ID2D1SolidColorBrush> D2DWindow::GetSolidColor(D2D1_COLOR_F clr)
 {
 	return m_pDirect->GetColorBrush(d2dw::CColorF(clr.r, clr.g, clr.b, clr.a));
 }
-////////////////////////////////////////////////////////////////////////////////////////////
-CHDL ControlHandle::handle_ = 800; // initial value
-
-CHDL ControlHandle::CreateControlHandle(D2DControl* ctrl)
-{	
-	handle_++;
-
-	m1_[handle_] = ctrl;
-	m2_[ctrl->GetName()] = handle_;
-	return handle_;
-}
-void ControlHandle::DeleteControlHandle( CHDL id )
-{
-	if ( id == 0 || m1_.empty() ) return;
-
-	xassert( m1_.find(id) != m1_.end());
-
-	D2DControl* ctrl = m1_[id];
-		
-	m1_[id] = NULL;
-	m2_[ctrl->GetName()] = 0;
-
-}
-D2DControl* ControlHandle::GetFromControlHandle(CHDL id )
-{
-	if ( m1_.find(id) != m1_.end())
-		return m1_[id];
-
-	return NULL;
-}
-D2DControl* ControlHandle::GetFromControlName(LPCWSTR nm )
-{
-	if ( m2_.find(nm) != m2_.end())
-	{
-		return GetFromControlHandle(m2_[nm]);
-	}
-	return NULL;
-}
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

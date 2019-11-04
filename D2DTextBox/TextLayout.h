@@ -68,7 +68,7 @@ class CTextLayout
 		CTextLayout();
 		virtual ~CTextLayout();
 
-		BOOL Layout(D2DContext& hdc, const WCHAR *psz,  int nCnt, const SIZE& sz, bool bSingleLine, int nSelEnd,int& StarCharPos, IDWriteTextFormat* fmt);		
+		BOOL Layout(D2DContext& hdc, const WCHAR *psz,  int nCnt, const d2dw::CSizeF& sz, bool bSingleLine, int nSelEnd,int& StarCharPos, IDWriteTextFormat* fmt);		
 		BOOL Render(D2DContext& hdc, const FRectF& rc, const WCHAR *psz,  int nCnt, int nSelStart, int nSelEnd,bool bSelTrail,const COMPOSITIONRENDERINFO *pCompositionRenderInfo, UINT nCompositionRenderInfo);
 
 	public :
