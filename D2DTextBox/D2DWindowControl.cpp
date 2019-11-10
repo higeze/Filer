@@ -1,7 +1,6 @@
 ﻿#include "text_stdafx.h"
 #include "D2DWindow.h" 
 #include "D2DWindowControl.h"
-#include "gdi32.h"
 #include "MoveTarget.h"
 
 #define CLASSNAME L"D2DWindow"
@@ -19,10 +18,8 @@ D2DControl::D2DControl()
 	// You must create this on Heap, OnStack is NG.
 	_ASSERT( _CrtIsValidHeapPointer(this));
 }
-D2DControl::~D2DControl()
-{
+D2DControl::~D2DControl(){}
 
-}
 int D2DControl::Stat( int new_stat)
 {
 	if ( new_stat < 0 )
@@ -49,14 +46,6 @@ bool D2DControl::IsVisible()   const
 {
 	return (stat_ & STAT::VISIBLE);
 }
-void D2DControl::SetRect( const FRectF& rc )
-{ 
-	rc_.SetFRectF(rc); 
-}
-void D2DControl::SetRect( const FPointF& pt, const FSizeF& sz )
-{ 
-	rc_.SetFRectF( FRectF(pt,sz)); 
-}
 
 void D2DControl::StatActive(bool bActive)
 {
@@ -66,22 +55,19 @@ void D2DControl::StatActive(bool bActive)
 		stat_ &= ~FOCUS;
 }
 
-void D2DControl::CreateWindow(D2DWindow* parent, const FRectFBoxModel& rc, int stat, LPCWSTR name)
+void D2DControl::CreateWindow(D2DWindow* parent, int stat, LPCWSTR name)
 {
-	InnerCreateWindow( parent,rc,stat,name);
+	InnerCreateWindow( parent,stat,name);
 
 	OnCreate();
 }
-void D2DControl::InnerCreateWindow(D2DWindow* parent, const FRectFBoxModel& rc, int stat, LPCWSTR name)
+void D2DControl::InnerCreateWindow(D2DWindow* parent, int stat, LPCWSTR name)
 {
 	_ASSERT(parent);
 
 	parent_ = parent;
-	rc_ = rc;
 	stat_ = stat;
-	name_ = name;
 	target_ = nullptr; // このオブジェクトと関連付けるポインタ、通常はnull
-	guid_ = FString::NewGuid();
 }
 
 void D2DControl::DestroyControl()

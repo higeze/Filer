@@ -6,10 +6,11 @@ struct XTag
 struct YTag
 {};
 
-class CPoint:public tagPOINT
+class CPoint:public POINT
 {
 public:
 	CPoint(){x=0;y=0;}
+	CPoint(POINT pt) :POINT(pt) {}
 	CPoint(LONG lX,LONG lY){x=lX;y=lY;}
 	//virtual ~CPoint(){}//Because of Struct
 

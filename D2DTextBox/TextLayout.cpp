@@ -7,18 +7,13 @@
 using namespace V4;
 using namespace TSF;
 
-
-static LPCWSTR __password = L"**************************************************"; // 50 chars
-
 CTextLayout::CTextLayout()
 {
 	::OutputDebugStringA("Construct\r\n");
 
 	prgLines_ = NULL;
 	nLineCnt_ = 0;
-	str_ = NULL;
 	row_width_ = 0;
-	bPassword_ = false;
 	bRecalc_ = true;
 	selected_halftone_color_ = D2RGBA(0,140,255,100);
 }
@@ -38,7 +33,7 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const d2dw:
 	Clear();
 	bSingleLine_ = bSingleLine;
 
-	str_ = psz;
+	LPCWSTR str = psz;
 	nLineCnt_ = 1;
 	StarCharPos_ = 0;
 
@@ -176,13 +171,14 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const d2dw:
 					UINT col;
 					for (col = 0; col < nCnt ; col++)
 					{ 				
-						FRectF rc = charRects[rcIdx++];
-						prgLines_[r].prgCharInfo[col].rc = rc.Offset(2.5, 2.5);
+						d2dw::CRectF rc = charRects[rcIdx++];
+						rc.OffsetRect(2.5, 2.5);
+						prgLines_[r].prgCharInfo[col].rc = rc;
 					}
 
 					// 行の最後の処理				
 					{
-						FRectF rc = prgLines_[r].prgCharInfo[col-1].rc;
+						d2dw::CRectF rc = prgLines_[r].prgCharInfo[col-1].rc;
 						rc.left = rc.right; //前の文字の右端を左端として、rectを作成
 						prgLines_[r].prgCharInfo[col].rc = rc;//No more offset
 						rcIdx++;
@@ -191,11 +187,11 @@ BOOL CTextLayout::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt,const d2dw:
 				else // 空行
 				{
 					prgLines_[r].prgCharInfo = new CHARINFO[1];				
-					FRectF rc = charRects[rcIdx++];
+					d2dw::CRectF rc = charRects[rcIdx++];
 
 					xassert( rc.left == rc.right );
-
-					prgLines_[r].prgCharInfo[0].rc = rc.Offset(2.5, 2.5);
+					rc.OffsetRect(2.5, 2.5);
+					prgLines_[r].prgCharInfo[0].rc = rc;
 
 					xassert( prgLines_[r].nCnt == 0 );
 				}
@@ -230,7 +226,7 @@ class CaretRect
 	public :
 		CaretRect( bool bTrail ):bTrail_(bTrail),cnt_(0){};
 
-		void Push(const FRectF& rc, int row, int colStart, int colLast )
+		void Push(const d2dw::CRectF& rc, int row, int colStart, int colLast )
 		{
 			if ( bTrail_ )
 			{
@@ -248,7 +244,7 @@ class CaretRect
 			cnt_++;		
 		}
 
-		FRectF Get(){ return rc_; }
+		d2dw::CRectF Get(){ return rc_; }
 		bool empty() { return cnt_ == 0; }
 
 		int row(){ return row_; }
@@ -271,25 +267,18 @@ class CaretRect
 	private :
 		bool bTrail_;
 		int cnt_;
-		FRectF rc_;
+		d2dw::CRectF rc_;
 		int row_,col_;
 };
 #pragma endregion
 
-BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCnt, int nSelStart, int nSelEnd,bool bTrail,
+BOOL CTextLayout::Render(D2DContext& cxt, const d2dw::CRectF& rc,LPCWSTR psz,  int nCnt, int nSelStart, int nSelEnd,bool bTrail,
 	const COMPOSITIONRENDERINFO *pCompositionRenderInfo, UINT nCompositionRenderInfo)
 {
-		//cxt.pWindow->m_pDirect->GetTextLayout(*(cxt.pWindow->m_spProp->Format), psz, d2dw::CSizeF(rc.Width(), rc.Height()))->GetMetrics(&tm_);
-		//::OutputDebugStringA((boost::format("Rect %1%, %2%, %3%\, %4%, %5%, %6%\r\n") % rc.left % rc.top % rc.right % rc.bottom % rc.Width() % rc.Height()).str().c_str());
-		//::OutputDebugStringA((boost::format("TM %1%, %2%, %3%\, %4%, %5%, %6%\r\n") % tm_.left % tm_.top % tm_.width % tm_.height % tm_.layoutWidth % tm_.layoutHeight).str().c_str());
-		//HRESULT hr = cxt.pWindow->m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(rc.Width()*5, rc.Height()));
-		//::OutputDebugStringA((boost::format("HR %1$#x \r\n") % hr).str().c_str());
-
-		//cxt.m_pDirect->GetHwndRenderTarget()->DrawTextLayout( D2D1::Point2F(rc.left, rc.top), DWTextLayout_, cxt.black ); // D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
 		cxt.pWindow->m_pDirect->DrawTextLayout(*(cxt.pWindow->m_spProp->Format), psz, d2dw::CRectF(rc.left,rc.top, rc.right, rc.bottom));
 
     // Render selection,caret
-    FRectF rcSelCaret(rc.left, rc.top, rc.left + 1.0f, rc.top + (float)nLineHeight_);
+    d2dw::CRectF rcSelCaret(rc.left, rc.top, rc.left + 1.0f, rc.top + (float)nLineHeight_);
 
 	CaretRect xcaret(bTrail);
 
@@ -321,10 +310,6 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
                 {
                     for (int j = nSelStartInLine; j < nSelEndInLine; j++)
                     {
-						//auto br = MakeBrsuh(cxt, selected_halftone_color_ );
-						//cxt.pWindow->m_pDirect->GetHwndRenderTarget()->FillRectangle( prgLines_[r].prgCharInfo[j].rc, br ); // SELECTED 色でfill, セレクトされた時のハーフトン塗り
-						//D2RGBA(0, 140, 255, 100);
-						
 						cxt.pWindow->m_pDirect->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)), prgLines_[r].prgCharInfo[j].rc);
                     }
 
@@ -410,16 +395,6 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
 						if ((pCompositionRenderInfo[j].da.crText.type != TF_CT_NONE) &&
 							(pCompositionRenderInfo[j].da.crBk.type != TF_CT_NONE))
 						{
-						   /* SetBkMode(hdc, OPAQUE);
-							SetTextColor(hdc, GetAttributeColor(&pCompositionRenderInfo[j].da.crText));
-							SetBkColor(hdc, GetAttributeColor(&pCompositionRenderInfo[j].da.crBk));
- 
-							RECT rc = prgLines_[r].prgCharInfo[k].rc;
-							ExtTextOut(hdc, rc.left, rc.top, ETO_OPAQUE, &rc, 
-										psz + prgLines_[r].nPos + k, 1, NULL);*/
-
-
-
 							int a = 0;
 						}
      
@@ -427,20 +402,14 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
 						{
 							// 変換途中の下線の描画
 							{
-								FRectF rc = prgLines_[r].prgCharInfo[k].rc;
+								d2dw::CRectF rc = prgLines_[r].prgCharInfo[k].rc;
      
-								FPointF pts[2];
+								d2dw::CPointF pts[2];
 								pts[0].x = rc.left;
 								pts[0].y = rc.bottom;
 								pts[1].x = rc.right - (bClause ? nBaseLineWidth : 0);
 								pts[1].y = rc.bottom;
-								//Polyline(hdc, pts, 2);
-								
-
-								//auto pt0 = pts[0]; pt0.Offset(rc.left, rc.top);
-								//auto pt1 = pts[1]; pt1.Offset(rc.left, rc.top);
-
-								cxt.pWindow->m_pDirect->GetHwndRenderTarget()->DrawLine( pts[0], pts[1], cxt.black );
+								cxt.pWindow->m_pDirect->DrawSolidLine(*(cxt.pWindow->m_spProp->Line), pts[0], pts[1]);
 							}
 						}
 					}
@@ -456,7 +425,7 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
 			rcSelCaret.left = rc.left;
 			rcSelCaret.right = rc.left + 1;
 
-			rcSelCaret.Offset( 0, nLineHeight_*nLineCnt_ );			
+			rcSelCaret.OffsetRect( 0, nLineHeight_*nLineCnt_ );			
 			xcaret.Push(rcSelCaret, nLineCnt_, 0, 0);
 		}
 		
@@ -486,11 +455,11 @@ BOOL CTextLayout::Render(D2DContext& cxt, const FRectF& rc,LPCWSTR psz,  int nCn
 //
 //----------------------------------------------------------------
 
-BOOL CTextLayout::RectFromCharPos(UINT nPos, FRectF *prc)
+BOOL CTextLayout::RectFromCharPos(UINT nPos, d2dw::CRectF *prc)
 {
-    FRectF& retrc = *prc;
+    d2dw::CRectF& retrc = *prc;
 
-	retrc.Clear();
+	retrc.SetRect(0,0,0,0);
 
     UINT sum = 0;
 	UINT current_rowno = 0;
@@ -536,7 +505,7 @@ BOOL CTextLayout::RectFromCharPos(UINT nPos, FRectF *prc)
 //
 //----------------------------------------------------------------
 
-static bool PtInRect0( const FRectF& rc, const FPointF& pt, bool bSinleLine )
+static bool PtInRect0( const d2dw::CRectF& rc, const d2dw::CPointF& pt, bool bSinleLine )
 {	
 	if ( bSinleLine )
 	{
@@ -554,13 +523,13 @@ static bool PtInRect0( const FRectF& rc, const FPointF& pt, bool bSinleLine )
 	return false;
 
 }
-static bool PtInRectRightSide( const FRectF& rc, const FPointF& pt )
+static bool PtInRectRightSide( const d2dw::CRectF& rc, const d2dw::CPointF& pt )
 {
 	return ( rc.top <= pt.y && pt.y <= rc.bottom && rc.right <= pt.x );
 }
 
 
-int CTextLayout::CharPosFromPoint(const FPointF& pt)
+int CTextLayout::CharPosFromPoint(const d2dw::CPointF& pt)
 {
 	xassert( StarCharPos_ == 0 || (StarCharPos_ && this->bSingleLine_) );
 		
@@ -570,7 +539,7 @@ int CTextLayout::CharPosFromPoint(const FPointF& pt)
 		// 行内
 		for (int j = 0; j < prgLines_[r].nCnt; j++)
 		{
-			FRectF& rc = prgLines_[r].prgCharInfo[j].rc;
+			d2dw::CRectF& rc = prgLines_[r].prgCharInfo[j].rc;
 
 			if (PtInRect0(rc, pt, bSingleLine_))
 			{
@@ -591,7 +560,7 @@ int CTextLayout::CharPosFromPoint(const FPointF& pt)
 			}
 
 			int j = prgLines_[r].nCnt;
-			FRectF& rc = prgLines_[r].prgCharInfo[j].rc;
+			d2dw::CRectF& rc = prgLines_[r].prgCharInfo[j].rc;
 			if ( PtInRectRightSide( rc, pt ))			
 				return prgLines_[r].nPos + j + StarCharPos_;
 		}
@@ -600,7 +569,7 @@ int CTextLayout::CharPosFromPoint(const FPointF& pt)
 	return -1;
 }
 
-int CTextLayout::CharPosFromNearPoint(const FPointF& pt)
+int CTextLayout::CharPosFromNearPoint(const d2dw::CPointF& pt)
 {
 	struct st
 	{
@@ -615,7 +584,7 @@ int CTextLayout::CharPosFromNearPoint(const FPointF& pt)
         {
 			xassert( prgLines_[i].prgCharInfo );
 			
-			FRectF rc = prgLines_[i].prgCharInfo[j].rc;
+			d2dw::CRectF rc = prgLines_[i].prgCharInfo[j].rc;
 
 			if ( rc.top <= pt.y && pt.y <= rc.bottom )
 			{

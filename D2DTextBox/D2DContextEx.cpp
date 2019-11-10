@@ -50,10 +50,6 @@ UINT D2DContext::GetLineMetric( const D2D1_SIZE_F& sz, IDWriteTextFormat* fmt, L
 	return textMetrics.lineCount;
 }
 
-HRESULT D2DContext::CreateFont(LPCWSTR fontnm, float height, IDWriteTextFormat** ret )
-{
-	return pWindow->m_pDirect->GetDWriteFactory()->CreateTextFormat( fontnm,0, DWRITE_FONT_WEIGHT_NORMAL,DWRITE_FONT_STYLE_NORMAL,DWRITE_FONT_STRETCH_NORMAL,height,L"", ret );
-}
 
 
 	///TSF////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,7 +63,8 @@ HRESULT D2DContext::CreateFont(LPCWSTR fontnm, float height, IDWriteTextFormat**
 		bCaret = true;
 		QueryPerformanceCounter(&pregtm);
 	}
-	bool DrawCaret(D2DContext& cxt, const FRectF& rc)
+
+	bool DrawCaret(D2DContext& cxt, const d2dw::CRectF& rc)
 	{
 		QueryPerformanceCounter(&gtm);
 
@@ -78,7 +75,7 @@ HRESULT D2DContext::CreateFont(LPCWSTR fontnm, float height, IDWriteTextFormat**
 			bCaret = !bCaret;
 		} else {
 			cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-			cxt.pWindow->m_pDirect->GetHwndRenderTarget()->FillRectangle(rc, (bCaret ? cxt.black : cxt.white));
+			cxt.pWindow->m_pDirect->FillSolidRectangle((bCaret ? d2dw::SolidFill(0.f, 0.f, 0.f) : d2dw::SolidFill(1.f, 1.f, 1.f)), rc);
 			cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 		}
 
@@ -87,42 +84,34 @@ HRESULT D2DContext::CreateFont(LPCWSTR fontnm, float height, IDWriteTextFormat**
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-CComPtr<ID2D1SolidColorBrush> MakeBrsuh( D2DContext& cxt, D2D1_COLOR_F clr )
-{
-	CComPtr<ID2D1SolidColorBrush> br;
-	cxt.pWindow->m_pDirect->GetHwndRenderTarget()->CreateSolidColorBrush( clr, &br );
-	return br;
-}
-
-FRectF FRectFV( _variant_t& x,_variant_t& y,_variant_t& cx,_variant_t& cy )
+d2dw::CRectF FRectFV( _variant_t& x,_variant_t& y,_variant_t& cx,_variant_t& cy )
 {
 	float fx; x.ChangeType( VT_R4 ); fx = x.fltVal;
 	float fy; y.ChangeType( VT_R4 ); fy = y.fltVal;
 	float fcx; cx.ChangeType( VT_R4 ); fcx = cx.fltVal+fx;
 	float fcy; cy.ChangeType( VT_R4 ); fcy = cy.fltVal+fy;
 
-	return FRectF(fx,fy,fcx,fcy );
+	return d2dw::CRectF(fx,fy,fcx,fcy );
 }
-FSizeF FSizeFV( _variant_t& cx,_variant_t& cy )
+d2dw::CSizeF FSizeFV( _variant_t& cx,_variant_t& cy )
 {
 	float fcx; cx.ChangeType( VT_R4 ); fcx = cx.fltVal;
 	float fcy; cy.ChangeType( VT_R4 ); fcy = cy.fltVal;
 
-	return FSizeF( fcx,fcy );
+	return d2dw::CSizeF( fcx, fcy );
 
 }
-FPointF FPointFV( _variant_t& cx,_variant_t& cy )
+d2dw::CPointF FPointFV( _variant_t& cx,_variant_t& cy )
 {
 	float fcx; cx.ChangeType( VT_R4 ); fcx = cx.fltVal;
 	float fcy; cy.ChangeType( VT_R4 ); fcy = cy.fltVal;
-	return FPointF( fcx,fcy );
+	return d2dw::CPointF( fcx,fcy );
 }
-FString FStringV( _variant_t& s )
+std::wstring FStringV( _variant_t& s )
 {
-	s.ChangeType( VT_BSTR );
+	//s.ChangeType( VT_BSTR );
 
-	return s.bstrVal;
+	return std::wstring(s.bstrVal);
 }
 
 };

@@ -4,6 +4,7 @@
 #include "initguid.h"
 #include "InputScope.h"
 #include "tsattrs.h"
+#include "d2dwindowcontrol.h"
 using namespace TSF;
 
 
@@ -122,8 +123,8 @@ STDAPI CTextStore::RequestLock(DWORD dwLockFlags, HRESULT *phrSession)
         return E_INVALIDARG;
     }
 
-	if ( _pEditor->ct_ == NULL )
-		return S_OK;
+	//if ( _pEditor->m_text.empty() )
+	//	return S_OK;
 		
 
 	if(m_fLocked)
@@ -319,15 +320,16 @@ STDAPI CTextStore::GetText(LONG acpStart, LONG acpEnd, __out_ecount(cchPlainReq)
     }
 
     if (acpEnd == -1)
-        acpEnd = _pEditor->ct_->GetTextLength();
+        acpEnd = _pEditor->m_text.size();
 
     acpEnd = min(acpEnd, acpStart + (int)cchPlainReq);
 
-    if ((acpStart != acpEnd) &&
-        !_pEditor->ct_->GetText(acpStart, pchPlain, acpEnd - acpStart))
+    if (acpStart != acpEnd)
     {
         return E_FAIL;
     }
+	pchPlain = (LPWSTR)_pEditor->m_text.substr(acpStart, acpEnd - acpStart).c_str();
+
 
     *pcchPlainOut = acpEnd - acpStart;
     if (ulRunInfoReq)
@@ -360,16 +362,16 @@ STDAPI CTextStore::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, __in_ecoun
 
     LONG acpRemovingEnd;
 
-    if (acpStart > (LONG)_pEditor->ct_->GetTextLength())
+    if (acpStart > (LONG)_pEditor->m_text.size())
         return E_INVALIDARG;
 
-    acpRemovingEnd = min(acpEnd, (LONG)_pEditor->ct_->GetTextLength() + 1);
-    if (!_pEditor->ct_->RemoveText(acpStart, acpRemovingEnd - acpStart))
-        return E_FAIL;
+    acpRemovingEnd = (std::min)(acpEnd, (LONG)_pEditor->m_text.size() + 1);
+	_pEditor->m_text.erase(acpStart, acpRemovingEnd - acpStart);
+        //return E_FAIL;
 
 	UINT nrCnt;
-    if (!_pEditor->ct_->InsertText(acpStart, pchText, cch, nrCnt))
-        return E_FAIL;
+	_pEditor->m_text.insert(acpStart, pchText, cch);
+ //       return E_FAIL;
 
     pChange->acpStart = acpStart;
     pChange->acpOldEnd = acpEnd;
@@ -461,7 +463,7 @@ STDAPI CTextStore::GetEndACP(LONG *pacp)
     }
 
 	
-	*pacp = _pEditor->ct_->GetTextLength();
+	*pacp = _pEditor->m_text.size();
     return S_OK;
 }
 
@@ -493,8 +495,8 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
         return TS_E_NOLOCK;
     }
 	
-	FRectF rcStart;
-    FRectF rcEnd;
+	d2dw::CRectF rcStart;
+    d2dw::CRectF rcEnd;
 
     if (_pEditor->GetLayout()->RectFromCharPos(acpStart, &rcStart) &&
         _pEditor->GetLayout()->RectFromCharPos(acpEnd, &rcEnd))
@@ -538,8 +540,8 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
 	//*prc = xrc.GetRECT();
 
 
-    ClientToScreen(_pEditor->GetWnd(), (POINT *)&prc->left);
-    ClientToScreen(_pEditor->GetWnd(), (POINT *)&prc->right);
+    ClientToScreen(_pEditor->m_pTxtbox->m_pWnd->m_hWnd, (POINT *)&prc->left);
+    ClientToScreen(_pEditor->m_pTxtbox->m_pWnd->m_hWnd, (POINT *)&prc->right);
 
 
 
@@ -574,7 +576,7 @@ STDAPI CTextStore::GetScreenExt(TsViewCookie vcView, RECT *prc)
 
 STDAPI CTextStore::GetWnd(TsViewCookie vcView, HWND *phwnd)
 {
-    *phwnd = _pEditor->GetWnd();
+    *phwnd = _pEditor->m_pTxtbox->m_pWnd->m_hWnd;
     return S_OK;
 }
 
@@ -605,12 +607,12 @@ STDAPI CTextStore::InsertTextAtSelection(DWORD dwFlags, __in_ecount(cch) const W
         return S_OK;
     }
 
-    if (!_pEditor->ct_->RemoveText(acpStart, acpEnd - acpStart))
-        return E_FAIL;
+	_pEditor->m_text.erase(acpStart, acpEnd - acpStart);
+    //    return E_FAIL;
 
 	UINT nrCnt;
-    if (pchText && !_pEditor->ct_->InsertText(acpStart, pchText, cch, nrCnt))
-        return E_FAIL;
+	_pEditor->m_text.insert(acpStart, pchText, cch);
+ //       return E_FAIL;
 
     
     if (pacpStart)

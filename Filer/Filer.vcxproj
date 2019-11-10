@@ -186,29 +186,21 @@
     <ResourceCompile Include="Filer.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\HiLib\small.ico" />
     <Image Include="Filer.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\Downloads\D2DWindowMaster\D2DWindow-master\projects\Direct2dTemplate\Direct2dTemplate\common_stdafx.h" />
     <ClInclude Include="..\D2DTextBox\D2DContextEx.h" />
-    <ClInclude Include="..\D2DTextBox\d2dmatome.h" />
-    <ClInclude Include="..\D2DTextBox\D2DMisc.h" />
     <ClInclude Include="..\D2DTextBox\D2DWindow.h" />
     <ClInclude Include="..\D2DTextBox\d2dwindowcontrol.h" />
     <ClInclude Include="..\D2DTextBox\D2DWindowMessage.h" />
     <ClInclude Include="..\D2DTextBox\D2DWindowMessageStruct.h" />
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h" />
-    <ClInclude Include="..\D2DTextBox\fstring.h" />
-    <ClInclude Include="..\D2DTextBox\gdi32.h" />
     <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h" />
     <ClInclude Include="..\D2DTextBox\ItemLoopArray.h" />
     <ClInclude Include="..\D2DTextBox\MoveTarget.h" />
     <ClInclude Include="..\D2DTextBox\resource.h" />
     <ClInclude Include="..\D2DTextBox\text_stdafx.h" />
-    <ClInclude Include="..\D2DTextBox\stringstream.h" />
     <ClInclude Include="..\D2DTextBox\targetver.h" />
-    <ClInclude Include="..\D2DTextBox\TextContainer.h" />
     <ClInclude Include="..\D2DTextBox\TextEditor.h" />
     <ClInclude Include="..\D2DTextBox\TextLayout.h" />
     <ClInclude Include="..\D2DTextBox\TextStoreACP.h" />
@@ -408,7 +400,6 @@
     <ClCompile Include="..\D2DTextBox\D2DWindowTextboxTSF.cpp" />
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />
     <ClCompile Include="..\D2DTextBox\text_stdafx.cpp" />
-    <ClCompile Include="..\D2DTextBox\TextContainer.cpp" />
     <ClCompile Include="..\D2DTextBox\TextEditor.cpp" />
     <ClCompile Include="..\D2DTextBox\TextLayout.cpp" />
     <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp" />

@@ -6,12 +6,6 @@
 #include <queue>
 #include "DeadlineTimer.h"
 
-
-//
-//#include "D2DWindow.h"
-//#include "D2DWindowControl.h"
-//#include "D2DMisc.h"
-
 class CDirect2DWrite;
 class BackgroundProperty;
 struct GridViewProperty;

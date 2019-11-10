@@ -6,75 +6,27 @@
 namespace TSF {
 class CTextStore;
 class CTextEditSink;
-class CTextContainer;
-//----------------------------------------------------------------
-// D2DTextbox::AppTSFInit()
-// {
-//	g_pTextInputCtrl = new TSF::CTextEditorCtrl();
-//	CoCreateInstance 
-//		IID_ITfThreadMgr g_pThreadMgr
-//		IID_ITfKeystrokeMgr g_pKeystrokeMgr
-//	CoCreateInstance
-//		IID_ITfDisplayAttributeMgr __s_pdam
-//  }
-//CTextEditor
-//	protected :
-//		HWND hWnd_;
-//		CTextEditSink* pTextEditSink_;	
-//		CTextLayout layout_;
-//		CTextStore* pTextStore_;
-//	    ITfDocumentMgr* pDocumentMgr_;
-//	    ITfContext* pInputContext_;
-//	
-//	public :
-//		BOOL InitTSF();
-//			new CTextStore(this);
-//			pDocumentMgr_ = CreateDocumentMgr
-//			pInputContext_ = CreateContext
-//			new CTextEditSink(this);
-//
-//	    BOOL UninitTSF();
-//    
-//    
-//	
-//CTextEditSink : public ITfTextEditSink
-//	private :
-//		CTextEditor *_pEditor;
-//	
-//	
-//class CTextStore : public ITextStoreACP
-//	private :
-//	    CTextEditor *_pEditor;
-//		ITextStoreACPSink* TextStoreACPSink_;
-//	
-//
-//class CTextLayout
-//		BOOL Layout(D2DContext& hdc, const WCHAR *psz, ...
-//		BOOL Render(D2DContext& hdc, const FRectF& rc, ... 
-//	
-//
-//
-//----------------------------------------------------------------
+//class CTextContainer;
 
 class CTextEditor 
 {
 	public:
 		int m_selStart = 0;
 		int m_selEnd = 0;
-
+		int m_startCharPos = 0;
+		std::wstring m_text;
+		bool m_isSelTrail = true;
+		bool m_isSingleLine = false;
 
 		std::function<void(const std::wstring&)> m_changed;
 		D2DTextbox* m_pTxtbox;
 
 		CTextEditor(D2DTextbox* pTxtbox);
 		virtual ~CTextEditor(); 
-    
-		void SetContainer( CTextContainer* ct ){ ct_ = ct; }
-		CTextContainer* GetContainer(){ return ct_; }
-    
+        
 		void MoveSelection(int nSelStart, int nSelEnd, bool bTrail=true);
-		BOOL MoveSelectionAtPoint(POINT pt);
-		BOOL MoveSelectionAtNearPoint(POINT pt);
+		BOOL MoveSelectionAtPoint(const CPoint& pt);
+		BOOL MoveSelectionAtNearPoint(const CPoint& pt);
 		BOOL InsertAtSelection(LPCWSTR psz);
 		BOOL DeleteAtSelection(BOOL fBack);
 		BOOL DeleteSelection();
@@ -89,11 +41,8 @@ class CTextEditor
 		int GetSelectionStart() {return m_selStart;}
 		int GetSelectionEnd() {return m_selEnd;}
 
-		
-		HWND GetWnd() {return hWnd_;}
-
-		BOOL InitTSF(HWND hWnd);
-		BOOL UninitTSF();
+		void InitTSF();
+		void UninitTSF();
  
 		void InvalidateRect();
 		float GetLineHeight() {return layout_.GetLineHeight();}
@@ -102,11 +51,8 @@ class CTextEditor
 		void ClearCompositionRenderInfo();
 		BOOL AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIBUTE *pda);
 		void OnTextChange(const std::wstring& text);
-
-
-		CTextContainer* ct_;
 		IBridgeTSFInterface* bri_;
-		D2D1_MATRIX_3X2_F mat_;
+//		D2D1_MATRIX_3X2_F mat_;
 
 		void SetFocus();
 
@@ -115,20 +61,15 @@ class CTextEditor
 	
 
 	protected :
-		HWND hWnd_;
 		
 		CTextLayout layout_;
-		CTextEditSink* pTextEditSink_;	
-	private:
-		CTextStore* pTextStore_;
-
+		CComPtr<CTextEditSink> m_pTextEditSink;	
+		CComPtr<CTextStore> m_pTextStore;
+		CComPtr<ITfDocumentMgr> m_pDocumentMgr;
+		CComPtr<ITfContext> m_pInputContext;
 		COMPOSITIONRENDERINFO *pCompositionRenderInfo_;
 		int nCompositionRenderInfo_;
 		TfEditCookie ecTextStore_;
-	
-			
-		ITfDocumentMgr* pDocumentMgr_;
-		ITfContext* pInputContext_;
 
 };
 
@@ -168,17 +109,15 @@ class CTextEditorCtrl : public CTextEditor
 {
 	public :
 		CTextEditorCtrl(D2DTextbox* pTextbox):CTextEditor(pTextbox){}
-		HWND Create(HWND hwndParent);
+		void Create();
 
 		LRESULT  WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam);
 		
-		void SetContainer( CTextContainer* ct, IBridgeTSFInterface* ib );
 		
 		CTextEditor& GetEditor(){ return *this; }
 
 		void OnEditChanged();
 
-		void Password(bool bl){ layout_.Password(bl); }
 	private :
 		//void Move(int x, int y, int nWidth, int nHeight);
 		void OnSetFocus(WPARAM wParam, LPARAM lParam);
@@ -194,9 +133,6 @@ class CTextEditorCtrl : public CTextEditor
 };
 
 // mainframe.cpp‚É‚ ‚é
-//CTextEditorCtrl* GetTextEditorCtrl(); 
-//CTextEditorCtrl* GetTextEditorCtrl2(HWND hWnd);
-
 
 
 };

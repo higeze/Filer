@@ -4,6 +4,8 @@
 #include "TextStoreACP.h"
 #include "D2DWindow.h"
 #include "CellProperty.h"
+#include "Direct2DWrite.h"
+#include "Debug.h"
 
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
 extern ITfThreadMgr2* g_pThreadMgr;
@@ -17,13 +19,8 @@ using namespace TSF;
 CTextEditor::CTextEditor(D2DTextbox* pTxtbox) 
 	:m_pTxtbox(pTxtbox)
 {
-    pTextStore_ = NULL;    
-	ct_ = NULL;
 	pCompositionRenderInfo_ = NULL;
     nCompositionRenderInfo_ = 0;
-	pDocumentMgr_ = NULL;
-	pInputContext_ = NULL;
-
 }
 
 CTextEditor::~CTextEditor() 
@@ -37,105 +34,52 @@ CTextEditor::~CTextEditor()
 //
 //----------------------------------------------------------------
 
-BOOL CTextEditor::InitTSF(HWND hWnd)
+void CTextEditor::InitTSF()
 {
-	BOOL ret = FALSE;
+    m_pTextStore = CComPtr<CTextStore>(new CTextStore(this));
+	if (!m_pTextStore) { throw std::exception(FILE_LINE_FUNC); }
+    if (FAILED(g_pThreadMgr->CreateDocumentMgr(&m_pDocumentMgr))) { throw std::exception(FILE_LINE_FUNC); }
+	if (FAILED(m_pDocumentMgr->CreateContext(g_TfClientId, 0, m_pTextStore, &m_pInputContext, &ecTextStore_))) {
+		throw std::exception(FILE_LINE_FUNC);
+	}
+	if (FAILED(m_pDocumentMgr->Push(m_pInputContext))) {
+		throw std::exception(FILE_LINE_FUNC);
+	}
 
-    pTextStore_ = new CTextStore(this);
-
-	ITfDocumentMgr* pDocumentMgrPrev = NULL;
-	
-
-    if (!pTextStore_) 
-		goto Exit;
-    
-	if (FAILED(g_pThreadMgr->CreateDocumentMgr(&pDocumentMgr_)))
-		goto Exit;
-
-    if (FAILED(pDocumentMgr_->CreateContext(g_TfClientId, 0, pTextStore_, &pInputContext_, &ecTextStore_)))
-		goto Exit;
-
-    if (FAILED(pDocumentMgr_->Push(pInputContext_)))
-		goto Exit;
+	CComPtr<ITfDocumentMgr> pDocumentMgrPrev = NULL;
 
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
 	g_pThreadMgr->SetFocus(pDocumentMgr_);
 #else
-	if (FAILED( g_pThreadMgr->AssociateFocus(hWnd, pDocumentMgr_, &pDocumentMgrPrev)))
-		goto Exit;
+	if (FAILED(g_pThreadMgr->AssociateFocus(m_pTxtbox->m_pWnd->m_hWnd, m_pDocumentMgr, &pDocumentMgrPrev))) {
+		throw std::exception(FILE_LINE_FUNC);
+	}
 #endif
-	
-	hWnd_ = hWnd;
 
-	if ( pDocumentMgrPrev )
-		pDocumentMgrPrev->Release();
-
-	pTextEditSink_ = new CTextEditSink(this);
-    if (!pTextEditSink_)
-		goto Exit;
-
-    pTextEditSink_->_Advise(pInputContext_);
-
-
-	ret = TRUE;
-
-	
-
-Exit :
-	//if ( pDocumentMgrPrev )
-	//	pDocumentMgrPrev->Release();
-    return ret;
+	m_pTextEditSink = CComPtr<CTextEditSink>(new CTextEditSink(this));
+	if (!m_pTextEditSink) { throw std::exception(FILE_LINE_FUNC); }
+	 m_pTextEditSink->_Advise(m_pInputContext);
 }
 
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-
-BOOL CTextEditor::UninitTSF()
+void CTextEditor::UninitTSF()
 {
-    if (pTextEditSink_)
+    if (m_pTextEditSink)
     {
-        pTextEditSink_->_Unadvise();
-        pTextEditSink_->Release();
-        pTextEditSink_ = NULL;
+        m_pTextEditSink->_Unadvise();
     }
 	
-	if (pDocumentMgr_)
+	if (m_pDocumentMgr)
     {
-        pDocumentMgr_->Pop(TF_POPF_ALL);
-		
-		pDocumentMgr_->Release();
-		pDocumentMgr_ = NULL;
+        m_pDocumentMgr->Pop(TF_POPF_ALL);
 	}
-
-	if (pInputContext_)
-	{
-		pInputContext_->Release();
-		pInputContext_ = NULL;
-	}
-
-    if (pTextStore_)
-    {
-        while( pTextStore_->Release() );
-        pTextStore_ = NULL;
-    }
-
-    return TRUE;
 }
-//----------------------------------------------------------------
-//
-// move Caret 
-//
-//----------------------------------------------------------------
 
 void CTextEditor::MoveSelection(int nSelStart, int nSelEnd, bool bTrail)
 {
 	if ( nSelEnd < nSelStart )
 		std::swap( nSelStart, nSelEnd );
 
-    int nTextLength = (int)ct_->GetTextLength();
+    int nTextLength = (int)m_text.size();
     if (nSelStart >= nTextLength)
         nSelStart = nTextLength;
 
@@ -145,54 +89,36 @@ void CTextEditor::MoveSelection(int nSelStart, int nSelEnd, bool bTrail)
     m_selStart = nSelStart; 
     m_selEnd = nSelEnd;
 
-	ct_->bSelTrail_ = bTrail;
+	m_isSelTrail = bTrail;
 
 
-    pTextStore_->OnSelectionChange();
+    m_pTextStore->OnSelectionChange();
 }
-
-//----------------------------------------------------------------
-//
-//	caretが動く時
-//
-//----------------------------------------------------------------
 
 void CTextEditor::MoveSelectionNext()
 {
-    int nTextLength = (int)ct_->GetTextLength();
+    int nTextLength = (int)m_text.size();
 
-	int zCaretPos = (ct_->bSelTrail_ ? m_selEnd : m_selStart );
+	int zCaretPos = (m_isSelTrail ? m_selEnd : m_selStart );
 	zCaretPos = min(nTextLength, zCaretPos+1); // 1:次の文字
 
     m_selStart = m_selEnd = zCaretPos;
-    pTextStore_->OnSelectionChange();
+    m_pTextStore->OnSelectionChange();
 }
-
-//----------------------------------------------------------------
-//
-//　caretが動く時
-//
-//----------------------------------------------------------------
 
 void CTextEditor::MoveSelectionPrev()
 {
-	int zCaretPos = (ct_->bSelTrail_ ? m_selEnd : m_selStart );
+	int zCaretPos = (m_isSelTrail ? m_selEnd : m_selStart );
 	zCaretPos = max(0, zCaretPos-1);
 
     m_selEnd = m_selStart = zCaretPos;
-    pTextStore_->OnSelectionChange();
+    m_pTextStore->OnSelectionChange();
 }
 
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-
-BOOL CTextEditor::MoveSelectionAtPoint(POINT pt)
+BOOL CTextEditor::MoveSelectionAtPoint(const CPoint& pt)
 {
     BOOL bRet = FALSE;
-    int nSel = (int)layout_.CharPosFromPoint(pt);
+    int nSel = (int)layout_.CharPosFromPoint(m_pTxtbox->m_pWnd->m_pDirect->Pixels2Dips(pt));
     if (nSel != -1)
     {
         MoveSelection(nSel, nSel,true);
@@ -201,10 +127,10 @@ BOOL CTextEditor::MoveSelectionAtPoint(POINT pt)
     return bRet;
 }
 
-BOOL CTextEditor::MoveSelectionAtNearPoint(POINT pt)
+BOOL CTextEditor::MoveSelectionAtNearPoint(const CPoint& pt)
 {
     BOOL bRet = FALSE;
-    int nSel = (int)layout_.CharPosFromNearPoint(pt);
+    int nSel = (int)layout_.CharPosFromNearPoint(m_pTxtbox->m_pWnd->m_pDirect->Pixels2Dips(pt));
     if (nSel != -1)
     {
         MoveSelection(nSel, nSel,true);
@@ -213,14 +139,9 @@ BOOL CTextEditor::MoveSelectionAtNearPoint(POINT pt)
     return bRet;
 }
 
-//----------------------------------------------------------------
-//
-// VK_DOWN,VK_UP
-//
-//----------------------------------------------------------------
 BOOL CTextEditor::MoveSelectionUpDown(BOOL bUp, bool bShiftKey )
 {
-    FRectF rc;
+    d2dw::CRectF rc;
 
 	if ( bUp )
 	{
@@ -279,12 +200,6 @@ BOOL CTextEditor::MoveSelectionUpDown(BOOL bUp, bool bShiftKey )
 	return FALSE;
 }
 
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-
 BOOL CTextEditor::MoveSelectionToLineFirstEnd(BOOL bFirst, bool bShiftKey)
 {
     BOOL bRet = FALSE;
@@ -293,14 +208,14 @@ BOOL CTextEditor::MoveSelectionToLineFirstEnd(BOOL bFirst, bool bShiftKey)
     if (bFirst)
     {
 		// when pushed VK_HOME
-		ct_->nStartCharPos_ = 0;
+		m_startCharPos = 0;
 		nSel2 = m_selEnd;
         nSel = layout_.FineFirstEndCharPosInLine(m_selStart, TRUE);
     }
     else
     {
         // when pushed VK_END
-		ct_->nStartCharPos_ = 0;
+		m_startCharPos = 0;
 		nSel2 = m_selStart;
 		nSel = layout_.FineFirstEndCharPosInLine(m_selEnd, FALSE);
     }
@@ -323,31 +238,19 @@ BOOL CTextEditor::MoveSelectionToLineFirstEnd(BOOL bFirst, bool bShiftKey)
     return bRet;
 }
 
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
 void CTextEditor::InvalidateRect()
 {
 	layout_.bRecalc_ = true;
 }
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
+
 BOOL CTextEditor::InsertAtSelection(LPCWSTR psz)
 {
 	layout_.bRecalc_ = true;
 
     LONG lOldSelEnd = m_selEnd;
-    if (!ct_->RemoveText(m_selStart, m_selEnd - m_selStart))
-        return FALSE;
+	m_text.erase(m_selStart, m_selEnd - m_selStart);
 
-	UINT nrCnt;
-    if (!ct_->InsertText(m_selStart, psz, lstrlen(psz), nrCnt))
-        return FALSE;
+	m_text.insert(m_selStart, psz, lstrlen(psz));
 
     //m_selStart += nrCnt; // lstrlen(psz);
 	m_selStart += lstrlen(psz);
@@ -356,79 +259,62 @@ BOOL CTextEditor::InsertAtSelection(LPCWSTR psz)
     
 	LONG acs = m_selStart;
 	LONG ecs = m_selEnd;
-	pTextStore_->OnTextChange(acs, lOldSelEnd, ecs);
-	OnTextChange(ct_->GetTextBuffer());
-	m_changed(ct_->GetTextBuffer());
-
-	
-
-    pTextStore_->OnSelectionChange();
+	m_pTextStore->OnTextChange(acs, lOldSelEnd, ecs);
+	OnTextChange(m_text);
+	m_changed(m_text);
+    m_pTextStore->OnSelectionChange();
     return TRUE;
 }
-
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
 
 BOOL CTextEditor::DeleteAtSelection(BOOL fBack)
 {
 	layout_.bRecalc_ = true;
 
-    if (!fBack && (m_selEnd < (int)ct_->GetTextLength()))
+    if (!fBack && (m_selEnd < (int)m_text.size()))
     {
-        if (!ct_->RemoveText(m_selEnd, 1))
-            return FALSE;
+		m_text.erase(m_selEnd, 1);
 
 		
 		LONG ecs = m_selEnd;
 
-        pTextStore_->OnTextChange(ecs, ecs + 1, ecs);
-		OnTextChange(ct_->GetTextBuffer());
-		m_changed(ct_->GetTextBuffer());
+        m_pTextStore->OnTextChange(ecs, ecs + 1, ecs);
+		OnTextChange(m_text);
+		m_changed(m_text);
 
     }
 	 
     if (fBack && (m_selStart > 0))
     {
-        if (!ct_->RemoveText(m_selStart - 1, 1))
-            return FALSE;
+		m_text.erase(m_selStart - 1, 1);
 
         m_selStart--;
         m_selEnd = m_selStart;
 
 		LONG acs = m_selStart;
-        pTextStore_->OnTextChange(acs, acs + 1, acs );
-		OnTextChange(ct_->GetTextBuffer());
-		m_changed(ct_->GetTextBuffer());
-        pTextStore_->OnSelectionChange();
+        m_pTextStore->OnTextChange(acs, acs + 1, acs );
+		OnTextChange(m_text);
+		m_changed(m_text);
+        m_pTextStore->OnSelectionChange();
     }
 
     return TRUE;
 }
-
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
 
 BOOL CTextEditor::DeleteSelection()
 {
 	layout_.bRecalc_ = true;
 
     ULONG nSelOldEnd = m_selEnd;
-    ct_->RemoveText(m_selStart, m_selEnd - m_selStart);
+    m_text.erase(m_selStart, m_selEnd - m_selStart);
 
     m_selEnd = m_selStart;
 
 	LONG acs = m_selStart;
 
-    pTextStore_->OnTextChange(acs, nSelOldEnd, acs);
-	OnTextChange(ct_->GetTextBuffer());
-	m_changed(ct_->GetTextBuffer());
-    pTextStore_->OnSelectionChange();
+    m_pTextStore->OnTextChange(acs, nSelOldEnd, acs);
+	OnTextChange(m_text);
+	m_changed(m_text);
+    m_pTextStore->OnSelectionChange();
 
     return TRUE;
 }
@@ -446,22 +332,17 @@ void CTextEditor::OnTextChange(const std::wstring& text)
 
 	if (rcNewClient.Height() > rcClient.Height()) {
 		CRect rc;
-		::GetWindowRect(hWnd_, &rc);
+		::GetWindowRect(m_pTxtbox->m_pWnd->m_hWnd, &rc);
 		CPoint pt(rc.TopLeft());
-		::ScreenToClient(::GetParent(hWnd_), &pt);
-		::MoveWindow(hWnd_, pt.x, pt.y, rc.Width(), rcNewClient.Height(), TRUE);
+		::ScreenToClient(::GetParent(m_pTxtbox->m_pWnd->m_hWnd), &pt);
+		::MoveWindow(m_pTxtbox->m_pWnd->m_hWnd, pt.x, pt.y, rc.Width(), rcNewClient.Height(), TRUE);
 	}
 
 }
- 
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
+
 int CTextEditor::CurrentCaretPos()
 {
-	return (ct_->bSelTrail_ ? m_selEnd : m_selStart );
+	return (m_isSelTrail ? m_selEnd : m_selStart );
 }
 //----------------------------------------------------------------
 //
@@ -475,20 +356,14 @@ void CTextEditor::Render(D2DContext& cxt )
 	if ( layout_.bRecalc_ )
 	{
 
-		layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), m_pTxtbox->GetContentRect().Size(), ct_->bSingleLine_, zCaretPos, ct_->nStartCharPos_, cxt.textformat);
+		layout_.Layout(cxt, m_text.c_str(), m_text.size(), m_pTxtbox->GetContentRect().Size(), m_isSingleLine, zCaretPos, m_startCharPos, cxt.textformat);
 		layout_.bRecalc_ = false;
 	}
 		
-	//D2DMatrix mat( cxt );				
-	//mat.PushTransform();
-	//mat.Offset( ct_->offpt_.x, ct_->offpt_.y );
+	int selstart = (int)m_selStart - m_startCharPos;
+	int selend = (int)m_selEnd - m_startCharPos;
 
-	int selstart = (int)m_selStart - ct_->nStartCharPos_;
-	int selend = (int)m_selEnd - ct_->nStartCharPos_;
-
-	layout_.Render(cxt, m_pTxtbox->GetContentRect() , ct_->GetTextBuffer(), ct_->GetTextLength(), selstart, selend,ct_->bSelTrail_,pCompositionRenderInfo_, nCompositionRenderInfo_);
-
-	//mat.PopTransform();
+	layout_.Render(cxt, m_pTxtbox->GetContentRect() , m_text.c_str(), m_text.size(), selstart, selend,m_isSelTrail,pCompositionRenderInfo_, nCompositionRenderInfo_);
 }
 //----------------------------------------------------------------
 //
@@ -501,7 +376,7 @@ void CTextEditor::CalcRender(D2DContext& cxt )
 	
 	//::OutputDebugStringA((boost::format("TextBuff:%1%, TextLen:%2%\r\n") % ct_->GetTextBuffer() % ct_->GetTextLength()).str().c_str());
 	d2dw::CSizeF size(m_pTxtbox->GetContentRect().Size());
-	layout_.Layout(cxt, ct_->GetTextBuffer(), ct_->GetTextLength(), size, ct_->bSingleLine_,0, x, cxt.textformat);	
+	layout_.Layout(cxt, m_text.c_str(), m_text.size(), size, m_isSingleLine,0, x, cxt.textformat);	
 	layout_.bRecalc_ = false;
 }
 
@@ -517,9 +392,9 @@ void CTextEditor::CalcRender(D2DContext& cxt )
 
 void CTextEditor::SetFocus()
 {
-    if (pDocumentMgr_)
+    if (m_pDocumentMgr)
     {
-		g_pThreadMgr->SetFocus(pDocumentMgr_);
+		g_pThreadMgr->SetFocus(m_pDocumentMgr);
     }
 
 
@@ -604,34 +479,24 @@ BOOL CTextEditor::AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRI
 }
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-void CTextEditorCtrl::SetContainer( CTextContainer* ct, IBridgeTSFInterface* rect_size )
-{
-	CTextEditor::SetContainer(ct);
-
-	Reset(rect_size);
-
-}
+//void CTextEditorCtrl::SetContainer( IBridgeTSFInterface* rect_size )
+//{
+//	//CTextEditor::SetContainer(ct);
+//
+//	Reset(rect_size);
+//
+//}
 //----------------------------------------------------------------
 //
 //
 //
 //----------------------------------------------------------------
 
-HWND CTextEditorCtrl::Create(HWND hwndParent)
-{
-    hWnd_ = hwndParent;
-	
-	InitTSF(hWnd_);
+void CTextEditorCtrl::Create()
+{	
+	InitTSF();
 
-	//HRESULT hr = DWriteCreateFactory( DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&factory_));
-
-	pTextEditSink_->OnChanged_ = std::bind(&CTextEditorCtrl::OnEditChanged, this );// &CTextEditorCtrl::OnChanged;
-
-
-	static CTextContainer dumy;
-	SetContainer(  &dumy , NULL );
-
-    return hWnd_;
+	m_pTextEditSink->OnChanged_ = std::bind(&CTextEditorCtrl::OnEditChanged, this );// &CTextEditorCtrl::OnChanged;
 }
 void CTextEditorCtrl::OnEditChanged()
 {
@@ -681,7 +546,7 @@ LRESULT CTextEditorCtrl::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPAR
 				return 0;
             
 			// normal charcter input. not TSF.
-			if ( wch >= L' ' ||  (wch == L'\r'&& !ct_->bSingleLine_ )) 
+			if ( wch >= L' ' ||  (wch == L'\r'&& !m_isSingleLine )) 
             {				
 				if ( wch < 256 )
 				{
@@ -692,7 +557,7 @@ LRESULT CTextEditorCtrl::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPAR
 				else
 				{
 					// outof input
-					TRACE( L"out of char %c\n", wch );
+//					TRACE( L"out of char %c\n", wch );
 				}
             }
 		break;
@@ -737,9 +602,9 @@ BOOL CTextEditorCtrl::OnKeyDown(WPARAM wParam, LPARAM lParam)
                  if (nSelStart > 0)
                  {					
 					if ( nSelStart == nSelEnd )
-						ct_->bSelTrail_ = false;
+						m_isSelTrail = false;
 
-					if ( ct_->bSelTrail_ )
+					if ( m_isSelTrail )
 						MoveSelection(nSelStart, nSelEnd-1, true );
 					else
 						MoveSelection(nSelStart - 1, nSelEnd, false);											
@@ -758,9 +623,9 @@ BOOL CTextEditorCtrl::OnKeyDown(WPARAM wParam, LPARAM lParam)
                  nSelEnd = GetSelectionEnd();
 
 				 if ( nSelStart == nSelEnd )
-						ct_->bSelTrail_ = true;
+						m_isSelTrail = true;
 
-				if ( ct_->bSelTrail_ )
+				if ( m_isSelTrail )
 					MoveSelection(nSelStart, nSelEnd + 1,true);
 				else
 					MoveSelection(nSelStart+1, nSelEnd,false);
@@ -846,10 +711,10 @@ void CTextEditorCtrl::OnSetFocus(WPARAM wParam, LPARAM lParam)
 
 void CTextEditorCtrl::OnLButtonDown(WPARAM wParam, LPARAM lParam)
 {
-    POINT pt;
+    CPoint pt((short)LOWORD(lParam), (short)(HIWORD(lParam)));
     _uSelDragStart = (UINT)-1;
-    pt.x = GET_X_LPARAM(lParam);
-    pt.y = GET_Y_LPARAM(lParam);
+    //pt.x = GET_X_LPARAM(lParam);
+    //pt.y = GET_Y_LPARAM(lParam);
 
 
 
@@ -876,10 +741,8 @@ void CTextEditorCtrl::OnLButtonUp(WPARAM wParam, LPARAM lParam)
 {
     UINT nSelStart = GetSelectionStart();
     UINT nSelEnd = GetSelectionEnd();
-    POINT pt;
-    pt.x = GET_X_LPARAM(lParam);
-    pt.y = GET_Y_LPARAM(lParam);
-
+    CPoint pt((short)LOWORD(lParam), (short)HIWORD(lParam));
+ 
     if (MoveSelectionAtPoint(pt))
     {
         UINT nNewSelStart = GetSelectionStart();
@@ -904,9 +767,9 @@ void CTextEditorCtrl::OnMouseMove(WPARAM wParam, LPARAM lParam)
 {
     if (wParam & MK_LBUTTON)
     {
-        POINT pt;
-        pt.x = max(0, GET_X_LPARAM(lParam));
-        pt.y = max(0, GET_Y_LPARAM(lParam));
+        CPoint pt((std::max)((short)0, (short)LOWORD(lParam)), (std::max)((short)0, (short)HIWORD(lParam)));
+        //pt.x = max(0, GET_X_LPARAM(lParam));
+        //pt.y = max(0, GET_Y_LPARAM(lParam));
 
         if (MoveSelectionAtPoint(pt))		
         {

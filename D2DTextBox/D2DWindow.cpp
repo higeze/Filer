@@ -3,20 +3,16 @@
 #include "D2DWindowControl.h"
 #include "Selection.h"
 
-#include "gdi32.h"
 #include <Shellapi.h>
 
 #include "MoveTarget.h"
 #include <random>
 
+#include "Direct2DWrite.h"
 #include "CellProperty.h"
 #define CLASSNAME L"D2DWindow"
 
 using namespace V4;
-using namespace GDI32;
-
-
-std::wstring D2DWindow::appinfo_;
 
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -46,7 +42,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			
 			d->m_pDirect->BeginDraw();
 
-			d->m_pDirect->GetHwndRenderTarget()->Clear(ColorF(ColorF::White));
+			d->m_pDirect->GetHwndRenderTarget()->Clear(d2dw::CColorF(1.f,1.f,1.f));
 
 			d->WndProc( message, wParam, lParam ); // All objects is drawned.
 
@@ -75,7 +71,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
 		case WM_MOUSEWHEEL:// マウスホイール	
 		{				
-			FPoint pt(lParam);			
+			CPoint pt(LOWORD(lParam), HIWORD(lParam));			
 			ScreenToClient( hWnd, &pt );				
 			lParam = MAKELONG(pt.x, pt.y );
 		}
@@ -137,39 +133,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
-		case WM_DROPFILES:
-		{
-			std::vector<D2D_DROPOBJECT> ar;			
-			{
-				HDROP hd = (HDROP)wParam;
-				UINT cnt = DragQueryFile(hd,-1,nullptr,0);
-				ar.resize(cnt);
-				for( UINT i = 0; i < cnt; i++ )
-				{
-					WCHAR cb[MAX_PATH];
-					POINT pt;
-					DragQueryFile(hd,i,cb,MAX_PATH);
-					DragQueryPoint(hd, &pt);
-
-					D2D_DROPOBJECT it;
-					it.filename = cb;
-					it.pt = pt;
-					ar[i] = it;
-				}
-				DragFinish( hd );
-			}						
-			d->WndProc( WM_D2D_DRAGDROP, (WPARAM)&ar,0 );
-			
-
-			if ( d->redraw_ )
-			{
-				InvalidateRect( hWnd, NULL, FALSE );				
-				d->redraw_ = 0;
-			}
-
-			return 0;
-		}
-		break;
 		
 		case WM_DESTROY:
 		{			
@@ -211,20 +174,6 @@ ATOM D2DWindowRegisterClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wcex);
 }
 
-int D2DWindow::SecurityId(bool bNew)
-{
-	static int sec_id;
-	
-	std::random_device seed_gen;
-    static std::default_random_engine engine(seed_gen());
-    static std::uniform_int_distribution<> dist(-999999, 999999);  
-	
-	if ( bNew )
-		sec_id = dist(engine);
-				
-	return sec_id;
-}
-
 D2DWindow::D2DWindow(
 	std::shared_ptr<CellProperty> spProp,
 	std::function<std::wstring()> getter,
@@ -263,20 +212,6 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 
 	cxt_.textformat = m_pDirect->GetTextFormat(*(m_spProp->Format));
 
-	cxt_.black = m_pDirect->GetColorBrush(D2RGB(0, 0, 0));
-	cxt_.white = m_pDirect->GetColorBrush(D2RGB(255, 255, 255));
-	cxt_.gray = m_pDirect->GetColorBrush(D2RGB(192, 192, 192));
-	cxt_.red = m_pDirect->GetColorBrush(D2RGB(255, 0, 0));
-	cxt_.ltgray = m_pDirect->GetColorBrush(D2RGB(230, 230, 230));
-	cxt_.bluegray = m_pDirect->GetColorBrush(D2RGB(113, 113, 130));
-	cxt_.transparent = m_pDirect->GetColorBrush(D2RGBA(0, 0, 0, 0));
-	cxt_.halftone = m_pDirect->GetColorBrush(D2RGBA(113, 113, 130, 100));
-	cxt_.halftoneRed = m_pDirect->GetColorBrush(D2RGBA(250, 113, 130, 150));
-	cxt_.tooltip = m_pDirect->GetColorBrush(D2RGBA(255, 242, 0, 255));
-	cxt_.basegray = m_pDirect->GetColorBrush(D2RGBA(241, 243, 246, 255));
-	cxt_.basegray_line = m_pDirect->GetColorBrush(D2RGBA(201, 203, 205, 255));
-	cxt_.basetext = m_pDirect->GetColorBrush(D2RGBA(90, 92, 98, 255));
-
 	float dashes[] = { 2.0f };
 
 	m_pDirect->GetD2D1Factory()->CreateStrokeStyle(
@@ -300,39 +235,18 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 		&cxt_.dot4_
 	);
 
-	cxt_.line_height = 0;
-	cxt_.xoff = 0;
-
-	CComPtr<IDWriteTextLayout> tl = m_pDirect->GetTextLayout(*(m_spProp->Format), L"T", d2dw::CSizeF(1000.f, 1000.f));
-
-	DWRITE_HIT_TEST_METRICS mt;
-
-	float y;
-	tl->HitTestTextPosition(0, true, &cxt_.xoff, &y, &mt);
-
-	cxt_.line_height = mt.height;
-
 	redraw_ = 0;
 
 	// create textbox control
-	FRectF rcText(0, 0, rc.right-rc.left, rc.bottom-rc.top);
-	FRectFBoxModel rcModel(rcText);
-	rcModel.BoderWidth_ = m_spProp->Line->Width;
-	rcModel.Margin_.Set(0.f);
-	rcModel.Padding_.Set(m_spProp->Padding->left);
-
 	m_pTxtbox.reset(new D2DTextbox(this, m_spProp, V4::D2DTextbox::MULTILINE, m_changed));
 	m_pTxtbox->SetStat(V4::STAT::BORDER);
-	m_pTxtbox->CreateWindow(this, rcModel, VISIBLE, L"txtbox");
+	m_pTxtbox->CreateWindow(this, VISIBLE, L"txtbox");
 	m_pTxtbox->SetText(m_strInit.c_str());
-	m_pTxtbox->SetFont(m_pDirect->GetTextFormat(*(m_spProp->Format)));
-
 
 	// OnCreateで各子コントロールを作成後にサイズの調整が必要
 	SendMessage(m_hWnd, WM_SIZE,0,MAKELPARAM(rc.right-rc.left,rc.bottom-rc.top));
 	m_pTxtbox->StatActive(true);
 	return m_hWnd;
-
 }
 
 
@@ -349,20 +263,6 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 	else if (message == WM_SIZE && m_pTxtbox)
 	{
 		m_pTxtbox->WndProc(this,message,wParam,lParam);
-	}
-	else if ( message == WM_D2D_RESTRUCT_RENDERTARGET )
-	{
-		if ( wParam == 0 )
-		{
-			if (m_pTxtbox)
-				m_pTxtbox->WndProc(this,message,wParam,lParam);
-		}					
-		else if ( wParam == 1 )
-		{
-
-			if (m_pTxtbox)
-				m_pTxtbox->WndProc(this,message,wParam,lParam);
-		}
 	} else if (m_pTxtbox && (message == WM_SYSKEYDOWN || message == WM_KEYDOWN ) && (wParam == VK_RETURN ) && !(::GetKeyState(VK_MENU) & 0x8000)) {
 		//Do not send message to children
 		::SetFocus(::GetParent(m_hWnd));
@@ -413,39 +313,13 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 		case WM_DESTROY:
 		{
-			::OutputDebugStringA("WM_DESTROY");
 			if (m_pTxtbox) {
 				m_pTxtbox->DestroyControl();
 			}
 
 			Clear();
 		}
-		break;
-		
+		break;		
 	}
 	return ret;
-}
-
-void V4::SetCursor( HCURSOR h )
-{
-	if ( h != ::GetCursor() )
-	{	
-		::SetCursor( h );
-	}
-}
-
-DWORD D2DRGBADWORD_CONV(D2D1_COLOR_F clr)
-{
-	DWORD r = ROUND(clr.r * 255);
-	DWORD g = ROUND(clr.g * 255);
-	DWORD b = ROUND(clr.b * 255);
-	DWORD a = ROUND(clr.a * 255);
-
-	return D2DRGBADWORD(r,g,b,a );
-}
-
-
-CComPtr<ID2D1SolidColorBrush> D2DWindow::GetSolidColor(D2D1_COLOR_F clr)
-{
-	return m_pDirect->GetColorBrush(d2dw::CColorF(clr.r, clr.g, clr.b, clr.a));
 }

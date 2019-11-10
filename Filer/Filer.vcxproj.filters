@@ -42,9 +42,6 @@
     <Image Include="Filer.ico">
       <Filter>Resource</Filter>
     </Image>
-    <Image Include="..\HiLib\small.ico">
-      <Filter>D2DTextBox</Filter>
-    </Image>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirectoryWatcher.h">
@@ -614,13 +611,7 @@
     <ClInclude Include="..\D2DTextBox\TextEditor.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\TextContainer.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\targetver.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\stringstream.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\resource.h">
@@ -635,12 +626,6 @@
     <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\gdi32.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\fstring.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -653,12 +638,6 @@
     <ClInclude Include="..\D2DTextBox\d2dwindowcontrol.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\D2DMisc.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\d2dmatome.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DContextEx.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -669,9 +648,6 @@
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\text_stdafx.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Downloads\D2DWindowMaster\D2DWindow-master\projects\Direct2dTemplate\Direct2dTemplate\common_stdafx.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DWindow.h">
@@ -1016,9 +992,6 @@
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\TextEditor.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\TextContainer.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp">

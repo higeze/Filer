@@ -5,10 +5,8 @@
 #include "TextLayout.h"
 #include "D2DCharRect.h"
 #include "CellProperty.h"
+#include "MyClipboard.h"
 
-//#ifdef TEXTBOXTEST
-//	#include "s1.h"
-//#endif
 
 #define TAB_WIDTH_4CHAR 4
 
@@ -37,7 +35,8 @@ D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::shared_ptr<CellProperty>& pPr
 :m_pWnd(pWnd), m_pProp(pProp), m_changed(changed)
 {
 	ctrl_ = new TSF::CTextEditorCtrl(this);
-	ctrl_->Create(pWnd->m_hWnd);
+	ctrl_->Create();
+	ctrl_->bri_ = this;
 	ctrl_->m_changed = m_changed;
 
 	if ( typ & RIGHT || typ & CENTER || typ & VCENTER )
@@ -45,71 +44,12 @@ D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::shared_ptr<CellProperty>& pPr
 
 	typ_ = typ;
 	bActive_ = false;
-	bUpdateScbar_ = false;
-	fmt_ = NULL;
-	
-	ct_.bSingleLine_ = ( typ_ != TYP::MULTILINE );
-	ct_.LimitCharCnt_ = 65500;	
-
 }
 
-void D2DTextbox::CreateWindow( D2DWindow* parent, const FRectFBoxModel& rc, int stat, LPCWSTR name)
+void D2DTextbox::CreateWindow( D2DWindow* parent,int stat, LPCWSTR name)
 {
-	D2DControl::CreateWindow( parent,rc,stat,name);
-	
-	if ( fmt_ )
-	{
-		CComPtr<IDWriteTextLayout> tl;		
-		if ( S_OK == parent_->cxt_.pWindow->m_pDirect->GetDWriteFactory()->CreateTextLayout( L"T", 1, fmt_, 1000,1000,  &tl ))
-		{
-			DWRITE_HIT_TEST_METRICS mt;
-			float y = 0, xoff=0;
-			tl->HitTestTextPosition( 0, true,&xoff,&y,&mt );
-			
-			font_height_ = mt.height;			
-		}
-	}
-	else
-	{
-		font_height_ = parent->cxt_.line_height;
-
-	}
+	D2DControl::CreateWindow( parent,stat,name);
 	SetText(L"");
-}
-IDWriteTextFormat* D2DTextbox::GetFormat()
-{
-	return fmt_;
-}
-void D2DTextbox::SetFont( CComPtr<IDWriteTextFormat> fmt )
-{
-	fmt_ = fmt;
-
-	CalcRender(true);
-
-}
-
-// 文字のRECT情報を計算し、文字レイアウトを取得
-void D2DTextbox::CalcRender(bool bLayoutUpdate)
-{
-	if ( fmt_ )
-	{
-		IDWriteTextFormat* old = NULL;
-
-		old = parent_->cxt_.textformat;
-		parent_->cxt_.textformat = fmt_;
-
-		ctrl_->SetContainer( &ct_, this ); 
-		//ctrl_->mat_ = mat_;	
-		ctrl_->CalcRender( parent_->cxt_ );
-
-
-		parent_->cxt_.textformat = old;
-	}
-	else
-	{
-		ctrl_->SetContainer( &ct_, this ); 
-		ctrl_->CalcRender( parent_->cxt_ );
-	}
 }
 
 
@@ -123,18 +63,13 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 	{
 		case WM_PAINT:
 		{
-			//PaintBackground(e.Direct, rcInner);
-			{
-				d->m_pDirect->FillSolidRectangle(*(d->m_spProp->NormalFill), GetClientRect());
-			}
-			//PaintLine(e.Direct, rcClient);
-			{
-				d->m_pDirect->GetHwndRenderTarget()->DrawRectangle(GetClientRect(), d->m_pDirect->GetColorBrush(d->m_spProp->EditLine->Color), d->m_spProp->Line->Width);
-			}
+			//PaintBackground
+			d->m_pDirect->FillSolidRectangle(*(d->m_spProp->NormalFill), GetClientRect());
+			//PaintLine(e.Direct, rcClient)
+			d->m_pDirect->GetHwndRenderTarget()->DrawRectangle(GetClientRect(), d->m_pDirect->GetColorBrush(d->m_spProp->EditLine->Color), d->m_spProp->Line->Width);
 			//PaintContent(e.Direct, rcContent);
-			{
-				ctrl_->WndProc(d, WM_PAINT, wParam, lParam);
-			}
+			ctrl_->WndProc(d, WM_PAINT, wParam, lParam);
+
 			d->redraw_ = 1;
 		}
 		break;
@@ -153,12 +88,6 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 			
 			switch( message )
 			{
-			//case WM_SIZE:
-			//{
-			//	//rc_.SetSize(LOWORD(lParam), HIWORD(lParam));
-			//	//ctrl_->Reset(ctrl_->bri_);
-			//}
-			//break;
 				case WM_KEYDOWN:
 				{			
 					ret = OnKeyDown(d,message,wParam,lParam);
@@ -170,10 +99,6 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 				break;
 
 			}
-
-			if (ctrl_->GetContainer() != &ct_ /*|| d->GetCapture() != this*/)
-				return ret;
-
 			int bAddTabCount = 0;
 			
 			if ( message == WM_LBUTTONDOWN || message == WM_LBUTTONUP || message == WM_MOUSEMOVE  
@@ -204,7 +129,7 @@ int D2DTextbox::TabCountCurrentRow()
 {
 	int bAddTabCount = 0;
 
-	LPCWSTR s = ct_.GetTextBuffer();
+	LPCWSTR s = ctrl_->m_text.c_str();
 	int pos = (std::max)(0, ctrl_->m_selEnd - 1 );
 
 	while(pos)
@@ -236,7 +161,7 @@ int D2DTextbox::OnKeyDown(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lPar
 			ret =  (heldControl && Clipboard( d->m_hWnd, L'C' ) ? 1 : 0 );
 			if ( ctrl_->m_selEnd > ctrl_->m_selStart )
 			{
-				ct_.RemoveText( ctrl_->m_selStart, ctrl_->m_selEnd-ctrl_->m_selStart );
+				ctrl_->m_text.erase( ctrl_->m_selStart, ctrl_->m_selEnd-ctrl_->m_selStart );
 				ctrl_->m_selEnd = ctrl_->m_selStart;
 			}
 		break;
@@ -265,76 +190,69 @@ int D2DTextbox::OnKeyDown(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lPar
 }
 BOOL D2DTextbox::Clipboard( HWND hwnd, TCHAR ch )
 {
-	if ( !OpenClipboard( hwnd ) ) return FALSE;
+//	if ( !OpenClipboard( hwnd ) ) return FALSE;
 	
 	if ( ch == L'C' ) // copy
 	{
 		int SelLen = ctrl_->m_selEnd-ctrl_->m_selStart;
-		if ( ctrl_->GetContainer() == &ct_ &&  SelLen > 0 )
+		if (SelLen > 0 )
 		{
-			std::unique_ptr<WCHAR[]> xcb( new WCHAR[SelLen+1] );
-			WCHAR* cb = xcb.get();
+			std::wstring strCopy = ctrl_->m_text.substr(ctrl_->m_selStart, SelLen);
 
-			ct_.GetText(ctrl_->m_selStart, cb, SelLen );
-			cb[SelLen]=0;
+			HGLOBAL hGlobal = ::GlobalAlloc(GHND | GMEM_SHARE, (strCopy.size() + 1) * sizeof(wchar_t));
+			wchar_t* strMem = (wchar_t*)::GlobalLock(hGlobal);
+			::GlobalUnlock(hGlobal);
 
-			int cch = SelLen;
-			
-			HANDLE hglbCopy = GlobalAlloc(GMEM_DDESHARE, (cch + 1) * sizeof(WCHAR)); 
-			if (hglbCopy == NULL) 
-			{ 
-				CloseClipboard(); 
-				return FALSE; 
-			} 
-	 
-			// Lock the handle and copy the text to the buffer. 
-	 
-			WCHAR* lptstrCopy = (WCHAR*)GlobalLock(hglbCopy); 
-			memcpy(lptstrCopy, cb, cch * sizeof(WCHAR)); 
-			lptstrCopy[cch] = 0; 
-			GlobalUnlock(hglbCopy); 
-	        
-			// Place the handle on the clipboard. 
-			EmptyClipboard();
-			SetClipboardData(CF_UNICODETEXT, hglbCopy); 
-
+			if (strMem != NULL) {
+				::wcscpy_s(strMem, strCopy.size() + 1, strCopy.c_str());
+				CClipboard clipboard;
+				if (clipboard.Open(m_pWnd->m_hWnd) != 0) {
+					clipboard.Empty();
+					clipboard.SetData(CF_UNICODETEXT, hGlobal);
+					clipboard.Close();
+				}
+			}
 		}
 		else
 		{
-			EmptyClipboard();
-			SetClipboardData(CF_UNICODETEXT, NULL);		
+			CClipboard clipboard;
+			if (clipboard.Open(m_pWnd->m_hWnd) != 0) {
+				clipboard.Empty();
+				clipboard.SetData(CF_UNICODETEXT, NULL);
+				clipboard.Close();
+			}
 		}
 	}
 	else if ( ch == L'V' ) // paste
 	{
-		HANDLE h = GetClipboardData( CF_UNICODETEXT );
-		if ( h )
-		{
-			LPWSTR s1a = (LPWSTR)GlobalLock( h );
-			auto s1b = FilterInputString( s1a, lstrlen(s1a) );
+		CClipboard clipboard;
+		if (clipboard.Open(m_pWnd->m_hWnd) != 0) {
+			HANDLE h = clipboard.GetData(CF_UNICODETEXT);
+			if (h) {
+				LPWSTR s1a = (LPWSTR)GlobalLock(h);
+				auto s1b = FilterInputString(s1a, lstrlen(s1a));
 
-			UINT s1 = ctrl_->m_selStart;
-			UINT e1 = ctrl_->m_selEnd;
-
-
-			UINT rcnt;
-			ct_.InsertText( ctrl_->m_selEnd, s1b.c_str(), s1b.length(), rcnt );
-			ctrl_->m_selEnd += rcnt;
-			ctrl_->m_selStart = ctrl_->m_selEnd;
-
-			GlobalUnlock( h );
+				UINT s1 = ctrl_->m_selStart;
+				UINT e1 = ctrl_->m_selEnd;
 
 
-			// 上書された分を削除
-			if ( e1 - s1 > 0 )
-				ct_.RemoveText(s1, e1-s1);
+				//			UINT rcnt;
+				ctrl_->m_text.insert(ctrl_->m_selEnd, s1b);
+				ctrl_->m_selEnd += s1b.length();
+				ctrl_->m_selStart = ctrl_->m_selEnd;
+
+				GlobalUnlock(h);
 
 
-			bUpdateScbar_ = true;
-			CalcRender(true);
-		}	
+				// 上書された分を削除
+				if (e1 - s1 > 0)
+					ctrl_->m_text.erase(s1, e1 - s1);
+
+				ctrl_->CalcRender(parent_->cxt_);
+			}
+			clipboard.Close();
+		}
 	}	
-	::CloseClipboard();
 	return TRUE;
 
 }
@@ -381,22 +299,22 @@ std::wstring D2DTextbox::FilterInputString( LPCWSTR s, UINT len )
 	}
 }
 
-void D2DTextbox::SetViewText(LPCWSTR str)
-{
-	FString org = ct_.GetTextBuffer();
-
-	SetText(str);
-	
-
-	UINT nrCnt; 
-	ct_.Clear();
-	ct_.InsertText( 0, org, org.length(), nrCnt );
-	ctrl_->m_selStart = ctrl_->m_selEnd = ct_.GetTextLength();
-	//ct_.CaretLast();
-
-	CalcRender(true);
-
-}
+//void D2DTextbox::SetViewText(LPCWSTR str)
+//{
+//	//FString org = ct_.GetTextBuffer();
+//
+//	SetText(str);
+//	//
+//
+//	//UINT nrCnt; 
+//	//ct_.Clear();
+//	//ct_.InsertText( 0, org, org.length(), nrCnt );
+//	//ctrl_->m_selStart = ctrl_->m_selEnd = ct_.GetTextLength();
+//	////ct_.CaretLast();
+//
+//	//CalcRender(true);
+//
+//}
 void D2DTextbox::SetReadOnly(bool bReadOnly )
 {
 	if ( bReadOnly )
@@ -411,101 +329,27 @@ void D2DTextbox::SetText(VARIANT v)
 	else
 	{
 		_variant_t dst;
-		if ( HR(VariantChangeType( &dst, &v, 0, VT_BSTR )))
+		if ( VariantChangeType( &dst, &v, 0, VT_BSTR ) == S_OK)
 			SetText( dst.bstrVal );
 	}
 }
 int D2DTextbox::InsertText( LPCWSTR str, int pos, int strlen)
 {
-	// pos < 0  is current postion.
-	parent_->redraw_ = 1;
-
-	if ( pos < 0 )
-	{
-		int zCaretPos = (ct_.bSelTrail_ ? ctrl_->m_selEnd : ctrl_->m_selStart );
-		pos = zCaretPos;
-
-	}
-	
-	if ( strlen < 0 )
-		strlen = lstrlen(str);
-
-	UINT nrCnt; 
-	if ( ct_.InsertText( pos, str, strlen, nrCnt ))
-	{
-		ctrl_->m_selEnd += nrCnt;
-		ctrl_->m_selStart += nrCnt;
-	}
-	bUpdateScbar_ = true;
-
-	CalcRender(true);
+	ctrl_->m_text.insert(pos, str, strlen);
+	ctrl_->CalcRender(m_pWnd->cxt_);
 
 	return 0;
-
 }
 
 
 void D2DTextbox::SetText(LPCWSTR str1)
 {
-	parent_->redraw_ = 1;
-	bUpdateScbar_ = true;
-
-	{
-		FString s1b = FilterInputString( str1, lstrlen(str1) );
-	
-		UINT nrCnt; 
-		ct_.Clear();
-		ct_.InsertText( 0, s1b, s1b.length(), nrCnt );
-		ctrl_->m_selStart = ctrl_->m_selEnd = ct_.GetTextLength();
-	}	
-	auto ct = ctrl_->GetContainer();
-	auto bri = ctrl_->bri_;
-
-	ActiveSw();
-
-	ctrl_->SetContainer( ct, bri ); 
+	ctrl_->m_text = str1;
+	ctrl_->m_selStart = 0;
+	ctrl_->m_selEnd = ctrl_->m_text.size();;
+	ctrl_->CalcRender(m_pWnd->cxt_);
 }
 
-void D2DTextbox::ActiveSw()
-{	
-	IDWriteTextFormat* old = NULL;
-	if ( fmt_ == NULL )
-		fmt_ = parent_->cxt_.textformat;
-	else
-	{
-		old = parent_->cxt_.textformat;
-		parent_->cxt_.textformat = fmt_;
-	}
-
-	ctrl_->SetContainer( &ct_, this ); 
-	ctrl_->CalcRender( parent_->cxt_ );
-
-	{
-		//text_layout_.Release();
-		//ctrl_->GetLayout()->GetTextLayout( &text_layout_ );  // singlineの場合自動で、vcenterになる
-
-		offpt_.y = offpt_.x = 0;
-
-		if (typ_ & SINGLELINE) 
-		{
-			float topline_width = ctrl_->GetLayout()->GetLineWidth();	
-
-			if (typ_ & RIGHT )
-			{			
-				offpt_.x = rc_.GetContentRect().Width() - topline_width;
-			}
-			else if ( typ_ & CENTER )
-			{			
-				offpt_.x = (rc_.GetContentRect().Width() - topline_width)/2.0f;
-			}
-		}
-
-		ct_.offpt_ = offpt_;
-	}
-
-	if ( old )
-		parent_->cxt_.textformat = old;
-}
 
 void D2DTextbox::StatActive( bool bActive )
 {
@@ -513,9 +357,6 @@ void D2DTextbox::StatActive( bool bActive )
 	
 	if ( bActive )
 	{
-		ctrl_->Password((typ_ & PASSWORD) != 0);
-
-		CalcRender(true);
 		bActive_ = true;
 
 		ctrl_->SetFocus();
@@ -526,11 +367,7 @@ void D2DTextbox::StatActive( bool bActive )
 	}
 	else
 	{
-		if ( ctrl_->GetContainer() == &ct_ )
-		{						
-			ctrl_->SetContainer( NULL, NULL );
-		}
-		V4::SetCursor( ::LoadCursor(NULL,IDC_ARROW));
+		::SetCursor(::LoadCursor(NULL,IDC_ARROW));
 		bActive_ = false;
 
 		if ( OnLeave_ )
@@ -553,34 +390,9 @@ d2dw::CRectF D2DTextbox::GetContentRect() const
 	return rcContent;
 }
 
-//FRectFBoxModel D2DTextbox::GetClientRectEx()
-//{
-//	// 変換ダイアログの表示位置 -> CTextStore::GetTextExt
-//	FRectFBoxModel x = rc_;
-//	
-//
-//	if ( this->typ_ == TYP::SINGLELINE || this->typ_ == TYP::PASSWORD )
-//	{
-//		// 26:標準フォント高で微調整
-//		x.Offset(0, (rc_.Height()- 26)/2+2 ); // ???
-//	}
-//
-//	return x;
-//}
-FString D2DTextbox::GetText()
+std::wstring D2DTextbox::GetText()
 {	
-	return FString( ct_.GetTextBuffer());  // null terminate	
-}
-
-
-void D2DTextbox::SetSize( const FSizeF& sz )
-{
-	FRectF rc( rc_.left, rc_.top, rc_.left+sz.width, rc_.top+sz.height);
-	SetRect(rc);
-}
-void D2DTextbox::SetRect( const FRectF& rc )
-{
-	rc_ = rc;
+	return ctrl_->m_text;  // null terminate	
 }
 
 // Tab文字　可
