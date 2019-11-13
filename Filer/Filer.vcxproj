@@ -196,13 +196,10 @@
     <ClInclude Include="..\D2DTextBox\D2DWindowMessageStruct.h" />
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h" />
     <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h" />
-    <ClInclude Include="..\D2DTextBox\ItemLoopArray.h" />
-    <ClInclude Include="..\D2DTextBox\MoveTarget.h" />
     <ClInclude Include="..\D2DTextBox\resource.h" />
     <ClInclude Include="..\D2DTextBox\text_stdafx.h" />
     <ClInclude Include="..\D2DTextBox\targetver.h" />
     <ClInclude Include="..\D2DTextBox\TextEditor.h" />
-    <ClInclude Include="..\D2DTextBox\TextLayout.h" />
     <ClInclude Include="..\D2DTextBox\TextStoreACP.h" />
     <ClInclude Include="..\D2DTextBox\undo.h" />
     <ClInclude Include="..\HiLib\ApplicationProperty.h" />
@@ -401,7 +398,6 @@
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />
     <ClCompile Include="..\D2DTextBox\text_stdafx.cpp" />
     <ClCompile Include="..\D2DTextBox\TextEditor.cpp" />
-    <ClCompile Include="..\D2DTextBox\TextLayout.cpp" />
     <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp" />
     <ClCompile Include="..\D2DTextBox\undo.cpp" />
     <ClCompile Include="..\HiLib\Band.cpp" />

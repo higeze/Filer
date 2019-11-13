@@ -5,8 +5,6 @@
 #include "InputScope.h"
 #include "tsattrs.h"
 #include "d2dwindowcontrol.h"
-using namespace TSF;
-
 
 #define Round(x)	((LONG)(x+0.5f))
 
@@ -498,8 +496,8 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
 	d2dw::CRectF rcStart;
     d2dw::CRectF rcEnd;
 
-    if (_pEditor->GetLayout()->RectFromCharPos(acpStart, &rcStart) &&
-        _pEditor->GetLayout()->RectFromCharPos(acpEnd, &rcEnd))
+    if (_pEditor->RectFromCharPos(acpStart, &rcStart) &&
+        _pEditor->RectFromCharPos(acpEnd, &rcEnd))
     {
         if (rcStart.top == rcEnd.top)
         {
@@ -511,7 +509,7 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
 			// ÅŒã‚Ì•¶Žš‚ª‰üsˆÊ’u‚É‚­‚éB
 			//::OutputDebugStringEx( L"GetTextExtA %d %d,  %d %d\n",acpStart,acpEnd, rcStart.top, rcEnd.top );
 
-			_pEditor->GetLayout()->RectFromCharPos(acpEnd-1, &rcEnd);
+			_pEditor->RectFromCharPos(acpEnd-1, &rcEnd);
 
 			prc->left = Round(min(rcStart.left, rcEnd.left));
             prc->right = Round(max(rcStart.right, rcEnd.right));

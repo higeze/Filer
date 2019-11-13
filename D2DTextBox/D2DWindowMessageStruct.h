@@ -1,8 +1,5 @@
 #pragma once
 
-namespace V4 
-{
-
 
 struct D2D_OBJECT_UPDATE
 {
@@ -12,16 +9,6 @@ struct D2D_OBJECT_UPDATE
 	d2dw::CPointF globalpt;
 	void* object;
 };
-
-
-
-
-
-
-
-
-};
-
 
 
 

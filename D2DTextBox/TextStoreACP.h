@@ -1,7 +1,4 @@
 #pragma once
-
-namespace TSF {
-
 class CTextEditor;
 
 class CTextStore : public ITextStoreACP
@@ -76,7 +73,4 @@ class CTextStore : public ITextStoreACP
 		BOOL _LockDocument(DWORD dwLockFlags);
 		void _UnlockDocument();
 		BOOL _IsLocked(DWORD dwLockType);
-};
-
-
 };

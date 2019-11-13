@@ -1,11 +1,14 @@
 ﻿#include "text_stdafx.h"
 #include "TextEditor.h"
 #include "d2dwindowcontrol.h"
+#include "D2DContextEx.h"
 #include "TextStoreACP.h"
 #include "D2DWindow.h"
 #include "CellProperty.h"
 #include "Direct2DWrite.h"
+#include "IBridgeTSFInterface.h"
 #include "Debug.h"
+
 
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
 extern ITfThreadMgr2* g_pThreadMgr;
@@ -14,13 +17,17 @@ extern ITfThreadMgr* g_pThreadMgr;
 #endif
 extern TfClientId g_TfClientId;
 
-using namespace TSF;
-
 CTextEditor::CTextEditor(D2DTextbox* pTxtbox) 
 	:m_pTxtbox(pTxtbox)
 {
 	pCompositionRenderInfo_ = NULL;
     nCompositionRenderInfo_ = 0;
+	nLineCnt_ = 0;
+	row_width_ = 0;
+	bRecalc_ = true;
+	selected_halftone_color_ = D2RGBA(0, 140, 255, 100);
+	QueryPerformanceFrequency(&m_frequency);
+	SetFocus();
 }
 
 CTextEditor::~CTextEditor() 
@@ -28,11 +35,25 @@ CTextEditor::~CTextEditor()
     UninitTSF();
 }
 
-//----------------------------------------------------------------
-//
-// Application Initialize
-//
-//----------------------------------------------------------------
+// activeを黒色から即スタート
+
+bool CTextEditor::DrawCaret(D2DContext& cxt, const d2dw::CRectF& rc)
+{
+	QueryPerformanceCounter(&m_gtm);
+
+	float zfps = (float)(m_gtm.QuadPart - m_pregtm.QuadPart) / (float)m_frequency.QuadPart;
+
+	if (zfps > 0.4f) {
+		m_pregtm = m_gtm;
+		m_bCaret = !m_bCaret;
+	} else {
+		cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+		cxt.pWindow->m_pDirect->FillSolidRectangle((m_bCaret ? d2dw::SolidFill(0.f, 0.f, 0.f) : d2dw::SolidFill(1.f, 1.f, 1.f)), rc);
+		cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+	}
+
+	return true;
+}
 
 void CTextEditor::InitTSF()
 {
@@ -118,7 +139,7 @@ void CTextEditor::MoveSelectionPrev()
 BOOL CTextEditor::MoveSelectionAtPoint(const CPoint& pt)
 {
     BOOL bRet = FALSE;
-    int nSel = (int)layout_.CharPosFromPoint(m_pTxtbox->m_pWnd->m_pDirect->Pixels2Dips(pt));
+    int nSel = (int)CharPosFromPoint(m_pTxtbox->m_pWnd->m_pDirect->Pixels2Dips(pt));
     if (nSel != -1)
     {
         MoveSelection(nSel, nSel,true);
@@ -130,7 +151,7 @@ BOOL CTextEditor::MoveSelectionAtPoint(const CPoint& pt)
 BOOL CTextEditor::MoveSelectionAtNearPoint(const CPoint& pt)
 {
     BOOL bRet = FALSE;
-    int nSel = (int)layout_.CharPosFromNearPoint(m_pTxtbox->m_pWnd->m_pDirect->Pixels2Dips(pt));
+    int nSel = (int)CharPosFromNearPoint(m_pTxtbox->m_pWnd->m_pDirect->Pixels2Dips(pt));
     if (nSel != -1)
     {
         MoveSelection(nSel, nSel,true);
@@ -145,12 +166,12 @@ BOOL CTextEditor::MoveSelectionUpDown(BOOL bUp, bool bShiftKey )
 
 	if ( bUp )
 	{
-		if (!layout_.RectFromCharPos(m_selStart, &rc))
+		if (!RectFromCharPos(m_selStart, &rc))
 			return FALSE;
 	}
 	else
 	{
-		if (!layout_.RectFromCharPos(m_selEnd, &rc))
+		if (!RectFromCharPos(m_selEnd, &rc))
 		{
 			//MoveSelectionNext();
 			return false;
@@ -210,14 +231,14 @@ BOOL CTextEditor::MoveSelectionToLineFirstEnd(BOOL bFirst, bool bShiftKey)
 		// when pushed VK_HOME
 		m_startCharPos = 0;
 		nSel2 = m_selEnd;
-        nSel = layout_.FineFirstEndCharPosInLine(m_selStart, TRUE);
+        nSel = FineFirstEndCharPosInLine(m_selStart, TRUE);
     }
     else
     {
         // when pushed VK_END
 		m_startCharPos = 0;
 		nSel2 = m_selStart;
-		nSel = layout_.FineFirstEndCharPosInLine(m_selEnd, FALSE);
+		nSel = FineFirstEndCharPosInLine(m_selEnd, FALSE);
     }
 
     if (nSel != (UINT)-1)
@@ -240,12 +261,12 @@ BOOL CTextEditor::MoveSelectionToLineFirstEnd(BOOL bFirst, bool bShiftKey)
 
 void CTextEditor::InvalidateRect()
 {
-	layout_.bRecalc_ = true;
+	bRecalc_ = true;
 }
 
 BOOL CTextEditor::InsertAtSelection(LPCWSTR psz)
 {
-	layout_.bRecalc_ = true;
+	bRecalc_ = true;
 
     LONG lOldSelEnd = m_selEnd;
 	m_text.erase(m_selStart, m_selEnd - m_selStart);
@@ -268,7 +289,7 @@ BOOL CTextEditor::InsertAtSelection(LPCWSTR psz)
 
 BOOL CTextEditor::DeleteAtSelection(BOOL fBack)
 {
-	layout_.bRecalc_ = true;
+	bRecalc_ = true;
 
     if (!fBack && (m_selEnd < (int)m_text.size()))
     {
@@ -302,7 +323,7 @@ BOOL CTextEditor::DeleteAtSelection(BOOL fBack)
 
 BOOL CTextEditor::DeleteSelection()
 {
-	layout_.bRecalc_ = true;
+	bRecalc_ = true;
 
     ULONG nSelOldEnd = m_selEnd;
     m_text.erase(m_selStart, m_selEnd - m_selStart);
@@ -353,17 +374,16 @@ void CTextEditor::Render(D2DContext& cxt )
 {	
 	int zCaretPos = CurrentCaretPos(); //(ct_->bSelTrail_ ? m_selEnd : m_selStart );
 
-	if ( layout_.bRecalc_ )
+	if ( bRecalc_ )
 	{
-
-		layout_.Layout(cxt, m_text.c_str(), m_text.size(), m_pTxtbox->GetContentRect().Size(), m_isSingleLine, zCaretPos, m_startCharPos, cxt.textformat);
-		layout_.bRecalc_ = false;
+		Layout(cxt, m_text.c_str(), m_text.size(), m_pTxtbox->GetContentRect().Size(), zCaretPos, m_startCharPos);
+		bRecalc_ = false;
 	}
 		
 	int selstart = (int)m_selStart - m_startCharPos;
 	int selend = (int)m_selEnd - m_startCharPos;
 
-	layout_.Render(cxt, m_pTxtbox->GetContentRect() , m_text.c_str(), m_text.size(), selstart, selend,m_isSelTrail,pCompositionRenderInfo_, nCompositionRenderInfo_);
+	Render(cxt, m_pTxtbox->GetContentRect() , m_text.c_str(), m_text.size(), selstart, selend,m_isSelTrail,pCompositionRenderInfo_, nCompositionRenderInfo_);
 }
 //----------------------------------------------------------------
 //
@@ -376,8 +396,8 @@ void CTextEditor::CalcRender(D2DContext& cxt )
 	
 	//::OutputDebugStringA((boost::format("TextBuff:%1%, TextLen:%2%\r\n") % ct_->GetTextBuffer() % ct_->GetTextLength()).str().c_str());
 	d2dw::CSizeF size(m_pTxtbox->GetContentRect().Size());
-	layout_.Layout(cxt, m_text.c_str(), m_text.size(), size, m_isSingleLine,0, x, cxt.textformat);	
-	layout_.bRecalc_ = false;
+	Layout(cxt, m_text.c_str(), m_text.size(), size,0, x);	
+	bRecalc_ = false;
 }
 
 
@@ -445,12 +465,6 @@ void CTextEditor::ClearCompositionRenderInfo()
     }
 }
 
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-
 BOOL CTextEditor::AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIBUTE *pda)
 {
     if (pCompositionRenderInfo_)
@@ -477,40 +491,16 @@ BOOL CTextEditor::AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRI
 
     return TRUE;
 }
-//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//void CTextEditorCtrl::SetContainer( IBridgeTSFInterface* rect_size )
-//{
-//	//CTextEditor::SetContainer(ct);
-//
-//	Reset(rect_size);
-//
-//}
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-
-void CTextEditorCtrl::Create()
+void CTextEditor::Create()
 {	
 	InitTSF();
 
-	m_pTextEditSink->OnChanged_ = std::bind(&CTextEditorCtrl::OnEditChanged, this );// &CTextEditorCtrl::OnChanged;
+	m_pTextEditSink->OnChanged_ = std::bind(&CTextEditor::OnEditChanged, this );// &CTextEditorCtrl::OnChanged;
 }
-void CTextEditorCtrl::OnEditChanged()
-{
-	
+void CTextEditor::OnEditChanged(){}
 
-}
-
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-
-LRESULT CTextEditorCtrl::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CTextEditor::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
 {
     LRESULT ret = 0;
 
@@ -565,26 +555,12 @@ LRESULT CTextEditorCtrl::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPAR
     return ret;
 }
 
-
-
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-
-void CTextEditorCtrl::OnPaint(D2DContext& hdc)
+void CTextEditor::OnPaint(D2DContext& hdc)
 {
     Render(hdc);
 }
 
-//----------------------------------------------------------------
-// 
-//
-//
-//----------------------------------------------------------------
-
-BOOL CTextEditorCtrl::OnKeyDown(WPARAM wParam, LPARAM lParam)
+BOOL CTextEditor::OnKeyDown(WPARAM wParam, LPARAM lParam)
 {
     BOOL ret = true; 
 
@@ -685,43 +661,25 @@ BOOL CTextEditorCtrl::OnKeyDown(WPARAM wParam, LPARAM lParam)
 		break;
     }
 
-	layout_.bRecalc_ = true;
+	bRecalc_ = true;
 
 	return ret;
 }
 
-
-
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-
-void CTextEditorCtrl::OnSetFocus(WPARAM wParam, LPARAM lParam)
+void CTextEditor::OnSetFocus(WPARAM wParam, LPARAM lParam)
 {
     //SetFocus();
 }
 
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-
-void CTextEditorCtrl::OnLButtonDown(WPARAM wParam, LPARAM lParam)
+void CTextEditor::OnLButtonDown(WPARAM wParam, LPARAM lParam)
 {
     CPoint pt((short)LOWORD(lParam), (short)(HIWORD(lParam)));
-    _uSelDragStart = (UINT)-1;
-    //pt.x = GET_X_LPARAM(lParam);
-    //pt.y = GET_Y_LPARAM(lParam);
-
-
+    m_selDragStart = (UINT)-1;
 
     if (MoveSelectionAtPoint(pt))
     {
         InvalidateRect();
-        _uSelDragStart = GetSelectionStart();
+        m_selDragStart = GetSelectionStart();
     }
 	else
 	{
@@ -731,13 +689,7 @@ void CTextEditorCtrl::OnLButtonDown(WPARAM wParam, LPARAM lParam)
 	}
 }
 
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-
-void CTextEditorCtrl::OnLButtonUp(WPARAM wParam, LPARAM lParam)
+void CTextEditor::OnLButtonUp(WPARAM wParam, LPARAM lParam)
 {
     UINT nSelStart = GetSelectionStart();
     UINT nSelEnd = GetSelectionEnd();
@@ -749,7 +701,7 @@ void CTextEditorCtrl::OnLButtonUp(WPARAM wParam, LPARAM lParam)
         UINT nNewSelEnd = GetSelectionEnd();
 
 		auto bl = true;
-			if ( nNewSelStart < _uSelDragStart )
+			if ( nNewSelStart < m_selDragStart )
 				bl = false;
 
         MoveSelection(min(nSelStart, nNewSelStart), max(nSelEnd, nNewSelEnd),bl); // (nNewSelStart>_uSelDragStart));
@@ -757,19 +709,11 @@ void CTextEditorCtrl::OnLButtonUp(WPARAM wParam, LPARAM lParam)
     }
 }
 
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-
-void CTextEditorCtrl::OnMouseMove(WPARAM wParam, LPARAM lParam)
+void CTextEditor::OnMouseMove(WPARAM wParam, LPARAM lParam)
 {
     if (wParam & MK_LBUTTON)
     {
         CPoint pt((std::max)((short)0, (short)LOWORD(lParam)), (std::max)((short)0, (short)HIWORD(lParam)));
-        //pt.x = max(0, GET_X_LPARAM(lParam));
-        //pt.y = max(0, GET_Y_LPARAM(lParam));
 
         if (MoveSelectionAtPoint(pt))		
         {
@@ -777,10 +721,10 @@ void CTextEditorCtrl::OnMouseMove(WPARAM wParam, LPARAM lParam)
             UINT nNewSelEnd = GetSelectionEnd();
 
 			auto bl = true;
-			if ( nNewSelStart < _uSelDragStart )
+			if ( nNewSelStart < m_selDragStart )
 				bl = false;
 
-            MoveSelection(min(_uSelDragStart, nNewSelStart), max(_uSelDragStart, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
+            MoveSelection(min(m_selDragStart, nNewSelStart), max(m_selDragStart, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
             InvalidateRect();
         }
     }
@@ -1004,4 +948,539 @@ Exit:
 
     return hr;
 }
+
+//----------------------------------------------------------------
+//
+//
+// Calc layout 行数の把握と文字単位にPOS,LEN,RECTを取得
+//----------------------------------------------------------------
+
+BOOL CTextEditor::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt, const d2dw::CSizeF& sz, int zCaret, int& StarCharPos)
+{
+	Clear();
+
+	LPCWSTR str = psz;
+	nLineCnt_ = 1;
+	StarCharPos_ = 0;
+
+	// 行数を計算
+
+	nLineCnt_ = 0;
+
+	{
+		BOOL bNewLine = TRUE;
+		for (int i = 0; i < nCnt; i++) {
+			switch (psz[i]) {
+			case 0x0d://CR
+			case 0x0a://LF                
+				if (bNewLine) {
+					nLineCnt_++;
+				}
+				bNewLine = TRUE;
+				break;
+			default:
+				if (bNewLine) {
+					nLineCnt_++;
+				}
+				bNewLine = FALSE;
+				break;
+			}
+		}
+	}
+
+	// 行数分のLINEINFOを作成, 文字0でもLINEINFOは１つ作成
+
+	m_lineInfos = std::vector((std::max)((UINT)1, nLineCnt_), LINEINFO());
+
+	// Count character of each line.　文字単位にPOS,LEN,RECTを取得
+
+	int nCurrentLine = -1;
+	m_lineInfos[0].nPos = 0;
+	m_lineInfos[0].nCnt = 0;
+	m_lineInfos[0].CharInfos = std::vector<CHARINFO>();
+
+	// prgLines_ の設定
+	{
+		UINT crlf = 0;
+		int nNewLine = 1;
+
+		for (int i = 0; i < nCnt; i++) {
+			switch (psz[i]) {
+			case 0x0d://CR
+			case 0x0a://LF
+				nNewLine++;
+
+				if (nNewLine == 2) {
+					nCurrentLine++;
+					m_lineInfos[nCurrentLine].nPos = i;
+					m_lineInfos[nCurrentLine].nCnt = 0; // CRCRの場合、nCntは0		
+					m_lineInfos[nCurrentLine].CharInfos = std::vector<CHARINFO>();
+					nNewLine = 1;
+				}
+
+
+				xassert(crlf == 0 || crlf == psz[i]); // CRLFはだめ、CRCR.. or LFLF..はOK
+				crlf = psz[i];
+				break;
+			default:
+				if (nNewLine) {
+					nCurrentLine++;
+					m_lineInfos[nCurrentLine].nPos = i;
+					m_lineInfos[nCurrentLine].nCnt = 1;
+					m_lineInfos[nCurrentLine].CharInfos = std::vector<CHARINFO>();
+
+				} else {
+					m_lineInfos[nCurrentLine].nCnt++;
+
+				}
+				nNewLine = 0;
+				crlf = 0;
+				break;
+			}
+		}
+	}
+
+	{
+
+		StarCharPos_ = 0;
+		int slen = nCnt;
+
+		// 文字文のRECT取得
+		std::vector<d2dw::CRectF> charRects = cxt.pWindow->m_pDirect->CalcCharRects(*(cxt.pWindow->m_spProp->Format), std::wstring(psz).substr(StarCharPos), sz);
+		if (charRects.empty()) {
+			auto pLayout = cxt.pWindow->m_pDirect->GetTextLayout(*(cxt.pWindow->m_spProp->Format), std::wstring(psz).substr(StarCharPos), sz);
+			float x, y;
+			DWRITE_HIT_TEST_METRICS tm;
+			pLayout->HitTestTextPosition(0, false, &x, &y, &tm);
+			nLineHeight_ = tm.height;
+		} else {
+			nLineHeight_ = charRects[0].Height();
+		}
+
+		// prgLines_[lineno].prgCharInfo[col].rc の設定
+		{
+			UINT rcIdx = 0;
+			// Get the rectangle of each characters. RECTを取得
+			for (UINT r = 0; r < nLineCnt_; r++) {
+				m_lineInfos[r].CharInfos = std::vector<CHARINFO>();
+
+				UINT nCnt = m_lineInfos[r].nCnt;
+				if (nCnt) {
+					UINT nCntK = nCnt + 1; // 改行分
+
+					m_lineInfos[r].CharInfos = std::vector<CHARINFO>(nCntK, CHARINFO());
+
+					UINT col;
+					for (col = 0; col < nCnt; col++) {
+						d2dw::CRectF rc = charRects[rcIdx++];
+						rc.OffsetRect(2.5, 2.5);
+						m_lineInfos[r].CharInfos[col].rc = rc;
+					}
+
+					// 行の最後の処理				
+					{
+						d2dw::CRectF rc = m_lineInfos[r].CharInfos[col - 1].rc;
+						rc.left = rc.right; //前の文字の右端を左端として、rectを作成
+						m_lineInfos[r].CharInfos[col].rc = rc;//No more offset
+						rcIdx++;
+					}
+				} else // 空行
+				{
+					m_lineInfos[r].CharInfos = std::vector<CHARINFO>(1, CHARINFO());
+					d2dw::CRectF rc = charRects[rcIdx++];
+
+					xassert(rc.left == rc.right);
+					rc.OffsetRect(2.5, 2.5);
+					m_lineInfos[r].CharInfos[0].rc = rc;
+
+					xassert(m_lineInfos[r].nCnt == 0);
+				}
+			}
+		}
+
+		if (nCnt) {
+			// 1行目の文字幅の取得、右寄せのためにrow_width_必要
+			row_width_ = 0;
+			for (int col = 0; col < m_lineInfos[0].nCnt; col++) {
+				row_width_ += m_lineInfos[0].CharInfos[col].rc.Width();
+			}
+		}
+
+		return TRUE;
+	}
+
+
+	return FALSE;
+}
+//----------------------------------------------------------------
+// Rnderを開始、　DrawTextLayoutで文字表示とCaretを位置を計算して表示
+//
+//
+//----------------------------------------------------------------
+
+#pragma region CaretRect
+class CaretRect
+{
+public:
+	CaretRect(bool bTrail) :bTrail_(bTrail), cnt_(0) {};
+
+	void Push(const d2dw::CRectF& rc, int row, int colStart, int colLast)
+	{
+		if (bTrail_) {
+			rc_ = rc;
+			row_ = row;
+			col_ = colLast;
+		} else if (!bTrail_ && cnt_ == 0) {
+			rc_ = rc;
+			row_ = row;
+			col_ = colStart;
+		}
+
+		cnt_++;
+	}
+
+	d2dw::CRectF Get() { return rc_; }
+	bool empty() { return cnt_ == 0; }
+
+	int row() { return row_; }
+	int col() { return col_; }
+
+
+	bool IsComplete(int rowno)
+	{
+		if (cnt_ == 0) return false;
+
+		if (bTrail_) {
+			if (row_ == rowno)
+				return false;
+		}
+
+		return true;
+	}
+
+private:
+	bool bTrail_;
+	int cnt_;
+	d2dw::CRectF rc_;
+	int row_, col_;
+};
+#pragma endregion
+
+BOOL CTextEditor::Render(D2DContext& cxt, const d2dw::CRectF& rc, LPCWSTR psz, int nCnt, int nSelStart, int nSelEnd, bool bTrail,
+	const COMPOSITIONRENDERINFO *pCompositionRenderInfo, UINT nCompositionRenderInfo)
+{
+	cxt.pWindow->m_pDirect->DrawTextLayout(*(cxt.pWindow->m_spProp->Format), psz, d2dw::CRectF(rc.left, rc.top, rc.right, rc.bottom));
+
+	// Render selection,caret
+	d2dw::CRectF rcSelCaret(rc.left, rc.top, rc.left + 1.0f, rc.top + (float)nLineHeight_);
+
+	CaretRect xcaret(bTrail);
+
+	if (nLineCnt_) {
+#pragma region CaretRectX
+
+		for (UINT r = 0; r < nLineCnt_; r++) {
+
+			if ((nSelEnd >= m_lineInfos[r].nPos) && (nSelStart <= m_lineInfos[r].nPos + m_lineInfos[r].nCnt)) {
+				int nSelStartInLine = 0;
+				int nSelEndInLine = m_lineInfos[r].nCnt;
+
+				if (nSelStart > m_lineInfos[r].nPos) {
+					nSelStartInLine = nSelStart - m_lineInfos[r].nPos;
+				}
+
+				if (nSelEnd < m_lineInfos[r].nPos + m_lineInfos[r].nCnt) {
+					nSelEndInLine = nSelEnd - m_lineInfos[r].nPos;
+
+				}
+
+				// caret, select範囲指定の場合
+				if (nSelStartInLine != nSelEndInLine && nSelEndInLine != -1) {
+					for (int j = nSelStartInLine; j < nSelEndInLine; j++) {
+						cxt.pWindow->m_pDirect->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)), m_lineInfos[r].CharInfos[j].rc);
+					}
+
+					bool blast = bTrail;
+
+					if (blast) {
+						rcSelCaret = m_lineInfos[r].CharInfos[nSelEndInLine - 1].rc;
+						rcSelCaret.left = rcSelCaret.right;
+					} else {
+						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
+						rcSelCaret.right = rcSelCaret.left;
+					}
+					rcSelCaret.right++;
+
+					xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
+
+
+				} else // caret, 範囲指定されてない場合
+				{
+					if (nSelStartInLine == m_lineInfos[r].nCnt && !m_lineInfos[r].CharInfos.empty()) {
+						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
+						rcSelCaret.right = rcSelCaret.left + 1;
+
+						_ASSERT(rcSelCaret.bottom >= 0);
+						_ASSERT(rcSelCaret.bottom < 65000);
+
+						xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
+
+
+					} else if (nSelStartInLine > -1 && !m_lineInfos[r].CharInfos.empty()) {
+						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
+						rcSelCaret.right = rcSelCaret.left + 1;
+
+						_ASSERT(rcSelCaret.bottom >= 0);
+						xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
+
+					}
+				}
+
+			}
+
+			// キャレット表示位置が確定
+			if (xcaret.IsComplete(r)) {
+				if (bTrail)
+					break;
+
+			}
+
+			for (UINT j = 0; j < nCompositionRenderInfo; j++) {
+
+				if ((pCompositionRenderInfo[j].nEnd >= m_lineInfos[r].nPos) &&
+					(pCompositionRenderInfo[j].nStart <= m_lineInfos[r].nPos + m_lineInfos[r].nCnt)) {
+					UINT nCompStartInLine = 0;
+					UINT nCompEndInLine = m_lineInfos[r].nCnt;
+					int  nBaseLineWidth = (nLineHeight_ / 18) + 1;
+
+					if (pCompositionRenderInfo[j].nStart > m_lineInfos[r].nPos)
+						nCompStartInLine = pCompositionRenderInfo[j].nStart - m_lineInfos[r].nPos;
+
+					if (pCompositionRenderInfo[j].nEnd < m_lineInfos[r].nPos + m_lineInfos[r].nCnt)
+						nCompEndInLine = pCompositionRenderInfo[j].nEnd - m_lineInfos[r].nPos;
+
+					for (UINT k = nCompStartInLine; k < nCompEndInLine; k++) {
+						UINT uCurrentCompPos = m_lineInfos[r].nPos + k - pCompositionRenderInfo[j].nStart;
+						BOOL bClause = FALSE;
+
+						if (k + 1 == nCompEndInLine) {
+							bClause = TRUE;
+						}
+
+						if ((pCompositionRenderInfo[j].da.crText.type != TF_CT_NONE) &&
+							(pCompositionRenderInfo[j].da.crBk.type != TF_CT_NONE)) {
+							int a = 0;
+						}
+
+						if (pCompositionRenderInfo[j].da.lsStyle != TF_LS_NONE) {
+							// 変換途中の下線の描画
+							{
+								d2dw::CRectF rc = m_lineInfos[r].CharInfos[k].rc;
+
+								d2dw::CPointF pts[2];
+								pts[0].x = rc.left;
+								pts[0].y = rc.bottom;
+								pts[1].x = rc.right - (bClause ? nBaseLineWidth : 0);
+								pts[1].y = rc.bottom;
+								cxt.pWindow->m_pDirect->DrawSolidLine(*(cxt.pWindow->m_spProp->Line), pts[0], pts[1]);
+							}
+						}
+					}
+				}
+			}
+		}
+#pragma endregion
+
+
+		if (xcaret.empty()) {
+			//次行の文字なし先頭列
+			rcSelCaret.left = rc.left;
+			rcSelCaret.right = rc.left + 1;
+
+			rcSelCaret.OffsetRect(0, nLineHeight_*nLineCnt_);
+			xcaret.Push(rcSelCaret, nLineCnt_, 0, 0);
+		}
+
+
+		// 情報
+		int CaretRow = xcaret.row() + 1;
+		int CaretCol = xcaret.col();
+		int LineNumber = nLineCnt_;
+
+
+		// Caret表示
+		DrawCaret(cxt, xcaret.Get());
+
+	} else {
+		// 文字がない場合Caret表示
+		DrawCaret(cxt, rcSelCaret);
+	}
+
+	return TRUE;
+}
+
+//----------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------
+
+BOOL CTextEditor::RectFromCharPos(UINT nPos, d2dw::CRectF *prc)
+{
+	d2dw::CRectF& retrc = *prc;
+
+	retrc.SetRect(0, 0, 0, 0);
+
+	UINT sum = 0;
+	UINT current_rowno = 0;
+	for (UINT r = 0; r < nLineCnt_; r++) {
+		if (m_lineInfos[r].nCnt)
+			sum += m_lineInfos[r].nCnt + 1; // 1 is \r
+		else
+			sum += 1;
+
+		current_rowno = r;
+		if (nPos < sum) {
+			break;
+		}
+	}
+
+	UINT pos = nPos - m_lineInfos[current_rowno].nPos;
+
+	if (pos <= (UINT)m_lineInfos[current_rowno].nCnt && m_lineInfos[current_rowno].nCnt) {
+		retrc = m_lineInfos[current_rowno].CharInfos[pos].rc;
+		return TRUE;
+	} else if (pos > 0) {
+		retrc = m_lineInfos[current_rowno].CharInfos[pos - 1].rc;
+		retrc.left = retrc.right;
+		return TRUE;
+	} else if (sum) {
+		retrc = m_lineInfos[current_rowno].CharInfos[0].rc; // 空行で先頭の場合、
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+
+static bool PtInRectRightSide(const d2dw::CRectF& rc, const d2dw::CPointF& pt)
+{
+	return (rc.top <= pt.y && pt.y <= rc.bottom && rc.right <= pt.x);
+}
+
+
+int CTextEditor::CharPosFromPoint(const d2dw::CPointF& pt)
+{
+
+	for (UINT r = 0; r < nLineCnt_; r++) {
+		// 行内
+		for (int j = 0; j < m_lineInfos[r].nCnt; j++) {
+			d2dw::CRectF& rc = m_lineInfos[r].CharInfos[j].rc;
+
+			if (rc.PtInRect(pt) || (pt.x == 0 && rc.left == 0 && rc.right == 0 && rc.top <= pt.y && pt.y <= rc.bottom)) {
+				int nWidth = m_lineInfos[r].CharInfos[j].GetWidth();
+				if (pt.x > m_lineInfos[r].CharInfos[j].rc.left + (nWidth * 3 / 4)) {
+					return m_lineInfos[r].nPos + j + 1 + StarCharPos_;
+				}
+				return m_lineInfos[r].nPos + j + StarCharPos_;
+			}
+		}
+
+		// 行端
+		{
+			if (r == 1) {
+				r = 1;
+			}
+
+			int j = m_lineInfos[r].nCnt;
+			d2dw::CRectF& rc = m_lineInfos[r].CharInfos[j].rc;
+			if (PtInRectRightSide(rc, pt))
+				return m_lineInfos[r].nPos + j + StarCharPos_;
+		}
+	}
+
+	return -1;
+}
+
+int CTextEditor::CharPosFromNearPoint(const d2dw::CPointF& pt)
+{
+	struct st
+	{
+		int i, j;
+	};
+
+	std::vector<st> ar;
+
+	for (UINT i = 0; i < nLineCnt_; i++) {
+		for (int j = 0; j < m_lineInfos[i].nCnt + 1; j++) // +1 is return key
+		{
+			xassert(!m_lineInfos[i].CharInfos.empty());
+
+			d2dw::CRectF rc = m_lineInfos[i].CharInfos[j].rc;
+
+			if (rc.top <= pt.y && pt.y <= rc.bottom) {
+				st s;
+				s.i = i;
+				s.j = j;
+				ar.push_back(s);
+			}
+		}
+	}
+
+
+	UINT last = ar.size();
+
+	if (last) {
+		st s = ar[last - 1];
+
+		return m_lineInfos[s.i].nPos + s.j;
+
+	}
+
+	return -1;
+}
+
+//----------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------
+
+UINT CTextEditor::FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst)
+{
+	if (bFirst) {
+		// 先頭列へ
+		for (UINT i = 0; i < nLineCnt_; i++) {
+			if ((m_lineInfos[i].nPos <= (int)uCurPos) && ((int)uCurPos <= m_lineInfos[i].nPos + m_lineInfos[i].nCnt)) {
+				return m_lineInfos[i].nPos;
+			}
+		}
+
+	} else {
+		// 行の最後尾
+		for (UINT i = 0; i < nLineCnt_; i++) {
+			if ((m_lineInfos[i].nPos <= (int)uCurPos) && ((int)uCurPos <= m_lineInfos[i].nPos + m_lineInfos[i].nCnt)) {
+				{
+					UINT idx = m_lineInfos[i].nPos + m_lineInfos[i].nCnt;
+					return idx;
+				}
+			}
+		}
+	}
+	return (UINT)(-1);
+}
+
+
+//----------------------------------------------------------------
+//
+// memory clear
+//
+//----------------------------------------------------------------
+
+void CTextEditor::Clear()
+{
+	m_lineInfos.clear();
+}
+
+
 #pragma endregion

@@ -1,18 +1,14 @@
 ﻿#include "text_stdafx.h"
 #include "D2DWindow.h"
 #include "D2DWindowControl.h"
-#include "Selection.h"
 
 #include <Shellapi.h>
 
-#include "MoveTarget.h"
 #include <random>
 
 #include "Direct2DWrite.h"
 #include "CellProperty.h"
 #define CLASSNAME L"D2DWindow"
-
-using namespace V4;
 
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -238,8 +234,8 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 	redraw_ = 0;
 
 	// create textbox control
-	m_pTxtbox.reset(new D2DTextbox(this, m_spProp, V4::D2DTextbox::MULTILINE, m_changed));
-	m_pTxtbox->SetStat(V4::STAT::BORDER);
+	m_pTxtbox.reset(new D2DTextbox(this, m_spProp, m_changed));
+	m_pTxtbox->SetStat(STAT::BORDER);
 	m_pTxtbox->CreateWindow(this, VISIBLE, L"txtbox");
 	m_pTxtbox->SetText(m_strInit.c_str());
 

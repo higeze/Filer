@@ -3,9 +3,7 @@
 
 static ITfDisplayAttributeMgr *s_DisplayAttributeMgr = NULL;
 
-using namespace TSF;
-
-CDispAttrProps* TSF::GetDispAttrProps()
+CDispAttrProps* GetDispAttrProps()
 {
     IEnumGUID *pEnumProp = NULL;
     CDispAttrProps *pProps = NULL;
@@ -98,7 +96,7 @@ HRESULT UninitDisplayAttrbute()
 //
 //----------------------------------------------------------------------------
 
-HRESULT TSF::GetDisplayAttributeTrackPropertyRange(TfEditCookie ec, ITfContext *pic, ITfRange *pRange, ITfReadOnlyProperty **ppProp, CDispAttrProps *pDispAttrProps)
+HRESULT GetDisplayAttributeTrackPropertyRange(TfEditCookie ec, ITfContext *pic, ITfRange *pRange, ITfReadOnlyProperty **ppProp, CDispAttrProps *pDispAttrProps)
 {
     ITfReadOnlyProperty *pProp = NULL;
     HRESULT hr = E_FAIL;
@@ -150,7 +148,7 @@ Exit:
 //
 //----------------------------------------------------------------------------
 
-HRESULT TSF::GetDisplayAttributeData(TfEditCookie ec, ITfReadOnlyProperty *pProp, ITfRange *pRange, TF_DISPLAYATTRIBUTE *pda, TfGuidAtom *pguid)
+HRESULT GetDisplayAttributeData(TfEditCookie ec, ITfReadOnlyProperty *pProp, ITfRange *pRange, TF_DISPLAYATTRIBUTE *pda, TfGuidAtom *pguid)
 {
     VARIANT var;
     IEnumTfPropertyValue *pEnumPropertyVal;

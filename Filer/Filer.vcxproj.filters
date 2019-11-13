@@ -605,9 +605,6 @@
     <ClInclude Include="..\HiLib\observable_vector.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\TextLayout.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\TextEditor.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -615,12 +612,6 @@
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\resource.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\MoveTarget.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\ItemLoopArray.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h">
@@ -986,9 +977,6 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\TextLayout.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\TextEditor.cpp">

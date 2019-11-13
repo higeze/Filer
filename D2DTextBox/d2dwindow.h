@@ -1,11 +1,8 @@
 ﻿#pragma once
 
 #include "D2DContextEx.h"
-#include "ItemLoopArray.h"
 #include "D2DWindowMessage.h"
 #include "D2DWindowMessageStruct.h"
-#include "IBridgeTSFInterface.h"
-#include "faststack.h"
 #include "Direct2DWrite.h"
 
 #undef CreateWindow
@@ -18,9 +15,6 @@
 
 class CellProperty;
 
-
-
-namespace V4 {
 
 // DISABLE:表示はされる、マウス等はうけつけない 
 // DEATH:表示されない、すべてのメッセージは無視される
@@ -71,6 +65,4 @@ public:
 		HWND CreateD2DWindow( DWORD WSEX_STYLE, HWND parent, DWORD WS_STYLE, RECT rc, UINT* img_resource_id=nullptr, int img_cnt=0 );		
 		LRESULT WndProc(UINT message, WPARAM wParam, LPARAM lParam);		
 		void Clear();
-};
-
 };

@@ -3,33 +3,13 @@
 #include <dxgi1_2.h>
 #include "Direct2DWrite.h"
 
-namespace V4 
-{
-
-#define STOCKSIZE 16
-struct D2DContext;
-
 class D2DWindow;
 
 
 struct D2DContext
 {	
-	V4::D2DWindow* pWindow;
+	D2DWindow* pWindow;
 
-	//CComPtr<ID2D1SolidColorBrush> ltgray;
-	//CComPtr<ID2D1SolidColorBrush> black;
-	//CComPtr<ID2D1SolidColorBrush> white;
-	//CComPtr<ID2D1SolidColorBrush> red;
-	//CComPtr<ID2D1SolidColorBrush> gray;
-	//CComPtr<ID2D1SolidColorBrush> bluegray;
-	//CComPtr<ID2D1SolidColorBrush> transparent;
-	//CComPtr<ID2D1SolidColorBrush> halftone;
-	//CComPtr<ID2D1SolidColorBrush> halftoneRed;
-	//CComPtr<ID2D1SolidColorBrush> tooltip;
-
-	//CComPtr<ID2D1SolidColorBrush> basegray;
-	//CComPtr<ID2D1SolidColorBrush> basegray_line;
-	//CComPtr<ID2D1SolidColorBrush> basetext;
 
 	CComPtr<ID2D1StrokeStyle> dot4_;
 	CComPtr<ID2D1StrokeStyle> dot2_;
@@ -83,7 +63,7 @@ inline void ThrowIfFailed( HRESULT hr, LPCWSTR msg, UINT line, LPCSTR fnm )
 //	return hr;
 //}
 
-void CaretActive(); // D2DContextEx.cpp
+//void CaretActive(); // D2DContextEx.cpp
 
 //////////////////////////////////////////////////////////////////////////////////////
 // Variant
@@ -91,13 +71,5 @@ d2dw::CRectF FRectFV( _variant_t& x,_variant_t& y,_variant_t& cx,_variant_t& cy 
 d2dw::CSizeF FSizeFV( _variant_t& cx,_variant_t& cy );
 d2dw::CPointF FPointFV( _variant_t& cx,_variant_t& cy );
 std::wstring FStringV( _variant_t& s );
-
-//以下 TSFのために追加 /////////////////////////////////////////////////////////////////////
-
-bool DrawCaret(D2DContext& cxt, const d2dw::CRectF& rc );
-
-////////////////////////////////////////////////////////////////////////////////////////
- 
-};
 
 

@@ -121,7 +121,7 @@ void CTextCell::OnEdit(const EventArgs& e)
 	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(GetRect()));
 	UINT id[] = { IDB_PNG1 };
 	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
-	m_pEdit = new V4::D2DWindow(
+	m_pEdit = new D2DWindow(
 			m_spProperty,
 			[spCell]() -> std::basic_string<TCHAR>{
 				return spCell->GetString();

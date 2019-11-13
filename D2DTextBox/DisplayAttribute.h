@@ -4,8 +4,6 @@
 
 #define MAX_DISPATTRGUID 10
 
-namespace TSF {
-
 class CDispAttrProps
 {
 public:
@@ -74,5 +72,3 @@ HRESULT GetAttributeColor(TF_DA_COLOR *pdac, COLORREF *pcr);
 HRESULT SetAttributeColor(TF_DA_COLOR *pdac, COLORREF cr);
 HRESULT SetAttributeSysColor(TF_DA_COLOR *pdac, int nIndex);
 HRESULT ClearAttributeColor(TF_DA_COLOR *pdac);
-
-};

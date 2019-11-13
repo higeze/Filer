@@ -2,56 +2,28 @@
 #include "D2DWindow.h"
 #include "D2DWindowControl.h"
 #include "TextEditor.h"
-#include "TextLayout.h"
-#include "D2DCharRect.h"
 #include "CellProperty.h"
 #include "MyClipboard.h"
+#include "IBridgeTSFInterface.h"
 
 
 #define TAB_WIDTH_4CHAR 4
 
-using namespace TSF;
-using namespace V4;
-
-#define LEFT_MARGIN 0.0f
-
-LPCWSTR regexpre[] = { 
-	/*
-		#include <regex>
-		std::wregex re(regexpre[0]);	
-		bool bl = std::regex_match( L"ABCabc", re );
-
-	*/
-
-	L"[A-Za-z]+",									// 1文字以上 英字 
-	L"[A-Za-z0-9]+",								// 1文字以上 英数字 
-	L"[0-9]+",										// 1文字以上 数字 
-	L"^[-+0-9][0-9]{0,14}" ,						// 1文字以上 数字１５桁まで 
-	L"^[-+0-9][0-9]{0,14}[.]{1}[0-9]{1,4}",			// 1文字以上 数字　ドット １文字　小数点４桁まで
-	L"[0-9]{2,4}[./ ]{1}[0-9]{1,2}[./ ]{1}[0-9]{1,4}"// 日付用 
-};
-
-D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::shared_ptr<CellProperty>& pProp, TYP typ, std::function<void(const std::wstring&)> changed)
-:m_pWnd(pWnd), m_pProp(pProp), m_changed(changed)
+D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::shared_ptr<CellProperty>& pProp, std::function<void(const std::wstring&)> changed)
+	:m_pProp(pProp), m_changed(changed)
 {
-	ctrl_ = new TSF::CTextEditorCtrl(this);
+	m_pWnd = pWnd;
+	ctrl_ = new CTextEditor(this);
 	ctrl_->Create();
 	ctrl_->bri_ = this;
 	ctrl_->m_changed = m_changed;
-
-	if ( typ & RIGHT || typ & CENTER || typ & VCENTER )
-		typ = (D2DTextbox::TYP)(typ | TYP::SINGLELINE);
-
-	typ_ = typ;
-	bActive_ = false;
 }
 
-void D2DTextbox::CreateWindow( D2DWindow* parent,int stat, LPCWSTR name)
+void D2DTextbox::CreateWindow(D2DWindow* parent, int stat, LPCWSTR name)
 {
 	D2DControl::CreateWindow( parent,stat,name);
 	SetText(L"");
 }
-
 
 LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -69,7 +41,6 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 			d->m_pDirect->GetHwndRenderTarget()->DrawRectangle(GetClientRect(), d->m_pDirect->GetColorBrush(d->m_spProp->EditLine->Color), d->m_spProp->Line->Width);
 			//PaintContent(e.Direct, rcContent);
 			ctrl_->WndProc(d, WM_PAINT, wParam, lParam);
-
 			d->redraw_ = 1;
 		}
 		break;
@@ -81,10 +52,6 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 
 			if ( (stat_ & READONLY) || (stat_ & DISABLE) ) 
 				return 0;
-				
-			if ( EventMessageHanler_ && EventMessageHanler_(this, message,wParam,lParam))
-				return 1;
-
 			
 			switch( message )
 			{
@@ -110,7 +77,6 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 			else if ( message == WM_CHAR && (WCHAR)wParam == L'\r' )
 			{
 				// top column, tab count.
-
 				bAddTabCount = TabCountCurrentRow();
 			}
 
@@ -175,13 +141,10 @@ int D2DTextbox::OnKeyDown(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lPar
 		break;
 		case VK_RETURN:
 		case VK_TAB:			
-			if ( OnPushKey_ )
-				ret = OnPushKey_( this, (UINT)wParam );			
-		break;
+			InsertText(L"\t", -1, 1);
+			break;
 
 		default :
-			if ( OnPushKey_ )			
-				ret = OnPushKey_( this, (UINT)wParam );			
 		break;
 
 	}
@@ -248,7 +211,7 @@ BOOL D2DTextbox::Clipboard( HWND hwnd, TCHAR ch )
 				if (e1 - s1 > 0)
 					ctrl_->m_text.erase(s1, e1 - s1);
 
-				ctrl_->CalcRender(parent_->cxt_);
+				ctrl_->CalcRender(m_pWnd->cxt_);
 			}
 			clipboard.Close();
 		}
@@ -259,69 +222,29 @@ BOOL D2DTextbox::Clipboard( HWND hwnd, TCHAR ch )
 
 std::wstring D2DTextbox::FilterInputString( LPCWSTR s, UINT len )
 {
-	if ( typ_ != TYP::MULTILINE )
+	// \n->\r or \r\n->\r
+	WCHAR* cb = new WCHAR[len+1];
+	WCHAR* p = cb;
+	for(UINT i = 0; i < len; i++ )
 	{
-		for(UINT i = 0; i < len; i++ )
-		{
-			if ( s[i] == '\r' || s[i] == '\n' )
-			{
-				len = i;
-				break;
-			}
+		if ( s[i] == '\r' && s[i+1] == '\n' )
+		{				
+			*p++ = '\r';
+			i++;
 		}
-
-		std::wstring r( s, len );
-		return r;
+		else if ( s[i] == '\n' )
+			*p++ = '\r';
+		else
+			*p++ = s[i];
 	}
-	else
-	{
-		// \n->\r or \r\n->\r
-		WCHAR* cb = new WCHAR[len+1];
-		WCHAR* p = cb;
-		for(UINT i = 0; i < len; i++ )
-		{
-			if ( s[i] == '\r' && s[i+1] == '\n' )
-			{				
-				*p++ = '\r';
-				i++;
-			}
-			else if ( s[i] == '\n' )
-				*p++ = '\r';
-			else
-				*p++ = s[i];
-		}
-		*p = 0;
+	*p = 0;
 
-		std::wstring r = cb;
-		delete [] cb;
+	std::wstring r = cb;
+	delete [] cb;
 
-		return r;
-	}
+	return r;
 }
 
-//void D2DTextbox::SetViewText(LPCWSTR str)
-//{
-//	//FString org = ct_.GetTextBuffer();
-//
-//	SetText(str);
-//	//
-//
-//	//UINT nrCnt; 
-//	//ct_.Clear();
-//	//ct_.InsertText( 0, org, org.length(), nrCnt );
-//	//ctrl_->m_selStart = ctrl_->m_selEnd = ct_.GetTextLength();
-//	////ct_.CaretLast();
-//
-//	//CalcRender(true);
-//
-//}
-void D2DTextbox::SetReadOnly(bool bReadOnly )
-{
-	if ( bReadOnly )
-		stat_ |=  STAT::READONLY ;
-	else
-		stat_ &=  ~STAT::READONLY;
-}
 void D2DTextbox::SetText(VARIANT v)
 {
 	if ( v.vt == VT_BSTR )
@@ -350,31 +273,6 @@ void D2DTextbox::SetText(LPCWSTR str1)
 	ctrl_->CalcRender(m_pWnd->cxt_);
 }
 
-
-void D2DTextbox::StatActive( bool bActive )
-{
-	// captureは上位層で操作
-	
-	if ( bActive )
-	{
-		bActive_ = true;
-
-		ctrl_->SetFocus();
-		V4::CaretActive(); // D2DContextEx.cpp
-
-		if ( OnEnter_ )
-			OnEnter_(this);
-	}
-	else
-	{
-		::SetCursor(::LoadCursor(NULL,IDC_ARROW));
-		bActive_ = false;
-
-		if ( OnLeave_ )
-			OnLeave_(this);
-	}
-}
-
 d2dw::CRectF D2DTextbox::GetClientRect() const
 {
 	CRect rcClient;
@@ -393,20 +291,6 @@ d2dw::CRectF D2DTextbox::GetContentRect() const
 std::wstring D2DTextbox::GetText()
 {	
 	return ctrl_->m_text;  // null terminate	
-}
-
-// Tab文字　可
-void D2DTextbox::TabEnable()
-{
-	OnPushKey_ = [](D2DTextbox* tx,UINT key)->LRESULT
-	{
-		if ( key == '\t' )
-		{			
-			tx->InsertText( L"\t", -1, 1 );
-			return 1;
-		}
-		return 0;
-	};
 }
 
 static ITfKeystrokeMgr *g_pKeystrokeMgr	= NULL;

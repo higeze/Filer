@@ -5,15 +5,8 @@
 #include "D2DWindow.h"
 
 
-static LARGE_INTEGER __s_frequency_;
-
-
-namespace V4{
-
-
 void D2DContext::Init()
 {
-	QueryPerformanceFrequency( &__s_frequency_ );
 }
 
 UINT D2DContext::GetLineMetrics( const D2D1_SIZE_F& sz,  LPCWSTR str, int len, DWRITE_TEXT_METRICS& textMetrics, std::vector<DWRITE_LINE_METRICS>& lineMetrics )
@@ -54,33 +47,7 @@ UINT D2DContext::GetLineMetric( const D2D1_SIZE_F& sz, IDWriteTextFormat* fmt, L
 
 	///TSF////////////////////////////////////////////////////////////////////////////////////////////
 
-	static bool bCaret = false;
-	static LARGE_INTEGER gtm, pregtm;
 
-	// activeを黒色から即スタート
-	void CaretActive()
-	{
-		bCaret = true;
-		QueryPerformanceCounter(&pregtm);
-	}
-
-	bool DrawCaret(D2DContext& cxt, const d2dw::CRectF& rc)
-	{
-		QueryPerformanceCounter(&gtm);
-
-		float zfps = (float)(gtm.QuadPart - pregtm.QuadPart) / (float)__s_frequency_.QuadPart;
-
-		if (zfps > 0.4f) {
-			pregtm = gtm;
-			bCaret = !bCaret;
-		} else {
-			cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-			cxt.pWindow->m_pDirect->FillSolidRectangle((bCaret ? d2dw::SolidFill(0.f, 0.f, 0.f) : d2dw::SolidFill(1.f, 1.f, 1.f)), rc);
-			cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-		}
-
-		return true;
-	}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -113,5 +80,3 @@ std::wstring FStringV( _variant_t& s )
 
 	return std::wstring(s.bstrVal);
 }
-
-};
