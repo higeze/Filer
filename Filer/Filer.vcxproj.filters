@@ -605,9 +605,6 @@
     <ClInclude Include="..\HiLib\observable_vector.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\TextEditor.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\targetver.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -626,9 +623,6 @@
     <ClInclude Include="..\D2DTextBox\D2DWindowMessage.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\d2dwindowcontrol.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DContextEx.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -642,6 +636,12 @@
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\D2DWindow.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\Textbox.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\TextEditSink.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
   </ItemGroup>
@@ -979,13 +979,7 @@
     <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
-    <ClCompile Include="..\D2DTextBox\TextEditor.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\D2DWindowTextboxTSF.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\D2DWindowControl.cpp">
@@ -1001,6 +995,12 @@
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\text_stdafx.cpp">
+      <Filter>D2DTextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\Textbox.cpp">
+      <Filter>D2DTextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\TextEditSink.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
   </ItemGroup>

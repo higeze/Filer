@@ -191,7 +191,7 @@
   <ItemGroup>
     <ClInclude Include="..\D2DTextBox\D2DContextEx.h" />
     <ClInclude Include="..\D2DTextBox\D2DWindow.h" />
-    <ClInclude Include="..\D2DTextBox\d2dwindowcontrol.h" />
+    <ClInclude Include="..\D2DTextBox\Textbox.h" />
     <ClInclude Include="..\D2DTextBox\D2DWindowMessage.h" />
     <ClInclude Include="..\D2DTextBox\D2DWindowMessageStruct.h" />
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h" />
@@ -199,7 +199,7 @@
     <ClInclude Include="..\D2DTextBox\resource.h" />
     <ClInclude Include="..\D2DTextBox\text_stdafx.h" />
     <ClInclude Include="..\D2DTextBox\targetver.h" />
-    <ClInclude Include="..\D2DTextBox\TextEditor.h" />
+    <ClInclude Include="..\D2DTextBox\TextEditSink.h" />
     <ClInclude Include="..\D2DTextBox\TextStoreACP.h" />
     <ClInclude Include="..\D2DTextBox\undo.h" />
     <ClInclude Include="..\HiLib\ApplicationProperty.h" />
@@ -394,10 +394,10 @@
     <ClCompile Include="..\D2DTextBox\D2DContextEx.cpp" />
     <ClCompile Include="..\D2DTextBox\D2DWindow.cpp" />
     <ClCompile Include="..\D2DTextBox\D2DWindowControl.cpp" />
-    <ClCompile Include="..\D2DTextBox\D2DWindowTextboxTSF.cpp" />
+    <ClCompile Include="..\D2DTextBox\Textbox.cpp" />
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />
     <ClCompile Include="..\D2DTextBox\text_stdafx.cpp" />
-    <ClCompile Include="..\D2DTextBox\TextEditor.cpp" />
+    <ClCompile Include="..\D2DTextBox\TextEditSink.cpp" />
     <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp" />
     <ClCompile Include="..\D2DTextBox\undo.cpp" />
     <ClCompile Include="..\HiLib\Band.cpp" />

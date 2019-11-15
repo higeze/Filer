@@ -1,14 +1,14 @@
 #include "text_stdafx.h"
+#include "Textbox.h"
 #include "TextStoreACP.h"
-#include "TextEditor.h"
-#include "initguid.h"
-#include "InputScope.h"
-#include "tsattrs.h"
-#include "d2dwindowcontrol.h"
+#include "TextEditSink.h"
+#include <initguid.h>
+#include <InputScope.h>
+#include <tsattrs.h>
 
 #define Round(x)	((LONG)(x+0.5f))
 
-CTextStore::CTextStore(CTextEditor *pEditor):_pEditor(pEditor)
+CTextStore::CTextStore(D2DTextbox *pEditor):_pEditor(pEditor)
 {
 	_cRef = 1;
 	TextStoreACPSink_ = NULL;
@@ -528,7 +528,7 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
 
 
 // 候補ダイアログボックスの位置
-	d2dw::CRectF rcContent = _pEditor->bri_->GetContentRect();
+	d2dw::CRectF rcContent = _pEditor->GetContentRect();
 	::OffsetRect( prc, Round(rcContent.left), Round(rcContent.top) );
 
 
@@ -538,8 +538,8 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
 	//*prc = xrc.GetRECT();
 
 
-    ClientToScreen(_pEditor->m_pTxtbox->m_pWnd->m_hWnd, (POINT *)&prc->left);
-    ClientToScreen(_pEditor->m_pTxtbox->m_pWnd->m_hWnd, (POINT *)&prc->right);
+    ClientToScreen(_pEditor->m_pWnd->m_hWnd, (POINT *)&prc->left);
+    ClientToScreen(_pEditor->m_pWnd->m_hWnd, (POINT *)&prc->right);
 
 
 
@@ -574,7 +574,7 @@ STDAPI CTextStore::GetScreenExt(TsViewCookie vcView, RECT *prc)
 
 STDAPI CTextStore::GetWnd(TsViewCookie vcView, HWND *phwnd)
 {
-    *phwnd = _pEditor->m_pTxtbox->m_pWnd->m_hWnd;
+    *phwnd = _pEditor->m_pWnd->m_hWnd;
     return S_OK;
 }
 

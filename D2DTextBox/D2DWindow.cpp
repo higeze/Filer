@@ -1,6 +1,6 @@
 ﻿#include "text_stdafx.h"
 #include "D2DWindow.h"
-#include "D2DWindowControl.h"
+#include "Textbox.h"
 
 #include <Shellapi.h>
 
@@ -235,13 +235,11 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 
 	// create textbox control
 	m_pTxtbox.reset(new D2DTextbox(this, m_spProp, m_changed));
-	m_pTxtbox->SetStat(STAT::BORDER);
 	m_pTxtbox->CreateWindow(this, VISIBLE, L"txtbox");
 	m_pTxtbox->SetText(m_strInit.c_str());
 
 	// OnCreateで各子コントロールを作成後にサイズの調整が必要
 	SendMessage(m_hWnd, WM_SIZE,0,MAKELPARAM(rc.right-rc.left,rc.bottom-rc.top));
-	m_pTxtbox->StatActive(true);
 	return m_hWnd;
 }
 

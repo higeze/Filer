@@ -13,7 +13,6 @@
 #include "GridView.h"
 #include <algorithm>
 #include "D2DWindow.h"
-#include "D2DWindowControl.h"
 
 
 CTextCell::~CTextCell()
@@ -29,62 +28,6 @@ void CTextCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 	direct.DrawTextLayout(*(m_spProperty->Format), GetString(), rcPaint);
 }
 
-//CSize CStringSizeCalculater::CalcSize(const std::wstring& str)
-//{
-//	CSize ret(0, 0);
-//	for (const auto& ch : str) {
-//		const auto& iter = m_charMap.find(ch);
-//		CSize sizeCh(0, 0);
-//		if (iter != m_charMap.end()) {
-//			sizeCh = iter->second;
-//		} else {
-//			HFONT hFont = (HFONT)m_pDC->SelectFont(m_pFont->operator HFONT());
-//			CRect rcCh;
-//			m_pDC->DrawTextExW(const_cast<LPWSTR>(&ch), 1, rcCh,
-//				DT_CALCRECT | m_format & ~DT_WORDBREAK, NULL);
-//			m_pDC->SelectFont(hFont);
-//			sizeCh = rcCh.Size();
-//			m_charMap.emplace(ch, sizeCh);
-//		}
-//		ret.cx += sizeCh.cx;
-//		ret.cy = (std::max)(ret.cy, sizeCh.cy);
-//	}
-//
-//	return ret;
-//}
-//
-//CSize CStringSizeCalculater::CalcSizeWithFixedWidth(const std::wstring& str, const LONG& width)
-//{
-//	std::vector<CSize> ret;
-//	ret.emplace_back(0, 0);
-//	size_t i = 0;
-//
-//	for (const auto& ch : str) {
-//		const auto& iter = m_charMap.find(ch);
-//		CSize sizeCh(0, 0);
-//		if (iter != m_charMap.end()) {
-//			sizeCh = iter->second;
-//		} else {
-//			HFONT hFont = (HFONT)m_pDC->SelectFont(m_pFont->operator HFONT());
-//			CRect rcCh;
-//			m_pDC->DrawTextExW(const_cast<LPWSTR>(&ch), 1, rcCh,
-//				DT_CALCRECT | m_format & ~DT_WORDBREAK, NULL);
-//			m_pDC->SelectFont(hFont);
-//			sizeCh = rcCh.Size();
-//			m_charMap.emplace(ch, sizeCh);
-//		}
-//		if (ret.back().cx + sizeCh.cx > width) {
-//			ret.push_back(sizeCh);
-//		} else {
-//			ret.back().cx += sizeCh.cx;
-//			ret.back().cy = (std::max)(ret.back().cy, sizeCh.cy);
-//		}
-//	}
-//
-//	return CSize(width, std::accumulate(ret.begin(), ret.end(), 0L, [](LONG y, const CSize& rh)->LONG {return y + rh.cy; }));
-//}
-
-
 d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
 {
 	//Calc Content Rect
@@ -92,16 +35,6 @@ d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
 	if (text.empty()) { text = L"a"; }
 	return direct.CalcTextSize(*(m_spProperty->Format), text);
 }
-
-//CSize CTextCell::MeasureSize(CDC* pDC)
-//{
-//	CRect rcContent(MeasureContentSize(pDC));
-//
-//	//Calc CenterBorder Rect
-//	CRect rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
-//	m_bFitMeasureValid = true;
-//	return rcCenter.Size();	
-//}
 
 d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
 {
