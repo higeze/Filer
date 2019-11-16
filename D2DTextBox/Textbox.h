@@ -97,8 +97,6 @@ public:
 public:
 	LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT EditWndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam);
-	void CreateWindow(D2DWindow* parent, int stat, LPCWSTR name);
-	void DestroyControl();
 
 	// Getter ////////////////////////////////////////////////////
 	int GetSelectionStart() { return m_selStart; }
@@ -113,8 +111,10 @@ public:
 	d2dw::CRectF GetContentRect() const;
 
 	// Text Functions ////////////////////////////////////////
-	std::wstring GetText();
+	std::wstring GetText() const{ return m_text; }
+	size_t GetTextSize() const { return m_text.size(); }
 	int InsertText(LPCWSTR str, int pos = -1, int strlen = -1);
+	void EraseText(const size_t off, size_t count);
 	void SetText(LPCWSTR str);
 	void SetText(VARIANT value);
 	void ClearText() { SetText(L""); }
@@ -184,7 +184,6 @@ private:
 	D2D1_COLOR_F selected_halftone_color_;
 
 	std::function<void(const std::wstring&)> m_changed;
-	D2DWindow* m_pWnd;
 	std::shared_ptr<CellProperty> m_pProp;
 
 	std::vector<LINEINFO> m_lineInfos;
@@ -213,6 +212,9 @@ private:
 	COMPOSITIONRENDERINFO *pCompositionRenderInfo_;
 	int nCompositionRenderInfo_;
 	TfEditCookie ecTextStore_;
+
+public:
+	D2DWindow* m_pWnd;
 
 
 

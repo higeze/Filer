@@ -149,27 +149,27 @@ public:
 	template<class U>
 	BOOL AddMsgHandler(UINT uMsg,INT_PTR(U::*memberfunc)(UINT,WPARAM,LPARAM,BOOL&),U* that)
 	{
-		MsgMap::_Pairib pib=m_msgMap.insert(MsgMap::value_type(uMsg,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
+		auto pib=m_msgMap.insert(MsgMap::value_type(uMsg,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
 		return pib.second;
 	}
 
 	template<class U>
 	BOOL AddCmdIDHandler(WORD wID,INT_PTR(U::*memberfunc)(WORD,WORD,HWND,BOOL&),U* that)
 	{
-		CmdIDMap::_Pairib pib=m_cmdidMap.insert(CmdIDMap::value_type(wID,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
+		auto pib=m_cmdidMap.insert(CmdIDMap::value_type(wID,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
 		return pib.second;
 	}
 
 	template<class U>
 	BOOL AddNtfyHandler(UINT_PTR upID,UINT uCode,INT_PTR(U::*memberfunc)(int,LPNMHDR,BOOL&),U* that)
 	{
-		NtfyMap::_Pairib pib=m_ntfyMap.insert(NtfyMap::value_type(MAKELONG(upID,uCode),std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3)));	
+		auto pib=m_ntfyMap.insert(NtfyMap::value_type(MAKELONG(upID,uCode),std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3)));	
 		return pib.second;
 	}
 	template<class U>
 	BOOL AddNtfyCdHandler(UINT uCode,INT_PTR(U::*memberfunc)(int,LPNMHDR,BOOL&),U* that)
 	{
-		NtfyCdMap::_Pairib pib=m_ntfyCdMap.insert(NtfyCdMap::value_type(uCode,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3)));
+		auto pib=m_ntfyCdMap.insert(NtfyCdMap::value_type(uCode,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3)));
 		return pib.second;
 	}
 

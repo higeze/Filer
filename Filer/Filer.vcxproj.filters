@@ -982,9 +982,6 @@
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
-    <ClCompile Include="..\D2DTextBox\D2DWindowControl.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
     <ClCompile Include="..\D2DTextBox\D2DWindow.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>

@@ -418,7 +418,7 @@ namespace d2dw{
 		{
 			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
 				CPointF dpi(96.0f, 96.0f);
-				GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
+				//GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
 				m_xPixels2Dips = 96.0f / dpi.x;
 				m_yPixels2Dips = 96.0f / dpi.y;
 			}
@@ -429,7 +429,7 @@ namespace d2dw{
 		{
 			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
 				CPointF dpi(96.0f, 96.0f);
-				GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
+				//GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
 				m_xPixels2Dips = 96.0f / dpi.x;
 				m_yPixels2Dips = 96.0f / dpi.y;
 			}
@@ -440,7 +440,7 @@ namespace d2dw{
 		{
 			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
 				CPointF dpi(96.0f, 96.0f);
-				GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
+				//GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
 				m_xPixels2Dips = 96.0f / dpi.x;
 				m_yPixels2Dips = 96.0f / dpi.y;
 			}
@@ -451,7 +451,7 @@ namespace d2dw{
 		{
 			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
 				CPointF dpi(96.0f, 96.0f);
-				GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
+				//GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
 				m_xPixels2Dips = 96.0f / dpi.x;
 				m_yPixels2Dips = 96.0f / dpi.y;
 			}

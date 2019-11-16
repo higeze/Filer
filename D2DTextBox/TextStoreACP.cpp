@@ -318,7 +318,7 @@ STDAPI CTextStore::GetText(LONG acpStart, LONG acpEnd, __out_ecount(cchPlainReq)
     }
 
     if (acpEnd == -1)
-        acpEnd = _pEditor->m_text.size();
+        acpEnd = _pEditor->GetTextSize();
 
     acpEnd = min(acpEnd, acpStart + (int)cchPlainReq);
 
@@ -326,7 +326,7 @@ STDAPI CTextStore::GetText(LONG acpStart, LONG acpEnd, __out_ecount(cchPlainReq)
     {
         return E_FAIL;
     }
-	pchPlain = (LPWSTR)_pEditor->m_text.substr(acpStart, acpEnd - acpStart).c_str();
+	pchPlain = (LPWSTR)_pEditor->GetText().substr(acpStart, acpEnd - acpStart).c_str();
 
 
     *pcchPlainOut = acpEnd - acpStart;
@@ -360,15 +360,15 @@ STDAPI CTextStore::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, __in_ecoun
 
     LONG acpRemovingEnd;
 
-    if (acpStart > (LONG)_pEditor->m_text.size())
+    if (acpStart > (LONG)_pEditor->GetTextSize())
         return E_INVALIDARG;
 
-    acpRemovingEnd = (std::min)(acpEnd, (LONG)_pEditor->m_text.size() + 1);
-	_pEditor->m_text.erase(acpStart, acpRemovingEnd - acpStart);
+    acpRemovingEnd = (std::min)(acpEnd, (LONG)_pEditor->GetTextSize() + 1);
+	_pEditor->EraseText(acpStart, acpRemovingEnd - acpStart);
         //return E_FAIL;
 
 	UINT nrCnt;
-	_pEditor->m_text.insert(acpStart, pchText, cch);
+	_pEditor->InsertText(pchText, acpStart, cch);
  //       return E_FAIL;
 
     pChange->acpStart = acpStart;
@@ -461,7 +461,7 @@ STDAPI CTextStore::GetEndACP(LONG *pacp)
     }
 
 	
-	*pacp = _pEditor->m_text.size();
+	*pacp = _pEditor->GetTextSize();
     return S_OK;
 }
 
@@ -605,11 +605,11 @@ STDAPI CTextStore::InsertTextAtSelection(DWORD dwFlags, __in_ecount(cch) const W
         return S_OK;
     }
 
-	_pEditor->m_text.erase(acpStart, acpEnd - acpStart);
+	_pEditor->EraseText(acpStart, acpEnd - acpStart);
     //    return E_FAIL;
 
 	UINT nrCnt;
-	_pEditor->m_text.insert(acpStart, pchText, cch);
+	_pEditor->InsertText(pchText, acpStart, cch);
  //       return E_FAIL;
 
     

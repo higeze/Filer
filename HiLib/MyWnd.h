@@ -291,12 +291,12 @@ public:
 	template<class U>
 	BOOL AddCmdIDHandler(WORD wID,LRESULT(U::*memberfunc)(WORD,WORD,HWND,BOOL&),U* that)
 	{
-		CmdIDMap::_Pairib pib=m_cmdidMap.insert(CmdIDMap::value_type(wID,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
+		auto pib=m_cmdidMap.insert(CmdIDMap::value_type(wID,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
 		return pib.second;
 	}
 	BOOL AddCmdIDHandler(WORD wID,FunCmd cmd)
 	{
-		CmdIDMap::_Pairib pib=m_cmdidMap.insert(CmdIDMap::value_type(wID, cmd));
+		auto pib=m_cmdidMap.insert(CmdIDMap::value_type(wID, cmd));
 		return pib.second;
 	}
 
@@ -316,7 +316,7 @@ public:
 	template<class U>
 	BOOL AddCmdCdHandler(WORD wCd,LRESULT(U::*memberfunc)(WORD,WORD,HWND,BOOL&),U* that)
 	{
-		CmdIDMap::_Pairib pib=m_cmdcdMap.insert(CmdCdMap::value_type(wCd,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
+		auto pib=m_cmdcdMap.insert(CmdCdMap::value_type(wCd,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
 		return pib.second;
 	}
 
@@ -330,12 +330,12 @@ public:
 	template<class U>
 	BOOL AddNtfyHandler(UINT_PTR upID,UINT uCode,LRESULT(U::*memberfunc)(int,LPNMHDR,BOOL&),U* that)
 	{
-		NtfyMap::_Pairib pib=m_ntfyMap.insert(NtfyMap::value_type(MAKELONG(upID,uCode),std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3)));	
+		auto pib=m_ntfyMap.insert(NtfyMap::value_type(MAKELONG(upID,uCode),std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3)));	
 		return pib.second;
 	}
 	BOOL AddNtfyHandler(UINT_PTR upID,UINT uCode,FunNtfy ntfy)
 	{
-		NtfyMap::_Pairib pib=m_ntfyMap.insert(NtfyMap::value_type(MAKELONG(upID,uCode),ntfy));	
+		auto pib=m_ntfyMap.insert(NtfyMap::value_type(MAKELONG(upID,uCode),ntfy));	
 		return pib.second;
 	}
 

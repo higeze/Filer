@@ -13,8 +13,56 @@
 
 #define TAB_WIDTH_4CHAR 4
 
+
+HRESULT InitDisplayAttrbute();
+HRESULT UninitDisplayAttrbute();
+
+#if ( _WIN32_WINNT < _WIN32_WINNT_WIN8 )
+ITfThreadMgr* D2DTextbox::s_pThreadMgr = NULL;
+#else
+ITfThreadMgr2* D2DTextbox::s_pThreadMgr = NULL;
+#endif
+ITfKeystrokeMgr* D2DTextbox::s_pKeystrokeMgr = NULL;
+TfClientId D2DTextbox::s_tfClientId = TF_CLIENTID_NULL;
+
+// STATIC
+bool D2DTextbox::AppTSFInit()
+{
+#if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
+	if (FAILED(CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr2, (void**)&s_pThreadMgr))) goto Exit;
+#else
+	if (FAILED(CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr, (void**)&s_pThreadMgr))) goto Exit;
+#endif
+
+	if (FAILED(s_pThreadMgr->Activate(&s_tfClientId)))  goto Exit;
+	if (FAILED(s_pThreadMgr->QueryInterface(IID_ITfKeystrokeMgr, (void **)&s_pKeystrokeMgr)))  goto Exit;
+	if (FAILED(InitDisplayAttrbute()))	goto Exit;
+
+	return true;
+Exit:
+
+	return false;
+
+}
+// STATIC
+void D2DTextbox::AppTSFExit()
+{
+	UninitDisplayAttrbute();
+
+
+	if (s_pThreadMgr) {
+		s_pThreadMgr->Deactivate();
+		s_pThreadMgr->Release();
+	}
+
+	if (s_pKeystrokeMgr)
+		s_pKeystrokeMgr->Release();
+}
+
+
+
 D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::shared_ptr<CellProperty>& pProp, std::function<void(const std::wstring&)> changed)
-	:m_pWnd(pWnd), m_pProp(pProp), m_changed(changed)
+	:m_pWnd(pWnd), m_pProp(pProp), m_changed(changed), m_text()
 {
 	// You must create this on Heap, OnStack is NG.
 	_ASSERT(_CrtIsValidHeapPointer(this));
@@ -30,23 +78,11 @@ D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::shared_ptr<CellProperty>& pPr
 	selected_halftone_color_ = D2RGBA(0, 140, 255, 100);
 	QueryPerformanceFrequency(&m_frequency);
 	SetFocus();
-
 }
 
 D2DTextbox::~D2DTextbox()
 {
 	UninitTSF();
-}
-
-void D2DTextbox::CreateWindow(D2DWindow* parent, int stat, LPCWSTR name)
-{
-	m_pWnd = parent;
-	SetText(L"");
-}
-
-void D2DTextbox::DestroyControl()
-{
-	SendMessage(m_pWnd->m_hWnd, WM_D2D_DESTROY_CONTROL, 0, (LPARAM)this);
 }
 
 LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
@@ -128,6 +164,7 @@ int D2DTextbox::TabCountCurrentRow()
 	return bAddTabCount;
 
 }
+
 int D2DTextbox::OnKeyDown(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int ret = 0;
@@ -260,6 +297,13 @@ std::wstring D2DTextbox::FilterInputString( LPCWSTR s, UINT len )
 	return r;
 }
 
+void D2DTextbox::EraseText(const size_t off, size_t count)
+{ 
+	m_text.erase(off, count);
+	CalcRender(m_pWnd->cxt_);
+}
+
+
 void D2DTextbox::SetText(VARIANT v)
 {
 	if ( v.vt == VT_BSTR )
@@ -303,57 +347,6 @@ d2dw::CRectF D2DTextbox::GetContentRect() const
 	return rcContent;
 }
 
-std::wstring D2DTextbox::GetText()
-{	
-	return m_text;  // null terminate	
-}
-
-static ITfKeystrokeMgr *g_pKeystrokeMgr	= NULL;
-TfClientId g_TfClientId	= TF_CLIENTID_NULL;
-
-HRESULT InitDisplayAttrbute();
-HRESULT UninitDisplayAttrbute();
-
-#if ( _WIN32_WINNT < _WIN32_WINNT_WIN8 )
-ITfThreadMgr* g_pThreadMgr = NULL;
-#else
-ITfThreadMgr2* g_pThreadMgr = NULL;
-#endif
-
-// STATIC
-bool D2DTextbox::AppTSFInit()
-{
-	#if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
-	if (FAILED(CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER,IID_ITfThreadMgr2, (void**)&g_pThreadMgr))) goto Exit;    
-	#else
-	if (FAILED(CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER,IID_ITfThreadMgr, (void**)&g_pThreadMgr))) goto Exit;    
-	#endif
-	
-	if (FAILED(g_pThreadMgr->Activate(&g_TfClientId)))  goto Exit;    
-	if (FAILED(g_pThreadMgr->QueryInterface(IID_ITfKeystrokeMgr, (void **)&g_pKeystrokeMgr)))  goto Exit;
-	if ( FAILED(InitDisplayAttrbute()))	goto Exit;
-
-	return true;
-Exit:
-
-	return false;
-
-}
-// STATIC
-void D2DTextbox::AppTSFExit()
-{
-	UninitDisplayAttrbute();
-
-
-	if ( g_pThreadMgr )
-	{
-		g_pThreadMgr->Deactivate();
-		g_pThreadMgr->Release();
-	}
-
-	if ( g_pKeystrokeMgr )
-		g_pKeystrokeMgr->Release();
-}
 
 // activeを黒色から即スタート
 
@@ -379,8 +372,8 @@ void D2DTextbox::InitTSF()
 {
 	m_pTextStore = CComPtr<CTextStore>(new CTextStore(this));
 	if (!m_pTextStore) { throw std::exception(FILE_LINE_FUNC); }
-	if (FAILED(g_pThreadMgr->CreateDocumentMgr(&m_pDocumentMgr))) { throw std::exception(FILE_LINE_FUNC); }
-	if (FAILED(m_pDocumentMgr->CreateContext(g_TfClientId, 0, m_pTextStore, &m_pInputContext, &ecTextStore_))) {
+	if (FAILED(s_pThreadMgr->CreateDocumentMgr(&m_pDocumentMgr))) { throw std::exception(FILE_LINE_FUNC); }
+	if (FAILED(m_pDocumentMgr->CreateContext(s_tfClientId, 0, m_pTextStore, &m_pInputContext, &ecTextStore_))) {
 		throw std::exception(FILE_LINE_FUNC);
 	}
 	if (FAILED(m_pDocumentMgr->Push(m_pInputContext))) {
@@ -390,9 +383,9 @@ void D2DTextbox::InitTSF()
 	CComPtr<ITfDocumentMgr> pDocumentMgrPrev = NULL;
 
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
-	g_pThreadMgr->SetFocus(pDocumentMgr_);
+	s_pThreadMgr->SetFocus(pDocumentMgr_);
 #else
-	if (FAILED(g_pThreadMgr->AssociateFocus(m_pWnd->m_hWnd, m_pDocumentMgr, &pDocumentMgrPrev))) {
+	if (FAILED(s_pThreadMgr->AssociateFocus(m_pWnd->m_hWnd, m_pDocumentMgr, &pDocumentMgrPrev))) {
 		throw std::exception(FILE_LINE_FUNC);
 	}
 #endif
@@ -698,7 +691,7 @@ void D2DTextbox::CalcRender(D2DContext& cxt)
 void D2DTextbox::SetFocus()
 {
 	if (m_pDocumentMgr) {
-		g_pThreadMgr->SetFocus(m_pDocumentMgr);
+		s_pThreadMgr->SetFocus(m_pDocumentMgr);
 	}
 }
 

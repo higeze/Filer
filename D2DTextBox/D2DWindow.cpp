@@ -235,7 +235,6 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 
 	// create textbox control
 	m_pTxtbox.reset(new D2DTextbox(this, m_spProp, m_changed));
-	m_pTxtbox->CreateWindow(this, VISIBLE, L"txtbox");
 	m_pTxtbox->SetText(m_strInit.c_str());
 
 	// OnCreateで各子コントロールを作成後にサイズの調整が必要
@@ -307,10 +306,6 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 		case WM_DESTROY:
 		{
-			if (m_pTxtbox) {
-				m_pTxtbox->DestroyControl();
-			}
-
 			Clear();
 		}
 		break;		
