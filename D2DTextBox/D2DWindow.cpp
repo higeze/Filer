@@ -186,11 +186,7 @@ D2DWindow::D2DWindow(
 		D2DWindowRegisterClass( GetModuleHandle(0));
 }
 
-D2DWindow::~D2DWindow() { Clear(); }
-
-void D2DWindow::Clear()
-{
-}
+D2DWindow::~D2DWindow() {}
 
 HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE, RECT rc, UINT* img_resource_id, int img_cnt )
 {
@@ -208,34 +204,10 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 
 	cxt_.textformat = m_pDirect->GetTextFormat(*(m_spProp->Format));
 
-	float dashes[] = { 2.0f };
-
-	m_pDirect->GetD2D1Factory()->CreateStrokeStyle(
-		D2D1::StrokeStyleProperties(
-			D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_ROUND, D2D1_LINE_JOIN_MITER,
-			10.0f,
-			D2D1_DASH_STYLE_CUSTOM,
-			0.0f),
-		dashes, ARRAYSIZE(dashes),
-		&cxt_.dot2_
-	);
-
-	float dashes2[] = { 4.0f };
-	m_pDirect->GetD2D1Factory()->CreateStrokeStyle(
-		D2D1::StrokeStyleProperties(
-			D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_FLAT, D2D1_CAP_STYLE_ROUND, D2D1_LINE_JOIN_MITER,
-			10.0f,
-			D2D1_DASH_STYLE_CUSTOM,
-			0.0f),
-		dashes2, ARRAYSIZE(dashes2),
-		&cxt_.dot4_
-	);
-
 	redraw_ = 0;
 
 	// create textbox control
-	m_pTxtbox.reset(new D2DTextbox(this, m_spProp, m_changed));
-	m_pTxtbox->SetText(m_strInit.c_str());
+	m_pTxtbox.reset(new D2DTextbox(this, m_strInit, m_spProp, m_changed));
 
 	// OnCreateで各子コントロールを作成後にサイズの調整が必要
 	SendMessage(m_hWnd, WM_SIZE,0,MAKELPARAM(rc.right-rc.left,rc.bottom-rc.top));
@@ -297,18 +269,12 @@ LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_LBUTTONDBLCLK:
 		case WM_RBUTTONDOWN:
 		case WM_RBUTTONUP:
-			redraw_ = 1; 
-		break;
+
 		case WM_KEYDOWN:
 		case WM_KEYUP:
 		case WM_CHAR:
 			redraw_ = 1; 
 		break;
-		case WM_DESTROY:
-		{
-			Clear();
-		}
-		break;		
 	}
 	return ret;
 }

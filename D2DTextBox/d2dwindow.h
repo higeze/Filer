@@ -64,5 +64,4 @@ public:
 
 		HWND CreateD2DWindow( DWORD WSEX_STYLE, HWND parent, DWORD WS_STYLE, RECT rc, UINT* img_resource_id=nullptr, int img_cnt=0 );		
 		LRESULT WndProc(UINT message, WPARAM wParam, LPARAM lParam);		
-		void Clear();
 };

@@ -89,7 +89,7 @@ public:
 	static void AppTSFExit();
 
 public:
-	D2DTextbox(D2DWindow* pWnd, const std::shared_ptr<CellProperty>& pProp,std::function<void(const std::wstring&)> changed);
+	D2DTextbox(D2DWindow* pWnd, const std::wstring& initText, const std::shared_ptr<CellProperty>& pProp,std::function<void(const std::wstring&)> changed);
 	~D2DTextbox();
 	void InitTSF();
 	void UninitTSF();
@@ -152,8 +152,6 @@ public:
 	void ClearCompositionRenderInfo();
 	BOOL AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIBUTE *pda);
 	void OnTextChange(const std::wstring& text);
-
-	void SetFocus();
 public:
 
 
@@ -161,8 +159,6 @@ public:
 
 private:
 	int OnKeyDown(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam);
-	//void Move(int x, int y, int nWidth, int nHeight);
-	void OnSetFocus(WPARAM wParam, LPARAM lParam);
 	void OnPaint(D2DContext& hdc);
 	BOOL OnKeyDown(WPARAM wParam, LPARAM lParam);
 	void OnLButtonDown(WPARAM wParam, LPARAM lParam);

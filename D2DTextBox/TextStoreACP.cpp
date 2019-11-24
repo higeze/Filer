@@ -322,14 +322,12 @@ STDAPI CTextStore::GetText(LONG acpStart, LONG acpEnd, __out_ecount(cchPlainReq)
 
     acpEnd = min(acpEnd, acpStart + (int)cchPlainReq);
 
-    if (acpStart != acpEnd)
-    {
-        return E_FAIL;
+    if (acpStart != acpEnd){
+		memcpy(pchPlain, _pEditor->GetText().data() + acpStart, (acpEnd - acpStart) * sizeof(WCHAR));
     }
-	pchPlain = (LPWSTR)_pEditor->GetText().substr(acpStart, acpEnd - acpStart).c_str();
-
 
     *pcchPlainOut = acpEnd - acpStart;
+
     if (ulRunInfoReq)
     {
         prgRunInfo[0].uCount = acpEnd - acpStart;
@@ -606,11 +604,9 @@ STDAPI CTextStore::InsertTextAtSelection(DWORD dwFlags, __in_ecount(cch) const W
     }
 
 	_pEditor->EraseText(acpStart, acpEnd - acpStart);
-    //    return E_FAIL;
 
 	UINT nrCnt;
 	_pEditor->InsertText(pchText, acpStart, cch);
- //       return E_FAIL;
 
     
     if (pacpStart)

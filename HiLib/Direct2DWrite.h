@@ -76,9 +76,9 @@ namespace d2dw
 		CRectF(const CSizeF& size);
 
 		void SetRect(FLOAT l, FLOAT t, FLOAT r, FLOAT b);
-		void MoveToX(int x);
-		void MoveToY(int y);
-		void MoveToXY(int x, int y);
+		void MoveToX(FLOAT x);
+		void MoveToY(FLOAT y);
+		void MoveToXY(FLOAT x, FLOAT y);
 		void MoveToXY(const CPointF& pt);
 		void OffsetRect(FLOAT x, FLOAT y);
 		void OffsetRect(const CPointF& pt);
@@ -321,7 +321,6 @@ namespace d2dw{
 			boost::hash_combine(seed, std::hash<decltype(key.first)>()(key.first));
 			boost::hash_combine(seed, std::hash<decltype(key.second)>()(key.second));
 			return seed;
-
 		}
 	};
 
@@ -413,83 +412,18 @@ namespace d2dw{
 			return D2D1_RECT_F{ LayoutRound(rc.left), LayoutRound(rc.top), LayoutRound(rc.right), LayoutRound(rc.bottom) };
 		}
 
-
-		FLOAT Pixels2DipsX(int x)
-		{
-			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
-				CPointF dpi(96.0f, 96.0f);
-				//GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-				m_xPixels2Dips = 96.0f / dpi.x;
-				m_yPixels2Dips = 96.0f / dpi.y;
-			}
-			return x * m_xPixels2Dips;
-		}
-
-		FLOAT Pixels2DipsY(int y)
-		{
-			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
-				CPointF dpi(96.0f, 96.0f);
-				//GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-				m_xPixels2Dips = 96.0f / dpi.x;
-				m_yPixels2Dips = 96.0f / dpi.y;
-			}
-			return y * m_yPixels2Dips;
-		}
-
-		int Dips2PixelsX(FLOAT x)
-		{
-			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
-				CPointF dpi(96.0f, 96.0f);
-				//GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-				m_xPixels2Dips = 96.0f / dpi.x;
-				m_yPixels2Dips = 96.0f / dpi.y;
-			}
-			return x / m_xPixels2Dips;
-		}
-
-		int Dips2PixelsY(FLOAT y)
-		{
-			if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
-				CPointF dpi(96.0f, 96.0f);
-				//GetD2D1Factory()->GetDesktopDpi(&dpi.x, &dpi.y);
-				m_xPixels2Dips = 96.0f / dpi.x;
-				m_yPixels2Dips = 96.0f / dpi.y;
-			}
-			return y / m_yPixels2Dips;
-		}
-
-		CPointF Pixels2Dips(CPoint pt)
-		{
-			return CPointF(Pixels2DipsX(pt.x), Pixels2DipsY(pt.y));
-		}
-
-		CPoint Dips2Pixels(CPointF pt)
-		{
-			return CPoint(Dips2PixelsX(pt.x), Dips2PixelsY(pt.y));
-		}
-
-		CSizeF Pixels2Dips(CSize sz)
-		{
-			return CSizeF(Pixels2DipsX(sz.cx), Pixels2DipsY(sz.cy));
-		}
-
-		CSize Dips2Pixels(CSizeF sz)
-		{
-			return CSize(Dips2PixelsX(sz.width), Dips2PixelsY(sz.height));
-		}
-
-
-		CRectF Pixels2Dips(CRect rc)
-		{
-			return CRectF(Pixels2DipsX(rc.left), Pixels2DipsY(rc.top),
-						  Pixels2DipsX(rc.right), Pixels2DipsY(rc.bottom));
-		}
-
-		CRect Dips2Pixels(CRectF rc)
-		{
-			return CRect(Dips2PixelsX(rc.left), Dips2PixelsY(rc.top),
-				Dips2PixelsX(rc.right), Dips2PixelsY(rc.bottom));
-		}
+		FLOAT GetPixels2DipsRatioX();
+		FLOAT GetPixels2DipsRatioY();
+		FLOAT Pixels2DipsX(int x);
+		FLOAT Pixels2DipsY(int y);
+		int Dips2PixelsX(FLOAT x);
+		int Dips2PixelsY(FLOAT y);
+		CPointF Pixels2Dips(CPoint pt);
+		CPoint Dips2Pixels(CPointF pt);
+		CSizeF Pixels2Dips(CSize sz);
+		CSize Dips2Pixels(CSizeF sz);
+		CRectF Pixels2Dips(CRect rc);
+		CRect Dips2Pixels(CRectF rc);
 
 		static FLOAT Points2Dips(int points)
 		{
@@ -498,7 +432,7 @@ namespace d2dw{
 
 		static int Dips2Points(FLOAT dips)
 		{
-			return dips * 72.0f / 96.0f;
+			return static_cast<int>(std::round(dips * 72.0f / 96.0f));
 		}
 
 		void Clear();

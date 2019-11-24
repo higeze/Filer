@@ -9,11 +9,6 @@ class D2DWindow;
 struct D2DContext
 {	
 	D2DWindow* pWindow;
-
-
-	CComPtr<ID2D1StrokeStyle> dot4_;
-	CComPtr<ID2D1StrokeStyle> dot2_;
-
 	LPVOID free_space;
 
 	void Init();
@@ -27,30 +22,30 @@ struct D2DContext
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-class D2DError 
-{
-	public :
-		explicit D2DError( HRESULT hr, LPCWSTR msg, UINT line, LPCSTR fnm):hr_(hr),msg_(msg),line_(line),fnm_(fnm )
-		{
-//			TRACE(L"%s :%d行 HR=%x %s\n", (LPCWSTR)fnm_, line_,hr_,(LPCWSTR)msg_);		
-		}
-
-	public :
-		CComBSTR msg_;
-		CComBSTR fnm_;
-		UINT line_;
-		HRESULT hr_;
-
-};
-inline void ThrowIfFailed( HRESULT hr, LPCWSTR msg, UINT line, LPCSTR fnm )
-{
-	if (FAILED(hr))
-	{
-		throw D2DError( hr, msg, line,fnm );
-		//General access denied error 0x80070005 
-	}
-}
-#define THROWIFFAILED(hr,msg) ThrowIfFailed(hr,msg, __LINE__, __FILE__)
+//class D2DError 
+//{
+//	public :
+//		explicit D2DError( HRESULT hr, LPCWSTR msg, UINT line, LPCSTR fnm):hr_(hr),msg_(msg),line_(line),fnm_(fnm )
+//		{
+////			TRACE(L"%s :%d行 HR=%x %s\n", (LPCWSTR)fnm_, line_,hr_,(LPCWSTR)msg_);		
+//		}
+//
+//	public :
+//		CComBSTR msg_;
+//		CComBSTR fnm_;
+//		UINT line_;
+//		HRESULT hr_;
+//
+//};
+//inline void ThrowIfFailed( HRESULT hr, LPCWSTR msg, UINT line, LPCSTR fnm )
+//{
+//	if (FAILED(hr))
+//	{
+//		throw D2DError( hr, msg, line,fnm );
+//		//General access denied error 0x80070005 
+//	}
+//}
+//#define THROWIFFAILED(hr,msg) ThrowIfFailed(hr,msg, __LINE__, __FILE__)
 
 //inline HRESULT NoThrowIfFailed(HRESULT hr)
 //{
@@ -67,9 +62,9 @@ inline void ThrowIfFailed( HRESULT hr, LPCWSTR msg, UINT line, LPCSTR fnm )
 
 //////////////////////////////////////////////////////////////////////////////////////
 // Variant
-d2dw::CRectF FRectFV( _variant_t& x,_variant_t& y,_variant_t& cx,_variant_t& cy );
-d2dw::CSizeF FSizeFV( _variant_t& cx,_variant_t& cy );
-d2dw::CPointF FPointFV( _variant_t& cx,_variant_t& cy );
-std::wstring FStringV( _variant_t& s );
+//d2dw::CRectF FRectFV( _variant_t& x,_variant_t& y,_variant_t& cx,_variant_t& cy );
+//d2dw::CSizeF FSizeFV( _variant_t& cx,_variant_t& cy );
+//d2dw::CPointF FPointFV( _variant_t& cx,_variant_t& cy );
+//std::wstring FStringV( _variant_t& s );
 
 

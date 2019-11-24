@@ -61,8 +61,8 @@ void D2DTextbox::AppTSFExit()
 
 
 
-D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::shared_ptr<CellProperty>& pProp, std::function<void(const std::wstring&)> changed)
-	:m_pWnd(pWnd), m_pProp(pProp), m_changed(changed), m_text()
+D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::wstring& initText, const std::shared_ptr<CellProperty>& pProp, std::function<void(const std::wstring&)> changed)
+	:m_pWnd(pWnd), m_pProp(pProp), m_changed(changed), m_text(initText), m_selStart(0), m_selEnd(initText.size())
 {
 	// You must create this on Heap, OnStack is NG.
 	_ASSERT(_CrtIsValidHeapPointer(this));
@@ -77,7 +77,9 @@ D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::shared_ptr<CellProperty>& pPr
 	bRecalc_ = true;
 	selected_halftone_color_ = D2RGBA(0, 140, 255, 100);
 	QueryPerformanceFrequency(&m_frequency);
-	SetFocus();
+	if (m_pDocumentMgr) {
+		s_pThreadMgr->SetFocus(m_pDocumentMgr);
+	}
 }
 
 D2DTextbox::~D2DTextbox()
@@ -328,7 +330,7 @@ void D2DTextbox::SetText(LPCWSTR str1)
 {
 	m_text = str1;
 	m_selStart = 0;
-	m_selEnd = m_text.size();;
+	m_selEnd = m_text.size();
 	CalcRender(m_pWnd->cxt_);
 }
 
@@ -346,9 +348,6 @@ d2dw::CRectF D2DTextbox::GetContentRect() const
 	rcContent.DeflateRect(*(m_pWnd->m_spProp->Padding));
 	return rcContent;
 }
-
-
-// activeを黒色から即スタート
 
 bool D2DTextbox::DrawCaret(D2DContext& cxt, const d2dw::CRectF& rc)
 {
@@ -688,13 +687,6 @@ void D2DTextbox::CalcRender(D2DContext& cxt)
 	bRecalc_ = false;
 }
 
-void D2DTextbox::SetFocus()
-{
-	if (m_pDocumentMgr) {
-		s_pThreadMgr->SetFocus(m_pDocumentMgr);
-	}
-}
-
 void D2DTextbox::ClearCompositionRenderInfo()
 {
 	if (pCompositionRenderInfo_) {
@@ -875,11 +867,6 @@ BOOL D2DTextbox::OnKeyDown(WPARAM wParam, LPARAM lParam)
 	bRecalc_ = true;
 
 	return ret;
-}
-
-void D2DTextbox::OnSetFocus(WPARAM wParam, LPARAM lParam)
-{
-	//SetFocus();
 }
 
 void D2DTextbox::OnLButtonDown(WPARAM wParam, LPARAM lParam)
@@ -1088,12 +1075,6 @@ BOOL D2DTextbox::Render(D2DContext& cxt, const d2dw::CRectF& rc, LPCWSTR psz, in
 
 	return TRUE;
 }
-
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
 
 BOOL D2DTextbox::RectFromCharPos(UINT nPos, d2dw::CRectF *prc)
 {

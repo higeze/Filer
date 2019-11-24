@@ -51,32 +51,32 @@ UINT D2DContext::GetLineMetric( const D2D1_SIZE_F& sz, IDWriteTextFormat* fmt, L
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-d2dw::CRectF FRectFV( _variant_t& x,_variant_t& y,_variant_t& cx,_variant_t& cy )
-{
-	float fx; x.ChangeType( VT_R4 ); fx = x.fltVal;
-	float fy; y.ChangeType( VT_R4 ); fy = y.fltVal;
-	float fcx; cx.ChangeType( VT_R4 ); fcx = cx.fltVal+fx;
-	float fcy; cy.ChangeType( VT_R4 ); fcy = cy.fltVal+fy;
-
-	return d2dw::CRectF(fx,fy,fcx,fcy );
-}
-d2dw::CSizeF FSizeFV( _variant_t& cx,_variant_t& cy )
-{
-	float fcx; cx.ChangeType( VT_R4 ); fcx = cx.fltVal;
-	float fcy; cy.ChangeType( VT_R4 ); fcy = cy.fltVal;
-
-	return d2dw::CSizeF( fcx, fcy );
-
-}
-d2dw::CPointF FPointFV( _variant_t& cx,_variant_t& cy )
-{
-	float fcx; cx.ChangeType( VT_R4 ); fcx = cx.fltVal;
-	float fcy; cy.ChangeType( VT_R4 ); fcy = cy.fltVal;
-	return d2dw::CPointF( fcx,fcy );
-}
-std::wstring FStringV( _variant_t& s )
-{
-	//s.ChangeType( VT_BSTR );
-
-	return std::wstring(s.bstrVal);
-}
+//d2dw::CRectF FRectFV( _variant_t& x,_variant_t& y,_variant_t& cx,_variant_t& cy )
+//{
+//	float fx; x.ChangeType( VT_R4 ); fx = x.fltVal;
+//	float fy; y.ChangeType( VT_R4 ); fy = y.fltVal;
+//	float fcx; cx.ChangeType( VT_R4 ); fcx = cx.fltVal+fx;
+//	float fcy; cy.ChangeType( VT_R4 ); fcy = cy.fltVal+fy;
+//
+//	return d2dw::CRectF(fx,fy,fcx,fcy );
+//}
+//d2dw::CSizeF FSizeFV( _variant_t& cx,_variant_t& cy )
+//{
+//	float fcx; cx.ChangeType( VT_R4 ); fcx = cx.fltVal;
+//	float fcy; cy.ChangeType( VT_R4 ); fcy = cy.fltVal;
+//
+//	return d2dw::CSizeF( fcx, fcy );
+//
+//}
+//d2dw::CPointF FPointFV( _variant_t& cx,_variant_t& cy )
+//{
+//	float fcx; cx.ChangeType( VT_R4 ); fcx = cx.fltVal;
+//	float fcy; cy.ChangeType( VT_R4 ); fcy = cy.fltVal;
+//	return d2dw::CPointF( fcx,fcy );
+//}
+//std::wstring FStringV( _variant_t& s )
+//{
+//	//s.ChangeType( VT_BSTR );
+//
+//	return std::wstring(s.bstrVal);
+//}

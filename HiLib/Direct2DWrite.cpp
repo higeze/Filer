@@ -63,9 +63,9 @@ namespace d2dw
 	{
 		left = l; top = t; right = r; bottom = b;
 	}
-	void CRectF::MoveToX(int x) { right = x + right - left; left = x; }
-	void CRectF::MoveToY(int y) { bottom = y + bottom - top; top = y; }
-	void CRectF::MoveToXY(int x, int y)
+	void CRectF::MoveToX(FLOAT x) { right = x + right - left; left = x; }
+	void CRectF::MoveToY(FLOAT y) { bottom = y + bottom - top; top = y; }
+	void CRectF::MoveToXY(FLOAT x, FLOAT y)
 	{
 		right += x - left;
 		bottom += y - top;
@@ -543,7 +543,7 @@ namespace d2dw
 		} else {
 			auto pLayout = GetTextLayout(format, text, size);
 			std::vector<CRectF> rects(text.size(), d2dw::CRectF());
-			for (auto i = 0; i < rects.size(); i++) {
+			for (size_t i = 0; i < rects.size(); i++) {
 				float x, y;
 				DWRITE_HIT_TEST_METRICS tm;
 				pLayout->HitTestTextPosition(i, false, &x, &y, &tm);
@@ -551,37 +551,83 @@ namespace d2dw
 			}
 			return rects;
 		}
-
-		//float x, y;
-		//{
-		//	DWRITE_HIT_TEST_METRICS tm;
-		//	layout_->HitTestTextPosition(0, false, &x, &y, &tm);
-		//	line_height_ = tm.height;
-		//}
-
-		//cnt_ = slen;
-		//rects_ = new FRectF[cnt_];
-		//ZeroMemory(rects_, sizeof(FRectF)*cnt_);
-		//int r = 0;
-		//for (size_t i = 0; i < text.size(); i++) {
-		//	float x1, y1;
-		//	DWRITE_HIT_TEST_METRICS tm;
-
-		//	pLayout->HitTestTextPosition(i, false, &x1, &y1, &tm);
-
-
-		//	if (bSingleLine_ && y1 != y)
-		//		break;
-
-		//	rects_[i].SetRect(tm.left, tm.top, FSizeF(tm.width, tm.height));
-
-		//	r++;
-		//}
-
-		//*plen = r;
-
-		//return rects_;
 	}
+
+	FLOAT CDirect2DWrite::GetPixels2DipsRatioX()
+	{
+		if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
+			//UINT dpi = ::GetDpiForWindow(m_hWnd);
+			UINT dpi = 96;
+			m_xPixels2Dips = 96.0f / dpi;
+			m_yPixels2Dips = 96.0f / dpi;
+		}
+		return m_xPixels2Dips;
+	}
+
+	FLOAT CDirect2DWrite::GetPixels2DipsRatioY()
+	{
+		if (m_xPixels2Dips == 0.0f || m_yPixels2Dips == 0.0f) {
+			//UINT dpi = ::GetDpiForWindow(m_hWnd);
+			UINT dpi = 96;
+			m_xPixels2Dips = 96.0f / dpi;
+			m_yPixels2Dips = 96.0f / dpi;
+		}
+		return m_yPixels2Dips;
+	}
+
+	FLOAT CDirect2DWrite::Pixels2DipsX(int x)
+	{
+		return x * GetPixels2DipsRatioX();
+	}
+
+	FLOAT CDirect2DWrite::Pixels2DipsY(int y)
+	{
+		return y * GetPixels2DipsRatioY();
+	}
+
+	int CDirect2DWrite::Dips2PixelsX(FLOAT x)
+	{
+		return static_cast<int>(std::round(x / GetPixels2DipsRatioX()));
+	}
+
+	int CDirect2DWrite::Dips2PixelsY(FLOAT y)
+	{
+		return static_cast<int>(std::round(y / GetPixels2DipsRatioY()));
+	}
+
+	CPointF CDirect2DWrite::Pixels2Dips(CPoint pt)
+	{
+		return CPointF(Pixels2DipsX(pt.x), Pixels2DipsY(pt.y));
+	}
+
+	CPoint CDirect2DWrite::Dips2Pixels(CPointF pt)
+	{
+		return CPoint(Dips2PixelsX(pt.x), Dips2PixelsY(pt.y));
+	}
+
+	CSizeF CDirect2DWrite::Pixels2Dips(CSize sz)
+	{
+		return CSizeF(Pixels2DipsX(sz.cx), Pixels2DipsY(sz.cy));
+	}
+
+	CSize CDirect2DWrite::Dips2Pixels(CSizeF sz)
+	{
+		return CSize(Dips2PixelsX(sz.width), Dips2PixelsY(sz.height));
+	}
+
+
+	CRectF CDirect2DWrite::Pixels2Dips(CRect rc)
+	{
+		return CRectF(Pixels2DipsX(rc.left), Pixels2DipsY(rc.top),
+			Pixels2DipsX(rc.right), Pixels2DipsY(rc.bottom));
+	}
+
+	CRect CDirect2DWrite::Dips2Pixels(CRectF rc)
+	{
+		return CRect(Dips2PixelsX(rc.left), Dips2PixelsY(rc.top),
+			Dips2PixelsX(rc.right), Dips2PixelsY(rc.bottom));
+	}
+
 
 
 	void CDirect2DWrite::Clear()
