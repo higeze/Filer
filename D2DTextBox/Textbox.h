@@ -7,6 +7,8 @@
 #include "TextEditSink.h"
 #include "CellProperty.h"
 
+#include "UIElement.h"
+
 class LayoutLineInfo;
 struct D2DContext;
 class D2DWindow;
@@ -96,7 +98,15 @@ public:
 
 public:
 	LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
-	LRESULT EditWndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam);
+
+	virtual void OnPaint(const PaintEvent& e);
+	virtual void OnKeyDown(const KeyDownEvent& e);
+	virtual void OnLButtonDown(const LButtonDownEvent& e);
+	virtual void OnLButtonUp(const LButtonUpEvent& e);
+	virtual void OnMouseMove(const MouseMoveEvent& e);
+	virtual void OnChar(const CharEvent& e);
+
+
 
 	// Getter ////////////////////////////////////////////////////
 	int GetSelectionStart() { return m_selStart; }
@@ -122,7 +132,6 @@ public:
 private:
 
 	BOOL Clipboard(HWND hwnd, TCHAR ch);
-	int TabCountCurrentRow();
 
 public:
 
@@ -140,40 +149,22 @@ public:
 	
 
 	// Render /////////////////////////////////////
-	void Render(D2DContext& hdc);
-	void CalcRender(D2DContext& hdc);
-	bool DrawCaret(D2DContext& cxt, const d2dw::CRectF& rc);
-	BOOL Layout(D2DContext& hdc, const WCHAR *psz, int nCnt, const d2dw::CSizeF& sz, int nSelEnd, int& StarCharPos);
-	BOOL Render(D2DContext& hdc, const d2dw::CRectF& rc, const WCHAR *psz, int nCnt, int nSelStart, int nSelEnd, bool bSelTrail, const COMPOSITIONRENDERINFO *pCompositionRenderInfo, UINT nCompositionRenderInfo);
+	void Render();
+//	void CalcRender();
+	void DrawCaret(const d2dw::CRectF& rc);
+	BOOL Layout();
 
 
 	void InvalidateRect();
-	int CurrentCaretPos();
 	void ClearCompositionRenderInfo();
 	BOOL AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIBUTE *pda);
 	void OnTextChange(const std::wstring& text);
-public:
-
-
-	void OnEditChanged();
-
-private:
-	int OnKeyDown(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam);
-	void OnPaint(D2DContext& hdc);
-	BOOL OnKeyDown(WPARAM wParam, LPARAM lParam);
-	void OnLButtonDown(WPARAM wParam, LPARAM lParam);
-	void OnLButtonUp(WPARAM wParam, LPARAM lParam);
-	void OnMouseMove(WPARAM wParam, LPARAM lParam);
-
-public:
-
 public:
 	int CharPosFromPoint(const d2dw::CPointF& pt);
 	int CharPosFromNearPoint(const d2dw::CPointF& pt);
 	BOOL RectFromCharPos(UINT nPos, d2dw::CRectF *prc);
 
 	UINT FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst);
-
 
 private:
 	bool bRecalc_;
@@ -212,9 +203,6 @@ private:
 public:
 	D2DWindow* m_pWnd;
 
-
-
-
 public:
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
 	static ITfThreadMgr2* s_pThreadMgr;
@@ -223,11 +211,5 @@ public:
 #endif
 	static TfClientId s_tfClientId;
 	static ITfKeystrokeMgr* s_pKeystrokeMgr;
-
-
-
-
-
-
 
 };

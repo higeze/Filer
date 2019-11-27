@@ -30,21 +30,37 @@ struct KeyEventArgs:public EventArgs
 	UINT Flags;
 	KeyEventArgs(UINT ch,UINT uRepCnt,UINT uFlags)
 		:Char(ch),RepeatCount(uRepCnt),Flags(uFlags){}
+	KeyEventArgs(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam) :
+		Char(wParam), RepeatCount(lParam & 0xFF), Flags(lParam >> 16 & 0xFF) {}
 };
+
+struct CharEvent :public KeyEventArgs
+{
+	CharEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
+		:KeyEventArgs(pDirect, wParam, lParam){}
+	CharEvent(UINT ch, UINT uRepCnt, UINT uFlags) :KeyEventArgs(ch, uRepCnt, uFlags) {}
+};
+
 
 struct KeyDownEvent :public KeyEventArgs
 {
+	KeyDownEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
+		:KeyEventArgs(pDirect, wParam, lParam) {}
 	KeyDownEvent(UINT ch, UINT uRepCnt, UINT uFlags):KeyEventArgs(ch, uRepCnt, uFlags){}
 };
 
 struct PaintEvent:public EventArgs
 {
 	d2dw::CDirect2DWrite& Direct;
+	d2dw::CDirect2DWrite* DirectPtr;
+
 	//CDC* DCPtr;
 	PaintEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct)
 		:EventArgs(pWnd), Direct(direct){}
 	PaintEvent(d2dw::CDirect2DWrite& direct)
 		:EventArgs(), Direct(direct){}
+	PaintEvent(d2dw::CDirect2DWrite* pDirect)
+		:EventArgs(), DirectPtr(pDirect), Direct(*pDirect){}
 };
 
 //struct OGLPaintEventArgs:public PaintEventArgs
@@ -58,20 +74,27 @@ struct PaintEvent:public EventArgs
 struct MouseEvent:public EventArgs
 {
 	d2dw::CDirect2DWrite& Direct;
+	d2dw::CDirect2DWrite* DirectPtr;
 	UINT Flags;
 	CPoint Point;
 	MouseEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt)
 		:EventArgs(pWnd), Direct(direct), Flags(uFlags),Point(pt){}
+	MouseEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
+		:EventArgs(nullptr), DirectPtr(pDirect), Direct(*pDirect), Flags((UINT)wParam), Point((short)LOWORD(lParam), (short)HIWORD(lParam)){}
 	virtual ~MouseEvent(){}
 };
 
 struct LButtonDownEvent :public MouseEvent
 {
+	LButtonDownEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam):
+		MouseEvent(pDirect, wParam, lParam){}
 	LButtonDownEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt):MouseEvent(pWnd, direct, uFlags, pt){}
 };
 
 struct LButtonUpEvent :public MouseEvent
 {
+	LButtonUpEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam) :
+		MouseEvent(pDirect, wParam, lParam) {}
 	LButtonUpEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt):MouseEvent(pWnd, direct, uFlags, pt) {}
 };
 
@@ -107,6 +130,9 @@ struct RButtonDownEvent :public MouseEvent
 
 struct MouseMoveEvent :public MouseEvent
 {
+	MouseMoveEvent(d2dw::CDirect2DWrite* pDirect, LPARAM lParam, WPARAM wParam) :
+		MouseEvent(pDirect, lParam, wParam) {}
+
 	MouseMoveEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
 };
 

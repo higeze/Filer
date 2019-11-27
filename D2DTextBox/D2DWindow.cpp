@@ -10,6 +10,73 @@
 #include "CellProperty.h"
 #define CLASSNAME L"D2DWindow"
 
+LRESULT D2DWindow::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
+
+	SetFocus(m_hWnd);
+
+	bHandled = TRUE;
+	return 0;
+}
+
+LRESULT D2DWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	PAINTSTRUCT ps;
+	HDC hdc = BeginPaint(m_hWnd, &ps);
+
+	m_pDirect->BeginDraw();
+
+	m_pDirect->GetHwndRenderTarget()->Clear(d2dw::CColorF(1.f, 1.f, 1.f));
+
+	WndProc(uMsg, wParam, lParam); // All objects is drawned.
+
+	if (redraw_)
+	{
+		InvalidateRect(m_hWnd, NULL, FALSE);
+		redraw_ = 0;
+	}
+
+	m_pDirect->EndDraw();
+
+	EndPaint(m_hWnd, &ps);
+	return 0;
+}
+
+LRESULT D2DWindow::OnEraseBkGnd(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	return 1;
+}
+
+LRESULT D2DWindow::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
+	WndProc(uMsg, wParam, lParam);
+	bHandled = FALSE;
+	return DefWindowProc(m_hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT D2DWindow::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	WndProc(uMsg, wParam, lParam);
+
+	if (redraw_)
+	{
+		InvalidateRect(m_hWnd, NULL, FALSE);
+		redraw_ = 0;
+	}
+	bHandled = FALSE;
+	return DefWindowProc(m_hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT D2DWindow::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	return WndProc(uMsg, wParam, lParam);
+}
+
+
+
+
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	D2DWindow* d = (D2DWindow*)::GetWindowLongPtr( hWnd, GWL_USERDATA );
@@ -17,60 +84,35 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 	switch( message )
 	{
 		case WM_CREATE:
-		{									
+		{			
 			CREATESTRUCT* st = (CREATESTRUCT*)lParam;
 			
 			::SetWindowLongPtr( hWnd, GWL_USERDATA,(LONG) st->lpCreateParams ); // GWL_USERDATA must be set here.
 			D2DWindow* d = (D2DWindow*)::GetWindowLongPtr(hWnd, GWL_USERDATA);
-			
-			d->m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(hWnd);
-
-			SetFocus(hWnd);
-
-			return 0; // DefWindowProc(hWnd, message, wParam, lParam);
+			d->m_hWnd = hWnd;
+			BOOL bHandled;
+			return d->OnCreate(message, wParam, lParam, bHandled);
 		}		
 		break;
 		case WM_DISPLAYCHANGE:
 		case WM_PAINT:
 		{
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hWnd, &ps);					
-			
-			d->m_pDirect->BeginDraw();
-
-			d->m_pDirect->GetHwndRenderTarget()->Clear(d2dw::CColorF(1.f,1.f,1.f));
-
-			d->WndProc( message, wParam, lParam ); // All objects is drawned.
-
-			if (d->redraw_)
-			{
-				InvalidateRect(hWnd, NULL, FALSE);
-				d->redraw_ = 0;
-			}
-
-			d->m_pDirect->EndDraw();
-
-			EndPaint(hWnd, &ps);
-			return 0;
+			BOOL bHandled;
+			return d->OnPaint(message, wParam, lParam, bHandled);
 		}
 		break;
 		case WM_ERASEBKGND:
-			return 1;
+		{
+			BOOL bHandled;
+			return d->OnEraseBkGnd(message, wParam, lParam, bHandled);
+		}
 		break;
 		case WM_SIZE :
 		{
-			d->m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
-			d->WndProc( message, wParam,lParam );
-			return DefWindowProc(hWnd, message, wParam, lParam);
+			BOOL bHandled;
+			return d->OnSize(message, wParam, lParam, bHandled);
 		}
 		break;
-
-		case WM_MOUSEWHEEL:// マウスホイール	
-		{				
-			CPoint pt(LOWORD(lParam), HIWORD(lParam));			
-			ScreenToClient( hWnd, &pt );				
-			lParam = MAKELONG(pt.x, pt.y );
-		}
 		case WM_LBUTTONDOWN:		
 		case WM_RBUTTONDOWN:
 			SetFocus(hWnd);
@@ -81,59 +123,23 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 		case WM_MOUSEMOVE:		
 		//case WM_MOUSEHWHEEL:
 		case WM_CHAR:
-		{
-			if ( message == WM_CHAR )
-			{
-				int a = 0;
-			}
-
-			d->WndProc( message, wParam,lParam );
-
-			if ( d->redraw_ )
-			{
-				InvalidateRect( hWnd, NULL, FALSE );				
-				d->redraw_ = 0;
-			}
-			
-			return DefWindowProc(hWnd, message, wParam, lParam);
-		}
-		break;
-		//case WM_IME_NOTIFY:
+			//case WM_IME_NOTIFY:
 		case WM_IME_STARTCOMPOSITION:
 		case WM_IME_COMPOSITION:
 		case WM_IME_ENDCOMPOSITION:
-		{
-			d->WndProc(  message, wParam,lParam );
-
-			if ( d->redraw_ )
-			{
-				InvalidateRect( hWnd, NULL, FALSE );				
-				d->redraw_ = 0;
-			}
-			
-			return DefWindowProc(hWnd, message, wParam, lParam);
-		}
-		break;
 		case WM_KILLFOCUS: // 0x8
 		case WM_KEYDOWN: // 0x100
 		case WM_KEYUP: //0x101
 		{
-			d->WndProc( message, wParam,lParam );
-
-			if ( d->redraw_ )
-			{
-				InvalidateRect( hWnd, NULL, FALSE );				
-				d->redraw_ = 0;
-			}
-			
-			return DefWindowProc(hWnd, message, wParam, lParam);
+			BOOL bHandled;
+			return d->OnChar(message, wParam, lParam, bHandled);
 		}
 		break;
 		
 		case WM_DESTROY:
-		{			
-			return d->WndProc( message, wParam,lParam );
-			//return DefWindowProc(hWnd, message, wParam, lParam);
+		{
+			BOOL bHandled;
+			return d->OnDestroy(message, wParam, lParam, bHandled);
 		}
 		break;
 		default :
@@ -197,12 +203,7 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 
 	HWND h = parent;
 	
-	m_hWnd =  ::CreateWindowExW( dwWSEXSTYLE, CLASSNAME, L"", dwWSSTYLE, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, parent, NULL, ::GetModuleHandle(0), this ); 	
-
-	cxt_.Init();
-	cxt_.pWindow = this;
-
-	cxt_.textformat = m_pDirect->GetTextFormat(*(m_spProp->Format));
+	m_hWnd =  ::CreateWindowExW( dwWSEXSTYLE, CLASSNAME, L"", dwWSSTYLE, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, parent, NULL, ::GetModuleHandle(0), this );
 
 	redraw_ = 0;
 

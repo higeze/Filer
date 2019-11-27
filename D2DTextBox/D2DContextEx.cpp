@@ -4,44 +4,40 @@
 #include <dxgi1_2.h>
 #include "D2DWindow.h"
 
-
-void D2DContext::Init()
-{
-}
-
-UINT D2DContext::GetLineMetrics( const D2D1_SIZE_F& sz,  LPCWSTR str, int len, DWRITE_TEXT_METRICS& textMetrics, std::vector<DWRITE_LINE_METRICS>& lineMetrics )
-{
-	CComPtr<IDWriteTextLayout> textlayout;
-	pWindow->m_pDirect->GetDWriteFactory()->CreateTextLayout(str,len, textformat,(FLOAT)sz.width, (FLOAT)sz.height, &textlayout ); 
-
-	
-    textlayout->GetMetrics(&textMetrics);
-
-    lineMetrics.resize(textMetrics.lineCount);
-    textlayout->GetLineMetrics(&lineMetrics.front(), textMetrics.lineCount, &textMetrics.lineCount);
-    
-    return textMetrics.lineCount; // 全行数
-}
-UINT D2DContext::GetLineMetric( const D2D1_SIZE_F& sz,  LPCWSTR str, int len, DWRITE_TEXT_METRICS& textMetrics, DWRITE_LINE_METRICS& lineMetric )
-{
-	std::vector<DWRITE_LINE_METRICS> ar;
-	
-	UINT r = GetLineMetrics( sz,str,len, textMetrics, ar );
-	_ASSERT( r );
-	lineMetric = ar[0];
-	return r;
-}
-UINT D2DContext::GetLineMetric( const D2D1_SIZE_F& sz,  LPCWSTR str, int len, DWRITE_TEXT_METRICS& textMetrics )
-{
-	return GetLineMetric( sz, textformat, str,len, textMetrics ); 
-}
-UINT D2DContext::GetLineMetric( const D2D1_SIZE_F& sz, IDWriteTextFormat* fmt, LPCWSTR str, int len, DWRITE_TEXT_METRICS& textMetrics )
-{
-	CComPtr<IDWriteTextLayout> tl;
-	pWindow->m_pDirect->GetDWriteFactory()->CreateTextLayout(str,len, fmt,(FLOAT)sz.width, (FLOAT)sz.height, &tl );
-    tl->GetMetrics(&textMetrics);
-	return textMetrics.lineCount;
-}
+//
+//UINT D2DContext::GetLineMetrics( const D2D1_SIZE_F& sz,  LPCWSTR str, int len, DWRITE_TEXT_METRICS& textMetrics, std::vector<DWRITE_LINE_METRICS>& lineMetrics )
+//{
+//	CComPtr<IDWriteTextLayout> textlayout;
+//	pWindow->m_pDirect->GetDWriteFactory()->CreateTextLayout(str,len, textformat,(FLOAT)sz.width, (FLOAT)sz.height, &textlayout ); 
+//
+//	
+//    textlayout->GetMetrics(&textMetrics);
+//
+//    lineMetrics.resize(textMetrics.lineCount);
+//    textlayout->GetLineMetrics(&lineMetrics.front(), textMetrics.lineCount, &textMetrics.lineCount);
+//    
+//    return textMetrics.lineCount; // 全行数
+//}
+//UINT D2DContext::GetLineMetric( const D2D1_SIZE_F& sz,  LPCWSTR str, int len, DWRITE_TEXT_METRICS& textMetrics, DWRITE_LINE_METRICS& lineMetric )
+//{
+//	std::vector<DWRITE_LINE_METRICS> ar;
+//	
+//	UINT r = GetLineMetrics( sz,str,len, textMetrics, ar );
+//	_ASSERT( r );
+//	lineMetric = ar[0];
+//	return r;
+//}
+//UINT D2DContext::GetLineMetric( const D2D1_SIZE_F& sz,  LPCWSTR str, int len, DWRITE_TEXT_METRICS& textMetrics )
+//{
+//	return GetLineMetric( sz, textformat, str,len, textMetrics ); 
+//}
+//UINT D2DContext::GetLineMetric( const D2D1_SIZE_F& sz, IDWriteTextFormat* fmt, LPCWSTR str, int len, DWRITE_TEXT_METRICS& textMetrics )
+//{
+//	CComPtr<IDWriteTextLayout> tl;
+//	pWindow->m_pDirect->GetDWriteFactory()->CreateTextLayout(str,len, fmt,(FLOAT)sz.width, (FLOAT)sz.height, &tl );
+//    tl->GetMetrics(&textMetrics);
+//	return textMetrics.lineCount;
+//}
 
 
 

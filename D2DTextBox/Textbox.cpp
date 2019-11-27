@@ -9,6 +9,7 @@
 #include "CellProperty.h"
 #include "Direct2DWrite.h"
 #include "Debug.h"
+#include "UIElement.h"
 
 
 #define TAB_WIDTH_4CHAR 4
@@ -68,7 +69,6 @@ D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::wstring& initText, const std:
 	_ASSERT(_CrtIsValidHeapPointer(this));
 
 	InitTSF();
-	m_pTextEditSink->OnChanged_ = std::bind(&D2DTextbox::OnEditChanged, this);// &CTextEditorCtrl::OnChanged;
 
 	pCompositionRenderInfo_ = NULL;
 	nCompositionRenderInfo_ = 0;
@@ -87,6 +87,210 @@ D2DTextbox::~D2DTextbox()
 	UninitTSF();
 }
 
+void D2DTextbox::OnPaint(const PaintEvent& e)
+{
+	//PaintBackground
+	e.DirectPtr->FillSolidRectangle(*(m_pWnd->m_spProp->NormalFill), GetClientRect());
+	//PaintLine(e.Direct, rcClient)
+	e.DirectPtr->GetHwndRenderTarget()->DrawRectangle(GetClientRect(), e.DirectPtr->GetColorBrush(m_pWnd->m_spProp->EditLine->Color), m_pWnd->m_spProp->Line->Width);
+	//PaintContent(e.Direct, rcContent);
+	Render();
+	m_pWnd->redraw_ = 1;
+}
+
+void D2DTextbox::OnKeyDown(const KeyDownEvent& e)
+{
+	bool heldShift = (GetKeyState(VK_SHIFT) & 0x80) != 0;
+	bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
+
+	int nSelStart;
+	int nSelEnd;
+	switch (e.Char) {
+	case VK_LEFT:
+		if (heldShift) {
+			nSelStart = GetSelectionStart();
+			nSelEnd = GetSelectionEnd();
+			if (nSelStart > 0) {
+				if (nSelStart == nSelEnd)
+					m_isSelTrail = false;
+
+				if (m_isSelTrail)
+					MoveSelection(nSelStart, nSelEnd - 1, true);
+				else
+					MoveSelection(nSelStart - 1, nSelEnd, false);
+			}
+		}
+		else {
+			MoveSelectionPrev();
+		}
+		break;
+
+	case VK_RIGHT:
+		if (heldShift) {
+			nSelStart = GetSelectionStart();
+			nSelEnd = GetSelectionEnd();
+
+			if (nSelStart == nSelEnd)
+				m_isSelTrail = true;
+
+			if (m_isSelTrail)
+				MoveSelection(nSelStart, nSelEnd + 1, true);
+			else
+				MoveSelection(nSelStart + 1, nSelEnd, false);
+		}
+		else {
+			MoveSelectionNext();
+		}
+		break;
+
+	case VK_UP:
+		MoveSelectionUpDown(TRUE, heldShift);
+		break;
+
+	case VK_DOWN:
+		MoveSelectionUpDown(FALSE, heldShift);
+		break;
+
+	case VK_HOME:
+		MoveSelectionToLineFirstEnd(TRUE, heldShift);
+		break;
+
+	case VK_END:
+		MoveSelectionToLineFirstEnd(FALSE, heldShift);
+		break;
+
+	case VK_DELETE:
+		nSelStart = GetSelectionStart();
+		nSelEnd = GetSelectionEnd();
+		if (nSelStart == nSelEnd) {
+			DeleteAtSelection(FALSE);
+		}
+		else {
+			DeleteSelection();
+		}
+
+		break;
+
+	case VK_BACK:
+		nSelStart = GetSelectionStart();
+		nSelEnd = GetSelectionEnd();
+		if (nSelStart == nSelEnd) {
+			DeleteAtSelection(TRUE);
+		}
+		else {
+			DeleteSelection();
+		}
+
+		break;
+	case VK_ESCAPE:
+		nSelEnd = GetSelectionEnd();
+		MoveSelection(nSelEnd, nSelEnd);
+		break;
+	case 'C':
+		(heldControl && Clipboard(m_pWnd->m_hWnd, L'C') ? 1 : 0);
+		break;
+	case 'X':
+		(heldControl && Clipboard(m_pWnd->m_hWnd, L'C') ? 1 : 0);
+		if (m_selEnd > m_selStart)
+		{
+			m_text.erase(m_selStart, m_selEnd - m_selStart);
+			m_selEnd = m_selStart;
+		}
+		break;
+	case 'V':
+		(heldControl && Clipboard(m_pWnd->m_hWnd, L'V') ? 1 : 0);
+		break;
+	case 'Z':
+		break;
+	case VK_INSERT:
+		(heldShift && Clipboard(m_pWnd->m_hWnd, L'V') ? 1 : 0);
+		break;
+	case VK_RETURN:
+	case VK_TAB:
+		InsertText(L"\t", -1, 1);
+		break;
+
+	default:
+		break;
+
+	}
+	bRecalc_ = true;
+}
+
+void D2DTextbox::OnLButtonDown(const LButtonDownEvent& e)
+{
+	m_selDragStart = (UINT)-1;
+
+	if (MoveSelectionAtPoint(e.Point)) {
+		InvalidateRect();
+		m_selDragStart = GetSelectionStart();
+	}
+	else {
+		int end = m_selEnd;
+		MoveSelection(end, end, true);
+
+	}
+}
+
+void D2DTextbox::OnLButtonUp(const LButtonUpEvent& e)
+{
+	UINT nSelStart = GetSelectionStart();
+	UINT nSelEnd = GetSelectionEnd();
+
+	if (MoveSelectionAtPoint(e.Point)) {
+		UINT nNewSelStart = GetSelectionStart();
+		UINT nNewSelEnd = GetSelectionEnd();
+
+		auto bl = true;
+		if (nNewSelStart < m_selDragStart)
+			bl = false;
+
+		MoveSelection(min(nSelStart, nNewSelStart), max(nSelEnd, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
+		InvalidateRect();
+	}
+}
+
+void D2DTextbox::OnMouseMove(const MouseMoveEvent& e)
+{
+	if (e.Flags & MK_LBUTTON) {
+		if (MoveSelectionAtPoint(e.Point)) {
+			UINT nNewSelStart = GetSelectionStart();
+			UINT nNewSelEnd = GetSelectionEnd();
+
+			auto bl = true;
+			if (nNewSelStart < m_selDragStart)
+				bl = false;
+
+			MoveSelection(min(m_selDragStart, nNewSelStart), max(m_selDragStart, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
+			InvalidateRect();
+		}
+	}
+}
+
+void D2DTextbox::OnChar(const CharEvent& e)
+{
+	bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
+
+	if (heldControl) {
+		return;
+	}
+
+	// normal charcter input. not TSF.
+	if (e.Char >= L' ' || (e.Char == L'\r' && !m_isSingleLine)) {
+		if (e.Char < 256) {
+			WCHAR wc[] = { e.Char, '\0' };
+			this->InsertAtSelection(wc);
+			InvalidateRect();
+		}
+		else {
+		}
+	}
+
+}
+
+
+
+
 LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT ret = 0;
@@ -94,117 +298,27 @@ LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lP
 	switch ( message )
 	{
 		case WM_PAINT:
-		{
-			//PaintBackground
-			d->m_pDirect->FillSolidRectangle(*(d->m_spProp->NormalFill), GetClientRect());
-			//PaintLine(e.Direct, rcClient)
-			d->m_pDirect->GetHwndRenderTarget()->DrawRectangle(GetClientRect(), d->m_pDirect->GetColorBrush(d->m_spProp->EditLine->Color), d->m_spProp->Line->Width);
-			//PaintContent(e.Direct, rcContent);
-			EditWndProc(d, WM_PAINT, wParam, lParam);
-			d->redraw_ = 1;
-		}
+			OnPaint(PaintEvent(d->m_pDirect.get()));
 		break;
-		default :
-		{				
-			switch( message )
-			{
-				case WM_KEYDOWN:
-				{			
-					ret = OnKeyDown(d,message,wParam,lParam);
-
-					if ( ret )
-						return ret;
-
-				}
-				break;
-
-			}
-			int bAddTabCount = 0;
-			
-			if ( message == WM_LBUTTONDOWN || message == WM_LBUTTONUP || message == WM_MOUSEMOVE  
-				|| message == WM_RBUTTONDOWN || message == WM_RBUTTONUP || message == WM_LBUTTONDBLCLK )			
-			{					
-				//FPointF npt = matEx_.DPtoLP( FPointF(lParam) );
-				//lParam = MAKELONG( (WORD)npt.x, (WORD)npt.y );				
-			}
-			else if ( message == WM_CHAR && (WCHAR)wParam == L'\r' )
-			{
-				// top column, tab count.
-				bAddTabCount = TabCountCurrentRow();
-			}
-
-			ret = EditWndProc( d, message, wParam, lParam ); // WM_CHAR,WM_KEYDOWNの処理など
-
-			// add tab
-			for( int i = 0; i < bAddTabCount; i++ )
-				OnKeyDown(d,WM_KEYDOWN,(WPARAM)L'\t',0);
-		}
+		case WM_KEYDOWN:
+			OnKeyDown(KeyDownEvent(d->m_pDirect.get(), wParam, lParam));
+		break;
+		case WM_LBUTTONDOWN:
+			OnLButtonDown(LButtonDownEvent(d->m_pDirect.get(), wParam, lParam));
+			break;
+		case WM_LBUTTONUP:
+			OnLButtonUp(LButtonUpEvent(d->m_pDirect.get(), wParam, lParam));
+			break;
+		case WM_MOUSEMOVE:
+			OnMouseMove(MouseMoveEvent(d->m_pDirect.get(), wParam, lParam));
+			break;
+		case WM_CHAR:
+			OnChar(CharEvent(d->m_pDirect.get(), wParam, lParam));
 		break;	
 	}
 	return ret; 
 }
 
-int D2DTextbox::TabCountCurrentRow()
-{
-	int bAddTabCount = 0;
-
-	LPCWSTR s = m_text.c_str();
-	int pos = (std::max)(0, m_selEnd - 1 );
-
-	while(pos)
-	{
-		if ( s[pos] == L'\n' || s[pos] == L'\r')
-			break;
-
-		if ( s[pos] == L'\t' )
-			bAddTabCount++;
-		else
-			bAddTabCount = 0;
-
-		pos--;
-	}				
-	return bAddTabCount;
-
-}
-
-int D2DTextbox::OnKeyDown(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	int ret = 0;
-	bool heldShift   = (GetKeyState(VK_SHIFT)   & 0x80) != 0;
-    bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
-	switch( wParam )
-	{
-		case 'C':		
-			ret =  (heldControl && Clipboard( d->m_hWnd, L'C' ) ? 1 : 0 );
-		break;
-		case 'X':		
-			ret =  (heldControl && Clipboard( d->m_hWnd, L'C' ) ? 1 : 0 );
-			if ( m_selEnd > m_selStart )
-			{
-				m_text.erase( m_selStart, m_selEnd-m_selStart );
-				m_selEnd = m_selStart;
-			}
-		break;
-		case 'V':
-			ret =  (heldControl && Clipboard( d->m_hWnd, L'V' ) ? 1 : 0 );			 
-		break;
-		case 'Z':
-		break;
-		case VK_INSERT:				
-			ret =  (heldShift && Clipboard( d->m_hWnd, L'V' ) ? 1 : 0 );
-		break;
-		case VK_RETURN:
-		case VK_TAB:			
-			InsertText(L"\t", -1, 1);
-			break;
-
-		default :
-		break;
-
-	}
-
-	return ret;
-}
 BOOL D2DTextbox::Clipboard( HWND hwnd, TCHAR ch )
 {
 //	if ( !OpenClipboard( hwnd ) ) return FALSE;
@@ -265,7 +379,7 @@ BOOL D2DTextbox::Clipboard( HWND hwnd, TCHAR ch )
 				if (e1 - s1 > 0)
 					m_text.erase(s1, e1 - s1);
 
-				CalcRender(m_pWnd->cxt_);
+				bRecalc_ = true;
 			}
 			clipboard.Close();
 		}
@@ -302,7 +416,7 @@ std::wstring D2DTextbox::FilterInputString( LPCWSTR s, UINT len )
 void D2DTextbox::EraseText(const size_t off, size_t count)
 { 
 	m_text.erase(off, count);
-	CalcRender(m_pWnd->cxt_);
+	bRecalc_ = true;
 }
 
 
@@ -320,7 +434,7 @@ void D2DTextbox::SetText(VARIANT v)
 int D2DTextbox::InsertText( LPCWSTR str, int pos, int strlen)
 {
 	m_text.insert(pos, str, strlen);
-	CalcRender(m_pWnd->cxt_);
+	bRecalc_ = true;
 
 	return 0;
 }
@@ -331,7 +445,7 @@ void D2DTextbox::SetText(LPCWSTR str1)
 	m_text = str1;
 	m_selStart = 0;
 	m_selEnd = m_text.size();
-	CalcRender(m_pWnd->cxt_);
+	bRecalc_ = true;
 }
 
 d2dw::CRectF D2DTextbox::GetClientRect() const
@@ -349,22 +463,20 @@ d2dw::CRectF D2DTextbox::GetContentRect() const
 	return rcContent;
 }
 
-bool D2DTextbox::DrawCaret(D2DContext& cxt, const d2dw::CRectF& rc)
+void D2DTextbox::DrawCaret(const d2dw::CRectF& rc)
 {
 	QueryPerformanceCounter(&m_gtm);
 
 	float zfps = (float)(m_gtm.QuadPart - m_pregtm.QuadPart) / (float)m_frequency.QuadPart;
 
-	if (zfps > 0.4f) {
+	if (zfps > 0.5f) {
 		m_pregtm = m_gtm;
 		m_bCaret = !m_bCaret;
-	} else {
-		cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-		cxt.pWindow->m_pDirect->FillSolidRectangle((m_bCaret ? d2dw::SolidFill(0.f, 0.f, 0.f) : d2dw::SolidFill(1.f, 1.f, 1.f)), rc);
-		cxt.pWindow->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+	} else if(m_bCaret){
+		m_pWnd->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+		m_pWnd->m_pDirect->FillSolidRectangle(m_pWnd->m_spProp->Format->Color, rc);
+		m_pWnd->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	}
-
-	return true;
 }
 
 void D2DTextbox::InitTSF()
@@ -629,6 +741,7 @@ BOOL D2DTextbox::DeleteSelection()
 }
 
 void D2DTextbox::OnTextChange(const std::wstring& text)
+
 {
 	d2dw::CRectF rcClient(GetClientRect());
 	d2dw::CRectF rcContent(GetContentRect());
@@ -649,42 +762,165 @@ void D2DTextbox::OnTextChange(const std::wstring& text)
 
 }
 
-int D2DTextbox::CurrentCaretPos()
+void D2DTextbox::Render()
 {
-	return (m_isSelTrail ? m_selEnd : m_selStart);
-}
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-void D2DTextbox::Render(D2DContext& cxt)
-{
-	int zCaretPos = CurrentCaretPos(); //(ct_->bSelTrail_ ? m_selEnd : m_selStart );
-
 	if (bRecalc_) {
-		Layout(cxt, m_text.c_str(), m_text.size(), GetContentRect().Size(), zCaretPos, m_startCharPos);
+		Layout();
 		bRecalc_ = false;
 	}
 
-	int selstart = (int)m_selStart - m_startCharPos;
-	int selend = (int)m_selEnd - m_startCharPos;
+	int nSelStart = (int)m_selStart - m_startCharPos;
+	int nSelEnd = (int)m_selEnd - m_startCharPos;
 
-	Render(cxt, GetContentRect(), m_text.c_str(), m_text.size(), selstart, selend, m_isSelTrail, pCompositionRenderInfo_, nCompositionRenderInfo_);
-}
-//----------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------
-void D2DTextbox::CalcRender(D2DContext& cxt)
-{
-	int x = 0;
+	d2dw::CRectF rc(GetContentRect());
 
-	//::OutputDebugStringA((boost::format("TextBuff:%1%, TextLen:%2%\r\n") % ct_->GetTextBuffer() % ct_->GetTextLength()).str().c_str());
-	d2dw::CSizeF size(GetContentRect().Size());
-	Layout(cxt, m_text.c_str(), m_text.size(), size, 0, x);
-	bRecalc_ = false;
+	m_pWnd->m_pDirect->DrawTextLayout(*(m_pWnd->m_spProp->Format), m_text, rc);
+
+	// Render selection,caret
+	d2dw::CRectF rcSelCaret(rc.left, rc.top, rc.left + 1.0f, rc.top + (float)nLineHeight_);
+
+	CaretRect xcaret(m_isSelTrail);
+
+	if (nLineCnt_) {
+
+		for (UINT r = 0; r < nLineCnt_; r++) {
+
+			if ((nSelEnd >= m_lineInfos[r].nPos) && (nSelStart <= m_lineInfos[r].nPos + m_lineInfos[r].nCnt)) {
+				int nSelStartInLine = 0;
+				int nSelEndInLine = m_lineInfos[r].nCnt;
+
+				if (nSelStart > m_lineInfos[r].nPos) {
+					nSelStartInLine = nSelStart - m_lineInfos[r].nPos;
+				}
+
+				if (nSelEnd < m_lineInfos[r].nPos + m_lineInfos[r].nCnt) {
+					nSelEndInLine = nSelEnd - m_lineInfos[r].nPos;
+
+				}
+
+				// caret, select範囲指定の場合
+				if (nSelStartInLine != nSelEndInLine && nSelEndInLine != -1) {
+					for (int j = nSelStartInLine; j < nSelEndInLine; j++) {
+						m_pWnd->m_pDirect->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)), m_lineInfos[r].CharInfos[j].rc);
+					}
+
+					bool blast = m_isSelTrail;
+
+					if (blast) {
+						rcSelCaret = m_lineInfos[r].CharInfos[nSelEndInLine - 1].rc;
+						rcSelCaret.left = rcSelCaret.right;
+					}
+					else {
+						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
+						rcSelCaret.right = rcSelCaret.left;
+					}
+					rcSelCaret.right++;
+
+					xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
+
+
+				}
+				else // caret, 範囲指定されてない場合
+				{
+					if (nSelStartInLine == m_lineInfos[r].nCnt && !m_lineInfos[r].CharInfos.empty()) {
+						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
+						rcSelCaret.right = rcSelCaret.left + 1;
+
+						_ASSERT(rcSelCaret.bottom >= 0);
+						_ASSERT(rcSelCaret.bottom < 65000);
+
+						xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
+
+
+					}
+					else if (nSelStartInLine > -1 && !m_lineInfos[r].CharInfos.empty()) {
+						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
+						rcSelCaret.right = rcSelCaret.left + 1;
+
+						_ASSERT(rcSelCaret.bottom >= 0);
+						xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
+
+					}
+				}
+
+			}
+
+			// キャレット表示位置が確定
+			if (xcaret.IsComplete(r)) {
+				if (m_isSelTrail)
+					break;
+
+			}
+
+			for (UINT j = 0; j < nCompositionRenderInfo_; j++) {
+
+				if ((pCompositionRenderInfo_[j].nEnd >= m_lineInfos[r].nPos) &&
+					(pCompositionRenderInfo_[j].nStart <= m_lineInfos[r].nPos + m_lineInfos[r].nCnt)) {
+					UINT nCompStartInLine = 0;
+					UINT nCompEndInLine = m_lineInfos[r].nCnt;
+					int  nBaseLineWidth = (nLineHeight_ / 18) + 1;
+
+					if (pCompositionRenderInfo_[j].nStart > m_lineInfos[r].nPos)
+						nCompStartInLine = pCompositionRenderInfo_[j].nStart - m_lineInfos[r].nPos;
+
+					if (pCompositionRenderInfo_[j].nEnd < m_lineInfos[r].nPos + m_lineInfos[r].nCnt)
+						nCompEndInLine = pCompositionRenderInfo_[j].nEnd - m_lineInfos[r].nPos;
+
+					for (UINT k = nCompStartInLine; k < nCompEndInLine; k++) {
+						UINT uCurrentCompPos = m_lineInfos[r].nPos + k - pCompositionRenderInfo_[j].nStart;
+						BOOL bClause = FALSE;
+
+						if (k + 1 == nCompEndInLine) {
+							bClause = TRUE;
+						}
+
+						if ((pCompositionRenderInfo_[j].da.crText.type != TF_CT_NONE) &&
+							(pCompositionRenderInfo_[j].da.crBk.type != TF_CT_NONE)) {
+							int a = 0;
+						}
+
+						if (pCompositionRenderInfo_[j].da.lsStyle != TF_LS_NONE) {
+							// 変換途中の下線の描画
+							{
+								d2dw::CRectF rc = m_lineInfos[r].CharInfos[k].rc;
+
+								d2dw::CPointF pts[2];
+								pts[0].x = rc.left;
+								pts[0].y = rc.bottom;
+								pts[1].x = rc.right - (bClause ? nBaseLineWidth : 0);
+								pts[1].y = rc.bottom;
+								m_pWnd->m_pDirect->DrawSolidLine(*(m_pWnd->m_spProp->Line), pts[0], pts[1]);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (xcaret.empty()) {
+			//次行の文字なし先頭列
+			rcSelCaret.left = rc.left;
+			rcSelCaret.right = rc.left + 1;
+
+			rcSelCaret.OffsetRect(0, nLineHeight_ * nLineCnt_);
+			xcaret.Push(rcSelCaret, nLineCnt_, 0, 0);
+		}
+
+
+		// 情報
+		int CaretRow = xcaret.row() + 1;
+		int CaretCol = xcaret.col();
+		int LineNumber = nLineCnt_;
+
+
+		// Caret表示
+		DrawCaret(xcaret.Get());
+
+	}
+	else {
+		// 文字がない場合Caret表示
+		DrawCaret(rcSelCaret);
+	}
 }
 
 void D2DTextbox::ClearCompositionRenderInfo()
@@ -720,361 +956,6 @@ BOOL D2DTextbox::AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIB
 	return TRUE;
 }
 
-void D2DTextbox::OnEditChanged() {}
-
-LRESULT D2DTextbox::EditWndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	LRESULT ret = 0;
-
-	switch (message) {
-	case WM_PAINT:
-		OnPaint(d->cxt_);
-		break;
-		/*case WM_SETFOCUS:
-			focusは別系統で
-			this->OnSetFocus(wParam, lParam);
-		break;*/
-	case WM_KEYDOWN:
-		if (this->OnKeyDown(wParam, lParam))
-			ret = 1;
-		break;
-	case WM_LBUTTONDOWN:
-		this->OnLButtonDown(wParam, lParam);
-		break;
-	case WM_LBUTTONUP:
-		this->OnLButtonUp(wParam, lParam);
-		break;
-	case WM_MOUSEMOVE:
-		this->OnMouseMove(wParam, lParam);
-		break;
-	case WM_CHAR:
-		// wParam is a character of the result string. 
-
-		bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
-		WCHAR wch = (WCHAR)wParam;
-
-		if (heldControl)
-			return 0;
-
-		// normal charcter input. not TSF.
-		if (wch >= L' ' || (wch == L'\r' && !m_isSingleLine)) {
-			if (wch < 256) {
-				WCHAR wc[] = { wch, '\0' };
-				this->InsertAtSelection(wc);
-				InvalidateRect();
-			} else {
-				// outof input
-//					TRACE( L"out of char %c\n", wch );
-			}
-		}
-		break;
-	}
-	return ret;
-}
-
-void D2DTextbox::OnPaint(D2DContext& hdc)
-{
-	Render(hdc);
-}
-
-BOOL D2DTextbox::OnKeyDown(WPARAM wParam, LPARAM lParam)
-{
-	BOOL ret = true;
-
-	bool heldShift = (GetKeyState(VK_SHIFT) & 0x80) != 0;
-
-	int nSelStart;
-	int nSelEnd;
-	switch (0xff & wParam) {
-	case VK_LEFT:
-		if (heldShift) {
-			nSelStart = GetSelectionStart();
-			nSelEnd = GetSelectionEnd();
-			if (nSelStart > 0) {
-				if (nSelStart == nSelEnd)
-					m_isSelTrail = false;
-
-				if (m_isSelTrail)
-					MoveSelection(nSelStart, nSelEnd - 1, true);
-				else
-					MoveSelection(nSelStart - 1, nSelEnd, false);
-			}
-		} else {
-			MoveSelectionPrev();
-		}
-		break;
-
-	case VK_RIGHT:
-		if (heldShift) {
-			nSelStart = GetSelectionStart();
-			nSelEnd = GetSelectionEnd();
-
-			if (nSelStart == nSelEnd)
-				m_isSelTrail = true;
-
-			if (m_isSelTrail)
-				MoveSelection(nSelStart, nSelEnd + 1, true);
-			else
-				MoveSelection(nSelStart + 1, nSelEnd, false);
-		} else {
-			MoveSelectionNext();
-		}
-		break;
-
-	case VK_UP:
-		ret = MoveSelectionUpDown(TRUE, heldShift);
-		break;
-
-	case VK_DOWN:
-		ret = MoveSelectionUpDown(FALSE, heldShift);
-		break;
-
-	case VK_HOME:
-		ret = MoveSelectionToLineFirstEnd(TRUE, heldShift);
-		break;
-
-	case VK_END:
-		ret = MoveSelectionToLineFirstEnd(FALSE, heldShift);
-		break;
-
-	case VK_DELETE:
-		nSelStart = GetSelectionStart();
-		nSelEnd = GetSelectionEnd();
-		if (nSelStart == nSelEnd) {
-			DeleteAtSelection(FALSE);
-		} else {
-			DeleteSelection();
-		}
-
-		break;
-
-	case VK_BACK:
-		nSelStart = GetSelectionStart();
-		nSelEnd = GetSelectionEnd();
-		if (nSelStart == nSelEnd) {
-			DeleteAtSelection(TRUE);
-		} else {
-			DeleteSelection();
-		}
-
-		break;
-	case VK_ESCAPE:
-		nSelEnd = GetSelectionEnd();
-		MoveSelection(nSelEnd, nSelEnd);
-		break;
-	}
-
-	bRecalc_ = true;
-
-	return ret;
-}
-
-void D2DTextbox::OnLButtonDown(WPARAM wParam, LPARAM lParam)
-{
-	CPoint pt((short)LOWORD(lParam), (short)(HIWORD(lParam)));
-	m_selDragStart = (UINT)-1;
-
-	if (MoveSelectionAtPoint(pt)) {
-		InvalidateRect();
-		m_selDragStart = GetSelectionStart();
-	} else {
-		int end = m_selEnd;
-		MoveSelection(end, end, true);
-
-	}
-}
-
-void D2DTextbox::OnLButtonUp(WPARAM wParam, LPARAM lParam)
-{
-	UINT nSelStart = GetSelectionStart();
-	UINT nSelEnd = GetSelectionEnd();
-	CPoint pt((short)LOWORD(lParam), (short)HIWORD(lParam));
-
-	if (MoveSelectionAtPoint(pt)) {
-		UINT nNewSelStart = GetSelectionStart();
-		UINT nNewSelEnd = GetSelectionEnd();
-
-		auto bl = true;
-		if (nNewSelStart < m_selDragStart)
-			bl = false;
-
-		MoveSelection(min(nSelStart, nNewSelStart), max(nSelEnd, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
-		InvalidateRect();
-	}
-}
-
-void D2DTextbox::OnMouseMove(WPARAM wParam, LPARAM lParam)
-{
-	if (wParam & MK_LBUTTON) {
-		CPoint pt((std::max)((short)0, (short)LOWORD(lParam)), (std::max)((short)0, (short)HIWORD(lParam)));
-
-		if (MoveSelectionAtPoint(pt)) {
-			UINT nNewSelStart = GetSelectionStart();
-			UINT nNewSelEnd = GetSelectionEnd();
-
-			auto bl = true;
-			if (nNewSelStart < m_selDragStart)
-				bl = false;
-
-			MoveSelection(min(m_selDragStart, nNewSelStart), max(m_selDragStart, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
-			InvalidateRect();
-		}
-	}
-}
-
-
-BOOL D2DTextbox::Render(D2DContext& cxt, const d2dw::CRectF& rc, LPCWSTR psz, int nCnt, int nSelStart, int nSelEnd, bool bTrail,
-	const COMPOSITIONRENDERINFO *pCompositionRenderInfo, UINT nCompositionRenderInfo)
-{
-	cxt.pWindow->m_pDirect->DrawTextLayout(*(cxt.pWindow->m_spProp->Format), psz, d2dw::CRectF(rc.left, rc.top, rc.right, rc.bottom));
-
-	// Render selection,caret
-	d2dw::CRectF rcSelCaret(rc.left, rc.top, rc.left + 1.0f, rc.top + (float)nLineHeight_);
-
-	CaretRect xcaret(bTrail);
-
-	if (nLineCnt_) {
-#pragma region CaretRectX
-
-		for (UINT r = 0; r < nLineCnt_; r++) {
-
-			if ((nSelEnd >= m_lineInfos[r].nPos) && (nSelStart <= m_lineInfos[r].nPos + m_lineInfos[r].nCnt)) {
-				int nSelStartInLine = 0;
-				int nSelEndInLine = m_lineInfos[r].nCnt;
-
-				if (nSelStart > m_lineInfos[r].nPos) {
-					nSelStartInLine = nSelStart - m_lineInfos[r].nPos;
-				}
-
-				if (nSelEnd < m_lineInfos[r].nPos + m_lineInfos[r].nCnt) {
-					nSelEndInLine = nSelEnd - m_lineInfos[r].nPos;
-
-				}
-
-				// caret, select範囲指定の場合
-				if (nSelStartInLine != nSelEndInLine && nSelEndInLine != -1) {
-					for (int j = nSelStartInLine; j < nSelEndInLine; j++) {
-						cxt.pWindow->m_pDirect->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)), m_lineInfos[r].CharInfos[j].rc);
-					}
-
-					bool blast = bTrail;
-
-					if (blast) {
-						rcSelCaret = m_lineInfos[r].CharInfos[nSelEndInLine - 1].rc;
-						rcSelCaret.left = rcSelCaret.right;
-					} else {
-						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
-						rcSelCaret.right = rcSelCaret.left;
-					}
-					rcSelCaret.right++;
-
-					xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
-
-
-				} else // caret, 範囲指定されてない場合
-				{
-					if (nSelStartInLine == m_lineInfos[r].nCnt && !m_lineInfos[r].CharInfos.empty()) {
-						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
-						rcSelCaret.right = rcSelCaret.left + 1;
-
-						_ASSERT(rcSelCaret.bottom >= 0);
-						_ASSERT(rcSelCaret.bottom < 65000);
-
-						xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
-
-
-					} else if (nSelStartInLine > -1 && !m_lineInfos[r].CharInfos.empty()) {
-						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
-						rcSelCaret.right = rcSelCaret.left + 1;
-
-						_ASSERT(rcSelCaret.bottom >= 0);
-						xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
-
-					}
-				}
-
-			}
-
-			// キャレット表示位置が確定
-			if (xcaret.IsComplete(r)) {
-				if (bTrail)
-					break;
-
-			}
-
-			for (UINT j = 0; j < nCompositionRenderInfo; j++) {
-
-				if ((pCompositionRenderInfo[j].nEnd >= m_lineInfos[r].nPos) &&
-					(pCompositionRenderInfo[j].nStart <= m_lineInfos[r].nPos + m_lineInfos[r].nCnt)) {
-					UINT nCompStartInLine = 0;
-					UINT nCompEndInLine = m_lineInfos[r].nCnt;
-					int  nBaseLineWidth = (nLineHeight_ / 18) + 1;
-
-					if (pCompositionRenderInfo[j].nStart > m_lineInfos[r].nPos)
-						nCompStartInLine = pCompositionRenderInfo[j].nStart - m_lineInfos[r].nPos;
-
-					if (pCompositionRenderInfo[j].nEnd < m_lineInfos[r].nPos + m_lineInfos[r].nCnt)
-						nCompEndInLine = pCompositionRenderInfo[j].nEnd - m_lineInfos[r].nPos;
-
-					for (UINT k = nCompStartInLine; k < nCompEndInLine; k++) {
-						UINT uCurrentCompPos = m_lineInfos[r].nPos + k - pCompositionRenderInfo[j].nStart;
-						BOOL bClause = FALSE;
-
-						if (k + 1 == nCompEndInLine) {
-							bClause = TRUE;
-						}
-
-						if ((pCompositionRenderInfo[j].da.crText.type != TF_CT_NONE) &&
-							(pCompositionRenderInfo[j].da.crBk.type != TF_CT_NONE)) {
-							int a = 0;
-						}
-
-						if (pCompositionRenderInfo[j].da.lsStyle != TF_LS_NONE) {
-							// 変換途中の下線の描画
-							{
-								d2dw::CRectF rc = m_lineInfos[r].CharInfos[k].rc;
-
-								d2dw::CPointF pts[2];
-								pts[0].x = rc.left;
-								pts[0].y = rc.bottom;
-								pts[1].x = rc.right - (bClause ? nBaseLineWidth : 0);
-								pts[1].y = rc.bottom;
-								cxt.pWindow->m_pDirect->DrawSolidLine(*(cxt.pWindow->m_spProp->Line), pts[0], pts[1]);
-							}
-						}
-					}
-				}
-			}
-		}
-#pragma endregion
-
-
-		if (xcaret.empty()) {
-			//次行の文字なし先頭列
-			rcSelCaret.left = rc.left;
-			rcSelCaret.right = rc.left + 1;
-
-			rcSelCaret.OffsetRect(0, nLineHeight_*nLineCnt_);
-			xcaret.Push(rcSelCaret, nLineCnt_, 0, 0);
-		}
-
-
-		// 情報
-		int CaretRow = xcaret.row() + 1;
-		int CaretCol = xcaret.col();
-		int LineNumber = nLineCnt_;
-
-
-		// Caret表示
-		DrawCaret(cxt, xcaret.Get());
-
-	} else {
-		// 文字がない場合Caret表示
-		DrawCaret(cxt, rcSelCaret);
-	}
-
-	return TRUE;
-}
 
 BOOL D2DTextbox::RectFromCharPos(UINT nPos, d2dw::CRectF *prc)
 {
@@ -1167,6 +1048,7 @@ int D2DTextbox::CharPosFromNearPoint(const d2dw::CPointF& pt)
 		{
 			xassert(!m_lineInfos[i].CharInfos.empty());
 
+	
 			d2dw::CRectF rc = m_lineInfos[i].CharInfos[j].rc;
 
 			if (rc.top <= pt.y && pt.y <= rc.bottom) {
@@ -1216,17 +1098,10 @@ UINT D2DTextbox::FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst)
 }
 
 
-//----------------------------------------------------------------
-//
-//
-// Calc layout 行数の把握と文字単位にPOS,LEN,RECTを取得
-//----------------------------------------------------------------
-
-BOOL D2DTextbox::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt, const d2dw::CSizeF& sz, int zCaret, int& StarCharPos)
+BOOL D2DTextbox::Layout()
 {
-	LPCWSTR str = psz;
+	d2dw::CSizeF sz(GetContentRect().Size());
 	nLineCnt_ = 1;
-	StarCharPos_ = 0;
 
 	// 行数を計算
 
@@ -1234,8 +1109,8 @@ BOOL D2DTextbox::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt, const d2dw:
 
 	{
 		BOOL bNewLine = TRUE;
-		for (int i = 0; i < nCnt; i++) {
-			switch (psz[i]) {
+		for (size_t i = 0; i < m_text.size(); i++) {
+			switch (m_text[i]) {
 			case 0x0d://CR
 			case 0x0a://LF                
 				if (bNewLine) {
@@ -1269,8 +1144,8 @@ BOOL D2DTextbox::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt, const d2dw:
 		UINT crlf = 0;
 		int nNewLine = 1;
 
-		for (int i = 0; i < nCnt; i++) {
-			switch (psz[i]) {
+		for (size_t i = 0; i < m_text.size(); i++) {
+			switch (m_text[i]) {
 			case 0x0d://CR
 			case 0x0a://LF
 				nNewLine++;
@@ -1284,8 +1159,8 @@ BOOL D2DTextbox::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt, const d2dw:
 				}
 
 
-				xassert(crlf == 0 || crlf == psz[i]); // CRLFはだめ、CRCR.. or LFLF..はOK
-				crlf = psz[i];
+				xassert(crlf == 0 || crlf == m_text[i]); // CRLFはだめ、CRCR.. or LFLF..はOK
+				crlf = m_text[i];
 				break;
 			default:
 				if (nNewLine) {
@@ -1307,13 +1182,10 @@ BOOL D2DTextbox::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt, const d2dw:
 
 	{
 
-		StarCharPos_ = 0;
-		int slen = nCnt;
-
 		// 文字文のRECT取得
-		std::vector<d2dw::CRectF> charRects = cxt.pWindow->m_pDirect->CalcCharRects(*(cxt.pWindow->m_spProp->Format), std::wstring(psz).substr(StarCharPos), sz);
+		std::vector<d2dw::CRectF> charRects = m_pWnd->m_pDirect->CalcCharRects(*(m_pWnd->m_spProp->Format), m_text, sz);
 		if (charRects.empty()) {
-			auto pLayout = cxt.pWindow->m_pDirect->GetTextLayout(*(cxt.pWindow->m_spProp->Format), std::wstring(psz).substr(StarCharPos), sz);
+			auto pLayout = m_pWnd->m_pDirect->GetTextLayout(*(m_pWnd->m_spProp->Format), m_text, sz);
 			float x, y;
 			DWRITE_HIT_TEST_METRICS tm;
 			pLayout->HitTestTextPosition(0, false, &x, &y, &tm);
@@ -1363,7 +1235,7 @@ BOOL D2DTextbox::Layout(D2DContext& cxt, const WCHAR *psz, int nCnt, const d2dw:
 			}
 		}
 
-		if (nCnt) {
+		if (!m_text.empty()) {
 			// 1行目の文字幅の取得、右寄せのためにrow_width_必要
 			row_width_ = 0;
 			for (int col = 0; col < m_lineInfos[0].nCnt; col++) {
