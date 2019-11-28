@@ -807,7 +807,7 @@ template<> inline int CSheet::Coordinate2Index<RowTag, AllTag>(FLOAT coordinate)
 
 	auto& dictionary = GetDictionary<RowTag, AllTag>().get<IndexTag>();
 	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
-		[ptOrigin](const RowData& rowData, const int& rhs)->bool {
+		[ptOrigin](const RowData& rowData, const FLOAT& rhs)->bool {
 		if (rowData.Index >= 0) {
 			return (std::max)(ptOrigin.y, rowData.DataPtr->GetBottom()) < rhs;
 		}
@@ -834,7 +834,7 @@ template<> inline int CSheet::Coordinate2Index<RowTag, VisTag>(FLOAT coordinate)
 
 	auto& dictionary = GetDictionary<RowTag, VisTag>().get<IndexTag>();
 	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
-		[ptOrigin](const RowData& rowData, const int& rhs)->bool {
+		[ptOrigin](const RowData& rowData, const FLOAT& rhs)->bool {
 		if (rowData.Index >= 0) {
 			return (std::max)(ptOrigin.y, rowData.DataPtr->GetBottom()) < rhs;
 		}
@@ -861,7 +861,7 @@ template<> inline int CSheet::Coordinate2Index<ColTag, VisTag>(FLOAT coordinate)
 
 	auto& dictionary = GetDictionary<ColTag, VisTag>().get<IndexTag>();
 	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
-		[ptOrigin](const ColumnData& rowData, const int& rhs)->bool {
+		[ptOrigin](const ColumnData& rowData, const FLOAT& rhs)->bool {
 		if (rowData.Index >= 0) {
 			return (std::max)(ptOrigin.x, rowData.DataPtr->GetRight()) < rhs;
 		}
@@ -888,7 +888,7 @@ template<> inline int CSheet::Coordinate2Index<ColTag, AllTag>(FLOAT coordinate)
 
 	auto& dictionary = GetDictionary<ColTag, AllTag>().get<IndexTag>();
 	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
-		[ptOrigin](const ColumnData& rowData, const int& rhs)->bool {
+		[ptOrigin](const ColumnData& rowData, const FLOAT& rhs)->bool {
 		if (rowData.Index >= 0) {
 			return (std::max)(ptOrigin.x, rowData.DataPtr->GetRight()) < rhs;
 		}

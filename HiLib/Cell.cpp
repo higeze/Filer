@@ -139,7 +139,7 @@ d2dw::CRectF CCell::GetRect()const
 
 d2dw::CRectF CCell::CenterBorder2InnerBorder(d2dw::CRectF rcCenter)
 {
-	auto halfLineWidth = m_spProperty->Line->Width*0.5;
+	auto halfLineWidth = m_spProperty->Line->Width*0.5f;
 	rcCenter-= d2dw::CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
 	return rcCenter;
 }
@@ -159,7 +159,7 @@ d2dw::CRectF CCell::Content2InnerBorder(d2dw::CRectF rcContent)
 d2dw::CRectF CCell::InnerBorder2CenterBorder(d2dw::CRectF rcInner)
 {
 	//Calc CenterBorder Rect 
-	auto halfLineWidth = m_spProperty->Line->Width*0.5;
+	auto halfLineWidth = m_spProperty->Line->Width*0.5f;
 	rcInner += d2dw::CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
 	return rcInner;
 }
@@ -188,7 +188,7 @@ void CCell::PaintLine(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 void CCell::PaintFocus(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
 	if(GetFocused()){
-		auto halfLineWidth = m_spProperty->Line->Width*0.5;
+		auto halfLineWidth = m_spProperty->Line->Width*0.5f;
 		rcPaint.DeflateRect(halfLineWidth, halfLineWidth);
 		direct.DrawSolidRectangle(*(m_spProperty->FocusedLine), rcPaint);
 	}

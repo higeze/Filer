@@ -3,19 +3,18 @@
 #include "Textbox.h"
 
 #include <Shellapi.h>
-
 #include <random>
 
 #include "Direct2DWrite.h"
 #include "CellProperty.h"
+#include "UIElement.h"
+
 #define CLASSNAME L"D2DWindow"
 
 LRESULT D2DWindow::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
-
 	SetFocus(m_hWnd);
-
 	bHandled = TRUE;
 	return 0;
 }
@@ -23,23 +22,16 @@ LRESULT D2DWindow::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHand
 LRESULT D2DWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	PAINTSTRUCT ps;
-	HDC hdc = BeginPaint(m_hWnd, &ps);
+	HDC hdc = ::BeginPaint(m_hWnd, &ps);
 
 	m_pDirect->BeginDraw();
 
 	m_pDirect->GetHwndRenderTarget()->Clear(d2dw::CColorF(1.f, 1.f, 1.f));
 
-	WndProc(uMsg, wParam, lParam); // All objects is drawned.
-
-	if (redraw_)
-	{
-		InvalidateRect(m_hWnd, NULL, FALSE);
-		redraw_ = 0;
-	}
-
+	m_pTxtbox->OnPaint(PaintEvent(m_pDirect.get()));
 	m_pDirect->EndDraw();
 
-	EndPaint(m_hWnd, &ps);
+	::EndPaint(m_hWnd, &ps);
 	return 0;
 }
 
@@ -51,36 +43,83 @@ LRESULT D2DWindow::OnEraseBkGnd(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& b
 LRESULT D2DWindow::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
-	WndProc(uMsg, wParam, lParam);
 	bHandled = FALSE;
-	return DefWindowProc(m_hWnd, uMsg, wParam, lParam);
+	return 0;
 }
 
 LRESULT D2DWindow::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	WndProc(uMsg, wParam, lParam);
-
-	if (redraw_)
-	{
-		InvalidateRect(m_hWnd, NULL, FALSE);
-		redraw_ = 0;
-	}
+	m_pTxtbox->OnChar(CharEvent(m_pDirect.get(), wParam, lParam));
 	bHandled = FALSE;
-	return DefWindowProc(m_hWnd, uMsg, wParam, lParam);
+	return 0;
 }
 
-LRESULT D2DWindow::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+LRESULT D2DWindow::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	return WndProc(uMsg, wParam, lParam);
+	if ((wParam == VK_RETURN) && !(::GetKeyState(VK_MENU) & 0x8000)) {
+		//Do not send message to children
+		::SetFocus(::GetParent(m_hWnd));
+	}else if (wParam == VK_TAB) {
+		//Do not send message to children
+		::SetFocus(::GetParent(m_hWnd));
+	}else if (wParam == VK_ESCAPE) {
+		//Back to initial string
+		m_pTxtbox->SetText(m_strInit.c_str());
+	}else {
+		m_pTxtbox->OnKeyDown(KeyDownEvent(m_pDirect.get(), wParam, lParam));
+	}
+	redraw_ = true;
+	bHandled = FALSE;
+	return 0;
 }
 
+LRESULT D2DWindow::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_setter(m_pTxtbox->GetText());
+	SendMessage(m_hWnd, WM_CLOSE, NULL, NULL);
+	bHandled = FALSE;
+	return 0;
+}
+
+LRESULT D2DWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_pTxtbox->OnMouseMove(MouseMoveEvent(m_pDirect.get(), wParam, lParam));
+	redraw_ = true;
+	bHandled = FALSE;
+	return 0;
+}
+
+LRESULT D2DWindow::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_pTxtbox->OnLButtonDown(LButtonDownEvent(m_pDirect.get(), wParam, lParam));
+	redraw_ = true;
+	bHandled = FALSE;
+	return 0;
+}
+
+LRESULT D2DWindow::OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_pTxtbox->OnLButtonUp(LButtonUpEvent(m_pDirect.get(), wParam, lParam));
+	redraw_ = true;
+	bHandled = FALSE;
+	return 0;
+}
+
+LRESULT D2DWindow::OnNCDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_final();
+	delete this;
+	return 0;
+}
 
 
 
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	D2DWindow* d = (D2DWindow*)::GetWindowLongPtr( hWnd, GWL_USERDATA );
-
+	LRESULT ret = 0;
+	BOOL bHandled = TRUE;
+	
 	switch( message )
 	{
 		case WM_CREATE:
@@ -90,75 +129,99 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			::SetWindowLongPtr( hWnd, GWL_USERDATA,(LONG) st->lpCreateParams ); // GWL_USERDATA must be set here.
 			D2DWindow* d = (D2DWindow*)::GetWindowLongPtr(hWnd, GWL_USERDATA);
 			d->m_hWnd = hWnd;
-			BOOL bHandled;
-			return d->OnCreate(message, wParam, lParam, bHandled);
+			ret = d->OnCreate(message, wParam, lParam, bHandled);
 		}		
 		break;
 		case WM_DISPLAYCHANGE:
 		case WM_PAINT:
 		{
-			BOOL bHandled;
-			return d->OnPaint(message, wParam, lParam, bHandled);
+			ret = d->OnPaint(message, wParam, lParam, bHandled);
 		}
 		break;
 		case WM_ERASEBKGND:
 		{
-			BOOL bHandled;
-			return d->OnEraseBkGnd(message, wParam, lParam, bHandled);
+			ret = d->OnEraseBkGnd(message, wParam, lParam, bHandled);
 		}
 		break;
 		case WM_SIZE :
 		{
-			BOOL bHandled;
-			return d->OnSize(message, wParam, lParam, bHandled);
+			ret = d->OnSize(message, wParam, lParam, bHandled);
 		}
 		break;
-		case WM_LBUTTONDOWN:		
+		case WM_MOUSEMOVE:
+		{
+			ret = d->OnMouseMove(message, wParam, lParam, bHandled);
+		}
+		break;
+		case WM_KILLFOCUS:
+		{
+			ret = d->OnKillFocus(message, wParam, lParam, bHandled);
+		}
+		break;
+		case WM_KEYDOWN:
+		case WM_SYSKEYDOWN:
+		{
+			ret = d->OnKeyDown(message, wParam, lParam, bHandled);
+		}
+		break;
+		case WM_CHAR:
+		{
+			ret = d->OnChar(message, wParam, lParam, bHandled);
+		}
+		break;
+		case WM_LBUTTONDOWN:
+		{
+			ret = d->OnLButtonDown(message, wParam, lParam, bHandled);
+		}
+		break;
+		case WM_LBUTTONUP:
+		{
+			ret = d->OnLButtonUp(message, wParam, lParam, bHandled);
+		}
+		break;
 		case WM_RBUTTONDOWN:
 			SetFocus(hWnd);
 		case WM_LBUTTONDBLCLK:
-		case WM_CAPTURECHANGED:		
-		case WM_LBUTTONUP:
+		case WM_CAPTURECHANGED:
 		case WM_RBUTTONUP:
-		case WM_MOUSEMOVE:		
-		//case WM_MOUSEHWHEEL:
-		case WM_CHAR:
+			//case WM_MOUSEHWHEEL:
 			//case WM_IME_NOTIFY:
 		case WM_IME_STARTCOMPOSITION:
 		case WM_IME_COMPOSITION:
 		case WM_IME_ENDCOMPOSITION:
-		case WM_KILLFOCUS: // 0x8
-		case WM_KEYDOWN: // 0x100
 		case WM_KEYUP: //0x101
-		{
-			BOOL bHandled;
-			return d->OnChar(message, wParam, lParam, bHandled);
-		}
+			break;
+		//case WM_DESTROY:
+		//{
+		//	BOOL bHandled;
+		//	return d->OnDestroy(message, wParam, lParam, bHandled);
+		//}
 		break;
-		
-		case WM_DESTROY:
+		case WM_NCDESTROY:
 		{
 			BOOL bHandled;
-			return d->OnDestroy(message, wParam, lParam, bHandled);
+			ret = d->OnNCDestroy(message, wParam, lParam, bHandled);
 		}
 		break;
 		default :
 		{
-			if ( message >= WM_USER )
-			{
-				d->WndProc(  message, wParam,lParam );
-				if ( d->redraw_ )
-				{
-					InvalidateRect( hWnd, NULL, FALSE );				
-					d->redraw_ = 0;
-				}
-			}
-			else 
-				return DefWindowProc(hWnd, message, wParam, lParam);
+			ret = DefWindowProc(hWnd, message, wParam, lParam);
 		}
 	}
-	return 0;
+
+	if (d && d->redraw_)
+	{
+		InvalidateRect(hWnd, NULL, FALSE);
+		d->redraw_ = 0;
+	}
+
+	if (!bHandled) {
+		ret = DefWindowProc(hWnd, message, wParam, lParam);
+	}
+
+	return ret;
 }
+
 ATOM D2DWindowRegisterClass(HINSTANCE hInstance)
 {
 	WNDCLASSEX wcex;
@@ -213,69 +276,4 @@ HWND D2DWindow::CreateD2DWindow( DWORD dwWSEXSTYLE, HWND parent, DWORD dwWSSTYLE
 	// OnCreateで各子コントロールを作成後にサイズの調整が必要
 	SendMessage(m_hWnd, WM_SIZE,0,MAKELPARAM(rc.right-rc.left,rc.bottom-rc.top));
 	return m_hWnd;
-}
-
-
-LRESULT D2DWindow::WndProc( UINT message, WPARAM wParam, LPARAM lParam)
-{
-	LRESULT ret = 0;
-
-	// WM_PAINT, WM_SIZE, WM_D2D_RESTRUCT_RENDERTARGETはCAPTUREに関わらず、すべてにSENDすること
-
-	if ( message == WM_PAINT  && m_pTxtbox)
-	{
-		m_pTxtbox->WndProc(this,WM_PAINT,wParam,lParam);
-	}
-	else if (message == WM_SIZE && m_pTxtbox)
-	{
-		m_pTxtbox->WndProc(this,message,wParam,lParam);
-	} else if (m_pTxtbox && (message == WM_SYSKEYDOWN || message == WM_KEYDOWN ) && (wParam == VK_RETURN ) && !(::GetKeyState(VK_MENU) & 0x8000)) {
-		//Do not send message to children
-		::SetFocus(::GetParent(m_hWnd));
-		return 0;
-	} else if (m_pTxtbox && (message == WM_KEYDOWN) && (wParam == VK_TAB)) {
-		//Do not send message to children
-		::SetFocus(::GetParent(m_hWnd));
-		return 0;
-	} else if (m_pTxtbox && (message == WM_KEYDOWN) && (wParam == VK_ESCAPE)) {
-		//Back to initial string
-		m_pTxtbox -> SetText(m_strInit.c_str());
-		::SetFocus(::GetParent(m_hWnd));//This function delete this as result
-		return 0;
-	} else if (message == WM_NCDESTROY) {
-		m_final();
-		::OutputDebugStringA("WM_NCDESTROY");
-		delete this;
-		return 0;
-	} else if (message == WM_KILLFOCUS) {
-		m_setter(m_pTxtbox->GetText());
-		::OutputDebugStringA("WM_KILLFOCUS");
-		SendMessage(m_hWnd, WM_CLOSE, NULL, NULL);
-		auto a = 3;
-		a += 4;
-	} 
-	else if (m_pTxtbox &&  message != WM_MOUSEMOVE)
-	{		
-		m_pTxtbox->WndProc(this,message,wParam,lParam);
-	}
-	else if (m_pTxtbox &&  message==WM_MOUSEMOVE )
-	{		
-		m_pTxtbox->WndProc(this,message,wParam,lParam);
-	}	
-	switch( message )
-	{		
-		// 状態変化しやすい命令はデフォルトで必ずリドローさせる。WM_MOUSEMOVEは適宜、リドローさせる。
-		case WM_LBUTTONDOWN:
-		case WM_LBUTTONUP:		
-		case WM_LBUTTONDBLCLK:
-		case WM_RBUTTONDOWN:
-		case WM_RBUTTONUP:
-
-		case WM_KEYDOWN:
-		case WM_KEYUP:
-		case WM_CHAR:
-			redraw_ = 1; 
-		break;
-	}
-	return ret;
 }

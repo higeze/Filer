@@ -29,7 +29,7 @@ void CBoolCell::PaintContent(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint)
 		pts[4].SetPoint(lt.x + 11, lt.y + 1);
 		pts[5].SetPoint(lt.x + 6, lt.y + 8);
 		pGeoSink->BeginFigure(pts[0], D2D1_FIGURE_BEGIN_FILLED);
-		for (auto i = 1; i < pts.size(); i++) {
+		for (size_t i = 1; i < pts.size(); i++) {
 			pGeoSink->AddLine(pts[i]);
 		}
 		pGeoSink->EndFigure(D2D1_FIGURE_END_CLOSED);

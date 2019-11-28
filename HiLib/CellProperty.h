@@ -81,14 +81,14 @@ public:
 
 public:
 	CellProperty()
-		:Format(std::make_shared<d2dw::FormatF>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9.0f),  0.0f, 0.0f, 0.0f, 1.0f)),
-		Line(std::make_shared<d2dw::SolidLine>(221.0f/255, 206.0f/255, 188.0f/255, 1.0f, 1.0f)),
-		EditLine(std::make_shared<d2dw::SolidLine>(0.0f/255, 0.0f/255, 255.0f/255, 1.0f, 1.0f)),
-		FocusedLine(std::make_shared<d2dw::SolidLine>(22.0f/255, 160.0f/255, 133.0f/255, 1.0f, 1.0f)),
-		NormalFill(std::make_shared<d2dw::SolidFill>(246.0f/255, 246.0f/255, 246.0f/255, 1.0f)),
-		FocusedFill(std::make_shared<d2dw::SolidFill>(0.0f/255, 224.0f/255, 226.0f/255, 1.0f)),
-		SelectedFill(std::make_shared<d2dw::SolidFill>(150.0f/255, 200.0f/255, 240.0f/255, 0.5f)),
-		UnfocusSelectedFill(std::make_shared<d2dw::SolidFill>(224.0f/255, 224.0f/255, 224.0f/255, 0.5f)),
+		:Format(std::make_shared<d2dw::FormatF>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9),  0.0f, 0.0f, 0.0f, 1.0f)),
+		Line(std::make_shared<d2dw::SolidLine>(221.f/255.f, 206.f/255.f, 188.f/255.f, 1.0f, 1.0f)),
+		EditLine(std::make_shared<d2dw::SolidLine>(0.0f/255.f, 0.0f/255.f, 255.f/255.f, 1.0f, 1.0f)),
+		FocusedLine(std::make_shared<d2dw::SolidLine>(22.f/255.f, 160.f/255.f, 133.f/255.f, 1.0f, 1.0f)),
+		NormalFill(std::make_shared<d2dw::SolidFill>(246.f/255.f, 246.f/255.f, 246.f/255.f, 1.0f)),
+		FocusedFill(std::make_shared<d2dw::SolidFill>(0.0f/255.f, 224.f/255.f, 226.f/255.f, 1.0f)),
+		SelectedFill(std::make_shared<d2dw::SolidFill>(150.f/255.f, 200.f/255.f, 240.f/255.f, 0.5f)),
+		UnfocusSelectedFill(std::make_shared<d2dw::SolidFill>(224.f/255.f, 224.f/255.f, 224.f/255.f, 0.5f)),
 		HotFill(std::make_shared<d2dw::SolidFill>(1.0f, 1.0f, 1.0f, 0.3f)),
 		//m_spBrChecked(std::make_shared<CBrush>(RGB(241,196,15))),
 		//m_spDrawTextProperty(std::make_shared<CDrawTextProperty>(DT_LEFT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL)),
@@ -165,14 +165,14 @@ public:
 	//CHeaderProperty():CCellProperty(),m_crTop(RGB(206,185,205)),m_crBottom(RGB(233,158,231)){}
 	HeaderProperty()
 		:CellProperty(
-		std::make_shared<d2dw::FormatF>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9.0f), 0.0f, 0.0f, 0.0f, 1.0f),
-		std::make_shared<d2dw::SolidLine>(211.0f / 255, 206.0f / 255, 188.0f / 255, 1.0f, 1.0f),
-		std::make_shared<d2dw::SolidLine>(0.0f / 255, 0.0f / 255, 255.0f / 255, 1.0f, 1.0f),
-		std::make_shared<d2dw::SolidLine>(22.0f / 255, 160.0f / 255, 133.0f / 255, 1.0f, 1.0f),
-		std::make_shared<d2dw::SolidFill>(239.0f / 255, 239.0f / 255, 232.0f / 255, 1.0f),
-		std::make_shared<d2dw::SolidFill>(195.0f / 255, 224.0f / 255, 226.0f / 255, 1.0f),
-		std::make_shared<d2dw::SolidFill>(195.0f / 255, 224.0f / 255, 226.0f / 255, 0.3f),
-		std::make_shared<d2dw::SolidFill>(224.0f / 255, 224.0f / 255, 224.0f / 255, 0.3f),
+		std::make_shared<d2dw::FormatF>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9), 0.0f, 0.0f, 0.0f, 1.0f),
+		std::make_shared<d2dw::SolidLine>(211.f / 255.f, 206.f / 255.f, 188.f / 255.f, 1.0f, 1.0f),
+		std::make_shared<d2dw::SolidLine>(0.f / 255.f, 0.f / 255.f, 255.f / 255.f, 1.0f, 1.0f),
+		std::make_shared<d2dw::SolidLine>(22.f / 255.f, 160.f / 255, 133.f / 255.f, 1.0f, 1.0f),
+		std::make_shared<d2dw::SolidFill>(239.f / 255.f, 239.f / 255, 232.f / 255.f, 1.0f),
+		std::make_shared<d2dw::SolidFill>(195.f / 255.f, 224.f / 255, 226.f / 255.f, 1.0f),
+		std::make_shared<d2dw::SolidFill>(195.f / 255.f, 224.f / 255, 226.f / 255.f, 0.3f),
+		std::make_shared<d2dw::SolidFill>(224.f / 255.f, 224.f / 255, 224.f / 255.f, 0.3f),
 		std::make_shared<d2dw::SolidFill>(1.0f, 1.0f, 1.0f, 0.3f),
 		std::make_shared<d2dw::CRectF>(2.0f, 2.0f, 2.0f, 2.0f)),
 		DragLine(std::make_shared<d2dw::SolidLine>(1.0f, 0.0f, 0.0f, 1.0f, 1.0f)){};

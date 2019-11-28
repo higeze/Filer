@@ -365,7 +365,7 @@ STDAPI CTextStore::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, __in_ecoun
 	_pEditor->EraseText(acpStart, acpRemovingEnd - acpStart);
         //return E_FAIL;
 
-	UINT nrCnt;
+	//UINT nrCnt;
 	_pEditor->InsertText(pchText, acpStart, cch);
  //       return E_FAIL;
 
@@ -605,7 +605,7 @@ STDAPI CTextStore::InsertTextAtSelection(DWORD dwFlags, __in_ecount(cch) const W
 
 	_pEditor->EraseText(acpStart, acpEnd - acpStart);
 
-	UINT nrCnt;
+	//UINT nrCnt;
 	_pEditor->InsertText(pchText, acpStart, cch);
 
     
