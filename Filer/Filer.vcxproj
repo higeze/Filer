@@ -189,11 +189,8 @@
     <Image Include="Filer.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\D2DTextBox\D2DContextEx.h" />
-    <ClInclude Include="..\D2DTextBox\D2DWindow.h" />
+    <ClInclude Include="..\D2DTextBox\TextboxWnd.h" />
     <ClInclude Include="..\D2DTextBox\Textbox.h" />
-    <ClInclude Include="..\D2DTextBox\D2DWindowMessage.h" />
-    <ClInclude Include="..\D2DTextBox\D2DWindowMessageStruct.h" />
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h" />
     <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h" />
     <ClInclude Include="..\D2DTextBox\resource.h" />
@@ -291,7 +288,7 @@
     <ClInclude Include="..\HiLib\MyWnd.h" />
     <ClInclude Include="..\HiLib\MyXMLSerializer.h" />
     <ClInclude Include="..\HiLib\ObservableContainer.h" />
-    <ClInclude Include="..\HiLib\observable_vector.h" />
+    <ClInclude Include="..\HiLib\observable.h" />
     <ClInclude Include="..\HiLib\Operation.h" />
     <ClInclude Include="..\HiLib\ParentColumnHeaderCell.h" />
     <ClInclude Include="..\HiLib\ParentColumnHeaderHeaderCell.h" />
@@ -391,8 +388,7 @@
     <ClInclude Include="ViewProperty.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\D2DTextBox\D2DContextEx.cpp" />
-    <ClCompile Include="..\D2DTextBox\D2DWindow.cpp" />
+    <ClCompile Include="..\D2DTextBox\TextboxWnd.cpp" />
     <ClCompile Include="..\D2DTextBox\Textbox.cpp" />
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />
     <ClCompile Include="..\D2DTextBox\text_stdafx.cpp" />

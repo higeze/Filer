@@ -1,4 +1,5 @@
 #pragma once
+
 class D2DTextbox;
 
 class CTextStore : public ITextStoreACP

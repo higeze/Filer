@@ -602,9 +602,6 @@
     <ClInclude Include="..\HiLib\ThreadSafeKnownFolderManager.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\observable_vector.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\targetver.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -617,15 +614,6 @@
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\D2DWindowMessageStruct.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\D2DWindowMessage.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\D2DContextEx.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\undo.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -635,13 +623,16 @@
     <ClInclude Include="..\D2DTextBox\text_stdafx.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\D2DWindow.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\Textbox.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\TextEditSink.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\observable.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\TextboxWnd.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
   </ItemGroup>
@@ -982,12 +973,6 @@
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
-    <ClCompile Include="..\D2DTextBox\D2DWindow.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\D2DContextEx.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
     <ClCompile Include="..\D2DTextBox\undo.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
@@ -998,6 +983,9 @@
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\TextEditSink.cpp">
+      <Filter>D2DTextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\TextboxWnd.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
   </ItemGroup>

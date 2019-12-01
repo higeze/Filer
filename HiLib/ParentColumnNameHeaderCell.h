@@ -12,10 +12,10 @@ public:
 
 private:
 
-	static const int TRIANGLE_WIDTH=12;
-	static const int TRIANGLE_HEIGHT=6;
-	static const CRect TRIANGLE_MARGIN;
-	static const int MIN_COLUMN_WIDTH = 16;
+	static const FLOAT TRIANGLE_WIDTH;
+	static const FLOAT TRIANGLE_HEIGHT;
+	static const d2dw::CRectF TRIANGLE_MARGIN;
+	static const FLOAT MIN_COLUMN_WIDTH;
 
 public:
 	CParentColumnNameHeaderCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = &CParentColumnNameHeaderCell::ContextMenu)

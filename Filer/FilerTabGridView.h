@@ -6,7 +6,7 @@
 #include "FilerGridView.h"
 #include "ShellFolder.h"
 
-#include "observable_vector.h"
+#include "observable.h"
 
 
 class CFilerGridView;

@@ -11,6 +11,16 @@ enum class NotifyVectorChangedAction
 	Reset,
 };
 
+enum class NotifyStringChangedAction
+{
+	Assign,
+	Insert,
+	Erase,
+	Replace,
+	Clear,
+};
+
+
 template<typename T>
 struct NotifyVectorChangedEventArgs
 {
@@ -20,6 +30,90 @@ struct NotifyVectorChangedEventArgs
 	std::vector<T> OldItems;
 	int OldStartingIndex = -1;
 };
+
+template<typename CharT,
+	class Traits = std::char_traits<CharT>,
+	class Allocator = std::allocator<CharT> >
+struct NotifyStringChangedEventArgs
+{
+	NotifyStringChangedAction Action;
+	std::basic_string<CharT, Traits, Allocator> NewString;
+	std::basic_string<CharT, Traits, Allocator> OldString;
+};
+
+
+template <class CharT,
+	class Traits = std::char_traits<CharT>,
+	class Allocator = std::allocator<CharT> >
+class observable_basic_string :public std::basic_string<CharT, Traits, Allocator>
+{
+public:
+	std::basic_string<CharT, Traits, Allocator>::basic_string;
+
+	boost::signals2::signal<void(const NotifyStringChangedEventArgs<CharT>&)> StringChanged;
+
+	observable_basic_string<CharT, Traits, Allocator>& notify_assign(const std::basic_string<CharT, Traits, Allocator>& str)
+	{
+		std::basic_string<CharT, Traits, Allocator> old(*this);
+		operator=(str);
+		StringChanged(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+			NotifyStringChangedAction::Assign,
+			*this,
+			old,
+		});
+		return *this;
+	}
+
+	observable_basic_string<CharT, Traits, Allocator>& notify_insert(size_type index, const basic_string<CharT, Traits, Allocator>& str)
+	{
+		std::basic_string<CharT, Traits, Allocator> old(*this);
+		insert(index, str);
+		StringChanged(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+			NotifyStringChangedAction::Insert,
+			*this,
+			old,
+		});
+		return *this;
+	}
+
+	observable_basic_string<CharT, Traits, Allocator>& notify_erase(size_type index = 0, size_type count = npos)
+	{
+		std::basic_string<CharT, Traits, Allocator> old(*this);
+		erase(index, count);
+		StringChanged(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+			NotifyStringChangedAction::Erase,
+			*this,
+			old,
+		});
+		return *this;
+	}
+
+	observable_basic_string<CharT, Traits, Allocator>& notify_replace(size_type pos, size_type count, const basic_string& str)
+	{
+		std::basic_string<CharT, Traits, Allocator> old(*this);
+		replace(pos, count, str);
+		StringChanged(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+			NotifyStringChangedAction::Replace,
+			*this,
+			old,
+		});
+		return *this;
+	}
+
+	void notify_clear()
+	{
+		std::basic_string<CharT, Traits, Allocator> old(*this);
+		clear();
+		StringChanged(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+			NotifyStringChangedAction::Clear,
+			*this,
+			old,
+		});
+	}
+};
+
+using observable_wstring = observable_basic_string<wchar_t>;
+
 
 template<class T, class Allocator = std::allocator<T>>
 class observable_vector:public std::vector<T, Allocator>

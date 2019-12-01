@@ -1,10 +1,12 @@
 #include "text_stdafx.h"
-#include "Textbox.h"
-#include "TextStoreACP.h"
-#include "TextEditSink.h"
 #include <initguid.h>
 #include <InputScope.h>
 #include <tsattrs.h>
+#include "Textbox.h"
+#include "TextboxWnd.h"
+#include "TextStoreACP.h"
+#include "TextEditSink.h"
+#include "observable.h"
 
 #define Round(x)	((LONG)(x+0.5f))
 
@@ -318,7 +320,7 @@ STDAPI CTextStore::GetText(LONG acpStart, LONG acpEnd, __out_ecount(cchPlainReq)
     }
 
     if (acpEnd == -1)
-        acpEnd = _pEditor->GetTextSize();
+        acpEnd = _pEditor->GetText().size();
 
     acpEnd = min(acpEnd, acpStart + (int)cchPlainReq);
 
@@ -358,15 +360,16 @@ STDAPI CTextStore::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, __in_ecoun
 
     LONG acpRemovingEnd;
 
-    if (acpStart > (LONG)_pEditor->GetTextSize())
+    if (acpStart > (LONG)_pEditor->GetText().size())
         return E_INVALIDARG;
 
-    acpRemovingEnd = (std::min)(acpEnd, (LONG)_pEditor->GetTextSize() + 1);
-	_pEditor->EraseText(acpStart, acpRemovingEnd - acpStart);
-        //return E_FAIL;
+    acpRemovingEnd = (std::min)(acpEnd, (LONG)_pEditor->GetText().size() + 1);
+	_pEditor->GetText().notify_replace(acpStart, acpRemovingEnd - acpStart, pchText);
+	//_pEditor->EraseText(acpStart, acpRemovingEnd - acpStart);
+ //       //return E_FAIL;
 
-	//UINT nrCnt;
-	_pEditor->InsertText(pchText, acpStart, cch);
+	////UINT nrCnt;
+	//_pEditor->InsertText(pchText, acpStart, cch);
  //       return E_FAIL;
 
     pChange->acpStart = acpStart;
@@ -459,7 +462,7 @@ STDAPI CTextStore::GetEndACP(LONG *pacp)
     }
 
 	
-	*pacp = _pEditor->GetTextSize();
+	*pacp = _pEditor->GetText().size();
     return S_OK;
 }
 
@@ -603,10 +606,11 @@ STDAPI CTextStore::InsertTextAtSelection(DWORD dwFlags, __in_ecount(cch) const W
         return S_OK;
     }
 
-	_pEditor->EraseText(acpStart, acpEnd - acpStart);
+	_pEditor->GetText().notify_replace(acpStart, acpEnd - acpStart, pchText);
+	//_pEditor->EraseText(acpStart, acpEnd - acpStart);
 
-	//UINT nrCnt;
-	_pEditor->InsertText(pchText, acpStart, cch);
+	////UINT nrCnt;
+	//_pEditor->InsertText(pchText, acpStart, cch);
 
     
     if (pacpStart)

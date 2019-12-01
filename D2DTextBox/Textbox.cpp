@@ -1,11 +1,9 @@
 ﻿#include "text_stdafx.h"
-#include "D2DWindow.h"
 #include "Textbox.h"
+#include "TextboxWnd.h"
 #include "TextEditSink.h"
 #include "TextStoreACP.h"
 #include "MyClipboard.h"
-#include "IBridgeTSFInterface.h"
-#include "D2DContextEx.h"
 #include "CellProperty.h"
 #include "Direct2DWrite.h"
 #include "Debug.h"
@@ -62,7 +60,7 @@ void D2DTextbox::AppTSFExit()
 
 
 
-D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::wstring& initText, const std::shared_ptr<CellProperty>& pProp, std::function<void(const std::wstring&)> changed)
+D2DTextbox::D2DTextbox(CTextboxWnd* pWnd, const std::wstring& initText, const std::shared_ptr<CellProperty>& pProp, std::function<void(const std::wstring&)> changed)
 	:m_pWnd(pWnd), m_pProp(pProp), m_changed(changed), m_text(initText), m_selStart(0), m_selEnd(initText.size())
 {
 	// You must create this on Heap, OnStack is NG.
@@ -75,12 +73,34 @@ D2DTextbox::D2DTextbox(D2DWindow* pWnd, const std::wstring& initText, const std:
 	nLineCnt_ = 0;
 	row_width_ = 0;
 	bRecalc_ = true;
-	selected_halftone_color_ = D2RGBA(0, 140, 255, 100);
 	QueryPerformanceFrequency(&m_frequency);
 	if (m_pDocumentMgr) {
 		s_pThreadMgr->SetFocus(m_pDocumentMgr);
 	}
+	m_text.StringChanged.connect([this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
+		d2dw::CRectF rcClient(GetClientRect());
+		d2dw::CRectF rcContent(GetContentRect());
+
+		d2dw::CSizeF szNewContent(m_pWnd->m_pDirect->CalcTextSizeWithFixedWidth(*(m_pProp->Format), e.NewString, rcContent.Width()));
+		d2dw::CRectF rcNewContent(szNewContent);
+		rcNewContent.InflateRect(*(m_pProp->Padding));
+		rcNewContent.InflateRect(m_pProp->Line->Width * 0.5f);
+		CRect rcNewClient(m_pWnd->m_pDirect->Dips2Pixels(rcNewContent));
+
+		if (rcNewClient.Height() > rcClient.Height()) {
+			CRect rc;
+			::GetWindowRect(m_pWnd->m_hWnd, &rc);
+			CPoint pt(rc.TopLeft());
+			::ScreenToClient(::GetParent(m_pWnd->m_hWnd), &pt);
+			::MoveWindow(m_pWnd->m_hWnd, pt.x, pt.y, rc.Width(), rcNewClient.Height(), TRUE);
+		}
+
+		m_changed(e.NewString);
+
+
+		});
 }
+
 
 D2DTextbox::~D2DTextbox()
 {
@@ -95,7 +115,7 @@ void D2DTextbox::OnPaint(const PaintEvent& e)
 	e.DirectPtr->GetHwndRenderTarget()->DrawRectangle(GetClientRect(), e.DirectPtr->GetColorBrush(m_pWnd->m_spProp->EditLine->Color), m_pWnd->m_spProp->Line->Width);
 	//PaintContent(e.Direct, rcContent);
 	Render();
-	m_pWnd->redraw_ = 1;
+	m_pWnd->m_redraw = 1;
 }
 
 void D2DTextbox::OnKeyDown(const KeyDownEvent& e)
@@ -193,7 +213,7 @@ void D2DTextbox::OnKeyDown(const KeyDownEvent& e)
 		(heldControl && Clipboard(m_pWnd->m_hWnd, L'C') ? 1 : 0);
 		if (m_selEnd > m_selStart)
 		{
-			m_text.erase(m_selStart, m_selEnd - m_selStart);
+			m_text.notify_erase(m_selStart, m_selEnd - m_selStart);
 			m_selEnd = m_selStart;
 		}
 		break;
@@ -207,7 +227,7 @@ void D2DTextbox::OnKeyDown(const KeyDownEvent& e)
 		break;
 	case VK_RETURN:
 	case VK_TAB:
-		InsertText(L"\t", -1, 1);
+		InsertAtSelection(L"\t");
 		break;
 
 	default:
@@ -221,7 +241,7 @@ void D2DTextbox::OnLButtonDown(const LButtonDownEvent& e)
 {
 	m_selDragStart = (UINT)-1;
 
-	if (MoveSelectionAtPoint(e.Point)) {
+	if (MoveSelectionAtPoint(m_pWnd->m_pDirect->Pixels2Dips(e.Point))) {
 		InvalidateRect();
 		m_selDragStart = GetSelectionStart();
 	}
@@ -237,7 +257,7 @@ void D2DTextbox::OnLButtonUp(const LButtonUpEvent& e)
 	UINT nSelStart = GetSelectionStart();
 	UINT nSelEnd = GetSelectionEnd();
 
-	if (MoveSelectionAtPoint(e.Point)) {
+	if (MoveSelectionAtPoint(m_pWnd->m_pDirect->Pixels2Dips(e.Point))) {
 		UINT nNewSelStart = GetSelectionStart();
 		UINT nNewSelEnd = GetSelectionEnd();
 
@@ -253,7 +273,7 @@ void D2DTextbox::OnLButtonUp(const LButtonUpEvent& e)
 void D2DTextbox::OnMouseMove(const MouseMoveEvent& e)
 {
 	if (e.Flags & MK_LBUTTON) {
-		if (MoveSelectionAtPoint(e.Point)) {
+		if (MoveSelectionAtPoint(m_pWnd->m_pDirect->Pixels2Dips(e.Point))) {
 			UINT nNewSelStart = GetSelectionStart();
 			UINT nNewSelEnd = GetSelectionEnd();
 
@@ -278,7 +298,7 @@ void D2DTextbox::OnChar(const CharEvent& e)
 	// normal charcter input. not TSF.
 	if (e.Char >= L' ' || (e.Char == L'\r' && !m_isSingleLine)) {
 		if (e.Char < 256) {
-			WCHAR wc[] = { e.Char, '\0' };
+			WCHAR wc[] = { static_cast<WCHAR>(e.Char), '\0' };
 			this->InsertAtSelection(wc);
 			InvalidateRect();
 		}
@@ -286,37 +306,6 @@ void D2DTextbox::OnChar(const CharEvent& e)
 		}
 	}
 
-}
-
-
-
-
-LRESULT D2DTextbox::WndProc(D2DWindow* d, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	LRESULT ret = 0;
-
-	switch ( message )
-	{
-		case WM_PAINT:
-			OnPaint(PaintEvent(d->m_pDirect.get()));
-		break;
-		case WM_KEYDOWN:
-			OnKeyDown(KeyDownEvent(d->m_pDirect.get(), wParam, lParam));
-		break;
-		case WM_LBUTTONDOWN:
-			OnLButtonDown(LButtonDownEvent(d->m_pDirect.get(), wParam, lParam));
-			break;
-		case WM_LBUTTONUP:
-			OnLButtonUp(LButtonUpEvent(d->m_pDirect.get(), wParam, lParam));
-			break;
-		case WM_MOUSEMOVE:
-			OnMouseMove(MouseMoveEvent(d->m_pDirect.get(), wParam, lParam));
-			break;
-		case WM_CHAR:
-			OnChar(CharEvent(d->m_pDirect.get(), wParam, lParam));
-		break;	
-	}
-	return ret; 
 }
 
 BOOL D2DTextbox::Clipboard( HWND hwnd, TCHAR ch )
@@ -368,17 +357,11 @@ BOOL D2DTextbox::Clipboard( HWND hwnd, TCHAR ch )
 
 
 				//			UINT rcnt;
-				m_text.insert(m_selEnd, s1b);
+				m_text.notify_replace(m_selStart, m_selEnd - m_selEnd, s1b);
 				m_selEnd += s1b.length();
 				m_selStart = m_selEnd;
 
 				GlobalUnlock(h);
-
-
-				// 上書された分を削除
-				if (e1 - s1 > 0)
-					m_text.erase(s1, e1 - s1);
-
 				bRecalc_ = true;
 			}
 			clipboard.Close();
@@ -412,33 +395,6 @@ std::wstring D2DTextbox::FilterInputString( LPCWSTR s, UINT len )
 
 	return r;
 }
-
-void D2DTextbox::EraseText(const size_t off, size_t count)
-{ 
-	m_text.erase(off, count);
-	bRecalc_ = true;
-}
-
-
-void D2DTextbox::SetText(VARIANT v)
-{
-	if ( v.vt == VT_BSTR )
-		SetText( v.bstrVal );
-	else
-	{
-		_variant_t dst;
-		if ( VariantChangeType( &dst, &v, 0, VT_BSTR ) == S_OK)
-			SetText( dst.bstrVal );
-	}
-}
-int D2DTextbox::InsertText( LPCWSTR str, int pos, int strlen)
-{
-	m_text.insert(pos, str, strlen);
-	bRecalc_ = true;
-
-	return 0;
-}
-
 
 void D2DTextbox::SetText(LPCWSTR str1)
 {
@@ -558,10 +514,10 @@ void D2DTextbox::MoveSelectionPrev()
 	m_pTextStore->OnSelectionChange();
 }
 
-BOOL D2DTextbox::MoveSelectionAtPoint(const CPoint& pt)
+BOOL D2DTextbox::MoveSelectionAtPoint(const d2dw::CPointF& pt)
 {
 	BOOL bRet = FALSE;
-	int nSel = (int)CharPosFromPoint(m_pWnd->m_pDirect->Pixels2Dips(pt));
+	int nSel = (int)CharPosFromPoint(pt);
 	if (nSel != -1) {
 		MoveSelection(nSel, nSel, true);
 		bRet = TRUE;
@@ -569,10 +525,10 @@ BOOL D2DTextbox::MoveSelectionAtPoint(const CPoint& pt)
 	return bRet;
 }
 
-BOOL D2DTextbox::MoveSelectionAtNearPoint(const CPoint& pt)
+BOOL D2DTextbox::MoveSelectionAtNearPoint(const d2dw::CPointF& pt)
 {
 	BOOL bRet = FALSE;
-	int nSel = (int)CharPosFromNearPoint(m_pWnd->m_pDirect->Pixels2Dips(pt));
+	int nSel = (int)CharPosFromNearPoint(pt);
 	if (nSel != -1) {
 		MoveSelection(nSel, nSel, true);
 		bRet = TRUE;
@@ -595,7 +551,7 @@ BOOL D2DTextbox::MoveSelectionUpDown(BOOL bUp, bool bShiftKey)
 
 	}
 
-	POINT pt;
+	d2dw::CPointF pt;
 	pt.x = rc.left;
 	if (bUp) {
 		pt.y = rc.top - ((rc.bottom - rc.top) / 2);
@@ -670,21 +626,13 @@ BOOL D2DTextbox::InsertAtSelection(LPCWSTR psz)
 {
 	bRecalc_ = true;
 
-	LONG lOldSelEnd = m_selEnd;
-	m_text.erase(m_selStart, m_selEnd - m_selStart);
+	LONG acpOldend = m_selEnd;
 
-	m_text.insert(m_selStart, psz, lstrlen(psz));
-
-	//m_selStart += nrCnt; // lstrlen(psz);
+	m_text.notify_replace(m_selStart, m_selEnd - m_selStart, psz);
 	m_selStart += lstrlen(psz);
 	m_selEnd = m_selStart;
 
-
-	LONG acs = m_selStart;
-	LONG ecs = m_selEnd;
-	m_pTextStore->OnTextChange(acs, lOldSelEnd, ecs);
-	OnTextChange(m_text);
-	m_changed(m_text);
+	m_pTextStore->OnTextChange(m_selStart, acpOldend, m_selEnd);
 	m_pTextStore->OnSelectionChange();
 	return TRUE;
 }
@@ -694,27 +642,18 @@ BOOL D2DTextbox::DeleteAtSelection(BOOL fBack)
 	bRecalc_ = true;
 
 	if (!fBack && (m_selEnd < (int)m_text.size())) {
-		m_text.erase(m_selEnd, 1);
+		m_text.notify_erase(m_selEnd, 1);
 
-
-		LONG ecs = m_selEnd;
-
-		m_pTextStore->OnTextChange(ecs, ecs + 1, ecs);
-		OnTextChange(m_text);
-		m_changed(m_text);
-
+		m_pTextStore->OnTextChange(m_selEnd, m_selEnd + 1, m_selEnd);
 	}
 
 	if (fBack && (m_selStart > 0)) {
-		m_text.erase(m_selStart - 1, 1);
+		m_text.notify_erase(m_selStart - 1, 1);
 
 		m_selStart--;
 		m_selEnd = m_selStart;
 
-		LONG acs = m_selStart;
-		m_pTextStore->OnTextChange(acs, acs + 1, acs);
-		OnTextChange(m_text);
-		m_changed(m_text);
+		m_pTextStore->OnTextChange(m_selStart, m_selStart + 1, m_selStart);
 		m_pTextStore->OnSelectionChange();
 	}
 
@@ -725,42 +664,44 @@ BOOL D2DTextbox::DeleteSelection()
 {
 	bRecalc_ = true;
 
-	ULONG nSelOldEnd = m_selEnd;
-	m_text.erase(m_selStart, m_selEnd - m_selStart);
-
+	LONG acpOldEnd = m_selEnd;
+	m_text.notify_erase(m_selStart, m_selEnd - m_selStart);
 	m_selEnd = m_selStart;
 
-	LONG acs = m_selStart;
-
-	m_pTextStore->OnTextChange(acs, nSelOldEnd, acs);
-	OnTextChange(m_text);
-	m_changed(m_text);
+	m_pTextStore->OnTextChange(m_selStart, acpOldEnd, m_selStart);
 	m_pTextStore->OnSelectionChange();
 
 	return TRUE;
 }
 
-void D2DTextbox::OnTextChange(const std::wstring& text)
-
+void D2DTextbox::ClearText() 
 {
-	d2dw::CRectF rcClient(GetClientRect());
-	d2dw::CRectF rcContent(GetContentRect());
-
-	d2dw::CSizeF szNewContent(m_pWnd->m_pDirect->CalcTextSizeWithFixedWidth(*(m_pProp->Format), text, rcContent.Width()));
-	d2dw::CRectF rcNewContent(szNewContent);
-	rcNewContent.InflateRect(*(m_pProp->Padding));
-	rcNewContent.InflateRect(m_pProp->Line->Width*0.5f);
-	CRect rcNewClient(m_pWnd->m_pDirect->Dips2Pixels(rcNewContent));
-
-	if (rcNewClient.Height() > rcClient.Height()) {
-		CRect rc;
-		::GetWindowRect(m_pWnd->m_hWnd, &rc);
-		CPoint pt(rc.TopLeft());
-		::ScreenToClient(::GetParent(m_pWnd->m_hWnd), &pt);
-		::MoveWindow(m_pWnd->m_hWnd, pt.x, pt.y, rc.Width(), rcNewClient.Height(), TRUE);
-	}
-
+	m_text.notify_clear();
+	m_selStart = m_selEnd = 0;
 }
+
+
+//void D2DTextbox::OnTextChange(const std::wstring& text)
+//
+//{
+//	d2dw::CRectF rcClient(GetClientRect());
+//	d2dw::CRectF rcContent(GetContentRect());
+//
+//	d2dw::CSizeF szNewContent(m_pWnd->m_pDirect->CalcTextSizeWithFixedWidth(*(m_pProp->Format), text, rcContent.Width()));
+//	d2dw::CRectF rcNewContent(szNewContent);
+//	rcNewContent.InflateRect(*(m_pProp->Padding));
+//	rcNewContent.InflateRect(m_pProp->Line->Width*0.5f);
+//	CRect rcNewClient(m_pWnd->m_pDirect->Dips2Pixels(rcNewContent));
+//
+//	if (rcNewClient.Height() > rcClient.Height()) {
+//		CRect rc;
+//		::GetWindowRect(m_pWnd->m_hWnd, &rc);
+//		CPoint pt(rc.TopLeft());
+//		::ScreenToClient(::GetParent(m_pWnd->m_hWnd), &pt);
+//		::MoveWindow(m_pWnd->m_hWnd, pt.x, pt.y, rc.Width(), rcNewClient.Height(), TRUE);
+//	}
+//
+//}
 
 void D2DTextbox::Render()
 {
@@ -858,7 +799,7 @@ void D2DTextbox::Render()
 					(pCompositionRenderInfo_[j].nStart <= m_lineInfos[r].nPos + m_lineInfos[r].nCnt)) {
 					UINT nCompStartInLine = 0;
 					UINT nCompEndInLine = m_lineInfos[r].nCnt;
-					int  nBaseLineWidth = (nLineHeight_ / 18) + 1;
+					int  nBaseLineWidth = static_cast<int>(nLineHeight_ / 18.f) + 1;
 
 					if (pCompositionRenderInfo_[j].nStart > m_lineInfos[r].nPos)
 						nCompStartInLine = pCompositionRenderInfo_[j].nStart - m_lineInfos[r].nPos;
@@ -1010,7 +951,7 @@ int D2DTextbox::CharPosFromPoint(const d2dw::CPointF& pt)
 			d2dw::CRectF& rc = m_lineInfos[r].CharInfos[j].rc;
 
 			if (rc.PtInRect(pt) || (pt.x == 0 && rc.left == 0 && rc.right == 0 && rc.top <= pt.y && pt.y <= rc.bottom)) {
-				int nWidth = m_lineInfos[r].CharInfos[j].GetWidth();
+				FLOAT nWidth = m_lineInfos[r].CharInfos[j].GetWidth();
 				if (pt.x > m_lineInfos[r].CharInfos[j].rc.left + (nWidth * 3 / 4)) {
 					return m_lineInfos[r].nPos + j + 1 + StarCharPos_;
 				}

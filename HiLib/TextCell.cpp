@@ -12,7 +12,7 @@
 #include "Column.h"
 #include "GridView.h"
 #include <algorithm>
-#include "D2DWindow.h"
+#include "TextboxWnd.h"
 
 
 CTextCell::~CTextCell()
@@ -46,15 +46,13 @@ d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& d
 	if (text.empty()) { text = L"a"; }
 	return direct.CalcTextSizeWithFixedWidth(*(m_spProperty->Format), text, rcContent.Width());
 }
-#define IDB_PNG1	131
 
 void CTextCell::OnEdit(const EventArgs& e)
 {
-
 	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(GetRect()));
-	UINT id[] = { IDB_PNG1 };
 	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
-	m_pEdit = new D2DWindow(
+
+	m_pEdit = new CTextboxWnd(
 			m_spProperty,
 			[spCell]() -> std::basic_string<TCHAR>{
 				return spCell->GetString();
@@ -72,52 +70,7 @@ void CTextCell::OnEdit(const EventArgs& e)
 				spCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 			}
 	);
-	HWND hwnd = m_pEdit->CreateD2DWindow(0, e.WindowPtr->m_hWnd, WS_CHILD | WS_VISIBLE, rcEdit, id, _countof(id));
-
-	//::MoveWindow(hwnd, rcEdit.left, rcEdit.top, rcEdit.Width(), rcEdit.Height() + 30, TRUE);
-
-	//auto IdleMessage = [](HWND hwnd, UINT msg, UINT_PTR id, DWORD time) {
-	//	if (IDLE_TIMER_ID == id)
-	//		SendMessage(hwnd, WM_D2D_IDLE, 0, 0);
-	//};
-
-	//::SetTimer(e.WindowPtr->m_hWnd, IDLE_TIMER_ID, IDLE_TIME, IdleMessage);
-
-
-	//CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(InnerBorder2Content(CenterBorder2InnerBorder(GetRect()))));
-	//auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
-	//SetState(UIElementState::Hot);//During Editing, Keep Hot
-	//m_pEdit = new CInplaceEdit(
-	//	m_pSheet->GetGridPtr(),
-	//	[spCell]() -> std::basic_string<TCHAR>{
-	//		return spCell->GetString();
-	//	},
-	//	[spCell](const std::basic_string<TCHAR>& str) -> void{
-	//		spCell->SetString(str);
-	//	},
-	//	[spCell](const std::basic_string<TCHAR>& str) -> void{
-	//		if(spCell->CanSetStringOnEditing()){
-	//			spCell->SetString(str);
-	//		}
-	//	},
-	//	[spCell]()->void{
-	//		spCell->m_pEdit=NULL;
-	//		spCell->SetState(UIElementState::Normal);//After Editing, Change Normal
-	//	},
-	//	m_spProperty->Format->Font.GetGDIFont(),
-	//	GetFormat());
-
-	//m_pEdit->Create(m_pSheet->GetGridPtr()->m_hWnd, rcEdit);
-	//m_pEdit->SetWindowText(GetString().c_str());
-	//rcEdit.MoveToXY(0, 0);
-	////	CRect rcRect(m_pEdit->GetRect());
-	////	CRect rcPadding(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)));
-	////	rcEdit.DeflateRect(rcPadding);
-	//m_pEdit->SetRect(rcEdit);
-	////	m_pEdit->SetMargins(0, 0);// m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)).left, m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(*(m_spProperty->Padding)).right);
-	//m_pEdit->SetFocus();
-	//m_pEdit->SetSel(0, -1);
-	//m_pEdit->ShowWindow(SW_SHOW);
+	m_pEdit->Create(e.WindowPtr->m_hWnd, rcEdit);
 }
 
 void CTextCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)

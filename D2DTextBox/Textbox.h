@@ -1,21 +1,17 @@
 ﻿#pragma once
-#include "D2DContextEx.h"
-#include "D2DWindow.h"
-#include "D2DWindowMessage.h"
-#include "D2DWindowMessageStruct.h"
+#include <msctf.h>
 #include "IBridgeTSFInterface.h"
-#include "TextEditSink.h"
 #include "CellProperty.h"
-
 #include "UIElement.h"
+#include "observable.h"
 
 class LayoutLineInfo;
 struct D2DContext;
-class D2DWindow;
+class CTextboxWnd;
 class CTextStore;
 class CTextEditSink;
 class IBridgeTSFInterface;
-class D2DWindow;
+class CTextboxWnd;
 
 struct COMPOSITIONRENDERINFO
 {
@@ -91,13 +87,13 @@ public:
 	static void AppTSFExit();
 
 public:
-	D2DTextbox(D2DWindow* pWnd, const std::wstring& initText, const std::shared_ptr<CellProperty>& pProp,std::function<void(const std::wstring&)> changed);
+	D2DTextbox(CTextboxWnd* pWnd, const std::wstring& initText, const std::shared_ptr<CellProperty>& pProp,std::function<void(const std::wstring&)> changed);
 	~D2DTextbox();
 	void InitTSF();
 	void UninitTSF();
 
 public:
-	LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
+	//LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
 
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnKeyDown(const KeyDownEvent& e);
@@ -105,8 +101,6 @@ public:
 	virtual void OnLButtonUp(const LButtonUpEvent& e);
 	virtual void OnMouseMove(const MouseMoveEvent& e);
 	virtual void OnChar(const CharEvent& e);
-
-
 
 	// Getter ////////////////////////////////////////////////////
 	int GetSelectionStart() { return m_selStart; }
@@ -121,13 +115,7 @@ public:
 	d2dw::CRectF GetContentRect() const;
 
 	// Text Functions ////////////////////////////////////////
-	std::wstring GetText() const{ return m_text; }
-	size_t GetTextSize() const { return m_text.size(); }
-	int InsertText(LPCWSTR str, int pos = -1, int strlen = -1);
-	void EraseText(const size_t off, size_t count);
-	void SetText(LPCWSTR str);
-	void SetText(VARIANT value);
-	void ClearText() { SetText(L""); }
+	observable_wstring& GetText() { return m_text; }
 	std::wstring FilterInputString(LPCWSTR s, UINT len);
 private:
 
@@ -137,11 +125,13 @@ public:
 
 	// Selection ////////////////////////////////////////
 	void MoveSelection(int nSelStart, int nSelEnd, bool bTrail = true);
-	BOOL MoveSelectionAtPoint(const CPoint& pt);
-	BOOL MoveSelectionAtNearPoint(const CPoint& pt);
+	BOOL MoveSelectionAtPoint(const d2dw::CPointF& pt);
+	BOOL MoveSelectionAtNearPoint(const d2dw::CPointF& pt);
 	BOOL InsertAtSelection(LPCWSTR psz);
 	BOOL DeleteAtSelection(BOOL fBack);
 	BOOL DeleteSelection();
+	void SetText(LPCWSTR str);
+	void ClearText();
 	void MoveSelectionNext();
 	void MoveSelectionPrev();
 	BOOL MoveSelectionUpDown(BOOL bUp, bool bShiftKey);
@@ -150,7 +140,6 @@ public:
 
 	// Render /////////////////////////////////////
 	void Render();
-//	void CalcRender();
 	void DrawCaret(const d2dw::CRectF& rc);
 	BOOL Layout();
 
@@ -158,7 +147,6 @@ public:
 	void InvalidateRect();
 	void ClearCompositionRenderInfo();
 	BOOL AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIBUTE *pda);
-	void OnTextChange(const std::wstring& text);
 public:
 	int CharPosFromPoint(const d2dw::CPointF& pt);
 	int CharPosFromNearPoint(const d2dw::CPointF& pt);
@@ -168,7 +156,6 @@ public:
 
 private:
 	bool bRecalc_;
-	D2D1_COLOR_F selected_halftone_color_;
 
 	std::function<void(const std::wstring&)> m_changed;
 	std::shared_ptr<CellProperty> m_pProp;
@@ -182,7 +169,7 @@ private:
 	int m_selStart = 0;
 	int m_selEnd = 0;
 	int m_startCharPos = 0;
-	std::wstring m_text;
+	observable_wstring m_text;
 	bool m_isSelTrail = true;
 	bool m_isSingleLine = false;
 
@@ -196,12 +183,13 @@ private:
 	CComPtr<CTextStore> m_pTextStore;
 	CComPtr<ITfDocumentMgr> m_pDocumentMgr;
 	CComPtr<ITfContext> m_pInputContext;
+
 	COMPOSITIONRENDERINFO *pCompositionRenderInfo_;
-	int nCompositionRenderInfo_;
+	UINT nCompositionRenderInfo_;
 	TfEditCookie ecTextStore_;
 
 public:
-	D2DWindow* m_pWnd;
+	CTextboxWnd* m_pWnd;
 
 public:
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )

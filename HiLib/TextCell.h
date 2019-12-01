@@ -1,10 +1,10 @@
 #pragma once
 #include "Cell.h"
 #include <unordered_map>
-#include "D2DWindow.h"
 
 
 class CInplaceEdit;
+class CTextboxWnd;
 
 struct equal_double
 //	:public std::binary_function<const double&,const double&,bool>
@@ -43,7 +43,7 @@ class CTextCell:public CCell
 {
 protected:
 	//CInplaceEdit* m_pEdit;
-	D2DWindow* m_pEdit;
+	CTextboxWnd* m_pEdit;
 public:
 	CTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr)
 		:CCell(pSheet,pRow, pColumn,spProperty,pMenu),m_pEdit(NULL){}
@@ -52,7 +52,7 @@ public:
 	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint);
 	virtual void PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint);
 
-	void SetEditPtr(D2DWindow* pEdit) { m_pEdit = pEdit; }
+	void SetEditPtr(CTextboxWnd* pEdit) { m_pEdit = pEdit; }
 	//virtual CSize MeasureSize(CDC* pDC);
 	//virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
 	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite& direct) override;

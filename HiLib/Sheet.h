@@ -380,7 +380,7 @@ public:
 
 		auto& visDic = GetDictionary<TRC, VisTag>().get<IndexTag>();
 		auto iter = std::upper_bound(visDic.begin(), visDic.end(), coordinate,
-			[ptOrigin](const int& c, const TRC::Data & data)->bool {
+			[ptOrigin](const FLOAT& c, const TRC::Data & data)->bool {
 			if (data.Index >= 0) {
 				return c<(std::max)(ptOrigin.Get<TRC::Axis>(), data.DataPtr->GetLeftTop());
 			}

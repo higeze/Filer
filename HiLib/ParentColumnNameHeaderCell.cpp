@@ -7,7 +7,11 @@
 #include "SheetEventArgs.h"
 
 CMenu CParentColumnNameHeaderCell::ContextMenu;
-const CRect CParentColumnNameHeaderCell::TRIANGLE_MARGIN=CRect(2,0,2,0);
+const FLOAT CParentColumnNameHeaderCell::TRIANGLE_WIDTH = 12.f;
+const FLOAT CParentColumnNameHeaderCell::TRIANGLE_HEIGHT = 6.f;
+const d2dw::CRectF CParentColumnNameHeaderCell::TRIANGLE_MARGIN=d2dw::CRectF(2.f,0.f,2.f,0.f);
+const FLOAT CParentColumnNameHeaderCell::MIN_COLUMN_WIDTH = 16.f;
+
 
 Sorts CParentColumnNameHeaderCell::GetSort()const
 {
@@ -41,7 +45,7 @@ void CParentColumnNameHeaderCell::PaintSortMark(d2dw::CDirect2DWrite& direct, d2
 	switch(GetSort()){
 	case Sorts::Down:
 		{
-			int top=(rcPaint.Height()-TRIANGLE_HEIGHT)/2;
+			FLOAT top=(rcPaint.Height()-TRIANGLE_HEIGHT)/2;
 			arPoint[0]= d2dw::CPointF(TRIANGLE_MARGIN.left,top);
 			arPoint[1]= d2dw::CPointF(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH/2,top+TRIANGLE_HEIGHT);
 			arPoint[2]= d2dw::CPointF(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH,top);
@@ -49,7 +53,7 @@ void CParentColumnNameHeaderCell::PaintSortMark(d2dw::CDirect2DWrite& direct, d2
 		}
 	case Sorts::Up:
 		{
-			int bottom=(rcPaint.Height()-TRIANGLE_HEIGHT)/2+TRIANGLE_HEIGHT;
+			FLOAT bottom=(rcPaint.Height()-TRIANGLE_HEIGHT)/2+TRIANGLE_HEIGHT;
 			arPoint[0]= d2dw::CPointF(TRIANGLE_MARGIN.left,bottom);
 			arPoint[1]= d2dw::CPointF(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH/2,bottom-TRIANGLE_HEIGHT);
 			arPoint[2]= d2dw::CPointF(TRIANGLE_MARGIN.left+TRIANGLE_WIDTH,bottom);
