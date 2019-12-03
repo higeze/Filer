@@ -3,6 +3,8 @@
 #include "MyPoint.h"
 #include "Direct2DWrite.h"
 
+#undef CreateEvent
+
 namespace UIElementState
 {
 	enum Type{
@@ -21,6 +23,21 @@ struct EventArgs
 public:
 	CWnd* WindowPtr;
 	EventArgs(CWnd* pWnd = nullptr):WindowPtr(pWnd){}
+};
+
+struct CreateEvent :public EventArgs
+{
+
+	CreateEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
+		:EventArgs() {}
+};
+
+
+struct KillFocusEvent :public EventArgs
+{
+
+	KillFocusEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
+		:EventArgs() {}
 };
 
 struct KeyEventArgs:public EventArgs
@@ -162,11 +179,6 @@ struct SetCursorEvent:public EventArgs
 struct SetFocusEvent :public EventArgs
 {
 	SetFocusEvent():EventArgs(){}
-};
-
-struct KillFocusEvent :public EventArgs
-{
-	KillFocusEvent() :EventArgs() {}
 };
 
 

@@ -398,7 +398,7 @@ void CGridView::UpdateRow()
 
 	//Scroll Virtical Range
 	if (IsVirtualPage()) {
-		m_pVScroll->SetScrollRange(0, m_pDirect->Dips2PixelsY(GetCellsHeight()));
+		m_pVScroll->SetScrollRange(0.f, GetCellsHeight());
 		if (scrollPos != GetVerticalScrollPos()) {
 			UpdateRow();
 		}
@@ -418,14 +418,14 @@ void CGridView::UpdateScrolls()
 
 	//Scroll Range
 	d2dw::CRectF rcCells(GetCellsRect());
-	m_pVScroll->SetScrollRange(0, m_pDirect->Dips2PixelsY(rcCells.Height()));
-	m_pHScroll->SetScrollRange(0, m_pDirect->Dips2PixelsY(rcCells.Width()));
+	m_pVScroll->SetScrollRange(0.f, rcCells.Height());
+	m_pHScroll->SetScrollRange(0.f, rcCells.Width());
 
 	//Scroll Page
 	d2dw::CRectF rcPage(GetPageRect());
 
-	m_pVScroll->SetScrollPage(m_pDirect->Dips2PixelsY(rcPage.Height()));
-	m_pHScroll->SetScrollPage(m_pDirect->Dips2PixelsX(rcPage.Width()));
+	m_pVScroll->SetScrollPage(rcPage.Height());
+	m_pHScroll->SetScrollPage(rcPage.Width());
 
 	//EnableShow Vertical		
 	m_pVScroll->SetVisible(m_pVScroll->GetScrollDistance() > m_pVScroll->GetScrollPage());
@@ -461,8 +461,8 @@ CPoint CGridView::GetScrollPos()const
 
 void CGridView::SetScrollPos(const CPoint& ptScroll)
 {
-	m_pHScroll->SetScrollPos(ptScroll.x);
-	m_pVScroll->SetScrollPos(ptScroll.y);
+	m_pHScroll->SetScrollPos(m_pDirect->Pixels2DipsX(ptScroll.x));
+	m_pVScroll->SetScrollPos(m_pDirect->Pixels2DipsY(ptScroll.y));
 }
 
 FLOAT CGridView::GetVerticalScrollPos()const

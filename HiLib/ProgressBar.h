@@ -14,9 +14,9 @@ namespace d2dw
 
 		CRectF m_rect;
 		
-		int m_min = 0.0f;
-		int m_max = 100.0f;
-		int m_value = 0.0f;
+		int m_min = 0;
+		int m_max = 100;
+		int m_value = 0;
 
 		std::shared_ptr<ProgressProperty> m_spProgressProp;
 	public:

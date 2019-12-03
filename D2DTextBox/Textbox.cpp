@@ -60,19 +60,24 @@ void D2DTextbox::AppTSFExit()
 
 
 
-D2DTextbox::D2DTextbox(CTextboxWnd* pWnd, const std::wstring& initText, const std::shared_ptr<CellProperty>& pProp, std::function<void(const std::wstring&)> changed)
-	:m_pWnd(pWnd), m_pProp(pProp), m_changed(changed), m_text(initText), m_selStart(0), m_selEnd(initText.size())
+D2DTextbox::D2DTextbox(CTextboxWnd* pWnd,
+	std::shared_ptr<CellProperty> pProp,
+	std::function<std::wstring()> getter,
+	std::function<void(const std::wstring&)> setter,
+	std::function<void(const std::wstring&)> changed,
+	std::function<void()> final)
+	:m_pWnd(pWnd), m_pProp(pProp), m_getter(getter), m_setter(setter), m_changed(changed), m_text(getter()), m_final(final),
+	m_selStart(0), m_selEnd(getter().size())
 {
 	// You must create this on Heap, OnStack is NG.
 	_ASSERT(_CrtIsValidHeapPointer(this));
-
-	InitTSF();
 
 	pCompositionRenderInfo_ = NULL;
 	nCompositionRenderInfo_ = 0;
 	nLineCnt_ = 0;
 	row_width_ = 0;
 	bRecalc_ = true;
+
 	QueryPerformanceFrequency(&m_frequency);
 	if (m_pDocumentMgr) {
 		s_pThreadMgr->SetFocus(m_pDocumentMgr);
@@ -104,15 +109,22 @@ D2DTextbox::D2DTextbox(CTextboxWnd* pWnd, const std::wstring& initText, const st
 
 D2DTextbox::~D2DTextbox()
 {
+	m_final();
 	UninitTSF();
 }
+
+void D2DTextbox::OnCreate(const CreateEvent& e)
+{
+	InitTSF();
+}
+
 
 void D2DTextbox::OnPaint(const PaintEvent& e)
 {
 	//PaintBackground
-	e.DirectPtr->FillSolidRectangle(*(m_pWnd->m_spProp->NormalFill), GetClientRect());
+	e.DirectPtr->FillSolidRectangle(*(m_pProp->NormalFill), GetClientRect());
 	//PaintLine(e.Direct, rcClient)
-	e.DirectPtr->GetHwndRenderTarget()->DrawRectangle(GetClientRect(), e.DirectPtr->GetColorBrush(m_pWnd->m_spProp->EditLine->Color), m_pWnd->m_spProp->Line->Width);
+	e.DirectPtr->GetHwndRenderTarget()->DrawRectangle(GetClientRect(), e.DirectPtr->GetColorBrush(m_pProp->EditLine->Color), m_pProp->Line->Width);
 	//PaintContent(e.Direct, rcContent);
 	Render();
 	m_pWnd->m_redraw = 1;
@@ -226,6 +238,8 @@ void D2DTextbox::OnKeyDown(const KeyDownEvent& e)
 		(heldShift && Clipboard(m_pWnd->m_hWnd, L'V') ? 1 : 0);
 		break;
 	case VK_RETURN:
+		InsertAtSelection(L"\r\n");
+		break;
 	case VK_TAB:
 		InsertAtSelection(L"\t");
 		break;
@@ -307,6 +321,12 @@ void D2DTextbox::OnChar(const CharEvent& e)
 	}
 
 }
+
+void D2DTextbox::OnKillFocus(const KillFocusEvent& e)
+{
+	m_setter(m_text);
+}
+
 
 BOOL D2DTextbox::Clipboard( HWND hwnd, TCHAR ch )
 {
@@ -414,8 +434,8 @@ d2dw::CRectF D2DTextbox::GetClientRect() const
 d2dw::CRectF D2DTextbox::GetContentRect() const
 {
 	d2dw::CRectF rcContent(GetClientRect());
-	rcContent.DeflateRect(m_pWnd->m_spProp->Line->Width*0.5f);
-	rcContent.DeflateRect(*(m_pWnd->m_spProp->Padding));
+	rcContent.DeflateRect(m_pProp->Line->Width*0.5f);
+	rcContent.DeflateRect(*(m_pProp->Padding));
 	return rcContent;
 }
 
@@ -430,7 +450,7 @@ void D2DTextbox::DrawCaret(const d2dw::CRectF& rc)
 		m_bCaret = !m_bCaret;
 	} else if(m_bCaret){
 		m_pWnd->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-		m_pWnd->m_pDirect->FillSolidRectangle(m_pWnd->m_spProp->Format->Color, rc);
+		m_pWnd->m_pDirect->FillSolidRectangle(m_pProp->Format->Color, rc);
 		m_pWnd->m_pDirect->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	}
 }
@@ -715,7 +735,7 @@ void D2DTextbox::Render()
 
 	d2dw::CRectF rc(GetContentRect());
 
-	m_pWnd->m_pDirect->DrawTextLayout(*(m_pWnd->m_spProp->Format), m_text, rc);
+	m_pWnd->m_pDirect->DrawTextLayout(*(m_pProp->Format), m_text, rc);
 
 	// Render selection,caret
 	d2dw::CRectF rcSelCaret(rc.left, rc.top, rc.left + 1.0f, rc.top + (float)nLineHeight_);
@@ -830,7 +850,7 @@ void D2DTextbox::Render()
 								pts[0].y = rc.bottom;
 								pts[1].x = rc.right - (bClause ? nBaseLineWidth : 0);
 								pts[1].y = rc.bottom;
-								m_pWnd->m_pDirect->DrawSolidLine(*(m_pWnd->m_spProp->Line), pts[0], pts[1]);
+								m_pWnd->m_pDirect->DrawSolidLine(*(m_pProp->Line), pts[0], pts[1]);
 							}
 						}
 					}
@@ -1124,9 +1144,9 @@ BOOL D2DTextbox::Layout()
 	{
 
 		// 文字文のRECT取得
-		std::vector<d2dw::CRectF> charRects = m_pWnd->m_pDirect->CalcCharRects(*(m_pWnd->m_spProp->Format), m_text, sz);
+		std::vector<d2dw::CRectF> charRects = m_pWnd->m_pDirect->CalcCharRects(*(m_pProp->Format), m_text, sz);
 		if (charRects.empty()) {
-			auto pLayout = m_pWnd->m_pDirect->GetTextLayout(*(m_pWnd->m_spProp->Format), m_text, sz);
+			auto pLayout = m_pWnd->m_pDirect->GetTextLayout(*(m_pProp->Format), m_text, sz);
 			float x, y;
 			DWRITE_HIT_TEST_METRICS tm;
 			pLayout->HitTestTextPosition(0, false, &x, &y, &tm);

@@ -217,7 +217,7 @@ public:
 			Changed(NotifyChangedEventArgs<T>{ oldValue });
 		}
 	}
-
+	operator T () { return m_value; }
 	T get()const { return m_value; }
 	void set(const T& value) { m_value = value; }
 };

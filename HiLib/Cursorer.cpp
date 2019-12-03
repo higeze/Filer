@@ -14,7 +14,7 @@ void CCursorer::UpdateCursor(std::shared_ptr<CCell>& cell, bool old, bool curren
 	if (anchor) { m_anchorCell = cell; }//Anchor
 	if (focus) {
 		if (m_focusedCell != cell) {
-			if (m_focusedCell) { m_focusedCell->OnKillFocus(KillFocusEvent()); }//Blur
+			if (m_focusedCell) { m_focusedCell->OnKillFocus(KillFocusEvent(cell->GetSheetPtr()->GetGridPtr()->GetDirect().get(), NULL, NULL)); }//Blur
 			m_focusedCell = cell;
 			m_focusedCell->OnSetFocus(SetFocusEvent());//Focus
 			m_doubleFocusedCell = nullptr;//DoubleFocus
@@ -108,7 +108,7 @@ void CCursorer::OnCursorCtrlShift(std::shared_ptr<CCell>& cell)
 void CCursorer::OnCursorClear(CSheet* pSheet)
 {
 	if(m_focusedCell){
-		m_focusedCell->OnKillFocus(KillFocusEvent());//Blur
+		m_focusedCell->OnKillFocus(KillFocusEvent(pSheet->GetGridPtr()->GetDirect().get(), NULL, NULL));//Blur
 	}
 	Clear();
 	pSheet->DeselectAll();//Select

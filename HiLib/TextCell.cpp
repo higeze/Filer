@@ -49,7 +49,7 @@ d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& d
 
 void CTextCell::OnEdit(const EventArgs& e)
 {
-	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(GetRect()));
+	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(m_pSheet->GetGridPtr()->GetDirect()->LayoutRound(GetRect())));
 	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
 
 	m_pEdit = new CTextboxWnd(
@@ -66,7 +66,7 @@ void CTextCell::OnEdit(const EventArgs& e)
 				}
 			},
 			[spCell]()->void{
-				spCell->m_pEdit=NULL;
+				spCell->SetEditPtr(nullptr);
 				spCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 			}
 	);

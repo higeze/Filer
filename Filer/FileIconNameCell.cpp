@@ -5,6 +5,7 @@
 #include "CellProperty.h"
 #include "InplaceEdit.h"
 #include "FileIconCache.h"
+#include "TextboxWnd.h"
 
 CFileIconNameCell::CFileIconNameCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	:CParameterCell(pSheet, pRow, pColumn, spProperty){}
@@ -103,44 +104,37 @@ d2dw::CSizeF CFileIconNameCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2D
 
 void CFileIconNameCell::OnEdit(const EventArgs& e)
 {
-	////Icon Size
-	//CSize iconSize(GetIconSize(*(m_pSheet->GetGridPtr()->GetDirect())));
-	////Space
-	//int space = m_pSheet->GetGridPtr()->GetDirect()->Dips2PixelsX(m_spProperty->Padding->left + m_spProperty->Padding->right);
-	////Edit Rect
-	//CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(InnerBorder2Content(CenterBorder2InnerBorder(GetRect()))));
-	//rcEdit.left += iconSize.cx + space;
+	//Icon Size
+	CSize iconSize(GetIconSize(*(m_pSheet->GetGridPtr()->GetDirect())));
+	//Space
+	int space = m_pSheet->GetGridPtr()->GetDirect()->Dips2PixelsX(m_spProperty->Padding->left + m_spProperty->Padding->right);
+	//Edit Rect
+	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(m_pSheet->GetGridPtr()->GetDirect()->LayoutRound(GetRect())));
+	rcEdit.left += iconSize.cx + space;
 
+	SetState(UIElementState::Hot);//During Editing, Keep Hot
+	//CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(GetRect()));
+	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
 
-	//auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
-	//SetState(UIElementState::Hot);//During Editing, Keep Hot
-	//m_pEdit = new CInplaceEdit(
-	//	m_pSheet->GetGridPtr(),
-	//	[spCell]() -> std::basic_string<TCHAR> {
-	//	return spCell->GetString();
-	//},
-	//	[spCell](const std::basic_string<TCHAR>& str) -> void {
-	//	spCell->SetString(str);
-	//},
-	//	[spCell](const std::basic_string<TCHAR>& str) -> void {
-	//	if (spCell->CanSetStringOnEditing()) {
-	//		spCell->SetString(str);
-	//	}
-	//},
-	//	[spCell]()->void {
-	//	spCell->SetEditPtr(NULL);
-	//	spCell->SetState(UIElementState::Normal);//After Editing, Change Normal
-	//},
-	//	m_spProperty->Format->Font.GetGDIFont(),
-	//	GetFormat());
-
-	//m_pEdit->Create(m_pSheet->GetGridPtr()->m_hWnd, rcEdit);
-	//m_pEdit->SetWindowText(GetString().c_str());
-	//rcEdit.MoveToXY(0, 0);
-	//m_pEdit->SetRect(rcEdit);
-	//m_pEdit->SetFocus();
-	//m_pEdit->SetSel(0, -1);
-	//m_pEdit->ShowWindow(SW_SHOW);
+	m_pEdit = new CTextboxWnd(
+		m_spProperty,
+		[spCell]() -> std::basic_string<TCHAR> {
+			return spCell->GetString();
+		},
+		[spCell](const std::basic_string<TCHAR>& str) -> void {
+			spCell->SetString(str);
+		},
+			[spCell](const std::basic_string<TCHAR>& str) -> void {
+			if (spCell->CanSetStringOnEditing()) {
+				spCell->SetString(str);
+			}
+		},
+			[spCell]()->void {
+			spCell->SetEditPtr(nullptr);
+			spCell->SetState(UIElementState::Normal);//After Editing, Change Normal
+		}
+	);
+	m_pEdit->Create(e.WindowPtr->m_hWnd, rcEdit);
 }
 
 void CFileIconNameCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)

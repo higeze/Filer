@@ -87,20 +87,26 @@ public:
 	static void AppTSFExit();
 
 public:
-	D2DTextbox(CTextboxWnd* pWnd, const std::wstring& initText, const std::shared_ptr<CellProperty>& pProp,std::function<void(const std::wstring&)> changed);
+	D2DTextbox(CTextboxWnd* pWnd,
+		std::shared_ptr<CellProperty> pProp,
+		std::function<std::wstring()> getter,
+		std::function<void(const std::wstring&)> setter,
+		std::function<void(const std::wstring&)> changed,
+		std::function<void()> final);
 	~D2DTextbox();
 	void InitTSF();
 	void UninitTSF();
 
 public:
 	//LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
-
+	virtual void OnCreate(const CreateEvent& e);
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnKeyDown(const KeyDownEvent& e);
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnLButtonUp(const LButtonUpEvent& e);
 	virtual void OnMouseMove(const MouseMoveEvent& e);
 	virtual void OnChar(const CharEvent& e);
+	virtual void OnKillFocus(const KillFocusEvent& e);
 
 	// Getter ////////////////////////////////////////////////////
 	int GetSelectionStart() { return m_selStart; }
@@ -154,11 +160,17 @@ public:
 
 	UINT FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst);
 
-private:
-	bool bRecalc_;
+public:
+	std::wstring m_strInit;
 
-	std::function<void(const std::wstring&)> m_changed;
+
+private:
 	std::shared_ptr<CellProperty> m_pProp;
+	std::function<std::wstring()> m_getter;
+	std::function<void(const std::wstring&)> m_setter;
+	std::function<void(const std::wstring&)> m_changed;
+	std::function<void()> m_final;
+	bool bRecalc_;
 
 	std::vector<LINEINFO> m_lineInfos;
 	UINT nLineCnt_;

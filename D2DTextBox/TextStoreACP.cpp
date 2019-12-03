@@ -700,7 +700,7 @@ void CTextStore::PrepareAttributes(ULONG cFilterAttrs, const TS_ATTRID *paFilter
 
             case IF_ATTR_FONT_STYLE_HEIGHT:
                 _attrval[_nAttrVals].varValue.vt = VT_I4;
-                _attrval[_nAttrVals].varValue.lVal = _pEditor->GetLineHeight();
+                _attrval[_nAttrVals].varValue.lVal = static_cast<LONG>(_pEditor->GetLineHeight());
                 break;
 
             case IF_ATTR_FONT_FACENAME:
@@ -710,7 +710,7 @@ void CTextStore::PrepareAttributes(ULONG cFilterAttrs, const TS_ATTRID *paFilter
 
             case IF_ATTR_FONT_SIZEPTS:
                 _attrval[_nAttrVals].varValue.vt = VT_I4;
-                _attrval[_nAttrVals].varValue.lVal = (int)((double)_pEditor->GetLineHeight() / 96.0 * 72.0);
+                _attrval[_nAttrVals].varValue.lVal = static_cast<LONG>(_pEditor->GetLineHeight() / 96.f * 72.f);
                 break;
 
             case IF_ATTR_TEXT_READONLY:

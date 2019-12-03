@@ -136,8 +136,8 @@ public:
 		PaintLine(e.Direct, *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);
 	}
 
-	virtual int GetLineLeftTop(CSheet* pSheet) { return pSheet->FirstPointer<TRCYou, AllTag>()->GetLeftTop(); }
-	virtual int GetLineRightBottom(CSheet* pSheet) { return pSheet->ZeroPointer<TRCYou, AllTag>()->GetRightBottom(); }
+	virtual FLOAT GetLineLeftTop(CSheet* pSheet) { return pSheet->FirstPointer<TRCYou, AllTag>()->GetLeftTop(); }
+	virtual FLOAT GetLineRightBottom(CSheet* pSheet) { return pSheet->ZeroPointer<TRCYou, AllTag>()->GetRightBottom(); }
 
 	void PaintLine(d2dw::CDirect2DWrite& direct, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1) {}
 

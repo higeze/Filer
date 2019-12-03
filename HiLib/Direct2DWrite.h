@@ -412,6 +412,11 @@ namespace d2dw{
 			return D2D1_RECT_F{ LayoutRound(rc.left), LayoutRound(rc.top), LayoutRound(rc.right), LayoutRound(rc.bottom) };
 		}
 
+		CRectF LayoutRound(const CRectF& rc, FLOAT unit = 0.5f)
+		{
+			return CRectF{ LayoutRound(rc.left), LayoutRound(rc.top), LayoutRound(rc.right), LayoutRound(rc.bottom) };
+		}
+
 		FLOAT GetPixels2DipsRatioX();
 		FLOAT GetPixels2DipsRatioY();
 		FLOAT Pixels2DipsX(int x);

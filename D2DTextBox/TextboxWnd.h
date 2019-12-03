@@ -8,12 +8,7 @@ class D2DTextbox;
 class CTextboxWnd:public CWnd
 {
 public:
-	std::shared_ptr<CellProperty> m_spProp;
-	std::function<std::wstring()> m_getter;
-	std::function<void(const std::wstring&)> m_setter;
-	std::function<void(const std::wstring&)> m_changed;
-	std::function<void()> m_final;
-	std::wstring m_strInit;
+
 	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
 	std::unique_ptr<D2DTextbox> m_pTxtbox;
 
