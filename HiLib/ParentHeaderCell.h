@@ -2,7 +2,6 @@
 #include "TextCell.h"
 
 class CColor;
-class IInplaceEdit;
 
 class CParentHeaderCell:public CTextCell
 {

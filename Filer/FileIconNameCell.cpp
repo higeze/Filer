@@ -3,9 +3,8 @@
 #include "FileRow.h"
 #include "GridView.h"
 #include "CellProperty.h"
-#include "InplaceEdit.h"
 #include "FileIconCache.h"
-#include "TextboxWnd.h"
+#include "Textbox.h"
 
 CFileIconNameCell::CFileIconNameCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	:CParameterCell(pSheet, pRow, pColumn, spProperty){}
@@ -116,25 +115,25 @@ void CFileIconNameCell::OnEdit(const EventArgs& e)
 	//CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(GetRect()));
 	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
 
-	m_pEdit = new CTextboxWnd(
-		m_spProperty,
-		[spCell]() -> std::basic_string<TCHAR> {
-			return spCell->GetString();
-		},
-		[spCell](const std::basic_string<TCHAR>& str) -> void {
-			spCell->SetString(str);
-		},
-			[spCell](const std::basic_string<TCHAR>& str) -> void {
-			if (spCell->CanSetStringOnEditing()) {
-				spCell->SetString(str);
-			}
-		},
-			[spCell]()->void {
-			spCell->SetEditPtr(nullptr);
-			spCell->SetState(UIElementState::Normal);//After Editing, Change Normal
-		}
-	);
-	m_pEdit->Create(e.WindowPtr->m_hWnd, rcEdit);
+	//m_pEdit = new CTextboxWnd(
+	//	m_spProperty,
+	//	[spCell]() -> std::basic_string<TCHAR> {
+	//		return spCell->GetString();
+	//	},
+	//	[spCell](const std::basic_string<TCHAR>& str) -> void {
+	//		spCell->SetString(str);
+	//	},
+	//		[spCell](const std::basic_string<TCHAR>& str) -> void {
+	//		if (spCell->CanSetStringOnEditing()) {
+	//			spCell->SetString(str);
+	//		}
+	//	},
+	//		[spCell]()->void {
+	//		spCell->SetEditPtr(nullptr);
+	//		spCell->SetState(UIElementState::Normal);//After Editing, Change Normal
+	//	}
+	//);
+	//m_pEdit->Create(e.WindowPtr->m_hWnd, rcEdit);
 }
 
 void CFileIconNameCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)

@@ -33,6 +33,14 @@ struct CreateEvent :public EventArgs
 };
 
 
+struct CloseEvent :public EventArgs
+{
+
+	CloseEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
+		:EventArgs() {}
+};
+
+
 struct KillFocusEvent :public EventArgs
 {
 

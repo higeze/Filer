@@ -120,9 +120,9 @@ d2dw::CRectF CSheetCell::GetPaintRect()
 	return CCell::GetRect();//TODO
 }
 
-CPoint CSheetCell::GetScrollPos()const
+d2dw::CPointF CSheetCell::GetScrollPos()const
 {
-	return CPoint(0,0);
+	return d2dw::CPointF(0,0);
 }
 
 d2dw::CSizeF CSheetCell::MeasureSize(d2dw::CDirect2DWrite& direct)

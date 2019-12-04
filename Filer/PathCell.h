@@ -2,7 +2,6 @@
 
 #include "TextCell.h"
 
-class IInplaceEdit;
 class CSize;
 class CDC;
 

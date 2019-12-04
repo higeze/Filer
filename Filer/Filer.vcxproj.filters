@@ -272,9 +272,6 @@
     <ClInclude Include="..\HiLib\IMouseObserver.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\InplaceEdit.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\KonamiCommander.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -761,9 +758,6 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\GridView.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\InplaceEdit.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\KonamiCommander.cpp">

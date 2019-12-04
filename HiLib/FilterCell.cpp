@@ -1,9 +1,9 @@
 #include "FilterCell.h"
-#include "InplaceEdit.h"
 #include "Sheet.h"
 #include "CellProperty.h"
 #include "Column.h"
 #include "GridView.h"
+#include "Textbox.h"
 
 CFilterCell::CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu)
 	:CEditableCell(pSheet, pRow, pColumn, spProperty,pMenu){ }
@@ -36,15 +36,21 @@ void CFilterCell::SetStringCore(const std::wstring& str)
 
 void CFilterCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
-	std::wstring str=GetString();
-	if(!str.empty()){
-		direct.DrawTextLayout(*(m_spProperty->Format), str, rcPaint);
-	}else{
-		str = L"Filter items...";
-		d2dw::FormatF filterFnC(
-			m_spProperty->Format->Font.FamilyName, m_spProperty->Format->Font.Size,
-			210.0f/255,210.0f/255,210.0f/255, 1.0f);
-		direct.DrawTextLayout(filterFnC, str, rcPaint);
+	if (m_pEdit) {
+		m_pEdit->OnPaint(PaintEvent(&direct));
+	}else {
+
+		std::wstring str = GetString();
+		if (!str.empty()) {
+			direct.DrawTextLayout(*(m_spProperty->Format), str, rcPaint);
+		}
+		else {
+			str = L"Filter items...";
+			d2dw::FormatF filterFnC(
+				m_spProperty->Format->Font.FamilyName, m_spProperty->Format->Font.Size,
+				210.0f / 255, 210.0f / 255, 210.0f / 255, 1.0f);
+			direct.DrawTextLayout(filterFnC, str, rcPaint);
+		}
 	}
 }
 

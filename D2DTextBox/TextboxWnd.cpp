@@ -117,7 +117,7 @@ CTextboxWnd::CTextboxWnd(
 	std::function<void(const std::wstring&)> setter,
 	std::function<void(const std::wstring&)> changed,
 	std::function<void()> final)
-	:CWnd(), m_pTxtbox(std::make_unique<D2DTextbox>(this, pProp,getter,setter,changed,final))
+//	:CWnd(), m_pTxtbox(std::make_unique<D2DTextbox>(this, pProp,getter,setter,changed,final))
 {
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()

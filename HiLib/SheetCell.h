@@ -72,7 +72,7 @@ public:
 	virtual Compares EqualCell(CTextCell* pCell, std::function<void(CCell*, Compares)> action);
 	virtual Compares EqualCell(CSheetCell* pCell, std::function<void(CCell*, Compares)> action);
 
-	virtual CPoint GetScrollPos()const;
+	virtual d2dw::CPointF GetScrollPos()const;
 	std::shared_ptr<CDC> GetClientDCPtr()const;
 	virtual CGridView* GetGridPtr();
 

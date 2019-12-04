@@ -12,6 +12,8 @@ class CTextStore;
 class CTextEditSink;
 class IBridgeTSFInterface;
 class CTextboxWnd;
+class CGridView;
+class CTextCell;
 
 struct COMPOSITIONRENDERINFO
 {
@@ -87,7 +89,9 @@ public:
 	static void AppTSFExit();
 
 public:
-	D2DTextbox(CTextboxWnd* pWnd,
+	D2DTextbox(
+		CGridView* pWnd, 
+		CTextCell* pCell,
 		std::shared_ptr<CellProperty> pProp,
 		std::function<std::wstring()> getter,
 		std::function<void(const std::wstring&)> setter,
@@ -100,6 +104,7 @@ public:
 public:
 	//LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
 	virtual void OnCreate(const CreateEvent& e);
+	virtual void OnClose(const CloseEvent& e);
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnKeyDown(const KeyDownEvent& e);
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
@@ -165,6 +170,7 @@ public:
 
 
 private:
+	CTextCell* m_pCell;
 	std::shared_ptr<CellProperty> m_pProp;
 	std::function<std::wstring()> m_getter;
 	std::function<void(const std::wstring&)> m_setter;
@@ -201,7 +207,7 @@ private:
 	TfEditCookie ecTextStore_;
 
 public:
-	CTextboxWnd* m_pWnd;
+	CGridView* m_pWnd;
 
 public:
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )

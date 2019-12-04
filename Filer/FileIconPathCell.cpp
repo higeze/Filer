@@ -3,7 +3,6 @@
 #include "FileRow.h"
 #include "GridView.h"
 #include "CellProperty.h"
-#include "InplaceEdit.h"
 #include "FileIconCache.h"
 
 CFileIconPathCell::CFileIconPathCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)

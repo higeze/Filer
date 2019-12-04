@@ -5,27 +5,31 @@
 #include "MySize.h"
 #include "MyDC.h"
 #include "MyRgn.h"
-
-#include "InplaceEdit.h"
 #include "Sheet.h"
 #include "Row.h"
 #include "Column.h"
 #include "GridView.h"
 #include <algorithm>
-#include "TextboxWnd.h"
+#include "Textbox.h"
 
 
 CTextCell::~CTextCell()
 {
 	if(m_pEdit){
-		SendMessage(m_pEdit->m_hWnd,WM_CLOSE,0,0);
+		//SendMessage(m_pEdit->m_hWnd,WM_CLOSE,0,0);
+		m_pSheet->GetGridPtr()->SetEditPtr(nullptr);
 		m_pEdit = nullptr;
 	}
 }
 
 void CTextCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
-	direct.DrawTextLayout(*(m_spProperty->Format), GetString(), rcPaint);
+	if (m_pEdit) {
+		m_pEdit->OnPaint(PaintEvent(&direct));
+	}
+	else {
+		direct.DrawTextLayout(*(m_spProperty->Format), GetString(), rcPaint);
+	}
 }
 
 d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
@@ -52,7 +56,9 @@ void CTextCell::OnEdit(const EventArgs& e)
 	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(m_pSheet->GetGridPtr()->GetDirect()->LayoutRound(GetRect())));
 	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
 
-	m_pEdit = new CTextboxWnd(
+	m_pEdit = new D2DTextbox(
+			m_pSheet->GetGridPtr(),
+			this,
 			m_spProperty,
 			[spCell]() -> std::basic_string<TCHAR>{
 				return spCell->GetString();
@@ -67,22 +73,27 @@ void CTextCell::OnEdit(const EventArgs& e)
 			},
 			[spCell]()->void{
 				spCell->SetEditPtr(nullptr);
+				spCell->GetSheetPtr()->GetGridPtr()->SetEditPtr(nullptr);
 				spCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 			}
 	);
-	m_pEdit->Create(e.WindowPtr->m_hWnd, rcEdit);
+	m_pEdit->OnCreate(CreateEvent(m_pSheet->GetGridPtr()->GetDirect().get(), NULL, NULL));
+	m_pSheet->GetGridPtr()->SetEditPtr(m_pEdit);
+}
+
+void CTextCell::PaintLine(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+{
+	if (m_pEdit) {
+		direct.DrawSolidRectangle(*(m_spProperty->EditLine), rcPaint);
+	}
+	else {
+		CCell::PaintLine(direct, rcPaint);
+	}
+
 }
 
 void CTextCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
 {
-	if(m_pEdit){
-		CRect rcCell(direct.Dips2Pixels(GetRect()));
-		CRect rcEdit; ::GetWindowRect(m_pEdit->m_hWnd, &rcEdit);
-		rcEdit = m_pSheet->GetGridPtr()->ScreenToClientRect(rcEdit);
-		if(rcCell!=rcEdit){
-			//::MoveWindow(m_pEdit->m_hWnd, rcCell.left, rcCell.top, rcCell.Width(), rcCell.Height(), FALSE);
-		}
-	}
 	CCell::PaintBackground(direct, rcPaint);
 }
 	
@@ -116,6 +127,13 @@ Compares CTextCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Comp
 {
 	action(this, Compares::Diff);
 	return Compares::Diff;
+}
+
+void CTextCell::OnKillFocus(const KillFocusEvent& e)
+{
+	if (m_pEdit) {
+		m_pEdit->OnKillFocus(e);
+	}
 }
 
 

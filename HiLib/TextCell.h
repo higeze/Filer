@@ -2,9 +2,7 @@
 #include "Cell.h"
 #include <unordered_map>
 
-
-class CInplaceEdit;
-class CTextboxWnd;
+class D2DTextbox;
 
 struct equal_double
 //	:public std::binary_function<const double&,const double&,bool>
@@ -42,22 +40,23 @@ public:
 class CTextCell:public CCell
 {
 protected:
-	//CInplaceEdit* m_pEdit;
-	CTextboxWnd* m_pEdit;
+	D2DTextbox* m_pEdit;
 public:
 	CTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr)
 		:CCell(pSheet,pRow, pColumn,spProperty,pMenu),m_pEdit(NULL){}
 	virtual ~CTextCell();
 
-	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint);
-	virtual void PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint);
+	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint) override;
+	virtual void PaintLine(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint) override;
+	virtual void PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint) override;
 
-	void SetEditPtr(CTextboxWnd* pEdit) { m_pEdit = pEdit; }
+	void SetEditPtr(D2DTextbox* pEdit) { m_pEdit = pEdit; }
 	//virtual CSize MeasureSize(CDC* pDC);
 	//virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
 	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite& direct) override;
 	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct) override;
 	virtual void OnEdit(const EventArgs& e);
+	virtual void OnKillFocus(const KillFocusEvent& e) override;
 	virtual bool CanSetStringOnEditing()const{return true;}
 
 	virtual UINT GetFormat()const

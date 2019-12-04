@@ -7,6 +7,7 @@
 #include "TextStoreACP.h"
 #include "TextEditSink.h"
 #include "observable.h"
+#include "GridView.h"
 
 #define Round(x)	((LONG)(x+0.5f))
 

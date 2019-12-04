@@ -191,7 +191,7 @@ public:
 	virtual void ResetColumnSort();
 
 	virtual std::shared_ptr<CDC> GetClientDCPtr()const=0;
-	virtual CPoint GetScrollPos()const=0;
+	virtual d2dw::CPointF GetScrollPos()const=0;
 	virtual CGridView* GetGridPtr()=0;
 	virtual bool Empty()const;
 	virtual bool Visible()const;

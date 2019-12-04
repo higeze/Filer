@@ -43,7 +43,6 @@
 #include "PathRow.h"
 #include "KnownFolder.h"
 #include "DriveFolder.h"
-#include "InplaceEdit.h"
 #include "Scroll.h"
 #include "ShellFileFactory.h"
 #include "ThreadPool.h"
@@ -52,6 +51,7 @@
 #include "IncrementalCopyWnd.h"
 #include "ProgressBar.h"
 #include "ResourceIDFactory.h"
+#include "Textbox.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 extern HWND g_main;
@@ -124,7 +124,8 @@ void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 		}
 
 		if (m_pEdit) {
-			::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);
+			m_pEdit->OnClose(CloseEvent(m_pDirect.get(), NULL, NULL));
+			//::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);
 		}
 
 		if (Empty()) {

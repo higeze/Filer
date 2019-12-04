@@ -1,8 +1,6 @@
 #include "ParentHeaderCell.h"
 #include "CellProperty.h"
 #include "MyRect.h"
-#include "MyColor.h"
-#include "InplaceEdit.h"
 #include "Sheet.h"
 #include "GridView.h"
 

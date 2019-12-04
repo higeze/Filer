@@ -41,7 +41,6 @@
 #include "PathRow.h"
 #include "KnownFolder.h"
 #include "DriveFolder.h"
-#include "InplaceEdit.h"
 #include "Scroll.h"
 #include "ShellFileFactory.h"
 #include "ThreadPool.h"
@@ -50,6 +49,7 @@
 #include "IncrementalCopyWnd.h"
 #include "ProgressBar.h"
 #include "SearchWnd.h"
+#include "Textbox.h"
 
 #define SCRATCH_QCM_FIRST 1
 #define SCRATCH_QCM_NEW 600//200,500 are used by system
@@ -471,7 +471,8 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 
 
 		if (m_pEdit) {
-			::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);
+			m_pEdit->OnClose(CloseEvent(m_pDirect.get(), NULL, NULL));
+			//::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);
 		}
 
 		//Save and Restore Filter value

@@ -41,7 +41,6 @@
 #include "PathRow.h"
 #include "KnownFolder.h"
 #include "DriveFolder.h"
-#include "InplaceEdit.h"
 #include "Scroll.h"
 #include "ShellFileFactory.h"
 #include "ThreadPool.h"

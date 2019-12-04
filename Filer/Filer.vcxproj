@@ -252,7 +252,6 @@
     <ClInclude Include="..\HiLib\IDragger.h" />
     <ClInclude Include="..\HiLib\IKeyObserver.h" />
     <ClInclude Include="..\HiLib\IMouseObserver.h" />
-    <ClInclude Include="..\HiLib\InplaceEdit.h" />
     <ClInclude Include="..\HiLib\KonamiCommander.h" />
     <ClInclude Include="..\HiLib\KonamiResource.h" />
     <ClInclude Include="..\HiLib\MenuItem.h" />
@@ -418,7 +417,6 @@
     <ClCompile Include="..\HiLib\FullCommand.cpp" />
     <ClCompile Include="..\HiLib\GridView.cpp" />
     <ClCompile Include="..\HiLib\IDL.cpp" />
-    <ClCompile Include="..\HiLib\InplaceEdit.cpp" />
     <ClCompile Include="..\HiLib\KonamiCommander.cpp" />
     <ClCompile Include="..\HiLib\MouseStateMachine.cpp" />
     <ClCompile Include="..\HiLib\MyAutoUpdater.cpp" />

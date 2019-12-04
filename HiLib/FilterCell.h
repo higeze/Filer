@@ -2,7 +2,6 @@
 #include "TextCell.h"
 #include "DeadlineTimer.h"
 
-class IInplaceEdit;
 
 /**
  *  Filter Cell

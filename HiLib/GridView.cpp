@@ -32,8 +32,11 @@
 #include "MouseStateMachine.h"
 #include "GridViewProperty.h"
 #include "ResourceIDFactory.h"
-#include "InplaceEdit.h"
 #include "Scroll.h"
+
+#include "Textbox.h"
+
+
 
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
@@ -221,6 +224,9 @@ LRESULT CGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled
 {
 	//Direct2DWrite
 	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
+	if (m_pEdit) {
+		m_pEdit->OnCreate(CreateEvent(m_pDirect.get(), NULL, NULL));
+	}
 	return 0;
 }
 
@@ -454,9 +460,9 @@ void CGridView::UpdateScrolls()
 
 }
 
-CPoint CGridView::GetScrollPos()const
+d2dw::CPointF CGridView::GetScrollPos()const
 {
-	return CPoint(m_pHScroll->GetScrollPos(), m_pVScroll->GetScrollPos());
+	return d2dw::CPointF(m_pHScroll->GetScrollPos(), m_pVScroll->GetScrollPos());
 }
 
 void CGridView::SetScrollPos(const CPoint& ptScroll)
@@ -493,9 +499,14 @@ LRESULT CGridView::OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	if (m_isFocusable) { SetFocus(); }
 	SetCapture();
 
-	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	LButtonDownEvent e(this, *m_pDirect, (UINT)wParam,ptClient);
-	m_pMouseStateMachine->LButtonDown(e);
+	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
+	if (m_pEdit && m_pEdit->GetClientRect().PtInRect(m_pDirect->Pixels2Dips(ptClient))) {
+		m_pEdit->OnLButtonDown(LButtonDownEvent(m_pDirect.get(), wParam, lParam));
+		Invalidate();
+	}else {
+		LButtonDownEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
+		m_pMouseStateMachine->LButtonDown(e);
+	}
 	SubmitUpdate();
 	return 0;
 }
@@ -504,9 +515,13 @@ LRESULT CGridView::OnLButtonUp(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 {
 	ReleaseCapture();
 
-	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	LButtonUpEvent e(this, *m_pDirect, (UINT)wParam,ptClient);
-	m_pMouseStateMachine->LButtonUp(e);
+	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
+	if (m_pEdit && m_pEdit->GetClientRect().PtInRect(m_pDirect->Pixels2Dips(ptClient))) {
+		m_pEdit->OnLButtonUp(LButtonUpEvent(m_pDirect.get(), wParam, lParam));
+	}else {
+		LButtonUpEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
+		m_pMouseStateMachine->LButtonUp(e);
+	}
 	SubmitUpdate();
 	return 0;
 }
@@ -549,9 +564,13 @@ LRESULT CGridView::OnMouseMove(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
     ::TrackMouseEvent( &stTrackMouseEvent );
 
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	MouseMoveEvent e(this, *m_pDirect, (UINT)wParam,ptClient);
-	CSheet::OnMouseMove(e);
-	PostUpdate(Updates::Invalidate);
+	MouseMoveEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
+	if (m_pEdit && m_pEdit->GetClientRect().PtInRect(m_pDirect->Pixels2Dips(ptClient))) {
+		m_pEdit->OnMouseMove(e);
+	}else {
+		CSheet::OnMouseMove(e);
+		PostUpdate(Updates::Invalidate);
+	}
 	SubmitUpdate();
 	return 0;
 }
@@ -569,9 +588,39 @@ LRESULT CGridView::OnSetCursor(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 	return 0;
 }
 
+LRESULT CGridView::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	if (m_pEdit) {
+		m_pEdit->OnChar(CharEvent(wParam, lParam & 0xFF, lParam >> 16 & 0xFF));
+		SubmitUpdate();
+	}
+	bHandled = FALSE;
+	return 0;
+}
+
 LRESULT CGridView::OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	OnKeyDown(KeyDownEvent(wParam, lParam & 0xFF, lParam>>16 & 0xFF));
+	if (m_pEdit) {
+		if ((wParam == VK_RETURN) && !(::GetKeyState(VK_MENU) & 0x8000)) {
+			//Do not send message to children
+			m_pEdit->OnKillFocus(KillFocusEvent(m_pDirect.get(), wParam, lParam));
+		}
+		else if ((wParam == VK_TAB) && !(::GetKeyState(VK_MENU) & 0x8000)) {
+			//Do not send message to children
+			m_pEdit->OnKillFocus(KillFocusEvent(m_pDirect.get(), wParam, lParam));
+		}
+		else if (wParam == VK_ESCAPE) {
+			//Back to initial string
+			m_pEdit->SetText(m_pEdit->m_strInit.c_str());
+			m_pEdit->OnKillFocus(KillFocusEvent(m_pDirect.get(), wParam, lParam));
+		}
+		else {
+			m_pEdit->OnKeyDown(KeyDownEvent(m_pDirect.get(), wParam, lParam));
+		}
+	}
+	else {
+		OnKeyDown(KeyDownEvent(wParam, lParam & 0xFF, lParam >> 16 & 0xFF));
+	}
 	SubmitUpdate();
 	bHandled = FALSE;
 	return 0;
@@ -688,7 +737,7 @@ void CGridView::OnPaint(const PaintEvent& e)
 	}
 
 	//Paint Focused Line
-	if (::GetFocus() == m_hWnd || (m_pEdit && ::GetFocus() == m_pEdit->m_hWnd)) {
+	if (::GetFocus() == m_hWnd) {
 		d2dw::CRectF rcFocus(m_pDirect->Pixels2Dips(rcClient));
 		rcFocus.DeflateRect(1.0f, 1.0f);
 		m_pDirect->DrawSolidRectangle(*(m_spHeaderProperty->FocusedLine), rcFocus);
@@ -848,7 +897,7 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 		}
 	} else {
 		auto rcCell(pCell->GetRect());
-		LONG vScrollAdd = 0;
+		FLOAT vScrollAdd = 0;
 		//Bottom has priority (Bottom can Overwrite ScrollPos)
 
 		if (rcCell.bottom > rcPage.bottom) {
@@ -862,7 +911,7 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 		}
 	}
 	auto rcCell(pCell->GetRect());
-	LONG hScrollAdd = 0;
+	FLOAT hScrollAdd = 0;
 
 	//Right has priority (Right can Overwrite ScrollPos)
 

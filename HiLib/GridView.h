@@ -10,7 +10,8 @@ class CDirect2DWrite;
 class BackgroundProperty;
 struct GridViewProperty;
 struct CMouseStateMachine;
-class CInplaceEdit;
+class D2DTextbox;
+
 namespace d2dw
 {
 	class CVScroll;
@@ -25,7 +26,7 @@ public:
 
 	static CMenu ContextMenu;
 protected:
-	CInplaceEdit* m_pEdit = nullptr;
+	D2DTextbox* m_pEdit = nullptr;
 	bool m_isFocusable = true;
 
 	d2dw::CRectF m_rcUpdateRect;
@@ -77,7 +78,7 @@ public:
 	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_rowNameHeader = row; }
 	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_rowFilter; }
 	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_rowFilter = row; }
-	void SetEditPtr(CInplaceEdit* pEdit) { m_pEdit = pEdit; }
+	void SetEditPtr(D2DTextbox* pEdit) { m_pEdit = pEdit; }
 
 protected:
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -99,6 +100,7 @@ protected:
 	virtual LRESULT OnSetCursor(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 
 	virtual LRESULT OnContextMenu(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	virtual LRESULT OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	virtual LRESULT OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 
 	virtual LRESULT OnFilter(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -146,7 +148,7 @@ public:
 
 	virtual CGridView* GetGridPtr(){return this;};
 
-	virtual CPoint GetScrollPos()const override;
+	virtual d2dw::CPointF GetScrollPos()const override;
 	virtual void SetScrollPos(const CPoint& ptScroll);
 
 	virtual FLOAT GetVerticalScrollPos()const;
