@@ -22,6 +22,7 @@
 #include "Gdipluspixelformats.h"
 #include "MyClipboard.h"
 #include "SheetEventArgs.h"
+#include "SheetStateMachine.h"
 
 
 #include "FullCommand.h"
@@ -85,6 +86,7 @@ CGridView::CGridView(
 	AddMsgHandler(WM_MOUSEMOVE,&CGridView::OnMouseMove,this);
 	AddMsgHandler(WM_MOUSELEAVE,&CGridView::OnMouseLeave,this);
 	AddMsgHandler(WM_SETCURSOR,&CGridView::OnSetCursor,this);
+	AddMsgHandler(WM_CHAR, &CGridView::OnChar, this);
 	AddMsgHandler(WM_KEYDOWN,&CGridView::OnKeyDown,this);
 	AddMsgHandler(WM_FILTER,&CGridView::OnFilter,this);
 	AddMsgHandler(WM_LBUTTONDBLCLKTIMEXCEED,&CGridView::OnLButtonDblClkTimeExceed,this);
@@ -224,9 +226,6 @@ LRESULT CGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled
 {
 	//Direct2DWrite
 	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
-	if (m_pEdit) {
-		m_pEdit->OnCreate(CreateEvent(m_pDirect.get(), NULL, NULL));
-	}
 	return 0;
 }
 
@@ -268,8 +267,11 @@ LRESULT CGridView::OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	m_pDirect->BeginDraw();
 
 	m_pDirect->ClearSolid(*(m_spGridViewProp->BackgroundPropPtr->m_brush));
-	PaintEvent e(this, *m_pDirect);
+	PaintEvent e(this);
 	OnPaint(e);
+	if (m_pEdit) {
+		m_pEdit->OnPaint(e);
+	}
 	m_pVScroll->OnPaint(e);
 	m_pHScroll->OnPaint(e);
 
@@ -481,13 +483,18 @@ FLOAT CGridView::GetHorizontalScrollPos()const
 	return m_pHScroll->GetScrollPos();
 }
 
+void CGridView::BeginEdit(CCell* pCell)
+{
+	m_spStateMachine->BeginEdit(BeginEditEvent(this, pCell));
+}
+
+
 LRESULT CGridView::OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	m_keepEnsureVisibleFocusedCell = false;
 	if (m_isFocusable) { SetFocus(); }
 	bHandled=false;
-	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	RButtonDownEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
+	RButtonDownEvent e(this, wParam, lParam);
 	CSheet::OnRButtonDown(e);
 	SubmitUpdate();
 	return 0;
@@ -499,14 +506,8 @@ LRESULT CGridView::OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	if (m_isFocusable) { SetFocus(); }
 	SetCapture();
 
-	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
-	if (m_pEdit && m_pEdit->GetClientRect().PtInRect(m_pDirect->Pixels2Dips(ptClient))) {
-		m_pEdit->OnLButtonDown(LButtonDownEvent(m_pDirect.get(), wParam, lParam));
-		Invalidate();
-	}else {
-		LButtonDownEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
-		m_pMouseStateMachine->LButtonDown(e);
-	}
+	m_pMouseStateMachine->LButtonDown(LButtonDownEvent(this, wParam, lParam));
+
 	SubmitUpdate();
 	return 0;
 }
@@ -515,40 +516,28 @@ LRESULT CGridView::OnLButtonUp(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 {
 	ReleaseCapture();
 
-	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
-	if (m_pEdit && m_pEdit->GetClientRect().PtInRect(m_pDirect->Pixels2Dips(ptClient))) {
-		m_pEdit->OnLButtonUp(LButtonUpEvent(m_pDirect.get(), wParam, lParam));
-	}else {
-		LButtonUpEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
-		m_pMouseStateMachine->LButtonUp(e);
-	}
+	m_pMouseStateMachine->LButtonUp(LButtonUpEvent(this, wParam, lParam));	
 	SubmitUpdate();
 	return 0;
 }
 
 LRESULT CGridView::OnLButtonDblClk(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	LButtonDblClkEvent e(this, *m_pDirect, (UINT)wParam,ptClient);
-	m_pMouseStateMachine->LButtonDblClk(e);
+	m_pMouseStateMachine->LButtonDblClk(LButtonDblClkEvent(this, wParam, lParam));
 	SubmitUpdate();
 	return 0;
 }
 
 LRESULT CGridView::OnLButtonDblClkTimeExceed(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
-	LButtonDblClkTimeExceedEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
-	m_pMouseStateMachine->LButtonDblClkTimeExceed(e);
+	m_pMouseStateMachine->LButtonDblClkTimeExceed(LButtonDblClkTimeExceedEvent(this, wParam, lParam));
 	SubmitUpdate();
 	return 0;
 }
 
 LRESULT CGridView::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
-	MouseLeaveEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
-	m_pMouseStateMachine->MouseLeave(e);
+	m_pMouseStateMachine->MouseLeave(MouseLeaveEvent(this, wParam, lParam));
 	SubmitUpdate();
 	return 0;
 }
@@ -563,14 +552,8 @@ LRESULT CGridView::OnMouseMove(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
     stTrackMouseEvent.hwndTrack = m_hWnd;
     ::TrackMouseEvent( &stTrackMouseEvent );
 
-	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
-	MouseMoveEvent e(this, *m_pDirect, (UINT)wParam, ptClient);
-	if (m_pEdit && m_pEdit->GetClientRect().PtInRect(m_pDirect->Pixels2Dips(ptClient))) {
-		m_pEdit->OnMouseMove(e);
-	}else {
-		CSheet::OnMouseMove(e);
-		PostUpdate(Updates::Invalidate);
-	}
+	CSheet::OnMouseMove(MouseMoveEvent(this, wParam, lParam));
+	PostUpdate(Updates::Invalidate);
 	SubmitUpdate();
 	return 0;
 }
@@ -579,7 +562,7 @@ LRESULT CGridView::OnSetCursor(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 {
 	bHandled = FALSE; //Default Handled = FALSE meand Arrow
 	if((UINT)LOWORD(lParam) == HTCLIENT){
-		CSheet::OnSetCursor(SetCursorEvent(this, (UINT)LOWORD(lParam), bHandled));
+		CSheet::OnSetCursor(SetCursorEvent(this, wParam, lParam, bHandled));
 	}else{
 		bHandled = FALSE;
 	}
@@ -590,37 +573,17 @@ LRESULT CGridView::OnSetCursor(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHand
 
 LRESULT CGridView::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	if (m_pEdit) {
-		m_pEdit->OnChar(CharEvent(wParam, lParam & 0xFF, lParam >> 16 & 0xFF));
-		SubmitUpdate();
-	}
-	bHandled = FALSE;
+	m_spStateMachine->Char(CharEvent(this, wParam, lParam));
+
+	SubmitUpdate();
+	bHandled = TRUE;
 	return 0;
 }
 
 LRESULT CGridView::OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	if (m_pEdit) {
-		if ((wParam == VK_RETURN) && !(::GetKeyState(VK_MENU) & 0x8000)) {
-			//Do not send message to children
-			m_pEdit->OnKillFocus(KillFocusEvent(m_pDirect.get(), wParam, lParam));
-		}
-		else if ((wParam == VK_TAB) && !(::GetKeyState(VK_MENU) & 0x8000)) {
-			//Do not send message to children
-			m_pEdit->OnKillFocus(KillFocusEvent(m_pDirect.get(), wParam, lParam));
-		}
-		else if (wParam == VK_ESCAPE) {
-			//Back to initial string
-			m_pEdit->SetText(m_pEdit->m_strInit.c_str());
-			m_pEdit->OnKillFocus(KillFocusEvent(m_pDirect.get(), wParam, lParam));
-		}
-		else {
-			m_pEdit->OnKeyDown(KeyDownEvent(m_pDirect.get(), wParam, lParam));
-		}
-	}
-	else {
-		OnKeyDown(KeyDownEvent(wParam, lParam & 0xFF, lParam >> 16 & 0xFF));
-	}
+	OnKeyDown(KeyDownEvent(this, wParam, lParam));
+	
 	SubmitUpdate();
 	bHandled = FALSE;
 	return 0;
@@ -632,21 +595,21 @@ void CGridView::OnKeyDown(const KeyDownEvent& e)
 	{
 	case VK_HOME:
 		m_pVScroll->SetScrollPos(0);
-		break;
+		return;
 	case VK_END:
 		m_pVScroll->SetScrollPos(m_pVScroll->GetScrollRange().second - m_pVScroll->GetScrollPage());
-		break;
+		return;
 	case VK_PRIOR: // Page Up
 		m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetScrollPage());
-		break;
+		return;
 	case VK_NEXT: // Page Down
 		m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() + m_pVScroll->GetScrollPage());
-		break;
+		return;
 	default:
 		break;
+		CSheet::OnKeyDown(e);
 	}
 
-	CSheet::OnKeyDown(e);
 }
 
 void CGridView::OnContextMenu(const ContextMenuEvent& e)
@@ -657,7 +620,7 @@ void CGridView::OnContextMenu(const ContextMenuEvent& e)
 		CMenu* pMenu = GetContextMenuPtr(); 
 		if(pMenu){
 			CPoint ptScreen(e.Point);
-			HWND hWnd = e.WindowPtr->m_hWnd;
+			HWND hWnd = e.WndPtr->m_hWnd;
 			SetContextMenuRowColumn(CRowColumn());
 			::ClientToScreen(hWnd, &ptScreen);
 			::SetForegroundWindow(hWnd);
@@ -672,8 +635,7 @@ LRESULT CGridView::OnContextMenu(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 {
 	CPoint ptClient((short)LOWORD(lParam),(short)HIWORD(lParam));	
 	ScreenToClient(ptClient);//Necessary to convert Client
-	ContextMenuEvent e(this, ptClient);
-	OnContextMenu(e);
+	OnContextMenu(ContextMenuEvent(this, wParam, MAKELPARAM(ptClient.x, ptClient.y)));
 	SubmitUpdate();
 	return 0;
 }

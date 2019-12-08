@@ -10,7 +10,7 @@ namespace d2dw
 	{
 		//Draw background
 		CRectF backRect(GetRect());
-		e.Direct.FillSolidRectangle(m_spProgressProp->BackgroundFill, backRect);
+		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spProgressProp->BackgroundFill, backRect);
 
 		//Draw foreground
 		CRectF foreRect(
@@ -18,13 +18,13 @@ namespace d2dw
 			backRect.top,
 			backRect.left + backRect.Width()*GetValue() / (GetMax() - GetMin()),
 			backRect.bottom);
-		e.Direct.FillSolidRectangle(m_spProgressProp->ForegroundFill, foreRect);
+		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spProgressProp->ForegroundFill, foreRect);
 
 		//Draw border
-		e.Direct.DrawSolidRectangle(m_spProgressProp->Border, backRect);
+		e.WndPtr->GetDirectPtr()->DrawSolidRectangle(m_spProgressProp->Border, backRect);
 
 		//Draw text
 		std::wstring text = boost::lexical_cast<std::wstring>(GetValue()) + L" /  " + boost::lexical_cast<std::wstring>(GetMax() - GetMin());
-		e.Direct.DrawTextInRect(m_spProgressProp->Format, text, backRect);
+		e.WndPtr->GetDirectPtr()->DrawTextInRect(m_spProgressProp->Format, text, backRect);
 	}
 }

@@ -563,7 +563,7 @@ LRESULT CFilerWnd::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	CRect rcClient = GetClientRect();
 
 	//Favorites
-	CRect rcFavoriteClient = m_spLeftFavoritesView->GetDirect()->Dips2Pixels(m_spLeftFavoritesView->GetRect());
+	CRect rcFavoriteClient = m_spLeftFavoritesView->GetDirectPtr()->Dips2Pixels(m_spLeftFavoritesView->GetRect());
     m_spLeftFavoritesView->SetWindowPos(HWND_BOTTOM,
         rcClient.left , rcClient.top, 
         rcFavoriteClient.Width(), rcClient.Height(),
@@ -613,8 +613,8 @@ LRESULT CFilerWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 
 LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	//m_spLeftView->GetGridView()->GetDirect()->GetIconCachePtr()->Clear();
-	//m_spRightView->GetGridView()->GetDirect()->GetIconCachePtr()->Clear();
+	//m_spLeftView->GetGridView()->GetDirectPtr()->GetIconCachePtr()->Clear();
+	//m_spRightView->GetGridView()->GetDirectPtr()->GetIconCachePtr()->Clear();
 	CDriveFolderManager::GetInstance()->Update();
 	m_spLeftFavoritesView->Reload();
 	m_spRightFavoritesView->Reload();

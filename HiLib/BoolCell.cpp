@@ -9,15 +9,15 @@ CBoolCell::CBoolCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr
 {
 }
 
-void CBoolCell::PaintContent(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint)
+void CBoolCell::PaintContent(d2dw::CDirect2DWrite* pDirect,d2dw::CRectF rcPaint)
 {
 //TODO store ptrs
 	d2dw::SolidLine line(0.0, 0.0, 0.0, 1.0, 1.0);
 	rcPaint.right=rcPaint.left+rcPaint.Height();
-	direct.DrawSolidRectangle(line, rcPaint);
+	pDirect->DrawSolidRectangle(line, rcPaint);
 	if (m_bool) {
 		CComPtr<ID2D1PathGeometry> pPathGeo;
-		direct.GetD2D1Factory()->CreatePathGeometry(&pPathGeo);
+		pDirect->GetD2D1Factory()->CreatePathGeometry(&pPathGeo);
 		CComPtr<ID2D1GeometrySink> pGeoSink;
 		pPathGeo->Open(&pGeoSink);
 		d2dw::CPointF lt = rcPaint.LeftTop();
@@ -35,7 +35,7 @@ void CBoolCell::PaintContent(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint)
 		pGeoSink->EndFigure(D2D1_FIGURE_END_CLOSED);
 		pGeoSink->Close();
 		d2dw::SolidFill fill(0.0, 0.0, 0.0, 1.0);
-		direct.FillSolidGeometry(fill, pPathGeo);
+		pDirect->FillSolidGeometry(fill, pPathGeo);
 	}
 
 

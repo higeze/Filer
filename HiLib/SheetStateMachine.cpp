@@ -5,7 +5,10 @@
 #include "Celler.h"
 #include "SheetEventArgs.h"
 #include "Sheet.h"
+#include "Cell.h"
 #include "Scroll.h"
+#include "Textbox.h"
+#include "TextCell.h"
 
 #include <boost\msm\front\state_machine_def.hpp>
 #include <boost\msm\back\state_machine.hpp>
@@ -59,6 +62,49 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 	struct RowDragState :state<> {};
 	struct ColDragState :state<> {};
 	struct ItemDragState :state<> {};
+	struct EditState :state<>
+	{
+		template < class event_t, class fsm_t >
+		void on_entry(event_t const& e, fsm_t& machine)
+		{
+			if (auto p = dynamic_cast<CGridView*>(machine.m_pSheet)){
+				CTextCell* pCell = static_cast<CTextCell*>(e.CellPtr);
+
+				D2DTextbox* pEdit = new D2DTextbox(
+					p,
+					pCell,
+					pCell->GetPropertyPtr(),
+					[pCell]() -> std::basic_string<TCHAR> {
+						return pCell->GetString();
+					},
+					[pCell](const std::basic_string<TCHAR>& str) -> void {
+						pCell->SetString(str);
+					},
+						[pCell](const std::basic_string<TCHAR>& str) -> void {
+						if (pCell->CanSetStringOnEditing()) {
+							pCell->SetString(str);
+						}
+					},
+						[pCell]()->void {
+						pCell->SetEditPtr(nullptr);
+						pCell->GetSheetPtr()->GetGridPtr()->SetEditPtr(nullptr);
+						pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
+					}
+					);
+				pEdit->OnCreate(CreateEvent(p, NULL, NULL));
+				pCell->SetEditPtr(pEdit);
+				p->SetEditPtr(pEdit);
+			}
+
+		}
+		template < class event_t, class fsm_t >
+		void on_exit(event_t const& e, fsm_t& machine)
+		{
+			if (auto p = dynamic_cast<CGridView*>(machine.m_pSheet)) {
+				p->GetEditPtr()->OnClose(CloseEvent(p, NULL, NULL));
+			}
+		}
+	};
 
 	//Machine
 
@@ -150,14 +196,14 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		template<class Event>
 		void Action_VScrlDrag_LButtonDown(Event const & e)
 		{
-			m_startDragV = e.Direct.Pixels2DipsY(e.Point.y);
+			m_startDragV = e.WndPtr->GetDirectPtr()->Pixels2DipsY(e.Point.y);
 		}
 
 		template<class Event>
 		bool Guard_VScrlDrag_LButtonDown(Event const & e)
 		{
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
-				return p->m_pVScroll->GetVisible() && p->m_pVScroll->GetThumbRect().PtInRect(e.Direct.Pixels2Dips(e.Point));
+				return p->m_pVScroll->GetVisible() && p->m_pVScroll->GetThumbRect().PtInRect(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
 			} else {
 				return false;
 			}
@@ -175,10 +221,10 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)){
 				p->m_pVScroll->SetScrollPos(
 					p->m_pVScroll->GetScrollPos() +
-					(e.Direct.Pixels2DipsY(e.Point.y) - m_startDragV) *
+					(e.WndPtr->GetDirectPtr()->Pixels2DipsY(e.Point.y) - m_startDragV) *
 					p->m_pVScroll->GetScrollDistance() /
 					p->m_pVScroll->GetRect().Height());
-					m_startDragV = e.Direct.Pixels2DipsY(e.Point.y);
+					m_startDragV = e.WndPtr->GetDirectPtr()->Pixels2DipsY(e.Point.y);
 			}
 		}
 
@@ -187,14 +233,14 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 		template<class Event>
 		void Action_HScrlDrag_LButtonDown(Event const & e)
 		{
-			m_startDragH = e.Direct.Pixels2DipsX(e.Point.x);
+			m_startDragH = e.WndPtr->GetDirectPtr()->Pixels2DipsX(e.Point.x);
 		}
 
 		template<class Event>
 		bool Guard_HScrlDrag_LButtonDown(Event const & e)
 		{
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
-				return p->m_pHScroll->GetVisible() && p->m_pHScroll->GetThumbRect().PtInRect(e.Direct.Pixels2Dips(e.Point));
+				return p->m_pHScroll->GetVisible() && p->m_pHScroll->GetThumbRect().PtInRect(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
 			} else {
 				return false;
 			}
@@ -212,10 +258,10 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
 				p->m_pHScroll->SetScrollPos(
 					p->m_pHScroll->GetScrollPos() +
-					(e.Direct.Pixels2DipsX(e.Point.x) - m_startDragH) *
+					(e.WndPtr->GetDirectPtr()->Pixels2DipsX(e.Point.x) - m_startDragH) *
 					p->m_pHScroll->GetScrollDistance() /
 					p->m_pHScroll->GetRect().Width());
-				m_startDragH = e.Direct.Pixels2DipsX(e.Point.x);
+				m_startDragH = e.WndPtr->GetDirectPtr()->Pixels2DipsX(e.Point.x);
 			}
 		}
 
@@ -378,7 +424,89 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 			m_pSheet->m_spColTracker->OnLeaveTrack(m_pSheet, e);
 		}
 
+		//Edit state
+		template<class Event>
+		void Action_Edit_MouseMove(Event const& e)
+		{
+			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
+				if (p->GetEditPtr()->GetClientRect().PtInRect(p->GetDirectPtr()->Pixels2Dips(e.Point))) {
+					p->GetEditPtr()->OnMouseMove(e);
+				}
+				else {
+					Action_Normal_MouseMove(e);
+				}
+			}
+		}
 
+		template<class Event>
+		bool Guard_Edit_LButtonDown(Event const& e)
+		{
+			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
+				return !p->GetEditPtr()->GetClientRect().PtInRect(p->GetDirectPtr()->Pixels2Dips(e.Point));
+			}
+			else {
+				return true;
+			}
+		}
+
+		template<class Event>
+		void Action_Edit_LButtonDown(Event const& e)
+		{
+			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
+				p->GetEditPtr()->OnLButtonDown(e);
+			}
+		}
+
+		template<class Event>
+		void Action_Edit_LButtonUp(Event const& e)
+		{
+			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
+				if (p->GetEditPtr()->GetClientRect().PtInRect(p->GetDirectPtr()->Pixels2Dips(e.Point))) {
+					p->GetEditPtr()->OnLButtonUp(e);
+				}
+				else {
+					Action_Normal_LButtonUp(e);
+				}
+			}
+		}
+
+		template<class Event>
+		bool Guard_Edit_KeyDown(Event const& e)
+		{
+			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
+
+				if ((e.Char == VK_RETURN) && !(::GetKeyState(VK_MENU) & 0x8000) ||
+					(e.Char == VK_TAB) && !(::GetKeyState(VK_MENU) & 0x8000)) {
+					//Commit Edit
+					return true;
+				}
+				else if (e.Char == VK_ESCAPE) {
+					//CancelEdit
+					p->GetEditPtr()->CancelEdit();
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
+
+		}
+
+		template<class Event>
+		void Action_Edit_KeyDown(const Event& e)
+		{
+			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
+				p->GetEditPtr()->OnKeyDown(e);
+			}
+		}
+
+		template<class Event>
+		void Action_Edit_Char(const Event& e)
+		{
+			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
+				p->GetEditPtr()->OnChar(e);
+			}
+		}
 
 		struct transition_table :boost::mpl::vector<
 			//     Start          Event             Target         Action                                       Guard
@@ -394,14 +522,24 @@ struct CSheetStateMachine::Impl :state_machine_def<CSheetStateMachine::Impl>
 			a_irow<NormalState,   SetCursorEvent,                       &Machine_::Action_Normal_SetCursor>,
 			a_irow<NormalState,   KeyDownEvent,                         &Machine_::Action_Normal_KeyDown>,
 
+			  _row<NormalState,   BeginEditEvent,        EditState>,
 			   row<NormalState,   LButtonDownEvent,      VScrlDragState,&Machine_::Action_VScrlDrag_LButtonDown,   &Machine_::Guard_VScrlDrag_LButtonDown>,
 			   row<NormalState,   LButtonDownEvent,      HScrlDragState,&Machine_::Action_HScrlDrag_LButtonDown,   &Machine_::Guard_HScrlDrag_LButtonDown>,
 			   row<NormalState,   LButtonBeginDragEvent, ColDragState,  &Machine_::Action_ColDrag_LButtonBeginDrag,  &Machine_::Guard_ColDrag_LButtonBeginDrag>,
 			   row<NormalState,   LButtonBeginDragEvent, RowDragState,  &Machine_::Action_RowDrag_LButtonBeginDrag,  &Machine_::Guard_RowDrag_LButtonBeginDrag>,
 			   row<NormalState,   LButtonBeginDragEvent, ItemDragState, &Machine_::Action_ItemDrag_LButtonBeginDrag, &Machine_::Guard_ItemDrag_LButtonBeginDrag>,
-      		   row<NormalState,   LButtonDownEvent, RowTrackState, &Machine_::Action_RowTrack_LButtonDown, &Machine_::Guard_RowTrack_LButtonDown>,
-       		   row<NormalState,   LButtonDownEvent, ColTrackState, &Machine_::Action_ColTrack_LButtonDown, &Machine_::Guard_ColTrack_LButtonDown>,
+      		   row<NormalState,   LButtonDownEvent,      RowTrackState, &Machine_::Action_RowTrack_LButtonDown, &Machine_::Guard_RowTrack_LButtonDown>,
+       		   row<NormalState,   LButtonDownEvent,      ColTrackState, &Machine_::Action_ColTrack_LButtonDown, &Machine_::Guard_ColTrack_LButtonDown>,
 			
+			a_irow<EditState,     MouseMoveEvent,                       &Machine_::Action_Edit_MouseMove>,
+			   row<EditState,	  LButtonDownEvent,      NormalState,   &Machine_::Action_Edit_LButtonDown, &Machine_::Guard_Edit_LButtonDown>,
+			a_irow<EditState,     LButtonUpEvent,                       &Machine_::Action_Edit_LButtonUp>,
+			   row<EditState,     KeyDownEvent,          NormalState,   &Machine_::Action_Edit_KeyDown, &Machine_::Guard_Edit_KeyDown>,
+			a_irow<EditState,     CharEvent,                            &Machine_::Action_Edit_Char>,
+			  _row<EditState,     KillFocusEvent,        NormalState>,
+
+
+
 			a_irow<VScrlDragState, MouseMoveEvent, &Machine_::Action_VScrlDrag_MouseMove>,
 			a_row<VScrlDragState,  LButtonUpEvent, NormalState, &Machine_::Action_VScrlDrag_LButtonUp>,
 
@@ -476,4 +614,5 @@ void CSheetStateMachine::LButtonBeginDrag(const LButtonBeginDragEvent& e) { pImp
 void CSheetStateMachine::SetCursor(const SetCursorEvent& e) { pImpl->m_machine.process_event(e); }
 void CSheetStateMachine::ContextMenu(const ContextMenuEvent& e) { pImpl->m_machine.process_event(e); }
 void CSheetStateMachine::KeyDown(const KeyDownEvent& e) { pImpl->m_machine.process_event(e); }
+void CSheetStateMachine::BeginEdit(const BeginEditEvent& e) { pImpl->m_machine.process_event(e); }
 

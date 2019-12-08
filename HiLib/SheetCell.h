@@ -44,7 +44,7 @@ public:
 	virtual void SetSelected(const bool& bSelected) override;
 
 	//Paint
-	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint) override;
+	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
 	
 	//Event
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;

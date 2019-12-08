@@ -214,8 +214,7 @@ LRESULT CIncrementalCopyWnd::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 	m_pDirect->BeginDraw();
 
 	m_pDirect->ClearSolid(BackgroundFill);
-	PaintEvent e(this, *m_pDirect);
-	m_pProgressbar->OnPaint(e);
+	m_pProgressbar->OnPaint(PaintEvent(this));
 
 	m_pDirect->EndDraw();
 	return 0;

@@ -21,31 +21,46 @@ namespace UIElementState
 struct EventArgs
 {
 public:
-	CWnd* WindowPtr;
-	EventArgs(CWnd* pWnd = nullptr):WindowPtr(pWnd){}
+	CWnd* WndPtr;
+	EventArgs(CWnd* pWnd = nullptr):WndPtr(pWnd){}
 };
+
+class CCell;
+
+struct BeginEditEvent :public EventArgs
+{
+	CCell* CellPtr;
+	BeginEditEvent(CWnd* pWnd, CCell* pCell)
+		:EventArgs(pWnd) {}
+};
+//
+//struct EndEditEvent :public EventArgs
+//{
+//	CCell* CellPtr;
+//	BeginEditEvent(d2dw::CDirect2DWrite* pDirect, CCell* pCell)
+//		:EventArgs() {}
+//};
+
 
 struct CreateEvent :public EventArgs
 {
-
-	CreateEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
-		:EventArgs() {}
+	CreateEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
+		:EventArgs(pWnd) {}
 };
 
 
 struct CloseEvent :public EventArgs
 {
 
-	CloseEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
-		:EventArgs() {}
+	CloseEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
+		:EventArgs(pWnd) {}
 };
 
 
 struct KillFocusEvent :public EventArgs
 {
-
-	KillFocusEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
-		:EventArgs() {}
+	KillFocusEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
+		:EventArgs(pWnd){}
 };
 
 struct KeyEventArgs:public EventArgs
@@ -53,153 +68,118 @@ struct KeyEventArgs:public EventArgs
 	UINT Char;
 	UINT RepeatCount;
 	UINT Flags;
-	KeyEventArgs(UINT ch,UINT uRepCnt,UINT uFlags)
-		:Char(ch),RepeatCount(uRepCnt),Flags(uFlags){}
-	KeyEventArgs(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam) :
-		Char(wParam), RepeatCount(lParam & 0xFF), Flags(lParam >> 16 & 0xFF) {}
+	KeyEventArgs(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
+		:EventArgs(pWnd), Char(wParam), RepeatCount(lParam & 0xFF), Flags(lParam >> 16 & 0xFF) {}
 };
 
 struct CharEvent :public KeyEventArgs
 {
-	CharEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
-		:KeyEventArgs(pDirect, wParam, lParam){}
-	CharEvent(UINT ch, UINT uRepCnt, UINT uFlags) :KeyEventArgs(ch, uRepCnt, uFlags) {}
+	CharEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
+		:KeyEventArgs(pWnd, wParam, lParam){}
 };
-
 
 struct KeyDownEvent :public KeyEventArgs
 {
-	KeyDownEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
-		:KeyEventArgs(pDirect, wParam, lParam) {}
-	KeyDownEvent(UINT ch, UINT uRepCnt, UINT uFlags):KeyEventArgs(ch, uRepCnt, uFlags){}
+	KeyDownEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
+		:KeyEventArgs(pWnd, wParam, lParam) {}
 };
 
 struct PaintEvent:public EventArgs
 {
-	d2dw::CDirect2DWrite& Direct;
-	d2dw::CDirect2DWrite* DirectPtr;
-
-	//CDC* DCPtr;
-	PaintEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct)
-		:EventArgs(pWnd), Direct(direct){}
-	PaintEvent(d2dw::CDirect2DWrite& direct)
-		:EventArgs(), Direct(direct){}
-	PaintEvent(d2dw::CDirect2DWrite* pDirect)
-		:EventArgs(), DirectPtr(pDirect), Direct(*pDirect){}
+	PaintEvent(CWnd* pWnd)
+		:EventArgs(pWnd){}
 };
-
-//struct OGLPaintEventArgs:public PaintEventArgs
-//{
-//	CDC* DCPtr;
-//	COGLRenderer* OGLRendererPtr;
-//	OGLPaintEventArgs(COGLRenderer* pOGLRenderer, CDC* pDC)
-//		:PaintEventArgs(pDC),OGLRendererPtr(pOGLRenderer){}
-//};
 
 struct MouseEvent:public EventArgs
 {
-	d2dw::CDirect2DWrite& Direct;
-	d2dw::CDirect2DWrite* DirectPtr;
 	UINT Flags;
 	CPoint Point;
-	MouseEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt)
-		:EventArgs(pWnd), Direct(direct), Flags(uFlags),Point(pt){}
-	MouseEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam)
-		:EventArgs(nullptr), DirectPtr(pDirect), Direct(*pDirect), Flags((UINT)wParam), Point((short)LOWORD(lParam), (short)HIWORD(lParam)){}
+	MouseEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
+		:EventArgs(pWnd), Flags(wParam),Point((short)LOWORD(lParam), (short)HIWORD(lParam)){}
 	virtual ~MouseEvent(){}
 };
 
 struct LButtonDownEvent :public MouseEvent
 {
-	LButtonDownEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam):
-		MouseEvent(pDirect, wParam, lParam){}
-	LButtonDownEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt):MouseEvent(pWnd, direct, uFlags, pt){}
+	LButtonDownEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam):
+		MouseEvent(pWnd, wParam, lParam){}
 };
 
 struct LButtonUpEvent :public MouseEvent
 {
-	LButtonUpEvent(d2dw::CDirect2DWrite* pDirect, WPARAM wParam, LPARAM lParam) :
-		MouseEvent(pDirect, wParam, lParam) {}
-	LButtonUpEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt):MouseEvent(pWnd, direct, uFlags, pt) {}
+	LButtonUpEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam) :
+		MouseEvent(pWnd, wParam, lParam) {}
 };
 
 struct LButtonClkEvent :public MouseEvent
 {
-	LButtonClkEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
+	LButtonClkEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam) :MouseEvent(pWnd, wParam, lParam) {}
 };
 
 struct LButtonSnglClkEvent :public MouseEvent
 {
-	LButtonSnglClkEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
+	LButtonSnglClkEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam) :MouseEvent(pWnd, wParam, lParam) {}
 };
 
 struct LButtonDblClkEvent :public MouseEvent
 {
-	LButtonDblClkEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
+	LButtonDblClkEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam) :MouseEvent(pWnd, wParam, lParam) {}
 };
 
 struct LButtonDblClkTimeExceedEvent :public MouseEvent
 {
-	LButtonDblClkTimeExceedEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
+	LButtonDblClkTimeExceedEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam) :MouseEvent(pWnd, wParam, lParam) {}
 };
 
 struct LButtonBeginDragEvent :public MouseEvent
 {
-	LButtonBeginDragEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
+	LButtonBeginDragEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam) :MouseEvent(pWnd, wParam, lParam) {}
 };
 
 struct RButtonDownEvent :public MouseEvent
 {
-	RButtonDownEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
+	RButtonDownEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam) :MouseEvent(pWnd, wParam, lParam) {}
 };
 
 struct MouseMoveEvent :public MouseEvent
 {
-	MouseMoveEvent(d2dw::CDirect2DWrite* pDirect, LPARAM lParam, WPARAM wParam) :
-		MouseEvent(pDirect, lParam, wParam) {}
-
-	MouseMoveEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
+	MouseMoveEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam) :
+		MouseEvent(pWnd, wParam, lParam) {}
 };
 
 struct MouseLeaveEvent :public MouseEvent
 {
-	MouseLeaveEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, CPoint pt) :MouseEvent(pWnd, direct, uFlags, pt) {}
+	MouseLeaveEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam) :MouseEvent(pWnd, wParam, lParam) {}
 };
 
 
 struct MouseWheelEvent:public MouseEvent
 {
 	short Delta;
-	MouseWheelEvent(CWnd* pWnd, d2dw::CDirect2DWrite& direct, UINT uFlags, short zDelta, CPoint pt)
-		:MouseEvent(pWnd, direct, uFlags, pt),Delta(zDelta){}
-	virtual ~MouseWheelEvent(){}
+	MouseWheelEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
+		:MouseEvent(pWnd, wParam, lParam), Delta(GET_WHEEL_DELTA_WPARAM(wParam)){}
 };
 
 struct SetCursorEvent:public EventArgs
 {
 	UINT HitTest;
 	BOOL& Handled;
-	SetCursorEvent(CWnd* pWnd, UINT nHitTest, BOOL& Handled)
-		:EventArgs(pWnd), HitTest(nHitTest), Handled(Handled){}
-	virtual ~SetCursorEvent(){}
+	SetCursorEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+		:EventArgs(pWnd), HitTest(LOWORD(lParam)), Handled(Handled){}
 };
 
 struct SetFocusEvent :public EventArgs
 {
-	SetFocusEvent():EventArgs(){}
+	SetFocusEvent(CWnd* pWnd):EventArgs(pWnd){}
 };
-
 
 struct ContextMenuEvent:public EventArgs
 {
 public:
 	CPoint Point;
-	ContextMenuEvent(CWnd* pWnd, CPoint pt)
-		:EventArgs(pWnd),Point(pt){}
-	virtual ~ContextMenuEvent(){}
+	ContextMenuEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
+		:EventArgs(pWnd),Point((short)LOWORD(lParam), (short)HIWORD(lParam)){}
 };
-
-
 
 
 class CUIElement

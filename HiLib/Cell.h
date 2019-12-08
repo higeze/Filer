@@ -96,10 +96,10 @@ public:
 	virtual void SetChecked(const bool& bChecked);
 	
 	//Paint
-	virtual void PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rc);
-	virtual void PaintLine(d2dw::CDirect2DWrite& direct, d2dw::CRectF rc);
-	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rc){/*Do Nothing*/}
-	virtual void PaintFocus(d2dw::CDirect2DWrite& direct, d2dw::CRectF rc);
+	virtual void PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc);
+	virtual void PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc);
+	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc){/*Do Nothing*/}
+	virtual void PaintFocus(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc);
 	
 	//Event
 	virtual void OnPaint(const PaintEvent& e);

@@ -41,18 +41,18 @@ namespace d2dw
 	{
 		if (!GetVisible())return;
 		//Draw background
-		e.Direct.FillSolidRectangle(m_spScrollProp->BackgroundFill, GetRect());
+		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spScrollProp->BackgroundFill, GetRect());
 		//Draw thumb
 		auto thumbFill = m_spScrollProp->ThumbNormalFill;
 		if (GetState() == UIElementState::Dragged) {
 			thumbFill = m_spScrollProp->ThumbScrollFill;
 		} else if (CPoint pt = m_pGrid->GetCursorPosInClient();
-			GetThumbRect().PtInRect(m_pGrid->GetDirect()->Pixels2Dips(pt))) {
+			GetThumbRect().PtInRect(m_pGrid->GetDirectPtr()->Pixels2Dips(pt))) {
 			thumbFill = m_spScrollProp->ThumbHotFill;
 		} else {
 			thumbFill = m_spScrollProp->ThumbNormalFill;
 		}
-		e.Direct.FillSolidRectangle(thumbFill, GetThumbRect());
+		e.WndPtr->GetDirectPtr()->FillSolidRectangle(thumbFill, GetThumbRect());
 	}
 
 	CRectF CVScroll::GetThumbRect()const

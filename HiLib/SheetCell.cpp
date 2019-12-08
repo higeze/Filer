@@ -281,12 +281,12 @@ Compares CSheetCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Com
 	return comp;
 }
 
-void CSheetCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CSheetCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 /*	CRgn rgn;
 	rgn.CreateRectRgnIndirect(rcPaint);
 	pDC->SelectClipRgn(rgn);*/	
-	CSheet::OnPaint(PaintEvent(direct));
+	CSheet::OnPaint(PaintEvent(m_pSheet->GetGridPtr()));
 	//pDC->SelectClipRgn(NULL);
 }
 
@@ -386,7 +386,7 @@ CMenu* CSheetCell::GetContextMenuPtr()
 void CSheetCell::OnContextMenu(const ContextMenuEvent& e)
 {
 	if(!Visible())return;
-	auto cell = Cell(static_cast<CGridView*>(e.WindowPtr)->GetDirect()->Pixels2Dips(e.Point));
+	auto cell = Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
 	if(cell){
 		cell->OnContextMenu(e);
 	}else{

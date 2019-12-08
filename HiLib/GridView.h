@@ -66,7 +66,7 @@ public:
 	~CGridView();
 
 	//Getter Setter
-	std::shared_ptr<d2dw::CDirect2DWrite>& GetDirect() { return m_pDirect; }
+	d2dw::CDirect2DWrite* GetDirectPtr() { return m_pDirect.get(); }
 	std::shared_ptr<GridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	d2dw::CRectF GetUpdateRect()const { return m_rcUpdateRect; }
 	void SetUpdateRect(d2dw::CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
@@ -78,7 +78,9 @@ public:
 	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_rowNameHeader = row; }
 	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_rowFilter; }
 	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_rowFilter = row; }
+	D2DTextbox* GetEditPtr() { return m_pEdit; }
 	void SetEditPtr(D2DTextbox* pEdit) { m_pEdit = pEdit; }
+	void BeginEdit(CCell* pCell);
 
 protected:
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);

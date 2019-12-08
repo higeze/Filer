@@ -68,8 +68,8 @@ public:
 	{
 		CPoint pt;
 		::GetCursorPos(&pt);
-		::ScreenToClient(e.WindowPtr->m_hWnd, &pt);
-		if (IsTarget(pSheet, MouseEvent(e.WindowPtr, *(pSheet->GetGridPtr()->GetDirect()), 0,  pt))) {
+		::ScreenToClient(e.WndPtr->m_hWnd, &pt);
+		if (IsTarget(pSheet, MouseEvent(e.WndPtr, 0, MAKELPARAM(pt.x, pt.y)))) {
 			e.Handled = TRUE;
 			SetSizeCursor(); 
 		}
@@ -87,7 +87,7 @@ public:
 		//e.Handled = TRUE;
 		SetSizeCursor();
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		p->SetWidthHeightWithoutSignal(e.Direct.Pixels2Dips(e.Point).Get<TRC::Axis>() - p->GetLeftTop());
+		p->SetWidthHeightWithoutSignal(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point).Get<TRC::Axis>() - p->GetLeftTop());
 		pSheet->Track<TRC>(p);
 	}
 
@@ -95,7 +95,7 @@ public:
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		p->SetWidthHeightWithoutSignal(e.Direct.Pixels2Dips(e.Point).Get<TRC::Axis>() - p->GetLeftTop());
+		p->SetWidthHeightWithoutSignal(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point).Get<TRC::Axis>() - p->GetLeftTop());
 		pSheet->EndTrack<TRC>(p);
 	}
 
@@ -110,7 +110,7 @@ public:
 		if (!pSheet->Visible()) {
 			return CBand::kInvalidIndex;
 		}
-		d2dw::CPointF ptDips = e.Direct.Pixels2Dips(e.Point);
+		d2dw::CPointF ptDips = e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point);
 		auto visIndexes = pSheet->Point2Indexes<VisTag>(ptDips);
 		auto minIdx = pSheet->GetMinIndex<TRC, VisTag>();
 		auto maxIdx = pSheet->GetMaxIndex<TRC, VisTag>();
@@ -153,7 +153,7 @@ public:
 		if (!pSheet->Visible()) {
 			return false;
 		}
-		d2dw::CPointF ptDips = e.Direct.Pixels2Dips(e.Point);
+		d2dw::CPointF ptDips = e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point);
 		auto visIndexes = pSheet->Point2Indexes<VisTag>(ptDips);
 		auto other = pSheet->Coordinate2Pointer<TRC::Other>(ptDips.Get<TRC::OtherAxis>());
 		auto minIdx = pSheet->GetMinIndex<TRC, VisTag>();

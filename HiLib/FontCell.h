@@ -11,7 +11,7 @@ public:
 	virtual ~CFontCell(){}
 	d2dw::CFontF GetFont();
 
-	void PaintContent(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint) override;
+	void PaintContent(d2dw::CDirect2DWrite* pDirect,d2dw::CRectF rcPaint) override;
 
 	virtual void OnLButtonClk(MouseEvent& e);
 

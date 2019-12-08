@@ -87,22 +87,22 @@ D2DTextbox::D2DTextbox(
 		s_pThreadMgr->SetFocus(m_pDocumentMgr);
 	}
 	m_text.StringChanged.connect([this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
-		d2dw::CRectF rcClient(GetClientRect());
-		d2dw::CRectF rcContent(GetContentRect());
+		//d2dw::CRectF rcClient(GetClientRect());
+		//d2dw::CRectF rcContent(GetContentRect());
 
-		d2dw::CSizeF szNewContent(m_pWnd->GetDirect()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), e.NewString, rcContent.Width()));
-		d2dw::CRectF rcNewContent(szNewContent);
-		rcNewContent.InflateRect(*(m_pProp->Padding));
-		rcNewContent.InflateRect(m_pProp->Line->Width * 0.5f);
-		CRect rcNewClient(m_pWnd->GetDirect()->Dips2Pixels(rcNewContent));
+		//d2dw::CSizeF szNewContent(m_pWnd->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), e.NewString, rcContent.Width()));
+		//d2dw::CRectF rcNewContent(szNewContent);
+		//rcNewContent.InflateRect(*(m_pProp->Padding));
+		//rcNewContent.InflateRect(m_pProp->Line->Width * 0.5f);
+		//CRect rcNewClient(m_pWnd->GetDirectPtr()->Dips2Pixels(rcNewContent));
 
-		if (rcNewClient.Height() > rcClient.Height()) {
-			CRect rc;
-			::GetWindowRect(m_pWnd->m_hWnd, &rc);
-			CPoint pt(rc.TopLeft());
-			::ScreenToClient(::GetParent(m_pWnd->m_hWnd), &pt);
-			::MoveWindow(m_pWnd->m_hWnd, pt.x, pt.y, rc.Width(), rcNewClient.Height(), TRUE);
-		}
+		//if (rcNewClient.Height() > rcClient.Height()) {
+		//	CRect rc;
+		//	::GetWindowRect(m_pWnd->m_hWnd, &rc);
+		//	CPoint pt(rc.TopLeft());
+		//	::ScreenToClient(::GetParent(m_pWnd->m_hWnd), &pt);
+		//	::MoveWindow(m_pWnd->m_hWnd, pt.x, pt.y, rc.Width(), rcNewClient.Height(), TRUE);
+		//}
 
 		m_changed(e.NewString);
 
@@ -131,10 +131,10 @@ void D2DTextbox::OnClose(const CloseEvent& e)
 void D2DTextbox::OnPaint(const PaintEvent& e)
 {
 	//PaintBackground
-	//e.DirectPtr->FillSolidRectangle(*(m_pProp->NormalFill), GetClientRect());
-	//PaintLine(e.Direct, rcClient)
-	//e.DirectPtr->GetHwndRenderTarget()->DrawRectangle(GetClientRect(), e.DirectPtr->GetColorBrush(m_pProp->EditLine->Color), m_pProp->Line->Width);
-	//PaintContent(e.Direct, rcContent);
+	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetClientRect());
+	//PaintLine
+	e.WndPtr->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->EditLine), GetClientRect());
+	//PaintContent
 	Render();
 	m_pWnd->Invalidate();
 }
@@ -265,7 +265,7 @@ void D2DTextbox::OnLButtonDown(const LButtonDownEvent& e)
 {
 	m_selDragStart = (UINT)-1;
 
-	if (MoveSelectionAtPoint(m_pWnd->GetDirect()->Pixels2Dips(e.Point))) {
+	if (MoveSelectionAtPoint(m_pWnd->GetDirectPtr()->Pixels2Dips(e.Point))) {
 		InvalidateRect();
 		m_selDragStart = GetSelectionStart();
 	}
@@ -282,7 +282,7 @@ void D2DTextbox::OnLButtonUp(const LButtonUpEvent& e)
 	UINT nSelStart = GetSelectionStart();
 	UINT nSelEnd = GetSelectionEnd();
 
-	if (MoveSelectionAtPoint(m_pWnd->GetDirect()->Pixels2Dips(e.Point))) {
+	if (MoveSelectionAtPoint(m_pWnd->GetDirectPtr()->Pixels2Dips(e.Point))) {
 		UINT nNewSelStart = GetSelectionStart();
 		UINT nNewSelEnd = GetSelectionEnd();
 
@@ -299,7 +299,7 @@ void D2DTextbox::OnLButtonUp(const LButtonUpEvent& e)
 void D2DTextbox::OnMouseMove(const MouseMoveEvent& e)
 {
 	if (e.Flags & MK_LBUTTON) {
-		if (MoveSelectionAtPoint(m_pWnd->GetDirect()->Pixels2Dips(e.Point))) {
+		if (MoveSelectionAtPoint(m_pWnd->GetDirectPtr()->Pixels2Dips(e.Point))) {
 			UINT nNewSelStart = GetSelectionStart();
 			UINT nNewSelEnd = GetSelectionEnd();
 
@@ -327,7 +327,7 @@ void D2DTextbox::OnChar(const CharEvent& e)
 		if (e.Char < 256) {
 			WCHAR wc[] = { static_cast<WCHAR>(e.Char), '\0' };
 			this->InsertAtSelection(wc);
-			InvalidateRect();
+			//InvalidateRect();
 		}
 		else {
 		}
@@ -335,11 +335,11 @@ void D2DTextbox::OnChar(const CharEvent& e)
 	m_pWnd->PostUpdate(Updates::Invalidate);
 }
 
-void D2DTextbox::OnKillFocus(const KillFocusEvent& e)
-{
-	m_setter(m_text);
-	OnClose(CloseEvent(nullptr, NULL, NULL));
-}
+//void D2DTextbox::OnKillFocus(const KillFocusEvent& e)
+//{
+//	m_setter(m_text);
+//	OnClose(CloseEvent(nullptr, NULL, NULL));
+//}
 
 
 BOOL D2DTextbox::Clipboard( HWND hwnd, TCHAR ch )
@@ -443,7 +443,7 @@ d2dw::CRectF D2DTextbox::GetClientRect() const
 	return m_pCell->GetRect();
 	//CRect rcClient;
 	//::GetClientRect(m_pWnd->m_hWnd, &rcClient);
-	//return m_pWnd->GetDirect()->Pixels2Dips(rcClient);
+	//return m_pWnd->GetDirectPtr()->Pixels2Dips(rcClient);
 }
 
 d2dw::CRectF D2DTextbox::GetContentRect() const
@@ -464,9 +464,9 @@ void D2DTextbox::DrawCaret(const d2dw::CRectF& rc)
 		m_pregtm = m_gtm;
 		m_bCaret = !m_bCaret;
 	} else if(m_bCaret){
-		m_pWnd->GetDirect()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-		m_pWnd->GetDirect()->FillSolidRectangle(m_pProp->Format->Color, rc);
-		m_pWnd->GetDirect()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+		m_pWnd->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, rc);
+		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	}
 }
 
@@ -657,6 +657,11 @@ void D2DTextbox::InvalidateRect()
 	bRecalc_ = true;
 }
 
+void D2DTextbox::CancelEdit()
+{
+	SetText(m_strInit.c_str());
+}
+
 BOOL D2DTextbox::InsertAtSelection(LPCWSTR psz)
 {
 	bRecalc_ = true;
@@ -722,11 +727,11 @@ void D2DTextbox::ClearText()
 //	d2dw::CRectF rcClient(GetClientRect());
 //	d2dw::CRectF rcContent(GetContentRect());
 //
-//	d2dw::CSizeF szNewContent(m_pWnd->GetDirect()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), text, rcContent.Width()));
+//	d2dw::CSizeF szNewContent(m_pWnd->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), text, rcContent.Width()));
 //	d2dw::CRectF rcNewContent(szNewContent);
 //	rcNewContent.InflateRect(*(m_pProp->Padding));
 //	rcNewContent.InflateRect(m_pProp->Line->Width*0.5f);
-//	CRect rcNewClient(m_pWnd->GetDirect()->Dips2Pixels(rcNewContent));
+//	CRect rcNewClient(m_pWnd->GetDirectPtr()->Dips2Pixels(rcNewContent));
 //
 //	if (rcNewClient.Height() > rcClient.Height()) {
 //		CRect rc;
@@ -750,7 +755,7 @@ void D2DTextbox::Render()
 
 	d2dw::CRectF rc(GetContentRect());
 
-	m_pWnd->GetDirect()->DrawTextLayout(*(m_pProp->Format), m_text, rc);
+	m_pWnd->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), m_text, rc);
 
 	// Render selection,caret
 	d2dw::CRectF rcSelCaret(rc.left, rc.top, rc.left + 1.0f, rc.top + (float)nLineHeight_);
@@ -777,7 +782,7 @@ void D2DTextbox::Render()
 				// caret, select範囲指定の場合
 				if (nSelStartInLine != nSelEndInLine && nSelEndInLine != -1) {
 					for (int j = nSelStartInLine; j < nSelEndInLine; j++) {
-						m_pWnd->GetDirect()->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)), m_lineInfos[r].CharInfos[j].rc);
+						m_pWnd->GetDirectPtr()->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)), m_lineInfos[r].CharInfos[j].rc);
 					}
 
 					bool blast = m_isSelTrail;
@@ -865,7 +870,7 @@ void D2DTextbox::Render()
 								pts[0].y = rc.bottom;
 								pts[1].x = rc.right - (bClause ? nBaseLineWidth : 0);
 								pts[1].y = rc.bottom;
-								m_pWnd->GetDirect()->DrawSolidLine(*(m_pProp->Line), pts[0], pts[1]);
+								m_pWnd->GetDirectPtr()->DrawSolidLine(*(m_pProp->Line), pts[0], pts[1]);
 							}
 						}
 					}
@@ -1160,9 +1165,9 @@ BOOL D2DTextbox::Layout()
 	{
 
 		// 文字文のRECT取得
-		std::vector<d2dw::CRectF> charRects = m_pWnd->GetDirect()->CalcCharRects(*(m_pProp->Format), m_text, contentSize);
+		std::vector<d2dw::CRectF> charRects = m_pWnd->GetDirectPtr()->CalcCharRects(*(m_pProp->Format), m_text, contentSize);
 		if (charRects.empty()) {
-			auto pLayout = m_pWnd->GetDirect()->GetTextLayout(*(m_pProp->Format), m_text, contentSize);
+			auto pLayout = m_pWnd->GetDirectPtr()->GetTextLayout(*(m_pProp->Format), m_text, contentSize);
 			float x, y;
 			DWRITE_HIT_TEST_METRICS tm;
 			pLayout->HitTestTextPosition(0, false, &x, &y, &tm);

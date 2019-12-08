@@ -22,12 +22,12 @@ void CFileIconNameCell::SetStringCore(const std::basic_string<TCHAR>& str)
 
 }
 
-d2dw::CSizeF CFileIconNameCell::GetIconSizeF(d2dw::CDirect2DWrite& direct)const
+d2dw::CSizeF CFileIconNameCell::GetIconSizeF(d2dw::CDirect2DWrite* pDirect)const
 {
-	return direct.Pixels2Dips(GetIconSize(direct));
+	return pDirect->Pixels2Dips(GetIconSize(pDirect));
 }
 
-CSize CFileIconNameCell::GetIconSize(d2dw::CDirect2DWrite& direct)const
+CSize CFileIconNameCell::GetIconSize(d2dw::CDirect2DWrite* pDirect)const
 {
 	return CSize(16, 16);
 }
@@ -41,11 +41,11 @@ std::shared_ptr<CShellFile> CFileIconNameCell::GetShellFile()
 	}
 }
 
-void CFileIconNameCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CFileIconNameCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	//Paint Icon
 	auto spFile = GetShellFile();
-	d2dw::CRectF rcIcon = GetIconSizeF(direct);
+	d2dw::CRectF rcIcon = GetIconSizeF(pDirect);
 	rcIcon.MoveToXY(rcPaint.left, rcPaint.top);
 
 	std::weak_ptr<CFileIconNameCell> wp(shared_from_this());
@@ -62,7 +62,7 @@ void CFileIconNameCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF 
 		}
 	};
 
-	direct.DrawBitmap(direct.GetIconCachePtr()->GetFileIconBitmap(spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetExt(), updated), rcIcon);
+	pDirect->DrawBitmap(direct.GetIconCachePtr()->GetFileIconBitmap(spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetExt(), updated), rcIcon);
 
 	//Space
 	FLOAT space = m_spProperty->Padding->left + m_spProperty->Padding->right;
@@ -70,7 +70,7 @@ void CFileIconNameCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF 
 	//Paint Text
 	d2dw::CRectF rcText(rcIcon.right + space, rcPaint.top, rcPaint.right, rcPaint.bottom);
 
-	CTextCell::PaintContent(direct, rcText);
+	CTextCell::PaintContent(pDirect, rcText);
 }
 
 d2dw::CSizeF CFileIconNameCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
@@ -104,15 +104,15 @@ d2dw::CSizeF CFileIconNameCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2D
 void CFileIconNameCell::OnEdit(const EventArgs& e)
 {
 	//Icon Size
-	CSize iconSize(GetIconSize(*(m_pSheet->GetGridPtr()->GetDirect())));
+	CSize iconSize(GetIconSize(*(m_pSheet->GetGridPtr()->GetDirectPtr())));
 	//Space
-	int space = m_pSheet->GetGridPtr()->GetDirect()->Dips2PixelsX(m_spProperty->Padding->left + m_spProperty->Padding->right);
+	int space = m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2PixelsX(m_spProperty->Padding->left + m_spProperty->Padding->right);
 	//Edit Rect
-	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(m_pSheet->GetGridPtr()->GetDirect()->LayoutRound(GetRect())));
+	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2Pixels(m_pSheet->GetGridPtr()->GetDirectPtr()->LayoutRound(GetRect())));
 	rcEdit.left += iconSize.cx + space;
 
 	SetState(UIElementState::Hot);//During Editing, Keep Hot
-	//CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(GetRect()));
+	//CRect rcEdit(m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2Pixels(GetRect()));
 	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
 
 	//m_pEdit = new CTextboxWnd(
@@ -136,13 +136,13 @@ void CFileIconNameCell::OnEdit(const EventArgs& e)
 	//m_pEdit->Create(e.WindowPtr->m_hWnd, rcEdit);
 }
 
-void CFileIconNameCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CFileIconNameCell::PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	if (m_pEdit) {
 		//Icon Size
-		CSize iconSize(GetIconSize(direct));
+		CSize iconSize(GetIconSize(pDirect));
 		//Space
-		int space = m_pSheet->GetGridPtr()->GetDirect()->Dips2PixelsX(m_spProperty->Padding->left + m_spProperty->Padding->right);
+		int space = m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2PixelsX(m_spProperty->Padding->left + m_spProperty->Padding->right);
 		//Inner Rect
 		d2dw::CRectF rcText(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
 		rcText.left += iconSize.cx + space;
@@ -153,6 +153,6 @@ void CFileIconNameCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRec
 		//	m_pEdit->MoveWindow(direct.Dips2Pixels(rcText), FALSE);
 		//}
 	}
-	CCell::PaintBackground(direct, rcPaint);
+	CCell::PaintBackground(pDirect, rcPaint);
 }
 

@@ -111,7 +111,7 @@ public:
 	virtual void OnLButtonUp(const LButtonUpEvent& e);
 	virtual void OnMouseMove(const MouseMoveEvent& e);
 	virtual void OnChar(const CharEvent& e);
-	virtual void OnKillFocus(const KillFocusEvent& e);
+	//virtual void OnKillFocus(const KillFocusEvent& e);
 
 	// Getter ////////////////////////////////////////////////////
 	int GetSelectionStart() { return m_selStart; }
@@ -142,6 +142,7 @@ public:
 	BOOL DeleteAtSelection(BOOL fBack);
 	BOOL DeleteSelection();
 	void SetText(LPCWSTR str);
+	void CancelEdit();
 	void ClearText();
 	void MoveSelectionNext();
 	void MoveSelectionPrev();
@@ -165,11 +166,8 @@ public:
 
 	UINT FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst);
 
-public:
-	std::wstring m_strInit;
-
-
 private:
+	std::wstring m_strInit;
 	CTextCell* m_pCell;
 	std::shared_ptr<CellProperty> m_pProp;
 	std::function<std::wstring()> m_getter;

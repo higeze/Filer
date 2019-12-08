@@ -18,7 +18,7 @@ public:
 	virtual std::wstring GetString() override;
 	virtual void SetString(const std::wstring& str)override;
 	virtual void SetStringCore(const std::wstring& str)override;
-	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)override;
+	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)override;
 	virtual bool IsComparable()const override
 	{
 		return false;

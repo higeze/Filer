@@ -15,11 +15,11 @@ public:
 	virtual std::wstring GetString() override;
 	void SetStringCore(const std::wstring& str) override;
 	virtual std::shared_ptr<CShellFile> GetShellFile();
-	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)override;
+	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)override;
 	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite& direct) override;
 	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct) override;
 	virtual void OnEdit(const EventArgs& e) override;
-	virtual void PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint) override;
+	virtual void PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
 
 protected:
 	d2dw::CSizeF GetIconSizeF(d2dw::CDirect2DWrite& direct)const;

@@ -18,7 +18,7 @@ Sorts CParentColumnNameHeaderCell::GetSort()const
 	return m_pColumn->GetSort();
 }
 
-void CParentColumnNameHeaderCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CParentColumnNameHeaderCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	switch(GetSort()){
 	case Sorts::Up:
@@ -26,19 +26,19 @@ void CParentColumnNameHeaderCell::PaintContent(d2dw::CDirect2DWrite& direct, d2d
 		{
 			d2dw::CRectF rcText(rcPaint);
 			rcText.right = (std::max)(rcText.left,  rcText.right - (TRIANGLE_WIDTH+TRIANGLE_MARGIN.left+TRIANGLE_MARGIN.right));
-			CTextCell::PaintContent(direct,rcText);
+			CTextCell::PaintContent(pDirect,rcText);
 			d2dw::CRectF rcSort(rcPaint);
 			rcSort.left=rcText.right;
-			PaintSortMark(direct,rcSort);
+			PaintSortMark(pDirect,rcSort);
 			break;
 		}
 	default:
-		CTextCell::PaintContent(direct,rcPaint);
+		CTextCell::PaintContent(pDirect,rcPaint);
 		break;
 	}
 }
 
-void CParentColumnNameHeaderCell::PaintSortMark(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CParentColumnNameHeaderCell::PaintSortMark(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	std::array<d2dw::CPointF,3> arPoint;
 
@@ -70,9 +70,9 @@ void CParentColumnNameHeaderCell::PaintSortMark(d2dw::CDirect2DWrite& direct, d2
 	}
 	//TODO Fill Geometry
 	d2dw::SolidLine line(0.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	direct.DrawSolidLine(line, arPoint[0], arPoint[1]);
-	direct.DrawSolidLine(line, arPoint[1], arPoint[2]);
-	direct.DrawSolidLine(line, arPoint[2], arPoint[0]);
+	pDirect->DrawSolidLine(line, arPoint[0], arPoint[1]);
+	pDirect->DrawSolidLine(line, arPoint[1], arPoint[2]);
+	pDirect->DrawSolidLine(line, arPoint[2], arPoint[0]);
 }
 
 d2dw::CSizeF CParentColumnNameHeaderCell::GetSortSize()const

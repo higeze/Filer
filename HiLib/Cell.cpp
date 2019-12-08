@@ -164,33 +164,33 @@ d2dw::CRectF CCell::InnerBorder2CenterBorder(d2dw::CRectF rcInner)
 	return rcInner;
 }
 
-void CCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CCell::PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	//Paint Normal
-	direct.FillSolidRectangle(*(m_spProperty->NormalFill), rcPaint);
+	pDirect->FillSolidRectangle(*(m_spProperty->NormalFill), rcPaint);
 	//Selected
 	if (GetSelected() && ::GetFocus() == m_pSheet->GetGridPtr()->m_hWnd) {
-		direct.FillSolidRectangle(*(m_spProperty->SelectedFill), rcPaint);
+		pDirect->FillSolidRectangle(*(m_spProperty->SelectedFill), rcPaint);
 	} else if (GetSelected()) {
-		direct.FillSolidRectangle(*(m_spProperty->UnfocusSelectedFill), rcPaint);
+		pDirect->FillSolidRectangle(*(m_spProperty->UnfocusSelectedFill), rcPaint);
 	}
 	//Hot, Pressed
 	if (m_state == UIElementState::Hot || m_state == UIElementState::Pressed) {
-		direct.FillSolidRectangle(*(m_spProperty->HotFill), rcPaint);
+		pDirect->FillSolidRectangle(*(m_spProperty->HotFill), rcPaint);
 	}
 }
 
-void CCell::PaintLine(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CCell::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	direct.DrawSolidRectangle(*(m_spProperty->Line), rcPaint);
+	pDirect->DrawSolidRectangle(*(m_spProperty->Line), rcPaint);
 }
 
-void CCell::PaintFocus(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CCell::PaintFocus(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	if(GetFocused()){
 		auto halfLineWidth = m_spProperty->Line->Width*0.5f;
 		rcPaint.DeflateRect(halfLineWidth, halfLineWidth);
-		direct.DrawSolidRectangle(*(m_spProperty->FocusedLine), rcPaint);
+		pDirect->DrawSolidRectangle(*(m_spProperty->FocusedLine), rcPaint);
 	}
 }
 
@@ -199,10 +199,10 @@ void CCell::OnPaint(const PaintEvent& e)
 	d2dw::CRectF rcClient(GetRect());
 	d2dw::CRectF rcInner(CenterBorder2InnerBorder(rcClient));
 	d2dw::CRectF rcContent(InnerBorder2Content(rcInner));
-	PaintLine(e.Direct,rcClient);
-	PaintBackground(e.Direct,rcInner);
-	PaintContent(e.Direct,rcContent);
-	PaintFocus(e.Direct, rcInner);
+	PaintLine(e.WndPtr->GetDirectPtr(),rcClient);
+	PaintBackground(e.WndPtr->GetDirectPtr(),rcInner);
+	PaintContent(e.WndPtr->GetDirectPtr(),rcContent);
+	PaintFocus(e.WndPtr->GetDirectPtr(), rcInner);
 }
 
 void CCell::OnLButtonDown(const LButtonDownEvent& e)

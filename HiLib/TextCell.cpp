@@ -22,14 +22,14 @@ CTextCell::~CTextCell()
 	}
 }
 
-void CTextCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CTextCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	if (m_pEdit) {
-		m_pEdit->OnPaint(PaintEvent(&direct));
-	}
-	else {
-		direct.DrawTextLayout(*(m_spProperty->Format), GetString(), rcPaint);
-	}
+	//if (m_pEdit) {
+	//	m_pEdit->OnPaint(PaintEvent(m_pSheet->GetGridPtr()));
+	//}
+	//else {
+		pDirect->DrawTextLayout(*(m_spProperty->Format), GetString(), rcPaint);
+	//}
 }
 
 d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
@@ -53,48 +53,23 @@ d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& d
 
 void CTextCell::OnEdit(const EventArgs& e)
 {
-	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirect()->Dips2Pixels(m_pSheet->GetGridPtr()->GetDirect()->LayoutRound(GetRect())));
-	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
-
-	m_pEdit = new D2DTextbox(
-			m_pSheet->GetGridPtr(),
-			this,
-			m_spProperty,
-			[spCell]() -> std::basic_string<TCHAR>{
-				return spCell->GetString();
-			},
-			[spCell](const std::basic_string<TCHAR>& str) -> void{
-				spCell->SetString(str);
-			},
-			[spCell](const std::basic_string<TCHAR>& str) -> void{
-				if(spCell->CanSetStringOnEditing()){
-					spCell->SetString(str);
-				}
-			},
-			[spCell]()->void{
-				spCell->SetEditPtr(nullptr);
-				spCell->GetSheetPtr()->GetGridPtr()->SetEditPtr(nullptr);
-				spCell->SetState(UIElementState::Normal);//After Editing, Change Normal
-			}
-	);
-	m_pEdit->OnCreate(CreateEvent(m_pSheet->GetGridPtr()->GetDirect().get(), NULL, NULL));
-	m_pSheet->GetGridPtr()->SetEditPtr(m_pEdit);
+	m_pSheet->GetGridPtr()->BeginEdit(this);
 }
 
-void CTextCell::PaintLine(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CTextCell::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	if (m_pEdit) {
-		direct.DrawSolidRectangle(*(m_spProperty->EditLine), rcPaint);
-	}
-	else {
-		CCell::PaintLine(direct, rcPaint);
-	}
+	//if (m_pEdit) {
+	//	direct.DrawSolidRectangle(*(m_spProperty->EditLine), rcPaint);
+	//}
+	//else {
+		CCell::PaintLine(pDirect, rcPaint);
+	//}
 
 }
 
-void CTextCell::PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CTextCell::PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	CCell::PaintBackground(direct, rcPaint);
+	CCell::PaintBackground(pDirect, rcPaint);
 }
 	
 bool CTextCell::IsComparable()const{return true;}
@@ -131,9 +106,9 @@ Compares CTextCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Comp
 
 void CTextCell::OnKillFocus(const KillFocusEvent& e)
 {
-	if (m_pEdit) {
-		m_pEdit->OnKillFocus(e);
-	}
+	//if (m_pEdit) {
+	//	m_pEdit->OnKillFocus(e);
+	//}
 }
 
 

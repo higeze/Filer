@@ -38,7 +38,7 @@ void CFileDragger::OnLeaveDrag(CSheet* pSheet, MouseEvent const & e)
 
 bool CFileDragger::IsTarget(CSheet* pSheet, MouseEvent const & e)
 {
-	auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Direct.Pixels2Dips(e.Point));
+	auto visIndexes = pSheet->Point2Indexes<VisTag>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
 	auto maxRow = pSheet->GetMaxIndex<RowTag, VisTag>();
 	auto maxCol = pSheet->GetMaxIndex<ColTag, VisTag>();
 

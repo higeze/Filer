@@ -531,7 +531,7 @@ FLOAT CSheet::GetColumnInitWidth(CColumn* pColumn)
 	FLOAT maxWidth=0;
 	for(const auto& rowData : rowDictionary){
 		auto pCell=pColumn->Cell(rowData.DataPtr.get());
-		maxWidth= (std::max)(pCell->GetInitSize(*(GetGridPtr()->GetDirect())).width, maxWidth);
+		maxWidth= (std::max)(pCell->GetInitSize(*(GetGridPtr()->GetDirectPtr())).width, maxWidth);
 	};
 	return maxWidth;
 }
@@ -543,7 +543,7 @@ FLOAT CSheet::GetColumnFitWidth(CColumn* pColumn)
 	//CDC dc(::CreateCompatibleDC(*GetClientDCPtr().get()));	
 	for(const auto& rowData : rowDictionary){
 		auto pCell=pColumn->Cell(rowData.DataPtr.get());
-		maxWidth= (std::max)(pCell->GetFitSize(*(GetGridPtr()->GetDirect())).width, maxWidth);
+		maxWidth= (std::max)(pCell->GetFitSize(*(GetGridPtr()->GetDirectPtr())).width, maxWidth);
 	};
 	return maxWidth;
 }
@@ -554,7 +554,7 @@ FLOAT CSheet::GetRowHeight(CRow* pRow)
 	FLOAT maxHeight=0;
 	for(const auto& colData : colDictionary){
 		auto pCell=colData.DataPtr->Cell(pRow);
-		maxHeight= (std::max)(pCell->GetActSize(*(GetGridPtr()->GetDirect())).height, maxHeight);
+		maxHeight= (std::max)(pCell->GetActSize(*(GetGridPtr()->GetDirectPtr())).height, maxHeight);
 	};
 	return maxHeight;
 }

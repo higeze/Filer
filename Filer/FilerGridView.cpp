@@ -845,7 +845,7 @@ void CFilerGridView::OnContextMenu(const ContextMenuEvent& e)
 {
 	CPoint ptScreen(e.Point);
 	ClientToScreen(ptScreen);
-	auto cell = Cell(GetDirect()->Pixels2Dips(e.Point));
+	auto cell = Cell(GetDirectPtr()->Pixels2Dips(e.Point));
 	std::vector<PITEMID_CHILD> vPidl;
 
 	if (!cell) {

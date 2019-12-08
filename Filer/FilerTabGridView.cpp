@@ -100,7 +100,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 		rcTabClient.DeflateRect(nPaddingX, nPaddingY);
 
 		m_spFilerView->PostUpdate(Updates::Rect);
-		m_spFilerView->SetUpdateRect(m_spFilerView->GetDirect()->Pixels2Dips(rcTabClient));
+		m_spFilerView->SetUpdateRect(m_spFilerView->GetDirectPtr()->Pixels2Dips(rcTabClient));
 	});
 
 	m_pParentWnd->AddNtfyHandler((UINT_PTR)m_cwa.hMenu(), NM_CLICK, &CFilerTabGridView::OnNotifyTabLClick, this);

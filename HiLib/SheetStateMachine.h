@@ -26,4 +26,6 @@ struct CSheetStateMachine
 	void MouseLeave(const MouseLeaveEvent& e);
 	void SetCursor(const SetCursorEvent& e);
 	void KeyDown(const KeyDownEvent& e);
+	void Char(const CharEvent& e);
+	void BeginEdit(const BeginEditEvent& e);
 };

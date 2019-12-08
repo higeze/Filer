@@ -13,7 +13,7 @@ LRESULT CTextboxWnd::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 	// create direct
 	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
 
-	m_pTxtbox->OnCreate(CreateEvent(m_pDirect.get(), wParam, lParam));
+	m_pTxtbox->OnCreate(CreateEvent(this, wParam, lParam));
 
 	InvalidateRect(NULL, FALSE);
 	return 0;
@@ -28,7 +28,7 @@ LRESULT CTextboxWnd::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 
 	m_pDirect->GetHwndRenderTarget()->Clear(d2dw::CColorF(1.f, 1.f, 1.f));
 
-	m_pTxtbox->OnPaint(PaintEvent(m_pDirect.get()));
+	m_pTxtbox->OnPaint(PaintEvent(this));
 	m_pDirect->EndDraw();
 
 	::EndPaint(m_hWnd, &ps);
@@ -50,7 +50,7 @@ LRESULT CTextboxWnd::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHand
 
 LRESULT CTextboxWnd::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pTxtbox->OnChar(CharEvent(m_pDirect.get(), wParam, lParam));
+	m_pTxtbox->OnChar(CharEvent(this, wParam, lParam));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
@@ -67,11 +67,11 @@ LRESULT CTextboxWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 	}
 	else if (wParam == VK_ESCAPE) {
 		//Back to initial string
-		m_pTxtbox->SetText(m_pTxtbox->m_strInit.c_str());
+		m_pTxtbox->CancelEdit();
 		::SetFocus(::GetParent(m_hWnd));
 	}
 	else {
-		m_pTxtbox->OnKeyDown(KeyDownEvent(m_pDirect.get(), wParam, lParam));
+		m_pTxtbox->OnKeyDown(KeyDownEvent(this, wParam, lParam));
 	}
 	InvalidateRect(NULL, FALSE);
 	return 0;
@@ -79,28 +79,28 @@ LRESULT CTextboxWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 LRESULT CTextboxWnd::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pTxtbox->OnKillFocus(KillFocusEvent(m_pDirect.get(), wParam, lParam));
+	//m_pTxtbox->OnKillFocus(KillFocusEvent(this, wParam, lParam));
 	SendMessage(WM_CLOSE, NULL, NULL);
 	return 0;
 }
 
 LRESULT CTextboxWnd::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pTxtbox->OnMouseMove(MouseMoveEvent(m_pDirect.get(), wParam, lParam));
+	m_pTxtbox->OnMouseMove(MouseMoveEvent(this, wParam, lParam));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
 LRESULT CTextboxWnd::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pTxtbox->OnLButtonDown(LButtonDownEvent(m_pDirect.get(), wParam, lParam));
+	m_pTxtbox->OnLButtonDown(LButtonDownEvent(this, wParam, lParam));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
 LRESULT CTextboxWnd::OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pTxtbox->OnLButtonUp(LButtonUpEvent(m_pDirect.get(), wParam, lParam));
+	m_pTxtbox->OnLButtonUp(LButtonUpEvent(this, wParam, lParam));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }

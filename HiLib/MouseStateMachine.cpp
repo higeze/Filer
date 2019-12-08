@@ -49,7 +49,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		void on_entry(event_t const & e, fsm_t & machine)
 		{
 			spdlog::info("LButtonDragState");
-			machine.m_pSheet->OnLButtonBeginDrag(LButtonBeginDragEvent(e.WindowPtr, e.Direct, e.Flags, e.Point));
+			machine.m_pSheet->OnLButtonBeginDrag(LButtonBeginDragEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
 		}
 	};
 
@@ -63,7 +63,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template<class Event>
 		void Action_LButtonUp(Event const & e)
 		{
-			m_pSheet->OnLButtonClk(LButtonClkEvent(e.WindowPtr, e.Direct, e.Flags, e.Point));
+			m_pSheet->OnLButtonClk(LButtonClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
 			m_pSheet->OnLButtonUp(e);
 		}
 
@@ -92,7 +92,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template<class Event>
 		void Action_Upped_LButtonDblClkTimeExceed(Event const & e)
 		{
-			m_pSheet->OnLButtonSnglClk(LButtonSnglClkEvent(e.WindowPtr, e.Direct, e.Flags, e.Point));
+			m_pSheet->OnLButtonSnglClk(LButtonSnglClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
 				m_deadlineTimer.stop();
 			}

@@ -43,13 +43,13 @@ std::wstring CFavoriteCell::GetShortName()
 }
 
 
-void CFavoriteCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CFavoriteCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	//Paint Icon
-	CFileIconCell::PaintContent(direct, rcPaint);
+	CFileIconCell::PaintContent(pDirect, rcPaint);
 
 	//Paint Text
-	direct.DrawTextInRect(*(m_spProperty->Format) , GetShortName(), Content2InnerBorder(rcPaint));
+	pDirect->DrawTextInRect(*(m_spProperty->Format) , GetShortName(), Content2InnerBorder(rcPaint));
 }
 
 void CFavoriteCell::OnContextMenu(const ContextMenuEvent& e)

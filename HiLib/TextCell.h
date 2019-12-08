@@ -46,9 +46,9 @@ public:
 		:CCell(pSheet,pRow, pColumn,spProperty,pMenu),m_pEdit(NULL){}
 	virtual ~CTextCell();
 
-	virtual void PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint) override;
-	virtual void PaintLine(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint) override;
-	virtual void PaintBackground(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint) override;
+	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
+	virtual void PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
+	virtual void PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
 
 	void SetEditPtr(D2DTextbox* pEdit) { m_pEdit = pEdit; }
 	//virtual CSize MeasureSize(CDC* pDC);

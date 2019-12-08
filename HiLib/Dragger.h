@@ -25,7 +25,7 @@ public:
 
 	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.Direct.Pixels2Dips(e.Point));
+		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
 		if (visIndexes.Row <= pSheet->GetMaxIndex<RowTag, VisTag>() &&
 			visIndexes.Row >= pSheet->GetMinIndex<RowTag, VisTag>() &&
 			visIndexes.Col <= pSheet->GetMaxIndex<ColTag, VisTag>() &&
@@ -39,13 +39,13 @@ public:
 
 	void OnBeginDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		m_dragFromIndex = pSheet->Point2Indexes<AllTag>(e.Direct.Pixels2Dips(e.Point)).Get<TRC>();
+		m_dragFromIndex = pSheet->Point2Indexes<AllTag>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point)).Get<TRC>();
 		m_dragToIndex = CBand::kInvalidIndex;
 	}
 
 	void OnDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto visibleIndex = pSheet->Point2Indexes<VisTag>(e.Direct.Pixels2Dips(e.Point)).Get<TRC>();
+		auto visibleIndex = pSheet->Point2Indexes<VisTag>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point)).Get<TRC>();
 
 		auto visMinMax = pSheet->GetMinMaxIndexes<TRC, VisTag>();
 		auto allMinMax = pSheet->GetMinMaxIndexes<TRC, AllTag>();
@@ -133,26 +133,26 @@ public:
 		FLOAT cooyou1 = GetLineRightBottom(pSheet);
 
 		//Paint DragLine
-		PaintLine(e.Direct, *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);
+		PaintLine(e.WndPtr->GetDirectPtr(), *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);
 	}
 
 	virtual FLOAT GetLineLeftTop(CSheet* pSheet) { return pSheet->FirstPointer<TRCYou, AllTag>()->GetLeftTop(); }
 	virtual FLOAT GetLineRightBottom(CSheet* pSheet) { return pSheet->ZeroPointer<TRCYou, AllTag>()->GetRightBottom(); }
 
-	void PaintLine(d2dw::CDirect2DWrite& direct, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1) {}
+	void PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1) {}
 
 };
 
 template <>
-void CDragger<RowTag, ColTag>::PaintLine(d2dw::CDirect2DWrite& direct, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
+void CDragger<RowTag, ColTag>::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
 {
-	direct.DrawSolidLine(line, d2dw::CPointF(cooyou0, coome), d2dw::CPointF(cooyou1, coome));
+	pDirect->DrawSolidLine(line, d2dw::CPointF(cooyou0, coome), d2dw::CPointF(cooyou1, coome));
 }
 
 template <>
-void CDragger<ColTag, RowTag>::PaintLine(d2dw::CDirect2DWrite& direct, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
+void CDragger<ColTag, RowTag>::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
 {
-	direct.DrawSolidLine(line, d2dw::CPointF(coome, cooyou0), d2dw::CPointF(coome, cooyou1));
+	pDirect->DrawSolidLine(line, d2dw::CPointF(coome, cooyou0), d2dw::CPointF(coome, cooyou1));
 }
 
 

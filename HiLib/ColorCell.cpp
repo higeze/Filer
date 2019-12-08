@@ -11,10 +11,10 @@ CColorCell::CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_p
 
 d2dw::CColorF CColorCell::GetColor(){return m_color;}
 
-void CColorCell::PaintBackground(d2dw::CDirect2DWrite& direct,d2dw::CRectF rcPaint)
+void CColorCell::PaintBackground(d2dw::CDirect2DWrite* pDirect,d2dw::CRectF rcPaint)
 {
 	d2dw::SolidFill colorFill(m_color);
-	direct.FillSolidRectangle(colorFill, rcPaint);
+	pDirect->FillSolidRectangle(colorFill, rcPaint);
 }
 
 void CColorCell::OnLButtonClk(const LButtonClkEvent& e)

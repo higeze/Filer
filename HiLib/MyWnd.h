@@ -16,6 +16,12 @@
 using namespace std::placeholders;
 namespace phs=std::placeholders;
 
+namespace d2dw
+{
+	class CDirect2DWrite;
+}
+
+
 #define NAMED_STRUCT_ARG_METHOD(cls,type,strct,prop) \
 	cls& prop(type prop){strct.##prop=prop;return *this;}\
 	type prop()const{return strct.##prop;}
@@ -162,6 +168,9 @@ private:
 	bool m_isDeleteOnFinalMessage = false;
 	//prohibit copy constructor and substitute
 public:
+
+	d2dw::CDirect2DWrite* GetDirectPtr() { return nullptr; }
+
 	FunMsg m_allMsg;
 	MsgMap m_msgMap;
 	CmdIDMap m_cmdidMap;

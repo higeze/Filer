@@ -24,12 +24,12 @@ std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()
 	}
 }
 
-void CFileIconCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CFileIconCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	auto spFile = GetShellFile();
 	d2dw::CRectF rc = rcPaint;
-	rc.bottom = rc.top + direct.Pixels2DipsY(16);
-	rc.right = rc.left + direct.Pixels2DipsX(16);
+	rc.bottom = rc.top + pDirect->Pixels2DipsY(16);
+	rc.right = rc.left + pDirect->Pixels2DipsX(16);
 
 	std::weak_ptr<CFileIconCell> wp(shared_from_this());
 	std::function<void()> updated = [wp]()->void {
@@ -44,7 +44,7 @@ void CFileIconCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPa
 			sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 		}
 	};
-	direct.DrawBitmap(direct.GetIconCachePtr()->GetFileIconBitmap(spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetExt(), updated), rc);
+	pDirect->DrawBitmap(pDirect->GetIconCachePtr()->GetFileIconBitmap(spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetExt(), updated), rc);
 }
 
 d2dw::CSizeF CFileIconCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)

@@ -14,10 +14,10 @@ CFontCell::CFontCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr
 
 d2dw::CFontF CFontCell::GetFont(){return m_font;}
 
-void CFontCell::PaintContent(d2dw::CDirect2DWrite& direct, d2dw::CRectF rcPaint)
+void CFontCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	d2dw::FormatF fac(m_font, d2dw::CColorF(0.0f, 0.0f, 0.0f, 1.0f), d2dw::CAlignmentF());
-	direct.DrawTextLayout(fac, GetString(), rcPaint);
+	pDirect->DrawTextLayout(fac, GetString(), rcPaint);
 }
 
 void CFontCell::OnLButtonClk(MouseEvent& e)
@@ -44,6 +44,6 @@ std::wstring CFontCell::GetString()
 	std::wstring wstr;
 	wstr.append(m_font.FamilyName);
 	wstr.append(L", ");
-	wstr.append(boost::lexical_cast<std::wstring>((int)(m_pSheet->GetGridPtr()->GetDirect()->Dips2Points(m_font.Size))));
+	wstr.append(boost::lexical_cast<std::wstring>((int)(m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2Points(m_font.Size))));
 	return wstr;
 }
