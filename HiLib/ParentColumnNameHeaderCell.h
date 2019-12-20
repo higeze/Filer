@@ -25,8 +25,8 @@ public:
 	Sorts GetSort()const;
 	d2dw::CSizeF GetSortSize()const;
 	//virtual d2dw::CSizeF GetInitSize(d2dw::CDirect2DWrite& direct) override {return d2dw::CSizeF(MIN_COLUMN_WIDTH,0);}
-	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite& direct) override;
-	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct) override;
+	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* direct) override;
+	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* direct) override;
 	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
 
 	virtual void OnLButtonClk(const LButtonClkEvent& e)override;

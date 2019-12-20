@@ -15,8 +15,8 @@ public:
 	virtual ~CBoolCell(){}
 
 	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect,d2dw::CRectF rcPaint) override;
-	virtual d2dw::CSizeF MeasureSize(d2dw::CDirect2DWrite& direct) override;
-	virtual d2dw::CSizeF MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite& direct) override;
+	virtual d2dw::CSizeF MeasureSize(d2dw::CDirect2DWrite* pDirect) override;
+	virtual d2dw::CSizeF MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override;
 
 	virtual std::wstring GetString();
 	virtual void SetStringCore(const std::wstring& str);

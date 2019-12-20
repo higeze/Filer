@@ -40,15 +40,15 @@ void CBoolCell::PaintContent(d2dw::CDirect2DWrite* pDirect,d2dw::CRectF rcPaint)
 
 
 }
-d2dw::CSizeF CBoolCell::MeasureSize(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CBoolCell::MeasureSize(d2dw::CDirect2DWrite* pDirect)
 {
-	d2dw::CRectF rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(d2dw::CRectF(0,0,5,5))));
+	d2dw::CRectF rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(d2dw::CRectF(0.f,0.f,5.f,5.f))));
 	return rcCenter.Size();	
 }
 
-d2dw::CSizeF CBoolCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CBoolCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
-	return MeasureSize(direct);
+	return MeasureSize(pDirect);
 }
 
 std::wstring CBoolCell::GetString()

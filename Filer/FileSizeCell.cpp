@@ -25,7 +25,7 @@ std::shared_ptr<CShellFile> CFileSizeCell::GetShellFile()
 	}
 }
 
-d2dw::CSizeF CFileSizeCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CFileSizeCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
 //	d2dw::CRectF rcContent;
@@ -41,7 +41,7 @@ d2dw::CSizeF CFileSizeCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
 		break;
 	}
 	if (str.empty()) { str = _T("a"); }
-	return direct.CalcTextSize(*(m_spProperty->Format), str);
+	return pDirect->CalcTextSize(*(m_spProperty->Format), str);
 	//return rcContent.Size();
 }
 

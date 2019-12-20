@@ -125,7 +125,7 @@ d2dw::CPointF CSheetCell::GetScrollPos()const
 	return d2dw::CPointF(0,0);
 }
 
-d2dw::CSizeF CSheetCell::MeasureSize(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CSheetCell::MeasureSize(d2dw::CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
 	d2dw::CRectF rcContent(CSheet::MeasureSize());
@@ -135,9 +135,9 @@ d2dw::CSizeF CSheetCell::MeasureSize(d2dw::CDirect2DWrite& direct)
 	return rcCenter.Size();
 }
 
-d2dw::CSizeF CSheetCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CSheetCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
-	return MeasureSize(direct);
+	return MeasureSize(pDirect);
 }
 
 void CSheetCell::OnLButtonDown(const LButtonDownEvent& e)

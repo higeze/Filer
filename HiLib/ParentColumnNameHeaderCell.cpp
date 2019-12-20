@@ -90,9 +90,9 @@ d2dw::CSizeF CParentColumnNameHeaderCell::GetSortSize()const
 
 }
 
-d2dw::CSizeF CParentColumnNameHeaderCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CParentColumnNameHeaderCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 {
-	d2dw::CSizeF size = CTextCell::MeasureContentSize(direct);
+	d2dw::CSizeF size = CTextCell::MeasureContentSize(pDirect);
 	d2dw::CSizeF sizeTri = GetSortSize();
 
 	size.width += sizeTri.width;
@@ -101,9 +101,9 @@ d2dw::CSizeF CParentColumnNameHeaderCell::MeasureContentSize(d2dw::CDirect2DWrit
 	return size;
 }
 
-d2dw::CSizeF CParentColumnNameHeaderCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CParentColumnNameHeaderCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
-	d2dw::CSizeF size = CTextCell::MeasureContentSizeWithFixedWidth(direct);
+	d2dw::CSizeF size = CTextCell::MeasureContentSizeWithFixedWidth(pDirect);
 	d2dw::CSizeF sizeTri = GetSortSize();
 
 	size.width += sizeTri.width;

@@ -65,13 +65,13 @@ public:
 	std::shared_ptr<CellProperty> GetPropertyPtr() { return m_spProperty; }
 
 	//Size, Rect method
-	virtual d2dw::CSizeF GetInitSize(d2dw::CDirect2DWrite& direct);
-	virtual d2dw::CSizeF GetFitSize(d2dw::CDirect2DWrite& direct);
-	virtual d2dw::CSizeF GetActSize(d2dw::CDirect2DWrite& direct);
-	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite& direct);
-	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct);
-	virtual d2dw::CSizeF MeasureSize(d2dw::CDirect2DWrite& direct);
-	virtual d2dw::CSizeF MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite& direct);
+	virtual d2dw::CSizeF GetInitSize(d2dw::CDirect2DWrite* pDirect);
+	virtual d2dw::CSizeF GetFitSize(d2dw::CDirect2DWrite* pDirect);
+	virtual d2dw::CSizeF GetActSize(d2dw::CDirect2DWrite* pDirect);
+	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* pDirect);
+	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect);
+	virtual d2dw::CSizeF MeasureSize(d2dw::CDirect2DWrite* pDdirect);
+	virtual d2dw::CSizeF MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect);
 	virtual d2dw::CRectF CenterBorder2InnerBorder(d2dw::CRectF rcCenter);
 	virtual d2dw::CRectF InnerBorder2Content(d2dw::CRectF rcInner);
 	virtual d2dw::CRectF Content2InnerBorder(d2dw::CRectF rcContent);

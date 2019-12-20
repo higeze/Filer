@@ -36,8 +36,8 @@ public:
 	virtual d2dw::CRectF GetRect()const override;
 	virtual d2dw::CRectF GetPaintRect() override;
 
-	virtual d2dw::CSizeF MeasureSize(d2dw::CDirect2DWrite& direct) override;
-	virtual d2dw::CSizeF MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite& direct) override;
+	virtual d2dw::CSizeF MeasureSize(d2dw::CDirect2DWrite* pDirect) override;
+	virtual d2dw::CSizeF MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override;
 
 	//virtual void SetFocused(const bool& bFocused);
 	virtual bool GetSelected()const override;

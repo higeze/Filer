@@ -19,11 +19,15 @@ namespace d2dw
 
 		std::shared_ptr<ScrollProperty> m_spScrollProp;
 
+		FLOAT m_startDrag;
+
 
 	public:
 		CScrollBase(CGridView* pGrid, const std::shared_ptr<ScrollProperty>& spScrollProp);
 		virtual ~CScrollBase() = default;
 
+		FLOAT GetStartDrag()const { return m_startDrag; }
+		void SetStartDrag(const FLOAT startDrag) { m_startDrag = startDrag; }
 		FLOAT GetScrollBandWidth()const { return m_spScrollProp->BandWidth; }
 		FLOAT GetScrollDelta()const { return m_spScrollProp->DeltaScroll; }
 		FLOAT GetScrollPage()const { return m_page; }

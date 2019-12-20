@@ -13,7 +13,7 @@ public:
 
 	virtual bool IsComparable()const override{return false;}
 	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)override;
-	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite& direct) override;
-	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct) override;
+	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* pDirect) override;
+	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override;
 	virtual std::shared_ptr<CShellFile> GetShellFile();
 };

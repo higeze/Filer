@@ -1,7 +1,7 @@
 #pragma once
 #include "MyWnd.h"
 #include "Sheet.h"
-#include "MyGdiPlusHelper.h"
+//#include "MyGdiPlusHelper.h"
 #include "ThreadHelper.h"
 #include <queue>
 #include "DeadlineTimer.h"
@@ -172,12 +172,12 @@ public:
 	//virtual void ColumnErased(CColumnEventArgs& e);
 	virtual void SubmitUpdate();
 
-	Status SaveGIFWithNewColorTable(Image *pImage,IStream* pIStream,const CLSID* clsidEncoder,DWORD nColors,BOOL fTransparent);
+//	Status SaveGIFWithNewColorTable(Image *pImage,IStream* pIStream,const CLSID* clsidEncoder,DWORD nColors,BOOL fTransparent);
 
 	virtual CColumn* GetParentColumnPtr(CCell* pCell)override;	
 	
-	HGLOBAL GetPaintMetaFileData();
-	HENHMETAFILE GetPaintEnhMetaFileData();
-	HENHMETAFILE GetAllEnhMetaFileData();
+	//HGLOBAL GetPaintMetaFileData();
+	//HENHMETAFILE GetPaintEnhMetaFileData();
+	//HENHMETAFILE GetAllEnhMetaFileData();
 
 };

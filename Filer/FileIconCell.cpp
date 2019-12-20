@@ -47,12 +47,12 @@ void CFileIconCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcP
 	pDirect->DrawBitmap(pDirect->GetIconCachePtr()->GetFileIconBitmap(spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetExt(), updated), rc);
 }
 
-d2dw::CSizeF CFileIconCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CFileIconCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 {
-	return d2dw::CSizeF(direct.Pixels2DipsX(16) , direct.Pixels2DipsY(16));
+	return d2dw::CSizeF(pDirect->Pixels2DipsX(16) , pDirect->Pixels2DipsY(16));
 }
 
-d2dw::CSizeF CFileIconCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CFileIconCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
-	return MeasureContentSize(direct);
+	return MeasureContentSize(pDirect);
 }

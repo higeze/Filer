@@ -32,15 +32,15 @@ void CTextCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint
 	//}
 }
 
-d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
 	std::wstring text = GetString();
 	if (text.empty()) { text = L"a"; }
-	return direct.CalcTextSize(*(m_spProperty->Format), text);
+	return pDirect->CalcTextSize(*(m_spProperty->Format), text);
 }
 
-d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
 	d2dw::CRectF rcCenter(0,0,m_pColumn->GetWidth(),0);
@@ -48,7 +48,7 @@ d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& d
 
 	std::wstring text = GetString();
 	if (text.empty()) { text = L"a"; }
-	return direct.CalcTextSizeWithFixedWidth(*(m_spProperty->Format), text, rcContent.Width());
+	return pDirect->CalcTextSizeWithFixedWidth(*(m_spProperty->Format), text, rcContent.Width());
 }
 
 void CTextCell::OnEdit(const EventArgs& e)

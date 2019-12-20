@@ -317,9 +317,6 @@
     <ClInclude Include="..\HiLib\MyGdiObj.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\MyGdiplusHelper.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\MyInternet.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -632,6 +629,9 @@
     <ClInclude Include="..\D2DTextBox\TextboxWnd.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\GridViewStateMachine.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -778,9 +778,6 @@
     <ClCompile Include="..\HiLib\MyFile.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\MyGdiplusHelper.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\MyInternet.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -861,9 +858,6 @@
     </ClCompile>
     <ClCompile Include="ShellFolder.cpp">
       <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\SheetStateMachine.cpp">
-      <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\Celler.cpp">
       <Filter>HiLib</Filter>
@@ -982,6 +976,12 @@
     <ClCompile Include="..\D2DTextBox\TextboxWnd.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
+    <ClCompile Include="..\HiLib\SheetStateMachineImpl.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\GridViewStateMachine.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\HiLib\msxml6.tli">
@@ -995,6 +995,9 @@
     </None>
     <None Include="..\Release\Filer.exe">
       <Filter>Release</Filter>
+    </None>
+    <None Include="..\HiLib\SheetStateMachine.cpp">
+      <Filter>HiLib</Filter>
     </None>
   </ItemGroup>
 </Project>

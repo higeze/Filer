@@ -107,7 +107,7 @@ LRESULT CIncrementalCopyWnd::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, 
 	rcBtnOK.SetRect(rc.right - 170, rc.bottom - 25, rc.right - 170 + 52, rc.bottom - 25 + 22);
 	rcBtnCancel.SetRect(rc.right - 115, rc.bottom - 25, rc.right - 115 + 52, rc.bottom - 25 + 22);
 
-	d2dw::CRectF rcProgress = d2dw::CRectF(rc.left + 5, rc.top + 5, rc.Width() - 5, rc.top + 30);
+	d2dw::CRectF rcProgress = m_pDirect->Pixels2Dips(CRect(rc.left + 5, rc.top + 5, rc.Width() - 5, rc.top + 30));
 	m_pProgressbar->SetRect(rcProgress);
 
 	CRect rcGrid(rc.left + 5, rc.top + 30 + 5, rc.Width() - 5, rc.bottom - 30);
@@ -227,7 +227,7 @@ LRESULT CIncrementalCopyWnd::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 
 	m_buttonCopy.MoveWindow(rc.right - 115, rc.bottom - 25, 52, 22, TRUE);
 	m_buttonClose.MoveWindow(rc.right - 60, rc.bottom - 25, 52, 22, TRUE);
-	d2dw::CRectF rcProgress = d2dw::CRectF(rc.left + 5, rc.top + 5, rc.Width() -5, rc.top + 30);
+	d2dw::CRectF rcProgress = m_pDirect->Pixels2Dips(CRect(rc.left + 5, rc.top + 5, rc.Width() -5, rc.top + 30));
 	m_pProgressbar->SetRect(rcProgress);
 	CRect rcGrid(rc.left + 5, rc.top + 30 + 5, rc.Width() - 5, rc.bottom - 30);
 	m_pFileGrid->MoveWindow(rcGrid, TRUE);

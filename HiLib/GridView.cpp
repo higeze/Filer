@@ -18,8 +18,8 @@
 #include "Cursorer.h"
 #include "Dragger.h"
 #include "SheetState.h"
-#include "MyGdiPlusHelper.h"
-#include "Gdipluspixelformats.h"
+//#include "MyGdiPlusHelper.h"
+//#include "Gdipluspixelformats.h"
 #include "MyClipboard.h"
 #include "SheetEventArgs.h"
 #include "SheetStateMachine.h"
@@ -36,6 +36,8 @@
 #include "Scroll.h"
 
 #include "Textbox.h"
+
+#include <boost/sml.hpp>
 
 
 
@@ -104,6 +106,11 @@ CGridView::CGridView(
 
 	CellLButtonClk.connect(std::bind(&CGridView::OnCellLButtonClk,this,std::placeholders::_1));
 	CellContextMenu.connect(std::bind(&CGridView::OnCellContextMenu,this,std::placeholders::_1));
+
+
+
+
+
 }
 
 CGridView::~CGridView(){}

@@ -471,7 +471,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 
 
 		if (m_pEdit) {
-			m_pEdit->OnClose(CloseEvent(m_pDirect.get(), NULL, NULL));
+			m_pEdit->OnClose(CloseEvent(this, NULL, NULL));
 			//::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);
 		}
 

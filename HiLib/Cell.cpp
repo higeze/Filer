@@ -29,49 +29,49 @@ bool CCell::operator>(CCell& rhs)
 	return _tcsicmp(this->GetSortString().c_str(), rhs.GetSortString().c_str())<0;
 }
 
-d2dw::CSizeF CCell::GetInitSize(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CCell::GetInitSize(d2dw::CDirect2DWrite* pDirect)
 {
-	return GetFitSize(direct);
+	return GetFitSize(pDirect);
 }
 
-d2dw::CSizeF CCell::GetFitSize(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CCell::GetFitSize(d2dw::CDirect2DWrite* pDirect)
 {
 	if(!m_bFitMeasureValid){
-		m_fitSize = MeasureSize(direct);
+		m_fitSize = MeasureSize(pDirect);
 		m_bFitMeasureValid = true;
 	}
 	return m_fitSize;
 }
 
-d2dw::CSizeF CCell::GetActSize(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CCell::GetActSize(d2dw::CDirect2DWrite* pDirect)
 {
 	if(!m_bActMeasureValid){
 		auto width = m_pColumn->GetWidth();
-		auto fitSize = GetFitSize(direct);
+		auto fitSize = GetFitSize(pDirect);
 		if(fitSize.width <= width){
 			m_bActMeasureValid = true;
 			m_actSize.width = width;
 			m_actSize.height = m_fitSize.height;
 		}else{
-			m_actSize = MeasureSizeWithFixedWidth(direct);
+			m_actSize = MeasureSizeWithFixedWidth(pDirect);
 		}
 	}
 	return m_actSize;
 }
 
-d2dw::CSizeF CCell::MeasureContentSize(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 {
 	return d2dw::CSizeF();
 }
 
-d2dw::CSizeF CCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
 	return d2dw::CSizeF();
 }
 
-d2dw::CSizeF CCell::MeasureSize(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CCell::MeasureSize(d2dw::CDirect2DWrite* pDirect)
 {
-	d2dw::CRectF rcContent(MeasureContentSize(direct));
+	d2dw::CRectF rcContent(MeasureContentSize(pDirect));
 
 	//Calc CenterBorder Rect
 	d2dw::CRectF rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
@@ -79,10 +79,10 @@ d2dw::CSizeF CCell::MeasureSize(d2dw::CDirect2DWrite& direct)
 	return rcCenter.Size();	
 }
 
-d2dw::CSizeF CCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite& direct)
+d2dw::CSizeF CCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
-	d2dw::CRectF rcContent(MeasureContentSizeWithFixedWidth(direct));
+	d2dw::CRectF rcContent(MeasureContentSizeWithFixedWidth(pDirect));
 
 	//Calc CenterBorder Rect
 	d2dw::CRectF rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
