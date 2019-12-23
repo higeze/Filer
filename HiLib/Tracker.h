@@ -70,7 +70,7 @@ public:
 		::GetCursorPos(&pt);
 		::ScreenToClient(e.WndPtr->m_hWnd, &pt);
 		if (IsTarget(pSheet, MouseEvent(e.WndPtr, 0, MAKELPARAM(pt.x, pt.y)))) {
-			e.Handled = TRUE;
+			//e.Handled = TRUE;
 			SetSizeCursor(); 
 		}
 	}

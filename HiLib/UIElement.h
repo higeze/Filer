@@ -31,7 +31,7 @@ struct BeginEditEvent :public EventArgs
 {
 	CCell* CellPtr;
 	BeginEditEvent(CWnd* pWnd, CCell* pCell)
-		:EventArgs(pWnd) {}
+		:EventArgs(pWnd), CellPtr(pCell) {}
 };
 //
 //struct EndEditEvent :public EventArgs

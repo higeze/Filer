@@ -49,7 +49,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		void on_entry(event_t const & e, fsm_t & machine)
 		{
 			spdlog::info("LButtonDragState");
-			machine.m_pSheet->OnLButtonBeginDrag(LButtonBeginDragEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
+			machine.m_pSheet->GetGridPtr()->m_pMachine->process_event(LButtonBeginDragEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
 		}
 	};
 
@@ -63,8 +63,8 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 		template<class Event>
 		void Action_LButtonUp(Event const & e)
 		{
-			m_pSheet->OnLButtonClk(LButtonClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
-			m_pSheet->OnLButtonUp(e);
+			m_pSheet->GetGridPtr()->m_pMachine->process_event(LButtonClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
+			m_pSheet->GetGridPtr()->m_pMachine->process_event(e);
 		}
 
 		template<class Event>
@@ -73,26 +73,26 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
 				m_deadlineTimer.stop();
 			}
-			m_pSheet->OnMouseLeave(e);
+			m_pSheet->GetGridPtr()->m_pMachine->process_event(e);
 		}
 		
 		template<class Event>
 		void Action_LButtonDown(Event const & e)
 		{
-			m_pSheet->OnLButtonDown(e);
+			m_pSheet->GetGridPtr()->m_pMachine->process_event(e);
 		}
 
 		//Upped
 		template<class Event>
 		void Action_Upped_LButtonDblClk(Event const & e)
 		{
-			m_pSheet->OnLButtonDblClk(e);
+			m_pSheet->GetGridPtr()->m_pMachine->process_event(e);
 		}
 
 		template<class Event>
 		void Action_Upped_LButtonDblClkTimeExceed(Event const & e)
 		{
-			m_pSheet->OnLButtonSnglClk(LButtonSnglClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
+			m_pSheet->GetGridPtr()->m_pMachine->process_event(LButtonSnglClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
 			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
 				m_deadlineTimer.stop();
 			}
@@ -106,7 +106,7 @@ struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
 				m_deadlineTimer.stop();
 			}
 			//m_pSheet->OnLButtonUp((MouseEventArgs)e.Args);
-			m_pSheet->OnMouseLeave(e);
+			m_pSheet->GetGridPtr()->m_pMachine->process_event(e);
 		}
 
 		struct transition_table :boost::mpl::vector<

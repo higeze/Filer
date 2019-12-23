@@ -14,7 +14,7 @@ public:
 
 	int m_redraw;
 
-	std::shared_ptr<d2dw::CDirect2DWrite>& GetDirectPtr() { return  m_pDirect; }
+	d2dw::CDirect2DWrite* GetDirectPtr() override { return  m_pDirect.get(); }
 
 public :
 	CTextboxWnd(

@@ -323,7 +323,7 @@ STDAPI CTextStore::GetText(LONG acpStart, LONG acpEnd, __out_ecount(cchPlainReq)
     if (acpEnd == -1)
         acpEnd = _pEditor->GetText().size();
 
-    acpEnd = min(acpEnd, acpStart + (int)cchPlainReq);
+    acpEnd = (std::min)(acpEnd, acpStart + (int)cchPlainReq);
 
     if (acpStart != acpEnd){
 		memcpy(pchPlain, _pEditor->GetText().data() + acpStart, (acpEnd - acpStart) * sizeof(WCHAR));
@@ -503,8 +503,8 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
     {
         if (rcStart.top == rcEnd.top)
         {
-            prc->left = Round( min(rcStart.left, rcEnd.left));
-            prc->right = Round(max(rcStart.right, rcEnd.right));
+            prc->left = Round((std::min)(rcStart.left, rcEnd.left));
+            prc->right = Round((std::max)(rcStart.right, rcEnd.right));
         }
         else
         {            
@@ -513,11 +513,11 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
 
 			_pEditor->RectFromCharPos(acpEnd-1, &rcEnd);
 
-			prc->left = Round(min(rcStart.left, rcEnd.left));
-            prc->right = Round(max(rcStart.right, rcEnd.right));
+			prc->left = Round((std::min)(rcStart.left, rcEnd.left));
+            prc->right = Round((std::max)(rcStart.right, rcEnd.right));
         }
-        prc->top = Round(min(rcStart.top, rcEnd.top));
-        prc->bottom = Round(max(rcStart.bottom, rcEnd.bottom));
+        prc->top = Round((std::min)(rcStart.top, rcEnd.top));
+        prc->bottom = Round((std::max)(rcStart.bottom, rcEnd.bottom));
     }
     else
     {

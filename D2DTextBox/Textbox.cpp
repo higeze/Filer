@@ -290,7 +290,7 @@ void D2DTextbox::OnLButtonUp(const LButtonUpEvent& e)
 		if (nNewSelStart < m_selDragStart)
 			bl = false;
 
-		MoveSelection(min(nSelStart, nNewSelStart), max(nSelEnd, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
+		MoveSelection((std::min)(nSelStart, nNewSelStart), (std::max)(nSelEnd, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
 		InvalidateRect();
 	}
 	m_pWnd->PostUpdate(Updates::Invalidate);
@@ -307,7 +307,7 @@ void D2DTextbox::OnMouseMove(const MouseMoveEvent& e)
 			if (nNewSelStart < m_selDragStart)
 				bl = false;
 
-			MoveSelection(min(m_selDragStart, nNewSelStart), max(m_selDragStart, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
+			MoveSelection((std::min)(m_selDragStart, nNewSelStart), (std::max)(m_selDragStart, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
 			InvalidateRect();
 		}
 	}
@@ -534,7 +534,7 @@ void D2DTextbox::MoveSelectionNext()
 	int nTextLength = (int)m_text.size();
 
 	int zCaretPos = (m_isSelTrail ? m_selEnd : m_selStart);
-	zCaretPos = min(nTextLength, zCaretPos + 1); // 1:次の文字
+	zCaretPos = (std::min)(nTextLength, zCaretPos + 1); // 1:次の文字
 
 	m_selStart = m_selEnd = zCaretPos;
 	m_pTextStore->OnSelectionChange();
@@ -543,7 +543,7 @@ void D2DTextbox::MoveSelectionNext()
 void D2DTextbox::MoveSelectionPrev()
 {
 	int zCaretPos = (m_isSelTrail ? m_selEnd : m_selStart);
-	zCaretPos = max(0, zCaretPos - 1);
+	zCaretPos = (std::max)(0, zCaretPos - 1);
 
 	m_selEnd = m_selStart = zCaretPos;
 	m_pTextStore->OnSelectionChange();

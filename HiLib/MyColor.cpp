@@ -6,8 +6,8 @@ CHSV RGB2HSV(const CRGB& rgb)
 	int r=rgb.GetR();
 	int g=rgb.GetG();
 	int b=rgb.GetB();
-	int mx=max(max(r,g),b);
-	int mn=min(min(r,g),b);
+	int mx=(std::max)((std::max)(r,g),b);
+	int mn = (std::min)((std::min)(r, g), b);
 	int d=mx-mn;
 	v=mx;
 	if (mx==0){

@@ -94,8 +94,10 @@ public:
 	std::shared_ptr<IDragger> m_spItemDragger; // Dragger for Item
 	std::shared_ptr<ICeller> m_spCeller; //Celler
 	std::shared_ptr<CCursorer> m_spCursorer; // Cursor
-protected:
+private:
 	std::shared_ptr<CSheetStateMachine> m_spStateMachine;
+
+protected:
 	std::set<Updates> m_setUpdate; // Set posted update
 
 	RowDictionary m_rowAllDictionary; // Index-Pointer All Row Dictionary
@@ -647,8 +649,8 @@ public:
 		auto& dict = GetDictionary<T::Tag, VisTag>().get<IndexTag>();
 		auto idx1 = pBand1->GetIndex<VisTag>();
 		auto idx2 = pBand2->GetIndex<VisTag>();
-		auto beg = min(idx1, idx2);
-		auto last = max(idx1, idx2);
+		auto beg = (std::min)(idx1, idx2);
+		auto last = (std::max)(idx1, idx2);
 		for (auto iter = dict.find(beg), end = dict.find(last + 1); iter != end; ++iter) {
 			iter->DataPtr->SetSelected(doSelect);
 		}

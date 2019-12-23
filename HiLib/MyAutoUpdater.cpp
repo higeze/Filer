@@ -128,7 +128,7 @@ int CAutoUpdater::CompareVersion(std::wstring wstrLHS,std::wstring wstrRHS)//LHS
 */
 int CAutoUpdater::CompareVersion(std::vector<UINT> vuLHS,std::vector<UINT> vuRHS)//LHS>RHS=1,LHS==RHS=0,LHS<RHS=-1
 {
-	for(UINT i=0;i<max(vuLHS.size(),vuRHS.size());++i){
+	for(UINT i=0;i<(std::max)(vuLHS.size(),vuRHS.size());++i){
 		UINT uLHS=0;
 		UINT uRHS=0;
 		if(i<vuLHS.size()){

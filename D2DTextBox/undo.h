@@ -90,8 +90,8 @@ class CSelected
 		CSelected( int textPostion ):m_textposition_start(textPostion),m_textposition_end(textPostion){}
 
 		void SetEnd( int textPosition ){ m_textposition_end = textPosition; }
-		int StartPostion(){ return min(m_textposition_start,m_textposition_end); }
-		int Length(){ return abs(m_textposition_start-m_textposition_end); }
+		int StartPostion(){ return (std::min)(m_textposition_start,m_textposition_end); }
+		int Length(){ return std::abs(m_textposition_start-m_textposition_end); }
 			
 	protected :
 		int m_textposition_start;
