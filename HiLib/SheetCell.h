@@ -59,8 +59,8 @@ public:
 	virtual void OnSetCursor(const SetCursorEvent& e) override;
 	virtual void OnSetFocus(const SetFocusEvent& e) override;
 	virtual void OnKillFocus(const KillFocusEvent& e) override;
-
 	virtual void OnKeyDown(const KeyDownEvent& e)  override;
+
 	//String
 	virtual std::wstring GetString() override {return CSheet::GetSheetString();};
 	virtual void SetString(const std::wstring& str)  override {/*Do Nothing*/};

@@ -1,19 +1,20 @@
 #pragma once
-#include <boost\timer.hpp>
+#include <chrono>
 #include <Windows.h>
 #include "MyString.h"
 
-class CConsoleTimer:public boost::timer
+class CConsoleTimer
 {
 private:
 	HWND m_hWnd;
+	std::chrono::system_clock::time_point m_tp;
 	std::string m_strMessage;
 public:
 	CConsoleTimer(const std::string& strMessage)
-		:timer(), m_strMessage(strMessage){}
+		:m_tp(std::chrono::system_clock::now()), m_strMessage(strMessage){}
 	virtual ~CConsoleTimer()
 	{
-		spdlog::info(m_strMessage + " : " + std::to_string(elapsed()));
+		spdlog::info(m_strMessage + " : " + std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - m_tp).count()));
 	}
 
 };

@@ -165,7 +165,7 @@ struct SetCursorEvent:public EventArgs
 	UINT HitTest;
 	BOOL& Handled;
 	SetCursorEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-		:EventArgs(pWnd), HitTest(LOWORD(lParam)), Handled(Handled){}
+		:EventArgs(pWnd), HitTest(LOWORD(lParam)), Handled(bHandled){}
 };
 
 struct SetFocusEvent :public EventArgs

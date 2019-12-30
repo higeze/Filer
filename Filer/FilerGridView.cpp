@@ -68,6 +68,8 @@ CFilerGridView::CFilerGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGr
 	m_spItemDragger = std::make_shared<CFileDragger>();
 }
 
+CFilerGridView::~CFilerGridView() = default;
+
 LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
 	//Base Create
@@ -352,7 +354,7 @@ void CFilerGridView::Reload()
 	OpenFolder(m_spFolder);
 }
 
-void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
+void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 {
 	m_keepEnsureVisibleFocusedCell = false;
 	switch (e.Char)
@@ -433,7 +435,7 @@ void CFilerGridView::OnKeyDown(const KeyDownEvent& e)
 		break;
 	}
 
-	CFilerGridViewBase::OnKeyDown(e);
+	CFilerGridViewBase::Normal_KeyDown(e);
 };
 
 void CFilerGridView::InsertDefaultRowColumn()
@@ -841,7 +843,7 @@ bool CFilerGridView::InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, 
 	return SUCCEEDED(hr);
 }
 
-void CFilerGridView::OnContextMenu(const ContextMenuEvent& e)
+void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
 	CPoint ptScreen(e.Point);
 	ClientToScreen(ptScreen);
@@ -900,6 +902,8 @@ void CFilerGridView::OnContextMenu(const ContextMenuEvent& e)
 		}
 			ShowShellContextMenu(m_hWnd, ptScreen, m_spFolder->GetShellFolderPtr(), vPidl);
 	}
+
+	CFilerGridViewBase::Normal_ContextMenu(e);
 }
 
 void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl, bool hasNew)

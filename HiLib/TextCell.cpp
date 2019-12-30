@@ -13,23 +13,11 @@
 #include "Textbox.h"
 
 
-CTextCell::~CTextCell()
-{
-	if(m_pEdit){
-		//SendMessage(m_pEdit->m_hWnd,WM_CLOSE,0,0);
-		m_pSheet->GetGridPtr()->SetEditPtr(nullptr);
-		m_pEdit = nullptr;
-	}
-}
+CTextCell::~CTextCell(){}
 
 void CTextCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	//if (m_pEdit) {
-	//	m_pEdit->OnPaint(PaintEvent(m_pSheet->GetGridPtr()));
-	//}
-	//else {
-		pDirect->DrawTextLayout(*(m_spProperty->Format), GetString(), rcPaint);
-	//}
+	pDirect->DrawTextLayout(*(m_spProperty->Format), GetString(), rcPaint);
 }
 
 d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
@@ -51,6 +39,11 @@ d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* p
 	return pDirect->CalcTextSizeWithFixedWidth(*(m_spProperty->Format), text, rcContent.Width());
 }
 
+d2dw::CRectF CTextCell::GetEditRect() const
+{
+	return GetRect();
+}
+
 void CTextCell::OnEdit(const EventArgs& e)
 {
 	m_pSheet->GetGridPtr()->BeginEdit(this);
@@ -58,12 +51,7 @@ void CTextCell::OnEdit(const EventArgs& e)
 
 void CTextCell::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	//if (m_pEdit) {
-	//	direct.DrawSolidRectangle(*(m_spProperty->EditLine), rcPaint);
-	//}
-	//else {
-		CCell::PaintLine(pDirect, rcPaint);
-	//}
+	CCell::PaintLine(pDirect, rcPaint);
 
 }
 
@@ -104,12 +92,7 @@ Compares CTextCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Comp
 	return Compares::Diff;
 }
 
-void CTextCell::OnKillFocus(const KillFocusEvent& e)
-{
-	//if (m_pEdit) {
-	//	m_pEdit->OnKillFocus(e);
-	//}
-}
+void CTextCell::OnKillFocus(const KillFocusEvent& e){}
 
 
 std::wstring CStringCell::GetString()

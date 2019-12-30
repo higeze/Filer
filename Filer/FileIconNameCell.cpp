@@ -101,19 +101,32 @@ d2dw::CSizeF CFileIconNameCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2D
 	return d2dw::CSizeF(iconSize.width + space + textSize.width, (std::max)(iconSize.height, textSize.height));
 }
 
-void CFileIconNameCell::OnEdit(const EventArgs& e)
+d2dw::CRectF CFileIconNameCell::GetEditRect() const
 {
 	//Icon Size
-	CSize iconSize(GetIconSize(e.WndPtr->GetDirectPtr()));
+	CSize iconSize(GetIconSize(m_pSheet->GetGridPtr()->GetDirectPtr()));
 	//Space
 	int space = m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2PixelsX(m_spProperty->Padding->left + m_spProperty->Padding->right);
 	//Edit Rect
 	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2Pixels(m_pSheet->GetGridPtr()->GetDirectPtr()->LayoutRound(GetRect())));
 	rcEdit.left += iconSize.cx + space;
+	return m_pSheet->GetGridPtr()->GetDirectPtr()->Pixels2Dips(rcEdit);
+}
 
-	SetState(UIElementState::Hot);//During Editing, Keep Hot
-	//CRect rcEdit(m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2Pixels(GetRect()));
-	auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
+void CFileIconNameCell::OnEdit(const EventArgs& e)
+{
+	m_pSheet->GetGridPtr()->BeginEdit(this);
+	////Icon Size
+	//CSize iconSize(GetIconSize(e.WndPtr->GetDirectPtr()));
+	////Space
+	//int space = m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2PixelsX(m_spProperty->Padding->left + m_spProperty->Padding->right);
+	////Edit Rect
+	//CRect rcEdit(m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2Pixels(m_pSheet->GetGridPtr()->GetDirectPtr()->LayoutRound(GetRect())));
+	//rcEdit.left += iconSize.cx + space;
+
+	//SetState(UIElementState::Hot);//During Editing, Keep Hot
+	////CRect rcEdit(m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2Pixels(GetRect()));
+	//auto spCell = std::static_pointer_cast<CTextCell>(CSheet::Cell(m_pRow, m_pColumn));
 
 	//m_pEdit = new CTextboxWnd(
 	//	m_spProperty,
@@ -138,21 +151,21 @@ void CFileIconNameCell::OnEdit(const EventArgs& e)
 
 void CFileIconNameCell::PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	if (m_pEdit) {
-		//Icon Size
-		CSize iconSize(GetIconSize(pDirect));
-		//Space
-		int space = m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2PixelsX(m_spProperty->Padding->left + m_spProperty->Padding->right);
-		//Inner Rect
-		d2dw::CRectF rcText(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
-		rcText.left += iconSize.cx + space;
+	//if (m_pEdit) {
+	//	//Icon Size
+	//	CSize iconSize(GetIconSize(pDirect));
+	//	//Space
+	//	int space = m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2PixelsX(m_spProperty->Padding->left + m_spProperty->Padding->right);
+	//	//Inner Rect
+	//	d2dw::CRectF rcText(InnerBorder2Content(CenterBorder2InnerBorder(GetRect())));
+	//	rcText.left += iconSize.cx + space;
 
-		//d2dw::CRectF rcEdit(direct.Pixels2Dips(m_pSheet->GetGridPtr()->ScreenToClientRect(m_pEdit->GetWindowRect())));
+	//	//d2dw::CRectF rcEdit(direct.Pixels2Dips(m_pSheet->GetGridPtr()->ScreenToClientRect(m_pEdit->GetWindowRect())));
 
-		//if (rcText != rcEdit) {
-		//	m_pEdit->MoveWindow(direct.Dips2Pixels(rcText), FALSE);
-		//}
-	}
+	//	//if (rcText != rcEdit) {
+	//	//	m_pEdit->MoveWindow(direct.Dips2Pixels(rcText), FALSE);
+	//	//}
+	//}
 	CCell::PaintBackground(pDirect, rcPaint);
 }
 

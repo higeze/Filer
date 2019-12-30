@@ -1,174 +1,105 @@
 #include "MouseStateMachine.h"
-#include "UIElement.h"
-#include "Sheet.h"
 #include "GridView.h"
-#include "SheetEventArgs.h"
+#include "DeadlineTimer.h"
+#include <boost/sml.hpp>
 
-#include <boost\msm\front\state_machine_def.hpp>
-#include <boost\msm\back\state_machine.hpp>
-#include <boost\mpl\vector.hpp>
+namespace sml = boost::sml;
 
-using namespace boost::msm::front;
-
-struct CMouseStateMachine::Impl :state_machine_def<CMouseStateMachine::Impl>
+struct CMouseStateMachine::Machine
 {
+	class Normal{};
+	class LButtonDowned{};
+	class LButtonUpped{};
+	class LButtonDblClked{};
+	class LButtonDrag{};
 
-	//Event
-	struct Exception{};
+	std::shared_ptr<CDeadlineTimer> m_pDeadlineTimer;
 
-	//State
-	struct NormalState :state<> 
+	Machine() :m_pDeadlineTimer(std::make_shared<CDeadlineTimer>()) {}
+
+	void Normal_LButtonUp(CGridView* pGrid, const LButtonUpEvent& e)
 	{
-		template < class event_t, class fsm_t >
-		void on_entry(event_t const & e, fsm_t & machine)
-		{
-			spdlog::info("NormalState");
-		}
-	};
+		pGrid->CSheet::OnLButtonClk(LButtonClkEvent(pGrid, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
+		pGrid->CSheet::OnLButtonUp(e);
+	}
 
-	struct LButtonDownedState :state<> 
+	void Normal_MouseLeave(CGridView* pGrid, const MouseLeaveEvent& e)
 	{
-		template < class event_t, class fsm_t >
-		void on_entry(event_t const & e, fsm_t & machine)
-		{
-			spdlog::info("LButtonDownedState");
-			if (auto p = dynamic_cast<CGridView*>(machine.m_pSheet)) {
-				HWND hWnd = p->m_hWnd;				
-				machine.m_deadlineTimer.run([hWnd, e] {
-					spdlog::info("timer editcell");
-					::PostMessage(hWnd, WM_LBUTTONDBLCLKTIMEXCEED, NULL, MAKELPARAM(e.Point.x, e.Point.y));
-				}, std::chrono::milliseconds(::GetDoubleClickTime()));
-			}
-		}
-	};
-	struct LButtonUppedState :state<> {};
-	struct LButtonDblClkedState :state<> {};
-	struct LButtonDragState :state<> 
-	{
-		template < class event_t, class fsm_t >
-		void on_entry(event_t const & e, fsm_t & machine)
-		{
-			spdlog::info("LButtonDragState");
-			machine.m_pSheet->GetGridPtr()->m_pMachine->process_event(LButtonBeginDragEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
-		}
-	};
-
-	//Machine
-	struct Machine_ :state_machine_def<CMouseStateMachine::Impl::Machine_>
-	{
-		//Deadline timer
-		CDeadlineTimer m_deadlineTimer;
-
-		//Any
-		template<class Event>
-		void Action_LButtonUp(Event const & e)
-		{
-			m_pSheet->GetGridPtr()->m_pMachine->process_event(LButtonClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
-			m_pSheet->GetGridPtr()->m_pMachine->process_event(e);
-		}
-
-		template<class Event>
-		void Action_MouseLeave(Event const & e)
-		{
-			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
-				m_deadlineTimer.stop();
-			}
-			m_pSheet->GetGridPtr()->m_pMachine->process_event(e);
-		}
+		m_pDeadlineTimer->stop();
+		pGrid->CSheet::OnMouseLeave(e);
+	}
 		
-		template<class Event>
-		void Action_LButtonDown(Event const & e)
-		{
-			m_pSheet->GetGridPtr()->m_pMachine->process_event(e);
-		}
+	void Normal_LButtonDown(CGridView* pGrid, const LButtonDownEvent& e)
+	{
+		m_pDeadlineTimer->run([pGrid, e] {
+			pGrid->PostMessage(WM_LBUTTONDBLCLKTIMEXCEED, NULL, MAKELPARAM(e.Point.x, e.Point.y));
+			}, std::chrono::milliseconds(::GetDoubleClickTime()));
 
-		//Upped
-		template<class Event>
-		void Action_Upped_LButtonDblClk(Event const & e)
-		{
-			m_pSheet->GetGridPtr()->m_pMachine->process_event(e);
-		}
+		pGrid->CSheet::OnLButtonDown(e);
+	}
 
-		template<class Event>
-		void Action_Upped_LButtonDblClkTimeExceed(Event const & e)
-		{
-			m_pSheet->GetGridPtr()->m_pMachine->process_event(LButtonSnglClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
-			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
-				m_deadlineTimer.stop();
-			}
-		}
+	void LButtonDowned_LButtonDblClkTimeExceed(CGridView* pGrid, const LButtonDblClkTimeExceedEvent& e)
+	{
+		pGrid->CSheet::OnLButtonBeginDrag(LButtonBeginDragEvent(pGrid, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
+	}
 
-		//Drag
-		template<class Event>
-		void Action_Drag_MouseLeave(Event const & e)
-		{
-			if (auto p = dynamic_cast<CGridView*>(m_pSheet)) {
-				m_deadlineTimer.stop();
-			}
-			//m_pSheet->OnLButtonUp((MouseEventArgs)e.Args);
-			m_pSheet->GetGridPtr()->m_pMachine->process_event(e);
-		}
+	void LButtonUpped_LButtonDblClk(CGridView* pGrid, const LButtonDblClkEvent& e)
+	{
+		pGrid->CSheet::OnLButtonDblClk(e);
+	}
 
-		struct transition_table :boost::mpl::vector<
-			//     Start                 Event                    Target                Action                                             Guard
-			 a_row<NormalState,          LButtonDownEvent,             LButtonDownedState,   &Machine_::Action_LButtonDown>,
-			 a_row<NormalState,          MouseLeaveEvent,              NormalState,          &Machine_::Action_MouseLeave>,
+	void LButtonUpped_LButtonDblClkTimeExceed(CGridView* pGrid, const LButtonDblClkTimeExceedEvent& e)
+	{
+		pGrid->CSheet::OnLButtonSnglClk(LButtonSnglClkEvent(pGrid, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
+		m_pDeadlineTimer->stop();
+	}
 
-			  _row<LButtonDownedState,   LButtonDblClkTimeExceedEvent, LButtonDragState>,
- 			 a_row<LButtonDownedState,   LButtonUpEvent,               LButtonUppedState,    &Machine_::Action_LButtonUp>,
-     		 a_row<LButtonDownedState,   MouseLeaveEvent,              NormalState,          &Machine_::Action_MouseLeave>,
-			 _row<LButtonDownedState,    Exception,					   NormalState>,
+	void LButtonDrag_MouseLeave(CGridView* pGrid, const MouseLeaveEvent& e)
+	{
+		m_pDeadlineTimer->stop();
+		//m_pSheet->OnLButtonUp((MouseEventArgs)e.Args);
+		pGrid->CSheet::OnMouseLeave(e);
+	}
 
-			 a_row<LButtonUppedState,    LButtonDownEvent,             LButtonDownedState, &Machine_::Action_LButtonDown>,
-			a_row<LButtonUppedState,     LButtonDblClkEvent,           LButtonDblClkedState, &Machine_::Action_Upped_LButtonDblClk>,
- 			 a_row<LButtonUppedState,    LButtonDblClkTimeExceedEvent, NormalState,          &Machine_::Action_Upped_LButtonDblClkTimeExceed>,
-			 a_row<LButtonUppedState,    MouseLeaveEvent,              NormalState,          &Machine_::Action_MouseLeave>,
-			_row<LButtonUppedState,      Exception,                    NormalState>,
+	template <class R, class... Ts>
+	auto call(R(Machine::* f)(Ts...))
+	{
+		return [this, f](Ts... args) { return (this->*f)(args...); };
+	}
 
-			 a_row<LButtonDblClkedState, LButtonUpEvent,               NormalState,          &Machine_::Action_LButtonUp>,
-			 a_row<LButtonDblClkedState, MouseLeaveEvent,              NormalState,          &Machine_::Action_MouseLeave>,
-			_row<LButtonDblClkedState,   Exception,                    NormalState>,
+	auto operator()() noexcept //Not const
+	{
+		using namespace sml;
 
-			 a_row<LButtonDragState,     LButtonUpEvent,               NormalState,          &Machine_::Action_LButtonUp>,
-			 a_row<LButtonDragState,     MouseLeaveEvent,              NormalState,          &Machine_::Action_Drag_MouseLeave>,
-			_row<LButtonDragState,       Exception,                    NormalState>
+		return make_transition_table(
+			*state<Normal> +event<LButtonDownEvent> / call(&Machine::Normal_LButtonDown) = state<LButtonDowned>,
+			state<Normal> +event<MouseLeaveEvent> / call(&Machine::Normal_MouseLeave) = state<Normal>,
 
+			state<LButtonDowned> +event<LButtonDblClkTimeExceedEvent> / call(&Machine::LButtonDowned_LButtonDblClkTimeExceed) = state<LButtonDrag>,
+			state<LButtonDowned> +event<LButtonUpEvent> / call(&Machine::Normal_LButtonUp) = state<LButtonUpped>,
+			state<LButtonDowned> +event<MouseLeaveEvent> / call(&Machine::Normal_MouseLeave) = state<Normal>,
 
-		> {};
+			state<LButtonUpped> +event<LButtonDownEvent> / call(&Machine::Normal_LButtonDown) = state<LButtonDowned>,
+			state<LButtonUpped> +event<LButtonDblClkEvent> / call(&Machine::LButtonUpped_LButtonDblClk) = state<LButtonDblClked>,
+			state<LButtonUpped> +event<LButtonDblClkTimeExceedEvent> / call(&Machine::LButtonUpped_LButtonDblClkTimeExceed) = state<Normal>,
+			state<LButtonUpped> +event<MouseLeaveEvent> / call(&Machine::Normal_MouseLeave) = state<Normal>,
 
-		using initial_state = NormalState;
+			state<LButtonDblClked> +event<LButtonUpEvent> / call(&Machine::Normal_LButtonUp) = state<Normal>,
+			state<LButtonDblClked> +event<MouseLeaveEvent> / call(&Machine::Normal_MouseLeave) = state<Normal>,
 
-		template <class FSM, class Event>
-		void no_transition(Event const& e, FSM&, int state) {}
-
-		template <class FSM, class Event>
-		void exception_caught(Event const& ev, FSM& fsm, std::exception& ex)
-		{
-			reinterpret_cast<CGridView*>(m_pSheet)->SetMouseStateMachine(std::make_shared<CMouseStateMachine>(m_pSheet));
-			throw ex;
-		}
-
-		CMouseStateMachine * const base;
-		CSheet* m_pSheet;
-		Machine_(CMouseStateMachine * const p, CSheet* pSheet) :base(p), m_pSheet(pSheet) {}
-
-	};
-
-	using Machine = boost::msm::back::state_machine<Machine_>;
-	Machine m_machine;
-	Impl(CMouseStateMachine * const p, CSheet* pSheet) :m_machine(p, pSheet) {}
-
-
+			state<LButtonDrag> +event<LButtonUpEvent> / call(&Machine::Normal_LButtonUp) = state<Normal>,
+			state<LButtonDrag> +event<MouseLeaveEvent> / call(&Machine::LButtonDrag_MouseLeave) = state<Normal>
+		);
+	}
 };
 
-CMouseStateMachine::CMouseStateMachine(CSheet* pSheet) :pImpl(new Impl(this, pSheet))
-{
-	pImpl->m_machine.start();
-}
-CMouseStateMachine::~CMouseStateMachine() {}
+CMouseStateMachine::CMouseStateMachine(CGridView* pGrid)
+	:m_pMachine(new boost::sml::sm<Machine>{ pGrid }){ }
 
-void CMouseStateMachine::LButtonDown(const LButtonDownEvent& e) { pImpl->m_machine.process_event(e); }
-void CMouseStateMachine::LButtonUp(const LButtonUpEvent& e) { pImpl->m_machine.process_event(e); }
-void CMouseStateMachine::LButtonDblClk(const LButtonDblClkEvent& e) { pImpl->m_machine.process_event(e); }
-void CMouseStateMachine::LButtonDblClkTimeExceed(const LButtonDblClkTimeExceedEvent& e) { pImpl->m_machine.process_event(e); }
-void CMouseStateMachine::MouseLeave(const MouseLeaveEvent& e) { pImpl->m_machine.process_event(e); }
+CMouseStateMachine::~CMouseStateMachine() = default;
+
+void CMouseStateMachine::process_event(const LButtonDownEvent& e) { m_pMachine->process_event(e); }
+void CMouseStateMachine::process_event(const LButtonUpEvent& e) { m_pMachine->process_event(e); }
+void CMouseStateMachine::process_event(const LButtonDblClkEvent& e) { m_pMachine->process_event(e); }
+void CMouseStateMachine::process_event(const LButtonDblClkTimeExceedEvent& e) { m_pMachine->process_event(e); }
+void CMouseStateMachine::process_event(const MouseLeaveEvent& e) { m_pMachine->process_event(e); }

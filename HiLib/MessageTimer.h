@@ -1,5 +1,5 @@
 #pragma once
-#include <boost\timer.hpp>
+#include <chrono>
 #include <Windows.h>
 #include "MyString.h"
 
@@ -18,18 +18,19 @@ int MessageBoxT(HWND hWnd, const char_type* lpText, const char_type* lpCaption, 
 
 
 template<typename char_type>
-class CMessageTimer:public boost::timer
+class CMessageTimer
 {
 private:
 	HWND m_hWnd;
+	std::chrono::system_clock::time_point m_tp;
 	std::basic_string<char_type> m_strMessage;
 public:
 	CMessageTimer(HWND hWnd, const std::basic_string<char_type>& wstrMessage)
-		:timer(), m_hWnd(hWnd), m_strMessage(wstrMessage){}
+		:m_tp(std::chrono::system_clock::now()), m_hWnd(hWnd), m_strMessage(wstrMessage){}
 	virtual ~CMessageTimer()
 	{
 		MessageBoxT<char_type>(m_hWnd,
-			(m_strMessage + TSTRING_CAST(char_type, " : ") + boost::lexical_cast<std::basic_string<char_type>>(elapsed())).c_str(),
+			(m_strMessage + TSTRING_CAST(char_type, " : ") + boost::lexical_cast<std::basic_string<char_type>>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count())).c_str(),
 			TSTRING_CAST(char_type, "MessageTimer"),
 			MB_OK | MB_ICONINFORMATION);
 	}

@@ -87,4 +87,5 @@ class CChildHeaderRow:public CChildRow
 {
 public:
 	CChildHeaderRow(CSheetCell* pGrid):CChildRow(pGrid){}
+	virtual bool IsTrackable()const override { return true; }
 };

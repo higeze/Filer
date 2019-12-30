@@ -38,26 +38,30 @@ private:
 public:
 	//Constructor
 	CFilerGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp);
-	virtual ~CFilerGridView(){}
+	virtual ~CFilerGridView();
 	//getter
 	std::shared_ptr<CShellFolder>& GetFolder() { return m_spFolder; }
 	//signal
 	boost::signals2::signal<void(std::shared_ptr<CShellFolder>&)> FolderChanged;
 
+	/******************/
+	/* Window Message */
+	/******************/
 	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	virtual LRESULT OnCommandFind(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
+	/**************/
+	/* UI Message */
+	/**************/
+	virtual void Normal_KeyDown(const KeyDownEvent& e)override;
+	virtual void Normal_ContextMenu(const ContextMenuEvent& e) override;
 
-
-	LRESULT OnCommandFind(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
-
-
-
-	virtual void OnKeyDown(const KeyDownEvent& e)override;
-	virtual void OnContextMenu(const ContextMenuEvent& e) override;
 	virtual void OnBkGndLButtondDblClk(const LButtonDblClkEvent& e) override;
-
 	virtual void OnCellLButtonDblClk(CellEventArgs& e);
+
+
+
 	virtual void Reload();
 	virtual void OpenFolder(std::shared_ptr<CShellFolder>& spFolder) override;
 

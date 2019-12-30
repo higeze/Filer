@@ -51,6 +51,7 @@ public:
 	CIncrementalCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	~CIncrementalCopyWnd();
+	virtual d2dw::CDirect2DWrite* GetDirectPtr() override { return m_pDirect.get(); }
 	std::unique_ptr<d2dw::CProgressBar>& GetProgressBarPtr() { return m_pProgressbar; }
 
 	LRESULT OnCommandCopy(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);

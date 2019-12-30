@@ -96,7 +96,7 @@ public:
 		std::function<std::wstring()> getter,
 		std::function<void(const std::wstring&)> setter,
 		std::function<void(const std::wstring&)> changed,
-		std::function<void()> final);
+		std::function<void(const std::wstring&)> final);
 	~D2DTextbox();
 	void InitTSF();
 	void UninitTSF();
@@ -146,6 +146,7 @@ public:
 	void ClearText();
 	void MoveSelectionNext();
 	void MoveSelectionPrev();
+	//BOOL MoveSelectionUp(bool bShiftKey)
 	BOOL MoveSelectionUpDown(BOOL bUp, bool bShiftKey);
 	BOOL MoveSelectionToLineFirstEnd(BOOL bFirst, bool bShiftKey);
 	
@@ -173,7 +174,7 @@ private:
 	std::function<std::wstring()> m_getter;
 	std::function<void(const std::wstring&)> m_setter;
 	std::function<void(const std::wstring&)> m_changed;
-	std::function<void()> m_final;
+	std::function<void(const std::wstring&)> m_final;
 	bool bRecalc_;
 
 	std::vector<LINEINFO> m_lineInfos;

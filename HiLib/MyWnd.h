@@ -169,7 +169,7 @@ private:
 	//prohibit copy constructor and substitute
 public:
 
-	virtual d2dw::CDirect2DWrite* GetDirectPtr() { return nullptr; }
+	virtual d2dw::CDirect2DWrite* GetDirectPtr() { throw std::exception("Not Implemented"); }
 
 	FunMsg m_allMsg;
 	MsgMap m_msgMap;

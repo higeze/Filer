@@ -1,6 +1,6 @@
 #pragma once
 #include "ShellFile.h"
-#include <boost/timer.hpp>
+#include <chrono>
 
 class CShellFolder :public CShellFile
 {
@@ -33,10 +33,10 @@ public:
 	std::shared_ptr<CShellFile> CreateShExFileFolder(CIDL& relativeIdl);
 	static std::optional<FileTimes> GetFolderFileTimes(const std::shared_ptr<bool>& cancel,
 		const CComPtr<IShellFolder>& pParentFolder, const CComPtr<IShellFolder>& pFolder, const CIDL& relativeIdl, const std::wstring& path,
-		boost::timer& tim, int limit, bool ignoreFolderTime);
+		std::chrono::system_clock::time_point& tp, int limit, bool ignoreFolderTime);
 	static bool GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<bool>& cancel,
 		const CComPtr<IShellFolder>& pFolder, const std::wstring& path,
-		const boost::timer& tim, const int limit);
+		const std::chrono::system_clock::time_point& tp, const int limit);
 private:
 	std::pair<FileTimes, FileTimeStatus> GetLockFileTimes();
 	std::pair<ULARGE_INTEGER, FileSizeStatus> GetLockSize();

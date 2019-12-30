@@ -48,6 +48,7 @@
 #include "ShellFunction.h"
 #include "IncrementalCopyWnd.h"
 #include "ProgressBar.h"
+#include "GridViewStateMachine.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -68,6 +69,8 @@ CFilerGridViewBase::CFilerGridViewBase(std::shared_ptr<FilerGridViewProperty>& s
 	CellLButtonDblClk.connect(std::bind(&CFilerGridViewBase::OnCellLButtonDblClk, this, std::placeholders::_1));
 }
 
+CFilerGridViewBase::~CFilerGridViewBase() = default;
+
 LRESULT CFilerGridViewBase::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	//Base Create
@@ -87,7 +90,10 @@ RowDictionary::const_iterator CFilerGridViewBase::FindIfRowIterByFileNameExt(con
 	});
 }
 
-void CFilerGridViewBase::OnKeyDown(const KeyDownEvent& e)
+/**************/
+/* UI Message */
+/**************/
+void CFilerGridViewBase::Normal_KeyDown(const KeyDownEvent& e)
 {
 	m_keepEnsureVisibleFocusedCell = false;
 	switch (e.Char) {
@@ -187,7 +193,7 @@ void CFilerGridViewBase::OnKeyDown(const KeyDownEvent& e)
 		break;
 	}
 
-	CGridView::OnKeyDown(e);
+	CGridView::Normal_KeyDown(e);
 };
 
 void CFilerGridViewBase::InsertDefaultRowColumn()
@@ -200,7 +206,6 @@ void CFilerGridViewBase::InsertDefaultRowColumn()
 	InsertRowNotify(CRow::kMinIndex, m_rowFilter);
 	InsertRowNotify(CRow::kMinIndex, m_rowNameHeader);
 	InsertRowNotify(CRow::kMinIndex, m_rowHeader);
-
 }
 
 void CFilerGridViewBase::OnCellLButtonDblClk(CellEventArgs& e)

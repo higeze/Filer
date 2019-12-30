@@ -70,7 +70,7 @@ public:
 		::GetCursorPos(&pt);
 		::ScreenToClient(e.WndPtr->m_hWnd, &pt);
 		if (IsTarget(pSheet, MouseEvent(e.WndPtr, 0, MAKELPARAM(pt.x, pt.y)))) {
-			//e.Handled = TRUE;
+			e.Handled = TRUE;
 			SetSizeCursor(); 
 		}
 	}
@@ -160,7 +160,7 @@ public:
 		auto maxIdx = pSheet->GetMaxIndex<TRC, VisTag>();
 
 		//If Header except Filter
-		if (visIndexes.Get<TRC::Other>() < 0 && (other==nullptr || other->IsTrackable())) {
+		if (other!=nullptr && other->IsTrackable()) {
 			if (visIndexes.Get<TRC>() < minIdx) {
 				//Out of Left	
 				return false;

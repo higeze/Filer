@@ -69,7 +69,7 @@ D2DTextbox::D2DTextbox(
 	std::function<std::wstring()> getter,
 	std::function<void(const std::wstring&)> setter,
 	std::function<void(const std::wstring&)> changed,
-	std::function<void()> final)
+	std::function<void(const std::wstring&)> final)
 	:m_pWnd(pWnd), m_pCell(pCell), m_pProp(pProp), m_getter(getter), m_setter(setter), m_changed(changed), m_text(getter()), m_final(final),
 	m_selStart(0), m_selEnd(getter().size())
 {
@@ -123,7 +123,7 @@ void D2DTextbox::OnCreate(const CreateEvent& e)
 
 void D2DTextbox::OnClose(const CloseEvent& e)
 {
-	m_final();
+	m_final(m_text);
 	delete this;
 }
 
@@ -440,7 +440,7 @@ void D2DTextbox::SetText(LPCWSTR str1)
 
 d2dw::CRectF D2DTextbox::GetClientRect() const
 {
-	return m_pCell->GetRect();
+	return m_pCell->GetEditRect();
 	//CRect rcClient;
 	//::GetClientRect(m_pWnd->m_hWnd, &rcClient);
 	//return m_pWnd->GetDirectPtr()->Pixels2Dips(rcClient);
@@ -525,8 +525,10 @@ void D2DTextbox::MoveSelection(int nSelStart, int nSelEnd, bool bTrail)
 
 	m_isSelTrail = bTrail;
 
-
 	m_pTextStore->OnSelectionChange();
+
+	QueryPerformanceCounter(&m_pregtm);
+	m_bCaret = true;
 }
 
 void D2DTextbox::MoveSelectionNext()
@@ -538,6 +540,9 @@ void D2DTextbox::MoveSelectionNext()
 
 	m_selStart = m_selEnd = zCaretPos;
 	m_pTextStore->OnSelectionChange();
+
+	QueryPerformanceCounter(&m_pregtm);
+	m_bCaret = true;
 }
 
 void D2DTextbox::MoveSelectionPrev()
@@ -547,6 +552,9 @@ void D2DTextbox::MoveSelectionPrev()
 
 	m_selEnd = m_selStart = zCaretPos;
 	m_pTextStore->OnSelectionChange();
+
+	QueryPerformanceCounter(&m_pregtm);
+	m_bCaret = true;
 }
 
 BOOL D2DTextbox::MoveSelectionAtPoint(const d2dw::CPointF& pt)

@@ -451,17 +451,17 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 		break;
 	case VK_F5:
 		{
-			int okcancel = ::MessageBox(m_hWnd, L"Copy?", L"Copy?", MB_OKCANCEL);
+			int okcancel = ::MessageBox(m_spCurView->GetGridView()->m_hWnd, L"Copy?", L"Copy?", MB_OKCANCEL);
 			if (okcancel == IDOK) {
 				std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
 				m_spCurView->GetGridView()->CopySelectedFilesTo(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl());
 			}
-			bHandled = TRUE;
+			bHandled = FALSE;
 		}
 		break;
 	case VK_F6:
 		{
-			int okcancel = ::MessageBox(m_hWnd, L"Move?", L"Move?", MB_OKCANCEL);
+			int okcancel = ::MessageBox(m_spCurView->GetGridView()->m_hWnd, L"Move?", L"Move?", MB_OKCANCEL);
 			if (okcancel == IDOK) {
 				std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
 				m_spCurView->GetGridView()->MoveSelectedFilesTo(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl());
@@ -471,7 +471,7 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 		break;
 	case VK_F9:
 		{
-			int okcancel = ::MessageBox(m_hWnd, L"Incremental Copy?", L"Incremental Copy?", MB_OKCANCEL);
+			int okcancel = ::MessageBox(m_spCurView->GetGridView()->m_hWnd, L"Incremental Copy?", L"Incremental Copy?", MB_OKCANCEL);
 			if (okcancel == IDOK) {
 				std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
 				m_spCurView->GetGridView()->CopyIncrementalSelectedFilesTo(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl());

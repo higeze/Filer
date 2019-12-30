@@ -35,25 +35,20 @@ protected:
 public:
 	//Constructor
 	CFilerGridViewBase(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp);
-	virtual ~CFilerGridViewBase() {}
+	virtual ~CFilerGridViewBase();
 	//getter
 	std::shared_ptr<FilerGridViewProperty> GetFilerGridViewPropPtr() { return std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp); }
 
 	virtual bool HasSheetCell()override { return false; }
 	virtual bool IsVirtualPage()override { return true; }
 
-	//signal
+	/**********/
+	/* Signal */
+	/**********/
 	std::function<void(CMenu&)> AddCustomContextMenu;
 	std::function<bool(int, CComPtr<IShellFolder>, std::vector<PITEMID_CHILD>)> ExecCustomContextMenu;
 
-	virtual LRESULT OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
-	virtual LRESULT OnCommandCut(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	virtual LRESULT OnCommandCopy(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
-	virtual LRESULT OnCommandPaste(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
-	virtual LRESULT OnCommandDelete(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
-
-	virtual void OnKeyDown(const KeyDownEvent& e)override;
 
 	virtual void OnCellLButtonDblClk(CellEventArgs& e);
 	virtual void Open(std::shared_ptr<CShellFile>& spFile);
@@ -66,6 +61,20 @@ public:
 	virtual bool CopyToClipboard();
 	virtual bool PasteFromClipboard();
 	virtual bool DeleteSelectedFiles(){ return false; }
+	/******************/
+	/* Window Message */
+	/******************/
+	virtual LRESULT OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	virtual LRESULT OnCommandCut(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	virtual LRESULT OnCommandCopy(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
+	virtual LRESULT OnCommandPaste(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
+	virtual LRESULT OnCommandDelete(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
+
+	/*****************/
+	/* State Message */
+	/*****************/
+	virtual void Normal_KeyDown(const KeyDownEvent& e)override;
+
 
 protected:
 	virtual void InsertDefaultRowColumn();

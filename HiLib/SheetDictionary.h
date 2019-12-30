@@ -59,18 +59,20 @@ struct ColumnData:public Data
 struct IndexTag {};
 struct PointerTag {};
 
-typedef boost::multi_index::multi_index_container<
+using RowDictionary =
+boost::multi_index::multi_index_container<
 	RowData,
 	boost::multi_index::indexed_by<
 		boost::multi_index::ordered_unique<boost::multi_index::tag<IndexTag>, boost::multi_index::member<Data, int, &Data::Index>>,
 		boost::multi_index::hashed_unique<boost::multi_index::tag<PointerTag>, boost::multi_index::const_mem_fun<RowData, const CRow*, &RowData::Get>>
 	>
-> RowDictionary;
+>;
 
-typedef boost::multi_index::multi_index_container<
+using ColumnDictionary =
+boost::multi_index::multi_index_container<
 	ColumnData,
 	boost::multi_index::indexed_by<
 		boost::multi_index::ordered_unique<boost::multi_index::tag<IndexTag>, boost::multi_index::member<Data, int, &Data::Index>>,
 		boost::multi_index::hashed_unique<boost::multi_index::tag<PointerTag>, boost::multi_index::const_mem_fun<ColumnData, const CColumn*, &ColumnData::Get>>
 	>
-> ColumnDictionary;
+>;

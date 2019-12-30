@@ -123,9 +123,9 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(std::shared_ptr<
 					auto limit = spArgs->TimeLimitFolderSize ? spArgs->TimeLimitMs : -1;
 					m_futureSize = CThreadPool::GetInstance()->enqueue([](std::shared_ptr<bool> spCancelThread, CComPtr<IShellFolder> pShellFolder, CIDL folderIdl, std::wstring path, int limit, std::function<void()> sizeChanged) {
 						try {
-							boost::timer tim;
+							std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
 							ULARGE_INTEGER size = { 0 };
-							if (CShellFolder::GetFolderSize(size, spCancelThread, pShellFolder, path, tim, limit)) {
+							if (CShellFolder::GetFolderSize(size, spCancelThread, pShellFolder, path, tp, limit)) {
 								if (sizeChanged) { sizeChanged(); }
 								return std::make_pair(size, FileSizeStatus::Available);
 							} else {
@@ -169,7 +169,7 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(std::shared_ptr<
 				CComPtr<IShellFolder> pParentFolder, CComPtr<IShellFolder> pFolder, CIDL relativeIdl, std::wstring path,
 				int limit, bool ignoreFolderTime, std::function<void()> timeChanged) {
 				try {
-					boost::timer tim;
+					std::chrono::time_point tim = std::chrono::system_clock::now();
 					auto times = GetFolderFileTimes(spCancelThread, pParentFolder, pFolder, relativeIdl, path, tim, limit, ignoreFolderTime);
 					if (times.has_value()) {
 						timeChanged();
@@ -204,12 +204,12 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(std::shared_ptr<
 //static
 bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<bool>& cancel, 
 	const CComPtr<IShellFolder>& pFolder, const std::wstring& path, 
-	const boost::timer& tim, const int limit)
+	const std::chrono::system_clock::time_point& tp, const int limit)
 {	
 	if (*cancel) {
 		spdlog::info("CShellFolder::GetFolderSize Canceled at top : {}", wstr2str(path));
 		return false;
-	} else if (limit > 0 && tim.elapsed() > limit/1000.0) {
+	} else if (limit > 0 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count() > limit) {
 		spdlog::info("CShellFolder::GetFolderSize TimeElapsed at top : {}", wstr2str(path));
 		return false;
 	}
@@ -226,7 +226,7 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<boo
 				if (*cancel) {
 					spdlog::info("CShellFolder::GetFolderSize Canceled in while : {}", wstr2str(path));
 					return false;
-				} else if (limit > 0 && tim.elapsed() > limit/1000.0) {
+				}else if (limit > 0 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count() > limit) {
 					spdlog::info("CShellFolder::GetFolderSize TimeElapsed in while : {}", wstr2str(path));
 					return false;
 				}
@@ -246,7 +246,7 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<boo
 						SUCCEEDED(pChidFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &childEnumIdl))) {
 						if (CShellFolder::GetFolderSize(childSize, cancel,
 							pChidFolder, childPath,
-							tim, limit)) {
+							tp, limit)) {
 							size.QuadPart += childSize.QuadPart;
 						} else {
 							return false;
@@ -272,7 +272,7 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<boo
 
 std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<bool>& cancel,
 	const CComPtr<IShellFolder>& pParentFolder, const CComPtr<IShellFolder>& pFolder, const CIDL& relativeIdl, const std::wstring& path,
-	boost::timer& tim, int limit, bool ignoreFolderTime)
+	std::chrono::system_clock::time_point& tp, int limit, bool ignoreFolderTime)
 {
 	FileTimes times = shell::GetFileTimes(pParentFolder, relativeIdl).value_or(FileTimes());
 	if (ignoreFolderTime) {
@@ -282,7 +282,7 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 	if (*cancel) {
 		spdlog::info("CShellFolder::GetFolderFileTimes Canceled at top : {}", wstr2str(path));
 		return times;
-	} else if (limit > 0 && tim.elapsed() > limit / 1000.0) {
+	} else if (limit > 0 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-tp).count() > limit) {
 		spdlog::info("CShellFolder::GetFolderFileTimes TimeElapsed at top : {}", wstr2str(path));
 		return times;
 	}
@@ -297,7 +297,7 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 				if (*cancel) {
 					spdlog::info("CShellFolder::GetFolderFileTimes Canceled in while : {}", wstr2str(path));
 					return times;
-				} else if (limit > 0 && tim.elapsed() > limit / 1000.0) {
+				} else if (limit > 0 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count() > limit) {
 					spdlog::info("CShellFolder::GetFolderFileTimes TimeElapsed in while : {}", wstr2str(path));
 					return times;
 				}
@@ -329,7 +329,7 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 
 			for (auto childFolderArg : folders) {
 				FileTimes grandchildTime = GetFolderFileTimes(cancel, pFolder, std::get<0>(childFolderArg),
-					std::get<1>(childFolderArg), std::get<2>(childFolderArg), tim, limit, ignoreFolderTime).value_or(FileTimes());
+					std::get<1>(childFolderArg), std::get<2>(childFolderArg), tp, limit, ignoreFolderTime).value_or(FileTimes());
 
 				times.LastWriteTime = ::CompareFileTime(&times.LastWriteTime, &grandchildTime.LastWriteTime) >= 0 ?
 					times.LastWriteTime : grandchildTime.LastWriteTime;

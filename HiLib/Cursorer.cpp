@@ -26,10 +26,9 @@ void CCursorer::UpdateCursor(std::shared_ptr<CCell>& cell, bool old, bool curren
 
 void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 {
-	//TODOTODO
+
 	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
-//	if (!cell) {
-			return;
+		return;
 	}
 	
 	UpdateCursor(cell);

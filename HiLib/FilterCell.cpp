@@ -36,21 +36,17 @@ void CFilterCell::SetStringCore(const std::wstring& str)
 
 void CFilterCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	if (m_pEdit) {
-		m_pEdit->OnPaint(PaintEvent(m_pSheet->GetGridPtr()));
-	}else {
 
-		std::wstring str = GetString();
-		if (!str.empty()) {
-			pDirect->DrawTextLayout(*(m_spProperty->Format), str, rcPaint);
-		}
-		else {
-			str = L"Filter items...";
-			d2dw::FormatF filterFnC(
-				m_spProperty->Format->Font.FamilyName, m_spProperty->Format->Font.Size,
-				210.0f / 255, 210.0f / 255, 210.0f / 255, 1.0f);
-			pDirect->DrawTextLayout(filterFnC, str, rcPaint);
-		}
+	std::wstring str = GetString();
+	if (!str.empty()) {
+		pDirect->DrawTextLayout(*(m_spProperty->Format), str, rcPaint);
+	}
+	else {
+		str = L"Filter items...";
+		d2dw::FormatF filterFnC(
+			m_spProperty->Format->Font.FamilyName, m_spProperty->Format->Font.Size,
+			210.0f / 255, 210.0f / 255, 210.0f / 255, 1.0f);
+		pDirect->DrawTextLayout(filterFnC, str, rcPaint);
 	}
 }
 

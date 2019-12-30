@@ -39,22 +39,20 @@ public:
 
 class CTextCell:public CCell
 {
-protected:
-	D2DTextbox* m_pEdit;
 public:
 	CTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr)
-		:CCell(pSheet,pRow, pColumn,spProperty,pMenu),m_pEdit(NULL){}
+		:CCell(pSheet,pRow, pColumn,spProperty,pMenu){}
 	virtual ~CTextCell();
 
 	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
 	virtual void PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
 	virtual void PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
 
-	void SetEditPtr(D2DTextbox* pEdit) { m_pEdit = pEdit; }
 	//virtual CSize MeasureSize(CDC* pDC);
 	//virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
 	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* direct) override;
 	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* direct) override;
+	virtual d2dw::CRectF GetEditRect() const;
 	virtual void OnEdit(const EventArgs& e);
 	virtual void OnKillFocus(const KillFocusEvent& e) override;
 	virtual bool CanSetStringOnEditing()const{return true;}

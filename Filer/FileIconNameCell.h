@@ -18,6 +18,7 @@ public:
 	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)override;
 	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* pDirect) override;
 	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override;
+	virtual d2dw::CRectF GetEditRect() const override;
 	virtual void OnEdit(const EventArgs& e) override;
 	virtual void PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
 

@@ -144,28 +144,24 @@ void CSheetCell::OnLButtonDown(const LButtonDownEvent& e)
 {
 	CCell::OnLButtonDown(e);
 	CSheet::OnLButtonDown(e);
-	SubmitUpdate();
 }
 
 void CSheetCell::OnLButtonUp(const LButtonUpEvent& e)
 {
 	CCell::OnLButtonUp(e);
 	CSheet::OnLButtonUp(e);
-	SubmitUpdate();
 }
 
 void CSheetCell::OnLButtonClk(const LButtonClkEvent& e)
 {
 	CCell::OnLButtonClk(e);
 	CSheet::OnLButtonClk(e);
-	SubmitUpdate();
 }
 
 void CSheetCell::OnLButtonSnglClk(const LButtonSnglClkEvent& e)
 {
 	CCell::OnLButtonSnglClk(e);
 	CSheet::OnLButtonSnglClk(e);
-	SubmitUpdate();
 }
 
 
@@ -173,7 +169,6 @@ void CSheetCell::OnLButtonDblClk(const LButtonDblClkEvent& e)
 {
 	CCell::OnLButtonDblClk(e);
 	CSheet::OnLButtonDblClk(e);
-	SubmitUpdate();
 }
 
 
@@ -181,44 +176,37 @@ void CSheetCell::OnMouseMove(const MouseMoveEvent& e)
 {
 	CCell::OnMouseMove(e);
 	CSheet::OnMouseMove(e);
-	SubmitUpdate();
 }
 
 void CSheetCell::OnMouseLeave(const MouseLeaveEvent& e)
 {
 	CCell::OnMouseLeave(e);
 	CSheet::OnMouseLeave(e);
-	SubmitUpdate();
 }
 
 void CSheetCell::OnSetCursor(const SetCursorEvent& e)
 {
 	CCell::OnSetCursor(e);
 	CSheet::OnSetCursor(e);
-	SubmitUpdate();
 }
 
 void CSheetCell::OnSetFocus(const SetFocusEvent& e)
 {
 	CCell::OnSetFocus(e);
 	CSheet::OnSetFocus(e);
-	SubmitUpdate();
 }
 
 void CSheetCell::OnKillFocus(const KillFocusEvent& e)
 {
 	CCell::OnKillFocus(e);
 	CSheet::OnKillFocus(e);
-	SubmitUpdate();
 }
 
 void CSheetCell::OnKeyDown(const KeyDownEvent& e)
 {
 	CCell::OnKeyDown(e);
 	CSheet::OnKeyDown(e);
-	SubmitUpdate();
 }
-
 
 bool CSheetCell::IsComparable()const
 {

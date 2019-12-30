@@ -9,8 +9,7 @@
 #include "Row.h"
 #include "Cell.h"
 
-
-struct CSheetStateMachine;
+class IStateMachine;
 class IDragger;
 class ITracker;
 class ICeller;
@@ -28,6 +27,7 @@ template <typename TRC, typename TRCYou> class CDragger;
 class CCursorer;
 class IMouseObserver;
 class CSerializeData;
+struct SheetStateMachine;
 
 struct RowTag
 {
@@ -78,14 +78,18 @@ const UINT WM_LBUTTONDBLCLKTIMEXCEED = RegisterWindowMessage(L"WM_LBUTTONDBLCLKT
 class CSheet:virtual public CUIElement
 {
 	//Friend classes
+	friend class CMouseStateMachine;
 	friend class CFileDragger;
 	friend class CSerializeData;
+	friend class CCeller;
 public:
 	//static cell Accessor
 	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
 	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow);
 	static std::shared_ptr<CCell>& Cell( CRow* pRow,  CColumn* pColumn);
-
+protected:
+	//State machine
+	std::unique_ptr<IStateMachine> m_pMachine;
 public:
 	std::shared_ptr<ITracker> m_spRowTracker; // Tracker for Row
 	std::shared_ptr<ITracker> m_spColTracker; // Tracker for Column
@@ -95,7 +99,6 @@ public:
 	std::shared_ptr<ICeller> m_spCeller; //Celler
 	std::shared_ptr<CCursorer> m_spCursorer; // Cursor
 private:
-	std::shared_ptr<CSheetStateMachine> m_spStateMachine;
 
 protected:
 	std::set<Updates> m_setUpdate; // Set posted update
@@ -140,11 +143,11 @@ public:
 		CMenu* pContextMenu= &CSheet::ContextMenu);
 
 	//Destructor
-	virtual ~CSheet(){}
+	virtual ~CSheet();
 
 	//Getter Setter
-	std::shared_ptr<CSheetStateMachine> GetSheetStateMachine() { return m_spStateMachine; }
-	void SetSheetStateMachine(std::shared_ptr<CSheetStateMachine>& machine) { m_spStateMachine = machine; }
+//	std::shared_ptr<CSheetStateMachine> GetSheetStateMachine() { return m_spStateMachine; }
+//	void SetSheetStateMachine(std::shared_ptr<CSheetStateMachine>& machine) { m_spStateMachine = machine; }
 	std::shared_ptr<CCursorer> GetCursorerPtr(){return m_spCursorer;} /**< Cursor */
 	void SetContextMenuRowColumn(const CRowColumn& roco){m_rocoContextMenu = roco;}
 	virtual std::shared_ptr<HeaderProperty> GetHeaderProperty(){return m_spHeaderProperty;} /** Getter for Header Cell Property */
@@ -231,19 +234,19 @@ public:
 	virtual FLOAT GetCellsWidth();
 	virtual d2dw::CRectF GetCellsRect();
 	virtual d2dw::CRectF GetPaintRect()=0;
-	//Event handler
-	virtual void OnPaint(const PaintEvent& e);
-	virtual void OnPaintAll(const PaintEvent& e);
-	virtual void OnRButtonDown(const RButtonDownEvent& e);
 
+	/**************/
+	/* UI Message */
+	/**************/
+protected:
+	virtual void OnPaint(const PaintEvent& e);
+	virtual void OnRButtonDown(const RButtonDownEvent& e);
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnLButtonUp(const LButtonUpEvent& e);
 	virtual void OnLButtonClk(const LButtonClkEvent& e);
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e);
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e);
-	virtual void OnBkGndLButtondDblClk(const LButtonDblClkEvent& e) {}
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e);
-	//virtual void OnLButtonEndDrag(MouseEventArgs& e);
 	virtual void OnContextMenu(const ContextMenuEvent& e);
 	virtual void OnMouseMove(const MouseMoveEvent& e);
 	virtual void OnMouseLeave(const MouseLeaveEvent& e);
@@ -251,6 +254,14 @@ public:
 	virtual void OnSetFocus(const SetFocusEvent& e);
 	virtual void OnKillFocus(const KillFocusEvent& e);
 	virtual void OnKeyDown(const KeyDownEvent& e);
+	virtual void OnChar(const CharEvent& e);
+	virtual void OnBeginEdit(const BeginEditEvent& e);
+
+
+	virtual void OnPaintAll(const PaintEvent& e);
+	virtual void OnBkGndLButtondDblClk(const LButtonDblClkEvent& e) {}
+
+public:
 
 	std::shared_ptr<CCell> Cell(const d2dw::CPointF& pt);
 
@@ -271,6 +282,53 @@ public:
 
 	Compares CheckEqualRange(RowDictionary::iterator rowBegin, RowDictionary::iterator rowEnd, ColumnDictionary::iterator colBegin, ColumnDictionary::iterator colEnd, std::function<void(CCell*, Compares)> action);
 	Compares CheckEqualRow(CRow* pRow, ColumnDictionary::iterator colBegin, ColumnDictionary::iterator colEnd, std::function<void(CCell*, Compares)> action);
+
+	//Normal
+	virtual void Normal_Paint(const PaintEvent& e);
+	virtual void Normal_LButtonDown(const LButtonDownEvent& e);
+	virtual void Normal_LButtonUp(const LButtonUpEvent& e);
+	virtual void Normal_LButtonClk(const LButtonClkEvent& e);
+	virtual void Normal_LButtonSnglClk(const LButtonSnglClkEvent& e);
+	virtual void Normal_LButtonDblClk(const LButtonDblClkEvent& e);
+	virtual void Normal_RButtonDown(const RButtonDownEvent& e);
+	virtual void Normal_MouseMove(const MouseMoveEvent& e);
+	virtual void Normal_MouseLeave(const MouseLeaveEvent& e);
+	virtual bool Normal_Guard_SetCursor(const SetCursorEvent& e);
+	virtual void Normal_SetCursor(const SetCursorEvent& e);
+	virtual void Normal_ContextMenu(const ContextMenuEvent& e);
+	virtual void Normal_KeyDown(const KeyDownEvent& e);
+	virtual void Normal_SetFocus(const SetFocusEvent& e);
+	virtual void Normal_KillFocus(const KillFocusEvent& e);
+	//RowTrack
+	virtual void RowTrack_LButtonDown(const LButtonDownEvent& e);
+	virtual bool RowTrack_Guard_LButtonDown(const LButtonDownEvent& e);
+	virtual void RowTrack_MouseMove(const MouseMoveEvent& e);
+	virtual void RowTrack_LButtonUp(const LButtonUpEvent& e);
+	virtual void RowTrack_MouseLeave(const MouseLeaveEvent& e);
+	//ColTrack
+	virtual void ColTrack_LButtonDown(const LButtonDownEvent& e);
+	virtual bool ColTrack_Guard_LButtonDown(const LButtonDownEvent& e);
+	virtual void ColTrack_MouseMove(const MouseMoveEvent& e);
+	virtual void ColTrack_LButtonUp(const LButtonUpEvent& e);
+	virtual void ColTrack_MouseLeave(const MouseLeaveEvent& e);
+	//RowDrag
+	void RowDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	bool RowDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	void RowDrag_MouseMove(const MouseMoveEvent& e);
+	void RowDrag_LButtonUp(const LButtonUpEvent& e);
+	void RowDrag_MouseLeave(const MouseLeaveEvent& e);
+	//ColDrag
+	void ColDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	bool ColDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	void ColDrag_MouseMove(const MouseMoveEvent& e);
+	void ColDrag_LButtonUp(const LButtonUpEvent& e);
+	void ColDrag_MouseLeave(const MouseLeaveEvent& e);
+	//ItemDrag
+	void ItemDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	bool ItemDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	void ItemDrag_MouseMove(const MouseMoveEvent& e);
+	void ItemDrag_LButtonUp(const LButtonUpEvent& e);
+	void ItemDrag_MouseLeave(const MouseLeaveEvent& e);
 
 	//Menu
 	CMenu* const m_pContextMenu;

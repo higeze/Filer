@@ -976,7 +976,7 @@
     <ClCompile Include="..\D2DTextBox\TextboxWnd.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\SheetStateMachineImpl.cpp">
+    <ClCompile Include="..\HiLib\SheetStateMachine.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\GridViewStateMachine.cpp">
@@ -995,9 +995,6 @@
     </None>
     <None Include="..\Release\Filer.exe">
       <Filter>Release</Filter>
-    </None>
-    <None Include="..\HiLib\SheetStateMachine.cpp">
-      <Filter>HiLib</Filter>
     </None>
   </ItemGroup>
 </Project>
