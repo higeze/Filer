@@ -1139,7 +1139,7 @@ void CGridView::Edit_BeginEdit(const BeginEditEvent& e)
 			pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 		}
 		);
-	pEdit->OnCreate(CreateEvent(this, NULL, NULL));
+	//pEdit->OnCreate(CreateEvent(this, NULL, NULL));
 	SetEditPtr(pEdit);
 }
 
@@ -1170,7 +1170,7 @@ void CGridView::Edit_LButtonDown(const LButtonDownEvent& e)
 void CGridView::Edit_LButtonUp(const LButtonUpEvent& e)
 {
 	if (GetEditPtr()->GetClientRect().PtInRect(GetDirectPtr()->Pixels2Dips(e.Point))) {
-		GetEditPtr()->OnLButtonUp(e);
+		//GetEditPtr()->OnLButtonUp(e);
 	}
 	else {
 		Normal_LButtonUp(e);

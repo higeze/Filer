@@ -88,8 +88,8 @@ void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
 		return;
 	}
 	UpdateCursor(cell, true, true, false, true);
-	m_oldCell=m_currentCell;//Old
-	m_currentCell=cell;//Current
+	//m_oldCell=m_currentCell;//Old
+	//m_currentCell=cell;//Current
 
 	cell->GetSheetPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_oldCell->GetRowPtr(), false);
 	cell->GetSheetPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_currentCell->GetRowPtr(), true);

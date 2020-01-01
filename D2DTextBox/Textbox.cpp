@@ -18,6 +18,10 @@
 HRESULT InitDisplayAttrbute();
 HRESULT UninitDisplayAttrbute();
 
+/*****************/
+/* static member */
+/*****************/
+
 #if ( _WIN32_WINNT < _WIN32_WINNT_WIN8 )
 ITfThreadMgr* D2DTextbox::s_pThreadMgr = NULL;
 #else
@@ -26,7 +30,9 @@ ITfThreadMgr2* D2DTextbox::s_pThreadMgr = NULL;
 ITfKeystrokeMgr* D2DTextbox::s_pKeystrokeMgr = NULL;
 TfClientId D2DTextbox::s_tfClientId = TF_CLIENTID_NULL;
 
-// STATIC
+/*******************/
+/* static function */
+/*******************/
 bool D2DTextbox::AppTSFInit()
 {
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
@@ -45,7 +51,6 @@ Exit:
 	return false;
 
 }
-// STATIC
 void D2DTextbox::AppTSFExit()
 {
 	UninitDisplayAttrbute();
@@ -60,8 +65,9 @@ void D2DTextbox::AppTSFExit()
 		s_pKeystrokeMgr->Release();
 }
 
-
-
+/***************/
+/* constructor */
+/***************/
 D2DTextbox::D2DTextbox(
 	CGridView* pWnd,
 	CTextCell* pCell,
@@ -70,8 +76,11 @@ D2DTextbox::D2DTextbox(
 	std::function<void(const std::wstring&)> setter,
 	std::function<void(const std::wstring&)> changed,
 	std::function<void(const std::wstring&)> final)
-	:m_pWnd(pWnd), m_pCell(pCell), m_pProp(pProp), m_getter(getter), m_setter(setter), m_changed(changed), m_text(getter()), m_final(final),
-	m_selStart(0), m_selEnd(getter().size())
+	:m_pWnd(pWnd), m_pCell(pCell), m_pProp(pProp),
+	m_getter(getter), m_setter(setter), m_changed(changed), m_final(final),
+	m_text(getter()),
+	m_carets(getter().size(), getter().size(), getter().size(), 0, getter().size()),
+	m_recalc(true)
 {
 	// You must create this on Heap, OnStack is NG.
 	_ASSERT(_CrtIsValidHeapPointer(this));
@@ -80,394 +89,33 @@ D2DTextbox::D2DTextbox(
 	nCompositionRenderInfo_ = 0;
 	nLineCnt_ = 0;
 	row_width_ = 0;
-	bRecalc_ = true;
 
 	QueryPerformanceFrequency(&m_frequency);
 	if (m_pDocumentMgr) {
 		s_pThreadMgr->SetFocus(m_pDocumentMgr);
 	}
-	m_text.StringChanged.connect([this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
-		//d2dw::CRectF rcClient(GetClientRect());
-		//d2dw::CRectF rcContent(GetContentRect());
+	
+	m_text.StringChanged.connect(
+		[this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
+			m_pTextStore->OnTextChange(e.StartIndex, e.OldEndIndex, e.NewEndIndex);
+			m_changed(e.NewString);
+			m_recalc = true;
+		}
+	);
+	m_carets.Changed.connect(
+		[this](const NotifyChangedEventArgs<std::tuple<int, int, int, int, int>>& e)->void {
+			m_pTextStore->OnSelectionChange();
+		}
+	);
 
-		//d2dw::CSizeF szNewContent(m_pWnd->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), e.NewString, rcContent.Width()));
-		//d2dw::CRectF rcNewContent(szNewContent);
-		//rcNewContent.InflateRect(*(m_pProp->Padding));
-		//rcNewContent.InflateRect(m_pProp->Line->Width * 0.5f);
-		//CRect rcNewClient(m_pWnd->GetDirectPtr()->Dips2Pixels(rcNewContent));
-
-		//if (rcNewClient.Height() > rcClient.Height()) {
-		//	CRect rc;
-		//	::GetWindowRect(m_pWnd->m_hWnd, &rc);
-		//	CPoint pt(rc.TopLeft());
-		//	::ScreenToClient(::GetParent(m_pWnd->m_hWnd), &pt);
-		//	::MoveWindow(m_pWnd->m_hWnd, pt.x, pt.y, rc.Width(), rcNewClient.Height(), TRUE);
-		//}
-
-		m_changed(e.NewString);
-
-
-		});
+	InitTSF();
 }
-
-
+/**************/
+/* destructor */
+/**************/
 D2DTextbox::~D2DTextbox()
 {
 	UninitTSF();
-}
-
-void D2DTextbox::OnCreate(const CreateEvent& e)
-{
-	InitTSF();
-}
-
-void D2DTextbox::OnClose(const CloseEvent& e)
-{
-	m_final(m_text);
-	delete this;
-}
-
-
-void D2DTextbox::OnPaint(const PaintEvent& e)
-{
-	//PaintBackground
-	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetClientRect());
-	//PaintLine
-	e.WndPtr->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->EditLine), GetClientRect());
-	//PaintContent
-	Render();
-	m_pWnd->Invalidate();
-}
-
-void D2DTextbox::OnKeyDown(const KeyDownEvent& e)
-{
-	bool heldShift = (GetKeyState(VK_SHIFT) & 0x80) != 0;
-	bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
-
-	int nSelStart;
-	int nSelEnd;
-	switch (e.Char) {
-	case VK_LEFT:
-		if (heldShift) {
-			nSelStart = GetSelectionStart();
-			nSelEnd = GetSelectionEnd();
-			if (nSelStart > 0) {
-				if (nSelStart == nSelEnd)
-					m_isSelTrail = false;
-
-				if (m_isSelTrail)
-					MoveSelection(nSelStart, nSelEnd - 1, true);
-				else
-					MoveSelection(nSelStart - 1, nSelEnd, false);
-			}
-		}
-		else {
-			MoveSelectionPrev();
-		}
-		break;
-
-	case VK_RIGHT:
-		if (heldShift) {
-			nSelStart = GetSelectionStart();
-			nSelEnd = GetSelectionEnd();
-
-			if (nSelStart == nSelEnd)
-				m_isSelTrail = true;
-
-			if (m_isSelTrail)
-				MoveSelection(nSelStart, nSelEnd + 1, true);
-			else
-				MoveSelection(nSelStart + 1, nSelEnd, false);
-		}
-		else {
-			MoveSelectionNext();
-		}
-		break;
-
-	case VK_UP:
-		MoveSelectionUpDown(TRUE, heldShift);
-		break;
-
-	case VK_DOWN:
-		MoveSelectionUpDown(FALSE, heldShift);
-		break;
-
-	case VK_HOME:
-		MoveSelectionToLineFirstEnd(TRUE, heldShift);
-		break;
-
-	case VK_END:
-		MoveSelectionToLineFirstEnd(FALSE, heldShift);
-		break;
-
-	case VK_DELETE:
-		nSelStart = GetSelectionStart();
-		nSelEnd = GetSelectionEnd();
-		if (nSelStart == nSelEnd) {
-			DeleteAtSelection(FALSE);
-		}
-		else {
-			DeleteSelection();
-		}
-
-		break;
-
-	case VK_BACK:
-		nSelStart = GetSelectionStart();
-		nSelEnd = GetSelectionEnd();
-		if (nSelStart == nSelEnd) {
-			DeleteAtSelection(TRUE);
-		}
-		else {
-			DeleteSelection();
-		}
-
-		break;
-	case VK_ESCAPE:
-		nSelEnd = GetSelectionEnd();
-		MoveSelection(nSelEnd, nSelEnd);
-		break;
-	case 'C':
-		(heldControl && Clipboard(m_pWnd->m_hWnd, L'C') ? 1 : 0);
-		break;
-	case 'X':
-		(heldControl && Clipboard(m_pWnd->m_hWnd, L'C') ? 1 : 0);
-		if (m_selEnd > m_selStart)
-		{
-			m_text.notify_erase(m_selStart, m_selEnd - m_selStart);
-			m_selEnd = m_selStart;
-		}
-		break;
-	case 'V':
-		(heldControl && Clipboard(m_pWnd->m_hWnd, L'V') ? 1 : 0);
-		break;
-	case 'Z':
-		break;
-	case VK_INSERT:
-		(heldShift && Clipboard(m_pWnd->m_hWnd, L'V') ? 1 : 0);
-		break;
-	case VK_RETURN:
-		InsertAtSelection(L"\r\n");
-		break;
-	case VK_TAB:
-		InsertAtSelection(L"\t");
-		break;
-
-	default:
-		break;
-
-	}
-	bRecalc_ = true;
-	m_pWnd->PostUpdate(Updates::Invalidate);
-}
-
-void D2DTextbox::OnLButtonDown(const LButtonDownEvent& e)
-{
-	m_selDragStart = (UINT)-1;
-
-	if (MoveSelectionAtPoint(m_pWnd->GetDirectPtr()->Pixels2Dips(e.Point))) {
-		InvalidateRect();
-		m_selDragStart = GetSelectionStart();
-	}
-	else {
-		int end = m_selEnd;
-		MoveSelection(end, end, true);
-
-	}
-	m_pWnd->PostUpdate(Updates::Invalidate);
-}
-
-void D2DTextbox::OnLButtonUp(const LButtonUpEvent& e)
-{
-	UINT nSelStart = GetSelectionStart();
-	UINT nSelEnd = GetSelectionEnd();
-
-	if (MoveSelectionAtPoint(m_pWnd->GetDirectPtr()->Pixels2Dips(e.Point))) {
-		UINT nNewSelStart = GetSelectionStart();
-		UINT nNewSelEnd = GetSelectionEnd();
-
-		auto bl = true;
-		if (nNewSelStart < m_selDragStart)
-			bl = false;
-
-		MoveSelection((std::min)(nSelStart, nNewSelStart), (std::max)(nSelEnd, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
-		InvalidateRect();
-	}
-	m_pWnd->PostUpdate(Updates::Invalidate);
-}
-
-void D2DTextbox::OnMouseMove(const MouseMoveEvent& e)
-{
-	if (e.Flags & MK_LBUTTON) {
-		if (MoveSelectionAtPoint(m_pWnd->GetDirectPtr()->Pixels2Dips(e.Point))) {
-			UINT nNewSelStart = GetSelectionStart();
-			UINT nNewSelEnd = GetSelectionEnd();
-
-			auto bl = true;
-			if (nNewSelStart < m_selDragStart)
-				bl = false;
-
-			MoveSelection((std::min)(m_selDragStart, nNewSelStart), (std::max)(m_selDragStart, nNewSelEnd), bl); // (nNewSelStart>_uSelDragStart));
-			InvalidateRect();
-		}
-	}
-	m_pWnd->PostUpdate(Updates::Invalidate);
-}
-
-void D2DTextbox::OnChar(const CharEvent& e)
-{
-	bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
-
-	if (heldControl) {
-		return;
-	}
-
-	// normal charcter input. not TSF.
-	if (e.Char >= L' ' || (e.Char == L'\r' && !m_isSingleLine)) {
-		if (e.Char < 256) {
-			WCHAR wc[] = { static_cast<WCHAR>(e.Char), '\0' };
-			this->InsertAtSelection(wc);
-			//InvalidateRect();
-		}
-		else {
-		}
-	}
-	m_pWnd->PostUpdate(Updates::Invalidate);
-}
-
-//void D2DTextbox::OnKillFocus(const KillFocusEvent& e)
-//{
-//	m_setter(m_text);
-//	OnClose(CloseEvent(nullptr, NULL, NULL));
-//}
-
-
-BOOL D2DTextbox::Clipboard( HWND hwnd, TCHAR ch )
-{
-//	if ( !OpenClipboard( hwnd ) ) return FALSE;
-	
-	if ( ch == L'C' ) // copy
-	{
-		int SelLen = m_selEnd-m_selStart;
-		if (SelLen > 0 )
-		{
-			std::wstring strCopy = m_text.substr(m_selStart, SelLen);
-
-			HGLOBAL hGlobal = ::GlobalAlloc(GHND | GMEM_SHARE, (strCopy.size() + 1) * sizeof(wchar_t));
-			wchar_t* strMem = (wchar_t*)::GlobalLock(hGlobal);
-			::GlobalUnlock(hGlobal);
-
-			if (strMem != NULL) {
-				::wcscpy_s(strMem, strCopy.size() + 1, strCopy.c_str());
-				CClipboard clipboard;
-				if (clipboard.Open(m_pWnd->m_hWnd) != 0) {
-					clipboard.Empty();
-					clipboard.SetData(CF_UNICODETEXT, hGlobal);
-					clipboard.Close();
-				}
-			}
-		}
-		else
-		{
-			CClipboard clipboard;
-			if (clipboard.Open(m_pWnd->m_hWnd) != 0) {
-				clipboard.Empty();
-				clipboard.SetData(CF_UNICODETEXT, NULL);
-				clipboard.Close();
-			}
-		}
-	}
-	else if ( ch == L'V' ) // paste
-	{
-		CClipboard clipboard;
-		if (clipboard.Open(m_pWnd->m_hWnd) != 0) {
-			HANDLE h = clipboard.GetData(CF_UNICODETEXT);
-			if (h) {
-				LPWSTR s1a = (LPWSTR)GlobalLock(h);
-				auto s1b = FilterInputString(s1a, lstrlen(s1a));
-
-				UINT s1 = m_selStart;
-				UINT e1 = m_selEnd;
-
-
-				//			UINT rcnt;
-				m_text.notify_replace(m_selStart, m_selEnd - m_selEnd, s1b);
-				m_selEnd += s1b.length();
-				m_selStart = m_selEnd;
-
-				GlobalUnlock(h);
-				bRecalc_ = true;
-			}
-			clipboard.Close();
-		}
-	}	
-	return TRUE;
-
-}
-
-std::wstring D2DTextbox::FilterInputString( LPCWSTR s, UINT len )
-{
-	// \n->\r or \r\n->\r
-	WCHAR* cb = new WCHAR[len+1];
-	WCHAR* p = cb;
-	for(UINT i = 0; i < len; i++ )
-	{
-		if ( s[i] == '\r' && s[i+1] == '\n' )
-		{				
-			*p++ = '\r';
-			i++;
-		}
-		else if ( s[i] == '\n' )
-			*p++ = '\r';
-		else
-			*p++ = s[i];
-	}
-	*p = 0;
-
-	std::wstring r = cb;
-	delete [] cb;
-
-	return r;
-}
-
-void D2DTextbox::SetText(LPCWSTR str1)
-{
-	m_text = str1;
-	m_selStart = 0;
-	m_selEnd = m_text.size();
-	bRecalc_ = true;
-}
-
-d2dw::CRectF D2DTextbox::GetClientRect() const
-{
-	return m_pCell->GetEditRect();
-	//CRect rcClient;
-	//::GetClientRect(m_pWnd->m_hWnd, &rcClient);
-	//return m_pWnd->GetDirectPtr()->Pixels2Dips(rcClient);
-}
-
-d2dw::CRectF D2DTextbox::GetContentRect() const
-{
-	d2dw::CRectF rcContent(GetClientRect());
-	rcContent.DeflateRect(m_pProp->Line->Width*0.5f);
-	rcContent.DeflateRect(*(m_pProp->Padding));
-	return rcContent;
-}
-
-void D2DTextbox::DrawCaret(const d2dw::CRectF& rc)
-{
-	QueryPerformanceCounter(&m_gtm);
-
-	float zfps = (float)(m_gtm.QuadPart - m_pregtm.QuadPart) / (float)m_frequency.QuadPart;
-
-	if (zfps > 0.5f) {
-		m_pregtm = m_gtm;
-		m_bCaret = !m_bCaret;
-	} else if(m_bCaret){
-		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-		m_pWnd->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, rc);
-		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-	}
 }
 
 void D2DTextbox::InitTSF()
@@ -508,258 +156,356 @@ void D2DTextbox::UninitTSF()
 	}
 }
 
-void D2DTextbox::MoveSelection(int nSelStart, int nSelEnd, bool bTrail)
+
+void D2DTextbox::MoveCaret(const int& newPos)
 {
-	if (nSelEnd < nSelStart)
-		std::swap(nSelStart, nSelEnd);
+	m_carets.notify_set(
+		std::get<caret::CurCaret>(m_carets), 
+		newPos,
+		newPos,
+		newPos,
+		newPos);
 
-	int nTextLength = (int)m_text.size();
-	if (nSelStart >= nTextLength)
-		nSelStart = nTextLength;
-
-	if (nSelEnd >= nTextLength)
-		nSelEnd = nTextLength;
-
-	m_selStart = nSelStart;
-	m_selEnd = nSelEnd;
-
-	m_isSelTrail = bTrail;
-
-	m_pTextStore->OnSelectionChange();
-
-	QueryPerformanceCounter(&m_pregtm);
-	m_bCaret = true;
+	ResetCaret();
 }
 
-void D2DTextbox::MoveSelectionNext()
+void D2DTextbox::MoveCaretWithShift(const int& newPos)
 {
-	int nTextLength = (int)m_text.size();
+	m_carets.notify_set(
+		std::get<caret::CurCaret>(m_carets),
+		newPos,
+		std::get<caret::AncCaret>(m_carets),
+		(std::min)(std::get<caret::AncCaret>(m_carets), newPos),
+		(std::max)(std::get<caret::AncCaret>(m_carets), newPos));
 
-	int zCaretPos = (m_isSelTrail ? m_selEnd : m_selStart);
-	zCaretPos = (std::min)(nTextLength, zCaretPos + 1); // 1:次の文字
-
-	m_selStart = m_selEnd = zCaretPos;
-	m_pTextStore->OnSelectionChange();
-
-	QueryPerformanceCounter(&m_pregtm);
-	m_bCaret = true;
+	ResetCaret();
 }
 
-void D2DTextbox::MoveSelectionPrev()
+void D2DTextbox::MoveSelection(const int& selFirst, const int& selLast)
 {
-	int zCaretPos = (m_isSelTrail ? m_selEnd : m_selStart);
-	zCaretPos = (std::max)(0, zCaretPos - 1);
+	m_carets.notify_set(
+		std::get<caret::CurCaret>(m_carets),
+		selLast,
+		selFirst,
+		selFirst,
+		selLast);
 
-	m_selEnd = m_selStart = zCaretPos;
-	m_pTextStore->OnSelectionChange();
-
-	QueryPerformanceCounter(&m_pregtm);
-	m_bCaret = true;
+	ResetCaret();
 }
 
-BOOL D2DTextbox::MoveSelectionAtPoint(const d2dw::CPointF& pt)
+/**************/
+/* UI Message */
+/**************/
+void D2DTextbox::OnClose(const CloseEvent& e)
 {
-	BOOL bRet = FALSE;
-	int nSel = (int)CharPosFromPoint(pt);
-	if (nSel != -1) {
-		MoveSelection(nSel, nSel, true);
-		bRet = TRUE;
-	}
-	return bRet;
+	m_final(m_text);
+	delete this;
 }
 
-BOOL D2DTextbox::MoveSelectionAtNearPoint(const d2dw::CPointF& pt)
+void D2DTextbox::OnPaint(const PaintEvent& e)
 {
-	BOOL bRet = FALSE;
-	int nSel = (int)CharPosFromNearPoint(pt);
-	if (nSel != -1) {
-		MoveSelection(nSel, nSel, true);
-		bRet = TRUE;
-	}
-	return bRet;
+	//PaintBackground
+	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetClientRect());
+	//PaintLine
+	e.WndPtr->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->EditLine), GetClientRect());
+	//PaintContent
+	Render();
+	m_pWnd->Invalidate();
 }
 
-BOOL D2DTextbox::MoveSelectionUpDown(BOOL bUp, bool bShiftKey)
+void D2DTextbox::OnKeyDown(const KeyDownEvent& e)
 {
-	d2dw::CRectF rc;
+	bool shift = (::GetKeyState(VK_SHIFT) & 0x80) != 0;
+	bool ctrl = (::GetKeyState(VK_CONTROL) & 0x80) != 0;
 
-	if (bUp) {
-		if (!RectFromCharPos(m_selStart, &rc))
-			return FALSE;
-	} else {
-		if (!RectFromCharPos(m_selEnd, &rc)) {
-			//MoveSelectionNext();
-			return false;
-		}
-
-	}
-
-	d2dw::CPointF pt;
-	pt.x = rc.left;
-	if (bUp) {
-		pt.y = rc.top - ((rc.bottom - rc.top) / 2);
-		if (pt.y < 0)
-			return FALSE;
-	} else {
-		pt.y = rc.bottom + ((rc.bottom - rc.top) / 2);
-	}
-
-	UINT nSel = bUp ? m_selEnd : m_selStart;
-
-	// 文字間の場合
-	if (MoveSelectionAtPoint(pt)) {
-		if (bShiftKey) {
-			UINT nSel2 = bUp ? m_selStart : m_selEnd;
-			MoveSelection(nSel, nSel2, !bUp);
-		}
-
-		return TRUE;
-	}
-
-	// 行の最後のさらに後ろ側の場合
-	if (MoveSelectionAtNearPoint(pt)) {
-		if (bShiftKey) {
-			UINT nSel2 = bUp ? m_selStart : m_selEnd;
-			MoveSelection(nSel, nSel2, !bUp);
-		}
-
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
-BOOL D2DTextbox::MoveSelectionToLineFirstEnd(BOOL bFirst, bool bShiftKey)
-{
-	BOOL bRet = FALSE;
-	UINT nSel, nSel2;
-
-	if (bFirst) {
-		// when pushed VK_HOME
-		m_startCharPos = 0;
-		nSel2 = m_selEnd;
-		nSel = FineFirstEndCharPosInLine(m_selStart, TRUE);
-	} else {
-		// when pushed VK_END
-		m_startCharPos = 0;
-		nSel2 = m_selStart;
-		nSel = FineFirstEndCharPosInLine(m_selEnd, FALSE);
-	}
-
-	if (nSel != (UINT)-1) {
-		if (bShiftKey) {
-			MoveSelection(nSel, nSel2, true);
+	switch (e.Char) {
+	case VK_LEFT:
+	{
+		int newPos = std::clamp(std::get<caret::CurCaret>(m_carets) - 1, 0, (int)m_text.size());
+		if (shift) {
+			MoveCaretWithShift(newPos);
 		} else {
-			MoveSelection(nSel, nSel);
+			MoveCaret(newPos);
+		}
+		break;
+	}
+	case VK_RIGHT:
+	{
+		int newPos = std::clamp(std::get<caret::CurCaret>(m_carets) + 1, 0, (int)m_text.size());
+		if (shift) {
+			MoveCaretWithShift(newPos);
+		} else {
+			MoveCaret(newPos);
+		}
+		break;
+	}
+	case VK_UP:
+	{
+		auto curRect = GetCharRectFromPos(std::get<caret::CurCaret>(m_carets));
+		if (!curRect) break;
+		d2dw::CPointF newPt(curRect.value().left, curRect.value().top - curRect.value().Height() / 2);
+
+		auto newPos(GetCharPosFromPoint(newPt));
+		if (!newPos) break;
+
+		if (shift) {
+			MoveCaretWithShift(newPos.value());
+		} else {
+			MoveCaret(newPos.value());
+		}
+		break;
+	}
+	case VK_DOWN:
+	{
+		auto curRect = GetCharRectFromPos(std::get<caret::CurCaret>(m_carets));
+		if (!curRect) break;
+		d2dw::CPointF newPt(curRect.value().left, curRect.value().bottom + curRect.value().Height() / 2);
+
+		auto newPos(GetCharPosFromPoint(newPt));
+		if (!newPos) break;
+
+		if (shift) {
+			MoveCaretWithShift(newPos.value());
+		} else {
+			MoveCaret(newPos.value());
+		}
+		break;
+	}
+	case VK_HOME:
+	{
+		int newPos = std::clamp(GetFirstCharPosInLine(std::get<caret::CurCaret>(m_carets)).value(), 0, (int)m_text.size());
+		if (shift) {
+			MoveCaretWithShift(newPos);
+		} else {
+			MoveCaret(newPos);
+		}
+		break;
+	}
+	case VK_END:
+	{
+		int newPos = std::clamp(GetLastCharPosInLine(std::get<caret::CurCaret>(m_carets)).value(), 0, (int)m_text.size());
+		if (shift) {
+			MoveCaretWithShift(newPos);
+		} else {
+			MoveCaret(newPos);
+		}
+		break;
+	}
+	case VK_DELETE:
+	{
+		if (std::get<caret::SelBegin>(m_carets) == std::get<caret::SelEnd>(m_carets)) {
+			if (std::get<caret::CurCaret>(m_carets) < (int)m_text.size()) {
+				m_text.notify_erase(std::get<caret::CurCaret>(m_carets), 1);
+			}
+		} else {
+			m_text.notify_erase(std::get<caret::SelBegin>(m_carets), std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets));
+			MoveCaret(std::get<caret::SelBegin>(m_carets));
+		}
+		break;
+	}
+	case VK_BACK:
+	{
+		if (std::get<caret::SelBegin>(m_carets) == std::get<caret::SelEnd>(m_carets)) {
+			if (std::get<caret::CurCaret>(m_carets) > 0) {
+				m_text.notify_erase(std::get<caret::CurCaret>(m_carets) - 1, 1);
+				MoveCaret(std::get<caret::CurCaret>(m_carets) - 1);
+			}
+
+		} else {
+			m_text.notify_erase(std::get<caret::SelBegin>(m_carets), std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets));
+			MoveCaret(std::get<caret::SelBegin>(m_carets));
 		}
 
-		bRet = TRUE;
+		break;
 	}
+	//case VK_ESCAPE:
+	//	break;
+	case 'C':
+	{
+		if (ctrl) {
+			CopySelectionToClipboard();
+		}
+		break;
+	}
+	case 'X':
+	{
+		if (ctrl) {
+			CopySelectionToClipboard();
+			m_text.notify_erase(std::get<caret::SelBegin>(m_carets), std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets));
+			MoveCaret(std::get<caret::SelBegin>(m_carets));
+		}
+		break;
+	}
+	case 'V':
+	case VK_INSERT:
+	{
+		if (ctrl) {
+			PasteFromClipboard();
+		}
+		break;
+	}
+	case VK_RETURN:
+		InsertAtSelection(L"\r\n");
+		break;
+	case VK_TAB:
+		InsertAtSelection(L"\t");
+		break;
 
+	default:
+		break;
 
-	return bRet;
+	}
 }
 
-void D2DTextbox::InvalidateRect()
+void D2DTextbox::OnLButtonDown(const LButtonDownEvent& e)
 {
-	bRecalc_ = true;
+	d2dw::CPointF newPt(m_pWnd->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto newPos(GetCharPosFromPoint(newPt));
+	if (!newPos) return;
+
+	if (GetKeyState(VK_SHIFT) & 0x8000) {
+		MoveCaretWithShift(newPos.value());
+	} else {
+		MoveCaret(newPos.value());
+	}
+}
+
+void D2DTextbox::OnMouseMove(const MouseMoveEvent& e)
+{
+	if (e.Flags & MK_LBUTTON) {
+		d2dw::CPointF newPt(m_pWnd->GetDirectPtr()->Pixels2Dips(e.Point));
+		auto newPos(GetCharPosFromPoint(newPt));
+		if (!newPos) return;
+
+		MoveCaretWithShift(newPos.value());
+	}
+}
+
+void D2DTextbox::OnChar(const CharEvent& e)
+{
+	bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
+
+	if (heldControl) {
+		return;
+	}
+
+	// normal character input. not TSF.
+	if (e.Char >= L' ' || e.Char == L'\r') {
+		if (e.Char < 256) {
+			WCHAR wc[] = { static_cast<WCHAR>(e.Char), '\0' };
+			InsertAtSelection(wc);
+		}
+		else {
+		}
+	}
+}
+
+
+bool D2DTextbox::CopySelectionToClipboard()
+{
+	int selLen = std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets);
+	if (selLen > 0) {
+		std::wstring strCopy = m_text.substr(std::get<caret::SelBegin>(m_carets), selLen);
+
+		HGLOBAL hGlobal = ::GlobalAlloc(GHND | GMEM_SHARE, (strCopy.size() + 1) * sizeof(wchar_t));
+		wchar_t* strMem = (wchar_t*)::GlobalLock(hGlobal);
+		::GlobalUnlock(hGlobal);
+
+		if (strMem != NULL) {
+			::wcscpy_s(strMem, strCopy.size() + 1, strCopy.c_str());
+			if (CClipboard clipboard; clipboard.Open(m_pWnd->m_hWnd) != 0) {
+				clipboard.Empty();
+				clipboard.SetData(CF_UNICODETEXT, hGlobal);
+			}
+		}
+	} else {
+		if (CClipboard clipboard; clipboard.Open(m_pWnd->m_hWnd) != 0) {
+			clipboard.Empty();
+			clipboard.SetData(CF_UNICODETEXT, NULL);
+			clipboard.Close();
+		}
+	}
+	return true;
+}
+
+bool D2DTextbox::PasteFromClipboard()
+{
+	if (CClipboard clipboard; clipboard.Open(m_pWnd->m_hWnd) != 0) {
+		HANDLE hGlobal = clipboard.GetData(CF_UNICODETEXT);
+		if (hGlobal) {
+			std::wstring str((LPWSTR)GlobalLock(hGlobal));
+			//str = FilterInputString(str);
+			m_text.notify_replace(std::get<caret::SelBegin>(m_carets), std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets), str);
+			MoveCaret(std::get<caret::CurCaret>(m_carets) + str.size());
+			GlobalUnlock(hGlobal);
+		}
+	}
+	return true;
+}
+
+d2dw::CRectF D2DTextbox::GetClientRect() const
+{
+	return m_pCell->GetEditRect();
+}
+
+d2dw::CRectF D2DTextbox::GetContentRect() const
+{
+	d2dw::CRectF rcContent(GetClientRect());
+	rcContent.DeflateRect(m_pProp->Line->Width*0.5f);
+	rcContent.DeflateRect(*(m_pProp->Padding));
+	return rcContent;
+}
+
+void D2DTextbox::ResetCaret()
+{
+	QueryPerformanceCounter(&m_pregtm);
+	m_bCaret = true;
+}
+
+void D2DTextbox::DrawCaret(const d2dw::CRectF& rc)
+{
+	QueryPerformanceCounter(&m_gtm);
+
+	float zfps = (float)(m_gtm.QuadPart - m_pregtm.QuadPart) / (float)m_frequency.QuadPart;
+
+	if (zfps > 0.5f) {
+		m_pregtm = m_gtm;
+		m_bCaret = !m_bCaret;
+	} else if(m_bCaret){
+		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+		m_pWnd->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, rc);
+		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+	}
 }
 
 void D2DTextbox::CancelEdit()
 {
-	SetText(m_strInit.c_str());
+	m_text.notify_assign(m_strInit);
+	m_carets.notify_set(std::get<caret::CurCaret>(m_carets), m_text.size(), m_text.size(), m_text.size(), m_text.size());
 }
 
 BOOL D2DTextbox::InsertAtSelection(LPCWSTR psz)
 {
-	bRecalc_ = true;
-
-	LONG acpOldend = m_selEnd;
-
-	m_text.notify_replace(m_selStart, m_selEnd - m_selStart, psz);
-	m_selStart += lstrlen(psz);
-	m_selEnd = m_selStart;
-
-	m_pTextStore->OnTextChange(m_selStart, acpOldend, m_selEnd);
-	m_pTextStore->OnSelectionChange();
+	m_text.notify_replace(std::get<caret::SelBegin>(m_carets), std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets), psz);
+	MoveCaret(std::get<caret::CurCaret>(m_carets) + lstrlen(psz));
 	return TRUE;
 }
 
-BOOL D2DTextbox::DeleteAtSelection(BOOL fBack)
-{
-	bRecalc_ = true;
-
-	if (!fBack && (m_selEnd < (int)m_text.size())) {
-		m_text.notify_erase(m_selEnd, 1);
-
-		m_pTextStore->OnTextChange(m_selEnd, m_selEnd + 1, m_selEnd);
-	}
-
-	if (fBack && (m_selStart > 0)) {
-		m_text.notify_erase(m_selStart - 1, 1);
-
-		m_selStart--;
-		m_selEnd = m_selStart;
-
-		m_pTextStore->OnTextChange(m_selStart, m_selStart + 1, m_selStart);
-		m_pTextStore->OnSelectionChange();
-	}
-
-	return TRUE;
-}
-
-BOOL D2DTextbox::DeleteSelection()
-{
-	bRecalc_ = true;
-
-	LONG acpOldEnd = m_selEnd;
-	m_text.notify_erase(m_selStart, m_selEnd - m_selStart);
-	m_selEnd = m_selStart;
-
-	m_pTextStore->OnTextChange(m_selStart, acpOldEnd, m_selStart);
-	m_pTextStore->OnSelectionChange();
-
-	return TRUE;
-}
-
-void D2DTextbox::ClearText() 
+void D2DTextbox::ClearText()
 {
 	m_text.notify_clear();
-	m_selStart = m_selEnd = 0;
+	MoveCaret(0);
 }
-
-
-//void D2DTextbox::OnTextChange(const std::wstring& text)
-//
-//{
-//	d2dw::CRectF rcClient(GetClientRect());
-//	d2dw::CRectF rcContent(GetContentRect());
-//
-//	d2dw::CSizeF szNewContent(m_pWnd->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), text, rcContent.Width()));
-//	d2dw::CRectF rcNewContent(szNewContent);
-//	rcNewContent.InflateRect(*(m_pProp->Padding));
-//	rcNewContent.InflateRect(m_pProp->Line->Width*0.5f);
-//	CRect rcNewClient(m_pWnd->GetDirectPtr()->Dips2Pixels(rcNewContent));
-//
-//	if (rcNewClient.Height() > rcClient.Height()) {
-//		CRect rc;
-//		::GetWindowRect(m_pWnd->m_hWnd, &rc);
-//		CPoint pt(rc.TopLeft());
-//		::ScreenToClient(::GetParent(m_pWnd->m_hWnd), &pt);
-//		::MoveWindow(m_pWnd->m_hWnd, pt.x, pt.y, rc.Width(), rcNewClient.Height(), TRUE);
-//	}
-//
-//}
 
 void D2DTextbox::Render()
 {
-	if (bRecalc_) {
+	if (m_recalc) {
 		Layout();
-		bRecalc_ = false;
+		m_recalc = false;
 	}
 
-	int nSelStart = (int)m_selStart - m_startCharPos;
-	int nSelEnd = (int)m_selEnd - m_startCharPos;
+	int nSelStart = (int)std::get<caret::SelBegin>(m_carets);
+	int nSelEnd = (int)std::get<caret::SelEnd>(m_carets);
 
 	d2dw::CRectF rc(GetContentRect());
 
@@ -768,7 +514,8 @@ void D2DTextbox::Render()
 	// Render selection,caret
 	d2dw::CRectF rcSelCaret(rc.left, rc.top, rc.left + 1.0f, rc.top + (float)nLineHeight_);
 
-	CaretRect xcaret(m_isSelTrail);
+	bool isSelTrail = std::get<caret::SelEnd>(m_carets) < std::get<caret::CurCaret>(m_carets);
+	CaretRect xcaret(isSelTrail);
 
 	if (nLineCnt_) {
 
@@ -793,7 +540,7 @@ void D2DTextbox::Render()
 						m_pWnd->GetDirectPtr()->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)), m_lineInfos[r].CharInfos[j].rc);
 					}
 
-					bool blast = m_isSelTrail;
+					bool blast = isSelTrail;
 
 					if (blast) {
 						rcSelCaret = m_lineInfos[r].CharInfos[nSelEndInLine - 1].rc;
@@ -836,7 +583,7 @@ void D2DTextbox::Render()
 
 			// キャレット表示位置が確定
 			if (xcaret.IsComplete(r)) {
-				if (m_isSelTrail)
+				if (isSelTrail)
 					break;
 
 			}
@@ -989,39 +736,64 @@ static bool PtInRectRightSide(const d2dw::CRectF& rc, const d2dw::CPointF& pt)
 	return (rc.top <= pt.y && pt.y <= rc.bottom && rc.right <= pt.x);
 }
 
-
-int D2DTextbox::CharPosFromPoint(const d2dw::CPointF& pt)
+std::vector<d2dw::CRectF> D2DTextbox::GetCharRects()
 {
+	d2dw::CRectF contentRect(GetContentRect());
+	std::vector<d2dw::CRectF> charRects(m_pWnd->GetDirectPtr()->CalcCharRects(*(m_pProp->Format), m_text, contentRect.Size()));
+	std::for_each(charRects.begin(), charRects.end(), [offset = contentRect.LeftTop()](d2dw::CRectF& rc) {rc.OffsetRect(offset); });
+	charRects.emplace_back(charRects.back().right, charRects.back().top, contentRect.right, contentRect.bottom);
+	return charRects;
+}
 
-	for (UINT r = 0; r < nLineCnt_; r++) {
-		// 行内
-		for (int j = 0; j < m_lineInfos[r].nCnt; j++) {
-			d2dw::CRectF& rc = m_lineInfos[r].CharInfos[j].rc;
+std::optional<d2dw::CRectF> D2DTextbox::GetCharRectFromPos(const int& pos)
+{
+	if ((pos < 0) || ((int)m_text.size() < pos)) {
+		return std::nullopt;
+	} else {
+		return std::make_optional(GetCharRects()[pos]);
+	}
+}
 
-			if (rc.PtInRect(pt) || (pt.x == 0 && rc.left == 0 && rc.right == 0 && rc.top <= pt.y && pt.y <= rc.bottom)) {
-				FLOAT nWidth = m_lineInfos[r].CharInfos[j].GetWidth();
-				if (pt.x > m_lineInfos[r].CharInfos[j].rc.left + (nWidth * 3 / 4)) {
-					return m_lineInfos[r].nPos + j + 1 + StarCharPos_;
-				}
-				return m_lineInfos[r].nPos + j + StarCharPos_;
-			}
-		}
+std::optional<int> D2DTextbox::GetCharPosFromPoint(const d2dw::CPointF& pt)
+{
+	std::vector<d2dw::CRectF> charRects(GetCharRects());
+	auto iter = std::find_if(charRects.begin(), charRects.end(),
+		[pt](const d2dw::CRectF& rc)->bool {
+			return rc.left <= pt.x && pt.x < rc.right &&
+				rc.top <= pt.y && pt.y < rc.bottom;
+		});
+	if (iter == charRects.end()) {
+		return std::nullopt;
+	} else {
+		return std::make_optional(std::distance(charRects.begin(), iter));
+	}
+}
 
-		// 行端
-		{
-			if (r == 1) {
-				r = 1;
-			}
-
-			int j = m_lineInfos[r].nCnt;
-			d2dw::CRectF& rc = m_lineInfos[r].CharInfos[j].rc;
-			if (PtInRectRightSide(rc, pt))
-				return m_lineInfos[r].nPos + j + StarCharPos_;
+std::optional<int> D2DTextbox::GetFirstCharPosInLine(const int& pos)
+{
+	std::vector<d2dw::CRectF> charRects(GetCharRects());
+	d2dw::CRectF curRect(charRects[pos]);
+	for (auto i = pos - 1; i > 0; i--) {
+		if (charRects[i].top != curRect.top) {
+			return std::make_optional(i + 1);
 		}
 	}
-
-	return -1;
+	return std::make_optional(0);
 }
+
+std::optional<int> D2DTextbox::GetLastCharPosInLine(const int& pos)
+{
+	std::vector<d2dw::CRectF> charRects(GetCharRects());
+	d2dw::CRectF curRect(charRects[pos]);
+	for (auto i = pos + 1; i < (int)charRects.size(); i++) {
+		if (charRects[i].top != curRect.top) {
+			return std::make_optional(i);
+		}
+	}
+	return std::make_optional((int)charRects.size());
+
+}
+
 
 int D2DTextbox::CharPosFromNearPoint(const d2dw::CPointF& pt)
 {
@@ -1062,29 +834,29 @@ int D2DTextbox::CharPosFromNearPoint(const d2dw::CPointF& pt)
 	return -1;
 }
 
-UINT D2DTextbox::FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst)
-{
-	if (bFirst) {
-		// 先頭列へ
-		for (UINT i = 0; i < nLineCnt_; i++) {
-			if ((m_lineInfos[i].nPos <= (int)uCurPos) && ((int)uCurPos <= m_lineInfos[i].nPos + m_lineInfos[i].nCnt)) {
-				return m_lineInfos[i].nPos;
-			}
-		}
-
-	} else {
-		// 行の最後尾
-		for (UINT i = 0; i < nLineCnt_; i++) {
-			if ((m_lineInfos[i].nPos <= (int)uCurPos) && ((int)uCurPos <= m_lineInfos[i].nPos + m_lineInfos[i].nCnt)) {
-				{
-					UINT idx = m_lineInfos[i].nPos + m_lineInfos[i].nCnt;
-					return idx;
-				}
-			}
-		}
-	}
-	return (UINT)(-1);
-}
+//UINT D2DTextbox::FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst)
+//{
+//	if (bFirst) {
+//		// 先頭列へ
+//		for (UINT i = 0; i < nLineCnt_; i++) {
+//			if ((m_lineInfos[i].nPos <= (int)uCurPos) && ((int)uCurPos <= m_lineInfos[i].nPos + m_lineInfos[i].nCnt)) {
+//				return m_lineInfos[i].nPos;
+//			}
+//		}
+//
+//	} else {
+//		// 行の最後尾
+//		for (UINT i = 0; i < nLineCnt_; i++) {
+//			if ((m_lineInfos[i].nPos <= (int)uCurPos) && ((int)uCurPos <= m_lineInfos[i].nPos + m_lineInfos[i].nCnt)) {
+//				{
+//					UINT idx = m_lineInfos[i].nPos + m_lineInfos[i].nCnt;
+//					return idx;
+//				}
+//			}
+//		}
+//	}
+//	return (UINT)(-1);
+//}
 
 
 BOOL D2DTextbox::Layout()

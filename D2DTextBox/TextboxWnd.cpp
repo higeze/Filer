@@ -13,7 +13,7 @@ LRESULT CTextboxWnd::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 	// create direct
 	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
 
-	m_pTxtbox->OnCreate(CreateEvent(this, wParam, lParam));
+	//m_pTxtbox->OnCreate(CreateEvent(this, wParam, lParam));
 
 	InvalidateRect(NULL, FALSE);
 	return 0;
@@ -100,7 +100,7 @@ LRESULT CTextboxWnd::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL
 
 LRESULT CTextboxWnd::OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pTxtbox->OnLButtonUp(LButtonUpEvent(this, wParam, lParam));
+	//m_pTxtbox->OnLButtonUp(LButtonUpEvent(this, wParam, lParam));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }

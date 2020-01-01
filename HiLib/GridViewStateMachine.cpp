@@ -95,6 +95,7 @@ struct CGridStateMachine::Machine
 			state<Edit> +event<LButtonDownEvent>[call(&CGridView::Edit_Guard_LButtonDown)] / call(&CGridView::Normal_LButtonDown) = state<Normal>,
 			state<Edit> +event<LButtonDownEvent> / call(&CGridView::Edit_LButtonDown),
 			state<Edit> +event<LButtonUpEvent> / call(&CGridView::Edit_LButtonUp),
+			state<Edit> +event<MouseMoveEvent> / call(&CGridView::Edit_MouseMove),
 			state<Edit> +event<KeyDownEvent>[call(&CGridView::Edit_Guard_KeyDown)] = state<Normal>,
 			state<Edit> +event<KeyDownEvent> / call(&CGridView::Edit_KeyDown),
 			state<Edit> +event<CharEvent> / call(&CGridView::Edit_Char),

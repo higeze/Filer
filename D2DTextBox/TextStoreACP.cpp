@@ -291,8 +291,8 @@ STDAPI CTextStore::SetSelection(ULONG ulCount, const TS_SELECTION_ACP *pSelectio
 	
 	if (ulCount > 0)
     { 
-        _pEditor->MoveSelection((int)pSelection[0].acpStart, (int)pSelection[0].acpEnd,true);
-        _pEditor->InvalidateRect();
+        _pEditor->MoveSelection((int)pSelection[0].acpStart, (int)pSelection[0].acpEnd);
+        //_pEditor->InvalidateRect();
     }
 
     return S_OK;;
@@ -377,7 +377,7 @@ STDAPI CTextStore::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, __in_ecoun
     pChange->acpOldEnd = acpEnd;
     pChange->acpNewEnd = acpStart + cch;
 
-    _pEditor->InvalidateRect();
+    //_pEditor->InvalidateRect();
     return S_OK;
 }
 
@@ -631,8 +631,8 @@ STDAPI CTextStore::InsertTextAtSelection(DWORD dwFlags, __in_ecount(cch) const W
         pChange->acpNewEnd = acpStart + cch;
     }
 
-    _pEditor->MoveSelection(acpStart, acpStart + cch,true);
-    _pEditor->InvalidateRect();
+    _pEditor->MoveSelection(acpStart, acpStart + cch);
+    //_pEditor->InvalidateRect();
     return S_OK;
 }
 

@@ -87,6 +87,22 @@ class D2DTextbox: public IBridgeTSFInterface
 public:
 	static bool AppTSFInit();
 	static void AppTSFExit();
+private:
+	enum caret
+	{
+		OldCaret = 0,
+		CurCaret,
+		AncCaret,
+		SelBegin,
+		SelEnd,
+	};
+	observable_tuple<int, int, int, int, int> m_carets;
+	observable_wstring m_text;
+	bool m_recalc = true;
+
+	LARGE_INTEGER m_frequency;
+	bool m_bCaret = false;
+	LARGE_INTEGER m_gtm, m_pregtm;
 
 public:
 	D2DTextbox(
@@ -98,28 +114,24 @@ public:
 		std::function<void(const std::wstring&)> changed,
 		std::function<void(const std::wstring&)> final);
 	~D2DTextbox();
+private:
 	void InitTSF();
 	void UninitTSF();
-
 public:
-	//LRESULT WndProc(D2DWindow* parent, UINT message, WPARAM wParam, LPARAM lParam);
-	virtual void OnCreate(const CreateEvent& e);
-	virtual void OnClose(const CloseEvent& e);
-	virtual void OnPaint(const PaintEvent& e);
-	virtual void OnKeyDown(const KeyDownEvent& e);
-	virtual void OnLButtonDown(const LButtonDownEvent& e);
-	virtual void OnLButtonUp(const LButtonUpEvent& e);
-	virtual void OnMouseMove(const MouseMoveEvent& e);
-	virtual void OnChar(const CharEvent& e);
-	//virtual void OnKillFocus(const KillFocusEvent& e);
-
 	// Getter ////////////////////////////////////////////////////
-	int GetSelectionStart() { return m_selStart; }
-	int GetSelectionEnd() { return m_selEnd; }
+	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets); }
+	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets); }
 	float GetLineHeight() { return nLineHeight_; }
 	float GetLineWidth() { return row_width_; }
 	UINT GetLineCount() { return nLineCnt_; }
 
+public:
+	virtual void OnClose(const CloseEvent& e);
+	virtual void OnPaint(const PaintEvent& e);
+	virtual void OnKeyDown(const KeyDownEvent& e);
+	virtual void OnLButtonDown(const LButtonDownEvent& e);
+	virtual void OnMouseMove(const MouseMoveEvent& e);
+	virtual void OnChar(const CharEvent& e);
 
 	// IBridgeInterface///////////////////////////////////////////
 	d2dw::CRectF GetClientRect() const;
@@ -127,45 +139,50 @@ public:
 
 	// Text Functions ////////////////////////////////////////
 	observable_wstring& GetText() { return m_text; }
-	std::wstring FilterInputString(LPCWSTR s, UINT len);
+	//std::wstring FilterInputString(LPCWSTR s, UINT len);
 private:
+	bool CopySelectionToClipboard();
+	bool PasteFromClipboard();
 
-	BOOL Clipboard(HWND hwnd, TCHAR ch);
+
+//	BOOL Clipboard(HWND hwnd, TCHAR ch);
 
 public:
 
 	// Selection ////////////////////////////////////////
-	void MoveSelection(int nSelStart, int nSelEnd, bool bTrail = true);
-	BOOL MoveSelectionAtPoint(const d2dw::CPointF& pt);
-	BOOL MoveSelectionAtNearPoint(const d2dw::CPointF& pt);
+	void MoveCaret(const int& newPos);
+	void MoveCaretWithShift(const int& newPos);
+	void MoveSelection(const int& selFirst, const int& selLast);
 	BOOL InsertAtSelection(LPCWSTR psz);
-	BOOL DeleteAtSelection(BOOL fBack);
-	BOOL DeleteSelection();
-	void SetText(LPCWSTR str);
+	//BOOL DeleteAtSelection(BOOL fBack);
+	//BOOL DeleteSelection();
+	//void SetText(LPCWSTR str);
 	void CancelEdit();
 	void ClearText();
-	void MoveSelectionNext();
-	void MoveSelectionPrev();
-	//BOOL MoveSelectionUp(bool bShiftKey)
-	BOOL MoveSelectionUpDown(BOOL bUp, bool bShiftKey);
-	BOOL MoveSelectionToLineFirstEnd(BOOL bFirst, bool bShiftKey);
 	
 
 	// Render /////////////////////////////////////
 	void Render();
+	void ResetCaret();
 	void DrawCaret(const d2dw::CRectF& rc);
 	BOOL Layout();
 
 
-	void InvalidateRect();
+	//void InvalidateRect();
 	void ClearCompositionRenderInfo();
 	BOOL AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIBUTE *pda);
 public:
-	int CharPosFromPoint(const d2dw::CPointF& pt);
+	std::vector<d2dw::CRectF> GetCharRects();
+	std::optional<d2dw::CRectF> GetCharRectFromPos(const int& pos);
+	std::optional<int> GetCharPosFromPoint(const d2dw::CPointF& pt);
+	std::optional<int> GetFirstCharPosInLine(const int& pos);
+	std::optional<int> GetLastCharPosInLine(const int& pos);
+
+
 	int CharPosFromNearPoint(const d2dw::CPointF& pt);
 	BOOL RectFromCharPos(UINT nPos, d2dw::CRectF *prc);
 
-	UINT FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst);
+	//UINT FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst);
 
 private:
 	std::wstring m_strInit;
@@ -175,7 +192,7 @@ private:
 	std::function<void(const std::wstring&)> m_setter;
 	std::function<void(const std::wstring&)> m_changed;
 	std::function<void(const std::wstring&)> m_final;
-	bool bRecalc_;
+
 
 	std::vector<LINEINFO> m_lineInfos;
 	UINT nLineCnt_;
@@ -183,18 +200,11 @@ private:
 	FLOAT row_width_;
 	int StarCharPos_;
 
-	int m_selStart = 0;
-	int m_selEnd = 0;
-	int m_startCharPos = 0;
-	observable_wstring m_text;
-	bool m_isSelTrail = true;
-	bool m_isSingleLine = false;
 
-	UINT m_selDragStart;
 
-	LARGE_INTEGER m_frequency;
-	bool m_bCaret = false;
-	LARGE_INTEGER m_gtm, m_pregtm;
+	//UINT m_selDragStart;
+
+
 
 	CComPtr<CTextEditSink> m_pTextEditSink;
 	CComPtr<CTextStore> m_pTextStore;

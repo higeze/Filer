@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <tuple>
 
 enum class NotifyVectorChangedAction
 {
@@ -39,6 +40,9 @@ struct NotifyStringChangedEventArgs
 	NotifyStringChangedAction Action;
 	std::basic_string<CharT, Traits, Allocator> NewString;
 	std::basic_string<CharT, Traits, Allocator> OldString;
+	int StartIndex = -1;
+	int OldEndIndex = -1;
+	int NewEndIndex = -1;
 };
 
 
@@ -55,11 +59,12 @@ public:
 	observable_basic_string<CharT, Traits, Allocator>& notify_assign(const std::basic_string<CharT, Traits, Allocator>& str)
 	{
 		std::basic_string<CharT, Traits, Allocator> old(*this);
-		operator=(str);
+		std::basic_string<CharT, Traits, Allocator>::operator=(str);
 		StringChanged(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Assign,
 			*this,
 			old,
+			0, (int)old.size(), (int)this->size()
 		});
 		return *this;
 	}
@@ -72,6 +77,7 @@ public:
 			NotifyStringChangedAction::Insert,
 			*this,
 			old,
+			(int)index, (int)index, (int)(index + str.size())
 		});
 		return *this;
 	}
@@ -84,6 +90,7 @@ public:
 			NotifyStringChangedAction::Erase,
 			*this,
 			old,
+			(int)index, (int)(index + count), (int)(index)
 		});
 		return *this;
 	}
@@ -96,6 +103,7 @@ public:
 			NotifyStringChangedAction::Replace,
 			*this,
 			old,
+			(int)pos, (int)(pos + count), int(pos + str.size())
 		});
 		return *this;
 	}
@@ -108,6 +116,7 @@ public:
 			NotifyStringChangedAction::Clear,
 			*this,
 			old,
+			0, (int)old.size(), 0
 		});
 	}
 };
@@ -191,7 +200,7 @@ template<typename T>
 struct NotifyChangedEventArgs
 {
 	T OldValue;
-};
+};	
 
 
 
@@ -205,7 +214,10 @@ private:
 
 public:
 	observable(){}
+	observable(const observable<T>& value) :m_value(value.m_value) {}
 	observable(const T& value) :m_value(value){}
+	observable<T>& operator=(const observable<T>& value) { m_value = value.m_value; return *this; }
+	observable<T>& operator=(const T& value){ m_value = value; return *this; }
 
 	boost::signals2::signal<void(const NotifyChangedEventArgs<T>&)> Changed;
 
@@ -237,3 +249,38 @@ std::wistream& operator>>(std::wistream& is, observable<T>& observable)
 	observable.set(value);
 	return is;
 }
+
+template<typename... Args>
+class observable_tuple:public std::tuple<Args...>
+{
+public:
+	observable_tuple(const Args& ...args) :std::tuple<Args...>(args...) {}
+
+	boost::signals2::signal<void(const NotifyChangedEventArgs<std::tuple<Args...>>&)> Changed;
+
+	void notify_set(const Args& ...args)
+	{
+		std::tuple<Args...> value = std::make_tuple(args...);
+		if (static_cast<std::tuple<Args...>>(*this) != value) {
+			std::tuple<Args...> oldValue = static_cast<std::tuple<Args...>>(*this);
+			std::tuple<Args...>::operator=(value);
+			Changed(NotifyChangedEventArgs<std::tuple<Args...>>{ oldValue });
+		}
+	}
+};
+
+//template<typename T>
+//std::wostream& operator<<(std::wostream& os, const observable<T>& observable)
+//{
+//	os << observable.get();
+//	return os;
+//}
+//
+//template <typename T>
+//std::wistream& operator>>(std::wistream& is, observable<T>& observable)
+//{
+//	T value;
+//	is >> value;
+//	observable.set(value);
+//	return is;
+//}
