@@ -145,8 +145,6 @@ private:
 	bool PasteFromClipboard();
 
 
-//	BOOL Clipboard(HWND hwnd, TCHAR ch);
-
 public:
 
 	// Selection ////////////////////////////////////////
@@ -199,11 +197,6 @@ private:
 	float nLineHeight_;
 	FLOAT row_width_;
 	int StarCharPos_;
-
-
-
-	//UINT m_selDragStart;
-
 
 
 	CComPtr<CTextEditSink> m_pTextEditSink;

@@ -329,6 +329,8 @@
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
+    <ClInclude Include="..\ToDo\ToDoGridView.h" />
+    <ClInclude Include="..\ToDo\ToDoNameColumn.h" />
     <ClInclude Include="CheckableFileGrid.h" />
     <ClInclude Include="FileIconPathCell.h" />
     <ClInclude Include="FilerGridViewBase.h" />
@@ -459,6 +461,8 @@
     <ClCompile Include="..\HiLib\ThreadSafeKnownFolderManagaer.cpp" />
     <ClCompile Include="..\HiLib\Tracker.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
+    <ClCompile Include="..\ToDo\ToDoGridView.cpp" />
+    <ClCompile Include="..\ToDo\ToDoNameColumn.cpp" />
     <ClCompile Include="FileIconPathCell.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />
     <ClCompile Include="FileIconPathColumn.cpp" />
