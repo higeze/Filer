@@ -6,6 +6,7 @@
 enum class NotifyVectorChangedAction
 {
 	Add,
+	Insert,
 	Move,
 	Remove,
 	Replace,
@@ -145,6 +146,20 @@ public:
 		});
 	}
 
+	iterator notify_insert(const_iterator position, const T& x)
+	{
+		auto ret = std::vector<T, Allocator>::insert(position, x);
+		VectorChanged(NotifyVectorChangedEventArgs<T>
+		{
+			NotifyVectorChangedAction::Insert,
+			{ x },
+			(int)std::distance((const_iterator)std::vector<T, Allocator>::begin(), position),
+			{},
+				-1
+		});
+		return ret;
+	}
+
 	iterator notify_erase(const_iterator where)
 	{
 		auto oldItem = *where;
@@ -180,7 +195,7 @@ public:
 	}
 
 
-	void notiry_clear()
+	void notify_clear()
 	{
 		clear();
 		VectorChanged(NotifyVectorChangedEventArgs<T>
@@ -191,7 +206,7 @@ public:
 				{},
 				-1
 			});
-		return std::vector::ret;
+		return;
 	}
 
 };

@@ -25,7 +25,7 @@ std::wstring CPathCell::GetString()
 d2dw::CRectF CPathCell::GetRect()const
 {
 	return d2dw::CRectF(
-		m_pSheet->ZeroPointer<ColTag, VisTag>()->GetLeft(),
+		m_pSheet->CellFirstPointer<ColTag, VisTag>()->GetLeft(),
 		m_pRow->GetTop(),
 		m_pSheet->LastPointer<ColTag, VisTag>()->GetRight(),
 		m_pRow->GetBottom());
@@ -41,7 +41,7 @@ d2dw::CSizeF CPathCell::GetFitSize(d2dw::CDirect2DWrite* pDirect)
 d2dw::CSizeF CPathCell::GetActSize(d2dw::CDirect2DWrite* pDirect)
 {
 	if(!m_bActMeasureValid){
-		auto width = m_pSheet->LastPointer<ColTag, VisTag>()->GetRight() - m_pSheet->ZeroPointer<ColTag, VisTag>()->GetLeft();
+		auto width = m_pSheet->LastPointer<ColTag, VisTag>()->GetRight() - m_pSheet->CellFirstPointer<ColTag, VisTag>()->GetLeft();
 		auto fitSize = MeasureSize(pDirect);
 		if(fitSize.width <= width){
 			m_actSize.width = width;
@@ -59,7 +59,7 @@ d2dw::CSizeF CPathCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* p
 {
 	//Calc Content Rect
 	d2dw::CRectF rcCenter(0,0,
-		m_pSheet->LastPointer<ColTag, VisTag>()->GetRight() - m_pSheet->ZeroPointer<ColTag, VisTag>()->GetLeft(),0);
+		m_pSheet->LastPointer<ColTag, VisTag>()->GetRight() - m_pSheet->CellFirstPointer<ColTag, VisTag>()->GetLeft(),0);
 	d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
 	//Calc Content Rect
 	std::basic_string<TCHAR> str=GetString();

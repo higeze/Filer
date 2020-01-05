@@ -434,7 +434,7 @@ public:
 	{
 		//t.clear();
 		if(auto spSheet = std::dynamic_pointer_cast<CSheet>(CSheet::Cell(pRow, pColumn))){
-			auto& rowAllDict = spSheet->GetDictionary<RowTag, AllTag>();
+			auto& rowAllDict = spSheet->GetContainer<RowTag, AllTag>();
 			auto& rowDict = rowAllDict.get<IndexTag>();
 			t.clear();
 			for(auto rowIter=rowDict.find(0);rowIter!=rowDict.end();rowIter++){

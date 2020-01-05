@@ -8,6 +8,7 @@
 #include "SheetEventArgs.h"
 #include "Row.h"
 #include "Cell.h"
+#include "observable.h"
 
 class IStateMachine;
 class IDragger;
@@ -31,9 +32,9 @@ struct SheetStateMachine;
 
 struct RowTag
 {
-	typedef std::shared_ptr<CRow> SharedPtr;
+	using SharedPtr = std::shared_ptr<CRow>;
 	typedef const CRow* Ptr;
-	typedef RowDictionary Dictionary;
+	typedef observable_vector<std::shared_ptr<CRow>> Container;
 	typedef YTag Axis;
 	typedef XTag OtherAxis;
 	typedef ColTag Other;
@@ -42,30 +43,99 @@ struct RowTag
 
 struct ColTag
 {
-	typedef std::shared_ptr<CColumn> SharedPtr;
+	using SharedPtr = std::shared_ptr<CColumn>;
 	typedef const CColumn* Ptr;
-	typedef ColumnDictionary Dictionary;
+	typedef observable_vector<std::shared_ptr<CColumn>> Container;
 	typedef XTag Axis;
 	typedef YTag OtherAxis;
 	typedef RowTag Other;
 	typedef ColumnData Data;
 };
 
-struct AllTag
-{};
+template<typename TRC>
+FLOAT Point2Coordinate(d2dw::CPointF pt)
+{ 
+	if constexpr (std::is_same_v<TRC, RowTag>) {
+		return pt.y;
+	} else if constexpr (std::is_same_v<TRC, ColTag>) {
+		return pt.x;
+	} else {
+		throw std::exception("Point2Coordinate");
+	}
+}
 
-struct VisTag
-{};
-
-struct RC
+FLOAT GetLeftTop(const std::shared_ptr<CRow>& ptr)
 {
-	RC(int row, int col) :Row(row), Col(col) {}
-	int Row;
-	int Col;
-	template<typename TRC> int Get() const { return CBand::kInvalidIndex; }
-};
-template<> inline int RC::Get<RowTag>() const { return Row; }
-template<> inline int RC::Get<ColTag>() const { return Col; }
+	return ptr->GetTop();
+}
+
+FLOAT GetLeftTop(const std::shared_ptr<CColumn>& ptr)
+{
+	return ptr->GetLeft();
+}
+
+FLOAT GetRightBottom(const std::shared_ptr<CRow>& ptr)
+{
+	return ptr->GetBottom();
+}
+
+FLOAT GetRightBottom(const std::shared_ptr<CColumn>& ptr)
+{
+	return ptr->GetRight();
+}
+
+FLOAT GetWidthHeight(const std::shared_ptr<CRow>& ptr)
+{
+	return ptr->GetHeight();
+}
+
+FLOAT GetWidthHeight(const std::shared_ptr<CColumn>& ptr)
+{
+	return ptr->GetWidth();
+}
+
+void SetWidthHeight(const std::shared_ptr<CRow>& ptr, const FLOAT height)
+{
+	return ptr->SetHeight(height);
+}
+
+void SetWidthHeight(const std::shared_ptr<CColumn>& ptr, const FLOAT width)
+{
+	return ptr->SetWidth(width);
+}
+
+void SetWidthHeightWithoutSignal(const std::shared_ptr<CRow>& ptr, const FLOAT height)
+{
+	return ptr->SetHeightWithoutSignal(height);
+}
+
+void SetWidthHeightWithoutSignal(const std::shared_ptr<CColumn>& ptr, const FLOAT width)
+{
+	return ptr->SetWidthWithoutSignal(width);
+}
+
+
+template<typename TRC>
+int Indexes2Index(const std::pair<int, int>& pair)
+{
+	if constexpr (std::is_same_v<TRC, RowTag>) {
+		return pair.first;
+	} else if constexpr (std::is_same_v<TRC, ColTag>) {
+		return pair.second;
+	} else {
+		throw std::exception("Indexes2Index");
+	}
+}
+
+//struct RC
+//{
+//	RC(int row, int col) :Row(row), Col(col) {}
+//	int Row;
+//	int Col;
+//	template<typename TRC> int Get() const { return CBand::kInvalidIndex; }
+//};
+//template<> inline int RC::Get<RowTag>() const { return Row; }
+//template<> inline int RC::Get<ColTag>() const { return Col; }
 
 //Self defined message
 const UINT WM_FILTER = RegisterWindowMessage(L"WM_FILTER");
@@ -103,13 +173,23 @@ private:
 protected:
 	std::set<Updates> m_setUpdate; // Set posted update
 
-	RowDictionary m_rowAllDictionary; // Index-Pointer All Row Dictionary
-	RowDictionary m_rowVisibleDictionary; // Index-Pointer Visible Row Dictionary
-	RowDictionary m_rowPaintDictionary; // Index-Pointer Paint Row Dictionary
+	observable_vector<std::shared_ptr<CRow>> m_allRows;
+	observable_vector<std::shared_ptr<CRow>> m_visRows;
+	observable_vector<std::shared_ptr<CRow>> m_pntRows;
+	size_t m_frozenRowCount = 0;
 
-	ColumnDictionary m_columnAllDictionary; // Index-Pointer All Column Dictionary
-	ColumnDictionary m_columnVisibleDictionary; // Index-Pointer Visible Column Dictionary
-	ColumnDictionary m_columnPaintDictionary; // Index-Pointer Paint Column Dictionary
+	observable_vector<std::shared_ptr<CColumn>> m_allCols;
+	observable_vector<std::shared_ptr<CColumn>> m_visCols;
+	observable_vector<std::shared_ptr<CColumn>> m_pntCols;
+	size_t m_frozenColumnCount = 0;
+
+	//RowDictionary m_rowAllDictionary; // Index-Pointer All Row Dictionary
+	//RowDictionary m_rowVisibleDictionary; // Index-Pointer Visible Row Dictionary
+	//RowDictionary m_rowPaintDictionary; // Index-Pointer Paint Row Dictionary
+
+	//ColumnDictionary m_columnAllDictionary; // Index-Pointer All Column Dictionary
+	//ColumnDictionary m_columnVisibleDictionary; // Index-Pointer Visible Column Dictionary
+	//ColumnDictionary m_columnPaintDictionary; // Index-Pointer Paint Column Dictionary
 
 	std::shared_ptr<HeaderProperty> m_spHeaderProperty; // HeaderProperty
 	std::shared_ptr<CellProperty> m_spFilterProperty; // FilterProperty
@@ -207,17 +287,14 @@ public:
 	virtual void UpdateRowPaintDictionary();
 	virtual void UpdateColumnPaintDictionary();
 
-	virtual void EraseColumn(std::shared_ptr<CColumn> spColumn){EraseColumnImpl(spColumn);}
-	virtual void EraseColumnImpl(std::shared_ptr<CColumn> spColumn);
-	virtual void EraseRow(CRow* pRow);
-	virtual void EraseRowNotify(CRow* pRow, bool notify = true);	virtual void EraseRows(const std::vector<CRow*>& vpRow);
+	virtual void EraseColumn(const std::shared_ptr<CColumn>& spColumn, bool notify = true);
+	virtual void EraseRow(const std::shared_ptr<CRow>& spColumn, bool notify = true);
+	virtual void EraseRows(const std::vector<std::shared_ptr<CRow>>& vpRow, bool notify = true);
 
 	virtual void MoveColumn(int colTo, std::shared_ptr<CColumn> spFromColumn){MoveImpl<ColTag>(colTo, spFromColumn);}
 
-	virtual void InsertRow(int rowVisib, std::shared_ptr<CRow> pRow);
-	virtual void InsertRowNotify(int rowVisib, std::shared_ptr<CRow> pRow, bool notify = true);
-	virtual void InsertColumn(int colTo, std::shared_ptr<CColumn> pColumn);
-	virtual void InsertColumnNotify(int colTo, std::shared_ptr<CColumn> pColumn, bool notify = true);
+	virtual void InsertRow(int rowVisib, const std::shared_ptr<CRow>& pRow, bool notify = true);
+	virtual void InsertColumn(int colTo, const std::shared_ptr<CColumn>& pColumn, bool notify = true);
 
 	virtual FLOAT GetColumnInitWidth(CColumn* pColumn);
 	virtual FLOAT GetColumnFitWidth(CColumn* pColumn);
@@ -280,8 +357,8 @@ public:
 	virtual void Filter(int colDisp, std::function<bool(const std::shared_ptr<CCell>&)> predicate);
 	virtual void ResetFilter();
 
-	Compares CheckEqualRange(RowDictionary::iterator rowBegin, RowDictionary::iterator rowEnd, ColumnDictionary::iterator colBegin, ColumnDictionary::iterator colEnd, std::function<void(CCell*, Compares)> action);
-	Compares CheckEqualRow(CRow* pRow, ColumnDictionary::iterator colBegin, ColumnDictionary::iterator colEnd, std::function<void(CCell*, Compares)> action);
+	//Compares CheckEqualRange(RowDictionary::iterator rowBegin, RowDictionary::iterator rowEnd, ColumnDictionary::iterator colBegin, ColumnDictionary::iterator colEnd, std::function<void(CCell*, Compares)> action);
+	//Compares CheckEqualRow(CRow* pRow, ColumnDictionary::iterator colBegin, ColumnDictionary::iterator colEnd, std::function<void(CCell*, Compares)> action);
 
 	//Normal
 	virtual void Normal_Paint(const PaintEvent& e);
@@ -335,93 +412,59 @@ public:
 	virtual CMenu* GetContextMenuPtr() { return m_pContextMenu; }
 
 	//Tag dispatch
-	template<typename TRC, typename TAV> TRC::template Dictionary& GetDictionary() { return nullptr; }
+	template<typename TRC, typename TAV> TRC::template Container& GetContainer() { return m_allRows; }
+	template<> inline RowTag::Container& GetContainer<RowTag, AllTag>()
+	{
+		return m_allRows;
+	}
+	template<> inline RowTag::Container& GetContainer<RowTag, VisTag>()
+	{
+		return m_visRows;
+	}
+	template<> inline RowTag::Container& GetContainer<RowTag, PntTag>()
+	{
+		return m_pntRows;
+	}
+	template<> inline ColTag::Container& GetContainer<ColTag, AllTag>()
+	{
+		return m_allCols;
+	}
+	template<> inline ColTag::Container& GetContainer<ColTag, VisTag>()
+	{
+		return m_visCols;
+	}
+	template<> inline ColTag::Container& GetContainer<ColTag, PntTag>()
+	{
+		return m_pntCols;
+	}
+
+	template<typename TRC> int GetFrozenCount() { return CBand::kInvalidIndex; }
+	template<> int GetFrozenCount<RowTag>() { return m_frozenRowCount; }
+	template<> int GetFrozenCount<ColTag>() { return m_frozenColumnCount; }
 
 	template<typename TRC, typename TAV, typename TIP>
-	auto Begin()->decltype(GetDictionary <TRC, TAV>().get<TIP>().begin())
+	auto Begin()->decltype(GetContainer<TRC, TAV>().begin())
 	{
-		return GetDictionary<TRC, TAV>().get<TIP>().begin();
+		return GetContainer<TRC, TAV>().begin();
 	}
 
 	template<typename TRC, typename TAV, typename TIP>
-	auto End()->decltype(GetDictionary <TRC, TAV>().get<TIP>().end())
+	auto End()->decltype(GetContainer<TRC, TAV>().end())
 	{
-		return GetDictionary<TRC, TAV>().get<TIP>().end();
+		return GetContainer<TRC, TAV>().end();
 	}
 
 	template<typename TRC, typename TAV>
-	auto Zero()->decltype(GetDictionary <TRC, TAV>().get<IndexTag>().begin())
+	auto CellBegin()->decltype(GetContainer <TRC, TAV>().end())
 	{
-		return GetDictionary<TRC, TAV>().get<IndexTag>().find(0);
+		return std::next(GetContainer<TRC, TAV>().begin(), GetForzenCount<TRC>());
 	}
-
-	//RowDictionary::index<IndexTag>::type::iterator RowAllBegin()
-	//{
-	//	auto& dictionary = m_rowAllDictionary.get<IndexTag>();
-	//	return dictionary.begin();
-	//}
-
-	//RowDictionary::index<IndexTag>::type::iterator RowAllZero()
-	//{
-	//	auto& dictionary = m_rowAllDictionary.get<IndexTag>();
-	//	return dictionary.find(0);
-	//}
-
-	//RowDictionary::index<IndexTag>::type::iterator RowAllEnd()
-	//{
-	//	auto& dictionary = m_rowAllDictionary.get<IndexTag>();
-	//	return dictionary.end();
-	//}
-
-	//ColumnDictionary::index<IndexTag>::type::iterator ColumnAllBegin()
-	//{
-	//	auto& dictionary = m_columnAllDictionary.get<IndexTag>();
-	//	return dictionary.begin();
-	//}
-
-	//ColumnDictionary::index<IndexTag>::type::iterator ColumnAllZero()
-	//{
-	//	auto& dictionary = m_columnAllDictionary.get<IndexTag>();
-	//	return dictionary.find(0);
-	//}
-
-	//ColumnDictionary::index<IndexTag>::type::iterator ColumnAllEnd()
-	//{
-	//	auto& dictionary = m_columnAllDictionary.get<IndexTag>();
-	//	return dictionary.end();
-	//}
-
-	//ColumnDictionary::index<IndexTag>::type::iterator ColumnVisibleBegin()
-	//{
-	//	if (m_columnVisibleDictionary.empty()) {
-	//		UpdateColumnVisibleDictionary();
-	//	}
-	//	auto& dictionary = m_columnVisibleDictionary.get<IndexTag>();
-	//	return dictionary.begin();
-	//}
-
-	//ColumnDictionary::index<IndexTag>::type::iterator ColumnVisibleZero()
-	//{
-	//	if (m_columnVisibleDictionary.empty()) {
-	//		UpdateColumnVisibleDictionary();
-	//	}
-	//	auto& dictionary = m_columnVisibleDictionary.get<IndexTag>();
-	//	return dictionary.find(0);
-	//}
-
-	//ColumnDictionary::index<IndexTag>::type::iterator ColumnVisibleEnd()
-	//{
-	//	if (m_columnVisibleDictionary.empty()) {
-	//		UpdateColumnVisibleDictionary();
-	//	}
-	//	auto& dictionary = m_columnVisibleDictionary.get<IndexTag>();
-	//	return dictionary.end();
-	//}
 
 	template<typename TRC, typename TAV> int Size()
 	{
-		return GetDictionary<TRC, TAV>().size();
+		return GetContainer<TRC, TAV>().size();
 	}
+
 	template<typename TAV> std::shared_ptr<CCell> Cell(int row, int col)
 	{
 		auto pRow = Index2Pointer<RowTag, TAV>(row);
@@ -434,62 +477,83 @@ public:
 		}
 	}
 
+
 	template<typename TRC> TRC::template SharedPtr Coordinate2Pointer(FLOAT coordinate)
 	{
 		auto ptOrigin = GetOriginPoint();
 
-		auto& visDic = GetDictionary<TRC, VisTag>().get<IndexTag>();
-		auto iter = std::upper_bound(visDic.begin(), visDic.end(), coordinate,
-			[ptOrigin](const FLOAT& c, const TRC::Data & data)->bool {
-			if (data.Index >= 0) {
-				return c<(std::max)(ptOrigin.Get<TRC::Axis>(), data.DataPtr->GetLeftTop());
-			}
-			else {
-				return c<data.DataPtr->GetLeftTop();
-			}
-		});
+		auto& visContainer = GetContainer<TRC, VisTag>();
+		auto iter = std::upper_bound(visContainer.begin(), visContainer.end(), coordinate,
+			[this, ptOrigin](const FLOAT& c, const TRC::SharedPtr& ptr)->bool {
+				if (ptr->GetIndex<VisTag>() >= GetFrozenCount<TRC>()) {
+					return c < (std::max)(Point2Coordinate<TRC>(ptOrigin), GetLeftTop(ptr));
+				} else {
+					return c < GetLeftTop(ptr);
+				}
+			});
 
 		auto prevIter = boost::prior(iter);
 
-		if (iter == visDic.begin() || (iter == visDic.end() && coordinate > prevIter->DataPtr->GetRightBottom())) {
+		if (iter == visContainer.begin() || (iter == visContainer.end() && coordinate > GetRightBottom(*prevIter))) {
 			return nullptr;
-		}
-		else {
+		} else {
 			--iter;
 		}
-		return iter->DataPtr;
+		return *iter;
 	}
-	template<typename TRC> FLOAT Point2Coordinate(d2dw::CPointF pt) { return CBand::kInvalidIndex; }
 
-	template<typename TRC, typename TAV> int Coordinate2Index(FLOAT coordinate) { return CBand::kInvalidIndex; }
-	template<typename TAV> RC Point2Indexes(d2dw::CPointF pt)
+	template<typename TRC> int Coordinate2Index(FLOAT coordinate)
 	{
-		return RC(Coordinate2Index<RowTag, TAV>(pt.y), Coordinate2Index<ColTag, TAV>(pt.x));
+		auto ptOrigin = GetOriginPoint();
+
+		auto& visContainer = GetContainer<TRC, VisTag>();
+		auto iter = std::lower_bound(visContainer.begin(), visContainer.end(), coordinate,
+			[this, ptOrigin](const typename TRC::SharedPtr& ptr, const FLOAT& rhs)->bool {
+				if (ptr->GetIndex<VisTag>() >= 0) {
+					return (std::max)(Point2Coordinate<TRC>(ptOrigin), GetRightBottom(ptr)) < rhs;
+				} else {
+					return GetRightBottom(ptr) < rhs;
+				}
+			});
+		int index = 0;
+		if (iter == visContainer.end()) {
+			index = visContainer.size();
+		} else if (iter == visContainer.begin() && GetLeftTop(*iter) > coordinate) {
+			index = (*iter)->GetIndex<VisTag>() - 1;
+		} else {
+			index = (*iter)->GetIndex<VisTag>();
+		}
+		return index;
 	}
-	template<typename TAV> std::pair<int, int> Coordinates2Indexes(d2dw::CPointF pt)
-	{ 
-		return std::make_pair(Coordinate2Index<RowTag, TAV>(pt.y), Coordinate2Index<ColTag, TAV>(pt.x));
+	template<typename TRC> int Point2Index(const d2dw::CPointF& pt)
+	{
+		return Coordinate2Index<TRC>(Point2Coordinate<TRC>(pt));
+	}
+
+	std::pair<int, int> Point2Indexes(d2dw::CPointF pt)
+	{
+		return std::make_pair(Coordinate2Index<RowTag>(pt.y), Coordinate2Index<ColTag>(pt.x));
 	}
 	template<typename TRC, typename TAV> TRC::template SharedPtr LastPointer()
 	{
-		return boost::prior(GetDictionary<TRC, TAV>().end())->DataPtr;
+		return GetContainer<TRC, TAV>().back();
 	}
-	template<typename TRC, typename TAV> TRC::template SharedPtr ZeroPointer()
+	template<typename TRC, typename TAV> TRC::template SharedPtr CellFirstPointer()
 	{
-		return GetDictionary<TRC, TAV>().find(0)->DataPtr;
+		return GetContainer<TRC, TAV>()[GetFrozenCount<TRC>()];
 	}
 	template<typename TRC, typename TAV> TRC::template SharedPtr FirstPointer()
 	{
-		return GetDictionary<TRC, TAV>().begin()->DataPtr;
+		return GetContainer<TRC, TAV>().front();
 	}
 
 	template<typename TRC, typename TAV> int Pointer2Index(TRC::template Ptr pointer)
 	{
-		auto& dic = GetDictionary<TRC, TAV>().get<PointerTag>();
+		auto& container = GetContainer<TRC, TAV>();
 
-		auto iter = dic.find(pointer);
-		if (iter != dic.end()) {
-			return iter->Index;
+		auto iter = container.find(pointer);
+		if (iter != container.end()) {
+			return iter->GetIndex<TAV>();
 		}
 		else {
 			throw std::exception("Sheet::Pointer2Index");
@@ -498,44 +562,28 @@ public:
 
 	template<typename TRC, typename TAV> TRC::template SharedPtr Index2Pointer(int index) 
 	{ 
-		auto& dic = GetDictionary<TRC, TAV>().get<IndexTag>();
+		auto& container = GetContainer<TRC, TAV>();
 
-		auto iter = dic.find(index);
-		if (iter != dic.end()) {
-			return iter->DataPtr;
-			return iter->DataPtr;
-		}
-		else {
+		if (0 <= index && index < container.size()) {
+			return container[index];
+		} else {
 			return nullptr;
 		}
 	}
 
 	template<typename TRC, typename TAV> int GetMaxIndex()
 	{
-		auto& indexDictionary = GetDictionary<TRC, TAV>().get<IndexTag>();
-		if (!indexDictionary.empty()) {
-			return boost::prior(indexDictionary.end())->Index;
-		}
-		else {
-			return CBand::kInvalidIndex;
-		}
+		return GetContainer<TRC, TAV>().size();
 	}
 
 	template<typename TRC, typename TAV> int GetMinIndex()
 	{
-		auto& indexDictionary = GetDictionary<TRC, TAV>().get<IndexTag>();
-		if (!indexDictionary.empty()) {
-			return indexDictionary.begin()->Index;
-		}
-		else {
-			return CBand::kInvalidIndex;
-		}
+		return 0;
 	}
 
 	template<typename TRC, typename TAV> std::pair<int, int> GetMinMaxIndexes()
 	{ 
-		auto& indexDictionary = GetDictionary<TRC, TAV>().get<IndexTag>();
-		return std::make_pair(indexDictionary.begin()->Index, boost::prior(indexDictionary.end())->Index);
+		return std::make_pair(GetMinIndex<TRC, TAV>(), GetMaxIndex<TRC, TAV>());
 	}
 
 	template<typename TRC> int Vis2AllIndex(int index)
@@ -553,11 +601,11 @@ public:
 	template<typename TRC> void FitBandWidth(TRC::template SharedPtr& ptr)
 	{
 		ptr->SetMeasureValid(false);
-		ptr->SetWidthHeightWithoutSignal(0.0f);
-		auto& otherDic = GetDictionary<TRC::Other, AllTag>();
-		for(const auto& other : otherDic) {
-			other.DataPtr->SetMeasureValid(false);
-			CSheet::Cell(ptr, other.DataPtr)->SetActMeasureValid(false);
+		SetWidthHeightWithoutSignal(ptr, 0.0f);
+		auto& otherContainer = GetContainer<TRC::Other, AllTag>();
+		for(const auto& otherPtr : otherContainer) {
+			otherPtr->SetMeasureValid(false);
+			CSheet::Cell(ptr, otherPtr)->SetActMeasureValid(false);
 		};
 
 		PostUpdate(Updates::Column);
@@ -567,6 +615,16 @@ public:
 	}
 
 	template<typename TRC> void Moved(CMovedEventArgs<TRC>& e) {  }
+	template<> inline void CSheet::Moved<RowTag>(CMovedEventArgs<RowTag>& e)
+	{
+		RowMoved(e);
+	}
+
+	template<> inline void CSheet::Moved<ColTag>(CMovedEventArgs<ColTag>& e)
+	{
+		ColumnMoved(e);
+	}
+
 	template<typename TRC> void Track(TRC::template SharedPtr& ptr)
 	{
 		PostUpdate(Updates::Column);//TODO
@@ -576,10 +634,10 @@ public:
 	}
 	template<typename TRC> void EndTrack(TRC::template SharedPtr& ptr)
 	{
-		auto& otherDic = GetDictionary<TRC::Other, AllTag>();
-		for (const auto& other : otherDic) {
-			other.DataPtr->SetMeasureValid(false);
-			CSheet::Cell(ptr, other.DataPtr)->OnPropertyChanged(L"size");
+		auto& otherContainer = GetContainer<TRC::Other, AllTag>();
+		for (const auto& otherPtr : otherContainer) {
+			otherPtr->SetMeasureValid(false);
+			CSheet::Cell(ptr, otherPtr)->OnPropertyChanged(L"size");
 		}
 
 		PostUpdate(Updates::Column);
@@ -618,85 +676,92 @@ public:
 		PostUpdate(Updates::Invalidate);//
 	}
 
-	template<typename TRC>
+	template<typename TRC, typename TAV = AllTag>
 	void EraseImpl(TRC::template SharedPtr erasePtr)
 	{
-		auto& ptrDictionary = GetDictionary<TRC, AllTag>().get<PointerTag>();
-		auto& idxDictionary = GetDictionary<TRC, AllTag>().get<IndexTag>();
-		auto iterPtr = ptrDictionary.find(erasePtr.get());
-		auto iterIdx = idxDictionary.find(iterPtr->Index);
-		auto eraseIdx = iterPtr->Index;
-		if (eraseIdx >= 0) {
-			//slide left
-			auto iter = boost::next(iterIdx);
-			auto end = idxDictionary.end();
-			idxDictionary.erase(iterIdx);
-			for (; iter != end; ++iter) {
-				auto newdata = *iter;
-				newdata.Index--;
-				idxDictionary.replace(iter, newdata);
-			}
+		auto& container = GetContainer<TRC, TAV>();
+		auto iter = std::find(container.begin(), container.end(), erasePtr);
+		if (iter != container.end()) {
+			container.notify_erase(iter);
 		}
-		else {
-			//slide right
-			auto iter = boost::prior(iterIdx);
-			auto end = boost::prior(idxDictionary.begin());
-			idxDictionary.erase(iterIdx);
-			for (; iter != end; --iter) {
-				auto newdata = *iter;
-				newdata.Index++;
-				idxDictionary.replace(iter, newdata);
-			}
-		}
+		//auto& ptrDictionary = GetContainer<TRC, AllTag>().get<PointerTag>();
+		//auto& idxDictionary = GetContainer<TRC, AllTag>().get<IndexTag>();
+		//auto iterPtr = ptrDictionary.find(erasePtr.get());
+		//auto iterIdx = idxDictionary.find(iterPtr->Index);
+		//auto eraseIdx = iterPtr->Index;
+		//if (eraseIdx >= 0) {
+		//	//slide left
+		//	auto iter = boost::next(iterIdx);
+		//	auto end = idxDictionary.end();
+		//	idxDictionary.erase(iterIdx);
+		//	for (; iter != end; ++iter) {
+		//		auto newdata = *iter;
+		//		newdata.Index--;
+		//		idxDictionary.replace(iter, newdata);
+		//	}
+		//}
+		//else {
+		//	//slide right
+		//	auto iter = boost::prior(iterIdx);
+		//	auto end = boost::prior(idxDictionary.begin());
+		//	idxDictionary.erase(iterIdx);
+		//	for (; iter != end; --iter) {
+		//		auto newdata = *iter;
+		//		newdata.Index++;
+		//		idxDictionary.replace(iter, newdata);
+		//	}
+		//}
 	}
 
-	template<typename TRC, typename TAV>
-	void InsertImpl(int index, TRC::template SharedPtr& pInsert)
+	template<typename TRC, typename TAV = AllTag>
+	void InsertImpl(int index, const TRC::template SharedPtr& pInsert)
 	{
-		auto& dict = GetDictionary<TRC, TAV>();
-		auto& ptrDict = dict.get<PointerTag>();
-		auto& idxDict = dict.get<IndexTag>();
+		auto& container = GetContainer<TRC, TAV>();
+		container.notify_insert(std::next(container.begin(), index), pInsert);
+		//auto& dict = GetContainer<TRC, TAV>();
+		//auto& ptrDict = dict.get<PointerTag>();
+		//auto& idxDict = dict.get<IndexTag>();
 
-		if (index >= 0) {//Plus
-			auto max = GetMaxIndex<TRC, AllTag>();
-			if (max == CBand::kInvalidIndex) {
-				index = 0;
-			}else if (index > max) {
-				index = max + 1;
-			}
-			//Slide right
-			auto iterTo = idxDict.find(index);
-			if (iterTo != idxDict.end()) {
-				auto iter = idxDict.end(); iter--;
-				auto end = iterTo; end--;
-				for (; iter != end; --iter) {
-					auto newdata = *iter;
-					newdata.Index++;
-					idxDict.replace(iter, newdata);
-				}
-			}
-		}
-		else {//Minus
-			int min = (std::min)(GetMinIndex<TRC, TAV>(), -1);
-			if (min == CBand::kInvalidIndex) {
-				index = -1;
-			}else if (index < min) {
-				index = min -1;
-			}
-			//Slide left
-			auto iterTo = idxDict.find(index);
-			if (iterTo != idxDict.end()) {
-				auto iter = idxDict.begin();
-				auto end = iterTo; end++;
-				for (; iter != end; ++iter) {
-					auto newdata = *iter;
-					newdata.Index--;
-					idxDict.replace(iter, newdata);
-				}
-			}
-		}
-		//Insert
-		dict.insert(TRC::Data(index, pInsert));
+		//if (index >= 0) {//Plus
+		//	auto max = GetMaxIndex<TRC, AllTag>();
+		//	if (max == CBand::kInvalidIndex) {
+		//		index = 0;
+		//	}else if (index > max) {
+		//		index = max + 1;
+		//	}
+		//	//Slide right
+		//	auto iterTo = idxDict.find(index);
+		//	if (iterTo != idxDict.end()) {
+		//		auto iter = idxDict.end(); iter--;
+		//		auto end = iterTo; end--;
+		//		for (; iter != end; --iter) {
+		//			auto newdata = *iter;
+		//			newdata.Index++;
+		//			idxDict.replace(iter, newdata);
+		//		}
+		//	}
+		//}
+		//else {//Minus
+		//	int min = (std::min)(GetMinIndex<TRC, TAV>(), -1);
+		//	if (min == CBand::kInvalidIndex) {
+		//		index = -1;
+		//	}else if (index < min) {
+		//		index = min -1;
+		//	}
+		//	//Slide left
+		//	auto iterTo = idxDict.find(index);
+		//	if (iterTo != idxDict.end()) {
+		//		auto iter = idxDict.begin();
+		//		auto end = iterTo; end++;
+		//		for (; iter != end; ++iter) {
+		//			auto newdata = *iter;
+		//			newdata.Index--;
+		//			idxDict.replace(iter, newdata);
+		//		}
+		//	}
+		//}
+		////Insert
+		//dict.insert(TRC::Data(index, pInsert));
 	}
 	
 	virtual void SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& cell2, bool doSelect);
@@ -704,7 +769,7 @@ public:
 	void SelectBandRange(T* pBand1, T* pBand2, bool doSelect)
 	{
 		if (!pBand1 || !pBand2)return;
-		auto& dict = GetDictionary<T::Tag, VisTag>().get<IndexTag>();
+		auto& dict = GetContainer<T::Tag, VisTag>()();
 		auto idx1 = pBand1->GetIndex<VisTag>();
 		auto idx2 = pBand2->GetIndex<VisTag>();
 		auto beg = (std::min)(idx1, idx2);
@@ -721,264 +786,254 @@ public:
  */
 protected:
 	template<class T, class U>
-	void Erase(T& dictionary, U erasePtr)
+	void Erase(T& container, U erasePtr)
 	{
-		auto& ptrDictionary = dictionary.get<PointerTag>();
-		auto& idxDictionary = dictionary.get<IndexTag>();
-		auto iterPtr=ptrDictionary.find(erasePtr);
-		auto iterIdx=idxDictionary.find(iterPtr->Index);
-		auto eraseIdx=iterPtr->Index;
-		if(eraseIdx>=0){
-			//slide left
-			auto iter=boost::next(iterIdx);
-			auto end=idxDictionary.end();
-			idxDictionary.erase(iterIdx);
-			for(;iter!=end;++iter){
-				auto newdata=*iter;
-				newdata.Index--;
-				idxDictionary.replace(iter,newdata);
-			}	
-		}else{
-			//slide right
-			auto iter=boost::prior(iterIdx);
-			auto end=boost::prior(idxDictionary.begin());
-			idxDictionary.erase(iterIdx);
-			for(;iter!=end;--iter){
-				auto newdata=*iter;
-				newdata.Index++;
-				idxDictionary.replace(iter,newdata);
-			}	
-
+		auto iter = std::find(container.begin(), container.end(), erasePtr);
+		if (iter != container.end()) {
+			container.notify_erase(iter);
 		}
+
+		//auto& ptrDictionary = dictionary.get<PointerTag>();
+		//auto& idxDictionary = dictionary.get<IndexTag>();
+		//auto iterPtr=ptrDictionary.find(erasePtr);
+		//auto iterIdx=idxDictionary.find(iterPtr->Index);
+		//auto eraseIdx=iterPtr->Index;
+		//if(eraseIdx>=0){
+		//	//slide left
+		//	auto iter=boost::next(iterIdx);
+		//	auto end=idxDictionary.end();
+		//	idxDictionary.erase(iterIdx);
+		//	for(;iter!=end;++iter){
+		//		auto newdata=*iter;
+		//		newdata.Index--;
+		//		idxDictionary.replace(iter,newdata);
+		//	}	
+		//}else{
+		//	//slide right
+		//	auto iter=boost::prior(iterIdx);
+		//	auto end=boost::prior(idxDictionary.begin());
+		//	idxDictionary.erase(iterIdx);
+		//	for(;iter!=end;--iter){
+		//		auto newdata=*iter;
+		//		newdata.Index++;
+		//		idxDictionary.replace(iter,newdata);
+		//	}	
+
+		//}
 	}
 
 	template<class T, class U>
-	void EraseSome(T& dictionary, std::vector<U> erasePtrs)
+	void EraseSome(T& container, std::vector<U> erasePtrs)
 	{
-		auto& ptrDictionary = dictionary.get<PointerTag>();
-		auto& idxDictionary = dictionary.get<IndexTag>();
+		//auto& ptrDictionary = dictionary.get<PointerTag>();
+		//auto& idxDictionary = dictionary.get<IndexTag>();
 
 		for(auto& erasePtr : erasePtrs){
-			auto iterPtr=ptrDictionary.find(erasePtr);
-			auto iterIdx=idxDictionary.find(iterPtr->Index);
-			auto eraseIdx=iterPtr->Index;
-			if(eraseIdx>=0){
-				//slide left
-				auto iter=boost::next(iterIdx);
-				auto end=idxDictionary.end();
-				idxDictionary.erase(iterIdx);
-				for(;iter!=end;++iter){
-					auto newdata=*iter;
-					newdata.Index--;
-					idxDictionary.replace(iter,newdata);
-				}	
-			}else{
-				//slide right
-				auto iter=boost::prior(iterIdx);
-				auto end=boost::prior(idxDictionary.begin());
-				idxDictionary.erase(iterIdx);
-				for(;iter!=end;--iter){
-					auto newdata=*iter;
-					newdata.Index++;
-					idxDictionary.replace(iter,newdata);
-				}	
+			Erase<T, U>(container, erasePtr);
+			//auto iterPtr=ptrDictionary.find(erasePtr);
+			//auto iterIdx=idxDictionary.find(iterPtr->Index);
+			//auto eraseIdx=iterPtr->Index;
+			//if(eraseIdx>=0){
+			//	//slide left
+			//	auto iter=boost::next(iterIdx);
+			//	auto end=idxDictionary.end();
+			//	idxDictionary.erase(iterIdx);
+			//	for(;iter!=end;++iter){
+			//		auto newdata=*iter;
+			//		newdata.Index--;
+			//		idxDictionary.replace(iter,newdata);
+			//	}	
+			//}else{
+			//	//slide right
+			//	auto iter=boost::prior(iterIdx);
+			//	auto end=boost::prior(idxDictionary.begin());
+			//	idxDictionary.erase(iterIdx);
+			//	for(;iter!=end;--iter){
+			//		auto newdata=*iter;
+			//		newdata.Index++;
+			//		idxDictionary.replace(iter,newdata);
+			//	}	
 
-			}
+			//}
 		}
 	}
 
 	template<class T>
-	void UpdateVisibleDictionary(T& orderDictionary, T& visibleDictionary)
+	void UpdateVisibleDictionary(T& allContainer, T& visContainer)
 	{
-		visibleDictionary.clear();
-
-		auto& dispDictionary = orderDictionary.get<IndexTag>();
-
-		//Insert Minus Elements
-		{
-		if(dispDictionary.find(-1)!=dispDictionary.end()){
-			int newdisp=-1;
-			//In case of reverse iterator one iterator plused. therefore it is necessary to minul.
-			for(auto iter=boost::prior(boost::make_reverse_iterator(dispDictionary.find(-1))),end=dispDictionary.rend();iter!=end;++iter){
-				if(iter->DataPtr->GetVisible()){
-					visibleDictionary.insert(T::value_type(newdisp,iter->DataPtr));
-					newdisp--;
-				}
+		visContainer.notify_clear();
+		for (auto ptr : allContainer) {
+			if (ptr->GetVisible()) {
+				visContainer.notify_push_back(ptr);
 			}
 		}
-		}
+		//auto& dispDictionary = orderDictionary.get<IndexTag>();
 
-		//Insert Plus Elements
-		{
-		int newdisp=0;
-		for(auto iter=dispDictionary.find(0),end=dispDictionary.end();iter!=end;++iter){
-			if(iter->DataPtr->GetVisible()){
-				visibleDictionary.insert(T::value_type(newdisp,iter->DataPtr));
-				newdisp++;
-			}
-		}
-		}
+		////Insert Minus Elements
+		//{
+		//if(dispDictionary.find(-1)!=dispDictionary.end()){
+		//	int newdisp=-1;
+		//	//In case of reverse iterator one iterator plused. therefore it is necessary to minul.
+		//	for(auto iter=boost::prior(boost::make_reverse_iterator(dispDictionary.find(-1))),end=dispDictionary.rend();iter!=end;++iter){
+		//		if(iter->DataPtr->GetVisible()){
+		//			visibleDictionary.insert(T::value_type(newdisp,iter->DataPtr));
+		//			newdisp--;
+		//		}
+		//	}
+		//}
+		//}
+
+		////Insert Plus Elements
+		//{
+		//int newdisp=0;
+		//for(auto iter=dispDictionary.find(0),end=dispDictionary.end();iter!=end;++iter){
+		//	if(iter->DataPtr->GetVisible()){
+		//		visibleDictionary.insert(T::value_type(newdisp,iter->DataPtr));
+		//		newdisp++;
+		//	}
+		//}
+		//}
 	}
 
-	template<class T, class U, class V>
-	void UpdatePaintDictionary(T& visibleDictionary, T& paintDictionary, FLOAT pageFirst, FLOAT pageLast, U predFirst, V predLast)
+	template<class TRC>
+	void UpdatePaintContainer(FLOAT pageFirst, FLOAT pageLast)
 	{
-		paintDictionary.clear();
+		auto& pntContainer = GetContainer<TRC, PntTag>();
+		auto& visContainer = GetContainer<TRC, VisTag>();
+		pntContainer.notify_clear();
 
-		auto& dispDictionary = visibleDictionary.get<IndexTag>();
-		//Copy Minus Elements
-		std::copy(dispDictionary.begin(),dispDictionary.find(0),std::inserter(paintDictionary,paintDictionary.end()));
+		//Copy FrozenColumns
+		auto cellBegin = std::next(visContainer.begin(), GetFrozenCount<TRC>());
+		for (auto iter = visContainer.begin(); iter != cellBegin ; ++iter) {
+			pntContainer.notify_push_back(*iter);
+		}
 		//Find Displayed Plus Elements
-		auto beginIter=std::upper_bound(dispDictionary.find(0),dispDictionary.end(),pageFirst,predFirst);
-		if(beginIter!=dispDictionary.find(0)){
+		auto beginIter=std::upper_bound(cellBegin, visContainer.end(), pageFirst,
+			[this](const FLOAT& x, const auto& ptr)->bool { return x < GetLeftTop(ptr); });
+		if(beginIter != cellBegin){
 			--beginIter;
 		}
-		auto endIter=std::lower_bound(dispDictionary.find(0),dispDictionary.end(),pageLast,predLast);
-		if(endIter!=dispDictionary.end()){
+		auto endIter = std::lower_bound(cellBegin, visContainer.end(), pageLast,
+			[this](const auto& ptr, const FLOAT& x)->bool { return x > GetRightBottom(ptr); });
+		if(endIter != visContainer.end()){
 			++endIter;
 		}
-		std::copy(beginIter,endIter,std::inserter(paintDictionary,paintDictionary.end()));
+		for (auto iter = beginIter; iter != endIter; ++iter) {
+			pntContainer.notify_push_back(*iter);
+		}
 	}
 };
 
-template<> inline RowTag::Dictionary& CSheet::GetDictionary<RowTag, AllTag>()
-{
-	return m_rowAllDictionary;
-}
-template<> inline RowTag::Dictionary& CSheet::GetDictionary<RowTag, VisTag>()
-{
-	return m_rowVisibleDictionary;
-}
-template<> inline ColTag::Dictionary& CSheet::GetDictionary<ColTag, AllTag>()
-{
-	return m_columnAllDictionary;
-}
-template<> inline ColTag::Dictionary& CSheet::GetDictionary<ColTag, VisTag>()
-{
-	return m_columnVisibleDictionary;
-}
-
-template<> inline FLOAT CSheet::Point2Coordinate<RowTag>(d2dw::CPointF pt) { return pt.y; }
-template<> inline FLOAT CSheet::Point2Coordinate<ColTag>(d2dw::CPointF pt) { return pt.x; }
-
-template<> inline int CSheet::Coordinate2Index<RowTag, AllTag>(FLOAT coordinate)
-{
-	auto ptOrigin = GetOriginPoint();
-
-	auto& dictionary = GetDictionary<RowTag, AllTag>().get<IndexTag>();
-	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
-		[ptOrigin](const RowData& rowData, const FLOAT& rhs)->bool {
-		if (rowData.Index >= 0) {
-			return (std::max)(ptOrigin.y, rowData.DataPtr->GetBottom()) < rhs;
-		}
-		else {
-			return rowData.DataPtr->GetBottom() < rhs;
-		}
-	});
-	int index = 0;
-	if (rowIter == dictionary.end()) {
-		index = boost::prior(rowIter)->Index + 1;
-	}
-	else if (rowIter == dictionary.begin() && rowIter->DataPtr->GetTop()>coordinate) {
-		index = rowIter->Index - 1;
-	}
-	else {
-		index = rowIter->Index;
-	}
-	return index;
-}
-
-template<> inline int CSheet::Coordinate2Index<RowTag, VisTag>(FLOAT coordinate)
-{
-	auto ptOrigin = GetOriginPoint();
-
-	auto& dictionary = GetDictionary<RowTag, VisTag>().get<IndexTag>();
-	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
-		[ptOrigin](const RowData& rowData, const FLOAT& rhs)->bool {
-		if (rowData.Index >= 0) {
-			return (std::max)(ptOrigin.y, rowData.DataPtr->GetBottom()) < rhs;
-		}
-		else {
-			return rowData.DataPtr->GetBottom() < rhs;
-		}
-	});
-	int index = 0;
-	if (rowIter == dictionary.end()) {
-		index = boost::prior(rowIter)->Index + 1;
-	}
-	else if (rowIter == dictionary.begin() && rowIter->DataPtr->GetTop()>coordinate) {
-		index = rowIter->Index - 1;
-	}
-	else {
-		index = rowIter->Index;
-	}
-	return index;
-}
-
-template<> inline int CSheet::Coordinate2Index<ColTag, VisTag>(FLOAT coordinate)
-{
-	auto ptOrigin = GetOriginPoint();
-
-	auto& dictionary = GetDictionary<ColTag, VisTag>().get<IndexTag>();
-	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
-		[ptOrigin](const ColumnData& rowData, const FLOAT& rhs)->bool {
-		if (rowData.Index >= 0) {
-			return (std::max)(ptOrigin.x, rowData.DataPtr->GetRight()) < rhs;
-		}
-		else {
-			return rowData.DataPtr->GetRight() < rhs;
-		}
-	});
-	int index = 0;
-	if (rowIter == dictionary.end()) {
-		index = boost::prior(rowIter)->Index + 1;
-	}
-	else if (rowIter == dictionary.begin() && rowIter->DataPtr->GetLeft()>coordinate) {
-		index = rowIter->Index - 1;
-	}
-	else {
-		index = rowIter->Index;
-	}
-	return index;
-}
-
-template<> inline int CSheet::Coordinate2Index<ColTag, AllTag>(FLOAT coordinate)
-{
-	auto ptOrigin = GetOriginPoint();
-
-	auto& dictionary = GetDictionary<ColTag, AllTag>().get<IndexTag>();
-	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
-		[ptOrigin](const ColumnData& rowData, const FLOAT& rhs)->bool {
-		if (rowData.Index >= 0) {
-			return (std::max)(ptOrigin.x, rowData.DataPtr->GetRight()) < rhs;
-		}
-		else {
-			return rowData.DataPtr->GetRight() < rhs;
-		}
-	});
-	int index = 0;
-	if (rowIter == dictionary.end()) {
-		index = boost::prior(rowIter)->Index + 1;
-	}
-	else if (rowIter == dictionary.begin() && rowIter->DataPtr->GetLeft()>coordinate) {
-		index = rowIter->Index - 1;
-	}
-	else {
-		index = rowIter->Index;
-	}
-	return index;
-}
+//
+//template<> inline int CSheet::Coordinate2Index<RowTag, AllTag>(FLOAT coordinate)
+//{
+//	auto ptOrigin = GetOriginPoint();
+//
+//	auto& dictionary = GetContainer<RowTag, AllTag>().get<IndexTag>();
+//	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
+//		[ptOrigin](const RowData& rowData, const FLOAT& rhs)->bool {
+//		if (rowData.Index >= 0) {
+//			return (std::max)(ptOrigin.y, rowData.DataPtr->GetBottom()) < rhs;
+//		}
+//		else {
+//			return rowData.DataPtr->GetBottom() < rhs;
+//		}
+//	});
+//	int index = 0;
+//	if (rowIter == dictionary.end()) {
+//		index = boost::prior(rowIter)->Index + 1;
+//	}
+//	else if (rowIter == dictionary.begin() && rowIter->DataPtr->GetTop()>coordinate) {
+//		index = rowIter->Index - 1;
+//	}
+//	else {
+//		index = rowIter->Index;
+//	}
+//	return index;
+//}
+//
+//template<> inline int CSheet::Coordinate2Index<RowTag, VisTag>(FLOAT coordinate)
+//{
+//	auto ptOrigin = GetOriginPoint();
+//
+//	auto& dictionary = GetContainer<RowTag, VisTag>().get<IndexTag>();
+//	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
+//		[ptOrigin](const RowData& rowData, const FLOAT& rhs)->bool {
+//		if (rowData.Index >= 0) {
+//			return (std::max)(ptOrigin.y, rowData.DataPtr->GetBottom()) < rhs;
+//		}
+//		else {
+//			return rowData.DataPtr->GetBottom() < rhs;
+//		}
+//	});
+//	int index = 0;
+//	if (rowIter == dictionary.end()) {
+//		index = boost::prior(rowIter)->Index + 1;
+//	}
+//	else if (rowIter == dictionary.begin() && rowIter->DataPtr->GetTop()>coordinate) {
+//		index = rowIter->Index - 1;
+//	}
+//	else {
+//		index = rowIter->Index;
+//	}
+//	return index;
+//}
+//
+//template<> inline int CSheet::Coordinate2Index<ColTag, VisTag>(FLOAT coordinate)
+//{
+//	auto ptOrigin = GetOriginPoint();
+//
+//	auto& dictionary = GetContainer<ColTag, VisTag>().get<IndexTag>();
+//	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
+//		[ptOrigin](const ColumnData& rowData, const FLOAT& rhs)->bool {
+//		if (rowData.Index >= 0) {
+//			return (std::max)(ptOrigin.x, rowData.DataPtr->GetRight()) < rhs;
+//		}
+//		else {
+//			return rowData.DataPtr->GetRight() < rhs;
+//		}
+//	});
+//	int index = 0;
+//	if (rowIter == dictionary.end()) {
+//		index = boost::prior(rowIter)->Index + 1;
+//	}
+//	else if (rowIter == dictionary.begin() && rowIter->DataPtr->GetLeft()>coordinate) {
+//		index = rowIter->Index - 1;
+//	}
+//	else {
+//		index = rowIter->Index;
+//	}
+//	return index;
+//}
+//
+//template<> inline int CSheet::Coordinate2Index<ColTag, AllTag>(FLOAT coordinate)
+//{
+//	auto ptOrigin = GetOriginPoint();
+//
+//	auto& dictionary = GetContainer<ColTag, AllTag>().get<IndexTag>();
+//	auto rowIter = std::lower_bound(dictionary.begin(), dictionary.end(), coordinate,
+//		[ptOrigin](const ColumnData& rowData, const FLOAT& rhs)->bool {
+//		if (rowData.Index >= 0) {
+//			return (std::max)(ptOrigin.x, rowData.DataPtr->GetRight()) < rhs;
+//		}
+//		else {
+//			return rowData.DataPtr->GetRight() < rhs;
+//		}
+//	});
+//	int index = 0;
+//	if (rowIter == dictionary.end()) {
+//		index = boost::prior(rowIter)->Index + 1;
+//	}
+//	else if (rowIter == dictionary.begin() && rowIter->DataPtr->GetLeft()>coordinate) {
+//		index = rowIter->Index - 1;
+//	}
+//	else {
+//		index = rowIter->Index;
+//	}
+//	return index;
+//}
 
 
-template<> inline void CSheet::Moved<RowTag>(CMovedEventArgs<RowTag>& e)
-{
-	RowMoved(e);
-}
-
-template<> inline void CSheet::Moved<ColTag>(CMovedEventArgs<ColTag>& e)
-{
-	ColumnMoved(e);
-}
 
 
 

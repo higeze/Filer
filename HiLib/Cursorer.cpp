@@ -291,7 +291,7 @@ std::vector<RC> CCursorer::GetSelectedRCs(CSheet* pSheet)const
 std::vector<std::shared_ptr<CRow>> CCursorer::GetSelectedRows(CSheet* pSheet)const
 {
 	std::vector<std::shared_ptr<CRow>> selectedRows;
-	auto& rowDictionary=pSheet->GetDictionary<RowTag, VisTag>();
+	auto& rowDictionary=pSheet->GetContainer<RowTag, VisTag>();
 
 	for(auto& rowData : rowDictionary){
 		if(rowData.DataPtr->GetSelected()){

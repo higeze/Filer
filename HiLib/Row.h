@@ -38,24 +38,9 @@ public:
 
 	virtual void SetVisible(const bool& bVisible, bool notify = true)override;
 	virtual void SetSelected(const bool& bSelected);
-	template<typename TAV>
-	int GetIndex()const
-	{
-		return m_pSheet->Pointer2Index<RowTag, TAV>(this);
-	}
-	//TODO Refactor
-	virtual FLOAT GetLeftTop()const override { return GetTop(); }
-	virtual FLOAT GetRightBottom()/*TODO*/ override { return GetBottom(); }
-	virtual FLOAT GetMinWidthHeight() override { return m_minHeight; }
-	virtual FLOAT GetMaxWidthHeight() override { return m_maxHeight; }
-	virtual void SetWidthHeightWithoutSignal(const FLOAT height) override { SetHeightWithoutSignal(height); }
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name) override;
 	virtual SizingType GetSizingType()const override { return SizingType::None; }
-
-
-
-
 };
 
 class CGridView;

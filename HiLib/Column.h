@@ -98,11 +98,11 @@ public:
 	virtual void SetSort(const Sorts& sort);
 	virtual void SetVisible(const bool& bVisible, bool notify = true)override;
 	virtual void SetSelected(const bool& bSelected)override;
-	template<typename TAV>
-	int GetIndex()const
-	{
-		return m_pSheet->Pointer2Index<ColTag, TAV>(this);
-	}
+	//template<typename TAV>
+	//int GetIndex()const
+	//{
+	//	return m_pSheet->Pointer2Index<ColTag, TAV>(this);
+	//}
 
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::shared_ptr<CCell> spCellSrc){return false;}
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::wstring source){return false;}
@@ -113,11 +113,6 @@ public:
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) = 0;
 	virtual void InsertNecessaryRows(){};
-	virtual FLOAT GetLeftTop()const override { return GetLeft(); }
-	virtual FLOAT GetRightBottom()/*TODO*/ override { return GetRight(); }
-	virtual FLOAT GetMinWidthHeight() override { return m_minWidth; }
-	virtual FLOAT GetMaxWidthHeight() override { return m_maxWidth; }
-	virtual void SetWidthHeightWithoutSignal(const FLOAT width) override { SetWidthWithoutSignal(width); }
 	//virtual LineType GetLineType()const { return m_lineType; }
 	virtual SizingType GetSizingType()const override { return SizingType::None; }
 	virtual SizeType GetSizeType()const { return m_sizeType; }

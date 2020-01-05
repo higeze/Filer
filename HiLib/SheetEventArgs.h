@@ -32,8 +32,8 @@ public:
 class CRowEventArgs
 {
 public:
-	CRow* m_pRow;
-	CRowEventArgs(CRow* pRow):m_pRow(pRow){}
+	std::shared_ptr<CRow> m_pRow;
+	CRowEventArgs(const std::shared_ptr<CRow>& pRow):m_pRow(pRow){}
 	virtual ~CRowEventArgs(){}
 };
 
@@ -43,8 +43,8 @@ public:
 class CRowsEventArgs
 {
 public:
-	std::vector<CRow*> m_rows;
-	CRowsEventArgs(const std::vector<CRow*> rows):m_rows(rows){}
+	std::vector<std::shared_ptr<CRow>> m_rows;
+	CRowsEventArgs(const std::vector<std::shared_ptr<CRow>>& rows):m_rows(rows){}
 	virtual ~CRowsEventArgs(){}
 };
 
@@ -54,8 +54,8 @@ public:
 class CColumnEventArgs
 {
 public:
-	CColumn* m_pColumn;
-	CColumnEventArgs(CColumn* pColumn):m_pColumn(pColumn){}
+	std::shared_ptr<CColumn> m_pColumn;
+	CColumnEventArgs(const std::shared_ptr<CColumn>& spColumn):m_pColumn(spColumn){}
 	virtual ~CColumnEventArgs(){}
 };
 

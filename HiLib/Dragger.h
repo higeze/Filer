@@ -1,6 +1,7 @@
 #pragma once
 #include "IDragger.h"
 #include "Sheet.h"
+#include "Band.h"
 #include "CellProperty.h"
 #include "MyPen.h"
 
@@ -25,12 +26,12 @@ public:
 
 	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto visIndexes = pSheet->Point2Indexes<VisTag>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
-		if (visIndexes.Row <= pSheet->GetMaxIndex<RowTag, VisTag>() &&
-			visIndexes.Row >= pSheet->GetMinIndex<RowTag, VisTag>() &&
-			visIndexes.Col <= pSheet->GetMaxIndex<ColTag, VisTag>() &&
-			visIndexes.Col >= pSheet->GetMinIndex<ColTag, VisTag>() &&
-			visIndexes.Get<TRCYou>()<0) {
+		auto visIndexes = pSheet->Point2Indexes(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+		if (visIndexes.first <= pSheet->GetMaxIndex<RowTag, VisTag>() &&
+			visIndexes.first >= pSheet->GetMinIndex<RowTag, VisTag>() &&
+			visIndexes.second <= pSheet->GetMaxIndex<ColTag, VisTag>() &&
+			visIndexes.second >= pSheet->GetMinIndex<ColTag, VisTag>() &&
+			Indexes2Index<TRCYou>(visIndexes)<0) {
 			return true;
 		}else{
 			return false;
@@ -39,13 +40,13 @@ public:
 
 	void OnBeginDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		m_dragFromIndex = pSheet->Point2Indexes<AllTag>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point)).Get<TRC>();
+		m_dragFromIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
 		m_dragToIndex = CBand::kInvalidIndex;
 	}
 
 	void OnDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto visibleIndex = pSheet->Point2Indexes<VisTag>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point)).Get<TRC>();
+		auto visibleIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
 
 		auto visMinMax = pSheet->GetMinMaxIndexes<TRC, VisTag>();
 		auto allMinMax = pSheet->GetMinMaxIndexes<TRC, AllTag>();
@@ -119,25 +120,22 @@ public:
 		//other : Left
 		FLOAT coome = 0;
 		if (m_dragToIndex > pSheet->GetMaxIndex<TRC, AllTag>()) {
-			coome = pSheet->LastPointer<TRC, AllTag>()->GetRightBottom();
+			coome = GetRightBottom(pSheet->GetContainer<TRC, AllTag>().back());
 		}
 		else if(m_dragToIndex <= 0) {
-			coome = pSheet->ZeroPointer<TRC, AllTag>()->GetLeftTop();
+			coome = GetLeftTop(pSheet->GetContainer<TRC, AllTag>()[pSheet->GetFrozenCount<TRC>()]);
 		}
 		else {
-			coome = pSheet->Index2Pointer<TRC, AllTag>(m_dragToIndex)->GetLeftTop();
+			coome = GetLeftTop(pSheet->Index2Pointer<TRC, AllTag>(m_dragToIndex));
 		}
 
 		//Get Right/Bottom Line
-		FLOAT cooyou0 = GetLineLeftTop(pSheet);
-		FLOAT cooyou1 = GetLineRightBottom(pSheet);
+		FLOAT cooyou0 = GetLeftTop(pSheet->GetContainer<TRCYou, AllTag>().front());
+		FLOAT cooyou1 = GetRightBottom(pSheet->GetContainer<TRCYou, AllTag>()[pSheet->GetFrozenCount<TRC>()]);
 
 		//Paint DragLine
 		PaintLine(e.WndPtr->GetDirectPtr(), *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);
 	}
-
-	virtual FLOAT GetLineLeftTop(CSheet* pSheet) { return pSheet->FirstPointer<TRCYou, AllTag>()->GetLeftTop(); }
-	virtual FLOAT GetLineRightBottom(CSheet* pSheet) { return pSheet->ZeroPointer<TRCYou, AllTag>()->GetRightBottom(); }
 
 	void PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1) {}
 
