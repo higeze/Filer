@@ -27,11 +27,11 @@ public:
 	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override
 	{
 		auto visIndexes = pSheet->Point2Indexes(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
-		if (visIndexes.first <= pSheet->GetMaxIndex<RowTag, VisTag>() &&
-			visIndexes.first >= pSheet->GetMinIndex<RowTag, VisTag>() &&
-			visIndexes.second <= pSheet->GetMaxIndex<ColTag, VisTag>() &&
-			visIndexes.second >= pSheet->GetMinIndex<ColTag, VisTag>() &&
-			Indexes2Index<TRCYou>(visIndexes)<0) {
+		if (visIndexes.Row < (int)pSheet->GetContainer<RowTag, VisTag>().size() &&
+			visIndexes.Row >= 0 &&
+			visIndexes.Col < (int)pSheet->GetContainer<ColTag, VisTag>().size() &&
+			visIndexes.Col >= 0 &&
+			visIndexes.Get<TRCYou::IndexesTag>()<0) {
 			return true;
 		}else{
 			return false;
@@ -48,23 +48,23 @@ public:
 	{
 		auto visibleIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
 
-		auto visMinMax = pSheet->GetMinMaxIndexes<TRC, VisTag>();
-		auto allMinMax = pSheet->GetMinMaxIndexes<TRC, AllTag>();
+		int visMax = pSheet->GetContainer<TRC, VisTag>().size() - 1;
+		int allMax = pSheet->GetContainer<TRC, AllTag>().size() - 1;
 
 		if (visibleIndex == CBand::kInvalidIndex) {
 			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visibleIndex);
 		}
-		else if (visibleIndex < visMinMax.first) {
-			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visMinMax.first);
+		else if (visibleIndex < 0) {
+			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(0);
 		}
-		else if (visibleIndex > visMinMax.second) {
-			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visMinMax.second) + 1;
+		else if (visibleIndex > visMax) {
+			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visMax) + 1;
 		}
-		else if (visibleIndex == visMinMax.first) {
-			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visMinMax.first);
+		else if (visibleIndex == 0) {
+			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(0);
 		}
-		else if (visibleIndex == visMinMax.second) {
-			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visMinMax.second) + 1;
+		else if (visibleIndex == visMax) {
+			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visMax) + 1;
 		}
 		else {
 			auto allIndex = pSheet->Vis2AllIndex<TRC>(visibleIndex);
@@ -119,7 +119,7 @@ public:
 		//u/min : Left/Top
 		//other : Left
 		FLOAT coome = 0;
-		if (m_dragToIndex > pSheet->GetMaxIndex<TRC, AllTag>()) {
+		if (m_dragToIndex >= (int)pSheet->GetContainer<TRC, AllTag>().size()) {
 			coome = GetRightBottom(pSheet->GetContainer<TRC, AllTag>().back());
 		}
 		else if(m_dragToIndex <= 0) {

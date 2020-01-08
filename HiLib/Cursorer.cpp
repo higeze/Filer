@@ -225,13 +225,13 @@ void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 						coVisib=((std::max)(coVisib-1,0));
 						break;
 					case VK_RIGHT:
-						coVisib=((std::min)(coVisib+1,pSheet->GetMaxIndex<ColTag, VisTag>()));
+						coVisib=((std::min)(coVisib+1, (int)pSheet->GetContainer<ColTag, VisTag>().size()));
 						break;
 					case VK_UP:
 						roVisib=((std::max)(roVisib-1,0));
 						break;
 					case VK_DOWN:
-						roVisib=((std::min)(roVisib+1,pSheet->GetMaxIndex<RowTag, VisTag>()));
+						roVisib=((std::min)(roVisib+1, (int)pSheet->GetContainer<ColTag, VisTag>().size()));
 						break;
 				}
 				cell=pSheet->Cell<VisTag>(roVisib, coVisib);
@@ -256,9 +256,9 @@ void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 }
 
 
-std::vector<RC> CCursorer::GetFocusedRCs(CSheet* pSheet)const
+std::vector<Indexes> CCursorer::GetFocusedRCs(CSheet* pSheet)const
 {
-	std::vector<RC> focusedRCs;
+	std::vector<Indexes> focusedRCs;
 	//CRowColumn focusedRoCo = GetFocusedRowColumn();
 	//if(!focusedRoCo.IsInvalid()){
 	//	std::shared_ptr<CCell> focusedCell = CSheet::Cell(focusedRoCo.GetRowPtr(), focusedRoCo.GetColumnPtr());
@@ -272,9 +272,9 @@ std::vector<RC> CCursorer::GetFocusedRCs(CSheet* pSheet)const
 }
 
 
-std::vector<RC> CCursorer::GetSelectedRCs(CSheet* pSheet)const
+std::vector<Indexes> CCursorer::GetSelectedRCs(CSheet* pSheet)const
 {
-	std::vector<RC> selectedRCs;
+	std::vector<Indexes> selectedRCs;
 	//auto& rowDictionary=pSheet->m_rowVisibleDictionary.get<IndexTag>();
 	//auto& colDictionary=pSheet->m_columnVisibleDictionary.get<IndexTag>();
 
@@ -291,11 +291,11 @@ std::vector<RC> CCursorer::GetSelectedRCs(CSheet* pSheet)const
 std::vector<std::shared_ptr<CRow>> CCursorer::GetSelectedRows(CSheet* pSheet)const
 {
 	std::vector<std::shared_ptr<CRow>> selectedRows;
-	auto& rowDictionary=pSheet->GetContainer<RowTag, VisTag>();
+	auto& rowContainer=pSheet->GetContainer<RowTag, VisTag>();
 
-	for(auto& rowData : rowDictionary){
-		if(rowData.DataPtr->GetSelected()){
-			selectedRows.push_back(rowData.DataPtr);
+	for(auto& ptr : rowContainer){
+		if(ptr->GetSelected()){
+			selectedRows.push_back(ptr);
 		}
 	}
 	return selectedRows;
@@ -313,7 +313,7 @@ std::vector<std::shared_ptr<CColumn>> CCursorer::GetSelectedColumns(CSheet* pShe
 	return selectedCols;
 }
 
-void CCursorer::SetFocusedRCs(CSheet* pSheet, std::vector<RC> rcs)
+void CCursorer::SetFocusedRCs(CSheet* pSheet, std::vector<Indexes> rcs)
 {
 	//TODO
 	//if(rcs.empty() || rcs.size()==0)return;
@@ -332,7 +332,7 @@ void CCursorer::SetFocusedRCs(CSheet* pSheet, std::vector<RC> rcs)
 	//}
 
 }
-void CCursorer::SetSelectedRCs(CSheet* pSheet, std::vector<RC> rcs)
+void CCursorer::SetSelectedRCs(CSheet* pSheet, std::vector<Indexes> rcs)
 {
 	//if(rcs.empty() || rcs.size()==0)return;
 	//auto rowMinMax = pSheet->GetMinMaxAllRowIndex();

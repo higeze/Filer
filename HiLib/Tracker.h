@@ -55,7 +55,7 @@ public:
 
 	void OnDividerDblClk(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto idx = GetTrackLeftTopIndex(pSheet, e);
+		int idx = GetTrackLeftTopIndex(pSheet, e);
 		if (idx != CBand::kInvalidIndex) {
 			auto ptr = pSheet->Index2Pointer<TRC, VisTag>(idx);
 			if (ptr) {
@@ -87,7 +87,7 @@ public:
 		//e.Handled = TRUE;
 		SetSizeCursor();
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		SetWidthHeightWithoutSignal(p, Point2Coordinate<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point)) - GetLeftTop(p));
+		SetWidthHeightWithoutSignal(p, e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point).Get<TRC::PointTag>() - GetLeftTop(p));
 		pSheet->Track<TRC>(p);
 	}
 
@@ -95,7 +95,7 @@ public:
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		SetWidthHeightWithoutSignal(p, Point2Coordinate<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point)) - GetLeftTop(p));
+		SetWidthHeightWithoutSignal(p, e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point).Get<TRC::PointTag>() - GetLeftTop(p));
 		pSheet->EndTrack<TRC>(p);
 	}
 
@@ -112,30 +112,30 @@ public:
 		}
 		d2dw::CPointF ptDips = e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point);
 		auto visIndexes = pSheet->Point2Indexes(ptDips);
-		auto minIdx = pSheet->GetMinIndex<TRC, VisTag>();
-		auto maxIdx = pSheet->GetMaxIndex<TRC, VisTag>();
+		int minIdx = 0;
+		int maxIdx = pSheet->GetContainer<TRC, VisTag>().size() - 1;
 
 		//If Header except Filter
-		if (Indexes2Index<TRC::Other>(visIndexes) < 0) {
-			if (Indexes2Index<TRC>(visIndexes) < minIdx) {
+		if (visIndexes.Get<TRC::Other::IndexesTag>() < 0) {
+			if (visIndexes.Get<TRC::IndexesTag>() < minIdx) {
 				//Out of Left	
 				return CBand::kInvalidIndex;
 			}
-			else if (Indexes2Index<TRC>(visIndexes) > maxIdx) {
+			else if (visIndexes.Get<TRC::IndexesTag>() > maxIdx) {
 				//Out of Right
-				if (ptDips.Get<TRC::Axis>() < GetRightBottom(pSheet->GetContainer<TRC, VisTag>().back()) + CBand::kResizeAreaHarfWidth) {
-					return Indexes2Index<TRC>(visIndexes) - 1;
+				if (ptDips.Get<TRC::PointTag>() < GetRightBottom(pSheet->GetContainer<TRC, VisTag>().back()) + CBand::kResizeAreaHarfWidth) {
+					return visIndexes.Get<TRC::IndexesTag>() - 1;
 				}
 				else
 				{
 					return CBand::kInvalidIndex;
 				}
 			}
-			else if (ptDips.Get<TRC::Axis>() < GetLeftTop(pSheet->Index2Pointer<TRC, VisTag>(Indexes2Index<TRC>(visIndexes))) + CBand::kResizeAreaHarfWidth) {
-				return (std::max)(Indexes2Index<TRC>(visIndexes) - 1, minIdx);
+			else if (ptDips.Get<TRC::PointTag>() < GetLeftTop(pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC::IndexesTag>())) + CBand::kResizeAreaHarfWidth) {
+				return (std::max)(visIndexes.Get<TRC::IndexesTag>() - 1, minIdx);
 			}
-			else if (GetRightBottom(pSheet->Index2Pointer<TRC, VisTag>(Indexes2Index<TRC>(visIndexes))) - CBand::kResizeAreaHarfWidth < Point2Coordinate<TRC>(ptDips)) {
-				return (std::min)(Indexes2Index<TRC>(visIndexes), maxIdx);
+			else if (GetRightBottom(pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC::IndexesTag>())) - CBand::kResizeAreaHarfWidth < ptDips.Get<TRC::PointTag>()) {
+				return (std::min)(visIndexes.Get<TRC::IndexesTag>(), (int)maxIdx);
 			}
 			else {
 				return CBand::kInvalidIndex;
@@ -155,19 +155,19 @@ public:
 		}
 		d2dw::CPointF ptDips = e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point);
 		auto visIndexes = pSheet->Point2Indexes(ptDips);
-		auto other = pSheet->Coordinate2Pointer<TRC::Other>(ptDips.Get<TRC::OtherAxis>());
-		auto minIdx = pSheet->GetMinIndex<TRC, VisTag>();
-		auto maxIdx = pSheet->GetMaxIndex<TRC, VisTag>();
+		auto other = pSheet->Coordinate2Pointer<TRC::Other>(ptDips.Get<TRC::Other::PointTag>());
+		int minIdx = 0;
+		int maxIdx = (int)pSheet->GetContainer<TRC, VisTag>().size() - 1;
 
 		//If Header except Filter
 		if (other!=nullptr && other->IsTrackable()) {
-			if (Indexes2Index<TRC>(visIndexes) < minIdx) {
+			if (visIndexes.Get<TRC::IndexesTag>() < minIdx) {
 				//Out of Left	
 				return false;
 			}
-			else if (Indexes2Index<TRC>(visIndexes) > maxIdx) {
+			else if (visIndexes.Get<TRC::IndexesTag>() > maxIdx) {
 				//Out of Right
-				if (ptDips.Get<TRC::Axis>() < GetRightBottom(pSheet->GetContainer<TRC, VisTag>().back()) + CBand::kResizeAreaHarfWidth) {
+				if (ptDips.Get<TRC::PointTag>() < GetRightBottom(pSheet->GetContainer<TRC, VisTag>().back()) + CBand::kResizeAreaHarfWidth) {
 					//m_trackLeftVisib = visIndexes.Get<TRC>() - 1;
 					return true;
 				}
@@ -175,12 +175,10 @@ public:
 				{
 					return false;
 				}
-			}
-			else if (ptDips.Get<TRC::Axis>() < GetLeftTop(pSheet->Index2Pointer<TRC, VisTag>(Indexes2Index<TRC>(visIndexes))) + CBand::kResizeAreaHarfWidth) {
+			} else if (ptDips.Get<TRC::PointTag>() < GetLeftTop(pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC::IndexesTag>())) + CBand::kResizeAreaHarfWidth) {
 				//m_trackLeftVisib = (std::max)(visIndexes.Get<TRC>() - 1, minIdx);
 				return true;
-			}
-			else if (GetRightBottom(pSheet->Index2Pointer<TRC, VisTag>(Indexes2Index<TRC>(visIndexes))) - CBand::kResizeAreaHarfWidth < Point2Coordinate<TRC>(ptDips)) {
+			} else if (GetRightBottom(pSheet->Index2Pointer<TRC, VisTag>(visIndexes.Get<TRC::IndexesTag>())) - CBand::kResizeAreaHarfWidth < ptDips.Get<TRC::PointTag>()) {
 				//m_trackLeftVisib = (std::min)(visIndexes.Get<TRC>(), maxIdx);
 				return true;
 			}

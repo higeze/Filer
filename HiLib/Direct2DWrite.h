@@ -24,8 +24,14 @@ struct YTag;
 
 namespace d2dw
 {
+	template<typename ...>
+	constexpr bool false_v = false;
+
 	struct CPointF :public D2D1_POINT_2F
 	{
+		struct XTag{};
+		struct YTag{};
+
 		CPointF();
 		CPointF(FLOAT a, FLOAT b);
 
@@ -39,7 +45,16 @@ namespace d2dw
 		bool operator!=(const CPointF& pt)const;
 
 		template<typename TXY>
-		FLOAT Get()const { return 0; }
+		FLOAT Get() const
+		{
+			if constexpr (std::is_same_v<TXY, XTag>) {
+				return x;
+			} else if constexpr (std::is_same_v<TXY, YTag>) {
+				return y;
+			} else {
+				static_assert(false_v<TXY>);
+			}
+		}
 
 		template <class Archive>
 		void serialize(Archive& ar)
@@ -48,9 +63,6 @@ namespace d2dw
 			ar("y", y);
 		}
 	};
-
-	template<> inline FLOAT CPointF::Get<XTag>()const { return x; }
-	template<> inline FLOAT CPointF::Get<YTag>()const { return y; }
 
 	struct CSizeF :public D2D1_SIZE_F
 	{

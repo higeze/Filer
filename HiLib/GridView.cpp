@@ -24,9 +24,6 @@
 #include "Celler.h"
 #include "Scroll.h"
 #include "Textbox.h"
-
-#include "FullCommand.h"
-
 #include "FindDlg.h"
 
 #include "TextCell.h"
@@ -124,7 +121,7 @@ void CGridView::ColumnMoved(CMovedEventArgs<ColTag>& e)
 {
 	//FilterAll();
 	CSheet::ColumnMoved(e);
-	SignalColumnMoved((CColumn*)e.m_ptr, e.m_from, e.m_to);
+	SignalColumnMoved(e.m_ptr, e.m_from, e.m_to);
 }
 
 void CGridView::OnCellContextMenu(CellContextMenuEventArgs& e)
@@ -157,56 +154,49 @@ void CGridView::OnCellLButtonClk(CellEventArgs& e)
 
 void CGridView::SortAllInSubmitUpdate()
 {
-	auto& colDictionary = m_columnAllDictionary.get<IndexTag>();
-	for (const auto& colData : colDictionary) {
-		if (colData.DataPtr->GetSort() != Sorts::None) {
-			this->Sort(colData.DataPtr.get(), colData.DataPtr->GetSort(), false);
+	for (const auto& ptr : m_allCols) {
+		if (ptr->GetSort() != Sorts::None) {
+			this->Sort(ptr.get(), ptr->GetSort(), false);
 		}
 	}
 }
 
 void CGridView::ClearFilter()
 {
-	auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
-	auto& colDictionary=m_columnAllDictionary.get<IndexTag>();
-
 	//Reset Filter
-	for(auto iter=rowDictionary.find(0),end=rowDictionary.end();iter!=end;++iter){
-		iter->DataPtr->SetVisible(true);
+	for(auto iter=std::next(m_allRows.begin(), m_frozenRowCount), end=m_allRows.end(); iter!=end; ++iter){
+		(*iter)->SetVisible(true);
 	};
 	//Clear Filter
-	for(auto colIter=colDictionary.begin(),colEnd=colDictionary.end();colIter!=colEnd;++colIter){
-		colIter->DataPtr->Cell(GetFilterRowPtr().get())->SetStringNotify(L"");	
+	for(auto ptr : m_allCols ){
+		Cell(GetFilterRowPtr(), ptr)->SetStringNotify(L"");	
 	}
 }
 
 void CGridView::FilterAll()
 {
-	auto& rowDictionary=m_rowAllDictionary.get<IndexTag>();
-	auto& colDictionary=m_columnAllDictionary.get<IndexTag>();
-
 	//Reset Filter
-	for(auto iter=rowDictionary.find(0),end=rowDictionary.end();iter!=end;++iter){
-		iter->DataPtr->SetVisible(true);
+	for(auto iter=std::next(m_allRows.begin(), m_frozenRowCount),end=m_allRows.end();iter!=end;++iter){
+		(*iter)->SetVisible(true);
 	};
 	//Set Filter
-	for(auto colIter=colDictionary.find(0),colEnd=colDictionary.end();colIter!=colEnd;++colIter){
-		auto strFilter=colIter->DataPtr->Cell(GetFilterRowPtr().get())->GetString();
+	for(auto colIter=std::next(m_allCols.begin(), m_frozenColumnCount),colEnd=m_allCols.end();colIter!=colEnd;++colIter){
+		auto strFilter=(*colIter)->Cell(GetFilterRowPtr().get())->GetString();
 		if(strFilter.empty() || strFilter==std::wstring(L""))continue;
 		std::vector<std::wstring> vstrFilter;
 		boost::split(vstrFilter,strFilter,boost::is_space());
-		for(auto rowIter=rowDictionary.find(0),rowEnd=rowDictionary.end();rowIter!=rowEnd;++rowIter){
-			if(!rowIter->DataPtr->GetVisible())continue;
+		for (auto rowIter = std::next(m_allRows.begin(), m_frozenRowCount), end = m_allRows.end(); rowIter != end; ++rowIter) {
+			if(!(*rowIter)->GetVisible())continue;
 			//Filter
-			auto pCell=colIter->DataPtr->Cell(rowIter->DataPtr.get());
+			auto pCell=Cell(*rowIter, *colIter);
 			for(const auto& str : vstrFilter){
 				if(str[0]==L'-' && str.size()>=2){
 					std::wstring strMinus(str.substr(1));
 					if(pCell->Filter(strMinus)){
-						rowIter->DataPtr->SetVisible(false);				
+						(*rowIter)->SetVisible(false);				
 					}
 				}else if(!(pCell->Filter(str))){
-					rowIter->DataPtr->SetVisible(false);
+					(*rowIter)->SetVisible(false);
 				}
 			}
 		}		
@@ -227,12 +217,10 @@ void CGridView::DelayUpdate()
 
 FLOAT CGridView::UpdateHeadersRow(FLOAT top)
 {
-	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
-
 	//Minus Cells
-	for (auto iter = rowDictionary.begin(), end = rowDictionary.find(0); iter != end; ++iter) {
-		iter->DataPtr->SetTopWithoutSignal(top);
-		top += iter->DataPtr->GetHeight();
+	for (auto iter = m_visRows.begin(), end = std::next(m_visRows.begin(), m_frozenRowCount); iter != end; ++iter) {
+		(*iter)->SetTopWithoutSignal(top);
+		top += (*iter)->GetHeight();
 	}
 	return top;
 }

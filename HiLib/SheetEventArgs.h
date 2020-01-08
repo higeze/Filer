@@ -68,8 +68,8 @@ public:
 	int m_from;
 	int m_to;
 public:
-	CColumnMovedEventArgs(CColumn* pColumn, int from, int to )
-		:CColumnEventArgs(pColumn), m_from(from), m_to(to){}
+	CColumnMovedEventArgs(const std::shared_ptr<CColumn> spCol, const int from, const int to )
+		:CColumnEventArgs(spCol), m_from(from), m_to(to){}
 	virtual ~CColumnMovedEventArgs(){}
 };
 
@@ -79,9 +79,9 @@ class CMovedEventArgs
 public:
 	int m_from;
 	int m_to;
-	TRC::template Ptr m_ptr;
+	typename TRC::SharedPtr m_ptr;
 public:
-	CMovedEventArgs(TRC::template Ptr ptr, int from, int to)
+	CMovedEventArgs(typename TRC::SharedPtr ptr, int from, int to)
 	:m_ptr(ptr), m_from(from), m_to(to){}
 	virtual ~CMovedEventArgs() {}
 };

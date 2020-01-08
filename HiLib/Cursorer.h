@@ -51,12 +51,12 @@ private:
 public:
 	virtual void OnCursorClear(CSheet* pSheet);
 
-	//std::vector<RC> GetFocusedRCs(CSheet* pSheet)const;
-	//std::vector<RC> GetSelectedRCs(CSheet* pSheet)const;
+	std::vector<Indexes> GetFocusedRCs(CSheet* pSheet)const;
+	std::vector<Indexes> GetSelectedRCs(CSheet* pSheet)const;
 	std::vector<std::shared_ptr<CRow>> GetSelectedRows(CSheet* pSheet)const;
 	std::vector<std::shared_ptr<CColumn>> GetSelectedColumns(CSheet* pSheet)const;
-	//void SetFocusedRCs(CSheet* pSheet, std::vector<RC> rcs);
-	//void SetSelectedRCs(CSheet* pSheet, std::vector<RC> rocos);
+	void SetFocusedRCs(CSheet* pSheet, std::vector<Indexes> rcs);
+	void SetSelectedRCs(CSheet* pSheet, std::vector<Indexes> rocos);
 	void SetSelectedRows(CSheet* pSheet, std::vector<std::shared_ptr<CRow>> rcs);
 	void SetSelectedColumns(CSheet* pSheet, std::vector<std::shared_ptr<CColumn>> cols);
 

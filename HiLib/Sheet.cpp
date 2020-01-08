@@ -18,8 +18,6 @@
 #include "SheetStateMachine.h"
 #include "GridView.h"
 
-#include <iterator>
-
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CMenu CSheet::ContextMenu;
@@ -35,7 +33,13 @@ CSheet::CSheet(
 	m_bSelected(false),
 	m_bFocused(false),
 	m_pContextMenu(pContextMenu?pContextMenu:&CSheet::ContextMenu),
-	m_pMachine(new CSheetStateMachine(this))
+	m_pMachine(new CSheetStateMachine(this)),
+	m_allRows([](std::shared_ptr<CRow>& sp, size_t idx) { sp->SetIndex<AllTag>(idx); }),
+	m_visRows([](std::shared_ptr<CRow>& sp, size_t idx) { sp->SetIndex<VisTag>(idx); }),
+	m_pntRows([](std::shared_ptr<CRow>& sp, size_t idx) { /* Do Nothing */ }),
+	m_allCols([](std::shared_ptr<CColumn>& sp, size_t idx) { sp->SetIndex<AllTag>(idx); }),
+	m_visCols([](std::shared_ptr<CColumn>& sp, size_t idx) { sp->SetIndex<VisTag>(idx); }),
+	m_pntCols([](std::shared_ptr<CColumn>& sp, size_t idx) { /* Do Nothing */ })
 {
 
 	if(!m_spRowTracker){
@@ -59,6 +63,55 @@ CSheet::CSheet(
 	if (!m_spCeller) {
 		m_spCeller = std::make_shared<CCeller>();
 	}
+
+	//m_allRows.VectorChanged.connect(
+	//	[vec = m_allRows](const NotifyVectorChangedEventArgs<std::shared_ptr<CRow>>& e)->void {
+	//		switch (e.Action) {
+	//		case NotifyVectorChangedAction::Add:
+	//		{
+	//			for (auto i = e.NewStartingIndex; i < vec.size(); i++) {
+	//				vec[i]->SetIndex<AllTag>(i);
+	//			}
+	//			break;
+	//		}
+	//		case NotifyVectorChangedAction::Insert:
+	//		{
+	//			for (auto i = e.NewStartingIndex; i < vec.size(); i++) {
+	//				vec[i]->SetIndex<AllTag>(i);
+	//			}
+	//			break;
+	//		}
+	//		case NotifyVectorChangedAction::Move:
+	//		{
+	//			break;
+	//		}
+	//		case NotifyVectorChangedAction::Remove:
+	//		{
+	//			for (auto i = e.OldStartingIndex; i < vec.size(); i++) {
+	//				vec[i]->SetIndex<AllTag>(i);
+	//			}
+	//			break;
+	//		}
+	//		case NotifyVectorChangedAction::Replace:
+	//		{
+	//			for (auto i = 0; i < e.NewItems.size(); i++) {
+	//				e.NewItems[i]->SetIndex<AllTag>(e.NewStartingIndex + i);
+	//			}
+	//			break;
+	//		}
+	//		case NotifyVectorChangedAction::Reset:
+	//		{
+	//			for (auto i = 0; i < vec.size(); i++) {
+	//				vec[i]->SetIndex<AllTag>(i);
+	//			}
+	//			break;
+	//		}
+	//		default:
+	//			break;
+	//		}
+	//	});
+
+
 }
 
 CSheet::~CSheet() = default;
@@ -365,12 +418,12 @@ std::wstring CSheet::GetSheetString()const
 
 void CSheet::UpdateRowVisibleDictionary()
 {
-	UpdateVisibleDictionary(m_allRows, m_visRows);
+	UpdateVisibleContainer<RowTag>();
 }
 
 void CSheet::UpdateColumnVisibleDictionary()
 {
-	UpdateVisibleDictionary(m_allCols, m_visCols);
+	UpdateVisibleContainer<ColTag>();
 }
 
 void CSheet::UpdateRowPaintDictionary()
@@ -623,7 +676,7 @@ d2dw::CRectF CSheet::GetRect()const
 
 FLOAT CSheet::GetCellsHeight()//TODOTODO
 {
-	if (Size<RowTag, VisTag>() == 0 || GetMaxIndex<RowTag, VisTag>() < m_frozenRowCount) {
+	if (GetContainer<RowTag, VisTag>().size() == 0 || GetContainer<RowTag, VisTag>().size() < m_frozenRowCount) {
 		return 0.0f;
 	}
 
@@ -635,7 +688,7 @@ FLOAT CSheet::GetCellsHeight()//TODOTODO
 
 FLOAT CSheet::GetCellsWidth()
 {
-	if (Size<ColTag, VisTag>() == 0 || GetMaxIndex<ColTag, VisTag>() < m_frozenColumnCount) {
+	if (GetContainer<ColTag, VisTag>().size() == 0 || GetContainer<ColTag, VisTag>().size() < m_frozenColumnCount) {
 		return 0.0f;
 	}
 
@@ -647,7 +700,7 @@ FLOAT CSheet::GetCellsWidth()
 
 d2dw::CRectF CSheet::GetCellsRect()
 {
-	if(Size<RowTag, VisTag>()==0 ||Size<ColTag, VisTag>()==0 || GetMaxIndex<RowTag, VisTag>()<m_frozenRowCount || GetMaxIndex<ColTag, VisTag>()<m_frozenRowCount ){
+	if(GetContainer<RowTag, VisTag>().size() == 0 || GetContainer<RowTag, VisTag>().size() < m_frozenRowCount || GetContainer<ColTag, VisTag>().size() < m_frozenColumnCount){
 		return d2dw::CRectF(0,0,0,0);
 	}
 

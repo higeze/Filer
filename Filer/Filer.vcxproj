@@ -222,9 +222,6 @@
     <ClInclude Include="..\HiLib\ChildRowHeaderColumn.h" />
     <ClInclude Include="..\HiLib\ColorCell.h" />
     <ClInclude Include="..\HiLib\Column.h" />
-    <ClInclude Include="..\HiLib\CompareCell.h" />
-    <ClInclude Include="..\HiLib\CompareColumn.h" />
-    <ClInclude Include="..\HiLib\CompareColumnHeaderCell.h" />
     <ClInclude Include="..\HiLib\Console.h" />
     <ClInclude Include="..\HiLib\ConsoleTimer.h" />
     <ClInclude Include="..\HiLib\CShellExtension.h" />
@@ -241,7 +238,6 @@
     <ClInclude Include="..\HiLib\FindDlg.h" />
     <ClInclude Include="..\HiLib\FindDlgResource.h" />
     <ClInclude Include="..\HiLib\FontCell.h" />
-    <ClInclude Include="..\HiLib\FullCommand.h" />
     <ClInclude Include="..\HiLib\FunctionMenuItem.h" />
     <ClInclude Include="..\HiLib\GridView.h" />
     <ClInclude Include="..\HiLib\GridViewProperty.h" />
@@ -251,6 +247,7 @@
     <ClInclude Include="..\HiLib\IDragger.h" />
     <ClInclude Include="..\HiLib\IKeyObserver.h" />
     <ClInclude Include="..\HiLib\IMouseObserver.h" />
+    <ClInclude Include="..\HiLib\index_vector.h" />
     <ClInclude Include="..\HiLib\KonamiCommander.h" />
     <ClInclude Include="..\HiLib\KonamiResource.h" />
     <ClInclude Include="..\HiLib\MenuItem.h" />
@@ -284,9 +281,7 @@
     <ClInclude Include="..\HiLib\MyWin32.h" />
     <ClInclude Include="..\HiLib\MyWnd.h" />
     <ClInclude Include="..\HiLib\MyXMLSerializer.h" />
-    <ClInclude Include="..\HiLib\ObservableContainer.h" />
     <ClInclude Include="..\HiLib\observable.h" />
-    <ClInclude Include="..\HiLib\Operation.h" />
     <ClInclude Include="..\HiLib\ParentColumnHeaderCell.h" />
     <ClInclude Include="..\HiLib\ParentColumnHeaderHeaderCell.h" />
     <ClInclude Include="..\HiLib\ParentColumnNameHeaderCell.h" />
@@ -313,7 +308,6 @@
     <ClInclude Include="..\HiLib\Sheet.h" />
     <ClInclude Include="..\HiLib\SheetCell.h" />
     <ClInclude Include="..\HiLib\SheetCellResource.h" />
-    <ClInclude Include="..\HiLib\SheetDictionary.h" />
     <ClInclude Include="..\HiLib\SheetEnums.h" />
     <ClInclude Include="..\HiLib\SheetEventArgs.h" />
     <ClInclude Include="..\HiLib\SheetStateMachine.h" />
@@ -404,8 +398,6 @@
     <ClCompile Include="..\HiLib\ChildRowHeaderColumn.cpp" />
     <ClCompile Include="..\HiLib\ColorCell.cpp" />
     <ClCompile Include="..\HiLib\Column.cpp" />
-    <ClCompile Include="..\HiLib\CompareCell.cpp" />
-    <ClCompile Include="..\HiLib\CompareColumn.cpp" />
     <ClCompile Include="..\HiLib\Console.cpp" />
     <ClCompile Include="..\HiLib\CShellExtension.cpp" />
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
@@ -414,7 +406,6 @@
     <ClCompile Include="..\HiLib\FileIconCache.cpp" />
     <ClCompile Include="..\HiLib\FilterCell.cpp" />
     <ClCompile Include="..\HiLib\FontCell.cpp" />
-    <ClCompile Include="..\HiLib\FullCommand.cpp" />
     <ClCompile Include="..\HiLib\GridView.cpp" />
     <ClCompile Include="..\HiLib\GridViewStateMachine.cpp" />
     <ClCompile Include="..\HiLib\IDL.cpp" />
@@ -450,7 +441,6 @@
     <ClCompile Include="..\HiLib\SEHException.cpp" />
     <ClCompile Include="..\HiLib\Sheet.cpp" />
     <ClCompile Include="..\HiLib\SheetCell.cpp" />
-    <ClCompile Include="..\HiLib\SheetDictionary.cpp" />
     <ClCompile Include="..\HiLib\SheetStateMachine.cpp" />
     <ClCompile Include="..\HiLib\ShellFunction.cpp" />
     <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp" />

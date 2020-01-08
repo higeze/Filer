@@ -7,8 +7,6 @@
 #include "Column.h"
 #include "RowColumn.h"
 #include "MyMenu.h"
-#include "UnDoReDoManager.h"
-#include "FullCommand.h"
 
 
 CMenu CCell::ContextMenu;

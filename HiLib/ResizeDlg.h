@@ -32,10 +32,10 @@ private:
 
 		CEdit rowSizeEdit = (HWND)::GetDlgItem(m_hWnd, IDC_EDIT_ROWSIZE);
 		CEdit colSizeEdit = (HWND)::GetDlgItem(m_hWnd, IDC_EDIT_COLUMNSIZE);
-		int rowSize = m_pSheetCell->GetMaxIndex<RowTag, AllTag>();
-		int colSize = m_pSheetCell->GetMaxIndex<ColTag, AllTag>();
-		rowSizeEdit.SetWindowTextW(boost::lexical_cast<std::wstring>(rowSize).c_str());
-		colSizeEdit.SetWindowTextW(boost::lexical_cast<std::wstring>(colSize).c_str());
+		int rowSize = m_pSheetCell->GetContainer<RowTag, AllTag>().size();
+		int colSize = m_pSheetCell->GetContainer<ColTag, AllTag>().size();
+		rowSizeEdit.SetWindowTextW(std::to_wstring(rowSize).c_str());
+		colSizeEdit.SetWindowTextW(std::to_wstring(colSize).c_str());
 
 		rowSizeEdit.EnableWindow(m_pSheetCell->CanResizeRow());
 		colSizeEdit.EnableWindow(m_pSheetCell->CanResizeColumn());
