@@ -25,7 +25,6 @@ protected:
 
 	bool m_isInit; //if init is set, initial width is used
 	std::wstring m_filter; //Filter string
-	int m_allIndex = kInvalidIndex;
 
 public:
 	FRIEND_SERIALIZER
@@ -47,8 +46,6 @@ public:
 		ar("maxwidth", m_maxWidth);
 		m_isInit = false;
 		ar("filter", m_filter);
-		m_allIndex = GetIndex<AllTag>();
-		ar("index", m_allIndex);
 	}
 	template <class Archive>
 	void load(Archive& ar)
@@ -62,7 +59,6 @@ public:
 		ar("maxwidth", m_maxWidth);
 		m_isInit = false;
 		ar("filter", m_filter);
-		ar("index", m_allIndex);
 	}
 public:
 	//Constructor
@@ -88,21 +84,21 @@ public:
 	virtual std::wstring GetFilter()const{return m_filter;}
 	virtual void SetFilter(const std::wstring& filter){m_filter = filter;}
 	virtual FLOAT GetWidth();
-	virtual void SetWidth(const FLOAT width);
-	virtual void SetWidthWithoutSignal(const FLOAT width);
+	virtual void SetWidth(const FLOAT width, bool notify = true);
+	//virtual void SetWidthWithoutSignal(const FLOAT width);
 	virtual FLOAT GetLeft()const{return  m_left + Offset();}
 	virtual void SetSheetLeft(const FLOAT left){m_left=left;}
 	virtual void SetSheetLeftWithoutSignal(const FLOAT left){m_left=left;}
-	virtual FLOAT GetRight(){return GetLeft() + GetWidth();}
+	virtual FLOAT GetRight() {return GetLeft() + GetWidth();}
+	virtual FLOAT GetLeftTop() override{ return GetLeft(); }
+	virtual FLOAT GetRightBottom() override { return GetRight(); }
+	virtual FLOAT GetWidthHeight() override { return GetWidth(); }
+	virtual void SetWidthHeight(const FLOAT wh, bool notify = true) override { SetWidth(wh, notify); }
+
 	virtual Sorts GetSort()const{return m_sort;};
 	virtual void SetSort(const Sorts& sort);
 	virtual void SetVisible(const bool& bVisible, bool notify = true)override;
 	virtual void SetSelected(const bool& bSelected)override;
-	//template<typename TAV>
-	//int GetIndex()const
-	//{
-	//	return m_pSheet->Pointer2Index<ColTag, TAV>(this);
-	//}
 
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::shared_ptr<CCell> spCellSrc){return false;}
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::wstring source){return false;}

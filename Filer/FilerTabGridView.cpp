@@ -293,8 +293,8 @@ LRESULT CFilerTabGridView::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HW
 	//TODO Bad connection between FilerTabGridView and FavoritesView
 	if(auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)){
 		p->GetFavoritesPropPtr()->GetFavorites()->push_back(std::make_shared<CFavorite>(m_folders[m_contextMenuTabIndex]->GetPath(), L""));
-		p->GetLeftFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetLeftFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
-		p->GetRightFavoritesView()->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(p->GetRightFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
+		p->GetLeftFavoritesView()->PushRow(std::make_shared<CFavoriteRow>(p->GetLeftFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
+		p->GetRightFavoritesView()->PushRow(std::make_shared<CFavoriteRow>(p->GetRightFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
 		p->GetLeftFavoritesView()->SubmitUpdate();
 		p->GetRightFavoritesView()->SubmitUpdate();
 	}

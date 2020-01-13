@@ -2,10 +2,6 @@
 #include "Sheet.h"
 #include "Row.h"
 #include "Column.h"
-#include "MyRect.h"
-#include "MySize.h"
-#include "MyDC.h"
-#include "CellProperty.h"
 #include "MyMenu.h"
 
 CMenu CParentRowHeaderCell::ContextMenu;
@@ -27,7 +23,7 @@ bool CParentRowHeaderCell::Filter(const std::wstring& strFilter)const//Not filte
 
 std::wstring CParentRowHeaderIndexCell::GetString()
 {
-	return boost::lexical_cast<std::wstring>(m_pRow->GetIndex<VisTag>()+1);
+	return std::to_wstring(m_pRow->GetIndex<VisTag>() + 1 - m_pSheet->GetFrozenCount<RowTag>());
 }
 
 

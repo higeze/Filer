@@ -99,8 +99,6 @@ private:
 	void Modified(const std::wstring& fileName);
 	void Removed(const std::wstring& fileName);
 	void Renamed(const std::wstring& oldName, const std::wstring& newName);
-protected:
-	void InsertDefaultRowColumn() override; 
 public:
 	FRIEND_SERIALIZER
 	template <class Archive>
@@ -111,12 +109,10 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn);
-
-		std::vector<ColumnData> columns;
-		for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
-			columns.push_back(*iter);
-		}
-		ar("Columns", columns);
+	
+		ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
+		ar("RowFrozenCount", m_frozenRowCount);
+		ar("ColFrozenCount", m_frozenColumnCount);
 	}
 
 	template <class Archive>
@@ -128,24 +124,18 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn, this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
 
-		std::vector<ColumnData> columns;
-		for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
-			columns.push_back(*iter);
-		}
-		ar("Columns", columns);
-
-		if (m_columnAllDictionary.empty()) {
-
-			for (auto& col : columns) {
-				if (auto p = std::dynamic_pointer_cast<CFileNameColumn>(col.DataPtr)) {
-					m_pNameColumn = p;
-				} else if (auto p = std::dynamic_pointer_cast<CParentRowHeaderColumn>(col.DataPtr)) {
-					m_pHeaderColumn = p;
-				}
-				InsertColumnNotify(col.Index, col.DataPtr, false);
+		ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
+		for (auto& colPtr : m_allCols) {
+			if (auto p = std::dynamic_pointer_cast<CFileNameColumn>(colPtr)) {
+				m_pNameColumn = p;
+			} else if (auto p = std::dynamic_pointer_cast<CParentRowHeaderColumn>(colPtr)) {
+				m_pHeaderColumn = p;
 			}
 		}
+		ar("RowFrozenCount", m_frozenRowCount);
+		ar("ColFrozenCount", m_frozenColumnCount);
 	}
+
 
 
 

@@ -82,11 +82,14 @@ void CFavoritesGridView::OpenFavorites()
 		m_spCursorer->Clear();
 
 		if (Empty()) {
-			InsertDefaultRowColumn();
+			//IconColumn
+			{
+				auto pColumn = std::make_shared<CFavoritesColumn>(this, m_spFavoritesProp->GetFavorites());
+				PushColumn(pColumn);
+			}
 		}
 		//Clear RowDictionary From 0 to last
-		auto& rowDictionary = m_rowAllDictionary.get<IndexTag>();
-		rowDictionary.erase(rowDictionary.begin(), rowDictionary.end());
+		m_allRows.idx_erase(m_allRows.begin()+m_frozenRowCount, m_allRows.end());
 	}
 
 	{
@@ -95,12 +98,12 @@ void CFavoritesGridView::OpenFavorites()
 		try {
 			//Enumerate favorites
 			for (size_t i = 0; i < m_spFavoritesProp->GetFavorites()->size(); i++) {
-				InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(this, i));
+				PushRow(std::make_shared<CFavoriteRow>(this, i));
 			}
 
-			for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
-				std::dynamic_pointer_cast<CParentMapColumn>(iter->DataPtr)->Clear();
-				iter->DataPtr->SetMeasureValid(false);
+			for (auto colPtr : m_allCols) {
+				std::dynamic_pointer_cast<CParentMapColumn>(colPtr)->Clear();
+				colPtr->SetMeasureValid(false);
 			}
 
 		} catch (...) {
@@ -116,16 +119,6 @@ void CFavoritesGridView::OpenFavorites()
 	PostUpdate(Updates::Invalidate);
 
 	SubmitUpdate();
-}
-
-
-void CFavoritesGridView::InsertDefaultRowColumn()
-{
-	//IconColumn
-	{
-		auto pColumn = std::make_shared<CFavoritesColumn>(this, m_spFavoritesProp->GetFavorites());
-		InsertColumn(CColumn::kMaxIndex,pColumn);
-	}
 }
 
 void CFavoritesGridView::OnCellLButtonDblClk(CellEventArgs& e)

@@ -22,14 +22,16 @@ protected:
 	bool m_bSelected; // Selected or not
 	bool m_bMeasureValid; // Measurement for width/height is valid or not
 
-	int m_allIndex = -9999;
-	int m_visIndex = -9999;
+	int m_allIndex = kInvalidIndex;
+	int m_visIndex = kInvalidIndex;
 public:
 	FRIEND_SERIALIZER;
 	template <class Archive>
 	void save(Archive& ar)
 	{
 		ar("visible", m_bVisible);
+		ar("allindex", m_allIndex);
+		ar("visindex", m_visIndex);
 	}
 	template <class Archive>
 	void load(Archive& ar)
@@ -37,6 +39,8 @@ public:
 		//TODO m_pSheet = static_cast<sheet_xml_wiarchive&>(ar).GetSheetPtr();
 
 		ar("visible", m_bVisible);
+		ar("allindex", m_allIndex);
+		ar("visindex", m_visIndex);
 		m_bMeasureValid = true;//Width or Height are serialized
 	}
 
@@ -68,6 +72,11 @@ public:
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) = 0;
 	virtual void OnPropertyChanged(const wchar_t* name) = 0;
 	virtual SizingType GetSizingType()const = 0;
+	virtual FLOAT GetLeftTop() = 0;
+	virtual FLOAT GetRightBottom() = 0;
+	virtual FLOAT GetWidthHeight() = 0;
+	virtual void SetWidthHeight(const FLOAT wh, bool notify = true) = 0;
+
 	
 	template<typename T>
 	int GetIndex() const{return kInvalidIndex; }

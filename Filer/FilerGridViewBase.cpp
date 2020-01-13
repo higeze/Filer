@@ -78,11 +78,11 @@ LRESULT CFilerGridViewBase::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 	return 0;
 }
 
-RowDictionary::const_iterator CFilerGridViewBase::FindIfRowIterByFileNameExt(const std::wstring& fileNameExt)
+index_vector<std::shared_ptr<CRow>>::const_iterator CFilerGridViewBase::FindIfRowIterByFileNameExt(const std::wstring& fileNameExt)
 {
-	return std::find_if(m_rowAllDictionary.begin(), m_rowAllDictionary.end(),
-		[&](const RowData& data)->bool {
-		if (auto p = std::dynamic_pointer_cast<CFileRow>(data.DataPtr)) {
+	return std::find_if(m_allRows.begin(), m_allRows.end(),
+		[&](const std::shared_ptr<CRow>& rowPtr)->bool {
+		if (auto p = std::dynamic_pointer_cast<CFileRow>(rowPtr)) {
 			return p->GetFilePointer()->GetFileName() == fileNameExt;
 		} else {
 			return false;
@@ -195,18 +195,6 @@ void CFilerGridViewBase::Normal_KeyDown(const KeyDownEvent& e)
 
 	CGridView::Normal_KeyDown(e);
 };
-
-void CFilerGridViewBase::InsertDefaultRowColumn()
-{
-	//Row
-	m_rowHeader = std::make_shared<CParentHeaderRow>(this);
-	m_rowNameHeader = std::make_shared<CParentHeaderRow>(this);
-	m_rowFilter = std::make_shared<CParentRow>(this);
-
-	InsertRowNotify(CRow::kMinIndex, m_rowFilter);
-	InsertRowNotify(CRow::kMinIndex, m_rowNameHeader);
-	InsertRowNotify(CRow::kMinIndex, m_rowHeader);
-}
 
 void CFilerGridViewBase::OnCellLButtonDblClk(CellEventArgs& e)
 {

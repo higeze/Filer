@@ -5,27 +5,23 @@
 #include "SheetEventArgs.h"
 #include "SheetEnums.h"
 
-/**
- *  CColumn
- */
-
 FLOAT CColumn::GetWidth()
 {
 	if (m_isInit) {
-		SetWidthWithoutSignal(m_pSheet->GetColumnInitWidth(this));
+		SetWidth(m_pSheet->GetColumnInitWidth(this), false);
 		m_bMeasureValid = true;
 		m_isInit = false;
 	} else if (!m_bMeasureValid) {
 		switch (GetSizingType()) {
 		case SizingType::Fit:
-			SetWidthWithoutSignal(m_pSheet->GetColumnFitWidth(this));
+			SetWidth(m_pSheet->GetColumnFitWidth(this), false);
 			break;
 		case SizingType::Depend:
-			SetWidthWithoutSignal((std::max)(m_width, m_pSheet->GetColumnFitWidth(this)));
+			SetWidth((std::max)(m_width, m_pSheet->GetColumnFitWidth(this)), false);
 			break;
 		case SizingType::Independ:
 		default:
-			SetWidthWithoutSignal(m_pSheet->GetColumnFitWidth(this));
+			SetWidth(m_pSheet->GetColumnFitWidth(this), false);
 			break;
 		}
 		m_bMeasureValid = true;
@@ -33,17 +29,14 @@ FLOAT CColumn::GetWidth()
 	return m_width;
 }
 
-void CColumn::SetWidth(const FLOAT width)
+void CColumn::SetWidth(const FLOAT width, bool notify)
 {
 	if(m_width!=width){
-		SetWidthWithoutSignal(width);
-		//m_pSheet->ColumnWidthChanged(CColumnEventArgs(this));
-	}
-}
+		m_width = std::clamp(width, m_minWidth, m_maxWidth);
+		if (notify) {
 
-void CColumn::SetWidthWithoutSignal(const FLOAT width) 
-{
-	m_width = std::clamp(width, m_minWidth, m_maxWidth);
+		}
+	}
 }
 
 void CColumn::SetVisible(const bool& bVisible, bool notify)
@@ -89,21 +82,6 @@ void CColumn::OnPropertyChanged(const wchar_t* name)
 {
 	m_pSheet->OnColumnPropertyChanged(this, name);
 }
-
-//CColumn::int CColumn::GetIndex<VisTag>()const
-//{
-//	return m_pSheet->Pointer2Index<ColTag, VisTag>(this);
-//}
-//
-//CColumn::int CColumn::GetIndex<AllTag>()const
-//{
-//	return m_pSheet->Pointer2Index<ColTag, AllTag>(this);
-//}
-
-//bool CColumn::SortPredicate(const CCell& lhs, const CCell& rhs)
-//{
-//
-//}
 
 /**
  *  CParentColumn

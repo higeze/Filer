@@ -77,22 +77,23 @@ LRESULT CCheckableFileGrid::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 	m_rowNameHeader = std::make_shared<CParentHeaderRow>(this);
 	m_rowFilter = std::make_shared<CParentRow>(this);
 
-	InsertRowNotify(CRow::kMinIndex, m_rowFilter, false);
-	InsertRowNotify(CRow::kMinIndex, m_rowNameHeader, false);
+	m_allRows.idx_push_back(m_rowFilter);
+	m_allRows.idx_push_back(m_rowNameHeader);
+
+	m_frozenRowCount = 2;
+
 
 	//Insert columns if not initialized
-	if (m_columnAllDictionary.empty()) {
-		auto insertFun = [this](std::shared_ptr<CColumn> col, int defaultIndex) {
-			InsertColumnNotify(col->GetSerializedIndex() == CColumn::kInvalidIndex ? defaultIndex : col->GetSerializedIndex(), col, false);
-		};
-
-		insertFun(std::make_shared<CParentRowHeaderColumn>(this), CColumn::kMinIndex);
-		//insertFun(std::make_shared<CFileIconColumn>(this), CColumn::kMaxIndex);
+	if (m_allCols.empty()) {
 		m_pNameColumn = std::make_shared<CFileIconPathColumn>(this);
-		insertFun(m_pNameColumn, CColumn::kMaxIndex);
-		insertFun(std::make_shared<CFileExtColumn>(this), CColumn::kMaxIndex);
-		insertFun(std::make_shared<CFileSizeColumn>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr), CColumn::kMaxIndex);
-		insertFun(std::make_shared<CFileLastWriteColumn>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr), CColumn::kMaxIndex);
+
+		m_allCols.idx_push_back(std::make_shared<CParentRowHeaderColumn>(this));
+		m_allCols.idx_push_back(m_pNameColumn);
+		m_allCols.idx_push_back(std::make_shared<CFileExtColumn>(this));
+		m_allCols.idx_push_back(std::make_shared<CFileSizeColumn>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr));
+		m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
+
+		m_frozenColumnCount = 1;
 	}
 
 	PostUpdate(Updates::All);
@@ -100,22 +101,6 @@ LRESULT CCheckableFileGrid::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 
 	return 0;
 }
-
-
-
-void CCheckableFileGrid::InsertDefaultRowColumn()
-{
-	//Row
-//	m_rowHeader = std::make_shared<CParentHeaderRow>(this);
-	m_rowNameHeader = std::make_shared<CParentHeaderRow>(this);
-	m_rowFilter = std::make_shared<CParentRow>(this);
-
-	InsertRowNotify(CRow::kMinIndex, m_rowFilter);
-	InsertRowNotify(CRow::kMinIndex, m_rowNameHeader);
-//	InsertRowNotify(CRow::kMinIndex, m_rowHeader);
-
-}
-
 
 void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 {
@@ -128,13 +113,9 @@ void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 			//::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);
 		}
 
-		if (Empty()) {
-			InsertDefaultRowColumn();
-		}
-
-		InsertRow(CRow::kMaxIndex, std::make_shared<CFileRow>(this, spFile));
-		for (auto& col : m_columnAllDictionary) {
-			col.DataPtr->SetMeasureValid(false);
+		PushRow(std::make_shared<CFileRow>(this, spFile));
+		for (auto& colPtr : m_allCols) {
+			colPtr->SetMeasureValid(false);
 		}
 
 		PostUpdate(Updates::Sort);

@@ -36,7 +36,4 @@ public:
 //	virtual bool PasteFromClipboard() override;
 //	virtual bool Delete() override;
 	void AddItem(const std::shared_ptr<CShellFile>& spFile);
-
-protected:
-	void InsertDefaultRowColumn() override;
 };

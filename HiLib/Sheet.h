@@ -14,8 +14,6 @@ class IDragger;
 class ITracker;
 class ICeller;
 class CCursorer;
-class CRow;
-class CColumn;
 struct HeaderProperty;
 class CellProperty;
 class CRect;
@@ -48,7 +46,7 @@ struct Indexes
 struct ColTag;
 struct RowTag
 {
-	using PointTag = d2dw::CPointF::XTag;
+	using PointTag = d2dw::CPointF::YTag;
 	using IndexesTag = Indexes::RowIdxTag;
 	using SharedPtr = std::shared_ptr<CRow>;
 	typedef const CRow* Ptr;
@@ -58,75 +56,13 @@ struct RowTag
 
 struct ColTag
 {
-	using PointTag = d2dw::CPointF::YTag;
+	using PointTag = d2dw::CPointF::XTag;
 	using IndexesTag = Indexes::ColIdxTag;
 	using SharedPtr = std::shared_ptr<CColumn>;
 	typedef const CColumn* Ptr;
 	using Container = index_vector<std::shared_ptr<CColumn>>;
 	typedef RowTag Other;
 };
-
-//template<typename TRC>
-//FLOAT Point2Coordinate(d2dw::CPointF pt)
-//{ 
-//	if constexpr (std::is_same_v<TRC, RowTag>) {
-//		return pt.y;
-//	} else if constexpr (std::is_same_v<TRC, ColTag>) {
-//		return pt.x;
-//	} else {
-//		throw std::exception("Point2Coordinate");
-//	}
-//}
-
-FLOAT GetLeftTop(const std::shared_ptr<CRow>& ptr)//TODOTODO
-{
-	return ptr->GetTop();
-}
-
-FLOAT GetLeftTop(const std::shared_ptr<CColumn>& ptr)
-{
-	return ptr->GetLeft();
-}
-
-FLOAT GetRightBottom(const std::shared_ptr<CRow>& ptr)
-{
-	return ptr->GetBottom();
-}
-
-FLOAT GetRightBottom(const std::shared_ptr<CColumn>& ptr)
-{
-	return ptr->GetRight();
-}
-
-FLOAT GetWidthHeight(const std::shared_ptr<CRow>& ptr)
-{
-	return ptr->GetHeight();
-}
-
-FLOAT GetWidthHeight(const std::shared_ptr<CColumn>& ptr)
-{
-	return ptr->GetWidth();
-}
-
-void SetWidthHeight(const std::shared_ptr<CRow>& ptr, const FLOAT height)
-{
-	return ptr->SetHeight(height);
-}
-
-void SetWidthHeight(const std::shared_ptr<CColumn>& ptr, const FLOAT width)
-{
-	return ptr->SetWidth(width);
-}
-
-void SetWidthHeightWithoutSignal(const std::shared_ptr<CRow>& ptr, const FLOAT height)
-{
-	return ptr->SetHeightWithoutSignal(height);
-}
-
-void SetWidthHeightWithoutSignal(const std::shared_ptr<CColumn>& ptr, const FLOAT width)
-{
-	return ptr->SetWidthWithoutSignal(width);
-}
 
 //Self defined message
 const UINT WM_FILTER = RegisterWindowMessage(L"WM_FILTER");
@@ -147,7 +83,7 @@ public:
 	//static cell Accessor
 	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
 	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow);
-	static std::shared_ptr<CCell>& Cell( CRow* pRow,  CColumn* pColumn);
+	static std::shared_ptr<CCell>& Cell(CRow* pRow,  CColumn* pColumn);
 protected:
 	//State machine
 	std::unique_ptr<IStateMachine> m_pMachine;
@@ -159,7 +95,6 @@ public:
 	std::shared_ptr<IDragger> m_spItemDragger; // Dragger for Item
 	std::shared_ptr<ICeller> m_spCeller; //Celler
 	std::shared_ptr<CCursorer> m_spCursorer; // Cursor
-private:
 
 protected:
 	std::set<Updates> m_setUpdate; // Set posted update
@@ -272,10 +207,10 @@ public:
 	virtual void EraseRow(const std::shared_ptr<CRow>& spColumn, bool notify = true);
 	virtual void EraseRows(const std::vector<std::shared_ptr<CRow>>& vpRow, bool notify = true);
 
-	virtual void MoveColumn(int colTo, std::shared_ptr<CColumn> spFromColumn){MoveImpl<ColTag>(colTo, spFromColumn);}
+	virtual void MoveColumn(int colTo, std::shared_ptr<CColumn> spFromColumn){Move<ColTag>(colTo, spFromColumn);}
 
-	virtual void InsertRow(int rowVisib, const std::shared_ptr<CRow>& pRow, bool notify = true);
-	virtual void InsertColumn(int colTo, const std::shared_ptr<CColumn>& pColumn, bool notify = true);
+	virtual void PushRow(const std::shared_ptr<CRow>& pRow, bool notify = true);
+	virtual void PushColumn(const std::shared_ptr<CColumn>& pColumn, bool notify = true);
 
 	virtual FLOAT GetColumnInitWidth(CColumn* pColumn);
 	virtual FLOAT GetColumnFitWidth(CColumn* pColumn);
@@ -284,7 +219,7 @@ public:
 
 	virtual std::wstring GetSheetString()const;
 
-	virtual d2dw::CPointF GetOriginPoint();
+	virtual d2dw::CPointF GetFrozenPoint();
 	virtual d2dw::CSizeF MeasureSize()const;
 
 	virtual d2dw::CRectF GetRect()const;
@@ -316,7 +251,7 @@ protected:
 	virtual void OnBeginEdit(const BeginEditEvent& e);
 
 
-	virtual void OnPaintAll(const PaintEvent& e);
+	//virtual void OnPaintAll(const PaintEvent& e);
 	virtual void OnBkGndLButtondDblClk(const LButtonDblClkEvent& e) {}
 
 public:
@@ -392,6 +327,9 @@ public:
 	CMenu* const m_pContextMenu;
 	virtual CMenu* GetContextMenuPtr() { return m_pContextMenu; }
 
+	/************/
+	/* Template */
+	/************/
 	//Tag dispatch
 	template<typename TRC, typename TAV> typename TRC::Container& GetContainer() { return m_allRows; }
 	template<> inline RowTag::Container& GetContainer<RowTag, AllTag>()
@@ -430,6 +368,17 @@ public:
 		}
 	}
 
+	template<typename TRC> void SetFrozenCount(int count)
+	{
+		if constexpr (std::is_same_v<TRC, RowTag>) {
+			m_frozenRowCount = count;
+		} else if constexpr (std::is_same_v<TRC, ColTag>) {
+			m_frozenColumnCount = count;
+		} else {
+			static_assert(false_v<TRC>);
+		}
+	}
+
 	template<typename TAV> std::shared_ptr<CCell> Cell(int row, int col)
 	{
 		auto pRow = Index2Pointer<RowTag, TAV>(row);
@@ -442,52 +391,38 @@ public:
 		}
 	}
 
-	template<typename TRC> TRC::template SharedPtr Coordinate2Pointer(FLOAT coordinate)
+	template<typename TRC> typename TRC::SharedPtr Coordinate2Pointer(FLOAT coordinate)
 	{
-		auto ptOrigin = GetOriginPoint();
-
-		auto& visContainer = GetContainer<TRC, VisTag>();
-		auto iter = std::upper_bound(visContainer.begin(), visContainer.end(), coordinate,
-			[this, ptOrigin](const FLOAT& c, const TRC::SharedPtr& ptr)->bool {
-				if (ptr->GetIndex<VisTag>() >= GetFrozenCount<TRC>()) {
-					return c < (std::max)(ptOrigin.Get<TRC::PointTag>(), GetLeftTop(ptr));
-				} else {
-					return c < GetLeftTop(ptr);
-				}
-			});
-
-		auto prevIter = boost::prior(iter);
-
-		if (iter == visContainer.begin() || (iter == visContainer.end() && coordinate > GetRightBottom(*prevIter))) {
-			return nullptr;
+		auto container = GetContainer<TRC, VisTag>();
+		int idx = Coordinate2Index<TRC>(coordinate);
+		if (0 <= idx && idx < (int)container.size()) {
+			return container[idx];
 		} else {
-			--iter;
+			return nullptr;
 		}
-		return *iter;
 	}
 
 	template<typename TRC> int Coordinate2Index(FLOAT coordinate)
 	{
-		auto ptOrigin = GetOriginPoint();
+		auto ptOrigin = GetFrozenPoint();
 
 		auto& visContainer = GetContainer<TRC, VisTag>();
 		auto iter = std::lower_bound(visContainer.begin(), visContainer.end(), coordinate,
 			[this, ptOrigin](const typename TRC::SharedPtr& ptr, const FLOAT& rhs)->bool {
-				if (ptr->GetIndex<VisTag>() >= 0) {
-					return (std::max)(ptOrigin.Get<TRC::PointTag>(), GetRightBottom(ptr)) < rhs;
+				if (ptr->GetIndex<VisTag>() >= GetFrozenCount<TRC>()) {
+					return (std::max)(ptOrigin.Get<TRC::PointTag>(), ptr->GetRightBottom()) < rhs;
 				} else {
-					return GetRightBottom(ptr) < rhs;
+					return ptr->GetRightBottom() < rhs;
 				}
 			});
-		int index = 0;
+
 		if (iter == visContainer.end()) {
-			index = visContainer.size();
-		} else if (iter == visContainer.begin() && GetLeftTop(*iter) > coordinate) {
-			index = (*iter)->GetIndex<VisTag>() - 1;
+			return visContainer.size();
+		} else if (iter == visContainer.begin() && (*iter)->GetLeftTop() > coordinate) {
+			return (*iter)->GetIndex<VisTag>() - 1;
 		} else {
-			index = (*iter)->GetIndex<VisTag>();
+			return (*iter)->GetIndex<VisTag>();
 		}
-		return index;
 	}
 	template<typename TRC> int Point2Index(const d2dw::CPointF& pt)
 	{
@@ -499,20 +434,7 @@ public:
 		return Indexes(Coordinate2Index<RowTag>(pt.y), Coordinate2Index<ColTag>(pt.x));
 	}
 
-	template<typename TRC, typename TAV> int Pointer2Index(TRC::template Ptr pointer)
-	{
-		auto& container = GetContainer<TRC, TAV>();
-
-		auto iter = container.find(pointer);
-		if (iter != container.end()) {
-			return iter->GetIndex<TAV>();
-		}
-		else {
-			throw std::exception("Sheet::Pointer2Index");
-		}
-	}
-
-	template<typename TRC, typename TAV> TRC::template SharedPtr Index2Pointer(int index) 
+	template<typename TRC, typename TAV> typename TRC::SharedPtr Index2Pointer(int index) 
 	{ 
 		auto& container = GetContainer<TRC, TAV>();
 
@@ -538,7 +460,7 @@ public:
 	template<typename TRC> void FitBandWidth(TRC::template SharedPtr& ptr)
 	{
 		ptr->SetMeasureValid(false);
-		SetWidthHeightWithoutSignal(ptr, 0.0f);
+		ptr->SetWidthHeight(0.0f, false);
 		auto& otherContainer = GetContainer<TRC::Other, AllTag>();
 		for(const auto& otherPtr : otherContainer) {
 			otherPtr->SetMeasureValid(false);
@@ -582,25 +504,27 @@ public:
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
 	}
-	template<typename TRC> void FitWidth(TRC::template SharedPtr& e) {  }
 
 	template<typename TRC>
-	void MoveImpl(int indexTo, typename TRC::SharedPtr spFrom)
+	void Move(int indexTo, typename TRC::SharedPtr spFrom)
 	{
 		int from = spFrom->GetIndex<AllTag>();
 		int to = indexTo;
-		if (from >= 0 && to >= 0 && to>from) {
+		if (to>from) {
 			to--;
-		}
-		if (from<0 && to<0 && to<from) {
-			to++;
+		} else {
+
 		}
 
-		EraseImpl<TRC>(spFrom);
-		InsertImpl<TRC, AllTag>(to, spFrom);
+		auto& container = GetContainer<TRC, AllTag>();
+		auto iter = std::find(container.begin(), container.end(), spFrom);
+		if (iter != container.end()) {
+			container.idx_erase(iter);
+		}
 
-		TRC::Ptr p = nullptr;
-		Moved<TRC>(CMovedEventArgs<TRC>(p, from, to));
+		container.idx_insert(container.cbegin() + to, spFrom);
+
+		Moved<TRC>(CMovedEventArgs<TRC>(spFrom, from, to));
 
 		//ColumnMoved(CColumnMovedEventArgs(nullptr, from, to));//TODO change to tag dispatch
 		PostUpdate(Updates::RowVisible);
@@ -613,22 +537,6 @@ public:
 		PostUpdate(Updates::Invalidate);//
 	}
 
-	template<typename TRC, typename TAV = AllTag>
-	void EraseImpl(TRC::template SharedPtr erasePtr)
-	{
-		auto& container = GetContainer<TRC, TAV>();
-		auto iter = std::find(container.begin(), container.end(), erasePtr);
-		if (iter != container.end()) {
-			container.idx_erase(iter);
-		}
-	}
-
-	template<typename TRC, typename TAV = AllTag>
-	void InsertImpl(int index, const TRC::template SharedPtr& pInsert)
-	{
-		auto& container = GetContainer<TRC, TAV>();
-		container.idx_insert(std::next(container.begin(), index), pInsert);
-	}
 	
 	virtual void SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& cell2, bool doSelect);
 	template<class T>
@@ -644,29 +552,7 @@ public:
 			(*iter)->SetSelected(doSelect);
 		}
 	}
-	
 
-
-/*
- *  Template function
- */
-protected:
-	template<class T, class U>
-	void Erase(T& container, U erasePtr)
-	{
-		auto iter = std::find(container.begin(), container.end(), erasePtr);
-		if (iter != container.end()) {
-			container.idx_erase(iter);
-		}
-	}
-
-	template<class T, class U>
-	void EraseSome(T& container, std::vector<U> erasePtrs)
-	{
-		for(auto& erasePtr : erasePtrs){
-			Erase<T, U>(container, erasePtr);
-		}
-	}
 
 	template<class TRC>
 	void UpdateVisibleContainer()
@@ -695,12 +581,12 @@ protected:
 		}
 		//Find Displayed Plus Elements
 		auto beginIter=std::upper_bound(cellBegin, visContainer.end(), pageFirst,
-			[this](const FLOAT& x, const auto& ptr)->bool { return x < GetLeftTop(ptr); });
+			[this](const FLOAT& x, const auto& ptr)->bool { return x < ptr->GetLeftTop(); });
 		if(beginIter != cellBegin){
 			--beginIter;
 		}
 		auto endIter = std::lower_bound(cellBegin, visContainer.end(), pageLast,
-			[this](const auto& ptr, const FLOAT& x)->bool { return x > GetRightBottom(ptr); });
+			[this](const auto& ptr, const FLOAT& x)->bool { return x > ptr->GetRightBottom(); });
 		if(endIter != visContainer.end()){
 			++endIter;
 		}

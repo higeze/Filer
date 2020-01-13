@@ -27,11 +27,13 @@ FLOAT CRow::GetHeight()
 	return m_height;
 }
 
-void CRow::SetHeight(const FLOAT height)
+void CRow::SetHeight(const FLOAT height, bool notify)
 {
 	if(m_height!=height){
 		m_height=height;
-		OnPropertyChanged(L"height");
+		if (notify) {
+			OnPropertyChanged(L"height");
+		}
 	}
 }
 void CRow::SetVisible(const bool& bVisible, bool notify)
@@ -51,7 +53,6 @@ void CRow::SetSelected(const bool& bSelected)
 	}
 }
 
-
 void CRow::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 {
 	if (!_tcsicmp(L"value", name) /*|| !_tcsicmp(L"size", name)*/) {
@@ -70,33 +71,6 @@ void CRow::OnPropertyChanged(const wchar_t* name)
 }
 
 
-//CRow::int CRow::GetIndex<VisTag>()const
-//{
-//	return m_pSheet->Pointer2Index<RowTag, VisTag>(this);
-//}
-//CRow::int CRow::GetIndex<AllTag>()const
-//{
-//	return m_pSheet->Pointer2Index<RowTag, AllTag>(this);
-//}
-
 CParentRow::CParentRow(CGridView* pGrid):CRow(pGrid){} 
 
-//FLOAT CParentRow::Offset()const
-//{
-//	 FLOAT offset(static_cast<CGridView*>(m_pSheet)->GetPaintRect().top);
-//	//if(m_pSheet->Visible() && GetVisible() && GetIndex<AllTag>()>=0){
-//	if(m_pSheet->Visible() && GetVisible() && GetIndex<VisTag>()>=0){
-//		offset-=static_cast<CGridView*>(m_pSheet)->GetVerticalScrollPos();
-//	}
-//	return offset;
-//}
-//
 CChildRow::CChildRow(CSheetCell* pSheetCell):CRow(pSheetCell){} 
-//
-//FLOAT CChildRow::Offset()const
-//{
-//	return static_cast<CSheetCell*>(m_pSheet)->GetTop()
-//			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
-//			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
-//			+ static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Padding->top;
-//}

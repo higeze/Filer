@@ -123,14 +123,15 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	CRect rcClient = GetClientRect();
 	CRect rcLeftFavorites, rcRightFavorites, rcLeftGrid, rcRightGrid;
 	d2dw::CDirect2DWrite direct(m_hWnd);
-	auto favoriteWidth = direct.Pixels2DipsX(
+	LONG favoriteWidth = direct.Dips2PixelsX(
 		m_spFilerGridViewProp->CellPropPtr->Line->Width * 2 + //def:GridLine=0.5*2, CellLine=0.5*2
 		m_spFilerGridViewProp->CellPropPtr->Padding->left + //def:2
 		m_spFilerGridViewProp->CellPropPtr->Padding->right + //def:2
-		16.0);
+		16.f);//icon
 	rcLeftFavorites.SetRect(
 		rcClient.left, rcClient.top,
 		rcClient.left + favoriteWidth, rcClient.bottom);
+
 	if (m_splitterLeft == 0) {//Initial = No serialize
 
 		if (rcClient.Width() >= 800) {
@@ -285,8 +286,8 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 					psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
 					std::wstring path = shell::STRRET2WSTR(strret, pIdl);
 					GetFavoritesPropPtr()->GetFavorites()->push_back(std::make_shared<CFavorite>(path, L""));
-					m_spLeftFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spLeftFavoritesView.get(), GetFavoritesPropPtr()->GetFavorites()->size() - 1));
-					m_spRightFavoritesView->InsertRow(CRow::kMaxIndex, std::make_shared<CFavoriteRow>(m_spRightFavoritesView.get(), GetFavoritesPropPtr()->GetFavorites()->size() - 1));
+					m_spLeftFavoritesView->PushRow(std::make_shared<CFavoriteRow>(m_spLeftFavoritesView.get(), GetFavoritesPropPtr()->GetFavorites()->size() - 1));
+					m_spRightFavoritesView->PushRow(std::make_shared<CFavoriteRow>(m_spRightFavoritesView.get(), GetFavoritesPropPtr()->GetFavorites()->size() - 1));
 				}
 				m_spLeftFavoritesView->SubmitUpdate();
 				m_spRightFavoritesView->SubmitUpdate();
@@ -677,24 +678,26 @@ LRESULT CFilerWnd::OnCommandExeExtensionOption(WORD wNotifyCode, WORD wID, HWND 
 
 LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	return OnCommandOption<CFilerTabGridView, std::shared_ptr<FilerGridViewProperty>>(
-		L"Left View", m_spLeftView,
-		[this](const std::wstring& str)->void {
-		m_spLeftFavoritesView->UpdateAll();
-		m_spRightFavoritesView->UpdateAll();
-		SerializeProperty(this);
-	}, m_spFilerGridViewProp);
+	//return OnCommandOption<CFilerTabGridView, std::shared_ptr<FilerGridViewProperty>>(
+	//	L"Left View", m_spLeftView,
+	//	[this](const std::wstring& str)->void {
+	//	m_spLeftFavoritesView->UpdateAll();
+	//	m_spRightFavoritesView->UpdateAll();
+	//	SerializeProperty(this);
+	//}, m_spFilerGridViewProp);
+	return 0;
 }
 
 LRESULT CFilerWnd::OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	return OnCommandOption<CFilerTabGridView, std::shared_ptr<FilerGridViewProperty>>(
-		L"Right View", m_spRightView,
-		[this](const std::wstring& str)->void {
-		m_spLeftFavoritesView->UpdateAll();
-		m_spRightFavoritesView->UpdateAll();
-		SerializeProperty(this);}, 
-		m_spFilerGridViewProp);
+	//return OnCommandOption<CFilerTabGridView, std::shared_ptr<FilerGridViewProperty>>(
+	//	L"Right View", m_spRightView,
+	//	[this](const std::wstring& str)->void {
+	//	m_spLeftFavoritesView->UpdateAll();
+	//	m_spRightFavoritesView->UpdateAll();
+	//	SerializeProperty(this);}, 
+	//	m_spFilerGridViewProp);
+	return 0;
 }
 
 #ifdef USE_PYTHON_EXTENSION

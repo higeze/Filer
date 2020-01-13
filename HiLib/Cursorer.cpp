@@ -26,8 +26,8 @@ void CCursorer::UpdateCursor(std::shared_ptr<CCell>& cell, bool old, bool curren
 
 void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 {
-
-	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	// Cell is null or H
+	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>() < cell->GetSheetPtr()->GetFrozenCount<RowTag>() || cell->GetColumnPtr()->GetIndex<AllTag>() < cell->GetSheetPtr()->GetFrozenCount<RowTag>()) {
 		return;
 	}
 	
@@ -38,7 +38,7 @@ void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
 {
-	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
 
@@ -49,7 +49,7 @@ void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
 {
-	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
 
@@ -62,7 +62,7 @@ void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorLeave(std::shared_ptr<CCell>& cell)
 {
-	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
 	if (m_isDragPossible) {
@@ -74,7 +74,7 @@ void CCursorer::OnCursorLeave(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 {
-	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
 	UpdateCursor(cell);
@@ -84,7 +84,7 @@ void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
 {
-	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
 		return;
 	}
 	UpdateCursor(cell, true, true, false, true);
@@ -97,7 +97,7 @@ void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorCtrlShift(std::shared_ptr<CCell>& cell)
 {
-	if (!cell || cell->GetRowPtr()->GetIndex<AllTag>() < 0 || cell->GetColumnPtr()->GetIndex<AllTag>() < 0) {
+	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>() < 0 || cell->GetColumnPtr()->GetIndex<AllTag>() < 0) {
 		return;
 	}
 	
@@ -225,13 +225,13 @@ void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 						coVisib=((std::max)(coVisib-1,0));
 						break;
 					case VK_RIGHT:
-						coVisib=((std::min)(coVisib+1, (int)pSheet->GetContainer<ColTag, VisTag>().size()));
+						coVisib=((std::min)(coVisib+1, (int)pSheet->GetContainer<ColTag, VisTag>().size() - 1));
 						break;
 					case VK_UP:
 						roVisib=((std::max)(roVisib-1,0));
 						break;
-					case VK_DOWN:
-						roVisib=((std::min)(roVisib+1, (int)pSheet->GetContainer<ColTag, VisTag>().size()));
+					case VK_DOWN: 
+						roVisib=((std::min)(roVisib+1, (int)pSheet->GetContainer<RowTag, VisTag>().size() - 1));
 						break;
 				}
 				cell=pSheet->Cell<VisTag>(roVisib, coVisib);

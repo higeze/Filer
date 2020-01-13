@@ -219,7 +219,7 @@ FLOAT CGridView::UpdateHeadersRow(FLOAT top)
 {
 	//Minus Cells
 	for (auto iter = m_visRows.begin(), end = std::next(m_visRows.begin(), m_frozenRowCount); iter != end; ++iter) {
-		(*iter)->SetTopWithoutSignal(top);
+		(*iter)->SetTop(top, false);
 		top += (*iter)->GetHeight();
 	}
 	return top;
@@ -234,42 +234,39 @@ FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
 			(bottom > min && bottom < max);
 	};
 	//Plus Cells
-	auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
-	for (auto rowIter = rowDictionary.find(0), rowEnd = rowDictionary.end(),rowNextIter = std::next(rowIter) ; rowIter != rowEnd; ++rowIter, ++rowNextIter) {
-		
+	for (auto rowIter = m_visRows.begin() + m_frozenRowCount, rowEnd = m_visRows.end(); rowIter != rowEnd; ++rowIter) {
+		auto rowNextIter = std::next(rowIter);
 		if (IsVirtualPage()) {
-			rowIter->DataPtr->SetTopWithoutSignal(top);
+			(*rowIter)->SetTop(top, false);
 	
-			FLOAT defaultHeight = rowIter->DataPtr->GetDefaultHeight();
+			FLOAT defaultHeight = (*rowIter)->GetDefaultHeight();
 			FLOAT bottom = top + defaultHeight;
 			if (isInPage(pageTop, pageBottom, top, top + defaultHeight) ||
-				(rowNextIter!=rowEnd && isInPage(pageTop, pageBottom, bottom, bottom + rowNextIter->DataPtr->GetDefaultHeight()))){
+				(rowNextIter!=rowEnd && isInPage(pageTop, pageBottom, bottom, bottom + (*rowNextIter)->GetDefaultHeight()))){
 				if (HasSheetCell()) {
-					auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
-					for (auto& colData : colDictionary) {
-						std::shared_ptr<CCell> pCell = CSheet::Cell(rowIter->DataPtr, colData.DataPtr);
+					for (auto& ptr : m_visCols) {
+						std::shared_ptr<CCell> pCell = CSheet::Cell(*rowIter, ptr);
 						if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
 							pSheetCell->UpdateAll();
 						}
 					}
 				}
-				top += rowIter->DataPtr->GetHeight();
+				top += (*rowIter)->GetHeight();
 			} else {
 				top += defaultHeight;
 			}
 			//std::cout << top << std::endl;
 		} else {
-			rowIter->DataPtr->SetTopWithoutSignal(top);
+			(*rowIter)->SetTop(top, false);
 			if (HasSheetCell()) {
-				auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
-				for (auto& colData : colDictionary) {
-					std::shared_ptr<CCell> pCell = CSheet::Cell(rowIter->DataPtr, colData.DataPtr);
+				for (auto& ptr : m_visCols) {
+					std::shared_ptr<CCell> pCell = CSheet::Cell(*rowIter, ptr);
 					if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
 						pSheetCell->UpdateAll();
 					}
 				}
 			}
-			top += rowIter->DataPtr->GetHeight();
+			top += (*rowIter)->GetHeight();
 		}
 //		prevRowIter = rowIter;
 	}
@@ -377,8 +374,8 @@ FLOAT CGridView::GetHorizontalScrollPos()const
 LRESULT CGridView::OnCommandEditHeader(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
 	if(!m_rocoContextMenu.IsInvalid()){
-		if(m_rocoContextMenu.GetRowPtr()==GetNameHeaderRowPtr().get()){
-			if(auto pCell=std::dynamic_pointer_cast<CParentHeaderCell>(m_rocoContextMenu.GetColumnPtr()->Cell(m_rocoContextMenu.GetRowPtr()))){
+		if(m_rocoContextMenu.GetRowPtr()==GetNameHeaderRowPtr()){
+			if(auto pCell=std::dynamic_pointer_cast<CParentHeaderCell>(Cell(m_rocoContextMenu.GetRowPtr(), m_rocoContextMenu.GetColumnPtr()))){
 				pCell->OnEdit(EventArgs());
 			}
 		}
@@ -390,9 +387,7 @@ LRESULT CGridView::OnCommandEditHeader(WORD wNotifyCode,WORD wID,HWND hWndCtl,BO
 LRESULT CGridView::OnCommandDeleteColumn(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
 	if(!m_rocoContextMenu.IsInvalid()){
-		auto& dic = m_columnAllDictionary.get<PointerTag>();
-		auto iter = dic.find(m_rocoContextMenu.GetColumnPtr());
-		EraseColumn(iter->DataPtr);
+		EraseColumn(m_rocoContextMenu.GetColumnPtr());
 		SubmitUpdate();
 	}
 	return 0;
@@ -425,15 +420,12 @@ LRESULT CGridView::OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bH
 	bool IncludesHeader = true;
 
 	if(SelectModeRow){
-		auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
-		auto& colDictionary = m_columnVisibleDictionary.get<IndexTag>();
-
-		for (auto rowIter = rowDictionary.begin(), rowEnd = rowDictionary.end(); rowIter != rowEnd; ++rowIter) {
-			if (rowIter->DataPtr->GetSelected() || (IncludesHeader && rowIter->DataPtr->GetIndex<VisTag>()<0)) {
-				for (auto colIter = colDictionary.begin(), colBegin = colDictionary.begin(), colEnd = colDictionary.end(); colIter != colEnd; ++colIter) {
-					auto pCell = colIter->DataPtr->Cell(rowIter->DataPtr.get());
+		for (auto rowPtr : m_visRows) {
+			if (rowPtr->GetSelected() || (IncludesHeader && rowPtr->GetIndex<VisTag>()<0)) {
+				for (auto colPtr : m_visCols) {
+					auto pCell = Cell(rowPtr, colPtr);
 					strCopy.append(pCell->GetString());
-					if (std::next(colIter) == colDictionary.end()) {
+					if (colPtr->GetIndex<VisTag>() == m_visCols.size() - 1) {
 						strCopy.append(L"\r\n");
 					} else {
 						strCopy.append(L"\t");
@@ -443,14 +435,11 @@ LRESULT CGridView::OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bH
 			}
 		}
 	}else{
-		auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
-		auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
-
-		for(auto rowIter=rowDictionary.begin(),rowEnd=rowDictionary.end();rowIter!=rowEnd;++rowIter){
+		for(auto rowPtr : m_visRows){
 			bool bSelectedLine(false);
 			bool bFirstLine(true);
-			for(auto colIter=colDictionary.begin(),colBegin=colDictionary.begin(),colEnd=colDictionary.end();colIter!=colEnd;++colIter){
-				auto pCell=colIter->DataPtr->Cell(rowIter->DataPtr.get());
+			for(auto colPtr : m_visCols){
+				auto pCell=Cell(rowPtr, colPtr);
 				if(pCell->GetSelected()){
 					bSelectedLine=true;
 					if(bFirstLine){
@@ -501,30 +490,30 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 	if (IsVirtualPage()) {
 		//Helper functions
 		std::function<bool(FLOAT, FLOAT, FLOAT, FLOAT)> isAllInPage = [](FLOAT min, FLOAT max, FLOAT top, FLOAT bottom)->bool {
-			return (top > min && top < max) &&
-				(bottom > min && bottom < max);
+			return (top > min&& top < max) &&
+				(bottom > min&& bottom < max);
 		};
-		//Dictionary
-		auto& rowDictionary = m_rowVisibleDictionary.get<IndexTag>();
 
 		FLOAT pageHeight = rcPage.Height();
 		FLOAT scrollPos = GetVerticalScrollPos();
-
+		//Frozen
+		if(pCell->GetRowPtr()->GetIndex<AllTag>() < pCell->GetSheetPtr()->GetFrozenCount<RowTag>() || pCell->GetColumnPtr()->GetIndex<AllTag>() < pCell->GetSheetPtr()->GetFrozenCount<ColTag>()){
+			//Do nothing
 		//Check if in page
-		if (isAllInPage(rcPage.top, rcPage.bottom, m_spCursorer->GetFocusedCell()->GetRowPtr()->GetTop(), m_spCursorer->GetFocusedCell()->GetRowPtr()->GetBottom())) {
+		}  else if (isAllInPage(rcPage.top, rcPage.bottom, m_spCursorer->GetFocusedCell()->GetRowPtr()->GetTop(), m_spCursorer->GetFocusedCell()->GetRowPtr()->GetBottom())) {
 			//Do nothing
 		//Larget than bottom
 		} else if (m_spCursorer->GetFocusedCell()->GetRowPtr()->GetBottom() > rcPage.bottom) {
 			FLOAT height = 0.0f;
 			FLOAT scroll = 0.0f;
-			for (auto iter = rowDictionary.find(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), zero = rowDictionary.find(0), end = std::prev(rowDictionary.find(0)); iter != end; --iter) {
-				height += iter->DataPtr->GetHeight();
+			for (auto iter = std::next(m_visRows.begin(), m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), frozen = std::next(m_visRows.begin(), m_frozenRowCount), end = std::prev(frozen); iter != end; --iter) {
+				height += (*iter)->GetHeight();
 				if (height >= pageHeight) {
-					FLOAT heightToFocus = std::accumulate(rowDictionary.find(0), std::next(rowDictionary.find(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>())), 0.0f,
-						[](const FLOAT& acc, const RowData& data)->FLOAT { return acc + data.DataPtr->GetDefaultHeight(); });
+					FLOAT heightToFocus = std::accumulate(std::next(m_visRows.begin(), m_frozenRowCount), std::next(m_visRows.begin(), m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), 0.0f,
+						[](const FLOAT& acc, const std::shared_ptr<CRow>& ptr)->FLOAT { return acc + ptr->GetDefaultHeight(); });
 					scroll = heightToFocus - pageHeight;
 					break;
-				} else if (iter == zero) {
+				} else if (iter == frozen) {
 					scroll = 0.0f;
 					break;
 				}
@@ -542,8 +531,8 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 			}
 			//Smaller than top
 		} else if (m_spCursorer->GetFocusedCell()->GetRowPtr()->GetTop() < rcPage.top) {
-			FLOAT scroll = std::accumulate(rowDictionary.find(0), rowDictionary.find(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), 0.0f,
-				[](const FLOAT& acc, const RowData& data)->FLOAT{ return acc + data.DataPtr->GetDefaultHeight(); });
+			FLOAT scroll = std::accumulate(std::next(m_visRows.begin(), m_frozenRowCount), std::next(m_visRows.begin(), m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), 0.0f,
+				[](const FLOAT& acc, const std::shared_ptr<CRow>& ptr)->FLOAT{ return acc + ptr->GetDefaultHeight(); });
 			scroll = std::floorf(scroll);
 
 			FLOAT top = UpdateCellsRow(rcPage.top - scroll, rcPage.top, rcPage.bottom);
@@ -603,7 +592,7 @@ std::pair<bool, bool> CGridView::GetHorizontalVerticalScrollNecessity()
 {
 	d2dw::CRectF rcClient(m_pDirect->Pixels2Dips(GetClientRect()));
 	d2dw::CRectF rcCells(GetCellsRect());
-	d2dw::CPointF ptOrigin(GetOriginPoint());
+	d2dw::CPointF ptOrigin(GetFrozenPoint());
 	//First
 	bool bEnableShowHorizontal = rcCells.right > rcClient.right || rcCells.left < ptOrigin.x ;
 	bool bEnableShowVertical = rcCells.bottom > rcClient.bottom || rcCells.top < ptOrigin.y;
@@ -621,7 +610,7 @@ d2dw::CRectF CGridView::GetPageRect()
 {
 	d2dw::CRectF rcClient(m_pDirect->Pixels2Dips(GetClientRect()));
 	d2dw::CRectF rcCells(GetCellsRect());
-	d2dw::CPointF ptOrigin(GetOriginPoint());
+	d2dw::CPointF ptOrigin(GetFrozenPoint());
 	//First
 	bool bEnableShowVertical = rcCells.bottom > rcClient.bottom || rcCells.top < ptOrigin.y;
 	bool bEnableShowHorizontal = rcCells.right > rcClient.right || rcCells.left < ptOrigin.x ;
@@ -742,14 +731,11 @@ void CGridView::FindNext(const std::wstring& findWord, bool matchCase, bool matc
 	//If focused cell is invalid(Not focused), MinMax Visible Cell is start point
 	auto focused = m_spCursorer->GetFocusedCell();
 
-	auto& rowDict = m_rowVisibleDictionary.get<IndexTag>();
-	auto& colDict = m_columnVisibleDictionary.get<IndexTag>();
-
 	//Scan from Min to Max and Jump if Find
-	auto jumpToFindNextCell = [&](RowDictionary::iterator rowIter, ColumnDictionary::iterator colIter, RowDictionary::iterator rowEnd, ColumnDictionary::iterator colEnd)->bool{
+	auto jumpToFindNextCell = [&](auto rowIter, auto colIter, auto rowEnd, auto colEnd)->bool{
 		while(1){
 
-			auto spCell = CSheet::Cell(rowIter->DataPtr, colIter->DataPtr);
+			auto spCell = CSheet::Cell(*rowIter, *colIter);
 			auto str = spCell->GetString();
 
 			if(my::find(str, findWord, matchCase, matchWholeWord)){
@@ -758,7 +744,7 @@ void CGridView::FindNext(const std::wstring& findWord, bool matchCase, bool matc
 			}else{
 				colIter++;
 				if(colIter==colEnd){
-					colIter = colDict.begin();
+					colIter = m_visCols.begin();
 					rowIter++;
 				}
 				if(rowIter==rowEnd){
@@ -769,34 +755,34 @@ void CGridView::FindNext(const std::wstring& findWord, bool matchCase, bool matc
 	};
 
 
-	RowDictionary::iterator rIter, rEnd;
-	ColumnDictionary::iterator cIter, cEnd;
+	index_vector<std::shared_ptr<CRow>>::iterator rIter, rEnd;
+	index_vector<std::shared_ptr<CColumn>>::iterator cIter, cEnd;
 	//Find word from Min to Max
 
 	if(!focused){
-		rIter = rowDict.begin();
-		cIter = colDict.begin();
+		rIter = m_visRows.begin();
+		cIter = m_visCols.begin();
 	}else{
-		rIter = rowDict.find(focused->GetRowPtr()->GetIndex<VisTag>());
-		cIter = colDict.find(focused->GetColumnPtr()->GetIndex<VisTag>());
+		rIter = std::next(m_visRows.begin(), (focused->GetRowPtr()->GetIndex<VisTag>()));
+		cIter = std::next(m_visCols.begin(), (focused->GetColumnPtr()->GetIndex<VisTag>()));
 		cIter++;
-		if(cIter==colDict.end()){
-			cIter = colDict.begin();
+		if(cIter==m_visCols.end()){
+			cIter = m_visCols.begin();
 			rIter++;
 		}
 	}
-	rEnd = rowDict.end();
-	cEnd = colDict.end();
+	rEnd = m_visRows.end();
+	cEnd = m_visCols.end();
 	if(rIter!=rEnd && cIter!=cEnd && jumpToFindNextCell(rIter, cIter, rEnd, cEnd)){
 		return;
 	}
 	//Find word from begining to Min
 	//If focused cell is invalid(Not focused), all range is already searched.
 	if(!focused){
-		rIter = rowDict.begin();
-		cIter = colDict.begin();
-		rEnd = rowDict.end();
-		cEnd = colDict.end();
+		rIter = m_visRows.begin();
+		rEnd = m_visRows.end();
+		cIter = m_visCols.begin();
+		cEnd = m_visCols.end();
 
 		if(jumpToFindNextCell(rIter, cIter, rEnd, cEnd)){
 			return;
@@ -813,14 +799,11 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 	//If focused cell is invalid(Not focused), MinMax Visible Cell is start point
 	auto focused = m_spCursorer->GetFocusedCell();
 
-	auto& rowDict = m_rowVisibleDictionary.get<IndexTag>();
-	auto& colDict = m_columnVisibleDictionary.get<IndexTag>();
-
 	//Scan from Min to Max and Jump if Find
-	auto jumpToFindPrevCell = [&](RowDictionary::reverse_iterator rowIter, ColumnDictionary::reverse_iterator colIter, RowDictionary::reverse_iterator rowEnd, ColumnDictionary::reverse_iterator colEnd)->bool{
+	auto jumpToFindPrevCell = [&](auto rowIter, auto colIter, auto rowEnd, auto colEnd)->bool{
 		while(1){
 
-			auto spCell = CSheet::Cell(rowIter->DataPtr, colIter->DataPtr);
+			auto spCell = CSheet::Cell(*rowIter, *colIter);
 			auto str = spCell->GetString();
 
 			if(my::find(str, findWord, matchCase, matchWholeWord)){
@@ -829,7 +812,7 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 			}else{
 				colIter++;
 				if(colIter==colEnd){
-					colIter = colDict.rbegin();
+					colIter = m_visCols.rbegin();
 					rowIter++;
 				}
 				if(rowIter==rowEnd){
@@ -840,37 +823,37 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 	};
 
 
-	RowDictionary::reverse_iterator rIter, rEnd;
-	ColumnDictionary::reverse_iterator cIter, cEnd;
+	index_vector<std::shared_ptr<CRow>>::reverse_iterator rIter, rEnd;
+	index_vector<std::shared_ptr<CColumn>>::reverse_iterator cIter, cEnd;
 	//Find word from Min to Max
 
 	if(!focused){
-		rIter = rowDict.rbegin();
-		cIter = colDict.rbegin();
+		rIter = m_visRows.rbegin();
+		cIter = m_visCols.rbegin();
 	}else{
 		//In case of reverse_iterator, one iterator plused. Therefore it is necessary to minus.
-		rIter = RowDictionary::reverse_iterator(rowDict.find(focused->GetRowPtr()->GetIndex<VisTag>()));
-		cIter = ColumnDictionary::reverse_iterator(colDict.find(focused->GetColumnPtr()->GetIndex<VisTag>()));
+		rIter = std::next(m_visRows.rbegin(), focused->GetRowPtr()->GetIndex<VisTag>());
+		cIter = std::next(m_visCols.rbegin(), focused->GetColumnPtr()->GetIndex<VisTag>());
 		rIter--;
 		cIter--;
 		cIter++;
-		if(cIter==colDict.rend()){
-			cIter = colDict.rbegin();
+		if(cIter==m_visCols.rend()){
+			cIter = m_visCols.rbegin();
 			rIter++;
 		}
 	}
-	rEnd = rowDict.rend();
-	cEnd = colDict.rend();
+	rEnd = m_visRows.rend();
+	cEnd = m_visCols.rend();
 	if(rIter!=rEnd && cIter!=cEnd && jumpToFindPrevCell(rIter, cIter, rEnd, cEnd)){
 		return;
 	}
 	//Find word from begining to Min
 	//If focused cell is invalid(Not focused), all range is already searched.
 	if(!focused){
-		rIter = rowDict.rbegin();
-		cIter = colDict.rbegin();
-		rEnd = rowDict.rend();
-		cEnd = colDict.rend();
+		rIter = m_visRows.rbegin();
+		rEnd = m_visRows.rend();
+		cIter = m_visCols.rbegin();
+		cEnd = m_visCols.rend();
 
 		if(jumpToFindPrevCell(rIter, cIter, rEnd, cEnd)){
 			return;
@@ -898,11 +881,9 @@ void CGridView::Normal_Paint(const PaintEvent& e)
 
 	//Paint
 	{
-		auto & colDictionary = m_columnPaintDictionary.get<IndexTag>();
-		auto& rowDictionary = m_rowPaintDictionary.get<IndexTag>();
-		for (auto colIter = colDictionary.rbegin(),colEnd = colDictionary.rend(); colIter != colEnd; ++colIter) {
-			for (auto rowIter = rowDictionary.rbegin(),rowEnd = rowDictionary.rend(); rowIter != rowEnd; ++rowIter) {
-				colIter->DataPtr->Cell(rowIter->DataPtr.get())->OnPaint(e);
+		for (auto colIter = m_pntCols.rbegin(),colEnd = m_pntCols.rend(); colIter != colEnd; ++colIter) {
+			for (auto rowIter = m_pntRows.rbegin(),rowEnd = m_pntRows.rend(); rowIter != rowEnd; ++rowIter) {
+				Cell(*rowIter, *colIter)->OnPaint(e);
 			}
 		}
 	}

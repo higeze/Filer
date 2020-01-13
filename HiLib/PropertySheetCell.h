@@ -18,15 +18,15 @@ public:
 
 	void Resize(int row, int col)override
 	{
-		int curRowSize = GetMaxIndex<RowTag, AllTag>();
-		int curColSize = GetMaxIndex<ColTag, AllTag>();
+		int curRowSize = GetContainer<RowTag, AllTag>().size() - 1;
+		int curColSize = GetContainer<ColTag, AllTag>().size() - 1;
 
 		if(row==curRowSize)return;
 
 		if(CanResizeRow() && row>curRowSize){
 			for(auto i=0;i<row-curRowSize;i++){
 				auto spRow=std::make_shared<CChildRow>(this);
-				InsertRow(100,spRow);
+				PushRow(spRow);
 				auto pColValue= Index2Pointer<ColTag, AllTag>(1);
 
 				CCellSerializer serializer(std::dynamic_pointer_cast<CSheet>(Cell(m_pRow,m_pColumn)),m_spHeaderProperty,m_spFilterProperty,m_spCellProperty);
@@ -34,9 +34,7 @@ public:
 			}
 		}else if(CanResizeRow() && row<curRowSize && row>0){
 			for(auto i=0;i<curRowSize-row;i++){
-				auto& indexDic = m_rowAllDictionary.get<IndexTag>();
-				auto iter=boost::prior(indexDic.end());
-				EraseRow(iter->DataPtr.get());
+				EraseRow(m_allRows.back());
 			}
 		}
 		OnPropertyChanged(L"value");

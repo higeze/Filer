@@ -25,16 +25,19 @@ public:
 
 	virtual FLOAT GetDefaultHeight();
 	virtual FLOAT GetHeight();
-	virtual void SetHeight(const FLOAT height);
-	virtual void SetHeightWithoutSignal(const FLOAT height){m_height=height;}
+	virtual void SetHeight(const FLOAT height, bool notify = true);
 
 	//virtual FLOAT GetTop()const{return m_top+Offset();}
 	virtual FLOAT GetTop()const{return m_top;}
-	virtual void SetTop(const FLOAT& top){m_top=top;}//TODO low setter
-	virtual void SetTopWithoutSignal(const FLOAT& top){m_top=top;}
+	virtual void SetTop(const FLOAT& top, bool notify = true){m_top=top;}//TODO low setter
 
 	//virtual FLOAT GetBottom()const{return m_top+m_height+Offset();}
 	virtual FLOAT GetBottom()const{return m_top + m_height;}
+	virtual FLOAT GetLeftTop() override { return GetTop(); }
+	virtual FLOAT GetRightBottom() override { return GetBottom(); }
+	virtual FLOAT GetWidthHeight() override { return GetHeight(); }
+	virtual void SetWidthHeight(const FLOAT wh, bool notify = true) override { return SetHeight(wh, notify); }
+
 
 	virtual void SetVisible(const bool& bVisible, bool notify = true)override;
 	virtual void SetSelected(const bool& bSelected);

@@ -39,7 +39,6 @@ public:
 	void Reload();
 
 private:
-	void InsertDefaultRowColumn();
 
 public:
 	FRIEND_SERIALIZER

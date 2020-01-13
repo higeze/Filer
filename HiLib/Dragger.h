@@ -9,8 +9,6 @@
 struct MouseEvent;
 struct SetCursorEvent;
 
-
-
 template<typename TRC, typename TRCYou>
 class CDragger :public IDragger
 {
@@ -31,7 +29,7 @@ public:
 			visIndexes.Row >= 0 &&
 			visIndexes.Col < (int)pSheet->GetContainer<ColTag, VisTag>().size() &&
 			visIndexes.Col >= 0 &&
-			visIndexes.Get<TRCYou::IndexesTag>()<0) {
+			visIndexes.Get<TRCYou::IndexesTag>() < pSheet->GetFrozenCount<TRCYou>()) {
 			return true;
 		}else{
 			return false;
@@ -90,7 +88,7 @@ public:
 		else {
 			if (m_dragToIndex >= 0 && m_dragToIndex != m_dragFromIndex) {//TODO Only when Row
 				auto sp = pSheet->Index2Pointer<TRC, AllTag>(m_dragFromIndex);
-				pSheet->MoveImpl<TRC>(m_dragToIndex, sp);
+				pSheet->Move<TRC>(m_dragToIndex, sp);
 			}
 		}
 		m_dragFromIndex = CBand::kInvalidIndex;
@@ -120,18 +118,18 @@ public:
 		//other : Left
 		FLOAT coome = 0;
 		if (m_dragToIndex >= (int)pSheet->GetContainer<TRC, AllTag>().size()) {
-			coome = GetRightBottom(pSheet->GetContainer<TRC, AllTag>().back());
+			coome = pSheet->GetContainer<TRC, AllTag>().back()->GetRightBottom();
 		}
 		else if(m_dragToIndex <= 0) {
-			coome = GetLeftTop(pSheet->GetContainer<TRC, AllTag>()[pSheet->GetFrozenCount<TRC>()]);
+			coome = pSheet->GetContainer<TRC, AllTag>()[pSheet->GetFrozenCount<TRC>()]->GetLeftTop();
 		}
 		else {
-			coome = GetLeftTop(pSheet->Index2Pointer<TRC, AllTag>(m_dragToIndex));
+			coome = pSheet->Index2Pointer<TRC, AllTag>(m_dragToIndex)->GetLeftTop();
 		}
 
 		//Get Right/Bottom Line
-		FLOAT cooyou0 = GetLeftTop(pSheet->GetContainer<TRCYou, AllTag>().front());
-		FLOAT cooyou1 = GetRightBottom(pSheet->GetContainer<TRCYou, AllTag>()[pSheet->GetFrozenCount<TRC>()]);
+		FLOAT cooyou0 = pSheet->GetContainer<TRCYou, AllTag>().front()->GetLeftTop();
+		FLOAT cooyou1 = pSheet->GetContainer<TRCYou, AllTag>().back()->GetRightBottom();
 
 		//Paint DragLine
 		PaintLine(e.WndPtr->GetDirectPtr(), *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);

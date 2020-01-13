@@ -24,6 +24,6 @@ public:
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn);
 
 	virtual SizingType GetSizingType()const override { return SizingType::Fit; }
-virtual bool IsTrackable()const override { return true; }
+	virtual bool IsTrackable()const override { return true; }
 
 };
