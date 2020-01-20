@@ -488,36 +488,22 @@ STDAPI CTextStore::GetActiveView(TsViewCookie *pvcView)
 
 STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, RECT *prc, BOOL *pfClipped)
 {
-//does the caller have a lock
+    //Does the caller have a lock
     if(!_IsLocked(TS_LF_READ))
     {
         //the caller doesn't have a lock
         return TS_E_NOLOCK;
     }
-	
-	d2dw::CRectF rcStart;
-    d2dw::CRectF rcEnd;
+	//Get candidate dialogbox rect
+	auto rcStart(_pEditor->GetCharRectFromPos(acpStart));
+    auto rcEnd(_pEditor->GetCharRectFromPos(acpEnd));
 
-    if (_pEditor->RectFromCharPos(acpStart, &rcStart) &&
-        _pEditor->RectFromCharPos(acpEnd, &rcEnd))
+    if (rcStart && rcEnd)
     {
-        if (rcStart.top == rcEnd.top)
-        {
-            prc->left = Round((std::min)(rcStart.left, rcEnd.left));
-            prc->right = Round((std::max)(rcStart.right, rcEnd.right));
-        }
-        else
-        {            
-			// 最後の文字が改行位置にくる。
-			//::OutputDebugStringEx( L"GetTextExtA %d %d,  %d %d\n",acpStart,acpEnd, rcStart.top, rcEnd.top );
-
-			_pEditor->RectFromCharPos(acpEnd-1, &rcEnd);
-
-			prc->left = Round((std::min)(rcStart.left, rcEnd.left));
-            prc->right = Round((std::max)(rcStart.right, rcEnd.right));
-        }
-        prc->top = Round((std::min)(rcStart.top, rcEnd.top));
-        prc->bottom = Round((std::max)(rcStart.bottom, rcEnd.bottom));
+        prc->left = (LONG)std::round(rcStart.value().left);
+        prc->right = (LONG)std::round(rcEnd.value().left);
+        prc->top = (LONG)std::round(rcStart.value().top);
+        prc->bottom = (LONG)std::round(rcEnd.value().bottom);
     }
     else
     {
@@ -526,24 +512,7 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
         prc->top = 0;
         prc->bottom = 0;
     }
-
-
-
-// 候補ダイアログボックスの位置
-	d2dw::CRectF rcContent = _pEditor->GetContentRect();
-	::OffsetRect( prc, Round(rcContent.left), Round(rcContent.top) );
-
-
- // 	D2DMat m( _pEditor->mat_ );
-
-	//auto xrc = m.LPtoDP( FRectF(*prc) );
-	//*prc = xrc.GetRECT();
-
-
-    ClientToScreen(_pEditor->m_pWnd->m_hWnd, (POINT *)&prc->left);
-    ClientToScreen(_pEditor->m_pWnd->m_hWnd, (POINT *)&prc->right);
-
-
+    _pEditor->m_pWnd->ClientToScreen(prc);
 
     *pfClipped = FALSE;
     return S_OK;

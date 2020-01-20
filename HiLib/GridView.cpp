@@ -1097,12 +1097,12 @@ void CGridView::Edit_BeginEdit(const BeginEditEvent& e)
 		[pCell](const std::basic_string<TCHAR>& str) -> void {
 			pCell->SetString(str);
 		},
-			[pCell](const std::basic_string<TCHAR>& str) -> void {
+		[pCell](const std::basic_string<TCHAR>& str) -> void {
 			if (pCell->CanSetStringOnEditing()) {
 				pCell->SetString(str);
 			}
 		},
-			[pCell](const std::basic_string<TCHAR>& str)->void {
+		[pCell](const std::basic_string<TCHAR>& str)->void {
 			pCell->SetString(str);
 			pCell->GetSheetPtr()->GetGridPtr()->SetEditPtr(nullptr);
 			pCell->SetState(UIElementState::Normal);//After Editing, Change Normal

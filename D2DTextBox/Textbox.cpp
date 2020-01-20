@@ -87,8 +87,8 @@ D2DTextbox::D2DTextbox(
 
 	pCompositionRenderInfo_ = NULL;
 	nCompositionRenderInfo_ = 0;
-	nLineCnt_ = 0;
-	row_width_ = 0;
+	//nLineCnt_ = 0;
+	//row_width_ = 0;
 
 	QueryPerformanceFrequency(&m_frequency);
 	if (m_pDocumentMgr) {
@@ -487,7 +487,7 @@ void D2DTextbox::CancelEdit()
 BOOL D2DTextbox::InsertAtSelection(LPCWSTR psz)
 {
 	m_text.notify_replace(std::get<caret::SelBegin>(m_carets), std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets), psz);
-	MoveCaret(std::get<caret::CurCaret>(m_carets) + lstrlen(psz));
+	MoveCaret(std::get<caret::SelBegin>(m_carets) + lstrlen(psz));
 	return TRUE;
 }
 
@@ -499,164 +499,57 @@ void D2DTextbox::ClearText()
 
 void D2DTextbox::Render()
 {
-	if (m_recalc) {
-		Layout();
-		m_recalc = false;
-	}
+	//if (m_recalc) {
+	//	Layout();
+	//	m_recalc = false;
+	//}
 
-	int nSelStart = (int)std::get<caret::SelBegin>(m_carets);
-	int nSelEnd = (int)std::get<caret::SelEnd>(m_carets);
+	d2dw::CRectF contentRect(GetContentRect());
 
-	d2dw::CRectF rc(GetContentRect());
+	if (!m_text.empty()) {
+		//Draw Text
+		m_pWnd->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), m_text, contentRect);
 
-	m_pWnd->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), m_text, rc);
+		//Draw Selection
+		std::vector<d2dw::CRectF> charRects = GetCharRects();
+		for (auto n = std::get<caret::SelBegin>(m_carets); n < std::get<caret::SelEnd>(m_carets); n++) {
+			m_pWnd->GetDirectPtr()->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)),
+				charRects[n]);
+		}
+		//Draw Caret
+		d2dw::CRectF caretRect = charRects[std::get<caret::CurCaret>(m_carets)];
+		caretRect.right = caretRect.left + 1;
+		DrawCaret(caretRect);
+		//Draw Composition line
+		for (UINT j = 0; j < nCompositionRenderInfo_; j++) {
+			if (pCompositionRenderInfo_[j].da.lsStyle != TF_LS_NONE) {
+				for (auto n = pCompositionRenderInfo_[j].nStart; n < pCompositionRenderInfo_[j].nEnd; n++) {
+					d2dw::CPointF pts[2];
+					pts[0].x = charRects[n].left;
+					pts[0].y = charRects[n].bottom;
+					pts[1].x = charRects[n].right;
+					pts[1].y = charRects[n].bottom;
 
-	// Render selection,caret
-	d2dw::CRectF rcSelCaret(rc.left, rc.top, rc.left + 1.0f, rc.top + (float)nLineHeight_);
-
-	bool isSelTrail = std::get<caret::SelEnd>(m_carets) < std::get<caret::CurCaret>(m_carets);
-	CaretRect xcaret(isSelTrail);
-
-	if (nLineCnt_) {
-
-		for (UINT r = 0; r < nLineCnt_; r++) {
-
-			if ((nSelEnd >= m_lineInfos[r].nPos) && (nSelStart <= m_lineInfos[r].nPos + m_lineInfos[r].nCnt)) {
-				int nSelStartInLine = 0;
-				int nSelEndInLine = m_lineInfos[r].nCnt;
-
-				if (nSelStart > m_lineInfos[r].nPos) {
-					nSelStartInLine = nSelStart - m_lineInfos[r].nPos;
-				}
-
-				if (nSelEnd < m_lineInfos[r].nPos + m_lineInfos[r].nCnt) {
-					nSelEndInLine = nSelEnd - m_lineInfos[r].nPos;
-
-				}
-
-				// caret, select範囲指定の場合
-				if (nSelStartInLine != nSelEndInLine && nSelEndInLine != -1) {
-					for (int j = nSelStartInLine; j < nSelEndInLine; j++) {
-						m_pWnd->GetDirectPtr()->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)), m_lineInfos[r].CharInfos[j].rc);
-					}
-
-					bool blast = isSelTrail;
-
-					if (blast) {
-						rcSelCaret = m_lineInfos[r].CharInfos[nSelEndInLine - 1].rc;
-						rcSelCaret.left = rcSelCaret.right;
-					}
-					else {
-						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
-						rcSelCaret.right = rcSelCaret.left;
-					}
-					rcSelCaret.right++;
-
-					xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
-
-
-				}
-				else // caret, 範囲指定されてない場合
-				{
-					if (nSelStartInLine == m_lineInfos[r].nCnt && !m_lineInfos[r].CharInfos.empty()) {
-						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
-						rcSelCaret.right = rcSelCaret.left + 1;
-
-						_ASSERT(rcSelCaret.bottom >= 0);
-						_ASSERT(rcSelCaret.bottom < 65000);
-
-						xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
-
-
-					}
-					else if (nSelStartInLine > -1 && !m_lineInfos[r].CharInfos.empty()) {
-						rcSelCaret = m_lineInfos[r].CharInfos[nSelStartInLine].rc;
-						rcSelCaret.right = rcSelCaret.left + 1;
-
-						_ASSERT(rcSelCaret.bottom >= 0);
-						xcaret.Push(rcSelCaret, r, nSelStartInLine, nSelEndInLine);
-
-					}
-				}
-
-			}
-
-			// キャレット表示位置が確定
-			if (xcaret.IsComplete(r)) {
-				if (isSelTrail)
-					break;
-
-			}
-
-			for (UINT j = 0; j < nCompositionRenderInfo_; j++) {
-
-				if ((pCompositionRenderInfo_[j].nEnd >= m_lineInfos[r].nPos) &&
-					(pCompositionRenderInfo_[j].nStart <= m_lineInfos[r].nPos + m_lineInfos[r].nCnt)) {
-					UINT nCompStartInLine = 0;
-					UINT nCompEndInLine = m_lineInfos[r].nCnt;
-					int  nBaseLineWidth = static_cast<int>(nLineHeight_ / 18.f) + 1;
-
-					if (pCompositionRenderInfo_[j].nStart > m_lineInfos[r].nPos)
-						nCompStartInLine = pCompositionRenderInfo_[j].nStart - m_lineInfos[r].nPos;
-
-					if (pCompositionRenderInfo_[j].nEnd < m_lineInfos[r].nPos + m_lineInfos[r].nCnt)
-						nCompEndInLine = pCompositionRenderInfo_[j].nEnd - m_lineInfos[r].nPos;
-
-					for (UINT k = nCompStartInLine; k < nCompEndInLine; k++) {
-						UINT uCurrentCompPos = m_lineInfos[r].nPos + k - pCompositionRenderInfo_[j].nStart;
-						BOOL bClause = FALSE;
-
-						if (k + 1 == nCompEndInLine) {
-							bClause = TRUE;
-						}
-
-						if ((pCompositionRenderInfo_[j].da.crText.type != TF_CT_NONE) &&
-							(pCompositionRenderInfo_[j].da.crBk.type != TF_CT_NONE)) {
-							int a = 0;
-						}
-
-						if (pCompositionRenderInfo_[j].da.lsStyle != TF_LS_NONE) {
-							// 変換途中の下線の描画
-							{
-								d2dw::CRectF rc = m_lineInfos[r].CharInfos[k].rc;
-
-								d2dw::CPointF pts[2];
-								pts[0].x = rc.left;
-								pts[0].y = rc.bottom;
-								pts[1].x = rc.right - (bClause ? nBaseLineWidth : 0);
-								pts[1].y = rc.bottom;
-								m_pWnd->GetDirectPtr()->DrawSolidLine(*(m_pProp->Line), pts[0], pts[1]);
-							}
-						}
-					}
+					m_pWnd->GetDirectPtr()->DrawSolidLine(*(m_pProp->Line), pts[0], pts[1]);
 				}
 			}
 		}
-
-		if (xcaret.empty()) {
-			//次行の文字なし先頭列
-			rcSelCaret.left = rc.left;
-			rcSelCaret.right = rc.left + 1;
-
-			rcSelCaret.OffsetRect(0, nLineHeight_ * nLineCnt_);
-			xcaret.Push(rcSelCaret, nLineCnt_, 0, 0);
-		}
-
-
-		// 情報
-		int CaretRow = xcaret.row() + 1;
-		int CaretCol = xcaret.col();
-		int LineNumber = nLineCnt_;
-
-
-		// Caret表示
-		DrawCaret(xcaret.Get());
-
+	} else {
+		//Draw Caret
+		d2dw::CRectF caretRect = contentRect;
+		caretRect.right = caretRect.left + 1;
+		caretRect.bottom = contentRect.top + GetLineHeight();
+		DrawCaret(caretRect);
 	}
-	else {
-		// 文字がない場合Caret表示
-		DrawCaret(rcSelCaret);
-	}
+}
+
+FLOAT D2DTextbox::GetLineHeight()
+{
+	auto pLayout = m_pWnd->GetDirectPtr()->GetTextLayout(*(m_pProp->Format), L"", GetContentRect().Size());
+	float x, y;
+	DWRITE_HIT_TEST_METRICS tm;
+	pLayout->HitTestTextPosition(0, false, &x, &y, &tm);
+	return tm.height;
 }
 
 void D2DTextbox::ClearCompositionRenderInfo()
@@ -692,50 +585,6 @@ BOOL D2DTextbox::AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIB
 	return TRUE;
 }
 
-
-BOOL D2DTextbox::RectFromCharPos(UINT nPos, d2dw::CRectF *prc)
-{
-	d2dw::CRectF& retrc = *prc;
-
-	retrc.SetRect(0, 0, 0, 0);
-
-	UINT sum = 0;
-	UINT current_rowno = 0;
-	for (UINT r = 0; r < nLineCnt_; r++) {
-		if (m_lineInfos[r].nCnt)
-			sum += m_lineInfos[r].nCnt + 1; // 1 is \r
-		else
-			sum += 1;
-
-		current_rowno = r;
-		if (nPos < sum) {
-			break;
-		}
-	}
-
-	UINT pos = nPos - m_lineInfos[current_rowno].nPos;
-
-	if (pos <= (UINT)m_lineInfos[current_rowno].nCnt && m_lineInfos[current_rowno].nCnt) {
-		retrc = m_lineInfos[current_rowno].CharInfos[pos].rc;
-		return TRUE;
-	} else if (pos > 0) {
-		retrc = m_lineInfos[current_rowno].CharInfos[pos - 1].rc;
-		retrc.left = retrc.right;
-		return TRUE;
-	} else if (sum) {
-		retrc = m_lineInfos[current_rowno].CharInfos[0].rc; // 空行で先頭の場合、
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
-
-static bool PtInRectRightSide(const d2dw::CRectF& rc, const d2dw::CPointF& pt)
-{
-	return (rc.top <= pt.y && pt.y <= rc.bottom && rc.right <= pt.x);
-}
-
 std::vector<d2dw::CRectF> D2DTextbox::GetCharRects()
 {
 	d2dw::CRectF contentRect(GetContentRect());
@@ -747,7 +596,7 @@ std::vector<d2dw::CRectF> D2DTextbox::GetCharRects()
 
 std::optional<d2dw::CRectF> D2DTextbox::GetCharRectFromPos(const int& pos)
 {
-	if ((pos < 0) || ((int)m_text.size() < pos)) {
+	if (m_text.size() == 0 || pos < 0 || (int)m_text.size() < pos) {
 		return std::nullopt;
 	} else {
 		return std::make_optional(GetCharRects()[pos]);
@@ -756,7 +605,11 @@ std::optional<d2dw::CRectF> D2DTextbox::GetCharRectFromPos(const int& pos)
 
 std::optional<int> D2DTextbox::GetCharPosFromPoint(const d2dw::CPointF& pt)
 {
+	if (m_text.size() == 0) {
+		return std::nullopt;
+	}
 	std::vector<d2dw::CRectF> charRects(GetCharRects());
+
 	auto iter = std::find_if(charRects.begin(), charRects.end(),
 		[pt](const d2dw::CRectF& rc)->bool {
 			return rc.left <= pt.x && pt.x < rc.right &&
@@ -794,221 +647,156 @@ std::optional<int> D2DTextbox::GetLastCharPosInLine(const int& pos)
 
 }
 
-
-int D2DTextbox::CharPosFromNearPoint(const d2dw::CPointF& pt)
-{
-	struct st
-	{
-		int i, j;
-	};
-
-	std::vector<st> ar;
-
-	for (UINT i = 0; i < nLineCnt_; i++) {
-		for (int j = 0; j < m_lineInfos[i].nCnt + 1; j++) // +1 is return key
-		{
-			xassert(!m_lineInfos[i].CharInfos.empty());
-
-	
-			d2dw::CRectF rc = m_lineInfos[i].CharInfos[j].rc;
-
-			if (rc.top <= pt.y && pt.y <= rc.bottom) {
-				st s;
-				s.i = i;
-				s.j = j;
-				ar.push_back(s);
-			}
-		}
-	}
-
-
-	UINT last = ar.size();
-
-	if (last) {
-		st s = ar[last - 1];
-
-		return m_lineInfos[s.i].nPos + s.j;
-
-	}
-
-	return -1;
-}
-
-//UINT D2DTextbox::FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst)
+//BOOL D2DTextbox::Layout()
 //{
-//	if (bFirst) {
-//		// 先頭列へ
-//		for (UINT i = 0; i < nLineCnt_; i++) {
-//			if ((m_lineInfos[i].nPos <= (int)uCurPos) && ((int)uCurPos <= m_lineInfos[i].nPos + m_lineInfos[i].nCnt)) {
-//				return m_lineInfos[i].nPos;
-//			}
-//		}
+//	d2dw::CRectF contentRect(GetContentRect());
+//	d2dw::CSizeF contentSize(contentRect.Size());
+//	nLineCnt_ = 1;
 //
-//	} else {
-//		// 行の最後尾
-//		for (UINT i = 0; i < nLineCnt_; i++) {
-//			if ((m_lineInfos[i].nPos <= (int)uCurPos) && ((int)uCurPos <= m_lineInfos[i].nPos + m_lineInfos[i].nCnt)) {
-//				{
-//					UINT idx = m_lineInfos[i].nPos + m_lineInfos[i].nCnt;
-//					return idx;
+//	// 行数を計算
+//
+//	nLineCnt_ = 0;
+//
+//	{
+//		BOOL bNewLine = TRUE;
+//		for (size_t i = 0; i < m_text.size(); i++) {
+//			switch (m_text[i]) {
+//			case 0x0d://CR
+//			case 0x0a://LF                
+//				if (bNewLine) {
+//					nLineCnt_++;
 //				}
+//				bNewLine = TRUE;
+//				break;
+//			default:
+//				if (bNewLine) {
+//					nLineCnt_++;
+//				}
+//				bNewLine = FALSE;
+//				break;
 //			}
 //		}
 //	}
-//	return (UINT)(-1);
+//
+//	// 行数分のLINEINFOを作成, 文字0でもLINEINFOは１つ作成
+//
+//	m_lineInfos = std::vector((std::max)((UINT)1, nLineCnt_), LINEINFO());
+//
+//	// Count character of each line.　文字単位にPOS,LEN,RECTを取得
+//
+//	int nCurrentLine = -1;
+//	m_lineInfos[0].nPos = 0;
+//	m_lineInfos[0].nCnt = 0;
+//	m_lineInfos[0].CharInfos = std::vector<CHARINFO>();
+//
+//	// prgLines_ の設定
+//	{
+//		UINT crlf = 0;
+//		int nNewLine = 1;
+//
+//		for (size_t i = 0; i < m_text.size(); i++) {
+//			switch (m_text[i]) {
+//			case 0x0d://CR
+//			case 0x0a://LF
+//				nNewLine++;
+//
+//				if (nNewLine == 2) {
+//					nCurrentLine++;
+//					m_lineInfos[nCurrentLine].nPos = i;
+//					m_lineInfos[nCurrentLine].nCnt = 0; // CRCRの場合、nCntは0		
+//					m_lineInfos[nCurrentLine].CharInfos = std::vector<CHARINFO>();
+//					nNewLine = 1;
+//				}
+//
+//
+//				xassert(crlf == 0 || crlf == m_text[i]); // CRLFはだめ、CRCR.. or LFLF..はOK
+//				crlf = m_text[i];
+//				break;
+//			default:
+//				if (nNewLine) {
+//					nCurrentLine++;
+//					m_lineInfos[nCurrentLine].nPos = i;
+//					m_lineInfos[nCurrentLine].nCnt = 1;
+//					m_lineInfos[nCurrentLine].CharInfos = std::vector<CHARINFO>();
+//
+//				} else {
+//					m_lineInfos[nCurrentLine].nCnt++;
+//
+//				}
+//				nNewLine = 0;
+//				crlf = 0;
+//				break;
+//			}
+//		}
+//	}
+//
+//	{
+//
+//		// 文字文のRECT取得
+//		std::vector<d2dw::CRectF> charRects = m_pWnd->GetDirectPtr()->CalcCharRects(*(m_pProp->Format), m_text, contentSize);
+//		if (charRects.empty()) {
+//			auto pLayout = m_pWnd->GetDirectPtr()->GetTextLayout(*(m_pProp->Format), m_text, contentSize);
+//			float x, y;
+//			DWRITE_HIT_TEST_METRICS tm;
+//			pLayout->HitTestTextPosition(0, false, &x, &y, &tm);
+//			nLineHeight_ = tm.height;
+//		} else {
+//			nLineHeight_ = charRects[0].Height();
+//		}
+//
+//		// prgLines_[lineno].prgCharInfo[col].rc の設定
+//		{
+//			UINT rcIdx = 0;
+//			// Get the rectangle of each characters. RECTを取得
+//			for (UINT r = 0; r < nLineCnt_; r++) {
+//				m_lineInfos[r].CharInfos = std::vector<CHARINFO>();
+//
+//				UINT nCnt = m_lineInfos[r].nCnt;
+//				if (nCnt) {
+//					UINT nCntK = nCnt + 1; // 改行分
+//
+//					m_lineInfos[r].CharInfos = std::vector<CHARINFO>(nCntK, CHARINFO());
+//
+//					UINT col;
+//					for (col = 0; col < nCnt; col++) {
+//						d2dw::CRectF rc = charRects[rcIdx++];
+//						rc.OffsetRect(contentRect.LeftTop());
+//						m_lineInfos[r].CharInfos[col].rc = rc;
+//					}
+//
+//					// 行の最後の処理				
+//					{
+//						d2dw::CRectF rc = m_lineInfos[r].CharInfos[col - 1].rc;
+//						rc.left = rc.right; //前の文字の右端を左端として、rectを作成
+//						m_lineInfos[r].CharInfos[col].rc = rc;//No more offset
+//						rcIdx++;
+//					}
+//				} else // 空行
+//				{
+//					m_lineInfos[r].CharInfos = std::vector<CHARINFO>(1, CHARINFO());
+//					d2dw::CRectF rc = charRects[rcIdx++];
+//
+//					xassert(rc.left == rc.right);
+//					rc.OffsetRect(contentRect.LeftTop());
+//					m_lineInfos[r].CharInfos[0].rc = rc;
+//
+//					xassert(m_lineInfos[r].nCnt == 0);
+//				}
+//			}
+//		}
+//
+//		if (!m_text.empty()) {
+//			// 1行目の文字幅の取得、右寄せのためにrow_width_必要
+//			row_width_ = 0;
+//			for (int col = 0; col < m_lineInfos[0].nCnt; col++) {
+//				row_width_ += m_lineInfos[0].CharInfos[col].rc.Width();
+//			}
+//		}
+//
+//		return TRUE;
+//	}
+//
+//
+//	return FALSE;
 //}
-
-
-BOOL D2DTextbox::Layout()
-{
-	d2dw::CRectF contentRect(GetContentRect());
-	d2dw::CSizeF contentSize(contentRect.Size());
-	nLineCnt_ = 1;
-
-	// 行数を計算
-
-	nLineCnt_ = 0;
-
-	{
-		BOOL bNewLine = TRUE;
-		for (size_t i = 0; i < m_text.size(); i++) {
-			switch (m_text[i]) {
-			case 0x0d://CR
-			case 0x0a://LF                
-				if (bNewLine) {
-					nLineCnt_++;
-				}
-				bNewLine = TRUE;
-				break;
-			default:
-				if (bNewLine) {
-					nLineCnt_++;
-				}
-				bNewLine = FALSE;
-				break;
-			}
-		}
-	}
-
-	// 行数分のLINEINFOを作成, 文字0でもLINEINFOは１つ作成
-
-	m_lineInfos = std::vector((std::max)((UINT)1, nLineCnt_), LINEINFO());
-
-	// Count character of each line.　文字単位にPOS,LEN,RECTを取得
-
-	int nCurrentLine = -1;
-	m_lineInfos[0].nPos = 0;
-	m_lineInfos[0].nCnt = 0;
-	m_lineInfos[0].CharInfos = std::vector<CHARINFO>();
-
-	// prgLines_ の設定
-	{
-		UINT crlf = 0;
-		int nNewLine = 1;
-
-		for (size_t i = 0; i < m_text.size(); i++) {
-			switch (m_text[i]) {
-			case 0x0d://CR
-			case 0x0a://LF
-				nNewLine++;
-
-				if (nNewLine == 2) {
-					nCurrentLine++;
-					m_lineInfos[nCurrentLine].nPos = i;
-					m_lineInfos[nCurrentLine].nCnt = 0; // CRCRの場合、nCntは0		
-					m_lineInfos[nCurrentLine].CharInfos = std::vector<CHARINFO>();
-					nNewLine = 1;
-				}
-
-
-				xassert(crlf == 0 || crlf == m_text[i]); // CRLFはだめ、CRCR.. or LFLF..はOK
-				crlf = m_text[i];
-				break;
-			default:
-				if (nNewLine) {
-					nCurrentLine++;
-					m_lineInfos[nCurrentLine].nPos = i;
-					m_lineInfos[nCurrentLine].nCnt = 1;
-					m_lineInfos[nCurrentLine].CharInfos = std::vector<CHARINFO>();
-
-				} else {
-					m_lineInfos[nCurrentLine].nCnt++;
-
-				}
-				nNewLine = 0;
-				crlf = 0;
-				break;
-			}
-		}
-	}
-
-	{
-
-		// 文字文のRECT取得
-		std::vector<d2dw::CRectF> charRects = m_pWnd->GetDirectPtr()->CalcCharRects(*(m_pProp->Format), m_text, contentSize);
-		if (charRects.empty()) {
-			auto pLayout = m_pWnd->GetDirectPtr()->GetTextLayout(*(m_pProp->Format), m_text, contentSize);
-			float x, y;
-			DWRITE_HIT_TEST_METRICS tm;
-			pLayout->HitTestTextPosition(0, false, &x, &y, &tm);
-			nLineHeight_ = tm.height;
-		} else {
-			nLineHeight_ = charRects[0].Height();
-		}
-
-		// prgLines_[lineno].prgCharInfo[col].rc の設定
-		{
-			UINT rcIdx = 0;
-			// Get the rectangle of each characters. RECTを取得
-			for (UINT r = 0; r < nLineCnt_; r++) {
-				m_lineInfos[r].CharInfos = std::vector<CHARINFO>();
-
-				UINT nCnt = m_lineInfos[r].nCnt;
-				if (nCnt) {
-					UINT nCntK = nCnt + 1; // 改行分
-
-					m_lineInfos[r].CharInfos = std::vector<CHARINFO>(nCntK, CHARINFO());
-
-					UINT col;
-					for (col = 0; col < nCnt; col++) {
-						d2dw::CRectF rc = charRects[rcIdx++];
-						rc.OffsetRect(contentRect.LeftTop());
-						m_lineInfos[r].CharInfos[col].rc = rc;
-					}
-
-					// 行の最後の処理				
-					{
-						d2dw::CRectF rc = m_lineInfos[r].CharInfos[col - 1].rc;
-						rc.left = rc.right; //前の文字の右端を左端として、rectを作成
-						m_lineInfos[r].CharInfos[col].rc = rc;//No more offset
-						rcIdx++;
-					}
-				} else // 空行
-				{
-					m_lineInfos[r].CharInfos = std::vector<CHARINFO>(1, CHARINFO());
-					d2dw::CRectF rc = charRects[rcIdx++];
-
-					xassert(rc.left == rc.right);
-					rc.OffsetRect(contentRect.LeftTop());
-					m_lineInfos[r].CharInfos[0].rc = rc;
-
-					xassert(m_lineInfos[r].nCnt == 0);
-				}
-			}
-		}
-
-		if (!m_text.empty()) {
-			// 1行目の文字幅の取得、右寄せのためにrow_width_必要
-			row_width_ = 0;
-			for (int col = 0; col < m_lineInfos[0].nCnt; col++) {
-				row_width_ += m_lineInfos[0].CharInfos[col].rc.Width();
-			}
-		}
-
-		return TRUE;
-	}
-
-
-	return FALSE;
-}
 

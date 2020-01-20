@@ -369,6 +369,11 @@ public:
 	BOOL SetWindowText(LPCTSTR lpszString){return ::SetWindowText(m_hWnd,lpszString);}
 	BOOL InvalidateRect(const RECT *lpRect,BOOL bErase){return ::InvalidateRect(m_hWnd,lpRect,bErase);}
 	BOOL ClientToScreen(LPPOINT lpPoint){return ::ClientToScreen(m_hWnd,lpPoint);}
+	BOOL ClientToScreen(LPRECT lpRect) 
+	{ 
+		BOOL ret = ::ClientToScreen(m_hWnd, reinterpret_cast<LPPOINT>(&(lpRect->left))) && ::ClientToScreen(m_hWnd, reinterpret_cast<LPPOINT>(&(lpRect->right)));
+		return ret;
+	}
 	BOOL DestroyWindow(){return ::DestroyWindow(m_hWnd);}
 	BOOL GetClientRect(LPRECT lpRect){return ::GetClientRect(m_hWnd,lpRect);}
 	CRect GetClientRect()const

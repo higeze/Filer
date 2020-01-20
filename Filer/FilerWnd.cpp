@@ -21,7 +21,10 @@
 #include "Direct2DWrite.h"
 #include "FileIconCache.h"
 #include "ThreadSafeDriveFolderManager.h"
-
+#include "BindGridView.h"
+#include "BindRow.h"
+#include "BindTextColumn.h"
+#include "BindTextCell.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -685,6 +688,60 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 	//	m_spRightFavoritesView->UpdateAll();
 	//	SerializeProperty(this);
 	//}, m_spFilerGridViewProp);
+	auto pBindWnd = new CBindGridView<CRect>(std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp));
+
+	pBindWnd->RegisterClassExArgument()
+		.lpszClassName(L"CBindWnd")
+		.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
+		.hCursor(::LoadCursor(NULL, IDC_ARROW))
+		.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
+
+	pBindWnd->CreateWindowExArgument()
+		.lpszClassName(_T("CBindWnd"))
+		.lpszWindowName(L"RECT")
+		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
+		.dwExStyle(WS_EX_ACCEPTFILES)
+		.hMenu(NULL);
+
+
+	pBindWnd->SetIsDeleteOnFinalMessage(true);
+	pBindWnd->PushColumn(std::make_shared<CBindTextColumn<CRect>>(
+		pBindWnd,
+		L"Top",
+		[](const CRect& rc)->std::wstring {return std::to_wstring(rc.top); },
+		[](CRect& rc, const std::wstring& str)->void {rc.top = boost::lexical_cast<LONG>(str); }));
+	pBindWnd->PushColumn(std::make_shared<CBindTextColumn<CRect>>(
+		pBindWnd,
+		L"Right",
+		[](const CRect& rc)->std::wstring {return std::to_wstring(rc.right); },
+		[](CRect& rc, const std::wstring& str)->void {rc.right = boost::lexical_cast<LONG>(str); }));
+
+	pBindWnd->SetNameHeaderRowPtr(std::make_shared<CParentHeaderRow>(pBindWnd));
+	pBindWnd->SetFilterRowPtr(std::make_shared<CParentRow>(pBindWnd));
+
+	pBindWnd->PushRow(pBindWnd->GetNameHeaderRowPtr());
+	pBindWnd->PushRow(pBindWnd->GetFilterRowPtr());
+
+	pBindWnd->SetFrozenCount<RowTag>(2);
+
+	pBindWnd->GetItemsSource().notify_push_back(RECT{ 1,2,3,4 });
+	pBindWnd->GetItemsSource().notify_push_back(RECT{ 10,20,30,40 });
+	pBindWnd->GetItemsSource().notify_push_back(RECT{ -1,-2,-3,-4 });
+
+
+	HWND hWnd = NULL;
+	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+		hWnd = m_hWnd;
+	} else {
+		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	}
+
+	pBindWnd->CreateOnCenterOfParent(hWnd, CSize(400, 600));
+	pBindWnd->ShowWindow(SW_SHOW);
+	pBindWnd->UpdateWindow();
+
+
+
 	return 0;
 }
 

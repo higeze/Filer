@@ -93,7 +93,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>Async</ExceptionHandling>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -133,7 +133,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>Async</ExceptionHandling>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -202,9 +202,12 @@
     <ClInclude Include="..\HiLib\Band.h" />
     <ClInclude Include="..\HiLib\BindCell.h" />
     <ClInclude Include="..\HiLib\BindColumn.h" />
+    <ClInclude Include="..\HiLib\BindGridView.h" />
     <ClInclude Include="..\HiLib\BindPaintCell.h" />
     <ClInclude Include="..\HiLib\BindPaintColumn.h" />
     <ClInclude Include="..\HiLib\BindRow.h" />
+    <ClInclude Include="..\HiLib\BindTextCell.h" />
+    <ClInclude Include="..\HiLib\BindTextColumn.h" />
     <ClInclude Include="..\HiLib\BoolCell.h" />
     <ClInclude Include="..\HiLib\BoostPythonHelper.h" />
     <ClInclude Include="..\HiLib\ButtonState.h" />
@@ -281,6 +284,7 @@
     <ClInclude Include="..\HiLib\MyWin32.h" />
     <ClInclude Include="..\HiLib\MyWnd.h" />
     <ClInclude Include="..\HiLib\MyXMLSerializer.h" />
+    <ClInclude Include="..\HiLib\named_arguments.h" />
     <ClInclude Include="..\HiLib\observable.h" />
     <ClInclude Include="..\HiLib\ParentColumnHeaderCell.h" />
     <ClInclude Include="..\HiLib\ParentColumnHeaderHeaderCell.h" />
@@ -323,8 +327,6 @@
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
-    <ClInclude Include="..\ToDo\ToDoGridView.h" />
-    <ClInclude Include="..\ToDo\ToDoNameColumn.h" />
     <ClInclude Include="CheckableFileGrid.h" />
     <ClInclude Include="FileIconPathCell.h" />
     <ClInclude Include="FilerGridViewBase.h" />
@@ -451,8 +453,6 @@
     <ClCompile Include="..\HiLib\ThreadSafeKnownFolderManagaer.cpp" />
     <ClCompile Include="..\HiLib\Tracker.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
-    <ClCompile Include="..\ToDo\ToDoGridView.cpp" />
-    <ClCompile Include="..\ToDo\ToDoNameColumn.cpp" />
     <ClCompile Include="FileIconPathCell.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />
     <ClCompile Include="FileIconPathColumn.cpp" />

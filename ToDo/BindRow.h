@@ -1,6 +1,11 @@
-#include "ToDoGridView.h"
+#pragma once
 #include "Row.h"
-#include "ParentRowHeaderColumn.h"
+
+
+class CBindRow :public CParentRow
+{
+	using CParentRow::CParentRow;
+};
 
 //CToDoGridView::CToDoGridView(std::shared_ptr<ToDoGridViewProperty>& spToDoGridViewProp)
 //{

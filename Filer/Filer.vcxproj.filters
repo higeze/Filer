@@ -17,9 +17,6 @@
     <Filter Include="D2DTextBox">
       <UniqueIdentifier>{cce17a06-89bc-4334-81bb-ab715ac5fcf1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ToDo">
-      <UniqueIdentifier>{32108590-8083-4d92-8163-6234e5067eb6}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -614,13 +611,19 @@
     <ClInclude Include="..\HiLib\GridViewStateMachine.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\ToDo\ToDoGridView.h">
-      <Filter>ToDo</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ToDo\ToDoNameColumn.h">
-      <Filter>ToDo</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\index_vector.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindGridView.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindTextColumn.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindTextCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\named_arguments.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -960,12 +963,6 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\GridViewStateMachine.cpp">
       <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ToDo\ToDoGridView.cpp">
-      <Filter>ToDo</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ToDo\ToDoNameColumn.cpp">
-      <Filter>ToDo</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

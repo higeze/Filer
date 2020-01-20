@@ -22,64 +22,64 @@ struct COMPOSITIONRENDERINFO
 	TF_DISPLAYATTRIBUTE da;
 };
 
-struct CHARINFO
-{
-	d2dw::CRectF rc;
-	float GetWidth() { return rc.right - rc.left; }
-};
+//struct CHARINFO
+//{
+//	d2dw::CRectF rc;
+//	float GetWidth() { return rc.right - rc.left; }
+//};
+//
+//struct LINEINFO
+//{
+//	int nPos;
+//	int nCnt;
+//	std::vector<CHARINFO> CharInfos;
+//};
 
-struct LINEINFO
-{
-	int nPos;
-	int nCnt;
-	std::vector<CHARINFO> CharInfos;
-};
-
-class CaretRect
-{
-public:
-	CaretRect(bool bTrail) :bTrail_(bTrail), cnt_(0) {};
-
-	void Push(const d2dw::CRectF& rc, int row, int colStart, int colLast)
-	{
-		if (bTrail_) {
-			rc_ = rc;
-			row_ = row;
-			col_ = colLast;
-		} else if (!bTrail_ && cnt_ == 0) {
-			rc_ = rc;
-			row_ = row;
-			col_ = colStart;
-		}
-
-		cnt_++;
-	}
-
-	d2dw::CRectF Get() { return rc_; }
-	bool empty() { return cnt_ == 0; }
-
-	int row() { return row_; }
-	int col() { return col_; }
-
-
-	bool IsComplete(int rowno)
-	{
-		if (cnt_ == 0) return false;
-
-		if (bTrail_) {
-			if (row_ == rowno)
-				return false;
-		}
-
-		return true;
-	}
-
-private:
-	bool bTrail_;
-	int cnt_;
-	d2dw::CRectF rc_;
-	int row_, col_;
-};
+//class CaretRect
+//{
+//public:
+//	CaretRect(bool bTrail) :bTrail_(bTrail), cnt_(0) {};
+//
+//	void Push(const d2dw::CRectF& rc, int row, int colStart, int colLast)
+//	{
+//		if (bTrail_) {
+//			rc_ = rc;
+//			row_ = row;
+//			col_ = colLast;
+//		} else if (!bTrail_ && cnt_ == 0) {
+//			rc_ = rc;
+//			row_ = row;
+//			col_ = colStart;
+//		}
+//
+//		cnt_++;
+//	}
+//
+//	d2dw::CRectF Get() { return rc_; }
+//	bool empty() { return cnt_ == 0; }
+//
+//	int row() { return row_; }
+//	int col() { return col_; }
+//
+//
+//	bool IsComplete(int rowno)
+//	{
+//		if (cnt_ == 0) return false;
+//
+//		if (bTrail_) {
+//			if (row_ == rowno)
+//				return false;
+//		}
+//
+//		return true;
+//	}
+//
+//private:
+//	bool bTrail_;
+//	int cnt_;
+//	d2dw::CRectF rc_;
+//	int row_, col_;
+//};
 
 
 class D2DTextbox: public IBridgeTSFInterface
@@ -121,9 +121,8 @@ public:
 	// Getter ////////////////////////////////////////////////////
 	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets); }
 	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets); }
-	float GetLineHeight() { return nLineHeight_; }
-	float GetLineWidth() { return row_width_; }
-	UINT GetLineCount() { return nLineCnt_; }
+	//float GetLineWidth() { return row_width_; }
+	//UINT GetLineCount() { return nLineCnt_; }
 
 public:
 	virtual void OnClose(const CloseEvent& e);
@@ -144,7 +143,6 @@ private:
 	bool CopySelectionToClipboard();
 	bool PasteFromClipboard();
 
-
 public:
 
 	// Selection ////////////////////////////////////////
@@ -163,7 +161,8 @@ public:
 	void Render();
 	void ResetCaret();
 	void DrawCaret(const d2dw::CRectF& rc);
-	BOOL Layout();
+	FLOAT GetLineHeight();
+	//	BOOL Layout();
 
 
 	//void InvalidateRect();
@@ -173,12 +172,13 @@ public:
 	std::vector<d2dw::CRectF> GetCharRects();
 	std::optional<d2dw::CRectF> GetCharRectFromPos(const int& pos);
 	std::optional<int> GetCharPosFromPoint(const d2dw::CPointF& pt);
+
 	std::optional<int> GetFirstCharPosInLine(const int& pos);
 	std::optional<int> GetLastCharPosInLine(const int& pos);
 
 
-	int CharPosFromNearPoint(const d2dw::CPointF& pt);
-	BOOL RectFromCharPos(UINT nPos, d2dw::CRectF *prc);
+	//int CharPosFromNearPoint(const d2dw::CPointF& pt);
+	//BOOL RectFromCharPos(UINT nPos, d2dw::CRectF *prc);
 
 	//UINT FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst);
 
@@ -192,11 +192,11 @@ private:
 	std::function<void(const std::wstring&)> m_final;
 
 
-	std::vector<LINEINFO> m_lineInfos;
-	UINT nLineCnt_;
-	float nLineHeight_;
-	FLOAT row_width_;
-	int StarCharPos_;
+	//std::vector<LINEINFO> m_lineInfos;
+	//UINT nLineCnt_;
+	//FLOAT m_lineHeight = 0.f;
+	//FLOAT row_width_;
+	//int StarCharPos_;
 
 
 	CComPtr<CTextEditSink> m_pTextEditSink;
