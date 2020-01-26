@@ -16,6 +16,7 @@ struct CGridStateMachine::Machine
 	class RowTrack {};
 	class ColTrack {};
 	class Edit {};
+	class Error {};
 
 	template<class T, class R, class... Ts>
 	auto call(R(T::* f)(Ts...))const
@@ -50,7 +51,7 @@ struct CGridStateMachine::Machine
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CGridView::RowDrag_Guard_LButtonBeginDrag)] / call(&CGridView::RowDrag_LButtonBeginDrag) = state<RowDrag>,
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CGridView::ColDrag_Guard_LButtonBeginDrag)] / call(&CGridView::ColDrag_LButtonBeginDrag) = state<ColDrag>,
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CGridView::ItemDrag_Guard_LButtonBeginDrag)] / call(&CGridView::ItemDrag_LButtonBeginDrag) = state<ItemDrag>,
-			
+
 			state<Normal> +event<BeginEditEvent> / call(&CGridView::Edit_BeginEdit) = state<Edit>,
 			//VScrlDrag
 			state<VScrlDrag> +event<PaintEvent> / call(&CGridView::Normal_Paint),
@@ -99,7 +100,12 @@ struct CGridStateMachine::Machine
 			state<Edit> +event<KeyDownEvent>[call(&CGridView::Edit_Guard_KeyDown)] = state<Normal>,
 			state<Edit> +event<KeyDownEvent> / call(&CGridView::Edit_KeyDown),
 			state<Edit> +event<CharEvent> / call(&CGridView::Edit_Char),
-			state<Edit> +event<KillFocusEvent> = state<Normal>);
+			state<Edit> +event<KillFocusEvent> = state<Normal>,
+			state<Edit> +event<EndEditEvent> = state<Normal>,
+			//Error handler
+			*state<Error> +exception<std::exception> / call(&CGridView::Error_StdException) = state<Normal>
+		);
+			
 
 	}
 };
@@ -128,5 +134,6 @@ void CGridStateMachine::process_event(const ContextMenuEvent & e) { m_pMachine->
 void CGridStateMachine::process_event(const KeyDownEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const CharEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const BeginEditEvent & e) { m_pMachine->process_event(e); }
+void CGridStateMachine::process_event(const EndEditEvent& e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const SetFocusEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const KillFocusEvent & e) { m_pMachine->process_event(e); }

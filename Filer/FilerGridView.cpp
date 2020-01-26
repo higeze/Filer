@@ -1,5 +1,5 @@
 #include "FilerGridView.h"
-
+#include "GridViewStateMachine.h"
 #include "ShellFile.h"
 #include "ShellFolder.h"
 #include "Row.h"
@@ -444,10 +444,14 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	spdlog::info("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetFileName()));
 
 	CONSOLETIMER("OpenFolder Total");
-	bool isUpdate = m_spFolder == spFolder;
+	bool isUpdate = m_spFolder ? m_spFolder->GetPath() == spFolder->GetPath() : false;
+	m_spPreviousFolder = m_spFolder;
+	m_spFolder = spFolder;
 	{
 		CONSOLETIMER("OpenFolder Pre-Process");
 		
+		//StateMachine
+		m_pMachine.reset(new CGridStateMachine(this));
 		//Direct2DWrite
 		if (!isUpdate) {
 			m_pDirect->ClearTextLayoutMap();
@@ -457,10 +461,12 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 
 		//Cursor
 		m_spCursorer->Clear();
+		if (!isUpdate) {
+			DeselectAll();
+		}
 
 		if (m_pEdit) {
-			m_pEdit->OnClose(CloseEvent(this, NULL, NULL));
-			//::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);
+			EndEdit();
 		}
 
 		//Save and Restore Filter value
@@ -469,15 +475,15 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 			std::unordered_map<std::shared_ptr<CColumn>, std::wstring> map;
 			bool isAllEmpty = std::all_of(m_allCols.begin(), m_allCols.end(), [](const auto& ptr) { return ptr->GetFilter().empty(); });
 			if (isAllEmpty) {
-				if (m_spFolder) {
-					m_filterMap.erase(m_spFolder->GetPath());
+				if (m_spPreviousFolder) {
+					m_filterMap.erase(m_spPreviousFolder->GetPath());
 				}
 			} else {
 				for (const auto& colPtr : m_allCols) {
 					map.emplace(colPtr, colPtr->GetFilter());
 				}
-				if (m_spFolder) {
-					m_filterMap.insert_or_assign(m_spFolder->GetPath(), map);
+				if (m_spPreviousFolder) {
+					m_filterMap.insert_or_assign(m_spPreviousFolder->GetPath(), map);
 				}
 			}
 			//Load Map
@@ -493,9 +499,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 					colPtr->SetFilter(L"");
 				}
 			}
-			//Update
-			m_spPreviousFolder = m_spFolder;
-			m_spFolder = spFolder;
+
 		}
 
 		//Clear RowDictionary From 0 to last
@@ -875,7 +879,7 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 			ShowShellContextMenu(m_hWnd, ptScreen, m_spFolder->GetShellFolderPtr(), vPidl);
 	}
 
-	CFilerGridViewBase::Normal_ContextMenu(e);
+	//CFilerGridViewBase::Normal_ContextMenu(e);
 }
 
 void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl, bool hasNew)

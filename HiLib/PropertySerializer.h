@@ -281,7 +281,7 @@ public:
 				spRow=std::make_shared<CChildRow>(spSheetCell.get());
 				spSheetCell->PushRow(spRow);
 				//pColProperty=pSheet->AllColumn(0);
-				pColValue=spSheetCell->Index2Pointer<ColTag, AllTag>(1);
+				pColValue=spSheetCell->Index2Pointer<ColTag, AllTag>(spSheetCell->GetFrozenCount<ColTag>() + 1);
 				serializer.SerializeValue(val,spRow.get(),pColValue.get());
 			}
 			CSheet::Cell(pRow, pCol) = spSheetCell;
@@ -366,12 +366,12 @@ public:
 		if (auto spSheet = m_pSheet.lock()) {
 			if (!spSheet->Empty()) {
 				std::wstring wstrName(lpszName, (lpszName + strlen(lpszName)));
-				auto pCol = spSheet->Index2Pointer<ColTag, AllTag>(0);
-				for (auto rowIter = spSheet->GetContainer<RowTag, AllTag>().begin(), rowEnd = spSheet->GetContainer<RowTag, AllTag>().end(); rowIter != rowEnd; ++rowIter) {
+				auto pCol = spSheet->Index2Pointer<ColTag, AllTag>(spSheet->GetFrozenCount<ColTag>());
+				for (auto rowIter = spSheet->GetContainer<RowTag, AllTag>().begin() + spSheet->GetFrozenCount<RowTag>(), rowEnd = spSheet->GetContainer<RowTag, AllTag>().end(); rowIter != rowEnd; ++rowIter) {
 					auto pCell = CSheet::Cell(*rowIter, pCol);
 					if (m_setCellPtr.find(pCell.get()) == m_setCellPtr.end() && pCol->Cell(rowIter->get())->GetString() == wstrName) {
 						m_setCellPtr.insert(pCell.get());
-						DeserializeValue(t, rowIter->get(), spSheet->Index2Pointer<ColTag, AllTag>(1).get());
+						DeserializeValue(t, rowIter->get(), spSheet->Index2Pointer<ColTag, AllTag>(spSheet->GetFrozenCount<ColTag>() + 1).get());
 						break;
 					}
 				}
@@ -443,7 +443,7 @@ public:
 			t.clear();
 			for(auto rowIter=allRows.begin() + spSheet->GetFrozenCount<RowTag>();rowIter!=allRows.end();rowIter++){
 				auto val = CreateInstance<T>();
-				DeserializeValue(val,rowIter->get(),spSheet->Index2Pointer<ColTag, AllTag>(1).get());
+				DeserializeValue(val,rowIter->get(),spSheet->Index2Pointer<ColTag, AllTag>(spSheet->GetFrozenCount<ColTag>() + 1).get());
 				t.push_back(val);
 			}
 			

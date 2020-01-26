@@ -626,6 +626,21 @@
     <ClInclude Include="..\HiLib\named_arguments.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="Task.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindCheckBoxCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CheckBoxFilterCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CheckBoxCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindCheckBoxColumn.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -707,9 +722,6 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\Band.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\BoolCell.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\Cell.cpp">
@@ -962,6 +974,12 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\GridViewStateMachine.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CheckBoxFilterCell.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CheckBoxCell.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

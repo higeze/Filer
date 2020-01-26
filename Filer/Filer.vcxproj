@@ -201,6 +201,8 @@
     <ClInclude Include="..\HiLib\atlpartial.h" />
     <ClInclude Include="..\HiLib\Band.h" />
     <ClInclude Include="..\HiLib\BindCell.h" />
+    <ClInclude Include="..\HiLib\BindCheckBoxCell.h" />
+    <ClInclude Include="..\HiLib\BindCheckBoxColumn.h" />
     <ClInclude Include="..\HiLib\BindColumn.h" />
     <ClInclude Include="..\HiLib\BindGridView.h" />
     <ClInclude Include="..\HiLib\BindPaintCell.h" />
@@ -218,6 +220,8 @@
     <ClInclude Include="..\HiLib\CellState.h" />
     <ClInclude Include="..\HiLib\CellStringCommand.h" />
     <ClInclude Include="..\HiLib\CExpandCollapseCell.h" />
+    <ClInclude Include="..\HiLib\CheckBoxCell.h" />
+    <ClInclude Include="..\HiLib\CheckBoxFilterCell.h" />
     <ClInclude Include="..\HiLib\ChildColumnHeaderCell.h" />
     <ClInclude Include="..\HiLib\ChildHeaderCell.h" />
     <ClInclude Include="..\HiLib\ChildIndexColumn.h" />
@@ -378,6 +382,7 @@
     <ClInclude Include="ShellFolder.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Task.h" />
     <ClInclude Include="UniqueIDFactory.h" />
     <ClInclude Include="Unknown.h" />
     <ClInclude Include="ViewProperty.h" />
@@ -391,11 +396,12 @@
     <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp" />
     <ClCompile Include="..\D2DTextBox\undo.cpp" />
     <ClCompile Include="..\HiLib\Band.cpp" />
-    <ClCompile Include="..\HiLib\BoolCell.cpp" />
     <ClCompile Include="..\HiLib\BoostPythonHelper.cpp" />
     <ClCompile Include="..\HiLib\Cell.cpp" />
     <ClCompile Include="..\HiLib\Celler.cpp" />
     <ClCompile Include="..\HiLib\CellStringCommand.cpp" />
+    <ClCompile Include="..\HiLib\CheckBoxCell.cpp" />
+    <ClCompile Include="..\HiLib\CheckBoxFilterCell.cpp" />
     <ClCompile Include="..\HiLib\ChildIndexColumn.cpp" />
     <ClCompile Include="..\HiLib\ChildRowHeaderColumn.cpp" />
     <ClCompile Include="..\HiLib\ColorCell.cpp" />

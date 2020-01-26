@@ -532,7 +532,12 @@ namespace d2dw
 	void CDirect2DWrite::DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap, const CRectF& rect)
 	{
 		if (pBitmap) {
-			GetHwndRenderTarget()->DrawBitmap(pBitmap, rect);
+			auto bmpRect = d2dw::CRectF(
+				std::round(rect.left),
+				std::round(rect.top),
+				std::round(rect.right),
+				std::round(rect.bottom));
+			GetHwndRenderTarget()->DrawBitmap(pBitmap, bmpRect);
 		}
 	}
 
@@ -627,8 +632,6 @@ namespace d2dw
 		return CRect(Dips2PixelsX(rc.left), Dips2PixelsY(rc.top),
 			Dips2PixelsX(rc.right), Dips2PixelsY(rc.bottom));
 	}
-
-
 
 	void CDirect2DWrite::Clear()
 	{

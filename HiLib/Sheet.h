@@ -249,6 +249,7 @@ protected:
 	virtual void OnKeyDown(const KeyDownEvent& e);
 	virtual void OnChar(const CharEvent& e);
 	virtual void OnBeginEdit(const BeginEditEvent& e);
+	virtual void OnEndEdit(const EndEditEvent& e);
 
 
 	//virtual void OnPaintAll(const PaintEvent& e);
@@ -305,23 +306,25 @@ public:
 	virtual void ColTrack_LButtonUp(const LButtonUpEvent& e);
 	virtual void ColTrack_MouseLeave(const MouseLeaveEvent& e);
 	//RowDrag
-	void RowDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e);
-	bool RowDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
-	void RowDrag_MouseMove(const MouseMoveEvent& e);
-	void RowDrag_LButtonUp(const LButtonUpEvent& e);
-	void RowDrag_MouseLeave(const MouseLeaveEvent& e);
+	virtual void RowDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	virtual bool RowDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	virtual void RowDrag_MouseMove(const MouseMoveEvent& e);
+	virtual void RowDrag_LButtonUp(const LButtonUpEvent& e);
+	virtual void RowDrag_MouseLeave(const MouseLeaveEvent& e);
 	//ColDrag
-	void ColDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e);
-	bool ColDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
-	void ColDrag_MouseMove(const MouseMoveEvent& e);
-	void ColDrag_LButtonUp(const LButtonUpEvent& e);
-	void ColDrag_MouseLeave(const MouseLeaveEvent& e);
+	virtual void ColDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	virtual bool ColDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	virtual void ColDrag_MouseMove(const MouseMoveEvent& e);
+	virtual void ColDrag_LButtonUp(const LButtonUpEvent& e);
+	virtual void ColDrag_MouseLeave(const MouseLeaveEvent& e);
 	//ItemDrag
-	void ItemDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e);
-	bool ItemDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
-	void ItemDrag_MouseMove(const MouseMoveEvent& e);
-	void ItemDrag_LButtonUp(const LButtonUpEvent& e);
-	void ItemDrag_MouseLeave(const MouseLeaveEvent& e);
+	virtual void ItemDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	virtual bool ItemDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	virtual void ItemDrag_MouseMove(const MouseMoveEvent& e);
+	virtual void ItemDrag_LButtonUp(const LButtonUpEvent& e);
+	virtual void ItemDrag_MouseLeave(const MouseLeaveEvent& e);
+	//Error
+	virtual void Error_StdException(const std::exception& e);
 
 	//Menu
 	CMenu* const m_pContextMenu;

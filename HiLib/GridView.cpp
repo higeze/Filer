@@ -82,6 +82,7 @@ CGridView::CGridView(
 	AddMsgHandler(WM_SETCURSOR, &CGridView::OnSetCursor, this);
 	AddMsgHandler(WM_CHAR, &CGridView::OnChar, this);
 	AddMsgHandler(WM_KEYDOWN, &CGridView::OnKeyDown, this);
+	AddMsgHandler(WM_SYSKEYDOWN, &CGridView::OnKeyDown, this);
 	AddMsgHandler(WM_FILTER, &CGridView::OnFilter, this);
 	AddMsgHandler(WM_LBUTTONDBLCLKTIMEXCEED, &CGridView::OnLButtonDblClkTimeExceed, this);
 	AddMsgHandler(WM_DELAY_UPDATE, &CGridView::OnDelayUpdate, this);
@@ -502,14 +503,18 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 		//Check if in page
 		}  else if (isAllInPage(rcPage.top, rcPage.bottom, m_spCursorer->GetFocusedCell()->GetRowPtr()->GetTop(), m_spCursorer->GetFocusedCell()->GetRowPtr()->GetBottom())) {
 			//Do nothing
-		//Larget than bottom
+		//Larger than bottom
 		} else if (m_spCursorer->GetFocusedCell()->GetRowPtr()->GetBottom() > rcPage.bottom) {
 			FLOAT height = 0.0f;
 			FLOAT scroll = 0.0f;
-			for (auto iter = std::next(m_visRows.begin(), m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), frozen = std::next(m_visRows.begin(), m_frozenRowCount), end = std::prev(frozen); iter != end; --iter) {
+			for (auto iter = m_visRows.begin() + m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>(),
+					frozen = m_visRows.begin() + m_frozenRowCount, 
+					end = m_visRows.begin() + (std::max)(size_t(0), m_frozenRowCount -1);
+					iter != end; --iter) {
 				height += (*iter)->GetHeight();
 				if (height >= pageHeight) {
-					FLOAT heightToFocus = std::accumulate(std::next(m_visRows.begin(), m_frozenRowCount), std::next(m_visRows.begin(), m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()), 0.0f,
+					FLOAT heightToFocus = std::accumulate(m_visRows.begin() + m_frozenRowCount,
+						m_visRows.begin() + m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>() + 1, 0.0f,
 						[](const FLOAT& acc, const std::shared_ptr<CRow>& ptr)->FLOAT { return acc + ptr->GetDefaultHeight(); });
 					scroll = heightToFocus - pageHeight;
 					break;
@@ -1138,6 +1143,7 @@ void CGridView::Edit_LButtonDown(const LButtonDownEvent& e)
 
 void CGridView::Edit_LButtonUp(const LButtonUpEvent& e)
 {
+	ReleaseCapture();
 	if (GetEditPtr()->GetClientRect().PtInRect(GetDirectPtr()->Pixels2Dips(e.Point))) {
 		//GetEditPtr()->OnLButtonUp(e);
 	}
@@ -1149,8 +1155,8 @@ void CGridView::Edit_LButtonUp(const LButtonUpEvent& e)
 bool CGridView::Edit_Guard_KeyDown(const KeyDownEvent& e)
 {
 
-	if ((e.Char == VK_RETURN) && !(::GetKeyState(VK_MENU) & 0x8000) ||
-		(e.Char == VK_TAB) && !(::GetKeyState(VK_MENU) & 0x8000)) {
+	if ((e.Char == VK_RETURN && !(::GetKeyState(VK_MENU) & 0x8000)) ||
+		(e.Char == VK_TAB && !(::GetKeyState(VK_MENU) & 0x8000))) {
 		//Commit Edit
 		return true;
 	}
@@ -1174,12 +1180,19 @@ void CGridView::Edit_Char(const CharEvent& e)
 	GetEditPtr()->OnChar(e);
 }
 
+
 /******************/
 /* Window Message */
 /******************/
 void CGridView::BeginEdit(CCell* pCell)
 {
 	OnBeginEdit(BeginEditEvent(this, pCell));
+	return;
+}
+
+void CGridView::EndEdit()
+{
+	OnEndEdit(EndEditEvent(this));
 	return;
 }
 
@@ -1234,7 +1247,7 @@ LRESULT CGridView::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 LRESULT CGridView::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	CSheet::OnKeyDown(KeyDownEvent(this, wParam, lParam));
-	bHandled = FALSE;
+	//bHandled = FALSE;
 	return 0;
 }
 LRESULT CGridView::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)

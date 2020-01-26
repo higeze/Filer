@@ -10,6 +10,7 @@
 #include "UIElement.h"
 #include "GridView.h"
 #include "TextCell.h"
+#include <boost/algorithm/algorithm.hpp>
 
 
 #define TAB_WIDTH_4CHAR 4
@@ -345,7 +346,7 @@ void D2DTextbox::OnKeyDown(const KeyDownEvent& e)
 		break;
 	}
 	case VK_RETURN:
-		InsertAtSelection(L"\r\n");
+		InsertAtSelection(L"\n");
 		break;
 	case VK_TAB:
 		InsertAtSelection(L"\t");
@@ -434,9 +435,10 @@ bool D2DTextbox::PasteFromClipboard()
 		HANDLE hGlobal = clipboard.GetData(CF_UNICODETEXT);
 		if (hGlobal) {
 			std::wstring str((LPWSTR)GlobalLock(hGlobal));
+			boost::algorithm::replace_all(str, L"\r\n", L"\n");
 			//str = FilterInputString(str);
 			m_text.notify_replace(std::get<caret::SelBegin>(m_carets), std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets), str);
-			MoveCaret(std::get<caret::CurCaret>(m_carets) + str.size());
+			MoveCaret(std::get<caret::SelBegin>(m_carets) + str.size());
 			GlobalUnlock(hGlobal);
 		}
 	}
@@ -590,7 +592,40 @@ std::vector<d2dw::CRectF> D2DTextbox::GetCharRects()
 	d2dw::CRectF contentRect(GetContentRect());
 	std::vector<d2dw::CRectF> charRects(m_pWnd->GetDirectPtr()->CalcCharRects(*(m_pProp->Format), m_text, contentRect.Size()));
 	std::for_each(charRects.begin(), charRects.end(), [offset = contentRect.LeftTop()](d2dw::CRectF& rc) {rc.OffsetRect(offset); });
-	charRects.emplace_back(charRects.back().right, charRects.back().top, contentRect.right, contentRect.bottom);
+	
+	/*example-1*/
+	/*abcd\n   */
+	/*efghijklm*/
+	/*no\n     */
+	/*\n       */
+	/*pqrstu\n */
+	/*vwxzy    */
+
+	/*example-2*/
+	/*abcd\n   */
+	/*efghijklm*/
+	/*no\n     */
+	/*\n       */
+	/*pqrstu\n */
+	/*vwxzy\n  */
+	/*         */
+
+	for (std::size_t i = 0; i < charRects.size(); i++) {
+		if (m_text[i] == L'\n' && i != charRects.size()) {
+			charRects[i].right = contentRect.right;
+		}
+	}
+
+	if (m_text.back() == L'\n') {
+		charRects.emplace_back(
+			contentRect.left, charRects.back().bottom,
+			contentRect.right, charRects.back().bottom + charRects.back().Height());
+
+	}else{
+		charRects.emplace_back(charRects.back().right, charRects.back().top, contentRect.right, charRects.back().bottom);
+
+	}
+	
 	return charRects;
 }
 

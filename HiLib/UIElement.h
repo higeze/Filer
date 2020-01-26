@@ -33,13 +33,12 @@ struct BeginEditEvent :public EventArgs
 	BeginEditEvent(CWnd* pWnd, CCell* pCell)
 		:EventArgs(pWnd), CellPtr(pCell) {}
 };
-//
-//struct EndEditEvent :public EventArgs
-//{
-//	CCell* CellPtr;
-//	BeginEditEvent(d2dw::CDirect2DWrite* pDirect, CCell* pCell)
-//		:EventArgs() {}
-//};
+
+struct EndEditEvent :public EventArgs
+{
+	EndEditEvent(CWnd* pWnd)
+		:EventArgs() {}
+};
 
 
 struct CreateEvent :public EventArgs

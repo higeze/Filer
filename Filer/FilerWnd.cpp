@@ -25,6 +25,11 @@
 #include "BindRow.h"
 #include "BindTextColumn.h"
 #include "BindTextCell.h"
+#include "BindCheckBoxColumn.h"
+#include "BindCheckBoxCell.h"
+
+
+#include "Task.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -688,7 +693,7 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 	//	m_spRightFavoritesView->UpdateAll();
 	//	SerializeProperty(this);
 	//}, m_spFilerGridViewProp);
-	auto pBindWnd = new CBindGridView<CRect>(std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp));
+	auto pBindWnd = new CBindGridView<Task>(std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp));
 
 	pBindWnd->RegisterClassExArgument()
 		.lpszClassName(L"CBindWnd")
@@ -705,16 +710,22 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 
 
 	pBindWnd->SetIsDeleteOnFinalMessage(true);
-	pBindWnd->PushColumn(std::make_shared<CBindTextColumn<CRect>>(
+
+	pBindWnd->PushColumn(std::make_shared<CBindCheckBoxColumn<Task>>(
 		pBindWnd,
-		L"Top",
-		[](const CRect& rc)->std::wstring {return std::to_wstring(rc.top); },
-		[](CRect& rc, const std::wstring& str)->void {rc.top = boost::lexical_cast<LONG>(str); }));
-	pBindWnd->PushColumn(std::make_shared<CBindTextColumn<CRect>>(
+		L"Done",
+		[](const Task& tk)->bool {return tk.Done; },
+		[](Task& tk, const bool check)->void {tk.Done = check; }));
+	pBindWnd->PushColumn(std::make_shared<CBindTextColumn<Task>>(
 		pBindWnd,
-		L"Right",
-		[](const CRect& rc)->std::wstring {return std::to_wstring(rc.right); },
-		[](CRect& rc, const std::wstring& str)->void {rc.right = boost::lexical_cast<LONG>(str); }));
+		L"Name",
+		[](const Task& tk)->std::wstring {return tk.Name; },
+		[](Task& tk, const std::wstring& str)->void {tk.Name = str; }));
+	pBindWnd->PushColumn(std::make_shared<CBindTextColumn<Task>>(
+		pBindWnd,
+		L"Memo",
+		[](const Task& tk)->std::wstring {return tk.Memo; },
+		[](Task& tk, const std::wstring& str)->void {tk.Name = str; }));
 
 	pBindWnd->SetNameHeaderRowPtr(std::make_shared<CParentHeaderRow>(pBindWnd));
 	pBindWnd->SetFilterRowPtr(std::make_shared<CParentRow>(pBindWnd));
@@ -724,9 +735,9 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 
 	pBindWnd->SetFrozenCount<RowTag>(2);
 
-	pBindWnd->GetItemsSource().notify_push_back(RECT{ 1,2,3,4 });
-	pBindWnd->GetItemsSource().notify_push_back(RECT{ 10,20,30,40 });
-	pBindWnd->GetItemsSource().notify_push_back(RECT{ -1,-2,-3,-4 });
+	pBindWnd->GetItemsSource().notify_push_back(Task{ true, L"Test", L"mon" });
+	pBindWnd->GetItemsSource().notify_push_back(Task{ false, L"PVA", L"Tue" });
+	pBindWnd->GetItemsSource().notify_push_back(Task{ true, L"NAME", L"Run" });
 
 
 	HWND hWnd = NULL;

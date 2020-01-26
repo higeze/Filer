@@ -1,5 +1,6 @@
 #include "Sheet.h"
 #include <numeric>
+#include <boost/format.hpp>
 #include "SheetEventArgs.h"
 #include "CellProperty.h"
 #include "MyRect.h"
@@ -869,6 +870,21 @@ void CSheet::ItemDrag_MouseLeave(const MouseLeaveEvent& e)
 	m_spItemDragger->OnLeaveDrag(this, e);
 }
 
+/*********/
+/* Error */
+/*********/
+void CSheet::Error_StdException(const std::exception& e)
+{
+	::OutputDebugStringA(e.what());
+
+	std::string msg = (boost::format(
+		"What:%1%\r\n"
+		"Last Error:%2%\r\n"
+	) % e.what() % GetLastErrorString()).str();
+
+	MessageBoxA(GetGridPtr()->m_hWnd, msg.c_str(), "Exception in StateMachine", MB_ICONWARNING);
+}
+
 /**************/
 /* UI Message */
 /**************/
@@ -884,11 +900,14 @@ void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pMachine->pr
 void CSheet::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
 void CSheet::OnSetCursor(const SetCursorEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnMouseLeave(const MouseLeaveEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnKeyDown(const KeyDownEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
+void CSheet::OnKeyDown(const KeyDownEvent& e) { m_pMachine->process_event(e);
+PostUpdate(Updates::Invalidate);
+SubmitUpdate(); }
 void CSheet::OnSetFocus(const SetFocusEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnKillFocus(const KillFocusEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnChar(const CharEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnBeginEdit(const BeginEditEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
+void CSheet::OnEndEdit(const EndEditEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 
 
 void CSheet::SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& cell2, bool doSelect)
@@ -917,8 +936,6 @@ void CSheet::SelectAll()
 void CSheet::DeselectAll()
 {
 	auto setSelected = [](auto& ptr) {ptr->SetSelected(false); };
-
-
 
 	for(const auto& colPtr : m_allCols){
 		for(const auto& rowPtr : m_allRows){

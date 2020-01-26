@@ -1,27 +1,23 @@
 #pragma once
-#include "TextCell.h"
+#include "CheckBoxCell.h"
 
 
-/**
- * CBoolCell
- */
-class CBoolCell:public CTextCell
+class CBoolCell:public CCheckBoxCell
 {
 private:
 	bool m_bool;
-//	CCheckBox m_checkBox;
 public:
-	CBoolCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,bool b);
-	virtual ~CBoolCell(){}
+	CBoolCell::CBoolCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, bool b)
+		:CCheckBoxCell(pSheet, pRow, pColumn, spProperty), m_bool(b){}
+	virtual ~CBoolCell() = default;
 
-	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect,d2dw::CRectF rcPaint) override;
-	virtual d2dw::CSizeF MeasureSize(d2dw::CDirect2DWrite* pDirect) override;
-	virtual d2dw::CSizeF MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override;
+	virtual bool GetCheck() const override
+	{
+		return m_bool;
+	}
 
-	virtual std::wstring GetString();
-	virtual void SetStringCore(const std::wstring& str);
-
-	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
-
-	virtual bool IsComparable()const;
+	virtual void SetCheck(bool check) override
+	{
+		m_bool = check;
+	}
 };

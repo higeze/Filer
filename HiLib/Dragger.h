@@ -44,40 +44,23 @@ public:
 
 	void OnDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto visibleIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+		int visIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
 
-		int visMax = pSheet->GetContainer<TRC, VisTag>().size() - 1;
-		int allMax = pSheet->GetContainer<TRC, AllTag>().size() - 1;
-
-		if (visibleIndex == CBand::kInvalidIndex) {
-			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visibleIndex);
-		}
-		else if (visibleIndex < 0) {
-			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(0);
-		}
-		else if (visibleIndex > visMax) {
-			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visMax) + 1;
-		}
-		else if (visibleIndex == 0) {
-			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(0);
-		}
-		else if (visibleIndex == visMax) {
-			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visMax) + 1;
-		}
-		else {
-			auto allIndex = pSheet->Vis2AllIndex<TRC>(visibleIndex);
-			if (allIndex < m_dragFromIndex) {
-				m_dragToIndex = allIndex;
-			}
-			else if (allIndex > m_dragFromIndex) {
-				m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visibleIndex + 1);
-			}
-			else {
-				m_dragToIndex = allIndex;
+		if (visIndex == CBand::kInvalidIndex) {
+			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visIndex);
+		} else {
+			int visDragToIndex = std::clamp(visIndex,
+				(int)pSheet->Vis2AllIndex<TRC>(pSheet->GetFrozenCount<TRC>()),
+				(int)(pSheet->GetContainer<TRC, VisTag>().size() - 1));
+			int allDragToIndex = pSheet->Vis2AllIndex<TRC>(visDragToIndex);
+			if (allDragToIndex < m_dragFromIndex) {
+				m_dragToIndex = allDragToIndex;
+			} else if (allDragToIndex > m_dragFromIndex) {
+				m_dragToIndex = allDragToIndex + 1;
+			} else {//m_dragToIndex == m_dragFromIndex
+				m_dragToIndex = allDragToIndex;
 			}
 		}
-
-		m_dragToIndex = (std::max)(m_dragToIndex, 0);
 	}
 
 	void OnEndDrag(CSheet* pSheet, const MouseEvent& e) override

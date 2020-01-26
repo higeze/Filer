@@ -11,7 +11,7 @@ struct CSheetStateMachine::Machine
 	class ItemDrag {};
 	class RowTrack {};
 	class ColTrack {};
-
+	class Error {};
 
 	template<class T, class R, class... Ts>
 	auto call(R(T::* f)(Ts...))const
@@ -70,7 +70,9 @@ struct CSheetStateMachine::Machine
 			state<ColTrack> +event<PaintEvent> / call(&CSheet::Normal_Paint),
 			state<ColTrack> +event<LButtonUpEvent> / call(&CSheet::ColTrack_LButtonUp) = state<Normal>,
 			state<ColTrack> +event<MouseMoveEvent> / call(&CSheet::ColTrack_MouseMove),
-			state<ColTrack> +event<MouseLeaveEvent> / call(&CSheet::ColTrack_MouseLeave) = state<Normal>
+			state<ColTrack> +event<MouseLeaveEvent> / call(&CSheet::ColTrack_MouseLeave) = state<Normal>,
+			//Error handler
+			*state<Error> +exception<std::exception> / call(&CSheet::Error_StdException) = state<Normal>
 		);
 	}
 };
@@ -95,6 +97,7 @@ void CSheetStateMachine::process_event(const ContextMenuEvent& e) { m_pMachine->
 void CSheetStateMachine::process_event(const KeyDownEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const CharEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const BeginEditEvent& e) { m_pMachine->process_event(e); }
+void CSheetStateMachine::process_event(const EndEditEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const SetFocusEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const KillFocusEvent& e) { m_pMachine->process_event(e); }
 

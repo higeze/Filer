@@ -19,11 +19,8 @@ void CFilterCell::SetString(const std::wstring& str)
 {
 	//Filter cell undo redo is set when Post WM_FILTER
 	if(GetString()!=str){
-		std::wstring newString = str;
-		CCell* pCell = this;
-		HWND hWnd = m_pSheet->GetGridPtr()->m_hWnd;
-		m_deadlinetimer.run([hWnd, pCell, newString] {
-			pCell->CCell::SetString(newString);	
+		CCell::SetStringNotify(str);
+		m_deadlinetimer.run([hWnd = m_pSheet->GetGridPtr()->m_hWnd, newString = str] {
 			::PostMessage(hWnd,WM_FILTER,NULL,NULL);
 		}, std::chrono::milliseconds(200));
 	}
@@ -48,18 +45,4 @@ void CFilterCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPai
 			210.0f / 255, 210.0f / 255, 210.0f / 255, 1.0f);
 		pDirect->DrawTextLayout(filterFnC, str, rcPaint);
 	}
-}
-
-void CFilterCell::OnPropertyChanged(const wchar_t* name)
-{
-	if (!_tcsicmp(L"value", name)) {
-		//Update valid flag
-		m_bFitMeasureValid = false;
-		m_bActMeasureValid = false;
-	} else if (!_tcsicmp(L"size", name)) {
-		m_bActMeasureValid = false;
-	}
-	//Notify to Row, Column and Sheet
-	m_pRow->OnCellPropertyChanged(this, name);
-	m_pColumn->OnCellPropertyChanged(this, name);
 }

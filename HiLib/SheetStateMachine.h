@@ -24,6 +24,7 @@ public:
 	virtual void process_event(const KeyDownEvent& e) = 0;
 	virtual void process_event(const CharEvent& e) = 0;
 	virtual void process_event(const BeginEditEvent& e) = 0;
+	virtual void process_event(const EndEditEvent& e) = 0;
 };
 
 class CSheetStateMachine:public IStateMachine
@@ -53,5 +54,6 @@ public:
 	virtual void process_event(const CharEvent& e) override;
 
 	virtual void process_event(const BeginEditEvent& e) override;
+	virtual void process_event(const EndEditEvent& e) override;
 };
 

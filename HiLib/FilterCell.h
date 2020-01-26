@@ -23,8 +23,4 @@ public:
 	{
 		return false;
 	}
-
-	virtual void OnPropertyChanged(const wchar_t* name) override;
-
-
 };
