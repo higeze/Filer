@@ -712,9 +712,9 @@ void CGridView::SubmitUpdate()
 void CGridView::Clear()
 {
 	CSheet::Clear();
-	m_rowHeaderHeader = std::shared_ptr<CRow>();
-	m_rowNameHeader=std::shared_ptr<CRow>();
-	m_rowFilter=std::shared_ptr<CRow>();
+	//m_rowHeaderHeader = std::shared_ptr<CRow>();
+	//m_rowNameHeader=std::shared_ptr<CRow>();
+	//m_rowFilter=std::shared_ptr<CRow>();
 }
 
 CColumn* CGridView::GetParentColumnPtr(CCell* pCell)

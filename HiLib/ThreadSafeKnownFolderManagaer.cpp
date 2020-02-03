@@ -29,7 +29,7 @@ namespace shell
 				pFolder->GetIDList(KF_FLAG_DEFAULT, idl.ptrptr());
 
 				//Path Hint:pFolder->GetPath couldn't get GUID
-				std::wstring path = shell::GetDisplayNameOf(pDesktopFolder, idl);
+				std::wstring path = shell::GetDisplayNameOf(pDesktopFolder, idl, SHGDN_FORPARSING);
 
 				if (pknownid[i] == FOLDERID_Desktop) {
 					::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, idl.ptrptr());

@@ -51,37 +51,14 @@ std::wstring shell::Size2String(ULONGLONG size)
 	return ConvertCommaSeparatedNumber(size);
 }
 
-std::wstring shell::GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL)
+std::wstring shell::GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL, SHGDNF uFlags)
 {
 	STRRET strret{ 0 };
 	std::wstring ret;
-	if (SUCCEEDED(pParentFolder->GetDisplayNameOf(childIDL.ptr(), SHGDN_FORPARSING, &strret))) {
-		StrRetToBufW(&strret, childIDL.ptr(), ::GetBuffer(ret, 256), 256);
+	if (SUCCEEDED(pParentFolder->GetDisplayNameOf(childIDL.ptr(), uFlags, &strret))) {
+		::StrRetToBufW(&strret, childIDL.ptr(), ::GetBuffer(ret, 256), 256);
 		::ReleaseBuffer(ret);
 		return ret;
-		//int lengch;
-		//LPSTR lpstr;
-		//WCHAR awc[MAX_PATH] = { 0 };
-		//switch (strret.uType) {
-		//case STRRET_WSTR:
-		//	return std::wstring(strret.pOleStr);
-		//	break;
-		//case STRRET_OFFSET:
-		//	lpstr = (LPSTR)(((char*)childIDL.ptr()) + strret.uOffset);
-		//	lengch = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, NULL, 0);
-		//	::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, awc, lengch);
-		//	return std::wstring(awc);
-		//	break;
-		//case STRRET_CSTR:
-		//	lpstr = strret.cStr;
-		//	lengch = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, NULL, 0);
-		//	::MultiByteToWideChar(CP_THREAD_ACP, 0, lpstr, -1, awc, lengch);
-		//	return std::wstring(awc);
-		//	break;
-		//default:
-		//	return std::wstring();
-		//	break;
-		//}
 	}
 	return ret;
 }
@@ -645,7 +622,7 @@ shell::ParsedFileType shell::ParseFileType(
 	const CIDL& childIDL)
 {
 	shell::ParsedFileType ret;
-	ret.FilePath = shell::GetDisplayNameOf(pParentFolder, childIDL);
+	ret.FilePath = shell::GetDisplayNameOf(pParentFolder, childIDL, SHGDN_FORPARSING);
 	if (ret.FilePath.empty()) {
 		ret.FileType = shell::FileType::None;
 	} else {

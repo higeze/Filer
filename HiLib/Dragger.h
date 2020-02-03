@@ -38,7 +38,7 @@ public:
 
 	void OnBeginDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		m_dragFromIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+		m_dragFromIndex = pSheet->Vis2AllIndex<TRC>(pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point)));
 		m_dragToIndex = CBand::kInvalidIndex;
 	}
 
@@ -50,7 +50,7 @@ public:
 			m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visIndex);
 		} else {
 			int visDragToIndex = std::clamp(visIndex,
-				(int)pSheet->Vis2AllIndex<TRC>(pSheet->GetFrozenCount<TRC>()),
+				(int)(pSheet->GetFrozenCount<TRC>()),
 				(int)(pSheet->GetContainer<TRC, VisTag>().size() - 1));
 			int allDragToIndex = pSheet->Vis2AllIndex<TRC>(visDragToIndex);
 			if (allDragToIndex < m_dragFromIndex) {

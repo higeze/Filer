@@ -414,13 +414,14 @@ void CSheet::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
 	//Sort
 	switch(sort){
 	case Sorts::Down:
-		std::stable_sort(std::next(m_allRows.begin(), m_frozenRowCount),m_allRows.end(),
+		m_allRows.idx_stable_sort(m_allRows.begin() + m_frozenRowCount,m_allRows.end(),
 			[pCol](const auto& lhs,const auto& rhs)->bool{
 				return _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str()) > 0;
 			});
+
 		break;
 	case Sorts::Up:
-		std::stable_sort(std::next(m_allRows.begin(), m_frozenRowCount), m_allRows.end(),
+		m_allRows.idx_stable_sort(m_allRows.begin() + m_frozenRowCount, m_allRows.end(),
 			[pCol](const auto& lhs, const auto& rhs)->bool {
 				return _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str()) < 0;
 			});
@@ -883,6 +884,7 @@ void CSheet::Error_StdException(const std::exception& e)
 	) % e.what() % GetLastErrorString()).str();
 
 	MessageBoxA(GetGridPtr()->m_hWnd, msg.c_str(), "Exception in StateMachine", MB_ICONWARNING);
+	Clear();
 }
 
 /**************/
@@ -979,22 +981,20 @@ void CSheet::Clear()
 	m_pntCols.clear();
 
 	m_spCursorer->Clear();
+	m_spCeller->Clear();
+	//m_spColDragger->Clear();
+	//m_spRowDragger->Clear();
+	//m_spColTracker->Clear();
+	//m_spRowTracker->Clear();
 
 	m_rocoContextMenu=CRowColumn();
-	//m_rocoMouse = CRowColumn();
 
-	//m_coTrackLeftVisib=COLUMN_INDEX_INVALID;
-
-	//m_operation=Operation::None;
-
-	m_pHeaderColumn=std::shared_ptr<CColumn>();
-
-
-	m_rowHeader=std::shared_ptr<CRow>();
-
+	//m_pHeaderColumn=std::shared_ptr<CColumn>();
+	//m_rowHeader=std::shared_ptr<CRow>();
 
 	m_bSelected = false;
 	m_bFocused = false;
+	m_keepEnsureVisibleFocusedCell = false;
 }
 
 

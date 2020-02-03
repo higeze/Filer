@@ -5,6 +5,9 @@
 #include "MyString.h"
 #include "ThreadPool.h"
 
+#include "ShellFunction.h"
+#include <algorithm>
+
 
 CDirectoryWatcher::CDirectoryWatcher(HWND hWnd)
 	:m_hWnd(hWnd), m_pQuitEvent(), m_vData(kBufferSize, 0)
@@ -15,7 +18,7 @@ CDirectoryWatcher::~CDirectoryWatcher(void)
 	QuitWatching();
 }
 
-void CDirectoryWatcher::StartWatching(const std::wstring& path)
+void CDirectoryWatcher::StartWatching(const std::wstring& path, const std::vector<std::wstring>& names)
 {
 	try {
 		//Create event
@@ -26,7 +29,7 @@ void CDirectoryWatcher::StartWatching(const std::wstring& path)
 		}
 
 		//Create watch thread
-		m_futureWatch = CThreadPool::GetInstance()->enqueue(&CDirectoryWatcher::WatchDirectory, this, path);
+		m_futureWatch = CThreadPool::GetInstance()->enqueue(&CDirectoryWatcher::WatchDirectory, this, path, names);
 	}
 	catch (std::exception& e) {
 		FILE_LINE_FUNC_TRACE;
@@ -62,13 +65,15 @@ void CDirectoryWatcher::QuitWatching()
 
 }
 
-void CDirectoryWatcher::WatchDirectory(const std::wstring& path)
+void CDirectoryWatcher::WatchDirectory(const std::wstring& path, const std::vector<std::wstring>& names)
 {
 	try{
 		spdlog::info("Start CDirectoryWatcher::WatchDirectoryCallback");
 
 		//Create File
 		m_path = path;
+		m_names = names;
+		std::sort(m_names.begin(), m_names.end());
 		UniqueHandlePtr pDir(::CreateFileW(m_path.c_str(),
 								FILE_LIST_DIRECTORY,
 								FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -105,6 +110,21 @@ void CDirectoryWatcher::WatchDirectory(const std::wstring& path)
 	}catch(std::exception&){
 		FILE_LINE_FUNC_TRACE;
 	}
+}
+
+std::vector<std::wstring> CDirectoryWatcher::GetFileNamesInDirectory(const std::wstring& dirPath)
+{
+	std::vector<std::wstring> names;
+
+	CIDL absIdl(::ILCreateFromPathW(dirPath.c_str()));
+	CComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(absIdl);
+	shell::for_each_idl_in_shellfolder(m_hWnd, pFolder, [&names, &pFolder](const CIDL& idl) {
+		std::wstring path = shell::GetDisplayNameOf(pFolder, idl, SHGDN_FORPARSING);
+		if (!path.empty() && path[0] != L':') {
+			names.emplace_back(::PathFindFileName(path.c_str()));
+		}
+	});
+	return names;
 }
 
 void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
@@ -156,8 +176,104 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 			}
 
 			if (dwBytes > 0) {
-				::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)pFileNotifyInfo, NULL);
+				//Scan
+				//::Sleep(100);
+				std::vector<std::wstring> fileNames = GetFileNamesInDirectory(m_path);
+				std::sort(fileNames.begin(), fileNames.end());
+				//Diff
+				std::vector<std::wstring> addDiff, remDiff;
+				std::set_difference(fileNames.begin(), fileNames.end(), m_names.begin(), m_names.end(), std::back_inserter(addDiff));
+				std::set_difference(m_names.begin(), m_names.end(), fileNames.begin(), fileNames.end(), std::back_inserter(remDiff));
+
+				auto pInfo = pFileNotifyInfo;
+				std::vector<std::pair<DWORD, std::wstring>> infos;
+				auto oldIter = remDiff.end();
+				while (true) {
+					std::wstring fileName;
+					memcpy(::GetBuffer(fileName, pInfo->FileNameLength / sizeof(wchar_t)), pInfo->FileName, pInfo->FileNameLength);
+					::ReleaseBuffer(fileName);
+
+					switch (pInfo->Action) {
+					case FILE_ACTION_ADDED:
+						spdlog::info("FILE_ACTION_ADDED");
+						{
+							auto iter = std::find(addDiff.begin(), addDiff.end(), fileName);
+							if (iter != addDiff.end()) {
+								infos.emplace_back(FILE_ACTION_ADDED, fileName);
+								addDiff.erase(iter);
+							}
+							break;
+						}
+					case FILE_ACTION_MODIFIED:
+						spdlog::info("FILE_ACTION_MODIFIED");
+						{
+							auto iter = std::find(fileNames.begin(), fileNames.end(), fileName);
+							if (iter != fileNames.end()) {
+								infos.emplace_back(FILE_ACTION_MODIFIED, fileName);
+							}
+							break;
+						}
+						break;
+					case FILE_ACTION_REMOVED:
+						spdlog::info("FILE_ACTION_REMOVED");
+						{
+							auto iter = std::find(remDiff.begin(), remDiff.end(), fileName);
+							if (iter != remDiff.end()) {
+								infos.emplace_back(FILE_ACTION_REMOVED, fileName);
+								remDiff.erase(iter);
+							}
+							break;
+						}
+						break;
+					case FILE_ACTION_RENAMED_NEW_NAME:
+						spdlog::info("FILE_ACTION_RENAMED_NEW_NAME");
+						{
+							auto newIter = std::find(addDiff.begin(), addDiff.end(), fileName);
+							if (newIter != addDiff.end() && oldIter != remDiff.end()) {
+								infos.emplace_back(FILE_ACTION_RENAMED_NEW_NAME, *oldIter + L"/" + *newIter);
+								addDiff.erase(newIter);
+								remDiff.erase(oldIter);
+							} else {
+								FILE_LINE_FUNC_TRACE;
+							}
+							oldIter = remDiff.end();
+						}
+						break;
+					case FILE_ACTION_RENAMED_OLD_NAME:
+						spdlog::info("FILE_ACTION_RENAMED_OLD_NAME");
+						{
+							oldIter = std::find(remDiff.begin(), remDiff.end(), fileName);
+						}
+						break;
+					default:
+						break;
+					}
+
+					if (pInfo->NextEntryOffset == 0) { break; }
+
+					pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<PBYTE>(pInfo) + pInfo->NextEntryOffset);
+				}
+
+				//Check if there is mis-catch
+				if (!addDiff.empty()) {
+					for (const auto& add : addDiff) {
+						infos.emplace_back(FILE_ACTION_ADDED, add);
+					}
+				}
+
+				if (!remDiff.empty()) {
+					for (const auto& rem : remDiff) {
+						infos.emplace_back(FILE_ACTION_REMOVED, rem);
+					}
+				}
+
+				//std::sort(infos.begin(), infos.end());
+				//infos.erase(std::unique(infos.begin(), infos.end()), infos.end());
+				if (!infos.empty()) {
+					::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)&infos, NULL);
+				}
 				delete[](PBYTE)pFileNotifyInfo;
+				m_names = fileNames;
 			}
 		}
 	}catch(std::exception&){

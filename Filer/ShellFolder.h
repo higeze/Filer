@@ -30,7 +30,7 @@ public:
 	std::shared_ptr<CShellFolder> Clone()const;
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed = nullptr)override;
 	virtual std::pair<FileTimes, FileTimeStatus> GetFileTimes(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed = nullptr)override;
-	std::shared_ptr<CShellFile> CreateShExFileFolder(CIDL& relativeIdl);
+	std::shared_ptr<CShellFile> CreateShExFileFolder(const CIDL& relativeIdl);
 	static std::optional<FileTimes> GetFolderFileTimes(const std::shared_ptr<bool>& cancel,
 		const CComPtr<IShellFolder>& pParentFolder, const CComPtr<IShellFolder>& pFolder, const CIDL& relativeIdl, const std::wstring& path,
 		std::chrono::system_clock::time_point& tp, int limit, bool ignoreFolderTime);

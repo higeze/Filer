@@ -15,7 +15,7 @@ shell::ParsedFileType CShellFileFactory::ParseFileType(
 	const CIDL& childIDL)
 {
 	shell::ParsedFileType ret;
-	ret.FilePath = shell::GetDisplayNameOf(pParentFolder, childIDL);
+	ret.FilePath = shell::GetDisplayNameOf(pParentFolder, childIDL, SHGDN_FORPARSING);
 	if (ret.FilePath.empty()) {
 		ret.FileType = shell::FileType::None;
 	} else {

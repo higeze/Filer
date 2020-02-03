@@ -5,6 +5,12 @@ class CDirectoryWatcher;
 
 class CFilerGridView:public CFilerGridViewBase
 {
+private:
+	static CLIPFORMAT s_cf_shellidlist;
+	static CLIPFORMAT s_cf_filecontents;
+	static CLIPFORMAT s_cf_filedescriptor;
+	static CLIPFORMAT s_cf_renprivatemessages;
+
 private:	
 	//For DirectoryWatch
 	std::shared_ptr<CDirectoryWatcher> m_spWatcher;
@@ -88,6 +94,7 @@ public:
 private:
 	//Drag & Drop
 	BOOL SetDragImage(CIDL firstIdl, CComPtr<IDragSourceHelper> pDragSourceHelper, IDataObject *pDataObject);
+	bool IsDroppable(const std::vector<FORMATETC>& formats);
 	void Dropped(IDataObject *pDataObj, DWORD dwEffect);
 	void ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl, bool hasNew = false);
 	bool InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf);

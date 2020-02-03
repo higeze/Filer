@@ -60,7 +60,7 @@ namespace shell
 	std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit = 3);
 
 	bool GetFileSize(ULARGE_INTEGER& size, const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& childIdl);
-	std::wstring GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL);
+	std::wstring GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL, SHGDNF uFlags);
 
 	std::wstring STRRET2WSTR(STRRET& strret, LPITEMIDLIST pidl);
 	std::tuple<std::wstring, std::wstring, std::wstring> GetPathNameExt(const CComPtr<IShellFolder>& pParentFolder, const LPITEMIDLIST& relativeIDL);
@@ -195,6 +195,22 @@ namespace shell
 	ParsedFileType ParseFileType(
 		const CComPtr<IShellFolder>& pParentFolder,
 		const CIDL& childIDL);
+	
+	template<class Fn>
+	void for_each_idl_in_shellfolder(HWND hWnd, const CComPtr<IShellFolder>& pFolder, Fn func)
+	{
+		CComPtr<IEnumIDList> enumIdl;
+		if (SUCCEEDED(pFolder->EnumObjects(hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
+			CIDL nextIdl;
+			ULONG ulRet(0);
+			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
+				if (!nextIdl) { break; }
+				func(nextIdl);
+				nextIdl.Clear();
+			}
+		}
+
+	}
 
 
 };

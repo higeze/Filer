@@ -366,7 +366,7 @@ void CShellFolder::SetExt(const std::wstring& wstrExt)
 	//Do nothing
 }
 
-std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL& childIdl)
+std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const CIDL& childIdl)
 {
 	return CShellFileFactory::GetInstance()->CreateShellFilePtr(GetShellFolderPtr(), GetAbsoluteIdl(), childIdl);
 }

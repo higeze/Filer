@@ -572,7 +572,7 @@ STDAPI CTextStore::InsertTextAtSelection(DWORD dwFlags, __in_ecount(cch) const W
     if (dwFlags & TS_IAS_QUERYONLY)
     {
         *pacpStart = acpStart;
-        *pacpEnd = acpStart + cch;
+        *pacpEnd = acpEnd;
         return S_OK;
     }
 

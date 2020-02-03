@@ -641,6 +641,12 @@
     <ClInclude Include="..\HiLib\BindCheckBoxColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\BindSheetCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindSheetCellColumn.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">

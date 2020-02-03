@@ -2,6 +2,7 @@
 #include "GridViewStateMachine.h"
 #include "ShellFile.h"
 #include "ShellFolder.h"
+#include "ShellFunction.h"
 #include "Row.h"
 #include "Column.h"
 #include "Cell.h"
@@ -57,6 +58,36 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
+CLIPFORMAT CFilerGridView::s_cf_shellidlist = ::RegisterClipboardFormat(CFSTR_SHELLIDLIST);
+CLIPFORMAT CFilerGridView::s_cf_filecontents = ::RegisterClipboardFormat(CFSTR_FILECONTENTS);
+CLIPFORMAT CFilerGridView::s_cf_filedescriptor = ::RegisterClipboardFormat(CFSTR_FILEDESCRIPTOR);
+CLIPFORMAT CFilerGridView::s_cf_renprivatemessages = ::RegisterClipboardFormat(L"RenPrivateMessages");
+
+#include <mapix.h>
+#include <mapitags.h>
+#include <mapidefs.h>
+#include <mapiutil.h>
+#include <imessage.h>
+
+#define SETFormatEtc(fe, cf, asp, td, med, li)   \
+    {\
+    (fe).cfFormat=cf;\
+    (fe).dwAspect=asp;\
+    (fe).ptd=td;\
+    (fe).tymed=med;\
+    (fe).lindex=li;\
+    }
+
+#define SETDefFormatEtc(fe, cf, med)   \
+    {\
+    (fe).cfFormat=cf;\
+    (fe).dwAspect=DVASPECT_CONTENT;\
+    (fe).ptd=NULL;\
+    (fe).tymed=med;\
+    (fe).lindex=-1;\
+    }
+
+
 CFilerGridView::CFilerGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
 	:CFilerGridViewBase(spFilerGridViewProp)
 {
@@ -81,7 +112,8 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	//Drag & Drop
 	//DropTarget
 	auto pDropTarget = new CDropTarget(m_hWnd);
-	pDropTarget->Dropped.connect([this](IDataObject *pDataObj, DWORD dwEffect)->void {Dropped(pDataObj, dwEffect); });
+	pDropTarget->IsDroppable = ([this](const std::vector<FORMATETC>& formats)->bool {return IsDroppable(formats); });
+	pDropTarget->Dropped = ([this](IDataObject *pDataObj, DWORD dwEffect)->void {Dropped(pDataObj, dwEffect); });
 	m_pDropTarget = CComPtr<IDropTarget>(pDropTarget);
 	::RegisterDragDrop(m_hWnd, m_pDropTarget);
 	//DropSource
@@ -128,93 +160,214 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	return 0;
 }
 
+bool CFilerGridView::IsDroppable(const std::vector<FORMATETC>& formats)
+{
+	bool isShellIdList = false;
+	bool isFileContents = false;
+	bool isFileDescriptor = false;
+
+	for (const auto& format : formats) {
+		isShellIdList |= format.cfFormat == s_cf_shellidlist;
+		isFileContents |= format.cfFormat == s_cf_filecontents;
+		isFileDescriptor |= format.cfFormat == s_cf_filedescriptor;
+	}
+	return  isShellIdList || (isFileContents && isFileDescriptor);
+}
+
 void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 {
-	CComPtr<IShellItem2> pDestShellItem;
-	CComPtr<IFileOperation> pFileOperation;
+	std::vector<FORMATETC> formats;
+	CComPtr<IEnumFORMATETC> pEnumFormatEtc;
+	if (SUCCEEDED(pDataObj->EnumFormatEtc(DATADIR::DATADIR_GET, &pEnumFormatEtc))) {
+		FORMATETC rgelt[100];
+		ULONG celtFetched = 0UL;
+		if (SUCCEEDED(pEnumFormatEtc->Next(100, rgelt, &celtFetched))) {
+			for (size_t i = 0; i < celtFetched; ++i) {
+				formats.push_back(rgelt[i]);
+			}
+		}
+	}
+	bool isShellIdList = false;
+	bool isFileContents = false;
+	bool isFileDescriptor = false;
+	bool isRenPrivateMessages = false;
 
-	HRESULT hr = ::SHCreateItemFromIDList(m_spFolder->GetAbsoluteIdl().ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
-	if (FAILED(hr)) { return; }
+	for (const auto& format : formats) {
+		isShellIdList |= format.cfFormat == s_cf_shellidlist;
+		isFileContents |= format.cfFormat == s_cf_filecontents;
+		isFileDescriptor |= format.cfFormat == s_cf_filedescriptor;
+		isRenPrivateMessages |= format.cfFormat == s_cf_renprivatemessages;
+	}
 
-	hr = pFileOperation.CoCreateInstance(CLSID_FileOperation);
-	if (FAILED(hr)) { return; }
+	if (isShellIdList) {
 
-	switch (dwEffect) {
-	case DROPEFFECT_MOVE:
-	{
-		//if folder is same, do not need to move
-		FORMATETC formatetc = { 0 };
-		formatetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLIDLIST);
-		formatetc.ptd = NULL;
-		formatetc.dwAspect = DVASPECT_CONTENT;
-		formatetc.lindex = -1;
-		formatetc.tymed = TYMED_HGLOBAL;
+		CComPtr<IShellItem2> pDestShellItem;
+		CComPtr<IFileOperation> pFileOperation;
 
-		STGMEDIUM medium;
-		HRESULT hr = pDataObj->GetData(&formatetc, &medium);
+		HRESULT hr = ::SHCreateItemFromIDList(m_spFolder->GetAbsoluteIdl().ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem));
 		if (FAILED(hr)) { return; }
-		LPIDA pida = (LPIDA)GlobalLock(medium.hGlobal);
-		CIDL folderIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
 
-		if (folderIdl == m_spFolder->GetAbsoluteIdl()) {
-			//Do nothing
-		} else {
-			HRESULT hr = pFileOperation->MoveItems(pDataObj, pDestShellItem);
+		hr = pFileOperation.CoCreateInstance(CLSID_FileOperation);
+		if (FAILED(hr)) { return; }
+
+		switch (dwEffect) {
+		case DROPEFFECT_MOVE:
+		{
+			//if folder is same, do not need to move
+			FORMATETC formatetc = { 0 };
+			formatetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLIDLIST);
+			formatetc.ptd = NULL;
+			formatetc.dwAspect = DVASPECT_CONTENT;
+			formatetc.lindex = -1;
+			formatetc.tymed = TYMED_HGLOBAL;
+
+			STGMEDIUM medium;
+			HRESULT hr = pDataObj->GetData(&formatetc, &medium);
 			if (FAILED(hr)) { return; }
+			LPIDA pida = (LPIDA)GlobalLock(medium.hGlobal);
+			CIDL folderIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
+
+			if (folderIdl == m_spFolder->GetAbsoluteIdl()) {
+				//Do nothing
+			} else {
+				HRESULT hr = pFileOperation->MoveItems(pDataObj, pDestShellItem);
+				if (FAILED(hr)) { return; }
+				hr = pFileOperation->PerformOperations();
+				if (FAILED(hr)) { return; }
+			}
+		}
+		break;
+		case DROPEFFECT_COPY:
+		{
+			HRESULT hr = pFileOperation->CopyItems(pDataObj, pDestShellItem);
 			hr = pFileOperation->PerformOperations();
 			if (FAILED(hr)) { return; }
 		}
-	}
-	break;
-	case DROPEFFECT_COPY:
-	{
-		HRESULT hr = pFileOperation->CopyItems(pDataObj, pDestShellItem);
-		hr = pFileOperation->PerformOperations();
-		if (FAILED(hr)) { return; }
-	}
-	break;
-	case DROPEFFECT_LINK:
-	{
-		FORMATETC formatetc = { 0 };
-		formatetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLIDLIST);
-		formatetc.ptd = NULL;
-		formatetc.dwAspect = DVASPECT_CONTENT;
-		formatetc.lindex = -1;
-		formatetc.tymed = TYMED_HGLOBAL;
-
-		STGMEDIUM medium;
-		HRESULT hr = pDataObj->GetData(&formatetc, &medium);
-		if (FAILED(hr)) { return; }
-		LPIDA pida = (LPIDA)GlobalLock(medium.hGlobal);
-		CIDL folderIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
-		for (UINT i = 0; i < pida->cidl; i++) {
-			CIDL childIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + pida->aoffset[1 + i])));
-			CIDL absoluteIdl(folderIdl + childIdl);
-			CComPtr<IShellLink> pShellLink;
-
-			pShellLink.CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER);
-			pShellLink->SetIDList(absoluteIdl.ptr());
-			CComQIPtr<IPersistFile> pPersistFile(pShellLink);
-
-			std::wstring destPath = m_spFolder->GetPath();
-			WCHAR szSrcPath[MAX_PATH];
-			WCHAR szDestPath[MAX_PATH];
-			::SHGetPathFromIDList(absoluteIdl.ptr(), szSrcPath);
-			LPTSTR lpszFileName = PathFindFileName(szSrcPath);
-			lstrcpyW(szDestPath, destPath.c_str());
-			PathAppend(szDestPath, lpszFileName);
-
-			wsprintfW(szDestPath, L"%s.lnk", szDestPath);
-			pPersistFile->Save(szDestPath, TRUE);
-		}
-		GlobalUnlock(medium.hGlobal);
-		ReleaseStgMedium(&medium);
-	}
-	break;
-	default:
 		break;
+		case DROPEFFECT_LINK:
+		{
+			FORMATETC formatetc = { 0 };
+			formatetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLIDLIST);
+			formatetc.ptd = NULL;
+			formatetc.dwAspect = DVASPECT_CONTENT;
+			formatetc.lindex = -1;
+			formatetc.tymed = TYMED_HGLOBAL;
+
+			STGMEDIUM medium;
+			HRESULT hr = pDataObj->GetData(&formatetc, &medium);
+			if (FAILED(hr)) { return; }
+			LPIDA pida = (LPIDA)GlobalLock(medium.hGlobal);
+			CIDL folderIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
+			for (UINT i = 0; i < pida->cidl; i++) {
+				CIDL childIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + pida->aoffset[1 + i])));
+				CIDL absoluteIdl(folderIdl + childIdl);
+				CComPtr<IShellLink> pShellLink;
+
+				pShellLink.CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER);
+				pShellLink->SetIDList(absoluteIdl.ptr());
+				CComQIPtr<IPersistFile> pPersistFile(pShellLink);
+
+				std::wstring destPath = m_spFolder->GetPath();
+				WCHAR szSrcPath[MAX_PATH];
+				WCHAR szDestPath[MAX_PATH];
+				::SHGetPathFromIDList(absoluteIdl.ptr(), szSrcPath);
+				LPTSTR lpszFileName = PathFindFileName(szSrcPath);
+				lstrcpyW(szDestPath, destPath.c_str());
+				PathAppend(szDestPath, lpszFileName);
+
+				wsprintfW(szDestPath, L"%s.lnk", szDestPath);
+				pPersistFile->Save(szDestPath, TRUE);
+			}
+			GlobalUnlock(medium.hGlobal);
+			ReleaseStgMedium(&medium);
+		}
+		break;
+		default:
+			break;
+		}
+	} else if (isFileContents && isFileDescriptor && isRenPrivateMessages) {
+		MAPIINIT_0 mapinit = { MAPI_INIT_VERSION, MAPI_MULTITHREAD_NOTIFICATIONS };
+		HRESULT hr = ::MAPIInitialize(&mapinit);
+
+		FORMATETC descriptor_format = { s_cf_filedescriptor, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+		LPFILEGROUPDESCRIPTOR lpfgd = NULL;
+		STGMEDIUM stg;
+
+		hr = pDataObj->GetData(&descriptor_format, &stg);
+
+		if (SUCCEEDED(hr) && stg.hGlobal != NULL) {
+			lpfgd = (LPFILEGROUPDESCRIPTOR)GlobalLock(stg.hGlobal);
+
+			if (lpfgd != NULL) {
+				LPMALLOC	lpMalloc = MAPIGetDefaultMalloc();
+				LPMSGSESS	lpSess = NULL;
+				hr = OpenIMsgSession(lpMalloc, NULL, &lpSess);
+
+				if (lpSess) {
+					for (UINT i = 0; i < lpfgd->cItems; i++) {
+						LPFILEDESCRIPTOR lpfd = NULL;
+						FORMATETC contents_format = { s_cf_filecontents, NULL, DVASPECT_CONTENT, (LONG)i, TYMED_ISTORAGE };
+						STGMEDIUM	cstg;
+
+						lpfd = (LPFILEDESCRIPTOR)&lpfgd->fgd[i];
+
+						hr = pDataObj->GetData(&contents_format, &cstg);
+
+						if (SUCCEEDED(hr) && cstg.pstg != NULL) {
+							LPMESSAGE	lpmsg = NULL;
+
+							hr = OpenIMsgOnIStg(lpSess, MAPIAllocateBuffer, MAPIAllocateMore, MAPIFreeBuffer, lpMalloc, NULL, cstg.pstg, NULL, 0, 0, &lpmsg);
+
+							if ((hr == S_OK) && (lpmsg != NULL)) {
+								CDropTarget::MessageToFile(lpmsg, m_spFolder->GetPath());
+								lpmsg->Release();
+							}
+
+							ReleaseStgMedium(&cstg);
+						}
+					}
+
+					CloseIMsgSession(lpSess);
+				}
+				ReleaseStgMedium(&stg);
+			}
+
+		}
+		::MAPIUninitialize();
+	}else if(isFileContents && isFileDescriptor){
+		//Set up format structure for the descriptor and contents
+		FORMATETC descriptor_format = { s_cf_filedescriptor, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+		FORMATETC contents_format = { s_cf_filecontents,   NULL, DVASPECT_CONTENT, -1, TYMED_ISTREAM }; //TYMED_ISTREAM means use stream as a tempoary meory instead of RAM's global memory
+
+		// Get the descriptor information
+		STGMEDIUM descriptor_storage = { 0 };
+		if (SUCCEEDED(pDataObj->GetData(&descriptor_format, &descriptor_storage))) {
+
+			FILEGROUPDESCRIPTOR* file_group_descriptor;
+			FILEDESCRIPTOR      file_descriptor;
+			file_group_descriptor = (FILEGROUPDESCRIPTOR*)GlobalLock(descriptor_storage.hGlobal);
+
+			// For each file, get the name and copy the stream to a file
+			std::wstring file_list;
+			for (unsigned int file_index = 0; file_index < file_group_descriptor->cItems; file_index++) {
+				file_descriptor = file_group_descriptor->fgd[file_index];
+				contents_format.lindex = file_index;
+				STGMEDIUM contents_storage = { 0 };
+				if (SUCCEEDED(pDataObj->GetData(&contents_format, &contents_storage))) {
+					// Dump stream to a file
+					std::wstring dirPath = m_spFolder->GetPath();
+					std::wstring filePath;
+					::PathCombine(::GetBuffer(filePath, MAX_PATH), dirPath.c_str(), file_descriptor.cFileName);
+					::ReleaseBuffer(filePath);
+					HRESULT hr = CDropTarget::StreamToFile(contents_storage.pstm, filePath);
+					::ReleaseStgMedium(&contents_storage);
+				}
+			}
+			::ReleaseStgMedium(&descriptor_storage);
+		}
 	}
 }
+
 
 void CFilerGridView::Added(const std::wstring& fileName)
 {
@@ -320,10 +473,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 	if (iter == m_allRows.end()) 
 	{
 		spdlog::info("Renamed NoMatch " + wstr2str(oldName) + "=>" + wstr2str(newName));
-		return;
-	}
-
-	if (auto p = std::dynamic_pointer_cast<CFileRow>(*iter)) {
+	}else if (auto p = std::dynamic_pointer_cast<CFileRow>(*iter)) {
 		ULONG chEaten;
 		ULONG dwAttributes;
 		CIDL newIdl;
@@ -504,44 +654,43 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 
 		//Clear RowDictionary From 0 to last
 		m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
-		//Set up Watcher
-		try {
-			if (::PathFileExists(m_spFolder->GetPath().c_str()) &&
-				!boost::iequals(m_spFolder->GetExt(), L".zip")) {
-				if (m_spWatcher->GetPath() != m_spFolder->GetPath()) {
-					m_spWatcher->QuitWatching();
-					m_spWatcher->StartWatching(m_spFolder->GetPath());
-				}
-			} else {
-				m_spWatcher->QuitWatching();
-			}
-		} catch (std::exception& e) {
-			MessageBox(L"Watcher", L"Error", 0);
-			throw e;
-		}
 	}
 
 	{
 		CONSOLETIMER("OpenFolder Enumeration");
-			try {
-			//Enumerate child IDL
-
-			CComPtr<IEnumIDList> enumIdl;
-			if (SUCCEEDED(m_spFolder->GetShellFolderPtr()->EnumObjects(m_hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) &&
-				enumIdl) {
-				CIDL nextIdl;
-				ULONG ulRet(0);
-				while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
-					if (!nextIdl) { break; }
-					if (auto spFile = m_spFolder->CreateShExFileFolder(nextIdl)) {
+		std::vector<std::wstring> names;
+		try {
+		//Enumerate child IDL
+			shell::for_each_idl_in_shellfolder(m_hWnd, m_spFolder->GetShellFolderPtr(),
+				[this, &names](const CIDL& idl) {
+					if (auto spFile = m_spFolder->CreateShExFileFolder(idl)) {
 						PushRow(std::make_shared<CFileRow>(this, spFile));
+
+						std::wstring path = shell::GetDisplayNameOf(m_spFolder->GetShellFolderPtr(), idl, SHGDN_FORPARSING);
+						if (!path.empty() && path[0] != L':') {
+							names.emplace_back(::PathFindFileName(path.c_str()));
+						}
 					}
-					nextIdl.Clear();
-				}
-			}
+				});
 		} catch (std::exception&) {
 			throw std::exception(FILE_LINE_FUNC);
 		}
+
+		//Set up Watcher
+		try {
+			if (::PathFileExists(m_spFolder->GetPath().c_str()) &&
+				!boost::iequals(m_spFolder->GetExt(), L".zip")) {
+				m_spWatcher->QuitWatching();
+				m_spWatcher->StartWatching(m_spFolder->GetPath(), names);
+			} else {
+				m_spWatcher->QuitWatching();
+			}
+		}
+		catch (std::exception & e) {
+			MessageBox(L"Watcher", L"Error", 0);
+			throw e;
+		}
+
 	}
 
 	{
@@ -719,47 +868,38 @@ bool CFilerGridView::PasteFromClipboard()
 
 LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
-	auto pInfo0 = reinterpret_cast<PFILE_NOTIFY_INFORMATION>(wParam);
-	auto pInfo = pInfo0;
-	while (true) {
-		std::wstring fileName;
-		memcpy(::GetBuffer(fileName, pInfo->FileNameLength / sizeof(wchar_t)), pInfo->FileName, pInfo->FileNameLength);
-		::ReleaseBuffer(fileName);
-
-		switch (pInfo->Action) {
+	auto pInfos = reinterpret_cast<std::vector<std::pair<DWORD, std::wstring>>*>(wParam);
+	if (pInfos->size() > 1) {
+		auto a = 1.f;
+	}
+	for(auto info : *pInfos){
+		switch (info.first) {
 		case FILE_ACTION_ADDED:
 			spdlog::info("FILE_ACTION_ADDED");
-			Added(fileName);
+			Added(info.second);
 			break;
 		case FILE_ACTION_MODIFIED:
 			spdlog::info("FILE_ACTION_MODIFIED");
-			Modified(fileName);
+			Modified(info.second);
 			break;
 		case FILE_ACTION_REMOVED:
 			spdlog::info("FILE_ACTION_REMOVED");
-			Removed(fileName);
+			Removed(info.second);
 			break;
 		case FILE_ACTION_RENAMED_NEW_NAME:
 			spdlog::info("FILE_ACTION_RENAMED_NEW_NAME");
-			if (!m_oldName.empty()) {
-				Renamed(m_oldName, fileName);
-				m_oldName.clear();
-			}
-			else {
-				FILE_LINE_FUNC_TRACE;
+			{
+				std::list<std::wstring> oldnew;
+				boost::split(oldnew, info.second, boost::is_any_of(L"/"));
+				Renamed(oldnew.front(), oldnew.back());
 			}
 			break;
 		case FILE_ACTION_RENAMED_OLD_NAME:
 			spdlog::info("FILE_ACTION_RENAMED_OLD_NAME");
-			m_oldName = fileName;
 			break;
 		default:
 			break;
 		}
-
-		if (pInfo->NextEntryOffset == 0) { break; }
-		
-		pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<PBYTE>(pInfo) + pInfo->NextEntryOffset);
 	}
 	
 	//Do not delete since caller delete this by himself

@@ -69,7 +69,11 @@ std::wstring CFileLastWriteCell::GetString()
 			return L"-";
 		case FileTimeStatus::Available:
 		case FileTimeStatus::AvailableLoading:
-			return shell::FileTime2String(&(times.first.LastWriteTime));
+			if (!times.first.LastWriteTime.dwLowDateTime && !times.first.LastWriteTime.dwHighDateTime) {
+				return L"-";
+			} else {
+				return shell::FileTime2String(&(times.first.LastWriteTime));
+			}
 		case FileTimeStatus::Loading:
 			return L"...";
 		case FileTimeStatus::Unavailable:

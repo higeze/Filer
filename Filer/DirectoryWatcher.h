@@ -64,7 +64,8 @@ private:
 	std::wstring m_path;
 	std::vector<BYTE> m_vData;
 
-
+	std::vector<std::wstring> GetFileNamesInDirectory(const std::wstring& dirPath);
+	std::vector<std::wstring> m_names;
 
 public:
 	CDirectoryWatcher(HWND m_hWnd);
@@ -83,11 +84,11 @@ public:
 
 	//static VOID CALLBACK WatchDirectoryCallback(PTP_CALLBACK_INSTANCE pInstance,LPVOID pvParam,PTP_WORK pWork);
 	//static VOID CALLBACK IoCompletionCallback(PTP_CALLBACK_INSTANCE pInstance,PVOID pvParam,PVOID pOverlapped,ULONG IoResult,ULONG_PTR ulBytes,PTP_IO pio);
-	void WatchDirectory(const std::wstring& path);
+	void WatchDirectory(const std::wstring& path, const std::vector<std::wstring>& names);
 	void IoCompletionCallback(HANDLE hIocp, HANDLE hDir);
 
 	//void SetPath(const std::wstring& path){m_path = path;}
-	void StartWatching(const std::wstring& path);
+	void StartWatching(const std::wstring& path, const std::vector<std::wstring>& names);
 	void QuitWatching();
 };
 

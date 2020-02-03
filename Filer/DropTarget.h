@@ -1,5 +1,6 @@
 #pragma once
 #include "Unknown.h"
+#include <mapix.h>
 class CIDL;
 
 class CDropTarget : public CUnknown<IDropTarget>
@@ -24,5 +25,14 @@ public:
 
 	//signal
 	//boost::signals2::signal<void(std::string, std::vector<CIDLPtr>)> Dropped;
-		boost::signals2::signal<void(IDataObject*, DWORD)> Dropped;
+	std::function<bool(const std::vector<FORMATETC>&)> IsDroppable;
+	std::function<void(IDataObject*, DWORD)> Dropped;
+
+public:
+	/******************/
+	/* Helper function*/
+	/******************/
+	static HRESULT StreamToFile(IStream* stream, const std::wstring& filePath);
+	static HRESULT MessageToFile(LPMESSAGE pMessage, const std::wstring& dirPath);
+
 };

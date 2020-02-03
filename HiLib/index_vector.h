@@ -44,4 +44,13 @@ public:
 		}
 		return ret;
 	}
+
+	template <class RandomAccessIterator, class Compare>
+	void idx_stable_sort(RandomAccessIterator first, RandomAccessIterator last, Compare comp){
+		std::stable_sort(first, last, comp);
+
+		for (size_type i = std::distance(begin(), first), lastPos = std::distance(begin(), last); i < lastPos; i++) {
+			m_setter(operator[](i), i);
+		}
+	}
 };
