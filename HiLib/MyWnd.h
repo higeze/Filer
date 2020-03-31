@@ -251,7 +251,7 @@ public:
 	{	
 		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,funMsg));
 		if (!pair.second) {
-			spdlog::info((boost::format(
+			SPDLOG_INFO((boost::format(
 				"Duplicate "
 				"MSG:%1$04x"
 			) % uMsg).str());
@@ -276,7 +276,7 @@ public:
 	{	
 		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
 		if (!pair.second) {
-			spdlog::info((boost::format(
+			SPDLOG_INFO((boost::format(
 				"Duplicate "
 				"MSG:%1$04x"
 			) % uMsg).str());

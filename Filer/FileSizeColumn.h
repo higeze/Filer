@@ -1,20 +1,20 @@
 #pragma once
 
-#include "ParentMapColumn.h"
+#include "MapColumn.h"
 
 struct FileSizeArgs;
 
-class CFileSizeColumn:public CParentDefaultMapColumn
+class CFileSizeColumn:public CMapColumn
 {
 private:
 	std::shared_ptr<FileSizeArgs> m_spSizeArgs;
 public:
-	CFileSizeColumn(CGridView* pGrid = nullptr, std::shared_ptr<FileSizeArgs> spSizeProp = nullptr);
+	CFileSizeColumn(CSheet* pSheet = nullptr, std::shared_ptr<FileSizeArgs> spSizeProp = nullptr);
 	~CFileSizeColumn(void){}
 
 	virtual CColumn& ShallowCopy(const CColumn& column)override
 	{
-		CParentDefaultMapColumn::ShallowCopy(column);
+		CMapColumn::ShallowCopy(column);
 		return *this;
 	}
 	virtual CFileSizeColumn* CloneRaw()const{return new CFileSizeColumn(*this);}

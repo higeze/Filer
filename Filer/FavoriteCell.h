@@ -7,7 +7,7 @@ class CFavoriteCell:public CFileIconCell
 {
 private:
 	virtual std::wstring GetShortName();
-	virtual UINT GetFormat()const{ return DT_CENTER | DT_VCENTER | DT_NOPREFIX | DT_WORDBREAK | DT_EDITCONTROL; }
+//	virtual UINT GetFormat()const{ return DT_CENTER | DT_VCENTER | DT_NOPREFIX | DT_WORDBREAK | DT_EDITCONTROL; }
 
 public:
 	CFavoriteCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty);

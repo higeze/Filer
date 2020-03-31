@@ -46,6 +46,7 @@ public:
 	virtual void OnCursorCtrlShift(std::shared_ptr<CCell>& cell);
 	//virtual void UpdateCursor();
 private:
+	virtual bool IsCursorTargetCell(const std::shared_ptr<CCell>& cell);
 	virtual void UpdateCursor(std::shared_ptr<CCell>& cell, bool old  = true, bool current = true, bool anchor = true, bool focus = true);
 
 public:

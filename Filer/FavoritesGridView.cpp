@@ -67,7 +67,7 @@ LRESULT CFavoritesGridView::OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lPa
 
 void CFavoritesGridView::OpenFavorites()
 {
-	spdlog::info("CFavoritesGridView::OpenFavorites");
+	SPDLOG_INFO("CFavoritesGridView::OpenFavorites");
 
 	CONSOLETIMER("OpenFavorites Total");
 	{
@@ -102,8 +102,8 @@ void CFavoritesGridView::OpenFavorites()
 			}
 
 			for (auto colPtr : m_allCols) {
-				std::dynamic_pointer_cast<CParentMapColumn>(colPtr)->Clear();
-				colPtr->SetMeasureValid(false);
+				std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
+				colPtr->SetIsMeasureValid(false);
 			}
 
 		} catch (...) {

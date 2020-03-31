@@ -254,6 +254,7 @@
     <ClInclude Include="..\HiLib\GridViewProperty.h" />
     <ClInclude Include="..\HiLib\GridViewResource.h" />
     <ClInclude Include="..\HiLib\GridViewStateMachine.h" />
+    <ClInclude Include="..\HiLib\IBindSheet.h" />
     <ClInclude Include="..\HiLib\IDL.h" />
     <ClInclude Include="..\HiLib\IDragger.h" />
     <ClInclude Include="..\HiLib\IKeyObserver.h" />
@@ -299,7 +300,7 @@
     <ClInclude Include="..\HiLib\ParentColumnNameHeaderCell.h" />
     <ClInclude Include="..\HiLib\ParentDefaultColumn.h" />
     <ClInclude Include="..\HiLib\ParentHeaderCell.h" />
-    <ClInclude Include="..\HiLib\ParentMapColumn.h" />
+    <ClInclude Include="..\HiLib\MapColumn.h" />
     <ClInclude Include="..\HiLib\ParentRowHeaderCell.h" />
     <ClInclude Include="..\HiLib\ParentRowHeaderColumn.h" />
     <ClInclude Include="..\HiLib\ProgressBar.h" />
@@ -322,6 +323,7 @@
     <ClInclude Include="..\HiLib\SheetCellResource.h" />
     <ClInclude Include="..\HiLib\SheetEnums.h" />
     <ClInclude Include="..\HiLib\SheetEventArgs.h" />
+    <ClInclude Include="..\HiLib\SheetProperty.h" />
     <ClInclude Include="..\HiLib\SheetStateMachine.h" />
     <ClInclude Include="..\HiLib\ShellFunction.h" />
     <ClInclude Include="..\HiLib\ShowHideMenuItem.h" />
@@ -331,6 +333,7 @@
     <ClInclude Include="..\HiLib\ThreadPool.h" />
     <ClInclude Include="..\HiLib\ThreadSafeDriveFolderManager.h" />
     <ClInclude Include="..\HiLib\ThreadSafeKnownFolderManager.h" />
+    <ClInclude Include="..\HiLib\Timer.h" />
     <ClInclude Include="..\HiLib\Tracker.h" />
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
@@ -440,7 +443,7 @@
     <ClCompile Include="..\HiLib\ParentColumnNameHeaderCell.cpp" />
     <ClCompile Include="..\HiLib\ParentDefaultColumn.cpp" />
     <ClCompile Include="..\HiLib\ParentHeaderCell.cpp" />
-    <ClCompile Include="..\HiLib\ParentMapColumn.cpp" />
+    <ClCompile Include="..\HiLib\MapColumn.cpp" />
     <ClCompile Include="..\HiLib\ParentRowHeaderCell.cpp" />
     <ClCompile Include="..\HiLib\ParentRowHeaderColumn.cpp" />
     <ClCompile Include="..\HiLib\ProgressBar.cpp" />
@@ -461,7 +464,7 @@
     <ClCompile Include="..\HiLib\ThreadPool.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeKnownFolderManagaer.cpp" />
-    <ClCompile Include="..\HiLib\Tracker.cpp" />
+    <ClCompile Include="..\HiLib\Timer.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="FileIconPathCell.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />

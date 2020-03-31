@@ -5,7 +5,7 @@
 class CFileIconPathColumn : public CFileNameColumn
 {
 public:
-	CFileIconPathColumn(CGridView* pGrid = nullptr);
+	CFileIconPathColumn(CSheet* pSheet = nullptr);
 	virtual ~CFileIconPathColumn(void) {};
 	virtual CColumn& ShallowCopy(const CColumn& column)override
 	{

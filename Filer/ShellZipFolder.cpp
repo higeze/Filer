@@ -33,14 +33,14 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellZipFolder::GetSize(std::shared_p
 	return CShellFile::GetSize(spArgs);
 }
 
-void CShellZipFolder::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt)
+void CShellZipFolder::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd)
 {
-	return CShellFile::SetFileNameWithoutExt(wstrNameWoExt);
+	return CShellFile::SetFileNameWithoutExt(wstrNameWoExt, hWnd);
 }
 
-void CShellZipFolder::SetExt(const std::wstring& wstrExt)
+void CShellZipFolder::SetExt(const std::wstring& wstrExt, HWND hWnd)
 {
-	return CShellFile::SetExt(wstrExt);
+	return CShellFile::SetExt(wstrExt, hWnd);
 }
 
 

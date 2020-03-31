@@ -1,12 +1,12 @@
 #pragma once
 #include "Column.h"
 
-class CChildIndexColumn:public CChildColumn
+class CChildIndexColumn:public CColumn
 {
 private:
 	std::unordered_map<CRow*,std::shared_ptr<CCell>> m_mapCell;
 public:
-	CChildIndexColumn(CSheetCell* pSheet):CChildColumn(pSheet){}
+	CChildIndexColumn(CSheet* pSheet):CColumn(pSheet){}
 	virtual ~CChildIndexColumn(){}
 	virtual std::shared_ptr<CCell>& Cell(CRow* pRow);
 	virtual int GetDataSize()const;

@@ -5,19 +5,19 @@
 class CBoolCell:public CCheckBoxCell
 {
 private:
-	bool m_bool;
+	CheckBoxState m_checkboxState;
 public:
 	CBoolCell::CBoolCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, bool b)
-		:CCheckBoxCell(pSheet, pRow, pColumn, spProperty), m_bool(b){}
+		:CCheckBoxCell(pSheet, pRow, pColumn, spProperty), m_checkboxState(b?CheckBoxState::True:CheckBoxState::False){}
 	virtual ~CBoolCell() = default;
 
-	virtual bool GetCheck() const override
+	virtual CheckBoxState GetCheckBoxState() const override
 	{
-		return m_bool;
+		return m_checkboxState;
 	}
 
-	virtual void SetCheck(bool check) override
+	virtual void SetCheckBoxState(const CheckBoxState& state) override
 	{
-		m_bool = check;
+		m_checkboxState = state;
 	}
 };

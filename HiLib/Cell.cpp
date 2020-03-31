@@ -34,9 +34,9 @@ d2dw::CSizeF CCell::GetInitSize(d2dw::CDirect2DWrite* pDirect)
 
 d2dw::CSizeF CCell::GetFitSize(d2dw::CDirect2DWrite* pDirect)
 {
-	if(!m_bFitMeasureValid){
+	if(!m_isFitMeasureValid){
 		m_fitSize = MeasureSize(pDirect);
-		m_bFitMeasureValid = true;
+		m_isFitMeasureValid = true;
 	}
 	return m_fitSize;
 }
@@ -73,7 +73,7 @@ d2dw::CSizeF CCell::MeasureSize(d2dw::CDirect2DWrite* pDirect)
 
 	//Calc CenterBorder Rect
 	d2dw::CRectF rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
-	m_bFitMeasureValid = true;
+	m_isFitMeasureValid = true;
 	return rcCenter.Size();	
 }
 
@@ -105,9 +105,10 @@ void CCell::OnPropertyChanged(const wchar_t* name)
 {
 	if (!_tcsicmp(L"value", name)) {
 		//Update valid flag
-		m_bFitMeasureValid = false;
+		m_isFitMeasureValid = false;
 		m_bActMeasureValid = false;
 	} else if (!_tcsicmp(L"size", name)) {
+		m_isFitMeasureValid = false;
 		m_bActMeasureValid = false;
 	}
 	//Notify to Row, Column and Sheet
@@ -222,15 +223,15 @@ void CCell::OnLButtonDblClk(const LButtonDblClkEvent& e)
 
 void CCell::OnContextMenu(const ContextMenuEvent& e)
 {
-	CMenu* pMenu = GetContextMenuPtr(); 
-	if(pMenu){//TODO should use GetWnd not GetHWND?
-		CPoint ptScreen(e.Point);
-		HWND hWnd = m_pSheet->GetGridPtr()->m_hWnd;
-		m_pSheet->SetContextMenuRowColumn(CRowColumn(m_pRow,m_pColumn));
-		::ClientToScreen(hWnd, &ptScreen);
-		::SetForegroundWindow(hWnd);
-		pMenu->TrackPopupMenu(0,ptScreen.x,ptScreen.y,hWnd);
-	}
+	//CMenu* pMenu = GetContextMenuPtr(); 
+	//if(pMenu){//TODO should use GetWnd not GetHWND?
+	//	CPoint ptScreen(e.Point);
+	//	HWND hWnd = m_pSheet->GetGridPtr()->m_hWnd;
+	//	m_pSheet->SetContextMenuRowColumn(CRowColumn(m_pRow,m_pColumn));
+	//	::ClientToScreen(hWnd, &ptScreen);
+	//	::SetForegroundWindow(hWnd);
+	//	pMenu->TrackPopupMenu(0,ptScreen.x,ptScreen.y,hWnd);
+	//}
 	//HMENU hMenu = ::CreatePopupMenu();
 	//MENUITEMINFO mii = {0};
 	//mii.cbSize = sizeof(MENUITEMINFO);
@@ -268,6 +269,11 @@ void CCell::OnKillFocus(const KillFocusEvent& e)
 bool CCell::Filter(const std::wstring& strFilter)
 {
 	return boost::algorithm::to_lower_copy(GetString()).find(boost::algorithm::to_lower_copy(strFilter))!=std::wstring::npos;
+}
+
+bool CCell::IsVisible()const
+{
+	return m_pRow->GetVisible() && m_pColumn->GetVisible();
 }
 
 bool CCell::GetSelected()const

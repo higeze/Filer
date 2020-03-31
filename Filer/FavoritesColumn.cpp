@@ -6,8 +6,11 @@
 #include "PathCell.h"
 #include "CellProperty.h"
 
-CFavoritesColumn::CFavoritesColumn(CGridView* pGrid, std::shared_ptr<std::vector<std::shared_ptr<CFavorite>>> pFavorites)
-		:CParentDefaultMapColumn(pGrid),m_spFavorites(pFavorites){}
+CFavoritesColumn::CFavoritesColumn(CSheet* pSheet, std::shared_ptr<std::vector<std::shared_ptr<CFavorite>>> pFavorites)
+		:CMapColumn(pSheet),m_spFavorites(pFavorites)
+{
+	m_isMinLengthFit = true;
+}
 
 
 std::shared_ptr<CCell> CFavoritesColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)

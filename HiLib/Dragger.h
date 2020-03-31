@@ -101,18 +101,18 @@ public:
 		//other : Left
 		FLOAT coome = 0;
 		if (m_dragToIndex >= (int)pSheet->GetContainer<TRC, AllTag>().size()) {
-			coome = pSheet->GetContainer<TRC, AllTag>().back()->GetRightBottom();
+			coome = pSheet->GetContainer<TRC, AllTag>().back()->GetEnd();
 		}
 		else if(m_dragToIndex <= 0) {
-			coome = pSheet->GetContainer<TRC, AllTag>()[pSheet->GetFrozenCount<TRC>()]->GetLeftTop();
+			coome = pSheet->GetContainer<TRC, AllTag>()[pSheet->GetFrozenCount<TRC>()]->GetStart();
 		}
 		else {
-			coome = pSheet->Index2Pointer<TRC, AllTag>(m_dragToIndex)->GetLeftTop();
+			coome = pSheet->Index2Pointer<TRC, AllTag>(m_dragToIndex)->GetStart();
 		}
 
 		//Get Right/Bottom Line
-		FLOAT cooyou0 = pSheet->GetContainer<TRCYou, AllTag>().front()->GetLeftTop();
-		FLOAT cooyou1 = pSheet->GetContainer<TRCYou, AllTag>().back()->GetRightBottom();
+		FLOAT cooyou0 = pSheet->GetContainer<TRCYou, AllTag>().front()->GetStart();
+		FLOAT cooyou1 = pSheet->GetContainer<TRCYou, AllTag>().back()->GetEnd();
 
 		//Paint DragLine
 		PaintLine(e.WndPtr->GetDirectPtr(), *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);

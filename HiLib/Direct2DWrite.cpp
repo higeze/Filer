@@ -373,7 +373,7 @@ namespace d2dw
 		}
 	}
 
-	FLOAT CDirect2DWrite::GetDefaultHeight(const FormatF& format)
+	FLOAT CDirect2DWrite::GetVirtualHeight(const FormatF& format)
 	{
 		auto iter = m_defaultHeightMap.find(format);
 		if (iter != m_defaultHeightMap.end()) {
@@ -519,9 +519,9 @@ namespace d2dw
 		CComPtr<ID2D1Bitmap> pBitmap;
 		HRESULT hr = GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
 		if (FAILED(hr)) {
-			spdlog::info("Failed");
-			spdlog::info((boost::format("%08X") % hIcon).str());
-			spdlog::info((boost::format("%08X") % hr).str());
+			SPDLOG_INFO("Failed");
+			SPDLOG_INFO((boost::format("%08X") % hIcon).str());
+			SPDLOG_INFO((boost::format("%08X") % hr).str());
 
 			throw std::exception(FILELINEFUNCTION);
 		}

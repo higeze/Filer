@@ -3,10 +3,10 @@
 
 class CGridView;
 
-class CFavoriteRow:public CParentRow
+class CFavoriteRow:public CRow
 {
 public:
-	CFavoriteRow(CGridView* pGrid, int orderIndex);
+	CFavoriteRow(CSheet* pSheet, int orderIndex);
 	virtual ~CFavoriteRow(){}
 	int GetOrderIndex()const;
 };

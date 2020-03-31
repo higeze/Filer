@@ -8,7 +8,7 @@
 //
 #include "ChildIndexColumn.h"
 #include "ChildRowHeaderColumn.h"
-#include "ParentMapColumn.h"
+#include "MapColumn.h"
 //
 #include "Tracker.h"
 #include "Dragger.h"
@@ -26,19 +26,15 @@ CSheetCell::CSheetCell(
 	CSheet* pSheet,
 	CRow* pRow,
 	CColumn* pColumn,
-	std::shared_ptr<CellProperty> spProperty,
-	std::shared_ptr<HeaderProperty> spHeaderProperty,
-	std::shared_ptr<CellProperty> spFilterProperty,
+	std::shared_ptr<SheetProperty> spSheetProperty,
 	std::shared_ptr<CellProperty> spCellProperty,
 	CMenu* pMenu)
-	:CSheet(spHeaderProperty,
-		spFilterProperty,
-		spCellProperty), 
-	CCell(pSheet,pRow,pColumn,spProperty,pMenu)
+	:CSheet(spSheetProperty), 
+	CCell(pSheet,pRow,pColumn,spCellProperty,pMenu)
 {
-	//m_lineType = LineType::Both;
 	m_spRowDragger = std::make_shared<CSheetCellRowDragger>();
 	m_spColDragger = std::make_shared<CSheetCellColDragger>();
+	m_isWrappable = true;
 }
 
 void CSheetCell::AddRow()
@@ -83,12 +79,6 @@ void CSheetCell::ColumnErased(CColumnEventArgs& e)
 	OnPropertyChanged(L"value");
 }
 
-//void CSheetCell::ColumnHeaderEndTrack(CColumnEventArgs& e)
-//{
-////	CSheet::ColumnHeaderEndTrack(e);
-//	OnPropertyChanged(L"size");
-//}
-
 void CSheetCell::RowInserted(CRowEventArgs& e)
 {
 	CSheet::RowInserted(e);
@@ -125,19 +115,17 @@ d2dw::CPointF CSheetCell::GetScrollPos()const
 	return d2dw::CPointF(0,0);
 }
 
-d2dw::CSizeF CSheetCell::MeasureSize(d2dw::CDirect2DWrite* pDirect)
+d2dw::CSizeF CSheetCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
 	d2dw::CRectF rcContent(CSheet::MeasureSize());
-	//Calc InnerBorder, CenterBorder Rect
-	d2dw::CRectF rcCenter(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
 
-	return rcCenter.Size();
+	return rcContent.Size();
 }
 
-d2dw::CSizeF CSheetCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
+d2dw::CSizeF CSheetCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
-	return MeasureSize(pDirect);
+	return MeasureContentSize(pDirect);
 }
 
 void CSheetCell::OnLButtonDown(const LButtonDownEvent& e)
@@ -279,15 +267,6 @@ void CSheetCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPain
 	//pDC->SelectClipRgn(NULL);
 }
 
-std::shared_ptr<HeaderProperty> CSheetCell::GetHeaderPropertyPtr()
-{
-	return m_spHeaderProperty;
-}
-std::shared_ptr<CellProperty> CSheetCell::GetCellPropertyPtr()
-{
-	return m_spProperty;
-}
-
 std::shared_ptr<CDC> CSheetCell::GetClientDCPtr()const
 {
 	return m_pSheet->GetClientDCPtr();
@@ -331,6 +310,7 @@ bool CSheetCell::Filter(const std::wstring& strFilter)const
 	}
 	return false;
 }
+
 CMenu* CSheetCell::GetContextMenuPtr()
 {
 	//Copy base menu
@@ -373,14 +353,9 @@ CMenu* CSheetCell::GetContextMenuPtr()
 
 void CSheetCell::OnContextMenu(const ContextMenuEvent& e)
 {
-	if(!Visible())return;
-	auto cell = Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
-	if(cell){
-		cell->OnContextMenu(e);
-	}else{
-		CCell::OnContextMenu(e);
-	}
-	SubmitUpdate();
+	CSheet::OnContextMenu(e);
+	if (e.Handled) { return; }
+	CCell::OnContextMenu(e);
 }
 
 CColumn* CSheetCell::GetParentColumnPtr(CCell* pCell)
@@ -394,33 +369,31 @@ void CSheetCell::OnPropertyChanged(const wchar_t* name)
 	CCell::OnPropertyChanged(name);
 }
 
+void CSheetCell::OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name)
+{
+	CSheet::OnColumnPropertyChanged(pCol, name);
+	CCell::OnPropertyChanged(name);
+}
+
+void CSheetCell::OnRowPropertyChanged(CRow* pRow, const wchar_t* name)
+{
+	CSheet::OnRowPropertyChanged(pRow, name);
+	CCell::OnPropertyChanged(name);
+}
+
 
 void CSheetCell::UpdateRow()
 {
 	if (!Visible()) { return; }
 
-	FLOAT top = GetTop() +
-		m_spCellProperty->Line->Width * 0.5f * 2.0f +
-		GetPropertyPtr()->Padding->top;
-
-//	d2dw::CRectF rcPaint(GetGridPtr()->GetPaintRect());
-//	FLOAT scrollPos = GetGridPtr()->GetVerticalScrollPos();
-
-	//std::function<bool(FLOAT, FLOAT, FLOAT, FLOAT)> isPaint = [](FLOAT min, FLOAT max, FLOAT top, FLOAT bottom)->bool {
-	//	return (top > min && top < max) ||
-	//		(bottom > min && bottom < max);
-	//};
-
-	//	return static_cast<CSheetCell*>(m_pSheet)->GetTop()
-	//			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
-	//			+ (FLOAT)(static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Line->Width*0.5)
-	//			+ static_cast<CSheetCell*>(m_pSheet)->GetPropertyPtr()->Padding->top;
+	FLOAT top =
+		GetTop() +
+		CCell::GetCellPropertyPtr()->Line->Width * 0.5f +
+		CCell::GetCellPropertyPtr()->Padding->top +
+		CSheet::GetCellProperty()->Line->Width * 0.5f;
 
 	for (auto rowPtr : m_visRows) {
 		rowPtr->SetTop(top, false);
-		//FLOAT defaultHeight = iter->DataPtr->GetDefaultHeight();
-		//FLOAT bottom = top + defaultHeight;
-		//if (isPaint(rcPaint.top, rcPaint.bottom, top, bottom)) {
 		for (auto colPtr : m_visCols) {
 			std::shared_ptr<CCell> pCell = CSheet::Cell(rowPtr, colPtr);
 			if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
@@ -428,12 +401,29 @@ void CSheetCell::UpdateRow()
 			}
 		}
 		top += rowPtr->GetHeight();
-
-		//} else {
-		//	top += defaultHeight;
-		//}
 	}
-	//}
+}
+
+void CSheetCell::UpdateColumn()
+{
+	if (!Visible()) { return; }
+
+	FLOAT left =
+		GetLeft() +
+		CCell::GetCellPropertyPtr()->Line->Width * 0.5f +
+		CCell::GetCellPropertyPtr()->Padding->left +
+		CSheet::GetCellProperty()->Line->Width * 0.5f;
+
+	for (auto& colPtr : m_allCols) {
+		colPtr->SetLeft(left, false);
+		for (auto rowPtr : m_visRows) {
+			std::shared_ptr<CCell> pCell = CSheet::Cell(rowPtr, colPtr);
+			if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
+				pSheetCell->UpdateAll();
+			}
+		}
+		left += colPtr->GetWidth();
+	}
 }
 
 

@@ -16,7 +16,7 @@ public:
 	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* pDirect) override;
 	virtual std::wstring GetString() override;
 	virtual std::wstring GetSortString() override;
-	virtual UINT GetFormat()const override{ return DT_RIGHT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL; }
+//	virtual UINT GetFormat()const override{ return DT_RIGHT|DT_TOP|DT_NOPREFIX|DT_WORDBREAK|DT_EDITCONTROL; }
 	
 private:
 	virtual std::shared_ptr<CShellFile> GetShellFile() ;

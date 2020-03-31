@@ -122,8 +122,8 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 
 	//Insert rows
 	m_rowHeader = std::make_shared<CPathRow>(this);
-	m_rowNameHeader = std::make_shared<CParentHeaderRow>(this);
-	m_rowFilter = std::make_shared<CParentRow>(this);
+	m_rowNameHeader = std::make_shared<CHeaderRow>(this);
+	m_rowFilter = std::make_shared<CRow>(this);
 
 	m_allRows.idx_push_back(m_rowHeader);
 	m_allRows.idx_push_back(m_rowNameHeader);
@@ -239,9 +239,28 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 		break;
 		case DROPEFFECT_COPY:
 		{
-			HRESULT hr = pFileOperation->CopyItems(pDataObj, pDestShellItem);
-			hr = pFileOperation->PerformOperations();
+			//if folder is same, do not need to move
+			FORMATETC formatetc = { 0 };
+			formatetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLIDLIST);
+			formatetc.ptd = NULL;
+			formatetc.dwAspect = DVASPECT_CONTENT;
+			formatetc.lindex = -1;
+			formatetc.tymed = TYMED_HGLOBAL;
+
+			STGMEDIUM medium;
+			HRESULT hr = pDataObj->GetData(&formatetc, &medium);
 			if (FAILED(hr)) { return; }
+			LPIDA pida = (LPIDA)GlobalLock(medium.hGlobal);
+			CIDL folderIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
+
+			if (folderIdl == m_spFolder->GetAbsoluteIdl()) {
+				//Do nothing
+			} else {
+				
+				HRESULT hr = pFileOperation->CopyItems(pDataObj, pDestShellItem);
+				hr = pFileOperation->PerformOperations();
+				if (FAILED(hr)) { return; }
+			}
 		}
 		break;
 		case DROPEFFECT_LINK:
@@ -286,6 +305,8 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 			break;
 		}
 	} else if (isFileContents && isFileDescriptor && isRenPrivateMessages) {
+
+
 		MAPIINIT_0 mapinit = { MAPI_INIT_VERSION, MAPI_MULTITHREAD_NOTIFICATIONS };
 		HRESULT hr = ::MAPIInitialize(&mapinit);
 
@@ -303,27 +324,31 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 				LPMSGSESS	lpSess = NULL;
 				hr = OpenIMsgSession(lpMalloc, NULL, &lpSess);
 
-				if (lpSess) {
-					for (UINT i = 0; i < lpfgd->cItems; i++) {
-						LPFILEDESCRIPTOR lpfd = NULL;
-						FORMATETC contents_format = { s_cf_filecontents, NULL, DVASPECT_CONTENT, (LONG)i, TYMED_ISTORAGE };
-						STGMEDIUM	cstg;
+					if (lpSess) {
+						CComPtr<IFileOperation> pFileOperation;
+						if (SUCCEEDED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {
+							for (UINT i = 0; i < lpfgd->cItems; i++) {
+							LPFILEDESCRIPTOR lpfd = NULL;
+							FORMATETC contents_format = { s_cf_filecontents, NULL, DVASPECT_CONTENT, (LONG)i, TYMED_ISTORAGE };
+							STGMEDIUM	cstg;
 
-						lpfd = (LPFILEDESCRIPTOR)&lpfgd->fgd[i];
+							lpfd = (LPFILEDESCRIPTOR)&lpfgd->fgd[i];
 
-						hr = pDataObj->GetData(&contents_format, &cstg);
+							hr = pDataObj->GetData(&contents_format, &cstg);
 
-						if (SUCCEEDED(hr) && cstg.pstg != NULL) {
-							LPMESSAGE	lpmsg = NULL;
+							if (SUCCEEDED(hr) && cstg.pstg != NULL) {
+								LPMESSAGE	lpmsg = NULL;
 
-							hr = OpenIMsgOnIStg(lpSess, MAPIAllocateBuffer, MAPIAllocateMore, MAPIFreeBuffer, lpMalloc, NULL, cstg.pstg, NULL, 0, 0, &lpmsg);
+								hr = OpenIMsgOnIStg(lpSess, MAPIAllocateBuffer, MAPIAllocateMore, MAPIFreeBuffer, lpMalloc, NULL, cstg.pstg, NULL, 0, 0, &lpmsg);
 
-							if ((hr == S_OK) && (lpmsg != NULL)) {
-								CDropTarget::MessageToFile(lpmsg, m_spFolder->GetPath());
-								lpmsg->Release();
+								if ((hr == S_OK) && (lpmsg != NULL)) {
+									CDropTarget::CopyMessage(pFileOperation, m_spFolder, lpmsg);
+									lpmsg->Release();
+								}
+
+								ReleaseStgMedium(&cstg);
 							}
-
-							ReleaseStgMedium(&cstg);
+							pFileOperation->PerformOperations();
 						}
 					}
 
@@ -349,19 +374,19 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 
 			// For each file, get the name and copy the stream to a file
 			std::wstring file_list;
-			for (unsigned int file_index = 0; file_index < file_group_descriptor->cItems; file_index++) {
-				file_descriptor = file_group_descriptor->fgd[file_index];
-				contents_format.lindex = file_index;
-				STGMEDIUM contents_storage = { 0 };
-				if (SUCCEEDED(pDataObj->GetData(&contents_format, &contents_storage))) {
-					// Dump stream to a file
-					std::wstring dirPath = m_spFolder->GetPath();
-					std::wstring filePath;
-					::PathCombine(::GetBuffer(filePath, MAX_PATH), dirPath.c_str(), file_descriptor.cFileName);
-					::ReleaseBuffer(filePath);
-					HRESULT hr = CDropTarget::StreamToFile(contents_storage.pstm, filePath);
-					::ReleaseStgMedium(&contents_storage);
+			CComPtr<IFileOperation> pFileOperation;
+			if (SUCCEEDED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {
+				for (unsigned int file_index = 0; file_index < file_group_descriptor->cItems; file_index++) {
+					file_descriptor = file_group_descriptor->fgd[file_index];
+					contents_format.lindex = file_index;
+					STGMEDIUM contents_storage = { 0 };
+					if (SUCCEEDED(pDataObj->GetData(&contents_format, &contents_storage))) {
+						// Dump stream to a file
+						HRESULT hr = CDropTarget::CopyStream(pFileOperation, m_spFolder, contents_storage.pstm, file_descriptor.cFileName);
+						::ReleaseStgMedium(&contents_storage);
+					}
 				}
+				pFileOperation->PerformOperations();
 			}
 			::ReleaseStgMedium(&descriptor_storage);
 		}
@@ -371,7 +396,7 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 
 void CFilerGridView::Added(const std::wstring& fileName)
 {
-	spdlog::info("Added " + wstr2str(fileName));
+	SPDLOG_INFO("Added " + wstr2str(fileName));
 	CIDL idl;
 	ULONG chEaten;
 	ULONG dwAttributes;
@@ -400,17 +425,17 @@ void CFilerGridView::Added(const std::wstring& fileName)
 		m_bNewFile = false;
 	}
 	else {
-		spdlog::info("Added FAILED " + wstr2str(fileName));
+		SPDLOG_INFO("Added FAILED " + wstr2str(fileName));
 	}
 }
 
 void CFilerGridView::Modified(const std::wstring& fileName)
 {
-	spdlog::info("Modified " + wstr2str(fileName));
+	SPDLOG_INFO("Modified " + wstr2str(fileName));
 	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == m_allRows.end()) {
-		spdlog::info("Modified NoMatch " + wstr2str(fileName));
+		SPDLOG_INFO("Modified NoMatch " + wstr2str(fileName));
 		return;
 	}else if (auto p = std::dynamic_pointer_cast<CFileRow>(*iter)) {
 		//Because ItemIdList includes, size, last write time, etc., it is necessary to get new one.
@@ -422,7 +447,7 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 
 		if (SUCCEEDED(hRes) && newIdl) {
 			p->SetFilePointer(m_spFolder->CreateShExFileFolder(newIdl));
-			p->SetMeasureValid(false);
+			p->SetIsMeasureValid(false);
 			PostUpdate(Updates::ColumnVisible);
 			PostUpdate(Updates::RowVisible);
 			PostUpdate(Updates::Row);
@@ -432,23 +457,23 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 			FilterAll();
 			SubmitUpdate();
 		} else {
-			spdlog::info("Modified FAILED " + wstr2str(fileName));
+			SPDLOG_INFO("Modified FAILED " + wstr2str(fileName));
 		}
 	}
 }
 void CFilerGridView::Removed(const std::wstring& fileName)
 {
-	spdlog::info("Removed " + wstr2str(fileName));
+	SPDLOG_INFO("Removed " + wstr2str(fileName));
 	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == m_allRows.end()) {
-		spdlog::info("Removed NoMatch " + wstr2str(fileName));
+		SPDLOG_INFO("Removed NoMatch " + wstr2str(fileName));
 		return;
 	}
 
 	EraseRow(*iter, false);
 	for (const auto& colPtr : m_allCols) {
-		std::dynamic_pointer_cast<CParentMapColumn>(colPtr)->Clear();
+		std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
 	}
 
 	m_spCursorer->OnCursorClear(this);
@@ -467,12 +492,12 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 }
 void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& newName)
 {
-	spdlog::info("Renamed " + wstr2str(oldName) + "=>"+ wstr2str(newName));
+	SPDLOG_INFO("Renamed " + wstr2str(oldName) + "=>"+ wstr2str(newName));
 	auto iter = FindIfRowIterByFileNameExt(oldName);
 
 	if (iter == m_allRows.end()) 
 	{
-		spdlog::info("Renamed NoMatch " + wstr2str(oldName) + "=>" + wstr2str(newName));
+		SPDLOG_INFO("Renamed NoMatch " + wstr2str(oldName) + "=>" + wstr2str(newName));
 	}else if (auto p = std::dynamic_pointer_cast<CFileRow>(*iter)) {
 		ULONG chEaten;
 		ULONG dwAttributes;
@@ -483,7 +508,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 
 		if (SUCCEEDED(hRes) && newIdl) {
 			p->SetFilePointer(m_spFolder->CreateShExFileFolder(newIdl));
-			p->SetMeasureValid(false);
+			p->SetIsMeasureValid(false);
 			PostUpdate(Updates::ColumnVisible);
 			PostUpdate(Updates::RowVisible);
 			PostUpdate(Updates::Row);
@@ -494,7 +519,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 			SubmitUpdate();
 		}
 		else {
-			spdlog::info("Renamed FAILED " + wstr2str(oldName) + "=>" + wstr2str(newName));
+			SPDLOG_INFO("Renamed FAILED " + wstr2str(oldName) + "=>" + wstr2str(newName));
 			return Removed(oldName);
 		}
 	}
@@ -591,7 +616,7 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 
 void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	spdlog::info("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetFileName()));
+	SPDLOG_INFO("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetFileName()));
 
 	CONSOLETIMER("OpenFolder Total");
 	bool isUpdate = m_spFolder ? m_spFolder->GetPath() == spFolder->GetPath() : false;
@@ -696,7 +721,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	{
 		CONSOLETIMER("OpenFolder Updating");
 		for (const auto& colPtr : m_allCols) {
-			std::dynamic_pointer_cast<CParentMapColumn>(colPtr)->Clear();
+			std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
 		}
 
 		//PathCell
@@ -875,19 +900,19 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 	for(auto info : *pInfos){
 		switch (info.first) {
 		case FILE_ACTION_ADDED:
-			spdlog::info("FILE_ACTION_ADDED");
+			SPDLOG_INFO("FILE_ACTION_ADDED");
 			Added(info.second);
 			break;
 		case FILE_ACTION_MODIFIED:
-			spdlog::info("FILE_ACTION_MODIFIED");
+			SPDLOG_INFO("FILE_ACTION_MODIFIED");
 			Modified(info.second);
 			break;
 		case FILE_ACTION_REMOVED:
-			spdlog::info("FILE_ACTION_REMOVED");
+			SPDLOG_INFO("FILE_ACTION_REMOVED");
 			Removed(info.second);
 			break;
 		case FILE_ACTION_RENAMED_NEW_NAME:
-			spdlog::info("FILE_ACTION_RENAMED_NEW_NAME");
+			SPDLOG_INFO("FILE_ACTION_RENAMED_NEW_NAME");
 			{
 				std::list<std::wstring> oldnew;
 				boost::split(oldnew, info.second, boost::is_any_of(L"/"));
@@ -895,7 +920,7 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 			}
 			break;
 		case FILE_ACTION_RENAMED_OLD_NAME:
-			spdlog::info("FILE_ACTION_RENAMED_OLD_NAME");
+			SPDLOG_INFO("FILE_ACTION_RENAMED_OLD_NAME");
 			break;
 		default:
 			break;
@@ -958,6 +983,10 @@ bool CFilerGridView::InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, 
 	cmi.nShow = SW_SHOWNORMAL;
 	m_bNewFile = true;
 	hr = m_pcmNew3->InvokeCommand((LPCMINVOKECOMMANDINFO)&cmi);
+
+	m_pcmNew2 = nullptr;
+	m_pcmNew3 = nullptr;
+
 	return SUCCEEDED(hr);
 }
 

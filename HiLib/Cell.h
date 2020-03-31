@@ -39,8 +39,9 @@ protected:
 
 	d2dw::CSizeF m_fitSize = d2dw::CSizeF();
 	d2dw::CSizeF m_actSize = d2dw::CSizeF();
-	bool m_bFitMeasureValid = false;
+	bool m_isFitMeasureValid = false;
 	bool m_bActMeasureValid = false;
+	bool m_isWrappable = true;
 
 	//LineType m_lineType = LineType::MultiLine;
 
@@ -58,11 +59,12 @@ public:
 	CRow* GetRowPtr()const { return m_pRow; }
 	CColumn* GetColumnPtr()const { return m_pColumn; }
 	//LineType GetLineType()const { return m_lineType; }
-	virtual SizingType GetRowSizingType()const { return SizingType::Fit; }
-	virtual SizingType GetColSizingType()const { return SizingType::Independ; }
-	void SetFitMeasureValid(const bool& b) { m_bFitMeasureValid = b; }
+	virtual bool GetIsWrappable()const { return m_isWrappable; }
+	//virtual SizingType GetRowSizingType()const { return SizingType::AlwaysFit; }
+	//virtual SizingType GetColSizingType()const { return SizingType::Independ; }
+	void SetFitMeasureValid(const bool& b) { m_isFitMeasureValid = b; }
 	void SetActMeasureValid(const bool& b) { m_bActMeasureValid = b; }
-	std::shared_ptr<CellProperty> GetPropertyPtr() { return m_spProperty; }
+	std::shared_ptr<CellProperty> GetCellPropertyPtr() { return m_spProperty; }
 
 	//Size, Rect method
 	virtual d2dw::CSizeF GetInitSize(d2dw::CDirect2DWrite* pDirect);
@@ -80,6 +82,9 @@ public:
 	virtual FLOAT GetLeft()const;
 	virtual FLOAT GetTop()const;
 	virtual d2dw::CRectF GetRect()const;
+
+	//Visible
+	bool IsVisible()const;
 
 	//Selected
 	virtual bool GetSelected()const;
@@ -131,7 +136,7 @@ public:
 	virtual Compares EqualCell(CSheetCell* pCell, std::function<void(CCell*, Compares)> action);
 
 	//Menu
-	CMenu* const m_pContextMenu;
+	CMenu* const m_pContextMenu = nullptr;
 	virtual CMenu* GetContextMenuPtr(){return m_pContextMenu;}
 
 	//Clipboard

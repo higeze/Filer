@@ -1,40 +1,44 @@
 #pragma once
 #include "BindGridView.h"
 #include "BindTextCell.h"
+#include "BindSheetCell.h"
 #include "FilterCell.h"
-#include "ParentMapColumn.h"
+#include "MapColumn.h"
 #include "ParentColumnNameHeaderCell.h"
 #include "named_arguments.h"
 
-template<typename T>
-class CBindSheetCellColumn : public CParentDefaultMapColumn
+template<typename TItem, typename TValueItem>
+class CBindSheetCellColumn : public CMapColumn
 {
 private:
 	std::wstring m_header;
-
-	std::function<std::wstring(const T&)> m_getFunction;
-	std::function<void(T&, const std::wstring&)> m_setFunction;
-
+	std::function<observable_vector<TValueItem>&(TItem&)> m_itemser;
+	std::function<void(CBindSheetCell<TItem, TValueItem>*)> m_initialize;
 public:
-	CBindTextColumn(CBindGridView<T>* pGrid,
+	template<typename... Args>
+	CBindSheetCellColumn(CSheet* pSheet,
 		const std::wstring& header,
-		std::function<std::wstring(const T&)> getter,
-		std::function<void(T&, const std::wstring&)> setter)
-		:CParentDefaultMapColumn(pGrid), m_header(header), m_getFunction(getter), m_setFunction(setter)
+		std::function<observable_vector<TValueItem>&(TItem&)> itemser,
+		std::function<void(CBindSheetCell<TItem, TValueItem>*)> initializer,
+		Args... args)
+		:CMapColumn(pSheet, args...), m_header(header), m_itemser(itemser), m_initialize(initializer)
 	{
+		m_isMinLengthFit = true;
+		m_isMaxLengthFit = false;
 	}
 
-	virtual ~CBindTextColumn(void) = default;
+//	virtual SizingType GetSizingType()const override { return SizingType::AlwaysFit; }
+
+	virtual ~CBindSheetCellColumn(void) = default;
 
 	virtual CColumn& ShallowCopy(const CColumn& column)override
 	{
-		CParentDefaultMapColumn::ShallowCopy(column);
+		CMapColumn::ShallowCopy(column);
 		return *this;
 	}
-	virtual CBindTextColumn* CloneRaw()const { return new CBindTextColumn(*this); }
+	virtual CBindSheetCellColumn* CloneRaw()const { return new CBindSheetCellColumn(*this); }
 	//std::shared_ptr<CToDoNameColumn> Clone()const { return std::shared_ptr<CToDoNameColumn>(CloneRaw()); }
-	std::function<std::wstring(const T&)> GetGetter() { return m_getFunction; }
-	std::function<void(T&, const std::wstring&)> GetSetter() { return m_setFunction; }
+	std::function<observable_vector<TValueItem>&(TItem&)> GetItemser() { return m_itemser; }
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
@@ -53,9 +57,13 @@ public:
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CBindTextCell<T>>(
-			m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty(),
-			arg<'e'>() = EditMode::FocusedSingleClickEdit);
+		auto spCell = std::make_shared<CBindSheetCell<TItem, TValueItem>>(
+			m_pSheet, pRow, pColumn,
+			m_pSheet->GetSheetProperty(),
+			m_pSheet->GetCellProperty(),
+			m_initialize);
+		spCell->UpdateAll();
+		return spCell;
 	}
 };
 

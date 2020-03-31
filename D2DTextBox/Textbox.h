@@ -4,6 +4,7 @@
 #include "CellProperty.h"
 #include "UIElement.h"
 #include "observable.h"
+#include "DeadlineTimer.h"
 
 class LayoutLineInfo;
 struct D2DContext;
@@ -100,9 +101,12 @@ private:
 	observable_wstring m_text;
 	bool m_recalc = true;
 
-	LARGE_INTEGER m_frequency;
+//	LARGE_INTEGER m_frequency;
 	bool m_bCaret = false;
-	LARGE_INTEGER m_gtm, m_pregtm;
+//	LARGE_INTEGER m_gtm, m_pregtm;
+
+	bool m_isFirstDrawCaret = true;
+	bool m_isClosing = false;
 
 public:
 	D2DTextbox(
@@ -121,6 +125,7 @@ public:
 	// Getter ////////////////////////////////////////////////////
 	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets); }
 	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets); }
+	CTextCell* GetCellPtr() { return m_pCell; }
 	//float GetLineWidth() { return row_width_; }
 	//UINT GetLineCount() { return nLineCnt_; }
 
@@ -158,6 +163,7 @@ public:
 	
 
 	// Render /////////////////////////////////////
+	bool IsVisible()const;
 	void Render();
 	void ResetCaret();
 	void DrawCaret(const d2dw::CRectF& rc);
@@ -183,6 +189,7 @@ public:
 	//UINT FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst);
 
 private:
+	CDeadlineTimer m_timer;
 	std::wstring m_strInit;
 	CTextCell* m_pCell;
 	std::shared_ptr<CellProperty> m_pProp;

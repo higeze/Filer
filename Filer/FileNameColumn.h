@@ -1,15 +1,20 @@
 #pragma once
 
-#include "ParentMapColumn.h"
+#include "MapColumn.h"
 
-class CFileNameColumn: public CParentDefaultMapColumn
+class CFileNameColumn: public CMapColumn
 {
 public:
-	CFileNameColumn(CGridView* pGrid = nullptr);
+	template<typename... Args>
+	CFileNameColumn(CSheet* pSheet = nullptr, Args... args)
+		:CMapColumn(pSheet, args...)
+	{
+		m_minLength = ::get(arg<"minwidth"_s>(), args..., default_(30.f));
+	}
 	virtual ~CFileNameColumn(void){};
 	virtual CColumn& ShallowCopy(const CColumn& column)override
 	{
-		CParentDefaultMapColumn::ShallowCopy(column);
+		CMapColumn::ShallowCopy(column);
 		return *this;
 	}
 	virtual CFileNameColumn* CloneRaw()const{return new CFileNameColumn(*this);}

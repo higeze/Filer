@@ -1,5 +1,5 @@
 #pragma once
-#include "ParentMapColumn.h"
+#include "MapColumn.h"
 #include "ParentColumnNameHeaderCell.h"
 #include "FilterCell.h"
 #include "BindPaintCell.h"
@@ -8,15 +8,15 @@
 #include "MyDC.h"
 
 template<typename T>
-class CBindPaintColumn:public CParentMapColumn
+class CBindPaintColumn:public CMapColumn
 {
 private:
 	std::wstring m_header;
 	std::function<void(T,CDC*,CRect)> m_paintFunction;
 	std::function<CSize(T,CDC*)> m_measureFunction;
 public:
-	CBindPaintColumn(CGridView* pGrid, std::wstring header, std::function<void(T,CDC*,CRect)> paintFunction, std::function<CSize(T,CDC*)> measureFunction)
-		:CParentMapColumn(pGrid),m_header(header), m_paintFunction(paintFunction),m_measureFunction(measureFunction){}
+	CBindPaintColumn(CSheet* pSheet, std::wstring header, std::function<void(T,CDC*,CRect)> paintFunction, std::function<CSize(T,CDC*)> measureFunction)
+		:CMapColumn(pSheet),m_header(header), m_paintFunction(paintFunction),m_measureFunction(measureFunction){}
 	virtual ~CBindPaintColumn(){}
 
 	std::function<void(T,CDC*,CRect)> GetPaintFunction(){return m_paintFunction;}

@@ -94,39 +94,24 @@ std::wstring CShellFile::GetExt()
 	return m_wstrExt;
 }
 
-void CShellFile::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt)
+void CShellFile::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd)
 {
-	CIDL idlNew;
-	if(SUCCEEDED(m_pParentShellFolder->SetNameOf(
-		NULL,
+	HRESULT hr = m_pParentShellFolder->SetNameOf(
+		hWnd,
 		m_childIdl.ptr(),
 		(wstrNameWoExt + GetExt()).c_str(),
 		SHGDN_FORPARSING | SHGDN_INFOLDER,
-		idlNew.ptrptr()))){
-		
-		m_childIdl = idlNew;
-		m_absoluteIdl = m_parentIdl + idlNew;
-
-		Reset();
-	}
-
+		nullptr);
 }
 
-void CShellFile::SetExt(const std::wstring& wstrExt)
+void CShellFile::SetExt(const std::wstring& wstrExt, HWND hWnd)
 {
-	CIDL idlNew;
-	if (SUCCEEDED(m_pParentShellFolder->SetNameOf(
-		NULL,
+	HRESULT hr = m_pParentShellFolder->SetNameOf(
+		hWnd,
 		m_childIdl.ptr(),
 		(GetFileNameWithoutExt() + wstrExt).c_str(),
 		SHGDN_FORPARSING | SHGDN_INFOLDER,
-		idlNew.ptrptr()))) {
-
-		m_childIdl = idlNew;
-		m_absoluteIdl = m_parentIdl + idlNew;
-
-		Reset();
-	}
+		nullptr);
 }
 
 std::wstring CShellFile::GetTypeName()

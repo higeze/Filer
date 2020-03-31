@@ -10,56 +10,114 @@ void CCheckBoxCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcP
 {
 	//TODO store ptrs
 	d2dw::SolidLine line(0.0, 0.0, 0.0, 1.0, 1.0);
-	rcPaint.right = rcPaint.left + rcPaint.Height();
+	rcPaint.right = rcPaint.left + 16.f;
+	rcPaint.bottom = rcPaint.top + 16.f;
 	pDirect->DrawSolidRectangle(line, rcPaint);
-	if (GetCheck()) {
-		CComPtr<ID2D1PathGeometry> pPathGeo;
-		pDirect->GetD2D1Factory()->CreatePathGeometry(&pPathGeo);
-		CComPtr<ID2D1GeometrySink> pGeoSink;
-		pPathGeo->Open(&pGeoSink);
-		d2dw::CPointF lt = rcPaint.LeftTop();
-		std::array<d2dw::CPointF, 6> pts;
-		pts[0].SetPoint(lt.x + 2, lt.y + 6);
-		pts[1].SetPoint(lt.x + 2, lt.y + 8);
-		pts[2].SetPoint(lt.x + 6, lt.y + 12);
-		pts[3].SetPoint(lt.x + 11, lt.y + 4);
-		pts[4].SetPoint(lt.x + 11, lt.y + 1);
-		pts[5].SetPoint(lt.x + 6, lt.y + 8);
-		pGeoSink->BeginFigure(pts[0], D2D1_FIGURE_BEGIN_FILLED);
-		for (size_t i = 1; i < pts.size(); i++) {
-			pGeoSink->AddLine(pts[i]);
+	switch(GetCheckBoxState()){
+		case CheckBoxState::True:
+		{
+			CComPtr<ID2D1PathGeometry> pPathGeo;
+			pDirect->GetD2D1Factory()->CreatePathGeometry(&pPathGeo);
+			CComPtr<ID2D1GeometrySink> pGeoSink;
+			pPathGeo->Open(&pGeoSink);
+			d2dw::CPointF lt = rcPaint.LeftTop();
+			std::array<d2dw::CPointF, 6> pts;
+			pts[0].SetPoint(lt.x + 2, lt.y + 6);
+			pts[1].SetPoint(lt.x + 2, lt.y + 8);
+			pts[2].SetPoint(lt.x + 6, lt.y + 12);
+			pts[3].SetPoint(lt.x + 11, lt.y + 4);
+			pts[4].SetPoint(lt.x + 11, lt.y + 1);
+			pts[5].SetPoint(lt.x + 6, lt.y + 8);
+			pGeoSink->BeginFigure(pts[0], D2D1_FIGURE_BEGIN_FILLED);
+			for (size_t i = 1; i < pts.size(); i++) {
+				pGeoSink->AddLine(pts[i]);
+			}
+			pGeoSink->EndFigure(D2D1_FIGURE_END_CLOSED);
+			pGeoSink->Close();
+			d2dw::SolidFill fill(0.0, 0.0, 0.0, 1.0);
+			pDirect->FillSolidGeometry(fill, pPathGeo);
 		}
-		pGeoSink->EndFigure(D2D1_FIGURE_END_CLOSED);
-		pGeoSink->Close();
-		d2dw::SolidFill fill(0.0, 0.0, 0.0, 1.0);
-		pDirect->FillSolidGeometry(fill, pPathGeo);
+		break;
+		case CheckBoxState::Intermediate:
+		{
+			d2dw::SolidFill fill(0.0, 0.0, 0.0, 1.0);
+			d2dw::CRectF rcFill(rcPaint);
+			rcFill.DeflateRect(4.f);
+			pDirect->FillSolidRectangle(fill, rcFill);
+		}
+		break;
+		default:
+			break;
+
 	}
 }
 
-d2dw::CSizeF CCheckBoxCell::MeasureSize(d2dw::CDirect2DWrite* pDirect)
+d2dw::CSizeF CCheckBoxCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 {
-	d2dw::CRectF rcCenter = (InnerBorder2CenterBorder(Content2InnerBorder(d2dw::CRectF(0.f, 0.f, 5.f, 5.f))));
-	return rcCenter.Size();
+	return d2dw::CSizeF(16.f, 16.f);
 }
 
-d2dw::CSizeF CCheckBoxCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
+d2dw::CSizeF CCheckBoxCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
-	return MeasureSize(pDirect);
+	return MeasureContentSize(pDirect);
+}
+
+CheckBoxState CCheckBoxCell::Str2State(const std::wstring& str)
+{
+	if (str == L"1") {
+		return CheckBoxState::True;
+	} else if (str == L"0") {
+		return CheckBoxState::False;
+	} else {
+		return CheckBoxState::Intermediate;
+	}
+}
+
+std::wstring CCheckBoxCell::State2Str(const CheckBoxState& state)
+{
+	switch (state) {
+	case CheckBoxState::True:
+		return L"1";
+	case CheckBoxState::False:
+		return L"0";
+	case CheckBoxState::Intermediate:
+	default:
+		return L"";
+	}
 }
 
 std::wstring CCheckBoxCell::GetString()
 {
-	return boost::lexical_cast<std::wstring>(GetCheck());
+	return State2Str(GetCheckBoxState());
 }
 
 void CCheckBoxCell::SetStringCore(const std::wstring& str)
 {
-	SetCheck(boost::lexical_cast<bool>(str));
+	SetCheckBoxState(Str2State(str));
 }
 
 void CCheckBoxCell::OnLButtonDown(const LButtonDownEvent& e)
 {
-	SetString(boost::lexical_cast<std::wstring>(!GetCheck()));
+	switch (GetCheckBoxType()) {
+		case CheckBoxType::Normal:
+			switch (GetCheckBoxState()) {
+			case CheckBoxState::True:
+				return SetString(L"0");
+			case CheckBoxState::False:
+			default:
+				return SetString(L"1");
+			}
+		case CheckBoxType::ThreeState:
+			switch (GetCheckBoxState()) {
+			case CheckBoxState::True:
+				return SetString(L"");
+			case CheckBoxState::False:
+				return SetString(L"1");
+			case CheckBoxState::Intermediate:
+			default:
+				return SetString(L"0");
+			}
+	}
 }
 
 bool CCheckBoxCell::IsComparable()const { return false; }

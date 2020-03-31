@@ -14,7 +14,7 @@ public:
 		:m_tp(std::chrono::system_clock::now()), m_strMessage(strMessage){}
 	virtual ~CConsoleTimer()
 	{
-		spdlog::info(m_strMessage + " : " + std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - m_tp).count()));
+		SPDLOG_INFO(m_strMessage + " : " + std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - m_tp).count()));
 	}
 
 };

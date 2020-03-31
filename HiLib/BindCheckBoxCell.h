@@ -2,7 +2,7 @@
 #include "CheckBoxCell.h"
 #include "BindCheckBoxColumn.h"
 
-template<typename T>
+template<typename TItem>
 class CBindCheckBoxCell :public CCheckBoxCell
 {
 public:
@@ -10,19 +10,17 @@ public:
 		:CCheckBoxCell(pSheet, pRow, pColumn, spProperty){}
 	virtual ~CBindCheckBoxCell() = default;
 
-	virtual bool GetCheck() const override
+	virtual CheckBoxState GetCheckBoxState() const override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindCheckBoxColumn<T>*>(m_pColumn);
-		auto pBindGrid = static_cast<CBindGridView<T>*>(m_pSheet);
-		return pBindColumn->GetGetter()(pBindGrid->GetItemsSource()[pBindRow->GetIndex<AllTag>() - pBindGrid->GetFrozenCount<RowTag>()]);
+		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
+		auto pBindColumn = static_cast<CBindCheckBoxColumn<TItem>*>(m_pColumn);
+		return pBindColumn->GetGetter()(pBindRow->GetItem());
 	}
 
-	virtual void SetCheck(bool check) override
+	virtual void SetCheckBoxState(const CheckBoxState& state) override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindCheckBoxColumn<T>*>(m_pColumn);
-		auto pBindGrid = static_cast<CBindGridView<T>*>(m_pSheet);
-		pBindColumn->GetSetter()(pBindGrid->GetItemsSource()[pBindRow->GetIndex<AllTag>() - pBindGrid->GetFrozenCount<RowTag>()], check);
+		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
+		auto pBindColumn = static_cast<CBindCheckBoxColumn<TItem>*>(m_pColumn);
+		pBindColumn->GetSetter()(pBindRow->GetItem(), state);
 	}
 };

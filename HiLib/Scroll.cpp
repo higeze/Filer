@@ -77,14 +77,12 @@ namespace d2dw
 
 	void CVScroll::OnPropertyChanged(const wchar_t* name)
 	{
-		m_pGrid->PostUpdate(Updates::Row);
-		m_pGrid->PostUpdate(Updates::Invalidate);
+		m_pGrid->OnVScrollPropertyChanged(this, name);
 	}
 
 	void CHScroll::OnPropertyChanged(const wchar_t* name)
 	{
-		m_pGrid->PostUpdate(Updates::Column);
-		m_pGrid->PostUpdate(Updates::Invalidate);
+		m_pGrid->OnHScrollPropertyChanged(this, name);
 	}
 
 

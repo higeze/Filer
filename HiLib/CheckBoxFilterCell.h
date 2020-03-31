@@ -12,8 +12,8 @@ public:
 	CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty);
 	virtual ~CCheckBoxFilterCell() = default;
 
-	virtual bool GetCheck() const override;
-	virtual void SetCheck(bool check) override;
+	virtual CheckBoxState GetCheckBoxState() const override;
+	virtual void SetCheckBoxState(const CheckBoxState& state) override;
 
 	virtual std::wstring GetString() override;
 	virtual void SetString(const std::wstring& str)override;

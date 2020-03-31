@@ -19,25 +19,20 @@ public:
 		CSheet* pSheet = nullptr,
 		CRow* pRow = nullptr,
 		CColumn* pColumn = nullptr,
-		std::shared_ptr<CellProperty> spProperty = nullptr,
-		std::shared_ptr<HeaderProperty> spHeaderProperty = nullptr,
-		std::shared_ptr<CellProperty> spFilterProperty = nullptr,
+		std::shared_ptr<SheetProperty> spSheetProperty = nullptr,
 		std::shared_ptr<CellProperty> spCellProperty = nullptr,
 		CMenu* pMenu=nullptr);
 	virtual ~CSheetCell(){}
 	static CMenu SheetCellContextMenu;
 	virtual CMenu* GetContextMenuPtr()override;
-	//Property
-	virtual std::shared_ptr<HeaderProperty> GetHeaderPropertyPtr();
-	virtual std::shared_ptr<CellProperty> GetCellPropertyPtr();
 	//Rect
 	virtual FLOAT GetTop()const override;
 	virtual FLOAT GetLeft()const override;
 	virtual d2dw::CRectF GetRect()const override;
 	virtual d2dw::CRectF GetPaintRect() override;
 
-	virtual d2dw::CSizeF MeasureSize(d2dw::CDirect2DWrite* pDirect) override;
-	virtual d2dw::CSizeF MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override;
+	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* pDirect) override;
+	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override;
 
 	//virtual void SetFocused(const bool& bFocused);
 	virtual bool GetSelected()const override;
@@ -86,10 +81,14 @@ public:
 
 	virtual CColumn* GetParentColumnPtr(CCell* pCell) override;
 	virtual void OnPropertyChanged(const wchar_t* name) override;
+	virtual void OnRowPropertyChanged(CRow* pRow, const wchar_t* name) override;
+	virtual void OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name) override;
 
-	virtual SizingType GetRowSizingType()const { return SizingType::Depend; }
-	virtual SizingType GetColSizingType()const { return SizingType::Depend; }
+
+	//virtual SizingType GetRowSizingType()const { return SizingType::Depend; }
+	//virtual SizingType GetColSizingType()const { return SizingType::Depend; }
 
 	virtual void UpdateRow()override;
+	virtual void UpdateColumn()override;
 
 };

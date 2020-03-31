@@ -1,7 +1,7 @@
 #pragma once
-#include "CellProperty.h"
 #include "Direct2DWrite.h"
-
+#include "CellProperty.h"
+#include "SheetProperty.h"
 
 struct ProgressProperty
 {
@@ -20,9 +20,7 @@ public:
 		ar("BackgroundFill", BackgroundFill);
 		ar("ForegroundFill", ForegroundFill);
 	}
-
 };
-
 
 struct ScrollProperty
 {
@@ -48,35 +46,25 @@ public:
 		ar("BandWidth", BandWidth);
 		ar("DeltaScroll", DeltaScroll);
 	}
-
 };
 
-struct GridViewProperty
+struct GridViewProperty:public SheetProperty
 {
 public:
-	std::shared_ptr<BackgroundProperty> BackgroundPropPtr;
-	std::shared_ptr<HeaderProperty> HeaderPropPtr; 
-	std::shared_ptr<CellProperty> CellPropPtr; 
-	std::shared_ptr<int> DeltaScrollPtr;
 	std::shared_ptr<ScrollProperty> VScrollPropPtr;
 	std::shared_ptr<ScrollProperty> HScrollPropPtr;
 
 	GridViewProperty()
-		:HeaderPropPtr(std::make_shared<HeaderProperty>()),
-		BackgroundPropPtr(std::make_shared<BackgroundProperty>()),
-		CellPropPtr(std::make_shared<CellProperty>()),
+		:SheetProperty(),
 		VScrollPropPtr(std::make_shared<ScrollProperty>()),
 		HScrollPropPtr(std::make_shared<ScrollProperty>()){ }
 
-	virtual ~GridViewProperty() {};
+	virtual ~GridViewProperty() = default;
 
-	FRIEND_SERIALIZER
     template <class Archive>
     void serialize(Archive& ar)
     {
-		ar("BackgroundProperty", BackgroundPropPtr);
-		ar("HeadersProperty",HeaderPropPtr);
-		ar("CellsProperty",CellPropPtr);
+		SheetProperty::serialize(ar);
 		ar("VScrollProperty", VScrollPropPtr);
 		ar("HScrollProperty", HScrollPropPtr);
     }

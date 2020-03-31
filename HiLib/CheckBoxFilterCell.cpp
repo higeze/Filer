@@ -7,17 +7,19 @@
 //
 
 CCheckBoxFilterCell::CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-	:CCheckBoxCell(pSheet, pRow, pColumn, spProperty){}
-
-bool CCheckBoxFilterCell::GetCheck() const 
-{ 
-	std::wstring filter = m_pColumn->GetFilter();
-	return filter.empty() ? false : boost::lexical_cast<bool>(m_pColumn->GetFilter());
+	:CCheckBoxCell(pSheet, pRow, pColumn, spProperty)
+{
+	SetCheckBoxType(CheckBoxType::ThreeState);
 }
 
-void CCheckBoxFilterCell::SetCheck(bool check)
+CheckBoxState CCheckBoxFilterCell::GetCheckBoxState() const
 { 
-	return m_pColumn->SetFilter(boost::lexical_cast<std::wstring>(check));
+	return Str2State(m_pColumn->GetFilter());
+}
+
+void CCheckBoxFilterCell::SetCheckBoxState(const CheckBoxState& state)
+{ 
+	return m_pColumn->SetFilter(State2Str(state));
 }
 
 std::wstring CCheckBoxFilterCell::GetString()
@@ -48,7 +50,7 @@ void CCheckBoxFilterCell::OnPropertyChanged(const wchar_t* name)
 {
 	if (!_tcsicmp(L"value", name)) {
 		//Update valid flag
-		m_bFitMeasureValid = false;
+		m_isFitMeasureValid = false;
 		m_bActMeasureValid = false;
 	} else if (!_tcsicmp(L"size", name)) {
 		m_bActMeasureValid = false;

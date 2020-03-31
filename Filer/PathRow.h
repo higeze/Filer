@@ -4,15 +4,14 @@
 
 class CColumn;
 class CPathCell;
-class CParentRowHeaderCell;
 
-class CPathRow :public CParentHeaderRow
+class CPathRow :public CHeaderRow
 {
 private:
 	std::shared_ptr<CCell> m_spPathCell;
 	std::shared_ptr<CCell> m_spHeaderCell;
 public:
-	CPathRow(CGridView* pGrid) :CParentHeaderRow(pGrid) {}
+	CPathRow(CSheet* pSheet) :CHeaderRow(pSheet) {}
 
 	virtual bool HasCell()const override{ return true; }
 	virtual std::shared_ptr<CCell>& Cell(CColumn* pCol) override;

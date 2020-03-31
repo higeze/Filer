@@ -1,28 +1,35 @@
 #pragma once
 #include "SheetCell.h"
+#include "BindSheetCellColumn.h"
+#include "IBindSheet.h"
 #include "observable.h"
 
-template<typename T>
-class CBindSheetCell :public CSheetCell
+template<typename TItem, typename TValueItem>
+class CBindSheetCell :public CSheetCell, public IBindSheet<TValueItem>
 {
-private:
-	observable_vector<T> m_itemsSource;
 public:
 	CBindSheetCell(
-		CSheet* pSheet = nullptr,
-		CRow* pRow = nullptr,
-		CColumn* pColumn = nullptr,
-		std::shared_ptr<CellProperty> spProperty = nullptr,
-		std::shared_ptr<HeaderProperty> spHeaderProperty = nullptr,
-		std::shared_ptr<CellProperty> spFilterProperty = nullptr,
-		std::shared_ptr<CellProperty> spCellProperty = nullptr)
-		:CSheetCell(pSheet, pRow, pColumn, spProperty, spHeaderProperty, spFilterProperty, spCellProperty)
+		CSheet* pSheet,
+		CRow* pRow,
+		CColumn* pColumn,
+		std::shared_ptr<SheetProperty> spSheetProperty,
+		std::shared_ptr<CellProperty> spCellProperty,
+		std::function<void(CBindSheetCell<TItem, TValueItem>*)> initializer)
+		:CSheetCell(pSheet, pRow, pColumn, spSheetProperty, spCellProperty)
 	{
-		m_itemsSource.VectorChanged.connect(
-			[this](const NotifyVectorChangedEventArgs<T>& e)->void {
+		initializer(this);
+
+		auto& itemsSource = GetItemsSource();
+
+		for (auto& item : itemsSource) {
+			PushRow(std::make_shared<CBindRow<TValueItem>>(this));
+		}
+
+		GetItemsSource().VectorChanged.connect(
+			[this](const NotifyVectorChangedEventArgs<TValueItem>& e)->void {
 				switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
-					PushRow(std::make_shared<CBindRow<T>>(this));
+					PushRow(std::make_shared<CBindRow<TValueItem>>(this));
 					break;
 				case NotifyVectorChangedAction::Remove:
 					EraseRow(m_allRows.back());
@@ -37,10 +44,15 @@ public:
 		);
 	}
 
-	virtual bool HasSheetCell()override { return false; }
+	virtual bool HasSheetCell()override { return true; }
 	virtual bool IsVirtualPage()override { return true; }
 
-	observable_vector<T>& GetItemsSource() { return m_itemsSource; }
+	observable_vector<TValueItem>& GetItemsSource() override
+	{
+		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
+		auto pBindColumn = static_cast<CBindSheetCellColumn<TItem, TValueItem>*>(m_pColumn);
+		return pBindColumn->GetItemser()(pBindRow->GetItem());
+	}
 
 	/******************/
 	/* Window Message */
@@ -51,6 +63,12 @@ public:
 	/****************/
 	void Normal_ContextMenu(const ContextMenuEvent& e) override
 	{
+		auto spCell = Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+		if (spCell) {
+			spCell->OnContextMenu(e);
+			if (e.Handled) { return; }
+		}
+
 		//CreateMenu
 		CMenu menu(::CreatePopupMenu());
 		//Add Row
@@ -69,20 +87,21 @@ public:
 
 		CPoint ptClient(e.Point);
 		CPoint ptScreen(e.Point);
-		ClientToScreen(ptScreen);
-		::SetForegroundWindow(m_hWnd);
+		e.WndPtr->ClientToScreen(ptScreen);
+		::SetForegroundWindow(e.WndPtr->m_hWnd);
 		int idCmd = menu.TrackPopupMenu(
 			TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
 			ptScreen.x,
 			ptScreen.y,
-			m_hWnd);
+			e.WndPtr->m_hWnd);
 
 		if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
-			m_itemsSource.notify_push_back(T());
+			GetItemsSource().notify_push_back(TValueItem());
 		} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
-			auto a = Cell(m_pDirect->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>();
-			m_itemsSource.notify_erase(m_itemsSource.cbegin() + Cell(m_pDirect->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount);
+			auto a = Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>();
+			GetItemsSource().notify_erase(GetItemsSource().cbegin() + Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount);
 		}
+		e.Handled = TRUE;
 
 	}
 

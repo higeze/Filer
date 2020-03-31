@@ -91,7 +91,7 @@ D2DTextbox::D2DTextbox(
 	//nLineCnt_ = 0;
 	//row_width_ = 0;
 
-	QueryPerformanceFrequency(&m_frequency);
+//	QueryPerformanceFrequency(&m_frequency);
 	if (m_pDocumentMgr) {
 		s_pThreadMgr->SetFocus(m_pDocumentMgr);
 	}
@@ -116,6 +116,7 @@ D2DTextbox::D2DTextbox(
 /**************/
 D2DTextbox::~D2DTextbox()
 {
+	m_timer.stop();
 	UninitTSF();
 }
 
@@ -199,8 +200,11 @@ void D2DTextbox::MoveSelection(const int& selFirst, const int& selLast)
 /**************/
 void D2DTextbox::OnClose(const CloseEvent& e)
 {
-	m_final(m_text);
-	delete this;
+	if (!m_isClosing) {
+		m_isClosing = true;
+		m_final(m_text);
+		delete this;
+	}
 }
 
 void D2DTextbox::OnPaint(const PaintEvent& e)
@@ -211,7 +215,7 @@ void D2DTextbox::OnPaint(const PaintEvent& e)
 	e.WndPtr->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->EditLine), GetClientRect());
 	//PaintContent
 	Render();
-	m_pWnd->Invalidate();
+	//m_pWnd->Invalidate();
 }
 
 void D2DTextbox::OnKeyDown(const KeyDownEvent& e)
@@ -391,7 +395,7 @@ void D2DTextbox::OnChar(const CharEvent& e)
 	}
 
 	// normal character input. not TSF.
-	if (e.Char >= L' ' || e.Char == L'\r') {
+	if (e.Char >= L' ') {
 		if (e.Char < 256) {
 			WCHAR wc[] = { static_cast<WCHAR>(e.Char), '\0' };
 			InsertAtSelection(wc);
@@ -460,24 +464,41 @@ d2dw::CRectF D2DTextbox::GetContentRect() const
 
 void D2DTextbox::ResetCaret()
 {
-	QueryPerformanceCounter(&m_pregtm);
+	SPDLOG_INFO("ResetCaret");
+
 	m_bCaret = true;
+	m_pWnd->PostUpdate(Updates::Invalidate);
+	m_timer.run_interval([this]()->void
+		{
+			m_bCaret = !m_bCaret;
+			m_pWnd->Invalidate();
+		}, 
+		std::chrono::milliseconds(::GetCaretBlinkTime()));
+	///QueryPerformanceCounter(&m_pregtm);
+	///m_bCaret = true;
 }
 
 void D2DTextbox::DrawCaret(const d2dw::CRectF& rc)
 {
-	QueryPerformanceCounter(&m_gtm);
+	if (m_isFirstDrawCaret) {
+		m_isFirstDrawCaret = false;
+		ResetCaret();
+	}
 
-	float zfps = (float)(m_gtm.QuadPart - m_pregtm.QuadPart) / (float)m_frequency.QuadPart;
+///	QueryPerformanceCounter(&m_gtm);
 
-	if (zfps > 0.5f) {
-		m_pregtm = m_gtm;
-		m_bCaret = !m_bCaret;
-	} else if(m_bCaret){
+///	float zfps = (float)(m_gtm.QuadPart - m_pregtm.QuadPart) / (float)m_frequency.QuadPart;
+
+	//if (zfps > 0.5f) {
+	//	m_pregtm = m_gtm;
+	//	m_bCaret = !m_bCaret;
+	//} else if(m_bCaret){
+	if (m_bCaret) {
 		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 		m_pWnd->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, rc);
 		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	}
+	//}
 }
 
 void D2DTextbox::CancelEdit()
@@ -497,6 +518,11 @@ void D2DTextbox::ClearText()
 {
 	m_text.notify_clear();
 	MoveCaret(0);
+}
+
+bool D2DTextbox::IsVisible()const
+{
+	return m_pCell->IsVisible();
 }
 
 void D2DTextbox::Render()

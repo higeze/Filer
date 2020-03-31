@@ -27,6 +27,8 @@
 #include "BindTextCell.h"
 #include "BindCheckBoxColumn.h"
 #include "BindCheckBoxCell.h"
+#include "BindSheetCellColumn.h"
+#include "BindSheetCell.h"
 
 
 #include "Task.h"
@@ -62,7 +64,7 @@ CFilerWnd::CFilerWnd()
 	.lpszMenuName(MAKEINTRESOURCE(IDR_MENU_FILER));
 
 	m_cwa
-	.lpszWindowName(L"FilerWnd") 
+	.lpszWindowName(L"Filer") 
 	.lpszClassName(L"CFilerWnd")
 	.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN )
 	.x(m_rcWnd.left)
@@ -353,7 +355,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 
 							PROCESS_INFORMATION pi = { 0 };
 							DWORD len = 0;
-							spdlog::info("CreateProcess: {}", wstr2str(cmdline));
+							SPDLOG_INFO("CreateProcess: {}", wstr2str(cmdline));
 
 							if (!::CreateProcess(NULL, const_cast<LPWSTR>(cmdline.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) break;
 							if (!::WaitForInputIdle(pi.hProcess, INFINITE) != 0)break;
@@ -361,7 +363,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 
 							DWORD exitCode = 0;
 							if (!::GetExitCodeProcess(pi.hProcess, &exitCode))break;
-							spdlog::info("ExitCode: {}", exitCode);
+							SPDLOG_INFO("ExitCode: {}", exitCode);
 
 							::CloseHandle(pi.hThread);
 							::CloseHandle(pi.hProcess);
@@ -370,7 +372,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 							std::string buff;
 							if (len > 0 && ReadFile(hRead, (LPVOID)::GetBuffer(buff, len), len, &len, NULL)) {
 								::ReleaseBuffer(buff);
-								spdlog::info("Output: {}", buff);
+								SPDLOG_INFO("Output: {}", buff);
 							}
 
 						} while (0);
@@ -686,14 +688,7 @@ LRESULT CFilerWnd::OnCommandExeExtensionOption(WORD wNotifyCode, WORD wID, HWND 
 
 LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	//return OnCommandOption<CFilerTabGridView, std::shared_ptr<FilerGridViewProperty>>(
-	//	L"Left View", m_spLeftView,
-	//	[this](const std::wstring& str)->void {
-	//	m_spLeftFavoritesView->UpdateAll();
-	//	m_spRightFavoritesView->UpdateAll();
-	//	SerializeProperty(this);
-	//}, m_spFilerGridViewProp);
-	auto pBindWnd = new CBindGridView<Task>(std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp));
+	auto pBindWnd = new CBindGridView<MainTask>(std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp));
 
 	pBindWnd->RegisterClassExArgument()
 		.lpszClassName(L"CBindWnd")
@@ -711,34 +706,73 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 
 	pBindWnd->SetIsDeleteOnFinalMessage(true);
 
-	pBindWnd->PushColumn(std::make_shared<CBindCheckBoxColumn<Task>>(
-		pBindWnd,
-		L"Done",
-		[](const Task& tk)->bool {return tk.Done; },
-		[](Task& tk, const bool check)->void {tk.Done = check; }));
-	pBindWnd->PushColumn(std::make_shared<CBindTextColumn<Task>>(
-		pBindWnd,
-		L"Name",
-		[](const Task& tk)->std::wstring {return tk.Name; },
-		[](Task& tk, const std::wstring& str)->void {tk.Name = str; }));
-	pBindWnd->PushColumn(std::make_shared<CBindTextColumn<Task>>(
-		pBindWnd,
-		L"Memo",
-		[](const Task& tk)->std::wstring {return tk.Memo; },
-		[](Task& tk, const std::wstring& str)->void {tk.Name = str; }));
+	//Columns
+	pBindWnd->SetHeaderColumnPtr(std::make_shared<CParentRowHeaderColumn>(pBindWnd));
+	pBindWnd->PushColumns(
+		pBindWnd->GetHeaderColumnPtr(),
+		std::make_shared<CBindCheckBoxColumn<MainTask>>(
+			pBindWnd,
+			L"Done",
+			[](const MainTask& tk)->CheckBoxState {return tk.Done?CheckBoxState::True:CheckBoxState::False; },
+			[](MainTask& tk, const CheckBoxState& state)->void {tk.Done = state == CheckBoxState::True ? true : false; }),
+		std::make_shared<CBindTextColumn<MainTask>>(
+			pBindWnd,
+			L"Name",
+			[](const MainTask& tk)->std::wstring {return tk.Name; },
+			[](MainTask& tk, const std::wstring& str)->void {tk.Name = str; }),
+		std::make_shared<CBindTextColumn<MainTask>>(
+			pBindWnd,
+			L"Memo",
+			[](const MainTask& tk)->std::wstring {return tk.Memo; },
+			[](MainTask& tk, const std::wstring& str)->void {tk.Memo = str; }),
+		std::make_shared<CBindSheetCellColumn< MainTask, SubTask>>(
+			pBindWnd,
+			L"Sub Task",
+			[](MainTask& tk)->observable_vector<SubTask>& {return tk.SubTasks; },
+			[](CBindSheetCell<MainTask, SubTask>* pCell)->void 
+			{
+				pCell->SetHeaderColumnPtr(std::make_shared<CParentRowHeaderColumn>(pCell));
+				pCell->PushColumns(
+					pCell->GetHeaderColumnPtr(),
+					std::make_shared<CBindCheckBoxColumn<SubTask>>(
+						pCell,
+						L"Done",
+						[](const SubTask& tk)->CheckBoxState {return tk.Done ? CheckBoxState::True : CheckBoxState::False; },
+						[](SubTask& tk, const CheckBoxState& state)->void {tk.Done = state == CheckBoxState::True ? true : false; }),
+					std::make_shared<CBindTextColumn<SubTask>>(
+						pCell,
+						L"Name",
+						[](const SubTask& tk)->std::wstring {return tk.Name; },
+						[](SubTask& tk, const std::wstring& str)->void {tk.Name = str; }),
+					std::make_shared<CBindTextColumn<SubTask>>(
+						pCell,
+						L"Memo",
+						[](const SubTask& tk)->std::wstring {return tk.Memo; },
+						[](SubTask& tk, const std::wstring& str)->void {tk.Memo = str; })
+				);
+				pCell->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pCell));
+				pCell->PushRows(pCell->GetNameHeaderRowPtr());
+				pCell->SetFrozenCount<RowTag>(1);
+			},
+			arg<"maxwidth"_s>() = FLT_MAX)
+		);
+	pBindWnd->SetFrozenCount<ColTag>(1);
 
-	pBindWnd->SetNameHeaderRowPtr(std::make_shared<CParentHeaderRow>(pBindWnd));
-	pBindWnd->SetFilterRowPtr(std::make_shared<CParentRow>(pBindWnd));
+	//Rows
+	pBindWnd->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pBindWnd));
+	pBindWnd->SetFilterRowPtr(std::make_shared<CRow>(pBindWnd));
 
-	pBindWnd->PushRow(pBindWnd->GetNameHeaderRowPtr());
-	pBindWnd->PushRow(pBindWnd->GetFilterRowPtr());
+	pBindWnd->PushRows(
+		pBindWnd->GetNameHeaderRowPtr(),
+		pBindWnd->GetFilterRowPtr());
 
 	pBindWnd->SetFrozenCount<RowTag>(2);
 
-	pBindWnd->GetItemsSource().notify_push_back(Task{ true, L"Test", L"mon" });
-	pBindWnd->GetItemsSource().notify_push_back(Task{ false, L"PVA", L"Tue" });
-	pBindWnd->GetItemsSource().notify_push_back(Task{ true, L"NAME", L"Run" });
-
+	pBindWnd->GetItemsSource().notify_push_back(MainTask{ true, L"Test", L"mon" });
+	pBindWnd->GetItemsSource().notify_push_back(MainTask{ false, L"PVA", L"Tue" });
+	pBindWnd->GetItemsSource().notify_push_back(MainTask{ true, L"NAME", L"Run" });
+	pBindWnd->GetItemsSource()[2].SubTasks.notify_push_back(SubTask{ true, L"SUB", L"TODO" });
+	pBindWnd->GetItemsSource()[2].SubTasks.notify_push_back(SubTask{ true, L"SUB2", L"TET" });
 
 	HWND hWnd = NULL;
 	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
@@ -750,9 +784,6 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 	pBindWnd->CreateOnCenterOfParent(hWnd, CSize(400, 600));
 	pBindWnd->ShowWindow(SW_SHOW);
 	pBindWnd->UpdateWindow();
-
-
-
 	return 0;
 }
 

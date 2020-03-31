@@ -25,6 +25,8 @@ public:
 protected:
 	d2dw::CSizeF GetIconSizeF(d2dw::CDirect2DWrite* pDirect)const;
 	CSize GetIconSize(d2dw::CDirect2DWrite* pDirect)const;
+	std::wstring GetViewString();
+	
 
 
 };

@@ -26,21 +26,17 @@ class CCellSerializer
 {
 private:
 	std::weak_ptr<CSheet> m_pSheet;
-	//CDC* m_pDC;
-	std::shared_ptr<HeaderProperty> m_spPropSheetCellHeader;
-	std::shared_ptr<CellProperty> m_spPropSheetCellFilter;
-	std::shared_ptr<CellProperty> m_spPropSheetCellCell;
+
+	std::shared_ptr<SheetProperty> m_spSheetProperty;
+	std::shared_ptr<CellProperty> m_spCellProperty;
 
 public:
 	CCellSerializer(
 		std::shared_ptr<CSheet> pSheet,
-		std::shared_ptr<HeaderProperty> spPropSheetCellHeader,
-		std::shared_ptr<CellProperty> spPropSheetCellFilter,
-		std::shared_ptr<CellProperty> spPropSheetCellCell)
+		std::shared_ptr<SheetProperty> spSheetProperty,
+		std::shared_ptr<CellProperty> spCellProperty)
 		:m_pSheet(pSheet),
-		m_spPropSheetCellHeader(spPropSheetCellHeader),
-		m_spPropSheetCellFilter(spPropSheetCellFilter),
-		m_spPropSheetCellCell(spPropSheetCellCell){}
+		m_spSheetProperty(spSheetProperty){}
 	virtual ~CCellSerializer(){}
 
 	template<class T, typename ENABLE_IF_SERIALIZE>
@@ -78,9 +74,9 @@ public:
 			std::shared_ptr<CColumn> pColValue;	
 			if(auto pSheet=std::dynamic_pointer_cast<CGridView>(spSheet)){
 				if(pSheet->Empty()){
-					auto pRowHeader=std::make_shared<CParentHeaderRow>(pSheet.get());
-					auto pRowFilter=std::make_shared<CParentRow>(pSheet.get());
-					pRow=std::make_shared<CParentRow>(pSheet.get());
+					auto pRowHeader=std::make_shared<CHeaderRow>(pSheet.get());
+					auto pRowFilter=std::make_shared<CRow>(pSheet.get());
+					pRow=std::make_shared<CRow>(pSheet.get());
 
 					pSheet->SetNameHeaderRowPtr(pRowHeader);
 					pSheet->SetFilterRowPtr(pRowFilter);
@@ -101,7 +97,7 @@ public:
 					pSheet->SetFrozenCount<ColTag>(1);
 
 				}else{
-					pRow=std::make_shared<CParentRow>(pSheet.get());
+					pRow=std::make_shared<CRow>(pSheet.get());
 					pSheet->PushRow(pRow);
 					pColProperty=pSheet->Index2Pointer<ColTag, AllTag>(pSheet->GetFrozenCount<ColTag>());
 					pColValue=pSheet->Index2Pointer<ColTag, AllTag>(pSheet->GetFrozenCount<ColTag>() + 1);
@@ -110,8 +106,8 @@ public:
 			}else if(auto pSheet=std::dynamic_pointer_cast<CSheetCell>(spSheet)){
 
 				if(pSheet->Empty()){
-					auto pChildRowHeader=std::make_shared<CChildHeaderRow>(pSheet.get());
-					pRow = std::make_shared<CChildRow>(pSheet.get());
+					auto pChildRowHeader=std::make_shared<CHeaderRow>(pSheet.get());
+					pRow = std::make_shared<CRow>(pSheet.get());
 					pSheet->SetHeaderRowPtr(pChildRowHeader);
 					pSheet->PushRow(pChildRowHeader);
 					pSheet->PushRow(pRow);
@@ -124,7 +120,7 @@ public:
 					pSheet->PushColumn(pColValue);
 					pSheet->SetFrozenCount<ColTag>(0);
 				}else{
-					pRow=std::make_shared<CChildRow>(pSheet.get());
+					pRow=std::make_shared<CRow>(pSheet.get());
 					pSheet->PushRow(pRow);
 					pColProperty = pSheet->Index2Pointer<ColTag, AllTag>(pSheet->GetFrozenCount<ColTag>());
 					pColValue = pSheet->Index2Pointer<ColTag, AllTag>(pSheet->GetFrozenCount<ColTag>() + 1);
@@ -209,14 +205,12 @@ public:
 				spSheet.get(),
 				pRow,
 				pCol,
-				spSheet->GetCellProperty(),
-				m_spPropSheetCellHeader,
-				m_spPropSheetCellFilter,
-				m_spPropSheetCellCell));
+				m_spSheetProperty,
+				m_spCellProperty));
 
 			pCol->Cell(pRow)=spSheetCell;
 
-			t.serialize(CCellSerializer(std::dynamic_pointer_cast<CSheet>(spSheetCell),m_spPropSheetCellHeader,m_spPropSheetCellFilter,m_spPropSheetCellCell));
+			t.serialize(CCellSerializer(std::dynamic_pointer_cast<CSheet>(spSheetCell),m_spSheetProperty, m_spCellProperty));
 			spSheetCell->UpdateAll();
 		}
 	}
@@ -231,14 +225,12 @@ public:
 					spSheet.get(),
 					pRow,
 					pCol,
-					spSheet->GetCellProperty(),
-					m_spPropSheetCellHeader,
-					m_spPropSheetCellFilter,
-					m_spPropSheetCellCell));
+					m_spSheetProperty,
+					m_spCellProperty));
 
 			pCol->Cell(pRow) = spSheetCell;
 
-			t.save(CCellSerializer(std::dynamic_pointer_cast<CSheet>(spSheetCell), m_spPropSheetCellHeader, m_spPropSheetCellFilter, m_spPropSheetCellCell));
+			t.save(CCellSerializer(std::dynamic_pointer_cast<CSheet>(spSheetCell), m_spSheetProperty, m_spCellProperty));
 			spSheetCell->UpdateAll();
 		}
 	}
@@ -262,12 +254,10 @@ public:
 				spSheet.get(),
 				pRow,
 				pCol,
-				spSheet->GetCellProperty(),
-				m_spPropSheetCellHeader,
-				m_spPropSheetCellFilter,
-				m_spPropSheetCellCell);
+				m_spSheetProperty,
+				m_spCellProperty);
 
-			auto pChildRowHeader=std::make_shared<CChildHeaderRow>(spSheetCell.get());
+			auto pChildRowHeader=std::make_shared<CHeaderRow>(spSheetCell.get());
 			spSheetCell->SetHeaderRowPtr(pChildRowHeader);
 			spSheetCell->PushRow(pChildRowHeader);
 			
@@ -276,9 +266,9 @@ public:
 
 			spSheetCell->PushColumn(pColIndex);
 			spSheetCell->PushColumn(pColValue);
-			CCellSerializer serializer(spSheetCell,m_spPropSheetCellHeader,m_spPropSheetCellFilter,m_spPropSheetCellCell);
+			CCellSerializer serializer(spSheetCell,m_spSheetProperty,m_spCellProperty);
 			for(auto& val : t){
-				spRow=std::make_shared<CChildRow>(spSheetCell.get());
+				spRow=std::make_shared<CRow>(spSheetCell.get());
 				spSheetCell->PushRow(spRow);
 				//pColProperty=pSheet->AllColumn(0);
 				pColValue=spSheetCell->Index2Pointer<ColTag, AllTag>(spSheetCell->GetFrozenCount<ColTag>() + 1);

@@ -1,17 +1,17 @@
 #pragma once
 
-#include "ParentMapColumn.h"
+#include "MapColumn.h"
 
-class CFileExtColumn:public CParentDefaultMapColumn
+class CFileExtColumn:public CMapColumn
 {
 public:
-	CFileExtColumn(CGridView* pGrid = nullptr)
-		:CParentDefaultMapColumn(pGrid){}
+	CFileExtColumn(CSheet* pSheet = nullptr)
+		:CMapColumn(pSheet){}
 	~CFileExtColumn(void){}
 
 	virtual CColumn& ShallowCopy(const CColumn& column)override
 	{
-		CParentDefaultMapColumn::ShallowCopy(column);
+		CMapColumn::ShallowCopy(column);
 		return *this;
 	}
 	virtual CFileExtColumn* CloneRaw()const{return new CFileExtColumn(*this);}

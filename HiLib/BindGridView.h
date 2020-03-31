@@ -4,21 +4,22 @@
 #include "observable.h"
 #include "MyString.h"
 #include "MyXmlSerializer.h"
+#include "IBindSheet.h"
 
-template<typename T>
-class CBindGridView :public CGridView
+template<typename TItem>
+class CBindGridView :public CGridView, public IBindSheet<TItem>
 {
 private:
-	observable_vector<T> m_itemsSource;
+	observable_vector<TItem> m_itemsSource;
 public:
 	CBindGridView(std::shared_ptr<GridViewProperty>& spGridViewProp)
 		:CGridView(spGridViewProp)
 	{
 		m_itemsSource.VectorChanged.connect(
-			[this](const NotifyVectorChangedEventArgs<T>& e)->void {
+			[this](const NotifyVectorChangedEventArgs<TItem>& e)->void {
 				switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
-					PushRow(std::make_shared<CBindRow<T>>(this));
+					PushRow(std::make_shared<CBindRow<TItem>>(this));
 					break;
 				case NotifyVectorChangedAction::Remove:
 					EraseRow(m_allRows.back());
@@ -33,12 +34,10 @@ public:
 		);
 	}
 
-	
-
 	virtual bool HasSheetCell()override { return true; }
 	virtual bool IsVirtualPage()override { return true; }
 
-	observable_vector<T>& GetItemsSource() { return m_itemsSource; }
+	observable_vector<TItem>& GetItemsSource() override { return m_itemsSource; }
 
 	/******************/
 	/* Window Message */
@@ -47,8 +46,15 @@ public:
 	/****************/
 	/* StateMachine */
 	/****************/
+
 	void Normal_ContextMenu(const ContextMenuEvent& e) override
 	{
+		auto spCell = Cell(m_pDirect->Pixels2Dips(e.Point));
+		if (spCell) {
+			spCell->OnContextMenu(e);
+			if (e.Handled) { return; }
+		}
+
 		//CreateMenu
 		CMenu menu(::CreatePopupMenu());
 		//Add Row
@@ -76,12 +82,12 @@ public:
 			m_hWnd);
 
 		if(idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")){
-			m_itemsSource.notify_push_back(T());
+			m_itemsSource.notify_push_back(TItem());
 		} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
 			auto a = Cell(m_pDirect->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>();
 			m_itemsSource.notify_erase(m_itemsSource.cbegin() + Cell(m_pDirect->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount);
 		}
-
+		e.Handled = TRUE;
 	}
 
 	void Normal_KeyDown(const KeyDownEvent& e) override
@@ -110,10 +116,10 @@ public:
 				} else {
 					::ReleaseBuffer(path);
 					//Deserialize
-					std::vector<T> itemsSource;
+					std::vector<TItem> itemsSource;
 					try {
 						//Serialize
-						CXMLSerializer<std::vector<T>> serializer;
+						CXMLSerializer<std::vector<TItem>> serializer;
 						serializer.Deserialize(path.c_str(), L"Task", itemsSource);
 						//m_itemsSource.notify_clear();//TODOTODO
 						while (!m_itemsSource.empty()) {
@@ -152,9 +158,9 @@ public:
 					::ReleaseBuffer(path);
 					//Serialize
 					try {
-						std::vector<T> itemsSource;
+						std::vector<TItem> itemsSource;
 						std::copy(m_itemsSource.cbegin(), m_itemsSource.cend(), std::back_inserter(itemsSource));
-						CXMLSerializer<std::vector<T>> serializer;
+						CXMLSerializer<std::vector<TItem>> serializer;
 						serializer.Serialize(path.c_str(), L"Task", itemsSource);
 					}
 					catch (/*_com_error &e*/...) {
@@ -162,8 +168,17 @@ public:
 				}
 			}
 			break;
+		case VK_F2:
+		{
+			//TODOTODO
+			//if (m_spCursorer->GetFocusedCell()) {
+			//	std::static_pointer_cast<CFileIconNameCell>(CSheet::Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(EventArgs(this));
+			//}
+		}
+		break;
+
 		default:
-			break;
+			CGridView::Normal_KeyDown(e);
 		}
 	}
 

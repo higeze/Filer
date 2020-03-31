@@ -6,9 +6,6 @@
 #include "PathCell.h"
 #include "CellProperty.h"
 
-CFileNameColumn::CFileNameColumn(CGridView* pGrid)
-		:CParentDefaultMapColumn(pGrid){}
-
 std::shared_ptr<CCell> CFileNameColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CPathCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());	

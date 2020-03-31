@@ -368,9 +368,6 @@
     <ClInclude Include="..\HiLib\ParentHeaderCell.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\ParentMapColumn.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\ParentRowHeaderCell.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -647,6 +644,18 @@
     <ClInclude Include="..\HiLib\BindSheetCellColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\Timer.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\MapColumn.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\IBindSheet.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\SheetProperty.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -814,9 +823,6 @@
     <ClCompile Include="..\HiLib\ParentHeaderCell.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\ParentMapColumn.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\ParentRowHeaderCell.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -845,9 +851,6 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\TextCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\Tracker.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\UIElement.cpp">
@@ -986,6 +989,12 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\CheckBoxCell.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Timer.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\MapColumn.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

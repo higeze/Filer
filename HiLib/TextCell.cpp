@@ -31,6 +31,7 @@ d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
+	
 	d2dw::CRectF rcCenter(0,0,m_pColumn->GetWidth(),0);
 	d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
 
@@ -46,7 +47,9 @@ d2dw::CRectF CTextCell::GetEditRect() const
 
 void CTextCell::OnEdit(const EventArgs& e)
 {
-	m_pSheet->GetGridPtr()->BeginEdit(this);
+	if (IsVisible()) {
+		m_pSheet->GetGridPtr()->BeginEdit(this);
+	}
 }
 
 void CTextCell::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)

@@ -6,8 +6,8 @@
 #include "PathCell.h"
 #include "CellProperty.h"
 
-CFileIconColumn::CFileIconColumn(CGridView* pGrid)
-		:CParentDefaultMapColumn(pGrid){}
+CFileIconColumn::CFileIconColumn(CSheet* pSheet)
+		:CMapColumn(pSheet){}
 
 
 std::shared_ptr<CCell> CFileIconColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)

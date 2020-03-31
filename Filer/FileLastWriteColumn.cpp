@@ -8,8 +8,8 @@
 #include "FileSizeArgs.h"
 
 
-CFileLastWriteColumn::CFileLastWriteColumn(CGridView* pGrid, std::shared_ptr<FileTimeArgs> spTimeProp)
-	:CParentDefaultMapColumn(pGrid), m_spTimeArgs(spTimeProp){}
+CFileLastWriteColumn::CFileLastWriteColumn(CSheet* pSheet, std::shared_ptr<FileTimeArgs> spTimeProp)
+	:CMapColumn(pSheet), m_spTimeArgs(spTimeProp){}
 
 std::shared_ptr<CCell> CFileLastWriteColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {

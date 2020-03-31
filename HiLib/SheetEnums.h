@@ -1,13 +1,60 @@
 #pragma once
 
 
-enum class SizingType
-{
-	None,
-	Fit,
-	Depend,
-	Independ,
-};
+//enum class SizingType
+//{
+//	None,
+//	AlwaysFit,
+//	Depend,
+//	Independ,
+//};
+
+//enum class ColumnSizingType
+//{
+//	AlwaysFit_UnTrackable,
+//	MinFitMaxInf_Trackable,
+//	MinWrappableMaxInf_Trackable,
+//	Free_Trackable,
+//};
+//
+//enum class LengthType
+//{
+//	Value,
+//	Fit,
+//};
+//
+//enum class RowHeightType
+//{
+//	Value,
+//	Fit
+//};
+
+
+
+//If Cell-Value, Cell-Size Changed
+//Column:Fit Width to Max Cells Wi3dth // If Cell is Wrappable, Keep Width // If Cell is NotWrappable, Min-Fit, Max-Inf 
+
+//MinColumn
+//       Num Fit
+//  Wrap O   O
+//NoWrap O   O
+
+//       Num, Fit, INF
+
+
+//enum class RowSizingType
+//{
+//	AlwaysFit_UnTrackable,
+//	MinFitMaxInf_Trackable,
+//	Free_Trackable,
+//};
+//
+//enum class CellSizingType
+//{
+//	Wrap,
+//	NoWrap
+//};
+//
 
 //enum class LineType
 //{

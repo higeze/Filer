@@ -5,7 +5,7 @@
 class CChildRowHeaderColumn:public CChildIndexColumn
 {
 public:
-	CChildRowHeaderColumn(CSheetCell* pSheetCell):CChildIndexColumn(pSheetCell){}
+	CChildRowHeaderColumn(CSheet* pSheet):CChildIndexColumn(pSheet){}
 	virtual ~CChildRowHeaderColumn(){}
 
 	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn);

@@ -29,9 +29,6 @@ private:
 	std::wstring m_wstrPropertyName;
 	std::shared_ptr<T> m_prop;
 	std::tuple<Args...> m_args;
-	std::shared_ptr<HeaderProperty> m_spPropSheetCellHeader;
-	std::shared_ptr<CellProperty> m_spPropSheetCellFilter;
-	std::shared_ptr<CellProperty> m_spPropSheetCellCell;
 
 	bool m_showDefault = true;
 	bool m_showApply = true;
@@ -51,14 +48,8 @@ public:
 		:CWnd(),
 		m_args(args...),
 		m_spGrid(std::make_shared<CPropertyGridView>(spGridViewProperty)),
-		m_spPropSheetCellHeader(spGridViewProperty->HeaderPropPtr),
-		m_spPropSheetCellFilter(spGridViewProperty->CellPropPtr),
-		m_spPropSheetCellCell(spGridViewProperty->CellPropPtr),
 		m_wstrPropertyName(wstrPropertyName),
 		m_prop(prop)//,
-//		m_showDefault(showDefault),
-//		m_showApply(showApply),
-//		m_isModal(isModal)
 	{
 		SetIsDeleteOnFinalMessage(true);
 
@@ -109,7 +100,7 @@ public:
 	LRESULT OnCommandDefault(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 	{
 		m_spGrid->Clear();
-		CCellSerializer serializer(m_spGrid,m_spPropSheetCellHeader,m_spPropSheetCellFilter,m_spPropSheetCellCell);
+		CCellSerializer serializer(m_spGrid,m_spGrid->GetSheetProperty(),m_spGrid->GetCellProperty());
 		serializer.Serialize(m_spGrid, m_wstrPropertyName.c_str(), MakeShared<T>());
 		m_buttonApply.EnableWindow(TRUE);
 		m_spGrid->SubmitUpdate();
@@ -215,7 +206,7 @@ public:
 		m_spGrid->Create(m_hWnd, rcGrid);
 
 		//Serializer have to be called after Creation, because Direct2DWrite is necessary
-		CCellSerializer serializer(m_spGrid, m_spPropSheetCellHeader, m_spPropSheetCellFilter, m_spPropSheetCellCell);
+		CCellSerializer serializer(m_spGrid, m_spGrid->GetSheetProperty(), m_spGrid->GetCellProperty());
 		serializer.Serialize(m_spGrid, m_wstrPropertyName.c_str(), m_prop);
 
 		m_spGrid->SubmitUpdate();

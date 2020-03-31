@@ -68,7 +68,7 @@ void CDirectoryWatcher::QuitWatching()
 void CDirectoryWatcher::WatchDirectory(const std::wstring& path, const std::vector<std::wstring>& names)
 {
 	try{
-		spdlog::info("Start CDirectoryWatcher::WatchDirectoryCallback");
+		SPDLOG_INFO("Start CDirectoryWatcher::WatchDirectoryCallback");
 
 		//Create File
 		m_path = path;
@@ -106,7 +106,7 @@ void CDirectoryWatcher::WatchDirectory(const std::wstring& path, const std::vect
 		//Terminate thread
 		futureCallback.get();
 
-		spdlog::info("End CDirectoryWatcher::WatchDirectoryCallback");
+		SPDLOG_INFO("End CDirectoryWatcher::WatchDirectoryCallback");
 	}catch(std::exception&){
 		FILE_LINE_FUNC_TRACE;
 	}
@@ -130,7 +130,7 @@ std::vector<std::wstring> CDirectoryWatcher::GetFileNamesInDirectory(const std::
 void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 {
 	try{
-		spdlog::info("Start CDirectoryWatcher::IoCompletionCallback");
+		SPDLOG_INFO("Start CDirectoryWatcher::IoCompletionCallback");
 
 		while (true) {
 			DWORD dwBytes = 0L;
@@ -150,7 +150,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 
 			//Keep watching
 			if (pOverlapped) {
-				spdlog::info("ReadDirectoryChangesW");
+				SPDLOG_INFO("ReadDirectoryChangesW");
 				//Associate iocompletionobject to thread pool
 				if (!ReadDirectoryChangesW(
 					hDir,
@@ -195,7 +195,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 
 					switch (pInfo->Action) {
 					case FILE_ACTION_ADDED:
-						spdlog::info("FILE_ACTION_ADDED");
+						SPDLOG_INFO("FILE_ACTION_ADDED");
 						{
 							auto iter = std::find(addDiff.begin(), addDiff.end(), fileName);
 							if (iter != addDiff.end()) {
@@ -205,7 +205,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 							break;
 						}
 					case FILE_ACTION_MODIFIED:
-						spdlog::info("FILE_ACTION_MODIFIED");
+						SPDLOG_INFO("FILE_ACTION_MODIFIED");
 						{
 							auto iter = std::find(fileNames.begin(), fileNames.end(), fileName);
 							if (iter != fileNames.end()) {
@@ -215,7 +215,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 						}
 						break;
 					case FILE_ACTION_REMOVED:
-						spdlog::info("FILE_ACTION_REMOVED");
+						SPDLOG_INFO("FILE_ACTION_REMOVED");
 						{
 							auto iter = std::find(remDiff.begin(), remDiff.end(), fileName);
 							if (iter != remDiff.end()) {
@@ -226,7 +226,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 						}
 						break;
 					case FILE_ACTION_RENAMED_NEW_NAME:
-						spdlog::info("FILE_ACTION_RENAMED_NEW_NAME");
+						SPDLOG_INFO("FILE_ACTION_RENAMED_NEW_NAME");
 						{
 							auto newIter = std::find(addDiff.begin(), addDiff.end(), fileName);
 							if (newIter != addDiff.end() && oldIter != remDiff.end()) {
@@ -240,7 +240,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 						}
 						break;
 					case FILE_ACTION_RENAMED_OLD_NAME:
-						spdlog::info("FILE_ACTION_RENAMED_OLD_NAME");
+						SPDLOG_INFO("FILE_ACTION_RENAMED_OLD_NAME");
 						{
 							oldIter = std::find(remDiff.begin(), remDiff.end(), fileName);
 						}

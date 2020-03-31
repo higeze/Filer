@@ -6,8 +6,8 @@
 #include "PathCell.h"
 #include "CellProperty.h"
 
-CFileIconPathColumn::CFileIconPathColumn(CGridView* pGrid)
-	:CFileNameColumn(pGrid)
+CFileIconPathColumn::CFileIconPathColumn(CSheet* pSheet)
+	:CFileNameColumn(pSheet)
 {
 }
 

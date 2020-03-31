@@ -176,8 +176,9 @@ struct ContextMenuEvent:public EventArgs
 {
 public:
 	CPoint Point;
-	ContextMenuEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
-		:EventArgs(pWnd),Point((short)LOWORD(lParam), (short)HIWORD(lParam)){}
+	BOOL& Handled;
+	ContextMenuEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL& handled)
+		:EventArgs(pWnd),Point((short)LOWORD(lParam), (short)HIWORD(lParam)), Handled(handled){}
 };
 
 

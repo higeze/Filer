@@ -2,5 +2,5 @@
 #include "ShellFile.h"
 
 
-CFileRow::CFileRow(CGridView* pGrid, std::shared_ptr<CShellFile> spFile)
-	:CParentRow(pGrid), m_spFile(spFile){}
+CFileRow::CFileRow(CSheet* pSheet, std::shared_ptr<CShellFile> spFile)
+	:CRow(pSheet), m_spFile(spFile){}

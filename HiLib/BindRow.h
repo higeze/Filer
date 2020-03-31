@@ -1,30 +1,22 @@
 #pragma once
 #include "Row.h"
+#include "IBindSheet.h"
+#include "Debug.h"
 
-template<typename T>
-class CBindRow :public CParentRow
+template<typename TItem>
+class CBindRow :public CRow
 {
 public:
-	CParentRow::CParentRow;
-};
+	using CRow::CRow;
 
-//CToDoGridView::CToDoGridView(std::shared_ptr<ToDoGridViewProperty>& spToDoGridViewProp)
-//{
-//	//Insert rows
-//	m_rowNameHeader = std::make_shared<CParentHeaderRow>(this);
-//	m_rowFilter = std::make_shared<CParentRow>(this);
-//
-//	InsertRowNotify(CRow::kMinIndex, m_rowFilter, false);
-//	InsertRowNotify(CRow::kMinIndex, m_rowNameHeader, false);
-//
-//	//Insert columns if not initialized
-//
-//		InsertColumnNotify(CColumn::kMinIndex, std::make_shared<CParentRowHeaderColumn>(this));
-//		m_pNameColumn = std::make_shared<CToDoNameColumn>(this);
-//		InsertColumnNotiry(CColumn::kMaxIndex, m_pNameColumn );
-//		insertFun(std::make_shared<CFileExtColumn>(this), CColumn::kMaxIndex);
-//		insertFun(std::make_shared<CFileSizeColumn>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr), CColumn::kMaxIndex);
-//		insertFun(std::make_shared<CFileLastWriteColumn>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr), CColumn::kMaxIndex);
-//	}
-//}
-//~CToDoGridView() = default;
+	TItem& GetItem()
+	{
+		if (auto pBindSheet = dynamic_cast<IBindSheet<TItem>*>(m_pSheet)) {
+			auto& itemsSource = pBindSheet->GetItemsSource();
+			auto index = GetIndex<AllTag>() - m_pSheet->GetFrozenCount<RowTag>();
+			return pBindSheet->GetItemsSource()[GetIndex<AllTag>() - m_pSheet->GetFrozenCount<RowTag>()];
+		} else {
+			throw std::exception(FILE_LINE_FUNC);
+		}
+	}
+};

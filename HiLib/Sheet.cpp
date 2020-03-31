@@ -25,13 +25,9 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 CMenu CSheet::ContextMenu;
 
 CSheet::CSheet(
-	std::shared_ptr<HeaderProperty> spHeaderProperty,
-	std::shared_ptr<CellProperty> spFilterProperty,
-	std::shared_ptr<CellProperty> spCellProperty,
+	std::shared_ptr<SheetProperty> spSheetProperty,
 	CMenu* pContextMenu)
-	:m_spHeaderProperty(spHeaderProperty),
-	m_spFilterProperty(spFilterProperty),
-	m_spCellProperty(spCellProperty),
+	:m_spSheetProperty(spSheetProperty),
 	m_bSelected(false),
 	m_bFocused(false),
 	m_pContextMenu(pContextMenu?pContextMenu:&CSheet::ContextMenu),
@@ -99,14 +95,14 @@ std::shared_ptr<CCell> CSheet::Cell(const d2dw::CPointF& pt)
 void CSheet::SetAllRowMeasureValid(bool valid)
 {
 	for (const auto& ptr : m_allRows) {
-		ptr->SetMeasureValid(valid);
+		ptr->SetIsMeasureValid(valid);
 	}
 }
 
 void CSheet::SetAllColumnMeasureValid(bool valid)
 {
 	for (const auto& ptr : m_allCols) {
-		ptr->SetMeasureValid(valid);
+		ptr->SetIsMeasureValid(valid);
 	}
 }
 
@@ -160,9 +156,9 @@ void CSheet::OnRowPropertyChanged(CRow* pRow, const wchar_t* name)
 
 void CSheet::OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name)
 {
-	if (!_tcsicmp(name, L"visible")) {
+	if (!_tcsicmp(name, L"visible") || !_tcsicmp(name, L"size")) {
 		for (const auto& ptr : m_allRows) {
-			ptr->SetMeasureValid(false);
+			ptr->SetIsMeasureValid(false);
 		}
 		PostUpdate(Updates::ColumnVisible);
 		PostUpdate(Updates::Column);
@@ -176,6 +172,17 @@ void CSheet::OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name)
 	}
 }
 
+void CSheet::OnVScrollPropertyChanged(d2dw::CVScroll* pScrl, const wchar_t* name)
+{
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Invalidate);
+}
+
+void CSheet::OnHScrollPropertyChanged(d2dw::CHScroll* pScrl, const wchar_t* name)
+{
+	PostUpdate(Updates::Column);
+	PostUpdate(Updates::Invalidate);
+}
 
 void CSheet::ColumnInserted(CColumnEventArgs& e)
 {
@@ -203,7 +210,7 @@ void CSheet::ColumnErased(CColumnEventArgs& e)
 
 void CSheet::ColumnHeaderFitWidth(CColumnEventArgs& e)
 {
-	e.m_pColumn->SetMeasureValid(false);
+	e.m_pColumn->SetIsMeasureValid(false);
 	for(const auto& ptr : m_allRows){
 		e.m_pColumn->Cell(ptr.get())->SetActMeasureValid(false);
 	}
@@ -515,17 +522,6 @@ FLOAT CSheet::GetRowHeight(CRow* pRow)
 		});
 }
 
-void CSheet::UpdateColumn()
-{
-	if(!Visible()){return;}
-
-	FLOAT left= m_spCellProperty->Line->Width/2.0f;
-	for(auto& ptr : m_allCols){
-		ptr->SetSheetLeftWithoutSignal(left);
-		left+=ptr->GetWidth();
-	}
-}
-
 bool CSheet::Empty()const
 {
 	return m_allRows.empty() || m_allCols.empty();
@@ -538,8 +534,7 @@ bool CSheet::Visible()const
 d2dw::CPointF CSheet::GetFrozenPoint()
 {
 	if(!Visible()){
-		MessageBox(NULL,L"CSheet::GetOriginPoint",NULL,0);
-		throw std::exception("CSheet::GetOriginPoint");	
+		return GetRect().LeftTop();
 	}
 
 	FLOAT x = 0;
@@ -579,7 +574,7 @@ d2dw::CRectF CSheet::GetRect()const
 
 	d2dw::CRectF rc(left, top, right, bottom);
 
-	auto outerPenWidth = m_spCellProperty->Line->Width/2.0f;
+	auto outerPenWidth = m_spSheetProperty->CellPropPtr->Line->Width/2.0f;
 	rc.InflateRect(outerPenWidth, outerPenWidth);
 	return rc;
 }
@@ -902,9 +897,12 @@ void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pMachine->pr
 void CSheet::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
 void CSheet::OnSetCursor(const SetCursorEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnMouseLeave(const MouseLeaveEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnKeyDown(const KeyDownEvent& e) { m_pMachine->process_event(e);
-PostUpdate(Updates::Invalidate);
-SubmitUpdate(); }
+void CSheet::OnKeyDown(const KeyDownEvent& e) 
+{ 
+	m_pMachine->process_event(e);
+	PostUpdate(Updates::Invalidate);
+	SubmitUpdate();
+}
 void CSheet::OnSetFocus(const SetFocusEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnKillFocus(const KillFocusEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnChar(const CharEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }

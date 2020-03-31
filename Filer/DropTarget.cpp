@@ -1,5 +1,7 @@
 #include "DropTarget.h"
 #include "IDL.h"
+#include "MyString.h"
+#include "ShellFolder.h"
 
 #define INITGUID
 #include <objbase.h>
@@ -67,10 +69,6 @@ STDMETHODIMP CDropTarget::QueryInterface(REFIID riid, void **ppvObject)
 
 STDMETHODIMP CDropTarget::DragEnter(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
 {
-	if (m_pDropTargetHelper != NULL) {
-		m_pDropTargetHelper->DragEnter(m_hWnd, pDataObj, (LPPOINT)&pt, *pdwEffect);
-	}
-
 	std::vector<FORMATETC> formats;
 	CComPtr<IEnumFORMATETC> pEnumFormatEtc;
 	if (SUCCEEDED(pDataObj->EnumFormatEtc(DATADIR::DATADIR_GET, &pEnumFormatEtc))) {
@@ -84,6 +82,11 @@ STDMETHODIMP CDropTarget::DragEnter(IDataObject *pDataObj, DWORD grfKeyState, PO
 	}
 
 	m_bSupportFormat = IsDroppable(formats);
+	if (m_bSupportFormat && m_pDropTargetHelper != NULL) {
+		HRESULT hr = m_pDropTargetHelper->DragEnter(m_hWnd, pDataObj, (LPPOINT)&pt, *pdwEffect);
+	}
+	*pdwEffect = m_bSupportFormat ? *pdwEffect = GetEffectFromKeyState(grfKeyState) : DROPEFFECT_NONE;
+
 	m_bRButton = grfKeyState & MK_RBUTTON;
 
 	return S_OK; 
@@ -91,8 +94,8 @@ STDMETHODIMP CDropTarget::DragEnter(IDataObject *pDataObj, DWORD grfKeyState, PO
 
 STDMETHODIMP CDropTarget::DragOver(DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
 {
-	if (m_pDropTargetHelper != NULL) {
-		m_pDropTargetHelper->DragOver((LPPOINT)&pt, *pdwEffect);
+	if (m_bSupportFormat && m_pDropTargetHelper != NULL) {
+		HRESULT hr = m_pDropTargetHelper->DragOver((LPPOINT)&pt, *pdwEffect);
 	}
 
 	*pdwEffect = m_bSupportFormat ? *pdwEffect = GetEffectFromKeyState(grfKeyState) : DROPEFFECT_NONE;
@@ -174,10 +177,11 @@ DWORD CDropTarget::GetEffectFromKeyState(DWORD grfKeyState)
 		if (grfKeyState & MK_SHIFT)
 			dwEffect = DROPEFFECT_LINK;
 		else
-			dwEffect = DROPEFFECT_COPY;
+			dwEffect = DROPEFFECT_MOVE;
 	}
-	else
-		dwEffect = DROPEFFECT_MOVE;
+	else {
+		dwEffect = DROPEFFECT_COPY;
+	}
 
 	return dwEffect;
 }
@@ -203,18 +207,22 @@ void CDropTarget::InitializeMenuItem(HMENU hmenu, LPTSTR lpszItemName, int nId)
 /******************/
 /* Helper function*/
 /******************/
-HRESULT CDropTarget::StreamToFile(IStream* stream, const std::wstring& filePath)
+HRESULT CDropTarget::CopyStream(const CComPtr<IFileOperation>& pFileOperation, const std::shared_ptr<CShellFolder>& pDestFolder, IStream* pSrcStream, const std::wstring& fileName)
 {
 	HRESULT       hr = S_OK;
 	unsigned char buffer[1024];
 	unsigned long bytes_read = 0;
 	int           bytes_written = 0;
 	int* pFileHandle = new int();	//handle to a file
-	errno_t errorNo;
-	errorNo = _wsopen_s(pFileHandle, filePath.c_str(), O_RDWR | O_BINARY | O_CREAT, SH_DENYNO, S_IREAD | S_IWRITE);
+
+	std::wstring filePath;
+	::PathCombine(GetBuffer(filePath, MAX_PATH), GetMakeSureTempDirectory<wchar_t>().c_str(), fileName.c_str());
+	::ReleaseBuffer(filePath);
+
+	errno_t errorNo = _wsopen_s(pFileHandle, filePath.c_str(), O_RDWR | O_BINARY | O_CREAT, SH_DENYNO, S_IREAD | S_IWRITE);
 	if ((*pFileHandle) != -1) {
 		do {
-			hr = stream->Read(buffer, 1024, &bytes_read);
+			hr = pSrcStream->Read(buffer, 1024, &bytes_read);
 			if (bytes_read)
 				bytes_written = _write((*pFileHandle), buffer, bytes_read);
 		} while (S_OK == hr && bytes_read == 1024);
@@ -227,38 +235,42 @@ HRESULT CDropTarget::StreamToFile(IStream* stream, const std::wstring& filePath)
 			error = _doserrno;
 		hr = HRESULT_FROM_WIN32(errno);
 	}
-	return hr;
+
+	// copy temp to dest
+	CComPtr<IShellItem2> pSrcShellItem;
+	CComPtr<IShellItem2> pDestShellItem;
+
+	if (SUCCEEDED(::SHCreateItemFromIDList(pDestFolder->GetAbsoluteIdl().ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem))) &&
+		SUCCEEDED(::SHCreateItemFromParsingName(filePath.c_str(), nullptr, IID_IShellItem2, reinterpret_cast<LPVOID*>(&pSrcShellItem))) &&
+		SUCCEEDED(pFileOperation->MoveItems(pSrcShellItem, pDestShellItem))) {
+		return S_OK;
+	} else {
+		return S_FALSE;
+	}
 }
 
-HRESULT CDropTarget::MessageToFile(LPMESSAGE pMessage, const std::wstring& dirPath)
+HRESULT CDropTarget::CopyMessage(const CComPtr<IFileOperation>& pFileOperation, const std::shared_ptr<CShellFolder>& pDestFolder, LPMESSAGE pSrcMessage)
 {
 	HRESULT hRes = S_OK;
 	LPSPropValue pSubject = NULL;
 	LPSTORAGE pStorage = NULL;
 	LPMSGSESS pMsgSession = NULL;
 	LPMESSAGE pIMsg = NULL;
-	//SizedSPropTagArray(7, excludeTags);
-	wchar_t strAttachmentFile[_MAX_PATH];
-	LPWSTR lpWideCharStr = NULL;
-	ULONG cbStrSize = 0L;
+	SizedSPropTagArray(7, excludeTags);
 
-	// get subject line of message to copy. This will be used as the
-	// new file name.
-	HrGetOneProp(pMessage, PR_SUBJECT, &pSubject);
+	// get subject line of message to copy. This will be used as the new file name.
+	HrGetOneProp(pSrcMessage, PR_SUBJECT, &pSubject);
 
-	// fuse path, subject, and suffix into one string
-	::PathCombine(strAttachmentFile, dirPath.c_str(), pSubject->Value.lpszW);
-	wcscat_s(strAttachmentFile, L".msg");
+	// get temp file path
+	std::wstring tempPath;
+	::PathCombineW(GetBuffer(tempPath, _MAX_PATH), GetMakeSureTempDirectory<wchar_t>().c_str(), (SanitizeFileName<wchar_t>(pSubject->Value.lpszW) + L".msg").c_str());
+	::ReleaseBuffer(tempPath);
 
 	// get memory allocation function
 	LPMALLOC pMalloc = MAPIGetDefaultMalloc();
 
-	MAPIAllocateBuffer((lstrlenW(strAttachmentFile) + 1) * sizeof(WCHAR),
-		(LPVOID*)&lpWideCharStr);
-	wcscpy_s(lpWideCharStr, lstrlenW(strAttachmentFile) + 1, const_cast<const wchar_t*>(strAttachmentFile));
-
 	// create compound file
-	hRes = ::StgCreateDocfile(lpWideCharStr,
+	hRes = ::StgCreateDocfile(tempPath.c_str(),
 		STGM_READWRITE |
 		STGM_TRANSACTED |
 		STGM_CREATE, 0, &pStorage);
@@ -287,22 +299,22 @@ HRESULT CDropTarget::MessageToFile(LPMESSAGE pMessage, const std::wstring& dirPa
 	// the properties that Exchange excludes to save bits and time.
 	// Should not be necessary to exclude these, but speeds the process
 	// when a lot of messages are being copied.
-	//excludeTags.cValues = 7;
-	//excludeTags.aulPropTag[0] = PR_ACCESS;
-	//excludeTags.aulPropTag[1] = PR_BODY;
-	//excludeTags.aulPropTag[2] = PR_RTF_SYNC_BODY_COUNT;
-	//excludeTags.aulPropTag[3] = PR_RTF_SYNC_BODY_CRC;
-	//excludeTags.aulPropTag[4] = PR_RTF_SYNC_BODY_TAG;
-	//excludeTags.aulPropTag[5] = PR_RTF_SYNC_PREFIX_COUNT;
-	//excludeTags.aulPropTag[6] = PR_RTF_SYNC_TRAILING_COUNT;
+	excludeTags.cValues = 7;
+	excludeTags.aulPropTag[0] = PR_ACCESS;
+	excludeTags.aulPropTag[1] = PR_BODY;
+	excludeTags.aulPropTag[2] = PR_RTF_SYNC_BODY_COUNT;
+	excludeTags.aulPropTag[3] = PR_RTF_SYNC_BODY_CRC;
+	excludeTags.aulPropTag[4] = PR_RTF_SYNC_BODY_TAG;
+	excludeTags.aulPropTag[5] = PR_RTF_SYNC_PREFIX_COUNT;
+	excludeTags.aulPropTag[6] = PR_RTF_SYNC_TRAILING_COUNT;
 
 	// copy message properties to IMessage object opened on top of
 	// IStorage.
-	hRes = pMessage->CopyTo(0, NULL,
-		NULL,//(LPSPropTagArray)&excludeTags,
+	hRes = pSrcMessage->CopyTo(0, NULL,
+		(LPSPropTagArray)&excludeTags,
 		NULL, NULL,
 		(LPIID)&IID_IMessage,
-		pIMsg, MAPI_DIALOG | MAPI_NOREPLACE, NULL);
+		pIMsg, 0, NULL);
 
 	// save changes to IMessage object.
 	pIMsg->SaveChanges(KEEP_OPEN_READWRITE);
@@ -311,7 +323,6 @@ HRESULT CDropTarget::MessageToFile(LPMESSAGE pMessage, const std::wstring& dirPa
 	hRes = pStorage->Commit(STGC_DEFAULT);
 
 	// free objects and clean up memory
-	MAPIFreeBuffer(lpWideCharStr);
 	pStorage->Release();
 	pIMsg->Release();
 	CloseIMsgSession(pMsgSession);
@@ -319,7 +330,16 @@ HRESULT CDropTarget::MessageToFile(LPMESSAGE pMessage, const std::wstring& dirPa
 	pStorage = NULL;
 	pIMsg = NULL;
 	pMsgSession = NULL;
-	lpWideCharStr = NULL;
 
-	return hRes;
+	// copy temp to dest
+	CComPtr<IShellItem2> pSrcShellItem;
+	CComPtr<IShellItem2> pDestShellItem;
+	
+	if (SUCCEEDED(::SHCreateItemFromIDList(pDestFolder->GetAbsoluteIdl().ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem))) &&
+		SUCCEEDED(::SHCreateItemFromParsingName(tempPath.c_str(), nullptr, IID_IShellItem2, reinterpret_cast<LPVOID*>(&pSrcShellItem))) &&
+		SUCCEEDED(pFileOperation->MoveItems(pSrcShellItem, pDestShellItem))){
+		return  S_OK;
+	} else {
+		return  S_FALSE;
+	}
 }

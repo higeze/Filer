@@ -2,6 +2,7 @@
 #include "MyString.h"
 #include <ShellAPI.h>
 #include <Shlwapi.h>
+#include <spdlog/spdlog.h>
 
 
 #include "MyWin32.h"
@@ -127,13 +128,18 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 				uiMsg % wParam % lParam).str();
 
 			MessageBoxA(m_hWnd, msg.c_str(), "Exception in Message Loop", MB_ICONWARNING);
+			SPDLOG_ERROR("Exception in Message Loop" + msg);
+			::PostQuitMessage(0);
 		}catch(...){
-			std::string text;
-			text+="MSG:" + boost::lexical_cast<std::string>(uiMsg) +"\r\n";
-			text+="WPARAM:" + boost::lexical_cast<std::string>(wParam) +"\r\n";
-			text+="LPARAM:" + boost::lexical_cast<std::string>(lParam);
+			std::string msg = (boost::format(
+				"MSG:%3$04x\r\n"
+				"WPARAM:%4$04x\r\n"
+				"LPARAM:%5$04x"
+				) % uiMsg % wParam % lParam).str();
 
-			MessageBoxA(m_hWnd, text.c_str(), "Exception in Message Loop", MB_ICONWARNING);
+			MessageBoxA(m_hWnd, msg.c_str(), "Exception in Message Loop", MB_ICONWARNING);
+			SPDLOG_ERROR("Exception in Message Loop" + msg);
+			::PostQuitMessage(0);
 		}
 		return DefWndProc(m_hWnd,uiMsg,wParam,lParam);		
 	}

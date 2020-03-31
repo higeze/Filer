@@ -133,7 +133,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(std::shared_ptr<
 								return std::make_pair(size, FileSizeStatus::Unavailable);
 							}
 						} catch (...) {
-							spdlog::info("CShellFile::GetSize Exception at size thread");
+							SPDLOG_INFO("CShellFile::GetSize Exception at size thread");
 							return std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable);
 						}					
 					}, m_spCancelThread, GetShellFolderPtr(), GetAbsoluteIdl(), GetPath(), limit, changed);
@@ -179,7 +179,7 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(std::shared_ptr<
 						return std::make_pair(times.value(), FileTimeStatus::Unavailable);
 					}
 				} catch (...) {
-					spdlog::info("CShellFile::GetFileTimes Exception at time thread");
+					SPDLOG_INFO("CShellFile::GetFileTimes Exception at time thread");
 					return std::make_pair(FileTimes(), FileTimeStatus::Unavailable);
 				}
 			}, m_spCancelThread, GetParentShellFolderPtr(), GetShellFolderPtr(), GetChildIdl(), GetPath(), limit, spArgs->IgnoreFolderTime, changed);
@@ -207,10 +207,10 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<boo
 	const std::chrono::system_clock::time_point& tp, const int limit)
 {	
 	if (*cancel) {
-		spdlog::info("CShellFolder::GetFolderSize Canceled at top : {}", wstr2str(path));
+		SPDLOG_INFO("CShellFolder::GetFolderSize Canceled at top : {}", wstr2str(path));
 		return false;
 	} else if (limit > 0 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count() > limit) {
-		spdlog::info("CShellFolder::GetFolderSize TimeElapsed at top : {}", wstr2str(path));
+		SPDLOG_INFO("CShellFolder::GetFolderSize TimeElapsed at top : {}", wstr2str(path));
 		return false;
 	}
 
@@ -224,10 +224,10 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<boo
 			ULONG ulRet(0);
 			while (SUCCEEDED(enumIdl->Next(1, childIdl.ptrptr(), &ulRet))) {
 				if (*cancel) {
-					spdlog::info("CShellFolder::GetFolderSize Canceled in while : {}", wstr2str(path));
+					SPDLOG_INFO("CShellFolder::GetFolderSize Canceled in while : {}", wstr2str(path));
 					return false;
 				}else if (limit > 0 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count() > limit) {
-					spdlog::info("CShellFolder::GetFolderSize TimeElapsed in while : {}", wstr2str(path));
+					SPDLOG_INFO("CShellFolder::GetFolderSize TimeElapsed in while : {}", wstr2str(path));
 					return false;
 				}
 
@@ -264,7 +264,7 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<boo
 			}
 		}
 	} catch (...) {
-		spdlog::info("Exception CShellFolder::GetFolderSize {}", wstr2str(path));
+		SPDLOG_INFO("Exception CShellFolder::GetFolderSize {}", wstr2str(path));
 		return false;
 	}
 	return true;
@@ -280,10 +280,10 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 	}
 
 	if (*cancel) {
-		spdlog::info("CShellFolder::GetFolderFileTimes Canceled at top : {}", wstr2str(path));
+		SPDLOG_INFO("CShellFolder::GetFolderFileTimes Canceled at top : {}", wstr2str(path));
 		return times;
 	} else if (limit > 0 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-tp).count() > limit) {
-		spdlog::info("CShellFolder::GetFolderFileTimes TimeElapsed at top : {}", wstr2str(path));
+		SPDLOG_INFO("CShellFolder::GetFolderFileTimes TimeElapsed at top : {}", wstr2str(path));
 		return times;
 	}
 	try {
@@ -295,10 +295,10 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 			std::vector<std::tuple<CComPtr<IShellFolder>, CIDL, std::wstring>> folders;
 			while (SUCCEEDED(enumIdl->Next(1, childIdl.ptrptr(), &ulRet))) {
 				if (*cancel) {
-					spdlog::info("CShellFolder::GetFolderFileTimes Canceled in while : {}", wstr2str(path));
+					SPDLOG_INFO("CShellFolder::GetFolderFileTimes Canceled in while : {}", wstr2str(path));
 					return times;
 				} else if (limit > 0 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count() > limit) {
-					spdlog::info("CShellFolder::GetFolderFileTimes TimeElapsed in while : {}", wstr2str(path));
+					SPDLOG_INFO("CShellFolder::GetFolderFileTimes TimeElapsed in while : {}", wstr2str(path));
 					return times;
 				}
 
@@ -337,31 +337,24 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 
 		}
 	} catch (...) {
-		spdlog::info("Exception CShellFolder::GetFolderLastWriteTime {}", wstr2str(path));
+		SPDLOG_INFO("Exception CShellFolder::GetFolderLastWriteTime {}", wstr2str(path));
 		return std::nullopt;
 	}
 	return times;
 
 }
 
-void CShellFolder::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt) 
+void CShellFolder::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND  hWnd) 
 {
-	CIDL idlNew;
-	if (SUCCEEDED(m_pParentShellFolder->SetNameOf(
-		NULL,
+	HRESULT hr = m_pParentShellFolder->SetNameOf(
+		hWnd,
 		m_childIdl.ptr(),
 		wstrNameWoExt.c_str(),
 		SHGDN_FORPARSING | SHGDN_INFOLDER,
-		idlNew.ptrptr()))) {
-
-		m_childIdl = idlNew;
-		m_absoluteIdl = m_parentIdl + idlNew;
-
-		Reset();
-	}
+		nullptr);
 }
 
-void CShellFolder::SetExt(const std::wstring& wstrExt)
+void CShellFolder::SetExt(const std::wstring& wstrExt, HWND hWnd)
 {
 	//Do nothing
 }

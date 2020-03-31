@@ -41,7 +41,10 @@ class CTextCell:public CCell
 {
 public:
 	CTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr)
-		:CCell(pSheet,pRow, pColumn,spProperty,pMenu){}
+		:CCell(pSheet, pRow, pColumn, spProperty, pMenu)
+	{
+		m_isWrappable = true;
+	}
 	virtual ~CTextCell();
 
 	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
@@ -57,14 +60,14 @@ public:
 	virtual void OnKillFocus(const KillFocusEvent& e) override;
 	virtual bool CanSetStringOnEditing()const{return true;}
 
-	virtual UINT GetFormat()const
-	{
-		if (GetRowSizingType() == SizingType::Depend && GetColSizingType() == SizingType::Depend) {
-			return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_EDITCONTROL;
-		} else {
-			return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_WORDBREAK | DT_EDITCONTROL;
-		}
-	}
+	//virtual UINT GetFormat()const
+	//{
+	//	if (GetRowSizingType() == SizingType::Depend && GetColSizingType() == SizingType::Depend) {
+	//		return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_EDITCONTROL;
+	//	} else {
+	//		return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_WORDBREAK | DT_EDITCONTROL;
+	//	}
+	//}
 
 	virtual bool IsComparable()const;
 	virtual Compares EqualCell(CCell* pCell, std::function<void(CCell*, Compares)> action);
@@ -110,12 +113,8 @@ public:
 		:CEditableStringCell(pSheet, pRow, pColumn, spProperty, str, pMenu){}
 
 	virtual ~CEditableNoWrapStringCell() {}
-	virtual UINT GetFormat()const override { return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_EDITCONTROL; }
+//	virtual UINT GetFormat()const override { return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_EDITCONTROL; }
 };
-
-
-//Editable, 
-class CDcmParameter;
 
 class CParameterCell:public CEditableCell
 {

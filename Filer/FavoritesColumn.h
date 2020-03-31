@@ -1,16 +1,16 @@
 #pragma once
 
-#include "ParentMapColumn.h"
+#include "MapColumn.h"
 
 class CFavorite;
 
 
-class CFavoritesColumn:public CParentDefaultMapColumn
+class CFavoritesColumn:public CMapColumn
 {
 private:
 	std::shared_ptr<std::vector<std::shared_ptr<CFavorite>>> m_spFavorites;
 public:
-	CFavoritesColumn(CGridView* pGrid, std::shared_ptr<std::vector<std::shared_ptr<CFavorite>>> pFavorites);
+	CFavoritesColumn(CSheet* pGrid, std::shared_ptr<std::vector<std::shared_ptr<CFavorite>>> pFavorites);
 	virtual ~CFavoritesColumn(void){}
 	//Getter
 	std::shared_ptr<std::vector<std::shared_ptr<CFavorite>>> GetFavorites() { return m_spFavorites; }

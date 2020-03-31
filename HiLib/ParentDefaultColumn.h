@@ -1,14 +1,14 @@
 #pragma once
-#include "ParentMapColumn.h"
+#include "MapColumn.h"
 
-class CParentDefaultColumn:public CParentMapColumn
+class CParentDefaultColumn:public CMapColumn
 {
 protected:
 	std::shared_ptr<bool> m_spVisible;
 
 public:
-	CParentDefaultColumn(CGridView* pGrid = nullptr, std::shared_ptr<bool> spVisible = nullptr):
-		CParentMapColumn(pGrid), m_spVisible(spVisible){}
+	CParentDefaultColumn(CSheet* pSheet = nullptr, std::shared_ptr<bool> spVisible = nullptr):
+		CMapColumn(pSheet), m_spVisible(spVisible){}
 	virtual ~CParentDefaultColumn(){}
 
 	bool GetVisible()const override

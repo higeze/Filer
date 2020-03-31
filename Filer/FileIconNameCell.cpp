@@ -18,7 +18,7 @@ std::wstring CFileIconNameCell::GetString()
 void CFileIconNameCell::SetStringCore(const std::wstring& str)
 {
 	auto pFileRow = static_cast<CFileRow*>(m_pRow);
-	pFileRow->GetFilePointer()->SetFileNameWithoutExt(str);
+	pFileRow->GetFilePointer()->SetFileNameWithoutExt(str, m_pSheet->GetGridPtr()->m_hWnd);
 
 }
 
@@ -31,6 +31,20 @@ CSize CFileIconNameCell::GetIconSize(d2dw::CDirect2DWrite* pDirect)const
 {
 	return CSize(16, 16);
 }
+
+std::wstring CFileIconNameCell::GetViewString()
+{
+	std::wstring text;
+	if (m_pSheet->GetGridPtr()->GetEditPtr() && m_pSheet->GetGridPtr()->GetEditPtr()->GetCellPtr() == this) {
+		text = m_pSheet->GetGridPtr()->GetEditPtr()->GetText();
+	} else {
+		text = GetString();
+	}
+	if (text.empty()) { text = L"a"; }
+
+	return text;
+}
+
 
 std::shared_ptr<CShellFile> CFileIconNameCell::GetShellFile()
 {
@@ -79,7 +93,7 @@ d2dw::CSizeF CFileIconNameCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect
 	//Space
 	FLOAT space = m_spProperty->Padding->left + m_spProperty->Padding->right;
 	//Calc Text Size
-	d2dw::CSizeF textSize = CTextCell::MeasureContentSize(pDirect);
+	d2dw::CSizeF textSize = pDirect->CalcTextSize(*(m_spProperty->Format), GetViewString());
 	//Return
 	return d2dw::CSizeF(iconSize.width + space + textSize.width, (std::max)(iconSize.height, textSize.height));
 }
@@ -93,9 +107,8 @@ d2dw::CSizeF CFileIconNameCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2D
 	//Calc Text Size
 	d2dw::CRectF rcCenter(0, 0, m_pColumn->GetWidth(), 0);
 	d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
-	std::wstring text = GetString();
-	if (text.empty()) { text = L"a"; }
-	d2dw::CSizeF textSize = pDirect->CalcTextSizeWithFixedWidth(*(m_spProperty->Format), text, rcContent.Width() - iconSize.width - space);
+
+	d2dw::CSizeF textSize = pDirect->CalcTextSizeWithFixedWidth(*(m_spProperty->Format), GetViewString(), rcContent.Width() - iconSize.width - space);
 	//Return
 	return d2dw::CSizeF(iconSize.width + space + textSize.width, (std::max)(iconSize.height, textSize.height));
 }
@@ -103,13 +116,13 @@ d2dw::CSizeF CFileIconNameCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2D
 d2dw::CRectF CFileIconNameCell::GetEditRect() const
 {
 	//Icon Size
-	CSize iconSize(GetIconSize(m_pSheet->GetGridPtr()->GetDirectPtr()));
+	d2dw::CSizeF iconSize(GetIconSizeF(m_pSheet->GetGridPtr()->GetDirectPtr()));
 	//Space
-	int space = m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2PixelsX(m_spProperty->Padding->left + m_spProperty->Padding->right);
+	FLOAT space = m_spProperty->Padding->left + m_spProperty->Padding->right;
 	//Edit Rect
-	CRect rcEdit(m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2Pixels(m_pSheet->GetGridPtr()->GetDirectPtr()->LayoutRound(GetRect())));
-	rcEdit.left += iconSize.cx + space;
-	return m_pSheet->GetGridPtr()->GetDirectPtr()->Pixels2Dips(rcEdit);
+	d2dw::CRectF rcEdit(GetRect());
+	rcEdit.left += iconSize.width + space;
+	return rcEdit;
 }
 
 void CFileIconNameCell::OnEdit(const EventArgs& e)

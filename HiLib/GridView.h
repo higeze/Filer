@@ -41,10 +41,6 @@ protected:
 	d2dw::CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
 
-	std::shared_ptr<CRow> m_rowHeaderHeader; /**< Header Header row */
-	std::shared_ptr<CRow> m_rowNameHeader; /**< Name Header row */
-	std::shared_ptr<CRow> m_rowFilter; /**< Filter row */
-
 	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
 
 protected:
@@ -77,12 +73,6 @@ public:
 	std::shared_ptr<GridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	d2dw::CRectF GetUpdateRect()const { return m_rcUpdateRect; }
 	void SetUpdateRect(d2dw::CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
-	virtual std::shared_ptr<CRow> GetHeaderHeaderRowPtr()const { return m_rowHeaderHeader; }
-	virtual void SetHeaderHeaderRowPtr(std::shared_ptr<CRow> row) { m_rowHeaderHeader = row; }
-	virtual std::shared_ptr<CRow> GetNameHeaderRowPtr()const { return m_rowNameHeader; }
-	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_rowNameHeader = row; }
-	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_rowFilter; }
-	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_rowFilter = row; }
 	D2DTextbox* GetEditPtr() { return m_pEdit; }
 	void SetEditPtr(D2DTextbox* pEdit) { m_pEdit = pEdit; }
 
@@ -117,7 +107,7 @@ protected:
 	virtual LRESULT OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	//virtual LRESULT OnCmdEnChange(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	virtual LRESULT OnCommandEditHeader(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
-	virtual LRESULT OnCommandDeleteColumn(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
+	virtual LRESULT OnCommandDeleteColumn(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& sc);
 	virtual LRESULT OnCommandResizeSheetCell(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	virtual LRESULT OnCommandSelectAll(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	virtual LRESULT OnCommandDelete(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) { return 0; }
@@ -163,6 +153,8 @@ public:
 	virtual void SortAllInSubmitUpdate();
 
 	virtual void UpdateRow()override;
+	virtual void UpdateColumn()override;
+
 	virtual FLOAT UpdateHeadersRow(FLOAT top);
 	virtual FLOAT UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom);
 	virtual void UpdateScrolls();

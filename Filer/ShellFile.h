@@ -95,8 +95,8 @@ public:
 	UINT GetSFGAO();
 	DWORD GetAttributes();
 
-	virtual void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt);
-	virtual void SetExt(const std::wstring& wstrExt);
+	virtual void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd = NULL);
+	virtual void SetExt(const std::wstring& wstrExt, HWND hWnd = NULL);
 
 	//LastWrite
 	std::optional<FileTimes> GetFileTimes();

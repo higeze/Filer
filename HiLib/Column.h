@@ -2,12 +2,14 @@
 #include "Band.h"
 #include "SheetEnums.h"
 #include "MyFriendSerializer.h"
-#include "SheetEnums.h"
+#include "named_arguments.h"
+#include <float.h>
 
 class CCell;
 class CRow;
 struct ColTag;
 class Sheet;
+
 
 class CColumn:public CBand
 {
@@ -15,15 +17,9 @@ public:
 	typedef ColTag Tag;
 protected:
 	Sorts m_sort; //Indicate sort state
-	FLOAT m_left; //left position from parent sheet
-	FLOAT m_width; //width
-	FLOAT m_minWidth = 10;
-	FLOAT m_maxWidth = 1000;
-	//LineType m_lineType = LineType::None;
-	SizeType m_sizeType = SizeType::Trackable;
-	//bool m_isFitAlways = false;
+	bool m_isInit = true; //if init is set, initial width is used
 
-	bool m_isInit; //if init is set, initial width is used
+	SizeType m_sizeType = SizeType::Trackable;
 	std::wstring m_filter; //Filter string
 
 public:
@@ -33,17 +29,11 @@ public:
 	{
 		CBand::save(ar);
 
-		//if (auto pGrid = dynamic_cast<CGridView>(m_pSheet)) {
-		//	auto cell = CSheet::Cell(m_pGrid->GetNameHeaderRowPtr(), this);
-		//	if (cell) {
-		//		ar("name", cell->GetString());
-		//	}
-		//}
 		ar("sort", m_sort);
-		ar("left", m_left);
-		ar("width", m_width);
-		ar("minwidth", m_minWidth);
-		ar("maxwidth", m_maxWidth);
+		ar("left", m_start);
+		ar("width", m_length);
+		//ar("minwidth", m_minWidth);
+		//ar("maxwidth", m_maxWidth);
 		m_isInit = false;
 		ar("filter", m_filter);
 	}
@@ -53,25 +43,35 @@ public:
 		CBand::load(ar);
 
 		ar("sort", m_sort);
-		ar("left", m_left);
-		ar("width", m_width);
-		ar("minwidth", m_minWidth);
-		ar("maxwidth", m_maxWidth);
+		ar("left", m_start);
+		ar("width", m_length);
+		//ar("minwidth", m_minWidth);
+		//ar("maxwidth", m_maxWidth);
 		m_isInit = false;
+		m_isMeasureValid = true;//Width or Height are serialized
 		ar("filter", m_filter);
 	}
 public:
 	//Constructor
-	CColumn(CSheet* pSheet = nullptr)
-		:CBand(pSheet),m_sort(Sorts::None),m_left(0),m_width(0),m_isInit(true)/*,m_isSerialized(false)*/{}
+	template<typename... Args>
+	CColumn(CSheet* pSheet = nullptr, Args... args)
+		:CBand(pSheet),m_sort(Sorts::None),m_isInit(true)
+	{
+		m_isMinLengthFit = ::get(arg<"isminfit"_s>(), args..., default_(false));
+		m_isMaxLengthFit = ::get(arg<"ismaxfit"_s>(), args..., default_(false));
+		m_minLength = ::get(arg<"minwidth"_s>(), args..., default_(20.f));
+		m_maxLength = ::get(arg<"maxwidth"_s>(), args..., default_(1000.f));
+	}
 	//Destructor
 	virtual ~CColumn(){}
 	virtual CColumn& ShallowCopy(const CColumn& column)
 	{
 		CBand::ShallowCopy(column);
 		m_sort =  column.m_sort;
-		m_left = column.m_left;
-		m_width = column.m_width;
+		m_start = column.m_start;
+		m_length = column.m_length;
+		m_minLength = column.m_minLength;
+		m_maxLength = column.m_maxLength;
 		m_isInit = column.m_isInit;
 		m_filter = column.m_filter;
 		return *this;
@@ -83,17 +83,23 @@ public:
 	virtual int GetSerializedIndex()const { return m_allIndex; }
 	virtual std::wstring GetFilter()const{return m_filter;}
 	virtual void SetFilter(const std::wstring& filter){m_filter = filter;}
-	virtual FLOAT GetWidth();
-	virtual void SetWidth(const FLOAT width, bool notify = true);
-	//virtual void SetWidthWithoutSignal(const FLOAT width);
-	virtual FLOAT GetLeft()const{return  m_left + Offset();}
-	virtual void SetSheetLeft(const FLOAT left){m_left=left;}
-	virtual void SetSheetLeftWithoutSignal(const FLOAT left){m_left=left;}
-	virtual FLOAT GetRight() {return GetLeft() + GetWidth();}
-	virtual FLOAT GetLeftTop() override{ return GetLeft(); }
-	virtual FLOAT GetRightBottom() override { return GetRight(); }
-	virtual FLOAT GetWidthHeight() override { return GetWidth(); }
-	virtual void SetWidthHeight(const FLOAT wh, bool notify = true) override { SetWidth(wh, notify); }
+
+	
+	//Length
+	virtual FLOAT GetLength() override;
+	virtual FLOAT GetVirtualLength() override;
+	virtual FLOAT GetFitLength() override;
+	//Width
+	virtual FLOAT GetWidth() { return GetLength(); }
+	virtual FLOAT GetFitWidth() { return GetFitLength(); }
+	virtual void SetWidth(const FLOAT width, bool notify = true) { SetLength(width, notify); }
+
+	//Start/End	
+	//Left/Right
+	virtual FLOAT GetLeft() { return GetStart(); }
+	virtual void SetLeft(const FLOAT left, bool notify = true) { SetStart(left); }
+	virtual FLOAT GetRight() { return GetEnd(); }
+
 
 	virtual Sorts GetSort()const{return m_sort;};
 	virtual void SetSort(const Sorts& sort);
@@ -105,49 +111,13 @@ public:
 	virtual void Delete(std::shared_ptr<CCell> spCellDst){}
 	virtual bool HasCell()const { return true; }
 	virtual std::shared_ptr<CCell>& Cell(CRow* pRow) = 0;
-	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
-	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
+	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
+	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
+	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) = 0;
 	virtual void InsertNecessaryRows(){};
-	//virtual LineType GetLineType()const { return m_lineType; }
-	virtual SizingType GetSizingType()const override { return SizingType::None; }
+//	virtual SizingType GetSizingType()const override { return SizingType::None; }
 	virtual SizeType GetSizeType()const { return m_sizeType; }
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name);
-
-	virtual FLOAT Offset()const = 0;
-
-};
-
-class CGridView;
-
-class CParentColumn:public CColumn
-{
-public:
-	//Constructor
-	CParentColumn(CGridView* pGrid = nullptr);
-	//Destructor
-	virtual ~CParentColumn(){}
-	virtual CColumn& ShallowCopy(const CColumn& column)override
-	{
-		CColumn::ShallowCopy(column);
-		return *this;
-	}
-	virtual CParentColumn* CloneRaw()const{return nullptr;}
-	std::shared_ptr<CParentColumn> Clone()const{return std::shared_ptr<CParentColumn>(CloneRaw());}
-	virtual FLOAT Offset()const;
-	virtual std::shared_ptr<CCell> HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
-	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn) = 0;
-};
-
-class CSheetCell;
-
-class CChildColumn:public CColumn
-{
-public:
-	//Constructor
-	CChildColumn(CSheetCell* pSheetCell);
-	//Destructor
-	virtual ~CChildColumn(){}
-	virtual FLOAT Offset()const;
 };

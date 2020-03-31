@@ -1,10 +1,10 @@
-#include "ParentMapColumn.h"
+#include "MapColumn.h"
 #include "ChildIndexColumn.h"
 
-class CParentPropertyNameColumn:public CParentMapColumn
+class CParentPropertyNameColumn:public CMapColumn
 {
 public:
-	CParentPropertyNameColumn(CGridView* pGrid);
+	CParentPropertyNameColumn(CSheet* pSheet);
 	virtual ~CParentPropertyNameColumn(){}
 	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn);
@@ -14,7 +14,7 @@ public:
 class CChildPropertyNameColumn:public CChildIndexColumn
 {
 public:
-	CChildPropertyNameColumn(CSheetCell* pSheetCell);
+	CChildPropertyNameColumn(CSheet* pSheet);
 	virtual ~CChildPropertyNameColumn(){}
 	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn);
@@ -24,7 +24,7 @@ public:
 class CChildPropertyIndexColumn:public CChildRowHeaderColumn
 {
 public:
-	CChildPropertyIndexColumn(CSheetCell* pSheetCell);
+	CChildPropertyIndexColumn(CSheet* pSheet);
 	virtual ~CChildPropertyIndexColumn(){}
 	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn);
@@ -32,24 +32,22 @@ public:
 };
 
 
-class CParentPropertyValueColumn:public CParentMapColumn
+class CParentPropertyValueColumn:public CMapColumn
 {
 public:
-	CParentPropertyValueColumn(CGridView* pGrid);
+	CParentPropertyValueColumn(CSheet* pSheet);
 	virtual ~CParentPropertyValueColumn(){}
 	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn);
-	virtual SizingType GetSizingType()const override { return SizingType::Depend; }
 };
 
 class CChildPropertyValueColumn:public CChildIndexColumn
 {
 public:
-	CChildPropertyValueColumn(CSheetCell* pSheetCell);
+	CChildPropertyValueColumn(CSheet* pSheet);
 	virtual ~CChildPropertyValueColumn(){}
 	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn);
-	virtual SizingType GetSizingType()const override { return SizingType::Depend; }
 };

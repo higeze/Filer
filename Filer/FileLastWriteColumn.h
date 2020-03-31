@@ -1,19 +1,19 @@
 #pragma once
-#include "ParentMapColumn.h"
+#include "MapColumn.h"
 
 struct FileTimeArgs;
 
-class CFileLastWriteColumn:public CParentDefaultMapColumn
+class CFileLastWriteColumn:public CMapColumn
 {
 private:
 	std::shared_ptr<FileTimeArgs> m_spTimeArgs;
 public:
-	CFileLastWriteColumn(CGridView* pGrid = nullptr, std::shared_ptr<FileTimeArgs> spTimeProp = nullptr);
+	CFileLastWriteColumn(CSheet* pSheet = nullptr, std::shared_ptr<FileTimeArgs> spTimeProp = nullptr);
 	~CFileLastWriteColumn(void){}
 
 	virtual CColumn& ShallowCopy(const CColumn& column)override
 	{
-		CParentDefaultMapColumn::ShallowCopy(column);
+		CMapColumn::ShallowCopy(column);
 		return *this;
 	}
 	virtual CFileLastWriteColumn* CloneRaw()const{return new CFileLastWriteColumn(*this);}

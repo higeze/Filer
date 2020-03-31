@@ -12,7 +12,7 @@ enum class EditMode
 };
 
 
-template<typename T>
+template<typename TItem>
 class CBindTextCell :public CEditableCell
 {
 private:
@@ -20,21 +20,21 @@ private:
 public:
 	//CBindTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	//	:CEditableCell(pSheet, pRow, pColumn, spProperty, pMenu){}
-	struct Args
-	{
-		CSheet* SheetPtr;
-		CRow* RowPtr;
-		CColumn* ColPtr;
-		std::shared_ptr<CellProperty> PropPtr;
-		EditMode EditMode = EditMode::LButtonDownEdit;
-	};
+	//struct Args
+	//{
+	//	CSheet* SheetPtr;
+	//	CRow* RowPtr;
+	//	CColumn* ColPtr;
+	//	std::shared_ptr<CellProperty> PropPtr;
+	//	EditMode EditMode = EditMode::LButtonDownEdit;
+	//};
 
 
 	template<typename... Args>
 	CBindTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
 		:CEditableCell(pSheet, pRow, pColumn, spProperty)
 	{
-		m_editMode = ::get(arg<'e'>(), args...);
+		m_editMode = ::get(arg<"editmode"_s>(), args...);
 	}
 
 	virtual ~CBindTextCell() = default;
@@ -44,18 +44,16 @@ public:
 
 	virtual std::wstring GetString() override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindTextColumn<T>*>(m_pColumn);
-		auto pBindGrid = static_cast<CBindGridView<T>*>(m_pSheet);
-		return pBindColumn->GetGetter()(pBindGrid->GetItemsSource()[pBindRow->GetIndex<AllTag>() - pBindGrid->GetFrozenCount<RowTag>()]);
+		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
+		auto pBindColumn = static_cast<CBindTextColumn<TItem>*>(m_pColumn);
+		return pBindColumn->GetGetter()(pBindRow->GetItem());
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindTextColumn<T>*>(m_pColumn);
-		auto pBindGrid = static_cast<CBindGridView<T>*>(m_pSheet);
-		pBindColumn->GetSetter()(pBindGrid->GetItemsSource()[pBindRow->GetIndex<AllTag>() - pBindGrid->GetFrozenCount<RowTag>()], str);
+		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
+		auto pBindColumn = static_cast<CBindTextColumn<TItem>*>(m_pColumn);
+		pBindColumn->GetSetter()(pBindRow->GetItem(), str);
 	}
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override

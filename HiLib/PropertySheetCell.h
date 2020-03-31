@@ -13,6 +13,8 @@ class CPropertySheetCell:public CSheetCell
 public:
 	virtual bool CanResizeRow()const override{return true;}
 	virtual bool CanResizeColumn()const override{return false;}
+	virtual bool HasSheetCell()override { return true; }
+	virtual bool IsVirtualPage()override { return true; }
 
 	//TODO Not size but index
 
@@ -25,11 +27,11 @@ public:
 
 		if(CanResizeRow() && row>curRowSize){
 			for(auto i=0;i<row-curRowSize;i++){
-				auto spRow=std::make_shared<CChildRow>(this);
+				auto spRow=std::make_shared<CRow>(this);
 				PushRow(spRow);
 				auto pColValue= Index2Pointer<ColTag, AllTag>(1);
 
-				CCellSerializer serializer(std::dynamic_pointer_cast<CSheet>(Cell(m_pRow,m_pColumn)),m_spHeaderProperty,m_spFilterProperty,m_spCellProperty);
+				CCellSerializer serializer(std::dynamic_pointer_cast<CSheet>(Cell(m_pRow,m_pColumn)),GetSheetProperty(), CCell::GetCellPropertyPtr());
 				serializer.SerializeValue(CreateInstance<T>(),spRow.get(),pColValue.get());
 			}
 		}else if(CanResizeRow() && row<curRowSize && row>0){
@@ -49,11 +51,9 @@ public:
 		CSheet* pSheet = nullptr,
 		CRow* pRow = nullptr,
 		CColumn* pColumn = nullptr,
-		std::shared_ptr<CellProperty> spProperty = nullptr,
-		std::shared_ptr<HeaderProperty> spHeaderProperty = nullptr,
-		std::shared_ptr<CellProperty> spFilterProperty = nullptr,
+		std::shared_ptr<SheetProperty> spSheetProperty = nullptr,
 		std::shared_ptr<CellProperty> spCellProperty = nullptr,
 		CMenu* pMenu=nullptr)
-		:CSheetCell(pSheet,pRow,pColumn,spProperty,spHeaderProperty,spFilterProperty,spCellProperty){}
+		:CSheetCell(pSheet,pRow,pColumn,spSheetProperty, spCellProperty){}
 	virtual ~CPropertySheetCell(){}
 };

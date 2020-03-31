@@ -1,12 +1,12 @@
 #pragma once
 
-#include "ParentMapColumn.h"
+#include "MapColumn.h"
 
 
-class CFileIconColumn:public CParentDefaultMapColumn
+class CFileIconColumn:public CMapColumn
 {
 public:
-	CFileIconColumn(CGridView* pGrid = nullptr);
+	CFileIconColumn(CSheet* pSheet = nullptr);
 	virtual ~CFileIconColumn(void){}
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)override;

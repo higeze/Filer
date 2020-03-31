@@ -1,41 +1,41 @@
 #include "Row.h"
 #include "GridView.h"
-#include "SheetCell.h"
 #include "CellProperty.h"
-#include "SheetEventArgs.h"
 
-
-
-FLOAT CRow::GetDefaultHeight()
+FLOAT CRow::GetLength()
 {
-	if (!m_bMeasureValid) {
-		m_height = 
-			m_pSheet->GetGridPtr()->GetDirectPtr()->GetDefaultHeight(*(m_pSheet->GetCellProperty()->Format)) +
-			m_pSheet->GetCellProperty()->Line->Width*0.5f + 
-			m_pSheet->GetCellProperty()->Padding->top + 
+	if(!m_isMeasureValid){
+		FitHeight();
+	}
+
+	if (!m_isFitMeasureValid) {
+		BoundHeight();
+	}
+	return m_length;
+}
+
+FLOAT CRow::GetVirtualLength()
+{
+	if (!m_isVirtualMeasureValid) {
+		m_length =
+			m_pSheet->GetGridPtr()->GetDirectPtr()->GetVirtualHeight(*(m_pSheet->GetCellProperty()->Format)) +
+			m_pSheet->GetCellProperty()->Line->Width * 0.5f * 2.f +
+			m_pSheet->GetCellProperty()->Padding->top +
 			m_pSheet->GetCellProperty()->Padding->bottom;
+		m_isVirtualMeasureValid = true;
 	}
-	return m_height;
+	return m_length;
 }
 
-FLOAT CRow::GetHeight()
+FLOAT CRow::GetFitLength()
 {
-	if(!m_bMeasureValid){
-		m_height = m_pSheet->GetRowHeight(this);
-		m_bMeasureValid=true;
+	if (!m_isFitMeasureValid) {
+		m_fitLength = m_pSheet->GetRowHeight(this);
+		m_isFitMeasureValid = true;
 	}
-	return m_height;
+	return m_fitLength;
 }
 
-void CRow::SetHeight(const FLOAT height, bool notify)
-{
-	if(m_height!=height){
-		m_height=height;
-		if (notify) {
-			OnPropertyChanged(L"height");
-		}
-	}
-}
 void CRow::SetVisible(const bool& bVisible, bool notify)
 {
 	if(m_bVisible!=bVisible){
@@ -55,13 +55,8 @@ void CRow::SetSelected(const bool& bSelected)
 
 void CRow::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 {
-	if (!_tcsicmp(L"value", name) /*|| !_tcsicmp(L"size", name)*/) {
-		if (GetSizingType() == SizingType::Depend || GetSizingType() == SizingType::Fit ||
-			(GetSizingType() == SizingType::None && (pCell->GetRowSizingType() == SizingType::Depend || pCell->GetRowSizingType() == SizingType::Fit))) {
-			m_bMeasureValid = false;
-		} else {
-			//Do nothing, Cell value change 
-		}
+	if (!_tcsicmp(L"value", name) || !_tcsicmp(L"size", name)) {
+		m_isFitMeasureValid = false;
 	}
 }
 
@@ -69,8 +64,3 @@ void CRow::OnPropertyChanged(const wchar_t* name)
 {
 	m_pSheet->OnRowPropertyChanged(this, name);
 }
-
-
-CParentRow::CParentRow(CGridView* pGrid):CRow(pGrid){} 
-
-CChildRow::CChildRow(CSheetCell* pSheetCell):CRow(pSheetCell){} 

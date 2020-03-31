@@ -7,6 +7,15 @@
 #include "Column.h"
 #include "Cell.h"
 
+
+bool CCursorer::IsCursorTargetCell(const std::shared_ptr<CCell>& cell)
+{
+	return cell &&
+		cell->GetRowPtr()->GetIndex<AllTag>() >= cell->GetSheetPtr()->GetFrozenCount<RowTag>() &&
+		cell->GetColumnPtr()->GetIndex<AllTag>() >= cell->GetSheetPtr()->GetFrozenCount<ColTag>();
+
+}
+
 void CCursorer::UpdateCursor(std::shared_ptr<CCell>& cell, bool old, bool current, bool anchor, bool focus)
 {
 	if (old) { m_oldCell = m_currentCell; }//Old
@@ -26,8 +35,7 @@ void CCursorer::UpdateCursor(std::shared_ptr<CCell>& cell, bool old, bool curren
 
 void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 {
-	// Cell is null or H
-	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>() < cell->GetSheetPtr()->GetFrozenCount<RowTag>() || cell->GetColumnPtr()->GetIndex<AllTag>() < cell->GetSheetPtr()->GetFrozenCount<RowTag>()) {
+	if(!IsCursorTargetCell(cell)){
 		return;
 	}
 	
@@ -38,7 +46,7 @@ void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
 {
-	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!IsCursorTargetCell(cell)) {
 		return;
 	}
 
@@ -49,7 +57,7 @@ void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
 {
-	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!IsCursorTargetCell(cell)) {
 		return;
 	}
 
@@ -62,7 +70,7 @@ void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorLeave(std::shared_ptr<CCell>& cell)
 {
-	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!IsCursorTargetCell(cell)) {
 		return;
 	}
 	if (m_isDragPossible) {
@@ -74,7 +82,7 @@ void CCursorer::OnCursorLeave(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 {
-	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!IsCursorTargetCell(cell)) {
 		return;
 	}
 	UpdateCursor(cell);
@@ -84,7 +92,7 @@ void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
 {
-	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>()<0 || cell->GetColumnPtr()->GetIndex<AllTag>()<0) {
+	if (!IsCursorTargetCell(cell)) {
 		return;
 	}
 	UpdateCursor(cell, true, true, false, true);
@@ -97,10 +105,10 @@ void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
 
 void CCursorer::OnCursorCtrlShift(std::shared_ptr<CCell>& cell)
 {
-	if (!cell){// || cell->GetRowPtr()->GetIndex<AllTag>() < 0 || cell->GetColumnPtr()->GetIndex<AllTag>() < 0) {
+	if (!IsCursorTargetCell(cell)) {
 		return;
 	}
-	
+
 	UpdateCursor(cell, true, true, false, true);
 	cell->GetSheetPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_currentCell->GetRowPtr(), true);
 }
@@ -214,21 +222,21 @@ void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 		{
 			
 			std::shared_ptr<CCell> cell;
-			if(!m_focusedCell){//Not Focused yet. Cell(0, 0) is Focused;
-				cell = pSheet->Cell<VisTag>(0, 0);
+			if(!m_focusedCell){//Not Focused yet. Cell(frozen, frozen) is Focused;
+				cell = pSheet->Cell<VisTag>(pSheet->GetFrozenCount<RowTag>(), pSheet->GetFrozenCount<ColTag>());
 			}else{//Move selection
 				cell=m_currentCell;//TODO Low Current or Focused
 				int roVisib= cell->GetRowPtr()->GetIndex<VisTag>();
 				int coVisib= cell->GetColumnPtr()->GetIndex<VisTag>();
 				switch(e.Char){
 					case VK_LEFT:
-						coVisib=((std::max)(coVisib-1,0));
+						coVisib=((std::max)(coVisib-1,pSheet->GetFrozenCount<ColTag>()));
 						break;
 					case VK_RIGHT:
 						coVisib=((std::min)(coVisib+1, (int)pSheet->GetContainer<ColTag, VisTag>().size() - 1));
 						break;
 					case VK_UP:
-						roVisib=((std::max)(roVisib-1,0));
+						roVisib=((std::max)(roVisib-1,pSheet->GetFrozenCount<RowTag>()));
 						break;
 					case VK_DOWN: 
 						roVisib=((std::min)(roVisib+1, (int)pSheet->GetContainer<RowTag, VisTag>().size() - 1));

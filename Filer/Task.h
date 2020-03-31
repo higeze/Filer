@@ -1,4 +1,5 @@
 #pragma once
+#include "observable.h"
 
 struct Task
 {
@@ -20,12 +21,13 @@ struct SubTask:public Task
 
 struct MainTask:public Task
 {
-	std::vector<std::wstring> Links;
-	std::vector<SubTask> SubTasks;
+	observable_vector<std::wstring> Links;
+	observable_vector<SubTask> SubTasks;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar("SubTask", SubTasks);
+		Task::serialize(ar);
+		ar("SubTasks", static_cast<std::vector<SubTask>&>(SubTasks));
 	}
 };

@@ -11,8 +11,8 @@ public:
 	virtual std::wstring GetFileName()override;
 	virtual std::wstring GetExt()override;
 
-	virtual void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt) override;
-	virtual void SetExt(const std::wstring& wstrExt) override;
+	virtual void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd = NULL) override;
+	virtual void SetExt(const std::wstring& wstrExt, HWND hWnd = NULL) override;
 
 //	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction) override;
 	virtual std::pair<FileTimes, FileTimeStatus> GetFileTimes(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed = nullptr)override;

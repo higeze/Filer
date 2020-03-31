@@ -129,7 +129,25 @@ template<class T, class Allocator = std::allocator<T>>
 class observable_vector:public std::vector<T, Allocator>
 {
 public:
-	std::vector<T, Allocator>::vector;
+	using std::vector<T, Allocator>::vector;
+	virtual ~observable_vector<T, Allocator>(){}
+
+	observable_vector<T, Allocator>(const observable_vector<T, Allocator>& val)
+	{
+		*this = val;
+	}
+
+	observable_vector<T, Allocator>(observable_vector<T, Allocator>&& val)
+	{
+		*this = val;
+	}
+
+	observable_vector<T, Allocator>& operator=(const observable_vector<T, Allocator>& val)
+	{
+		std::vector<T, Allocator>::operator=(val);
+		VectorChanged.connect(val.VectorChanged);
+		return *this;
+	}
 
 	boost::signals2::signal<void(const NotifyVectorChangedEventArgs<T>&)> VectorChanged;
 

@@ -12,8 +12,8 @@
 #include "CellProperty.h"
 
 
-CParentPropertyNameColumn::CParentPropertyNameColumn(CGridView* pGrid)
-	:CParentMapColumn(pGrid)
+CParentPropertyNameColumn::CParentPropertyNameColumn(CSheet* pSheet)
+	:CMapColumn(pSheet)
 {}
 
 std::shared_ptr<CCell> CParentPropertyNameColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
@@ -31,8 +31,8 @@ std::shared_ptr<CCell> CParentPropertyNameColumn::CellTemplate(CRow* pRow, CColu
 	return std::make_shared<CPropertyNameCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 }
 
-CChildPropertyNameColumn::CChildPropertyNameColumn(CSheetCell* pSheetCell)
-	:CChildIndexColumn(pSheetCell)
+CChildPropertyNameColumn::CChildPropertyNameColumn(CSheet* pSheet)
+	:CChildIndexColumn(pSheet)
 {}
 
 std::shared_ptr<CCell> CChildPropertyNameColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
@@ -50,7 +50,7 @@ std::shared_ptr<CCell> CChildPropertyNameColumn::CellTemplate(CRow* pRow, CColum
 	return std::make_shared<CPropertyNameCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 }
 
-CChildPropertyIndexColumn::CChildPropertyIndexColumn(CSheetCell* pSheetCell)
+CChildPropertyIndexColumn::CChildPropertyIndexColumn(CSheet* pSheetCell)
 	:CChildRowHeaderColumn(pSheetCell)
 {}
 
@@ -69,8 +69,8 @@ std::shared_ptr<CCell> CChildPropertyIndexColumn::CellTemplate(CRow* pRow, CColu
 	return std::make_shared<CStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),boost::lexical_cast<std::wstring>(pRow->GetIndex<AllTag>()));
 }
 
-CParentPropertyValueColumn::CParentPropertyValueColumn(CGridView* pGrid)
-	:CParentMapColumn(pGrid)
+CParentPropertyValueColumn::CParentPropertyValueColumn(CSheet* pSheet)
+	:CMapColumn(pSheet)
 {}
 
 std::shared_ptr<CCell> CParentPropertyValueColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
@@ -88,8 +88,8 @@ std::shared_ptr<CCell> CParentPropertyValueColumn::CellTemplate(CRow* pRow, CCol
 	return std::make_shared<CEditableNoWrapStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty(),L"");
 }
 
-CChildPropertyValueColumn::CChildPropertyValueColumn(CSheetCell* pSheetCell)
-	:CChildIndexColumn(pSheetCell)
+CChildPropertyValueColumn::CChildPropertyValueColumn(CSheet* pSheet)
+	:CChildIndexColumn(pSheet)
 {}
 
 std::shared_ptr<CCell> CChildPropertyValueColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)

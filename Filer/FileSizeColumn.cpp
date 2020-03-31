@@ -7,8 +7,8 @@
 #include "CellProperty.h"
 #include "FilerGridViewProperty.h"
 
-CFileSizeColumn::CFileSizeColumn(CGridView* pGrid, std::shared_ptr<FileSizeArgs> spSizeProp)
-		:CParentDefaultMapColumn(pGrid), m_spSizeArgs(spSizeProp){}
+CFileSizeColumn::CFileSizeColumn(CSheet* pSheet, std::shared_ptr<FileSizeArgs> spSizeProp)
+		:CMapColumn(pSheet), m_spSizeArgs(spSizeProp){}
 
 std::shared_ptr<CCell> CFileSizeColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {

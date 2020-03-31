@@ -1,5 +1,6 @@
 #pragma once
 #include "UIElement.h"
+#include "SheetProperty.h"
 #include "MyMenu.h"
 #include "SheetEnums.h"
 #include "SheetEventArgs.h"
@@ -20,6 +21,13 @@ class CRect;
 class CPoint;
 class IMouseObserver;
 struct SheetStateMachine;
+class CGridView;
+
+namespace d2dw
+{
+	class CVScroll;
+	class CHScroll;
+}
 
 template<typename ...>
 constexpr bool false_v = false;
@@ -109,15 +117,18 @@ protected:
 	index_vector<std::shared_ptr<CColumn>> m_pntCols;
 	size_t m_frozenColumnCount = 0;
 
-	std::shared_ptr<HeaderProperty> m_spHeaderProperty; // HeaderProperty
-	std::shared_ptr<CellProperty> m_spFilterProperty; // FilterProperty
-	std::shared_ptr<CellProperty> m_spCellProperty; // CellProperty
+
+	std::shared_ptr<SheetProperty> m_spSheetProperty; // SheetProperty
 
 	std::shared_ptr<CColumn> m_pHeaderColumn; // Header column
 	std::shared_ptr<CRow> m_rowHeader; // Header row
+	std::shared_ptr<CRow> m_rowNameHeader; /**< Name Header row */
+	std::shared_ptr<CRow> m_rowFilter; /**< Filter row */
+
 
 	bool m_bSelected; // Selected or not
 	bool m_bFocused; // Focused or not
+
 
 	CRowColumn m_rocoContextMenu; // Store RowColumn of Caller
 
@@ -135,10 +146,7 @@ public:
 	boost::signals2::signal<void(CellContextMenuEventArgs&)> CellContextMenu;
 
 	//Constructor
-	CSheet(std::shared_ptr<HeaderProperty> spHeaderProperty,
-		std::shared_ptr<CellProperty> spFilterProperty,
-		std::shared_ptr<CellProperty> spCellProperty,
-		CMenu* pContextMenu= &CSheet::ContextMenu);
+	CSheet(std::shared_ptr<SheetProperty> spSheetProperty, CMenu* pContextMenu= &CSheet::ContextMenu);
 
 	//Destructor
 	virtual ~CSheet();
@@ -146,13 +154,21 @@ public:
 	//Getter Setter
 	std::shared_ptr<CCursorer> GetCursorerPtr(){return m_spCursorer;} /**< Cursor */
 	void SetContextMenuRowColumn(const CRowColumn& roco){m_rocoContextMenu = roco;}
-	virtual std::shared_ptr<HeaderProperty> GetHeaderProperty(){return m_spHeaderProperty;} /** Getter for Header Cell Property */
-	virtual std::shared_ptr<CellProperty> GetFilterProperty(){return m_spFilterProperty;} /** Getter for Filter Cell Property */
-	virtual std::shared_ptr<CellProperty> GetCellProperty(){return m_spCellProperty;} /** Getter for Cell Property */
+	virtual std::shared_ptr<SheetProperty> GetSheetProperty() { return m_spSheetProperty; } /** Getter for Header Cell Property */
+	virtual std::shared_ptr<HeaderProperty> GetHeaderProperty(){return m_spSheetProperty->HeaderPropPtr;} /** Getter for Header Cell Property */
+	virtual std::shared_ptr<CellProperty> GetFilterProperty(){return m_spSheetProperty->CellPropPtr;} /** Getter for Filter Cell Property */
+	virtual std::shared_ptr<CellProperty> GetCellProperty(){return m_spSheetProperty->CellPropPtr;} /** Getter for Cell Property */
+
 	virtual std::shared_ptr<CColumn> GetHeaderColumnPtr()const{return m_pHeaderColumn;} /** Getter for Header Column */
 	virtual void SetHeaderColumnPtr(std::shared_ptr<CColumn> column){m_pHeaderColumn=column;} /** Setter for Header Column */
 	virtual std::shared_ptr<CRow> GetHeaderRowPtr()const{return m_rowHeader;} /** Getter for Header Row */
 	virtual void SetHeaderRowPtr(std::shared_ptr<CRow> row){m_rowHeader=row;} /** Setter for Header Row */
+	virtual std::shared_ptr<CRow> GetNameHeaderRowPtr()const { return m_rowNameHeader; }
+	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_rowNameHeader = row; }
+	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_rowFilter; }
+	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_rowFilter = row; }
+
+
 	virtual bool GetSelected()const{return m_bSelected;};
 	virtual void SetSelected(const bool& bSelected){m_bSelected=bSelected;};
 	virtual bool GetFocused()const{return m_bFocused;};
@@ -181,7 +197,7 @@ public:
 	virtual bool HasSheetCell(){ return false; }
 	virtual bool IsVirtualPage() { return false; }
 	virtual void UpdateRow() = 0;
-	virtual void UpdateColumn();
+	virtual void UpdateColumn() = 0;
 	virtual void UpdateScrolls(){}
 	virtual void Invalidate(){}
 	virtual void UpdateAll();
@@ -210,7 +226,22 @@ public:
 	virtual void MoveColumn(int colTo, std::shared_ptr<CColumn> spFromColumn){Move<ColTag>(colTo, spFromColumn);}
 
 	virtual void PushRow(const std::shared_ptr<CRow>& pRow, bool notify = true);
+	
+	void PushRows(){}
+	template<class Head, class... Tail>
+	void PushRows(Head&& head, Tail&&... tail)
+	{
+		PushRow(head, true);
+		PushRows(std::forward<Tail>(tail)...);
+	}
 	virtual void PushColumn(const std::shared_ptr<CColumn>& pColumn, bool notify = true);
+	void PushColumns() {}
+	template<class Head, class... Tail>
+	void PushColumns(Head&& head, Tail&&... tail)
+	{
+		PushColumn(head, true);
+		PushColumns(std::forward<Tail>(tail)...);
+	}
 
 	virtual FLOAT GetColumnInitWidth(CColumn* pColumn);
 	virtual FLOAT GetColumnFitWidth(CColumn* pColumn);
@@ -262,6 +293,8 @@ public:
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name);
 	virtual void OnRowPropertyChanged(CRow* pRow, const wchar_t* name);
 	virtual void OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name);
+	virtual void OnVScrollPropertyChanged(d2dw::CVScroll* pScrl, const wchar_t* name);
+	virtual void OnHScrollPropertyChanged(d2dw::CHScroll* pScrl, const wchar_t* name);
 
 	virtual void SelectAll();
 	virtual void DeselectAll();
@@ -413,15 +446,15 @@ public:
 		auto iter = std::lower_bound(visContainer.begin(), visContainer.end(), coordinate,
 			[this, ptOrigin](const typename TRC::SharedPtr& ptr, const FLOAT& rhs)->bool {
 				if (ptr->GetIndex<VisTag>() >= GetFrozenCount<TRC>()) {
-					return (std::max)(ptOrigin.Get<TRC::PointTag>(), ptr->GetRightBottom()) < rhs;
+					return (std::max)(ptOrigin.Get<TRC::PointTag>(), ptr->GetEnd()) < rhs;
 				} else {
-					return ptr->GetRightBottom() < rhs;
+					return ptr->GetEnd() < rhs;
 				}
 			});
 
 		if (iter == visContainer.end()) {
 			return visContainer.size();
-		} else if (iter == visContainer.begin() && (*iter)->GetLeftTop() > coordinate) {
+		} else if (iter == visContainer.begin() && (*iter)->GetStart() > coordinate) {
 			return (*iter)->GetIndex<VisTag>() - 1;
 		} else {
 			return (*iter)->GetIndex<VisTag>();
@@ -462,14 +495,14 @@ public:
 
 	template<typename TRC> void FitBandWidth(TRC::template SharedPtr& ptr)
 	{
-		ptr->SetMeasureValid(false);
-		ptr->SetWidthHeight(0.0f, false);
 		auto& otherContainer = GetContainer<TRC::Other, AllTag>();
 		for(const auto& otherPtr : otherContainer) {
-			otherPtr->SetMeasureValid(false);
+			otherPtr->SetIsMeasureValid(false);
+			otherPtr->SetIsFitMeasureValid(false);
 			CSheet::Cell(ptr, otherPtr)->SetActMeasureValid(false);
 		};
 
+		ptr->FitLength();
 		PostUpdate(Updates::Column);
 		PostUpdate(Updates::Row);
 		PostUpdate(Updates::Scrolls);
@@ -498,7 +531,7 @@ public:
 	{
 		auto& otherContainer = GetContainer<TRC::Other, AllTag>();
 		for (const auto& otherPtr : otherContainer) {
-			otherPtr->SetMeasureValid(false);
+			otherPtr->SetIsMeasureValid(false);
 			CSheet::Cell(ptr, otherPtr)->OnPropertyChanged(L"size");
 		}
 
@@ -506,6 +539,7 @@ public:
 		PostUpdate(Updates::Row);
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
+
 	}
 
 	template<typename TRC>
@@ -584,12 +618,12 @@ public:
 		}
 		//Find Displayed Plus Elements
 		auto beginIter=std::upper_bound(cellBegin, visContainer.end(), pageFirst,
-			[this](const FLOAT& x, const auto& ptr)->bool { return x < ptr->GetLeftTop(); });
+			[this](const FLOAT& x, const auto& ptr)->bool { return x < ptr->GetStart(); });
 		if(beginIter != cellBegin){
 			--beginIter;
 		}
 		auto endIter = std::lower_bound(cellBegin, visContainer.end(), pageLast,
-			[this](const auto& ptr, const FLOAT& x)->bool { return x > ptr->GetRightBottom(); });
+			[this](const auto& ptr, const FLOAT& x)->bool { return x > ptr->GetEnd(); });
 		if(endIter != visContainer.end()){
 			++endIter;
 		}

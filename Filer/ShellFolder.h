@@ -22,8 +22,8 @@ public:
 	virtual std::wstring GetFileName()override;
 	virtual std::wstring GetExt()override;
 
-	virtual void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt) override;
-	virtual void SetExt(const std::wstring& wstrExt) override;
+	virtual void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd = NULL) override;
+	virtual void SetExt(const std::wstring& wstrExt, HWND hWnd = NULL) override;
 
 	CComPtr<IShellFolder> GetShellFolderPtr();
 	std::shared_ptr<CShellFolder> GetParent();
