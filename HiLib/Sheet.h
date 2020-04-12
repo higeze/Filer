@@ -127,7 +127,7 @@ protected:
 
 
 	bool m_bSelected; // Selected or not
-	bool m_bFocused; // Focused or not
+	//bool m_bFocused; // Focused or not
 
 
 	CRowColumn m_rocoContextMenu; // Store RowColumn of Caller
@@ -169,9 +169,9 @@ public:
 	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_rowFilter = row; }
 
 
-	virtual bool GetSelected()const{return m_bSelected;};
-	virtual void SetSelected(const bool& bSelected){m_bSelected=bSelected;};
-	virtual bool GetFocused()const{return m_bFocused;};
+	virtual bool GetIsSelected()const{return m_bSelected;};
+	virtual void SetIsSelected(const bool& bSelected){m_bSelected=bSelected;};
+	virtual bool GetIsFocused()const{return false;};
 	//virtual void SetFocused(const bool& bFocused){m_bFocused=bFocused;};
 
 	//Function
@@ -225,6 +225,7 @@ public:
 
 	virtual void MoveColumn(int colTo, std::shared_ptr<CColumn> spFromColumn){Move<ColTag>(colTo, spFromColumn);}
 
+	virtual void InsertRow(int row, const std::shared_ptr<CRow>& spRow, bool notify = true);
 	virtual void PushRow(const std::shared_ptr<CRow>& pRow, bool notify = true);
 	
 	void PushRows(){}
@@ -234,6 +235,7 @@ public:
 		PushRow(head, true);
 		PushRows(std::forward<Tail>(tail)...);
 	}
+
 	virtual void PushColumn(const std::shared_ptr<CColumn>& pColumn, bool notify = true);
 	void PushColumns() {}
 	template<class Head, class... Tail>
@@ -317,6 +319,7 @@ public:
 	virtual void Normal_LButtonClk(const LButtonClkEvent& e);
 	virtual void Normal_LButtonSnglClk(const LButtonSnglClkEvent& e);
 	virtual void Normal_LButtonDblClk(const LButtonDblClkEvent& e);
+	virtual void Normal_LButtonBeginDrag(const LButtonBeginDragEvent& e);
 	virtual void Normal_RButtonDown(const RButtonDownEvent& e);
 	virtual void Normal_MouseMove(const MouseMoveEvent& e);
 	virtual void Normal_MouseLeave(const MouseLeaveEvent& e);
@@ -324,6 +327,7 @@ public:
 	virtual void Normal_SetCursor(const SetCursorEvent& e);
 	virtual void Normal_ContextMenu(const ContextMenuEvent& e);
 	virtual void Normal_KeyDown(const KeyDownEvent& e);
+	virtual void Normal_Char(const CharEvent& e);
 	virtual void Normal_SetFocus(const SetFocusEvent& e);
 	virtual void Normal_KillFocus(const KillFocusEvent& e);
 	//RowTrack
@@ -586,7 +590,7 @@ public:
 		auto beg = (std::min)(idx1, idx2);
 		auto last = (std::max)(idx1, idx2);
 		for (auto iter = std::next(container.begin(), beg), end = std::next(container.begin(), last + 1); iter != end; ++iter) {
-			(*iter)->SetSelected(doSelect);
+			(*iter)->SetIsSelected(doSelect);
 		}
 	}
 

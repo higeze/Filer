@@ -16,6 +16,4 @@ public:
 	virtual void OnLButtonClk(MouseEvent& e);
 
 	virtual std::wstring GetString();
-
-	virtual bool IsComparable()const{return false;}
 };

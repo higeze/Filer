@@ -1,5 +1,5 @@
 #include "FavoritesColumn.h"
-#include "ParentColumnNameHeaderCell.h"
+#include "SortCell.h"
 #include "FilterCell.h"
 #include "Sheet.h"
 #include "FavoriteCell.h"
@@ -15,12 +15,12 @@ CFavoritesColumn::CFavoritesColumn(CSheet* pSheet, std::shared_ptr<std::vector<s
 
 std::shared_ptr<CCell> CFavoritesColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CParentHeaderCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());	
+	return std::make_shared<CCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());	
 }
 
 std::shared_ptr<CCell> CFavoritesColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"Icon");
+	return std::make_shared<CSortCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(), arg<"text"_s>() = L"Icon");
 }
 
 std::shared_ptr<CCell> CFavoritesColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)

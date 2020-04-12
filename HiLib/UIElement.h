@@ -40,21 +40,17 @@ struct EndEditEvent :public EventArgs
 		:EventArgs() {}
 };
 
-
 struct CreateEvent :public EventArgs
 {
 	CreateEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
 		:EventArgs(pWnd) {}
 };
 
-
 struct CloseEvent :public EventArgs
 {
-
 	CloseEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
 		:EventArgs(pWnd) {}
 };
-
 
 struct KillFocusEvent :public EventArgs
 {
@@ -94,7 +90,7 @@ struct MouseEvent:public EventArgs
 	UINT Flags;
 	CPoint Point;
 	MouseEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
-		:EventArgs(pWnd), Flags(wParam),Point((short)LOWORD(lParam), (short)HIWORD(lParam)){}
+		:EventArgs(pWnd), Flags(wParam), Point((short)LOWORD(lParam), (short)HIWORD(lParam)){}
 	virtual ~MouseEvent(){}
 };
 
@@ -169,7 +165,8 @@ struct SetCursorEvent:public EventArgs
 
 struct SetFocusEvent :public EventArgs
 {
-	SetFocusEvent(CWnd* pWnd):EventArgs(pWnd){}
+	HWND OldHWnd = nullptr;
+	SetFocusEvent(CWnd* pWnd, WPARAM wParam = NULL, LPARAM lParam = NULL):EventArgs(pWnd),OldHWnd((HWND)wParam){}
 };
 
 struct ContextMenuEvent:public EventArgs
@@ -194,12 +191,14 @@ public:
 
 	virtual UIElementState::Type GetState()const{return m_state;}
 	void SetState(const UIElementState::Type& state);
+	virtual bool GetIsFocused()const { return false; }
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnLButtonUp(const LButtonUpEvent& e);
 	virtual void OnLButtonClk(const LButtonClkEvent& e) {}
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) {}
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) {}
+	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) {}
 
 	virtual void OnMButtonDown(const MouseEvent& e){}//TODO
 	virtual void OnMButtonUp(const MouseEvent& e){}//TODO
@@ -210,7 +209,12 @@ public:
 	virtual void OnMouseWheel(const MouseWheelEvent& e){}
 
 	virtual void OnKeyDown(const KeyDownEvent& e){}
+	virtual void OnChar(const CharEvent& e) {}
 	virtual void OnContextMenu(const ContextMenuEvent& e){}
+	virtual void OnSetFocus(const SetFocusEvent& e) {}
+	virtual void OnSetCursor(const SetCursorEvent& e) {}
+	virtual void OnKillFocus(const KillFocusEvent& e) {}
+
 
 	virtual void OnPropertyChanged(const wchar_t* name){}
 };

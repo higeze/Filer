@@ -2,9 +2,9 @@
 
 #include "observable.h"
 
-template<typename TItem>
+template<typename TValueItem>
 class IBindSheet
 {
 public:
-	virtual observable_vector<TItem>& GetItemsSource() = 0;
+	virtual observable_vector<TValueItem>& GetItemsSource() = 0;
 };

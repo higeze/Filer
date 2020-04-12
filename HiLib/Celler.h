@@ -11,6 +11,7 @@ public:
 	virtual void OnLButtonClk(CSheet* pSheet, const LButtonClkEvent& e) = 0;
 	virtual void OnLButtonSnglClk(CSheet* pSheet, const LButtonSnglClkEvent& e) = 0;
 	virtual void OnLButtonDblClk(CSheet* pSheet, const LButtonDblClkEvent& e) = 0;
+	virtual void OnLButtonBeginDrag(CSheet* pSheet, const LButtonBeginDragEvent& e) = 0;
 	virtual void OnMouseMove(CSheet* pSheet, const MouseMoveEvent& e) = 0;
 	virtual void OnMouseLeave(CSheet* pSheet, const MouseLeaveEvent& e) = 0;
 	virtual void OnContextMenu(CSheet* pSheet, const ContextMenuEvent& e) = 0;
@@ -18,6 +19,7 @@ public:
 	//virtual void OnKillFocus(CSheet* pSheet, const EventArgs& e) = 0;
 	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) = 0;
 	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) = 0;
+	virtual void OnChar(CSheet* pSheet, const CharEvent& e) = 0;
 
 	virtual void OnClear() = 0;
 	virtual void Clear() = 0;
@@ -33,6 +35,7 @@ public:
 	virtual void OnLButtonClk(CSheet* pSheet, const LButtonClkEvent& e) override;
 	virtual void OnLButtonSnglClk(CSheet* pSheet, const LButtonSnglClkEvent& e) override;
 	virtual void OnLButtonDblClk(CSheet* pSheet, const LButtonDblClkEvent& e) override;
+	virtual void OnLButtonBeginDrag(CSheet* pSheet, const LButtonBeginDragEvent& e) override;
 	virtual void OnMouseMove(CSheet* pSheet, const MouseMoveEvent& e) override;
 	virtual void OnMouseLeave(CSheet* pSheet, const MouseLeaveEvent& e) override;
 	virtual void OnContextMenu(CSheet* pSheet, const ContextMenuEvent& e) override;
@@ -40,7 +43,8 @@ public:
 	//virtual void OnKillFocus(CSheet* pSheet, const EventArgs& e);
 	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) override;
 	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) override;
-	
+	virtual void OnChar(CSheet* pSheet, const CharEvent& e) override;;
+
 	virtual void OnClear() override;
 	virtual void Clear() override;
 };

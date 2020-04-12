@@ -100,7 +100,7 @@ public:
 	LRESULT OnCommandDefault(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 	{
 		m_spGrid->Clear();
-		CCellSerializer serializer(m_spGrid,m_spGrid->GetSheetProperty(),m_spGrid->GetCellProperty());
+		CCellSerializer serializer(m_spGrid.get());
 		serializer.Serialize(m_spGrid, m_wstrPropertyName.c_str(), MakeShared<T>());
 		m_buttonApply.EnableWindow(TRUE);
 		m_spGrid->SubmitUpdate();
@@ -109,7 +109,7 @@ public:
 
 	LRESULT OnCommandOK(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 	{
-		CCellDeserializer deserializer(m_spGrid);
+		CCellDeserializer deserializer(m_spGrid.get());
 		deserializer.Deserialize(m_wstrPropertyName.c_str(),m_prop);
 		SignalPropertyChanged(m_wstrPropertyName);
 		SendMessage(WM_CLOSE,NULL,NULL);
@@ -118,7 +118,7 @@ public:
 
 	LRESULT OnCommandApply(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 	{
-		CCellDeserializer deserializer(m_spGrid);
+		CCellDeserializer deserializer(m_spGrid.get());
 		deserializer.Deserialize(m_wstrPropertyName.c_str(),m_prop);
 		m_spGrid->UpdateAll();
 		SignalPropertyChanged(m_wstrPropertyName);
@@ -206,7 +206,7 @@ public:
 		m_spGrid->Create(m_hWnd, rcGrid);
 
 		//Serializer have to be called after Creation, because Direct2DWrite is necessary
-		CCellSerializer serializer(m_spGrid, m_spGrid->GetSheetProperty(), m_spGrid->GetCellProperty());
+		CCellSerializer serializer(m_spGrid.get());
 		serializer.Serialize(m_spGrid, m_wstrPropertyName.c_str(), m_prop);
 
 		m_spGrid->SubmitUpdate();

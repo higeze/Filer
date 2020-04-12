@@ -2,7 +2,6 @@
 #include "Column.h"
 #include "Sheet.h"
 #include "PathCell.h"
-#include "ParentRowHeaderCell.h"
 #include "CellProperty.h"
 
 
@@ -12,7 +11,7 @@ std::shared_ptr<CCell>& CPathRow::Cell(CColumn* pCol)
 		throw std::exception("Error in CPathRow::Cell");
 	}else if (pCol == m_pSheet->GetHeaderColumnPtr().get()) {
 		if (!m_spHeaderCell) {
-			m_spHeaderCell = std::make_shared<CParentRowHeaderCell>(m_pSheet, this, pCol, m_pSheet->GetHeaderProperty());
+			m_spHeaderCell = std::make_shared<CCell>(m_pSheet, this, pCol, m_pSheet->GetHeaderProperty());
 		}
 		return m_spHeaderCell;
 	} else {

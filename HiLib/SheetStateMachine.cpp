@@ -40,12 +40,14 @@ struct CSheetStateMachine::Machine
 			state<Normal> +event<ContextMenuEvent> / call(&CSheet::Normal_ContextMenu),
 			state<Normal> +event<SetCursorEvent>[call(&CSheet::Normal_Guard_SetCursor)] / call(&CSheet::Normal_SetCursor),
 			state<Normal> +event<KeyDownEvent> / call(&CSheet::Normal_KeyDown),
+			state<Normal> +event<CharEvent> / call(&CSheet::Normal_Char),
 			state<Normal> +event<SetFocusEvent> / call(&CSheet::Normal_SetFocus),
 			state<Normal> +event<KillFocusEvent> / call(&CSheet::Normal_KillFocus),
 
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CSheet::RowDrag_Guard_LButtonBeginDrag)] / call(&CSheet::RowDrag_LButtonBeginDrag) = state<RowDrag>,
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CSheet::ColDrag_Guard_LButtonBeginDrag)] / call(&CSheet::ColDrag_LButtonBeginDrag) = state<ColDrag>,
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CSheet::ItemDrag_Guard_LButtonBeginDrag)] / call(&CSheet::ItemDrag_LButtonBeginDrag) = state<ItemDrag>,
+			state<Normal> +event<LButtonBeginDragEvent> / call(&CSheet::Normal_LButtonBeginDrag),
 			//
 			state<RowDrag> +event<PaintEvent> / call(&CSheet::Normal_Paint),
 			state<RowDrag> +event<LButtonUpEvent> / call(&CSheet::RowDrag_LButtonUp) = state<Normal>,

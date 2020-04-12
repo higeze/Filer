@@ -16,12 +16,7 @@ public:
 	virtual void SetCheckBoxState(const CheckBoxState& state) override;
 
 	virtual std::wstring GetString() override;
-	virtual void SetString(const std::wstring& str)override;
 	virtual void SetStringCore(const std::wstring& str)override;
-	virtual bool IsComparable()const override
-	{
-		return false;
-	}
 
 	virtual void OnPropertyChanged(const wchar_t* name) override;
 };

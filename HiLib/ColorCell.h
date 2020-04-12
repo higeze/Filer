@@ -14,5 +14,4 @@ public:
 	virtual void PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
 	virtual void OnLButtonClk(const LButtonClkEvent& e) override;
 	virtual std::basic_string<TCHAR> GetString() override;
-	virtual bool IsComparable()const override{return false;}
 };

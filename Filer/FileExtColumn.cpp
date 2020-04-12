@@ -1,6 +1,6 @@
 //#include "stdafx.h"
 #include "FileExtColumn.h"
-#include "ParentColumnNameHeaderCell.h"
+#include "SortCell.h"
 #include "FilterCell.h"
 #include "PathCell.h"
 #include "FileExtCell.h"
@@ -14,7 +14,7 @@ std::shared_ptr<CCell> CFileExtColumn::HeaderCellTemplate(CRow* pRow, CColumn* p
 
 std::shared_ptr<CCell> CFileExtColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"Ext");
+	return std::make_shared<CSortCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),arg<"text"_s>() = L"Ext");
 }
 
 std::shared_ptr<CCell> CFileExtColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)

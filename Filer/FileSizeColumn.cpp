@@ -1,5 +1,5 @@
 #include "FileSizeColumn.h"
-#include "ParentColumnNameHeaderCell.h"
+#include "SortCell.h"
 #include "FilterCell.h"
 #include "FilerGridView.h"
 #include "FileSizeCell.h"
@@ -17,7 +17,7 @@ std::shared_ptr<CCell> CFileSizeColumn::HeaderCellTemplate(CRow* pRow, CColumn* 
 
 std::shared_ptr<CCell> CFileSizeColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"Size");
+	return std::make_shared<CSortCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),arg<"text"_s>() = L"Size");
 }
 
 std::shared_ptr<CCell> CFileSizeColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)

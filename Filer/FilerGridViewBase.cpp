@@ -5,7 +5,7 @@
 #include "Row.h"
 #include "Column.h"
 #include "Cell.h"
-#include "ParentRowHeaderColumn.h"
+#include "RowHeaderColumn.h"
 #include "FileRow.h"
 #include "FileNameColumn.h"
 #include "FileSizeColumn.h"
@@ -195,6 +195,16 @@ void CFilerGridViewBase::Normal_KeyDown(const KeyDownEvent& e)
 
 	CGridView::Normal_KeyDown(e);
 };
+
+bool CFilerGridViewBase::Edit_Guard_KeyDownWithNormal(const KeyDownEvent& e)
+{
+	return false;
+}
+
+bool CFilerGridViewBase::Edit_Guard_KeyDownWithoutNormal(const KeyDownEvent& e)
+{
+	return Edit_Guard_KeyDown(e);
+}
 
 void CFilerGridViewBase::OnCellLButtonDblClk(CellEventArgs& e)
 {

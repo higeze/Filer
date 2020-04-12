@@ -3,15 +3,18 @@
 
 class CShellFile;
 
-class CFileIconNameCell:public CParameterCell, public std::enable_shared_from_this<CFileIconNameCell>
+class CFileIconNameCell:public CTextCell, public std::enable_shared_from_this<CFileIconNameCell>
 {
 protected:
 	mutable boost::signals2::connection m_conDelayUpdateAction;
 public:
-	CFileIconNameCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty);
-	virtual ~CFileIconNameCell(){}
+	CFileIconNameCell::CFileIconNameCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit){}
+	virtual ~CFileIconNameCell()
+	{
+		auto a = 9;
+	}
 
-	virtual bool IsComparable()const override{return false;}
 	virtual std::wstring GetString() override;
 	virtual std::shared_ptr<CShellFile> GetShellFile();
 	virtual void SetStringCore(const std::wstring& str) override;
@@ -21,6 +24,9 @@ public:
 	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override;
 	virtual d2dw::CRectF GetEditRect() const override;
 	virtual void OnEdit(const EventArgs& e) override;
+
+	virtual bool CanSetStringOnEditing()const override { return false; }
+
 
 protected:
 	d2dw::CSizeF GetIconSizeF(d2dw::CDirect2DWrite* pDirect)const;

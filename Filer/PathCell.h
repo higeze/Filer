@@ -1,18 +1,14 @@
 #pragma once
-
 #include "TextCell.h"
 
-class CSize;
-class CDC;
-
-class CPathCell:public CEditableCell
+class CPathCell:public CTextCell
 {
 public:
 	/**
 	 *  Constructor
 	 */
-	CPathCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CMenu* pMenu = nullptr)
-		:CEditableCell(pSheet,pRow, pColumn,spProperty,pMenu){}
+	CPathCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty)
+		:CTextCell(pSheet,pRow, pColumn,spProperty, arg<"editmode"_s>() = EditMode::LButtonDownEdit){}
 	/**
 	 *  Destructor
 	 */
@@ -36,13 +32,6 @@ public:
 
 	virtual bool IsLeftestCell()const;
 
-	/**
-	 *  Comparable or not
-	 */
-	virtual bool IsComparable()const override
-	{
-		return false;
-	}
 	virtual bool CanSetStringOnEditing()const override{return false;}
 };
 

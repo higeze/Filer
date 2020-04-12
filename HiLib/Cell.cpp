@@ -8,16 +8,6 @@
 #include "RowColumn.h"
 #include "MyMenu.h"
 
-
-CMenu CCell::ContextMenu;
-
-CCell::CCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CMenu* pContextMenu)
-	:m_pSheet(pSheet),
-	m_pRow(pRow),
-	m_pColumn(pColumn),
-	m_spProperty(spProperty),
-	m_pContextMenu(pContextMenu?pContextMenu:&CCell::ContextMenu){}
-
 bool CCell::operator<(CCell& rhs)
 {
 	return _tcsicmp(this->GetSortString().c_str(), rhs.GetSortString().c_str())>0;
@@ -43,11 +33,11 @@ d2dw::CSizeF CCell::GetFitSize(d2dw::CDirect2DWrite* pDirect)
 
 d2dw::CSizeF CCell::GetActSize(d2dw::CDirect2DWrite* pDirect)
 {
-	if(!m_bActMeasureValid){
+	if(!m_isActMeasureValid){
 		auto width = m_pColumn->GetWidth();
 		auto fitSize = GetFitSize(pDirect);
 		if(fitSize.width <= width){
-			m_bActMeasureValid = true;
+			m_isActMeasureValid = true;
 			m_actSize.width = width;
 			m_actSize.height = m_fitSize.height;
 		}else{
@@ -84,21 +74,8 @@ d2dw::CSizeF CCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 
 	//Calc CenterBorder Rect
 	d2dw::CRectF rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
-	m_bActMeasureValid = true;
+	m_isActMeasureValid = true;
 	return rcCenter.Size();	
-}
-
-void CCell::SetString(const std::wstring& str)
-{
-	if(GetString()!=str){
-		SetStringNotify(str);	
-	}
-}
-
-void CCell::SetStringNotify(const std::wstring& str)
-{
-	SetStringCore(str);
-	OnPropertyChanged(L"value");
 }
 
 void CCell::OnPropertyChanged(const wchar_t* name)
@@ -106,10 +83,10 @@ void CCell::OnPropertyChanged(const wchar_t* name)
 	if (!_tcsicmp(L"value", name)) {
 		//Update valid flag
 		m_isFitMeasureValid = false;
-		m_bActMeasureValid = false;
+		m_isActMeasureValid = false;
 	} else if (!_tcsicmp(L"size", name)) {
 		m_isFitMeasureValid = false;
-		m_bActMeasureValid = false;
+		m_isActMeasureValid = false;
 	}
 	//Notify to Row, Column and Sheet
 	m_pRow->OnCellPropertyChanged(this, name);
@@ -138,27 +115,27 @@ d2dw::CRectF CCell::GetRect()const
 
 d2dw::CRectF CCell::CenterBorder2InnerBorder(d2dw::CRectF rcCenter)
 {
-	auto halfLineWidth = m_spProperty->Line->Width*0.5f;
+	auto halfLineWidth = m_spCellProperty->Line->Width*0.5f;
 	rcCenter-= d2dw::CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
 	return rcCenter;
 }
 
 d2dw::CRectF CCell::InnerBorder2Content(d2dw::CRectF rcInner)
 {
-	rcInner.DeflateRect(*(m_spProperty->Padding));
+	rcInner.DeflateRect(*(m_spCellProperty->Padding));
 	return rcInner;
 }
 
 d2dw::CRectF CCell::Content2InnerBorder(d2dw::CRectF rcContent)
 {
-	rcContent.InflateRect(*(m_spProperty->Padding));
+	rcContent.InflateRect(*(m_spCellProperty->Padding));
 	return rcContent;
 }
 
 d2dw::CRectF CCell::InnerBorder2CenterBorder(d2dw::CRectF rcInner)
 {
 	//Calc CenterBorder Rect 
-	auto halfLineWidth = m_spProperty->Line->Width*0.5f;
+	auto halfLineWidth = m_spCellProperty->Line->Width*0.5f;
 	rcInner += d2dw::CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
 	return rcInner;
 }
@@ -166,30 +143,30 @@ d2dw::CRectF CCell::InnerBorder2CenterBorder(d2dw::CRectF rcInner)
 void CCell::PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	//Paint Normal
-	pDirect->FillSolidRectangle(*(m_spProperty->NormalFill), rcPaint);
+	pDirect->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
 	//Selected
-	if (GetSelected() && ::GetFocus() == m_pSheet->GetGridPtr()->m_hWnd) {
-		pDirect->FillSolidRectangle(*(m_spProperty->SelectedFill), rcPaint);
-	} else if (GetSelected()) {
-		pDirect->FillSolidRectangle(*(m_spProperty->UnfocusSelectedFill), rcPaint);
+	if (GetIsSelected() && m_pSheet->GetIsFocused()  /*::GetFocus() == m_pSheet->GetGridPtr()->m_hWnd*/) {
+		pDirect->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rcPaint);
+	} else if (GetIsSelected()) {
+		pDirect->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rcPaint);
 	}
 	//Hot, Pressed
 	if (m_state == UIElementState::Hot || m_state == UIElementState::Pressed) {
-		pDirect->FillSolidRectangle(*(m_spProperty->HotFill), rcPaint);
+		pDirect->FillSolidRectangle(*(m_spCellProperty->HotFill), rcPaint);
 	}
 }
 
 void CCell::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	pDirect->DrawSolidRectangle(*(m_spProperty->Line), rcPaint);
+	pDirect->DrawSolidRectangle(*(m_spCellProperty->Line), rcPaint);
 }
 
 void CCell::PaintFocus(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	if(GetFocused()){
-		auto halfLineWidth = m_spProperty->Line->Width*0.5f;
+	if(GetIsFocused()){
+		auto halfLineWidth = m_spCellProperty->Line->Width*0.5f;
 		rcPaint.DeflateRect(halfLineWidth, halfLineWidth);
-		pDirect->DrawSolidRectangle(*(m_spProperty->FocusedLine), rcPaint);
+		pDirect->DrawSolidRectangle(*(m_spCellProperty->FocusedLine), rcPaint);
 	}
 }
 
@@ -221,41 +198,6 @@ void CCell::OnLButtonDblClk(const LButtonDblClkEvent& e)
 	m_pSheet->CellLButtonDblClk(CellEventArgs(this));
 }
 
-void CCell::OnContextMenu(const ContextMenuEvent& e)
-{
-	//CMenu* pMenu = GetContextMenuPtr(); 
-	//if(pMenu){//TODO should use GetWnd not GetHWND?
-	//	CPoint ptScreen(e.Point);
-	//	HWND hWnd = m_pSheet->GetGridPtr()->m_hWnd;
-	//	m_pSheet->SetContextMenuRowColumn(CRowColumn(m_pRow,m_pColumn));
-	//	::ClientToScreen(hWnd, &ptScreen);
-	//	::SetForegroundWindow(hWnd);
-	//	pMenu->TrackPopupMenu(0,ptScreen.x,ptScreen.y,hWnd);
-	//}
-	//HMENU hMenu = ::CreatePopupMenu();
-	//MENUITEMINFO mii = {0};
-	//mii.cbSize = sizeof(MENUITEMINFO);
-	//mii.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID  | MIIM_STRING;
-	//mii.fType = MFT_STRING;
-	//mii.fState = MFS_ENABLED;
-	//mii.wID = 98765;
-	//mii.dwTypeData = L"TEST";
-	//mii.cch = 4;
-	////AddCmdIDHandler(mii.wID, 
-	////	[&](WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)->LRESULT
-	////	{
-	////		return OnCommandMenuItem(wNotifyCode, wID, hWndCtl, bHandled);
-	////	});
-	//::InsertMenuItem(hMenu, 0, TRUE, &mii);
-	//	CPoint ptScreen(e.Point);
-	//	//m_rocoContextMenu.SetRowColumnPtr(e.CellPtr->GetRowPtr(),e.CellPtr->GetColumnPtr());
-	//	ClientToScreen(m_pSheet->GetGridPtr(), &ptScreen);
-	//	::SetForegroundWindow(m_pSheet->GetGridPtr());
-	//	::TrackPopupMenu(hMenu,0,ptScreen.x,ptScreen.y,0,m_pSheet->GetGridPtr(),NULL);
-
-
-	//m_pSheet->CellContextMenu(CellContextMenuEventArgs(this,e.Point));	
-}
 void CCell::OnSetFocus(const SetFocusEvent& e)
 {
 	OnPropertyChanged(L"focus");
@@ -271,17 +213,17 @@ bool CCell::Filter(const std::wstring& strFilter)
 	return boost::algorithm::to_lower_copy(GetString()).find(boost::algorithm::to_lower_copy(strFilter))!=std::wstring::npos;
 }
 
-bool CCell::IsVisible()const
+bool CCell::GetIsVisible()const
 {
 	return m_pRow->GetVisible() && m_pColumn->GetVisible();
 }
 
-bool CCell::GetSelected()const
+bool CCell::GetIsSelected()const
 {
-	return m_bSelected || m_pRow->GetSelected() || m_pColumn->GetSelected() || m_pSheet->GetSelected();
+	return m_bSelected || m_pRow->GetIsSelected() || m_pColumn->GetIsSelected();
 }
 
-void CCell::SetSelected(const bool& selected)
+void CCell::SetIsSelected(const bool& selected)
 {
 	if(m_bSelected!=selected){
 		m_bSelected=selected;
@@ -289,23 +231,23 @@ void CCell::SetSelected(const bool& selected)
 	}
 }
 
-bool CCell::GetFocused()const
+bool CCell::GetIsFocused()const
 {
 	return m_pSheet->IsFocusedCell(this) /* || m_pSheet->GetFocused()*/;
 }
 
-bool CCell::GetDoubleFocused()const
+bool CCell::GetIsDoubleFocused()const
 {
 	return m_pSheet->IsDoubleFocusedCell(this) /* || m_pSheet->GetFocused()*/;
 }
 
 
-bool CCell::GetChecked()const
+bool CCell::GetIsChecked()const
 {
 	return m_bChecked;
 }
 
-void CCell::SetChecked(const bool& bChecked)
+void CCell::SetIsChecked(const bool& bChecked)
 {
 	if(m_bChecked!=bChecked){
 		m_bChecked=bChecked;
@@ -313,37 +255,20 @@ void CCell::SetChecked(const bool& bChecked)
 	}
 }
 
-bool CCell::IsComparable()const
-{
-	return true;
-}
-
-Compares CCell::EqualCell(CCell* pCell, std::function<void(CCell*, Compares)> action)
-{
-	return pCell->EqualCell(this, action);
-}
-
-Compares CCell::EqualCell(CEmptyCell* pCell, std::function<void(CCell*, Compares)> action)
-{
-	action(this, Compares::DiffNE);
-	return Compares::DiffNE;
-} 
-
-Compares CCell::EqualCell(CTextCell* pCell, std::function<void(CCell*, Compares)> action)
-{
-	action(this, Compares::Diff);
-	return Compares::Diff;
-}
-
-Compares CCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Compares)> action)
-{
-	action(this, Compares::Diff);
-	return Compares::Diff;
-}
-
 std::wstring CCell::GetString()
 {
 	return std::wstring();
 }
+
+void CCell::SetString(const std::wstring& str, bool notify)
+{
+	if (GetString() != str) {
+		SetStringCore(str);
+		if (notify) {
+			OnPropertyChanged(L"value");
+		}
+	}
+}
+
 
 

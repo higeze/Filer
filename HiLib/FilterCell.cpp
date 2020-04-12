@@ -5,30 +5,18 @@
 #include "GridView.h"
 #include "Textbox.h"
 
-CFilterCell::CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu)
-	:CEditableCell(pSheet, pRow, pColumn, spProperty,pMenu){ }
-
-CFilterCell::~CFilterCell(){}
-
 std::wstring CFilterCell::GetString()
 {
 	return m_pColumn->GetFilter();
 }
 
-void CFilterCell::SetString(const std::wstring& str)
-{
-	//Filter cell undo redo is set when Post WM_FILTER
-	if(GetString()!=str){
-		CCell::SetStringNotify(str);
-		m_deadlinetimer.run([hWnd = m_pSheet->GetGridPtr()->m_hWnd, newString = str] {
-			::PostMessage(hWnd,WM_FILTER,NULL,NULL);
-		}, std::chrono::milliseconds(200));
-	}
-}
-
 void CFilterCell::SetStringCore(const std::wstring& str)
 {
-	m_pColumn->SetFilter(str);
+	//Filter cell undo redo is set when Post WM_FILTER
+	m_deadlinetimer.run([hWnd = m_pSheet->GetGridPtr()->m_hWnd, pColumn = m_pColumn, newString = str]{
+		pColumn->SetFilter(newString);
+		::PostMessage(hWnd,WM_FILTER,NULL,NULL);
+	}, std::chrono::milliseconds(200));
 }
 
 void CFilterCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
@@ -36,12 +24,12 @@ void CFilterCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPai
 
 	std::wstring str = GetString();
 	if (!str.empty()) {
-		pDirect->DrawTextLayout(*(m_spProperty->Format), str, rcPaint);
+		pDirect->DrawTextLayout(*(m_spCellProperty->Format), str, rcPaint);
 	}
 	else {
 		str = L"Filter items...";
 		d2dw::FormatF filterFnC(
-			m_spProperty->Format->Font.FamilyName, m_spProperty->Format->Font.Size,
+			m_spCellProperty->Format->Font.FamilyName, m_spCellProperty->Format->Font.Size,
 			210.0f / 255, 210.0f / 255, 210.0f / 255, 1.0f);
 		pDirect->DrawTextLayout(filterFnC, str, rcPaint);
 	}

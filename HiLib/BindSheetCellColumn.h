@@ -1,10 +1,10 @@
 #pragma once
 #include "BindGridView.h"
 #include "BindTextCell.h"
-#include "BindSheetCell.h"
+#include "BindItemsSheetCell.h"
 #include "FilterCell.h"
 #include "MapColumn.h"
-#include "ParentColumnNameHeaderCell.h"
+#include "SortCell.h"
 #include "named_arguments.h"
 
 template<typename TItem, typename TValueItem>
@@ -13,13 +13,13 @@ class CBindSheetCellColumn : public CMapColumn
 private:
 	std::wstring m_header;
 	std::function<observable_vector<TValueItem>&(TItem&)> m_itemser;
-	std::function<void(CBindSheetCell<TItem, TValueItem>*)> m_initialize;
+	std::function<void(CBindItemsSheetCell<TItem, TValueItem>*)> m_initialize;
 public:
 	template<typename... Args>
 	CBindSheetCellColumn(CSheet* pSheet,
 		const std::wstring& header,
 		std::function<observable_vector<TValueItem>&(TItem&)> itemser,
-		std::function<void(CBindSheetCell<TItem, TValueItem>*)> initializer,
+		std::function<void(CBindItemsSheetCell<TItem, TValueItem>*)> initializer,
 		Args... args)
 		:CMapColumn(pSheet, args...), m_header(header), m_itemser(itemser), m_initialize(initializer)
 	{
@@ -42,12 +42,12 @@ public:
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CParentHeaderCell>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+		return std::make_shared<CCell>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
 	}
 
 	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet, pRow, pColumn, m_pSheet->GetHeaderProperty(), m_header);
+		return std::make_shared<CSortCell>(m_pSheet, pRow, pColumn, m_pSheet->GetHeaderProperty(), arg<"text"_s>() = m_header);
 	}
 
 	std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)
@@ -57,7 +57,7 @@ public:
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		auto spCell = std::make_shared<CBindSheetCell<TItem, TValueItem>>(
+		auto spCell = std::make_shared<CBindItemsSheetCell<TItem, TValueItem>>(
 			m_pSheet, pRow, pColumn,
 			m_pSheet->GetSheetProperty(),
 			m_pSheet->GetCellProperty(),

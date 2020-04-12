@@ -119,5 +119,3 @@ void CCheckBoxCell::OnLButtonDown(const LButtonDownEvent& e)
 			}
 	}
 }
-
-bool CCheckBoxCell::IsComparable()const { return false; }

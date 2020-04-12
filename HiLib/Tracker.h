@@ -94,9 +94,10 @@ public:
 	void OnEndTrack(CSheet* pSheet, const MouseEvent& e) override
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
-		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		p->SetLength(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point).Get<TRC::PointTag>() - p->GetStart(), true);
-		pSheet->EndTrack<TRC>(p);
+		if (auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib)) {
+			p->SetLength(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point).Get<TRC::PointTag>() - p->GetStart(), true);
+			pSheet->EndTrack<TRC>(p);
+		}
 	}
 
 	void OnLeaveTrack(CSheet* pSheet, const MouseEvent& e) override

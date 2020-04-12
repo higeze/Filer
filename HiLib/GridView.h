@@ -90,6 +90,7 @@ protected:
 	virtual LRESULT OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnMouseWheel(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	virtual LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	virtual LRESULT OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	virtual LRESULT OnRButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnLButtonDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
@@ -163,6 +164,8 @@ public:
 	//virtual void ColumnErased(CColumnEventArgs& e);
 	virtual void SubmitUpdate();
 	virtual CColumn* GetParentColumnPtr(CCell* pCell)override;	
+	virtual bool GetIsFocused()const;
+
 
 public:
 	//Normal
@@ -201,6 +204,8 @@ public:
 	virtual void Edit_LButtonDown(const LButtonDownEvent& e);
 	virtual void Edit_LButtonUp(const LButtonUpEvent& e);
 	virtual bool Edit_Guard_KeyDown(const KeyDownEvent& e);
+	virtual bool Edit_Guard_KeyDownWithNormal(const KeyDownEvent& e);
+	virtual bool Edit_Guard_KeyDownWithoutNormal(const KeyDownEvent& e);
 	virtual void Edit_KeyDown(const KeyDownEvent& e);
 	virtual void Edit_Char(const CharEvent& e);
 };

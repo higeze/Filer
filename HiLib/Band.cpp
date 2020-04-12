@@ -12,15 +12,14 @@ void CBand::SetStart(const FLOAT start, bool notify)
 
 void CBand::SetLength(const FLOAT length, bool notify)
 {
-	if (m_length != length) {
-		m_length = std::clamp(
-			length,
-			m_isMinLengthFit ? GetFitLength() : m_minLength,
-			m_isMaxLengthFit ? GetFitLength() : m_maxLength);
+	auto oldLength = m_length;
+	m_length = std::clamp(
+		length,
+		m_isMinLengthFit ? GetFitLength() : m_minLength,
+		m_isMaxLengthFit ? GetFitLength() : m_maxLength);
 
-		if (notify) {
-			OnPropertyChanged(L"size");
-		}
+	if (oldLength != m_length && notify) {
+		OnPropertyChanged(L"size");
 	}
 }
 
@@ -32,6 +31,5 @@ void CBand::FitLength(bool notify)
 
 void CBand::BoundLength(bool notify)
 {
-	auto length = m_length;
-	SetLength(length, notify);
+	SetLength(m_length);
 }

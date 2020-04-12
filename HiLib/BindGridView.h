@@ -5,6 +5,7 @@
 #include "MyString.h"
 #include "MyXmlSerializer.h"
 #include "IBindSheet.h"
+#include "Cursorer.h"
 
 template<typename TItem>
 class CBindGridView :public CGridView, public IBindSheet<TItem>
@@ -15,7 +16,9 @@ public:
 	CBindGridView(std::shared_ptr<GridViewProperty>& spGridViewProp)
 		:CGridView(spGridViewProp)
 	{
-		m_itemsSource.VectorChanged.connect(
+		m_spCursorer = std::make_shared<CExcelLikeCursorer>();
+
+		m_itemsSource.VectorChanged =
 			[this](const NotifyVectorChangedEventArgs<TItem>& e)->void {
 				switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
@@ -30,14 +33,23 @@ public:
 					break;
 				}
 
-			}
-		);
+			};
 	}
 
 	virtual bool HasSheetCell()override { return true; }
 	virtual bool IsVirtualPage()override { return true; }
 
 	observable_vector<TItem>& GetItemsSource() override { return m_itemsSource; }
+
+	void RowMoved(CMovedEventArgs<RowTag>& e) override
+	{
+		auto& itemsSource = GetItemsSource();
+		auto fromIter = itemsSource.cbegin() + (e.m_from - GetFrozenCount<RowTag>());
+		auto temp = *fromIter;
+		itemsSource.erase(fromIter);
+		auto toIter = itemsSource.cbegin() + (e.m_to - GetFrozenCount<RowTag>());
+		itemsSource.insert(toIter, temp);
+	}
 
 	/******************/
 	/* Window Message */
@@ -85,7 +97,7 @@ public:
 			m_itemsSource.notify_push_back(TItem());
 		} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
 			auto a = Cell(m_pDirect->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>();
-			m_itemsSource.notify_erase(m_itemsSource.cbegin() + Cell(m_pDirect->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount);
+			m_itemsSource.notify_erase(m_itemsSource.cbegin() + (Cell(m_pDirect->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
 		}
 		e.Handled = TRUE;
 	}
@@ -168,14 +180,14 @@ public:
 				}
 			}
 			break;
-		case VK_F2:
-		{
-			//TODOTODO
-			//if (m_spCursorer->GetFocusedCell()) {
-			//	std::static_pointer_cast<CFileIconNameCell>(CSheet::Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(EventArgs(this));
-			//}
-		}
-		break;
+		//case VK_F2:
+		//{
+		//	//TODOTODO
+		//	//if (m_spCursorer->GetFocusedCell()) {
+		//	//	std::static_pointer_cast<CFileIconNameCell>(CSheet::Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(EventArgs(this));
+		//	//}
+		//}
+		//break;
 
 		default:
 			CGridView::Normal_KeyDown(e);

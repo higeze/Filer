@@ -1,5 +1,5 @@
 #pragma once
-#include "SheetCell.h"
+#include "BindItemsSheetCellBase.h"
 #include "Row.h"
 #include "PropertySerializer.h"
 #include "SheetEventArgs.h"
@@ -7,8 +7,9 @@
 #include "MyMPL.h"
 #include <memory>
 
-template<typename T>
-class CPropertySheetCell:public CSheetCell
+template<typename TValueItem>
+class CBindPropertySheetCell
+	:public CBindItemsSheetCellBase<TValueItem>,std::enable_shared_from_this<CBindPropertySheetCell<TValueItem>>
 {
 public:
 	virtual bool CanResizeRow()const override{return true;}
@@ -16,44 +17,65 @@ public:
 	virtual bool HasSheetCell()override { return true; }
 	virtual bool IsVirtualPage()override { return true; }
 
-	//TODO Not size but index
-
-	void Resize(int row, int col)override
-	{
-		int curRowSize = GetContainer<RowTag, AllTag>().size() - 1;
-		int curColSize = GetContainer<ColTag, AllTag>().size() - 1;
-
-		if(row==curRowSize)return;
-
-		if(CanResizeRow() && row>curRowSize){
-			for(auto i=0;i<row-curRowSize;i++){
-				auto spRow=std::make_shared<CRow>(this);
-				PushRow(spRow);
-				auto pColValue= Index2Pointer<ColTag, AllTag>(1);
-
-				CCellSerializer serializer(std::dynamic_pointer_cast<CSheet>(Cell(m_pRow,m_pColumn)),GetSheetProperty(), CCell::GetCellPropertyPtr());
-				serializer.SerializeValue(CreateInstance<T>(),spRow.get(),pColValue.get());
-			}
-		}else if(CanResizeRow() && row<curRowSize && row>0){
-			for(auto i=0;i<curRowSize-row;i++){
-				EraseRow(m_allRows.back());
-			}
-		}
-		OnPropertyChanged(L"value");
-		SubmitUpdate();
-
-		//Column is not resizable
-	}
 public:
 
 	//Constructor
-	CPropertySheetCell(
-		CSheet* pSheet = nullptr,
-		CRow* pRow = nullptr,
-		CColumn* pColumn = nullptr,
-		std::shared_ptr<SheetProperty> spSheetProperty = nullptr,
-		std::shared_ptr<CellProperty> spCellProperty = nullptr,
-		CMenu* pMenu=nullptr)
-		:CSheetCell(pSheet,pRow,pColumn,spSheetProperty, spCellProperty){}
-	virtual ~CPropertySheetCell(){}
+	template<typename... Args>
+	CBindPropertySheetCell(
+		CSheet* pSheet,
+		CRow* pRow,
+		CColumn* pColumn,
+		std::shared_ptr<SheetProperty> spSheetProperty,
+		std::shared_ptr<CellProperty> spCellProperty,
+		observable_vector<TValueItem>& itemsSource,
+		Args... args)
+		:CBindItemsSheetCellBase<TValueItem>(
+			pSheet,pRow,pColumn,spSheetProperty, spCellProperty,
+			arg<"ptritems"_s>() = &itemsSource,
+			args...)
+	{
+		SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(this));
+		InsertRow(0, GetNameHeaderRowPtr());
+		SetFrozenCount<RowTag>(1);
+
+		auto spColValue = std::make_shared<CPropertyValueColumn>(this);
+		PushColumns(
+			std::make_shared<CPropertyIndexColumn>(this),
+			spColValue);
+		SetFrozenCount<ColTag>(1);
+
+		CCellSerializer serializer(this);
+		auto items = GetItemsSource();
+		for (auto& val : items) {
+			auto spRow = std::make_shared<CBindRow<TValueItem>>(this);
+			PushRow(spRow);
+			serializer.SerializeValue(val, spRow.get(), spColValue.get());
+		}
+
+		this->GetItemsSource().VectorChanged = 
+			[this](const NotifyVectorChangedEventArgs<TValueItem>& e)->void {
+				switch (e.Action) {
+				case NotifyVectorChangedAction::Add:
+				{
+					auto spRow = std::make_shared<CBindRow<TValueItem>>(this);
+					PushRow(spRow);
+					//TODOTODO
+					//auto spColValue = Index2Pointer<ColTag, AllTag>(GetFrozenCount<ColTag>() + 1);
+					//CCellSerializer serializer(this);
+					//serializer.SerializeValue(e.NewItems[0], spRow.get(), spColValue.get());
+					break;
+				}
+				case NotifyVectorChangedAction::Remove:
+				{
+					EraseRow(m_allRows.back());
+					break;
+				}
+				case NotifyVectorChangedAction::Reset:
+					//TODOTODO
+				default:
+					break;
+				}
+			};
+
+	}
 };

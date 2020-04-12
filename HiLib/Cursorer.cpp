@@ -41,7 +41,7 @@ void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 	
 	UpdateCursor(cell);
 	cell->GetSheetPtr()->DeselectAll();
-	cell->GetRowPtr()->SetSelected(true);//Select
+	cell->GetRowPtr()->SetIsSelected(true);//Select
 }
 
 void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
@@ -52,7 +52,7 @@ void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
 
 	UpdateCursor(cell);
 	m_isDragPossible = true;
-	cell->GetRowPtr()->SetSelected(true);//Select
+	cell->GetRowPtr()->SetIsSelected(true);//Select
 }
 
 void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
@@ -64,7 +64,7 @@ void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
 	if (m_isDragPossible) {
 		m_isDragPossible = false;
 		cell->GetSheetPtr()->DeselectAll();
-		cell->GetRowPtr()->SetSelected(true);//Select
+		cell->GetRowPtr()->SetIsSelected(true);//Select
 	}
 }
 
@@ -87,7 +87,7 @@ void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 	}
 	UpdateCursor(cell);
 
-	cell->GetRowPtr()->SetSelected(!cell->GetRowPtr()->GetSelected());//Select
+	cell->GetRowPtr()->SetIsSelected(!cell->GetRowPtr()->GetIsSelected());//Select
 }
 
 void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
@@ -147,7 +147,7 @@ void CCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
 		}else if(e.Flags & MK_SHIFT){
 			return OnCursorShift(cell);
 		}else{
-			if (cell->GetSelected()) {//Only case of selected cell, behaviour is wrong. up to reset.
+			if (cell->GetIsSelected()) {//Only case of selected cell, behaviour is wrong. up to reset.
 				return OnCursorDown(cell);
 			}
 			else {
@@ -200,7 +200,7 @@ void CCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e)
 	}
 
 	//Focus, Select
-	if(cell->GetSelected()){
+	if(cell->GetIsSelected()){
 		//Do Nothing
 	}else{
 		return OnCursor(cell);
@@ -213,53 +213,61 @@ void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 	if(pSheet->Empty()){
 		return;
 	}
+
+	auto moveCursor = [this, pSheet](UINT arrow, bool ctrl, bool shift)->void {
+		std::shared_ptr<CCell> cell;
+		if (!m_focusedCell) {//Not Focused yet. Cell(frozen, frozen) is Focused;
+			cell = pSheet->Cell<VisTag>(pSheet->GetFrozenCount<RowTag>(), pSheet->GetFrozenCount<ColTag>());
+		} else {//Move selection
+			cell = m_currentCell;//TODO Low Current or Focused
+			int roVisib = cell->GetRowPtr()->GetIndex<VisTag>();
+			int coVisib = cell->GetColumnPtr()->GetIndex<VisTag>();
+			switch (arrow) {
+			case VK_LEFT:
+				coVisib = ((std::max)(coVisib - 1, pSheet->GetFrozenCount<ColTag>()));
+				break;
+			case VK_RIGHT:
+				coVisib = ((std::min)(coVisib + 1, (int)pSheet->GetContainer<ColTag, VisTag>().size() - 1));
+				break;
+			case VK_UP:
+				roVisib = ((std::max)(roVisib - 1, pSheet->GetFrozenCount<RowTag>()));
+				break;
+			case VK_DOWN:
+				roVisib = ((std::min)(roVisib + 1, (int)pSheet->GetContainer<RowTag, VisTag>().size() - 1));
+				break;
+			}
+			cell = pSheet->Cell<VisTag>(roVisib, coVisib);
+		}
+
+		if (ctrl) {
+			OnCursorCtrl(cell);
+		} else if (shift) {
+			OnCursorShift(cell);
+		} else {
+			OnCursor(cell);
+		}
+		((CGridView*)pSheet)->PostUpdate(Updates::EnsureVisibleFocusedCell);
+	};
+
+	UINT arrow = e.Char;
+	bool ctrl = ::GetKeyState(VK_CONTROL) & 0x8000;
+	bool shift = ::GetKeyState(VK_SHIFT) & 0x8000;
 	switch (e.Char)
 	{
 	case VK_LEFT:
 	case VK_RIGHT:
 	case VK_UP:
 	case VK_DOWN:
-		{
-			
-			std::shared_ptr<CCell> cell;
-			if(!m_focusedCell){//Not Focused yet. Cell(frozen, frozen) is Focused;
-				cell = pSheet->Cell<VisTag>(pSheet->GetFrozenCount<RowTag>(), pSheet->GetFrozenCount<ColTag>());
-			}else{//Move selection
-				cell=m_currentCell;//TODO Low Current or Focused
-				int roVisib= cell->GetRowPtr()->GetIndex<VisTag>();
-				int coVisib= cell->GetColumnPtr()->GetIndex<VisTag>();
-				switch(e.Char){
-					case VK_LEFT:
-						coVisib=((std::max)(coVisib-1,pSheet->GetFrozenCount<ColTag>()));
-						break;
-					case VK_RIGHT:
-						coVisib=((std::min)(coVisib+1, (int)pSheet->GetContainer<ColTag, VisTag>().size() - 1));
-						break;
-					case VK_UP:
-						roVisib=((std::max)(roVisib-1,pSheet->GetFrozenCount<RowTag>()));
-						break;
-					case VK_DOWN: 
-						roVisib=((std::min)(roVisib+1, (int)pSheet->GetContainer<RowTag, VisTag>().size() - 1));
-						break;
-				}
-				cell=pSheet->Cell<VisTag>(roVisib, coVisib);
-			}
-			if(::GetKeyState(VK_CONTROL) & 0x8000){
-				OnCursorCtrl(cell);
-			}else if(::GetKeyState(VK_SHIFT) & 0x8000){
-				OnCursorShift(cell);
-			}else{
-				OnCursor(cell);
-			}
-			((CGridView*)pSheet)->PostUpdate(Updates::EnsureVisibleFocusedCell);
-			break;
-		}
+		arrow = e.Char;
+		moveCursor(arrow, ctrl, shift);
+		break;
 	case VK_ESCAPE:
 		OnCursorClear(pSheet);
 		break;
 	default:
 		break;
 	}
+
 	return;
 }
 
@@ -302,7 +310,7 @@ std::vector<std::shared_ptr<CRow>> CCursorer::GetSelectedRows(CSheet* pSheet)con
 	auto& rowContainer=pSheet->GetContainer<RowTag, VisTag>();
 
 	for(auto& ptr : rowContainer){
-		if(ptr->GetSelected()){
+		if(ptr->GetIsSelected()){
 			selectedRows.push_back(ptr);
 		}
 	}
@@ -427,6 +435,87 @@ void CSheetCellCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 	}
 	return;
 }
+
+void CExcelLikeCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
+{
+	if (pSheet->Empty()) {
+		return;
+	}
+
+	auto moveCursor = [this, pSheet](UINT arrow, bool ctrl, bool shift)->void {
+		std::shared_ptr<CCell> cell;
+		if (!m_focusedCell) {//Not Focused yet. Cell(frozen, frozen) is Focused;
+			cell = pSheet->Cell<VisTag>(pSheet->GetFrozenCount<RowTag>(), pSheet->GetFrozenCount<ColTag>());
+		} else {//Move selection
+			cell = m_currentCell;//TODO Low Current or Focused
+			int roVisib = cell->GetRowPtr()->GetIndex<VisTag>();
+			int coVisib = cell->GetColumnPtr()->GetIndex<VisTag>();
+			switch (arrow) {
+			case VK_LEFT:
+				coVisib = ((std::max)(coVisib - 1, pSheet->GetFrozenCount<ColTag>()));
+				break;
+			case VK_RIGHT:
+				coVisib = ((std::min)(coVisib + 1, (int)pSheet->GetContainer<ColTag, VisTag>().size() - 1));
+				break;
+			case VK_UP:
+				roVisib = ((std::max)(roVisib - 1, pSheet->GetFrozenCount<RowTag>()));
+				break;
+			case VK_DOWN:
+				roVisib = ((std::min)(roVisib + 1, (int)pSheet->GetContainer<RowTag, VisTag>().size() - 1));
+				break;
+			}
+			cell = pSheet->Cell<VisTag>(roVisib, coVisib);
+		}
+
+		if (ctrl) {
+			OnCursorCtrl(cell);
+		} else if (shift) {
+			OnCursorShift(cell);
+		} else {
+			OnCursor(cell);
+		}
+		((CGridView*)pSheet)->PostUpdate(Updates::EnsureVisibleFocusedCell);
+	};
+
+	UINT arrow = e.Char;
+	bool ctrl = ::GetKeyState(VK_CONTROL) & 0x8000;
+	bool shift = ::GetKeyState(VK_SHIFT) & 0x8000;
+	switch (e.Char) {
+	case VK_TAB:
+		if (shift) {
+			arrow = VK_LEFT;
+		} else {
+			arrow = VK_RIGHT;
+		}
+		ctrl = false; shift = false;
+		moveCursor(arrow, ctrl, shift);
+		break;
+	case VK_RETURN:
+		if (shift) {
+			arrow = VK_UP;
+		} else {
+			arrow = VK_DOWN;
+		}
+		ctrl = false; shift = false;
+		moveCursor(arrow, ctrl, shift);
+		break;
+	case VK_LEFT:
+	case VK_RIGHT:
+	case VK_UP:
+	case VK_DOWN:
+		arrow = e.Char;
+		moveCursor(arrow, ctrl, shift);
+		break;
+	case VK_ESCAPE:
+		OnCursorClear(pSheet);
+		break;
+	default:
+		break;
+	}
+
+	return;
+}
+
 
 
 

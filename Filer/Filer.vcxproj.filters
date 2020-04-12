@@ -149,16 +149,7 @@
     <ClInclude Include="..\HiLib\Band.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\BindCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\BindColumn.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindPaintCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindPaintColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\BindRow.h">
@@ -186,21 +177,6 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\CExpandCollapseCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ChildColumnHeaderCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ChildHeaderCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ChildIndexColumn.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ChildRowHeaderCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ChildRowHeaderColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\ColorCell.h">
@@ -351,27 +327,6 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\MyXMLSerializer.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ParentColumnHeaderCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ParentColumnHeaderHeaderCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ParentColumnNameHeaderCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ParentDefaultColumn.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ParentHeaderCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ParentRowHeaderCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ParentRowHeaderColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\PropertyColumn.h">
@@ -638,9 +593,6 @@
     <ClInclude Include="..\HiLib\BindCheckBoxColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\BindSheetCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\BindSheetCellColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -654,6 +606,27 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\SheetProperty.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindItemsSheetCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindItemsSheetCellBase.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindItemsFilterSheetCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\SortCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ColumnIndexCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\RowIndexCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\RowHeaderColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -745,12 +718,6 @@
     <ClCompile Include="..\HiLib\CellStringCommand.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\ChildIndexColumn.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ChildRowHeaderColumn.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\ColorCell.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -806,27 +773,6 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\MyXMLSerializer.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ParentColumnHeaderCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ParentColumnHeaderHeaderCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ParentColumnNameHeaderCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ParentDefaultColumn.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ParentHeaderCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ParentRowHeaderCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ParentRowHeaderColumn.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\PropertyColumn.cpp">
@@ -997,6 +943,18 @@
     <ClCompile Include="..\HiLib\MapColumn.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
+    <ClCompile Include="..\HiLib\SortCell.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ColumnIndexCell.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\RowIndexCell.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\RowHeaderColumn.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\HiLib\msxml6.tli">
@@ -1011,5 +969,6 @@
     <None Include="..\Release\Filer.exe">
       <Filter>Release</Filter>
     </None>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>

@@ -47,7 +47,7 @@ public:
 
 
 	virtual void SetVisible(const bool& bVisible, bool notify = true)override;
-	virtual void SetSelected(const bool& bSelected);
+	virtual void SetIsSelected(const bool& bSelected);
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name) override;
 //	virtual SizingType GetSizingType()const override { return SizingType::None; }

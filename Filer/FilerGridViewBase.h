@@ -8,7 +8,7 @@
 
 #include "shobjidl.h"
 #include "MyFriendSerializer.h"
-#include "ParentRowHeaderColumn.h"
+#include "RowHeaderColumn.h"
 #include "FileNameColumn.h"
 #include "FileIconColumn.h"
 #include "FileExtColumn.h"
@@ -71,5 +71,8 @@ public:
 	/*****************/
 	/* State Message */
 	/*****************/
-	virtual void Normal_KeyDown(const KeyDownEvent& e)override;
+	virtual void Normal_KeyDown(const KeyDownEvent& e) override;
+	bool Edit_Guard_KeyDownWithNormal(const KeyDownEvent& e) override;
+	bool Edit_Guard_KeyDownWithoutNormal(const KeyDownEvent& e) override;
+
 };

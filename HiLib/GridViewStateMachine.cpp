@@ -45,12 +45,14 @@ struct CGridStateMachine::Machine
 			state<Normal> +event<ContextMenuEvent> / call(&CGridView::Normal_ContextMenu),
 			state<Normal> +event<SetCursorEvent>[call(&CGridView::Normal_Guard_SetCursor)] / call(&CGridView::Normal_SetCursor),
 			state<Normal> +event<KeyDownEvent> / call(&CGridView::Normal_KeyDown),
+			state<Normal> +event<CharEvent> / call(&CGridView::Normal_Char),
 			state<Normal> +event<SetFocusEvent> / call(&CGridView::Normal_SetFocus),
 			state<Normal> +event<KillFocusEvent> / call(&CGridView::Normal_KillFocus),
 
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CGridView::RowDrag_Guard_LButtonBeginDrag)] / call(&CGridView::RowDrag_LButtonBeginDrag) = state<RowDrag>,
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CGridView::ColDrag_Guard_LButtonBeginDrag)] / call(&CGridView::ColDrag_LButtonBeginDrag) = state<ColDrag>,
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CGridView::ItemDrag_Guard_LButtonBeginDrag)] / call(&CGridView::ItemDrag_LButtonBeginDrag) = state<ItemDrag>,
+			state<Normal> +event<LButtonBeginDragEvent> / call(&CGridView::Normal_LButtonBeginDrag),
 
 			state<Normal> +event<BeginEditEvent> / call(&CGridView::Edit_BeginEdit) = state<Edit>,
 			//VScrlDrag
@@ -97,7 +99,8 @@ struct CGridStateMachine::Machine
 			state<Edit> +event<LButtonDownEvent> / call(&CGridView::Edit_LButtonDown),
 			state<Edit> +event<LButtonUpEvent> / call(&CGridView::Edit_LButtonUp),
 			state<Edit> +event<MouseMoveEvent> / call(&CGridView::Edit_MouseMove),
-			state<Edit> +event<KeyDownEvent>[call(&CGridView::Edit_Guard_KeyDown)] = state<Normal>,
+			state<Edit> +event<KeyDownEvent>[call(&CGridView::Edit_Guard_KeyDownWithNormal)] / call(&CGridView::Normal_KeyDown) = state<Normal>,
+			state<Edit> +event<KeyDownEvent>[call(&CGridView::Edit_Guard_KeyDownWithoutNormal)] = state<Normal>,
 			state<Edit> +event<KeyDownEvent> / call(&CGridView::Edit_KeyDown),
 			state<Edit> +event<CharEvent> / call(&CGridView::Edit_Char),
 			state<Edit> +event<KillFocusEvent> = state<Normal>,

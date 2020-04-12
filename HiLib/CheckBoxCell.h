@@ -40,6 +40,4 @@ public:
 	virtual void SetStringCore(const std::wstring& str);
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
-
-	virtual bool IsComparable()const;
 };

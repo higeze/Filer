@@ -1,4 +1,4 @@
-#include "ParentColumnNameHeaderCell.h"
+#include "SortCell.h"
 #include "CellProperty.h"
 #include "MyRect.h"
 #include "MyColor.h"
@@ -6,21 +6,15 @@
 #include "Column.h"
 #include "SheetEventArgs.h"
 
-CMenu CParentColumnNameHeaderCell::ContextMenu;
-const FLOAT CParentColumnNameHeaderCell::TRIANGLE_WIDTH = 12.f;
-const FLOAT CParentColumnNameHeaderCell::TRIANGLE_HEIGHT = 6.f;
-const d2dw::CRectF CParentColumnNameHeaderCell::TRIANGLE_MARGIN=d2dw::CRectF(2.f,0.f,2.f,0.f);
-const FLOAT CParentColumnNameHeaderCell::MIN_COLUMN_WIDTH = 16.f;
+const FLOAT CSortCell::TRIANGLE_WIDTH = 12.f;
+const FLOAT CSortCell::TRIANGLE_HEIGHT = 6.f;
+const d2dw::CRectF CSortCell::TRIANGLE_MARGIN=d2dw::CRectF(2.f,0.f,2.f,0.f);
+const FLOAT CSortCell::MIN_COLUMN_WIDTH = 16.f;
 
 
-Sorts CParentColumnNameHeaderCell::GetSort()const
+void CSortCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	return m_pColumn->GetSort();
-}
-
-void CParentColumnNameHeaderCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
-{
-	switch(GetSort()){
+	switch(m_pColumn->GetSort()){
 	case Sorts::Up:
 	case Sorts::Down:
 		{
@@ -38,11 +32,11 @@ void CParentColumnNameHeaderCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2
 	}
 }
 
-void CParentColumnNameHeaderCell::PaintSortMark(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
+void CSortCell::PaintSortMark(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	std::array<d2dw::CPointF,3> arPoint;
 
-	switch(GetSort()){
+	switch(m_pColumn->GetSort()){
 	case Sorts::Down:
 		{
 			FLOAT top=(rcPaint.Height()-TRIANGLE_HEIGHT)/2;
@@ -75,9 +69,9 @@ void CParentColumnNameHeaderCell::PaintSortMark(d2dw::CDirect2DWrite* pDirect, d
 	pDirect->DrawSolidLine(line, arPoint[2], arPoint[0]);
 }
 
-d2dw::CSizeF CParentColumnNameHeaderCell::GetSortSize()const
+d2dw::CSizeF CSortCell::GetSortSize()const
 {
-	switch(GetSort()){
+	switch(m_pColumn->GetSort()){
 	case Sorts::Up:
 	case Sorts::Down:
 		return d2dw::CSizeF(TRIANGLE_WIDTH+TRIANGLE_MARGIN.left+TRIANGLE_MARGIN.right,
@@ -90,7 +84,7 @@ d2dw::CSizeF CParentColumnNameHeaderCell::GetSortSize()const
 
 }
 
-d2dw::CSizeF CParentColumnNameHeaderCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
+d2dw::CSizeF CSortCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 {
 	d2dw::CSizeF size = CTextCell::MeasureContentSize(pDirect);
 	d2dw::CSizeF sizeTri = GetSortSize();
@@ -101,7 +95,7 @@ d2dw::CSizeF CParentColumnNameHeaderCell::MeasureContentSize(d2dw::CDirect2DWrit
 	return size;
 }
 
-d2dw::CSizeF CParentColumnNameHeaderCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
+d2dw::CSizeF CSortCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
 	d2dw::CSizeF size = CTextCell::MeasureContentSizeWithFixedWidth(pDirect);
 	d2dw::CSizeF sizeTri = GetSortSize();
@@ -112,7 +106,24 @@ d2dw::CSizeF CParentColumnNameHeaderCell::MeasureContentSizeWithFixedWidth(d2dw:
 	return size;
 }
 
-void CParentColumnNameHeaderCell::OnLButtonClk(const LButtonClkEvent& e)
+void CSortCell::OnLButtonClk(const LButtonClkEvent& e)
 {
-	m_pSheet->CellLButtonClk(CellEventArgs(this));
+	//Get current Sort before all reset 
+	auto sort = m_pColumn->GetSort();
+	//Reset All Sort
+	m_pSheet->ResetColumnSort();
+	//Sort
+	switch(sort){
+		case Sorts::None:
+		case Sorts::Down:
+			m_pColumn->SetSort(Sorts::Up);
+			break;
+		case Sorts::Up:
+			m_pColumn->SetSort(Sorts::Down);
+			break;
+		default:
+			m_pColumn->SetSort(Sorts::None);
+			break;
+	}
+	m_pSheet->SubmitUpdate();
 }

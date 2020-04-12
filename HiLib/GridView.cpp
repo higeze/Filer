@@ -7,7 +7,6 @@
 #include "Row.h"
 #include "ParentHeaderCell.h"
 #include "MapColumn.h"
-#include "ParentRowHeaderColumn.h"
 #include "GridViewResource.h"
 #include "SheetCell.h"
 #include "MyRgn.h"
@@ -70,6 +69,7 @@ CGridView::CGridView(
 	AddMsgHandler(WM_PAINT, &CGridView::OnPaint, this);
 	AddMsgHandler(WM_MOUSEWHEEL, &CGridView::OnMouseWheel, this);
 	AddMsgHandler(WM_KILLFOCUS, &CGridView::OnKillFocus, this);
+	AddMsgHandler(WM_SETFOCUS, &CGridView::OnSetFocus, this);
 
 	AddMsgHandler(WM_RBUTTONDOWN, &CGridView::OnRButtonDown, this);
 	AddMsgHandler(WM_LBUTTONDOWN, &CGridView::OnLButtonDown, this);
@@ -130,27 +130,27 @@ void CGridView::OnCellContextMenu(CellContextMenuEventArgs& e)
 
 void CGridView::OnCellLButtonClk(CellEventArgs& e)
 {
-	if(e.CellPtr->GetRowPtr()==GetNameHeaderRowPtr().get())
-	{	
-		auto pCol=e.CellPtr->GetColumnPtr();
-		Sorts sort=pCol->GetSort();
-		//Reset Sort
-		ResetColumnSort();
-		//Sort
-		switch(sort){
-			case Sorts::None:
-			case Sorts::Down:
-				pCol->SetSort(Sorts::Up);
-				break;
-			case Sorts::Up:
-				pCol->SetSort(Sorts::Down);
-				break;
-			default:
-				pCol->SetSort(Sorts::None);
-				break;
-		}
-		SubmitUpdate();
-	}
+	//if(e.CellPtr->GetRowPtr()==GetNameHeaderRowPtr().get())
+	//{	
+	//	auto pCol=e.CellPtr->GetColumnPtr();
+	//	Sorts sort=pCol->GetSort();
+	//	//Reset Sort
+	//	ResetColumnSort();
+	//	//Sort
+	//	switch(sort){
+	//		case Sorts::None:
+	//		case Sorts::Down:
+	//			pCol->SetSort(Sorts::Up);
+	//			break;
+	//		case Sorts::Up:
+	//			pCol->SetSort(Sorts::Down);
+	//			break;
+	//		default:
+	//			pCol->SetSort(Sorts::None);
+	//			break;
+	//	}
+	//	SubmitUpdate();
+	//}
 }
 
 void CGridView::SortAllInSubmitUpdate()
@@ -170,7 +170,7 @@ void CGridView::ClearFilter()
 	};
 	//Clear Filter
 	for(auto ptr : m_allCols ){
-		Cell(GetFilterRowPtr(), ptr)->SetStringNotify(L"");	
+		Cell(GetFilterRowPtr(), ptr)->SetString(L"");	
 	}
 }
 
@@ -446,7 +446,7 @@ LRESULT CGridView::OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bH
 
 	if(SelectModeRow){
 		for (auto rowPtr : m_visRows) {
-			if (rowPtr->GetSelected() || (IncludesHeader && rowPtr->GetIndex<VisTag>()<0)) {
+			if (rowPtr->GetIsSelected() || (IncludesHeader && rowPtr->GetIndex<VisTag>()<0)) {
 				for (auto colPtr : m_visCols) {
 					auto pCell = Cell(rowPtr, colPtr);
 					strCopy.append(pCell->GetString());
@@ -465,7 +465,7 @@ LRESULT CGridView::OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bH
 			bool bFirstLine(true);
 			for(auto colPtr : m_visCols){
 				auto pCell=Cell(rowPtr, colPtr);
-				if(pCell->GetSelected()){
+				if(pCell->GetIsSelected()){
 					bSelectedLine=true;
 					if(bFirstLine){
 						bFirstLine=false;
@@ -746,6 +746,26 @@ CColumn* CGridView::GetParentColumnPtr(CCell* pCell)
 	return pCell->GetColumnPtr();
 }
 
+bool CGridView::GetIsFocused()const
+{
+	auto hWndAct = ::GetActiveWindow();
+	auto hWndFcs = ::GetFocus();
+	auto hWndFore = ::GetForegroundWindow();
+
+	return hWndFcs == m_hWnd ||
+		(HWND)::GetWindowWord(hWndAct, GWL_HWNDPARENT) == m_hWnd ||
+		(HWND)::GetWindowWord(hWndFcs, GWL_HWNDPARENT) == m_hWnd ||
+		(HWND)::GetWindowWord(hWndFore, GWL_HWNDPARENT) == m_hWnd ||
+		(HWND)::GetWindow(hWndAct, GW_OWNER) == m_hWnd ||
+		(HWND)::GetWindow(hWndFcs, GW_OWNER) == m_hWnd ||
+		(HWND)::GetWindow(hWndFore, GW_OWNER) == m_hWnd ||
+		(HWND)::GetParent(hWndAct) == m_hWnd ||
+		(HWND)::GetParent(hWndFcs) == m_hWnd ||
+		(HWND)::GetParent(hWndFore) == m_hWnd;
+
+}
+
+
 LRESULT CGridView::OnCommandFind(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
 	CFindDlg* pDlg = new CFindDlg(this);
@@ -900,48 +920,15 @@ void CGridView::Normal_Paint(const PaintEvent& e)
 {
 	if (!Visible())return;
 
+	CSheet::Normal_Paint(e);
 	CRect rcClient(GetClientRect());
 
-	//Update PaintDictionary
-	UpdateRowPaintDictionary();
-	UpdateColumnPaintDictionary();
-
-	DEBUG_OUTPUT_COLUMN_PAINT_DICTIONARY
-
-	//Paint
-	{
-		for (auto colIter = m_pntCols.rbegin(),colEnd = m_pntCols.rend(); colIter != colEnd; ++colIter) {
-			for (auto rowIter = m_pntRows.rbegin(),rowEnd = m_pntRows.rend(); rowIter != rowEnd; ++rowIter) {
-				Cell(*rowIter, *colIter)->OnPaint(e);
-			}
-		}
-	}
-
 	//Paint Focused Line
-	auto hWndAct = ::GetActiveWindow();
-	auto hWndFcs = ::GetFocus();
-	auto hWndFore = ::GetForegroundWindow();
-
-	if (hWndFcs == m_hWnd ||
-		(HWND)::GetWindowWord(hWndAct, GWL_HWNDPARENT) == m_hWnd ||
-		(HWND)::GetWindowWord(hWndFcs, GWL_HWNDPARENT) == m_hWnd ||
-		(HWND)::GetWindowWord(hWndFore, GWL_HWNDPARENT) == m_hWnd ||
-		(HWND)::GetWindow(hWndAct, GW_OWNER) == m_hWnd ||
-		(HWND)::GetWindow(hWndFcs, GW_OWNER) == m_hWnd ||
-		(HWND)::GetWindow(hWndFore, GW_OWNER) == m_hWnd ||
-		(HWND)::GetParent(hWndAct) == m_hWnd ||
-		(HWND)::GetParent(hWndFcs) == m_hWnd ||
-		(HWND)::GetParent(hWndFore) == m_hWnd)
-	{
-			d2dw::CRectF rcFocus(m_pDirect->Pixels2Dips(rcClient));
-			rcFocus.DeflateRect(1.0f, 1.0f);
-			m_pDirect->DrawSolidRectangle(*(GetHeaderProperty()->FocusedLine), rcFocus);
+	if (GetIsFocused() ){
+		d2dw::CRectF rcFocus(m_pDirect->Pixels2Dips(rcClient));
+		rcFocus.DeflateRect(1.0f, 1.0f);
+		m_pDirect->DrawSolidRectangle(*(GetHeaderProperty()->FocusedLine), rcFocus);
 	}
-
-	//Paint Column Drag Target Line
-	m_spRowDragger->OnPaintDragLine(this, e);
-	m_spColDragger->OnPaintDragLine(this, e);
-	if (m_spItemDragger) { m_spItemDragger->OnPaintDragLine(this, e); }
 }
 
 void CGridView::Normal_LButtonDown(const LButtonDownEvent& e)
@@ -1210,6 +1197,16 @@ bool CGridView::Edit_Guard_KeyDown(const KeyDownEvent& e)
 	}
 }
 
+bool CGridView::Edit_Guard_KeyDownWithNormal(const KeyDownEvent& e)
+{
+	return Edit_Guard_KeyDown(e);
+}
+
+bool CGridView::Edit_Guard_KeyDownWithoutNormal(const KeyDownEvent& e)
+{
+	return false;
+}
+
 void CGridView::Edit_KeyDown(const KeyDownEvent& e)
 {
 	if (GetEditPtr()) {
@@ -1355,7 +1352,7 @@ LRESULT CGridView::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandl
 	m_pDirect->ClearSolid(*(m_spGridViewProp->BackgroundPropPtr->m_brush));
 	PaintEvent e(this);
 	CSheet::OnPaint(e);
-	if (m_pEdit && m_pEdit->IsVisible()) {
+	if (m_pEdit && m_pEdit->GetIsVisible()) {
 		m_pEdit->OnPaint(e);
 	}
 	m_pVScroll->OnPaint(e);
@@ -1364,6 +1361,14 @@ LRESULT CGridView::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandl
 	m_pDirect->EndDraw();
 	return 0;
 }
+
+LRESULT CGridView::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	CSheet::OnSetFocus(SetFocusEvent(this, wParam, lParam));
+	InvalidateRect(NULL, FALSE);
+	return 0;
+}
+
 
 LRESULT CGridView::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {

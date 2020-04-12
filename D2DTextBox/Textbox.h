@@ -163,7 +163,7 @@ public:
 	
 
 	// Render /////////////////////////////////////
-	bool IsVisible()const;
+	bool GetIsVisible()const;
 	void Render();
 	void ResetCaret();
 	void DrawCaret(const d2dw::CRectF& rc);

@@ -1,4 +1,5 @@
 #include "Celler.h"
+#include "Cursorer.h"
 #include "Cell.h"
 #include "Sheet.h"
 #include "GridView.h"
@@ -42,6 +43,16 @@ void CCeller::OnLButtonDblClk(CSheet* pSheet, const LButtonDblClkEvent& e)
 		pSheet->OnBkGndLButtondDblClk(e);
 	}
 }
+void CCeller::OnLButtonBeginDrag(CSheet* pSheet, const LButtonBeginDragEvent& e)
+{
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	if (cell != nullptr) {
+		cell->OnLButtonBeginDrag(e);
+	} else {
+		
+	}
+}
+
 void CCeller::OnMouseMove(CSheet* pSheet, const MouseMoveEvent& e)
 {
 	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
@@ -87,8 +98,20 @@ void CCeller::OnSetCursor(CSheet* pSheet, const SetCursorEvent& e)
 
 void CCeller::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 {
-	//TODO Combine with Curosr
+	auto cell = pSheet->GetCursorerPtr()->GetFocusedCell();
+	if (cell != nullptr) {
+		cell->OnKeyDown(e);
+	}
 }
+
+void CCeller::OnChar(CSheet* pSheet, const CharEvent& e)
+{
+	auto cell = pSheet->GetCursorerPtr()->GetFocusedCell();
+	if (cell != nullptr) {
+		cell->OnChar(e);
+	}
+}
+
 
 void CCeller::OnClear()
 {

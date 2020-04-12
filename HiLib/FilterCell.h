@@ -6,21 +6,17 @@
 /**
  *  Filter Cell
  */
-class CFilterCell:public CEditableCell
+class CFilterCell:public CTextCell
 {
 private :
 	CDeadlineTimer m_deadlinetimer;
 
 public:
-	CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr);
-	virtual ~CFilterCell();
+	CFilterCell::CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::LButtonDownEdit){}
+	virtual ~CFilterCell() = default;
 
 	virtual std::wstring GetString() override;
-	virtual void SetString(const std::wstring& str)override;
 	virtual void SetStringCore(const std::wstring& str)override;
 	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)override;
-	virtual bool IsComparable()const override
-	{
-		return false;
-	}
 };

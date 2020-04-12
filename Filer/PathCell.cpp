@@ -40,16 +40,16 @@ d2dw::CSizeF CPathCell::GetFitSize(d2dw::CDirect2DWrite* pDirect)
 
 d2dw::CSizeF CPathCell::GetActSize(d2dw::CDirect2DWrite* pDirect)
 {
-	if(!m_bActMeasureValid){
+	if(!m_isActMeasureValid){
 		auto width = m_pSheet->GetContainer<ColTag, VisTag>().back()->GetRight() - m_pSheet->GetContainer<ColTag, VisTag>()[m_pSheet->GetFrozenCount<ColTag>()]->GetLeft();
 		auto fitSize = MeasureSize(pDirect);
 		if(fitSize.width <= width){
 			m_actSize.width = width;
 			m_actSize.height = fitSize.height;
-			m_bActMeasureValid = true;
+			m_isActMeasureValid = true;
 		}else{
 			m_actSize = MeasureSizeWithFixedWidth(pDirect);
-			m_bActMeasureValid = true;
+			m_isActMeasureValid = true;
 		}
 	}
 	return m_actSize;
@@ -64,7 +64,7 @@ d2dw::CSizeF CPathCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* p
 	//Calc Content Rect
 	std::basic_string<TCHAR> str=GetString();
 	if(str.empty()){str=_T("a");}
-	return pDirect->CalcTextSizeWithFixedWidth(*(m_spProperty->Format), str, rcContent.Width());
+	return pDirect->CalcTextSizeWithFixedWidth(*(m_spCellProperty->Format), str, rcContent.Width());
 }
 
 void CPathCell::OnPaint(const PaintEvent& e)

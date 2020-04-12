@@ -29,7 +29,7 @@ CSheet::CSheet(
 	CMenu* pContextMenu)
 	:m_spSheetProperty(spSheetProperty),
 	m_bSelected(false),
-	m_bFocused(false),
+	//m_bFocused(false),
 	m_pContextMenu(pContextMenu?pContextMenu:&CSheet::ContextMenu),
 	m_pMachine(new CSheetStateMachine(this)),
 	m_allRows([](std::shared_ptr<CRow>& sp, size_t idx) { sp->SetIndex<AllTag>(idx); }),
@@ -490,6 +490,15 @@ void CSheet::PushColumn(const std::shared_ptr<CColumn>& spCol, bool notify)
 	}
 }
 
+void CSheet::InsertRow(int row, const std::shared_ptr<CRow>& spRow, bool notify)
+{
+	m_allRows.idx_insert(m_allRows.cbegin() + row, spRow);
+	if (notify) {
+		RowInserted(CRowEventArgs(spRow));
+	}
+}
+
+
 void CSheet::PushRow(const std::shared_ptr<CRow>& spRow, bool notify)
 {
 	m_allRows.idx_push_back(spRow);
@@ -630,14 +639,11 @@ void CSheet::UpdateAll()
 /**********/
 void CSheet::Normal_Paint(const PaintEvent& e)
 {
-	DEBUG_OUTPUT_COLUMN_VISIBLE_DICTIONARY
-
 	if (!Visible())return;
+
 	//Update Paint Dictioanary
 	UpdateRowPaintDictionary();
 	UpdateColumnPaintDictionary();
-
-	DEBUG_OUTPUT_COLUMN_PAINT_DICTIONARY
 
 	//Paint
 	for (auto rowIter = m_pntRows.rbegin(), rowEnd = m_pntRows.rend(); rowIter != rowEnd; ++rowIter) {
@@ -645,6 +651,11 @@ void CSheet::Normal_Paint(const PaintEvent& e)
 			Cell(*rowIter, *colIter)->OnPaint(e);
 		}
 	}
+
+	//Paint Drag Target Line
+	m_spRowDragger->OnPaintDragLine(this, e);
+	m_spColDragger->OnPaintDragLine(this, e);
+	if (m_spItemDragger) { m_spItemDragger->OnPaintDragLine(this, e); }
 }
 void CSheet::Normal_LButtonDown(const LButtonDownEvent& e)
 {
@@ -677,6 +688,11 @@ void CSheet::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 		m_spCeller->OnLButtonDblClk(this, e);
 	}
 }
+void CSheet::Normal_LButtonBeginDrag(const LButtonBeginDragEvent& e)
+{
+	m_spCeller->OnLButtonBeginDrag(this, e);
+}
+
 void CSheet::Normal_RButtonDown(const RButtonDownEvent& e)
 {
 	m_spCursorer->OnRButtonDown(this, e);
@@ -709,19 +725,23 @@ void CSheet::Normal_KeyDown(const KeyDownEvent& e)
 	m_spCursorer->OnKeyDown(this, e);
 	m_spCeller->OnKeyDown(this, e);
 }
+void CSheet::Normal_Char(const CharEvent& e)
+{
+	m_spCeller->OnChar(this, e);
+}
 
 void CSheet::Normal_SetFocus(const SetFocusEvent& e)
 {
 	if (!Visible())return;
 	//	m_spCursorer->OnCursorClear(this);
-	m_bFocused = true;
+	//m_bFocused = true;
 }
 
 void CSheet::Normal_KillFocus(const KillFocusEvent& e)
 {
 	if (!Visible())return;
 	//m_spCursorer->OnCursorClear(this);
-	m_bFocused = false;
+	//m_bFocused = false;
 }
 
 
@@ -921,7 +941,7 @@ void CSheet::SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& 
 
 	for(auto col = colBeg; col<=colLast; col++){
 		for(auto row = rowBeg; row<=rowLast; row++){
-			Cell(m_visRows[row], m_visCols[col])->SetSelected(doSelect);
+			Cell(m_visRows[row], m_visCols[col])->SetIsSelected(doSelect);
 		}
 	}	
 }
@@ -929,13 +949,13 @@ void CSheet::SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& 
 void CSheet::SelectAll()
 {
 	for (auto iter = std::next(m_visRows.begin(), m_frozenRowCount); iter!=m_visRows.end(); ++iter) {
-		(*iter)->SetSelected(true);
+		(*iter)->SetIsSelected(true);
 	}
 }
 
 void CSheet::DeselectAll()
 {
-	auto setSelected = [](auto& ptr) {ptr->SetSelected(false); };
+	auto setSelected = [](auto& ptr) {ptr->SetIsSelected(false); };
 
 	for(const auto& colPtr : m_allCols){
 		for(const auto& rowPtr : m_allRows){
@@ -991,7 +1011,7 @@ void CSheet::Clear()
 	//m_rowHeader=std::shared_ptr<CRow>();
 
 	m_bSelected = false;
-	m_bFocused = false;
+	//m_bFocused = false;
 	m_keepEnsureVisibleFocusedCell = false;
 }
 

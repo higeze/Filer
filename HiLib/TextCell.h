@@ -37,15 +37,39 @@ public:
 	}
 };
 
+enum class EditMode
+{
+	None,
+	ReadOnly,
+	LButtonDownEdit,
+	FocusedSingleClickEdit,
+	ExcelLike,
+};
+
 class CTextCell:public CCell
 {
+private:
+	EditMode m_editMode = EditMode::LButtonDownEdit;
+protected:
+	std::wstring m_text;
+
+
 public:
-	CTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr)
-		:CCell(pSheet, pRow, pColumn, spProperty, pMenu)
+	template<typename... Args>
+	CTextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
+		:CCell(pSheet, pRow, pColumn, spProperty, args...)
 	{
-		m_isWrappable = true;
+		m_editMode = ::get(arg<"editmode"_s>(), args..., default_(EditMode::ReadOnly));
+		m_text = ::get(arg<"text"_s>(), args..., default_(std::wstring()));
 	}
-	virtual ~CTextCell();
+	virtual ~CTextCell() = default;
+	//Accesser
+	EditMode GetEditMode()const { return m_editMode; }
+	void SetEditMode(const EditMode& value) { m_editMode = value; }
+
+	virtual std::wstring GetString() override;
+	virtual void SetStringCore(const std::wstring& str) override;
+
 
 	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
 	virtual void PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
@@ -57,78 +81,26 @@ public:
 	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* direct) override;
 	virtual d2dw::CRectF GetEditRect() const;
 	virtual void OnEdit(const EventArgs& e);
-	virtual void OnKillFocus(const KillFocusEvent& e) override;
+
+	virtual void OnLButtonDown(const LButtonDownEvent& e);
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e);
+	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e);
+	virtual void OnKeyDown(const KeyDownEvent& e) override;
+	virtual void OnChar(const CharEvent& e);
+
 	virtual bool CanSetStringOnEditing()const{return true;}
-
-	//virtual UINT GetFormat()const
-	//{
-	//	if (GetRowSizingType() == SizingType::Depend && GetColSizingType() == SizingType::Depend) {
-	//		return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_EDITCONTROL;
-	//	} else {
-	//		return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_WORDBREAK | DT_EDITCONTROL;
-	//	}
-	//}
-
-	virtual bool IsComparable()const;
-	virtual Compares EqualCell(CCell* pCell, std::function<void(CCell*, Compares)> action);
-	virtual Compares EqualCell(CEmptyCell* pCell, std::function<void(CCell*, Compares)> action);
-	virtual Compares EqualCell(CTextCell* pCell, std::function<void(CCell*, Compares)> action);
-	virtual Compares EqualCell(CSheetCell* pCell, std::function<void(CCell*, Compares)> action);
 };
 
-class CStringCell:public CTextCell
-{
-protected:
-	std::wstring m_string;
-public:
-	CStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty, std::wstring str,CMenu* pMenu=nullptr)
-		:CTextCell(pSheet,pRow, pColumn,spProperty,pMenu),m_string(str){}
-	virtual ~CStringCell(){}
-	virtual std::wstring GetString();
-	virtual void SetStringCore(const std::wstring& str);
-};
-
-class CEditableCell:public CTextCell
-{
-public:
-	CEditableCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CMenu* pMenu=nullptr)
-		:CTextCell(pSheet,pRow, pColumn,spProperty,pMenu){}
-	virtual ~CEditableCell(){}
-	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
-};
-
-class CEditableStringCell:public CStringCell
-{
-public:
-	CEditableStringCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, std::wstring str,CMenu* pMenu=nullptr)
-		:CStringCell(pSheet,pRow,pColumn,spProperty,str,pMenu){}
-	virtual ~CEditableStringCell(){}
-	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
-};
-
-class CEditableNoWrapStringCell :public CEditableStringCell
-{
-public:
-	CEditableNoWrapStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, std::wstring str, CMenu* pMenu = nullptr)
-		:CEditableStringCell(pSheet, pRow, pColumn, spProperty, str, pMenu){}
-
-	virtual ~CEditableNoWrapStringCell() {}
-//	virtual UINT GetFormat()const override { return DT_LEFT | DT_TOP | DT_NOPREFIX | DT_EDITCONTROL; }
-};
-
-class CParameterCell:public CEditableCell
-{
-private:
-	bool m_bFirstFocus;
-public:
-	CParameterCell(CSheet* pSheet=nullptr, CRow* pRow=nullptr, CColumn* pColumn=nullptr,std::shared_ptr<CellProperty> spProperty=nullptr,CMenu* pMenu=nullptr)
-		:CEditableCell(pSheet,pRow, pColumn,spProperty,pMenu),m_bFirstFocus(false){}
-	virtual ~CParameterCell(){}
-	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
-	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override;
-	virtual void OnKillFocus(const KillFocusEvent& e) override;
-
-	virtual bool CanSetStringOnEditing()const override{return false;}
-
-};
+//class CStringCell:public CTextCell
+//{
+//protected:
+//	std::wstring m_string;
+//public:
+//	template<typename... Args>
+//	CStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty, std::wstring str, Args... args)
+//		:CTextCell(pSheet,pRow, pColumn,spProperty,args...),m_string(str){}
+//	virtual ~CStringCell() = default;
+//	virtual std::wstring GetString();
+//	virtual void SetStringCore(const std::wstring& str);
+//};
 

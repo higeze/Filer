@@ -1,5 +1,5 @@
 #include "FileIconPathColumn.h"
-#include "ParentColumnNameHeaderCell.h"
+#include "SortCell.h"
 #include "FilterCell.h"
 #include "Sheet.h"
 #include "FileIconPathCell.h"
@@ -7,9 +7,7 @@
 #include "CellProperty.h"
 
 CFileIconPathColumn::CFileIconPathColumn(CSheet* pSheet)
-	:CFileNameColumn(pSheet)
-{
-}
+	:CFileNameColumn(pSheet){}
 
 std::shared_ptr<CCell> CFileIconPathColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {

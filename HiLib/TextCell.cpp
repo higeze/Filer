@@ -13,11 +13,9 @@
 #include "Textbox.h"
 
 
-CTextCell::~CTextCell(){}
-
 void CTextCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	pDirect->DrawTextLayout(*(m_spProperty->Format), GetString(), rcPaint);
+	pDirect->DrawTextLayout(*(m_spCellProperty->Format), GetString(), rcPaint);
 }
 
 d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
@@ -25,7 +23,7 @@ d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 	//Calc Content Rect
 	std::wstring text = GetString();
 	if (text.empty()) { text = L"a"; }
-	return pDirect->CalcTextSize(*(m_spProperty->Format), text);
+	return pDirect->CalcTextSize(*(m_spCellProperty->Format), text);
 }
 
 d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
@@ -37,7 +35,7 @@ d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* p
 
 	std::wstring text = GetString();
 	if (text.empty()) { text = L"a"; }
-	return pDirect->CalcTextSizeWithFixedWidth(*(m_spProperty->Format), text, rcContent.Width());
+	return pDirect->CalcTextSizeWithFixedWidth(*(m_spCellProperty->Format), text, rcContent.Width());
 }
 
 d2dw::CRectF CTextCell::GetEditRect() const
@@ -47,7 +45,7 @@ d2dw::CRectF CTextCell::GetEditRect() const
 
 void CTextCell::OnEdit(const EventArgs& e)
 {
-	if (IsVisible()) {
+	if (GetIsVisible()) {
 		m_pSheet->GetGridPtr()->BeginEdit(this);
 	}
 }
@@ -55,85 +53,66 @@ void CTextCell::OnEdit(const EventArgs& e)
 void CTextCell::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	CCell::PaintLine(pDirect, rcPaint);
-
 }
 
 void CTextCell::PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	CCell::PaintBackground(pDirect, rcPaint);
 }
-	
-bool CTextCell::IsComparable()const{return true;}
 
-Compares CTextCell::EqualCell(CCell* pCell, std::function<void(CCell*, Compares)> action)
+void CTextCell::OnLButtonDown(const LButtonDownEvent& e)
 {
-	return pCell->EqualCell(this, action);
-}
-
-Compares CTextCell::EqualCell(CEmptyCell* pCell, std::function<void(CCell*, Compares)> action)
-{
-	action(this, Compares::DiffNE);
-	return Compares::DiffNE;
-}
-
-Compares CTextCell::EqualCell(CTextCell* pCell, std::function<void(CCell*, Compares)> action)
-{
-	auto str=GetString();
-	bool bEqual=true;
-	if(IsNaN(str)){
-		bEqual= str==pCell->GetString();
-	}else{
-		bEqual= equal_wstring_compare_in_double()(str,pCell->GetString());
-	}
-	action(this, bEqual?Compares::Same:Compares::Diff);
-	return bEqual?Compares::Same:Compares::Diff;
-}
-
-Compares CTextCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Compares)> action)
-{
-	action(this, Compares::Diff);
-	return Compares::Diff;
-}
-
-void CTextCell::OnKillFocus(const KillFocusEvent& e){}
-
-
-std::wstring CStringCell::GetString()
-{
-	return m_string;
-}
-
-void CStringCell::SetStringCore(const std::wstring& str)
-{
-	m_string=str;
-}
-
-
-void CEditableCell::OnLButtonDown(const LButtonDownEvent& e)
-{
-	OnEdit(e);
-}
-
-
-void CEditableStringCell::OnLButtonDown(const LButtonDownEvent& e)
-{
-	OnEdit(e);
-}
-
-void CParameterCell::OnLButtonDown(const LButtonDownEvent& e)
-{
-	//Do Nothing
-}
-void CParameterCell::OnLButtonSnglClk(const LButtonSnglClkEvent& e)
-{
-	if(GetDoubleFocused()){
+	if (m_editMode == EditMode::LButtonDownEdit) {
 		OnEdit(e);
 	}
-
+	CCell::OnLButtonDown(e);
 }
 
-void CParameterCell::OnKillFocus(const KillFocusEvent& e)
+void CTextCell::OnLButtonDblClk(const LButtonDblClkEvent& e)
 {
-	m_bFirstFocus=false;
-	CCell::OnKillFocus(e);
+	if (m_editMode == EditMode::ExcelLike) {
+		OnEdit(e);
+	}
+	CCell::OnLButtonDblClk(e);
+}
+
+void CTextCell::OnLButtonSnglClk(const LButtonSnglClkEvent& e)
+{
+	if (m_editMode == EditMode::FocusedSingleClickEdit) {
+		if (GetIsDoubleFocused()) {
+			OnEdit(e);
+		}
+	}
+	CCell::OnLButtonSnglClk(e);
+}
+
+void CTextCell::OnKeyDown(const KeyDownEvent& e)
+{
+	switch (e.Char) {
+	case VK_F2:
+		OnEdit(e);
+		break;
+	}
+	CCell::OnKeyDown(e);
+}
+
+void CTextCell::OnChar(const CharEvent& e)
+{
+	if (m_editMode == EditMode::ExcelLike) {
+		if ((UINT)(L' ') < e.Char && e.Char < 256) {
+			OnEdit(e);
+			m_pSheet->GetGridPtr()->GetEditPtr()->OnChar(e);
+		}
+	}
+	CCell::OnChar(e);
+}
+
+std::wstring CTextCell::GetString()
+{
+	return m_text;
+}
+
+void CTextCell::SetStringCore(const std::wstring& str)
+{
+	m_text = str;
 }

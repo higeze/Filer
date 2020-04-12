@@ -46,14 +46,14 @@ FLOAT CColumn::GetFitLength()
 
 void CColumn::SetVisible(const bool& bVisible, bool notify)
 {
-	if(m_bVisible!=bVisible){
-		m_bVisible=bVisible;
+	if(*m_spVisible!=bVisible){
+		*m_spVisible=bVisible;
 		if(notify){
 			OnPropertyChanged(L"visible");
 		}
 	}
 }
-void CColumn::SetSelected(const bool& bSelected)
+void CColumn::SetIsSelected(const bool& bSelected)
 {
 	if(m_bSelected!=bSelected){
 		m_bSelected=bSelected;

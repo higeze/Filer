@@ -10,6 +10,7 @@
 #include "MyString.h"
 #include "SerializerEnableIf.h"
 #include "CellProperty.h"
+#include "observable.h"
 
 #define CLEAR_POLYMORPHIC_RELATION \
 	CSerializer::s_dynamicSerializeMap.clear();\
@@ -104,6 +105,17 @@ public:
 			MSXML2::IXMLDOMElementPtr pItemElem=m_pDoc->createElement(_bstr_t("item"));
 			pElem->appendChild(pItemElem);
 			SerializeValue(*iter,pItemElem);
+		}
+	}
+
+	//For observable_vector
+	template<class T>
+	void SerializeValue(observable_vector<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
+	{
+		for (auto iter = tValue.begin(), end = tValue.end(); iter != end; ++iter) {
+			MSXML2::IXMLDOMElementPtr pItemElem = m_pDoc->createElement(_bstr_t("item"));
+			pElem->appendChild(pItemElem);
+			SerializeValue(*iter, pItemElem);
 		}
 	}
 
@@ -233,6 +245,19 @@ public:
 			tValue.resize(vpItemElem.size());
 			for(UINT n=0,nSize=vpItemElem.size();n<nSize;++n){
 				DeserializeElement(tValue[n],vpItemElem[n]);
+			}
+		}
+	}
+
+	//For vector
+	template<class T>
+	void DeserializeElement(observable_vector<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
+	{
+		std::vector<MSXML2::IXMLDOMElementPtr> vpItemElem = GetChildElementsByTagName(pElem, "item");
+		if (!vpItemElem.empty()) {
+			tValue.resize(vpItemElem.size());
+			for (UINT n = 0, nSize = vpItemElem.size(); n < nSize; ++n) {
+				DeserializeElement(tValue[n], vpItemElem[n]);
 			}
 		}
 	}

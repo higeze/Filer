@@ -42,7 +42,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 		OnSize(0, NULL, NULL, dummy);
 	});
 
-	m_folders.VectorChanged.connect([this](const NotifyVectorChangedEventArgs<std::shared_ptr<CShellFolder>>& e)->void {
+	m_folders.VectorChanged = [this](const NotifyVectorChangedEventArgs<std::shared_ptr<CShellFolder>>& e)->void {
 		switch (e.Action) {
 		case NotifyVectorChangedAction::Add:
 		{
@@ -67,7 +67,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 			break;
 		}
 
-	});
+	};
 
 	//Tab
 	m_font = m_spFilerView->GetHeaderProperty()->Format->Font.GetGDIFont();

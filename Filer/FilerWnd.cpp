@@ -28,7 +28,7 @@
 #include "BindCheckBoxColumn.h"
 #include "BindCheckBoxCell.h"
 #include "BindSheetCellColumn.h"
-#include "BindSheetCell.h"
+#include "BindItemsSheetCell.h"
 
 
 #include "Task.h"
@@ -707,7 +707,7 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 	pBindWnd->SetIsDeleteOnFinalMessage(true);
 
 	//Columns
-	pBindWnd->SetHeaderColumnPtr(std::make_shared<CParentRowHeaderColumn>(pBindWnd));
+	pBindWnd->SetHeaderColumnPtr(std::make_shared<CRowHeaderColumn>(pBindWnd));
 	pBindWnd->PushColumns(
 		pBindWnd->GetHeaderColumnPtr(),
 		std::make_shared<CBindCheckBoxColumn<MainTask>>(
@@ -729,9 +729,9 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 			pBindWnd,
 			L"Sub Task",
 			[](MainTask& tk)->observable_vector<SubTask>& {return tk.SubTasks; },
-			[](CBindSheetCell<MainTask, SubTask>* pCell)->void 
+			[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void 
 			{
-				pCell->SetHeaderColumnPtr(std::make_shared<CParentRowHeaderColumn>(pCell));
+				pCell->SetHeaderColumnPtr(std::make_shared<CRowHeaderColumn>(pCell));
 				pCell->PushColumns(
 					pCell->GetHeaderColumnPtr(),
 					std::make_shared<CBindCheckBoxColumn<SubTask>>(
@@ -750,8 +750,10 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 						[](const SubTask& tk)->std::wstring {return tk.Memo; },
 						[](SubTask& tk, const std::wstring& str)->void {tk.Memo = str; })
 				);
+				pCell->SetFrozenCount<ColTag>(1);
+
 				pCell->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pCell));
-				pCell->PushRows(pCell->GetNameHeaderRowPtr());
+				pCell->InsertRow(0, pCell->GetNameHeaderRowPtr());
 				pCell->SetFrozenCount<RowTag>(1);
 			},
 			arg<"maxwidth"_s>() = FLT_MAX)

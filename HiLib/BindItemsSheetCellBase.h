@@ -1,58 +1,59 @@
 #pragma once
 #include "SheetCell.h"
-#include "BindSheetCellColumn.h"
 #include "IBindSheet.h"
 #include "observable.h"
+#include "Debug.h"
+#include "named_arguments.h"
 
-template<typename TItem, typename TValueItem>
-class CBindSheetCell :public CSheetCell, public IBindSheet<TValueItem>
+template<typename TValueItem>
+class CBindItemsSheetCellBase :public CSheetCell, public IBindSheet<TValueItem>
 {
+private:
+	std::function<observable_vector<TValueItem>& (CSheetCell*)> m_funItems = nullptr;
+	observable_vector<TValueItem>* m_ptrItems = nullptr;
 public:
-	CBindSheetCell(
+	template<typename... Args>
+	CBindItemsSheetCellBase(
 		CSheet* pSheet,
 		CRow* pRow,
 		CColumn* pColumn,
 		std::shared_ptr<SheetProperty> spSheetProperty,
 		std::shared_ptr<CellProperty> spCellProperty,
-		std::function<void(CBindSheetCell<TItem, TValueItem>*)> initializer)
+		Args... args)
 		:CSheetCell(pSheet, pRow, pColumn, spSheetProperty, spCellProperty)
 	{
-		initializer(this);
-
-		auto& itemsSource = GetItemsSource();
-
-		for (auto& item : itemsSource) {
-			PushRow(std::make_shared<CBindRow<TValueItem>>(this));
-		}
-
-		GetItemsSource().VectorChanged.connect(
-			[this](const NotifyVectorChangedEventArgs<TValueItem>& e)->void {
-				switch (e.Action) {
-				case NotifyVectorChangedAction::Add:
-					PushRow(std::make_shared<CBindRow<TValueItem>>(this));
-					break;
-				case NotifyVectorChangedAction::Remove:
-					EraseRow(m_allRows.back());
-					break;
-				case NotifyVectorChangedAction::Reset:
-					//TODOTODO
-				default:
-					break;
-				}
-
-			}
-		);
+		auto rowHeaders = ::get(arg<"rowhdrs"_s>(), args..., default_(std::vector<std::shared_ptr<CRow>>()));
+		auto columnHeaders = ::get(arg<"colhdrs"_s>(), args..., default_(std::vector<std::shared_ptr<CColumn>>()));
+		m_funItems = ::get(arg<"funitems"_s>(), args..., default_(nullptr));
+		m_ptrItems = ::get(arg<"ptritems"_s>(), args..., default_(nullptr));
 	}
+
+	virtual ~CBindItemsSheetCellBase() = default;
 
 	virtual bool HasSheetCell()override { return true; }
 	virtual bool IsVirtualPage()override { return true; }
 
-	observable_vector<TValueItem>& GetItemsSource() override
-	{
-		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindSheetCellColumn<TItem, TValueItem>*>(m_pColumn);
-		return pBindColumn->GetItemser()(pBindRow->GetItem());
+	observable_vector<TValueItem>& GetItemsSource() 
+	{ 
+		if (m_funItems) {
+			return m_funItems(this);
+		} else if (m_ptrItems) {
+			return *m_ptrItems;
+		} else {
+			throw std::exception(FILE_LINE_FUNC);
+		}
 	}
+
+	void RowMoved(CMovedEventArgs<RowTag>& e) override
+	{
+		auto& itemsSource = GetItemsSource();
+		auto fromIter = itemsSource.cbegin() + (e.m_from - GetFrozenCount<RowTag>());
+		auto temp = *fromIter;
+		itemsSource.erase(fromIter);
+		auto toIter = itemsSource.cbegin() + (e.m_to - GetFrozenCount<RowTag>());
+		itemsSource.insert(toIter, temp);
+	}
+
 
 	/******************/
 	/* Window Message */
@@ -96,10 +97,11 @@ public:
 			e.WndPtr->m_hWnd);
 
 		if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
-			GetItemsSource().notify_push_back(TValueItem());
+			auto& items = GetItemsSource();
+			items.notify_push_back(TValueItem());
 		} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
 			auto a = Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>();
-			GetItemsSource().notify_erase(GetItemsSource().cbegin() + Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount);
+			this->GetItemsSource().notify_erase(this->GetItemsSource().cbegin() + (Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
 		}
 		e.Handled = TRUE;
 

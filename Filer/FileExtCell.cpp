@@ -1,10 +1,8 @@
 #include "FileExtCell.h"
+#include "Sheet.h"
+#include "GridView.h"
 #include "ShellFile.h"
 #include "FileRow.h"
-#include "GridView.h"
-
-CFileExtCell::CFileExtCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-	:CParameterCell(pSheet, pRow, pColumn, spProperty){}
 
 std::wstring CFileExtCell::GetString()
 {

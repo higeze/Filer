@@ -1,13 +1,12 @@
 #pragma once
 #include "UIElement.h"
 #include "SheetEnums.h"
+#include "named_arguments.h"
 
 class CellProperty;
 class CRect;
 class CSize;
-class CDC;
 class CSheet;
-
 class CCell;
 class CEmptyCell;
 class CTextCell;
@@ -23,34 +22,36 @@ struct CellContextMenuEventArgs;
 
 class CCell:virtual public CUIElement
 {
-public:
-	static CMenu ContextMenu;
-
 protected:
 
 	CSheet* m_pSheet;
 	CRow* m_pRow;
 	CColumn* m_pColumn;
-	std::shared_ptr<CellProperty> m_spProperty;
+	std::shared_ptr<CellProperty> m_spCellProperty;
 
 	bool m_bSelected = false;
 	bool m_bChecked = false;
 
-
 	d2dw::CSizeF m_fitSize = d2dw::CSizeF();
 	d2dw::CSizeF m_actSize = d2dw::CSizeF();
 	bool m_isFitMeasureValid = false;
-	bool m_bActMeasureValid = false;
+	bool m_isActMeasureValid = false;
 	bool m_isWrappable = true;
-
-	//LineType m_lineType = LineType::MultiLine;
 
 public:
 	//Constructor
-	CCell(CSheet* pSheet = nullptr, CRow* pRow = nullptr, CColumn* pColumn = nullptr, std::shared_ptr<CellProperty> spProperty = nullptr, CMenu* pContextMenu= &CCell::ContextMenu);
+	template<typename... Args>
+	CCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
+		:CUIElement(),
+		m_pSheet(pSheet),
+		m_pRow(pRow),
+		m_pColumn(pColumn),
+		m_spCellProperty(spProperty)
+	{
+		m_isWrappable = ::get(arg<"iswrap"_s>(), args..., default_(true));
+	}
 	//Destructor
-	virtual ~CCell(){}
-
+	virtual ~CCell() = default;
 	//Operator
 	bool operator<(CCell& rhs);
 	bool operator>(CCell& rhs);
@@ -58,13 +59,10 @@ public:
 	CSheet* GetSheetPtr()const { return m_pSheet; }
 	CRow* GetRowPtr()const { return m_pRow; }
 	CColumn* GetColumnPtr()const { return m_pColumn; }
-	//LineType GetLineType()const { return m_lineType; }
 	virtual bool GetIsWrappable()const { return m_isWrappable; }
-	//virtual SizingType GetRowSizingType()const { return SizingType::AlwaysFit; }
-	//virtual SizingType GetColSizingType()const { return SizingType::Independ; }
 	void SetFitMeasureValid(const bool& b) { m_isFitMeasureValid = b; }
-	void SetActMeasureValid(const bool& b) { m_bActMeasureValid = b; }
-	std::shared_ptr<CellProperty> GetCellPropertyPtr() { return m_spProperty; }
+	void SetActMeasureValid(const bool& b) { m_isActMeasureValid = b; }
+	std::shared_ptr<CellProperty> GetCellPropertyPtr() { return m_spCellProperty; }
 
 	//Size, Rect method
 	virtual d2dw::CSizeF GetInitSize(d2dw::CDirect2DWrite* pDirect);
@@ -84,22 +82,18 @@ public:
 	virtual d2dw::CRectF GetRect()const;
 
 	//Visible
-	bool IsVisible()const;
-
+	bool GetIsVisible()const;
 	//Selected
-	virtual bool GetSelected()const;
-	virtual void SetSelected(const bool& selected);
-
+	virtual bool GetIsSelected()const;
+	virtual void SetIsSelected(const bool& selected);
 	//Focused
-	virtual bool GetFocused()const;
-
+	virtual bool GetIsFocused()const override;
 	//DoubleFocused
-	virtual bool GetDoubleFocused()const;
-
+	virtual bool GetIsDoubleFocused()const;
 	//Checked
-	virtual bool GetChecked()const;
-	virtual void SetChecked(const bool& bChecked);
-	
+	virtual bool GetIsChecked()const;
+	virtual void SetIsChecked(const bool& bChecked);
+
 	//Paint
 	virtual void PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc);
 	virtual void PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc);
@@ -112,35 +106,25 @@ public:
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override {/*Do Nothing*/ }
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override;
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override;
+	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override {/*Do Nothing*/ }
 
-	virtual void OnContextMenu(const ContextMenuEvent& e) override;
-	virtual void OnSetFocus(const SetFocusEvent& e);
-	virtual void OnSetCursor(const SetCursorEvent& e){/*Do Nothing*/}
-	virtual void OnKillFocus(const KillFocusEvent& e);
+	virtual void OnContextMenu(const ContextMenuEvent& e) override {/*Do Nothing*/ };
+	virtual void OnSetFocus(const SetFocusEvent& e) override;
+	virtual void OnSetCursor(const SetCursorEvent& e) override {/*Do Nothing*/ };
+	virtual void OnKillFocus(const KillFocusEvent& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override {/*Do Nothing*/};
+	virtual void OnChar(const CharEvent& e) override {/*Do Nothing*/ };
 
 	//String
 	virtual std::wstring GetString();
 	virtual std::wstring GetSortString(){return GetString();}
 
-	virtual void SetString(const std::wstring& str);
-	virtual void SetStringNotify(const std::wstring& str);
+	virtual void SetString(const std::wstring& str, bool notify = true);
 	virtual void SetStringCore(const std::wstring& str){/*Do Nothing*/};
 	virtual bool Filter(const std::wstring& strFilter);
 
-	//Compare
-	virtual bool IsComparable()const=0;
-	virtual Compares EqualCell(CCell* pCell, std::function<void(CCell*, Compares)> action);
-	virtual Compares EqualCell(CEmptyCell* pCell, std::function<void(CCell*, Compares)> action);
-	virtual Compares EqualCell(CTextCell* pCell, std::function<void(CCell*, Compares)> action);
-	virtual Compares EqualCell(CSheetCell* pCell, std::function<void(CCell*, Compares)> action);
-
-	//Menu
-	CMenu* const m_pContextMenu = nullptr;
-	virtual CMenu* GetContextMenuPtr(){return m_pContextMenu;}
-
 	//Clipboard
-	virtual bool IsClipboardCopyable()const{return false;}
+	virtual bool GetIsClipboardCopyable()const{return false;}
 
 	//Update action
 	virtual void OnPropertyChanged(const wchar_t*) override;

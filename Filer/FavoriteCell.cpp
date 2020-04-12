@@ -49,7 +49,7 @@ void CFavoriteCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcP
 	CFileIconCell::PaintContent(pDirect, rcPaint);
 
 	//Paint Text
-	pDirect->DrawTextInRect(*(m_spProperty->Format) , GetShortName(), Content2InnerBorder(rcPaint));
+	pDirect->DrawTextInRect(*(m_spCellProperty->Format) , GetShortName(), Content2InnerBorder(rcPaint));
 }
 
 void CFavoriteCell::OnContextMenu(const ContextMenuEvent& e)

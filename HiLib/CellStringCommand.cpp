@@ -7,13 +7,13 @@ CCellStringCommand::CCellStringCommand(CCell* pCell, const std::wstring& prevStr
 
 void CCellStringCommand::Do()
 {
-	m_pCell->SetStringNotify(m_nextString);
+	m_pCell->SetString(m_nextString);
 }
 void CCellStringCommand::UnDo()
 {
-	m_pCell->SetStringNotify(m_prevString);
+	m_pCell->SetString(m_prevString);
 }
 void CCellStringCommand::ReDo()
 {
-	m_pCell->SetStringNotify(m_nextString);
+	m_pCell->SetString(m_nextString);
 }

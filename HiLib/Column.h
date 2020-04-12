@@ -104,7 +104,7 @@ public:
 	virtual Sorts GetSort()const{return m_sort;};
 	virtual void SetSort(const Sorts& sort);
 	virtual void SetVisible(const bool& bVisible, bool notify = true)override;
-	virtual void SetSelected(const bool& bSelected)override;
+	virtual void SetIsSelected(const bool& bSelected)override;
 
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::shared_ptr<CCell> spCellSrc){return false;}
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::wstring source){return false;}

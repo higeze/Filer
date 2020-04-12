@@ -1,5 +1,4 @@
 #include "FileIconCell.h"
-#include "MyDC.h"
 #include "Column.h"
 #include "FileRow.h"
 #include "ShellFile.h"

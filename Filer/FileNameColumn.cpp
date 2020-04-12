@@ -1,5 +1,5 @@
 #include "FileNameColumn.h"
-#include "ParentColumnNameHeaderCell.h"
+#include "SortCell.h"
 #include "FilterCell.h"
 #include "Sheet.h"
 #include "FileIconNameCell.h"
@@ -13,7 +13,7 @@ std::shared_ptr<CCell> CFileNameColumn::HeaderCellTemplate(CRow* pRow, CColumn* 
 
 std::shared_ptr<CCell> CFileNameColumn:: NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"Name");
+	return std::make_shared<CSortCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(), arg<"text"_s>() = L"Name");
 }
 
 std::shared_ptr<CCell> CFileNameColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)

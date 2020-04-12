@@ -1,5 +1,5 @@
 #include "FileIconColumn.h"
-#include "ParentColumnNameHeaderCell.h"
+#include "SortCell.h"
 #include "FilterCell.h"
 #include "Sheet.h"
 #include "FileIconCell.h"
@@ -17,7 +17,7 @@ std::shared_ptr<CCell> CFileIconColumn::HeaderCellTemplate(CRow* pRow, CColumn* 
 
 std::shared_ptr<CCell> CFileIconColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"I");
+	return std::make_shared<CSortCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"I");
 }
 
 std::shared_ptr<CCell> CFileIconColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)

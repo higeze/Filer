@@ -19,7 +19,7 @@ public:
 protected:
 	//Field
 	CSheet* m_pSheet = nullptr; // Parent sheet pointer
-	bool m_bVisible = true; // Visible or not
+	std::shared_ptr<bool> m_spVisible = std::make_shared<bool>(true); // Visible or not
 	bool m_bSelected = false; // Selected or not
 
 	FLOAT m_start = 0.f;
@@ -38,14 +38,14 @@ public:
 	template <class Archive>
 	void save(Archive& ar)
 	{
-		ar("visible", m_bVisible);
+		ar("visible", *m_spVisible);
 		ar("allindex", m_allIndex);
 		ar("visindex", m_visIndex);
 	}
 	template <class Archive>
 	void load(Archive& ar)
 	{
-		ar("visible", m_bVisible);
+		ar("visible", *m_spVisible);
 		ar("allindex", m_allIndex);
 		ar("visindex", m_visIndex);
 	}
@@ -60,7 +60,7 @@ public:
 	CBand& ShallowCopy(const CBand& band)
 	{
 		m_pSheet = band.m_pSheet;
-		m_bVisible = band.m_bVisible;
+		*m_spVisible = *(band.m_spVisible);
 		m_bSelected = band.m_bSelected;
 		m_isMeasureValid = band.m_isMeasureValid;
 		m_isFitMeasureValid = band.m_isFitMeasureValid;	
@@ -71,10 +71,10 @@ public:
 	bool GetIsMeasureValid()const{return m_isMeasureValid;}
 	void SetIsMeasureValid(bool bMeasureValid){m_isMeasureValid = bMeasureValid;}
 	void SetIsFitMeasureValid(bool isFitMeasureValid) { m_isFitMeasureValid = isFitMeasureValid; }
-	virtual bool GetVisible()const{return m_bVisible;}
+	virtual bool GetVisible()const{return *m_spVisible;}
 	virtual void SetVisible(const bool& bVisible, bool notify = true) = 0;
-	virtual bool GetSelected()const{return m_bSelected;}
-	virtual void SetSelected(const bool& bSelected) = 0;
+	virtual bool GetIsSelected()const{return m_bSelected;}
+	virtual void SetIsSelected(const bool& bSelected) = 0;
 	virtual bool IsDragTrackable()const{return false;}
 	virtual bool IsTrackable()const { return false; }
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) = 0;

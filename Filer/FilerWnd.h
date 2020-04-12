@@ -76,7 +76,7 @@ struct ExeExtension
 struct ExeExtensionProperty
 {
 public:
-	std::vector<ExeExtension> ExeExtensions;
+	observable_vector<ExeExtension> ExeExtensions;
 
 	FRIEND_SERIALIZER
 	template <class Archive>

@@ -1,10 +1,7 @@
 #include "MapColumn.h"
 #include "Sheet.h"
-#include "GridView.h"
-#include "ParentColumnNameHeaderCell.h"
-#include "ParentColumnHeaderCell.h"
-#include "ParentColumnHeaderHeaderCell.h"
-
+#include "ColumnIndexCell.h"
+#include "SortCell.h"
 #include "FilterCell.h"
 #include "Cell.h"
 #include "Row.h"
@@ -37,12 +34,12 @@ std::shared_ptr<CCell>& CMapColumn::Cell(CRow* pRow )
 
 std::shared_ptr<CCell> CMapColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CParentColumnHeaderIndexCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
+	return std::make_shared<CColumnIndexCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
 std::shared_ptr<CCell> CMapColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CParentColumnNameHeaderCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
+	return std::make_shared<CSortCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
 std::shared_ptr<CCell> CMapColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)

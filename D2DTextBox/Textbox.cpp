@@ -520,9 +520,9 @@ void D2DTextbox::ClearText()
 	MoveCaret(0);
 }
 
-bool D2DTextbox::IsVisible()const
+bool D2DTextbox::GetIsVisible()const
 {
-	return m_pCell->IsVisible();
+	return m_pCell->GetIsVisible();
 }
 
 void D2DTextbox::Render()

@@ -1,16 +1,10 @@
 #pragma once
-
 #include "TextCell.h"
 
-
-class CPropertyNameCell:public CStringCell
+class CPropertyNameCell:public CTextCell
 {
 public:
 	CPropertyNameCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CStringCell(pSheet,pRow,pColumn,spProperty,L""){}
-	virtual ~CPropertyNameCell(){}
-	virtual bool IsComparable()const
-	{
-		return false;
-	}
+		:CTextCell(pSheet,pRow,pColumn,spProperty,arg<"text"_s>() = L""){}
+	virtual ~CPropertyNameCell() = default;
 };

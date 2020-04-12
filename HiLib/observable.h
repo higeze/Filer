@@ -145,36 +145,47 @@ public:
 	observable_vector<T, Allocator>& operator=(const observable_vector<T, Allocator>& val)
 	{
 		std::vector<T, Allocator>::operator=(val);
-		VectorChanged.connect(val.VectorChanged);
+		VectorChanged = val.VectorChanged;
 		return *this;
 	}
 
-	boost::signals2::signal<void(const NotifyVectorChangedEventArgs<T>&)> VectorChanged;
+	observable_vector<T, Allocator>& operator=(observable_vector<T, Allocator>&& val)
+	{
+		std::vector<T, Allocator>::operator=(val);
+		VectorChanged = std::move(val.VectorChanged);
+		return *this;
+	}
+
+	std::function<void(const NotifyVectorChangedEventArgs<T>&)> VectorChanged = nullptr;
 
 	void notify_push_back(const T& x)
 	{
 		std::vector<T, Allocator>::push_back(x);
-		VectorChanged(NotifyVectorChangedEventArgs<T>
-		{
-			NotifyVectorChangedAction::Add,
-			{ x },
-			(int)size() - 1,
-			{},
-			-1
-		});
+		if (VectorChanged) {
+			VectorChanged(NotifyVectorChangedEventArgs<T>
+			{
+				NotifyVectorChangedAction::Add,
+				{ x },
+					(int)size() - 1,
+				{},
+					-1
+			});
+		}
 	}
 
 	iterator notify_insert(const_iterator position, const T& x)
 	{
 		auto ret = std::vector<T, Allocator>::insert(position, x);
-		VectorChanged(NotifyVectorChangedEventArgs<T>
-		{
-			NotifyVectorChangedAction::Insert,
-			{ x },
-			(int)std::distance((const_iterator)std::vector<T, Allocator>::begin(), position),
-			{},
-				-1
-		});
+		if (VectorChanged) {
+			VectorChanged(NotifyVectorChangedEventArgs<T>
+			{
+				NotifyVectorChangedAction::Insert,
+				{ x },
+					(int)std::distance((const_iterator)std::vector<T, Allocator>::begin(), position),
+				{},
+					-1
+			});
+		}
 		return ret;
 	}
 
@@ -183,14 +194,16 @@ public:
 		auto oldItem = *where;
 		auto index = std::distance((const_iterator)std::vector<T, Allocator>::begin(), where);
 		iterator ret = std::vector<T, Allocator>::erase(where);
-		VectorChanged(NotifyVectorChangedEventArgs<T>
-		{
-			NotifyVectorChangedAction::Remove,
-			{},
-			-1,
-			{oldItem},
-			index
-		});
+		if (VectorChanged) {
+			VectorChanged(NotifyVectorChangedEventArgs<T>
+			{
+				NotifyVectorChangedAction::Remove,
+				{},
+					-1,
+				{ oldItem },
+					index
+			});
+		}
 
 		return ret;
 	}
@@ -200,15 +213,16 @@ public:
 		auto oldItems = std::vector<T>(first, last);
 		auto index = std::distance((const_iterator)std::vector<T, Allocator>::begin(), first);
 		iterator ret = std::vector<T, Allocator>::erase(first, last);
-		VectorChanged(NotifyVectorChangedEventArgs<T>
+		if (VectorChanged) {
+			VectorChanged(NotifyVectorChangedEventArgs<T>
 			{
 				NotifyVectorChangedAction::Remove,
 				{},
-				-1,
-				oldItems,
-				index
+					-1,
+					oldItems,
+					index
 			});
-
+		}
 		return ret;
 	}
 
@@ -216,14 +230,16 @@ public:
 	void notify_clear()
 	{
 		clear();
-		VectorChanged(NotifyVectorChangedEventArgs<T>
+		if (VectorChanged) {
+			VectorChanged(NotifyVectorChangedEventArgs<T>
 			{
 				NotifyVectorChangedAction::Reset,
 				{},
-				-1,
+					-1,
 				{},
-				-1
+					-1
 			});
+		}
 		return;
 	}
 

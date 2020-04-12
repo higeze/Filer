@@ -4,7 +4,7 @@
 class CMapColumn:public CColumn
 {
 protected:
-	std::unordered_map<CRow*,std::shared_ptr<CCell>> m_mapCell; /**<Map to hold row-cell*/
+	std::unordered_map<const CRow*,std::shared_ptr<CCell>> m_mapCell; /**<Map to hold row-cell*/
 public:
 	template<typename... Args>
 	CMapColumn(CSheet* pSheet = nullptr, Args... args):CColumn(pSheet, args...){}
@@ -30,4 +30,10 @@ public:
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)override;
 
 	virtual void Clear(){m_mapCell.clear();}
+	virtual void Erase(const CRow* pRow) 
+	{
+		if (m_mapCell.find(pRow) != m_mapCell.end()) {
+			m_mapCell.erase(pRow);
+		}
+	}
 };

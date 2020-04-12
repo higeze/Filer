@@ -5,9 +5,6 @@
 #include "MyPen.h"
 #include "MyRect.h"
 #include "MyRgn.h"
-//
-#include "ChildIndexColumn.h"
-#include "ChildRowHeaderColumn.h"
 #include "MapColumn.h"
 //
 #include "Tracker.h"
@@ -20,8 +17,6 @@
 #include "SheetEventArgs.h"
 #include "GridView.h"
 
-CMenu CSheetCell::SheetCellContextMenu;
-
 CSheetCell::CSheetCell(
 	CSheet* pSheet,
 	CRow* pRow,
@@ -32,7 +27,7 @@ CSheetCell::CSheetCell(
 	:CSheet(spSheetProperty), 
 	CCell(pSheet,pRow,pColumn,spCellProperty,pMenu)
 {
-	m_spRowDragger = std::make_shared<CSheetCellRowDragger>();
+	m_spRowDragger = std::make_shared<CRowDragger>();
 	m_spColDragger = std::make_shared<CSheetCellColDragger>();
 	m_isWrappable = true;
 }
@@ -159,6 +154,12 @@ void CSheetCell::OnLButtonDblClk(const LButtonDblClkEvent& e)
 	CSheet::OnLButtonDblClk(e);
 }
 
+void CSheetCell::OnLButtonBeginDrag(const LButtonBeginDragEvent& e)
+{
+	CCell::OnLButtonBeginDrag(e);
+	CSheet::OnLButtonBeginDrag(e);
+}
+
 
 void CSheetCell::OnMouseMove(const MouseMoveEvent& e)
 {
@@ -196,67 +197,12 @@ void CSheetCell::OnKeyDown(const KeyDownEvent& e)
 	CSheet::OnKeyDown(e);
 }
 
-bool CSheetCell::IsComparable()const
+void CSheetCell::OnChar(const CharEvent& e)
 {
-	return true;
+	CCell::OnChar(e);
+	CSheet::OnChar(e);
 }
 
-Compares CSheetCell::EqualCell(CCell* pCell, std::function<void(CCell*, Compares)> action)
-{
-	return pCell->EqualCell(this, action);
-}
-Compares CSheetCell::EqualCell(CEmptyCell* pCell, std::function<void(CCell*, Compares)> action)
-{
-	action(this, Compares::DiffNE);
-	return Compares::DiffNE;
-} 
-Compares CSheetCell::EqualCell(CTextCell* pCell, std::function<void(CCell*, Compares)> action)
-{
-	action(this, Compares::Diff);
-	return Compares::Diff;
-} 
-Compares CSheetCell::EqualCell(CSheetCell* pCell, std::function<void(CCell*, Compares)> action)
-{//TODO check size, fixed and soon
-
-	//if Minus size is difference, all cells are not equal
-	//if(GetMinIndex<ColTag, AllTag>()!=pCell->GetMinIndex<ColTag, AllTag>() ||
-	//	GetMinIndex<RowTag, AllTag>() !=pCell->GetMinIndex<RowTag, AllTag>()){
-	//	boost::range::for_each(m_columnVisibleDictionary,[&](const ColumnData& colData){
-	//		boost::range::for_each(this->m_rowVisibleDictionary,[&](const RowData& rowData){
-	//			action(CSheet::Cell(rowData.DataPtr, colData.DataPtr).get(), Compares::Diff);
-	//		});
-	//	});
-	//	action(this, Compares::Diff);
-	//	return Compares::Diff;
-	//}
-
-	//auto comp = Compares::Same;
-	////if size is difference, cell is not equal
-	//if(m_columnVisibleDictionary.size()!=pCell->m_columnVisibleDictionary.size() ||
-	//	m_rowVisibleDictionary.size()!=pCell->m_rowVisibleDictionary.size()){
-	//	comp = Compares::Diff;
-	//}
-	////Larger size cells are checked
-	//auto& colDictionary=m_columnVisibleDictionary.get<IndexTag>();
-	//auto& rowDictionary=m_rowVisibleDictionary.get<IndexTag>();
-
-	//for(auto colIter=colDictionary.begin(),colEnd=colDictionary.end();colIter!=colEnd;++colIter){
-	//	for(auto rowIter=rowDictionary.begin(),rowEnd=rowDictionary.end();rowIter!=rowEnd;++rowIter){
-	//		auto pCellMe=colIter->DataPtr->Cell(rowIter->DataPtr.get());
-	//		auto pCellOther=pCell->Cell<VisTag>(rowIter->Index,colIter->Index);
-	//		if(pCellOther){
-	//			auto cellComp = pCellOther->EqualCell(pCellMe.get(), action);//run equal cell to check
-	//			comp = (comp==Compares::Same && cellComp==Compares::Same)?Compares::Same:Compares::Diff;
-	//		}else{
-	//			comp = Compares::Diff;
-	//			action(this, comp);
-	//		}
-	//	}
-	//}
-	//action(this, comp);	
-	//return comp;
-	return Compares::Same;
-}
 
 void CSheetCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
@@ -282,12 +228,12 @@ CGridView* CSheetCell::GetGridPtr()
 //	CSheet::SetFocused(bFocused);
 //}
 
-bool CSheetCell::GetSelected()const
+bool CSheetCell::GetIsSelected()const
 {
-	return CCell::GetSelected();// || CSheet::GetSelected();
+	return CCell::GetIsSelected();// || CSheet::GetSelected();
 }
 
-void CSheetCell::SetSelected(const bool& bSelected)
+void CSheetCell::SetIsSelected(const bool& bSelected)
 {
 	//if(selected){
 	//	CSheet::SelectAll();
@@ -295,9 +241,15 @@ void CSheetCell::SetSelected(const bool& bSelected)
 	//	CSheet::DeselectAll();
 	//}
 
-	CCell::SetSelected(bSelected);
+	CCell::SetIsSelected(bSelected);
 	//CSheet::SetSelected(bSelected);
 }
+
+bool CSheetCell::GetIsFocused()const
+{
+	return CCell::GetIsFocused();
+}
+
 
 bool CSheetCell::Filter(const std::wstring& strFilter)const
 {
@@ -309,46 +261,6 @@ bool CSheetCell::Filter(const std::wstring& strFilter)const
 		}
 	}
 	return false;
-}
-
-CMenu* CSheetCell::GetContextMenuPtr()
-{
-	//Copy base menu
-	SheetCellContextMenu = CMenu(*CCell::GetContextMenuPtr());
-
-	//Resize
-	if(CanResizeRow() || CanResizeColumn()){
-		//Create Resize menu
-		auto spResizeMenuItem = std::make_shared<CFunctionMenuItem>();
-		spResizeMenuItem->SetID(IDM_RESIZE_SHEETCELL);
-		spResizeMenuItem->SetMask(MIIM_TYPE|MIIM_ID);
-		spResizeMenuItem->SetType(MFT_STRING);
-		spResizeMenuItem->SetTypeData(L"Resize");
-		spResizeMenuItem->SetFunction([&]()->void{Resize();});
-		//Assign command
-		GetGridPtr()->ReplaceCmdIDHandler(spResizeMenuItem->GetID(),
-			[spResizeMenuItem](WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)->HRESULT
-				{return spResizeMenuItem->OnCommand(wNotifyCode,wID,hWndCtl,bHandled);});
-
-		//Create AddRow menu
-		auto spAddRowMenuItem = std::make_shared<CFunctionMenuItem>();
-		spAddRowMenuItem->SetID(IDM_ADDROW_SHEETCELL);
-		spAddRowMenuItem->SetMask(MIIM_TYPE | MIIM_ID);
-		spAddRowMenuItem->SetType(MFT_STRING);
-		spAddRowMenuItem->SetTypeData(L"Add Row");
-		spAddRowMenuItem->SetFunction([&]()->void {AddRow(); });
-		//Assign command
-		GetGridPtr()->ReplaceCmdIDHandler(spAddRowMenuItem->GetID(),
-			[spAddRowMenuItem](WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)->HRESULT {return spAddRowMenuItem->OnCommand(wNotifyCode, wID, hWndCtl, bHandled); });
-
-		//Insert menu
-		if(SheetCellContextMenu.GetMenuItemCount()>0){
-			SheetCellContextMenu.InsertSeparator(SheetCellContextMenu.GetMenuItemCount(), TRUE);
-		}
-		SheetCellContextMenu.InsertMenuItem(SheetCellContextMenu.GetMenuItemCount(), TRUE, spAddRowMenuItem.get());
-		SheetCellContextMenu.InsertMenuItem(SheetCellContextMenu.GetMenuItemCount(), TRUE, spResizeMenuItem.get());
-	}
-	return &SheetCellContextMenu;
 }
 
 void CSheetCell::OnContextMenu(const ContextMenuEvent& e)

@@ -23,8 +23,6 @@ public:
 		std::shared_ptr<CellProperty> spCellProperty = nullptr,
 		CMenu* pMenu=nullptr);
 	virtual ~CSheetCell(){}
-	static CMenu SheetCellContextMenu;
-	virtual CMenu* GetContextMenuPtr()override;
 	//Rect
 	virtual FLOAT GetTop()const override;
 	virtual FLOAT GetLeft()const override;
@@ -35,8 +33,10 @@ public:
 	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override;
 
 	//virtual void SetFocused(const bool& bFocused);
-	virtual bool GetSelected()const override;
-	virtual void SetSelected(const bool& bSelected) override;
+	virtual bool GetIsSelected()const override;
+	virtual void SetIsSelected(const bool& bSelected) override;
+	virtual bool GetIsFocused()const override;
+
 
 	//Paint
 	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
@@ -47,6 +47,7 @@ public:
 	virtual void OnLButtonClk(const LButtonClkEvent& e) override;
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override;
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override;
+	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
 
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
 	virtual void OnMouseLeave(const MouseLeaveEvent& e) override;
@@ -55,17 +56,12 @@ public:
 	virtual void OnSetFocus(const SetFocusEvent& e) override;
 	virtual void OnKillFocus(const KillFocusEvent& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e)  override;
+	virtual void OnChar(const CharEvent& e)  override;
 
 	//String
 	virtual std::wstring GetString() override {return CSheet::GetSheetString();};
-	virtual void SetString(const std::wstring& str)  override {/*Do Nothing*/};
+	virtual void SetString(const std::wstring& str, bool notify)  override {/*Do Nothing*/};
 	virtual bool Filter(const std::wstring& strFilter)const;
-	//Compare
-	virtual bool IsComparable()const;
-	virtual Compares EqualCell(CCell* pCell, std::function<void(CCell*, Compares)> action);
-	virtual Compares EqualCell(CEmptyCell* pCell, std::function<void(CCell*, Compares)> action);
-	virtual Compares EqualCell(CTextCell* pCell, std::function<void(CCell*, Compares)> action);
-	virtual Compares EqualCell(CSheetCell* pCell, std::function<void(CCell*, Compares)> action);
 
 	virtual d2dw::CPointF GetScrollPos()const;
 	std::shared_ptr<CDC> GetClientDCPtr()const;

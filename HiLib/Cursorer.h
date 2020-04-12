@@ -12,7 +12,7 @@ struct SetCursorEvent;
 
 class CCursorer
 {
-private:
+protected:
 	std::shared_ptr<CCell> m_oldCell;
 	std::shared_ptr<CCell> m_currentCell;
 	std::shared_ptr<CCell> m_anchorCell;
@@ -45,7 +45,7 @@ public:
 	virtual void OnCursorShift(std::shared_ptr<CCell>& cell);
 	virtual void OnCursorCtrlShift(std::shared_ptr<CCell>& cell);
 	//virtual void UpdateCursor();
-private:
+protected:
 	virtual bool IsCursorTargetCell(const std::shared_ptr<CCell>& cell);
 	virtual void UpdateCursor(std::shared_ptr<CCell>& cell, bool old  = true, bool current = true, bool anchor = true, bool focus = true);
 
@@ -78,5 +78,11 @@ public:
 	virtual ~CSheetCellCursorer(){}
 	virtual void OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e) override;
 	virtual void OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e) override;
+	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) override;
+};
+
+class CExcelLikeCursorer :public CCursorer
+{
+	using CCursorer::CCursorer;
 	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) override;
 };

@@ -25,6 +25,7 @@ public:
 	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override
 	{
 		auto visIndexes = pSheet->Point2Indexes(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+		auto v = visIndexes.Get<TRCYou::IndexesTag>();
 		if (visIndexes.Row < (int)pSheet->GetContainer<RowTag, VisTag>().size() &&
 			visIndexes.Row >= 0 &&
 			visIndexes.Col < (int)pSheet->GetContainer<ColTag, VisTag>().size() &&

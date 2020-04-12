@@ -1,7 +1,6 @@
 #include "PropertyColumn.h"
 #include "Sheet.h"
-#include "ParentColumnHeaderCell.h"
-#include "ParentColumnNameHeaderCell.h"
+#include "SortCell.h"
 #include "PropertyNameCell.h"
 #include "FilterCell.h"
 #include "Cell.h"
@@ -10,99 +9,69 @@
 #include "Row.h"
 #include "GridView.h"
 #include "CellProperty.h"
+#include "RowIndexCell.h"
 
 
-CParentPropertyNameColumn::CParentPropertyNameColumn(CSheet* pSheet)
+CPropertyNameColumn::CPropertyNameColumn(CSheet* pSheet)
 	:CMapColumn(pSheet)
 {}
 
-std::shared_ptr<CCell> CParentPropertyNameColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CPropertyNameColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"Property");
+	return std::make_shared<CSortCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(), arg<"text"_s>() = L"Name");
 }
 
-std::shared_ptr<CCell> CParentPropertyNameColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CPropertyNameColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CFilterCell>(m_pSheet,pRow,pColumn,m_pSheet->GetFilterProperty());
 }
 
-std::shared_ptr<CCell> CParentPropertyNameColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CPropertyNameColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CPropertyNameCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
 }
 
-CChildPropertyNameColumn::CChildPropertyNameColumn(CSheet* pSheet)
-	:CChildIndexColumn(pSheet)
-{}
 
-std::shared_ptr<CCell> CChildPropertyNameColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-{
-	return std::make_shared<CStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"Property");
-}
-
-std::shared_ptr<CCell> CChildPropertyNameColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
-{
-	return std::make_shared<CFilterCell>(m_pSheet,pRow,pColumn,m_pSheet->GetFilterProperty());
-}
-
-std::shared_ptr<CCell> CChildPropertyNameColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
-{
-	return std::make_shared<CPropertyNameCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
-}
-
-CChildPropertyIndexColumn::CChildPropertyIndexColumn(CSheet* pSheetCell)
-	:CChildRowHeaderColumn(pSheetCell)
-{}
-
-std::shared_ptr<CCell> CChildPropertyIndexColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-{
-	return std::make_shared<CStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"X");
-}
-
-std::shared_ptr<CCell> CChildPropertyIndexColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
-{
-	return std::make_shared<CFilterCell>(m_pSheet,pRow,pColumn,m_pSheet->GetFilterProperty());
-}
-
-std::shared_ptr<CCell> CChildPropertyIndexColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
-{
-	return std::make_shared<CStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),boost::lexical_cast<std::wstring>(pRow->GetIndex<AllTag>()));
-}
-
-CParentPropertyValueColumn::CParentPropertyValueColumn(CSheet* pSheet)
+CPropertyValueColumn::CPropertyValueColumn(CSheet* pSheet)
 	:CMapColumn(pSheet)
-{}
-
-std::shared_ptr<CCell> CParentPropertyValueColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"Value");
+	m_isMinLengthFit = true;
 }
 
-std::shared_ptr<CCell> CParentPropertyValueColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CPropertyValueColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+{
+	return std::make_shared<CSortCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(), arg<"text"_s>() = L"Value");
+}
+
+std::shared_ptr<CCell> CPropertyValueColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CFilterCell>(m_pSheet,pRow,pColumn,m_pSheet->GetFilterProperty());
 }
 
-std::shared_ptr<CCell> CParentPropertyValueColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CPropertyValueColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CEditableNoWrapStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty(),L"");
+	return std::make_shared<CTextCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty(),
+		arg<"editmode"_s>() = EditMode::LButtonDownEdit,
+		arg<"text"_s>() = L"");
 }
 
-CChildPropertyValueColumn::CChildPropertyValueColumn(CSheet* pSheet)
-	:CChildIndexColumn(pSheet)
-{}
-
-std::shared_ptr<CCell> CChildPropertyValueColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
+CPropertyIndexColumn::CPropertyIndexColumn(CSheet* pSheet)
+	:CMapColumn(pSheet)
 {
-	return std::make_shared<CStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),L"Value");
+	m_isMinLengthFit = true;
 }
 
-std::shared_ptr<CCell> CChildPropertyValueColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CPropertyIndexColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CFilterCell>(m_pSheet,pRow,pColumn,m_pSheet->GetFilterProperty());
+	return std::make_shared<CSortCell>(m_pSheet, pRow, pColumn, m_pSheet->GetHeaderProperty(), arg<"text"_s>() = L"Index");
 }
 
-std::shared_ptr<CCell> CChildPropertyValueColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
+std::shared_ptr<CCell> CPropertyIndexColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CEditableNoWrapStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty(),L"44");
+	return std::make_shared<CCell>(m_pSheet, pRow, pColumn, m_pSheet->GetHeaderProperty());
+}
+
+std::shared_ptr<CCell> CPropertyIndexColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
+{
+	return std::make_shared<CRowIndexCell>(m_pSheet, pRow, pColumn, m_pSheet->GetHeaderProperty());
 }

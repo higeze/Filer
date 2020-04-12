@@ -18,8 +18,11 @@ CDirectoryWatcher::~CDirectoryWatcher(void)
 	QuitWatching();
 }
 
-void CDirectoryWatcher::StartWatching(const std::wstring& path, const std::vector<std::wstring>& names)
+void CDirectoryWatcher::StartWatching(const std::wstring& path, const CIDL& absIdl)
 {
+	m_path = path;
+	m_absIdl = absIdl;
+
 	try {
 		//Create event
 		m_pQuitEvent.reset(CreateEvent(NULL, TRUE, FALSE, NULL));
@@ -29,7 +32,7 @@ void CDirectoryWatcher::StartWatching(const std::wstring& path, const std::vecto
 		}
 
 		//Create watch thread
-		m_futureWatch = CThreadPool::GetInstance()->enqueue(&CDirectoryWatcher::WatchDirectory, this, path, names);
+		m_futureWatch = CThreadPool::GetInstance()->enqueue(&CDirectoryWatcher::WatchDirectory, this);
 	}
 	catch (std::exception& e) {
 		FILE_LINE_FUNC_TRACE;
@@ -65,14 +68,13 @@ void CDirectoryWatcher::QuitWatching()
 
 }
 
-void CDirectoryWatcher::WatchDirectory(const std::wstring& path, const std::vector<std::wstring>& names)
+void CDirectoryWatcher::WatchDirectory()
 {
 	try{
 		SPDLOG_INFO("Start CDirectoryWatcher::WatchDirectoryCallback");
 
 		//Create File
-		m_path = path;
-		m_names = names;
+		m_names = GetFileNamesInDirectory(m_absIdl);
 		std::sort(m_names.begin(), m_names.end());
 		UniqueHandlePtr pDir(::CreateFileW(m_path.c_str(),
 								FILE_LIST_DIRECTORY,
@@ -112,11 +114,10 @@ void CDirectoryWatcher::WatchDirectory(const std::wstring& path, const std::vect
 	}
 }
 
-std::vector<std::wstring> CDirectoryWatcher::GetFileNamesInDirectory(const std::wstring& dirPath)
+std::vector<std::wstring> CDirectoryWatcher::GetFileNamesInDirectory(CIDL absIdl)
 {
 	std::vector<std::wstring> names;
 
-	CIDL absIdl(::ILCreateFromPathW(dirPath.c_str()));
 	CComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(absIdl);
 	shell::for_each_idl_in_shellfolder(m_hWnd, pFolder, [&names, &pFolder](const CIDL& idl) {
 		std::wstring path = shell::GetDisplayNameOf(pFolder, idl, SHGDN_FORPARSING);
@@ -178,7 +179,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 			if (dwBytes > 0) {
 				//Scan
 				//::Sleep(100);
-				std::vector<std::wstring> fileNames = GetFileNamesInDirectory(m_path);
+				std::vector<std::wstring> fileNames = GetFileNamesInDirectory(m_absIdl);
 				std::sort(fileNames.begin(), fileNames.end());
 				//Diff
 				std::vector<std::wstring> addDiff, remDiff;
