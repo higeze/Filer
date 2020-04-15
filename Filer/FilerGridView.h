@@ -111,7 +111,7 @@ public:
 	template <class Archive>
 	void save(Archive& ar)
 	{
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowHeaderColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);
@@ -125,7 +125,7 @@ public:
 	template <class Archive>
 	void load(Archive& ar)
 	{
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowHeaderColumn, this);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn, this);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn, this);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn, this);
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
@@ -135,7 +135,7 @@ public:
 		for (auto& colPtr : m_allCols) {
 			if (auto p = std::dynamic_pointer_cast<CFileNameColumn>(colPtr)) {
 				m_pNameColumn = p;
-			} else if (auto p = std::dynamic_pointer_cast<CRowHeaderColumn>(colPtr)) {
+			} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
 				m_pHeaderColumn = p;
 			}
 		}

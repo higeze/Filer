@@ -927,7 +927,11 @@ void CSheet::OnSetFocus(const SetFocusEvent& e) { m_pMachine->process_event(e); 
 void CSheet::OnKillFocus(const KillFocusEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnChar(const CharEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnBeginEdit(const BeginEditEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnEndEdit(const EndEditEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
+void CSheet::OnEndEdit(const EndEditEvent& e)
+{ 
+	m_pMachine->process_event(e);
+	SubmitUpdate();
+}
 
 
 void CSheet::SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& cell2, bool doSelect)

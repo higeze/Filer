@@ -5,7 +5,7 @@
 #include "Row.h"
 #include "Column.h"
 #include "Cell.h"
-#include "RowHeaderColumn.h"
+#include "RowIndexColumn.h"
 #include "FileRow.h"
 #include "FileNameColumn.h"
 #include "FileSizeColumn.h"

@@ -1,6 +1,6 @@
 #pragma once
 #include "MapColumn.h"
-#include "RowHeaderColumn.h"
+#include "RowIndexColumn.h"
 #include "ParentColumnNameHeaderCell.h"
 #include "FilterCell.h"
 #include "BindCell.h"
@@ -56,13 +56,13 @@ public:
 };
 
 template<typename TItem>
-class CBindRowHeaderColumn:public CRowHeaderColumn
+class CBindRowHeaderColumn:public CRowIndexColumn
 {
 private:
 	std::function<bool(TItem&)> m_getCheckedFunction;
 public:
 	CBindRowHeaderColumn(CSheet* pSheet, std::function<bool(TItem&)> getCheckedFunction)
-		:CRowHeaderColumn(pSheet),m_getCheckedFunction(getCheckedFunction){}
+		:CRowIndexColumn(pSheet),m_getCheckedFunction(getCheckedFunction){}
 	virtual ~CBindRowHeaderColumn(){}
 
 	std::function<bool(TItem&)> GetGetCheckedFunction(){return m_getCheckedFunction;}

@@ -8,7 +8,7 @@
 
 #include "shobjidl.h"
 #include "MyFriendSerializer.h"
-#include "RowHeaderColumn.h"
+#include "RowIndexColumn.h"
 #include "FileNameColumn.h"
 #include "FileIconColumn.h"
 #include "FileExtColumn.h"

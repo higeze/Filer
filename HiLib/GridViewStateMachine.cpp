@@ -53,6 +53,7 @@ struct CGridStateMachine::Machine
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CGridView::ColDrag_Guard_LButtonBeginDrag)] / call(&CGridView::ColDrag_LButtonBeginDrag) = state<ColDrag>,
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CGridView::ItemDrag_Guard_LButtonBeginDrag)] / call(&CGridView::ItemDrag_LButtonBeginDrag) = state<ItemDrag>,
 			state<Normal> +event<LButtonBeginDragEvent> / call(&CGridView::Normal_LButtonBeginDrag),
+		//	state<Normal> +event<EndEditEvent> / call(&CGridView::Edit_EndEdit),
 
 			state<Normal> +event<BeginEditEvent> / call(&CGridView::Edit_BeginEdit) = state<Edit>,
 			//VScrlDrag
@@ -104,7 +105,7 @@ struct CGridStateMachine::Machine
 			state<Edit> +event<KeyDownEvent> / call(&CGridView::Edit_KeyDown),
 			state<Edit> +event<CharEvent> / call(&CGridView::Edit_Char),
 			state<Edit> +event<KillFocusEvent> = state<Normal>,
-			state<Edit> +event<EndEditEvent> = state<Normal>,
+			state<Edit> +event<EndEditEvent>/* / call(&CGridView::Edit_EndEdit)*/ = state<Normal>,
 			//Error handler
 			*state<Error> +exception<std::exception> / call(&CGridView::Error_StdException) = state<Normal>
 		);

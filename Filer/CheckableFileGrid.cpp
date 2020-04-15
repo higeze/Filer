@@ -6,7 +6,7 @@
 #include "Row.h"
 #include "Column.h"
 #include "Cell.h"
-#include "RowHeaderColumn.h"
+#include "RowIndexColumn.h"
 #include "FileRow.h"
 #include "FileNameColumn.h"
 #include "FileIconPathColumn.h"
@@ -87,7 +87,7 @@ LRESULT CCheckableFileGrid::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 	if (m_allCols.empty()) {
 		m_pNameColumn = std::make_shared<CFileIconPathColumn>(this);
 
-		m_allCols.idx_push_back(std::make_shared<CRowHeaderColumn>(this));
+		m_allCols.idx_push_back(std::make_shared<CRowIndexColumn>(this));
 		m_allCols.idx_push_back(m_pNameColumn);
 		m_allCols.idx_push_back(std::make_shared<CFileExtColumn>(this));
 		m_allCols.idx_push_back(std::make_shared<CFileSizeColumn>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr));

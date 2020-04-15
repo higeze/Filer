@@ -26,24 +26,26 @@ std::shared_ptr<CShellFile> CFileIconCell::GetShellFile()
 void CFileIconCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
 	auto spFile = GetShellFile();
-	d2dw::CRectF rc = rcPaint;
-	rc.bottom = rc.top + pDirect->Pixels2DipsY(16);
-	rc.right = rc.left + pDirect->Pixels2DipsX(16);
+	if (spFile) {
+		d2dw::CRectF rc = rcPaint;
+		rc.bottom = rc.top + pDirect->Pixels2DipsY(16);
+		rc.right = rc.left + pDirect->Pixels2DipsX(16);
 
-	std::weak_ptr<CFileIconCell> wp(shared_from_this());
-	std::function<void()> updated = [wp]()->void {
-		if (auto sp = wp.lock()) {
-			auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
-				[wp]()->void {
-				if (auto sp = wp.lock()) {
-					sp->OnPropertyChanged(L"value");
-				}
-			});
-			sp->m_conDelayUpdateAction = con;
-			sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
-		}
-	};
-	pDirect->DrawBitmap(pDirect->GetIconCachePtr()->GetFileIconBitmap(spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetExt(), updated), rc);
+		std::weak_ptr<CFileIconCell> wp(shared_from_this());
+		std::function<void()> updated = [wp]()->void {
+			if (auto sp = wp.lock()) {
+				auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					[wp]()->void {
+						if (auto sp = wp.lock()) {
+							sp->OnPropertyChanged(L"value");
+						}
+					});
+				sp->m_conDelayUpdateAction = con;
+				sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+			}
+		};
+		pDirect->DrawBitmap(pDirect->GetIconCachePtr()->GetFileIconBitmap(spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetExt(), updated), rc);
+	}
 }
 
 d2dw::CSizeF CFileIconCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)

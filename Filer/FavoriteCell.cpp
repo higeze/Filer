@@ -18,7 +18,6 @@
 #include "FavoritesGridView.h"
 #include "PropertyWnd.h"
 #include "Filer.h"
-#include "ShellFileFactory.h"
 
 
 CFavoriteCell::CFavoriteCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
@@ -29,10 +28,7 @@ std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
 	auto pRow = static_cast<CFavoriteRow*>(m_pRow);
 	auto pCol = static_cast<CFavoritesColumn*>(m_pColumn);
 	auto order = pRow->GetOrderIndex();
-	if (!pCol->GetFavorites()->at(order)->GetShellFile()) {
-		pCol->GetFavorites()->at(order)->SetShellFile(CShellFileFactory::GetInstance()->CreateShellFilePtr(pCol->GetFavorites()->at(order)->GetPath()));
-	}
-	return pCol->GetFavorites()->at(order)->GetShellFile();
+	return pCol->GetFavorites()->at(order)->GetShellFile([pSheet = m_pSheet]() {pSheet->GetGridPtr()->DelayUpdate(); });
 }
 
 std::wstring CFavoriteCell::GetShortName()

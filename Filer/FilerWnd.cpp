@@ -225,26 +225,30 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		BOOL dummy = FALSE;
 		spView->OnCreate(WM_CREATE, NULL, NULL, dummy);
 		//Capture KeyDown Msg in FilerView
-		auto fun = spView->GetGridView()->GetMsgHandler(WM_KEYDOWN);
-		if (fun) {
-			FunMsg newFun = [this, fun](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
+		auto funKeyDown = spView->GetGridView()->GetMsgHandler(WM_KEYDOWN);
+		if (funKeyDown) {
+			FunMsg newFun = [this, funKeyDown](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
 				LRESULT lr = OnKeyDown(uMsg, wParam, lParam, bHandled);
 				if (bHandled) {
 					return lr;
 				} else {
-					return fun(uMsg, wParam, lParam, bHandled);
+					return funKeyDown(uMsg, wParam, lParam, bHandled);
 				}
 			};
 			spView->GetGridView()->ReplaceMsgHandler(WM_KEYDOWN, newFun);
 		}
 
-		spView->GetGridView()->AddMsgHandler(WM_SETFOCUS,
-			[&](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
-			m_spCurView = spView;
-			m_spCurView->GetGridView()->InvalidateRect(NULL, FALSE);
-			return 0;
-		});
+		auto funSetFocus = spView->GetGridView()->GetMsgHandler(WM_SETFOCUS);
+		if (funSetFocus){
+			FunMsg newFun = [this, spView, funSetFocus](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
+				m_spCurView = spView;
+				m_spCurView->GetGridView()->InvalidateRect(NULL, FALSE);
+				return funSetFocus(uMsg, lParam, wParam, bHandled);
+			};
+			spView->GetGridView()->ReplaceMsgHandler(WM_SETFOCUS, newFun);
+		}
 	};
+
 
 	createFilerTabGridView(m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFilerGridView"), rcLeftGrid);
 	createFilerTabGridView(m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFilerGridView"), rcRightGrid);
@@ -698,7 +702,7 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 
 	pBindWnd->CreateWindowExArgument()
 		.lpszClassName(_T("CBindWnd"))
-		.lpszWindowName(L"RECT")
+		.lpszWindowName(L"TODO")
 		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
 		.dwExStyle(WS_EX_ACCEPTFILES)
 		.hMenu(NULL);
@@ -707,7 +711,7 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 	pBindWnd->SetIsDeleteOnFinalMessage(true);
 
 	//Columns
-	pBindWnd->SetHeaderColumnPtr(std::make_shared<CRowHeaderColumn>(pBindWnd));
+	pBindWnd->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pBindWnd));
 	pBindWnd->PushColumns(
 		pBindWnd->GetHeaderColumnPtr(),
 		std::make_shared<CBindCheckBoxColumn<MainTask>>(
@@ -731,7 +735,7 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 			[](MainTask& tk)->observable_vector<SubTask>& {return tk.SubTasks; },
 			[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void 
 			{
-				pCell->SetHeaderColumnPtr(std::make_shared<CRowHeaderColumn>(pCell));
+				pCell->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pCell));
 				pCell->PushColumns(
 					pCell->GetHeaderColumnPtr(),
 					std::make_shared<CBindCheckBoxColumn<SubTask>>(
@@ -783,7 +787,7 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
 	}
 
-	pBindWnd->CreateOnCenterOfParent(hWnd, CSize(400, 600));
+	pBindWnd->CreateOnCenterOfParent(NULL, CSize(400, 600));
 	pBindWnd->ShowWindow(SW_SHOW);
 	pBindWnd->UpdateWindow();
 	return 0;

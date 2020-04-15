@@ -27,7 +27,7 @@ void CTimer::run(std::function<void()> action, const std::chrono::milliseconds& 
 
 void CTimer::stop()
 {
-	if (m_future.valid() && m_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+	if (m_future.valid() /*&& m_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready*/) {
 		{
 			std::lock_guard<std::mutex> guard(m_mtx);
 			m_stop.store(true);

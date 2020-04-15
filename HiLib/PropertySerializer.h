@@ -6,7 +6,7 @@
 #include "PropertyGridView.h"
 
 #include "Row.h"
-#include "RowHeaderColumn.h"
+#include "RowIndexColumn.h"
 #include "PropertyColumn.h"
 
 #include "CellProperty.h"
@@ -60,70 +60,33 @@ public:
 	template<class char_type,class T>
 	void operator()(const char_type* lpszName,T& t)
 	{
-		std::shared_ptr<CRow> pRow;
+		std::shared_ptr<CRow> pItemRow;
 		std::shared_ptr<CColumn> pColName;
 		std::shared_ptr<CColumn> pColValue;	
-		if(auto pGrid=dynamic_cast<CGridView*>(m_pSheet)){
-			if(pGrid->Empty()){
-				auto pRowHeader=std::make_shared<CHeaderRow>(pGrid);
-				auto pRowFilter=std::make_shared<CRow>(pGrid);
-				pRow=std::make_shared<CRow>(pGrid);
 
-				pGrid->SetNameHeaderRowPtr(pRowHeader);
-				pGrid->SetFilterRowPtr(pRowFilter);
+		if(m_pSheet->Empty()){
+			m_pSheet->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(m_pSheet));
+			pItemRow = std::make_shared<CRow>(m_pSheet);
+			m_pSheet->PushRows(
+				m_pSheet->GetNameHeaderRowPtr(),
+				pItemRow);
+			m_pSheet->SetFrozenCount<RowTag>(1);
 
-				pGrid->PushRow(pRowHeader);
-				pGrid->PushRow(pRowFilter);
-				pGrid->PushRow(pRow);
-				pGrid->SetFrozenCount<RowTag>(2);
-
-				auto pColHeader = std::make_shared<CRowHeaderColumn>(pGrid);
-				pColName=std::make_shared<CPropertyNameColumn>(pGrid);
-				pColValue=std::make_shared<CPropertyValueColumn>(pGrid);
-				pGrid->SetHeaderColumnPtr(pColHeader);
-
-				pGrid->PushColumn(pColHeader);
-				pGrid->PushColumn(pColName);
-				pGrid->PushColumn(pColValue);
-				pGrid->SetFrozenCount<ColTag>(1);
-
-			}else{
-				pRow=std::make_shared<CRow>(pGrid);
-				pGrid->PushRow(pRow);
-				pColName=pGrid->Index2Pointer<ColTag, AllTag>(pGrid->GetFrozenCount<ColTag>());
-				pColValue=pGrid->Index2Pointer<ColTag, AllTag>(pGrid->GetFrozenCount<ColTag>() + 1);
-			}
-			
-		}else if(auto pSheetCell=dynamic_cast<CSheetCell*>(m_pSheet)){
-
-			if(pSheetCell->Empty()){
-				auto pHeaderRow=std::make_shared<CHeaderRow>(pSheetCell);
-				pRow = std::make_shared<CRow>(pSheetCell);
-				pSheetCell->SetNameHeaderRowPtr(pHeaderRow);
-				pSheetCell->PushRows(
-					pHeaderRow,
-					pRow);
-				pSheetCell->SetFrozenCount<RowTag>(1);
-
-				pColName=std::make_shared<CPropertyNameColumn>(pSheetCell);
-				pColValue=std::make_shared<CPropertyValueColumn>(pSheetCell);
-
-				pSheetCell->PushColumn(pColName);
-				pSheetCell->PushColumn(pColValue);
-				pSheetCell->SetFrozenCount<ColTag>(0);
-			}else{
-				pRow=std::make_shared<CRow>(pSheetCell);
-				pSheetCell->PushRow(pRow);
-				pColName = pSheetCell->Index2Pointer<ColTag, AllTag>(pSheetCell->GetFrozenCount<ColTag>());
-				pColValue = pSheetCell->Index2Pointer<ColTag, AllTag>(pSheetCell->GetFrozenCount<ColTag>() + 1);
-			}
+			pColName = std::make_shared<CPropertyNameColumn>(m_pSheet);
+			pColValue = std::make_shared<CPropertyValueColumn>(m_pSheet);
+			m_pSheet->PushColumns(
+				pColName,
+				pColValue);
+			m_pSheet->SetFrozenCount<ColTag>(1);
+		}else{
+			pItemRow=std::make_shared<CRow>(m_pSheet);
+			m_pSheet->PushRow(pItemRow);
+			pColName = m_pSheet->Index2Pointer<ColTag, AllTag>(0);
+			pColValue = m_pSheet->Index2Pointer<ColTag, AllTag>(1);
 		}
 
-		//spSheet->UpdateRowVisibleDictionary();
-		//spSheet->UpdateColumnVisibleDictionary();
-
-		pColName->Cell(pRow.get())->SetStringCore(std::wstring(lpszName,(lpszName+strlen(lpszName))));
-		SerializeValue(t,pRow.get(),pColValue.get());	
+		CSheet::Cell(pItemRow, pColName)->SetStringCore(std::wstring(lpszName,(lpszName+strlen(lpszName))));
+		SerializeValue(t,pItemRow.get(),pColValue.get());	
 	}
 
 	//For base
@@ -261,7 +224,7 @@ class CCellDeserializer
 {
 private:
 	CSheet* m_pSheet;
-	std::unordered_set<CCell*> m_setCellPtr;
+//	std::unordered_set<CCell*> m_setCellPtr;
 
 public:
 	CCellDeserializer(CSheet* pSheet)
@@ -273,7 +236,7 @@ public:
 	{
 		//Deserialize
 		t.serialize(*this);
-		m_setCellPtr.clear();
+//		m_setCellPtr.clear();
 	}
 
 	template<class T, typename ENABLE_IF_SAVE_LOAD>
@@ -281,7 +244,7 @@ public:
 	{
 		//Deserialize
 		t.load(*this);
-		m_setCellPtr.clear();
+//		m_setCellPtr.clear();
 	}
 
 	template<class T>
@@ -320,12 +283,13 @@ public:
 	{
 		if (!m_pSheet->Empty()) {
 			std::wstring wstrName(lpszName, (lpszName + strlen(lpszName)));
-			auto pCol = m_pSheet->Index2Pointer<ColTag, AllTag>(m_pSheet->GetFrozenCount<ColTag>());
+			auto spNameCol = m_pSheet->Index2Pointer<ColTag, AllTag>(0);
+			auto spValueCol = m_pSheet->Index2Pointer<ColTag, AllTag>(1);
 			for (auto rowIter = m_pSheet->GetContainer<RowTag, AllTag>().begin() + m_pSheet->GetFrozenCount<RowTag>(), rowEnd = m_pSheet->GetContainer<RowTag, AllTag>().end(); rowIter != rowEnd; ++rowIter) {
-				auto pCell = CSheet::Cell(*rowIter, pCol);
-				if (m_setCellPtr.find(pCell.get()) == m_setCellPtr.end() && pCol->Cell(rowIter->get())->GetString() == wstrName) {
-					m_setCellPtr.insert(pCell.get());
-					DeserializeValue(t, rowIter->get(), m_pSheet->Index2Pointer<ColTag, AllTag>(m_pSheet->GetFrozenCount<ColTag>() + 1).get());
+				//auto pCell = CSheet::Cell(*rowIter, pCol);
+				if (/*m_setCellPtr.find(pCell.get()) == m_setCellPtr.end() && */CSheet::Cell(*rowIter, spNameCol)->GetString() == wstrName) {
+					//m_setCellPtr.insert(pCell.get());
+					DeserializeValue(t, rowIter->get(), spValueCol.get());
 					break;
 				}
 			}
@@ -393,7 +357,7 @@ public:
 		t.clear();
 		for(auto rowIter=allRows.begin() + m_pSheet->GetFrozenCount<RowTag>();rowIter!=allRows.end();rowIter++){
 			auto val = CreateInstance<T>();
-			DeserializeValue(val,rowIter->get(), m_pSheet->Index2Pointer<ColTag, AllTag>(m_pSheet->GetFrozenCount<ColTag>() + 1).get());
+			DeserializeValue(val,rowIter->get(), m_pSheet->Index2Pointer<ColTag, AllTag>(m_pSheet->GetFrozenCount<ColTag>()).get());
 			t.push_back(val);
 		}
 	}
@@ -402,12 +366,22 @@ public:
 	template<class T>
 	void DeserializeValue(observable_vector<T>& t, CRow* pRow, CColumn* pColumn)
 	{
-		auto& allRows = m_pSheet->GetContainer<RowTag, AllTag>();
-		t.clear();
-		for (auto rowIter = allRows.begin() + m_pSheet->GetFrozenCount<RowTag>(); rowIter != allRows.end(); rowIter++) {
-			auto val = CreateInstance<T>();
-			DeserializeValue(val, rowIter->get(), m_pSheet->Index2Pointer<ColTag, AllTag>(m_pSheet->GetFrozenCount<ColTag>() + 1).get());
-			t.push_back(val);
+		//auto& allRows = m_pSheet->GetContainer<RowTag, AllTag>();
+		//t.clear();
+		//for (auto rowIter = allRows.begin() + m_pSheet->GetFrozenCount<RowTag>(); rowIter != allRows.end(); rowIter++) {
+		//	auto val = CreateInstance<T>();
+		//	DeserializeValue(val, rowIter->get(), m_pSheet->Index2Pointer<ColTag, AllTag>(m_pSheet->GetFrozenCount<ColTag>()).get());
+		//	t.push_back(val);
+		//}
+		if (auto spSheet = std::dynamic_pointer_cast<CSheet>(CSheet::Cell(pRow, pColumn))) {
+			auto& allRows = spSheet->GetContainer<RowTag, AllTag>();
+			t.clear();
+			for (auto rowIter = allRows.begin() + spSheet->GetFrozenCount<RowTag>(); rowIter != allRows.end(); rowIter++) {
+				auto val = CreateInstance<T>();
+				DeserializeValue(val, rowIter->get(), spSheet->Index2Pointer<ColTag, AllTag>(spSheet->GetFrozenCount<ColTag>()).get());
+				t.push_back(val);
+			}
+
 		}
 	}
 	//For shared_ptr

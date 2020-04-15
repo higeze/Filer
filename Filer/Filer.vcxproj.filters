@@ -626,7 +626,7 @@
     <ClInclude Include="..\HiLib\RowIndexCell.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\RowHeaderColumn.h">
+    <ClInclude Include="..\HiLib\RowIndexColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -952,7 +952,7 @@
     <ClCompile Include="..\HiLib\RowIndexCell.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\RowHeaderColumn.cpp">
+    <ClCompile Include="..\HiLib\RowIndexColumn.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
@@ -970,5 +970,7 @@
       <Filter>Release</Filter>
     </None>
     <None Include="ClassDiagram.cd" />
+    <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
   </ItemGroup>
 </Project>

@@ -6,7 +6,7 @@
 #include "Row.h"
 #include "Column.h"
 #include "Cell.h"
-#include "RowHeaderColumn.h"
+#include "RowIndexColumn.h"
 #include "FileRow.h"
 #include "FileNameColumn.h"
 #include "FileSizeColumn.h"
@@ -133,7 +133,7 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 
 	//Insert columns if not initialized
 	if (m_allCols.empty()) {
-		m_pHeaderColumn = std::make_shared<CRowHeaderColumn>(this);
+		m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this);
 		m_pNameColumn = std::make_shared<CFileNameColumn>(this);
 
 		m_allCols.idx_push_back(m_pHeaderColumn);
@@ -628,8 +628,8 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 	{
 		CONSOLETIMER("OpenFolder Pre-Process");
 		
-		//StateMachine
-		m_pMachine.reset(new CGridStateMachine(this));
+		//StateMachine // Do not reset
+		//m_pMachine.reset(new CGridStateMachine(this));
 		//Direct2DWrite
 		if (!isUpdate) {
 			m_pDirect->ClearTextLayoutMap();

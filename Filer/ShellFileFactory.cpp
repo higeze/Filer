@@ -64,6 +64,7 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<
 //static
 std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const std::wstring& path)
 {
+
 	auto desktop(CKnownFolderManager::GetInstance()->GetDesktopFolder());
 	CIDL absIdl;
 

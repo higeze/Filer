@@ -5,29 +5,28 @@
  *  CParentRowHeaderColumn
  *  Most Left side column which show Row number and act as Row header
  */
-class CRowHeaderColumn:public CMapColumn
+class CRowIndexColumn:public CMapColumn
 {
 public:
-	CRowHeaderColumn(CSheet* pSheet = nullptr):CMapColumn(pSheet)
-	{
-		m_isMaxLengthFit = true;
-		m_isMinLengthFit = true;
-	}
-	virtual ~CRowHeaderColumn(){}
+	CRowIndexColumn(CSheet* pSheet = nullptr)
+		:CMapColumn(pSheet, arg<"isminfit"_s>() = true, arg<"ismaxfit"_s>() = true){}
+
+	virtual ~CRowIndexColumn() = default;
+
 	virtual CColumn& ShallowCopy(const CColumn& column)override
 	{
 		CMapColumn::ShallowCopy(column);
 		return *this;
 	}
-	virtual CRowHeaderColumn* CloneRaw()const{return new CRowHeaderColumn(*this);}
-	std::shared_ptr<CRowHeaderColumn> Clone()const{return std::shared_ptr<CRowHeaderColumn>(CloneRaw());}
+	virtual CRowIndexColumn* CloneRaw()const{return new CRowIndexColumn(*this);}
+	std::shared_ptr<CRowIndexColumn> Clone()const{return std::shared_ptr<CRowIndexColumn>(CloneRaw());}
+
 	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn);
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn);
 
-//	virtual SizingType GetSizingType()const override { return SizingType::AlwaysFit; }
 	virtual bool IsTrackable()const override { return true; }
 
 };

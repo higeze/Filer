@@ -40,7 +40,7 @@ public:
 
 		auto spColValue = std::make_shared<CPropertyValueColumn>(this);
 		PushColumns(
-			std::make_shared<CPropertyIndexColumn>(this),
+			std::make_shared<CRowIndexColumn>(this),
 			spColValue);
 		SetFrozenCount<ColTag>(1);
 

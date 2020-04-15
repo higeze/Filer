@@ -176,31 +176,33 @@ void CGridView::ClearFilter()
 
 void CGridView::FilterAll()
 {
-	//Reset Filter
-	for(auto iter=std::next(m_allRows.begin(), m_frozenRowCount),end=m_allRows.end();iter!=end;++iter){
-		(*iter)->SetVisible(true);
-	};
-	//Set Filter
-	for(auto colIter=std::next(m_allCols.begin(), m_frozenColumnCount),colEnd=m_allCols.end();colIter!=colEnd;++colIter){
-		auto strFilter=(*colIter)->Cell(GetFilterRowPtr().get())->GetString();
-		if(strFilter.empty() || strFilter==std::wstring(L""))continue;
-		std::vector<std::wstring> vstrFilter;
-		boost::split(vstrFilter,strFilter,boost::is_space());
-		for (auto rowIter = std::next(m_allRows.begin(), m_frozenRowCount), end = m_allRows.end(); rowIter != end; ++rowIter) {
-			if(!(*rowIter)->GetVisible())continue;
-			//Filter
-			auto pCell=Cell(*rowIter, *colIter);
-			for(const auto& str : vstrFilter){
-				if(str[0]==L'-' && str.size()>=2){
-					std::wstring strMinus(str.substr(1));
-					if(pCell->Filter(strMinus)){
-						(*rowIter)->SetVisible(false);				
+	if (GetFilterRowPtr()) {
+		//Reset Filter
+		for (auto iter = std::next(m_allRows.begin(), m_frozenRowCount), end = m_allRows.end(); iter != end; ++iter) {
+			(*iter)->SetVisible(true);
+		};
+		//Set Filter
+		for (auto colIter = std::next(m_allCols.begin(), m_frozenColumnCount), colEnd = m_allCols.end(); colIter != colEnd; ++colIter) {
+			auto strFilter = (*colIter)->Cell(GetFilterRowPtr().get())->GetString();
+			if (strFilter.empty() || strFilter == std::wstring(L""))continue;
+			std::vector<std::wstring> vstrFilter;
+			boost::split(vstrFilter, strFilter, boost::is_space());
+			for (auto rowIter = std::next(m_allRows.begin(), m_frozenRowCount), end = m_allRows.end(); rowIter != end; ++rowIter) {
+				if (!(*rowIter)->GetVisible())continue;
+				//Filter
+				auto pCell = Cell(*rowIter, *colIter);
+				for (const auto& str : vstrFilter) {
+					if (str[0] == L'-' && str.size() >= 2) {
+						std::wstring strMinus(str.substr(1));
+						if (pCell->Filter(strMinus)) {
+							(*rowIter)->SetVisible(false);
+						}
+					} else if (!(pCell->Filter(str))) {
+						(*rowIter)->SetVisible(false);
 					}
-				}else if(!(pCell->Filter(str))){
-					(*rowIter)->SetVisible(false);
 				}
 			}
-		}		
+		}
 	}
 }
 
@@ -1137,6 +1139,15 @@ void CGridView::Edit_BeginEdit(const BeginEditEvent& e)
 		SetCapture();
 	}
 }
+
+//void CGridView::Edit_EndEdit(const EndEditEvent& e)
+//{
+//	ReleaseCapture();
+//	if (GetEditPtr()) {
+//		GetEditPtr()->OnClose(CloseEvent(this, NULL, NULL));
+//	}
+//}
+
 
 void CGridView::Edit_OnExit()
 {

@@ -293,7 +293,7 @@
     <ClInclude Include="..\HiLib\SortCell.h" />
     <ClInclude Include="..\HiLib\MapColumn.h" />
     <ClInclude Include="..\HiLib\RowIndexCell.h" />
-    <ClInclude Include="..\HiLib\RowHeaderColumn.h" />
+    <ClInclude Include="..\HiLib\RowIndexColumn.h" />
     <ClInclude Include="..\HiLib\ProgressBar.h" />
     <ClInclude Include="..\HiLib\PropertyColumn.h" />
     <ClInclude Include="..\HiLib\PropertyGridView.h" />
@@ -431,7 +431,7 @@
     <ClCompile Include="..\HiLib\SortCell.cpp" />
     <ClCompile Include="..\HiLib\MapColumn.cpp" />
     <ClCompile Include="..\HiLib\RowIndexCell.cpp" />
-    <ClCompile Include="..\HiLib\RowHeaderColumn.cpp" />
+    <ClCompile Include="..\HiLib\RowIndexColumn.cpp" />
     <ClCompile Include="..\HiLib\ProgressBar.cpp" />
     <ClCompile Include="..\HiLib\PropertyColumn.cpp" />
     <ClCompile Include="..\HiLib\PropertyGridView.cpp" />
@@ -504,6 +504,8 @@
     <None Include="..\HiLib\msxml6.tli" />
     <None Include="..\Release\Filer.exe" />
     <None Include="ClassDiagram.cd" />
+    <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -55,7 +55,7 @@ void CDirectoryWatcher::QuitWatching()
 		}
 		//Work
 		//Release thread
-		if (m_futureWatch.valid() && m_futureWatch.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+		if (m_futureWatch.valid() /*&& m_futureWatch.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready*/) {
 			m_futureWatch.get();
 		}
 		//Path
