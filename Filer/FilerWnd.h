@@ -95,7 +95,7 @@ private:
 	const int kSplitterWidth = 5;
 	LONG m_splitterLeft;
 	bool m_isSizing = false;
-	CPoint m_ptStart;
+	CPoint m_ptBeginClient;
 
 	//Common properties
 	std::shared_ptr<CApplicationProperty> m_spApplicationProp;

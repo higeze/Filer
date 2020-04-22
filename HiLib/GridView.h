@@ -197,8 +197,9 @@ public:
 	virtual void HScrlDrag_LButtonUp(const LButtonUpEvent& e);
 	virtual void HScrlDrag_MouseMove(const MouseMoveEvent& e);
 	//Edit
-	virtual void Edit_BeginEdit(const BeginEditEvent& e);
+	//virtual void Edit_BeginEdit(const BeginEditEvent& e);
 	//virtual void Edit_EndEdit(const EndEditEvent& e);
+	virtual void Edit_OnEntry(const BeginEditEvent& e);
 	virtual void Edit_OnExit();
 	virtual void Edit_MouseMove(const MouseMoveEvent& e);
 	virtual bool Edit_Guard_LButtonDown(const LButtonDownEvent& e);

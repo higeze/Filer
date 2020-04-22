@@ -422,7 +422,7 @@ void CSheet::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
 	switch(sort){
 	case Sorts::Down:
 		m_allRows.idx_stable_sort(m_allRows.begin() + m_frozenRowCount,m_allRows.end(),
-			[pCol](const auto& lhs,const auto& rhs)->bool{
+			[pCol](const auto& lhs, const auto& rhs)->bool{
 				return _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str()) > 0;
 			});
 

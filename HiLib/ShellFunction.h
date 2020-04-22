@@ -200,10 +200,11 @@ namespace shell
 	void for_each_idl_in_shellfolder(HWND hWnd, const CComPtr<IShellFolder>& pFolder, Fn func)
 	{
 		CComPtr<IEnumIDList> enumIdl;
-		if (SUCCEEDED(pFolder->EnumObjects(hWnd, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
+		if (SUCCEEDED(pFolder->EnumObjects(hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
 			CIDL nextIdl;
 			ULONG ulRet(0);
-			while (SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet))) {
+			while (true) {
+				SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
 				if (!nextIdl) { break; }
 				func(nextIdl);
 				nextIdl.Clear();

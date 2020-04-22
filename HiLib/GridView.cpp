@@ -87,6 +87,17 @@ CGridView::CGridView(
 	AddMsgHandler(WM_LBUTTONDBLCLKTIMEXCEED, &CGridView::OnLButtonDblClkTimeExceed, this);
 	AddMsgHandler(WM_DELAY_UPDATE, &CGridView::OnDelayUpdate, this);
 
+	AddMsgHandler(WM_CANCELMODE, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hHandled)->LRESULT
+		{
+			m_pMouseMachine->process_event(CancelModeEvent(this, wParam, lParam));
+			return 0;
+		});
+	AddMsgHandler(WM_CAPTURECHANGED, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hHandled)->LRESULT
+		{
+			m_pMouseMachine->process_event(CaptureChangedEvent(this, wParam, lParam));
+			return 0;
+		});
+
 	//AddCmdCdHandler(EN_CHANGE,&CGridView::OnCmdEnChange,this);
 	AddCmdIDHandler(ID_HD_COMMAND_EDITHEADER, &CGridView::OnCommandEditHeader, this);
 	AddCmdIDHandler(ID_HD_COMMAND_DELETECOLUMN, &CGridView::OnCommandDeleteColumn, this);
@@ -937,12 +948,12 @@ void CGridView::Normal_LButtonDown(const LButtonDownEvent& e)
 {
 	m_keepEnsureVisibleFocusedCell = false;
 	if (m_isFocusable) { SetFocus(); }
-	SetCapture();
+//setcap	SetCapture();
 	CSheet::Normal_LButtonDown(e);
 }
 void CGridView::Normal_LButtonUp(const LButtonUpEvent& e)
 {
-	ReleaseCapture();
+	//setcapture	ReleaseCapture();
 
 	CSheet::Normal_LButtonUp(e);
 }
@@ -1041,7 +1052,7 @@ void CGridView::VScrlDrag_OnExit()
 }
 void CGridView::VScrlDrag_LButtonDown(const LButtonDownEvent& e)
 {
-	SetCapture();
+	//setcaptureSetCapture();
 	m_pVScroll->SetStartDrag(GetDirectPtr()->Pixels2DipsY(e.Point.y));
 }
 bool CGridView::VScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
@@ -1050,7 +1061,7 @@ bool CGridView::VScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
 }
 void CGridView::VScrlDrag_LButtonUp(const LButtonUpEvent& e)
 {
-	ReleaseCapture();
+	//setcaptureReleaseCapture();
 	m_pVScroll->SetStartDrag(0.f);
 }
 void CGridView::VScrlDrag_MouseMove(const MouseMoveEvent& e)
@@ -1064,7 +1075,7 @@ void CGridView::VScrlDrag_MouseMove(const MouseMoveEvent& e)
 }
 
 /***************/
-/* VScrollDrag */
+/* HScrollDrag */
 /***************/
 void CGridView::HScrlDrag_OnEntry()
 {
@@ -1103,7 +1114,19 @@ void CGridView::HScrlDrag_MouseMove(const MouseMoveEvent& e)
 
 //Edit
 //In case of Message, Check nullptr. In case of Guard, not.
-void CGridView::Edit_BeginEdit(const BeginEditEvent& e)
+//void CGridView::Edit_BeginEdit(const BeginEditEvent& e)
+//{
+//}
+
+//void CGridView::Edit_EndEdit(const EndEditEvent& e)
+//{
+//	ReleaseCapture();
+//	if (GetEditPtr()) {
+//		GetEditPtr()->OnClose(CloseEvent(this, NULL, NULL));
+//	}
+//}
+
+void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 {
 	if (auto pCell = dynamic_cast<CTextCell*>(e.CellPtr)) {
 
@@ -1139,14 +1162,6 @@ void CGridView::Edit_BeginEdit(const BeginEditEvent& e)
 		SetCapture();
 	}
 }
-
-//void CGridView::Edit_EndEdit(const EndEditEvent& e)
-//{
-//	ReleaseCapture();
-//	if (GetEditPtr()) {
-//		GetEditPtr()->OnClose(CloseEvent(this, NULL, NULL));
-//	}
-//}
 
 
 void CGridView::Edit_OnExit()
@@ -1281,7 +1296,9 @@ LRESULT CGridView::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& b
 }
 LRESULT CGridView::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	CSheet::OnMouseMove(MouseMoveEvent(this, wParam, lParam));
+	auto e = MouseMoveEvent(this, wParam, lParam);
+	m_pMouseMachine->process_event(e);
+	CSheet::OnMouseMove(e);
 	return 0;
 }
 LRESULT CGridView::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -1292,7 +1309,9 @@ LRESULT CGridView::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 }
 LRESULT CGridView::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	CSheet::OnChar(CharEvent(this, wParam, lParam));
+	auto e = CharEvent(this, wParam, lParam);
+	m_pMouseMachine->process_event(e);
+	CSheet::OnChar(e);
 	bHandled = TRUE;
 	return 0;
 }

@@ -52,6 +52,8 @@
 #include "SearchWnd.h"
 #include "Textbox.h"
 
+#include "MouseStateMachine.h"
+
 #define SCRATCH_QCM_FIRST 1
 #define SCRATCH_QCM_NEW 600//200,500 are used by system
 #define SCRATCH_QCM_LAST  0x7FFF
@@ -176,6 +178,9 @@ bool CFilerGridView::IsDroppable(const std::vector<FORMATETC>& formats)
 
 void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 {
+	//When DropTarget Dropped, LButtonUp is not Fired. Therefore need to cal here to change state.
+	m_pMouseMachine->process_event(LButtonUpEvent(this, NULL, NULL));
+
 	std::vector<FORMATETC> formats;
 	CComPtr<IEnumFORMATETC> pEnumFormatEtc;
 	if (SUCCEEDED(pDataObj->EnumFormatEtc(DATADIR::DATADIR_GET, &pEnumFormatEtc))) {
@@ -720,6 +725,9 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		for (const auto& colPtr : m_allCols) {
 			std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
 		}
+
+		GetHeaderColumnPtr()->SetIsFitMeasureValid(false);
+
 
 		//PathCell
 		auto pPathCell = CSheet::Cell(m_rowHeader, m_pNameColumn);

@@ -28,7 +28,11 @@ std::shared_ptr<CShellFile> CFavoriteCell::GetShellFile()
 	auto pRow = static_cast<CFavoriteRow*>(m_pRow);
 	auto pCol = static_cast<CFavoritesColumn*>(m_pColumn);
 	auto order = pRow->GetOrderIndex();
-	return pCol->GetFavorites()->at(order)->GetShellFile([pSheet = m_pSheet]() {pSheet->GetGridPtr()->DelayUpdate(); });
+	return pCol->GetFavorites()->at(order)->GetShellFile(
+		[pSheet = m_pSheet]() 
+		{
+			pSheet->GetGridPtr()->DelayUpdate();
+		});
 }
 
 std::wstring CFavoriteCell::GetShortName()

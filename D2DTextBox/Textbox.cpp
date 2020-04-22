@@ -80,7 +80,7 @@ D2DTextbox::D2DTextbox(
 	:m_pWnd(pWnd), m_pCell(pCell), m_pProp(pProp),
 	m_getter(getter), m_setter(setter), m_changed(changed), m_final(final),
 	m_text(getter()),
-	m_carets(getter().size(), getter().size(), getter().size(), 0, getter().size()),
+	m_carets(0, getter().size(), 0, 0, getter().size()),
 	m_recalc(true)
 {
 	// You must create this on Heap, OnStack is NG.

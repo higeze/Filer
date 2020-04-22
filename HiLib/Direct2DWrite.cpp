@@ -367,6 +367,18 @@ namespace d2dw
 			if (FAILED(GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(format), size.width, size.height, &pTextLayout))) {
 				throw std::exception(FILELINEFUNCTION);
 			} else {
+				CComPtr<IDWriteTypography> typo;
+				GetDWriteFactory()->CreateTypography(&typo);
+
+				DWRITE_FONT_FEATURE feature;
+				feature.nameTag = DWRITE_FONT_FEATURE_TAG_STANDARD_LIGATURES;
+				feature.parameter = 0;
+				typo->AddFontFeature(feature);
+				DWRITE_TEXT_RANGE range;
+				range.startPosition = 0;
+				range.length = text.size();
+				pTextLayout->SetTypography(typo, range);
+
 				auto ret = mapIter->second.emplace(std::make_pair(text, size), pTextLayout);
 				return ret.first->second;
 			}

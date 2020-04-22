@@ -178,6 +178,22 @@ public:
 		:EventArgs(pWnd),Point((short)LOWORD(lParam), (short)HIWORD(lParam)), Handled(handled){}
 };
 
+struct CancelModeEvent :public EventArgs
+{
+public:
+	CancelModeEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
+		:EventArgs(pWnd){ }
+};
+
+struct CaptureChangedEvent :public EventArgs
+{
+public:
+	HWND HWnd;
+	CaptureChangedEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
+		:EventArgs(pWnd), HWnd(reinterpret_cast<HWND>(lParam)){ }
+};
+
+
 
 class CUIElement
 {

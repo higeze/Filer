@@ -534,7 +534,7 @@ LRESULT CFilerWnd::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 
 	if (m_isSizing)
 	{
-		m_ptStart = pt;
+		m_ptBeginClient = pt;
 		SetCapture();
 		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
 	}
@@ -545,7 +545,7 @@ LRESULT CFilerWnd::OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 {
 	if (m_isSizing)
 	{
-		m_ptStart.SetPoint(0, 0);
+		m_ptBeginClient.SetPoint(0, 0);
 		ReleaseCapture();
 		m_isSizing = false;
 	}
@@ -565,8 +565,8 @@ LRESULT CFilerWnd::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 	if (m_isSizing && wParam == MK_LBUTTON)
 	{
-		m_splitterLeft += pt.x - m_ptStart.x;
-		m_ptStart = pt;
+		m_splitterLeft += pt.x - m_ptBeginClient.x;
+		m_ptBeginClient = pt;
 		PostMessage(WM_SIZE, 0, 0);
 	}
 	//m_konamiCommander.OnMouseMove(uMsg, wParam, lParam, bHandled);

@@ -115,6 +115,7 @@ STDMETHODIMP CDropTarget::DragLeave()
 STDMETHODIMP CDropTarget::Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
 {
 
+
 	DWORD dwEffect = *pdwEffect;
 	
 	*pdwEffect = GetEffectFromKeyState(grfKeyState);

@@ -12,6 +12,7 @@ private:
 	std::wstring m_shortName;
 	std::shared_ptr<CShellFile> m_spFile;
 
+	std::shared_ptr<bool> m_spCancel;
 	std::future<std::shared_ptr<CShellFile>> m_futureFile;
 	std::mutex m_mtxFile;
 

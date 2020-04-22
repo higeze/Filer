@@ -55,7 +55,7 @@ struct CGridStateMachine::Machine
 			state<Normal> +event<LButtonBeginDragEvent> / call(&CGridView::Normal_LButtonBeginDrag),
 		//	state<Normal> +event<EndEditEvent> / call(&CGridView::Edit_EndEdit),
 
-			state<Normal> +event<BeginEditEvent> / call(&CGridView::Edit_BeginEdit) = state<Edit>,
+			state<Normal> +event<BeginEditEvent> = state<Edit>,
 			//VScrlDrag
 			state<VScrlDrag> +event<PaintEvent> / call(&CGridView::Normal_Paint),
 			state<VScrlDrag> +on_entry<_> / call(&CGridView::VScrlDrag_OnEntry),
@@ -94,8 +94,9 @@ struct CGridStateMachine::Machine
 			state<ColTrack> +event<MouseMoveEvent> / call(&CGridView::ColTrack_MouseMove),
 			state<ColTrack> +event<MouseLeaveEvent> / call(&CGridView::ColTrack_MouseLeave) = state<Normal>,
 			//Edit
-			state<Edit> +event<PaintEvent> / call(&CGridView::Normal_Paint),
+			state<Edit> +on_entry<BeginEditEvent> / call(&CGridView::Edit_OnEntry),
 			state<Edit> +on_exit<_> / call(&CGridView::Edit_OnExit),
+			state<Edit> +event<PaintEvent> / call(&CGridView::Normal_Paint),
 			state<Edit> +event<LButtonDownEvent>[call(&CGridView::Edit_Guard_LButtonDown)] / call(&CGridView::Normal_LButtonDown) = state<Normal>,
 			state<Edit> +event<LButtonDownEvent> / call(&CGridView::Edit_LButtonDown),
 			state<Edit> +event<LButtonUpEvent> / call(&CGridView::Edit_LButtonUp),
