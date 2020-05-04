@@ -1,17 +1,13 @@
 #include "CheckableFileGrid.h"
 #include "FilerGridView.h"
-
 #include "ShellFile.h"
 #include "ShellFolder.h"
 #include "Row.h"
 #include "Column.h"
 #include "Cell.h"
 #include "RowIndexColumn.h"
-#include "FileRow.h"
-#include "FileNameColumn.h"
-#include "FileIconPathColumn.h"
+#include "FileColumn.h"
 #include "FileSizeColumn.h"
-#include "FileExtColumn.h"
 #include "FileLastWriteColumn.h"
 #include "shlwapi.h"
 
@@ -57,7 +53,7 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 extern HWND g_main;
 
 CCheckableFileGrid::CCheckableFileGrid(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
-	:CFilerGridViewBase(spFilerGridViewProp)
+	:CFilerBindGridView(spFilerGridViewProp)
 {
 	m_cwa
 		.dwExStyle(WS_EX_ACCEPTFILES);
@@ -71,27 +67,27 @@ CCheckableFileGrid::CCheckableFileGrid(std::shared_ptr<FilerGridViewProperty>& s
 LRESULT CCheckableFileGrid::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	//Base Create
-	CFilerGridViewBase::OnCreate(uMsg, wParam, lParam, bHandled);
+	CFilerBindGridView::OnCreate(uMsg, wParam, lParam, bHandled);
 
 	//Insert rows
 	m_rowNameHeader = std::make_shared<CHeaderRow>(this);
 	m_rowFilter = std::make_shared<CRow>(this);
 
-	m_allRows.idx_push_back(m_rowFilter);
 	m_allRows.idx_push_back(m_rowNameHeader);
+	m_allRows.idx_push_back(m_rowFilter);
 
 	m_frozenRowCount = 2;
 
 
 	//Insert columns if not initialized
 	if (m_allCols.empty()) {
-		m_pNameColumn = std::make_shared<CFileIconPathColumn>(this);
+		m_pNameColumn = std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
 
 		m_allCols.idx_push_back(std::make_shared<CRowIndexColumn>(this));
 		m_allCols.idx_push_back(m_pNameColumn);
-		m_allCols.idx_push_back(std::make_shared<CFileExtColumn>(this));
-		m_allCols.idx_push_back(std::make_shared<CFileSizeColumn>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr));
-		m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
+		m_allCols.idx_push_back(std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"));
+		m_allCols.idx_push_back(std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr));
+		m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
 
 		m_frozenColumnCount = 1;
 	}
@@ -113,7 +109,7 @@ void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 			//::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);
 		}
 
-		PushRow(std::make_shared<CFileRow>(this, spFile));
+		m_spItemsSource->notify_push_back(std::make_tuple(spFile));
 		for (auto& colPtr : m_allCols) {
 			colPtr->SetIsMeasureValid(false);
 		}
@@ -139,8 +135,8 @@ void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)
 {
 	auto pCell = e.CellPtr;
-	if (auto p = dynamic_cast<CFileRow*>(e.CellPtr->GetRowPtr())) {
-		auto spFile = p->GetFilePointer();
+	if (auto spRow = dynamic_cast<CBindRow<std::shared_ptr<CShellFile>>*>(e.CellPtr->GetRowPtr())) {
+		auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 		Open(spFile);
 	}
 }
@@ -157,14 +153,13 @@ void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 
 	pWnd->CreateWindowExArgument()
 		.lpszClassName(_T("CFilerGridViewWnd"))
-		.lpszWindowName(spFolder->GetFileName().c_str())
+		.lpszWindowName(spFolder->GetDispName().c_str())
 		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
 		.dwExStyle(WS_EX_ACCEPTFILES)
 		.hMenu(NULL);
 
-	pWnd->FolderChanged.connect([pWnd](std::shared_ptr<CShellFolder>& pFolder) {
-		pWnd->SetWindowTextW(pFolder->GetFileName().c_str());
-	});
+	pWnd->FolderChanged = [pWnd](std::shared_ptr<CShellFolder>& pFolder) {
+		pWnd->SetWindowTextW(pFolder->GetDispName().c_str());};
 
 	pWnd->SetIsDeleteOnFinalMessage(true);
 

@@ -6,5 +6,5 @@ template<typename TValueItem>
 class IBindSheet
 {
 public:
-	virtual observable_vector<TValueItem>& GetItemsSource() = 0;
+	virtual observable_vector<std::tuple<TValueItem>>& GetItemsSource() = 0;
 };

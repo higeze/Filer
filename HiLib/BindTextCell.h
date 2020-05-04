@@ -3,9 +3,8 @@
 #include "BindGridView.h"
 #include "BindRow.h"
 #include "BindTextColumn.h"
-#include "TextBox.h"
 
-template<typename TItem>
+template<typename... TItems>
 class CBindTextCell :public CTextCell
 {
 public:
@@ -17,15 +16,15 @@ public:
 
 	virtual std::wstring GetString() override
 	{
-		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindTextColumn<TItem>*>(m_pColumn);
-		return pBindColumn->GetGetter()(pBindRow->GetItem());
+		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
+		auto pBindColumn = static_cast<CBindTextColumn<TItems...>*>(m_pColumn);
+		return pBindColumn->GetGetter()(pBindRow->GetTupleItems());
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override
 	{
-		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindTextColumn<TItem>*>(m_pColumn);
-		pBindColumn->GetSetter()(pBindRow->GetItem(), str);
+		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
+		auto pBindColumn = static_cast<CBindTextColumn<TItems...>*>(m_pColumn);
+		pBindColumn->GetSetter()(pBindRow->GetTupleItems(), str);
 	}
 };

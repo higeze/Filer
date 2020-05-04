@@ -8,8 +8,8 @@ public:
 	virtual ~CShellZipFolder(){}
 
 	virtual std::wstring GetFileNameWithoutExt()override;
-	virtual std::wstring GetFileName()override;
-	virtual std::wstring GetExt()override;
+	virtual std::wstring GetDispName()override;
+	virtual std::wstring GetDispExt()override;
 
 	virtual void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd = NULL) override;
 	virtual void SetExt(const std::wstring& wstrExt, HWND hWnd = NULL) override;

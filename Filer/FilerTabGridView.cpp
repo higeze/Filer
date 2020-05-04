@@ -2,14 +2,15 @@
 #include "FavoritesGridView.h"
 #include "FavoritesProperty.h"
 #include "FilerWnd.h"
-#include "FavoriteRow.h"
+#include "BindRow.h"
 #include "KnownFolder.h"
 #include "ShellFileFactory.h"
 #include "Debug.h"
 
 CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
-	:m_spFilerView(std::make_shared<CFilerGridView>(spFilerGridViewProp))
 {
+	m_spFilerView = std::make_shared<CFilerGridView>(spFilerGridViewProp);
+
 	CreateWindowExArgument()
 		.dwStyle(WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE | TCS_HOTTRACK | TCS_FLATBUTTONS | TCS_MULTILINE);
 
@@ -88,7 +89,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 	}
 
 	//Folder Changed
-	m_spFilerView->FolderChanged.connect([this](std::shared_ptr<CShellFolder>& pFolder) {
+	m_spFilerView->FolderChanged = [this](std::shared_ptr<CShellFolder>& pFolder) {
 		m_folders[GetCurSel()] = pFolder;
 		SetItemText(GetCurSel(), m_folders[GetCurSel()]->GetFileNameWithoutExt().c_str());
 		int nPaddingX = GetSystemMetrics(SM_CXDLGFRAME);
@@ -101,7 +102,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 
 		m_spFilerView->PostUpdate(Updates::Rect);
 		m_spFilerView->SetUpdateRect(m_spFilerView->GetDirectPtr()->Pixels2Dips(rcTabClient));
-	});
+	};
 
 	m_pParentWnd->AddNtfyHandler((UINT_PTR)m_cwa.hMenu(), NM_CLICK, &CFilerTabGridView::OnNotifyTabLClick, this);
 	m_pParentWnd->AddNtfyHandler((UINT_PTR)m_cwa.hMenu(), NM_RCLICK, &CFilerTabGridView::OnNotifyTabRClick, this);
@@ -292,9 +293,9 @@ LRESULT CFilerTabGridView::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HW
 {
 	//TODO Bad connection between FilerTabGridView and FavoritesView
 	if(auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)){
-		p->GetFavoritesPropPtr()->GetFavorites()->push_back(std::make_shared<CFavorite>(m_folders[m_contextMenuTabIndex]->GetPath(), L""));
-		p->GetLeftFavoritesView()->PushRow(std::make_shared<CFavoriteRow>(p->GetLeftFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
-		p->GetRightFavoritesView()->PushRow(std::make_shared<CFavoriteRow>(p->GetRightFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites()->size() - 1));
+		p->GetFavoritesPropPtr()->GetFavorites().push_back(std::make_shared<CFavorite>(m_folders[m_contextMenuTabIndex]->GetPath(), L""));
+		//p->GetLeftFavoritesView()->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(p->GetLeftFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites().size() - 1));
+		//p->GetRightFavoritesView()->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(p->GetRightFavoritesView().get(), p->GetFavoritesPropPtr()->GetFavorites().size() - 1));
 		p->GetLeftFavoritesView()->SubmitUpdate();
 		p->GetRightFavoritesView()->SubmitUpdate();
 	}

@@ -6,7 +6,7 @@ class CDriveFolder :public CKnownDriveBaseFolder
 public:
 	CDriveFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CDriveFolder() {}
-	virtual std::wstring GetExt() override;
+	virtual std::wstring GetDispExt() override;
 };
 
 

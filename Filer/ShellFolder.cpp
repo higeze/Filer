@@ -75,7 +75,7 @@ std::wstring CShellFolder::GetFileNameWithoutExt()
 	return m_wstrFileNameWithoutExt;
 }
 
-std::wstring CShellFolder::GetFileName()
+std::wstring CShellFolder::GetDispName()
 {
 	if (m_wstrFileName.empty()) {
 		STRRET strret;
@@ -85,7 +85,7 @@ std::wstring CShellFolder::GetFileName()
 	return m_wstrFileName;
 }
 
-std::wstring CShellFolder::GetExt()
+std::wstring CShellFolder::GetDispExt()
 {
 	if (m_wstrExt.empty()) {
 		m_wstrExt = L"folder";

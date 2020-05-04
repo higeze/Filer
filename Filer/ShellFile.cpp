@@ -71,14 +71,14 @@ std::wstring& CShellFile::GetPath()
 std::wstring CShellFile::GetFileNameWithoutExt()
 {
 	if (m_wstrFileNameWithoutExt.empty()) {
-		m_wstrFileNameWithoutExt = GetFileName();
+		m_wstrFileNameWithoutExt = GetDispName();
 		::PathRemoveExtension(::GetBuffer(m_wstrFileNameWithoutExt, MAX_PATH));
 		::ReleaseBuffer(m_wstrFileNameWithoutExt);
 	}
 	return m_wstrFileNameWithoutExt;
 }
 
-std::wstring CShellFile::GetFileName()
+std::wstring CShellFile::GetDispName()
 {
 	if (m_wstrFileName.empty()) {
 		m_wstrFileName = ::PathFindFileName(GetPath().c_str());
@@ -86,20 +86,39 @@ std::wstring CShellFile::GetFileName()
 	return m_wstrFileName;
 }
 
-std::wstring CShellFile::GetExt()
+std::wstring CShellFile::GetDispExt()
 {
 	if (m_wstrExt.empty()) {
-		m_wstrExt = ::PathFindExtension(GetFileName().c_str());
+		m_wstrExt = ::PathFindExtension(GetDispName().c_str());
 	}
 	return m_wstrExt;
 }
+
+std::wstring CShellFile::GetPathName()
+{
+	return ::PathFindFileName(GetPath().c_str());
+}
+
+std::wstring CShellFile::GetPathNameWithoutExt()
+{
+	std::wstring ret = ::PathFindFileName(GetPath().c_str());
+	::PathRemoveExtension(::GetBuffer(ret, MAX_PATH));
+	::ReleaseBuffer(ret);
+	return ret;
+}
+
+std::wstring CShellFile::GetPathExt()
+{
+	return ::PathFindExtension(GetPath().c_str());
+}
+
 
 void CShellFile::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd)
 {
 	HRESULT hr = m_pParentShellFolder->SetNameOf(
 		hWnd,
 		m_childIdl.ptr(),
-		(wstrNameWoExt + GetExt()).c_str(),
+		(wstrNameWoExt + GetDispExt()).c_str(),
 		SHGDN_FORPARSING | SHGDN_INFOLDER,
 		nullptr);
 }

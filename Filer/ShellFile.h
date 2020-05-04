@@ -89,8 +89,12 @@ public:
 	//Lazy Evaluation Getter
 	virtual std::wstring& GetPath();
 	virtual std::wstring GetFileNameWithoutExt();
-	virtual std::wstring GetFileName();
-	virtual std::wstring GetExt();
+	virtual std::wstring GetDispName();
+	virtual std::wstring GetDispExt();
+	virtual std::wstring GetPathName();
+	virtual std::wstring GetPathNameWithoutExt();
+	virtual std::wstring GetPathExt();
+
 	std::wstring GetTypeName();	
 	UINT GetSFGAO();
 	DWORD GetAttributes();
@@ -136,8 +140,8 @@ public:
 
 	virtual std::wstring& GetPath() override{ return m_wstrPath; }
 	virtual std::wstring GetFileNameWithoutExt()override { return m_wstrFileNameWithoutExt; }
-	virtual std::wstring GetFileName() override { return m_wstrFileName; }
-	virtual std::wstring GetExt() override { return m_wstrExt; }
+	virtual std::wstring GetDispName() override { return m_wstrFileName; }
+	virtual std::wstring GetDispExt() override { return m_wstrExt; }
 
 	//Icon
 //	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction)override;

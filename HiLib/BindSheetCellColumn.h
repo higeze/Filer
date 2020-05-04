@@ -12,13 +12,13 @@ class CBindSheetCellColumn : public CMapColumn
 {
 private:
 	std::wstring m_header;
-	std::function<observable_vector<TValueItem>&(TItem&)> m_itemser;
+	std::function<observable_vector<std::tuple<TValueItem>>&(TItem&)> m_itemser;
 	std::function<void(CBindItemsSheetCell<TItem, TValueItem>*)> m_initialize;
 public:
 	template<typename... Args>
 	CBindSheetCellColumn(CSheet* pSheet,
 		const std::wstring& header,
-		std::function<observable_vector<TValueItem>&(TItem&)> itemser,
+		std::function<observable_vector<std::tuple<TValueItem>>&(TItem&)> itemser,
 		std::function<void(CBindItemsSheetCell<TItem, TValueItem>*)> initializer,
 		Args... args)
 		:CMapColumn(pSheet, args...), m_header(header), m_itemser(itemser), m_initialize(initializer)

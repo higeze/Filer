@@ -16,7 +16,7 @@ std::wstring CKnownDriveBaseFolder::GetFileNameWithoutExt()
 	return m_wstrFileNameWithoutExt;
 }
 
-std::wstring CKnownDriveBaseFolder::GetFileName()
+std::wstring CKnownDriveBaseFolder::GetDispName()
 {
 	if (m_wstrFileName.empty()) {
 		STRRET strret;
@@ -67,7 +67,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CKnownFolder::GetSize(std::shared_ptr<
 	return m_size;
 }
 
-std::wstring CKnownFolder::GetExt()
+std::wstring CKnownFolder::GetDispExt()
 {
 	if (m_wstrExt.empty()) {
 		m_wstrExt = L"known";

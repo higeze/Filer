@@ -27,7 +27,7 @@ public:
 		CColumn* pColumn,
 		std::shared_ptr<SheetProperty> spSheetProperty,
 		std::shared_ptr<CellProperty> spCellProperty,
-		observable_vector<TValueItem>& itemsSource,
+		observable_vector<std::tuple<TValueItem>> itemsSource,
 		Args... args)
 		:CBindItemsSheetCellBase<TValueItem>(
 			pSheet,pRow,pColumn,spSheetProperty, spCellProperty,
@@ -53,7 +53,7 @@ public:
 		}
 
 		this->GetItemsSource().VectorChanged = 
-			[this](const NotifyVectorChangedEventArgs<TValueItem>& e)->void {
+			[this](const NotifyVectorChangedEventArgs<std::tuple<TValueItem>>& e)->void {
 				switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
 				{

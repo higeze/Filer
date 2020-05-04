@@ -119,6 +119,14 @@ public:
 		}
 	}
 
+	//For single tuple
+	template<class T>
+	void SerializeValue(std::tuple<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
+	{
+		SerializeValue(std::get<T>(tValue), pElem);
+	}
+
+
 	//For shared_ptr
 	template<class T, ENABLE_IF_ABSTRUCT>
 	void SerializeValue(std::shared_ptr<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
@@ -249,7 +257,7 @@ public:
 		}
 	}
 
-	//For vector
+	//For observable_vector
 	template<class T>
 	void DeserializeElement(observable_vector<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
 	{
@@ -261,6 +269,14 @@ public:
 			}
 		}
 	}
+
+	//For single tuple
+	template<class T>
+	void DeserializeElement(std::tuple<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
+	{
+		DeserializeElement(std::get<T>(tValue), pElem);
+	}
+
 
 	//For shared_ptr
 	template<class T, class... U, typename ENABLE_IF_ABSTRUCT>

@@ -79,7 +79,7 @@ LRESULT CIncrementalCopyWnd::OnCommandCopy(WORD wNotifyCode, WORD wID, HWND hWnd
 	});
 
 	m_idlMap.clear();
-	m_buttonCopy.EnableWindow(!m_idlMap.empty());
+	m_buttonDo.EnableWindow(!m_idlMap.empty());
 
 	return 0;
 }
@@ -117,22 +117,22 @@ LRESULT CIncrementalCopyWnd::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, 
 	m_pFileGrid->Create(m_hWnd, rcGrid);
 
 	//OK button
-	m_buttonCopy.CreateWindowExArgument()
+	m_buttonDo.CreateWindowExArgument()
 		.lpszClassName(WC_BUTTON)
 		.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"Copy"))
 		.lpszWindowName(L"Copy")
-		.dwStyle(WS_CHILD | WS_VISIBLE | BP_PUSHBUTTON);
+		.dwStyle(WS_CHILD | WS_VISIBLE | BP_PUSHBUTTON | WS_TABSTOP);
 
-	m_buttonCopy.RegisterClassExArgument().lpszClassName(WC_BUTTON);
-	m_buttonCopy.Create(m_hWnd, rcBtnOK);
-	m_buttonCopy.EnableWindow(FALSE);
+	m_buttonDo.RegisterClassExArgument().lpszClassName(WC_BUTTON);
+	m_buttonDo.Create(m_hWnd, rcBtnOK);
+	m_buttonDo.EnableWindow(FALSE);
 
 	//Cancel button
 	m_buttonClose.CreateWindowExArgument()
 		.lpszClassName(WC_BUTTON)
 		.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"Close"))
 		.lpszWindowName(L"Close")
-		.dwStyle(WS_CHILD | WS_VISIBLE | BP_PUSHBUTTON);
+		.dwStyle(WS_CHILD | WS_VISIBLE | BP_PUSHBUTTON | WS_TABSTOP);
 
 	m_buttonClose.RegisterClassExArgument().lpszClassName(WC_BUTTON);
 	m_buttonClose.Create(m_hWnd, rcBtnCancel);
@@ -178,9 +178,14 @@ LRESULT CIncrementalCopyWnd::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, 
 		fileCount.get();
 		incremental.get();
 
-		m_buttonCopy.EnableWindow(!m_idlMap.empty());
+		if (!m_idlMap.empty()) {
+			m_buttonDo.EnableWindow(TRUE);
+			m_buttonDo.SetFocus();
+		}
 		m_buttonClose.EnableWindow(TRUE);
 	});
+
+
 
 	return 0;
 }
@@ -225,7 +230,7 @@ LRESULT CIncrementalCopyWnd::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 	CRect rc = GetClientRect();
 	m_pDirect->GetHwndRenderTarget()->Resize(D2D1_SIZE_U{ (UINT)rc.Width(), (UINT)rc.Height() });
 
-	m_buttonCopy.MoveWindow(rc.right - 115, rc.bottom - 25, 52, 22, TRUE);
+	m_buttonDo.MoveWindow(rc.right - 115, rc.bottom - 25, 52, 22, TRUE);
 	m_buttonClose.MoveWindow(rc.right - 60, rc.bottom - 25, 52, 22, TRUE);
 	d2dw::CRectF rcProgress = m_pDirect->Pixels2Dips(CRect(rc.left + 5, rc.top + 5, rc.Width() -5, rc.top + 30));
 	m_pProgressbar->SetRect(rcProgress);

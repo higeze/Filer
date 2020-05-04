@@ -27,14 +27,14 @@ public:
 		auto& items = this->GetItemsSource();
 
 		for (auto& item : items) {
-			PushRow(std::make_shared<CBindRow<TValueItem>>(this));
+			PushRow(std::make_shared<CBindRowTest<TValueItem>>(this));
 		}
 
 		items.VectorChanged =
 			[this](const NotifyVectorChangedEventArgs<TValueItem>& e)->void {
 			switch (e.Action) {
 			case NotifyVectorChangedAction::Add:
-				PushRow(std::make_shared<CBindRow<TValueItem>>(this));
+				PushRow(std::make_shared<CBindRowTest<TValueItem>>(this));
 				break;
 			case NotifyVectorChangedAction::Remove:
 				EraseRow(m_allRows.back());
@@ -50,9 +50,9 @@ public:
 
 	observable_vector<TValueItem>& GetItemsSourceImpl()
 	{
-		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
+		auto pBindRow = static_cast<CBindRowTest<TItem>*>(m_pRow);
 		auto pBindColumn = static_cast<CBindSheetCellColumn<TItem, TValueItem>*>(m_pColumn);
-		return pBindColumn->GetItemser()(pBindRow->GetItem());
+		return pBindColumn->GetItemser()(pBindRow->GetTupleItems());
 	}
 
 	/******************/

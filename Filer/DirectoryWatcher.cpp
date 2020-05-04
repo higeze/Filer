@@ -60,6 +60,7 @@ void CDirectoryWatcher::QuitWatching()
 		}
 		//Path
 		m_path.clear();
+		m_absIdl.Clear();
 	}
 	catch (std::exception& e) {
 		FILE_LINE_FUNC_TRACE;

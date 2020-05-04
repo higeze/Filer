@@ -9,8 +9,8 @@ template<typename TValueItem>
 class CBindItemsSheetCellBase :public CSheetCell, public IBindSheet<TValueItem>
 {
 private:
-	std::function<observable_vector<TValueItem>& (CSheetCell*)> m_funItems = nullptr;
-	observable_vector<TValueItem>* m_ptrItems = nullptr;
+	std::function<observable_vector<std::tuple<TValueItem>>& (CSheetCell*)> m_funItems = nullptr;
+	observable_vector<std::tuple<TValueItem>>* m_ptrItems = nullptr;
 public:
 	template<typename... Args>
 	CBindItemsSheetCellBase(
@@ -33,7 +33,7 @@ public:
 	virtual bool HasSheetCell()override { return true; }
 	virtual bool IsVirtualPage()override { return true; }
 
-	observable_vector<TValueItem>& GetItemsSource() 
+	observable_vector<std::tuple<TValueItem>>& GetItemsSource() 
 	{ 
 		if (m_funItems) {
 			return m_funItems(this);

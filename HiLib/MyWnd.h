@@ -165,6 +165,7 @@ public:
 //	typedef std::tr1::unordered_map<UINT,FunNtfy> NtfyCdMap;
 
 private:
+	std::function<void()> m_finalAction = nullptr;
 	bool m_isDeleteOnFinalMessage = false;
 	//prohibit copy constructor and substitute
 public:
@@ -205,6 +206,7 @@ public:
 	void SetCreateWindowExArgument();
 	void SetRegisterClassExArgument();
 	void SetIsDeleteOnFinalMessage(bool val) { m_isDeleteOnFinalMessage = val; }
+	void SetFinalAction(const std::function<void()>& finalAction) { m_finalAction = finalAction; }
 
 	CreateWindowExArg& CreateWindowExArgument(){return m_cwa;}
 	RegisterClassExArg& RegisterClassExArgument(){return m_rca;}
@@ -215,6 +217,9 @@ public:
 
 	virtual void OnFinalMessage(HWND hWnd)
 	{
+		if (m_finalAction) {
+			m_finalAction();
+		}
 		if (m_isDeleteOnFinalMessage) {
 			delete this;
 		}
@@ -625,7 +630,7 @@ public:
 		return SetItem(GetCurSel(),TCIF_TEXT,lpszItem,0,0,0,NULL);
 	}
 
-	BOOL GetItem(int nItem, LPTCITEM pTabCtrlItem) const
+	BOOL GetTupleItems(int nItem, LPTCITEM pTabCtrlItem) const
 	{
 		return (BOOL)::SendMessage(m_hWnd, TCM_GETITEM, nItem, (LPARAM)pTabCtrlItem);
 	}
@@ -638,14 +643,14 @@ public:
 	{
 		TCITEM tcItem = {0};
 		tcItem.mask = TCIF_PARAM;
-		GetItem(index,&tcItem);
+		GetTupleItems(index,&tcItem);
 		return tcItem.lParam;
 	}
 	LPARAM GetCurItemParam()
 	{
 		TCITEM tcItem = {0};
 		tcItem.mask = TCIF_PARAM;
-		GetItem(GetCurSel(),&tcItem);
+		GetTupleItems(GetCurSel(),&tcItem);
 		return tcItem.lParam;
 	}
 
@@ -803,7 +808,7 @@ public:
 	HIMAGELIST GetImageList(int nImageListType){return (HIMAGELIST)::SendMessage(m_hWnd,LVM_GETIMAGELIST,(WPARAM)nImageListType,0L);}
 
 	HIMAGELIST SetImageList(HIMAGELIST hImageList,int nImageListType){return (HIMAGELIST)::SendMessage(m_hWnd,LVM_SETIMAGELIST,(WPARAM)nImageListType, (LPARAM)hImageList);}
-	BOOL GetItem(LPLVITEM pItem){return (BOOL)::SendMessage(m_hWnd,LVM_GETITEM,0,(LPARAM)pItem);}
+	BOOL GetTupleItems(LPLVITEM pItem){return (BOOL)::SendMessage(m_hWnd,LVM_GETITEM,0,(LPARAM)pItem);}
 	BOOL DeleteColumn(int nSubItem){return (BOOL)::SendMessage(m_hWnd,LVM_DELETECOLUMN,nSubItem,0L);}
 	BOOL SetItemState(int nItem,UINT uState,UINT uStateMask)
 	{
@@ -915,11 +920,11 @@ public:
 	}
 
 
-	BOOL GetItem(int nItem, const LPHDITEM phdi){return (BOOL)SendMessage(HDM_GETITEM,(WPARAM)(nItem),(LPARAM)(phdi));}
+	BOOL GetTupleItems(int nItem, const LPHDITEM phdi){return (BOOL)SendMessage(HDM_GETITEM,(WPARAM)(nItem),(LPARAM)(phdi));}
 	BOOL SetSortMark(int nItem,HeaderSorts sort){
 		HDITEM hdi={0};
 		hdi.mask = HDI_FORMAT;
-		GetItem(nItem, &hdi);
+		GetTupleItems(nItem, &hdi);
 		hdi.mask = HDI_FORMAT;
 		hdi.fmt &= ~HDF_SORTDOWN & ~HDF_SORTUP;
 		switch(sort){
@@ -951,7 +956,7 @@ public:
 		hdTextFilter.pszText=GetBuffer(strFilter,HD_FILTERTEXTSIZE);
 		hdTextFilter.cchTextMax=HD_FILTERTEXTSIZE;
 
-		GetItem(nColumn,&hdItem);
+		GetTupleItems(nColumn,&hdItem);
 		ReleaseBuffer(strFilter);
 
 		return strFilter;
@@ -983,7 +988,7 @@ public:
 		std::vector<std::basic_string<TCHAR>> vstrFilter(nItemCount);
 		for(int i=0;i<nItemCount;++i){
 			::ZeroMemory(szFilter,sizeof(szFilter));
-			GetItem(i,&hdItem);
+			GetTupleItems(i,&hdItem);
 			if(::_tcslen(szFilter)){
 				vstrFilter[i]=std::wstring(szFilter);
 			}else{

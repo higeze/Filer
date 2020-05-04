@@ -1,5 +1,6 @@
 #pragma once
-#include "Gridview.h"
+#include "BindGridview.h"
+#include "Favorite.h"
 #include "MyFriendSerializer.h"
 
 struct GridViewProperty;
@@ -7,8 +8,7 @@ class CFavoritesProperty;
 class CShellFile;
 class CFilerWnd;
 
-class CFavoritesGridView :
-	public CGridView
+class CFavoritesGridView : public CBindGridView<std::shared_ptr<CFavorite>>
 {
 private:
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
@@ -32,7 +32,7 @@ public:
 
 	void OpenFavorites();
 
-	void RowMoved(CMovedEventArgs<RowTag>& e) override;
+	//void RowMoved(CMovedEventArgs<RowTag>& e) override;
 
 	void FilterAll() override {/*Do nothing*/}
 

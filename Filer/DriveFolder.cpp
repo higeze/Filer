@@ -6,7 +6,7 @@ CDriveFolder::CDriveFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parent
 {
 }
 
-std::wstring CDriveFolder::GetExt()
+std::wstring CDriveFolder::GetDispExt()
 {
 	if (m_wstrExt.empty()) {
 		m_wstrExt = L"drive";

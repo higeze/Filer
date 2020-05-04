@@ -2,7 +2,7 @@
 #include "CheckBoxCell.h"
 #include "BindCheckBoxColumn.h"
 
-template<typename TItem>
+template<typename... TItems>
 class CBindCheckBoxCell :public CCheckBoxCell
 {
 public:
@@ -12,15 +12,15 @@ public:
 
 	virtual CheckBoxState GetCheckBoxState() const override
 	{
-		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindCheckBoxColumn<TItem>*>(m_pColumn);
-		return pBindColumn->GetGetter()(pBindRow->GetItem());
+		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
+		auto pBindColumn = static_cast<CBindCheckBoxColumn<TItems...>*>(m_pColumn);
+		return pBindColumn->GetGetter()(pBindRow->GetTupleItems());
 	}
 
 	virtual void SetCheckBoxState(const CheckBoxState& state) override
 	{
-		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindCheckBoxColumn<TItem>*>(m_pColumn);
-		pBindColumn->GetSetter()(pBindRow->GetItem(), state);
+		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
+		auto pBindColumn = static_cast<CBindCheckBoxColumn<TItems...>*>(m_pColumn);
+		pBindColumn->GetSetter()(pBindRow->GetTupleItems(), state);
 	}
 };

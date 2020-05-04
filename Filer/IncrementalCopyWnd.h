@@ -23,7 +23,7 @@ private:
 
 	d2dw::SolidFill BackgroundFill = d2dw::SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
 
-	CButton m_buttonCopy;
+	CButton m_buttonDo;
 	CButton m_buttonClose;
 
 	std::unique_ptr<d2dw::CProgressBar> m_pProgressbar;

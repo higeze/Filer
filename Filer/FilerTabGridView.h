@@ -18,6 +18,9 @@ class CFilerTabGridView :public CTabCtrl
 private:
 	CUniqueIDFactory m_uniqueIDFactory;
 	observable_vector<std::wstring> m_vwPath;
+	observable_vector< std::tuple<std::shared_ptr<CShellFile>>> m_itemsSource;
+	std::vector< std::tuple<std::shared_ptr<CShellFile>>> m_selectedItems;
+
 	std::shared_ptr<CFilerGridView> m_spFilerView;
 
 	observable_vector<std::shared_ptr<CShellFolder>> m_folders;

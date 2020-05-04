@@ -217,6 +217,13 @@ public:
 	{
 		SerializeValue(*t, pRow, pCol);
 	}
+	//For single tuple
+	template<class T>
+	void SerializeValue(std::tuple<T>& t, CRow* pRow, CColumn* pCol)
+	{
+		SerializeValue(std::get<T>(t), pRow, pCol);
+	}
+
 };
 
 
@@ -397,5 +404,13 @@ public:
 	{
 		DeserializeValue(*t, pRow, pColumn);
 	}
+
+	//For single tuple
+	template<class T>
+	void DeserializeValue(std::tuple<T>& t, CRow* pRow, CColumn* pColumn)
+	{
+		DeserializeValue(std::get<T>(t), pRow, pColumn);
+	}
+
 };
 

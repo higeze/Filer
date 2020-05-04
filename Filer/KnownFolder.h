@@ -8,7 +8,7 @@ public:
 	virtual ~CKnownDriveBaseFolder() {}
 //	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction) override;
 	virtual std::wstring GetFileNameWithoutExt() override;
-	virtual std::wstring GetFileName() override;
+	virtual std::wstring GetDispName() override;
 };
 
 class CKnownFolder:public CKnownDriveBaseFolder
@@ -19,7 +19,7 @@ public:
 	CKnownFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IKnownFolder>& pKnownFolder, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CKnownFolder(){}
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed = nullptr) override;
-	virtual std::wstring GetExt() override;
+	virtual std::wstring GetDispExt() override;
 
 	KF_CATEGORY GetCategory();
 	KNOWNFOLDERID GetId();

@@ -56,9 +56,6 @@
     <ClInclude Include="Favorite.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="FavoriteRow.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="FavoritesColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -77,13 +74,7 @@
     <ClInclude Include="FileExtCell.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="FileExtColumn.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="FileIconCell.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FileIconColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="FileLastWriteCell.h">
@@ -92,16 +83,10 @@
     <ClInclude Include="FileLastWriteColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="FileNameColumn.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="Filer.h">
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="FilerGridView.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FileRow.h">
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="FilerProperty.h">
@@ -491,23 +476,14 @@
     <ClInclude Include="..\HiLib\ProgressBar.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="FilerGridViewBase.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="CheckableFileGrid.h">
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="IncrementalCopyWnd.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="FileIconPathCell.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\ThreadPool.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="FileIconPathColumn.h">
-      <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="FilerGridViewWnd.h">
       <Filter>Filer</Filter>
@@ -629,6 +605,18 @@
     <ClInclude Include="..\HiLib\RowIndexColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="FileOperationWnd.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerBindGridView.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="RenameInfo.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileColumn.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -643,12 +631,6 @@
     <ClCompile Include="Favorite.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="FavoriteRow.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FavoritesColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="FavoritesGridView.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
@@ -658,34 +640,10 @@
     <ClCompile Include="FileDraggingState.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="FileExtCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileExtColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileIconCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileIconColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileLastWriteCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileLastWriteColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileNameColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="Filer.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FilerGridView.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileRow.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FilerWnd.cpp">
@@ -814,9 +772,6 @@
     <ClCompile Include="..\HiLib\MouseStateMachine.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="FavoriteCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="FilerTabGridView.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
@@ -844,9 +799,6 @@
     <ClCompile Include="..\HiLib\Direct2DWrite.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="FileIconNameCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\Console.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -871,9 +823,6 @@
     <ClCompile Include="..\HiLib\ProgressBar.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="FilerGridViewBase.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="CheckableFileGrid.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
@@ -882,12 +831,6 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\ThreadPool.cpp">
       <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="FileIconPathCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileIconPathColumn.cpp">
-      <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FilerGridViewWnd.cpp">
       <Filter>Filer</Filter>
@@ -954,6 +897,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\RowIndexColumn.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="FileOperationWnd.cpp">
+      <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

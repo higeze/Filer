@@ -1,10 +1,14 @@
 #pragma once
-#include "FilerGridViewBase.h"
+#include "FilerBindGridView.h"
 
+class CShellFile;
 class CDirectoryWatcher;
 
-class CFilerGridView:public CFilerGridViewBase
+class CFilerGridView:public CFilerBindGridView<std::shared_ptr<CShellFile>>
 {
+	/*******************/
+	/* Static variable */
+	/*******************/
 private:
 	static CLIPFORMAT s_cf_shellidlist;
 	static CLIPFORMAT s_cf_filecontents;
@@ -14,12 +18,9 @@ private:
 private:	
 	//For DirectoryWatch
 	std::shared_ptr<CDirectoryWatcher> m_spWatcher;
-	std::wstring m_oldName;
 
 	std::shared_ptr<CShellFolder> m_spFolder;
 	std::shared_ptr<CShellFolder> m_spPreviousFolder;
-
-	std::wstring m_initPath;
 
 	//For Drag & Drop 
 	CComPtr<IDropTarget> m_pDropTarget;
@@ -36,7 +37,7 @@ private:
 	CComPtr<IContextMenu3> m_pcm3;
 
 	//For New
-	bool m_bNewFile = false;
+	bool m_isNewFile = false;
 
 	//Remember past filter
 	std::unordered_map<std::wstring, std::unordered_map<std::shared_ptr<CColumn>, std::wstring>> m_filterMap;
@@ -48,7 +49,7 @@ public:
 	//getter
 	std::shared_ptr<CShellFolder>& GetFolder() { return m_spFolder; }
 	//signal
-	boost::signals2::signal<void(std::shared_ptr<CShellFolder>&)> FolderChanged;
+	std::function<void(std::shared_ptr<CShellFolder>&)> FolderChanged;
 
 	/******************/
 	/* Window Message */
@@ -66,8 +67,9 @@ public:
 	virtual void OnBkGndLButtondDblClk(const LButtonDblClkEvent& e) override;
 	virtual void OnCellLButtonDblClk(CellEventArgs& e);
 
-
-
+	/************/
+	/* Function */
+	/************/
 	virtual void Reload();
 	virtual void OpenFolder(std::shared_ptr<CShellFolder>& spFolder) override;
 
@@ -83,6 +85,7 @@ public:
 
 	std::vector<LPITEMIDLIST> GetSelectedLastPIDLVector();
 	std::vector<LPITEMIDLIST> GetSelectedAbsolutePIDLVector();
+	std::vector<CIDL> GetSelectedChildIDLVector();
 
 	virtual bool CutToClipboard() override;
 	virtual bool CopyToClipboard() override;
@@ -111,39 +114,36 @@ public:
 	template <class Archive>
 	void save(Archive& ar)
 	{
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn);
+		//REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
+		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispNameColumn<std::shared_ptr<CShellFile>>);
+		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);
+		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>);
+		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>);
 	
-		ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
-		ar("RowFrozenCount", m_frozenRowCount);
-		ar("ColFrozenCount", m_frozenColumnCount);
+		//ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
+		//ar("RowFrozenCount", m_frozenRowCount);
+		//ar("ColFrozenCount", m_frozenColumnCount);
 	}
 
 	template <class Archive>
 	void load(Archive& ar)
 	{
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn, this);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn, this);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileExtColumn, this);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn, this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
+		//REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn, this);
+		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispNameColumn<std::shared_ptr<CShellFile>>, this);
+		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>, this);
+		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
+		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
 
-		ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
-		for (auto& colPtr : m_allCols) {
-			if (auto p = std::dynamic_pointer_cast<CFileNameColumn>(colPtr)) {
-				m_pNameColumn = p;
-			} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
-				m_pHeaderColumn = p;
-			}
-		}
+		//TODOTODO
+		//ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
+		//for (auto& colPtr : m_allCols) {
+		//	if (auto p = std::dynamic_pointer_cast<CFileDispNameColumn>(colPtr)) {
+		//		m_pNameColumn = p;
+		//	} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
+		//		m_pHeaderColumn = p;
+		//	}
+		//}
 		ar("RowFrozenCount", m_frozenRowCount);
 		ar("ColFrozenCount", m_frozenColumnCount);
 	}
-
-
-
-
 };

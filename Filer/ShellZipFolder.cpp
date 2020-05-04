@@ -8,14 +8,14 @@ std::wstring CShellZipFolder::GetFileNameWithoutExt()
 	return CShellFile::GetFileNameWithoutExt();
 }
 
-std::wstring CShellZipFolder::GetFileName()
+std::wstring CShellZipFolder::GetDispName()
 {
-	return CShellFile::GetFileName();
+	return CShellFile::GetDispName();
 }
 
-std::wstring CShellZipFolder::GetExt()
+std::wstring CShellZipFolder::GetDispExt()
 {
-	return CShellFile::GetExt();
+	return CShellFile::GetDispExt();
 }
 
 //std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellZipFolder::GetIcon(std::function<void(CShellFile*)>& changedAction)

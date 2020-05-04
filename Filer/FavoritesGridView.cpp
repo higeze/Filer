@@ -6,8 +6,7 @@
 #include "Column.h"
 #include "Cell.h"
 #include "FavoritesColumn.h"
-#include "FileNameColumn.h"
-#include "FavoriteRow.h"
+#include "BindRow.h"
 #include "FavoriteCell.h"
 
 #include "ShellFile.h"
@@ -25,7 +24,8 @@
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CFavoritesGridView::CFavoritesGridView(CFilerWnd* pWnd, std::shared_ptr<GridViewProperty> spGridViewProperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp)
-			:CGridView(spGridViewProperty),
+			:CBindGridView(spGridViewProperty,
+						   spFavoritesProp->GetFavoritesPtr()),
 			m_spFavoritesProp(spFavoritesProp),
 			m_pFilerWnd(pWnd)
 {
@@ -84,7 +84,7 @@ void CFavoritesGridView::OpenFavorites()
 		if (Empty()) {
 			//IconColumn
 			{
-				auto pColumn = std::make_shared<CFavoritesColumn>(this, m_spFavoritesProp->GetFavorites());
+				auto pColumn = std::make_shared<CFavoritesColumn<std::shared_ptr<CFavorite>>>(this);
 				PushColumn(pColumn);
 			}
 		}
@@ -97,8 +97,8 @@ void CFavoritesGridView::OpenFavorites()
 
 		try {
 			//Enumerate favorites
-			for (size_t i = 0; i < m_spFavoritesProp->GetFavorites()->size(); i++) {
-				PushRow(std::make_shared<CFavoriteRow>(this, i));
+			for (size_t i = 0; i < m_spFavoritesProp->GetFavorites().size(); i++) {
+				PushRow(std::make_shared<CBindRow<std::shared_ptr<CFavorite>>>(this));
 			}
 
 			for (auto colPtr : m_allCols) {
@@ -123,28 +123,28 @@ void CFavoritesGridView::OpenFavorites()
 
 void CFavoritesGridView::OnCellLButtonDblClk(CellEventArgs& e)
 {
-	if(auto p = dynamic_cast<CFavoriteCell*>(e.CellPtr)){
+	if(auto p = dynamic_cast<CFavoriteCell<std::shared_ptr<CFavorite>>*>(e.CellPtr)){
 		auto pFile = p->GetShellFile();
 		if (pFile != nullptr && typeid(*pFile) != typeid(CShellInvalidFile)) {
 			FileChosen(p->GetShellFile());
 		}
 	}
 }
-
-void CFavoritesGridView::RowMoved(CMovedEventArgs<RowTag>& e)
-{
-	auto favorites(m_spFavoritesProp->GetFavorites());
-	auto fromIter = favorites->begin(); std::advance(fromIter, e.m_from);
-	auto temp = *fromIter;
-	favorites->erase(fromIter);
-	auto toIter = favorites->begin(); std::advance(toIter, e.m_to);
-	favorites->insert(toIter, temp);
-}
+//
+//void CFavoritesGridView::RowMoved(CMovedEventArgs<RowTag>& e)
+//{
+//	auto favorites(m_spFavoritesProp->GetFavorites());
+//	auto fromIter = favorites->begin(); std::advance(fromIter, e.m_from);
+//	auto temp = *fromIter;
+//	favorites->erase(fromIter);
+//	auto toIter = favorites->begin(); std::advance(toIter, e.m_to);
+//	favorites->insert(toIter, temp);
+//}
 
 void CFavoritesGridView::Reload()
 {
-	for (auto iter = m_spFavoritesProp->GetFavorites()->begin(); iter != m_spFavoritesProp->GetFavorites()->end(); ++iter) {
-		((*iter))->SetLockShellFile(nullptr);
+	for (auto iter = m_spFavoritesProp->GetFavorites().begin(); iter != m_spFavoritesProp->GetFavorites().end(); ++iter) {
+		(std::get<0>((*iter)))->SetLockShellFile(nullptr);
 	}
 	OpenFavorites();
 	//PostUpdate(Updates::All);

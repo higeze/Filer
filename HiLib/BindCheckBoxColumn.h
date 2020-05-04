@@ -5,33 +5,26 @@
 #include "MapColumn.h"
 #include "named_arguments.h"
 
-template<typename TItem>
+template<typename... TItems>
 class CBindCheckBoxColumn : public CMapColumn
 {
 private:
 	std::wstring m_header;
 
-	std::function<CheckBoxState(const TItem&)> m_getFunction;
-	std::function<void(TItem&, const CheckBoxState&)> m_setFunction;
+	std::function<CheckBoxState(const std::tuple<TItems...>&)> m_getFunction;
+	std::function<void(std::tuple<TItems...>&, const CheckBoxState&)> m_setFunction;
 
 public:
 	CBindCheckBoxColumn(CSheet* pSheet,
 		const std::wstring& header,
-		std::function<CheckBoxState(const TItem&)> getter,
-		std::function<void(TItem&, const CheckBoxState&)> setter)
+		std::function<CheckBoxState(const std::tuple<TItems...>&)> getter,
+		std::function<void(std::tuple<TItems...>&, const CheckBoxState&)> setter)
 		:CMapColumn(pSheet), m_header(header), m_getFunction(getter), m_setFunction(setter){}
 
 	virtual ~CBindCheckBoxColumn(void) = default;
 
-	virtual CColumn& ShallowCopy(const CColumn& column)override
-	{
-		CMapColumn::ShallowCopy(column);
-		return *this;
-	}
-	virtual CBindCheckBoxColumn* CloneRaw()const { return new CBindCheckBoxColumn(*this); }
-	//std::shared_ptr<CToDoNameColumn> Clone()const { return std::shared_ptr<CToDoNameColumn>(CloneRaw()); }
-	std::function<CheckBoxState(const TItem&)> GetGetter() { return m_getFunction; }
-	std::function<void(TItem&, const CheckBoxState&)> GetSetter() { return m_setFunction; }
+	std::function<CheckBoxState(const std::tuple<TItems...>&)> GetGetter() { return m_getFunction; }
+	std::function<void(std::tuple<TItems...>&, const CheckBoxState&)> GetSetter() { return m_setFunction; }
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
@@ -50,7 +43,7 @@ public:
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CBindCheckBoxCell<TItem>>(
+		return std::make_shared<CBindCheckBoxCell<TItems...>>(
 			m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
 	}
 };
