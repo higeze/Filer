@@ -531,6 +531,14 @@ FLOAT CSheet::GetRowHeight(CRow* pRow)
 		});
 }
 
+FLOAT CSheet::GetRowFitHeight(CRow* pRow)
+{
+	return std::accumulate(m_visCols.begin(), m_visCols.end(), 0.f,
+						   [this, pRow](const FLOAT val, const std::shared_ptr<CColumn>& colPtr)->FLOAT {
+							   return (std::max)(Cell(pRow, colPtr.get())->GetFitSize(GetGridPtr()->GetDirectPtr()).height, val);
+						   });
+}
+
 bool CSheet::Empty()const
 {
 	return m_allRows.empty() || m_allCols.empty();

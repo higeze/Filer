@@ -191,9 +191,9 @@ public:
 		auto a = 2;
 	}
 
-	//For observable_vector
+	//For observable_tuple_vector
 	template<class T>
-	void SerializeValue(observable_vector<T>& t, CRow* pRow, CColumn* pCol)
+	void SerializeValue(observable_vector<std::tuple<T>>& t, CRow* pRow, CColumn* pCol)
 	{
 		auto spCell = std::make_shared<CBindPropertySheetCell<T>>(
 			m_pSheet,
@@ -369,9 +369,9 @@ public:
 		}
 	}
 
-	//For observable_vector
+	//For observable_tuple_vector
 	template<class T>
-	void DeserializeValue(observable_vector<T>& t, CRow* pRow, CColumn* pColumn)
+	void DeserializeValue(observable_vector<std::tuple<T>>& t, CRow* pRow, CColumn* pColumn)
 	{
 		//auto& allRows = m_pSheet->GetContainer<RowTag, AllTag>();
 		//t.clear();
@@ -380,15 +380,23 @@ public:
 		//	DeserializeValue(val, rowIter->get(), m_pSheet->Index2Pointer<ColTag, AllTag>(m_pSheet->GetFrozenCount<ColTag>()).get());
 		//	t.push_back(val);
 		//}
-		if (auto spSheet = std::dynamic_pointer_cast<CSheet>(CSheet::Cell(pRow, pColumn))) {
-			auto& allRows = spSheet->GetContainer<RowTag, AllTag>();
-			t.clear();
-			for (auto rowIter = allRows.begin() + spSheet->GetFrozenCount<RowTag>(); rowIter != allRows.end(); rowIter++) {
-				auto val = CreateInstance<T>();
-				DeserializeValue(val, rowIter->get(), spSheet->Index2Pointer<ColTag, AllTag>(spSheet->GetFrozenCount<ColTag>()).get());
-				t.push_back(val);
-			}
 
+		//if (auto spSheet = std::dynamic_pointer_cast<CSheet>(CSheet::Cell(pRow, pColumn))) {
+		//	auto& allRows = spSheet->GetContainer<RowTag, AllTag>();
+		//	t.clear();
+		//	for (auto rowIter = allRows.begin() + spSheet->GetFrozenCount<RowTag>(); rowIter != allRows.end(); rowIter++) {
+		//		auto val = CreateInstance<T>();
+		//		DeserializeValue(val, rowIter->get(), spSheet->Index2Pointer<ColTag, AllTag>(spSheet->GetFrozenCount<ColTag>()).get());
+		//		t.push_back(std::make_tuple(val));
+		//	}
+		//}
+
+		if (auto spSheet = std::dynamic_pointer_cast<CBindPropertySheetCell<T>>(CSheet::Cell(pRow, pColumn))) {
+			auto& itemsSource = spSheet->GetItemsSource();
+			t.clear();
+			for (auto item : itemsSource) {
+				t.push_back(item);
+			}
 		}
 	}
 	//For shared_ptr

@@ -57,10 +57,6 @@ CCheckableFileGrid::CCheckableFileGrid(std::shared_ptr<FilerGridViewProperty>& s
 {
 	m_cwa
 		.dwExStyle(WS_EX_ACCEPTFILES);
-
-//	AddMsgHandler(WM_ACTIVATE, &CCheckableFileGrid::OnActivate, this);
-
-//	CellLButtonDblClk.connect(std::bind(&CFilerGridView::OnCellLButtonDblClk, this, std::placeholders::_1));
 }
 
 
@@ -82,12 +78,12 @@ LRESULT CCheckableFileGrid::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 	//Insert columns if not initialized
 	if (m_allCols.empty()) {
 		m_pNameColumn = std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
-
-		m_allCols.idx_push_back(std::make_shared<CRowIndexColumn>(this));
-		m_allCols.idx_push_back(m_pNameColumn);
-		m_allCols.idx_push_back(std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"));
-		m_allCols.idx_push_back(std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr));
-		m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
+		PushColumns(
+			std::make_shared<CRowIndexColumn>(this),
+			m_pNameColumn,
+			std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"),
+			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr),
+			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
 
 		m_frozenColumnCount = 1;
 	}
@@ -100,36 +96,19 @@ LRESULT CCheckableFileGrid::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 
 void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 {
-		if (false) {
-			m_pDirect->ClearTextLayoutMap();
-		}
+	//Edit
+	if (m_pEdit) {
+		EndEdit();
+	}
+	//Celler
+	m_spCeller->Clear();
+	//Cursor
+	m_spCursorer->Clear();
 
-		if (m_pEdit) {
-			m_pEdit->OnClose(CloseEvent(this, NULL, NULL));
-			//::SendMessage(m_pEdit->m_hWnd, WM_CLOSE, NULL, NULL);
-		}
+	m_spItemsSource->notify_push_back(std::make_tuple(spFile));
 
-		m_spItemsSource->notify_push_back(std::make_tuple(spFile));
-		for (auto& colPtr : m_allCols) {
-			colPtr->SetIsMeasureValid(false);
-		}
-
-		PostUpdate(Updates::Sort);
-		PostUpdate(Updates::Filter);
-		PostUpdate(Updates::ColumnVisible);
-		PostUpdate(Updates::RowVisible);
-		PostUpdate(Updates::Column);
-		PostUpdate(Updates::Row);
-		PostUpdate(Updates::Scrolls);
-		PostUpdate(Updates::Invalidate);
-
-		//Celler
-		m_spCeller->Clear();
-
-		//Cursor
-		m_spCursorer->Clear();
-
-		SubmitUpdate();
+	PostUpdate(Updates::All);
+	SubmitUpdate();
 }
 
 void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)

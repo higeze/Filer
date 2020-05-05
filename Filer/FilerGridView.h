@@ -114,35 +114,34 @@ public:
 	template <class Archive>
 	void save(Archive& ar)
 	{
-		//REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispNameColumn<std::shared_ptr<CShellFile>>);
-		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);
-		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>);
-		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispNameColumn<std::shared_ptr<CShellFile>>);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>);
 	
-		//ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
-		//ar("RowFrozenCount", m_frozenRowCount);
-		//ar("ColFrozenCount", m_frozenColumnCount);
+		ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
+		ar("RowFrozenCount", m_frozenRowCount);
+		ar("ColFrozenCount", m_frozenColumnCount);
 	}
 
 	template <class Archive>
 	void load(Archive& ar)
 	{
-		//REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn, this);
-		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispNameColumn<std::shared_ptr<CShellFile>>, this);
-		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>, this);
-		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
-		//REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn, this);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispNameColumn<std::shared_ptr<CShellFile>>, this, L"Name");
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>, this, L"Exe");
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
 
-		//TODOTODO
-		//ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
-		//for (auto& colPtr : m_allCols) {
-		//	if (auto p = std::dynamic_pointer_cast<CFileDispNameColumn>(colPtr)) {
-		//		m_pNameColumn = p;
-		//	} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
-		//		m_pHeaderColumn = p;
-		//	}
-		//}
+		ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
+		for (auto& colPtr : m_allCols) {
+			if (auto p = std::dynamic_pointer_cast<CFileDispNameColumn<std::shared_ptr<CShellFile>>>(colPtr)) {
+				m_pNameColumn = p;
+			} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
+				m_pHeaderColumn = p;
+			}
+		}
 		ar("RowFrozenCount", m_frozenRowCount);
 		ar("ColFrozenCount", m_frozenColumnCount);
 	}

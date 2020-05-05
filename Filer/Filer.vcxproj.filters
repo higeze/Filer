@@ -68,9 +68,6 @@
     <ClInclude Include="FileDragger.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="FileDraggingState.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="FileExtCell.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -637,9 +634,6 @@
     <ClCompile Include="FileDragger.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="FileDraggingState.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="Filer.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
@@ -650,9 +644,6 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FileSizeCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileSizeColumn.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="PathCell.cpp">

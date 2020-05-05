@@ -14,7 +14,7 @@ class CFileSizeColumn:public CMapColumn
 private:
 	std::shared_ptr<FileSizeArgs> m_spSizeArgs;
 public:
-	CFileSizeColumn(CSheet* pSheet, std::shared_ptr<FileSizeArgs> spSizeProp)
+	CFileSizeColumn(CSheet* pSheet = nullptr, std::shared_ptr<FileSizeArgs> spSizeProp = nullptr)
 		:CMapColumn(pSheet), m_spSizeArgs(spSizeProp)
 	{
 	}

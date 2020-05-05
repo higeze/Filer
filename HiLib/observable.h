@@ -176,14 +176,15 @@ public:
 	iterator notify_insert(const_iterator position, const T& x)
 	{
 		auto ret = std::vector<T, Allocator>::insert(position, x);
+		auto index = std::distance(std::vector<T, Allocator>::begin(), ret);
 		if (VectorChanged) {
 			VectorChanged(NotifyVectorChangedEventArgs<T>
 			{
 				NotifyVectorChangedAction::Insert,
 				{ x },
-					(int)std::distance((const_iterator)std::vector<T, Allocator>::begin(), position),
+				index,
 				{},
-					-1
+				-1
 			});
 		}
 		return ret;

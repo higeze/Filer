@@ -7,22 +7,15 @@
 #include "ShellFile.h"
 #include "ThreadPool.h"
 
-
-//Copy
-//destIDL, srcIDL, srcChildIDLs
-//RenameFileGrid
-//Move
-//destIDL, srcIDL, srcChildIDLs
-//RenameFileGrid
-
-
+//TODOTODO
 //Rename
 //srcIDL, srcChildIDLs
+
 //Replace
 //RenameFileGrid
+
 //Delete
 //srcIDL, srcChildIDLs
-
 
 CFileOperationWndBase::CFileOperationWndBase(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 											 const std::wstring& buttonText,

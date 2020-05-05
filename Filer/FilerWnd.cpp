@@ -207,10 +207,9 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		spFavoritesView->CreateWindowExArgument()
 			.dwStyle(spFavoritesView->CreateWindowExArgument().dwStyle() | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | (rc.operator bool() ? WS_VISIBLE : 0))
 			.hMenu((HMENU)id);
-		spFavoritesView->FileChosen.connect([&](std::shared_ptr<CShellFile>& spFile)->void {
+		spFavoritesView->FileChosen = [&](std::shared_ptr<CShellFile>& spFile)->void {
 			spView->GetGridView()->Open(spFile);
-			spView->GetGridView()->SetFocus();
-		});
+			spView->GetGridView()->SetFocus();};
 		spFavoritesView->Create(m_hWnd, rc);
 	};
 	createFavoritesView(m_spLeftFavoritesView, m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFavoritesGridView"), rcLeftFavorites);
@@ -302,9 +301,9 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 					STRRET strret;
 					psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
 					std::wstring path = shell::STRRET2WSTR(strret, pIdl);
-					GetFavoritesPropPtr()->GetFavorites().push_back(std::make_shared<CFavorite>(path, L""));
-					m_spLeftFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spLeftFavoritesView.get()));
-					m_spRightFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spRightFavoritesView.get()));
+					GetFavoritesPropPtr()->GetFavorites().notify_push_back(std::make_tuple(std::make_shared<CFavorite>(path, L"")));
+					//m_spLeftFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spLeftFavoritesView.get()));
+					//m_spRightFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spRightFavoritesView.get()));
 				}
 				m_spLeftFavoritesView->SubmitUpdate();
 				m_spRightFavoritesView->SubmitUpdate();
@@ -681,11 +680,10 @@ LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndC
 
 LRESULT CFilerWnd::OnCommandExeExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	return 0;
-	//return OnCommandOption<ExeExtensionProperty>(L"Exe extension Property", m_spExeExProp,
-	//	[this](const std::wstring& str)->void {
-	//	SerializeProperty(this);
-	//});
+	return OnCommandOption<ExeExtensionProperty>(L"Exe extension Property", m_spExeExProp,
+		[this](const std::wstring& str)->void {
+		SerializeProperty(this);
+	});
 }
 
 LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)

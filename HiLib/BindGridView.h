@@ -19,16 +19,20 @@ public:
 				  std::shared_ptr<observable_vector<std::tuple<TItems...>>> spItemsSource = nullptr)
 		:CGridView(spGridViewProp), m_spItemsSource(spItemsSource)
 	{
+		//ItemsSource
 		if (!m_spItemsSource) {
 			m_spItemsSource = std::make_shared<observable_vector<std::tuple<TItems...>>>();
 		}
-
-		auto& test = GetItemsSource();
-		GetItemsSource().VectorChanged =
+		//VectorChanged
+		auto& itemsSource = GetItemsSource();
+		auto funVectorChanged =
 			[this](const NotifyVectorChangedEventArgs<std::tuple<TItems...>>& e)->void {
 			switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
 					PushRow(std::make_shared<CBindRow<TItems...>>(this));
+					break;
+				case NotifyVectorChangedAction::Insert:
+					InsertRow(e.NewStartingIndex, std::make_shared<CBindRow<TItems...>>(this));
 					break;
 				case NotifyVectorChangedAction::Remove:
 				{
@@ -47,7 +51,23 @@ public:
 				default:
 					break;
 			}
+			SubmitUpdate();
 		};
+
+		if (itemsSource.VectorChanged) {
+			itemsSource.VectorChanged =
+				[existingFun = itemsSource.VectorChanged, newFun = funVectorChanged](const NotifyVectorChangedEventArgs<std::tuple<TItems...>>& e)->void {
+				existingFun(e);
+				newFun(e);
+			};
+		} else {
+			itemsSource.VectorChanged = funVectorChanged;
+		}
+		//PushNewRow
+		for (auto& tup : itemsSource) {
+			PushRow(std::make_shared<CBindRow<TItems...>>(this));
+		}
+
 	}
 
 	observable_vector<std::tuple<TItems...>>& GetItemsSource() { return *m_spItemsSource; }
@@ -58,9 +78,9 @@ public:
 		auto& itemsSource = GetItemsSource();
 		auto fromIter = itemsSource.cbegin() + (e.m_from - GetFrozenCount<RowTag>());
 		auto temp = *fromIter;
-		itemsSource.erase(fromIter);
+		itemsSource.notify_erase(fromIter);
 		auto toIter = itemsSource.cbegin() + (e.m_to - GetFrozenCount<RowTag>());
-		itemsSource.insert(toIter, temp);
+		itemsSource.notify_insert(toIter, temp);
 	}
 
 };

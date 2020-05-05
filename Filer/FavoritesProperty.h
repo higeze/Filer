@@ -19,23 +19,8 @@ public:
 	observable_vector<std::tuple<std::shared_ptr<CFavorite>>>& GetFavorites(){return *m_spFavorites;}
 
     template <class Archive>
-    void save(Archive& ar)
+    void serialize(Archive& ar)
     {
-		std::vector<std::shared_ptr<CFavorite>> favorites;
-		for (auto tup : *m_spFavorites) {
-			favorites.push_back(std::get<0>(tup));
-		}
-		ar("Favorites", favorites);
+		ar("Favorites", m_spFavorites);
     }
-
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		std::vector<std::shared_ptr<CFavorite>> favorites;
-		ar("Favorites", favorites);
-		for (auto obj : favorites) {
-			m_spFavorites->push_back(std::make_tuple(obj));
-		}
-	}
-
 };

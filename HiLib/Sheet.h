@@ -248,6 +248,7 @@ public:
 	virtual FLOAT GetColumnInitWidth(CColumn* pColumn);
 	virtual FLOAT GetColumnFitWidth(CColumn* pColumn);
 
+	virtual FLOAT GetRowFitHeight(CRow* pRow);
 	virtual FLOAT GetRowHeight(CRow* pRow);
 
 	virtual std::wstring GetSheetString()const;

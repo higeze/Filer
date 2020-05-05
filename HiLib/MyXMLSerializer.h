@@ -12,6 +12,10 @@
 #include "CellProperty.h"
 #include "observable.h"
 
+
+/*********************/
+/* POLYMORPHIC MACRO */
+/*********************/
 #define CLEAR_POLYMORPHIC_RELATION \
 	CSerializer::s_dynamicSerializeMap.clear();\
 	CDeserializer::s_dynamicDeserializeMap.clear();\
@@ -31,6 +35,9 @@ CDeserializer::s_dynamicMakeSharedMap.insert_or_assign(\
 	return std::make_shared<Derived>(__VA_ARGS__);\
 })
 
+/*********************/
+/* POLYMORPHIC MACRO */
+/*********************/
 class CSerializer{
 private:
 	MSXML2::IXMLDOMDocumentPtr m_pDoc;
@@ -47,13 +54,18 @@ public:
 	template<class char_type,class T>
 	void operator()(const char_type* lpszName, T& tValue)
 	{
-		MSXML2::IXMLDOMElementPtr pElem = m_pDoc->createElement(_bstr_t(lpszName));
-		if (m_pElem) {
-			m_pElem->appendChild(pElem);
-		} else {
-			m_pDoc->appendChild(pElem);
+		try {
+			MSXML2::IXMLDOMElementPtr pElem = m_pDoc->createElement(_bstr_t(lpszName));
+			if (m_pElem) {
+				m_pElem->appendChild(pElem);
+			} else {
+				m_pDoc->appendChild(pElem);
+			}
+			SerializeValue(tValue, pElem);
 		}
-		SerializeValue(tValue, pElem);
+		catch (...) {
+
+		}
 	}
 
 	//For base
@@ -127,7 +139,7 @@ public:
 	}
 
 
-	//For shared_ptr
+	//For shared_ptr abstruct
 	template<class T, ENABLE_IF_ABSTRUCT>
 	void SerializeValue(std::shared_ptr<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
 	{
@@ -138,7 +150,7 @@ public:
 		}
 		throw std::exception("No registration for abstruct class");
 	}
-
+	//For shared_ptr not abstruct
 	template<class T, ENABLE_IF_NOTABSTRUCT>
 	void SerializeValue(std::shared_ptr<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
 	{
@@ -151,6 +163,10 @@ public:
 		}
 	}
 };
+
+/*****************/
+/* CDeserializer */
+/*****************/
 
 class CDeserializer{
 private:
@@ -166,35 +182,26 @@ public:
 	static std::map<std::string, std::function<void(CDeserializer*, MSXML2::IXMLDOMElementPtr, void*)>> s_dynamicDeserializeMap;
 	static std::map<std::string, std::function<std::shared_ptr<void>()>> s_dynamicMakeSharedMap;
 
-	//operator()
-	//template<class char_type,class T>
-	//void operator()(const char_type* lpszName,T& tValue)
-	//{
-	//	std::vector<MSXML2::IXMLDOMElementPtr> vpElem;
-	//	if(m_pElem){
-	//		vpElem=GetChildElementsByTagName(m_pElem,lpszName);
-	//	}else{
-	//		vpElem=GetChildElementsByTagName(m_pDoc,lpszName);		
-	//	}
-	//	if(vpElem.size()==1){
-	//		MSXML2::IXMLDOMElementPtr pElem=vpElem[0];
-	//		DeserializeElement(tValue,pElem);
-	//	}
-	//}
-
 	template<class char_type, class T, class... U>
 	void operator()(const char_type* lpszName, T& tValue, U... args)
 	{
-		std::vector<MSXML2::IXMLDOMElementPtr> vpElem;
-		if (m_pElem) {
-			vpElem = GetChildElementsByTagName(m_pElem, lpszName);
+		try {
+			std::vector<MSXML2::IXMLDOMElementPtr> vpElem;
+			if (m_pElem) {
+				vpElem = GetChildElementsByTagName(m_pElem, lpszName);
+			} else {
+				vpElem = GetChildElementsByTagName(m_pDoc, lpszName);
+			}
+
+			if (vpElem.size() == 1) {
+				MSXML2::IXMLDOMElementPtr pElem = vpElem[0];
+				DeserializeElement(tValue, pElem, args...);
+			}
 		}
-		else {
-			vpElem = GetChildElementsByTagName(m_pDoc, lpszName);
-		}
-		if (vpElem.size() == 1) {
-			MSXML2::IXMLDOMElementPtr pElem = vpElem[0];
-			DeserializeElement(tValue, pElem, args...);
+		catch(...){
+			std::string msg;
+			MessageBoxA(NULL, msg.c_str(), "Exception in deserialize", MB_ICONWARNING);
+
 		}
 	}
 	
@@ -219,12 +226,6 @@ public:
 	}
 
 	//For serialize
-	//template<class T, ENABLE_IF_SERIALIZE>
-	//void DeserializeElement(T& tValue,MSXML2::IXMLDOMElementPtr pElem)
-	//{
-	//	tValue.serialize(CDeserializer(m_pDoc,pElem));
-	//}
-
 	template<class T, class... U, typename ENABLE_IF_SERIALIZE>
 	void DeserializeElement(T& tValue, MSXML2::IXMLDOMElementPtr pElem, U... args)
 	{
@@ -232,12 +233,6 @@ public:
 	}
 
 	//For save load
-	//template<class T>
-	//void DeserializeElement(T& tValue, MSXML2::IXMLDOMElementPtr pElem, ENABLE_IF_SAVE_LOAD)
-	//{
-	//	tValue.load(CDeserializer(m_pDoc, pElem));
-	//}
-
 	template<class T, class... U, typename ENABLE_IF_SAVE_LOAD>
 	void DeserializeElement(T& tValue, MSXML2::IXMLDOMElementPtr pElem, U... args)
 	{
@@ -259,13 +254,16 @@ public:
 
 	//For observable_vector
 	template<class T>
-	void DeserializeElement(observable_vector<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
+	void DeserializeElement(observable_vector<T>& tVector, MSXML2::IXMLDOMElementPtr pElem)
 	{
 		std::vector<MSXML2::IXMLDOMElementPtr> vpItemElem = GetChildElementsByTagName(pElem, "item");
+		
 		if (!vpItemElem.empty()) {
-			tValue.resize(vpItemElem.size());
+			tVector.notify_clear();
 			for (UINT n = 0, nSize = vpItemElem.size(); n < nSize; ++n) {
-				DeserializeElement(tValue[n], vpItemElem[n]);
+				auto t = CreateInstance<T>();
+				DeserializeElement(t, vpItemElem[n]);
+				tVector.notify_push_back(t);
 			}
 		}
 	}
@@ -286,7 +284,7 @@ public:
 		if (var.vt != VT_NULL) {
 
 			std::string key;
-			::strcpy_s(::GetBuffer(key, 32), 32 * sizeof(char) / sizeof(byte), (_bstr_t)var);
+			::strcpy_s(::GetBuffer(key, 256), 256 * sizeof(char) / sizeof(byte), (_bstr_t)var);
 			::ReleaseBuffer(key);
 
 			//Dynamic Make shared
@@ -314,7 +312,7 @@ public:
 		if (var.vt != VT_NULL) {
 
 			std::string key;
-			::strcpy_s(::GetBuffer(key, 32), 32 * sizeof(char) / sizeof(byte), (_bstr_t)var);
+			::strcpy_s(::GetBuffer(key, 256), 256 * sizeof(char) / sizeof(byte), (_bstr_t)var);
 			::ReleaseBuffer(key);
 
 			//Dynamic Make shared
@@ -338,15 +336,6 @@ public:
 		}
 		DeserializeElement(*tValue, pElem);
 	}
-
-	//template<class T, class... U>
-	//void DeserializeElement(std::shared_ptr<T>& tValue, MSXML2::IXMLDOMElementPtr pElem, U... args)
-	//{
-	//	if (!tValue) {
-	//		tValue = std::make_shared<T>(args...);
-	//	}
-	//	DeserializeElement(*tValue, pElem);
-	//}
 };
 
 template<class T>
@@ -407,17 +396,6 @@ public:
 		//Save
 		return pDoc;
 	}
-
-	//template<class char_type>
-	//MSXML2::IXMLDOMElementPtr Serialize(MSXML2::IXMLDOMDocumentPtr pDoc,const char_type* lpszRootName, T& tObj)
-	//{
-	//	MSXML2::IXMLDOMElementPtr pElem=pDoc->createElement(_bstr_t(lpszRootName));
-	//	//Serialize
-	//	CSerializer serializer(pDoc,pElem);
-	//	serializer(lpszRootName,tObj);	
-	//	//Save
-	//	return pDoc;
-	//}
 
 	template<class char_type>
 	void Deserialize(MSXML2::IXMLDOMDocumentPtr pDoc, const char_type* lpszRootName, T& tObj)

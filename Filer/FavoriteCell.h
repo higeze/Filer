@@ -104,7 +104,7 @@ public:
 			auto& itemsSource = static_cast<CFavoritesGridView*>(m_pSheet)->GetItemsSource();
 			auto order = pRow->GetIndex<AllTag>();
 
-			itemsSource.erase(std::next(itemsSource.cbegin(), order));
+			itemsSource.notify_erase(std::next(itemsSource.cbegin(), order));
 			pFilerWnd->GetLeftFavoritesView()->Reload();
 			pFilerWnd->GetRightFavoritesView()->Reload();
 			pFilerWnd->InvalidateRect(NULL, FALSE);

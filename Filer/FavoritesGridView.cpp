@@ -59,56 +59,37 @@ LRESULT CFavoritesGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL&
 	return 0;
 }
 
-LRESULT CFavoritesGridView::OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	bHandled = true;
-	return MA_NOACTIVATE;
-}
+//LRESULT CFavoritesGridView::OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+//{
+//	bHandled = true;
+//	return MA_NOACTIVATE;
+//}
 
 void CFavoritesGridView::OpenFavorites()
 {
 	SPDLOG_INFO("CFavoritesGridView::OpenFavorites");
 
 	CONSOLETIMER("OpenFavorites Total");
-	{
-		CONSOLETIMER("OpenFavorites Pre-Process");
 
-		//Direct2DWrite
-		m_pDirect->ClearTextLayoutMap();
-		//Celler
-		m_spCeller->Clear();
+	//Direct2DWrite
+	m_pDirect->ClearTextLayoutMap();
+	//Celler
+	m_spCeller->Clear();
+	//Cursor
+	m_spCursorer->Clear();
 
-		//Cursor
-		m_spCursorer->Clear();
-
-		if (Empty()) {
-			//IconColumn
-			{
-				auto pColumn = std::make_shared<CFavoritesColumn<std::shared_ptr<CFavorite>>>(this);
-				PushColumn(pColumn);
-			}
+	if (Empty()) {
+		//IconColumn
+		{
+			auto pColumn = std::make_shared<CFavoritesColumn<std::shared_ptr<CFavorite>>>(this);
+			PushColumn(pColumn);
 		}
-		//Clear RowDictionary From 0 to last
-		m_allRows.idx_erase(m_allRows.begin()+m_frozenRowCount, m_allRows.end());
 	}
 
-	{
-		CONSOLETIMER("OpenFavorites Enumeration");
 
-		try {
-			//Enumerate favorites
-			for (size_t i = 0; i < m_spFavoritesProp->GetFavorites().size(); i++) {
-				PushRow(std::make_shared<CBindRow<std::shared_ptr<CFavorite>>>(this));
-			}
-
-			for (auto colPtr : m_allCols) {
-				std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
-				colPtr->SetIsMeasureValid(false);
-			}
-
-		} catch (...) {
-			throw std::exception(FILE_LINE_FUNC);
-		}
+	for (auto colPtr : m_allCols) {
+		std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
+		colPtr->SetIsMeasureValid(false);
 	}
 
 	PostUpdate(Updates::Sort);
@@ -147,6 +128,4 @@ void CFavoritesGridView::Reload()
 		(std::get<0>((*iter)))->SetLockShellFile(nullptr);
 	}
 	OpenFavorites();
-	//PostUpdate(Updates::All);
-	//SubmitUpdate();
 }

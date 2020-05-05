@@ -23,7 +23,6 @@ protected:
 	std::wstring m_filter; //Filter string
 
 public:
-	FRIEND_SERIALIZER
 	template <class Archive>
 	void save(Archive& ar)
 	{

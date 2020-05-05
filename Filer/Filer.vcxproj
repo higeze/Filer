@@ -354,7 +354,6 @@
     <ClInclude Include="FavoritesItemDragger.h" />
     <ClInclude Include="FavoritesProperty.h" />
     <ClInclude Include="FileDragger.h" />
-    <ClInclude Include="FileDraggingState.h" />
     <ClInclude Include="FileExtCell.h" />
     <ClInclude Include="FileIconCell.h" />
     <ClInclude Include="FavoriteCell.h" />
@@ -463,13 +462,11 @@
     <ClCompile Include="Favorite.cpp" />
     <ClCompile Include="FavoritesGridView.cpp" />
     <ClCompile Include="FileDragger.cpp" />
-    <ClCompile Include="FileDraggingState.cpp" />
     <ClCompile Include="Filer.cpp" />
     <ClCompile Include="FilerGridView.cpp" />
     <ClCompile Include="FilerTabGridView.cpp" />
     <ClCompile Include="FilerWnd.cpp" />
     <ClCompile Include="FileSizeCell.cpp" />
-    <ClCompile Include="FileSizeColumn.cpp" />
     <ClCompile Include="KnownFolder.cpp" />
     <ClCompile Include="PathCell.cpp" />
     <ClCompile Include="ShellFile.cpp" />

@@ -17,7 +17,7 @@ class CFileLastWriteColumn:public CMapColumn
 private:
 	std::shared_ptr<FileTimeArgs> m_spTimeArgs;
 public:
-	CFileLastWriteColumn(CSheet* pSheet, std::shared_ptr<FileTimeArgs> spTimeProp)
+	CFileLastWriteColumn(CSheet* pSheet = nullptr, std::shared_ptr<FileTimeArgs> spTimeProp = nullptr)
 		:CMapColumn(pSheet), m_spTimeArgs(spTimeProp)
 	{
 	}
