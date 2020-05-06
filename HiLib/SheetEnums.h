@@ -96,13 +96,13 @@ enum class Compares{
 
 enum class Updates{
 	None,
-	Sort,
-	Filter,
-	Rect,
-	RowVisible,
-	ColumnVisible,
-	Column,
-	Row,
+	Filter,//Update Row IsVisible
+	Rect,//Move Window
+	RowVisible,//AllContainer->VisContainer
+	ColumnVisible,//AllContainer->VisContainer
+	Sort,//Sort VisContainer
+	Column,//Start&Length
+	Row,//Start&Length
 	Scrolls,
 	EnsureVisibleFocusedCell,
 	Invalidate,

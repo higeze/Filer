@@ -59,10 +59,6 @@ public:
 				{
 					auto spRow = std::make_shared<CBindRow<TValueItem>>(this);
 					PushRow(spRow);
-					//TODOTODO
-					//auto spColValue = Index2Pointer<ColTag, AllTag>(GetFrozenCount<ColTag>() + 1);
-					//CCellSerializer serializer(this);
-					//serializer.SerializeValue(e.NewItems[0], spRow.get(), spColValue.get());
 					break;
 				}
 				case NotifyVectorChangedAction::Remove:

@@ -894,7 +894,23 @@ bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 
 bool CFilerGridView::DeleteSelectedFiles()
 {
-	CThreadPool::GetInstance()->enqueue(&shell::DeleteFiles, GetSelectedAbsolutePIDLVector());
+	//Create
+	auto pWnd = new CDeleteWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
+							 m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
+
+	HWND hWnd = NULL;
+	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+		hWnd = m_hWnd;
+	} else {
+		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	}
+
+	pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 300));
+	//pWnd->SetFinalAction([&]() {g_hDlgModeless = NULL; });
+	pWnd->SetIsDeleteOnFinalMessage(true);
+	pWnd->ShowWindow(SW_SHOW);
+	pWnd->UpdateWindow();
+
 	return true;
 }
 

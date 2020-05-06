@@ -46,6 +46,12 @@ public:
 	}
 
 	template <class RandomAccessIterator, class Compare>
+	void stable_sort(RandomAccessIterator first, RandomAccessIterator last, Compare comp)
+	{
+		std::stable_sort(first, last, comp);
+	}
+
+	template <class RandomAccessIterator, class Compare>
 	void idx_stable_sort(RandomAccessIterator first, RandomAccessIterator last, Compare comp){
 		std::stable_sort(first, last, comp);
 

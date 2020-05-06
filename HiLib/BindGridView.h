@@ -73,16 +73,15 @@ public:
 	observable_vector<std::tuple<TItems...>>& GetItemsSource() { return *m_spItemsSource; }
 	//std::vector<std::tuple<TItems...>>& GetSelectedItems() { return m_funSelItems(); }
 
-	void RowMoved(CMovedEventArgs<RowTag>& e) override
-	{
-		auto& itemsSource = GetItemsSource();
-		auto fromIter = itemsSource.cbegin() + (e.m_from - GetFrozenCount<RowTag>());
-		auto temp = *fromIter;
-		itemsSource.notify_erase(fromIter);
-		auto toIter = itemsSource.cbegin() + (e.m_to - GetFrozenCount<RowTag>());
-		itemsSource.notify_insert(toIter, temp);
-	}
-
+	//void RowMoved(CMovedEventArgs<RowTag>& e) override
+	//{
+	//	auto& itemsSource = GetItemsSource();
+	//	auto fromIter = itemsSource.cbegin() + (e.m_from - GetFrozenCount<RowTag>());
+	//	auto temp = *fromIter;
+	//	itemsSource.notify_erase(fromIter);
+	//	auto toIter = itemsSource.cbegin() + (e.m_to - GetFrozenCount<RowTag>());
+	//	itemsSource.notify_insert(toIter, temp);
+	//}
 };
 
 //

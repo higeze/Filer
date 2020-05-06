@@ -30,6 +30,8 @@ public:
 	void FilterAll() override {/*Do nothing*/}
 	void Reload();
 
+	virtual void RowMoved(CMovedEventArgs<RowTag>& e) override;
+
 public:
 	template <class Archive>
 	void serialize(Archive& ar)

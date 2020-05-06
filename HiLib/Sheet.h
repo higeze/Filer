@@ -550,7 +550,7 @@ public:
 	template<typename TRC>
 	void Move(int indexTo, typename TRC::SharedPtr spFrom)
 	{
-		int from = spFrom->GetIndex<AllTag>();
+		int from = spFrom->GetIndex<VisTag>();
 		int to = indexTo;
 		if (to>from) {
 			to--;
@@ -558,7 +558,7 @@ public:
 
 		}
 
-		auto& container = GetContainer<TRC, AllTag>();
+		auto& container = GetContainer<TRC, VisTag>();
 		auto iter = std::find(container.begin(), container.end(), spFrom);
 		if (iter != container.end()) {
 			container.idx_erase(iter);
@@ -569,10 +569,10 @@ public:
 		Moved<TRC>(CMovedEventArgs<TRC>(spFrom, from, to));
 
 		//ColumnMoved(CColumnMovedEventArgs(nullptr, from, to));//TODO change to tag dispatch
-		PostUpdate(Updates::RowVisible);
+		//PostUpdate(Updates::RowVisible);
 		PostUpdate(Updates::Row);
 
-		PostUpdate(Updates::ColumnVisible);
+		//PostUpdate(Updates::ColumnVisible);
 		PostUpdate(Updates::Column);
 		//PostUpdate(Updates::Row);
 		PostUpdate(Updates::Scrolls);

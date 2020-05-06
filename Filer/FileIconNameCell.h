@@ -33,7 +33,7 @@ public:
 		//Paint Icon
 		auto spFile = GetShellFile();
 		d2dw::CRectF rcIcon = GetIconSizeF(pDirect);
-		rcIcon.MoveToXY(rcPaint.left, rcPaint.top);//TODOTODO
+		rcIcon.MoveToXY(rcPaint.left, rcPaint.top);
 
 		std::weak_ptr<CFileIconNameCellBase> wp(shared_from_this());
 		std::function<void()> updated = [wp]()->void {
@@ -203,7 +203,10 @@ template<typename... TItems>
 class CFileRenameCell :public CTextCell
 {
 public:
-	using CTextCell::CTextCell;
+	CFileRenameCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
+	{
+	}
 
 	virtual ~CFileRenameCell(void) {}
 

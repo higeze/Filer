@@ -111,16 +111,16 @@ void CFavoritesGridView::OnCellLButtonDblClk(CellEventArgs& e)
 		}
 	}
 }
-//
-//void CFavoritesGridView::RowMoved(CMovedEventArgs<RowTag>& e)
-//{
-//	auto favorites(m_spFavoritesProp->GetFavorites());
-//	auto fromIter = favorites->begin(); std::advance(fromIter, e.m_from);
-//	auto temp = *fromIter;
-//	favorites->erase(fromIter);
-//	auto toIter = favorites->begin(); std::advance(toIter, e.m_to);
-//	favorites->insert(toIter, temp);
-//}
+
+void CFavoritesGridView::RowMoved(CMovedEventArgs<RowTag>& e)
+{
+	auto& itemsSource = GetItemsSource();
+	auto fromIter = itemsSource.cbegin() + (e.m_from - GetFrozenCount<RowTag>());
+	auto temp = *fromIter;
+	itemsSource.notify_erase(fromIter);
+	auto toIter = itemsSource.cbegin() + (e.m_to - GetFrozenCount<RowTag>());
+	itemsSource.notify_insert(toIter, temp);
+}
 
 void CFavoritesGridView::Reload()
 {

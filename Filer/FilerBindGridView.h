@@ -203,12 +203,7 @@ public:
 				}
 				break;
 			case VK_DELETE:
-				{
-					int okcancel = ::MessageBox(m_hWnd, L"Delete?", L"Delete?", MB_OKCANCEL);
-					if (okcancel == IDOK) {
-						DeleteSelectedFiles();
-					}
-				}
+				DeleteSelectedFiles();
 				break;
 			case VK_RETURN:
 				{

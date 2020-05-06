@@ -141,14 +141,15 @@ void CSheet::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 void CSheet::OnRowPropertyChanged(CRow* pRow, const wchar_t* name)
 {
 	if (!_tcsicmp(name, L"selected")) {
-		PostUpdate(Updates::RowVisible);
-		PostUpdate(Updates::Column);
-		PostUpdate(Updates::Row);
+		////0506PostUpdate(Updates::RowVisible);
+		////0506PostUpdate(Updates::Column);
+		////0506PostUpdate(Updates::Row);
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
 	} else if (_tcsicmp(name, L"visible") == 0) {
 		PostUpdate(Updates::RowVisible);
 		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Column);
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);//
 	}
@@ -327,16 +328,17 @@ void CSheet::PostUpdate(Updates type)
 		m_setUpdate.insert(Updates::Invalidate);
 		break;
 	case Updates::EnsureVisibleFocusedCell:
-		m_setUpdate.insert(Updates::RowVisible);
+		////0506m_setUpdate.insert(Updates::RowVisible);
 		m_setUpdate.insert(Updates::Row);
-		m_setUpdate.insert(Updates::ColumnVisible);
+		////0506m_setUpdate.insert(Updates::ColumnVisible);
 		m_setUpdate.insert(Updates::Column);
 		m_setUpdate.insert(Updates::Scrolls);
+		////0506m_setUpdate.insert(Updates::Sort);
 		m_setUpdate.insert(type);
 		m_setUpdate.insert(Updates::Invalidate);
 		break;
 	case Updates::Sort:
-		m_setUpdate.insert(Updates::RowVisible);
+		////0506m_setUpdate.insert(Updates::RowVisible);
 		m_setUpdate.insert(Updates::Row);
 		m_setUpdate.insert(type);
 		m_setUpdate.insert(Updates::Invalidate);
@@ -349,6 +351,8 @@ void CSheet::PostUpdate(Updates type)
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
 		m_setUpdate.insert(type);
+	case Updates::RowVisible:
+		m_setUpdate.insert(Updates::Sort);
 	default:
 		m_setUpdate.insert(type);
 		break;
@@ -421,14 +425,14 @@ void CSheet::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
 	//Sort
 	switch(sort){
 	case Sorts::Down:
-		m_allRows.idx_stable_sort(m_allRows.begin() + m_frozenRowCount,m_allRows.end(),
+		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
 			[pCol](const auto& lhs, const auto& rhs)->bool{
 				return _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str()) > 0;
 			});
 
 		break;
 	case Sorts::Up:
-		m_allRows.idx_stable_sort(m_allRows.begin() + m_frozenRowCount, m_allRows.end(),
+		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
 			[pCol](const auto& lhs, const auto& rhs)->bool {
 				return _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str()) < 0;
 			});

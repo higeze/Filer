@@ -322,7 +322,7 @@ void CGridView::UpdateColumn()
 
 	FLOAT left = GetCellProperty()->Line->Width / 2.0f;
 
-	for (auto& colPtr : m_allCols) {
+	for (auto& colPtr : m_visCols) {
 		if (colPtr->GetIndex<VisTag>() == GetFrozenCount<ColTag>()) {
 			left -= GetHorizontalScrollPos();
 		}

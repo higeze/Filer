@@ -199,9 +199,7 @@ public:
 			}
 		}
 		catch(...){
-			std::string msg;
-			MessageBoxA(NULL, msg.c_str(), "Exception in deserialize", MB_ICONWARNING);
-
+			MessageBoxA(NULL, (LPCSTR)lpszName, "Exception in deserialize", MB_ICONWARNING);
 		}
 	}
 	
