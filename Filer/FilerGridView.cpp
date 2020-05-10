@@ -126,13 +126,13 @@ LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHa
 	m_pDragSourceHelper.CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER);
 
 	//Insert rows
-	m_rowHeader = std::make_shared<CPathRow>(this);
-	m_rowNameHeader = std::make_shared<CHeaderRow>(this);
-	m_rowFilter = std::make_shared<CRow>(this);
+	m_pHeaderRow = std::make_shared<CPathRow>(this);
+	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this);
+	m_pFilterRow = std::make_shared<CRow>(this);
 
-	m_allRows.idx_push_back(m_rowHeader);
-	m_allRows.idx_push_back(m_rowNameHeader);
-	m_allRows.idx_push_back(m_rowFilter);
+	m_allRows.idx_push_back(m_pHeaderRow);
+	m_allRows.idx_push_back(m_pNameHeaderRow);
+	m_allRows.idx_push_back(m_pFilterRow);
 
 	m_frozenRowCount = 3;
 
@@ -729,7 +729,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 
 
 		//PathCell
-		auto pPathCell = CSheet::Cell(m_rowHeader, m_pNameColumn);
+		auto pPathCell = CSheet::Cell(m_pHeaderRow, m_pNameColumn);
 		pPathCell->OnPropertyChanged(L"value");
 
 		PostUpdate(Updates::Sort);
@@ -766,7 +766,6 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 			}
 
 		}
-		SubmitUpdate();
 	}
 }
 
@@ -1064,17 +1063,17 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		}
 		vPidl.push_back(m_spFolder->GetAbsoluteIdl().FindLastID());
 		ShowShellContextMenu(m_hWnd, ptScreen, pFolder, vPidl, true);
-	}else if(cell->GetRowPtr() == m_rowHeader.get() || cell->GetRowPtr() == m_rowNameHeader.get()){
+	}else if(cell->GetRowPtr() == m_pHeaderRow.get() || cell->GetRowPtr() == m_pNameHeaderRow.get()){
 		//Header menu
 		CMenu menu(::CreatePopupMenu());
 		if (menu.IsNull()) { return; }
 		if (m_headerMenuItems.empty()) {
 			for (const auto& colPtr : m_allCols ) {
-				auto cell = CSheet::Cell(m_rowNameHeader, colPtr);
+				auto cell = CSheet::Cell(m_pNameHeaderRow, colPtr);
 				auto str = cell->GetString();
 				m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
 					IDM_VISIBLEROWHEADERCOLUMN + colPtr->GetIndex<AllTag>(),
-					Cell(m_rowNameHeader, colPtr)->GetString(), this, colPtr.get()));
+					Cell(m_pNameHeaderRow, colPtr)->GetString(), this, colPtr.get()));
 			}
 
 			for (auto& item : m_headerMenuItems) {

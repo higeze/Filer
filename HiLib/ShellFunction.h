@@ -62,7 +62,7 @@ namespace shell
 	bool GetFileSize(ULARGE_INTEGER& size, const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& childIdl);
 	std::wstring GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL, SHGDNF uFlags);
 
-	std::wstring STRRET2WSTR(STRRET& strret, LPITEMIDLIST pidl);
+	std::wstring strret2wstring(STRRET& strret, PCUITEMID_CHILD pidl);
 	std::tuple<std::wstring, std::wstring, std::wstring> GetPathNameExt(const CComPtr<IShellFolder>& pParentFolder, const LPITEMIDLIST& relativeIDL);
 	std::optional<FileTimes> GetFileTimes(const CComPtr<IShellFolder>& pParentFolder, const CIDL& relativeIDL);
 

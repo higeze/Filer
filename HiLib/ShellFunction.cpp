@@ -56,38 +56,18 @@ std::wstring shell::GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder,
 	STRRET strret{ 0 };
 	std::wstring ret;
 	if (SUCCEEDED(pParentFolder->GetDisplayNameOf(childIDL.ptr(), uFlags, &strret))) {
-		::StrRetToBufW(&strret, childIDL.ptr(), ::GetBuffer(ret, 256), 256);
-		::ReleaseBuffer(ret);
-		return ret;
+		return strret2wstring(strret, childIDL.ptr());
 	}
 	return ret;
 }
 
 
-std::wstring shell::STRRET2WSTR(STRRET& strret, LPITEMIDLIST pidl)
+std::wstring shell::strret2wstring(STRRET& strret, PCUITEMID_CHILD pidl)
 {
-	int nLength;
-	LPSTR lpmstr;
-	WCHAR wcRet[MAX_PATH] = { 0 };
-	switch (strret.uType) {
-	case STRRET_WSTR:
-		return std::wstring(strret.pOleStr);
-		break;
-	case STRRET_OFFSET:
-		lpmstr = (LPSTR)(((char*)pidl) + strret.uOffset);
-		nLength = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpmstr, -1, NULL, 0);
-		::MultiByteToWideChar(CP_THREAD_ACP, 0, lpmstr, -1, wcRet, nLength);
-		break;
-	case STRRET_CSTR:
-		lpmstr = strret.cStr;
-		nLength = ::MultiByteToWideChar(CP_THREAD_ACP, 0, lpmstr, -1, NULL, 0);
-		::MultiByteToWideChar(CP_THREAD_ACP, 0, lpmstr, -1, wcRet, nLength);
-		//::wcscpy_s(wcRet,wcslen(wcRet),(LPCWSTR)strret.cStr);
-		break;
-	default:
-		break;
-	}
-	return std::wstring(wcRet);
+	std::wstring ret;
+	::StrRetToBufW(&strret, pidl, ::GetBuffer(ret, 256), 256);
+	::ReleaseBuffer(ret);
+	return ret;
 }
 
 std::tuple<std::wstring, std::wstring, std::wstring> shell::GetPathNameExt(const CComPtr<IShellFolder>& pParentFolder, const LPITEMIDLIST& relativeIDL)
@@ -97,7 +77,7 @@ std::tuple<std::wstring, std::wstring, std::wstring> shell::GetPathNameExt(const
 	std::wstring name;
 	std::wstring ext;
 	if (SUCCEEDED(pParentFolder->GetDisplayNameOf(relativeIDL, SHGDN_FORPARSING, &strret))) {
-		path = shell::STRRET2WSTR(strret, relativeIDL);
+		path = shell::strret2wstring(strret, relativeIDL);
 		name = ::PathFindFileName(path.c_str());
 		ext = ::PathFindExtension(path.c_str());
 	}

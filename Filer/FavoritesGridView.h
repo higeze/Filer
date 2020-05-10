@@ -30,7 +30,7 @@ public:
 	void FilterAll() override {/*Do nothing*/}
 	void Reload();
 
-	virtual void RowMoved(CMovedEventArgs<RowTag>& e) override;
+	virtual void MoveRow(int indexTo, typename RowTag::SharedPtr spFrom) override;
 
 public:
 	template <class Archive>

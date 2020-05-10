@@ -125,5 +125,5 @@ void CSortCell::OnLButtonClk(const LButtonClkEvent& e)
 			m_pColumn->SetSort(Sorts::None);
 			break;
 	}
-	m_pSheet->SubmitUpdate();
+	//m_pSheet->SubmitUpdate();
 }

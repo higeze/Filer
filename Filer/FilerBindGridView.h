@@ -25,16 +25,15 @@ template<typename... TItems>
 class CFilerBindGridView :public CBindGridView<TItems...>
 {
 protected:
-	//Columns
-	std::shared_ptr<CColumn> m_pNameColumn;
-
 	//HeaderMenuItems
 	std::vector<std::shared_ptr<CShowHideColumnMenuItem>> m_headerMenuItems;
 public:
 	//Constructor
+	template<typename... TArgs>
 	CFilerBindGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-					   std::shared_ptr<observable_vector<std::tuple<TItems...>>> spItemsSource = nullptr)
-		:CBindGridView(std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), spItemsSource)
+					   std::shared_ptr<observable_vector<std::tuple<TItems...>>> spItemsSource = nullptr,
+					   TArgs... args)
+		:CBindGridView(std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), spItemsSource, args...)
 	{
 		m_cwa.dwExStyle(WS_EX_ACCEPTFILES);
 
@@ -54,8 +53,6 @@ public:
 
 	//Getter
 	std::shared_ptr<FilerGridViewProperty> GetFilerGridViewPropPtr() { return std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp); }
-	std::shared_ptr<CColumn> GetFileNameColumnPtr() { return m_pNameColumn; }
-	void SetFileNameColumnPtr(const std::shared_ptr<CColumn>& spCol) { m_pNameColumn = spCol; }
 	virtual bool HasSheetCell()override { return false; }
 	virtual bool IsVirtualPage()override { return true; }
 

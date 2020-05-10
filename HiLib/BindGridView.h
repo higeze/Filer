@@ -15,8 +15,10 @@ protected:
 	std::shared_ptr<observable_vector<std::tuple<TItems...>>> m_spItemsSource;
 
 public:
+	template<typename... TArgs> 
 	CBindGridView(std::shared_ptr<GridViewProperty>& spGridViewProp,
-				  std::shared_ptr<observable_vector<std::tuple<TItems...>>> spItemsSource = nullptr)
+				  std::shared_ptr<observable_vector<std::tuple<TItems...>>> spItemsSource = nullptr,
+				  TArgs... args)
 		:CGridView(spGridViewProp), m_spItemsSource(spItemsSource)
 	{
 		//ItemsSource
@@ -51,7 +53,6 @@ public:
 				default:
 					break;
 			}
-			SubmitUpdate();
 		};
 
 		if (itemsSource.VectorChanged) {
@@ -63,25 +64,56 @@ public:
 		} else {
 			itemsSource.VectorChanged = funVectorChanged;
 		}
+
+		//TArg...
+		m_pHeaderColumn = ::get(arg<"hdrcol"_s>(), args..., default_(nullptr));
+		if (m_pHeaderColumn) {
+			m_pHeaderColumn->SetSheetPtr(this);
+			PushColumn(m_pHeaderColumn);
+		}
+
+		m_pNameColumn = ::get(arg<"namecol"_s>(), args..., default_(nullptr));
+		if (m_pNameColumn) {
+			m_pNameColumn->SetSheetPtr(this);
+			PushColumn(m_pNameColumn);
+		}
+
+		m_pHeaderRow = ::get(arg<"hdrrow"_s>(), args..., default_(nullptr));
+		if (m_pHeaderRow){
+			m_pHeaderRow->SetSheetPtr(this);
+			PushRow(m_pHeaderRow);
+		}
+
+		m_pNameHeaderRow = ::get(arg<"namerow"_s>(), args..., default_(nullptr));
+		if (m_pNameHeaderRow) {
+			m_pNameHeaderRow->SetSheetPtr(this);
+			PushRow(m_pNameHeaderRow);
+		}
+
+		m_pFilterRow = ::get(arg<"fltrow"_s>(), args..., default_(nullptr));
+		if (m_pFilterRow) {
+			m_pFilterRow->SetSheetPtr(this);
+			PushRow(m_pFilterRow);
+		}
+
+		m_frozenColumnCount = ::get(arg<"frzcolcnt"_s>(), args..., default_(0));
+		m_frozenRowCount = ::get(arg<"frzrowcnt"_s>(), args..., default_(0));
+
+		std::vector<std::shared_ptr<CColumn>> columns;
+		columns = ::get(arg<"columns"_s>(), args..., default_(columns));
+		for (auto& spCol : columns) {
+			spCol->SetSheetPtr(this);
+			PushColumn(spCol);
+		}
+
 		//PushNewRow
 		for (auto& tup : itemsSource) {
 			PushRow(std::make_shared<CBindRow<TItems...>>(this));
 		}
-
 	}
 
 	observable_vector<std::tuple<TItems...>>& GetItemsSource() { return *m_spItemsSource; }
 	//std::vector<std::tuple<TItems...>>& GetSelectedItems() { return m_funSelItems(); }
-
-	//void RowMoved(CMovedEventArgs<RowTag>& e) override
-	//{
-	//	auto& itemsSource = GetItemsSource();
-	//	auto fromIter = itemsSource.cbegin() + (e.m_from - GetFrozenCount<RowTag>());
-	//	auto temp = *fromIter;
-	//	itemsSource.notify_erase(fromIter);
-	//	auto toIter = itemsSource.cbegin() + (e.m_to - GetFrozenCount<RowTag>());
-	//	itemsSource.notify_insert(toIter, temp);
-	//}
 };
 
 //

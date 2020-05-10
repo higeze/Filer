@@ -1,5 +1,5 @@
 #include "FileOperationWnd.h"
-
+#include "named_arguments.h"
 //TODOTODO
 //RenameWnd
 
@@ -10,33 +10,9 @@ CCopyMoveWndBase::CCopyMoveWndBase(
 	std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 	const std::wstring& buttonText,
 	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CFileOperationWndBase(spFilerGridViewProp, buttonText, srcIDL, srcChildIDLs), m_destIDL(destIDL) {}
-
-void CCopyMoveWndBase::InitializeFileGrid()
+	:CFileOperationWndBase(spFilerGridViewProp, buttonText, srcIDL, srcChildIDLs), m_destIDL(destIDL)
 {
-	//Insert rows
-	m_pFileGrid->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(m_pFileGrid.get()));
-	m_pFileGrid->SetFilterRowPtr(std::make_shared<CRow>(m_pFileGrid.get()));
-	m_pFileGrid->PushRows(
-		m_pFileGrid->GetNameHeaderRowPtr(),
-		m_pFileGrid->GetFilterRowPtr());
-
-	m_pFileGrid->SetFrozenCount<RowTag>(2);
-
-	//Insert columns
-	m_pFileGrid->SetFileNameColumnPtr(std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>, RenameInfo>>(m_pFileGrid.get(), L"Name"));
-	m_pFileGrid->PushColumns(
-		std::make_shared<CRowIndexColumn>(m_pFileGrid.get()),
-		m_pFileGrid->GetFileNameColumnPtr(),
-		std::make_shared<CFilePathExtColumn<std::shared_ptr<CShellFile>, RenameInfo>>(m_pFileGrid.get(), L"Ext"),
-		std::make_shared<CFilePathRenameColumn<std::shared_ptr<CShellFile>, RenameInfo>>(m_pFileGrid.get(), L"Rename"),
-		std::make_shared<CFileReextColumn<std::shared_ptr<CShellFile>, RenameInfo>>(m_pFileGrid.get(), L"Reext"),
-		std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>, RenameInfo>>(m_pFileGrid.get(), m_pFileGrid->GetFilerGridViewPropPtr()->FileSizeArgsPtr),
-		std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>, RenameInfo>>(m_pFileGrid.get(), m_pFileGrid->GetFilerGridViewPropPtr()->FileTimeArgsPtr));
-
-	m_pFileGrid->SetFrozenCount<ColTag>(1);
-
-	//Insert rows
+	//Items Source
 	for (auto& childIDL : m_srcChildIDLs) {
 		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(
 			shell::DesktopBindToShellFolder(m_srcIDL),
@@ -47,6 +23,23 @@ void CCopyMoveWndBase::InitializeFileGrid()
 				spFile,
 				RenameInfo{ spFile->GetPathNameWithoutExt(), spFile->GetPathExt() }));
 	}
+
+	//FileGrid
+	m_pFileGrid = std::make_unique<CFilerBindGridView<std::shared_ptr<CShellFile>, RenameInfo>>(
+		spFilerGridViewProp,
+		m_spItemsSource,
+		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr),
+		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, L"Name"),
+		arg<"frzcolcnt"_s>() = 1,
+		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{
+			std::make_shared<CFilePathExtColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, L"Ext"),
+			std::make_shared<CFilePathRenameColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, L"Rename"),
+			std::make_shared<CFileReextColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, L"Reext"),
+			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, spFilerGridViewProp->FileSizeArgsPtr),
+			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, spFilerGridViewProp->FileTimeArgsPtr)},
+		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
+		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
+		arg<"frzrowcnt"_s>() = 2);
 }
 
 
@@ -215,31 +208,8 @@ CDeleteWnd::CDeleteWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewPr
 	m_cwa
 		.lpszWindowName(L"Delete")
 		.lpszClassName(L"CDeleteWnd");
-}
 
-void CDeleteWnd::InitializeFileGrid()
-{
-	//Insert rows
-	m_pFileGrid->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(m_pFileGrid.get()));
-	m_pFileGrid->SetFilterRowPtr(std::make_shared<CRow>(m_pFileGrid.get()));
-	m_pFileGrid->PushRows(
-		m_pFileGrid->GetNameHeaderRowPtr(),
-		m_pFileGrid->GetFilterRowPtr());
-
-	m_pFileGrid->SetFrozenCount<RowTag>(2);
-
-	//Insert columns
-	m_pFileGrid->SetFileNameColumnPtr(std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>>>(m_pFileGrid.get(), L"Name"));
-	m_pFileGrid->PushColumns(
-		std::make_shared<CRowIndexColumn>(m_pFileGrid.get()),
-		m_pFileGrid->GetFileNameColumnPtr(),
-		std::make_shared<CFilePathExtColumn<std::shared_ptr<CShellFile>>>(m_pFileGrid.get(), L"Ext"),
-		std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(m_pFileGrid.get(), m_pFileGrid->GetFilerGridViewPropPtr()->FileSizeArgsPtr),
-		std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(m_pFileGrid.get(), m_pFileGrid->GetFilerGridViewPropPtr()->FileTimeArgsPtr));
-
-	m_pFileGrid->SetFrozenCount<ColTag>(1);
-
-	//Insert rows
+	//Items Source
 	for (auto& childIDL : m_srcChildIDLs) {
 		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(
 			shell::DesktopBindToShellFolder(m_srcIDL),
@@ -248,6 +218,21 @@ void CDeleteWnd::InitializeFileGrid()
 		m_spItemsSource->notify_push_back(
 			std::make_tuple(spFile));
 	}
+
+	//FileGrid
+	m_pFileGrid = std::make_unique<CFilerBindGridView<std::shared_ptr<CShellFile>>>(
+		spFilerGridViewProp,
+		m_spItemsSource,
+		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr),
+		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Name"),
+		arg<"frzcolcnt"_s>() = 1,
+		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{
+			std::make_shared<CFilePathExtColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Ext"),
+			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileSizeArgsPtr),
+			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileTimeArgsPtr) },
+		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
+		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
+		arg<"frzrowcnt"_s>() = 2);
 }
 
 LRESULT CDeleteWnd::OnCommandDo(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)

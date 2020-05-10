@@ -133,9 +133,9 @@ LPITEMIDLIST CIDL::GetItemIdList(LPCWSTR lpwstrPath)
 	return pIdl;
 }
 
-std::wstring CIDL::STRRET2WSTR(STRRET& strret)const
+std::wstring CIDL::strret2wstring(STRRET& strret)const
 {
-	return shell::STRRET2WSTR(strret, m_pIDL);
+	return shell::strret2wstring(strret, m_pIDL);
 }
 
 CIDL CIDL::operator + ( const CIDL& idl ) const

@@ -49,16 +49,9 @@ protected:
 	std::shared_ptr<GridViewProperty> m_spGridViewProp;
 public:
 
-	boost::signals2::signal<void(std::shared_ptr<CColumn>)> SignalColumnInserted;
-	boost::signals2::signal<void(std::shared_ptr<CColumn>)> SignalColumnErased;
-	boost::signals2::signal<void(std::shared_ptr<CColumn>, int, int)> SignalColumnMoved;
 	boost::signals2::signal<void()> SignalPreDelayUpdate;
 	static UINT WM_DELAY_UPDATE;
 	void DelayUpdate();
-
-	virtual void ColumnInserted(CColumnEventArgs& e)override;
-	virtual void ColumnErased(CColumnEventArgs& e)override;
-	virtual void ColumnMoved(CMovedEventArgs<ColTag>& e)override;
 
 public:
 	//Constructor

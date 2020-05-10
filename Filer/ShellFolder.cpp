@@ -70,7 +70,7 @@ std::wstring CShellFolder::GetFileNameWithoutExt()
 	if (m_wstrFileNameWithoutExt.empty()) {
 		STRRET strret;
 		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
-		m_wstrFileNameWithoutExt = m_childIdl.STRRET2WSTR(strret);
+		m_wstrFileNameWithoutExt = m_childIdl.strret2wstring(strret);
 	}
 	return m_wstrFileNameWithoutExt;
 }
@@ -80,7 +80,7 @@ std::wstring CShellFolder::GetDispName()
 	if (m_wstrFileName.empty()) {
 		STRRET strret;
 		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
-		m_wstrFileName = m_childIdl.STRRET2WSTR(strret);
+		m_wstrFileName = m_childIdl.strret2wstring(strret);
 	}
 	return m_wstrFileName;
 }
@@ -236,7 +236,7 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<boo
 				} else {
 					STRRET childStrret;
 					pFolder->GetDisplayNameOf(childIdl.ptr(), SHGDN_FORPARSING, &childStrret);
-					std::wstring childPath = childIdl.STRRET2WSTR(childStrret);
+					std::wstring childPath = childIdl.strret2wstring(childStrret);
 					std::wstring childExt = ::PathFindExtension(childPath.c_str());
 
 					CComPtr<IShellFolder> pChidFolder;
@@ -308,7 +308,7 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 					FileTimes childTimes;
 					STRRET childStrret;
 					pFolder->GetDisplayNameOf(childIdl.ptr(), SHGDN_FORPARSING, &childStrret);
-					std::wstring childPath = childIdl.STRRET2WSTR(childStrret);
+					std::wstring childPath = childIdl.strret2wstring(childStrret);
 					std::wstring childExt = ::PathFindExtension(childPath.c_str());
 
 					CComPtr<IShellFolder> pChidFolder;

@@ -209,6 +209,15 @@ void CSheet::ColumnErased(CColumnEventArgs& e)
 	PostUpdate(Updates::Invalidate);
 }
 
+void CSheet::ColumnMoved(CMovedEventArgs<ColTag>& e)
+{
+	PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::Column);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+}
+
+
 void CSheet::ColumnHeaderFitWidth(CColumnEventArgs& e)
 {
 	e.m_pColumn->SetIsMeasureValid(false);
@@ -257,6 +266,14 @@ void CSheet::RowsErased(CRowsEventArgs& e)
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);//
 }
+
+void CSheet::RowMoved(CMovedEventArgs<RowTag>& e)
+{
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+}
+
 
 void CSheet::SizeChanged()
 {

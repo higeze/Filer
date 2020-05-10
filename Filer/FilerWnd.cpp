@@ -300,7 +300,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				for (auto& pIdl : vpIdl) {
 					STRRET strret;
 					psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
-					std::wstring path = shell::STRRET2WSTR(strret, pIdl);
+					std::wstring path = shell::strret2wstring(strret, pIdl);
 					GetFavoritesPropPtr()->GetFavorites().notify_push_back(std::make_tuple(std::make_shared<CFavorite>(path, L"")));
 					//m_spLeftFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spLeftFavoritesView.get()));
 					//m_spRightFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spRightFavoritesView.get()));
@@ -320,7 +320,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 						for (auto& pIdl : vpIdl) {
 							STRRET strret;
 							psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
-							filePaths.emplace_back(L"\"" + shell::STRRET2WSTR(strret, pIdl) + L"\"");
+							filePaths.emplace_back(L"\"" + shell::strret2wstring(strret, pIdl) + L"\"");
 						}
 
 						std::wstring fileMultiPath = boost::join(filePaths, L" ");

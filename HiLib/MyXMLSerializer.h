@@ -185,6 +185,7 @@ public:
 	template<class char_type, class T, class... U>
 	void operator()(const char_type* lpszName, T& tValue, U... args)
 	{
+		T tInit = tValue;
 		try {
 			std::vector<MSXML2::IXMLDOMElementPtr> vpElem;
 			if (m_pElem) {
@@ -200,6 +201,7 @@ public:
 		}
 		catch(...){
 			MessageBoxA(NULL, (LPCSTR)lpszName, "Exception in deserialize", MB_ICONWARNING);
+			tValue = tInit;
 		}
 	}
 	

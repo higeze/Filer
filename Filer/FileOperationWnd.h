@@ -45,9 +45,6 @@ public:
 		m_buttonText(buttonText), m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs),
 		m_spItemsSource(std::make_shared< observable_vector<std::tuple<TItems...>>>())
 	{
-		m_pFileGrid = std::make_unique<CFilerBindGridView<TItems...>>(
-			spFilerGridViewProp,
-			m_spItemsSource);
 		m_rca
 			.lpszClassName(L"CFileOperationWnd")
 			.style(CS_VREDRAW | CS_HREDRAW)
@@ -72,7 +69,6 @@ public:
 		AddCmdIDHandler(CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"Cancel"), &CFileOperationWndBase::OnCommandCancel, this);
 	}
 	virtual ~CFileOperationWndBase() = default;
-	virtual void InitializeFileGrid() = 0;
 	virtual d2dw::CDirect2DWrite* GetDirectPtr() override { return m_pDirect.get(); }
 
 	virtual LRESULT OnCommandDo(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) = 0;
@@ -139,7 +135,7 @@ public:
 		m_buttonDo.SubclassWindow(m_buttonDo.m_hWnd);
 		m_buttonCancel.Create(m_hWnd, rcBtnCancel);
 		m_pFileGrid->Create(m_hWnd, rcGrid);
-		InitializeFileGrid();
+	//	InitializeFileGrid();
 		m_pFileGrid->PostUpdate(Updates::All);
 		m_pFileGrid->SubmitUpdate();
 
@@ -191,6 +187,9 @@ public:
 
 };
 
+/****************/
+/* CCopyMoveWnd */
+/****************/
 class CCopyMoveWndBase :public CFileOperationWndBase<std::shared_ptr<CShellFile>, RenameInfo>
 {
 protected:
@@ -200,9 +199,11 @@ public:
 						  const std::wstring& buttonText,
 						  const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CCopyMoveWndBase() = default;
-	virtual void InitializeFileGrid();
 };
 
+/************/
+/* CCopyWnd */
+/************/
 class CCopyWnd :public CCopyMoveWndBase
 {
 public:
@@ -212,6 +213,9 @@ public:
 	virtual LRESULT OnCommandDo(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
 };
 
+/************/
+/* CMoveWnd */
+/************/
 class CMoveWnd :public CCopyMoveWndBase
 {
 public:
@@ -221,12 +225,39 @@ public:
 	virtual LRESULT OnCommandDo(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
 };
 
+/**************/
+/* CDeleteWnd */
+/**************/
 class CDeleteWnd :public CFileOperationWndBase<std::shared_ptr<CShellFile>>
 {
 public:
 	CDeleteWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 			 const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CDeleteWnd() = default;
-	virtual void InitializeFileGrid();
 	virtual LRESULT OnCommandDo(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
 };
+
+/***********************/
+/* CIncrementalCopyWnd */
+/***********************/
+//class CIncrementalCopyWnd :public CCopyMoveWndBase
+//{
+//public:
+//	static UINT WM_INCREMENTMAX;
+//	static UINT WM_INCREMENTVALUE;
+//	static UINT WM_ADDITEM;
+//
+//protected:
+//	std::unique_ptr<d2dw::CProgressBar> m_pProgressbar;
+//	CIDL m_newIDL;
+//	CDeadlineTimer m_periodicTimer;
+//	std::unordered_map<CIDL, std::vector<CIDL>,
+//		shell::IdlHash, shell::IdlEqual> m_idlMap;
+//
+//public:
+//	CIncrementalCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+//			   const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
+//	virtual ~CIncrementalCopyWnd() = default;
+//	virtual void InitializeFileGrid();
+//	virtual LRESULT OnCommandDo(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
+//};

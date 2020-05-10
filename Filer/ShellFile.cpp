@@ -63,7 +63,7 @@ std::wstring& CShellFile::GetPath()
 	if (m_wstrPath.empty()) {
 		STRRET strret;
 		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_FORPARSING, &strret);
-		m_wstrPath = m_childIdl.STRRET2WSTR(strret);
+		m_wstrPath = m_childIdl.strret2wstring(strret);
 	}
 	return m_wstrPath;
 }

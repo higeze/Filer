@@ -5,8 +5,6 @@
 #include "ConsoleTimer.h"
 #include "MyString.h"
 
-
-
 CFavorite::CFavorite()
 	:m_path(), m_shortName(), m_spFile(nullptr), m_spCancel(std::make_shared<bool>(false)){}
 

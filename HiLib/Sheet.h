@@ -121,9 +121,10 @@ protected:
 	std::shared_ptr<SheetProperty> m_spSheetProperty; // SheetProperty
 
 	std::shared_ptr<CColumn> m_pHeaderColumn; // Header column
-	std::shared_ptr<CRow> m_rowHeader; // Header row
-	std::shared_ptr<CRow> m_rowNameHeader; /**< Name Header row */
-	std::shared_ptr<CRow> m_rowFilter; /**< Filter row */
+	std::shared_ptr<CColumn> m_pNameColumn;
+	std::shared_ptr<CRow> m_pHeaderRow; // Header row
+	std::shared_ptr<CRow> m_pNameHeaderRow; /**< Name Header row */
+	std::shared_ptr<CRow> m_pFilterRow; /**< Filter row */
 
 
 	bool m_bSelected; // Selected or not
@@ -134,7 +135,6 @@ protected:
 
 	//For open mode flag to keep ensurevisiblecell after open
 	bool m_keepEnsureVisibleFocusedCell = false;
-
 public:
 	static CMenu ContextMenu; // ContextMenu
 
@@ -161,12 +161,14 @@ public:
 
 	virtual std::shared_ptr<CColumn> GetHeaderColumnPtr()const{return m_pHeaderColumn;} /** Getter for Header Column */
 	virtual void SetHeaderColumnPtr(std::shared_ptr<CColumn> column){m_pHeaderColumn=column;} /** Setter for Header Column */
-	virtual std::shared_ptr<CRow> GetHeaderRowPtr()const{return m_rowHeader;} /** Getter for Header Row */
-	virtual void SetHeaderRowPtr(std::shared_ptr<CRow> row){m_rowHeader=row;} /** Setter for Header Row */
-	virtual std::shared_ptr<CRow> GetNameHeaderRowPtr()const { return m_rowNameHeader; }
-	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_rowNameHeader = row; }
-	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_rowFilter; }
-	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_rowFilter = row; }
+	virtual std::shared_ptr<CColumn> GetNameColumnPtr() { return m_pNameColumn; }
+	virtual void SetNameColumnPtr(const std::shared_ptr<CColumn>& spCol) { m_pNameColumn = spCol; }
+	virtual std::shared_ptr<CRow> GetHeaderRowPtr()const{return m_pHeaderRow;} /** Getter for Header Row */
+	virtual void SetHeaderRowPtr(std::shared_ptr<CRow> row){m_pHeaderRow=row;} /** Setter for Header Row */
+	virtual std::shared_ptr<CRow> GetNameHeaderRowPtr()const { return m_pNameHeaderRow; }
+	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_pNameHeaderRow = row; }
+	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_pFilterRow; }
+	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_pFilterRow = row; }
 
 
 	virtual bool GetIsSelected()const{return m_bSelected;};
@@ -182,13 +184,13 @@ public:
 	//Observer
 	virtual void ColumnInserted(CColumnEventArgs& e);
 	virtual void ColumnErased(CColumnEventArgs& e);
-	virtual void ColumnMoved(CMovedEventArgs<ColTag>& e) {}
+	virtual void ColumnMoved(CMovedEventArgs<ColTag>& e);
 	virtual void ColumnHeaderFitWidth(CColumnEventArgs& e);
 
 	virtual void RowInserted(CRowEventArgs& e);
 	virtual void RowErased(CRowEventArgs& e);
 	virtual void RowsErased(CRowsEventArgs& e);
-	virtual void RowMoved(CMovedEventArgs<RowTag>& e) {}
+	virtual void RowMoved(CMovedEventArgs<RowTag>& e);
 
 	virtual void SizeChanged();
 	virtual void Scroll();
@@ -222,8 +224,6 @@ public:
 	virtual void EraseColumn(const std::shared_ptr<CColumn>& spColumn, bool notify = true);
 	virtual void EraseRow(const std::shared_ptr<CRow>& spColumn, bool notify = true);
 	virtual void EraseRows(const std::vector<std::shared_ptr<CRow>>& vpRow, bool notify = true);
-
-	virtual void MoveColumn(int colTo, std::shared_ptr<CColumn> spFromColumn){Move<ColTag>(colTo, spFromColumn);}
 
 	virtual void InsertRow(int row, const std::shared_ptr<CRow>& spRow, bool notify = true);
 	virtual void PushRow(const std::shared_ptr<CRow>& pRow, bool notify = true);
@@ -514,17 +514,6 @@ public:
 		PostUpdate(Updates::Invalidate);
 	}
 
-	template<typename TRC> void Moved(CMovedEventArgs<TRC>& e) {  }
-	template<> inline void CSheet::Moved<RowTag>(CMovedEventArgs<RowTag>& e)
-	{
-		RowMoved(e);
-	}
-
-	template<> inline void CSheet::Moved<ColTag>(CMovedEventArgs<ColTag>& e)
-	{
-		ColumnMoved(e);
-	}
-
 	template<typename TRC> void Track(TRC::template SharedPtr& ptr)
 	{
 		PostUpdate(Updates::Column);//TODO
@@ -547,39 +536,51 @@ public:
 
 	}
 
-	template<typename TRC>
-	void Move(int indexTo, typename TRC::SharedPtr spFrom)
+	virtual void MoveRow(int indexTo, typename RowTag::SharedPtr spFrom)
 	{
 		int from = spFrom->GetIndex<VisTag>();
-		int to = indexTo;
-		if (to>from) {
-			to--;
-		} else {
+		int to = indexTo > from ? indexTo - 1 : indexTo;
 
-		}
-
-		auto& container = GetContainer<TRC, VisTag>();
+		auto& container = GetContainer<RowTag, VisTag>();
 		auto iter = std::find(container.begin(), container.end(), spFrom);
 		if (iter != container.end()) {
 			container.idx_erase(iter);
 		}
-
 		container.idx_insert(container.cbegin() + to, spFrom);
 
-		Moved<TRC>(CMovedEventArgs<TRC>(spFrom, from, to));
-
-		//ColumnMoved(CColumnMovedEventArgs(nullptr, from, to));//TODO change to tag dispatch
-		//PostUpdate(Updates::RowVisible);
-		PostUpdate(Updates::Row);
-
-		//PostUpdate(Updates::ColumnVisible);
-		PostUpdate(Updates::Column);
-		//PostUpdate(Updates::Row);
-		PostUpdate(Updates::Scrolls);
-		PostUpdate(Updates::Invalidate);//
+		RowMoved(CMovedEventArgs<RowTag>(spFrom, from, indexTo));
 	}
 
-	
+	virtual void MoveColumn(int indexTo, typename ColTag::SharedPtr spFrom)
+	{
+		int from = spFrom->GetIndex<VisTag>();
+		int to = indexTo > from ? indexTo - 1 : indexTo;
+		from = Vis2AllIndex<ColTag>(from);
+		to = Vis2AllIndex<ColTag>(to);
+
+		auto& container = GetContainer<ColTag, AllTag>();
+		auto iter = std::find(container.begin(), container.end(), spFrom);
+		if (iter != container.end()) {
+			container.idx_erase(iter);
+		}
+		container.idx_insert(container.cbegin() + to, spFrom);
+
+		ColumnMoved(CMovedEventArgs<ColTag>(spFrom, from, to));
+	}
+
+	template<typename TRC>
+	void Move(int indexTo, typename TRC::SharedPtr spFrom)
+	{
+		MoveRow(indexTo, spFrom);
+	}
+
+	template<> inline
+	void Move<ColTag>(int indexTo, typename ColTag::SharedPtr spFrom)
+	{
+		MoveColumn(indexTo, spFrom);
+	}
+
+
 	virtual void SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& cell2, bool doSelect);
 	template<class T>
 	void SelectBandRange(T* pBand1, T* pBand2, bool doSelect)

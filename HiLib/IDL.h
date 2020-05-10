@@ -45,7 +45,7 @@ public:
 	CIDL CloneParentIDL()const;
 	//void SetSpecialFolderLocation(HWND hWnd, int nFolder);
 
-	std::wstring STRRET2WSTR(STRRET& strret)const;
+	std::wstring strret2wstring(STRRET& strret)const;
 private:
 	//void Create(UINT uSize);	
 	//UINT GetSize();

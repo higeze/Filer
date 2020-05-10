@@ -114,28 +114,6 @@ CGridView::CGridView(
 
 CGridView::~CGridView() = default;
 
-
-void CGridView::ColumnInserted(CColumnEventArgs& e)
-{
-	//FilterAll();
-	PostUpdate(Updates::Filter);
-	CSheet::ColumnInserted(e);
-	SignalColumnInserted(e.m_pColumn);
-}
-void CGridView::ColumnErased(CColumnEventArgs& e)
-{
-//	FilterAll();
-	PostUpdate(Updates::Filter);
-	CSheet::ColumnErased(e);
-	SignalColumnErased(e.m_pColumn);
-}
-void CGridView::ColumnMoved(CMovedEventArgs<ColTag>& e)
-{
-	//FilterAll();
-	CSheet::ColumnMoved(e);
-	SignalColumnMoved(e.m_ptr, e.m_from, e.m_to);
-}
-
 void CGridView::OnCellContextMenu(CellContextMenuEventArgs& e)
 {}
 
@@ -166,7 +144,7 @@ void CGridView::OnCellLButtonClk(CellEventArgs& e)
 
 void CGridView::SortAllInSubmitUpdate()
 {
-	for (const auto& ptr : m_allCols) {
+	for (const auto& ptr : m_visCols) {
 		if (ptr->GetSort() != Sorts::None) {
 			this->Sort(ptr.get(), ptr->GetSort(), false);
 		}
@@ -418,7 +396,6 @@ LRESULT CGridView::OnCommandEditHeader(WORD wNotifyCode,WORD wID,HWND hWndCtl,BO
 			}
 		}
 	}
-	SubmitUpdate();
 	return 0;
 }
 
@@ -426,7 +403,6 @@ LRESULT CGridView::OnCommandDeleteColumn(WORD wNotifyCode,WORD wID,HWND hWndCtl,
 {
 	if(!m_rocoContextMenu.IsInvalid()){
 		EraseColumn(m_rocoContextMenu.GetColumnPtr());
-		SubmitUpdate();
 	}
 	return 0;
 }
@@ -437,7 +413,6 @@ LRESULT CGridView::OnCommandResizeSheetCell(WORD wNotifyCode,WORD wID,HWND hWndC
 		if(auto p = std::dynamic_pointer_cast<CSheetCell>(CSheet::Cell(m_rocoContextMenu.GetRowPtr(),m_rocoContextMenu.GetColumnPtr()))){
 			p->Resize();
 		}
-		SubmitUpdate();
 	}
 	return 0;
 }
@@ -446,7 +421,6 @@ LRESULT CGridView::OnCommandResizeSheetCell(WORD wNotifyCode,WORD wID,HWND hWndC
 LRESULT CGridView::OnCommandSelectAll(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
 	SelectAll();
-	SubmitUpdate();
 	return 0;
 }
 
@@ -622,7 +596,6 @@ void CGridView::Jump(std::shared_ptr<CCell>& spCell)
 {
 	m_spCursorer->OnCursor(spCell);
 	PostUpdate(Updates::EnsureVisibleFocusedCell);
-	SubmitUpdate();
 }
 
 d2dw::CRectF CGridView::GetPaintRect()
@@ -1333,7 +1306,6 @@ LRESULT CGridView::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 LRESULT CGridView::OnFilter(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	FilterAll();
-	SubmitUpdate();
 	return 0;
 }
 

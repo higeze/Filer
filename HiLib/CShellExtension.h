@@ -22,7 +22,7 @@ public:
 	LPITEMIDLIST GetPreviousItemID(LPITEMIDLIST pidl);
 
 	UINT GetItemIDSize(LPITEMIDLIST pidl);
-	BOOL STRRET2WSTR(LPITEMIDLIST pidl,LPSTRRET pStrret,LPWSTR lpwstrRet);
+	BOOL strret2wstring(LPITEMIDLIST pidl,LPSTRRET pStrret,LPWSTR lpwstrRet);
 
 //	BOOL Execute(HWND,LPITEMIDLIST pidl);
 //	BOOL ShowContextMenu(HWND hWnd, LPITEMIDLIST pidl);

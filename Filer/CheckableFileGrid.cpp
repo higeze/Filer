@@ -66,11 +66,11 @@ LRESULT CCheckableFileGrid::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 	CFilerBindGridView::OnCreate(uMsg, wParam, lParam, bHandled);
 
 	//Insert rows
-	m_rowNameHeader = std::make_shared<CHeaderRow>(this);
-	m_rowFilter = std::make_shared<CRow>(this);
+	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this);
+	m_pFilterRow = std::make_shared<CRow>(this);
 
-	m_allRows.idx_push_back(m_rowNameHeader);
-	m_allRows.idx_push_back(m_rowFilter);
+	m_allRows.idx_push_back(m_pNameHeaderRow);
+	m_allRows.idx_push_back(m_pFilterRow);
 
 	m_frozenRowCount = 2;
 
@@ -107,6 +107,10 @@ void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 
 	m_spItemsSource->notify_push_back(std::make_tuple(spFile));
 
+	for (auto& spCol : m_allCols) {
+		spCol->SetIsFitMeasureValid(false);
+		spCol->SetIsMeasureValid(false);
+	}
 	PostUpdate(Updates::All);
 	SubmitUpdate();
 }

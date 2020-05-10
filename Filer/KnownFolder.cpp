@@ -11,7 +11,7 @@ std::wstring CKnownDriveBaseFolder::GetFileNameWithoutExt()
 	if (m_wstrFileNameWithoutExt.empty()) {
 		STRRET strret;
 		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
-		m_wstrFileNameWithoutExt = m_childIdl.STRRET2WSTR(strret);
+		m_wstrFileNameWithoutExt = m_childIdl.strret2wstring(strret);
 	}
 	return m_wstrFileNameWithoutExt;
 }
@@ -21,7 +21,7 @@ std::wstring CKnownDriveBaseFolder::GetDispName()
 	if (m_wstrFileName.empty()) {
 		STRRET strret;
 		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
-		m_wstrFileName = m_childIdl.STRRET2WSTR(strret);
+		m_wstrFileName = m_childIdl.strret2wstring(strret);
 	}
 	return m_wstrFileName;
 }

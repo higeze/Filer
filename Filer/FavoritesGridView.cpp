@@ -98,8 +98,6 @@ void CFavoritesGridView::OpenFavorites()
 	PostUpdate(Updates::Column);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Invalidate);
-
-	SubmitUpdate();
 }
 
 void CFavoritesGridView::OnCellLButtonDblClk(CellEventArgs& e)
@@ -112,13 +110,16 @@ void CFavoritesGridView::OnCellLButtonDblClk(CellEventArgs& e)
 	}
 }
 
-void CFavoritesGridView::RowMoved(CMovedEventArgs<RowTag>& e)
+void CFavoritesGridView::MoveRow(int indexTo, typename RowTag::SharedPtr spFrom)
 {
+	int from = spFrom->GetIndex<VisTag>();
+	int to = indexTo > from ? indexTo - 1 : indexTo;
+
 	auto& itemsSource = GetItemsSource();
-	auto fromIter = itemsSource.cbegin() + (e.m_from - GetFrozenCount<RowTag>());
+	auto fromIter = itemsSource.cbegin() + (from - GetFrozenCount<RowTag>());
 	auto temp = *fromIter;
 	itemsSource.notify_erase(fromIter);
-	auto toIter = itemsSource.cbegin() + (e.m_to - GetFrozenCount<RowTag>());
+	auto toIter = itemsSource.cbegin() + (to - GetFrozenCount<RowTag>());
 	itemsSource.notify_insert(toIter, temp);
 }
 
