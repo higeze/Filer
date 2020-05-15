@@ -17,6 +17,12 @@ public:
 		if (auto pBindSheet = dynamic_cast<CBindGridView<TItems...>*>(m_pSheet)) {
 			auto& itemsSource = pBindSheet->GetItemsSource();
 			auto index = GetIndex<AllTag>() - m_pSheet->GetFrozenCount<RowTag>();
+
+			//if (itemsSource.size() <= index) {
+			//	auto a = 6;
+			//}
+
+
 			return itemsSource[index];
 		} else {
 			throw std::exception(FILE_LINE_FUNC);

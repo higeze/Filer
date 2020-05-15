@@ -622,6 +622,10 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 
 void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
+	if (m_pEdit) {
+		EndEdit();
+	}
+
 	SPDLOG_INFO("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetDispName()));
 
 	CONSOLETIMER("OpenFolder Total");
@@ -646,9 +650,6 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 			DeselectAll();
 		}
 
-		if (m_pEdit) {
-			EndEdit();
-		}
 
 		//Save and Restore Filter value
 		if (!isUpdate) {

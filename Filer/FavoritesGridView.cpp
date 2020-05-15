@@ -121,6 +121,8 @@ void CFavoritesGridView::MoveRow(int indexTo, typename RowTag::SharedPtr spFrom)
 	itemsSource.notify_erase(fromIter);
 	auto toIter = itemsSource.cbegin() + (to - GetFrozenCount<RowTag>());
 	itemsSource.notify_insert(toIter, temp);
+
+	Reload();
 }
 
 void CFavoritesGridView::Reload()

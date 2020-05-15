@@ -748,7 +748,6 @@ bool CGridView::GetIsFocused()const
 		(HWND)::GetParent(hWndAct) == m_hWnd ||
 		(HWND)::GetParent(hWndFcs) == m_hWnd ||
 		(HWND)::GetParent(hWndFore) == m_hWnd;
-
 }
 
 
@@ -1132,7 +1131,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 		//pEdit->OnCreate(CreateEvent(this, NULL, NULL));
 		SetEditPtr(pEdit);
 		PostUpdate(Updates::Invalidate);
-		SetCapture();
+		//SetCapture();
 	}
 }
 
@@ -1157,7 +1156,9 @@ void CGridView::Edit_MouseMove(const MouseMoveEvent& e)
 
 bool CGridView::Edit_Guard_LButtonDown(const LButtonDownEvent& e)
 {
-	return !GetEditPtr()->GetClientRect().PtInRect(GetDirectPtr()->Pixels2Dips(e.Point));
+	auto ret = !GetEditPtr()->GetClientRect().PtInRect(GetDirectPtr()->Pixels2Dips(e.Point));
+	if (ret) { SetEditPtr(nullptr); }
+	return ret;
 }
 
 void CGridView::Edit_LButtonDown(const LButtonDownEvent& e)

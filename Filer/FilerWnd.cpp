@@ -207,9 +207,13 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		spFavoritesView->CreateWindowExArgument()
 			.dwStyle(spFavoritesView->CreateWindowExArgument().dwStyle() | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | (rc.operator bool() ? WS_VISIBLE : 0))
 			.hMenu((HMENU)id);
+
 		spFavoritesView->FileChosen = [&](std::shared_ptr<CShellFile>& spFile)->void {
 			spView->GetGridView()->Open(spFile);
-			spView->GetGridView()->SetFocus();};
+			spView->GetGridView()->SetFocus();
+			spView->GetGridView()->SubmitUpdate();
+		};
+		
 		spFavoritesView->Create(m_hWnd, rc);
 	};
 	createFavoritesView(m_spLeftFavoritesView, m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFavoritesGridView"), rcLeftFavorites);
@@ -239,15 +243,18 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 			spView->GetGridView()->ReplaceMsgHandler(WM_KEYDOWN, newFun);
 		}
 
-		//auto funSetFocus = spView->GetGridView()->GetMsgHandler(WM_SETFOCUS);
-		//if (funSetFocus){
-		//	FunMsg newFun = [this, spView, funSetFocus](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
-		//		m_spCurView = spView;
-		//		m_spCurView->GetGridView()->InvalidateRect(NULL, FALSE);
-		//		return funSetFocus(uMsg, lParam, wParam, bHandled);
-		//	};
-		//	spView->GetGridView()->ReplaceMsgHandler(WM_SETFOCUS, newFun);
-		//}
+		auto funSetFocus = spView->GetGridView()->GetMsgHandler(WM_SETFOCUS);
+		if (funSetFocus){
+			std::weak_ptr<CFilerTabGridView> wp(spView);
+			FunMsg newFun = [this, wp, funSetFocus](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
+				if (auto sp = wp.lock()) {
+					m_spCurView = sp;
+					m_spCurView->GetGridView()->InvalidateRect(NULL, FALSE);
+				}
+				return funSetFocus(uMsg, lParam, wParam, bHandled);
+			};
+			spView->GetGridView()->ReplaceMsgHandler(WM_SETFOCUS, newFun);
+		}
 	};
 
 
