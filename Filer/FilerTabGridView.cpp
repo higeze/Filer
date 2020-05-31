@@ -38,6 +38,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 		SetCurSel(std::clamp(m_selectedIndex.get(), 0, GetItemCount() - 1));
 		if (m_spFilerView->IsWindow()) {
 			m_spFilerView->OpenFolder(m_folders[m_selectedIndex.get()]);
+			m_spFilerView->SubmitUpdate();
 		}
 		BOOL dummy = FALSE;
 		OnSize(0, NULL, NULL, dummy);
@@ -140,6 +141,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 	m_spFilerView->Create(m_hWnd, rcTabClient);
 	//Open
 	m_spFilerView->OpenFolder(m_folders[GetCurSel()]);
+	m_spFilerView->SubmitUpdate();
 
 	return 0;
 }
@@ -315,7 +317,7 @@ LRESULT CFilerTabGridView::OnCommandOpenSameAsOther(WORD wNotifyCode, WORD wID, 
 		}
 			
 		GetGridView()->OpenFolder(otherView->GetGridView()->GetFolder());
-
+		GetGridView()->SubmitUpdate();
 	}
 	return 0;
 }

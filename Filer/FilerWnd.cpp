@@ -65,7 +65,7 @@ CFilerWnd::CFilerWnd()
 	m_cwa
 	.lpszWindowName(L"Filer") 
 	.lpszClassName(L"CFilerWnd")
-	.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN )
+	.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS )
 	.x(m_rcWnd.left)
 	.y(m_rcWnd.top)
 	.nWidth(m_rcWnd.Width())
@@ -73,6 +73,8 @@ CFilerWnd::CFilerWnd()
 	.hMenu(NULL); 
 
 	AddMsgHandler(WM_CREATE,&CFilerWnd::OnCreate,this);
+	AddMsgHandler(WM_ERASEBKGND, &CFilerWnd::OnEraseBkGnd, this);
+	AddMsgHandler(WM_PAINT, &CFilerWnd::OnPaint, this);
 	AddMsgHandler(WM_SIZE,&CFilerWnd::OnSize,this);
 	AddMsgHandler(WM_CLOSE,&CFilerWnd::OnClose,this);
 	AddMsgHandler(WM_DESTROY,&CFilerWnd::OnDestroy,this);
@@ -123,6 +125,9 @@ HWND CFilerWnd::Create(HWND hWndParent)
 
 LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	//Direct2DWrite
+	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
+
 	WINDOWPLACEMENT wp = { 0 };
 	wp.length = sizeof(WINDOWPLACEMENT);
 	wp.rcNormalPosition = m_rcWnd;
@@ -133,16 +138,22 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 
 	//Size
 	CRect rcClient = GetClientRect();
-	CRect rcLeftFavorites, rcRightFavorites, rcLeftGrid, rcRightGrid;
-	d2dw::CDirect2DWrite direct(m_hWnd);
-	LONG favoriteWidth = direct.Dips2PixelsX(
+	CRect rcLeftFavorites, rcRightFavorites, rcLeftGrid, rcRightGrid, rcStatusBar;
+	LONG favoriteWidth = m_pDirect->Dips2PixelsX(
 		m_spFilerGridViewProp->CellPropPtr->Line->Width * 2 + //def:GridLine=0.5*2, CellLine=0.5*2
 		m_spFilerGridViewProp->CellPropPtr->Padding->left + //def:2
 		m_spFilerGridViewProp->CellPropPtr->Padding->right + //def:2
 		16.f);//icon
+	m_spStatusBar = std::make_shared<d2dw::CStatusBar>(this, std::make_shared<StatusBarProperty>());
+	LONG statusHeight = m_pDirect->Dips2PixelsY(m_spStatusBar->MeasureSize(m_pDirect.get()).height);
+
+	rcStatusBar.SetRect(
+		rcClient.left, rcClient.bottom - statusHeight,
+		rcClient.right, rcClient.bottom);
+
 	rcLeftFavorites.SetRect(
 		rcClient.left, rcClient.top,
-		rcClient.left + favoriteWidth, rcClient.bottom);
+		rcClient.left + favoriteWidth, rcClient.bottom - statusHeight);
 
 	if (m_splitterLeft == 0) {//Initial = No serialize
 
@@ -152,26 +163,26 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				rcClient.left + favoriteWidth,
 				rcClient.top,
 				rcClient.left + favoriteWidth + viewWidth,
-				rcClient.bottom);
+				rcClient.bottom - statusHeight);
 
 			rcRightFavorites.SetRect(
 				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth,
 				rcClient.top,
 				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth + favoriteWidth,
-				rcClient.bottom);
+				rcClient.bottom - statusHeight);
 
 			rcRightGrid.SetRect(
 				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth + favoriteWidth,
 				rcClient.top,
 				rcClient.right, 
-				rcClient.bottom);
+				rcClient.bottom - statusHeight);
 			m_splitterLeft = favoriteWidth + viewWidth;
 		} else {
 			rcLeftGrid.SetRect(
 				rcClient.left + favoriteWidth, 
 				rcClient.top,
 				rcClient.right,
-				rcClient.bottom);
+				rcClient.bottom - statusHeight);
 			m_splitterLeft = rcClient.right;
 		}
 	} else {
@@ -180,27 +191,29 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				rcClient.left + favoriteWidth,
 				rcClient.top,
 				m_splitterLeft,
-				rcClient.bottom);
+				rcClient.bottom - statusHeight);
 
 			rcRightFavorites.SetRect(
 				m_splitterLeft + kSplitterWidth,
 				rcClient.top,
 				m_splitterLeft + kSplitterWidth + favoriteWidth,
-				rcClient.bottom);
+				rcClient.bottom - statusHeight);
 
 			rcRightGrid.SetRect(
 				m_splitterLeft + kSplitterWidth + favoriteWidth,
 				rcClient.top,
 				rcClient.right,// - (m_splitterLeft + kSplitterWidth + favoriteWidth), 
-				rcClient.bottom);
+				rcClient.bottom - statusHeight);
 		} else {
 			rcLeftGrid.SetRect(
 				rcClient.left + favoriteWidth,
 				rcClient.top,
 				rcClient.right, 
-				rcClient.bottom);
+				rcClient.bottom - statusHeight);
 		}
 	}
+	//CStatusBar
+	m_spStatusBar->SetRect(m_pDirect->Pixels2Dips(rcStatusBar));
 
 	//CFavoritesGridView
 	auto createFavoritesView = [this](std::shared_ptr<CFavoritesGridView>& spFavoritesView, std::shared_ptr<CFilerTabGridView>& spView, unsigned short id, CRect& rc)->void {
@@ -527,6 +540,27 @@ LRESULT CFilerWnd::OnDestroy(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	return 0;
 }
 
+LRESULT CFilerWnd::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	CPaintDC dc(m_hWnd);
+	m_pDirect->BeginDraw();
+
+	m_pDirect->ClearSolid(BackgroundFill.Color);
+
+	PaintEvent e(this);
+	m_spStatusBar->OnPaint(e);
+
+	m_pDirect->EndDraw();
+	return 0;
+}
+
+LRESULT CFilerWnd::OnEraseBkGnd(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	//For Back buffering
+	bHandled = TRUE;
+	return 1;
+}
+
 LRESULT CFilerWnd::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	CPoint pt((short)LOWORD(lParam), (short)HIWORD(lParam));	
@@ -575,43 +609,56 @@ LRESULT CFilerWnd::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 	//m_konamiCommander.OnMouseMove(uMsg, wParam, lParam, bHandled);
 	return 0;
 }
-
+//TODOTODO D2dw::CWnd m_pdirect, create, erasebkgnd, onsize
 LRESULT CFilerWnd::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 {
+	m_pDirect->GetHwndRenderTarget()->Resize(D2D1_SIZE_U{ LOWORD(lParam), HIWORD(lParam) });
+
 	CRect rcClient = GetClientRect();
 
-	//Favorites
-	CRect rcFavoriteClient = m_spLeftFavoritesView->GetDirectPtr()->Dips2Pixels(m_spLeftFavoritesView->GetRect());
+	LONG statusHeight = m_pDirect->Dips2PixelsY(m_spStatusBar->MeasureSize(m_pDirect.get()).height);
+	CRect rcStatusBar(
+		rcClient.left, rcClient.bottom - statusHeight,
+		rcClient.right, rcClient.bottom);
+	m_spStatusBar->SetRect(m_pDirect->Pixels2Dips(rcStatusBar));
+
+	CRect rcFavoriteClient = m_pDirect->Dips2Pixels(m_spLeftFavoritesView->GetRect());
+
     m_spLeftFavoritesView->SetWindowPos(HWND_BOTTOM,
         rcClient.left , rcClient.top, 
-        rcFavoriteClient.Width(), rcClient.Height(),
+        rcFavoriteClient.Width(),
+		rcClient.Height() - statusHeight,
         SWP_SHOWWINDOW);
 
 	if (rcClient.Width() >= m_splitterLeft + kSplitterWidth) {
 		m_spLeftView->SetWindowPos(HWND_BOTTOM,
 			rcClient.left + rcFavoriteClient.Width(), 
 			rcClient.top,
-			m_splitterLeft-(rcClient.left + rcFavoriteClient.Width()), rcClient.Height(),
+			m_splitterLeft-(rcClient.left + rcFavoriteClient.Width()),
+			rcClient.Height() - statusHeight,
 			SWP_SHOWWINDOW);
 		m_spLeftView->UpdateWindow();
 
 		m_spRightFavoritesView->SetWindowPos(HWND_BOTTOM,
 			m_splitterLeft + kSplitterWidth,
 			rcClient.top,
-			rcFavoriteClient.Width(), rcClient.Height(),
+			rcFavoriteClient.Width(),
+			rcClient.Height() - statusHeight,
 			SWP_SHOWWINDOW);
 
 		m_spRightView->SetWindowPos(HWND_BOTTOM,
 			m_splitterLeft + kSplitterWidth + rcFavoriteClient.Width(),
 			rcClient.top,
-			rcClient.right - (m_splitterLeft + kSplitterWidth + rcFavoriteClient.Width()), rcClient.Height(),
+			rcClient.right - (m_splitterLeft + kSplitterWidth + rcFavoriteClient.Width()),
+			rcClient.Height() - statusHeight,
 			SWP_SHOWWINDOW);
 		m_spRightView->UpdateWindow();
 	}else{
 		m_spLeftView->SetWindowPos(HWND_BOTTOM,
 			rcClient.left + rcFavoriteClient.Width(),
 			rcClient.top,
-			rcClient.Width() - rcFavoriteClient.Width(), rcClient.Height(),
+			rcClient.Width() - rcFavoriteClient.Width(),
+			rcClient.Height() - statusHeight,
 			SWP_SHOWWINDOW);
 		m_spLeftView->UpdateWindow();
 		m_spRightView->ShowWindow(SW_HIDE);

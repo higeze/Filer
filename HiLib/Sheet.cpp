@@ -234,9 +234,9 @@ void CSheet::ColumnHeaderFitWidth(CColumnEventArgs& e)
 
 void CSheet::RowInserted(CRowEventArgs& e)
 {
-	//boost::for_each(m_columnAllDictionary,[&](const ColumnData& colData){
-	//	colData.DataPtr->SetMeasureValid(false);
-	//});
+	for(auto& spCol : m_allCols){
+		spCol->SetIsFitMeasureValid(false);
+	};
 	PostUpdate(Updates::RowVisible);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
@@ -934,33 +934,24 @@ void CSheet::Error_StdException(const std::exception& e)
 /**************/
 /* UI Message */
 /**************/
-void CSheet::OnPaint(const PaintEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnContextMenu(const ContextMenuEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnRButtonDown(const RButtonDownEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnLButtonDown(const LButtonDownEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnLButtonUp(const LButtonUpEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnLButtonClk(const LButtonClkEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
-void CSheet::OnLButtonDblClk(const LButtonDblClkEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
-void CSheet::OnSetCursor(const SetCursorEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnMouseLeave(const MouseLeaveEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnKeyDown(const KeyDownEvent& e) 
-{ 
-	m_pMachine->process_event(e);
-	PostUpdate(Updates::Invalidate);
-	SubmitUpdate();
-}
-void CSheet::OnSetFocus(const SetFocusEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnKillFocus(const KillFocusEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnChar(const CharEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnBeginEdit(const BeginEditEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
-void CSheet::OnEndEdit(const EndEditEvent& e)
-{ 
-	m_pMachine->process_event(e);
-	SubmitUpdate();
-}
+void CSheet::OnPaint(const PaintEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnContextMenu(const ContextMenuEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnRButtonDown(const RButtonDownEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnLButtonDown(const LButtonDownEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnLButtonUp(const LButtonUpEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnLButtonClk(const LButtonClkEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate);}
+void CSheet::OnLButtonDblClk(const LButtonDblClkEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate);}
+void CSheet::OnSetCursor(const SetCursorEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnMouseLeave(const MouseLeaveEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnKeyDown(const KeyDownEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate);}
+void CSheet::OnSetFocus(const SetFocusEvent& e) { m_pMachine->process_event(e); }
+void CSheet::OnKillFocus(const KillFocusEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnChar(const CharEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnBeginEdit(const BeginEditEvent& e) { m_pMachine->process_event(e);}
+void CSheet::OnEndEdit(const EndEditEvent& e){ m_pMachine->process_event(e); }
 
 
 void CSheet::SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& cell2, bool doSelect)

@@ -614,6 +614,9 @@
     <ClInclude Include="FileColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\StatusBar.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -891,6 +894,9 @@
     </ClCompile>
     <ClCompile Include="FileOperationWnd.cpp">
       <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\StatusBar.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

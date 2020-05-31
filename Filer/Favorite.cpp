@@ -23,7 +23,7 @@ CFavorite::~CFavorite()
 std::shared_ptr<CShellFile>& CFavorite::GetShellFile(const std::function<void()>& changed)
 {
 	if (!GeLockShellFile()) {
-		//Thread stated, not finished
+		//Thread started, not finished
 		if (m_futureFile.valid() && m_futureFile.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
 			//Do nothing
 		//Thread finished

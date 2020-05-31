@@ -18,7 +18,7 @@ namespace d2dw
 		int m_max = 100;
 		int m_value = 0;
 
-		std::shared_ptr<ProgressProperty> m_spProgressProp;
+		std::shared_ptr<ProgressProperty> m_spStatusBarProp;
 	public:
 		CProgressBar(CWnd* pWnd, const std::shared_ptr<ProgressProperty>& spProgressProp);
 		virtual ~CProgressBar() = default;

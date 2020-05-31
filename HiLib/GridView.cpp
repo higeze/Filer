@@ -1241,31 +1241,37 @@ void CGridView::EndEdit()
 LRESULT CGridView::OnRButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	CSheet::OnRButtonDown(RButtonDownEvent(this, wParam, lParam));
+	SubmitUpdate();
 	return 0;
 }
 LRESULT CGridView::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	m_pMouseMachine->process_event(LButtonDownEvent(this, wParam, lParam));
+	SubmitUpdate();
 	return 0;
 }
 LRESULT CGridView::OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	m_pMouseMachine->process_event(LButtonUpEvent(this, wParam, lParam));
+	SubmitUpdate();
 	return 0;
 }
 LRESULT CGridView::OnLButtonDblClk(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	m_pMouseMachine->process_event(LButtonDblClkEvent(this, wParam, lParam));
+	SubmitUpdate();
 	return 0;
 }
 LRESULT CGridView::OnLButtonDblClkTimeExceed(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	m_pMouseMachine->process_event(LButtonDblClkTimeExceedEvent(this, wParam, lParam));
+	SubmitUpdate();
 	return 0;
 }
 LRESULT CGridView::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	CSheet::OnMouseLeave(MouseLeaveEvent(this, wParam, lParam));
+	SubmitUpdate();
 	return 0;
 }
 LRESULT CGridView::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -1273,12 +1279,14 @@ LRESULT CGridView::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 	auto e = MouseMoveEvent(this, wParam, lParam);
 	m_pMouseMachine->process_event(e);
 	CSheet::OnMouseMove(e);
+	SubmitUpdate();
 	return 0;
 }
 LRESULT CGridView::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	bHandled = FALSE; //Default Handled = FALSE meand Arrow
 	CSheet::OnSetCursor(SetCursorEvent(this, wParam, lParam, bHandled));
+	SubmitUpdate();
 	return 0;
 }
 LRESULT CGridView::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -1287,12 +1295,14 @@ LRESULT CGridView::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 	m_pMouseMachine->process_event(e);
 	CSheet::OnChar(e);
 	bHandled = TRUE;
+	SubmitUpdate();
 	return 0;
 }
 LRESULT CGridView::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	CSheet::OnKeyDown(KeyDownEvent(this, wParam, lParam));
 	//bHandled = FALSE;
+	SubmitUpdate();
 	return 0;
 }
 LRESULT CGridView::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -1301,12 +1311,14 @@ LRESULT CGridView::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 	CPoint ptClient((short)LOWORD(lParam), (short)HIWORD(lParam));
 	ScreenToClient(ptClient);//Necessary to convert Client
 	CSheet::OnContextMenu(ContextMenuEvent(this, wParam, MAKELPARAM(ptClient.x, ptClient.y), bHandled));
+	SubmitUpdate();
 	return 0;
 }
 
 LRESULT CGridView::OnFilter(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	FilterAll();
+	SubmitUpdate();
 	return 0;
 }
 
@@ -1369,6 +1381,7 @@ LRESULT CGridView::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 {
 	CSheet::OnSetFocus(SetFocusEvent(this, wParam, lParam));
 	InvalidateRect(NULL, FALSE);
+	SubmitUpdate();
 	return 0;
 }
 
@@ -1377,6 +1390,7 @@ LRESULT CGridView::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 {
 	CSheet::OnKillFocus(KillFocusEvent(this, wParam, lParam));
 	InvalidateRect(NULL, FALSE);
+	SubmitUpdate();
 	return 0;
 }
 

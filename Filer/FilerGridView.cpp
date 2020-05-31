@@ -425,7 +425,6 @@ void CFilerGridView::Added(const std::wstring& fileName)
 		}
 		PostUpdate(Updates::Sort);
 		FilterAll();
-		SubmitUpdate();
 		if (m_isNewFile) {
 			std::static_pointer_cast<CFileIconDispNameCell<std::shared_ptr<CShellFile>>>(CSheet::Cell(spRow, m_pNameColumn))->OnEdit(EventArgs(this));
 		}
@@ -467,7 +466,6 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 			PostUpdate(Updates::Invalidate);
 			PostUpdate(Updates::Sort);
 			FilterAll();
-			SubmitUpdate();
 		} else {
 			SPDLOG_INFO("Modified FAILED " + wstr2str(fileName));
 		}
@@ -501,7 +499,6 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 		PostUpdate(Updates::Sort);
 
 		FilterAll();
-		SubmitUpdate();
 	}
 
 }
@@ -535,7 +532,6 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 			PostUpdate(Updates::Invalidate);
 			PostUpdate(Updates::Sort);
 			FilterAll();
-			SubmitUpdate();
 		}
 		else {
 			SPDLOG_INFO("Renamed FAILED " + wstr2str(oldName) + "=>" + wstr2str(newName));
@@ -984,6 +980,7 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 	
 	//Do not delete since caller delete this by himself
 	//delete [] (PBYTE)pInfo0;
+	SubmitUpdate();
 
 	return 0;
 }

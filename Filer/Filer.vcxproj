@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -80,7 +80,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -319,6 +319,7 @@
     <ClInclude Include="..\HiLib\ShellFunction.h" />
     <ClInclude Include="..\HiLib\ShowHideMenuItem.h" />
     <ClInclude Include="..\HiLib\SingletonMalloc.h" />
+    <ClInclude Include="..\HiLib\StatusBar.h" />
     <ClInclude Include="..\HiLib\TextCell.h" />
     <ClInclude Include="..\HiLib\ThreadHelper.h" />
     <ClInclude Include="..\HiLib\ThreadPool.h" />
@@ -441,6 +442,7 @@
     <ClCompile Include="..\HiLib\ShellFunction.cpp" />
     <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp" />
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
+    <ClCompile Include="..\HiLib\StatusBar.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
     <ClCompile Include="..\HiLib\ThreadPool.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp" />

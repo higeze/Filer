@@ -11,6 +11,7 @@
 #include "ViewProperty.h"
 #include "CellProperty.h"
 #include "PropertyWnd.h"
+#include "StatusBar.h"
 //#include "KonamiCommander.h"
 
 class CFilerGridView;
@@ -90,6 +91,7 @@ public:
 class CFilerWnd:public CWnd
 {
 private:
+	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
 	CRect m_rcWnd;
 	CRect m_rcPropWnd;
 	const int kSplitterWidth = 5;
@@ -111,6 +113,11 @@ private:
 	std::shared_ptr<CFilerTabGridView> m_spRightView;
 	
 	std::shared_ptr<CFilerTabGridView> m_spCurView;
+
+	std::shared_ptr<d2dw::CStatusBar> m_spStatusBar;
+
+	//Property
+	d2dw::SolidFill BackgroundFill = d2dw::SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
 	
 	//CKonamiCommander m_konamiCommander;
 
@@ -129,11 +136,15 @@ public:
 	std::shared_ptr<CFavoritesGridView>& GetRightFavoritesView() { return m_spRightFavoritesView; }
 	std::shared_ptr<CFilerTabGridView>& GetLeftView() { return m_spLeftView; }
 	std::shared_ptr<CFilerTabGridView>& GetRightView() { return m_spRightView; }
+	d2dw::CDirect2DWrite* GetDirectPtr() { return m_pDirect.get(); }
+
 
 private:
 	LRESULT OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnClose(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnDestroy(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	LRESULT OnEraseBkGnd(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
