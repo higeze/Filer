@@ -1,6 +1,7 @@
 //#include "stdafx.h"
 #include "Direct2DWrite.h"
 #include "FileIconCache.h"
+#include <fmt/format.h>
 
 namespace d2dw
 {
@@ -254,7 +255,7 @@ namespace d2dw
 					D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_MULTI_THREADED,
 					__uuidof(ID2D1Factory1),
 					(void**)&m_pD2D1Factory))) {
-				throw std::exception(FILELINEFUNCTION);
+				throw std::exception(FILE_LINE_FUNC);
 			}
 		}
 		return m_pD2D1Factory;
@@ -268,7 +269,7 @@ namespace d2dw
 					DWRITE_FACTORY_TYPE::DWRITE_FACTORY_TYPE_SHARED,
 					__uuidof(IDWriteFactory1),
 					(IUnknown**)&m_pDWriteFactory))) {
-				throw std::exception(FILELINEFUNCTION);
+				throw std::exception(FILE_LINE_FUNC);
 			}
 		}
 		return m_pDWriteFactory;
@@ -280,7 +281,7 @@ namespace d2dw
 			if (FAILED(
 				m_pWICImagingFactory.CoCreateInstance(
 					CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER))) {
-				throw std::exception(FILELINEFUNCTION);
+				throw std::exception(FILE_LINE_FUNC);
 			}
 		}
 		return m_pWICImagingFactory;
@@ -301,7 +302,7 @@ namespace d2dw
 					//	D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
 					D2D1::HwndRenderTargetProperties(m_hWnd, size),
 					&m_pHwndRenderTarget))) {
-				throw std::exception(FILELINEFUNCTION);
+				throw std::exception(FILE_LINE_FUNC);
 			}
 		}
 		return m_pHwndRenderTarget;
@@ -315,7 +316,7 @@ namespace d2dw
 		} else {
 			CComPtr<ID2D1SolidColorBrush> pBrush;
 			if (FAILED(GetHwndRenderTarget()->CreateSolidColorBrush(color, &pBrush))) {
-				throw std::exception(FILELINEFUNCTION);
+				throw std::exception(FILE_LINE_FUNC);
 			} else {
 				auto ret = m_solidColorBrushMap.emplace(color, pBrush);
 				return ret.first->second;
@@ -339,7 +340,7 @@ namespace d2dw
 				format.Font.Size,
 				L"en-us",
 				&pTextFormat))){
-				throw std::exception(FILELINEFUNCTION);
+				throw std::exception(FILE_LINE_FUNC);
 			} else {
 				pTextFormat->SetTextAlignment(format.Alignment.TextAlignment);
 				pTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING::DWRITE_WORD_WRAPPING_CHARACTER);
@@ -365,7 +366,7 @@ namespace d2dw
 		} else {
 			CComPtr<IDWriteTextLayout> pTextLayout = NULL;
 			if (FAILED(GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(format), size.width, size.height, &pTextLayout))) {
-				throw std::exception(FILELINEFUNCTION);
+				throw std::exception(FILE_LINE_FUNC);
 			} else {
 				CComPtr<IDWriteTypography> typo;
 				GetDWriteFactory()->CreateTypography(&typo);
@@ -506,18 +507,18 @@ namespace d2dw
 
 		CComPtr<IWICBitmap> pWICBitmap;
 		if (FAILED(GetWICImagingFactory()->CreateBitmapFromHICON(hIcon, &pWICBitmap))) {
-			throw std::exception(FILELINEFUNCTION);
+			throw std::exception(FILE_LINE_FUNC);
 		}
 		CComPtr<IWICFormatConverter> pWICFormatConverter;
 		if (FAILED(GetWICImagingFactory()->CreateFormatConverter(&pWICFormatConverter))) {
-			throw std::exception(FILELINEFUNCTION);
+			throw std::exception(FILE_LINE_FUNC);
 		}
 		if (FAILED(pWICFormatConverter->Initialize(pWICBitmap, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeMedianCut))) {
-			throw std::exception(FILELINEFUNCTION);
+			throw std::exception(FILE_LINE_FUNC);
 		}
 		double dpix = 96.0f, dpiy = 96.0f;
 		if (FAILED(pWICFormatConverter->GetResolution(&dpix, &dpiy))) {
-			throw std::exception(FILELINEFUNCTION);
+			throw std::exception(FILE_LINE_FUNC);
 		}
 
 		D2D1_BITMAP_PROPERTIES bitmapProps;
@@ -532,10 +533,10 @@ namespace d2dw
 		HRESULT hr = GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
 		if (FAILED(hr)) {
 			SPDLOG_INFO("Failed");
-			SPDLOG_INFO((boost::format("%08X") % hIcon).str());
-			SPDLOG_INFO((boost::format("%08X") % hr).str());
+			SPDLOG_INFO(fmt::format("{:08X}", (LONG_PTR)hIcon));
+			SPDLOG_INFO(fmt::format("{:08X}", hr));
 
-			throw std::exception(FILELINEFUNCTION);
+			throw std::exception(FILE_LINE_FUNC);
 		}
 
 		GetHwndRenderTarget()->DrawBitmap(pBitmap, rect);

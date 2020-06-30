@@ -1,6 +1,5 @@
 #include "Sheet.h"
 #include <numeric>
-#include <boost/format.hpp>
 #include "SheetEventArgs.h"
 #include "CellProperty.h"
 #include "MyRect.h"
@@ -922,10 +921,10 @@ void CSheet::Error_StdException(const std::exception& e)
 {
 	::OutputDebugStringA(e.what());
 
-	std::string msg = (boost::format(
-		"What:%1%\r\n"
-		"Last Error:%2%\r\n"
-	) % e.what() % GetLastErrorString()).str();
+	std::string msg = fmt::format(
+		"What:{}\r\n"
+		"Last Error:{}\r\n",
+		e.what(), GetLastErrorString());
 
 	MessageBoxA(GetGridPtr()->m_hWnd, msg.c_str(), "Exception in StateMachine", MB_ICONWARNING);
 	Clear();

@@ -2,6 +2,7 @@
 #include "MyIcon.h"
 #include "MyCom.h"
 #include "ThreadPool.h"
+#include "Debug.h"
 #include <VersionHelpers.h>
 #include <ntddkbd.h>
 
@@ -51,18 +52,18 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetBitmapFromIcon(const CIcon& icon)
 {
 	CComPtr<IWICBitmap> pWICBitmap;
 	if (FAILED(m_pDirect->GetWICImagingFactory()->CreateBitmapFromHICON(icon, &pWICBitmap))) {
-		throw std::exception(FILELINEFUNCTION);
+		throw std::exception(FILE_LINE_FUNC);
 	}
 	CComPtr<IWICFormatConverter> pWICFormatConverter;
 	if (FAILED(m_pDirect->GetWICImagingFactory()->CreateFormatConverter(&pWICFormatConverter))) {
-		throw std::exception(FILELINEFUNCTION);
+		throw std::exception(FILE_LINE_FUNC);
 	}
 	if (FAILED(pWICFormatConverter->Initialize(pWICBitmap, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeMedianCut))) {
-		throw std::exception(FILELINEFUNCTION);
+		throw std::exception(FILE_LINE_FUNC);
 	}
 	//double dpix = 96.0f, dpiy = 96.0f;
 	//if (FAILED(pWICFormatConverter->GetResolution(&dpix, &dpiy))) {
-	//	throw std::exception(FILELINEFUNCTION);
+	//	throw std::exception(FILE_LINE_FUNC);
 	//}
 
 	//D2D1_BITMAP_PROPERTIES bitmapProps;
@@ -77,7 +78,7 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetBitmapFromIcon(const CIcon& icon)
 //	HRESULT hr = m_pDirect->GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
 	HRESULT hr = m_pDirect->GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICFormatConverter, nullptr, &pBitmap);
 	if (FAILED(hr)) {
-		throw std::exception(FILELINEFUNCTION);
+		throw std::exception(FILE_LINE_FUNC);
 	}
 	return pBitmap;
 }

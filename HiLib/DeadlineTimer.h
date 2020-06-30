@@ -20,7 +20,6 @@ public:
 	~CDeadlineTimer() { stop(); }
 
 	void run(std::function<void()> action, const std::chrono::milliseconds& ms);
-	void run_interval(std::function<void()> action, const std::chrono::milliseconds& ms);
 
 	void run_oneshot(std::function<void()> action, const std::chrono::milliseconds& ms);
 

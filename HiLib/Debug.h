@@ -1,5 +1,4 @@
 #pragma once
+#include <fmt/format.h>
 
-#define FILE_LINE_FUNC (boost::format("File:%1%, Line:%2%, Func:%3%") % ::PathFindFileNameA(__FILE__) % __LINE__ % __FUNCTION__).str().c_str()
-
-#define FILE_LINE_FUNC_TRACE SPDLOG_INFO((boost::format("File:%1%, Line:%2%, Func:%3%") % ::PathFindFileNameA(__FILE__) % __LINE__ % __FUNCTION__).str());
+#define FILE_LINE_FUNC fmt::format("File:{}, Line:{}, Func:{}", ::PathFindFileNameA(__FILE__), __LINE__, __FUNCTION__).c_str()

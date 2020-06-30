@@ -8,6 +8,7 @@
 #include "CellProperty.h"
 #include "Sheet.h"
 #include "GridView.h"
+#include <fmt/format.h>
 
 template<typename... TItems>
 class CFileSizeCell:public CTextCell, public std::enable_shared_from_this<CFileSizeCell<TItems...>>
@@ -108,7 +109,7 @@ public:
 				case FileSizeStatus::None:
 					return L"none";
 				case FileSizeStatus::Available:
-					return (boost::wformat(L"%12d") % size.first.QuadPart).str();
+					return fmt::format(L"{:12d}", size.first.QuadPart);
 				case FileSizeStatus::Calculating:
 					return L"...";
 				case FileSizeStatus::Unavailable:

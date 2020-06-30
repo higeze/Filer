@@ -10,6 +10,7 @@
 #include <commctrl.h>
 #include <commdlg.h>
 #include "MyPrerocessor.h"
+#include <fmt/format.h>
 
 #pragma comment(lib, "comctl32.lib")
 
@@ -256,10 +257,7 @@ public:
 	{	
 		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,funMsg));
 		if (!pair.second) {
-			SPDLOG_INFO((boost::format(
-				"Duplicate "
-				"MSG:%1$04x"
-			) % uMsg).str());
+			SPDLOG_INFO(fmt::format("Duplicate MSG:{:04X}",uMsg));
 		}
 		return pair.second;
 	}
@@ -281,10 +279,7 @@ public:
 	{	
 		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
 		if (!pair.second) {
-			SPDLOG_INFO((boost::format(
-				"Duplicate "
-				"MSG:%1$04x"
-			) % uMsg).str());
+			SPDLOG_INFO(fmt::format("Duplicate MSG:{:04X}", uMsg));
 		}
 		return pair.second;
 	}

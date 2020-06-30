@@ -2,6 +2,7 @@
 #include "FileIconCache.h"
 #include "MyCom.h"
 #include "MyIcon.h"
+#include <fmt/format.h>
 
 CKnownDriveBaseFolder::CKnownDriveBaseFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder)
 	:CShellFolder(pParentShellFolder, parentIdl, childIdl, pShellFolder){}
@@ -110,12 +111,12 @@ CKnownFolderManager::CKnownFolderManager()
 					auto knownFolder = std::make_shared<CKnownFolder>(pParentShellFolder, parentIdl, childIdl, pFolder, pShellFolder);
 					m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
 				} else {
-					SPDLOG_INFO("CKnownFolder::CKnownFolder Non enumerable " +
-						(boost::format("%1$08x-%2$04x") % std::get<0>(pair.second).Data1 % std::get<0>(pair.second).Data2).str());
+					SPDLOG_INFO(fmt::format("CKnownFolder::CKnownFolder Non enumerable {:08X}-{:04X}",
+											std::get<0>(pair.second).Data1, std::get<0>(pair.second).Data2));
 				}
 			} else {
-				SPDLOG_INFO("CKnownFolder::CKnownFolder IDL is null " +
-					(boost::format("%1$08x-%2$04x") % std::get<0>(pair.second).Data1 % std::get<0>(pair.second).Data2).str());
+				SPDLOG_INFO(fmt::format("CKnownFolder::CKnownFolder IDL is null {:08X}-{:04X}",
+							std::get<0>(pair.second).Data1, std::get<0>(pair.second).Data2));
 			}
 		}
 

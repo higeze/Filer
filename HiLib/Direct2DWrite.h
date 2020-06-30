@@ -16,8 +16,9 @@
 #include "MyPoint.h"
 #include "MyRect.h"
 #include "MyFont.h"
+#include "Debug.h"
+#include <fmt/format.h>
 
-#define FILELINEFUNCTION (boost::format("File:%1%, Line:%2%, Func:%3%") % ::PathFindFileNameA(__FILE__) % __LINE__ % __FUNCTION__).str().c_str()
 
 struct XTag;
 struct YTag;

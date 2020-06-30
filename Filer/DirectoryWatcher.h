@@ -8,7 +8,7 @@ struct closehandle
 	void operator()(HANDLE handle)const
 	{
 		if (!::CloseHandle(handle)) {
-			FILE_LINE_FUNC_TRACE;
+			SPDLOG_INFO("");
 		}
 	}
 

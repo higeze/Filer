@@ -27,7 +27,7 @@ void CDirectoryWatcher::StartWatching(const std::wstring& path, const CIDL& absI
 		//Create event
 		m_pQuitEvent.reset(CreateEvent(NULL, TRUE, FALSE, NULL));
 		if (!m_pQuitEvent) {
-			FILE_LINE_FUNC_TRACE;
+			SPDLOG_INFO("");
 			return;
 		}
 
@@ -35,7 +35,7 @@ void CDirectoryWatcher::StartWatching(const std::wstring& path, const CIDL& absI
 		m_futureWatch = CThreadPool::GetInstance()->enqueue(&CDirectoryWatcher::WatchDirectory, this);
 	}
 	catch (std::exception& e) {
-		FILE_LINE_FUNC_TRACE;
+		SPDLOG_INFO("");
 		QuitWatching();
 		throw e;
 	}
@@ -48,7 +48,7 @@ void CDirectoryWatcher::QuitWatching()
 		if (m_pQuitEvent) {
 			//Throw quit event
 			if (!::SetEvent(m_pQuitEvent.get())) {
-				FILE_LINE_FUNC_TRACE;
+				SPDLOG_INFO("");
 			}
 			//Close handle
 			m_pQuitEvent.reset();
@@ -63,7 +63,7 @@ void CDirectoryWatcher::QuitWatching()
 		m_absIdl.Clear();
 	}
 	catch (std::exception& e) {
-		FILE_LINE_FUNC_TRACE;
+		SPDLOG_INFO("");
 		throw e;
 	}
 
@@ -111,7 +111,7 @@ void CDirectoryWatcher::WatchDirectory()
 
 		SPDLOG_INFO("End CDirectoryWatcher::WatchDirectoryCallback");
 	}catch(std::exception&){
-		FILE_LINE_FUNC_TRACE;
+		SPDLOG_INFO("");
 	}
 }
 
@@ -236,7 +236,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 								addDiff.erase(newIter);
 								remDiff.erase(oldIter);
 							} else {
-								FILE_LINE_FUNC_TRACE;
+								SPDLOG_INFO("");
 							}
 							oldIter = remDiff.end();
 						}
@@ -279,7 +279,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 			}
 		}
 	}catch(std::exception&){
-		FILE_LINE_FUNC_TRACE;
+		SPDLOG_INFO("");
 	}
 }
 

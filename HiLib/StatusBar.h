@@ -57,15 +57,19 @@ namespace d2dw
 	class CStatusBar: CUIElement
 	{
 	private:
+		std::mutex m_mtx;
 		CTimer m_timer;
-		LONG m_cpu = 0L;
+		double m_cpu = 0.f;
 		LONG m_mem = 0L;
+		LONG m_handleCount = 0L;
 		LONG m_threadCount = 0L;
 
-		PDH_HQUERY              m_hQuery;
-		PDH_HCOUNTER            m_hCounterCPU;
-		PDH_HCOUNTER            m_hCounterMemory;
-		PDH_HCOUNTER            m_hCounterThread;
+
+		PDH_HQUERY m_hQuery;
+		PDH_HCOUNTER m_hCounterCPU;
+		PDH_HCOUNTER m_hCounterMemory;
+		PDH_HCOUNTER m_hCounterThread;
+		PDH_HCOUNTER m_hCounterHandle;
 
 		void Update();
 

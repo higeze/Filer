@@ -1121,7 +1121,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 					}
 				}
 			},
-				[pCell, pEdit](const std::basic_string<TCHAR>& str)->void {
+				[pCell](const std::basic_string<TCHAR>& str)->void {
 				// Need to EditPtr to nullptr first. Otherwise exception occur
 				pCell->GetSheetPtr()->GetGridPtr()->SetEditPtr(nullptr);
 				pCell->SetString(str);
@@ -1139,8 +1139,9 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 void CGridView::Edit_OnExit()
 {
 	ReleaseCapture();
-	if (GetEditPtr()) {
+	if (auto pEdit = GetEditPtr()) {
 		GetEditPtr()->OnClose(CloseEvent(this, NULL, NULL));
+		delete pEdit;
 	}
 }
 void CGridView::Edit_MouseMove(const MouseMoveEvent& e)
@@ -1157,7 +1158,7 @@ void CGridView::Edit_MouseMove(const MouseMoveEvent& e)
 bool CGridView::Edit_Guard_LButtonDown(const LButtonDownEvent& e)
 {
 	auto ret = !GetEditPtr()->GetClientRect().PtInRect(GetDirectPtr()->Pixels2Dips(e.Point));
-	if (ret) { SetEditPtr(nullptr); }
+//	if (ret) { SetEditPtr(nullptr); }
 	return ret;
 }
 

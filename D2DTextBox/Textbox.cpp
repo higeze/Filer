@@ -203,7 +203,6 @@ void D2DTextbox::OnClose(const CloseEvent& e)
 	if (!m_isClosing) {
 		m_isClosing = true;
 		m_final(m_text);
-		delete this;
 	}
 }
 
@@ -468,7 +467,7 @@ void D2DTextbox::ResetCaret()
 
 	m_bCaret = true;
 	m_pWnd->PostUpdate(Updates::Invalidate);
-	m_timer.run_interval([this]()->void
+	m_timer.run([this]()->void
 		{
 			m_bCaret = !m_bCaret;
 			m_pWnd->Invalidate();

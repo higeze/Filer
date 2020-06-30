@@ -3,6 +3,7 @@
 #include <ShellAPI.h>
 #include <Shlwapi.h>
 #include <spdlog/spdlog.h>
+#include <fmt/format.h>
 
 
 #include "MyWin32.h"
@@ -118,24 +119,24 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 
 		}catch(std::exception& ex){
 			::OutputDebugStringA(ex.what());
-			std::string msg = (boost::format(
-				"What:%1%\r\n"
-				"Last Error:%2%\r\n"
-				"MSG:%3$04x\r\n"
-				"WPARAM:%4$04x\r\n"
-				"LPARAM:%5$04x"
-			) % ex.what() % GetLastErrorString() %
-				uiMsg % wParam % lParam).str();
+			std::string msg = fmt::format(
+				"What:{}\r\n"
+				"Last Error:{}\r\n"
+				"MSG:{:04X}\r\n"
+				"WPARAM:{:04X}\r\n"
+				"LPARAM:{:04X}",
+				ex.what() ,GetLastErrorString(),
+				uiMsg, wParam, lParam);
 
 			MessageBoxA(m_hWnd, msg.c_str(), "Exception in Message Loop", MB_ICONWARNING);
 			SPDLOG_ERROR("Exception in Message Loop" + msg);
 			::PostQuitMessage(0);
 		}catch(...){
-			std::string msg = (boost::format(
-				"MSG:%3$04x\r\n"
-				"WPARAM:%4$04x\r\n"
-				"LPARAM:%5$04x"
-				) % uiMsg % wParam % lParam).str();
+			std::string msg = fmt::format(
+				"MSG:{:04X}\r\n"
+				"WPARAM:{:04X}\r\n"
+				"LPARAM:{:04X}",
+				uiMsg, wParam, lParam);
 
 			MessageBoxA(m_hWnd, msg.c_str(), "Exception in Message Loop", MB_ICONWARNING);
 			SPDLOG_ERROR("Exception in Message Loop" + msg);

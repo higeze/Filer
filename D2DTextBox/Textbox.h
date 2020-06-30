@@ -4,7 +4,7 @@
 #include "CellProperty.h"
 #include "UIElement.h"
 #include "observable.h"
-#include "DeadlineTimer.h"
+#include "Timer.h"
 
 class LayoutLineInfo;
 struct D2DContext;
@@ -189,7 +189,7 @@ public:
 	//UINT FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst);
 
 private:
-	CDeadlineTimer m_timer;
+	CTimer m_timer;
 	std::wstring m_strInit;
 	CTextCell* m_pCell;
 	std::shared_ptr<CellProperty> m_pProp;
