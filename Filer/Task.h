@@ -21,13 +21,13 @@ struct SubTask:public Task
 
 struct MainTask:public Task
 {
-	observable_vector<std::wstring> Links;
-	observable_vector<SubTask> SubTasks;
+	observable_vector<std::tuple<std::wstring>> Links;
+	observable_vector<std::tuple<SubTask>> SubTasks;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
 		Task::serialize(ar);
-		ar("SubTasks", static_cast<std::vector<SubTask>&>(SubTasks));
+		ar("SubTasks", static_cast<std::vector<std::tuple<SubTask>>&>(SubTasks));
 	}
 };

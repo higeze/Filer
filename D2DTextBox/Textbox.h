@@ -5,6 +5,7 @@
 #include "UIElement.h"
 #include "observable.h"
 #include "Timer.h"
+#include "MyWnd.h"
 
 class LayoutLineInfo;
 struct D2DContext;
@@ -23,72 +24,12 @@ struct COMPOSITIONRENDERINFO
 	TF_DISPLAYATTRIBUTE da;
 };
 
-//struct CHARINFO
-//{
-//	d2dw::CRectF rc;
-//	float GetWidth() { return rc.right - rc.left; }
-//};
-//
-//struct LINEINFO
-//{
-//	int nPos;
-//	int nCnt;
-//	std::vector<CHARINFO> CharInfos;
-//};
-
-//class CaretRect
-//{
-//public:
-//	CaretRect(bool bTrail) :bTrail_(bTrail), cnt_(0) {};
-//
-//	void Push(const d2dw::CRectF& rc, int row, int colStart, int colLast)
-//	{
-//		if (bTrail_) {
-//			rc_ = rc;
-//			row_ = row;
-//			col_ = colLast;
-//		} else if (!bTrail_ && cnt_ == 0) {
-//			rc_ = rc;
-//			row_ = row;
-//			col_ = colStart;
-//		}
-//
-//		cnt_++;
-//	}
-//
-//	d2dw::CRectF Get() { return rc_; }
-//	bool empty() { return cnt_ == 0; }
-//
-//	int row() { return row_; }
-//	int col() { return col_; }
-//
-//
-//	bool IsComplete(int rowno)
-//	{
-//		if (cnt_ == 0) return false;
-//
-//		if (bTrail_) {
-//			if (row_ == rowno)
-//				return false;
-//		}
-//
-//		return true;
-//	}
-//
-//private:
-//	bool bTrail_;
-//	int cnt_;
-//	d2dw::CRectF rc_;
-//	int row_, col_;
-//};
-
-
 class D2DTextbox: public IBridgeTSFInterface
 {
 public:
 	static bool AppTSFInit();
 	static void AppTSFExit();
-private:
+protected:
 	enum caret
 	{
 		OldCaret = 0,
@@ -110,7 +51,8 @@ private:
 
 public:
 	D2DTextbox(
-		CGridView* pWnd, 
+		CWnd* pWnd,
+		//////CGridView* pWnd, 
 		CTextCell* pCell,
 		std::shared_ptr<CellProperty> pProp,
 		std::function<std::wstring()> getter,
@@ -122,7 +64,7 @@ private:
 	void InitTSF();
 	void UninitTSF();
 public:
-	// Getter ////////////////////////////////////////////////////
+	// Getter
 	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets); }
 	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets); }
 	CTextCell* GetCellPtr() { return m_pCell; }
@@ -137,11 +79,11 @@ public:
 	virtual void OnMouseMove(const MouseMoveEvent& e);
 	virtual void OnChar(const CharEvent& e);
 
-	// IBridgeInterface///////////////////////////////////////////
-	d2dw::CRectF GetClientRect() const;
+	// IBridgeInterface
+	virtual d2dw::CRectF GetClientRect() const;
 	d2dw::CRectF GetContentRect() const;
 
-	// Text Functions ////////////////////////////////////////
+	// Text Functions 
 	observable_wstring& GetText() { return m_text; }
 	//std::wstring FilterInputString(LPCWSTR s, UINT len);
 private:
@@ -150,7 +92,7 @@ private:
 
 public:
 
-	// Selection ////////////////////////////////////////
+	// Selection
 	void MoveCaret(const int& newPos);
 	void MoveCaretWithShift(const int& newPos);
 	void MoveSelection(const int& selFirst, const int& selLast);
@@ -162,8 +104,8 @@ public:
 	void ClearText();
 	
 
-	// Render /////////////////////////////////////
-	bool GetIsVisible()const;
+	// Render
+	virtual bool GetIsVisible()const;
 	void Render();
 	void ResetCaret();
 	void DrawCaret(const d2dw::CRectF& rc);
@@ -216,7 +158,8 @@ private:
 	TfEditCookie ecTextStore_;
 
 public:
-	CGridView* m_pWnd;
+	//////CGridView* m_pWnd;
+	CWnd* m_pWnd;
 
 public:
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
@@ -227,4 +170,30 @@ public:
 	static TfClientId s_tfClientId;
 	static ITfKeystrokeMgr* s_pKeystrokeMgr;
 
+};
+
+struct TextboxProperty:public CellProperty
+{};
+
+class D2DTextbox2 :public D2DTextbox
+{
+public:
+	D2DTextbox2(CWnd* pWnd, const std::shared_ptr<TextboxProperty>& spProp, 
+		std::function<std::wstring()> getter,
+		std::function<void(const std::wstring&)> setter,
+		std::function<void(const std::wstring&)> changed,
+		std::function<void(const std::wstring&)> final)
+		:D2DTextbox(pWnd, nullptr, spProp, getter, setter, changed, final){}
+
+	d2dw::CRectF GetClientRect() const override
+	{
+		CRect rc = m_pWnd->GetClientRect();
+		rc.DeflateRect(1);
+		return m_pWnd->GetDirectPtr()->Pixels2Dips(rc);
+	}
+
+	bool GetIsVisible() const override
+	{
+		return true;
+	}
 };

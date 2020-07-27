@@ -57,7 +57,9 @@ IDR_CONTEXTMENU_TAB MENU
 {
     POPUP "DUMMY"
     {
-        MENUITEM "New\tCtrl+T", IDM_NEWTAB
+        MENUITEM "New Filer tab\tCtrl+T", IDM_NEWFILERTAB
+        MENUITEM "New ToDo tab", IDM_NEWTODOTAB
+        MENUITEM "New Text tab", IDM_NEWTEXTTAB
         MENUITEM "Clone\tCtrl+W", IDM_CLONETAB
 		MENUITEM SEPARATOR
 		MENUITEM "Open same as other", IDM_OPENSAMEASOTHER

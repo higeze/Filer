@@ -1,29 +1,32 @@
 ﻿#pragma once
 #include "MyWnd.h"
 #include "Direct2DWrite.h"
+#include "observable.h"
 
 class CellProperty;
 class D2DTextbox;
+struct TextboxProperty;
 
 class CTextboxWnd:public CWnd
 {
 public:
-
+	observable<std::wstring> m_path;
+	std::wstring m_text;
 	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
 	std::unique_ptr<D2DTextbox> m_pTxtbox;
-
-	int m_redraw;
-
-	d2dw::CDirect2DWrite* GetDirectPtr() override { return  m_pDirect.get(); }
+	std::shared_ptr<TextboxProperty> m_spProp;
 
 public :
-	CTextboxWnd(
-		std::shared_ptr<CellProperty> spProp,
-		std::function<std::wstring()> getter,
-		std::function<void(const std::wstring&)> setter,
-		std::function<void(const std::wstring&)> changed,
-		std::function<void()> final);
+	CTextboxWnd(std::shared_ptr<TextboxProperty> spProp);
 	virtual ~CTextboxWnd();
+
+	d2dw::CDirect2DWrite* GetDirectPtr() override { return  m_pDirect.get(); }
+	observable<std::wstring>& GetObsPath() { return m_path; }
+	void Open();
+	void Open(const std::wstring& path);
+	void Save();
+	void Save(const std::wstring& path);
+
 private:
 	LRESULT OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 

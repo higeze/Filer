@@ -86,17 +86,7 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 	LRESULT CALLBACK CWnd::WndProc(UINT uiMsg,WPARAM wParam,LPARAM lParam)
 	{
 		try{
-/*			auto iter=m_msgMap.find(uiMsg);
-			LRESULT lResult=0;
-			if(iter!=m_msgMap.end()){
-				BOOL bHandled=TRUE;
-				lResult=iter->second(uiMsg,wParam,lParam,bHandled);
-				if(bHandled==TRUE){return lResult;}
-			}*/	
-			//if(uiMsg == WM_SETFOCUS){
-			//	auto a =1.1;
 
-			//}
 			LRESULT lResult=0;
 			BOOL bHandled = TRUE;
 			if (m_allMsg) {
@@ -106,16 +96,11 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 
 			auto iter = m_msgMap.find(uiMsg);
 			if (iter != m_msgMap.end()) {
-				lResult = iter->second(uiMsg, wParam, lParam, bHandled);
-				if (bHandled == TRUE) { return lResult; }
+				for (auto& fun : iter->second) {
+					lResult = fun(uiMsg, wParam, lParam, bHandled);
+					if (bHandled == TRUE) { return lResult; }
+				}
 			}
-
-			//auto ret = m_msgMap.equal_range(uiMsg);
-			//for(auto iter = ret.first;iter!=ret.second;++iter){
-			//	bHandled=TRUE;
-			//	lResult=iter->second(uiMsg,wParam,lParam,bHandled);
-			//	if(bHandled==TRUE){return lResult;}			
-			//}
 
 		}catch(std::exception& ex){
 			::OutputDebugStringA(ex.what());

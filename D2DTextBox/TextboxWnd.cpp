@@ -6,15 +6,20 @@
 #include "CellProperty.h"
 #include "UIElement.h"
 #include "ResourceIDFactory.h"
+#include "MyFile.h"
 
 LRESULT CTextboxWnd::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	SetFocus();
-	// create direct
+	// Create direct
 	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
+	// Cteate textbox
+	m_pTxtbox = std::make_unique<D2DTextbox2>(this, m_spProp,
+											 [this]() {return m_text; },
+											 [this](const std::wstring& text) {m_text = text; },
+		[this](const std::wstring& text) {m_text = text; },
+											 [](const std::wstring& text) {});
 
-	//m_pTxtbox->OnCreate(CreateEvent(this, wParam, lParam));
-
+	SetFocus();
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
@@ -57,21 +62,16 @@ LRESULT CTextboxWnd::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHand
 
 LRESULT CTextboxWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	if ((wParam == VK_RETURN) && !(::GetKeyState(VK_MENU) & 0x8000)) {
-		//Do not send message to children
-		::SetFocus(::GetParent(m_hWnd));
-	}
-	else if ((wParam == VK_TAB) && !(::GetKeyState(VK_MENU) & 0x8000)) {
-		//Do not send message to children
-		::SetFocus(::GetParent(m_hWnd));
-	}
-	else if (wParam == VK_ESCAPE) {
-		//Back to initial string
-		m_pTxtbox->CancelEdit();
-		::SetFocus(::GetParent(m_hWnd));
-	}
-	else {
-		m_pTxtbox->OnKeyDown(KeyDownEvent(this, wParam, lParam));
+	if ((wParam == 'O') && ::GetAsyncKeyState(VK_CONTROL)) {
+		Open();
+	} else if ((wParam == 'S') && ::GetAsyncKeyState(VK_CONTROL)) {
+		if (m_path.get().empty()) {
+			Save();
+		} else {
+			Save(m_path);
+		}
+	} else {
+		m_pTxtbox->OnKeyDown(KeyDownEvent(this, wParam, lParam, bHandled));
 	}
 	InvalidateRect(NULL, FALSE);
 	return 0;
@@ -79,8 +79,6 @@ LRESULT CTextboxWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 LRESULT CTextboxWnd::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	//m_pTxtbox->OnKillFocus(KillFocusEvent(this, wParam, lParam));
-	SendMessage(WM_CLOSE, NULL, NULL);
 	return 0;
 }
 
@@ -93,6 +91,7 @@ LRESULT CTextboxWnd::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 
 LRESULT CTextboxWnd::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
+	SetFocus();
 	m_pTxtbox->OnLButtonDown(LButtonDownEvent(this, wParam, lParam));
 	InvalidateRect(NULL, FALSE);
 	return 0;
@@ -105,19 +104,11 @@ LRESULT CTextboxWnd::OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 	return 0;
 }
 
-void CTextboxWnd::OnFinalMessage(HWND m_hWnd)
-{
-	//m_final();
-	delete this;
-}
+void CTextboxWnd::OnFinalMessage(HWND m_hWnd){}
 
-CTextboxWnd::CTextboxWnd(
-	std::shared_ptr<CellProperty> pProp,
-	std::function<std::wstring()> getter,
-	std::function<void(const std::wstring&)> setter,
-	std::function<void(const std::wstring&)> changed,
-	std::function<void()> final)
-//	:CWnd(), m_pTxtbox(std::make_unique<D2DTextbox>(this, pProp,getter,setter,changed,final))
+
+CTextboxWnd::CTextboxWnd(std::shared_ptr<TextboxProperty> pProp)
+	:CWnd(), m_spProp(pProp)
 {
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
@@ -150,3 +141,77 @@ CTextboxWnd::CTextboxWnd(
 }
 
 CTextboxWnd::~CTextboxWnd() = default;
+
+void CTextboxWnd::Open()
+{
+	std::wstring path;
+	OPENFILENAME ofn = { 0 };
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = m_hWnd;
+	//ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
+	ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrTitle = L"Open";
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	//ofn.lpstrDefExt = L"txt";
+
+	if (!GetOpenFileName(&ofn)) {
+		DWORD errCode = CommDlgExtendedError();
+		if (errCode) {
+			//wsprintf(szErrMsg, L"Error code : %d", errCode);
+			//MessageBox(NULL, szErrMsg, L"GetOpenFileName", MB_OK);
+		}
+	} else {
+		::ReleaseBuffer(path);
+		Open(path);
+	}
+}
+
+void CTextboxWnd::Open(const std::wstring& path)
+{
+	if (::PathFileExists(path.c_str())) {
+		m_path.notify_set(path);
+		m_pTxtbox->GetText().notify_assign(str2wstr(CFile::ReadAllString<char>(path)));
+	}
+
+}
+
+void CTextboxWnd::Save()
+{
+	std::wstring path;
+	if (m_path.get().empty()) {
+		OPENFILENAME ofn = { 0 };
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hwndOwner = m_hWnd;
+		//ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
+		ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
+		ofn.nMaxFile = MAX_PATH;
+		ofn.lpstrTitle = L"Save as";
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
+		//ofn.lpstrDefExt = L"txt";
+
+		if (!GetSaveFileName(&ofn)) {
+			DWORD errCode = CommDlgExtendedError();
+			if (errCode) {
+				//wsprintf(szErrMsg, L"Error code : %d", errCode);
+				//MessageBox(NULL, szErrMsg, L"GetOpenFileName", MB_OK);
+			}
+		} else {
+			::ReleaseBuffer(path);
+		}
+	}
+	//Serialize
+	try {
+		Save(path);
+	}
+	catch (/*_com_error &e*/...) {
+	}
+
+}
+
+void CTextboxWnd::Save(const std::wstring& path)
+{
+	m_path.notify_set(path);
+	CFile::WriteAllString(path, wstr2str(m_text));
+}
+

@@ -617,6 +617,9 @@
     <ClInclude Include="..\HiLib\StatusBar.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="ToDoGridView.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -897,6 +900,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\StatusBar.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="ToDoGridView.cpp">
+      <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

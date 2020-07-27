@@ -190,6 +190,25 @@ public:
 		return ret;
 	}
 
+	iterator notify_replace(iterator position, const T& x)
+	{
+		auto oldItem = *position;
+		*position = x;
+		auto index = std::distance(std::vector<T, Allocator>::begin(), position);
+
+		if (VectorChanged) {
+			VectorChanged(NotifyVectorChangedEventArgs<T>
+			{
+				NotifyVectorChangedAction::Replace,
+				{ x },
+				index,
+				{ oldItem},
+				-1
+			});
+		}
+		return position;
+	}
+
 	iterator notify_erase(const_iterator where)
 	{
 		auto oldItem = *where;
@@ -279,6 +298,15 @@ public:
 			Changed(NotifyChangedEventArgs<T>{ oldValue });
 		}
 	}
+
+	void forth_notify_set(const T& value)
+	{
+		auto oldValue = m_value;
+		m_value = value;
+		Changed(NotifyChangedEventArgs<T>{ oldValue });
+	}
+
+
 	operator T () { return m_value; }
 	T get()const { return m_value; }
 	void set(const T& value) { m_value = value; }

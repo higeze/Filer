@@ -24,7 +24,7 @@
 #define IDM_DELETE								40015
 #define IDM_FIND								40016
 #define IDC_STATIC_VERSION                      40100
-#define IDM_NEWTAB								40017
+#define IDM_NEWFILERTAB								40017
 #define IDM_CLOSETAB							40018
 #define IDM_CLONETAB							40019
 #define IDM_CLOSEALLBUTTHISTAB					40020
@@ -43,7 +43,11 @@
 #define IDM_PYTHONEXTENSIONOPTION				40042
 #define IDM_COPYTEXT							40043
 #define IDM_FILERGRIDVIEWOPTION                 40044
-#define IDM_EXEEXTENSIONOPTION				40045
+#define IDM_EXEEXTENSIONOPTION					40045
+#define IDM_NEWTODOTAB							40046
+#define IDM_NEWTEXTTAB							40047
+
+
 
 
 

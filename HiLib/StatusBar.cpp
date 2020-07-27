@@ -10,17 +10,17 @@ namespace d2dw
 	CStatusBar::CStatusBar(CWnd* pWnd, const std::shared_ptr<StatusBarProperty>& spStatusBarProp)
 		:m_pWnd(pWnd), m_spStatusBarProp(spStatusBarProp)
 	{
-		//Thread
-		if (::PdhOpenQuery(NULL, 0, &m_hQuery) == ERROR_SUCCESS &&
-			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\% Processor Time", 0, &m_hCounterCPU) == ERROR_SUCCESS &&
-			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Private Bytes", 0, &m_hCounterMemory) == ERROR_SUCCESS &&
-			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Thread Count", 0, &m_hCounterThread) == ERROR_SUCCESS &&
-			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Handle Count", 0, &m_hCounterHandle) == ERROR_SUCCESS) {
-			Update();
-			m_timer.run([this]()->void { Update(); }, std::chrono::milliseconds(1000));
-		} else {
-			throw std::exception(FILE_LINE_FUNC);
-		}
+		//TODO High
+		//if (::PdhOpenQuery(NULL, 0, &m_hQuery) == ERROR_SUCCESS &&
+		//	::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\% Processor Time", 0, &m_hCounterCPU) == ERROR_SUCCESS &&
+		//	::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Private Bytes", 0, &m_hCounterMemory) == ERROR_SUCCESS &&
+		//	::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Thread Count", 0, &m_hCounterThread) == ERROR_SUCCESS &&
+		//	::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Handle Count", 0, &m_hCounterHandle) == ERROR_SUCCESS) {
+		//	Update();
+		//	m_timer.run([this]()->void { Update(); }, std::chrono::milliseconds(1000));
+		//} else {
+		//	throw std::exception(FILE_LINE_FUNC);
+		//}
 	}
 
 	CStatusBar::~CStatusBar()
@@ -29,6 +29,7 @@ namespace d2dw
 		::PdhRemoveCounter(m_hCounterCPU);
 		::PdhRemoveCounter(m_hCounterMemory);
 		::PdhRemoveCounter(m_hCounterThread);
+		::PdhRemoveCounter(m_hCounterHandle);
 		::PdhCloseQuery(m_hQuery);
 	}
 
@@ -77,7 +78,7 @@ namespace d2dw
 			m_pWnd->InvalidateRect(m_pWnd->GetDirectPtr()->Dips2Pixels(this->GetRect()), FALSE);
 		}
 		catch (...) {
-
+			throw std::exception(FILE_LINE_FUNC);
 		}
 	}
 

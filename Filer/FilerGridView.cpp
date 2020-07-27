@@ -103,7 +103,7 @@ CFilerGridView::CFilerGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGr
 
 CFilerGridView::~CFilerGridView()
 {
-	m_spWatcher->QuitWatching();
+	if (m_spWatcher) { m_spWatcher->QuitWatching(); }
 }
 
 LRESULT CFilerGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
@@ -610,10 +610,9 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 		NewFolder();
 		break;
 	default:
-		break;
+		CFilerBindGridView::Normal_KeyDown(e);
 	}
 
-	CFilerBindGridView::Normal_KeyDown(e);
 };
 
 void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)

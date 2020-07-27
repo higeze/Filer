@@ -1005,10 +1005,8 @@ void CGridView::Normal_KeyDown(const KeyDownEvent& e)
 		m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() + m_pVScroll->GetScrollPage());
 		return;
 	default:
-		break;
-	}
-	
-	CSheet::Normal_KeyDown(e);
+		CSheet::Normal_KeyDown(e);
+	}	
 }
 
 /***************/
@@ -1301,8 +1299,7 @@ LRESULT CGridView::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandle
 }
 LRESULT CGridView::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	CSheet::OnKeyDown(KeyDownEvent(this, wParam, lParam));
-	//bHandled = FALSE;
+	CSheet::OnKeyDown(KeyDownEvent(this, wParam, lParam, bHandled));
 	SubmitUpdate();
 	return 0;
 }

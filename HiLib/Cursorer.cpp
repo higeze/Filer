@@ -211,6 +211,7 @@ void CCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e)
 void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 {
 	if(pSheet->Empty()){
+		e.Handled = FALSE;
 		return;
 	}
 
@@ -265,9 +266,8 @@ void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 		OnCursorClear(pSheet);
 		break;
 	default:
-		break;
+		e.Handled = FALSE;
 	}
-
 	return;
 }
 

@@ -156,7 +156,7 @@ typedef std::function<LRESULT(int,LPNMHDR,BOOL&)> FunNtfy;
 class CWnd
 {
 public:
-	typedef std::unordered_map<UINT,FunMsg> MsgMap;
+	typedef std::unordered_map<UINT,std::vector<FunMsg>> MsgMap;
 
 	typedef std::unordered_map<WORD,FunCmd> CmdIDMap;
 	typedef std::unordered_map<WORD,FunCmd> CmdCdMap;
@@ -253,49 +253,47 @@ public:
 		return TRUE;
 	}
 
-	BOOL AddMsgHandler(UINT uMsg,FunMsg funMsg)
-	{	
-		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,funMsg));
-		if (!pair.second) {
-			SPDLOG_INFO(fmt::format("Duplicate MSG:{:04X}",uMsg));
-		}
-		return pair.second;
-	}
-
-	FunMsg GetMsgHandler(UINT uMsg)
+	BOOL AddMsgHandler(UINT uMsg, FunMsg funMsg)
 	{
 		auto iter = m_msgMap.find(uMsg);
 		if (iter == m_msgMap.end()) {
-			return nullptr;
+			auto pair = m_msgMap.emplace(uMsg, std::vector<FunMsg>{funMsg});
+		} else {
+			iter->second.emplace_back(funMsg);
 		}
-		else {
-			return iter->second;
-		}
-
+		return true;
 	}
+
+	//FunMsg GetMsgHandler(UINT uMsg)
+	//{
+	//	auto iter = m_msgMap.find(uMsg);
+	//	if (iter == m_msgMap.end()) {
+	//		return nullptr;
+	//	}
+	//	else {
+	//		return iter->second;
+	//	}
+
+	//}
 
 	template<class U>
 	BOOL AddMsgHandler(UINT uMsg,LRESULT(U::*memberfunc)(UINT,WPARAM,LPARAM,BOOL&),U* that)
 	{	
-		auto pair = m_msgMap.insert(MsgMap::value_type(uMsg,std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4)));
-		if (!pair.second) {
-			SPDLOG_INFO(fmt::format("Duplicate MSG:{:04X}", uMsg));
-		}
-		return pair.second;
+		return AddMsgHandler(uMsg, std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4));
 	}
 
-	template<class U>
-	BOOL ReplaceMsgHandler(UINT uMsg,LRESULT(U::*memberfunc)(UINT,WPARAM,LPARAM,BOOL&),U* that)
-	{	
-		EraseMsgHandler(uMsg);
-		return	AddMsgHandler(uMsg,memberfunc,that);
-	}
+	//template<class U>
+	//BOOL ReplaceMsgHandler(UINT uMsg,LRESULT(U::*memberfunc)(UINT,WPARAM,LPARAM,BOOL&),U* that)
+	//{	
+	//	EraseMsgHandler(uMsg);
+	//	return	AddMsgHandler(uMsg,memberfunc,that);
+	//}
 
-	BOOL ReplaceMsgHandler(UINT uMsg, FunMsg fun)
-	{
-		EraseMsgHandler(uMsg);
-		return	AddMsgHandler(uMsg, fun);
-	}
+	//BOOL ReplaceMsgHandler(UINT uMsg, FunMsg fun)
+	//{
+	//	EraseMsgHandler(uMsg);
+	//	return	AddMsgHandler(uMsg, fun);
+	//}
 
 	template<class U>
 	BOOL AddCmdIDHandler(WORD wID,LRESULT(U::*memberfunc)(WORD,WORD,HWND,BOOL&),U* that)
@@ -634,6 +632,7 @@ public:
 	{
 		return (int)::SendMessage(m_hWnd, TCM_GETITEMCOUNT, 0, 0L);
 	}
+
 	LPARAM GetItemParam(int index)
 	{
 		TCITEM tcItem = {0};
@@ -641,6 +640,7 @@ public:
 		GetTupleItems(index,&tcItem);
 		return tcItem.lParam;
 	}
+
 	LPARAM GetCurItemParam()
 	{
 		TCITEM tcItem = {0};

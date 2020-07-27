@@ -1,45 +1,175 @@
 #pragma once
 #include "MyWnd.h"
+#include "MyXmlSerializer.h"
 #include "UniqueIDFactory.h"
 #include "MyFriendSerializer.h"
 #include "MyRect.h"
-#include "FilerGridView.h"
+#include "MyFont.h"
 #include "ShellFolder.h"
+#include "ShellFileFactory.h"
+#include "FilerGridView.h"
+#include "FilerGridViewProperty.h"
 
 #include "observable.h"
 
 
 class CFilerGridView;
+struct FilerGridViewProperty;
+class CToDoGridView;
 struct GridViewProperty;
+class CTextboxWnd;
 class CShellFolder;
+class CFont;
+
+struct TabData
+{
+	TabData(){}
+	virtual ~TabData() = default;
+
+	virtual std::wstring GetItemText() = 0;
+
+	//In case of REGISTER_POLYMORPHIC_RELATION, Base and Derived class have to be same function structure
+	template<class Archive>
+	void save(Archive& ar){}
+	template<class Archive>
+	void load(Archive& ar){}
+};
+
+struct FilerTabData:public TabData
+{
+	std::wstring Path;
+	std::shared_ptr<CShellFolder> FolderPtr;
+
+	FilerTabData()
+		:TabData(){ }
+
+	FilerTabData(const std::wstring& path)
+		:TabData(), Path(path)
+	{
+		if (!Path.empty()) {
+			auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
+			FolderPtr = std::dynamic_pointer_cast<CShellFolder>(spFile);
+		}
+	}
+	FilerTabData(const std::shared_ptr<CShellFolder>& spFolder)
+		:TabData(), FolderPtr(spFolder), Path(spFolder->GetPath()){}
+
+	virtual ~FilerTabData() = default;
+
+	FilerTabData(const FilerTabData& data)
+	{
+		Path = data.Path;
+		FolderPtr = data.FolderPtr->Clone();
+	}
+
+	virtual std::wstring GetItemText() override
+	{
+		if (FolderPtr) {
+			return FolderPtr->GetFileNameWithoutExt().c_str();
+		} else {
+			return L"nullptr";
+		}
+	}
+
+	template<class Archive>
+	void save(Archive& ar)
+	{
+		Path = FolderPtr->GetPath();
+		ar("Path", Path);
+	}
+
+	template<class Archive>
+	void load(Archive& ar)
+	{
+		ar("Path", Path);
+		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(Path);
+		FolderPtr = std::dynamic_pointer_cast<CShellFolder>(spFile);
+	}
+};
+
+struct ToDoTabData:public TabData
+{
+	std::wstring Path;
+
+	ToDoTabData(const std::wstring& path = std::wstring())
+		:TabData(), Path(path){}
+
+	virtual ~ToDoTabData() = default;
+
+	virtual std::wstring GetItemText() override
+	{
+		return ::PathFindFileName(Path.c_str());
+	}
+
+	template<class Archive>
+	void save(Archive& ar)
+	{
+		ar("Path", Path);
+	}
+	template<class Archive>
+	void load(Archive& ar)
+	{
+		ar("Path", Path);
+	}
+};
+
+struct TextTabData :public TabData
+{
+	std::wstring Path;
+
+	TextTabData(const std::wstring& path = std::wstring())
+		:TabData(), Path(path)
+	{
+	}
+
+	virtual ~TextTabData() = default;
+
+	virtual std::wstring GetItemText() override
+	{
+		return ::PathFindFileName(Path.c_str());
+	}
+
+	template<class Archive>
+	void save(Archive & ar)
+	{
+		ar("Path", Path);
+	}
+	template<class Archive>
+	void load(Archive & ar)
+	{
+		ar("Path", Path);
+	}
+};
 
 class CFilerTabGridView :public CTabCtrl
 {
 private:
-	CUniqueIDFactory m_uniqueIDFactory;
-	observable_vector<std::wstring> m_vwPath;
-	//observable_vector< std::tuple<std::shared_ptr<CShellFile>>> m_itemsSource;
-	//std::vector< std::tuple<std::shared_ptr<CShellFile>>> m_selectedItems;
-
-	std::shared_ptr<CFilerGridView> m_spFilerView;
-
-	observable_vector<std::shared_ptr<CShellFolder>> m_folders;
-	observable<int> m_selectedIndex = -1;
-
-
 	CWnd* m_pParentWnd;
+	CUniqueIDFactory m_uniqueIDFactory;
 
-	CFont m_font;
-	//unsigned int m_prevSelectedIndex;
+	observable_vector<std::shared_ptr<TabData>> m_itemsSource;
+	std::unordered_map<std::string, std::function<std::shared_ptr<CWnd>(const std::shared_ptr<TabData>&)>> m_itemsTemplate;
+	observable<int> m_selectedIndex = -1;
 	int m_contextMenuTabIndex;
 
+	std::shared_ptr<CWnd> m_curView;
+	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
+
+	CFont m_font;
 public:
 	CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty);
 	virtual ~CFilerTabGridView() {}
 
 	//Getter Setter
+	std::function<std::shared_ptr<CFilerGridView>()> GetFilerGridViewPtr;
+	std::function<std::shared_ptr<CToDoGridView>()> GetToDoGridViewPtr;
+	std::function<std::shared_ptr<CTextboxWnd>()> GetTextViewPtr;
+
+	observable_vector<std::shared_ptr<TabData>>& GetItemsSource(){ return m_itemsSource; }
+	int GetSelectedIndex()const{ return m_selectedIndex.get(); }
+
 	void SetContextMenuTabIndex(int index) { m_contextMenuTabIndex = index; }
-	std::shared_ptr<CFilerGridView> GetGridView() { return m_spFilerView; }
+	std::shared_ptr<CWnd> GetCurView() { return m_curView; }
 	void SetParentWnd(CWnd* pParentWnd) { m_pParentWnd = pParentWnd; }
 
 	//Message
@@ -49,7 +179,9 @@ public:
 	LRESULT OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
-	LRESULT OnCommandNewTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	LRESULT OnCommandNewFilerTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	LRESULT OnCommandNewToDoTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	LRESULT OnCommandNewTextTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandCloneTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandCloseTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandCloseAllButThisTab(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
@@ -62,6 +194,8 @@ public:
 	LRESULT OnNotifyTabRClick(int id, LPNMHDR, BOOL& bHandled);
 
 private:
+
+	CRect GetTabRect();
 	//void AddNewTab(const std::wstring& path);
 	//void AddNewTab(const std::shared_ptr<CShellFile>& spFile);
 public:
@@ -69,21 +203,24 @@ public:
 	template <class Archive>
 	void save(Archive& ar)
 	{
-		m_vwPath.clear();
-		std::transform(m_folders.begin(), m_folders.end(), std::back_inserter(m_vwPath),
-			[](auto spFolder)->std::wstring {return spFolder->GetPath(); });
-		ar("ViewPaths", m_vwPath);
+		REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
+		REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData );
+		REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
+
+		ar("ItemsSource", static_cast<std::vector<std::shared_ptr<TabData>>&>(m_itemsSource));
 		ar("SelectedIndex", m_selectedIndex);
-		ar("FilerView", m_spFilerView);
+		ar("FilerView", GetFilerGridViewPtr());
 	}
 
 	template <class Archive>
 	void load(Archive& ar)
 	{
-		ar("ViewPaths", m_vwPath);
+		REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
+		REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData);
+		REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
+
+		ar("ItemsSource", static_cast<std::vector<std::shared_ptr<TabData>>&>(m_itemsSource));
 		ar("SelectedIndex", m_selectedIndex);
-		ar("FilerView", m_spFilerView, m_spFilerView->GetFilerGridViewPropPtr());
+		ar("FilerView", GetFilerGridViewPtr(), m_spFilerGridViewProp);
 	}
-
-
 };

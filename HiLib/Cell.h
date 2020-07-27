@@ -110,9 +110,9 @@ public:
 
 	virtual void OnContextMenu(const ContextMenuEvent& e) override {/*Do Nothing*/ };
 	virtual void OnSetFocus(const SetFocusEvent& e) override;
-	virtual void OnSetCursor(const SetCursorEvent& e) override {/*Do Nothing*/ };
+	virtual void OnSetCursor(const SetCursorEvent& e) override { e.Handled = FALSE; /*Do Nothing*/ };
 	virtual void OnKillFocus(const KillFocusEvent& e) override;
-	virtual void OnKeyDown(const KeyDownEvent& e) override {/*Do Nothing*/};
+	virtual void OnKeyDown(const KeyDownEvent& e) override { e.Handled = FALSE; /*Do Nothing*/ };
 	virtual void OnChar(const CharEvent& e) override {/*Do Nothing*/ };
 
 	//String

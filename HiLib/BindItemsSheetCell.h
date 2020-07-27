@@ -19,7 +19,7 @@ public:
 		Args... args)
 		:CBindItemsSheetCellBase<TValueItem>(
 			pSheet, pRow, pColumn, spSheetProperty, spCellProperty,
-			arg<"funitems"_s>() = [](CSheetCell* p)->observable_vector<TValueItem>&{ return static_cast<CBindItemsSheetCell<TItem, TValueItem>*>(p)->GetItemsSourceImpl();},
+			arg<"funitems"_s>() = [](CSheetCell* p)->observable_vector<std::tuple<TValueItem>>&{ return static_cast<CBindItemsSheetCell<TItem, TValueItem>*>(p)->GetItemsSourceImpl();},
 			args...)
 	{
 		initializer(this);
@@ -27,30 +27,41 @@ public:
 		auto& items = this->GetItemsSource();
 
 		for (auto& item : items) {
-			PushRow(std::make_shared<CBindRowTest<TValueItem>>(this));
+			PushRow(std::make_shared<CBindRow<TValueItem>>(this));
 		}
 
 		items.VectorChanged =
-			[this](const NotifyVectorChangedEventArgs<TValueItem>& e)->void {
-				switch (e.Action) {
+			[this](const NotifyVectorChangedEventArgs<std::tuple<TValueItem>>& e)->void {
+			switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
-					PushRow(std::make_shared<CBindRowTest<TValueItem>>(this));
+					PushRow(std::make_shared<CBindRow<TValueItem>>(this));
+					break;
+				case NotifyVectorChangedAction::Insert:
+					InsertRow(e.NewStartingIndex, std::make_shared<CBindRow<TValueItem>>(this));
 					break;
 				case NotifyVectorChangedAction::Remove:
-					EraseRow(m_allRows.back());
-					break;
-				case NotifyVectorChangedAction::Reset:
-					//TODOTODO
-				default:
+				{
+					auto spRow = m_allRows[e.OldStartingIndex + m_frozenRowCount];
+					for (const auto& colPtr : m_allCols) {
+						if (auto pMapCol = std::dynamic_pointer_cast<CMapColumn>(colPtr)) {
+							pMapCol->Erase(const_cast<CRow*>(spRow.get()));
+						}
+					}
+					EraseRow(spRow);
 					break;
 				}
-
-			};
+				case NotifyVectorChangedAction::Reset:
+					m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
+					break;
+				default:
+					break;
+			}
+		};
 	}
 
-	observable_vector<TValueItem>& GetItemsSourceImpl()
+	observable_vector<std::tuple<TValueItem>>& GetItemsSourceImpl()
 	{
-		auto pBindRow = static_cast<CBindRowTest<TItem>*>(m_pRow);
+		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
 		auto pBindColumn = static_cast<CBindSheetCellColumn<TItem, TValueItem>*>(m_pColumn);
 		return pBindColumn->GetItemser()(pBindRow->GetTupleItems());
 	}

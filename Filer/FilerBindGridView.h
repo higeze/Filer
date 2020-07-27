@@ -213,10 +213,8 @@ public:
 				}
 				break;
 			default:
-				break;
+				CGridView::Normal_KeyDown(e);
 		}
-
-		CGridView::Normal_KeyDown(e);
 	};
 
 	bool Edit_Guard_KeyDownWithNormal(const KeyDownEvent& e) override

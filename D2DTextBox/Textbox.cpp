@@ -70,7 +70,8 @@ void D2DTextbox::AppTSFExit()
 /* constructor */
 /***************/
 D2DTextbox::D2DTextbox(
-	CGridView* pWnd,
+	//////CGridView* pWnd,
+	CWnd* pWnd,
 	CTextCell* pCell,
 	std::shared_ptr<CellProperty> pProp,
 	std::function<std::wstring()> getter,
@@ -466,11 +467,12 @@ void D2DTextbox::ResetCaret()
 	SPDLOG_INFO("ResetCaret");
 
 	m_bCaret = true;
-	m_pWnd->PostUpdate(Updates::Invalidate);
+	//////m_pWnd->PostUpdate(Updates::Invalidate);
+	m_pWnd->InvalidateRect(NULL, FALSE);
 	m_timer.run([this]()->void
 		{
 			m_bCaret = !m_bCaret;
-			m_pWnd->Invalidate();
+			m_pWnd->InvalidateRect(NULL, FALSE);
 		}, 
 		std::chrono::milliseconds(::GetCaretBlinkTime()));
 	///QueryPerformanceCounter(&m_pregtm);

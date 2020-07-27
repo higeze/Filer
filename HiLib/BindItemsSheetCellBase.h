@@ -3,7 +3,9 @@
 #include "IBindSheet.h"
 #include "observable.h"
 #include "Debug.h"
+#include "ResourceIDFactory.h"
 #include "named_arguments.h"
+
 
 template<typename TValueItem>
 class CBindItemsSheetCellBase :public CSheetCell, public IBindSheet<TValueItem>

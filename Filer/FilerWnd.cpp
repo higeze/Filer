@@ -29,8 +29,7 @@
 #include "BindSheetCellColumn.h"
 #include "BindItemsSheetCell.h"
 
-
-#include "Task.h"
+#include "ToDoGridView.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -222,9 +221,8 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 			.hMenu((HMENU)id);
 
 		spFavoritesView->FileChosen = [&](std::shared_ptr<CShellFile>& spFile)->void {
-			spView->GetGridView()->Open(spFile);
-			spView->GetGridView()->SetFocus();
-			spView->GetGridView()->SubmitUpdate();
+			auto& itemsSource = spView->GetItemsSource();
+			itemsSource.notify_replace(itemsSource.begin() + spView->GetSelectedIndex(), std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
 		};
 		
 		spFavoritesView->Create(m_hWnd, rc);
@@ -242,34 +240,24 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		spView->SubclassWindow(spView->m_hWnd);
 		BOOL dummy = FALSE;
 		spView->OnCreate(WM_CREATE, NULL, NULL, dummy);
-		//Capture KeyDown Msg in FilerView
-		auto funKeyDown = spView->GetGridView()->GetMsgHandler(WM_KEYDOWN);
-		if (funKeyDown) {
-			FunMsg newFun = [this, funKeyDown](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
-				LRESULT lr = OnKeyDown(uMsg, wParam, lParam, bHandled);
-				if (bHandled) {
-					return lr;
-				} else {
-					return funKeyDown(uMsg, wParam, lParam, bHandled);
-				}
-			};
-			spView->GetGridView()->ReplaceMsgHandler(WM_KEYDOWN, newFun);
-		}
+		//Capture KeyDown
+		spView->GetFilerGridViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
+		spView->GetToDoGridViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
+		//Capture SetFocus
+		spView->GetFilerGridViewPtr()->AddMsgHandler(WM_SETFOCUS,
+		[this, spView](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
+			m_spCurView = spView;
+			spView->GetFilerGridViewPtr()->InvalidateRect(NULL, FALSE);
+			return 0;
+		});
 
-		auto funSetFocus = spView->GetGridView()->GetMsgHandler(WM_SETFOCUS);
-		if (funSetFocus){
-			std::weak_ptr<CFilerTabGridView> wp(spView);
-			FunMsg newFun = [this, wp, funSetFocus](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
-				if (auto sp = wp.lock()) {
-					m_spCurView = sp;
-					m_spCurView->GetGridView()->InvalidateRect(NULL, FALSE);
-				}
-				return funSetFocus(uMsg, lParam, wParam, bHandled);
-			};
-			spView->GetGridView()->ReplaceMsgHandler(WM_SETFOCUS, newFun);
-		}
+		spView->GetToDoGridViewPtr()->AddMsgHandler(WM_SETFOCUS,
+		[this, spView](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
+			m_spCurView = spView;
+			spView->GetToDoGridViewPtr()->InvalidateRect(NULL, FALSE);
+			return 0;
+		});
 	};
-
 
 	createFilerTabGridView(m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFilerGridView"), rcLeftGrid);
 	createFilerTabGridView(m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFilerGridView"), rcRightGrid);
@@ -458,8 +446,8 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		};
 	};
 
-	applyCustomContextMenu(m_spLeftView->GetGridView());
-	applyCustomContextMenu(m_spRightView->GetGridView());
+	applyCustomContextMenu(m_spLeftView->GetFilerGridViewPtr());
+	applyCustomContextMenu(m_spRightView->GetFilerGridViewPtr());
 
 	return 0;
 }
@@ -473,7 +461,6 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 			if (::GetAsyncKeyState(VK_CONTROL)) {
 				BOOL dummy;
 				OnCommandSave(0, 0, 0, dummy);
-				bHandled = TRUE;
 			}
 		}
 		break;
@@ -482,40 +469,46 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 			if (::GetAsyncKeyState(VK_MENU)) {
 				BOOL dummy;
 				OnCommandExit(0, 0, 0, dummy);
-				bHandled = TRUE;
 			}
 		}
 		break;
 	case VK_F5:
 		{
 			std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
-			m_spCurView->GetGridView()->CopySelectedFilesTo(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl());
-			bHandled = FALSE;
+			if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurView->GetCurView())) {
+				if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetCurView())) {
+					spCurFilerGridView->CopySelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
+				}
+			}
 		}
 		break;
 	case VK_F6:
 		{
 			std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
-			m_spCurView->GetGridView()->MoveSelectedFilesTo(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl());
-			bHandled = FALSE;
+			if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurView->GetCurView())) {
+				if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetCurView())) {
+					spCurFilerGridView->MoveSelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
+				}
+			}
 		}
 		break;
 	case VK_F9:
 		{
-			int okcancel = ::MessageBox(m_spCurView->GetGridView()->m_hWnd, L"Incremental Copy?", L"Incremental Copy?", MB_OKCANCEL);
-			if (okcancel == IDOK) {
-				std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
-				m_spCurView->GetGridView()->CopyIncrementalSelectedFilesTo(spOtherView->GetGridView()->GetFolder()->GetAbsoluteIdl());
+			std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
+			if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurView->GetCurView())) {
+				if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetCurView())) {
+					int okcancel = ::MessageBox(spCurFilerGridView->m_hWnd, L"Incremental Copy?", L"Incremental Copy?", MB_OKCANCEL);
+					if (okcancel == IDOK) {
+						spCurFilerGridView->CopyIncrementalSelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
+					}
+				}
 			}
-			bHandled = TRUE;
-
 		}
 		break;
 	default:
-		break;
+		bHandled = FALSE;
 	}
 	//m_konamiCommander.OnKeyDown(uMsg, wParam, lParam, bHandled);
-	bHandled = FALSE;
 	return 0;
 }
 
@@ -671,7 +664,7 @@ LRESULT CFilerWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 {
 	if (!m_spCurView) { m_spCurView = m_spLeftView; }
 	if(m_spCurView){
-		::SetFocus(m_spCurView->GetGridView()->m_hWnd);
+		::SetFocus(m_spCurView->GetCurView()->m_hWnd);
 	}
 	return 0;
 }
@@ -683,9 +676,8 @@ LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 	CDriveFolderManager::GetInstance()->Update();
 	m_spLeftFavoritesView->Reload();
 	m_spRightFavoritesView->Reload();
-	m_spLeftView->GetGridView()->Reload();
-	m_spRightView->GetGridView()->Reload();
-
+	m_spLeftView->GetFilerGridViewPtr()->Reload();
+	m_spRightView->GetFilerGridViewPtr()->Reload();
 	return 0;
 }
 
@@ -715,8 +707,10 @@ LRESULT CFilerWnd::OnCommandFilerGridViewOption(WORD wNotifyCode, WORD wID, HWND
 {
 	return OnCommandOption<FilerGridViewProperty>(L"FilerGridView Property", m_spFilerGridViewProp,
 		[this](const std::wstring& str)->void {
-		m_spLeftView->GetGridView()->UpdateAll();
-		m_spRightView->GetGridView()->UpdateAll();
+		m_spLeftView->GetFilerGridViewPtr()->UpdateAll();
+		m_spLeftView->GetToDoGridViewPtr()->UpdateAll();
+		m_spRightView->GetFilerGridViewPtr()->UpdateAll();
+		m_spRightView->GetToDoGridViewPtr()->UpdateAll();
 		SerializeProperty(this);
 	});
 }
@@ -743,87 +737,87 @@ LRESULT CFilerWnd::OnCommandExeExtensionOption(WORD wNotifyCode, WORD wID, HWND 
 LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
 	//TODOTODO
-	//auto pBindWnd = new CBindGridView<MainTask>(std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp));
+	auto pBindWnd = new CToDoGridView(std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp));
 
-	//pBindWnd->RegisterClassExArgument()
-	//	.lpszClassName(L"CBindWnd")
-	//	.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
-	//	.hCursor(::LoadCursor(NULL, IDC_ARROW))
-	//	.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
+	pBindWnd->RegisterClassExArgument()
+		.lpszClassName(L"CBindWnd")
+		.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
+		.hCursor(::LoadCursor(NULL, IDC_ARROW))
+		.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
 
-	//pBindWnd->CreateWindowExArgument()
-	//	.lpszClassName(_T("CBindWnd"))
-	//	.lpszWindowName(L"TODO")
-	//	.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
-	//	.dwExStyle(WS_EX_ACCEPTFILES)
-	//	.hMenu(NULL);
+	pBindWnd->CreateWindowExArgument()
+		.lpszClassName(_T("CBindWnd"))
+		.lpszWindowName(L"TODO")
+		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
+		.dwExStyle(WS_EX_ACCEPTFILES)
+		.hMenu(NULL);
 
 
-	//pBindWnd->SetIsDeleteOnFinalMessage(true);
+	pBindWnd->SetIsDeleteOnFinalMessage(true);
 
-	////Columns
-	//pBindWnd->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pBindWnd));
-	//pBindWnd->PushColumns(
-	//	pBindWnd->GetHeaderColumnPtr(),
-	//	std::make_shared<CBindCheckBoxColumn<MainTask>>(
-	//		pBindWnd,
-	//		L"Done",
-	//		[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).Done?CheckBoxState::True:CheckBoxState::False; },
-	//		[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
-	//	std::make_shared<CBindTextColumn<MainTask>>(
-	//		pBindWnd,
-	//		L"Name",
-	//		[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name; },
-	//		[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name = str; }),
-	//	std::make_shared<CBindTextColumn<MainTask>>(
-	//		pBindWnd,
-	//		L"Memo",
-	//		[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo; },
-	//		[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo = str; }),
-	//	std::make_shared<CBindSheetCellColumn< MainTask, SubTask>>(
-	//		pBindWnd,
-	//		L"Sub Task",
-	//		[](std::tuple<MainTask>& tk)->observable_vector<SubTask>& {return std::get<MainTask>(tk).SubTasks; },
-	//		[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void 
-	//		{
-	//			pCell->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pCell));
-	//			pCell->PushColumns(
-	//				pCell->GetHeaderColumnPtr(),
-	//				std::make_shared<CBindCheckBoxColumn<SubTask>>(
-	//					pCell,
-	//					L"Done",
-	//					[](const std::tuple<SubTask>& tk)->CheckBoxState {return std::get<SubTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
-	//					[](std::tuple<SubTask>& tk, const CheckBoxState& state)->void {std::get<SubTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
-	//				std::make_shared<CBindTextColumn<SubTask>>(
-	//					pCell,
-	//					L"Name",
-	//					[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Name; },
-	//					[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Name = str; }),
-	//				std::make_shared<CBindTextColumn<SubTask>>(
-	//					pCell,
-	//					L"Memo",
-	//					[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Memo; },
-	//					[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Memo = str; })
-	//			);
-	//			pCell->SetFrozenCount<ColTag>(1);
+	//Columns
+	pBindWnd->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pBindWnd));
+	pBindWnd->PushColumns(
+		pBindWnd->GetHeaderColumnPtr(),
+		std::make_shared<CBindCheckBoxColumn<MainTask>>(
+			pBindWnd,
+			L"Done",
+			[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).Done?CheckBoxState::True:CheckBoxState::False; },
+			[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
+		std::make_shared<CBindTextColumn<MainTask>>(
+			pBindWnd,
+			L"Name",
+			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name; },
+			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name = str; }),
+		std::make_shared<CBindTextColumn<MainTask>>(
+			pBindWnd,
+			L"Memo",
+			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo; },
+			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo = str; }),
+		std::make_shared<CBindSheetCellColumn< MainTask, SubTask>>(
+			pBindWnd,
+			L"Sub Task",
+			[](std::tuple<MainTask>& tk)->observable_vector<std::tuple<SubTask>>& {return std::get<MainTask>(tk).SubTasks; },
+			[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void 
+			{
+				pCell->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pCell));
+				pCell->PushColumns(
+					pCell->GetHeaderColumnPtr(),
+					std::make_shared<CBindCheckBoxColumn<SubTask>>(
+						pCell,
+						L"Done",
+						[](const std::tuple<SubTask>& tk)->CheckBoxState {return std::get<SubTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
+						[](std::tuple<SubTask>& tk, const CheckBoxState& state)->void {std::get<SubTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
+					std::make_shared<CBindTextColumn<SubTask>>(
+						pCell,
+						L"Name",
+						[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Name; },
+						[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Name = str; }),
+					std::make_shared<CBindTextColumn<SubTask>>(
+						pCell,
+						L"Memo",
+						[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Memo; },
+						[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Memo = str; })
+				);
+				pCell->SetFrozenCount<ColTag>(1);
 
-	//			pCell->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pCell));
-	//			pCell->InsertRow(0, pCell->GetNameHeaderRowPtr());
-	//			pCell->SetFrozenCount<RowTag>(1);
-	//		},
-	//		arg<"maxwidth"_s>() = FLT_MAX)
-	//	);
-	//pBindWnd->SetFrozenCount<ColTag>(1);
+				pCell->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pCell));
+				pCell->InsertRow(0, pCell->GetNameHeaderRowPtr());
+				pCell->SetFrozenCount<RowTag>(1);
+			},
+			arg<"maxwidth"_s>() = FLT_MAX)
+		);
+	pBindWnd->SetFrozenCount<ColTag>(1);
 
-	////Rows
-	//pBindWnd->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pBindWnd));
-	//pBindWnd->SetFilterRowPtr(std::make_shared<CRow>(pBindWnd));
+	//Rows
+	pBindWnd->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pBindWnd));
+	pBindWnd->SetFilterRowPtr(std::make_shared<CRow>(pBindWnd));
 
-	//pBindWnd->PushRows(
-	//	pBindWnd->GetNameHeaderRowPtr(),
-	//	pBindWnd->GetFilterRowPtr());
+	pBindWnd->PushRows(
+		pBindWnd->GetNameHeaderRowPtr(),
+		pBindWnd->GetFilterRowPtr());
 
-	//pBindWnd->SetFrozenCount<RowTag>(2);
+	pBindWnd->SetFrozenCount<RowTag>(2);
 
 	//pBindWnd->GetItemsSource().notify_push_back(MainTask{ true, L"Test", L"mon" });
 	//pBindWnd->GetItemsSource().notify_push_back(MainTask{ false, L"PVA", L"Tue" });
@@ -831,16 +825,17 @@ LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWnd
 	//std::get<MainTask>(pBindWnd->GetItemsSource()[2]).SubTasks.notify_push_back(SubTask{ true, L"SUB", L"TODO" });
 	//std::get<MainTask>(pBindWnd->GetItemsSource()[2]).SubTasks.notify_push_back(SubTask{ true, L"SUB2", L"TET" });
 
-	//HWND hWnd = NULL;
-	//if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-	//	hWnd = m_hWnd;
-	//} else {
-	//	hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
-	//}
+	HWND hWnd = NULL;
+	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+		hWnd = m_hWnd;
+	} else {
+		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	}
 
-	//pBindWnd->CreateOnCenterOfParent(NULL, CSize(400, 600));
-	//pBindWnd->ShowWindow(SW_SHOW);
-	//pBindWnd->UpdateWindow();
+	pBindWnd->CreateOnCenterOfParent(NULL, CSize(400, 600));
+	pBindWnd->ShowWindow(SW_SHOW);
+	pBindWnd->UpdateWindow();
+	pBindWnd->UpdateAll();
 	return 0;
 }
 

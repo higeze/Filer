@@ -75,8 +75,9 @@ struct CharEvent :public KeyEventArgs
 
 struct KeyDownEvent :public KeyEventArgs
 {
-	KeyDownEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
-		:KeyEventArgs(pWnd, wParam, lParam) {}
+	BOOL& Handled;
+	KeyDownEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+		:KeyEventArgs(pWnd, wParam, lParam), Handled(bHandled) {}
 };
 
 struct PaintEvent:public EventArgs

@@ -12,6 +12,7 @@
 #include "CellProperty.h"
 #include "PropertyWnd.h"
 #include "StatusBar.h"
+#include "FilerGridViewProperty.h"
 //#include "KonamiCommander.h"
 
 class CFilerGridView;
