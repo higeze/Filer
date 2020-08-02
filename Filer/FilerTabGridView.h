@@ -116,9 +116,10 @@ struct ToDoTabData:public TabData
 struct TextTabData :public TabData
 {
 	std::wstring Path;
+	bool IsSaved;
 
 	TextTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(path)
+		:TabData(), Path(path), IsSaved(true)
 	{
 	}
 
@@ -126,7 +127,7 @@ struct TextTabData :public TabData
 
 	virtual std::wstring GetItemText() override
 	{
-		return ::PathFindFileName(Path.c_str());
+		return std::wstring(IsSaved?L"":L"*") + ::PathFindFileName(Path.c_str());
 	}
 
 	template<class Archive>
@@ -158,7 +159,7 @@ private:
 	CFont m_font;
 public:
 	CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty);
-	virtual ~CFilerTabGridView() {}
+	virtual ~CFilerTabGridView();
 
 	//Getter Setter
 	std::function<std::shared_ptr<CFilerGridView>()> GetFilerGridViewPtr;

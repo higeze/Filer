@@ -17,7 +17,10 @@ public:
 	virtual bool HasSheetCell() override { return true; }
 	observable<std::wstring>& GetObsPath() { return m_path; }
 
+	void Open();
 	void Open(const std::wstring& path);
+	void Save();
+	void Save(const std::wstring& path);
 	/******************/
 	/* Window Message */
 	/******************/

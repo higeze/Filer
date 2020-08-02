@@ -11,6 +11,7 @@ class CTextboxWnd:public CWnd
 {
 public:
 	observable<std::wstring> m_path;
+	observable<bool> m_isSaved = false;
 	std::wstring m_text;
 	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
 	std::unique_ptr<D2DTextbox> m_pTxtbox;
@@ -22,10 +23,13 @@ public :
 
 	d2dw::CDirect2DWrite* GetDirectPtr() override { return  m_pDirect.get(); }
 	observable<std::wstring>& GetObsPath() { return m_path; }
+	observable<bool>& GetObsIsSaved() { return m_isSaved; }
 	void Open();
 	void Open(const std::wstring& path);
 	void Save();
 	void Save(const std::wstring& path);
+	bool GetIsFocused()const;
+
 
 private:
 	LRESULT OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
@@ -37,10 +41,14 @@ private:
 	LRESULT OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
+	LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
 	LRESULT OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnMouseWheel(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	LRESULT OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+
 	void OnFinalMessage(HWND hWnd) override;
 };

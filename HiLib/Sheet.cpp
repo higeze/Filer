@@ -172,13 +172,13 @@ void CSheet::OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name)
 	}
 }
 
-void CSheet::OnVScrollPropertyChanged(d2dw::CVScroll* pScrl, const wchar_t* name)
+void CSheet::OnVScrollPropertyChanged(const wchar_t* name)
 {
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Invalidate);
 }
 
-void CSheet::OnHScrollPropertyChanged(d2dw::CHScroll* pScrl, const wchar_t* name)
+void CSheet::OnHScrollPropertyChanged(const wchar_t* name)
 {
 	PostUpdate(Updates::Column);
 	PostUpdate(Updates::Invalidate);
@@ -740,9 +740,15 @@ bool CSheet::Normal_Guard_SetCursor(const SetCursorEvent& e)
 
 void CSheet::Normal_SetCursor(const SetCursorEvent& e)
 {
-	m_spRowTracker->OnSetCursor(this, e);
-	m_spColTracker->OnSetCursor(this, e);
-	m_spCeller->OnSetCursor(this, e);
+	if (!e.Handled) { 
+		m_spRowTracker->OnSetCursor(this, e);
+	}
+	if (!e.Handled) {
+		m_spColTracker->OnSetCursor(this, e);
+	}
+	if (!e.Handled) {
+		m_spCeller->OnSetCursor(this, e);
+	}
 }
 void CSheet::Normal_ContextMenu(const ContextMenuEvent& e)
 {

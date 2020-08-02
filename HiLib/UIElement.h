@@ -80,6 +80,14 @@ struct KeyDownEvent :public KeyEventArgs
 		:KeyEventArgs(pWnd, wParam, lParam), Handled(bHandled) {}
 };
 
+struct RectEvent :public EventArgs
+{
+	BOOL& Handled;
+	d2dw::CRectF Rect;
+	RectEvent(CWnd* pWnd, d2dw::CRectF rect, BOOL& bHandled) :
+		Rect(rect), Handled(bHandled){}
+};
+
 struct PaintEvent:public EventArgs
 {
 	PaintEvent(CWnd* pWnd)

@@ -72,6 +72,8 @@ public:
 		if (IsTarget(pSheet, MouseEvent(e.WndPtr, 0, MAKELPARAM(pt.x, pt.y)))) {
 			e.Handled = TRUE;
 			SetSizeCursor(); 
+		} else {
+			e.Handled = FALSE;
 		}
 	}
 

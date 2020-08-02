@@ -17,6 +17,12 @@ class CTextboxWnd;
 class CGridView;
 class CTextCell;
 
+namespace d2dw
+{
+	class CVScroll;
+	class CHScroll;
+}
+
 struct COMPOSITIONRENDERINFO
 {
 	int nStart;
@@ -33,14 +39,18 @@ protected:
 	enum caret
 	{
 		OldCaret = 0,
-		CurCaret,
+		CurCaret,	
 		AncCaret,
 		SelBegin,
 		SelEnd,
 	};
 	observable_tuple<int, int, int, int, int> m_carets;
 	observable_wstring m_text;
-	bool m_recalc = true;
+	bool m_hasBorder = true;
+	bool m_isWrap = true;
+	bool m_isScrollable = false;
+
+//	bool m_recalc = true;
 
 //	LARGE_INTEGER m_frequency;
 	bool m_bCaret = false;
@@ -48,6 +58,9 @@ protected:
 
 	bool m_isFirstDrawCaret = true;
 	bool m_isClosing = false;
+	std::unique_ptr<d2dw::CVScroll> m_pVScroll;
+	std::unique_ptr<d2dw::CHScroll> m_pHScroll;
+	//FLOAT m_vertialScroll;
 
 public:
 	D2DTextbox(
@@ -59,7 +72,7 @@ public:
 		std::function<void(const std::wstring&)> setter,
 		std::function<void(const std::wstring&)> changed,
 		std::function<void(const std::wstring&)> final);
-	~D2DTextbox();
+	virtual ~D2DTextbox();
 private:
 	void InitTSF();
 	void UninitTSF();
@@ -68,23 +81,34 @@ public:
 	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets); }
 	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets); }
 	CTextCell* GetCellPtr() { return m_pCell; }
+//	void SetVertialScroll(FLOAT scroll) { m_vertialScroll = scroll; }
 	//float GetLineWidth() { return row_width_; }
 	//UINT GetLineCount() { return nLineCnt_; }
 
 public:
 	virtual void OnClose(const CloseEvent& e);
 	virtual void OnPaint(const PaintEvent& e);
+	virtual void OnSetFocus(const SetFocusEvent& e);
+	virtual void OnKillFocus(const KillFocusEvent& e);
 	virtual void OnKeyDown(const KeyDownEvent& e);
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnMouseMove(const MouseMoveEvent& e);
+	virtual void OnMouseWheel(const MouseWheelEvent& e);
+	virtual void OnContextMenu(const ContextMenuEvent& e){}
+
 	virtual void OnChar(const CharEvent& e);
+	virtual void OnRect(const RectEvent& e);
+
+	virtual void UpdateScroll();
 
 	// IBridgeInterface
 	virtual d2dw::CRectF GetClientRect() const;
-	d2dw::CRectF GetContentRect() const;
+	virtual d2dw::CRectF GetPageRect() const;
+	virtual d2dw::CRectF GetContentRect() const;
 
 	// Text Functions 
 	observable_wstring& GetText() { return m_text; }
+	void Clear();
 	//std::wstring FilterInputString(LPCWSTR s, UINT len);
 private:
 	bool CopySelectionToClipboard();
@@ -102,7 +126,8 @@ public:
 	//void SetText(LPCWSTR str);
 	void CancelEdit();
 	void ClearText();
-	
+	void EnsureVisibleCaret();
+
 
 	// Render
 	virtual bool GetIsVisible()const;
@@ -117,8 +142,12 @@ public:
 	void ClearCompositionRenderInfo();
 	BOOL AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIBUTE *pda);
 public:
-	std::vector<d2dw::CRectF> GetCharRects();
-	std::optional<d2dw::CRectF> GetCharRectFromPos(const int& pos);
+	std::vector<d2dw::CRectF> GetOriginCharRects() const;
+	std::vector<d2dw::CRectF> GetScrolledCharRects() const;
+	std::vector<d2dw::CRectF> GetScrolledCursorCharRects() const;
+
+	std::optional<d2dw::CRectF> GetScrolledCharRectFromPos(const int& pos);
+	std::optional<d2dw::CRectF> GetScrolledCursorCharRectFromPos(const int& pos);
 	std::optional<int> GetCharPosFromPoint(const d2dw::CPointF& pt);
 
 	std::optional<int> GetFirstCharPosInLine(const int& pos);
@@ -130,7 +159,7 @@ public:
 
 	//UINT FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst);
 
-private:
+protected:
 	CTimer m_timer;
 	std::wstring m_strInit;
 	CTextCell* m_pCell;
@@ -183,12 +212,19 @@ public:
 		std::function<void(const std::wstring&)> setter,
 		std::function<void(const std::wstring&)> changed,
 		std::function<void(const std::wstring&)> final)
-		:D2DTextbox(pWnd, nullptr, spProp, getter, setter, changed, final){}
+		:D2DTextbox(pWnd, nullptr, spProp, getter, setter, changed, final)
+	{
+		m_hasBorder = false;
+		m_isWrap = false;
+		m_isScrollable = true;
+	}
+
+	virtual ~D2DTextbox2(){}
 
 	d2dw::CRectF GetClientRect() const override
 	{
 		CRect rc = m_pWnd->GetClientRect();
-		rc.DeflateRect(1);
+		//rc.DeflateRect(1);
 		return m_pWnd->GetDirectPtr()->Pixels2Dips(rc);
 	}
 
@@ -196,4 +232,6 @@ public:
 	{
 		return true;
 	}
+
+	virtual void OnContextMenu(const ContextMenuEvent& e) override;
 };

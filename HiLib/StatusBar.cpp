@@ -25,12 +25,13 @@ namespace d2dw
 
 	CStatusBar::~CStatusBar()
 	{
-		m_timer.stop();
-		::PdhRemoveCounter(m_hCounterCPU);
-		::PdhRemoveCounter(m_hCounterMemory);
-		::PdhRemoveCounter(m_hCounterThread);
-		::PdhRemoveCounter(m_hCounterHandle);
-		::PdhCloseQuery(m_hQuery);
+		//TODO High
+		//m_timer.stop();
+		//::PdhRemoveCounter(m_hCounterCPU);
+		//::PdhRemoveCounter(m_hCounterMemory);
+		//::PdhRemoveCounter(m_hCounterThread);
+		//::PdhRemoveCounter(m_hCounterHandle);
+		//::PdhCloseQuery(m_hQuery);
 	}
 
 	void CStatusBar::Update()

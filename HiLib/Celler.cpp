@@ -93,6 +93,8 @@ void CCeller::OnSetCursor(CSheet* pSheet, const SetCursorEvent& e)
 	auto cell = pSheet->Cell(pSheet->GetGridPtr()->GetDirectPtr()->Pixels2Dips(pt));
 	if (cell != nullptr) {
 		cell->OnSetCursor(e);
+	} else {
+		e.Handled = FALSE;
 	}
 }
 

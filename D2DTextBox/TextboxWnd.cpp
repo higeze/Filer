@@ -13,11 +13,16 @@ LRESULT CTextboxWnd::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 	// Create direct
 	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
 	// Cteate textbox
-	m_pTxtbox = std::make_unique<D2DTextbox2>(this, m_spProp,
-											 [this]() {return m_text; },
-											 [this](const std::wstring& text) {m_text = text; },
-		[this](const std::wstring& text) {m_text = text; },
-											 [](const std::wstring& text) {});
+	m_pTxtbox = std::make_unique<D2DTextbox2>(
+		this, m_spProp,
+		[this]() { return m_text; },
+		[this](const std::wstring& text) { m_text = text; },
+		[this](const std::wstring& text) 
+		{
+			m_text = text;
+			m_isSaved.notify_set(false);
+		},
+		[](const std::wstring& text) {});
 
 	SetFocus();
 	InvalidateRect(NULL, FALSE);
@@ -28,16 +33,24 @@ LRESULT CTextboxWnd::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 {
 	PAINTSTRUCT ps;
 	HDC hdc = ::BeginPaint(m_hWnd, &ps);
+	CRect rcClient = GetClientRect();
 
 	m_pDirect->BeginDraw();
 
 	m_pDirect->GetHwndRenderTarget()->Clear(d2dw::CColorF(1.f, 1.f, 1.f));
 
 	m_pTxtbox->OnPaint(PaintEvent(this));
+
+	//Paint Focused Line
+	if (GetIsFocused()) {
+		d2dw::CRectF rcFocus(m_pDirect->Pixels2Dips(rcClient));
+		rcFocus.DeflateRect(1.0f, 1.0f);
+		m_pDirect->DrawSolidRectangle(*(m_spProp->FocusedLine), rcFocus);
+	}
+
 	m_pDirect->EndDraw();
 
 	::EndPaint(m_hWnd, &ps);
-	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
@@ -49,6 +62,8 @@ LRESULT CTextboxWnd::OnEraseBkGnd(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 LRESULT CTextboxWnd::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
+	m_pTxtbox->OnRect(RectEvent(this, m_pDirect->Pixels2Dips(GetClientRect()), bHandled)
+	);
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
@@ -77,8 +92,18 @@ LRESULT CTextboxWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 	return 0;
 }
 
+LRESULT CTextboxWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_pTxtbox->OnSetFocus(SetFocusEvent(this, wParam, lParam));
+	InvalidateRect(NULL, FALSE);
+	return 0;
+}
+
+
 LRESULT CTextboxWnd::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
+	m_pTxtbox->OnKillFocus(KillFocusEvent(this, wParam, lParam));
+	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
@@ -88,6 +113,14 @@ LRESULT CTextboxWnd::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
+
+LRESULT CTextboxWnd::OnMouseWheel(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_pTxtbox->OnMouseWheel(MouseWheelEvent(this, wParam, lParam));
+	InvalidateRect(NULL, FALSE);
+	return 0;
+}
+
 
 LRESULT CTextboxWnd::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
@@ -100,6 +133,13 @@ LRESULT CTextboxWnd::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL
 LRESULT CTextboxWnd::OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	//m_pTxtbox->OnLButtonUp(LButtonUpEvent(this, wParam, lParam));
+	InvalidateRect(NULL, FALSE);
+	return 0;
+}
+
+LRESULT CTextboxWnd::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_pTxtbox->OnContextMenu(ContextMenuEvent(this, wParam, lParam, bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
@@ -134,13 +174,35 @@ CTextboxWnd::CTextboxWnd(std::shared_ptr<TextboxProperty> pProp)
 	AddMsgHandler(WM_SYSKEYDOWN, &CTextboxWnd::OnKeyDown, this);
 	AddMsgHandler(WM_CHAR, &CTextboxWnd::OnChar, this);
 
+	AddMsgHandler(WM_SETFOCUS, &CTextboxWnd::OnSetFocus, this);
 	AddMsgHandler(WM_KILLFOCUS, &CTextboxWnd::OnKillFocus, this);
 	AddMsgHandler(WM_LBUTTONDOWN, &CTextboxWnd::OnLButtonDown, this);
 	AddMsgHandler(WM_LBUTTONUP, &CTextboxWnd::OnLButtonUp, this);
 	AddMsgHandler(WM_MOUSEMOVE, &CTextboxWnd::OnMouseMove, this);
+	AddMsgHandler(WM_MOUSEWHEEL, &CTextboxWnd::OnMouseWheel, this);
+	AddMsgHandler(WM_CONTEXTMENU, &CTextboxWnd::OnContextMenu, this);
 }
 
 CTextboxWnd::~CTextboxWnd() = default;
+
+bool CTextboxWnd::GetIsFocused()const
+{
+	auto hWndAct = ::GetActiveWindow();
+	auto hWndFcs = ::GetFocus();
+	auto hWndFore = ::GetForegroundWindow();
+
+	return hWndFcs == m_hWnd ||
+		(HWND)::GetWindowWord(hWndAct, GWL_HWNDPARENT) == m_hWnd ||
+		(HWND)::GetWindowWord(hWndFcs, GWL_HWNDPARENT) == m_hWnd ||
+		(HWND)::GetWindowWord(hWndFore, GWL_HWNDPARENT) == m_hWnd ||
+		(HWND)::GetWindow(hWndAct, GW_OWNER) == m_hWnd ||
+		(HWND)::GetWindow(hWndFcs, GW_OWNER) == m_hWnd ||
+		(HWND)::GetWindow(hWndFore, GW_OWNER) == m_hWnd ||
+		(HWND)::GetParent(hWndAct) == m_hWnd ||
+		(HWND)::GetParent(hWndFcs) == m_hWnd ||
+		(HWND)::GetParent(hWndFore) == m_hWnd;
+}
+
 
 void CTextboxWnd::Open()
 {
@@ -169,9 +231,14 @@ void CTextboxWnd::Open()
 
 void CTextboxWnd::Open(const std::wstring& path)
 {
+	m_pTxtbox->Clear();
 	if (::PathFileExists(path.c_str())) {
 		m_path.notify_set(path);
+		m_isSaved.notify_set(true);
 		m_pTxtbox->GetText().notify_assign(str2wstr(CFile::ReadAllString<char>(path)));
+	} else {
+		m_path.notify_set(L"");
+		m_isSaved.notify_set(false);
 	}
 
 }
@@ -212,6 +279,7 @@ void CTextboxWnd::Save()
 void CTextboxWnd::Save(const std::wstring& path)
 {
 	m_path.notify_set(path);
+	m_isSaved.notify_set(true);
 	CFile::WriteAllString(path, wstr2str(m_text));
 }
 

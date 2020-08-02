@@ -358,26 +358,16 @@ STDAPI CTextStore::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, __in_ecoun
         return TS_E_NOLOCK;
     }
 
-
-    LONG acpRemovingEnd;
-
     if (acpStart > (LONG)_pEditor->GetText().size())
         return E_INVALIDARG;
 
-    acpRemovingEnd = (std::min)(acpEnd, (LONG)_pEditor->GetText().size() + 1);
-	_pEditor->GetText().notify_replace(acpStart, acpRemovingEnd - acpStart, pchText);
-	//_pEditor->EraseText(acpStart, acpRemovingEnd - acpStart);
- //       //return E_FAIL;
-
-	////UINT nrCnt;
-	//_pEditor->InsertText(pchText, acpStart, cch);
- //       return E_FAIL;
+    LONG acpRemovingEnd = (std::min)(acpEnd, (LONG)_pEditor->GetText().size() + 1);
+    _pEditor->GetText().notify_replace(acpStart, acpRemovingEnd - acpStart, pchText, cch);
 
     pChange->acpStart = acpStart;
     pChange->acpOldEnd = acpEnd;
     pChange->acpNewEnd = acpStart + cch;
 
-    //_pEditor->InvalidateRect();
     return S_OK;
 }
 
@@ -495,8 +485,8 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
         return TS_E_NOLOCK;
     }
 	//Get candidate dialogbox rect
-	auto rcStart(_pEditor->GetCharRectFromPos(acpStart));
-    auto rcEnd(_pEditor->GetCharRectFromPos(acpEnd));
+	auto rcStart(_pEditor->GetScrolledCursorCharRectFromPos(acpStart));
+    auto rcEnd(_pEditor->GetScrolledCursorCharRectFromPos(acpEnd));
 
     if (rcStart && rcEnd)
     {

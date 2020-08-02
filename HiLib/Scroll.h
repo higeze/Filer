@@ -10,7 +10,7 @@ namespace d2dw
 	class CScrollBase :public CUIElement
 	{
 	protected:
-		CGridView* m_pGrid;
+		CWnd* m_pWnd;
 		bool m_visible = true;
 		FLOAT m_page = 0.0f;
 		std::pair<FLOAT, FLOAT> m_range = std::make_pair(0.0f, 0.0f);
@@ -21,9 +21,11 @@ namespace d2dw
 
 		FLOAT m_startDrag;
 
+		std::function<void(const wchar_t*)> m_onPropertyChanged;
+
 
 	public:
-		CScrollBase(CGridView* pGrid, const std::shared_ptr<ScrollProperty>& spScrollProp);
+		CScrollBase(CWnd* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged);
 		virtual ~CScrollBase() = default;
 
 		FLOAT GetStartDrag()const { return m_startDrag; }
@@ -49,24 +51,29 @@ namespace d2dw
 		void SetVisible(bool visible) { m_visible = visible; }
 		virtual void OnPaint(const PaintEvent& e);
 		virtual CRectF GetThumbRect()const = 0;
+		virtual void OnPropertyChanged(const wchar_t* name) override
+		{
+			m_onPropertyChanged(name);
+		}
+
 	};
 
 	class CVScroll :public CScrollBase
 	{
 	public:
-		CVScroll(CGridView* pGrid, const std::shared_ptr<ScrollProperty>& spScrollProp):CScrollBase(pGrid, spScrollProp){}
+		CVScroll(CWnd* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
+			:CScrollBase(pWnd, spScrollProp, onPropertyChanged){}
 		virtual ~CVScroll() = default;
 		virtual CRectF GetThumbRect()const override;
-		virtual void OnPropertyChanged(const wchar_t* name) override;
 	};
 
 	class CHScroll :public CScrollBase
 	{
 	public:
-		CHScroll(CGridView* pGrid, const std::shared_ptr<ScrollProperty>& spScrollProp) :CScrollBase(pGrid, spScrollProp) {}
+		CHScroll(CWnd* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
+			:CScrollBase(pWnd, spScrollProp, onPropertyChanged) {}
 		virtual ~CHScroll() = default;
 		virtual CRectF GetThumbRect()const override;
-		virtual void OnPropertyChanged(const wchar_t* name) override;
 	};
 
 }

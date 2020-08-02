@@ -215,20 +215,22 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	m_spStatusBar->SetRect(m_pDirect->Pixels2Dips(rcStatusBar));
 
 	//CFavoritesGridView
-	auto createFavoritesView = [this](std::shared_ptr<CFavoritesGridView>& spFavoritesView, std::shared_ptr<CFilerTabGridView>& spView, unsigned short id, CRect& rc)->void {
+	auto createFavoritesView = [this](std::shared_ptr<CFavoritesGridView>& spFavoritesView, std::weak_ptr<CFilerTabGridView>& wpView, unsigned short id, CRect& rc)->void {
 		spFavoritesView->CreateWindowExArgument()
 			.dwStyle(spFavoritesView->CreateWindowExArgument().dwStyle() | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | (rc.operator bool() ? WS_VISIBLE : 0))
 			.hMenu((HMENU)id);
 
-		spFavoritesView->FileChosen = [&](std::shared_ptr<CShellFile>& spFile)->void {
-			auto& itemsSource = spView->GetItemsSource();
-			itemsSource.notify_replace(itemsSource.begin() + spView->GetSelectedIndex(), std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
+		spFavoritesView->FileChosen = [wpView](std::shared_ptr<CShellFile>& spFile)->void {
+			if (auto spView = wpView.lock()) {
+				auto& itemsSource = spView->GetItemsSource();
+				itemsSource.notify_replace(itemsSource.begin() + spView->GetSelectedIndex(), std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
+			}
 		};
 		
 		spFavoritesView->Create(m_hWnd, rc);
 	};
-	createFavoritesView(m_spLeftFavoritesView, m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFavoritesGridView"), rcLeftFavorites);
-	createFavoritesView(m_spRightFavoritesView, m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFavoritesGridView"), rcRightFavorites);
+	createFavoritesView(m_spLeftFavoritesView, std::weak_ptr<CFilerTabGridView>(m_spLeftView), CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFavoritesGridView"), rcLeftFavorites);
+	createFavoritesView(m_spRightFavoritesView, std::weak_ptr<CFilerTabGridView>(m_spRightView), CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFavoritesGridView"), rcRightFavorites);
 
 	//CFilerTabGridView
 	auto createFilerTabGridView = [this](std::shared_ptr<CFilerTabGridView>& spView, unsigned short id, CRect& rc)->void {
@@ -245,16 +247,20 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		spView->GetToDoGridViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
 		//Capture SetFocus
 		spView->GetFilerGridViewPtr()->AddMsgHandler(WM_SETFOCUS,
-		[this, spView](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
-			m_spCurView = spView;
-			spView->GetFilerGridViewPtr()->InvalidateRect(NULL, FALSE);
+		[this, wpView = std::weak_ptr<CFilerTabGridView>(spView)](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
+			if (auto spView = wpView.lock()) {
+				m_spCurView = spView;
+				spView->GetFilerGridViewPtr()->InvalidateRect(NULL, FALSE);
+			}
 			return 0;
 		});
 
 		spView->GetToDoGridViewPtr()->AddMsgHandler(WM_SETFOCUS,
-		[this, spView](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
-			m_spCurView = spView;
-			spView->GetToDoGridViewPtr()->InvalidateRect(NULL, FALSE);
+		[this, wpView = std::weak_ptr<CFilerTabGridView>(spView)](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
+			if (auto spView = wpView.lock()) {
+				m_spCurView = spView;
+				spView->GetToDoGridViewPtr()->InvalidateRect(NULL, FALSE);
+			}
 			return 0;
 		});
 	};
@@ -663,7 +669,7 @@ LRESULT CFilerWnd::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 LRESULT CFilerWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	if (!m_spCurView) { m_spCurView = m_spLeftView; }
-	if(m_spCurView){
+	if(m_spCurView && m_spCurView->GetCurView()){
 		::SetFocus(m_spCurView->GetCurView()->m_hWnd);
 	}
 	return 0;

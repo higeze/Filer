@@ -109,6 +109,20 @@ public:
 		return *this;
 	}
 
+	observable_basic_string<CharT, Traits, Allocator>& notify_replace(size_type pos, size_type n1, const CharT* s, size_type n2)
+	{
+		std::basic_string<CharT, Traits, Allocator> old(*this);
+		replace(pos, n1, s, n2);
+		StringChanged(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+			NotifyStringChangedAction::Replace,
+				* this,
+				old,
+				(int)pos, (int)(pos + n1), int(pos + n2)
+		});
+		return *this;
+	}
+
+
 	void notify_clear()
 	{
 		std::basic_string<CharT, Traits, Allocator> old(*this);

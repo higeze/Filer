@@ -167,8 +167,29 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 	CreateWindowExArgument()
 		.dwStyle(WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE | TCS_HOTTRACK | TCS_FLATBUTTONS | TCS_MULTILINE);
 
+	//
+	auto updateView = [this](const std::shared_ptr<TabData>& spData) {
+		auto iter = m_itemsTemplate.find(typeid(*spData).name());
+		if (iter != m_itemsTemplate.end()) {
+			auto newView = iter->second(spData);
+			if (newView && m_curView != newView) {
+				m_curView = newView;
+				m_curView->ShowWindow(SW_SHOW);
+				if (GetFilerGridViewPtr() != m_curView) GetFilerGridViewPtr()->ShowWindow(SW_HIDE);
+				if (GetToDoGridViewPtr() != m_curView) GetToDoGridViewPtr()->ShowWindow(SW_HIDE);
+				if (GetTextViewPtr() != m_curView) GetTextViewPtr()->ShowWindow(SW_HIDE);
+				//m_curView->ShowWindow(SW_SHOW);
+				m_curView->MoveWindow(GetTabRect(), TRUE);
+				m_curView->SetFocus();
+				m_curView->InvalidateRect(NULL, FALSE);
+			} else {
+				//Do nothing
+			}
+		}
+	};
+
 	//ItemsSource
-	m_itemsSource.VectorChanged = [this](const NotifyVectorChangedEventArgs<std::shared_ptr<TabData>>& e)->void {
+	m_itemsSource.VectorChanged = [this, updateView](const NotifyVectorChangedEventArgs<std::shared_ptr<TabData>>& e)->void {
 		switch (e.Action) {
 			case NotifyVectorChangedAction::Add:
 			{
@@ -189,22 +210,9 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 
 			case NotifyVectorChangedAction::Replace:
 			{
-				auto pData = m_itemsSource[m_selectedIndex];
-				SetItemText(e.NewStartingIndex, pData->GetItemText().c_str());
-				auto iter = m_itemsTemplate.find(typeid(*pData).name());
-				if (iter != m_itemsTemplate.end()) {
-					auto newView = iter->second(pData);
-					if (newView && m_curView != newView) {
-						if (m_curView) {
-							m_curView->ShowWindow(SW_HIDE);
-						}
-						m_curView = newView;
-						m_curView->ShowWindow(SW_SHOW);
-						m_curView->MoveWindow(GetTabRect(), FALSE);
-					} else {
-						//Do nothing
-					}
-				}
+				auto spData = m_itemsSource[m_selectedIndex];
+				SetItemText(e.NewStartingIndex, spData->GetItemText().c_str());
+				updateView(spData);
 			}
 			break;
 			case NotifyVectorChangedAction::Reset:
@@ -224,6 +232,7 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 		auto pData = std::static_pointer_cast<FilerTabData>(pTabData);
 		auto spView = GetFilerGridViewPtr();
 		spView->OpenFolder(pData->FolderPtr);
+		spView->UpdateAll();
 		spView->SubmitUpdate();
 
 		return spView;
@@ -233,6 +242,7 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 		auto pData = std::static_pointer_cast<ToDoTabData>(pTabData);
 		auto spView = GetToDoGridViewPtr();
 		spView->Open(pData->Path);
+		spView->UpdateAll();
 		spView->SubmitUpdate();
 
 		return spView;
@@ -242,29 +252,17 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 		auto pData = std::static_pointer_cast<TextTabData>(pTabData);
 		auto spView = GetTextViewPtr();
 		spView->Open(pData->Path);
+		spView->InvalidateRect(NULL, FALSE);
 
 		return spView;
 	});
 
 	//SelectedIndex
 	m_selectedIndex.Changed.connect(
-		[this](const NotifyChangedEventArgs<int>& e)->void {
+		[this, updateView](const NotifyChangedEventArgs<int>& e)->void {
 			SetCurSel(std::clamp(m_selectedIndex.get(), 0, GetItemCount() - 1));
-			auto pData = m_itemsSource[m_selectedIndex];
-			auto iter = m_itemsTemplate.find(typeid(*pData).name());
-			if (iter != m_itemsTemplate.end()) {
-				auto newView = iter->second(pData);
-				if (newView && m_curView != newView) {
-					if (m_curView) {
-						m_curView->ShowWindow(SW_HIDE);
-					}
-					m_curView = newView;
-					m_curView->ShowWindow(SW_SHOW);
-					m_curView->MoveWindow(GetTabRect(), FALSE);
-				} else {
-					//Do nothing
-				}
-			}
+			auto spData = m_itemsSource[m_selectedIndex];
+			updateView(spData);
 		});
 
 
@@ -283,6 +281,13 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 	AddCmdIDHandler(IDM_CLOSEALLBUTTHISTAB, &CFilerTabGridView::OnCommandCloseAllButThisTab, this);
 	AddCmdIDHandler(IDM_ADDTOFAVORITE, &CFilerTabGridView::OnCommandAddToFavorite, this);
 	AddCmdIDHandler(IDM_OPENSAMEASOTHER, &CFilerTabGridView::OnCommandOpenSameAsOther, this);
+}
+
+CFilerTabGridView::~CFilerTabGridView()
+{
+	//GetFilerGridViewPtr = nullptr;
+	//GetToDoGridViewPtr = nullptr;
+	//GetTextViewPtr = nullptr;
 }
 
 LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -311,13 +316,23 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 
 			//Path Changed
 			spTextView->GetObsPath().Changed.connect([&](const NotifyChangedEventArgs<std::wstring>& e) {
-				auto pData = std::static_pointer_cast<ToDoTabData>(m_itemsSource[GetCurSel()]);
+				auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[GetCurSel()]);
 				pData->Path = spTextView->GetObsPath().get();
 
 				SetItemText(GetCurSel(), pData->GetItemText().c_str());
 
 				spTextView->MoveWindow(GetTabRect(), FALSE);
-													 });
+			});
+
+			//IsSave Changed
+			spTextView->GetObsIsSaved().Changed.connect([&](const NotifyChangedEventArgs<bool>& e) {
+				auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[GetCurSel()]);
+				pData->IsSaved = spTextView->GetObsIsSaved().get();
+
+				SetItemText(GetCurSel(), pData->GetItemText().c_str());
+
+				spTextView->MoveWindow(GetTabRect(), FALSE);
+				});
 
 			spTextView->Create(m_hWnd, GetTabRect());
 		}
@@ -357,6 +372,7 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 	auto iter = m_itemsTemplate.find(typeid(*pData).name());
 	if (iter != m_itemsTemplate.end()) {
 		m_curView = iter->second(pData);
+		//m_curView->InvalidateRect(NULL, FALSE);
 	}
 
 	return 0;

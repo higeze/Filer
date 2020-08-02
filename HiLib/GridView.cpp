@@ -44,8 +44,8 @@ CGridView::CGridView(
 	CSheet(spGridViewProp, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
 	CWnd(),
 	m_pMouseMachine(new CMouseStateMachine(this)),
-	m_pVScroll(std::make_unique<d2dw::CVScroll>(this, spGridViewProp->VScrollPropPtr)),
-	m_pHScroll(std::make_unique<d2dw::CHScroll>(this, spGridViewProp->HScrollPropPtr))
+	m_pVScroll(std::make_unique<d2dw::CVScroll>(this, spGridViewProp->VScrollPropPtr, std::bind(&CGridView::OnVScrollPropertyChanged, this, phs::_1))),
+	m_pHScroll(std::make_unique<d2dw::CHScroll>(this, spGridViewProp->HScrollPropPtr, std::bind(&CGridView::OnHScrollPropertyChanged, this, phs::_1)))
 {
 	m_pMachine.reset(new CGridStateMachine(this));
 
@@ -355,7 +355,7 @@ void CGridView::UpdateScrolls()
 	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetVisible()?(m_pHScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
 	m_pVScroll->SetRect(rcVertical);
 
-	auto a = m_pHScroll->GetVisible() ? (::GetSystemMetrics(SM_CYHSCROLL) + lineHalfWidth) : lineHalfWidth;
+//	auto a = m_pHScroll->GetVisible() ? (::GetSystemMetrics(SM_CYHSCROLL) + lineHalfWidth) : lineHalfWidth;
 
 	rcHorizontal.left= rcClient.left + lineHalfWidth;
 	rcHorizontal.top = rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
@@ -1283,7 +1283,7 @@ LRESULT CGridView::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 }
 LRESULT CGridView::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	bHandled = FALSE; //Default Handled = FALSE meand Arrow
+	bHandled = FALSE; //Default Handled = FALSE means Arrow
 	CSheet::OnSetCursor(SetCursorEvent(this, wParam, lParam, bHandled));
 	SubmitUpdate();
 	return 0;

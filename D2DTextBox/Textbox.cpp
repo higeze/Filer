@@ -10,7 +10,10 @@
 #include "UIElement.h"
 #include "GridView.h"
 #include "TextCell.h"
+#include "Scroll.h"
+#include "GridViewProperty.h"//ScrollProperty
 #include <boost/algorithm/algorithm.hpp>
+#include "ResourceIDFactory.h"
 
 
 #define TAB_WIDTH_4CHAR 4
@@ -82,7 +85,8 @@ D2DTextbox::D2DTextbox(
 	m_getter(getter), m_setter(setter), m_changed(changed), m_final(final),
 	m_text(getter()),
 	m_carets(0, getter().size(), 0, 0, getter().size()),
-	m_recalc(true)
+	m_pVScroll(std::make_unique<d2dw::CVScroll>(pWnd, std::make_shared<ScrollProperty>(), [](const wchar_t* name) {})),
+	m_pHScroll(std::make_unique<d2dw::CHScroll>(pWnd, std::make_shared<ScrollProperty>(), [](const wchar_t* name) {}))
 {
 	// You must create this on Heap, OnStack is NG.
 	_ASSERT(_CrtIsValidHeapPointer(this));
@@ -101,12 +105,13 @@ D2DTextbox::D2DTextbox(
 		[this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
 			m_pTextStore->OnTextChange(e.StartIndex, e.OldEndIndex, e.NewEndIndex);
 			m_changed(e.NewString);
-			m_recalc = true;
+			UpdateScroll();
 		}
 	);
 	m_carets.Changed.connect(
 		[this](const NotifyChangedEventArgs<std::tuple<int, int, int, int, int>>& e)->void {
 			m_pTextStore->OnSelectionChange();
+			EnsureVisibleCaret();
 		}
 	);
 
@@ -159,6 +164,21 @@ void D2DTextbox::UninitTSF()
 	}
 }
 
+void D2DTextbox::Clear()
+{
+	m_carets.notify_set(0, 0, 0, 0, 0);
+	m_text.notify_clear();
+
+	m_pVScroll->SetScrollPage(GetPageRect().Height());
+	m_pVScroll->SetScrollPos(0.f);
+	m_pVScroll->SetScrollRange(0.f, GetContentRect().Height());
+
+	m_pHScroll->SetScrollPage(GetPageRect().Width());
+	m_pHScroll->SetScrollPos(0.f);
+	m_pHScroll->SetScrollRange(0.f, GetContentRect().Width());
+}
+
+
 
 void D2DTextbox::MoveCaret(const int& newPos)
 {
@@ -196,6 +216,28 @@ void D2DTextbox::MoveSelection(const int& selFirst, const int& selLast)
 	ResetCaret();
 }
 
+void D2DTextbox::EnsureVisibleCaret()
+{
+	if (m_isScrollable) {
+		auto pageRect = GetPageRect();
+		auto curRect = GetScrolledCharRectFromPos(std::get<caret::CurCaret>(m_carets));
+		auto orgRect = GetScrolledCharRectFromPos(0);
+		if (curRect && orgRect) {
+			if (curRect.value().top < pageRect.top) {
+				m_pVScroll->SetScrollPos(curRect.value().top - orgRect.value().top);
+			} else if (curRect.value().bottom > pageRect.bottom) {
+				m_pVScroll->SetScrollPos(curRect.value().bottom - pageRect.Height() - orgRect.value().top);
+			}
+
+			if (curRect.value().left < pageRect.left) {
+				m_pHScroll->SetScrollPos(curRect.value().left - orgRect.value().left);
+			} else if (curRect.value().right > pageRect.right) {
+				m_pHScroll->SetScrollPos(curRect.value().right - pageRect.Width() - orgRect.value().left);
+			}
+		}
+	}
+}
+
 /**************/
 /* UI Message */
 /**************/
@@ -207,15 +249,33 @@ void D2DTextbox::OnClose(const CloseEvent& e)
 	}
 }
 
+void D2DTextbox::OnRect(const RectEvent& e)
+{
+	UpdateScroll();
+}
+
 void D2DTextbox::OnPaint(const PaintEvent& e)
 {
 	//PaintBackground
 	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetClientRect());
 	//PaintLine
-	e.WndPtr->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->EditLine), GetClientRect());
+	if (m_hasBorder) { e.WndPtr->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->EditLine), GetClientRect()); }
 	//PaintContent
 	Render();
-	//m_pWnd->Invalidate();
+	//PaintScroll
+	m_pVScroll->OnPaint(e);
+	m_pHScroll->OnPaint(e);
+}
+
+void D2DTextbox::OnSetFocus(const SetFocusEvent& e)
+{
+	m_isFirstDrawCaret = true;
+}
+
+
+void D2DTextbox::OnKillFocus(const KillFocusEvent& e)
+{
+	m_timer.stop();
 }
 
 void D2DTextbox::OnKeyDown(const KeyDownEvent& e)
@@ -246,53 +306,59 @@ void D2DTextbox::OnKeyDown(const KeyDownEvent& e)
 	}
 	case VK_UP:
 	{
-		auto curRect = GetCharRectFromPos(std::get<caret::CurCaret>(m_carets));
-		if (!curRect) break;
-		d2dw::CPointF newPt(curRect.value().left, curRect.value().top - curRect.value().Height() / 2);
+		if (auto curRect = GetScrolledCursorCharRectFromPos(std::get<caret::CurCaret>(m_carets))) {
+			d2dw::CPointF newPt(curRect.value().left + curRect.value().Width() / 2, curRect.value().top - curRect.value().Height() / 2);
 
-		auto newPos(GetCharPosFromPoint(newPt));
-		if (!newPos) break;
+			auto newPos(GetCharPosFromPoint(newPt));
+			if (!newPos) break;
 
-		if (shift) {
-			MoveCaretWithShift(newPos.value());
-		} else {
-			MoveCaret(newPos.value());
+			if (shift) {
+				MoveCaretWithShift(newPos.value());
+			} else {
+				MoveCaret(newPos.value());
+			}
 		}
 		break;
 	}
 	case VK_DOWN:
 	{
-		auto curRect = GetCharRectFromPos(std::get<caret::CurCaret>(m_carets));
-		if (!curRect) break;
-		d2dw::CPointF newPt(curRect.value().left, curRect.value().bottom + curRect.value().Height() / 2);
+		
+		if (auto curRect = GetScrolledCursorCharRectFromPos(std::get<caret::CurCaret>(m_carets))) {
+			d2dw::CPointF newPt(curRect.value().left + curRect.value().Width() / 2, curRect.value().bottom + curRect.value().Height() / 2);
 
-		auto newPos(GetCharPosFromPoint(newPt));
-		if (!newPos) break;
+			auto newPos(GetCharPosFromPoint(newPt));
+			if (!newPos) break;
 
-		if (shift) {
-			MoveCaretWithShift(newPos.value());
-		} else {
-			MoveCaret(newPos.value());
+			if (shift) {
+				MoveCaretWithShift(newPos.value());
+			} else {
+				MoveCaret(newPos.value());
+			}
 		}
+
 		break;
 	}
 	case VK_HOME:
 	{
-		int newPos = std::clamp(GetFirstCharPosInLine(std::get<caret::CurCaret>(m_carets)).value(), 0, (int)m_text.size());
-		if (shift) {
-			MoveCaretWithShift(newPos);
-		} else {
-			MoveCaret(newPos);
+		if (auto firstCharPos = GetFirstCharPosInLine(std::get<caret::CurCaret>(m_carets))){
+			int newPos = std::clamp(firstCharPos.value(), 0, (int)m_text.size());
+				if (shift) {
+					MoveCaretWithShift(newPos);
+				} else {
+					MoveCaret(newPos);
+				}
 		}
 		break;
 	}
 	case VK_END:
 	{
-		int newPos = std::clamp(GetLastCharPosInLine(std::get<caret::CurCaret>(m_carets)).value(), 0, (int)m_text.size());
-		if (shift) {
-			MoveCaretWithShift(newPos);
-		} else {
-			MoveCaret(newPos);
+		if (auto lastCharPos = GetFirstCharPosInLine(std::get<caret::CurCaret>(m_carets))) {
+			int newPos = std::clamp(lastCharPos.value(), 0, (int)m_text.size());
+			if (shift) {
+				MoveCaretWithShift(newPos);
+			} else {
+				MoveCaret(newPos);
+			}
 		}
 		break;
 	}
@@ -366,12 +432,12 @@ void D2DTextbox::OnLButtonDown(const LButtonDownEvent& e)
 {
 	d2dw::CPointF newPt(m_pWnd->GetDirectPtr()->Pixels2Dips(e.Point));
 	auto newPos(GetCharPosFromPoint(newPt));
-	if (!newPos) return;
-
-	if (GetKeyState(VK_SHIFT) & 0x8000) {
-		MoveCaretWithShift(newPos.value());
-	} else {
-		MoveCaret(newPos.value());
+	if (auto newPos = GetCharPosFromPoint(newPt)) {
+		if (GetKeyState(VK_SHIFT) & 0x8000) {
+			MoveCaretWithShift(newPos.value());
+		} else {
+			MoveCaret(newPos.value());
+		}
 	}
 }
 
@@ -379,11 +445,15 @@ void D2DTextbox::OnMouseMove(const MouseMoveEvent& e)
 {
 	if (e.Flags & MK_LBUTTON) {
 		d2dw::CPointF newPt(m_pWnd->GetDirectPtr()->Pixels2Dips(e.Point));
-		auto newPos(GetCharPosFromPoint(newPt));
-		if (!newPos) return;
-
-		MoveCaretWithShift(newPos.value());
+		if (auto newPos = GetCharPosFromPoint(newPt)) {
+			MoveCaretWithShift(newPos.value());
+		}
 	}
+}
+
+void D2DTextbox::OnMouseWheel(const MouseWheelEvent& e)
+{
+	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);
 }
 
 void D2DTextbox::OnChar(const CharEvent& e)
@@ -403,6 +473,50 @@ void D2DTextbox::OnChar(const CharEvent& e)
 		else {
 		}
 	}
+}
+
+void D2DTextbox::UpdateScroll()
+{
+	//VScroll
+	//Page
+	m_pVScroll->SetScrollPage(GetPageRect().Height());
+	//Range
+	m_pVScroll->SetScrollRange(0, GetContentRect().Height());
+	//Enable
+	m_pVScroll->SetVisible(m_pVScroll->GetScrollDistance() > m_pVScroll->GetScrollPage());
+
+	//HScroll
+	//Page
+	m_pHScroll->SetScrollPage(GetPageRect().Width());
+	//Range
+	m_pHScroll->SetScrollRange(0, GetContentRect().Width());
+	//Enable
+	m_pHScroll->SetVisible(m_pHScroll->GetScrollDistance() > m_pHScroll->GetScrollPage());
+
+	//VScroll
+	//Position
+	d2dw::CRectF rcClient(GetClientRect());
+	d2dw::CRectF rcVertical;
+	FLOAT lineHalfWidth = m_pProp->Line->Width * 0.5f;
+
+	rcVertical.left = rcClient.right - ::GetSystemMetrics(SM_CXVSCROLL) - lineHalfWidth;
+	rcVertical.top = rcClient.top + lineHalfWidth;
+	rcVertical.right = rcClient.right - lineHalfWidth;
+	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetVisible() ? (m_pHScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	//rcVertical.bottom = rcClient.bottom - lineHalfWidth;
+
+	m_pVScroll->SetRect(rcVertical);
+
+	//HScroll
+	//Position
+	d2dw::CRectF rcHorizontal;
+	rcHorizontal.left = rcClient.left + lineHalfWidth;
+	rcHorizontal.top = rcClient.bottom - ::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
+	rcHorizontal.right = rcClient.right - (m_pVScroll->GetVisible() ? (m_pVScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
+	m_pHScroll->SetRect(rcHorizontal);
+
+
 }
 
 
@@ -456,27 +570,39 @@ d2dw::CRectF D2DTextbox::GetClientRect() const
 
 d2dw::CRectF D2DTextbox::GetContentRect() const
 {
-	d2dw::CRectF rcContent(GetClientRect());
-	rcContent.DeflateRect(m_pProp->Line->Width*0.5f);
-	rcContent.DeflateRect(*(m_pProp->Padding));
-	return rcContent;
+	auto rcPage(GetPageRect());
+	if (auto charRects = GetScrolledCursorCharRects();!charRects.empty()) {
+		auto a = d2dw::CRectF(
+			charRects.front().left,
+			charRects.front().top, 
+			(std::max)(rcPage.right, std::max_element(charRects.begin(), charRects.end(), [](const auto& lhs, const auto& rhs) {return lhs.right < rhs.right; })->right),
+			charRects.back().bottom);
+		return a;
+	} else {
+		return d2dw::CRectF();
+	}
 }
+
+d2dw::CRectF D2DTextbox::GetPageRect() const
+{
+	d2dw::CRectF rcPage(GetClientRect());
+	rcPage.DeflateRect(m_pProp->Line->Width * 0.5f);
+	rcPage.DeflateRect(*(m_pProp->Padding));
+	return rcPage;
+}
+
 
 void D2DTextbox::ResetCaret()
 {
-	SPDLOG_INFO("ResetCaret");
-
 	m_bCaret = true;
-	//////m_pWnd->PostUpdate(Updates::Invalidate);
-	m_pWnd->InvalidateRect(NULL, FALSE);
 	m_timer.run([this]()->void
 		{
 			m_bCaret = !m_bCaret;
 			m_pWnd->InvalidateRect(NULL, FALSE);
 		}, 
 		std::chrono::milliseconds(::GetCaretBlinkTime()));
-	///QueryPerformanceCounter(&m_pregtm);
-	///m_bCaret = true;
+	//////m_pWnd->PostUpdate(Updates::Invalidate);
+	m_pWnd->InvalidateRect(NULL, FALSE);
 }
 
 void D2DTextbox::DrawCaret(const d2dw::CRectF& rc)
@@ -485,21 +611,11 @@ void D2DTextbox::DrawCaret(const d2dw::CRectF& rc)
 		m_isFirstDrawCaret = false;
 		ResetCaret();
 	}
-
-///	QueryPerformanceCounter(&m_gtm);
-
-///	float zfps = (float)(m_gtm.QuadPart - m_pregtm.QuadPart) / (float)m_frequency.QuadPart;
-
-	//if (zfps > 0.5f) {
-	//	m_pregtm = m_gtm;
-	//	m_bCaret = !m_bCaret;
-	//} else if(m_bCaret){
 	if (m_bCaret) {
 		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 		m_pWnd->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, rc);
 		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	}
-	//}
 }
 
 void D2DTextbox::CancelEdit()
@@ -528,19 +644,14 @@ bool D2DTextbox::GetIsVisible()const
 
 void D2DTextbox::Render()
 {
-	//if (m_recalc) {
-	//	Layout();
-	//	m_recalc = false;
-	//}
-
-	d2dw::CRectF contentRect(GetContentRect());
+	d2dw::CRectF pageRect(GetPageRect());
 
 	if (!m_text.empty()) {
+		std::vector<d2dw::CRectF> charRects = GetScrolledCursorCharRects();
 		//Draw Text
-		m_pWnd->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), m_text, contentRect);
+		m_pWnd->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), m_text, GetContentRect());
 
 		//Draw Selection
-		std::vector<d2dw::CRectF> charRects = GetCharRects();
 		for (auto n = std::get<caret::SelBegin>(m_carets); n < std::get<caret::SelEnd>(m_carets); n++) {
 			m_pWnd->GetDirectPtr()->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)),
 				charRects[n]);
@@ -565,16 +676,16 @@ void D2DTextbox::Render()
 		}
 	} else {
 		//Draw Caret
-		d2dw::CRectF caretRect = contentRect;
+		d2dw::CRectF caretRect = pageRect;
 		caretRect.right = caretRect.left + 1;
-		caretRect.bottom = contentRect.top + GetLineHeight();
+		caretRect.bottom = pageRect.top + GetLineHeight();
 		DrawCaret(caretRect);
 	}
 }
 
 FLOAT D2DTextbox::GetLineHeight()
 {
-	auto pLayout = m_pWnd->GetDirectPtr()->GetTextLayout(*(m_pProp->Format), L"", GetContentRect().Size());
+	auto pLayout = m_pWnd->GetDirectPtr()->GetTextLayout(*(m_pProp->Format), L"", d2dw::CSizeF(FLT_MAX, FLT_MAX));
 	float x, y;
 	DWRITE_HIT_TEST_METRICS tm;
 	pLayout->HitTestTextPosition(0, false, &x, &y, &tm);
@@ -614,54 +725,101 @@ BOOL D2DTextbox::AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIB
 	return TRUE;
 }
 
-std::vector<d2dw::CRectF> D2DTextbox::GetCharRects()
+std::vector<d2dw::CRectF> D2DTextbox::GetOriginCharRects() const
 {
-	d2dw::CRectF contentRect(GetContentRect());
-	std::vector<d2dw::CRectF> charRects(m_pWnd->GetDirectPtr()->CalcCharRects(*(m_pProp->Format), m_text, contentRect.Size()));
-	std::for_each(charRects.begin(), charRects.end(), [offset = contentRect.LeftTop()](d2dw::CRectF& rc) {rc.OffsetRect(offset); });
-	
-	/*example-1*/
-	/*abcd\n   */
-	/*efghijklm*/
-	/*no\n     */
-	/*\n       */
-	/*pqrstu\n */
-	/*vwxzy    */
+	d2dw::CSizeF size(m_isWrap ? GetPageRect().Width() : FLT_MAX, FLT_MAX);
+	std::vector<d2dw::CRectF> originCharRects(m_pWnd->GetDirectPtr()->CalcCharRects(*(m_pProp->Format), m_text, size));
+	return originCharRects;
+}
 
-	/*example-2*/
-	/*abcd\n   */
-	/*efghijklm*/
-	/*no\n     */
-	/*\n       */
-	/*pqrstu\n */
-	/*vwxzy\n  */
-	/*         */
+std::vector<d2dw::CRectF> D2DTextbox::GetScrolledCharRects() const
+{
+	std::vector<d2dw::CRectF> scrolledCharRects(GetOriginCharRects());
+	d2dw::CPointF offset(GetPageRect().LeftTop());
+	offset.Offset(-m_pHScroll->GetScrollPos(), -m_pVScroll->GetScrollPos());
+	std::for_each(scrolledCharRects.begin(), scrolledCharRects.end(), [offset](auto& rc) {rc.OffsetRect(offset); });
+	return 	scrolledCharRects;
+}
 
-	for (std::size_t i = 0; i < charRects.size(); i++) {
-		if (m_text[i] == L'\n' && i != charRects.size()) {
-			charRects[i].right = contentRect.right;
+
+std::vector<d2dw::CRectF> D2DTextbox::GetScrolledCursorCharRects() const
+{
+	d2dw::CRectF pageRect(GetPageRect());
+	std::vector<d2dw::CRectF> charRects(GetScrolledCharRects());
+	if (charRects.size()) {
+		//Max Right
+		auto maxRight = (std::max)(pageRect.right, std::max_element(charRects.begin(), charRects.end(),
+			[](const auto& lhs, const auto& rhs) {return lhs.right < rhs.right; })->right);
+
+		//Case of IsWrap
+		/*example-1*/
+		/*abcd\n   */
+		/*efghijklm*/
+		/*no\n     */
+		/*\n       */
+		/*pqrstu\n */
+		/*vwxzy    */
+
+		/*example-2*/
+		/*abcd\n   */
+		/*efghijklm*/
+		/*no\n     */
+		/*\n       */
+		/*pqrstu\n */
+		/*vwxzy\n  */
+		/*         */
+
+		//Case of Not IsWrap
+		/*example-1    */
+		/*abcd\n       */
+		/*efghijklmno\n*/
+		/*\n           */
+		/*pqrstu\n     */
+		/*vwxzy        */
+
+		/*example-2    */
+		/*abcd\n       */
+		/*efghijklmno\n*/
+		/*\n           */
+		/*pqrstu\n     */
+		/*vwxzy\n      */
+		/*             */
+
+		for (std::size_t i = 0; i < charRects.size(); i++) {
+			if (m_text[i] == L'\n') {
+				charRects[i].right = maxRight;
+			}
 		}
-	}
 
-	if (m_text.back() == L'\n') {
-		charRects.emplace_back(
-			contentRect.left, charRects.back().bottom,
-			contentRect.right, charRects.back().bottom + charRects.back().Height());
+		if (m_text.back() == L'\n') {
+			charRects.emplace_back(
+				pageRect.left, charRects.back().bottom,
+				maxRight, charRects.back().bottom + charRects.back().Height());
 
-	}else{
-		charRects.emplace_back(charRects.back().right, charRects.back().top, contentRect.right, charRects.back().bottom);
+		} else {
+			charRects.emplace_back(charRects.back().right, charRects.back().top, maxRight, charRects.back().bottom);
 
+		}
 	}
 	
 	return charRects;
 }
 
-std::optional<d2dw::CRectF> D2DTextbox::GetCharRectFromPos(const int& pos)
+std::optional<d2dw::CRectF> D2DTextbox::GetScrolledCharRectFromPos(const int& pos)
+{
+	if (m_text.size() == 0 || pos < 0 || (int)m_text.size() <= pos) {
+		return std::nullopt;
+	} else {
+		return std::make_optional(GetScrolledCharRects()[pos]);
+	}
+}
+
+std::optional<d2dw::CRectF> D2DTextbox::GetScrolledCursorCharRectFromPos(const int& pos)
 {
 	if (m_text.size() == 0 || pos < 0 || (int)m_text.size() < pos) {
 		return std::nullopt;
 	} else {
-		return std::make_optional(GetCharRects()[pos]);
+		return std::make_optional(GetScrolledCursorCharRects()[pos]);
 	}
 }
 
@@ -670,7 +828,7 @@ std::optional<int> D2DTextbox::GetCharPosFromPoint(const d2dw::CPointF& pt)
 	if (m_text.size() == 0) {
 		return std::nullopt;
 	}
-	std::vector<d2dw::CRectF> charRects(GetCharRects());
+	std::vector<d2dw::CRectF> charRects(GetScrolledCursorCharRects());
 
 	auto iter = std::find_if(charRects.begin(), charRects.end(),
 		[pt](const d2dw::CRectF& rc)->bool {
@@ -686,7 +844,7 @@ std::optional<int> D2DTextbox::GetCharPosFromPoint(const d2dw::CPointF& pt)
 
 std::optional<int> D2DTextbox::GetFirstCharPosInLine(const int& pos)
 {
-	std::vector<d2dw::CRectF> charRects(GetCharRects());
+	std::vector<d2dw::CRectF> charRects(GetScrolledCursorCharRects());
 	d2dw::CRectF curRect(charRects[pos]);
 	for (auto i = pos - 1; i > 0; i--) {
 		if (charRects[i].top != curRect.top) {
@@ -698,7 +856,7 @@ std::optional<int> D2DTextbox::GetFirstCharPosInLine(const int& pos)
 
 std::optional<int> D2DTextbox::GetLastCharPosInLine(const int& pos)
 {
-	std::vector<d2dw::CRectF> charRects(GetCharRects());
+	std::vector<d2dw::CRectF> charRects(GetScrolledCursorCharRects());
 	d2dw::CRectF curRect(charRects[pos]);
 	for (auto i = pos + 1; i < (int)charRects.size(); i++) {
 		if (charRects[i].top != curRect.top) {
@@ -709,156 +867,41 @@ std::optional<int> D2DTextbox::GetLastCharPosInLine(const int& pos)
 
 }
 
-//BOOL D2DTextbox::Layout()
-//{
-//	d2dw::CRectF contentRect(GetContentRect());
-//	d2dw::CSizeF contentSize(contentRect.Size());
-//	nLineCnt_ = 1;
-//
-//	// 行数を計算
-//
-//	nLineCnt_ = 0;
-//
-//	{
-//		BOOL bNewLine = TRUE;
-//		for (size_t i = 0; i < m_text.size(); i++) {
-//			switch (m_text[i]) {
-//			case 0x0d://CR
-//			case 0x0a://LF                
-//				if (bNewLine) {
-//					nLineCnt_++;
-//				}
-//				bNewLine = TRUE;
-//				break;
-//			default:
-//				if (bNewLine) {
-//					nLineCnt_++;
-//				}
-//				bNewLine = FALSE;
-//				break;
-//			}
-//		}
-//	}
-//
-//	// 行数分のLINEINFOを作成, 文字0でもLINEINFOは１つ作成
-//
-//	m_lineInfos = std::vector((std::max)((UINT)1, nLineCnt_), LINEINFO());
-//
-//	// Count character of each line.　文字単位にPOS,LEN,RECTを取得
-//
-//	int nCurrentLine = -1;
-//	m_lineInfos[0].nPos = 0;
-//	m_lineInfos[0].nCnt = 0;
-//	m_lineInfos[0].CharInfos = std::vector<CHARINFO>();
-//
-//	// prgLines_ の設定
-//	{
-//		UINT crlf = 0;
-//		int nNewLine = 1;
-//
-//		for (size_t i = 0; i < m_text.size(); i++) {
-//			switch (m_text[i]) {
-//			case 0x0d://CR
-//			case 0x0a://LF
-//				nNewLine++;
-//
-//				if (nNewLine == 2) {
-//					nCurrentLine++;
-//					m_lineInfos[nCurrentLine].nPos = i;
-//					m_lineInfos[nCurrentLine].nCnt = 0; // CRCRの場合、nCntは0		
-//					m_lineInfos[nCurrentLine].CharInfos = std::vector<CHARINFO>();
-//					nNewLine = 1;
-//				}
-//
-//
-//				xassert(crlf == 0 || crlf == m_text[i]); // CRLFはだめ、CRCR.. or LFLF..はOK
-//				crlf = m_text[i];
-//				break;
-//			default:
-//				if (nNewLine) {
-//					nCurrentLine++;
-//					m_lineInfos[nCurrentLine].nPos = i;
-//					m_lineInfos[nCurrentLine].nCnt = 1;
-//					m_lineInfos[nCurrentLine].CharInfos = std::vector<CHARINFO>();
-//
-//				} else {
-//					m_lineInfos[nCurrentLine].nCnt++;
-//
-//				}
-//				nNewLine = 0;
-//				crlf = 0;
-//				break;
-//			}
-//		}
-//	}
-//
-//	{
-//
-//		// 文字文のRECT取得
-//		std::vector<d2dw::CRectF> charRects = m_pWnd->GetDirectPtr()->CalcCharRects(*(m_pProp->Format), m_text, contentSize);
-//		if (charRects.empty()) {
-//			auto pLayout = m_pWnd->GetDirectPtr()->GetTextLayout(*(m_pProp->Format), m_text, contentSize);
-//			float x, y;
-//			DWRITE_HIT_TEST_METRICS tm;
-//			pLayout->HitTestTextPosition(0, false, &x, &y, &tm);
-//			nLineHeight_ = tm.height;
-//		} else {
-//			nLineHeight_ = charRects[0].Height();
-//		}
-//
-//		// prgLines_[lineno].prgCharInfo[col].rc の設定
-//		{
-//			UINT rcIdx = 0;
-//			// Get the rectangle of each characters. RECTを取得
-//			for (UINT r = 0; r < nLineCnt_; r++) {
-//				m_lineInfos[r].CharInfos = std::vector<CHARINFO>();
-//
-//				UINT nCnt = m_lineInfos[r].nCnt;
-//				if (nCnt) {
-//					UINT nCntK = nCnt + 1; // 改行分
-//
-//					m_lineInfos[r].CharInfos = std::vector<CHARINFO>(nCntK, CHARINFO());
-//
-//					UINT col;
-//					for (col = 0; col < nCnt; col++) {
-//						d2dw::CRectF rc = charRects[rcIdx++];
-//						rc.OffsetRect(contentRect.LeftTop());
-//						m_lineInfos[r].CharInfos[col].rc = rc;
-//					}
-//
-//					// 行の最後の処理				
-//					{
-//						d2dw::CRectF rc = m_lineInfos[r].CharInfos[col - 1].rc;
-//						rc.left = rc.right; //前の文字の右端を左端として、rectを作成
-//						m_lineInfos[r].CharInfos[col].rc = rc;//No more offset
-//						rcIdx++;
-//					}
-//				} else // 空行
-//				{
-//					m_lineInfos[r].CharInfos = std::vector<CHARINFO>(1, CHARINFO());
-//					d2dw::CRectF rc = charRects[rcIdx++];
-//
-//					xassert(rc.left == rc.right);
-//					rc.OffsetRect(contentRect.LeftTop());
-//					m_lineInfos[r].CharInfos[0].rc = rc;
-//
-//					xassert(m_lineInfos[r].nCnt == 0);
-//				}
-//			}
-//		}
-//
-//		if (!m_text.empty()) {
-//			// 1行目の文字幅の取得、右寄せのためにrow_width_必要
-//			row_width_ = 0;
-//			for (int col = 0; col < m_lineInfos[0].nCnt; col++) {
-//				row_width_ += m_lineInfos[0].CharInfos[col].rc.Width();
-//			}
-//		}
-//
-//		return TRUE;
-//	}
-//
-//
-//	return FALSE;
-//}
 
+
+void D2DTextbox2::OnContextMenu(const ContextMenuEvent& e)
+{
+	//CreateMenu
+	CMenu menu(::CreatePopupMenu());
+	//Add Row
+	MENUITEMINFO mii = { 0 };
+	mii.cbSize = sizeof(MENUITEMINFO);
+	mii.fMask = MIIM_TYPE | MIIM_ID;
+	mii.fType = MFT_STRING;
+	mii.fState = MFS_ENABLED;
+	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Execute");
+	mii.dwTypeData = L"Execute";
+	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+	CPoint ptScreen(e.Point);
+	::SetForegroundWindow(m_pWnd->m_hWnd);
+	int idCmd = menu.TrackPopupMenu(
+		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
+		ptScreen.x,
+		ptScreen.y,
+		m_pWnd->m_hWnd);
+
+	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Execute")) {
+		auto exe = m_text.substr(std::get<caret::SelBegin>(m_carets), std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets));
+		exe = ((exe.front() == L'\"')?L"":L"\"") + exe + ((exe.back() == L'\"') ? L"" : L"\"");
+		SHELLEXECUTEINFO execInfo = {};
+		execInfo.cbSize = sizeof(execInfo);
+		execInfo.hwnd = m_pWnd->m_hWnd;
+		execInfo.lpVerb = L"open";
+		execInfo.lpFile = exe.c_str();
+		execInfo.nShow = SW_SHOWDEFAULT;
+		::ShellExecuteEx(&execInfo);
+	}
+	e.Handled = TRUE;
+
+}

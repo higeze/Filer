@@ -1,16 +1,40 @@
 #include "ToDoGridView.h"
 #include "ResourceIDFactory.h"
 
+void CToDoGridView::Open()
+{
+	std::wstring path;
+	OPENFILENAME ofn = { 0 };
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = m_hWnd;
+	ofn.lpstrFilter = L"XML file(*.xml)\0*.xml\0\0";
+	ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrTitle = L"Open";
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	ofn.lpstrDefExt = L"xml";
+
+	if (!GetOpenFileName(&ofn)) {
+		DWORD errCode = CommDlgExtendedError();
+		if (errCode) {
+			//wsprintf(szErrMsg, L"Error code : %d", errCode);
+			//MessageBox(NULL, szErrMsg, L"GetOpenFileName", MB_OK);
+		}
+	} else {
+		::ReleaseBuffer(path);
+		Open(path);
+	}
+}
+
 void CToDoGridView::Open(const std::wstring& path)
 {
-	m_path.notify_set(path);
-	auto& itemsSource = GetItemsSource();
-	//itemsSource.notify_clear();//TODOTODO
-	while (!itemsSource.empty()) {
-		itemsSource.notify_erase(GetItemsSource().cbegin());
-	}
-
 	if (::PathFileExists(path.c_str())){
+		m_path.notify_set(path);
+		auto& itemsSource = GetItemsSource();
+		//itemsSource.notify_clear();//TODOTODO
+		while (!itemsSource.empty()) {
+			itemsSource.notify_erase(GetItemsSource().cbegin());
+		}
 		//Deserialize
 		try {
 			//Serialize
@@ -30,6 +54,59 @@ void CToDoGridView::Open(const std::wstring& path)
 		}
 	}
 }
+
+
+void CToDoGridView::Save()
+{
+	std::wstring path;
+	if (m_path.get().empty()) {
+		OPENFILENAME ofn = { 0 };
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hwndOwner = m_hWnd;
+		ofn.lpstrFilter = L"XML file(*.xml)\0*.xml\0\0";
+		ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
+		ofn.nMaxFile = MAX_PATH;
+		ofn.lpstrTitle = L"Save as";
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
+		ofn.lpstrDefExt = L"xml";
+
+		if (!GetSaveFileName(&ofn)) {
+			DWORD errCode = CommDlgExtendedError();
+			if (errCode) {
+				//wsprintf(szErrMsg, L"Error code : %d", errCode);
+				//MessageBox(NULL, szErrMsg, L"GetOpenFileName", MB_OK);
+			}
+		} else {
+			::ReleaseBuffer(path);
+		}
+	}
+	//Serialize
+	try {
+		Save(path);
+	}
+	catch (/*_com_error &e*/...) {
+	}
+
+}
+
+void CToDoGridView::Save(const std::wstring& path)
+{
+	m_path.notify_set(path);
+	//Serialize
+	try {
+		auto itemsSource = GetItemsSource();
+		std::vector<MainTask> tempItemsSource;
+		for (const auto& item : itemsSource) {
+			tempItemsSource.push_back(std::get<MainTask>(item));
+		}
+		CXMLSerializer<std::vector<MainTask>> serializer;
+		serializer.Serialize(m_path.get().c_str(), L"Task", tempItemsSource);
+	}
+	catch (/*_com_error &e*/...) {
+	}
+}
+
+
 
 void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
@@ -77,80 +154,16 @@ void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 
 void CToDoGridView::Normal_KeyDown(const KeyDownEvent& e)
 {
-	switch (e.Char) {
-		case 'O':
-			if (::GetAsyncKeyState(VK_CONTROL)) {
-				std::wstring path;
-				OPENFILENAME ofn = { 0 };
-				ofn.lStructSize = sizeof(OPENFILENAME);
-				ofn.hwndOwner = m_hWnd;
-				ofn.lpstrFilter = L"XML file(*.xml)\0*.xml\0\0";
-				ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
-				ofn.nMaxFile = MAX_PATH;
-				ofn.lpstrTitle = L"Open";
-				ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-				ofn.lpstrDefExt = L"xml";
-
-				if (!GetOpenFileName(&ofn)) {
-					DWORD errCode = CommDlgExtendedError();
-					if (errCode) {
-						//wsprintf(szErrMsg, L"Error code : %d", errCode);
-						//MessageBox(NULL, szErrMsg, L"GetOpenFileName", MB_OK);
-					}
-				} else {
-					::ReleaseBuffer(path);
-					Open(path);
-				}
-			}
-			break;
-		case 'S':
-			if (::GetAsyncKeyState(VK_CONTROL)) {
-				if (m_path.get().empty()) {
-					std::wstring path;
-					OPENFILENAME ofn = { 0 };
-					ofn.lStructSize = sizeof(OPENFILENAME);
-					ofn.hwndOwner = m_hWnd;
-					ofn.lpstrFilter = L"XML file(*.xml)\0*.xml\0\0";
-					ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
-					ofn.nMaxFile = MAX_PATH;
-					ofn.lpstrTitle = L"Save as";
-					ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
-					ofn.lpstrDefExt = L"xml";
-
-					if (!GetSaveFileName(&ofn)) {
-						DWORD errCode = CommDlgExtendedError();
-						if (errCode) {
-							//wsprintf(szErrMsg, L"Error code : %d", errCode);
-							//MessageBox(NULL, szErrMsg, L"GetOpenFileName", MB_OK);
-						}
-					} else {
-						::ReleaseBuffer(path);
-					}
-				}
-				//Serialize
-				try {
-					auto itemsSource = GetItemsSource();
-					std::vector<MainTask> tempItemsSource;
-					for (const auto& item : itemsSource) {
-						tempItemsSource.push_back(std::get<MainTask>(item));
-					}
-					CXMLSerializer<std::vector<MainTask>> serializer;
-					serializer.Serialize(m_path.get().c_str(), L"Task", tempItemsSource);
-				}
-				catch (/*_com_error &e*/...) {
-				}
-			}
-			break;
-			//case VK_F2:
-			//{
-			//	//TODOTODO
-			//	//if (m_spCursorer->GetFocusedCell()) {
-			//	//	std::static_pointer_cast<CFileIconNameCell>(CSheet::Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(EventArgs(this));
-			//	//}
-			//}
-			//break;
-
-		default:
-			CGridView::Normal_KeyDown(e);
+	if ((e.Char == 'O') && ::GetAsyncKeyState(VK_CONTROL)) {
+		Open();
+	} else if ((e.Char == 'S') && ::GetAsyncKeyState(VK_CONTROL)) {
+		if (m_path.get().empty()) {
+			Save();
+		} else {
+			Save(m_path);
+		}
+	} else {
+		CGridView::Normal_KeyDown(e);
 	}
+	InvalidateRect(NULL, FALSE);
 }

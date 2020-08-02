@@ -37,7 +37,7 @@ namespace d2dw
 		CPointF(FLOAT a, FLOAT b);
 
 		void SetPoint(FLOAT a, FLOAT b);
-		void Offset(LONG xOffset, LONG yOffset);
+		void Offset(FLOAT xOffset, FLOAT yOffset);
 		void Offset(CPointF& pt);
 		CPointF operator -() const;
 		CPointF operator +(CPointF pt) const;

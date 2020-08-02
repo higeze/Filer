@@ -9,7 +9,7 @@ namespace d2dw
 	CPointF::CPointF() :D2D1_POINT_2F{ 0.0f } {}
 	CPointF::CPointF(FLOAT a, FLOAT b) :D2D1_POINT_2F{ a, b } {}
 	void CPointF::SetPoint(FLOAT a, FLOAT b) { x = a; y = b; }
-	void CPointF::Offset(LONG xOffset, LONG yOffset) { x += xOffset; y += yOffset; }
+	void CPointF::Offset(FLOAT xOffset, FLOAT yOffset) { x += xOffset; y += yOffset; }
 	void CPointF::Offset(CPointF& pt) { x += pt.x; y += pt.y; }
 	CPointF CPointF::operator -() const { return CPointF(-x, -y); }
 	CPointF CPointF::operator +(CPointF pt) const

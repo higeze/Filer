@@ -7,8 +7,8 @@
 
 namespace d2dw
 {
-	CScrollBase::CScrollBase(CGridView* pGrid, const std::shared_ptr<ScrollProperty>& spScrollProp)
-		:CUIElement(), m_pGrid(pGrid), m_spScrollProp(spScrollProp){}
+	CScrollBase::CScrollBase(CWnd* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
+		:CUIElement(), m_pWnd(pWnd), m_spScrollProp(spScrollProp), m_onPropertyChanged(onPropertyChanged){}
 
 
 	void CScrollBase::SetScrollPos(const FLOAT pos)
@@ -46,8 +46,8 @@ namespace d2dw
 		auto thumbFill = m_spScrollProp->ThumbNormalFill;
 		if (GetState() == UIElementState::Dragged) {
 			thumbFill = m_spScrollProp->ThumbScrollFill;
-		} else if (CPoint pt = m_pGrid->GetCursorPosInClient();
-			GetThumbRect().PtInRect(m_pGrid->GetDirectPtr()->Pixels2Dips(pt))) {
+		} else if (CPoint pt = m_pWnd->GetCursorPosInClient();
+			GetThumbRect().PtInRect(m_pWnd->GetDirectPtr()->Pixels2Dips(pt))) {
 			thumbFill = m_spScrollProp->ThumbHotFill;
 		} else {
 			thumbFill = m_spScrollProp->ThumbNormalFill;
@@ -74,17 +74,6 @@ namespace d2dw
 				(std::min)(m_rect.left + m_rect.Width() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), m_rect.right - m_spScrollProp->ThumbMargin.right),
 				m_rect.bottom - m_spScrollProp->ThumbMargin.bottom);
 	}
-
-	void CVScroll::OnPropertyChanged(const wchar_t* name)
-	{
-		m_pGrid->OnVScrollPropertyChanged(this, name);
-	}
-
-	void CHScroll::OnPropertyChanged(const wchar_t* name)
-	{
-		m_pGrid->OnHScrollPropertyChanged(this, name);
-	}
-
 
 }
 
