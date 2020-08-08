@@ -1,5 +1,6 @@
 #pragma once
 #include "Direct2DWrite.h"
+#include "ScrollProperty.h"
 
 enum class PicturePositon
 {
@@ -10,7 +11,7 @@ enum class PicturePositon
 	Center
 };
 
-class BackgroundProperty
+struct BackgroundProperty
 {
 public:
 	std::shared_ptr<d2dw::SolidFill> m_brush;
@@ -35,7 +36,7 @@ public:
     }
 };
 
-class CellProperty
+struct TextboxProperty
 {
 public:
 	std::shared_ptr<d2dw::FormatF> Format;
@@ -48,9 +49,13 @@ public:
 	std::shared_ptr<d2dw::SolidFill> UnfocusSelectedFill;
 	std::shared_ptr<d2dw::SolidFill> HotFill;
 	std::shared_ptr<d2dw::CRectF> Padding;
+	std::shared_ptr<ScrollProperty> VScrollPropPtr;
+	std::shared_ptr<ScrollProperty> HScrollPropPtr;
+	bool IsWrap = true;
+
 
 public:
-	CellProperty()
+	TextboxProperty()
 		:Format(std::make_shared<d2dw::FormatF>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9),  0.0f, 0.0f, 0.0f, 1.0f)),
 		Line(std::make_shared<d2dw::SolidLine>(221.f/255.f, 206.f/255.f, 188.f/255.f, 1.0f, 1.0f)),
 		EditLine(std::make_shared<d2dw::SolidLine>(0.0f/255.f, 0.0f/255.f, 255.f/255.f, 1.0f, 1.0f)),
@@ -60,9 +65,12 @@ public:
 		SelectedFill(std::make_shared<d2dw::SolidFill>(150.f/255.f, 200.f/255.f, 240.f/255.f, 0.5f)),
 		UnfocusSelectedFill(std::make_shared<d2dw::SolidFill>(224.f/255.f, 224.f/255.f, 224.f/255.f, 0.5f)),
 		HotFill(std::make_shared<d2dw::SolidFill>(1.0f, 1.0f, 1.0f, 0.3f)),
-		Padding(std::make_shared<d2dw::CRectF>(2.0f,2.0f,2.0f,2.0f)){};
+		Padding(std::make_shared<d2dw::CRectF>(2.0f,2.0f,2.0f,2.0f)),
+		VScrollPropPtr(std::make_shared<ScrollProperty>()),
+		HScrollPropPtr(std::make_shared<ScrollProperty>()),
+		IsWrap(true){};
 
-	CellProperty(
+	TextboxProperty(
 		std::shared_ptr<d2dw::FormatF> fontAndColor,
 		std::shared_ptr<d2dw::SolidLine> line,
 		std::shared_ptr<d2dw::SolidLine> editLine,
@@ -82,10 +90,12 @@ public:
 		SelectedFill(selectedFill),
 		UnfocusSelectedFill(unfocusSelectedFill),
 		HotFill(hotFill),
+		Padding(padding),
+		VScrollPropPtr(std::make_shared<ScrollProperty>()),
+		HScrollPropPtr(std::make_shared<ScrollProperty>()),
+		IsWrap(true){};
 
-		Padding(padding){};
-
-	virtual ~CellProperty() = default;
+	virtual ~TextboxProperty() = default;
 
 	template <class Archive>
     void serialize(Archive& ar)
@@ -100,9 +110,18 @@ public:
 		ar("UnfocusSelectedFill", UnfocusSelectedFill);
 		ar("HotFill", HotFill);
 		ar("Padding",Padding);
-    }
-
+		ar("VScrollProperty", VScrollPropPtr);
+		ar("HScrollProperty", HScrollPropPtr);
+		ar("IsWrap", IsWrap);
+	}
 };
+
+struct CellProperty :public TextboxProperty
+{
+public:
+	using TextboxProperty::TextboxProperty;
+};
+
 
 struct HeaderProperty:public CellProperty
 {

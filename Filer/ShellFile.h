@@ -117,6 +117,7 @@ public:
 	//bool HasIconInCache();
 	bool IsDirectory();
 	virtual void Reset();
+	void Open();
 
 private:
 	void UpdateWIN32_FIND_DATA();

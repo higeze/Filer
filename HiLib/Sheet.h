@@ -16,7 +16,7 @@ class ITracker;
 class ICeller;
 class CCursorer;
 struct HeaderProperty;
-class CellProperty;
+struct CellProperty;
 class CRect;
 class CPoint;
 class IMouseObserver;

@@ -155,10 +155,11 @@ private:
 
 	std::shared_ptr<CWnd> m_curView;
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
+	std::shared_ptr<TextboxProperty> m_spTextboxProp;
 
 	CFont m_font;
 public:
-	CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty);
+	CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty, std::shared_ptr<TextboxProperty>& spTextboxProp);
 	virtual ~CFilerTabGridView();
 
 	//Getter Setter

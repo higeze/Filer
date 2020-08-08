@@ -617,6 +617,11 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 
 void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
+	//OpenFolder is called when DeviceChange, even inactive.
+	if (!spFolder) {
+		return;
+	}
+
 	if (m_pEdit) {
 		EndEdit();
 	}

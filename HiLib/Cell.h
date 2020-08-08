@@ -3,7 +3,7 @@
 #include "SheetEnums.h"
 #include "named_arguments.h"
 
-class CellProperty;
+struct CellProperty;
 class CRect;
 class CSize;
 class CSheet;

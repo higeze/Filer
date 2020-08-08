@@ -15,8 +15,7 @@ LRESULT CTextboxWnd::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 	// Cteate textbox
 	m_pTxtbox = std::make_unique<D2DTextbox2>(
 		this, m_spProp,
-		[this]() { return m_text; },
-		[this](const std::wstring& text) { m_text = text; },
+		m_text,
 		[this](const std::wstring& text) 
 		{
 			m_text = text;
@@ -147,8 +146,8 @@ LRESULT CTextboxWnd::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL
 void CTextboxWnd::OnFinalMessage(HWND m_hWnd){}
 
 
-CTextboxWnd::CTextboxWnd(std::shared_ptr<TextboxProperty> pProp)
-	:CWnd(), m_spProp(pProp)
+CTextboxWnd::CTextboxWnd(std::shared_ptr<TextboxProperty> spProp)
+	:CWnd(), m_spProp(spProp)
 {
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
@@ -234,8 +233,8 @@ void CTextboxWnd::Open(const std::wstring& path)
 	m_pTxtbox->Clear();
 	if (::PathFileExists(path.c_str())) {
 		m_path.notify_set(path);
-		m_isSaved.notify_set(true);
 		m_pTxtbox->GetText().notify_assign(str2wstr(CFile::ReadAllString<char>(path)));
+		m_isSaved.notify_set(true);
 	} else {
 		m_path.notify_set(L"");
 		m_isSaved.notify_set(false);
@@ -281,5 +280,11 @@ void CTextboxWnd::Save(const std::wstring& path)
 	m_path.notify_set(path);
 	m_isSaved.notify_set(true);
 	CFile::WriteAllString(path, wstr2str(m_text));
+}
+
+void CTextboxWnd::Update()
+{
+	InvalidateRect(NULL, FALSE);
+	m_pTxtbox->Update();
 }
 

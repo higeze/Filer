@@ -33,8 +33,8 @@ CRect CFilerTabGridView::GetTabRect()
 }
 
 
-CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
-	:m_spFilerGridViewProp(spFilerGridViewProp)
+CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, std::shared_ptr<TextboxProperty>& spTextboxProp)
+	:m_spFilerGridViewProp(spFilerGridViewProp), m_spTextboxProp(spTextboxProp)
 {
 	//FilerGridView Closure
 	GetFilerGridViewPtr = [spFilerView = std::make_shared<CFilerGridView>(spFilerGridViewProp), this]()->std::shared_ptr<CFilerGridView> {
@@ -293,7 +293,7 @@ CFilerTabGridView::~CFilerTabGridView()
 LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	//TextView Closure
-	GetTextViewPtr = [spTextView = std::make_shared<CTextboxWnd>(std::make_shared<TextboxProperty>()), this]()->std::shared_ptr<CTextboxWnd>{
+	GetTextViewPtr = [spTextView = std::make_shared<CTextboxWnd>(m_spTextboxProp), this]()->std::shared_ptr<CTextboxWnd>{
 
 		if (!spTextView->IsWindow() && m_hWnd) {
 			spTextView->RegisterClassExArgument()

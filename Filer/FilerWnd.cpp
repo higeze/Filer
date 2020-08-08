@@ -30,6 +30,7 @@
 #include "BindItemsSheetCell.h"
 
 #include "ToDoGridView.h"
+#include "TextboxWnd.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -41,10 +42,11 @@ CFilerWnd::CFilerWnd()
 	m_splitterLeft(0),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
 	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
+	m_spTextboxProp(std::make_shared<TextboxProperty>()),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
-	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp)),
-	m_spRightView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp)),
+	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp, m_spTextboxProp)),
+	m_spRightView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp, m_spTextboxProp)),
 	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spCurView(m_spLeftView)
@@ -98,6 +100,7 @@ CFilerWnd::CFilerWnd()
 	//AddCmdIDHandler(IDM_EDIT_SELECTALL,&CMultiLineListView::OnCmdEditSelectAll,(CMultiLineListView*)m_upList.get());
 	AddCmdIDHandler(IDM_APPLICATIONOPTION, &CFilerWnd::OnCommandApplicationOption, this);
 	AddCmdIDHandler(IDM_FILERGRIDVIEWOPTION, &CFilerWnd::OnCommandFilerGridViewOption, this);
+	AddCmdIDHandler(IDM_TEXTOPTION, &CFilerWnd::OnCommandTextOption, this);
 	AddCmdIDHandler(IDM_FAVORITESOPTION,&CFilerWnd::OnCommandFavoritesOption,this);
 	AddCmdIDHandler(IDM_EXEEXTENSIONOPTION, &CFilerWnd::OnCommandExeExtensionOption, this);
 	AddCmdIDHandler(IDM_LEFTVIEWOPTION, &CFilerWnd::OnCommandLeftViewOption, this);
@@ -222,8 +225,12 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 
 		spFavoritesView->FileChosen = [wpView](std::shared_ptr<CShellFile>& spFile)->void {
 			if (auto spView = wpView.lock()) {
-				auto& itemsSource = spView->GetItemsSource();
-				itemsSource.notify_replace(itemsSource.begin() + spView->GetSelectedIndex(), std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
+				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+					auto& itemsSource = spView->GetItemsSource();
+					itemsSource.notify_replace(itemsSource.begin() + spView->GetSelectedIndex(), std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
+				} else {
+					spFile->Open();
+				}
 			}
 		};
 		
@@ -245,6 +252,7 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		//Capture KeyDown
 		spView->GetFilerGridViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
 		spView->GetToDoGridViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
+		spView->GetTextViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
 		//Capture SetFocus
 		spView->GetFilerGridViewPtr()->AddMsgHandler(WM_SETFOCUS,
 		[this, wpView = std::weak_ptr<CFilerTabGridView>(spView)](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
@@ -263,6 +271,16 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 			}
 			return 0;
 		});
+
+		spView->GetTextViewPtr()->AddMsgHandler(WM_SETFOCUS,
+			[this, wpView = std::weak_ptr<CFilerTabGridView>(spView)](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
+			if (auto spView = wpView.lock()) {
+				m_spCurView = spView;
+				spView->GetTextViewPtr()->InvalidateRect(NULL, FALSE);
+			}
+			return 0;
+		});
+
 	};
 
 	createFilerTabGridView(m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFilerGridView"), rcLeftGrid);
@@ -720,6 +738,17 @@ LRESULT CFilerWnd::OnCommandFilerGridViewOption(WORD wNotifyCode, WORD wID, HWND
 		SerializeProperty(this);
 	});
 }
+
+LRESULT CFilerWnd::OnCommandTextOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+{
+	return OnCommandOption<TextboxProperty>(L"Text Property", m_spTextboxProp,
+		[this](const std::wstring& str)->void {
+			m_spLeftView->GetTextViewPtr()->Update();
+			m_spRightView->GetTextViewPtr()->Update();
+			SerializeProperty(this);
+		});
+}
+
 
 LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {

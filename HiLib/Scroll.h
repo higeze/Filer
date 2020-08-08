@@ -1,9 +1,9 @@
 #pragma once
 #include "Direct2DWrite.h"
 #include "UIElement.h"
-#include "GridViewProperty.h"
 
 class CGridView;
+struct ScrollProperty;
 
 namespace d2dw
 {
@@ -30,8 +30,8 @@ namespace d2dw
 
 		FLOAT GetStartDrag()const { return m_startDrag; }
 		void SetStartDrag(const FLOAT startDrag) { m_startDrag = startDrag; }
-		FLOAT GetScrollBandWidth()const { return m_spScrollProp->BandWidth; }
-		FLOAT GetScrollDelta()const { return m_spScrollProp->DeltaScroll; }
+		FLOAT GetScrollBandWidth() const;
+		FLOAT GetScrollDelta() const;
 		FLOAT GetScrollPage()const { return m_page; }
 		std::pair<FLOAT, FLOAT> GetScrollRange()const { return m_range; }
 		FLOAT GetScrollDistance()const { return m_range.second - m_range.first; }

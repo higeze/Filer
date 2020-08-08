@@ -290,6 +290,7 @@
     <ClInclude Include="..\HiLib\named_arguments.h" />
     <ClInclude Include="..\HiLib\observable.h" />
     <ClInclude Include="..\HiLib\ColumnIndexCell.h" />
+    <ClInclude Include="..\HiLib\ScrollProperty.h" />
     <ClInclude Include="..\HiLib\SortCell.h" />
     <ClInclude Include="..\HiLib\MapColumn.h" />
     <ClInclude Include="..\HiLib\RowIndexCell.h" />

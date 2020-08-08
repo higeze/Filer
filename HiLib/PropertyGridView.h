@@ -1,8 +1,8 @@
 #pragma once
 #include "GridView.h"
 
-class CellProperty;
-class BackgroundProperty;
+struct CellProperty;
+struct BackgroundProperty;
 struct GridViewProperty;
 
 class CPropertyGridView:public CGridView

@@ -1,4 +1,5 @@
 #include "Scroll.h"
+#include "ScrollProperty.h"
 #include "GridView.h"
 
 #include <boost\msm\front\state_machine_def.hpp>
@@ -9,6 +10,9 @@ namespace d2dw
 {
 	CScrollBase::CScrollBase(CWnd* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
 		:CUIElement(), m_pWnd(pWnd), m_spScrollProp(spScrollProp), m_onPropertyChanged(onPropertyChanged){}
+
+	FLOAT CScrollBase::GetScrollBandWidth()const { return m_spScrollProp->BandWidth; }
+	FLOAT CScrollBase::GetScrollDelta()const { return m_spScrollProp->DeltaScroll; }
 
 
 	void CScrollBase::SetScrollPos(const FLOAT pos)

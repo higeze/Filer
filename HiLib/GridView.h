@@ -10,7 +10,7 @@
 namespace sml = boost::sml;
 
 class CDirect2DWrite;
-class BackgroundProperty;
+struct BackgroundProperty;
 struct GridViewProperty;
 class CMouseStateMachine;
 class D2DTextbox;

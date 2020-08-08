@@ -6,6 +6,7 @@
 #include "observable.h"
 #include "Timer.h"
 #include "MyWnd.h"
+#include "Scroll.h"
 
 class LayoutLineInfo;
 struct D2DContext;
@@ -30,6 +31,12 @@ struct COMPOSITIONRENDERINFO
 	TF_DISPLAYATTRIBUTE da;
 };
 
+template<typename T>
+bool in_range(const T& value, const T& min, const T& max)
+{
+	return min <= value && value <= max;
+}
+
 class D2DTextbox: public IBridgeTSFInterface
 {
 public:
@@ -47,13 +54,13 @@ protected:
 	observable_tuple<int, int, int, int, int> m_carets;
 	observable_wstring m_text;
 	bool m_hasBorder = true;
-	bool m_isWrap = true;
 	bool m_isScrollable = false;
 
 //	bool m_recalc = true;
 
 //	LARGE_INTEGER m_frequency;
 	bool m_bCaret = false;
+	d2dw::CPointF m_cursorPoint;
 //	LARGE_INTEGER m_gtm, m_pregtm;
 
 	bool m_isFirstDrawCaret = true;
@@ -65,11 +72,9 @@ protected:
 public:
 	D2DTextbox(
 		CWnd* pWnd,
-		//////CGridView* pWnd, 
 		CTextCell* pCell,
-		std::shared_ptr<CellProperty> pProp,
-		std::function<std::wstring()> getter,
-		std::function<void(const std::wstring&)> setter,
+		const std::shared_ptr<TextboxProperty> pProp,
+		const std::wstring& text,
 		std::function<void(const std::wstring&)> changed,
 		std::function<void(const std::wstring&)> final);
 	virtual ~D2DTextbox();
@@ -127,6 +132,7 @@ public:
 	void CancelEdit();
 	void ClearText();
 	void EnsureVisibleCaret();
+	void Update();
 
 
 	// Render
@@ -143,12 +149,12 @@ public:
 	BOOL AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIBUTE *pda);
 public:
 	std::vector<d2dw::CRectF> GetOriginCharRects() const;
-	std::vector<d2dw::CRectF> GetScrolledCharRects() const;
-	std::vector<d2dw::CRectF> GetScrolledCursorCharRects() const;
+	std::vector<d2dw::CRectF> GetOriginCursorCharRects() const;
+	std::vector<d2dw::CRectF> GetActualCharRects() const;
 
-	std::optional<d2dw::CRectF> GetScrolledCharRectFromPos(const int& pos);
-	std::optional<d2dw::CRectF> GetScrolledCursorCharRectFromPos(const int& pos);
-	std::optional<int> GetCharPosFromPoint(const d2dw::CPointF& pt);
+	std::optional<d2dw::CRectF> GetOriginCharRect(const int& pos);
+	std::optional<d2dw::CRectF> GetActualCharRect(const int& pos);
+	std::optional<int> GetOriginCharPosFromPoint(const d2dw::CPointF& pt);
 
 	std::optional<int> GetFirstCharPosInLine(const int& pos);
 	std::optional<int> GetLastCharPosInLine(const int& pos);
@@ -163,7 +169,7 @@ protected:
 	CTimer m_timer;
 	std::wstring m_strInit;
 	CTextCell* m_pCell;
-	std::shared_ptr<CellProperty> m_pProp;
+	std::shared_ptr<TextboxProperty> m_pProp;
 	std::function<std::wstring()> m_getter;
 	std::function<void(const std::wstring&)> m_setter;
 	std::function<void(const std::wstring&)> m_changed;
@@ -201,21 +207,18 @@ public:
 
 };
 
-struct TextboxProperty:public CellProperty
-{};
-
 class D2DTextbox2 :public D2DTextbox
 {
 public:
-	D2DTextbox2(CWnd* pWnd, const std::shared_ptr<TextboxProperty>& spProp, 
-		std::function<std::wstring()> getter,
-		std::function<void(const std::wstring&)> setter,
+	D2DTextbox2(
+		CWnd* pWnd, 
+		const std::shared_ptr<TextboxProperty>& spProp, 
+		const std::wstring& text,
 		std::function<void(const std::wstring&)> changed,
 		std::function<void(const std::wstring&)> final)
-		:D2DTextbox(pWnd, nullptr, spProp, getter, setter, changed, final)
+		:D2DTextbox(pWnd, nullptr, spProp, text, changed, final)
 	{
 		m_hasBorder = false;
-		m_isWrap = false;
 		m_isScrollable = true;
 	}
 

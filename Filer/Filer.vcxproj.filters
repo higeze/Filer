@@ -620,6 +620,9 @@
     <ClInclude Include="ToDoGridView.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\ScrollProperty.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">

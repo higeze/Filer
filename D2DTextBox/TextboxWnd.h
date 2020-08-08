@@ -3,7 +3,7 @@
 #include "Direct2DWrite.h"
 #include "observable.h"
 
-class CellProperty;
+struct TextboxProperty;
 class D2DTextbox;
 struct TextboxProperty;
 
@@ -29,7 +29,7 @@ public :
 	void Save();
 	void Save(const std::wstring& path);
 	bool GetIsFocused()const;
-
+	void Update();
 
 private:
 	LRESULT OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);

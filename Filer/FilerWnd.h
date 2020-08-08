@@ -13,6 +13,7 @@
 #include "PropertyWnd.h"
 #include "StatusBar.h"
 #include "FilerGridViewProperty.h"
+#include "Textbox.h"
 //#include "KonamiCommander.h"
 
 class CFilerGridView;
@@ -105,6 +106,7 @@ private:
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
+	std::shared_ptr<TextboxProperty> m_spTextboxProp;
 
 	//Windows
 	std::shared_ptr<CFavoritesGridView> m_spLeftFavoritesView;
@@ -160,6 +162,7 @@ private:
 
 	LRESULT OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandFilerGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
+	LRESULT OnCommandTextOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
 	LRESULT OnCommandExeExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
@@ -210,6 +213,7 @@ public:
 
 		ar("ApplicationProperty", m_spApplicationProp);
 		ar("FilerGridViewProperty",m_spFilerGridViewProp);
+		ar("TextboxProperty", m_spTextboxProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
 		ar("LeftView", m_spLeftView);
@@ -234,10 +238,11 @@ public:
 
 		ar("ApplicationProperty", m_spApplicationProp);
 		ar("FilerGridViewProperty",m_spFilerGridViewProp);
+		ar("TextboxProperty", m_spTextboxProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
-		ar("LeftView", m_spLeftView, m_spFilerGridViewProp);
-		ar("RightView", m_spRightView, m_spFilerGridViewProp);
+		ar("LeftView", m_spLeftView, m_spFilerGridViewProp, m_spTextboxProp);
+		ar("RightView", m_spRightView, m_spFilerGridViewProp, m_spTextboxProp);
 
 		ar("LeftFavoritesView", m_spLeftFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
 		ar("RightFavoritesView", m_spRightFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);

@@ -332,9 +332,6 @@ void CGridView::UpdateScrolls()
 
 	//Scroll Page
 	d2dw::CRectF rcPage(GetPageRect());
-	if (rcPage.Width() == 20.5) {
-		auto a=1;
-	}
 	m_pVScroll->SetScrollPage(rcPage.Height());
 	m_pHScroll->SetScrollPage(rcPage.Width());
 
@@ -1104,13 +1101,8 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 			this,
 			pCell,
 			pCell->GetCellPropertyPtr(),
-			[pCell]() -> std::basic_string<TCHAR> {
-				return pCell->GetString();
-			},
+			pCell->GetString(),
 			[pCell](const std::basic_string<TCHAR>& str) -> void {
-				pCell->SetString(str);
-			},
-				[pCell](const std::basic_string<TCHAR>& str) -> void {
 				if (pCell->CanSetStringOnEditing()) {
 					pCell->SetString(str);
 				} else {
@@ -1119,7 +1111,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 					}
 				}
 			},
-				[pCell](const std::basic_string<TCHAR>& str)->void {
+			[pCell](const std::basic_string<TCHAR>& str)->void {
 				// Need to EditPtr to nullptr first. Otherwise exception occur
 				pCell->GetSheetPtr()->GetGridPtr()->SetEditPtr(nullptr);
 				pCell->SetString(str);

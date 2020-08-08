@@ -485,8 +485,8 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
         return TS_E_NOLOCK;
     }
 	//Get candidate dialogbox rect
-	auto rcStart(_pEditor->GetScrolledCursorCharRectFromPos(acpStart));
-    auto rcEnd(_pEditor->GetScrolledCursorCharRectFromPos(acpEnd));
+	auto rcStart(_pEditor->GetActualCharRect(acpStart));
+    auto rcEnd(_pEditor->GetActualCharRect(acpEnd));
 
     if (rcStart && rcEnd)
     {

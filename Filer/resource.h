@@ -46,6 +46,8 @@
 #define IDM_EXEEXTENSIONOPTION					40045
 #define IDM_NEWTODOTAB							40046
 #define IDM_NEWTEXTTAB							40047
+#define IDM_TEXTOPTION							40048
+
 
 
 
