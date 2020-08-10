@@ -43,7 +43,7 @@ CGridView::CGridView(
 	m_spGridViewProp(spGridViewProp),
 	CSheet(spGridViewProp, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
 	CWnd(),
-	m_pMouseMachine(new CMouseStateMachine(this)),
+	m_pMouseMachine(std::make_unique<CMouseStateMachine>(this)),
 	m_pVScroll(std::make_unique<d2dw::CVScroll>(this, spGridViewProp->VScrollPropPtr, std::bind(&CGridView::OnVScrollPropertyChanged, this, phs::_1))),
 	m_pHScroll(std::make_unique<d2dw::CHScroll>(this, spGridViewProp->HScrollPropPtr, std::bind(&CGridView::OnHScrollPropertyChanged, this, phs::_1)))
 {
@@ -1267,9 +1267,7 @@ LRESULT CGridView::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& b
 }
 LRESULT CGridView::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	auto e = MouseMoveEvent(this, wParam, lParam);
-	m_pMouseMachine->process_event(e);
-	CSheet::OnMouseMove(e);
+	m_pMouseMachine->process_event(MouseMoveEvent(this, wParam, lParam));
 	SubmitUpdate();
 	return 0;
 }

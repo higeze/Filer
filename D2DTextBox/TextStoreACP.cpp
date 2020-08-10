@@ -485,15 +485,16 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
         return TS_E_NOLOCK;
     }
 	//Get candidate dialogbox rect
-	auto rcStart(_pEditor->GetActualCharRect(acpStart));
-    auto rcEnd(_pEditor->GetActualCharRect(acpEnd));
+    if(in_range<int>(acpStart, 0, _pEditor->GetActualCharRects().size() - 1) && 
+        in_range<int>(acpEnd, 0, _pEditor->GetActualCharRects().size() - 1)){
+        
+	    auto rcStart(_pEditor->GetActualCharRects()[acpStart]);
+        auto rcEnd(_pEditor->GetActualCharRects()[acpEnd]);
 
-    if (rcStart && rcEnd)
-    {
-        prc->left = (LONG)std::round(rcStart.value().left);
-        prc->right = (LONG)std::round(rcEnd.value().left);
-        prc->top = (LONG)std::round(rcStart.value().top);
-        prc->bottom = (LONG)std::round(rcEnd.value().bottom);
+        prc->left = (LONG)std::round(rcStart.left);
+        prc->right = (LONG)std::round(rcEnd.left);
+        prc->top = (LONG)std::round(rcStart.top);
+        prc->bottom = (LONG)std::round(rcEnd.bottom);
     }
     else
     {

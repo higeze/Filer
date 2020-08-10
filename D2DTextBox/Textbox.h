@@ -7,6 +7,9 @@
 #include "Timer.h"
 #include "MyWnd.h"
 #include "Scroll.h"
+#include "TextboxStateMachine.h"
+#include "UIElement.h"
+
 
 class LayoutLineInfo;
 struct D2DContext;
@@ -37,12 +40,21 @@ bool in_range(const T& value, const T& min, const T& max)
 	return min <= value && value <= max;
 }
 
-class D2DTextbox: public IBridgeTSFInterface
+class D2DTextbox: public IBridgeTSFInterface, public CUIElement
 {
+/**********/
+/* Static */
+/**********/
 public:
 	static bool AppTSFInit();
 	static void AppTSFExit();
+
+/*********/
+/* Field */
+/*********/
+
 protected:
+/* Caret */
 	enum caret
 	{
 		OldCaret = 0,
@@ -52,22 +64,19 @@ protected:
 		SelEnd,
 	};
 	observable_tuple<int, int, int, int, int> m_carets;
+	d2dw::CPointF m_caretPoint;
+/* Text */
 	observable_wstring m_text;
-	bool m_hasBorder = true;
-	bool m_isScrollable = false;
-
-//	bool m_recalc = true;
-
-//	LARGE_INTEGER m_frequency;
-	bool m_bCaret = false;
-	d2dw::CPointF m_cursorPoint;
-//	LARGE_INTEGER m_gtm, m_pregtm;
-
-	bool m_isFirstDrawCaret = true;
-	bool m_isClosing = false;
+/* Scroll */
 	std::unique_ptr<d2dw::CVScroll> m_pVScroll;
 	std::unique_ptr<d2dw::CHScroll> m_pHScroll;
-	//FLOAT m_vertialScroll;
+/* Other */
+	bool m_hasBorder = true;
+	bool m_isScrollable = false;
+	bool m_bCaret = false;
+	bool m_isFirstDrawCaret = true;
+	bool m_isClosing = false;
+	std::unique_ptr<CTextboxStateMachine> m_pTextMachine;
 
 public:
 	D2DTextbox(
@@ -86,23 +95,61 @@ public:
 	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets); }
 	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets); }
 	CTextCell* GetCellPtr() { return m_pCell; }
-//	void SetVertialScroll(FLOAT scroll) { m_vertialScroll = scroll; }
-	//float GetLineWidth() { return row_width_; }
-	//UINT GetLineCount() { return nLineCnt_; }
 
 public:
-	virtual void OnClose(const CloseEvent& e);
-	virtual void OnPaint(const PaintEvent& e);
-	virtual void OnSetFocus(const SetFocusEvent& e);
-	virtual void OnKillFocus(const KillFocusEvent& e);
-	virtual void OnKeyDown(const KeyDownEvent& e);
-	virtual void OnLButtonDown(const LButtonDownEvent& e);
-	virtual void OnMouseMove(const MouseMoveEvent& e);
-	virtual void OnMouseWheel(const MouseWheelEvent& e);
-	virtual void OnContextMenu(const ContextMenuEvent& e){}
+	/******************/
+	/* Windows Message*/
+	/******************/
+	virtual void OnPaint(const PaintEvent& e){ m_pTextMachine->process_event(e); }
+	virtual void OnSetFocus(const SetFocusEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnKillFocus(const KillFocusEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnKeyDown(const KeyDownEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnLButtonDown(const LButtonDownEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnLButtonUp(const LButtonUpEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnMouseMove(const MouseMoveEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnSetCursor(const SetCursorEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnContextMenu(const ContextMenuEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnChar(const CharEvent& e) override { m_pTextMachine->process_event(e); }
 
-	virtual void OnChar(const CharEvent& e);
+	virtual void OnMouseWheel(const MouseWheelEvent& e);
+	virtual void OnClose(const CloseEvent& e);
 	virtual void OnRect(const RectEvent& e);
+
+	virtual void Normal_Paint(const PaintEvent& e);
+	virtual void Normal_LButtonDown(const LButtonDownEvent& e);
+	virtual void Normal_LButtonUp(const LButtonUpEvent& e) { /*Do nothing*/ }
+	virtual void Normal_LButtonClk(const LButtonClkEvent& e) { /*Do nothing*/ }
+	virtual void Normal_LButtonSnglClk(const LButtonSnglClkEvent& e) { /*Do nothing*/ }
+	virtual void Normal_LButtonDblClk(const LButtonDblClkEvent& e) { /*Do nothing*/ }
+	virtual void Normal_RButtonDown(const RButtonDownEvent& e) { /*Do nothing*/ }
+	virtual void Normal_MouseMove(const MouseMoveEvent& e);
+	virtual void Normal_MouseLeave(const MouseLeaveEvent& e) { /*Do nothing*/ }
+	virtual void Normal_SetCursor(const SetCursorEvent& e);
+	virtual void Normal_ContextMenu(const ContextMenuEvent& e) { /*Do nothing*/ }
+	virtual void Normal_KeyDown(const KeyDownEvent& e);
+	virtual void Normal_Char(const CharEvent& e);
+	virtual void Normal_SetFocus(const SetFocusEvent& e);
+	virtual void Normal_KillFocus(const KillFocusEvent& e);
+
+	virtual void VScrlDrag_OnEntry(const LButtonDownEvent& e);
+	virtual void VScrlDrag_OnExit();
+	virtual void VScrlDrag_MouseMove(const MouseMoveEvent& e);
+	//virtual bool VScrl_Guard_SetCursor(const SetCursorEvent& e);
+	//virtual void VScrl_SetCursor(const SetCursorEvent& e);
+
+	virtual bool VScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e);
+
+	virtual void HScrlDrag_OnEntry(const LButtonDownEvent& e);
+	virtual void HScrlDrag_OnExit();
+	virtual void HScrlDrag_MouseMove(const MouseMoveEvent& e);
+	virtual bool HScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e);
+	//virtual bool HScrl_Guard_SetCursor(const SetCursorEvent& e);
+	//virtual void HScrl_SetCursor(const SetCursorEvent& e);
+
+	virtual void Error_StdException(const std::exception& e);
+
+
+
 
 	virtual void UpdateScroll();
 
@@ -121,9 +168,9 @@ private:
 
 public:
 
-	// Selection
-	void MoveCaret(const int& newPos);
-	void MoveCaretWithShift(const int& newPos);
+	/* Caret */
+	void MoveCaret(const int& position, const d2dw::CPointF& point);
+	void MoveCaretWithShift(const int& position, const d2dw::CPointF& point);
 	void MoveSelection(const int& selFirst, const int& selLast);
 	BOOL InsertAtSelection(LPCWSTR psz);
 	//BOOL DeleteAtSelection(BOOL fBack);
@@ -148,12 +195,12 @@ public:
 	void ClearCompositionRenderInfo();
 	BOOL AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIBUTE *pda);
 public:
-	std::vector<d2dw::CRectF> GetOriginCharRects() const;
-	std::vector<d2dw::CRectF> GetOriginCursorCharRects() const;
-	std::vector<d2dw::CRectF> GetActualCharRects() const;
+	std::function<std::vector<d2dw::CRectF>&()> GetOriginCharRects;
+	std::function<std::vector<d2dw::CRectF>&()> GetOriginCursorCharRects;
+	std::function<std::vector<d2dw::CRectF>&()> GetActualCharRects;
 
-	std::optional<d2dw::CRectF> GetOriginCharRect(const int& pos);
-	std::optional<d2dw::CRectF> GetActualCharRect(const int& pos);
+	//std::optional<d2dw::CRectF> GetOriginCharRect(const int& pos);
+	//std::optional<d2dw::CRectF> GetActualCharRect(const int& pos);
 	std::optional<int> GetOriginCharPosFromPoint(const d2dw::CPointF& pt);
 
 	std::optional<int> GetFirstCharPosInLine(const int& pos);
@@ -236,5 +283,5 @@ public:
 		return true;
 	}
 
-	virtual void OnContextMenu(const ContextMenuEvent& e) override;
+	virtual void Normal_ContextMenu(const ContextMenuEvent& e) override;
 };

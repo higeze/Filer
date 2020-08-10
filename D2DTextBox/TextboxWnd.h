@@ -1,19 +1,22 @@
 ﻿#pragma once
 #include "MyWnd.h"
+#include "UIElement.h"
 #include "Direct2DWrite.h"
 #include "observable.h"
 
 struct TextboxProperty;
 class D2DTextbox;
 struct TextboxProperty;
+class CMouseStateMachine;
 
-class CTextboxWnd:public CWnd
+class CTextboxWnd:public CWnd, public CUIElement
 {
 public:
 	observable<std::wstring> m_path;
 	observable<bool> m_isSaved = false;
 	std::wstring m_text;
 	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
+	std::unique_ptr<CMouseStateMachine> m_pMouseMachine;
 	std::unique_ptr<D2DTextbox> m_pTxtbox;
 	std::shared_ptr<TextboxProperty> m_spProp;
 
@@ -41,12 +44,10 @@ private:
 	LRESULT OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
+	LRESULT OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
-	LRESULT OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	LRESULT OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnMouseWheel(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	LRESULT OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 

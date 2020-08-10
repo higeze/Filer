@@ -189,6 +189,7 @@
     <Image Include="Filer.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\D2DTextBox\TextboxStateMachine.h" />
     <ClInclude Include="..\D2DTextBox\TextboxWnd.h" />
     <ClInclude Include="..\D2DTextBox\Textbox.h" />
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h" />
@@ -384,6 +385,7 @@
     <ClInclude Include="ViewProperty.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\D2DTextBox\TextboxStateMachine.cpp" />
     <ClCompile Include="..\D2DTextBox\TextboxWnd.cpp" />
     <ClCompile Include="..\D2DTextBox\Textbox.cpp" />
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />

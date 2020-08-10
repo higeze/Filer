@@ -623,6 +623,9 @@
     <ClInclude Include="..\HiLib\ScrollProperty.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\D2DTextBox\TextboxStateMachine.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -906,6 +909,9 @@
     </ClCompile>
     <ClCompile Include="ToDoGridView.cpp">
       <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\TextboxStateMachine.cpp">
+      <Filter>D2DTextBox</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

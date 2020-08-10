@@ -3,7 +3,7 @@
 #include <boost/sml.hpp>
 
 //Pre-declare
-class CGridView;
+class CUIElement;
 
 class CMouseStateMachine
 {
@@ -11,7 +11,7 @@ private:
 	struct Machine;
 	std::unique_ptr<boost::sml::sm<Machine>> m_pMachine;
 public:
-	CMouseStateMachine(CGridView* pGrid);
+	CMouseStateMachine(CUIElement* pGrid);
 	~CMouseStateMachine();
 
 	void process_event(const LButtonDownEvent& e);
