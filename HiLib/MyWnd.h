@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MyUniqueHandle.h"
+#include "MyPoint.h"
 #include "MyRect.h"
 #include "MySize.h"
 #include "MyDC.h"
@@ -426,7 +427,16 @@ public:
 	HFONT GetFont(){return (HFONT)::SendMessage(m_hWnd,WM_GETFONT,0,0);}
 	BOOL IsWindowVisible(){return ::IsWindowVisible(m_hWnd);}
 	BOOL IsWindow(){return ::IsWindow(m_hWnd);}
-	BOOL ScreenToClient(LPPOINT lpPoint){return ::ScreenToClient(m_hWnd,lpPoint);}
+	//BOOL ScreenToClient(LPPOINT lpPoint){return ::ScreenToClient(m_hWnd,lpPoint);}
+	CPoint ScreenToClient(const CPoint& ptScreen)
+	{
+		CPoint ptClient(ptScreen);
+		if (::ScreenToClient(m_hWnd, ptClient)) {
+			return ptClient;
+		} else {
+			return CPoint();
+		}
+	}
 	BOOL ScreenToClient(LPRECT lpRect)
 	{
 		if(!::ScreenToClient(m_hWnd,(LPPOINT)lpRect)){return FALSE;};

@@ -394,6 +394,8 @@ namespace d2dw{
 		void EndDraw();
 
 		void DrawSolidLine(const SolidLine& line, const D2D1_POINT_2F& p0, const D2D1_POINT_2F& p1);
+		void DrawSolidTriangleWave(const SolidLine& line, const D2D1_POINT_2F& p0, const D2D1_POINT_2F& p1, const FLOAT& amplitude, const FLOAT& period);
+
 		void DrawTextLayout(const FormatF& fnc, const std::wstring& text, const D2D1_POINT_2F& origin, const D2D1_SIZE_F& size);
 		void DrawTextLayout(const FormatF& fnc, const std::wstring& text, const CRectF& rect);
 		void DrawTextInRect(const FormatF& fnc, const std::wstring& text, const CRectF& rect);

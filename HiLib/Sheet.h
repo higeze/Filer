@@ -267,7 +267,7 @@ public:
 	/**************/
 protected:
 	virtual void OnPaint(const PaintEvent& e);
-	virtual void OnRButtonDown(const RButtonDownEvent& e);
+	virtual void OnRButtonDown(const RButtonDownEvent& e) override;
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnLButtonUp(const LButtonUpEvent& e);
 	virtual void OnLButtonClk(const LButtonClkEvent& e);

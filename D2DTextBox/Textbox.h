@@ -29,9 +29,11 @@ namespace d2dw
 
 struct COMPOSITIONRENDERINFO
 {
-	int nStart;
-	int nEnd;
-	TF_DISPLAYATTRIBUTE da;
+	COMPOSITIONRENDERINFO(int start, int end, TF_DISPLAYATTRIBUTE displayAttribute)
+		:Start(start), End(end), DisplayAttribute(displayAttribute){ }
+	int Start;
+	int End;
+	TF_DISPLAYATTRIBUTE DisplayAttribute;
 };
 
 template<typename T>
@@ -106,6 +108,7 @@ public:
 	virtual void OnKeyDown(const KeyDownEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnMouseMove(const MouseMoveEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnSetCursor(const SetCursorEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnContextMenu(const ContextMenuEvent& e) override { m_pTextMachine->process_event(e); }
@@ -120,7 +123,7 @@ public:
 	virtual void Normal_LButtonUp(const LButtonUpEvent& e) { /*Do nothing*/ }
 	virtual void Normal_LButtonClk(const LButtonClkEvent& e) { /*Do nothing*/ }
 	virtual void Normal_LButtonSnglClk(const LButtonSnglClkEvent& e) { /*Do nothing*/ }
-	virtual void Normal_LButtonDblClk(const LButtonDblClkEvent& e) { /*Do nothing*/ }
+	virtual void Normal_LButtonDblClk(const LButtonDblClkEvent& e);
 	virtual void Normal_RButtonDown(const RButtonDownEvent& e) { /*Do nothing*/ }
 	virtual void Normal_MouseMove(const MouseMoveEvent& e);
 	virtual void Normal_MouseLeave(const MouseLeaveEvent& e) { /*Do nothing*/ }
@@ -147,7 +150,6 @@ public:
 	//virtual void HScrl_SetCursor(const SetCursorEvent& e);
 
 	virtual void Error_StdException(const std::exception& e);
-
 
 
 
@@ -193,7 +195,7 @@ public:
 
 	//void InvalidateRect();
 	void ClearCompositionRenderInfo();
-	BOOL AddCompositionRenderInfo(int nStart, int nEnd, TF_DISPLAYATTRIBUTE *pda);
+	BOOL AddCompositionRenderInfo(int Start, int End, TF_DISPLAYATTRIBUTE *pda);
 public:
 	std::function<std::vector<d2dw::CRectF>&()> GetOriginCharRects;
 	std::function<std::vector<d2dw::CRectF>&()> GetOriginCursorCharRects;
@@ -235,9 +237,11 @@ protected:
 	CComPtr<ITfDocumentMgr> m_pDocumentMgr;
 	CComPtr<ITfContext> m_pInputContext;
 
-	COMPOSITIONRENDERINFO *pCompositionRenderInfo_;
-	UINT nCompositionRenderInfo_;
-	TfEditCookie ecTextStore_;
+	std::vector<COMPOSITIONRENDERINFO> m_compositionInfos;
+
+	//COMPOSITIONRENDERINFO *pCompositionRenderInfo_;
+	//UINT nCompositionRenderInfo_;
+	TfEditCookie m_editCookie;
 
 public:
 	//////CGridView* m_pWnd;

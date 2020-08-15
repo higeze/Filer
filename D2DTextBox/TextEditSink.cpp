@@ -117,19 +117,19 @@ STDAPI CTextEditSink::OnEndEdit(ITfContext *pic, TfEditCookie ecReadOnly, ITfEdi
                     {
                         while (pEnumRanges->Next(1, &pRange, NULL) == S_OK)
                         {
-                            TF_DISPLAYATTRIBUTE da;
+                            TF_DISPLAYATTRIBUTE DisplayAttribute;
                             TfGuidAtom guid;
-                            if (GetDisplayAttributeData(ecReadOnly, pProp, pRange, &da, &guid) == S_OK)
+                            if (GetDisplayAttributeData(ecReadOnly, pProp, pRange, &DisplayAttribute, &guid) == S_OK)
                             {
                                 ITfRangeACP *pRangeACP;
                                 if (pRange->QueryInterface(IID_ITfRangeACP, (void **)&pRangeACP) == S_OK)
                                 {
-                                    LONG nStart;
-                                    LONG nEnd;
-                                    pRangeACP->GetExtent(&nStart, &nEnd);
+                                    LONG Start;
+                                    LONG End;
+                                    pRangeACP->GetExtent(&Start, &End);
                                     
 									
-									_pEditor->AddCompositionRenderInfo(nStart, nStart + nEnd, &da);
+									_pEditor->AddCompositionRenderInfo(Start, Start + End, &DisplayAttribute);
 
 
                                     pRangeACP->Release();

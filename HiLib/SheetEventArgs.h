@@ -20,9 +20,9 @@ public:
 struct CellContextMenuEventArgs:public CellEventArgs
 {
 public:
-	CPoint Point;
+	CPoint PointInClient;
 	CellContextMenuEventArgs(CCell* pCell,CPoint pt)
-		:CellEventArgs(pCell),Point(pt){}
+		:CellEventArgs(pCell),PointInClient(pt){}
 	virtual ~CellContextMenuEventArgs(){}
 
 };

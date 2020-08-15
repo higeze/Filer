@@ -450,6 +450,53 @@ namespace d2dw
 		GetHwndRenderTarget()->DrawLine(LayoutRound(p0), LayoutRound(p1), GetColorBrush(line.Color),line.Width);
 	}
 
+	void CDirect2DWrite::DrawSolidTriangleWave(const SolidLine& line, const D2D1_POINT_2F& startPoint, const D2D1_POINT_2F& endPoint, const FLOAT& amplitude, const FLOAT& period)
+	{
+		D2D_POINT_2F nextCenterPoint = startPoint;
+		D2D_POINT_2F currPoint = startPoint;
+		D2D_POINT_2F nextPoint;
+		FLOAT radPoint = std::atan2(endPoint.y - startPoint.y, endPoint.x - startPoint.x);
+		FLOAT radWave = std::atan2(amplitude, (period / 2.f));
+		FLOAT hypotenuseWave = std::sqrt(std::pow(period / 4.f, 2) + std::pow(amplitude / 2.f, 2));
+		int count = 0;
+		while (true) {
+			nextCenterPoint.x = startPoint.x + std::cos(radPoint) * ((count + 1) * period / 4.f);
+			nextCenterPoint.y = startPoint.y + std::sin(radPoint) * ((count + 1) * period / 4.f);
+
+			if ((startPoint.x <= endPoint.x ? nextCenterPoint.x > endPoint.x : nextCenterPoint.x < endPoint.x) ||
+				(startPoint.y <= endPoint.y ? nextCenterPoint.y > endPoint.y : nextCenterPoint.y < endPoint.y)) {
+				break;
+			}
+
+			switch (count % 4) {
+				case 0:
+					nextPoint = currPoint;
+					nextPoint.x += std::cos(radPoint + radWave) * hypotenuseWave;
+					nextPoint.y += std::sin(radPoint + radWave) * hypotenuseWave;
+					break;
+				case 1:
+					nextPoint = nextCenterPoint;
+					break;
+				case 2:
+					nextPoint = currPoint;
+					nextPoint.x += std::cos(radPoint + radWave) * hypotenuseWave;
+					nextPoint.y -= std::sin(radWave - radPoint) * hypotenuseWave;
+					break;
+				case 3:
+					nextPoint = nextCenterPoint;
+					break;
+				default:
+					break;
+			}
+
+			DrawSolidLine(line, currPoint, nextPoint);
+
+			currPoint = nextPoint;
+			count++;
+		}
+	}
+
+
 	void CDirect2DWrite::DrawTextLayout(const FormatF& format, const std::wstring& text, const D2D1_POINT_2F& origin, const D2D1_SIZE_F& size)
 	{
 		GetHwndRenderTarget()->DrawTextLayout(origin, GetTextLayout(format, text, size), GetColorBrush(format.Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);

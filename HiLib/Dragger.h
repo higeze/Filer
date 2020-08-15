@@ -26,7 +26,7 @@ public:
 
 	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto visIndexes = pSheet->Point2Indexes(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+		auto visIndexes = pSheet->Point2Indexes(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 		auto v = visIndexes.Get<TRCYou::IndexesTag>();
 		if (visIndexes.Row < (int)pSheet->GetContainer<RowTag, VisTag>().size() &&
 			visIndexes.Row >= 0 &&
@@ -41,7 +41,7 @@ public:
 
 	void OnBeginDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		m_dragFromVisIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+		m_dragFromVisIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 		m_dragToVisIndex = CBand::kInvalidIndex;
 		//m_dragFromIndex = pSheet->Vis2AllIndex<TRC>(pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point)));
 		//m_dragToIndex = CBand::kInvalidIndex;
@@ -49,7 +49,7 @@ public:
 
 	void OnDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto curVisIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+		auto curVisIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
 		if (curVisIndex == CBand::kInvalidIndex) {
 			m_dragToVisIndex = CBand::kInvalidIndex;

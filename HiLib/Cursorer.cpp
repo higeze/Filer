@@ -128,7 +128,7 @@ void CCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
 	if(pSheet->Empty()){
 		return;
 	}
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
 	//If out of sheet, reset curosr
 	if(!cell){
@@ -193,7 +193,7 @@ void CCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e)
 		return;
 	}
 	//Get RowColumn from Point
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
 	if(!cell){
 		return OnCursorClear(pSheet);
@@ -211,7 +211,7 @@ void CCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e)
 void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 {
 	if(pSheet->Empty()){
-		e.Handled = FALSE;
+		*e.HandledPtr= FALSE;
 		return;
 	}
 
@@ -266,7 +266,7 @@ void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 		OnCursorClear(pSheet);
 		break;
 	default:
-		e.Handled = FALSE;
+		*e.HandledPtr = FALSE;
 	}
 	return;
 }
@@ -387,7 +387,7 @@ void CSheetCellCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e
 		return;
 	}
 	//Get RowColumn from Point
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
 	if(!cell){
 		return OnCursorClear(pSheet);
@@ -411,7 +411,7 @@ void CSheetCellCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e
 		return;
 	}
 	//Get RowColumn from Point
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
 	if(!cell){
 		return OnCursorClear(pSheet);

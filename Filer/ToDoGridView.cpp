@@ -110,10 +110,10 @@ void CToDoGridView::Save(const std::wstring& path)
 
 void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
-	auto spCell = Cell(m_pDirect->Pixels2Dips(e.Point));
+	auto spCell = Cell(m_pDirect->Pixels2Dips(e.PointInClient));
 	if (spCell) {
 		spCell->OnContextMenu(e);
-		if (e.Handled) { return; }
+		if (*e.HandledPtr) { return; }
 	}
 
 	//CreateMenu
@@ -132,24 +132,21 @@ void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 	mii.dwTypeData = L"Remove Row";
 	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
-	CPoint ptClient(e.Point);
-	CPoint ptScreen(e.Point);
-	ClientToScreen(ptScreen);
 	::SetForegroundWindow(m_hWnd);
 	int idCmd = menu.TrackPopupMenu(
 		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
-		ptScreen.x,
-		ptScreen.y,
+		e.PointInScreen.x,
+		e.PointInScreen.y,
 		m_hWnd);
 
 	auto& itemsSource = GetItemsSource();
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
 		itemsSource.notify_push_back(MainTask());
 	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
-		auto a = Cell(m_pDirect->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>();
-		itemsSource.notify_erase(itemsSource.cbegin() + (Cell(m_pDirect->Pixels2Dips(ptClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
+		auto a = Cell(m_pDirect->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
+		itemsSource.notify_erase(itemsSource.cbegin() + (Cell(m_pDirect->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
 	}
-	e.Handled = TRUE;
+	*e.HandledPtr = TRUE;
 }
 
 void CToDoGridView::Normal_KeyDown(const KeyDownEvent& e)

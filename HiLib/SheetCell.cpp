@@ -123,6 +123,12 @@ d2dw::CSizeF CSheetCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* 
 	return MeasureContentSize(pDirect);
 }
 
+void CSheetCell::OnRButtonDown(const RButtonDownEvent& e)
+{
+	CCell::OnRButtonDown(e);
+	CSheet::OnRButtonDown(e);
+}
+
 void CSheetCell::OnLButtonDown(const LButtonDownEvent& e)
 {
 	CCell::OnLButtonDown(e);
@@ -266,7 +272,7 @@ bool CSheetCell::Filter(const std::wstring& strFilter)const
 void CSheetCell::OnContextMenu(const ContextMenuEvent& e)
 {
 	CSheet::OnContextMenu(e);
-	if (e.Handled) { return; }
+	if (*e.HandledPtr) { return; }
 	CCell::OnContextMenu(e);
 }
 

@@ -42,6 +42,7 @@ public:
 	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
 	
 	//Event
+	virtual void OnRButtonDown(const RButtonDownEvent& e) override;
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override;
 	virtual void OnLButtonClk(const LButtonClkEvent& e) override;

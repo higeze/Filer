@@ -42,7 +42,7 @@ LRESULT CTextboxWnd::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 
 	m_pDirect->GetHwndRenderTarget()->Clear(d2dw::CColorF(1.f, 1.f, 1.f));
 
-	m_pTxtbox->OnPaint(PaintEvent(this));
+	m_pTxtbox->OnPaint(PaintEvent(this, &bHandled));
 
 	//Paint Focused Line
 	if (GetIsFocused()) {
@@ -65,39 +65,15 @@ LRESULT CTextboxWnd::OnEraseBkGnd(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 LRESULT CTextboxWnd::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
-	m_pTxtbox->OnRect(RectEvent(this, m_pDirect->Pixels2Dips(GetClientRect()), bHandled)
+	m_pTxtbox->OnRect(RectEvent(this, m_pDirect->Pixels2Dips(GetClientRect()), &bHandled)
 	);
-	InvalidateRect(NULL, FALSE);
-	return 0;
-}
-
-LRESULT CTextboxWnd::OnChar(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	m_pTxtbox->OnChar(CharEvent(this, wParam, lParam));
-	InvalidateRect(NULL, FALSE);
-	return 0;
-}
-
-LRESULT CTextboxWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	if ((wParam == 'O') && ::GetAsyncKeyState(VK_CONTROL)) {
-		Open();
-	} else if ((wParam == 'S') && ::GetAsyncKeyState(VK_CONTROL)) {
-		if (m_path.get().empty()) {
-			Save();
-		} else {
-			Save(m_path);
-		}
-	} else {
-		m_pTxtbox->OnKeyDown(KeyDownEvent(this, wParam, lParam, bHandled));
-	}
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
 LRESULT CTextboxWnd::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pTxtbox->OnSetCursor(SetCursorEvent(this, wParam, lParam, bHandled));
+	m_pTxtbox->OnSetCursor(SetCursorEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
@@ -105,7 +81,7 @@ LRESULT CTextboxWnd::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 
 LRESULT CTextboxWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pTxtbox->OnSetFocus(SetFocusEvent(this, wParam, lParam));
+	m_pTxtbox->OnSetFocus(SetFocusEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
@@ -113,22 +89,16 @@ LRESULT CTextboxWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& b
 
 LRESULT CTextboxWnd::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pTxtbox->OnKillFocus(KillFocusEvent(this, wParam, lParam));
+	m_pTxtbox->OnKillFocus(KillFocusEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
-LRESULT CTextboxWnd::OnMouseWheel(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	m_pTxtbox->OnMouseWheel(MouseWheelEvent(this, wParam, lParam));
-	InvalidateRect(NULL, FALSE);
-	return 0;
-}
 
 
 LRESULT CTextboxWnd::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pTxtbox->OnContextMenu(ContextMenuEvent(this, wParam, lParam, bHandled));
+	m_pTxtbox->OnContextMenu(ContextMenuEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
@@ -159,58 +129,43 @@ CTextboxWnd::CTextboxWnd(std::shared_ptr<TextboxProperty> spProp)
 	AddMsgHandler(WM_PAINT, &CTextboxWnd::OnPaint, this);
 	AddMsgHandler(WM_DISPLAYCHANGE, &CTextboxWnd::OnPaint, this);
 
-	AddMsgHandler(WM_KEYDOWN, &CTextboxWnd::OnKeyDown, this);
-	AddMsgHandler(WM_SYSKEYDOWN, &CTextboxWnd::OnKeyDown, this);
-	AddMsgHandler(WM_CHAR, &CTextboxWnd::OnChar, this);
-
 	AddMsgHandler(WM_SETCURSOR, &CTextboxWnd::OnSetCursor, this);
 	AddMsgHandler(WM_SETFOCUS, &CTextboxWnd::OnSetFocus, this);
 	AddMsgHandler(WM_KILLFOCUS, &CTextboxWnd::OnKillFocus, this);
-	AddMsgHandler(WM_MOUSEWHEEL, &CTextboxWnd::OnMouseWheel, this);
 	AddMsgHandler(WM_CONTEXTMENU, &CTextboxWnd::OnContextMenu, this);
 
+
 	//Mouse
-	AddMsgHandler(WM_LBUTTONDOWN, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hHandled)->LRESULT {
-		m_pMouseMachine->process_event(LButtonDownEvent(this, wParam, lParam));
+	AddMsgHandler(WM_LBUTTONDOWN, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
 		SetFocus();
+		return UserInput_Message<LButtonDownEvent>(msg, wParam, lParam, bHandled);
+		});
+	AddMsgHandler(WM_LBUTTONUP, &CTextboxWnd::UserInput_Message<LButtonUpEvent>, this);
+	AddMsgHandler(WM_LBUTTONDBLCLK, &CTextboxWnd::UserInput_Message<LButtonDblClkEvent>, this);
+	AddMsgHandler(RegisterWindowMessage(L"WM_LBUTTONDBLCLKTIMEXCEED"), &CTextboxWnd::UserInput_Message<LButtonDblClkTimeExceedEvent>, this);
+	AddMsgHandler(WM_MOUSEMOVE, &CTextboxWnd::UserInput_Message<MouseMoveEvent>, this);
+	AddMsgHandler(WM_MOUSELEAVE, &CTextboxWnd::UserInput_Message<MouseLeaveEvent>, this);
+	AddMsgHandler(WM_MOUSEWHEEL, &CTextboxWnd::UserInput_Message<MouseWheelEvent>, this);
+	AddMsgHandler(WM_CANCELMODE, &CTextboxWnd::UserInput_Message<CancelModeEvent>, this);
+	AddMsgHandler(WM_CAPTURECHANGED, &CTextboxWnd::UserInput_Message<CaptureChangedEvent>, this);
+	AddMsgHandler(WM_KEYDOWN, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
+		if ((wParam == 'O') && ::GetAsyncKeyState(VK_CONTROL)) {
+			Open();
+		} else if ((wParam == 'S') && ::GetAsyncKeyState(VK_CONTROL)) {
+			if (m_path.get().empty()) {
+				Save();
+			} else {
+				Save(m_path);
+			}
+		} else {
+			m_pTxtbox->OnKeyDown(KeyDownEvent(this, wParam, lParam, &bHandled));
+		}
 		InvalidateRect(NULL, FALSE);
 		return 0;
 		});
-	AddMsgHandler(WM_LBUTTONUP, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hHandled)->LRESULT {
-		m_pMouseMachine->process_event(LButtonUpEvent(this, wParam, lParam));
-		InvalidateRect(NULL, FALSE);
-		return 0;
-		});
-	AddMsgHandler(WM_LBUTTONDBLCLK, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hHandled)->LRESULT {
-		m_pMouseMachine->process_event(LButtonDblClkEvent(this, wParam, lParam));
-		InvalidateRect(NULL, FALSE);
-		return 0;
-		});
-	AddMsgHandler(RegisterWindowMessage(L"WM_LBUTTONDBLCLKTIMEXCEED"), [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hHandled)->LRESULT {
-		m_pMouseMachine->process_event(LButtonDblClkTimeExceedEvent(this, wParam, lParam));
-		InvalidateRect(NULL, FALSE);
-		return 0;
-		});
-	AddMsgHandler(WM_MOUSEMOVE, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hHandled)->LRESULT {
-		m_pMouseMachine->process_event(MouseMoveEvent(this, wParam, lParam));
-		InvalidateRect(NULL, FALSE);
-		return 0;
-		});
-	AddMsgHandler(WM_MOUSELEAVE, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hHandled)->LRESULT {
-		m_pMouseMachine->process_event(MouseLeaveEvent(this, wParam, lParam));
-		InvalidateRect(NULL, FALSE);
-		return 0;
-		});
-	AddMsgHandler(WM_CANCELMODE, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hHandled)->LRESULT {
-		m_pMouseMachine->process_event(CancelModeEvent(this, wParam, lParam));
-		InvalidateRect(NULL, FALSE);
-		return 0;
-		});
-	AddMsgHandler(WM_CAPTURECHANGED, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& hHandled)->LRESULT {
-		m_pMouseMachine->process_event(CaptureChangedEvent(this, wParam, lParam));
-		InvalidateRect(NULL, FALSE);
-		return 0;
-		});
+
+	AddMsgHandler(WM_SYSKEYDOWN, &CTextboxWnd::UserInput_Message<SysKeyDownEvent>, this);
+	AddMsgHandler(WM_CHAR, &CTextboxWnd::UserInput_Message<CharEvent>, this);
 
 
 

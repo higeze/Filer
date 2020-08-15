@@ -740,13 +740,13 @@ bool CSheet::Normal_Guard_SetCursor(const SetCursorEvent& e)
 
 void CSheet::Normal_SetCursor(const SetCursorEvent& e)
 {
-	if (!e.Handled) { 
+	if (!*e.HandledPtr) { 
 		m_spRowTracker->OnSetCursor(this, e);
 	}
-	if (!e.Handled) {
+	if (!*e.HandledPtr) {
 		m_spColTracker->OnSetCursor(this, e);
 	}
-	if (!e.Handled) {
+	if (!*e.HandledPtr) {
 		m_spCeller->OnSetCursor(this, e);
 	}
 }
@@ -766,14 +766,14 @@ void CSheet::Normal_Char(const CharEvent& e)
 
 void CSheet::Normal_SetFocus(const SetFocusEvent& e)
 {
-	if (!Visible())return;
+	*e.HandledPtr = FALSE;
 	//	m_spCursorer->OnCursorClear(this);
 	//m_bFocused = true;
 }
 
 void CSheet::Normal_KillFocus(const KillFocusEvent& e)
 {
-	if (!Visible())return;
+	*e.HandledPtr = FALSE;
 	//m_spCursorer->OnCursorClear(this);
 	//m_bFocused = false;
 }

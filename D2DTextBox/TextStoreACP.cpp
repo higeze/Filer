@@ -492,9 +492,9 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
         auto rcEnd(_pEditor->GetActualCharRects()[acpEnd]);
 
         prc->left = (LONG)std::round(rcStart.left);
-        prc->right = (LONG)std::round(rcEnd.left);
+        prc->right = (LONG)std::round(rcEnd.right);
         prc->top = (LONG)std::round(rcStart.top);
-        prc->bottom = (LONG)std::round(rcEnd.bottom);
+        prc->bottom = (LONG)std::round(rcEnd.bottom + 4);//Half of Triangle Wave Amplitude
     }
     else
     {

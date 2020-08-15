@@ -1048,9 +1048,9 @@ bool CFilerGridView::InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, 
 
 void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
-	CPoint ptScreen(e.Point);
+	CPoint ptScreen(e.PointInClient);
 	ClientToScreen(ptScreen);
-	auto cell = Cell(GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = Cell(GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	std::vector<PITEMID_CHILD> vPidl;
 
 	if (!cell) {

@@ -76,10 +76,8 @@ public:
 		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 
-		CPoint ptScreen(e.Point);
-		::ClientToScreen(m_pSheet->GetGridPtr()->m_hWnd, &ptScreen);
 		::SetForegroundWindow(m_pSheet->GetGridPtr()->m_hWnd);
-		WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, ptScreen.x, ptScreen.y, m_pSheet->GetGridPtr()->m_hWnd);
+		WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, m_pSheet->GetGridPtr()->m_hWnd);
 		if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"EditFavorite")) {
 
 			CFilerWnd* pFilerWnd = static_cast<CFavoritesGridView*>(m_pSheet)->GetFilerWndPtr();

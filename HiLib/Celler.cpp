@@ -7,35 +7,35 @@
 
 void CCeller::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
 {
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (cell != nullptr) {
 		cell->OnLButtonDown(e);
 	}
 }
 void CCeller::OnLButtonUp(CSheet* pSheet, const LButtonUpEvent& e)
 {
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (cell != nullptr) {
 		cell->OnLButtonUp(e);
 	}
 }
 void CCeller::OnLButtonClk(CSheet* pSheet, const LButtonClkEvent& e)
 {
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (cell && (cell->GetState() == UIElementState::Pressed || cell->GetState() == UIElementState::PressedLeave)) {
 		cell->OnLButtonClk(e);
 	}
 }
 void CCeller::OnLButtonSnglClk(CSheet* pSheet, const LButtonSnglClkEvent& e)
 {
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (cell != nullptr) {
 		cell->OnLButtonSnglClk(e);
 	}
 }
 void CCeller::OnLButtonDblClk(CSheet* pSheet, const LButtonDblClkEvent& e)
 {
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (cell != nullptr) {
 		cell->OnLButtonDblClk(e);
 	}
@@ -45,7 +45,7 @@ void CCeller::OnLButtonDblClk(CSheet* pSheet, const LButtonDblClkEvent& e)
 }
 void CCeller::OnLButtonBeginDrag(CSheet* pSheet, const LButtonBeginDragEvent& e)
 {
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (cell != nullptr) {
 		cell->OnLButtonBeginDrag(e);
 	} else {
@@ -55,9 +55,9 @@ void CCeller::OnLButtonBeginDrag(CSheet* pSheet, const LButtonBeginDragEvent& e)
 
 void CCeller::OnMouseMove(CSheet* pSheet, const MouseMoveEvent& e)
 {
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (m_cellUnderMouse != nullptr && cell.get() != m_cellUnderMouse.get()) {
-		m_cellUnderMouse->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.Point.x, e.Point.y)));
+		m_cellUnderMouse->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
 	}
 	m_cellUnderMouse = cell;
 	if (cell != nullptr) {
@@ -67,7 +67,7 @@ void CCeller::OnMouseMove(CSheet* pSheet, const MouseMoveEvent& e)
 
 void CCeller::OnMouseLeave(CSheet* pSheet, const MouseLeaveEvent& e)
 {
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (m_cellUnderMouse != nullptr) {
 		pSheet->UnhotAll();//TODO
 		m_cellUnderMouse->OnMouseLeave(e);
@@ -78,7 +78,7 @@ void CCeller::OnMouseLeave(CSheet* pSheet, const MouseLeaveEvent& e)
 
 void CCeller::OnContextMenu(CSheet* pSheet, const ContextMenuEvent& e)
 {
-	auto cell = pSheet->Cell(pSheet->GetGridPtr()->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto cell = pSheet->Cell(pSheet->GetGridPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (cell != nullptr) {
 		cell->OnContextMenu(e);
 	}
@@ -89,12 +89,12 @@ void CCeller::OnSetCursor(CSheet* pSheet, const SetCursorEvent& e)
 {
 	CPoint pt;
 	::GetCursorPos(&pt);
-	e.WndPtr->ScreenToClient(&pt);
+	pt = e.WndPtr->ScreenToClient(pt);
 	auto cell = pSheet->Cell(pSheet->GetGridPtr()->GetDirectPtr()->Pixels2Dips(pt));
 	if (cell != nullptr) {
 		cell->OnSetCursor(e);
 	} else {
-		e.Handled = FALSE;
+		*e.HandledPtr = FALSE;
 	}
 }
 

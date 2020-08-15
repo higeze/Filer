@@ -9,7 +9,7 @@
 
 void CFileDragger::OnBeginDrag(CSheet* pSheet, MouseEvent const & e)
 {
-	m_ptDragStart = e.Point;
+	m_ptDragStart = e.PointInClient;
 	if (auto p = dynamic_cast<CFilerGridView*>(pSheet)) {
 		p->Drag();
 	}
@@ -38,7 +38,7 @@ void CFileDragger::OnLeaveDrag(CSheet* pSheet, MouseEvent const & e)
 
 bool CFileDragger::IsTarget(CSheet* pSheet, MouseEvent const & e)
 {
-	auto visIndexes = pSheet->Point2Indexes(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+	auto visIndexes = pSheet->Point2Indexes(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	int maxRow = pSheet->GetContainer<RowTag, VisTag>().size() - 1;
 	int maxCol = pSheet->GetContainer<ColTag, VisTag>().size() - 1;
 
