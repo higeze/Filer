@@ -271,6 +271,13 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 	AddMsgHandler(WM_CLOSE, &CFilerTabGridView::OnClose, this);
 	//AddMsgHandler(WM_DESTROY, &CFilerTabGridView::OnDestroy, this);
 	AddMsgHandler(WM_KEYDOWN,&CFilerTabGridView::OnKeyDown,this);
+	//WM_MOUSEWHEEL is sent to window where mouse is
+	AddMsgHandler(WM_MOUSEWHEEL, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)->LRESULT {
+			if (m_curView) {
+				m_curView->SendMessage(msg, wParam, lParam);
+			}
+			return 0;
+		});
 
 	AddCmdIDHandler(IDM_NEWFILERTAB, &CFilerTabGridView::OnCommandNewFilerTab, this);
 	AddCmdIDHandler(IDM_NEWTODOTAB, &CFilerTabGridView::OnCommandNewToDoTab, this);
@@ -281,6 +288,7 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 	AddCmdIDHandler(IDM_CLOSEALLBUTTHISTAB, &CFilerTabGridView::OnCommandCloseAllButThisTab, this);
 	AddCmdIDHandler(IDM_ADDTOFAVORITE, &CFilerTabGridView::OnCommandAddToFavorite, this);
 	AddCmdIDHandler(IDM_OPENSAMEASOTHER, &CFilerTabGridView::OnCommandOpenSameAsOther, this);
+
 }
 
 CFilerTabGridView::~CFilerTabGridView()

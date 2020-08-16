@@ -153,12 +153,10 @@ public:
 
 
 
-	virtual void UpdateScroll();
 
 	// IBridgeInterface
 	virtual d2dw::CRectF GetClientRect() const;
 	virtual d2dw::CRectF GetPageRect() const;
-	virtual d2dw::CRectF GetContentRect() const;
 
 	// Text Functions 
 	observable_wstring& GetText() { return m_text; }
@@ -182,6 +180,8 @@ public:
 	void ClearText();
 	void EnsureVisibleCaret();
 	void Update();
+	virtual void UpdateRects();
+	virtual void UpdateScroll();
 
 
 	// Render
@@ -199,7 +199,11 @@ public:
 public:
 	std::function<std::vector<d2dw::CRectF>&()> GetOriginCharRects;
 	std::function<std::vector<d2dw::CRectF>&()> GetOriginCursorCharRects;
-	std::function<std::vector<d2dw::CRectF>&()> GetActualCharRects;
+	std::function<std::vector<d2dw::CRectF>& ()> GetActualCharRects;
+	std::function<std::vector<d2dw::CRectF>& ()> GetActualSelectionCharRects;
+
+	std::function<d2dw::CRectF&()> GetOriginContentRect;
+	std::function<d2dw::CRectF& ()> GetActualContentRect;
 
 	//std::optional<d2dw::CRectF> GetOriginCharRect(const int& pos);
 	//std::optional<d2dw::CRectF> GetActualCharRect(const int& pos);

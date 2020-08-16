@@ -43,6 +43,7 @@ public:
 	std::shared_ptr<d2dw::SolidLine> Line;
 	std::shared_ptr<d2dw::SolidLine> EditLine;
 	std::shared_ptr<d2dw::SolidLine> FocusedLine;
+	std::shared_ptr<d2dw::SolidLine> BlankLine;
 	std::shared_ptr<d2dw::SolidFill> NormalFill;
 	std::shared_ptr<d2dw::SolidFill> FocusedFill;
 	std::shared_ptr<d2dw::SolidFill> SelectedFill;
@@ -60,6 +61,7 @@ public:
 		Line(std::make_shared<d2dw::SolidLine>(221.f/255.f, 206.f/255.f, 188.f/255.f, 1.0f, 1.0f)),
 		EditLine(std::make_shared<d2dw::SolidLine>(0.0f/255.f, 0.0f/255.f, 255.f/255.f, 1.0f, 1.0f)),
 		FocusedLine(std::make_shared<d2dw::SolidLine>(22.f/255.f, 160.f/255.f, 133.f/255.f, 1.0f, 1.0f)),
+		BlankLine(std::make_shared<d2dw::SolidLine>(100.f / 255.f, 100.f / 255.f, 100.f / 255.f, 0.6f, 1.0f)),
 		NormalFill(std::make_shared<d2dw::SolidFill>(246.f/255.f, 246.f/255.f, 246.f/255.f, 1.0f)),
 		FocusedFill(std::make_shared<d2dw::SolidFill>(0.0f/255.f, 224.f/255.f, 226.f/255.f, 1.0f)),
 		SelectedFill(std::make_shared<d2dw::SolidFill>(150.f/255.f, 200.f/255.f, 240.f/255.f, 0.5f)),
@@ -91,6 +93,7 @@ public:
 		UnfocusSelectedFill(unfocusSelectedFill),
 		HotFill(hotFill),
 		Padding(padding),
+		BlankLine(std::make_shared<d2dw::SolidLine>(100.f / 255.f, 100.f / 255.f, 100.f / 255.f, 0.6f, 1.0f)),
 		VScrollPropPtr(std::make_shared<ScrollProperty>()),
 		HScrollPropPtr(std::make_shared<ScrollProperty>()),
 		IsWrap(true){};
@@ -104,6 +107,7 @@ public:
 		ar("Line",Line);
 		ar("EditLine", EditLine);
 		ar("FocusedLine",FocusedLine);
+		ar("BlankLine", BlankLine);
 		ar("NormalFill",NormalFill);
 		ar("FocusedFill",FocusedFill);
 		ar("SelectedFill",SelectedFill);

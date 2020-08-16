@@ -523,6 +523,56 @@ namespace d2dw
 		DrawTextLayout(tmpFormat, text, rect);
 	}
 
+	void CDirect2DWrite::DrawTab(const SolidLine& line, const CRectF& rc)
+	{
+		auto width = rc.Width();
+		auto height = rc.Height();
+		auto centerPoint = rc.CenterPoint();
+		auto deg2rad = [](const int& deg) { return deg * (3.14 / 180); };
+		
+		auto left = CPointF(rc.left + 0.1 * width, centerPoint.y);
+		auto right = CPointF(rc.left + 0.9 * width, centerPoint.y);
+		auto top = CPointF(right.x - 0.3 * height * std::cos(deg2rad(45)), centerPoint.y - 0.3 * height * std::sin(deg2rad(45)));
+		auto bottom = CPointF(right.x - 0.3 * height * std::cos(deg2rad(45)), centerPoint.y + 0.3 * height * std::sin(deg2rad(45)));
+
+		GetHwndRenderTarget()->DrawLine(left, right, GetColorBrush(line.Color), line.Width);
+		GetHwndRenderTarget()->DrawLine(right, top, GetColorBrush(line.Color), line.Width);
+		GetHwndRenderTarget()->DrawLine(right, bottom, GetColorBrush(line.Color), line.Width);
+
+	}
+
+	void CDirect2DWrite::DrawLineFeed(const SolidLine& line, const CRectF& rc)
+	{
+		auto width = rc.Width();
+		auto height = rc.Height();
+		auto centerPoint = rc.CenterPoint();
+		auto deg2rad = [](const int& deg) { return deg * (3.14 / 180); };
+
+		auto top = CPointF(centerPoint.x, rc.top + 0.1 * height);
+		auto bottom = CPointF(centerPoint.x, rc.top + 0.9 * height);
+		auto left = CPointF(centerPoint.x - 0.3 * height * std::cos(deg2rad(45)), bottom.y - 0.3 * height * std::cos(deg2rad(45)));
+		auto right = CPointF(centerPoint.x + 0.3 * height * std::cos(deg2rad(45)), bottom.y - 0.3 * height * std::cos(deg2rad(45)));
+
+		GetHwndRenderTarget()->DrawLine(top, bottom, GetColorBrush(line.Color), line.Width);
+		GetHwndRenderTarget()->DrawLine(bottom, left, GetColorBrush(line.Color), line.Width);
+		GetHwndRenderTarget()->DrawLine(bottom, right, GetColorBrush(line.Color), line.Width);
+	}
+
+	void CDirect2DWrite::DrawHalfSpace(const SolidLine& line, const CRectF& rc)
+	{
+		auto width = rc.Width();
+		auto height = rc.Height();
+		auto centerPoint = rc.CenterPoint();
+
+		D2D1_ELLIPSE ellipse = D2D1::Ellipse(
+			centerPoint,
+			line.Width,
+			line.Width
+		);
+
+		GetHwndRenderTarget()->FillEllipse(&ellipse, GetColorBrush(line.Color));
+	}
+
 	void CDirect2DWrite::DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rc)
 	{
 		auto rect = LayoutRound(rc);

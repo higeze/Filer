@@ -86,8 +86,8 @@ D2DTextbox::D2DTextbox(
 	m_text(text),
 	m_carets(0, text.size(), 0, 0, text.size()),
 	m_pTextMachine(std::make_unique<CTextboxStateMachine>(this)),
-	m_pVScroll(std::make_unique<d2dw::CVScroll>(pWnd, pProp->VScrollPropPtr, [this](const wchar_t* name) { UpdateScroll(); })),
-	m_pHScroll(std::make_unique<d2dw::CHScroll>(pWnd, pProp->HScrollPropPtr, [this](const wchar_t* name) { UpdateScroll(); }))
+	m_pVScroll(std::make_unique<d2dw::CVScroll>(pWnd, pProp->VScrollPropPtr, [this](const wchar_t* name) { UpdateScroll(); UpdateRects(); })),
+	m_pHScroll(std::make_unique<d2dw::CHScroll>(pWnd, pProp->HScrollPropPtr, [this](const wchar_t* name) { UpdateScroll(); UpdateRects(); }))
 {
 	m_caretPoint.SetPoint(0, GetLineHeight() * 0.5f),
 	
@@ -167,7 +167,7 @@ D2DTextbox::D2DTextbox(
 	};
 
 	GetActualCharRects = [this, actualCharRects = std::vector<d2dw::CRectF>()](void)mutable->std::vector<d2dw::CRectF>& {
-		//if (actualCharRects.empty())
+		if (actualCharRects.empty())
 		{
 			actualCharRects = GetOriginCharRects();
 			d2dw::CPointF offset(GetPageRect().LeftTop());
@@ -176,6 +176,49 @@ D2DTextbox::D2DTextbox(
 		}
 		return actualCharRects;
 	};
+
+	GetActualSelectionCharRects = [this, selectionCharRects = std::vector<d2dw::CRectF>()](void)mutable->std::vector<d2dw::CRectF>& {
+		if (selectionCharRects.empty())
+		{
+			selectionCharRects = GetActualCharRects();
+			auto size = m_pWnd->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"a");
+			for (size_t i = 0; i < m_text.size(); i++) {
+				if (m_text[i] == L'\r' || m_text[i] == L'\n') {
+					selectionCharRects[i].right += size.width;
+				}
+			}
+		}
+		return selectionCharRects;
+	};
+
+	GetOriginContentRect = [this, contentRect = d2dw::CRectF()](void)mutable->d2dw::CRectF&
+	{
+		auto rcPage(GetPageRect());
+		auto charRects(GetOriginCharRects());
+		if (!charRects.empty()) {
+			contentRect = d2dw::CRectF(
+				charRects.front().left,
+				charRects.front().top,
+				(std::max)(rcPage.Width(), std::max_element(charRects.begin(), charRects.end(), [](const auto& lhs, const auto& rhs) {return lhs.right < rhs.right; })->right),
+				charRects.back().bottom);
+		}
+		return contentRect;
+	};
+
+	GetActualContentRect = [this, contentRect = d2dw::CRectF()](void)mutable->d2dw::CRectF&
+	{
+		auto rcPage(GetPageRect());
+		auto charRects(GetActualCharRects());
+		if (!charRects.empty()) {
+			contentRect = d2dw::CRectF(
+				charRects.front().left,
+				charRects.front().top,
+				(std::max)(rcPage.right, std::max_element(charRects.begin(), charRects.end(), [](const auto& lhs, const auto& rhs) {return lhs.right < rhs.right; })->right),
+				charRects.back().bottom);
+		}
+		return contentRect;
+	};
+
 
 	// You must create this on Heap, OnStack is NG.
 	_ASSERT(_CrtIsValidHeapPointer(this));
@@ -194,10 +237,8 @@ D2DTextbox::D2DTextbox(
 		[this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
 			m_pTextStore->OnTextChange(e.StartIndex, e.OldEndIndex, e.NewEndIndex);
 			m_changed(e.NewString);
-			GetOriginCharRects().clear();
-			GetOriginCursorCharRects().clear();
-			GetActualCharRects().clear();
 			UpdateScroll();
+			UpdateRects();
 		}
 	);
 	m_carets.Changed.connect(
@@ -263,11 +304,11 @@ void D2DTextbox::Clear()
 
 	m_pVScroll->SetScrollPage(GetPageRect().Height());
 	m_pVScroll->SetScrollPos(0.f);
-	m_pVScroll->SetScrollRange(0.f, GetContentRect().Height());
+	m_pVScroll->SetScrollRange(0.f, GetOriginContentRect().Height());
 
 	m_pHScroll->SetScrollPage(GetPageRect().Width());
 	m_pHScroll->SetScrollPos(0.f);
-	m_pHScroll->SetScrollRange(0.f, GetContentRect().Width());
+	m_pHScroll->SetScrollRange(0.f, GetOriginContentRect().Width());
 }
 
 
@@ -317,7 +358,7 @@ void D2DTextbox::EnsureVisibleCaret()
 {
 	if (m_isScrollable) {
 		auto pageRect = GetPageRect();
-		auto contentRect = GetContentRect();
+		auto contentRect = GetOriginContentRect();
 		auto charRects = GetOriginCharRects();
 		if (!charRects.empty()) {
 			//Range
@@ -355,7 +396,8 @@ void D2DTextbox::OnClose(const CloseEvent& e)
 
 void D2DTextbox::OnRect(const RectEvent& e)
 {
-	Update();
+	UpdateScroll();
+	UpdateRects();
 }
 
 void D2DTextbox::OnMouseWheel(const MouseWheelEvent& e)
@@ -574,14 +616,14 @@ void D2DTextbox::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 	std::vector<wchar_t> delimiters{ L' ', L'\t', L'\n' };
 	if (auto index = GetOriginCharPosFromPoint(newPoint)) {
 		if (std::find(delimiters.begin(), delimiters.end(), m_text[index.value()]) == delimiters.end()) {
-			auto selBegin = index.value() - 1;
+			size_t selBegin = index.value() - 1;
 			for (; selBegin >= 0; --selBegin) {
 				if (std::find(delimiters.begin(), delimiters.end(), m_text[selBegin]) != delimiters.end()) {
 					selBegin++;
 					break;
 				}
 			}
-			auto selEnd = index.value() + 1;
+			size_t selEnd = index.value() + 1;
 			for (; selEnd < m_text.size(); ++selEnd) {
 				if (std::find(delimiters.begin(), delimiters.end(), m_text[selEnd]) != delimiters.end()) {
 					break;
@@ -797,7 +839,7 @@ void D2DTextbox::UpdateScroll()
 	//Page
 	m_pVScroll->SetScrollPage(GetPageRect().Height());
 	//Range
-	m_pVScroll->SetScrollRange(0, GetContentRect().Height());
+	m_pVScroll->SetScrollRange(0, GetOriginContentRect().Height());
 	//Enable
 	m_pVScroll->SetVisible(m_pVScroll->GetScrollDistance() > m_pVScroll->GetScrollPage());
 
@@ -805,7 +847,7 @@ void D2DTextbox::UpdateScroll()
 	//Page
 	m_pHScroll->SetScrollPage(GetPageRect().Width());
 	//Range
-	m_pHScroll->SetScrollRange(0, GetContentRect().Width());
+	m_pHScroll->SetScrollRange(0, GetOriginContentRect().Width());
 	//Enable
 	m_pHScroll->SetVisible(m_pHScroll->GetScrollDistance() > m_pHScroll->GetScrollPage());
 
@@ -885,21 +927,6 @@ d2dw::CRectF D2DTextbox::GetClientRect() const
 	return m_pCell->GetEditRect();
 }
 
-d2dw::CRectF D2DTextbox::GetContentRect() const
-{
-	auto rcPage(GetPageRect());
-	if (auto charRects = GetActualCharRects();!charRects.empty()) {
-		auto a = d2dw::CRectF(
-			charRects.front().left,
-			charRects.front().top, 
-			(std::max)(rcPage.right, std::max_element(charRects.begin(), charRects.end(), [](const auto& lhs, const auto& rhs) {return lhs.right < rhs.right; })->right),
-			charRects.back().bottom);
-		return a;
-	} else {
-		return d2dw::CRectF();
-	}
-}
-
 d2dw::CRectF D2DTextbox::GetPageRect() const
 {
 	d2dw::CRectF rcPage(GetClientRect());
@@ -918,7 +945,6 @@ void D2DTextbox::ResetCaret()
 			m_pWnd->InvalidateRect(NULL, FALSE);
 		}, 
 		std::chrono::milliseconds(::GetCaretBlinkTime()));
-	//////m_pWnd->PostUpdate(Updates::Invalidate);
 	m_pWnd->InvalidateRect(NULL, FALSE);
 }
 
@@ -970,13 +996,35 @@ void D2DTextbox::Render()
 
 	if (!m_text.empty()) {
 		std::vector<d2dw::CRectF> charRects = GetActualCharRects();
+		std::vector<d2dw::CRectF> selCharRects = GetActualSelectionCharRects();
+
 		//Draw Text
-		m_pWnd->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), m_text, GetContentRect());
+		m_pWnd->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), m_text, GetActualContentRect());
+
+		//Draw cr, lf, tab, space
+		for (size_t i = 0; i < m_text.size(); i++) {
+			switch (m_text[i]) {
+				case L'\r':
+					break;
+				case L'\n':
+					m_pWnd->GetDirectPtr()->DrawLineFeed(*(m_pProp->BlankLine), selCharRects[i]);
+					break;
+				case L'\t':
+					m_pWnd->GetDirectPtr()->DrawTab(*(m_pProp->BlankLine), selCharRects[i]);
+					break;
+				case L' ':
+					m_pWnd->GetDirectPtr()->DrawHalfSpace(*(m_pProp->BlankLine), selCharRects[i]);
+				case L'　':
+				default:
+					break;
+			}
+		}
 
 		//Draw Selection
 		for (auto n = std::get<caret::SelBegin>(m_carets); n < std::get<caret::SelEnd>(m_carets); n++) {
-			m_pWnd->GetDirectPtr()->FillSolidRectangle(d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)),
-				charRects[n]);
+			m_pWnd->GetDirectPtr()->FillSolidRectangle(
+				d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)),
+				selCharRects[n]);
 		}
 		//Draw Caret
 		d2dw::CRectF caretRect = charRects[std::get<caret::CurCaret>(m_carets)];
@@ -1109,11 +1157,17 @@ std::optional<int> D2DTextbox::GetLastCharPosInLine(const int& pos)
 
 }
 
-void D2DTextbox::Update()
+void D2DTextbox::UpdateRects()
 {
 	GetOriginCharRects().clear();
 	GetOriginCursorCharRects().clear();
 	GetActualCharRects().clear();
+	GetActualSelectionCharRects().clear();
+}
+
+void D2DTextbox::Update()
+{
 	UpdateScroll();
+	UpdateRects();
 	EnsureVisibleCaret();
 }
