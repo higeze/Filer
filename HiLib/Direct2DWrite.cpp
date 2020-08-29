@@ -237,6 +237,25 @@ namespace d2dw
 		return seed;
 	}
 
+	//SyntaxFormat
+	bool SyntaxFormatF::operator==(const SyntaxFormatF& rhs) const
+	{
+		return Color == rhs.Color && IsBold == rhs.IsBold;
+	}
+
+	bool SyntaxFormatF::operator!=(const SyntaxFormatF& rhs) const
+	{
+		return !operator==(rhs);
+	}
+
+	std::size_t SyntaxFormatF::GetHashCode() const
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, std::hash<decltype(Color)>()(Color));
+		boost::hash_combine(seed, std::hash<decltype(IsBold)>()(IsBold));
+
+		return seed;
+	}
 
 
 
@@ -528,12 +547,12 @@ namespace d2dw
 		auto width = rc.Width();
 		auto height = rc.Height();
 		auto centerPoint = rc.CenterPoint();
-		auto deg2rad = [](const int& deg) { return deg * (3.14 / 180); };
+		auto deg2rad = [](const int& deg) { return deg * (3.14f / 180); };
 		
-		auto left = CPointF(rc.left + 0.1 * width, centerPoint.y);
-		auto right = CPointF(rc.left + 0.9 * width, centerPoint.y);
-		auto top = CPointF(right.x - 0.3 * height * std::cos(deg2rad(45)), centerPoint.y - 0.3 * height * std::sin(deg2rad(45)));
-		auto bottom = CPointF(right.x - 0.3 * height * std::cos(deg2rad(45)), centerPoint.y + 0.3 * height * std::sin(deg2rad(45)));
+		auto left = CPointF(rc.left + 0.1f * width, centerPoint.y);
+		auto right = CPointF(rc.left + 0.9f * width, centerPoint.y);
+		auto top = CPointF(right.x - 0.3f * height * std::cos(deg2rad(45)), centerPoint.y - 0.3f * height * std::sin(deg2rad(45)));
+		auto bottom = CPointF(right.x - 0.3f * height * std::cos(deg2rad(45)), centerPoint.y + 0.3f * height * std::sin(deg2rad(45)));
 
 		GetHwndRenderTarget()->DrawLine(left, right, GetColorBrush(line.Color), line.Width);
 		GetHwndRenderTarget()->DrawLine(right, top, GetColorBrush(line.Color), line.Width);
@@ -548,10 +567,10 @@ namespace d2dw
 		auto centerPoint = rc.CenterPoint();
 		auto deg2rad = [](const int& deg) { return deg * (3.14 / 180); };
 
-		auto top = CPointF(centerPoint.x, rc.top + 0.1 * height);
-		auto bottom = CPointF(centerPoint.x, rc.top + 0.9 * height);
-		auto left = CPointF(centerPoint.x - 0.3 * height * std::cos(deg2rad(45)), bottom.y - 0.3 * height * std::cos(deg2rad(45)));
-		auto right = CPointF(centerPoint.x + 0.3 * height * std::cos(deg2rad(45)), bottom.y - 0.3 * height * std::cos(deg2rad(45)));
+		auto top = CPointF(centerPoint.x, rc.top + 0.1f * height);
+		auto bottom = CPointF(centerPoint.x, rc.top + 0.9f * height);
+		auto left = CPointF(centerPoint.x - 0.3f * height * std::cos(deg2rad(45)), bottom.y - 0.3f * height * std::cos(deg2rad(45)));
+		auto right = CPointF(centerPoint.x + 0.3f * height * std::cos(deg2rad(45)), bottom.y - 0.3f * height * std::cos(deg2rad(45)));
 
 		GetHwndRenderTarget()->DrawLine(top, bottom, GetColorBrush(line.Color), line.Width);
 		GetHwndRenderTarget()->DrawLine(bottom, left, GetColorBrush(line.Color), line.Width);
@@ -656,17 +675,34 @@ namespace d2dw
 		if (text.empty()) {
 			return std::vector<CRectF>();
 		} else {
-			auto pLayout = GetTextLayout(format, text, size);
-			std::vector<CRectF> rects(text.size(), d2dw::CRectF());
-			for (size_t i = 0; i < rects.size(); i++) {
-				float x, y;
-				DWRITE_HIT_TEST_METRICS tm;
-				pLayout->HitTestTextPosition(i, false, &x, &y, &tm);
-				rects[i].SetRect(tm.left, tm.top, tm.left + tm.width, tm.top + tm.height);
-			}
-			return rects;
+			return CalcCharRects(GetTextLayout(format, text, size), text.size());
 		}
 	}
+
+	std::vector<CRectF> CDirect2DWrite::CalcCharRects(const CComPtr<IDWriteTextLayout>& pTextLayout, const size_t& count)
+	{
+		std::vector<CRectF> rects;
+		for (size_t i = 0; i < count; i++) {
+			float x, y;
+			DWRITE_HIT_TEST_METRICS tm;
+			pTextLayout->HitTestTextPosition(i, false, &x, &y, &tm);
+			rects.emplace_back(tm.left, tm.top, tm.left + tm.width, tm.top + tm.height);
+		}
+		return rects;
+	}
+
+	std::vector<CRectF> CDirect2DWrite::CalcCharRects(const CComPtr<IDWriteTextLayout1>& pTextLayout, const size_t& count)
+	{
+		std::vector<CRectF> rects;
+		for (size_t i = 0; i < count; i++) {
+			float x, y;
+			DWRITE_HIT_TEST_METRICS tm;
+			pTextLayout->HitTestTextPosition(i, false, &x, &y, &tm);
+			rects.emplace_back(tm.left, tm.top, tm.left + tm.width, tm.top + tm.height);
+		}
+		return rects;
+	}
+
 
 	FLOAT CDirect2DWrite::GetPixels2DipsRatioX()
 	{

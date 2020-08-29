@@ -11,8 +11,8 @@
 #include "UIElement.h"
 
 
-class LayoutLineInfo;
-struct D2DContext;
+//class LayoutLineInfo;
+//struct D2DContext;
 class CTextboxWnd;
 class CTextStore;
 class CTextEditSink;
@@ -179,8 +179,9 @@ public:
 	void CancelEdit();
 	void ClearText();
 	void EnsureVisibleCaret();
-	void Update();
-	virtual void UpdateRects();
+	void UpdateAll();
+	virtual void UpdateOriginRects();
+	virtual void UpdateActualRects();
 	virtual void UpdateScroll();
 
 
@@ -197,10 +198,12 @@ public:
 	void ClearCompositionRenderInfo();
 	BOOL AddCompositionRenderInfo(int Start, int End, TF_DISPLAYATTRIBUTE *pda);
 public:
+	std::function<CComPtr<IDWriteTextLayout1>& ()> GetTextLayoutPtr;
 	std::function<std::vector<d2dw::CRectF>&()> GetOriginCharRects;
 	std::function<std::vector<d2dw::CRectF>&()> GetOriginCursorCharRects;
 	std::function<std::vector<d2dw::CRectF>& ()> GetActualCharRects;
 	std::function<std::vector<d2dw::CRectF>& ()> GetActualSelectionCharRects;
+	std::function<std::vector<d2dw::CRectF>& ()> GetActualCursorCharRects;
 
 	std::function<d2dw::CRectF&()> GetOriginContentRect;
 	std::function<d2dw::CRectF& ()> GetActualContentRect;
@@ -208,6 +211,8 @@ public:
 	//std::optional<d2dw::CRectF> GetOriginCharRect(const int& pos);
 	//std::optional<d2dw::CRectF> GetActualCharRect(const int& pos);
 	std::optional<int> GetOriginCharPosFromPoint(const d2dw::CPointF& pt);
+	std::optional<int> GetActualCharPosFromPoint(const d2dw::CPointF& pt);
+
 
 	std::optional<int> GetFirstCharPosInLine(const int& pos);
 	std::optional<int> GetLastCharPosInLine(const int& pos);
@@ -262,22 +267,29 @@ public:
 
 };
 
-class D2DTextbox2 :public D2DTextbox
+class CTextEditor :public D2DTextbox
 {
+private:
+	observable<std::wstring> m_path;
+	observable<bool> m_isSaved = false;
+
 public:
-	D2DTextbox2(
+	CTextEditor(
 		CWnd* pWnd, 
 		const std::shared_ptr<TextboxProperty>& spProp, 
-		const std::wstring& text,
 		std::function<void(const std::wstring&)> changed,
 		std::function<void(const std::wstring&)> final)
-		:D2DTextbox(pWnd, nullptr, spProp, text, changed, final)
+		:D2DTextbox(pWnd, nullptr, spProp, L"", changed, final)
 	{
 		m_hasBorder = false;
 		m_isScrollable = true;
 	}
 
-	virtual ~D2DTextbox2(){}
+	virtual ~CTextEditor(){}
+
+	observable<std::wstring>& GetObsPath() { return m_path; }
+	observable<bool>& GetObsIsSaved() { return m_isSaved; }
+
 
 	d2dw::CRectF GetClientRect() const override
 	{
@@ -292,4 +304,20 @@ public:
 	}
 
 	virtual void Normal_ContextMenu(const ContextMenuEvent& e) override;
+
+	//std::wstring m_text;
+
+	void OnKeyDown(const KeyDownEvent& e) override;
+	//void Invalidate() override;
+
+
+	void Open();
+	void Open(const std::wstring& path);
+	void Save();
+	void Save(const std::wstring& path);
+	void Update();
+
+
+
+
 };

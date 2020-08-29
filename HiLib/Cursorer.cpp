@@ -23,9 +23,10 @@ void CCursorer::UpdateCursor(std::shared_ptr<CCell>& cell, bool old, bool curren
 	if (anchor) { m_anchorCell = cell; }//Anchor
 	if (focus) {
 		if (m_focusedCell != cell) {
-			if (m_focusedCell) { m_focusedCell->OnKillFocus(KillFocusEvent(cell->GetSheetPtr()->GetGridPtr(), NULL, NULL)); }//Blur
+			BOOL bDummy(TRUE);
+			if (m_focusedCell) { m_focusedCell->OnKillFocus(KillFocusEvent(cell->GetSheetPtr()->GetGridPtr(), NULL, NULL, &bDummy)); }//Blur
 			m_focusedCell = cell;
-			m_focusedCell->OnSetFocus(SetFocusEvent(cell->GetSheetPtr()->GetGridPtr()));//Focus
+			m_focusedCell->OnSetFocus(SetFocusEvent(cell->GetSheetPtr()->GetGridPtr(), 0,0,&bDummy));//Focus
 			m_doubleFocusedCell = nullptr;//DoubleFocus
 		} else if (m_focusedCell == cell) {
 			m_doubleFocusedCell = cell;//DoubleFocus

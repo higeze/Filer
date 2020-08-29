@@ -10,28 +10,26 @@ namespace d2dw
 	CStatusBar::CStatusBar(CWnd* pWnd, const std::shared_ptr<StatusBarProperty>& spStatusBarProp)
 		:m_pWnd(pWnd), m_spStatusBarProp(spStatusBarProp)
 	{
-		//TODO High
-		//if (::PdhOpenQuery(NULL, 0, &m_hQuery) == ERROR_SUCCESS &&
-		//	::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\% Processor Time", 0, &m_hCounterCPU) == ERROR_SUCCESS &&
-		//	::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Private Bytes", 0, &m_hCounterMemory) == ERROR_SUCCESS &&
-		//	::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Thread Count", 0, &m_hCounterThread) == ERROR_SUCCESS &&
-		//	::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Handle Count", 0, &m_hCounterHandle) == ERROR_SUCCESS) {
-		//	Update();
-		//	m_timer.run([this]()->void { Update(); }, std::chrono::milliseconds(1000));
-		//} else {
-		//	throw std::exception(FILE_LINE_FUNC);
-		//}
+		if (::PdhOpenQuery(NULL, 0, &m_hQuery) == ERROR_SUCCESS &&
+			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\% Processor Time", 0, &m_hCounterCPU) == ERROR_SUCCESS &&
+			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Private Bytes", 0, &m_hCounterMemory) == ERROR_SUCCESS &&
+			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Thread Count", 0, &m_hCounterThread) == ERROR_SUCCESS &&
+			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Handle Count", 0, &m_hCounterHandle) == ERROR_SUCCESS) {
+			Update();
+			m_timer.run([this]()->void { Update(); }, std::chrono::milliseconds(3000));
+		} else {
+			throw std::exception(FILE_LINE_FUNC);
+		}
 	}
 
 	CStatusBar::~CStatusBar()
 	{
-		//TODO High
-		//m_timer.stop();
-		//::PdhRemoveCounter(m_hCounterCPU);
-		//::PdhRemoveCounter(m_hCounterMemory);
-		//::PdhRemoveCounter(m_hCounterThread);
-		//::PdhRemoveCounter(m_hCounterHandle);
-		//::PdhCloseQuery(m_hQuery);
+		m_timer.stop();
+		::PdhRemoveCounter(m_hCounterCPU);
+		::PdhRemoveCounter(m_hCounterMemory);
+		::PdhRemoveCounter(m_hCounterThread);
+		::PdhRemoveCounter(m_hCounterHandle);
+		::PdhCloseQuery(m_hQuery);
 	}
 
 	void CStatusBar::Update()
@@ -89,16 +87,19 @@ namespace d2dw
 		auto rcPaint = GetRect();
 		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->BackgroundFill, rcPaint);
 
-		e.WndPtr->GetDirectPtr()->DrawTextLayout(m_spStatusBarProp->Format, 
-												 fmt::format(
-                                                     L"CPU:{:.1f}%, PrivateMemory:{:.1f}MB, HandleCount:{}, ThreadCount:{}, ThreadPool:{}/{}",
-                                                     m_cpu,
-                                                     m_mem / 1024.f /1024.f,
-													 m_handleCount,
-													 m_threadCount,
-													 CThreadPool::GetInstance()->GetActiveThreadCount(),
-													 CThreadPool::GetInstance()->GetTotalTheadCount()),
-												 rcPaint);
+		e.WndPtr->GetDirectPtr()->DrawTextLayout(
+			m_spStatusBarProp->Format,
+			fmt::format(
+			L"CPU:{:.1f}%, PrivateMemory:{:.1f}MB, HandleCount:{}, ThreadCount:{}, ThreadPool:{}/{}\t"
+			L"{}",
+			m_cpu,
+			m_mem / 1024.f / 1024.f,
+			m_handleCount,
+			m_threadCount,
+			CThreadPool::GetInstance()->GetActiveThreadCount(),
+			CThreadPool::GetInstance()->GetTotalTheadCount(),
+			m_text),
+			rcPaint);
 	}
 
 	CSizeF CStatusBar::MeasureSize(CDirect2DWrite* pDirect)

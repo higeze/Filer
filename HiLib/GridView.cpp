@@ -77,19 +77,19 @@ CGridView::CGridView(
 	AddMsgHandler(WM_DELAY_UPDATE, &CGridView::OnDelayUpdate, this);
 
 
-	AddMsgHandler(WM_RBUTTONDOWN, &CGridView::UserInput_Message<RButtonDownEvent>, this);
-	AddMsgHandler(WM_LBUTTONDOWN, &CGridView::UserInput_Message<LButtonDownEvent>, this);
-	AddMsgHandler(WM_LBUTTONUP, &CGridView::UserInput_Message<LButtonUpEvent>, this);
-	AddMsgHandler(WM_LBUTTONDBLCLK, &CGridView::UserInput_Message<LButtonDblClkEvent>, this);
-	AddMsgHandler(WM_LBUTTONDBLCLKTIMEXCEED, &CGridView::UserInput_Message<LButtonDblClkTimeExceedEvent>, this);
-	AddMsgHandler(WM_MOUSEMOVE, &CGridView::UserInput_Message<MouseMoveEvent>, this);
-	AddMsgHandler(WM_MOUSELEAVE, &CGridView::UserInput_Message<MouseLeaveEvent>, this);
-	AddMsgHandler(WM_MOUSEWHEEL, &CGridView::UserInput_Message<MouseWheelEvent>, this);
-	AddMsgHandler(WM_CANCELMODE, &CGridView::UserInput_Message<CancelModeEvent>, this);
-	AddMsgHandler(WM_CAPTURECHANGED, &CGridView::UserInput_Message<CaptureChangedEvent>, this);
-	AddMsgHandler(WM_CHAR, &CGridView::UserInput_Message<CharEvent>, this);
-	AddMsgHandler(WM_KEYDOWN, &CGridView::UserInput_Message<KeyDownEvent>, this);
-	AddMsgHandler(WM_SYSKEYDOWN, &CGridView::UserInput_Message<SysKeyDownEvent>, this);
+	AddMsgHandler(WM_RBUTTONDOWN, &CGridView::UserInputMachine_Message<RButtonDownEvent>, this);
+	AddMsgHandler(WM_LBUTTONDOWN, &CGridView::UserInputMachine_Message<LButtonDownEvent>, this);
+	AddMsgHandler(WM_LBUTTONUP, &CGridView::UserInputMachine_Message<LButtonUpEvent>, this);
+	AddMsgHandler(WM_LBUTTONDBLCLK, &CGridView::UserInputMachine_Message<LButtonDblClkEvent>, this);
+	AddMsgHandler(WM_LBUTTONDBLCLKTIMEXCEED, &CGridView::UserInputMachine_Message<LButtonDblClkTimeExceedEvent>, this);
+	AddMsgHandler(WM_MOUSEMOVE, &CGridView::UserInputMachine_Message<MouseMoveEvent>, this);
+	AddMsgHandler(WM_MOUSELEAVE, &CGridView::UserInputMachine_Message<MouseLeaveEvent>, this);
+	AddMsgHandler(WM_MOUSEWHEEL, &CGridView::UserInputMachine_Message<MouseWheelEvent>, this);
+	AddMsgHandler(WM_CANCELMODE, &CGridView::UserInputMachine_Message<CancelModeEvent>, this);
+	AddMsgHandler(WM_CAPTURECHANGED, &CGridView::UserInputMachine_Message<CaptureChangedEvent>, this);
+	AddMsgHandler(WM_CHAR, &CGridView::UserInputMachine_Message<CharEvent>, this);
+	AddMsgHandler(WM_KEYDOWN, &CGridView::UserInputMachine_Message<KeyDownEvent>, this);
+	AddMsgHandler(WM_SYSKEYDOWN, &CGridView::UserInputMachine_Message<SysKeyDownEvent>, this);
 
 	//Command
 	//AddCmdCdHandler(EN_CHANGE,&CGridView::OnCmdEnChange,this);

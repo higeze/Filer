@@ -145,30 +145,40 @@ struct CMouseStateMachine::Machine
 
 			state<LButtonDowned> +on_entry<LButtonDownEvent> / call(&Machine::LButtonDowned_OnEntry),
 			state<LButtonDowned> +on_exit<_> / call(&Machine::LButtonDowned_OnExit),
-			//state<LButtonDowned> +event<LButtonDblClkTimeExceedEvent> / call(&Machine::LButtonDowned_LButtonDblClkTimeExceed) = state<LButtonDrag>,
 			state<LButtonDowned> +event<LButtonUpEvent> / call(&Machine::Normal_LButtonUp) = state<LButtonUpped>,
 			state<LButtonDowned> +event<MouseMoveEvent> [call(&Machine::LButtonDowned_Guard_MouseMove)] = state<LButtonDrag>,
 			state<LButtonDowned> +event<MouseMoveEvent> / call(&Machine::Normal_MouseMove),
 			state<LButtonDowned> +event<MouseLeaveEvent> / call(&Machine::Normal_MouseLeave) = state<Normal>,
+			state<LButtonDowned> +event<CharEvent> / call(&Machine::Normal_Char),
+			state<LButtonDowned> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
+
 
 			state<LButtonUpped> +event<LButtonDownEvent> / call(&Machine::Normal_LButtonDown) = state<LButtonDowned>,
 			state<LButtonUpped> +event<LButtonDblClkEvent> / call(&Machine::LButtonUpped_LButtonDblClk) = state<LButtonDblClked>,
 			state<LButtonUpped> +event<LButtonDblClkTimeExceedEvent> / call(&Machine::LButtonUpped_LButtonDblClkTimeExceed) = state<Normal>,
 			state<LButtonUpped> +event<MouseMoveEvent> / call(&Machine::Normal_MouseMove),
 			state<LButtonUpped> +event<MouseLeaveEvent> / call(&Machine::Normal_MouseLeave) = state<Normal>,
+			state<LButtonUpped> +event<CharEvent> / call(&Machine::Normal_Char),
+			state<LButtonUpped> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
+
 
 			state<LButtonDblClked> +event<LButtonUpEvent> / call(&Machine::Normal_LButtonUp) = state<Normal>,
 			state<LButtonDblClked> +event<MouseMoveEvent> / call(&Machine::Normal_MouseMove),
 			state<LButtonDblClked> +event<MouseLeaveEvent> / call(&Machine::Normal_MouseLeave) = state<Normal>,
+			state<LButtonDblClked> +event<CharEvent> / call(&Machine::Normal_Char),
+			state<LButtonDblClked> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
+
 
 			state<LButtonDrag> +on_entry<MouseMoveEvent> / call(&Machine::LButtonDrag_OnEntry),
 			state<LButtonDrag> +on_exit<_> / call(&Machine::LButtonDrag_OnExit),
 			state<LButtonDrag> +event<LButtonUpEvent> / call(&Machine::Normal_LButtonUp) = state<Normal>,
 			state<LButtonDrag> +event<MouseMoveEvent> / call(&Machine::Normal_MouseMove),
-			state<LButtonDrag> +event<MouseLeaveEvent> / call(&Machine::LButtonDrag_MouseLeave) = state<Normal>,
+			//state<LButtonDrag> +event<MouseLeaveEvent> / call(&Machine::LButtonDrag_MouseLeave) = state<Normal>,
 			state<LButtonDrag> +event<CharEvent> [call(&Machine::LButtonDrag_Guard_Char)] = state<Normal>,
-			state<LButtonDrag> +event<CancelModeEvent> = state<Normal>,
-			state<LButtonDrag> +event<CaptureChangedEvent> = state<Normal>
+			state<LButtonDrag> +event<CharEvent> / call(&Machine::Normal_Char),
+			state<LButtonDrag> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
+			state<LButtonDrag> +event<CancelModeEvent> = state<Normal>//,
+			//state<LButtonDrag> +event<CaptureChangedEvent> = state<Normal>
 
 		);
 	}

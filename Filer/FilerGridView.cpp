@@ -784,6 +784,20 @@ void CFilerGridView::OnCellLButtonDblClk(CellEventArgs& e)
 	}
 }
 
+std::vector<std::shared_ptr<CShellFile>> CFilerGridView::GetSelectedFiles()
+{
+	std::vector<std::shared_ptr<CShellFile>> files;
+	for (const auto& rowPtr : m_visRows) {
+		if (rowPtr->GetIsSelected()) {
+			if (auto spRow = std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr)) {
+				files.push_back(spRow->GetItem<std::shared_ptr<CShellFile>>());
+			}
+		}
+	}
+	return files;
+
+}
+
 std::vector<LPITEMIDLIST> CFilerGridView::GetSelectedLastPIDLVector()
 {
 	std::vector<LPITEMIDLIST> vPidl;
@@ -922,17 +936,17 @@ bool CFilerGridView::NewFolder()
 
 bool CFilerGridView::CutToClipboard()
 {
-	return InvokeNormalShellContextmenuCommand(m_hWnd, "Cut", m_spFolder->GetShellFolderPtr(), GetSelectedLastPIDLVector());
+	return InvokeNormalShellContextmenuCommand(m_hWnd, "Cut", m_spFolder->GetShellFolderPtr(), GetSelectedFiles());
 }
 
 bool CFilerGridView::CopyToClipboard()
 {
-	return InvokeNormalShellContextmenuCommand(m_hWnd, "Copy", m_spFolder->GetShellFolderPtr(), GetSelectedLastPIDLVector());
+	return InvokeNormalShellContextmenuCommand(m_hWnd, "Copy", m_spFolder->GetShellFolderPtr(), GetSelectedFiles());
 }
 
 bool CFilerGridView::PasteFromClipboard()
 {
-	std::vector<LPITEMIDLIST> vPidl;
+	//std::vector<LPITEMIDLIST> vPidl;
 	CIDL idl = m_spFolder->GetAbsoluteIdl().CloneParentIDL();
 	CComPtr<IShellFolder> pDesktop;
 	::SHGetDesktopFolder(&pDesktop);
@@ -941,8 +955,8 @@ bool CFilerGridView::PasteFromClipboard()
 	if(!pFolder){
 		pFolder = pDesktop;
 	}
-	vPidl.push_back(m_spFolder->GetAbsoluteIdl().FindLastID());
-	return InvokeNormalShellContextmenuCommand(m_hWnd, "Paste", pFolder, vPidl);
+	//vPidl.push_back(m_spFolder->GetAbsoluteIdl().FindLastID());
+	return InvokeNormalShellContextmenuCommand(m_hWnd, "Paste", pFolder, {m_spFolder});
 }
 
 
@@ -989,8 +1003,12 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 	return 0;
 }
 
-bool CFilerGridView::InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl)
+bool CFilerGridView::InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<std::shared_ptr<CShellFile>> files)
 {
+	std::vector<PITEMID_CHILD> vpIdl;
+	for (auto file : files) {
+		vpIdl.push_back(file->GetAbsoluteIdl().FindLastID());
+	}
     CComPtr<IContextMenu> pcm;
 	HRESULT hr=psf->GetUIObjectOf(hWnd, vpIdl.size(),(LPCITEMIDLIST*)(vpIdl.data()),IID_IContextMenu,nullptr,(LPVOID *)&pcm);
     if(SUCCEEDED(hr)){
@@ -1008,6 +1026,16 @@ bool CFilerGridView::InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVer
 			}
 		}
     }
+
+	if (SUCCEEDED(hr)) {
+		if (StatusLog) {
+			StatusLog(fmt::format(L"SUCCEEDED {}:{}", str2wstr(lpVerb), files[0]->GetPathName()));
+		}
+	} else {
+		if (StatusLog) {
+			StatusLog(fmt::format(L"FAILED {}:{}", str2wstr(lpVerb), files[0]->GetPathName()));
+		}
+	}
 	return SUCCEEDED(hr);
 }
 
@@ -1048,8 +1076,6 @@ bool CFilerGridView::InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, 
 
 void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
-	CPoint ptScreen(e.PointInClient);
-	ClientToScreen(ptScreen);
 	auto cell = Cell(GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	std::vector<PITEMID_CHILD> vPidl;
 
@@ -1064,7 +1090,7 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 			pFolder = pDesktop;
 		}
 		vPidl.push_back(m_spFolder->GetAbsoluteIdl().FindLastID());
-		ShowShellContextMenu(m_hWnd, ptScreen, pFolder, vPidl, true);
+		ShowShellContextMenu(m_hWnd, e.PointInScreen, pFolder, vPidl, true);
 	}else if(cell->GetRowPtr() == m_pHeaderRow.get() || cell->GetRowPtr() == m_pNameHeaderRow.get()){
 		//Header menu
 		CMenu menu(::CreatePopupMenu());
@@ -1089,8 +1115,8 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 
 		menu.TrackPopupMenu(
 			TPM_LEFTALIGN | TPM_RIGHTBUTTON,
-			ptScreen.x,
-			ptScreen.y,
+			e.PointInScreen.x,
+			e.PointInScreen.y,
 			m_hWnd);
 	}else{
 		//Cell menu
@@ -1101,7 +1127,7 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 				vPidl.push_back(spFile->GetAbsoluteIdl().FindLastID());
 			}
 		}
-			ShowShellContextMenu(m_hWnd, ptScreen, m_spFolder->GetShellFolderPtr(), vPidl);
+			ShowShellContextMenu(m_hWnd, e.PointInScreen, m_spFolder->GetShellFolderPtr(), vPidl);
 	}
 
 	//CFilerGridViewBase::Normal_ContextMenu(e);

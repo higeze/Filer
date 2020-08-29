@@ -18,10 +18,7 @@
 
 class CFilerGridView;
 struct FilerGridViewProperty;
-//class CFavoritesProperty;
-//class CFavoritesGridView;
 class CShellFolder;
-//class CFilerTabGridView;
 
 
 #ifdef USE_PYTHON_EXTENSION
@@ -106,7 +103,7 @@ private:
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
-	std::shared_ptr<TextboxProperty> m_spTextboxProp;
+	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
 
 	//Windows
 	std::shared_ptr<CFavoritesGridView> m_spLeftFavoritesView;
@@ -213,7 +210,7 @@ public:
 
 		ar("ApplicationProperty", m_spApplicationProp);
 		ar("FilerGridViewProperty",m_spFilerGridViewProp);
-		ar("TextboxProperty", m_spTextboxProp);
+		ar("TextEditorProperty", m_spTextEditorProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
 		ar("LeftView", m_spLeftView);
@@ -238,11 +235,11 @@ public:
 
 		ar("ApplicationProperty", m_spApplicationProp);
 		ar("FilerGridViewProperty",m_spFilerGridViewProp);
-		ar("TextboxProperty", m_spTextboxProp);
+		ar("TextEditorProperty", m_spTextEditorProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
-		ar("LeftView", m_spLeftView, m_spFilerGridViewProp, m_spTextboxProp);
-		ar("RightView", m_spRightView, m_spFilerGridViewProp, m_spTextboxProp);
+		ar("LeftView", m_spLeftView, m_spFilerGridViewProp, m_spTextEditorProp);
+		ar("RightView", m_spRightView, m_spFilerGridViewProp, m_spTextEditorProp);
 
 		ar("LeftFavoritesView", m_spLeftFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
 		ar("RightFavoritesView", m_spRightFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);

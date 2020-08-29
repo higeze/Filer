@@ -105,6 +105,14 @@ void CSheet::SetAllColumnMeasureValid(bool valid)
 	}
 }
 
+void CSheet::SetAllColumnFitMeasureValid(bool valid)
+{
+	for (const auto& ptr : m_allCols) {
+		ptr->SetIsFitMeasureValid(valid);
+	}
+}
+
+
 void CSheet::SetColumnAllCellMeasureValid(CColumn* pColumn, bool valid)
 {
 	for (const auto& ptr : m_allRows) {
@@ -244,7 +252,7 @@ void CSheet::RowInserted(CRowEventArgs& e)
 
 void CSheet::RowErased(CRowEventArgs& e)
 {
-	this->SetAllColumnMeasureValid(false);
+	this->SetAllColumnFitMeasureValid(false);
 
 	PostUpdate(Updates::RowVisible);
 	PostUpdate(Updates::Column);
@@ -259,6 +267,7 @@ void CSheet::RowsErased(CRowsEventArgs& e)
 	//boost::for_each(m_columnAllDictionary,[&](const ColumnData& colData){
 	//	colData.DataPtr->SetMeasureValid(false);
 	//});
+	this->SetAllColumnFitMeasureValid(false);
 	PostUpdate(Updates::RowVisible);
 	PostUpdate(Updates::Column);
 	PostUpdate(Updates::Row);
@@ -894,6 +903,7 @@ void CSheet::ColDrag_MouseLeave(const MouseLeaveEvent& e)
 /************/
 void CSheet::ItemDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e)
 {
+	::OutputDebugString(L"ItemDrag_BeginDrag\r\n");
 	m_spItemDragger->OnBeginDrag(this, e);
 }
 
@@ -904,11 +914,13 @@ bool CSheet::ItemDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
 
 void CSheet::ItemDrag_MouseMove(const MouseMoveEvent& e)
 {
+	::OutputDebugString(L"ItemDrag_MouseMove\r\n");
 	m_spItemDragger->OnDrag(this, e);
 }
 
 void CSheet::ItemDrag_LButtonUp(const LButtonUpEvent& e)
 {
+	::OutputDebugString(L"ItemDrag_LButtonUp\r\n");
 	m_spCursorer->OnLButtonUp(this, e);
 	m_spCeller->OnLButtonUp(this, e);
 
@@ -917,6 +929,7 @@ void CSheet::ItemDrag_LButtonUp(const LButtonUpEvent& e)
 
 void CSheet::ItemDrag_MouseLeave(const MouseLeaveEvent& e)
 {
+	::OutputDebugString(L"ItemDrag_Leave\r\n");
 	m_spItemDragger->OnLeaveDrag(this, e);
 }
 

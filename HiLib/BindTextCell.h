@@ -28,3 +28,32 @@ public:
 		pBindColumn->GetSetter()(pBindRow->GetTupleItems(), str);
 	}
 };
+
+template<typename... TItems>
+class CBindTextCell2 :public CTextCell
+{
+private:
+	std::function<std::wstring()> m_getter;
+	std::function<void(const std::wstring&)> m_setter;
+public:
+	template<typename... Args>
+	CBindTextCell2(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, 
+		std::function<std::wstring()> getter,
+		std::function<void(const std::wstring&)> setter,
+		Args... args)
+		:CTextCell(pSheet, pRow, pColumn, spProperty, args...), m_getter(getter), m_setter(setter)
+	{
+	}
+
+	virtual ~CBindTextCell2() = default;
+
+	virtual std::wstring GetString() override
+	{
+		return m_getter();
+	}
+
+	virtual void SetStringCore(const std::wstring& str) override
+	{
+		m_setter(str);
+	}
+};

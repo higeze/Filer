@@ -10,6 +10,7 @@
 #include "GridView.h"
 #include "CellProperty.h"
 #include "RowIndexCell.h"
+#include "BindTextCell.h"
 
 std::shared_ptr<CCell> CPropertyNameColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {

@@ -125,34 +125,6 @@ void CFileIconCache::Clear()
 	m_defaultIconBmp.Release();
 }
 
-//CComPtr<ID2D1Bitmap> CFileIconCache::GetDriveIconBitmap(const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext)
-//{
-//	if (auto iter = m_driveMap.lock_find(path); iter != m_driveMap.end()) {
-//		return iter->second;
-//	} else {
-//		SHFILEINFO sfi = { 0 };
-//		::SHGetFileInfo((LPCTSTR)absoluteIDL.ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-//		CIcon icon(sfi.hIcon);
-//		CComPtr<ID2D1Bitmap> pBitmap = GetBitmapFromIcon(icon);
-//		m_driveMap.lock_emplace(std::make_pair(path, pBitmap));
-//		return pBitmap;
-//	}
-//}
-//
-//CComPtr<ID2D1Bitmap> CFileIconCache::GetKnownIconBitmap(const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext)
-//{
-//	if (auto iter = m_knownMap.lock_find(path); iter != m_knownMap.end()) {
-//		return iter->second;
-//	} else {
-//		SHFILEINFO sfi = { 0 };
-//		::SHGetFileInfo((LPCTSTR)absoluteIDL.ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-//		CIcon icon(sfi.hIcon);
-//		CComPtr<ID2D1Bitmap> pBitmap = GetBitmapFromIcon(icon);
-//		m_knownMap.lock_emplace(std::make_pair(path, pBitmap));
-//		return pBitmap;
-//	}
-//}
-//
 CComPtr<ID2D1Bitmap> CFileIconCache::GetDefaultIconBitmap()
 {
 	if (!m_defaultIconBmp) {
@@ -162,15 +134,3 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetDefaultIconBitmap()
 	}
 	return m_defaultIconBmp;
 }
-//
-//CComPtr<ID2D1Bitmap> CFileIconCache::GetFolderIconBitmap()
-//{
-//	if (!m_folderIconBmp) {
-//		auto folder = CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_ProgramFiles);
-//		SHFILEINFO sfi = { 0 };
-//		::SHGetFileInfo((LPCTSTR)(folder->GetAbsoluteIdl().ptr()), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-//		CIcon folderIcon(sfi.hIcon);
-//		m_folderIconBmp = GetBitmapFromIcon(folderIcon);
-//	}
-//	return m_folderIconBmp;
-//}

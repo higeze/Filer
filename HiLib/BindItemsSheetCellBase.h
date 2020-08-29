@@ -13,6 +13,7 @@ class CBindItemsSheetCellBase :public CSheetCell, public IBindSheet<TValueItem>
 private:
 	std::function<observable_vector<std::tuple<TValueItem>>& (CSheetCell*)> m_funItems = nullptr;
 	observable_vector<std::tuple<TValueItem>>* m_ptrItems = nullptr;
+	observable_vector<std::tuple<TValueItem>> m_items;
 public:
 	template<typename... Args>
 	CBindItemsSheetCellBase(
@@ -28,6 +29,7 @@ public:
 		auto columnHeaders = ::get(arg<"colhdrs"_s>(), args..., default_(std::vector<std::shared_ptr<CColumn>>()));
 		m_funItems = ::get(arg<"funitems"_s>(), args..., default_(nullptr));
 		m_ptrItems = ::get(arg<"ptritems"_s>(), args..., default_(nullptr));
+		m_items = ::get(arg<"items"_s>(), args..., default_(observable_vector<std::tuple<TValueItem>>()));
 	}
 
 	virtual ~CBindItemsSheetCellBase() = default;
@@ -42,7 +44,7 @@ public:
 		} else if (m_ptrItems) {
 			return *m_ptrItems;
 		} else {
-			throw std::exception(FILE_LINE_FUNC);
+			return m_items;
 		}
 	}
 

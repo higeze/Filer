@@ -23,7 +23,7 @@ namespace d2dw
 
 struct GridViewStateMachine;
 
-class CGridView:public CWnd,public CSheet
+class CGridView:public CWnd, public CSheet
 {
 	friend class CMouseStateMachine;
 protected:
@@ -77,7 +77,7 @@ protected:
 	/* Window Message */
 	/******************/
 	template<typename T>
-	LRESULT UserInput_Message(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+	LRESULT UserInputMachine_Message(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 	{
 		m_pMouseMachine->process_event(T(this, wParam, lParam, &bHandled));
 		SubmitUpdate();

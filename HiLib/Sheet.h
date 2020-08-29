@@ -179,6 +179,7 @@ public:
 	//Function
 	void SetAllRowMeasureValid(bool valid);
 	void SetAllColumnMeasureValid(bool valid);
+	void SetAllColumnFitMeasureValid(bool valid);
 	void SetColumnAllCellMeasureValid(CColumn* pColumn, bool valid);
 
 	//Observer

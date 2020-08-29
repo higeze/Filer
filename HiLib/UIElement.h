@@ -197,7 +197,7 @@ public:
 	ContextMenuEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
 		:EventArgs(pWnd, pHandled),
 		PointInScreen((short)LOWORD(lParam), (short)HIWORD(lParam)),
-		PointInClient(pWnd->ScreenToClient(PointInScreen)){}
+		PointInClient(pWnd->ScreenToClient(CPoint((short)LOWORD(lParam), (short)HIWORD(lParam)))){}
 };
 
 struct CancelModeEvent :public EventArgs
@@ -228,8 +228,13 @@ public:
 	virtual ~CUIElement(){}
 
 	virtual UIElementState::Type GetState()const{return m_state;}
-	void SetState(const UIElementState::Type& state);
+	virtual void SetState(const UIElementState::Type& state);
 	virtual bool GetIsFocused()const { return false; }
+
+	virtual void OnPaint(const PaintEvent& e) {}
+	virtual void OnClose(const CloseEvent& e) {}
+	virtual void OnRect(const RectEvent& e) {}
+
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnLButtonUp(const LButtonUpEvent& e);
@@ -259,4 +264,7 @@ public:
 
 
 	virtual void OnPropertyChanged(const wchar_t* name){}
+
+	void Update() {}
+
 };

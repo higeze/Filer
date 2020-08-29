@@ -25,13 +25,13 @@ public:
 		CSheet* pSheet,
 		CRow* pRow,
 		CColumn* pColumn,
-		std::shared_ptr<SheetProperty> spSheetProperty,
-		std::shared_ptr<CellProperty> spCellProperty,
-		observable_vector<std::tuple<TValueItem>> itemsSource,
+		std::shared_ptr<SheetProperty>& spSheetProperty,
+		std::shared_ptr<CellProperty>& spCellProperty,
+		observable_vector<std::tuple<TValueItem>>& itemsSource,
 		Args... args)
 		:CBindItemsSheetCellBase<TValueItem>(
 			pSheet,pRow,pColumn,spSheetProperty, spCellProperty,
-			arg<"ptritems"_s>() = &itemsSource,
+			arg<"items"_s>() = itemsSource,
 			args...)
 	{
 		SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(this));
@@ -45,20 +45,23 @@ public:
 		SetFrozenCount<ColTag>(1);
 
 		CCellSerializer serializer(this);
-		auto items = GetItemsSource();
+		auto& items = GetItemsSource();
 		for (auto& val : items) {
 			auto spRow = std::make_shared<CBindRow<TValueItem>>(this);
 			PushRow(spRow);
 			serializer.SerializeValue(val, spRow.get(), spColValue.get());
 		}
 
-		this->GetItemsSource().VectorChanged = 
-			[this](const NotifyVectorChangedEventArgs<std::tuple<TValueItem>>& e)->void {
+		items.VectorChanged = 
+			[this, spColValue](const NotifyVectorChangedEventArgs<std::tuple<TValueItem>>& e)->void {
 				switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
 				{
 					auto spRow = std::make_shared<CBindRow<TValueItem>>(this);
 					PushRow(spRow);
+					CCellSerializer serializer(this);
+					auto val = CreateInstance<TValueItem>();
+					serializer.SerializeValue(val, spRow.get(), spColValue.get());
 					break;
 				}
 				case NotifyVectorChangedAction::Remove:

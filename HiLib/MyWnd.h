@@ -499,6 +499,13 @@ public:
 		return pt;
 	}
 
+	CPoint GetCursorPosInScreen()
+	{
+		CPoint pt;
+		::GetCursorPos(&pt);
+		return pt;
+	}
+
 	LONG_PTR GetWidowLongPtr(int nIndex)
 	{
 		return ::GetWindowLongPtr(m_hWnd, nIndex);

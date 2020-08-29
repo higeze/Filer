@@ -42,11 +42,11 @@ CFilerWnd::CFilerWnd()
 	m_splitterLeft(0),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
 	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
-	m_spTextboxProp(std::make_shared<TextboxProperty>()),
+	m_spTextEditorProp(std::make_shared<TextEditorProperty>()),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
-	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp, m_spTextboxProp)),
-	m_spRightView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp, m_spTextboxProp)),
+	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp, m_spTextEditorProp)),
+	m_spRightView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp, m_spTextEditorProp)),
 	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spCurView(m_spLeftView)
@@ -249,10 +249,12 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		spView->SubclassWindow(spView->m_hWnd);
 		BOOL dummy = FALSE;
 		spView->OnCreate(WM_CREATE, NULL, NULL, dummy);
+		
 		//Capture KeyDown
 		spView->GetFilerGridViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
 		spView->GetToDoGridViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
 		spView->GetTextViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
+		
 		//Capture SetFocus
 		spView->GetFilerGridViewPtr()->AddMsgHandler(WM_SETFOCUS,
 		[this, wpView = std::weak_ptr<CFilerTabGridView>(spView)](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
@@ -280,6 +282,11 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 			}
 			return 0;
 		});
+
+		spView->GetFilerGridViewPtr()->StatusLog = [this](const std::wstring& log) {
+			m_spStatusBar->SetText(log);
+			InvalidateRect(GetDirectPtr()->Dips2Pixels(m_spStatusBar->GetRect()), FALSE);
+		};
 
 	};
 
@@ -741,7 +748,7 @@ LRESULT CFilerWnd::OnCommandFilerGridViewOption(WORD wNotifyCode, WORD wID, HWND
 
 LRESULT CFilerWnd::OnCommandTextOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	return OnCommandOption<TextboxProperty>(L"Text Property", m_spTextboxProp,
+	return OnCommandOption<TextEditorProperty>(L"Text Editor Property", m_spTextEditorProp,
 		[this](const std::wstring& str)->void {
 			m_spLeftView->GetTextViewPtr()->Update();
 			m_spRightView->GetTextViewPtr()->Update();

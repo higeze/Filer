@@ -23,6 +23,8 @@
 #include "CellProperty.h"
 #include "observable.h"
 
+#include "BindTextCell.h"
+
 class CCellSerializer
 {
 private:
@@ -93,13 +95,25 @@ public:
 	template<class T, typename ENABLE_IF_DEFAULT>
 	void SerializeValue(T& t,CRow* pRow,CColumn* pCol)
 	{
-		pCol->Cell(pRow)->SetStringCore(boost::lexical_cast<std::wstring>(t));
+		pCol->Cell(pRow) = //->SetStringCore(boost::lexical_cast<std::wstring>(t));
+			std::make_shared<CBindTextCell2<T>>(
+				m_pSheet, pRow, pCol, m_pSheet->GetCellProperty(),
+				[&t]() {return boost::lexical_cast<std::wstring>(t); },
+				[&t](const std::wstring& str) {t = boost::lexical_cast<T>(str); },
+				arg<"editmode"_s>() = EditMode::LButtonDownEdit);
+
 	}
 
 	//For std::string boost::lexical cast couldn't cast std::string to std::wstring
 	void SerializeValue(std::string& t,CRow* pRow,CColumn* pCol)
 	{
-		pCol->Cell(pRow)->SetStringCore(str2wstr(t));
+		pCol->Cell(pRow) = //->SetStringCore(str2wstr(t));
+			std::make_shared<CBindTextCell2<std::string>>(
+				m_pSheet, pRow, pCol, m_pSheet->GetCellProperty(),
+				[&t]() {return str2wstr(t); },
+				[&t](const std::wstring& str) {t = wstr2str(str); },
+				arg<"editmode"_s>() = EditMode::LButtonDownEdit);
+
 	}
 
 	//For Color

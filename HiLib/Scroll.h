@@ -49,7 +49,7 @@ namespace d2dw
 			m_rect.SetRect(left, top, right, bottom);
 		}
 		void SetVisible(bool visible) { m_visible = visible; }
-		virtual void OnPaint(const PaintEvent& e);
+		virtual void OnPaint(const PaintEvent& e) override;
 		virtual CRectF GetThumbRect()const = 0;
 		virtual void OnPropertyChanged(const wchar_t* name) override
 		{

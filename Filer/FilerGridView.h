@@ -50,6 +50,7 @@ public:
 	std::shared_ptr<CShellFolder>& GetFolder() { return m_spFolder; }
 	//signal
 	std::function<void(std::shared_ptr<CShellFolder>&)> FolderChanged;
+	std::function<void(const std::wstring&)> StatusLog;
 
 	/******************/
 	/* Window Message */
@@ -83,6 +84,8 @@ public:
 	bool MoveSelectedFilesTo(const CIDL& destIDL);
 	virtual bool DeleteSelectedFiles() override;
 
+	std::vector<std::shared_ptr<CShellFile>> GetSelectedFiles();
+
 	std::vector<LPITEMIDLIST> GetSelectedLastPIDLVector();
 	std::vector<LPITEMIDLIST> GetSelectedAbsolutePIDLVector();
 	std::vector<CIDL> GetSelectedChildIDLVector();
@@ -101,7 +104,7 @@ private:
 	void Dropped(IDataObject *pDataObj, DWORD dwEffect);
 	void ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl, bool hasNew = false);
 	bool InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf);
-	bool InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl);
+	bool InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<std::shared_ptr<CShellFile>> vpIdl);
 
 
 	//DirectoryWatch action

@@ -1,6 +1,8 @@
 #pragma once
 #include "Direct2DWrite.h"
 #include "ScrollProperty.h"
+#include <regex>
+#include "observable.h"
 
 enum class PicturePositon
 {
@@ -117,6 +119,41 @@ public:
 		ar("VScrollProperty", VScrollPropPtr);
 		ar("HScrollProperty", HScrollPropPtr);
 		ar("IsWrap", IsWrap);
+	}
+};
+
+struct SyntaxAppearance
+{
+	std::wstring Regex;
+	//std::regex Re;
+	d2dw::SyntaxFormatF SyntaxFormat;
+
+	template <class Archive>
+	void save(Archive& ar)
+	{
+		ar("Regex", Regex);
+		ar("SyntaxAppearance", SyntaxFormat);
+	}
+
+	template <class Archive>
+	void load(Archive& ar)
+	{
+		ar("Regex", Regex);
+		ar("SyntaxAppearance", SyntaxFormat);
+	}
+
+};
+
+struct TextEditorProperty :public TextboxProperty
+{
+	observable_vector<std::tuple<SyntaxAppearance>> SyntaxAppearances;
+	TextEditorProperty():TextboxProperty(){}
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+		TextboxProperty::serialize(ar);
+		ar("SyntaxAppearances", SyntaxAppearances);
 	}
 };
 

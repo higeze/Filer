@@ -230,6 +230,7 @@
     <ClInclude Include="..\HiLib\Column.h" />
     <ClInclude Include="..\HiLib\Console.h" />
     <ClInclude Include="..\HiLib\ConsoleTimer.h" />
+    <ClInclude Include="..\HiLib\Control.h" />
     <ClInclude Include="..\HiLib\CShellExtension.h" />
     <ClInclude Include="..\HiLib\Cursorer.h" />
     <ClInclude Include="..\HiLib\DeadlineTimer.h" />

@@ -63,6 +63,7 @@ namespace d2dw
 		LONG m_mem = 0L;
 		LONG m_handleCount = 0L;
 		LONG m_threadCount = 0L;
+		std::wstring m_text;
 
 
 		PDH_HQUERY m_hQuery;
@@ -93,6 +94,7 @@ namespace d2dw
 		{
 			m_rect.SetRect(left, top, right, bottom);
 		}
+		void SetText(const std::wstring& text) { m_text = text; }
 		CSizeF GetSize()const { return CSizeF(m_rect.Width(), m_rect.Height()); }
 		virtual void OnPaint(const PaintEvent & e);
 		virtual CSizeF MeasureSize(CDirect2DWrite* pDirect);

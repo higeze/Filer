@@ -19,7 +19,7 @@
 #include "BindItemsSheetCell.h"
 
 #include "TextboxWnd.h"
-
+#include "Textbox.h"
 
 CRect CFilerTabGridView::GetTabRect()
 {
@@ -33,8 +33,8 @@ CRect CFilerTabGridView::GetTabRect()
 }
 
 
-CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, std::shared_ptr<TextboxProperty>& spTextboxProp)
-	:m_spFilerGridViewProp(spFilerGridViewProp), m_spTextboxProp(spTextboxProp)
+CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, std::shared_ptr<TextEditorProperty>& spTextEditorProp)
+	:m_spFilerGridViewProp(spFilerGridViewProp), m_spTextEditorProp(spTextEditorProp)
 {
 	//FilerGridView Closure
 	GetFilerGridViewPtr = [spFilerView = std::make_shared<CFilerGridView>(spFilerGridViewProp), this]()->std::shared_ptr<CFilerGridView> {
@@ -251,7 +251,9 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 	m_itemsTemplate.emplace(typeid(TextTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CWnd> {
 		auto pData = std::static_pointer_cast<TextTabData>(pTabData);
 		auto spView = GetTextViewPtr();
-		spView->Open(pData->Path);
+		if (auto p = std::dynamic_pointer_cast<CTextEditor>(spView->GetControlPtr())) {
+			p->Open(pData->Path);
+		}
 		spView->InvalidateRect(NULL, FALSE);
 
 		return spView;
@@ -298,10 +300,11 @@ CFilerTabGridView::~CFilerTabGridView()
 	//GetTextViewPtr = nullptr;
 }
 
+
 LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	//TextView Closure
-	GetTextViewPtr = [spTextView = std::make_shared<CTextboxWnd>(m_spTextboxProp), this]()->std::shared_ptr<CTextboxWnd>{
+	GetTextViewPtr = [spTextView = std::make_shared<CTextboxWnd>(m_spTextEditorProp), this]()->std::shared_ptr<CTextboxWnd>{
 
 		if (!spTextView->IsWindow() && m_hWnd) {
 			spTextView->RegisterClassExArgument()
@@ -321,26 +324,27 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 
 			spTextView->SetIsDeleteOnFinalMessage(false);
 
+			if (auto p = std::dynamic_pointer_cast<CTextEditor>(spTextView->GetControlPtr())) {
+				//Path Changed
+				p->GetObsPath().Changed.connect([&](const NotifyChangedEventArgs<std::wstring>& e) {
+					auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[GetCurSel()]);
+					pData->Path = p->GetObsPath().get();
 
-			//Path Changed
-			spTextView->GetObsPath().Changed.connect([&](const NotifyChangedEventArgs<std::wstring>& e) {
-				auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[GetCurSel()]);
-				pData->Path = spTextView->GetObsPath().get();
+					SetItemText(GetCurSel(), pData->GetItemText().c_str());
 
-				SetItemText(GetCurSel(), pData->GetItemText().c_str());
+					spTextView->MoveWindow(GetTabRect(), FALSE);
+					});
 
-				spTextView->MoveWindow(GetTabRect(), FALSE);
-			});
+				//IsSave Changed
+				p->GetObsIsSaved().Changed.connect([&](const NotifyChangedEventArgs<bool>& e) {
+					auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[GetCurSel()]);
+					pData->IsSaved = p->GetObsIsSaved().get();
 
-			//IsSave Changed
-			spTextView->GetObsIsSaved().Changed.connect([&](const NotifyChangedEventArgs<bool>& e) {
-				auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[GetCurSel()]);
-				pData->IsSaved = spTextView->GetObsIsSaved().get();
+					SetItemText(GetCurSel(), pData->GetItemText().c_str());
 
-				SetItemText(GetCurSel(), pData->GetItemText().c_str());
-
-				spTextView->MoveWindow(GetTabRect(), FALSE);
-				});
+					spTextView->MoveWindow(GetTabRect(), FALSE);
+					});
+			}
 
 			spTextView->Create(m_hWnd, GetTabRect());
 		}
@@ -442,17 +446,14 @@ LRESULT CFilerTabGridView::OnNotifyTabLClick(int id, LPNMHDR, BOOL& bHandled)
 
 LRESULT CFilerTabGridView::OnNotifyTabRClick(int id, LPNMHDR, BOOL& bHandled)
 {
-	CPoint ptScreen;
-	::GetCursorPos(ptScreen);
-	CPoint ptClient(ptScreen);
-	ScreenToClient(ptClient);
 	TC_HITTESTINFO tchi = { 0 };
-	tchi.pt = ptClient;
+	tchi.pt = GetCursorPosInClient();
 	tchi.flags = TCHT_ONITEMLABEL;
 	int index = HitTest(&tchi);
 	SetContextMenuTabIndex(index);
 
 	CMenu menu;
+	CPoint ptScreen(GetCursorPosInScreen());
 	menu.Attach(::GetSubMenu(::LoadMenu(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_CONTEXTMENU_TAB)), 0));
 	::SetForegroundWindow(m_hWnd);
 	menu.TrackPopupMenu(0, ptScreen.x, ptScreen.y, m_hWnd);

@@ -120,7 +120,7 @@ d2dw::CSizeF CSheetCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 
 d2dw::CSizeF CSheetCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
 {
-	return MeasureContentSize(pDirect);
+	return CSheetCell::MeasureContentSize(pDirect);
 }
 
 void CSheetCell::OnRButtonDown(const RButtonDownEvent& e)
@@ -212,11 +212,7 @@ void CSheetCell::OnChar(const CharEvent& e)
 
 void CSheetCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-/*	CRgn rgn;
-	rgn.CreateRectRgnIndirect(rcPaint);
-	pDC->SelectClipRgn(rgn);*/	
 	CSheet::OnPaint(PaintEvent(m_pSheet->GetGridPtr()));
-	//pDC->SelectClipRgn(NULL);
 }
 
 std::shared_ptr<CDC> CSheetCell::GetClientDCPtr()const

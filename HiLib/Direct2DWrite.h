@@ -307,6 +307,23 @@ namespace d2dw
 
 	};
 
+	struct SyntaxFormatF
+	{
+		CColorF Color;
+		bool IsBold;
+
+		bool operator==(const SyntaxFormatF& rhs) const;
+		bool operator!=(const SyntaxFormatF& rhs) const;
+		std::size_t GetHashCode() const;
+
+		template <class Archive>
+		void serialize(Archive& ar)
+		{
+			ar("Color", Color);
+			ar("IsBold", IsBold);
+		}
+	};
+
 };
 
 namespace std
@@ -368,7 +385,7 @@ namespace d2dw{
 		FLOAT m_xPixels2Dips = 0.0f;
 		FLOAT m_yPixels2Dips = 0.0f;
 
-		std::unique_ptr<CFileIconCache> m_pIconCache;
+		std::unique_ptr<CFileIconCache> m_pIconCache;//TODO Create only when necessary
 
 	public:
 		CDirect2DWrite(HWND hWnd);
@@ -412,7 +429,10 @@ namespace d2dw{
 
 		CSizeF CalcTextSize(const FormatF& format, const std::wstring& text);
 		CSizeF CalcTextSizeWithFixedWidth(const FormatF& fca, const std::wstring& text, const FLOAT width);
-		std::vector<CRectF> CDirect2DWrite::CalcCharRects(const FormatF& format, const std::wstring& text, const CSizeF& size);
+
+		std::vector<CRectF> CalcCharRects(const FormatF& format, const std::wstring& text, const CSizeF& size);
+		static std::vector<CRectF> CalcCharRects(const CComPtr<IDWriteTextLayout>& pTextLayout, const size_t& count);
+		static std::vector<CRectF> CalcCharRects(const CComPtr<IDWriteTextLayout1>& pTextLayout, const size_t& count);
 
 		FLOAT LayoutRound(FLOAT value, FLOAT unit = 0.5f)
 		{
