@@ -23,7 +23,7 @@ void CColorCell::OnLButtonClk(const LButtonClkEvent& e)
 	COLORREF CustColors[16];
 	CHOOSECOLOR cc={0};
 	cc.lStructSize=sizeof(CHOOSECOLOR);
-	cc.hwndOwner=m_pSheet->GetGridPtr()->m_hWnd;
+	cc.hwndOwner=m_pSheet->GetWndPtr()->m_hWnd;
 	COLORREF rgb = RGB(m_color.r * 255, m_color.g * 255, m_color.b * 255);
 	cc.rgbResult=rgb;
 	cc.lpCustColors=CustColors;

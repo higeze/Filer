@@ -94,6 +94,8 @@ public:
 	virtual void SetWidth(const FLOAT width, bool notify = true) { SetLength(width, notify); }
 
 	//Start/End	
+	virtual FLOAT GetStart() override;
+	virtual FLOAT GetEnd() override;
 	//Left/Right
 	virtual FLOAT GetLeft() { return GetStart(); }
 	virtual void SetLeft(const FLOAT left, bool notify = true) { SetStart(left); }

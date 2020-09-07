@@ -10,7 +10,7 @@ class CPropertyGridView:public CGridView
 private:
 
 public:
-	CPropertyGridView(std::shared_ptr<GridViewProperty> spGridViewProperty);
+	CPropertyGridView(CWnd* pWnd, std::shared_ptr<GridViewProperty> spGridViewProperty);
 	virtual ~CPropertyGridView(){}
 	boost::signals2::signal<void()> PropertyChanged;
 

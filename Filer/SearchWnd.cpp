@@ -6,6 +6,7 @@
 #include "ShellFunction.h"
 #include "ShellFileFactory.h"
 #include "ResourceIDFactory.h"
+#include "TextboxWnd.h"
 
 UINT CSearchWnd::WM_INCREMENTMAX = ::RegisterWindowMessage(L"CSearchWnd::WM_INCREMENTMAX");
 UINT CSearchWnd::WM_INCREMENTVALUE = ::RegisterWindowMessage(L"CSearchWnd::WM_INCREMENTVALUE");
@@ -13,7 +14,7 @@ UINT CSearchWnd::WM_ADDITEM = ::RegisterWindowMessage(L"CSearchWnd::WM_ADDITEM")
 
 CSearchWnd::CSearchWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, const CIDL& srcIDL)
 	:CWnd(), m_srcIDL(srcIDL),
-	m_pFileGrid(std::make_unique<CCheckableFileGrid>(spFilerGridViewProp)),
+	m_pFileGrid(std::make_unique<CCheckableFileGrid>(this, spFilerGridViewProp)),
 	m_pProgressbar(std::make_unique<d2dw::CProgressBar>(this, std::make_shared<ProgressProperty>()))
 
 {
@@ -102,12 +103,6 @@ LRESULT CSearchWnd::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 
 	//Progress
 	m_pProgressbar->SetRect(m_pDirect->Pixels2Dips(GetProgressBarRect(rcClient)));
-
-	//FileGrid
-	m_pFileGrid->CreateWindowExArgument()
-		.dwStyle(WS_CHILD | WS_VISIBLE | m_pFileGrid->CreateWindowExArgument().dwStyle());
-
-	m_pFileGrid->Create(m_hWnd, GetFileGridRect(rcClient));
 
 	//Search button
 	m_buttonSearch.CreateWindowExArgument()
@@ -214,7 +209,7 @@ LRESULT CSearchWnd::OnClose(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 	}
 
 	//Destroy
-	m_pFileGrid->DestroyWindow();
+	//m_pFileGrid->DestroyWindow();
 	DestroyWindow();
 	return 0;
 }
@@ -230,7 +225,9 @@ LRESULT CSearchWnd::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHand
 	m_pDirect->BeginDraw();
 
 	m_pDirect->ClearSolid(BackgroundFill);
-	m_pProgressbar->OnPaint(PaintEvent(this));
+	auto e = PaintEvent(this);
+	m_pFileGrid->OnPaint(e);
+	m_pProgressbar->OnPaint(e);
 
 	m_pDirect->EndDraw();
 	return 0;
@@ -243,7 +240,7 @@ LRESULT CSearchWnd::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandl
 
 	m_edit.MoveWindow(GetEditRect(rcClient), TRUE);
 	m_pProgressbar->SetRect(m_pDirect->Pixels2Dips(GetProgressBarRect(rcClient)));
-	m_pFileGrid->MoveWindow(GetFileGridRect(rcClient), TRUE);
+	m_pFileGrid->OnRect(RectEvent(this, GetDirectPtr()->Pixels2Dips(GetFileGridRect(rcClient))));
 	m_buttonSearch.MoveWindow(GetSearchBtnRect(rcClient), TRUE);
 	m_buttonCancel.MoveWindow(GetCancelBtnRect(rcClient), TRUE);
 	m_buttonClose.MoveWindow(GetCloseBtnRect(rcClient), TRUE);

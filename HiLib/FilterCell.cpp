@@ -13,7 +13,7 @@ std::wstring CFilterCell::GetString()
 void CFilterCell::SetStringCore(const std::wstring& str)
 {
 	//Filter cell undo redo is set when Post WM_FILTER
-	m_deadlinetimer.run([hWnd = m_pSheet->GetGridPtr()->m_hWnd, pColumn = m_pColumn, newString = str]{
+	m_deadlinetimer.run([hWnd = m_pSheet->GetWndPtr()->m_hWnd, pColumn = m_pColumn, newString = str]{
 		pColumn->SetFilter(newString);
 		::PostMessage(hWnd,WM_FILTER,NULL,NULL);
 	}, std::chrono::milliseconds(200));

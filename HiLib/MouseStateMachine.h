@@ -19,6 +19,7 @@ public:
 	void process_event(const LButtonDblClkEvent& e);
 	void process_event(const LButtonDblClkTimeExceedEvent& e);
 	void process_event(const RButtonDownEvent& e);
+	void process_event(const ContextMenuEvent& e);
 	void process_event(const MouseMoveEvent& e);
 	void process_event(const MouseLeaveEvent& e);
 	void process_event(const MouseWheelEvent& e);

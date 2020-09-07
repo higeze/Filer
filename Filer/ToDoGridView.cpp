@@ -6,7 +6,7 @@ void CToDoGridView::Open()
 	std::wstring path;
 	OPENFILENAME ofn = { 0 };
 	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = m_hWnd;
+	ofn.hwndOwner = GetWndPtr()->m_hWnd;
 	ofn.lpstrFilter = L"XML file(*.xml)\0*.xml\0\0";
 	ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
 	ofn.nMaxFile = MAX_PATH;
@@ -62,7 +62,7 @@ void CToDoGridView::Save()
 	if (m_path.get().empty()) {
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = m_hWnd;
+		ofn.hwndOwner = GetWndPtr()->m_hWnd;
 		ofn.lpstrFilter = L"XML file(*.xml)\0*.xml\0\0";
 		ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
 		ofn.nMaxFile = MAX_PATH;
@@ -110,7 +110,7 @@ void CToDoGridView::Save(const std::wstring& path)
 
 void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
-	auto spCell = Cell(m_pDirect->Pixels2Dips(e.PointInClient));
+	auto spCell = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (spCell) {
 		spCell->OnContextMenu(e);
 		if (*e.HandledPtr) { return; }
@@ -132,19 +132,19 @@ void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 	mii.dwTypeData = L"Remove Row";
 	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
-	::SetForegroundWindow(m_hWnd);
+	::SetForegroundWindow(GetWndPtr()->m_hWnd);
 	int idCmd = menu.TrackPopupMenu(
 		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
 		e.PointInScreen.x,
 		e.PointInScreen.y,
-		m_hWnd);
+		GetWndPtr()->m_hWnd);
 
 	auto& itemsSource = GetItemsSource();
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
 		itemsSource.notify_push_back(MainTask());
 	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
-		auto a = Cell(m_pDirect->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
-		itemsSource.notify_erase(itemsSource.cbegin() + (Cell(m_pDirect->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
+		auto a = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
+		itemsSource.notify_erase(itemsSource.cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
 	}
 	*e.HandledPtr = TRUE;
 }
@@ -162,5 +162,5 @@ void CToDoGridView::Normal_KeyDown(const KeyDownEvent& e)
 	} else {
 		CGridView::Normal_KeyDown(e);
 	}
-	InvalidateRect(NULL, FALSE);
+	//InvalidateRect(NULL, FALSE);
 }

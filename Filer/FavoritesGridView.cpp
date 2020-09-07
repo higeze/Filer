@@ -23,47 +23,28 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
-CFavoritesGridView::CFavoritesGridView(CFilerWnd* pWnd, std::shared_ptr<GridViewProperty> spGridViewProperty, std::shared_ptr<CFavoritesProperty> spFavoritesProp)
-			:CBindGridView(spGridViewProperty,
-						   spFavoritesProp->GetFavoritesPtr()),
-			m_spFavoritesProp(spFavoritesProp),
-			m_pFilerWnd(pWnd)
+CFavoritesGridView::CFavoritesGridView(
+	CWnd* pWnd,
+	std::shared_ptr<GridViewProperty> spGridViewProp,
+	std::shared_ptr<CFavoritesProperty> spFavoritesProp)
+	:CBindGridView(pWnd, spGridViewProp, spFavoritesProp->GetFavoritesPtr()),
+	m_spFavoritesProp(spFavoritesProp)
 {
 	m_isFocusable = false;
-
-	//RegisterArgs and CreateArgs
-	RegisterClassExArgument()
-		.lpszClassName(_T("CFavoriteGridView"))
-		.style(CS_DBLCLKS)
-		.hCursor(::LoadCursor(NULL, IDC_ARROW))
-		.hbrBackground((HBRUSH)(COLOR_3DFACE+1));
-	CreateWindowExArgument()
-		.lpszClassName(_T("CFavoriteGridView"))
-		.lpszWindowName(_T("FavoriteGridView"))
-		.dwStyle(WS_CHILD);
-
-	//AddMsgHandler(WM_MOUSEACTIVATE, &CFavoritesGridView::OnMouseActivate, this);
 
 	m_spItemDragger = std::make_shared<CFavoritesItemDragger>();
 
 	CellLButtonDblClk.connect(std::bind(&CFavoritesGridView::OnCellLButtonDblClk,this,std::placeholders::_1));
 }
 
-LRESULT CFavoritesGridView::OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
+void CFavoritesGridView::OnCreate(const CreateEvent& e)
 {
 	//Base Create
-	CGridView::OnCreate(uMsg,wParam,lParam,bHandled);
+	CGridView::OnCreate(e);
 
 	//List
 	OpenFavorites();
-	return 0;
 }
-
-//LRESULT CFavoritesGridView::OnMouseActivate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-//{
-//	bHandled = true;
-//	return MA_NOACTIVATE;
-//}
 
 void CFavoritesGridView::OpenFavorites()
 {
@@ -72,7 +53,7 @@ void CFavoritesGridView::OpenFavorites()
 	CONSOLETIMER("OpenFavorites Total");
 
 	//Direct2DWrite
-	m_pDirect->ClearTextLayoutMap();
+	GetWndPtr()->GetDirectPtr()->ClearTextLayoutMap();
 	//Celler
 	m_spCeller->Clear();
 	//Cursor

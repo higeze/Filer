@@ -149,11 +149,11 @@ private:
 	CUniqueIDFactory m_uniqueIDFactory;
 
 	observable_vector<std::shared_ptr<TabData>> m_itemsSource;
-	std::unordered_map<std::string, std::function<std::shared_ptr<CWnd>(const std::shared_ptr<TabData>&)>> m_itemsTemplate;
+	std::unordered_map<std::string, std::function<std::shared_ptr<CUIElement>(const std::shared_ptr<TabData>&)>> m_itemsTemplate;
 	observable<int> m_selectedIndex = -1;
 	int m_contextMenuTabIndex;
 
-	std::shared_ptr<CWnd> m_curView;
+	std::shared_ptr<CTextboxWnd> m_pContentWnd;
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
 
@@ -165,13 +165,13 @@ public:
 	//Getter Setter
 	std::function<std::shared_ptr<CFilerGridView>()> GetFilerGridViewPtr;
 	std::function<std::shared_ptr<CToDoGridView>()> GetToDoGridViewPtr;
-	std::function<std::shared_ptr<CTextboxWnd>()> GetTextViewPtr;
+	std::function<std::shared_ptr<CTextEditor>()> GetTextViewPtr;
 
 	observable_vector<std::shared_ptr<TabData>>& GetItemsSource(){ return m_itemsSource; }
 	int GetSelectedIndex()const{ return m_selectedIndex.get(); }
 
 	void SetContextMenuTabIndex(int index) { m_contextMenuTabIndex = index; }
-	std::shared_ptr<CWnd> GetCurView() { return m_curView; }
+	std::shared_ptr<CTextboxWnd> GetContentWnd() { return m_pContentWnd; }
 	void SetParentWnd(CWnd* pParentWnd) { m_pParentWnd = pParentWnd; }
 
 	//Message
@@ -223,6 +223,6 @@ public:
 
 		ar("ItemsSource", static_cast<std::vector<std::shared_ptr<TabData>>&>(m_itemsSource));
 		ar("SelectedIndex", m_selectedIndex);
-		ar("FilerView", GetFilerGridViewPtr(), m_spFilerGridViewProp);
+		ar("FilerView", GetFilerGridViewPtr(), m_pContentWnd.get(), m_spFilerGridViewProp);
 	}
 };

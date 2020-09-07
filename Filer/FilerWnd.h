@@ -13,7 +13,7 @@
 #include "PropertyWnd.h"
 #include "StatusBar.h"
 #include "FilerGridViewProperty.h"
-#include "Textbox.h"
+#include "TextboxWnd.h"
 //#include "KonamiCommander.h"
 
 class CFilerGridView;
@@ -87,10 +87,9 @@ public:
 };
 
 
-class CFilerWnd:public CWnd
+class CFilerWnd:public CTextboxWnd
 {
 private:
-	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
 	CRect m_rcWnd;
 	CRect m_rcPropWnd;
 	const int kSplitterWidth = 5;
@@ -106,14 +105,13 @@ private:
 	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
 
 	//Windows
+	std::shared_ptr<CFilerTabGridView> m_spLeftWnd;
+	std::shared_ptr<CFilerTabGridView> m_spRightWnd;
+	std::shared_ptr<CFilerTabGridView> m_spCurWnd;
+
+	//Controls
 	std::shared_ptr<CFavoritesGridView> m_spLeftFavoritesView;
 	std::shared_ptr<CFavoritesGridView> m_spRightFavoritesView;
-
-	std::shared_ptr<CFilerTabGridView> m_spLeftView;
-	std::shared_ptr<CFilerTabGridView> m_spRightView;
-	
-	std::shared_ptr<CFilerTabGridView> m_spCurView;
-
 	std::shared_ptr<d2dw::CStatusBar> m_spStatusBar;
 
 	//Property
@@ -126,7 +124,6 @@ public:
 	CFilerWnd();
 	virtual ~CFilerWnd();
 
-	virtual HWND Create(HWND hWndParent);
 	//Getter
 	std::shared_ptr<CApplicationProperty>& GetApplicationProperty() { return m_spApplicationProp; }
 	std::shared_ptr<FilerGridViewProperty>& GetFilerGridViewPropPtr() { return m_spFilerGridViewProp; }
@@ -134,25 +131,13 @@ public:
 
 	std::shared_ptr<CFavoritesGridView>& GetLeftFavoritesView() { return m_spLeftFavoritesView; }
 	std::shared_ptr<CFavoritesGridView>& GetRightFavoritesView() { return m_spRightFavoritesView; }
-	std::shared_ptr<CFilerTabGridView>& GetLeftView() { return m_spLeftView; }
-	std::shared_ptr<CFilerTabGridView>& GetRightView() { return m_spRightView; }
-	d2dw::CDirect2DWrite* GetDirectPtr() { return m_pDirect.get(); }
-
+	std::shared_ptr<CFilerTabGridView>& GetLeftWnd() { return m_spLeftWnd; }
+	std::shared_ptr<CFilerTabGridView>& GetRightWnd() { return m_spRightWnd; }
 
 private:
-	LRESULT OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	LRESULT OnClose(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	LRESULT OnDestroy(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	LRESULT OnEraseBkGnd(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	LRESULT OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	LRESULT OnKeyDown(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	LRESULT OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-
-	LRESULT OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	LRESULT OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	virtual LRESULT OnClose(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)override;
+	virtual LRESULT OnDestroy(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	virtual LRESULT OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
 	LRESULT OnCommandSave(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandExit(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
@@ -165,37 +150,47 @@ private:
 	LRESULT OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 	LRESULT OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 
+	virtual void OnCreate(const CreateEvent& e) override;
+	virtual void OnRect(const RectEvent& e) override;
+	virtual void OnSetFocus(const SetFocusEvent& e) override;
+	virtual void OnKeyDown(const KeyDownEvent& e) override;
+
+	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
+	virtual void OnLButtonUp(const LButtonUpEvent& e) override;
+	virtual void OnMouseMove(const MouseMoveEvent& e) override;
+
 public:
-	template<class T, class... Args>
-	LRESULT OnCommandOption(const std::wstring& name, std::shared_ptr<T>& spProp, std::function<void(const std::wstring&)> changed, Args&... args)
-	{
-		auto pPropWnd = new CPropertyWnd<T, Args...>(
-			m_spFilerGridViewProp,
-			name,
-			spProp,
-			args...);
+	//TODODO
+	//template<class T, class... Args>
+	//LRESULT OnCommandOption(const std::wstring& name, std::shared_ptr<T>& spProp, std::function<void(const std::wstring&)> changed, Args&... args)
+	//{
+	//	auto pPropWnd = new CPropertyWnd<T, Args...>(
+	//		m_spFilerGridViewProp,
+	//		name,
+	//		spProp,
+	//		args...);
 
-		pPropWnd->SignalPropertyChanged.connect(changed);
-		pPropWnd->SignalClose.connect([this](CPropertyWnd<T, Args...>* pWnd)->void{
-			WINDOWPLACEMENT wp = { 0 };
-			wp.length = sizeof(WINDOWPLACEMENT);
-			pWnd->GetWindowPlacement(&wp);
-			m_rcPropWnd = CRect(wp.rcNormalPosition);
-		});
+	//	pPropWnd->SignalPropertyChanged.connect(changed);
+	//	pPropWnd->SignalClose.connect([this](CPropertyWnd<T, Args...>* pWnd)->void{
+	//		WINDOWPLACEMENT wp = { 0 };
+	//		wp.length = sizeof(WINDOWPLACEMENT);
+	//		pWnd->GetWindowPlacement(&wp);
+	//		m_rcPropWnd = CRect(wp.rcNormalPosition);
+	//	});
 
-		HWND hWnd = NULL;
-		if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-			hWnd = m_hWnd;
-		} else {
-			hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
-		}
+	//	HWND hWnd = NULL;
+	//	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+	//		hWnd = m_hWnd;
+	//	} else {
+	//		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	//	}
 
-		pPropWnd->CreateOnCenterOfParent(hWnd, m_rcPropWnd.Size());
-		pPropWnd->ShowWindow(SW_SHOW);
-		pPropWnd->UpdateWindow();
+	//	pPropWnd->CreateOnCenterOfParent(hWnd, m_rcPropWnd.Size());
+	//	pPropWnd->ShowWindow(SW_SHOW);
+	//	pPropWnd->UpdateWindow();
 
-		return 0;
-	}
+	//	return 0;
+	//}
 
 	FRIEND_SERIALIZER
     template <class Archive>
@@ -213,8 +208,8 @@ public:
 		ar("TextEditorProperty", m_spTextEditorProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
-		ar("LeftView", m_spLeftView);
-		ar("RightView", m_spRightView);
+		ar("LeftView", m_spLeftWnd);
+		ar("RightView", m_spRightWnd);
 
 		ar("LeftFavoritesView", m_spLeftFavoritesView);
 		ar("RightFavoritesView", m_spRightFavoritesView);
@@ -238,8 +233,8 @@ public:
 		ar("TextEditorProperty", m_spTextEditorProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
-		ar("LeftView", m_spLeftView, m_spFilerGridViewProp, m_spTextEditorProp);
-		ar("RightView", m_spRightView, m_spFilerGridViewProp, m_spTextEditorProp);
+		ar("LeftView", m_spLeftWnd, m_spFilerGridViewProp, m_spTextEditorProp);
+		ar("RightView", m_spRightWnd, m_spFilerGridViewProp, m_spTextEditorProp);
 
 		ar("LeftFavoritesView", m_spLeftFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
 		ar("RightFavoritesView", m_spRightFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);

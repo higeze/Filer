@@ -78,7 +78,7 @@ void CCeller::OnMouseLeave(CSheet* pSheet, const MouseLeaveEvent& e)
 
 void CCeller::OnContextMenu(CSheet* pSheet, const ContextMenuEvent& e)
 {
-	auto cell = pSheet->Cell(pSheet->GetGridPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	auto cell = pSheet->Cell(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (cell != nullptr) {
 		cell->OnContextMenu(e);
 	}
@@ -90,7 +90,7 @@ void CCeller::OnSetCursor(CSheet* pSheet, const SetCursorEvent& e)
 	CPoint pt;
 	::GetCursorPos(&pt);
 	pt = e.WndPtr->ScreenToClient(pt);
-	auto cell = pSheet->Cell(pSheet->GetGridPtr()->GetDirectPtr()->Pixels2Dips(pt));
+	auto cell = pSheet->Cell(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(pt));
 	if (cell != nullptr) {
 		cell->OnSetCursor(e);
 	} else {

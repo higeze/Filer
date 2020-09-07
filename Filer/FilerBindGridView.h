@@ -30,20 +30,13 @@ protected:
 public:
 	//Constructor
 	template<typename... TArgs>
-	CFilerBindGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-					   std::shared_ptr<observable_vector<std::tuple<TItems...>>> spItemsSource = nullptr,
-					   TArgs... args)
-		:CBindGridView(std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), spItemsSource, args...)
+	CFilerBindGridView(
+		CWnd* pWnd,
+		std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		std::shared_ptr<observable_vector<std::tuple<TItems...>>> spItemsSource = nullptr,
+		TArgs... args)
+		:CBindGridView(pWnd, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), spItemsSource, args...)
 	{
-		m_cwa.dwExStyle(WS_EX_ACCEPTFILES);
-
-		AddCmdIDHandler(IDM_CUT, &CFilerBindGridView::OnCommandCut, this);
-
-		//They are already assigned in GridView
-		//AddCmdIDHandler(IDM_COPY,&CFilerGridViewBase::OnCommandCopy,this);
-		//AddCmdIDHandler(IDM_PASTE,&CFilerGridViewBase::OnCommandPaste,this);
-		//AddCmdIDHandler(IDM_DELETE,&CFilerGridViewBase::OnCommandDelete,this);
-
 		m_spItemDragger = std::make_shared<CFileDragger>();
 
 		CellLButtonDblClk.connect(std::bind(&CFilerBindGridView::OnCellLButtonDblClk, this, std::placeholders::_1));
@@ -85,7 +78,7 @@ public:
 		SHELLEXECUTEINFO	sei = { 0 };
 		sei.cbSize = sizeof(SHELLEXECUTEINFO);
 		sei.fMask = SEE_MASK_INVOKEIDLIST;
-		sei.hwnd = m_hWnd;
+		sei.hwnd = GetWndPtr()->m_hWnd;
 		sei.lpVerb = NULL;
 		sei.lpFile = NULL;
 		sei.lpParameters = NULL;
@@ -153,28 +146,24 @@ public:
 	/******************/
 	/* Window Message */
 	/******************/
-	virtual LRESULT OnCommandCut(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+	virtual void OnCommandCut(const CommandEvent& e) override
 	{
 		CutToClipboard();
-		return 0;
 	}
 
-	virtual LRESULT OnCommandCopy(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+	virtual void OnCommandCopy(const CommandEvent& e) override
 	{
 		CopyToClipboard();
-		return 0;
 	}
 	
-	virtual LRESULT OnCommandPaste(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+	virtual void OnCommandPaste(const CommandEvent& e) override
 	{
 		PasteFromClipboard();
-		return 0;
 	}
 	
-	virtual LRESULT OnCommandDelete(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
+	virtual void OnCommandDelete(const CommandEvent& e) override
 	{
 		DeleteSelectedFiles();
-		return 0;
 	}
 
 	/*****************/

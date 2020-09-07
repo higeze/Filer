@@ -9,99 +9,48 @@
 #include "MyFile.h"
 #include "MouseStateMachine.h"
 
-LRESULT CTextboxWnd::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+LRESULT CTextboxWnd::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	// Create direct
-	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
-	// Create textbox
-	m_pControl = std::make_shared<CTextEditor>(
-		this, m_spProp,
-		[this](const std::wstring& text) 
-		{
-//			m_isSaved.notify_set(false);
-		},
-		[](const std::wstring& text) {});
-	// Create mouse statemachine
-	m_pMouseMachine = std::make_unique<CMouseStateMachine>(m_pControl.get());
-
-
-	SetFocus();
-	InvalidateRect(NULL, FALSE);
-	return 0;
-}
-
-LRESULT CTextboxWnd::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	PAINTSTRUCT ps;
-	HDC hdc = ::BeginPaint(m_hWnd, &ps);
-	CRect rcClient = GetClientRect();
-
-	m_pDirect->BeginDraw();
-
-	m_pDirect->GetHwndRenderTarget()->Clear(d2dw::CColorF(1.f, 1.f, 1.f));
-
-	m_pControl->OnPaint(PaintEvent(this, &bHandled));
-
-	//Paint Focused Line
-	if (GetIsFocused()) {
-		d2dw::CRectF rcFocus(m_pDirect->Pixels2Dips(rcClient));
-		rcFocus.DeflateRect(1.0f, 1.0f);
-		m_pDirect->DrawSolidRectangle(*(m_spProp->FocusedLine), rcFocus);
+	if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
+		::SetForegroundWindow(hWnd);
 	}
 
-	m_pDirect->EndDraw();
-
-	::EndPaint(m_hWnd, &ps);
-	return 0;
-}
-
-LRESULT CTextboxWnd::OnEraseBkGnd(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	return 1;
-}
-
-LRESULT CTextboxWnd::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
-	m_pControl->OnRect(RectEvent(this, m_pDirect->Pixels2Dips(GetClientRect()), &bHandled));
-	InvalidateRect(NULL, FALSE);
+	DestroyWindow();
 	return 0;
 }
 
 LRESULT CTextboxWnd::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pControl->OnSetCursor(SetCursorEvent(this, wParam, lParam, &bHandled));
+	if (GetFocusedControlPtr())GetFocusedControlPtr()->OnSetCursor(SetCursorEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
-
 
 LRESULT CTextboxWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pControl->OnSetFocus(SetFocusEvent(this, wParam, lParam, &bHandled));
+	if (GetFocusedControlPtr())GetFocusedControlPtr()->OnSetFocus(SetFocusEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
-
 
 LRESULT CTextboxWnd::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pControl->OnKillFocus(KillFocusEvent(this, wParam, lParam, &bHandled));
+	if (GetFocusedControlPtr())GetFocusedControlPtr()->OnKillFocus(KillFocusEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
-LRESULT CTextboxWnd::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+LRESULT CTextboxWnd::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pControl->OnContextMenu(ContextMenuEvent(this, wParam, lParam, &bHandled));
+	GetFocusedControlPtr()->OnCommand(CommandEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
-void CTextboxWnd::OnFinalMessage(HWND m_hWnd){}
+void CTextboxWnd::OnFinalMessage(HWND m_hWnd) {}
 
-CTextboxWnd::CTextboxWnd(std::shared_ptr<TextEditorProperty> spProp)
-	:CWnd(), m_spProp(spProp)
+CTextboxWnd::CTextboxWnd()
+	:CWnd()
 {
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
@@ -113,30 +62,66 @@ CTextboxWnd::CTextboxWnd(std::shared_ptr<TextEditorProperty> spProp)
 		.lpszClassName(_T("CInplaceEditWnd"))
 		.lpszWindowName(_T("InplaceEditWnd"))
 		.dwStyle(WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE)
+		.dwExStyle(WS_EX_ACCEPTFILES)
 		.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"InplaceEditWnd"));
 
 	//Add Message
-	AddMsgHandler(WM_CREATE, &CTextboxWnd::OnCreate, this);
-	AddMsgHandler(WM_ERASEBKGND, &CTextboxWnd::OnEraseBkGnd, this);
-	AddMsgHandler(WM_SIZE, &CTextboxWnd::OnSize, this);
+	AddMsgHandler(WM_CREATE, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
+		{
+			m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
+			m_pMouseMachine = std::make_unique<CMouseStateMachine>(this);
+			OnCreate(CreateEvent(this, wParam, lParam, &bHandled));
+			SetFocus();
+			SendAll(&CUIElement::OnCreate, CreateEvent(this, wParam, lParam, &bHandled));
+			InvalidateRect(NULL, FALSE);
+			return 0;
+		});
+	AddMsgHandler(WM_CLOSE, &CTextboxWnd::OnClose, this);
 
-	AddMsgHandler(WM_PAINT, &CTextboxWnd::OnPaint, this);
-	AddMsgHandler(WM_DISPLAYCHANGE, &CTextboxWnd::OnPaint, this);
+	AddMsgHandler(WM_ERASEBKGND, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
+		{
+			bHandled = TRUE;
+			return 1;
+		});
+	AddMsgHandler(WM_SIZE, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
+		{
+			m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
+			OnRect(RectEvent(this, GetDirectPtr()->Pixels2Dips(GetClientRect())));
+			return 0;
+		});
+
+	auto onPaint = [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
+		{
+			CPaintDC dc(m_hWnd);
+			m_pDirect->BeginDraw();
+
+			m_pDirect->ClearSolid(d2dw::CColorF(1.f, 1.f, 1.f));
+
+			OnPaint(PaintEvent(this, &bHandled));
+
+			m_pDirect->EndDraw();
+			return 0;
+		};
+	AddMsgHandler(WM_PAINT, onPaint);
+	AddMsgHandler(WM_DISPLAYCHANGE, onPaint);
 
 	AddMsgHandler(WM_SETCURSOR, &CTextboxWnd::OnSetCursor, this);
 	AddMsgHandler(WM_SETFOCUS, &CTextboxWnd::OnSetFocus, this);
 	AddMsgHandler(WM_KILLFOCUS, &CTextboxWnd::OnKillFocus, this);
-	AddMsgHandler(WM_CONTEXTMENU, &CTextboxWnd::OnContextMenu, this);
 
 
 	//UserInput
-	AddMsgHandler(WM_LBUTTONDOWN, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
-		SetFocus();
-		return UserInputMachine_Message<LButtonDownEvent>(msg, wParam, lParam, bHandled);
+	AddMsgHandler(WM_LBUTTONDOWN, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT
+		{
+			SetFocus();
+			return UserInputMachine_Message<LButtonDownEvent>(msg, wParam, lParam, bHandled);
 		});
 	AddMsgHandler(WM_LBUTTONUP, &CTextboxWnd::UserInputMachine_Message<LButtonUpEvent>, this);
 	AddMsgHandler(WM_LBUTTONDBLCLK, &CTextboxWnd::UserInputMachine_Message<LButtonDblClkEvent>, this);
 	AddMsgHandler(RegisterWindowMessage(L"WM_LBUTTONDBLCLKTIMEXCEED"), &CTextboxWnd::UserInputMachine_Message<LButtonDblClkTimeExceedEvent>, this);
+	AddMsgHandler(WM_RBUTTONDOWN, &CTextboxWnd::UserInputMachine_Message<RButtonDownEvent>, this);
+	AddMsgHandler(WM_CONTEXTMENU, &CTextboxWnd::UserInputMachine_Message<ContextMenuEvent>, this);
+
 	AddMsgHandler(WM_MOUSEMOVE, &CTextboxWnd::UserInputMachine_Message<MouseMoveEvent>, this);
 	AddMsgHandler(WM_MOUSELEAVE, &CTextboxWnd::UserInputMachine_Message<MouseLeaveEvent>, this);
 	AddMsgHandler(WM_MOUSEWHEEL, &CTextboxWnd::UserInputMachine_Message<MouseWheelEvent>, this);
@@ -169,7 +154,7 @@ bool CTextboxWnd::GetIsFocused()const
 
 void CTextboxWnd::Update()
 {
-	m_pControl->Update();
+	GetFocusedControlPtr()->Update();
 }
 
 

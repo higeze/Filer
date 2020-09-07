@@ -34,18 +34,17 @@ CRect CFilerTabGridView::GetTabRect()
 
 
 CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, std::shared_ptr<TextEditorProperty>& spTextEditorProp)
-	:m_spFilerGridViewProp(spFilerGridViewProp), m_spTextEditorProp(spTextEditorProp)
+	:m_spFilerGridViewProp(spFilerGridViewProp), m_spTextEditorProp(spTextEditorProp), m_pContentWnd(std::make_shared<CTextboxWnd>())
 {
+	//Capture KeyDown Msg in FilerGridView
+	m_pContentWnd->AddMsgHandler(WM_KEYDOWN, &CFilerTabGridView::OnKeyDown, this);
+
 	//FilerGridView Closure
-	GetFilerGridViewPtr = [spFilerView = std::make_shared<CFilerGridView>(spFilerGridViewProp), this]()->std::shared_ptr<CFilerGridView> {
+	GetFilerGridViewPtr =
+		[spFilerView = std::make_shared<CFilerGridView>(m_pContentWnd.get(), m_spFilerGridViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CFilerGridView> {
 
-		if (!spFilerView->IsWindow() && m_hWnd) {
-			DWORD dwStyle = spFilerView->CreateWindowExArgument().dwStyle();
-			spFilerView->CreateWindowExArgument().dwStyle(dwStyle | WS_CHILD | WS_VISIBLE);
-			spFilerView->Create(m_hWnd, GetTabRect());
-
-			//Capture KeyDown Msg in FilerGridView
-			spFilerView->AddMsgHandler(WM_KEYDOWN, &CFilerTabGridView::OnKeyDown, this);
+		if (!isInitialized && m_pContentWnd->IsWindow()) {
+			isInitialized = true;
 
 			//Folder Changed
 			spFilerView->FolderChanged = [&](std::shared_ptr<CShellFolder>& pFolder) {
@@ -56,34 +55,20 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 				SetItemText(GetCurSel(), pData->GetItemText().c_str());
 
 				spFilerView->PostUpdate(Updates::Rect);
-				spFilerView->SetUpdateRect(spFilerView->GetDirectPtr()->Pixels2Dips(GetTabRect()));
+				spFilerView->SetUpdateRect(m_pContentWnd->GetDirectPtr()->Pixels2Dips(GetTabRect()));
 			};
+			//Create
+			spFilerView->OnCreate(CreateEvent(m_pContentWnd.get(), NULL, NULL, nullptr));
 		}
 
 		return spFilerView;
 	};
 
 	//ToDoGridView Closure
-	GetToDoGridViewPtr = [spToDoView = std::make_shared<CToDoGridView>(std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp)), this]()->std::shared_ptr<CToDoGridView>{
+	GetToDoGridViewPtr = [spToDoView = std::make_shared<CToDoGridView>(m_pContentWnd.get(), std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp)), isInitialized = false, this]()mutable->std::shared_ptr<CToDoGridView>{
 
-		if (!spToDoView->IsWindow() && m_hWnd) {
-			spToDoView->RegisterClassExArgument()
-				.lpszClassName(L"CBindWnd")
-				.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
-				.hCursor(::LoadCursor(NULL, IDC_ARROW))
-				.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
-
-			spToDoView->CreateWindowExArgument()
-				.lpszClassName(_T("CBindWnd"))
-				.lpszWindowName(L"TODO")
-				.dwStyle(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
-				.dwExStyle(WS_EX_ACCEPTFILES)
-				.hMenu(NULL);
-
-			spToDoView->AddMsgHandler(WM_KEYDOWN, &CFilerTabGridView::OnKeyDown, this);
-
-			spToDoView->SetIsDeleteOnFinalMessage(false);
-
+		if (!isInitialized && m_pContentWnd->IsWindow()) {
+			isInitialized = true;
 			//Columns
 			spToDoView->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(spToDoView.get()));
 			spToDoView->PushColumns(
@@ -155,13 +140,14 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 				SetItemText(GetCurSel(), pData->GetItemText().c_str());
 
 				spToDoView->PostUpdate(Updates::Rect);
-				spToDoView->SetUpdateRect(spToDoView->GetDirectPtr()->Pixels2Dips(GetTabRect()));
+				spToDoView->SetUpdateRect(m_pContentWnd->GetDirectPtr()->Pixels2Dips(GetTabRect()));
 			});
 
-			spToDoView->Create(m_hWnd, GetTabRect());
+			spToDoView->OnCreate(CreateEvent(m_pContentWnd.get(), NULL, NULL, nullptr));
 		}
 		return spToDoView;
 	};
+
 
 	//CFilerTabGridView
 	CreateWindowExArgument()
@@ -171,17 +157,14 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 	auto updateView = [this](const std::shared_ptr<TabData>& spData) {
 		auto iter = m_itemsTemplate.find(typeid(*spData).name());
 		if (iter != m_itemsTemplate.end()) {
-			auto newView = iter->second(spData);
-			if (newView && m_curView != newView) {
-				m_curView = newView;
-				m_curView->ShowWindow(SW_SHOW);
-				if (GetFilerGridViewPtr() != m_curView) GetFilerGridViewPtr()->ShowWindow(SW_HIDE);
-				if (GetToDoGridViewPtr() != m_curView) GetToDoGridViewPtr()->ShowWindow(SW_HIDE);
-				if (GetTextViewPtr() != m_curView) GetTextViewPtr()->ShowWindow(SW_HIDE);
-				//m_curView->ShowWindow(SW_SHOW);
-				m_curView->MoveWindow(GetTabRect(), TRUE);
-				m_curView->SetFocus();
-				m_curView->InvalidateRect(NULL, FALSE);
+			auto newControl = iter->second(spData);
+			if (newControl && m_pContentWnd->GetFocusedControlPtr() != newControl) {
+				m_pContentWnd->ClearControlPtr();
+				m_pContentWnd->AddControlPtr(newControl);
+				CSize sz = m_pContentWnd->GetClientRect().Size();
+				m_pContentWnd->SendMessage(WM_SIZE, NULL, MAKELPARAM(sz.cx, sz.cy));
+				m_pContentWnd->SetFocus();
+				m_pContentWnd->InvalidateRect(NULL, FALSE);
 			} else {
 				//Do nothing
 			}
@@ -228,7 +211,7 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 
 
 	//ItemsTemplate
-	m_itemsTemplate.emplace(typeid(FilerTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CWnd> {
+	m_itemsTemplate.emplace(typeid(FilerTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CUIElement> {
 		auto pData = std::static_pointer_cast<FilerTabData>(pTabData);
 		auto spView = GetFilerGridViewPtr();
 		spView->OpenFolder(pData->FolderPtr);
@@ -238,7 +221,7 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 		return spView;
 	});
 
-	m_itemsTemplate.emplace(typeid(ToDoTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CWnd> {
+	m_itemsTemplate.emplace(typeid(ToDoTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CUIElement> {
 		auto pData = std::static_pointer_cast<ToDoTabData>(pTabData);
 		auto spView = GetToDoGridViewPtr();
 		spView->Open(pData->Path);
@@ -248,13 +231,10 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 		return spView;
 	});
 
-	m_itemsTemplate.emplace(typeid(TextTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CWnd> {
+	m_itemsTemplate.emplace(typeid(TextTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CUIElement> {
 		auto pData = std::static_pointer_cast<TextTabData>(pTabData);
 		auto spView = GetTextViewPtr();
-		if (auto p = std::dynamic_pointer_cast<CTextEditor>(spView->GetControlPtr())) {
-			p->Open(pData->Path);
-		}
-		spView->InvalidateRect(NULL, FALSE);
+		spView->Open(pData->Path);
 
 		return spView;
 	});
@@ -275,8 +255,8 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 	AddMsgHandler(WM_KEYDOWN,&CFilerTabGridView::OnKeyDown,this);
 	//WM_MOUSEWHEEL is sent to window where mouse is
 	AddMsgHandler(WM_MOUSEWHEEL, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& handled)->LRESULT {
-			if (m_curView) {
-				m_curView->SendMessage(msg, wParam, lParam);
+			if (m_pContentWnd) {
+				m_pContentWnd->SendMessage(msg, wParam, lParam);
 			}
 			return 0;
 		});
@@ -293,64 +273,42 @@ CFilerTabGridView::CFilerTabGridView(std::shared_ptr<FilerGridViewProperty>& spF
 
 }
 
-CFilerTabGridView::~CFilerTabGridView()
-{
-	//GetFilerGridViewPtr = nullptr;
-	//GetToDoGridViewPtr = nullptr;
-	//GetTextViewPtr = nullptr;
-}
-
+CFilerTabGridView::~CFilerTabGridView() = default;
 
 LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
+	//Create Content Wnd
+	m_pContentWnd->Create(m_hWnd, GetTabRect());
+
 	//TextView Closure
-	GetTextViewPtr = [spTextView = std::make_shared<CTextboxWnd>(m_spTextEditorProp), this]()->std::shared_ptr<CTextboxWnd>{
+	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(m_pContentWnd.get(), m_spTextEditorProp, nullptr, nullptr), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>{
 
-		if (!spTextView->IsWindow() && m_hWnd) {
-			spTextView->RegisterClassExArgument()
-				.lpszClassName(L"CTextView")
-				.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
-				.hCursor(::LoadCursor(NULL, IDC_ARROW))
-				.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
+		if (!isInitialized && m_pContentWnd->IsWindow()) {
+			isInitialized = true;
+			//Path Changed
+			spTextView->GetObsPath().Changed.connect([&](const NotifyChangedEventArgs<std::wstring>& e) {
+				auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[GetCurSel()]);
+				pData->Path = spTextView->GetObsPath().get();
 
-			spTextView->CreateWindowExArgument()
-				.lpszClassName(_T("CTextView"))
-				.lpszWindowName(L"Text")
-				.dwStyle(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
-				.dwExStyle(WS_EX_ACCEPTFILES)
-				.hMenu(NULL);
+				SetItemText(GetCurSel(), pData->GetItemText().c_str());
 
-			spTextView->AddMsgHandler(WM_KEYDOWN, &CFilerTabGridView::OnKeyDown, this);
+				m_pContentWnd->MoveWindow(GetTabRect(), FALSE);
+				});
 
-			spTextView->SetIsDeleteOnFinalMessage(false);
+			//IsSave Changed
+			spTextView->GetObsIsSaved().Changed.connect([&](const NotifyChangedEventArgs<bool>& e) {
+				auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[GetCurSel()]);
+				pData->IsSaved = spTextView->GetObsIsSaved().get();
 
-			if (auto p = std::dynamic_pointer_cast<CTextEditor>(spTextView->GetControlPtr())) {
-				//Path Changed
-				p->GetObsPath().Changed.connect([&](const NotifyChangedEventArgs<std::wstring>& e) {
-					auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[GetCurSel()]);
-					pData->Path = p->GetObsPath().get();
+				SetItemText(GetCurSel(), pData->GetItemText().c_str());
 
-					SetItemText(GetCurSel(), pData->GetItemText().c_str());
-
-					spTextView->MoveWindow(GetTabRect(), FALSE);
-					});
-
-				//IsSave Changed
-				p->GetObsIsSaved().Changed.connect([&](const NotifyChangedEventArgs<bool>& e) {
-					auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[GetCurSel()]);
-					pData->IsSaved = p->GetObsIsSaved().get();
-
-					SetItemText(GetCurSel(), pData->GetItemText().c_str());
-
-					spTextView->MoveWindow(GetTabRect(), FALSE);
-					});
-			}
-
-			spTextView->Create(m_hWnd, GetTabRect());
+				m_pContentWnd->MoveWindow(GetTabRect(), FALSE);
+				});
+			//Create
+			spTextView->OnCreate(CreateEvent(m_pContentWnd.get(), NULL, NULL, nullptr));
 		}
 		return spTextView;
 	};
-
 
 
 	//ItemsSource
@@ -378,31 +336,32 @@ LRESULT CFilerTabGridView::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BO
 	});
 
 	SetCurSel(std::clamp(m_selectedIndex.get(), 0, GetItemCount() -1));
-
 	//Show Current view
 	auto pData = m_itemsSource[GetCurSel()];
 	auto iter = m_itemsTemplate.find(typeid(*pData).name());
 	if (iter != m_itemsTemplate.end()) {
-		m_curView = iter->second(pData);
-		//m_curView->InvalidateRect(NULL, FALSE);
-	}
+		m_pContentWnd->ClearControlPtr();
+		m_pContentWnd->AddControlPtr(iter->second(pData));
+		CSize sz = m_pContentWnd->GetClientRect().Size();
+		m_pContentWnd->SendMessage(WM_SIZE, NULL, MAKELPARAM(sz.cx, sz.cy));
+		m_pContentWnd->SetFocus();
+		m_pContentWnd->InvalidateRect(NULL, FALSE);
 
+	}
 	return 0;
 }
 
 LRESULT CFilerTabGridView::OnClose(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	GetFilerGridViewPtr()->DestroyWindow();
-	GetToDoGridViewPtr()->DestroyWindow();
-	GetTextViewPtr()->DestroyWindow();
+	m_pContentWnd->DestroyWindow();
 	DestroyWindow();
 	return 0;
 }
 
 LRESULT CFilerTabGridView::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	if (m_curView->IsWindow()) {
-		m_curView->MoveWindow(GetTabRect(), FALSE);
+	if (m_pContentWnd->IsWindow()) {
+		m_pContentWnd->MoveWindow(GetTabRect(), FALSE);
 	}
 	return 0;
 }
@@ -440,7 +399,7 @@ LRESULT CFilerTabGridView::OnNotifyTabSelChange(int, LPNMHDR, BOOL& bHandled)
 
 LRESULT CFilerTabGridView::OnNotifyTabLClick(int id, LPNMHDR, BOOL& bHandled)
 {
-	::SetFocus(m_curView->m_hWnd);
+	::SetFocus(m_pContentWnd->m_hWnd);
 	return 0;
 }
 
@@ -517,8 +476,9 @@ LRESULT CFilerTabGridView::OnCommandAddToFavorite(WORD wNotifyCode, WORD wID, HW
 	//TODO Bad connection between FilerTabGridView and FavoritesView
 	if(auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)){
 		p->GetFavoritesPropPtr()->GetFavorites().notify_push_back(std::make_shared<CFavorite>(std::static_pointer_cast<FilerTabData>(m_itemsSource[m_contextMenuTabIndex])->Path, L""));
-		p->GetLeftFavoritesView()->SubmitUpdate();
-		p->GetRightFavoritesView()->SubmitUpdate();
+		//TODODO
+		//p->GetLeftFavoritesView()->SubmitUpdate();
+		//p->GetRightFavoritesView()->SubmitUpdate();
 	}
 	return 0;
 }
@@ -528,7 +488,7 @@ LRESULT CFilerTabGridView::OnCommandOpenSameAsOther(WORD wNotifyCode, WORD wID, 
 	//TODO Bad connection between FilerTabGridView and FavoritesView
 	if (auto p = dynamic_cast<CFilerWnd*>(m_pParentWnd)) {
 			
-		std::shared_ptr<CFilerTabGridView> otherView = (this == p->GetLeftView().get())? p->GetRightView(): p->GetLeftView();
+		std::shared_ptr<CFilerTabGridView> otherView = (this == p->GetLeftWnd().get())? p->GetRightWnd(): p->GetLeftWnd();
 		m_itemsSource.notify_replace(m_itemsSource.begin() + m_selectedIndex.get(), otherView->GetItemsSource()[otherView->GetSelectedIndex()]);
 	}
 	return 0;

@@ -2,6 +2,10 @@
 #include "GridView.h"
 #include "CellProperty.h"
 
+FLOAT CRow::GetStart() { return m_start + m_pSheet->GetRectInWnd().top; }
+
+FLOAT CRow::GetEnd() { return m_start + m_length + +m_pSheet->GetRectInWnd().top; }
+
 FLOAT CRow::GetLength()
 {
 	if(!m_isMeasureValid){
@@ -18,7 +22,7 @@ FLOAT CRow::GetVirtualLength()
 {
 	if (!m_isVirtualMeasureValid) {
 		m_length =
-			m_pSheet->GetGridPtr()->GetDirectPtr()->GetVirtualHeight(*(m_pSheet->GetCellProperty()->Format)) +
+			m_pSheet->GetWndPtr()->GetDirectPtr()->GetVirtualHeight(*(m_pSheet->GetCellProperty()->Format)) +
 			m_pSheet->GetCellProperty()->Line->Width * 0.5f * 2.f +
 			m_pSheet->GetCellProperty()->Padding->top +
 			m_pSheet->GetCellProperty()->Padding->bottom;

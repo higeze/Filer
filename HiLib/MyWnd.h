@@ -172,7 +172,7 @@ private:
 	//prohibit copy constructor and substitute
 public:
 
-	virtual d2dw::CDirect2DWrite* GetDirectPtr() { throw std::exception("Not Implemented"); }
+	virtual d2dw::CDirect2DWrite* GetDirectPtr() const { throw std::exception("Not Implemented"); }
 
 	FunMsg m_allMsg;
 	MsgMap m_msgMap;
@@ -231,9 +231,9 @@ public:
 
 	BOOL SubclassWindow(HWND hWnd);
 
-	LRESULT OnCommand(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	virtual LRESULT OnCommand(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 
-	LRESULT OnNotify(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	virtual LRESULT OnNotify(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 
 	BOOL AddAllMsgHandler(UINT uMsg, FunMsg funMsg)
 	{
@@ -411,6 +411,7 @@ public:
 	HDC BeginPaint(LPPAINTSTRUCT lpPaint){return ::BeginPaint(m_hWnd,lpPaint);}
 	BOOL EndPaint(const PAINTSTRUCT *lpPaint){return ::EndPaint(m_hWnd,lpPaint);}
 	BOOL SetWindowPos(HWND hWndInsertAfter,int X,int Y,int cx,int cy,UINT uFlags){return ::SetWindowPos(m_hWnd,hWndInsertAfter,X,Y,cx,cy,uFlags);}
+	BOOL SetWindowPos(HWND hWndInsertAfter, CRect rc, UINT uFlags) { return ::SetWindowPos(m_hWnd, hWndInsertAfter, rc.left, rc.top, rc.Width(), rc.Height(), uFlags); }
 	int ReleaseDC(HDC hDC){return ::ReleaseDC(m_hWnd,hDC);}
 	LONG_PTR SetWindowLongPtr(int nIndex,LONG_PTR dwNewLong){return ::SetWindowLongPtr(m_hWnd,nIndex,dwNewLong);}
 	LONG GetWindowLong(int nIndex){return ::GetWindowLong(m_hWnd,nIndex);}
@@ -540,8 +541,8 @@ public:
 	void UpdateBuffer(CWnd* pWnd)//OnCreate,OnSize
 	{
 		UHDC uhDC=pWnd->GetUHDC();
-		RECT rcClient={0};
-		pWnd->GetClientRect(&rcClient);
+		RECT rcClient= pWnd->GetClientRect();
+		
 		m_uhBitMapBuff=UHBITMAP(::CreateCompatibleBitmap(uhDC.get(),rcClient.right-rcClient.left,rcClient.bottom-rcClient.top));
 		m_uhDCBuff=UHDC(::CreateCompatibleDC(uhDC.get()));
 		::SelectObject(m_uhDCBuff.get(),m_uhBitMapBuff.get());
@@ -857,7 +858,7 @@ public:
 			SendMessage(EM_SCROLLCARET,0,0L);
 		}
 	}
-	CRect GetRect(){
+	CRect GetRectInWnd(){
 		CRect rcRect;
 		if((BOOL)SendMessage(EM_GETRECT,0,(LPARAM)&rcRect)){
 			return rcRect;

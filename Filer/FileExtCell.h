@@ -27,7 +27,7 @@ public:
 	void SetStringCore(const std::wstring& str)
 	{
 		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		return std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems())->SetExt(str, m_pSheet->GetGridPtr()->m_hWnd);
+		return std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems())->SetExt(str, m_pSheet->GetWndPtr()->m_hWnd);
 	}
 
 	virtual bool CanSetStringOnEditing()const override { return false; }
@@ -55,7 +55,7 @@ public:
 	void SetStringCore(const std::wstring& str)
 	{
 		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		return std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems())->SetExt(str, m_pSheet->GetGridPtr()->m_hWnd);
+		return std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems())->SetExt(str, m_pSheet->GetWndPtr()->m_hWnd);
 	}
 
 	virtual bool CanSetStringOnEditing()const override { return false; }

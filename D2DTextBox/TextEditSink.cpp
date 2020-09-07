@@ -68,7 +68,7 @@ STDAPI_(ULONG) CTextEditSink::Release()
 //----------------------------------------------------------------------------
 #define TES_INVALID_COOKIE  ((DWORD)(-1))
 
-CTextEditSink::CTextEditSink(D2DTextbox *pEditor)
+CTextEditSink::CTextEditSink(CTextBox *pEditor)
 {
     _cRef = 1;
     _dwEditCookie = TES_INVALID_COOKIE;

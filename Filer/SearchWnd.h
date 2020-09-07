@@ -46,7 +46,7 @@ public:
 
 	CSearchWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, const CIDL& srcIDL);
 	~CSearchWnd();
-	virtual d2dw::CDirect2DWrite* GetDirectPtr() override { return m_pDirect.get(); }
+	virtual d2dw::CDirect2DWrite* GetDirectPtr()const override { return m_pDirect.get(); }
 
 	std::unique_ptr<d2dw::CProgressBar>& GetProgressBarPtr() { return m_pProgressbar; }
 

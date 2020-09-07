@@ -24,7 +24,7 @@ CSheetCell::CSheetCell(
 	std::shared_ptr<SheetProperty> spSheetProperty,
 	std::shared_ptr<CellProperty> spCellProperty,
 	CMenu* pMenu)
-	:CSheet(spSheetProperty), 
+	:CSheet(pSheet->GetWndPtr(), spSheetProperty), 
 	CCell(pSheet,pRow,pColumn,spCellProperty,pMenu)
 {
 	m_spRowDragger = std::make_shared<CRowDragger>();
@@ -45,7 +45,7 @@ void CSheetCell::Resize()
 {
 	if(CanResizeRow() || CanResizeColumn()){
 		CResizeDlg* pDlg = new CResizeDlg(this);
-		g_hDlgModeless = pDlg->Create(m_pSheet->GetGridPtr()->m_hWnd);
+		g_hDlgModeless = pDlg->Create(m_pSheet->GetWndPtr()->m_hWnd);
 		pDlg->ShowWindow(SW_SHOW);
 	}else{
 		
@@ -95,14 +95,14 @@ FLOAT CSheetCell::GetLeft()const
 	return CCell::GetLeft();
 }
 
-d2dw::CRectF CSheetCell::GetRect()const
+d2dw::CRectF CSheetCell::GetRectInWnd()const
 {
-	return CCell::GetRect();
+	return CCell::GetRectInWnd();
 }
 
 d2dw::CRectF CSheetCell::GetPaintRect()
 {
-	return CCell::GetRect();//TODO
+	return CCell::GetRectInWnd();//TODO
 }
 
 d2dw::CPointF CSheetCell::GetScrollPos()const
@@ -212,13 +212,13 @@ void CSheetCell::OnChar(const CharEvent& e)
 
 void CSheetCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 {
-	CSheet::OnPaint(PaintEvent(m_pSheet->GetGridPtr()));
+	CSheet::OnPaint(PaintEvent(m_pSheet->GetWndPtr()));
 }
 
-std::shared_ptr<CDC> CSheetCell::GetClientDCPtr()const
-{
-	return m_pSheet->GetClientDCPtr();
-}
+//std::shared_ptr<CDC> CSheetCell::GetClientDCPtr()const
+//{
+//	return m_pSheet->GetClientDCPtr();
+//}
 CGridView* CSheetCell::GetGridPtr()
 {
 	return m_pSheet->GetGridPtr();

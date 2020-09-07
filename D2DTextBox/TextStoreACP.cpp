@@ -11,7 +11,7 @@
 
 #define Round(x)	((LONG)(x+0.5f))
 
-CTextStore::CTextStore(D2DTextbox *pEditor):_pEditor(pEditor)
+CTextStore::CTextStore(CTextBox *pEditor):_pEditor(pEditor)
 {
 	_cRef = 1;
 	TextStoreACPSink_ = NULL;
@@ -503,7 +503,7 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
         prc->top = 0;
         prc->bottom = 0;
     }
-    _pEditor->m_pWnd->ClientToScreen(prc);
+    _pEditor->GetWndPtr()->ClientToScreen(prc);
 
     *pfClipped = FALSE;
     return S_OK;
@@ -536,7 +536,7 @@ STDAPI CTextStore::GetScreenExt(TsViewCookie vcView, RECT *prc)
 
 STDAPI CTextStore::GetWnd(TsViewCookie vcView, HWND *phwnd)
 {
-    *phwnd = _pEditor->m_pWnd->m_hWnd;
+    *phwnd = _pEditor->GetWndPtr()->m_hWnd;
     return S_OK;
 }
 

@@ -27,7 +27,9 @@ public:
 	virtual bool HasCell()const { return false; }
 	virtual std::shared_ptr<CCell>& Cell(CColumn* pCol) { throw std::exception("Not implemented"); }
 
-	//Start/End
+	//Start/End	
+	virtual FLOAT GetStart() override;
+	virtual FLOAT GetEnd() override;
 	//Top/Bottom
 	virtual FLOAT GetTop(){ return GetStart(); }
 	virtual void SetTop(const FLOAT top, bool notify = true) { SetStart(top, notify); }

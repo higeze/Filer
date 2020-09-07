@@ -22,7 +22,7 @@ std::wstring CPathCell::GetString()
 	}
 }
 
-d2dw::CRectF CPathCell::GetRect()const
+d2dw::CRectF CPathCell::GetRectInWnd()const
 {
 	return d2dw::CRectF(
 		m_pSheet->GetContainer<ColTag, VisTag>()[m_pSheet->GetFrozenCount<ColTag>()]->GetLeft(),

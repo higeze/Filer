@@ -42,7 +42,7 @@ bool in_range(const T& value, const T& min, const T& max)
 	return min <= value && value <= max;
 }
 
-class D2DTextbox: public IBridgeTSFInterface, public CUIElement
+class CTextBox: public IBridgeTSFInterface, public CUIElement
 {
 /**********/
 /* Static */
@@ -56,6 +56,7 @@ public:
 /*********/
 
 protected:
+	CWnd* m_pWnd;
 /* Caret */
 	enum caret
 	{
@@ -81,14 +82,14 @@ protected:
 	std::unique_ptr<CTextboxStateMachine> m_pTextMachine;
 
 public:
-	D2DTextbox(
+	CTextBox(
 		CWnd* pWnd,
 		CTextCell* pCell,
 		const std::shared_ptr<TextboxProperty> pProp,
 		const std::wstring& text,
 		std::function<void(const std::wstring&)> changed,
 		std::function<void(const std::wstring&)> final);
-	virtual ~D2DTextbox();
+	virtual ~CTextBox();
 private:
 	void InitTSF();
 	void UninitTSF();
@@ -97,6 +98,7 @@ public:
 	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets); }
 	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets); }
 	CTextCell* GetCellPtr() { return m_pCell; }
+	virtual CWnd* GetWndPtr()const override { return m_pWnd; }
 
 public:
 	/******************/
@@ -155,7 +157,7 @@ public:
 
 
 	// IBridgeInterface
-	virtual d2dw::CRectF GetClientRect() const;
+	virtual d2dw::CRectF GetRectInWnd() const;
 	virtual d2dw::CRectF GetPageRect() const;
 
 	// Text Functions 
@@ -253,8 +255,6 @@ protected:
 	TfEditCookie m_editCookie;
 
 public:
-	//////CGridView* m_pWnd;
-	CWnd* m_pWnd;
 
 public:
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
@@ -267,7 +267,7 @@ public:
 
 };
 
-class CTextEditor :public D2DTextbox
+class CTextEditor :public CTextBox
 {
 private:
 	observable<std::wstring> m_path;
@@ -279,7 +279,7 @@ public:
 		const std::shared_ptr<TextboxProperty>& spProp, 
 		std::function<void(const std::wstring&)> changed,
 		std::function<void(const std::wstring&)> final)
-		:D2DTextbox(pWnd, nullptr, spProp, L"", changed, final)
+		:CTextBox(pWnd, nullptr, spProp, L"", changed, final)
 	{
 		m_hasBorder = false;
 		m_isScrollable = true;
@@ -291,11 +291,11 @@ public:
 	observable<bool>& GetObsIsSaved() { return m_isSaved; }
 
 
-	d2dw::CRectF GetClientRect() const override
+	d2dw::CRectF GetRectInWnd() const override
 	{
-		CRect rc = m_pWnd->GetClientRect();
+		CRect rc = GetWndPtr()->GetClientRect();
 		//rc.DeflateRect(1);
-		return m_pWnd->GetDirectPtr()->Pixels2Dips(rc);
+		return GetWndPtr()->GetDirectPtr()->Pixels2Dips(rc);
 	}
 
 	bool GetIsVisible() const override

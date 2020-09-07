@@ -4,12 +4,12 @@
 namespace d2dw
 {
 	CProgressBar::CProgressBar(CWnd* pWnd, const std::shared_ptr<ProgressProperty>& spProgressProp)
-		:CUIElement(), m_pWnd(pWnd), m_spStatusBarProp(spProgressProp){}
+		:m_pWnd(pWnd), m_spStatusBarProp(spProgressProp){}
 
 	void CProgressBar::OnPaint(const PaintEvent& e)
 	{
 		//Draw background
-		CRectF backRect(GetRect());
+		CRectF backRect(GetRectInWnd());
 		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->BackgroundFill, backRect);
 
 		//Draw foreground

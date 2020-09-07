@@ -629,6 +629,9 @@
     <ClInclude Include="..\HiLib\Control.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\TabControl.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -914,6 +917,9 @@
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\MouseStateMachine.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\TabControl.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

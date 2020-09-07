@@ -140,7 +140,7 @@ public:
 		}
 
 		//Size
-		CRect rc = GetClientRect();
+		CRect rc = GetRectInWnd();
 		CRect rcBtnDefault, rcBtnOK, rcBtnCancel, rcBtnApply, rcGrid;
 		rcBtnDefault.SetRect(rc.left + 3, rc.bottom - 25, rc.left + 3 + 52, rc.bottom - 25 + 22);
 		rcBtnApply.SetRect(rc.right - 60, rc.bottom - 25, rc.right - 60 + 52, rc.bottom - 25 + 22);
@@ -239,7 +239,7 @@ public:
 
 	LRESULT OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
 	{
-		CRect rc=GetClientRect();
+		CRect rc=GetRectInWnd();
 		if(m_buttonDefault.IsWindow())m_buttonDefault.MoveWindow(rc.left+3,rc.bottom-25,52,22,TRUE);
 		if(m_buttonApply.IsWindow()){
 			m_buttonApply.MoveWindow(rc.right-60,rc.bottom-25,52,22,TRUE);

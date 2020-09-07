@@ -54,7 +54,7 @@ public:
 namespace d2dw
 {
 
-	class CStatusBar: CUIElement
+	class CStatusBar: public CUIElement
 	{
 	private:
 		std::mutex m_mtx;
@@ -76,7 +76,6 @@ namespace d2dw
 
 	protected:
 		CWnd* m_pWnd;
-
 		CRectF m_rect;
 
 		int m_min = 0;
@@ -88,12 +87,14 @@ namespace d2dw
 		CStatusBar(CWnd* pWnd, const std::shared_ptr<StatusBarProperty>& spStatusBarProp);
 		virtual ~CStatusBar();
 
-		CRectF GetRect()const { return m_rect; }
-		void SetRect(const CRectF & rect) { m_rect = rect; }
-		void SetRect(const FLOAT left, const FLOAT top, const FLOAT right, const FLOAT bottom)
-		{
-			m_rect.SetRect(left, top, right, bottom);
-		}
+		CWnd* GetWndPtr()const override { return m_pWnd; }
+		CRectF GetRectInWnd()const { return m_rect; }
+		void OnRect(const RectEvent& e) override { m_rect = e.Rect; }
+		//void SetRect(const CRectF & rect) { m_rect = rect; }
+		//void SetRect(const FLOAT left, const FLOAT top, const FLOAT right, const FLOAT bottom)
+		//{
+		//	m_rect.SetRect(left, top, right, bottom);
+		//}
 		void SetText(const std::wstring& text) { m_text = text; }
 		CSizeF GetSize()const { return CSizeF(m_rect.Width(), m_rect.Height()); }
 		virtual void OnPaint(const PaintEvent & e);

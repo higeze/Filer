@@ -36,6 +36,11 @@ struct CMouseStateMachine::Machine
 		pGrid->OnRButtonDown(e);
 	}
 
+	void Normal_ContextMenu(CUIElement* pGrid, const ContextMenuEvent& e)
+	{
+		pGrid->OnContextMenu(e);
+	}
+
 	void Normal_MouseMove(CUIElement* pGrid, const MouseMoveEvent& e)
 	{
 		pGrid->OnMouseMove(e);
@@ -141,7 +146,7 @@ struct CMouseStateMachine::Machine
 			state<Normal> +event<MouseWheelEvent> / call(&Machine::Normal_MouseWheel),
 			state<Normal> +event<CharEvent> / call(&Machine::Normal_Char),
 			state<Normal> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
-
+			state<Normal> +event<ContextMenuEvent> / call(&Machine::Normal_ContextMenu),
 
 			state<LButtonDowned> +on_entry<LButtonDownEvent> / call(&Machine::LButtonDowned_OnEntry),
 			state<LButtonDowned> +on_exit<_> / call(&Machine::LButtonDowned_OnExit),
@@ -194,6 +199,7 @@ void CMouseStateMachine::process_event(const LButtonUpEvent& e) { m_pMachine->pr
 void CMouseStateMachine::process_event(const LButtonDblClkEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const LButtonDblClkTimeExceedEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const RButtonDownEvent& e) { m_pMachine->process_event(e); }
+void CMouseStateMachine::process_event(const ContextMenuEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const MouseMoveEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const MouseLeaveEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const MouseWheelEvent& e) { m_pMachine->process_event(e); }

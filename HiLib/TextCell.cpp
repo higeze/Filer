@@ -40,7 +40,7 @@ d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* p
 
 d2dw::CRectF CTextCell::GetEditRect() const
 {
-	return GetRect();
+	return GetRectInWnd();
 }
 
 void CTextCell::OnEdit(const EventArgs& e)

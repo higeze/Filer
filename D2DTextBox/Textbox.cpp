@@ -31,17 +31,17 @@ HRESULT UninitDisplayAttrbute();
 /*****************/
 
 #if ( _WIN32_WINNT < _WIN32_WINNT_WIN8 )
-ITfThreadMgr* D2DTextbox::s_pThreadMgr = NULL;
+ITfThreadMgr* CTextBox::s_pThreadMgr = NULL;
 #else
 ITfThreadMgr2* D2DTextbox::s_pThreadMgr = NULL;
 #endif
-ITfKeystrokeMgr* D2DTextbox::s_pKeystrokeMgr = NULL;
-TfClientId D2DTextbox::s_tfClientId = TF_CLIENTID_NULL;
+ITfKeystrokeMgr* CTextBox::s_pKeystrokeMgr = NULL;
+TfClientId CTextBox::s_tfClientId = TF_CLIENTID_NULL;
 
 /*******************/
 /* static function */
 /*******************/
-bool D2DTextbox::AppTSFInit()
+bool CTextBox::AppTSFInit()
 {
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
 	if (FAILED(CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr2, (void**)&s_pThreadMgr))) goto Exit;
@@ -59,7 +59,7 @@ Exit:
 	return false;
 
 }
-void D2DTextbox::AppTSFExit()
+void CTextBox::AppTSFExit()
 {
 	UninitDisplayAttrbute();
 
@@ -76,7 +76,7 @@ void D2DTextbox::AppTSFExit()
 /***************/
 /* constructor */
 /***************/
-D2DTextbox::D2DTextbox(
+CTextBox::CTextBox(
 	CWnd* pWnd,
 	CTextCell* pCell,
 	const std::shared_ptr<TextboxProperty> pProp,
@@ -92,12 +92,13 @@ D2DTextbox::D2DTextbox(
 	m_pHScroll(std::make_unique<d2dw::CHScroll>(pWnd, pProp->HScrollPropPtr, [this](const wchar_t* name) { UpdateAll(); }))
 {
 	m_caretPoint.SetPoint(0, GetLineHeight() * 0.5f);
+	//m_caretPoint.SetPoint(0, pProp->Format->Font.Size * 0.5f);
 
 	GetTextLayoutPtr = [this, pTextLayout1 = CComPtr<IDWriteTextLayout1>(nullptr)](void)mutable->CComPtr<IDWriteTextLayout1>&
 	{
 		if (!pTextLayout1) {
 			auto pageRect = GetPageRect();
-			auto pDirect = m_pWnd->GetDirectPtr();
+			auto pDirect = GetWndPtr()->GetDirectPtr();
 			auto pRender = pDirect->GetHwndRenderTarget();
 			auto pFactory = pDirect->GetDWriteFactory();
 			auto size = d2dw::CSizeF(m_pProp->IsWrap ? pageRect.Width() : FLT_MAX, FLT_MAX);
@@ -160,7 +161,7 @@ D2DTextbox::D2DTextbox(
 			
 			originCharRects = d2dw::CDirect2DWrite::CalcCharRects(GetTextLayoutPtr(), m_text.size());
 			if (m_text.empty()) {
-				auto size = m_pWnd->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"");
+				auto size = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"");
 				originCharRects.emplace_back(
 					0.f, 0.f,
 					size.width, size.height);
@@ -254,7 +255,7 @@ D2DTextbox::D2DTextbox(
 		if (selectionCharRects.empty())
 		{
 			selectionCharRects = GetActualCharRects();
-			auto size = m_pWnd->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"a");
+			auto size = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"a");
 			for (size_t i = 0; i < m_text.size(); i++) {
 				if (m_text[i] == L'\r' || m_text[i] == L'\n') {
 					selectionCharRects[i].right += size.width;
@@ -299,7 +300,7 @@ D2DTextbox::D2DTextbox(
 	m_text.StringChanged.connect(
 		[this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
 			m_pTextStore->OnTextChange(e.StartIndex, e.OldEndIndex, e.NewEndIndex);
-			m_changed(e.NewString);
+			if (m_changed) { m_changed(e.NewString); }
 			UpdateAll();
 		}
 	);
@@ -315,13 +316,13 @@ D2DTextbox::D2DTextbox(
 /**************/
 /* destructor */
 /**************/
-D2DTextbox::~D2DTextbox()
+CTextBox::~CTextBox()
 {
 	m_timer.stop();
 	UninitTSF();
 }
 
-void D2DTextbox::InitTSF()
+void CTextBox::InitTSF()
 {
 	m_pTextStore = CComPtr<CTextStore>(new CTextStore(this));
 	if (!m_pTextStore) { throw std::exception(FILE_LINE_FUNC); }
@@ -338,7 +339,7 @@ void D2DTextbox::InitTSF()
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
 	s_pThreadMgr->SetFocus(pDocumentMgr_);
 #else
-	if (FAILED(s_pThreadMgr->AssociateFocus(m_pWnd->m_hWnd, m_pDocumentMgr, &pDocumentMgrPrev))) {
+	if (FAILED(s_pThreadMgr->AssociateFocus(GetWndPtr()->m_hWnd, m_pDocumentMgr, &pDocumentMgrPrev))) {
 		throw std::exception(FILE_LINE_FUNC);
 	}
 #endif
@@ -348,7 +349,7 @@ void D2DTextbox::InitTSF()
 	m_pTextEditSink->_Advise(m_pInputContext);
 }
 
-void D2DTextbox::UninitTSF()
+void CTextBox::UninitTSF()
 {
 	if (m_pTextEditSink) {
 		m_pTextEditSink->_Unadvise();
@@ -359,7 +360,7 @@ void D2DTextbox::UninitTSF()
 	}
 }
 
-void D2DTextbox::Clear()
+void CTextBox::Clear()
 {
 	m_carets.notify_set(0, 0, 0, 0, 0);
 	m_text.notify_clear();
@@ -375,7 +376,7 @@ void D2DTextbox::Clear()
 
 
 
-void D2DTextbox::MoveCaret(const int& index, const d2dw::CPointF& point)
+void CTextBox::MoveCaret(const int& index, const d2dw::CPointF& point)
 {
 //	auto modPos = (newPos == m_text.size() - 1 && m_text[m_text.size() - 1] == L'\n' && std::get<caret::CurCaret>(m_carets) != newPos +1) ? newPos + 1 : newPos;
 	m_carets.notify_set(
@@ -390,7 +391,7 @@ void D2DTextbox::MoveCaret(const int& index, const d2dw::CPointF& point)
 	ResetCaret();
 }
 
-void D2DTextbox::MoveCaretWithShift(const int& index, const d2dw::CPointF& point)
+void CTextBox::MoveCaretWithShift(const int& index, const d2dw::CPointF& point)
 {
 	m_carets.notify_set(
 		std::get<caret::CurCaret>(m_carets),
@@ -404,7 +405,7 @@ void D2DTextbox::MoveCaretWithShift(const int& index, const d2dw::CPointF& point
 	ResetCaret();
 }
 
-void D2DTextbox::MoveSelection(const int& selBegin, const int& selEnd)
+void CTextBox::MoveSelection(const int& selBegin, const int& selEnd)
 {
 	m_carets.notify_set(
 		std::get<caret::CurCaret>(m_carets),
@@ -416,7 +417,7 @@ void D2DTextbox::MoveSelection(const int& selBegin, const int& selEnd)
 	ResetCaret();
 }
 
-void D2DTextbox::EnsureVisibleCaret()
+void CTextBox::EnsureVisibleCaret()
 {
 	if (m_isScrollable) {
 		auto pageRect = GetPageRect();
@@ -448,7 +449,7 @@ void D2DTextbox::EnsureVisibleCaret()
 /*******************/
 /* Windows Message */
 /*******************/
-void D2DTextbox::OnClose(const CloseEvent& e)
+void CTextBox::OnClose(const CloseEvent& e)
 {
 	if (!m_isClosing) {
 		m_isClosing = true;
@@ -456,12 +457,12 @@ void D2DTextbox::OnClose(const CloseEvent& e)
 	}
 }
 
-void D2DTextbox::OnRect(const RectEvent& e)
+void CTextBox::OnRect(const RectEvent& e)
 {
 	UpdateAll();
 }
 
-void D2DTextbox::OnMouseWheel(const MouseWheelEvent& e)
+void CTextBox::OnMouseWheel(const MouseWheelEvent& e)
 {
 	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);
 }
@@ -471,12 +472,12 @@ void D2DTextbox::OnMouseWheel(const MouseWheelEvent& e)
 /*****************/
 
 
-void D2DTextbox::Normal_Paint(const PaintEvent& e)
+void CTextBox::Normal_Paint(const PaintEvent& e)
 {
 	//PaintBackground
-	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetClientRect());
+	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
 	//PaintLine
-	if (m_hasBorder) { e.WndPtr->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->EditLine), GetClientRect()); }
+	if (m_hasBorder) { e.WndPtr->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->EditLine), GetRectInWnd()); }
 	//PaintContent
 	Render();
 	//PaintScroll
@@ -484,18 +485,18 @@ void D2DTextbox::Normal_Paint(const PaintEvent& e)
 	m_pHScroll->OnPaint(e);
 }
 
-void D2DTextbox::Normal_SetFocus(const SetFocusEvent& e)
+void CTextBox::Normal_SetFocus(const SetFocusEvent& e)
 {
 	m_isFirstDrawCaret = true;
 }
 
 
-void D2DTextbox::Normal_KillFocus(const KillFocusEvent& e)
+void CTextBox::Normal_KillFocus(const KillFocusEvent& e)
 {
 	m_timer.stop();
 }
 
-void D2DTextbox::Normal_KeyDown(const KeyDownEvent& e)
+void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 {
 	bool shift = (::GetKeyState(VK_SHIFT) & 0x80) != 0;
 	bool ctrl = (::GetKeyState(VK_CONTROL) & 0x80) != 0;
@@ -651,9 +652,9 @@ void D2DTextbox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 }
 
-void D2DTextbox::Normal_LButtonDown(const LButtonDownEvent& e)
+void CTextBox::Normal_LButtonDown(const LButtonDownEvent& e)
 {
-	auto newPoint = m_pWnd->GetDirectPtr()->Pixels2Dips(e.PointInClient);
+	auto newPoint = GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
 
 	if (auto index = GetActualCharPosFromPoint(newPoint)) {
 		auto point = GetOriginCharRects()[index.value()].CenterPoint();
@@ -665,9 +666,9 @@ void D2DTextbox::Normal_LButtonDown(const LButtonDownEvent& e)
 	}
 }
 
-void D2DTextbox::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
+void CTextBox::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 {
-	auto newPoint = m_pWnd->GetDirectPtr()->Pixels2Dips(e.PointInClient);
+	auto newPoint = GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
 	std::vector<wchar_t> delimiters{ L' ', L'\t', L'\n' };
 
 	if (auto index = GetActualCharPosFromPoint(newPoint)) {
@@ -691,10 +692,10 @@ void D2DTextbox::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 }
 
 
-void D2DTextbox::Normal_MouseMove(const MouseMoveEvent& e)
+void CTextBox::Normal_MouseMove(const MouseMoveEvent& e)
 {
 	if (e.Flags & MK_LBUTTON) {
-		d2dw::CPointF newPoint(m_pWnd->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+		d2dw::CPointF newPoint(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
 		if (auto index = GetActualCharPosFromPoint(newPoint)) {
 			auto point = GetOriginCharRects()[index.value()].CenterPoint();
@@ -703,7 +704,7 @@ void D2DTextbox::Normal_MouseMove(const MouseMoveEvent& e)
 	}
 }
 
-void D2DTextbox::Normal_Char(const CharEvent& e)
+void CTextBox::Normal_Char(const CharEvent& e)
 {
 	bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
 
@@ -722,12 +723,12 @@ void D2DTextbox::Normal_Char(const CharEvent& e)
 	}
 }
 
-void D2DTextbox::Normal_SetCursor(const SetCursorEvent& e)
+void CTextBox::Normal_SetCursor(const SetCursorEvent& e)
 {
-	CPoint pt = m_pWnd->GetCursorPosInClient();
+	CPoint pt = GetWndPtr()->GetCursorPosInClient();
 	HCURSOR hCursor = NULL;
-	if (m_pVScroll->GetVisible() && m_pVScroll->GetRect().PtInRect(m_pWnd->GetDirectPtr()->Pixels2Dips(pt)) ||
-		m_pHScroll->GetVisible() && m_pHScroll->GetRect().PtInRect(m_pWnd->GetDirectPtr()->Pixels2Dips(pt))) {
+	if (m_pVScroll->GetVisible() && m_pVScroll->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(pt)) ||
+		m_pHScroll->GetVisible() && m_pHScroll->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(pt))) {
 		hCursor = ::LoadCursor(NULL, IDC_ARROW);
 	} else {
 		hCursor = ::LoadCursor(NULL, IDC_IBEAM);
@@ -751,19 +752,19 @@ void CTextEditor::Normal_ContextMenu(const ContextMenuEvent& e)
 	mii.dwTypeData = L"Execute";
 	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
-	::SetForegroundWindow(m_pWnd->m_hWnd);
+	::SetForegroundWindow(GetWndPtr()->m_hWnd);
 	int idCmd = menu.TrackPopupMenu(
 		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
 		e.PointInScreen.x,
 		e.PointInScreen.y,
-		m_pWnd->m_hWnd);
+		GetWndPtr()->m_hWnd);
 
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Execute")) {
 		auto exe = m_text.substr(std::get<caret::SelBegin>(m_carets), std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets));
 		exe = ((exe.front() == L'\"') ? L"" : L"\"") + boost::algorithm::trim_copy(exe) + ((exe.back() == L'\"') ? L"" : L"\"");
 		SHELLEXECUTEINFO execInfo = {};
 		execInfo.cbSize = sizeof(execInfo);
-		execInfo.hwnd = m_pWnd->m_hWnd;
+		execInfo.hwnd = GetWndPtr()->m_hWnd;
 		execInfo.lpVerb = L"open";
 		execInfo.lpFile = exe.c_str();
 		execInfo.nShow = SW_SHOWDEFAULT;
@@ -778,34 +779,34 @@ void CTextEditor::Normal_ContextMenu(const ContextMenuEvent& e)
 /***************/
 /* VScrollDrag */
 /***************/
-void D2DTextbox::VScrlDrag_OnEntry(const LButtonDownEvent& e)
+void CTextBox::VScrlDrag_OnEntry(const LButtonDownEvent& e)
 {
 	m_pVScroll->SetState(UIElementState::Dragged);
-	m_pVScroll->SetStartDrag(m_pWnd->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
+	m_pVScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
 }
-void D2DTextbox::VScrlDrag_OnExit()
+void CTextBox::VScrlDrag_OnExit()
 {
 	m_pVScroll->SetState(UIElementState::Normal);
 	m_pVScroll->SetStartDrag(0.f);
 }
-bool D2DTextbox::VScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
+bool CTextBox::VScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
 {
-	return m_pVScroll->GetVisible() && m_pVScroll->GetThumbRect().PtInRect(m_pWnd->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	return m_pVScroll->GetVisible() && m_pVScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 }
-void D2DTextbox::VScrlDrag_MouseMove(const MouseMoveEvent& e)
+void CTextBox::VScrlDrag_MouseMove(const MouseMoveEvent& e)
 {
 	m_pVScroll->SetScrollPos(
 		m_pVScroll->GetScrollPos() +
-		(m_pWnd->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y) - m_pVScroll->GetStartDrag()) *
+		(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y) - m_pVScroll->GetStartDrag()) *
 		m_pVScroll->GetScrollDistance() /
-		m_pVScroll->GetRect().Height());
-	m_pVScroll->SetStartDrag(m_pWnd->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
+		m_pVScroll->GetRectInWnd().Height());
+	m_pVScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
 }
 //bool D2DTextbox::VScrl_Guard_SetCursor(const SetCursorEvent& e)
 //{
 //	CPoint pt;
 //	::GetCursorPos(pt);
-//	return m_pVScroll->GetVisible() && m_pVScroll->GetThumbRect().PtInRect(m_pWnd->GetDirectPtr()->Pixels2Dips(pt));
+//	return m_pVScroll->GetVisible() && m_pVScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(pt));
 //}
 //void D2DTextbox::VScrl_SetCursor(const SetCursorEvent& e)
 //{
@@ -820,38 +821,38 @@ void D2DTextbox::VScrlDrag_MouseMove(const MouseMoveEvent& e)
 /***************/
 /* HScrollDrag */
 /***************/
-void D2DTextbox::HScrlDrag_OnEntry(const LButtonDownEvent& e)
+void CTextBox::HScrlDrag_OnEntry(const LButtonDownEvent& e)
 {
 	m_pHScroll->SetState(UIElementState::Dragged);
-	m_pHScroll->SetStartDrag(m_pWnd->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
+	m_pHScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
 }
 
-void D2DTextbox::HScrlDrag_OnExit()
+void CTextBox::HScrlDrag_OnExit()
 {
 	m_pHScroll->SetState(UIElementState::Normal);
 	m_pHScroll->SetStartDrag(0.f);
 }
 
-bool D2DTextbox::HScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
+bool CTextBox::HScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
 {
-	return m_pHScroll->GetVisible() && m_pHScroll->GetThumbRect().PtInRect(m_pWnd->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	return m_pHScroll->GetVisible() && m_pHScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 }
 
-void D2DTextbox::HScrlDrag_MouseMove(const MouseMoveEvent& e)
+void CTextBox::HScrlDrag_MouseMove(const MouseMoveEvent& e)
 {
 	m_pHScroll->SetScrollPos(
 		m_pHScroll->GetScrollPos() +
-		(m_pWnd->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x) - m_pHScroll->GetStartDrag()) *
+		(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x) - m_pHScroll->GetStartDrag()) *
 		m_pHScroll->GetScrollDistance() /
-		m_pHScroll->GetRect().Width());
-	m_pHScroll->SetStartDrag(m_pWnd->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
+		m_pHScroll->GetRectInWnd().Width());
+	m_pHScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
 }
 
 //bool D2DTextbox::HScrl_Guard_SetCursor(const SetCursorEvent& e)
 //{
 //	CPoint pt;
 //	::GetCursorPos(pt);
-//	return m_pHScroll->GetVisible() && m_pHScroll->GetThumbRect().PtInRect(m_pWnd->GetDirectPtr()->Pixels2Dips(pt));
+//	return m_pHScroll->GetVisible() && m_pHScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(pt));
 //}
 //void D2DTextbox::HScrl_SetCursor(const SetCursorEvent& e)
 //{
@@ -861,7 +862,7 @@ void D2DTextbox::HScrlDrag_MouseMove(const MouseMoveEvent& e)
 //	}
 //}
 
-void D2DTextbox::Error_StdException(const std::exception& e)
+void CTextBox::Error_StdException(const std::exception& e)
 {
 	::OutputDebugStringA(e.what());
 
@@ -870,7 +871,7 @@ void D2DTextbox::Error_StdException(const std::exception& e)
 		"Last Error:{}\r\n",
 		e.what(), GetLastErrorString());
 
-	MessageBoxA(m_pWnd->m_hWnd, msg.c_str(), "Exception in StateMachine", MB_ICONWARNING);
+	MessageBoxA(GetWndPtr()->m_hWnd, msg.c_str(), "Exception in StateMachine", MB_ICONWARNING);
 	Clear();
 }
 
@@ -882,7 +883,7 @@ void D2DTextbox::Error_StdException(const std::exception& e)
 
 
 
-bool D2DTextbox::CopySelectionToClipboard()
+bool CTextBox::CopySelectionToClipboard()
 {
 	int selLen = std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets);
 	if (selLen > 0) {
@@ -894,13 +895,13 @@ bool D2DTextbox::CopySelectionToClipboard()
 
 		if (strMem != NULL) {
 			::wcscpy_s(strMem, strCopy.size() + 1, strCopy.c_str());
-			if (CClipboard clipboard; clipboard.Open(m_pWnd->m_hWnd) != 0) {
+			if (CClipboard clipboard; clipboard.Open(GetWndPtr()->m_hWnd) != 0) {
 				clipboard.Empty();
 				clipboard.SetData(CF_UNICODETEXT, hGlobal);
 			}
 		}
 	} else {
-		if (CClipboard clipboard; clipboard.Open(m_pWnd->m_hWnd) != 0) {
+		if (CClipboard clipboard; clipboard.Open(GetWndPtr()->m_hWnd) != 0) {
 			clipboard.Empty();
 			clipboard.SetData(CF_UNICODETEXT, NULL);
 			clipboard.Close();
@@ -909,9 +910,9 @@ bool D2DTextbox::CopySelectionToClipboard()
 	return true;
 }
 
-bool D2DTextbox::PasteFromClipboard()
+bool CTextBox::PasteFromClipboard()
 {
-	if (CClipboard clipboard; clipboard.Open(m_pWnd->m_hWnd) != 0) {
+	if (CClipboard clipboard; clipboard.Open(GetWndPtr()->m_hWnd) != 0) {
 		HANDLE hGlobal = clipboard.GetData(CF_UNICODETEXT);
 		if (hGlobal) {
 			std::wstring str((LPWSTR)GlobalLock(hGlobal));
@@ -929,52 +930,52 @@ bool D2DTextbox::PasteFromClipboard()
 	return true;
 }
 
-d2dw::CRectF D2DTextbox::GetClientRect() const
+d2dw::CRectF CTextBox::GetRectInWnd() const
 {
 	return m_pCell->GetEditRect();
 }
 
-d2dw::CRectF D2DTextbox::GetPageRect() const
+d2dw::CRectF CTextBox::GetPageRect() const
 {
-	d2dw::CRectF rcPage(GetClientRect());
+	d2dw::CRectF rcPage(GetRectInWnd());
 	rcPage.DeflateRect(m_pProp->Line->Width * 0.5f);
 	rcPage.DeflateRect(*(m_pProp->Padding));
 	return rcPage;
 }
 
 
-void D2DTextbox::ResetCaret()
+void CTextBox::ResetCaret()
 {
 	m_bCaret = true;
 	m_timer.run([this]()->void
 		{
 			m_bCaret = !m_bCaret;
-			m_pWnd->InvalidateRect(NULL, FALSE);
+			GetWndPtr()->InvalidateRect(NULL, FALSE);
 		}, 
 		std::chrono::milliseconds(::GetCaretBlinkTime()));
-	m_pWnd->InvalidateRect(NULL, FALSE);
+	GetWndPtr()->InvalidateRect(NULL, FALSE);
 }
 
-void D2DTextbox::DrawCaret(const d2dw::CRectF& rc)
+void CTextBox::DrawCaret(const d2dw::CRectF& rc)
 {
 	if (m_isFirstDrawCaret) {
 		m_isFirstDrawCaret = false;
 		ResetCaret();
 	}
 	if (m_bCaret) {
-		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-		m_pWnd->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, rc);
-		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+		GetWndPtr()->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, rc);
+		GetWndPtr()->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	}
 }
 
-void D2DTextbox::CancelEdit()
+void CTextBox::CancelEdit()
 {
 	m_text.notify_assign(m_strInit);
 	m_carets.notify_set(std::get<caret::CurCaret>(m_carets), m_text.size(), m_text.size(), m_text.size(), m_text.size());
 }
 
-BOOL D2DTextbox::InsertAtSelection(LPCWSTR psz)
+BOOL CTextBox::InsertAtSelection(LPCWSTR psz)
 {
 	m_text.notify_replace(std::get<caret::SelBegin>(m_carets), std::get<caret::SelEnd>(m_carets) - std::get<caret::SelBegin>(m_carets), psz);
 	auto index = std::get<caret::SelBegin>(m_carets) + lstrlen(psz);
@@ -984,7 +985,7 @@ BOOL D2DTextbox::InsertAtSelection(LPCWSTR psz)
 	return TRUE;
 }
 
-void D2DTextbox::ClearText()
+void CTextBox::ClearText()
 {
 	m_text.notify_clear();
 	auto index = 0;
@@ -992,12 +993,12 @@ void D2DTextbox::ClearText()
 	MoveCaret(index, point);
 }
 
-bool D2DTextbox::GetIsVisible()const
+bool CTextBox::GetIsVisible()const
 {
 	return m_pCell->GetIsVisible();
 }
 
-void D2DTextbox::Render()
+void CTextBox::Render()
 {
 	d2dw::CRectF pageRect(GetPageRect());
 
@@ -1010,8 +1011,8 @@ void D2DTextbox::Render()
 		auto rect = GetActualContentRect();
 		auto origin = rect.LeftTop();
 
-		m_pWnd->GetDirectPtr()->GetHwndRenderTarget()->DrawTextLayout(origin, GetTextLayoutPtr(), m_pWnd->GetDirectPtr()->GetColorBrush(m_pProp->Format->Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
-		//m_pWnd->GetDirectPtr()->DrawTextLayout((*(m_pProp->Format), m_text, GetActualContentRect());
+		GetWndPtr()->GetDirectPtr()->GetHwndRenderTarget()->DrawTextLayout(origin, GetTextLayoutPtr(), GetWndPtr()->GetDirectPtr()->GetColorBrush(m_pProp->Format->Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
+		//GetWndPtr()->GetDirectPtr()->DrawTextLayout((*(m_pProp->Format), m_text, GetActualContentRect());
 
 		//Draw cr, lf, tab, space
 		for (size_t i = 0; i < m_text.size(); i++) {
@@ -1019,13 +1020,13 @@ void D2DTextbox::Render()
 				case L'\r':
 					break;
 				case L'\n':
-					m_pWnd->GetDirectPtr()->DrawLineFeed(*(m_pProp->BlankLine), selCharRects[i]);
+					GetWndPtr()->GetDirectPtr()->DrawLineFeed(*(m_pProp->BlankLine), selCharRects[i]);
 					break;
 				case L'\t':
-					m_pWnd->GetDirectPtr()->DrawTab(*(m_pProp->BlankLine), selCharRects[i]);
+					GetWndPtr()->GetDirectPtr()->DrawTab(*(m_pProp->BlankLine), selCharRects[i]);
 					break;
 				case L' ':
-					m_pWnd->GetDirectPtr()->DrawHalfSpace(*(m_pProp->BlankLine), selCharRects[i]);
+					GetWndPtr()->GetDirectPtr()->DrawHalfSpace(*(m_pProp->BlankLine), selCharRects[i]);
 				case L'　':
 				default:
 					break;
@@ -1034,7 +1035,7 @@ void D2DTextbox::Render()
 
 		//Draw Selection
 		for (auto n = std::get<caret::SelBegin>(m_carets); n < std::get<caret::SelEnd>(m_carets); n++) {
-			m_pWnd->GetDirectPtr()->FillSolidRectangle(
+			GetWndPtr()->GetDirectPtr()->FillSolidRectangle(
 				d2dw::SolidFill(d2dw::CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)),
 				selCharRects[n]);
 		}
@@ -1052,7 +1053,7 @@ void D2DTextbox::Render()
 					}
 					if (n == (compositionInfo.End - 1) || (charRects[n].bottom + charRects[n].Height() / 2.f) < charRects[n + 1].bottom) {
 						ptEnd.SetPoint(charRects[n].right, charRects[n].bottom);
-						m_pWnd->GetDirectPtr()->DrawSolidTriangleWave(*(m_pProp->EditLine), ptStart, ptEnd, 4.f, 8.f);
+						GetWndPtr()->GetDirectPtr()->DrawSolidTriangleWave(*(m_pProp->EditLine), ptStart, ptEnd, 4.f, 8.f);
 					}
 				}
 			}
@@ -1067,23 +1068,23 @@ void D2DTextbox::Render()
 	}
 }
 
-FLOAT D2DTextbox::GetLineHeight()
+FLOAT CTextBox::GetLineHeight()
 {
-	return m_pWnd->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"").height;
+	return GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"").height;
 }
 
-void D2DTextbox::ClearCompositionRenderInfo()
+void CTextBox::ClearCompositionRenderInfo()
 {
 	m_compositionInfos.clear();
 }
 
-BOOL D2DTextbox::AddCompositionRenderInfo(int start, int end, TF_DISPLAYATTRIBUTE* pDisplayAttribute)
+BOOL CTextBox::AddCompositionRenderInfo(int start, int end, TF_DISPLAYATTRIBUTE* pDisplayAttribute)
 {
 	m_compositionInfos.emplace_back(start, end, *pDisplayAttribute);
 	return TRUE;
 }
 
-std::optional<int> D2DTextbox::GetOriginCharPosFromPoint(const d2dw::CPointF& pt)
+std::optional<int> CTextBox::GetOriginCharPosFromPoint(const d2dw::CPointF& pt)
 {
 	if (m_text.size() == 0) {
 		return std::nullopt;
@@ -1102,7 +1103,7 @@ std::optional<int> D2DTextbox::GetOriginCharPosFromPoint(const d2dw::CPointF& pt
 	}
 }
 
-std::optional<int> D2DTextbox::GetActualCharPosFromPoint(const d2dw::CPointF& pt)
+std::optional<int> CTextBox::GetActualCharPosFromPoint(const d2dw::CPointF& pt)
 {
 	if (m_text.size() == 0) {
 		return std::nullopt;
@@ -1122,7 +1123,7 @@ std::optional<int> D2DTextbox::GetActualCharPosFromPoint(const d2dw::CPointF& pt
 }
 
 
-std::optional<int> D2DTextbox::GetFirstCharPosInLine(const int& pos)
+std::optional<int> CTextBox::GetFirstCharPosInLine(const int& pos)
 {
 	std::vector<d2dw::CRectF> charRects(GetOriginCharRects());
 	d2dw::CRectF curRect(charRects[pos]);
@@ -1134,7 +1135,7 @@ std::optional<int> D2DTextbox::GetFirstCharPosInLine(const int& pos)
 	return std::make_optional(0);
 }
 
-std::optional<int> D2DTextbox::GetLastCharPosInLine(const int& pos)
+std::optional<int> CTextBox::GetLastCharPosInLine(const int& pos)
 {
 	std::vector<d2dw::CRectF> charRects(GetOriginCharRects());
 	d2dw::CRectF curRect(charRects[pos]);
@@ -1147,21 +1148,21 @@ std::optional<int> D2DTextbox::GetLastCharPosInLine(const int& pos)
 
 }
 
-void D2DTextbox::UpdateOriginRects()
+void CTextBox::UpdateOriginRects()
 {
 	GetTextLayoutPtr() = nullptr;
 	GetOriginCharRects().clear();
 	GetOriginCursorCharRects().clear();
 }
 
-void D2DTextbox::UpdateActualRects()
+void CTextBox::UpdateActualRects()
 {
 	GetActualCharRects().clear();
 	GetActualCursorCharRects().clear();
 	GetActualSelectionCharRects().clear();
 }
 
-void D2DTextbox::UpdateScroll()
+void CTextBox::UpdateScroll()
 {
 	//VScroll
 	//Page
@@ -1181,7 +1182,7 @@ void D2DTextbox::UpdateScroll()
 
 	//VScroll
 	//Position
-	d2dw::CRectF rcClient(GetClientRect());
+	d2dw::CRectF rcClient(GetRectInWnd());
 	d2dw::CRectF rcVertical;
 	FLOAT lineHalfWidth = m_pProp->Line->Width * 0.5f;
 
@@ -1203,7 +1204,7 @@ void D2DTextbox::UpdateScroll()
 	m_pHScroll->SetRect(rcHorizontal);
 }
 
-void D2DTextbox::UpdateAll()
+void CTextBox::UpdateAll()
 {
 	UpdateOriginRects();
 	UpdateScroll();
@@ -1229,7 +1230,7 @@ void CTextEditor::OnKeyDown(const KeyDownEvent& e)
 			}
 			break;
 		default:
-			D2DTextbox::OnKeyDown(e);
+			CTextBox::OnKeyDown(e);
 			break;
 	}
 }
@@ -1239,7 +1240,7 @@ void CTextEditor::Open()
 	std::wstring path;
 	OPENFILENAME ofn = { 0 };
 	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = m_pWnd->m_hWnd;
+	ofn.hwndOwner = GetWndPtr()->m_hWnd;
 	//ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
 	ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
 	ofn.nMaxFile = MAX_PATH;
@@ -1279,7 +1280,7 @@ void CTextEditor::Save()
 	if (m_path.get().empty()) {
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = m_pWnd->m_hWnd;
+		ofn.hwndOwner = GetWndPtr()->m_hWnd;
 		//ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
 		ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
 		ofn.nMaxFile = MAX_PATH;

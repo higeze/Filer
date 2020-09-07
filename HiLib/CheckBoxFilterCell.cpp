@@ -29,7 +29,7 @@ std::wstring CCheckBoxFilterCell::GetString()
 
 void CCheckBoxFilterCell::SetStringCore(const std::wstring& str)
 {
-	m_deadlinetimer.run([hWnd = m_pSheet->GetGridPtr()->m_hWnd, pCell = this, newString = str] {
+	m_deadlinetimer.run([hWnd = m_pSheet->GetWndPtr()->m_hWnd, pCell = this, newString = str] {
 		pCell->CCheckBoxCell::SetStringCore(newString);
 		::PostMessage(hWnd, WM_FILTER, NULL, NULL);
 		}, std::chrono::milliseconds(200));

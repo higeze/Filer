@@ -27,7 +27,7 @@ void CFontCell::OnLButtonClk(MouseEvent& e)
 	CFont gdifont = m_font.GetGDIFont();
 	memcpy(&logFont,&gdifont.GetLogFont(),sizeof(LOGFONT));
 	cf.lStructSize=sizeof(CHOOSEFONT);
-	cf.hwndOwner=m_pSheet->GetGridPtr()->m_hWnd;
+	cf.hwndOwner=m_pSheet->GetWndPtr()->m_hWnd;
 	cf.lpLogFont=&logFont;
 	cf.Flags=CF_SCREENFONTS|CF_INITTOLOGFONTSTRUCT;
 	if(!ChooseFont(&cf))return;
@@ -44,6 +44,6 @@ std::wstring CFontCell::GetString()
 	std::wstring wstr;
 	wstr.append(m_font.FamilyName);
 	wstr.append(L", ");
-	wstr.append(boost::lexical_cast<std::wstring>((int)(m_pSheet->GetGridPtr()->GetDirectPtr()->Dips2Points(m_font.Size))));
+	wstr.append(boost::lexical_cast<std::wstring>((int)(m_pSheet->GetWndPtr()->GetDirectPtr()->Dips2Points(m_font.Size))));
 	return wstr;
 }

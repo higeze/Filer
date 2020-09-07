@@ -13,7 +13,7 @@ class CDirect2DWrite;
 struct BackgroundProperty;
 struct GridViewProperty;
 class CMouseStateMachine;
-class D2DTextbox;
+class CTextBox;
 
 namespace d2dw
 {
@@ -23,26 +23,20 @@ namespace d2dw
 
 struct GridViewStateMachine;
 
-class CGridView:public CWnd, public CSheet
+class CGridView: public CSheet
 {
-	friend class CMouseStateMachine;
-protected:
-	std::unique_ptr<CMouseStateMachine> m_pMouseMachine;
-
 public:
 	std::unique_ptr<d2dw::CVScroll> m_pVScroll;
 	std::unique_ptr<d2dw::CHScroll> m_pHScroll;
 
 	static CMenu ContextMenu;
 protected:
-	D2DTextbox* m_pEdit = nullptr;
+	CWnd* m_pWnd;
+	CTextBox* m_pEdit = nullptr;
 	bool m_isFocusable = true;
-
+	d2dw::CRectF m_rect;
 	d2dw::CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
-
-	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
-
 protected:
 	CDeadlineTimer m_invalidateTimer;
 
@@ -56,26 +50,29 @@ public:
 public:
 	//Constructor
 	CGridView(
+		CWnd* pWnd,
 		std::shared_ptr<GridViewProperty>& spGridViewProp,
 		CMenu* pContextMenu= &CGridView::ContextMenu);
 	//Destructor
 	virtual ~CGridView();
 
 	//Getter Setter
-	d2dw::CDirect2DWrite* GetDirectPtr() override { return m_pDirect.get(); }
 	std::shared_ptr<GridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	d2dw::CRectF GetUpdateRect()const { return m_rcUpdateRect; }
 	void SetUpdateRect(d2dw::CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
-	D2DTextbox* GetEditPtr() { return m_pEdit; }
-	void SetEditPtr(D2DTextbox* pEdit) { m_pEdit = pEdit; }
+	CTextBox* GetEditPtr() { return m_pEdit; }
+	void SetEditPtr(CTextBox* pEdit) { m_pEdit = pEdit; }
+	virtual CWnd* GetWndPtr()const override { return m_pWnd; }
+	d2dw::CRectF GetRectInWnd()const { return m_rect; }
+
 
 protected:
-	virtual std::shared_ptr<CDC> GetClientDCPtr()const;
-	virtual void OnCellLButtonClk(CellEventArgs& e);
-	virtual void OnCellContextMenu(CellContextMenuEventArgs& e);
+	virtual void OnCellLButtonClk(CellEventArgs& e) {}
+	virtual void OnCellContextMenu(CellContextMenuEventArgs& e) {}
 	/******************/
 	/* Window Message */
 	/******************/
+public:
 	template<typename T>
 	LRESULT UserInputMachine_Message(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 	{
@@ -84,34 +81,30 @@ protected:
 		return 0;
 	}
 
-	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnClose(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnDestroy(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnEraseBkGnd(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnPaint(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	virtual LRESULT OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	virtual LRESULT OnSetCursor(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnContextMenu(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnFilter(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	//virtual LRESULT OnLButtonDblClkTimeExceed(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
-	virtual LRESULT OnCommandEditHeader(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
-	virtual LRESULT OnCommandDeleteColumn(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& sc);
-	virtual LRESULT OnCommandResizeSheetCell(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
-	virtual LRESULT OnCommandSelectAll(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	virtual LRESULT OnCommandDelete(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) { return 0; }
-	virtual LRESULT OnCommandCopy(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	virtual LRESULT OnCommandPaste(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) { return 0; }
-	virtual LRESULT OnCommandFind(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
+	virtual void OnCommandEditHeader(const CommandEvent& e);
+	virtual void OnCommandDeleteColumn(const CommandEvent& e);
+	virtual void OnCommandResizeSheetCell(const CommandEvent& e);
+	virtual void OnCommandSelectAll(const CommandEvent& e);
+	virtual void OnCommandDelete(const CommandEvent& e) { }
+	virtual void OnCommandCopy(const CommandEvent& e);
+	virtual void OnCommandCut(const CommandEvent& e) { }
+	virtual void OnCommandPaste(const CommandEvent& e) { }
+	virtual void OnCommandFind(const CommandEvent& e);
 
 	/**************/
 	/* UI Message */
 	/**************/
-	virtual void OnMouseWheel(const MouseWheelEvent& e);
-
+	virtual void OnRect(const RectEvent& e) override;
+	virtual	void OnPaint(const PaintEvent& e) override;
+	virtual void OnMouseWheel(const MouseWheelEvent& e) override;
+	virtual void OnSetFocus(const SetFocusEvent& e);
+	virtual void OnKillFocus(const KillFocusEvent& e);
+	virtual void OnSetCursor(const SetCursorEvent& e);
+	virtual void OnContextMenu(const ContextMenuEvent& e);
+	virtual void OnCommand(const CommandEvent& e);
 
 public:
 	void BeginEdit(CCell* pCell);

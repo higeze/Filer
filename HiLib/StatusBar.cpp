@@ -74,7 +74,7 @@ namespace d2dw
 					m_handleCount = -1;//Error
 				}
 			}
-			m_pWnd->InvalidateRect(m_pWnd->GetDirectPtr()->Dips2Pixels(this->GetRect()), FALSE);
+			GetWndPtr()->InvalidateRect(GetWndPtr()->GetDirectPtr()->Dips2Pixels(this->GetRectInWnd()), FALSE);
 		}
 		catch (...) {
 			throw std::exception(FILE_LINE_FUNC);
@@ -84,7 +84,7 @@ namespace d2dw
 	void CStatusBar::OnPaint(const PaintEvent& e)
 	{
 		std::lock_guard<std::mutex> lock(m_mtx);
-		auto rcPaint = GetRect();
+		auto rcPaint = GetRectInWnd();
 		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->BackgroundFill, rcPaint);
 
 		e.WndPtr->GetDirectPtr()->DrawTextLayout(

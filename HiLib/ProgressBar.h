@@ -11,7 +11,6 @@ namespace d2dw
 	{
 	protected:
 		CWnd* m_pWnd;
-
 		CRectF m_rect;
 		
 		int m_min = 0;
@@ -55,7 +54,8 @@ namespace d2dw
 			}
 		}
 
-		CRectF GetRect()const { return m_rect; }
+		CWnd* GetWndPtr()const { return m_pWnd; }
+		CRectF GetRectInWnd()const { return m_rect; }
 		void SetRect(const CRectF& rect) { m_rect = rect; }
 		void SetRect(const FLOAT left, const FLOAT top, const FLOAT right, const FLOAT bottom)
 		{

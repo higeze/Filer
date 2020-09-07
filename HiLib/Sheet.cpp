@@ -24,6 +24,7 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 CMenu CSheet::ContextMenu;
 
 CSheet::CSheet(
+	CWnd* pWnd,
 	std::shared_ptr<SheetProperty> spSheetProperty,
 	CMenu* pContextMenu)
 	:m_spSheetProperty(spSheetProperty),
@@ -540,7 +541,7 @@ FLOAT CSheet::GetColumnInitWidth(CColumn* pColumn)
 {
 	return std::accumulate(m_visRows.begin(), m_visRows.end(), 0.f,
 		[this, pColumn](const FLOAT val, const std::shared_ptr<CRow>& rowPtr)->FLOAT {
-			return (std::max)(Cell(rowPtr.get(), pColumn)->GetInitSize(GetGridPtr()->GetDirectPtr()).width, val);
+			return (std::max)(Cell(rowPtr.get(), pColumn)->GetInitSize(GetWndPtr()->GetDirectPtr()).width, val);
 		});
 }
 
@@ -548,7 +549,7 @@ FLOAT CSheet::GetColumnFitWidth(CColumn* pColumn)
 {
 	return std::accumulate(m_visRows.begin(), m_visRows.end(), 0.f,
 		[this, pColumn](const FLOAT val, const std::shared_ptr<CRow>& rowPtr)->FLOAT {
-			return (std::max)(Cell(rowPtr.get(), pColumn)->GetFitSize(GetGridPtr()->GetDirectPtr()).width, val);
+			return (std::max)(Cell(rowPtr.get(), pColumn)->GetFitSize(GetWndPtr()->GetDirectPtr()).width, val);
 		});
 }
 
@@ -556,7 +557,7 @@ FLOAT CSheet::GetRowHeight(CRow* pRow)
 {
 	return std::accumulate(m_visCols.begin(), m_visCols.end(), 0.f,
 		[this, pRow](const FLOAT val, const std::shared_ptr<CColumn>& colPtr)->FLOAT {
-			return (std::max)(Cell(pRow, colPtr.get())->GetActSize(GetGridPtr()->GetDirectPtr()).height, val);
+			return (std::max)(Cell(pRow, colPtr.get())->GetActSize(GetWndPtr()->GetDirectPtr()).height, val);
 		});
 }
 
@@ -564,7 +565,7 @@ FLOAT CSheet::GetRowFitHeight(CRow* pRow)
 {
 	return std::accumulate(m_visCols.begin(), m_visCols.end(), 0.f,
 						   [this, pRow](const FLOAT val, const std::shared_ptr<CColumn>& colPtr)->FLOAT {
-							   return (std::max)(Cell(pRow, colPtr.get())->GetFitSize(GetGridPtr()->GetDirectPtr()).height, val);
+							   return (std::max)(Cell(pRow, colPtr.get())->GetFitSize(GetWndPtr()->GetDirectPtr()).height, val);
 						   });
 }
 
@@ -580,7 +581,7 @@ bool CSheet::Visible()const
 d2dw::CPointF CSheet::GetFrozenPoint()
 {
 	if(!Visible()){
-		return GetRect().LeftTop();
+		return GetRectInWnd().LeftTop();
 	}
 
 	FLOAT x = 0;
@@ -603,14 +604,14 @@ d2dw::CPointF CSheet::GetFrozenPoint()
 
 d2dw::CSizeF CSheet::MeasureSize()const
 {
-	d2dw::CRectF rc(CSheet::GetRect());
+	d2dw::CRectF rc(CSheet::GetRectInWnd());
 	return d2dw::CSizeF(rc.Width(), rc.Height());
 }
 
 //GetRect return Sheet(All) Rect in Window Client
 //GetCellsRect return Cells(=Scrollable Cells) Rect in Window Client
 //GetCellsClipRect return Cells(=Scrollable Cells) Clip(=Paint area) Rect in Window Client
-d2dw::CRectF CSheet::GetRect()const
+d2dw::CRectF CSheet::GetRectInWnd()const
 {
 	if(!Visible()){return d2dw::CRectF();}
 	FLOAT left=m_visCols.front()->GetLeft();
@@ -775,14 +776,14 @@ void CSheet::Normal_Char(const CharEvent& e)
 
 void CSheet::Normal_SetFocus(const SetFocusEvent& e)
 {
-	*e.HandledPtr = FALSE;
+	if (e.HandledPtr) { *e.HandledPtr = FALSE; }
 	//	m_spCursorer->OnCursorClear(this);
 	//m_bFocused = true;
 }
 
 void CSheet::Normal_KillFocus(const KillFocusEvent& e)
 {
-	*e.HandledPtr = FALSE;
+	if (e.HandledPtr) { *e.HandledPtr = FALSE; }
 	//m_spCursorer->OnCursorClear(this);
 	//m_bFocused = false;
 }
@@ -945,31 +946,31 @@ void CSheet::Error_StdException(const std::exception& e)
 		"Last Error:{}\r\n",
 		e.what(), GetLastErrorString());
 
-	MessageBoxA(GetGridPtr()->m_hWnd, msg.c_str(), "Exception in StateMachine", MB_ICONWARNING);
+	MessageBoxA(GetWndPtr()->m_hWnd, msg.c_str(), "Exception in StateMachine", MB_ICONWARNING);
 	Clear();
 }
 
 /**************/
 /* UI Message */
 /**************/
-void CSheet::OnPaint(const PaintEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnContextMenu(const ContextMenuEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnRButtonDown(const RButtonDownEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnLButtonDown(const LButtonDownEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnLButtonUp(const LButtonUpEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnLButtonClk(const LButtonClkEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate);}
-void CSheet::OnLButtonDblClk(const LButtonDblClkEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate);}
-void CSheet::OnSetCursor(const SetCursorEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnMouseLeave(const MouseLeaveEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnKeyDown(const KeyDownEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate);}
-void CSheet::OnSetFocus(const SetFocusEvent& e) { m_pMachine->process_event(e); }
-void CSheet::OnKillFocus(const KillFocusEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnChar(const CharEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnBeginEdit(const BeginEditEvent& e) { m_pMachine->process_event(e);}
-void CSheet::OnEndEdit(const EndEditEvent& e){ m_pMachine->process_event(e); }
+void CSheet::OnPaint(const PaintEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
+void CSheet::OnContextMenu(const ContextMenuEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnRButtonDown(const RButtonDownEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnLButtonDown(const LButtonDownEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnLButtonUp(const LButtonUpEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnLButtonClk(const LButtonClkEvent& e) { m_pMachine->process_event(e); SubmitUpdate();  }
+void CSheet::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
+void CSheet::OnLButtonDblClk(const LButtonDblClkEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
+void CSheet::OnSetCursor(const SetCursorEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnMouseLeave(const MouseLeaveEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnKeyDown(const KeyDownEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
+void CSheet::OnSetFocus(const SetFocusEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
+void CSheet::OnKillFocus(const KillFocusEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnChar(const CharEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
+void CSheet::OnBeginEdit(const BeginEditEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnEndEdit(const EndEditEvent& e){ m_pMachine->process_event(e);  SubmitUpdate();}
 
 
 void CSheet::SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& cell2, bool doSelect)

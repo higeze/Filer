@@ -9,7 +9,7 @@
 namespace d2dw
 {
 	CScrollBase::CScrollBase(CWnd* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
-		:CUIElement(), m_pWnd(pWnd), m_spScrollProp(spScrollProp), m_onPropertyChanged(onPropertyChanged){}
+		:m_pWnd(pWnd), m_spScrollProp(spScrollProp), m_onPropertyChanged(onPropertyChanged){}
 
 	FLOAT CScrollBase::GetScrollBandWidth()const { return m_spScrollProp->BandWidth; }
 	FLOAT CScrollBase::GetScrollDelta()const { return m_spScrollProp->DeltaScroll; }
@@ -45,13 +45,13 @@ namespace d2dw
 	{
 		if (!GetVisible())return;
 		//Draw background
-		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spScrollProp->BackgroundFill, GetRect());
+		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spScrollProp->BackgroundFill, GetRectInWnd());
 		//Draw thumb
 		auto thumbFill = m_spScrollProp->ThumbNormalFill;
 		if (GetState() == UIElementState::Dragged) {
 			thumbFill = m_spScrollProp->ThumbScrollFill;
-		} else if (CPoint pt = m_pWnd->GetCursorPosInClient();
-			GetThumbRect().PtInRect(m_pWnd->GetDirectPtr()->Pixels2Dips(pt))) {
+		} else if (CPoint pt = GetWndPtr()->GetCursorPosInClient();
+			GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(pt))) {
 			thumbFill = m_spScrollProp->ThumbHotFill;
 		} else {
 			thumbFill = m_spScrollProp->ThumbNormalFill;

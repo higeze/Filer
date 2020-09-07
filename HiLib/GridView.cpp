@@ -30,6 +30,8 @@
 #include "GridViewProperty.h"
 #include "ResourceIDFactory.h"
 
+#include "resource.h"
+
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 UINT CGridView::WM_DELAY_UPDATE = ::RegisterWindowMessage(L"CGridView::WM_DELAY_UPDATE");
@@ -37,104 +39,26 @@ UINT CGridView::WM_DELAY_UPDATE = ::RegisterWindowMessage(L"CGridView::WM_DELAY_
 CMenu CGridView::ContextMenu;
 
 CGridView::CGridView(
+	CWnd* pWnd,
 	std::shared_ptr<GridViewProperty>& spGridViewProp,
 	CMenu* pContextMenu)
-	:
+	:m_pWnd(pWnd),
 	m_spGridViewProp(spGridViewProp),
-	CSheet(spGridViewProp, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
-	CWnd(),
-	m_pMouseMachine(std::make_unique<CMouseStateMachine>(this)),
-	m_pVScroll(std::make_unique<d2dw::CVScroll>(this, spGridViewProp->VScrollPropPtr, std::bind(&CGridView::OnVScrollPropertyChanged, this, phs::_1))),
-	m_pHScroll(std::make_unique<d2dw::CHScroll>(this, spGridViewProp->HScrollPropPtr, std::bind(&CGridView::OnHScrollPropertyChanged, this, phs::_1)))
+	CSheet(pWnd, spGridViewProp, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
+	m_pVScroll(std::make_unique<d2dw::CVScroll>(pWnd, spGridViewProp->VScrollPropPtr, std::bind(&CGridView::OnVScrollPropertyChanged, this, phs::_1))),
+	m_pHScroll(std::make_unique<d2dw::CHScroll>(pWnd, spGridViewProp->HScrollPropPtr, std::bind(&CGridView::OnHScrollPropertyChanged, this, phs::_1)))
 {
 	m_pMachine.reset(new CGridStateMachine(this));
 
-	//RegisterArgs and CreateArgs
-	RegisterClassExArgument()
-		.lpszClassName(_T("CGridView"))
-		.style(CS_DBLCLKS)
-		.hCursor(::LoadCursor(NULL, IDC_ARROW))
-		.hbrBackground((HBRUSH)(COLOR_3DFACE + 1));
-	CreateWindowExArgument()
-		.lpszClassName(_T("CGridView"))
-		.lpszWindowName(_T("GridView"))
-		.dwStyle(WS_CHILD | WS_CLIPCHILDREN)
-		.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"PropertyGridView"));
 	//Add Message
-	AddMsgHandler(WM_CREATE, &CGridView::OnCreate, this);
-	AddMsgHandler(WM_CLOSE, &CGridView::OnClose, this);
-	AddMsgHandler(WM_DESTROY, &CGridView::OnDestroy, this);
-	AddMsgHandler(WM_ERASEBKGND, &CGridView::OnEraseBkGnd, this);
-	AddMsgHandler(WM_SIZE, &CGridView::OnSize, this);
-	AddMsgHandler(WM_PAINT, &CGridView::OnPaint, this);
-	AddMsgHandler(WM_KILLFOCUS, &CGridView::OnKillFocus, this);
-	AddMsgHandler(WM_SETFOCUS, &CGridView::OnSetFocus, this);
-
-	AddMsgHandler(WM_CONTEXTMENU, &CGridView::OnContextMenu, this);
-
-	AddMsgHandler(WM_SETCURSOR, &CGridView::OnSetCursor, this);
-	AddMsgHandler(WM_FILTER, &CGridView::OnFilter, this);
-	AddMsgHandler(WM_DELAY_UPDATE, &CGridView::OnDelayUpdate, this);
-
-
-	AddMsgHandler(WM_RBUTTONDOWN, &CGridView::UserInputMachine_Message<RButtonDownEvent>, this);
-	AddMsgHandler(WM_LBUTTONDOWN, &CGridView::UserInputMachine_Message<LButtonDownEvent>, this);
-	AddMsgHandler(WM_LBUTTONUP, &CGridView::UserInputMachine_Message<LButtonUpEvent>, this);
-	AddMsgHandler(WM_LBUTTONDBLCLK, &CGridView::UserInputMachine_Message<LButtonDblClkEvent>, this);
-	AddMsgHandler(WM_LBUTTONDBLCLKTIMEXCEED, &CGridView::UserInputMachine_Message<LButtonDblClkTimeExceedEvent>, this);
-	AddMsgHandler(WM_MOUSEMOVE, &CGridView::UserInputMachine_Message<MouseMoveEvent>, this);
-	AddMsgHandler(WM_MOUSELEAVE, &CGridView::UserInputMachine_Message<MouseLeaveEvent>, this);
-	AddMsgHandler(WM_MOUSEWHEEL, &CGridView::UserInputMachine_Message<MouseWheelEvent>, this);
-	AddMsgHandler(WM_CANCELMODE, &CGridView::UserInputMachine_Message<CancelModeEvent>, this);
-	AddMsgHandler(WM_CAPTURECHANGED, &CGridView::UserInputMachine_Message<CaptureChangedEvent>, this);
-	AddMsgHandler(WM_CHAR, &CGridView::UserInputMachine_Message<CharEvent>, this);
-	AddMsgHandler(WM_KEYDOWN, &CGridView::UserInputMachine_Message<KeyDownEvent>, this);
-	AddMsgHandler(WM_SYSKEYDOWN, &CGridView::UserInputMachine_Message<SysKeyDownEvent>, this);
-
-	//Command
-	//AddCmdCdHandler(EN_CHANGE,&CGridView::OnCmdEnChange,this);
-	AddCmdIDHandler(ID_HD_COMMAND_EDITHEADER, &CGridView::OnCommandEditHeader, this);
-	AddCmdIDHandler(ID_HD_COMMAND_DELETECOLUMN, &CGridView::OnCommandDeleteColumn, this);
-
-	AddCmdIDHandler(IDM_SELECTALL, &CGridView::OnCommandSelectAll, this);
-	AddCmdIDHandler(IDM_DELETE, &CGridView::OnCommandDelete, this);
-	AddCmdIDHandler(IDM_COPY, &CGridView::OnCommandCopy, this);
-	AddCmdIDHandler(IDM_PASTE, &CGridView::OnCommandPaste, this);
-	AddCmdIDHandler(IDM_FIND, &CGridView::OnCommandFind, this);
+	pWnd->AddMsgHandler(WM_FILTER, &CGridView::OnFilter, this);
+	pWnd->AddMsgHandler(WM_DELAY_UPDATE, &CGridView::OnDelayUpdate, this);
 
 	CellLButtonClk.connect(std::bind(&CGridView::OnCellLButtonClk, this, std::placeholders::_1));
 	CellContextMenu.connect(std::bind(&CGridView::OnCellContextMenu, this, std::placeholders::_1));
 }
 
 CGridView::~CGridView() = default;
-
-void CGridView::OnCellContextMenu(CellContextMenuEventArgs& e)
-{}
-
-void CGridView::OnCellLButtonClk(CellEventArgs& e)
-{
-	//if(e.CellPtr->GetRowPtr()==GetNameHeaderRowPtr().get())
-	//{	
-	//	auto pCol=e.CellPtr->GetColumnPtr();
-	//	Sorts sort=pCol->GetSort();
-	//	//Reset Sort
-	//	ResetColumnSort();
-	//	//Sort
-	//	switch(sort){
-	//		case Sorts::None:
-	//		case Sorts::Down:
-	//			pCol->SetSort(Sorts::Up);
-	//			break;
-	//		case Sorts::Up:
-	//			pCol->SetSort(Sorts::Down);
-	//			break;
-	//		default:
-	//			pCol->SetSort(Sorts::None);
-	//			break;
-	//	}
-	//	SubmitUpdate();
-	//}
-}
 
 void CGridView::SortAllInSubmitUpdate()
 {
@@ -191,13 +115,13 @@ void CGridView::FilterAll()
 
 void CGridView::Invalidate()
 {
-	InvalidateRect(NULL,FALSE);
+	GetWndPtr()->InvalidateRect(NULL,FALSE);
 }
 
 void CGridView::DelayUpdate()
 {
 	m_invalidateTimer.run([this] {
-		PostMessage(WM_DELAY_UPDATE, NULL, NULL);
+		GetWndPtr()->PostMessage(WM_DELAY_UPDATE, NULL, NULL);
 	}, std::chrono::milliseconds(50));
 }
 
@@ -270,7 +194,7 @@ void CGridView::UpdateRow()
 	top = UpdateHeadersRow(top);
 
 	//Page
-	d2dw::CRectF rcPage(m_pDirect->Pixels2Dips(GetClientRect()));
+	d2dw::CRectF rcPage(GetRectInWnd());
 	rcPage.top = top;
 	FLOAT pageHeight = rcPage.Height();
 	FLOAT scrollPos = GetVerticalScrollPos();
@@ -314,7 +238,7 @@ void CGridView::UpdateScrolls()
 	if(!Visible())return;
 
 	//Client
-	d2dw::CRectF rcClient(m_pDirect->Pixels2Dips(GetClientRect()));
+	d2dw::CRectF rcClient(GetRectInWnd());
 
 	//Origin
 	//d2dw::CPointF ptOrigin(GetOriginPoint());
@@ -363,8 +287,8 @@ d2dw::CPointF CGridView::GetScrollPos()const
 
 void CGridView::SetScrollPos(const CPoint& ptScroll)
 {
-	m_pHScroll->SetScrollPos(m_pDirect->Pixels2DipsX(ptScroll.x));
-	m_pVScroll->SetScrollPos(m_pDirect->Pixels2DipsY(ptScroll.y));
+	m_pHScroll->SetScrollPos(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(ptScroll.x));
+	m_pVScroll->SetScrollPos(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(ptScroll.y));
 }
 
 FLOAT CGridView::GetVerticalScrollPos()const
@@ -378,7 +302,7 @@ FLOAT CGridView::GetHorizontalScrollPos()const
 }
 
 
-LRESULT CGridView::OnCommandEditHeader(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
+void CGridView::OnCommandEditHeader(const CommandEvent& e)
 {
 	if(!m_rocoContextMenu.IsInvalid()){
 		if(m_rocoContextMenu.GetRowPtr()==GetNameHeaderRowPtr()){
@@ -387,35 +311,31 @@ LRESULT CGridView::OnCommandEditHeader(WORD wNotifyCode,WORD wID,HWND hWndCtl,BO
 			}
 		}
 	}
-	return 0;
 }
 
-LRESULT CGridView::OnCommandDeleteColumn(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
+void CGridView::OnCommandDeleteColumn(const CommandEvent& e)
 {
 	if(!m_rocoContextMenu.IsInvalid()){
 		EraseColumn(m_rocoContextMenu.GetColumnPtr());
 	}
-	return 0;
 }
 
-LRESULT CGridView::OnCommandResizeSheetCell(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
+void CGridView::OnCommandResizeSheetCell(const CommandEvent& e)
 {
 	if(!m_rocoContextMenu.IsInvalid()){
 		if(auto p = std::dynamic_pointer_cast<CSheetCell>(CSheet::Cell(m_rocoContextMenu.GetRowPtr(),m_rocoContextMenu.GetColumnPtr()))){
 			p->Resize();
 		}
 	}
-	return 0;
 }
 
 
-LRESULT CGridView::OnCommandSelectAll(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
+void CGridView::OnCommandSelectAll(const CommandEvent& e)
 {
 	SelectAll();
-	return 0;
 }
 
-LRESULT CGridView::OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
+void CGridView::OnCommandCopy(const CommandEvent& e)
 {
 	//TODO High
 	std::wstring strCopy;
@@ -466,14 +386,12 @@ LRESULT CGridView::OnCommandCopy(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bH
 	if(strMem!=NULL){
 		::wcscpy_s(strMem,strCopy.size()+1,strCopy.c_str());
 		CClipboard clipboard;
-		if(clipboard.Open(m_hWnd)!=0){	
+		if(clipboard.Open(GetWndPtr()->m_hWnd)!=0){	
 			clipboard.Empty();
 			clipboard.SetData(CF_UNICODETEXT,hGlobal);
 			clipboard.Close();
 		}
 	}
-
-	return 0;
 }
 
 void CGridView::UpdateAll()
@@ -553,7 +471,7 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 			}
 		}
 	} else {
-		auto rcCell(pCell->GetRect());
+		auto rcCell(pCell->GetRectInWnd());
 		FLOAT vScrollAdd = 0;
 		//Bottom has priority (Bottom can Overwrite ScrollPos)
 
@@ -567,7 +485,7 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 			m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() + vScrollAdd);
 		}
 	}
-	auto rcCell(pCell->GetRect());
+	auto rcCell(pCell->GetRectInWnd());
 	FLOAT hScrollAdd = 0;
 
 	//Right has priority (Right can Overwrite ScrollPos)
@@ -591,12 +509,12 @@ void CGridView::Jump(std::shared_ptr<CCell>& spCell)
 
 d2dw::CRectF CGridView::GetPaintRect()
 {
-	return m_pDirect->Pixels2Dips(GetClientRect());
+	return GetRectInWnd();
 }
 
 std::pair<bool, bool> CGridView::GetHorizontalVerticalScrollNecessity()
 {
-	d2dw::CRectF rcClient(m_pDirect->Pixels2Dips(GetClientRect()));
+	d2dw::CRectF rcClient(GetRectInWnd());
 	d2dw::CRectF rcCells(GetCellsRect());
 	d2dw::CPointF ptOrigin(GetFrozenPoint());
 	//First
@@ -614,7 +532,7 @@ std::pair<bool, bool> CGridView::GetHorizontalVerticalScrollNecessity()
 
 d2dw::CRectF CGridView::GetPageRect()
 {
-	d2dw::CRectF rcClient(m_pDirect->Pixels2Dips(GetClientRect()));
+	d2dw::CRectF rcClient(GetRectInWnd());
 	d2dw::CRectF rcCells(GetCellsRect());
 	d2dw::CPointF ptOrigin(GetFrozenPoint());
 	//First
@@ -630,11 +548,6 @@ d2dw::CRectF CGridView::GetPageRect()
 	return d2dw::CRectF(ptOrigin.x, ptOrigin.y,
 		rcClient.right - (bEnableShowVertical?GetSystemMetrics(SM_CXVSCROLL):0),
 		rcClient.bottom - (bEnableShowHorizontal?GetSystemMetrics(SM_CYHSCROLL):0));
-}
-
-std::shared_ptr<CDC> CGridView::GetClientDCPtr()const
-{
-	return std::make_shared<CClientDC>(m_hWnd);
 }
 
 void CGridView::SubmitUpdate()
@@ -660,7 +573,8 @@ void CGridView::SubmitUpdate()
 			}
 			case Updates::Rect:
 			{
-				MoveWindow(m_pDirect->Dips2Pixels(GetUpdateRect()), FALSE);
+				//TODODO
+				GetWndPtr()->MoveWindow(GetWndPtr()->GetDirectPtr()->Dips2Pixels(GetUpdateRect()), FALSE);
 			}
 			case Updates::RowVisible:
 			{
@@ -725,29 +639,29 @@ CColumn* CGridView::GetParentColumnPtr(CCell* pCell)
 
 bool CGridView::GetIsFocused()const
 {
+	//TODODO
 	auto hWndAct = ::GetActiveWindow();
 	auto hWndFcs = ::GetFocus();
 	auto hWndFore = ::GetForegroundWindow();
 
-	return hWndFcs == m_hWnd ||
-		(HWND)::GetWindowWord(hWndAct, GWL_HWNDPARENT) == m_hWnd ||
-		(HWND)::GetWindowWord(hWndFcs, GWL_HWNDPARENT) == m_hWnd ||
-		(HWND)::GetWindowWord(hWndFore, GWL_HWNDPARENT) == m_hWnd ||
-		(HWND)::GetWindow(hWndAct, GW_OWNER) == m_hWnd ||
-		(HWND)::GetWindow(hWndFcs, GW_OWNER) == m_hWnd ||
-		(HWND)::GetWindow(hWndFore, GW_OWNER) == m_hWnd ||
-		(HWND)::GetParent(hWndAct) == m_hWnd ||
-		(HWND)::GetParent(hWndFcs) == m_hWnd ||
-		(HWND)::GetParent(hWndFore) == m_hWnd;
+	return hWndFcs == GetWndPtr()->m_hWnd ||
+		(HWND)::GetWindowWord(hWndAct, GWL_HWNDPARENT) == GetWndPtr()->m_hWnd ||
+		(HWND)::GetWindowWord(hWndFcs, GWL_HWNDPARENT) == GetWndPtr()->m_hWnd ||
+		(HWND)::GetWindowWord(hWndFore, GWL_HWNDPARENT) == GetWndPtr()->m_hWnd ||
+		(HWND)::GetWindow(hWndAct, GW_OWNER) == GetWndPtr()->m_hWnd ||
+		(HWND)::GetWindow(hWndFcs, GW_OWNER) == GetWndPtr()->m_hWnd ||
+		(HWND)::GetWindow(hWndFore, GW_OWNER) == GetWndPtr()->m_hWnd ||
+		(HWND)::GetParent(hWndAct) == GetWndPtr()->m_hWnd ||
+		(HWND)::GetParent(hWndFcs) == GetWndPtr()->m_hWnd ||
+		(HWND)::GetParent(hWndFore) == GetWndPtr()->m_hWnd;
 }
 
 
-LRESULT CGridView::OnCommandFind(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
+void CGridView::OnCommandFind(const CommandEvent& e)
 {
 	CFindDlg* pDlg = new CFindDlg(this);
-	g_hDlgModeless = pDlg->Create(m_hWnd);
+	g_hDlgModeless = pDlg->Create(GetWndPtr()->m_hWnd);
 	pDlg->ShowWindow(SW_SHOW);
-	return 0;
 }
 
 void CGridView::FindNext(const std::wstring& findWord, bool matchCase, bool matchWholeWord)
@@ -814,7 +728,7 @@ void CGridView::FindNext(const std::wstring& findWord, bool matchCase, bool matc
 		}
 	}
 
-	MessageBox((L"\"" + findWord + L"\" is not found!").c_str(), L"Find",MB_OK); 
+	GetWndPtr()->MessageBox((L"\"" + findWord + L"\" is not found!").c_str(), L"Find",MB_OK);
 
 }
 
@@ -885,7 +799,7 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 		}
 	}
 
-	MessageBox((L"\"" + findWord + L"\" is not found!").c_str(), L"Find",MB_OK); 
+	GetWndPtr()->MessageBox((L"\"" + findWord + L"\" is not found!").c_str(), L"Find",MB_OK);
 
 }
 
@@ -895,23 +809,22 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 void CGridView::Normal_Paint(const PaintEvent& e)
 {
 	if (!Visible())return;
-
+	d2dw::CRectF rcClient(GetRectInWnd());
+	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), rcClient);
 	CSheet::Normal_Paint(e);
-	CRect rcClient(GetClientRect());
+
 
 	//Paint Focused Line
 	if (GetIsFocused() ){
-		d2dw::CRectF rcFocus(m_pDirect->Pixels2Dips(rcClient));
+		d2dw::CRectF rcFocus(rcClient);
 		rcFocus.DeflateRect(1.0f, 1.0f);
-		m_pDirect->DrawSolidRectangle(*(GetHeaderProperty()->FocusedLine), rcFocus);
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(GetHeaderProperty()->FocusedLine), rcFocus);
 	}
 }
 
 void CGridView::Normal_LButtonDown(const LButtonDownEvent& e)
 {
 	m_keepEnsureVisibleFocusedCell = false;
-	if (m_isFocusable) { SetFocus(); }
-//setcap	SetCapture();
 	CSheet::Normal_LButtonDown(e);
 }
 void CGridView::Normal_LButtonUp(const LButtonUpEvent& e)
@@ -935,8 +848,6 @@ void CGridView::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 void CGridView::Normal_RButtonDown(const RButtonDownEvent& e)
 {
 	m_keepEnsureVisibleFocusedCell = false;
-	if (m_isFocusable) { SetFocus(); }
-
 	CSheet::Normal_RButtonDown(e);
 }
 void CGridView::Normal_MouseMove(const MouseMoveEvent& e)
@@ -945,7 +856,7 @@ void CGridView::Normal_MouseMove(const MouseMoveEvent& e)
 	TRACKMOUSEEVENT stTrackMouseEvent;
 	stTrackMouseEvent.cbSize = sizeof(stTrackMouseEvent);
 	stTrackMouseEvent.dwFlags = TME_LEAVE;
-	stTrackMouseEvent.hwndTrack = m_hWnd;
+	stTrackMouseEvent.hwndTrack = GetWndPtr()->m_hWnd;
 	::TrackMouseEvent(&stTrackMouseEvent);
 
 	CSheet::Normal_MouseMove(e);
@@ -965,7 +876,7 @@ void CGridView::Normal_SetCursor(const SetCursorEvent& e)
 void CGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
 	if (!Visible())return;
-	auto cell = Cell(m_pDirect->Pixels2Dips(e.PointInClient));
+	auto cell = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 	if (!cell) {
 		CMenu* pMenu = GetContextMenuPtr();
 		if (pMenu) {
@@ -1014,11 +925,11 @@ void CGridView::VScrlDrag_OnExit()
 void CGridView::VScrlDrag_LButtonDown(const LButtonDownEvent& e)
 {
 	//setcaptureSetCapture();
-	m_pVScroll->SetStartDrag(GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
+	m_pVScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
 }
 bool CGridView::VScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
 {
-	return m_pVScroll->GetVisible() && m_pVScroll->GetThumbRect().PtInRect(GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	return m_pVScroll->GetVisible() && m_pVScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 }
 void CGridView::VScrlDrag_LButtonUp(const LButtonUpEvent& e)
 {
@@ -1029,10 +940,10 @@ void CGridView::VScrlDrag_MouseMove(const MouseMoveEvent& e)
 {
 	m_pVScroll->SetScrollPos(
 		m_pVScroll->GetScrollPos() +
-		(GetDirectPtr()->Pixels2DipsY(e.PointInClient.y) - m_pVScroll->GetStartDrag()) *
+		(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y) - m_pVScroll->GetStartDrag()) *
 		m_pVScroll->GetScrollDistance() /
-		m_pVScroll->GetRect().Height());
-	m_pVScroll->SetStartDrag(GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
+		m_pVScroll->GetRectInWnd().Height());
+	m_pVScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
 }
 
 /***************/
@@ -1050,12 +961,12 @@ void CGridView::HScrlDrag_OnExit()
 
 void CGridView::HScrlDrag_LButtonDown(const LButtonDownEvent& e)
 {
-	m_pHScroll->SetStartDrag(GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
+	m_pHScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
 }
 
 bool CGridView::HScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
 {
-	return m_pHScroll->GetVisible() && m_pHScroll->GetThumbRect().PtInRect(GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	return m_pHScroll->GetVisible() && m_pHScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 }
 
 void CGridView::HScrlDrag_LButtonUp(const LButtonUpEvent& e)
@@ -1067,18 +978,18 @@ void CGridView::HScrlDrag_MouseMove(const MouseMoveEvent& e)
 {
 	m_pHScroll->SetScrollPos(
 		m_pHScroll->GetScrollPos() +
-		(GetDirectPtr()->Pixels2DipsX(e.PointInClient.x) - m_pHScroll->GetStartDrag()) *
+		(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x) - m_pHScroll->GetStartDrag()) *
 		m_pHScroll->GetScrollDistance() /
-		m_pHScroll->GetRect().Width());
-	m_pHScroll->SetStartDrag(GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
+		m_pHScroll->GetRectInWnd().Width());
+	m_pHScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
 }
 
 void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 {
 	if (auto pCell = dynamic_cast<CTextCell*>(e.CellPtr)) {
 
-		D2DTextbox* pEdit = new D2DTextbox(
-			this,
+		CTextBox* pEdit = new CTextBox(
+			GetWndPtr(),
 			pCell,
 			pCell->GetCellPropertyPtr(),
 			pCell->GetString(),
@@ -1110,14 +1021,14 @@ void CGridView::Edit_OnExit()
 {
 	ReleaseCapture();
 	if (auto pEdit = GetEditPtr()) {
-		GetEditPtr()->OnClose(CloseEvent(this, NULL, NULL));
+		GetEditPtr()->OnClose(CloseEvent(GetWndPtr(), NULL, NULL, nullptr));
 		delete pEdit;
 	}
 }
 void CGridView::Edit_MouseMove(const MouseMoveEvent& e)
 {
 	if (GetEditPtr()) {
-		if (GetEditPtr()->GetClientRect().PtInRect(GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
+		if (GetEditPtr()->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
 			GetEditPtr()->OnMouseMove(e);
 		} else {
 			Normal_MouseMove(e);
@@ -1127,7 +1038,7 @@ void CGridView::Edit_MouseMove(const MouseMoveEvent& e)
 
 bool CGridView::Edit_Guard_LButtonDown(const LButtonDownEvent& e)
 {
-	auto ret = !GetEditPtr()->GetClientRect().PtInRect(GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	auto ret = !GetEditPtr()->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 //	if (ret) { SetEditPtr(nullptr); }
 	return ret;
 }
@@ -1142,7 +1053,7 @@ void CGridView::Edit_LButtonDown(const LButtonDownEvent& e)
 void CGridView::Edit_LButtonUp(const LButtonUpEvent& e)
 {
 	if (GetEditPtr()) {
-		if (GetEditPtr()->GetClientRect().PtInRect(GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
+		if (GetEditPtr()->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
 			//GetEditPtr()->OnLButtonUp(e);
 		} else {
 			Normal_LButtonUp(e);
@@ -1199,30 +1110,14 @@ void CGridView::Edit_Char(const CharEvent& e)
 /******************/
 void CGridView::BeginEdit(CCell* pCell)
 {
-	OnBeginEdit(BeginEditEvent(this, pCell));
+	OnBeginEdit(BeginEditEvent(GetWndPtr(), pCell));
 	return;
 }
 
 void CGridView::EndEdit()
 {
-	OnEndEdit(EndEditEvent(this));
+	OnEndEdit(EndEditEvent(GetWndPtr()));
 	return;
-}
-
-LRESULT CGridView::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	bHandled = FALSE; //Default Handled = FALSE means Arrow
-	CSheet::OnSetCursor(SetCursorEvent(this, wParam, lParam, &bHandled));
-	SubmitUpdate();
-	return 0;
-}
-
-LRESULT CGridView::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	bHandled = FALSE;
-	CSheet::OnContextMenu(ContextMenuEvent(this, wParam, lParam, &bHandled));
-	SubmitUpdate();
-	return 0;
 }
 
 LRESULT CGridView::OnFilter(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -1232,85 +1127,14 @@ LRESULT CGridView::OnFilter(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHand
 	return 0;
 }
 
-LRESULT CGridView::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	//Direct2DWrite
-	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
-	return 0;
-}
-
-LRESULT CGridView::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
-		::SetForegroundWindow(hWnd);
-	}
-
-	DestroyWindow();
-	return 0;
-}
-
-LRESULT CGridView::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	return 0;
-}
-
-LRESULT CGridView::OnEraseBkGnd(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	//For Back buffering
-	bHandled = TRUE;
-	return 1;
-}
-
-LRESULT CGridView::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	m_pDirect->GetHwndRenderTarget()->Resize(D2D1_SIZE_U{ LOWORD(lParam), HIWORD(lParam) });
-	SizeChanged();
-	SubmitUpdate();
-	return 0;
-}
-
-LRESULT CGridView::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	CPaintDC dc(m_hWnd);
-	m_pDirect->BeginDraw();
-
-	m_pDirect->ClearSolid(*(m_spGridViewProp->BackgroundPropPtr->m_brush));
-	PaintEvent e(this, &bHandled);
-	CSheet::OnPaint(e);
-	if (m_pEdit && m_pEdit->GetIsVisible()) {
-		m_pEdit->OnPaint(e);
-	}
-	m_pVScroll->OnPaint(e);
-	m_pHScroll->OnPaint(e);
-
-	m_pDirect->EndDraw();
-	return 0;
-}
-
-LRESULT CGridView::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	CSheet::OnSetFocus(SetFocusEvent(this, wParam, lParam, &bHandled));
-	InvalidateRect(NULL, FALSE);
-	SubmitUpdate();
-	return 0;
-}
-
-
-LRESULT CGridView::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	CSheet::OnKillFocus(KillFocusEvent(this, wParam, lParam, &bHandled));
-	InvalidateRect(NULL, FALSE);
-	SubmitUpdate();
-	return 0;
-}
-
 LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	SPDLOG_INFO("CGridView::OnDelayUpdate");
 
 	CONSOLETIMER("OnDelayUpdate Total");
-	SignalPreDelayUpdate();
-	SignalPreDelayUpdate.disconnect_all_slots();
+	//TODODO
+	//SignalPreDelayUpdate();
+	//SignalPreDelayUpdate.disconnect_all_slots();
 	PostUpdate(Updates::Filter);
 
 	if (m_keepEnsureVisibleFocusedCell) {
@@ -1326,10 +1150,91 @@ LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 /**************/
 /* UI Message */
 /**************/
+
+void CGridView::OnRect(const RectEvent& e)
+{
+	m_rect = e.Rect;
+	SizeChanged();
+	SubmitUpdate();
+}
+
+void CGridView::OnPaint(const PaintEvent& e)
+{
+	//GetWndPtr()->GetDirectPtr()->ClearSolid(*(m_spGridViewProp->BackgroundPropPtr->m_brush));
+	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), GetRectInWnd());
+	
+	CSheet::OnPaint(e);
+
+	if (m_pEdit && m_pEdit->GetIsVisible()) {
+		m_pEdit->OnPaint(e);
+	}
+	m_pVScroll->OnPaint(e);
+	m_pHScroll->OnPaint(e);
+	SubmitUpdate();
+}
+
 void CGridView::OnMouseWheel(const MouseWheelEvent& e)
 {
 	m_keepEnsureVisibleFocusedCell = false;
 	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);
+	SubmitUpdate();
+}
+
+void CGridView::OnSetFocus(const SetFocusEvent& e)
+{
+	CSheet::OnSetFocus(e);
+	SubmitUpdate();
+}
+
+void CGridView::OnKillFocus(const KillFocusEvent& e)
+{
+	CSheet::OnKillFocus(e);
+	SubmitUpdate();
+}
+
+void CGridView::OnSetCursor(const SetCursorEvent& e)
+{
+	*e.HandledPtr = FALSE; //Default Handled = FALSE means Arrow
+	CSheet::OnSetCursor(e);
+	SubmitUpdate();
+}
+
+void CGridView::OnContextMenu(const ContextMenuEvent& e)
+{
+	*e.HandledPtr = FALSE;
+	CSheet::OnContextMenu(e);
+	SubmitUpdate();
+}
+
+void CGridView::OnCommand(const CommandEvent& e)
+{
+	switch (e.ID) {
+		case ID_HD_COMMAND_EDITHEADER:
+			OnCommandEditHeader(e);
+			break;
+		case ID_HD_COMMAND_DELETECOLUMN:
+			OnCommandDeleteColumn(e);
+			break;
+		case IDM_SELECTALL:
+			OnCommandSelectAll(e);
+			break;
+		case IDM_DELETE:
+			OnCommandDelete(e);
+			break;
+		case IDM_COPY:
+			OnCommandCopy(e);
+			break;
+		//case IDM_CUT:
+		//	OnCommandCut(e);
+		//	break;
+		case IDM_PASTE:
+			OnCommandPaste(e);
+			break;
+		case IDM_FIND:
+			OnCommandFind(e);
+			break;
+	}
+	SubmitUpdate();
 }
 
 

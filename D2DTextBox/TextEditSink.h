@@ -1,11 +1,11 @@
 #pragma once
 
-class D2DTextbox;
+class CTextBox;
 
 class CTextEditSink : public ITfTextEditSink
 {
 	public:
-		CTextEditSink(D2DTextbox *pEditor);
+		CTextEditSink(CTextBox *pEditor);
 
 		//
 		// IUnknown methods
@@ -29,5 +29,5 @@ class CTextEditSink : public ITfTextEditSink
 		long _cRef;
 		ITfContext *_pic;
 		DWORD _dwEditCookie;
-		D2DTextbox *_pEditor;
+		CTextBox *_pEditor;
 };

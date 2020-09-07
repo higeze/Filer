@@ -44,7 +44,7 @@ private:
 
 public:
 	//Constructor
-	CFilerGridView(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp);
+	CFilerGridView(CWnd* pWnd, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp);
 	virtual ~CFilerGridView();
 	//getter
 	std::shared_ptr<CShellFolder>& GetFolder() { return m_spFolder; }
@@ -55,10 +55,11 @@ public:
 	/******************/
 	/* Window Message */
 	/******************/
-	virtual LRESULT OnCreate(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	virtual void OnCreate(const CreateEvent& e);
+	virtual void OnCommand(const CommandEvent& e);
 	virtual LRESULT OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	virtual LRESULT OnCommandFind(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
+	virtual void OnCommandFind(const CommandEvent& e) override;
 	/**************/
 	/* UI Message */
 	/**************/

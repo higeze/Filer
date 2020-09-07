@@ -146,7 +146,7 @@ public:
 	boost::signals2::signal<void(CellContextMenuEventArgs&)> CellContextMenu;
 
 	//Constructor
-	CSheet(std::shared_ptr<SheetProperty> spSheetProperty, CMenu* pContextMenu= &CSheet::ContextMenu);
+	CSheet(CWnd* pWnd, std::shared_ptr<SheetProperty> spSheetProperty, CMenu* pContextMenu= &CSheet::ContextMenu);
 
 	//Destructor
 	virtual ~CSheet();
@@ -210,7 +210,6 @@ public:
 	//Sort
 	virtual void ResetColumnSort();
 
-	virtual std::shared_ptr<CDC> GetClientDCPtr()const=0;
 	virtual d2dw::CPointF GetScrollPos()const=0;
 	virtual CGridView* GetGridPtr()=0;
 	virtual bool Empty()const;
@@ -257,7 +256,7 @@ public:
 	virtual d2dw::CPointF GetFrozenPoint();
 	virtual d2dw::CSizeF MeasureSize()const;
 
-	virtual d2dw::CRectF GetRect()const;
+	virtual d2dw::CRectF GetRectInWnd()const;
 	virtual FLOAT GetCellsHeight();
 	virtual FLOAT GetCellsWidth();
 	virtual d2dw::CRectF GetCellsRect();

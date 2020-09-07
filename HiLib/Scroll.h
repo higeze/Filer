@@ -36,7 +36,8 @@ namespace d2dw
 		std::pair<FLOAT, FLOAT> GetScrollRange()const { return m_range; }
 		FLOAT GetScrollDistance()const { return m_range.second - m_range.first; }
 		FLOAT GetScrollPos()const { return m_pos; }
-		CRectF GetRect()const { return m_rect; }
+		CWnd* GetWndPtr()const override { return m_pWnd; }
+		CRectF GetRectInWnd() const override { return m_rect; }
 		CSizeF GetSize()const { return CSizeF(m_rect.Width(), m_rect.Height()); }
 		bool GetVisible()const { return m_visible; }
 

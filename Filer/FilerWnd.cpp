@@ -31,13 +31,15 @@
 
 #include "ToDoGridView.h"
 #include "TextboxWnd.h"
+#include "MouseStateMachine.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
 #endif
 
 CFilerWnd::CFilerWnd()
-	:m_rcWnd(0, 0, 300, 500), 
+	:CTextboxWnd(),
+	m_rcWnd(0, 0, 300, 500), 
 	m_rcPropWnd(0, 0, 300, 400),
 	m_splitterLeft(0),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
@@ -45,11 +47,11 @@ CFilerWnd::CFilerWnd()
 	m_spTextEditorProp(std::make_shared<TextEditorProperty>()),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
-	m_spLeftView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp, m_spTextEditorProp)),
-	m_spRightView(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp, m_spTextEditorProp)),
+	m_spLeftWnd(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp, m_spTextEditorProp)),
+	m_spRightWnd(std::make_shared<CFilerTabGridView>(m_spFilerGridViewProp, m_spTextEditorProp)),
 	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
-	m_spCurView(m_spLeftView)
+	m_spCurWnd(m_spLeftWnd)
 #ifdef USE_PYTHON_EXTENSION
 	,m_spPyExProp(std::make_shared<CPythonExtensionProperty>())
 #endif
@@ -73,31 +75,11 @@ CFilerWnd::CFilerWnd()
 	.nHeight(m_rcWnd.Height())
 	.hMenu(NULL); 
 
-	AddMsgHandler(WM_CREATE,&CFilerWnd::OnCreate,this);
-	AddMsgHandler(WM_ERASEBKGND, &CFilerWnd::OnEraseBkGnd, this);
-	AddMsgHandler(WM_PAINT, &CFilerWnd::OnPaint, this);
-	AddMsgHandler(WM_SIZE,&CFilerWnd::OnSize,this);
-	AddMsgHandler(WM_CLOSE,&CFilerWnd::OnClose,this);
 	AddMsgHandler(WM_DESTROY,&CFilerWnd::OnDestroy,this);
-	AddMsgHandler(WM_SETFOCUS, &CFilerWnd::OnSetFocus, this);
-
-	AddMsgHandler(WM_LBUTTONDOWN, &CFilerWnd::OnLButtonDown, this);
-	AddMsgHandler(WM_LBUTTONUP, &CFilerWnd::OnLButtonUp, this);
-	AddMsgHandler(WM_MOUSEMOVE, &CFilerWnd::OnMouseMove, this);
-	AddMsgHandler(WM_DEVICECHANGE, &CFilerWnd::OnDeviceChange, this);
-	//AddMsgHandler(WM_KEYDOWN,&CFilerWnd::OnKeyDown,this);
-	//AddNtfyHandler(9996,TCN_KEYDOWN, [this](int id,LPNMHDR pnmh,BOOL& bHandled)->LRESULT{
-	//	this->OnKeyDown(WM_KEYDOWN, (WPARAM)((NMTCKEYDOWN*)pnmh)->wVKey, NULL, bHandled);
-	//	return 0;
-	//});
-	//AddMsgHandler(WM_SETCURSOR, &CKonamiCommander::OnSetCursor, &m_konamiCommander);
-	//AddMsgHandler(WM_PAINT, &CKonamiCommander::OnPaint, &m_konamiCommander);
 
 	AddCmdIDHandler(IDM_SAVE,&CFilerWnd::OnCommandSave,this);
 	AddCmdIDHandler(IDM_EXIT, &CFilerWnd::OnCommandExit, this);
 
-	//AddCmdIDHandler(IDM_EDIT_COPY,&CMultiLineListView::OnCmdEditCopy,(CMultiLineListView*)m_upList.get());
-	//AddCmdIDHandler(IDM_EDIT_SELECTALL,&CMultiLineListView::OnCmdEditSelectAll,(CMultiLineListView*)m_upList.get());
 	AddCmdIDHandler(IDM_APPLICATIONOPTION, &CFilerWnd::OnCommandApplicationOption, this);
 	AddCmdIDHandler(IDM_FILERGRIDVIEWOPTION, &CFilerWnd::OnCommandFilerGridViewOption, this);
 	AddCmdIDHandler(IDM_TEXTOPTION, &CFilerWnd::OnCommandTextOption, this);
@@ -110,43 +92,23 @@ CFilerWnd::CFilerWnd()
 #endif
 }
 
-CFilerWnd::~CFilerWnd()
+CFilerWnd::~CFilerWnd() = default;
+
+void CFilerWnd::OnCreate(const CreateEvent& e)
 {
-
-}
-
-HWND CFilerWnd::Create(HWND hWndParent)
-{
-	HWND hWnd = CWnd::Create(hWndParent, m_rcWnd);
-	//WINDOWPLACEMENT wp = { 0 };
-	//wp.length = sizeof(WINDOWPLACEMENT);
-	//wp.rcNormalPosition = m_rcWnd;
-	//::SetWindowPlacement(m_hWnd, &wp);
-	return hWnd;
-}
-
-LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
-{
-	//Direct2DWrite
-	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
-
-	WINDOWPLACEMENT wp = { 0 };
-	wp.length = sizeof(WINDOWPLACEMENT);
-	wp.rcNormalPosition = m_rcWnd;
-	::SetWindowPlacement(m_hWnd, &wp);
-
 	//Konami
 	//m_konamiCommander.SetHwnd(m_hWnd);
+	m_spStatusBar = std::make_shared<d2dw::CStatusBar>(this, std::make_shared<StatusBarProperty>());
+	m_spStatusBar->OnCreate(CreateEvent(this, 0, 0));
 
 	//Size
 	CRect rcClient = GetClientRect();
 	CRect rcLeftFavorites, rcRightFavorites, rcLeftGrid, rcRightGrid, rcStatusBar;
-	LONG favoriteWidth = m_pDirect->Dips2PixelsX(
+	LONG favoriteWidth = GetDirectPtr()->Dips2PixelsX(
 		m_spFilerGridViewProp->CellPropPtr->Line->Width * 2 + //def:GridLine=0.5*2, CellLine=0.5*2
 		m_spFilerGridViewProp->CellPropPtr->Padding->left + //def:2
 		m_spFilerGridViewProp->CellPropPtr->Padding->right + //def:2
 		16.f);//icon
-	m_spStatusBar = std::make_shared<d2dw::CStatusBar>(this, std::make_shared<StatusBarProperty>());
 	LONG statusHeight = m_pDirect->Dips2PixelsY(m_spStatusBar->MeasureSize(m_pDirect.get()).height);
 
 	rcStatusBar.SetRect(
@@ -215,15 +177,14 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		}
 	}
 	//CStatusBar
-	m_spStatusBar->SetRect(m_pDirect->Pixels2Dips(rcStatusBar));
+	m_spStatusBar->OnRect(RectEvent(this, m_pDirect->Pixels2Dips(rcStatusBar)));
 
 	//CFavoritesGridView
-	auto createFavoritesView = [this](std::shared_ptr<CFavoritesGridView>& spFavoritesView, std::weak_ptr<CFilerTabGridView>& wpView, unsigned short id, CRect& rc)->void {
-		spFavoritesView->CreateWindowExArgument()
-			.dwStyle(spFavoritesView->CreateWindowExArgument().dwStyle() | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | (rc.operator bool() ? WS_VISIBLE : 0))
-			.hMenu((HMENU)id);
-
-		spFavoritesView->FileChosen = [wpView](std::shared_ptr<CShellFile>& spFile)->void {
+	auto createFavoritesView = [this](std::shared_ptr<CFavoritesGridView>& spFavoritesGridView, std::weak_ptr<CFilerTabGridView>& wpView, unsigned short id, CRect& rc)->void {
+		spFavoritesGridView = std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp);
+		spFavoritesGridView->OnCreate(CreateEvent(this, 0, 0));
+		spFavoritesGridView->OnRect(RectEvent(RectEvent(this, m_pDirect->Pixels2Dips(rc))));
+		spFavoritesGridView->FileChosen = [wpView](std::shared_ptr<CShellFile>& spFile)->void {
 			if (auto spView = wpView.lock()) {
 				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
 					auto& itemsSource = spView->GetItemsSource();
@@ -233,11 +194,9 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 				}
 			}
 		};
-		
-		spFavoritesView->Create(m_hWnd, rc);
 	};
-	createFavoritesView(m_spLeftFavoritesView, std::weak_ptr<CFilerTabGridView>(m_spLeftView), CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFavoritesGridView"), rcLeftFavorites);
-	createFavoritesView(m_spRightFavoritesView, std::weak_ptr<CFilerTabGridView>(m_spRightView), CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFavoritesGridView"), rcRightFavorites);
+	createFavoritesView(m_spLeftFavoritesView, std::weak_ptr<CFilerTabGridView>(m_spLeftWnd), CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFavoritesGridView"), rcLeftFavorites);
+	createFavoritesView(m_spRightFavoritesView, std::weak_ptr<CFilerTabGridView>(m_spRightWnd), CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFavoritesGridView"), rcRightFavorites);
 
 	//CFilerTabGridView
 	auto createFilerTabGridView = [this](std::shared_ptr<CFilerTabGridView>& spView, unsigned short id, CRect& rc)->void {
@@ -251,47 +210,27 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		spView->OnCreate(WM_CREATE, NULL, NULL, dummy);
 		
 		//Capture KeyDown
-		spView->GetFilerGridViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
-		spView->GetToDoGridViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
-		spView->GetTextViewPtr()->AddMsgHandler(WM_KEYDOWN, &CFilerWnd::OnKeyDown, this);
+		spView->GetContentWnd()->AddMsgHandler(WM_KEYDOWN, &CTextboxWnd::UserInputMachine_Message<KeyDownEvent>, (CTextboxWnd*)this);
 		
 		//Capture SetFocus
-		spView->GetFilerGridViewPtr()->AddMsgHandler(WM_SETFOCUS,
+		spView->GetContentWnd()->AddMsgHandler(WM_SETFOCUS,
 		[this, wpView = std::weak_ptr<CFilerTabGridView>(spView)](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
 			if (auto spView = wpView.lock()) {
-				m_spCurView = spView;
-				spView->GetFilerGridViewPtr()->InvalidateRect(NULL, FALSE);
-			}
-			return 0;
-		});
-
-		spView->GetToDoGridViewPtr()->AddMsgHandler(WM_SETFOCUS,
-		[this, wpView = std::weak_ptr<CFilerTabGridView>(spView)](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
-			if (auto spView = wpView.lock()) {
-				m_spCurView = spView;
-				spView->GetToDoGridViewPtr()->InvalidateRect(NULL, FALSE);
-			}
-			return 0;
-		});
-
-		spView->GetTextViewPtr()->AddMsgHandler(WM_SETFOCUS,
-			[this, wpView = std::weak_ptr<CFilerTabGridView>(spView)](UINT uMsg, LPARAM lParam, WPARAM wParam, BOOL& bHandled)->LRESULT {
-			if (auto spView = wpView.lock()) {
-				m_spCurView = spView;
-				spView->GetTextViewPtr()->InvalidateRect(NULL, FALSE);
+				m_spCurWnd = spView;
+				spView->GetContentWnd()->InvalidateRect(NULL, FALSE);
 			}
 			return 0;
 		});
 
 		spView->GetFilerGridViewPtr()->StatusLog = [this](const std::wstring& log) {
 			m_spStatusBar->SetText(log);
-			InvalidateRect(GetDirectPtr()->Dips2Pixels(m_spStatusBar->GetRect()), FALSE);
+			InvalidateRect(GetDirectPtr()->Dips2Pixels(m_spStatusBar->GetRectInWnd()), FALSE);
 		};
 
 	};
 
-	createFilerTabGridView(m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFilerGridView"), rcLeftGrid);
-	createFilerTabGridView(m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFilerGridView"), rcRightGrid);
+	createFilerTabGridView(m_spLeftWnd, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFilerGridView"), rcLeftGrid);
+	createFilerTabGridView(m_spRightWnd, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFilerGridView"), rcRightGrid);
 
 	auto applyCustomContextMenu = [this](std::shared_ptr<CFilerGridView> spFilerView)->void {
 		spFilerView->AddCustomContextMenu = [&](CMenu& menu) {
@@ -344,8 +283,9 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 					//m_spLeftFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spLeftFavoritesView.get()));
 					//m_spRightFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spRightFavoritesView.get()));
 				}
-				m_spLeftFavoritesView->SubmitUpdate();
-				m_spRightFavoritesView->SubmitUpdate();
+				//TODODO
+				//m_spLeftFavoritesView->SubmitUpdate();
+				//m_spRightFavoritesView->SubmitUpdate();
 				return true;
 			} else {
 				auto iter = std::find_if(m_spExeExProp->ExeExtensions.begin(), m_spExeExProp->ExeExtensions.end(),
@@ -477,15 +417,23 @@ LRESULT CFilerWnd::OnCreate(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 		};
 	};
 
-	applyCustomContextMenu(m_spLeftView->GetFilerGridViewPtr());
-	applyCustomContextMenu(m_spRightView->GetFilerGridViewPtr());
+	applyCustomContextMenu(m_spLeftWnd->GetFilerGridViewPtr());
+	applyCustomContextMenu(m_spRightWnd->GetFilerGridViewPtr());
 
-	return 0;
+
+	AddControlPtr(m_spLeftFavoritesView);
+	AddControlPtr(m_spRightFavoritesView);
+	AddControlPtr(m_spStatusBar);
+
+	WINDOWPLACEMENT wp = { 0 };
+	wp.length = sizeof(WINDOWPLACEMENT);
+	wp.rcNormalPosition = m_rcWnd;
+	::SetWindowPlacement(m_hWnd, &wp);
 }
 
-LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 {
-	switch (wParam)
+	switch (e.Char)
 	{
 	case 'S':
 		{
@@ -505,42 +453,45 @@ LRESULT CFilerWnd::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 		break;
 	case VK_F5:
 		{
-			std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
-			if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurView->GetCurView())) {
-				if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetCurView())) {
-					spCurFilerGridView->CopySelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
-				}
-			}
+		//TODODO
+			//std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurWnd == m_spLeftWnd ? m_spRightWnd : m_spLeftWnd;
+			//if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurWnd->GetContentWnd()->GetControlPtr())) {
+			//	if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetContentWnd()->GetControlPtr())) {
+			//		spCurFilerGridView->CopySelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
+			//	}
+			//}
 		}
 		break;
 	case VK_F6:
 		{
-			std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
-			if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurView->GetCurView())) {
-				if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetCurView())) {
-					spCurFilerGridView->MoveSelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
-				}
-			}
+		//TODODO
+			//std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurWnd == m_spLeftWnd ? m_spRightWnd : m_spLeftWnd;
+			//if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurWnd->GetContentWnd()->GetControlPtr())) {
+			//	if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetContentWnd()->GetControlPtr())) {
+			//		spCurFilerGridView->MoveSelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
+			//	}
+			//}
 		}
 		break;
 	case VK_F9:
 		{
-			std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurView == m_spLeftView ? m_spRightView : m_spLeftView;
-			if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurView->GetCurView())) {
-				if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetCurView())) {
-					int okcancel = ::MessageBox(spCurFilerGridView->m_hWnd, L"Incremental Copy?", L"Incremental Copy?", MB_OKCANCEL);
-					if (okcancel == IDOK) {
-						spCurFilerGridView->CopyIncrementalSelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
-					}
-				}
-			}
+		//TODODO
+			//std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurWnd == m_spLeftWnd ? m_spRightWnd : m_spLeftWnd;
+			//if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurWnd->GetContentWnd()->GetControlPtr())) {
+			//	if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetContentWnd()->GetControlPtr())) {
+			//		int okcancel = ::MessageBox(spCurFilerGridView->GetWndPtr()->m_hWnd, L"Incremental Copy?", L"Incremental Copy?", MB_OKCANCEL);
+			//		if (okcancel == IDOK) {
+			//			spCurFilerGridView->CopyIncrementalSelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
+			//		}
+			//	}
+			//}
 		}
 		break;
 	default:
-		bHandled = FALSE;
+		*e.HandledPtr = FALSE;
 	}
+
 	//m_konamiCommander.OnKeyDown(uMsg, wParam, lParam, bHandled);
-	return 0;
 }
 
 LRESULT CFilerWnd::OnClose(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
@@ -550,10 +501,12 @@ LRESULT CFilerWnd::OnClose(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled
 	GetWindowPlacement(&wp);
 	m_rcWnd=CRect(wp.rcNormalPosition);
 	
-	m_spLeftFavoritesView->DestroyWindow();
-	m_spRightFavoritesView->DestroyWindow();
-	m_spLeftView->DestroyWindow();
-	m_spRightView->DestroyWindow();
+	auto e = CloseEvent(this, wParam, lParam, &bHandled);
+
+	m_spLeftFavoritesView->OnClose(e);
+	m_spRightFavoritesView->OnClose(e);
+	m_spLeftWnd->DestroyWindow();
+	m_spRightWnd->DestroyWindow();
 	DestroyWindow();
 	return 0;
 }
@@ -564,140 +517,148 @@ LRESULT CFilerWnd::OnDestroy(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 	return 0;
 }
 
-LRESULT CFilerWnd::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+void CFilerWnd::OnLButtonDown(const LButtonDownEvent& e)
 {
-	CPaintDC dc(m_hWnd);
-	m_pDirect->BeginDraw();
+	CRect leftRc(ScreenToClientRect(m_spLeftWnd->GetWindowRect()));
 
-	m_pDirect->ClearSolid(BackgroundFill.Color);
-
-	PaintEvent e(this);
-	m_spStatusBar->OnPaint(e);
-
-	m_pDirect->EndDraw();
-	return 0;
-}
-
-LRESULT CFilerWnd::OnEraseBkGnd(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	//For Back buffering
-	bHandled = TRUE;
-	return 1;
-}
-
-LRESULT CFilerWnd::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	CPoint pt((short)LOWORD(lParam), (short)HIWORD(lParam));	
-	CRect leftRc(ScreenToClientRect(m_spLeftView->GetWindowRect()));
-
-	m_isSizing = (pt.x >= (leftRc.right)) &&
-		(pt.x <= (leftRc.right + kSplitterWidth));
+	m_isSizing = (e.PointInClient.x >= (leftRc.right)) &&
+		(e.PointInClient.x <= (leftRc.right + kSplitterWidth));
 
 	if (m_isSizing)
 	{
-		m_ptBeginClient = pt;
+		m_ptBeginClient = e.PointInClient;
 		SetCapture();
 		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
+	} else {
+		CTextboxWnd::OnLButtonDown(e);
 	}
-	return 0;
 }
 
-LRESULT CFilerWnd::OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) 
+void CFilerWnd::OnLButtonUp(const LButtonUpEvent& e) 
 {
 	if (m_isSizing)
 	{
 		m_ptBeginClient.SetPoint(0, 0);
-		ReleaseCapture();
 		m_isSizing = false;
+		ReleaseCapture();
+		OnRect(RectEvent(this, GetRectInWnd()));
+	} else {
+		CTextboxWnd::OnLButtonUp(e);
 	}
-	return 0;
 }
 
-LRESULT CFilerWnd::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+void CFilerWnd::OnMouseMove(const MouseMoveEvent& e)
 {
-	CPoint pt((short)LOWORD(lParam), (short)HIWORD(lParam));
-	CRect leftRc(ScreenToClientRect(m_spLeftView->GetWindowRect()));
+	CRect leftRc(ScreenToClientRect(m_spLeftWnd->GetWindowRect()));
 
-	if ((pt.x >= (leftRc.right)) &&
-		(pt.x <= (leftRc.right + kSplitterWidth)))
+	if ((e.PointInClient.x >= (leftRc.right)) &&
+		(e.PointInClient.x <= (leftRc.right + kSplitterWidth)))
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
 	}
 
-	if (m_isSizing && wParam == MK_LBUTTON)
+	if (m_isSizing && e.Flags == MK_LBUTTON)
 	{
-		m_splitterLeft += pt.x - m_ptBeginClient.x;
-		m_ptBeginClient = pt;
-		PostMessage(WM_SIZE, 0, 0);
+		m_splitterLeft += e.PointInClient.x - m_ptBeginClient.x;
+		m_ptBeginClient = e.PointInClient;
+		OnRect(RectEvent(this, GetRectInWnd()));
+	} else {
+		CTextboxWnd::OnMouseMove(e);
 	}
 	//m_konamiCommander.OnMouseMove(uMsg, wParam, lParam, bHandled);
-	return 0;
 }
 //TODOTODO D2dw::CWnd m_pdirect, create, erasebkgnd, onsize
-LRESULT CFilerWnd::OnSize(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
+void CFilerWnd::OnRect(const RectEvent& e)
 {
-	m_pDirect->GetHwndRenderTarget()->Resize(D2D1_SIZE_U{ LOWORD(lParam), HIWORD(lParam) });
-
 	CRect rcClient = GetClientRect();
-
+	CRect rcLeftFavorites, rcRightFavorites, rcLeftGrid, rcRightGrid, rcStatusBar;
+	LONG favoriteWidth = GetDirectPtr()->Dips2PixelsX(
+		m_spFilerGridViewProp->CellPropPtr->Line->Width * 2 + //def:GridLine=0.5*2, CellLine=0.5*2
+		m_spFilerGridViewProp->CellPropPtr->Padding->left + //def:2
+		m_spFilerGridViewProp->CellPropPtr->Padding->right + //def:2
+		16.f);//icon
 	LONG statusHeight = m_pDirect->Dips2PixelsY(m_spStatusBar->MeasureSize(m_pDirect.get()).height);
-	CRect rcStatusBar(
+
+	rcStatusBar.SetRect(
 		rcClient.left, rcClient.bottom - statusHeight,
 		rcClient.right, rcClient.bottom);
-	m_spStatusBar->SetRect(m_pDirect->Pixels2Dips(rcStatusBar));
 
-	CRect rcFavoriteClient = m_pDirect->Dips2Pixels(m_spLeftFavoritesView->GetRect());
+	rcLeftFavorites.SetRect(
+		rcClient.left, rcClient.top,
+		rcClient.left + favoriteWidth, rcClient.bottom - statusHeight);
 
-    m_spLeftFavoritesView->SetWindowPos(HWND_BOTTOM,
-        rcClient.left , rcClient.top, 
-        rcFavoriteClient.Width(),
-		rcClient.Height() - statusHeight,
-        SWP_SHOWWINDOW);
+	if (m_splitterLeft == 0) {//Initial = No serialize
 
-	if (rcClient.Width() >= m_splitterLeft + kSplitterWidth) {
-		m_spLeftView->SetWindowPos(HWND_BOTTOM,
-			rcClient.left + rcFavoriteClient.Width(), 
-			rcClient.top,
-			m_splitterLeft-(rcClient.left + rcFavoriteClient.Width()),
-			rcClient.Height() - statusHeight,
-			SWP_SHOWWINDOW);
-		m_spLeftView->UpdateWindow();
+		if (rcClient.Width() >= 800) {
+			LONG viewWidth = (rcClient.Width() - 2 * favoriteWidth - kSplitterWidth) / 2;
+			rcLeftGrid.SetRect(
+				rcClient.left + favoriteWidth,
+				rcClient.top,
+				rcClient.left + favoriteWidth + viewWidth,
+				rcClient.bottom - statusHeight);
 
-		m_spRightFavoritesView->SetWindowPos(HWND_BOTTOM,
-			m_splitterLeft + kSplitterWidth,
-			rcClient.top,
-			rcFavoriteClient.Width(),
-			rcClient.Height() - statusHeight,
-			SWP_SHOWWINDOW);
+			rcRightFavorites.SetRect(
+				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth,
+				rcClient.top,
+				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth + favoriteWidth,
+				rcClient.bottom - statusHeight);
 
-		m_spRightView->SetWindowPos(HWND_BOTTOM,
-			m_splitterLeft + kSplitterWidth + rcFavoriteClient.Width(),
-			rcClient.top,
-			rcClient.right - (m_splitterLeft + kSplitterWidth + rcFavoriteClient.Width()),
-			rcClient.Height() - statusHeight,
-			SWP_SHOWWINDOW);
-		m_spRightView->UpdateWindow();
-	}else{
-		m_spLeftView->SetWindowPos(HWND_BOTTOM,
-			rcClient.left + rcFavoriteClient.Width(),
-			rcClient.top,
-			rcClient.Width() - rcFavoriteClient.Width(),
-			rcClient.Height() - statusHeight,
-			SWP_SHOWWINDOW);
-		m_spLeftView->UpdateWindow();
-		m_spRightView->ShowWindow(SW_HIDE);
+			rcRightGrid.SetRect(
+				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth + favoriteWidth,
+				rcClient.top,
+				rcClient.right,
+				rcClient.bottom - statusHeight);
+			m_splitterLeft = favoriteWidth + viewWidth;
+		} else {
+			rcLeftGrid.SetRect(
+				rcClient.left + favoriteWidth,
+				rcClient.top,
+				rcClient.right,
+				rcClient.bottom - statusHeight);
+			m_splitterLeft = rcClient.right;
+		}
+	} else {
+		if (rcClient.Width() >= m_splitterLeft + kSplitterWidth) {
+			rcLeftGrid.SetRect(
+				rcClient.left + favoriteWidth,
+				rcClient.top,
+				m_splitterLeft,
+				rcClient.bottom - statusHeight);
+
+			rcRightFavorites.SetRect(
+				m_splitterLeft + kSplitterWidth,
+				rcClient.top,
+				m_splitterLeft + kSplitterWidth + favoriteWidth,
+				rcClient.bottom - statusHeight);
+
+			rcRightGrid.SetRect(
+				m_splitterLeft + kSplitterWidth + favoriteWidth,
+				rcClient.top,
+				rcClient.right,// - (m_splitterLeft + kSplitterWidth + favoriteWidth), 
+				rcClient.bottom - statusHeight);
+		} else {
+			rcLeftGrid.SetRect(
+				rcClient.left + favoriteWidth,
+				rcClient.top,
+				rcClient.right,
+				rcClient.bottom - statusHeight);
+		}
 	}
+	
+	m_spLeftFavoritesView->OnRect(RectEvent(this, GetDirectPtr()->Pixels2Dips(rcLeftFavorites)));
+	m_spRightFavoritesView->OnRect(RectEvent(this, GetDirectPtr()->Pixels2Dips(rcRightFavorites)));
+	m_spStatusBar->OnRect(RectEvent(this, GetDirectPtr()->Pixels2Dips(rcStatusBar)));
 
-	return 0;
+	m_spLeftWnd->SetWindowPos(HWND_BOTTOM, rcLeftGrid, SWP_SHOWWINDOW);
+	m_spRightWnd->SetWindowPos(HWND_BOTTOM, rcRightGrid, SWP_SHOWWINDOW);
 }
 
-LRESULT CFilerWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+void CFilerWnd::OnSetFocus(const SetFocusEvent& e)
 {
-	if (!m_spCurView) { m_spCurView = m_spLeftView; }
-	if(m_spCurView && m_spCurView->GetCurView()){
-		::SetFocus(m_spCurView->GetCurView()->m_hWnd);
+	if (!m_spCurWnd) { m_spCurWnd = m_spLeftWnd; }
+	if(m_spCurWnd && m_spCurWnd->GetContentWnd()){
+		::SetFocus(m_spCurWnd->GetContentWnd()->m_hWnd);
 	}
-	return 0;
 }
 
 LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -707,8 +668,8 @@ LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 	CDriveFolderManager::GetInstance()->Update();
 	m_spLeftFavoritesView->Reload();
 	m_spRightFavoritesView->Reload();
-	m_spLeftView->GetFilerGridViewPtr()->Reload();
-	m_spRightView->GetFilerGridViewPtr()->Reload();
+	m_spLeftWnd->GetFilerGridViewPtr()->Reload();
+	m_spRightWnd->GetFilerGridViewPtr()->Reload();
 	return 0;
 }
 
@@ -728,156 +689,165 @@ LRESULT CFilerWnd::OnCommandExit(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL&
 
 LRESULT CFilerWnd::OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	return OnCommandOption<CApplicationProperty>(L"Application Property", m_spApplicationProp,
-		[this](const std::wstring& str)->void {
-			SerializeProperty(this);
-	});
+	//return OnCommandOption<CApplicationProperty>(L"Application Property", m_spApplicationProp,
+	//	[this](const std::wstring& str)->void {
+	//		SerializeProperty(this);
+	//});
+	return 0;
 }
 
 LRESULT CFilerWnd::OnCommandFilerGridViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	return OnCommandOption<FilerGridViewProperty>(L"FilerGridView Property", m_spFilerGridViewProp,
-		[this](const std::wstring& str)->void {
-		m_spLeftView->GetFilerGridViewPtr()->UpdateAll();
-		m_spLeftView->GetToDoGridViewPtr()->UpdateAll();
-		m_spRightView->GetFilerGridViewPtr()->UpdateAll();
-		m_spRightView->GetToDoGridViewPtr()->UpdateAll();
-		SerializeProperty(this);
-	});
+	//TODODO
+	//return OnCommandOption<FilerGridViewProperty>(L"FilerGridView Property", m_spFilerGridViewProp,
+	//	[this](const std::wstring& str)->void {
+	//	m_spLeftView->GetFilerGridViewPtr()->UpdateAll();
+	//	m_spLeftView->GetToDoGridViewPtr()->UpdateAll();
+	//	m_spRightView->GetFilerGridViewPtr()->UpdateAll();
+	//	m_spRightView->GetToDoGridViewPtr()->UpdateAll();
+	//	SerializeProperty(this);
+	//});
+	return 0;
 }
 
 LRESULT CFilerWnd::OnCommandTextOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	return OnCommandOption<TextEditorProperty>(L"Text Editor Property", m_spTextEditorProp,
-		[this](const std::wstring& str)->void {
-			m_spLeftView->GetTextViewPtr()->Update();
-			m_spRightView->GetTextViewPtr()->Update();
-			SerializeProperty(this);
-		});
+	//TODODO
+	//return OnCommandOption<TextEditorProperty>(L"Text Editor Property", m_spTextEditorProp,
+	//	[this](const std::wstring& str)->void {
+	//		m_spLeftView->GetTextViewPtr()->Update();
+	//		m_spRightView->GetTextViewPtr()->Update();
+	//		SerializeProperty(this);
+	//	});
+	return 0;
 }
 
 
 LRESULT CFilerWnd::OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 {
-	return OnCommandOption<CFavoritesProperty>(L"Favorites Property", m_spFavoritesProp,
-		[this](const std::wstring& str)->void {
-		m_spLeftFavoritesView->Reload();
-		m_spRightFavoritesView->Reload();
-		InvalidateRect(NULL, FALSE);
-		SerializeProperty(this);
-	});
+	//TODODO
+	//return OnCommandOption<CFavoritesProperty>(L"Favorites Property", m_spFavoritesProp,
+	//	[this](const std::wstring& str)->void {
+	//	m_spLeftFavoritesView->Reload();
+	//	m_spRightFavoritesView->Reload();
+	//	InvalidateRect(NULL, FALSE);
+	//	SerializeProperty(this);
+	//});
+	return 0;
 }
 
 LRESULT CFilerWnd::OnCommandExeExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
-	return OnCommandOption<ExeExtensionProperty>(L"Exe extension Property", m_spExeExProp,
-		[this](const std::wstring& str)->void {
-		SerializeProperty(this);
-	});
+	//TODODO
+	//return OnCommandOption<ExeExtensionProperty>(L"Exe extension Property", m_spExeExProp,
+	//	[this](const std::wstring& str)->void {
+	//	SerializeProperty(this);
+	//});
+	return 0;
 }
 
 LRESULT CFilerWnd::OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
 {
 	//TODOTODO
-	auto pBindWnd = new CToDoGridView(std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp));
+	//auto pBindWnd = new CToDoGridView(std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp));
 
-	pBindWnd->RegisterClassExArgument()
-		.lpszClassName(L"CBindWnd")
-		.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
-		.hCursor(::LoadCursor(NULL, IDC_ARROW))
-		.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
+	//pBindWnd->RegisterClassExArgument()
+	//	.lpszClassName(L"CBindWnd")
+	//	.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
+	//	.hCursor(::LoadCursor(NULL, IDC_ARROW))
+	//	.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
 
-	pBindWnd->CreateWindowExArgument()
-		.lpszClassName(_T("CBindWnd"))
-		.lpszWindowName(L"TODO")
-		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
-		.dwExStyle(WS_EX_ACCEPTFILES)
-		.hMenu(NULL);
+	//pBindWnd->CreateWindowExArgument()
+	//	.lpszClassName(_T("CBindWnd"))
+	//	.lpszWindowName(L"TODO")
+	//	.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
+	//	.dwExStyle(WS_EX_ACCEPTFILES)
+	//	.hMenu(NULL);
 
 
-	pBindWnd->SetIsDeleteOnFinalMessage(true);
+	//pBindWnd->SetIsDeleteOnFinalMessage(true);
 
-	//Columns
-	pBindWnd->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pBindWnd));
-	pBindWnd->PushColumns(
-		pBindWnd->GetHeaderColumnPtr(),
-		std::make_shared<CBindCheckBoxColumn<MainTask>>(
-			pBindWnd,
-			L"Done",
-			[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).Done?CheckBoxState::True:CheckBoxState::False; },
-			[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
-		std::make_shared<CBindTextColumn<MainTask>>(
-			pBindWnd,
-			L"Name",
-			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name; },
-			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name = str; }),
-		std::make_shared<CBindTextColumn<MainTask>>(
-			pBindWnd,
-			L"Memo",
-			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo; },
-			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo = str; }),
-		std::make_shared<CBindSheetCellColumn< MainTask, SubTask>>(
-			pBindWnd,
-			L"Sub Task",
-			[](std::tuple<MainTask>& tk)->observable_vector<std::tuple<SubTask>>& {return std::get<MainTask>(tk).SubTasks; },
-			[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void 
-			{
-				pCell->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pCell));
-				pCell->PushColumns(
-					pCell->GetHeaderColumnPtr(),
-					std::make_shared<CBindCheckBoxColumn<SubTask>>(
-						pCell,
-						L"Done",
-						[](const std::tuple<SubTask>& tk)->CheckBoxState {return std::get<SubTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
-						[](std::tuple<SubTask>& tk, const CheckBoxState& state)->void {std::get<SubTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
-					std::make_shared<CBindTextColumn<SubTask>>(
-						pCell,
-						L"Name",
-						[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Name; },
-						[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Name = str; }),
-					std::make_shared<CBindTextColumn<SubTask>>(
-						pCell,
-						L"Memo",
-						[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Memo; },
-						[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Memo = str; })
-				);
-				pCell->SetFrozenCount<ColTag>(1);
+	////Columns
+	//pBindWnd->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pBindWnd));
+	//pBindWnd->PushColumns(
+	//	pBindWnd->GetHeaderColumnPtr(),
+	//	std::make_shared<CBindCheckBoxColumn<MainTask>>(
+	//		pBindWnd,
+	//		L"Done",
+	//		[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).Done?CheckBoxState::True:CheckBoxState::False; },
+	//		[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
+	//	std::make_shared<CBindTextColumn<MainTask>>(
+	//		pBindWnd,
+	//		L"Name",
+	//		[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name; },
+	//		[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name = str; }),
+	//	std::make_shared<CBindTextColumn<MainTask>>(
+	//		pBindWnd,
+	//		L"Memo",
+	//		[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo; },
+	//		[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo = str; }),
+	//	std::make_shared<CBindSheetCellColumn< MainTask, SubTask>>(
+	//		pBindWnd,
+	//		L"Sub Task",
+	//		[](std::tuple<MainTask>& tk)->observable_vector<std::tuple<SubTask>>& {return std::get<MainTask>(tk).SubTasks; },
+	//		[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void 
+	//		{
+	//			pCell->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pCell));
+	//			pCell->PushColumns(
+	//				pCell->GetHeaderColumnPtr(),
+	//				std::make_shared<CBindCheckBoxColumn<SubTask>>(
+	//					pCell,
+	//					L"Done",
+	//					[](const std::tuple<SubTask>& tk)->CheckBoxState {return std::get<SubTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
+	//					[](std::tuple<SubTask>& tk, const CheckBoxState& state)->void {std::get<SubTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
+	//				std::make_shared<CBindTextColumn<SubTask>>(
+	//					pCell,
+	//					L"Name",
+	//					[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Name; },
+	//					[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Name = str; }),
+	//				std::make_shared<CBindTextColumn<SubTask>>(
+	//					pCell,
+	//					L"Memo",
+	//					[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Memo; },
+	//					[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Memo = str; })
+	//			);
+	//			pCell->SetFrozenCount<ColTag>(1);
 
-				pCell->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pCell));
-				pCell->InsertRow(0, pCell->GetNameHeaderRowPtr());
-				pCell->SetFrozenCount<RowTag>(1);
-			},
-			arg<"maxwidth"_s>() = FLT_MAX)
-		);
-	pBindWnd->SetFrozenCount<ColTag>(1);
+	//			pCell->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pCell));
+	//			pCell->InsertRow(0, pCell->GetNameHeaderRowPtr());
+	//			pCell->SetFrozenCount<RowTag>(1);
+	//		},
+	//		arg<"maxwidth"_s>() = FLT_MAX)
+	//	);
+	//pBindWnd->SetFrozenCount<ColTag>(1);
 
-	//Rows
-	pBindWnd->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pBindWnd));
-	pBindWnd->SetFilterRowPtr(std::make_shared<CRow>(pBindWnd));
+	////Rows
+	//pBindWnd->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pBindWnd));
+	//pBindWnd->SetFilterRowPtr(std::make_shared<CRow>(pBindWnd));
 
-	pBindWnd->PushRows(
-		pBindWnd->GetNameHeaderRowPtr(),
-		pBindWnd->GetFilterRowPtr());
+	//pBindWnd->PushRows(
+	//	pBindWnd->GetNameHeaderRowPtr(),
+	//	pBindWnd->GetFilterRowPtr());
 
-	pBindWnd->SetFrozenCount<RowTag>(2);
+	//pBindWnd->SetFrozenCount<RowTag>(2);
 
-	//pBindWnd->GetItemsSource().notify_push_back(MainTask{ true, L"Test", L"mon" });
-	//pBindWnd->GetItemsSource().notify_push_back(MainTask{ false, L"PVA", L"Tue" });
-	//pBindWnd->GetItemsSource().notify_push_back(MainTask{ true, L"NAME", L"Run" });
-	//std::get<MainTask>(pBindWnd->GetItemsSource()[2]).SubTasks.notify_push_back(SubTask{ true, L"SUB", L"TODO" });
-	//std::get<MainTask>(pBindWnd->GetItemsSource()[2]).SubTasks.notify_push_back(SubTask{ true, L"SUB2", L"TET" });
+	////pBindWnd->GetItemsSource().notify_push_back(MainTask{ true, L"Test", L"mon" });
+	////pBindWnd->GetItemsSource().notify_push_back(MainTask{ false, L"PVA", L"Tue" });
+	////pBindWnd->GetItemsSource().notify_push_back(MainTask{ true, L"NAME", L"Run" });
+	////std::get<MainTask>(pBindWnd->GetItemsSource()[2]).SubTasks.notify_push_back(SubTask{ true, L"SUB", L"TODO" });
+	////std::get<MainTask>(pBindWnd->GetItemsSource()[2]).SubTasks.notify_push_back(SubTask{ true, L"SUB2", L"TET" });
 
-	HWND hWnd = NULL;
-	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-		hWnd = m_hWnd;
-	} else {
-		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
-	}
+	//HWND hWnd = NULL;
+	//if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+	//	hWnd = m_hWnd;
+	//} else {
+	//	hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	//}
 
-	pBindWnd->CreateOnCenterOfParent(NULL, CSize(400, 600));
-	pBindWnd->ShowWindow(SW_SHOW);
-	pBindWnd->UpdateWindow();
-	pBindWnd->UpdateAll();
+	//pBindWnd->CreateOnCenterOfParent(NULL, CSize(400, 600));
+	//pBindWnd->ShowWindow(SW_SHOW);
+	//pBindWnd->UpdateWindow();
+	//pBindWnd->UpdateAll();
 	return 0;
 }
 

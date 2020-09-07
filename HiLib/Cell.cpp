@@ -104,13 +104,15 @@ FLOAT CCell::GetTop()const
 	return m_pRow->GetTop();
 }
 
-d2dw::CRectF CCell::GetRect()const
+d2dw::CRectF CCell::GetRectInWnd()const
 {
-	return d2dw::CRectF(
+	auto rc =  d2dw::CRectF(
 		m_pColumn->GetLeft(),
 		m_pRow->GetTop(),
 		m_pColumn->GetRight(),
 		m_pRow->GetBottom());
+
+	return rc;
 }
 
 d2dw::CRectF CCell::CenterBorder2InnerBorder(d2dw::CRectF rcCenter)
@@ -172,7 +174,7 @@ void CCell::PaintFocus(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 
 void CCell::OnPaint(const PaintEvent& e)
 {
-	d2dw::CRectF rcClient(GetRect());
+	d2dw::CRectF rcClient(GetRectInWnd());
 	d2dw::CRectF rcInner(CenterBorder2InnerBorder(rcClient));
 	d2dw::CRectF rcContent(InnerBorder2Content(rcInner));
 	PaintLine(e.WndPtr->GetDirectPtr(),rcClient);
@@ -269,6 +271,8 @@ void CCell::SetString(const std::wstring& str, bool notify)
 		}
 	}
 }
+
+CWnd* CCell::GetWndPtr()const { return m_pSheet->GetWndPtr(); }
 
 
 

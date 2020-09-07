@@ -20,7 +20,7 @@ class CMenu;
 struct CellEventArgs;
 struct CellContextMenuEventArgs;
 
-class CCell:virtual public CUIElement
+class CCell :virtual public CUIElement
 {
 protected:
 
@@ -42,8 +42,7 @@ public:
 	//Constructor
 	template<typename... Args>
 	CCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
-		:CUIElement(),
-		m_pSheet(pSheet),
+		:m_pSheet(pSheet),
 		m_pRow(pRow),
 		m_pColumn(pColumn),
 		m_spCellProperty(spProperty)
@@ -79,7 +78,7 @@ public:
 
 	virtual FLOAT GetLeft()const;
 	virtual FLOAT GetTop()const;
-	virtual d2dw::CRectF GetRect()const;
+	virtual d2dw::CRectF GetRectInWnd()const override;
 
 	//Visible
 	bool GetIsVisible()const;
@@ -97,9 +96,9 @@ public:
 	//Paint
 	virtual void PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc);
 	virtual void PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc);
-	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc){/*Do Nothing*/}
+	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc) {/*Do Nothing*/ }
 	virtual void PaintFocus(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc);
-	
+
 	//Event
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnRButtonDown(const RButtonDownEvent& e) override {}
@@ -118,15 +117,18 @@ public:
 
 	//String
 	virtual std::wstring GetString();
-	virtual std::wstring GetSortString(){return GetString();}
+	virtual std::wstring GetSortString() { return GetString(); }
 
 	virtual void SetString(const std::wstring& str, bool notify = true);
-	virtual void SetStringCore(const std::wstring& str){/*Do Nothing*/};
+	virtual void SetStringCore(const std::wstring& str) {/*Do Nothing*/ };
 	virtual bool Filter(const std::wstring& strFilter);
 
 	//Clipboard
-	virtual bool GetIsClipboardCopyable()const{return false;}
+	virtual bool GetIsClipboardCopyable()const { return false; }
 
 	//Update action
 	virtual void OnPropertyChanged(const wchar_t*) override;
+
+	//WndPtr
+	virtual CWnd* GetWndPtr()const override;
 };

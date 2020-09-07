@@ -24,9 +24,9 @@ void CCursorer::UpdateCursor(std::shared_ptr<CCell>& cell, bool old, bool curren
 	if (focus) {
 		if (m_focusedCell != cell) {
 			BOOL bDummy(TRUE);
-			if (m_focusedCell) { m_focusedCell->OnKillFocus(KillFocusEvent(cell->GetSheetPtr()->GetGridPtr(), NULL, NULL, &bDummy)); }//Blur
+			if (m_focusedCell) { m_focusedCell->OnKillFocus(KillFocusEvent(cell->GetSheetPtr()->GetWndPtr(), NULL, NULL, &bDummy)); }//Blur
 			m_focusedCell = cell;
-			m_focusedCell->OnSetFocus(SetFocusEvent(cell->GetSheetPtr()->GetGridPtr(), 0,0,&bDummy));//Focus
+			m_focusedCell->OnSetFocus(SetFocusEvent(cell->GetSheetPtr()->GetWndPtr(), 0,0,&bDummy));//Focus
 			m_doubleFocusedCell = nullptr;//DoubleFocus
 		} else if (m_focusedCell == cell) {
 			m_doubleFocusedCell = cell;//DoubleFocus
@@ -117,7 +117,7 @@ void CCursorer::OnCursorCtrlShift(std::shared_ptr<CCell>& cell)
 void CCursorer::OnCursorClear(CSheet* pSheet)
 {
 	if(m_focusedCell){
-		m_focusedCell->OnKillFocus(KillFocusEvent(pSheet->GetGridPtr(), NULL, NULL));//Blur
+		m_focusedCell->OnKillFocus(KillFocusEvent(pSheet->GetWndPtr(), NULL, NULL));//Blur
 	}
 	Clear();
 	pSheet->DeselectAll();//Select

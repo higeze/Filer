@@ -48,22 +48,23 @@
 #include "ProgressBar.h"
 #include "ResourceIDFactory.h"
 #include "Textbox.h"
+#include "TextboxWnd.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 extern HWND g_main;
 
-CCheckableFileGrid::CCheckableFileGrid(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
-	:CFilerBindGridView(spFilerGridViewProp)
+CCheckableFileGrid::CCheckableFileGrid(CWnd* pWnd, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
+	:CFilerBindGridView(pWnd, spFilerGridViewProp)
 {
-	m_cwa
-		.dwExStyle(WS_EX_ACCEPTFILES);
+	//m_cwa
+	//	.dwExStyle(WS_EX_ACCEPTFILES);
 }
 
 
-LRESULT CCheckableFileGrid::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+void CCheckableFileGrid::OnCreate(const CreateEvent& e)
 {
 	//Base Create
-	CFilerBindGridView::OnCreate(uMsg, wParam, lParam, bHandled);
+	CFilerBindGridView::OnCreate(e);
 
 	//Insert rows
 	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this);
@@ -90,8 +91,6 @@ LRESULT CCheckableFileGrid::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BO
 
 	PostUpdate(Updates::All);
 	SubmitUpdate();
-
-	return 0;
 }
 
 void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
@@ -126,7 +125,9 @@ void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)
 
 void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	auto pWnd = new CFilerGridView(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
+	auto pWnd = new CTextboxWnd();
+	auto pControl = std::make_shared<CFilerGridView>(pWnd, std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
+	//pWnd->SetControlPtr(pControl);
 
 	pWnd->RegisterClassExArgument()
 		.lpszClassName(L"CFilerGridViewWnd")
@@ -141,20 +142,20 @@ void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		.dwExStyle(WS_EX_ACCEPTFILES)
 		.hMenu(NULL);
 
-	pWnd->FolderChanged = [pWnd](std::shared_ptr<CShellFolder>& pFolder) {
+	pControl->FolderChanged = [pWnd](std::shared_ptr<CShellFolder>& pFolder) {
 		pWnd->SetWindowTextW(pFolder->GetDispName().c_str());};
 
 	pWnd->SetIsDeleteOnFinalMessage(true);
 
 	HWND hWnd = NULL;
-	if ((GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-		hWnd = m_hWnd;
+	if ((GetWndPtr()->GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+		hWnd = GetWndPtr()->m_hWnd;
 	} else {
-		hWnd = GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+		hWnd = GetWndPtr()->GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
 	}
 
 	pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 500));
-	pWnd->OpenFolder(spFolder);
+	pControl->OpenFolder(spFolder);
 	pWnd->ShowWindow(SW_SHOW);
 	pWnd->UpdateWindow();
 }

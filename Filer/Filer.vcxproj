@@ -323,6 +323,7 @@
     <ClInclude Include="..\HiLib\ShowHideMenuItem.h" />
     <ClInclude Include="..\HiLib\SingletonMalloc.h" />
     <ClInclude Include="..\HiLib\StatusBar.h" />
+    <ClInclude Include="..\HiLib\TabControl.h" />
     <ClInclude Include="..\HiLib\TextCell.h" />
     <ClInclude Include="..\HiLib\ThreadHelper.h" />
     <ClInclude Include="..\HiLib\ThreadPool.h" />
@@ -448,6 +449,7 @@
     <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp" />
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
     <ClCompile Include="..\HiLib\StatusBar.cpp" />
+    <ClCompile Include="..\HiLib\TabControl.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
     <ClCompile Include="..\HiLib\ThreadPool.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp" />

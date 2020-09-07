@@ -2,7 +2,7 @@
 #include "SheetStateMachine.h"
 #include <boost/sml.hpp>
 
-class D2DTextbox;
+class CTextBox;
 
 class CTextboxStateMachine :public IStateMachine
 {
@@ -10,7 +10,7 @@ private:
 	struct Machine;
 	std::unique_ptr<boost::sml::sm<Machine>> m_pMachine;
 public:
-	CTextboxStateMachine(D2DTextbox* pTextbox);
+	CTextboxStateMachine(CTextBox* pTextbox);
 	~CTextboxStateMachine();
 
 	virtual void process_event(const PaintEvent& e) override;

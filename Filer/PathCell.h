@@ -22,7 +22,7 @@ public:
 	 */
 	virtual std::wstring GetString() override;
 
-	virtual d2dw::CRectF CPathCell::GetRect()const override;
+	virtual d2dw::CRectF CPathCell::GetRectInWnd()const override;
 	/**
 	 *  Set string to column property
 	 */

@@ -49,8 +49,8 @@ struct CreateEvent :public EventArgs
 
 struct CloseEvent :public EventArgs
 {
-	CloseEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam)
-		:EventArgs(pWnd) {}
+	CloseEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:EventArgs(pWnd, pHandled) {}
 };
 
 struct KillFocusEvent :public EventArgs
@@ -200,6 +200,15 @@ public:
 		PointInClient(pWnd->ScreenToClient(CPoint((short)LOWORD(lParam), (short)HIWORD(lParam)))){}
 };
 
+struct CommandEvent :public EventArgs
+{
+	UINT ID;
+	UINT NotifyCode;
+	HWND HWndControl;
+	CommandEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+	:EventArgs(pWnd, pHandled),ID(wParam & 0xFFFF), NotifyCode((wParam>>16) & 0xFFFF), HWndControl((HWND)lParam){}
+};
+
 struct CancelModeEvent :public EventArgs
 {
 public:
@@ -225,16 +234,23 @@ protected:
 public:
 	CUIElement()
 		:m_state(UIElementState::Normal){}
-	virtual ~CUIElement(){}
+	virtual ~CUIElement() = default;
 
+	/*********/
+	/* state */
+	/*********/
 	virtual UIElementState::Type GetState()const{return m_state;}
 	virtual void SetState(const UIElementState::Type& state);
 	virtual bool GetIsFocused()const { return false; }
 
+	/*********/
+	/* event */
+	/*********/
+	virtual void OnCreate(const CreateEvent& e) {}
 	virtual void OnPaint(const PaintEvent& e) {}
 	virtual void OnClose(const CloseEvent& e) {}
+	virtual void OnCommand(const CommandEvent& e) {}
 	virtual void OnRect(const RectEvent& e) {}
-
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnLButtonUp(const LButtonUpEvent& e);
@@ -244,7 +260,6 @@ public:
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) {}
 
 	virtual void OnRButtonDown(const RButtonDownEvent& e) {}
-
 
 	virtual void OnMButtonDown(const MouseEvent& e){}//TODO
 	virtual void OnMButtonUp(const MouseEvent& e){}//TODO
@@ -262,9 +277,10 @@ public:
 	virtual void OnSetCursor(const SetCursorEvent& e) {}
 	virtual void OnKillFocus(const KillFocusEvent& e) {}
 
-
 	virtual void OnPropertyChanged(const wchar_t* name){}
 
+	virtual CWnd* GetWndPtr()const = 0;
+	virtual d2dw::CRectF GetRectInWnd() const = 0;
 	void Update() {}
 
 };

@@ -76,26 +76,26 @@ public:
 		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 
-		::SetForegroundWindow(m_pSheet->GetGridPtr()->m_hWnd);
-		WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, m_pSheet->GetGridPtr()->m_hWnd);
+		::SetForegroundWindow(m_pSheet->GetWndPtr()->m_hWnd);
+		WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, m_pSheet->GetWndPtr()->m_hWnd);
 		if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"EditFavorite")) {
-
-			CFilerWnd* pFilerWnd = static_cast<CFavoritesGridView*>(m_pSheet)->GetFilerWndPtr();
+			auto pFilerWnd = static_cast<CFilerWnd*>(m_pSheet->GetWndPtr());
 
 			auto pRow = static_cast<CBindRow<TItems...>*>(m_pRow);
 			auto pCol = static_cast<CFavoritesColumn<TItems...>*>(m_pColumn);
 			auto& itemsSource = static_cast<CFavoritesGridView*>(m_pSheet)->GetItemsSource();
 			auto order = pRow->GetIndex<AllTag>();
 
-			pFilerWnd->OnCommandOption<CFavorite>(L"Favorite", std::get<std::shared_ptr<CFavorite>>(itemsSource[order]),
-												  [pFilerWnd](const std::wstring& prop)->void {
-													  pFilerWnd->GetLeftFavoritesView()->Reload();
-													  pFilerWnd->GetRightFavoritesView()->Reload();
-													  pFilerWnd->InvalidateRect(NULL, FALSE);
-													  ::SerializeProperty(pFilerWnd);
-												  });
+			//TODODO
+			//pFilerWnd->OnCommandOption<CFavorite>(L"Favorite", std::get<std::shared_ptr<CFavorite>>(itemsSource[order]),
+			//									  [pFilerWnd](const std::wstring& prop)->void {
+			//										  pFilerWnd->GetLeftFavoritesView()->Reload();
+			//										  pFilerWnd->GetRightFavoritesView()->Reload();
+			//										  pFilerWnd->InvalidateRect(NULL, FALSE);
+			//										  ::SerializeProperty(pFilerWnd);
+			//									  });
 		} else if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeleteFavorite")) {
-			CFilerWnd* pFilerWnd = static_cast<CFavoritesGridView*>(m_pSheet)->GetFilerWndPtr();
+			auto pFilerWnd = static_cast<CFilerWnd*>(m_pSheet->GetWndPtr());
 
 			auto pRow = static_cast<CBindRow<TItems...>*>(m_pRow);
 			auto pCol = static_cast<CFavoritesColumn<TItems...>*>(m_pColumn);

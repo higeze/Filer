@@ -2,6 +2,10 @@
 #include "Sheet.h"
 #include "CellProperty.h"
 
+FLOAT CColumn::GetStart() { return m_start + m_pSheet->GetRectInWnd().left; }
+
+FLOAT CColumn::GetEnd() { return m_start + m_length + +m_pSheet->GetRectInWnd().left; }
+
 FLOAT CColumn::GetLength()
 {
 	if (m_isInit) {

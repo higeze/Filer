@@ -26,7 +26,7 @@ public:
 	//Rect
 	virtual FLOAT GetTop()const override;
 	virtual FLOAT GetLeft()const override;
-	virtual d2dw::CRectF GetRect()const override;
+	virtual d2dw::CRectF GetRectInWnd()const override;
 	virtual d2dw::CRectF GetPaintRect() override;
 
 	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* pDirect) override;
@@ -36,6 +36,8 @@ public:
 	virtual bool GetIsSelected()const override;
 	virtual void SetIsSelected(const bool& bSelected) override;
 	virtual bool GetIsFocused()const override;
+
+	virtual CWnd* GetWndPtr()const override { return CCell::GetWndPtr(); }
 
 
 	//Paint

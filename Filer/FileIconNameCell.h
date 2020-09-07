@@ -89,11 +89,11 @@ public:
 	virtual d2dw::CRectF GetEditRect() const override
 	{
 		//Icon Size
-		d2dw::CSizeF iconSize(GetIconSizeF(m_pSheet->GetGridPtr()->GetDirectPtr()));
+		d2dw::CSizeF iconSize(GetIconSizeF(m_pSheet->GetWndPtr()->GetDirectPtr()));
 		//Space
 		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
 		//Edit Rect
-		d2dw::CRectF rcEdit(GetRect());
+		d2dw::CRectF rcEdit(GetRectInWnd());
 		rcEdit.left += iconSize.width + space;
 		return rcEdit;
 	}
@@ -146,7 +146,7 @@ public:
 	virtual void SetStringCore(const std::wstring& str) override
 	{
 		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, m_pSheet->GetGridPtr()->m_hWnd);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, m_pSheet->GetWndPtr()->m_hWnd);
 
 	}
 };
