@@ -1,5 +1,6 @@
 #pragma once
 #include "MyWnd.h"
+#include "UIControl.h"
 #include "Sheet.h"
 //#include "MyGdiPlusHelper.h"
 #include "ThreadHelper.h"
@@ -13,12 +14,12 @@ class CDirect2DWrite;
 struct BackgroundProperty;
 struct GridViewProperty;
 class CMouseStateMachine;
-class CTextBox;
 
 namespace d2dw
 {
 	class CVScroll;
 	class CHScroll;
+	class CTextBox;
 }
 
 struct GridViewStateMachine;
@@ -31,10 +32,8 @@ public:
 
 	static CMenu ContextMenu;
 protected:
-	CWnd* m_pWnd;
-	CTextBox* m_pEdit = nullptr;
+	d2dw::CTextBox* m_pEdit = nullptr;
 	bool m_isFocusable = true;
-	d2dw::CRectF m_rect;
 	d2dw::CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
 protected:
@@ -60,11 +59,8 @@ public:
 	std::shared_ptr<GridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	d2dw::CRectF GetUpdateRect()const { return m_rcUpdateRect; }
 	void SetUpdateRect(d2dw::CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
-	CTextBox* GetEditPtr() { return m_pEdit; }
-	void SetEditPtr(CTextBox* pEdit) { m_pEdit = pEdit; }
-	virtual CWnd* GetWndPtr()const override { return m_pWnd; }
-	d2dw::CRectF GetRectInWnd()const { return m_rect; }
-
+	d2dw::CTextBox* GetEditPtr() { return m_pEdit; }
+	void SetEditPtr(d2dw::CTextBox* pEdit) { m_pEdit = pEdit; }
 
 protected:
 	virtual void OnCellLButtonClk(CellEventArgs& e) {}

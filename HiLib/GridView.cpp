@@ -29,6 +29,7 @@
 #include "MouseStateMachine.h"
 #include "GridViewProperty.h"
 #include "ResourceIDFactory.h"
+#include "TextboxWnd.h"
 
 #include "resource.h"
 
@@ -268,7 +269,7 @@ void CGridView::UpdateScrolls()
 	rcVertical.top = rcClient.top + lineHalfWidth;
 	rcVertical.right = rcClient.right - lineHalfWidth;
 	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetVisible()?(m_pHScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
-	m_pVScroll->SetRect(rcVertical);
+	m_pVScroll->OnRect(RectEvent(GetWndPtr(), rcVertical));
 
 //	auto a = m_pHScroll->GetVisible() ? (::GetSystemMetrics(SM_CYHSCROLL) + lineHalfWidth) : lineHalfWidth;
 
@@ -276,7 +277,7 @@ void CGridView::UpdateScrolls()
 	rcHorizontal.top = rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
 	rcHorizontal.right = rcClient.right - (m_pVScroll->GetVisible()?(m_pVScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
 	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
-	m_pHScroll->SetRect(rcHorizontal);
+	m_pHScroll->OnRect(RectEvent(GetWndPtr(), rcHorizontal));
 
 }
 
@@ -573,8 +574,7 @@ void CGridView::SubmitUpdate()
 			}
 			case Updates::Rect:
 			{
-				//TODODO
-				GetWndPtr()->MoveWindow(GetWndPtr()->GetDirectPtr()->Dips2Pixels(GetUpdateRect()), FALSE);
+				OnRect(RectEvent(GetWndPtr(), GetUpdateRect()));
 			}
 			case Updates::RowVisible:
 			{
@@ -988,7 +988,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 {
 	if (auto pCell = dynamic_cast<CTextCell*>(e.CellPtr)) {
 
-		CTextBox* pEdit = new CTextBox(
+		d2dw::CTextBox* pEdit = new d2dw::CTextBox(
 			GetWndPtr(),
 			pCell,
 			pCell->GetCellPropertyPtr(),

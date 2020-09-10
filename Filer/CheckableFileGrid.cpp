@@ -125,7 +125,7 @@ void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)
 
 void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	auto pWnd = new CTextboxWnd();
+	auto pWnd = new d2dw::CWindow();
 	auto pControl = std::make_shared<CFilerGridView>(pWnd, std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
 	//pWnd->SetControlPtr(pControl);
 

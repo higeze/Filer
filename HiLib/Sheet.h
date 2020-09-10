@@ -1,5 +1,5 @@
 #pragma once
-#include "UIElement.h"
+#include "UIControl.h"
 #include "SheetProperty.h"
 #include "MyMenu.h"
 #include "SheetEnums.h"
@@ -80,7 +80,8 @@ const UINT WM_LBUTTONDBLCLKTIMEXCEED = RegisterWindowMessage(L"WM_LBUTTONDBLCLKT
 /********/
 /*CSheet*/
 /********/
-class CSheet:virtual public CUIElement
+
+class CSheet:virtual public d2dw::CUIControl
 {
 	//Friend classes
 	friend class CMouseStateMachine;
@@ -146,7 +147,7 @@ public:
 	boost::signals2::signal<void(CellContextMenuEventArgs&)> CellContextMenu;
 
 	//Constructor
-	CSheet(CWnd* pWnd, std::shared_ptr<SheetProperty> spSheetProperty, CMenu* pContextMenu= &CSheet::ContextMenu);
+	CSheet(d2dw::CWindow* pWnd, std::shared_ptr<SheetProperty> spSheetProperty, CMenu* pContextMenu= &CSheet::ContextMenu);
 
 	//Destructor
 	virtual ~CSheet();
@@ -169,6 +170,7 @@ public:
 	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_pNameHeaderRow = row; }
 	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_pFilterRow; }
 	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_pFilterRow = row; }
+	virtual d2dw::CRectF GetRectInWnd()const override;
 
 
 	virtual bool GetIsSelected()const{return m_bSelected;};
@@ -256,7 +258,6 @@ public:
 	virtual d2dw::CPointF GetFrozenPoint();
 	virtual d2dw::CSizeF MeasureSize()const;
 
-	virtual d2dw::CRectF GetRectInWnd()const;
 	virtual FLOAT GetCellsHeight();
 	virtual FLOAT GetCellsWidth();
 	virtual d2dw::CRectF GetCellsRect();

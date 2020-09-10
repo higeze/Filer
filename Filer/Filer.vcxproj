@@ -190,7 +190,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\D2DTextBox\TextboxStateMachine.h" />
-    <ClInclude Include="..\D2DTextBox\TextboxWnd.h" />
     <ClInclude Include="..\D2DTextBox\Textbox.h" />
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h" />
     <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h" />
@@ -324,6 +323,7 @@
     <ClInclude Include="..\HiLib\SingletonMalloc.h" />
     <ClInclude Include="..\HiLib\StatusBar.h" />
     <ClInclude Include="..\HiLib\TabControl.h" />
+    <ClInclude Include="..\HiLib\TextboxWnd.h" />
     <ClInclude Include="..\HiLib\TextCell.h" />
     <ClInclude Include="..\HiLib\ThreadHelper.h" />
     <ClInclude Include="..\HiLib\ThreadPool.h" />
@@ -331,6 +331,7 @@
     <ClInclude Include="..\HiLib\ThreadSafeKnownFolderManager.h" />
     <ClInclude Include="..\HiLib\Timer.h" />
     <ClInclude Include="..\HiLib\Tracker.h" />
+    <ClInclude Include="..\HiLib\UIControl.h" />
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
@@ -388,7 +389,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\D2DTextBox\TextboxStateMachine.cpp" />
-    <ClCompile Include="..\D2DTextBox\TextboxWnd.cpp" />
     <ClCompile Include="..\D2DTextBox\Textbox.cpp" />
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />
     <ClCompile Include="..\D2DTextBox\text_stdafx.cpp" />
@@ -450,11 +450,13 @@
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
     <ClCompile Include="..\HiLib\StatusBar.cpp" />
     <ClCompile Include="..\HiLib\TabControl.cpp" />
+    <ClCompile Include="..\HiLib\TextboxWnd.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
     <ClCompile Include="..\HiLib\ThreadPool.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeKnownFolderManagaer.cpp" />
     <ClCompile Include="..\HiLib\Timer.cpp" />
+    <ClCompile Include="..\HiLib\UIControl.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="FileOperationWnd.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />

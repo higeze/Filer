@@ -87,7 +87,7 @@ public:
 };
 
 
-class CFilerWnd:public CTextboxWnd
+class CFilerWnd:public d2dw::CWindow
 {
 private:
 	CRect m_rcWnd;
@@ -103,13 +103,13 @@ private:
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
 	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
+	std::shared_ptr<TabControlProperty> m_spTabControlProp;
 
-	//Windows
-	std::shared_ptr<CFilerTabGridView> m_spLeftWnd;
-	std::shared_ptr<CFilerTabGridView> m_spRightWnd;
-	std::shared_ptr<CFilerTabGridView> m_spCurWnd;
 
 	//Controls
+	std::shared_ptr<CFilerTabGridView> m_spLeftView;
+	std::shared_ptr<CFilerTabGridView> m_spRightView;
+	std::shared_ptr<CFilerTabGridView> m_spCurView;
 	std::shared_ptr<CFavoritesGridView> m_spLeftFavoritesView;
 	std::shared_ptr<CFavoritesGridView> m_spRightFavoritesView;
 	std::shared_ptr<d2dw::CStatusBar> m_spStatusBar;
@@ -131,11 +131,11 @@ public:
 
 	std::shared_ptr<CFavoritesGridView>& GetLeftFavoritesView() { return m_spLeftFavoritesView; }
 	std::shared_ptr<CFavoritesGridView>& GetRightFavoritesView() { return m_spRightFavoritesView; }
-	std::shared_ptr<CFilerTabGridView>& GetLeftWnd() { return m_spLeftWnd; }
-	std::shared_ptr<CFilerTabGridView>& GetRightWnd() { return m_spRightWnd; }
+	std::shared_ptr<CFilerTabGridView>& GetLeftWnd() { return m_spLeftView; }
+	std::shared_ptr<CFilerTabGridView>& GetRightWnd() { return m_spRightView; }
 
 private:
-	virtual LRESULT OnClose(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)override;
+	virtual void OnClose(const CloseEvent& e)override;
 	virtual LRESULT OnDestroy(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
@@ -152,7 +152,7 @@ private:
 
 	virtual void OnCreate(const CreateEvent& e) override;
 	virtual void OnRect(const RectEvent& e) override;
-	virtual void OnSetFocus(const SetFocusEvent& e) override;
+	//virtual void OnSetFocus(const SetFocusEvent& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
@@ -208,8 +208,8 @@ public:
 		ar("TextEditorProperty", m_spTextEditorProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
-		ar("LeftView", m_spLeftWnd);
-		ar("RightView", m_spRightWnd);
+		ar("LeftView", m_spLeftView);
+		ar("RightView", m_spRightView);
 
 		ar("LeftFavoritesView", m_spLeftFavoritesView);
 		ar("RightFavoritesView", m_spRightFavoritesView);
@@ -233,8 +233,8 @@ public:
 		ar("TextEditorProperty", m_spTextEditorProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
-		ar("LeftView", m_spLeftWnd, m_spFilerGridViewProp, m_spTextEditorProp);
-		ar("RightView", m_spRightWnd, m_spFilerGridViewProp, m_spTextEditorProp);
+		ar("LeftView", m_spLeftView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp);
+		ar("RightView", m_spRightView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp);
 
 		ar("LeftFavoritesView", m_spLeftFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
 		ar("RightFavoritesView", m_spRightFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);

@@ -68,8 +68,8 @@ public:
 	{
 		CPoint pt;
 		::GetCursorPos(&pt);
-		::ScreenToClient(e.WndPtr->m_hWnd, &pt);
-		if (IsTarget(pSheet, MouseEvent(e.WndPtr, 0, MAKELPARAM(pt.x, pt.y)))) {
+		::ScreenToClient(pSheet->GetWndPtr()->m_hWnd, &pt);
+		if (IsTarget(pSheet, MouseEvent(pSheet->GetWndPtr(), 0, MAKELPARAM(pt.x, pt.y)))) {
 			*e.HandledPtr = TRUE;
 			SetSizeCursor(); 
 		} else {
@@ -87,7 +87,7 @@ public:
 	{
 		SetSizeCursor();
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
-		p->SetLength(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient).Get<TRC::PointTag>() - p->GetStart(), true);
+		p->SetLength(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient).Get<TRC::PointTag>() - p->GetStart(), true);
 		pSheet->Track<TRC>(p);
 	}
 
@@ -95,7 +95,7 @@ public:
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
 		if (auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib)) {
-			p->SetLength(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient).Get<TRC::PointTag>() - p->GetStart(), true);
+			p->SetLength(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient).Get<TRC::PointTag>() - p->GetStart(), true);
 			pSheet->EndTrack<TRC>(p);
 		}
 	}
@@ -111,7 +111,7 @@ public:
 		if (!pSheet->Visible()) {
 			return CBand::kInvalidIndex;
 		}
-		d2dw::CPointF ptDips = e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient);
+		d2dw::CPointF ptDips = pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
 		auto visIndexes = pSheet->Point2Indexes(ptDips);
 		int minIdx = 0;
 		int maxIdx = pSheet->GetContainer<TRC, VisTag>().size() - 1;
@@ -154,7 +154,7 @@ public:
 		if (!pSheet->Visible()) {
 			return false;
 		}
-		d2dw::CPointF ptDips = e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient);
+		d2dw::CPointF ptDips = pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
 		auto visIndexes = pSheet->Point2Indexes(ptDips);
 		auto other = pSheet->Coordinate2Pointer<TRC::Other>(ptDips.Get<TRC::Other::PointTag>());
 		int minIdx = 0;

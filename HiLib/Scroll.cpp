@@ -1,6 +1,7 @@
 #include "Scroll.h"
 #include "ScrollProperty.h"
 #include "GridView.h"
+#include "TextboxWnd.h"
 
 #include <boost\msm\front\state_machine_def.hpp>
 #include <boost\msm\back\state_machine.hpp>
@@ -8,8 +9,8 @@
 
 namespace d2dw
 {
-	CScrollBase::CScrollBase(CWnd* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
-		:m_pWnd(pWnd), m_spScrollProp(spScrollProp), m_onPropertyChanged(onPropertyChanged){}
+	CScrollBase::CScrollBase(CWindow* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
+		:CUIControl(pWnd), m_spScrollProp(spScrollProp), m_onPropertyChanged(onPropertyChanged){}
 
 	FLOAT CScrollBase::GetScrollBandWidth()const { return m_spScrollProp->BandWidth; }
 	FLOAT CScrollBase::GetScrollDelta()const { return m_spScrollProp->DeltaScroll; }
@@ -45,7 +46,7 @@ namespace d2dw
 	{
 		if (!GetVisible())return;
 		//Draw background
-		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spScrollProp->BackgroundFill, GetRectInWnd());
+		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spScrollProp->BackgroundFill, GetRectInWnd());
 		//Draw thumb
 		auto thumbFill = m_spScrollProp->ThumbNormalFill;
 		if (GetState() == UIElementState::Dragged) {
@@ -56,7 +57,7 @@ namespace d2dw
 		} else {
 			thumbFill = m_spScrollProp->ThumbNormalFill;
 		}
-		e.WndPtr->GetDirectPtr()->FillSolidRectangle(thumbFill, GetThumbRect());
+		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(thumbFill, GetThumbRect());
 	}
 
 	CRectF CVScroll::GetThumbRect()const

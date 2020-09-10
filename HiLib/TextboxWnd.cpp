@@ -9,47 +9,59 @@
 #include "MyFile.h"
 #include "MouseStateMachine.h"
 
-LRESULT CTextboxWnd::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+namespace d2dw
+{
+
+void CWindow::SetFocusControl(const std::shared_ptr<CUIControl>& spControl)
+{
+	if (m_pFocusedControl) {
+		m_pFocusedControl->OnKillFocus(KillFocusEvent(this, 0, 0, nullptr));
+	}
+	m_pFocusedControl = spControl;
+	m_pFocusedControl->OnSetFocus(SetFocusEvent(this, 0, 0, nullptr));
+}
+
+LRESULT CWindow::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
 		::SetForegroundWindow(hWnd);
 	}
-
+	OnClose(CloseEvent(this, wParam, lParam, &bHandled));
 	DestroyWindow();
 	return 0;
 }
 
-LRESULT CTextboxWnd::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+LRESULT CWindow::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	if (GetFocusedControlPtr())GetFocusedControlPtr()->OnSetCursor(SetCursorEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
-LRESULT CTextboxWnd::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+LRESULT CWindow::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	if (GetFocusedControlPtr())GetFocusedControlPtr()->OnSetFocus(SetFocusEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
-LRESULT CTextboxWnd::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+LRESULT CWindow::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	if (GetFocusedControlPtr())GetFocusedControlPtr()->OnKillFocus(KillFocusEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
-LRESULT CTextboxWnd::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+LRESULT CWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	GetFocusedControlPtr()->OnCommand(CommandEvent(this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }
 
-void CTextboxWnd::OnFinalMessage(HWND m_hWnd) {}
+void CWindow::OnFinalMessage(HWND m_hWnd) {}
 
-CTextboxWnd::CTextboxWnd()
+CWindow::CWindow()
 	:CWnd()
 {
 	//RegisterArgs and CreateArgs
@@ -76,7 +88,7 @@ CTextboxWnd::CTextboxWnd()
 			InvalidateRect(NULL, FALSE);
 			return 0;
 		});
-	AddMsgHandler(WM_CLOSE, &CTextboxWnd::OnClose, this);
+	AddMsgHandler(WM_CLOSE, &CWindow::OnClose, this);
 
 	AddMsgHandler(WM_ERASEBKGND, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
 		{
@@ -91,23 +103,23 @@ CTextboxWnd::CTextboxWnd()
 		});
 
 	auto onPaint = [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
-		{
-			CPaintDC dc(m_hWnd);
-			m_pDirect->BeginDraw();
+	{
+		CPaintDC dc(m_hWnd);
+		m_pDirect->BeginDraw();
 
-			m_pDirect->ClearSolid(d2dw::CColorF(1.f, 1.f, 1.f));
+		m_pDirect->ClearSolid(d2dw::CColorF(1.f, 1.f, 1.f));
 
-			OnPaint(PaintEvent(this, &bHandled));
+		OnPaint(PaintEvent(this, &bHandled));
 
-			m_pDirect->EndDraw();
-			return 0;
-		};
+		m_pDirect->EndDraw();
+		return 0;
+	};
 	AddMsgHandler(WM_PAINT, onPaint);
 	AddMsgHandler(WM_DISPLAYCHANGE, onPaint);
 
-	AddMsgHandler(WM_SETCURSOR, &CTextboxWnd::OnSetCursor, this);
-	AddMsgHandler(WM_SETFOCUS, &CTextboxWnd::OnSetFocus, this);
-	AddMsgHandler(WM_KILLFOCUS, &CTextboxWnd::OnKillFocus, this);
+	AddMsgHandler(WM_SETCURSOR, &CWindow::OnSetCursor, this);
+	AddMsgHandler(WM_SETFOCUS, &CWindow::OnSetFocus, this);
+	AddMsgHandler(WM_KILLFOCUS, &CWindow::OnKillFocus, this);
 
 
 	//UserInput
@@ -116,25 +128,25 @@ CTextboxWnd::CTextboxWnd()
 			SetFocus();
 			return UserInputMachine_Message<LButtonDownEvent>(msg, wParam, lParam, bHandled);
 		});
-	AddMsgHandler(WM_LBUTTONUP, &CTextboxWnd::UserInputMachine_Message<LButtonUpEvent>, this);
-	AddMsgHandler(WM_LBUTTONDBLCLK, &CTextboxWnd::UserInputMachine_Message<LButtonDblClkEvent>, this);
-	AddMsgHandler(RegisterWindowMessage(L"WM_LBUTTONDBLCLKTIMEXCEED"), &CTextboxWnd::UserInputMachine_Message<LButtonDblClkTimeExceedEvent>, this);
-	AddMsgHandler(WM_RBUTTONDOWN, &CTextboxWnd::UserInputMachine_Message<RButtonDownEvent>, this);
-	AddMsgHandler(WM_CONTEXTMENU, &CTextboxWnd::UserInputMachine_Message<ContextMenuEvent>, this);
+	AddMsgHandler(WM_LBUTTONUP, &CWindow::UserInputMachine_Message<LButtonUpEvent>, this);
+	AddMsgHandler(WM_LBUTTONDBLCLK, &CWindow::UserInputMachine_Message<LButtonDblClkEvent>, this);
+	AddMsgHandler(RegisterWindowMessage(L"WM_LBUTTONDBLCLKTIMEXCEED"), &CWindow::UserInputMachine_Message<LButtonDblClkTimeExceedEvent>, this);
+	AddMsgHandler(WM_RBUTTONDOWN, &CWindow::UserInputMachine_Message<RButtonDownEvent>, this);
+	AddMsgHandler(WM_CONTEXTMENU, &CWindow::UserInputMachine_Message<ContextMenuEvent>, this);
 
-	AddMsgHandler(WM_MOUSEMOVE, &CTextboxWnd::UserInputMachine_Message<MouseMoveEvent>, this);
-	AddMsgHandler(WM_MOUSELEAVE, &CTextboxWnd::UserInputMachine_Message<MouseLeaveEvent>, this);
-	AddMsgHandler(WM_MOUSEWHEEL, &CTextboxWnd::UserInputMachine_Message<MouseWheelEvent>, this);
-	AddMsgHandler(WM_CANCELMODE, &CTextboxWnd::UserInputMachine_Message<CancelModeEvent>, this);
-	AddMsgHandler(WM_CAPTURECHANGED, &CTextboxWnd::UserInputMachine_Message<CaptureChangedEvent>, this);
-	AddMsgHandler(WM_KEYDOWN, &CTextboxWnd::UserInputMachine_Message<KeyDownEvent>, this);
-	AddMsgHandler(WM_SYSKEYDOWN, &CTextboxWnd::UserInputMachine_Message<SysKeyDownEvent>, this);
-	AddMsgHandler(WM_CHAR, &CTextboxWnd::UserInputMachine_Message<CharEvent>, this);
+	AddMsgHandler(WM_MOUSEMOVE, &CWindow::UserInputMachine_Message<MouseMoveEvent>, this);
+	AddMsgHandler(WM_MOUSELEAVE, &CWindow::UserInputMachine_Message<MouseLeaveEvent>, this);
+	AddMsgHandler(WM_MOUSEWHEEL, &CWindow::UserInputMachine_Message<MouseWheelEvent>, this);
+	AddMsgHandler(WM_CANCELMODE, &CWindow::UserInputMachine_Message<CancelModeEvent>, this);
+	AddMsgHandler(WM_CAPTURECHANGED, &CWindow::UserInputMachine_Message<CaptureChangedEvent>, this);
+	AddMsgHandler(WM_KEYDOWN, &CWindow::UserInputMachine_Message<KeyDownEvent>, this);
+	AddMsgHandler(WM_SYSKEYDOWN, &CWindow::UserInputMachine_Message<SysKeyDownEvent>, this);
+	AddMsgHandler(WM_CHAR, &CWindow::UserInputMachine_Message<CharEvent>, this);
 }
 
-CTextboxWnd::~CTextboxWnd() = default;
+CWindow::~CWindow() = default;
 
-bool CTextboxWnd::GetIsFocused()const
+bool CWindow::GetIsFocused()const
 {
 	auto hWndAct = ::GetActiveWindow();
 	auto hWndFcs = ::GetFocus();
@@ -152,9 +164,10 @@ bool CTextboxWnd::GetIsFocused()const
 		(HWND)::GetParent(hWndFore) == m_hWnd;
 }
 
-void CTextboxWnd::Update()
+void CWindow::Update()
 {
 	GetFocusedControlPtr()->Update();
+}
 }
 
 

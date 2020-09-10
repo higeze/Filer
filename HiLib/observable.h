@@ -313,6 +313,13 @@ public:
 		}
 	}
 
+	void force_notify_set(const T& value)
+	{
+		auto oldValue = m_value;
+		m_value = value;
+		Changed(NotifyChangedEventArgs<T>{ oldValue });
+	}
+
 	void forth_notify_set(const T& value)
 	{
 		auto oldValue = m_value;

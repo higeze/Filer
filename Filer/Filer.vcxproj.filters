@@ -530,9 +530,6 @@
     <ClInclude Include="..\HiLib\observable.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\TextboxWnd.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\GridViewStateMachine.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -630,6 +627,12 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\TabControl.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\UIControl.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\TextboxWnd.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -871,9 +874,6 @@
     <ClCompile Include="..\D2DTextBox\TextEditSink.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
-    <ClCompile Include="..\D2DTextBox\TextboxWnd.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\SheetStateMachine.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -920,6 +920,12 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\TabControl.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\TextboxWnd.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\UIControl.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

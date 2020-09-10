@@ -2,16 +2,19 @@
 #include "SheetStateMachine.h"
 #include <boost/sml.hpp>
 
+namespace d2dw
+{
+
 class CTextBox;
 
-class CTextboxStateMachine :public IStateMachine
+class CTextBoxStateMachine :public IStateMachine
 {
 private:
 	struct Machine;
 	std::unique_ptr<boost::sml::sm<Machine>> m_pMachine;
 public:
-	CTextboxStateMachine(CTextBox* pTextbox);
-	~CTextboxStateMachine();
+	CTextBoxStateMachine(d2dw::CTextBox* pTextbox);
+	~CTextBoxStateMachine();
 
 	virtual void process_event(const PaintEvent& e) override;
 	virtual void process_event(const RButtonDownEvent& e) override;
@@ -32,3 +35,4 @@ public:
 	virtual void process_event(const BeginEditEvent& e) override {}
 	virtual void process_event(const EndEditEvent& e) override {}
 };
+}

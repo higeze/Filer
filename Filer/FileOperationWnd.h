@@ -28,7 +28,7 @@
 //	CButton m_buttonCancel;
 //
 //	std::shared_ptr<CFilerBindGridView<TItems...>> m_spFilerControl;
-//	std::unique_ptr<CTextboxWnd> m_pFileGrid;
+//	std::unique_ptr<d2dw::CWindow> m_pFileGrid;
 //
 //	bool m_showDefault = true;
 //	bool m_showApply = true;

@@ -11,7 +11,7 @@
 
 #define Round(x)	((LONG)(x+0.5f))
 
-CTextStore::CTextStore(CTextBox *pEditor):_pEditor(pEditor)
+CTextStore::CTextStore(d2dw::CTextBox *pEditor):_pEditor(pEditor)
 {
 	_cRef = 1;
 	TextStoreACPSink_ = NULL;

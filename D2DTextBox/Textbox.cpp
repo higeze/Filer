@@ -1,6 +1,6 @@
 ﻿#include "text_stdafx.h"
 #include "Textbox.h"
-//#include "TextboxWnd.h"
+#include "TextboxWnd.h"
 #include "TextEditSink.h"
 #include "TextStoreACP.h"
 #include "MyClipboard.h"
@@ -25,6 +25,8 @@
 
 HRESULT InitDisplayAttrbute();
 HRESULT UninitDisplayAttrbute();
+
+namespace d2dw{
 
 /*****************/
 /* static member */
@@ -77,17 +79,17 @@ void CTextBox::AppTSFExit()
 /* constructor */
 /***************/
 CTextBox::CTextBox(
-	CWnd* pWnd,
+	CWindow* pWnd,
 	CTextCell* pCell,
 	const std::shared_ptr<TextboxProperty> pProp,
 	const std::wstring& text,
 	std::function<void(const std::wstring&)> changed,
 	std::function<void(const std::wstring&)> final)
-	:m_pWnd(pWnd), m_pCell(pCell), m_pProp(pProp),
+	:CUIControl(pWnd), m_pCell(pCell), m_pProp(pProp),
 	m_changed(changed), m_final(final),
 	m_text(text),
 	m_carets(0, text.size(), 0, 0, text.size()),
-	m_pTextMachine(std::make_unique<CTextboxStateMachine>(this)),
+	m_pTextMachine(std::make_unique<CTextBoxStateMachine>(this)),
 	m_pVScroll(std::make_unique<d2dw::CVScroll>(pWnd, pProp->VScrollPropPtr, [this](const wchar_t* name) { UpdateAll(); })),
 	m_pHScroll(std::make_unique<d2dw::CHScroll>(pWnd, pProp->HScrollPropPtr, [this](const wchar_t* name) { UpdateAll(); }))
 {
@@ -475,9 +477,9 @@ void CTextBox::OnMouseWheel(const MouseWheelEvent& e)
 void CTextBox::Normal_Paint(const PaintEvent& e)
 {
 	//PaintBackground
-	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
 	//PaintLine
-	if (m_hasBorder) { e.WndPtr->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->EditLine), GetRectInWnd()); }
+	if (m_hasBorder) { GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->EditLine), GetRectInWnd()); }
 	//PaintContent
 	Render();
 	//PaintScroll
@@ -1192,7 +1194,7 @@ void CTextBox::UpdateScroll()
 	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetVisible() ? (m_pHScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
 	//rcVertical.bottom = rcClient.bottom - lineHalfWidth;
 
-	m_pVScroll->SetRect(rcVertical);
+	m_pVScroll->OnRect(RectEvent(GetWndPtr(), rcVertical));
 
 	//HScroll
 	//Position
@@ -1201,7 +1203,7 @@ void CTextBox::UpdateScroll()
 	rcHorizontal.top = rcClient.bottom - ::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
 	rcHorizontal.right = rcClient.right - (m_pVScroll->GetVisible() ? (m_pVScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
 	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
-	m_pHScroll->SetRect(rcHorizontal);
+	m_pHScroll->OnRect(RectEvent(GetWndPtr(), rcHorizontal));
 }
 
 void CTextBox::UpdateAll()
@@ -1317,4 +1319,6 @@ void CTextEditor::Save(const std::wstring& path)
 void CTextEditor::Update()
 {
 	UpdateAll();
+}
+
 }

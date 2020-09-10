@@ -26,7 +26,7 @@ public:
 
 	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto visIndexes = pSheet->Point2Indexes(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+		auto visIndexes = pSheet->Point2Indexes(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 		auto v = visIndexes.Get<TRCYou::IndexesTag>();
 		if (visIndexes.Row < (int)pSheet->GetContainer<RowTag, VisTag>().size() &&
 			visIndexes.Row >= 0 &&
@@ -41,15 +41,15 @@ public:
 
 	void OnBeginDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		m_dragFromVisIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+		m_dragFromVisIndex = pSheet->Point2Index<TRC>(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 		m_dragToVisIndex = CBand::kInvalidIndex;
-		//m_dragFromIndex = pSheet->Vis2AllIndex<TRC>(pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point)));
+		//m_dragFromIndex = pSheet->Vis2AllIndex<TRC>(pSheet->Point2Index<TRC>(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.Point)));
 		//m_dragToIndex = CBand::kInvalidIndex;
 	}
 
 	void OnDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
-		auto curVisIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+		auto curVisIndex = pSheet->Point2Index<TRC>(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
 		if (curVisIndex == CBand::kInvalidIndex) {
 			m_dragToVisIndex = CBand::kInvalidIndex;
@@ -69,7 +69,7 @@ public:
 
 
 
-		//int visIndex = pSheet->Point2Index<TRC>(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.Point));
+		//int visIndex = pSheet->Point2Index<TRC>(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.Point));
 
 		//if (visIndex == CBand::kInvalidIndex) {
 		//	m_dragToIndex = pSheet->Vis2AllIndex<TRC>(visIndex);
@@ -149,7 +149,7 @@ public:
 			FLOAT cooyou1 = pSheet->GetContainer<TRCYou, VisTag>().back()->GetEnd();
 
 			//Paint DragLine
-			PaintLine(e.WndPtr->GetDirectPtr(), *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);
+			PaintLine(pSheet->GetWndPtr()->GetDirectPtr(), *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);
 		}
 
 
@@ -178,7 +178,7 @@ public:
 		//	FLOAT cooyou1 = pSheet->GetContainer<TRCYou, AllTag>().back()->GetEnd();
 
 		//	//Paint DragLine
-		//	PaintLine(e.WndPtr->GetDirectPtr(), *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);
+		//	PaintLine(pSheet->GetWndPtr()->GetDirectPtr(), *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);
 		//}
 	}
 

@@ -2,7 +2,7 @@
 #include "Cell.h"
 #include <unordered_map>
 
-class CTextBox;
+class d2dw::CTextBox;
 
 struct equal_double
 //	:public std::binary_function<const double&,const double&,bool>

@@ -241,7 +241,6 @@ public:
 	/*********/
 	virtual UIElementState::Type GetState()const{return m_state;}
 	virtual void SetState(const UIElementState::Type& state);
-	virtual bool GetIsFocused()const { return false; }
 
 	/*********/
 	/* event */
@@ -278,9 +277,10 @@ public:
 	virtual void OnKillFocus(const KillFocusEvent& e) {}
 
 	virtual void OnPropertyChanged(const wchar_t* name){}
-
-	virtual CWnd* GetWndPtr()const = 0;
+	
 	virtual d2dw::CRectF GetRectInWnd() const = 0;
+
 	void Update() {}
 
 };
+

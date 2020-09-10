@@ -1,21 +1,19 @@
 #pragma once
 #include "Direct2DWrite.h"
-#include "UIElement.h"
+#include "UIControl.h"
 
 class CGridView;
 struct ScrollProperty;
 
 namespace d2dw
 {
-	class CScrollBase :public CUIElement
+	class CScrollBase :public CUIControl
 	{
 	protected:
-		CWnd* m_pWnd;
 		bool m_visible = true;
 		FLOAT m_page = 0.0f;
 		std::pair<FLOAT, FLOAT> m_range = std::make_pair(0.0f, 0.0f);
 		FLOAT m_pos = 0.0f;
-		CRectF m_rect;
 
 		std::shared_ptr<ScrollProperty> m_spScrollProp;
 
@@ -25,7 +23,7 @@ namespace d2dw
 
 
 	public:
-		CScrollBase(CWnd* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged);
+		CScrollBase(CWindow* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged);
 		virtual ~CScrollBase() = default;
 
 		FLOAT GetStartDrag()const { return m_startDrag; }
@@ -36,19 +34,17 @@ namespace d2dw
 		std::pair<FLOAT, FLOAT> GetScrollRange()const { return m_range; }
 		FLOAT GetScrollDistance()const { return m_range.second - m_range.first; }
 		FLOAT GetScrollPos()const { return m_pos; }
-		CWnd* GetWndPtr()const override { return m_pWnd; }
-		CRectF GetRectInWnd() const override { return m_rect; }
-		CSizeF GetSize()const { return CSizeF(m_rect.Width(), m_rect.Height()); }
+		CSizeF GetSize()const { return GetRectInWnd().Size(); }
 		bool GetVisible()const { return m_visible; }
 
 		void SetScrollPos(const FLOAT pos);
 		void SetScrollPage(const FLOAT page);
 		void SetScrollRange(const FLOAT min, FLOAT max);
-		void SetRect(const CRectF& rect){ m_rect = rect; }
-		void SetRect(const FLOAT left, const FLOAT top, const FLOAT right, const FLOAT bottom) 
-		{
-			m_rect.SetRect(left, top, right, bottom);
-		}
+		//void SetRect(const CRectF& rect){ m_rect = rect; }
+		//void SetRect(const FLOAT left, const FLOAT top, const FLOAT right, const FLOAT bottom) 
+		//{
+		//	m_rect.SetRect(left, top, right, bottom);
+		//}
 		void SetVisible(bool visible) { m_visible = visible; }
 		virtual void OnPaint(const PaintEvent& e) override;
 		virtual CRectF GetThumbRect()const = 0;
@@ -62,7 +58,7 @@ namespace d2dw
 	class CVScroll :public CScrollBase
 	{
 	public:
-		CVScroll(CWnd* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
+		CVScroll(CWindow* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
 			:CScrollBase(pWnd, spScrollProp, onPropertyChanged){}
 		virtual ~CVScroll() = default;
 		virtual CRectF GetThumbRect()const override;
@@ -71,7 +67,7 @@ namespace d2dw
 	class CHScroll :public CScrollBase
 	{
 	public:
-		CHScroll(CWnd* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
+		CHScroll(CWindow* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
 			:CScrollBase(pWnd, spScrollProp, onPropertyChanged) {}
 		virtual ~CHScroll() = default;
 		virtual CRectF GetThumbRect()const override;

@@ -86,7 +86,7 @@ public:
 	virtual bool GetIsSelected()const;
 	virtual void SetIsSelected(const bool& selected);
 	//Focused
-	virtual bool GetIsFocused()const override;
+	virtual bool GetIsFocused()const;
 	//DoubleFocused
 	virtual bool GetIsDoubleFocused()const;
 	//Checked
@@ -128,7 +128,4 @@ public:
 
 	//Update action
 	virtual void OnPropertyChanged(const wchar_t*) override;
-
-	//WndPtr
-	virtual CWnd* GetWndPtr()const override;
 };

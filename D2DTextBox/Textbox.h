@@ -2,22 +2,17 @@
 #include <msctf.h>
 #include "IBridgeTSFInterface.h"
 #include "CellProperty.h"
-#include "UIElement.h"
 #include "observable.h"
 #include "Timer.h"
 #include "MyWnd.h"
 #include "Scroll.h"
 #include "TextboxStateMachine.h"
-#include "UIElement.h"
+#include "UIControl.h"
 
 
-//class LayoutLineInfo;
-//struct D2DContext;
-class CTextboxWnd;
 class CTextStore;
 class CTextEditSink;
 class IBridgeTSFInterface;
-class CTextboxWnd;
 class CGridView;
 class CTextCell;
 
@@ -42,48 +37,52 @@ bool in_range(const T& value, const T& min, const T& max)
 	return min <= value && value <= max;
 }
 
-class CTextBox: public IBridgeTSFInterface, public CUIElement
+namespace d2dw
 {
-/**********/
-/* Static */
-/**********/
+
+class CWindow;
+
+class CTextBox : public IBridgeTSFInterface, public CUIControl
+{
+	/**********/
+	/* Static */
+	/**********/
 public:
 	static bool AppTSFInit();
 	static void AppTSFExit();
 
-/*********/
-/* Field */
-/*********/
+	/*********/
+	/* Field */
+	/*********/
 
 protected:
-	CWnd* m_pWnd;
-/* Caret */
+	/* Caret */
 	enum caret
 	{
 		OldCaret = 0,
-		CurCaret,	
+		CurCaret,
 		AncCaret,
 		SelBegin,
 		SelEnd,
 	};
 	observable_tuple<int, int, int, int, int> m_carets;
 	d2dw::CPointF m_caretPoint;
-/* Text */
+	/* Text */
 	observable_wstring m_text;
-/* Scroll */
+	/* Scroll */
 	std::unique_ptr<d2dw::CVScroll> m_pVScroll;
 	std::unique_ptr<d2dw::CHScroll> m_pHScroll;
-/* Other */
+	/* Other */
 	bool m_hasBorder = true;
 	bool m_isScrollable = false;
 	bool m_bCaret = false;
 	bool m_isFirstDrawCaret = true;
 	bool m_isClosing = false;
-	std::unique_ptr<CTextboxStateMachine> m_pTextMachine;
+	std::unique_ptr<CTextBoxStateMachine> m_pTextMachine;
 
 public:
 	CTextBox(
-		CWnd* pWnd,
+		CWindow* pWnd,
 		CTextCell* pCell,
 		const std::shared_ptr<TextboxProperty> pProp,
 		const std::wstring& text,
@@ -98,13 +97,12 @@ public:
 	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets); }
 	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets); }
 	CTextCell* GetCellPtr() { return m_pCell; }
-	virtual CWnd* GetWndPtr()const override { return m_pWnd; }
 
 public:
 	/******************/
 	/* Windows Message*/
 	/******************/
-	virtual void OnPaint(const PaintEvent& e){ m_pTextMachine->process_event(e); }
+	virtual void OnPaint(const PaintEvent& e) { m_pTextMachine->process_event(e); }
 	virtual void OnSetFocus(const SetFocusEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnKillFocus(const KillFocusEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnKeyDown(const KeyDownEvent& e) override { m_pTextMachine->process_event(e); }
@@ -198,16 +196,16 @@ public:
 
 	//void InvalidateRect();
 	void ClearCompositionRenderInfo();
-	BOOL AddCompositionRenderInfo(int Start, int End, TF_DISPLAYATTRIBUTE *pda);
+	BOOL AddCompositionRenderInfo(int Start, int End, TF_DISPLAYATTRIBUTE* pda);
 public:
 	std::function<CComPtr<IDWriteTextLayout1>& ()> GetTextLayoutPtr;
-	std::function<std::vector<d2dw::CRectF>&()> GetOriginCharRects;
-	std::function<std::vector<d2dw::CRectF>&()> GetOriginCursorCharRects;
+	std::function<std::vector<d2dw::CRectF>& ()> GetOriginCharRects;
+	std::function<std::vector<d2dw::CRectF>& ()> GetOriginCursorCharRects;
 	std::function<std::vector<d2dw::CRectF>& ()> GetActualCharRects;
 	std::function<std::vector<d2dw::CRectF>& ()> GetActualSelectionCharRects;
 	std::function<std::vector<d2dw::CRectF>& ()> GetActualCursorCharRects;
 
-	std::function<d2dw::CRectF&()> GetOriginContentRect;
+	std::function<d2dw::CRectF& ()> GetOriginContentRect;
 	std::function<d2dw::CRectF& ()> GetActualContentRect;
 
 	//std::optional<d2dw::CRectF> GetOriginCharRect(const int& pos);
@@ -267,7 +265,7 @@ public:
 
 };
 
-class CTextEditor :public CTextBox
+class CTextEditor :public d2dw::CTextBox
 {
 private:
 	observable<std::wstring> m_path;
@@ -275,28 +273,20 @@ private:
 
 public:
 	CTextEditor(
-		CWnd* pWnd, 
-		const std::shared_ptr<TextboxProperty>& spProp, 
+		CWindow* pWnd,
+		const std::shared_ptr<TextboxProperty>& spProp,
 		std::function<void(const std::wstring&)> changed,
 		std::function<void(const std::wstring&)> final)
-		:CTextBox(pWnd, nullptr, spProp, L"", changed, final)
+		:d2dw::CTextBox(pWnd, nullptr, spProp, L"", changed, final)
 	{
 		m_hasBorder = false;
 		m_isScrollable = true;
 	}
 
-	virtual ~CTextEditor(){}
+	virtual ~CTextEditor() {}
 
 	observable<std::wstring>& GetObsPath() { return m_path; }
 	observable<bool>& GetObsIsSaved() { return m_isSaved; }
-
-
-	d2dw::CRectF GetRectInWnd() const override
-	{
-		CRect rc = GetWndPtr()->GetClientRect();
-		//rc.DeflateRect(1);
-		return GetWndPtr()->GetDirectPtr()->Pixels2Dips(rc);
-	}
 
 	bool GetIsVisible() const override
 	{
@@ -317,7 +307,5 @@ public:
 	void Save(const std::wstring& path);
 	void Update();
 
-
-
-
 };
+}

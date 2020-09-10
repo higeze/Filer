@@ -18,16 +18,18 @@
 #include "Celler.h"
 #include "SheetStateMachine.h"
 #include "GridView.h"
+#include "TextboxWnd.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CMenu CSheet::ContextMenu;
 
 CSheet::CSheet(
-	CWnd* pWnd,
+	d2dw::CWindow* pWnd,
 	std::shared_ptr<SheetProperty> spSheetProperty,
 	CMenu* pContextMenu)
-	:m_spSheetProperty(spSheetProperty),
+	:CUIControl(pWnd),
+	m_spSheetProperty(spSheetProperty),
 	m_bSelected(false),
 	//m_bFocused(false),
 	m_pContextMenu(pContextMenu?pContextMenu:&CSheet::ContextMenu),
