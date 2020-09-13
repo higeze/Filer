@@ -2,7 +2,7 @@
 #include "Cell.h"
 #include <unordered_map>
 
-class d2dw::CTextBox;
+class CTextBox;
 
 struct equal_double
 //	:public std::binary_function<const double&,const double&,bool>
@@ -71,16 +71,16 @@ public:
 	virtual void SetStringCore(const std::wstring& str) override;
 
 
-	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
-	virtual void PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
-	virtual void PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
+	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override;
+	virtual void PaintLine(CDirect2DWrite* pDirect, CRectF rcPaint) override;
+	virtual void PaintBackground(CDirect2DWrite* pDirect, CRectF rcPaint) override;
 
 	//virtual CSize MeasureSize(CDC* pDC);
 	//virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
-	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* direct) override;
-	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* direct) override;
-	virtual d2dw::CRectF GetEditRect() const;
-	virtual void OnEdit(const EventArgs& e);
+	virtual CSizeF MeasureContentSize(CDirect2DWrite* direct) override;
+	virtual CSizeF MeasureContentSizeWithFixedWidth(CDirect2DWrite* direct) override;
+	virtual CRectF GetEditRect() const;
+	virtual void OnEdit(const Event& e);
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e);

@@ -6,10 +6,10 @@
 CCheckBoxCell::CCheckBoxCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	:CCell(pSheet, pRow, pColumn, spProperty){}
 
-void CCheckBoxCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
+void CCheckBoxCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	//TODO store ptrs
-	d2dw::SolidLine line(0.0, 0.0, 0.0, 1.0, 1.0);
+	SolidLine line(0.0, 0.0, 0.0, 1.0, 1.0);
 	rcPaint.right = rcPaint.left + 16.f;
 	rcPaint.bottom = rcPaint.top + 16.f;
 	pDirect->DrawSolidRectangle(line, rcPaint);
@@ -20,8 +20,8 @@ void CCheckBoxCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcP
 			pDirect->GetD2D1Factory()->CreatePathGeometry(&pPathGeo);
 			CComPtr<ID2D1GeometrySink> pGeoSink;
 			pPathGeo->Open(&pGeoSink);
-			d2dw::CPointF lt = rcPaint.LeftTop();
-			std::array<d2dw::CPointF, 6> pts;
+			CPointF lt = rcPaint.LeftTop();
+			std::array<CPointF, 6> pts;
 			pts[0].SetPoint(lt.x + 2, lt.y + 6);
 			pts[1].SetPoint(lt.x + 2, lt.y + 8);
 			pts[2].SetPoint(lt.x + 6, lt.y + 12);
@@ -34,14 +34,14 @@ void CCheckBoxCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcP
 			}
 			pGeoSink->EndFigure(D2D1_FIGURE_END_CLOSED);
 			pGeoSink->Close();
-			d2dw::SolidFill fill(0.0, 0.0, 0.0, 1.0);
+			SolidFill fill(0.0, 0.0, 0.0, 1.0);
 			pDirect->FillSolidGeometry(fill, pPathGeo);
 		}
 		break;
 		case CheckBoxState::Intermediate:
 		{
-			d2dw::SolidFill fill(0.0, 0.0, 0.0, 1.0);
-			d2dw::CRectF rcFill(rcPaint);
+			SolidFill fill(0.0, 0.0, 0.0, 1.0);
+			CRectF rcFill(rcPaint);
 			rcFill.DeflateRect(4.f);
 			pDirect->FillSolidRectangle(fill, rcFill);
 		}
@@ -52,12 +52,12 @@ void CCheckBoxCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcP
 	}
 }
 
-d2dw::CSizeF CCheckBoxCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
+CSizeF CCheckBoxCell::MeasureContentSize(CDirect2DWrite* pDirect)
 {
-	return d2dw::CSizeF(16.f, 16.f);
+	return CSizeF(16.f, 16.f);
 }
 
-d2dw::CSizeF CCheckBoxCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
+CSizeF CCheckBoxCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 {
 	return MeasureContentSize(pDirect);
 }

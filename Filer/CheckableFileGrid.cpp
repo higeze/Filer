@@ -48,13 +48,13 @@
 #include "ProgressBar.h"
 #include "ResourceIDFactory.h"
 #include "Textbox.h"
-#include "TextboxWnd.h"
+#include "D2DWWindow.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 extern HWND g_main;
 
-CCheckableFileGrid::CCheckableFileGrid(CWnd* pWnd, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
-	:CFilerBindGridView(pWnd, spFilerGridViewProp)
+CCheckableFileGrid::CCheckableFileGrid(CD2DWControl* pParentControl, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
+	:CFilerBindGridView(pParentControl, spFilerGridViewProp)
 {
 	//m_cwa
 	//	.dwExStyle(WS_EX_ACCEPTFILES);
@@ -125,7 +125,7 @@ void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)
 
 void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	auto pWnd = new d2dw::CWindow();
+	auto pWnd = new CD2DWWindow();
 	auto pControl = std::make_shared<CFilerGridView>(pWnd, std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
 	//pWnd->SetControlPtr(pControl);
 

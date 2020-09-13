@@ -16,7 +16,7 @@
 //	:m_destIDL(destIDL), m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs),
 //	CWnd(), 
 //	m_pFileGrid(std::make_unique<CCheckableFileGrid>(spFilerGridViewProp)),
-//	m_pProgressbar(std::make_unique<d2dw::CProgressBar>(this, std::make_shared<ProgressProperty>()))
+//	m_pProgressbar(std::make_unique<CProgressBar>(this, std::make_shared<ProgressProperty>()))
 //
 //{
 //	m_rca
@@ -94,7 +94,7 @@
 //LRESULT CIncrementalCopyWnd::OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 //{
 //	//Direct2DWrite
-//	m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
+//	m_pDirect = std::make_shared<CDirect2DWrite>(m_hWnd);
 //
 //	//Modal Window
 //	if (m_isModal && GetParent()) {
@@ -107,7 +107,7 @@
 //	rcBtnOK.SetRect(rc.right - 170, rc.bottom - 25, rc.right - 170 + 52, rc.bottom - 25 + 22);
 //	rcBtnCancel.SetRect(rc.right - 115, rc.bottom - 25, rc.right - 115 + 52, rc.bottom - 25 + 22);
 //
-//	d2dw::CRectF rcProgress = m_pDirect->Pixels2Dips(CRect(rc.left + 5, rc.top + 5, rc.Width() - 5, rc.top + 30));
+//	CRectF rcProgress = m_pDirect->Pixels2Dips(CRect(rc.left + 5, rc.top + 5, rc.Width() - 5, rc.top + 30));
 //	m_pProgressbar->SetRect(rcProgress);
 //
 //	CRect rcGrid(rc.left + 5, rc.top + 30 + 5, rc.Width() - 5, rc.bottom - 30);
@@ -232,7 +232,7 @@
 //
 //	m_buttonDo.MoveWindow(rc.right - 115, rc.bottom - 25, 52, 22, TRUE);
 //	m_buttonClose.MoveWindow(rc.right - 60, rc.bottom - 25, 52, 22, TRUE);
-//	d2dw::CRectF rcProgress = m_pDirect->Pixels2Dips(CRect(rc.left + 5, rc.top + 5, rc.Width() -5, rc.top + 30));
+//	CRectF rcProgress = m_pDirect->Pixels2Dips(CRect(rc.left + 5, rc.top + 5, rc.Width() -5, rc.top + 30));
 //	m_pProgressbar->SetRect(rcProgress);
 //	CRect rcGrid(rc.left + 5, rc.top + 30 + 5, rc.Width() - 5, rc.bottom - 30);
 //	m_pFileGrid->GetWndPtr()->MoveWindow(rcGrid, TRUE);

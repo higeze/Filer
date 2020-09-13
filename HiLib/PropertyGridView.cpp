@@ -2,8 +2,8 @@
 #include "GridViewProperty.h"
 #include "ResourceIDFactory.h"
 
-CPropertyGridView::CPropertyGridView(CWnd* pWnd, std::shared_ptr<GridViewProperty> spGridViewProperty)
-	:CGridView(pWnd, spGridViewProperty)
+CPropertyGridView::CPropertyGridView(CD2DWControl* pParentControl, std::shared_ptr<GridViewProperty> spGridViewProperty)
+	:CGridView(pParentControl, spGridViewProperty)
 {
 	//No virtual
 	//m_isVirtualPage = false;

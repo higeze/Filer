@@ -623,16 +623,13 @@
     <ClInclude Include="..\D2DTextBox\TextboxStateMachine.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\Control.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\TabControl.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\UIControl.h">
+    <ClInclude Include="..\HiLib\D2DWControl.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\TextboxWnd.h">
+    <ClInclude Include="..\HiLib\D2DWWindow.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -922,10 +919,10 @@
     <ClCompile Include="..\HiLib\TabControl.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\TextboxWnd.cpp">
+    <ClCompile Include="..\HiLib\D2DWControl.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\UIControl.cpp">
+    <ClCompile Include="..\HiLib\D2DWWindow.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,13 +1,11 @@
 #pragma once
 #include "Direct2DWrite.h"
-#include "UIControl.h"
+#include "D2DWControl.h"
 
 class CGridView;
 struct ScrollProperty;
 
-namespace d2dw
-{
-	class CScrollBase :public CUIControl
+	class CScrollBase :public CD2DWControl
 	{
 	protected:
 		bool m_visible = true;
@@ -23,7 +21,7 @@ namespace d2dw
 
 
 	public:
-		CScrollBase(CWindow* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged);
+		CScrollBase(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged);
 		virtual ~CScrollBase() = default;
 
 		FLOAT GetStartDrag()const { return m_startDrag; }
@@ -58,8 +56,8 @@ namespace d2dw
 	class CVScroll :public CScrollBase
 	{
 	public:
-		CVScroll(CWindow* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
-			:CScrollBase(pWnd, spScrollProp, onPropertyChanged){}
+		CVScroll(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
+			:CScrollBase(pParentControl, spScrollProp, onPropertyChanged){}
 		virtual ~CVScroll() = default;
 		virtual CRectF GetThumbRect()const override;
 	};
@@ -67,10 +65,9 @@ namespace d2dw
 	class CHScroll :public CScrollBase
 	{
 	public:
-		CHScroll(CWindow* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
-			:CScrollBase(pWnd, spScrollProp, onPropertyChanged) {}
+		CHScroll(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
+			:CScrollBase(pParentControl, spScrollProp, onPropertyChanged) {}
 		virtual ~CHScroll() = default;
 		virtual CRectF GetThumbRect()const override;
 	};
 
-}

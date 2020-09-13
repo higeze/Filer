@@ -23,8 +23,6 @@
 struct XTag;
 struct YTag;
 
-namespace d2dw
-{
 	template<typename ...>
 	constexpr bool false_v = false;
 
@@ -144,14 +142,13 @@ namespace d2dw
 			ar("a", a);
 		}
 	};
-}
 
 namespace std
 {
 	template <>
-	struct hash<d2dw::CSizeF>
+	struct hash<CSizeF>
 	{
-		std::size_t operator() (d2dw::CSizeF const & key) const
+		std::size_t operator() (CSizeF const & key) const
 		{
 			return key.GetHashCode();
 		}
@@ -162,17 +159,14 @@ namespace std
 namespace std
 {
 	template <>
-	struct hash<d2dw::CColorF>
+	struct hash<CColorF>
 	{
-		std::size_t operator() (d2dw::CColorF const & key) const
+		std::size_t operator() (CColorF const & key) const
 		{
 			return key.GetHashCode();
 		}
 	};
 }
-
-namespace d2dw
-{
 	struct CFontF
 	{
 	public:
@@ -194,22 +188,19 @@ namespace d2dw
 			ar("Size", Size);
 		}
 	};
-}
 
 namespace std
 {
 	template <>
-	struct hash<d2dw::CFontF>
+	struct hash<CFontF>
 	{
-		std::size_t operator() (d2dw::CFontF const & key) const
+		std::size_t operator() (CFontF const & key) const
 		{
 			return key.GetHashCode();
 		}
 	};
 }
 
-namespace d2dw
-{
 	struct CAlignmentF
 	{
 	public:
@@ -231,24 +222,18 @@ namespace d2dw
 		}
 	};
 
-}
-
 namespace std
 {
 	template <>
-	struct hash<d2dw::CAlignmentF>
+	struct hash<CAlignmentF>
 	{
-		std::size_t operator() (d2dw::CAlignmentF const & key) const
+		std::size_t operator() (CAlignmentF const & key) const
 		{
 			return key.GetHashCode();
 		}
 	};
 }
 
-
-
-namespace d2dw
-{
 	struct SolidLine
 	{
 	public:
@@ -324,14 +309,12 @@ namespace d2dw
 		}
 	};
 
-};
-
 namespace std
 {
 	template <>
-	struct hash<d2dw::FormatF>
+	struct hash<FormatF>
 	{
-		std::size_t operator() (d2dw::FormatF const & key) const
+		std::size_t operator() (FormatF const & key) const
 		{
 			return key.GetHashCode();
 		}
@@ -340,8 +323,6 @@ namespace std
 
 
 
-
-namespace d2dw{
 
 	struct StrSizeHash
 	{
@@ -424,7 +405,7 @@ namespace d2dw{
 		void FillSolidRectangle(const SolidFill& fill, const D2D1_RECT_F& rect);
 		void DrawSolidGeometry(const SolidLine& line, CComPtr<ID2D1PathGeometry>& path);
 		void FillSolidGeometry(const SolidFill& fill, CComPtr<ID2D1PathGeometry>& path);
-		void DrawIcon(HICON hIcon, d2dw::CRectF& rect);
+		void DrawIcon(HICON hIcon, CRectF& rect);
 		void DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap, const CRectF& rect);
 
 		CSizeF CalcTextSize(const FormatF& format, const std::wstring& text);
@@ -481,5 +462,3 @@ namespace d2dw{
 		void Clear();
 
 	};
-}
-

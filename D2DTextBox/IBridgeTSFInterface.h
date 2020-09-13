@@ -5,6 +5,6 @@ class IBridgeTSFInterface
 {
 public:
 	IBridgeTSFInterface(){}
-	virtual d2dw::CRectF GetRectInWnd() const = 0;
+	virtual CRectF GetRectInWnd() const = 0;
 };
 

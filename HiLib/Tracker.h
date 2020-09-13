@@ -111,7 +111,7 @@ public:
 		if (!pSheet->Visible()) {
 			return CBand::kInvalidIndex;
 		}
-		d2dw::CPointF ptDips = pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
+		CPointF ptDips = pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
 		auto visIndexes = pSheet->Point2Indexes(ptDips);
 		int minIdx = 0;
 		int maxIdx = pSheet->GetContainer<TRC, VisTag>().size() - 1;
@@ -154,7 +154,7 @@ public:
 		if (!pSheet->Visible()) {
 			return false;
 		}
-		d2dw::CPointF ptDips = pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
+		CPointF ptDips = pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
 		auto visIndexes = pSheet->Point2Indexes(ptDips);
 		auto other = pSheet->Coordinate2Pointer<TRC::Other>(ptDips.Get<TRC::Other::PointTag>());
 		int minIdx = 0;

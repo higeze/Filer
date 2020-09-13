@@ -32,8 +32,8 @@ protected:
 	bool m_bSelected = false;
 	bool m_bChecked = false;
 
-	d2dw::CSizeF m_fitSize = d2dw::CSizeF();
-	d2dw::CSizeF m_actSize = d2dw::CSizeF();
+	CSizeF m_fitSize = CSizeF();
+	CSizeF m_actSize = CSizeF();
 	bool m_isFitMeasureValid = false;
 	bool m_isActMeasureValid = false;
 	bool m_isWrappable = true;
@@ -64,21 +64,21 @@ public:
 	std::shared_ptr<CellProperty> GetCellPropertyPtr() { return m_spCellProperty; }
 
 	//Size, Rect method
-	virtual d2dw::CSizeF GetInitSize(d2dw::CDirect2DWrite* pDirect);
-	virtual d2dw::CSizeF GetFitSize(d2dw::CDirect2DWrite* pDirect);
-	virtual d2dw::CSizeF GetActSize(d2dw::CDirect2DWrite* pDirect);
-	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* pDirect);
-	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect);
-	virtual d2dw::CSizeF MeasureSize(d2dw::CDirect2DWrite* pDdirect);
-	virtual d2dw::CSizeF MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect);
-	virtual d2dw::CRectF CenterBorder2InnerBorder(d2dw::CRectF rcCenter);
-	virtual d2dw::CRectF InnerBorder2Content(d2dw::CRectF rcInner);
-	virtual d2dw::CRectF Content2InnerBorder(d2dw::CRectF rcContent);
-	virtual d2dw::CRectF InnerBorder2CenterBorder(d2dw::CRectF rcInner);
+	virtual CSizeF GetInitSize(CDirect2DWrite* pDirect);
+	virtual CSizeF GetFitSize(CDirect2DWrite* pDirect);
+	virtual CSizeF GetActSize(CDirect2DWrite* pDirect);
+	virtual CSizeF MeasureContentSize(CDirect2DWrite* pDirect);
+	virtual CSizeF MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect);
+	virtual CSizeF MeasureSize(CDirect2DWrite* pDdirect);
+	virtual CSizeF MeasureSizeWithFixedWidth(CDirect2DWrite* pDirect);
+	virtual CRectF CenterBorder2InnerBorder(CRectF rcCenter);
+	virtual CRectF InnerBorder2Content(CRectF rcInner);
+	virtual CRectF Content2InnerBorder(CRectF rcContent);
+	virtual CRectF InnerBorder2CenterBorder(CRectF rcInner);
 
 	virtual FLOAT GetLeft()const;
 	virtual FLOAT GetTop()const;
-	virtual d2dw::CRectF GetRectInWnd()const override;
+	virtual CRectF GetRectInWnd()const override;
 
 	//Visible
 	bool GetIsVisible()const;
@@ -94,10 +94,10 @@ public:
 	virtual void SetIsChecked(const bool& bChecked);
 
 	//Paint
-	virtual void PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc);
-	virtual void PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc);
-	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc) {/*Do Nothing*/ }
-	virtual void PaintFocus(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rc);
+	virtual void PaintBackground(CDirect2DWrite* pDirect, CRectF rc);
+	virtual void PaintLine(CDirect2DWrite* pDirect, CRectF rc);
+	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rc) {/*Do Nothing*/ }
+	virtual void PaintFocus(CDirect2DWrite* pDirect, CRectF rc);
 
 	//Event
 	virtual void OnPaint(const PaintEvent& e);

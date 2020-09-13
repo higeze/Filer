@@ -13,22 +13,22 @@
 //#include "ResourceIDFactory.h"
 //#include "ShellFile.h"
 //#include "ThreadPool.h"
-//#include "TextboxWnd.h"
+//#include "D2DWWindow.h"
 //
 //
 //template<typename... TItems>
 //class CFileOperationWndBase: public CWnd
 //{
 //protected:
-//	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
-//	d2dw::SolidFill BackgroundFill = d2dw::SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
+//	std::shared_ptr<CDirect2DWrite> m_pDirect;
+//	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
 //
 //	std::wstring m_buttonText;
 //	CButton m_buttonDo;
 //	CButton m_buttonCancel;
 //
 //	std::shared_ptr<CFilerBindGridView<TItems...>> m_spFilerControl;
-//	std::unique_ptr<d2dw::CWindow> m_pFileGrid;
+//	std::unique_ptr<CWindow> m_pFileGrid;
 //
 //	bool m_showDefault = true;
 //	bool m_showApply = true;
@@ -71,7 +71,7 @@
 //		AddCmdIDHandler(CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"Cancel"), &CFileOperationWndBase::OnCommandCancel, this);
 //	}
 //	virtual ~CFileOperationWndBase() = default;
-//	virtual d2dw::CDirect2DWrite* GetDirectPtr() override { return m_pDirect.get(); }
+//	virtual CDirect2DWrite* GetDirectPtr() override { return m_pDirect.get(); }
 //
 //	virtual LRESULT OnCommandDo(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) = 0;
 //	virtual LRESULT OnCommandCancel(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled)
@@ -86,7 +86,7 @@
 //	virtual LRESULT OnCreate(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 //	{
 //		//Direct2DWrite
-//		m_pDirect = std::make_shared<d2dw::CDirect2DWrite>(m_hWnd);
+//		m_pDirect = std::make_shared<CDirect2DWrite>(m_hWnd);
 //
 //		//Modal Window
 //		if (m_isModal && GetParent()) {
@@ -252,7 +252,7 @@
 ////	static UINT WM_ADDITEM;
 ////
 ////protected:
-////	std::unique_ptr<d2dw::CProgressBar> m_pProgressbar;
+////	std::unique_ptr<CProgressBar> m_pProgressbar;
 ////	CIDL m_newIDL;
 ////	CDeadlineTimer m_periodicTimer;
 ////	std::unordered_map<CIDL, std::vector<CIDL>,

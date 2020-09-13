@@ -68,7 +68,7 @@ public:
 	/****************/
 	void Normal_ContextMenu(const ContextMenuEvent& e) override
 	{
-		auto spCell = Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+		auto spCell = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 		if (spCell) {
 			spCell->OnContextMenu(e);
 			if (*e.HandledPtr) { return; }
@@ -90,19 +90,19 @@ public:
 		mii.dwTypeData = L"Remove Row";
 		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
-		::SetForegroundWindow(e.WndPtr->m_hWnd);
+		::SetForegroundWindow(GetWndPtr()->m_hWnd);
 		int idCmd = menu.TrackPopupMenu(
 			TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
 			e.PointInScreen.x,
 			e.PointInScreen.y,
-			e.WndPtr->m_hWnd);
+			GetWndPtr()->m_hWnd);
 
 		if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
 			auto& items = GetItemsSource();
 			items.notify_push_back(TValueItem());
 		} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
-			auto a = Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
-			this->GetItemsSource().notify_erase(this->GetItemsSource().cbegin() + (Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
+			auto a = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
+			this->GetItemsSource().notify_erase(this->GetItemsSource().cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
 		}
 		*e.HandledPtr = TRUE;
 

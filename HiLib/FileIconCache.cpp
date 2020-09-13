@@ -6,8 +6,6 @@
 #include <VersionHelpers.h>
 #include <ntddkbd.h>
 
-using namespace d2dw;
-
 
 BOOL GetOSVersion(OSVERSIONINFOEX* os)
 {

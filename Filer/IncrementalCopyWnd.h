@@ -19,14 +19,14 @@
 //class CIncrementalCopyWnd :public CWnd
 //{
 //private:
-//	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
+//	std::shared_ptr<CDirect2DWrite> m_pDirect;
 //
-//	d2dw::SolidFill BackgroundFill = d2dw::SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
+//	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
 //
 //	CButton m_buttonDo;
 //	CButton m_buttonClose;
 //
-//	std::unique_ptr<d2dw::CProgressBar> m_pProgressbar;
+//	std::unique_ptr<CProgressBar> m_pProgressbar;
 //	std::unique_ptr<CCheckableFileGrid> m_pFileGrid;
 //
 //	bool m_showDefault = true;
@@ -51,8 +51,8 @@
 //	CIncrementalCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 //		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 //	~CIncrementalCopyWnd();
-//	virtual d2dw::CDirect2DWrite* GetDirectPtr() override { return m_pDirect.get(); }
-//	std::unique_ptr<d2dw::CProgressBar>& GetProgressBarPtr() { return m_pProgressbar; }
+//	virtual CDirect2DWrite* GetDirectPtr() override { return m_pDirect.get(); }
+//	std::unique_ptr<CProgressBar>& GetProgressBarPtr() { return m_pProgressbar; }
 //
 //	LRESULT OnCommandCopy(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 //	LRESULT OnCommandClose(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);

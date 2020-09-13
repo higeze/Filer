@@ -3,8 +3,6 @@
 #include "FileIconCache.h"
 #include <fmt/format.h>
 
-namespace d2dw
-{
 	//CPointF
 	CPointF::CPointF() :D2D1_POINT_2F{ 0.0f } {}
 	CPointF::CPointF(FLOAT a, FLOAT b) :D2D1_POINT_2F{ a, b } {}
@@ -528,11 +526,11 @@ namespace d2dw
 
 	void CDirect2DWrite::DrawTextInRect(const FormatF& format, const std::wstring& text, const CRectF& rect)
 	{
-		d2dw::FormatF tmpFormat(format);
+		FormatF tmpFormat(format);
 		tmpFormat.Alignment.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
 		tmpFormat.Alignment.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER;
 
-		d2dw::CSizeF size = CalcTextSize(tmpFormat, text);
+		CSizeF size = CalcTextSize(tmpFormat, text);
 
 		while (size.width > rect.Width() || size.height > rect.Height()) {
 			tmpFormat.Font.Size -= 1.0f;
@@ -618,7 +616,7 @@ namespace d2dw
 		GetHwndRenderTarget()->FillGeometry(path, GetColorBrush(fill.Color));
 	}
 
-	void CDirect2DWrite::DrawIcon(HICON hIcon, d2dw::CRectF& rect)
+	void CDirect2DWrite::DrawIcon(HICON hIcon, CRectF& rect)
 	{
 
 		CComPtr<IWICBitmap> pWICBitmap;
@@ -661,7 +659,7 @@ namespace d2dw
 	void CDirect2DWrite::DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap, const CRectF& rect)
 	{
 		if (pBitmap) {
-			auto bmpRect = d2dw::CRectF(
+			auto bmpRect = CRectF(
 				std::round(rect.left),
 				std::round(rect.top),
 				std::round(rect.right),
@@ -796,5 +794,3 @@ namespace d2dw
 
 		m_pIconCache->Clear();
 	}
-
-}

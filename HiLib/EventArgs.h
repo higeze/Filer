@@ -9,15 +9,15 @@ class CCell;
 class CColumn;
 class CRow;
 
-class EventArgs
+class Event
 {
 public:
 	typedef IWnd window_type;
 	typedef int int;
 public:
-	window_type* m_pWnd;
-	EventArgs(window_type* pWnd):m_pWnd(pWnd){}
-	virtual ~EventArgs(){}
+	window_type* m_pParentControl;
+	Event(window_type* pWnd):m_pParentControl(pWnd){}
+	virtual ~Event(){}
 };
 class CRowEventArgs
 {
@@ -34,13 +34,13 @@ public:
 	virtual ~CColumnEventArgs(){}
 };
 
-class CellEventArgs:public EventArgs
+class CellEventArgs:public Event
 {
 public:
 	typedef CCell std::shared_ptr<CCell>;
 public:
 	std::shared_ptr<CCell>* m_pCell;
-	CellEventArgs(window_type* pWnd,std::shared_ptr<CCell>* pCell):EventArgs(pWnd),m_pCell(pCell){}
+	CellEventArgs(window_type* pWnd,std::shared_ptr<CCell>* pCell):Event(pWnd),m_pCell(pCell){}
 	virtual ~CellEventArgs(){}
 };
 

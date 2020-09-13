@@ -302,7 +302,7 @@ public:
 	observable<T>& operator=(const observable<T>& value) { m_value = value.m_value; return *this; }
 	observable<T>& operator=(const T& value){ m_value = value; return *this; }
 
-	boost::signals2::signal<void(const NotifyChangedEventArgs<T>&)> Changed;
+	std::function<void(const NotifyChangedEventArgs<T>&)> Changed;
 
 	void notify_set(const T& value)
 	{

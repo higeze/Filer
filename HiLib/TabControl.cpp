@@ -1,31 +1,41 @@
 #include "TabControl.h"
+#include "D2DWWindow.h"
 
-CTabControl::CTabControl(CWnd* pWnd, const std::shared_ptr<TabControlProperty>& spProp)
-	:m_pWnd(pWnd), m_spProp(spProp)
+CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<TabControlProperty>& spProp)
+	:CD2DWControl(pParentControl), m_spProp(spProp)
 {
+	//ItemsSource
+	m_itemsSource.VectorChanged =
+		[this](const NotifyVectorChangedEventArgs<std::shared_ptr<TabData>>& e)->void
+	{
+		switch (e.Action) {
+			case NotifyVectorChangedAction::Add:
+			case NotifyVectorChangedAction::Insert:
+				GetHeaderRects().clear();
+				m_selectedIndex.force_notify_set((std::min)((size_t)e.NewStartingIndex, m_itemsSource.size()));
+				break;
+			case NotifyVectorChangedAction::Remove:
+				GetHeaderRects().clear();
+				m_selectedIndex.force_notify_set((std::min)((size_t)e.OldStartingIndex, m_itemsSource.size()));
+				break;
+			case NotifyVectorChangedAction::Replace:
+				GetHeaderRects().clear();
+				m_selectedIndex.force_notify_set((std::min)((size_t)e.NewStartingIndex, m_itemsSource.size()));
+				break;
+			case NotifyVectorChangedAction::Reset:
+				GetHeaderRects().clear();
+				m_selectedIndex.force_notify_set((std::min)((size_t)m_selectedIndex.get(), m_itemsSource.size()));
+			default:
+				break;
+		}
+	};
 	//SelectedIndex
-	m_selectedIndex.Changed.connect(
+	m_selectedIndex.Changed = 
 		[this](const NotifyChangedEventArgs<int>& e)->void {
 			auto spData = m_itemsSource[m_selectedIndex.get()];
 			m_spCurControl = m_itemsControlTemplate[typeid(*spData).name()](spData);
-		});
-
-}
-CTabControl::~CTabControl() = default;
-
-/***********/
-/* Command */
-/***********/
-void CTabControl::OnCommandCloneTab(const CommandEvent& e)
-{}
-void CTabControl::OnCommandCloseTab(const CommandEvent& e)
-{}
-void CTabControl::OnCommandCloseAllButThisTab(const CommandEvent& e)
-{}
-
-void CTabControl::OnCreate(const CreateEvent& e) 
-{
-	GetHeaderRects = [rects = std::vector<d2dw::CRectF>(), this]()mutable->std::vector<d2dw::CRectF>&
+		};
+	GetHeaderRects = [rects = std::vector<CRectF>(), this]()mutable->std::vector<CRectF>&
 	{
 		if (rects.empty()) {
 			FLOAT minWidth = 30.f;
@@ -37,7 +47,7 @@ void CTabControl::OnCreate(const CreateEvent& e)
 					if (iter != m_itemsHeaderTemplate.end()) {
 						auto text = iter->second.operator()(pData);
 						auto size = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_spProp->Format), text);
-						auto rect = d2dw::CRectF(
+						auto rect = CRectF(
 							left,
 							rcInWnd.top,
 							left + m_spProp->Padding->left + (std::max)(size.width, minWidth) + m_spProp->Padding->right,
@@ -51,31 +61,60 @@ void CTabControl::OnCreate(const CreateEvent& e)
 		return rects;
 	};
 
-	GetContentRect = [rect = d2dw::CRectF(), this]()mutable->d2dw::CRectF&
+	GetContentRect = [rect = CRectF(), this]()mutable->CRectF&
 	{
 		rect = GetRectInWnd();
 		auto rects = GetHeaderRects();
-		auto iter = std::max_element(rects.begin(), rects.end(), [](const d2dw::CRectF& left, const d2dw::CRectF& right)->bool
+		auto iter = std::max_element(rects.begin(), rects.end(), [](const CRectF& left, const CRectF& right)->bool
 		{return left.Height() > right.Height(); });
 		rect.top += (iter != rects.end()) ? iter->Height() : 0;
 		return rect;
 	};
 
-	GetControlRect = [rect = d2dw::CRectF(), this]()mutable->d2dw::CRectF&
+	GetControlRect = [rect = CRectF(), this]()mutable->CRectF&
 	{
 		rect = GetContentRect(); rect.DeflateRect(*(m_spProp->Padding));
 		return rect;
 	};
 
-	//Show Current view
-	if (m_selectedIndex.get() > 0) {
-		auto pData = m_itemsSource[m_selectedIndex.get()];
-		auto iter = m_itemsControlTemplate.find(typeid(*pData).name());
-		if (iter != m_itemsControlTemplate.end()) {
-			m_spCurControl = iter->second.operator()(pData);
-		}
+}
+CTabControl::~CTabControl() = default;
+
+/***********/
+/* Command */
+/***********/
+void CTabControl::OnCommandCloneTab(const CommandEvent& e)
+{
+	//TODOLOW should deep clone
+	m_itemsSource.notify_push_back(m_itemsSource[m_selectedIndex.get()]);
+	m_selectedIndex.notify_set(m_selectedIndex - 1);
+}
+void CTabControl::OnCommandCloseTab(const CommandEvent& e)
+{
+	if(m_selectedIndex.get()>1){
+		m_itemsSource.notify_erase(m_itemsSource.begin() + m_selectedIndex.get());
+		m_selectedIndex.forth_notify_set((std::min)(m_selectedIndex.get() - 1, m_selectedIndex.get()));
 	}
-	//
+}
+void CTabControl::OnCommandCloseAllButThisTab(const CommandEvent& e)
+{
+	if (m_selectedIndex.get()>1) {
+		//Erase larger tab
+		m_itemsSource.notify_erase(m_itemsSource.begin() + (m_selectedIndex.get() + 1), m_itemsSource.end());
+		//Erase smaller tab
+		m_itemsSource.notify_erase(m_itemsSource.begin(), m_itemsSource.begin() + m_selectedIndex.get());
+
+		m_selectedIndex.forth_notify_set(0);
+	}
+}
+
+/**************/
+/* UI Message */
+/**************/
+
+void CTabControl::OnCreate(const CreateEvent& e) 
+{
+	CD2DWControl::OnCreate(e);
 }
 
 void CTabControl::OnPaint(const PaintEvent& e)
@@ -86,15 +125,21 @@ void CTabControl::OnPaint(const PaintEvent& e)
 		auto headerRects = GetHeaderRects();
 		for (size_t i = 0; i < m_itemsSource.size(); i++) {
 			auto headerRc = headerRects[i];
-			GetWndPtr()->GetDirectPtr()->FillSolidRectangle(i == m_selectedIndex.get() ? *(m_spProp->SelectedFill) : *(m_spProp->NormalFill), headerRc);
-			GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), d2dw::CPointF(headerRc.left, headerRc.bottom), headerRc.LeftTop());
-			GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), headerRc.LeftTop(), d2dw::CPointF(headerRc.right, headerRc.top));
-			GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), d2dw::CPointF(headerRc.right, headerRc.top), d2dw::CPointF(headerRc.right, headerRc.bottom));
+
+			GetWndPtr()->GetDirectPtr()->FillSolidRectangle(i == m_selectedIndex.get() ? 
+				(GetIsFocused()?*(m_spProp->SelectedFill):*(m_spProp->UnfocusSelectedFill)) :
+				*(m_spProp->NormalFill), headerRc);
+			if (auto pt = GetWndPtr()->GetDirectPtr()->Pixels2Dips(GetWndPtr()->GetCursorPosInClient()); headerRc.PtInRect(pt)) {
+				GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_spProp->HotFill), headerRc);
+			}
+			GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(headerRc.left, headerRc.bottom), headerRc.LeftTop());
+			GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), headerRc.LeftTop(), CPointF(headerRc.right, headerRc.top));
+			GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(headerRc.right, headerRc.top), CPointF(headerRc.right, headerRc.bottom));
 
 			auto iter = m_itemsHeaderTemplate.find(typeid(*m_itemsSource[i]).name());
 			auto text = iter->second.operator()(m_itemsSource[i]);
 			if (!text.empty()) {
-				d2dw::CRectF textRc = headerRc; textRc.DeflateRect(*(m_spProp->Padding));
+				CRectF textRc = headerRc; textRc.DeflateRect(*(m_spProp->Padding));
 				GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_spProp->Format), text, textRc);
 			}
 		}
@@ -102,35 +147,35 @@ void CTabControl::OnPaint(const PaintEvent& e)
 		//Content
 		auto contentRc = GetContentRect();
 		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetIsFocused()?*(m_spProp->SelectedFill):*(m_spProp->UnfocusSelectedFill), contentRc);
-		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), contentRc.LeftTop(), d2dw::CPointF(contentRc.left, contentRc.bottom));
-		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), d2dw::CPointF(contentRc.left, contentRc.bottom), d2dw::CPointF(contentRc.right, contentRc.bottom));
-		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), d2dw::CPointF(contentRc.right, contentRc.bottom), d2dw::CPointF(contentRc.right, contentRc.top));
+		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), contentRc.LeftTop(), CPointF(contentRc.left, contentRc.bottom));
+		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.left, contentRc.bottom), CPointF(contentRc.right, contentRc.bottom));
+		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.right, contentRc.bottom), CPointF(contentRc.right, contentRc.top));
+
+		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), 
+			CPointF(headerRects.front().left, headerRects.front().bottom), CPointF(headerRects[m_selectedIndex.get()].left, headerRects[m_selectedIndex].bottom));
+		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), 
+			CPointF(headerRects[m_selectedIndex.get()].right, headerRects[m_selectedIndex].bottom), CPointF(rc.right,headerRects.back().bottom) );
 
 		//Control
-		auto controlRc = GetControlRect();
-		m_spCurControl->OnRect(RectEvent(GetWndPtr(), controlRc));
 		m_spCurControl->OnPaint(e);
 	}
 
 }
-void CTabControl::OnCommand(const CommandEvent& e)
-{
-	//switch (e.ID) {
-	//	//TOTODODO
-	//}
-}
+
 void CTabControl::OnRect(const RectEvent& e)
 { 
-	m_rect = e.Rect;
+	CD2DWControl::OnRect(e);
 	GetHeaderRects().clear();
 	GetContentRect().SetRect(0, 0, 0, 0);
+	GetControlRect().SetRect(0, 0, 0, 0);
+	if (m_spCurControl) { m_spCurControl->OnRect(RectEvent(GetWndPtr(), GetControlRect())); }
 }
 
 void CTabControl::OnLButtonDown(const LButtonDownEvent& e)
 {
 	auto headerRects = GetHeaderRects();
 	auto iter = std::find_if(headerRects.begin(), headerRects.end(),
-		[&](const d2dw::CRectF& rc)->bool { return rc.PtInRect(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
+		[&](const CRectF& rc)->bool { return rc.PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
 
 	if (iter != headerRects.end()) {
 		m_selectedIndex.notify_set(iter - headerRects.begin());
@@ -177,7 +222,12 @@ void CTabControl::OnMouseMove(const MouseMoveEvent& e)
 }
 void CTabControl::OnMouseEnter(const MouseEvent& e)
 {
-	m_spCurControl->OnMouseEnter(e);
+	if (GetControlRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
+		m_spCurControl->OnMouseEnter(e);
+	} else {
+		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
+		*(e.HandledPtr)= true;
+	}
 }
 void CTabControl::OnMouseLeave(const MouseLeaveEvent& e)
 {
@@ -209,7 +259,15 @@ void CTabControl::OnSetFocus(const SetFocusEvent& e)
 }
 void CTabControl::OnSetCursor(const SetCursorEvent& e)
 {
-	m_spCurControl->OnSetCursor(e);
+	CPointF pt = GetWndPtr()->GetDirectPtr()->Pixels2Dips((GetWndPtr()->GetCursorPosInClient()));
+	if (GetRectInWnd().PtInRect(pt)) {
+		if (GetControlRect().PtInRect(pt)) {
+			m_spCurControl->OnSetCursor(e);
+		} else {
+			::SetCursor(::LoadCursor(NULL, IDC_ARROW));
+			*(e.HandledPtr) = true;
+		}
+	}
 }
 void CTabControl::OnKillFocus(const KillFocusEvent& e)
 {

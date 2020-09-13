@@ -1,6 +1,6 @@
 #pragma once
 #include "Direct2DWrite.h"
-#include "UIElement.h"
+#include "D2DWControl.h"
 #include "observable.h"
 #include <Shlwapi.h>
 
@@ -11,25 +11,26 @@ class CToDoGridView;
 struct GridViewProperty;
 class CShellFolder;
 class CTextEditor;
+class CD2DWWindow;
 
 struct TabControlProperty
 {
-	std::shared_ptr<d2dw::FormatF> Format;
-	std::shared_ptr<d2dw::SolidLine> Line;
-	std::shared_ptr<d2dw::SolidFill> SelectedFill;
-	std::shared_ptr<d2dw::SolidFill> UnfocusSelectedFill;
-	std::shared_ptr<d2dw::SolidFill> NormalFill;
-	std::shared_ptr<d2dw::SolidFill> HotFill;
-	std::shared_ptr<d2dw::CRectF> Padding;
+	std::shared_ptr<FormatF> Format;
+	std::shared_ptr<SolidLine> Line;
+	std::shared_ptr<SolidFill> SelectedFill;
+	std::shared_ptr<SolidFill> UnfocusSelectedFill;
+	std::shared_ptr<SolidFill> NormalFill;
+	std::shared_ptr<SolidFill> HotFill;
+	std::shared_ptr<CRectF> Padding;
 
 	TabControlProperty()
-		:Format(std::make_shared<d2dw::FormatF>(L"Meiryo UI", d2dw::CDirect2DWrite::Points2Dips(9),  0.0f, 0.0f, 0.0f, 1.0f)),
-		Line(std::make_shared<d2dw::SolidLine>(221.f/255.f, 206.f/255.f, 188.f/255.f, 1.0f, 1.0f)),
-		NormalFill(std::make_shared<d2dw::SolidFill>(230.f/255.f, 230.f/255.f, 230.f/255.f, 1.0f)),
-		SelectedFill(std::make_shared<d2dw::SolidFill>(255.f/255.f, 255.f/255.f, 255.f/255.f, 1.0f)),
-		UnfocusSelectedFill(std::make_shared<d2dw::SolidFill>(224.f/255.f, 224.f/255.f, 224.f/255.f, 0.5f)),
-		HotFill(std::make_shared<d2dw::SolidFill>(1.0f, 1.0f, 1.0f, 0.3f)),
-		Padding(std::make_shared<d2dw::CRectF>(2.0f,2.0f,2.0f,2.0f)){};
+		:Format(std::make_shared<FormatF>(L"Meiryo UI", CDirect2DWrite::Points2Dips(9),  0.0f, 0.0f, 0.0f, 1.0f)),
+		Line(std::make_shared<SolidLine>(221.f/255.f, 206.f/255.f, 188.f/255.f, 1.0f, 1.0f)),
+		NormalFill(std::make_shared<SolidFill>(239.f/255.f, 239.f/255.f, 239.f/255.f, 1.0f)),
+		SelectedFill(std::make_shared<SolidFill>(255.f/255.f, 255.f/255.f, 255.f/255.f, 1.0f)),
+		UnfocusSelectedFill(std::make_shared<SolidFill>(224.f/255.f, 224.f/255.f, 224.f/255.f, 0.5f)),
+		HotFill(std::make_shared<SolidFill>(1.0f, 1.0f, 1.0f, 0.3f)),
+		Padding(std::make_shared<CRectF>(2.0f,2.0f,2.0f,2.0f)){};
 };
 
 
@@ -45,11 +46,9 @@ struct TabData
 	void load(Archive& ar){}
 };
 
-class CTabControl :public CUIControl
+class CTabControl :public CD2DWControl
 {
 protected:
-	CWnd* m_pWnd;
-	d2dw::CRectF m_rect;
 	std::shared_ptr<TabControlProperty> m_spProp;
 	observable_vector<std::shared_ptr<TabData>> m_itemsSource;
 
@@ -58,18 +57,16 @@ protected:
 	std::shared_ptr<CUIElement> m_spCurControl;
 	observable<int> m_selectedIndex = -1;
 public:
-	CTabControl(CWnd* pWnd, const std::shared_ptr<TabControlProperty>& spProp);
+	CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<TabControlProperty>& spProp);
 	virtual ~CTabControl();
 
 	//Getter Setter
-	d2dw::CRectF GetRectInWnd() const override { return m_rect; }
-
 	observable_vector<std::shared_ptr<TabData>>& GetItemsSource(){ return m_itemsSource; }
 	int GetSelectedIndex()const{ return m_selectedIndex.get(); }
 
-	std::function<std::vector<d2dw::CRectF>&()> GetHeaderRects;
-	std::function<d2dw::CRectF&()> GetContentRect;
-	std::function<d2dw::CRectF&()> GetControlRect;
+	std::function<std::vector<CRectF>&()> GetHeaderRects;
+	std::function<CRectF&()> GetContentRect;
+	std::function<CRectF&()> GetControlRect;
 
 
 	/***************/
@@ -79,7 +76,6 @@ public:
 	virtual void OnCreate(const CreateEvent& e);
 	virtual void OnPaint(const PaintEvent& e);
 	//virtual void OnClose(const CloseEvent& e);
-	virtual void OnCommand(const CommandEvent& e);
 	virtual void OnRect(const RectEvent& e);
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e);

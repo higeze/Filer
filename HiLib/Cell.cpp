@@ -7,6 +7,7 @@
 #include "Column.h"
 #include "RowColumn.h"
 #include "MyMenu.h"
+#include "D2DWWindow.h"
 
 bool CCell::operator<(CCell& rhs)
 {
@@ -17,12 +18,12 @@ bool CCell::operator>(CCell& rhs)
 	return _tcsicmp(this->GetSortString().c_str(), rhs.GetSortString().c_str())<0;
 }
 
-d2dw::CSizeF CCell::GetInitSize(d2dw::CDirect2DWrite* pDirect)
+CSizeF CCell::GetInitSize(CDirect2DWrite* pDirect)
 {
 	return GetFitSize(pDirect);
 }
 
-d2dw::CSizeF CCell::GetFitSize(d2dw::CDirect2DWrite* pDirect)
+CSizeF CCell::GetFitSize(CDirect2DWrite* pDirect)
 {
 	if(!m_isFitMeasureValid){
 		m_fitSize = MeasureSize(pDirect);
@@ -31,7 +32,7 @@ d2dw::CSizeF CCell::GetFitSize(d2dw::CDirect2DWrite* pDirect)
 	return m_fitSize;
 }
 
-d2dw::CSizeF CCell::GetActSize(d2dw::CDirect2DWrite* pDirect)
+CSizeF CCell::GetActSize(CDirect2DWrite* pDirect)
 {
 	if(!m_isActMeasureValid){
 		auto width = m_pColumn->GetWidth();
@@ -47,33 +48,33 @@ d2dw::CSizeF CCell::GetActSize(d2dw::CDirect2DWrite* pDirect)
 	return m_actSize;
 }
 
-d2dw::CSizeF CCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
+CSizeF CCell::MeasureContentSize(CDirect2DWrite* pDirect)
 {
-	return d2dw::CSizeF();
+	return CSizeF();
 }
 
-d2dw::CSizeF CCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
+CSizeF CCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 {
-	return d2dw::CSizeF();
+	return CSizeF();
 }
 
-d2dw::CSizeF CCell::MeasureSize(d2dw::CDirect2DWrite* pDirect)
+CSizeF CCell::MeasureSize(CDirect2DWrite* pDirect)
 {
-	d2dw::CRectF rcContent(MeasureContentSize(pDirect));
+	CRectF rcContent(MeasureContentSize(pDirect));
 
 	//Calc CenterBorder Rect
-	d2dw::CRectF rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
+	CRectF rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
 	m_isFitMeasureValid = true;
 	return rcCenter.Size();	
 }
 
-d2dw::CSizeF CCell::MeasureSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
+CSizeF CCell::MeasureSizeWithFixedWidth(CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
-	d2dw::CRectF rcContent(MeasureContentSizeWithFixedWidth(pDirect));
+	CRectF rcContent(MeasureContentSizeWithFixedWidth(pDirect));
 
 	//Calc CenterBorder Rect
-	d2dw::CRectF rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
+	CRectF rcCenter=(InnerBorder2CenterBorder(Content2InnerBorder(rcContent)));
 	m_isActMeasureValid = true;
 	return rcCenter.Size();	
 }
@@ -104,9 +105,9 @@ FLOAT CCell::GetTop()const
 	return m_pRow->GetTop();
 }
 
-d2dw::CRectF CCell::GetRectInWnd()const
+CRectF CCell::GetRectInWnd()const
 {
-	auto rc =  d2dw::CRectF(
+	auto rc =  CRectF(
 		m_pColumn->GetLeft(),
 		m_pRow->GetTop(),
 		m_pColumn->GetRight(),
@@ -115,34 +116,34 @@ d2dw::CRectF CCell::GetRectInWnd()const
 	return rc;
 }
 
-d2dw::CRectF CCell::CenterBorder2InnerBorder(d2dw::CRectF rcCenter)
+CRectF CCell::CenterBorder2InnerBorder(CRectF rcCenter)
 {
 	auto halfLineWidth = m_spCellProperty->Line->Width*0.5f;
-	rcCenter-= d2dw::CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
+	rcCenter-= CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
 	return rcCenter;
 }
 
-d2dw::CRectF CCell::InnerBorder2Content(d2dw::CRectF rcInner)
+CRectF CCell::InnerBorder2Content(CRectF rcInner)
 {
 	rcInner.DeflateRect(*(m_spCellProperty->Padding));
 	return rcInner;
 }
 
-d2dw::CRectF CCell::Content2InnerBorder(d2dw::CRectF rcContent)
+CRectF CCell::Content2InnerBorder(CRectF rcContent)
 {
 	rcContent.InflateRect(*(m_spCellProperty->Padding));
 	return rcContent;
 }
 
-d2dw::CRectF CCell::InnerBorder2CenterBorder(d2dw::CRectF rcInner)
+CRectF CCell::InnerBorder2CenterBorder(CRectF rcInner)
 {
 	//Calc CenterBorder Rect 
 	auto halfLineWidth = m_spCellProperty->Line->Width*0.5f;
-	rcInner += d2dw::CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
+	rcInner += CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
 	return rcInner;
 }
 
-void CCell::PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
+void CCell::PaintBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	//Paint Normal
 	pDirect->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
@@ -158,12 +159,12 @@ void CCell::PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 	}
 }
 
-void CCell::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
+void CCell::PaintLine(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	pDirect->DrawSolidRectangle(*(m_spCellProperty->Line), rcPaint);
 }
 
-void CCell::PaintFocus(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
+void CCell::PaintFocus(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	if(GetIsFocused()){
 		auto halfLineWidth = m_spCellProperty->Line->Width*0.5f;
@@ -174,13 +175,15 @@ void CCell::PaintFocus(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
 
 void CCell::OnPaint(const PaintEvent& e)
 {
-	d2dw::CRectF rcClient(GetRectInWnd());
-	d2dw::CRectF rcInner(CenterBorder2InnerBorder(rcClient));
-	d2dw::CRectF rcContent(InnerBorder2Content(rcInner));
-	PaintLine(e.WndPtr->GetDirectPtr(),rcClient);
-	PaintBackground(e.WndPtr->GetDirectPtr(),rcInner);
-	PaintContent(e.WndPtr->GetDirectPtr(),rcContent);
-	PaintFocus(e.WndPtr->GetDirectPtr(), rcInner);
+	if (GetRectInWnd().Width() > 0 && GetRectInWnd().Height() > 0) {
+		CRectF rcClient(GetRectInWnd());
+		CRectF rcInner(CenterBorder2InnerBorder(rcClient));
+		CRectF rcContent(InnerBorder2Content(rcInner));
+		PaintLine(m_pSheet->GetWndPtr()->GetDirectPtr(), rcClient);
+		PaintBackground(m_pSheet->GetWndPtr()->GetDirectPtr(), rcInner);
+		PaintContent(m_pSheet->GetWndPtr()->GetDirectPtr(), rcContent);
+		PaintFocus(m_pSheet->GetWndPtr()->GetDirectPtr(), rcInner);
+	}
 }
 
 void CCell::OnLButtonDown(const LButtonDownEvent& e)
@@ -271,8 +274,6 @@ void CCell::SetString(const std::wstring& str, bool notify)
 		}
 	}
 }
-
-CWnd* CCell::GetWndPtr()const { return m_pSheet->GetWndPtr(); }
 
 
 

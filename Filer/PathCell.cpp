@@ -22,23 +22,23 @@ std::wstring CPathCell::GetString()
 	}
 }
 
-d2dw::CRectF CPathCell::GetRectInWnd()const
+CRectF CPathCell::GetRectInWnd()const
 {
-	return d2dw::CRectF(
+	return CRectF(
 		m_pSheet->GetContainer<ColTag, VisTag>()[m_pSheet->GetFrozenCount<ColTag>()]->GetLeft(),
 		m_pRow->GetTop(),
 		m_pSheet->GetContainer<ColTag, VisTag>().back()->GetRight(),
 		m_pRow->GetBottom());
 }
 
-d2dw::CSizeF CPathCell::GetFitSize(d2dw::CDirect2DWrite* pDirect)
+CSizeF CPathCell::GetFitSize(CDirect2DWrite* pDirect)
 {
 	CCell::GetFitSize(pDirect);
 	m_fitSize.width = 0;//Zero Width
 	return m_fitSize;
 }
 
-d2dw::CSizeF CPathCell::GetActSize(d2dw::CDirect2DWrite* pDirect)
+CSizeF CPathCell::GetActSize(CDirect2DWrite* pDirect)
 {
 	if(!m_isActMeasureValid){
 		auto width = m_pSheet->GetContainer<ColTag, VisTag>().back()->GetRight() - m_pSheet->GetContainer<ColTag, VisTag>()[m_pSheet->GetFrozenCount<ColTag>()]->GetLeft();
@@ -55,12 +55,12 @@ d2dw::CSizeF CPathCell::GetActSize(d2dw::CDirect2DWrite* pDirect)
 	return m_actSize;
 }
 
-d2dw::CSizeF CPathCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
+CSizeF CPathCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
-	d2dw::CRectF rcCenter(0,0,
+	CRectF rcCenter(0,0,
 		m_pSheet->GetContainer<ColTag, VisTag>().back()->GetRight() - m_pSheet->GetContainer<ColTag, VisTag>()[m_pSheet->GetFrozenCount<ColTag>()]->GetLeft(),0);
-	d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
+	CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
 	//Calc Content Rect
 	std::basic_string<TCHAR> str=GetString();
 	if(str.empty()){str=_T("a");}

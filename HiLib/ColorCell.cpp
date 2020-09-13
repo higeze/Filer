@@ -4,16 +4,17 @@
 #include "MyDC.h"
 #include "Sheet.h"
 #include "GridView.h"
+#include "D2DWWindow.h"
 
-CColorCell::CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,d2dw::CColorF color)
+CColorCell::CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CColorF color)
 	:CTextCell(pSheet,pRow,pColumn,spProperty),
 	m_color(color){}
 
-d2dw::CColorF CColorCell::GetColor(){return m_color;}
+CColorF CColorCell::GetColor(){return m_color;}
 
-void CColorCell::PaintBackground(d2dw::CDirect2DWrite* pDirect,d2dw::CRectF rcPaint)
+void CColorCell::PaintBackground(CDirect2DWrite* pDirect,CRectF rcPaint)
 {
-	d2dw::SolidFill colorFill(m_color);
+	SolidFill colorFill(m_color);
 	pDirect->FillSolidRectangle(colorFill, rcPaint);
 }
 

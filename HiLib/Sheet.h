@@ -1,5 +1,5 @@
 #pragma once
-#include "UIControl.h"
+#include "D2DWControl.h"
 #include "SheetProperty.h"
 #include "MyMenu.h"
 #include "SheetEnums.h"
@@ -23,14 +23,9 @@ class IMouseObserver;
 struct SheetStateMachine;
 class CGridView;
 
-namespace d2dw
-{
-	class CVScroll;
-	class CHScroll;
-}
+class CVScroll;
+class CHScroll;
 
-template<typename ...>
-constexpr bool false_v = false;
 
 struct Indexes
 {
@@ -54,7 +49,7 @@ struct Indexes
 struct ColTag;
 struct RowTag
 {
-	using PointTag = d2dw::CPointF::YTag;
+	using PointTag = CPointF::YTag;
 	using IndexesTag = Indexes::RowIdxTag;
 	using SharedPtr = std::shared_ptr<CRow>;
 	typedef const CRow* Ptr;
@@ -64,7 +59,7 @@ struct RowTag
 
 struct ColTag
 {
-	using PointTag = d2dw::CPointF::XTag;
+	using PointTag = CPointF::XTag;
 	using IndexesTag = Indexes::ColIdxTag;
 	using SharedPtr = std::shared_ptr<CColumn>;
 	typedef const CColumn* Ptr;
@@ -81,7 +76,7 @@ const UINT WM_LBUTTONDBLCLKTIMEXCEED = RegisterWindowMessage(L"WM_LBUTTONDBLCLKT
 /*CSheet*/
 /********/
 
-class CSheet:virtual public d2dw::CUIControl
+class CSheet:public CD2DWControl
 {
 	//Friend classes
 	friend class CMouseStateMachine;
@@ -147,7 +142,7 @@ public:
 	boost::signals2::signal<void(CellContextMenuEventArgs&)> CellContextMenu;
 
 	//Constructor
-	CSheet(d2dw::CWindow* pWnd, std::shared_ptr<SheetProperty> spSheetProperty, CMenu* pContextMenu= &CSheet::ContextMenu);
+	CSheet(CD2DWControl* pParentControl, std::shared_ptr<SheetProperty> spSheetProperty, CMenu* pContextMenu= &CSheet::ContextMenu);
 
 	//Destructor
 	virtual ~CSheet();
@@ -170,13 +165,11 @@ public:
 	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_pNameHeaderRow = row; }
 	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_pFilterRow; }
 	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_pFilterRow = row; }
-	virtual d2dw::CRectF GetRectInWnd()const override;
+	//virtual CRectF GetRectInWnd()const override;
 
 
 	virtual bool GetIsSelected()const{return m_bSelected;};
 	virtual void SetIsSelected(const bool& bSelected){m_bSelected=bSelected;};
-	virtual bool GetIsFocused()const{return false;};
-	//virtual void SetFocused(const bool& bFocused){m_bFocused=bFocused;};
 
 	//Function
 	void SetAllRowMeasureValid(bool valid);
@@ -212,7 +205,7 @@ public:
 	//Sort
 	virtual void ResetColumnSort();
 
-	virtual d2dw::CPointF GetScrollPos()const=0;
+	virtual CPointF GetScrollPos()const=0;
 	virtual CGridView* GetGridPtr()=0;
 	virtual bool Empty()const;
 	virtual bool Visible()const;
@@ -255,13 +248,13 @@ public:
 
 	virtual std::wstring GetSheetString()const;
 
-	virtual d2dw::CPointF GetFrozenPoint();
-	virtual d2dw::CSizeF MeasureSize()const;
+	virtual CPointF GetFrozenPoint();
+	virtual CSizeF MeasureSize()const;
 
 	virtual FLOAT GetCellsHeight();
 	virtual FLOAT GetCellsWidth();
-	virtual d2dw::CRectF GetCellsRect();
-	virtual d2dw::CRectF GetPaintRect()=0;
+	virtual CRectF GetCellsRect();
+	virtual CRectF GetPaintRect()=0;
 
 	/**************/
 	/* UI Message */
@@ -292,7 +285,7 @@ protected:
 
 public:
 
-	std::shared_ptr<CCell> Cell(const d2dw::CPointF& pt);
+	std::shared_ptr<CCell> Cell(const CPointF& pt);
 
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name);
 	virtual void OnRowPropertyChanged(CRow* pRow, const wchar_t* name);
@@ -466,12 +459,12 @@ public:
 			return (*iter)->GetIndex<VisTag>();
 		}
 	}
-	template<typename TRC> int Point2Index(const d2dw::CPointF& pt)
+	template<typename TRC> int Point2Index(const CPointF& pt)
 	{
 		return Coordinate2Index<TRC>(pt.Get<TRC::PointTag>());
 	}
 
-	Indexes Point2Indexes(d2dw::CPointF pt)
+	Indexes Point2Indexes(CPointF pt)
 	{
 		return Indexes(Coordinate2Index<RowTag>(pt.y), Coordinate2Index<ColTag>(pt.x));
 	}

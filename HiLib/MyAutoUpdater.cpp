@@ -89,10 +89,10 @@ bool CAutoUpdater::Update()
 		if(!CheckConnection())return false;
 		if(!CheckUpdate())return false;
 		if(!PromptUpdate())return false;
-
-		CUpdateDialog* pDlg = new CUpdateDialog(this);//Sucide dialog
-		g_hDlgModeless = pDlg->Create(m_hWnd);
-		pDlg->ShowWindow(SW_SHOW);
+//TODOLOW
+		//CUpdateDialog* pDlg = new CUpdateDialog(this);//Sucide dialog
+		//g_hDlgModeless = pDlg->Create(m_hWnd);
+		//pDlg->ShowWindow(SW_SHOW);
 
 		return true;
 	}catch(...){

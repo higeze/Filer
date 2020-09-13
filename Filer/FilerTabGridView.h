@@ -14,11 +14,14 @@
 
 class CFilerGridView;
 struct FilerGridViewProperty;
-class CToDoGridView;
 struct GridViewProperty;
-class d2dw::CWindow;
+class CToDoGridView;
+class CD2DWWindow;
 class CShellFolder;
 
+/***************/
+/* FilerTabData */
+/***************/
 struct FilerTabData:public TabData
 {
 	std::wstring Path;
@@ -62,6 +65,9 @@ struct FilerTabData:public TabData
 	}
 };
 
+/***************/
+/* ToDoTabData */
+/***************/
 struct ToDoTabData:public TabData
 {
 	std::wstring Path;
@@ -83,6 +89,9 @@ struct ToDoTabData:public TabData
 	}
 };
 
+/***************/
+/* TextTabData */
+/***************/
 struct TextTabData :public TabData
 {
 	std::wstring Path;
@@ -107,6 +116,9 @@ struct TextTabData :public TabData
 	}
 };
 
+/*************/
+/* CFilerTab */
+/*************/
 class CFilerTabGridView :public CTabControl
 {
 private:
@@ -115,28 +127,29 @@ private:
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
 public:
-	CFilerTabGridView(CWnd* pWnd, std::shared_ptr<TabControlProperty> spTabProp, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty, std::shared_ptr<TextEditorProperty>& spTextboxProp);
+	CFilerTabGridView(CD2DWControl* pParentControl, std::shared_ptr<TabControlProperty> spTabProp, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty, std::shared_ptr<TextEditorProperty>& spTextboxProp);
 	virtual ~CFilerTabGridView();
 
-	//Getter Setter
+	/***********/
+	/* Closure */
+	/***********/
 	std::function<std::shared_ptr<CFilerGridView>()> GetFilerGridViewPtr;
 	std::function<std::shared_ptr<CToDoGridView>()> GetToDoGridViewPtr;
 	std::function<std::shared_ptr<CTextEditor>()> GetTextViewPtr;
 
-	//Message
+	/**************/
+	/* UI Message */
+	/**************/
 	void OnCreate(const CreateEvent& e) override;
-	//LRESULT OnClose(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	//LRESULT OnDestroy(UINT uiMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-	//LRESULT OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	void OnKeyDown(const KeyDownEvent& e) override;
 	void OnContextMenu(const ContextMenuEvent& e) override;
 
+	/***********/
+	/* Command */
+	/***********/
 	void OnCommandNewFilerTab(const CommandEvent& e);
 	void OnCommandNewToDoTab(const CommandEvent& e);
 	void OnCommandNewTextTab(const CommandEvent& e);
-	void OnCommandCloneTab(const CommandEvent& e);
-	void OnCommandCloseTab(const CommandEvent& e);
-	void OnCommandCloseAllButThisTab(const CommandEvent& e);
 	void OnCommandAddToFavorite(const CommandEvent& e);
 	void OnCommandOpenSameAsOther(const CommandEvent& e);
 
@@ -150,7 +163,7 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
 
 		CTabControl::save(ar);
-		//ar("FilerView", GetFilerGridViewPtr());
+		ar("FilerView", GetFilerGridViewPtr());
 	}
 
 	template <class Archive>
@@ -161,6 +174,6 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
 
 		CTabControl::load(ar);
-		//ar("FilerView", GetFilerGridViewPtr(), this, m_spFilerGridViewProp);
+		ar("FilerView", GetFilerGridViewPtr(), this, m_spFilerGridViewProp);
 	}
 };

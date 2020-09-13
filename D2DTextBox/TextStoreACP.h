@@ -1,11 +1,11 @@
 #pragma once
 
-class d2dw::CTextBox;
+class CTextBox;
 
 class CTextStore : public ITextStoreACP
 {
 	public:
-		 CTextStore(d2dw::CTextBox *pEditor);
+		 CTextStore(CTextBox *pEditor);
 
 		//
 		// IUnknown methods
@@ -57,7 +57,7 @@ class CTextStore : public ITextStoreACP
 	private:
 		void PrepareAttributes(ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs);
    
-		d2dw::CTextBox *_pEditor;
+		CTextBox *_pEditor;
 		ITextStoreACPSink* TextStoreACPSink_;
 		TS_ATTRVAL _attrval[8];
 		int _nAttrVals;

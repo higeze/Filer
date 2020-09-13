@@ -18,6 +18,7 @@
 #include "FileDragger.h"
 #include "SheetEventArgs.h"
 #include "ShowHideMenuItem.h"
+#include "D2DWWindow.h"
 
 #define WM_UAHMEASUREMENUITEM 0x0094
 
@@ -31,11 +32,11 @@ public:
 	//Constructor
 	template<typename... TArgs>
 	CFilerBindGridView(
-		CWnd* pWnd,
+		CD2DWControl* pParentControl,
 		std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		std::shared_ptr<observable_vector<std::tuple<TItems...>>> spItemsSource = nullptr,
 		TArgs... args)
-		:CBindGridView(pWnd, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), spItemsSource, args...)
+		:CBindGridView(pParentControl, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), spItemsSource, args...)
 	{
 		m_spItemDragger = std::make_shared<CFileDragger>();
 
@@ -143,9 +144,9 @@ public:
 	virtual bool PasteFromClipboard() { return false; }
 	virtual bool DeleteSelectedFiles() { return false; }
 
-	/******************/
-	/* Window Message */
-	/******************/
+	/***********/
+	/* Command */
+	/***********/
 	virtual void OnCommandCut(const CommandEvent& e) override
 	{
 		CutToClipboard();

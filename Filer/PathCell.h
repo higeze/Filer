@@ -13,16 +13,16 @@ public:
 	 *  Destructor
 	 */
 	virtual ~CPathCell(void){}
-	d2dw::CSizeF GetFitSize(d2dw::CDirect2DWrite* pDirect)override;
-	d2dw::CSizeF GetActSize(d2dw::CDirect2DWrite* pDirect)override;
+	CSizeF GetFitSize(CDirect2DWrite* pDirect)override;
+	CSizeF GetActSize(CDirect2DWrite* pDirect)override;
 	//CSize MeasureContentSize(CDC* pDC)override;
-	d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)override;
+	CSizeF MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)override;
 	/**
 	 *  Get string from column property
 	 */
 	virtual std::wstring GetString() override;
 
-	virtual d2dw::CRectF CPathCell::GetRectInWnd()const override;
+	virtual CRectF CPathCell::GetRectInWnd()const override;
 	/**
 	 *  Set string to column property
 	 */

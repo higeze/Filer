@@ -30,10 +30,10 @@ public:
 	}
 
 
-	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* pDirect) override
+	virtual CSizeF MeasureContentSize(CDirect2DWrite* pDirect) override
 	{
 		//Calc Content Rect
-	//	d2dw::CRectF rcContent;
+	//	CRectF rcContent;
 		std::basic_string<TCHAR> str;
 		auto spFile = GetShellFile();
 		auto size = spFile->ReadSize();

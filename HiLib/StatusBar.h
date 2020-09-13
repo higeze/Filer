@@ -1,6 +1,6 @@
 #pragma once
 #include "Direct2DWrite.h"
-#include "UIElement.h"
+#include "D2DWControl.h"
 #include "Timer.h"
 #include <pdh.h>
 
@@ -34,11 +34,11 @@ std::wstring ConvertCommaSeparatedNumber(T n, int separate_digit)
 struct StatusBarProperty
 {
 public:
-	d2dw::FormatF Format = d2dw::FormatF();
+	FormatF Format = FormatF();
 
-	d2dw::SolidLine Border = d2dw::SolidLine(230.f / 255.f, 230.f / 255.f, 230.f / 255.f, 1.0f);
-	d2dw::SolidFill BackgroundFill = d2dw::SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
-	d2dw::SolidFill ForegroundFill = d2dw::SolidFill(0.f, 0.f, 0.f, 1.0f);
+	SolidLine Border = SolidLine(230.f / 255.f, 230.f / 255.f, 230.f / 255.f, 1.0f);
+	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
+	SolidFill ForegroundFill = SolidFill(0.f, 0.f, 0.f, 1.0f);
 
 	template <class Archive>
 	void serialize(Archive& ar)
@@ -51,10 +51,8 @@ public:
 
 
 
-namespace d2dw
-{
 
-	class CStatusBar: public CUIElement
+	class CStatusBar: public CD2DWControl
 	{
 	private:
 		std::mutex m_mtx;
@@ -75,8 +73,6 @@ namespace d2dw
 		void Update();
 
 	protected:
-		CWnd* m_pWnd;
-		CRectF m_rect;
 
 		int m_min = 0;
 		int m_max = 100;
@@ -84,12 +80,9 @@ namespace d2dw
 
 		std::shared_ptr<StatusBarProperty> m_spStatusBarProp;
 	public:
-		CStatusBar(CWnd* pWnd, const std::shared_ptr<StatusBarProperty>& spStatusBarProp);
+		CStatusBar(CD2DWControl* pParentControl, const std::shared_ptr<StatusBarProperty>& spStatusBarProp);
 		virtual ~CStatusBar();
 
-		CWnd* GetWndPtr()const override { return m_pWnd; }
-		CRectF GetRectInWnd()const { return m_rect; }
-		void OnRect(const RectEvent& e) override { m_rect = e.Rect; }
 		//void SetRect(const CRectF & rect) { m_rect = rect; }
 		//void SetRect(const FLOAT left, const FLOAT top, const FLOAT right, const FLOAT bottom)
 		//{
@@ -99,6 +92,6 @@ namespace d2dw
 		CSizeF GetSize()const { return CSizeF(m_rect.Width(), m_rect.Height()); }
 		virtual void OnPaint(const PaintEvent & e);
 		virtual CSizeF MeasureSize(CDirect2DWrite* pDirect);
-	};
 
-}
+		void OnCreate(const CreateEvent& e)override;
+	};

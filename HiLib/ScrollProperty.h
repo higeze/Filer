@@ -4,12 +4,12 @@
 struct ScrollProperty
 {
 public:
-	d2dw::SolidFill BackgroundFill = d2dw::SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 0.4f);
-	d2dw::SolidFill ThumbNormalFill = d2dw::SolidFill(100.f / 255.f, 100.f / 255.f, 100.f / 255.f, 0.4f);
-	d2dw::SolidFill ThumbHotFill = d2dw::SolidFill(100.f / 255.f, 100.f / 255.f, 100.f / 255.f, 0.7f);
-	d2dw::SolidFill ThumbScrollFill = d2dw::SolidFill(100.f / 255.f, 100.f / 255.f, 100.f / 255.f, 1.0f);
+	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 0.4f);
+	SolidFill ThumbNormalFill = SolidFill(100.f / 255.f, 100.f / 255.f, 100.f / 255.f, 0.4f);
+	SolidFill ThumbHotFill = SolidFill(100.f / 255.f, 100.f / 255.f, 100.f / 255.f, 0.7f);
+	SolidFill ThumbScrollFill = SolidFill(100.f / 255.f, 100.f / 255.f, 100.f / 255.f, 1.0f);
 
-	d2dw::CRectF ThumbMargin = d2dw::CRectF(4.f, 4.f, 4.f, 4.f);
+	CRectF ThumbMargin = CRectF(4.f, 4.f, 4.f, 4.f);
 	FLOAT BandWidth = 16.f;
 	FLOAT DeltaScroll = 30.f;
 

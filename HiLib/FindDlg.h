@@ -11,7 +11,7 @@ extern HWND g_hDlgModeless;
 class CFindDlg:public CDlg<IDD_FIND>
 {
 private:
-	CGridView* m_pWnd;
+	CGridView* m_pParentControl;
 	CEdit m_findEdit;
 	bool m_canDeleteThis;
 	void OnFinalMessage(HWND hWnd)override
@@ -69,7 +69,7 @@ private:
 		bool matchWholeWord = !!matchWholeWordCheckBox.GetCheck();
 		std::wstring findWord = findEdit.GetWindowTextW();
 
-		m_pWnd->FindNext(findWord, matchCase, matchWholeWord);
+		m_pParentControl->FindNext(findWord, matchCase, matchWholeWord);
 
 		return TRUE;
 	}	
@@ -83,7 +83,7 @@ private:
 		bool matchWholeWord = !!matchWholeWordCheckBox.GetCheck();
 		std::wstring findWord = findEdit.GetWindowTextW();
 
-		m_pWnd->FindPrev(findWord, matchCase, matchWholeWord);
+		m_pParentControl->FindPrev(findWord, matchCase, matchWholeWord);
 
 		return TRUE;
 	}	
@@ -94,7 +94,7 @@ private:
 	}
 
 public:
-	CFindDlg(CGridView* pWnd):CDlg<IDD_FIND>(),m_pWnd(pWnd),m_canDeleteThis(true)
+	CFindDlg(CGridView* pWnd):CDlg<IDD_FIND>(),m_pParentControl(pWnd),m_canDeleteThis(true)
 	{
 		AddMsgHandler(WM_INITDIALOG,&CFindDlg::OnInitDialog,this);
 		AddMsgHandler(WM_CLOSE,&CFindDlg::OnClose,this);

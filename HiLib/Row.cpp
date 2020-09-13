@@ -1,6 +1,7 @@
 #include "Row.h"
 #include "GridView.h"
 #include "CellProperty.h"
+#include "D2DWWindow.h"
 
 FLOAT CRow::GetStart() { return m_start + m_pSheet->GetRectInWnd().top; }
 

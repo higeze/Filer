@@ -18,17 +18,17 @@
 #include "Celler.h"
 #include "SheetStateMachine.h"
 #include "GridView.h"
-#include "TextboxWnd.h"
+#include "D2DWWindow.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CMenu CSheet::ContextMenu;
 
 CSheet::CSheet(
-	d2dw::CWindow* pWnd,
+	CD2DWControl* pParentControl,
 	std::shared_ptr<SheetProperty> spSheetProperty,
 	CMenu* pContextMenu)
-	:CUIControl(pWnd),
+	:CD2DWControl(pParentControl),
 	m_spSheetProperty(spSheetProperty),
 	m_bSelected(false),
 	//m_bFocused(false),
@@ -82,7 +82,7 @@ std::shared_ptr<CCell>& CSheet::Cell( CRow* pRow,  CColumn* pColumn)
 	return pColumn->Cell(pRow);
 }
 
-std::shared_ptr<CCell> CSheet::Cell(const d2dw::CPointF& pt)
+std::shared_ptr<CCell> CSheet::Cell(const CPointF& pt)
 {
 	auto rowPtr = Coordinate2Pointer<RowTag>(pt.y);
 	auto colPtr = Coordinate2Pointer<ColTag>(pt.x);
@@ -420,8 +420,8 @@ void CSheet::UpdateColumnVisibleDictionary()
 
 void CSheet::UpdateRowPaintDictionary()
 {
-	d2dw::CRectF rcClip(GetPaintRect());
-	d2dw::CPointF ptOrigin(GetFrozenPoint());
+	CRectF rcClip(GetPaintRect());
+	CPointF ptOrigin(GetFrozenPoint());
 	rcClip.left = ptOrigin.x;
 	rcClip.top = ptOrigin.y;
 	UpdatePaintContainer<RowTag>(
@@ -431,8 +431,8 @@ void CSheet::UpdateRowPaintDictionary()
 
 void CSheet::UpdateColumnPaintDictionary()
 {
-	d2dw::CRectF rcClip(GetPaintRect());
-	d2dw::CPointF ptOrigin(GetFrozenPoint());
+	CRectF rcClip(GetPaintRect());
+	CPointF ptOrigin(GetFrozenPoint());
 	rcClip.left = ptOrigin.x;
 	rcClip.top = ptOrigin.y;
 	UpdatePaintContainer<ColTag>(
@@ -577,10 +577,10 @@ bool CSheet::Empty()const
 }
 bool CSheet::Visible()const
 {
-	return (!m_visRows.empty()) && (!m_visCols.empty());
+	return (!m_visRows.empty()) && (!m_visCols.empty()) && GetRectInWnd().Width() > 0 && GetRectInWnd().Height() > 0;
 }
 
-d2dw::CPointF CSheet::GetFrozenPoint()
+CPointF CSheet::GetFrozenPoint()
 {
 	if(!Visible()){
 		return GetRectInWnd().LeftTop();
@@ -600,33 +600,44 @@ d2dw::CPointF CSheet::GetFrozenPoint()
 		x = m_visCols[m_frozenColumnCount - 1]->GetRight();
 	}
 
-	return d2dw::CPointF(x,y);
+	return CPointF(x,y);
 }
 
 
-d2dw::CSizeF CSheet::MeasureSize()const
+CSizeF CSheet::MeasureSize()const
 {
-	d2dw::CRectF rc(CSheet::GetRectInWnd());
-	return d2dw::CSizeF(rc.Width(), rc.Height());
-}
-
-//GetRect return Sheet(All) Rect in Window Client
-//GetCellsRect return Cells(=Scrollable Cells) Rect in Window Client
-//GetCellsClipRect return Cells(=Scrollable Cells) Clip(=Paint area) Rect in Window Client
-d2dw::CRectF CSheet::GetRectInWnd()const
-{
-	if(!Visible()){return d2dw::CRectF();}
+	//CRectF rc(CSheet::GetRectInWnd());
+	//return CSizeF(rc.Width(), rc.Height());
+	if(!Visible()){return CSizeF();}
 	FLOAT left=m_visCols.front()->GetLeft();
 	FLOAT top=m_visRows.front()->GetTop();
 	FLOAT right=m_visCols.back()->GetRight();
 	FLOAT bottom=m_visRows.back()->GetBottom();
 
-	d2dw::CRectF rc(left, top, right, bottom);
+	CRectF rc(left, top, right, bottom);
 
 	auto outerPenWidth = m_spSheetProperty->CellPropPtr->Line->Width/2.0f;
 	rc.InflateRect(outerPenWidth, outerPenWidth);
-	return rc;
+	return rc.Size();
 }
+
+//GetRect return Sheet(All) Rect in Window Client
+//GetCellsRect return Cells(=Scrollable Cells) Rect in Window Client
+//GetCellsClipRect return Cells(=Scrollable Cells) Clip(=Paint area) Rect in Window Client
+//CRectF CSheet::GetRectInWnd()const
+//{
+//	if(!Visible()){return CRectF();}
+//	FLOAT left=m_visCols.front()->GetLeft();
+//	FLOAT top=m_visRows.front()->GetTop();
+//	FLOAT right=m_visCols.back()->GetRight();
+//	FLOAT bottom=m_visRows.back()->GetBottom();
+//
+//	CRectF rc(left, top, right, bottom);
+//
+//	auto outerPenWidth = m_spSheetProperty->CellPropPtr->Line->Width/2.0f;
+//	rc.InflateRect(outerPenWidth, outerPenWidth);
+//	return rc;
+//}
 
 FLOAT CSheet::GetCellsHeight()
 {
@@ -652,10 +663,10 @@ FLOAT CSheet::GetCellsWidth()
 	return right - left;
 }
 
-d2dw::CRectF CSheet::GetCellsRect()
+CRectF CSheet::GetCellsRect()
 {
 	if(GetContainer<RowTag, VisTag>().size() == 0 || GetContainer<RowTag, VisTag>().size() <= m_frozenRowCount || GetContainer<ColTag, VisTag>().size() <= m_frozenColumnCount){
-		return d2dw::CRectF(0,0,0,0);
+		return CRectF(0,0,0,0);
 	}
 
 	FLOAT left=m_visCols[m_frozenColumnCount]->GetLeft();
@@ -663,7 +674,7 @@ d2dw::CRectF CSheet::GetCellsRect()
 	FLOAT right=m_visCols.back()->GetRight();
 	FLOAT bottom=m_visRows.back()->GetBottom();
 
-	return d2dw::CRectF(left,top,right,bottom);
+	return CRectF(left,top,right,bottom);
 }
 
 void CSheet::UpdateAll()

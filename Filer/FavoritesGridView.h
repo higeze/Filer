@@ -16,7 +16,7 @@ public:
 
 public:
 	CFavoritesGridView(
-		CWnd* pWnd, 
+		CD2DWControl* pParentControl, 
 		std::shared_ptr<GridViewProperty> spGridViewProp,
 		std::shared_ptr<CFavoritesProperty> spFavoritesProp);
 	virtual ~CFavoritesGridView(void) = default;

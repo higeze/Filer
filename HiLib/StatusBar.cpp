@@ -3,12 +3,19 @@
 #include "ThreadPool.h"
 #include <psapi.h>
 #include <fmt/format.h>
+#include "D2DWWindow.h"
 #pragma comment(lib, "pdh.lib")
 
-namespace d2dw
-{
-	CStatusBar::CStatusBar(CWnd* pWnd, const std::shared_ptr<StatusBarProperty>& spStatusBarProp)
-		:m_pWnd(pWnd), m_spStatusBarProp(spStatusBarProp)
+	CStatusBar::CStatusBar(CD2DWControl* pParentControl, const std::shared_ptr<StatusBarProperty>& spStatusBarProp)
+		:CD2DWControl(pParentControl), 
+		m_spStatusBarProp(spStatusBarProp),
+		m_hQuery(nullptr),
+		m_hCounterCPU(nullptr),
+		m_hCounterMemory(nullptr),
+		m_hCounterThread(nullptr),
+		m_hCounterHandle(nullptr){}
+
+	void CStatusBar::OnCreate(const CreateEvent& e)
 	{
 		if (::PdhOpenQuery(NULL, 0, &m_hQuery) == ERROR_SUCCESS &&
 			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\% Processor Time", 0, &m_hCounterCPU) == ERROR_SUCCESS &&
@@ -21,6 +28,7 @@ namespace d2dw
 			throw std::exception(FILE_LINE_FUNC);
 		}
 	}
+
 
 	CStatusBar::~CStatusBar()
 	{
@@ -85,9 +93,9 @@ namespace d2dw
 	{
 		std::lock_guard<std::mutex> lock(m_mtx);
 		auto rcPaint = GetRectInWnd();
-		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->BackgroundFill, rcPaint);
+		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->BackgroundFill, rcPaint);
 
-		e.WndPtr->GetDirectPtr()->DrawTextLayout(
+		GetWndPtr()->GetDirectPtr()->DrawTextLayout(
 			m_spStatusBarProp->Format,
 			fmt::format(
 			L"CPU:{:.1f}%, PrivateMemory:{:.1f}MB, HandleCount:{}, ThreadCount:{}, ThreadPool:{}/{}\t"
@@ -109,4 +117,3 @@ namespace d2dw
 		if (text.empty()) { text = L"a"; }
 		return pDirect->CalcTextSize(m_spStatusBarProp->Format, text);
 	}
-}

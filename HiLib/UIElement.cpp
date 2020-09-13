@@ -1,4 +1,19 @@
 #include "UIElement.h"
+#include "D2DWWindow.h"
+
+CreateEvent::CreateEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
+	:Event(pWnd, pHandled) 
+{
+	auto pCS = reinterpret_cast<CREATESTRUCT*>(lParam);
+	CRect rc(pCS->x, pCS->y, pCS->x + pCS->cx, pCS->y + pCS->cy);
+	Rect = pWnd->GetDirectPtr()->Pixels2Dips(rc);
+}
+
+ContextMenuEvent::ContextMenuEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
+	:Event(pWnd, pHandled),
+	PointInScreen((short)LOWORD(lParam), (short)HIWORD(lParam)),
+	PointInClient(pWnd->ScreenToClient(CPoint((short)LOWORD(lParam), (short)HIWORD(lParam)))){}
+
 
 void CUIElement::SetState(const UIElementState::Type& state)
 {

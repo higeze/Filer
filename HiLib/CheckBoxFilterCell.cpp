@@ -4,6 +4,7 @@
 #include "Sheet.h"
 #include "GridView.h"
 #include "Column.h"
+#include "D2DWWindow.h"
 //
 
 CCheckBoxFilterCell::CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)

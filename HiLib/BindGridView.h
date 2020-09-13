@@ -17,11 +17,11 @@ protected:
 public:
 	template<typename... TArgs> 
 	CBindGridView(
-		CWnd* pWnd,
+		CD2DWControl* pParentControl,
 		std::shared_ptr<GridViewProperty>& spGridViewProp,
 		std::shared_ptr<observable_vector<std::tuple<TItems...>>> spItemsSource = nullptr,
 		TArgs... args)
-		:CGridView(pWnd, spGridViewProp), m_spItemsSource(spItemsSource)
+		:CGridView(pParentControl, spGridViewProp), m_spItemsSource(spItemsSource)
 	{
 		//ItemsSource
 		if (!m_spItemsSource) {

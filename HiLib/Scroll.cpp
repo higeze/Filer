@@ -1,16 +1,14 @@
 #include "Scroll.h"
 #include "ScrollProperty.h"
 #include "GridView.h"
-#include "TextboxWnd.h"
+#include "D2DWWindow.h"
 
 #include <boost\msm\front\state_machine_def.hpp>
 #include <boost\msm\back\state_machine.hpp>
 #include <boost\mpl\vector.hpp>
 
-namespace d2dw
-{
-	CScrollBase::CScrollBase(CWindow* pWnd, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
-		:CUIControl(pWnd), m_spScrollProp(spScrollProp), m_onPropertyChanged(onPropertyChanged){}
+	CScrollBase::CScrollBase(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
+		:CD2DWControl(pParentControl), m_spScrollProp(spScrollProp), m_onPropertyChanged(onPropertyChanged){}
 
 	FLOAT CScrollBase::GetScrollBandWidth()const { return m_spScrollProp->BandWidth; }
 	FLOAT CScrollBase::GetScrollDelta()const { return m_spScrollProp->DeltaScroll; }
@@ -79,6 +77,4 @@ namespace d2dw
 				(std::min)(m_rect.left + m_rect.Width() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), m_rect.right - m_spScrollProp->ThumbMargin.right),
 				m_rect.bottom - m_spScrollProp->ThumbMargin.bottom);
 	}
-
-}
 

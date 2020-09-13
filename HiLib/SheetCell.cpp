@@ -16,6 +16,7 @@
 #include "GridViewResource.h"
 #include "SheetEventArgs.h"
 #include "GridView.h"
+#include "D2DWWindow.h"
 
 CSheetCell::CSheetCell(
 	CSheet* pSheet,
@@ -24,7 +25,7 @@ CSheetCell::CSheetCell(
 	std::shared_ptr<SheetProperty> spSheetProperty,
 	std::shared_ptr<CellProperty> spCellProperty,
 	CMenu* pMenu)
-	:CSheet(pSheet->GetWndPtr(), spSheetProperty), 
+	:CSheet(pSheet, spSheetProperty), 
 	CCell(pSheet,pRow,pColumn,spCellProperty,pMenu)
 {
 	m_spRowDragger = std::make_shared<CRowDragger>();
@@ -95,30 +96,30 @@ FLOAT CSheetCell::GetLeft()const
 	return CCell::GetLeft();
 }
 
-d2dw::CRectF CSheetCell::GetRectInWnd()const
+CRectF CSheetCell::GetRectInWnd()const
 {
 	return CCell::GetRectInWnd();
 }
 
-d2dw::CRectF CSheetCell::GetPaintRect()
+CRectF CSheetCell::GetPaintRect()
 {
 	return CCell::GetRectInWnd();//TODO
 }
 
-d2dw::CPointF CSheetCell::GetScrollPos()const
+CPointF CSheetCell::GetScrollPos()const
 {
-	return d2dw::CPointF(0,0);
+	return CPointF(0,0);
 }
 
-d2dw::CSizeF CSheetCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
+CSizeF CSheetCell::MeasureContentSize(CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
-	d2dw::CRectF rcContent(CSheet::MeasureSize());
+	CRectF rcContent(CSheet::MeasureSize());
 
 	return rcContent.Size();
 }
 
-d2dw::CSizeF CSheetCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
+CSizeF CSheetCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 {
 	return CSheetCell::MeasureContentSize(pDirect);
 }
@@ -127,6 +128,12 @@ void CSheetCell::OnRButtonDown(const RButtonDownEvent& e)
 {
 	CCell::OnRButtonDown(e);
 	CSheet::OnRButtonDown(e);
+}
+
+void CSheetCell::OnCreate(const CreateEvent& e)
+{
+	CCell::OnCreate(e);
+	CSheet::OnCreate(e);
 }
 
 void CSheetCell::OnLButtonDown(const LButtonDownEvent& e)
@@ -210,7 +217,7 @@ void CSheetCell::OnChar(const CharEvent& e)
 }
 
 
-void CSheetCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
+void CSheetCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	CSheet::OnPaint(PaintEvent(m_pSheet->GetWndPtr()));
 }

@@ -52,8 +52,7 @@ public:
 
 };
 
-namespace d2dw
-{
+
 
 	class CFileIconCache
 	{
@@ -75,5 +74,3 @@ namespace d2dw
 		CComPtr<ID2D1Bitmap> GetDefaultIconBitmap();
 		void Clear();
 	};
-
-}

@@ -6,7 +6,7 @@ class CSheet;
 class CCell;
 class CGridView;
 class ISheetState;
-struct EventArgs;
+struct Event;
 struct MouseEvent;
 struct SetCursorEvent;
 

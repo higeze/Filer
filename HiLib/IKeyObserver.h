@@ -2,13 +2,13 @@
 
 class CGridView;
 class ISheetState;
-struct KeyEventArgs;
+struct KeyEvent;
 
 class IKeyObserver
 {
 public:
 	IKeyObserver(void){}
 	virtual ~IKeyObserver(void){}
-	virtual ISheetState* OnKeyDown(CGridView* pSheet, KeyEventArgs& e)=0;
+	virtual ISheetState* OnKeyDown(CGridView* pSheet, KeyEvent& e)=0;
 };
 

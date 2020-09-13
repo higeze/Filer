@@ -16,11 +16,11 @@ public:
 
 	virtual std::shared_ptr<CShellFile> GetShellFile() = 0;
 
-	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override
+	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override
 	{
 		auto spFile = GetShellFile();
 		if (spFile) {
-			d2dw::CRectF rc = rcPaint;
+			CRectF rc = rcPaint;
 			rc.bottom = rc.top + pDirect->Pixels2DipsY(16);
 			rc.right = rc.left + pDirect->Pixels2DipsX(16);
 
@@ -41,12 +41,12 @@ public:
 		}
 	}
 
-	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* pDirect) override
+	virtual CSizeF MeasureContentSize(CDirect2DWrite* pDirect) override
 	{
-		return d2dw::CSizeF(pDirect->Pixels2DipsX(16), pDirect->Pixels2DipsY(16));
+		return CSizeF(pDirect->Pixels2DipsX(16), pDirect->Pixels2DipsY(16));
 	}
 
-	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override
+	virtual CSizeF MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect) override
 	{
 		return MeasureContentSize(pDirect);
 	}

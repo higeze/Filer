@@ -26,24 +26,25 @@ public:
 	//Rect
 	virtual FLOAT GetTop()const override;
 	virtual FLOAT GetLeft()const override;
-	virtual d2dw::CRectF GetRectInWnd()const override;
-	virtual d2dw::CRectF GetPaintRect() override;
+	virtual CRectF GetRectInWnd()const override;
+	virtual CRectF GetPaintRect() override;
 
-	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* pDirect) override;
-	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override;
+	virtual CSizeF MeasureContentSize(CDirect2DWrite* pDirect) override;
+	virtual CSizeF MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect) override;
 
 	//virtual void SetFocused(const bool& bFocused);
 	virtual bool GetIsSelected()const override;
 	virtual void SetIsSelected(const bool& bSelected) override;
 	virtual bool GetIsFocused()const override;
 
-	virtual CWnd* GetWndPtr()const override { return CCell::GetWndPtr(); }
+	virtual CD2DWWindow* GetWndPtr()const override { return CSheet::GetWndPtr(); }
 
 
 	//Paint
-	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
+	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override;
 	
 	//Event
+	virtual void OnCreate(const CreateEvent& e);
 	virtual void OnPaint(const PaintEvent& e) override {}
 	virtual void OnClose(const CloseEvent & e) override {}
 	virtual void OnRect(const RectEvent& e) override {}
@@ -80,8 +81,7 @@ public:
 	virtual void SetString(const std::wstring& str, bool notify)  override {/*Do Nothing*/}
 	virtual bool Filter(const std::wstring& strFilter)const;
 
-	virtual d2dw::CPointF GetScrollPos()const;
-	std::shared_ptr<CDC> GetClientDCPtr()const;
+	virtual CPointF GetScrollPos()const;
 	virtual CGridView* GetGridPtr();
 
 	void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;

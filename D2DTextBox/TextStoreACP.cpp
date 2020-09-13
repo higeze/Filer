@@ -3,7 +3,7 @@
 #include <InputScope.h>
 #include <tsattrs.h>
 #include "Textbox.h"
-#include "TextboxWnd.h"
+#include "D2DWWindow.h"
 #include "TextStoreACP.h"
 #include "TextEditSink.h"
 #include "observable.h"
@@ -11,7 +11,7 @@
 
 #define Round(x)	((LONG)(x+0.5f))
 
-CTextStore::CTextStore(d2dw::CTextBox *pEditor):_pEditor(pEditor)
+CTextStore::CTextStore(CTextBox *pEditor):_pEditor(pEditor)
 {
 	_cRef = 1;
 	TextStoreACPSink_ = NULL;

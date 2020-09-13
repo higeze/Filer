@@ -229,7 +229,6 @@
     <ClInclude Include="..\HiLib\Column.h" />
     <ClInclude Include="..\HiLib\Console.h" />
     <ClInclude Include="..\HiLib\ConsoleTimer.h" />
-    <ClInclude Include="..\HiLib\Control.h" />
     <ClInclude Include="..\HiLib\CShellExtension.h" />
     <ClInclude Include="..\HiLib\Cursorer.h" />
     <ClInclude Include="..\HiLib\DeadlineTimer.h" />
@@ -323,7 +322,7 @@
     <ClInclude Include="..\HiLib\SingletonMalloc.h" />
     <ClInclude Include="..\HiLib\StatusBar.h" />
     <ClInclude Include="..\HiLib\TabControl.h" />
-    <ClInclude Include="..\HiLib\TextboxWnd.h" />
+    <ClInclude Include="..\HiLib\D2DWWindow.h" />
     <ClInclude Include="..\HiLib\TextCell.h" />
     <ClInclude Include="..\HiLib\ThreadHelper.h" />
     <ClInclude Include="..\HiLib\ThreadPool.h" />
@@ -331,7 +330,7 @@
     <ClInclude Include="..\HiLib\ThreadSafeKnownFolderManager.h" />
     <ClInclude Include="..\HiLib\Timer.h" />
     <ClInclude Include="..\HiLib\Tracker.h" />
-    <ClInclude Include="..\HiLib\UIControl.h" />
+    <ClInclude Include="..\HiLib\D2DWControl.h" />
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
@@ -450,13 +449,13 @@
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
     <ClCompile Include="..\HiLib\StatusBar.cpp" />
     <ClCompile Include="..\HiLib\TabControl.cpp" />
-    <ClCompile Include="..\HiLib\TextboxWnd.cpp" />
+    <ClCompile Include="..\HiLib\D2DWWindow.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
     <ClCompile Include="..\HiLib\ThreadPool.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeKnownFolderManagaer.cpp" />
     <ClCompile Include="..\HiLib\Timer.cpp" />
-    <ClCompile Include="..\HiLib\UIControl.cpp" />
+    <ClCompile Include="..\HiLib\D2DWControl.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="FileOperationWnd.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />

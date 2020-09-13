@@ -7,7 +7,7 @@
 #include "MyWnd.h"
 #include "Scroll.h"
 #include "TextboxStateMachine.h"
-#include "UIControl.h"
+#include "D2DWControl.h"
 
 
 class CTextStore;
@@ -16,11 +16,8 @@ class IBridgeTSFInterface;
 class CGridView;
 class CTextCell;
 
-namespace d2dw
-{
 	class CVScroll;
 	class CHScroll;
-}
 
 struct COMPOSITIONRENDERINFO
 {
@@ -37,12 +34,9 @@ bool in_range(const T& value, const T& min, const T& max)
 	return min <= value && value <= max;
 }
 
-namespace d2dw
-{
+class CD2DWWindow;
 
-class CWindow;
-
-class CTextBox : public IBridgeTSFInterface, public CUIControl
+class CTextBox : public IBridgeTSFInterface, public CD2DWControl
 {
 	/**********/
 	/* Static */
@@ -66,12 +60,12 @@ protected:
 		SelEnd,
 	};
 	observable_tuple<int, int, int, int, int> m_carets;
-	d2dw::CPointF m_caretPoint;
+	CPointF m_caretPoint;
 	/* Text */
 	observable_wstring m_text;
 	/* Scroll */
-	std::unique_ptr<d2dw::CVScroll> m_pVScroll;
-	std::unique_ptr<d2dw::CHScroll> m_pHScroll;
+	std::unique_ptr<CVScroll> m_pVScroll;
+	std::unique_ptr<CHScroll> m_pHScroll;
 	/* Other */
 	bool m_hasBorder = true;
 	bool m_isScrollable = false;
@@ -82,7 +76,7 @@ protected:
 
 public:
 	CTextBox(
-		CWindow* pWnd,
+		CD2DWControl* pParentControl,
 		CTextCell* pCell,
 		const std::shared_ptr<TextboxProperty> pProp,
 		const std::wstring& text,
@@ -102,6 +96,7 @@ public:
 	/******************/
 	/* Windows Message*/
 	/******************/
+	virtual void OnCreate(const CreateEvent& e);
 	virtual void OnPaint(const PaintEvent& e) { m_pTextMachine->process_event(e); }
 	virtual void OnSetFocus(const SetFocusEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnKillFocus(const KillFocusEvent& e) override { m_pTextMachine->process_event(e); }
@@ -155,8 +150,8 @@ public:
 
 
 	// IBridgeInterface
-	virtual d2dw::CRectF GetRectInWnd() const;
-	virtual d2dw::CRectF GetPageRect() const;
+	virtual CRectF GetRectInWnd() const;
+	virtual CRectF GetPageRect() const;
 
 	// Text Functions 
 	observable_wstring& GetText() { return m_text; }
@@ -169,8 +164,8 @@ private:
 public:
 
 	/* Caret */
-	void MoveCaret(const int& position, const d2dw::CPointF& point);
-	void MoveCaretWithShift(const int& position, const d2dw::CPointF& point);
+	void MoveCaret(const int& position, const CPointF& point);
+	void MoveCaretWithShift(const int& position, const CPointF& point);
 	void MoveSelection(const int& selFirst, const int& selLast);
 	BOOL InsertAtSelection(LPCWSTR psz);
 	//BOOL DeleteAtSelection(BOOL fBack);
@@ -189,7 +184,7 @@ public:
 	virtual bool GetIsVisible()const;
 	void Render();
 	void ResetCaret();
-	void DrawCaret(const d2dw::CRectF& rc);
+	void DrawCaret(const CRectF& rc);
 	FLOAT GetLineHeight();
 	//	BOOL Layout();
 
@@ -199,27 +194,27 @@ public:
 	BOOL AddCompositionRenderInfo(int Start, int End, TF_DISPLAYATTRIBUTE* pda);
 public:
 	std::function<CComPtr<IDWriteTextLayout1>& ()> GetTextLayoutPtr;
-	std::function<std::vector<d2dw::CRectF>& ()> GetOriginCharRects;
-	std::function<std::vector<d2dw::CRectF>& ()> GetOriginCursorCharRects;
-	std::function<std::vector<d2dw::CRectF>& ()> GetActualCharRects;
-	std::function<std::vector<d2dw::CRectF>& ()> GetActualSelectionCharRects;
-	std::function<std::vector<d2dw::CRectF>& ()> GetActualCursorCharRects;
+	std::function<std::vector<CRectF>& ()> GetOriginCharRects;
+	std::function<std::vector<CRectF>& ()> GetOriginCursorCharRects;
+	std::function<std::vector<CRectF>& ()> GetActualCharRects;
+	std::function<std::vector<CRectF>& ()> GetActualSelectionCharRects;
+	std::function<std::vector<CRectF>& ()> GetActualCursorCharRects;
 
-	std::function<d2dw::CRectF& ()> GetOriginContentRect;
-	std::function<d2dw::CRectF& ()> GetActualContentRect;
+	std::function<CRectF& ()> GetOriginContentRect;
+	std::function<CRectF& ()> GetActualContentRect;
 
-	//std::optional<d2dw::CRectF> GetOriginCharRect(const int& pos);
-	//std::optional<d2dw::CRectF> GetActualCharRect(const int& pos);
-	std::optional<int> GetOriginCharPosFromPoint(const d2dw::CPointF& pt);
-	std::optional<int> GetActualCharPosFromPoint(const d2dw::CPointF& pt);
+	//std::optional<CRectF> GetOriginCharRect(const int& pos);
+	//std::optional<CRectF> GetActualCharRect(const int& pos);
+	std::optional<int> GetOriginCharPosFromPoint(const CPointF& pt);
+	std::optional<int> GetActualCharPosFromPoint(const CPointF& pt);
 
 
 	std::optional<int> GetFirstCharPosInLine(const int& pos);
 	std::optional<int> GetLastCharPosInLine(const int& pos);
 
 
-	//int CharPosFromNearPoint(const d2dw::CPointF& pt);
-	//BOOL RectFromCharPos(UINT nPos, d2dw::CRectF *prc);
+	//int CharPosFromNearPoint(const CPointF& pt);
+	//BOOL RectFromCharPos(UINT nPos, CRectF *prc);
 
 	//UINT FineFirstEndCharPosInLine(UINT uCurPos, BOOL bFirst);
 
@@ -265,7 +260,7 @@ public:
 
 };
 
-class CTextEditor :public d2dw::CTextBox
+class CTextEditor :public CTextBox
 {
 private:
 	observable<std::wstring> m_path;
@@ -273,13 +268,13 @@ private:
 
 public:
 	CTextEditor(
-		CWindow* pWnd,
+		CD2DWControl* pParentControl,
 		const std::shared_ptr<TextboxProperty>& spProp,
 		std::function<void(const std::wstring&)> changed,
 		std::function<void(const std::wstring&)> final)
-		:d2dw::CTextBox(pWnd, nullptr, spProp, L"", changed, final)
+		:CTextBox(pParentControl, nullptr, spProp, L"", changed, final)
 	{
-		m_hasBorder = false;
+		m_hasBorder = true;
 		m_isScrollable = true;
 	}
 
@@ -294,6 +289,7 @@ public:
 	}
 
 	virtual void Normal_ContextMenu(const ContextMenuEvent& e) override;
+	virtual CRectF GetRectInWnd() const override { return CD2DWControl::GetRectInWnd(); }
 
 	//std::wstring m_text;
 
@@ -308,4 +304,3 @@ public:
 	void Update();
 
 };
-}

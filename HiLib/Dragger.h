@@ -182,20 +182,20 @@ public:
 		//}
 	}
 
-	void PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1) {}
+	void PaintLine(CDirect2DWrite* pDirect, SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1) {}
 
 };
 
 template <>
-void CDragger<RowTag, ColTag>::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
+void CDragger<RowTag, ColTag>::PaintLine(CDirect2DWrite* pDirect, SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
 {
-	pDirect->DrawSolidLine(line, d2dw::CPointF(cooyou0, coome), d2dw::CPointF(cooyou1, coome));
+	pDirect->DrawSolidLine(line, CPointF(cooyou0, coome), CPointF(cooyou1, coome));
 }
 
 template <>
-void CDragger<ColTag, RowTag>::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
+void CDragger<ColTag, RowTag>::PaintLine(CDirect2DWrite* pDirect, SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
 {
-	pDirect->DrawSolidLine(line, d2dw::CPointF(coome, cooyou0), d2dw::CPointF(coome, cooyou1));
+	pDirect->DrawSolidLine(line, CPointF(coome, cooyou0), CPointF(coome, cooyou1));
 }
 
 

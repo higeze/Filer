@@ -32,9 +32,9 @@ public:
 	static CheckBoxState Str2State(const std::wstring& str);
 	static std::wstring State2Str(const CheckBoxState& state);
 
-	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override;
-	virtual d2dw::CSizeF MeasureContentSize(d2dw::CDirect2DWrite* pDirect) override;
-	virtual d2dw::CSizeF MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect) override;
+	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override;
+	virtual CSizeF MeasureContentSize(CDirect2DWrite* pDirect) override;
+	virtual CSizeF MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect) override;
 
 	virtual std::wstring GetString();
 	virtual void SetStringCore(const std::wstring& str);

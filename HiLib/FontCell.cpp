@@ -7,16 +7,17 @@
 #include "Row.h"
 #include "Column.h"
 #include "GridView.h"
+#include "D2DWWindow.h"
 
-CFontCell::CFontCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,d2dw::CFontF font)
+CFontCell::CFontCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CFontF font)
 	:CTextCell(pSheet,pRow,pColumn,spProperty),
 	m_font(font){}
 
-d2dw::CFontF CFontCell::GetFont(){return m_font;}
+CFontF CFontCell::GetFont(){return m_font;}
 
-void CFontCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
+void CFontCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	d2dw::FormatF fac(m_font, d2dw::CColorF(0.0f, 0.0f, 0.0f, 1.0f), d2dw::CAlignmentF());
+	FormatF fac(m_font, CColorF(0.0f, 0.0f, 0.0f, 1.0f), CAlignmentF());
 	pDirect->DrawTextLayout(fac, GetString(), rcPaint);
 }
 

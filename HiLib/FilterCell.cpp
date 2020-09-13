@@ -4,6 +4,7 @@
 #include "Column.h"
 #include "GridView.h"
 #include "Textbox.h"
+#include "D2DWWindow.h"
 
 std::wstring CFilterCell::GetString()
 {
@@ -19,7 +20,7 @@ void CFilterCell::SetStringCore(const std::wstring& str)
 	}, std::chrono::milliseconds(200));
 }
 
-void CFilterCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
+void CFilterCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 
 	std::wstring str = GetString();
@@ -28,7 +29,7 @@ void CFilterCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPai
 	}
 	else {
 		str = L"Filter items...";
-		d2dw::FormatF filterFnC(
+		FormatF filterFnC(
 			m_spCellProperty->Format->Font.FamilyName, m_spCellProperty->Format->Font.Size,
 			210.0f / 255, 210.0f / 255, 210.0f / 255, 1.0f);
 		pDirect->DrawTextLayout(filterFnC, str, rcPaint);

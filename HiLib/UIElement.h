@@ -3,7 +3,7 @@
 #include "MyPoint.h"
 #include "Direct2DWrite.h"
 
-#undef CreateEvent
+class CD2DWWindow;
 
 namespace UIElementState
 {
@@ -18,66 +18,69 @@ namespace UIElementState
 	};
 }
 
-struct EventArgs
+struct Event
 {
 public:
-	CWnd* WndPtr;
+	CD2DWWindow* WndPtr;
 	BOOL* HandledPtr;
-	EventArgs(CWnd* pWnd = nullptr, BOOL* pHandled = nullptr):WndPtr(pWnd), HandledPtr(pHandled){}
+	Event(CD2DWWindow* pWnd = nullptr, BOOL* pHandled = nullptr):WndPtr(pWnd), HandledPtr(pHandled){}
 };
 
 class CCell;
 
-struct BeginEditEvent :public EventArgs
+struct BeginEditEvent :public Event
 {
 	CCell* CellPtr;
-	BeginEditEvent(CWnd* pWnd, CCell* pCell)
-		:EventArgs(pWnd), CellPtr(pCell) {}
+	BeginEditEvent(CD2DWWindow* pWnd, CCell* pCell)
+		:Event(pWnd), CellPtr(pCell) {}
 };
 
-struct EndEditEvent :public EventArgs
+struct EndEditEvent :public Event
 {
-	EndEditEvent(CWnd* pWnd)
-		:EventArgs() {}
+	EndEditEvent(CD2DWWindow* pWnd)
+		:Event() {}
 };
 
-struct CreateEvent :public EventArgs
+#undef CreateEvent
+struct CreateEvent :public Event
 {
-	CreateEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:EventArgs(pWnd, pHandled) {}
+	CRectF Rect;
+	CreateEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
+	CreateEvent(CD2DWWindow* pWnd, CRectF rect, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled), Rect(rect){}
 };
 
-struct CloseEvent :public EventArgs
+struct CloseEvent :public Event
 {
-	CloseEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:EventArgs(pWnd, pHandled) {}
+	CloseEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled) {}
 };
 
-struct KillFocusEvent :public EventArgs
+struct KillFocusEvent :public Event
 {
-	KillFocusEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:EventArgs(pWnd, pHandled){}
+	KillFocusEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled){}
 };
 
-struct KeyEventArgs:public EventArgs
+struct KeyEvent:public Event
 {
 	UINT Char;
 	UINT RepeatCount;
 	UINT Flags;
-	KeyEventArgs(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:EventArgs(pWnd, pHandled), Char(wParam), RepeatCount(lParam & 0xFF), Flags(lParam >> 16 & 0xFF) {}
+	KeyEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled), Char(wParam), RepeatCount(lParam & 0xFF), Flags(lParam >> 16 & 0xFF) {}
 };
 
-struct CharEvent :public KeyEventArgs
+struct CharEvent :public KeyEvent
 {
-	CharEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:KeyEventArgs(pWnd, wParam, lParam, pHandled){}
+	CharEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:KeyEvent(pWnd, wParam, lParam, pHandled){}
 };
 
-struct KeyDownEvent :public KeyEventArgs
+struct KeyDownEvent :public KeyEvent
 {
-	KeyDownEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:KeyEventArgs(pWnd, wParam, lParam, pHandled) {}
+	KeyDownEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:KeyEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
 struct SysKeyDownEvent :public KeyDownEvent
@@ -86,84 +89,84 @@ struct SysKeyDownEvent :public KeyDownEvent
 };
 
 
-struct RectEvent :public EventArgs
+struct RectEvent :public Event
 {
-	d2dw::CRectF Rect;
-	RectEvent(CWnd* pWnd, d2dw::CRectF rect, BOOL* pHandled = nullptr) :
-		EventArgs(pWnd, pHandled), Rect(rect){}
+	CRectF Rect;
+	RectEvent(CD2DWWindow* pWnd, CRectF rect, BOOL* pHandled = nullptr) :
+		Event(pWnd, pHandled), Rect(rect){}
 };
 
-struct PaintEvent:public EventArgs
+struct PaintEvent:public Event
 {
-	using EventArgs::EventArgs;
+	using Event::Event;
 };
 
-struct MouseEvent:public EventArgs
+struct MouseEvent:public Event
 {
 	UINT Flags;
 	CPoint PointInClient;
-	MouseEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:EventArgs(pWnd, pHandled), Flags(wParam), PointInClient((short)LOWORD(lParam), (short)HIWORD(lParam)){}
+	MouseEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled), Flags(wParam), PointInClient((short)LOWORD(lParam), (short)HIWORD(lParam)){}
 	virtual ~MouseEvent(){}
 };
 
 struct LButtonDownEvent :public MouseEvent
 {
-	LButtonDownEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr):
+	LButtonDownEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr):
 		MouseEvent(pWnd, wParam, lParam, pHandled){}
 };
 
 struct LButtonUpEvent :public MouseEvent
 {
-	LButtonUpEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr):
+	LButtonUpEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr):
 		MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
 struct LButtonClkEvent :public MouseEvent
 {
-	LButtonClkEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+	LButtonClkEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
 struct LButtonSnglClkEvent :public MouseEvent
 {
-	LButtonSnglClkEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+	LButtonSnglClkEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
 struct LButtonDblClkEvent :public MouseEvent
 {
-	LButtonDblClkEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+	LButtonDblClkEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
 struct LButtonDblClkTimeExceedEvent :public MouseEvent
 {
-	LButtonDblClkTimeExceedEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+	LButtonDblClkTimeExceedEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
 struct LButtonBeginDragEvent :public MouseEvent
 {
-	LButtonBeginDragEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+	LButtonBeginDragEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
 struct RButtonDownEvent :public MouseEvent
 {
-	RButtonDownEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+	RButtonDownEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
 struct MouseMoveEvent :public MouseEvent
 {
-	MouseMoveEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+	MouseMoveEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
 struct MouseLeaveEvent :public MouseEvent
 {
-	MouseLeaveEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+	MouseLeaveEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
@@ -171,57 +174,54 @@ struct MouseLeaveEvent :public MouseEvent
 struct MouseWheelEvent:public MouseEvent
 {
 	short Delta;
-	MouseWheelEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+	MouseWheelEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
 		:MouseEvent(pWnd, wParam, lParam, pHandled), Delta(GET_WHEEL_DELTA_WPARAM(wParam)){}
 };
 
-struct SetCursorEvent:public EventArgs
+struct SetCursorEvent:public Event
 {
 	UINT HitTest;
-	SetCursorEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:EventArgs(pWnd, pHandled), HitTest(LOWORD(lParam)){}
+	SetCursorEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled), HitTest(LOWORD(lParam)){}
 };
 
-struct SetFocusEvent :public EventArgs
+struct SetFocusEvent :public Event
 {
 	HWND OldHWnd = nullptr;
-	SetFocusEvent(CWnd* pWnd, WPARAM wParam = NULL, LPARAM lParam = NULL, BOOL* pHandled = nullptr)
-		:EventArgs(pWnd, pHandled),OldHWnd((HWND)wParam){}
+	SetFocusEvent(CD2DWWindow* pWnd, WPARAM wParam = NULL, LPARAM lParam = NULL, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled),OldHWnd((HWND)wParam){}
 };
 
-struct ContextMenuEvent:public EventArgs
+struct ContextMenuEvent:public Event
 {
 public:
 	CPoint PointInClient;
 	CPoint PointInScreen;
-	ContextMenuEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:EventArgs(pWnd, pHandled),
-		PointInScreen((short)LOWORD(lParam), (short)HIWORD(lParam)),
-		PointInClient(pWnd->ScreenToClient(CPoint((short)LOWORD(lParam), (short)HIWORD(lParam)))){}
+	ContextMenuEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
 };
 
-struct CommandEvent :public EventArgs
+struct CommandEvent :public Event
 {
 	UINT ID;
 	UINT NotifyCode;
 	HWND HWndControl;
-	CommandEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-	:EventArgs(pWnd, pHandled),ID(wParam & 0xFFFF), NotifyCode((wParam>>16) & 0xFFFF), HWndControl((HWND)lParam){}
+	CommandEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+	:Event(pWnd, pHandled),ID(wParam & 0xFFFF), NotifyCode((wParam>>16) & 0xFFFF), HWndControl((HWND)lParam){}
 };
 
-struct CancelModeEvent :public EventArgs
+struct CancelModeEvent :public Event
 {
 public:
-	CancelModeEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:EventArgs(pWnd, pHandled){ }
+	CancelModeEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled){ }
 };
 
-struct CaptureChangedEvent :public EventArgs
+struct CaptureChangedEvent :public Event
 {
 public:
 	HWND HWnd;
-	CaptureChangedEvent(CWnd* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:EventArgs(pWnd, pHandled), HWnd(reinterpret_cast<HWND>(lParam)){ }
+	CaptureChangedEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled), HWnd(reinterpret_cast<HWND>(lParam)){ }
 };
 
 
@@ -278,7 +278,7 @@ public:
 
 	virtual void OnPropertyChanged(const wchar_t* name){}
 	
-	virtual d2dw::CRectF GetRectInWnd() const = 0;
+	virtual CRectF GetRectInWnd() const = 0;
 
 	void Update() {}
 

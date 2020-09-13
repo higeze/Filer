@@ -13,7 +13,7 @@
 #include "PropertyWnd.h"
 #include "StatusBar.h"
 #include "FilerGridViewProperty.h"
-#include "TextboxWnd.h"
+#include "D2DWWindow.h"
 //#include "KonamiCommander.h"
 
 class CFilerGridView;
@@ -87,13 +87,13 @@ public:
 };
 
 
-class CFilerWnd:public d2dw::CWindow
+class CFilerWnd:public CD2DWWindow
 {
 private:
 	CRect m_rcWnd;
 	CRect m_rcPropWnd;
 	const int kSplitterWidth = 5;
-	LONG m_splitterLeft;
+	FLOAT m_splitterLeft;
 	bool m_isSizing = false;
 	CPoint m_ptBeginClient;
 
@@ -112,10 +112,11 @@ private:
 	std::shared_ptr<CFilerTabGridView> m_spCurView;
 	std::shared_ptr<CFavoritesGridView> m_spLeftFavoritesView;
 	std::shared_ptr<CFavoritesGridView> m_spRightFavoritesView;
-	std::shared_ptr<d2dw::CStatusBar> m_spStatusBar;
+	std::shared_ptr<CStatusBar> m_spStatusBar;
+	CRectF m_splitterRect;
 
 	//Property
-	d2dw::SolidFill BackgroundFill = d2dw::SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
+	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
 	
 	//CKonamiCommander m_konamiCommander;
 
@@ -123,6 +124,9 @@ public:
 	//Constructor
 	CFilerWnd();
 	virtual ~CFilerWnd();
+
+	HWND Create(HWND hWndParent) override;
+
 
 	//Getter
 	std::shared_ptr<CApplicationProperty>& GetApplicationProperty() { return m_spApplicationProp; }
@@ -133,34 +137,42 @@ public:
 	std::shared_ptr<CFavoritesGridView>& GetRightFavoritesView() { return m_spRightFavoritesView; }
 	std::shared_ptr<CFilerTabGridView>& GetLeftWnd() { return m_spLeftView; }
 	std::shared_ptr<CFilerTabGridView>& GetRightWnd() { return m_spRightView; }
+	// LeftFavorite, LeftTab, Splitter, RightFavorite, RightTab, StatusBar
+	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();
 
-private:
-	virtual void OnClose(const CloseEvent& e)override;
+	/******************/
+	/* Window Message */
+	/******************/
 	virtual LRESULT OnDestroy(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
-	LRESULT OnCommandSave(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	LRESULT OnCommandExit(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-
-	LRESULT OnCommandApplicationOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	LRESULT OnCommandFilerGridViewOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
-	LRESULT OnCommandTextOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	LRESULT OnCommandFavoritesOption(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled);
-	LRESULT OnCommandExeExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	LRESULT OnCommandLeftViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-	LRESULT OnCommandRightViewOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-
+	/**************/
+	/* UI Message */
+	/**************/
+	virtual void OnPaint(const PaintEvent& e)override;
+	virtual void OnClose(const CloseEvent& e)override;
 	virtual void OnCreate(const CreateEvent& e) override;
 	virtual void OnRect(const RectEvent& e) override;
 	//virtual void OnSetFocus(const SetFocusEvent& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
-
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override;
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
+	
+	/***********/
+	/* Command */
+	/***********/
+	void OnCommandSave(const CommandEvent& e);
+	void OnCommandExit(const CommandEvent& e);
+
+	void OnCommandApplicationOption(const CommandEvent& e);
+	void OnCommandFilerGridViewOption(const CommandEvent& e);
+	void OnCommandTextOption(const CommandEvent& e);
+	void OnCommandFavoritesOption(const CommandEvent& e);
+	void OnCommandExeExtensionOption(const CommandEvent& e);
 
 public:
-	//TODODO
+	//TODOLOW
 	//template<class T, class... Args>
 	//LRESULT OnCommandOption(const std::wstring& name, std::shared_ptr<T>& spProp, std::function<void(const std::wstring&)> changed, Args&... args)
 	//{

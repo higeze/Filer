@@ -9,10 +9,10 @@ private:
 	observable<std::wstring> m_path;
 public:
 	template<typename... TArgs>
-	CToDoGridView(CWnd* pWnd, std::shared_ptr<GridViewProperty>& spGridViewProp,
+	CToDoGridView(CD2DWControl* pParentControl, std::shared_ptr<GridViewProperty>& spGridViewProp,
 				  std::shared_ptr<observable_vector<std::tuple<MainTask>>> spItemsSource = nullptr,
 				  TArgs... args)
-		:CBindGridView<MainTask>(pWnd, spGridViewProp, spItemsSource, args...){}
+		:CBindGridView<MainTask>(pParentControl, spGridViewProp, spItemsSource, args...){}
 
 	virtual bool HasSheetCell() override { return true; }
 	observable<std::wstring>& GetObsPath() { return m_path; }

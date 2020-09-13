@@ -5,13 +5,13 @@
 class CFontCell:public CTextCell
 {
 private:
-	d2dw::CFontF m_font;
+	CFontF m_font;
 public:
-	CFontCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty, d2dw::CFontF font);
+	CFontCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty, CFontF font);
 	virtual ~CFontCell(){}
-	d2dw::CFontF GetFont();
+	CFontF GetFont();
 
-	void PaintContent(d2dw::CDirect2DWrite* pDirect,d2dw::CRectF rcPaint) override;
+	void PaintContent(CDirect2DWrite* pDirect,CRectF rcPaint) override;
 
 	virtual void OnLButtonClk(MouseEvent& e);
 

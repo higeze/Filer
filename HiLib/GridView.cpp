@@ -29,7 +29,7 @@
 #include "MouseStateMachine.h"
 #include "GridViewProperty.h"
 #include "ResourceIDFactory.h"
-#include "TextboxWnd.h"
+#include "D2DWWindow.h"
 
 #include "resource.h"
 
@@ -40,20 +40,19 @@ UINT CGridView::WM_DELAY_UPDATE = ::RegisterWindowMessage(L"CGridView::WM_DELAY_
 CMenu CGridView::ContextMenu;
 
 CGridView::CGridView(
-	CWnd* pWnd,
+	CD2DWControl* pParentControl,
 	std::shared_ptr<GridViewProperty>& spGridViewProp,
 	CMenu* pContextMenu)
-	:m_pWnd(pWnd),
-	m_spGridViewProp(spGridViewProp),
-	CSheet(pWnd, spGridViewProp, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
-	m_pVScroll(std::make_unique<d2dw::CVScroll>(pWnd, spGridViewProp->VScrollPropPtr, std::bind(&CGridView::OnVScrollPropertyChanged, this, phs::_1))),
-	m_pHScroll(std::make_unique<d2dw::CHScroll>(pWnd, spGridViewProp->HScrollPropPtr, std::bind(&CGridView::OnHScrollPropertyChanged, this, phs::_1)))
+	:m_spGridViewProp(spGridViewProp),
+	CSheet(pParentControl, spGridViewProp, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
+	m_pVScroll(std::make_unique<CVScroll>(this, spGridViewProp->VScrollPropPtr, std::bind(&CGridView::OnVScrollPropertyChanged, this, phs::_1))),
+	m_pHScroll(std::make_unique<CHScroll>(this, spGridViewProp->HScrollPropPtr, std::bind(&CGridView::OnHScrollPropertyChanged, this, phs::_1)))
 {
 	m_pMachine.reset(new CGridStateMachine(this));
 
 	//Add Message
-	pWnd->AddMsgHandler(WM_FILTER, &CGridView::OnFilter, this);
-	pWnd->AddMsgHandler(WM_DELAY_UPDATE, &CGridView::OnDelayUpdate, this);
+	GetWndPtr()->AddMsgHandler(WM_FILTER, &CGridView::OnFilter, this);
+	GetWndPtr()->AddMsgHandler(WM_DELAY_UPDATE, &CGridView::OnDelayUpdate, this);
 
 	CellLButtonClk.connect(std::bind(&CGridView::OnCellLButtonClk, this, std::placeholders::_1));
 	CellContextMenu.connect(std::bind(&CGridView::OnCellContextMenu, this, std::placeholders::_1));
@@ -195,7 +194,7 @@ void CGridView::UpdateRow()
 	top = UpdateHeadersRow(top);
 
 	//Page
-	d2dw::CRectF rcPage(GetRectInWnd());
+	CRectF rcPage(GetRectInWnd());
 	rcPage.top = top;
 	FLOAT pageHeight = rcPage.Height();
 	FLOAT scrollPos = GetVerticalScrollPos();
@@ -239,18 +238,18 @@ void CGridView::UpdateScrolls()
 	if(!Visible())return;
 
 	//Client
-	d2dw::CRectF rcClient(GetRectInWnd());
+	CRectF rcClient(GetRectInWnd());
 
 	//Origin
-	//d2dw::CPointF ptOrigin(GetOriginPoint());
+	//CPointF ptOrigin(GetOriginPoint());
 
 	//Scroll Range
-	d2dw::CRectF rcCells(GetCellsRect());
+	CRectF rcCells(GetCellsRect());
 	m_pVScroll->SetScrollRange(0.f, rcCells.Height());
 	m_pHScroll->SetScrollRange(0.f, rcCells.Width());
 
 	//Scroll Page
-	d2dw::CRectF rcPage(GetPageRect());
+	CRectF rcPage(GetPageRect());
 	m_pVScroll->SetScrollPage(rcPage.Height());
 	m_pHScroll->SetScrollPage(rcPage.Width());
 
@@ -261,8 +260,8 @@ void CGridView::UpdateScrolls()
 	m_pHScroll->SetVisible(m_pHScroll->GetScrollDistance() > m_pHScroll->GetScrollPage());
 
 	//Position scroll
-	d2dw::CRectF rcVertical;
-	d2dw::CRectF rcHorizontal;
+	CRectF rcVertical;
+	CRectF rcHorizontal;
 	FLOAT lineHalfWidth = GetCellProperty()->Line->Width * 0.5f;
 
 	rcVertical.left = rcClient.right - ::GetSystemMetrics(SM_CXVSCROLL) - lineHalfWidth;
@@ -281,9 +280,9 @@ void CGridView::UpdateScrolls()
 
 }
 
-d2dw::CPointF CGridView::GetScrollPos()const
+CPointF CGridView::GetScrollPos()const
 {
-	return d2dw::CPointF(m_pHScroll->GetScrollPos(), m_pVScroll->GetScrollPos());
+	return CPointF(m_pHScroll->GetScrollPos(), m_pVScroll->GetScrollPos());
 }
 
 void CGridView::SetScrollPos(const CPoint& ptScroll)
@@ -308,7 +307,7 @@ void CGridView::OnCommandEditHeader(const CommandEvent& e)
 	if(!m_rocoContextMenu.IsInvalid()){
 		if(m_rocoContextMenu.GetRowPtr()==GetNameHeaderRowPtr()){
 			if(auto pCell=std::dynamic_pointer_cast<CParentHeaderCell>(Cell(m_rocoContextMenu.GetRowPtr(), m_rocoContextMenu.GetColumnPtr()))){
-				pCell->OnEdit(EventArgs());
+				pCell->OnEdit(Event());
 			}
 		}
 	}
@@ -407,7 +406,7 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 	if(!pCell || !pCell->GetRowPtr()->GetVisible())return;
 
 	//Page
-	d2dw::CRectF rcPage(GetPageRect());
+	CRectF rcPage(GetPageRect());
 
 	if (IsVirtualPage()) {
 		//Helper functions
@@ -508,16 +507,16 @@ void CGridView::Jump(std::shared_ptr<CCell>& spCell)
 	PostUpdate(Updates::EnsureVisibleFocusedCell);
 }
 
-d2dw::CRectF CGridView::GetPaintRect()
+CRectF CGridView::GetPaintRect()
 {
 	return GetRectInWnd();
 }
 
 std::pair<bool, bool> CGridView::GetHorizontalVerticalScrollNecessity()
 {
-	d2dw::CRectF rcClient(GetRectInWnd());
-	d2dw::CRectF rcCells(GetCellsRect());
-	d2dw::CPointF ptOrigin(GetFrozenPoint());
+	CRectF rcClient(GetRectInWnd());
+	CRectF rcCells(GetCellsRect());
+	CPointF ptOrigin(GetFrozenPoint());
 	//First
 	bool bEnableShowHorizontal = rcCells.right > rcClient.right || rcCells.left < ptOrigin.x ;
 	bool bEnableShowVertical = rcCells.bottom > rcClient.bottom || rcCells.top < ptOrigin.y;
@@ -531,11 +530,11 @@ std::pair<bool, bool> CGridView::GetHorizontalVerticalScrollNecessity()
 	return std::make_pair(bEnableShowHorizontal, bEnableShowVertical);
 }
 
-d2dw::CRectF CGridView::GetPageRect()
+CRectF CGridView::GetPageRect()
 {
-	d2dw::CRectF rcClient(GetRectInWnd());
-	d2dw::CRectF rcCells(GetCellsRect());
-	d2dw::CPointF ptOrigin(GetFrozenPoint());
+	CRectF rcClient(GetRectInWnd());
+	CRectF rcCells(GetCellsRect());
+	CPointF ptOrigin(GetFrozenPoint());
 	//First
 	bool bEnableShowVertical = rcCells.bottom > rcClient.bottom || rcCells.top < ptOrigin.y;
 	bool bEnableShowHorizontal = rcCells.right > rcClient.right || rcCells.left < ptOrigin.x ;
@@ -546,7 +545,7 @@ d2dw::CRectF CGridView::GetPageRect()
 	bEnableShowVertical = rcCells.bottom > (rcClient.bottom - (bEnableShowHorizontal?GetSystemMetrics(SM_CYHSCROLL):0)) || rcCells.top < ptOrigin.y;
 	bEnableShowHorizontal = rcCells.right > (rcClient.right - (bEnableShowVertical?GetSystemMetrics(SM_CXVSCROLL):0)) || rcCells.left < ptOrigin.x;
 
-	return d2dw::CRectF(ptOrigin.x, ptOrigin.y,
+	return CRectF(ptOrigin.x, ptOrigin.y,
 		rcClient.right - (bEnableShowVertical?GetSystemMetrics(SM_CXVSCROLL):0),
 		rcClient.bottom - (bEnableShowHorizontal?GetSystemMetrics(SM_CYHSCROLL):0));
 }
@@ -636,26 +635,6 @@ CColumn* CGridView::GetParentColumnPtr(CCell* pCell)
 {
 	return pCell->GetColumnPtr();
 }
-
-bool CGridView::GetIsFocused()const
-{
-	//TODODO
-	auto hWndAct = ::GetActiveWindow();
-	auto hWndFcs = ::GetFocus();
-	auto hWndFore = ::GetForegroundWindow();
-
-	return hWndFcs == GetWndPtr()->m_hWnd ||
-		(HWND)::GetWindowWord(hWndAct, GWL_HWNDPARENT) == GetWndPtr()->m_hWnd ||
-		(HWND)::GetWindowWord(hWndFcs, GWL_HWNDPARENT) == GetWndPtr()->m_hWnd ||
-		(HWND)::GetWindowWord(hWndFore, GWL_HWNDPARENT) == GetWndPtr()->m_hWnd ||
-		(HWND)::GetWindow(hWndAct, GW_OWNER) == GetWndPtr()->m_hWnd ||
-		(HWND)::GetWindow(hWndFcs, GW_OWNER) == GetWndPtr()->m_hWnd ||
-		(HWND)::GetWindow(hWndFore, GW_OWNER) == GetWndPtr()->m_hWnd ||
-		(HWND)::GetParent(hWndAct) == GetWndPtr()->m_hWnd ||
-		(HWND)::GetParent(hWndFcs) == GetWndPtr()->m_hWnd ||
-		(HWND)::GetParent(hWndFore) == GetWndPtr()->m_hWnd;
-}
-
 
 void CGridView::OnCommandFind(const CommandEvent& e)
 {
@@ -809,14 +788,14 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 void CGridView::Normal_Paint(const PaintEvent& e)
 {
 	if (!Visible())return;
-	d2dw::CRectF rcClient(GetRectInWnd());
-	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), rcClient);
+	CRectF rcClient(GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), rcClient);
 	CSheet::Normal_Paint(e);
 
 
 	//Paint Focused Line
 	if (GetIsFocused() ){
-		d2dw::CRectF rcFocus(rcClient);
+		CRectF rcFocus(rcClient);
 		rcFocus.DeflateRect(1.0f, 1.0f);
 		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(GetHeaderProperty()->FocusedLine), rcFocus);
 	}
@@ -881,7 +860,7 @@ void CGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		CMenu* pMenu = GetContextMenuPtr();
 		if (pMenu) {
 			CPoint ptScreen(e.PointInClient);
-			HWND hWnd = e.WndPtr->m_hWnd;
+			HWND hWnd = GetWndPtr()->m_hWnd;
 			SetContextMenuRowColumn(CRowColumn());
 			::ClientToScreen(hWnd, &ptScreen);
 			::SetForegroundWindow(hWnd);
@@ -988,8 +967,8 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 {
 	if (auto pCell = dynamic_cast<CTextCell*>(e.CellPtr)) {
 
-		d2dw::CTextBox* pEdit = new d2dw::CTextBox(
-			GetWndPtr(),
+		CTextBox* pEdit = new CTextBox(
+			this,
 			pCell,
 			pCell->GetCellPropertyPtr(),
 			pCell->GetString(),
@@ -1009,7 +988,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 				pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 			}
 			);
-		//pEdit->OnCreate(CreateEvent(this, NULL, NULL));
+		pEdit->OnCreate(CreateEvent(GetWndPtr(), pCell->GetRectInWnd()));
 		SetEditPtr(pEdit);
 		PostUpdate(Updates::Invalidate);
 		//SetCapture();
@@ -1132,9 +1111,9 @@ LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 	SPDLOG_INFO("CGridView::OnDelayUpdate");
 
 	CONSOLETIMER("OnDelayUpdate Total");
-	//TODODO
-	//SignalPreDelayUpdate();
-	//SignalPreDelayUpdate.disconnect_all_slots();
+	//TODOHIGH
+	SignalPreDelayUpdate();
+	SignalPreDelayUpdate.disconnect_all_slots();
 	PostUpdate(Updates::Filter);
 
 	if (m_keepEnsureVisibleFocusedCell) {
@@ -1151,6 +1130,14 @@ LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 /* UI Message */
 /**************/
 
+void CGridView::OnCreate(const CreateEvent& e)
+{
+	CD2DWControl::OnCreate(e);
+	UpdateAll();
+	SubmitUpdate();
+}
+
+
 void CGridView::OnRect(const RectEvent& e)
 {
 	m_rect = e.Rect;
@@ -1160,8 +1147,9 @@ void CGridView::OnRect(const RectEvent& e)
 
 void CGridView::OnPaint(const PaintEvent& e)
 {
+	if (!Visible()) { return; }
 	//GetWndPtr()->GetDirectPtr()->ClearSolid(*(m_spGridViewProp->BackgroundPropPtr->m_brush));
-	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), GetRectInWnd());
 	
 	CSheet::OnPaint(e);
 

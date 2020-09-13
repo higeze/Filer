@@ -1,4 +1,5 @@
 #include "MouseStateMachine.h"
+#include "D2DWWindow.h"
 #include "UIElement.h"
 #include "DeadlineTimer.h"
 #include "MyPoint.h"

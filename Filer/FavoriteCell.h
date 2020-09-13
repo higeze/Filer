@@ -46,7 +46,7 @@ public:
 		}
 	}
 
-	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint) override
+	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override
 	{
 		//Paint Icon
 		CFileIconCell::PaintContent(pDirect, rcPaint);
@@ -86,7 +86,7 @@ public:
 			auto& itemsSource = static_cast<CFavoritesGridView*>(m_pSheet)->GetItemsSource();
 			auto order = pRow->GetIndex<AllTag>();
 
-			//TODODO
+			//TODOLOW
 			//pFilerWnd->OnCommandOption<CFavorite>(L"Favorite", std::get<std::shared_ptr<CFavorite>>(itemsSource[order]),
 			//									  [pFilerWnd](const std::wstring& prop)->void {
 			//										  pFilerWnd->GetLeftFavoritesView()->Reload();

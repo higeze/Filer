@@ -6,6 +6,7 @@
 #include "Row.h"
 #include "Column.h"
 #include "Cell.h"
+#include "D2DWWindow.h"
 
 
 bool CCursorer::IsCursorTargetCell(const std::shared_ptr<CCell>& cell)
@@ -129,7 +130,7 @@ void CCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
 	if(pSheet->Empty()){
 		return;
 	}
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	auto cell = pSheet->Cell(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
 	//If out of sheet, reset curosr
 	if(!cell){
@@ -194,7 +195,7 @@ void CCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e)
 		return;
 	}
 	//Get RowColumn from Point
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	auto cell = pSheet->Cell(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
 	if(!cell){
 		return OnCursorClear(pSheet);
@@ -388,7 +389,7 @@ void CSheetCellCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e
 		return;
 	}
 	//Get RowColumn from Point
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	auto cell = pSheet->Cell(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
 	if(!cell){
 		return OnCursorClear(pSheet);
@@ -412,7 +413,7 @@ void CSheetCellCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e
 		return;
 	}
 	//Get RowColumn from Point
-	auto cell = pSheet->Cell(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	auto cell = pSheet->Cell(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
 	if(!cell){
 		return OnCursorClear(pSheet);

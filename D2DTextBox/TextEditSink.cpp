@@ -1,5 +1,5 @@
 ﻿#include "text_stdafx.h"
-#include "TextboxWnd.h"
+#include "D2DWWindow.h"
 #include "Textbox.h"
 #include "TextEditSink.h"
 #include "CellProperty.h"
@@ -68,7 +68,7 @@ STDAPI_(ULONG) CTextEditSink::Release()
 //----------------------------------------------------------------------------
 #define TES_INVALID_COOKIE  ((DWORD)(-1))
 
-CTextEditSink::CTextEditSink(d2dw::CTextBox *pEditor)
+CTextEditSink::CTextEditSink(CTextBox *pEditor)
 {
     _cRef = 1;
     _dwEditCookie = TES_INVALID_COOKIE;

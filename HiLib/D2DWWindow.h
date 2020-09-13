@@ -1,37 +1,35 @@
 ﻿#pragma once
 #include "MyWnd.h"
 #include "UIElement.h"
-#include "UIControl.h"
+#include "D2DWControl.h"
 #include "Direct2DWrite.h"
 #include "observable.h"
 
-namespace d2dw
-{
-
 class CMouseStateMachine;
-class CUIControl;
+class CD2DWControl;
 
-class CWindow:public CWnd, public CUIElement
+class CD2DWWindow:public CWnd, public CD2DWControl
 {
 public:
-	std::shared_ptr<d2dw::CDirect2DWrite> m_pDirect;
+	std::shared_ptr<CDirect2DWrite> m_pDirect;
 	std::unique_ptr<CMouseStateMachine> m_pMouseMachine;
-	std::vector<std::shared_ptr<CUIControl>> m_pControls;
-	std::shared_ptr<CUIControl> m_pFocusedControl;
+	std::vector<std::shared_ptr<CD2DWControl>> m_pControls;
+	std::shared_ptr<CD2DWControl> m_pFocusedControl;
 
 public :
-	CWindow();
-	virtual ~CWindow();
+	CD2DWWindow();
+	virtual ~CD2DWWindow();
 
+	CD2DWWindow* GetWndPtr()const override{ return const_cast<CD2DWWindow*>(this); }
 	CDirect2DWrite* GetDirectPtr() const { return  m_pDirect.get(); }
 	bool GetIsFocused()const;
 
-	std::shared_ptr<CUIControl> GetFocusedControlPtr()
+	std::shared_ptr<CD2DWControl> GetFocusedControlPtr()
 	{
 		return m_pFocusedControl;
 	}
 	void ClearControlPtr() { m_pControls.clear(); }
-	void AddControlPtr(const std::shared_ptr<CUIControl>& pControl) 
+	void AddControlPtr(const std::shared_ptr<CD2DWControl>& pControl) 
 	{ 
 		m_pControls.push_back(pControl);
 		m_pFocusedControl = pControl;
@@ -64,12 +62,12 @@ public:
 	void OnFinalMessage(HWND hWnd) override;
 	
 	template<typename TFunc, typename TEvent>
-	void SendAll(TFunc f, const TEvent& e, bool invalidate = false)
+	void SendAll(TFunc f, const TEvent& e, bool invalidate = true)
 	{
 		for (auto& pControl : m_pControls) {
 			(pControl.get()->*f)(e);
 		}
-		if (invalidate) { InvalidateRect(NULL, FALSE); }
+		//if (invalidate) { InvalidateRect(NULL, FALSE); }
 	}
 
 	template<typename TFunc, typename TEvent>
@@ -92,12 +90,19 @@ public:
 		InvalidateRect(NULL, FALSE);
 	}
 
-	void SetFocusControl(const std::shared_ptr<CUIControl>& spControl);
+	void SetFocusControl(const std::shared_ptr<CD2DWControl>& spControl);
 
-	virtual void OnCreate(const CreateEvent& e) { SendAll(&CUIElement::OnCreate, e); }
+	virtual void OnCreate(const CreateEvent& e) {}
 	virtual void OnPaint(const PaintEvent& e) { SendAll(&CUIElement::OnPaint, e, false); }
 	virtual void OnClose(const CloseEvent& e) { SendAll(&CUIElement::OnClose, e); }
-	virtual void OnCommand(const CommandEvent& e) { SendAll(&CUIElement::OnCommand, e); }
+	virtual void OnCommand(const CommandEvent& e) 
+	{
+		*(e.HandledPtr) = FALSE;
+		SendFocused(&CUIElement::OnCommand, e);
+		if (!*e.HandledPtr) {
+			CD2DWControl::OnCommand(e);
+		}
+	}
 	virtual void OnRect(const RectEvent& e) { SendFocused(&CUIElement::OnRect, e); }
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e) 
@@ -124,7 +129,11 @@ public:
 	virtual void OnMouseWheel(const MouseWheelEvent& e) { SendPtInRect(&CUIElement::OnMouseWheel, e); }
 
 	virtual void OnContextMenu(const ContextMenuEvent& e) { SendPtInRect(&CUIElement::OnContextMenu, e); }
-	virtual void OnSetCursor(const SetCursorEvent& e) { SendPtInRect(&CUIElement::OnSetCursor, e); }
+	virtual void OnSetCursor(const SetCursorEvent& e) 
+	{
+		*(e.HandledPtr) = FALSE;
+		SendPtInRect(&CUIElement::OnSetCursor, e);
+	}
 
 	//Focus
 	virtual void OnMouseEnter(const MouseEvent& e) { SendPtInRect(&CUIElement::OnMouseEnter, e); }
@@ -136,8 +145,6 @@ public:
 	virtual void OnChar(const CharEvent& e) { SendFocused(&CUIElement::OnChar, e); }
 	virtual void OnPropertyChanged(const wchar_t* name) {}
 
-	d2dw::CRectF GetRectInWnd() const { return GetDirectPtr()->Pixels2Dips(GetClientRect()); }
+	CRectF GetRectInWnd() const { return GetDirectPtr()->Pixels2Dips(GetClientRect()); }
 };
-
-}
 

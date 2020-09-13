@@ -7,11 +7,11 @@
 struct ProgressProperty
 {
 public:
-	d2dw::FormatF Format = d2dw::FormatF();
+	FormatF Format = FormatF();
 
-	d2dw::SolidLine Border = d2dw::SolidLine(230.f / 255.f, 230.f / 255.f, 230.f / 255.f, 1.0f);
-	d2dw::SolidFill BackgroundFill = d2dw::SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
-	d2dw::SolidFill ForegroundFill = d2dw::SolidFill(0.f / 255.f, 200.f / 255.f, 0.f / 255.f, 1.0f);
+	SolidLine Border = SolidLine(230.f / 255.f, 230.f / 255.f, 230.f / 255.f, 1.0f);
+	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
+	SolidFill ForegroundFill = SolidFill(0.f / 255.f, 200.f / 255.f, 0.f / 255.f, 1.0f);
 
 	FRIEND_SERIALIZER
 		template <class Archive>

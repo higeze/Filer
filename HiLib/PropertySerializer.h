@@ -117,7 +117,7 @@ public:
 	}
 
 	//For Color
-	void SerializeValue(d2dw::CColorF& t,CRow* pRow,CColumn* pCol)
+	void SerializeValue(CColorF& t,CRow* pRow,CColumn* pCol)
 	{
 		pCol->Cell(pRow)=std::make_shared<CColorCell>(
 			m_pSheet,
@@ -127,7 +127,7 @@ public:
 			t);
 	}
 	//For Font
-	void SerializeValue(d2dw::CFontF& t,CRow* pRow,CColumn* pCol)
+	void SerializeValue(CFontF& t,CRow* pRow,CColumn* pCol)
 	{
 		pCol->Cell(pRow)=std::make_shared<CFontCell>(
 			m_pSheet,
@@ -331,7 +331,7 @@ public:
 	}
 
 	//For Color
-	void DeserializeValue(d2dw::CColorF& t, CRow* pRow, CColumn* pColumn)
+	void DeserializeValue(CColorF& t, CRow* pRow, CColumn* pColumn)
 	{
 		if(auto p=std::dynamic_pointer_cast<CColorCell>(CSheet::Cell(pRow, pColumn))){
 			t=p->GetColor();
@@ -339,7 +339,7 @@ public:
 	}
 
 	//For Font
-	void DeserializeValue(d2dw::CFontF& t,CRow* pRow,CColumn* pColumn)
+	void DeserializeValue(CFontF& t,CRow* pRow,CColumn* pColumn)
 	{
 		if(auto p=std::dynamic_pointer_cast<CFontCell>(pColumn->Cell(pRow))){
 			t=p->GetFont();

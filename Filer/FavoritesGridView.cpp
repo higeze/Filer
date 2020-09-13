@@ -24,10 +24,10 @@
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CFavoritesGridView::CFavoritesGridView(
-	CWnd* pWnd,
+	CD2DWControl* pParentControl,
 	std::shared_ptr<GridViewProperty> spGridViewProp,
 	std::shared_ptr<CFavoritesProperty> spFavoritesProp)
-	:CBindGridView(pWnd, spGridViewProp, spFavoritesProp->GetFavoritesPtr()),
+	:CBindGridView(pParentControl, spGridViewProp, spFavoritesProp->GetFavoritesPtr()),
 	m_spFavoritesProp(spFavoritesProp)
 {
 	m_isFocusable = false;

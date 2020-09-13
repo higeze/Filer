@@ -1,5 +1,6 @@
 #include "ToDoGridView.h"
 #include "ResourceIDFactory.h"
+#include "D2DWWindow.h"
 
 void CToDoGridView::Open()
 {

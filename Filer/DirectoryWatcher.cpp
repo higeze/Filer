@@ -85,13 +85,13 @@ void CDirectoryWatcher::WatchDirectory()
 								FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
 								NULL));
 		if(pDir.get() == INVALID_HANDLE_VALUE){
-			throw std::exception(FILE_LINE_FUNC);//TODODO
+			throw std::exception(FILE_LINE_FUNC);//TODOLOW
 		}
 
 		//Associate IoComp with hDir
 		UniqueHandlePtr pIocp(::CreateIoCompletionPort(pDir.get(), NULL, COMPKEY_DIR, 0));
 		if (pIocp.get() == INVALID_HANDLE_VALUE) {
-			throw std::exception(FILE_LINE_FUNC);//TODODO
+			throw std::exception(FILE_LINE_FUNC);//TODOLOW
 		}
 
 		//Start thread;

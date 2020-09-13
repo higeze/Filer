@@ -1,6 +1,6 @@
 #pragma once
 #include "MyWnd.h"
-#include "UIControl.h"
+#include "D2DWControl.h"
 #include "Sheet.h"
 //#include "MyGdiPlusHelper.h"
 #include "ThreadHelper.h"
@@ -15,26 +15,23 @@ struct BackgroundProperty;
 struct GridViewProperty;
 class CMouseStateMachine;
 
-namespace d2dw
-{
-	class CVScroll;
-	class CHScroll;
-	class CTextBox;
-}
+class CVScroll;
+class CHScroll;
+class CTextBox;
 
 struct GridViewStateMachine;
 
 class CGridView: public CSheet
 {
 public:
-	std::unique_ptr<d2dw::CVScroll> m_pVScroll;
-	std::unique_ptr<d2dw::CHScroll> m_pHScroll;
+	std::unique_ptr<CVScroll> m_pVScroll;
+	std::unique_ptr<CHScroll> m_pHScroll;
 
 	static CMenu ContextMenu;
 protected:
-	d2dw::CTextBox* m_pEdit = nullptr;
+	CTextBox* m_pEdit = nullptr;
 	bool m_isFocusable = true;
-	d2dw::CRectF m_rcUpdateRect;
+	CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
 protected:
 	CDeadlineTimer m_invalidateTimer;
@@ -49,7 +46,7 @@ public:
 public:
 	//Constructor
 	CGridView(
-		CWnd* pWnd,
+		CD2DWControl* pParentControl,
 		std::shared_ptr<GridViewProperty>& spGridViewProp,
 		CMenu* pContextMenu= &CGridView::ContextMenu);
 	//Destructor
@@ -57,10 +54,10 @@ public:
 
 	//Getter Setter
 	std::shared_ptr<GridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
-	d2dw::CRectF GetUpdateRect()const { return m_rcUpdateRect; }
-	void SetUpdateRect(d2dw::CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
-	d2dw::CTextBox* GetEditPtr() { return m_pEdit; }
-	void SetEditPtr(d2dw::CTextBox* pEdit) { m_pEdit = pEdit; }
+	CRectF GetUpdateRect()const { return m_rcUpdateRect; }
+	void SetUpdateRect(CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
+	CTextBox* GetEditPtr() { return m_pEdit; }
+	void SetEditPtr(CTextBox* pEdit) { m_pEdit = pEdit; }
 
 protected:
 	virtual void OnCellLButtonClk(CellEventArgs& e) {}
@@ -93,6 +90,7 @@ public:
 	/**************/
 	/* UI Message */
 	/**************/
+	virtual void OnCreate(const CreateEvent& e) override;
 	virtual void OnRect(const RectEvent& e) override;
 	virtual	void OnPaint(const PaintEvent& e) override;
 	virtual void OnMouseWheel(const MouseWheelEvent& e) override;
@@ -122,13 +120,13 @@ public:
 
 	virtual CGridView* GetGridPtr(){return this;};
 
-	virtual d2dw::CPointF GetScrollPos()const override;
+	virtual CPointF GetScrollPos()const override;
 	virtual void SetScrollPos(const CPoint& ptScroll);
 
 	virtual FLOAT GetVerticalScrollPos()const;
 	virtual FLOAT GetHorizontalScrollPos()const;
-	virtual d2dw::CRectF GetPaintRect();
-	virtual d2dw::CRectF GetPageRect();
+	virtual CRectF GetPaintRect();
+	virtual CRectF GetPageRect();
 	std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
 	
 	virtual void UpdateAll();
@@ -146,7 +144,6 @@ public:
 	//virtual void ColumnErased(CColumnEventArgs& e);
 	virtual void SubmitUpdate();
 	virtual CColumn* GetParentColumnPtr(CCell* pCell)override;	
-	virtual bool GetIsFocused()const;
 
 
 public:

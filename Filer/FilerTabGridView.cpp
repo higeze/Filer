@@ -18,14 +18,25 @@
 #include "BindSheetCellColumn.h"
 #include "BindItemsSheetCell.h"
 
-#include "TextboxWnd.h"
+#include "D2DWWindow.h"
 #include "Textbox.h"
 
 
-CFilerTabGridView::CFilerTabGridView(CWnd* pWnd, std::shared_ptr<TabControlProperty> spTabProp, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, std::shared_ptr<TextEditorProperty>& spTextEditorProp)
-	:CTabControl(pWnd, spTabProp), m_spFilerGridViewProp(spFilerGridViewProp), m_spTextEditorProp(spTextEditorProp)
+CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_ptr<TabControlProperty> spTabProp, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, std::shared_ptr<TextEditorProperty>& spTextEditorProp)
+	:CTabControl(pParentControl, spTabProp), m_spFilerGridViewProp(spFilerGridViewProp), m_spTextEditorProp(spTextEditorProp)
 {
-	//
+	//Command
+	m_commandMap.emplace(IDM_NEWFILERTAB, std::bind(&CFilerTabGridView::OnCommandNewFilerTab, this, phs::_1));
+	m_commandMap.emplace(IDM_NEWTODOTAB, std::bind(&CFilerTabGridView::OnCommandNewToDoTab, this, phs::_1));
+	m_commandMap.emplace(IDM_NEWTEXTTAB, std::bind(&CFilerTabGridView::OnCommandNewTextTab, this, phs::_1));
+
+	m_commandMap.emplace(IDM_CLONETAB, std::bind(&CFilerTabGridView::OnCommandCloneTab, this, phs::_1));
+	m_commandMap.emplace(IDM_CLOSETAB, std::bind(&CFilerTabGridView::OnCommandCloseTab, this, phs::_1));
+	m_commandMap.emplace(IDM_CLOSEALLBUTTHISTAB, std::bind(&CFilerTabGridView::OnCommandCloseAllButThisTab, this, phs::_1));
+	m_commandMap.emplace(IDM_ADDTOFAVORITE, std::bind(&CFilerTabGridView::OnCommandAddToFavorite, this, phs::_1));
+	m_commandMap.emplace(IDM_OPENSAMEASOTHER, std::bind(&CFilerTabGridView::OnCommandOpenSameAsOther, this, phs::_1));
+
+	//ItemsHeader
 	m_itemsHeaderTemplate.emplace(typeid(FilerTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
 		{
 
@@ -87,7 +98,7 @@ CFilerTabGridView::CFilerTabGridView(CWnd* pWnd, std::shared_ptr<TabControlPrope
 
 	//FilerGridView Closure
 	GetFilerGridViewPtr =
-		[spFilerView = std::make_shared<CFilerGridView>(pWnd, m_spFilerGridViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CFilerGridView> {
+		[spFilerView = std::make_shared<CFilerGridView>(this, m_spFilerGridViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CFilerGridView> {
 
 		if (!isInitialized && GetWndPtr()->IsWindow()) {
 			isInitialized = true;
@@ -97,18 +108,16 @@ CFilerTabGridView::CFilerTabGridView(CWnd* pWnd, std::shared_ptr<TabControlPrope
 				auto pData = std::static_pointer_cast<FilerTabData>(m_itemsSource[m_selectedIndex.get()]);
 				pData->FolderPtr = pFolder;
 				pData->Path = pFolder->GetPath();
+				GetHeaderRects().clear();
 				spFilerView->PostUpdate(Updates::Rect);
 				spFilerView->SetUpdateRect(GetControlRect());
 			};
-			//Create
-			spFilerView->OnCreate(CreateEvent(GetWndPtr(), NULL, NULL, nullptr));
 		}
-
 		return spFilerView;
 	};
 
 	//ToDoGridView Closure
-	GetToDoGridViewPtr = [spToDoView = std::make_shared<CToDoGridView>(GetWndPtr(), std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp)), isInitialized = false, this]()mutable->std::shared_ptr<CToDoGridView>{
+	GetToDoGridViewPtr = [spToDoView = std::make_shared<CToDoGridView>(this, std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp)), isInitialized = false, this]()mutable->std::shared_ptr<CToDoGridView>{
 
 		if (!isInitialized && GetWndPtr()->IsWindow()) {
 			isInitialized = true;
@@ -176,59 +185,47 @@ CFilerTabGridView::CFilerTabGridView(CWnd* pWnd, std::shared_ptr<TabControlPrope
 			spToDoView->SetFrozenCount<RowTag>(2);
 
 			//Path Changed
-			spToDoView->GetObsPath().Changed.connect([&](const NotifyChangedEventArgs<std::wstring>& e) {
+			spToDoView->GetObsPath().Changed = [&](const NotifyChangedEventArgs<std::wstring>& e) {
 				auto pData = std::static_pointer_cast<ToDoTabData>(m_itemsSource[m_selectedIndex.get()]);
 				pData->Path = spToDoView->GetObsPath().get();
 				spToDoView->PostUpdate(Updates::Rect);
 				spToDoView->SetUpdateRect(GetControlRect());
-			});
-
-			spToDoView->OnCreate(CreateEvent(GetWndPtr(), NULL, NULL, nullptr));
+			};
 		}
 		return spToDoView;
 	};
 
+	//TextView Closure
+	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(this, m_spTextEditorProp, nullptr, nullptr), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>{
 
-	//TOTODODO
-	//AddCmdIDHandler(IDM_NEWFILERTAB, &CFilerTabGridView::OnCommandNewFilerTab, this);
-	//AddCmdIDHandler(IDM_NEWTODOTAB, &CFilerTabGridView::OnCommandNewToDoTab, this);
-	//AddCmdIDHandler(IDM_NEWTEXTTAB, &CFilerTabGridView::OnCommandNewTextTab, this);
+		if (!isInitialized && GetWndPtr()->IsWindow()) {
+			isInitialized = true;
+			//Path Changed
+			spTextView->GetObsPath().Changed = [&](const NotifyChangedEventArgs<std::wstring>& e) {
+				auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[m_selectedIndex.get()]);
+				pData->Path = spTextView->GetObsPath().get();
+				};
 
-	//AddCmdIDHandler(IDM_CLONETAB, &CFilerTabGridView::OnCommandCloneTab, this);
-	//AddCmdIDHandler(IDM_CLOSETAB, &CFilerTabGridView::OnCommandCloseTab, this);
-	//AddCmdIDHandler(IDM_CLOSEALLBUTTHISTAB, &CFilerTabGridView::OnCommandCloseAllButThisTab, this);
-	//AddCmdIDHandler(IDM_ADDTOFAVORITE, &CFilerTabGridView::OnCommandAddToFavorite, this);
-	//AddCmdIDHandler(IDM_OPENSAMEASOTHER, &CFilerTabGridView::OnCommandOpenSameAsOther, this);
-
+			//IsSave Changed
+			spTextView->GetObsIsSaved().Changed = [&](const NotifyChangedEventArgs<bool>& e) {
+				auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[m_selectedIndex.get()]);
+				pData->IsSaved = spTextView->GetObsIsSaved().get();
+				};
+			//Create
+			auto a = GetControlRect();
+		}
+		return spTextView;
+	};
 }
 
 CFilerTabGridView::~CFilerTabGridView() = default;
 
 void CFilerTabGridView::OnCreate(const CreateEvent& e)
 {
-	//TextView Closure
-	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(GetWndPtr(), m_spTextEditorProp, nullptr, nullptr), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>{
-
-		if (!isInitialized && GetWndPtr()->IsWindow()) {
-			isInitialized = true;
-			//Path Changed
-			spTextView->GetObsPath().Changed.connect([&](const NotifyChangedEventArgs<std::wstring>& e) {
-				auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[m_selectedIndex.get()]);
-				pData->Path = spTextView->GetObsPath().get();
-				});
-
-			//IsSave Changed
-			spTextView->GetObsIsSaved().Changed.connect([&](const NotifyChangedEventArgs<bool>& e) {
-				auto pData = std::static_pointer_cast<TextTabData>(m_itemsSource[m_selectedIndex.get()]);
-				pData->IsSaved = spTextView->GetObsIsSaved().get();
-				});
-			//Create
-			spTextView->OnCreate(CreateEvent(GetWndPtr(), NULL, NULL, nullptr));
-		}
-		return spTextView;
-	};
-
 	CTabControl::OnCreate(e);
+	GetFilerGridViewPtr()->OnCreate(CreateEvent(GetWndPtr(), GetControlRect()));
+	GetToDoGridViewPtr()->OnCreate(CreateEvent(GetWndPtr(), GetControlRect()));
+	GetTextViewPtr()->OnCreate(CreateEvent(GetWndPtr(), GetControlRect()));
 
 	//ItemsSource
 	if (m_itemsSource.empty()) {
@@ -270,7 +267,7 @@ void CFilerTabGridView::OnContextMenu(const ContextMenuEvent& e)
 {
 	auto headerRects = GetHeaderRects();
 	auto iter = std::find_if(headerRects.begin(), headerRects.end(),
-		[&](const d2dw::CRectF& rc)->bool { return rc.PtInRect(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
+		[&](const CRectF& rc)->bool { return rc.PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
 
 	if (iter != headerRects.end()) {
 		CMenu menu;
@@ -285,56 +282,28 @@ void CFilerTabGridView::OnContextMenu(const ContextMenuEvent& e)
 void CFilerTabGridView::OnCommandNewFilerTab(const CommandEvent& e)
 {
 	m_itemsSource.notify_push_back(std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(CKnownFolderManager::GetInstance()->GetDesktopFolder())));
-	m_selectedIndex.notify_set(m_selectedIndex.get() - 1);
+	m_selectedIndex.notify_set(m_itemsSource.size() - 1);
 }
 
 void CFilerTabGridView::OnCommandNewToDoTab(const CommandEvent& e)
 {
 	m_itemsSource.notify_push_back(std::make_shared<ToDoTabData>(L""));
-	m_selectedIndex.notify_set(m_selectedIndex.get() - 1);
+	m_selectedIndex.notify_set(m_itemsSource.size() - 1);
 }
 
 void CFilerTabGridView::OnCommandNewTextTab(const CommandEvent& e)
 {
 	m_itemsSource.notify_push_back(std::make_shared<TextTabData>(L""));
-	m_selectedIndex.notify_set(m_selectedIndex.get() - 1);
-}
-
-
-void CFilerTabGridView::OnCommandCloneTab(const CommandEvent& e)
-{
-	m_itemsSource.notify_push_back(m_itemsSource[m_selectedIndex.get()]);
-	m_selectedIndex.notify_set(m_selectedIndex - 1);
-}
-
-void CFilerTabGridView::OnCommandCloseTab(const CommandEvent& e)
-{
-	if(m_selectedIndex.get()>1){
-		m_itemsSource.notify_erase(m_itemsSource.begin() + m_selectedIndex.get());
-		m_selectedIndex.forth_notify_set((std::min)(m_selectedIndex.get() - 1, m_selectedIndex.get()));
-	}
-}
-
-void CFilerTabGridView::OnCommandCloseAllButThisTab(const CommandEvent& e)
-{
-	if (m_selectedIndex.get()>1) {
-		//Erase larger tab
-		m_itemsSource.notify_erase(m_itemsSource.begin() + (m_selectedIndex.get() + 1), m_itemsSource.end());
-		//Erase smaller tab
-		m_itemsSource.notify_erase(m_itemsSource.begin(), m_itemsSource.begin() + m_selectedIndex.get());
-
-		m_selectedIndex.forth_notify_set(0);
-	}
+	m_selectedIndex.notify_set(m_itemsSource.size() - 1);
 }
 
 void CFilerTabGridView::OnCommandAddToFavorite(const CommandEvent& e)
 {
-	//TODO Bad connection between FilerTabGridView and FavoritesView
+	//TODOLOW Bad connection between FilerTabGridView and FavoritesView
 	if(auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())){
 		p->GetFavoritesPropPtr()->GetFavorites().notify_push_back(std::make_shared<CFavorite>(std::static_pointer_cast<FilerTabData>(m_itemsSource[m_selectedIndex])->Path, L""));
-		//TODODO
-		//p->GetLeftFavoritesView()->SubmitUpdate();
-		//p->GetRightFavoritesView()->SubmitUpdate();
+		p->GetLeftFavoritesView()->SubmitUpdate();
+		p->GetRightFavoritesView()->SubmitUpdate();
 	}
 }
 

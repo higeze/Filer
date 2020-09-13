@@ -1,30 +1,28 @@
 #include "ProgressBar.h"
+#include "D2DWWindow.h"
 #include <boost/lexical_cast.hpp>
 
-namespace d2dw
+CProgressBar::CProgressBar(CD2DWControl* pParentControl, const std::shared_ptr<ProgressProperty>& spProgressProp)
+	:CD2DWControl(pParentControl), m_spStatusBarProp(spProgressProp){}
+
+void CProgressBar::OnPaint(const PaintEvent& e)
 {
-	CProgressBar::CProgressBar(CWnd* pWnd, const std::shared_ptr<ProgressProperty>& spProgressProp)
-		:m_pWnd(pWnd), m_spStatusBarProp(spProgressProp){}
+	//Draw background
+	CRectF backRect(GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->BackgroundFill, backRect);
 
-	void CProgressBar::OnPaint(const PaintEvent& e)
-	{
-		//Draw background
-		CRectF backRect(GetRectInWnd());
-		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->BackgroundFill, backRect);
+	//Draw foreground
+	CRectF foreRect(
+		backRect.left,
+		backRect.top,
+		backRect.left + backRect.Width()*GetValue() / (GetMax() - GetMin()),
+		backRect.bottom);
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->ForegroundFill, foreRect);
 
-		//Draw foreground
-		CRectF foreRect(
-			backRect.left,
-			backRect.top,
-			backRect.left + backRect.Width()*GetValue() / (GetMax() - GetMin()),
-			backRect.bottom);
-		e.WndPtr->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->ForegroundFill, foreRect);
+	//Draw border
+	GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(m_spStatusBarProp->Border, backRect);
 
-		//Draw border
-		e.WndPtr->GetDirectPtr()->DrawSolidRectangle(m_spStatusBarProp->Border, backRect);
-
-		//Draw text
-		std::wstring text = boost::lexical_cast<std::wstring>(GetValue()) + L" /  " + boost::lexical_cast<std::wstring>(GetMax() - GetMin());
-		e.WndPtr->GetDirectPtr()->DrawTextInRect(m_spStatusBarProp->Format, text, backRect);
-	}
+	//Draw text
+	std::wstring text = boost::lexical_cast<std::wstring>(GetValue()) + L" /  " + boost::lexical_cast<std::wstring>(GetMax() - GetMin());
+	GetWndPtr()->GetDirectPtr()->DrawTextInRect(m_spStatusBarProp->Format, text, backRect);
 }

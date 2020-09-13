@@ -108,9 +108,9 @@ typedef _bstr_t bstring;
 
 #include "Direct2DWrite.h"
 
-#define D2RGBA(r,g,b,a) d2dw::CColorF(r/255.0f, g/255.0f, b/255.0f, a/255.0f ) //  薄い(0) <- A <- 濃い(255)
-#define D2RGB(r,g,b) d2dw::CColorF(r/255.0f, g/255.0f, b/255.0f, 1.0f )
-#define D2DRGB(dw) d2dw::CColorF(((dw&0xFF0000)>>16)/255.0f, ((dw&0x00FF00)>>8)/255.0f, (dw&0xFF)/255.0f, 1.0f )
+#define D2RGBA(r,g,b,a) CColorF(r/255.0f, g/255.0f, b/255.0f, a/255.0f ) //  薄い(0) <- A <- 濃い(255)
+#define D2RGB(r,g,b) CColorF(r/255.0f, g/255.0f, b/255.0f, 1.0f )
+#define D2DRGB(dw) CColorF(((dw&0xFF0000)>>16)/255.0f, ((dw&0x00FF00)>>8)/255.0f, (dw&0xFF)/255.0f, 1.0f )
 
 #define _USE_MATH_DEFINES
 #include <math.h>

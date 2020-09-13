@@ -13,12 +13,12 @@
 #include "Textbox.h"
 
 
-void CTextCell::PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
+void CTextCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	pDirect->DrawTextLayout(*(m_spCellProperty->Format), GetString(), rcPaint);
 }
 
-d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
+CSizeF CTextCell::MeasureContentSize(CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
 	std::wstring text = GetString();
@@ -26,36 +26,36 @@ d2dw::CSizeF CTextCell::MeasureContentSize(d2dw::CDirect2DWrite* pDirect)
 	return pDirect->CalcTextSize(*(m_spCellProperty->Format), text);
 }
 
-d2dw::CSizeF CTextCell::MeasureContentSizeWithFixedWidth(d2dw::CDirect2DWrite* pDirect)
+CSizeF CTextCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
 	
-	d2dw::CRectF rcCenter(0,0,m_pColumn->GetWidth(),0);
-	d2dw::CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
+	CRectF rcCenter(0,0,m_pColumn->GetWidth(),0);
+	CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
 
 	std::wstring text = GetString();
 	if (text.empty()) { text = L"a"; }
 	return pDirect->CalcTextSizeWithFixedWidth(*(m_spCellProperty->Format), text, rcContent.Width());
 }
 
-d2dw::CRectF CTextCell::GetEditRect() const
+CRectF CTextCell::GetEditRect() const
 {
 	return GetRectInWnd();
 }
 
-void CTextCell::OnEdit(const EventArgs& e)
+void CTextCell::OnEdit(const Event& e)
 {
 	if (GetIsVisible()) {
 		m_pSheet->GetGridPtr()->BeginEdit(this);
 	}
 }
 
-void CTextCell::PaintLine(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
+void CTextCell::PaintLine(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	CCell::PaintLine(pDirect, rcPaint);
 }
 
-void CTextCell::PaintBackground(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)
+void CTextCell::PaintBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	CCell::PaintBackground(pDirect, rcPaint);
 }

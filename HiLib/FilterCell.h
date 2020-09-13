@@ -18,5 +18,5 @@ public:
 
 	virtual std::wstring GetString() override;
 	virtual void SetStringCore(const std::wstring& str)override;
-	virtual void PaintContent(d2dw::CDirect2DWrite* pDirect, d2dw::CRectF rcPaint)override;
+	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)override;
 };

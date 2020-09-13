@@ -1199,69 +1199,70 @@ public:
 /****************/
 /* CProgressBar */
 /****************/
-class __declspec(novtable) CProgressBar:public CWnd
-{
-public:
-	CProgressBar()
-	{
-		m_rca.lpszClassName(PROGRESS_CLASS);
-		m_cwa.lpszClassName(PROGRESS_CLASS);
-	}
-	CProgressBar(HWND hWnd):CWnd(hWnd){}
-	virtual ~CProgressBar(){}
-
-	DWORD SetRange(int nLower, int nUpper)
-	{
-		return (DWORD)::SendMessage(m_hWnd, PBM_SETRANGE, 0, MAKELPARAM(nLower, nUpper));
-	}
-
-	std::pair<int, int> GetRange(int& nLower, int& nUpper) const
-	{
-		PBRANGE range = { 0 };
-		::SendMessage(m_hWnd, PBM_GETRANGE, TRUE, (LPARAM)&range);
-		return std::make_pair(range.iLow, range.iHigh);
-	}
-
-	int SetPos(int nPos)
-	{
-		return (int)(short)LOWORD(::SendMessage(m_hWnd, PBM_SETPOS, nPos, 0L));
-	}
-
-	int OffsetPos(int nPos)
-	{
-		return (int)(short)LOWORD(::SendMessage(m_hWnd, PBM_DELTAPOS, nPos, 0L));
-	}
-
-	int SetStep(int nStep)
-	{
-		return (int)(short)LOWORD(::SendMessage(m_hWnd, PBM_SETSTEP, nStep, 0L));
-	}
-
-	UINT GetPos() const
-	{
-		return (UINT)::SendMessage(m_hWnd, PBM_GETPOS, 0, 0L);
-	}
-
-	int GetStep() const
-	{
-		return (int)::SendMessage(m_hWnd, PBM_GETSTEP, 0, 0L);
-	}
-
-	int GetState() const
-	{
-		return (int)::SendMessage(m_hWnd, PBM_GETSTATE, 0, 0L);
-	}
-
-	int SetState(int nState)
-	{
-		return (int)::SendMessage(m_hWnd, PBM_SETSTATE, nState, 0L);
-	}
-
-	int StepIt()
-	{
-		return (int)(short)LOWORD(::SendMessage(m_hWnd, PBM_STEPIT, 0, 0L));
-	}
-};
+//TODOLOW
+//class __declspec(novtable) CProgressBar:public CWnd
+//{
+//public:
+//	CProgressBar()
+//	{
+//		m_rca.lpszClassName(PROGRESS_CLASS);
+//		m_cwa.lpszClassName(PROGRESS_CLASS);
+//	}
+//	CProgressBar(HWND hWnd):CWnd(hWnd){}
+//	virtual ~CProgressBar(){}
+//
+//	DWORD SetRange(int nLower, int nUpper)
+//	{
+//		return (DWORD)::SendMessage(m_hWnd, PBM_SETRANGE, 0, MAKELPARAM(nLower, nUpper));
+//	}
+//
+//	std::pair<int, int> GetRange(int& nLower, int& nUpper) const
+//	{
+//		PBRANGE range = { 0 };
+//		::SendMessage(m_hWnd, PBM_GETRANGE, TRUE, (LPARAM)&range);
+//		return std::make_pair(range.iLow, range.iHigh);
+//	}
+//
+//	int SetPos(int nPos)
+//	{
+//		return (int)(short)LOWORD(::SendMessage(m_hWnd, PBM_SETPOS, nPos, 0L));
+//	}
+//
+//	int OffsetPos(int nPos)
+//	{
+//		return (int)(short)LOWORD(::SendMessage(m_hWnd, PBM_DELTAPOS, nPos, 0L));
+//	}
+//
+//	int SetStep(int nStep)
+//	{
+//		return (int)(short)LOWORD(::SendMessage(m_hWnd, PBM_SETSTEP, nStep, 0L));
+//	}
+//
+//	UINT GetPos() const
+//	{
+//		return (UINT)::SendMessage(m_hWnd, PBM_GETPOS, 0, 0L);
+//	}
+//
+//	int GetStep() const
+//	{
+//		return (int)::SendMessage(m_hWnd, PBM_GETSTEP, 0, 0L);
+//	}
+//
+//	int GetState() const
+//	{
+//		return (int)::SendMessage(m_hWnd, PBM_GETSTATE, 0, 0L);
+//	}
+//
+//	int SetState(int nState)
+//	{
+//		return (int)::SendMessage(m_hWnd, PBM_SETSTATE, nState, 0L);
+//	}
+//
+//	int StepIt()
+//	{
+//		return (int)(short)LOWORD(::SendMessage(m_hWnd, PBM_STEPIT, 0, 0L));
+//	}
+//};
 
 /****************/
 /* CToolBarCtrl */
