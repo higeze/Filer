@@ -1,6 +1,7 @@
 #include "D2DWControl.h"
 #include "D2DWWindow.h"
 
+
 bool CD2DWControl::GetIsFocused()const
 {
 	//Parent Control is Window

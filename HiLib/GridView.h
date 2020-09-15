@@ -90,7 +90,7 @@ public:
 	/**************/
 	/* UI Message */
 	/**************/
-	virtual void OnCreate(const CreateEvent& e) override;
+	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnRect(const RectEvent& e) override;
 	virtual	void OnPaint(const PaintEvent& e) override;
 	virtual void OnMouseWheel(const MouseWheelEvent& e) override;

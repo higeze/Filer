@@ -8,14 +8,17 @@
 #include "ResourceIDFactory.h"
 #include "MyFile.h"
 #include "MouseStateMachine.h"
+#include "Dispatcher.h"
 
 void CD2DWWindow::SetFocusControl(const std::shared_ptr<CD2DWControl>& spControl)
 {
-	if (m_pFocusedControl) {
-		m_pFocusedControl->OnKillFocus(KillFocusEvent(this, 0, 0, nullptr));
+	if (spControl->GetIsFocusable()) {
+		if (m_pFocusedControl) {
+			m_pFocusedControl->OnKillFocus(KillFocusEvent(this, 0, 0, nullptr));
+		}
+		m_pFocusedControl = spControl;
+		m_pFocusedControl->OnSetFocus(SetFocusEvent(this, 0, 0, nullptr));
 	}
-	m_pFocusedControl = spControl;
-	m_pFocusedControl->OnSetFocus(SetFocusEvent(this, 0, 0, nullptr));
 }
 
 LRESULT CD2DWWindow::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -59,28 +62,28 @@ LRESULT CD2DWWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 void CD2DWWindow::OnFinalMessage(HWND m_hWnd) {}
 
 CD2DWWindow::CD2DWWindow()
-	:CWnd(),CD2DWControl(nullptr)
+	:CWnd(),CD2DWControl(nullptr),m_pDispatcher(std::make_unique<CDispatcher>(this))
 {
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
-		.lpszClassName(_T("CInplaceEditWnd"))
+		.lpszClassName(_T("CD2DWWindow"))
 		.style(CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS)
 		.hCursor(::LoadCursor(NULL, IDC_ARROW))
 		.hbrBackground(NULL);
 	CreateWindowExArgument()
-		.lpszClassName(_T("CInplaceEditWnd"))
-		.lpszWindowName(_T("InplaceEditWnd"))
+		.lpszClassName(_T("CD2DWWIndow"))
+		.lpszWindowName(_T("D2DWWindow"))
 		.dwStyle(WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE)
 		.dwExStyle(WS_EX_ACCEPTFILES)
-		.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"InplaceEditWnd"));
+		.hMenu(nullptr);
 
 	//Add Message
 	AddMsgHandler(WM_CREATE, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
 		{
+			SetFocus();
 			m_pDirect = std::make_shared<CDirect2DWrite>(m_hWnd);
 			m_pMouseMachine = std::make_unique<CMouseStateMachine>(this);
-			OnCreate(CreateEvent(this, wParam, lParam, &bHandled));
-			SetFocus();
+			OnCreate(CreateEvt(this, wParam, lParam, &bHandled));
 			InvalidateRect(NULL, FALSE);
 			return 0;
 		});
@@ -138,6 +141,7 @@ CD2DWWindow::CD2DWWindow()
 	AddMsgHandler(WM_KEYDOWN, &CD2DWWindow::UserInputMachine_Message<KeyDownEvent>, this);
 	AddMsgHandler(WM_SYSKEYDOWN, &CD2DWWindow::UserInputMachine_Message<SysKeyDownEvent>, this);
 	AddMsgHandler(WM_CHAR, &CD2DWWindow::UserInputMachine_Message<CharEvent>, this);
+	AddMsgHandler(CDispatcher::WM_DISPATCHER, &CDispatcher::OnDispatcher, m_pDispatcher.get());
 }
 
 CD2DWWindow::~CD2DWWindow() = default;

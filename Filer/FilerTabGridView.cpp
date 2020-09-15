@@ -64,7 +64,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 		});
 
 	//ItemsTemplate
-	m_itemsControlTemplate.emplace(typeid(FilerTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CUIElement> {
+	m_itemsControlTemplate.emplace(typeid(FilerTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto pData = std::static_pointer_cast<FilerTabData>(pTabData);
 		auto spView = GetFilerGridViewPtr();
 		spView->OpenFolder(pData->FolderPtr);
@@ -75,7 +75,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 		return spView;
 	});
 
-	m_itemsControlTemplate.emplace(typeid(ToDoTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CUIElement> {
+	m_itemsControlTemplate.emplace(typeid(ToDoTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto pData = std::static_pointer_cast<ToDoTabData>(pTabData);
 		auto spView = GetToDoGridViewPtr();
 		spView->Open(pData->Path);
@@ -86,7 +86,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 		return spView;
 	});
 
-	m_itemsControlTemplate.emplace(typeid(TextTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CUIElement> {
+	m_itemsControlTemplate.emplace(typeid(TextTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto pData = std::static_pointer_cast<TextTabData>(pTabData);
 		auto spView = GetTextViewPtr();
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
@@ -220,12 +220,12 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 
 CFilerTabGridView::~CFilerTabGridView() = default;
 
-void CFilerTabGridView::OnCreate(const CreateEvent& e)
+void CFilerTabGridView::OnCreate(const CreateEvt& e)
 {
 	CTabControl::OnCreate(e);
-	GetFilerGridViewPtr()->OnCreate(CreateEvent(GetWndPtr(), GetControlRect()));
-	GetToDoGridViewPtr()->OnCreate(CreateEvent(GetWndPtr(), GetControlRect()));
-	GetTextViewPtr()->OnCreate(CreateEvent(GetWndPtr(), GetControlRect()));
+	GetFilerGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
+	GetToDoGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
+	GetTextViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
 
 	//ItemsSource
 	if (m_itemsSource.empty()) {

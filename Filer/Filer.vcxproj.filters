@@ -116,9 +116,6 @@
     <ClInclude Include="targetver.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="UniqueIDFactory.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="Unknown.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -632,6 +629,12 @@
     <ClInclude Include="..\HiLib\D2DWWindow.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\Dispatcher.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\UniqueIDFactory.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -671,9 +674,6 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="UniqueIDFactory.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\Band.cpp">
@@ -923,6 +923,12 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\D2DWWindow.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Dispatcher.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\UniqueIDFactory.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

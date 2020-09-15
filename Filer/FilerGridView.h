@@ -3,6 +3,8 @@
 
 class CShellFile;
 class CDirectoryWatcher;
+struct CreateEvt;
+struct DirectoryWatchEvent;
 
 class CFilerGridView:public CFilerBindGridView<std::shared_ptr<CShellFile>>
 {
@@ -55,12 +57,12 @@ public:
 	/******************/
 	/* Window Message */
 	/******************/
-	virtual LRESULT OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	/**************/
 	/* UI Message */
 	/**************/
-	virtual void OnCreate(const CreateEvent& e)override;
+	virtual void OnCreate(const CreateEvt& e)override;
+	virtual void OnDirectoryWatch(const DirectoryWatchEvent& e);
 	/************************/
 	/* StateMachine Message */
 	/************************/

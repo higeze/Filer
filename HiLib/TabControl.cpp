@@ -112,7 +112,7 @@ void CTabControl::OnCommandCloseAllButThisTab(const CommandEvent& e)
 /* UI Message */
 /**************/
 
-void CTabControl::OnCreate(const CreateEvent& e) 
+void CTabControl::OnCreate(const CreateEvt& e) 
 {
 	CD2DWControl::OnCreate(e);
 }
@@ -125,6 +125,7 @@ void CTabControl::OnPaint(const PaintEvent& e)
 		auto headerRects = GetHeaderRects();
 		for (size_t i = 0; i < m_itemsSource.size(); i++) {
 			auto headerRc = headerRects[i];
+			if (headerRc.left > rc.right) { break; }
 
 			GetWndPtr()->GetDirectPtr()->FillSolidRectangle(i == m_selectedIndex.get() ? 
 				(GetIsFocused()?*(m_spProp->SelectedFill):*(m_spProp->UnfocusSelectedFill)) :

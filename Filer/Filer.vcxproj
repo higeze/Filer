@@ -234,6 +234,7 @@
     <ClInclude Include="..\HiLib\DeadlineTimer.h" />
     <ClInclude Include="..\HiLib\Direct2DWrite.h" />
     <ClInclude Include="..\HiLib\Debug.h" />
+    <ClInclude Include="..\HiLib\Dispatcher.h" />
     <ClInclude Include="..\HiLib\Dragger.h" />
     <ClInclude Include="..\HiLib\EmptyCell.h" />
     <ClInclude Include="..\HiLib\EventArgs.h" />
@@ -332,6 +333,7 @@
     <ClInclude Include="..\HiLib\Tracker.h" />
     <ClInclude Include="..\HiLib\D2DWControl.h" />
     <ClInclude Include="..\HiLib\UIElement.h" />
+    <ClInclude Include="..\HiLib\UniqueIDFactory.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
     <ClInclude Include="CheckableFileGrid.h" />
@@ -382,7 +384,6 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Task.h" />
     <ClInclude Include="ToDoGridView.h" />
-    <ClInclude Include="UniqueIDFactory.h" />
     <ClInclude Include="Unknown.h" />
     <ClInclude Include="ViewProperty.h" />
   </ItemGroup>
@@ -408,6 +409,7 @@
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
     <ClCompile Include="..\HiLib\DeadlineTimer.cpp" />
     <ClCompile Include="..\HiLib\Direct2DWrite.cpp" />
+    <ClCompile Include="..\HiLib\Dispatcher.cpp" />
     <ClCompile Include="..\HiLib\FileIconCache.cpp" />
     <ClCompile Include="..\HiLib\FilterCell.cpp" />
     <ClCompile Include="..\HiLib\FontCell.cpp" />
@@ -457,6 +459,7 @@
     <ClCompile Include="..\HiLib\Timer.cpp" />
     <ClCompile Include="..\HiLib\D2DWControl.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
+    <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
     <ClCompile Include="FileOperationWnd.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />
     <ClCompile Include="FilerGridViewWnd.cpp" />
@@ -486,7 +489,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ToDoGridView.cpp" />
-    <ClCompile Include="UniqueIDFactory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\HiLib\Gradius.cur" />

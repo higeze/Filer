@@ -225,7 +225,7 @@ void CTextBox::EnsureVisibleCaret()
 /* Windows Message */
 /*******************/
 
-void CTextBox::OnCreate(const CreateEvent& e)
+void CTextBox::OnCreate(const CreateEvt& e)
 {
 	m_caretPoint.SetPoint(0, GetLineHeight() * 0.5f);
 	//m_caretPoint.SetPoint(0, pProp->Format->Font.Size * 0.5f);

@@ -37,7 +37,7 @@ CFavoritesGridView::CFavoritesGridView(
 	CellLButtonDblClk.connect(std::bind(&CFavoritesGridView::OnCellLButtonDblClk,this,std::placeholders::_1));
 }
 
-void CFavoritesGridView::OnCreate(const CreateEvent& e)
+void CFavoritesGridView::OnCreate(const CreateEvt& e)
 {
 	//Base Create
 	CGridView::OnCreate(e);

@@ -1,7 +1,6 @@
 #pragma once
 #include "MyWnd.h"
 #include "MyXmlSerializer.h"
-#include "UniqueIDFactory.h"
 #include "MyFriendSerializer.h"
 #include "MyRect.h"
 #include "MyFont.h"
@@ -122,8 +121,6 @@ struct TextTabData :public TabData
 class CFilerTabGridView :public CTabControl
 {
 private:
-	CUniqueIDFactory m_uniqueIDFactory;
-
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
 public:
@@ -140,7 +137,7 @@ public:
 	/**************/
 	/* UI Message */
 	/**************/
-	void OnCreate(const CreateEvent& e) override;
+	void OnCreate(const CreateEvt& e) override;
 	void OnKeyDown(const KeyDownEvent& e) override;
 	void OnContextMenu(const ContextMenuEvent& e) override;
 

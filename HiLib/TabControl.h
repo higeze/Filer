@@ -53,8 +53,8 @@ protected:
 	observable_vector<std::shared_ptr<TabData>> m_itemsSource;
 
 	std::unordered_map<std::string, std::function<std::wstring(const std::shared_ptr<TabData>&)>> m_itemsHeaderTemplate;
-	std::unordered_map<std::string, std::function<std::shared_ptr<CUIElement>(const std::shared_ptr<TabData>&)>> m_itemsControlTemplate;
-	std::shared_ptr<CUIElement> m_spCurControl;
+	std::unordered_map<std::string, std::function<std::shared_ptr<CD2DWControl>(const std::shared_ptr<TabData>&)>> m_itemsControlTemplate;
+	std::shared_ptr<CD2DWControl> m_spCurControl;
 	observable<int> m_selectedIndex = -1;
 public:
 	CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<TabControlProperty>& spProp);
@@ -63,6 +63,8 @@ public:
 	//Getter Setter
 	observable_vector<std::shared_ptr<TabData>>& GetItemsSource(){ return m_itemsSource; }
 	int GetSelectedIndex()const{ return m_selectedIndex.get(); }
+	std::shared_ptr<CD2DWControl>& GetCurrentControlPtr() { return m_spCurControl; }
+
 
 	std::function<std::vector<CRectF>&()> GetHeaderRects;
 	std::function<CRectF&()> GetContentRect;
@@ -73,7 +75,7 @@ public:
 	/* UI MessageÅ@*/
 	/***************/
 
-	virtual void OnCreate(const CreateEvent& e);
+	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
 	//virtual void OnClose(const CloseEvent& e);
 	virtual void OnRect(const RectEvent& e);

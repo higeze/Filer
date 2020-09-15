@@ -169,7 +169,7 @@ public:
 	virtual void SetStringCore(const std::wstring& str) override
 	{
 		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, m_pSheet->GetGridPtr()->m_hWnd);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, m_pSheet->GetWndPtr()->m_hWnd);
 	}
 };
 

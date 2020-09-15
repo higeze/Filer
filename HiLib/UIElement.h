@@ -4,6 +4,7 @@
 #include "Direct2DWrite.h"
 
 class CD2DWWindow;
+class CD2DWControl;
 
 namespace UIElementState
 {
@@ -41,12 +42,12 @@ struct EndEditEvent :public Event
 		:Event() {}
 };
 
-#undef CreateEvent
-struct CreateEvent :public Event
+
+struct CreateEvt :public Event
 {
 	CRectF Rect;
-	CreateEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
-	CreateEvent(CD2DWWindow* pWnd, CRectF rect, BOOL* pHandled = nullptr)
+	CreateEvt(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
+	CreateEvt(CD2DWWindow* pWnd, CRectF rect, BOOL* pHandled = nullptr)
 		:Event(pWnd, pHandled), Rect(rect){}
 };
 
@@ -245,7 +246,7 @@ public:
 	/*********/
 	/* event */
 	/*********/
-	virtual void OnCreate(const CreateEvent& e) {}
+	virtual void OnCreate(const CreateEvt& e) {}
 	virtual void OnPaint(const PaintEvent& e) {}
 	virtual void OnClose(const CloseEvent& e) {}
 	virtual void OnCommand(const CommandEvent& e) {}

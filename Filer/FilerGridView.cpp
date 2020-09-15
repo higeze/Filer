@@ -94,7 +94,7 @@ CLIPFORMAT CFilerGridView::s_cf_renprivatemessages = ::RegisterClipboardFormat(L
 CFilerGridView::CFilerGridView(CD2DWControl* pParentControl, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
 	:CFilerBindGridView(pParentControl, spFilerGridViewProp)
 {
-	GetWndPtr()->AddMsgHandler(WM_DIRECTORYWATCH,&CFilerGridView::OnDirectoryWatch,this);
+	//TODOHIGH GetWndPtr()->AddMsgHandler(WM_DIRECTORYWATCH,&CFilerGridView::OnDirectoryWatch,this);//TODO
 	m_commandMap.emplace(IDM_SELECTALL, std::bind(&CFilerGridView::OnCommandSelectAll, this, phs::_1));
 	m_commandMap.emplace(IDM_CUT, std::bind(&CFilerGridView::OnCommandCut, this, phs::_1));
 	m_commandMap.emplace(IDM_COPY, std::bind(&CFilerGridView::OnCommandCopy, this, phs::_1));
@@ -110,13 +110,13 @@ CFilerGridView::~CFilerGridView()
 	if (m_spWatcher) { m_spWatcher->QuitWatching(); }
 }
 
-void CFilerGridView::OnCreate(const CreateEvent& e)
+void CFilerGridView::OnCreate(const CreateEvt& e)
 {
 	//Base Create
 	CFilerBindGridView::OnCreate(e);
 
 	//Directory watcher
-	m_spWatcher = std::make_shared<CDirectoryWatcher>(GetWndPtr()->m_hWnd);
+	m_spWatcher = std::make_shared<CDirectoryWatcher>(this, std::bind(&CFilerGridView::OnDirectoryWatch, this, phs::_1));
 
 	//Drag & Drop
 	//DropTarget
@@ -872,22 +872,20 @@ bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 bool CFilerGridView::CopySelectedFilesTo(const CIDL& destIDL)
 {
 	//Create
-	//TODOHIGH
-	//auto pWnd = new CCopyWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
-	//	destIDL, m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
+	auto pWnd = new CCopyWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
+		destIDL, m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
-	//HWND hWnd = NULL;
-	//if ((GetWndPtr()->GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-	//	hWnd = GetWndPtr()->m_hWnd;
-	//} else {
-	//	hWnd = GetWndPtr()->GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
-	//}
+	HWND hWnd = NULL;
+	if ((GetWndPtr()->GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+		hWnd = GetWndPtr()->m_hWnd;
+	} else {
+		hWnd = GetWndPtr()->GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	}
 
-	//pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 300));
-	////pWnd->SetFinalAction([&]() {g_hDlgModeless = NULL; });
-	//pWnd->SetIsDeleteOnFinalMessage(true);
-	//pWnd->ShowWindow(SW_SHOW);
-	//pWnd->UpdateWindow();
+	pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 400));
+	pWnd->SetIsDeleteOnFinalMessage(true);
+	pWnd->ShowWindow(SW_SHOW);
+	pWnd->UpdateWindow();
 
 	return true;
 }
@@ -895,22 +893,20 @@ bool CFilerGridView::CopySelectedFilesTo(const CIDL& destIDL)
 bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 {
 	//Create
-	//TODOHIGH
-	//auto pWnd = new CMoveWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
-	//							 destIDL, m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
+	auto pWnd = new CMoveWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
+								 destIDL, m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
-	//HWND hWnd = NULL;
-	//if ((GetWndPtr()->GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-	//	hWnd = GetWndPtr()->m_hWnd;
-	//} else {
-	//	hWnd = GetWndPtr()->GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
-	//}
+	HWND hWnd = NULL;
+	if ((GetWndPtr()->GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+		hWnd = GetWndPtr()->m_hWnd;
+	} else {
+		hWnd = GetWndPtr()->GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	}
 
-	//pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 300));
-	////pWnd->SetFinalAction([&]() {g_hDlgModeless = NULL; });
-	//pWnd->SetIsDeleteOnFinalMessage(true);
-	//pWnd->ShowWindow(SW_SHOW);
-	//pWnd->UpdateWindow();
+	pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 400));
+	pWnd->SetIsDeleteOnFinalMessage(true);
+	pWnd->ShowWindow(SW_SHOW);
+	pWnd->UpdateWindow();
 
 	return true;
 }
@@ -918,22 +914,20 @@ bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 bool CFilerGridView::DeleteSelectedFiles()
 {
 	//Create
-	//TODOHIGH
-	//auto pWnd = new CDeleteWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
-	//						 m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
+	auto pWnd = new CDeleteWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
+							 m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
-	//HWND hWnd = NULL;
-	//if ((GetWndPtr()->GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-	//	hWnd = GetWndPtr()->m_hWnd;
-	//} else {
-	//	hWnd = GetWndPtr()->GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
-	//}
+	HWND hWnd = NULL;
+	if ((GetWndPtr()->GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+		hWnd = GetWndPtr()->m_hWnd;
+	} else {
+		hWnd = GetWndPtr()->GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	}
 
-	//pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 300));
-	////pWnd->SetFinalAction([&]() {g_hDlgModeless = NULL; });
-	//pWnd->SetIsDeleteOnFinalMessage(true);
-	//pWnd->ShowWindow(SW_SHOW);
-	//pWnd->UpdateWindow();
+	pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 400));
+	pWnd->SetIsDeleteOnFinalMessage(true);
+	pWnd->ShowWindow(SW_SHOW);
+	pWnd->UpdateWindow();
 
 	return true;
 }
@@ -970,13 +964,12 @@ bool CFilerGridView::PasteFromClipboard()
 }
 
 
-LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled)
+void CFilerGridView::OnDirectoryWatch(const DirectoryWatchEvent& e)
 {
-	auto pInfos = reinterpret_cast<std::vector<std::pair<DWORD, std::wstring>>*>(wParam);
-	if (pInfos->size() > 1) {
+	if (e.Infos.size() > 1) {
 		auto a = 1.f;
 	}
-	for(auto info : *pInfos){
+	for(auto info : e.Infos){
 		switch (info.first) {
 		case FILE_ACTION_ADDED:
 			SPDLOG_INFO("FILE_ACTION_ADDED");
@@ -1006,11 +999,7 @@ LRESULT CFilerGridView::OnDirectoryWatch(UINT uMsg,WPARAM wParam,LPARAM lParam,B
 		}
 	}
 	
-	//Do not delete since caller delete this by himself
-	//delete [] (PBYTE)pInfo0;
 	SubmitUpdate();
-
-	return 0;
 }
 
 bool CFilerGridView::InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<std::shared_ptr<CShellFile>> files)

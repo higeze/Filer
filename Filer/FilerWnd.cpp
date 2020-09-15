@@ -68,14 +68,15 @@ CFilerWnd::CFilerWnd()
 	.lpszMenuName(MAKEINTRESOURCE(IDR_MENU_FILER));
 
 	m_cwa
-	.lpszWindowName(L"Filer") 
-	.lpszClassName(L"CFilerWnd")
-	.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS )
-	.x(m_rcWnd.left)
-	.y(m_rcWnd.top)
-	.nWidth(m_rcWnd.Width())
-	.nHeight(m_rcWnd.Height())
-	.hMenu(NULL); 
+		.lpszWindowName(L"Filer")
+		.lpszClassName(L"CFilerWnd")
+		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS)
+		.x(m_rcWnd.left)
+		.y(m_rcWnd.top)
+		.nWidth(m_rcWnd.Width())
+		.nHeight(m_rcWnd.Height())
+		;// .hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"FilerWnd"));
+
 
 	AddMsgHandler(WM_DESTROY, &CFilerWnd::OnDestroy, this);
 	AddMsgHandler(WM_DEVICECHANGE, &CFilerWnd::OnDeviceChange, this);
@@ -323,7 +324,7 @@ void CFilerWnd::OnPaint(const PaintEvent& e)
 	GetDirectPtr()->FillSolidRectangle(CColorF(1.f, 1.f, 1.f), m_splitterRect);
 }
 
-void CFilerWnd::OnCreate(const CreateEvent& e)
+void CFilerWnd::OnCreate(const CreateEvt& e)
 {
 	//WINDOWPLACEMENT wp = { 0 };
 	//wp.length = sizeof(WINDOWPLACEMENT);
@@ -335,11 +336,11 @@ void CFilerWnd::OnCreate(const CreateEvent& e)
 	
 	auto [rcLeftFav, rcLeftTab, rcSplitter, rcRightFav, rcRightTab, rcStatus] = GetRects();
 
-	m_spLeftFavoritesView->OnCreate(CreateEvent(this, rcLeftFav));
-	m_spRightFavoritesView->OnCreate(CreateEvent(this, rcRightFav));
-	m_spLeftView->OnCreate(CreateEvent(this, rcLeftTab));
-	m_spRightView->OnCreate(CreateEvent(this, rcRightTab));
-	m_spStatusBar->OnCreate(CreateEvent(this, rcStatus));
+	m_spLeftFavoritesView->OnCreate(CreateEvt(this, rcLeftFav));
+	m_spRightFavoritesView->OnCreate(CreateEvt(this, rcRightFav));
+	m_spLeftView->OnCreate(CreateEvt(this, rcLeftTab));
+	m_spRightView->OnCreate(CreateEvt(this, rcRightTab));
+	m_spStatusBar->OnCreate(CreateEvt(this, rcStatus));
 	m_splitterRect = rcSplitter;
 
 	AddControlPtr(m_spLeftView);
@@ -369,24 +370,28 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 		break;
 	case VK_F5:
 		{
-		//TODOHIGH
-			//std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurWnd == m_spLeftWnd ? m_spRightWnd : m_spLeftWnd;
-			//if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurWnd->GetContentWnd()->GetControlPtr())) {
-			//	if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetContentWnd()->GetControlPtr())) {
-			//		spCurFilerGridView->CopySelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
-			//	}
-			//}
+			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
+				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
+					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
+					if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spOtherTab->GetCurrentControlPtr())) {
+						spCurFilerGrid->CopySelectedFilesTo(spOtherFilerGrid->GetFolder()->GetAbsoluteIdl());
+						*(e.HandledPtr) = TRUE;
+					}
+				}
+			}
 		}
 		break;
 	case VK_F6:
 		{
-		//TODOHIGH
-			//std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurWnd == m_spLeftWnd ? m_spRightWnd : m_spLeftWnd;
-			//if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurWnd->GetContentWnd()->GetControlPtr())) {
-			//	if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetContentWnd()->GetControlPtr())) {
-			//		spCurFilerGridView->MoveSelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
-			//	}
-			//}
+			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
+				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
+					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
+					if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spOtherTab->GetCurrentControlPtr())) {
+						spCurFilerGrid->MoveSelectedFilesTo(spOtherFilerGrid->GetFolder()->GetAbsoluteIdl());
+						*(e.HandledPtr) = TRUE;
+					}
+				}
+			}
 		}
 		break;
 	case VK_F9:
@@ -404,7 +409,7 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 		}
 		break;
 	default:
-		m_pFocusedControl->OnKeyDown(e);
+		CD2DWWindow::OnKeyDown(e);
 	}
 
 	//m_konamiCommander.OnKeyDown(uMsg, wParam, lParam, bHandled);
@@ -486,7 +491,7 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
 		m_spFilerGridViewProp->CellPropPtr->Padding->left + //def:2
 		m_spFilerGridViewProp->CellPropPtr->Padding->right + //def:2
 		16.f);//icon
-	LONG statusHeight = m_pDirect->Dips2PixelsY(m_spStatusBar->MeasureSize(m_pDirect.get()).height);
+	LONG statusHeight = GetDirectPtr()->Dips2PixelsY(m_spStatusBar->MeasureSize(GetDirectPtr()).height);
 
 	rcStatusBar.SetRect(
 		rcClient.left, rcClient.bottom - statusHeight,

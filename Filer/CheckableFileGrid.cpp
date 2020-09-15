@@ -61,7 +61,7 @@ CCheckableFileGrid::CCheckableFileGrid(CD2DWControl* pParentControl, std::shared
 }
 
 
-void CCheckableFileGrid::OnCreate(const CreateEvent& e)
+void CCheckableFileGrid::OnCreate(const CreateEvt& e)
 {
 	//Base Create
 	CFilerBindGridView::OnCreate(e);
@@ -125,39 +125,40 @@ void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)
 
 void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	auto pWnd = new CD2DWWindow();
-	auto pControl = std::make_shared<CFilerGridView>(pWnd, std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
-	//pWnd->SetControlPtr(pControl);
+	//TODOHIGH
+	//auto pWnd = new CD2DWWindow();
+	//auto pControl = std::make_shared<CFilerGridView>(pWnd, std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
+	////pWnd->SetControlPtr(pControl);
 
-	pWnd->RegisterClassExArgument()
-		.lpszClassName(L"CFilerGridViewWnd")
-		.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
-		.hCursor(::LoadCursor(NULL, IDC_ARROW))
-		.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
+	//pWnd->RegisterClassExArgument()
+	//	.lpszClassName(L"CFilerGridViewWnd")
+	//	.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
+	//	.hCursor(::LoadCursor(NULL, IDC_ARROW))
+	//	.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
 
-	pWnd->CreateWindowExArgument()
-		.lpszClassName(_T("CFilerGridViewWnd"))
-		.lpszWindowName(spFolder->GetDispName().c_str())
-		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
-		.dwExStyle(WS_EX_ACCEPTFILES)
-		.hMenu(NULL);
+	//pWnd->CreateWindowExArgument()
+	//	.lpszClassName(_T("CFilerGridViewWnd"))
+	//	.lpszWindowName(spFolder->GetDispName().c_str())
+	//	.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
+	//	.dwExStyle(WS_EX_ACCEPTFILES)
+	//	.hMenu(NULL);
 
-	pControl->FolderChanged = [pWnd](std::shared_ptr<CShellFolder>& pFolder) {
-		pWnd->SetWindowTextW(pFolder->GetDispName().c_str());};
+	//pControl->FolderChanged = [pWnd](std::shared_ptr<CShellFolder>& pFolder) {
+	//	pWnd->SetWindowTextW(pFolder->GetDispName().c_str());};
 
-	pWnd->SetIsDeleteOnFinalMessage(true);
+	//pWnd->SetIsDeleteOnFinalMessage(true);
 
-	HWND hWnd = NULL;
-	if ((GetWndPtr()->GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-		hWnd = GetWndPtr()->m_hWnd;
-	} else {
-		hWnd = GetWndPtr()->GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
-	}
+	//HWND hWnd = NULL;
+	//if ((GetWndPtr()->GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+	//	hWnd = GetWndPtr()->m_hWnd;
+	//} else {
+	//	hWnd = GetWndPtr()->GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
+	//}
 
-	pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 500));
-	pControl->OpenFolder(spFolder);
-	pWnd->ShowWindow(SW_SHOW);
-	pWnd->UpdateWindow();
+	//pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 500));
+	//pControl->OpenFolder(spFolder);
+	//pWnd->ShowWindow(SW_SHOW);
+	//pWnd->UpdateWindow();
 }
 
 

@@ -1,7 +1,7 @@
 #include "UIElement.h"
 #include "D2DWWindow.h"
 
-CreateEvent::CreateEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
+CreateEvt::CreateEvt(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
 	:Event(pWnd, pHandled) 
 {
 	auto pCS = reinterpret_cast<CREATESTRUCT*>(lParam);

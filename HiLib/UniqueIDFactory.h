@@ -1,11 +1,12 @@
 #pragma once
+#include <unordered_set>
 
 class CUniqueIDFactory
 {
 private:
-	unsigned int m_id;
+	std::unordered_set<unsigned int> m_ids;
 public:
-	CUniqueIDFactory(unsigned int firstId = 0):m_id(0){}
+	CUniqueIDFactory(){}
 	virtual ~CUniqueIDFactory(void){}
 	unsigned int NewID();
 	void DeleteID(unsigned int id);

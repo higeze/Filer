@@ -130,7 +130,7 @@ void CSheetCell::OnRButtonDown(const RButtonDownEvent& e)
 	CSheet::OnRButtonDown(e);
 }
 
-void CSheetCell::OnCreate(const CreateEvent& e)
+void CSheetCell::OnCreate(const CreateEvt& e)
 {
 	CCell::OnCreate(e);
 	CSheet::OnCreate(e);

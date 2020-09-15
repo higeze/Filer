@@ -9,7 +9,7 @@ public:
 	CCheckableFileGrid(CD2DWControl* pParentControl, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp);
 	virtual ~CCheckableFileGrid() = default;
 
-	virtual void OnCreate(const CreateEvent& e) override;
+	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnCellLButtonDblClk(CellEventArgs& e)override;
 	virtual void OpenFolder(std::shared_ptr<CShellFolder>& spFile) override;
 

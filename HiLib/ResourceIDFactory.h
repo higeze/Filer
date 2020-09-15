@@ -8,6 +8,7 @@
 #include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <unordered_map>
 
 struct IDTag {};
 struct NameTag {};

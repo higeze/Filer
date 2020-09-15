@@ -1,6 +1,5 @@
 #pragma once
 #include "MyWnd.h"
-#include "UniqueIDFactory.h"
 #include "MyFriendSerializer.h"
 #include "MyRect.h"
 #include "FilerTabGridView.h"
@@ -151,7 +150,7 @@ public:
 	/**************/
 	virtual void OnPaint(const PaintEvent& e)override;
 	virtual void OnClose(const CloseEvent& e)override;
-	virtual void OnCreate(const CreateEvent& e) override;
+	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnRect(const RectEvent& e) override;
 	//virtual void OnSetFocus(const SetFocusEvent& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;

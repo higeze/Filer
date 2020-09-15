@@ -14,7 +14,13 @@ struct closehandle
 
 };
 
-const UINT WM_DIRECTORYWATCH = RegisterWindowMessage(L"WM_DIRECTORYWATCH");
+class CD2DWControl;
+
+struct DirectoryWatchEvent
+{
+	std::vector<std::pair<DWORD, std::wstring>> Infos;
+	DirectoryWatchEvent(const std::vector<std::pair<DWORD, std::wstring>>& infos):Infos(infos){}
+};
 
 class CDirectoryWatcher
 {
@@ -25,7 +31,8 @@ private:
 	const ULONG_PTR COMPKEY_DIR = 1;
 
 private:
-	HWND m_hWnd;
+	CD2DWControl* m_pControl;
+	std::function<void(const DirectoryWatchEvent&)> m_callback;
 
 	UniqueHandlePtr m_pQuitEvent;
 	std::future<void> m_futureWatch;
@@ -37,7 +44,7 @@ private:
 	std::vector<std::wstring> m_names;
 
 public:
-	CDirectoryWatcher(HWND m_hWnd);
+	CDirectoryWatcher(CD2DWControl* pControl, std::function<void(const DirectoryWatchEvent&)> callback);
 	~CDirectoryWatcher(void);
 
 	std::wstring GetPath()const { return m_path; }

@@ -39,15 +39,15 @@ public:
 
 	virtual CD2DWWindow* GetWndPtr()const override { return CSheet::GetWndPtr(); }
 
-
 	//Paint
 	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override;
 	
 	//Event
-	virtual void OnCreate(const CreateEvent& e);
+	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e) override {}
 	virtual void OnClose(const CloseEvent & e) override {}
 	virtual void OnRect(const RectEvent& e) override {}
+	virtual void OnCommand(const CommandEvent& e) override {}
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override;

@@ -15,7 +15,7 @@
 		m_hCounterThread(nullptr),
 		m_hCounterHandle(nullptr){}
 
-	void CStatusBar::OnCreate(const CreateEvent& e)
+	void CStatusBar::OnCreate(const CreateEvt& e)
 	{
 		if (::PdhOpenQuery(NULL, 0, &m_hQuery) == ERROR_SUCCESS &&
 			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\% Processor Time", 0, &m_hCounterCPU) == ERROR_SUCCESS &&

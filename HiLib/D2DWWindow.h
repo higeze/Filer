@@ -7,10 +7,12 @@
 
 class CMouseStateMachine;
 class CD2DWControl;
+class CDispatcher;
 
 class CD2DWWindow:public CWnd, public CD2DWControl
 {
-public:
+private:
+	std::unique_ptr<CDispatcher> m_pDispatcher;
 	std::shared_ptr<CDirect2DWrite> m_pDirect;
 	std::unique_ptr<CMouseStateMachine> m_pMouseMachine;
 	std::vector<std::shared_ptr<CD2DWControl>> m_pControls;
@@ -22,6 +24,7 @@ public :
 
 	CD2DWWindow* GetWndPtr()const override{ return const_cast<CD2DWWindow*>(this); }
 	CDirect2DWrite* GetDirectPtr() const { return  m_pDirect.get(); }
+	std::unique_ptr<CDispatcher>& GetDispatcherPtr() { return m_pDispatcher; }
 	bool GetIsFocused()const;
 
 	std::shared_ptr<CD2DWControl> GetFocusedControlPtr()
@@ -92,7 +95,7 @@ public:
 
 	void SetFocusControl(const std::shared_ptr<CD2DWControl>& spControl);
 
-	virtual void OnCreate(const CreateEvent& e) {}
+	virtual void OnCreate(const CreateEvt& e) = 0;
 	virtual void OnPaint(const PaintEvent& e) { SendAll(&CUIElement::OnPaint, e, false); }
 	virtual void OnClose(const CloseEvent& e) { SendAll(&CUIElement::OnClose, e); }
 	virtual void OnCommand(const CommandEvent& e) 

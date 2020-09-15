@@ -93,5 +93,5 @@ public:
 		virtual void OnPaint(const PaintEvent & e);
 		virtual CSizeF MeasureSize(CDirect2DWrite* pDirect);
 
-		void OnCreate(const CreateEvent& e)override;
+		void OnCreate(const CreateEvt& e)override;
 	};

@@ -4,13 +4,15 @@
 #include "MyWin32.h"
 #include "MyString.h"
 #include "ThreadPool.h"
+#include "D2DWWindow.h"
+#include "D2DWControl.h"
 
 #include "ShellFunction.h"
 #include <algorithm>
 
 
-CDirectoryWatcher::CDirectoryWatcher(HWND hWnd)
-	:m_hWnd(hWnd), m_pQuitEvent(), m_vData(kBufferSize, 0)
+CDirectoryWatcher::CDirectoryWatcher(CD2DWControl* pControl, std::function<void(const DirectoryWatchEvent&)> callback)
+	:m_pControl(pControl), m_pQuitEvent(), m_vData(kBufferSize, 0), m_callback(callback)
 {}
 
 CDirectoryWatcher::~CDirectoryWatcher(void)
@@ -120,7 +122,7 @@ std::vector<std::wstring> CDirectoryWatcher::GetFileNamesInDirectory(CIDL absIdl
 	std::vector<std::wstring> names;
 
 	CComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(absIdl);
-	shell::for_each_idl_in_shellfolder(m_hWnd, pFolder, [&names, &pFolder](const CIDL& idl) {
+	shell::for_each_idl_in_shellfolder(m_pControl->GetWndPtr()->m_hWnd, pFolder, [&names, &pFolder](const CIDL& idl) {
 		std::wstring path = shell::GetDisplayNameOf(pFolder, idl, SHGDN_FORPARSING);
 		if (!path.empty() && path[0] != L':') {
 			names.emplace_back(::PathFindFileName(path.c_str()));
@@ -272,7 +274,8 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 				//std::sort(infos.begin(), infos.end());
 				//infos.erase(std::unique(infos.begin(), infos.end()), infos.end());
 				if (!infos.empty()) {
-					::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)&infos, NULL);
+					//::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)&infos, NULL);
+					m_callback(DirectoryWatchEvent(infos));
 				}
 				delete[](PBYTE)pFileNotifyInfo;
 				m_names = fileNames;

@@ -988,7 +988,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 				pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 			}
 			);
-		pEdit->OnCreate(CreateEvent(GetWndPtr(), pCell->GetRectInWnd()));
+		pEdit->OnCreate(CreateEvt(GetWndPtr(), pCell->GetRectInWnd()));
 		SetEditPtr(pEdit);
 		PostUpdate(Updates::Invalidate);
 		//SetCapture();
@@ -1130,7 +1130,7 @@ LRESULT CGridView::OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& 
 /* UI Message */
 /**************/
 
-void CGridView::OnCreate(const CreateEvent& e)
+void CGridView::OnCreate(const CreateEvt& e)
 {
 	CD2DWControl::OnCreate(e);
 	UpdateAll();
