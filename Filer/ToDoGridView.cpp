@@ -30,11 +30,11 @@ void CToDoGridView::Open()
 void CToDoGridView::Open(const std::wstring& path)
 {
 	if (::PathFileExists(path.c_str())){
-		m_path.notify_set(path);
+		m_path.set(path);
 		auto& itemsSource = GetItemsSource();
 		//itemsSource.notify_clear();//TODOTODO
 		while (!itemsSource.empty()) {
-			itemsSource.notify_erase(GetItemsSource().cbegin());
+			itemsSource.erase(GetItemsSource().cbegin());
 		}
 		//Deserialize
 		try {
@@ -43,7 +43,7 @@ void CToDoGridView::Open(const std::wstring& path)
 			CXMLSerializer<std::vector<MainTask>> serializer;
 				serializer.Deserialize(m_path.get().c_str(), L"Task", tempItemsSource);
 			for (const auto& item : tempItemsSource) {
-				itemsSource.notify_push_back(std::make_tuple(item));
+				itemsSource.push_back(std::make_tuple(item));
 			}
 			for (auto& colPtr : m_allCols) {
 				colPtr->SetIsFitMeasureValid(false);
@@ -92,10 +92,10 @@ void CToDoGridView::Save()
 
 void CToDoGridView::Save(const std::wstring& path)
 {
-	m_path.notify_set(path);
+	m_path.set(path);
 	//Serialize
 	try {
-		auto itemsSource = GetItemsSource();
+		auto itemsSource = GetItemsSource().get();
 		std::vector<MainTask> tempItemsSource;
 		for (const auto& item : itemsSource) {
 			tempItemsSource.push_back(std::get<MainTask>(item));
@@ -142,10 +142,10 @@ void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 
 	auto& itemsSource = GetItemsSource();
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
-		itemsSource.notify_push_back(MainTask());
+		itemsSource.push_back(std::make_tuple(MainTask()));
 	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
 		auto a = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
-		itemsSource.notify_erase(itemsSource.cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
+		itemsSource.erase(itemsSource.cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
 	}
 	*e.HandledPtr = TRUE;
 }

@@ -9,10 +9,11 @@
 #include "MyFile.h"
 #include "MouseStateMachine.h"
 #include "Dispatcher.h"
+#include "DropTargetManager.h"
 
 void CD2DWWindow::SetFocusControl(const std::shared_ptr<CD2DWControl>& spControl)
 {
-	if (spControl->GetIsFocusable()) {
+	if (spControl->GetIsFocusable() && m_pFocusedControl != spControl) {
 		if (m_pFocusedControl) {
 			m_pFocusedControl->OnKillFocus(KillFocusEvent(this, 0, 0, nullptr));
 		}
@@ -27,14 +28,14 @@ LRESULT CD2DWWindow::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 		::SetForegroundWindow(hWnd);
 	}
 	OnClose(CloseEvent(this, wParam, lParam, &bHandled));
+	::RevokeDragDrop(m_hWnd);
 	DestroyWindow();
 	return 0;
 }
 
 LRESULT CD2DWWindow::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	if (GetFocusedControlPtr())GetFocusedControlPtr()->OnSetCursor(SetCursorEvent(this, wParam, lParam, &bHandled));
-	InvalidateRect(NULL, FALSE);
+	OnSetCursor(SetCursorEvent(this, wParam, lParam, &bHandled));
 	return 0;
 }
 
@@ -62,7 +63,9 @@ LRESULT CD2DWWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 void CD2DWWindow::OnFinalMessage(HWND m_hWnd) {}
 
 CD2DWWindow::CD2DWWindow()
-	:CWnd(),CD2DWControl(nullptr),m_pDispatcher(std::make_unique<CDispatcher>(this))
+	:CWnd(),CD2DWControl(nullptr),
+	m_pDispatcher(std::make_unique<CDispatcher>(this)),
+	m_pDropTargetManager(std::make_unique<CDropTargetManager>(this))
 {
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()
@@ -83,6 +86,7 @@ CD2DWWindow::CD2DWWindow()
 			SetFocus();
 			m_pDirect = std::make_shared<CDirect2DWrite>(m_hWnd);
 			m_pMouseMachine = std::make_unique<CMouseStateMachine>(this);
+			::RegisterDragDrop(m_hWnd, m_pDropTargetManager.get());
 			OnCreate(CreateEvt(this, wParam, lParam, &bHandled));
 			InvalidateRect(NULL, FALSE);
 			return 0;

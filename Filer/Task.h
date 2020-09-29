@@ -1,8 +1,9 @@
 #pragma once
-#include "observable.h"
+#include "ReactiveProperty.h"
 
 struct Task
 {
+	auto operator<=>(const Task&) const = default;
 	bool Done = false;
 	std::wstring Name;
 	std::wstring Memo;
@@ -21,13 +22,13 @@ struct SubTask:public Task
 
 struct MainTask:public Task
 {
-	observable_vector<std::tuple<std::wstring>> Links;
-	observable_vector<std::tuple<SubTask>> SubTasks;
+	ReactiveVectorProperty<std::tuple<std::wstring>> Links;
+	ReactiveVectorProperty<std::tuple<SubTask>> SubTasks;
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
 		Task::serialize(ar);
-		ar("SubTasks", static_cast<std::vector<std::tuple<SubTask>>&>(SubTasks));
+		ar("SubTasks", SubTasks);
 	}
 };

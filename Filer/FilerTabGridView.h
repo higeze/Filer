@@ -8,8 +8,8 @@
 #include "ShellFileFactory.h"
 #include "FilerGridView.h"
 #include "FilerGridViewProperty.h"
-#include "observable.h"
 #include "TabControl.h"
+#include "ReactiveProperty.h"
 
 class CFilerGridView;
 struct FilerGridViewProperty;
@@ -93,25 +93,29 @@ struct ToDoTabData:public TabData
 /***************/
 struct TextTabData :public TabData
 {
-	std::wstring Path;
-	bool IsSaved;
+	ReactiveWStringProperty Path;
+	ReactiveWStringProperty Text;
+	ReactiveTupleProperty<int, int, int, int, int> Carets;
+	ReactiveProperty<bool> IsSaved;
+	//observable_tuple<int, int, int, int, int> Carets;
+
 
 	TextTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(path), IsSaved(true)
-	{
-	}
+		:TabData(), Path(path), Text(), IsSaved(false), Carets(0,0,0,0,0){}
 
 	virtual ~TextTabData() = default;
 
 	template<class Archive>
 	void save(Archive & ar)
 	{
-		ar("Path", Path);
+		ar("Path", Path.get());
 	}
 	template<class Archive>
 	void load(Archive & ar)
 	{
-		ar("Path", Path);
+		std::wstring path;
+		ar("Path", path);
+		Path.set(path);
 	}
 };
 
@@ -123,6 +127,17 @@ class CFilerTabGridView :public CTabControl
 private:
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
+
+	std::unique_ptr<CBinding<std::wstring>> m_pTextBinding;
+	std::unique_ptr<CBinding<std::wstring>> m_pPathBinding;
+	std::unique_ptr<CBinding<bool>> m_pIsSavedBinding;
+	std::unique_ptr<CBinding<std::tuple<int, int, int, int, int>>> m_pCaretsBinding;
+
+	std::unique_ptr<sigslot::scoped_connection> m_pPathConnection;
+	std::unique_ptr<sigslot::scoped_connection> m_pIsSavedConnection;
+
+
+
 public:
 	CFilerTabGridView(CD2DWControl* pParentControl, std::shared_ptr<TabControlProperty> spTabProp, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty, std::shared_ptr<TextEditorProperty>& spTextboxProp);
 	virtual ~CFilerTabGridView();

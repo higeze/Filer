@@ -88,9 +88,7 @@ void CCeller::OnContextMenu(CSheet* pSheet, const ContextMenuEvent& e)
 //void CCeller::OnKillFocus(CSheet* pSheet, const EventArgs& e){}
 void CCeller::OnSetCursor(CSheet* pSheet, const SetCursorEvent& e)
 {
-	CPoint pt;
-	::GetCursorPos(&pt);
-	pt = pSheet->GetWndPtr()->ScreenToClient(pt);
+	CPoint pt = pSheet->GetWndPtr()->GetCursorPosInClient();
 	auto cell = pSheet->Cell(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(pt));
 	if (cell != nullptr) {
 		cell->OnSetCursor(e);

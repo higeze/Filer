@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <utility>
 #include <map>
+#include <tuple>
 #include "MyCom.h"
 #include "MyMPL.h"
 #include "MySerializer.h"
@@ -10,7 +11,7 @@
 #include "MyString.h"
 #include "SerializerEnableIf.h"
 #include "CellProperty.h"
-#include "observable.h"
+#include "ReactiveProperty.h"
 
 
 /*********************/
@@ -120,9 +121,9 @@ public:
 		}
 	}
 
-	//For observable_vector
+	//For ReactiveVectorProperty
 	template<class T>
-	void SerializeValue(observable_vector<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
+	void SerializeValue(ReactiveVectorProperty<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
 	{
 		for (auto iter = tValue.begin(), end = tValue.end(); iter != end; ++iter) {
 			MSXML2::IXMLDOMElementPtr pItemElem = m_pDoc->createElement(_bstr_t("item"));
@@ -252,18 +253,18 @@ public:
 		}
 	}
 
-	//For observable_vector
+	//For ReactiveVectorProperty
 	template<class T>
-	void DeserializeElement(observable_vector<T>& tVector, MSXML2::IXMLDOMElementPtr pElem)
+	void DeserializeElement(ReactiveVectorProperty<T>& tVector, MSXML2::IXMLDOMElementPtr pElem)
 	{
 		std::vector<MSXML2::IXMLDOMElementPtr> vpItemElem = GetChildElementsByTagName(pElem, "item");
 		
 		if (!vpItemElem.empty()) {
-			tVector.notify_clear();
+			tVector.clear();
 			for (UINT n = 0, nSize = vpItemElem.size(); n < nSize; ++n) {
 				auto t = CreateInstance<T>();
 				DeserializeElement(t, vpItemElem[n]);
-				tVector.notify_push_back(t);
+				tVector.push_back(t);
 			}
 		}
 	}

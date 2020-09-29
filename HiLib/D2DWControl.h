@@ -18,7 +18,7 @@ public:
 	virtual CD2DWWindow* GetWndPtr()const { return m_pParentControl->GetWndPtr(); }
 	virtual CD2DWControl* GetParentControlPtr()const { return m_pParentControl; }
 	virtual CRectF GetRectInWnd()const override { return m_rect; }
-	virtual void OnCreate(const CreateEvt& e) override { m_rect = e.Rect; }
+	virtual void OnCreate(const CreateEvt& e) override { m_rect = e.RectF; }
 	virtual void OnCommand(const CommandEvent& e) override;
 	virtual void OnRect(const RectEvent& e) override { m_rect = e.Rect; }
 	virtual bool GetIsFocused()const;

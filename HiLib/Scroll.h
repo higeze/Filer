@@ -8,7 +8,7 @@ struct ScrollProperty;
 	class CScrollBase :public CD2DWControl
 	{
 	protected:
-		bool m_visible = true;
+		Visibility m_visibility = Visibility::Auto;
 		FLOAT m_page = 0.0f;
 		std::pair<FLOAT, FLOAT> m_range = std::make_pair(0.0f, 0.0f);
 		FLOAT m_pos = 0.0f;
@@ -33,17 +33,15 @@ struct ScrollProperty;
 		FLOAT GetScrollDistance()const { return m_range.second - m_range.first; }
 		FLOAT GetScrollPos()const { return m_pos; }
 		CSizeF GetSize()const { return GetRectInWnd().Size(); }
-		bool GetVisible()const { return m_visible; }
 
 		void SetScrollPos(const FLOAT pos);
 		void SetScrollPage(const FLOAT page);
 		void SetScrollRange(const FLOAT min, FLOAT max);
-		//void SetRect(const CRectF& rect){ m_rect = rect; }
-		//void SetRect(const FLOAT left, const FLOAT top, const FLOAT right, const FLOAT bottom) 
-		//{
-		//	m_rect.SetRect(left, top, right, bottom);
-		//}
-		void SetVisible(bool visible) { m_visible = visible; }
+
+		Visibility GetVisibility()const { return m_visibility; }
+		void SetVisibility(const Visibility& value) { m_visibility = value; }
+		bool GetIsVisible()const;
+
 		virtual void OnPaint(const PaintEvent& e) override;
 		virtual CRectF GetThumbRect()const = 0;
 		virtual void OnPropertyChanged(const wchar_t* name) override

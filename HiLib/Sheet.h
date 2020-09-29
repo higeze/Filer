@@ -66,12 +66,6 @@ struct ColTag
 	using Container = index_vector<std::shared_ptr<CColumn>>;
 	typedef RowTag Other;
 };
-
-//Self defined message
-const UINT WM_FILTER = RegisterWindowMessage(L"WM_FILTER");
-const UINT WM_EDITCELL = RegisterWindowMessage(L"WM_EDITCELL");
-const UINT WM_LBUTTONDBLCLKTIMEXCEED = RegisterWindowMessage(L"WM_LBUTTONDBLCLKTIMEXCEED");
-
 /********/
 /*CSheet*/
 /********/
@@ -598,7 +592,7 @@ public:
 		auto& visContainer = GetContainer<TRC, VisTag>();
 		visContainer.clear();
 		for (auto ptr : allContainer) {
-			if (ptr->GetVisible()) {
+			if (ptr->GetIsVisible()) {
 				visContainer.idx_push_back(ptr);
 			}
 		}

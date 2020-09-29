@@ -1,7 +1,7 @@
 #pragma once
 #include "GridView.h"
 #include "BindRow.h"
-#include "observable.h"
+#include "ReactiveProperty.h"
 #include "MyString.h"
 #include "MyXmlSerializer.h"
 #include "IBindSheet.h"
@@ -12,24 +12,24 @@ template<typename... TItems>
 class CBindGridView :public CGridView
 {
 protected:
-	std::shared_ptr<observable_vector<std::tuple<TItems...>>> m_spItemsSource;
+	std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> m_spItemsSource;
 
 public:
 	template<typename... TArgs> 
 	CBindGridView(
 		CD2DWControl* pParentControl,
 		std::shared_ptr<GridViewProperty>& spGridViewProp,
-		std::shared_ptr<observable_vector<std::tuple<TItems...>>> spItemsSource = nullptr,
+		std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> spItemsSource = nullptr,
 		TArgs... args)
 		:CGridView(pParentControl, spGridViewProp), m_spItemsSource(spItemsSource)
 	{
 		//ItemsSource
 		if (!m_spItemsSource) {
-			m_spItemsSource = std::make_shared<observable_vector<std::tuple<TItems...>>>();
+			m_spItemsSource = std::make_shared<ReactiveVectorProperty<std::tuple<TItems...>>>();
 		}
 		//VectorChanged
 		auto& itemsSource = GetItemsSource();
-		auto funVectorChanged =
+		itemsSource.SubscribeDetail(
 			[this](const NotifyVectorChangedEventArgs<std::tuple<TItems...>>& e)->void {
 			switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
@@ -55,17 +55,7 @@ public:
 				default:
 					break;
 			}
-		};
-
-		if (itemsSource.VectorChanged) {
-			itemsSource.VectorChanged =
-				[existingFun = itemsSource.VectorChanged, newFun = funVectorChanged](const NotifyVectorChangedEventArgs<std::tuple<TItems...>>& e)->void {
-				existingFun(e);
-				newFun(e);
-			};
-		} else {
-			itemsSource.VectorChanged = funVectorChanged;
-		}
+		});
 
 		//TArg...
 		m_pHeaderColumn = ::get(arg<"hdrcol"_s>(), args..., default_(nullptr));
@@ -114,8 +104,8 @@ public:
 		}
 	}
 
-	observable_vector<std::tuple<TItems...>>& GetItemsSource() { return *m_spItemsSource; }
-	//std::vector<std::tuple<TItems...>>& GetSelectedItems() { return m_funSelItems(); }
+	ReactiveVectorProperty<std::tuple<TItems...>>& GetItemsSource() { return *m_spItemsSource; }
+	std::vector<std::tuple<TItems...>>& GetSelectedItems() { return m_funSelItems(); }
 
 	/******************/
 	/* Window Message */

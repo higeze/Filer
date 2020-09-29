@@ -6,7 +6,7 @@
 #include "D2DWWindow.h"
 #include "TextStoreACP.h"
 #include "TextEditSink.h"
-#include "observable.h"
+#include "ReactiveProperty.h"
 #include "GridView.h"
 
 #define Round(x)	((LONG)(x+0.5f))
@@ -362,7 +362,7 @@ STDAPI CTextStore::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, __in_ecoun
         return E_INVALIDARG;
 
     LONG acpRemovingEnd = (std::min)(acpEnd, (LONG)_pEditor->GetText().size() + 1);
-    _pEditor->GetText().notify_replace(acpStart, acpRemovingEnd - acpStart, pchText, cch);
+    _pEditor->GetText().replace(acpStart, acpRemovingEnd - acpStart, pchText, cch);
 
     pChange->acpStart = acpStart;
     pChange->acpOldEnd = acpEnd;
@@ -485,28 +485,33 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
         return TS_E_NOLOCK;
     }
 	//Get candidate dialogbox rect
+    CRectF rcf;
     if(in_range<int>(acpStart, 0, _pEditor->GetActualCharRects().size() - 1) && 
         in_range<int>(acpEnd, 0, _pEditor->GetActualCharRects().size() - 1)){
         
-	    auto rcStart(_pEditor->GetActualCharRects()[acpStart]);
-        auto rcEnd(_pEditor->GetActualCharRects()[acpEnd]);
+	    CRectF rcStart(_pEditor->GetActualCharRects()[acpStart]);
+        CRectF rcEnd(_pEditor->GetActualCharRects()[acpEnd]);
 
-        prc->left = (LONG)std::round(rcStart.left);
-        prc->right = (LONG)std::round(rcEnd.right);
-        prc->top = (LONG)std::round(rcStart.top);
-        prc->bottom = (LONG)std::round(rcEnd.bottom + 4);//Half of Triangle Wave Amplitude
+        rcf.left = rcStart.left;
+        rcf.right = rcEnd.right;
+        rcf.top = rcStart.top;
+        rcf.bottom = rcEnd.bottom + 4;//Half of Triangle Wave Amplitude
     }
     else
     {
-        prc->left = 0;
-        prc->right = 0;
-        prc->top = 0;
-        prc->bottom = 0;
+        rcf.left = 0;
+        rcf.right = 0;
+        rcf.top = 0;
+        rcf.bottom = 0;
     }
-    _pEditor->GetWndPtr()->ClientToScreen(prc);
-
+    
     *pfClipped = FALSE;
-    return S_OK;
+    if (auto rc = _pEditor->GetWndPtr()->ClientToScreen(_pEditor->GetWndPtr()->GetDirectPtr()->Dips2Pixels(rcf))) {
+        *prc = rc.value();
+        return S_OK;
+    } else {
+        return S_FALSE;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -517,15 +522,12 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
 
 STDAPI CTextStore::GetScreenExt(TsViewCookie vcView, RECT *prc)
 {
-	//*prc = _pEditor->bri_->GetClientRect().GetRECT();
-
-	////D2DMat m( _pEditor->mat_);
-	////auto xrc = m.LPtoDP( FRectF(*prc) );
-	////*prc = xrc.GetRECT();
-
- //   ClientToScreen(_pEditor->GetWnd(), (POINT *)&prc->left);
- //   ClientToScreen(_pEditor->GetWnd(), (POINT *)&prc->right);
-    return E_NOTIMPL;
+    if (auto rc = _pEditor->GetWndPtr()->ClientToScreen(_pEditor->GetWndPtr()->GetDirectPtr()->Dips2Pixels(_pEditor->GetRectInWnd()))) {
+        *prc = rc.value();
+        return S_OK;
+    } else {
+        return S_FALSE;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -567,7 +569,7 @@ STDAPI CTextStore::InsertTextAtSelection(DWORD dwFlags, __in_ecount(cch) const W
         return S_OK;
     }
 
-	_pEditor->GetText().notify_replace(acpStart, acpEnd - acpStart, pchText);
+	_pEditor->GetText().replace(acpStart, acpEnd - acpStart, pchText);
 	//_pEditor->EraseText(acpStart, acpEnd - acpStart);
 
 	////UINT nrCnt;

@@ -48,7 +48,7 @@ FLOAT CColumn::GetFitLength()
 	return m_fitLength;
 }
 
-void CColumn::SetVisible(const bool& bVisible, bool notify)
+void CColumn::SetIsVisible(const bool& bVisible, bool notify)
 {
 	if(*m_spVisible!=bVisible){
 		*m_spVisible=bVisible;

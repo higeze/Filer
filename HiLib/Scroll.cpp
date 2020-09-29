@@ -8,18 +8,36 @@
 #include <boost\mpl\vector.hpp>
 
 	CScrollBase::CScrollBase(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
-		:CD2DWControl(pParentControl), m_spScrollProp(spScrollProp), m_onPropertyChanged(onPropertyChanged){}
+		:CD2DWControl(pParentControl),
+		m_spScrollProp(spScrollProp),
+		m_onPropertyChanged(onPropertyChanged),
+		m_visibility(Visibility::Auto){}
 
 	FLOAT CScrollBase::GetScrollBandWidth()const { return m_spScrollProp->BandWidth; }
 	FLOAT CScrollBase::GetScrollDelta()const { return m_spScrollProp->DeltaScroll; }
 
+	bool CScrollBase::GetIsVisible()const
+	{
+		switch (GetVisibility()) {
+			case Visibility::Disabled:
+				return false;
+			case Visibility::Auto:
+				return GetScrollDistance() > GetScrollPage();
+			case Visibility::Hidden:
+				return false;
+			case Visibility::Visible:
+				return true;
+			default:
+				return false;
+		}
+	}
 
 	void CScrollBase::SetScrollPos(const FLOAT pos)
 	{
 		FLOAT newPos = std::clamp(pos, m_range.first, (std::max)(m_range.second - m_page, m_range.first));
 		if (m_pos != newPos) {
 			m_pos = newPos;
-			OnPropertyChanged(L"pos");
+			OnPropertyChanged(L"position");
 		}
 	}
 
@@ -28,6 +46,7 @@
 		if (m_page != page) {
 			m_page = page;
 			SetScrollPos(GetScrollPos());//Need clamp
+			OnPropertyChanged(L"page");
 		}
 	}
 	
@@ -36,13 +55,14 @@
 		if (m_range.first != min || m_range.second != max) {
 			m_range.first = min; m_range.second = max;
 			SetScrollPos(GetScrollPos());//Need clamp
+			OnPropertyChanged(L"range");
 		}
 	}
 
 
 	void CScrollBase::OnPaint(const PaintEvent& e)
 	{
-		if (!GetVisible())return;
+		if (!GetIsVisible())return;
 		//Draw background
 		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spScrollProp->BackgroundFill, GetRectInWnd());
 		//Draw thumb

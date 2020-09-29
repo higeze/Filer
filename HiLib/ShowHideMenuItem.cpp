@@ -34,12 +34,12 @@ CShowHideColumnMenuItem::CShowHideColumnMenuItem(WORD wID, std::wstring& str, CS
 
 bool CShowHideColumnMenuItem::GetIsChecked()
 {
-	return m_pColumn->GetVisible();
+	return m_pColumn->GetIsVisible();
 }
 
 void CShowHideColumnMenuItem::SetIsChecked(bool isChecked)
 {
-	m_pColumn->SetVisible(isChecked);
+	m_pColumn->SetIsVisible(isChecked);
 	m_mii.fState = isChecked ? MFS_CHECKED : MFS_UNCHECKED;
 }
 

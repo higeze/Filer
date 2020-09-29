@@ -31,6 +31,8 @@ CFavoritesGridView::CFavoritesGridView(
 	m_spFavoritesProp(spFavoritesProp)
 {
 	m_isFocusable = false;
+	m_pVScroll->SetVisibility(Visibility::Hidden);
+	m_pHScroll->SetVisibility(Visibility::Disabled);
 
 	m_spItemDragger = std::make_shared<CFavoritesItemDragger>();
 

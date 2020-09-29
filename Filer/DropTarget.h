@@ -68,18 +68,18 @@ std::basic_string<T> SanitizeFileName(const std::basic_string<T>& fileIn)
 	return fileOut;
 }
 
+class CD2DWControl;
 
 class CDropTarget : public CUnknown<IDropTarget>
 {
 private:
-	HWND              m_hWnd;
+	CD2DWControl*     m_pControl;
 	BOOL              m_bSupportFormat;
 	BOOL              m_bRButton;
 	IDropTargetHelper *m_pDropTargetHelper;
 public:
-	CDropTarget(HWND hwnd);
+	CDropTarget(CD2DWControl* pControl);
 	virtual ~CDropTarget();
-	STDMETHODIMP QueryInterface(REFIID riid, void **ppvObject) override;
 	
 	STDMETHODIMP DragEnter(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect) override;
 	STDMETHODIMP DragOver(DWORD grfKeyState, POINTL pt, DWORD *pdwEffect) override;
@@ -102,3 +102,4 @@ public:
 	static HRESULT CopyMessage(const CComPtr<IFileOperation>& pFileOperation, const std::shared_ptr<CShellFolder>& pDestFolder, LPMESSAGE pSrcMessage);
 
 };
+

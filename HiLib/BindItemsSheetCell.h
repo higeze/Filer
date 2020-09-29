@@ -2,7 +2,7 @@
 #include "BindItemsSheetCellBase.h"
 #include "BindSheetCellColumn.h"
 #include "IBindSheet.h"
-#include "observable.h"
+#include "ReactiveProperty.h"
 
 template<typename TItem, typename TValueItem>
 class CBindItemsSheetCell :public CBindItemsSheetCellBase<TValueItem>
@@ -19,7 +19,7 @@ public:
 		Args... args)
 		:CBindItemsSheetCellBase<TValueItem>(
 			pSheet, pRow, pColumn, spSheetProperty, spCellProperty,
-			arg<"funitems"_s>() = [](CSheetCell* p)->observable_vector<std::tuple<TValueItem>>&{ return static_cast<CBindItemsSheetCell<TItem, TValueItem>*>(p)->GetItemsSourceImpl();},
+			arg<"funitems"_s>() = [](CSheetCell* p)->ReactiveVectorProperty<std::tuple<TValueItem>>&{ return static_cast<CBindItemsSheetCell<TItem, TValueItem>*>(p)->GetItemsSourceImpl();},
 			args...)
 	{
 		initializer(this);
@@ -30,7 +30,7 @@ public:
 			PushRow(std::make_shared<CBindRow<TValueItem>>(this));
 		}
 
-		items.VectorChanged =
+		items.SubscribeDetail(
 			[this](const NotifyVectorChangedEventArgs<std::tuple<TValueItem>>& e)->void {
 			switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
@@ -56,10 +56,10 @@ public:
 				default:
 					break;
 			}
-		};
+		});
 	}
 
-	observable_vector<std::tuple<TValueItem>>& GetItemsSourceImpl()
+	ReactiveVectorProperty<std::tuple<TValueItem>>& GetItemsSourceImpl()
 	{
 		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
 		auto pBindColumn = static_cast<CBindSheetCellColumn<TItem, TValueItem>*>(m_pColumn);

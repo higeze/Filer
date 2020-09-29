@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -80,7 +80,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -236,6 +236,7 @@
     <ClInclude Include="..\HiLib\Debug.h" />
     <ClInclude Include="..\HiLib\Dispatcher.h" />
     <ClInclude Include="..\HiLib\Dragger.h" />
+    <ClInclude Include="..\HiLib\DropTargetManager.h" />
     <ClInclude Include="..\HiLib\EmptyCell.h" />
     <ClInclude Include="..\HiLib\EventArgs.h" />
     <ClInclude Include="..\HiLib\FileDragger.h" />
@@ -289,8 +290,8 @@
     <ClInclude Include="..\HiLib\MyWnd.h" />
     <ClInclude Include="..\HiLib\MyXMLSerializer.h" />
     <ClInclude Include="..\HiLib\named_arguments.h" />
-    <ClInclude Include="..\HiLib\observable.h" />
     <ClInclude Include="..\HiLib\ColumnIndexCell.h" />
+    <ClInclude Include="..\HiLib\ReactiveProperty.h" />
     <ClInclude Include="..\HiLib\ScrollProperty.h" />
     <ClInclude Include="..\HiLib\SortCell.h" />
     <ClInclude Include="..\HiLib\MapColumn.h" />
@@ -334,9 +335,11 @@
     <ClInclude Include="..\HiLib\D2DWControl.h" />
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UniqueIDFactory.h" />
+    <ClInclude Include="..\HiLib\Unknown.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
     <ClInclude Include="CheckableFileGrid.h" />
+    <ClInclude Include="DropTarget.h" />
     <ClInclude Include="FileOperationWnd.h" />
     <ClInclude Include="FilerBindGridView.h" />
     <ClInclude Include="FilerGridViewProperty.h" />
@@ -354,7 +357,6 @@
     <ClInclude Include="FilerTabGridView.h" />
     <ClInclude Include="DirectoryWatcher.h" />
     <ClInclude Include="DropSource.h" />
-    <ClInclude Include="DropTarget.h" />
     <ClInclude Include="Favorite.h" />
     <ClInclude Include="FavoritesColumn.h" />
     <ClInclude Include="FavoritesGridView.h" />
@@ -384,7 +386,6 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Task.h" />
     <ClInclude Include="ToDoGridView.h" />
-    <ClInclude Include="Unknown.h" />
     <ClInclude Include="ViewProperty.h" />
   </ItemGroup>
   <ItemGroup>
@@ -410,6 +411,7 @@
     <ClCompile Include="..\HiLib\DeadlineTimer.cpp" />
     <ClCompile Include="..\HiLib\Direct2DWrite.cpp" />
     <ClCompile Include="..\HiLib\Dispatcher.cpp" />
+    <ClCompile Include="..\HiLib\DropTargetManager.cpp" />
     <ClCompile Include="..\HiLib\FileIconCache.cpp" />
     <ClCompile Include="..\HiLib\FilterCell.cpp" />
     <ClCompile Include="..\HiLib\FontCell.cpp" />
@@ -460,6 +462,7 @@
     <ClCompile Include="..\HiLib\D2DWControl.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
+    <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="FileOperationWnd.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />
     <ClCompile Include="FilerGridViewWnd.cpp" />
@@ -471,7 +474,6 @@
     <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="DriveFolder.cpp" />
     <ClCompile Include="DropSource.cpp" />
-    <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="Favorite.cpp" />
     <ClCompile Include="FavoritesGridView.cpp" />
     <ClCompile Include="FileDragger.cpp" />

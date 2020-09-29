@@ -21,7 +21,7 @@
 #include <type_traits>
 #include "SerializerEnableIf.h"
 #include "CellProperty.h"
-#include "observable.h"
+#include "ReactiveProperty.h"
 
 #include "BindTextCell.h"
 
@@ -207,7 +207,7 @@ public:
 
 	//For observable_tuple_vector
 	template<class T>
-	void SerializeValue(observable_vector<std::tuple<T>>& t, CRow* pRow, CColumn* pCol)
+	void SerializeValue(ReactiveProperty<std::tuple<T>>& t, CRow* pRow, CColumn* pCol)
 	{
 		auto spCell = std::make_shared<CBindPropertySheetCell<T>>(
 			m_pSheet,
@@ -385,7 +385,7 @@ public:
 
 	//For observable_tuple_vector
 	template<class T>
-	void DeserializeValue(observable_vector<std::tuple<T>>& t, CRow* pRow, CColumn* pColumn)
+	void DeserializeValue(ReactiveProperty<std::tuple<T>>& t, CRow* pRow, CColumn* pColumn)
 	{
 		//auto& allRows = m_pSheet->GetContainer<RowTag, AllTag>();
 		//t.clear();

@@ -50,9 +50,6 @@
     <ClInclude Include="DropSource.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="DropTarget.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="Favorite.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -114,9 +111,6 @@
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="Unknown.h">
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\ApplicationProperty.h">
@@ -524,9 +518,6 @@
     <ClInclude Include="..\D2DTextBox\TextEditSink.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\observable.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\GridViewStateMachine.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -635,15 +626,24 @@
     <ClInclude Include="..\HiLib\UniqueIDFactory.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\DropTargetManager.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="DropTarget.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\Unknown.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ReactiveProperty.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="DropSource.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="DropTarget.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="Favorite.cpp">
@@ -929,6 +929,12 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="DropTarget.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\DropTargetManager.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

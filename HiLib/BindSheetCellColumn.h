@@ -12,14 +12,14 @@ class CBindSheetCellColumn : public CMapColumn
 {
 private:
 	std::wstring m_header;
-	std::function<observable_vector<std::tuple<TValueItem>>&(std::tuple<TItem>&)> m_itemser;
+	std::function<ReactiveVectorProperty<std::tuple<TValueItem>>&(std::tuple<TItem>&)> m_itemser;
 	std::function<void(CBindItemsSheetCell<TItem, TValueItem>*)> m_initialize;
 public:
 	template<typename... Args>
 	CBindSheetCellColumn(
 		CSheet* pSheet,
 		const std::wstring& header,
-		std::function<observable_vector<std::tuple<TValueItem>>&(std::tuple<TItem>&)> itemser,
+		std::function<ReactiveVectorProperty<std::tuple<TValueItem>>&(std::tuple<TItem>&)> itemser,
 		std::function<void(CBindItemsSheetCell<TItem, TValueItem>*)> initializer,
 		Args... args)
 		:CMapColumn(pSheet, args...), m_header(header), m_itemser(itemser), m_initialize(initializer)
@@ -39,7 +39,7 @@ public:
 	}
 	virtual CBindSheetCellColumn* CloneRaw()const { return new CBindSheetCellColumn(*this); }
 	//std::shared_ptr<CToDoNameColumn> Clone()const { return std::shared_ptr<CToDoNameColumn>(CloneRaw()); }
-	std::function<observable_vector<std::tuple<TValueItem>>&(std::tuple<TItem>&)> GetItemser() { return m_itemser; }
+	std::function<ReactiveVectorProperty<std::tuple<TValueItem>>&(std::tuple<TItem>&)> GetItemser() { return m_itemser; }
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{

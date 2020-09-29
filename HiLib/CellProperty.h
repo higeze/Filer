@@ -2,7 +2,7 @@
 #include "Direct2DWrite.h"
 #include "ScrollProperty.h"
 #include <regex>
-#include "observable.h"
+#include "ReactiveProperty.h"
 
 enum class PicturePositon
 {
@@ -128,32 +128,41 @@ struct SyntaxAppearance
 	//std::regex Re;
 	SyntaxFormatF SyntaxFormat;
 
+	SyntaxAppearance(const std::wstring& regex, const SyntaxFormatF& syntaxformat)
+		:Regex(regex), SyntaxFormat(syntaxformat){}
+
 	template <class Archive>
 	void save(Archive& ar)
 	{
 		ar("Regex", Regex);
-		ar("SyntaxAppearance", SyntaxFormat);
+		ar("SyntaxFormat", SyntaxFormat);
 	}
 
 	template <class Archive>
 	void load(Archive& ar)
 	{
 		ar("Regex", Regex);
-		ar("SyntaxAppearance", SyntaxFormat);
+		ar("SyntaxFormat", SyntaxFormat);
 	}
 
 };
 
 struct TextEditorProperty :public TextboxProperty
 {
-	observable_vector<std::tuple<SyntaxAppearance>> SyntaxAppearances;
-	TextEditorProperty():TextboxProperty(){}
+	//ReactiveVectorProperty<std::tuple<SyntaxAppearance>> SyntaxAppearances;
+	TextEditorProperty():TextboxProperty()
+	{
+		//SyntaxAppearances.push_back(
+		//	std::make_tuple(
+		//	SyntaxAppearance(L"/\\*.*?\\*/",
+		//	SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false))));
+	}
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
 		TextboxProperty::serialize(ar);
-		ar("SyntaxAppearances", SyntaxAppearances);
+		//TODOHIGHar("SyntaxAppearances", SyntaxAppearances);
 	}
 };
 

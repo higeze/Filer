@@ -1,7 +1,7 @@
 #pragma once
 #include "Direct2DWrite.h"
 #include "D2DWControl.h"
-#include "observable.h"
+#include "ReactiveProperty.h"
 #include <Shlwapi.h>
 
 
@@ -50,20 +50,22 @@ class CTabControl :public CD2DWControl
 {
 protected:
 	std::shared_ptr<TabControlProperty> m_spProp;
-	observable_vector<std::shared_ptr<TabData>> m_itemsSource;
+	ReactiveVectorProperty<std::shared_ptr<TabData>> m_itemsSource;
 
 	std::unordered_map<std::string, std::function<std::wstring(const std::shared_ptr<TabData>&)>> m_itemsHeaderTemplate;
 	std::unordered_map<std::string, std::function<std::shared_ptr<CD2DWControl>(const std::shared_ptr<TabData>&)>> m_itemsControlTemplate;
 	std::shared_ptr<CD2DWControl> m_spCurControl;
-	observable<int> m_selectedIndex = -1;
+	ReactiveProperty<int> m_selectedIndex;
+	std::optional<size_t> m_contextIndex;
 public:
 	CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<TabControlProperty>& spProp);
 	virtual ~CTabControl();
 
 	//Getter Setter
-	observable_vector<std::shared_ptr<TabData>>& GetItemsSource(){ return m_itemsSource; }
+	ReactiveVectorProperty<std::shared_ptr<TabData>>& GetItemsSource(){ return m_itemsSource; }
 	int GetSelectedIndex()const{ return m_selectedIndex.get(); }
 	std::shared_ptr<CD2DWControl>& GetCurrentControlPtr() { return m_spCurControl; }
+	std::optional<size_t> GetPtInHeaderRectIndex(const CPointF& pt)const;
 
 
 	std::function<std::vector<CRectF>&()> GetHeaderRects;

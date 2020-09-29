@@ -34,7 +34,7 @@ public:
 	CFilerBindGridView(
 		CD2DWControl* pParentControl,
 		std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		std::shared_ptr<observable_vector<std::tuple<TItems...>>> spItemsSource = nullptr,
+		std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> spItemsSource = nullptr,
 		TArgs... args)
 		:CBindGridView(pParentControl, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), spItemsSource, args...)
 	{

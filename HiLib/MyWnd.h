@@ -10,6 +10,7 @@
 #include <shellapi.h>
 #include <commctrl.h>
 #include <commdlg.h>
+#include <optional>
 #include "MyPrerocessor.h"
 #include <fmt/format.h>
 
@@ -359,11 +360,22 @@ public:
 */
 	BOOL SetWindowText(LPCTSTR lpszString){return ::SetWindowText(m_hWnd,lpszString);}
 	BOOL InvalidateRect(const RECT *lpRect,BOOL bErase){return ::InvalidateRect(m_hWnd,lpRect,bErase);}
-	BOOL ClientToScreen(LPPOINT lpPoint){return ::ClientToScreen(m_hWnd,lpPoint);}
-	BOOL ClientToScreen(LPRECT lpRect) 
+	std::optional<CPoint> ClientToScreen(CPoint pt)
+	{
+		if (::ClientToScreen(m_hWnd, pt)) {
+			return pt;
+		} else {
+			return std::nullopt;
+		}
+	}
+
+	std::optional<CRect> ClientToScreen(CRect rc) 
 	{ 
-		BOOL ret = ::ClientToScreen(m_hWnd, reinterpret_cast<LPPOINT>(&(lpRect->left))) && ::ClientToScreen(m_hWnd, reinterpret_cast<LPPOINT>(&(lpRect->right)));
-		return ret;
+		if (::ClientToScreen(m_hWnd, reinterpret_cast<LPPOINT>(&(rc.left))) && ::ClientToScreen(m_hWnd, reinterpret_cast<LPPOINT>(&(rc.right)))) {
+			return rc;
+		} else {
+			return std::nullopt;
+		}
 	}
 	BOOL DestroyWindow(){return ::DestroyWindow(m_hWnd);}
 	BOOL GetClientRect(LPRECT lpRect){return ::GetClientRect(m_hWnd,lpRect);}
@@ -420,8 +432,7 @@ public:
 	HFONT GetFont(){return (HFONT)::SendMessage(m_hWnd,WM_GETFONT,0,0);}
 	BOOL IsWindowVisible(){return ::IsWindowVisible(m_hWnd);}
 	BOOL IsWindow(){return ::IsWindow(m_hWnd);}
-	//BOOL ScreenToClient(LPPOINT lpPoint){return ::ScreenToClient(m_hWnd,lpPoint);}
-	CPoint ScreenToClient(const CPoint& ptScreen)
+	std::optional<CPoint> ScreenToClient(CPoint ptScreen)
 	{
 		CPoint ptClient(ptScreen);
 		if (::ScreenToClient(m_hWnd, ptClient)) {
@@ -430,16 +441,13 @@ public:
 			return CPoint();
 		}
 	}
-	BOOL ScreenToClient(LPRECT lpRect)
+	std::optional<CRect> ScreenToClientRect(CRect rc)
 	{
-		if(!::ScreenToClient(m_hWnd,(LPPOINT)lpRect)){return FALSE;};
-		return ::ScreenToClient(m_hWnd,((LPPOINT)lpRect)+1);
-	}
-	CRect ScreenToClientRect(LPRECT lpRect)
-	{
-		if(!::ScreenToClient(m_hWnd,(LPPOINT)lpRect)){return CRect();};
-		::ScreenToClient(m_hWnd,((LPPOINT)lpRect)+1);
-		return CRect(*lpRect);
+		if (::ScreenToClient(m_hWnd, reinterpret_cast<LPPOINT>(&(rc.left))) && ::ScreenToClient(m_hWnd, reinterpret_cast<LPPOINT>(&(rc.right)))) {
+			return rc;
+		} else {
+			return std::nullopt;
+		}
 	}
 	BOOL EnableWindow(BOOL bEnable){return ::EnableWindow(m_hWnd,bEnable);}
 	BOOL IsWindowEnabled(){return ::IsWindowEnabled(m_hWnd);}

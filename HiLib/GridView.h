@@ -40,7 +40,6 @@ protected:
 public:
 
 	boost::signals2::signal<void()> SignalPreDelayUpdate;
-	static UINT WM_DELAY_UPDATE;
 	void DelayUpdate();
 
 public:
@@ -74,8 +73,8 @@ public:
 		return 0;
 	}
 
-	virtual LRESULT OnFilter(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
-	virtual LRESULT OnDelayUpdate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	virtual void OnFilter();
+	virtual void OnDelayUpdate();
 
 	virtual void OnCommandEditHeader(const CommandEvent& e);
 	virtual void OnCommandDeleteColumn(const CommandEvent& e);

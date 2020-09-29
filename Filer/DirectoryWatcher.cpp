@@ -1,4 +1,3 @@
-//#include "stdafx.h"
 #include "DirectoryWatcher.h"
 #include "SEHException.h"
 #include "MyWin32.h"
@@ -6,10 +5,10 @@
 #include "ThreadPool.h"
 #include "D2DWWindow.h"
 #include "D2DWControl.h"
-
+#include "Dispatcher.h"
 #include "ShellFunction.h"
-#include <algorithm>
 
+#include <algorithm>
 
 CDirectoryWatcher::CDirectoryWatcher(CD2DWControl* pControl, std::function<void(const DirectoryWatchEvent&)> callback)
 	:m_pControl(pControl), m_pQuitEvent(), m_vData(kBufferSize, 0), m_callback(callback)
@@ -275,7 +274,11 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 				//infos.erase(std::unique(infos.begin(), infos.end()), infos.end());
 				if (!infos.empty()) {
 					//::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)&infos, NULL);
-					m_callback(DirectoryWatchEvent(infos));
+					m_pControl->GetWndPtr()->GetDispatcherPtr()->SendInvoke([&]()->void
+					{
+						m_callback(DirectoryWatchEvent(infos));
+
+					});
 				}
 				delete[](PBYTE)pFileNotifyInfo;
 				m_names = fileNames;

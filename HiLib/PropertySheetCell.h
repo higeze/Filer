@@ -27,7 +27,7 @@ public:
 		CColumn* pColumn,
 		std::shared_ptr<SheetProperty>& spSheetProperty,
 		std::shared_ptr<CellProperty>& spCellProperty,
-		observable_vector<std::tuple<TValueItem>>& itemsSource,
+		ReactiveProperty<std::tuple<TValueItem>>& itemsSource,
 		Args... args)
 		:CBindItemsSheetCellBase<TValueItem>(
 			pSheet,pRow,pColumn,spSheetProperty, spCellProperty,

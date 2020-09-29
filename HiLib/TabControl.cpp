@@ -2,39 +2,46 @@
 #include "D2DWWindow.h"
 
 CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<TabControlProperty>& spProp)
-	:CD2DWControl(pParentControl), m_spProp(spProp)
+	:CD2DWControl(pParentControl), m_spProp(spProp), m_selectedIndex(-1)
 {
 	//ItemsSource
-	m_itemsSource.VectorChanged =
+	m_itemsSource.SubscribeDetail(
 		[this](const NotifyVectorChangedEventArgs<std::shared_ptr<TabData>>& e)->void
-	{
-		switch (e.Action) {
-			case NotifyVectorChangedAction::Add:
-			case NotifyVectorChangedAction::Insert:
-				GetHeaderRects().clear();
-				m_selectedIndex.force_notify_set((std::min)((size_t)e.NewStartingIndex, m_itemsSource.size()));
-				break;
-			case NotifyVectorChangedAction::Remove:
-				GetHeaderRects().clear();
-				m_selectedIndex.force_notify_set((std::min)((size_t)e.OldStartingIndex, m_itemsSource.size()));
-				break;
-			case NotifyVectorChangedAction::Replace:
-				GetHeaderRects().clear();
-				m_selectedIndex.force_notify_set((std::min)((size_t)e.NewStartingIndex, m_itemsSource.size()));
-				break;
-			case NotifyVectorChangedAction::Reset:
-				GetHeaderRects().clear();
-				m_selectedIndex.force_notify_set((std::min)((size_t)m_selectedIndex.get(), m_itemsSource.size()));
-			default:
-				break;
-		}
-	};
+		{
+			switch (e.Action) {
+				case NotifyVectorChangedAction::Add:
+				case NotifyVectorChangedAction::Insert:
+					GetHeaderRects().clear();
+					m_selectedIndex.force_notify_set((std::min)((size_t)e.NewStartingIndex, m_itemsSource.size() -1));
+					break;
+				case NotifyVectorChangedAction::Remove:
+					GetHeaderRects().clear();
+					//todo onclose
+					m_selectedIndex.force_notify_set((std::min)((size_t)e.OldStartingIndex, m_itemsSource.size() -1));
+					break;
+				case NotifyVectorChangedAction::Replace:
+					GetHeaderRects().clear();
+					//todo onclose
+					m_selectedIndex.force_notify_set((std::min)((size_t)e.NewStartingIndex, m_itemsSource.size() -1));
+					break;
+				case NotifyVectorChangedAction::Reset:
+					GetHeaderRects().clear();
+					m_selectedIndex.force_notify_set((std::min)((size_t)m_selectedIndex.get(), m_itemsSource.size() -1));
+				default:
+					break;
+			}
+		});
 	//SelectedIndex
-	m_selectedIndex.Changed = 
-		[this](const NotifyChangedEventArgs<int>& e)->void {
-			auto spData = m_itemsSource[m_selectedIndex.get()];
-			m_spCurControl = m_itemsControlTemplate[typeid(*spData).name()](spData);
-		};
+	m_selectedIndex.Subscribe( 
+		[this](const int& value)->void {
+			auto spData = m_itemsSource[value];
+			auto spControl = m_itemsControlTemplate[typeid(*spData).name()](spData);
+			//if (m_spCurControl) {
+			//	m_spCurControl->OnClose(CloseEvent(m_spCurControl->GetWndPtr(), 0, 0));
+			//}
+			m_spCurControl = spControl;
+		});
+
 	GetHeaderRects = [rects = std::vector<CRectF>(), this]()mutable->std::vector<CRectF>&
 	{
 		if (rects.empty()) {
@@ -80,31 +87,43 @@ CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<Tab
 }
 CTabControl::~CTabControl() = default;
 
+std::optional<size_t> CTabControl::GetPtInHeaderRectIndex(const CPointF& pt)const
+{
+	auto headerRects = GetHeaderRects();
+	auto iter = std::find_if(headerRects.begin(), headerRects.end(),
+		[&](const CRectF& rc)->bool { return rc.PtInRect(pt); });
+	if (iter != headerRects.end()) {
+		return iter - headerRects.begin();
+	} else {
+		return std::nullopt;
+	}
+}
+
 /***********/
 /* Command */
 /***********/
 void CTabControl::OnCommandCloneTab(const CommandEvent& e)
 {
 	//TODOLOW should deep clone
-	m_itemsSource.notify_push_back(m_itemsSource[m_selectedIndex.get()]);
-	m_selectedIndex.notify_set(m_selectedIndex - 1);
+	m_itemsSource.push_back(m_itemsSource[m_selectedIndex.get()]);
+	m_selectedIndex.set(m_selectedIndex - 1);
 }
+
 void CTabControl::OnCommandCloseTab(const CommandEvent& e)
 {
-	if(m_selectedIndex.get()>1){
-		m_itemsSource.notify_erase(m_itemsSource.begin() + m_selectedIndex.get());
-		m_selectedIndex.forth_notify_set((std::min)(m_selectedIndex.get() - 1, m_selectedIndex.get()));
+	if (m_contextIndex) {
+		m_itemsSource.erase(m_itemsSource.begin() + m_contextIndex.value());
 	}
 }
 void CTabControl::OnCommandCloseAllButThisTab(const CommandEvent& e)
 {
-	if (m_selectedIndex.get()>1) {
+	if (m_contextIndex) {
 		//Erase larger tab
-		m_itemsSource.notify_erase(m_itemsSource.begin() + (m_selectedIndex.get() + 1), m_itemsSource.end());
+		m_itemsSource.erase(m_itemsSource.begin() + (m_contextIndex.value() + 1), m_itemsSource.end());
 		//Erase smaller tab
-		m_itemsSource.notify_erase(m_itemsSource.begin(), m_itemsSource.begin() + m_selectedIndex.get());
+		m_itemsSource.erase(m_itemsSource.begin(), m_itemsSource.begin() + m_contextIndex.value());
 
-		m_selectedIndex.forth_notify_set(0);
+		m_selectedIndex.force_notify_set(0);
 	}
 }
 
@@ -179,7 +198,7 @@ void CTabControl::OnLButtonDown(const LButtonDownEvent& e)
 		[&](const CRectF& rc)->bool { return rc.PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
 
 	if (iter != headerRects.end()) {
-		m_selectedIndex.notify_set(iter - headerRects.begin());
+		m_selectedIndex.set(iter - headerRects.begin());
 	} else {
 		m_spCurControl->OnLButtonDown(e);
 	}
@@ -252,7 +271,7 @@ void CTabControl::OnChar(const CharEvent& e)
 }
 void CTabControl::OnContextMenu(const ContextMenuEvent& e)
 {
-	m_spCurControl->OnContextMenu(e);
+	m_contextIndex = GetPtInHeaderRectIndex(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 }
 void CTabControl::OnSetFocus(const SetFocusEvent& e)
 {

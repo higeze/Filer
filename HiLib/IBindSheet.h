@@ -1,10 +1,10 @@
 #pragma once
 
-#include "observable.h"
+#include "ReactiveProperty.h"
 
 template<typename... TValueItem>
 class IBindSheet
 {
 public:
-	virtual observable_vector<std::tuple<TValueItem...>>& GetItemsSource() = 0;
+	virtual ReactiveVectorProperty<std::tuple<TValueItem...>>& GetItemsSource() = 0;
 };

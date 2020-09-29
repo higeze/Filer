@@ -83,13 +83,10 @@ struct CMouseStateMachine::Machine
 	bool LButtonDowned_Guard_MouseMove(CUIElement* pGrid, const MouseMoveEvent& e)
 	{
 		if (m_ptBeginClient.has_value()) {
-			CPoint ptBeginScreen = m_ptBeginClient.value();
-			e.WndPtr->ClientToScreen(ptBeginScreen);
 			auto cxdrag = ::GetSystemMetrics(SM_CXDRAG);
 			auto cydrag = ::GetSystemMetrics(SM_CXDRAG);
 			return std::abs(m_ptBeginClient.value().x - e.PointInClient.x) > cxdrag || std::abs(m_ptBeginClient.value().y - e.PointInClient.y) > cydrag;
-			// DragDetect disable LButtonUp if return false. Do not use.
-			//return ::DragDetect(e.WndPtr->m_hWnd, ptBeginScreen);
+			// Do not use DragDetect. Since it disables LButtonUp if return false.
 		} else {
 			return false;
 		}
@@ -166,6 +163,7 @@ struct CMouseStateMachine::Machine
 			state<LButtonUpped> +event<MouseLeaveEvent> / call(&Machine::Normal_MouseLeave) = state<Normal>,
 			state<LButtonUpped> +event<CharEvent> / call(&Machine::Normal_Char),
 			state<LButtonUpped> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
+			state<LButtonUpped> +event<ContextMenuEvent> / call(&Machine::Normal_ContextMenu),
 
 
 			state<LButtonDblClked> +event<LButtonUpEvent> / call(&Machine::Normal_LButtonUp) = state<Normal>,

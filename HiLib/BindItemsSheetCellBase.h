@@ -1,7 +1,7 @@
 #pragma once
 #include "SheetCell.h"
 #include "IBindSheet.h"
-#include "observable.h"
+#include "ReactiveProperty.h"
 #include "Debug.h"
 #include "ResourceIDFactory.h"
 #include "named_arguments.h"
@@ -11,9 +11,9 @@ template<typename TValueItem>
 class CBindItemsSheetCellBase :public CSheetCell, public IBindSheet<TValueItem>
 {
 private:
-	std::function<observable_vector<std::tuple<TValueItem>>& (CSheetCell*)> m_funItems = nullptr;
-	observable_vector<std::tuple<TValueItem>>* m_ptrItems = nullptr;
-	observable_vector<std::tuple<TValueItem>> m_items;
+	std::function<ReactiveVectorProperty<std::tuple<TValueItem>>& (CSheetCell*)> m_funItems = nullptr;
+	ReactiveVectorProperty<std::tuple<TValueItem>>* m_ptrItems = nullptr;
+	ReactiveVectorProperty<std::tuple<TValueItem>> m_items;
 public:
 	template<typename... Args>
 	CBindItemsSheetCellBase(
@@ -29,7 +29,7 @@ public:
 		auto columnHeaders = ::get(arg<"colhdrs"_s>(), args..., default_(std::vector<std::shared_ptr<CColumn>>()));
 		m_funItems = ::get(arg<"funitems"_s>(), args..., default_(nullptr));
 		m_ptrItems = ::get(arg<"ptritems"_s>(), args..., default_(nullptr));
-		m_items = ::get(arg<"items"_s>(), args..., default_(observable_vector<std::tuple<TValueItem>>()));
+		m_items = ::get(arg<"items"_s>(), args..., default_(ReactiveVectorProperty<std::tuple<TValueItem>>()));
 	}
 
 	virtual ~CBindItemsSheetCellBase() = default;
@@ -37,7 +37,7 @@ public:
 	virtual bool HasSheetCell()override { return true; }
 	virtual bool IsVirtualPage()override { return true; }
 
-	observable_vector<std::tuple<TValueItem>>& GetItemsSource() 
+	ReactiveVectorProperty<std::tuple<TValueItem>>& GetItemsSource() 
 	{ 
 		if (m_funItems) {
 			return m_funItems(this);
@@ -99,10 +99,10 @@ public:
 
 		if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
 			auto& items = GetItemsSource();
-			items.notify_push_back(TValueItem());
+			items.push_back(TValueItem());
 		} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
 			auto a = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
-			this->GetItemsSource().notify_erase(this->GetItemsSource().cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
+			this->GetItemsSource().erase(this->GetItemsSource().cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
 		}
 		*e.HandledPtr = TRUE;
 

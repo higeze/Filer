@@ -6,6 +6,14 @@
 class CD2DWWindow;
 class CD2DWControl;
 
+enum class Visibility
+{
+	Disabled,//Not visble, Not scrollable by any method
+	Auto,//Depends on page size, content size
+	Hidden,//Not Visible, but scrollable by mouse wheel
+	Visible,//Force visible
+};
+
 namespace UIElementState
 {
 	enum Type{
@@ -45,10 +53,11 @@ struct EndEditEvent :public Event
 
 struct CreateEvt :public Event
 {
-	CRectF Rect;
+	CRect Rect;
+	CRectF RectF;
 	CreateEvt(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
 	CreateEvt(CD2DWWindow* pWnd, CRectF rect, BOOL* pHandled = nullptr)
-		:Event(pWnd, pHandled), Rect(rect){}
+		:Event(pWnd, pHandled), RectF(rect){}
 };
 
 struct CloseEvent :public Event

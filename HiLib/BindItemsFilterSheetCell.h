@@ -2,7 +2,7 @@
 #include "BindItemsSheetCellBase.h"
 #include "BindSheetCellColumn.h"
 #include "IBindSheet.h"
-#include "observable.h"
+#include "ReactiveProperty.h"
 
 template<typename TItem, typename TValueItem>
 class CBindItemsFilterSheetCell :public CBindItemsSheetCellBase<TValueItem>
@@ -19,7 +19,7 @@ public:
 		Args... args)
 		:CBindItemsSheetCellBase<TValueItem>(
 			pSheet, pRow, pColumn, spSheetProperty, spCellProperty,
-			arg<"funitems"_s>() = [](CSheetCell* p)->observable_vector<TValueItem>& { return static_cast<CBindItemsSheetCell<TItem, TValueItem>*>(p)->GetItemsSourceImpl(); },
+			arg<"funitems"_s>() = [](CSheetCell* p)->ReactiveVectorProperty<TValueItem>& { return static_cast<CBindItemsSheetCell<TItem, TValueItem>*>(p)->GetItemsSourceImpl(); },
 			args...)
 	{
 		initializer(this);
@@ -48,7 +48,7 @@ public:
 		};
 	}
 
-	observable_vector<TValueItem>& GetItemsSourceImpl()
+	ReactiveVectorProperty<TValueItem>& GetItemsSourceImpl()
 	{
 		auto pBindRow = static_cast<CBindRowTest<TItem>*>(m_pRow);
 		auto pBindColumn = static_cast<CBindSheetCellColumn<TItem, TValueItem>*>(m_pColumn);

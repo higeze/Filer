@@ -220,7 +220,7 @@ bool CCell::Filter(const std::wstring& strFilter)
 
 bool CCell::GetIsVisible()const
 {
-	return m_pRow->GetVisible() && m_pColumn->GetVisible();
+	return m_pRow->GetIsVisible() && m_pColumn->GetIsVisible();
 }
 
 bool CCell::GetIsSelected()const

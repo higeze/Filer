@@ -51,6 +51,7 @@
 #include "Textbox.h"
 #include "D2DWWindow.h"
 #include "FileOperationWnd.h"
+#include "DropTargetManager.h"
 
 #include "MouseStateMachine.h"
 
@@ -120,11 +121,11 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 
 	//Drag & Drop
 	//DropTarget
-	auto pDropTarget = new CDropTarget(GetWndPtr()->m_hWnd);
-	pDropTarget->IsDroppable = ([this](const std::vector<FORMATETC>& formats)->bool {return IsDroppable(formats); });
-	pDropTarget->Dropped = ([this](IDataObject *pDataObj, DWORD dwEffect)->void {Dropped(pDataObj, dwEffect); });
+	auto pDropTarget = new CDropTarget(this);
+	pDropTarget->IsDroppable = ([this](const std::vector<FORMATETC>& formats)->bool { return IsDroppable(formats); });
+	pDropTarget->Dropped = ([this](IDataObject *pDataObj, DWORD dwEffect)->void { Dropped(pDataObj, dwEffect); });
 	m_pDropTarget = CComPtr<IDropTarget>(pDropTarget);
-	::RegisterDragDrop(GetWndPtr()->m_hWnd, m_pDropTarget);
+	GetWndPtr()->GetDropTargetManagerPtr()->RegisterDragDrop(this, m_pDropTarget);
 	//DropSource
 	m_pDropSource = CComPtr<IDropSource>(new CDropSource);
 	m_pDragSourceHelper.CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER);
@@ -690,7 +691,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 		}
 
 		//Clear RowDictionary From 0 to last
-		GetItemsSource().notify_clear();
+		GetItemsSource().clear();
 		//m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
 	}
 

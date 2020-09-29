@@ -18,7 +18,7 @@ CCopyMoveWndBase::CCopyMoveWndBase(
 			shell::DesktopBindToShellFolder(m_srcIDL),
 			m_srcIDL,
 			childIDL);
-		m_spItemsSource->notify_push_back(
+		m_spItemsSource->push_back(
 			std::make_tuple(
 				spFile,
 				RenameInfo{ spFile->GetPathNameWithoutExt(), spFile->GetPathExt() }));
@@ -66,7 +66,7 @@ void CCopyWnd::OnCommandDo(const CommandEvent& e)
 	std::vector<CIDL> noRenameIDLs;
 	std::vector<std::pair<CIDL, std::wstring>> renameIDLs;
 
-	for (auto& tup : *m_spItemsSource) {
+	for (auto& tup : m_spItemsSource->get()) {
 		auto& spFile = std::get<std::shared_ptr<CShellFile>>(tup);
 		auto& rename = std::get<RenameInfo>(tup);
 		std::wstring newname = rename.Name + rename.Ext;
@@ -214,7 +214,7 @@ CDeleteWnd::CDeleteWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewPr
 			shell::DesktopBindToShellFolder(m_srcIDL),
 			m_srcIDL,
 			childIDL);
-		m_spItemsSource->notify_push_back(
+		m_spItemsSource->push_back(
 			std::make_tuple(spFile));
 	}
 

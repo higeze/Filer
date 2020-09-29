@@ -6,9 +6,7 @@ class CDropSource : public CUnknown<IDropSource>
 public:
 	CDropSource();
 	~CDropSource();
-
-	STDMETHODIMP QueryInterface(REFIID riid, void **ppvObject);
 	
-	STDMETHODIMP QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState);
-	STDMETHODIMP GiveFeedback(DWORD dwEffect);
+	STDMETHODIMP QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState) override;
+	STDMETHODIMP GiveFeedback(DWORD dwEffect) override;
 };

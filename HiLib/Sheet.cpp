@@ -474,16 +474,16 @@ void CSheet::Filter(int colDisp,std::function<bool(const std::shared_ptr<CCell>&
 {
 	for(auto& rowIter=std::next(m_allRows.begin(), m_frozenRowCount);rowIter!=m_allRows.end(); ++rowIter){
 		if(predicate(Cell(*rowIter, m_allCols[colDisp]))){
-			(*rowIter)->SetVisible(true);
+			(*rowIter)->SetIsVisible(true);
 		}else{
-			(*rowIter)->SetVisible(false);		
+			(*rowIter)->SetIsVisible(false);		
 		}
 	}
 }
 
 void CSheet::ResetFilter()
 {
-	auto setVisible = [](const auto& ptr) {ptr->SetVisible(true); };
+	auto setVisible = [](const auto& ptr) {ptr->SetIsVisible(true); };
 	std::for_each(m_allRows.begin(), m_allRows.end(), setVisible);
 	std::for_each(m_allCols.begin(), m_allCols.end(), setVisible);
 }
@@ -589,13 +589,13 @@ CPointF CSheet::GetFrozenPoint()
 	FLOAT x = 0;
 	FLOAT y = 0;
 	if (m_frozenRowCount == 0) {
-		y = m_visRows[0]->GetTop();
+		y = GetRectInWnd().top + GetCellProperty()->Line->Width * 0.5f;
 	} else {
 		y = m_visRows[m_frozenRowCount - 1]->GetBottom();
 	}
 
 	if (m_frozenColumnCount == 0) {
-		x = m_visCols[0]->GetLeft();
+		x = GetRectInWnd().left + GetCellProperty()->Line->Width * 0.5f;
 	} else {
 		x = m_visCols[m_frozenColumnCount - 1]->GetRight();
 	}

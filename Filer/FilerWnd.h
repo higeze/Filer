@@ -57,6 +57,8 @@ public:
 
 struct ExeExtension
 {
+	auto operator<=>(const ExeExtension&) const = default;
+
 	std::wstring Name;
 	std::wstring Path;
 	std::wstring Parameter;
@@ -75,7 +77,7 @@ struct ExeExtension
 struct ExeExtensionProperty
 {
 public:
-	observable_vector<std::tuple<ExeExtension>> ExeExtensions;
+	ReactiveVectorProperty<std::tuple<ExeExtension>> ExeExtensions;
 
 	FRIEND_SERIALIZER
 	template <class Archive>

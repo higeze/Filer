@@ -3,22 +3,7 @@
 CDropSource::CDropSource():CUnknown<IDropSource>()
 {}
 
-CDropSource::~CDropSource(){}
-
-STDMETHODIMP CDropSource::QueryInterface(REFIID riid, void **ppvObject)
-{
-	*ppvObject = NULL;
-
-	if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_IDropSource)){
-		*ppvObject = static_cast<IDropSource *>(this);
-	}else{
-		return E_NOINTERFACE;
-	}
-
-	AddRef();
-
-	return S_OK;
-}
+CDropSource::~CDropSource() = default;
 
 STDMETHODIMP CDropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
 {

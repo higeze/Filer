@@ -2,6 +2,8 @@
 #include "IDL.h"
 #include "MyString.h"
 #include "ShellFolder.h"
+#include "D2DWWindow.h"
+#include "D2DWControl.h"
 
 #define INITGUID
 #include <objbase.h>
@@ -40,7 +42,7 @@ DEFINE_GUID(CLSID_MailMessage,
 	0x0000, 0x0000, 0xC0, 0x00, 0x0, 0x00, 0x0, 0x00, 0x00, 0x46);
 
 
-CDropTarget::CDropTarget(HWND hWnd):CUnknown<IDropTarget>(), m_hWnd(hWnd)
+CDropTarget::CDropTarget(CD2DWControl* pControl):CUnknown<IDropTarget>(), m_pControl(pControl)
 {
 	::CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pDropTargetHelper));
 }
@@ -50,21 +52,6 @@ CDropTarget::~CDropTarget()
 	if (m_pDropTargetHelper != nullptr){
 		m_pDropTargetHelper->Release();
 	}
-}
-
-STDMETHODIMP CDropTarget::QueryInterface(REFIID riid, void **ppvObject)
-{
-	*ppvObject = NULL;
-
-	if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_IDropTarget)){
-		*ppvObject = static_cast<IDropTarget *>(this);
-	}else{
-		return E_NOINTERFACE;
-	}
-
-	AddRef();
-
-	return S_OK;
 }
 
 STDMETHODIMP CDropTarget::DragEnter(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
@@ -83,7 +70,7 @@ STDMETHODIMP CDropTarget::DragEnter(IDataObject *pDataObj, DWORD grfKeyState, PO
 
 	m_bSupportFormat = IsDroppable(formats);
 	if (m_bSupportFormat && m_pDropTargetHelper != NULL) {
-		HRESULT hr = m_pDropTargetHelper->DragEnter(m_hWnd, pDataObj, (LPPOINT)&pt, *pdwEffect);
+		HRESULT hr = m_pDropTargetHelper->DragEnter(m_pControl->GetWndPtr()->m_hWnd, pDataObj, (LPPOINT)&pt, *pdwEffect);
 	}
 	*pdwEffect = m_bSupportFormat ? *pdwEffect = GetEffectFromKeyState(grfKeyState) : DROPEFFECT_NONE;
 
@@ -114,8 +101,6 @@ STDMETHODIMP CDropTarget::DragLeave()
 
 STDMETHODIMP CDropTarget::Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
 {
-
-
 	DWORD dwEffect = *pdwEffect;
 	
 	*pdwEffect = GetEffectFromKeyState(grfKeyState);
@@ -154,7 +139,7 @@ STDMETHODIMP CDropTarget::Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL 
 		InitializeMenuItem(hmenuPopup, NULL, 100);
 		InitializeMenuItem(hmenuPopup, TEXT("Cancel"), 0);
 
-		nId = TrackPopupMenu(hmenuPopup, TPM_RETURNCMD, pt.x, pt.y, 0, m_hWnd, NULL);
+		nId = TrackPopupMenu(hmenuPopup, TPM_RETURNCMD, pt.x, pt.y, 0, m_pControl->GetWndPtr()->m_hWnd, NULL);
 		if (nId == 0) {
 			DestroyMenu(hmenuPopup);
 			*pdwEffect = DROPEFFECT_NONE;

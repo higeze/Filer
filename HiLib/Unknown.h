@@ -25,4 +25,17 @@ public:
 		}
 		return (ULONG)m_refCount;
 	}
+	STDMETHODIMP QueryInterface(REFIID riid, void **ppvObject)
+	{
+		*ppvObject = NULL;
+
+		if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, _uuidof(T))){
+			*ppvObject = static_cast<T*>(this);
+		}else{
+			return E_NOINTERFACE;
+		}
+
+		AddRef();
+		return S_OK;
+	}
 };

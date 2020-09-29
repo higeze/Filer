@@ -5,6 +5,7 @@
 #include "GridView.h"
 #include "Column.h"
 #include "D2DWWindow.h"
+#include "Dispatcher.h"
 //
 
 CCheckBoxFilterCell::CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
@@ -30,10 +31,16 @@ std::wstring CCheckBoxFilterCell::GetString()
 
 void CCheckBoxFilterCell::SetStringCore(const std::wstring& str)
 {
-	m_deadlinetimer.run([hWnd = m_pSheet->GetWndPtr()->m_hWnd, pCell = this, newString = str] {
+	m_deadlinetimer.run([pSheet = m_pSheet, pCell = this, newString = str]()->void {
 		pCell->CCheckBoxCell::SetStringCore(newString);
-		::PostMessage(hWnd, WM_FILTER, NULL, NULL);
-		}, std::chrono::milliseconds(200));
+		if (auto pGrid = dynamic_cast<CGridView*>(pSheet)) {
+			pGrid->GetWndPtr()->GetDispatcherPtr()->PostInvoke([pGrid]()->void
+			{
+				pGrid->OnFilter();
+			});
+
+		}
+	}, std::chrono::milliseconds(200));
 }
 
 void CCheckBoxFilterCell::OnPropertyChanged(const wchar_t* name)

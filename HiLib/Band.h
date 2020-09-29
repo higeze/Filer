@@ -71,8 +71,8 @@ public:
 	bool GetIsMeasureValid()const{return m_isMeasureValid;}
 	void SetIsMeasureValid(bool bMeasureValid){m_isMeasureValid = bMeasureValid;}
 	void SetIsFitMeasureValid(bool isFitMeasureValid) { m_isFitMeasureValid = isFitMeasureValid; }
-	virtual bool GetVisible()const{return *m_spVisible;}
-	virtual void SetVisible(const bool& bVisible, bool notify = true) = 0;
+	virtual bool GetIsVisible()const{return *m_spVisible;}
+	virtual void SetIsVisible(const bool& bVisible, bool notify = true) = 0;
 	virtual bool GetIsSelected()const{return m_bSelected;}
 	virtual void SetIsSelected(const bool& bSelected) = 0;
 	virtual bool IsDragTrackable()const{return false;}

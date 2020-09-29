@@ -3,11 +3,12 @@
 #include "UIElement.h"
 #include "D2DWControl.h"
 #include "Direct2DWrite.h"
-#include "observable.h"
+#include "ReactiveProperty.h"
 
 class CMouseStateMachine;
 class CD2DWControl;
 class CDispatcher;
+class CDropTargetManager;
 
 class CD2DWWindow:public CWnd, public CD2DWControl
 {
@@ -17,6 +18,7 @@ private:
 	std::unique_ptr<CMouseStateMachine> m_pMouseMachine;
 	std::vector<std::shared_ptr<CD2DWControl>> m_pControls;
 	std::shared_ptr<CD2DWControl> m_pFocusedControl;
+	std::unique_ptr<CDropTargetManager> m_pDropTargetManager;
 
 public :
 	CD2DWWindow();
@@ -24,6 +26,14 @@ public :
 
 	CD2DWWindow* GetWndPtr()const override{ return const_cast<CD2DWWindow*>(this); }
 	CDirect2DWrite* GetDirectPtr() const { return  m_pDirect.get(); }
+	std::unique_ptr<CDropTargetManager>& GetDropTargetManagerPtr() { return m_pDropTargetManager; }
+	CPointF GetCursorPosInWnd() const
+	{ 
+		CPoint pt;
+		::GetCursorPos(&pt);
+		::ScreenToClient(m_hWnd, &pt);
+		return GetDirectPtr()->Pixels2Dips(pt);
+	}
 	std::unique_ptr<CDispatcher>& GetDispatcherPtr() { return m_pDispatcher; }
 	bool GetIsFocused()const;
 
@@ -114,7 +124,7 @@ public:
 			[&](const std::shared_ptr<CUIElement>& x) {return x->GetRectInWnd().PtInRect(GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
 
 		SetFocusControl(iter != m_pControls.end() ? *iter : m_pControls.front());
-		SendFocused(&CUIElement::OnLButtonDown, e);
+		SendPtInRect(&CUIElement::OnLButtonDown, e);
 
 	}
 	virtual void OnLButtonUp(const LButtonUpEvent& e) { SendPtInRect(&CUIElement::OnLButtonUp, e); }

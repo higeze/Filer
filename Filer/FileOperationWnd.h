@@ -4,7 +4,7 @@
 #include "FilerGridViewProperty.h"
 #include "ShellFunction.h"
 #include "DeadlineTimer.h"
-#include "observable.h"
+#include "ReactiveProperty.h"
 #include "FilerBindGridView.h"
 #include "RenameInfo.h"
 #include "IDL.h"
@@ -35,7 +35,7 @@ protected:
 	CIDL m_srcIDL;
 	std::vector<CIDL> m_srcChildIDLs;
 
-	std::shared_ptr<observable_vector<std::tuple<TItems...>>> m_spItemsSource;
+	std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> m_spItemsSource;
 	//std::vector< std::tuple<std::shared_ptr<CShellFile>, RenameInfo>> m_selectedItems;
 
 public:
@@ -43,7 +43,7 @@ public:
 									   const std::wstring& buttonText, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
 		:CD2DWWindow(),
 		m_buttonText(buttonText), m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs),
-		m_spItemsSource(std::make_shared< observable_vector<std::tuple<TItems...>>>())
+		m_spItemsSource(std::make_shared<ReactiveVectorProperty<std::tuple<TItems...>>>())
 	{
 		m_rca
 			.lpszClassName(L"CFileOperationWnd")

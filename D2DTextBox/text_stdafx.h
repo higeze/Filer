@@ -103,7 +103,7 @@ typedef _bstr_t bstring;
 
 
 #undef _WIN32_WINNT
-#define _WIN32_WINNT _WIN32_WINNT_WIN7
+#define _WIN32_WINNT _WIN32_WINNT_WIN10
 
 
 #include "Direct2DWrite.h"

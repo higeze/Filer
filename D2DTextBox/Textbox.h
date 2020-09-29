@@ -2,13 +2,12 @@
 #include <msctf.h>
 #include "IBridgeTSFInterface.h"
 #include "CellProperty.h"
-#include "observable.h"
 #include "Timer.h"
 #include "MyWnd.h"
 #include "Scroll.h"
 #include "TextboxStateMachine.h"
 #include "D2DWControl.h"
-
+#include "ReactiveProperty.h"
 
 class CTextStore;
 class CTextEditSink;
@@ -16,8 +15,8 @@ class IBridgeTSFInterface;
 class CGridView;
 class CTextCell;
 
-	class CVScroll;
-	class CHScroll;
+class CVScroll;
+class CHScroll;
 
 struct COMPOSITIONRENDERINFO
 {
@@ -35,6 +34,8 @@ bool in_range(const T& value, const T& min, const T& max)
 }
 
 class CD2DWWindow;
+
+
 
 class CTextBox : public IBridgeTSFInterface, public CD2DWControl
 {
@@ -59,10 +60,12 @@ protected:
 		SelBegin,
 		SelEnd,
 	};
-	observable_tuple<int, int, int, int, int> m_carets;
+
+	ReactiveWStringProperty m_text;
+	ReactiveTupleProperty<int, int, int, int, int> m_carets;
+
 	CPointF m_caretPoint;
 	/* Text */
-	observable_wstring m_text;
 	/* Scroll */
 	std::unique_ptr<CVScroll> m_pVScroll;
 	std::unique_ptr<CHScroll> m_pHScroll;
@@ -70,7 +73,7 @@ protected:
 	bool m_hasBorder = true;
 	bool m_isScrollable = false;
 	bool m_bCaret = false;
-	bool m_isFirstDrawCaret = true;
+	bool m_isFirstDrawCaret = false;
 	bool m_isClosing = false;
 	std::unique_ptr<CTextBoxStateMachine> m_pTextMachine;
 
@@ -88,8 +91,11 @@ private:
 	void UninitTSF();
 public:
 	// Getter
-	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets); }
-	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets); }
+	ReactiveWStringProperty& GetText() { return m_text; }
+	ReactiveTupleProperty<int, int, int, int, int>& GetCarets() { return m_carets; }
+
+	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets.get()); }
+	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets.get()); }
 	CTextCell* GetCellPtr() { return m_pCell; }
 
 public:
@@ -154,7 +160,6 @@ public:
 	virtual CRectF GetPageRect() const;
 
 	// Text Functions 
-	observable_wstring& GetText() { return m_text; }
 	void Clear();
 	//std::wstring FilterInputString(LPCWSTR s, UINT len);
 private:
@@ -220,7 +225,7 @@ public:
 
 protected:
 	CTimer m_timer;
-	std::wstring m_strInit;
+	std::wstring m_initText;
 	CTextCell* m_pCell;
 	std::shared_ptr<TextboxProperty> m_pProp;
 	std::function<std::wstring()> m_getter;
@@ -263,16 +268,15 @@ public:
 class CTextEditor :public CTextBox
 {
 private:
-	observable<std::wstring> m_path;
-	observable<bool> m_isSaved = false;
+	ReactiveWStringProperty m_path;
+	ReactiveProperty<bool> m_isSaved;
 
 public:
 	CTextEditor(
 		CD2DWControl* pParentControl,
-		const std::shared_ptr<TextboxProperty>& spProp,
-		std::function<void(const std::wstring&)> changed,
-		std::function<void(const std::wstring&)> final)
-		:CTextBox(pParentControl, nullptr, spProp, L"", changed, final)
+		const std::shared_ptr<TextboxProperty>& spProp)
+		:CTextBox(pParentControl, nullptr, spProp, L"", [this](const auto&)->void{ GetIsSaved().set(false); }, nullptr),
+		m_path(), m_isSaved(false)
 	{
 		m_hasBorder = true;
 		m_isScrollable = true;
@@ -280,20 +284,22 @@ public:
 
 	virtual ~CTextEditor() {}
 
-	observable<std::wstring>& GetObsPath() { return m_path; }
-	observable<bool>& GetObsIsSaved() { return m_isSaved; }
+	ReactiveWStringProperty& GetPath() { return m_path; }
+	ReactiveProperty<bool>& GetIsSaved() { return m_isSaved; }
 
 	bool GetIsVisible() const override
 	{
 		return true;
 	}
-
+	
+	virtual void Normal_Paint(const PaintEvent& e) override;
 	virtual void Normal_ContextMenu(const ContextMenuEvent& e) override;
 	virtual CRectF GetRectInWnd() const override { return CD2DWControl::GetRectInWnd(); }
 
 	//std::wstring m_text;
 
-	void OnKeyDown(const KeyDownEvent& e) override;
+	virtual void OnKeyDown(const KeyDownEvent& e) override;
+	virtual void OnClose(const CloseEvent& e) override;
 	//void Invalidate() override;
 
 

@@ -41,9 +41,9 @@ FLOAT CRow::GetFitLength()
 	return m_fitLength;
 }
 
-void CRow::SetVisible(const bool& bVisible, bool notify)
+void CRow::SetIsVisible(const bool& bVisible, bool notify)
 {
-	if(GetVisible()!=bVisible){
+	if(GetIsVisible()!=bVisible){
 		*m_spVisible=bVisible;
 		if(notify){
 			OnPropertyChanged(L"visible");

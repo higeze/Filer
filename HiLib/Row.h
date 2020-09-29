@@ -48,7 +48,7 @@ public:
 	virtual void BoundHeight(){ BoundLength(); }
 
 
-	virtual void SetVisible(const bool& bVisible, bool notify = true)override;
+	virtual void SetIsVisible(const bool& bVisible, bool notify = true)override;
 	virtual void SetIsSelected(const bool& bSelected);
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name) override;

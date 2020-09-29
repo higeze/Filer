@@ -5,6 +5,7 @@
 #include "GridView.h"
 #include "Textbox.h"
 #include "D2DWWindow.h"
+#include "Dispatcher.h"
 
 std::wstring CFilterCell::GetString()
 {
@@ -14,9 +15,12 @@ std::wstring CFilterCell::GetString()
 void CFilterCell::SetStringCore(const std::wstring& str)
 {
 	//Filter cell undo redo is set when Post WM_FILTER
-	m_deadlinetimer.run([hWnd = m_pSheet->GetWndPtr()->m_hWnd, pColumn = m_pColumn, newString = str]{
+	m_deadlinetimer.run([pWnd = m_pSheet->GetWndPtr(), newString = str, pSheet = m_pSheet, pColumn = m_pColumn]()->void
+	{
 		pColumn->SetFilter(newString);
-		::PostMessage(hWnd,WM_FILTER,NULL,NULL);
+		if (auto pGrid = dynamic_cast<CGridView*>(pSheet)) {
+			pWnd->GetDispatcherPtr()->PostInvoke([pGrid]()->void { pGrid->OnFilter(); });
+		}
 	}, std::chrono::milliseconds(200));
 }
 

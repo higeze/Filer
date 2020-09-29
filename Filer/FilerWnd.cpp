@@ -39,7 +39,7 @@
 
 CFilerWnd::CFilerWnd()
 	:CD2DWWindow(),
-	m_rcWnd(0, 0, 300, 500), 
+	m_rcWnd(0, 0, 1000, 600), 
 	m_rcPropWnd(0, 0, 300, 400),
 	m_splitterLeft(0),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
@@ -326,10 +326,11 @@ void CFilerWnd::OnPaint(const PaintEvent& e)
 
 void CFilerWnd::OnCreate(const CreateEvt& e)
 {
-	//WINDOWPLACEMENT wp = { 0 };
-	//wp.length = sizeof(WINDOWPLACEMENT);
-	//wp.rcNormalPosition = m_rcWnd;
-	//::SetWindowPlacement(m_hWnd, &wp);
+	//SetWindowPlacement make sure Window in Monitor
+	WINDOWPLACEMENT wp = { 0 };
+	wp.length = sizeof(WINDOWPLACEMENT);
+	wp.rcNormalPosition = e.Rect;
+	::SetWindowPlacement(m_hWnd, &wp);
 
 	//Konami
 	//m_konamiCommander.SetHwnd(m_hWnd);
@@ -348,19 +349,22 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	AddControlPtr(m_spLeftFavoritesView);
 	AddControlPtr(m_spRightFavoritesView);
 	AddControlPtr(m_spStatusBar);
+
+	SetFocusControl(m_spLeftView);
 }
 
 void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 {
 	switch (e.Char)
 	{
-	case 'S':
-		{
-			if (::GetAsyncKeyState(VK_CONTROL)) {
-				OnCommandSave(CommandEvent(this, 0, 0, e.HandledPtr));
-			}
-		}
-		break;
+	//TODOHIGH this conflict with Text save
+	//case 'S':
+	//	{
+	//		if (::GetAsyncKeyState(VK_CONTROL)) {
+	//			OnCommandSave(CommandEvent(this, 0, 0, e.HandledPtr));
+	//		}
+	//	}
+	//	break;
 	case VK_F4:
 		{
 			if (::GetAsyncKeyState(VK_MENU)) {
