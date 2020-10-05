@@ -17,8 +17,11 @@ private:
 	std::shared_ptr<CDirect2DWrite> m_pDirect;
 	std::unique_ptr<CMouseStateMachine> m_pMouseMachine;
 	std::vector<std::shared_ptr<CD2DWControl>> m_pControls;
-	std::shared_ptr<CD2DWControl> m_pFocusedControl;
 	std::unique_ptr<CDropTargetManager> m_pDropTargetManager;
+
+	std::shared_ptr<CD2DWControl> m_pFocusedControl;
+	std::shared_ptr<CD2DWControl> m_pCapturedControl;
+
 
 public :
 	CD2DWWindow();
@@ -37,10 +40,23 @@ public :
 	std::unique_ptr<CDispatcher>& GetDispatcherPtr() { return m_pDispatcher; }
 	bool GetIsFocused()const;
 
-	std::shared_ptr<CD2DWControl> GetFocusedControlPtr()
+	std::shared_ptr<CD2DWControl>& GetFocusedControlPtr()
 	{
 		return m_pFocusedControl;
 	}
+	void SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl);
+	std::shared_ptr<CD2DWControl>& GetCapturedControlPtr() { return m_pCapturedControl; }
+	void SetCapturedControlPtr(const std::shared_ptr<CD2DWControl>& spControl)
+	{
+		::OutputDebugString(L"SetCapturedControl\r\n");
+		m_pCapturedControl = spControl;
+	}
+	void ReleaseCapturedControlPtr()
+	{
+		::OutputDebugString(L"ReleaseCapturedControl\r\n");
+		m_pCapturedControl = nullptr;
+	}
+	std::vector<std::shared_ptr<CD2DWControl>>& GetControls() { return m_pControls; }
 	void ClearControlPtr() { m_pControls.clear(); }
 	void AddControlPtr(const std::shared_ptr<CD2DWControl>& pControl) 
 	{ 
@@ -84,6 +100,22 @@ public:
 	}
 
 	template<typename TFunc, typename TEvent>
+	void SendMouse(TFunc f, const TEvent& e)
+	{
+		if (GetCapturedControlPtr()) {
+			(GetCapturedControlPtr().get()->*f)(e);
+		} else {
+			for (auto& pControl : m_pControls) {
+				if (pControl->GetRectInWnd().PtInRect(GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
+					(pControl.get()->*f)(e);
+					break;
+				}
+			}
+		}
+		InvalidateRect(NULL, FALSE);
+	}
+
+	template<typename TFunc, typename TEvent>
 	void SendPtInRect(TFunc f, const TEvent& e)
 	{
 		auto pt = GetDirectPtr()->Pixels2Dips(GetCursorPosInClient());
@@ -103,7 +135,10 @@ public:
 		InvalidateRect(NULL, FALSE);
 	}
 
-	void SetFocusControl(const std::shared_ptr<CD2DWControl>& spControl);
+
+	/***************/
+	/* Control Msg */
+	/***************/
 
 	virtual void OnCreate(const CreateEvt& e) = 0;
 	virtual void OnPaint(const PaintEvent& e) { SendAll(&CUIElement::OnPaint, e, false); }
@@ -116,32 +151,48 @@ public:
 			CD2DWControl::OnCommand(e);
 		}
 	}
-	virtual void OnRect(const RectEvent& e) { SendFocused(&CUIElement::OnRect, e); }
+	virtual void OnRect(const RectEvent& e) {}
+
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e) 
 	{
 		auto iter = std::find_if(m_pControls.begin(), m_pControls.end(),
 			[&](const std::shared_ptr<CUIElement>& x) {return x->GetRectInWnd().PtInRect(GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
 
-		SetFocusControl(iter != m_pControls.end() ? *iter : m_pControls.front());
-		SendPtInRect(&CUIElement::OnLButtonDown, e);
+		SetFocusedControlPtr(iter != m_pControls.end() ? *iter : m_pControls.front());
+		SendMouse(&CUIElement::OnLButtonDown, e);
 
 	}
-	virtual void OnLButtonUp(const LButtonUpEvent& e) { SendPtInRect(&CUIElement::OnLButtonUp, e); }
-	virtual void OnLButtonClk(const LButtonClkEvent& e) { SendPtInRect(&CUIElement::OnLButtonClk, e); }
-	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) { SendPtInRect(&CUIElement::OnLButtonSnglClk, e); }
-	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) { SendPtInRect(&CUIElement::OnLButtonDblClk, e); }
-	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { SendPtInRect(&CUIElement::OnLButtonBeginDrag, e); }
+	virtual void OnLButtonUp(const LButtonUpEvent& e) { SendMouse(&CUIElement::OnLButtonUp, e); }
+	virtual void OnLButtonClk(const LButtonClkEvent& e) { SendMouse(&CUIElement::OnLButtonClk, e); }
+	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) { SendMouse(&CUIElement::OnLButtonSnglClk, e); }
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) { SendMouse(&CUIElement::OnLButtonDblClk, e); }
+	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { SendMouse(&CUIElement::OnLButtonBeginDrag, e); }
+	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) { SendMouse(&CUIElement::OnLButtonEndDrag, e); }
 
-	virtual void OnRButtonDown(const RButtonDownEvent& e) { SendPtInRect(&CUIElement::OnRButtonDown, e); }
+	virtual void OnRButtonDown(const RButtonDownEvent& e) { SendMouse(&CUIElement::OnRButtonDown, e); }
 
-	virtual void OnMButtonDown(const MouseEvent& e) { SendPtInRect(&CUIElement::OnMButtonDown, e); }
-	virtual void OnMButtonUp(const MouseEvent& e) { SendPtInRect(&CUIElement::OnMButtonUp, e); }
+	virtual void OnMButtonDown(const MouseEvent& e) { SendMouse(&CUIElement::OnMButtonDown, e); }
+	virtual void OnMButtonUp(const MouseEvent& e) { SendMouse(&CUIElement::OnMButtonUp, e); }
 
-	virtual void OnMouseMove(const MouseMoveEvent& e) { SendPtInRect(&CUIElement::OnMouseMove, e); }
+	virtual void OnMouseMove(const MouseMoveEvent& e) { SendMouse(&CUIElement::OnMouseMove, e); }
+
 	virtual void OnMouseWheel(const MouseWheelEvent& e) { SendPtInRect(&CUIElement::OnMouseWheel, e); }
 
-	virtual void OnContextMenu(const ContextMenuEvent& e) { SendPtInRect(&CUIElement::OnContextMenu, e); }
+	//virtual void OnCaptureChanged(const CaptureChangedEvent& e)
+	//{
+	//	if (e.HWnd == m_hWnd) {
+	//		auto pt = GetDirectPtr()->Pixels2Dips(GetCursorPosInClient());
+	//		auto iter = std::find_if(m_pControls.begin(), m_pControls.end(),
+	//			[&](const std::shared_ptr<CUIElement>& x) {return x->GetRectInWnd().PtInRect(pt); });
+	//		SetCapturedControl(*iter);
+	//	} else {
+	//		ReleaseCapturedControl();
+	//	}
+	//}
+
+	virtual void OnContextMenu(const ContextMenuEvent& e) { SendMouse(&CUIElement::OnContextMenu, e); }
+
 	virtual void OnSetCursor(const SetCursorEvent& e) 
 	{
 		*(e.HandledPtr) = FALSE;

@@ -32,6 +32,7 @@
 #include "ToDoGridView.h"
 #include "D2DWWindow.h"
 #include "MouseStateMachine.h"
+#include <Dbt.h>
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -99,7 +100,7 @@ CFilerWnd::CFilerWnd()
 			if (auto spView = wpView.lock()) {
 				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
 					auto& itemsSource = spView->GetItemsSource();
-					itemsSource.notify_replace(itemsSource.begin() + spView->GetSelectedIndex(), std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
+					itemsSource.replace(itemsSource.begin() + spView->GetSelectedIndex(), std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
 				} else {
 					spFile->Open();
 				}
@@ -150,15 +151,15 @@ CFilerWnd::CFilerWnd()
 #endif
 			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
 
-			for (auto& ex : m_spExeExProp->ExeExtensions) {
+			for (auto iter = m_spExeExProp->ExeExtensions.cbegin(); iter != m_spExeExProp->ExeExtensions.cend(); ++iter) {
 
 				MENUITEMINFO mii = { 0 };
 				mii.cbSize = sizeof(MENUITEMINFO);
 				mii.fMask = MIIM_TYPE | MIIM_ID;
 				mii.fType = MFT_STRING;
 				mii.fState = MFS_ENABLED;
-				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, std::get<ExeExtension>(ex).Name);
-				mii.dwTypeData = (LPWSTR)std::get<ExeExtension>(ex).Name.c_str();
+				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, std::get<ExeExtension>(*iter).Name);
+				mii.dwTypeData = (LPWSTR)std::get<ExeExtension>(*iter).Name.c_str();
 				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 			}
 
@@ -169,7 +170,7 @@ CFilerWnd::CFilerWnd()
 					STRRET strret;
 					psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
 					std::wstring path = shell::strret2wstring(strret, pIdl);
-					GetFavoritesPropPtr()->GetFavorites().notify_push_back(std::make_tuple(std::make_shared<CFavorite>(path, L"")));
+					GetFavoritesPropPtr()->GetFavorites().push_back(std::make_tuple(std::make_shared<CFavorite>(path, L"")));
 					//m_spLeftFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spLeftFavoritesView.get()));
 					//m_spRightFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spRightFavoritesView.get()));
 				}
@@ -177,11 +178,11 @@ CFilerWnd::CFilerWnd()
 				m_spRightFavoritesView->SubmitUpdate();
 				return true;
 			} else {
-				auto iter = std::find_if(m_spExeExProp->ExeExtensions.begin(), m_spExeExProp->ExeExtensions.end(),
+				auto iter = std::find_if(m_spExeExProp->ExeExtensions.cbegin(), m_spExeExProp->ExeExtensions.cend(),
 					[idCmd](const auto& exeex)->bool {
 					return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, std::get<ExeExtension>(exeex).Name) == idCmd;
 				});
-				if (iter != m_spExeExProp->ExeExtensions.end()) {
+				if (iter != m_spExeExProp->ExeExtensions.cend()) {
 					try {
 						auto& exeExtension = std::get<ExeExtension>(*iter);
 						std::vector<std::wstring> filePaths;
@@ -350,11 +351,12 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	AddControlPtr(m_spRightFavoritesView);
 	AddControlPtr(m_spStatusBar);
 
-	SetFocusControl(m_spLeftView);
+	SetFocusedControlPtr(m_spLeftView);
 }
 
 void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 {
+	*(e.HandledPtr) = FALSE;
 	switch (e.Char)
 	{
 	//TODOHIGH this conflict with Text save
@@ -413,9 +415,11 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 		}
 		break;
 	default:
+		break;
+	}
+	if (!(*e.HandledPtr)) {
 		CD2DWWindow::OnKeyDown(e);
 	}
-
 	//m_konamiCommander.OnKeyDown(uMsg, wParam, lParam, bHandled);
 }
 
@@ -600,11 +604,18 @@ LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 {
 	//m_spLeftView->GetGridView()->GetDirectPtr()->GetIconCachePtr()->Clear();
 	//m_spRightView->GetGridView()->GetDirectPtr()->GetIconCachePtr()->Clear();
-	CDriveFolderManager::GetInstance()->Update();
-	m_spLeftFavoritesView->Reload();
-	m_spRightFavoritesView->Reload();
-	m_spLeftView->GetFilerGridViewPtr()->Reload();
-	m_spRightView->GetFilerGridViewPtr()->Reload();
+	switch (wParam) {
+		case DBT_DEVICEARRIVAL:
+		case DBT_DEVICEREMOVECOMPLETE:
+			CDriveFolderManager::GetInstance()->Update();
+			m_spLeftFavoritesView->Reload();
+			m_spRightFavoritesView->Reload();
+			m_spLeftView->GetFilerGridViewPtr()->Reload();
+			m_spRightView->GetFilerGridViewPtr()->Reload();
+			InvalidateRect(NULL, FALSE);
+		default:
+			break;
+	}
 	return 0;
 }
 

@@ -701,6 +701,19 @@
 		return rects;
 	}
 
+	void CDirect2DWrite::PushAxisAlignedClip(const CRectF& clipRect, D2D1_ANTIALIAS_MODE antialiasMode)
+	{
+		auto rect = LayoutRound(clipRect);
+		rect.InflateRect(0.5f);
+		GetHwndRenderTarget()->PushAxisAlignedClip(rect, antialiasMode);
+	}
+	
+	void CDirect2DWrite::PopAxisAlignedClip()
+	{
+		GetHwndRenderTarget()->PopAxisAlignedClip();
+	}
+
+
 
 	FLOAT CDirect2DWrite::GetPixels2DipsRatioX()
 	{

@@ -60,11 +60,11 @@ protected:
 		SelBegin,
 		SelEnd,
 	};
-
+	//ReactiveProperty
 	ReactiveWStringProperty m_text;
+	ReactiveProperty<CPointF> m_caretPoint;
 	ReactiveTupleProperty<int, int, int, int, int> m_carets;
 
-	CPointF m_caretPoint;
 	/* Text */
 	/* Scroll */
 	std::unique_ptr<CVScroll> m_pVScroll;
@@ -92,6 +92,7 @@ private:
 public:
 	// Getter
 	ReactiveWStringProperty& GetText() { return m_text; }
+	ReactiveProperty<CPointF>& GetCaretPos() { return m_caretPoint; }
 	ReactiveTupleProperty<int, int, int, int, int>& GetCarets() { return m_carets; }
 
 	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets.get()); }
@@ -135,18 +136,18 @@ public:
 	virtual void Normal_SetFocus(const SetFocusEvent& e);
 	virtual void Normal_KillFocus(const KillFocusEvent& e);
 
-	virtual void VScrlDrag_OnEntry(const LButtonDownEvent& e);
-	virtual void VScrlDrag_OnExit();
+	virtual void VScrlDrag_OnEntry(const LButtonBeginDragEvent& e);
+	virtual void VScrlDrag_OnExit(const LButtonEndDragEvent& e);
 	virtual void VScrlDrag_MouseMove(const MouseMoveEvent& e);
 	//virtual bool VScrl_Guard_SetCursor(const SetCursorEvent& e);
 	//virtual void VScrl_SetCursor(const SetCursorEvent& e);
 
-	virtual bool VScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e);
+	virtual bool VScrlDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
 
-	virtual void HScrlDrag_OnEntry(const LButtonDownEvent& e);
-	virtual void HScrlDrag_OnExit();
+	virtual void HScrlDrag_OnEntry(const LButtonBeginDragEvent& e);
+	virtual void HScrlDrag_OnExit(const LButtonEndDragEvent& e);
 	virtual void HScrlDrag_MouseMove(const MouseMoveEvent& e);
-	virtual bool HScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e);
+	virtual bool HScrlDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
 	//virtual bool HScrl_Guard_SetCursor(const SetCursorEvent& e);
 	//virtual void HScrl_SetCursor(const SetCursorEvent& e);
 
@@ -269,23 +270,19 @@ class CTextEditor :public CTextBox
 {
 private:
 	ReactiveWStringProperty m_path;
-	ReactiveProperty<bool> m_isSaved;
+	ReactiveCommand<void> m_save;
+	ReactiveCommand<void> m_open;
 
 public:
 	CTextEditor(
 		CD2DWControl* pParentControl,
-		const std::shared_ptr<TextboxProperty>& spProp)
-		:CTextBox(pParentControl, nullptr, spProp, L"", [this](const auto&)->void{ GetIsSaved().set(false); }, nullptr),
-		m_path(), m_isSaved(false)
-	{
-		m_hasBorder = true;
-		m_isScrollable = true;
-	}
+		const std::shared_ptr<TextboxProperty>& spProp);
 
 	virtual ~CTextEditor() {}
 
 	ReactiveWStringProperty& GetPath() { return m_path; }
-	ReactiveProperty<bool>& GetIsSaved() { return m_isSaved; }
+	ReactiveCommand<void>& GetSaveCommand() { return m_save; }
+	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
 
 	bool GetIsVisible() const override
 	{
@@ -304,9 +301,9 @@ public:
 
 
 	void Open();
-	void Open(const std::wstring& path);
+	//void Open(const std::wstring& path);
 	void Save();
-	void Save(const std::wstring& path);
+	//void Save(const std::wstring& path);
 	void Update();
 
 };

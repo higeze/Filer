@@ -14,6 +14,7 @@ public:
 	virtual void process_event(const LButtonSnglClkEvent& e) = 0;
 	virtual void process_event(const LButtonDblClkEvent& e) = 0;
 	virtual void process_event(const LButtonBeginDragEvent& e) = 0;
+	virtual void process_event(const LButtonEndDragEvent& e) = 0;
 	virtual void process_event(const RButtonDownEvent& e) = 0;
 	virtual void process_event(const ContextMenuEvent& e) = 0;
 	virtual void process_event(const MouseMoveEvent& e) = 0;
@@ -44,6 +45,7 @@ public:
 	virtual void process_event(const LButtonSnglClkEvent& e) override;
 	virtual void process_event(const LButtonDblClkEvent& e) override;
 	virtual void process_event(const LButtonBeginDragEvent& e) override;
+	virtual void process_event(const LButtonEndDragEvent& e) override;
 	virtual void process_event(const ContextMenuEvent& e) override;
 	virtual void process_event(const MouseMoveEvent& e) override;
 	virtual void process_event(const MouseLeaveEvent& e) override;

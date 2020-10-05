@@ -11,7 +11,7 @@
 #include "Dispatcher.h"
 #include "DropTargetManager.h"
 
-void CD2DWWindow::SetFocusControl(const std::shared_ptr<CD2DWControl>& spControl)
+void CD2DWWindow::SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl)
 {
 	if (spControl->GetIsFocusable() && m_pFocusedControl != spControl) {
 		if (m_pFocusedControl) {

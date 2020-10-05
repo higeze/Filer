@@ -160,12 +160,12 @@ DWORD CDropTarget::GetEffectFromKeyState(DWORD grfKeyState)
 	DWORD dwEffect;
 
 	if (grfKeyState & MK_CONTROL) {
-		if (grfKeyState & MK_SHIFT)
+		if (grfKeyState & MK_SHIFT) {
 			dwEffect = DROPEFFECT_LINK;
-		else
+		} else {
 			dwEffect = DROPEFFECT_MOVE;
-	}
-	else {
+		}
+	} else {
 		dwEffect = DROPEFFECT_COPY;
 	}
 

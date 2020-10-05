@@ -16,7 +16,6 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include "ResourceIDFactory.h"
-#include "MyFile.h"
 
 #include <regex>
 
@@ -170,7 +169,7 @@ void CTextBox::MoveCaret(const int& index, const CPointF& point)
 		index,
 		index);
 
-	m_caretPoint = point;
+	m_caretPoint.set(point);
 
 	ResetCaret();
 }
@@ -184,7 +183,7 @@ void CTextBox::MoveCaretWithShift(const int& index, const CPointF& point)
 		(std::min)(std::get<caret::AncCaret>(m_carets.get()), index),
 		(std::max)(std::get<caret::AncCaret>(m_carets.get()), index));
 
-	m_caretPoint = point;
+	m_caretPoint.set(point);
 
 	ResetCaret();
 }
@@ -236,8 +235,8 @@ void CTextBox::EnsureVisibleCaret()
 
 void CTextBox::OnCreate(const CreateEvt& e)
 {
-	m_caretPoint.SetPoint(0, GetLineHeight() * 0.5f);
-	//m_caretPoint.SetPoint(0, pProp->Format->Font.Size * 0.5f);
+	m_caretPoint.set(CPointF(0, GetLineHeight() * 0.5f));
+	//m_caretPoint.set(CPointF(0, pProp->Format->Font.Size * 0.5f));
 
 	GetTextLayoutPtr = [this, pTextLayout1 = CComPtr<IDWriteTextLayout1>(nullptr)](void)mutable->CComPtr<IDWriteTextLayout1>&
 	{
@@ -444,15 +443,19 @@ void CTextBox::OnCreate(const CreateEvt& e)
 	
 	m_text.SubscribeDetail(
 		[this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
-			m_pTextStore->OnTextChange(e.StartIndex, e.OldEndIndex, e.NewEndIndex);
+			if (e.Action == NotifyStringChangedAction::Assign) {
+				m_pTextStore->OnTextChange(0, 0, 0);
+			} else {
+				m_pTextStore->OnTextChange(e.StartIndex, e.OldEndIndex, e.NewEndIndex);
+			}
 			if (m_changed) { m_changed(e.NewString); }
-			UpdateAll();
+				UpdateAll();
 		}
 	);
 	m_carets.Subscribe(
 		[this](const std::tuple<int, int, int, int, int>& value)->void {
-			m_pTextStore->OnSelectionChange();
 			EnsureVisibleCaret();
+			UpdateAll();
 		}
 	);
 
@@ -491,7 +494,7 @@ void CTextBox::OnMouseWheel(const MouseWheelEvent& e)
 
 void CTextBox::Normal_Paint(const PaintEvent& e)
 {
-	GetWndPtr()->GetDirectPtr()->GetHwndRenderTarget()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
 	//PaintBackground
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
@@ -503,7 +506,7 @@ void CTextBox::Normal_Paint(const PaintEvent& e)
 	m_pVScroll->OnPaint(e);
 	m_pHScroll->OnPaint(e);
 
-	GetWndPtr()->GetDirectPtr()->GetHwndRenderTarget()->PopAxisAlignedClip();
+	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
 }
 
 void CTextBox::Normal_SetFocus(const SetFocusEvent& e)
@@ -553,8 +556,8 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	case VK_UP:
 	{
 		auto curCharRect = GetOriginCharRects()[std::get<caret::CurCaret>(m_carets.get())];
-		auto point = CPointF(m_caretPoint.x,
-			(std::max)(GetOriginCharRects().front().CenterPoint().y, m_caretPoint.y - curCharRect.Height()));
+		auto point = CPointF(m_caretPoint.get().x,
+			(std::max)(GetOriginCharRects().front().CenterPoint().y, m_caretPoint.get().y - curCharRect.Height()));
 		if (auto position = GetOriginCharPosFromPoint(point)) {
 			if (shift) {
 				MoveCaretWithShift(position.value(), point);
@@ -567,8 +570,8 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	case VK_DOWN:
 	{
 		auto curCharRect = GetOriginCharRects()[std::get<caret::CurCaret>(m_carets.get())];
-		auto point = CPointF(m_caretPoint.x,
-			(std::min)(GetOriginCharRects().back().CenterPoint().y, m_caretPoint.y + curCharRect.Height()));
+		auto point = CPointF(m_caretPoint.get().x,
+			(std::min)(GetOriginCharRects().back().CenterPoint().y, m_caretPoint.get().y + curCharRect.Height()));
 		if (auto newPos = GetOriginCharPosFromPoint(point)) {
 			if (shift) {
 				MoveCaretWithShift(newPos.value(), point);
@@ -637,6 +640,14 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	//case VK_ESCAPE:
 	//	break;
+	case 'A':
+	{
+		if (ctrl) {
+			m_carets.set(std::get<caret::CurCaret>(m_carets.get()), m_text.size(), 0, 0, m_text.size());
+			m_caretPoint.set(GetOriginCharRects()[m_text.size()].CenterPoint());
+			ResetCaret();
+		}
+	}
 	case 'C':
 	{
 		if (ctrl) {
@@ -803,17 +814,17 @@ void CTextEditor::Normal_ContextMenu(const ContextMenuEvent& e)
 /***************/
 /* VScrollDrag */
 /***************/
-void CTextBox::VScrlDrag_OnEntry(const LButtonDownEvent& e)
+void CTextBox::VScrlDrag_OnEntry(const LButtonBeginDragEvent& e)
 {
 	m_pVScroll->SetState(UIElementState::Dragged);
 	m_pVScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
 }
-void CTextBox::VScrlDrag_OnExit()
+void CTextBox::VScrlDrag_OnExit(const LButtonEndDragEvent& e)
 {
 	m_pVScroll->SetState(UIElementState::Normal);
 	m_pVScroll->SetStartDrag(0.f);
 }
-bool CTextBox::VScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
+bool CTextBox::VScrlDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
 {
 	return m_pVScroll->GetIsVisible() && m_pVScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 }
@@ -831,19 +842,19 @@ void CTextBox::VScrlDrag_MouseMove(const MouseMoveEvent& e)
 /***************/
 /* HScrollDrag */
 /***************/
-void CTextBox::HScrlDrag_OnEntry(const LButtonDownEvent& e)
+void CTextBox::HScrlDrag_OnEntry(const LButtonBeginDragEvent& e)
 {
 	m_pHScroll->SetState(UIElementState::Dragged);
 	m_pHScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
 }
 
-void CTextBox::HScrlDrag_OnExit()
+void CTextBox::HScrlDrag_OnExit(const LButtonEndDragEvent& e)
 {
 	m_pHScroll->SetState(UIElementState::Normal);
 	m_pHScroll->SetStartDrag(0.f);
 }
 
-bool CTextBox::HScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
+bool CTextBox::HScrlDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
 {
 	return m_pHScroll->GetIsVisible() && m_pHScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 }
@@ -1204,20 +1215,36 @@ void CTextBox::UpdateAll()
 	UpdateActualRects();
 }
 
+
+/***************/
+/* CTextEditor */
+/***************/
+
+CTextEditor::CTextEditor(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<TextboxProperty>& spProp)
+	:CTextBox(pParentControl, nullptr, spProp, L"", nullptr, nullptr)
+{
+	m_hasBorder = true;
+	m_isScrollable = true;
+	m_open.Subscribe([this]()
+		{
+			UpdateAll();
+		}, 
+		100);
+}
+
 void CTextEditor::OnClose(const CloseEvent& e)
 {
-	if (!GetIsSaved().get()) {
-		if (IDYES == GetWndPtr()->MessageBoxW(
-			fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(m_path.get().c_str())).c_str(),
-			L"Save?",
-			MB_YESNO)) {
-			if (m_path.get().empty()) {
-				Save();
-			} else {
-				Save(m_path);
-			}
-		}
-	}
+	//TODOHIGH
+	//if (!GetTextStatus().get()) {
+	//	if (IDYES == GetWndPtr()->MessageBoxW(
+	//		fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(m_path.get().c_str())).c_str(),
+	//		L"Save?",
+	//		MB_YESNO)) {
+	//		Save();
+	//	}
+	//}
 }
 
 void CTextEditor::OnKeyDown(const KeyDownEvent& e)
@@ -1231,11 +1258,7 @@ void CTextEditor::OnKeyDown(const KeyDownEvent& e)
 			break;
 		case 'S':
 			if (ctrl) {
-				if (m_path.get().empty()) {
-					Save();
-				} else {
-					Save(m_path);
-				}
+				Save();
 			}
 			break;
 		default:
@@ -1246,81 +1269,12 @@ void CTextEditor::OnKeyDown(const KeyDownEvent& e)
 
 void CTextEditor::Open()
 {
-	std::wstring path;
-	OPENFILENAME ofn = { 0 };
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = GetWndPtr()->m_hWnd;
-	//ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
-	ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrTitle = L"Open";
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-	//ofn.lpstrDefExt = L"txt";
-
-	if (!GetOpenFileName(&ofn)) {
-		DWORD errCode = CommDlgExtendedError();
-		if (errCode) {
-			//wsprintf(szErrMsg, L"Error code : %d", errCode);
-			//MessageBox(NULL, szErrMsg, L"GetOpenFileName", MB_OK);
-		}
-	} else {
-		::ReleaseBuffer(path);
-		Open(path);
-	}
-}
-
-void CTextEditor::Open(const std::wstring& path)
-{
-	Clear();
-	if (::PathFileExists(path.c_str())) {
-		m_path.set(path);
-		GetText().assign(str2wstr(CFile::ReadAllString<char>(path)));
-		m_isSaved.force_notify_set(true);
-	} else {
-		m_path.set(L"");
-		m_isSaved.force_notify_set(true);
-	}
-
+	m_open.Execute();
 }
 
 void CTextEditor::Save()
 {
-	std::wstring path;
-	if (m_path.get().empty()) {
-		OPENFILENAME ofn = { 0 };
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = GetWndPtr()->m_hWnd;
-		ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
-		ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
-		ofn.nMaxFile = MAX_PATH;
-		ofn.lpstrTitle = L"Save as";
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
-		ofn.lpstrDefExt = L"txt";
-
-		if (!GetSaveFileName(&ofn)) {
-			DWORD errCode = CommDlgExtendedError();
-			if (errCode) {
-				//wsprintf(szErrMsg, L"Error code : %d", errCode);
-				//MessageBox(NULL, szErrMsg, L"GetOpenFileName", MB_OK);
-			}
-		} else {
-			::ReleaseBuffer(path);
-		}
-	}
-	//Serialize
-	try {
-		Save(path);
-	}
-	catch (/*_com_error &e*/...) {
-	}
-
-}
-
-void CTextEditor::Save(const std::wstring& path)
-{
-	m_path.set(path);
-	m_isSaved.set(true);
-	CFile::WriteAllString(path, wstr2str(m_text));
+	m_save.Execute();
 }
 
 void CTextEditor::Update()

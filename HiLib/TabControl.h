@@ -79,7 +79,7 @@ public:
 
 	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
-	//virtual void OnClose(const CloseEvent& e);
+	virtual void OnClose(const CloseEvent& e);
 	virtual void OnRect(const RectEvent& e);
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
@@ -119,14 +119,14 @@ public:
 	template <class Archive>
 	void save(Archive& ar)
 	{
-		ar("ItemsSource", static_cast<std::vector<std::shared_ptr<TabData>>&>(m_itemsSource));
+		ar("ItemsSource", m_itemsSource);
 		ar("SelectedIndex", m_selectedIndex);
 	}
 
 	template <class Archive>
 	void load(Archive& ar)
 	{
-		ar("ItemsSource", static_cast<std::vector<std::shared_ptr<TabData>>&>(m_itemsSource));
+		ar("ItemsSource", m_itemsSource);
 		ar("SelectedIndex", m_selectedIndex);
 	}
 };

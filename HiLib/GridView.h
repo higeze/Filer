@@ -53,8 +53,8 @@ public:
 
 	//Getter Setter
 	std::shared_ptr<GridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
-	CRectF GetUpdateRect()const { return m_rcUpdateRect; }
-	void SetUpdateRect(CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
+	//CRectF GetUpdateRect()const { return m_rcUpdateRect; }
+	//void SetUpdateRect(CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
 	CTextBox* GetEditPtr() { return m_pEdit; }
 	void SetEditPtr(CTextBox* pEdit) { m_pEdit = pEdit; }
 
@@ -91,6 +91,7 @@ public:
 	/**************/
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnRect(const RectEvent& e) override;
+	virtual void OnRectWoSubmit(const RectEvent& e);
 	virtual	void OnPaint(const PaintEvent& e) override;
 	virtual void OnMouseWheel(const MouseWheelEvent& e) override;
 	virtual void OnSetFocus(const SetFocusEvent& e);

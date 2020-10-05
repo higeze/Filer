@@ -371,10 +371,6 @@ void CSheet::PostUpdate(Updates type)
 		m_setUpdate.insert(type);
 		m_setUpdate.insert(Updates::Invalidate);
 		PostUpdate(Updates::EnsureVisibleFocusedCell);
-	case Updates::Rect:
-		PostUpdate(Updates::Scrolls);
-		PostUpdate(Updates::Invalidate);
-		m_setUpdate.insert(type);
 	case Updates::Filter:
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
@@ -876,7 +872,7 @@ void CSheet::RowDrag_MouseMove(const MouseMoveEvent& e)
 	m_spRowDragger->OnDrag(this, e);
 }
 
-void CSheet::RowDrag_LButtonUp(const LButtonUpEvent& e)
+void CSheet::RowDrag_LButtonEndDrag(const LButtonEndDragEvent& e)
 {
 	m_spRowDragger->OnEndDrag(this, e);
 }
@@ -903,7 +899,7 @@ void CSheet::ColDrag_MouseMove(const MouseMoveEvent& e)
 	m_spColDragger->OnDrag(this, e);
 }
 
-void CSheet::ColDrag_LButtonUp(const LButtonUpEvent& e)
+void CSheet::ColDrag_LButtonEndDrag(const LButtonEndDragEvent& e)
 {
 	m_spColDragger->OnEndDrag(this, e);
 }
@@ -932,11 +928,11 @@ void CSheet::ItemDrag_MouseMove(const MouseMoveEvent& e)
 	m_spItemDragger->OnDrag(this, e);
 }
 
-void CSheet::ItemDrag_LButtonUp(const LButtonUpEvent& e)
+void CSheet::ItemDrag_LButtonEndDrag(const LButtonEndDragEvent& e)
 {
 	::OutputDebugString(L"ItemDrag_LButtonUp\r\n");
-	m_spCursorer->OnLButtonUp(this, e);
-	m_spCeller->OnLButtonUp(this, e);
+	//m_spCursorer->OnLButtonEndDrag(this, e);
+	//m_spCeller->OnLButtonEndDrag(this, e);
 
 	m_spItemDragger->OnEndDrag(this, e);
 }
@@ -975,6 +971,7 @@ void CSheet::OnLButtonClk(const LButtonClkEvent& e) { m_pMachine->process_event(
 void CSheet::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
 void CSheet::OnLButtonDblClk(const LButtonDblClkEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnLButtonEndDrag(const LButtonEndDragEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
 void CSheet::OnSetCursor(const SetCursorEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnMouseLeave(const MouseLeaveEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }

@@ -70,17 +70,17 @@ struct CGridStateMachine::Machine
 			state<HScrlDrag> +event<MouseMoveEvent> / call(&CGridView::HScrlDrag_MouseMove),
 			//RowDrag
 			state<RowDrag> +event<PaintEvent> / call(&CGridView::Normal_Paint),
-			state<RowDrag> +event<LButtonUpEvent> / call(&CGridView::RowDrag_LButtonUp) = state<Normal>,
+			state<RowDrag> +event<LButtonEndDragEvent> / call(&CGridView::RowDrag_LButtonEndDrag) = state<Normal>,
 			state<RowDrag> +event<MouseMoveEvent> / call(&CGridView::RowDrag_MouseMove),
 			state<RowDrag> +event<MouseLeaveEvent> / call(&CGridView::RowDrag_MouseLeave) = state<Normal>,
 			//ColDrag
 			state<ColDrag> +event<PaintEvent> / call(&CGridView::Normal_Paint),
-			state<ColDrag> +event<LButtonUpEvent> / call(&CGridView::ColDrag_LButtonUp) = state<Normal>,
+			state<ColDrag> +event<LButtonEndDragEvent> / call(&CGridView::ColDrag_LButtonEndDrag) = state<Normal>,
 			state<ColDrag> +event<MouseMoveEvent> / call(&CGridView::ColDrag_MouseMove),
 			state<ColDrag> +event<MouseLeaveEvent> / call(&CGridView::ColDrag_MouseLeave) = state<Normal>,
 			//ItemDrag
 			state<ItemDrag> +event<PaintEvent> / call(&CGridView::Normal_Paint),
-			state<ItemDrag> +event<LButtonUpEvent> / call(&CGridView::ItemDrag_LButtonUp) = state<Normal>,
+			state<ItemDrag> +event<LButtonEndDragEvent> / call(&CGridView::ItemDrag_LButtonEndDrag) = state<Normal>,
 			state<ItemDrag> +event<MouseMoveEvent> / call(&CGridView::ItemDrag_MouseMove),
 			state<ItemDrag> +event<MouseLeaveEvent> / call(&CGridView::ItemDrag_MouseLeave) = state<Normal>,
 			//RowTrack
@@ -134,6 +134,7 @@ void CGridStateMachine::process_event(const RButtonDownEvent & e) { m_pMachine->
 void CGridStateMachine::process_event(const MouseMoveEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const MouseLeaveEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const LButtonBeginDragEvent & e) { m_pMachine->process_event(e); }
+void CGridStateMachine::process_event(const LButtonEndDragEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const SetCursorEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const ContextMenuEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const KeyDownEvent & e) { m_pMachine->process_event(e); }

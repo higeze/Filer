@@ -11,7 +11,7 @@
 #include "MyString.h"
 #include "SerializerEnableIf.h"
 #include "CellProperty.h"
-#include "ReactiveProperty.h"
+//#include "ReactiveProperty.h"
 
 
 /*********************/
@@ -76,6 +76,14 @@ public:
 		pElem->Puttext(_bstr_t(boost::lexical_cast<std::wstring>(tValue).c_str()));
 	}
 
+	//For ReactiveProperty
+	//template<class T>
+	//void SerializeValue(ReactiveProperty<T>& tValue,MSXML2::IXMLDOMElementPtr pElem)
+	//{
+	//	pElem->Puttext(_bstr_t(boost::lexical_cast<std::wstring>(tValue).c_str()));
+	//}
+
+
 	//For string
 	void SerializeValue(std::string& tValue, MSXML2::IXMLDOMElementPtr pElem)
 	{
@@ -122,15 +130,15 @@ public:
 	}
 
 	//For ReactiveVectorProperty
-	template<class T>
-	void SerializeValue(ReactiveVectorProperty<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
-	{
-		for (auto iter = tValue.begin(), end = tValue.end(); iter != end; ++iter) {
-			MSXML2::IXMLDOMElementPtr pItemElem = m_pDoc->createElement(_bstr_t("item"));
-			pElem->appendChild(pItemElem);
-			SerializeValue(*iter, pItemElem);
-		}
-	}
+	//template<class T>
+	//void SerializeValue(ReactiveVectorProperty<T>& tValue, MSXML2::IXMLDOMElementPtr pElem)
+	//{
+	//	for (auto iter = tValue.cbegin(), end = tValue.cend(); iter != end; ++iter) {
+	//		MSXML2::IXMLDOMElementPtr pItemElem = m_pDoc->createElement(_bstr_t("item"));
+	//		pElem->appendChild(pItemElem);
+	//		SerializeValue(*iter, pItemElem);
+	//	}
+	//}
 
 	//For single tuple
 	template<class T>
@@ -212,6 +220,12 @@ public:
 	{
 		tValue=boost::lexical_cast<T>(std::wstring(pElem->Gettext()));
 	}
+	//For ReactiveProperty
+	//template<class T>
+	//void DeserializeElement(ReactiveProperty<T>& tValue,MSXML2::IXMLDOMElementPtr pElem)
+	//{
+	//	tValue.set(boost::lexical_cast<T>(std::wstring(pElem->Gettext())));
+	//}
 
 	//For string
 	void DeserializeElement(std::string& tValue, MSXML2::IXMLDOMElementPtr pElem)
@@ -254,20 +268,20 @@ public:
 	}
 
 	//For ReactiveVectorProperty
-	template<class T>
-	void DeserializeElement(ReactiveVectorProperty<T>& tVector, MSXML2::IXMLDOMElementPtr pElem)
-	{
-		std::vector<MSXML2::IXMLDOMElementPtr> vpItemElem = GetChildElementsByTagName(pElem, "item");
-		
-		if (!vpItemElem.empty()) {
-			tVector.clear();
-			for (UINT n = 0, nSize = vpItemElem.size(); n < nSize; ++n) {
-				auto t = CreateInstance<T>();
-				DeserializeElement(t, vpItemElem[n]);
-				tVector.push_back(t);
-			}
-		}
-	}
+	//template<class T>
+	//void DeserializeElement(ReactiveVectorProperty<T>& tVector, MSXML2::IXMLDOMElementPtr pElem)
+	//{
+	//	std::vector<MSXML2::IXMLDOMElementPtr> vpItemElem = GetChildElementsByTagName(pElem, "item");
+	//	
+	//	if (!vpItemElem.empty()) {
+	//		tVector.clear();
+	//		for (UINT n = 0, nSize = vpItemElem.size(); n < nSize; ++n) {
+	//			auto t = CreateInstance<T>();
+	//			DeserializeElement(t, vpItemElem[n]);
+	//			tVector.push_back(t);
+	//		}
+	//	}
+	//}
 
 	//For single tuple
 	template<class T>

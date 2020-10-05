@@ -37,7 +37,7 @@ public:
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-		ar("FavoritesProperty",m_spFavoritesProp);
+		//ar("FavoritesProperty",m_spFavoritesProp);
 	}
 };
 

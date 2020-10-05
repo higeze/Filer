@@ -11,7 +11,7 @@ private:
 	struct Machine;
 	std::unique_ptr<boost::sml::sm<Machine>> m_pMachine;
 public:
-	CMouseStateMachine(CUIElement* pGrid);
+	CMouseStateMachine(CD2DWWindow* pGrid);
 	~CMouseStateMachine();
 
 	void process_event(const LButtonDownEvent& e);

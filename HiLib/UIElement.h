@@ -162,6 +162,12 @@ struct LButtonBeginDragEvent :public MouseEvent
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
+struct LButtonEndDragEvent :public MouseEvent
+{
+	LButtonEndDragEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
+};
+
 struct RButtonDownEvent :public MouseEvent
 {
 	RButtonDownEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
@@ -267,6 +273,7 @@ public:
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) {}
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) {}
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) {}
+	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) {}
 
 	virtual void OnRButtonDown(const RButtonDownEvent& e) {}
 
@@ -277,6 +284,8 @@ public:
 	virtual void OnMouseEnter(const MouseEvent& e);//TODO
 	virtual void OnMouseLeave(const MouseLeaveEvent& e);
 	virtual void OnMouseWheel(const MouseWheelEvent& e){}
+
+	virtual void OnCaptureChanged(const CaptureChangedEvent& e) {}
 
 	virtual void OnKeyDown(const KeyDownEvent& e) {}
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e){}

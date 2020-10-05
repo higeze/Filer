@@ -12,30 +12,44 @@ private:
 public:
 	Subject() {}
 	virtual ~Subject() = default;//disconnect_all in default destructor
-	virtual void OnNext(const T& value);
-	virtual sigslot::connection Subscribe(std::function<void(const T& value)> next);
+	virtual void OnNext(const T& value)
+	{
+		m_onNextSignal(value);
+	}
+
+	virtual sigslot::connection Subscribe(std::function<void(const T& value)> next, sigslot::group_id id = 0)
+	{
+		return m_onNextSignal.connect(next, id);
+	}
+
 };
 
-template<class T>
-inline void Subject<T>::OnNext(const T& value)
+template <>
+class Subject<void>
 {
-	m_onNextSignal(value);
-}
+private:
+	sigslot::signal<> m_onNextSignal;
+public:
+	Subject() {}
+	virtual ~Subject() = default;//disconnect_all in default destructor
+	virtual void OnNext()
+	{
+		m_onNextSignal();
+	}
+	virtual sigslot::connection Subscribe(std::function<void(void)> next, sigslot::group_id id = 0)
+	{
+		return m_onNextSignal.connect(next, id);
+	}
+};
 
-template<class T>
-inline sigslot::connection Subject<T>::Subscribe(std::function<void(const T& value)> next)
-{
-	return m_onNextSignal.connect(next);
-}
 
 template<class T>
 class IReactiveProperty
 {
 public:
-	virtual sigslot::connection Subscribe(std::function<void(const T& value)> next) = 0;
+	virtual sigslot::connection Subscribe(std::function<void(const T& value)> next, sigslot::group_id id = 0) = 0;
 	virtual operator T() const { return get(); }
 	virtual const T& get() const = 0;
-	//virtual void set(const T& value) = 0;
 	virtual void set(const T& value) = 0;
 };
 
@@ -55,6 +69,23 @@ std::wistream& operator>>(std::wistream& is, IReactiveProperty<T>& reactive)
 	return is;
 }
 
+template<class T>
+class IReactiveCommand
+{
+public:
+	virtual sigslot::connection Subscribe(std::function<void(const T& value)> next, sigslot::group_id id = 0) = 0;
+	virtual void Execute(const T& value) = 0;
+};
+
+template<>
+class IReactiveCommand<void>
+{
+public:
+	virtual sigslot::connection Subscribe(std::function<void(void)> next, sigslot::group_id id = 0) = 0;
+	virtual void Execute(void) = 0;
+};
+
+
 template <class T>
 class ReactiveProperty:public IReactiveProperty<T>
 {
@@ -69,30 +100,94 @@ public:
 	ReactiveProperty(const T& value):
 		m_pSubject(std::make_shared<Subject<T>>()),
 		m_value(value){};
-	~ReactiveProperty() = default;
+	virtual ~ReactiveProperty() = default;
 	ReactiveProperty(const ReactiveProperty& val) = default;
 	ReactiveProperty(ReactiveProperty&& val) = default;
 	ReactiveProperty& operator=(const ReactiveProperty& val) = default;
 	ReactiveProperty& operator=(ReactiveProperty&& val) = default;
 
-	virtual sigslot::connection Subscribe(std::function<void(const T& value)> next)
+	virtual sigslot::connection Subscribe(std::function<void(const T& value)> next, sigslot::group_id id = 0)
 	{
-		return m_pSubject->Subscribe(next);
+		return m_pSubject->Subscribe(next, id);
 	}
 	virtual const T& get() const override { return m_value; }
-	void set(const T& value) override
+	virtual void set(const T& value) override
 	{
 		if (m_value != value) {
 			m_value = value;
 			m_pSubject->OnNext(m_value);
 		}
 	}
-	void force_notify_set(const T& value)
+	virtual void force_notify_set(const T& value)
 	{
 		m_value = value;
 		m_pSubject->OnNext(m_value);
 	}
+
+	template <class Archive>
+	void save(Archive& ar)
+	{
+		ar("Value", m_value);
+	}
+
+	template <class Archive>
+	void load(Archive& ar)
+	{
+		ar("Value", m_value);
+		m_pSubject->OnNext(m_value);
+	}
 };
+
+template <class T>
+class ReactiveCommand:public IReactiveCommand<T>
+{
+protected:
+	std::shared_ptr<Subject<T>> m_pSubject;
+public:
+	ReactiveCommand():
+		m_pSubject(std::make_shared<Subject<T>>()){};
+	virtual ~ReactiveCommand() = default;
+	ReactiveCommand(const ReactiveCommand& val) = default;
+	ReactiveCommand(ReactiveCommand&& val) = default;
+	ReactiveCommand& operator=(const ReactiveCommand& val) = default;
+	ReactiveCommand& operator=(ReactiveCommand&& val) = default;
+
+	virtual sigslot::connection Subscribe(std::function<void(const T& value)> next, sigslot::group_id id = 0) override
+	{
+		return m_pSubject->Subscribe(next, id);
+	}
+
+	virtual void Execute(const T& value) override
+	{
+		m_pSubject->OnNext(value);
+	}
+};
+
+template<>
+class ReactiveCommand<void>:public IReactiveCommand<void>
+{
+protected:
+	std::shared_ptr<Subject<void>> m_pSubject;
+public:
+	ReactiveCommand():
+		m_pSubject(std::make_shared<Subject<void>>()){};
+	~ReactiveCommand() = default;
+	ReactiveCommand(const ReactiveCommand& val) = default;
+	ReactiveCommand(ReactiveCommand&& val) = default;
+	ReactiveCommand& operator=(const ReactiveCommand& val) = default;
+	ReactiveCommand& operator=(ReactiveCommand&& val) = default;
+
+	sigslot::connection Subscribe(std::function<void(void)> next,sigslot::group_id id = 0) override
+	{
+		return m_pSubject->Subscribe(next, id);
+	}
+
+	void Execute(void) override
+	{
+		m_pSubject->OnNext();
+	}
+};
+
 
 template<class T, class U>
 class ReactiveDetailProperty :public ReactiveProperty<T>
@@ -111,9 +206,9 @@ public:
 
 	virtual ~ReactiveDetailProperty() = default;
 
-	virtual sigslot::connection SubscribeDetail(std::function<void(const U& value)> next)
+	virtual sigslot::connection SubscribeDetail(std::function<void(const U& value)> next, sigslot::group_id id = 0)
 	{
-		return m_pDetailSubject->Subscribe(next);
+		return m_pDetailSubject->Subscribe(next, id);
 	}
 };
 
@@ -162,6 +257,26 @@ public:
 	
 	~ReactiveBasicStringProperty() = default;
 
+	virtual void set(const str_type& value) override
+	{
+		if (m_value != value) {
+			force_notify_set(value);
+		}
+	}
+	virtual void force_notify_set(const str_type& value) override
+	{
+		str_type old(m_value);
+		m_value.assign(value);
+		m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+			NotifyStringChangedAction::Assign,
+				m_value,
+				old,
+				0, (int)old.size(),
+				(int)m_value.size()
+		});
+		m_pSubject->OnNext(m_value);
+	}
+
 	const_reference operator[](size_type pos) const noexcept
 	{
 		return m_value.operator[](pos);
@@ -204,7 +319,7 @@ public:
 
 	str_type substr(size_type pos = 0, size_type n = npos) const
 	{
-		return m_value.substr();
+		return m_value.substr(pos, n);
 	}
 
 	const CharT* c_str() const noexcept
@@ -219,17 +334,7 @@ public:
 	
 	ReactiveBasicStringProperty<CharT, Traits, Allocator>& assign(const str_type& value)
 	{
-		if (m_value != value) {
-			str_type old(m_value);
-			m_value.assign(value);
-			m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
-				NotifyStringChangedAction::Assign,
-					m_value,
-					old,
-					0, (int)old.size(), (int)m_value.size()
-			});
-			m_pSubject->OnNext(m_value);
-		}
+		set(value);
 		return *this;
 	}
 
@@ -301,6 +406,29 @@ public:
 		});
 		m_pSubject->OnNext(m_value);
 	}
+
+	template <class Archive>
+	void save(Archive& ar)
+	{
+		ReactiveProperty<str_type>::load(ar);
+	}
+
+	template <class Archive>
+	void load(Archive& ar)
+	{
+		str_type old(m_value);
+		ar("Value", m_value);
+		if (old != m_value) {
+			m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+				NotifyStringChangedAction::Assign,
+				m_value,
+				old,
+				0, (int)old.size(), 0
+			});
+		}
+		m_pSubject->OnNext(m_value);
+	}
+
 };
 
 using ReactiveWStringProperty = ReactiveBasicStringProperty<wchar_t>;
@@ -340,9 +468,16 @@ struct NotifyVectorChangedEventArgs
 };
 
 template<class T, class Allocator = std::allocator<T>>
-class ReactiveVectorProperty:public std::vector<T, Allocator>, public ReactiveDetailProperty<std::vector<T, Allocator>, NotifyVectorChangedEventArgs<T>>
+class ReactiveVectorProperty:public ReactiveDetailProperty<std::vector<T, Allocator>, NotifyVectorChangedEventArgs<T>>
 {
 	using vector_type = std::vector<T, Allocator>;
+	using str_type = typename std::vector<T, Allocator>;
+	using size_type = typename  std::vector<T, Allocator>::size_type;
+	using iterator = typename std::vector<T, Allocator>::iterator;
+	using const_iterator = typename std::vector<T, Allocator>::const_iterator;
+	using const_reference = typename std::vector<T, Allocator>::const_reference;
+	using reference = typename std::vector<T, Allocator>::reference;
+
 public:
 	ReactiveVectorProperty() :
 		ReactiveDetailProperty(){}
@@ -351,6 +486,68 @@ public:
 		ReactiveDetailProperty(value){}
 
 	virtual ~ReactiveVectorProperty() = default;
+
+	virtual void set(const vector_type& value) override
+	{
+		if (m_value != value) {
+			force_notify_set(value);
+		}
+	}
+	virtual void force_notify_set(const vector_type& value) override
+	{
+		vector_type old(m_value);
+		m_value.assign(value.cbegin(), value.cend());
+		m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		{
+			NotifyVectorChangedAction::Reset,
+			m_value,
+			0,
+			old,
+			0
+		});
+		m_pSubject->OnNext(m_value);
+	}
+
+	const_reference operator[](size_type pos) const noexcept
+	{
+		return m_value.operator[](pos);
+	}
+
+	//TODO
+	reference operator[](size_type pos) noexcept
+	{
+		return m_value.operator[](pos);
+	}
+	//TODO
+	iterator begin() noexcept
+	{
+		return m_value.begin();
+	}
+	//TODO
+	iterator end() noexcept
+	{
+		return m_value.end();
+	}
+
+	const_iterator cbegin() const noexcept
+	{
+		return m_value.cbegin();
+	}
+
+	const_iterator cend() const noexcept
+	{
+		return m_value.cend();
+	}
+
+	size_type size() const noexcept
+	{
+		return m_value.size();
+	}
+
+	bool empty() const noexcept
+	{
+		return m_value.empty();
+	}
 
 	void push_back(const T& x)
 	{
@@ -366,7 +563,7 @@ public:
 		m_pSubject->OnNext(m_value);
 	}
 
-	vector_type::iterator insert(vector_type::const_iterator position, const T& x)
+	iterator insert(const_iterator position, const T& x)
 	{
 		auto ret = m_value.insert(position, x);
 		auto index = std::distance(m_value.begin(), ret);
@@ -382,7 +579,7 @@ public:
 		return ret;
 	}
 
-	vector_type::iterator replace(vector_type::iterator position, const T& x)
+	iterator replace(iterator position, const T& x)
 	{
 		auto oldItem = *position;
 		*position = x;
@@ -399,11 +596,11 @@ public:
 		return position;
 	}
 
-	vector_type::iterator erase(vector_type::const_iterator where)
+	iterator erase(const_iterator where)
 	{
 		auto oldItem = *where;
 		auto index = std::distance(m_value.cbegin(), where);
-		vector_type::iterator ret = m_value.erase(where);
+		iterator ret = m_value.erase(where);
 		m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Remove,
@@ -416,7 +613,7 @@ public:
 		return ret;
 	}
 
-	vector_type::iterator erase(vector_type::const_iterator first, vector_type::const_iterator last)
+	iterator erase(const_iterator first, const_iterator last)
 	{
 		auto oldItems = vector_type(first, last);
 		auto index = std::distance(m_value.cbegin(), first);
@@ -436,19 +633,44 @@ public:
 
 	void clear()
 	{
+		auto old = m_value;
 		m_value.clear();
 		m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Reset,
 			{},
-				-1,
-			{},
-				-1
+			-1,
+			old,
+			0
 		});
 		m_pSubject->OnNext(m_value);
 		return;
 	}
 
+
+	template <class Archive>
+	void save(Archive& ar)
+	{
+		ReactiveProperty<vector_type>::load(ar);
+	}
+
+	template <class Archive>
+	void load(Archive& ar)
+	{
+		vector_type old(m_value);
+		ar("Value", m_value);
+		if (old != m_value) {
+			m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+			{
+				NotifyVectorChangedAction::Reset,
+				m_value,
+				0,
+				old,
+				0
+			});
+		}
+		m_pSubject->OnNext(m_value);
+	}
 };
 
 
@@ -456,20 +678,30 @@ template<typename T>
 class CBinding
 {
 public:
-	CBinding(IReactiveProperty<T>& source, IReactiveProperty<T>& target)
+	CBinding(IReactiveProperty<T>& source, IReactiveProperty<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
 	{
 		target.set(source.get());
 		m_sourceConnection = source.Subscribe(
 			[&](T value)->void
 			{
 				target.set(value);
-			});
+			}, idSource);
 		m_targetConnection = target.Subscribe(
 			[&](T value)->void
 			{
 				source.set(value);
 			});
 	}
+
+	CBinding(IReactiveCommand<T>& source, IReactiveCommand<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		m_targetConnection = target.Subscribe(
+			[&](T value)->void
+			{
+				source.Execute(value);
+			}, idTarget);
+	}
+
 	virtual ~CBinding()
 	{
 		m_sourceConnection.disconnect();
@@ -481,6 +713,17 @@ private:
 
 
 };
+
+template<>
+CBinding<void>::CBinding(IReactiveCommand<void>& source, IReactiveCommand<void>& target, sigslot::group_id idSource, sigslot::group_id idTarget)
+{
+	m_targetConnection = target.Subscribe(
+		[&](void)->void
+		{
+			source.Execute();
+		}, idTarget);
+}
+
 
 
 

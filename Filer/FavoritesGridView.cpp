@@ -46,6 +46,8 @@ void CFavoritesGridView::OnCreate(const CreateEvt& e)
 
 	//List
 	OpenFavorites();
+
+	SubmitUpdate();
 }
 
 void CFavoritesGridView::OpenFavorites()
@@ -91,6 +93,7 @@ void CFavoritesGridView::OnCellLButtonDblClk(CellEventArgs& e)
 			FileChosen(p->GetShellFile());
 		}
 	}
+	SubmitUpdate();
 }
 
 void CFavoritesGridView::MoveRow(int indexTo, typename RowTag::SharedPtr spFrom)
@@ -101,17 +104,18 @@ void CFavoritesGridView::MoveRow(int indexTo, typename RowTag::SharedPtr spFrom)
 	auto& itemsSource = GetItemsSource();
 	auto fromIter = itemsSource.cbegin() + (from - GetFrozenCount<RowTag>());
 	auto temp = *fromIter;
-	itemsSource.notify_erase(fromIter);
+	itemsSource.erase(fromIter);
 	auto toIter = itemsSource.cbegin() + (to - GetFrozenCount<RowTag>());
-	itemsSource.notify_insert(toIter, temp);
+	itemsSource.insert(toIter, temp);
 
 	Reload();
 }
 
 void CFavoritesGridView::Reload()
 {
-	for (auto iter = m_spFavoritesProp->GetFavorites().begin(); iter != m_spFavoritesProp->GetFavorites().end(); ++iter) {
+	for (auto iter = m_spFavoritesProp->GetFavorites().cbegin(); iter != m_spFavoritesProp->GetFavorites().cend(); ++iter) {
 		(std::get<0>((*iter)))->SetLockShellFile(nullptr);
 	}
 	OpenFavorites();
+	SubmitUpdate();
 }

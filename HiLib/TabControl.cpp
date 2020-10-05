@@ -27,6 +27,7 @@ CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<Tab
 				case NotifyVectorChangedAction::Reset:
 					GetHeaderRects().clear();
 					m_selectedIndex.force_notify_set((std::min)((size_t)m_selectedIndex.get(), m_itemsSource.size() -1));
+					break;
 				default:
 					break;
 			}
@@ -34,12 +35,14 @@ CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<Tab
 	//SelectedIndex
 	m_selectedIndex.Subscribe( 
 		[this](const int& value)->void {
-			auto spData = m_itemsSource[value];
-			auto spControl = m_itemsControlTemplate[typeid(*spData).name()](spData);
-			//if (m_spCurControl) {
-			//	m_spCurControl->OnClose(CloseEvent(m_spCurControl->GetWndPtr(), 0, 0));
-			//}
-			m_spCurControl = spControl;
+			if (GetWndPtr()->m_hWnd) {
+				auto spData = m_itemsSource[value];
+				auto spControl = m_itemsControlTemplate[typeid(*spData).name()](spData);
+				//if (m_spCurControl) {
+				//	m_spCurControl->OnClose(CloseEvent(m_spCurControl->GetWndPtr(), 0, 0));
+				//}
+				m_spCurControl = spControl;
+			}
 		});
 
 	GetHeaderRects = [rects = std::vector<CRectF>(), this]()mutable->std::vector<CRectF>&
@@ -49,10 +52,11 @@ CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<Tab
 			if (m_selectedIndex.get() >= 0) {
 				auto rcInWnd = GetRectInWnd();
 				auto left = rcInWnd.left;
-				for (auto pData : m_itemsSource) {
-					auto iter = m_itemsHeaderTemplate.find(typeid(*pData).name());
-					if (iter != m_itemsHeaderTemplate.end()) {
-						auto text = iter->second.operator()(pData);
+				for(auto spData : m_itemsSource)
+				{
+					auto iterHeader = m_itemsHeaderTemplate.find(typeid(*spData).name());
+					if (iterHeader != m_itemsHeaderTemplate.end()) {
+						auto text = iterHeader->second.operator()(spData);
 						auto size = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_spProp->Format), text);
 						auto rect = CRectF(
 							left,
@@ -62,7 +66,7 @@ CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<Tab
 						left += rect.Width();
 						rects.push_back(rect);
 					}
-				}
+				};
 			}
 		}
 		return rects;
@@ -112,16 +116,16 @@ void CTabControl::OnCommandCloneTab(const CommandEvent& e)
 void CTabControl::OnCommandCloseTab(const CommandEvent& e)
 {
 	if (m_contextIndex) {
-		m_itemsSource.erase(m_itemsSource.begin() + m_contextIndex.value());
+		m_itemsSource.erase(m_itemsSource.cbegin() + m_contextIndex.value());
 	}
 }
 void CTabControl::OnCommandCloseAllButThisTab(const CommandEvent& e)
 {
 	if (m_contextIndex) {
 		//Erase larger tab
-		m_itemsSource.erase(m_itemsSource.begin() + (m_contextIndex.value() + 1), m_itemsSource.end());
+		m_itemsSource.erase(m_itemsSource.cbegin() + (m_contextIndex.value() + 1), m_itemsSource.cend());
 		//Erase smaller tab
-		m_itemsSource.erase(m_itemsSource.begin(), m_itemsSource.begin() + m_contextIndex.value());
+		m_itemsSource.erase(m_itemsSource.cbegin(), m_itemsSource.cbegin() + m_contextIndex.value());
 
 		m_selectedIndex.force_notify_set(0);
 	}
@@ -143,7 +147,7 @@ void CTabControl::OnPaint(const PaintEvent& e)
 		//Header
 		auto headerRects = GetHeaderRects();
 		for (size_t i = 0; i < m_itemsSource.size(); i++) {
-			auto headerRc = headerRects[i];
+			const auto& headerRc = headerRects[i];
 			if (headerRc.left > rc.right) { break; }
 
 			GetWndPtr()->GetDirectPtr()->FillSolidRectangle(i == m_selectedIndex.get() ? 
@@ -165,7 +169,7 @@ void CTabControl::OnPaint(const PaintEvent& e)
 		}
 	
 		//Content
-		auto contentRc = GetContentRect();
+		const auto& contentRc = GetContentRect();
 		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetIsFocused()?*(m_spProp->SelectedFill):*(m_spProp->UnfocusSelectedFill), contentRc);
 		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), contentRc.LeftTop(), CPointF(contentRc.left, contentRc.bottom));
 		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.left, contentRc.bottom), CPointF(contentRc.right, contentRc.bottom));
@@ -180,6 +184,12 @@ void CTabControl::OnPaint(const PaintEvent& e)
 		m_spCurControl->OnPaint(e);
 	}
 
+}
+
+void CTabControl::OnClose(const CloseEvent& e)
+{ 
+	CD2DWControl::OnClose(e);
+	m_spCurControl->OnClose(e);//TODOHigh m_itemsSource to be closed
 }
 
 void CTabControl::OnRect(const RectEvent& e)

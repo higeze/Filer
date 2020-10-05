@@ -20,6 +20,84 @@
 
 #include "D2DWWindow.h"
 #include "Textbox.h"
+#include "MyFile.h"
+
+
+void TextTabData::Open()
+{
+	std::wstring path;
+	OPENFILENAME ofn = { 0 };
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = NULL;// GetWndPtr()->m_hWnd;
+	//ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
+	ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrTitle = L"Open";
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	//ofn.lpstrDefExt = L"txt";
+
+	if (!GetOpenFileName(&ofn)) {
+		DWORD errCode = CommDlgExtendedError();
+		if (errCode) {
+			throw std::exception(FILE_LINE_FUNC);
+		}
+	} else {
+		::ReleaseBuffer(path);
+		Open(path);
+	}
+}
+
+void TextTabData::Open(const std::wstring& path)
+{
+	if (::PathFileExists(path.c_str())) {
+		Path.set(path);
+		Text.assign(str2wstr(CFile::ReadAllString<char>(path)));
+		Status.force_notify_set(TextStatus::Saved);
+		Carets.set(0, 0, 0, 0, 0);
+		CaretPos.set(CPointF(0, 10 * 0.5f));//TODOLOW
+	} else {
+		Path.set(L"");
+		Status.force_notify_set(TextStatus::Saved);
+		Carets.set(0, 0, 0, 0, 0);
+		CaretPos.set(CPointF(0, 10 * 0.5f));//TODOLOW
+	}
+}
+
+void TextTabData::Save()
+{
+	if (!::PathFileExistsW(Path.c_str())) {
+		std::wstring path;
+		OPENFILENAME ofn = { 0 };
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hwndOwner = NULL;// GetWndPtr()->m_hWnd;
+		ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
+		ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
+		ofn.nMaxFile = MAX_PATH;
+		ofn.lpstrTitle = L"Save as";
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
+		ofn.lpstrDefExt = L"txt";
+
+		if (!GetSaveFileName(&ofn)) {
+			DWORD errCode = CommDlgExtendedError();
+			if (errCode) {
+				throw std::exception(FILE_LINE_FUNC);
+			}
+		} else {
+			::ReleaseBuffer(path);
+		}
+		Save(path);
+	} else {
+		Save(Path);
+	}
+}
+
+void TextTabData::Save(const std::wstring& path)
+{
+	Path.set(path);
+	Status.force_notify_set(TextStatus::Saved);
+	CFile::WriteAllString(path, wstr2str(Text));
+}
+
 
 
 CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_ptr<TabControlProperty> spTabProp, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, std::shared_ptr<TextEditorProperty>& spTextEditorProp)
@@ -57,7 +135,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 	m_itemsHeaderTemplate.emplace(typeid(TextTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
 		{
 			if (auto p = std::dynamic_pointer_cast<TextTabData>(pTabData)) {
-				return std::wstring(p->IsSaved?L"":L"*") + ::PathFindFileName(p->Path.c_str());
+				return std::wstring(p->Status.get() == TextStatus::Dirty?L"*":L"") + ::PathFindFileName(p->Path.c_str());
 			} else {
 				return L"nullptr";
 			}
@@ -68,8 +146,8 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 		auto pData = std::static_pointer_cast<FilerTabData>(pTabData);
 		auto spView = GetFilerGridViewPtr();
 		spView->OpenFolder(pData->FolderPtr);
-		spView->UpdateAll();
-		spView->SetUpdateRect(GetControlRect());
+		spView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
+		spView->PostUpdate(Updates::All);
 		spView->SubmitUpdate();
 
 		return spView;
@@ -79,8 +157,8 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 		auto pData = std::static_pointer_cast<ToDoTabData>(pTabData);
 		auto spView = GetToDoGridViewPtr();
 		spView->Open(pData->Path);
-		spView->UpdateAll();
-		spView->SetUpdateRect(GetControlRect());
+		spView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
+		spView->PostUpdate(Updates::All);
 		spView->SubmitUpdate();
 
 		return spView;
@@ -91,19 +169,31 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 		auto spView = GetTextViewPtr();
 
 		//Path
+		m_pPathBinding.reset(nullptr);//Need to dispose first to disconnect
 		m_pPathBinding.reset(new CBinding<std::wstring>(spViewModel->Path, spView->GetPath()));
 		m_pPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { GetHeaderRects().clear(); }));
-		//IsSaved
-		m_pIsSavedBinding.reset(new CBinding<bool>(spViewModel->IsSaved, spView->GetIsSaved()));
-		m_pIsSavedConnection = std::make_unique<sigslot::scoped_connection>(spView->GetIsSaved().Subscribe([this](const auto&) { GetHeaderRects().clear(); }));
+		//Status
+		m_pStatusBinding.reset(nullptr);
+		m_pStatusConnection = std::make_unique<sigslot::scoped_connection>(spViewModel->Status.Subscribe([this](const auto&) { GetHeaderRects().clear(); }));
 		//Text
+		m_pTextBinding.reset(nullptr);
 		m_pTextBinding.reset(new CBinding<std::wstring>(spViewModel->Text, spView->GetText()));
-		////Carets
+		//Carets
+		m_pCaretsBinding.reset(nullptr);
 		m_pCaretsBinding.reset(new CBinding<std::tuple<int, int, int, int, int>>(spViewModel->Carets, spView->GetCarets()));
+		//CaretPos
+		m_pCaretPosBinding.reset(nullptr);
+		m_pCaretPosBinding.reset(new CBinding<CPointF>(spViewModel->CaretPos, spView->GetCaretPos()));
+		//Open
+		m_pOpenBinding.reset(nullptr);
+		m_pOpenBinding.reset(new CBinding<void>(spViewModel->OpenCommand, spView->GetOpenCommand()));
+		//Save
+		m_pSaveBinding.reset(nullptr);
+		m_pSaveBinding.reset(new CBinding<void>(spViewModel->SaveCommand, spView->GetSaveCommand()));
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
-		if (spViewModel->Text.get().empty()) {
-			spView->Open(spViewModel->Path);
+		if (spViewModel->Status.get() == TextStatus::None) {
+			spViewModel->Open(spViewModel->Path);
 		}
 
 		return spView;
@@ -123,8 +213,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 				pData->FolderPtr = pFolder;
 				pData->Path = pFolder->GetPath();
 				GetHeaderRects().clear();
-				spFilerView->PostUpdate(Updates::Rect);
-				spFilerView->SetUpdateRect(GetControlRect());
+				spFilerView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
 			};
 		}
 		return spFilerView;
@@ -202,8 +291,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 			spToDoView->GetPath().Subscribe([&](const std::wstring& e) {
 				auto pData = std::static_pointer_cast<ToDoTabData>(m_itemsSource[m_selectedIndex.get()]);
 				pData->Path = spToDoView->GetPath().get();
-				spToDoView->PostUpdate(Updates::Rect);
-				spToDoView->SetUpdateRect(GetControlRect());
+				spToDoView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
 			});
 		}
 		return spToDoView;

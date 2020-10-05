@@ -140,9 +140,9 @@ void CMoveWnd::OnCommandDo(const CommandEvent& e)
 	std::vector<CIDL> noRenameIDLs;
 	std::vector<std::pair<CIDL, std::wstring>> renameIDLs;
 
-	for (auto& tup : *m_spItemsSource) {
-		auto& spFile = std::get<std::shared_ptr<CShellFile>>(tup);
-		auto& rename = std::get<RenameInfo>(tup);
+	for (auto iter = m_spItemsSource->cbegin(); iter != m_spItemsSource->cend(); ++ iter) {
+		auto& spFile = std::get<std::shared_ptr<CShellFile>>(*iter);
+		auto& rename = std::get<RenameInfo>(*iter);
 		std::wstring newname = rename.Name + rename.Ext;
 		if (spFile->GetPathName() == newname) {
 			noRenameIDLs.push_back(spFile->GetAbsoluteIdl());
@@ -239,8 +239,8 @@ void CDeleteWnd::OnCommandDo(const CommandEvent& e)
 {
 	std::vector<CIDL> delIDLs;
 
-	for (auto& tup : *m_spItemsSource) {
-		auto& spFile = std::get<std::shared_ptr<CShellFile>>(tup);
+	for (auto iter = m_spItemsSource->cbegin(); iter != m_spItemsSource->cend(); ++iter) {
+		auto& spFile = std::get<std::shared_ptr<CShellFile>>(*iter);
 		delIDLs.push_back(spFile->GetAbsoluteIdl());
 	}
 

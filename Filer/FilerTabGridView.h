@@ -10,6 +10,7 @@
 #include "FilerGridViewProperty.h"
 #include "TabControl.h"
 #include "ReactiveProperty.h"
+#include <functional>
 
 class CFilerGridView;
 struct FilerGridViewProperty;
@@ -91,31 +92,54 @@ struct ToDoTabData:public TabData
 /***************/
 /* TextTabData */
 /***************/
+
+enum class TextStatus
+{
+	None,
+	Dirty,
+	Saved
+};
+
 struct TextTabData :public TabData
 {
 	ReactiveWStringProperty Path;
+	
 	ReactiveWStringProperty Text;
+	ReactiveProperty<CPointF> CaretPos;
 	ReactiveTupleProperty<int, int, int, int, int> Carets;
-	ReactiveProperty<bool> IsSaved;
-	//observable_tuple<int, int, int, int, int> Carets;
+	ReactiveProperty<TextStatus> Status;
 
+	ReactiveCommand<void> OpenCommand;
+	ReactiveCommand<void> SaveCommand;
 
 	TextTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(path), Text(), IsSaved(false), Carets(0,0,0,0,0){}
+		:TabData(), Path(path), Text(), Status(TextStatus::None), Carets(0,0,0,0,0)
+	{
+		OpenCommand.Subscribe([this]() { Open(); });
+		SaveCommand.Subscribe([this]() { Save(); });
+		Text.Subscribe([this](const auto&)
+		{
+			Status.set(TextStatus::Dirty);
+		});
+	}
 
 	virtual ~TextTabData() = default;
+
+	void Open();
+	void Open(const std::wstring& path);
+
+	void Save();
+	void Save(const std::wstring& path);
 
 	template<class Archive>
 	void save(Archive & ar)
 	{
-		ar("Path", Path.get());
+		ar("Path", Path);
 	}
 	template<class Archive>
 	void load(Archive & ar)
 	{
-		std::wstring path;
-		ar("Path", path);
-		Path.set(path);
+		ar("Path", Path);
 	}
 };
 
@@ -130,11 +154,15 @@ private:
 
 	std::unique_ptr<CBinding<std::wstring>> m_pTextBinding;
 	std::unique_ptr<CBinding<std::wstring>> m_pPathBinding;
-	std::unique_ptr<CBinding<bool>> m_pIsSavedBinding;
+	std::unique_ptr<CBinding<bool>> m_pStatusBinding;
+	std::unique_ptr<CBinding<CPointF>> m_pCaretPosBinding;
 	std::unique_ptr<CBinding<std::tuple<int, int, int, int, int>>> m_pCaretsBinding;
+	std::unique_ptr<CBinding<void>> m_pSaveBinding;
+	std::unique_ptr<CBinding<void>> m_pOpenBinding;
 
 	std::unique_ptr<sigslot::scoped_connection> m_pPathConnection;
-	std::unique_ptr<sigslot::scoped_connection> m_pIsSavedConnection;
+	std::unique_ptr<sigslot::scoped_connection> m_pStatusConnection;
+
 
 
 

@@ -97,7 +97,7 @@ enum class Compares{
 enum class Updates{
 	None,
 	Filter,//Update Row IsVisible
-	Rect,//Move Window
+	//Rect,//Move Window
 	RowVisible,//AllContainer->VisContainer
 	ColumnVisible,//AllContainer->VisContainer
 	Sort,//Sort VisContainer

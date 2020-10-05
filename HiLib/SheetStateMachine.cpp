@@ -50,17 +50,17 @@ struct CSheetStateMachine::Machine
 			state<Normal> +event<LButtonBeginDragEvent> / call(&CSheet::Normal_LButtonBeginDrag),
 			//
 			state<RowDrag> +event<PaintEvent> / call(&CSheet::Normal_Paint),
-			state<RowDrag> +event<LButtonUpEvent> / call(&CSheet::RowDrag_LButtonUp) = state<Normal>,
+			state<RowDrag> +event<LButtonEndDragEvent> / call(&CSheet::RowDrag_LButtonEndDrag) = state<Normal>,
 			state<RowDrag> +event<MouseMoveEvent> / call(&CSheet::RowDrag_MouseMove),
 			state<RowDrag> +event<MouseLeaveEvent> / call(&CSheet::RowDrag_MouseLeave) = state<Normal>,
 
 			state<ColDrag> +event<PaintEvent> / call(&CSheet::Normal_Paint),
-			state<ColDrag> +event<LButtonUpEvent> / call(&CSheet::ColDrag_LButtonUp) = state<Normal>,
+			state<ColDrag> +event<LButtonEndDragEvent> / call(&CSheet::ColDrag_LButtonEndDrag) = state<Normal>,
 			state<ColDrag> +event<MouseMoveEvent> / call(&CSheet::ColDrag_MouseMove),
 			state<ColDrag> +event<MouseLeaveEvent> / call(&CSheet::ColDrag_MouseLeave) = state<Normal>,
 
 			state<ItemDrag> +event<PaintEvent> / call(&CSheet::Normal_Paint),
-			state<ItemDrag> +event<LButtonUpEvent> / call(&CSheet::ItemDrag_LButtonUp) = state<Normal>,
+			state<ItemDrag> +event<LButtonEndDragEvent> / call(&CSheet::ItemDrag_LButtonEndDrag) = state<Normal>,
 			state<ItemDrag> +event<MouseMoveEvent> / call(&CSheet::ItemDrag_MouseMove),
 			state<ItemDrag> +event<MouseLeaveEvent> / call(&CSheet::ItemDrag_MouseLeave) = state<Normal>,
 
@@ -94,6 +94,7 @@ void CSheetStateMachine::process_event(const RButtonDownEvent& e) { m_pMachine->
 void CSheetStateMachine::process_event(const MouseMoveEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const MouseLeaveEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const LButtonBeginDragEvent& e) { m_pMachine->process_event(e); }
+void CSheetStateMachine::process_event(const LButtonEndDragEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const SetCursorEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const ContextMenuEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const KeyDownEvent& e) { m_pMachine->process_event(e); }

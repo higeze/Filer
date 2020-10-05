@@ -51,6 +51,10 @@ public:
 				}
 				case NotifyVectorChangedAction::Reset:
 					m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
+					for (auto& tup : e.NewItems) {
+						PushRow(std::make_shared<CBindRow<TItems...>>(this));
+					}
+
 					break;
 				default:
 					break;

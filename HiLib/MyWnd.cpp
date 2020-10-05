@@ -115,7 +115,7 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 
 			MessageBoxA(m_hWnd, msg.c_str(), "Exception in Message Loop", MB_ICONWARNING);
 			SPDLOG_ERROR("Exception in Message Loop" + msg);
-			::PostQuitMessage(0);
+			//::PostQuitMessage(0);
 		}catch(...){
 			std::string msg = fmt::format(
 				"MSG:{:04X}\r\n"
@@ -125,7 +125,7 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 
 			MessageBoxA(m_hWnd, msg.c_str(), "Exception in Message Loop", MB_ICONWARNING);
 			SPDLOG_ERROR("Exception in Message Loop" + msg);
-			::PostQuitMessage(0);
+			//::PostQuitMessage(0);
 		}
 		return DefWndProc(m_hWnd,uiMsg,wParam,lParam);		
 	}

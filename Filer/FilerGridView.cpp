@@ -187,7 +187,8 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 {
 	//When DropTarget Dropped, LButtonUp is not Fired. Therefore need to cal here to change state.
 	//TODOLOW
-	GetWndPtr()->SendMessage(WM_LBUTTONUP, NULL, NULL);
+	auto pt = GetWndPtr()->GetCursorPosInClient();
+	GetWndPtr()->SendMessage(WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(pt.x, pt.y));
 	//m_pMouseMachine->process_event(LButtonUpEvent(this, NULL, NULL));
 
 	std::vector<FORMATETC> formats;
@@ -416,7 +417,7 @@ void CFilerGridView::Added(const std::wstring& fileName)
 	ULONG dwAttributes;
 	HRESULT hr = m_spFolder->GetShellFolderPtr()->ParseDisplayName(GetWndPtr()->m_hWnd, NULL, const_cast<LPWSTR>(fileName.c_str()), &chEaten, idl.ptrptr(), &dwAttributes);
 	if (SUCCEEDED(hr) && idl) {
-		GetItemsSource().notify_push_back(m_spFolder->CreateShExFileFolder(idl));
+		GetItemsSource().push_back(m_spFolder->CreateShExFileFolder(idl));
 		auto spRow = m_allRows.back();
 
 		PostUpdate(Updates::ColumnVisible);
@@ -464,7 +465,7 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 
 		if (SUCCEEDED(hRes) && newIdl) {
 			std::get<std::shared_ptr<CShellFile>>(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
-			m_allRows[iter-itemsSource.begin() + m_frozenRowCount]->SetIsMeasureValid(false);
+			m_allRows[iter-itemsSource.cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
 			PostUpdate(Updates::ColumnVisible);
 			PostUpdate(Updates::RowVisible);
 			PostUpdate(Updates::Row);
@@ -482,17 +483,17 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 	SPDLOG_INFO("Removed " + wstr2str(fileName));
 
 	auto& itemsSource = GetItemsSource();
-	auto iter = std::find_if(itemsSource.begin(), itemsSource.end(),
+	auto iter = std::find_if(itemsSource.cbegin(), itemsSource.cend(),
 							 [fileName](const auto& value)->bool {
 								 return std::get<std::shared_ptr<CShellFile>>(value)->GetPathName() == fileName;
 							 });
 
-	if (iter == itemsSource.end()) {
+	if (iter == itemsSource.cend()) {
 		SPDLOG_INFO("Removed NoMatch " + wstr2str(fileName));
 		return;
 	} else {
 
-		itemsSource.notify_erase(iter);
+		itemsSource.erase(iter);
 
 		m_spCursorer->OnCursorClear(this);
 		m_spCeller->OnClear();
@@ -530,7 +531,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 
 		if (SUCCEEDED(hRes) && newIdl) {
 			std::get<std::shared_ptr<CShellFile>>(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
-			m_allRows[iter - itemsSource.begin() + m_frozenRowCount]->SetIsMeasureValid(false);
+			m_allRows[iter - itemsSource.cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
 			PostUpdate(Updates::ColumnVisible);
 			PostUpdate(Updates::RowVisible);
 			PostUpdate(Updates::Row);
@@ -549,6 +550,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 void CFilerGridView::Reload()
 {
 	OpenFolder(m_spFolder);
+	SubmitUpdate();
 }
 
 void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
@@ -702,7 +704,7 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 			shell::for_each_idl_in_shellfolder(GetWndPtr()->m_hWnd, m_spFolder->GetShellFolderPtr(),
 				[this](const CIDL& idl) {
 					if (auto spFile = m_spFolder->CreateShExFileFolder(idl)) {
-						GetItemsSource().notify_push_back(std::make_tuple(spFile));
+						GetItemsSource().push_back(std::make_tuple(spFile));
 					}
 				});
 		} catch (std::exception&) {
@@ -758,13 +760,13 @@ void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 			//If previous folder is found, set cursor for that.
 			if (m_spPreviousFolder) {
 				auto& itemsSource = GetItemsSource();
-				auto iter = std::find_if(itemsSource.begin(), itemsSource.end(), [this](const auto& tup)->bool {
+				auto iter = std::find_if(itemsSource.cbegin(), itemsSource.cend(), [this](const auto& tup)->bool {
 					return std::get<std::shared_ptr<CShellFile>>(tup)->GetAbsoluteIdl() == m_spPreviousFolder->GetAbsoluteIdl();
 				});
 
-				if (iter != itemsSource.end()) {
+				if (iter != itemsSource.cend()) {
 
-					if (auto cell = CSheet::Cell(m_allRows[iter-itemsSource.begin() + m_frozenRowCount], m_visCols[m_frozenColumnCount])) {
+					if (auto cell = CSheet::Cell(m_allRows[iter-itemsSource.cbegin() + m_frozenRowCount], m_visCols[m_frozenColumnCount])) {
 						m_spCursorer->OnCursor(cell);
 						m_keepEnsureVisibleFocusedCell = true;
 						PostUpdate(Updates::EnsureVisibleFocusedCell);

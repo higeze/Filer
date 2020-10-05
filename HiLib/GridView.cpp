@@ -564,10 +564,6 @@ void CGridView::SubmitUpdate()
 					FilterAll();
 				break;
 			}
-			case Updates::Rect:
-			{
-				OnRect(RectEvent(GetWndPtr(), GetUpdateRect()));
-			}
 			case Updates::RowVisible:
 			{
 				CONSOLETIMER("Updates::RowVisible");
@@ -1133,9 +1129,15 @@ void CGridView::OnCreate(const CreateEvt& e)
 
 void CGridView::OnRect(const RectEvent& e)
 {
-	m_rect = e.Rect;
+	CSheet::OnRect(e);
 	SizeChanged();
 	SubmitUpdate();
+}
+
+void CGridView::OnRectWoSubmit(const RectEvent& e)
+{
+	CSheet::OnRect(e);
+	SizeChanged();
 }
 
 void CGridView::OnPaint(const PaintEvent& e)

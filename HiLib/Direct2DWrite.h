@@ -416,6 +416,8 @@ namespace std
 		std::vector<CRectF> CalcCharRects(const FormatF& format, const std::wstring& text, const CSizeF& size);
 		static std::vector<CRectF> CalcCharRects(const CComPtr<IDWriteTextLayout>& pTextLayout, const size_t& count);
 		static std::vector<CRectF> CalcCharRects(const CComPtr<IDWriteTextLayout1>& pTextLayout, const size_t& count);
+		void PushAxisAlignedClip(const CRectF& clipRect, D2D1_ANTIALIAS_MODE antialiasMode);
+		void PopAxisAlignedClip();
 
 		FLOAT LayoutRound(FLOAT value, FLOAT unit = 0.5f)
 		{
