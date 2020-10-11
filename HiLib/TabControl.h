@@ -53,6 +53,7 @@ protected:
 	ReactiveVectorProperty<std::shared_ptr<TabData>> m_itemsSource;
 
 	std::unordered_map<std::string, std::function<std::wstring(const std::shared_ptr<TabData>&)>> m_itemsHeaderTemplate;
+	std::unordered_map<std::string, std::function<CComPtr<ID2D1Bitmap>(const std::shared_ptr<TabData>&)>> m_itemsHeaderIconTemplate;
 	std::unordered_map<std::string, std::function<std::shared_ptr<CD2DWControl>(const std::shared_ptr<TabData>&)>> m_itemsControlTemplate;
 	std::shared_ptr<CD2DWControl> m_spCurControl;
 	ReactiveProperty<int> m_selectedIndex;
@@ -88,6 +89,7 @@ public:
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e);
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e);
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e);
+	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e);
 
 	virtual void OnRButtonDown(const RButtonDownEvent& e);
 
@@ -95,7 +97,7 @@ public:
 	virtual void OnMButtonUp(const MouseEvent& e);
 
 	virtual void OnMouseMove(const MouseMoveEvent& e);
-	virtual void OnMouseEnter(const MouseEvent& e);
+	virtual void OnMouseEnter(const MouseEnterEvent& e);
 	virtual void OnMouseLeave(const MouseLeaveEvent& e);
 	virtual void OnMouseWheel(const MouseWheelEvent& e);
 

@@ -638,6 +638,9 @@
     <ClInclude Include="..\HiLib\ReactiveProperty.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\Button.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -935,6 +938,9 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\DropTargetManager.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Button.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

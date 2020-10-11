@@ -235,6 +235,9 @@ void CTextBox::EnsureVisibleCaret()
 
 void CTextBox::OnCreate(const CreateEvt& e)
 {
+
+	CD2DWControl::OnCreate(e);
+
 	m_caretPoint.set(CPointF(0, GetLineHeight() * 0.5f));
 	//m_caretPoint.set(CPointF(0, pProp->Format->Font.Size * 0.5f));
 
@@ -464,8 +467,6 @@ void CTextBox::OnCreate(const CreateEvt& e)
 	}
 
 	InitTSF();
-
-	CD2DWControl::OnCreate(e);
 }
 
 void CTextBox::OnClose(const CloseEvent& e)
@@ -1284,6 +1285,8 @@ void CTextEditor::Update()
 
 void CTextEditor::Normal_Paint(const PaintEvent& e)
 {
+	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+
 	//PaintBackground
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
 	//PaintLine
@@ -1298,6 +1301,8 @@ void CTextEditor::Normal_Paint(const PaintEvent& e)
 	//PaintScroll
 	m_pVScroll->OnPaint(e);
 	m_pHScroll->OnPaint(e);
+
+	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
 }
 
 

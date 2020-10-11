@@ -405,6 +405,8 @@ namespace std
 
 		void DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rect);
 		void FillSolidRectangle(const SolidFill& fill, const D2D1_RECT_F& rect);
+		void DrawSolidRoundedRectangle(const SolidLine& line, const D2D1_RECT_F& rect, FLOAT radiusX, FLOAT radiusY);
+		void FillSolidRoundedRectangle(const SolidFill& fill, const D2D1_RECT_F& rect, FLOAT radiusX, FLOAT radiusY);
 		void DrawSolidGeometry(const SolidLine& line, CComPtr<ID2D1PathGeometry>& path);
 		void FillSolidGeometry(const SolidFill& fill, CComPtr<ID2D1PathGeometry>& path);
 		void DrawIcon(HICON hIcon, CRectF& rect);

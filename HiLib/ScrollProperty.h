@@ -14,7 +14,7 @@ public:
 	FLOAT DeltaScroll = 30.f;
 
 	FRIEND_SERIALIZER
-		template <class Archive>
+	template <class Archive>
 	void serialize(Archive& ar)
 	{
 		ar("BackgroundFill", BackgroundFill);

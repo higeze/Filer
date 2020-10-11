@@ -173,6 +173,12 @@ void CSheetCell::OnLButtonBeginDrag(const LButtonBeginDragEvent& e)
 	CSheet::OnLButtonBeginDrag(e);
 }
 
+void CSheetCell::OnLButtonEndDrag(const LButtonEndDragEvent& e)
+{
+	CCell::OnLButtonEndDrag(e);
+	CSheet::OnLButtonEndDrag(e);
+}
+
 
 void CSheetCell::OnMouseMove(const MouseMoveEvent& e)
 {

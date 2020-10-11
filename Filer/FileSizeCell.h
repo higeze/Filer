@@ -11,7 +11,7 @@
 #include <fmt/format.h>
 
 template<typename... TItems>
-class CFileSizeCell:public CTextCell, public std::enable_shared_from_this<CFileSizeCell<TItems...>>
+class CFileSizeCell:public CTextCell//, public std::enable_shared_from_this<CFileSizeCell<TItems...>>
 {
 private:
 	mutable boost::signals2::connection m_conDelayUpdateAction;
@@ -55,7 +55,7 @@ public:
 	{
 		try {
 			auto spFile = GetShellFile();
-			std::weak_ptr<CFileSizeCell> wp(shared_from_this());
+			std::weak_ptr<CFileSizeCell> wp(std::dynamic_pointer_cast<CFileSizeCell>(shared_from_this()));
 			auto changed = [wp]()->void {
 				if (auto sp = wp.lock()) {
 					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
@@ -91,7 +91,7 @@ public:
 	{
 		try {
 			auto spFile = GetShellFile();
-			std::weak_ptr<CFileSizeCell<TItems...>> wp(shared_from_this());
+			std::weak_ptr<CFileSizeCell<TItems...>> wp(std::dynamic_pointer_cast<CFileSizeCell<TItems...>>(shared_from_this()));
 			auto changed = [wp]()->void {
 				if (auto sp = wp.lock()) {
 					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(

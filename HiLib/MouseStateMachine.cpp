@@ -121,7 +121,7 @@ struct CMouseStateMachine::Machine
 	{
 		::OutputDebugString(L"LButtonDrag_OnExit\r\n");
 
-		pGrid->OnLButtonEndDrag(LButtonEndDragEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y));
+		pGrid->OnLButtonEndDrag(LButtonEndDragEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
 
 		::ReleaseCapture();
 		pGrid->ReleaseCapturedControlPtr();

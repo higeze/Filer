@@ -14,17 +14,20 @@
 #include "ShellFile.h"
 #include "ThreadPool.h"
 #include "D2DWWindow.h"
+#include "Button.h"
+#include "ReactiveProperty.h"
 
 
 template<typename... TItems>
 class CFileOperationWndBase: public CD2DWWindow
 {
+private:
+
 protected:
 	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
 
-	std::wstring m_buttonText;
-	CButton m_buttonDo;
-	CButton m_buttonCancel;
+	std::shared_ptr<CButton> m_spButtonDo;
+	std::shared_ptr<CButton> m_spButtonCancel;
 
 	std::shared_ptr<CFilerBindGridView<TItems...>> m_spFilerControl;
 
@@ -38,11 +41,24 @@ protected:
 	std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> m_spItemsSource;
 	//std::vector< std::tuple<std::shared_ptr<CShellFile>, RenameInfo>> m_selectedItems;
 
+	std::tuple<CRectF, CRectF, CRectF> GetRects()
+	{
+		CRectF rc = GetRectInWnd();
+		CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.Width() - 5.f, rc.bottom - 30.f);
+		CRectF rcBtnCancel(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
+		CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
+
+		return { rcGrid, rcBtnDo, rcBtnCancel };
+	}
+
+
 public:
 	CFileOperationWndBase(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-									   const std::wstring& buttonText, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
+		const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
 		:CD2DWWindow(),
-		m_buttonText(buttonText), m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs),
+		m_spButtonDo(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
+		m_spButtonCancel(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
+		m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs),
 		m_spItemsSource(std::make_shared<ReactiveVectorProperty<std::tuple<TItems...>>>())
 	{
 		m_rca
@@ -59,23 +75,14 @@ public:
 			.lpszClassName(L"CFileOperationWnd")
 			.dwStyle(dwStyle);
 
+		m_spButtonCancel->GetCommand().Subscribe([this]()->void
+		{
+			SendMessage(WM_CLOSE, NULL, NULL);
+		});
 
-		//AddMsgHandler(WM_CREATE, &CFileOperationWndBase::OnCreate, this);
-		//AddMsgHandler(WM_SIZE, &CFileOperationWndBase::OnSize, this);
-		//AddMsgHandler(WM_CLOSE, &CFileOperationWndBase::OnClose, this);
-		//AddMsgHandler(WM_PAINT, &CFileOperationWndBase::OnPaint, this);
-
-		m_commandMap.emplace(CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"Do"), std::bind(&CFileOperationWndBase::OnCommandDo, this, phs::_1));
-		m_commandMap.emplace(CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"Cancel"), std::bind(&CFileOperationWndBase::OnCommandCancel, this, phs::_1));
+		m_spButtonCancel->GetContent().set(L"Cancel");
 	}
 	virtual ~CFileOperationWndBase() = default;
-
-	virtual void OnCommandDo(const CommandEvent& e) = 0;
-	virtual void OnCommandCancel(const CommandEvent& e)
-	{
-		SendMessage(WM_CLOSE, NULL, NULL);
-
-	}
 
 	virtual void OnCreate(const CreateEvt& e) override
 	{
@@ -85,54 +92,21 @@ public:
 		}
 
 		//Size
-		CRect rc = GetClientRect();
-		CRect rcBtnOK, rcBtnCancel;
-		rcBtnOK.SetRect(rc.right - 170, rc.bottom - 25, rc.right - 170 + 52, rc.bottom - 25 + 22);
-		rcBtnCancel.SetRect(rc.right - 115, rc.bottom - 25, rc.right - 115 + 52, rc.bottom - 25 + 22);
-
-		CRect rcGrid(rc.left + 5, rc.top + 5, rc.Width() - 5, rc.bottom - 30);
-
-		//OK button
-		m_buttonDo.CreateWindowExArgument()
-			.lpszClassName(WC_BUTTON)
-			.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"Do"))
-			.lpszWindowName(m_buttonText.c_str())
-			.dwStyle(WS_CHILD | WS_VISIBLE | WS_TABSTOP | BP_PUSHBUTTON);
-
-		m_buttonDo.RegisterClassExArgument().lpszClassName(WC_BUTTON);
-		m_buttonDo.AddMsgHandler(WM_KEYDOWN, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT
-		{
-			switch ((UINT)wParam) {
-				case VK_RETURN:
-					OnCommandDo(CommandEvent(this, 0, 0));
-					break;
-				default:
-					break;
-			}
-			return 0;
-		});
-
-		//Cancel button
-		m_buttonCancel.CreateWindowExArgument()
-			.lpszClassName(WC_BUTTON)
-			.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"Cancel"))
-			.lpszWindowName(L"Cancel")
-			.dwStyle(WS_CHILD | WS_VISIBLE | WS_TABSTOP);
-
-		m_buttonCancel.RegisterClassExArgument().lpszClassName(WC_BUTTON);
-
-		//Create on order of tabstop
-		m_buttonDo.Create(m_hWnd, rcBtnOK);
-		m_buttonDo.SubclassWindow(m_buttonDo.m_hWnd);
-		m_buttonCancel.Create(m_hWnd, rcBtnCancel);
+		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();
 		
 		//Create FilerControl
-		m_spFilerControl->OnCreate(e);
-		AddControlPtr(m_spFilerControl);
+		m_spFilerControl->OnCreate(CreateEvt(this, rcGrid));
+
+		//OK button
+		m_spButtonDo->OnCreate(CreateEvt(this, rcBtnDo));
+
+		//Cancel button
+		m_spButtonCancel->OnCreate(CreateEvt(this, rcBtnCancel));
 
 		//Focus
-		m_buttonDo.SetFocus();
+		SetFocusedControlPtr(m_spButtonDo);
 	}
+
 	virtual void OnClose(const CloseEvent& e) override
 	{
 		CD2DWWindow::OnClose(e);
@@ -149,12 +123,15 @@ public:
 
 	virtual void OnRect(const RectEvent& e) override
 	{
-		CRect rc = GetDirectPtr()->Dips2Pixels(e.Rect);
-		m_buttonDo.MoveWindow(rc.right - 115, rc.bottom - 25, 52, 22, TRUE);
-		m_buttonCancel.MoveWindow(rc.right - 60, rc.bottom - 25, 52, 22, TRUE);
+		CD2DWWindow::OnRect(e);
 
-		CRectF rcGrid(e.Rect.left + 5, e.Rect.top + 5, e.Rect.Width() - 5, e.Rect.bottom - 30);
+		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();		
+		//Create FilerControl
 		m_spFilerControl->OnRect(RectEvent(this, rcGrid));
+		//OK button
+		m_spButtonDo->OnRect(RectEvent(this, rcBtnDo));
+		//Cancel button
+		m_spButtonCancel->OnRect(RectEvent(this, rcBtnCancel));
 	}
 
 };
@@ -168,7 +145,6 @@ protected:
 	CIDL m_destIDL;
 public:
 	CCopyMoveWndBase(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-						  const std::wstring& buttonText,
 						  const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CCopyMoveWndBase() = default;
 };
@@ -182,7 +158,7 @@ public:
 	CCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 			  const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CCopyWnd() = default;
-	virtual void OnCommandDo(const CommandEvent& e) override;
+	void Copy();
 };
 
 /************/
@@ -194,7 +170,7 @@ public:
 	CMoveWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 			 const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CMoveWnd() = default;
-	virtual void OnCommandDo(const CommandEvent& e) override;
+	void Move();
 };
 
 /**************/
@@ -206,30 +182,5 @@ public:
 	CDeleteWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 			 const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CDeleteWnd() = default;
-	virtual void OnCommandDo(const CommandEvent& e) override;
+	void Delete();
 };
-
-///***********************/
-///* CIncrementalCopyWnd */
-///***********************/
-////class CIncrementalCopyWnd :public CCopyMoveWndBase
-////{
-////public:
-////	static UINT WM_INCREMENTMAX;
-////	static UINT WM_INCREMENTVALUE;
-////	static UINT WM_ADDITEM;
-////
-////protected:
-////	std::unique_ptr<CProgressBar> m_pProgressbar;
-////	CIDL m_newIDL;
-////	CDeadlineTimer m_periodicTimer;
-////	std::unordered_map<CIDL, std::vector<CIDL>,
-////		shell::IdlHash, shell::IdlEqual> m_idlMap;
-////
-////public:
-////	CIncrementalCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-////			   const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
-////	virtual ~CIncrementalCopyWnd() = default;
-////	virtual void InitializeFileGrid();
-////	virtual LRESULT OnCommandDo(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled) override;
-////};

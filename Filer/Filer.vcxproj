@@ -215,6 +215,7 @@
     <ClInclude Include="..\HiLib\BindTextColumn.h" />
     <ClInclude Include="..\HiLib\BoolCell.h" />
     <ClInclude Include="..\HiLib\BoostPythonHelper.h" />
+    <ClInclude Include="..\HiLib\Button.h" />
     <ClInclude Include="..\HiLib\ButtonState.h" />
     <ClInclude Include="..\HiLib\CDataString.h" />
     <ClInclude Include="..\HiLib\Cell.h" />
@@ -398,6 +399,7 @@
     <ClCompile Include="..\D2DTextBox\undo.cpp" />
     <ClCompile Include="..\HiLib\Band.cpp" />
     <ClCompile Include="..\HiLib\BoostPythonHelper.cpp" />
+    <ClCompile Include="..\HiLib\Button.cpp" />
     <ClCompile Include="..\HiLib\Cell.cpp" />
     <ClCompile Include="..\HiLib\Celler.cpp" />
     <ClCompile Include="..\HiLib\CellStringCommand.cpp" />

@@ -62,28 +62,30 @@ private:
 
 	INT_PTR OnCommandNext(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 	{
-		CButton matchCaseCheckBox = (HWND)::GetDlgItem(m_hWnd, IDC_CHECKBOX_FIND_MATCHCASE);
-		CButton matchWholeWordCheckBox = (HWND)::GetDlgItem(m_hWnd, IDC_CHECKBOX_FIND_MATCHWHOLEWORD);
-		CEdit findEdit = (HWND)::GetDlgItem(m_hWnd, IDC_EDIT_FIND);
-		bool matchCase = !!matchCaseCheckBox.GetCheck();
-		bool matchWholeWord = !!matchWholeWordCheckBox.GetCheck();
-		std::wstring findWord = findEdit.GetWindowTextW();
+		//TODO
+		//CButton matchCaseCheckBox = (HWND)::GetDlgItem(m_hWnd, IDC_CHECKBOX_FIND_MATCHCASE);
+		//CButton matchWholeWordCheckBox = (HWND)::GetDlgItem(m_hWnd, IDC_CHECKBOX_FIND_MATCHWHOLEWORD);
+		//CEdit findEdit = (HWND)::GetDlgItem(m_hWnd, IDC_EDIT_FIND);
+		//bool matchCase = !!matchCaseCheckBox.GetCheck();
+		//bool matchWholeWord = !!matchWholeWordCheckBox.GetCheck();
+		//std::wstring findWord = findEdit.GetWindowTextW();
 
-		m_pParentControl->FindNext(findWord, matchCase, matchWholeWord);
+		//m_pParentControl->FindNext(findWord, matchCase, matchWholeWord);
 
 		return TRUE;
 	}	
 	
 	INT_PTR OnCommandPrev(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
 	{
-		CButton matchCaseCheckBox = (HWND)::GetDlgItem(m_hWnd, IDC_CHECKBOX_FIND_MATCHCASE);
-		CButton matchWholeWordCheckBox = (HWND)::GetDlgItem(m_hWnd, IDC_CHECKBOX_FIND_MATCHWHOLEWORD);
-		CEdit findEdit = (HWND)::GetDlgItem(m_hWnd, IDC_EDIT_FIND);
-		bool matchCase = !!matchCaseCheckBox.GetCheck();
-		bool matchWholeWord = !!matchWholeWordCheckBox.GetCheck();
-		std::wstring findWord = findEdit.GetWindowTextW();
+		//TODO
+		//CButton matchCaseCheckBox = (HWND)::GetDlgItem(m_hWnd, IDC_CHECKBOX_FIND_MATCHCASE);
+		//CButton matchWholeWordCheckBox = (HWND)::GetDlgItem(m_hWnd, IDC_CHECKBOX_FIND_MATCHWHOLEWORD);
+		//CEdit findEdit = (HWND)::GetDlgItem(m_hWnd, IDC_EDIT_FIND);
+		//bool matchCase = !!matchCaseCheckBox.GetCheck();
+		//bool matchWholeWord = !!matchWholeWordCheckBox.GetCheck();
+		//std::wstring findWord = findEdit.GetWindowTextW();
 
-		m_pParentControl->FindPrev(findWord, matchCase, matchWholeWord);
+		//m_pParentControl->FindPrev(findWord, matchCase, matchWholeWord);
 
 		return TRUE;
 	}	

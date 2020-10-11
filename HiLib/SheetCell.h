@@ -55,6 +55,7 @@ public:
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override;
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override;
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
+	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;
 
 	virtual void OnRButtonDown(const RButtonDownEvent& e) override;
 
@@ -62,7 +63,7 @@ public:
 	virtual void OnMButtonUp(const MouseEvent& e) override {}//TODO
 
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
-	virtual void OnMouseEnter(const MouseEvent& e) override {}
+	virtual void OnMouseEnter(const MouseEnterEvent& e) override {}
 	virtual void OnMouseLeave(const MouseLeaveEvent& e) override;
 
 	virtual void OnMouseWheel(const MouseWheelEvent& e) override {}

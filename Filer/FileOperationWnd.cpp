@@ -8,9 +8,8 @@
 /********************/
 CCopyMoveWndBase::CCopyMoveWndBase(
 	std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-	const std::wstring& buttonText,
 	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CFileOperationWndBase(spFilerGridViewProp, buttonText, srcIDL, srcChildIDLs), m_destIDL(destIDL)
+	:CFileOperationWndBase(spFilerGridViewProp, srcIDL, srcChildIDLs), m_destIDL(destIDL)
 {
 	//Items Source
 	for (auto& childIDL : m_srcChildIDLs) {
@@ -49,7 +48,7 @@ CCopyMoveWndBase::CCopyMoveWndBase(
 /************/
 CCopyWnd::CCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 				   const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CCopyMoveWndBase(spFilerGridViewProp, L"Copy", destIDL, srcIDL, srcChildIDLs)
+	:CCopyMoveWndBase(spFilerGridViewProp, destIDL, srcIDL, srcChildIDLs)
 {
 	m_rca
 		.lpszClassName(L"CCopyWnd");
@@ -59,9 +58,15 @@ CCopyWnd::CCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		.lpszClassName(L"CCopyWnd")
 		;//.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"CCopyWnd"));
 
+	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	{
+		Copy();
+	});
+
+	m_spButtonDo->GetContent().set(L"Copy");
 }
 
-void CCopyWnd::OnCommandDo(const CommandEvent& e)
+void CCopyWnd::Copy()
 {
 	std::vector<CIDL> noRenameIDLs;
 	std::vector<std::pair<CIDL, std::wstring>> renameIDLs;
@@ -125,7 +130,7 @@ void CCopyWnd::OnCommandDo(const CommandEvent& e)
 /************/
 CMoveWnd::CMoveWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 				   const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CCopyMoveWndBase(spFilerGridViewProp, L"Move", destIDL, srcIDL, srcChildIDLs)
+	:CCopyMoveWndBase(spFilerGridViewProp, destIDL, srcIDL, srcChildIDLs)
 {
 	m_rca
 		.lpszClassName(L"CMoveWnd");
@@ -133,9 +138,16 @@ CMoveWnd::CMoveWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 	m_cwa
 		.lpszWindowName(L"Move")
 		.lpszClassName(L"CMoveWnd");
+
+	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	{
+		Move();
+	});
+
+	m_spButtonDo->GetContent().set(L"Move");
 }
 
-void CMoveWnd::OnCommandDo(const CommandEvent& e)
+void CMoveWnd::Move()
 {
 	std::vector<CIDL> noRenameIDLs;
 	std::vector<std::pair<CIDL, std::wstring>> renameIDLs;
@@ -199,7 +211,7 @@ void CMoveWnd::OnCommandDo(const CommandEvent& e)
 /**************/
 CDeleteWnd::CDeleteWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 				   const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CFileOperationWndBase(spFilerGridViewProp, L"Delete", srcIDL, srcChildIDLs)
+	:CFileOperationWndBase(spFilerGridViewProp, srcIDL, srcChildIDLs)
 {
 	m_rca
 		.lpszClassName(L"CDeleteWnd");
@@ -233,9 +245,17 @@ CDeleteWnd::CDeleteWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewPr
 		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
 		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
 		arg<"frzrowcnt"_s>() = 2);
+
+	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	{
+		Delete();
+	});
+
+	m_spButtonDo->GetContent().set(L"Delete");
+
 }
 
-void CDeleteWnd::OnCommandDo(const CommandEvent& e)
+void CDeleteWnd::Delete()
 {
 	std::vector<CIDL> delIDLs;
 

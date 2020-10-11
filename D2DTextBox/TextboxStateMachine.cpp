@@ -45,17 +45,17 @@ struct CTextBoxStateMachine::Machine
 			state<Normal> +event<KillFocusEvent> / call(&CTextBox::Normal_KillFocus),
 
 			//VScrlDrag
-			state<VScrlDrag> +event<PaintEvent> / call(&CTextBox::Normal_Paint),
 			state<VScrlDrag> +on_entry<LButtonBeginDragEvent> / call(&CTextBox::VScrlDrag_OnEntry),
 			state<VScrlDrag> +on_exit<LButtonEndDragEvent> / call(&CTextBox::VScrlDrag_OnExit),
-			state<VScrlDrag> +on_exit<LButtonEndDragEvent> = state<Normal>,
+			state<VScrlDrag> +event<LButtonEndDragEvent> = state<Normal>,
 			state<VScrlDrag> +event<MouseMoveEvent> / call(&CTextBox::VScrlDrag_MouseMove),
+			state<VScrlDrag> +event<PaintEvent> / call(&CTextBox::Normal_Paint),
 			//HScrlDrag
-			state<HScrlDrag> +event<PaintEvent> / call(&CTextBox::Normal_Paint),
 			state<HScrlDrag> +on_entry<LButtonBeginDragEvent> / call(&CTextBox::HScrlDrag_OnEntry),
 			state<HScrlDrag> +on_exit<LButtonEndDragEvent> / call(&CTextBox::HScrlDrag_OnExit),
-			state<HScrlDrag> +on_exit<LButtonEndDragEvent> = state<Normal>,
+			state<HScrlDrag> +event<LButtonEndDragEvent> = state<Normal>,
 			state<HScrlDrag> +event<MouseMoveEvent> / call(&CTextBox::HScrlDrag_MouseMove),
+			state<HScrlDrag> +event<PaintEvent> / call(&CTextBox::Normal_Paint),
 			//Error handler
 			*state<Error> +exception<std::exception> / call(&CTextBox::Error_StdException) = state<Normal>
 		);

@@ -180,6 +180,13 @@ struct MouseMoveEvent :public MouseEvent
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
+struct MouseEnterEvent :public MouseEvent
+{
+	MouseEnterEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
+};
+
+
 struct MouseLeaveEvent :public MouseEvent
 {
 	MouseLeaveEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
@@ -242,7 +249,7 @@ public:
 
 
 
-class CUIElement
+class CUIElement:public std::enable_shared_from_this<CUIElement>
 {
 protected:
 	UIElementState::Type m_state;
@@ -281,7 +288,7 @@ public:
 	virtual void OnMButtonUp(const MouseEvent& e){}//TODO
 
 	virtual void OnMouseMove(const MouseMoveEvent& e);
-	virtual void OnMouseEnter(const MouseEvent& e);//TODO
+	virtual void OnMouseEnter(const MouseEnterEvent& e);//TODO
 	virtual void OnMouseLeave(const MouseLeaveEvent& e);
 	virtual void OnMouseWheel(const MouseWheelEvent& e){}
 

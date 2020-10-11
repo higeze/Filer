@@ -19,8 +19,11 @@
 #include "BindItemsSheetCell.h"
 
 #include "D2DWWindow.h"
+#include "Dispatcher.h"
 #include "Textbox.h"
 #include "MyFile.h"
+#include "FileIconCache.h"
+#include "ShellFileFactory.h"
 
 
 void TextTabData::Open()
@@ -80,7 +83,7 @@ void TextTabData::Save()
 		if (!GetSaveFileName(&ofn)) {
 			DWORD errCode = CommDlgExtendedError();
 			if (errCode) {
-				throw std::exception(FILE_LINE_FUNC);
+				//throw std::exception(FILE_LINE_FUNC);
 			}
 		} else {
 			::ReleaseBuffer(path);
@@ -138,6 +141,44 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 				return std::wstring(p->Status.get() == TextStatus::Dirty?L"*":L"") + ::PathFindFileName(p->Path.c_str());
 			} else {
 				return L"nullptr";
+			}
+		});
+
+	//ItemsHeaderIcon
+	std::function<void()> updated = [this]()->void
+	{
+		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]()->void
+		{
+			GetWndPtr()->InvalidateRect(NULL, FALSE);
+		});
+	};
+
+	m_itemsHeaderIconTemplate.emplace(typeid(FilerTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData)->CComPtr<ID2D1Bitmap>
+		{
+
+			if (auto p = std::dynamic_pointer_cast<FilerTabData>(pTabData)) {
+				return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetFileIconBitmap(
+					p->FolderPtr->GetAbsoluteIdl(), p->FolderPtr->GetPath(), p->FolderPtr->GetDispExt(), updated);
+			} else {
+				return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
+			}
+		});
+	m_itemsHeaderIconTemplate.emplace(typeid(ToDoTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData)->CComPtr<ID2D1Bitmap>
+		{
+			if (auto p = std::dynamic_pointer_cast<ToDoTabData>(pTabData)) {
+				return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
+			} else {
+				return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
+			}
+		});
+	m_itemsHeaderIconTemplate.emplace(typeid(TextTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData)->CComPtr<ID2D1Bitmap>
+		{
+			if (auto p = std::dynamic_pointer_cast<TextTabData>(pTabData)) {
+				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Path);
+				return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetFileIconBitmap(
+					spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), updated);
+			} else {
+				return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
 		});
 

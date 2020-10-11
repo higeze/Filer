@@ -9,7 +9,7 @@
 
 template<typename TValueItem>
 class CBindPropertySheetCell
-	:public CBindItemsSheetCellBase<TValueItem>,std::enable_shared_from_this<CBindPropertySheetCell<TValueItem>>
+	:public CBindItemsSheetCellBase<TValueItem>//,std::enable_shared_from_this<CBindPropertySheetCell<TValueItem>>
 {
 public:
 	virtual bool CanResizeRow()const override{return true;}

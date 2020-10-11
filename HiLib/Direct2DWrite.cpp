@@ -602,9 +602,23 @@
 
 	}
 
+	void CDirect2DWrite::DrawSolidRoundedRectangle(const SolidLine& line, const D2D1_RECT_F& rect, FLOAT radiusX, FLOAT radiusY)
+	{
+		auto roundedrect = D2D1_ROUNDED_RECT{LayoutRound(rect), radiusX, radiusY};
+
+		GetHwndRenderTarget()->DrawRoundedRectangle(roundedrect, GetColorBrush(line.Color), line.Width);
+	}
+
 	void CDirect2DWrite::FillSolidRectangle(const SolidFill& fill, const D2D1_RECT_F& rect)
 	{
 		GetHwndRenderTarget()->FillRectangle(LayoutRound(rect), GetColorBrush(fill.Color));
+	}
+
+	void CDirect2DWrite::FillSolidRoundedRectangle(const SolidFill& fill, const D2D1_RECT_F& rect, FLOAT radiusX, FLOAT radiusY)
+	{
+		auto roundedrect = D2D1_ROUNDED_RECT{LayoutRound(rect), radiusX, radiusY};
+
+		GetHwndRenderTarget()->FillRoundedRectangle(roundedrect, GetColorBrush(fill.Color));
 	}
 
 	void CDirect2DWrite::DrawSolidGeometry(const SolidLine& line, CComPtr<ID2D1PathGeometry>& path)

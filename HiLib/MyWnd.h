@@ -558,16 +558,16 @@ public:
 /***********/
 /* CButton */
 /***********/
-class __declspec(novtable) CButton:public CWnd
-{
-public:
-	CButton(){}
-	CButton(HWND hWnd):CWnd(hWnd){}
-	virtual ~CButton(){}
-	CButton& operator=(HWND hWnd){m_hWnd=hWnd;return *this;}
-	int GetCheck(){return (int)SendMessage(BM_GETCHECK,0,0L);}
-	void SetCheck(int nCheck){SendMessage(BM_SETCHECK,(WPARAM)(int)(nCheck),0L);}
-};
+//class __declspec(novtable) CButton:public CWnd
+//{
+//public:
+//	CButton(){}
+//	CButton(HWND hWnd):CWnd(hWnd){}
+//	virtual ~CButton(){}
+//	CButton& operator=(HWND hWnd){m_hWnd=hWnd;return *this;}
+//	int GetCheck(){return (int)SendMessage(BM_GETCHECK,0,0L);}
+//	void SetCheck(int nCheck){SendMessage(BM_SETCHECK,(WPARAM)(int)(nCheck),0L);}
+//};
 
 
 /************/

@@ -857,9 +857,14 @@ void CSheet::ColTrack_MouseLeave(const MouseLeaveEvent& e)
 /***********/
 /* RowDrag */
 /***********/
-void CSheet::RowDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e)
+void CSheet::RowDrag_OnEntry(const LButtonBeginDragEvent& e)
 {
 	m_spRowDragger->OnBeginDrag(this, e);
+}
+
+void CSheet::RowDrag_OnExit(const LButtonEndDragEvent& e)
+{
+	m_spRowDragger->OnEndDrag(this, e);
 }
 
 bool CSheet::RowDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
@@ -872,11 +877,6 @@ void CSheet::RowDrag_MouseMove(const MouseMoveEvent& e)
 	m_spRowDragger->OnDrag(this, e);
 }
 
-void CSheet::RowDrag_LButtonEndDrag(const LButtonEndDragEvent& e)
-{
-	m_spRowDragger->OnEndDrag(this, e);
-}
-
 void CSheet::RowDrag_MouseLeave(const MouseLeaveEvent& e)
 {
 	m_spRowDragger->OnLeaveDrag(this, e);
@@ -884,9 +884,14 @@ void CSheet::RowDrag_MouseLeave(const MouseLeaveEvent& e)
 /***********/
 /* ColDrag */
 /***********/
-void CSheet::ColDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e)
+void CSheet::ColDrag_OnEntry(const LButtonBeginDragEvent& e)
 {
 	m_spColDragger->OnBeginDrag(this, e);
+}
+
+void CSheet::ColDrag_OnExit(const LButtonEndDragEvent& e)
+{
+	m_spColDragger->OnEndDrag(this, e);
 }
 
 bool CSheet::ColDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
@@ -899,11 +904,6 @@ void CSheet::ColDrag_MouseMove(const MouseMoveEvent& e)
 	m_spColDragger->OnDrag(this, e);
 }
 
-void CSheet::ColDrag_LButtonEndDrag(const LButtonEndDragEvent& e)
-{
-	m_spColDragger->OnEndDrag(this, e);
-}
-
 void CSheet::ColDrag_MouseLeave(const MouseLeaveEvent& e)
 {
 	m_spColDragger->OnLeaveDrag(this, e);
@@ -911,10 +911,19 @@ void CSheet::ColDrag_MouseLeave(const MouseLeaveEvent& e)
 /************/
 /* ItemDrag */
 /************/
-void CSheet::ItemDrag_LButtonBeginDrag(const LButtonBeginDragEvent& e)
+void CSheet::ItemDrag_OnEntry(const LButtonBeginDragEvent& e)
 {
 	::OutputDebugString(L"ItemDrag_BeginDrag\r\n");
 	m_spItemDragger->OnBeginDrag(this, e);
+}
+
+void CSheet::ItemDrag_OnExit(const LButtonEndDragEvent& e)
+{
+	::OutputDebugString(L"ItemDrag_LButtonUp\r\n");
+	//m_spCursorer->OnLButtonEndDrag(this, e);
+	//m_spCeller->OnLButtonEndDrag(this, e);
+
+	m_spItemDragger->OnEndDrag(this, e);
 }
 
 bool CSheet::ItemDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
@@ -926,15 +935,6 @@ void CSheet::ItemDrag_MouseMove(const MouseMoveEvent& e)
 {
 	::OutputDebugString(L"ItemDrag_MouseMove\r\n");
 	m_spItemDragger->OnDrag(this, e);
-}
-
-void CSheet::ItemDrag_LButtonEndDrag(const LButtonEndDragEvent& e)
-{
-	::OutputDebugString(L"ItemDrag_LButtonUp\r\n");
-	//m_spCursorer->OnLButtonEndDrag(this, e);
-	//m_spCeller->OnLButtonEndDrag(this, e);
-
-	m_spItemDragger->OnEndDrag(this, e);
 }
 
 void CSheet::ItemDrag_MouseLeave(const MouseLeaveEvent& e)

@@ -166,14 +166,12 @@ public:
 	virtual void VScrlDrag_OnExit();
 	virtual void VScrlDrag_LButtonDown(const LButtonDownEvent& e);
 	virtual bool VScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e);
-	virtual void VScrlDrag_LButtonUp(const LButtonUpEvent& e);
 	virtual void VScrlDrag_MouseMove(const MouseMoveEvent& e);
 	//HScrollDrag
 	virtual void HScrlDrag_OnEntry();
 	virtual void HScrlDrag_OnExit();
 	virtual void HScrlDrag_LButtonDown(const LButtonDownEvent& e);
 	virtual bool HScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e);
-	virtual void HScrlDrag_LButtonUp(const LButtonUpEvent& e);
 	virtual void HScrlDrag_MouseMove(const MouseMoveEvent& e);
 	//Edit
 	//virtual void Edit_BeginEdit(const BeginEditEvent& e);

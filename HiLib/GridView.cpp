@@ -889,6 +889,7 @@ void CGridView::VScrlDrag_OnEntry()
 }
 void CGridView::VScrlDrag_OnExit()
 {
+	m_pVScroll->SetStartDrag(0.f);
 	m_pVScroll->SetState(UIElementState::Normal);
 }
 void CGridView::VScrlDrag_LButtonDown(const LButtonDownEvent& e)
@@ -899,11 +900,6 @@ void CGridView::VScrlDrag_LButtonDown(const LButtonDownEvent& e)
 bool CGridView::VScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
 {
 	return m_pVScroll->GetIsVisible() && m_pVScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
-}
-void CGridView::VScrlDrag_LButtonUp(const LButtonUpEvent& e)
-{
-	//setcaptureReleaseCapture();
-	m_pVScroll->SetStartDrag(0.f);
 }
 void CGridView::VScrlDrag_MouseMove(const MouseMoveEvent& e)
 {
@@ -925,6 +921,7 @@ void CGridView::HScrlDrag_OnEntry()
 
 void CGridView::HScrlDrag_OnExit()
 {
+	m_pHScroll->SetStartDrag(0.f);
 	m_pHScroll->SetState(UIElementState::Normal);
 }
 
@@ -936,11 +933,6 @@ void CGridView::HScrlDrag_LButtonDown(const LButtonDownEvent& e)
 bool CGridView::HScrlDrag_Guard_LButtonDown(const LButtonDownEvent& e)
 {
 	return m_pHScroll->GetIsVisible() && m_pHScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
-}
-
-void CGridView::HScrlDrag_LButtonUp(const LButtonUpEvent& e)
-{
-	m_pHScroll->SetStartDrag(0.f);
 }
 
 void CGridView::HScrlDrag_MouseMove(const MouseMoveEvent& e)

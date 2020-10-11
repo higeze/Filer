@@ -7,7 +7,7 @@
 #include "CellProperty.h"
 
 template<typename... TItems>
-class CFileLastWriteCell:public CTextCell, public std::enable_shared_from_this<CFileLastWriteCell<TItems...>>
+class CFileLastWriteCell:public CTextCell//, public std::enable_shared_from_this<CFileLastWriteCell<TItems...>>
 {
 private:
 	mutable boost::signals2::connection m_conDelayUpdateAction;
@@ -29,7 +29,7 @@ public:
 	{
 		try {
 			auto spFile = GetShellFile();
-			std::weak_ptr<CFileLastWriteCell<TItems...>> wp(shared_from_this());
+			std::weak_ptr<CFileLastWriteCell<TItems...>> wp(std::dynamic_pointer_cast<CFileLastWriteCell<TItems...>>(shared_from_this()));
 			auto changed = [wp]()->void {
 				if (auto sp = wp.lock()) {
 					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(

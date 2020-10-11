@@ -339,17 +339,11 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	auto [rcLeftFav, rcLeftTab, rcSplitter, rcRightFav, rcRightTab, rcStatus] = GetRects();
 
 	m_spLeftFavoritesView->OnCreate(CreateEvt(this, rcLeftFav));
-	m_spRightFavoritesView->OnCreate(CreateEvt(this, rcRightFav));
 	m_spLeftView->OnCreate(CreateEvt(this, rcLeftTab));
+	m_splitterRect = rcSplitter;
+	m_spRightFavoritesView->OnCreate(CreateEvt(this, rcRightFav));
 	m_spRightView->OnCreate(CreateEvt(this, rcRightTab));
 	m_spStatusBar->OnCreate(CreateEvt(this, rcStatus));
-	m_splitterRect = rcSplitter;
-
-	AddControlPtr(m_spLeftView);
-	AddControlPtr(m_spRightView);
-	AddControlPtr(m_spLeftFavoritesView);
-	AddControlPtr(m_spRightFavoritesView);
-	AddControlPtr(m_spStatusBar);
 
 	SetFocusedControlPtr(m_spLeftView);
 }

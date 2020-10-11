@@ -10,7 +10,7 @@ class CShellFile;
 /* CFileIconNameCellBase */
 /*************************/
 template<typename... TItems>
-class CFileIconNameCellBase :public CTextCell, public std::enable_shared_from_this<CFileIconNameCellBase<TItems...>>
+class CFileIconNameCellBase :public CTextCell//, public std::enable_shared_from_this<CFileIconNameCellBase<TItems...>>
 {
 protected:
 	mutable boost::signals2::connection m_conDelayUpdateAction;
@@ -35,7 +35,8 @@ public:
 		CRectF rcIcon = GetIconSizeF(pDirect);
 		rcIcon.MoveToXY(rcPaint.left, rcPaint.top);
 
-		std::weak_ptr<CFileIconNameCellBase> wp(shared_from_this());
+		//TODOHIGH Not thread safe
+		std::weak_ptr<CFileIconNameCellBase> wp(std::dynamic_pointer_cast<CFileIconNameCellBase>(shared_from_this()));
 		std::function<void()> updated = [wp]()->void {
 			if (auto sp = wp.lock()) {
 				auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(

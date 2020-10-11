@@ -6,7 +6,7 @@
 #include "ShellFile.h"
 
 template<typename... TItems>
-class CFileIconCell:public CCell, public std::enable_shared_from_this<CFileIconCell<TItems...>>
+class CFileIconCell:public CCell//, public std::enable_shared_from_this<CFileIconCell<TItems...>>
 {
 protected:
 	mutable boost::signals2::connection m_conDelayUpdateAction;
@@ -24,7 +24,7 @@ public:
 			rc.bottom = rc.top + pDirect->Pixels2DipsY(16);
 			rc.right = rc.left + pDirect->Pixels2DipsX(16);
 
-			std::weak_ptr<CFileIconCell> wp(shared_from_this());
+			std::weak_ptr<CFileIconCell> wp(std::dynamic_pointer_cast<CFileIconCell>(shared_from_this()));
 			std::function<void()> updated = [wp]()->void {
 				if (auto sp = wp.lock()) {
 					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(

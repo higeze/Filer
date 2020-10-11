@@ -11,57 +11,6 @@
 #include "Dispatcher.h"
 #include "DropTargetManager.h"
 
-void CD2DWWindow::SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl)
-{
-	if (spControl->GetIsFocusable() && m_pFocusedControl != spControl) {
-		if (m_pFocusedControl) {
-			m_pFocusedControl->OnKillFocus(KillFocusEvent(this, 0, 0, nullptr));
-		}
-		m_pFocusedControl = spControl;
-		m_pFocusedControl->OnSetFocus(SetFocusEvent(this, 0, 0, nullptr));
-	}
-}
-
-LRESULT CD2DWWindow::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
-		::SetForegroundWindow(hWnd);
-	}
-	OnClose(CloseEvent(this, wParam, lParam, &bHandled));
-	::RevokeDragDrop(m_hWnd);
-	DestroyWindow();
-	return 0;
-}
-
-LRESULT CD2DWWindow::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	OnSetCursor(SetCursorEvent(this, wParam, lParam, &bHandled));
-	return 0;
-}
-
-LRESULT CD2DWWindow::OnSetFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	if (GetFocusedControlPtr())GetFocusedControlPtr()->OnSetFocus(SetFocusEvent(this, wParam, lParam, &bHandled));
-	InvalidateRect(NULL, FALSE);
-	return 0;
-}
-
-LRESULT CD2DWWindow::OnKillFocus(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	if (GetFocusedControlPtr())GetFocusedControlPtr()->OnKillFocus(KillFocusEvent(this, wParam, lParam, &bHandled));
-	InvalidateRect(NULL, FALSE);
-	return 0;
-}
-
-LRESULT CD2DWWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	OnCommand(CommandEvent(this, wParam, lParam, &bHandled));
-	InvalidateRect(NULL, FALSE);
-	return 0;
-}
-
-void CD2DWWindow::OnFinalMessage(HWND m_hWnd) {}
-
 CD2DWWindow::CD2DWWindow()
 	:CWnd(),CD2DWControl(nullptr),
 	m_pDispatcher(std::make_unique<CDispatcher>(this)),
@@ -81,48 +30,21 @@ CD2DWWindow::CD2DWWindow()
 		.hMenu(nullptr);
 
 	//Add Message
-	AddMsgHandler(WM_CREATE, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
-		{
-			SetFocus();
-			m_pDirect = std::make_shared<CDirect2DWrite>(m_hWnd);
-			m_pMouseMachine = std::make_unique<CMouseStateMachine>(this);
-			::RegisterDragDrop(m_hWnd, m_pDropTargetManager.get());
-			OnCreate(CreateEvt(this, wParam, lParam, &bHandled));
-			InvalidateRect(NULL, FALSE);
-			return 0;
-		});
+	AddMsgHandler(WM_CREATE, &CD2DWWindow::OnCreate, this);
 	AddMsgHandler(WM_CLOSE, &CD2DWWindow::OnClose, this);
+	AddMsgHandler(WM_SIZE, &CD2DWWindow::OnSize, this);
+	AddMsgHandler(WM_PAINT, &CD2DWWindow::OnPaint, this);
+	AddMsgHandler(WM_DISPLAYCHANGE, &CD2DWWindow::OnPaint, this);
 
 	AddMsgHandler(WM_ERASEBKGND, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
 		{
 			bHandled = TRUE;
 			return 1;
 		});
-	AddMsgHandler(WM_SIZE, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
-		{
-			m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
-			OnRect(RectEvent(this, GetDirectPtr()->Pixels2Dips(GetClientRect())));
-			return 0;
-		});
 
-	auto onPaint = [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
-	{
-		CPaintDC dc(m_hWnd);
-		m_pDirect->BeginDraw();
-
-		m_pDirect->ClearSolid(CColorF(1.f, 1.f, 1.f));
-
-		OnPaint(PaintEvent(this, &bHandled));
-
-		m_pDirect->EndDraw();
-		return 0;
-	};
-	AddMsgHandler(WM_PAINT, onPaint);
-	AddMsgHandler(WM_DISPLAYCHANGE, onPaint);
-
-	AddMsgHandler(WM_SETCURSOR, &CD2DWWindow::OnSetCursor, this);
-	AddMsgHandler(WM_SETFOCUS, &CD2DWWindow::OnSetFocus, this);
-	AddMsgHandler(WM_KILLFOCUS, &CD2DWWindow::OnKillFocus, this);
+	AddMsgHandler(WM_SETCURSOR, Normal_Message(&CD2DWWindow::OnSetCursor));
+	AddMsgHandler(WM_SETFOCUS, Normal_Message(&CD2DWWindow::OnSetFocus));
+	AddMsgHandler(WM_KILLFOCUS, Normal_Message(&CD2DWWindow::OnKillFocus));
 
 
 	//UserInput
@@ -150,6 +72,14 @@ CD2DWWindow::CD2DWWindow()
 
 CD2DWWindow::~CD2DWWindow() = default;
 
+CPointF CD2DWWindow::GetCursorPosInWnd() const
+{ 
+	CPoint pt;
+	::GetCursorPos(&pt);
+	::ScreenToClient(m_hWnd, &pt);
+	return GetDirectPtr()->Pixels2Dips(pt);
+}
+
 bool CD2DWWindow::GetIsFocused()const
 {
 	auto hWndAct = ::GetActiveWindow();
@@ -171,6 +101,48 @@ bool CD2DWWindow::GetIsFocused()const
 void CD2DWWindow::Update()
 {
 	GetFocusedControlPtr()->Update();
+}
+
+LRESULT CD2DWWindow::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	SetFocus();
+	m_pDirect = std::make_shared<CDirect2DWrite>(m_hWnd);
+	m_pMouseMachine = std::make_unique<CMouseStateMachine>(this);
+	::RegisterDragDrop(m_hWnd, m_pDropTargetManager.get());
+	OnCreate(CreateEvt(this, wParam, lParam, &bHandled));
+	InvalidateRect(NULL, FALSE);
+	return 0;
+}
+
+LRESULT CD2DWWindow::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
+		::SetForegroundWindow(hWnd);
+	}
+	OnClose(CloseEvent(this, wParam, lParam, &bHandled));
+	::RevokeDragDrop(m_hWnd);
+	DestroyWindow();
+	return 0;
+}
+
+LRESULT CD2DWWindow::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
+	OnRect(RectEvent(this, GetDirectPtr()->Pixels2Dips(GetClientRect())));
+	return 0;
+}
+
+LRESULT CD2DWWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	CPaintDC dc(m_hWnd);
+	m_pDirect->BeginDraw();
+
+	m_pDirect->ClearSolid(CColorF(1.f, 1.f, 1.f));
+
+	OnPaint(PaintEvent(this, &bHandled));
+
+	m_pDirect->EndDraw();
+	return 0;
 }
 
 

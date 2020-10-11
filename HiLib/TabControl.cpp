@@ -42,6 +42,7 @@ CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<Tab
 				//	m_spCurControl->OnClose(CloseEvent(m_spCurControl->GetWndPtr(), 0, 0));
 				//}
 				m_spCurControl = spControl;
+				m_spCurControl->OnSetFocus(SetFocusEvent(GetWndPtr()));
 			}
 		});
 
@@ -61,7 +62,7 @@ CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<Tab
 						auto rect = CRectF(
 							left,
 							rcInWnd.top,
-							left + m_spProp->Padding->left + (std::max)(size.width, minWidth) + m_spProp->Padding->right,
+							left + m_spProp->Padding->left + 16.f + m_spProp->Padding->right + (std::max)(size.width, minWidth) + m_spProp->Padding->right,
 							rcInWnd.top + m_spProp->Padding->top + size.height + m_spProp->Padding->bottom);
 						left += rect.Width();
 						rects.push_back(rect);
@@ -160,10 +161,14 @@ void CTabControl::OnPaint(const PaintEvent& e)
 			GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), headerRc.LeftTop(), CPointF(headerRc.right, headerRc.top));
 			GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(headerRc.right, headerRc.top), CPointF(headerRc.right, headerRc.bottom));
 
-			auto iter = m_itemsHeaderTemplate.find(typeid(*m_itemsSource[i]).name());
-			auto text = iter->second.operator()(m_itemsSource[i]);
+			auto iterIcon = m_itemsHeaderIconTemplate.find(typeid(*m_itemsSource[i]).name());
+			auto iconRc = headerRc; iconRc.DeflateRect(*(m_spProp->Padding)); iconRc.right = iconRc.left + 16.f;
+			GetWndPtr()->GetDirectPtr()->DrawBitmap(iterIcon->second.operator()(m_itemsSource[i]),iconRc);
+
+			auto iterText = m_itemsHeaderTemplate.find(typeid(*m_itemsSource[i]).name());
+			auto text = iterText->second.operator()(m_itemsSource[i]);
 			if (!text.empty()) {
-				CRectF textRc = headerRc; textRc.DeflateRect(*(m_spProp->Padding));
+				CRectF textRc = headerRc; textRc.DeflateRect(*(m_spProp->Padding)); textRc.left = textRc.left + 16.f + m_spProp->Padding->right;
 				GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_spProp->Format), text, textRc);
 			}
 		}
@@ -234,6 +239,10 @@ void CTabControl::OnLButtonBeginDrag(const LButtonBeginDragEvent& e)
 {
 	m_spCurControl->OnLButtonBeginDrag(e);
 }
+void CTabControl::OnLButtonEndDrag(const LButtonEndDragEvent& e) 
+{
+	m_spCurControl->OnLButtonEndDrag(e);
+}
 void CTabControl::OnRButtonDown(const RButtonDownEvent& e)
 {
 	m_spCurControl->OnRButtonDown(e);
@@ -250,7 +259,7 @@ void CTabControl::OnMouseMove(const MouseMoveEvent& e)
 {
 	m_spCurControl->OnMouseMove(e);
 }
-void CTabControl::OnMouseEnter(const MouseEvent& e)
+void CTabControl::OnMouseEnter(const MouseEnterEvent& e)
 {
 	if (GetControlRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
 		m_spCurControl->OnMouseEnter(e);

@@ -41,7 +41,7 @@ void CUIElement::OnMouseMove(const MouseMoveEvent& e)
 	case UIElementState::None:
 	case UIElementState::Normal:
 	case UIElementState::PressedLeave:
-		OnMouseEnter(e);
+		OnMouseEnter(MouseEnterEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
 		break;
 	//Already in element
 	case UIElementState::Hot:
@@ -58,7 +58,7 @@ void CUIElement::OnMouseMove(const MouseMoveEvent& e)
 	//}
 }
 
-void CUIElement::OnMouseEnter(const MouseEvent& e)
+void CUIElement::OnMouseEnter(const MouseEnterEvent& e)
 {
 	if(m_state==UIElementState::PressedLeave && e.Flags==MK_LBUTTON){
 		SetState(UIElementState::Pressed);
