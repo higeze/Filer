@@ -865,19 +865,26 @@ void CGridView::Normal_KeyDown(const KeyDownEvent& e)
 	switch (e.Char) {
 	case VK_HOME:
 		m_pVScroll->SetScrollPos(0);
-		return;
+		(*e.HandledPtr) = true;
+		break;
 	case VK_END:
 		m_pVScroll->SetScrollPos(m_pVScroll->GetScrollRange().second - m_pVScroll->GetScrollPage());
-		return;
+		(*e.HandledPtr) = true;
+		break;
 	case VK_PRIOR: // Page Up
 		m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetScrollPage());
-		return;
+		(*e.HandledPtr) = true;
+		break;
 	case VK_NEXT: // Page Down
 		m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() + m_pVScroll->GetScrollPage());
-		return;
+		(*e.HandledPtr) = true;
+		break;
 	default:
-		CSheet::Normal_KeyDown(e);
+		break;
 	}	
+	if (!(*e.HandledPtr)) {
+		CSheet::Normal_KeyDown(e);
+	}
 }
 
 /***************/
@@ -949,7 +956,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 {
 	if (auto pCell = dynamic_cast<CTextCell*>(e.CellPtr)) {
 
-		CTextBox* pEdit = new CTextBox(
+		SetEditPtr(std::make_shared<CTextBox>(
 			this,
 			pCell,
 			pCell->GetCellPropertyPtr(),
@@ -968,10 +975,8 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 				pCell->GetSheetPtr()->GetGridPtr()->SetEditPtr(nullptr);
 				pCell->SetString(str);
 				pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
-			}
-			);
-		pEdit->OnCreate(CreateEvt(GetWndPtr(), pCell->GetRectInWnd()));
-		SetEditPtr(pEdit);
+			}));
+		GetEditPtr()->OnCreate(CreateEvt(GetWndPtr(), pCell->GetRectInWnd()));
 		PostUpdate(Updates::Invalidate);
 		//SetCapture();
 	}
@@ -983,7 +988,7 @@ void CGridView::Edit_OnExit()
 	ReleaseCapture();
 	if (auto pEdit = GetEditPtr()) {
 		GetEditPtr()->OnClose(CloseEvent(GetWndPtr(), NULL, NULL, nullptr));
-		delete pEdit;
+		SetEditPtr(nullptr);
 	}
 }
 void CGridView::Edit_MouseMove(const MouseMoveEvent& e)
@@ -1093,12 +1098,9 @@ void CGridView::OnFilter()
 
 void CGridView::OnDelayUpdate()
 {
-	SPDLOG_INFO("CGridView::OnDelayUpdate");
-
 	CONSOLETIMER("OnDelayUpdate Total");
-	//TODOHIGH
 	SignalPreDelayUpdate();
-	SignalPreDelayUpdate.disconnect_all_slots();
+	SignalPreDelayUpdate.disconnect_all();
 	PostUpdate(Updates::Filter);
 
 	if (m_keepEnsureVisibleFocusedCell) {
@@ -1180,37 +1182,37 @@ void CGridView::OnContextMenu(const ContextMenuEvent& e)
 	CSheet::OnContextMenu(e);
 	SubmitUpdate();
 }
-
-void CGridView::OnCommand(const CommandEvent& e)
-{
-	switch (e.ID) {
-		case ID_HD_COMMAND_EDITHEADER:
-			OnCommandEditHeader(e);
-			break;
-		case ID_HD_COMMAND_DELETECOLUMN:
-			OnCommandDeleteColumn(e);
-			break;
-		case IDM_SELECTALL:
-			OnCommandSelectAll(e);
-			break;
-		case IDM_DELETE:
-			OnCommandDelete(e);
-			break;
-		case IDM_COPY:
-			OnCommandCopy(e);
-			break;
-		//case IDM_CUT:
-		//	OnCommandCut(e);
-		//	break;
-		case IDM_PASTE:
-			OnCommandPaste(e);
-			break;
-		case IDM_FIND:
-			OnCommandFind(e);
-			break;
-	}
-	SubmitUpdate();
-}
+//
+//void CGridView::OnCommand(const CommandEvent& e)
+//{
+//	switch (e.ID) {
+//		case ID_HD_COMMAND_EDITHEADER:
+//			OnCommandEditHeader(e);
+//			break;
+//		case ID_HD_COMMAND_DELETECOLUMN:
+//			OnCommandDeleteColumn(e);
+//			break;
+//		case IDM_SELECTALL:
+//			OnCommandSelectAll(e);
+//			break;
+//		case IDM_DELETE:
+//			OnCommandDelete(e);
+//			break;
+//		case IDM_COPY:
+//			OnCommandCopy(e);
+//			break;
+//		//case IDM_CUT:
+//		//	OnCommandCut(e);
+//		//	break;
+//		case IDM_PASTE:
+//			OnCommandPaste(e);
+//			break;
+//		case IDM_FIND:
+//			OnCommandFind(e);
+//			break;
+//	}
+//	SubmitUpdate();
+//}
 
 
 

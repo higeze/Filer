@@ -54,11 +54,7 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 extern HWND g_main;
 
 CCheckableFileGrid::CCheckableFileGrid(CD2DWControl* pParentControl, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
-	:CFilerBindGridView(pParentControl, spFilerGridViewProp)
-{
-	//m_cwa
-	//	.dwExStyle(WS_EX_ACCEPTFILES);
-}
+	:CFilerBindGridView(pParentControl, spFilerGridViewProp){}
 
 
 void CCheckableFileGrid::OnCreate(const CreateEvt& e)
@@ -125,40 +121,30 @@ void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)
 
 void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
 {
-	//TODOHIGH
-	//auto pWnd = new CD2DWWindow();
-	//auto pControl = std::make_shared<CFilerGridView>(pWnd, std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
-	////pWnd->SetControlPtr(pControl);
+	auto pFilerWnd = new CD2DWSingleControlWnd<CFilerGridView>(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
 
-	//pWnd->RegisterClassExArgument()
-	//	.lpszClassName(L"CFilerGridViewWnd")
-	//	.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
-	//	.hCursor(::LoadCursor(NULL, IDC_ARROW))
-	//	.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
 
-	//pWnd->CreateWindowExArgument()
-	//	.lpszClassName(_T("CFilerGridViewWnd"))
-	//	.lpszWindowName(spFolder->GetDispName().c_str())
-	//	.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
-	//	.dwExStyle(WS_EX_ACCEPTFILES)
-	//	.hMenu(NULL);
+	pFilerWnd->RegisterClassExArgument()
+		.lpszClassName(L"CFilerGridViewWnd")
+		.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
+		.hCursor(::LoadCursor(NULL, IDC_ARROW))
+		.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
 
-	//pControl->FolderChanged = [pWnd](std::shared_ptr<CShellFolder>& pFolder) {
-	//	pWnd->SetWindowTextW(pFolder->GetDispName().c_str());};
+	pFilerWnd->CreateWindowExArgument()
+		.lpszClassName(_T("CFilerGridViewWnd"))
+		.lpszWindowName(spFolder->GetDispName().c_str())
+		.dwStyle(WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN)
+		.dwExStyle(WS_EX_ACCEPTFILES)
+		.hMenu(NULL);
 
-	//pWnd->SetIsDeleteOnFinalMessage(true);
+	pFilerWnd->GetChildControlPtr()->FolderChanged = [pFilerWnd](std::shared_ptr<CShellFolder>& pFolder) {
+		pFilerWnd->SetWindowTextW(pFolder->GetDispName().c_str());};
+	pFilerWnd->SetIsDeleteOnFinalMessage(true);
 
-	//HWND hWnd = NULL;
-	//if ((GetWndPtr()->GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
-	//	hWnd = GetWndPtr()->m_hWnd;
-	//} else {
-	//	hWnd = GetWndPtr()->GetAncestorByStyle(WS_OVERLAPPEDWINDOW);
-	//}
-
-	//pWnd->CreateOnCenterOfParent(hWnd, CSize(300, 500));
-	//pControl->OpenFolder(spFolder);
-	//pWnd->ShowWindow(SW_SHOW);
-	//pWnd->UpdateWindow();
+	pFilerWnd->CreateOnCenterOfParent(GetWndPtr()->m_hWnd, CSize(300, 500));
+	pFilerWnd->GetChildControlPtr()->OpenFolder(spFolder);
+	pFilerWnd->ShowWindow(SW_SHOW);
+	pFilerWnd->UpdateWindow();
 }
 
 

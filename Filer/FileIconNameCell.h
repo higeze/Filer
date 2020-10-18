@@ -13,7 +13,7 @@ template<typename... TItems>
 class CFileIconNameCellBase :public CTextCell//, public std::enable_shared_from_this<CFileIconNameCellBase<TItems...>>
 {
 protected:
-	mutable boost::signals2::connection m_conDelayUpdateAction;
+	mutable sigslot::connection m_conDelayUpdateAction;
 public:
 	CFileIconNameCellBase(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit){ }
@@ -35,17 +35,14 @@ public:
 		CRectF rcIcon = GetIconSizeF(pDirect);
 		rcIcon.MoveToXY(rcPaint.left, rcPaint.top);
 
-		//TODOHIGH Not thread safe
-		std::weak_ptr<CFileIconNameCellBase> wp(std::dynamic_pointer_cast<CFileIconNameCellBase>(shared_from_this()));
-		std::function<void()> updated = [wp]()->void {
+		std::function<void()> updated = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileIconNameCellBase>(shared_from_this())) ]()->void {
 			if (auto sp = wp.lock()) {
-				auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+				sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
 					[wp]()->void {
 						if (auto sp = wp.lock()) {
 							sp->OnPropertyChanged(L"value");
 						}
 					});
-				sp->m_conDelayUpdateAction = con;
 				sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 			}
 		};

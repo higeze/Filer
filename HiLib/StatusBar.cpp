@@ -17,6 +17,7 @@
 
 	void CStatusBar::OnCreate(const CreateEvt& e)
 	{
+		CD2DWControl::OnCreate(e);
 		if (::PdhOpenQuery(NULL, 0, &m_hQuery) == ERROR_SUCCESS &&
 			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\% Processor Time", 0, &m_hCounterCPU) == ERROR_SUCCESS &&
 			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Private Bytes", 0, &m_hCounterMemory) == ERROR_SUCCESS &&

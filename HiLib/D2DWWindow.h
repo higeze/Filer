@@ -53,11 +53,10 @@ public:
 
 	virtual LRESULT OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	virtual LRESULT OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	virtual LRESULT OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) override;
 	virtual LRESULT OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	virtual LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	void OnFinalMessage(HWND hWnd) override {}
-	
-
 
 	/***************/
 	/* Control Msg */
@@ -66,14 +65,11 @@ public:
 	virtual void OnCreate(const CreateEvt& e) override = 0;
 	//virtual void OnRect(const RectEvent& e)
 	virtual void OnPaint(const PaintEvent& e) { SendAll(&CUIElement::OnPaint, e, false); }
-	virtual void OnClose(const CloseEvent& e) { SendAll(&CUIElement::OnClose, e); }
-	virtual void OnCommand(const CommandEvent& e) 
+	virtual void OnClose(const CloseEvent& e) { SendCopyAll(&CUIElement::OnClose, e); }
+	virtual void OnCommand(const CommandEvent& e)
 	{
 		*(e.HandledPtr) = FALSE;
 		SendFocused(&CUIElement::OnCommand, e);
-		if (!*e.HandledPtr) {
-			CD2DWControl::OnCommand(e);
-		}
 	}
 
 	//virtual void OnLButtonDown(const LButtonDownEvent& e)
@@ -84,7 +80,7 @@ public:
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { SendMouse(&CUIElement::OnLButtonBeginDrag, e); }
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) { SendMouse(&CUIElement::OnLButtonEndDrag, e); }
 
-	virtual void OnRButtonDown(const RButtonDownEvent& e) { SendMouse(&CUIElement::OnRButtonDown, e); }
+	//virtual void OnRButtonDown(const RButtonDownEvent& e);
 
 	virtual void OnMButtonDown(const MouseEvent& e) { SendMouse(&CUIElement::OnMButtonDown, e); }
 	virtual void OnMButtonUp(const MouseEvent& e) { SendMouse(&CUIElement::OnMButtonUp, e); }
@@ -104,10 +100,59 @@ public:
 	virtual void OnMouseLeave(const MouseLeaveEvent& e) { SendFocused(&CUIElement::OnMouseLeave, e); }
 	virtual void OnSetFocus(const SetFocusEvent& e) { SendFocused(&CUIElement::OnSetFocus, e); }
 	virtual void OnKillFocus(const KillFocusEvent& e) { SendFocused(&CUIElement::OnKillFocus, e); }
-	virtual void OnKeyDown(const KeyDownEvent& e) { SendFocused(&CUIElement::OnKeyDown, e); }
+	virtual void OnKeyDown(const KeyDownEvent& e) 
+	{ 
+		*(e.HandledPtr) = FALSE;
+		SendFocused(&CUIElement::OnKeyDown, e);
+	}
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e) { SendFocused(&CUIElement::OnSysKeyDown, e); }
 	virtual void OnChar(const CharEvent& e) { SendFocused(&CUIElement::OnChar, e); }
 
 	virtual void OnPropertyChanged(const wchar_t* name) {}
+};
+
+template<class TControl>
+class CD2DWSingleControlWnd : public CD2DWWindow
+{
+private:
+	std::shared_ptr<TControl> m_spChildControl;
+public:
+	template<typename... TArgs>
+	CD2DWSingleControlWnd(TArgs... args)
+		:CD2DWWindow(), m_spChildControl(std::make_shared<TControl>(this, args...))
+	{
+		//RegisterArgs and CreateArgs
+		RegisterClassExArgument()
+			.lpszClassName(_T("CD2DWSingleControlWindow"))
+			.style(CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS)
+			.hCursor(::LoadCursor(NULL, IDC_ARROW))
+			.hbrBackground(NULL);
+		CreateWindowExArgument()
+			.lpszClassName(_T("CD2DWSingleControlWindow"))
+			.lpszWindowName(_T("D2DWSingleConrrolWindow"))
+			.dwStyle(WS_OVERLAPPEDWINDOW | WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE)
+			.dwExStyle(WS_EX_ACCEPTFILES)
+			.hMenu(nullptr);	
+	}
+
+	std::shared_ptr<TControl> GetChildControlPtr()const { return m_spChildControl; }
+
+	virtual void OnCreate(const CreateEvt& e) override
+	{
+		m_spChildControl->OnCreate(CreateEvt(this, GetRectInWnd()));
+	}
+
+	virtual void OnClose(const CloseEvent& e) override
+	{
+		CD2DWWindow::OnClose(e);
+		DestroyWindow();
+	}
+
+	virtual void OnRect(const RectEvent& e) override
+	{
+		CD2DWWindow::OnRect(e);
+		m_spChildControl->OnRect(RectEvent(this, m_rect));
+	}
+
 };
 

@@ -36,6 +36,8 @@ struct TabControlProperty
 
 struct TabData
 {
+	ReactiveCommand<void> CloseCommand;
+
 	TabData(){}
 	virtual ~TabData() = default;
 

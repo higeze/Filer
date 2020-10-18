@@ -471,6 +471,8 @@ void CTextBox::OnCreate(const CreateEvt& e)
 
 void CTextBox::OnClose(const CloseEvent& e)
 {
+	CD2DWControl::OnClose(e);
+
 	if (!m_isClosing) {
 		m_isClosing = true;
 		if (m_final) { m_final(m_text); }
@@ -1235,18 +1237,10 @@ CTextEditor::CTextEditor(
 		100);
 }
 
-void CTextEditor::OnClose(const CloseEvent& e)
-{
-	//TODOHIGH
-	//if (!GetTextStatus().get()) {
-	//	if (IDYES == GetWndPtr()->MessageBoxW(
-	//		fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(m_path.get().c_str())).c_str(),
-	//		L"Save?",
-	//		MB_YESNO)) {
-	//		Save();
-	//	}
-	//}
-}
+//void CTextEditor::OnClose(const CloseEvent& e)
+//{
+//
+//}
 
 void CTextEditor::OnKeyDown(const KeyDownEvent& e)
 {

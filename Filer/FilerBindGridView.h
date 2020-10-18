@@ -177,20 +177,24 @@ public:
 			case 'X':
 				if (::GetAsyncKeyState(VK_CONTROL)) {
 					CutToClipboard();
+					(*e.HandledPtr) = true;
 				}
 				break;
 			case 'C':
 				if (::GetAsyncKeyState(VK_CONTROL)) {
 					CopyToClipboard();
+					(*e.HandledPtr) = true;
 				}
 				break;
 			case 'V':
 				if (::GetAsyncKeyState(VK_CONTROL)) {
 					PasteFromClipboard();
+					(*e.HandledPtr) = true;
 				}
 				break;
 			case VK_DELETE:
 				DeleteSelectedFiles();
+					(*e.HandledPtr) = true;
 				break;
 			case VK_RETURN:
 				{
@@ -198,13 +202,18 @@ public:
 						if (auto spRow = dynamic_cast<CBindRow<TItems...>*>(m_spCursorer->GetFocusedCell()->GetRowPtr())) {
 							auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 							Open(spFile);
+							(*e.HandledPtr) = true;
 						}
 					}
 				}
 				break;
 			default:
-				CGridView::Normal_KeyDown(e);
+				break;
 		}
+		if (!(*e.HandledPtr)) {
+			CGridView::Normal_KeyDown(e);
+		}
+
 	};
 
 	bool Edit_Guard_KeyDownWithNormal(const KeyDownEvent& e) override

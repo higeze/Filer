@@ -11,7 +11,7 @@ public:
 protected:
 	std::unordered_map<WORD,std::function<void(const CommandEvent&)>> m_commandMap;
 	CD2DWControl* m_pParentControl;
-	std::vector<std::shared_ptr<CD2DWControl>> m_pControls;
+	std::vector<std::shared_ptr<CD2DWControl>> m_childControls;
 	std::shared_ptr<CD2DWControl> m_pFocusedControl;
 	std::shared_ptr<CD2DWControl> m_pCapturedControl;
 	std::shared_ptr<CD2DWControl> m_pMouseControl;
@@ -32,12 +32,14 @@ public:
 	void SetCapturedControlPtr(const std::shared_ptr<CD2DWControl>& spControl){ m_pCapturedControl = spControl; }
 	void ReleaseCapturedControlPtr() { m_pCapturedControl = nullptr; }
 
-	std::vector<std::shared_ptr<CD2DWControl>>& GetControls() { return m_pControls; }
-	void ClearControlPtr() { m_pControls.clear(); }
-	void AddControlPtr(const std::shared_ptr<CD2DWControl>& pControl);
+	std::vector<std::shared_ptr<CD2DWControl>>& GetChildControlPtrs() { return m_childControls; }
+	void AddChildControlPtr(const std::shared_ptr<CD2DWControl>& pControl);
+	void EraseChildControlPtr(const std::shared_ptr<CD2DWControl>& pControl);
 
 	virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnClose(const CloseEvent& e) override;
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
+	virtual void OnRButtonDown(const RButtonDownEvent& e) override;
 	virtual void OnCommand(const CommandEvent& e) override;
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
 	virtual void OnRect(const RectEvent& e) override { m_rect = e.Rect; }
@@ -51,7 +53,17 @@ public:
 	template<typename TFunc, typename TEvent>
 	void SendAll(TFunc f, const TEvent& e, bool invalidate = true)
 	{
-		for (auto& pControl : m_pControls) {
+		for (auto& pControl : m_childControls) {
+			(pControl.get()->*f)(e);
+		}
+		if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
+	}
+
+	template<typename TFunc, typename TEvent>
+	void SendCopyAll(TFunc f, const TEvent& e, bool invalidate = true)
+	{
+		auto controls = m_childControls;
+		for (auto& pControl : controls) {
 			(pControl.get()->*f)(e);
 		}
 		if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
@@ -63,7 +75,7 @@ public:
 		if (GetCapturedControlPtr()) {
 			(GetCapturedControlPtr().get()->*f)(e);
 		} else {
-			for (auto& pControl : m_pControls) {
+			for (auto& pControl : m_childControls) {
 				if (pControl->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
 					(pControl.get()->*f)(e);
 					break;
@@ -77,7 +89,7 @@ public:
 	void SendPtInRect(TFunc f, const TEvent& e)
 	{
 		auto pt = GetWndPtr()->GetDirectPtr()->Pixels2Dips(GetWndPtr()->GetCursorPosInClient());
-		for (auto& pControl : m_pControls) {
+		for (auto& pControl : m_childControls) {
 			if (pControl->GetRectInWnd().PtInRect(pt)) {
 				(pControl.get()->*f)(e);
 				break;
@@ -92,5 +104,21 @@ public:
 		if (m_pFocusedControl) { (m_pFocusedControl.get()->*f)(e); }
 		GetWndPtr()->InvalidateRect(NULL, FALSE);
 	}
+
+	template<typename TFunc, typename TEvent>
+	void SetFocusSendPtInRect(TFunc f, const TEvent& e) 
+	{
+		auto iter = std::find_if(m_childControls.cbegin(), m_childControls.cend(),
+			[&](const std::shared_ptr<CUIElement>& x) {return x->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
+
+		if (iter != m_childControls.cend()) {
+			SetFocusedControlPtr(*iter);
+			(iter->get()->*f)(e);
+		} else {
+
+		}
+		GetWndPtr()->InvalidateRect(NULL, FALSE);
+	}
+
 
 };

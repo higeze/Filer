@@ -16,17 +16,28 @@ CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<Tab
 					break;
 				case NotifyVectorChangedAction::Remove:
 					GetHeaderRects().clear();
-					//todo onclose
-					m_selectedIndex.force_notify_set((std::min)((size_t)e.OldStartingIndex, m_itemsSource.size() -1));
+					for (auto pItem : e.OldItems) {
+						pItem->CloseCommand.Execute();
+					}
+					if (!m_itemsSource.empty()) {
+						m_selectedIndex.force_notify_set((std::min)((size_t)e.OldStartingIndex, m_itemsSource.size() - 1));
+					}
 					break;
 				case NotifyVectorChangedAction::Replace:
 					GetHeaderRects().clear();
-					//todo onclose
+					for (auto pItem : e.OldItems) {
+						pItem->CloseCommand.Execute();
+					}
 					m_selectedIndex.force_notify_set((std::min)((size_t)e.NewStartingIndex, m_itemsSource.size() -1));
 					break;
 				case NotifyVectorChangedAction::Reset:
+					for (auto pItem : e.OldItems) {
+						pItem->CloseCommand.Execute();
+					}
 					GetHeaderRects().clear();
-					m_selectedIndex.force_notify_set((std::min)((size_t)m_selectedIndex.get(), m_itemsSource.size() -1));
+					if (!m_itemsSource.empty()) {
+						m_selectedIndex.force_notify_set((std::min)((size_t)m_selectedIndex.get(), m_itemsSource.size() - 1));
+					}
 					break;
 				default:
 					break;
@@ -194,7 +205,10 @@ void CTabControl::OnPaint(const PaintEvent& e)
 void CTabControl::OnClose(const CloseEvent& e)
 { 
 	CD2DWControl::OnClose(e);
-	m_spCurControl->OnClose(e);//TODOHigh m_itemsSource to be closed
+
+	//m_itemsSource is used for serialization, itemsSource is used for CloseCommand
+	auto itemsSource = m_itemsSource;
+	itemsSource.clear();
 }
 
 void CTabControl::OnRect(const RectEvent& e)

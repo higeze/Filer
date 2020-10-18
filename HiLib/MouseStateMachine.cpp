@@ -109,7 +109,7 @@ struct CMouseStateMachine::Machine
 		::OutputDebugString(L"LButtonDrag_OnEntry\r\n");
 
 		e.WndPtr->SetCapture();
-			auto iter = std::find_if(e.WndPtr->GetControls().cbegin(), e.WndPtr->GetControls().cend(),
+			auto iter = std::find_if(e.WndPtr->GetChildControlPtrs().cbegin(), e.WndPtr->GetChildControlPtrs().cend(),
 		[&](const std::shared_ptr<CD2DWControl>& x) {return x->GetRectInWnd().PtInRect(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
 		e.WndPtr->SetCapturedControlPtr(*iter);
 

@@ -298,7 +298,7 @@ public:
 	//std::wstring m_text;
 
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
-	virtual void OnClose(const CloseEvent& e) override;
+	//virtual void OnClose(const CloseEvent& e) override;
 	//void Invalidate() override;
 
 

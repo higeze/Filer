@@ -101,8 +101,6 @@ void TextTabData::Save(const std::wstring& path)
 	CFile::WriteAllString(path, wstr2str(Text));
 }
 
-
-
 CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_ptr<TabControlProperty> spTabProp, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, std::shared_ptr<TextEditorProperty>& spTextEditorProp)
 	:CTabControl(pParentControl, spTabProp), m_spFilerGridViewProp(spFilerGridViewProp), m_spTextEditorProp(spTextEditorProp)
 {
@@ -228,9 +226,26 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 		//Open
 		m_pOpenBinding.reset(nullptr);
 		m_pOpenBinding.reset(new CBinding<void>(spViewModel->OpenCommand, spView->GetOpenCommand()));
-		//Save
+		//Save()
 		m_pSaveBinding.reset(nullptr);
 		m_pSaveBinding.reset(new CBinding<void>(spViewModel->SaveCommand, spView->GetSaveCommand()));
+		//Close
+		spViewModel->CloseCommand.Dispose();
+		spViewModel->CloseCommand.Subscribe([wp = std::weak_ptr(spViewModel), hWnd = GetWndPtr()->m_hWnd]()
+		{
+			if (auto sp = wp.lock()) {
+				if (sp->Status.get() == TextStatus::Dirty) {
+					if (IDYES == MessageBoxW(
+						hWnd,
+						fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(sp->Path.c_str())).c_str(),
+						L"Save?",
+						MB_YESNO)) {
+						sp->Save();
+					}
+				}
+			}
+		});
+
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
 		if (spViewModel->Status.get() == TextStatus::None) {

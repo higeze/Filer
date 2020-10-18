@@ -9,12 +9,14 @@
 #include "Sheet.h"
 #include "GridView.h"
 #include <fmt/format.h>
+#include <sigslot/signal.hpp>
+
 
 template<typename... TItems>
 class CFileSizeCell:public CTextCell//, public std::enable_shared_from_this<CFileSizeCell<TItems...>>
 {
 private:
-	mutable boost::signals2::connection m_conDelayUpdateAction;
+	mutable sigslot::connection m_conDelayUpdateAction;
 
 public:
 
@@ -91,16 +93,14 @@ public:
 	{
 		try {
 			auto spFile = GetShellFile();
-			std::weak_ptr<CFileSizeCell<TItems...>> wp(std::dynamic_pointer_cast<CFileSizeCell<TItems...>>(shared_from_this()));
-			auto changed = [wp]()->void {
+			auto changed = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileSizeCell<TItems...>>(shared_from_this()))]()->void {
 				if (auto sp = wp.lock()) {
-					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
 						[wp]()->void {
 							if (auto sp = wp.lock()) {
 								sp->OnPropertyChanged(L"value");
 							}
 						});
-					sp->m_conDelayUpdateAction = con;
 					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 				}
 			};

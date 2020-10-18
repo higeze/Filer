@@ -4,12 +4,14 @@
 #include "Direct2DWrite.h"
 #include "FileIconCache.h"
 #include "ShellFile.h"
+#include <sigslot/signal.hpp>
+
 
 template<typename... TItems>
 class CFileIconCell:public CCell//, public std::enable_shared_from_this<CFileIconCell<TItems...>>
 {
 protected:
-	mutable boost::signals2::connection m_conDelayUpdateAction;
+	mutable sigslot::connection m_conDelayUpdateAction;
 public:
 	using CCell::CCell;
 	virtual ~CFileIconCell() = default;
@@ -24,16 +26,14 @@ public:
 			rc.bottom = rc.top + pDirect->Pixels2DipsY(16);
 			rc.right = rc.left + pDirect->Pixels2DipsX(16);
 
-			std::weak_ptr<CFileIconCell> wp(std::dynamic_pointer_cast<CFileIconCell>(shared_from_this()));
-			std::function<void()> updated = [wp]()->void {
+			std::function<void()> updated = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileIconCell>(shared_from_this()))]()->void {
 				if (auto sp = wp.lock()) {
-					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
 						[wp]()->void {
 							if (auto sp = wp.lock()) {
 								sp->OnPropertyChanged(L"value");
 							}
 						});
-					sp->m_conDelayUpdateAction = con;
 					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 				}
 			};

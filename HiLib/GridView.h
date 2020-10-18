@@ -7,6 +7,7 @@
 #include <queue>
 #include "DeadlineTimer.h"
 #include <boost/sml.hpp>
+#include <sigslot/signal.hpp>
 
 namespace sml = boost::sml;
 
@@ -29,7 +30,7 @@ public:
 
 	static CMenu ContextMenu;
 protected:
-	CTextBox* m_pEdit = nullptr;
+	std::shared_ptr<CTextBox> m_pEdit = nullptr;
 	bool m_isFocusable = true;
 	CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
@@ -39,7 +40,7 @@ protected:
 	std::shared_ptr<GridViewProperty> m_spGridViewProp;
 public:
 
-	boost::signals2::signal<void()> SignalPreDelayUpdate;
+	sigslot::signal<> SignalPreDelayUpdate;
 	void DelayUpdate();
 
 public:
@@ -55,8 +56,8 @@ public:
 	std::shared_ptr<GridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	//CRectF GetUpdateRect()const { return m_rcUpdateRect; }
 	//void SetUpdateRect(CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
-	CTextBox* GetEditPtr() { return m_pEdit; }
-	void SetEditPtr(CTextBox* pEdit) { m_pEdit = pEdit; }
+	std::shared_ptr<CTextBox> GetEditPtr() { return m_pEdit; }
+	void SetEditPtr(std::shared_ptr<CTextBox> pEdit) { m_pEdit = pEdit; }
 
 protected:
 	virtual void OnCellLButtonClk(CellEventArgs& e) {}
@@ -98,7 +99,7 @@ public:
 	virtual void OnKillFocus(const KillFocusEvent& e);
 	virtual void OnSetCursor(const SetCursorEvent& e);
 	virtual void OnContextMenu(const ContextMenuEvent& e);
-	virtual void OnCommand(const CommandEvent& e);
+	//virtual void OnCommand(const CommandEvent& e);
 
 public:
 	void BeginEdit(CCell* pCell);

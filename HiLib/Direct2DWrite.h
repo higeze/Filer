@@ -296,6 +296,8 @@ namespace std
 	{
 		CColorF Color;
 		bool IsBold;
+		SyntaxFormatF()
+			:Color(), IsBold(false){}
 		SyntaxFormatF(const CColorF& color, bool isBold)
 			:Color(color), IsBold(isBold){}
 

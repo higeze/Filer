@@ -23,7 +23,7 @@ CD2DWWindow::CD2DWWindow()
 		.hCursor(::LoadCursor(NULL, IDC_ARROW))
 		.hbrBackground(NULL);
 	CreateWindowExArgument()
-		.lpszClassName(_T("CD2DWWIndow"))
+		.lpszClassName(_T("CD2DWWindow"))
 		.lpszWindowName(_T("D2DWWindow"))
 		.dwStyle(WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE)
 		.dwExStyle(WS_EX_ACCEPTFILES)
@@ -49,14 +49,23 @@ CD2DWWindow::CD2DWWindow()
 
 	//UserInput
 	AddMsgHandler(WM_LBUTTONDOWN, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT
-		{
-			SetFocus();
-			return UserInputMachine_Message<LButtonDownEvent>(msg, wParam, lParam, bHandled);
-		});
+	{
+		SetFocus();
+		return UserInputMachine_Message<LButtonDownEvent>(msg, wParam, lParam, bHandled);
+	});
 	AddMsgHandler(WM_LBUTTONUP, &CD2DWWindow::UserInputMachine_Message<LButtonUpEvent>, this);
-	AddMsgHandler(WM_LBUTTONDBLCLK, &CD2DWWindow::UserInputMachine_Message<LButtonDblClkEvent>, this);
+	//AddMsgHandler(WM_LBUTTONDBLCLK, &CD2DWWindow::UserInputMachine_Message<LButtonDblClkEvent>, this);
+	AddMsgHandler(WM_LBUTTONDBLCLK, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT
+	{
+		return UserInputMachine_Message<LButtonDblClkEvent>(msg, wParam, lParam, bHandled);
+	});
+
 	AddMsgHandler(RegisterWindowMessage(L"WM_LBUTTONDBLCLKTIMEXCEED"), &CD2DWWindow::UserInputMachine_Message<LButtonDblClkTimeExceedEvent>, this);
-	AddMsgHandler(WM_RBUTTONDOWN, &CD2DWWindow::UserInputMachine_Message<RButtonDownEvent>, this);
+	AddMsgHandler(WM_RBUTTONDOWN, [this](UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT
+	{
+		SetFocus();
+		return UserInputMachine_Message<RButtonDownEvent>(msg, wParam, lParam, bHandled);
+	});
 	AddMsgHandler(WM_CONTEXTMENU, &CD2DWWindow::UserInputMachine_Message<ContextMenuEvent>, this);
 
 	AddMsgHandler(WM_MOUSEMOVE, &CD2DWWindow::UserInputMachine_Message<MouseMoveEvent>, this);
@@ -124,6 +133,13 @@ LRESULT CD2DWWindow::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 	DestroyWindow();
 	return 0;
 }
+
+LRESULT CD2DWWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	OnCommand(CommandEvent(this, wParam, lParam, &bHandled));
+	return 0;
+}
+
 
 LRESULT CD2DWWindow::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {

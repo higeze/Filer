@@ -63,7 +63,7 @@ public:
 	{
 		m_rca
 			.lpszClassName(L"CFileOperationWnd")
-			.style(CS_VREDRAW | CS_HREDRAW)
+			.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
 			.hCursor(::LoadCursor(NULL, IDC_ARROW))
 			.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
 

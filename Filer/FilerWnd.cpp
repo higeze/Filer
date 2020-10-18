@@ -98,10 +98,13 @@ CFilerWnd::CFilerWnd()
 	auto setUpFavoritesView = [this](std::shared_ptr<CFavoritesGridView>& spFavoritesGridView, std::weak_ptr<CFilerTabGridView>& wpView, unsigned short id)->void {
 		spFavoritesGridView->FileChosen = [wpView](std::shared_ptr<CShellFile>& spFile)->void {
 			if (auto spView = wpView.lock()) {
-				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {//Open Filer
 					auto& itemsSource = spView->GetItemsSource();
 					itemsSource.replace(itemsSource.begin() + spView->GetSelectedIndex(), std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
-				} else {
+				} else if (boost::iequals(spFile->GetPathExt(), L".txt")) {//Open Text
+					auto& itemsSource = spView->GetItemsSource();
+					itemsSource.replace(itemsSource.begin() + spView->GetSelectedIndex(), std::make_shared<TextTabData>(spFile->GetPath()));
+				} else {//Open File
 					spFile->Open();
 				}
 			}
@@ -353,14 +356,6 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 	*(e.HandledPtr) = FALSE;
 	switch (e.Char)
 	{
-	//TODOHIGH this conflict with Text save
-	//case 'S':
-	//	{
-	//		if (::GetAsyncKeyState(VK_CONTROL)) {
-	//			OnCommandSave(CommandEvent(this, 0, 0, e.HandledPtr));
-	//		}
-	//	}
-	//	break;
 	case VK_F4:
 		{
 			if (::GetAsyncKeyState(VK_MENU)) {
@@ -396,16 +391,15 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 		break;
 	case VK_F9:
 		{
-		//TODOHIGH
-			//std::shared_ptr<CFilerTabGridView> spOtherView = m_spCurWnd == m_spLeftWnd ? m_spRightWnd : m_spLeftWnd;
-			//if (auto spCurFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(m_spCurWnd->GetContentWnd()->GetControlPtr())) {
-			//	if (auto spOtherFilerGridView = std::dynamic_pointer_cast<CFilerGridView>(spOtherView->GetContentWnd()->GetControlPtr())) {
-			//		int okcancel = ::MessageBox(spCurFilerGridView->GetWndPtr()->m_hWnd, L"Incremental Copy?", L"Incremental Copy?", MB_OKCANCEL);
-			//		if (okcancel == IDOK) {
-			//			spCurFilerGridView->CopyIncrementalSelectedFilesTo(spOtherFilerGridView->GetFolder()->GetAbsoluteIdl());
-			//		}
-			//	}
-			//}
+			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
+				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
+					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
+					if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spOtherTab->GetCurrentControlPtr())) {
+						spCurFilerGrid->CopyIncrementalSelectedFilesTo(spOtherFilerGrid->GetFolder()->GetAbsoluteIdl());
+						*(e.HandledPtr) = TRUE;
+					}
+				}
+			}
 		}
 		break;
 	default:

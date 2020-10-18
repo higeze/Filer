@@ -5,13 +5,14 @@
 #include "ShellFile.h"
 #include "ShellFolder.h"
 #include "CellProperty.h"
+#include <sigslot/signal.hpp>
 
 template<typename... TItems>
 class CFileLastWriteCell:public CTextCell//, public std::enable_shared_from_this<CFileLastWriteCell<TItems...>>
 {
 private:
-	mutable boost::signals2::connection m_conDelayUpdateAction;
-	mutable boost::signals2::connection m_conLastWriteChanged;
+	mutable sigslot::connection m_conDelayUpdateAction;
+	mutable sigslot::connection m_conLastWriteChanged;
 
 public:
 	CFileLastWriteCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
@@ -32,13 +33,12 @@ public:
 			std::weak_ptr<CFileLastWriteCell<TItems...>> wp(std::dynamic_pointer_cast<CFileLastWriteCell<TItems...>>(shared_from_this()));
 			auto changed = [wp]()->void {
 				if (auto sp = wp.lock()) {
-					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
 						[wp]()->void {
 							if (auto sp = wp.lock()) {
 								sp->OnPropertyChanged(L"value");
 							}
 						});
-					sp->m_conDelayUpdateAction = con;
 					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 				}
 			};

@@ -83,6 +83,7 @@ class IReactiveCommand<void>
 public:
 	virtual sigslot::connection Subscribe(std::function<void(void)> next, sigslot::group_id id = 0) = 0;
 	virtual void Execute(void) = 0;
+	virtual void Dispose(void) = 0;
 };
 
 
@@ -185,6 +186,11 @@ public:
 	void Execute(void) override
 	{
 		m_pSubject->OnNext();
+	}
+
+	void Dispose()
+	{
+		m_pSubject = std::make_shared<Subject<void>>();
 	}
 };
 

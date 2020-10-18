@@ -117,6 +117,7 @@ struct TextTabData :public TabData
 	{
 		OpenCommand.Subscribe([this]() { Open(); });
 		SaveCommand.Subscribe([this]() { Save(); });
+		//CloseCommand.Subscribe([this]() { Close(); });
 		Text.Subscribe([this](const auto&)
 		{
 			Status.set(TextStatus::Dirty);
@@ -162,6 +163,7 @@ private:
 
 	std::unique_ptr<sigslot::scoped_connection> m_pPathConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pStatusConnection;
+	std::unique_ptr<sigslot::scoped_connection> m_pCloseConnection;
 
 
 

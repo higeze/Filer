@@ -127,9 +127,12 @@ struct SyntaxAppearance
 	std::wstring Regex;
 	//std::regex Re;
 	SyntaxFormatF SyntaxFormat;
-
+	SyntaxAppearance()
+		:Regex(), SyntaxFormat(){}
 	SyntaxAppearance(const std::wstring& regex, const SyntaxFormatF& syntaxformat)
 		:Regex(regex), SyntaxFormat(syntaxformat){}
+
+	auto operator<=>(const SyntaxAppearance&) const = default;
 
 	template <class Archive>
 	void save(Archive& ar)
@@ -149,20 +152,20 @@ struct SyntaxAppearance
 
 struct TextEditorProperty :public TextboxProperty
 {
-	//ReactiveVectorProperty<std::tuple<SyntaxAppearance>> SyntaxAppearances;
+	ReactiveVectorProperty<std::tuple<SyntaxAppearance>> SyntaxAppearances;
 	TextEditorProperty():TextboxProperty()
 	{
-		//SyntaxAppearances.push_back(
-		//	std::make_tuple(
-		//	SyntaxAppearance(L"/\\*.*?\\*/",
-		//	SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false))));
+		SyntaxAppearances.push_back(
+			std::make_tuple(
+			SyntaxAppearance(L"/\\*.*?\\*/",
+			SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false))));
 	}
 
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
 		TextboxProperty::serialize(ar);
-		//TODOHIGHar("SyntaxAppearances", SyntaxAppearances);
+		ar("SyntaxAppearances", SyntaxAppearances);
 	}
 };
 
