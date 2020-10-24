@@ -115,8 +115,8 @@ struct MouseEvent:public Event
 {
 	UINT Flags;
 	CPoint PointInClient;
-	MouseEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:Event(pWnd, pHandled), Flags(wParam), PointInClient((short)LOWORD(lParam), (short)HIWORD(lParam)){}
+	CPointF PointInWnd;//Since member variable initialized in order of declarelation, order should be PointInCliend->PointInWnd
+	MouseEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
 	virtual ~MouseEvent(){}
 };
 

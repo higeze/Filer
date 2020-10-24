@@ -324,7 +324,7 @@ void CTabControl::OnSetCursor(const SetCursorEvent& e)
 }
 void CTabControl::OnKillFocus(const KillFocusEvent& e)
 {
-	m_spCurControl->OnKillFocus(e);
+	if(m_spCurControl)m_spCurControl->OnKillFocus(e);
 }
 
 

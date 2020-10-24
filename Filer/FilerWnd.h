@@ -11,8 +11,10 @@
 #include "CellProperty.h"
 #include "PropertyWnd.h"
 #include "StatusBar.h"
+#include "Splitter.h"
 #include "FilerGridViewProperty.h"
 #include "D2DWWindow.h"
+#include "ReactiveProperty.h"
 //#include "KonamiCommander.h"
 
 class CFilerGridView;
@@ -93,8 +95,8 @@ class CFilerWnd:public CD2DWWindow
 private:
 	CRect m_rcWnd;
 	CRect m_rcPropWnd;
-	const int kSplitterWidth = 5;
-	FLOAT m_splitterLeft;
+	ReactiveProperty<FLOAT> m_splitterLeft;
+
 	bool m_isSizing = false;
 	CPoint m_ptBeginClient;
 
@@ -105,6 +107,7 @@ private:
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
 	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
 	std::shared_ptr<TabControlProperty> m_spTabControlProp;
+	std::shared_ptr<SplitterProperty> m_spSplitterProp;
 
 
 	//Controls
@@ -114,12 +117,13 @@ private:
 	std::shared_ptr<CFavoritesGridView> m_spLeftFavoritesView;
 	std::shared_ptr<CFavoritesGridView> m_spRightFavoritesView;
 	std::shared_ptr<CStatusBar> m_spStatusBar;
-	CRectF m_splitterRect;
+	std::shared_ptr<CHorizontalSplitter> m_spSplitter;
 
 	//Property
 	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
 	
 	//CKonamiCommander m_konamiCommander;
+	std::unique_ptr<CBinding<FLOAT>> m_pSplitterBinding;
 
 public:
 	//Constructor
@@ -223,7 +227,7 @@ public:
 		ar("ExeExtensionProperty", m_spExeExProp);
 		ar("LeftView", m_spLeftView);
 		ar("RightView", m_spRightView);
-
+		ar("HorizontalSplitter", m_spSplitter);
 		ar("LeftFavoritesView", m_spLeftFavoritesView);
 		ar("RightFavoritesView", m_spRightFavoritesView);
 #ifdef USE_PYTHON_EXTENSION
@@ -246,9 +250,10 @@ public:
 		ar("TextEditorProperty", m_spTextEditorProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
+		ar("SplitterProperty", m_spSplitterProp);
 		ar("LeftView", m_spLeftView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp);
 		ar("RightView", m_spRightView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp);
-
+		ar("HorizontalSplitter", m_spSplitter, this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp);
 		ar("LeftFavoritesView", m_spLeftFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
 		ar("RightFavoritesView", m_spRightFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
 #ifdef USE_PYTHON_EXTENSION

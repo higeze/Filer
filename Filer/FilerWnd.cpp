@@ -49,16 +49,20 @@ CFilerWnd::CFilerWnd()
 	m_spTabControlProp(std::make_shared<TabControlProperty>()),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
+	m_spSplitterProp(std::make_shared<SplitterProperty>()),
 	m_spLeftView(std::make_shared<CFilerTabGridView>(this, std::make_shared<TabControlProperty>(), m_spFilerGridViewProp, m_spTextEditorProp)),
 	m_spRightView(std::make_shared<CFilerTabGridView>(this, std::make_shared<TabControlProperty>(), m_spFilerGridViewProp, m_spTextEditorProp)),
+	m_spSplitter(std::make_shared<CHorizontalSplitter>(this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp)),
 	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spStatusBar(std::make_shared<CStatusBar>(this, std::make_shared<StatusBarProperty>())),
-	m_spCurView(m_spLeftView)
+	m_spCurView(m_spLeftView),
+	m_pSplitterBinding(std::make_unique<CBinding<FLOAT>>(m_splitterLeft, m_spSplitter->GetSplitterLeft()))
 #ifdef USE_PYTHON_EXTENSION
 	,m_spPyExProp(std::make_shared<CPythonExtensionProperty>())
 #endif
 {
+
 	m_rca
 	.lpszClassName(L"CFilerWnd")
 	.style(CS_VREDRAW | CS_HREDRAW |CS_DBLCLKS)
@@ -325,7 +329,6 @@ void CFilerWnd::OnPaint(const PaintEvent& e)
 {
 	GetDirectPtr()->FillSolidRectangle(CColorF(1.f, 1.f, 1.f), GetRectInWnd());
 	CD2DWWindow::OnPaint(e);
-	GetDirectPtr()->FillSolidRectangle(CColorF(1.f, 1.f, 1.f), m_splitterRect);
 }
 
 void CFilerWnd::OnCreate(const CreateEvt& e)
@@ -343,7 +346,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 
 	m_spLeftFavoritesView->OnCreate(CreateEvt(this, rcLeftFav));
 	m_spLeftView->OnCreate(CreateEvt(this, rcLeftTab));
-	m_splitterRect = rcSplitter;
+	m_spSplitter->OnCreate(CreateEvt(this, rcSplitter));
 	m_spRightFavoritesView->OnCreate(CreateEvt(this, rcRightFav));
 	m_spRightView->OnCreate(CreateEvt(this, rcRightTab));
 	m_spStatusBar->OnCreate(CreateEvt(this, rcStatus));
@@ -429,52 +432,17 @@ LRESULT CFilerWnd::OnDestroy(UINT uMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandle
 
 void CFilerWnd::OnLButtonDown(const LButtonDownEvent& e)
 {
-	CRect leftRc(GetDirectPtr()->Dips2Pixels(m_spLeftView->GetRectInWnd()));
-
-	m_isSizing = (e.PointInClient.x >= (leftRc.right)) &&
-		(e.PointInClient.x <= (leftRc.right + kSplitterWidth));
-
-	if (m_isSizing)
-	{
-		m_ptBeginClient = e.PointInClient;
-		SetCapture();
-		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
-	} else {
-		CD2DWWindow::OnLButtonDown(e);
-	}
+	CD2DWWindow::OnLButtonDown(e);
 }
 
 void CFilerWnd::OnLButtonUp(const LButtonUpEvent& e) 
 {
-	if (m_isSizing)
-	{
-		m_ptBeginClient.SetPoint(0, 0);
-		m_isSizing = false;
-		ReleaseCapture();
-		OnRect(RectEvent(this, GetRectInWnd()));
-	} else {
-		CD2DWWindow::OnLButtonUp(e);
-	}
+	CD2DWWindow::OnLButtonUp(e);
 }
 
 void CFilerWnd::OnMouseMove(const MouseMoveEvent& e)
 {
-	CRect leftRc(GetDirectPtr()->Dips2Pixels(m_spLeftView->GetRectInWnd()));
-
-	if ((e.PointInClient.x >= (leftRc.right)) &&
-		(e.PointInClient.x <= (leftRc.right + kSplitterWidth)))
-	{
-		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
-	}
-
-	if (m_isSizing && e.Flags == MK_LBUTTON)
-	{
-		m_splitterLeft += e.PointInClient.x - m_ptBeginClient.x;
-		m_ptBeginClient = e.PointInClient;
-		OnRect(RectEvent(this, GetRectInWnd()));
-	} else {
-		CD2DWWindow::OnMouseMove(e);
-	}
+	CD2DWWindow::OnMouseMove(e);
 	//m_konamiCommander.OnMouseMove(uMsg, wParam, lParam, bHandled);
 }
 
@@ -497,10 +465,10 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
 		rcClient.left, rcClient.top,
 		rcClient.left + favoriteWidth, rcClient.bottom - statusHeight);
 
-	if (m_splitterLeft == 0) {//Initial = No serialize
+	if (m_splitterLeft.get() == 0) {//Initial = No serialize
 
 		if (rcClient.Width() >= 800) {
-			FLOAT viewWidth = (rcClient.Width() - 2 * favoriteWidth - kSplitterWidth) / 2;
+			FLOAT viewWidth = (rcClient.Width() - 2 * favoriteWidth - m_spSplitterProp->Width) / 2;
 			rcLeftGrid.SetRect(
 				rcClient.left + favoriteWidth,
 				rcClient.top,
@@ -508,41 +476,41 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
 				rcClient.bottom - statusHeight);
 
 			rcRightFavorites.SetRect(
-				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth,
+				rcClient.left + favoriteWidth + viewWidth + m_spSplitterProp->Width,
 				rcClient.top,
-				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth + favoriteWidth,
+				rcClient.left + favoriteWidth + viewWidth + m_spSplitterProp->Width + favoriteWidth,
 				rcClient.bottom - statusHeight);
 
 			rcRightGrid.SetRect(
-				rcClient.left + favoriteWidth + viewWidth + kSplitterWidth + favoriteWidth,
+				rcClient.left + favoriteWidth + viewWidth + m_spSplitterProp->Width + favoriteWidth,
 				rcClient.top,
 				rcClient.right,
 				rcClient.bottom - statusHeight);
-			m_splitterLeft = favoriteWidth + viewWidth;
+			m_splitterLeft.set(favoriteWidth + viewWidth);
 		} else {
 			rcLeftGrid.SetRect(
 				rcClient.left + favoriteWidth,
 				rcClient.top,
 				rcClient.right,
 				rcClient.bottom - statusHeight);
-			m_splitterLeft = rcClient.right;
+			m_splitterLeft.set(rcClient.right);
 		}
 	} else {
-		if (rcClient.Width() >= m_splitterLeft + kSplitterWidth) {
+		if (rcClient.Width() >= m_splitterLeft.get() + m_spSplitterProp->Width) {
 			rcLeftGrid.SetRect(
 				rcClient.left + favoriteWidth,
 				rcClient.top,
-				m_splitterLeft,
+				m_splitterLeft.get(),
 				rcClient.bottom - statusHeight);
 
 			rcRightFavorites.SetRect(
-				m_splitterLeft + kSplitterWidth,
+				m_splitterLeft.get() + m_spSplitterProp->Width,
 				rcClient.top,
-				m_splitterLeft + kSplitterWidth + favoriteWidth,
+				m_splitterLeft.get() + m_spSplitterProp->Width + favoriteWidth,
 				rcClient.bottom - statusHeight);
 
 			rcRightGrid.SetRect(
-				m_splitterLeft + kSplitterWidth + favoriteWidth,
+				m_splitterLeft.get() + m_spSplitterProp->Width + favoriteWidth,
 				rcClient.top,
 				rcClient.right,// - (m_splitterLeft + kSplitterWidth + favoriteWidth), 
 				rcClient.bottom - statusHeight);
@@ -560,7 +528,7 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
 
 
 	return {
-		rcLeftFavorites, rcLeftGrid, CRectF(m_splitterLeft, rcClient.top, m_splitterLeft + kSplitterWidth, rcClient.bottom),
+		rcLeftFavorites, rcLeftGrid, CRectF(m_splitterLeft.get(), rcClient.top, m_splitterLeft.get() + m_spSplitterProp->Width, rcClient.bottom),
 		rcRightFavorites, rcRightGrid, rcStatusBar
 	};
 
@@ -575,9 +543,9 @@ void CFilerWnd::OnRect(const RectEvent& e)
 	m_spLeftFavoritesView->OnRect(RectEvent(this, rcLeftFav));
 	m_spRightFavoritesView->OnRect(RectEvent(this, rcRightFav));
 	m_spStatusBar->OnRect(RectEvent(this, rcStatus));
+	m_spSplitter->OnRect(RectEvent(this, rcSplitter));
 	m_spLeftView->OnRect(RectEvent(this, rcLeftTab));
 	m_spRightView->OnRect(RectEvent(this, rcRightTab));
-	m_splitterRect = rcSplitter;
 }
 
 //void CFilerWnd::OnSetFocus(const SetFocusEvent& e)

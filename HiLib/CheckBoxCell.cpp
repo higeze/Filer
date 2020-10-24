@@ -17,7 +17,7 @@ void CCheckBoxCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 		case CheckBoxState::True:
 		{
 			CComPtr<ID2D1PathGeometry> pPathGeo;
-			pDirect->GetD2D1Factory()->CreatePathGeometry(&pPathGeo);
+			pDirect->GetD2DFactory()->CreatePathGeometry(&pPathGeo);
 			CComPtr<ID2D1GeometrySink> pGeoSink;
 			pPathGeo->Open(&pGeoSink);
 			CPointF lt = rcPaint.LeftTop();

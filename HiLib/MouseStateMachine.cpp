@@ -107,11 +107,13 @@ struct CMouseStateMachine::Machine
 	void LButtonDrag_OnEntry(CD2DWWindow* pGrid, const MouseMoveEvent& e)
 	{
 		::OutputDebugString(L"LButtonDrag_OnEntry\r\n");
-
 		e.WndPtr->SetCapture();
-			auto iter = std::find_if(e.WndPtr->GetChildControlPtrs().cbegin(), e.WndPtr->GetChildControlPtrs().cend(),
-		[&](const std::shared_ptr<CD2DWControl>& x) {return x->GetRectInWnd().PtInRect(e.WndPtr->GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
-		e.WndPtr->SetCapturedControlPtr(*iter);
+
+		auto iter = std::find_if(e.WndPtr->GetChildControlPtrs().cbegin(), e.WndPtr->GetChildControlPtrs().cend(),
+		[&](const std::shared_ptr<CD2DWControl>& x) {return x->GetRectInWnd().PtInRect(e.WndPtr->GetDirectPtr()->Pixels2Dips(m_ptBeginClient.value())); });
+		if (iter != e.WndPtr->GetChildControlPtrs().cend()) {
+			e.WndPtr->SetCapturedControlPtr(*iter);
+		}
 
 		pGrid->OnLButtonBeginDrag(LButtonBeginDragEvent(e.WndPtr, e.Flags, MAKELPARAM(m_ptBeginClient.value().x, m_ptBeginClient.value().y)));
 		m_ptBeginClient = std::nullopt;
@@ -120,10 +122,9 @@ struct CMouseStateMachine::Machine
 	void LButtonDrag_OnExit(CD2DWWindow* pGrid, const LButtonUpEvent& e)
 	{
 		::OutputDebugString(L"LButtonDrag_OnExit\r\n");
+		::ReleaseCapture();
 
 		pGrid->OnLButtonEndDrag(LButtonEndDragEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
-
-		::ReleaseCapture();
 		pGrid->ReleaseCapturedControlPtr();
 	}
 

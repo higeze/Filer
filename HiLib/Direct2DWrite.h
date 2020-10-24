@@ -5,6 +5,9 @@
 #pragma comment (lib, "D2d1.lib")
 #include <dwrite_1.h>
 #pragma comment (lib, "dwrite.lib")
+#include <d3d11_1.h>
+#pragma comment (lib, "d3d11.lib")
+
 #include <wincodec.h>
 //#include <wrl/client.h>
 //using namespace Microsoft::WRL;
@@ -353,11 +356,23 @@ namespace std
 	{
 	private:
 		HWND m_hWnd;
-		CComPtr<ID2D1Factory1> m_pD2D1Factory = NULL;
-		CComPtr<IDWriteFactory1> m_pDWriteFactory = NULL;
+		//CComPtr<ID2D1DeviceContext> m_pD2DDeviceContext = nullptr;
 
-		CComPtr<ID2D1HwndRenderTarget> m_pHwndRenderTarget = NULL;
-		CComPtr<IWICImagingFactory> m_pWICImagingFactory = NULL;
+		// Direct3D
+		//CComPtr<ID3D11Device1> m_pD3DDevice = nullptr; 
+		//CComPtr<ID3D11DeviceContext1> m_pD3DContext = nullptr;
+		// Direct2D
+		//CComPtr<ID2D1Device> m_pD2DDevice = nullptr;
+		//CComPtr<IDXGIDevice> m_pDXGIDevice;
+
+		//CComPtr<IDXGISwapChain1> m_pDXGISwapChain = nullptr;
+		//CComPtr<ID2D1Bitmap1> m_pD2DBackBuffer = nullptr;
+		//CComPtr<ID2D1Factory1> m_pD2DFactory = nullptr;
+		//CComPtr<IDWriteFactory1> m_pDWriteFactory = nullptr;
+		//CComPtr<IWICImagingFactory2> m_pWICImagingFactory = nullptr;
+
+
+		//CComPtr<ID2D1HwndRenderTarget> m_pHwndRenderTarget = NULL;
 		//CComPtr<IWICFormatConverter> m_pWICFormatConverter = NULL;
 
 
@@ -380,12 +395,25 @@ namespace std
 
 		std::unique_ptr<CFileIconCache>& GetIconCachePtr() { return m_pIconCache; }
 
-		CComPtr<ID2D1Factory1>& GetD2D1Factory();
-		CComPtr<IDWriteFactory1>& GetDWriteFactory();
-		CComPtr<IWICImagingFactory>& GetWICImagingFactory();
+		//CComPtr<ID2D1Factory1>& GetD2D1Factory();
+		std::function<CComPtr<ID2D1Device>& ()> GetD2DDevice;
+		std::function<CComPtr<ID2D1DeviceContext>& ()> GetD2DDeviceContext;
+		std::function<std::tuple<CComPtr<ID3D11Device1>&, CComPtr<ID3D11DeviceContext1>&>()> GetD3DDevices;
+		std::function<CComPtr<IDXGIDevice>& ()> GetDXGIDevice;
+		std::function<CComPtr<IDXGIAdapter>& ()> GetDXGIAdapter;
+		std::function<CComPtr<IDXGIFactory2>&()> GetDXGIFactory;
+		
+		std::function<CComPtr<IDXGISwapChain1>&()> GetDXGISwapChain;
+		std::function<CComPtr<ID2D1Bitmap1>&()> GetD2DBackBuffer;
+
+		std::function<CComPtr<ID2D1Factory1>&()> GetD2DFactory;
+		std::function<CComPtr<IDWriteFactory1>&()> GetDWriteFactory;
+		std::function<CComPtr<IWICImagingFactory2>&()> GetWICImagingFactory;
+		//CComPtr<IDWriteFactory1>& GetDWriteFactory();
+		//CComPtr<IWICImagingFactory2>& GetWICImagingFactory();
 		//CComPtr<IWICFormatConverter>& GetWICFormatConverter();
 
-		CComPtr<ID2D1HwndRenderTarget>& GetHwndRenderTarget();
+		CComPtr<ID2D1DeviceContext>& GetHwndRenderTarget();
 		void BeginDraw();
 		CComPtr<ID2D1SolidColorBrush>& GetColorBrush(const CColorF& color);
 		CComPtr<IDWriteTextFormat>& GetTextFormat(const FormatF& fca);
@@ -393,6 +421,7 @@ namespace std
 		FLOAT GetVirtualHeight(const FormatF& format);
 		void ClearTextLayoutMap() { m_textLayoutMap.clear(); }
 		void ClearSolid(const SolidFill& fill);
+		void Resize();
 		void EndDraw();
 
 		void DrawSolidLine(const SolidLine& line, const D2D1_POINT_2F& p0, const D2D1_POINT_2F& p1);

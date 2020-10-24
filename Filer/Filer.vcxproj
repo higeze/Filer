@@ -323,6 +323,7 @@
     <ClInclude Include="..\HiLib\ShellFunction.h" />
     <ClInclude Include="..\HiLib\ShowHideMenuItem.h" />
     <ClInclude Include="..\HiLib\SingletonMalloc.h" />
+    <ClInclude Include="..\HiLIb\Splitter.h" />
     <ClInclude Include="..\HiLib\StatusBar.h" />
     <ClInclude Include="..\HiLib\TabControl.h" />
     <ClInclude Include="..\HiLib\D2DWWindow.h" />
@@ -453,6 +454,7 @@
     <ClCompile Include="..\HiLib\ShellFunction.cpp" />
     <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp" />
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
+    <ClCompile Include="..\HiLIb\Splitter.cpp" />
     <ClCompile Include="..\HiLib\StatusBar.cpp" />
     <ClCompile Include="..\HiLib\TabControl.cpp" />
     <ClCompile Include="..\HiLib\D2DWWindow.cpp" />

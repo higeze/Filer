@@ -10,6 +10,7 @@
 #include "FilerGridViewProperty.h"
 #include "TabControl.h"
 #include "ReactiveProperty.h"
+#include "KnownFolder.h"
 #include <functional>
 
 class CFilerGridView;
@@ -35,7 +36,12 @@ struct FilerTabData:public TabData
 	{
 		if (!Path.empty()) {
 			auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
-			FolderPtr = std::dynamic_pointer_cast<CShellFolder>(spFile);
+			if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+				FolderPtr = sp;
+			} else {
+				FolderPtr = CKnownFolderManager::GetInstance()->GetDesktopFolder();
+				Path = FolderPtr->GetPath();
+			}
 		}
 	}
 	FilerTabData(const std::shared_ptr<CShellFolder>& spFolder)

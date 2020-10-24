@@ -43,7 +43,7 @@ public:
 	ReactiveProperty<bool>& GetIsEnabled() { return m_isEnabled; }
 
 	//Event
-	virtual void OnPaint(const PaintEvent& e);
+	virtual void OnPaint(const PaintEvent& e) override;
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override;
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;

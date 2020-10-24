@@ -143,7 +143,8 @@ LRESULT CD2DWWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 LRESULT CD2DWWindow::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
+	//m_pDirect->GetHwndRenderTarget()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
+	m_pDirect->Resize();
 	OnRect(RectEvent(this, GetDirectPtr()->Pixels2Dips(GetClientRect())));
 	return 0;
 }

@@ -260,69 +260,266 @@
 
 
 	//CDirect2DWrite
-	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd), m_pIconCache(std::make_unique<CFileIconCache>(this)) {}
+	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd), m_pIconCache(std::make_unique<CFileIconCache>(this)) 
+	{
+		GetD3DDevices = [p = CComPtr<ID3D11Device1>(), q = CComPtr<ID3D11DeviceContext1>(), this]() mutable->std::tuple<CComPtr<ID3D11Device1>&, CComPtr<ID3D11DeviceContext1>&>
+		{
+			if (!p) {
+				// Set feature levels supported by our application
+				D3D_FEATURE_LEVEL featureLevels[] =
+				{
+					D3D_FEATURE_LEVEL_11_1,
+					D3D_FEATURE_LEVEL_11_0,
+					D3D_FEATURE_LEVEL_10_1,
+					D3D_FEATURE_LEVEL_10_0,
+					D3D_FEATURE_LEVEL_9_3,
+					D3D_FEATURE_LEVEL_9_2,
+					D3D_FEATURE_LEVEL_9_1
+				};
+				// This flag adds support for surfaces with a different color channel ordering
+				// than the API default. It is required for compatibility with Direct2D.
+				UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+ 
+				CComPtr<ID3D11Device> device;
+				CComPtr<ID3D11DeviceContext> context;
+				D3D_FEATURE_LEVEL returnedFeatureLevel;
+ 
+				D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, creationFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION,
+									&device, &returnedFeatureLevel, &context);
+				device->QueryInterface(__uuidof(ID3D11Device1), (void **)&p);
+				context->QueryInterface(__uuidof(ID3D11DeviceContext1), (void **)&q);
+			}
+			return {p, q};
+		};
+
+		GetD2DDevice =  [p = CComPtr<ID2D1Device>(), this]() mutable->CComPtr<ID2D1Device>&
+		{
+			if (!p) {
+				GetD2DFactory()->CreateDevice(GetDXGIDevice(), &p);
+			}
+			return p;
+		};
+
+		GetD2DDeviceContext =  [p = CComPtr<ID2D1DeviceContext>(), this]() mutable->CComPtr<ID2D1DeviceContext>&
+		{
+			if (!p) {
+				GetD2DDevice()->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &p);
+			}
+			return p;
+		};
+
+
+		GetDXGIDevice =  [p = CComPtr<IDXGIDevice>(), this]() mutable->CComPtr<IDXGIDevice>&
+		{
+			if (!p) {
+				std::get<0>(GetD3DDevices())->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void **>(&p));
+			}
+			return p;
+		};
+		GetDXGIAdapter = [p = CComPtr<IDXGIAdapter>(), this]() mutable->CComPtr<IDXGIAdapter>&
+		{
+			if (!p) {
+				GetDXGIDevice()->GetAdapter(&p);
+			}
+			return p;
+		};
+
+		GetDXGIFactory = [p = CComPtr<IDXGIFactory2>(), this]() mutable->CComPtr<IDXGIFactory2>&
+		{
+			if (!p) {
+				GetDXGIAdapter()->GetParent(IID_PPV_ARGS(&p));
+			}
+			return p;
+		};
+
+		GetDXGISwapChain = [p = CComPtr<IDXGISwapChain1>(), this]() mutable->CComPtr<IDXGISwapChain1>&
+		{
+			if (!p) {
+				// Describe Windows 7-compatible Windowed swap chain
+				DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
+
+				swapChainDesc.Width = 0;
+				swapChainDesc.Height = 0;
+				swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+				swapChainDesc.Stereo = false;
+				swapChainDesc.SampleDesc.Count = 1;
+				swapChainDesc.SampleDesc.Quality = 0;
+				swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+				swapChainDesc.BufferCount = 2;
+				swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
+				swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+				swapChainDesc.Flags = 0;
+				// Create DXGI swap chain targeting a window handle (the only Windows 7-compatible option)
+				GetDXGIFactory()->CreateSwapChainForHwnd(std::get<0>(GetD3DDevices()), m_hWnd, &swapChainDesc, nullptr, nullptr, &p);
+			}
+			return p;
+		};
+	
+		GetD2DBackBuffer = [p = CComPtr<ID2D1Bitmap1>(), this]() mutable->CComPtr<ID2D1Bitmap1>&
+		{
+			if (!p) {
+				// Get the back buffer as an IDXGISurface (Direct2D doesn't accept an ID3D11Texture2D directly as a render target)
+				IDXGISurface* dxgiBackBuffer;
+				GetDXGISwapChain()->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer));
+				// Get screen DPI
+				FLOAT dpiX, dpiY;
+				//TODOHIGH
+				dpiX = dpiY = 96.f;
+				//GetD2D1Factory()->GetDesktopDpi(&dpiX, &dpiY);
+
+				// Create a Direct2D surface (bitmap) linked to the Direct3D texture back buffer via the DXGI back buffer
+				D2D1_BITMAP_PROPERTIES1 bitmapProperties =
+					D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+					D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE), dpiX, dpiY);
+
+				GetD2DDeviceContext()->CreateBitmapFromDxgiSurface(dxgiBackBuffer, &bitmapProperties, &p);
+			}
+			return p;
+		};
+
+		GetD2DFactory =[p = CComPtr<ID2D1Factory1>(), this]() mutable->CComPtr<ID2D1Factory1>&
+		{
+			if (!p) {
+				D2D1_FACTORY_OPTIONS options;
+				ZeroMemory(&options, sizeof(D2D1_FACTORY_OPTIONS));
+				if (FAILED(
+					::D2D1CreateFactory(
+						D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_MULTI_THREADED,
+						__uuidof(ID2D1Factory1),
+						&options,
+						reinterpret_cast<void**>(&p)))) {
+					throw std::exception(FILE_LINE_FUNC);
+				}
+			}
+			return p;
+		};
+		GetDWriteFactory = [p = CComPtr<IDWriteFactory1>(), this]() mutable->CComPtr<IDWriteFactory1>&
+		{
+			if (!p) {
+				if (FAILED(
+					::DWriteCreateFactory(
+						DWRITE_FACTORY_TYPE::DWRITE_FACTORY_TYPE_SHARED,
+						__uuidof(IDWriteFactory1),
+						reinterpret_cast<IUnknown**>(&p)))) {
+					throw std::exception(FILE_LINE_FUNC);
+				}
+			}
+			return p;
+		};
+
+		GetWICImagingFactory =  [p = CComPtr<IWICImagingFactory2>(), this]() mutable->CComPtr<IWICImagingFactory2>&
+		{
+			if (!p) {
+				if (FAILED(
+					p.CoCreateInstance(
+						CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER))) {
+					throw std::exception(FILE_LINE_FUNC);
+				}
+			}
+			return p;
+		};
+
+	}
 	CDirect2DWrite::~CDirect2DWrite() = default;
 
 
-	CComPtr<ID2D1Factory1>& CDirect2DWrite::GetD2D1Factory()
+	//CComPtr<ID2D1Factory1>& CDirect2DWrite::GetD2D1Factory()
+	//{
+	//	if (!m_pD2DFactory) {
+	//		D2D1_FACTORY_OPTIONS options;
+	//		ZeroMemory(&options, sizeof(D2D1_FACTORY_OPTIONS));
+	//		if (FAILED(
+	//			::D2D1CreateFactory(
+	//				D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_MULTI_THREADED,
+	//				__uuidof(ID2D1Factory1),
+	//				&options,
+	//				reinterpret_cast<void**>(&m_pD2DFactory)))) {
+	//			throw std::exception(FILE_LINE_FUNC);
+	//		}
+	//	}
+	//	return m_pD2DFactory;
+	//}
+
+	//CComPtr<IDWriteFactory1>& CDirect2DWrite::GetDWriteFactory()
+	//{
+	//	if (!m_pDWriteFactory) {
+	//		if (FAILED(
+	//			::DWriteCreateFactory(
+	//				DWRITE_FACTORY_TYPE::DWRITE_FACTORY_TYPE_SHARED,
+	//				__uuidof(IDWriteFactory1),
+	//				reinterpret_cast<IUnknown**>(&m_pDWriteFactory)))) {
+	//			throw std::exception(FILE_LINE_FUNC);
+	//		}
+	//	}
+	//	return m_pDWriteFactory;
+	//}
+
+	//CComPtr<IWICImagingFactory2>& CDirect2DWrite::GetWICImagingFactory()
+	//{
+	//	if (!m_pWICImagingFactory) {
+	//		if (FAILED(
+	//			m_pWICImagingFactory.CoCreateInstance(
+	//				CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER))) {
+	//			throw std::exception(FILE_LINE_FUNC);
+	//		}
+	//	}
+	//	return m_pWICImagingFactory;
+	//}
+
+	//CComPtr<ID2D1DeviceContext>& CDirect2DWrite::GetDeviceContext()
+	//{
+	//	if (!m_pD2DDeviceContext) {
+	//		//// Set feature levels supported by our application
+	//		//D3D_FEATURE_LEVEL featureLevels[] =
+	//		//{
+	//		//	D3D_FEATURE_LEVEL_11_1,
+	//		//	D3D_FEATURE_LEVEL_11_0,
+	//		//	D3D_FEATURE_LEVEL_10_1,
+	//		//	D3D_FEATURE_LEVEL_10_0,
+	//		//	D3D_FEATURE_LEVEL_9_3,
+	//		//	D3D_FEATURE_LEVEL_9_2,
+	//		//	D3D_FEATURE_LEVEL_9_1
+	//		//};
+	//		//// This flag adds support for surfaces with a different color channel ordering
+	//		//// than the API default. It is required for compatibility with Direct2D.
+	//		//UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+ //
+	//		// Create Direct3D device and context
+	//		//CComPtr<ID3D11Device> device;
+	//		//CComPtr<ID3D11DeviceContext> context;
+	//		//D3D_FEATURE_LEVEL returnedFeatureLevel;
+ //
+	//		//D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, creationFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION,
+	//		//					&device, &returnedFeatureLevel, &context);
+	//		//device->QueryInterface(__uuidof(ID3D11Device1), (void **)&m_pD3DDevice);
+	//		//context->QueryInterface(__uuidof(ID3D11DeviceContext1), (void **)&m_pD3DContext);
+ //
+	//		//m_pD3DDevice->QueryInterface(__uuidof(IDXGIDevice), (void **)&m_pDXGIDevice);
+	//		//GetD2D1Factory()->CreateDevice(GetDXGIDevice(), &m_pD2DDevice);
+	//		//m_pD2DDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &m_pD2DDeviceContext);
+	//	}
+	//	return m_pD2DDeviceContext;
+	//}
+
+
+	CComPtr<ID2D1DeviceContext>& CDirect2DWrite::GetHwndRenderTarget()
 	{
-		if (!m_pD2D1Factory) {
-			if (FAILED(
-				::D2D1CreateFactory(
-					D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_MULTI_THREADED,
-					__uuidof(ID2D1Factory1),
-					(void**)&m_pD2D1Factory))) {
-				throw std::exception(FILE_LINE_FUNC);
-			}
-		}
-		return m_pD2D1Factory;
-	}
-
-	CComPtr<IDWriteFactory1>& CDirect2DWrite::GetDWriteFactory()
-	{
-		if (!m_pDWriteFactory) {
-			if (FAILED(
-				::DWriteCreateFactory(
-					DWRITE_FACTORY_TYPE::DWRITE_FACTORY_TYPE_SHARED,
-					__uuidof(IDWriteFactory1),
-					(IUnknown**)&m_pDWriteFactory))) {
-				throw std::exception(FILE_LINE_FUNC);
-			}
-		}
-		return m_pDWriteFactory;
-	}
-
-	CComPtr<IWICImagingFactory>& CDirect2DWrite::GetWICImagingFactory()
-	{
-		if (!m_pWICImagingFactory) {
-			if (FAILED(
-				m_pWICImagingFactory.CoCreateInstance(
-					CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER))) {
-				throw std::exception(FILE_LINE_FUNC);
-			}
-		}
-		return m_pWICImagingFactory;
-	}
-
-
-	CComPtr<ID2D1HwndRenderTarget>& CDirect2DWrite::GetHwndRenderTarget()
-	{
-
-		if (!m_pHwndRenderTarget) {
-			RECT rect;
-			::GetClientRect(m_hWnd, &rect);
-			D2D1_SIZE_U size = D2D1::Size<UINT>(rect.right, rect.bottom);
-			if (FAILED(
-				GetD2D1Factory()->CreateHwndRenderTarget(
-					D2D1::RenderTargetProperties(),
-					//D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE,
-					//	D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
-					D2D1::HwndRenderTargetProperties(m_hWnd, size),
-					&m_pHwndRenderTarget))) {
-				throw std::exception(FILE_LINE_FUNC);
-			}
-		}
-		return m_pHwndRenderTarget;
+		return GetD2DDeviceContext();
+		//if (!m_pHwndRenderTarget) {
+		//	RECT rect;
+		//	::GetClientRect(m_hWnd, &rect);
+		//	D2D1_SIZE_U size = D2D1::Size<UINT>(rect.right, rect.bottom);
+		//	if (FAILED(
+		//		GetD2D1Factory()->CreateHwndRenderTarget(
+		//			D2D1::RenderTargetProperties(),
+		//			//D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE,
+		//			//	D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+		//			D2D1::HwndRenderTargetProperties(m_hWnd, size),
+		//			&m_pHwndRenderTarget))) {
+		//		throw std::exception(FILE_LINE_FUNC);
+		//	}
+		//}
+		//return m_pHwndRenderTarget;
 	}
 
 	CComPtr<ID2D1SolidColorBrush>& CDirect2DWrite::GetColorBrush(const CColorF& color)
@@ -453,12 +650,69 @@
 		GetHwndRenderTarget()->Clear(fill.Color);
 	}
 
+	void CDirect2DWrite::Resize()
+	{
+		// Get the GPU we are using
+		//IDXGIAdapter* dxgiAdapter;
+		//m_pDXGIDevice->GetAdapter(&dxgiAdapter);
+
+		// Get the DXGI factory instance
+		//IDXGIFactory2* dxgiFactory;
+		//dxgiAdapter->GetParent(IID_PPV_ARGS(&dxgiFactory));
+		// Describe Windows 7-compatible Windowed swap chain
+		//DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
+
+		//swapChainDesc.Width = 0;
+		//swapChainDesc.Height = 0;
+		//swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		//swapChainDesc.Stereo = false;
+		//swapChainDesc.SampleDesc.Count = 1;
+		//swapChainDesc.SampleDesc.Quality = 0;
+		//swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+		//swapChainDesc.BufferCount = 2;
+		//swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
+		//swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+		//swapChainDesc.Flags = 0;
+		//// Create DXGI swap chain targeting a window handle (the only Windows 7-compatible option)
+		//GetDXGIFactory()->CreateSwapChainForHwnd(std::get<0>(GetD3DDevices()), m_hWnd, &swapChainDesc, nullptr, nullptr, &m_pDXGISwapChain);
+		//// Get the back buffer as an IDXGISurface (Direct2D doesn't accept an ID3D11Texture2D directly as a render target)
+		//IDXGISurface* dxgiBackBuffer;
+		//m_pDXGISwapChain->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer));
+		//// Get screen DPI
+		//FLOAT dpiX, dpiY;
+		////TODOHIGH
+		//dpiX = dpiY = 96.f;
+		////GetD2D1Factory()->GetDesktopDpi(&dpiX, &dpiY);
+
+		//// Create a Direct2D surface (bitmap) linked to the Direct3D texture back buffer via the DXGI back buffer
+		//D2D1_BITMAP_PROPERTIES1 bitmapProperties =
+		//	D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+		//	D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE), dpiX, dpiY);
+
+		//GetD2DDeviceContext()->CreateBitmapFromDxgiSurface(dxgiBackBuffer, &bitmapProperties, &m_pD2DBackBuffer);
+
+		GetDXGISwapChain() = nullptr;
+		GetD2DBackBuffer() = nullptr;
+
+		// Set surface as render target in Direct2D device context
+		GetD2DDeviceContext()->SetTarget(GetD2DBackBuffer());
+
+	}
+
 	void CDirect2DWrite::EndDraw()
 	{
 		HRESULT hr = GetHwndRenderTarget()->EndDraw();
 		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET) {
 			Clear();
 		}
+		// Present (new for Direct2D 1.1)
+		DXGI_PRESENT_PARAMETERS parameters = { 0 };
+		parameters.DirtyRectsCount = 0;
+		parameters.pDirtyRects = nullptr;
+		parameters.pScrollRect = nullptr;
+		parameters.pScrollOffset = nullptr;
+ 
+		hr = GetDXGISwapChain()->Present1(1, 0, &parameters);
 	}
 
 
@@ -563,7 +817,7 @@
 		auto width = rc.Width();
 		auto height = rc.Height();
 		auto centerPoint = rc.CenterPoint();
-		auto deg2rad = [](const int& deg) { return deg * (3.14 / 180); };
+		auto deg2rad = [](const int& deg) { return (float)(deg * (3.14f / 180.f)); };
 
 		auto top = CPointF(centerPoint.x, rc.top + 0.1f * height);
 		auto bottom = CPointF(centerPoint.x, rc.top + 0.9f * height);
@@ -806,11 +1060,11 @@
 
 	void CDirect2DWrite::Clear()
 	{
-		m_pD2D1Factory = nullptr;
-		m_pDWriteFactory = nullptr;
-		m_pWICImagingFactory = nullptr;
-		m_pHwndRenderTarget = nullptr;
-
+		GetD2DFactory() = nullptr;
+		GetDWriteFactory() = nullptr;
+		GetWICImagingFactory() = nullptr;
+		//m_pHwndRenderTarget = nullptr;
+		GetD2DDeviceContext() = nullptr;
 		m_solidColorBrushMap.clear();
 		m_textFormatMap.clear();
 		m_textLayoutMap.clear();

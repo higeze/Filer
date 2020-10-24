@@ -14,6 +14,12 @@ ContextMenuEvent::ContextMenuEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lPar
 	PointInScreen((short)LOWORD(lParam), (short)HIWORD(lParam)),
 	PointInClient(pWnd->ScreenToClient(CPoint((short)LOWORD(lParam), (short)HIWORD(lParam))).value()){}
 
+MouseEvent::MouseEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
+		:Event(pWnd, pHandled), Flags(wParam),
+		PointInClient((short)LOWORD(lParam), (short)HIWORD(lParam)),
+		PointInWnd(pWnd->GetDirectPtr()->Pixels2Dips(PointInClient)){}
+
+
 
 void CUIElement::SetState(const UIElementState::Type& state)
 {

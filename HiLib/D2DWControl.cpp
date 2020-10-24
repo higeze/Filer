@@ -54,7 +54,7 @@ bool CD2DWControl::GetIsFocused()const
 
 void CD2DWControl::OnCreate(const CreateEvt& e)
 {
-	m_rect = e.RectF;
+	m_rect =  e.RectF;
 	GetParentControlPtr()->AddChildControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
 }
 
@@ -69,23 +69,28 @@ void CD2DWControl::OnRButtonDown(const RButtonDownEvent& e) { SetFocusSendPtInRe
 
 void CD2DWControl::OnMouseMove(const MouseMoveEvent& e)
 {
-	auto iter = std::find_if(m_childControls.cbegin(), m_childControls.cend(),
-		[&](const std::shared_ptr<CUIElement>& x) {return x->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
+	if (GetCapturedControlPtr()) {
+		GetCapturedControlPtr()->OnMouseMove(e);
+	} else {
 
-	if (iter == m_childControls.cend()) {//Mouse is NOT on child control, but on me.
-		if (GetMouseControlPtr()) {
-			GetMouseControlPtr()->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
+		auto iter = std::find_if(m_childControls.cbegin(), m_childControls.cend(),
+			[&](const std::shared_ptr<CUIElement>& x) { return x->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient)); });
+
+		if (iter == m_childControls.cend()) {//Mouse is NOT on child control, but on me.
+			if (GetMouseControlPtr()) {
+				GetMouseControlPtr()->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
+			}
+			SetMouseControlPtr(nullptr);
+		} else if (GetMouseControlPtr() != *iter) {//Mouse is on child control and different with previous one
+			if (GetMouseControlPtr()) {
+				GetMouseControlPtr()->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
+			}
+			SetMouseControlPtr(*iter);
+			GetMouseControlPtr()->OnMouseEnter(MouseEnterEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
 		}
-		SetMouseControlPtr(nullptr);
-	} else if(GetMouseControlPtr() != *iter){//Mouse is on child control and different with previous one
-		if (GetMouseControlPtr()) {
-			GetMouseControlPtr()->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
-		}
-		SetMouseControlPtr(*iter);
-		GetMouseControlPtr()->OnMouseEnter(MouseEnterEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
+
+		if (GetMouseControlPtr()) { GetMouseControlPtr()->OnMouseMove(e); }
 	}
-
-	if (GetMouseControlPtr()) { GetMouseControlPtr()->OnMouseMove(e); }
 }
 
 void CD2DWControl::OnCommand(const CommandEvent& e)
