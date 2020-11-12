@@ -99,6 +99,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MinimalRebuild>false</MinimalRebuild>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -257,6 +258,7 @@
     <ClInclude Include="..\HiLib\IKeyObserver.h" />
     <ClInclude Include="..\HiLib\IMouseObserver.h" />
     <ClInclude Include="..\HiLib\index_vector.h" />
+    <ClInclude Include="..\HiLib\IStateMachine.h" />
     <ClInclude Include="..\HiLib\KonamiCommander.h" />
     <ClInclude Include="..\HiLib\KonamiResource.h" />
     <ClInclude Include="..\HiLib\MenuItem.h" />
@@ -292,6 +294,8 @@
     <ClInclude Include="..\HiLib\MyXMLSerializer.h" />
     <ClInclude Include="..\HiLib\named_arguments.h" />
     <ClInclude Include="..\HiLib\ColumnIndexCell.h" />
+    <ClInclude Include="..\HiLib\PdfView.h" />
+    <ClInclude Include="..\HiLib\PdfViewStateMachine.h" />
     <ClInclude Include="..\HiLib\ReactiveProperty.h" />
     <ClInclude Include="..\HiLib\ScrollProperty.h" />
     <ClInclude Include="..\HiLib\SortCell.h" />
@@ -436,6 +440,8 @@
     <ClCompile Include="..\HiLib\MyWnd.cpp" />
     <ClCompile Include="..\HiLib\MyXMLSerializer.cpp" />
     <ClCompile Include="..\HiLib\ColumnIndexCell.cpp" />
+    <ClCompile Include="..\HiLib\PdfView.cpp" />
+    <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp" />
     <ClCompile Include="..\HiLib\SortCell.cpp" />
     <ClCompile Include="..\HiLib\MapColumn.cpp" />
     <ClCompile Include="..\HiLib\RowIndexCell.cpp" />
@@ -501,10 +507,6 @@
     <None Include="..\HiLib\msxml6.tlh" />
     <None Include="..\HiLib\msxml6.tli" />
     <None Include="..\Release\Filer.exe" />
-    <None Include="ClassDiagram.cd" />
-    <None Include="ClassDiagram1.cd" />
-    <None Include="ClassDiagram2.cd" />
-    <None Include="ClassDiagram3.cd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -25,7 +25,7 @@ struct CTextBoxStateMachine::Machine
 			*state<Normal> +event<PaintEvent> / call(&CTextBox::Normal_Paint),
 
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CTextBox::VScrlDrag_Guard_LButtonBeginDrag)] = state<VScrlDrag>,
-			state<Normal> +event<LButtonBeginDragEvent>[call(&CTextBox::VScrlDrag_Guard_LButtonBeginDrag)] = state<HScrlDrag>,
+			state<Normal> +event<LButtonBeginDragEvent>[call(&CTextBox::HScrlDrag_Guard_LButtonBeginDrag)] = state<HScrlDrag>,
 
 			state<Normal> +event<LButtonDownEvent> / call(&CTextBox::Normal_LButtonDown),
 			state<Normal> +event<LButtonUpEvent> / call(&CTextBox::Normal_LButtonUp),

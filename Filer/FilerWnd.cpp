@@ -33,6 +33,7 @@
 #include "D2DWWindow.h"
 #include "MouseStateMachine.h"
 #include <Dbt.h>
+#include "PdfView.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -46,12 +47,13 @@ CFilerWnd::CFilerWnd()
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
 	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
 	m_spTextEditorProp(std::make_shared<TextEditorProperty>()),
+	m_spPdfViewProp(std::make_shared<PdfViewProperty>()),
 	m_spTabControlProp(std::make_shared<TabControlProperty>()),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
 	m_spSplitterProp(std::make_shared<SplitterProperty>()),
-	m_spLeftView(std::make_shared<CFilerTabGridView>(this, std::make_shared<TabControlProperty>(), m_spFilerGridViewProp, m_spTextEditorProp)),
-	m_spRightView(std::make_shared<CFilerTabGridView>(this, std::make_shared<TabControlProperty>(), m_spFilerGridViewProp, m_spTextEditorProp)),
+	m_spLeftView(std::make_shared<CFilerTabGridView>(this, std::make_shared<TabControlProperty>(), m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp)),
+	m_spRightView(std::make_shared<CFilerTabGridView>(this, std::make_shared<TabControlProperty>(), m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp)),
 	m_spSplitter(std::make_shared<CHorizontalSplitter>(this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp)),
 	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
@@ -359,10 +361,28 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 	*(e.HandledPtr) = FALSE;
 	switch (e.Char)
 	{
+	case 'Q':
+		if (::GetAsyncKeyState(VK_CONTROL)) {
+			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
+				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
+					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
+					if (boost::iequals(spCurFilerGrid->GetFocusedFile()->GetPathExt(), L".txt")) {
+						spOtherTab->GetItemsSource().push_back(std::make_shared<TextTabData>(spCurFilerGrid->GetFocusedFile()->GetPath()));
+						*(e.HandledPtr) = TRUE;
+					}else if(boost::iequals(spCurFilerGrid->GetFocusedFile()->GetPathExt(), L".pdf")){
+						spOtherTab->GetItemsSource().push_back(std::make_shared<PdfTabData>(spCurFilerGrid->GetFocusedFile()->GetPath()));
+						*(e.HandledPtr) = TRUE;
+					}
+				}
+			}
+		}
+		break;
+
 	case VK_F4:
 		{
 			if (::GetAsyncKeyState(VK_MENU)) {
 				OnCommandExit(CommandEvent(this, 0, 0, e.HandledPtr));
+				*(e.HandledPtr) = TRUE;
 			}
 		}
 		break;

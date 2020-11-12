@@ -805,6 +805,16 @@ void CFilerGridView::OnCellLButtonDblClk(CellEventArgs& e)
 	}
 }
 
+std::shared_ptr<CShellFile> CFilerGridView::GetFocusedFile()
+{
+	CRow* pRow = GetCursorerPtr()->GetFocusedCell()->GetRowPtr();
+	if (auto pBindRow = dynamic_cast<CBindRow<std::shared_ptr<CShellFile>>*>(pRow)) {
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>();
+	}
+	return nullptr;
+}
+
+
 std::vector<std::shared_ptr<CShellFile>> CFilerGridView::GetSelectedFiles()
 {
 	std::vector<std::shared_ptr<CShellFile>> files;

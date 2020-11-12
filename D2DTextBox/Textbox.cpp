@@ -246,7 +246,7 @@ void CTextBox::OnCreate(const CreateEvt& e)
 		if (!pTextLayout1) {
 			auto pageRect = GetPageRect();
 			auto pDirect = GetWndPtr()->GetDirectPtr();
-			auto pRender = pDirect->GetHwndRenderTarget();
+			auto pRender = pDirect->GetD2DDeviceContext();
 			auto pFactory = pDirect->GetDWriteFactory();
 			auto size = CSizeF(m_pProp->IsWrap ? (std::max)(0.f, pageRect.Width()) : FLT_MAX, FLT_MAX);
 
@@ -974,9 +974,9 @@ void CTextBox::DrawCaret(const CRectF& rc)
 		ResetCaret();
 	}
 	if (m_bCaret) {
-		GetWndPtr()->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+		GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, rc);
-		GetWndPtr()->GetDirectPtr()->GetHwndRenderTarget()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+		GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	}
 }
 
@@ -1022,7 +1022,7 @@ void CTextBox::Render()
 		auto rect = GetActualContentRect();
 		auto origin = rect.LeftTop();
 
-		GetWndPtr()->GetDirectPtr()->GetHwndRenderTarget()->DrawTextLayout(origin, GetTextLayoutPtr(), GetWndPtr()->GetDirectPtr()->GetColorBrush(m_pProp->Format->Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
+		GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->DrawTextLayout(origin, GetTextLayoutPtr(), GetWndPtr()->GetDirectPtr()->GetColorBrush(m_pProp->Format->Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
 		//GetWndPtr()->GetDirectPtr()->DrawTextLayout((*(m_pProp->Format), m_text, GetActualContentRect());
 
 		//Draw cr, lf, tab, space

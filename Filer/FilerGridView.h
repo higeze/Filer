@@ -92,6 +92,7 @@ public:
 	bool MoveSelectedFilesTo(const CIDL& destIDL);
 	virtual bool DeleteSelectedFiles() override;
 
+	std::shared_ptr<CShellFile> GetFocusedFile();
 	std::vector<std::shared_ptr<CShellFile>> GetSelectedFiles();
 
 	std::vector<LPITEMIDLIST> GetSelectedLastPIDLVector();

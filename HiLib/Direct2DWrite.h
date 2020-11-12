@@ -356,26 +356,6 @@ namespace std
 	{
 	private:
 		HWND m_hWnd;
-		//CComPtr<ID2D1DeviceContext> m_pD2DDeviceContext = nullptr;
-
-		// Direct3D
-		//CComPtr<ID3D11Device1> m_pD3DDevice = nullptr; 
-		//CComPtr<ID3D11DeviceContext1> m_pD3DContext = nullptr;
-		// Direct2D
-		//CComPtr<ID2D1Device> m_pD2DDevice = nullptr;
-		//CComPtr<IDXGIDevice> m_pDXGIDevice;
-
-		//CComPtr<IDXGISwapChain1> m_pDXGISwapChain = nullptr;
-		//CComPtr<ID2D1Bitmap1> m_pD2DBackBuffer = nullptr;
-		//CComPtr<ID2D1Factory1> m_pD2DFactory = nullptr;
-		//CComPtr<IDWriteFactory1> m_pDWriteFactory = nullptr;
-		//CComPtr<IWICImagingFactory2> m_pWICImagingFactory = nullptr;
-
-
-		//CComPtr<ID2D1HwndRenderTarget> m_pHwndRenderTarget = NULL;
-		//CComPtr<IWICFormatConverter> m_pWICFormatConverter = NULL;
-
-
 		std::unordered_map<CColorF, CComPtr<ID2D1SolidColorBrush>> m_solidColorBrushMap;
 		std::unordered_map<FormatF, CComPtr<IDWriteTextFormat>> m_textFormatMap;
 		//std::unordered_map<FormatF, std::unordered_map<wchar_t, CSizeF>> m_charMap;
@@ -394,8 +374,8 @@ namespace std
 		CDirect2DWrite& operator=(const CDirect2DWrite&) = delete;
 
 		std::unique_ptr<CFileIconCache>& GetIconCachePtr() { return m_pIconCache; }
-
-		//CComPtr<ID2D1Factory1>& GetD2D1Factory();
+		
+		//Closure
 		std::function<CComPtr<ID2D1Device>& ()> GetD2DDevice;
 		std::function<CComPtr<ID2D1DeviceContext>& ()> GetD2DDeviceContext;
 		std::function<std::tuple<CComPtr<ID3D11Device1>&, CComPtr<ID3D11DeviceContext1>&>()> GetD3DDevices;
@@ -409,11 +389,7 @@ namespace std
 		std::function<CComPtr<ID2D1Factory1>&()> GetD2DFactory;
 		std::function<CComPtr<IDWriteFactory1>&()> GetDWriteFactory;
 		std::function<CComPtr<IWICImagingFactory2>&()> GetWICImagingFactory;
-		//CComPtr<IDWriteFactory1>& GetDWriteFactory();
-		//CComPtr<IWICImagingFactory2>& GetWICImagingFactory();
-		//CComPtr<IWICFormatConverter>& GetWICFormatConverter();
 
-		CComPtr<ID2D1DeviceContext>& GetHwndRenderTarget();
 		void BeginDraw();
 		CComPtr<ID2D1SolidColorBrush>& GetColorBrush(const CColorF& color);
 		CComPtr<IDWriteTextFormat>& GetTextFormat(const FormatF& fca);
@@ -442,6 +418,7 @@ namespace std
 		void FillSolidGeometry(const SolidFill& fill, CComPtr<ID2D1PathGeometry>& path);
 		void DrawIcon(HICON hIcon, CRectF& rect);
 		void DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap, const CRectF& rect);
+		void DrawBitmap(const CComPtr<ID2D1Bitmap1>& pBitmap, const CRectF& rect);
 
 		CSizeF CalcTextSize(const FormatF& format, const std::wstring& text);
 		CSizeF CalcTextSizeWithFixedWidth(const FormatF& fca, const std::wstring& text, const FLOAT width);

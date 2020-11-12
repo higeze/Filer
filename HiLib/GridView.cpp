@@ -778,7 +778,7 @@ void CGridView::Normal_Paint(const PaintEvent& e)
 {
 	if (!Visible())return;
 
-	GetWndPtr()->GetDirectPtr()->GetHwndRenderTarget()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), GetRectInWnd());
 	CSheet::Normal_Paint(e);
@@ -790,7 +790,7 @@ void CGridView::Normal_Paint(const PaintEvent& e)
 		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(GetHeaderProperty()->FocusedLine), rcFocus);
 	}
 
-	GetWndPtr()->GetDirectPtr()->GetHwndRenderTarget()->PopAxisAlignedClip();
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
 }
 
 void CGridView::Normal_LButtonDown(const LButtonDownEvent& e)

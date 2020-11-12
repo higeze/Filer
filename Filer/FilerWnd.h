@@ -15,11 +15,13 @@
 #include "FilerGridViewProperty.h"
 #include "D2DWWindow.h"
 #include "ReactiveProperty.h"
+#include "PdfView.h"
 //#include "KonamiCommander.h"
 
 class CFilerGridView;
 struct FilerGridViewProperty;
 class CShellFolder;
+//struct PdfViewProperty;
 
 
 #ifdef USE_PYTHON_EXTENSION
@@ -106,6 +108,7 @@ private:
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
 	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
+	std::shared_ptr<PdfViewProperty> m_spPdfViewProp;
 	std::shared_ptr<TabControlProperty> m_spTabControlProp;
 	std::shared_ptr<SplitterProperty> m_spSplitterProp;
 
@@ -223,6 +226,7 @@ public:
 		ar("ApplicationProperty", m_spApplicationProp);
 		ar("FilerGridViewProperty",m_spFilerGridViewProp);
 		ar("TextEditorProperty", m_spTextEditorProp);
+		ar("PdfViewProperty", m_spPdfViewProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
 		ar("LeftView", m_spLeftView);
@@ -248,11 +252,12 @@ public:
 		ar("ApplicationProperty", m_spApplicationProp);
 		ar("FilerGridViewProperty",m_spFilerGridViewProp);
 		ar("TextEditorProperty", m_spTextEditorProp);
+		ar("PdfViewProperty", m_spPdfViewProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
 		ar("SplitterProperty", m_spSplitterProp);
-		ar("LeftView", m_spLeftView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp);
-		ar("RightView", m_spRightView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp);
+		ar("LeftView", m_spLeftView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp);
+		ar("RightView", m_spRightView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp);
 		ar("HorizontalSplitter", m_spSplitter, this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp);
 		ar("LeftFavoritesView", m_spLeftFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
 		ar("RightFavoritesView", m_spRightFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);

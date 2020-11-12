@@ -644,6 +644,15 @@
     <ClInclude Include="..\HiLIb\Splitter.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\PdfView.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PdfViewStateMachine.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\IStateMachine.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -949,6 +958,12 @@
     <ClCompile Include="..\HiLIb\Splitter.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
+    <ClCompile Include="..\HiLib\PdfView.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\HiLib\msxml6.tli">
@@ -963,9 +978,5 @@
     <None Include="..\Release\Filer.exe">
       <Filter>Release</Filter>
     </None>
-    <None Include="ClassDiagram.cd" />
-    <None Include="ClassDiagram1.cd" />
-    <None Include="ClassDiagram2.cd" />
-    <None Include="ClassDiagram3.cd" />
   </ItemGroup>
 </Project>

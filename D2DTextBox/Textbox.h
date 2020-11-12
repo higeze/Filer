@@ -122,6 +122,9 @@ public:
 	virtual void OnClose(const CloseEvent& e);
 	virtual void OnRect(const RectEvent& e);
 
+	/**************/
+	/* SM Message */
+	/**************/
 	virtual void Normal_Paint(const PaintEvent& e);
 	virtual void Normal_LButtonDown(const LButtonDownEvent& e);
 	virtual void Normal_LButtonUp(const LButtonUpEvent& e) { /*Do nothing*/ }

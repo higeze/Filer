@@ -236,7 +236,7 @@
 //LRESULT CSearchWnd::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 //{
 //	CRect rcClient = GetClientRect();
-//	m_pDirect->GetHwndRenderTarget()->Resize(D2D1_SIZE_U{ (UINT)rcClient.Width(), (UINT)rcClient.Height() });
+//	m_pDirect->GetD2DDeviceContext()->Resize(D2D1_SIZE_U{ (UINT)rcClient.Width(), (UINT)rcClient.Height() });
 //
 //	m_edit.MoveWindow(GetEditRect(rcClient), TRUE);
 //	m_pProgressbar->OnRect(RectEvent(this, m_pDirect->Pixels2Dips(GetProgressBarRect(rcClient))));

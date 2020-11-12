@@ -24,6 +24,21 @@
 #include "MyFile.h"
 #include "FileIconCache.h"
 #include "ShellFileFactory.h"
+#include "PdfView.h"
+
+FilerTabData::FilerTabData(const std::wstring& path)
+	:TabData(), Path(path)
+{
+	if (!Path.empty()) {
+		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
+		if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+			FolderPtr = sp;
+		} else {
+			FolderPtr = CKnownFolderManager::GetInstance()->GetDesktopFolder();
+			Path = FolderPtr->GetPath();
+		}
+	}
+}
 
 
 void TextTabData::Open()
@@ -101,13 +116,21 @@ void TextTabData::Save(const std::wstring& path)
 	CFile::WriteAllString(path, wstr2str(Text));
 }
 
-CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_ptr<TabControlProperty> spTabProp, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, std::shared_ptr<TextEditorProperty>& spTextEditorProp)
-	:CTabControl(pParentControl, spTabProp), m_spFilerGridViewProp(spFilerGridViewProp), m_spTextEditorProp(spTextEditorProp)
+CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, 
+	std::shared_ptr<TabControlProperty> spTabProp,
+	std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, 
+	std::shared_ptr<TextEditorProperty>& spTextEditorProp,
+	std::shared_ptr<PdfViewProperty>& spPdfViewProp)
+	:CTabControl(pParentControl, spTabProp), 
+	m_spFilerGridViewProp(spFilerGridViewProp),
+	m_spTextEditorProp(spTextEditorProp),
+	m_spPdfViewProp(spPdfViewProp)
 {
 	//Command
 	m_commandMap.emplace(IDM_NEWFILERTAB, std::bind(&CFilerTabGridView::OnCommandNewFilerTab, this, phs::_1));
 	m_commandMap.emplace(IDM_NEWTODOTAB, std::bind(&CFilerTabGridView::OnCommandNewToDoTab, this, phs::_1));
 	m_commandMap.emplace(IDM_NEWTEXTTAB, std::bind(&CFilerTabGridView::OnCommandNewTextTab, this, phs::_1));
+	m_commandMap.emplace(IDM_NEWPDFTAB, std::bind(&CFilerTabGridView::OnCommandNewPdfTab, this, phs::_1));
 
 	m_commandMap.emplace(IDM_CLONETAB, std::bind(&CFilerTabGridView::OnCommandCloneTab, this, phs::_1));
 	m_commandMap.emplace(IDM_CLOSETAB, std::bind(&CFilerTabGridView::OnCommandCloseTab, this, phs::_1));
@@ -137,6 +160,14 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 		{
 			if (auto p = std::dynamic_pointer_cast<TextTabData>(pTabData)) {
 				return std::wstring(p->Status.get() == TextStatus::Dirty?L"*":L"") + ::PathFindFileName(p->Path.c_str());
+			} else {
+				return L"nullptr";
+			}
+		});
+	m_itemsHeaderTemplate.emplace(typeid(PdfTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
+		{
+			if (auto p = std::dynamic_pointer_cast<PdfTabData>(pTabData)) {
+				return std::wstring(::PathFindFileName(p->Path.c_str()));
 			} else {
 				return L"nullptr";
 			}
@@ -179,6 +210,16 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 				return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
 		});
+	m_itemsHeaderIconTemplate.emplace(typeid(PdfTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData)->CComPtr<ID2D1Bitmap>
+		{
+			if (auto p = std::dynamic_pointer_cast<PdfTabData>(pTabData)) {
+				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Path);
+				return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetFileIconBitmap(
+					spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), updated);
+			} else {
+				return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
+			}
+		});
 
 	//ItemsTemplate
 	m_itemsControlTemplate.emplace(typeid(FilerTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
@@ -208,9 +249,9 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 		auto spView = GetTextViewPtr();
 
 		//Path
-		m_pPathBinding.reset(nullptr);//Need to dispose first to disconnect
-		m_pPathBinding.reset(new CBinding<std::wstring>(spViewModel->Path, spView->GetPath()));
-		m_pPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { GetHeaderRects().clear(); }));
+		m_pTextPathBinding.reset(nullptr);//Need to dispose first to disconnect
+		m_pTextPathBinding.reset(new CBinding<std::wstring>(spViewModel->Path, spView->GetPath()));
+		m_pTextPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { GetHeaderRects().clear(); }));
 		//Status
 		m_pStatusBinding.reset(nullptr);
 		m_pStatusConnection = std::make_unique<sigslot::scoped_connection>(spViewModel->Status.Subscribe([this](const auto&) { GetHeaderRects().clear(); }));
@@ -254,6 +295,25 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 
 		return spView;
 	});
+
+	m_itemsControlTemplate.emplace(typeid(PdfTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
+		auto spViewModel = std::static_pointer_cast<PdfTabData>(pTabData);
+		auto spView = GetPdfViewPtr();
+
+		//Path
+		m_pPdfPathBinding.reset(nullptr);//Need to dispose first to disconnect
+		m_pPdfPathBinding.reset(new CBinding<std::wstring>(spViewModel->Path, spView->GetPath()));
+		m_pPdfPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { GetHeaderRects().clear(); }));
+		//Open
+		//m_pOpenBinding.reset(nullptr);
+		//m_pOpenBinding.reset(new CBinding<void>(spViewModel->OpenCommand, spView->GetOpenCommand()));
+
+		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
+		spView->Open(spViewModel->Path);//TODOHIGH
+
+		return spView;
+	});
+
 
 
 	//FilerGridView Closure
@@ -357,6 +417,11 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, std::shared_p
 	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(this, m_spTextEditorProp), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>{
 		return spTextView;
 	};
+
+	//PdfView Closure
+	GetPdfViewPtr = [spPdfView = std::make_shared<CPdfView>(this, m_spPdfViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CPdfView>{
+		return spPdfView;
+	};
 }
 
 CFilerTabGridView::~CFilerTabGridView() = default;
@@ -367,6 +432,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	GetFilerGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
 	GetToDoGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
 	GetTextViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
+	GetPdfViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
 
 	//ItemsSource
 	if (m_itemsSource.empty()) {
@@ -433,6 +499,12 @@ void CFilerTabGridView::OnCommandNewToDoTab(const CommandEvent& e)
 void CFilerTabGridView::OnCommandNewTextTab(const CommandEvent& e)
 {
 	m_itemsSource.push_back(std::make_shared<TextTabData>(L""));
+	m_selectedIndex.set(m_itemsSource.size() - 1);
+}
+
+void CFilerTabGridView::OnCommandNewPdfTab(const CommandEvent& e)
+{
+	m_itemsSource.push_back(std::make_shared<PdfTabData>(L""));
 	m_selectedIndex.set(m_itemsSource.size() - 1);
 }
 

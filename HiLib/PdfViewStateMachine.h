@@ -2,16 +2,16 @@
 #include "IStateMachine.h"
 #include <boost/sml.hpp>
 
-class CSheet;
+class CPdfView;
 
-class CSheetStateMachine:public IStateMachine
+class CPdfViewStateMachine :public IStateMachine
 {
 private:
 	struct Machine;
 	std::unique_ptr<boost::sml::sm<Machine>> m_pMachine;
 public:
-	CSheetStateMachine(CSheet* pSheet);
-	~CSheetStateMachine();
+	CPdfViewStateMachine(CPdfView* pPdfView);
+	~CPdfViewStateMachine();
 
 	virtual void process_event(const PaintEvent& e) override;
 	virtual void process_event(const RButtonDownEvent& e) override;
@@ -30,8 +30,6 @@ public:
 	virtual void process_event(const KillFocusEvent& e) override;
 	virtual void process_event(const KeyDownEvent& e) override;
 	virtual void process_event(const CharEvent& e) override;
-
-	virtual void process_event(const BeginEditEvent& e) override;
-	virtual void process_event(const EndEditEvent& e) override;
+	virtual void process_event(const BeginEditEvent& e) override {}
+	virtual void process_event(const EndEditEvent& e) override {}
 };
-

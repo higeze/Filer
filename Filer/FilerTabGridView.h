@@ -19,6 +19,8 @@ struct GridViewProperty;
 class CToDoGridView;
 class CD2DWWindow;
 class CShellFolder;
+class CPdfView;
+struct PdfViewProperty;
 
 /***************/
 /* FilerTabData */
@@ -31,19 +33,7 @@ struct FilerTabData:public TabData
 	FilerTabData()
 		:TabData(){ }
 
-	FilerTabData(const std::wstring& path)
-		:TabData(), Path(path)
-	{
-		if (!Path.empty()) {
-			auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
-			if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-				FolderPtr = sp;
-			} else {
-				FolderPtr = CKnownFolderManager::GetInstance()->GetDesktopFolder();
-				Path = FolderPtr->GetPath();
-			}
-		}
-	}
+	FilerTabData(const std::wstring& path);
 	FilerTabData(const std::shared_ptr<CShellFolder>& spFolder)
 		:TabData(), FolderPtr(spFolder), Path(spFolder->GetPath()){}
 
@@ -66,8 +56,15 @@ struct FilerTabData:public TabData
 	void load(Archive& ar)
 	{
 		ar("Path", Path);
-		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(Path);
-		FolderPtr = std::dynamic_pointer_cast<CShellFolder>(spFile);
+		if (!Path.empty()) {
+			auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(Path);
+			if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+				FolderPtr = sp;
+			} else {
+				FolderPtr = CKnownFolderManager::GetInstance()->GetDesktopFolder();
+				Path = FolderPtr->GetPath();
+			}
+		}
 	}
 };
 
@@ -150,6 +147,40 @@ struct TextTabData :public TabData
 	}
 };
 
+/**************/
+/* PdfTabData */
+/**************/
+
+struct PdfTabData :public TabData
+{
+	ReactiveWStringProperty Path;
+	
+	ReactiveCommand<void> OpenCommand;
+
+	PdfTabData(const std::wstring& path = std::wstring())
+		:TabData(), Path(path)
+	{
+		OpenCommand.Subscribe([this]() { Open(); });
+	}
+
+	virtual ~PdfTabData() = default;
+
+	void Open() {}
+	void Open(const std::wstring& path) {}
+
+	template<class Archive>
+	void save(Archive & ar)
+	{
+		ar("Path", Path);
+	}
+	template<class Archive>
+	void load(Archive & ar)
+	{
+		ar("Path", Path);
+	}
+};
+
+
 /*************/
 /* CFilerTab */
 /*************/
@@ -158,16 +189,20 @@ class CFilerTabGridView :public CTabControl
 private:
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
+	std::shared_ptr<PdfViewProperty> m_spPdfViewProp;
 
 	std::unique_ptr<CBinding<std::wstring>> m_pTextBinding;
-	std::unique_ptr<CBinding<std::wstring>> m_pPathBinding;
+	std::unique_ptr<CBinding<std::wstring>> m_pTextPathBinding;
+	std::unique_ptr<CBinding<std::wstring>> m_pPdfPathBinding;
 	std::unique_ptr<CBinding<bool>> m_pStatusBinding;
 	std::unique_ptr<CBinding<CPointF>> m_pCaretPosBinding;
 	std::unique_ptr<CBinding<std::tuple<int, int, int, int, int>>> m_pCaretsBinding;
 	std::unique_ptr<CBinding<void>> m_pSaveBinding;
 	std::unique_ptr<CBinding<void>> m_pOpenBinding;
 
-	std::unique_ptr<sigslot::scoped_connection> m_pPathConnection;
+
+	std::unique_ptr<sigslot::scoped_connection> m_pTextPathConnection;
+	std::unique_ptr<sigslot::scoped_connection> m_pPdfPathConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pStatusConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pCloseConnection;
 
@@ -175,7 +210,11 @@ private:
 
 
 public:
-	CFilerTabGridView(CD2DWControl* pParentControl, std::shared_ptr<TabControlProperty> spTabProp, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty, std::shared_ptr<TextEditorProperty>& spTextboxProp);
+	CFilerTabGridView(CD2DWControl* pParentControl,
+		std::shared_ptr<TabControlProperty> spTabProp, 
+		std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty,
+		std::shared_ptr<TextEditorProperty>& spTextboxProp,
+		std::shared_ptr<PdfViewProperty>& spPdfViewProp);
 	virtual ~CFilerTabGridView();
 
 	/***********/
@@ -184,6 +223,7 @@ public:
 	std::function<std::shared_ptr<CFilerGridView>()> GetFilerGridViewPtr;
 	std::function<std::shared_ptr<CToDoGridView>()> GetToDoGridViewPtr;
 	std::function<std::shared_ptr<CTextEditor>()> GetTextViewPtr;
+	std::function<std::shared_ptr<CPdfView>()> GetPdfViewPtr;
 
 	/**************/
 	/* UI Message */
@@ -198,6 +238,7 @@ public:
 	void OnCommandNewFilerTab(const CommandEvent& e);
 	void OnCommandNewToDoTab(const CommandEvent& e);
 	void OnCommandNewTextTab(const CommandEvent& e);
+	void OnCommandNewPdfTab(const CommandEvent& e);
 	void OnCommandAddToFavorite(const CommandEvent& e);
 	void OnCommandOpenSameAsOther(const CommandEvent& e);
 
@@ -209,6 +250,7 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
 		REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData );
 		REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
+		REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 
 		CTabControl::save(ar);
 		ar("FilerView", GetFilerGridViewPtr());
@@ -220,6 +262,7 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
 		REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData);
 		REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
+		REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 
 		CTabControl::load(ar);
 		ar("FilerView", GetFilerGridViewPtr(), this, m_spFilerGridViewProp);

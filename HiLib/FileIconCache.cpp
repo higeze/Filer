@@ -73,8 +73,8 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetBitmapFromIcon(const CIcon& icon)
 	////bitmapProps.colorContext = nullptr;
 
 	CComPtr<ID2D1Bitmap> pBitmap;
-//	HRESULT hr = m_pDirect->GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
-	HRESULT hr = m_pDirect->GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICFormatConverter, nullptr, &pBitmap);
+//	HRESULT hr = m_pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
+	HRESULT hr = m_pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICFormatConverter, nullptr, &pBitmap);
 	if (FAILED(hr)) {
 		throw std::exception(FILE_LINE_FUNC);
 	}

@@ -359,13 +359,11 @@
 		{
 			if (!p) {
 				// Get the back buffer as an IDXGISurface (Direct2D doesn't accept an ID3D11Texture2D directly as a render target)
-				IDXGISurface* dxgiBackBuffer;
+				CComPtr<IDXGISurface> dxgiBackBuffer;
 				GetDXGISwapChain()->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer));
 				// Get screen DPI
 				FLOAT dpiX, dpiY;
-				//TODOHIGH
-				dpiX = dpiY = 96.f;
-				//GetD2D1Factory()->GetDesktopDpi(&dpiX, &dpiY);
+				dpiX = dpiY = static_cast<FLOAT>(::GetDpiForWindow(m_hWnd));
 
 				// Create a Direct2D surface (bitmap) linked to the Direct3D texture back buffer via the DXGI back buffer
 				D2D1_BITMAP_PROPERTIES1 bitmapProperties =
@@ -422,106 +420,6 @@
 	}
 	CDirect2DWrite::~CDirect2DWrite() = default;
 
-
-	//CComPtr<ID2D1Factory1>& CDirect2DWrite::GetD2D1Factory()
-	//{
-	//	if (!m_pD2DFactory) {
-	//		D2D1_FACTORY_OPTIONS options;
-	//		ZeroMemory(&options, sizeof(D2D1_FACTORY_OPTIONS));
-	//		if (FAILED(
-	//			::D2D1CreateFactory(
-	//				D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_MULTI_THREADED,
-	//				__uuidof(ID2D1Factory1),
-	//				&options,
-	//				reinterpret_cast<void**>(&m_pD2DFactory)))) {
-	//			throw std::exception(FILE_LINE_FUNC);
-	//		}
-	//	}
-	//	return m_pD2DFactory;
-	//}
-
-	//CComPtr<IDWriteFactory1>& CDirect2DWrite::GetDWriteFactory()
-	//{
-	//	if (!m_pDWriteFactory) {
-	//		if (FAILED(
-	//			::DWriteCreateFactory(
-	//				DWRITE_FACTORY_TYPE::DWRITE_FACTORY_TYPE_SHARED,
-	//				__uuidof(IDWriteFactory1),
-	//				reinterpret_cast<IUnknown**>(&m_pDWriteFactory)))) {
-	//			throw std::exception(FILE_LINE_FUNC);
-	//		}
-	//	}
-	//	return m_pDWriteFactory;
-	//}
-
-	//CComPtr<IWICImagingFactory2>& CDirect2DWrite::GetWICImagingFactory()
-	//{
-	//	if (!m_pWICImagingFactory) {
-	//		if (FAILED(
-	//			m_pWICImagingFactory.CoCreateInstance(
-	//				CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER))) {
-	//			throw std::exception(FILE_LINE_FUNC);
-	//		}
-	//	}
-	//	return m_pWICImagingFactory;
-	//}
-
-	//CComPtr<ID2D1DeviceContext>& CDirect2DWrite::GetDeviceContext()
-	//{
-	//	if (!m_pD2DDeviceContext) {
-	//		//// Set feature levels supported by our application
-	//		//D3D_FEATURE_LEVEL featureLevels[] =
-	//		//{
-	//		//	D3D_FEATURE_LEVEL_11_1,
-	//		//	D3D_FEATURE_LEVEL_11_0,
-	//		//	D3D_FEATURE_LEVEL_10_1,
-	//		//	D3D_FEATURE_LEVEL_10_0,
-	//		//	D3D_FEATURE_LEVEL_9_3,
-	//		//	D3D_FEATURE_LEVEL_9_2,
-	//		//	D3D_FEATURE_LEVEL_9_1
-	//		//};
-	//		//// This flag adds support for surfaces with a different color channel ordering
-	//		//// than the API default. It is required for compatibility with Direct2D.
-	//		//UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
- //
-	//		// Create Direct3D device and context
-	//		//CComPtr<ID3D11Device> device;
-	//		//CComPtr<ID3D11DeviceContext> context;
-	//		//D3D_FEATURE_LEVEL returnedFeatureLevel;
- //
-	//		//D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, creationFlags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION,
-	//		//					&device, &returnedFeatureLevel, &context);
-	//		//device->QueryInterface(__uuidof(ID3D11Device1), (void **)&m_pD3DDevice);
-	//		//context->QueryInterface(__uuidof(ID3D11DeviceContext1), (void **)&m_pD3DContext);
- //
-	//		//m_pD3DDevice->QueryInterface(__uuidof(IDXGIDevice), (void **)&m_pDXGIDevice);
-	//		//GetD2D1Factory()->CreateDevice(GetDXGIDevice(), &m_pD2DDevice);
-	//		//m_pD2DDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &m_pD2DDeviceContext);
-	//	}
-	//	return m_pD2DDeviceContext;
-	//}
-
-
-	CComPtr<ID2D1DeviceContext>& CDirect2DWrite::GetHwndRenderTarget()
-	{
-		return GetD2DDeviceContext();
-		//if (!m_pHwndRenderTarget) {
-		//	RECT rect;
-		//	::GetClientRect(m_hWnd, &rect);
-		//	D2D1_SIZE_U size = D2D1::Size<UINT>(rect.right, rect.bottom);
-		//	if (FAILED(
-		//		GetD2D1Factory()->CreateHwndRenderTarget(
-		//			D2D1::RenderTargetProperties(),
-		//			//D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE,
-		//			//	D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
-		//			D2D1::HwndRenderTargetProperties(m_hWnd, size),
-		//			&m_pHwndRenderTarget))) {
-		//		throw std::exception(FILE_LINE_FUNC);
-		//	}
-		//}
-		//return m_pHwndRenderTarget;
-	}
-
 	CComPtr<ID2D1SolidColorBrush>& CDirect2DWrite::GetColorBrush(const CColorF& color)
 	{
 		auto iter = m_solidColorBrushMap.find(color);
@@ -529,7 +427,7 @@
 			return iter->second;
 		} else {
 			CComPtr<ID2D1SolidColorBrush> pBrush;
-			if (FAILED(GetHwndRenderTarget()->CreateSolidColorBrush(color, &pBrush))) {
+			if (FAILED(GetD2DDeviceContext()->CreateSolidColorBrush(color, &pBrush))) {
 				throw std::exception(FILE_LINE_FUNC);
 			} else {
 				auto ret = m_solidColorBrushMap.emplace(color, pBrush);
@@ -640,57 +538,18 @@
 	}
 	void CDirect2DWrite::BeginDraw()
 	{
-		GetHwndRenderTarget()->SetTransform(D2D1::Matrix3x2F::Identity());
-		GetHwndRenderTarget()->BeginDraw();
+		GetD2DDeviceContext()->SetTransform(D2D1::Matrix3x2F::Identity());
+		GetD2DDeviceContext()->BeginDraw();
 
 	}
 
 	void CDirect2DWrite::ClearSolid(const SolidFill& fill)
 	{
-		GetHwndRenderTarget()->Clear(fill.Color);
+		GetD2DDeviceContext()->Clear(fill.Color);
 	}
 
 	void CDirect2DWrite::Resize()
 	{
-		// Get the GPU we are using
-		//IDXGIAdapter* dxgiAdapter;
-		//m_pDXGIDevice->GetAdapter(&dxgiAdapter);
-
-		// Get the DXGI factory instance
-		//IDXGIFactory2* dxgiFactory;
-		//dxgiAdapter->GetParent(IID_PPV_ARGS(&dxgiFactory));
-		// Describe Windows 7-compatible Windowed swap chain
-		//DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
-
-		//swapChainDesc.Width = 0;
-		//swapChainDesc.Height = 0;
-		//swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-		//swapChainDesc.Stereo = false;
-		//swapChainDesc.SampleDesc.Count = 1;
-		//swapChainDesc.SampleDesc.Quality = 0;
-		//swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		//swapChainDesc.BufferCount = 2;
-		//swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-		//swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-		//swapChainDesc.Flags = 0;
-		//// Create DXGI swap chain targeting a window handle (the only Windows 7-compatible option)
-		//GetDXGIFactory()->CreateSwapChainForHwnd(std::get<0>(GetD3DDevices()), m_hWnd, &swapChainDesc, nullptr, nullptr, &m_pDXGISwapChain);
-		//// Get the back buffer as an IDXGISurface (Direct2D doesn't accept an ID3D11Texture2D directly as a render target)
-		//IDXGISurface* dxgiBackBuffer;
-		//m_pDXGISwapChain->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer));
-		//// Get screen DPI
-		//FLOAT dpiX, dpiY;
-		////TODOHIGH
-		//dpiX = dpiY = 96.f;
-		////GetD2D1Factory()->GetDesktopDpi(&dpiX, &dpiY);
-
-		//// Create a Direct2D surface (bitmap) linked to the Direct3D texture back buffer via the DXGI back buffer
-		//D2D1_BITMAP_PROPERTIES1 bitmapProperties =
-		//	D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
-		//	D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE), dpiX, dpiY);
-
-		//GetD2DDeviceContext()->CreateBitmapFromDxgiSurface(dxgiBackBuffer, &bitmapProperties, &m_pD2DBackBuffer);
-
 		GetDXGISwapChain() = nullptr;
 		GetD2DBackBuffer() = nullptr;
 
@@ -701,7 +560,7 @@
 
 	void CDirect2DWrite::EndDraw()
 	{
-		HRESULT hr = GetHwndRenderTarget()->EndDraw();
+		HRESULT hr = GetD2DDeviceContext()->EndDraw();
 		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET) {
 			Clear();
 		}
@@ -718,7 +577,7 @@
 
 	void CDirect2DWrite::DrawSolidLine(const SolidLine& line, const D2D1_POINT_2F& p0, const D2D1_POINT_2F& p1)
 	{
-		GetHwndRenderTarget()->DrawLine(LayoutRound(p0), LayoutRound(p1), GetColorBrush(line.Color),line.Width);
+		GetD2DDeviceContext()->DrawLine(LayoutRound(p0), LayoutRound(p1), GetColorBrush(line.Color),line.Width);
 	}
 
 	void CDirect2DWrite::DrawSolidTriangleWave(const SolidLine& line, const D2D1_POINT_2F& startPoint, const D2D1_POINT_2F& endPoint, const FLOAT& amplitude, const FLOAT& period)
@@ -770,7 +629,7 @@
 
 	void CDirect2DWrite::DrawTextLayout(const FormatF& format, const std::wstring& text, const D2D1_POINT_2F& origin, const D2D1_SIZE_F& size)
 	{
-		GetHwndRenderTarget()->DrawTextLayout(origin, GetTextLayout(format, text, size), GetColorBrush(format.Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
+		GetD2DDeviceContext()->DrawTextLayout(origin, GetTextLayout(format, text, size), GetColorBrush(format.Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
 	}
 
 	void CDirect2DWrite::DrawTextLayout(const FormatF& format, const std::wstring& text, const CRectF& rect)
@@ -806,9 +665,9 @@
 		auto top = CPointF(right.x - 0.3f * height * std::cos(deg2rad(45)), centerPoint.y - 0.3f * height * std::sin(deg2rad(45)));
 		auto bottom = CPointF(right.x - 0.3f * height * std::cos(deg2rad(45)), centerPoint.y + 0.3f * height * std::sin(deg2rad(45)));
 
-		GetHwndRenderTarget()->DrawLine(left, right, GetColorBrush(line.Color), line.Width);
-		GetHwndRenderTarget()->DrawLine(right, top, GetColorBrush(line.Color), line.Width);
-		GetHwndRenderTarget()->DrawLine(right, bottom, GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawLine(left, right, GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawLine(right, top, GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawLine(right, bottom, GetColorBrush(line.Color), line.Width);
 
 	}
 
@@ -824,9 +683,9 @@
 		auto left = CPointF(centerPoint.x - 0.3f * height * std::cos(deg2rad(45)), bottom.y - 0.3f * height * std::cos(deg2rad(45)));
 		auto right = CPointF(centerPoint.x + 0.3f * height * std::cos(deg2rad(45)), bottom.y - 0.3f * height * std::cos(deg2rad(45)));
 
-		GetHwndRenderTarget()->DrawLine(top, bottom, GetColorBrush(line.Color), line.Width);
-		GetHwndRenderTarget()->DrawLine(bottom, left, GetColorBrush(line.Color), line.Width);
-		GetHwndRenderTarget()->DrawLine(bottom, right, GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawLine(top, bottom, GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawLine(bottom, left, GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawLine(bottom, right, GetColorBrush(line.Color), line.Width);
 	}
 
 	void CDirect2DWrite::DrawHalfSpace(const SolidLine& line, const CRectF& rc)
@@ -841,18 +700,18 @@
 			line.Width
 		);
 
-		GetHwndRenderTarget()->FillEllipse(&ellipse, GetColorBrush(line.Color));
+		GetD2DDeviceContext()->FillEllipse(&ellipse, GetColorBrush(line.Color));
 	}
 
 	void CDirect2DWrite::DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rc)
 	{
 		auto rect = LayoutRound(rc);
 
-		//GetHwndRenderTarget()->DrawRectangle(LayoutRound(rect), GetColorBrush(line.Color), line.Width);
-		GetHwndRenderTarget()->DrawLine(CPointF(rect.left, rect.top), CPointF(rect.right, rect.top), GetColorBrush(line.Color), line.Width);
-		GetHwndRenderTarget()->DrawLine(CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom), GetColorBrush(line.Color), line.Width);
-		GetHwndRenderTarget()->DrawLine(CPointF(rect.right, rect.bottom), CPointF(rect.left, rect.bottom), GetColorBrush(line.Color), line.Width);
-		GetHwndRenderTarget()->DrawLine(CPointF(rect.left, rect.bottom), CPointF(rect.left, rect.top), GetColorBrush(line.Color), line.Width);
+		//GetD2DDeviceContext()->DrawRectangle(LayoutRound(rect), GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawLine(CPointF(rect.left, rect.top), CPointF(rect.right, rect.top), GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawLine(CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom), GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawLine(CPointF(rect.right, rect.bottom), CPointF(rect.left, rect.bottom), GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawLine(CPointF(rect.left, rect.bottom), CPointF(rect.left, rect.top), GetColorBrush(line.Color), line.Width);
 
 	}
 
@@ -860,28 +719,28 @@
 	{
 		auto roundedrect = D2D1_ROUNDED_RECT{LayoutRound(rect), radiusX, radiusY};
 
-		GetHwndRenderTarget()->DrawRoundedRectangle(roundedrect, GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawRoundedRectangle(roundedrect, GetColorBrush(line.Color), line.Width);
 	}
 
 	void CDirect2DWrite::FillSolidRectangle(const SolidFill& fill, const D2D1_RECT_F& rect)
 	{
-		GetHwndRenderTarget()->FillRectangle(LayoutRound(rect), GetColorBrush(fill.Color));
+		GetD2DDeviceContext()->FillRectangle(LayoutRound(rect), GetColorBrush(fill.Color));
 	}
 
 	void CDirect2DWrite::FillSolidRoundedRectangle(const SolidFill& fill, const D2D1_RECT_F& rect, FLOAT radiusX, FLOAT radiusY)
 	{
 		auto roundedrect = D2D1_ROUNDED_RECT{LayoutRound(rect), radiusX, radiusY};
 
-		GetHwndRenderTarget()->FillRoundedRectangle(roundedrect, GetColorBrush(fill.Color));
+		GetD2DDeviceContext()->FillRoundedRectangle(roundedrect, GetColorBrush(fill.Color));
 	}
 
 	void CDirect2DWrite::DrawSolidGeometry(const SolidLine& line, CComPtr<ID2D1PathGeometry>& path)
 	{
-		GetHwndRenderTarget()->DrawGeometry(path, GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawGeometry(path, GetColorBrush(line.Color), line.Width);
 	}
 	void CDirect2DWrite::FillSolidGeometry(const SolidFill& fill, CComPtr<ID2D1PathGeometry>& path)
 	{
-		GetHwndRenderTarget()->FillGeometry(path, GetColorBrush(fill.Color));
+		GetD2DDeviceContext()->FillGeometry(path, GetColorBrush(fill.Color));
 	}
 
 	void CDirect2DWrite::DrawIcon(HICON hIcon, CRectF& rect)
@@ -912,7 +771,7 @@
 		//bitmapProps.colorContext = nullptr;
 
 		CComPtr<ID2D1Bitmap> pBitmap;
-		HRESULT hr = GetHwndRenderTarget()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
+		HRESULT hr = GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
 		if (FAILED(hr)) {
 			SPDLOG_INFO("Failed");
 			SPDLOG_INFO(fmt::format("{:08X}", (LONG_PTR)hIcon));
@@ -921,7 +780,7 @@
 			throw std::exception(FILE_LINE_FUNC);
 		}
 
-		GetHwndRenderTarget()->DrawBitmap(pBitmap, rect);
+		GetD2DDeviceContext()->DrawBitmap(pBitmap, rect);
 	}
 
 	void CDirect2DWrite::DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap, const CRectF& rect)
@@ -932,7 +791,18 @@
 				std::round(rect.top),
 				std::round(rect.right),
 				std::round(rect.bottom));
-			GetHwndRenderTarget()->DrawBitmap(pBitmap, bmpRect);
+			GetD2DDeviceContext()->DrawBitmap(pBitmap, bmpRect);
+		}
+	}
+	void CDirect2DWrite::DrawBitmap(const CComPtr<ID2D1Bitmap1>& pBitmap, const CRectF& rect)
+	{
+		if (pBitmap) {
+			auto bmpRect = CRectF(
+				std::round(rect.left),
+				std::round(rect.top),
+				std::round(rect.right),
+				std::round(rect.bottom));
+			GetD2DDeviceContext()->DrawBitmap(pBitmap, bmpRect);
 		}
 	}
 
@@ -973,12 +843,12 @@
 	{
 		auto rect = LayoutRound(clipRect);
 		rect.InflateRect(0.5f);
-		GetHwndRenderTarget()->PushAxisAlignedClip(rect, antialiasMode);
+		GetD2DDeviceContext()->PushAxisAlignedClip(rect, antialiasMode);
 	}
 	
 	void CDirect2DWrite::PopAxisAlignedClip()
 	{
-		GetHwndRenderTarget()->PopAxisAlignedClip();
+		GetD2DDeviceContext()->PopAxisAlignedClip();
 	}
 
 
