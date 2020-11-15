@@ -294,6 +294,7 @@
     <ClInclude Include="..\HiLib\MyXMLSerializer.h" />
     <ClInclude Include="..\HiLib\named_arguments.h" />
     <ClInclude Include="..\HiLib\ColumnIndexCell.h" />
+    <ClInclude Include="..\HiLib\Pdf.h" />
     <ClInclude Include="..\HiLib\PdfView.h" />
     <ClInclude Include="..\HiLib\PdfViewStateMachine.h" />
     <ClInclude Include="..\HiLib\ReactiveProperty.h" />
@@ -310,7 +311,6 @@
     <ClInclude Include="..\HiLib\PropertySheetCell.h" />
     <ClInclude Include="..\HiLib\PropertyWnd.h" />
     <ClInclude Include="..\HiLib\ResizeDlg.h" />
-    <ClInclude Include="..\HiLib\resource.h" />
     <ClInclude Include="..\HiLib\ResourceIDFactory.h" />
     <ClInclude Include="..\HiLib\Row.h" />
     <ClInclude Include="..\HiLib\RowColumn.h" />
@@ -344,6 +344,7 @@
     <ClInclude Include="..\HiLib\Unknown.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
+    <ClInclude Include="..\HiLib\HiLibResource.h" />
     <ClInclude Include="CheckableFileGrid.h" />
     <ClInclude Include="DropTarget.h" />
     <ClInclude Include="FileOperationWnd.h" />
@@ -440,6 +441,7 @@
     <ClCompile Include="..\HiLib\MyWnd.cpp" />
     <ClCompile Include="..\HiLib\MyXMLSerializer.cpp" />
     <ClCompile Include="..\HiLib\ColumnIndexCell.cpp" />
+    <ClCompile Include="..\HiLib\Pdf.cpp" />
     <ClCompile Include="..\HiLib\PdfView.cpp" />
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp" />
     <ClCompile Include="..\HiLib\SortCell.cpp" />
@@ -507,6 +509,8 @@
     <None Include="..\HiLib\msxml6.tlh" />
     <None Include="..\HiLib\msxml6.tli" />
     <None Include="..\Release\Filer.exe" />
+    <None Include="HandGrab.cur" />
+    <None Include="HandOpen.cur" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

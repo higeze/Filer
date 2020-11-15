@@ -1,8 +1,11 @@
 #include "PdfView.h"
+#include "Pdf.h"
 #include "D2DWWindow.h"
 #include "Scroll.h"
 #include "Debug.h"
 #include <functional>
+#include "ThreadPool.h"
+#include "HiLibResource.h"
 
 CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewProperty>& pProp)
 	:CD2DWControl(pParentControl),
@@ -16,14 +19,6 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	m_scale.Subscribe([this](const FLOAT& value)
 	{
 		if (m_pdfDocument) {
-
-			UINT count;
-			FAILED_THROW(m_pdfDocument->get_PageCount(&count));
-			m_pdfPages.clear();
-			m_pdfBmps.clear();
-			m_pdfPages.assign(count, nullptr);
-			m_pdfBmps.assign(count, nullptr);
-
 			if (m_prevScale) {
 				m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() * value / m_prevScale);
 				m_pHScroll->SetScrollPos(m_pHScroll->GetScrollPos() * value / m_prevScale);
@@ -68,24 +63,9 @@ void CPdfView::OnCreate(const CreateEvt& e)
         sz = CSizeF();
         if (!m_pdfDocument) { return sz; }
 
-        CSizeF lastSize;
-        for(size_t i = 0; i<m_pdfPages.size(); i++){
-            if (i == 0 && !m_pdfPages[i]) {
-				FAILED_THROW(m_pdfDocument->GetPage(i, &m_pdfPages[i]));
-            }
-
-            ABI::Windows::Foundation::Size pdfPageSize;
-            if (!m_pdfPages[i]) {
-                pdfPageSize.Width = lastSize.width;
-                pdfPageSize.Height = lastSize.height;
-            } else {
-				FAILED_THROW(m_pdfPages[i]->get_Size(&pdfPageSize));
-            }
-
-            lastSize.width = pdfPageSize.Width;
-            lastSize.height = pdfPageSize.Height;
-            sz.width = (std::max)(sz.width, pdfPageSize.Width);
-            sz.height += pdfPageSize.Height;
+        for(const auto& pPage : m_pdfPages){
+            sz.width = (std::max)(sz.width, pPage->GetSourceSize().width);
+            sz.height += pPage->GetSourceSize().height;
         }
         return sz;
     };
@@ -124,108 +104,34 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 
 	//PaintBackground
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
-	//Paint Focused Line
-	if (GetIsFocused() ){
-		CRectF rcFocus(GetRectInWnd());
-		rcFocus.DeflateRect(1.0f, 1.0f);
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->FocusedLine), rcFocus);
-	}
 
 	//PaintContent
 	if (m_pdfDocument != nullptr) {
 		CPointF lefttopInWnd = GetRenderRectInWnd().LeftTop();
 		CPointF lefttopInRender = CPointF(-m_pHScroll->GetScrollPos(), -m_pVScroll->GetScrollPos());
 
-		m_pdfPages.clear();
-		UINT count;
-		m_pdfDocument->get_PageCount(&count);
-		m_pdfPages.assign(count, nullptr);
-
-		for (size_t pageNum = 0; pageNum < m_pdfPages.size(); pageNum++) {
-			if (m_pdfPages[pageNum] == nullptr) {
-				FAILED_THROW(m_pdfDocument->GetPage(pageNum, &m_pdfPages[pageNum]));
-			}
-
-			ABI::Windows::Foundation::Size pdfPageSize;
-			m_pdfPages[pageNum]->get_Size(&pdfPageSize);
-
-			PDF_RENDER_PARAMS params = PdfRenderParams(
-				D2D1::RectF(0.f, 0.f, pdfPageSize.Width, pdfPageSize.Height),
-				pdfPageSize.Width * m_scale.get(),
-				pdfPageSize.Height * m_scale.get());
-
-			//if ((lefttopInRender.y >= 0 && lefttopInRender.y <= GetRenderSize().height) ||
-			//   (lefttopInRender.y + params.DestinationHeight >= 0 && lefttopInRender.y + params.DestinationHeight <= GetRenderSize().height)) {
-
-			//	D2D_MATRIX_3X2_F mat{ 1.f, 0, 0, 1.f,  lefttopInWnd.x + lefttopInRender.x, lefttopInWnd.y + lefttopInRender.y };
-			//	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetTransform(mat);
-			//	GetPdfRenderer()->RenderPageToDeviceContext(
-			//		m_pdfPages[pageNum], GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext(), &params);
-			//	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetTransform(D2D1::Matrix3x2F::Identity());
-			//}
-
-			//lefttopInRender.y += params.DestinationHeight;
-			//if (lefttopInRender.y > GetRenderSize().height) {
-			//	break;
-			//}
+		for (const auto& pPage : m_pdfPages) {
 			if ((lefttopInRender.y >= 0 && lefttopInRender.y <= GetRenderSize().height) ||
-				(lefttopInRender.y + params.DestinationHeight >= 0 && lefttopInRender.y + params.DestinationHeight <= GetRenderSize().height) ||
-				(lefttopInRender.y <= 0 && lefttopInRender.y + params.DestinationHeight >= GetRenderSize().height)) {
+				(lefttopInRender.y + pPage->GetSourceSize().height * m_scale.get() >= 0 && lefttopInRender.y + pPage->GetSourceSize().height * m_scale.get() <= GetRenderSize().height) ||
+				(lefttopInRender.y <= 0 && lefttopInRender.y + pPage->GetSourceSize().height * m_scale.get() >= GetRenderSize().height)) {
 
-				if (m_pdfBmps[pageNum] == nullptr) {
-					CComPtr<IRandomAccessStream> pMemStream;
-					Microsoft::WRL::Wrappers::HStringReference inmemoryname(RuntimeClass_Windows_Storage_Streams_InMemoryRandomAccessStream);
-					Windows::Foundation::ActivateInstance(inmemoryname.Get(), &pMemStream);
-
-					CComPtr<IPdfPageRenderOptions> pOptions;
-					Microsoft::WRL::Wrappers::HStringReference optionsname(RuntimeClass_Windows_Data_Pdf_PdfPageRenderOptions);
-					Windows::Foundation::ActivateInstance(optionsname.Get(), &pOptions);
-					pOptions->put_SourceRect(ABI::Windows::Foundation::Rect{ 0.f, 0.f, pdfPageSize.Width, pdfPageSize.Height });
-					pOptions->put_DestinationWidth(pdfPageSize.Width * m_scale.get());
-					pOptions->put_DestinationHeight(pdfPageSize.Height * m_scale.get());
-
-					CComPtr<IAsyncAction> async;
-
-					m_pdfPages[pageNum]->RenderWithOptionsToStreamAsync(
-						pMemStream,
-						pOptions,
-						&async);
-
-					auto callback = Callback<IAsyncActionCompletedHandler>(
-					[this, p = pMemStream, n = pageNum](_In_ IAsyncAction* asyncInfo, AsyncStatus status)
-					{
-						if (m_pdfBmps[n] == nullptr) {
-							HRESULT hr;
-							CComPtr<IStream> pStream;
-							hr = CreateStreamOverRandomAccessStream(p, IID_PPV_ARGS(&pStream));
-							CComPtr<IWICBitmapDecoder> pWicBitmapDecoder;
-							hr = GetWndPtr()->GetDirectPtr()->GetWICImagingFactory()->CreateDecoderFromStream(pStream, nullptr, WICDecodeMetadataCacheOnLoad, &pWicBitmapDecoder);
-							CComPtr<IWICBitmapFrameDecode> pWicBitmapFrameDecode;
-							hr = pWicBitmapDecoder->GetFrame(0, &pWicBitmapFrameDecode);
-							CComPtr<IWICBitmapSource> pWicBitmapSource;
-							WICPixelFormatGUID wicPixcelFormat = GUID_WICPixelFormat32bppPBGRA;
-							hr = WICConvertBitmapSource(wicPixcelFormat, pWicBitmapFrameDecode, &pWicBitmapSource);
-							UINT imageWidth, imageHeight;
-							pWicBitmapSource->GetSize(&imageWidth, &imageHeight);
-							hr = GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWicBitmapSource, &m_pdfBmps[n]);
-							GetWndPtr()->InvalidateRect(NULL, FALSE);
-						}
-
-						return 0;
-					});
-					async->put_Completed(callback.Get());
-				} else {
-					GetWndPtr()->GetDirectPtr()->DrawBitmap(m_pdfBmps[pageNum], 
-						CRectF(
-							lefttopInWnd.x + lefttopInRender.x,
-							lefttopInWnd.y + lefttopInRender.y,
-							lefttopInWnd.x + lefttopInRender.x + params.DestinationWidth,
-							lefttopInWnd.y + lefttopInRender.y + params.DestinationHeight));
+				auto pair = pPage->GetBitmap([this]() { GetWndPtr()->InvalidateRect(NULL, FALSE); });
+				auto rect = CRectF(
+								lefttopInWnd.x + lefttopInRender.x,
+								lefttopInWnd.y + lefttopInRender.y,
+								lefttopInWnd.x + lefttopInRender.x + pPage->GetSourceSize().width * m_scale.get(),
+								lefttopInWnd.y + lefttopInRender.y + pPage->GetSourceSize().height * m_scale.get());
+				switch (pair.second) {
+					case PdfBmpStatus::Available:
+						GetWndPtr()->GetDirectPtr()->DrawBitmap(pair.first, rect);
+						break;
+					default:
+						GetWndPtr()->GetDirectPtr()->DrawTextInRect(*m_pProp->Format, L"Loading...", rect);
+						break;
 				}
-
 			}
 
-			lefttopInRender.y += params.DestinationHeight;
+			lefttopInRender.y += pPage->GetSourceSize().height * m_scale.get();
 			if (lefttopInRender.y > GetRenderSize().height) {
 				break;
 			}
@@ -236,6 +142,13 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	UpdateScroll();
 	m_pVScroll->OnPaint(e);
 	m_pHScroll->OnPaint(e);
+
+	//Paint Focused Line
+	if (GetIsFocused() ){
+		CRectF rcFocus(GetRectInWnd());
+		rcFocus.DeflateRect(1.0f, 1.0f);
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->FocusedLine), rcFocus);
+	}
 
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
 }
@@ -255,6 +168,18 @@ void CPdfView::Normal_KeyDown(const KeyDownEvent& e)
 	}
 }
 
+void CPdfView::Normal_SetCursor(const SetCursorEvent& e)
+{
+	if (VScrl_Guard_SetCursor(e) || (HScrl_Guard_SetCursor(e))) {
+		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
+		*(e.HandledPtr) = TRUE;
+	} else {
+		HCURSOR hCur = ::LoadCursor(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_CURSOR_HANDOPEN));
+		::SetCursor(hCur);
+		*(e.HandledPtr) = TRUE;
+	}
+}
+
 /***************/
 /* VScrollDrag */
 /***************/
@@ -268,9 +193,13 @@ void CPdfView::VScrlDrag_OnExit(const LButtonEndDragEvent& e)
 	m_pVScroll->SetState(UIElementState::Normal);
 	m_pVScroll->SetStartDrag(0.f);
 }
+bool CPdfView::VScrl_Guard_SetCursor(const SetCursorEvent& e)
+{
+	return m_pVScroll->GetIsVisible() && m_pVScroll->GetThumbRect().PtInRect(GetWndPtr()->GetCursorPosInWnd());
+}
 bool CPdfView::VScrlDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
 {
-	return m_pVScroll->GetIsVisible() && m_pVScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	return m_pVScroll->GetIsVisible() && m_pVScroll->GetThumbRect().PtInRect(e.PointInWnd);
 }
 void CPdfView::VScrlDrag_MouseMove(const MouseMoveEvent& e)
 {
@@ -282,6 +211,12 @@ void CPdfView::VScrlDrag_MouseMove(const MouseMoveEvent& e)
 	m_pVScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
 }
 
+void CPdfView::VScrlDrag_SetCursor(const SetCursorEvent& e)
+{
+	HCURSOR hCur = ::LoadCursor(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_CURSOR_HANDOPEN));
+	::SetCursor(hCur);
+	*(e.HandledPtr) = TRUE;
+}
 
 /***************/
 /* HScrollDrag */
@@ -297,10 +232,13 @@ void CPdfView::HScrlDrag_OnExit(const LButtonEndDragEvent& e)
 	m_pHScroll->SetState(UIElementState::Normal);
 	m_pHScroll->SetStartDrag(0.f);
 }
-
+bool CPdfView::HScrl_Guard_SetCursor(const SetCursorEvent& e)
+{
+	return m_pHScroll->GetIsVisible() && m_pHScroll->GetThumbRect().PtInRect(GetWndPtr()->GetCursorPosInWnd());
+}
 bool CPdfView::HScrlDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
 {
-	return m_pHScroll->GetIsVisible() && m_pHScroll->GetThumbRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+	return m_pHScroll->GetIsVisible() && m_pHScroll->GetThumbRect().PtInRect(e.PointInWnd);
 }
 
 void CPdfView::HScrlDrag_MouseMove(const MouseMoveEvent& e)
@@ -311,6 +249,13 @@ void CPdfView::HScrlDrag_MouseMove(const MouseMoveEvent& e)
 		m_pHScroll->GetScrollDistance() /
 		m_pHScroll->GetRectInWnd().Width());
 	m_pHScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
+}
+
+void CPdfView::HScrlDrag_SetCursor(const SetCursorEvent& e)
+{
+	HCURSOR hCur = ::LoadCursor(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_CURSOR_HANDOPEN));
+	::SetCursor(hCur);
+	*(e.HandledPtr) = TRUE;
 }
 
 /***********/
@@ -338,6 +283,15 @@ void CPdfView::Panning_MouseMove(const MouseMoveEvent& e)
 		m_pVScroll->GetScrollPos() + m_pVScroll->GetStartDrag() - e.PointInWnd.y);
 	m_pVScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
 
+	HCURSOR hCur = ::LoadCursor(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_CURSOR_HANDGRAB));
+	::SetCursor(hCur);
+}
+
+void CPdfView::Panning_SetCursor(const SetCursorEvent& e)
+{
+	HCURSOR hCur = ::LoadCursor(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_CURSOR_HANDGRAB));
+	::SetCursor(hCur);
+	*(e.HandledPtr) = TRUE;
 }
 
 void CPdfView::Error_StdException(const std::exception& e)
@@ -381,8 +335,6 @@ void CPdfView::Open(const std::wstring& path)
 {
 	GetPath().set(path);
 	m_pdfDocument = nullptr;
-	m_pdfPages.clear();
-	m_pdfBmps.clear();
 
 	CComPtr<IRandomAccessStream> s;
 	auto hr = CreateRandomAccessStreamOnFile(
@@ -407,15 +359,18 @@ void CPdfView::Open(const std::wstring& path)
 		auto hr = async->GetResults(&doc);
 		if (SUCCEEDED(hr)) {
 			m_pdfDocument = std::move(doc);
-			UINT count;
+			UINT32 count;
 			m_pdfDocument->get_PageCount(&count);
-			m_pdfPages.assign(count, nullptr);
-			m_pdfBmps.assign(count, nullptr);
-
-			FAILED_THROW(m_pdfDocument->GetPage(0, &m_pdfPages[0]));
+			m_pdfPages.clear();
+			for (UINT32 i = 0; i < count; i++) {
+				m_pdfPages.push_back(std::make_unique<CPdfPage>(GetWndPtr()->GetDirectPtr(), m_pdfDocument, i));
+			}
+			
+			CComPtr<IPdfPage> pdfPage;
+			FAILED_THROW(m_pdfDocument->GetPage(0, &pdfPage));
 
             ABI::Windows::Foundation::Size pdfPageSize;
-            m_pdfPages[0]->get_Size(&pdfPageSize);
+            pdfPage->get_Size(&pdfPageSize);
 
 			FLOAT scaleX = GetRenderSize().width / pdfPageSize.Width;
             FLOAT scaleY = GetRenderSize().height / pdfPageSize.Height;

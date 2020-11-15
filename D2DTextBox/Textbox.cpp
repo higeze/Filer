@@ -763,7 +763,7 @@ void CTextBox::Normal_Char(const CharEvent& e)
 
 void CTextBox::Normal_SetCursor(const SetCursorEvent& e)
 {
-	CPointF pt = GetWndPtr()->GetDirectPtr()->Pixels2Dips((GetWndPtr()->GetCursorPosInClient()));
+	CPointF pt = GetWndPtr()->GetCursorPosInWnd();
 	if (GetRectInWnd().PtInRect(pt)) {
 		if (m_pVScroll->GetIsVisible() && m_pVScroll->GetRectInWnd().PtInRect(pt) ||
 			m_pHScroll->GetIsVisible() && m_pHScroll->GetRectInWnd().PtInRect(pt)) {

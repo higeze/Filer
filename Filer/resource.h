@@ -1,4 +1,5 @@
 #include "FindDlgResource.h"
+#include "HiLibResource.h"
 
 #ifndef IDC_STATIC
 #define IDC_STATIC (-1)
@@ -9,7 +10,7 @@
 #define IDD_ABOUTME                             164
 #define IDR_ACCEL_FILER                         167
 #define IDR_MENU_FILER                          170
-#define IDR_CONTEXTMENU_TAB							171
+#define IDR_CONTEXTMENU_TAB						171
 #define IDM_ABOUTME                             40000
 #define IDM_SAVE                                40001
 #define IDM_OPEN                                40003

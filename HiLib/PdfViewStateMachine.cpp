@@ -29,6 +29,9 @@ struct CPdfViewStateMachine::Machine
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CPdfView::HScrlDrag_Guard_LButtonBeginDrag)] = state<HScrlDrag>,	
 			state<Normal> +event<LButtonBeginDragEvent> = state<Panning>,
 
+			//state<Normal> +event<LButtonDownEvent>[call(&CPdfView::VScrlDrag_Guard_LButtonDown)] = state<VScrlDrag>,
+			//state<Normal> +event<LButtonDownEvent>[call(&CPdfView::HScrlDrag_Guard_LButtonDown)] = state<HScrlDrag>,	
+			//state<Normal> +event<LButtonDownEvent> = state<Panning>,
 			state<Normal> +event<LButtonDownEvent> / call(&CPdfView::Normal_LButtonDown),
 			state<Normal> +event<LButtonUpEvent> / call(&CPdfView::Normal_LButtonUp),
 			state<Normal> +event<LButtonClkEvent> / call(&CPdfView::Normal_LButtonClk),
@@ -38,8 +41,6 @@ struct CPdfViewStateMachine::Machine
 			state<Normal> +event<MouseMoveEvent> / call(&CPdfView::Normal_MouseMove),
 			state<Normal> +event<MouseLeaveEvent> / call(&CPdfView::Normal_MouseLeave),
 			state<Normal> +event<ContextMenuEvent> / call(&CPdfView::Normal_ContextMenu),
-			//state<Normal> +event<SetCursorEvent>[call(&D2DTextbox::VScrl_Guard_SetCursor)] / call(&D2DTextbox::VScrl_SetCursor),
-			//state<Normal> +event<SetCursorEvent>[call(&D2DTextbox::HScrl_Guard_SetCursor)] / call(&D2DTextbox::HScrl_SetCursor),
 			state<Normal> +event<SetCursorEvent> / call(&CPdfView::Normal_SetCursor),
 			state<Normal> +event<KeyDownEvent> / call(&CPdfView::Normal_KeyDown),
 			state<Normal> +event<CharEvent> / call(&CPdfView::Normal_Char),
@@ -49,20 +50,38 @@ struct CPdfViewStateMachine::Machine
 			//VScrlDrag
 			state<VScrlDrag> +on_entry<LButtonBeginDragEvent> / call(&CPdfView::VScrlDrag_OnEntry),
 			state<VScrlDrag> +on_exit<LButtonEndDragEvent> / call(&CPdfView::VScrlDrag_OnExit),
+			//state<VScrlDrag> +on_entry<LButtonDownEvent> / call(&CPdfView::VScrlDrag_OnEntry),
+			//state<VScrlDrag> +on_exit<LButtonUpEvent> / call(&CPdfView::VScrlDrag_OnExit),
+
 			state<VScrlDrag> +event<LButtonEndDragEvent> = state<Normal>,
+			//state<VScrlDrag> +event<LButtonUpEvent> = state<Normal>,
+
 			state<VScrlDrag> +event<MouseMoveEvent> / call(&CPdfView::VScrlDrag_MouseMove),
+			state<VScrlDrag> +event<SetCursorEvent> / call(&CPdfView::VScrlDrag_SetCursor),
 			state<VScrlDrag> +event<PaintEvent> / call(&CPdfView::Normal_Paint),
 			//HScrlDrag
 			state<HScrlDrag> +on_entry<LButtonBeginDragEvent> / call(&CPdfView::HScrlDrag_OnEntry),
 			state<HScrlDrag> +on_exit<LButtonEndDragEvent> / call(&CPdfView::HScrlDrag_OnExit),
+			//state<VScrlDrag> +on_entry<LButtonDownEvent> / call(&CPdfView::VScrlDrag_OnEntry),
+			//state<VScrlDrag> +on_exit<LButtonUpEvent> / call(&CPdfView::VScrlDrag_OnExit),
+
 			state<HScrlDrag> +event<LButtonEndDragEvent> = state<Normal>,
+			//state<HScrlDrag> +event<LButtonUpEvent> = state<Normal>,
+
 			state<HScrlDrag> +event<MouseMoveEvent> / call(&CPdfView::HScrlDrag_MouseMove),
+			state<HScrlDrag> +event<SetCursorEvent> / call(&CPdfView::HScrlDrag_SetCursor),
 			state<HScrlDrag> +event<PaintEvent> / call(&CPdfView::Normal_Paint),
 			//Panning
 			state<Panning> +on_entry<LButtonBeginDragEvent> / call(&CPdfView::Panning_OnEntry),
 			state<Panning> +on_exit<LButtonEndDragEvent> / call(&CPdfView::Panning_OnExit),
+			//state<VScrlDrag> +on_entry<LButtonDownEvent> / call(&CPdfView::VScrlDrag_OnEntry),
+			//state<VScrlDrag> +on_exit<LButtonUpEvent> / call(&CPdfView::VScrlDrag_OnExit),
+
 			state<Panning> +event<LButtonEndDragEvent> = state<Normal>,
+			//state<Panning> +event<LButtonUpEvent> = state<Normal>,
+
 			state<Panning> +event<MouseMoveEvent> / call(&CPdfView::Panning_MouseMove),
+			state<Panning> +event<SetCursorEvent> / call(&CPdfView::Panning_SetCursor),
 			state<Panning> +event<PaintEvent> / call(&CPdfView::Normal_Paint),
 
 			//Error handler

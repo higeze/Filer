@@ -323,9 +323,6 @@
     <ClInclude Include="..\HiLib\ResizeDlg.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\resource.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\Row.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -653,6 +650,12 @@
     <ClInclude Include="..\HiLib\IStateMachine.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\HiLibResource.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\Pdf.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -964,6 +967,9 @@
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
+    <ClCompile Include="..\HiLib\Pdf.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\HiLib\msxml6.tli">
@@ -977,6 +983,12 @@
     </None>
     <None Include="..\Release\Filer.exe">
       <Filter>Release</Filter>
+    </None>
+    <None Include="HandGrab.cur">
+      <Filter>Resource</Filter>
+    </None>
+    <None Include="HandOpen.cur">
+      <Filter>Resource</Filter>
     </None>
   </ItemGroup>
 </Project>

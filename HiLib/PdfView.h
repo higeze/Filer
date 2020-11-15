@@ -40,12 +40,17 @@ using namespace ABI::Windows::Storage::Streams;
 using namespace Microsoft::WRL;
 //using namespace Microsoft::WRL::Wrappers;
 
+#include <future>
+#include <mutex>
+
+class CPdfPage;
 class CVScroll;
 class CHScroll;
 
 struct PdfViewProperty
 {
 public:
+	std::shared_ptr<FormatF> Format;
 	std::shared_ptr<SolidLine> FocusedLine;
 	std::shared_ptr<SolidFill> NormalFill;
 	std::shared_ptr<CRectF> Padding;
@@ -54,7 +59,8 @@ public:
 
 public:
 	PdfViewProperty()
-		:FocusedLine(std::make_shared<SolidLine>(22.f/255.f, 160.f/255.f, 133.f/255.f, 1.0f, 1.0f)),
+		:Format(std::make_shared<FormatF>(L"Meiryo UI", CDirect2DWrite::Points2Dips(9),  0.0f, 0.0f, 0.0f, 1.0f)),
+		FocusedLine(std::make_shared<SolidLine>(22.f/255.f, 160.f/255.f, 133.f/255.f, 1.0f, 1.0f)),
 		NormalFill(std::make_shared<SolidFill>(246.f/255.f, 246.f/255.f, 246.f/255.f, 1.0f)),
 		Padding(std::make_shared<CRectF>(2.0f,2.0f,2.0f,2.0f)),
 		VScrollPropPtr(std::make_shared<ScrollProperty>()),
@@ -98,8 +104,8 @@ protected:
 	std::unique_ptr<CHScroll> m_pHScroll;
 
 	CComPtr<IPdfDocument> m_pdfDocument;
-    std::vector<CComPtr<ABI::Windows::Data::Pdf::IPdfPage>> m_pdfPages;
-    std::vector<CComPtr<ID2D1Bitmap1>> m_pdfBmps;
+    std::vector<std::unique_ptr<CPdfPage>> m_pdfPages;
+   // std::vector<CComPtr<ID2D1Bitmap1>> m_pdfBmps;
 
 	std::unique_ptr<CPdfViewStateMachine> m_pMachine;
 
@@ -147,7 +153,7 @@ public:
 	/* SM Message */
 	/**************/
 	virtual void Normal_Paint(const PaintEvent& e);
-	virtual void Normal_LButtonDown(const LButtonDownEvent& e) { /*Do nothing*/ }
+	virtual void Normal_LButtonDown(const LButtonDownEvent& e){ /*Do nothing*/ }
 	virtual void Normal_LButtonUp(const LButtonUpEvent& e) { /*Do nothing*/ }
 	virtual void Normal_LButtonClk(const LButtonClkEvent& e) { /*Do nothing*/ }
 	virtual void Normal_LButtonSnglClk(const LButtonSnglClkEvent& e) { /*Do nothing*/ }
@@ -155,7 +161,7 @@ public:
 	virtual void Normal_RButtonDown(const RButtonDownEvent& e) { /*Do nothing*/ }
 	virtual void Normal_MouseMove(const MouseMoveEvent& e) { /*Do nothing*/ }
 	virtual void Normal_MouseLeave(const MouseLeaveEvent& e) { /*Do nothing*/ }
-	virtual void Normal_SetCursor(const SetCursorEvent& e) { /*Do nothing*/ }
+	virtual void Normal_SetCursor(const SetCursorEvent& e);
 	virtual void Normal_ContextMenu(const ContextMenuEvent& e) { /*Do nothing*/ }
 	virtual void Normal_KeyDown(const KeyDownEvent& e);
 	virtual void Normal_Char(const CharEvent& e) { /*Do nothing*/ }
@@ -165,16 +171,21 @@ public:
 	virtual void VScrlDrag_OnEntry(const LButtonBeginDragEvent& e);
 	virtual void VScrlDrag_OnExit(const LButtonEndDragEvent& e);
 	virtual void VScrlDrag_MouseMove(const MouseMoveEvent& e);
+	virtual void VScrlDrag_SetCursor(const SetCursorEvent& e);
+	virtual bool VScrl_Guard_SetCursor(const SetCursorEvent& e);
 	virtual bool VScrlDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
 
 	virtual void HScrlDrag_OnEntry(const LButtonBeginDragEvent& e);
 	virtual void HScrlDrag_OnExit(const LButtonEndDragEvent& e);
 	virtual void HScrlDrag_MouseMove(const MouseMoveEvent& e);
+	virtual void HScrlDrag_SetCursor(const SetCursorEvent& e);
+	virtual bool HScrl_Guard_SetCursor(const SetCursorEvent& e);
 	virtual bool HScrlDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
 
 	virtual void Panning_OnEntry(const LButtonBeginDragEvent& e);
 	virtual void Panning_OnExit(const LButtonEndDragEvent& e);
 	virtual void Panning_MouseMove(const MouseMoveEvent& e);
+	virtual void Panning_SetCursor(const SetCursorEvent& e);
 
 	virtual void Error_StdException(const std::exception& e);
 
