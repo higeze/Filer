@@ -1,5 +1,6 @@
 #pragma once
 #include "ReactiveProperty.h"
+#include "Debug.h"
 #include "atlcomcli.h"
 #include <msctf.h>
 #include <cstdlib>
@@ -28,7 +29,8 @@
 //TODOHIGH
 namespace abipdf = ABI::Windows::Data::Pdf;
 namespace abifoundation = ABI::Windows::Foundation;
-namespace abistream = ABI::Windows::Storage::Streams;
+namespace abistorage = ABI::Windows::Storage;
+namespace abistreams = ABI::Windows::Storage::Streams;
 namespace winfoundation = Windows::Foundation;
 namespace wrl = Microsoft::WRL;
 namespace wrlwrappers = Microsoft::WRL::Wrappers;
@@ -39,7 +41,62 @@ namespace wrlwrappers = Microsoft::WRL::Wrappers;
 class CVScroll;
 class CHScroll;
 class CDirect2DWrite;
+class CPdf;
+class CPdfPage;
 struct CSizeF;
+
+enum class PdfDocStatus
+{
+	None,
+	Available,
+	Loading,
+	Unavailable,
+};
+
+
+class CPdf
+{
+private:
+	CDirect2DWrite* m_pDirect;
+	std::pair<CComPtr<abipdf::IPdfDocument>, PdfDocStatus>  m_document;
+	std::mutex m_mtxDoc;
+	std::shared_ptr<bool> m_spCancelThread;
+	std::future<void> m_future;
+	std::vector<std::unique_ptr<CPdfPage>> m_pages;
+public:
+	CPdf(CDirect2DWrite* pDirect);
+	virtual ~CPdf();
+
+	CDirect2DWrite* GetDirectPtr() { return m_pDirect; }
+	std::function<CSizeF&()> GetSourceSize;
+
+	void Load(const std::wstring& path, std::function<void()> changed);
+	void Clear();
+	std::pair<CComPtr<abipdf::IPdfDocument>, PdfDocStatus> GetDocument()
+	{
+		return GetLockDocument();
+	}
+
+	UINT32 GetPageCount()const { return m_pages.size(); }
+	std::unique_ptr<CPdfPage>& GetPage(UINT32 index)
+	{
+		FALSE_THROW(GetPageCount() && 0 <= index && index < GetPageCount());
+		return m_pages[index];
+	}
+private:
+	std::pair<CComPtr<abipdf::IPdfDocument>, PdfDocStatus> GetLockDocument()
+	{
+		std::lock_guard<std::mutex> lock(m_mtxDoc);
+		return m_document;
+	}
+	void SetLockDocument(std::pair<CComPtr<abipdf::IPdfDocument>, PdfDocStatus>& document)
+	{
+		std::lock_guard<std::mutex> lock(m_mtxDoc);
+		m_document = document;
+	}
+
+
+};
 
 enum class PdfBmpStatus
 {
@@ -53,23 +110,24 @@ class CPdfPage
 {
 private:
 	/* Field */
-	CDirect2DWrite* m_pDirect;
-	CComPtr<abipdf::IPdfDocument> m_pDoc;
+	CPdf* m_pPdf;
 	UINT32 m_pageIndex;
 	std::mutex m_mtxBmp;
 	std::shared_ptr<bool> m_spCancelThread;
+	std::future<void> m_future;
 	std::pair<CComPtr<ID2D1Bitmap1>, PdfBmpStatus> m_bmp;
 public:
 	/* Constructor/Destructor */
-	CPdfPage(CDirect2DWrite* pDirect, CComPtr<abipdf::IPdfDocument> pDoc, UINT32 pageIndex);
+	CPdfPage(CPdf* pDoc, UINT32 pageIndex);
 	virtual ~CPdfPage();
 	/* Closure */
-	std::function<CSizeF()> GetSourceSize;
+	std::function<CSizeF&()> GetSourceSize;
 	/* Member function */
 	std::pair<CComPtr<ID2D1Bitmap1>, PdfBmpStatus> GetBitmap(std::function<void()> changed);
 
 private:
-	void LoadBitmap(std::function<void()> changed);
+	void Load(std::function<void()> changed);
+	void Clear();
 	std::pair<CComPtr<ID2D1Bitmap1>, PdfBmpStatus> GetLockBitmap()
 	{
 		std::lock_guard<std::mutex> lock(m_mtxBmp);

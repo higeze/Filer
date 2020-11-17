@@ -33,16 +33,19 @@
 
 
 //TODOHIGH
-using namespace ABI::Windows::Data::Pdf;
-using namespace ABI::Windows::Foundation;
-using namespace ABI::Windows::Storage;
-using namespace ABI::Windows::Storage::Streams;
-using namespace Microsoft::WRL;
-//using namespace Microsoft::WRL::Wrappers;
+namespace abipdf = ABI::Windows::Data::Pdf;
+namespace abifoundation = ABI::Windows::Foundation;
+namespace abistorage = ABI::Windows::Storage;
+namespace abistreams = ABI::Windows::Storage::Streams;
+namespace winfoundation = Windows::Foundation;
+namespace wrl = Microsoft::WRL;
+namespace wrlwrappers = Microsoft::WRL::Wrappers;
+
 
 #include <future>
 #include <mutex>
 
+class CPdf;
 class CPdfPage;
 class CVScroll;
 class CHScroll;
@@ -103,8 +106,8 @@ protected:
 	std::unique_ptr<CVScroll> m_pVScroll;
 	std::unique_ptr<CHScroll> m_pHScroll;
 
-	CComPtr<IPdfDocument> m_pdfDocument;
-    std::vector<std::unique_ptr<CPdfPage>> m_pdfPages;
+	std::unique_ptr<CPdf> m_pdf;
+    //std::vector<std::unique_ptr<CPdfPage>> m_pdfPages;
    // std::vector<CComPtr<ID2D1Bitmap1>> m_pdfBmps;
 
 	std::unique_ptr<CPdfViewStateMachine> m_pMachine;
@@ -120,10 +123,9 @@ public:
 	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
 	
 	std::function<CComPtr<IPdfRendererNative>& ()> GetPdfRenderer;
-	std::function<CRectF&()> GetRenderRectInWnd;
-	std::function<CSizeF&()> GetRenderSize;
-	std::function<CSizeF&()> GetRealContentSize;
-	std::function<CSizeF&()> GetRenderContentSize;
+	CRectF GetRenderRectInWnd();
+	CSizeF GetRenderSize();
+	CSizeF GetRenderContentSize();
 
 
 public:
