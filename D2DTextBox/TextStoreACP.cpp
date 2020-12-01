@@ -1,4 +1,3 @@
-#include "text_stdafx.h"
 #include <initguid.h>
 #include <InputScope.h>
 #include <tsattrs.h>

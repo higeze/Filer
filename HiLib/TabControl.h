@@ -36,9 +36,9 @@ struct TabControlProperty
 
 struct TabData
 {
-	ReactiveCommand<void> CloseCommand;
+	std::function<bool()> ClosingFunction;
 
-	TabData(){}
+	TabData() :ClosingFunction([]()->bool { return true; }) {}
 	virtual ~TabData() = default;
 
 	//In case of REGISTER_POLYMORPHIC_RELATION, Base and Derived class have to be same function structure
@@ -82,6 +82,7 @@ public:
 
 	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
+	virtual void OnClosing(const ClosingEvent& e);
 	virtual void OnClose(const CloseEvent& e);
 	virtual void OnRect(const RectEvent& e);
 

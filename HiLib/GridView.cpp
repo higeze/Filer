@@ -33,9 +33,6 @@
 #include "ResourceIDFactory.h"
 #include "D2DWWindow.h"
 
-#include "resource.h"
-
-
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CMenu CGridView::ContextMenu;

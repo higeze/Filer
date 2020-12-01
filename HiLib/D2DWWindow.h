@@ -65,6 +65,7 @@ public:
 	virtual void OnCreate(const CreateEvt& e) override = 0;
 	//virtual void OnRect(const RectEvent& e)
 	virtual void OnPaint(const PaintEvent& e) { SendAll(&CUIElement::OnPaint, e, false); }
+	virtual void OnClosing(const ClosingEvent& e) { SendCopyAll(&CUIElement::OnClosing, e); }
 	virtual void OnClose(const CloseEvent& e) { SendCopyAll(&CUIElement::OnClose, e); }
 	virtual void OnCommand(const CommandEvent& e)
 	{

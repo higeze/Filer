@@ -271,21 +271,32 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 		m_pSaveBinding.reset(nullptr);
 		m_pSaveBinding.reset(new CBinding<void>(spViewModel->SaveCommand, spView->GetSaveCommand()));
 		//Close
-		spViewModel->CloseCommand.Dispose();
-		spViewModel->CloseCommand.Subscribe([wp = std::weak_ptr(spViewModel), hWnd = GetWndPtr()->m_hWnd]()
+		spViewModel->ClosingFunction = [wp = std::weak_ptr(spViewModel), hWnd = GetWndPtr()->m_hWnd]()->bool
 		{
 			if (auto sp = wp.lock()) {
 				if (sp->Status.get() == TextStatus::Dirty) {
-					if (IDYES == MessageBoxW(
+					int ync = MessageBoxW(
 						hWnd,
 						fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(sp->Path.c_str())).c_str(),
 						L"Save?",
-						MB_YESNO)) {
-						sp->Save();
+						MB_YESNOCANCEL);
+					switch (ync) {
+						case IDYES:
+							sp->Save();
+							return true;
+						case IDNO:
+							return true;
+						case IDCANCEL:
+							return false;
+						default:
+							return true;
 					}
+				} else {
+					return true;
 				}
 			}
-		});
+			return true;
+		};
 
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
@@ -524,7 +535,10 @@ void CFilerTabGridView::OnCommandOpenSameAsOther(const CommandEvent& e)
 	if (auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())) {
 			
 		std::shared_ptr<CFilerTabGridView> otherView = (this == p->GetLeftWnd().get())? p->GetRightWnd(): p->GetLeftWnd();
+		
+		if (m_itemsSource[m_selectedIndex.get()]->ClosingFunction()) {
 		m_itemsSource.replace(m_itemsSource.begin() + m_selectedIndex.get(), otherView->GetItemsSource()[otherView->GetSelectedIndex()]);
+		}
 	}
 }
 

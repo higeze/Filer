@@ -16,24 +16,15 @@ CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<Tab
 					break;
 				case NotifyVectorChangedAction::Remove:
 					GetHeaderRects().clear();
-					for (auto pItem : e.OldItems) {
-						pItem->CloseCommand.Execute();
-					}
 					if (!m_itemsSource.empty()) {
 						m_selectedIndex.force_notify_set((std::min)((size_t)e.OldStartingIndex, m_itemsSource.size() - 1));
 					}
 					break;
 				case NotifyVectorChangedAction::Replace:
 					GetHeaderRects().clear();
-					for (auto pItem : e.OldItems) {
-						pItem->CloseCommand.Execute();
-					}
 					m_selectedIndex.force_notify_set((std::min)((size_t)e.NewStartingIndex, m_itemsSource.size() -1));
 					break;
 				case NotifyVectorChangedAction::Reset:
-					for (auto pItem : e.OldItems) {
-						pItem->CloseCommand.Execute();
-					}
 					GetHeaderRects().clear();
 					if (!m_itemsSource.empty()) {
 						m_selectedIndex.force_notify_set((std::min)((size_t)m_selectedIndex.get(), m_itemsSource.size() - 1));
@@ -128,15 +119,28 @@ void CTabControl::OnCommandCloneTab(const CommandEvent& e)
 void CTabControl::OnCommandCloseTab(const CommandEvent& e)
 {
 	if (m_contextIndex) {
-		m_itemsSource.erase(m_itemsSource.cbegin() + m_contextIndex.value());
+		if (m_itemsSource[m_contextIndex.value()]->ClosingFunction()) {
+			m_itemsSource.erase(m_itemsSource.cbegin() + m_contextIndex.value());
+		}
 	}
 }
 void CTabControl::OnCommandCloseAllButThisTab(const CommandEvent& e)
 {
 	if (m_contextIndex) {
 		//Erase larger tab
+		for (auto iter = m_itemsSource.cbegin() + (m_contextIndex.value() + 1), end = m_itemsSource.cend(); iter != end; ++iter) {
+			if (!((*iter)->ClosingFunction())) {
+				return;
+			}
+		}
 		m_itemsSource.erase(m_itemsSource.cbegin() + (m_contextIndex.value() + 1), m_itemsSource.cend());
+		
 		//Erase smaller tab
+		for (auto iter = m_itemsSource.cbegin(), end = m_itemsSource.cbegin() + m_contextIndex.value(); iter != end; ++iter) {
+			if (!((*iter)->ClosingFunction())) {
+				return;
+			}
+		}
 		m_itemsSource.erase(m_itemsSource.cbegin(), m_itemsSource.cbegin() + m_contextIndex.value());
 
 		m_selectedIndex.force_notify_set(0);
@@ -202,13 +206,22 @@ void CTabControl::OnPaint(const PaintEvent& e)
 
 }
 
+void CTabControl::OnClosing(const ClosingEvent& e)
+{ 
+	for (auto& item : m_itemsSource) 		{
+		if (!(item->ClosingFunction())) {
+			*(e.CancelPtr) = true;
+			return;
+		}
+	}
+
+	CD2DWControl::OnClosing(e);
+}
+
+
 void CTabControl::OnClose(const CloseEvent& e)
 { 
 	CD2DWControl::OnClose(e);
-
-	//m_itemsSource is used for serialization, itemsSource is used for CloseCommand
-	auto itemsSource = m_itemsSource;
-	itemsSource.clear();
 }
 
 void CTabControl::OnRect(const RectEvent& e)

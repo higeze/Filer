@@ -1,4 +1,3 @@
-#include "text_stdafx.h"
 #include "DisplayAttribute.h"
 
 static ITfDisplayAttributeMgr *s_DisplayAttributeMgr = NULL;

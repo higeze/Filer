@@ -95,14 +95,19 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 
 	//PaintContent
 	if (m_pdf->GetDocument().second == PdfDocStatus::Available) {
-		CPointF lefttopInWnd = GetRenderRectInWnd().LeftTop();
+		CRectF renderRect = GetRenderRectInWnd();
+		CPointF lefttopInWnd = renderRect.LeftTop();
 		CPointF lefttopInRender = CPointF(-m_pHScroll->GetScrollPos(), -m_pVScroll->GetScrollPos());
-
+		UINT32 curPageNo = 0;
+		FLOAT maxIntersectHeight = 0.f;
+		bool curPageNoDecided = false;
+		//Paint pages
 		for (size_t i = 0; i < m_pdf->GetPageCount(); i++) {
 			if ((lefttopInRender.y >= 0 && lefttopInRender.y <= GetRenderSize().height) ||
 				(lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get() >= 0 && lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get() <= GetRenderSize().height) ||
 				(lefttopInRender.y <= 0 && lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get() >= GetRenderSize().height)) {
-
+				
+				//Paint page
 				auto pair = m_pdf->GetPage(i)->GetBitmap([this]() { GetWndPtr()->InvalidateRect(NULL, FALSE); });
 				auto rect = CRectF(
 								lefttopInWnd.x + lefttopInRender.x,
@@ -114,9 +119,22 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 						GetWndPtr()->GetDirectPtr()->DrawBitmap(pair.first, rect);
 						break;
 					default:
-						GetWndPtr()->GetDirectPtr()->DrawTextInRect(*m_pProp->Format, L"Loading...", rect);
+						GetWndPtr()->GetDirectPtr()->DrawTextLayout(*m_pProp->Format, L"Loading Page...", rect);
 						break;
 				}
+
+				//Current Page
+				if (!curPageNoDecided) {
+					CRectF intersectRect = renderRect.IntersectRect(rect);
+					if (intersectRect == rect) {
+						curPageNoDecided = true;
+						curPageNo = i + 1;
+					} else if (intersectRect.Height() > maxIntersectHeight) {
+						maxIntersectHeight = intersectRect.Height();
+						curPageNo = i + 1;
+					}
+				}
+
 			}
 
 			lefttopInRender.y += m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get();
@@ -124,8 +142,17 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 				break;
 			}
 		}
+
+		std::wstring pageText = fmt::format(L"{} / {}", curPageNo, m_pdf->GetPageCount());
+		CSizeF textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), pageText);
+		GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), pageText,
+			CRectF(renderRect.right - textSize.width - m_pVScroll->GetRectInWnd().Width(),
+				renderRect.top,
+				renderRect.right - m_pVScroll->GetRectInWnd().Width(),
+				renderRect.top + textSize.height));
+
 	} else {
-		GetWndPtr()->GetDirectPtr()->DrawTextInRect(*m_pProp->Format, L"Loading...", GetRenderRectInWnd());
+		GetWndPtr()->GetDirectPtr()->DrawTextInRect(*m_pProp->Format, L"Loading Document...", GetRenderRectInWnd());
 	}
 
 	//PaintScroll

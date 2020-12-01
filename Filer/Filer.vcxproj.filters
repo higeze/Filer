@@ -488,12 +488,6 @@
     <ClInclude Include="..\HiLib\ThreadSafeKnownFolderManager.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\targetver.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\resource.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
@@ -504,9 +498,6 @@
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\TextStoreACP.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\text_stdafx.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\Textbox.h">
@@ -878,9 +869,6 @@
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\undo.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\text_stdafx.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\Textbox.cpp">

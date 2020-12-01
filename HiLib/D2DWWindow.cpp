@@ -1,5 +1,4 @@
-﻿#include "text_stdafx.h"
-#include <Shellapi.h>
+﻿#include <Shellapi.h>
 #include "D2DWWindow.h"
 #include "Textbox.h"
 #include "Direct2DWrite.h"
@@ -128,9 +127,13 @@ LRESULT CD2DWWindow::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 	if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
 		::SetForegroundWindow(hWnd);
 	}
-	OnClose(CloseEvent(this, wParam, lParam, &bHandled));
-	::RevokeDragDrop(m_hWnd);
-	DestroyWindow();
+	auto e = ClosingEvent(this, wParam, lParam, &bHandled);
+	OnClosing(e);
+	if (!(*e.CancelPtr)) {
+		OnClose(CloseEvent(this, wParam, lParam, &bHandled));
+		::RevokeDragDrop(m_hWnd);
+		DestroyWindow();
+	}
 	return 0;
 }
 

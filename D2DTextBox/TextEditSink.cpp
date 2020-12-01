@@ -1,5 +1,4 @@
-﻿#include "text_stdafx.h"
-#include "D2DWWindow.h"
+﻿#include "D2DWWindow.h"
 #include "Textbox.h"
 #include "TextEditSink.h"
 #include "CellProperty.h"

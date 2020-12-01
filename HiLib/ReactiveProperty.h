@@ -75,6 +75,7 @@ class IReactiveCommand
 public:
 	virtual sigslot::connection Subscribe(std::function<void(const T& value)> next, sigslot::group_id id = 0) = 0;
 	virtual void Execute(const T& value) = 0;
+	virtual void Dispose(void) = 0;
 };
 
 template<>
@@ -162,6 +163,10 @@ public:
 	{
 		m_pSubject->OnNext(value);
 	}
+	void Dispose()
+	{
+		m_pSubject = std::make_shared<Subject<T>>();
+	}
 };
 
 template<>
@@ -182,12 +187,10 @@ public:
 	{
 		return m_pSubject->Subscribe(next, id);
 	}
-
 	void Execute(void) override
 	{
 		m_pSubject->OnNext();
 	}
-
 	void Dispose()
 	{
 		m_pSubject = std::make_shared<Subject<void>>();
@@ -729,8 +732,6 @@ CBinding<void>::CBinding(IReactiveCommand<void>& source, IReactiveCommand<void>&
 			source.Execute();
 		}, idTarget);
 }
-
-
 
 
 //template <class CharT,

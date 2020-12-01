@@ -66,6 +66,13 @@ struct CloseEvent :public Event
 		:Event(pWnd, pHandled) {}
 };
 
+struct ClosingEvent :public CloseEvent
+{
+	std::unique_ptr<bool> CancelPtr;
+	ClosingEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:CloseEvent(pWnd, wParam, lParam, pHandled), CancelPtr(std::make_unique<bool>(false)) {}
+};
+
 struct KillFocusEvent :public Event
 {
 	KillFocusEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
@@ -270,6 +277,7 @@ public:
 	/*********/
 	virtual void OnCreate(const CreateEvt& e) {}
 	virtual void OnPaint(const PaintEvent& e) {}
+	virtual void OnClosing(const ClosingEvent& e) {}
 	virtual void OnClose(const CloseEvent& e) {}
 	virtual void OnCommand(const CommandEvent& e) {}
 	virtual void OnRect(const RectEvent& e) {}

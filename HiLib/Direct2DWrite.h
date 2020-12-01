@@ -105,6 +105,7 @@ struct YTag;
 		void InflateRect(const CRectF& rc);
 		void DeflateRect(const CRectF& rc);
 		bool PtInRect(const CPointF& pt) const;
+		CRectF IntersectRect(const CRectF& rc) const;
 		CPointF LeftTop() const;
 		CPointF CenterPoint() const;
 		CSizeF Size() const;

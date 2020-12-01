@@ -86,6 +86,18 @@
 	void CRectF::InflateRect(FLOAT x) { left -= x; right += x; top -= x; bottom += x; }
 	void CRectF::DeflateRect(FLOAT x) { left += x; right -= x; top += x; bottom -= x; }
 	bool CRectF::PtInRect(const CPointF& pt) const { return pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom; }
+	CRectF CRectF::IntersectRect(const CRectF& rc) const 
+	{
+		FLOAT l = (std::max)(left, rc.left);
+		FLOAT t = (std::max)(top, rc.top);
+		FLOAT r = (std::min)(right, rc.right);
+		FLOAT b = (std::min)(bottom, rc.bottom);
+		if (l > r || t > b) {
+			return CRectF();
+		} else {
+			return CRectF(l, t, r, b);
+		}
+	}
 	CPointF CRectF::LeftTop() const { return CPointF(left, top); }
 	CPointF CRectF::CenterPoint() const
 	{

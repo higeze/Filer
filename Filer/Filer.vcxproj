@@ -194,9 +194,6 @@
     <ClInclude Include="..\D2DTextBox\Textbox.h" />
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h" />
     <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h" />
-    <ClInclude Include="..\D2DTextBox\resource.h" />
-    <ClInclude Include="..\D2DTextBox\text_stdafx.h" />
-    <ClInclude Include="..\D2DTextBox\targetver.h" />
     <ClInclude Include="..\D2DTextBox\TextEditSink.h" />
     <ClInclude Include="..\D2DTextBox\TextStoreACP.h" />
     <ClInclude Include="..\D2DTextBox\undo.h" />
@@ -399,7 +396,6 @@
     <ClCompile Include="..\D2DTextBox\TextboxStateMachine.cpp" />
     <ClCompile Include="..\D2DTextBox\Textbox.cpp" />
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />
-    <ClCompile Include="..\D2DTextBox\text_stdafx.cpp" />
     <ClCompile Include="..\D2DTextBox\TextEditSink.cpp" />
     <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp" />
     <ClCompile Include="..\D2DTextBox\undo.cpp" />
@@ -509,8 +505,12 @@
     <None Include="..\HiLib\msxml6.tlh" />
     <None Include="..\HiLib\msxml6.tli" />
     <None Include="..\Release\Filer.exe" />
-    <None Include="HandGrab.cur" />
-    <None Include="HandOpen.cur" />
+    <None Include="HandGrab.cur">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </None>
+    <None Include="HandOpen.cur">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
