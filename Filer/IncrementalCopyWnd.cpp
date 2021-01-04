@@ -9,7 +9,7 @@
 #include "ResourceIDFactory.h"
 #include "Dispatcher.h"
 
-CIncrementalCopyWnd::CIncrementalCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+CIncrementalCopyWnd::CIncrementalCopyWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
 	:CD2DWWindow(), 
 	m_destIDL(destIDL), m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs),

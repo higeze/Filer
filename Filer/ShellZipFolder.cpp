@@ -23,12 +23,12 @@ std::wstring CShellZipFolder::GetDispExt()
 //	return CShellFile::GetIcon(changedAction);
 //}
 
-std::pair<FileTimes, FileTimeStatus> CShellZipFolder::GetFileTimes(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
+std::pair<FileTimes, FileTimeStatus> CShellZipFolder::GetFileTimes(const std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
 {
 	return CShellFile::GetFileTimes(spArgs);
 }
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellZipFolder::GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellZipFolder::GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
 {
 	return CShellFile::GetSize(spArgs);
 }

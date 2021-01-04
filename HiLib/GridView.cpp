@@ -39,7 +39,7 @@ CMenu CGridView::ContextMenu;
 
 CGridView::CGridView(
 	CD2DWControl* pParentControl,
-	std::shared_ptr<GridViewProperty>& spGridViewProp,
+	const std::shared_ptr<GridViewProperty>& spGridViewProp,
 	CMenu* pContextMenu)
 	:m_spGridViewProp(spGridViewProp),
 	CSheet(pParentControl, spGridViewProp, pContextMenu ? pContextMenu : &CGridView::ContextMenu),

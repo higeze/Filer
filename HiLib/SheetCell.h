@@ -87,11 +87,11 @@ public:
 
 	void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 
-	virtual void ColumnInserted(CColumnEventArgs& e) override;
-	virtual void ColumnErased(CColumnEventArgs& e) override;
-//	virtual void ColumnHeaderEndTrack(CColumnEventArgs& e) override;
-	virtual void RowInserted(CRowEventArgs& e) override;
-	virtual void RowErased(CRowEventArgs& e) override;
+	virtual void ColumnInserted(const CColumnEventArgs& e) override;
+	virtual void ColumnErased(const CColumnEventArgs& e) override;
+//	virtual void ColumnHeaderEndTrack(const CColumnEventArgs& e) override;
+	virtual void RowInserted(const CRowEventArgs& e) override;
+	virtual void RowErased(const CRowEventArgs& e) override;
 
 	virtual CColumn* GetParentColumnPtr(CCell* pCell) override;
 	virtual void OnPropertyChanged(const wchar_t* name) override;

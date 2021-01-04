@@ -130,14 +130,14 @@ STDMETHODIMP CDropTarget::Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL 
 		hmenuPopup = CreatePopupMenu();
 		
 		if (dwEffect & DROPEFFECT_MOVE)
-			InitializeMenuItem(hmenuPopup, TEXT("Move here"), DROPEFFECT_MOVE);
+			InitializeMenuItem(hmenuPopup, const_cast<LPWSTR>(L"Move here"), DROPEFFECT_MOVE);
 		if (dwEffect & DROPEFFECT_COPY)
-			InitializeMenuItem(hmenuPopup, TEXT("Copy here"), DROPEFFECT_COPY);
+			InitializeMenuItem(hmenuPopup, const_cast<LPWSTR>(L"Copy here"), DROPEFFECT_COPY);
 		if (dwEffect & DROPEFFECT_LINK)
-			InitializeMenuItem(hmenuPopup, TEXT("Link here"), DROPEFFECT_LINK);
+			InitializeMenuItem(hmenuPopup, const_cast<LPWSTR>(L"Link here"), DROPEFFECT_LINK);
 
 		InitializeMenuItem(hmenuPopup, NULL, 100);
-		InitializeMenuItem(hmenuPopup, TEXT("Cancel"), 0);
+		InitializeMenuItem(hmenuPopup, const_cast<LPWSTR>(L"Cancel"), 0);
 
 		nId = TrackPopupMenu(hmenuPopup, TPM_RETURNCMD, pt.x, pt.y, 0, m_pControl->GetWndPtr()->m_hWnd, NULL);
 		if (nId == 0) {

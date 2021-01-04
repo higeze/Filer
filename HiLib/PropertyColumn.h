@@ -4,7 +4,7 @@
 class CPropertyNameColumn:public CMapColumn
 {
 public:
-	CPropertyNameColumn::CPropertyNameColumn(CSheet* pSheet)
+	CPropertyNameColumn(CSheet* pSheet)
 		:CMapColumn(pSheet, arg<"isminfit"_s>() = true, arg<"ismaxfit"_s>() = false){}
 	virtual ~CPropertyNameColumn(){}
 	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn);
@@ -15,7 +15,7 @@ public:
 class CPropertyValueColumn:public CMapColumn
 {
 public:
-	CPropertyValueColumn::CPropertyValueColumn(CSheet* pSheet)
+	CPropertyValueColumn(CSheet* pSheet)
 		:CMapColumn(pSheet, arg<"isminfit"_s>() = true, arg<"ismaxfit"_s>() = false){}
 	virtual ~CPropertyValueColumn(){}
 	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn);

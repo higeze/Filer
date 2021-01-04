@@ -321,7 +321,7 @@ void CTabControl::OnContextMenu(const ContextMenuEvent& e)
 }
 void CTabControl::OnSetFocus(const SetFocusEvent& e)
 {
-	m_spCurControl->OnSetFocus(e);
+	if(m_spCurControl)m_spCurControl->OnSetFocus(e);
 }
 void CTabControl::OnSetCursor(const SetCursorEvent& e)
 {

@@ -1,6 +1,5 @@
 #pragma once
 #include "SheetCell.h"
-#include "IBindSheet.h"
 #include "ReactiveProperty.h"
 #include "Debug.h"
 #include "ResourceIDFactory.h"
@@ -8,7 +7,7 @@
 
 
 template<typename TValueItem>
-class CBindItemsSheetCellBase :public CSheetCell, public IBindSheet<TValueItem>
+class CBindItemsSheetCellBase :public CSheetCell
 {
 private:
 	std::function<ReactiveVectorProperty<std::tuple<TValueItem>>& (CSheetCell*)> m_funItems = nullptr;
@@ -48,7 +47,7 @@ public:
 		}
 	}
 
-	void RowMoved(CMovedEventArgs<RowTag>& e) override
+	void RowMoved(const CMovedEventArgs<RowTag>& e) override
 	{
 		auto& itemsSource = GetItemsSource();
 		auto fromIter = itemsSource.cbegin() + (e.m_from - GetFrozenCount<RowTag>());
@@ -83,11 +82,11 @@ public:
 		mii.fType = MFT_STRING;
 		mii.fState = MFS_ENABLED;
 		mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row");
-		mii.dwTypeData = L"Add Row";
+		mii.dwTypeData = const_cast<LPWSTR>(L"Add Row");
 		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 		mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row");
-		mii.dwTypeData = L"Remove Row";
+		mii.dwTypeData = const_cast<LPWSTR>(L"Remove Row");
 		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 		::SetForegroundWindow(GetWndPtr()->m_hWnd);

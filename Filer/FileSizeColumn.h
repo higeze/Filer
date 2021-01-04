@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Sheet.h"
 #include "MapColumn.h"
 #include "SortCell.h"
 #include "FilterCell.h"
@@ -40,6 +40,6 @@ public:
 		return std::make_shared<CFileSizeCell<TItems...>>(m_pSheet, pRow, pColumn, std::static_pointer_cast<FilerGridViewProperty>(m_pSheet->GetGridPtr()->GetGridViewPropPtr())->SizeCellPropPtr);
 	}
 
-	std::shared_ptr<FileSizeArgs> GetSizeArgsPtr() { return m_spSizeArgs; }
+	std::shared_ptr<FileSizeArgs> GetSizeArgsPtr() const { return m_spSizeArgs; }
 };
 

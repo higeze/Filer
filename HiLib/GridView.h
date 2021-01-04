@@ -47,7 +47,7 @@ public:
 	//Constructor
 	CGridView(
 		CD2DWControl* pParentControl,
-		std::shared_ptr<GridViewProperty>& spGridViewProp,
+		const std::shared_ptr<GridViewProperty>& spGridViewProp,
 		CMenu* pContextMenu= &CGridView::ContextMenu);
 	//Destructor
 	virtual ~CGridView();
@@ -60,19 +60,12 @@ public:
 	void SetEditPtr(std::shared_ptr<CTextBox> pEdit) { m_pEdit = pEdit; }
 
 protected:
-	virtual void OnCellLButtonClk(CellEventArgs& e) {}
-	virtual void OnCellContextMenu(CellContextMenuEventArgs& e) {}
+	virtual void OnCellLButtonClk(const CellEventArgs& e) {}
+	virtual void OnCellContextMenu(const CellContextMenuEventArgs& e) {}
 	/******************/
 	/* Window Message */
 	/******************/
 public:
-	template<typename T>
-	LRESULT UserInputMachine_Message(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-	{
-		m_pMouseMachine->process_event(T(this, wParam, lParam, &bHandled));
-		SubmitUpdate();
-		return 0;
-	}
 
 	virtual void OnFilter();
 	virtual void OnDelayUpdate();

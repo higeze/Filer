@@ -9,8 +9,9 @@ private:
 	ReactiveWStringProperty m_path;
 public:
 	template<typename... TArgs>
-	CToDoGridView(CD2DWControl* pParentControl, std::shared_ptr<GridViewProperty>& spGridViewProp,
-				  std::shared_ptr<ReactiveVectorProperty<std::tuple<MainTask>>> spItemsSource = nullptr,
+	CToDoGridView(CD2DWControl* pParentControl, 
+				const std::shared_ptr<GridViewProperty>& spGridViewProp,
+				const std::shared_ptr<ReactiveVectorProperty<std::tuple<MainTask>>> spItemsSource = nullptr,
 				  TArgs... args)
 		:CBindGridView<MainTask>(pParentControl, spGridViewProp, spItemsSource, args...){}
 

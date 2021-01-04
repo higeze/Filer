@@ -70,7 +70,7 @@ public:
 	virtual void Normal_ContextMenu(const ContextMenuEvent& e) override;
 
 	virtual void OnBkGndLButtondDblClk(const LButtonDblClkEvent& e) override;
-	virtual void OnCellLButtonDblClk(CellEventArgs& e);
+	virtual void OnCellLButtonDblClk(const CellEventArgs& e) override;
 	/***********/
 	/* Command */
 	/***********/
@@ -80,7 +80,7 @@ public:
 	/* Function */
 	/************/
 	virtual void Reload();
-	virtual void OpenFolder(std::shared_ptr<CShellFolder>& spFolder) override;
+	virtual void OpenFolder(const std::shared_ptr<CShellFolder>& spFolder) override;
 
 	std::wstring GetPath()const;
 	void SetPath(const std::wstring& path);

@@ -1,11 +1,6 @@
 #include "Scroll.h"
 #include "ScrollProperty.h"
-#include "GridView.h"
 #include "D2DWWindow.h"
-
-#include <boost\msm\front\state_machine_def.hpp>
-#include <boost\msm\back\state_machine.hpp>
-#include <boost\mpl\vector.hpp>
 
 	CScrollBase::CScrollBase(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
 		:CD2DWControl(pParentControl),
@@ -59,6 +54,14 @@
 		}
 	}
 
+	void CScrollBase::OnSetCursor(const SetCursorEvent& e)
+	{
+		auto pt = e.WndPtr->GetCursorPosInWnd();
+		if (GetRectInWnd().PtInRect(pt)) {
+			::SetCursor(::LoadCursor(NULL, IDC_ARROW));
+			*(e.HandledPtr) = TRUE;
+		}
+	}
 
 	void CScrollBase::OnPaint(const PaintEvent& e)
 	{

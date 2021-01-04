@@ -4,12 +4,13 @@
 #include "ReactiveProperty.h"
 #include "MyString.h"
 #include "MyXmlSerializer.h"
-#include "IBindSheet.h"
 #include "Cursorer.h"
+#include "MapColumn.h"
+#include "IBindSheet.h"
 
 
 template<typename... TItems>
-class CBindGridView :public CGridView
+class CBindGridView :public CGridView, public IBindSheet<TItems...>
 {
 protected:
 	std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> m_spItemsSource;
@@ -18,8 +19,8 @@ public:
 	template<typename... TArgs> 
 	CBindGridView(
 		CD2DWControl* pParentControl,
-		std::shared_ptr<GridViewProperty>& spGridViewProp,
-		std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> spItemsSource = nullptr,
+		const std::shared_ptr<GridViewProperty>& spGridViewProp,
+		const std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> spItemsSource = nullptr,
 		TArgs... args)
 		:CGridView(pParentControl, spGridViewProp), m_spItemsSource(spItemsSource)
 	{
@@ -108,8 +109,8 @@ public:
 		}
 	}
 
-	ReactiveVectorProperty<std::tuple<TItems...>>& GetItemsSource() { return *m_spItemsSource; }
-	std::vector<std::tuple<TItems...>>& GetSelectedItems() { return m_funSelItems(); }
+	ReactiveVectorProperty<std::tuple<TItems...>>& GetItemsSource() override { return *(this->m_spItemsSource); }
+	std::vector<std::tuple<TItems...>>& GetSelectedItems() { return this->m_funSelItems(); }
 
 	/******************/
 	/* Window Message */

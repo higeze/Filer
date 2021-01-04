@@ -1,7 +1,6 @@
 #pragma once
 #include "BindItemsSheetCellBase.h"
 #include "BindSheetCellColumn.h"
-#include "IBindSheet.h"
 #include "ReactiveProperty.h"
 
 template<typename TItem, typename TValueItem>

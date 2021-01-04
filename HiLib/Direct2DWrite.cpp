@@ -599,7 +599,7 @@
 		D2D_POINT_2F nextPoint;
 		FLOAT radPoint = std::atan2(endPoint.y - startPoint.y, endPoint.x - startPoint.x);
 		FLOAT radWave = std::atan2(amplitude, (period / 2.f));
-		FLOAT hypotenuseWave = std::sqrt(std::pow(period / 4.f, 2) + std::pow(amplitude / 2.f, 2));
+		FLOAT hypotenuseWave = static_cast<FLOAT>(std::sqrt(std::pow(period / 4.f, 2) + std::pow(amplitude / 2.f, 2)));
 		int count = 0;
 		while (true) {
 			nextCenterPoint.x = startPoint.x + std::cos(radPoint) * ((count + 1) * period / 4.f);

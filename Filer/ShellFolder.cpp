@@ -32,25 +32,25 @@ CComPtr<IShellFolder> CShellFolder::GetShellFolderPtr()
 	return m_pShellFolder;
 }
 
-std::pair<FileTimes, FileTimeStatus> CShellFolder::GetLockFileTimes()
+std::pair<FileTimes, FileTimeStatus> CShellFolder::GetLockFileTimes() const
 {
 	std::lock_guard<std::mutex> lock(m_mtxTime);
 	return m_fileTimes;
 }
 
-void CShellFolder::SetLockFileTimes(std::pair<FileTimes, FileTimeStatus>& times)
+void CShellFolder::SetLockFileTimes(const std::pair<FileTimes, FileTimeStatus>& times)
 {
 	std::lock_guard<std::mutex> lock(m_mtxTime);
 	m_fileTimes = times;
 }
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetLockSize()
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetLockSize() const
 {
 	std::lock_guard<std::mutex> lock(m_mtxSize);
 	return m_size;
 }
 
-void CShellFolder::SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size)
+void CShellFolder::SetLockSize(const std::pair<ULARGE_INTEGER, FileSizeStatus>& size)
 {
 	std::lock_guard<std::mutex> lock(m_mtxSize);
 	m_size = size;
@@ -109,7 +109,7 @@ std::shared_ptr<CShellFolder> CShellFolder::Clone()const
 	return std::make_shared<CShellFolder>(m_pParentShellFolder, m_parentIdl, m_childIdl, m_pShellFolder);
 }
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
 {
 	if (spArgs->NoFolderSize) {
 		SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable));
@@ -136,7 +136,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(std::shared_ptr<
 							SPDLOG_INFO("CShellFile::GetSize Exception at size thread");
 							return std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable);
 						}					
-					}, m_spCancelThread, GetShellFolderPtr(), GetAbsoluteIdl(), GetPath(), limit, changed);
+					}, this->m_spCancelThread, this->GetShellFolderPtr(), this->GetAbsoluteIdl(), this->GetPath(), limit, changed);
 				}
 				break;
 			case FileSizeStatus::Calculating:
@@ -154,7 +154,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(std::shared_ptr<
 	return GetLockSize();
 }
 
-std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
+std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(const std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
 {
 	switch (GetLockFileTimes().second) {
 	case FileTimeStatus::None:
@@ -182,7 +182,7 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(std::shared_ptr<
 					SPDLOG_INFO("CShellFile::GetFileTimes Exception at time thread");
 					return std::make_pair(FileTimes(), FileTimeStatus::Unavailable);
 				}
-			}, m_spCancelThread, GetParentShellFolderPtr(), GetShellFolderPtr(), GetChildIdl(), GetPath(), limit, spArgs->IgnoreFolderTime, changed);
+			}, this->m_spCancelThread, GetParentShellFolderPtr(), GetShellFolderPtr(), GetChildIdl(), GetPath(), limit, spArgs->IgnoreFolderTime, changed);
 		}
 		break;
 	case FileTimeStatus::Loading:

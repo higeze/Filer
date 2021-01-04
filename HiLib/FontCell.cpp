@@ -25,14 +25,14 @@ void CFontCell::OnLButtonClk(MouseEvent& e)
 {
 	CHOOSEFONT cf={0};
 	LOGFONT logFont={0};
-	CFont gdifont = m_font.GetGDIFont();
-	memcpy(&logFont,&gdifont.GetLogFont(),sizeof(LOGFONT));
+	LOGFONT srcLogFont = m_font.GetGDIFont().GetLogFont();
+	memcpy(reinterpret_cast<void*>(&logFont),reinterpret_cast<const void*>(&srcLogFont),sizeof(LOGFONT));
 	cf.lStructSize=sizeof(CHOOSEFONT);
 	cf.hwndOwner=m_pSheet->GetWndPtr()->m_hWnd;
 	cf.lpLogFont=&logFont;
 	cf.Flags=CF_SCREENFONTS|CF_INITTOLOGFONTSTRUCT;
 	if(!ChooseFont(&cf))return;
-	if(memcmp(&gdifont.GetLogFont(),&logFont,sizeof(LOGFONT))!=0){
+	if(memcmp(reinterpret_cast<const void*>(&logFont),reinterpret_cast<const void*>(&srcLogFont),sizeof(LOGFONT))!=0){
 		//TODO bold italic
 		m_font.FamilyName = logFont.lfFaceName;
 		m_font.Size = (float)logFont.lfHeight;

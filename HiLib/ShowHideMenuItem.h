@@ -25,7 +25,7 @@ protected:
 	void Update();
 
 public:
-	CShowHideColumnMenuItem(WORD wID, std::wstring& str, CSheet* pSheet, CColumn* pColumn);
+	CShowHideColumnMenuItem(const WORD wID, const std::wstring& str, CSheet* pSheet, CColumn* pColumn);
 	virtual ~CShowHideColumnMenuItem() {}
 
 	virtual bool GetIsChecked() override;

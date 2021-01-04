@@ -64,23 +64,23 @@ void CSheetCell::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 	//}
 }
 
-void CSheetCell::ColumnInserted(CColumnEventArgs& e)
+void CSheetCell::ColumnInserted(const CColumnEventArgs& e)
 {
 	CSheet::ColumnInserted(e);
 	OnPropertyChanged(L"value");
 }
-void CSheetCell::ColumnErased(CColumnEventArgs& e)
+void CSheetCell::ColumnErased(const CColumnEventArgs& e)
 {
 	CSheet::ColumnErased(e);
 	OnPropertyChanged(L"value");
 }
 
-void CSheetCell::RowInserted(CRowEventArgs& e)
+void CSheetCell::RowInserted(const CRowEventArgs& e)
 {
 	CSheet::RowInserted(e);
 	OnPropertyChanged(L"value");
 }
-void CSheetCell::RowErased(CRowEventArgs& e)
+void CSheetCell::RowErased(const CRowEventArgs& e)
 {
 	CSheet::RowErased(e);
 	OnPropertyChanged(L"value");

@@ -1,7 +1,6 @@
 #pragma once
 #include "BindItemsSheetCellBase.h"
 #include "BindSheetCellColumn.h"
-#include "IBindSheet.h"
 #include "ReactiveProperty.h"
 
 template<typename TItem, typename TValueItem>
@@ -27,22 +26,22 @@ public:
 		auto& items = this->GetItemsSource();
 
 		for (auto& item : items) {
-			PushRow(std::make_shared<CBindRow<TValueItem>>(this));
+			this->PushRow(std::make_shared<CBindRow<TValueItem>>(this));
 		}
 
 		items.SubscribeDetail(
 			[this](const NotifyVectorChangedEventArgs<std::tuple<TValueItem>>& e)->void {
 			switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
-					PushRow(std::make_shared<CBindRow<TValueItem>>(this));
+					this->PushRow(std::make_shared<CBindRow<TValueItem>>(this));
 					break;
 				case NotifyVectorChangedAction::Insert:
-					InsertRow(e.NewStartingIndex, std::make_shared<CBindRow<TValueItem>>(this));
+					this->InsertRow(e.NewStartingIndex, std::make_shared<CBindRow<TValueItem>>(this));
 					break;
 				case NotifyVectorChangedAction::Remove:
 				{
-					auto spRow = m_allRows[e.OldStartingIndex + m_frozenRowCount];
-					for (const auto& colPtr : m_allCols) {
+					auto spRow = this->m_allRows[e.OldStartingIndex + this->m_frozenRowCount];
+					for (const auto& colPtr : this->m_allCols) {
 						if (auto pMapCol = std::dynamic_pointer_cast<CMapColumn>(colPtr)) {
 							pMapCol->Erase(const_cast<CRow*>(spRow.get()));
 						}
@@ -51,7 +50,7 @@ public:
 					break;
 				}
 				case NotifyVectorChangedAction::Reset:
-					m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
+					this->m_allRows.idx_erase(this->m_allRows.begin() + this->m_frozenRowCount, this->m_allRows.end());
 					break;
 				default:
 					break;
@@ -61,8 +60,8 @@ public:
 
 	ReactiveVectorProperty<std::tuple<TValueItem>>& GetItemsSourceImpl()
 	{
-		auto pBindRow = static_cast<CBindRow<TItem>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindSheetCellColumn<TItem, TValueItem>*>(m_pColumn);
+		auto pBindRow = static_cast<CBindRow<TItem>*>(this->m_pRow);
+		auto pBindColumn = static_cast<const CBindSheetCellColumn<TItem, TValueItem>*>(this->m_pColumn);
 		return pBindColumn->GetItemser()(pBindRow->GetTupleItems());
 	}
 

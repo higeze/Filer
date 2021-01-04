@@ -53,7 +53,7 @@
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 extern HWND g_main;
 
-CCheckableFileGrid::CCheckableFileGrid(CD2DWControl* pParentControl, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
+CCheckableFileGrid::CCheckableFileGrid(CD2DWControl* pParentControl, const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
 	:CFilerBindGridView(pParentControl, spFilerGridViewProp){}
 
 
@@ -110,7 +110,7 @@ void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 	SubmitUpdate();
 }
 
-void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)
+void CCheckableFileGrid::OnCellLButtonDblClk(const CellEventArgs& e)
 {
 	auto pCell = e.CellPtr;
 	if (auto spRow = dynamic_cast<CBindRow<std::shared_ptr<CShellFile>>*>(e.CellPtr->GetRowPtr())) {
@@ -119,7 +119,7 @@ void CCheckableFileGrid::OnCellLButtonDblClk(CellEventArgs& e)
 	}
 }
 
-void CCheckableFileGrid::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
+void CCheckableFileGrid::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 {
 	auto pFilerWnd = new CD2DWSingleControlWnd<CFilerGridView>(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
 

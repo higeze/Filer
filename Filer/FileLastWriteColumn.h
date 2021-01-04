@@ -44,6 +44,6 @@ public:
 		return std::make_shared<CFileLastWriteCell<TItems...>>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
 	}
 
-	std::shared_ptr<FileTimeArgs> GetTimeArgsPtr() { return m_spTimeArgs; }
+	std::shared_ptr<FileTimeArgs> GetTimeArgsPtr() const { return m_spTimeArgs; }
 };
 

@@ -43,7 +43,7 @@ public:
 				}
 			};
 
-			auto times = spFile->GetFileTimes(static_cast<CFileLastWriteColumn<TItems...>*>(m_pColumn)->GetTimeArgsPtr(), changed);
+			auto times = spFile->GetFileTimes((static_cast<const CFileLastWriteColumn<TItems...>*>(this->m_pColumn))->GetTimeArgsPtr(), changed);
 			switch (times.second) {
 				case FileTimeStatus::None:
 					return L"-";

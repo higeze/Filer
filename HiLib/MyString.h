@@ -78,7 +78,7 @@ T* GetBuffer(std::basic_string<T>& str,int n)
 template<typename T>
 void ReleaseBuffer(std::basic_string<T>& str)
 {
-	std::basic_string<T>::size_type size=str.find_first_of(TCHAR_CAST(T,'\0'));
+	typename std::basic_string<T>::size_type size=str.find_first_of(TCHAR_CAST(T,'\0'));
 	str.resize(size);
 }
 

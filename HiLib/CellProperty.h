@@ -103,7 +103,26 @@ public:
 	virtual ~TextboxProperty() = default;
 
 	template <class Archive>
-    void serialize(Archive& ar)
+    void save(Archive& ar)
+    {
+		ar("Format",Format);
+		ar("Line",Line);
+		ar("EditLine", EditLine);
+		ar("FocusedLine",FocusedLine);
+		ar("BlankLine", BlankLine);
+		ar("NormalFill",NormalFill);
+		ar("FocusedFill",FocusedFill);
+		ar("SelectedFill",SelectedFill);
+		ar("UnfocusSelectedFill", UnfocusSelectedFill);
+		ar("HotFill", HotFill);
+		ar("Padding",Padding);
+		ar("VScrollProperty", VScrollPropPtr);
+		ar("HScrollProperty", HScrollPropPtr);
+		ar("IsWrap", IsWrap);
+	}
+
+	template <class Archive>
+    void load(Archive& ar)
     {
 		ar("Format",Format);
 		ar("Line",Line);
@@ -153,19 +172,32 @@ struct SyntaxAppearance
 struct TextEditorProperty :public TextboxProperty
 {
 	ReactiveVectorProperty<std::tuple<SyntaxAppearance>> SyntaxAppearances;
-	TextEditorProperty():TextboxProperty()
+	TextEditorProperty():TextboxProperty(){}
+
+	template <class Archive>
+	void save(Archive& ar)
 	{
-		SyntaxAppearances.push_back(
-			std::make_tuple(
-			SyntaxAppearance(L"/\\*.*?\\*/",
-			SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false))));
+		TextboxProperty::save(ar);
+		ar("SyntaxAppearances", SyntaxAppearances);
 	}
 
 	template <class Archive>
-	void serialize(Archive& ar)
+	void load(Archive& ar)
 	{
-		TextboxProperty::serialize(ar);
+		TextboxProperty::load(ar);
 		ar("SyntaxAppearances", SyntaxAppearances);
+
+		if (SyntaxAppearances.empty()) {
+			SyntaxAppearances.push_back(
+				std::make_tuple(
+				SyntaxAppearance(L"/\\*.*?\\*/",
+				SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false))));
+			SyntaxAppearances.push_back(
+				std::make_tuple(
+				SyntaxAppearance(L"//.*?\n",
+				SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false))));
+
+		}
 	}
 };
 
@@ -197,8 +229,13 @@ public:
 	virtual ~HeaderProperty(){}
 
     template <class Archive>
-    void serialize(Archive& ar)
+    void save(Archive& ar)
     {
-		CellProperty::serialize(ar);
+		CellProperty::save(ar);
+    }
+    template <class Archive>
+    void load(Archive& ar)
+    {
+		CellProperty::load(ar);
     }
 };

@@ -25,6 +25,7 @@
 template<typename... TItems>
 class CFilerBindGridView :public CBindGridView<TItems...>
 {
+	using base = CBindGridView<TItems...>;
 protected:
 	//HeaderMenuItems
 	std::vector<std::shared_ptr<CShowHideColumnMenuItem>> m_headerMenuItems;
@@ -33,20 +34,20 @@ public:
 	template<typename... TArgs>
 	CFilerBindGridView(
 		CD2DWControl* pParentControl,
-		std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> spItemsSource = nullptr,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> spItemsSource = nullptr,
 		TArgs... args)
-		:CBindGridView(pParentControl, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), spItemsSource, args...)
+		:base(pParentControl, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), spItemsSource, args...)
 	{
-		m_spItemDragger = std::make_shared<CFileDragger>();
+		this->m_spItemDragger = std::make_shared<CFileDragger>();
 
-		CellLButtonDblClk.connect(std::bind(&CFilerBindGridView::OnCellLButtonDblClk, this, std::placeholders::_1));
+		this->CellLButtonDblClk.connect(std::bind(&CFilerBindGridView::OnCellLButtonDblClk, this, std::placeholders::_1));
 	}
 	//Destructor
 	virtual ~CFilerBindGridView() = default;
 
 	//Getter
-	std::shared_ptr<FilerGridViewProperty> GetFilerGridViewPropPtr() { return std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp); }
+	std::shared_ptr<FilerGridViewProperty> GetFilerGridViewPropPtr() { return std::static_pointer_cast<FilerGridViewProperty>(this->m_spGridViewProp); }
 	virtual bool HasSheetCell()override { return false; }
 	virtual bool IsVirtualPage()override { return true; }
 
@@ -56,7 +57,7 @@ public:
 	std::function<void(CMenu&)> AddCustomContextMenu;
 	std::function<bool(int, CComPtr<IShellFolder>, std::vector<PITEMID_CHILD>)> ExecCustomContextMenu;
 
-	virtual void OnCellLButtonDblClk(CellEventArgs& e)
+	virtual void OnCellLButtonDblClk(const CellEventArgs& e)
 	{
 		auto pCell = e.CellPtr;
 		if (auto spRow = dynamic_cast<CBindRow<TItems...>*>(e.CellPtr->GetRowPtr())) {
@@ -65,7 +66,7 @@ public:
 		}
 	}
 
-	virtual void Open(std::shared_ptr<CShellFile>& spFile)
+	virtual void Open(const std::shared_ptr<CShellFile>& spFile)
 	{
 		if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
 			OpenFolder(spFolder);
@@ -74,12 +75,12 @@ public:
 		}
 	}
 
-	virtual void OpenFile(std::shared_ptr<CShellFile>& spFile)
+	virtual void OpenFile(const std::shared_ptr<CShellFile>& spFile)
 	{
 		SHELLEXECUTEINFO	sei = { 0 };
 		sei.cbSize = sizeof(SHELLEXECUTEINFO);
 		sei.fMask = SEE_MASK_INVOKEIDLIST;
-		sei.hwnd = GetWndPtr()->m_hWnd;
+		sei.hwnd = this->GetWndPtr()->m_hWnd;
 		sei.lpVerb = NULL;
 		sei.lpFile = NULL;
 		sei.lpParameters = NULL;
@@ -91,7 +92,7 @@ public:
 		::ShellExecuteEx(&sei);
 	}	
 	
-	virtual void OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
+	virtual void OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 	{
 		//auto pWnd = new CFilerGridView(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
 
@@ -127,11 +128,11 @@ public:
 		//pWnd->UpdateWindow();
 	}
 
-	index_vector<std::shared_ptr<CRow>>::const_iterator FindIfRowIterByFileNameExt(const std::wstring& fileNameExt)
+	index_vector<std::shared_ptr<CColumn>>::const_iterator FindIfRowIterByFileNameExt(const std::wstring& fileNameExt)
 	{
-		return std::find_if(m_allRows.begin(), m_allRows.end(),
+		return std::find_if(this->m_allRows.begin(), this->m_allRows.end(),
 							[&](const std::shared_ptr<CRow>& rowPtr)->bool {
-								if (auto p = std::dynamic_pointer_cast<CFileRow>(rowPtr)) {
+								if (auto p = std::dynamic_pointer_cast<CBindRow<TItems...>>(rowPtr)) {
 									return p->GetFilePointer()->GetDispName() == fileNameExt;
 								} else {
 									return false;
@@ -172,7 +173,7 @@ public:
 	/*****************/
 	void Normal_KeyDown(const KeyDownEvent& e) override
 	{
-		m_keepEnsureVisibleFocusedCell = false;
+		this->m_keepEnsureVisibleFocusedCell = false;
 		switch (e.Char) {
 			case 'X':
 				if (::GetAsyncKeyState(VK_CONTROL)) {
@@ -198,8 +199,8 @@ public:
 				break;
 			case VK_RETURN:
 				{
-					if (m_spCursorer->GetFocusedCell()) {
-						if (auto spRow = dynamic_cast<CBindRow<TItems...>*>(m_spCursorer->GetFocusedCell()->GetRowPtr())) {
+					if (this->m_spCursorer->GetFocusedCell()) {
+						if (auto spRow = dynamic_cast<CBindRow<TItems...>*>(this->m_spCursorer->GetFocusedCell()->GetRowPtr())) {
 							auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 							Open(spFile);
 							(*e.HandledPtr) = true;
@@ -223,6 +224,6 @@ public:
 
 	bool Edit_Guard_KeyDownWithoutNormal(const KeyDownEvent& e) override
 	{
-		return Edit_Guard_KeyDown(e);
+		return this->Edit_Guard_KeyDown(e);
 	}
 };

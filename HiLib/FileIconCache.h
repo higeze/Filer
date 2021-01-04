@@ -16,22 +16,22 @@ private:
 	std::mutex m_mtx;
 public:
 
-	auto lock_emplace(std::pair<Key, Value>& pair)
+	auto lock_emplace(const std::pair<Key, Value>& pair)
 	{
 		std::lock_guard<std::mutex> lock(m_mtx);
-		return emplace(pair);
+		return this->emplace(pair);
 	}
 
-	auto lock_insert(std::pair<Key, Value>& pair) 
+	auto lock_insert(const std::pair<Key, Value>& pair) 
 	{
 		std::lock_guard<std::mutex> lock(m_mtx);
-		return insert(pair);
+		return this->insert(pair);
 	}
 
-	auto lock_insert_or_assign(const Key& key, Value&& value)
+	auto lock_insert_or_assign(const Key& key, const Value&& value)
 	{
 		std::lock_guard<std::mutex> lock(m_mtx);
-		return insert_or_assign(key, value);
+		return this->insert_or_assign(key, value);
 	}
 
 
@@ -47,7 +47,7 @@ public:
 	auto lock_find(const Key& key)
 	{
 		std::lock_guard<std::mutex> lock(m_mtx);
-		return find(key);
+		return this->find(key);
 	}
 
 };

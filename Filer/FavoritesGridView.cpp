@@ -85,7 +85,7 @@ void CFavoritesGridView::OpenFavorites()
 	PostUpdate(Updates::Invalidate);
 }
 
-void CFavoritesGridView::OnCellLButtonDblClk(CellEventArgs& e)
+void CFavoritesGridView::OnCellLButtonDblClk(const CellEventArgs& e)
 {
 	if(auto p = dynamic_cast<CFavoriteCell<std::shared_ptr<CFavorite>>*>(e.CellPtr)){
 		auto pFile = p->GetShellFile();

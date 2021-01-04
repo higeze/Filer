@@ -4,9 +4,9 @@
 #include "D2DWControl.h"
 #include "Direct2DWrite.h"
 #include "ReactiveProperty.h"
+#include "MouseStateMachine.h"
 #include "Debug.h"
 
-class CMouseStateMachine;
 class CD2DWControl;
 class CDispatcher;
 class CDropTargetManager;

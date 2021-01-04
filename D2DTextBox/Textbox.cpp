@@ -786,7 +786,7 @@ void CTextEditor::Normal_ContextMenu(const ContextMenuEvent& e)
 	mii.fType = MFT_STRING;
 	mii.fState = MFS_ENABLED;
 	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Execute");
-	mii.dwTypeData = L"Execute";
+	mii.dwTypeData = const_cast<LPWSTR>(L"Execute");
 	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 	::SetForegroundWindow(GetWndPtr()->m_hWnd);

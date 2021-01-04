@@ -23,8 +23,8 @@ public:
 
 	virtual ~CBindCheckBoxColumn(void) = default;
 
-	std::function<CheckBoxState(const std::tuple<TItems...>&)> GetGetter() { return m_getFunction; }
-	std::function<void(std::tuple<TItems...>&, const CheckBoxState&)> GetSetter() { return m_setFunction; }
+	std::function<CheckBoxState(const std::tuple<TItems...>&)> GetGetter() const { return m_getFunction; }
+	std::function<void(std::tuple<TItems...>&, const CheckBoxState&)> GetSetter() const { return m_setFunction; }
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{

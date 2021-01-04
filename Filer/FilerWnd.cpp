@@ -101,8 +101,10 @@ CFilerWnd::CFilerWnd()
 #endif
 
 	//CFavoritesGridView
-	auto setUpFavoritesView = [this](std::shared_ptr<CFavoritesGridView>& spFavoritesGridView, std::weak_ptr<CFilerTabGridView>& wpView, unsigned short id)->void {
-		spFavoritesGridView->FileChosen = [wpView](std::shared_ptr<CShellFile>& spFile)->void {
+	auto setUpFavoritesView = [this](
+		const std::shared_ptr<CFavoritesGridView>& spFavoritesGridView,
+		const std::weak_ptr<CFilerTabGridView>& wpView, const unsigned short id)->void {
+		spFavoritesGridView->FileChosen = [wpView](const std::shared_ptr<CShellFile>& spFile)->void {
 			if (auto spView = wpView.lock()) {
 				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {//Open Filer
 					auto& itemsSource = spView->GetItemsSource();
@@ -141,7 +143,7 @@ CFilerWnd::CFilerWnd()
 			mii.fType = MFT_STRING;
 			mii.fState = MFS_ENABLED;
 			mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToFavoritesFromItem");
-			mii.dwTypeData = L"Add to favorite";
+			mii.dwTypeData = const_cast<LPWSTR>(L"Add to favorite");
 			menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 #ifdef USE_PYTHON_EXTENSION
@@ -362,7 +364,24 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 	switch (e.Char)
 	{
 	case 'Q':
-		if (::GetAsyncKeyState(VK_CONTROL)) {
+		if (::GetAsyncKeyState(VK_CONTROL) && ::GetAsyncKeyState(VK_SHIFT)) {
+			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
+				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
+					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
+					if (boost::iequals(spCurFilerGrid->GetFocusedFile()->GetPathExt(), L".txt")) {
+						spOtherTab->GetItemsSource().replace(
+							spOtherTab->GetItemsSource().begin() + spOtherTab->GetSelectedIndex(),
+							std::make_shared<TextTabData>(spCurFilerGrid->GetFocusedFile()->GetPath()));
+						*(e.HandledPtr) = TRUE;
+					}else if(boost::iequals(spCurFilerGrid->GetFocusedFile()->GetPathExt(), L".pdf")){
+						spOtherTab->GetItemsSource().replace(
+							spOtherTab->GetItemsSource().begin() + spOtherTab->GetSelectedIndex(),
+							std::make_shared<PdfTabData>(spCurFilerGrid->GetFocusedFile()->GetPath()));
+						*(e.HandledPtr) = TRUE;
+					}
+				}
+			}
+		}else if(::GetAsyncKeyState(VK_CONTROL)){
 			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
 				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
 					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;

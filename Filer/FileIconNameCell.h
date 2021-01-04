@@ -134,17 +134,17 @@ template<typename... TItems>
 class CFileIconDispNameCell:public CFileIconNameCellBase<TItems...>
 {
 public:
-	using CFileIconNameCellBase::CFileIconNameCellBase;
+	using CFileIconNameCellBase<TItems...>::CFileIconNameCellBase;
 	virtual std::wstring GetString() override
 	{
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
+		auto pBindRow = static_cast<CBindRow<TItems...>*>(this->m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetFileNameWithoutExt();
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override
 	{
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, m_pSheet->GetWndPtr()->m_hWnd);
+		auto pBindRow = static_cast<CBindRow<TItems...>*>(this->m_pRow);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, this->m_pSheet->GetWndPtr()->m_hWnd);
 
 	}
 };
@@ -156,18 +156,18 @@ template<typename... TItems>
 class CFileIconPathNameCell :public CFileIconNameCellBase<TItems...>
 {
 public:
-	using CFileIconNameCellBase::CFileIconNameCellBase;
+	using CFileIconNameCellBase<TItems...>::CFileIconNameCellBase;
 
 	virtual std::wstring GetString() override
 	{
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
+		auto pBindRow = static_cast<CBindRow<TItems...>*>(this->m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetPathNameWithoutExt();
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override
 	{
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, m_pSheet->GetWndPtr()->m_hWnd);
+		auto pBindRow = static_cast<CBindRow<TItems...>*>(this->m_pRow);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, this->m_pSheet->GetWndPtr()->m_hWnd);
 	}
 };
 
@@ -178,11 +178,11 @@ template<typename... TItems>
 class CFileIconPathCell :public CFileIconNameCellBase<TItems...>
 {
 public:
-	using CFileIconNameCellBase::CFileIconNameCellBase;
+	using CFileIconNameCellBase<TItems...>::CFileIconNameCellBase;
 
 	virtual std::wstring GetString() override
 	{
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
+		auto pBindRow = static_cast<CBindRow<TItems...>*>(this->m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetPath();
 	}
 
@@ -192,7 +192,7 @@ public:
 	}
 };
 
-
+struct RenameInfo;
 
 /*******************/
 /* CFileRenameCell */

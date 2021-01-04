@@ -154,6 +154,7 @@ struct TextTabData :public TabData
 struct PdfTabData :public TabData
 {
 	ReactiveWStringProperty Path;
+	ReactiveProperty<FLOAT> Scale;
 	
 	ReactiveCommand<void> OpenCommand;
 
@@ -194,6 +195,7 @@ private:
 	std::unique_ptr<CBinding<std::wstring>> m_pTextBinding;
 	std::unique_ptr<CBinding<std::wstring>> m_pTextPathBinding;
 	std::unique_ptr<CBinding<std::wstring>> m_pPdfPathBinding;
+	std::unique_ptr<CBinding<FLOAT>> m_pPdfScaleBinding;
 	std::unique_ptr<CBinding<bool>> m_pStatusBinding;
 	std::unique_ptr<CBinding<CPointF>> m_pCaretPosBinding;
 	std::unique_ptr<CBinding<std::tuple<int, int, int, int, int>>> m_pCaretsBinding;
@@ -253,7 +255,8 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 
 		CTabControl::save(ar);
-		ar("FilerView", GetFilerGridViewPtr());
+		auto spGrid = GetFilerGridViewPtr();
+		ar("FilerView", spGrid);
 	}
 
 	template <class Archive>
@@ -265,6 +268,7 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 
 		CTabControl::load(ar);
-		ar("FilerView", GetFilerGridViewPtr(), this, m_spFilerGridViewProp);
+		auto spGrid = GetFilerGridViewPtr();
+		ar("FilerView", spGrid, this, m_spFilerGridViewProp);
 	}
 };

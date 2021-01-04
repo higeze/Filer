@@ -108,14 +108,16 @@ public:
 	template<class T, typename ENABLE_IF_SERIALIZE>
 	void SerializeValue(T& tValue,MSXML2::IXMLDOMElementPtr pElem)
 	{
-		tValue.serialize(CSerializer(m_pDoc,pElem));
+		auto s = CSerializer(m_pDoc, pElem);
+		tValue.serialize(s);
 	}
 
 	//For save load
 	template<class T, typename ENABLE_IF_SAVE_LOAD>
 	void SerializeValue(T& tValue, MSXML2::IXMLDOMElementPtr pElem)
 	{
-		tValue.save(CSerializer(m_pDoc, pElem));
+		auto s = CSerializer(m_pDoc, pElem);
+		tValue.save(s);
 	}
 
 	//For vector
@@ -244,14 +246,16 @@ public:
 	template<class T, class... U, typename ENABLE_IF_SERIALIZE>
 	void DeserializeElement(T& tValue, MSXML2::IXMLDOMElementPtr pElem, U... args)
 	{
-		tValue.serialize(CDeserializer(m_pDoc, pElem), args...);
+		auto d = CDeserializer(m_pDoc, pElem);
+		tValue.serialize(d, args...);
 	}
 
 	//For save load
 	template<class T, class... U, typename ENABLE_IF_SAVE_LOAD>
 	void DeserializeElement(T& tValue, MSXML2::IXMLDOMElementPtr pElem, U... args)
 	{
-		tValue.load(CDeserializer(m_pDoc, pElem), args...);
+		auto d = CDeserializer(m_pDoc, pElem);
+		tValue.load(d, args...);
 	}
 
 	//For vector

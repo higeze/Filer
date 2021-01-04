@@ -25,8 +25,8 @@ public:
 
 	virtual ~CBindTextColumn(void) = default;
 
-	std::function<std::wstring(const std::tuple<TItems...>&)> GetGetter() { return m_getFunction; }
-	std::function<void(std::tuple<TItems...>&, const std::wstring&)> GetSetter() { return m_setFunction; }
+	std::function<std::wstring(const std::tuple<TItems...>&)> GetGetter() const { return m_getFunction; }
+	std::function<void(std::tuple<TItems...>&, const std::wstring&)> GetSetter() const { return m_setFunction; }
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{

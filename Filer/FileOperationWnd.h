@@ -53,7 +53,7 @@ protected:
 
 
 public:
-	CFileOperationWndBase(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	CFileOperationWndBase(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
 		:CD2DWWindow(),
 		m_spButtonDo(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
@@ -144,7 +144,7 @@ class CCopyMoveWndBase :public CFileOperationWndBase<std::shared_ptr<CShellFile>
 protected:
 	CIDL m_destIDL;
 public:
-	CCopyMoveWndBase(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	CCopyMoveWndBase(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 						  const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CCopyMoveWndBase() = default;
 };
@@ -155,7 +155,7 @@ public:
 class CCopyWnd :public CCopyMoveWndBase
 {
 public:
-	CCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	CCopyWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 			  const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CCopyWnd() = default;
 	void Copy();
@@ -167,7 +167,7 @@ public:
 class CMoveWnd :public CCopyMoveWndBase
 {
 public:
-	CMoveWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	CMoveWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 			 const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CMoveWnd() = default;
 	void Move();
@@ -179,7 +179,7 @@ public:
 class CDeleteWnd :public CFileOperationWndBase<std::shared_ptr<CShellFile>>
 {
 public:
-	CDeleteWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	CDeleteWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 			 const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CDeleteWnd() = default;
 	void Delete();

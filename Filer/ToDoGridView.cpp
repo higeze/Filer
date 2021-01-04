@@ -126,11 +126,11 @@ void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 	mii.fType = MFT_STRING;
 	mii.fState = MFS_ENABLED;
 	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row");
-	mii.dwTypeData = L"Add Row";
+	mii.dwTypeData = const_cast<LPWSTR>(L"Add Row");
 	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row");
-	mii.dwTypeData = L"Remove Row";
+	mii.dwTypeData = const_cast<LPWSTR>(L"Remove Row");
 	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 	::SetForegroundWindow(GetWndPtr()->m_hWnd);

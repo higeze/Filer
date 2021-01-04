@@ -205,9 +205,10 @@ typedef CDragger<ColTag, RowTag> CColDragger;
 template<typename TRC, typename TRCYou>
 class CSheetCellDragger:public CDragger<TRC, TRCYou>
 {
+	using base = CDragger<TRC, TRCYou>;
 public:
     /*! Constructor*/
-	CSheetCellDragger():CDragger(){}
+	CSheetCellDragger():base(){}
 	virtual ~CSheetCellDragger(){}
 	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override { return false; }
 };

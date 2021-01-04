@@ -1,9 +1,7 @@
 #pragma once
 #include "Row.h"
-#include "IBindSheet.h"
 #include "Debug.h"
-#include "BindGridView.h"
-
+#include "IBindSheet.h"
 
 template<typename... TItems>
 class CBindRow :public CRow
@@ -14,24 +12,9 @@ public:
 
 	std::tuple<TItems...>& GetTupleItems()
 	{
-		if (auto pBindSheet = dynamic_cast<CBindGridView<TItems...>*>(m_pSheet)) {
+		if(auto pBindSheet = dynamic_cast<IBindSheet<TItems...>*>(this->m_pSheet)){
 			auto& itemsSource = pBindSheet->GetItemsSource();
-			auto index = GetIndex<AllTag>() - m_pSheet->GetFrozenCount<RowTag>();
-
-			//if (itemsSource.size() <= index) {
-			//	auto a = 6;
-			//}
-
-
-			return itemsSource[index];
-		} else if(auto pBindSheet = dynamic_cast<IBindSheet<TItems...>*>(m_pSheet)){
-			auto& itemsSource = pBindSheet->GetItemsSource();
-			auto index = GetIndex<AllTag>() - m_pSheet->GetFrozenCount<RowTag>();
-
-			//if (itemsSource.size() <= index) {
-			//	auto a = 6;
-			//}
-
+			auto index = GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<RowTag>();
 
 			return itemsSource[index];
 
@@ -48,21 +31,3 @@ public:
 	//virtual std::shared_ptr<CShellFile> GetFilePointer() { return std::get<std::shared_ptr<CShellFile>>(GetItem()); }
 	//virtual void SetFilePointer(const std::shared_ptr<CShellFile>& spFile) { std::get<std::shared_ptr<CShellFile >>(GetItem()) = spFile; }
 };
-
-//template<typename TItem>
-//class CBindRowTest :public CRow
-//{
-//public:
-//	using CRow::CRow;
-//
-//	TItem& GetTupleItems()
-//	{
-//		if (auto pBindSheet = dynamic_cast<IBindSheet<TItem>*>(m_pSheet)) {
-//			auto& itemsSource = pBindSheet->GetItemsSource();
-//			auto index = GetIndex<AllTag>() - m_pSheet->GetFrozenCount<RowTag>();
-//			return pBindSheet->GetItemsSource()[GetIndex<AllTag>() - m_pSheet->GetFrozenCount<RowTag>()];
-//		} else {
-//			throw std::exception(FILE_LINE_FUNC);
-//		}
-//	}
-//};

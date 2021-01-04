@@ -315,6 +315,10 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 		m_pPdfPathBinding.reset(nullptr);//Need to dispose first to disconnect
 		m_pPdfPathBinding.reset(new CBinding<std::wstring>(spViewModel->Path, spView->GetPath()));
 		m_pPdfPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { GetHeaderRects().clear(); }));
+		//Scale
+		m_pPdfScaleBinding.reset(nullptr);//Need to dispose first to disconnect
+		m_pPdfScaleBinding.reset(new CBinding<FLOAT>(spViewModel->Scale, spView->GetScale()));
+
 		//Open
 		//m_pOpenBinding.reset(nullptr);
 		//m_pOpenBinding.reset(new CBinding<void>(spViewModel->OpenCommand, spView->GetOpenCommand()));

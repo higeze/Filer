@@ -35,7 +35,7 @@ public:
 			args...)
 	{
 		SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(this));
-		InsertRow(0, GetNameHeaderRowPtr());
+		InsertRow(0, this->GetNameHeaderRowPtr());
 		SetFrozenCount<RowTag>(1);
 
 		auto spColValue = std::make_shared<CPropertyValueColumn>(this);
@@ -45,7 +45,7 @@ public:
 		SetFrozenCount<ColTag>(1);
 
 		CCellSerializer serializer(this);
-		auto& items = GetItemsSource();
+		auto& items = this->GetItemsSource();
 		for (auto& val : items) {
 			auto spRow = std::make_shared<CBindRow<TValueItem>>(this);
 			PushRow(spRow);
@@ -66,7 +66,7 @@ public:
 				}
 				case NotifyVectorChangedAction::Remove:
 				{
-					EraseRow(m_allRows.back());
+					EraseRow(this->m_allRows.back());
 					break;
 				}
 				case NotifyVectorChangedAction::Reset:

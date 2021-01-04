@@ -70,7 +70,7 @@ public:
 					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 				}
 			};
-			auto size = spFile->GetSize(static_cast<CFileSizeColumn<TItems...>*>(m_pColumn)->GetSizeArgsPtr(), changed);
+			auto size = spFile->GetSize(static_cast<const CFileSizeColumn<TItems...>*>(m_pColumn)->GetSizeArgsPtr(), changed);
 			switch (size.second) {
 				case FileSizeStatus::None:
 					return L"none";
@@ -104,7 +104,7 @@ public:
 					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 				}
 			};
-			auto size = spFile->GetSize(static_cast<CFileSizeColumn<TItems...>*>(m_pColumn)->GetSizeArgsPtr(), changed);
+			auto size = spFile->GetSize(static_cast<const CFileSizeColumn<TItems...>*>(m_pColumn)->GetSizeArgsPtr(), changed);
 			switch (size.second) {
 				case FileSizeStatus::None:
 					return L"none";

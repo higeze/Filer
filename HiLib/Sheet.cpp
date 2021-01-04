@@ -195,7 +195,7 @@ void CSheet::OnHScrollPropertyChanged(const wchar_t* name)
 	PostUpdate(Updates::Invalidate);
 }
 
-void CSheet::ColumnInserted(CColumnEventArgs& e)
+void CSheet::ColumnInserted(const CColumnEventArgs& e)
 {
 	this->SetAllRowMeasureValid(false);
 
@@ -207,7 +207,7 @@ void CSheet::ColumnInserted(CColumnEventArgs& e)
 	PostUpdate(Updates::Invalidate);
 }
 
-void CSheet::ColumnErased(CColumnEventArgs& e)
+void CSheet::ColumnErased(const CColumnEventArgs& e)
 {
 	this->SetAllRowMeasureValid(false);
 
@@ -219,7 +219,7 @@ void CSheet::ColumnErased(CColumnEventArgs& e)
 	PostUpdate(Updates::Invalidate);
 }
 
-void CSheet::ColumnMoved(CMovedEventArgs<ColTag>& e)
+void CSheet::ColumnMoved(const CMovedEventArgs<ColTag>& e)
 {
 	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::Column);
@@ -228,7 +228,7 @@ void CSheet::ColumnMoved(CMovedEventArgs<ColTag>& e)
 }
 
 
-void CSheet::ColumnHeaderFitWidth(CColumnEventArgs& e)
+void CSheet::ColumnHeaderFitWidth(const CColumnEventArgs& e)
 {
 	e.m_pColumn->SetIsMeasureValid(false);
 	for(const auto& ptr : m_allRows){
@@ -242,7 +242,7 @@ void CSheet::ColumnHeaderFitWidth(CColumnEventArgs& e)
 	PostUpdate(Updates::Invalidate);
 }
 
-void CSheet::RowInserted(CRowEventArgs& e)
+void CSheet::RowInserted(const CRowEventArgs& e)
 {
 	for(auto& spCol : m_allCols){
 		spCol->SetIsFitMeasureValid(false);
@@ -253,7 +253,7 @@ void CSheet::RowInserted(CRowEventArgs& e)
 	PostUpdate(Updates::Invalidate);//
 }
 
-void CSheet::RowErased(CRowEventArgs& e)
+void CSheet::RowErased(const CRowEventArgs& e)
 {
 	this->SetAllColumnFitMeasureValid(false);
 
@@ -264,7 +264,7 @@ void CSheet::RowErased(CRowEventArgs& e)
 	PostUpdate(Updates::Invalidate);//
 }
 
-void CSheet::RowsErased(CRowsEventArgs& e)
+void CSheet::RowsErased(const CRowsEventArgs& e)
 {
 	//Remeasure column width irritate user, therefore Column measure doesn't run.
 	//boost::for_each(m_columnAllDictionary,[&](const ColumnData& colData){
@@ -278,7 +278,7 @@ void CSheet::RowsErased(CRowsEventArgs& e)
 	PostUpdate(Updates::Invalidate);//
 }
 
-void CSheet::RowMoved(CMovedEventArgs<RowTag>& e)
+void CSheet::RowMoved(const CMovedEventArgs<RowTag>& e)
 {
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
@@ -468,7 +468,7 @@ void CSheet::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
 
 void CSheet::Filter(int colDisp,std::function<bool(const std::shared_ptr<CCell>&)> predicate)
 {
-	for(auto& rowIter=std::next(m_allRows.begin(), m_frozenRowCount);rowIter!=m_allRows.end(); ++rowIter){
+	for(auto rowIter= m_allRows.begin() + m_frozenRowCount;rowIter!=m_allRows.end(); ++rowIter){
 		if(predicate(Cell(*rowIter, m_allCols[colDisp]))){
 			(*rowIter)->SetIsVisible(true);
 		}else{

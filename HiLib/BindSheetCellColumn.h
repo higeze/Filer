@@ -39,7 +39,7 @@ public:
 	}
 	virtual CBindSheetCellColumn* CloneRaw()const { return new CBindSheetCellColumn(*this); }
 	//std::shared_ptr<CToDoNameColumn> Clone()const { return std::shared_ptr<CToDoNameColumn>(CloneRaw()); }
-	std::function<ReactiveVectorProperty<std::tuple<TValueItem>>&(std::tuple<TItem>&)> GetItemser() { return m_itemser; }
+	std::function<ReactiveVectorProperty<std::tuple<TValueItem>>&(std::tuple<TItem>&)> GetItemser() const { return m_itemser; }
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{

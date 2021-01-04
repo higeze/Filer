@@ -12,7 +12,7 @@ private :
 	CDeadlineTimer m_deadlinetimer;
 
 public:
-	CFilterCell::CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+	CFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::LButtonDownEdit){}
 	virtual ~CFilterCell() = default;
 

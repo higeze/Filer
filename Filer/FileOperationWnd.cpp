@@ -7,7 +7,7 @@
 /* CCopyMoveWndBase */
 /********************/
 CCopyMoveWndBase::CCopyMoveWndBase(
-	std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
 	:CFileOperationWndBase(spFilerGridViewProp, srcIDL, srcChildIDLs), m_destIDL(destIDL)
 {
@@ -46,7 +46,7 @@ CCopyMoveWndBase::CCopyMoveWndBase(
 /************/
 /* CCopyWnd */
 /************/
-CCopyWnd::CCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+CCopyWnd::CCopyWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 				   const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
 	:CCopyMoveWndBase(spFilerGridViewProp, destIDL, srcIDL, srcChildIDLs)
 {
@@ -128,7 +128,7 @@ void CCopyWnd::Copy()
 /************/
 /* CMoveWnd */
 /************/
-CMoveWnd::CMoveWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+CMoveWnd::CMoveWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 				   const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
 	:CCopyMoveWndBase(spFilerGridViewProp, destIDL, srcIDL, srcChildIDLs)
 {
@@ -209,7 +209,7 @@ void CMoveWnd::Move()
 /**************/
 /* CDeleteWnd */
 /**************/
-CDeleteWnd::CDeleteWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+CDeleteWnd::CDeleteWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 				   const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
 	:CFileOperationWndBase(spFilerGridViewProp, srcIDL, srcChildIDLs)
 {

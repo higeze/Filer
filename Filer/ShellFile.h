@@ -87,7 +87,7 @@ public:
 	CIDL& GetChildIdl() { return m_childIdl; }
 
 	//Lazy Evaluation Getter
-	virtual std::wstring& GetPath();
+	virtual std::wstring GetPath();
 	virtual std::wstring GetFileNameWithoutExt();
 	virtual std::wstring GetDispName();
 	virtual std::wstring GetDispExt();
@@ -104,11 +104,11 @@ public:
 
 	//LastWrite
 	std::optional<FileTimes> GetFileTimes();
-	virtual std::pair<FileTimes, FileTimeStatus> GetFileTimes(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed = nullptr);
+	virtual std::pair<FileTimes, FileTimeStatus> GetFileTimes(const std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed = nullptr);
 
 	//Size
 	bool GetFileSize(ULARGE_INTEGER& size/*, std::shared_future<void> future*/);
-	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed = nullptr);
+	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed = nullptr);
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> ReadSize();
 
 	//Icon
@@ -139,7 +139,7 @@ public:
 	//Destructor
 	virtual ~CShellInvalidFile(){}
 
-	virtual std::wstring& GetPath() override{ return m_wstrPath; }
+	virtual std::wstring GetPath() override{ return m_wstrPath; }
 	virtual std::wstring GetFileNameWithoutExt()override { return m_wstrFileNameWithoutExt; }
 	virtual std::wstring GetDispName() override { return m_wstrFileName; }
 	virtual std::wstring GetDispExt() override { return m_wstrExt; }

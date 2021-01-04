@@ -635,7 +635,7 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 
 };
 
-void CFilerGridView::OpenFolder(std::shared_ptr<CShellFolder>& spFolder)
+void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 {
 	//OpenFolder is called when DeviceChange, even inactive.
 	if (!spFolder) {
@@ -796,7 +796,7 @@ void CFilerGridView::OnBkGndLButtondDblClk(const LButtonDblClkEvent& e)
 	SubmitUpdate();
 }
 
-void CFilerGridView::OnCellLButtonDblClk(CellEventArgs& e)
+void CFilerGridView::OnCellLButtonDblClk(const CellEventArgs& e)
 {
 	auto pCell = e.CellPtr;
 	if(auto spRow = dynamic_cast<CBindRow<std::shared_ptr<CShellFile>>*>(e.CellPtr->GetRowPtr())){
@@ -1178,7 +1178,7 @@ void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IS
 		mii.fType = MFT_STRING;
 		mii.fState = MFS_ENABLED;
 		mii.wID = IDM_COPYTEXT;
-		mii.dwTypeData = L"Copy Text";
+		mii.dwTypeData = const_cast<LPWSTR>(L"Copy Text");
 		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 		//Add Custom menu

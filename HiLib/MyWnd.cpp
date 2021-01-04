@@ -162,14 +162,14 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 		}
 	}
 
-	HWND CWnd::Create(HWND hWndParent,RECT& rc)
+	HWND CWnd::Create(HWND hWndParent,const RECT& rc)
 	{
 		m_cwa.x(rc.left).y(rc.top).nWidth(rc.right-rc.left).nHeight(rc.bottom-rc.top);
 
 		return CWnd::Create(hWndParent);
 	}
 
-	HWND CWnd::CreateOnCenterOfParent(HWND hWndParent, SIZE& size)
+	HWND CWnd::CreateOnCenterOfParent(HWND hWndParent, const SIZE& size)
 	{
 		CRect rcParent;
 		if (hWndParent == nullptr) {

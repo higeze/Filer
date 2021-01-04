@@ -55,6 +55,7 @@ bool CD2DWControl::GetIsFocused()const
 void CD2DWControl::OnCreate(const CreateEvt& e)
 {
 	m_rect =  e.RectF;
+	auto p = shared_from_this();
 	GetParentControlPtr()->AddChildControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
 }
 

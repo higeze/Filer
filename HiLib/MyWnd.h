@@ -206,8 +206,8 @@ public:
 	CreateWindowExArg& CreateWindowExArgument(){return m_cwa;}
 	RegisterClassExArg& RegisterClassExArgument(){return m_rca;}
 	virtual HWND Create(HWND hWndParent);
-	virtual HWND Create(HWND hWndParent,RECT& rc);
-	virtual HWND CreateOnCenterOfParent(HWND hWndParent, SIZE& size);
+	virtual HWND Create(HWND hWndParent,const RECT& rc);
+	virtual HWND CreateOnCenterOfParent(HWND hWndParent, const SIZE& size);
 
 
 	virtual void OnFinalMessage(HWND hWnd)
@@ -741,7 +741,7 @@ public:
 	{
 		std::vector<int> vnOrder=GetColumnOrderVector();
 		BOOL bRet=TRUE;
-		for each(const int& i in vnOrder){
+		for(const int& i : vnOrder){
 			bRet*=SetColumnWidth(i,cx);	
 		}
 		return bRet;
@@ -1024,7 +1024,7 @@ public:
 class __declspec(novtable) CToolTipCtrl:public CWnd
 {
 public:
-	CToolTipCtrl::CToolTipCtrl()
+	CToolTipCtrl()
 	{
 		m_rca
 		.lpszClassName(TOOLTIPS_CLASS);

@@ -2,7 +2,6 @@
 #include "Direct2DWrite.h"
 #include "D2DWControl.h"
 
-class CGridView;
 struct ScrollProperty;
 
 	class CScrollBase :public CD2DWControl
@@ -43,6 +42,7 @@ struct ScrollProperty;
 		bool GetIsVisible()const;
 
 		virtual void OnPaint(const PaintEvent& e) override;
+		virtual void OnSetCursor(const SetCursorEvent& e) override;
 		virtual CRectF GetThumbRect()const = 0;
 		virtual void OnPropertyChanged(const wchar_t* name) override
 		{

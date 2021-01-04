@@ -12,8 +12,8 @@ private:
 	std::future<std::pair<ULARGE_INTEGER, FileSizeStatus>> m_futureSize;
 	std::future<std::pair<FileTimes, FileTimeStatus>> m_futureTime;
 
-	std::mutex m_mtxSize;
-	std::mutex m_mtxTime;
+	mutable std::mutex m_mtxSize;
+	mutable std::mutex m_mtxTime;
 public:
 	CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CShellFolder();
@@ -28,8 +28,8 @@ public:
 	CComPtr<IShellFolder> GetShellFolderPtr();
 	std::shared_ptr<CShellFolder> GetParent();
 	std::shared_ptr<CShellFolder> Clone()const;
-	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed = nullptr)override;
-	virtual std::pair<FileTimes, FileTimeStatus> GetFileTimes(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed = nullptr)override;
+	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed = nullptr)override;
+	virtual std::pair<FileTimes, FileTimeStatus> GetFileTimes(const std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed = nullptr)override;
 	std::shared_ptr<CShellFile> CreateShExFileFolder(const CIDL& relativeIdl);
 	static std::optional<FileTimes> GetFolderFileTimes(const std::shared_ptr<bool>& cancel,
 		const CComPtr<IShellFolder>& pParentFolder, const CComPtr<IShellFolder>& pFolder, const CIDL& relativeIdl, const std::wstring& path,
@@ -38,10 +38,10 @@ public:
 		const CComPtr<IShellFolder>& pFolder, const std::wstring& path,
 		const std::chrono::system_clock::time_point& tp, const int limit);
 private:
-	std::pair<FileTimes, FileTimeStatus> GetLockFileTimes();
-	std::pair<ULARGE_INTEGER, FileSizeStatus> GetLockSize();
+	std::pair<FileTimes, FileTimeStatus> GetLockFileTimes() const;
+	std::pair<ULARGE_INTEGER, FileSizeStatus> GetLockSize() const;
 
 protected:
-	void SetLockSize(std::pair<ULARGE_INTEGER, FileSizeStatus>& size);
-	void SetLockFileTimes(std::pair<FileTimes, FileTimeStatus>& times);
+	void SetLockSize(const std::pair<ULARGE_INTEGER, FileSizeStatus>& size);
+	void SetLockFileTimes(const std::pair<FileTimes, FileTimeStatus>& times);
 };

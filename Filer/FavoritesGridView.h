@@ -12,7 +12,7 @@ class CFavoritesGridView : public CBindGridView<std::shared_ptr<CFavorite>>
 private:
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
 public:
-	std::function<void(std::shared_ptr<CShellFile>&)> FileChosen;
+	std::function<void(const std::shared_ptr<CShellFile>&)> FileChosen;
 
 public:
 	CFavoritesGridView(
@@ -26,7 +26,7 @@ public:
 
 	virtual void OnCreate(const CreateEvt& e) override;
 	
-	void OnCellLButtonDblClk(CellEventArgs& e);
+	void OnCellLButtonDblClk(const CellEventArgs& e);
 	void OpenFavorites();
 	void FilterAll() override {/*Do nothing*/}
 	void Reload();

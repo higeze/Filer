@@ -13,14 +13,14 @@ public:
 	virtual CheckBoxState GetCheckBoxState() const override
 	{
 		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindCheckBoxColumn<TItems...>*>(m_pColumn);
+		auto pBindColumn = static_cast<const CBindCheckBoxColumn<TItems...>*>(this->m_pColumn);
 		return pBindColumn->GetGetter()(pBindRow->GetTupleItems());
 	}
 
 	virtual void SetCheckBoxState(const CheckBoxState& state) override
 	{
 		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindCheckBoxColumn<TItems...>*>(m_pColumn);
+		auto pBindColumn = static_cast<const CBindCheckBoxColumn<TItems...>*>(this->m_pColumn);
 		pBindColumn->GetSetter()(pBindRow->GetTupleItems(), state);
 	}
 };

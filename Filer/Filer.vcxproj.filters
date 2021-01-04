@@ -972,10 +972,10 @@
     <None Include="..\Release\Filer.exe">
       <Filter>Release</Filter>
     </None>
-    <None Include="HandGrab.cur">
+    <None Include="HandOpen.cur">
       <Filter>Resource</Filter>
     </None>
-    <None Include="HandOpen.cur">
+    <None Include="HandGrab.cur">
       <Filter>Resource</Filter>
     </None>
   </ItemGroup>

@@ -39,7 +39,7 @@ private:
 		shell::IdlHash, shell::IdlEqual> m_idlMap;
 
 public:
-	CIncrementalCopyWnd(std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	CIncrementalCopyWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	~CIncrementalCopyWnd();
 	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();

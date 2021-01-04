@@ -82,6 +82,14 @@ public:
 	}
 };
 
+enum class InitialScaleMode
+{
+	None,
+	MinWidthHeight,
+	Width,
+	Height
+};
+
 
 class CPdfView : public CD2DWControl
 {
@@ -103,14 +111,16 @@ protected:
 	FLOAT m_prevScale;
 
 	/* Scroll */
-	std::unique_ptr<CVScroll> m_pVScroll;
-	std::unique_ptr<CHScroll> m_pHScroll;
+	std::shared_ptr<CVScroll> m_pVScroll;
+	std::shared_ptr<CHScroll> m_pHScroll;
 
 	std::unique_ptr<CPdf> m_pdf;
     //std::vector<std::unique_ptr<CPdfPage>> m_pdfPages;
    // std::vector<CComPtr<ID2D1Bitmap1>> m_pdfBmps;
 
 	std::unique_ptr<CPdfViewStateMachine> m_pMachine;
+
+	InitialScaleMode m_initialScaleMode;
 
 
 
@@ -120,6 +130,7 @@ public:
 public:
 	// Getter
 	ReactiveWStringProperty& GetPath() { return m_path; }
+	ReactiveProperty<FLOAT>& GetScale() { return m_scale; }
 	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
 	
 	std::function<CComPtr<IPdfRendererNative>& ()> GetPdfRenderer;
@@ -127,6 +138,7 @@ public:
 	CSizeF GetRenderSize();
 	CSizeF GetRenderContentSize();
 
+	std::tuple<CRectF, CRectF> GetRects() const;
 
 public:
 	/******************/

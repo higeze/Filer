@@ -1,10 +1,12 @@
 #pragma once
+#include "Direct2DWrite.h"
 #include "ReactiveProperty.h"
 #include "Debug.h"
 #include "atlcomcli.h"
 #include <msctf.h>
 #include <cstdlib>
 #include <utility>
+#include <queue>
  
 #include <windows.h>
 #include <shcore.h>
@@ -20,13 +22,13 @@
 
 #include <wrl/client.h>
 #include <wrl/event.h>
+#include <boost/sml.hpp>
    
 #pragma comment(lib, "shcore.lib")
 #pragma comment(lib, "runtimeobject.lib")
 #pragma comment(lib, "windows.data.pdf.lib")
 #pragma comment(lib, "windowscodecs.lib")
 
-//TODOHIGH
 namespace abipdf = ABI::Windows::Data::Pdf;
 namespace abifoundation = ABI::Windows::Foundation;
 namespace abistorage = ABI::Windows::Storage;
@@ -38,8 +40,6 @@ namespace wrlwrappers = Microsoft::WRL::Wrappers;
 #include <future>
 #include <mutex>
 
-class CVScroll;
-class CHScroll;
 class CDirect2DWrite;
 class CPdf;
 class CPdfPage;
@@ -58,16 +58,18 @@ class CPdf
 {
 private:
 	CDirect2DWrite* m_pDirect;
+	std::shared_ptr<FormatF> m_pFormat;
 	std::pair<CComPtr<abipdf::IPdfDocument>, PdfDocStatus>  m_document;
 	std::mutex m_mtxDoc;
 	std::shared_ptr<bool> m_spCancelThread;
 	std::future<void> m_future;
 	std::vector<std::unique_ptr<CPdfPage>> m_pages;
 public:
-	CPdf(CDirect2DWrite* pDirect);
+	CPdf(CDirect2DWrite* pDirect, const std::shared_ptr<FormatF>& pFormat);
 	virtual ~CPdf();
 
 	CDirect2DWrite* GetDirectPtr() { return m_pDirect; }
+	std::shared_ptr<FormatF> GetFormatPtr() const { return m_pFormat; }
 	std::function<CSizeF&()> GetSourceSize;
 
 	void Load(const std::wstring& path, std::function<void()> changed);
@@ -89,7 +91,7 @@ private:
 		std::lock_guard<std::mutex> lock(m_mtxDoc);
 		return m_document;
 	}
-	void SetLockDocument(std::pair<CComPtr<abipdf::IPdfDocument>, PdfDocStatus>& document)
+	void SetLockDocument(const std::pair<CComPtr<abipdf::IPdfDocument>, PdfDocStatus>& document)
 	{
 		std::lock_guard<std::mutex> lock(m_mtxDoc);
 		m_document = document;
@@ -98,12 +100,28 @@ private:
 
 };
 
-enum class PdfBmpStatus
+
+
+struct RenderEvent
 {
-	None,
-	Available,
-	Loading,
-	Unavailable,
+	RenderEvent(CDirect2DWrite* pDirect, const CRectF& rect, const FLOAT& scale)
+	:DirectPtr(pDirect), RenderRectInWnd(rect), Scale(scale){}
+	virtual ~RenderEvent() = default;
+
+	CDirect2DWrite* DirectPtr;
+	CRectF RenderRectInWnd;
+	FLOAT Scale;
+};
+struct LoadEvent {};
+struct ReloadEvent {};
+struct LoadCompletedEvent {};
+struct CancelCompletedEvent {};
+struct ErrorEvent {};
+
+struct PdfBmpInfo
+{
+	CComPtr<IWICFormatConverter> ConverterPtr;
+	FLOAT Scale;
 };
 
 class CPdfPage
@@ -115,7 +133,13 @@ private:
 	std::mutex m_mtxBmp;
 	std::shared_ptr<bool> m_spCancelThread;
 	std::future<void> m_future;
-	std::pair<CComPtr<ID2D1Bitmap1>, PdfBmpStatus> m_bmp;
+	PdfBmpInfo m_bmp;
+	FLOAT m_requestingScale;
+	FLOAT m_loadingScale;
+	struct Machine;
+	std::unique_ptr<boost::sml::sm<Machine, boost::sml::process_queue<std::queue>>> m_pMachine;
+	std::function<void()> StateChanged;
+
 public:
 	/* Constructor/Destructor */
 	CPdfPage(CPdf* pDoc, UINT32 pageIndex);
@@ -123,19 +147,35 @@ public:
 	/* Closure */
 	std::function<CSizeF&()> GetSourceSize;
 	/* Member function */
-	std::pair<CComPtr<ID2D1Bitmap1>, PdfBmpStatus> GetBitmap(std::function<void()> changed);
-
+	//PdfBmpInfo GetBitmap(FLOAT scale, std::function<void()> changed);
+	void Render(const RenderEvent& e) { process_event(e); }
 private:
-	void Load(std::function<void()> changed);
 	void Clear();
-	std::pair<CComPtr<ID2D1Bitmap1>, PdfBmpStatus> GetLockBitmap()
+	PdfBmpInfo GetLockBitmap()
 	{
 		std::lock_guard<std::mutex> lock(m_mtxBmp);
 		return m_bmp;
 	}
-	void SetLockBitmap(std::pair<CComPtr<ID2D1Bitmap1>, PdfBmpStatus>& bmp)
+	void SetLockBitmap(const PdfBmpInfo& bmp)
 	{
 		std::lock_guard<std::mutex> lock(m_mtxBmp);
 		m_bmp = bmp;
 	}
+
+	virtual void process_event(const RenderEvent& e);
+	virtual void process_event(const LoadEvent& e);
+	virtual void process_event(const ReloadEvent& e);
+	virtual void process_event(const LoadCompletedEvent& e);
+	virtual void process_event(const CancelCompletedEvent& e);
+	virtual void process_event(const ErrorEvent& e);
+
+	void None_Render(const RenderEvent& e);
+	void Loading_OnEntry();
+	//void Reloading_OnEntry(const ReloadEvent& e);
+	void Loading_Render(const RenderEvent& e);
+	void Available_Render(const RenderEvent& e);
+	void WaitCancel_OnEntry();
+	void WaitCancel_OnExit();
+	void WaitCancel_Render(const RenderEvent& e);
+	void Error_Render(const RenderEvent& e);
 };

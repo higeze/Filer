@@ -58,7 +58,7 @@ CShellFile::CShellFile(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl,
 
 CShellFile::~CShellFile() = default;
 
-std::wstring& CShellFile::GetPath()
+std::wstring CShellFile::GetPath()
 {
 	if (m_wstrPath.empty()) {
 		STRRET strret;
@@ -171,7 +171,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::ReadSize()
 }
 
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize(std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
 {
 	switch (m_size.second) {
 	case FileSizeStatus::None:
@@ -192,7 +192,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize(std::shared_ptr<Fi
 	return m_size;
 }
 
-std::pair<FileTimes, FileTimeStatus> CShellFile::GetFileTimes(std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
+std::pair<FileTimes, FileTimeStatus> CShellFile::GetFileTimes(const std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
 {
 	switch (m_fileTimes.second) {
 	case FileTimeStatus::None:

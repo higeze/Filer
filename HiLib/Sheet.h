@@ -130,10 +130,10 @@ public:
 
 public:
 	//Signals
-	boost::signals2::signal<void(CellEventArgs&)> CellLButtonDown;
-	boost::signals2::signal<void(CellEventArgs&)> CellLButtonClk;
-	boost::signals2::signal<void(CellEventArgs&)> CellLButtonDblClk;
-	boost::signals2::signal<void(CellContextMenuEventArgs&)> CellContextMenu;
+	sigslot::signal<const CellEventArgs&> CellLButtonDown;
+	sigslot::signal<const CellEventArgs&> CellLButtonClk;
+	sigslot::signal<const CellEventArgs&> CellLButtonDblClk;
+	sigslot::signal<const CellContextMenuEventArgs&> CellContextMenu;
 
 	//Constructor
 	CSheet(CD2DWControl* pParentControl, std::shared_ptr<SheetProperty> spSheetProperty, CMenu* pContextMenu= &CSheet::ContextMenu);
@@ -172,15 +172,15 @@ public:
 	void SetColumnAllCellMeasureValid(CColumn* pColumn, bool valid);
 
 	//Observer
-	virtual void ColumnInserted(CColumnEventArgs& e);
-	virtual void ColumnErased(CColumnEventArgs& e);
-	virtual void ColumnMoved(CMovedEventArgs<ColTag>& e);
-	virtual void ColumnHeaderFitWidth(CColumnEventArgs& e);
+	virtual void ColumnInserted(const CColumnEventArgs& e);
+	virtual void ColumnErased(const CColumnEventArgs& e);
+	virtual void ColumnMoved(const CMovedEventArgs<ColTag>& e);
+	virtual void ColumnHeaderFitWidth(const CColumnEventArgs& e);
 
-	virtual void RowInserted(CRowEventArgs& e);
-	virtual void RowErased(CRowEventArgs& e);
-	virtual void RowsErased(CRowsEventArgs& e);
-	virtual void RowMoved(CMovedEventArgs<RowTag>& e);
+	virtual void RowInserted(const CRowEventArgs& e);
+	virtual void RowErased(const CRowEventArgs& e);
+	virtual void RowsErased(const CRowsEventArgs& e);
+	virtual void RowMoved(const CMovedEventArgs<RowTag>& e);
 
 	virtual void SizeChanged();
 	virtual void Scroll();

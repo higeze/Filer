@@ -201,15 +201,16 @@ public:
 template<class T, class U>
 class ReactiveDetailProperty :public ReactiveProperty<T>
 {
+	using base = ReactiveProperty<T>;
 protected:
 	std::shared_ptr<Subject<U>> m_pDetailSubject;
 public:
 	ReactiveDetailProperty() :
-		ReactiveProperty(),
+		base(),
 		m_pDetailSubject(std::make_shared <Subject<U>>()){}
 
 	ReactiveDetailProperty(const T& value) :
-		ReactiveProperty(value),
+		base(value),
 		m_pDetailSubject(std::make_shared <Subject<U>>())
 	{};
 
@@ -249,8 +250,10 @@ struct NotifyStringChangedEventArgs
 template <class CharT,
 	class Traits = std::char_traits<CharT>,
 	class Allocator = std::allocator<CharT> >
-class ReactiveBasicStringProperty: public ReactiveDetailProperty<std::basic_string<CharT, Traits, Allocator>, NotifyStringChangedEventArgs<CharT>>
+class ReactiveBasicStringProperty
+	: public ReactiveDetailProperty<std::basic_string<CharT, Traits, Allocator>, NotifyStringChangedEventArgs<CharT>>
 {
+	using base = typename ReactiveDetailProperty<std::basic_string<CharT, Traits, Allocator>, NotifyStringChangedEventArgs<CharT>>;
 	using str_type = typename std::basic_string<CharT, Traits, Allocator>;
 	using size_type = typename  std::basic_string<CharT, Traits, Allocator>::size_type;
 	using const_iterator = typename std::basic_string<CharT, Traits, Allocator>::const_iterator;
@@ -258,37 +261,37 @@ class ReactiveBasicStringProperty: public ReactiveDetailProperty<std::basic_stri
 //	using reference = typename std::basic_string<CharT, Traits, Allocator>::reference;
 
 public:
-	ReactiveBasicStringProperty() :
-		ReactiveDetailProperty(){}
+	ReactiveBasicStringProperty()
+		:base(){}
 	
-	ReactiveBasicStringProperty(const str_type& value) :
-		ReactiveDetailProperty(value){}
+	ReactiveBasicStringProperty(const str_type& value) 
+		:base(value){}
 	
 	~ReactiveBasicStringProperty() = default;
 
 	virtual void set(const str_type& value) override
 	{
-		if (m_value != value) {
+		if (this->m_value != value) {
 			force_notify_set(value);
 		}
 	}
 	virtual void force_notify_set(const str_type& value) override
 	{
-		str_type old(m_value);
-		m_value.assign(value);
-		m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		str_type old(this->m_value);
+		this->m_value.assign(value);
+		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Assign,
-				m_value,
+				this->m_value,
 				old,
-				0, (int)old.size(),
-				(int)m_value.size()
+				0, (int)(old.size()),
+				(int)(this->m_value.size())
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 	}
 
 	const_reference operator[](size_type pos) const noexcept
 	{
-		return m_value.operator[](pos);
+		return this->m_value.operator[](pos);
 	}
 
 	//reference operator[](size_type pos) noexcept
@@ -298,47 +301,47 @@ public:
 
 	const_iterator cbegin() const noexcept
 	{
-		return m_value.cend();
+		return this->m_value.cend();
 	}
 
 	const_iterator cend() const noexcept
 	{
-		return m_value.cbegin();
+		return this->m_value.cbegin();
 	}
 
 	size_type size() const noexcept
 	{
-		return m_value.size();
+		return this->m_value.size();
 	}
 
 	bool empty() const noexcept
 	{
-		return m_value.empty();
+		return this->m_value.empty();
 	}
 
 	const CharT& front() const
 	{
-		return m_value.front();
+		return this->m_value.front();
 	}
 	
 	const CharT& back() const
 	{
-		return m_value.back();
+		return this->m_value.back();
 	}
 
-	str_type substr(size_type pos = 0, size_type n = npos) const
+	str_type substr(size_type pos = 0, size_type n = std::basic_string<CharT, Traits, Allocator>::npos) const
 	{
-		return m_value.substr(pos, n);
+		return this->m_value.substr(pos, n);
 	}
 
 	const CharT* c_str() const noexcept
 	{
-		return m_value.c_str();
+		return this->m_value.c_str();
 	}
 
 	const CharT* data() const noexcept
 	{
-		return m_value.data();
+		return this->m_value.data();
 	}
 	
 	ReactiveBasicStringProperty<CharT, Traits, Allocator>& assign(const str_type& value)
@@ -349,71 +352,71 @@ public:
 
 	ReactiveBasicStringProperty<CharT, Traits, Allocator>& insert(size_type index, const str_type& value)
 	{
-		str_type old(m_value);
-		m_value.insert(index, value);
-		m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		str_type old(this->m_value);
+		this->m_value.insert(index, value);
+		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Insert,
-			m_value,
+			this->m_value,
 			old,
 			(int)index, (int)index, (int)(index + value.size())
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
-	ReactiveBasicStringProperty<CharT, Traits, Allocator>& erase(size_type index = 0, size_type count = npos)
+	ReactiveBasicStringProperty<CharT, Traits, Allocator>& erase(size_type index = 0, size_type count = std::basic_string<CharT, Traits, Allocator>::npos)
 	{
-		str_type old(m_value);
-		m_value.erase(index, count);
-		m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		str_type old(this->m_value);
+		this->m_value.erase(index, count);
+		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Erase,
-			m_value,
+			this->m_value,
 			old,
 			(int)index, (int)(index + count), (int)(index)
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
 	ReactiveBasicStringProperty<CharT, Traits, Allocator>& replace(size_type pos, size_type count, const str_type& value)
 	{
-		str_type old(m_value);
-		m_value.replace(pos, count, value);
-		m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		str_type old(this->m_value);
+		this->m_value.replace(pos, count, value);
+		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Replace,
-			m_value,
+			this->m_value,
 			old,
 			(int)pos, (int)(pos + count), int(pos + value.size())
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
 	ReactiveBasicStringProperty<CharT, Traits, Allocator>& replace(size_type pos, size_type n1, const CharT* s, size_type n2)
 	{
-		str_type old(m_value);
-		m_value.replace(pos, n1, s, n2);
-		m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		str_type old(this->m_value);
+		this->m_value.replace(pos, n1, s, n2);
+		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Replace,
-				m_value,
+				this->m_value,
 				old,
 				(int)pos, (int)(pos + n1), int(pos + n2)
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
 	void clear()
 	{
-		str_type old(m_value);
-		m_value.clear();
-		m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		str_type old(this->m_value);
+		this->m_value.clear();
+		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Clear,
-			m_value,
+			this->m_value,
 			old,
 			0, (int)old.size(), 0
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 	}
 
 	template <class Archive>
@@ -425,17 +428,17 @@ public:
 	template <class Archive>
 	void load(Archive& ar)
 	{
-		str_type old(m_value);
-		ar("Value", m_value);
-		if (old != m_value) {
-			m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		str_type old(this->m_value);
+		ar("Value", this->m_value);
+		if (old != this->m_value) {
+			this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 				NotifyStringChangedAction::Assign,
-				m_value,
+				this->m_value,
 				old,
 				0, (int)old.size(), 0
 			});
 		}
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 	}
 
 };
@@ -445,14 +448,15 @@ using ReactiveWStringProperty = ReactiveBasicStringProperty<wchar_t>;
 template<typename... Args>
 class ReactiveTupleProperty:public ReactiveProperty<std::tuple<Args...>>
 {
+	using base = ReactiveProperty<std::tuple<Args...>>;
 	using tuple_type = std::tuple<Args...>;
 public:
 	ReactiveTupleProperty(const Args& ...args) :
-		ReactiveProperty(std::make_tuple(args...)){}
+		base(std::make_tuple(args...)){}
 
 	void set(const Args& ...args)
 	{
-		ReactiveProperty::set(std::make_tuple(args...));
+		base::set(std::make_tuple(args...));
 	}
 };
 
@@ -479,6 +483,7 @@ struct NotifyVectorChangedEventArgs
 template<class T, class Allocator = std::allocator<T>>
 class ReactiveVectorProperty:public ReactiveDetailProperty<std::vector<T, Allocator>, NotifyVectorChangedEventArgs<T>>
 {
+	using base = ReactiveDetailProperty<std::vector<T, Allocator>, NotifyVectorChangedEventArgs<T>>;
 	using vector_type = std::vector<T, Allocator>;
 	using str_type = typename std::vector<T, Allocator>;
 	using size_type = typename  std::vector<T, Allocator>::size_type;
@@ -489,79 +494,79 @@ class ReactiveVectorProperty:public ReactiveDetailProperty<std::vector<T, Alloca
 
 public:
 	ReactiveVectorProperty() :
-		ReactiveDetailProperty(){}
+		base(){}
 
 	ReactiveVectorProperty(const vector_type& value) :
-		ReactiveDetailProperty(value){}
+		base(value){}
 
 	virtual ~ReactiveVectorProperty() = default;
 
 	virtual void set(const vector_type& value) override
 	{
-		if (m_value != value) {
+		if (this->m_value != value) {
 			force_notify_set(value);
 		}
 	}
 	virtual void force_notify_set(const vector_type& value) override
 	{
-		vector_type old(m_value);
-		m_value.assign(value.cbegin(), value.cend());
-		m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		vector_type old(this->m_value);
+		this->m_value.assign(value.cbegin(), value.cend());
+		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Reset,
-			m_value,
+			this->m_value,
 			0,
 			old,
 			0
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 	}
 
 	const_reference operator[](size_type pos) const noexcept
 	{
-		return m_value.operator[](pos);
+		return this->m_value.operator[](pos);
 	}
 
 	//TODO
 	reference operator[](size_type pos) noexcept
 	{
-		return m_value.operator[](pos);
+		return this->m_value.operator[](pos);
 	}
 	//TODO
 	iterator begin() noexcept
 	{
-		return m_value.begin();
+		return this->m_value.begin();
 	}
 	//TODO
 	iterator end() noexcept
 	{
-		return m_value.end();
+		return this->m_value.end();
 	}
 
 	const_iterator cbegin() const noexcept
 	{
-		return m_value.cbegin();
+		return this->m_value.cbegin();
 	}
 
 	const_iterator cend() const noexcept
 	{
-		return m_value.cend();
+		return this->m_value.cend();
 	}
 
 	size_type size() const noexcept
 	{
-		return m_value.size();
+		return this->m_value.size();
 	}
 
 	bool empty() const noexcept
 	{
-		return m_value.empty();
+		return this->m_value.empty();
 	}
 
 	void push_back(const T& x)
 	{
-		m_value.push_back(x);
-		m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		this->m_value.push_back(x);
+		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Add,
 			{ x },
@@ -569,14 +574,14 @@ public:
 			{},
 				-1
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 	}
 
 	iterator insert(const_iterator position, const T& x)
 	{
-		auto ret = m_value.insert(position, x);
-		auto index = std::distance(m_value.begin(), ret);
-		m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		auto ret = this->m_value.insert(position, x);
+		auto index = std::distance(this->m_value.begin(), ret);
+		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Insert,
 			{ x },
@@ -584,7 +589,7 @@ public:
 			{},
 			-1
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 		return ret;
 	}
 
@@ -592,8 +597,8 @@ public:
 	{
 		auto oldItem = *position;
 		*position = x;
-		auto index = std::distance(m_value.begin(), position);
-		m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		auto index = std::distance(this->m_value.begin(), position);
+		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Replace,
 			{ x },
@@ -601,16 +606,16 @@ public:
 			{ oldItem},
 			-1
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 		return position;
 	}
 
 	iterator erase(const_iterator where)
 	{
 		auto oldItem = *where;
-		auto index = std::distance(m_value.cbegin(), where);
-		iterator ret = m_value.erase(where);
-		m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		auto index = std::distance(this->m_value.cbegin(), where);
+		iterator ret = this->m_value.erase(where);
+		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Remove,
 			{},
@@ -618,16 +623,16 @@ public:
 			{ oldItem },
 			index
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 		return ret;
 	}
 
 	iterator erase(const_iterator first, const_iterator last)
 	{
 		auto oldItems = vector_type(first, last);
-		auto index = std::distance(m_value.cbegin(), first);
-		iterator ret = m_value.erase(first, last);
-		m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		auto index = std::distance(this->m_value.cbegin(), first);
+		iterator ret = this->m_value.erase(first, last);
+		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Remove,
 			{},
@@ -635,16 +640,16 @@ public:
 				oldItems,
 				index
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 		return ret;
 	}
 
 
 	void clear()
 	{
-		auto old = m_value;
-		m_value.clear();
-		m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		auto old = this->m_value;
+		this->m_value.clear();
+		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Reset,
 			{},
@@ -652,7 +657,7 @@ public:
 			old,
 			0
 		});
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 		return;
 	}
 
@@ -666,19 +671,19 @@ public:
 	template <class Archive>
 	void load(Archive& ar)
 	{
-		vector_type old(m_value);
-		ar("Value", m_value);
-		if (old != m_value) {
-			m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		vector_type old(this->m_value);
+		ar("Value", this->m_value);
+		if (old != this->m_value) {
+			this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
 			{
 				NotifyVectorChangedAction::Reset,
-				m_value,
+				this->m_value,
 				0,
 				old,
 				0
 			});
 		}
-		m_pSubject->OnNext(m_value);
+		this->m_pSubject->OnNext(this->m_value);
 	}
 };
 
