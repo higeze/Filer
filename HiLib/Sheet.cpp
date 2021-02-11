@@ -509,6 +509,15 @@ void CSheet::EraseRows(const std::vector<std::shared_ptr<CRow>>& vspRow, bool no
 	}
 }
 
+void CSheet::InsertColumn(int pos, const std::shared_ptr<CColumn>& spColumn, bool notify)
+{
+	m_allCols.idx_insert(m_allCols.cbegin() + pos, spColumn);
+	if (notify) {
+		ColumnInserted(CColumnEventArgs(spColumn));
+	}
+}
+
+
 void CSheet::PushColumn(const std::shared_ptr<CColumn>& spCol, bool notify)
 {
 	//spCol->InsertNecessaryRows();

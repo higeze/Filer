@@ -1,124 +1,48 @@
-//#pragma once
-//#include "MapColumn.h"
-//#include "RowIndexColumn.h"
-//#include "ParentColumnNameHeaderCell.h"
-//#include "FilterCell.h"
-//#include "BindCell.h"
-//#include "Sheet.h"
-//
-//template<typename TData, typename TValue, typename... TItems>
-//class CBindColumn :public CMapColumn
-//{
-//private:
-//	std::wstring m_header;
-//	std::function<std::wstring(TData&)> m_getFunction;
-//	std::function<void(T&, std::wstring)> m_setFunction;
-//
-//public:
-//	CBindColumnTest() :CMapColumn() {}
-//	CBindColumnTest(CSheet* pSheet,
-//				std::wstring header,
-//				std::function<std::wstring(T&)> getFunction,
-//				std::function<void(T&, std::wstring)> setFunction)
-//		:CMapColumn(pSheet), m_header(header), m_getFunction(getFunction), m_setFunction(setFunction)
-//	{
-//	}
-//	virtual ~CBindColumnTest() {}
-//	virtual CColumn& ShallowCopy(const CColumn& column)override
-//	{
-//		CMapColumn::ShallowCopy(column);
-//		auto c = dynamic_cast<const CBindColumnTest<T>&>(column);
-//		m_header = c.m_header;
-//		m_getFunction = c.m_getFunction;
-//		m_setFunction = c.m_setFunction;
-//		return *this;
-//	}
-//
-//	virtual CBindColumnTest* CloneRaw()const { return new CBindColumnTest<TItem>(*this); }
-//	std::shared_ptr<CBindColumnTest> Clone()const { return std::shared_ptr<CBindColumnTest<TItem>>(CloneRaw()); }
-//
-//	std::function<std::wstring(TItem&)> GetGetFunction() { return m_getFunction; }
-//	std::function<void(TItem&, std::wstring)> GetSetFunction() { return m_setFunction; }
-//
-//	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-//	{
-//		return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet, pRow, pColumn, m_pSheet->GetHeaderProperty(), m_header);
-//	}
-//
-//	std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)
-//	{
-//		return std::make_shared<CFilterCell>(m_pSheet, pRow, pColumn, m_pSheet->GetFilterProperty());
-//	}
-//
-//	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
-//	{
-//		return std::make_shared<CBindCell<TItem>>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
-//	}
-//};
-//
-//
-//template<typename TItem>
-//class CBindColumnTest:public CMapColumn
-//{
-//private:
-//	std::wstring m_header;
-//	std::function<std::wstring(TItem&)> m_getFunction;
-//	std::function<void(T&,std::wstring)> m_setFunction;
-//
-//public:
-//	CBindColumnTest():CMapColumn(){}
-//	CBindColumnTest(CSheet* pSheet,
-//		std::wstring header, 
-//		std::function<std::wstring(T&)> getFunction,
-//		std::function<void(T&,std::wstring)> setFunction)
-//		:CMapColumn(pSheet),m_header(header), m_getFunction(getFunction),m_setFunction(setFunction){}
-//	virtual ~CBindColumnTest(){}
-//	virtual CColumn& ShallowCopy(const CColumn& column)override
-//	{
-//		CMapColumn::ShallowCopy(column);
-//		auto c = dynamic_cast<const CBindColumnTest<T>&>(column);
-//		m_header = c.m_header;
-//		m_getFunction = c.m_getFunction;
-//		m_setFunction = c.m_setFunction;
-//		return *this;
-//	}
-//
-//	virtual CBindColumnTest* CloneRaw()const{return new CBindColumnTest<TItem>(*this);}
-//	std::shared_ptr<CBindColumnTest> Clone()const{return std::shared_ptr<CBindColumnTest<TItem>>(CloneRaw());}
-//
-//	std::function<std::wstring(TItem&)> GetGetFunction(){return m_getFunction;}
-//	std::function<void(TItem&,std::wstring)> GetSetFunction(){return m_setFunction;}
-//
-//	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-//	{
-//		return std::make_shared<CParentColumnHeaderStringCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty(),m_header);
-//	}
-//
-//	std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)
-//	{
-//		return std::make_shared<CFilterCell>(m_pSheet,pRow,pColumn,m_pSheet->GetFilterProperty());
-//	}
-//
-//	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
-//	{
-//		return std::make_shared<CBindCell<TItem>>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
-//	}
-//};
-//
-//template<typename TItem>
-//class CBindRowHeaderColumn:public CRowIndexColumn
-//{
-//private:
-//	std::function<bool(TItem&)> m_getCheckedFunction;
-//public:
-//	CBindRowHeaderColumn(CSheet* pSheet, std::function<bool(TItem&)> getCheckedFunction)
-//		:CRowIndexColumn(pSheet),m_getCheckedFunction(getCheckedFunction){}
-//	virtual ~CBindRowHeaderColumn(){}
-//
-//	std::function<bool(TItem&)> GetGetCheckedFunction(){return m_getCheckedFunction;}
-//
-//	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
-//	{
-//		return std::make_shared<CBindRowHeaderCell<TItem>>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
-//	}
-//};
+#pragma once
+#include "Column.h"
+#include "Debug.h"
+#include "IBindSheet.h"
+#include "Debug.h"
+
+template<typename... TItems>
+class CBindColumn :public CColumn
+{
+public:
+	CBindColumn(CSheet* pSheet)
+		:CColumn(pSheet){ }
+
+	std::tuple<TItems...>& GetTupleItems()
+	{
+		if(auto pBindSheet = dynamic_cast<IBindSheet<TItems...>*>(this->m_pSheet)){
+			auto& itemsSource = pBindSheet->GetItemsSource();
+			auto index = GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<ColTag>();
+
+			return itemsSource[index];
+
+		} else {
+			throw std::exception(FILE_LINE_FUNC);
+		}
+	}
+
+	template<typename TItem> TItem& GetItem()
+	{
+		return std::get<TItem>(GetTupleItems());
+	}
+
+	std::shared_ptr<CCell>& Cell(CRow* pRow )
+	{
+		if (pRow->HasCell()) {
+			return pRow->Cell(this);
+		} else {
+			THROW_FILE_LINE_FUNC;
+		}
+	}
+
+
+	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
+	{
+		return std::make_shared<CTextCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
+	}
+
+};
+

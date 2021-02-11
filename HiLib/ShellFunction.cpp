@@ -53,10 +53,15 @@ std::wstring shell::Size2String(ULONGLONG size)
 
 std::wstring shell::GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL, SHGDNF uFlags)
 {
+	return GetDisplayNameOf(pParentFolder, childIDL.ptr(), uFlags);
+}
+
+std::wstring shell::GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const LPITEMIDLIST& childIDL, SHGDNF uFlags)
+{
 	STRRET strret{ 0 };
 	std::wstring ret;
-	if (SUCCEEDED(pParentFolder->GetDisplayNameOf(childIDL.ptr(), uFlags, &strret))) {
-		return strret2wstring(strret, childIDL.ptr());
+	if (SUCCEEDED(pParentFolder->GetDisplayNameOf(childIDL, uFlags, &strret))) {
+		return strret2wstring(strret, childIDL);
 	}
 	return ret;
 }

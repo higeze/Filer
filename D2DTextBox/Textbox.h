@@ -43,7 +43,7 @@ class CTextBox : public IBridgeTSFInterface, public CD2DWControl
 	/* Static */
 	/**********/
 public:
-	static bool AppTSFInit();
+	static void AppTSFInit();
 	static void AppTSFExit();
 
 	/*********/
@@ -240,17 +240,11 @@ protected:
 	std::function<void(const std::wstring&)> m_final;
 
 
-	//std::vector<LINEINFO> m_lineInfos;
-	//UINT nLineCnt_;
-	//FLOAT m_lineHeight = 0.f;
-	//FLOAT row_width_;
-	//int StarCharPos_;
+	std::function<CComPtr<CTextEditSink>&()> GetTextEditSink;
+	std::function<CComPtr<CTextStore>&()> GetTextStore;
 
-
-	CComPtr<CTextEditSink> m_pTextEditSink;
-	CComPtr<CTextStore> m_pTextStore;
-	CComPtr<ITfDocumentMgr> m_pDocumentMgr;
-	CComPtr<ITfContext> m_pInputContext;
+	std::function<CComPtr<ITfDocumentMgr>&()> GetDocumentMgr;
+	std::function<CComPtr<ITfContext>&()> GetContext;
 
 	std::vector<COMPOSITIONRENDERINFO> m_compositionInfos;
 
@@ -258,16 +252,17 @@ protected:
 	//UINT nCompositionRenderInfo_;
 	TfEditCookie m_editCookie;
 
-public:
-
+	/***********/
+	/* Statics */
+	/***********/
 public:
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
-	static ITfThreadMgr2* s_pThreadMgr;
+	static std::function<CComPtr<ITfThreadMgr2>&()> GetThreadMgr;
 #else
-	static ITfThreadMgr* s_pThreadMgr;
+	static std::function<CComPtr<ITfThreadMgr>&()> GetThreadMgr;
 #endif
 	static TfClientId s_tfClientId;
-	static ITfKeystrokeMgr* s_pKeystrokeMgr;
+	static std::function<CComPtr<ITfKeystrokeMgr>&()> GetKeystrokeMgr;
 
 };
 

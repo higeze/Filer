@@ -147,7 +147,6 @@ public:
 	/* Closure */
 	std::function<CSizeF&()> GetSourceSize;
 	/* Member function */
-	//PdfBmpInfo GetBitmap(FLOAT scale, std::function<void()> changed);
 	void Render(const RenderEvent& e) { process_event(e); }
 private:
 	void Clear();

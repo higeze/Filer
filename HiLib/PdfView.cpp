@@ -3,6 +3,8 @@
 #include "D2DWWindow.h"
 #include "Scroll.h"
 #include "Debug.h"
+#include "MyMenu.h"
+#include "ResourceIDFactory.h"
 #include <functional>
 #include "ThreadPool.h"
 #include "HiLibResource.h"
@@ -13,7 +15,7 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	m_pMachine(std::make_unique<CPdfViewStateMachine>(this)),
 	m_pVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr, [this](const wchar_t* name) { })),
 	m_pHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr, [this](const wchar_t* name) { })),
-	m_scale(1.f), m_prevScale(0.f), m_initialScaleMode(InitialScaleMode::Width)
+	m_scale(1.f), m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(InitialScaleMode::Width)
 {
 	m_scale.Subscribe([this](const FLOAT& value)
 	{
@@ -105,17 +107,8 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		UINT32 curPageNo = 0;
 		FLOAT maxIntersectHeight = 0.f;
 		bool curPageNoDecided = false;
+		//[this]() { GetWndPtr()->InvalidateRect(NULL, FALSE); }
 		//Paint Pages
-
-		//Create Effect
-		//CComPtr<ID2D1Effect> pBitmapEffect;
-		//FAILED_THROW(GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->CreateEffect(CLSID_D2D1BitmapSource, &pBitmapEffect));
-
-		//pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_SCALE, D2D1::Vector2F(1.0, 1.0));
-		//pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_INTERPOLATION_MODE, D2D1_BITMAPSOURCE_INTERPOLATION_MODE_MIPMAP_LINEAR);
-		//pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_ENABLE_DPI_CORRECTION, FALSE);
-		//pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_ALPHA_MODE, D2D1_BITMAPSOURCE_ALPHA_MODE_PREMULTIPLIED);
-		//pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_ORIENTATION, D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT);
 
 		//Iterate Pages
 		for (size_t i = 0; i < m_pdf->GetPageCount(); i++) {
@@ -129,29 +122,6 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 								lefttopInWnd.x + lefttopInRender.x + m_pdf->GetPage(i)->GetSourceSize().width * m_scale.get(),
 								lefttopInWnd.y + lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get());
 				m_pdf->GetPage(i)->Render(RenderEvent(GetWndPtr()->GetDirectPtr(), rect, m_scale));
-				//auto pbi = m_pdf->GetPage(i)->GetBitmap(m_scale, [this]() { GetWndPtr()->InvalidateRect(NULL, FALSE); });
-				//auto rect = CRectF(
-				//				lefttopInWnd.x + lefttopInRender.x,
-				//				lefttopInWnd.y + lefttopInRender.y,
-				//				lefttopInWnd.x + lefttopInRender.x + m_pdf->GetPage(i)->GetSourceSize().width * m_scale.get(),
-				//				lefttopInWnd.y + lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get());
-				//switch (pbi.Status) {
-				//	case PdfBmpStatus::Available:
-				//		{
-				//			pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_WIC_BITMAP_SOURCE, pbi.ConverterPtr);
-				//			GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->DrawImage(pBitmapEffect, rect.LeftTop());
-				//		}
-				//		break;
-				//	default:
-				//		if (pbi.ConverterPtr) {
-				//			pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_WIC_BITMAP_SOURCE, pbi.ConverterPtr);
-				//			pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_SCALE, D2D1::Vector2F(m_scale/pbi.Scale, m_scale/pbi.Scale));
-				//			GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->DrawImage(pBitmapEffect, rect.LeftTop());
-				//		} else {
-				//			GetWndPtr()->GetDirectPtr()->DrawTextLayout(*m_pProp->Format, L"Loading Page...", rect);
-				//		}
-				//		break;
-				//}
 
 				//Current Page
 				if (!curPageNoDecided) {
@@ -164,7 +134,6 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 						curPageNo = i + 1;
 					}
 				}
-
 			}
 
 			lefttopInRender.y += m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get();
@@ -225,6 +194,71 @@ void CPdfView::Normal_SetCursor(const SetCursorEvent& e)
 		*(e.HandledPtr) = TRUE;
 	}
 }
+
+void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
+{
+	//CreateMenu
+	CMenu menu(::CreatePopupMenu());
+	//Add Row
+	MENUITEMINFO mii = { 0 };
+	mii.cbSize = sizeof(MENUITEMINFO);
+	mii.fMask = MIIM_TYPE | MIIM_ID;
+	mii.fType = MFT_STRING;
+	mii.fState = MFS_ENABLED;
+	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateClockwise");
+	mii.dwTypeData = const_cast<LPWSTR>(L"Rotate Clockwise");
+	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateCounterClockwise");
+	mii.dwTypeData = const_cast<LPWSTR>(L"Rotate Counter Clockwise");
+	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+	::SetForegroundWindow(GetWndPtr()->m_hWnd);
+	int idCmd = menu.TrackPopupMenu(
+		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
+		e.PointInScreen.x,
+		e.PointInScreen.y,
+		GetWndPtr()->m_hWnd);
+
+	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateClockwise")) {
+		switch (m_rotate) {
+			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
+				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90;
+				break;
+			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90:
+				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180;
+				break;
+			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180:
+				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270;
+				break;
+			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270:
+				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT;
+				break;
+			default:
+				break;
+		}
+	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateCounterClockwise")) {
+		switch (m_rotate) {
+			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
+				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270;
+				break;
+			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90:
+				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT;
+				break;
+			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180:
+				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90;
+				break;
+			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270:
+				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180;
+				break;
+			default:
+				break;
+		}
+	}
+	*e.HandledPtr = TRUE;
+
+}
+
 
 /***************/
 /* VScrollDrag */

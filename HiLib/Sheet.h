@@ -224,7 +224,8 @@ public:
 		PushRow(head, true);
 		PushRows(std::forward<Tail>(tail)...);
 	}
-
+	
+	virtual void InsertColumn(int pos, const std::shared_ptr<CColumn>& spColumn, bool notify = true);
 	virtual void PushColumn(const std::shared_ptr<CColumn>& pColumn, bool notify = true);
 	void PushColumns() {}
 	template<class Head, class... Tail>

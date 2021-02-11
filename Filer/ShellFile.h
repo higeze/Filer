@@ -117,7 +117,7 @@ public:
 	//bool HasIconInCache();
 	bool IsDirectory();
 	virtual void Reset();
-	void Open();
+	virtual void Open();
 
 private:
 	void UpdateWIN32_FIND_DATA();
@@ -143,6 +143,7 @@ public:
 	virtual std::wstring GetFileNameWithoutExt()override { return m_wstrFileNameWithoutExt; }
 	virtual std::wstring GetDispName() override { return m_wstrFileName; }
 	virtual std::wstring GetDispExt() override { return m_wstrExt; }
+	virtual void Open() override {/* Do Nothing */ }
 
 	//Icon
 //	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction)override;

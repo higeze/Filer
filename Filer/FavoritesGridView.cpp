@@ -1,13 +1,10 @@
-//#include "stdafx.h"
 #include "FavoritesGridView.h"
 #include "FavoritesProperty.h"
-#include "GridViewProperty.h"
-#include "Row.h"
-#include "Column.h"
-#include "Cell.h"
-#include "FavoritesColumn.h"
 #include "BindRow.h"
+#include "FavoritesColumn.h"
 #include "FavoriteCell.h"
+
+#include "GridViewProperty.h"
 
 #include "ShellFile.h"
 #include "ShellFolder.h"
@@ -30,7 +27,6 @@ CFavoritesGridView::CFavoritesGridView(
 	:CBindGridView(pParentControl, spGridViewProp, spFavoritesProp->GetFavoritesPtr()),
 	m_spFavoritesProp(spFavoritesProp)
 {
-	m_isFocusable = false;
 	m_pVScroll->SetVisibility(Visibility::Hidden);
 	m_pHScroll->SetVisibility(Visibility::Disabled);
 

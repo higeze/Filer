@@ -27,7 +27,6 @@ public:
 	{
 		return std::get<TItem>(GetTupleItems());
 	}
-
 	//virtual std::shared_ptr<CShellFile> GetFilePointer() { return std::get<std::shared_ptr<CShellFile>>(GetItem()); }
 	//virtual void SetFilePointer(const std::shared_ptr<CShellFile>& spFile) { std::get<std::shared_ptr<CShellFile >>(GetItem()) = spFile; }
 };

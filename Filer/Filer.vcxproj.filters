@@ -647,6 +647,24 @@
     <ClInclude Include="..\HiLib\Pdf.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="LauncherCell.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="LauncherRow.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="LauncherGridView.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLIb\MapRow.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="LauncherProperty.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="LauncherItemDragger.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -957,6 +975,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\Pdf.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="LauncherGridView.cpp">
+      <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

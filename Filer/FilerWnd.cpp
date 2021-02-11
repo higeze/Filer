@@ -7,6 +7,7 @@
 #include "GridViewProperty.h"
 #include "FavoritesProperty.h"
 #include "FavoritesGridView.h"
+#include "LauncherGridView.h"
 #include "FilerProperty.h"
 #include "PropertyWnd.h"
 #include "FilerTabGridView.h"
@@ -50,8 +51,10 @@ CFilerWnd::CFilerWnd()
 	m_spPdfViewProp(std::make_shared<PdfViewProperty>()),
 	m_spTabControlProp(std::make_shared<TabControlProperty>()),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
+	m_spLauncherProp(std::make_shared<CLauncherProperty>()),
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
 	m_spSplitterProp(std::make_shared<SplitterProperty>()),
+	m_spLauncher(std::make_shared<CLauncherGridView>(this, m_spFilerGridViewProp, m_spLauncherProp)),
 	m_spLeftView(std::make_shared<CFilerTabGridView>(this, std::make_shared<TabControlProperty>(), m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp)),
 	m_spRightView(std::make_shared<CFilerTabGridView>(this, std::make_shared<TabControlProperty>(), m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp)),
 	m_spSplitter(std::make_shared<CHorizontalSplitter>(this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp)),
@@ -99,6 +102,8 @@ CFilerWnd::CFilerWnd()
 #ifdef USE_PYTHON_EXTENSION
 	m_commandMap.emplace(IDM_PYTHONEXTENSIONOPTION, std::bind(&CFilerWnd::OnCommandPythonExtensionOption, this, phs::_1));
 #endif
+	//CLauncherGridView
+	//Do nothing
 
 	//CFavoritesGridView
 	auto setUpFavoritesView = [this](
@@ -146,6 +151,12 @@ CFilerWnd::CFilerWnd()
 			mii.dwTypeData = const_cast<LPWSTR>(L"Add to favorite");
 			menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
+			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
+			mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToLauncherFromItem");
+			mii.dwTypeData = const_cast<LPWSTR>(L"Add to launcher");
+			menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+
 #ifdef USE_PYTHON_EXTENSION
 			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
 
@@ -178,15 +189,19 @@ CFilerWnd::CFilerWnd()
 		spFilerView->ExecCustomContextMenu = [&](int idCmd, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl)->bool {
 			if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToFavoritesFromItem")) {
 				for (auto& pIdl : vpIdl) {
-					STRRET strret;
-					psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
-					std::wstring path = shell::strret2wstring(strret, pIdl);
+					std::wstring path = shell::GetDisplayNameOf(psf, pIdl, SHGDN_FORPARSING);
 					GetFavoritesPropPtr()->GetFavorites().push_back(std::make_tuple(std::make_shared<CFavorite>(path, L"")));
-					//m_spLeftFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spLeftFavoritesView.get()));
-					//m_spRightFavoritesView->PushRow(std::make_shared<CBindRow<std::shared_ptr<CShellFile>>>(m_spRightFavoritesView.get()));
 				}
 				m_spLeftFavoritesView->SubmitUpdate();
 				m_spRightFavoritesView->SubmitUpdate();
+				return true;
+			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToLauncherFromItem")) {
+				for (auto& pIdl : vpIdl) {
+					
+					std::wstring path = shell::GetDisplayNameOf(psf, pIdl, SHGDN_FORPARSING);
+					GetLauncherPropPtr()->GetFavorites().push_back(std::make_tuple(std::make_shared<CFavorite>(path, L"")));
+				}
+				m_spLauncher->SubmitUpdate();
 				return true;
 			} else {
 				auto iter = std::find_if(m_spExeExProp->ExeExtensions.cbegin(), m_spExeExProp->ExeExtensions.cend(),
@@ -346,8 +361,9 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	//Konami
 	//m_konamiCommander.SetHwnd(m_hWnd);
 	
-	auto [rcLeftFav, rcLeftTab, rcSplitter, rcRightFav, rcRightTab, rcStatus] = GetRects();
+	auto [rcLauncher, rcLeftFav, rcLeftTab, rcSplitter, rcRightFav, rcRightTab, rcStatus] = GetRects();
 
+	m_spLauncher->OnCreate(CreateEvt(this, rcLauncher));
 	m_spLeftFavoritesView->OnCreate(CreateEvt(this, rcLeftFav));
 	m_spLeftView->OnCreate(CreateEvt(this, rcLeftTab));
 	m_spSplitter->OnCreate(CreateEvt(this, rcSplitter));
@@ -485,23 +501,30 @@ void CFilerWnd::OnMouseMove(const MouseMoveEvent& e)
 	//m_konamiCommander.OnMouseMove(uMsg, wParam, lParam, bHandled);
 }
 
-std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
+std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
 {
 	CRectF rcClient = GetRectInWnd();
-	CRectF rcLeftFavorites, rcRightFavorites, rcLeftGrid, rcRightGrid, rcStatusBar;
+
+	LONG launcherHeight = GetDirectPtr()->Dips2PixelsX(
+		m_spFilerGridViewProp->CellPropPtr->Line->Width * 2 + //def:GridLine=0.5*2, CellLine=0.5*2
+		m_spFilerGridViewProp->CellPropPtr->Padding->left + //default:2
+		m_spFilerGridViewProp->CellPropPtr->Padding->right + //default:2
+		16.f);//icon
 	LONG favoriteWidth = GetDirectPtr()->Dips2PixelsX(
 		m_spFilerGridViewProp->CellPropPtr->Line->Width * 2 + //def:GridLine=0.5*2, CellLine=0.5*2
-		m_spFilerGridViewProp->CellPropPtr->Padding->left + //def:2
-		m_spFilerGridViewProp->CellPropPtr->Padding->right + //def:2
+		m_spFilerGridViewProp->CellPropPtr->Padding->left + //default:2
+		m_spFilerGridViewProp->CellPropPtr->Padding->right + //default:2
 		16.f);//icon
 	LONG statusHeight = GetDirectPtr()->Dips2PixelsY(m_spStatusBar->MeasureSize(GetDirectPtr()).height);
 
-	rcStatusBar.SetRect(
-		rcClient.left, rcClient.bottom - statusHeight,
-		rcClient.right, rcClient.bottom);
+	CRectF rcLauncher, rcLeftFavorites, rcRightFavorites, rcSplitter, rcLeftGrid, rcRightGrid, rcStatusBar;
+
+	rcLauncher.SetRect(rcClient.left, rcClient.top, rcClient.right, rcClient.top + launcherHeight);
+
+	rcStatusBar.SetRect(rcClient.left, rcClient.bottom - statusHeight, rcClient.right, rcClient.bottom);
 
 	rcLeftFavorites.SetRect(
-		rcClient.left, rcClient.top,
+		rcClient.left, rcClient.top + launcherHeight,
 		rcClient.left + favoriteWidth, rcClient.bottom - statusHeight);
 
 	if (m_splitterLeft.get() == 0) {//Initial = No serialize
@@ -510,26 +533,26 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
 			FLOAT viewWidth = (rcClient.Width() - 2 * favoriteWidth - m_spSplitterProp->Width) / 2;
 			rcLeftGrid.SetRect(
 				rcClient.left + favoriteWidth,
-				rcClient.top,
+				rcClient.top + launcherHeight,
 				rcClient.left + favoriteWidth + viewWidth,
 				rcClient.bottom - statusHeight);
 
 			rcRightFavorites.SetRect(
 				rcClient.left + favoriteWidth + viewWidth + m_spSplitterProp->Width,
-				rcClient.top,
+				rcClient.top  + launcherHeight,
 				rcClient.left + favoriteWidth + viewWidth + m_spSplitterProp->Width + favoriteWidth,
 				rcClient.bottom - statusHeight);
 
 			rcRightGrid.SetRect(
 				rcClient.left + favoriteWidth + viewWidth + m_spSplitterProp->Width + favoriteWidth,
-				rcClient.top,
+				rcClient.top  + launcherHeight,
 				rcClient.right,
 				rcClient.bottom - statusHeight);
 			m_splitterLeft.set(favoriteWidth + viewWidth);
 		} else {
 			rcLeftGrid.SetRect(
 				rcClient.left + favoriteWidth,
-				rcClient.top,
+				rcClient.top  + launcherHeight,
 				rcClient.right,
 				rcClient.bottom - statusHeight);
 			m_splitterLeft.set(rcClient.right);
@@ -538,25 +561,25 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
 		if (rcClient.Width() >= m_splitterLeft.get() + m_spSplitterProp->Width) {
 			rcLeftGrid.SetRect(
 				rcClient.left + favoriteWidth,
-				rcClient.top,
+				rcClient.top  + launcherHeight,
 				m_splitterLeft.get(),
 				rcClient.bottom - statusHeight);
 
 			rcRightFavorites.SetRect(
 				m_splitterLeft.get() + m_spSplitterProp->Width,
-				rcClient.top,
+				rcClient.top + launcherHeight,
 				m_splitterLeft.get() + m_spSplitterProp->Width + favoriteWidth,
 				rcClient.bottom - statusHeight);
 
 			rcRightGrid.SetRect(
 				m_splitterLeft.get() + m_spSplitterProp->Width + favoriteWidth,
-				rcClient.top,
+				rcClient.top + launcherHeight,
 				rcClient.right,// - (m_splitterLeft + kSplitterWidth + favoriteWidth), 
 				rcClient.bottom - statusHeight);
 		} else {
 			rcLeftGrid.SetRect(
 				rcClient.left + favoriteWidth,
-				rcClient.top,
+				rcClient.top + launcherHeight,
 				rcClient.right,
 				rcClient.bottom - statusHeight);
 		}
@@ -564,11 +587,16 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
 
 	rcLeftGrid.DeflateRect(2.f);
 	rcRightGrid.DeflateRect(2.f);
-
+	rcSplitter.SetRect(m_splitterLeft.get(), rcClient.top + launcherHeight, m_splitterLeft.get() + m_spSplitterProp->Width, rcClient.bottom);
 
 	return {
-		rcLeftFavorites, rcLeftGrid, CRectF(m_splitterLeft.get(), rcClient.top, m_splitterLeft.get() + m_spSplitterProp->Width, rcClient.bottom),
-		rcRightFavorites, rcRightGrid, rcStatusBar
+		rcLauncher,
+		rcLeftFavorites,
+		rcLeftGrid,
+		rcSplitter,
+		rcRightFavorites, 
+		rcRightGrid,
+		rcStatusBar
 	};
 
 }
@@ -577,8 +605,9 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
 //TODOTODO CWnd m_pdirect, create, erasebkgnd, onsize
 void CFilerWnd::OnRect(const RectEvent& e)
 {
-	auto [rcLeftFav, rcLeftTab, rcSplitter, rcRightFav, rcRightTab, rcStatus] = GetRects();
+	auto [rcLauncher, rcLeftFav, rcLeftTab, rcSplitter, rcRightFav, rcRightTab, rcStatus] = GetRects();
 	
+	m_spLauncher->OnRect(RectEvent(this, rcLauncher));
 	m_spLeftFavoritesView->OnRect(RectEvent(this, rcLeftFav));
 	m_spRightFavoritesView->OnRect(RectEvent(this, rcRightFav));
 	m_spStatusBar->OnRect(RectEvent(this, rcStatus));
@@ -603,6 +632,7 @@ LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 		case DBT_DEVICEARRIVAL:
 		case DBT_DEVICEREMOVECOMPLETE:
 			CDriveFolderManager::GetInstance()->Update();
+			m_spLauncher->Reload();
 			m_spLeftFavoritesView->Reload();
 			m_spRightFavoritesView->Reload();
 			m_spLeftView->GetFilerGridViewPtr()->Reload();

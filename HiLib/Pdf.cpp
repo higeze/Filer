@@ -107,9 +107,7 @@ struct CPdfPage::Machine
 			state<None> +event<LoadEvent> = state<Loading>,
 
 			state<Loading> +on_entry<_> / call(&CPdfPage::Loading_OnEntry),
-			//state<Loading> +on_entry<ReloadEvent> / call(&CPdfPage::Loading_OnEntry),
-			//state<Loading> +on_entry<LoadCompletedEvent> / call(&CPdfPage::Loading_OnEntry),
-			//state<Loading> +on_entry<CancelCompletedEvent> / call(&CPdfPage::Loading_OnEntry),
+
 			state<Loading> +event<RenderEvent> / call(&CPdfPage::Loading_Render),
 			state<Loading> +event<LoadCompletedEvent> = state<Available>,
 			state<Loading> +event<ReloadEvent> = state<WaitCancel>,
@@ -120,7 +118,7 @@ struct CPdfPage::Machine
 
 			state<WaitCancel> +on_entry<_> / call(&CPdfPage::WaitCancel_OnEntry),
 			state<WaitCancel> +on_exit<_> / call(&CPdfPage::WaitCancel_OnExit),
-			//state<WaitCancel> +on_exit<CancelCompletedEvent> / call(&CPdfPage::WaitCancel_OnExit),
+
 			state<WaitCancel> +event<RenderEvent> / call(&CPdfPage::WaitCancel_Render),
 			state<WaitCancel> +event<LoadCompletedEvent> = state<Loading>,
 			state<WaitCancel> +event<CancelCompletedEvent> = state<Loading>,
@@ -284,10 +282,6 @@ void CPdfPage::Loading_OnEntry()
 	}
 
 }
-//void CPdfPage::Reloading_OnEntry(const ReloadEvent& e) 
-//{
-//	Loading_OnEntry(e);
-//}
 
 void CPdfPage::Loading_Render(const RenderEvent& e) 
 {
@@ -380,38 +374,4 @@ void CPdfPage::Error_Render(const RenderEvent& e)
 
 	e.DirectPtr->DrawTextInRect(*m_pPdf->GetFormatPtr(), L"Error on Page loading.", e.RenderRectInWnd);
 }
-
-//PdfBmpInfo CPdfPage::GetBitmap(FLOAT scale, std::function<void()> changed)
-//{
-//	if (m_pPdf->GetDocument().second == PdfDocStatus::Available) {
-//		auto pbi = GetLockBitmap();
-//		switch (pbi.Status) {
-//			case PdfBmpStatus::None:
-//			case PdfBmpStatus::Canceled:
-//				SetLockBitmap(PdfBmpInfo{ pbi.ConverterPtr, PdfBmpStatus::Loading, pbi.Scale });
-//				*m_spCancelThread = false;
-//				Load(scale, changed);
-//				break;
-//			case PdfBmpStatus::Loading:
-//				if (m_scale != scale) {
-//					*m_spCancelThread = true;
-//				}
-//				break;
-//			case PdfBmpStatus::Available:
-//				if (m_scale != scale) {
-//					SetLockBitmap({ pbi.ConverterPtr, PdfBmpStatus::Loading, pbi.Scale });
-//					*m_spCancelThread = false;
-//					Load(scale, changed);
-//				}
-//				break;
-//			case PdfBmpStatus::Unavailable:
-//				break;
-//		}
-//		m_scale = scale;
-//	} else {
-//		//Do nothing
-//	}
-//	return GetLockBitmap();
-//}
-
 

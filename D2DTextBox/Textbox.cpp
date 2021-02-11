@@ -28,47 +28,54 @@ HRESULT UninitDisplayAttrbute();
 /* static member */
 /*****************/
 
-#if ( _WIN32_WINNT < _WIN32_WINNT_WIN8 )
-ITfThreadMgr* CTextBox::s_pThreadMgr = NULL;
+#if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
+std::function<CComPtr<ITfThreadMgr2>& ()> CTextBox::GetThreadMgr = [p = CComPtr<ITfThreadMgr2>()]() mutable->CComPtr<ITfThreadMgr2>&
+{
+	if (!p) {
+		FAILED_THROW(::CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr2, (void**)&p));
+	}
+	return p;
+};
 #else
-ITfThreadMgr2* CTextBox::s_pThreadMgr = NULL;
+std::function<CComPtr<ITfThreadMgr>& ()> CTextBox::GetThreadMgr = [p = CComPtr<ITfThreadMgr>()]() mutable->CComPtr<ITfThreadMgr>&
+{
+	if (!p) {
+		FAILED_THROW(::CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr, (void**)&p));
+	}
+	return p;
+};
 #endif
-ITfKeystrokeMgr* CTextBox::s_pKeystrokeMgr = NULL;
+
+std::function<CComPtr<ITfKeystrokeMgr>& ()> CTextBox::GetKeystrokeMgr = [p = CComPtr<ITfKeystrokeMgr>()]() mutable->CComPtr<ITfKeystrokeMgr>&
+{
+	if (!p) {
+		FAILED_THROW(GetThreadMgr()->QueryInterface(IID_ITfKeystrokeMgr, (void**)&p));
+	}
+	return p;
+};
+
 TfClientId CTextBox::s_tfClientId = TF_CLIENTID_NULL;
 
 /*******************/
 /* static function */
 /*******************/
-bool CTextBox::AppTSFInit()
+void CTextBox::AppTSFInit()
 {
-#if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
-	if (FAILED(CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr2, (void**)&s_pThreadMgr))) goto Exit;
-#else
-	if (FAILED(CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr, (void**)&s_pThreadMgr))) goto Exit;
-#endif
-
-	if (FAILED(s_pThreadMgr->Activate(&s_tfClientId)))  goto Exit;
-	if (FAILED(s_pThreadMgr->QueryInterface(IID_ITfKeystrokeMgr, (void **)&s_pKeystrokeMgr)))  goto Exit;
-	if (FAILED(InitDisplayAttrbute()))	goto Exit;
-
-	return true;
-Exit:
-
-	return false;
-
+	FAILED_THROW(GetThreadMgr()->Activate(&s_tfClientId));
+	FAILED_THROW(InitDisplayAttrbute());
 }
 void CTextBox::AppTSFExit()
 {
 	UninitDisplayAttrbute();
 
-
-	if (s_pThreadMgr) {
-		s_pThreadMgr->Deactivate();
-		s_pThreadMgr->Release();
+	if (GetThreadMgr()) {
+		FAILED_THROW(GetThreadMgr()->Deactivate());
+		GetThreadMgr().Attach(nullptr);
 	}
 
-	if (s_pKeystrokeMgr)
-		s_pKeystrokeMgr->Release();
+	if (GetKeystrokeMgr()) {
+		GetKeystrokeMgr().Attach(nullptr);
+	}
 }
 
 /***************/
@@ -89,7 +96,39 @@ CTextBox::CTextBox(
 	m_pTextMachine(std::make_unique<CTextBoxStateMachine>(this)),
 	m_pVScroll(std::make_unique<CVScroll>(this, pProp->VScrollPropPtr, [this](const wchar_t* name) { UpdateAll(); })),
 	m_pHScroll(std::make_unique<CHScroll>(this, pProp->HScrollPropPtr, [this](const wchar_t* name) { UpdateAll(); }))
-{}
+{
+	GetTextStore = [p = CComPtr<CTextStore>(), this]() mutable->CComPtr<CTextStore>&
+	{
+		if (!p) {
+			p.Attach(new CTextStore(this));
+		}
+		return p;
+	};
+
+	GetDocumentMgr = [p = CComPtr<ITfDocumentMgr>(), this]() mutable->CComPtr<ITfDocumentMgr>&
+	{
+		if (!p) {
+			FAILED_THROW(GetThreadMgr()->CreateDocumentMgr(&p))
+		}
+		return p;
+	};
+
+	GetContext = [p = CComPtr<ITfContext>(), this]() mutable->CComPtr<ITfContext>&
+	{
+		if (!p) {
+			FAILED_THROW(GetDocumentMgr()->CreateContext(s_tfClientId, 0, GetTextStore(), &p, &m_editCookie));
+		}
+		return p;
+	};
+
+	GetTextEditSink = [p = CComPtr<CTextEditSink>(), this]() mutable->CComPtr<CTextEditSink>&
+	{
+		if (!p) {
+			p.Attach(new CTextEditSink(this));
+		}
+		return p;
+	};
+}
 /**************/
 /* destructor */
 /**************/
@@ -101,46 +140,33 @@ CTextBox::~CTextBox()
 
 void CTextBox::InitTSF()
 {
-	if (m_pTextStore = CComPtr<CTextStore>(new CTextStore(this)); !m_pTextStore) {
-		throw std::exception(FILE_LINE_FUNC);
-	}
-	if (FAILED(s_pThreadMgr->CreateDocumentMgr(&m_pDocumentMgr))) {
-		throw std::exception(FILE_LINE_FUNC);
-	}
-	if (FAILED(m_pDocumentMgr->CreateContext(s_tfClientId, 0, m_pTextStore, &m_pInputContext, &m_editCookie))) {
-		throw std::exception(FILE_LINE_FUNC);
-	}
-	if (FAILED(m_pDocumentMgr->Push(m_pInputContext))) {
-		throw std::exception(FILE_LINE_FUNC);
-	}
+
+	FAILED_THROW(GetDocumentMgr()->Push(GetContext()));
+
 
 #if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
-	if (FAILED(s_pThreadMgr->SetFocus(m_pDocumentMgr))){
-		throw std::exception(FILE_LINE_FUNC);
-	}
+	FAILED_THROW(GetThreadMgr()->SetFocus(GetDocumentMgr()));
 #else
 	CComPtr<ITfDocumentMgr> pDocumentMgrPrev = NULL;
-	if (FAILED(s_pThreadMgr->AssociateFocus(GetWndPtr()->m_hWnd, m_pDocumentMgr, &pDocumentMgrPrev))) {
-		throw std::exception(FILE_LINE_FUNC);
-	}
+	FAILED_THROW(GetThreadMgr()->AssociateFocus(GetWndPtr()->m_hWnd, GetDocumentMgr(), &pDocumentMgrPrev));
 #endif
 
-	if (m_pTextEditSink = CComPtr<CTextEditSink>(new CTextEditSink(this)); !m_pTextEditSink) {
-		throw std::exception(FILE_LINE_FUNC);
-	}
-	if (FAILED(m_pTextEditSink->_Advise(m_pInputContext))) {
-		throw std::exception(FILE_LINE_FUNC);
-	}
+	FAILED_THROW(GetTextEditSink()->_Advise(GetContext()));
 }
 
 void CTextBox::UninitTSF()
 {
-	if (m_pTextEditSink) {
-		m_pTextEditSink->_Unadvise();
+	if (GetTextEditSink()) {
+		FAILED_THROW(GetTextEditSink()->_Unadvise());
 	}
 
-	if (m_pDocumentMgr) {
-		m_pDocumentMgr->Pop(TF_POPF_ALL);
+	if (GetDocumentMgr()) {
+		ITfContext* pictop;
+		GetDocumentMgr()->GetTop(&pictop);
+		ITfContext* picbtm;
+		GetDocumentMgr()->GetBase(&picbtm);
+
+		FAILED_THROW(GetDocumentMgr()->Pop(TF_POPF_ALL));//TODO Error
 	}
 }
 
@@ -273,27 +299,27 @@ void CTextBox::OnCreate(const CreateEvt& e)
 
 				//Syntax
 				if (auto pTextEditorProp = std::dynamic_pointer_cast<TextEditorProperty>(m_pProp)) {
-					//for (const auto& tuple : pTextEditorProp->SyntaxAppearances.get()) {
-						//auto appearance = std::get<0>(tuple);
-						//if (!appearance.Regex.empty()) {
-						//	auto brush = pDirect->GetColorBrush(appearance.SyntaxFormat.Color);
+					for (const auto& tuple : pTextEditorProp->SyntaxAppearances.get()) {
+						auto appearance = std::get<0>(tuple);
+						if (!appearance.Regex.empty()) {
+							auto brush = pDirect->GetColorBrush(appearance.SyntaxFormat.Color);
 
-						//	std::wsmatch match;
-						//	auto begin = m_text.cbegin();
-						//	auto re = std::wregex(appearance.Regex);//L"/\\*.*?\\*/"
-						//	UINT32 beginPos = 0;
-						//	while (std::regex_search(begin, m_text.cend(), match, re)) {
-						//		DWRITE_TEXT_RANGE range{ beginPos + (UINT32)match.position(), (UINT32)match.length() };
-						//		pTextLayout1->SetDrawingEffect(brush, range);
-						//		if (appearance.SyntaxFormat.IsBold) {
-						//			pTextLayout1->SetFontWeight(DWRITE_FONT_WEIGHT_BOLD, range);
-						//		}
+							std::wsmatch match;
+							auto begin = m_text.cbegin();
+							auto re = std::wregex(appearance.Regex);//L"/\\*.*?\\*/"
+							UINT32 beginPos = 0;
+							while (std::regex_search(begin, m_text.cend(), match, re)) {
+								DWRITE_TEXT_RANGE range{ beginPos + (UINT32)match.position(), (UINT32)match.length() };
+								pTextLayout1->SetDrawingEffect(brush, range);
+								if (appearance.SyntaxFormat.IsBold) {
+									pTextLayout1->SetFontWeight(DWRITE_FONT_WEIGHT_BOLD, range);
+								}
 
-						//		begin = match[0].second;
-						//		beginPos = std::distance(m_text.cbegin(), begin);
-						//	}
-						//}
-					//}
+								begin = match[0].second;
+								beginPos = std::distance(m_text.cbegin(), begin);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -439,16 +465,14 @@ void CTextBox::OnCreate(const CreateEvt& e)
 		return contentRect;
 	};
 
-	if (FAILED(s_pThreadMgr->SetFocus(m_pDocumentMgr))){
-		throw std::exception(FILE_LINE_FUNC);
-	}
+	FAILED_THROW(GetThreadMgr()->SetFocus(GetDocumentMgr()));
 	
 	m_text.SubscribeDetail(
 		[this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
 			if (e.Action == NotifyStringChangedAction::Assign) {
-				m_pTextStore->OnTextChange(0, 0, 0);
+				GetTextStore()->OnTextChange(0, 0, 0);
 			} else {
-				m_pTextStore->OnTextChange(e.StartIndex, e.OldEndIndex, e.NewEndIndex);
+				GetTextStore()->OnTextChange(e.StartIndex, e.OldEndIndex, e.NewEndIndex);
 			}
 			if (m_changed) { m_changed(e.NewString); }
 				UpdateAll();
@@ -513,9 +537,7 @@ void CTextBox::Normal_Paint(const PaintEvent& e)
 
 void CTextBox::Normal_SetFocus(const SetFocusEvent& e)
 {
-	if (FAILED(s_pThreadMgr->SetFocus(m_pDocumentMgr))){
-		throw std::exception(FILE_LINE_FUNC);
-	}
+	FAILED_THROW(GetThreadMgr()->SetFocus(GetDocumentMgr()));
 	m_isFirstDrawCaret = true;
 }
 

@@ -258,6 +258,7 @@
     <ClInclude Include="..\HiLib\IStateMachine.h" />
     <ClInclude Include="..\HiLib\KonamiCommander.h" />
     <ClInclude Include="..\HiLib\KonamiResource.h" />
+    <ClInclude Include="..\HiLIb\MapRow.h" />
     <ClInclude Include="..\HiLib\MenuItem.h" />
     <ClInclude Include="..\HiLib\MessageTimer.h" />
     <ClInclude Include="..\HiLib\MouseStateMachine.h" />
@@ -343,6 +344,8 @@
     <ClInclude Include="..\HiLib\UpdateResource.h" />
     <ClInclude Include="..\HiLib\HiLibResource.h" />
     <ClInclude Include="CheckableFileGrid.h" />
+    <ClInclude Include="LauncherItemDragger.h" />
+    <ClInclude Include="LauncherProperty.h" />
     <ClInclude Include="DropTarget.h" />
     <ClInclude Include="FileOperationWnd.h" />
     <ClInclude Include="FilerBindGridView.h" />
@@ -351,6 +354,9 @@
     <ClInclude Include="FileSizeArgs.h" />
     <ClInclude Include="FileTimeArgs.h" />
     <ClInclude Include="KnownFolderManager.h" />
+    <ClInclude Include="LauncherGridView.h" />
+    <ClInclude Include="LauncherRow.h" />
+    <ClInclude Include="LauncherCell.h" />
     <ClInclude Include="PathRow.h" />
     <ClInclude Include="IncrementalCopyWnd.h" />
     <ClInclude Include="RenameInfo.h" />
@@ -474,6 +480,7 @@
     <ClCompile Include="FileOperationWnd.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />
     <ClCompile Include="FilerGridViewWnd.cpp" />
+    <ClCompile Include="LauncherGridView.cpp" />
     <ClCompile Include="PathRow.cpp" />
     <ClCompile Include="IncrementalCopyWnd.cpp" />
     <ClCompile Include="SearchWnd.cpp" />

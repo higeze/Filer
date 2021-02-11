@@ -31,7 +31,6 @@ public:
 	static CMenu ContextMenu;
 protected:
 	std::shared_ptr<CTextBox> m_pEdit = nullptr;
-	bool m_isFocusable = true;
 	CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
 protected:

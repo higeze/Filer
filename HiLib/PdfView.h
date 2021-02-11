@@ -108,6 +108,7 @@ protected:
 	ReactiveWStringProperty m_path;
 	ReactiveCommand<void> m_open;
 	ReactiveProperty<FLOAT> m_scale;
+	ReactiveProperty<D2D1_BITMAPSOURCE_ORIENTATION> m_rotate;
 	FLOAT m_prevScale;
 
 	/* Scroll */
@@ -176,7 +177,7 @@ public:
 	virtual void Normal_MouseMove(const MouseMoveEvent& e) { /*Do nothing*/ }
 	virtual void Normal_MouseLeave(const MouseLeaveEvent& e) { /*Do nothing*/ }
 	virtual void Normal_SetCursor(const SetCursorEvent& e);
-	virtual void Normal_ContextMenu(const ContextMenuEvent& e) { /*Do nothing*/ }
+	virtual void Normal_ContextMenu(const ContextMenuEvent& e);
 	virtual void Normal_KeyDown(const KeyDownEvent& e);
 	virtual void Normal_Char(const CharEvent& e) { /*Do nothing*/ }
 	virtual void Normal_SetFocus(const SetFocusEvent& e) { /*Do nothing*/ }
