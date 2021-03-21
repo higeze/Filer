@@ -8,6 +8,7 @@
 #include "TextboxStateMachine.h"
 #include "D2DWControl.h"
 #include "ReactiveProperty.h"
+#include "DisplayAttribute.h"
 
 class CTextStore;
 class CTextEditSink;
@@ -252,6 +253,12 @@ protected:
 	//UINT nCompositionRenderInfo_;
 	TfEditCookie m_editCookie;
 
+public:
+	CDispAttrProps* GetDispAttrProps();
+	HRESULT GetDisplayAttributeTrackPropertyRange(TfEditCookie ec, ITfContext* pic, ITfRange* pRange, ITfReadOnlyProperty** ppProp, CDispAttrProps* pDispAttrProps);
+	HRESULT GetDisplayAttributeData(TfEditCookie ec, ITfReadOnlyProperty* pProp, ITfRange* pRange, TF_DISPLAYATTRIBUTE* pda, TfGuidAtom* pguid);
+
+
 	/***********/
 	/* Statics */
 	/***********/
@@ -263,6 +270,10 @@ public:
 #endif
 	static TfClientId s_tfClientId;
 	static std::function<CComPtr<ITfKeystrokeMgr>&()> GetKeystrokeMgr;
+
+	static std::function<CComPtr<ITfDisplayAttributeMgr>& ()> GetDisplayAttributeMgr;
+
+	static std::function<CComPtr<ITfCategoryMgr>& ()> GetCategoryMgr;
 
 };
 

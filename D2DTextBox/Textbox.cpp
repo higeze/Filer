@@ -21,8 +21,8 @@
 #define TAB_WIDTH_4CHAR 4
 
 
-HRESULT InitDisplayAttrbute();
-HRESULT UninitDisplayAttrbute();
+//HRESULT InitDisplayAttrbute();
+//HRESULT UninitDisplayAttrbute();
 
 /*****************/
 /* static member */
@@ -54,6 +54,33 @@ std::function<CComPtr<ITfKeystrokeMgr>& ()> CTextBox::GetKeystrokeMgr = [p = CCo
 	return p;
 };
 
+std::function<CComPtr<ITfDisplayAttributeMgr>& ()> CTextBox::GetDisplayAttributeMgr = [p = CComPtr<ITfDisplayAttributeMgr>()]() mutable->CComPtr<ITfDisplayAttributeMgr>&
+{
+	if (!p) {
+		FAILED_THROW(::CoCreateInstance(
+			CLSID_TF_DisplayAttributeMgr,
+			NULL,
+			CLSCTX_INPROC_SERVER,
+			IID_ITfDisplayAttributeMgr,
+			(void**)&p));
+	}
+	return p;
+};
+
+std::function<CComPtr<ITfCategoryMgr>& ()> CTextBox::GetCategoryMgr = [p = CComPtr<ITfCategoryMgr>()]() mutable->CComPtr<ITfCategoryMgr>&
+{
+	if (!p) {
+		FAILED_THROW(::CoCreateInstance(
+			CLSID_TF_CategoryMgr,
+			NULL,
+			CLSCTX_INPROC_SERVER,
+			IID_ITfCategoryMgr,
+			(void**)&p));
+	}
+	return p;
+};
+
+
 TfClientId CTextBox::s_tfClientId = TF_CLIENTID_NULL;
 
 /*******************/
@@ -62,11 +89,11 @@ TfClientId CTextBox::s_tfClientId = TF_CLIENTID_NULL;
 void CTextBox::AppTSFInit()
 {
 	FAILED_THROW(GetThreadMgr()->Activate(&s_tfClientId));
-	FAILED_THROW(InitDisplayAttrbute());
+	//FAILED_THROW(InitDisplayAttrbute());
 }
 void CTextBox::AppTSFExit()
 {
-	UninitDisplayAttrbute();
+	//UninitDisplayAttrbute();
 
 	if (GetThreadMgr()) {
 		FAILED_THROW(GetThreadMgr()->Deactivate());
@@ -77,6 +104,130 @@ void CTextBox::AppTSFExit()
 		GetKeystrokeMgr().Attach(nullptr);
 	}
 }
+
+
+CDispAttrProps* CTextBox::GetDispAttrProps()
+{
+    CComPtr<IEnumGUID> pEnumProp;
+    CDispAttrProps *pProps = NULL;
+	FAILED_THROW(CTextBox::GetCategoryMgr()->EnumItemsInCategory(GUID_TFCAT_DISPLAYATTRIBUTEPROPERTY, &pEnumProp));
+
+    // Make a database for Display Attribute Properties.
+    GUID guidProp;
+    pProps = new CDispAttrProps;
+
+    // Add System Display Attribute first.
+    // So no other Display Attribute property overwrite it.
+    pProps->Add(GUID_PROP_ATTRIBUTE);
+	// SUCCEEDED:>=0
+	// FAILED:<0
+	// S_OK:0
+	// S_FALSE:1
+    while(pEnumProp->Next(1, &guidProp, NULL) == S_OK)
+    {
+		if (!::IsEqualGUID(guidProp, GUID_PROP_ATTRIBUTE)) {
+			pProps->Add(guidProp);
+		}
+    }
+
+	return pProps;
+}
+
+HRESULT CTextBox::GetDisplayAttributeTrackPropertyRange(TfEditCookie ec, ITfContext *pic, ITfRange *pRange, ITfReadOnlyProperty **ppProp, CDispAttrProps *pDispAttrProps)
+{
+    ITfReadOnlyProperty *pProp = NULL;
+    GUID  *pguidProp = NULL;
+    const GUID **ppguidProp;
+    ULONG ulNumProp = 0;
+    ULONG i;
+ 
+    pguidProp = pDispAttrProps->GetPropTable();
+
+    ulNumProp = pDispAttrProps->Count();
+
+    // TrackProperties wants an array of GUID *'s
+    //if ((ppguidProp = (const GUID **)LocalAlloc(LMEM_ZEROINIT, sizeof(GUID *)*ulNumProp)) == NULL)
+	if ((ppguidProp = (const GUID **)new byte[sizeof(GUID* )*ulNumProp]) == NULL)
+        return E_OUTOFMEMORY;
+
+    for (i=0; i<ulNumProp; i++)
+    {
+        ppguidProp[i] = pguidProp++;
+    }
+    
+    if (SUCCEEDED(pic->TrackProperties(ppguidProp, ulNumProp, 0, NULL, &pProp))){
+        *ppProp = pProp;
+    }
+
+	delete [] (byte*)ppguidProp;
+    //LocalFree(ppguidProp);
+	return S_OK;
+}
+
+//+---------------------------------------------------------------------------
+//
+//  GetDisplayAttributeData
+//
+//----------------------------------------------------------------------------
+
+HRESULT CTextBox::GetDisplayAttributeData(TfEditCookie ec, ITfReadOnlyProperty *pProp, ITfRange *pRange, TF_DISPLAYATTRIBUTE *pda, TfGuidAtom *pguid)
+{
+    VARIANT var;
+    IEnumTfPropertyValue *pEnumPropertyVal;
+    TF_PROPERTYVAL tfPropVal;
+    GUID guid;
+    TfGuidAtom gaVal;
+    ITfDisplayAttributeInfo *pDAI;
+
+    HRESULT hr = E_FAIL;
+
+    hr = S_FALSE;
+    if (SUCCEEDED(pProp->GetValue(ec, pRange, &var)))
+    {
+        if (SUCCEEDED(var.punkVal->QueryInterface(IID_IEnumTfPropertyValue, 
+                                                  (void **)&pEnumPropertyVal)))
+        {
+            while (pEnumPropertyVal->Next(1, &tfPropVal, NULL) == S_OK)
+            {
+                if (tfPropVal.varValue.vt == VT_EMPTY)
+                    continue; // prop has no value over this span
+
+                gaVal = (TfGuidAtom)tfPropVal.varValue.lVal;
+
+                GetCategoryMgr()->GetGUID(gaVal, &guid);
+
+                if (SUCCEEDED(GetDisplayAttributeMgr()->GetDisplayAttributeInfo(guid, &pDAI, NULL)))
+                {
+                    //
+                    // Issue: for simple apps.
+                    // 
+                    // Small apps can not show multi underline. So
+                    // this helper function returns only one 
+                    // DISPLAYATTRIBUTE structure.
+                    //
+                    if (pda)
+                    {
+                        pDAI->GetAttributeInfo(pda);
+                    }
+
+                    if (pguid)
+                    {
+                        *pguid = gaVal;
+                    }
+
+                    pDAI->Release();
+                    hr = S_OK;
+                    break;
+                }
+            }
+            pEnumPropertyVal->Release();
+        }
+        VariantClear(&var);
+    }
+
+    return hr;
+}
+
 
 /***************/
 /* constructor */
@@ -161,12 +312,7 @@ void CTextBox::UninitTSF()
 	}
 
 	if (GetDocumentMgr()) {
-		ITfContext* pictop;
-		GetDocumentMgr()->GetTop(&pictop);
-		ITfContext* picbtm;
-		GetDocumentMgr()->GetBase(&picbtm);
-
-		FAILED_THROW(GetDocumentMgr()->Pop(TF_POPF_ALL));//TODO Error
+		FAILED_THROW(GetDocumentMgr()->Pop(TF_POPF_ALL));
 	}
 }
 

@@ -61,14 +61,14 @@ private:
     int _nCount;
 };
 
-CDispAttrProps *GetDispAttrProps();
+//CDispAttrProps *GetDispAttrProps();
 
-HRESULT InitDisplayAttrbute();
-HRESULT UninitDisplayAttrbute();
-HRESULT GetDisplayAttributeTrackPropertyRange(TfEditCookie ec, ITfContext *pic, ITfRange *pRange, ITfReadOnlyProperty **ppProp, CDispAttrProps *pDispAttrProps);
-HRESULT GetDisplayAttributeData(TfEditCookie ec, ITfReadOnlyProperty *pProp, ITfRange *pRange, TF_DISPLAYATTRIBUTE *pda, TfClientId *pguid);
-
-HRESULT GetAttributeColor(TF_DA_COLOR *pdac, COLORREF *pcr);
-HRESULT SetAttributeColor(TF_DA_COLOR *pdac, COLORREF cr);
-HRESULT SetAttributeSysColor(TF_DA_COLOR *pdac, int nIndex);
-HRESULT ClearAttributeColor(TF_DA_COLOR *pdac);
+//HRESULT InitDisplayAttrbute();
+//HRESULT UninitDisplayAttrbute();
+//HRESULT GetDisplayAttributeTrackPropertyRange(TfEditCookie ec, ITfContext *pic, ITfRange *pRange, ITfReadOnlyProperty **ppProp, CDispAttrProps *pDispAttrProps);
+//HRESULT GetDisplayAttributeData(TfEditCookie ec, ITfReadOnlyProperty *pProp, ITfRange *pRange, TF_DISPLAYATTRIBUTE *pda, TfClientId *pguid);
+//
+//HRESULT GetAttributeColor(TF_DA_COLOR *pdac, COLORREF *pcr);
+//HRESULT SetAttributeColor(TF_DA_COLOR *pdac, COLORREF cr);
+//HRESULT SetAttributeSysColor(TF_DA_COLOR *pdac, int nIndex);
+//HRESULT ClearAttributeColor(TF_DA_COLOR *pdac);

@@ -136,6 +136,13 @@ void CSheetCell::OnCreate(const CreateEvt& e)
 	CSheet::OnCreate(e);
 }
 
+void CSheetCell::OnDestroy(const DestroyEvent& e)
+{
+	CCell::OnDestroy(e);
+	CSheet::OnDestroy(e);
+}
+
+
 void CSheetCell::OnLButtonDown(const LButtonDownEvent& e)
 {
 	CCell::OnLButtonDown(e);

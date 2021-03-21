@@ -256,7 +256,7 @@ CFilerWnd::CFilerWnd()
 
 							PROCESS_INFORMATION pi = { 0 };
 							DWORD len = 0;
-							SPDLOG_INFO("CreateProcess: {}", wstr2str(cmdline));
+							LOG_THIS_2("CreateProcess:", wstr2str(cmdline));
 
 							if (!::CreateProcess(NULL, const_cast<LPWSTR>(cmdline.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) break;
 							if (!::WaitForInputIdle(pi.hProcess, INFINITE) != 0)break;
@@ -264,7 +264,7 @@ CFilerWnd::CFilerWnd()
 
 							DWORD exitCode = 0;
 							if (!::GetExitCodeProcess(pi.hProcess, &exitCode))break;
-							SPDLOG_INFO("ExitCode: {}", exitCode);
+							LOG_THIS_2("ExitCode:", exitCode);
 
 							::CloseHandle(pi.hThread);
 							::CloseHandle(pi.hProcess);
@@ -273,7 +273,7 @@ CFilerWnd::CFilerWnd()
 							std::string buff;
 							if (len > 0 && ReadFile(hRead, (LPVOID)::GetBuffer(buff, len), len, &len, NULL)) {
 								::ReleaseBuffer(buff);
-								SPDLOG_INFO("Output: {}", buff);
+								LOG_THIS_2("Output:", buff);
 							}
 
 						} while (0);

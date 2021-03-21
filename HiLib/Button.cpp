@@ -8,6 +8,9 @@ void CButton::OnLButtonDown(const LButtonDownEvent& e)
 
 void CButton::OnLButtonUp(const LButtonUpEvent& e)
 {
+	if (GetState() == UIElementState::Pressed) {
+		GetCommand().Execute();
+	}
 	CUIElement::OnLButtonUp(e);
 }
 
@@ -63,7 +66,6 @@ void CButton::OnPaint(const PaintEvent& e)
 
 void CButton::OnLButtonSnglClk(const LButtonSnglClkEvent& e)
 {
-	GetCommand().Execute();
 }
 
 void CButton::OnKeyDown(const KeyDownEvent& e)

@@ -11,7 +11,7 @@
 #include "ShellFile.h"
 #include "ShellFolder.h"
 
-#include "ConsoleTimer.h"
+#include "Debug.h"
 #include "ApplicationProperty.h"
 #include "SheetEventArgs.h"
 #include "Cursorer.h"
@@ -30,12 +30,11 @@ CLauncherGridView::CLauncherGridView(
 	:CBindGridView(pParentControl, spGridViewProp, spLauncherProp->GetFavoritesPtr(), arg<"bindtype"_s>()=BindType::Column),
 	m_spLauncherProp(spLauncherProp)
 {
+	GetIsFocusable().set(false);
 	m_pVScroll->SetVisibility(Visibility::Disabled);
 	m_pHScroll->SetVisibility(Visibility::Hidden);
 
 	m_spItemDragger = std::make_shared<CLauncherItemDragger>();
-
-	CellLButtonDblClk.connect(std::bind(&CLauncherGridView::OnCellLButtonDblClk,this,std::placeholders::_1));
 }
 
 void CLauncherGridView::OnCreate(const CreateEvt& e)
@@ -51,9 +50,9 @@ void CLauncherGridView::OnCreate(const CreateEvt& e)
 
 void CLauncherGridView::OpenFavorites()
 {
-	SPDLOG_INFO("CLauncherGridView::OpenFavorites");
+	LOG_THIS_1("CLauncherGridView::OpenFavorites");
 
-	CONSOLETIMER("OpenFavorites Total");
+	LOG_SCOPED_TIMER_THIS_1("OpenFavorites Total");
 
 	//Direct2DWrite
 	GetWndPtr()->GetDirectPtr()->ClearTextLayoutMap();
@@ -84,15 +83,15 @@ void CLauncherGridView::OpenFavorites()
 	//PostUpdate(Updates::Invalidate);
 }
 
-void CLauncherGridView::OnCellLButtonDblClk(const CellEventArgs& e)
-{
-	if(auto p = dynamic_cast<CLauncherCell<std::shared_ptr<CFavorite>>*>(e.CellPtr)){
-		auto spFile = p->GetShellFile();
-		if (spFile != nullptr) {
-			spFile->Open();
-		}
-	}
-}
+//void CLauncherGridView::OnCellLButtonDblClk(const CellEventArgs& e)
+//{
+//	if(auto p = dynamic_cast<CLauncherCell<std::shared_ptr<CFavorite>>*>(e.CellPtr)){
+//		auto spFile = p->GetShellFile();
+//		if (spFile != nullptr) {
+//			spFile->Open();
+//		}
+//	}
+//}
 
 void CLauncherGridView::MoveColumn(int indexTo, typename ColTag::SharedPtr spFrom)
 {

@@ -1,8 +1,7 @@
 //#include "stdafx.h"
 #include "Favorite.h"
-#include "ThreadPool.h"
 #include "ShellFileFactory.h"
-#include "ConsoleTimer.h"
+#include "Debug.h"
 #include "MyString.h"
 
 CFavorite::CFavorite()
@@ -31,8 +30,8 @@ std::shared_ptr<CShellFile>& CFavorite::GetShellFile(const std::function<void()>
 			SetLockShellFile(m_futureFile.get());
 		//Thread not started
 		} else {
-			m_futureFile = CThreadPool::GetInstance()->enqueue([](std::shared_ptr<bool> spCancel, const std::wstring& path, const std::function<void()>& changed) {
-				CONSOLETIMER(wstr2str(path));
+			m_futureFile = std::async(std::launch::async, [](std::shared_ptr<bool> spCancel, const std::wstring& path, const std::function<void()>& changed) {
+				LOG_SCOPED_TIMER_1("CreateShellFilerPtr:" + wstr2str(path));
 				auto ret = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
 				if (!(*spCancel)) {
 					changed();

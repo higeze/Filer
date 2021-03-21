@@ -19,7 +19,7 @@
 #include "Cursorer.h"
 #include "Celler.h"
 
-#include "ConsoleTimer.h"
+#include "Debug.h"
 #include "ApplicationProperty.h"
 
 #include "DropTarget.h"
@@ -41,7 +41,6 @@
 #include "DriveFolder.h"
 #include "Scroll.h"
 #include "ShellFileFactory.h"
-#include "ThreadPool.h"
 
 #include "ShellFunction.h"
 #include "IncrementalCopyWnd.h"

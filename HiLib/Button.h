@@ -32,15 +32,13 @@ private:
 	std::shared_ptr<ButtonProperty> m_spButtonProperty;
 	ReactiveCommand<void> m_command;
 	ReactiveProperty<std::wstring> m_content;
-	ReactiveProperty<bool> m_isEnabled;
 public:
 	CButton(CD2DWControl* pControl, const std::shared_ptr<ButtonProperty>& spButtonProperty)
-		:CD2DWControl(pControl), m_spButtonProperty(spButtonProperty), m_isEnabled(true){}
+		:CD2DWControl(pControl), m_spButtonProperty(spButtonProperty){}
 	virtual ~CButton() = default;
 	//
 	ReactiveCommand<void>& GetCommand() { return m_command; }
 	ReactiveProperty<std::wstring>& GetContent() { return m_content; }
-	ReactiveProperty<bool>& GetIsEnabled() { return m_isEnabled; }
 
 	//Event
 	virtual void OnPaint(const PaintEvent& e) override;
@@ -52,5 +50,6 @@ public:
 
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
+
 
 };

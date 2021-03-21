@@ -251,10 +251,10 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 		//Path
 		m_pTextPathBinding.reset(nullptr);//Need to dispose first to disconnect
 		m_pTextPathBinding.reset(new CBinding<std::wstring>(spViewModel->Path, spView->GetPath()));
-		m_pTextPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { GetHeaderRects().clear(); }));
+		m_pTextPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Status
 		m_pStatusBinding.reset(nullptr);
-		m_pStatusConnection = std::make_unique<sigslot::scoped_connection>(spViewModel->Status.Subscribe([this](const auto&) { GetHeaderRects().clear(); }));
+		m_pStatusConnection = std::make_unique<sigslot::scoped_connection>(spViewModel->Status.Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Text
 		m_pTextBinding.reset(nullptr);
 		m_pTextBinding.reset(new CBinding<std::wstring>(spViewModel->Text, spView->GetText()));
@@ -314,7 +314,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 		//Path
 		m_pPdfPathBinding.reset(nullptr);//Need to dispose first to disconnect
 		m_pPdfPathBinding.reset(new CBinding<std::wstring>(spViewModel->Path, spView->GetPath()));
-		m_pPdfPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { GetHeaderRects().clear(); }));
+		m_pPdfPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Scale
 		m_pPdfScaleBinding.reset(nullptr);//Need to dispose first to disconnect
 		m_pPdfScaleBinding.reset(new CBinding<FLOAT>(spViewModel->Scale, spView->GetScale()));
@@ -337,13 +337,14 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 
 		if (!isInitialized && GetWndPtr()->IsWindow()) {
 			isInitialized = true;
+			spFilerView->GetIsEnabled().set(false);
 
 			//Folder Changed
 			spFilerView->FolderChanged = [&](std::shared_ptr<CShellFolder>& pFolder) {
 				auto pData = std::static_pointer_cast<FilerTabData>(m_itemsSource[m_selectedIndex.get()]);
 				pData->FolderPtr = pFolder;
 				pData->Path = pFolder->GetPath();
-				GetHeaderRects().clear();
+				UpdateHeaderRects();
 				spFilerView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
 			};
 		}
@@ -355,6 +356,8 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 
 		if (!isInitialized && GetWndPtr()->IsWindow()) {
 			isInitialized = true;
+			spToDoView->GetIsEnabled().set(false);
+
 			//Columns
 			spToDoView->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(spToDoView.get()));
 			spToDoView->PushColumns(
@@ -430,11 +433,13 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 
 	//TextView Closure
 	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(this, m_spTextEditorProp), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>{
+		spTextView->GetIsEnabled().set(false);
 		return spTextView;
 	};
 
 	//PdfView Closure
 	GetPdfViewPtr = [spPdfView = std::make_shared<CPdfView>(this, m_spPdfViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CPdfView>{
+		spPdfView->GetIsEnabled().set(false);
 		return spPdfView;
 	};
 }

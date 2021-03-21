@@ -111,11 +111,11 @@ CKnownFolderManager::CKnownFolderManager()
 					auto knownFolder = std::make_shared<CKnownFolder>(pParentShellFolder, parentIdl, childIdl, pFolder, pShellFolder);
 					m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
 				} else {
-					SPDLOG_INFO(fmt::format("CKnownFolder::CKnownFolder Non enumerable {:08X}-{:04X}",
+					LOG_THIS_1(fmt::format("CKnownFolder::CKnownFolder Non enumerable {:08X}-{:04X}",
 											std::get<0>(pair.second).Data1, std::get<0>(pair.second).Data2));
 				}
 			} else {
-				SPDLOG_INFO(fmt::format("CKnownFolder::CKnownFolder IDL is null {:08X}-{:04X}",
+				LOG_THIS_1(fmt::format("CKnownFolder::CKnownFolder IDL is null {:08X}-{:04X}",
 							std::get<0>(pair.second).Data1, std::get<0>(pair.second).Data2));
 			}
 		}
@@ -164,11 +164,11 @@ CKnownFolderManager::CKnownFolderManager()
 	//				auto knownFolder = std::make_shared<CKnownFolder>(pParentShellFolder, parentIdl, childIdl, pFolder, pShellFolder);
 	//				m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
 	//			} else {
-	//				SPDLOG_INFO("CKnownFolder::CKnownFolder Non enumerable " +
+	//				LOG_1("CKnownFolder::CKnownFolder Non enumerable " +
 	//					(boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str());
 	//			}
 	//		} else {
-	//			SPDLOG_INFO("CKnownFolder::CKnownFolder IDL is null " +
+	//			LOG_1("CKnownFolder::CKnownFolder IDL is null " +
 	//				(boost::format("%1$08x-%2$04x") % kfid.Data1 % kfid.Data2).str());
 	//		}
 	//	}

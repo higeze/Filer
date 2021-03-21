@@ -6,7 +6,6 @@
 #include "MyMenu.h"
 #include "ResourceIDFactory.h"
 #include <functional>
-#include "ThreadPool.h"
 #include "HiLibResource.h"
 
 CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewProperty>& pProp)

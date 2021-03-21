@@ -12,7 +12,6 @@
 #include "ShellFileFactory.h"
 #include "ResourceIDFactory.h"
 #include "ShellFile.h"
-#include "ThreadPool.h"
 #include "D2DWWindow.h"
 #include "Button.h"
 #include "ReactiveProperty.h"
@@ -37,6 +36,8 @@ protected:
 
 	CIDL m_srcIDL;
 	std::vector<CIDL> m_srcChildIDLs;
+
+	std::future<void> m_future;
 
 	std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> m_spItemsSource;
 	//std::vector< std::tuple<std::shared_ptr<CShellFile>, RenameInfo>> m_selectedItems;

@@ -82,69 +82,54 @@ CTextEditSink::CTextEditSink(CTextBox *pEditor)
 
 STDAPI CTextEditSink::OnEndEdit(ITfContext *pic, TfEditCookie ecReadOnly, ITfEditRecord *pEditRecord)
 {
-    CDispAttrProps *pDispAttrProps = GetDispAttrProps();
+    CDispAttrProps *pDispAttrProps = _pEditor->GetDispAttrProps();
     if (pDispAttrProps)
     {
-        IEnumTfRanges *pEnum;
-        if (SUCCEEDED(pEditRecord->GetTextAndPropertyUpdates(TF_GTP_INCL_TEXT,
+        
+        if (CComPtr<IEnumTfRanges> pEnum;
+            SUCCEEDED(pEditRecord->GetTextAndPropertyUpdates(TF_GTP_INCL_TEXT,
                                                              pDispAttrProps->GetPropTablePointer(),
                                                              pDispAttrProps->Count(),
                                                              &pEnum)) && pEnum)
         {
-            ITfRange *pRange;
-            if (pEnum->Next(1, &pRange, NULL) == S_OK)
+            // Test if there is range
+            if (CComPtr<ITfRange> pTestRange;
+                pEnum->Next(1, &pTestRange, NULL) == S_OK)
             {
-                // We check if there is a range to be changed.
-                pRange->Release();
-
                 _pEditor->ClearCompositionRenderInfo();
 
                 // We read the display attribute for entire range.
                 // It could be optimized by filtering the only delta with ITfEditRecord interface. 
-                ITfRange *pRangeEntire = NULL;
-                ITfRange *pRangeEnd = NULL;
+                CComPtr<ITfRange> pRangeEntire = nullptr;
+                CComPtr<ITfRange> pRangeEnd = nullptr;
                 if (SUCCEEDED(pic->GetStart(ecReadOnly, &pRangeEntire)) &&
                     SUCCEEDED(pic->GetEnd(ecReadOnly, &pRangeEnd)) &&
                     SUCCEEDED(pRangeEntire->ShiftEndToRange(ecReadOnly, pRangeEnd, TF_ANCHOR_END)))
                 {
-                    IEnumTfRanges *pEnumRanges;
-                    ITfReadOnlyProperty *pProp = NULL;
+                    CComPtr<ITfReadOnlyProperty> pProp;
 
-                    GetDisplayAttributeTrackPropertyRange(ecReadOnly, pic, pRangeEntire, &pProp, pDispAttrProps);
+                    _pEditor->GetDisplayAttributeTrackPropertyRange(ecReadOnly, pic, pRangeEntire, &pProp, pDispAttrProps);
 
-                    if (SUCCEEDED(pProp->EnumRanges(ecReadOnly, &pEnumRanges, pRangeEntire)))
-                    {
+                    if (CComPtr<IEnumTfRanges> pEnumRanges;
+                        SUCCEEDED(pProp->EnumRanges(ecReadOnly, &pEnumRanges, pRangeEntire))){
+                        CComPtr<ITfRange> pRange;
                         while (pEnumRanges->Next(1, &pRange, NULL) == S_OK)
                         {
                             TF_DISPLAYATTRIBUTE DisplayAttribute;
                             TfGuidAtom guid;
-                            if (GetDisplayAttributeData(ecReadOnly, pProp, pRange, &DisplayAttribute, &guid) == S_OK)
+                            if (_pEditor->GetDisplayAttributeData(ecReadOnly, pProp, pRange, &DisplayAttribute, &guid) == S_OK)
                             {
-                                ITfRangeACP *pRangeACP;
-                                if (pRange->QueryInterface(IID_ITfRangeACP, (void **)&pRangeACP) == S_OK)
-                                {
-                                    LONG Start;
-                                    LONG End;
-                                    pRangeACP->GetExtent(&Start, &End);
-                                    
-									
-									_pEditor->AddCompositionRenderInfo(Start, Start + End, &DisplayAttribute);
-
-
-                                    pRangeACP->Release();
+                                if(auto pRangeACP = CComQIPtr<ITfRangeACP>(pRange)){
+                                    LONG start, end;
+                                    pRangeACP->GetExtent(&start, &end);
+									_pEditor->AddCompositionRenderInfo(start, start + end, &DisplayAttribute);
                                 }
                             }
+                            pRange.Release();
                         }
                     }
-                }
-
-                if (pRangeEntire)
-                    pRangeEntire->Release();
-                if (pRangeEnd)
-                    pRangeEnd->Release();
- 
+                } 
             }
-            pEnum->Release();
         }
 
         delete pDispAttrProps;

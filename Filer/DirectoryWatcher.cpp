@@ -2,7 +2,6 @@
 #include "SEHException.h"
 #include "MyWin32.h"
 #include "MyString.h"
-#include "ThreadPool.h"
 #include "D2DWWindow.h"
 #include "D2DWControl.h"
 #include "Dispatcher.h"
@@ -28,15 +27,15 @@ void CDirectoryWatcher::StartWatching(const std::wstring& path, const CIDL& absI
 		//Create event
 		m_pQuitEvent.reset(CreateEvent(NULL, TRUE, FALSE, NULL));
 		if (!m_pQuitEvent) {
-			SPDLOG_INFO("");
+			LOG_THIS_1("");
 			return;
 		}
 
 		//Create watch thread
-		m_futureWatch = CThreadPool::GetInstance()->enqueue(&CDirectoryWatcher::WatchDirectory, this);
+		m_futureWatch = std::async(std::launch::async, &CDirectoryWatcher::WatchDirectory, this);
 	}
 	catch (std::exception& e) {
-		SPDLOG_INFO("");
+		LOG_THIS_1("");
 		QuitWatching();
 		throw e;
 	}
@@ -49,7 +48,7 @@ void CDirectoryWatcher::QuitWatching()
 		if (m_pQuitEvent) {
 			//Throw quit event
 			if (!::SetEvent(m_pQuitEvent.get())) {
-				SPDLOG_INFO("");
+				LOG_THIS_1("");
 			}
 			//Close handle
 			m_pQuitEvent.reset();
@@ -64,7 +63,7 @@ void CDirectoryWatcher::QuitWatching()
 		m_absIdl.Clear();
 	}
 	catch (std::exception& e) {
-		SPDLOG_INFO("");
+		LOG_THIS_1("");
 		throw e;
 	}
 
@@ -73,7 +72,7 @@ void CDirectoryWatcher::QuitWatching()
 void CDirectoryWatcher::WatchDirectory()
 {
 	try{
-		SPDLOG_INFO("Start CDirectoryWatcher::WatchDirectoryCallback");
+		LOG_THIS_1("Start CDirectoryWatcher::WatchDirectoryCallback");
 
 		//Create File
 		m_names = GetFileNamesInDirectory(m_absIdl);
@@ -96,7 +95,7 @@ void CDirectoryWatcher::WatchDirectory()
 		}
 
 		//Start thread;
-		std::future<void> futureCallback(CThreadPool::GetInstance()->enqueue(&CDirectoryWatcher::IoCompletionCallback, this, pIocp.get(), pDir.get()));
+		std::future<void> futureCallback = std::async(std::launch::async, &CDirectoryWatcher::IoCompletionCallback, this, pIocp.get(), pDir.get());
 
 		//Start observer
 		OVERLAPPED overlapped = { 0 };
@@ -110,9 +109,9 @@ void CDirectoryWatcher::WatchDirectory()
 		//Terminate thread
 		futureCallback.get();
 
-		SPDLOG_INFO("End CDirectoryWatcher::WatchDirectoryCallback");
+		LOG_THIS_1("End CDirectoryWatcher::WatchDirectoryCallback");
 	}catch(std::exception&){
-		SPDLOG_INFO("");
+		LOG_THIS_1("");
 	}
 }
 
@@ -133,7 +132,7 @@ std::vector<std::wstring> CDirectoryWatcher::GetFileNamesInDirectory(CIDL absIdl
 void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 {
 	try{
-		SPDLOG_INFO("Start CDirectoryWatcher::IoCompletionCallback");
+		LOG_THIS_1("Start CDirectoryWatcher::IoCompletionCallback");
 
 		while (true) {
 			DWORD dwBytes = 0L;
@@ -153,7 +152,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 
 			//Keep watching
 			if (pOverlapped) {
-				SPDLOG_INFO("ReadDirectoryChangesW");
+				LOG_THIS_1("ReadDirectoryChangesW");
 				//Associate iocompletionobject to thread pool
 				if (!ReadDirectoryChangesW(
 					hDir,
@@ -198,7 +197,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 
 					switch (pInfo->Action) {
 					case FILE_ACTION_ADDED:
-						SPDLOG_INFO("FILE_ACTION_ADDED");
+						LOG_THIS_1("FILE_ACTION_ADDED");
 						{
 							auto iter = std::find(addDiff.begin(), addDiff.end(), fileName);
 							if (iter != addDiff.end()) {
@@ -208,7 +207,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 							break;
 						}
 					case FILE_ACTION_MODIFIED:
-						SPDLOG_INFO("FILE_ACTION_MODIFIED");
+						LOG_THIS_1("FILE_ACTION_MODIFIED");
 						{
 							auto iter = std::find(fileNames.begin(), fileNames.end(), fileName);
 							if (iter != fileNames.end()) {
@@ -218,7 +217,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 						}
 						break;
 					case FILE_ACTION_REMOVED:
-						SPDLOG_INFO("FILE_ACTION_REMOVED");
+						LOG_THIS_1("FILE_ACTION_REMOVED");
 						{
 							auto iter = std::find(remDiff.begin(), remDiff.end(), fileName);
 							if (iter != remDiff.end()) {
@@ -229,7 +228,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 						}
 						break;
 					case FILE_ACTION_RENAMED_NEW_NAME:
-						SPDLOG_INFO("FILE_ACTION_RENAMED_NEW_NAME");
+						LOG_THIS_1("FILE_ACTION_RENAMED_NEW_NAME");
 						{
 							auto newIter = std::find(addDiff.begin(), addDiff.end(), fileName);
 							if (newIter != addDiff.end() && oldIter != remDiff.end()) {
@@ -237,13 +236,13 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 								addDiff.erase(newIter);
 								remDiff.erase(oldIter);
 							} else {
-								SPDLOG_INFO("");
+								LOG_THIS_1("");
 							}
 							oldIter = remDiff.end();
 						}
 						break;
 					case FILE_ACTION_RENAMED_OLD_NAME:
-						SPDLOG_INFO("FILE_ACTION_RENAMED_OLD_NAME");
+						LOG_THIS_1("FILE_ACTION_RENAMED_OLD_NAME");
 						{
 							oldIter = std::find(remDiff.begin(), remDiff.end(), fileName);
 						}
@@ -285,7 +284,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 			}
 		}
 	}catch(std::exception&){
-		SPDLOG_INFO("");
+		LOG_THIS_1("");
 	}
 }
 

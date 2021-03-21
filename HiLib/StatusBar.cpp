@@ -1,6 +1,5 @@
 #include "StatusBar.h"
 #include "Debug.h"
-#include "ThreadPool.h"
 #include <psapi.h>
 #include <fmt/format.h>
 #include "D2DWWindow.h"
@@ -99,14 +98,11 @@
 		GetWndPtr()->GetDirectPtr()->DrawTextLayout(
 			m_spStatusBarProp->Format,
 			fmt::format(
-			L"CPU:{:.1f}%, PrivateMemory:{:.1f}MB, HandleCount:{}, ThreadCount:{}, ThreadPool:{}/{}\t"
-			L"{}",
+			L"CPU:{:.1f}%, PrivateMemory:{:.1f}MB, HandleCount:{}, ThreadCount:{}\t{}",
 			m_cpu,
 			m_mem / 1024.f / 1024.f,
 			m_handleCount,
 			m_threadCount,
-			CThreadPool::GetInstance()->GetActiveThreadCount(),
-			CThreadPool::GetInstance()->GetTotalTheadCount(),
 			m_text),
 			rcPaint);
 	}

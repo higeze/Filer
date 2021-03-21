@@ -9,7 +9,7 @@
 #include "ShellFile.h"
 #include "ShellFolder.h"
 
-#include "ConsoleTimer.h"
+#include "Debug.h"
 #include "ApplicationProperty.h"
 #include "SheetEventArgs.h"
 #include "Cursorer.h"
@@ -27,6 +27,7 @@ CFavoritesGridView::CFavoritesGridView(
 	:CBindGridView(pParentControl, spGridViewProp, spFavoritesProp->GetFavoritesPtr()),
 	m_spFavoritesProp(spFavoritesProp)
 {
+	GetIsFocusable().set(false);
 	m_pVScroll->SetVisibility(Visibility::Hidden);
 	m_pHScroll->SetVisibility(Visibility::Disabled);
 
@@ -48,9 +49,9 @@ void CFavoritesGridView::OnCreate(const CreateEvt& e)
 
 void CFavoritesGridView::OpenFavorites()
 {
-	SPDLOG_INFO("CFavoritesGridView::OpenFavorites");
+	LOG_THIS_1("CFavoritesGridView::OpenFavorites");
 
-	CONSOLETIMER("OpenFavorites Total");
+	LOG_SCOPED_TIMER_THIS_1("OpenFavorites Total");
 
 	//Direct2DWrite
 	GetWndPtr()->GetDirectPtr()->ClearTextLayoutMap();

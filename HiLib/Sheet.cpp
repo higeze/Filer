@@ -10,7 +10,7 @@
 #include "Row.h"
 #include "Column.h"
 #include "RowColumn.h"
-#include "ConsoleTimer.h"
+#include "Debug.h"
 #include "ApplicationProperty.h"
 #include "Tracker.h"
 #include "Dragger.h"
@@ -302,37 +302,37 @@ void CSheet::SubmitUpdate()
 		switch(type){
 		case Updates::RowVisible:
 			{
-				CONSOLETIMER("UpdateRowVisibleDictionary");
+				LOG_SCOPED_TIMER_THIS_1("UpdateRowVisibleDictionary");
 				UpdateRowVisibleDictionary();
 			}
 			break;
 		case Updates::ColumnVisible:
 			{
-				CONSOLETIMER("UpdateColumnVisibleDictionary");
+				LOG_SCOPED_TIMER_THIS_1("UpdateColumnVisibleDictionary");
 				UpdateColumnVisibleDictionary();
 				break;
 			}
 		case Updates::Column:
 			{
-				CONSOLETIMER("UpdateColumn");
+				LOG_SCOPED_TIMER_THIS_1("UpdateColumn");
 				UpdateColumn();
 				break;
 			}
 		case Updates::Row:
 			{
-				CONSOLETIMER("UpdateRow");
+				LOG_SCOPED_TIMER_THIS_1("UpdateRow");
 				UpdateRow();
 				break;
 			}
 		case Updates::Scrolls:
 			{
-				CONSOLETIMER("UpdateScrolls");
+				LOG_SCOPED_TIMER_THIS_1("UpdateScrolls");
 				UpdateScrolls();
 				break;
 			}
 		case Updates::Invalidate:
 			{
-				CONSOLETIMER("Invalidate");
+				LOG_SCOPED_TIMER_THIS_1("Invalidate");
 				Invalidate();
 			}
 		default:

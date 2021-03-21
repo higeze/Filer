@@ -20,11 +20,9 @@ public:
 
 	std::shared_ptr<CLauncherProperty>& GetLauncherProp() { return m_spLauncherProp; }
 	
-	bool GetIsFocusable()const { return false; }
-
 	virtual void OnCreate(const CreateEvt& e) override;
 	
-	void OnCellLButtonDblClk(const CellEventArgs& e);
+	//void OnCellLButtonDblClk(const CellEventArgs& e);
 	void OpenFavorites();
 	void FilterAll() override {/*Do nothing*/}
 	void Reload();

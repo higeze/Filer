@@ -1,4 +1,5 @@
 #include "DriveFolder.h"
+#include "Debug.h"
 #include "ThreadSafeDriveFolderManager.h"
 
 CDriveFolder::CDriveFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder)
@@ -41,7 +42,7 @@ void CDriveFolderManager::Update()
 			(!parentIdl && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder))))) {
 			m_driveFolders.push_back(std::make_shared<CDriveFolder>(pParentShellFolder, parentIdl, childIdl, pShellFolder));
 		} else {
-			SPDLOG_INFO("nonenum");
+			LOG_THIS_1("nonenum");
 		}
 	}
 

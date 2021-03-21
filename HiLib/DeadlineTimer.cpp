@@ -1,5 +1,4 @@
 #include "DeadlineTimer.h"
-#include "ThreadPool.h"
 
 void CDeadlineTimer::run(std::function<void()> action, const std::chrono::milliseconds& ms)
 {
@@ -9,7 +8,7 @@ void CDeadlineTimer::run(std::function<void()> action, const std::chrono::millis
 		m_cv.notify_one();
 	} else {
 		m_action = action;
-		m_future = CThreadPool::GetInstance()->enqueue([this, ms] {
+		m_future = std::async(std::launch::async, [this, ms] {
 			std::unique_lock<std::mutex> lock(m_mtx);
 			while (!m_stop.load()) {
 				auto abs_time = std::chrono::steady_clock::now() + ms;
@@ -36,7 +35,7 @@ void CDeadlineTimer::run_oneshot(std::function<void()> action, const std::chrono
 		m_action = action;
 	} else {
 		m_action = action;
-		m_future = CThreadPool::GetInstance()->enqueue([this, ms] {
+		m_future = std::async(std::launch::async, [this, ms] {
 			std::this_thread::sleep_for(ms);
 			std::lock_guard<std::mutex> guard(m_mtx);
 			if (m_action && !m_stop.load()) {

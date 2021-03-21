@@ -52,6 +52,12 @@ public:
 		pDirect->DrawTextInRect(*(this->m_spCellProperty->Format), GetShortName(), this->Content2InnerBorder(rcPaint));
 	}
 
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override
+	{
+		this->GetShellFile()->Open();
+		(*e.HandledPtr) = true;
+	}
+
 	virtual void OnContextMenu(const ContextMenuEvent& e) override
 	{
 		CMenu menu(::CreatePopupMenu());
@@ -67,7 +73,7 @@ public:
 
 		menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
 
-		mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeleteLaucher");
+		mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeleteLauncher");
 		mii.dwTypeData = const_cast<LPWSTR>(L"Delete");
 		mii.cch = 6;
 		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
@@ -94,11 +100,11 @@ public:
 		} else if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeleteLauncher")) {
 			auto pFilerWnd = static_cast<CFilerWnd*>(this->m_pSheet->GetWndPtr());
 
-			auto pRow = static_cast<const CLauncherRow<TItems...>*>(this->m_pRow);
+			//auto pRow = static_cast<const CLauncherRow<TItems...>*>(this->m_pRow);
 			auto pCol = static_cast<const CBindColumn<TItems...>*>(this->m_pColumn);
 			auto pGrid = static_cast<CLauncherGridView*>(this->m_pSheet);
 			auto& itemsSource = pGrid->GetItemsSource();
-			auto index = pRow->GetIndex<AllTag>();
+			auto index = pCol->GetIndex<AllTag>();
 
 			itemsSource.erase(std::next(itemsSource.cbegin(), index));
 			pGrid->Reload();

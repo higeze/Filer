@@ -20,7 +20,7 @@
 #include "Cursorer.h"
 #include "Celler.h"
 
-#include "ConsoleTimer.h"
+#include "Debug.h"
 #include "ApplicationProperty.h"
 
 #include "DropTarget.h"
@@ -42,7 +42,6 @@
 #include "DriveFolder.h"
 #include "Scroll.h"
 #include "ShellFileFactory.h"
-#include "ThreadPool.h"
 
 #include "ShellFunction.h"
 #include "IncrementalCopyWnd.h"
@@ -410,7 +409,7 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 
 void CFilerGridView::Added(const std::wstring& fileName)
 {
-	SPDLOG_INFO("Added " + wstr2str(fileName));
+	LOG_THIS_1("Added " + wstr2str(fileName));
 	CIDL idl;
 	ULONG chEaten;
 	ULONG dwAttributes;
@@ -437,13 +436,13 @@ void CFilerGridView::Added(const std::wstring& fileName)
 		m_isNewFile = false;
 	}
 	else {
-		SPDLOG_INFO("Added FAILED " + wstr2str(fileName));
+		LOG_THIS_1("Added FAILED " + wstr2str(fileName));
 	}
 }
 
 void CFilerGridView::Modified(const std::wstring& fileName)
 {
-	SPDLOG_INFO("Modified " + wstr2str(fileName));
+	LOG_THIS_1("Modified " + wstr2str(fileName));
 	auto& itemsSource = GetItemsSource();
 	auto iter = std::find_if(itemsSource.begin(), itemsSource.end(),
 							[fileName](const auto& value)->bool {
@@ -452,7 +451,7 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 //	auto iter = FindIfRowIterByFileNameExt(fileName);
 
 	if (iter == itemsSource.end()) {
-		SPDLOG_INFO("Modified NoMatch " + wstr2str(fileName));
+		LOG_THIS_1("Modified NoMatch " + wstr2str(fileName));
 		return;
 	} else {
 		//Because ItemIdList includes, size, last write time, etc., it is necessary to get new one.
@@ -473,13 +472,13 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 			PostUpdate(Updates::Sort);
 			FilterAll();
 		} else {
-			SPDLOG_INFO("Modified FAILED " + wstr2str(fileName));
+			LOG_THIS_1("Modified FAILED " + wstr2str(fileName));
 		}
 	}
 }
 void CFilerGridView::Removed(const std::wstring& fileName)
 {
-	SPDLOG_INFO("Removed " + wstr2str(fileName));
+	LOG_THIS_1("Removed " + wstr2str(fileName));
 
 	auto& itemsSource = GetItemsSource();
 	auto iter = std::find_if(itemsSource.cbegin(), itemsSource.cend(),
@@ -488,7 +487,7 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 							 });
 
 	if (iter == itemsSource.cend()) {
-		SPDLOG_INFO("Removed NoMatch " + wstr2str(fileName));
+		LOG_THIS_1("Removed NoMatch " + wstr2str(fileName));
 		return;
 	} else {
 
@@ -510,7 +509,7 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 }
 void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& newName)
 {
-	SPDLOG_INFO("Renamed " + wstr2str(oldName) + "=>"+ wstr2str(newName));
+	LOG_THIS_1("Renamed " + wstr2str(oldName) + "=>"+ wstr2str(newName));
 	auto& itemsSource = GetItemsSource();
 	auto iter = std::find_if(itemsSource.begin(), itemsSource.end(),
 							 [oldName](const auto& value)->bool {
@@ -519,7 +518,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 
 	if (iter == itemsSource.end()) 
 	{
-		SPDLOG_INFO("Renamed NoMatch " + wstr2str(oldName) + "=>" + wstr2str(newName));
+		LOG_THIS_1("Renamed NoMatch " + wstr2str(oldName) + "=>" + wstr2str(newName));
 	} else {
 		ULONG chEaten;
 		ULONG dwAttributes;
@@ -540,7 +539,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 			FilterAll();
 		}
 		else {
-			SPDLOG_INFO("Renamed FAILED " + wstr2str(oldName) + "=>" + wstr2str(newName));
+			LOG_THIS_1("Renamed FAILED " + wstr2str(oldName) + "=>" + wstr2str(newName));
 			return Removed(oldName);
 		}
 	}
@@ -646,14 +645,14 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 		EndEdit();
 	}
 
-	SPDLOG_INFO("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetDispName()));
+	LOG_THIS_1("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetDispName()));
 
-	CONSOLETIMER("OpenFolder Total");
+	LOG_SCOPED_TIMER_THIS_1("OpenFolder Total");
 	bool isUpdate = m_spFolder ? m_spFolder->GetPath() == spFolder->GetPath() : false;
 	m_spPreviousFolder = m_spFolder;
 	m_spFolder = spFolder;
 	{
-		CONSOLETIMER("OpenFolder Pre-Process");
+		LOG_SCOPED_TIMER_THIS_1("OpenFolder Pre-Process");
 		
 		//StateMachine // Do not reset
 		//m_pMachine.reset(new CGridStateMachine(this));
@@ -710,7 +709,7 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 	}
 
 	{
-		CONSOLETIMER("OpenFolder Enumeration");
+		LOG_SCOPED_TIMER_THIS_1("OpenFolder Enumeration");
 		try {
 		//Enumerate child IDL
 			shell::for_each_idl_in_shellfolder(GetWndPtr()->m_hWnd, m_spFolder->GetShellFolderPtr(),
@@ -741,7 +740,7 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 	}
 
 	{
-		CONSOLETIMER("OpenFolder Updating");
+		LOG_SCOPED_TIMER_THIS_1("OpenFolder Updating");
 		for (const auto& colPtr : m_allCols) {
 			std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
 		}
@@ -967,19 +966,19 @@ void CFilerGridView::OnDirectoryWatch(const DirectoryWatchEvent& e)
 	for(auto info : e.Infos){
 		switch (info.first) {
 		case FILE_ACTION_ADDED:
-			SPDLOG_INFO("FILE_ACTION_ADDED");
+			LOG_THIS_1("FILE_ACTION_ADDED");
 			Added(info.second);
 			break;
 		case FILE_ACTION_MODIFIED:
-			SPDLOG_INFO("FILE_ACTION_MODIFIED");
+			LOG_THIS_1("FILE_ACTION_MODIFIED");
 			Modified(info.second);
 			break;
 		case FILE_ACTION_REMOVED:
-			SPDLOG_INFO("FILE_ACTION_REMOVED");
+			LOG_THIS_1("FILE_ACTION_REMOVED");
 			Removed(info.second);
 			break;
 		case FILE_ACTION_RENAMED_NEW_NAME:
-			SPDLOG_INFO("FILE_ACTION_RENAMED_NEW_NAME");
+			LOG_THIS_1("FILE_ACTION_RENAMED_NEW_NAME");
 			{
 				std::list<std::wstring> oldnew;
 				boost::split(oldnew, info.second, boost::is_any_of(L"/"));
@@ -987,7 +986,7 @@ void CFilerGridView::OnDirectoryWatch(const DirectoryWatchEvent& e)
 			}
 			break;
 		case FILE_ACTION_RENAMED_OLD_NAME:
-			SPDLOG_INFO("FILE_ACTION_RENAMED_OLD_NAME");
+			LOG_THIS_1("FILE_ACTION_RENAMED_OLD_NAME");
 			break;
 		default:
 			break;

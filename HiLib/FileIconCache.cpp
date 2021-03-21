@@ -1,7 +1,6 @@
 #include "FileIconCache.h"
 #include "MyIcon.h"
 #include "MyCom.h"
-#include "ThreadPool.h"
 #include "Debug.h"
 #include <VersionHelpers.h>
 #include <ntddkbd.h>
@@ -90,13 +89,13 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetFileIconBitmap(const CIDL& absoluteIDL, 
 			return iter->second;
 		} else {
 			m_extMap.lock_emplace(std::make_pair(ext, GetDefaultIconBitmap()));
-			CThreadPool::GetInstance()->enqueue([this](const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated) {
+			m_futures.emplace_back(std::async(std::launch::async, [this](const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated) {
 				CComPtr<ID2D1Bitmap> pBitmap = GetBitmapFromIcon(GetIcon(absoluteIDL));
 				m_extMap.lock_insert_or_assign(ext, std::move(pBitmap));
 				if (updated) {
 					updated();
 				}
-			}, absoluteIDL, path, ext, updated);
+			}, absoluteIDL, path, ext, updated));
 			return GetDefaultIconBitmap();
 		}
 	} else {
@@ -104,13 +103,13 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetFileIconBitmap(const CIDL& absoluteIDL, 
 			return iter->second;
 		} else {
 			m_pathMap.lock_emplace(std::make_pair(path, GetDefaultIconBitmap()));
-			CThreadPool::GetInstance()->enqueue([this](const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated) {
+			m_futures.emplace_back(std::async(std::launch::async, [this](const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated) {
 				CComPtr<ID2D1Bitmap> pBitmap = GetBitmapFromIcon(GetIcon(absoluteIDL));
 				m_pathMap.lock_insert_or_assign(path, std::move(pBitmap));
 				if (updated) {
 					updated();
 				}
-			}, absoluteIDL, path, ext, updated);
+			}, absoluteIDL, path, ext, updated));
 			return GetDefaultIconBitmap();
 		}
 	}

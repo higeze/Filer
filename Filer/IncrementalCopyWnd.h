@@ -33,6 +33,8 @@ private:
 	std::vector<CIDL> m_srcChildIDLs;
 	CIDL m_destIDL;
 
+	std::future<void> m_doFuture;
+	std::future<void> m_compFuture;
 	//CDeadlineTimer m_periodicTimer;
 
 	std::unordered_map<CIDL, std::vector<CIDL>,

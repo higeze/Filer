@@ -22,7 +22,6 @@ public:
 	virtual ~CFavoritesGridView(void) = default;
 
 	std::shared_ptr<CFavoritesProperty>& GetFavoritesProp() { return m_spFavoritesProp; }
-	bool GetIsFocusable()const { return false; }
 
 	virtual void OnCreate(const CreateEvt& e) override;
 	

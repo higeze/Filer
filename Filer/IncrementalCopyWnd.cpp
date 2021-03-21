@@ -3,7 +3,6 @@
 #include "Button.h"
 #include "CheckableFileGrid.h"
 #include "IDL.h"
-#include "ThreadPool.h"
 #include "ShellFunction.h"
 #include "ShellFileFactory.h"
 #include "ResourceIDFactory.h"
@@ -35,7 +34,7 @@ CIncrementalCopyWnd::CIncrementalCopyWnd(const std::shared_ptr<FilerGridViewProp
 
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
 	{
-		CThreadPool::GetInstance()->enqueue([idlMap = m_idlMap]()->void {
+		m_doFuture = std::async(std::launch::async, [idlMap = m_idlMap]()->void {
 			CComPtr<IFileOperation> pFileOperation = nullptr;
 			if (FAILED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {
 				return;
@@ -108,11 +107,12 @@ void CIncrementalCopyWnd::OnCreate(const CreateEvt& e)
 
 
 	m_spButtonDo->GetIsEnabled().set(false);
+
 	m_spButtonCancel->GetIsEnabled().set(false);
 	m_spButtonClose->GetIsEnabled().set(true);
 	
 	//Start comparison
-	CThreadPool::GetInstance()->enqueue([this]()->void {
+	m_compFuture = std::async(std::launch::async, [this]()->void {
 		std::function<void()> readMax = [this]()->void {
 			GetDispatcherPtr()->PostInvoke([this] { OnIncrementMax(); });
 		};
@@ -134,20 +134,20 @@ void CIncrementalCopyWnd::OnCreate(const CreateEvt& e)
 		GetProgressBarPtr()->SetMax(0);
 		GetProgressBarPtr()->SetValue(0);
 
-		auto fileCount = CThreadPool::GetInstance()->enqueue([srcIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, readMax]()->void{
+		auto countFuture = std::async(std::launch::async, [srcIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, readMax]()->void{
 			for (const auto& childIDL : srcChildIDLs) {
 				shell::CountFileOne(srcIDL, childIDL, readMax);
 			}
 		});
 
-		auto incremental = CThreadPool::GetInstance()->enqueue([srcParentIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, destParentIDL = m_destIDL, readValue, find]()->void {
+		auto incrFuture = std::async(std::launch::async, [srcParentIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, destParentIDL = m_destIDL, readValue, find]()->void {
 			for (const auto& srcChildIDL : srcChildIDLs) {
 				shell::FindIncrementalOne(srcParentIDL, srcChildIDL, destParentIDL, readValue, find);
 			}
 		});
 
-		fileCount.get();
-		incremental.get();
+		countFuture.get();
+		incrFuture.get();
 
 		if (!m_idlMap.empty()) {
 			m_spButtonDo->GetIsEnabled().set(true);

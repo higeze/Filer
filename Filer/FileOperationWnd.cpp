@@ -82,7 +82,7 @@ void CCopyWnd::Copy()
 		}
 	}
 
-	CThreadPool::GetInstance()->enqueue([](HWND hWnd, CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void {
+	m_future = std::async(std::launch::async, [](HWND hWnd, CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void {
 
 		CComPtr<IFileOperation> pFileOperation = nullptr;
 		if (FAILED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {
@@ -163,7 +163,7 @@ void CMoveWnd::Move()
 		}
 	}
 
-	CThreadPool::GetInstance()->enqueue([](HWND hWnd, CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void {
+	m_future = std::async(std::launch::async, [](HWND hWnd, CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void {
 
 		CComPtr<IFileOperation> pFileOperation = nullptr;
 		if (FAILED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {
@@ -264,7 +264,7 @@ void CDeleteWnd::Delete()
 		delIDLs.push_back(spFile->GetAbsoluteIdl());
 	}
 
-	CThreadPool::GetInstance()->enqueue([](HWND hWnd, std::vector<CIDL> delIDLs)->void {
+	m_future = std::async(std::launch::async, [](HWND hWnd, std::vector<CIDL> delIDLs)->void {
 
 		CComPtr<IFileOperation> pFileOperation = nullptr;
 		if (FAILED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {

@@ -14,7 +14,7 @@
 #include "MyRgn.h"
 #include "MyPen.h"
 #include "MyColor.h"
-#include "ConsoleTimer.h"
+#include "Debug.h"
 #include "ApplicationProperty.h"
 #include "Tracker.h"
 #include "Cursorer.h"
@@ -186,15 +186,16 @@ void CGridView::UpdateRow()
 {
 	if (!Visible()) { return; }
 
-	FLOAT top = GetCellProperty()->Line->Width * 0.5f;
+	FLOAT top = /*GetRectInWnd().top + */GetCellProperty()->Line->Width * 0.5f;
 
 	//Headers
 	top = UpdateHeadersRow(top);
 
 	//Page
-	CRectF rcPage(GetRectInWnd());
-	rcPage.top = top;
-	FLOAT pageHeight = rcPage.Height();
+	CRectF rcPage(GetPageRect());
+	rcPage.MoveToXY(0, 0);
+	//rcPage.MoveToY(top);
+	//FLOAT pageHeight = rcPage.Height();
 	FLOAT scrollPos = GetVerticalScrollPos();
 
 	//Cells
@@ -207,6 +208,11 @@ void CGridView::UpdateRow()
 			UpdateRow();
 		}
 	}
+
+	//::OutputDebugStringA(fmt::format("{}\r\n", typeid(*this).name()).c_str());
+	//for (const auto& r : m_allRows) {
+	//	::OutputDebugStringA(fmt::format("{}\r\n", r->GetStart()).c_str());
+	//}
 
 }
 
@@ -551,50 +557,51 @@ void CGridView::SubmitUpdate()
 			switch (type) {
 			case Updates::Sort:
 			{
-				CONSOLETIMER("Updates::Sort");
-					SortAllInSubmitUpdate();
+				LOG_SCOPED_TIMER_THIS_1("Updates::Sort");
+				SortAllInSubmitUpdate();
 				break;
 			}
 			case Updates::Filter:
 			{
-				CONSOLETIMER("Updates::Filter");
+				LOG_SCOPED_TIMER_THIS_1("Updates::Filter");
 					FilterAll();
 				break;
 			}
 			case Updates::RowVisible:
 			{
-				CONSOLETIMER("Updates::RowVisible");
+				LOG_SCOPED_TIMER_THIS_1("Updates::RowVisible");
 					UpdateRowVisibleDictionary();
 				break;
 			}
 			case Updates::ColumnVisible:
 			{
-				CONSOLETIMER("Updates::ColumnVisible");
+				LOG_SCOPED_TIMER_THIS_1("Updates::ColumnVisible");
 					UpdateColumnVisibleDictionary();
 				break;
 			}
 			case Updates::Column:
 			{
-				CONSOLETIMER("Updates::Column");
+				LOG_SCOPED_TIMER_THIS_1("Updates::Column");
 					UpdateColumn();
 				break;
 			}
 			case Updates::Row:
 			{
-				CONSOLETIMER("Updates::Row");
+				LOG_SCOPED_TIMER_THIS_1("Updates::Row");
 					UpdateRow();
 				break;
 			}
 			case Updates::Scrolls:
 			{
-				CONSOLETIMER("Updates::Scrolls");
+				LOG_SCOPED_TIMER_THIS_1("Updates::Scrolls");
 					UpdateScrolls();
 				break;
 			}
 			case Updates::EnsureVisibleFocusedCell:
 			{
-				CONSOLETIMER("Updates::EnsureVisibleFocusedCell");
+				LOG_SCOPED_TIMER_THIS_1("Updates::EnsureVisibleFocusedCell");
 					EnsureVisibleCell(m_spCursorer->GetFocusedCell());
+					UpdateRow();
 				break;
 			}
 			case Updates::Invalidate:
@@ -1095,7 +1102,7 @@ void CGridView::OnFilter()
 
 void CGridView::OnDelayUpdate()
 {
-	CONSOLETIMER("OnDelayUpdate Total");
+	LOG_SCOPED_TIMER_THIS_1("OnDelayUpdate Total");
 	SignalPreDelayUpdate();
 	SignalPreDelayUpdate.disconnect_all();
 	PostUpdate(Updates::Filter);

@@ -1,6 +1,7 @@
 #pragma once
 #include "IDL.h"
 #include "Direct2DWrite.h"
+#include <future>
 #include <mutex>
 #include <unordered_set>
 
@@ -54,23 +55,24 @@ public:
 
 
 
-	class CFileIconCache
-	{
-	private:
-		bool m_isWin10;
-		CDirect2DWrite* m_pDirect;
-		std::unordered_set<std::wstring> m_excludeExtSet;
-		lockable_unordered_map<std::wstring, CComPtr<ID2D1Bitmap>> m_extMap;
-		lockable_unordered_map <std::wstring, CComPtr<ID2D1Bitmap>> m_pathMap;
-		CComPtr<ID2D1Bitmap> m_defaultIconBmp;
-		CIcon GetIcon(const CIDL& absoluteIDL);
-		CComPtr<ID2D1Bitmap> GetBitmapFromIcon(const CIcon& icon);
+class CFileIconCache
+{
+private:
+	bool m_isWin10;
+	CDirect2DWrite* m_pDirect;
+	std::unordered_set<std::wstring> m_excludeExtSet;
+	lockable_unordered_map<std::wstring, CComPtr<ID2D1Bitmap>> m_extMap;
+	lockable_unordered_map <std::wstring, CComPtr<ID2D1Bitmap>> m_pathMap;
+	CComPtr<ID2D1Bitmap> m_defaultIconBmp;
+	CIcon GetIcon(const CIDL& absoluteIDL);
+	CComPtr<ID2D1Bitmap> GetBitmapFromIcon(const CIcon& icon);
+	std::vector<std::future<void>> m_futures;
 
-	public:
-		CFileIconCache(CDirect2DWrite* pDirect);
-		CFileIconCache() = default;
+public:
+	CFileIconCache(CDirect2DWrite* pDirect);
+	CFileIconCache() = default;
 
-		CComPtr<ID2D1Bitmap> GetFileIconBitmap(const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated = nullptr);
-		CComPtr<ID2D1Bitmap> GetDefaultIconBitmap();
-		void Clear();
-	};
+	CComPtr<ID2D1Bitmap> GetFileIconBitmap(const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated = nullptr);
+	CComPtr<ID2D1Bitmap> GetDefaultIconBitmap();
+	void Clear();
+};

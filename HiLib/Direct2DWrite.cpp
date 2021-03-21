@@ -785,9 +785,9 @@
 		CComPtr<ID2D1Bitmap> pBitmap;
 		HRESULT hr = GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap);
 		if (FAILED(hr)) {
-			SPDLOG_INFO("Failed");
-			SPDLOG_INFO(fmt::format("{:08X}", (LONG_PTR)hIcon));
-			SPDLOG_INFO(fmt::format("{:08X}", hr));
+			LOG_THIS_1("Failed");
+			LOG_THIS_1(fmt::format("{:08X}", (LONG_PTR)hIcon));
+			LOG_THIS_1(fmt::format("{:08X}", hr));
 
 			throw std::exception(FILE_LINE_FUNC);
 		}

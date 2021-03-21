@@ -158,9 +158,6 @@
     <ClInclude Include="..\HiLib\Column.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\ConsoleTimer.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\CShellExtension.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -466,9 +463,6 @@
     </ClInclude>
     <ClInclude Include="IncrementalCopyWnd.h">
       <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ThreadPool.h">
-      <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="FilerGridViewWnd.h">
       <Filter>Filer</Filter>
@@ -861,9 +855,6 @@
     </ClCompile>
     <ClCompile Include="IncrementalCopyWnd.cpp">
       <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ThreadPool.cpp">
-      <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="FilerGridViewWnd.cpp">
       <Filter>Filer</Filter>

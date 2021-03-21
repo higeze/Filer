@@ -60,6 +60,15 @@ struct CreateEvt :public Event
 		:Event(pWnd, pHandled), RectF(rect){}
 };
 
+struct DestroyEvent :public Event
+{
+	DestroyEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled){}
+	DestroyEvent(CD2DWWindow* pWnd, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled){}
+};
+
+
 struct CloseEvent :public Event
 {
 	CloseEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
@@ -211,8 +220,8 @@ struct MouseWheelEvent:public MouseEvent
 struct SetCursorEvent:public Event
 {
 	UINT HitTest;
-	SetCursorEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:Event(pWnd, pHandled), HitTest(LOWORD(lParam)){}
+	CPointF PointInWnd;
+	SetCursorEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
 };
 
 struct SetFocusEvent :public Event
@@ -225,8 +234,9 @@ struct SetFocusEvent :public Event
 struct ContextMenuEvent:public Event
 {
 public:
-	CPoint PointInClient;
 	CPoint PointInScreen;
+	CPoint PointInClient;
+	CPointF PointInWnd;
 	ContextMenuEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
 };
 
@@ -276,6 +286,7 @@ public:
 	/* event */
 	/*********/
 	virtual void OnCreate(const CreateEvt& e) {}
+	virtual void OnDestroy(const DestroyEvent& e) {}
 	virtual void OnPaint(const PaintEvent& e) {}
 	virtual void OnClosing(const ClosingEvent& e) {}
 	virtual void OnClose(const CloseEvent& e) {}

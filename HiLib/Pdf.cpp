@@ -1,6 +1,5 @@
 #include "Pdf.h"
 #include "Direct2DWrite.h"
-#include "ThreadPool.h"
 #include "Debug.h"
 #include <boost/sml.hpp>
 
@@ -59,7 +58,7 @@ void CPdf::Load(const std::wstring& path, std::function<void()> changed)
 		if (*m_spCancelThread || status != AsyncStatus::Completed) { return S_OK; }
 		CComPtr<abipdf::IPdfDocument> doc;
 		FAILED_THROW(async->GetResults(&doc));
-		m_future = CThreadPool::GetInstance()->enqueue([this, doc, changed]()
+		m_future = std::async(std::launch::async, [this, doc, changed]()
 		{
 			SetLockDocument(std::make_pair(std::move(doc), PdfDocStatus::Available));
 			UINT32 count;
@@ -229,7 +228,7 @@ void CPdfPage::Loading_OnEntry()
 				SetLockBitmap({ CComPtr<IWICFormatConverter>(),  0.f });
 				process_event(ErrorEvent());
 			} else {
-				m_future = CThreadPool::GetInstance()->enqueue([this, pMemStream, scale]()
+				m_future = std::async(std::launch::async, [this, pMemStream, scale]()
 				{
 					auto pbi = GetLockBitmap();
 					if (*m_spCancelThread) {
