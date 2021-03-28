@@ -175,6 +175,8 @@ public:
 	virtual bool Edit_Guard_LButtonDown(const LButtonDownEvent& e);
 	virtual void Edit_LButtonDown(const LButtonDownEvent& e);
 	virtual void Edit_LButtonUp(const LButtonUpEvent& e);
+	virtual void Edit_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+	virtual void Edit_LButtonEndDrag(const LButtonEndDragEvent& e);
 	virtual bool Edit_Guard_KeyDown(const KeyDownEvent& e);
 	virtual bool Edit_Guard_KeyDownWithNormal(const KeyDownEvent& e);
 	virtual bool Edit_Guard_KeyDownWithoutNormal(const KeyDownEvent& e);

@@ -109,24 +109,37 @@ struct CMouseStateMachine::Machine
 		::OutputDebugString(L"LButtonDrag_OnEntry\r\n");
 		e.WndPtr->SetCapture();
 
-		auto iter = std::find_if(e.WndPtr->GetChildControlPtrs().cbegin(), e.WndPtr->GetChildControlPtrs().cend(),
-		[&](const std::shared_ptr<CD2DWControl>& x) {return x->GetRectInWnd().PtInRect(e.WndPtr->GetDirectPtr()->Pixels2Dips(m_ptBeginClient.value())); });
-		if (iter != e.WndPtr->GetChildControlPtrs().cend()) {
-			e.WndPtr->SetCapturedControlPtr(*iter);
-		}
+		//auto iter = std::find_if(e.WndPtr->GetChildControlPtrs().cbegin(), e.WndPtr->GetChildControlPtrs().cend(),
+		//	[&](const std::shared_ptr<CD2DWControl>& x) {
+		//		return x->GetIsEnabled().get() && x->GetRectInWnd().PtInRect(e.WndPtr->GetDirectPtr()->Pixels2Dips(m_ptBeginClient.value()));
+		//	});
+		//if (iter != e.WndPtr->GetChildControlPtrs().cend()) {
+		//	e.WndPtr->SetCapturedControlPtr(*iter);
+		//}
 
 		pGrid->OnLButtonBeginDrag(LButtonBeginDragEvent(e.WndPtr, e.Flags, MAKELPARAM(m_ptBeginClient.value().x, m_ptBeginClient.value().y)));
 		m_ptBeginClient = std::nullopt;
 	}
 
-	void LButtonDrag_OnExit(CD2DWWindow* pGrid, const LButtonUpEvent& e)
+	void LButtonDrag_OnExitByUp(CD2DWWindow* pGrid, const LButtonUpEvent& e)
 	{
 		::OutputDebugString(L"LButtonDrag_OnExit\r\n");
 		::ReleaseCapture();
 
 		pGrid->OnLButtonEndDrag(LButtonEndDragEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
-		pGrid->ReleaseCapturedControlPtr();
+		//pGrid->ReleaseCapturedControlPtr();
 	}
+
+	void LButtonDrag_OnExitByChar(CD2DWWindow* pGrid, const CharEvent& e)
+	{
+		::OutputDebugString(L"LButtonDrag_OnExit\r\n");
+		::ReleaseCapture();
+
+		auto pt = e.WndPtr->GetCursorPosInClient();
+		pGrid->OnLButtonEndDrag(LButtonEndDragEvent(e.WndPtr, MK_LBUTTON, MAKELPARAM(pt.x, pt.y)));
+		//pGrid->ReleaseCapturedControlPtr();
+	}
+
 
 	//void LButtonDrag_CaptureChanged(CUIElement* pGrid, const CaptureChangedEvent& e)
 	//{
@@ -197,7 +210,9 @@ struct CMouseStateMachine::Machine
 
 
 			state<LButtonDrag> +on_entry<MouseMoveEvent> / call(&Machine::LButtonDrag_OnEntry),
-			state<LButtonDrag> +on_exit<LButtonUpEvent> / call(&Machine::LButtonDrag_OnExit),
+			state<LButtonDrag> +on_exit<LButtonUpEvent> / call(&Machine::LButtonDrag_OnExitByUp),
+			state<LButtonDrag> +on_exit<CharEvent> / call(&Machine::LButtonDrag_OnExitByChar),
+
 			state<LButtonDrag> +event<LButtonUpEvent> / call(&Machine::Normal_LButtonUp) = state<Normal>,
 			state<LButtonDrag> +event<MouseMoveEvent> / call(&Machine::Normal_MouseMove),
 			//state<LButtonDrag> +event<MouseLeaveEvent> / call(&Machine::LButtonDrag_MouseLeave) = state<Normal>,

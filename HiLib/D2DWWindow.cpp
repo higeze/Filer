@@ -13,7 +13,8 @@
 CD2DWWindow::CD2DWWindow()
 	:CWnd(),CD2DWControl(nullptr),
 	m_pDispatcher(std::make_unique<CDispatcher>(this)),
-	m_pDropTargetManager(std::make_unique<CDropTargetManager>(this))
+	m_pDropTargetManager(std::make_unique<CDropTargetManager>(this)),
+	m_pCapturedControl(nullptr)
 {
 	//RegisterArgs and CreateArgs
 	RegisterClassExArgument()

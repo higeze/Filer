@@ -1,6 +1,7 @@
 #include "TabControl.h"
 #include "D2DWWindow.h"
 #include "Dispatcher.h"
+#include <fmt/format.h>
 
 CTabHeaderControl::CTabHeaderControl(CTabControl* pTabControl, const std::shared_ptr<TabHeaderControlProperty>& spProp)
 	:CD2DWControl(pTabControl),m_spProp(spProp), m_spButton(std::make_shared<CButton>(this, spProp->ButtonProp))
@@ -220,6 +221,15 @@ CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<Tab
 					m_spCurControl = spControl;
 					m_spCurControl->GetIsEnabled().set(true);
 					SetFocusedControlPtr(spControl);
+				}
+			}
+			for (auto p : m_childControls) {
+				if (std::string(typeid(*p).name()).find("CFilerGridView") != std::string::npos) {
+					::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
+				} else if (std::string(typeid(*p).name()).find("CToDoGridView") != std::string::npos) {
+					::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
+				} else if (std::string(typeid(*p).name()).find("CTextEditor") != std::string::npos){
+					::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
 				}
 			}
 		});

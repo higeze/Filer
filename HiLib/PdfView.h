@@ -1,4 +1,5 @@
 #pragma once
+#include "D2DWWindow.h"
 #include <msctf.h>
 #include "Scroll.h"
 #include "ScrollProperty.h"
@@ -154,8 +155,16 @@ public:
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override { m_pMachine->process_event(e); }
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override { m_pMachine->process_event(e); }
 	virtual void OnMouseMove(const MouseMoveEvent& e) override { m_pMachine->process_event(e); }
-	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override { m_pMachine->process_event(e); }
-	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override { m_pMachine->process_event(e); }
+	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override 
+	{
+		e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+		m_pMachine->process_event(e); 
+	}
+	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override 
+	{
+		e.WndPtr->ReleaseCapturedControlPtr();
+		m_pMachine->process_event(e);
+	}
 	virtual void OnSetCursor(const SetCursorEvent& e) override { m_pMachine->process_event(e); }
 	virtual void OnContextMenu(const ContextMenuEvent& e) override { m_pMachine->process_event(e); }
 	virtual void OnChar(const CharEvent& e) override { m_pMachine->process_event(e); }

@@ -8,6 +8,7 @@ namespace sml = boost::sml;
 struct CTextBoxStateMachine::Machine
 {
 	class Normal {};
+	class TextDrag {};
 	class VScrlDrag {};
 	class HScrlDrag {};
 	class Error {};
@@ -26,6 +27,7 @@ struct CTextBoxStateMachine::Machine
 
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CTextBox::VScrlDrag_Guard_LButtonBeginDrag)] = state<VScrlDrag>,
 			state<Normal> +event<LButtonBeginDragEvent>[call(&CTextBox::HScrlDrag_Guard_LButtonBeginDrag)] = state<HScrlDrag>,
+			state<Normal> +event<LButtonBeginDragEvent> = state<TextDrag>,
 
 			state<Normal> +event<LButtonDownEvent> / call(&CTextBox::Normal_LButtonDown),
 			state<Normal> +event<LButtonUpEvent> / call(&CTextBox::Normal_LButtonUp),
@@ -43,6 +45,13 @@ struct CTextBoxStateMachine::Machine
 			state<Normal> +event<CharEvent> / call(&CTextBox::Normal_Char),
 			state<Normal> +event<SetFocusEvent> / call(&CTextBox::Normal_SetFocus),
 			state<Normal> +event<KillFocusEvent> / call(&CTextBox::Normal_KillFocus),
+
+			//TextDrag
+			state<TextDrag> +on_entry<LButtonBeginDragEvent> / call(&CTextBox::TextDrag_OnEntry),
+			state<TextDrag> +on_exit<LButtonEndDragEvent> / call(&CTextBox::TextDrag_OnExit),
+			state<TextDrag> +event<LButtonEndDragEvent> = state<Normal>,
+			state<TextDrag> +event<MouseMoveEvent> / call(&CTextBox::TextDrag_MouseMove),
+			state<TextDrag> +event<PaintEvent> / call(&CTextBox::Normal_Paint),
 
 			//VScrlDrag
 			state<VScrlDrag> +on_entry<LButtonBeginDragEvent> / call(&CTextBox::VScrlDrag_OnEntry),

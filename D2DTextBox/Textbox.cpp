@@ -547,16 +547,55 @@ void CTextBox::OnCreate(const CreateEvt& e)
 		return cursorCharRects;
 	};
 
+	GetOriginCaptureCharRects = [this, captureCharRects = std::vector<CRectF>()](void)mutable->std::vector<CRectF>& {
+		if (captureCharRects.empty()) {
+			auto charRects = GetOriginCharRects();
+			captureCharRects = charRects;
+			for (std::size_t i = 0; i < captureCharRects.size(); i++) {
+				//top
+				if (charRects[i].top == charRects.front().top) {
+					captureCharRects[i].top = -FLT_MAX;
+				}
+				//left
+				if (i == 0 || charRects[i].top > charRects[i - 1].top) {
+					captureCharRects[i].left = -FLT_MAX;
+				}
+				//right
+				if (m_text[i] == L'\n' || i == m_text.size()) {
+					captureCharRects[i].right = FLT_MAX;
+				}
+				//bottom
+				if (charRects[i].bottom == charRects.back().bottom) {
+					captureCharRects[i].bottom = FLT_MAX;
+				}
+			}
+		};
+		return captureCharRects;
+	};
+
+
 	GetActualCursorCharRects = [this, cursorCharRects = std::vector<CRectF>()](void)mutable->std::vector<CRectF>& {
 		if (cursorCharRects.empty()) {
 			cursorCharRects = GetOriginCursorCharRects();
 			CPointF offset(GetPageRect().LeftTop());
 			offset.Offset(-m_pHScroll->GetScrollPos(), -m_pVScroll->GetScrollPos());
-			std::for_each(cursorCharRects.begin(), cursorCharRects.end(), [offset](auto& rc) {rc.OffsetRect(offset); });
+			std::for_each(cursorCharRects.begin(), cursorCharRects.end(),
+				[offset](auto& rc) {rc.OffsetRect(offset); });
 		}
 		return cursorCharRects;
 	};
 
+	GetActualCaptureCharRects = [this, captureCharRects = std::vector<CRectF>()](void)mutable->std::vector<CRectF>& {
+		if (captureCharRects.empty()) {
+			captureCharRects = GetOriginCaptureCharRects();
+			CPointF offset(GetPageRect().LeftTop());
+			offset.Offset(-m_pHScroll->GetScrollPos(), -m_pVScroll->GetScrollPos());
+			std::for_each(captureCharRects.begin(), captureCharRects.end(),
+				[offset](auto& rc) {rc.OffsetRect(offset); });
+		}
+		return captureCharRects;
+
+	};
 
 	GetActualCharRects = [this, actualCharRects = std::vector<CRectF>()](void)mutable->std::vector<CRectF>& {
 		if (actualCharRects.empty())
@@ -564,7 +603,8 @@ void CTextBox::OnCreate(const CreateEvt& e)
 			actualCharRects = GetOriginCharRects();
 			CPointF offset(GetPageRect().LeftTop());
 			offset.Offset(-m_pHScroll->GetScrollPos(), -m_pVScroll->GetScrollPos());
-			std::for_each(actualCharRects.begin(), actualCharRects.end(), [offset](auto& rc) {rc.OffsetRect(offset); });
+			std::for_each(actualCharRects.begin(), actualCharRects.end(),
+				[offset](auto& rc) {rc.OffsetRect(offset); });
 		}
 		return actualCharRects;
 	};
@@ -636,6 +676,8 @@ void CTextBox::OnCreate(const CreateEvt& e)
 	}
 
 	InitTSF();
+
+	ResetCaret();
 }
 
 void CTextBox::OnClose(const CloseEvent& e)
@@ -896,18 +938,27 @@ void CTextBox::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 	}
 }
 
+void CTextBox::TextDrag_OnEntry(const LButtonBeginDragEvent& e)
+{
+}
 
-void CTextBox::Normal_MouseMove(const MouseMoveEvent& e)
+void CTextBox::TextDrag_OnExit(const LButtonEndDragEvent& e)
+{
+}
+
+void CTextBox::TextDrag_MouseMove(const MouseMoveEvent& e)
 {
 	if (e.Flags & MK_LBUTTON) {
-		CPointF newPoint(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+		CPointF newPoint(e.PointInWnd);
 
-		if (auto index = GetActualCharPosFromPoint(newPoint)) {
+		if (auto index = GetActualCaptureCharPosFromPoint(newPoint)) {
 			auto point = GetOriginCharRects()[index.value()].CenterPoint();
 			MoveCaretWithShift(index.value(), point);
 		}
 	}
 }
+
+void CTextBox::Normal_MouseMove(const MouseMoveEvent& e){}
 
 void CTextBox::Normal_Char(const CharEvent& e)
 {
@@ -1300,6 +1351,35 @@ std::optional<int> CTextBox::GetActualCharPosFromPoint(const CPointF& pt)
 	}
 }
 
+std::optional<int> CTextBox::GetActualCaptureCharPosFromPoint(const CPointF& pt)
+{
+	if (m_text.size() == 0) {
+		return std::nullopt;
+	}
+	std::vector<CRectF> charRects(GetActualCaptureCharRects());
+
+	auto iter = std::find_if(charRects.begin(), charRects.end(),
+		[pt](const CRectF& rc)->bool {
+			return rc.left <= pt.x && pt.x < rc.right&&
+				rc.top <= pt.y && pt.y < rc.bottom;
+		});
+	if (iter == charRects.end()) {
+		return std::nullopt;
+	} else {
+		//auto ch = GetActualCharRects();
+		//::OutputDebugStringA("char");
+		//for (auto rc : ch) {
+		//	::OutputDebugStringA(fmt::format("{}\t{}\t{}\t{}\r\n", rc.left, rc.top, rc.right, rc.bottom).c_str());
+		//}
+
+		//::OutputDebugStringA("cap");
+		//for (auto rc : charRects) {
+		//	::OutputDebugStringA(fmt::format("{}\t{}\t{}\t{}\r\n", rc.left, rc.top, rc.right, rc.bottom).c_str());
+		//}
+
+		return std::make_optional(std::distance(charRects.begin(), iter));
+	}
+}
 
 std::optional<int> CTextBox::GetFirstCharPosInLine(const int& pos)
 {
@@ -1331,12 +1411,14 @@ void CTextBox::UpdateOriginRects()
 	GetTextLayoutPtr() = nullptr;
 	GetOriginCharRects().clear();
 	GetOriginCursorCharRects().clear();
+	GetOriginCaptureCharRects().clear();
 }
 
 void CTextBox::UpdateActualRects()
 {
 	GetActualCharRects().clear();
 	GetActualCursorCharRects().clear();
+	GetActualCaptureCharRects().clear();
 	GetActualSelectionCharRects().clear();
 }
 

@@ -210,11 +210,14 @@ struct MouseLeaveEvent :public MouseEvent
 };
 
 
-struct MouseWheelEvent:public MouseEvent
+struct MouseWheelEvent:public Event
 {
+	CPoint PointInScreen;
+	CPoint PointInClient;
+	CPointF PointInWnd;
+
 	short Delta;
-	MouseWheelEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
-		:MouseEvent(pWnd, wParam, lParam, pHandled), Delta(GET_WHEEL_DELTA_WPARAM(wParam)){}
+	MouseWheelEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
 };
 
 struct SetCursorEvent:public Event

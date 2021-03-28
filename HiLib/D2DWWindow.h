@@ -19,6 +19,8 @@ private:
 	std::unique_ptr<CMouseStateMachine> m_pMouseMachine;
 	std::unique_ptr<CDropTargetManager> m_pDropTargetManager;
 
+	std::shared_ptr<CD2DWControl> m_pCapturedControl;
+
 public :
 	CD2DWWindow();
 	virtual ~CD2DWWindow();
@@ -31,6 +33,11 @@ public :
 	CPointF GetCursorPosInWnd() const;
 	bool GetIsFocused()const;
 	void Update();
+
+	std::shared_ptr<CD2DWControl>& GetCapturedControlPtr() { return m_pCapturedControl; }
+	void SetCapturedControlPtr(const std::shared_ptr<CD2DWControl>& spControl){ m_pCapturedControl = spControl; }
+	void ReleaseCapturedControlPtr() { m_pCapturedControl = nullptr; }
+
 
 public:
 	template<typename TEvent>

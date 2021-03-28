@@ -3,9 +3,9 @@
 #include "CellProperty.h"
 #include "D2DWWindow.h"
 
-FLOAT CRow::GetStart() { return m_start + m_pSheet->GetRectInWnd().top; }
+FLOAT CRow::GetStart() { return m_start/* + m_pSheet->GetRectInWnd().top*/; }
 
-FLOAT CRow::GetEnd() { return m_start + m_length + +m_pSheet->GetRectInWnd().top; }
+FLOAT CRow::GetEnd() { return m_start + m_length /* + +m_pSheet->GetRectInWnd().top*/; }
 
 FLOAT CRow::GetLength()
 {

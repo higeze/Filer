@@ -979,8 +979,16 @@ void CSheet::OnLButtonUp(const LButtonUpEvent& e) { m_pMachine->process_event(e)
 void CSheet::OnLButtonClk(const LButtonClkEvent& e) { m_pMachine->process_event(e); SubmitUpdate();  }
 void CSheet::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
 void CSheet::OnLButtonDblClk(const LButtonDblClkEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
-void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
-void CSheet::OnLButtonEndDrag(const LButtonEndDragEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) 
+{
+	e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+	m_pMachine->process_event(e); SubmitUpdate();
+}
+void CSheet::OnLButtonEndDrag(const LButtonEndDragEvent& e)
+{
+	e.WndPtr->ReleaseCapturedControlPtr();
+	m_pMachine->process_event(e); SubmitUpdate();
+}
 void CSheet::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
 void CSheet::OnSetCursor(const SetCursorEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnMouseLeave(const MouseLeaveEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }

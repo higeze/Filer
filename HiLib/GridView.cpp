@@ -186,14 +186,14 @@ void CGridView::UpdateRow()
 {
 	if (!Visible()) { return; }
 
-	FLOAT top = /*GetRectInWnd().top + */GetCellProperty()->Line->Width * 0.5f;
+	FLOAT top = GetRectInWnd().top + GetCellProperty()->Line->Width * 0.5f;
 
 	//Headers
 	top = UpdateHeadersRow(top);
 
 	//Page
 	CRectF rcPage(GetPageRect());
-	rcPage.MoveToXY(0, 0);
+	//rcPage.MoveToXY(0, 0);
 	//rcPage.MoveToY(top);
 	//FLOAT pageHeight = rcPage.Height();
 	FLOAT scrollPos = GetVerticalScrollPos();
@@ -209,7 +209,7 @@ void CGridView::UpdateRow()
 		}
 	}
 
-	//::OutputDebugStringA(fmt::format("{}\r\n", typeid(*this).name()).c_str());
+	//::OutputDebugStringA(fmt::format("Row of {}\r\n", typeid(*this).name()).c_str());
 	//for (const auto& r : m_allRows) {
 	//	::OutputDebugStringA(fmt::format("{}\r\n", r->GetStart()).c_str());
 	//}
@@ -220,7 +220,7 @@ void CGridView::UpdateColumn()
 {
 	if (!Visible()) { return; }
 
-	FLOAT left = GetCellProperty()->Line->Width * 0.5f;
+	FLOAT left = GetRectInWnd().left + GetCellProperty()->Line->Width * 0.5f;
 
 	for (auto& colPtr : m_visCols) {
 		if (colPtr->GetIndex<VisTag>() == GetFrozenCount<ColTag>()) {
@@ -235,6 +235,12 @@ void CGridView::UpdateColumn()
 		}
 		left += colPtr->GetWidth();
 	}
+
+	//::OutputDebugStringA(fmt::format("Column of {}\r\n", typeid(*this).name()).c_str());
+	//for (const auto& r : m_allCols) {
+	//	::OutputDebugStringA(fmt::format("{}\r\n", r->GetStart()).c_str());
+	//}
+
 }
 
 void CGridView::UpdateScrolls()
@@ -602,6 +608,7 @@ void CGridView::SubmitUpdate()
 				LOG_SCOPED_TIMER_THIS_1("Updates::EnsureVisibleFocusedCell");
 					EnsureVisibleCell(m_spCursorer->GetFocusedCell());
 					UpdateRow();
+					UpdateColumn();
 				break;
 			}
 			case Updates::Invalidate:
@@ -956,6 +963,9 @@ void CGridView::HScrlDrag_MouseMove(const MouseMoveEvent& e)
 	m_pHScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
 }
 
+/********/
+/* Edit */
+/********/
 void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 {
 	if (auto pCell = dynamic_cast<CTextCell*>(e.CellPtr)) {
@@ -986,49 +996,51 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 	}
 }
 
-
 void CGridView::Edit_OnExit()
 {
-	ReleaseCapture();
-	if (auto pEdit = GetEditPtr()) {
-		GetEditPtr()->OnClose(CloseEvent(GetWndPtr(), NULL, NULL, nullptr));
-		SetEditPtr(nullptr);
-	}
+	GetEditPtr()->OnClose(CloseEvent(GetWndPtr(), NULL, NULL, nullptr));
+	SetEditPtr(nullptr);
 }
+
 void CGridView::Edit_MouseMove(const MouseMoveEvent& e)
 {
-	if (GetEditPtr()) {
-		if (GetEditPtr()->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
-			GetEditPtr()->OnMouseMove(e);
-		} else {
-			Normal_MouseMove(e);
-		}
+	if (GetEditPtr()->GetRectInWnd().PtInRect(e.PointInWnd)) {
+		GetEditPtr()->OnMouseMove(e);
+	} else {
+		Normal_MouseMove(e);
 	}
 }
 
 bool CGridView::Edit_Guard_LButtonDown(const LButtonDownEvent& e)
 {
-	auto ret = !GetEditPtr()->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
-//	if (ret) { SetEditPtr(nullptr); }
-	return ret;
+	return !GetEditPtr()->GetRectInWnd().PtInRect(e.PointInWnd);
 }
 
 void CGridView::Edit_LButtonDown(const LButtonDownEvent& e)
 {
-	if (GetEditPtr()) {
+	if (GetEditPtr()->GetRectInWnd().PtInRect(e.PointInWnd)) {
 		GetEditPtr()->OnLButtonDown(e);
 	}
 }
 
 void CGridView::Edit_LButtonUp(const LButtonUpEvent& e)
 {
-	if (GetEditPtr()) {
-		if (GetEditPtr()->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
-			//GetEditPtr()->OnLButtonUp(e);
-		} else {
-			Normal_LButtonUp(e);
-		}
+	if (GetEditPtr()->GetRectInWnd().PtInRect(e.PointInWnd)) {
+		GetEditPtr()->OnLButtonUp(e);
+	} else {
+		Normal_LButtonUp(e);
 	}
+}
+
+void CGridView::Edit_LButtonBeginDrag(const LButtonBeginDragEvent& e)
+{
+	if (GetEditPtr()->GetRectInWnd().PtInRect(e.PointInWnd)) {
+		GetEditPtr()->OnLButtonBeginDrag(e);
+	}
+}
+void CGridView::Edit_LButtonEndDrag(const LButtonEndDragEvent& e)
+{
+	GetEditPtr()->OnLButtonEndDrag(e);
 }
 
 bool CGridView::Edit_Guard_KeyDown(const KeyDownEvent& e)
@@ -1061,17 +1073,12 @@ bool CGridView::Edit_Guard_KeyDownWithoutNormal(const KeyDownEvent& e)
 
 void CGridView::Edit_KeyDown(const KeyDownEvent& e)
 {
-	if (GetEditPtr()) {
-
-		GetEditPtr()->OnKeyDown(e);
-	}
+	GetEditPtr()->OnKeyDown(e);
 }
 
 void CGridView::Edit_Char(const CharEvent& e)
 {
-	if (GetEditPtr()) {
-		GetEditPtr()->OnChar(e);
-	}
+	GetEditPtr()->OnChar(e);
 }
 
 
@@ -1127,14 +1134,22 @@ void CGridView::OnCreate(const CreateEvt& e)
 
 void CGridView::OnRect(const RectEvent& e)
 {
-	CSheet::OnRect(e);
-	SizeChanged();
+	OnRectWoSubmit(e);
 	SubmitUpdate();
 }
 
 void CGridView::OnRectWoSubmit(const RectEvent& e)
 {
+	CRectF prevRect = m_rect;
 	CSheet::OnRect(e);
+
+	if (prevRect.left != m_rect.left) {
+		PostUpdate(Updates::Column);
+	}
+	if (prevRect.top != m_rect.top) {
+		PostUpdate(Updates::Row);
+	}
+
 	SizeChanged();
 }
 

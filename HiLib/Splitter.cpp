@@ -10,11 +10,13 @@ void CHorizontalSplitter::OnPaint(const PaintEvent& e)
 }
 void CHorizontalSplitter::OnLButtonBeginDrag(const LButtonBeginDragEvent& e)
 {
+	e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
 	m_inDrag = true;
 	m_ptBeginDrag = e.PointInWnd;
 }
 void CHorizontalSplitter::OnLButtonEndDrag(const LButtonEndDragEvent& e)
 {
+	e.WndPtr->ReleaseCapturedControlPtr();
 	m_inDrag = false;
 	m_ptBeginDrag = CPointF();
 }

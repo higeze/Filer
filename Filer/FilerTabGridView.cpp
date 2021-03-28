@@ -337,7 +337,6 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 
 		if (!isInitialized && GetWndPtr()->IsWindow()) {
 			isInitialized = true;
-			spFilerView->GetIsEnabled().set(false);
 
 			//Folder Changed
 			spFilerView->FolderChanged = [&](std::shared_ptr<CShellFolder>& pFolder) {
@@ -356,7 +355,6 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 
 		if (!isInitialized && GetWndPtr()->IsWindow()) {
 			isInitialized = true;
-			spToDoView->GetIsEnabled().set(false);
 
 			//Columns
 			spToDoView->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(spToDoView.get()));
@@ -433,13 +431,11 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 
 	//TextView Closure
 	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(this, m_spTextEditorProp), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>{
-		spTextView->GetIsEnabled().set(false);
 		return spTextView;
 	};
 
 	//PdfView Closure
 	GetPdfViewPtr = [spPdfView = std::make_shared<CPdfView>(this, m_spPdfViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CPdfView>{
-		spPdfView->GetIsEnabled().set(false);
 		return spPdfView;
 	};
 }
@@ -453,6 +449,11 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	GetToDoGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
 	GetTextViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
 	GetPdfViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
+
+	GetFilerGridViewPtr()->GetIsEnabled().set(false);
+	GetToDoGridViewPtr()->GetIsEnabled().set(false);
+	GetTextViewPtr()->GetIsEnabled().set(false);
+	GetPdfViewPtr()->GetIsEnabled().set(false);
 
 	//ItemsSource
 	if (m_itemsSource.empty()) {

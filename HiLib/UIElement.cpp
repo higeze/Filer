@@ -1,5 +1,6 @@
 #include "UIElement.h"
 #include "D2DWWindow.h"
+#include <windowsx.h>
 
 CreateEvt::CreateEvt(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
 	:Event(pWnd, pHandled), Rect()
@@ -11,19 +12,26 @@ CreateEvt::CreateEvt(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHan
 
 ContextMenuEvent::ContextMenuEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
 	:Event(pWnd, pHandled),
-	PointInScreen((short)LOWORD(lParam), (short)HIWORD(lParam)),
+	PointInScreen(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)),
 	PointInClient(pWnd->ScreenToClient(CPoint((short)LOWORD(lParam), (short)HIWORD(lParam))).value()),
 	PointInWnd(pWnd->GetDirectPtr()->Pixels2Dips(PointInClient)){}
 
 MouseEvent::MouseEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
 		:Event(pWnd, pHandled), Flags(wParam),
-		PointInClient((short)LOWORD(lParam), (short)HIWORD(lParam)),
+		PointInClient(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)),
 		PointInWnd(pWnd->GetDirectPtr()->Pixels2Dips(PointInClient)){}
 
 SetCursorEvent::SetCursorEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
 	:Event(pWnd, pHandled),
 	HitTest(LOWORD(lParam)),
 	PointInWnd(pWnd->GetDirectPtr()->Pixels2Dips(pWnd->GetCursorPosInClient())){}
+
+MouseWheelEvent::MouseWheelEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
+	:Event(pWnd, pHandled),
+	PointInScreen(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)),
+	PointInClient(pWnd->ScreenToClient(CPoint(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam))).value()),
+	PointInWnd(pWnd->GetDirectPtr()->Pixels2Dips(PointInClient)),
+	Delta(GET_WHEEL_DELTA_WPARAM(wParam)){}
 
 
 

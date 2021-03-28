@@ -14,7 +14,6 @@ protected:
 	CD2DWControl* m_pParentControl;
 	std::vector<std::shared_ptr<CD2DWControl>> m_childControls;
 	std::shared_ptr<CD2DWControl> m_pFocusedControl;
-	std::shared_ptr<CD2DWControl> m_pCapturedControl;
 	std::shared_ptr<CD2DWControl> m_pMouseControl;
 
 	CRectF m_rect;
@@ -32,9 +31,6 @@ public:
 	void SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl);
 	std::shared_ptr<CD2DWControl>& GetMouseControlPtr(){ return m_pMouseControl;}
 	void SetMouseControlPtr(const std::shared_ptr<CD2DWControl>& spControl) { m_pMouseControl = spControl; }
-	std::shared_ptr<CD2DWControl>& GetCapturedControlPtr() { return m_pCapturedControl; }
-	void SetCapturedControlPtr(const std::shared_ptr<CD2DWControl>& spControl){ m_pCapturedControl = spControl; }
-	void ReleaseCapturedControlPtr() { m_pCapturedControl = nullptr; }
 
 	std::vector<std::shared_ptr<CD2DWControl>>& GetChildControlPtrs() { return m_childControls; }
 	void AddChildControlPtr(const std::shared_ptr<CD2DWControl>& pControl);
@@ -105,8 +101,8 @@ public:
 	template<typename TFunc, typename TEvent>
 	void SendMouse(TFunc f, const TEvent& e)
 	{
-		if (GetCapturedControlPtr()) {
-			(GetCapturedControlPtr().get()->*f)(e);
+		if (GetWndPtr()->GetCapturedControlPtr()) {
+			(GetWndPtr()->GetCapturedControlPtr().get()->*f)(e);
 			GetWndPtr()->InvalidateRect(NULL, FALSE);
 		} else {
 			SendPtInRect(f, e);
@@ -133,8 +129,8 @@ public:
 	template<typename TFunc, typename TEvent>
 	void SendCapturePtInRect(TFunc f, const TEvent& e)
 	{
-		if (GetCapturedControlPtr()) {
-			(GetCapturedControlPtr().get()->*f)(e);
+		if (GetWndPtr()->GetCapturedControlPtr()) {
+			(GetWndPtr()->GetCapturedControlPtr().get()->*f)(e);
 			GetWndPtr()->InvalidateRect(NULL, FALSE);
 		} else {
 			SendPtInRect(f, e);

@@ -25,7 +25,7 @@ void CD2DWControl::AddChildControlPtr(const std::shared_ptr<CD2DWControl>& pCont
 void CD2DWControl::EraseChildControlPtr(const std::shared_ptr<CD2DWControl>& pControl)
 {
 	if (auto iter = std::find(m_childControls.cbegin(), m_childControls.cend(), pControl); iter != m_childControls.cend()) {
-		if (m_pCapturedControl == pControl) { m_pCapturedControl = nullptr; }
+		if (GetWndPtr()->GetCapturedControlPtr() == pControl) { GetWndPtr()->ReleaseCapturedControlPtr(); }
 		if (m_pFocusedControl == pControl) { m_pFocusedControl = nullptr; }
 		if (m_pMouseControl == pControl) { m_pMouseControl = nullptr; }
 		m_childControls.erase(iter);
@@ -84,8 +84,8 @@ void CD2DWControl::OnContextMenu(const ContextMenuEvent& e) { SendPtInRect(&CD2D
 
 void CD2DWControl::OnMouseMove(const MouseMoveEvent& e)
 {
-	if (GetCapturedControlPtr()) {
-		GetCapturedControlPtr()->OnMouseMove(e);
+	if (GetWndPtr()->GetCapturedControlPtr()) {
+		GetWndPtr()->GetCapturedControlPtr()->OnMouseMove(e);
 	} else {
 
 		auto iter = std::find_if(m_childControls.cbegin(), m_childControls.cend(),
@@ -122,7 +122,7 @@ void CD2DWControl::OnMouseWheel(const MouseWheelEvent& e) { SendPtInRect(&CD2DWC
 
 void CD2DWControl::OnSetCursor(const SetCursorEvent& e)
 {
-	if (!GetCapturedControlPtr()) {
+	if (!GetWndPtr()->GetCapturedControlPtr()) {
 		SendPtInRect(&CD2DWControl::OnSetCursor, e);
 	}
 }

@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "D2DWWindow.h"
 #include <msctf.h>
 #include "IBridgeTSFInterface.h"
 #include "CellProperty.h"
@@ -113,8 +114,16 @@ public:
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnMouseMove(const MouseMoveEvent& e) override { m_pTextMachine->process_event(e); }
-	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override { m_pTextMachine->process_event(e); }
-	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override 
+	{
+		e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+		m_pTextMachine->process_event(e);
+	}
+	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override
+	{
+		e.WndPtr->ReleaseCapturedControlPtr();
+		m_pTextMachine->process_event(e);
+	}
 	virtual void OnSetCursor(const SetCursorEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnContextMenu(const ContextMenuEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnChar(const CharEvent& e) override { m_pTextMachine->process_event(e); }
@@ -142,13 +151,17 @@ public:
 	virtual void Normal_SetFocus(const SetFocusEvent& e);
 	virtual void Normal_KillFocus(const KillFocusEvent& e);
 
+	virtual void TextDrag_OnEntry(const LButtonBeginDragEvent& e);
+	virtual void TextDrag_OnExit(const LButtonEndDragEvent& e);
+	virtual void TextDrag_MouseMove(const MouseMoveEvent& e);
+
 	virtual void VScrlDrag_OnEntry(const LButtonBeginDragEvent& e);
 	virtual void VScrlDrag_OnExit(const LButtonEndDragEvent& e);
 	virtual void VScrlDrag_MouseMove(const MouseMoveEvent& e);
+	virtual bool VScrlDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
 	//virtual bool VScrl_Guard_SetCursor(const SetCursorEvent& e);
 	//virtual void VScrl_SetCursor(const SetCursorEvent& e);
 
-	virtual bool VScrlDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
 
 	virtual void HScrlDrag_OnEntry(const LButtonBeginDragEvent& e);
 	virtual void HScrlDrag_OnExit(const LButtonEndDragEvent& e);
@@ -208,9 +221,12 @@ public:
 	std::function<CComPtr<IDWriteTextLayout1>& ()> GetTextLayoutPtr;
 	std::function<std::vector<CRectF>& ()> GetOriginCharRects;
 	std::function<std::vector<CRectF>& ()> GetOriginCursorCharRects;
+	std::function<std::vector<CRectF>& ()> GetOriginCaptureCharRects;
+
 	std::function<std::vector<CRectF>& ()> GetActualCharRects;
 	std::function<std::vector<CRectF>& ()> GetActualSelectionCharRects;
 	std::function<std::vector<CRectF>& ()> GetActualCursorCharRects;
+	std::function<std::vector<CRectF>& ()> GetActualCaptureCharRects;
 
 	std::function<CRectF& ()> GetOriginContentRect;
 	std::function<CRectF& ()> GetActualContentRect;
@@ -219,6 +235,7 @@ public:
 	//std::optional<CRectF> GetActualCharRect(const int& pos);
 	std::optional<int> GetOriginCharPosFromPoint(const CPointF& pt);
 	std::optional<int> GetActualCharPosFromPoint(const CPointF& pt);
+	std::optional<int> GetActualCaptureCharPosFromPoint(const CPointF& pt);
 
 
 	std::optional<int> GetFirstCharPosInLine(const int& pos);
