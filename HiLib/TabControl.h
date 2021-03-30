@@ -132,7 +132,6 @@ public:
 
 	void UpdateHeaderRects();
 
-	//std::function<std::vector<CRectF>&()> GetHeaderRects;
 	std::function<CRectF&()> GetContentRect;
 	std::function<CRectF&()> GetControlRect;
 
@@ -144,33 +143,9 @@ public:
 	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnClosing(const ClosingEvent& e);
-	virtual void OnClose(const CloseEvent& e);
 	virtual void OnRect(const RectEvent& e);
-
-	//virtual void OnLButtonDown(const LButtonDownEvent& e);
-	//virtual void OnLButtonUp(const LButtonUpEvent& e);
-	//virtual void OnLButtonClk(const LButtonClkEvent& e);
-	//virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e);
-	//virtual void OnLButtonDblClk(const LButtonDblClkEvent& e);
-	//virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e);
-	//virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e);
-
-	//virtual void OnRButtonDown(const RButtonDownEvent& e);
 	virtual void OnContextMenu(const ContextMenuEvent& e);
 
-	virtual void OnMButtonDown(const MouseEvent& e);
-	virtual void OnMButtonUp(const MouseEvent& e);
-
-	//virtual void OnMouseMove(const MouseMoveEvent& e);
-	//virtual void OnMouseEnter(const MouseEnterEvent& e);
-	//virtual void OnMouseLeave(const MouseLeaveEvent& e);
-	//virtual void OnMouseWheel(const MouseWheelEvent& e);
-
-	//virtual void OnKeyDown(const KeyDownEvent& e);
-	//virtual void OnSysKeyDown(const SysKeyDownEvent& e);
-	//virtual void OnChar(const CharEvent& e);
-	//virtual void OnSetFocus(const SetFocusEvent& e);
-	virtual void OnKillFocus(const KillFocusEvent& e);
 	virtual void OnSetCursor(const SetCursorEvent& e);
 
 	/***********/

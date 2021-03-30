@@ -52,6 +52,10 @@ public:
 	virtual void OnRButtonDown(const RButtonDownEvent& e) override;
 	virtual void OnContextMenu(const ContextMenuEvent& e) override;
 
+	virtual void OnMButtonDown(const MButtonDownEvent& e) override;
+	virtual void OnMButtonUp(const MButtonUpEvent& e) override;
+
+
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
 	virtual void OnMouseLeave(const MouseLeaveEvent& e) override;
 	virtual void OnSetCursor(const SetCursorEvent& e) override;
@@ -59,6 +63,7 @@ public:
 	virtual void OnMouseWheel(const MouseWheelEvent& e) override;
 
 	virtual void OnSetFocus(const SetFocusEvent& e) override;
+	virtual void OnKillFocus(const KillFocusEvent& e) override;
 
 	virtual void OnCommand(const CommandEvent& e) override;
 

@@ -81,6 +81,9 @@ void CD2DWControl::OnLButtonEndDrag(const LButtonEndDragEvent& e) { SendCaptureP
 void CD2DWControl::OnRButtonDown(const RButtonDownEvent& e) { SendPtInRect(&CD2DWControl::OnRButtonDown, e, true); }
 void CD2DWControl::OnContextMenu(const ContextMenuEvent& e) { SendPtInRect(&CD2DWControl::OnContextMenu, e); }
 
+void CD2DWControl::OnMButtonDown(const MButtonDownEvent& e) { SendPtInRect(&CD2DWControl::OnMButtonDown, e, true); }
+void CD2DWControl::OnMButtonUp(const MButtonUpEvent& e) { SendPtInRect(&CD2DWControl::OnMButtonUp, e, true); }
+
 
 void CD2DWControl::OnMouseMove(const MouseMoveEvent& e)
 {
@@ -128,6 +131,7 @@ void CD2DWControl::OnSetCursor(const SetCursorEvent& e)
 }
 
 void CD2DWControl::OnSetFocus(const SetFocusEvent& e) { SendFocused(&CD2DWControl::OnSetFocus, e); }
+void CD2DWControl::OnKillFocus(const KillFocusEvent& e) { SendFocused(&CD2DWControl::OnKillFocus, e); }
 
 
 void CD2DWControl::OnKeyDown(const KeyDownEvent& e) { SendFocused(&CD2DWControl::OnKeyDown, e); }

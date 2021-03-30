@@ -60,8 +60,8 @@ public:
 
 	virtual void OnRButtonDown(const RButtonDownEvent& e) override;
 
-	virtual void OnMButtonDown(const MouseEvent& e) override {}//TODO
-	virtual void OnMButtonUp(const MouseEvent& e) override {}//TODO
+	virtual void OnMButtonDown(const MButtonDownEvent& e) override {}
+	virtual void OnMButtonUp(const MButtonUpEvent& e) override {}
 
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
 	virtual void OnMouseEnter(const MouseEnterEvent& e) override {}

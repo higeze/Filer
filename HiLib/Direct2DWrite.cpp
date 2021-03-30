@@ -592,6 +592,12 @@
 		GetD2DDeviceContext()->DrawLine(LayoutRound(p0), LayoutRound(p1), GetColorBrush(line.Color),line.Width);
 	}
 
+	void CDirect2DWrite::DrawSolidLine(const CColorF& color, const FLOAT& width, const D2D1_POINT_2F& p0, const D2D1_POINT_2F& p1)
+	{
+		GetD2DDeviceContext()->DrawLine(LayoutRound(p0), LayoutRound(p1), GetColorBrush(color), width);
+	}
+
+
 	void CDirect2DWrite::DrawSolidTriangleWave(const SolidLine& line, const D2D1_POINT_2F& startPoint, const D2D1_POINT_2F& endPoint, const FLOAT& amplitude, const FLOAT& period)
 	{
 		D2D_POINT_2F nextCenterPoint = startPoint;

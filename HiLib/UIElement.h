@@ -190,6 +190,18 @@ struct RButtonDownEvent :public MouseEvent
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
+struct MButtonDownEvent :public MouseEvent
+{
+	MButtonDownEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr):
+		MouseEvent(pWnd, wParam, lParam, pHandled){}
+};
+
+struct MButtonUpEvent :public MouseEvent
+{
+	MButtonUpEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr):
+		MouseEvent(pWnd, wParam, lParam, pHandled) {}
+};
+
 struct MouseMoveEvent :public MouseEvent
 {
 	MouseMoveEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
@@ -306,8 +318,8 @@ public:
 
 	virtual void OnRButtonDown(const RButtonDownEvent& e) {}
 
-	virtual void OnMButtonDown(const MouseEvent& e){}//TODO
-	virtual void OnMButtonUp(const MouseEvent& e){}//TODO
+	virtual void OnMButtonDown(const MButtonDownEvent& e){}
+	virtual void OnMButtonUp(const MButtonUpEvent& e){}
 
 	virtual void OnMouseMove(const MouseMoveEvent& e);
 	virtual void OnMouseEnter(const MouseEnterEvent& e);//TODO

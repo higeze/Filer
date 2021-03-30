@@ -83,8 +83,6 @@ std::tuple<CRectF, CRectF, CRectF, CRectF> CTabHeaderControl::GetRects()
 	return { iconRect, textRect, buttonRect, rc };
 }
 
-
-
 void CTabHeaderControl::OnCreate(const CreateEvt& e)
 {
 	CD2DWControl::OnCreate(e);
@@ -101,13 +99,13 @@ void CTabHeaderControl::OnPaint(const PaintEvent& e)
 {
 	auto pTabControl = static_cast<CTabControl*>(m_pParentControl);
 	auto [iconRect, textRect, buttonRect, rect] = GetRects();
-
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(
-		GetIsSelected() ? 
-		(pTabControl->GetIsFocused()?
-			*(pTabControl->m_spProp->SelectedFill):
+	auto bkgndFill = GetIsSelected() ?
+		(pTabControl->GetIsFocused() ?
+			*(pTabControl->m_spProp->SelectedFill) :
 			*(pTabControl->m_spProp->UnfocusSelectedFill)) :
-		*(pTabControl->m_spProp->NormalFill), rect);
+		*(pTabControl->m_spProp->NormalFill);
+
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(bkgndFill, rect);
 
 	if (auto pt = GetWndPtr()->GetDirectPtr()->Pixels2Dips(GetWndPtr()->GetCursorPosInClient()); rect.PtInRect(pt)) {
 		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(pTabControl->m_spProp->HotFill), rect);
@@ -115,6 +113,12 @@ void CTabHeaderControl::OnPaint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(pTabControl->m_spProp->Line), CPointF(rect.left, rect.bottom), rect.LeftTop());
 	GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(pTabControl->m_spProp->Line), rect.LeftTop(), CPointF(rect.right, rect.top));
 	GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(pTabControl->m_spProp->Line), CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom));
+
+	if (GetIndex() == pTabControl->GetSelectedIndex()) {
+		GetWndPtr()->GetDirectPtr()->DrawSolidLine(bkgndFill.Color, pTabControl->m_spProp->Line->Width, CPointF(rect.left, rect.bottom), CPointF(rect.right, rect.bottom));
+	} else {
+		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(pTabControl->m_spProp->Line), CPointF(rect.left, rect.bottom), CPointF(rect.right, rect.bottom));
+	}
 
 	auto iterIcon = pTabControl->m_itemsHeaderIconTemplate.find(typeid(*pTabControl->m_itemsSource[GetIndex()]).name());
 	GetWndPtr()->GetDirectPtr()->DrawBitmap(iterIcon->second.operator()(pTabControl->m_itemsSource[GetIndex()]),iconRect);
@@ -223,54 +227,23 @@ CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<Tab
 					SetFocusedControlPtr(spControl);
 				}
 			}
-			for (auto p : m_childControls) {
-				if (std::string(typeid(*p).name()).find("CFilerGridView") != std::string::npos) {
-					::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
-				} else if (std::string(typeid(*p).name()).find("CToDoGridView") != std::string::npos) {
-					::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
-				} else if (std::string(typeid(*p).name()).find("CTextEditor") != std::string::npos){
-					::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
-				}
-			}
+			//for (auto p : m_childControls) {
+			//	if (std::string(typeid(*p).name()).find("CFilerGridView") != std::string::npos) {
+			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
+			//	} else if (std::string(typeid(*p).name()).find("CToDoGridView") != std::string::npos) {
+			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
+			//	} else if (std::string(typeid(*p).name()).find("CTextEditor") != std::string::npos){
+			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
+			//	}
+			//}
 		});
 
-	//GetHeaderRects = [rects = std::vector<CRectF>(), this]()mutable->std::vector<CRectF>&
-	//{
-	//	if (rects.empty()) {
-	//		FLOAT minWidth = 30.f;
-	//		if (m_selectedIndex.get() >= 0) {
-	//			auto rcInWnd = GetRectInWnd();
-	//			auto left = rcInWnd.left;
-	//			for(auto spData : m_itemsSource)
-	//			{
-	//				auto iterHeader = m_itemsHeaderTemplate.find(typeid(*spData).name());
-	//				if (iterHeader != m_itemsHeaderTemplate.end()) {
-	//					auto iconSize = CSizeF(16.f, 16.f);
-	//					auto text = iterHeader->second.operator()(spData);
-	//					auto textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_spProp->Format), text);
-	//					auto rect = CRectF(
-	//						left,
-	//						rcInWnd.top,
-	//						left + m_spProp->Padding->left + iconSize.width + m_spProp->Padding->right + (std::max)(textSize.width, minWidth) + m_spProp->Padding->right,
-	//						rcInWnd.top + m_spProp->Padding->top + textSize.height + m_spProp->Padding->bottom);
-	//					left += rect.Width();
-	//					rects.push_back(rect);
-	//				}
-	//			};
-	//		}
-	//	}
-	//	return rects;
-	//};
 
 	GetContentRect = [rect = CRectF(), this]()mutable->CRectF&
 	{
 		rect = GetRectInWnd();
-		//auto rects = GetHeaderRects();
-		//auto iter = std::max_element(rects.begin(), rects.end(), [](const CRectF& left, const CRectF& right)->bool
-		//{return left.Height() > right.Height(); });
-		//rect.top += (iter != rects.end()) ? iter->Height() : 0;
 		if (!m_headers.empty()) {
-			rect.top += m_headers.front()->GetRectInWnd().Height();
+			rect.top = m_headers.back()->GetRectInWnd().bottom;
 		}
 		return rect;
 	};
@@ -303,8 +276,15 @@ void CTabControl::UpdateHeaderRects()
 
 	for (auto& pHeader : m_headers) {
 		pHeader->SetMeasureValid(false);//TODO HIGH
+
+		auto hdrSize = pHeader->GetSize();
+		if (left + hdrSize.width > rcInWnd.right && left != rcInWnd.left) {
+			left = rcInWnd.left;
+			top += hdrSize.height;
+		}
+
 		pHeader->OnRect(RectEvent(GetWndPtr(),
-			CRectF(left, top, left + pHeader->GetSize().width, top + pHeader->GetSize().height)));
+			CRectF(left, top, left + hdrSize.width, top + hdrSize.height)));
 		left = pHeader->GetRectInWnd().right;
 	}
 }
@@ -363,50 +343,25 @@ void CTabControl::OnPaint(const PaintEvent& e)
 {
 	if (m_selectedIndex.get() >= 0) {
 		auto rc = GetRectInWnd();
+		//Content
+		const auto& contentRc = GetContentRect();
+		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetIsFocused()?*(m_spProp->SelectedFill):*(m_spProp->UnfocusSelectedFill), contentRc);
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_spProp->Line), contentRc);
+		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), contentRc.LeftTop(), CPointF(contentRc.left, contentRc.bottom));
+		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.left, contentRc.bottom), CPointF(contentRc.right, contentRc.bottom));
+		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.right, contentRc.bottom), CPointF(contentRc.right, contentRc.top));
+
+		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), 
+		//	CPointF(m_headers.front()->GetRectInWnd().left, m_headers.front()->GetRectInWnd().bottom),
+		//	CPointF(m_headers[m_selectedIndex.get()]->GetRectInWnd().left, m_headers[m_selectedIndex]->GetRectInWnd().bottom));
+		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), 
+		//	CPointF(m_headers[m_selectedIndex.get()]->GetRectInWnd().right, m_headers[m_selectedIndex]->GetRectInWnd().bottom),
+		//	CPointF(rc.right, m_headers.back()->GetRectInWnd().bottom) );
+
 		//Header
 		for (const auto& pHeader : m_headers) {
 			pHeader->OnPaint(e);
 		}
-		//auto headerRects = GetHeaderRects();
-		//for (size_t i = 0; i < m_itemsSource.size(); i++) {
-		//	const auto& headerRc = headerRects[i];
-		//	if (headerRc.left > rc.right) { break; }
-
-		//	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(i == m_selectedIndex.get() ? 
-		//		(GetIsFocused()?*(m_spProp->SelectedFill):*(m_spProp->UnfocusSelectedFill)) :
-		//		*(m_spProp->NormalFill), headerRc);
-		//	if (auto pt = GetWndPtr()->GetDirectPtr()->Pixels2Dips(GetWndPtr()->GetCursorPosInClient()); headerRc.PtInRect(pt)) {
-		//		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_spProp->HotFill), headerRc);
-		//	}
-		//	GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(headerRc.left, headerRc.bottom), headerRc.LeftTop());
-		//	GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), headerRc.LeftTop(), CPointF(headerRc.right, headerRc.top));
-		//	GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(headerRc.right, headerRc.top), CPointF(headerRc.right, headerRc.bottom));
-
-		//	auto iterIcon = m_itemsHeaderIconTemplate.find(typeid(*m_itemsSource[i]).name());
-		//	auto iconRc = headerRc; iconRc.DeflateRect(*(m_spProp->Padding)); iconRc.right = iconRc.left + 16.f;
-		//	GetWndPtr()->GetDirectPtr()->DrawBitmap(iterIcon->second.operator()(m_itemsSource[i]),iconRc);
-
-		//	auto iterText = m_itemsHeaderTemplate.find(typeid(*m_itemsSource[i]).name());
-		//	auto text = iterText->second.operator()(m_itemsSource[i]);
-		//	if (!text.empty()) {
-		//		CRectF textRc = headerRc; textRc.DeflateRect(*(m_spProp->Padding)); textRc.left = textRc.left + 16.f + m_spProp->Padding->right;
-		//		GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_spProp->Format), text, textRc);
-		//	}
-		//}
-	
-		//Content
-		const auto& contentRc = GetContentRect();
-		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetIsFocused()?*(m_spProp->SelectedFill):*(m_spProp->UnfocusSelectedFill), contentRc);
-		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), contentRc.LeftTop(), CPointF(contentRc.left, contentRc.bottom));
-		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.left, contentRc.bottom), CPointF(contentRc.right, contentRc.bottom));
-		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.right, contentRc.bottom), CPointF(contentRc.right, contentRc.top));
-
-		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), 
-			CPointF(m_headers.front()->GetRectInWnd().left, m_headers.front()->GetRectInWnd().bottom),
-			CPointF(m_headers[m_selectedIndex.get()]->GetRectInWnd().left, m_headers[m_selectedIndex]->GetRectInWnd().bottom));
-		GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), 
-			CPointF(m_headers[m_selectedIndex.get()]->GetRectInWnd().right, m_headers[m_selectedIndex]->GetRectInWnd().bottom),
-			CPointF(rc.right, m_headers.back()->GetRectInWnd().bottom) );
 
 		//Control
 		m_spCurControl->OnPaint(e);
@@ -426,104 +381,20 @@ void CTabControl::OnClosing(const ClosingEvent& e)
 	CD2DWControl::OnClosing(e);
 }
 
-
-void CTabControl::OnClose(const CloseEvent& e)
-{ 
-	CD2DWControl::OnClose(e);
-}
-
 void CTabControl::OnRect(const RectEvent& e)
 { 
 	CD2DWControl::OnRect(e);
-	//GetHeaderRects().clear();
 	UpdateHeaderRects();
 	GetContentRect().SetRect(0, 0, 0, 0);
 	GetControlRect().SetRect(0, 0, 0, 0);
 	if (m_spCurControl) { m_spCurControl->OnRect(RectEvent(GetWndPtr(), GetControlRect())); }
 }
 
-//void CTabControl::OnLButtonDown(const LButtonDownEvent& e)
-//{
-//	CD2DWControl::OnLButtonDown(e);
-//}
-
-//void CTabControl::OnLButtonUp(const LButtonUpEvent& e)
-//{
-//	CD2DWControl::OnLButtonUp(e);
-//}
-//void CTabControl::OnLButtonClk(const LButtonClkEvent& e)
-//{
-//	CD2DWControl::OnLButtonClk(e);
-//}
-//void CTabControl::OnLButtonSnglClk(const LButtonSnglClkEvent& e)
-//{
-//	CD2DWControl::OnLButtonSnglClk(e);
-//}
-//void CTabControl::OnLButtonDblClk(const LButtonDblClkEvent& e) 
-//{
-//	CD2DWControl::OnLButtonDblClk(e);
-//}
-//void CTabControl::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) 
-//{
-//	m_spCurControl->OnLButtonBeginDrag(e);
-//}
-//void CTabControl::OnLButtonEndDrag(const LButtonEndDragEvent& e) 
-//{
-//	m_spCurControl->OnLButtonEndDrag(e);
-//}
-//void CTabControl::OnRButtonDown(const RButtonDownEvent& e)
-//{
-//	CD2DWControl::OnRButtonDown(e);
-//}
-void CTabControl::OnMButtonDown(const MouseEvent& e)
-{
-	CD2DWControl::OnMButtonDown(e);
-}
-void CTabControl::OnMButtonUp(const MouseEvent& e)
-{
-	CD2DWControl::OnMButtonUp(e);
-}
-//void CTabControl::OnMouseMove(const MouseMoveEvent& e)
-//{
-//	CD2DWControl::OnMouseMove(e);
-//}
-//void CTabControl::OnMouseEnter(const MouseEnterEvent& e)
-//{
-//	if (GetControlRect().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
-//		m_spCurControl->OnMouseEnter(e);
-//	} else {
-//		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
-//		*(e.HandledPtr)= true;
-//	}
-//}
-//void CTabControl::OnMouseLeave(const MouseLeaveEvent& e)
-//{
-//	m_spCurControl->OnMouseLeave(e);
-//}
-//void CTabControl::OnMouseWheel(const MouseWheelEvent& e)
-//{
-//	m_spCurControl->OnMouseWheel(e);
-//}
-//void CTabControl::OnKeyDown(const KeyDownEvent& e)
-//{
-//	m_spCurControl->OnKeyDown(e);
-//}
-//void CTabControl::OnSysKeyDown(const SysKeyDownEvent& e)
-//{
-//	m_spCurControl->OnSysKeyDown(e);
-//}
-//void CTabControl::OnChar(const CharEvent& e)
-//{
-//	m_spCurControl->OnChar(e);
-//}
 void CTabControl::OnContextMenu(const ContextMenuEvent& e)
 {
 	m_contextIndex = GetPtInHeaderRectIndex(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 }
-//void CTabControl::OnSetFocus(const SetFocusEvent& e)
-//{
-//	if(m_spCurControl)m_spCurControl->OnSetFocus(e);
-//}
+
 void CTabControl::OnSetCursor(const SetCursorEvent& e)
 {
 	CD2DWControl::OnSetCursor(e);
@@ -532,11 +403,6 @@ void CTabControl::OnSetCursor(const SetCursorEvent& e)
 		*(e.HandledPtr) = true;
 	}
 }
-void CTabControl::OnKillFocus(const KillFocusEvent& e)
-{
-	if(m_spCurControl)m_spCurControl->OnKillFocus(e);
-}
-
 
 
 

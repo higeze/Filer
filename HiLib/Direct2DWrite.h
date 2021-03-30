@@ -402,6 +402,7 @@ namespace std
 		void EndDraw();
 
 		void DrawSolidLine(const SolidLine& line, const D2D1_POINT_2F& p0, const D2D1_POINT_2F& p1);
+		void DrawSolidLine(const CColorF& color, const FLOAT& width, const D2D1_POINT_2F& p0, const D2D1_POINT_2F& p1);
 		void DrawSolidTriangleWave(const SolidLine& line, const D2D1_POINT_2F& p0, const D2D1_POINT_2F& p1, const FLOAT& amplitude, const FLOAT& period);
 		void DrawTab(const SolidLine& line, const CRectF& rc);
 		void DrawLineFeed(const SolidLine& line, const CRectF& rc);

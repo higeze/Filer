@@ -90,8 +90,8 @@ public:
 
 	//virtual void OnRButtonDown(const RButtonDownEvent& e);
 
-	virtual void OnMButtonDown(const MouseEvent& e) { SendMouse(&CUIElement::OnMButtonDown, e); }
-	virtual void OnMButtonUp(const MouseEvent& e) { SendMouse(&CUIElement::OnMButtonUp, e); }
+	virtual void OnMButtonDown(const MButtonDownEvent& e) { SendMouse(&CUIElement::OnMButtonDown, e); }
+	virtual void OnMButtonUp(const MButtonUpEvent& e) { SendMouse(&CUIElement::OnMButtonUp, e); }
 
 	//virtual void OnMouseMove(const MouseMoveEvent& e) { SendMouse(&CUIElement::OnMouseMove, e); }
 	virtual void OnMouseWheel(const MouseWheelEvent& e) { SendPtInRect(&CUIElement::OnMouseWheel, e); }
