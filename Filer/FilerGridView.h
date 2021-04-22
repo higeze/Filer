@@ -1,5 +1,6 @@
 #pragma once
 #include "FilerBindGridView.h"
+#include "JsonSerializer.h"
 
 class CShellFile;
 class CDirectoryWatcher;
@@ -46,7 +47,7 @@ private:
 
 public:
 	//Constructor
-	CFilerGridView(CD2DWControl* pParentControl, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp);
+	CFilerGridView(CD2DWControl* pParentControl = nullptr, const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp = nullptr);
 	virtual ~CFilerGridView();
 	//getter
 	std::shared_ptr<CShellFolder>& GetFolder() { return m_spFolder; }
@@ -157,4 +158,39 @@ public:
 		ar("RowFrozenCount", m_frozenRowCount);
 		ar("ColFrozenCount", m_frozenColumnCount);
 	}
+    friend void to_json(json& j, const CFilerGridView& o);
+    friend void from_json(const json& j, CFilerGridView& o);
 };
+void to_json(json& j, const CFilerGridView& o)
+{
+	JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
+	JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispNameColumn<std::shared_ptr<CShellFile>>);
+	JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);
+	JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>);
+	JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>);
+	
+	j = json{
+		{"Columns", o.m_allCols},
+		{"RowFrozenCount", o.m_frozenRowCount},
+		{"ColFrozenCount", o.m_frozenColumnCount}
+	};
+}
+void from_json(const json& j, CFilerGridView& o)
+{
+	//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);// , this);
+	//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispNameColumn<std::shared_ptr<CShellFile>>);// , this, L"Name");
+	//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);// , this, L"Exe");
+	//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>);// , this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
+	//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>);// , this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
+
+	j.at("Columns").get_to(static_cast<std::vector<std::shared_ptr<CColumn>>&>(o.m_allCols));
+	for (auto& colPtr : o.m_allCols) {
+		if (auto p = std::dynamic_pointer_cast<CFileDispNameColumn<std::shared_ptr<CShellFile>>>(colPtr)) {
+			o.m_pNameColumn = p;
+		} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
+			o.m_pHeaderColumn = p;
+		}
+	}
+	j.at("RowFrozenCount").get_to(o.m_frozenRowCount);
+	j.at("ColFrozenCount").get_to(o.m_frozenColumnCount);
+}

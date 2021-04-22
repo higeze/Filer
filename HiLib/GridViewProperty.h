@@ -21,7 +21,25 @@ public:
 		ar("BackgroundFill", BackgroundFill);
 		ar("ForegroundFill", ForegroundFill);
 	}
+    friend void to_json(json& j, const ProgressProperty& o);
+    friend void from_json(const json& j, ProgressProperty& o);
 };
+
+void to_json(json& j, const ProgressProperty& o)
+{
+	j = json{
+		{"Border", o.Border},
+		{"BackgroundFill", o.BackgroundFill},
+		{"ForegroundFill", o.ForegroundFill}
+	};
+}
+void from_json(const json& j, ProgressProperty& o)
+{
+	j.at("Border").get_to(o.Border);
+	j.at("BackgroundFill").get_to(o.BackgroundFill);
+	j.at("ForegroundFill").get_to(o.ForegroundFill);
+}
+
 
 struct GridViewProperty:public SheetProperty
 {
@@ -43,5 +61,20 @@ public:
 		ar("VScrollProperty", VScrollPropPtr);
 		ar("HScrollProperty", HScrollPropPtr);
     }
+    friend void to_json(json& j, const GridViewProperty& o);
+    friend void from_json(const json& j, GridViewProperty& o);
 };
+
+void to_json(json& j, const GridViewProperty& o)
+{
+	to_json(j, static_cast<const SheetProperty&>(o));
+	j["VScrollProperty"] = o.VScrollPropPtr;
+	j["HScrollProperty"] = o.HScrollPropPtr;
+}
+void from_json(const json& j, GridViewProperty& o)
+{
+	from_json(j, static_cast<SheetProperty&>(o));
+	j.at("VScrollProperty").get_to(o.VScrollPropPtr);
+	j.at("HScrollProperty").get_to(o.HScrollPropPtr);
+}
 

@@ -87,6 +87,17 @@ public:
 	virtual void Dispose(void) = 0;
 };
 
+template<class T> class ReactiveProperty;
+template<class T> void to_json(json& j, const ReactiveProperty<T>& o);
+template<class T> void from_json(const json& j, ReactiveProperty<T>& o);
+
+template<class CharT, class Traits, class Allocator> class ReactiveBasicStringProperty;
+template<class CharT, class Traits, class Allocator> void to_json(json& j, const ReactiveBasicStringProperty<CharT, Traits, Allocator>& o);
+template<class CharT, class Traits, class Allocator> void from_json(const json& j, ReactiveBasicStringProperty<CharT, Traits, Allocator>& o);
+
+template<class T, class Allocator> class ReactiveVectorProperty;
+template<class T, class Allocator> void to_json(json& j, const ReactiveVectorProperty<T, Allocator>& o);
+template<class T, class Allocator> void from_json(const json& j, ReactiveVectorProperty<T, Allocator>& o);
 
 template <class T>
 class ReactiveProperty:public IReactiveProperty<T>
@@ -138,7 +149,27 @@ public:
 		ar("Value", m_value);
 		m_pSubject->OnNext(m_value);
 	}
+
+    friend void to_json(json& j, const ReactiveProperty<T>& o);
+    friend void from_json(const json& j, ReactiveProperty<T>& o);
 };
+
+template<class T>
+void to_json(json& j, const ReactiveProperty<T>& o)
+{
+	j = {
+		{"Value", o.m_value},
+	};
+}
+
+template<class T>
+void from_json(const json& j, ReactiveProperty<T>& o)
+{
+	j.at("Value").get_to(o.m_value);
+}
+
+
+
 
 template <class T>
 class ReactiveCommand:public IReactiveCommand<T>
@@ -441,7 +472,27 @@ public:
 		this->m_pSubject->OnNext(this->m_value);
 	}
 
+    friend void to_json(json& j, const ReactiveBasicStringProperty<CharT, Traits, Allocator>& o);
+    friend void from_json(const json& j, ReactiveBasicStringProperty<CharT, Traits, Allocator>& o);
 };
+
+template<class CharT, class Traits, class Allocator>
+void to_json(json& j, const ReactiveBasicStringProperty<CharT, Traits, Allocator>& o)
+{
+	j = {
+		{"Value", o.get()}
+	};
+}
+
+template<class CharT, class Traits, class Allocator>
+void from_json(const json& j, ReactiveBasicStringProperty<CharT, Traits, Allocator>& o)
+{
+	std::basic_string<CharT, Traits, Allocator> value;
+	j.at("Value").get_to(value);
+	o.set(value);
+}
+
+
 
 using ReactiveWStringProperty = ReactiveBasicStringProperty<wchar_t>;
 
@@ -685,7 +736,27 @@ public:
 		}
 		this->m_pSubject->OnNext(this->m_value);
 	}
+
+    friend void to_json(json& j, const ReactiveVectorProperty<T, Allocator>& o);
+    friend void from_json(const json& j, ReactiveVectorProperty<T, Allocator>& o);
 };
+
+template<class T, class Allocator>
+void to_json(json& j, const ReactiveVectorProperty<T, Allocator>& o)
+{
+	j = {
+		{"Value", o.get()}
+	};
+}
+
+template<class T, class Allocator>
+void from_json(const json& j, ReactiveVectorProperty<T, Allocator>& o)
+{
+	std::vector<T, Allocator> value;
+	j.at("Value").get_to(value);
+	o.set(value);
+}
+
 
 
 template<typename T>

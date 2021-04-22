@@ -12,6 +12,7 @@
 #include "ReactiveProperty.h"
 #include "KnownFolder.h"
 #include <functional>
+#include "JsonSerializer.h"
 
 class CFilerGridView;
 struct FilerGridViewProperty;
@@ -66,7 +67,28 @@ struct FilerTabData:public TabData
 			}
 		}
 	}
+    friend void to_json(json& j, const FilerTabData& o);
+    friend void from_json(const json& j, FilerTabData& o);
 };
+void to_json(json& j, const FilerTabData& o)
+{
+	to_json(j, static_cast<const TabData&>(o));
+	j["Path"] = o.FolderPtr->GetPath();
+}
+void from_json(const json& j, FilerTabData& o)
+{
+	from_json(j, static_cast<FilerTabData&>(o));
+	j.at("Path").get_to(o.Path);
+	if (!o.Path.empty()) {
+		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(o.Path);
+		if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+			o.FolderPtr = sp;
+		} else {
+			o.FolderPtr = CKnownFolderManager::GetInstance()->GetDesktopFolder();
+			o.Path = o.FolderPtr->GetPath();
+		}
+	}
+}
 
 /***************/
 /* ToDoTabData */
@@ -90,7 +112,20 @@ struct ToDoTabData:public TabData
 	{
 		ar("Path", Path);
 	}
+
+	friend void to_json(json& j, const ToDoTabData& o);
+    friend void from_json(const json& j, ToDoTabData& o);
 };
+void to_json(json& j, const ToDoTabData& o)
+{
+	to_json(j, static_cast<const TabData&>(o));
+	j["Path"] = o.Path;
+}
+void from_json(const json& j, ToDoTabData& o)
+{
+	from_json(j, static_cast<TabData&>(o));
+	j.at("Path").get_to(o.Path);
+}
 
 /***************/
 /* TextTabData */
@@ -145,7 +180,19 @@ struct TextTabData :public TabData
 	{
 		ar("Path", Path);
 	}
+	friend void to_json(json& j, const TextTabData& o);
+    friend void from_json(const json& j, TextTabData& o);
 };
+void to_json(json& j, const TextTabData& o)
+{
+	to_json(j, static_cast<const TabData&>(o));
+	j["Path"] = o.Path;
+}
+void from_json(const json& j, TextTabData& o)
+{
+	from_json(j, static_cast<TabData&>(o));
+	j.at("Path").get_to(o.Path);
+}
 
 /**************/
 /* PdfTabData */
@@ -179,7 +226,19 @@ struct PdfTabData :public TabData
 	{
 		ar("Path", Path);
 	}
+	friend void to_json(json& j, const PdfTabData& o);
+    friend void from_json(const json& j, PdfTabData& o);
 };
+void to_json(json& j, const PdfTabData& o)
+{
+	to_json(j, static_cast<const TabData&>(o));
+	j["Path"] = o.Path;
+}
+void from_json(const json& j, PdfTabData& o)
+{
+	from_json(j, static_cast<TabData&>(o));
+	j.at("Path").get_to(o.Path);
+}
 
 
 /*************/
@@ -212,11 +271,11 @@ private:
 
 
 public:
-	CFilerTabGridView(CD2DWControl* pParentControl,
-		std::shared_ptr<TabControlProperty> spTabProp, 
-		std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty,
-		std::shared_ptr<TextEditorProperty>& spTextboxProp,
-		std::shared_ptr<PdfViewProperty>& spPdfViewProp);
+	CFilerTabGridView(CD2DWControl* pParentControl = nullptr,
+		const std::shared_ptr<TabControlProperty>& spTabProp = nullptr, 
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty = nullptr,
+		const std::shared_ptr<TextEditorProperty>& spTextboxProp = nullptr,
+		const std::shared_ptr<PdfViewProperty>& spPdfViewProp = nullptr);
 	virtual ~CFilerTabGridView();
 
 	/***********/
@@ -271,4 +330,30 @@ public:
 		auto spGrid = GetFilerGridViewPtr();
 		ar("FilerView", spGrid, this, m_spFilerGridViewProp);
 	}
+
+    friend void to_json(json& j, const CFilerTabGridView& o);
+    friend void from_json(const json& j, CFilerTabGridView& o);
 };
+
+void to_json(json& j, const CFilerTabGridView& o)
+{
+	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
+	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData );
+	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
+	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
+
+	to_json(j, static_cast<const CTabControl&>(o));
+	j["FilerView"] = o.GetFilerGridViewPtr();
+}
+
+void from_json(const json& j, CFilerTabGridView& o)
+{
+	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
+	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData);
+	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
+	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
+
+	from_json(j, static_cast<CTabControl&>(o));
+	auto spGrid = o.GetFilerGridViewPtr();
+	j.at("FilerView").get_to(spGrid);
+}

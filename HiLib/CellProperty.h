@@ -3,6 +3,7 @@
 #include "ScrollProperty.h"
 #include <regex>
 #include "ReactiveProperty.h"
+#include "JsonSerializer.h"
 
 enum class PicturePositon
 {
@@ -36,7 +37,26 @@ public:
 		ar("PicturePath",m_picturePath);
 		ar("PicturePosition",m_picturePosition);
     }
+
+	friend void to_json(json& j, const BackgroundProperty& o);
+    friend void from_json(const json& j, BackgroundProperty& o);
 };
+void to_json(json& j, const BackgroundProperty& o)
+{
+	j = json{
+		{"BackgroundBrush", o.m_brush},
+		{"UsePicture", o.m_usePicture},
+		{"PicturePath", o.m_picturePath},
+		{"PicturePosition", o.m_picturePosition}
+	};
+}
+void from_json(const json& j, BackgroundProperty& o)
+{
+	j.at("BackgroundBrush").get_to(o.m_brush);
+	j.at("UsePicture").get_to(o.m_usePicture);
+	j.at("PicturePath").get_to(o.m_picturePath);
+	j.at("PicturePosition").get_to(o.m_picturePosition);
+}
 
 struct TextboxProperty
 {
@@ -139,7 +159,50 @@ public:
 		ar("HScrollProperty", HScrollPropPtr);
 		ar("IsWrap", IsWrap);
 	}
+
+	friend void to_json(json& j, const TextboxProperty& o);
+    friend void from_json(const json& j, TextboxProperty& o);
 };
+
+void to_json(json& j, const TextboxProperty& o)
+{
+	j = json{
+		{"Format",o.Format},
+		{"Line",o.Line},
+		{"EditLine", o.EditLine},
+		{"FocusedLine",o.FocusedLine},
+		{"BlankLine", o.BlankLine},
+		{"NormalFill",o.NormalFill},
+		{"FocusedFill",o.FocusedFill},
+		{"SelectedFill",o.SelectedFill},
+		{"UnfocusSelectedFill", o.UnfocusSelectedFill},
+		{"HotFill", o.HotFill},
+		{"Padding",o.Padding},
+		{"VScrollProperty", o.VScrollPropPtr},
+		{"HScrollProperty", o.HScrollPropPtr},
+		{"IsWrap", o.IsWrap }
+	};
+}
+
+void from_json(const json& j, TextboxProperty& o)
+{
+	j.at("Format").get_to(o.Format);
+	j.at("Line").get_to(o.Line);
+	j.at("EditLine").get_to(o.EditLine);
+	j.at("FocusedLine").get_to(o.FocusedLine);
+	j.at("BlankLine").get_to(o.BlankLine);
+	j.at("NormalFill").get_to(o.NormalFill);
+	j.at("FocusedFill").get_to(o.FocusedFill);
+	j.at("SelectedFill").get_to(o.SelectedFill);
+	j.at("UnfocusSelectedFill").get_to(o.UnfocusSelectedFill);
+	j.at("HotFill").get_to(o.HotFill);
+	j.at("Padding").get_to(o.Padding);
+	j.at("VScrollProperty").get_to(o.VScrollPropPtr);
+	j.at("HScrollProperty").get_to(o.HScrollPropPtr);
+	j.at("IsWrap").get_to(o.IsWrap);
+}
+
+
 
 struct SyntaxAppearance
 {
@@ -167,7 +230,22 @@ struct SyntaxAppearance
 		ar("SyntaxFormat", SyntaxFormat);
 	}
 
+	friend void to_json(json& j, const SyntaxAppearance& o);
+    friend void from_json(const json& j, SyntaxAppearance& o);
 };
+void to_json(json& j, const SyntaxAppearance& o)
+{
+	j = json{
+		{"Regex", o.Regex},
+		{"SyntaxFormat", o.SyntaxFormat}
+	};
+}
+void from_json(const json& j, SyntaxAppearance& o)
+{
+	j.at("Regex").get_to(o.Regex);
+	j.at("SyntaxFormat").get_to(o.SyntaxFormat);
+}
+
 
 struct TextEditorProperty :public TextboxProperty
 {
@@ -199,7 +277,32 @@ struct TextEditorProperty :public TextboxProperty
 
 		}
 	}
+
+	friend void to_json(json& j, const TextEditorProperty& o);
+    friend void from_json(const json& j, TextEditorProperty& o);
 };
+void to_json(json& j, const TextEditorProperty& o)
+{
+	to_json(j, static_cast<const TextboxProperty&>(o));
+	j["SyntaxAppearances"] = o.SyntaxAppearances;
+}
+
+void from_json(const json& j, TextEditorProperty& o)
+{
+	from_json(j, static_cast<TextboxProperty&>(o));
+	j.at("SyntaxAppearances").get_to(o.SyntaxAppearances);
+
+	if (o.SyntaxAppearances.empty()) {
+		o.SyntaxAppearances.push_back(
+			std::make_tuple(
+			SyntaxAppearance(L"/\\*.*?\\*/",
+			SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false))));
+		o.SyntaxAppearances.push_back(
+			std::make_tuple(
+			SyntaxAppearance(L"//.*?\n",
+			SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false))));
+	}
+}
 
 struct CellProperty :public TextboxProperty
 {

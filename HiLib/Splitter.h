@@ -1,6 +1,7 @@
 #pragma once
 #include "D2DWControl.h"
 #include "ReactiveProperty.h"
+#include "JsonSerializer.h"
 
 struct SplitterProperty
 {
@@ -14,7 +15,24 @@ public:
 		ar("BackgroundFill", BackgroundFill);
 		ar("Width", Width);
 	}
+
+    friend void to_json(json& j, const SplitterProperty& o);
+    friend void from_json(const json& j, SplitterProperty& o);
 };
+
+void to_json(json& j, const SplitterProperty& o)
+{
+	j = json{
+		{"BackgroundFill", o.BackgroundFill},
+		{"Width", o.Width}
+	};
+}
+void from_json(const json& j, SplitterProperty& o)
+{
+	j.at("BackgroundFill").get_to(o.BackgroundFill);
+	j.at("Width").get_to(o.Width);
+}
+
 
 
 class CHorizontalSplitter:public CD2DWControl
@@ -44,5 +62,12 @@ public:
     template <class Archive>
 	void serialize(Archive& ar) {}
 
-
+    friend void to_json(json& j, const CHorizontalSplitter& o);
+    friend void from_json(const json& j, CHorizontalSplitter& o);
 };
+
+void to_json(json& j, const CHorizontalSplitter& o){}
+void from_json(const json& j, CHorizontalSplitter& o){}
+
+
+

@@ -91,7 +91,7 @@ CLIPFORMAT CFilerGridView::s_cf_renprivatemessages = ::RegisterClipboardFormat(L
     }
 
 
-CFilerGridView::CFilerGridView(CD2DWControl* pParentControl, std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
+CFilerGridView::CFilerGridView(CD2DWControl* pParentControl, const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
 	:CFilerBindGridView(pParentControl, spFilerGridViewProp)
 {
 	m_commandMap.emplace(IDM_SELECTALL, std::bind(&CFilerGridView::OnCommandSelectAll, this, phs::_1));

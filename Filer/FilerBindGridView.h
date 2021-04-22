@@ -33,8 +33,8 @@ public:
 	//Constructor
 	template<typename... TArgs>
 	CFilerBindGridView(
-		CD2DWControl* pParentControl,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		CD2DWControl* pParentControl = nullptr,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp = nullptr,
 		const std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> spItemsSource = nullptr,
 		TArgs... args)
 		:base(pParentControl, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), spItemsSource, args...)

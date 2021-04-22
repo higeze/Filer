@@ -63,7 +63,12 @@ struct TabData
 	void save(Archive& ar){}
 	template<class Archive>
 	void load(Archive& ar){}
+
+    friend void to_json(json& j, const TabData& o);
+    friend void from_json(const json& j, TabData& o);
 };
+void to_json(json& j, const TabData& o) {}
+void from_json(const json& j, TabData& o) {}
 
 class CTabControl;
 
@@ -121,7 +126,8 @@ protected:
 	ReactiveProperty<int> m_selectedIndex;
 	std::optional<size_t> m_contextIndex;
 public:
-	CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<TabControlProperty>& spProp);
+	CTabControl(CD2DWControl* pParentControl = nullptr,
+		const std::shared_ptr<TabControlProperty>& spProp = nullptr);
 	virtual ~CTabControl();
 
 	//Getter Setter
@@ -170,4 +176,20 @@ public:
 		ar("ItemsSource", m_itemsSource);
 		ar("SelectedIndex", m_selectedIndex);
 	}
+
+    friend void to_json(json& j, const CTabControl& o);
+    friend void from_json(const json& j, CTabControl& o);
 };
+
+void to_json(json& j, const CTabControl& o)
+{
+	j = json{
+		{"ItemsSource", o.m_itemsSource},
+		{"SelectedIndex", o.m_selectedIndex }
+	};
+}
+void from_json(const json& j, CTabControl& o)
+{
+	j.at("ItemsSource").get_to(o.m_itemsSource);
+	j.at("SelectedIndex").get_to(o.m_selectedIndex);
+}

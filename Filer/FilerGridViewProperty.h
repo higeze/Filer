@@ -24,4 +24,19 @@ struct FilerGridViewProperty:public GridViewProperty
 		ar("FileSizeArgsProperty", FileSizeArgsPtr);
 		ar("LastWriteArgsProperty", FileTimeArgsPtr);
 	}
+
+    friend void to_json(json& j, const FilerGridViewProperty& o);
+    friend void from_json(const json& j, FilerGridViewProperty& o);
 };
+void to_json(json& j, const FilerGridViewProperty& o)
+{
+	to_json(j, static_cast<const GridViewProperty&>(o));
+	j["FileSizeArgsProperty"] = o.FileSizeArgsPtr;
+	j["FileTimeArgsProperty"] = o.FileTimeArgsPtr;
+}
+void from_json(const json& j, FilerGridViewProperty& o)
+{
+	from_json(j, static_cast<GridViewProperty&>(o));
+	j.at("FileSizeArgsProperty").get_to(o.FileSizeArgsPtr);
+	j.at("FileTimeArgsProperty").get_to(o.FileTimeArgsPtr);
+}

@@ -117,10 +117,10 @@ void TextTabData::Save(const std::wstring& path)
 }
 
 CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, 
-	std::shared_ptr<TabControlProperty> spTabProp,
-	std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, 
-	std::shared_ptr<TextEditorProperty>& spTextEditorProp,
-	std::shared_ptr<PdfViewProperty>& spPdfViewProp)
+	const std::shared_ptr<TabControlProperty>& spTabProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, 
+	const std::shared_ptr<TextEditorProperty>& spTextEditorProp,
+	const std::shared_ptr<PdfViewProperty>& spPdfViewProp)
 	:CTabControl(pParentControl, spTabProp), 
 	m_spFilerGridViewProp(spFilerGridViewProp),
 	m_spTextEditorProp(spTextEditorProp),

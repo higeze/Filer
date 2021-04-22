@@ -34,21 +34,6 @@ protected:
 
 	int m_allIndex = kInvalidIndex;
 	int m_visIndex = kInvalidIndex;
-public:
-	template <class Archive>
-	void save(Archive& ar)
-	{
-		ar("visible", *m_spVisible);
-		ar("allindex", m_allIndex);
-		ar("visindex", m_visIndex);
-	}
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		ar("visible", *m_spVisible);
-		ar("allindex", m_allIndex);
-		ar("visindex", m_visIndex);
-	}
 
 public:
 	//Constructor
@@ -102,5 +87,42 @@ public:
 	void SetIndex(const int index){}
 	template<> inline void SetIndex<AllTag>(const int index){ m_allIndex = index; }
 	template<> inline void SetIndex<VisTag>(const int index){ m_visIndex = index; }
+
+public:
+	template <class Archive>
+	void save(Archive& ar)
+	{
+		ar("visible", *m_spVisible);
+		ar("allindex", m_allIndex);
+		ar("visindex", m_visIndex);
+	}
+	template <class Archive>
+	void load(Archive& ar)
+	{
+		ar("visible", *m_spVisible);
+		ar("allindex", m_allIndex);
+		ar("visindex", m_visIndex);
+	}
+
+
+    friend void to_json(json& j, const CBand& o);
+    friend void from_json(const json& j, CBand& o);
 };
+
+void to_json(json& j, const CBand& o)
+{
+	j = json{
+		{"visible", o.m_spVisible},
+		{"allindex", o.m_allIndex},
+		{ "visindex", o.m_visIndex }
+	};
+
+}
+void from_json(const json& j, CBand& o)
+{	
+	j.at("visible").get_to(o.m_spVisible);
+	j.at("allindex").get_to(o.m_allIndex);
+	j.at("visindex").get_to(o.m_visIndex);
+}
+
 

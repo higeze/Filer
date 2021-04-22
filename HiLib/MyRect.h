@@ -3,6 +3,7 @@
 #include "MyPoint.h"
 #include "MySize.h"
 #include "MyFriendSerializer.h"
+#include "JsonSerializer.h"
 
 /*********/
 /* CRect */
@@ -170,6 +171,30 @@ public:
 		ar("Right",right);
 		ar("Bottom",bottom);
 	}
+
+    friend void to_json(json& j, const CRect& o);
+    friend void from_json(const json& j, CRect& o);
 };
+
+void to_json(json& j, const CRect& o)
+{
+	j = {
+		{"Left", o.left},
+		{"Top", o.top},
+		{"Right", o.right},
+		{"Bottom", o.bottom}
+	};
+
+}
+
+void from_json(const json& j, CRect& o)
+{
+	j.at("Left").get_to(o.left);
+	j.at("Top").get_to(o.top);
+	j.at("Right").get_to(o.right);
+	j.at("Bottom").get_to(o.bottom);
+}
+
+
 typedef std::shared_ptr<CRect> SPRect;
 typedef std::shared_ptr<CRect> CRectPtr;

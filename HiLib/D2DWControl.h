@@ -22,7 +22,9 @@ protected:
 
 public:
 
-	CD2DWControl(CD2DWControl* pParentControl):m_pParentControl(pParentControl){}
+	CD2DWControl(CD2DWControl* pParentControl = nullptr):m_pParentControl(pParentControl){}
+	virtual ~CD2DWControl(){}
+
 	virtual CD2DWWindow* GetWndPtr()const { return m_pParentControl->GetWndPtr(); }
 	virtual CD2DWControl* GetParentControlPtr()const { return m_pParentControl; }
 	virtual CRectF GetRectInWnd()const override { return m_rect; }

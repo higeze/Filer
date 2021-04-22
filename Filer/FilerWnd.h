@@ -18,6 +18,7 @@
 #include "ReactiveProperty.h"
 #include "PdfView.h"
 //#include "KonamiCommander.h"
+#include "JsonSerializer.h"
 
 class CFilerGridView;
 class CLauncherGridView;
@@ -77,8 +78,24 @@ struct ExeExtension
 		ar("Path", Path);
 		ar("Parameter", Parameter);
 	}
-
+    friend void to_json(json& j, const ExeExtension& o);
+    friend void from_json(const json& j, ExeExtension& o);
 };
+
+void to_json(json& j, const ExeExtension& o)
+{
+	j = json{
+		{"Name", o.Name},
+		{"Path", o.Path},
+		{"Parameter", o.Parameter}
+	};
+}
+void from_json(const json& j, ExeExtension& o)
+{
+	j.at("Name").get_to(o.Name);
+	j.at("Path").get_to(o.Path);
+	j.at("Parameter").get_to(o.Parameter);
+}
 
 struct ExeExtensionProperty
 {
@@ -91,8 +108,19 @@ public:
 	{
 		ar("ExeExtensions", ExeExtensions);
 	}
+    friend void to_json(json& j, const ExeExtensionProperty& o);
+    friend void from_json(const json& j, ExeExtensionProperty& o);
 };
-
+void to_json(json& j, const ExeExtensionProperty& o)
+{
+	j = json{
+		{"ExeExtensions", o.ExeExtensions}
+	};
+}
+void from_json(const json& j, ExeExtensionProperty& o)
+{
+	j.at("ExeExtensions").get_to(o.ExeExtensions);
+}
 
 class CFilerWnd:public CD2DWWindow
 {
@@ -281,4 +309,49 @@ private:
 	LRESULT OnCommandPythonExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
 #endif
 
+    friend void to_json(json& j, const CFilerWnd& o);
+    friend void from_json(const json& j, CFilerWnd& o);
 };
+
+void to_json(json& j, const CFilerWnd& o) 
+{
+    j = json{
+        {"WindowRectangle", o.m_rcWnd},
+        {"PropertyWindowRectangle", o.m_rcPropWnd},
+		{"LeftSplit", o.m_splitterLeft},
+		{ "ApplicationProperty", o.m_spApplicationProp },
+		{ "FilerGridViewProperty", o.m_spFilerGridViewProp },
+		{ "TextEditorProperty", o.m_spTextEditorProp },
+		{ "PdfViewProperty", o.m_spPdfViewProp },
+		{ "LauncherProperty", o.m_spLauncherProp },
+		{ "FavoritesProperty", o.m_spFavoritesProp },
+		{ "ExeExtensionProperty", o.m_spExeExProp },
+		//{ "LeftView", o.m_spLeftView },
+		//{ "RightView", o.m_spRightView },
+		{ "HorizontalSplitter", o.m_spSplitter }
+#ifdef USE_PYTHON_EXTENSION
+		{ "PythonExtensionProperty", m_spPyExProp }
+#endif
+    };
+}
+
+void from_json(const json& j, CFilerWnd& o)
+{
+		j.at("WindowRectangle").get_to(o.m_rcWnd);
+		j.at("PropertyWindowRectangle").get_to(o.m_rcPropWnd);
+		j.at("LeftSplit").get_to(o.m_splitterLeft);
+		j.at("ApplicationProperty").get_to(o.m_spApplicationProp);
+		j.at("FilerGridViewProperty").get_to(o.m_spFilerGridViewProp);
+		j.at("TextEditorProperty").get_to(o.m_spTextEditorProp);
+		j.at("PdfViewProperty").get_to(o.m_spPdfViewProp);
+		j.at("LauncherProperty").get_to(o.m_spLauncherProp);
+		j.at("FavoritesProperty").get_to(o.m_spFavoritesProp);
+		j.at("ExeExtensionProperty").get_to(o.m_spExeExProp);
+		j.at("SplitterProperty").get_to(o.m_spSplitterProp);
+		//j.at("LeftView").get_to(o.m_spLeftView);// , this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp);
+		//j.at("RightView").get_to(o.m_spRightView);// , this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp);
+		j.at("HorizontalSplitter").get_to(o.m_spSplitter);// , this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp);
+#ifdef USE_PYTHON_EXTENSION
+		j.at("PythonExtensionProperty", m_spPyExProp);
+#endif
+}

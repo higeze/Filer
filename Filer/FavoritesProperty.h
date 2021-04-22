@@ -23,4 +23,18 @@ public:
     {
 		ar("Favorites", m_spFavorites);
     }
+
+	friend void to_json(json& j, const CFavoritesProperty& o);
+    friend void from_json(const json& j, CFavoritesProperty& o);
 };
+
+void to_json(json& j, const CFavoritesProperty& o)
+{
+	j = json{
+		{"Favorites", o.m_spFavorites}
+	};
+}
+void from_json(const json& j, CFavoritesProperty& o)
+{
+	j.at("Favorites").get_to(o.m_spFavorites);
+}
