@@ -427,6 +427,7 @@
     <ClCompile Include="..\HiLib\GridView.cpp" />
     <ClCompile Include="..\HiLib\GridViewStateMachine.cpp" />
     <ClCompile Include="..\HiLib\IDL.cpp" />
+    <ClCompile Include="..\HiLib\JsonSerializer.cpp" />
     <ClCompile Include="..\HiLib\KonamiCommander.cpp" />
     <ClCompile Include="..\HiLib\MouseStateMachine.cpp" />
     <ClCompile Include="..\HiLib\MyAutoUpdater.cpp" />

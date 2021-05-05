@@ -67,6 +67,9 @@ public:
 	virtual void OnSetFocus(const SetFocusEvent& e) override;
 	virtual void OnKillFocus(const KillFocusEvent& e) override;
 
+	virtual void OnWndSetFocus(const SetFocusEvent& e) override;
+	virtual void OnWndKillFocus(const KillFocusEvent& e) override;
+
 	virtual void OnCommand(const CommandEvent& e) override;
 
 	virtual void OnKeyDown(const KeyDownEvent& e) override;

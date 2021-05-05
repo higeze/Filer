@@ -990,7 +990,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 				pCell->SetString(str);
 				pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 			}));
-		GetEditPtr()->OnCreate(CreateEvt(GetWndPtr(), pCell->GetRectInWnd()));
+		GetEditPtr()->OnCreate(CreateEvt(GetWndPtr(), this, pCell->GetRectInWnd()));
 		PostUpdate(Updates::Invalidate);
 		//SetCapture();
 	}

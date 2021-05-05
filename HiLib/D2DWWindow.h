@@ -106,8 +106,16 @@ public:
 	//Focus
 	virtual void OnMouseEnter(const MouseEnterEvent& e) { SendPtInRect(&CUIElement::OnMouseEnter, e); }
 	virtual void OnMouseLeave(const MouseLeaveEvent& e) { SendFocused(&CUIElement::OnMouseLeave, e); }
-	virtual void OnSetFocus(const SetFocusEvent& e) { SendFocused(&CUIElement::OnSetFocus, e); }
-	virtual void OnKillFocus(const KillFocusEvent& e) { SendFocused(&CUIElement::OnKillFocus, e); }
+	virtual void OnSetFocus(const SetFocusEvent& e) 
+	{ 
+		SendAll(&CUIElement::OnWndSetFocus, e);
+		SendFocused(&CUIElement::OnSetFocus, e);
+	}
+	virtual void OnKillFocus(const KillFocusEvent& e)
+	{ 
+		SendAll(&CUIElement::OnWndKillFocus, e);
+		SendFocused(&CUIElement::OnKillFocus, e);
+	}
 	virtual void OnKeyDown(const KeyDownEvent& e) 
 	{ 
 		*(e.HandledPtr) = FALSE;
@@ -147,7 +155,7 @@ public:
 
 	virtual void OnCreate(const CreateEvt& e) override
 	{
-		m_spChildControl->OnCreate(CreateEvt(this, GetRectInWnd()));
+		m_spChildControl->OnCreate(CreateEvt(this, this, GetRectInWnd()));
 	}
 
 	virtual void OnClose(const CloseEvent& e) override

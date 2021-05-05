@@ -4,6 +4,7 @@
 #include "MyFriendSerializer.h"
 #include "named_arguments.h"
 #include <float.h>
+#include "JsonSerializer.h"
 
 class CCell;
 class CRow;
@@ -123,30 +124,26 @@ public:
 		ar("filter", m_filter);
 	}
 
+	friend void to_json(json& j, const CColumn& o)
+	{
+		to_json(j, static_cast<const CBand&>(o));
 
-    friend void to_json(json& j, const CColumn& o);
-    friend void from_json(const json& j, CColumn& o);
+		j["sort"] = o.m_sort;
+		j["left"] = o.m_start;
+		j["width"], o.m_length;
+		j["filter"] = o.m_filter;
+
+	}
+	friend void from_json(const json& j, CColumn& o)
+	{
+		from_json(j, static_cast<CBand&>(o));
+
+		j.at("sort").get_to(o.m_sort);
+		j.at("left").get_to(o.m_start);
+		j.at("width").get_to(o.m_length);
+		o.m_isInit = false;
+		o.m_isMeasureValid = true;//Width or Height are serialized
+		j.at("filter").get_to(o.m_filter);
+	}
 };
-
-void to_json(json& j, const CColumn& o)
-{
-	to_json(j, static_cast<const CBand&>(o));
-
-	j["sort"] = o.m_sort;
-	j["left"] = o.m_start;
-	j["width"], o.m_length;
-	j["filter"] = o.m_filter;
-
-}
-void from_json(const json& j, CColumn& o)
-{
-	from_json(j, static_cast<CBand&>(o));
-
-	j.at("sort").get_to(o.m_sort);
-	j.at("left").get_to(o.m_start);
-	j.at("width").get_to(o.m_length);
-	o.m_isInit = false;
-	o.m_isMeasureValid = true;//Width or Height are serialized
-	j.at("filter").get_to(o.m_filter);
-}
 

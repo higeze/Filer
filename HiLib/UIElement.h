@@ -55,9 +55,10 @@ struct CreateEvt :public Event
 {
 	CRect Rect;
 	CRectF RectF;
-	CreateEvt(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
-	CreateEvt(CD2DWWindow* pWnd, CRectF rect, BOOL* pHandled = nullptr)
-		:Event(pWnd, pHandled), RectF(rect){}
+	CD2DWControl* ParentPtr;
+	CreateEvt(CD2DWWindow* pWnd, CD2DWControl* pParent, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
+	CreateEvt(CD2DWWindow* pWnd, CD2DWControl* pParent, CRectF rect, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled), ParentPtr(pParent), RectF(rect){}
 };
 
 struct DestroyEvent :public Event
@@ -332,9 +333,13 @@ public:
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e){}
 	virtual void OnChar(const CharEvent& e) {}
 	virtual void OnContextMenu(const ContextMenuEvent& e){}
-	virtual void OnSetFocus(const SetFocusEvent& e) {}
 	virtual void OnSetCursor(const SetCursorEvent& e) {}
+
+	virtual void OnSetFocus(const SetFocusEvent& e) {}
 	virtual void OnKillFocus(const KillFocusEvent& e) {}
+
+	virtual void OnWndSetFocus(const SetFocusEvent& e) {};
+	virtual void OnWndKillFocus(const KillFocusEvent& e) {};
 
 	virtual void OnPropertyChanged(const wchar_t* name){}
 	

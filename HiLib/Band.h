@@ -2,6 +2,8 @@
 #include "SheetEnums.h"
 #include <WTypesbase.h>
 #include <float.h>
+#include "JsonSerializer.h"
+
 class CSheet;
 class CCell;
 
@@ -105,24 +107,22 @@ public:
 	}
 
 
-    friend void to_json(json& j, const CBand& o);
-    friend void from_json(const json& j, CBand& o);
+	friend void to_json(json& j, const CBand& o)
+	{
+		j = json{
+			{"visible", o.m_spVisible},
+			{"allindex", o.m_allIndex},
+			{"visindex", o.m_visIndex }
+		};
+
+	}
+	friend void from_json(const json& j, CBand& o)
+	{	
+		j.at("visible").get_to(o.m_spVisible);
+		j.at("allindex").get_to(o.m_allIndex);
+		j.at("visindex").get_to(o.m_visIndex);
+	}
 };
 
-void to_json(json& j, const CBand& o)
-{
-	j = json{
-		{"visible", o.m_spVisible},
-		{"allindex", o.m_allIndex},
-		{ "visindex", o.m_visIndex }
-	};
-
-}
-void from_json(const json& j, CBand& o)
-{	
-	j.at("visible").get_to(o.m_spVisible);
-	j.at("allindex").get_to(o.m_allIndex);
-	j.at("visindex").get_to(o.m_visIndex);
-}
 
 

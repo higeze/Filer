@@ -2,8 +2,8 @@
 #include "D2DWWindow.h"
 #include <windowsx.h>
 
-CreateEvt::CreateEvt(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
-	:Event(pWnd, pHandled), Rect()
+CreateEvt::CreateEvt(CD2DWWindow* pWnd, CD2DWControl* pParent, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
+	:Event(pWnd, pHandled), ParentPtr(pParent), Rect()
 {
 	auto pCS = reinterpret_cast<CREATESTRUCT*>(lParam);
 	Rect = CRect(pCS->x, pCS->y, pCS->x + pCS->cx, pCS->y + pCS->cy);

@@ -99,11 +99,11 @@ void CIncrementalCopyWnd::OnCreate(const CreateEvt& e)
 
 	//Size
 	auto [rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose] = GetRects();
-	m_spProgressbar->OnCreate(CreateEvt(this, rcProgress));
-	m_spFileGrid->OnCreate(CreateEvt(this, rcGrid));
-	m_spButtonDo->OnCreate(CreateEvt(this, rcBtnDo));
-	m_spButtonCancel->OnCreate(CreateEvt(this, rcBtnCancel));
-	m_spButtonClose->OnCreate(CreateEvt(this, rcBtnClose));
+	m_spProgressbar->OnCreate(CreateEvt(this, this, rcProgress));
+	m_spFileGrid->OnCreate(CreateEvt(this, this, rcGrid));
+	m_spButtonDo->OnCreate(CreateEvt(this, this, rcBtnDo));
+	m_spButtonCancel->OnCreate(CreateEvt(this, this, rcBtnCancel));
+	m_spButtonClose->OnCreate(CreateEvt(this, this, rcBtnClose));
 
 
 	m_spButtonDo->GetIsEnabled().set(false);

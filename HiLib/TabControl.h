@@ -64,13 +64,14 @@ struct TabData
 	template<class Archive>
 	void load(Archive& ar){}
 
-    friend void to_json(json& j, const TabData& o);
-    friend void from_json(const json& j, TabData& o);
+	friend void to_json(json& j, const TabData& o) {}
+	friend void from_json(const json& j, TabData& o) {}
 };
-void to_json(json& j, const TabData& o) {}
-void from_json(const json& j, TabData& o) {}
 
 class CTabControl;
+/*********************/
+/* CTabHeaderControl */
+/*********************/
 
 class CTabHeaderControl :public CD2DWControl
 {
@@ -97,7 +98,7 @@ public:
 	int GetIndex() const { return m_index; }
 	void SetIndex(const int index) { m_index = index; }
 	bool GetIsSelected()const;
-	//virtual std::tuple<CSizeF, CSizeF, CSizeF> GetRects();
+
 	std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> MeasureSizes();
 	std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> GetSizes();
 	virtual CSizeF GetSize();
@@ -111,13 +112,58 @@ public:
 
 };
 
+/************************/
+/* CAddTabHeaderControl */
+/************************/
+
+class CAddTabHeaderControl :public CD2DWControl
+{
+private:
+	std::shared_ptr<TabHeaderControlProperty> m_spProp;
+	std::shared_ptr<CButton> m_spButton;
+
+	CSizeF m_buttonSize = CSizeF();
+	CSizeF m_size = CSizeF();
+
+	FLOAT m_minWidth = 30.f;
+	FLOAT m_maxWidth = 300.f;
+
+	bool m_isMeasureValid = false;
+
+public:
+	CAddTabHeaderControl(CTabControl* pTabControl, const std::shared_ptr<TabHeaderControlProperty>& spProp);
+	virtual ~CAddTabHeaderControl() = default;
+	bool GetMeasureValid()const { return m_isMeasureValid; }
+	void SetMeasureValid(const bool& b) { m_isMeasureValid = b; }
+
+	bool GetIsSelected()const;
+
+	std::tuple<CSizeF, CSizeF> MeasureSizes();
+	std::tuple<CSizeF, CSizeF> GetSizes();
+	virtual CSizeF GetSize();
+	std::tuple<CRectF, CRectF> GetRects();
+
+	virtual void OnCreate(const CreateEvt& e);
+	virtual void OnPaint(const PaintEvent& e);
+	virtual void OnRect(const RectEvent& e);
+	virtual void OnLButtonDown(const LButtonDownEvent& e);
+	//virtual void OnContextMenu(const ContextMenuEvent& e) {//Do Nothing}
+
+};
+
+/***************/
+/* CTabControl */
+/***************/
+
 class CTabControl :public CD2DWControl
 {
 	friend class CTabHeaderControl;
+	friend class CAddTabHeaderControl;
 protected:
 	std::shared_ptr<TabControlProperty> m_spProp;
 	ReactiveVectorProperty<std::shared_ptr<TabData>> m_itemsSource;
 	index_vector<std::shared_ptr<CTabHeaderControl>> m_headers;
+	std::shared_ptr<CAddTabHeaderControl> m_addHeader;
 
 	std::unordered_map<std::string, std::function<std::wstring(const std::shared_ptr<TabData>&)>> m_itemsHeaderTemplate;
 	std::unordered_map<std::string, std::function<CComPtr<ID2D1Bitmap>(const std::shared_ptr<TabData>&)>> m_itemsHeaderIconTemplate;
@@ -141,7 +187,6 @@ public:
 	std::function<CRectF&()> GetContentRect;
 	std::function<CRectF&()> GetControlRect;
 
-
 	/***************/
 	/* UI MessageÅ@*/
 	/***************/
@@ -153,13 +198,16 @@ public:
 	virtual void OnContextMenu(const ContextMenuEvent& e);
 
 	virtual void OnSetCursor(const SetCursorEvent& e);
+	virtual void OnKeyDown(const KeyDownEvent& e);
+
 
 	/***********/
 	/* Command */
 	/***********/
-	void OnCommandCloneTab(const CommandEvent& e);
-	void OnCommandCloseTab(const CommandEvent& e);
-	void OnCommandCloseAllButThisTab(const CommandEvent& e);
+	virtual void OnCommandCloneTab(const CommandEvent& e);
+	virtual void OnCommandNewTab(const CommandEvent& e) {}
+	virtual void OnCommandCloseTab(const CommandEvent& e);
+	virtual void OnCommandCloseAllButThisTab(const CommandEvent& e);
 
 public:
 	FRIEND_SERIALIZER
@@ -177,19 +225,17 @@ public:
 		ar("SelectedIndex", m_selectedIndex);
 	}
 
-    friend void to_json(json& j, const CTabControl& o);
-    friend void from_json(const json& j, CTabControl& o);
+	friend void to_json(json& j, const CTabControl& o)
+	{
+		j = json{
+			{"ItemsSource", o.m_itemsSource},
+			{"SelectedIndex", o.m_selectedIndex }
+		};
+	}
+	friend void from_json(const json& j, CTabControl& o)
+	{
+		j.at("ItemsSource").get_to(o.m_itemsSource);
+		j.at("SelectedIndex").get_to(o.m_selectedIndex);
+	}
 };
 
-void to_json(json& j, const CTabControl& o)
-{
-	j = json{
-		{"ItemsSource", o.m_itemsSource},
-		{"SelectedIndex", o.m_selectedIndex }
-	};
-}
-void from_json(const json& j, CTabControl& o)
-{
-	j.at("ItemsSource").get_to(o.m_itemsSource);
-	j.at("SelectedIndex").get_to(o.m_selectedIndex);
-}

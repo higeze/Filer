@@ -118,7 +118,7 @@ LRESULT CD2DWWindow::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHa
 	m_pDirect = std::make_shared<CDirect2DWrite>(m_hWnd);
 	m_pMouseMachine = std::make_unique<CMouseStateMachine>(this);
 	::RegisterDragDrop(m_hWnd, m_pDropTargetManager.get());
-	OnCreate(CreateEvt(this, wParam, lParam, &bHandled));
+	OnCreate(CreateEvt(this, this, wParam, lParam, &bHandled));
 	InvalidateRect(NULL, FALSE);
 	return 0;
 }

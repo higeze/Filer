@@ -54,17 +54,14 @@ public:
 		//}
 	}
 
-    friend void to_json(json& j, const CApplicationProperty& o);
-    friend void from_json(const json& j, CApplicationProperty& o);
+	friend void to_json(json& j, const CApplicationProperty& o)
+	{
+		j = json{
+			{"Debug", o.m_bDebug}
+		};
+	}
+	friend void from_json(const json& j, CApplicationProperty& o)
+	{
+		j.at("Debug").get_to(o.m_bDebug);
+	}
 };
-
-void to_json(json& j, const CApplicationProperty& o)
-{
-	j = json{
-		{"Debug", o.m_bDebug}
-	};
-}
-void from_json(const json& j, CApplicationProperty& o)
-{
-	j.at("Debug").get_to(o.m_bDebug);
-}

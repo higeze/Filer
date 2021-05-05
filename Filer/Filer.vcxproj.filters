@@ -973,6 +973,9 @@
     <ClCompile Include="LauncherGridView.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
+    <ClCompile Include="..\HiLib\JsonSerializer.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\HiLib\msxml6.tli">

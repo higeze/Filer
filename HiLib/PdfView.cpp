@@ -35,8 +35,8 @@ void CPdfView::OnCreate(const CreateEvt& e)
 {
 	CD2DWControl::OnCreate(e);
 	auto [rcVertical, rcHorizontal] = GetRects();
-	m_pVScroll->OnCreate(CreateEvt(GetWndPtr(), rcVertical));
-	m_pHScroll->OnCreate(CreateEvt(GetWndPtr(), rcHorizontal));
+	m_pVScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcVertical));
+	m_pHScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcHorizontal));
 
 	m_pdf = std::make_unique<CPdf>(GetWndPtr()->GetDirectPtr(), m_pProp->Format);
 

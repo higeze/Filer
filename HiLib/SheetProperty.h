@@ -22,22 +22,9 @@ public:
 		ar("HeadersProperty", HeaderPropPtr);
 		ar("CellsProperty", CellPropPtr);
 	}
-    friend void to_json(json& j, const SheetProperty& o);
-    friend void from_json(const json& j, SheetProperty& o);
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(SheetProperty,
+		BackgroundPropPtr,
+		HeaderPropPtr,
+		CellPropPtr)
 };
-
-void to_json(json& j, const SheetProperty& o)
-{
-	j = json{
-		{"BackgroundProperty", o.BackgroundPropPtr },
-		{"HeadersProperty", o.HeaderPropPtr},
-		{"CellsProperty", o.CellPropPtr}
-	};
-
-}
-void from_json(const json& j, SheetProperty& o)
-{
-	j.at("BackgroundProperty").get_to(o.BackgroundPropPtr);
-	j.at("HeadersProperty").get_to(o.HeaderPropPtr);
-	j.at("CellsProperty").get_to(o.CellPropPtr);
-}

@@ -67,22 +67,10 @@ struct YTag;
 			ar("y", y);
 		}
 
-		friend void to_json(json& j, const CPointF& o);
-		friend void from_json(const json& j, CPointF& o);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CPointF,
+			x,
+			y)
 	};
-
-	void to_json(json& j, const CPointF& o)
-	{
-		j = json{
-			{"x", o.x},
-			{"y", o.y}
-		};
-	}
-	void from_json(const json& j, CPointF& o)
-	{
-		j.at("x").get_to(o.x);
-		j.at("y").get_to(o.y);
-	}
 
 	struct CSizeF :public D2D1_SIZE_F
 	{
@@ -100,22 +88,10 @@ struct YTag;
 			ar("height", height);
 		}
 
-		friend void to_json(json& j, const CSizeF& o);
-		friend void from_json(const json& j, CSizeF& o);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CSizeF,
+			width,
+			height)
 	};
-	void to_json(json& j, const CSizeF& o)
-	{
-		j = json{
-			{"width", o.width},
-			{"height", o.height}
-		};
-	}
-	void from_json(const json& j, CSizeF& o)
-	{
-		j.at("width").get_to(o.width);
-		j.at("height").get_to(o.height);
-	}
-
 
 	struct CRectF :public D2D1_RECT_F
 	{
@@ -160,26 +136,12 @@ struct YTag;
 			ar("bottom", bottom);
 		}
 
-		friend void to_json(json& j, const CRectF& o);
-		friend void from_json(const json& j, CRectF& o);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CRectF,
+			left,
+			top,
+			right,
+			bottom)
 	};
-	void to_json(json& j, const CRectF& o)
-	{
-		j = json{
-			{"left", o.left},
-			{"top", o.top},
-			{"right", o.right},
-			{"bottom", o.bottom}
-		};
-	}
-	void from_json(const json& j, CRectF& o)
-	{
-		j.at("left").get_to(o.left);
-		j.at("top").get_to(o.top);
-		j.at("right").get_to(o.right);
-		j.at("bottom").get_to(o.bottom);
-	}
-
 
 	struct CColorF :public D2D1::ColorF
 	{
@@ -200,26 +162,12 @@ struct YTag;
 			ar("a", a);
 		}
 
-		friend void to_json(json& j, const CColorF& o);
-		friend void from_json(const json& j, CColorF& o);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CColorF,
+			r,
+			g,
+			b,
+			a)
 	};
-
-	void to_json(json& j, const CColorF& o)
-	{
-		j = json{
-			{"r", o.r},
-			{"g", o.g},
-			{"b", o.b},
-			{"a", o.a}
-		};
-	}
-	void from_json(const json& j, CColorF& o)
-	{
-		j.at("r").get_to(o.r);
-		j.at("g").get_to(o.g);
-		j.at("b").get_to(o.b);
-		j.at("a").get_to(o.a);
-	}
 
 namespace std
 {
@@ -266,22 +214,10 @@ namespace std
 			ar("Size", Size);
 		}
 
-		friend void to_json(json& j, const CFontF& o);
-		friend void from_json(const json& j, CFontF& o);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CFontF,
+			FamilyName,
+			Size)
 	};
-	void to_json(json& j, const CFontF& o)
-	{
-		j = json{
-			{"FamilyName", o.FamilyName},
-			{"Size", o.Size}
-		};
-	}
-	void from_json(const json& j, CFontF& o)
-	{
-		j.at("FamilyName").get_to(o.FamilyName);
-		j.at("Size").get_to(o.Size);
-	}
-
 
 namespace std
 {
@@ -314,21 +250,11 @@ namespace std
 			ar("TextAlignment", TextAlignment);
 			ar("ParagraphAlignment", ParagraphAlignment);
 		}
-		friend void to_json(json& j, const CAlignmentF& o);
-		friend void from_json(const json& j, CAlignmentF& o);
+
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CAlignmentF,
+			TextAlignment,
+			ParagraphAlignment)
 	};
-	void to_json(json& j, const CAlignmentF& o)
-	{
-		j = json{
-			{"TextAlignment", o.TextAlignment},
-			{"ParagraphAlignment", o.ParagraphAlignment}
-		};
-	}
-	void from_json(const json& j, CAlignmentF& o)
-	{
-		j.at("TextAlignment").get_to(o.TextAlignment);
-		j.at("ParagraphAlignment").get_to(o.ParagraphAlignment);
-	}
 
 namespace std
 {
@@ -356,22 +282,10 @@ namespace std
 			ar("Color", Color);
 			ar("Width", Width);
 		}
-		friend void to_json(json& j, const SolidLine& o);
-		friend void from_json(const json& j, SolidLine& o);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(SolidLine,
+			Color,
+			Width)
 	};
-	void to_json(json& j, const SolidLine& o)
-	{
-		j = json{
-			{"Color", o.Color},
-			{"Width", o.Width}
-		};
-	}
-	void from_json(const json& j, SolidLine& o)
-	{
-		j.at("Color").get_to(o.Color);
-		j.at("Width").get_to(o.Width);
-	}
-
 
 	struct SolidFill
 	{
@@ -389,20 +303,9 @@ namespace std
 			ar("Color", Color);
 		}
 
-		friend void to_json(json& j, const SolidFill& o);
-		friend void from_json(const json& j, SolidFill& o);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(SolidFill,
+			Color)
 	};
-	void to_json(json& j, const SolidFill& o)
-	{
-		j = json{
-			{"Color", o.Color}
-		};
-	}
-	void from_json(const json& j, SolidFill& o)
-	{
-		j.at("Color").get_to(o.Color);
-	}
-
 
 	struct FormatF
 	{
@@ -427,32 +330,21 @@ namespace std
 			ar("Alignment", Alignment);
 		}
 
-		friend void to_json(json& j, const FormatF& o);
-		friend void from_json(const json& j, FormatF& o);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(FormatF,
+			Font,
+			Color,
+			Alignment)
 	};
-	void to_json(json& j, const FormatF& o)
-	{
-		j = json{
-			{"Font", o.Font},
-			{"Color", o.Color},
-			{"Alignment", o.Alignment}
-		};
-	}
-	void from_json(const json& j, FormatF& o)
-	{
-		j.at("Font").get_to(o.Font);
-		j.at("Color").get_to(o.Color);
-		j.at("Alignment").get_to(o.Alignment);
-	}
 
 	struct SyntaxFormatF
 	{
 		CColorF Color;
 		bool IsBold;
+		bool IsUnderline;
 		SyntaxFormatF()
-			:Color(), IsBold(false){}
-		SyntaxFormatF(const CColorF& color, bool isBold)
-			:Color(color), IsBold(isBold){}
+			:Color(), IsBold(false), IsUnderline(false){}
+		SyntaxFormatF(const CColorF& color, bool isBold, bool isUnderline)
+			:Color(color), IsBold(isBold), IsUnderline(isUnderline){}
 
 		bool operator==(const SyntaxFormatF& rhs) const;
 		bool operator!=(const SyntaxFormatF& rhs) const;
@@ -463,23 +355,14 @@ namespace std
 		{
 			ar("Color", Color);
 			ar("IsBold", IsBold);
+			ar("IsUnderline", IsUnderline);
 		}
 
-		friend void to_json(json& j, const SyntaxFormatF& o);
-		friend void from_json(const json& j, SyntaxFormatF& o);
+		NLOHMANN_DEFINE_TYPE_INTRUSIVE(SyntaxFormatF,
+			Color,
+			IsBold,
+			IsUnderline)
 	};
-	void to_json(json& j, const SyntaxFormatF& o)
-	{
-		j = json{
-			{"Color", o.Color},
-			{"IsBold", o.IsBold}
-		};
-	}
-	void from_json(const json& j, SyntaxFormatF& o)
-	{
-		j.at("Color").get_to(o.Color);
-		j.at("IsBold").get_to(o.IsBold);
-	}
 
 namespace std
 {

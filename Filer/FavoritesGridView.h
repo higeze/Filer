@@ -16,9 +16,9 @@ public:
 
 public:
 	CFavoritesGridView(
-		CD2DWControl* pParentControl, 
-		std::shared_ptr<GridViewProperty> spGridViewProp,
-		std::shared_ptr<CFavoritesProperty> spFavoritesProp);
+		CD2DWControl* pParentControl = nullptr, 
+		const std::shared_ptr<GridViewProperty>& spGridViewProp = nullptr,
+		const std::shared_ptr<CFavoritesProperty>& spFavoritesProp = nullptr);
 	virtual ~CFavoritesGridView(void) = default;
 
 	std::shared_ptr<CFavoritesProperty>& GetFavoritesProp() { return m_spFavoritesProp; }
@@ -37,6 +37,13 @@ public:
 	void serialize(Archive& ar)
 	{
 		//ar("FavoritesProperty",m_spFavoritesProp);
+	}
+
+	friend void to_json(json& j, const CFavoritesGridView& o)
+	{
+	}
+	friend void from_json(const json& j, CFavoritesGridView& o)
+	{
 	}
 };
 

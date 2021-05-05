@@ -150,23 +150,19 @@ public:
 		m_pSubject->OnNext(m_value);
 	}
 
-    friend void to_json(json& j, const ReactiveProperty<T>& o);
-    friend void from_json(const json& j, ReactiveProperty<T>& o);
+	friend void to_json(json& j, const ReactiveProperty<T>& o)
+	{
+		j = {
+			{"Value", o.m_value},
+		};
+	}
+
+	friend void from_json(const json& j, ReactiveProperty<T>& o)
+	{
+		j.at("Value").get_to(o.m_value);
+	}
 };
 
-template<class T>
-void to_json(json& j, const ReactiveProperty<T>& o)
-{
-	j = {
-		{"Value", o.m_value},
-	};
-}
-
-template<class T>
-void from_json(const json& j, ReactiveProperty<T>& o)
-{
-	j.at("Value").get_to(o.m_value);
-}
 
 
 
@@ -472,25 +468,21 @@ public:
 		this->m_pSubject->OnNext(this->m_value);
 	}
 
-    friend void to_json(json& j, const ReactiveBasicStringProperty<CharT, Traits, Allocator>& o);
-    friend void from_json(const json& j, ReactiveBasicStringProperty<CharT, Traits, Allocator>& o);
+	friend void to_json(json& j, const ReactiveBasicStringProperty<CharT, Traits, Allocator>& o)
+	{
+		j = {
+			{"Value", o.get()}
+		};
+	}
+
+	friend void from_json(const json& j, ReactiveBasicStringProperty<CharT, Traits, Allocator>& o)
+	{
+		std::basic_string<CharT, Traits, Allocator> value;
+		j.at("Value").get_to(value);
+		o.set(value);
+	}
 };
 
-template<class CharT, class Traits, class Allocator>
-void to_json(json& j, const ReactiveBasicStringProperty<CharT, Traits, Allocator>& o)
-{
-	j = {
-		{"Value", o.get()}
-	};
-}
-
-template<class CharT, class Traits, class Allocator>
-void from_json(const json& j, ReactiveBasicStringProperty<CharT, Traits, Allocator>& o)
-{
-	std::basic_string<CharT, Traits, Allocator> value;
-	j.at("Value").get_to(value);
-	o.set(value);
-}
 
 
 
@@ -737,25 +729,21 @@ public:
 		this->m_pSubject->OnNext(this->m_value);
 	}
 
-    friend void to_json(json& j, const ReactiveVectorProperty<T, Allocator>& o);
-    friend void from_json(const json& j, ReactiveVectorProperty<T, Allocator>& o);
+	friend void to_json(json& j, const ReactiveVectorProperty<T, Allocator>& o)
+	{
+		j = {
+			{"Value", o.get()}
+		};
+	}
+
+	friend void from_json(const json& j, ReactiveVectorProperty<T, Allocator>& o)
+	{
+		std::vector<T, Allocator> value;
+		j.at("Value").get_to(value);
+		o.set(value);
+	}
 };
 
-template<class T, class Allocator>
-void to_json(json& j, const ReactiveVectorProperty<T, Allocator>& o)
-{
-	j = {
-		{"Value", o.get()}
-	};
-}
-
-template<class T, class Allocator>
-void from_json(const json& j, ReactiveVectorProperty<T, Allocator>& o)
-{
-	std::vector<T, Allocator> value;
-	j.at("Value").get_to(value);
-	o.set(value);
-}
 
 
 

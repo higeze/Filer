@@ -52,46 +52,49 @@ public:
 
 
 
-	class CStatusBar: public CD2DWControl
-	{
-	private:
-		std::mutex m_mtx;
-		CTimer m_timer;
-		double m_cpu = 0.f;
-		LONG m_mem = 0L;
-		LONG m_handleCount = 0L;
-		LONG m_threadCount = 0L;
-		std::wstring m_text;
+class CStatusBar : public CD2DWControl
+{
+private:
+	bool m_initialized = false;
+	std::mutex m_mtx;
+	CTimer m_timer;
+	double m_cpu = 0.f;
+	LONG m_mem = 0L;
+	LONG m_handleCount = 0L;
+	LONG m_threadCount = 0L;
+	std::wstring m_text;
 
 
-		PDH_HQUERY m_hQuery;
-		PDH_HCOUNTER m_hCounterCPU;
-		PDH_HCOUNTER m_hCounterMemory;
-		PDH_HCOUNTER m_hCounterThread;
-		PDH_HCOUNTER m_hCounterHandle;
+	PDH_HQUERY m_hQuery;
+	PDH_HCOUNTER m_hCounterCPU;
+	PDH_HCOUNTER m_hCounterMemory;
+	PDH_HCOUNTER m_hCounterThread;
+	PDH_HCOUNTER m_hCounterHandle;
 
-		void Update();
+	void Update();
 
-	protected:
+protected:
 
-		int m_min = 0;
-		int m_max = 100;
-		int m_value = 0;
+	int m_min = 0;
+	int m_max = 100;
+	int m_value = 0;
 
-		std::shared_ptr<StatusBarProperty> m_spStatusBarProp;
-	public:
-		CStatusBar(CD2DWControl* pParentControl, const std::shared_ptr<StatusBarProperty>& spStatusBarProp);
-		virtual ~CStatusBar();
+	std::shared_ptr<StatusBarProperty> m_spStatusBarProp;
+public:
+	CStatusBar(CD2DWControl* pParentControl, const std::shared_ptr<StatusBarProperty>& spStatusBarProp);
+	virtual ~CStatusBar();
 
-		//void SetRect(const CRectF & rect) { m_rect = rect; }
-		//void SetRect(const FLOAT left, const FLOAT top, const FLOAT right, const FLOAT bottom)
-		//{
-		//	m_rect.SetRect(left, top, right, bottom);
-		//}
-		void SetText(const std::wstring& text) { m_text = text; }
-		CSizeF GetSize()const { return CSizeF(m_rect.Width(), m_rect.Height()); }
-		virtual void OnPaint(const PaintEvent & e);
-		virtual CSizeF MeasureSize(CDirect2DWrite* pDirect);
+	//void SetRect(const CRectF & rect) { m_rect = rect; }
+	//void SetRect(const FLOAT left, const FLOAT top, const FLOAT right, const FLOAT bottom)
+	//{
+	//	m_rect.SetRect(left, top, right, bottom);
+	//}
+	void SetText(const std::wstring& text) { m_text = text; }
+	CSizeF GetSize()const { return CSizeF(m_rect.Width(), m_rect.Height()); }
+	virtual void OnPaint(const PaintEvent& e);
+	virtual CSizeF MeasureSize(CDirect2DWrite* pDirect);
 
-		void OnCreate(const CreateEvt& e)override;
-	};
+	void OnCreate(const CreateEvt& e)override;
+	void OnWndSetFocus(const SetFocusEvent& e) override;
+	void OnWndKillFocus(const KillFocusEvent& e) override;
+};

@@ -138,6 +138,123 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	m_commandMap.emplace(IDM_ADDTOFAVORITE, std::bind(&CFilerTabGridView::OnCommandAddToFavorite, this, phs::_1));
 	m_commandMap.emplace(IDM_OPENSAMEASOTHER, std::bind(&CFilerTabGridView::OnCommandOpenSameAsOther, this, phs::_1));
 
+
+	//FilerGridView Closure
+	GetFilerGridViewPtr =
+		[spFilerView = std::make_shared<CFilerGridView>(this, m_spFilerGridViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CFilerGridView>& {
+
+		if (!isInitialized && GetWndPtr()->IsWindow()) {
+			isInitialized = true;
+
+			//Folder Changed
+			spFilerView->FolderChanged = [&](std::shared_ptr<CShellFolder>& pFolder) {
+				auto pData = std::static_pointer_cast<FilerTabData>(m_itemsSource[m_selectedIndex.get()]);
+				pData->FolderPtr = pFolder;
+				pData->Path = pFolder->GetPath();
+				UpdateHeaderRects();
+				spFilerView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
+			};
+		}
+		return spFilerView;
+	};
+
+	//ToDoGridView Closure
+	GetToDoGridViewPtr = [spToDoView = std::make_shared<CToDoGridView>(this, std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp)), isInitialized = false, this]()mutable->std::shared_ptr<CToDoGridView>& {
+
+		if (!isInitialized && GetWndPtr()->IsWindow()) {
+			isInitialized = true;
+
+			//Columns
+			spToDoView->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(spToDoView.get()));
+			spToDoView->PushColumns(
+				spToDoView->GetHeaderColumnPtr(),
+				std::make_shared<CBindCheckBoxColumn<MainTask>>(
+					spToDoView.get(),
+					L"Done",
+					[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
+					[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
+				std::make_shared<CBindTextColumn<MainTask>>(
+					spToDoView.get(),
+					L"Name",
+					[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name; },
+					[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name = str; }),
+				std::make_shared<CBindTextColumn<MainTask>>(
+					spToDoView.get(),
+					L"Memo",
+					[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo; },
+					[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo = str; }),
+				std::make_shared<CBindSheetCellColumn< MainTask, SubTask>>(
+					spToDoView.get(),
+					L"Sub Task",
+					[](std::tuple<MainTask>& tk)->ReactiveVectorProperty<std::tuple<SubTask>>& {return std::get<MainTask>(tk).SubTasks; },
+					[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void {
+						pCell->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pCell));
+						pCell->PushColumns(
+							pCell->GetHeaderColumnPtr(),
+							std::make_shared<CBindCheckBoxColumn<SubTask>>(
+								pCell,
+								L"Done",
+								[](const std::tuple<SubTask>& tk)->CheckBoxState {return std::get<SubTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
+								[](std::tuple<SubTask>& tk, const CheckBoxState& state)->void {std::get<SubTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
+							std::make_shared<CBindTextColumn<SubTask>>(
+								pCell,
+								L"Name",
+								[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Name; },
+								[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Name = str; }),
+							std::make_shared<CBindTextColumn<SubTask>>(
+								pCell,
+								L"Memo",
+								[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Memo; },
+								[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Memo = str; })
+						);
+						pCell->SetFrozenCount<ColTag>(1);
+
+						pCell->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pCell));
+						pCell->InsertRow(0, pCell->GetNameHeaderRowPtr());
+						pCell->SetFrozenCount<RowTag>(1);
+					},
+					arg<"maxwidth"_s>() = FLT_MAX)
+			);
+			spToDoView->SetFrozenCount<ColTag>(1);
+
+			//Rows
+			spToDoView->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(spToDoView.get()));
+			spToDoView->SetFilterRowPtr(std::make_shared<CRow>(spToDoView.get()));
+
+			spToDoView->PushRows(
+				spToDoView->GetNameHeaderRowPtr(),
+				spToDoView->GetFilterRowPtr());
+
+			spToDoView->SetFrozenCount<RowTag>(2);
+
+			//Path Changed
+			spToDoView->GetPath().Subscribe([&](const std::wstring& e) {
+				auto pData = std::static_pointer_cast<ToDoTabData>(m_itemsSource[m_selectedIndex.get()]);
+				pData->Path = spToDoView->GetPath().get();
+				spToDoView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
+			});
+		}
+		return spToDoView;
+	};
+
+	//TextView Closure
+	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(this, m_spTextEditorProp), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>& {
+		return spTextView;
+	};
+
+	//PdfView Closure
+	GetPdfViewPtr = [spPdfView = std::make_shared<CPdfView>(this, m_spPdfViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CPdfView>& {
+		return spPdfView;
+	};
+}
+
+CFilerTabGridView::~CFilerTabGridView() = default;
+
+void CFilerTabGridView::OnCreate(const CreateEvt& e)
+{
+	/*****************/
+	/* ItemsTemplate */
+	/*****************/
 	//ItemsHeader
 	m_itemsHeaderTemplate.emplace(typeid(FilerTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
 		{
@@ -330,125 +447,14 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	});
 
 
-
-	//FilerGridView Closure
-	GetFilerGridViewPtr =
-		[spFilerView = std::make_shared<CFilerGridView>(this, m_spFilerGridViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CFilerGridView> {
-
-		if (!isInitialized && GetWndPtr()->IsWindow()) {
-			isInitialized = true;
-
-			//Folder Changed
-			spFilerView->FolderChanged = [&](std::shared_ptr<CShellFolder>& pFolder) {
-				auto pData = std::static_pointer_cast<FilerTabData>(m_itemsSource[m_selectedIndex.get()]);
-				pData->FolderPtr = pFolder;
-				pData->Path = pFolder->GetPath();
-				UpdateHeaderRects();
-				spFilerView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
-			};
-		}
-		return spFilerView;
-	};
-
-	//ToDoGridView Closure
-	GetToDoGridViewPtr = [spToDoView = std::make_shared<CToDoGridView>(this, std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp)), isInitialized = false, this]()mutable->std::shared_ptr<CToDoGridView>{
-
-		if (!isInitialized && GetWndPtr()->IsWindow()) {
-			isInitialized = true;
-
-			//Columns
-			spToDoView->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(spToDoView.get()));
-			spToDoView->PushColumns(
-				spToDoView->GetHeaderColumnPtr(),
-				std::make_shared<CBindCheckBoxColumn<MainTask>>(
-					spToDoView.get(),
-					L"Done",
-					[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
-					[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
-				std::make_shared<CBindTextColumn<MainTask>>(
-					spToDoView.get(),
-					L"Name",
-					[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name; },
-					[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name = str; }),
-				std::make_shared<CBindTextColumn<MainTask>>(
-					spToDoView.get(),
-					L"Memo",
-					[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo; },
-					[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo = str; }),
-				std::make_shared<CBindSheetCellColumn< MainTask, SubTask>>(
-					spToDoView.get(),
-					L"Sub Task",
-					[](std::tuple<MainTask>& tk)->ReactiveVectorProperty<std::tuple<SubTask>>& {return std::get<MainTask>(tk).SubTasks; },
-					[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void {
-						pCell->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pCell));
-						pCell->PushColumns(
-							pCell->GetHeaderColumnPtr(),
-							std::make_shared<CBindCheckBoxColumn<SubTask>>(
-								pCell,
-								L"Done",
-								[](const std::tuple<SubTask>& tk)->CheckBoxState {return std::get<SubTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
-								[](std::tuple<SubTask>& tk, const CheckBoxState& state)->void {std::get<SubTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
-							std::make_shared<CBindTextColumn<SubTask>>(
-								pCell,
-								L"Name",
-								[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Name; },
-								[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Name = str; }),
-							std::make_shared<CBindTextColumn<SubTask>>(
-								pCell,
-								L"Memo",
-								[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Memo; },
-								[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Memo = str; })
-						);
-						pCell->SetFrozenCount<ColTag>(1);
-
-						pCell->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pCell));
-						pCell->InsertRow(0, pCell->GetNameHeaderRowPtr());
-						pCell->SetFrozenCount<RowTag>(1);
-					},
-					arg<"maxwidth"_s>() = FLT_MAX)
-			);
-			spToDoView->SetFrozenCount<ColTag>(1);
-
-			//Rows
-			spToDoView->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(spToDoView.get()));
-			spToDoView->SetFilterRowPtr(std::make_shared<CRow>(spToDoView.get()));
-
-			spToDoView->PushRows(
-				spToDoView->GetNameHeaderRowPtr(),
-				spToDoView->GetFilterRowPtr());
-
-			spToDoView->SetFrozenCount<RowTag>(2);
-
-			//Path Changed
-			spToDoView->GetPath().Subscribe([&](const std::wstring& e) {
-				auto pData = std::static_pointer_cast<ToDoTabData>(m_itemsSource[m_selectedIndex.get()]);
-				pData->Path = spToDoView->GetPath().get();
-				spToDoView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
-			});
-		}
-		return spToDoView;
-	};
-
-	//TextView Closure
-	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(this, m_spTextEditorProp), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>{
-		return spTextView;
-	};
-
-	//PdfView Closure
-	GetPdfViewPtr = [spPdfView = std::make_shared<CPdfView>(this, m_spPdfViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CPdfView>{
-		return spPdfView;
-	};
-}
-
-CFilerTabGridView::~CFilerTabGridView() = default;
-
-void CFilerTabGridView::OnCreate(const CreateEvt& e)
-{
+	/**********/
+	/* Create */
+	/**********/
 	CTabControl::OnCreate(e);
-	GetFilerGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
-	GetToDoGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
-	GetTextViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
-	GetPdfViewPtr()->OnCreate(CreateEvt(GetWndPtr(), GetControlRect()));
+	GetFilerGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
+	GetToDoGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
+	GetTextViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
+	GetPdfViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 
 	GetFilerGridViewPtr()->GetIsEnabled().set(false);
 	GetToDoGridViewPtr()->GetIsEnabled().set(false);
@@ -469,27 +475,6 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		}
 	}
 }
-
-void CFilerTabGridView::OnKeyDown(const KeyDownEvent& e)
-{
-	switch (e.Char)
-	{
-	case 'T':
-		if (::GetAsyncKeyState(VK_CONTROL)) {
-			GetWndPtr()->SendMessage(WM_COMMAND, IDM_NEWFILERTAB, NULL);
-		}
-		break;
-	case 'W':
-		if (::GetAsyncKeyState(VK_CONTROL)) {
-			GetWndPtr()->SendMessage(WM_COMMAND, IDM_CLOSETAB, NULL);
-		}
-		break;
-	default:
-		m_spCurControl->OnKeyDown(e);
-		break;
-	}
-}
-
 
 void CFilerTabGridView::OnContextMenu(const ContextMenuEvent& e)
 {

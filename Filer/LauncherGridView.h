@@ -12,9 +12,9 @@ private:
 
 public:
 	CLauncherGridView(
-		CD2DWControl* pParentControl, 
-		std::shared_ptr<GridViewProperty> spGridViewProp,
-		std::shared_ptr<CLauncherProperty> spLauncherProp);
+		CD2DWControl* pParentControl = nullptr, 
+		const std::shared_ptr<GridViewProperty>& spGridViewProp = nullptr,
+		const std::shared_ptr<CLauncherProperty>& spLauncherProp = nullptr);
 	
 	virtual ~CLauncherGridView(void) = default;
 
@@ -35,5 +35,12 @@ public:
 	{
 		//ar("FavoritesProperty",m_spFavoritesProp);
 	}
+	friend void to_json(json& j, const CLauncherGridView& o)
+	{
+	}
+	friend void from_json(const json& j, CLauncherGridView& o)
+	{
+	}
+
 };
 

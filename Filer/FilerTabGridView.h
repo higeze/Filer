@@ -67,28 +67,26 @@ struct FilerTabData:public TabData
 			}
 		}
 	}
-    friend void to_json(json& j, const FilerTabData& o);
-    friend void from_json(const json& j, FilerTabData& o);
-};
-void to_json(json& j, const FilerTabData& o)
-{
-	to_json(j, static_cast<const TabData&>(o));
-	j["Path"] = o.FolderPtr->GetPath();
-}
-void from_json(const json& j, FilerTabData& o)
-{
-	from_json(j, static_cast<FilerTabData&>(o));
-	j.at("Path").get_to(o.Path);
-	if (!o.Path.empty()) {
-		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(o.Path);
-		if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-			o.FolderPtr = sp;
-		} else {
-			o.FolderPtr = CKnownFolderManager::GetInstance()->GetDesktopFolder();
-			o.Path = o.FolderPtr->GetPath();
+	friend void to_json(json& j, const FilerTabData& o)
+	{
+		to_json(j, static_cast<const TabData&>(o));
+		j["Path"] = o.FolderPtr->GetPath();
+	}
+	friend void from_json(const json& j, FilerTabData& o)
+	{
+		from_json(j, static_cast<TabData&>(o));
+		j.at("Path").get_to(o.Path);
+		if (!o.Path.empty()) {
+			auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(o.Path);
+			if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+				o.FolderPtr = sp;
+			} else {
+				o.FolderPtr = CKnownFolderManager::GetInstance()->GetDesktopFolder();
+				o.Path = o.FolderPtr->GetPath();
+			}
 		}
 	}
-}
+};
 
 /***************/
 /* ToDoTabData */
@@ -113,19 +111,8 @@ struct ToDoTabData:public TabData
 		ar("Path", Path);
 	}
 
-	friend void to_json(json& j, const ToDoTabData& o);
-    friend void from_json(const json& j, ToDoTabData& o);
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(ToDoTabData, Path)
 };
-void to_json(json& j, const ToDoTabData& o)
-{
-	to_json(j, static_cast<const TabData&>(o));
-	j["Path"] = o.Path;
-}
-void from_json(const json& j, ToDoTabData& o)
-{
-	from_json(j, static_cast<TabData&>(o));
-	j.at("Path").get_to(o.Path);
-}
 
 /***************/
 /* TextTabData */
@@ -180,19 +167,8 @@ struct TextTabData :public TabData
 	{
 		ar("Path", Path);
 	}
-	friend void to_json(json& j, const TextTabData& o);
-    friend void from_json(const json& j, TextTabData& o);
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(TextTabData, Path)
 };
-void to_json(json& j, const TextTabData& o)
-{
-	to_json(j, static_cast<const TabData&>(o));
-	j["Path"] = o.Path;
-}
-void from_json(const json& j, TextTabData& o)
-{
-	from_json(j, static_cast<TabData&>(o));
-	j.at("Path").get_to(o.Path);
-}
 
 /**************/
 /* PdfTabData */
@@ -226,20 +202,8 @@ struct PdfTabData :public TabData
 	{
 		ar("Path", Path);
 	}
-	friend void to_json(json& j, const PdfTabData& o);
-    friend void from_json(const json& j, PdfTabData& o);
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(PdfTabData, Path)
 };
-void to_json(json& j, const PdfTabData& o)
-{
-	to_json(j, static_cast<const TabData&>(o));
-	j["Path"] = o.Path;
-}
-void from_json(const json& j, PdfTabData& o)
-{
-	from_json(j, static_cast<TabData&>(o));
-	j.at("Path").get_to(o.Path);
-}
-
 
 /*************/
 /* CFilerTab */
@@ -278,24 +242,28 @@ public:
 		const std::shared_ptr<PdfViewProperty>& spPdfViewProp = nullptr);
 	virtual ~CFilerTabGridView();
 
+	/****************/
+	/* Pure Virtual */
+	/****************/
+
 	/***********/
 	/* Closure */
 	/***********/
-	std::function<std::shared_ptr<CFilerGridView>()> GetFilerGridViewPtr;
-	std::function<std::shared_ptr<CToDoGridView>()> GetToDoGridViewPtr;
-	std::function<std::shared_ptr<CTextEditor>()> GetTextViewPtr;
-	std::function<std::shared_ptr<CPdfView>()> GetPdfViewPtr;
+	std::function<std::shared_ptr<CFilerGridView>&()> GetFilerGridViewPtr;
+	std::function<std::shared_ptr<CToDoGridView>&()> GetToDoGridViewPtr;
+	std::function<std::shared_ptr<CTextEditor>&()> GetTextViewPtr;
+	std::function<std::shared_ptr<CPdfView>&()> GetPdfViewPtr;
 
 	/**************/
 	/* UI Message */
 	/**************/
 	void OnCreate(const CreateEvt& e) override;
-	void OnKeyDown(const KeyDownEvent& e) override;
 	void OnContextMenu(const ContextMenuEvent& e) override;
 
 	/***********/
 	/* Command */
 	/***********/
+	void OnCommandNewTab(const CommandEvent& e) override { return OnCommandNewFilerTab(e); }
 	void OnCommandNewFilerTab(const CommandEvent& e);
 	void OnCommandNewToDoTab(const CommandEvent& e);
 	void OnCommandNewTextTab(const CommandEvent& e);
@@ -331,29 +299,27 @@ public:
 		ar("FilerView", spGrid, this, m_spFilerGridViewProp);
 	}
 
-    friend void to_json(json& j, const CFilerTabGridView& o);
-    friend void from_json(const json& j, CFilerTabGridView& o);
+	friend void to_json(json& j, const CFilerTabGridView& o)
+	{
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData );
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
+
+		to_json(j, static_cast<const CTabControl&>(o));
+		j["FilerView"] = o.GetFilerGridViewPtr();
+	}
+
+	friend void from_json(const json& j, CFilerTabGridView& o)
+	{
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData);
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
+
+		from_json(j, static_cast<CTabControl&>(o));
+		//auto spGrid = o.GetFilerGridViewPtr();
+		//j.at("FilerView").get_to(spGrid);
+	}
 };
 
-void to_json(json& j, const CFilerTabGridView& o)
-{
-	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
-	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData );
-	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
-	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
-
-	to_json(j, static_cast<const CTabControl&>(o));
-	j["FilerView"] = o.GetFilerGridViewPtr();
-}
-
-void from_json(const json& j, CFilerTabGridView& o)
-{
-	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
-	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData);
-	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
-	JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
-
-	from_json(j, static_cast<CTabControl&>(o));
-	auto spGrid = o.GetFilerGridViewPtr();
-	j.at("FilerView").get_to(spGrid);
-}

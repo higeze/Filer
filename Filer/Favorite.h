@@ -2,6 +2,7 @@
 #include "MyFriendSerializer.h"
 #include <future>
 #include <mutex>
+#include "JsonSerializer.h"
 
 class CShellFile;
 
@@ -43,5 +44,19 @@ public:
 		ar("Path", m_path);
 		ar("ShortName",m_shortName);
     }
+	friend void to_json(json& j, const CFavorite& o)
+	{
+	
+		j = json{
+			{"Path", o.m_path},
+			{"ShortName", o.m_shortName}
+		};
+	}
+	friend void from_json(const json& j, CFavorite& o)
+	{
+		j.at("Path").get_to(o.m_path);
+		j.at("ShortName").get_to(o.m_shortName);
+	}
+
 };
 

@@ -26,33 +26,13 @@ public:
 		ar("DeltaScroll", DeltaScroll);
 	}
 
-	friend void to_json(json& j, const ScrollProperty& o);
-    friend void from_json(const json& j, ScrollProperty& o);
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(ScrollProperty, 
+		BackgroundFill,
+		ThumbNormalFill,
+		ThumbHotFill,
+		ThumbScrollFill,
+		ThumbMargin,
+		BandWidth,
+		DeltaScroll)
 };
-
-void to_json(json& j, const ScrollProperty& o)
-{
-	j = json{
-		{"BackgroundFill", o.BackgroundFill},
-		{"ThumbNormalFill", o.ThumbNormalFill},
-		{"ThumbHotFill", o.ThumbHotFill},
-		{"ThumbScrollFill", o.ThumbScrollFill},
-		{"ThumbMargin", o.ThumbMargin},
-		{"BandWidth", o.BandWidth },
-		{"DeltaScroll", o.DeltaScroll}
-	};
-
-}
-
-void from_json(const json& j, ScrollProperty& o)
-{
-	j.at("BackgroundFill").get_to(o.BackgroundFill);
-	j.at("ThumbNormalFill").get_to(o.ThumbNormalFill);
-	j.at("ThumbHotFill").get_to(o.ThumbHotFill);
-	j.at("ThumbScrollFill").get_to(o.ThumbScrollFill);
-	j.at("ThumbMargin").get_to( o.ThumbMargin);
-	j.at("BandWidth").get_to(o.BandWidth);
-	j.at("DeltaScroll").get_to(o.DeltaScroll);
-
-}
 

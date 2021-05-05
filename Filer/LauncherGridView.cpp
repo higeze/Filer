@@ -25,9 +25,11 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CLauncherGridView::CLauncherGridView(
 	CD2DWControl* pParentControl,
-	std::shared_ptr<GridViewProperty> spGridViewProp,
-	std::shared_ptr<CLauncherProperty> spLauncherProp)
-	:CBindGridView(pParentControl, spGridViewProp, spLauncherProp->GetFavoritesPtr(), arg<"bindtype"_s>()=BindType::Column),
+	const std::shared_ptr<GridViewProperty>& spGridViewProp,
+	const std::shared_ptr<CLauncherProperty>& spLauncherProp)
+	:CBindGridView(pParentControl, spGridViewProp, spLauncherProp->GetFavoritesPtr(),
+		arg<"bindtype"_s>() = BindType::Column,
+		arg<"rows"_s>() = std::vector<std::shared_ptr<CRow>>{std::make_shared<CLauncherRow<std::shared_ptr<CFavorite>>>(this)}),
 	m_spLauncherProp(spLauncherProp)
 {
 	GetIsFocusable().set(false);
@@ -40,7 +42,7 @@ CLauncherGridView::CLauncherGridView(
 void CLauncherGridView::OnCreate(const CreateEvt& e)
 {
 	//Base Create
-	CGridView::OnCreate(e);
+	CBindGridView::OnCreate(e);
 
 	//List
 	OpenFavorites();
@@ -54,20 +56,10 @@ void CLauncherGridView::OpenFavorites()
 
 	LOG_SCOPED_TIMER_THIS_1("OpenFavorites Total");
 
-	//Direct2DWrite
-	GetWndPtr()->GetDirectPtr()->ClearTextLayoutMap();
 	//Celler
 	m_spCeller->Clear();
 	//Cursor
 	m_spCursorer->Clear();
-
-	if (Empty()) {
-		//IconRow
-		{
-			auto pRow = std::make_shared<CLauncherRow<std::shared_ptr<CFavorite>>>(this);
-			PushRow(pRow);
-		}
-	}
 
 
 	//for (auto colPtr : m_allCols) {

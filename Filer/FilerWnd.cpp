@@ -61,8 +61,7 @@ CFilerWnd::CFilerWnd()
 	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spStatusBar(std::make_shared<CStatusBar>(this, std::make_shared<StatusBarProperty>())),
-	m_spCurView(m_spLeftView),
-	m_pSplitterBinding(std::make_unique<CBinding<FLOAT>>(m_splitterLeft, m_spSplitter->GetSplitterLeft()))
+	m_spCurView(m_spLeftView)
 #ifdef USE_PYTHON_EXTENSION
 	,m_spPyExProp(std::make_shared<CPythonExtensionProperty>())
 #endif
@@ -98,6 +97,24 @@ CFilerWnd::CFilerWnd()
 	m_commandMap.emplace(IDM_TEXTOPTION, std::bind(&CFilerWnd::OnCommandTextOption, this, phs::_1));
 	m_commandMap.emplace(IDM_FAVORITESOPTION, std::bind(&CFilerWnd::OnCommandFavoritesOption,this, phs::_1));
 	m_commandMap.emplace(IDM_EXEEXTENSIONOPTION, std::bind(&CFilerWnd::OnCommandExeExtensionOption, this, phs::_1));
+}
+
+CFilerWnd::~CFilerWnd() = default;
+
+HWND CFilerWnd::Create(HWND hWndParent)
+{
+	m_pSplitterBinding = std::make_unique<CBinding<FLOAT>>(m_splitterLeft, m_spSplitter->GetSplitterLeft());
+	return CWnd::Create(hWndParent, m_rcWnd);
+}
+
+void CFilerWnd::OnPaint(const PaintEvent& e)
+{
+	GetDirectPtr()->FillSolidRectangle(CColorF(1.f, 1.f, 1.f), GetRectInWnd());
+	CD2DWWindow::OnPaint(e);
+}
+
+void CFilerWnd::OnCreate(const CreateEvt& e)
+{
 
 #ifdef USE_PYTHON_EXTENSION
 	m_commandMap.emplace(IDM_PYTHONEXTENSIONOPTION, std::bind(&CFilerWnd::OnCommandPythonExtensionOption, this, phs::_1));
@@ -335,23 +352,13 @@ CFilerWnd::CFilerWnd()
 
 	applyCustomContextMenu(m_spLeftView->GetFilerGridViewPtr());
 	applyCustomContextMenu(m_spRightView->GetFilerGridViewPtr());
-}
 
-CFilerWnd::~CFilerWnd() = default;
 
-HWND CFilerWnd::Create(HWND hWndParent)
-{
-	return CWnd::Create(hWndParent, m_rcWnd);
-}
 
-void CFilerWnd::OnPaint(const PaintEvent& e)
-{
-	GetDirectPtr()->FillSolidRectangle(CColorF(1.f, 1.f, 1.f), GetRectInWnd());
-	CD2DWWindow::OnPaint(e);
-}
 
-void CFilerWnd::OnCreate(const CreateEvt& e)
-{
+
+
+
 	//SetWindowPlacement make sure Window in Monitor
 	WINDOWPLACEMENT wp = { 0 };
 	wp.length = sizeof(WINDOWPLACEMENT);
@@ -363,13 +370,13 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	
 	auto [rcLauncher, rcLeftFav, rcLeftTab, rcSplitter, rcRightFav, rcRightTab, rcStatus] = GetRects();
 
-	m_spLauncher->OnCreate(CreateEvt(this, rcLauncher));
-	m_spLeftFavoritesView->OnCreate(CreateEvt(this, rcLeftFav));
-	m_spLeftView->OnCreate(CreateEvt(this, rcLeftTab));
-	m_spSplitter->OnCreate(CreateEvt(this, rcSplitter));
-	m_spRightFavoritesView->OnCreate(CreateEvt(this, rcRightFav));
-	m_spRightView->OnCreate(CreateEvt(this, rcRightTab));
-	m_spStatusBar->OnCreate(CreateEvt(this, rcStatus));
+	m_spLauncher->OnCreate(CreateEvt(this, this, rcLauncher));
+	m_spLeftFavoritesView->OnCreate(CreateEvt(this, this, rcLeftFav));
+	m_spLeftView->OnCreate(CreateEvt(this, this, rcLeftTab));
+	m_spSplitter->OnCreate(CreateEvt(this, this, rcSplitter));
+	m_spRightFavoritesView->OnCreate(CreateEvt(this, this, rcRightFav));
+	m_spRightView->OnCreate(CreateEvt(this, this, rcRightTab));
+	m_spStatusBar->OnCreate(CreateEvt(this, this, rcStatus));
 
 	SetFocusedControlPtr(m_spLeftView);
 }

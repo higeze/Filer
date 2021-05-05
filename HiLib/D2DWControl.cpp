@@ -54,6 +54,7 @@ bool CD2DWControl::GetIsFocused()const
 
 void CD2DWControl::OnCreate(const CreateEvt& e)
 {
+	m_pParentControl = e.ParentPtr;
 	m_rect =  e.RectF;
 	auto p = shared_from_this();
 	GetParentControlPtr()->AddChildControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
@@ -133,6 +134,8 @@ void CD2DWControl::OnSetCursor(const SetCursorEvent& e)
 void CD2DWControl::OnSetFocus(const SetFocusEvent& e) { SendFocused(&CD2DWControl::OnSetFocus, e); }
 void CD2DWControl::OnKillFocus(const KillFocusEvent& e) { SendFocused(&CD2DWControl::OnKillFocus, e); }
 
+void CD2DWControl::OnWndSetFocus(const SetFocusEvent& e) { SendAll(&CD2DWControl::OnWndSetFocus, e); }
+void CD2DWControl::OnWndKillFocus(const KillFocusEvent& e) { SendAll(&CD2DWControl::OnWndKillFocus, e); }
 
 void CD2DWControl::OnKeyDown(const KeyDownEvent& e) { SendFocused(&CD2DWControl::OnKeyDown, e); }
 void CD2DWControl::OnSysKeyDown(const SysKeyDownEvent& e) { SendFocused(&CD2DWControl::OnSysKeyDown, e); }

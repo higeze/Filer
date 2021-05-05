@@ -8,6 +8,7 @@
 	CStatusBar::CStatusBar(CD2DWControl* pParentControl, const std::shared_ptr<StatusBarProperty>& spStatusBarProp)
 		:CD2DWControl(pParentControl), 
 		m_spStatusBarProp(spStatusBarProp),
+		m_initialized(false),
 		m_hQuery(nullptr),
 		m_hCounterCPU(nullptr),
 		m_hCounterMemory(nullptr),
@@ -17,32 +18,36 @@
 	void CStatusBar::OnCreate(const CreateEvt& e)
 	{
 		CD2DWControl::OnCreate(e);
-		if (::PdhOpenQuery(NULL, 0, &m_hQuery) == ERROR_SUCCESS &&
-			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\% Processor Time", 0, &m_hCounterCPU) == ERROR_SUCCESS &&
-			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Private Bytes", 0, &m_hCounterMemory) == ERROR_SUCCESS &&
-			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Thread Count", 0, &m_hCounterThread) == ERROR_SUCCESS &&
-			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Handle Count", 0, &m_hCounterHandle) == ERROR_SUCCESS) {
-			Update();
-			m_timer.run([this]()->void { Update(); }, std::chrono::milliseconds(3000));
-		} else {
-			throw std::exception(FILE_LINE_FUNC);
-		}
+		m_timer.run([this]()->void { Update(); }, std::chrono::milliseconds(3000));
 	}
 
 
 	CStatusBar::~CStatusBar()
 	{
 		m_timer.stop();
-		::PdhRemoveCounter(m_hCounterCPU);
-		::PdhRemoveCounter(m_hCounterMemory);
-		::PdhRemoveCounter(m_hCounterThread);
-		::PdhRemoveCounter(m_hCounterHandle);
-		::PdhCloseQuery(m_hQuery);
+		if (m_initialized) {
+			::PdhRemoveCounter(m_hCounterCPU);
+			::PdhRemoveCounter(m_hCounterMemory);
+			::PdhRemoveCounter(m_hCounterThread);
+			::PdhRemoveCounter(m_hCounterHandle);
+			::PdhCloseQuery(m_hQuery);
+		}
 	}
 
 	void CStatusBar::Update()
 	{
 		std::lock_guard<std::mutex> lock(m_mtx);
+		if (!m_initialized) {
+			if (::PdhOpenQuery(NULL, 0, &m_hQuery) == ERROR_SUCCESS &&
+			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\% Processor Time", 0, &m_hCounterCPU) == ERROR_SUCCESS &&
+			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Private Bytes", 0, &m_hCounterMemory) == ERROR_SUCCESS &&
+			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Thread Count", 0, &m_hCounterThread) == ERROR_SUCCESS &&
+			::PdhAddCounter(m_hQuery, L"\\Process(Filer)\\Handle Count", 0, &m_hCounterHandle) == ERROR_SUCCESS) {
+				m_initialized = true;
+			} else {
+				THROW_FILE_LINE_FUNC;
+			}
+		}
 		try {
 			//Memory
 			//PROCESS_MEMORY_COUNTERS_EX pmc;
@@ -107,6 +112,15 @@
 			rcPaint);
 	}
 
+	void CStatusBar::OnWndSetFocus(const SetFocusEvent& e)
+	{
+		m_timer.run([this]()->void { Update(); }, std::chrono::milliseconds(3000));
+	}
+	void CStatusBar::OnWndKillFocus(const KillFocusEvent& e)
+	{
+		m_timer.stop();
+	}
+
 	CSizeF CStatusBar::MeasureSize(CDirect2DWrite* pDirect)
 	{
 		//Calc Content Rect
@@ -114,3 +128,5 @@
 		if (text.empty()) { text = L"a"; }
 		return pDirect->CalcTextSize(m_spStatusBarProp->Format, text);
 	}
+
+

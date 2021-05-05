@@ -82,28 +82,13 @@ public:
 		ar("HScrollProperty", HScrollPropPtr);
 	}
 
-	friend void to_json(json& j, const PdfViewProperty& o);
-    friend void from_json(const json& j, PdfViewProperty& o);
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(PdfViewProperty,
+		FocusedLine,
+		NormalFill,
+		Padding,
+		VScrollPropPtr,
+		HScrollPropPtr)
 };
-void to_json(json& j, const PdfViewProperty& o)
-{
-	j = json{
-		{"FocusedLine", o.FocusedLine},
-		{"NormalFill", o.NormalFill},
-		{"Padding", o.Padding},
-		{"VScrollProperty", o.VScrollPropPtr},
-		{"HScrollProperty", o.HScrollPropPtr}
-	};
-}
-void from_json(const json& j, PdfViewProperty& o)
-{
-	j.at("FocusedLine").get_to(o.FocusedLine);
-	j.at("NormalFill").get_to(o.NormalFill);
-	j.at("Padding").get_to(o.Padding);
-	j.at("VScrollProperty").get_to(o.VScrollPropPtr);
-	j.at("HScrollProperty").get_to(o.HScrollPropPtr);
-}
-
 
 enum class InitialScaleMode
 {

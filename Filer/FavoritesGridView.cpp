@@ -22,9 +22,11 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CFavoritesGridView::CFavoritesGridView(
 	CD2DWControl* pParentControl,
-	std::shared_ptr<GridViewProperty> spGridViewProp,
-	std::shared_ptr<CFavoritesProperty> spFavoritesProp)
-	:CBindGridView(pParentControl, spGridViewProp, spFavoritesProp->GetFavoritesPtr()),
+	const std::shared_ptr<GridViewProperty>& spGridViewProp,
+	const std::shared_ptr<CFavoritesProperty>& spFavoritesProp)
+	:CBindGridView(pParentControl, spGridViewProp, spFavoritesProp->GetFavoritesPtr(),
+		arg<"bindtype"_s>() = BindType::Row,
+		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{std::make_shared<CFavoritesColumn<std::shared_ptr<CFavorite>>>(this)}),
 	m_spFavoritesProp(spFavoritesProp)
 {
 	GetIsFocusable().set(false);
@@ -39,7 +41,7 @@ CFavoritesGridView::CFavoritesGridView(
 void CFavoritesGridView::OnCreate(const CreateEvt& e)
 {
 	//Base Create
-	CGridView::OnCreate(e);
+	CBindGridView::OnCreate(e);
 
 	//List
 	OpenFavorites();
@@ -53,21 +55,10 @@ void CFavoritesGridView::OpenFavorites()
 
 	LOG_SCOPED_TIMER_THIS_1("OpenFavorites Total");
 
-	//Direct2DWrite
-	GetWndPtr()->GetDirectPtr()->ClearTextLayoutMap();
 	//Celler
 	m_spCeller->Clear();
 	//Cursor
 	m_spCursorer->Clear();
-
-	if (Empty()) {
-		//IconColumn
-		{
-			auto pColumn = std::make_shared<CFavoritesColumn<std::shared_ptr<CFavorite>>>(this);
-			PushColumn(pColumn);
-		}
-	}
-
 
 	for (auto colPtr : m_allCols) {
 		std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();

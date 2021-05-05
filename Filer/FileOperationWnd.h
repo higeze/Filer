@@ -96,13 +96,13 @@ public:
 		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();
 		
 		//Create FilerControl
-		m_spFilerControl->OnCreate(CreateEvt(this, rcGrid));
+		m_spFilerControl->OnCreate(CreateEvt(this, this, rcGrid));
 
 		//OK button
-		m_spButtonDo->OnCreate(CreateEvt(this, rcBtnDo));
+		m_spButtonDo->OnCreate(CreateEvt(this, this, rcBtnDo));
 
 		//Cancel button
-		m_spButtonCancel->OnCreate(CreateEvt(this, rcBtnCancel));
+		m_spButtonCancel->OnCreate(CreateEvt(this, this, rcBtnCancel));
 
 		//Focus
 		SetFocusedControlPtr(m_spButtonDo);

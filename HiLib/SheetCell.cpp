@@ -229,6 +229,18 @@ void CSheetCell::OnChar(const CharEvent& e)
 	CSheet::OnChar(e);
 }
 
+void CSheetCell::OnWndSetFocus(const SetFocusEvent& e)
+{
+	CCell::OnWndSetFocus(e);
+	CSheet::OnWndSetFocus(e);
+}
+
+void CSheetCell::OnWndKillFocus(const KillFocusEvent& e)
+{
+	CCell::OnWndKillFocus(e);
+	CSheet::OnWndKillFocus(e);
+}
+
 
 void CSheetCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 {

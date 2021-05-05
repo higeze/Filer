@@ -1,5 +1,6 @@
 #pragma once
 #include "Column.h"
+#include "TextCell.h"
 #include "Debug.h"
 #include "IBindSheet.h"
 #include "Debug.h"
@@ -37,7 +38,6 @@ public:
 			THROW_FILE_LINE_FUNC;
 		}
 	}
-
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{

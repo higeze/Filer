@@ -25,6 +25,10 @@ protected:
 	std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> m_spItemsSource;
 	BindType m_bindType;
 
+	std::vector<std::shared_ptr<CColumn>> m_initColumns;
+	std::vector<std::shared_ptr<CRow>> m_initRows;
+
+
 public:
 	template<typename... TArgs> 
 	CBindGridView(
@@ -70,17 +74,27 @@ public:
 		m_frozenColumnCount = ::get(arg<"frzcolcnt"_s>(), args..., default_(0));
 		m_frozenRowCount = ::get(arg<"frzrowcnt"_s>(), args..., default_(0));
 
-		std::vector<std::shared_ptr<CColumn>> columns;
-		columns = ::get(arg<"columns"_s>(), args..., default_(columns));
+		//std::vector<std::shared_ptr<CColumn>> columns;
+		m_initColumns = ::get(arg<"columns"_s>(), args..., default_(m_initColumns));
 
-		std::vector<std::shared_ptr<CRow>> rows;
-		rows = ::get(arg<"rows"_s>(), args..., default_(rows));
+		//std::vector<std::shared_ptr<CRow>> rows;
+		m_initRows = ::get(arg<"rows"_s>(), args..., default_(m_initRows));
 
 		//ItemsSource
 		if (!m_spItemsSource) {
 			m_spItemsSource = std::make_shared<ReactiveVectorProperty<std::tuple<TItems...>>>();
 		}
+	}
 
+	ReactiveVectorProperty<std::tuple<TItems...>>& GetItemsSource() override { return *(this->m_spItemsSource); }
+	std::vector<std::tuple<TItems...>>& GetSelectedItems() { return this->m_funSelItems(); }
+
+	/******************/
+	/* Window Message */
+	/******************/
+
+	void OnCreate(const CreateEvt& e) override
+	{
 		switch (m_bindType) {
 			case BindType::Row:
 			{
@@ -120,7 +134,7 @@ public:
 					});
 
 				//PushColumn
-				for (auto& spCol : columns) {
+				for (auto& spCol : m_initColumns) {
 					spCol->SetSheetPtr(this);
 					PushColumn(spCol);
 				}
@@ -169,7 +183,7 @@ public:
 					});
 
 				//PushRow
-				for (auto& spRow : rows) {
+				for (auto& spRow : m_initRows) {
 					spRow->SetSheetPtr(this);
 					PushRow(spRow);
 				}
@@ -184,14 +198,9 @@ public:
 			default:
 			break;
 		}
+
+		CD2DWControl::OnCreate(e);
 	}
-
-	ReactiveVectorProperty<std::tuple<TItems...>>& GetItemsSource() override { return *(this->m_spItemsSource); }
-	std::vector<std::tuple<TItems...>>& GetSelectedItems() { return this->m_funSelItems(); }
-
-	/******************/
-	/* Window Message */
-	/******************/
 
 	/****************/
 	/* StateMachine */

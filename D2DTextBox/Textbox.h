@@ -37,6 +37,36 @@ bool in_range(const T& value, const T& min, const T& max)
 
 class CD2DWWindow;
 
+template<class T>
+class property
+{
+protected:
+	std::function<T()> m_get = nullptr;
+	std::function<void(const T&)> m_set = nullptr;
+
+public:
+	T value;
+	property(const std::function<T()>& get = nullptr, const std::function<void(const T&)>& set = nullptr)
+		: m_get(get), m_set(set){}
+	void operator()(const std::function<T()>& get, const std::function<void(const T&)>& set)
+	{
+		m_get = get; m_set = set;
+	}
+	T operator()() const { return m_get(); }
+	operator T() const { return m_get(); }
+	T operator ->() { return m_get(); }
+
+	T operator()(T const& value) { return m_set(value); }
+	T operator=(T const& value) { return m_set(value); }
+};
+
+struct ExecutableInfo
+{
+	std::wstring Link = L"";
+	UINT32 StartPosition = 0;
+	UINT32 Length = 0;
+};
+
 
 
 class CTextBox : public IBridgeTSFInterface, public CD2DWControl
@@ -78,6 +108,7 @@ protected:
 	bool m_isFirstDrawCaret = false;
 	bool m_isClosing = false;
 	std::unique_ptr<CTextBoxStateMachine> m_pTextMachine;
+	std::vector<ExecutableInfo> m_executableInfos;
 
 public:
 	CTextBox(
@@ -106,6 +137,7 @@ public:
 	/* Windows Message*/
 	/******************/
 	virtual void OnCreate(const CreateEvt& e);
+	virtual void OnDestroy(const DestroyEvent& e);
 	virtual void OnPaint(const PaintEvent& e) { m_pTextMachine->process_event(e); }
 	virtual void OnSetFocus(const SetFocusEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnKillFocus(const KillFocusEvent& e) override { m_pTextMachine->process_event(e); }
@@ -127,6 +159,8 @@ public:
 	virtual void OnSetCursor(const SetCursorEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnContextMenu(const ContextMenuEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnChar(const CharEvent& e) override { m_pTextMachine->process_event(e); }
+
+	virtual void OnWndKillFocus(const KillFocusEvent& e) override;
 
 	virtual void OnMouseWheel(const MouseWheelEvent& e);
 	virtual void OnClose(const CloseEvent& e);
@@ -200,8 +234,8 @@ public:
 	void ClearText();
 	void EnsureVisibleCaret();
 	void UpdateAll();
-	virtual void UpdateOriginRects();
-	virtual void UpdateActualRects();
+	virtual void ResetOriginRects();
+	virtual void ResetActualRects();
 	virtual void UpdateScroll();
 
 
@@ -218,18 +252,21 @@ public:
 	void ClearCompositionRenderInfo();
 	BOOL AddCompositionRenderInfo(int Start, int End, TF_DISPLAYATTRIBUTE* pda);
 public:
-	std::function<CComPtr<IDWriteTextLayout1>& ()> GetTextLayoutPtr;
-	std::function<std::vector<CRectF>& ()> GetOriginCharRects;
-	std::function<std::vector<CRectF>& ()> GetOriginCursorCharRects;
-	std::function<std::vector<CRectF>& ()> GetOriginCaptureCharRects;
 
-	std::function<std::vector<CRectF>& ()> GetActualCharRects;
-	std::function<std::vector<CRectF>& ()> GetActualSelectionCharRects;
-	std::function<std::vector<CRectF>& ()> GetActualCursorCharRects;
-	std::function<std::vector<CRectF>& ()> GetActualCaptureCharRects;
+	property<CComPtr<IDWriteTextLayout1>> TextLayoutPtr;
 
-	std::function<CRectF& ()> GetOriginContentRect;
-	std::function<CRectF& ()> GetActualContentRect;
+
+	property<std::vector<CRectF>> OriginCharRects;
+	property<std::vector<CRectF>> OriginCursorCharRects;
+	property<std::vector<CRectF>> OriginCaptureCharRects;
+
+	property<std::vector<CRectF>> ActualCharRects;
+	property<std::vector<CRectF>> ActualSelectionCharRects;
+	property<std::vector<CRectF>> ActualCursorCharRects;
+	property<std::vector<CRectF>> ActualCaptureCharRects;
+
+	property<CRectF> OriginContentRect;
+	property<CRectF> ActualContentRect;
 
 	//std::optional<CRectF> GetOriginCharRect(const int& pos);
 	//std::optional<CRectF> GetActualCharRect(const int& pos);
