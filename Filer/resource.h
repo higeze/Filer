@@ -49,6 +49,8 @@
 #define IDM_NEWTEXTTAB							40047
 #define IDM_NEWPDFTAB							40048
 #define IDM_TEXTOPTION							40049
+#define IDM_LOCKTAB								40050
+
 
 
 

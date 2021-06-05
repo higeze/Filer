@@ -2,6 +2,7 @@
 #include "IDL.h"
 #include "Debug.h"
 #include <future>
+#include <sigslot/signal.hpp>
 
 struct closehandle
 {
@@ -49,10 +50,10 @@ public:
 
 	std::wstring GetPath()const { return m_path; }
 
-	boost::signals2::signal<void(const std::wstring&)> Added;
-	boost::signals2::signal<void(const std::wstring&)> Removed;
-	boost::signals2::signal<void(const std::wstring&)> Modified;
-	boost::signals2::signal<void(const std::wstring&, const std::wstring&)> Renamed;
+	//sigslot::signal<const std::wstring&> Added;
+	//sigslot::signal<const std::wstring&> Removed;
+	//sigslot::signal<const std::wstring&> Modified;
+	//sigslot::signal<const std::wstring&, const std::wstring&> Renamed;
 
 	void StartWatching(const std::wstring& path, const CIDL& absIdl);
 	void QuitWatching();

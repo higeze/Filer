@@ -3,6 +3,23 @@
 #include "Dispatcher.h"
 #include <fmt/format.h>
 
+
+/***********/
+/* TabData */
+/***********/
+bool TabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
+{
+	if (!isWndClosing && !Unlock) {
+		int ync = pWnd->MessageBox(
+		L"This tab is locked",
+		L"Locked",
+		MB_OK);
+		return false;
+	} else {
+		return true;
+	}
+}
+
 /*********************/
 /* CTabHeaderControl */
 /*********************/
@@ -74,14 +91,14 @@ std::tuple<CRectF, CRectF, CRectF, CRectF> CTabHeaderControl::GetRects()
 void CTabHeaderControl::OnCreate(const CreateEvt& e)
 {
 	CD2DWControl::OnCreate(e);
-
+	
 	//Set up Button
 	m_spButton->GetCommand().Subscribe([this]()->void
 	{
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke(
 			[pTabControl = static_cast<CTabControl*>(m_pParentControl), index = GetIndex()]()->void
 			{
-				if (pTabControl->m_itemsSource[index]->ClosingFunction()) {
+				if (pTabControl->m_itemsSource[index]->AcceptClosing(pTabControl->GetWndPtr(), false)) {
 					pTabControl->m_itemsSource.erase(pTabControl->m_itemsSource.cbegin() + index);
 				}
 			}
@@ -89,7 +106,9 @@ void CTabHeaderControl::OnCreate(const CreateEvt& e)
 	});
 
 	m_spButton->GetContent().set(L"x");
+	m_spButton->GetDisableContent().set(L"l");
 	m_spButton->GetIsFocusable().set(false);
+	m_isEnableBinding.reset(new CBinding<bool>(static_cast<CTabControl*>(m_pParentControl)->m_itemsSource[GetIndex()]->Unlock, m_spButton->GetIsEnabled()));
 
 	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 }
@@ -314,11 +333,18 @@ void CTabControl::OnCommandCloneTab(const CommandEvent& e)
 	m_itemsSource.push_back(m_itemsSource[m_selectedIndex.get()]);
 	m_selectedIndex.set(m_selectedIndex - 1);
 }
+void CTabControl::OnCommandLockTab(const CommandEvent& e)
+{
+	if (m_contextIndex) {
+		auto& item = m_itemsSource[m_contextIndex.value()];
+		item->Unlock.set(!item->Unlock.get());
+	}
+}
 
 void CTabControl::OnCommandCloseTab(const CommandEvent& e)
 {
 	if (m_contextIndex) {
-		if (m_itemsSource[m_contextIndex.value()]->ClosingFunction()) {
+		if (m_itemsSource[m_contextIndex.value()]->AcceptClosing(GetWndPtr(), false)) {
 			m_itemsSource.erase(m_itemsSource.cbegin() + m_contextIndex.value());
 		}
 	}
@@ -328,18 +354,20 @@ void CTabControl::OnCommandCloseAllButThisTab(const CommandEvent& e)
 	if (m_contextIndex) {
 		//Erase larger tab
 		for (auto iter = m_itemsSource.cbegin() + (m_contextIndex.value() + 1), end = m_itemsSource.cend(); iter != end; ++iter) {
-			if (!((*iter)->ClosingFunction())) {
+			if (!((*iter)->AcceptClosing(GetWndPtr(), false))) {
 				return;
 			}
 		}
+		//TODO HIGH
 		m_itemsSource.erase(m_itemsSource.cbegin() + (m_contextIndex.value() + 1), m_itemsSource.cend());
 		
 		//Erase smaller tab
 		for (auto iter = m_itemsSource.cbegin(), end = m_itemsSource.cbegin() + m_contextIndex.value(); iter != end; ++iter) {
-			if (!((*iter)->ClosingFunction())) {
+			if (!((*iter)->AcceptClosing(GetWndPtr(), false))) {
 				return;
 			}
 		}
+		//TODO HIGH
 		m_itemsSource.erase(m_itemsSource.cbegin(), m_itemsSource.cbegin() + m_contextIndex.value());
 
 		m_selectedIndex.force_notify_set(0);
@@ -509,7 +537,7 @@ void CTabControl::OnPaint(const PaintEvent& e)
 void CTabControl::OnClosing(const ClosingEvent& e)
 { 
 	for (auto& item : m_itemsSource) 		{
-		if (!(item->ClosingFunction())) {
+		if (!(item->AcceptClosing(GetWndPtr(), true))) {
 			*(e.CancelPtr) = true;
 			return;
 		}

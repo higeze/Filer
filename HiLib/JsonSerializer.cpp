@@ -9,3 +9,5 @@ std::unordered_map<std::string,
 std::unordered_map <
     std::string,
     std::function<std::shared_ptr<void>()>> json_make_shared_map;
+
+bool json_create_shared_ptr = true;

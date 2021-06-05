@@ -187,13 +187,13 @@ public:
 };
 
 template <>
-void CDragger<RowTag, ColTag>::PaintLine(CDirect2DWrite* pDirect, SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
+inline void CDragger<RowTag, ColTag>::PaintLine(CDirect2DWrite* pDirect, SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
 {
 	pDirect->DrawSolidLine(line, CPointF(cooyou0, coome), CPointF(cooyou1, coome));
 }
 
 template <>
-void CDragger<ColTag, RowTag>::PaintLine(CDirect2DWrite* pDirect, SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
+inline void CDragger<ColTag, RowTag>::PaintLine(CDirect2DWrite* pDirect, SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
 {
 	pDirect->DrawSolidLine(line, CPointF(coome, cooyou0), CPointF(coome, cooyou1));
 }

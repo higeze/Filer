@@ -140,7 +140,8 @@ LRESULT CD2DWWindow::OnClose(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 
 LRESULT CD2DWWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	OnCommand(CommandEvent(this, wParam, lParam, &bHandled));
+	bHandled = FALSE;
+	CD2DWControl::OnCommand(CommandEvent(this, wParam, lParam, &bHandled));
 	return 0;
 }
 

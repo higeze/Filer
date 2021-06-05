@@ -144,11 +144,12 @@ void CD2DWControl::OnChar(const CharEvent& e) { SendFocused(&CD2DWControl::OnCha
 
 void CD2DWControl::OnCommand(const CommandEvent& e)
 {
-	if (m_pFocusedControl) { m_pFocusedControl->OnCommand(e); }
-	if (!(*e.HandledPtr)) {
-		if (auto iter = m_commandMap.find(e.ID); iter != m_commandMap.end()) {
-			iter->second(e);
-		}
+	if (auto iter = m_commandMap.find(e.ID); iter != m_commandMap.end()) {
+		iter->second(e);
+	}
+
+	if (!(*e.HandledPtr) && m_pFocusedControl) {
+		m_pFocusedControl->OnCommand(e);
 	}
 	GetWndPtr()->InvalidateRect(NULL, FALSE);
 }

@@ -68,13 +68,13 @@ public:
 #define THROW_FILE_LINE_FUNC throw std::exception(FILE_LINE_FUNC)
 
 template<>
-void scoped_time_logger<char>::stop()
+inline void scoped_time_logger<char>::stop()
 {
 	SPDLOG_INFO(m_message + " : " + std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - m_tp).count()));
 }
 
 template<>
-void scoped_time_logger<wchar_t>::stop()
+inline void scoped_time_logger<wchar_t>::stop()
 {
 	//SPDLOG_INFO(m_message + L" : " + std::to_wstring(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - m_tp).count()));
 }

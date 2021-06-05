@@ -986,20 +986,26 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 			},
 			[pCell](const std::basic_string<TCHAR>& str)->void {
 				// Need to EditPtr to nullptr first. Otherwise exception occur
-				pCell->GetSheetPtr()->GetGridPtr()->SetEditPtr(nullptr);
+				//pCell->GetSheetPtr()->GetGridPtr()->SetEditPtr(nullptr);
 				pCell->SetString(str);
-				pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
+				//pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 			}));
 		GetEditPtr()->OnCreate(CreateEvt(GetWndPtr(), this, pCell->GetRectInWnd()));
 		PostUpdate(Updates::Invalidate);
 		//SetCapture();
 	}
+	m_isEditExiting = false;
 }
 
 void CGridView::Edit_OnExit()
 {
-	GetEditPtr()->OnClose(CloseEvent(GetWndPtr(), NULL, NULL, nullptr));
-	SetEditPtr(nullptr);
+	//To avoid situation Edit_OnExit->OnKillFocus->Edit_OnExit
+	if (!m_isEditExiting){
+		m_isEditExiting = true;
+		GetEditPtr()->OnClose(CloseEvent(GetWndPtr(), NULL, NULL, nullptr));
+		SetEditPtr(nullptr);
+		m_isEditExiting = false;
+	}
 }
 
 void CGridView::Edit_MouseMove(const MouseMoveEvent& e)

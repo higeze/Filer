@@ -130,7 +130,7 @@ public:
 
 		j["sort"] = o.m_sort;
 		j["left"] = o.m_start;
-		j["width"], o.m_length;
+		j["width"] = o.m_length;
 		j["filter"] = o.m_filter;
 
 	}

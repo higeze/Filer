@@ -53,6 +53,7 @@
 #include "DropTargetManager.h"
 
 #include "MouseStateMachine.h"
+#include <format>
 
 #define SCRATCH_QCM_FIRST 1
 #define SCRATCH_QCM_NEW 600//200,500 are used by system
@@ -968,8 +969,24 @@ void CFilerGridView::OnDirectoryWatch(const DirectoryWatchEvent& e)
 		case FILE_ACTION_ADDED:
 			LOG_THIS_1("FILE_ACTION_ADDED");
 			Added(info.second);
+
+	//::OutputDebugStringA("Added\r\n");
+	//for(const auto& spRow : m_allRows){
+	//	::OutputDebugStringA(std::format("Pointer:{}\r\n", (LONG)spRow.get()).c_str());
+	//};
+	//::OutputDebugStringA("Focus\r\n");
+	//::OutputDebugStringA(std::format("Pointer:{}\r\n", (LONG)m_spCursorer->GetFocusedCell()->GetRowPtr()).c_str());
+
+
+
 			break;
 		case FILE_ACTION_MODIFIED:
+	//::OutputDebugStringA("Modify\r\n");
+	//for(const auto& spRow : m_allRows){
+	//	::OutputDebugStringA(std::format("Pointer:{}\r\n", (LONG)spRow.get()).c_str());
+	//};
+	//::OutputDebugStringA("Focus\r\n");
+	//::OutputDebugStringA(std::format("Pointer:{}\r\n", (LONG)m_spCursorer->GetFocusedCell()->GetRowPtr()).c_str());
 			LOG_THIS_1("FILE_ACTION_MODIFIED");
 			Modified(info.second);
 			break;

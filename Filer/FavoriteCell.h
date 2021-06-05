@@ -39,8 +39,10 @@ public:
 	{
 		if (auto pBindRow = dynamic_cast<CBindRow<TItems...>*>(this->m_pRow)) {
 			return std::get<std::shared_ptr<CFavorite>>(pBindRow->GetTupleItems())->GetShellFile(
-				[pSheet = this->m_pSheet]() {
-					pSheet->GetGridPtr()->DelayUpdate();
+				[wp = std::weak_ptr(std::dynamic_pointer_cast<CFavoriteCell<TItems...>>(this->shared_from_this()))]() {
+					if (auto sp = wp.lock()) {
+						sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+					}
 				});
 		} else {
 			return nullptr;

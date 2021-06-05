@@ -33,6 +33,7 @@ protected:
 	std::shared_ptr<CTextBox> m_pEdit = nullptr;
 	CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
+	bool m_isEditExiting = false;
 protected:
 	CDeadlineTimer m_invalidateTimer;
 

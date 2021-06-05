@@ -56,8 +56,21 @@ public:
 	operator T() const { return m_get(); }
 	T operator ->() { return m_get(); }
 
-	T operator()(T const& value) { return m_set(value); }
-	T operator=(T const& value) { return m_set(value); }
+	T operator()(T const& val) { return m_set(val); }
+	T operator=(T const& val) { m_set(val); return value; }
+
+	//friend void to_json(json& j, const property<T>& o)
+	//{
+	//	to_json(j, m_get());
+	//}
+
+	//friend void from_json(const json& j, property<T>& o)
+	//{
+	//	T tmp;
+	//	from_json(j, tmp);
+	//	m_set(tmp);
+	//}
+
 };
 
 struct ExecutableInfo

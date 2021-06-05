@@ -26,6 +26,8 @@
 #include "ShellFileFactory.h"
 #include "PdfView.h"
 
+#include <MLang.h>
+
 FilerTabData::FilerTabData(const std::wstring& path)
 	:TabData(), Path(path)
 {
@@ -65,11 +67,57 @@ void TextTabData::Open()
 	}
 }
 
+
+std::pair<encoding_type, std::wstring> parse_ifstream(std::ifstream& ifs)
+{
+	static std::array<BYTE, 3> bom_utf8 = {0xEF, 0xBB, 0xBF};
+	static std::array<BYTE, 3> bom_utf16le = { 0xFF, 0xFE, 0x00 };
+	static std::array<BYTE, 3> bom_utf16be = { 0xFE, 0xFF, 0x00 };
+	static INT test = IS_TEXT_UNICODE_STATISTICS;
+
+	std::array<BYTE, 3> bom;
+	bom[0] = ifs.get();
+	bom[1] = ifs.get();
+	bom[2] = ifs.get();
+	ifs.seekg(0);
+
+	if (bom[0] == bom_utf16be[0] && bom[1] == bom_utf16be[1]){
+		throw std::exception("UTF16BE is not supported");
+	} else if (bom[0] == bom_utf16le[0] && bom[1] == bom_utf16le[1]) {
+		return {encoding_type::utf16le, std::wstring(std::next(std::istreambuf_iterator<char>(ifs), 2), std::istreambuf_iterator<char>()) };
+	} else if (bom[0] == bom_utf8[0] && bom[1] == bom_utf8[1] && bom[2] == bom_utf8[2]) {
+		return {encoding_type::utf8, utf8_to_wide(std::string(std::next(std::istreambuf_iterator<char>(ifs), 3), std::istreambuf_iterator<char>())) };
+	} else {
+		auto str = std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+
+		//if (::IsTextUnicode(str.c_str(), str.size(), &test)) {
+		//	return { encoding_type::utf16len, std::wstring(str.begin(), str.end()) };
+		//} else {
+			CComPtr<IMultiLanguage3> p;
+			FAILED_THROW(::CoCreateInstance(CLSID_CMultiLanguage, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&p)));
+			DetectEncodingInfo encoding = {};
+			INT size = str.size();
+			INT scores = 1;
+			p->DetectInputCodepage(MLDETECTCP_NONE, 0, const_cast<CHAR*>(str.c_str()), &size, &encoding, &scores);
+			switch (encoding.nCodePage) {
+				case 932:
+				return { encoding_type::sjis, sjis_to_wide(str) };
+				case 65001:
+				default:
+				return { encoding_type::utf8n, cp_to_wide(str, encoding.nCodePage) };
+			}
+		//}
+	}
+}
+
 void TextTabData::Open(const std::wstring& path)
 {
 	if (::PathFileExists(path.c_str())) {
 		Path.set(path);
-		Text.assign(str2wstr(CFile::ReadAllString<char>(path)));
+		std::ifstream ifs(path);
+		auto pair = parse_ifstream(ifs);
+		Encode.set(pair.first);
+		Text.assign(pair.second);
 		Status.force_notify_set(TextStatus::Saved);
 		Carets.set(0, 0, 0, 0, 0);
 		CaretPos.set(CPointF(0, 10 * 0.5f));//TODOLOW
@@ -79,6 +127,18 @@ void TextTabData::Open(const std::wstring& path)
 		Carets.set(0, 0, 0, 0, 0);
 		CaretPos.set(CPointF(0, 10 * 0.5f));//TODOLOW
 	}
+	//if (::PathFileExists(path.c_str())) {
+	//	Path.set(path);
+	//	Text.assign(str2wstr(CFile::ReadAllString<char>(path)));
+	//	Status.force_notify_set(TextStatus::Saved);
+	//	Carets.set(0, 0, 0, 0, 0);
+	//	CaretPos.set(CPointF(0, 10 * 0.5f));//TODOLOW
+	//} else {
+	//	Path.set(L"");
+	//	Status.force_notify_set(TextStatus::Saved);
+	//	Carets.set(0, 0, 0, 0, 0);
+	//	CaretPos.set(CPointF(0, 10 * 0.5f));//TODOLOW
+	//}
 }
 
 void TextTabData::Save()
@@ -113,8 +173,39 @@ void TextTabData::Save(const std::wstring& path)
 {
 	Path.set(path);
 	Status.force_notify_set(TextStatus::Saved);
-	CFile::WriteAllString(path, wstr2str(Text));
+	std::ofstream ofs(path);
+	ofs << wide_to_utf8(Text);//TODO MID
+
+	//CFile::WriteAllString(path, wstr2str(Text));
 }
+
+bool TextTabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
+{
+	if (!TabData::AcceptClosing(pWnd, isWndClosing)) {
+		return false;
+	} else {
+		if (Status.get() == TextStatus::Dirty) {
+			int ync = pWnd->MessageBox(
+				fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(Path.c_str())).c_str(),
+				L"Save?",
+				MB_YESNOCANCEL);
+			switch (ync) {
+				case IDYES:
+					Save();
+					return true;
+				case IDNO:
+					return true;
+				case IDCANCEL:
+					return false;
+				default:
+					return true;
+			}
+		} else {
+			return true;
+		}
+	}
+}
+
 
 CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, 
 	const std::shared_ptr<TabControlProperty>& spTabProp,
@@ -132,6 +223,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	m_commandMap.emplace(IDM_NEWTEXTTAB, std::bind(&CFilerTabGridView::OnCommandNewTextTab, this, phs::_1));
 	m_commandMap.emplace(IDM_NEWPDFTAB, std::bind(&CFilerTabGridView::OnCommandNewPdfTab, this, phs::_1));
 
+	m_commandMap.emplace(IDM_LOCKTAB, std::bind(&CFilerTabGridView::OnCommandLockTab, this, phs::_1));
 	m_commandMap.emplace(IDM_CLONETAB, std::bind(&CFilerTabGridView::OnCommandCloneTab, this, phs::_1));
 	m_commandMap.emplace(IDM_CLOSETAB, std::bind(&CFilerTabGridView::OnCommandCloseTab, this, phs::_1));
 	m_commandMap.emplace(IDM_CLOSEALLBUTTHISTAB, std::bind(&CFilerTabGridView::OnCommandCloseAllButThisTab, this, phs::_1));
@@ -140,23 +232,35 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 
 
 	//FilerGridView Closure
-	GetFilerGridViewPtr =
-		[spFilerView = std::make_shared<CFilerGridView>(this, m_spFilerGridViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CFilerGridView>& {
+	FilerGridViewPtr(
+		[&val = FilerGridViewPtr.value, this]()->std::shared_ptr<CFilerGridView>{
+			if (!val) {
+				val = std::make_shared<CFilerGridView>(this, m_spFilerGridViewProp);
+				//Folder Changed
+				val->FolderChanged = [&](std::shared_ptr<CShellFolder>& pFolder) {
+					auto pData = std::static_pointer_cast<FilerTabData>(m_itemsSource[m_selectedIndex.get()]);
+					pData->FolderPtr = pFolder;
+					pData->Path = pFolder->GetPath();
+					UpdateHeaderRects();
+					val->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
+				};
+			}
+			return val;
+		},
 
-		if (!isInitialized && GetWndPtr()->IsWindow()) {
-			isInitialized = true;
-
-			//Folder Changed
-			spFilerView->FolderChanged = [&](std::shared_ptr<CShellFolder>& pFolder) {
-				auto pData = std::static_pointer_cast<FilerTabData>(m_itemsSource[m_selectedIndex.get()]);
-				pData->FolderPtr = pFolder;
-				pData->Path = pFolder->GetPath();
-				UpdateHeaderRects();
-				spFilerView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
-			};
+		[&val = FilerGridViewPtr.value, this](const std::shared_ptr<CFilerGridView>& value)->void{
+			if (val != value) {
+				val = value;
+				val->FolderChanged = [&](std::shared_ptr<CShellFolder>& pFolder) {
+					auto pData = std::static_pointer_cast<FilerTabData>(m_itemsSource[m_selectedIndex.get()]);
+					pData->FolderPtr = pFolder;
+					pData->Path = pFolder->GetPath();
+					UpdateHeaderRects();
+					val->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
+				};
+			}
 		}
-		return spFilerView;
-	};
+		);
 
 	//ToDoGridView Closure
 	GetToDoGridViewPtr = [spToDoView = std::make_shared<CToDoGridView>(this, std::static_pointer_cast<GridViewProperty>(m_spFilerGridViewProp)), isInitialized = false, this]()mutable->std::shared_ptr<CToDoGridView>& {
@@ -341,7 +445,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	//ItemsTemplate
 	m_itemsControlTemplate.emplace(typeid(FilerTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto pData = std::static_pointer_cast<FilerTabData>(pTabData);
-		auto spView = GetFilerGridViewPtr();
+		auto spView = FilerGridViewPtr();
 		spView->OpenFolder(pData->FolderPtr);
 		spView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
 		spView->PostUpdate(Updates::All);
@@ -387,34 +491,6 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		//Save()
 		m_pSaveBinding.reset(nullptr);
 		m_pSaveBinding.reset(new CBinding<void>(spViewModel->SaveCommand, spView->GetSaveCommand()));
-		//Close
-		spViewModel->ClosingFunction = [wp = std::weak_ptr(spViewModel), hWnd = GetWndPtr()->m_hWnd]()->bool
-		{
-			if (auto sp = wp.lock()) {
-				if (sp->Status.get() == TextStatus::Dirty) {
-					int ync = MessageBoxW(
-						hWnd,
-						fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(sp->Path.c_str())).c_str(),
-						L"Save?",
-						MB_YESNOCANCEL);
-					switch (ync) {
-						case IDYES:
-							sp->Save();
-							return true;
-						case IDNO:
-							return true;
-						case IDCANCEL:
-							return false;
-						default:
-							return true;
-					}
-				} else {
-					return true;
-				}
-			}
-			return true;
-		};
-
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
 		if (spViewModel->Status.get() == TextStatus::None) {
@@ -451,12 +527,12 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	/* Create */
 	/**********/
 	CTabControl::OnCreate(e);
-	GetFilerGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
+	FilerGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetToDoGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetTextViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetPdfViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 
-	GetFilerGridViewPtr()->GetIsEnabled().set(false);
+	FilerGridViewPtr()->GetIsEnabled().set(false);
 	GetToDoGridViewPtr()->GetIsEnabled().set(false);
 	GetTextViewPtr()->GetIsEnabled().set(false);
 	GetPdfViewPtr()->GetIsEnabled().set(false);
@@ -531,8 +607,11 @@ void CFilerTabGridView::OnCommandOpenSameAsOther(const CommandEvent& e)
 			
 		std::shared_ptr<CFilerTabGridView> otherView = (this == p->GetLeftWnd().get())? p->GetRightWnd(): p->GetLeftWnd();
 		
-		if (m_itemsSource[m_selectedIndex.get()]->ClosingFunction()) {
-		m_itemsSource.replace(m_itemsSource.begin() + m_selectedIndex.get(), otherView->GetItemsSource()[otherView->GetSelectedIndex()]);
+
+		if (m_itemsSource[m_selectedIndex.get()]->AcceptClosing(GetWndPtr(), false)) {
+			m_itemsSource.replace(m_itemsSource.begin() + m_selectedIndex.get(), otherView->GetItemsSource()[otherView->GetSelectedIndex()]);
+		} else {
+			m_itemsSource.push_back(otherView->GetItemsSource()[otherView->GetSelectedIndex()]);
 		}
 	}
 }

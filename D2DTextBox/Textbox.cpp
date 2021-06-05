@@ -962,9 +962,9 @@ void CTextBox::Normal_LButtonDown(const LButtonDownEvent& e)
 		} else {
 			if (::GetAsyncKeyState(VK_CONTROL)) {
 				if (auto pos = GetActualCharPosFromPoint(e.PointInWnd)) {
-					auto iter = std::find_if(m_executableInfos.begin(), m_executableInfos.end(), [pos](const auto& info)->bool
+					auto iter = std::find_if(m_executableInfos.begin(), m_executableInfos.end(), [p = static_cast<UINT32>(pos.value())](const auto& info)->bool
 					{
-						return pos >= info.StartPosition && pos < info.StartPosition + info.Length;
+						return p >= info.StartPosition && p < info.StartPosition + info.Length;
 					});
 					if (iter != m_executableInfos.end()) {
 						auto exe = iter->Link;

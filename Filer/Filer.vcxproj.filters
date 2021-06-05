@@ -974,7 +974,7 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\JsonSerializer.cpp">
-      <Filter>Filer</Filter>
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

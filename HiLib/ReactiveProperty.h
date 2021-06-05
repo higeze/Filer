@@ -313,7 +313,7 @@ public:
 				0, (int)(old.size()),
 				(int)(this->m_value.size())
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	const_reference operator[](size_type pos) const noexcept
@@ -387,7 +387,7 @@ public:
 			old,
 			(int)index, (int)index, (int)(index + value.size())
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
@@ -401,7 +401,7 @@ public:
 			old,
 			(int)index, (int)(index + count), (int)(index)
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
@@ -415,7 +415,7 @@ public:
 			old,
 			(int)pos, (int)(pos + count), int(pos + value.size())
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
@@ -429,7 +429,7 @@ public:
 				old,
 				(int)pos, (int)(pos + n1), int(pos + n2)
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
@@ -443,7 +443,7 @@ public:
 			old,
 			0, (int)old.size(), 0
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	template <class Archive>
@@ -465,7 +465,7 @@ public:
 				0, (int)old.size(), 0
 			});
 		}
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	friend void to_json(json& j, const ReactiveBasicStringProperty<CharT, Traits, Allocator>& o)
@@ -562,7 +562,7 @@ public:
 			old,
 			0
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	const_reference operator[](size_type pos) const noexcept
@@ -617,7 +617,7 @@ public:
 			{},
 				-1
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	iterator insert(const_iterator position, const T& x)
@@ -632,7 +632,7 @@ public:
 			{},
 			-1
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 		return ret;
 	}
 
@@ -649,7 +649,7 @@ public:
 			{ oldItem},
 			-1
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 		return position;
 	}
 
@@ -666,7 +666,7 @@ public:
 			{ oldItem },
 			index
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 		return ret;
 	}
 
@@ -683,7 +683,7 @@ public:
 				oldItems,
 				index
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 		return ret;
 	}
 
@@ -700,7 +700,7 @@ public:
 			old,
 			0
 		});
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 		return;
 	}
 
@@ -726,7 +726,7 @@ public:
 				0
 			});
 		}
-		this->m_pSubject->OnNext(this->m_value);
+		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	friend void to_json(json& j, const ReactiveVectorProperty<T, Allocator>& o)
@@ -788,7 +788,7 @@ private:
 };
 
 template<>
-CBinding<void>::CBinding(IReactiveCommand<void>& source, IReactiveCommand<void>& target, sigslot::group_id idSource, sigslot::group_id idTarget)
+inline CBinding<void>::CBinding(IReactiveCommand<void>& source, IReactiveCommand<void>& target, sigslot::group_id idSource, sigslot::group_id idTarget)
 {
 	m_targetConnection = target.Subscribe(
 		[&](void)->void

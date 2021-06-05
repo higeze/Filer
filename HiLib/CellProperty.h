@@ -301,7 +301,7 @@ struct TextEditorProperty :public TextboxProperty
 				});
 			o.ExecutableAppearances.push_back(
 				ExecutableAppearance{
-				LR"(https?://[\w!?/+\-_~;.,*&@#$%()'[\]]+)",
+				LR"(https?://[\w!?/+\-_~;.,*&@#$%()'[\]=]+)",
 				SyntaxFormatF(CColorF(0.0f, 0.0f, 1.0f, 1.0f), false, true)
 				});
 		}

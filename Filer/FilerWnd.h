@@ -316,28 +316,26 @@ private:
 
 	friend void from_json(const json& j, CFilerWnd& o)
 	{
-			from_json_nothrow(j, "WindowRectangle", o.m_rcWnd);
-			from_json_nothrow(j, "PropertyWindowRectangle", o.m_rcPropWnd);
-			from_json_nothrow(j, "LeftSplit", o.m_splitterLeft);
-			from_json_nothrow(j, "ApplicationProperty", o.m_spApplicationProp);
-			from_json_nothrow(j, "FilerGridViewProperty", o.m_spFilerGridViewProp);
-			from_json_nothrow(j, "TextEditorProperty", o.m_spTextEditorProp);
-			from_json_nothrow(j, "PdfViewProperty", o.m_spPdfViewProp);
-			from_json_nothrow(j, "LauncherProperty", o.m_spLauncherProp);
-			from_json_nothrow(j, "FavoritesProperty", o.m_spFavoritesProp);
-			from_json_nothrow(j, "ExeExtensionProperty", o.m_spExeExProp);
-			from_json_nothrow(j, "SplitterProperty", o.m_spSplitterProp);
-			from_json_nothrow(j, "LeftFavorites", o.m_spLeftFavoritesView, &o, o.m_spFilerGridViewProp, o.m_spFavoritesProp);
-			from_json_nothrow(j, "RightFavorites", o.m_spRightFavoritesView, &o, o.m_spFilerGridViewProp, o.m_spFavoritesProp);
-			from_json_nothrow(j, "Launcher", o.m_spLauncher, &o, o.m_spFilerGridViewProp, o.m_spLauncherProp);
-			from_json_nothrow(j, "LeftView", o.m_spLeftView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
-			from_json_nothrow(j, "RightView", o.m_spRightView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
-			from_json_nothrow(j, "HorizontalSplitter", o.m_spSplitter, &o, o.m_spLeftView.get(), o.m_spRightView.get(), o.m_spSplitterProp);
+			get_to_nothrow(j, "WindowRectangle", o.m_rcWnd);
+			get_to_nothrow(j, "PropertyWindowRectangle", o.m_rcPropWnd);
+			get_to_nothrow(j, "LeftSplit", o.m_splitterLeft);
+			get_to_nothrow(j, "ApplicationProperty", o.m_spApplicationProp);
+			get_to_nothrow(j, "FilerGridViewProperty", o.m_spFilerGridViewProp);
+			get_to_nothrow(j, "TextEditorProperty", o.m_spTextEditorProp);
+			get_to_nothrow(j, "PdfViewProperty", o.m_spPdfViewProp);
+			get_to_nothrow(j, "LauncherProperty", o.m_spLauncherProp);
+			get_to_nothrow(j, "FavoritesProperty", o.m_spFavoritesProp);
+			get_to_nothrow(j, "ExeExtensionProperty", o.m_spExeExProp);
+			get_to_nothrow(j, "SplitterProperty", o.m_spSplitterProp);
+			get_to_nothrow(j, "LeftFavorites", o.m_spLeftFavoritesView, &o, o.m_spFilerGridViewProp, o.m_spFavoritesProp);
+			get_to_nothrow(j, "RightFavorites", o.m_spRightFavoritesView, &o, o.m_spFilerGridViewProp, o.m_spFavoritesProp);
+			get_to_nothrow(j, "Launcher", o.m_spLauncher, &o, o.m_spFilerGridViewProp, o.m_spLauncherProp);
+			get_to_nothrow(j, "LeftView", o.m_spLeftView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
+			get_to_nothrow(j, "RightView", o.m_spRightView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
+			get_to_nothrow(j, "HorizontalSplitter", o.m_spSplitter, &o, o.m_spLeftView.get(), o.m_spRightView.get(), o.m_spSplitterProp);
 	#ifdef USE_PYTHON_EXTENSION
 			from_json_nothrow(j, "PythonExtensionProperty", m_spPyExProp);
 	#endif
 	}
-
-
 };
 

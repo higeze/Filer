@@ -6,32 +6,12 @@
 #include <Windows.h>
 #include <nlohmann/json.hpp>
 #include <unordered_map>
-#include "MyString.h"
-
-//std::wstring str2wstr(const std::string& str)
-//{
-//	//Length
-//	auto len = ::MultiByteToWideChar(CP_THREAD_ACP, 0, str.c_str(), -1, NULL,0);
-//	std::vector<wchar_t> wstr(len+1,0);
-//	//Convert
-//	::MultiByteToWideChar(CP_THREAD_ACP, 0, str.c_str(), -1, &wstr[0], len);
-//
-//	return &wstr[0];
-//}
-//
-//std::string wstr2str(const std::wstring& wstr)
-//{
-//	//Length
-//	auto len = ::WideCharToMultiByte(CP_THREAD_ACP, 0, wstr.c_str(), -1, NULL, 0 ,NULL ,NULL);
-//	std::vector<char> str(len+1,'\0');
-//	//Convert
-//	::WideCharToMultiByte(CP_THREAD_ACP, 0, wstr.c_str(),wstr.size(), &str[0], len, NULL, NULL);
-//
-//	return &str[0];
-//}
-
+// https://qiita.com/javacommons/items/9ea0c8fd43b61b01a8da#stdstring-wide_to_utf8const-stdwstring-s
+#include <strconv.h>
 
 using json = nlohmann::json;
+
+
 
 /**********/
 /* GLOBAL */
@@ -46,6 +26,9 @@ extern std::unordered_map<std::string,
 extern std::unordered_map <
     std::string,
     std::function<std::shared_ptr<void>()>> json_make_shared_map;
+
+
+extern bool json_create_shared_ptr;
 
 /*********************/
 /* POLYMORPHIC MACRO */
@@ -116,6 +99,31 @@ inline get_to_t<T, TArgs...> get_to(std::shared_ptr<T>& ptr, TArgs... args)
     return get_to_t<T, TArgs...>(ptr, args...);
 }
 
+//template<typename T, typename... TArgs>
+//class overload_to_t
+//{
+//public:
+//    std::shared_ptr<T> m_new_ptr;
+//    std::shared_ptr<T>& m_ptr;
+//    get_to_t(std::shared_ptr<T>& ptr, TArgs... args)
+//        :m_ptr(ptr), m_new_ptr(ptr){}
+//    auto operator()(const json& j)
+//    {
+//        std::string name(typeid(T).name());
+//        json_make_shared_map.insert_or_assign(name, [new_ptr = m_new_ptr]() { return new_ptr; });
+//        auto ret = j.get_to(m_ptr);
+//        json_make_shared_map.erase(name);
+//        return ret;
+//    }
+//};
+//
+//template<typename T, typename... TArgs >
+//inline overload_to_t<T, TArgs...> get_to(std::shared_ptr<T>& ptr, TArgs... args)
+//{
+//    return overload_to_t<T, TArgs...>(ptr, args...);
+//}
+
+
 
 template<typename T, typename... TArgs >
 inline typename std::shared_ptr<T> operator|(const json& j, get_to_t<T, TArgs...> func)
@@ -124,7 +132,7 @@ inline typename std::shared_ptr<T> operator|(const json& j, get_to_t<T, TArgs...
 }
 
 template<typename T>
-auto from_json_nothrow(const json& j, const char* key, T& o)
+auto get_to_nothrow(const json& j, const char* key, T& o)
 {
     try {
         return j.at(key).get_to(o);
@@ -135,11 +143,11 @@ auto from_json_nothrow(const json& j, const char* key, T& o)
 }
 
 template<typename T, typename... TArgs>
-auto from_json_nothrow(const json& j, const char* key, std::shared_ptr<T>& o, TArgs... args)
+auto get_to_nothrow(const json& j, const char* key, std::shared_ptr<T>& o, TArgs... args)
 {
     try {
         return j.at(key) | get_to(o, args...);
-    }catch(...){
+    }catch(std::exception e){
         return o = std::make_shared<T>(args...);
     }
 }
@@ -204,7 +212,9 @@ namespace nlohmann {
                 name = typeid(T).name();
             }
             //make_shared
-            create_shared_ptr(name, ptr);
+            if (json_create_shared_ptr) {
+                create_shared_ptr(name, ptr);
+            }
 
             //from_json
             if (!j.is_null()) {
@@ -246,11 +256,11 @@ namespace nlohmann {
         {
             std::string str;
             j.get_to(str);
-            o = str2wstr(str);
+            o = utf8_to_wide(str);
         }
         static void to_json(json& j, const std::wstring& o)
         {
-            j = wstr2str(o);
+            j = wide_to_utf8(o);
         }
 
     };

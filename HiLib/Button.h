@@ -32,6 +32,7 @@ private:
 	std::shared_ptr<ButtonProperty> m_spButtonProperty;
 	ReactiveCommand<void> m_command;
 	ReactiveProperty<std::wstring> m_content;
+	ReactiveProperty<std::wstring> m_disable_content;
 public:
 	CButton(CD2DWControl* pControl, const std::shared_ptr<ButtonProperty>& spButtonProperty)
 		:CD2DWControl(pControl), m_spButtonProperty(spButtonProperty){}
@@ -39,6 +40,7 @@ public:
 	//
 	ReactiveCommand<void>& GetCommand() { return m_command; }
 	ReactiveProperty<std::wstring>& GetContent() { return m_content; }
+	ReactiveProperty<std::wstring>& GetDisableContent() { return m_disable_content; }
 
 	//Event
 	virtual void OnPaint(const PaintEvent& e) override;

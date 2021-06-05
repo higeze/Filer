@@ -49,6 +49,41 @@ struct GetOpenFileNameArg
 std::vector<std::basic_string<TCHAR>>
 	GetOpenFileName(GetOpenFileNameArg arg);
 
+template<typename T>
+inline std::basic_string<T> GetModuleFilePath(HMODULE hModule = nullptr)
+{
+	std::basic_string<T> strPath;
+	::GetModuleFileNameA(hModule,::GetBuffer(strPath,MAX_PATH),MAX_PATH);
+	ReleaseBuffer(strPath);
+	return strPath;
+}
+
+template<>
+inline std::basic_string<wchar_t> GetModuleFilePath<wchar_t>(HMODULE hModule)
+{
+	std::basic_string<wchar_t> strPath;
+	::GetModuleFileNameW(hModule,::GetBuffer(strPath,MAX_PATH),MAX_PATH);
+	ReleaseBuffer(strPath);
+	return strPath;
+}
+
+template<typename T>
+inline std::basic_string<T> GetModuleDirPath(HMODULE hModule = nullptr)
+{
+	std::basic_string<T> strPath = GetModuleFilePath<T>(hModule);
+	::PathRemoveFileSpecA(strPath.data());
+	ReleaseBuffer(strPath);
+	return strPath;
+}
+
+template<>
+inline std::basic_string<wchar_t> GetModuleDirPath(HMODULE hModule)
+{
+	std::basic_string<wchar_t> strPath = GetModuleFilePath<wchar_t>(hModule);
+	::PathRemoveFileSpecW(strPath.data());
+	ReleaseBuffer(strPath);
+	return strPath;
+}
 
 std::wstring GetModuleFileName(HMODULE hModule=NULL);
 std::wstring PathFindDirectory(std::wstring wstrPath);

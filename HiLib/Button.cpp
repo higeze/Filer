@@ -35,6 +35,7 @@ void CButton::OnPaint(const PaintEvent& e)
 	SolidFill fill = m_spButtonProperty->NormalFill;
 	SolidLine line = m_spButtonProperty->BorderLine;
 	FormatF format = m_spButtonProperty->Format;
+	std::wstring content = m_content.get();
 	if (GetIsEnabled().get()) {
 		switch (GetState()) {
 			case UIElementState::Hot:
@@ -53,13 +54,16 @@ void CButton::OnPaint(const PaintEvent& e)
 		}
 	} else {
 		format = m_spButtonProperty->DisableFormat;
+		if (!m_disable_content.get().empty()) {
+			content = m_disable_content;
+		}
 	}
 
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
 	GetWndPtr()->GetDirectPtr()->FillSolidRoundedRectangle(fill, GetRectInWnd(), radius, radius);
 	GetWndPtr()->GetDirectPtr()->DrawSolidRoundedRectangle(line, GetRectInWnd(), radius, radius);
-	GetWndPtr()->GetDirectPtr()->DrawTextInRect(format, m_content.get(), GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->DrawTextInRect(format, content, GetRectInWnd());
 
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
 }

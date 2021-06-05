@@ -125,11 +125,23 @@ enum class TextStatus
 	Saved
 };
 
+enum class encoding_type
+{
+	unknown,
+	utf16be,
+	utf16le,
+	utf16len,
+	utf8,
+	utf8n,
+	sjis,
+};
+
 struct TextTabData :public TabData
 {
 	ReactiveWStringProperty Path;
 	
 	ReactiveWStringProperty Text;
+	ReactiveProperty<encoding_type> Encode;
 	ReactiveProperty<CPointF> CaretPos;
 	ReactiveTupleProperty<int, int, int, int, int> Carets;
 	ReactiveProperty<TextStatus> Status;
@@ -156,6 +168,9 @@ struct TextTabData :public TabData
 
 	void Save();
 	void Save(const std::wstring& path);
+
+	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
+
 
 	template<class Archive>
 	void save(Archive & ar)
@@ -249,7 +264,9 @@ public:
 	/***********/
 	/* Closure */
 	/***********/
-	std::function<std::shared_ptr<CFilerGridView>&()> GetFilerGridViewPtr;
+	//std::function<std::shared_ptr<CFilerGridView>&()> GetFilerGridViewPtr;
+	property<std::shared_ptr<CFilerGridView>> FilerGridViewPtr;
+
 	std::function<std::shared_ptr<CToDoGridView>&()> GetToDoGridViewPtr;
 	std::function<std::shared_ptr<CTextEditor>&()> GetTextViewPtr;
 	std::function<std::shared_ptr<CPdfView>&()> GetPdfViewPtr;
@@ -282,7 +299,7 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 
 		CTabControl::save(ar);
-		auto spGrid = GetFilerGridViewPtr();
+		auto spGrid = FilerGridViewPtr();
 		ar("FilerView", spGrid);
 	}
 
@@ -295,7 +312,7 @@ public:
 		REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 
 		CTabControl::load(ar);
-		auto spGrid = GetFilerGridViewPtr();
+		auto spGrid = FilerGridViewPtr();
 		ar("FilerView", spGrid, this, m_spFilerGridViewProp);
 	}
 
@@ -307,7 +324,7 @@ public:
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 
 		to_json(j, static_cast<const CTabControl&>(o));
-		j["FilerView"] = o.GetFilerGridViewPtr();
+		j["FilerView"] = o.FilerGridViewPtr();
 	}
 
 	friend void from_json(const json& j, CFilerTabGridView& o)
@@ -318,8 +335,9 @@ public:
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 
 		from_json(j, static_cast<CTabControl&>(o));
-		//auto spGrid = o.GetFilerGridViewPtr();
-		//j.at("FilerView").get_to(spGrid);
+		std::shared_ptr<CFilerGridView> tmp;
+		get_to_nothrow(j, "FilerView", tmp, &o, o.m_spFilerGridViewProp);
+		o.FilerGridViewPtr = tmp;
 	}
 };
 

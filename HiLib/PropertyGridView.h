@@ -1,5 +1,6 @@
 #pragma once
 #include "GridView.h"
+//#include <sigslot/signal.hpp>
 
 struct CellProperty;
 struct BackgroundProperty;
@@ -12,7 +13,7 @@ private:
 public:
 	CPropertyGridView(CD2DWControl* pParentControl, std::shared_ptr<GridViewProperty> spGridViewProperty);
 	virtual ~CPropertyGridView(){}
-	boost::signals2::signal<void()> PropertyChanged;
+	sigslot::signal<> PropertyChanged;
 
 
 	virtual bool HasSheetCell()override{ return true; }

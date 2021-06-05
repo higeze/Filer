@@ -53,10 +53,12 @@ struct TabControlProperty
 
 struct TabData
 {
-	std::function<bool()> ClosingFunction;
+	ReactiveProperty<bool> Unlock = true;
 
-	TabData() :ClosingFunction([]()->bool { return true; }) {}
+	TabData(){}
 	virtual ~TabData() = default;
+
+	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing);
 
 	//In case of REGISTER_POLYMORPHIC_RELATION, Base and Derived class have to be same function structure
 	template<class Archive>
@@ -64,8 +66,17 @@ struct TabData
 	template<class Archive>
 	void load(Archive& ar){}
 
-	friend void to_json(json& j, const TabData& o) {}
-	friend void from_json(const json& j, TabData& o) {}
+
+	friend void to_json(json& j, const TabData& o)
+	{
+		j = json{
+			{"Unlock", o.Unlock},
+		};
+	}
+	friend void from_json(const json& j, TabData& o) 
+	{
+		get_to_nothrow(j, "Unlock", o.Unlock);
+	}
 };
 
 class CTabControl;
@@ -78,6 +89,7 @@ class CTabHeaderControl :public CD2DWControl
 private:
 	std::shared_ptr<TabHeaderControlProperty> m_spProp;
 	std::shared_ptr<CButton> m_spButton;
+	std::unique_ptr<CBinding<bool>> m_isEnableBinding;
 
 	CSizeF m_size = CSizeF();
 	CSizeF m_iconSize = CSizeF();
@@ -204,6 +216,7 @@ public:
 	/***********/
 	/* Command */
 	/***********/
+	virtual void OnCommandLockTab(const CommandEvent& e);
 	virtual void OnCommandCloneTab(const CommandEvent& e);
 	virtual void OnCommandNewTab(const CommandEvent& e) {}
 	virtual void OnCommandCloseTab(const CommandEvent& e);

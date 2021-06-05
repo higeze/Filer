@@ -21,6 +21,9 @@ public:
 		const std::shared_ptr<CFavoritesProperty>& spFavoritesProp = nullptr);
 	virtual ~CFavoritesGridView(void) = default;
 
+	//ReactiveVectorProperty<std::tuple<std::shared_ptr<CFavorite>>>& GetItemsSource() override { return m_itemsSource; }
+	//void SetItemsSource(const ReactiveVectorProperty<std::tuple<std::shared_ptr<CFavorite>>>& itemsSource) { m_itemsSource = itemsSource; }
+
 	std::shared_ptr<CFavoritesProperty>& GetFavoritesProp() { return m_spFavoritesProp; }
 
 	virtual void OnCreate(const CreateEvt& e) override;

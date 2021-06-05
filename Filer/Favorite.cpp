@@ -12,7 +12,7 @@ CFavorite::CFavorite(std::wstring path, std::wstring shortName)
 
 CFavorite::~CFavorite()
 {
-	if (m_futureFile.valid() /*&& m_futureWatch.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready*/) {
+	if (m_futureFile.valid() && m_futureFile.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
 		*m_spCancel = true;
 		m_futureFile.get();
 	}

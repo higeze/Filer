@@ -87,11 +87,76 @@ public:
 	}
 
 	ReactiveVectorProperty<std::tuple<TItems...>>& GetItemsSource() override { return *(this->m_spItemsSource); }
+	void SetItemsSource(const ReactiveVectorProperty<std::tuple<TItems...>>& items) { this->m_spItemsSource->set(items); }
 	std::vector<std::tuple<TItems...>>& GetSelectedItems() { return this->m_funSelItems(); }
 
 	/******************/
 	/* Window Message */
 	/******************/
+	void subscribe_detail_row(const NotifyVectorChangedEventArgs<std::tuple<TItems...>>& e)
+	{
+		switch (e.Action) {
+			case NotifyVectorChangedAction::Add:
+				PushRow(std::make_shared<CBindRow<TItems...>>(this));
+				break;
+			case NotifyVectorChangedAction::Insert:
+				InsertRow(e.NewStartingIndex, std::make_shared<CBindRow<TItems...>>(this));
+				break;
+			case NotifyVectorChangedAction::Remove:
+			{
+				auto spRow = m_allRows[e.OldStartingIndex + m_frozenRowCount];
+				for (const auto& colPtr : m_allCols) {
+					if (auto pMapCol = std::dynamic_pointer_cast<CMapColumn>(colPtr)) {
+						pMapCol->Erase(const_cast<CRow*>(spRow.get()));
+					}
+				}
+				EraseRow(spRow);
+				break;
+			}
+			case NotifyVectorChangedAction::Reset:
+				m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
+				for (auto& tup : e.NewItems) {
+					PushRow(std::make_shared<CBindRow<TItems...>>(this));
+				}
+
+				break;
+			default:
+				break;
+		}
+	}
+
+	void subscribe_detail_column(const NotifyVectorChangedEventArgs<std::tuple<TItems...>>& e)
+	{
+		switch (e.Action) {
+			case NotifyVectorChangedAction::Add:
+				this->PushColumn(std::make_shared<CBindColumn<TItems...>>(this));
+				break;
+			case NotifyVectorChangedAction::Insert:
+				this->InsertColumn(e.NewStartingIndex, std::make_shared<CBindColumn<TItems...>>(this));
+				break;
+			case NotifyVectorChangedAction::Remove:
+			{
+				auto spColumn = m_allCols[e.OldStartingIndex + m_frozenColumnCount];
+				for (const auto& rowPtr : m_allRows) {
+					if (auto pMapRow = std::dynamic_pointer_cast<CMapRow>(rowPtr)) {
+						pMapRow->Erase(const_cast<CColumn*>(spColumn.get()));
+					}
+				}
+				EraseColumn(spColumn);
+				break;
+			}
+			case NotifyVectorChangedAction::Reset:
+				m_allCols.idx_erase(m_allCols.begin() + m_frozenColumnCount, m_allCols.end());
+				for (auto& tup : e.NewItems) {
+					PushColumn(std::make_shared<CBindColumn<TItems...>>(this));
+				}
+
+				break;
+			default:
+				break;
+		}
+	}
+
 
 	void OnCreate(const CreateEvt& e) override
 	{
@@ -99,39 +164,21 @@ public:
 			case BindType::Row:
 			{
 				//VectorChanged
-				auto& itemsSource = GetItemsSource();
-				itemsSource.SubscribeDetail(
-					[this](const NotifyVectorChangedEventArgs<std::tuple<TItems...>>& e)->void
-					{
-					 switch (e.Action) {
-						 case NotifyVectorChangedAction::Add:
-							 PushRow(std::make_shared<CBindRow<TItems...>>(this));
-							 break;
-						 case NotifyVectorChangedAction::Insert:
-							 InsertRow(e.NewStartingIndex, std::make_shared<CBindRow<TItems...>>(this));
-							 break;
-						 case NotifyVectorChangedAction::Remove:
-						 {
-							 auto spRow = m_allRows[e.OldStartingIndex + m_frozenRowCount];
-							 for (const auto& colPtr : m_allCols) {
-								 if (auto pMapCol = std::dynamic_pointer_cast<CMapColumn>(colPtr)) {
-									 pMapCol->Erase(const_cast<CRow*>(spRow.get()));
-								 }
-							 }
-							 EraseRow(spRow);
-							 break;
-						 }
-						 case NotifyVectorChangedAction::Reset:
-							 m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
-							 for (auto& tup : e.NewItems) {
-								 PushRow(std::make_shared<CBindRow<TItems...>>(this));
-							 }
-
-							 break;
-						 default:
-							 break;
-					 }
+				ReactiveVectorProperty<std::tuple<TItems...>>& itemsSource = GetItemsSource();
+				itemsSource.Subscribe(
+					[this](const auto& items)->void {						
+						m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
+						for (auto spCol : m_allCols) {
+							if (auto sp = std::dynamic_pointer_cast<CMapColumn>(spCol)) {
+								sp
+							}
+							spCol->
+						}
+						for (auto& tup : items) {
+							PushRow(std::make_shared<CBindRow<TItems...>>(this));
+						}
 					});
+				itemsSource.SubscribeDetail([&](const auto& e) { this->subscribe_detail_row(e); });
 
 				//PushColumn
 				for (auto& spCol : m_initColumns) {
@@ -148,39 +195,15 @@ public:
 			case BindType::Column:
 			{
 				//VectorChanged
-				auto& itemsSource = GetItemsSource();
-				itemsSource.SubscribeDetail(
-					[this](const NotifyVectorChangedEventArgs<std::tuple<TItems...>>& e)->void
-					{
-					 switch (e.Action) {
-						 case NotifyVectorChangedAction::Add:
-							 this->PushColumn(std::make_shared<CBindColumn<TItems...>>(this));
-							 break;
-						 case NotifyVectorChangedAction::Insert:
-							 this->InsertColumn(e.NewStartingIndex, std::make_shared<CBindColumn<TItems...>>(this));
-							 break;
-						 case NotifyVectorChangedAction::Remove:
-						 {
-							 auto spColumn = m_allCols[e.OldStartingIndex + m_frozenColumnCount];
-							 for (const auto& rowPtr : m_allRows) {
-								 if (auto pMapRow = std::dynamic_pointer_cast<CMapRow>(rowPtr)) {
-									 pMapRow->Erase(const_cast<CColumn*>(spColumn.get()));
-								 }
-							 }
-							 EraseColumn(spColumn);
-							 break;
+				ReactiveVectorProperty<std::tuple<TItems...>>& itemsSource = GetItemsSource();
+				itemsSource.Subscribe(
+					[this](const auto& items)->void{
+						 m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
+						 for (auto& tup : items) {
+							 PushRow(std::make_shared<CBindRow<TItems...>>(this));
 						 }
-						 case NotifyVectorChangedAction::Reset:
-							 m_allCols.idx_erase(m_allCols.begin() + m_frozenColumnCount, m_allCols.end());
-							 for (auto& tup : e.NewItems) {
-								 PushColumn(std::make_shared<CBindColumn<TItems...>>(this));
-							 }
-
-							 break;
-						 default:
-							 break;
-					 }
 					});
+				itemsSource.SubscribeDetail([&](const auto& e) { this->subscribe_detail_column(e); });
 
 				//PushRow
 				for (auto& spRow : m_initRows) {
