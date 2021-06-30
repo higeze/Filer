@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -80,7 +80,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -198,7 +198,6 @@
     <ClInclude Include="..\D2DTextBox\TextStoreACP.h" />
     <ClInclude Include="..\D2DTextBox\undo.h" />
     <ClInclude Include="..\HiLib\ApplicationProperty.h" />
-    <ClInclude Include="..\HiLib\atlpartial.h" />
     <ClInclude Include="..\HiLib\Band.h" />
     <ClInclude Include="..\HiLib\BindCheckBoxCell.h" />
     <ClInclude Include="..\HiLib\BindCheckBoxColumn.h" />
@@ -236,6 +235,7 @@
     <ClInclude Include="..\HiLib\Dragger.h" />
     <ClInclude Include="..\HiLib\DropTargetManager.h" />
     <ClInclude Include="..\HiLib\EmptyCell.h" />
+    <ClInclude Include="..\HiLib\encoding_type.h" />
     <ClInclude Include="..\HiLib\EventArgs.h" />
     <ClInclude Include="..\HiLib\FileDragger.h" />
     <ClInclude Include="..\HiLib\FileIconCache.h" />
@@ -295,6 +295,7 @@
     <ClInclude Include="..\HiLib\Pdf.h" />
     <ClInclude Include="..\HiLib\PdfView.h" />
     <ClInclude Include="..\HiLib\PdfViewStateMachine.h" />
+    <ClInclude Include="..\HiLib\property.h" />
     <ClInclude Include="..\HiLib\ReactiveProperty.h" />
     <ClInclude Include="..\HiLib\ScrollProperty.h" />
     <ClInclude Include="..\HiLib\SortCell.h" />
@@ -330,6 +331,8 @@
     <ClInclude Include="..\HiLib\TabControl.h" />
     <ClInclude Include="..\HiLib\D2DWWindow.h" />
     <ClInclude Include="..\HiLib\TextCell.h" />
+    <ClInclude Include="..\HiLib\TextEnDecoder.h" />
+    <ClInclude Include="..\HiLib\TextFileDialog.h" />
     <ClInclude Include="..\HiLib\ThreadHelper.h" />
     <ClInclude Include="..\HiLib\ThreadSafeDriveFolderManager.h" />
     <ClInclude Include="..\HiLib\ThreadSafeKnownFolderManager.h" />
@@ -343,6 +346,7 @@
     <ClInclude Include="..\HiLib\UpdateResource.h" />
     <ClInclude Include="..\HiLib\HiLibResource.h" />
     <ClInclude Include="CheckableFileGrid.h" />
+    <ClInclude Include="FilerWndStatusBar.h" />
     <ClInclude Include="LauncherItemDragger.h" />
     <ClInclude Include="LauncherProperty.h" />
     <ClInclude Include="DropTarget.h" />
@@ -469,6 +473,7 @@
     <ClCompile Include="..\HiLib\TabControl.cpp" />
     <ClCompile Include="..\HiLib\D2DWWindow.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
+    <ClCompile Include="..\HiLib\TextEnDecoder.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeKnownFolderManagaer.cpp" />
     <ClCompile Include="..\HiLib\Timer.cpp" />
@@ -479,6 +484,7 @@
     <ClCompile Include="FileOperationWnd.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />
     <ClCompile Include="FilerGridViewWnd.cpp" />
+    <ClCompile Include="FilerWndStatusBar.cpp" />
     <ClCompile Include="LauncherGridView.cpp" />
     <ClCompile Include="PathRow.cpp" />
     <ClCompile Include="IncrementalCopyWnd.cpp" />

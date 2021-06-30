@@ -70,6 +70,7 @@ public:
 	virtual void OnMouseWheel(const MouseWheelEvent& e) override {}
 
 	virtual void OnKeyDown(const KeyDownEvent& e)  override;
+	virtual void OnKeyUp(const KeyUpEvent& e) override;
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e)  override {}
 	virtual void OnChar(const CharEvent& e)  override;
 	
@@ -84,7 +85,7 @@ public:
 	//String
 	virtual std::wstring GetString() override {return CSheet::GetSheetString();}
 	virtual void SetString(const std::wstring& str, bool notify)  override {/*Do Nothing*/}
-	virtual bool Filter(const std::wstring& strFilter)const;
+	virtual bool Filter(const std::wstring& strFilter);
 
 	virtual CPointF GetScrollPos()const;
 	virtual CGridView* GetGridPtr();

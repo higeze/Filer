@@ -13,10 +13,12 @@
 #include "ScrollProperty.h"//ScrollProperty
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include "ResourceIDFactory.h"
 
 #include <regex>
+#include <nameof/nameof.hpp>
 
 #define TAB_WIDTH_4CHAR 4
 
@@ -692,7 +694,7 @@ void CTextBox::OnCreate(const CreateEvt& e)
 
 	FAILED_THROW(GetThreadMgr()->SetFocus(GetDocumentMgr()));
 	
-	m_text.SubscribeDetail(
+	m_text.Subscribe(
 		[this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
 			if (e.Action == NotifyStringChangedAction::Assign) {
 				GetTextStore()->OnTextChange(0, 0, 0);
@@ -786,12 +788,34 @@ void CTextBox::Normal_KillFocus(const KillFocusEvent& e)
 	m_timer.stop();
 }
 
+void CTextBox::Normal_KeyUp(const KeyUpEvent& e)
+{
+	switch (e.Char) {
+		case VK_CONTROL:
+		{
+			BOOL dummy = FALSE;
+			Normal_SetCursor(SetCursorEvent(GetWndPtr(), HTCLIENT, &dummy));
+			break;
+
+		}
+		default:
+			break;
+	}
+}
+
 void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 {
 	bool shift = (::GetKeyState(VK_SHIFT) & 0x80) != 0;
 	bool ctrl = (::GetKeyState(VK_CONTROL) & 0x80) != 0;
 
 	switch (e.Char) {
+	case VK_CONTROL:
+	{
+		BOOL dummy = FALSE;
+		Normal_SetCursor(SetCursorEvent(GetWndPtr(), HTCLIENT, &dummy));
+		break;
+
+	}
 	case VK_LEFT:
 	{
 		auto position = std::clamp(std::get<caret::CurCaret>(m_carets.get()) - 1, 0, (int)m_text.size());
@@ -994,7 +1018,7 @@ void CTextBox::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 	if (auto index = GetActualCharPosFromPoint(newPoint)) {
 		if (std::find(delimiters.begin(), delimiters.end(), m_text[index.value()]) == delimiters.end()) {
 			size_t selBegin = index.value() - 1;
-			for (; selBegin >= 0; --selBegin) {
+			for (; selBegin > 0; --selBegin) {
 				if (std::find(delimiters.begin(), delimiters.end(), m_text[selBegin]) != delimiters.end()) {
 					selBegin++;
 					break;
@@ -1083,7 +1107,7 @@ void CTextBox::Normal_SetCursor(const SetCursorEvent& e)
 	}
 }
 
-void CTextEditor::Normal_ContextMenu(const ContextMenuEvent& e)
+void CTextBox::Normal_ContextMenu(const ContextMenuEvent& e)
 {
 	//CreateMenu
 	CMenu menu(::CreatePopupMenu());
@@ -1093,10 +1117,28 @@ void CTextEditor::Normal_ContextMenu(const ContextMenuEvent& e)
 	mii.fMask = MIIM_TYPE | MIIM_ID;
 	mii.fType = MFT_STRING;
 	mii.fState = MFS_ENABLED;
-	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Execute");
-	mii.dwTypeData = const_cast<LPWSTR>(L"Execute");
-	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
+	MENUITEMINFO mii_separator = { 0 };
+	mii_separator.cbSize = sizeof(MENUITEMINFO);
+	mii_separator.fMask = MIIM_FTYPE;
+	mii_separator.fType = MFT_SEPARATOR;
+
+	//Copy
+	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Copy");
+	mii.dwTypeData = const_cast<LPWSTR>(L"Copy\tCtrl+C");
+	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+	//Paste
+	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Paste");
+	mii.dwTypeData = const_cast<LPWSTR>(L"Paste\tCtrl+V");
+	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+	////Separator
+	//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii_separator);
+	////Execute
+	//mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Execute");
+	//mii.dwTypeData = const_cast<LPWSTR>(L"Execute");
+	//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+	//Show Menu
 	::SetForegroundWindow(GetWndPtr()->m_hWnd);
 	int idCmd = menu.TrackPopupMenu(
 		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
@@ -1104,19 +1146,24 @@ void CTextEditor::Normal_ContextMenu(const ContextMenuEvent& e)
 		e.PointInScreen.y,
 		GetWndPtr()->m_hWnd);
 
-	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Execute")) {
-		auto exe = m_text.substr(std::get<caret::SelBegin>(m_carets.get()), std::get<caret::SelEnd>(m_carets.get()) - std::get<caret::SelBegin>(m_carets.get()));
-		exe = ((exe.front() == L'\"') ? L"" : L"\"") + boost::algorithm::trim_copy(exe) + ((exe.back() == L'\"') ? L"" : L"\"");
-		SHELLEXECUTEINFO execInfo = {};
-		execInfo.cbSize = sizeof(execInfo);
-		execInfo.hwnd = GetWndPtr()->m_hWnd;
-		execInfo.lpVerb = L"open";
-		execInfo.lpFile = exe.c_str();
-		execInfo.nShow = SW_SHOWDEFAULT;
-		::ShellExecuteEx(&execInfo);
+	//Command
+	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Copy")) {
+		CopySelectionToClipboard();
+	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Paste")) {
+		PasteFromClipboard();
 	}
+	//else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Execute")) {
+	//	auto exe = m_text.substr(std::get<caret::SelBegin>(m_carets.get()), std::get<caret::SelEnd>(m_carets.get()) - std::get<caret::SelBegin>(m_carets.get()));
+	//	exe = ((exe.front() == L'\"') ? L"" : L"\"") + boost::algorithm::trim_copy(exe) + ((exe.back() == L'\"') ? L"" : L"\"");
+	//	SHELLEXECUTEINFO execInfo = {};
+	//	execInfo.cbSize = sizeof(execInfo);
+	//	execInfo.hwnd = GetWndPtr()->m_hWnd;
+	//	execInfo.lpVerb = L"open";
+	//	execInfo.lpFile = exe.c_str();
+	//	execInfo.nShow = SW_SHOWDEFAULT;
+	//	::ShellExecuteEx(&execInfo);
+	//}
 	*e.HandledPtr = TRUE;
-
 }
 
 
@@ -1205,6 +1252,7 @@ bool CTextBox::CopySelectionToClipboard()
 	int selLen = std::get<caret::SelEnd>(m_carets.get()) - std::get<caret::SelBegin>(m_carets.get());
 	if (selLen > 0) {
 		std::wstring strCopy = m_text.substr(std::get<caret::SelBegin>(m_carets.get()), selLen);
+		boost::algorithm::replace_all(strCopy, L"\n", L"\r\n");
 
 		HGLOBAL hGlobal = ::GlobalAlloc(GHND | GMEM_SHARE, (strCopy.size() + 1) * sizeof(wchar_t));
 		wchar_t* strMem = (wchar_t*)::GlobalLock(hGlobal);
@@ -1249,7 +1297,11 @@ bool CTextBox::PasteFromClipboard()
 
 CRectF CTextBox::GetRectInWnd() const
 {
-	return m_pCell->GetEditRect();
+	if (m_pCell) {
+		return m_pCell->GetEditRect();
+	} else {
+		return CD2DWControl::GetRectInWnd();
+	}
 }
 
 CRectF CTextBox::GetPageRect() const
@@ -1313,7 +1365,11 @@ void CTextBox::ClearText()
 
 bool CTextBox::GetIsVisible()const
 {
-	return m_pCell->GetIsVisible();
+	if (m_pCell) {
+		return m_pCell->GetIsVisible();
+	} else {
+		return true;
+	}
 }
 
 void CTextBox::Render()
@@ -1585,79 +1641,127 @@ void CTextBox::UpdateAll()
 
 CTextEditor::CTextEditor(
 	CD2DWControl* pParentControl,
-	const std::shared_ptr<TextboxProperty>& spProp)
-	:CTextBox(pParentControl, nullptr, spProp, L"", nullptr, nullptr)
+	const std::shared_ptr<TextEditorProperty>& spProp,
+	const std::shared_ptr<StatusBarProperty>& spStatusProp)
+	:CD2DWControl(pParentControl),
+	m_pProp(spProp),
+	m_spTextBox(std::make_shared<CTextBox>(this, nullptr, spProp, L"", nullptr, nullptr)),
+	m_spStatusBar(std::make_shared<CStatusBar>(this, spStatusProp))
 {
-	m_hasBorder = true;
-	m_isScrollable = true;
-	m_open.Subscribe([this]()
-		{
-			UpdateAll();
-		}, 
-		100);
+	m_spTextBox->SetHasBorder(false);
+	m_spTextBox->SetIsScrollable(true);
+
+	m_spStatusBar->GetIsFocusable().set(false);
+	
+	m_open.Subscribe([this](HWND hWnd)
+	{
+		m_spTextBox->UpdateAll();
+	}, 
+	100);
+	m_encoding.Subscribe([this](const encoding_type& e)
+	{
+		m_spStatusBar->SetText(str2wstr(std::string(nameof::nameof_enum(e))));
+	});
 }
 
-//void CTextEditor::OnClose(const CloseEvent& e)
-//{
-//
-//}
-
-void CTextEditor::OnKeyDown(const KeyDownEvent& e)
+std::tuple<CRectF, CRectF> CTextEditor::GetRects() const
 {
-	bool ctrl = ::GetAsyncKeyState(VK_CONTROL);
-	switch (e.Char) {
-		case 'O':
-			if (ctrl) {
-				Open();
-			}
-			break;
-		case 'S':
-			if (ctrl) {
-				Save();
-			}
-			break;
-		default:
-			CTextBox::OnKeyDown(e);
-			break;
+	CRectF rcClient = GetRectInWnd();
+
+	FLOAT statusHeight = m_spStatusBar->MeasureSize(GetWndPtr()->GetDirectPtr()).height;
+	CRectF rcText(rcClient.left, rcClient.top, rcClient.right, rcClient.bottom - statusHeight);
+	CRectF rcStatus(rcClient.left, rcText.bottom, rcClient.right, rcClient.bottom);
+
+	if (rcStatus.left > rcStatus.right) {
+		auto i = 10;
 	}
+
+	return { rcText, rcStatus };
 }
 
-void CTextEditor::Open()
+
+void CTextEditor::OnCreate(const CreateEvt& e)
 {
-	m_open.Execute();
+	CD2DWControl::OnCreate(e);
+	auto [rcText, rcStatus] = GetRects();
+	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, rcText));
+	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
 }
 
-void CTextEditor::Save()
+void CTextEditor::OnPaint(const PaintEvent& e)
 {
-	m_save.Execute();
-}
+	m_spTextBox->OnPaint(e);
+	m_spStatusBar->OnPaint(e);
 
-void CTextEditor::Update()
-{
-	UpdateAll();
-}
-
-void CTextEditor::Normal_Paint(const PaintEvent& e)
-{
-	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
-
-	//PaintBackground
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
-	//PaintLine
 	//Paint Focused Line
 	if (GetIsFocused() ){
 		CRectF rcFocus(GetRectInWnd());
 		rcFocus.DeflateRect(1.0f, 1.0f);
 		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->FocusedLine), rcFocus);
 	}
-	//PaintContent
-	Render();
-	//PaintScroll
-	m_pVScroll->OnPaint(e);
-	m_pHScroll->OnPaint(e);
+}
 
-	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
+void CTextEditor::OnRect(const RectEvent& e)
+{
+	CD2DWControl::OnRect(e);
+	auto [rcText, rcStatus] = GetRects();
+	m_spTextBox->OnRect(RectEvent(GetWndPtr(), rcText));
+	m_spStatusBar->OnRect(RectEvent(GetWndPtr(), rcStatus));
+	m_spTextBox->UpdateAll();
 }
 
 
+void CTextEditor::OnKeyDown(const KeyDownEvent& e)
+{
+	bool ctrl = ::GetAsyncKeyState(VK_CONTROL);
+	bool shift = ::GetAsyncKeyState(VK_SHIFT);
+	switch (e.Char) {
+		case 'O':
+			if (ctrl && shift) {
+				OpenAs();
+				*e.HandledPtr = TRUE;
+			} else if (ctrl) {
+				Open();
+				*e.HandledPtr = TRUE;
+			}
+			break;
+		case 'S':
+			if (ctrl && shift) {
+				SaveAs();
+				*e.HandledPtr = TRUE;
+			}else if (ctrl) {
+				Save();
+				*e.HandledPtr = TRUE;
+			}
+			break;
+		default:
+			CD2DWControl::OnKeyDown(e);
+			break;
+	}
+}
+
+void CTextEditor::Open()
+{
+	m_open.Execute(GetWndPtr()->m_hWnd);
+}
+
+void CTextEditor::OpenAs()
+{
+	m_open_as.Execute(GetWndPtr()->m_hWnd);
+}
+
+void CTextEditor::Save()
+{
+	m_save.Execute(GetWndPtr()->m_hWnd);
+}
+
+void CTextEditor::SaveAs()
+{
+	m_save_as.Execute(GetWndPtr()->m_hWnd);
+}
+
+void CTextEditor::Update()
+{
+	m_spTextBox->UpdateAll();
+}
 

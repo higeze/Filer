@@ -84,7 +84,7 @@ public:
 	virtual bool Paste(std::shared_ptr<CCell> spCellDst, std::wstring source){return false;}
 	virtual void Delete(std::shared_ptr<CCell> spCellDst){}
 	virtual bool HasCell()const { return true; }
-	virtual std::shared_ptr<CCell>& Cell(CRow* pRow) = 0;
+	//virtual std::shared_ptr<CCell>& Cell(CRow* pRow) = 0;
 	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
 	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }

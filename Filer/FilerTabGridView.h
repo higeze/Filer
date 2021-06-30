@@ -14,9 +14,12 @@
 #include <functional>
 #include "JsonSerializer.h"
 
+#include "encoding_type.h"
+
 class CFilerGridView;
 struct FilerGridViewProperty;
 struct GridViewProperty;
+struct StatusBarProperty;
 class CToDoGridView;
 class CD2DWWindow;
 class CShellFolder;
@@ -111,7 +114,16 @@ struct ToDoTabData:public TabData
 		ar("Path", Path);
 	}
 
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(ToDoTabData, Path)
+	friend void to_json(json& j, const ToDoTabData& o)
+	{
+		to_json(j, static_cast<const TabData&>(o));
+		j["Path"] = o.Path;
+	}
+	friend void from_json(const json& j, ToDoTabData& o)
+	{
+		from_json(j, static_cast<TabData&>(o));
+		j.at("Path").get_to(o.Path);
+	}
 };
 
 /***************/
@@ -125,35 +137,31 @@ enum class TextStatus
 	Saved
 };
 
-enum class encoding_type
-{
-	unknown,
-	utf16be,
-	utf16le,
-	utf16len,
-	utf8,
-	utf8n,
-	sjis,
-};
 
 struct TextTabData :public TabData
 {
 	ReactiveWStringProperty Path;
 	
 	ReactiveWStringProperty Text;
-	ReactiveProperty<encoding_type> Encode;
+	ReactiveProperty<encoding_type> Encoding;
 	ReactiveProperty<CPointF> CaretPos;
 	ReactiveTupleProperty<int, int, int, int, int> Carets;
 	ReactiveProperty<TextStatus> Status;
 
-	ReactiveCommand<void> OpenCommand;
-	ReactiveCommand<void> SaveCommand;
+	ReactiveCommand<HWND> OpenCommand;
+	ReactiveCommand<HWND> SaveCommand;
+	ReactiveCommand<HWND> OpenAsCommand;
+	ReactiveCommand<HWND> SaveAsCommand;
+
 
 	TextTabData(const std::wstring& path = std::wstring())
 		:TabData(), Path(path), Text(), Status(TextStatus::None), Carets(0,0,0,0,0)
 	{
-		OpenCommand.Subscribe([this]() { Open(); });
-		SaveCommand.Subscribe([this]() { Save(); });
+		OpenCommand.Subscribe([this](HWND hWnd) { Open(hWnd); });
+		SaveCommand.Subscribe([this](HWND hWnd) { Save(hWnd); });
+		OpenAsCommand.Subscribe([this](HWND hWnd) { OpenAs(hWnd); });
+		SaveAsCommand.Subscribe([this](HWND hWnd) { SaveAs(hWnd); });
+
 		//CloseCommand.Subscribe([this]() { Close(); });
 		Text.Subscribe([this](const auto&)
 		{
@@ -163,11 +171,13 @@ struct TextTabData :public TabData
 
 	virtual ~TextTabData() = default;
 
-	void Open();
-	void Open(const std::wstring& path);
+	void Open(HWND hWnd);
+	void OpenAs(HWND hWnd);
+	void Open(const std::wstring& path, const encoding_type& enc);
 
-	void Save();
-	void Save(const std::wstring& path);
+	void Save(HWND hWnd);
+	void SaveAs(HWND hWnd);
+	void Save(const std::wstring& path, const encoding_type& enc);
 
 	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
 
@@ -182,7 +192,17 @@ struct TextTabData :public TabData
 	{
 		ar("Path", Path);
 	}
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(TextTabData, Path)
+
+	friend void to_json(json& j, const TextTabData& o)
+	{
+		to_json(j, static_cast<const TabData&>(o));
+		j["Path"] = o.Path;
+	}
+	friend void from_json(const json& j, TextTabData& o)
+	{
+		from_json(j, static_cast<TabData&>(o));
+		j.at("Path").get_to(o.Path);
+	}
 };
 
 /**************/
@@ -217,7 +237,16 @@ struct PdfTabData :public TabData
 	{
 		ar("Path", Path);
 	}
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(PdfTabData, Path)
+	friend void to_json(json& j, const PdfTabData& o)
+	{
+		to_json(j, static_cast<const TabData&>(o));
+		j["Path"] = o.Path;
+	}
+	friend void from_json(const json& j, PdfTabData& o)
+	{
+		from_json(j, static_cast<TabData&>(o));
+		j.at("Path").get_to(o.Path);
+	}
 };
 
 /*************/
@@ -229,16 +258,20 @@ private:
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
 	std::shared_ptr<PdfViewProperty> m_spPdfViewProp;
+	std::shared_ptr<StatusBarProperty> m_spStatusProp;
 
-	std::unique_ptr<CBinding<std::wstring>> m_pTextBinding;
-	std::unique_ptr<CBinding<std::wstring>> m_pTextPathBinding;
-	std::unique_ptr<CBinding<std::wstring>> m_pPdfPathBinding;
-	std::unique_ptr<CBinding<FLOAT>> m_pPdfScaleBinding;
-	std::unique_ptr<CBinding<bool>> m_pStatusBinding;
-	std::unique_ptr<CBinding<CPointF>> m_pCaretPosBinding;
-	std::unique_ptr<CBinding<std::tuple<int, int, int, int, int>>> m_pCaretsBinding;
-	std::unique_ptr<CBinding<void>> m_pSaveBinding;
-	std::unique_ptr<CBinding<void>> m_pOpenBinding;
+	std::unique_ptr<CBinding> m_pTextBinding;
+	std::unique_ptr<CBinding> m_pTextEncodingBinding;
+	std::unique_ptr<CBinding> m_pTextPathBinding;
+	std::unique_ptr<CBinding> m_pPdfPathBinding;
+	std::unique_ptr<CBinding> m_pPdfScaleBinding;
+	std::unique_ptr<CBinding> m_pStatusBinding;
+	std::unique_ptr<CBinding> m_pCaretPosBinding;
+	std::unique_ptr<CBinding> m_pCaretsBinding;
+	std::unique_ptr<CBinding> m_pOpenBinding;
+	std::unique_ptr<CBinding> m_pOpenAsBinding;
+	std::unique_ptr<CBinding> m_pSaveBinding;
+	std::unique_ptr<CBinding> m_pSaveAsBinding;
 
 
 	std::unique_ptr<sigslot::scoped_connection> m_pTextPathConnection;
@@ -254,7 +287,8 @@ public:
 		const std::shared_ptr<TabControlProperty>& spTabProp = nullptr, 
 		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty = nullptr,
 		const std::shared_ptr<TextEditorProperty>& spTextboxProp = nullptr,
-		const std::shared_ptr<PdfViewProperty>& spPdfViewProp = nullptr);
+		const std::shared_ptr<PdfViewProperty>& spPdfViewProp = nullptr,
+		const std::shared_ptr<StatusBarProperty>& statusBarProp = nullptr);
 	virtual ~CFilerTabGridView();
 
 	/****************/

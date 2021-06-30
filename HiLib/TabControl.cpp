@@ -108,7 +108,7 @@ void CTabHeaderControl::OnCreate(const CreateEvt& e)
 	m_spButton->GetContent().set(L"x");
 	m_spButton->GetDisableContent().set(L"l");
 	m_spButton->GetIsFocusable().set(false);
-	m_isEnableBinding.reset(new CBinding<bool>(static_cast<CTabControl*>(m_pParentControl)->m_itemsSource[GetIndex()]->Unlock, m_spButton->GetIsEnabled()));
+	m_isEnableBinding.reset(new CBinding(static_cast<CTabControl*>(m_pParentControl)->m_itemsSource[GetIndex()]->Unlock, m_spButton->GetIsEnabled()));
 
 	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 }
@@ -383,7 +383,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 	CD2DWControl::OnCreate(e);
 
 	//ItemsSource
-	m_itemsSource.SubscribeDetail(
+	m_itemsSource.Subscribe(
 		[this](const NotifyVectorChangedEventArgs<std::shared_ptr<TabData>>& e)->void
 		{
 			switch (e.Action) {

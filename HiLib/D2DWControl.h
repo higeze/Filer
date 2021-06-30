@@ -73,6 +73,7 @@ public:
 	virtual void OnCommand(const CommandEvent& e) override;
 
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
+	virtual void OnKeyUp(const KeyUpEvent& e) override;
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e) override;
 	virtual void OnChar(const CharEvent& e) override;
 

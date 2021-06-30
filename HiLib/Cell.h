@@ -20,6 +20,12 @@ class CMenu;
 struct CellEventArgs;
 struct CellContextMenuEventArgs;
 
+//#define MAKELONG(a, b)      ((LONG)(((WORD)(((DWORD_PTR)(a)) & 0xffff)) | ((DWORD)((WORD)(((DWORD_PTR)(b)) & 0xffff))) << 16))
+
+
+#define MAKELONGLONG(a, b)      ((LONGLONG)(((LONG)(((LONG_PTR)(a)) & 0xffffffff)) | ((LONGLONG)((LONG)(((LONG_PTR)(b)) & 0xffffffff))) << 32))
+
+
 class CCell :virtual public CUIElement
 {
 protected:
@@ -58,6 +64,7 @@ public:
 	CSheet* GetSheetPtr()const { return m_pSheet; }
 	CRow* GetRowPtr()const { return m_pRow; }
 	CColumn* GetColumnPtr()const { return m_pColumn; }
+	LONGLONG GetRowColumnPtr()const { return MAKELONGLONG(m_pRow, m_pColumn); }
 	virtual bool GetIsWrappable()const { return m_isWrappable; }
 	void SetFitMeasureValid(const bool& b) { m_isFitMeasureValid = b; }
 	void SetActMeasureValid(const bool& b) { m_isActMeasureValid = b; }

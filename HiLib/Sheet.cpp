@@ -67,27 +67,70 @@ CSheet::CSheet(
 
 CSheet::~CSheet() = default;
 
-std::shared_ptr<CCell>& CSheet::Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn)
+//std::shared_ptr<CCell>& CSheet::Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn)
+//{
+//	return spColumn->Cell(spRow.get());
+//}
+//
+//std::shared_ptr<CCell>& CSheet::Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow)
+//{
+//	return spColumn->Cell(spRow.get());
+//}
+//
+//std::shared_ptr<CCell>& CSheet::Cell( CRow* pRow,  CColumn* pColumn)
+//{
+//	return pColumn->Cell(pRow);
+//}
+
+const std::shared_ptr<CCell>& CSheet::Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn) 
 {
-	return spColumn->Cell(spRow.get());
+	return Cell(spRow.get(), spColumn.get());
+}
+const std::shared_ptr<CCell>& CSheet::Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow) 
+{
+	return Cell(spRow, spColumn);
+}
+const std::shared_ptr<CCell>& CSheet::Cell(CRow* const pRow, CColumn* const pColumn) 
+{
+	auto& container = m_allCells.get<rowcol_tag>();
+	auto iter = container.find(MAKELONGLONG(pRow, pColumn));
+	if (iter == container.end()) {
+		if (m_bindType == BindType::Row) {
+			if (pRow == GetHeaderRowPtr().get()) {
+				iter = container.insert(pColumn->HeaderCellTemplate(pRow, pColumn)).first;
+			} else if (pRow == GetNameHeaderRowPtr().get()) {
+				iter = container.insert(pColumn->NameHeaderCellTemplate(pRow, pColumn)).first;
+			} else if (pRow == GetFilterRowPtr().get()) {
+				iter = container.insert(pColumn->FilterCellTemplate(pRow, pColumn)).first;
+			} else {
+				iter = container.insert(pColumn->CellTemplate(pRow, pColumn)).first;
+			}
+		} else if (m_bindType == BindType::Column) {
+			if (pRow == GetHeaderRowPtr().get()) {
+				iter = container.insert(pRow->HeaderCellTemplate(pRow, pColumn)).first;
+			} else if (pRow == GetNameHeaderRowPtr().get()) {
+				iter = container.insert(pRow->NameHeaderCellTemplate(pRow, pColumn)).first;
+			} else if (pRow == GetFilterRowPtr().get()) {
+				iter = container.insert(pRow->FilterCellTemplate(pRow, pColumn)).first;
+			} else {
+				iter = container.insert(pRow->CellTemplate(pRow, pColumn)).first;
+			}
+		}
+
+
+
+	}
+	return const_cast<std::shared_ptr<CCell>&>(*iter);
+
 }
 
-std::shared_ptr<CCell>& CSheet::Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow)
-{
-	return spColumn->Cell(spRow.get());
-}
-
-std::shared_ptr<CCell>& CSheet::Cell( CRow* pRow,  CColumn* pColumn)
-{
-	return pColumn->Cell(pRow);
-}
 
 std::shared_ptr<CCell> CSheet::Cell(const CPointF& pt)
 {
 	auto rowPtr = Coordinate2Pointer<RowTag>(pt.y);
 	auto colPtr = Coordinate2Pointer<ColTag>(pt.x);
 	if (rowPtr.get() != nullptr && colPtr.get() != nullptr){
-		return CSheet::Cell(rowPtr, colPtr);
+		return Cell(rowPtr, colPtr);
 	}
 	else {
 		return nullptr;
@@ -119,7 +162,7 @@ void CSheet::SetAllColumnFitMeasureValid(bool valid)
 void CSheet::SetColumnAllCellMeasureValid(CColumn* pColumn, bool valid)
 {
 	for (const auto& ptr : m_allRows) {
-		CSheet::Cell(ptr.get(), pColumn)->SetActMeasureValid(false);
+		Cell(ptr.get(), pColumn)->SetActMeasureValid(false);
 	}
 }
 
@@ -232,7 +275,7 @@ void CSheet::ColumnHeaderFitWidth(const CColumnEventArgs& e)
 {
 	e.m_pColumn->SetIsMeasureValid(false);
 	for(const auto& ptr : m_allRows){
-		e.m_pColumn->Cell(ptr.get())->SetActMeasureValid(false);
+		Cell(ptr, e.m_pColumn)->SetActMeasureValid(false);
 	}
 	this->SetAllColumnMeasureValid(false);
 	
@@ -384,14 +427,14 @@ void CSheet::PostUpdate(Updates type)
 
 }
 
-std::wstring CSheet::GetSheetString()const
+std::wstring CSheet::GetSheetString()
 {
 	std::wstring str;
 
 	for(const auto& rowPtr : m_visRows){
 		bool bFirstLine=true;
 		for(const auto& colPtr : m_visCols){
-			auto pCell=Cell(rowPtr, colPtr);
+			const auto& pCell = Cell(rowPtr, colPtr);
 			if(bFirstLine){
 				bFirstLine=false;
 			}else{
@@ -450,14 +493,14 @@ void CSheet::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
 	switch(sort){
 	case Sorts::Down:
 		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
-			[pCol](const auto& lhs, const auto& rhs)->bool{
+			[pCol, this](const auto& lhs, const auto& rhs)->bool{
 				return _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str()) > 0;
 			});
 
 		break;
 	case Sorts::Up:
 		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
-			[pCol](const auto& lhs, const auto& rhs)->bool {
+			[pCol, this](const auto& lhs, const auto& rhs)->bool {
 				return _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str()) < 0;
 			});
 		break;

@@ -223,6 +223,12 @@ void CSheetCell::OnKeyDown(const KeyDownEvent& e)
 	CSheet::OnKeyDown(e);
 }
 
+void CSheetCell::OnKeyUp(const KeyUpEvent& e)
+{
+	CCell::OnKeyUp(e);
+	CSheet::OnKeyUp(e);
+}
+
 void CSheetCell::OnChar(const CharEvent& e)
 {
 	CCell::OnChar(e);
@@ -285,7 +291,7 @@ bool CSheetCell::GetIsFocused()const
 }
 
 
-bool CSheetCell::Filter(const std::wstring& strFilter)const
+bool CSheetCell::Filter(const std::wstring& strFilter)
 {
 	for (auto colPtr : m_allCols) {
 		for (auto rowPtr : m_allRows) {
@@ -341,7 +347,7 @@ void CSheetCell::UpdateRow()
 	for (auto rowPtr : m_visRows) {
 		rowPtr->SetTop(top, false);
 		for (auto colPtr : m_visCols) {
-			std::shared_ptr<CCell> pCell = CSheet::Cell(rowPtr, colPtr);
+			std::shared_ptr<CCell> pCell = Cell(rowPtr, colPtr);
 			if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
 				pSheetCell->UpdateAll();
 			}
@@ -363,7 +369,7 @@ void CSheetCell::UpdateColumn()
 	for (auto& colPtr : m_allCols) {
 		colPtr->SetLeft(left, false);
 		for (auto rowPtr : m_visRows) {
-			std::shared_ptr<CCell> pCell = CSheet::Cell(rowPtr, colPtr);
+			std::shared_ptr<CCell> pCell = Cell(rowPtr, colPtr);
 			if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
 				pSheetCell->UpdateAll();
 			}

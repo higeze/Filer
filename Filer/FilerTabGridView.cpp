@@ -25,8 +25,18 @@
 #include "FileIconCache.h"
 #include "ShellFileFactory.h"
 #include "PdfView.h"
+#include "StatusBar.h"
 
-#include <MLang.h>
+#include "ResourceIDFactory.h"
+
+
+#include "TextFileDialog.h"
+#include "TextEnDecoder.h"
+
+
+/****************/
+/* FilerTabData */
+/****************/
 
 FilerTabData::FilerTabData(const std::wstring& path)
 	:TabData(), Path(path)
@@ -42,82 +52,113 @@ FilerTabData::FilerTabData(const std::wstring& path)
 	}
 }
 
+/***************/
+/* TextTabData */
+/***************/
 
-void TextTabData::Open()
+void TextTabData::Open(HWND hWnd)
 {
-	std::wstring path;
-	OPENFILENAME ofn = { 0 };
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = NULL;// GetWndPtr()->m_hWnd;
-	//ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
-	ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrTitle = L"Open";
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-	//ofn.lpstrDefExt = L"txt";
+	CTextFileOpenDialog dlg;
 
-	if (!GetOpenFileName(&ofn)) {
-		DWORD errCode = CommDlgExtendedError();
-		if (errCode) {
-			throw std::exception(FILE_LINE_FUNC);
+	dlg.SetEncodingTypes(
+		{
+			encoding_type::UNKNOWN,
+			encoding_type::UTF16BE,
+			encoding_type::UTF16LE,
+			encoding_type::UTF16LEN,
+			encoding_type::UTF8,
+			encoding_type::UTF8N,
+			encoding_type::SJIS,
+			encoding_type::ASCII,
+			encoding_type::JIS,
+			encoding_type::EUC
+		}
+	);
+
+	dlg.SetFileTypes({ {L"Text (*.txt)", L"*.txt"}, {L"All (*.*)", L"*.*"} });
+	
+	dlg.Show(hWnd);
+
+	if (!dlg.GetPath().empty()) {
+		Open(dlg.GetPath(), dlg.GetSelectedEncodingType());
+	} else {
+		return;
+	}
+}
+
+void TextTabData::OpenAs(HWND hWnd)
+{
+	if (::PathFileExists(Path.c_str())) {
+		CTextFileOpenDialog dlg;
+
+		dlg.SetEncodingTypes(
+			{
+				encoding_type::UNKNOWN,
+				encoding_type::UTF16BE,
+				encoding_type::UTF16LE,
+				encoding_type::UTF16LEN,
+				encoding_type::UTF8,
+				encoding_type::UTF8N,
+				encoding_type::SJIS,
+				encoding_type::ASCII,
+				encoding_type::JIS,
+				encoding_type::EUC
+			}
+		);
+		dlg.SetFileTypes({ {L"Text (*.txt)", L"*.txt"}, {L"All (*.*)", L"*.*"} });
+
+		dlg.SetFolder(::PathFindDirectory(Path));
+		dlg.SetFileName(::PathFindFileNameW(Path.c_str()));
+		dlg.SetSelectedEncodingType(Encoding);
+
+		dlg.Show(hWnd);
+
+		if (!dlg.GetPath().empty()) {
+			Open(dlg.GetPath(), dlg.GetSelectedEncodingType());
+		} else {
+			return;
 		}
 	} else {
-		::ReleaseBuffer(path);
-		Open(path);
+		Open(hWnd);
 	}
 }
 
 
-std::pair<encoding_type, std::wstring> parse_ifstream(std::ifstream& ifs)
-{
-	static std::array<BYTE, 3> bom_utf8 = {0xEF, 0xBB, 0xBF};
-	static std::array<BYTE, 3> bom_utf16le = { 0xFF, 0xFE, 0x00 };
-	static std::array<BYTE, 3> bom_utf16be = { 0xFE, 0xFF, 0x00 };
-	static INT test = IS_TEXT_UNICODE_STATISTICS;
+//{
+//	std::wstring path;
+//	OPENFILENAME ofn = { 0 };
+//	ofn.lStructSize = sizeof(OPENFILENAME);
+//	ofn.hwndOwner = NULL;// GetWndPtr()->m_hWnd;
+//	//ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
+//	ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
+//	ofn.nMaxFile = MAX_PATH;
+//	ofn.lpstrTitle = L"Open";
+//	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+//	//ofn.lpstrDefExt = L"txt";
+//
+//	if (!GetOpenFileName(&ofn)) {
+//		DWORD errCode = CommDlgExtendedError();
+//		if (errCode) {
+//			throw std::exception(FILE_LINE_FUNC);
+//		}
+//	} else {
+//		::ReleaseBuffer(path);
+//		Open(path);
+//	}
+//}
 
-	std::array<BYTE, 3> bom;
-	bom[0] = ifs.get();
-	bom[1] = ifs.get();
-	bom[2] = ifs.get();
-	ifs.seekg(0);
 
-	if (bom[0] == bom_utf16be[0] && bom[1] == bom_utf16be[1]){
-		throw std::exception("UTF16BE is not supported");
-	} else if (bom[0] == bom_utf16le[0] && bom[1] == bom_utf16le[1]) {
-		return {encoding_type::utf16le, std::wstring(std::next(std::istreambuf_iterator<char>(ifs), 2), std::istreambuf_iterator<char>()) };
-	} else if (bom[0] == bom_utf8[0] && bom[1] == bom_utf8[1] && bom[2] == bom_utf8[2]) {
-		return {encoding_type::utf8, utf8_to_wide(std::string(std::next(std::istreambuf_iterator<char>(ifs), 3), std::istreambuf_iterator<char>())) };
-	} else {
-		auto str = std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
-
-		//if (::IsTextUnicode(str.c_str(), str.size(), &test)) {
-		//	return { encoding_type::utf16len, std::wstring(str.begin(), str.end()) };
-		//} else {
-			CComPtr<IMultiLanguage3> p;
-			FAILED_THROW(::CoCreateInstance(CLSID_CMultiLanguage, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&p)));
-			DetectEncodingInfo encoding = {};
-			INT size = str.size();
-			INT scores = 1;
-			p->DetectInputCodepage(MLDETECTCP_NONE, 0, const_cast<CHAR*>(str.c_str()), &size, &encoding, &scores);
-			switch (encoding.nCodePage) {
-				case 932:
-				return { encoding_type::sjis, sjis_to_wide(str) };
-				case 65001:
-				default:
-				return { encoding_type::utf8n, cp_to_wide(str, encoding.nCodePage) };
-			}
-		//}
-	}
-}
-
-void TextTabData::Open(const std::wstring& path)
+void TextTabData::Open(const std::wstring& path, const encoding_type& enc)
 {
 	if (::PathFileExists(path.c_str())) {
 		Path.set(path);
 		std::ifstream ifs(path);
-		auto pair = parse_ifstream(ifs);
-		Encode.set(pair.first);
-		Text.assign(pair.second);
+		std::string str = std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+		encoding_type enc = CTextEnDecoder::GetInstance()->DetectEncoding(str);
+		std::wstring wstr = CTextEnDecoder::GetInstance()->Decode(str, enc);
+
+		Encoding.set(enc);
+		Text.assign(wstr);
 		Status.force_notify_set(TextStatus::Saved);
 		Carets.set(0, 0, 0, 0, 0);
 		CaretPos.set(CPointF(0, 10 * 0.5f));//TODOLOW
@@ -141,40 +182,111 @@ void TextTabData::Open(const std::wstring& path)
 	//}
 }
 
-void TextTabData::Save()
+void TextTabData::Save(HWND hWnd)
 {
 	if (!::PathFileExistsW(Path.c_str())) {
-		std::wstring path;
-		OPENFILENAME ofn = { 0 };
-		ofn.lStructSize = sizeof(OPENFILENAME);
-		ofn.hwndOwner = NULL;// GetWndPtr()->m_hWnd;
-		ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
-		ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
-		ofn.nMaxFile = MAX_PATH;
-		ofn.lpstrTitle = L"Save as";
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
-		ofn.lpstrDefExt = L"txt";
+		CTextFileSaveDialog dlg;
 
-		if (!GetSaveFileName(&ofn)) {
-			DWORD errCode = CommDlgExtendedError();
-			if (errCode) {
-				//throw std::exception(FILE_LINE_FUNC);
+		dlg.SetEncodingTypes(
+			{
+				encoding_type::UNKNOWN,
+				encoding_type::UTF16BE,
+				encoding_type::UTF16LE,
+				encoding_type::UTF16LEN,
+				encoding_type::UTF8,
+				encoding_type::UTF8N,
+				encoding_type::SJIS,
+				encoding_type::ASCII,
+				encoding_type::JIS,
+				encoding_type::EUC
 			}
+		);
+
+		dlg.SetFileTypes({ {L"Text (*.txt)", L"*.txt"}, {L"All (*.*)", L"*.*"} });
+
+		dlg.Show(hWnd);
+
+		if (!dlg.GetPath().empty()) {
+			Save(dlg.GetPath(), dlg.GetSelectedEncodingType());
 		} else {
-			::ReleaseBuffer(path);
+			return;
 		}
-		Save(path);
 	} else {
-		Save(Path);
+		Save(Path.get(), Encoding.get());
 	}
 }
 
-void TextTabData::Save(const std::wstring& path)
+void TextTabData::SaveAs(HWND hWnd)
+{
+	if (::PathFileExistsW(Path.c_str())) {
+		CTextFileSaveDialog dlg;
+
+		dlg.SetEncodingTypes(
+			{
+				encoding_type::UNKNOWN,
+				encoding_type::UTF16BE,
+				encoding_type::UTF16LE,
+				encoding_type::UTF16LEN,
+				encoding_type::UTF8,
+				encoding_type::UTF8N,
+				encoding_type::SJIS,
+				encoding_type::ASCII,
+				encoding_type::JIS,
+				encoding_type::EUC
+			}
+		);
+		dlg.SetFileTypes({ {L"Text (*.txt)", L"*.txt"}, {L"All (*.*)", L"*.*"} });
+
+		dlg.SetFolder(::PathFindDirectory(Path));
+		dlg.SetFileName(::PathFindFileNameW(Path.c_str()));
+		dlg.SetSelectedEncodingType(Encoding);
+
+		dlg.Show(hWnd);
+		
+		if (!dlg.GetPath().empty()) {
+			Save(dlg.GetPath(), dlg.GetSelectedEncodingType());
+		} else {
+			return;
+		}
+	} else {
+		Save(hWnd);
+	}
+}
+
+	//if (!::PathFileExistsW(Path.c_str())) {
+	//	std::wstring path;
+	//	OPENFILENAME ofn = { 0 };
+	//	ofn.lStructSize = sizeof(OPENFILENAME);
+	//	ofn.hwndOwner = NULL;// GetWndPtr()->m_hWnd;
+	//	ofn.lpstrFilter = L"Text file(*.txt)\0*.txt\0\0";
+	//	ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
+	//	ofn.nMaxFile = MAX_PATH;
+	//	ofn.lpstrTitle = L"Save as";
+	//	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
+	//	ofn.lpstrDefExt = L"txt";
+
+	//	if (!GetSaveFileName(&ofn)) {
+	//		DWORD errCode = CommDlgExtendedError();
+	//		if (errCode) {
+	//			//throw std::exception(FILE_LINE_FUNC);
+	//		}
+	//	} else {
+	//		::ReleaseBuffer(path);
+	//	}
+	//	Save(path);
+	//} else {
+	//	Save(Path);
+	//}
+//}
+
+void TextTabData::Save(const std::wstring& path, const encoding_type& enc)
 {
 	Path.set(path);
+	Encoding.set(enc);
 	Status.force_notify_set(TextStatus::Saved);
 	std::ofstream ofs(path);
-	ofs << wide_to_utf8(Text);//TODO MID
+	std::string str = CTextEnDecoder::GetInstance()->Encode(Text.get(), enc);
+	ofs.write(str.c_str(), str.size());
 
 	//CFile::WriteAllString(path, wstr2str(Text));
 }
@@ -191,7 +303,7 @@ bool TextTabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
 				MB_YESNOCANCEL);
 			switch (ync) {
 				case IDYES:
-					Save();
+					Save(pWnd->m_hWnd);
 					return true;
 				case IDNO:
 					return true;
@@ -206,16 +318,22 @@ bool TextTabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
 	}
 }
 
+/********************/
+/* FilerTabGridView */
+/********************/
 
 CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, 
 	const std::shared_ptr<TabControlProperty>& spTabProp,
 	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, 
 	const std::shared_ptr<TextEditorProperty>& spTextEditorProp,
-	const std::shared_ptr<PdfViewProperty>& spPdfViewProp)
+	const std::shared_ptr<PdfViewProperty>& spPdfViewProp,
+	const std::shared_ptr<StatusBarProperty>& spStatusProp)
 	:CTabControl(pParentControl, spTabProp), 
 	m_spFilerGridViewProp(spFilerGridViewProp),
 	m_spTextEditorProp(spTextEditorProp),
-	m_spPdfViewProp(spPdfViewProp)
+	m_spPdfViewProp(spPdfViewProp),
+	m_spStatusProp(spStatusProp)
+
 {
 	//Command
 	m_commandMap.emplace(IDM_NEWFILERTAB, std::bind(&CFilerTabGridView::OnCommandNewFilerTab, this, phs::_1));
@@ -332,7 +450,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 			spToDoView->SetFrozenCount<RowTag>(2);
 
 			//Path Changed
-			spToDoView->GetPath().Subscribe([&](const std::wstring& e) {
+			spToDoView->GetPath().Subscribe([&](const auto& notify) {
 				auto pData = std::static_pointer_cast<ToDoTabData>(m_itemsSource[m_selectedIndex.get()]);
 				pData->Path = spToDoView->GetPath().get();
 				spToDoView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
@@ -342,7 +460,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	};
 
 	//TextView Closure
-	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(this, m_spTextEditorProp), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>& {
+	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(this, m_spTextEditorProp, m_spStatusProp), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>& {
 		return spTextView;
 	};
 
@@ -471,30 +589,37 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 
 		//Path
 		m_pTextPathBinding.reset(nullptr);//Need to dispose first to disconnect
-		m_pTextPathBinding.reset(new CBinding<std::wstring>(spViewModel->Path, spView->GetPath()));
+		m_pTextPathBinding.reset(new CBinding(spViewModel->Path, spView->GetPath()));
 		m_pTextPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Status
 		m_pStatusBinding.reset(nullptr);
 		m_pStatusConnection = std::make_unique<sigslot::scoped_connection>(spViewModel->Status.Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Text
 		m_pTextBinding.reset(nullptr);
-		m_pTextBinding.reset(new CBinding<std::wstring>(spViewModel->Text, spView->GetText()));
+		m_pTextBinding.reset(new CBinding(spViewModel->Text, spView->GetTextBoxPtr()->GetText()));
+		//Encoding
+		m_pTextEncodingBinding.reset(nullptr);
+		m_pTextEncodingBinding.reset(new CBinding(spViewModel->Encoding, spView->GetEncoding()));		
 		//Carets
 		m_pCaretsBinding.reset(nullptr);
-		m_pCaretsBinding.reset(new CBinding<std::tuple<int, int, int, int, int>>(spViewModel->Carets, spView->GetCarets()));
+		m_pCaretsBinding.reset(new CBinding(spViewModel->Carets, spView->GetTextBoxPtr()->GetCarets()));
 		//CaretPos
 		m_pCaretPosBinding.reset(nullptr);
-		m_pCaretPosBinding.reset(new CBinding<CPointF>(spViewModel->CaretPos, spView->GetCaretPos()));
+		m_pCaretPosBinding.reset(new CBinding(spViewModel->CaretPos, spView->GetTextBoxPtr()->GetCaretPos()));
 		//Open
 		m_pOpenBinding.reset(nullptr);
-		m_pOpenBinding.reset(new CBinding<void>(spViewModel->OpenCommand, spView->GetOpenCommand()));
+		m_pOpenBinding.reset(new CBinding(spViewModel->OpenCommand, spView->GetOpenCommand()));
+		m_pOpenAsBinding.reset(nullptr);
+		m_pOpenAsBinding.reset(new CBinding(spViewModel->OpenAsCommand, spView->GetOpenAsCommand()));
 		//Save()
 		m_pSaveBinding.reset(nullptr);
-		m_pSaveBinding.reset(new CBinding<void>(spViewModel->SaveCommand, spView->GetSaveCommand()));
+		m_pSaveBinding.reset(new CBinding(spViewModel->SaveCommand, spView->GetSaveCommand()));
+		m_pSaveAsBinding.reset(nullptr);
+		m_pSaveAsBinding.reset(new CBinding(spViewModel->SaveAsCommand, spView->GetSaveAsCommand()));
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
 		if (spViewModel->Status.get() == TextStatus::None) {
-			spViewModel->Open(spViewModel->Path);
+			spViewModel->Open(spViewModel->Path, spViewModel->Encoding);
 		}
 
 		return spView;
@@ -506,11 +631,11 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 
 		//Path
 		m_pPdfPathBinding.reset(nullptr);//Need to dispose first to disconnect
-		m_pPdfPathBinding.reset(new CBinding<std::wstring>(spViewModel->Path, spView->GetPath()));
+		m_pPdfPathBinding.reset(new CBinding(spViewModel->Path, spView->GetPath()));
 		m_pPdfPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Scale
 		m_pPdfScaleBinding.reset(nullptr);//Need to dispose first to disconnect
-		m_pPdfScaleBinding.reset(new CBinding<FLOAT>(spViewModel->Scale, spView->GetScale()));
+		m_pPdfScaleBinding.reset(new CBinding(spViewModel->Scale, spView->GetScale()));
 
 		//Open
 		//m_pOpenBinding.reset(nullptr);

@@ -224,31 +224,105 @@ public:
 	}
 };
 
-
 template<class T, class U>
-class ReactiveDetailProperty :public ReactiveProperty<T>
+class IReactiveDetailProperty
 {
-	using base = ReactiveProperty<T>;
+public:
+	virtual sigslot::connection Subscribe(std::function<void(const U& value)> next, sigslot::group_id id = 0) = 0;
+	virtual operator T() const { return get(); }
+	virtual const T& get() const = 0;
+	virtual void set(const T& value) = 0;
+};
+
+
+template <class T, class U>
+class ReactiveDetailProperty :public IReactiveDetailProperty<T, U>
+{
 protected:
-	std::shared_ptr<Subject<U>> m_pDetailSubject;
+	std::shared_ptr<Subject<U>> m_pSubject;
+	T m_value;
 public:
 	ReactiveDetailProperty() :
-		base(),
-		m_pDetailSubject(std::make_shared <Subject<U>>()){}
+		m_pSubject(std::make_shared<Subject<U>>()),
+		m_value()
+	{};
 
 	ReactiveDetailProperty(const T& value) :
-		base(value),
-		m_pDetailSubject(std::make_shared <Subject<U>>())
+		m_pSubject(std::make_shared<Subject<U>>()),
+		m_value(value)
 	{};
 
 	virtual ~ReactiveDetailProperty() = default;
+	ReactiveDetailProperty(const ReactiveDetailProperty& val) = default;
+	ReactiveDetailProperty(ReactiveDetailProperty&& val) = default;
+	ReactiveDetailProperty& operator=(const ReactiveDetailProperty& val) = default;
+	ReactiveDetailProperty& operator=(ReactiveDetailProperty&& val) = default;
 
-	virtual sigslot::connection SubscribeDetail(std::function<void(const U& value)> next, sigslot::group_id id = 0)
+	virtual sigslot::connection Subscribe(std::function<void(const U& value)> next, sigslot::group_id id = 0)
 	{
-		return m_pDetailSubject->Subscribe(next, id);
+		return m_pSubject->Subscribe(next, id);
+	}
+	virtual const T& get() const override { return m_value; }
+	virtual void set(const T& value) override
+	{
+		if (m_value != value) {
+			force_notify_set(value);
+		}
+	}
+
+	virtual void force_notify_set(const T& value) = 0;
+
+	template <class Archive>
+	void save(Archive& ar)
+	{
+		ar("Value", m_value);
+	}
+
+	template <class Archive>
+	void load(Archive& ar)
+	{
+		ar("Value", m_value);
+	}
+
+	friend void to_json(json& j, const ReactiveDetailProperty<T, U>& o)
+	{
+		j = {
+			{"Value", o.m_value},
+		};
+	}
+
+	friend void from_json(const json& j, ReactiveDetailProperty<T, U>& o)
+	{
+		j.at("Value").get_to(o.m_value);
 	}
 };
 
+
+//
+//template<class T, class U>
+//class ReactiveDetailProperty :public ReactiveProperty<T>
+//{
+//	using base = ReactiveProperty<T>;
+//protected:
+//	std::shared_ptr<Subject<U>> m_pDetailSubject;
+//public:
+//	ReactiveDetailProperty() :
+//		base(),
+//		m_pDetailSubject(std::make_shared <Subject<U>>()){}
+//
+//	ReactiveDetailProperty(const T& value) :
+//		base(value),
+//		m_pDetailSubject(std::make_shared <Subject<U>>())
+//	{};
+//
+//	virtual ~ReactiveDetailProperty() = default;
+//
+//	virtual sigslot::connection SubscribeDetail(std::function<void(const U& value)> next, sigslot::group_id id = 0)
+//	{
+//		return m_pDetailSubject->Subscribe(next, id);
+//	}
+//};
+//
 
 
 
@@ -282,6 +356,7 @@ class ReactiveBasicStringProperty
 {
 	using base = typename ReactiveDetailProperty<std::basic_string<CharT, Traits, Allocator>, NotifyStringChangedEventArgs<CharT>>;
 	using str_type = typename std::basic_string<CharT, Traits, Allocator>;
+	using notify_type = typename NotifyStringChangedEventArgs<CharT>;
 	using size_type = typename  std::basic_string<CharT, Traits, Allocator>::size_type;
 	using const_iterator = typename std::basic_string<CharT, Traits, Allocator>::const_iterator;
 	using const_reference = typename std::basic_string<CharT, Traits, Allocator>::const_reference;
@@ -296,24 +371,17 @@ public:
 	
 	~ReactiveBasicStringProperty() = default;
 
-	virtual void set(const str_type& value) override
-	{
-		if (this->m_value != value) {
-			force_notify_set(value);
-		}
-	}
 	virtual void force_notify_set(const str_type& value) override
 	{
 		str_type old(this->m_value);
 		this->m_value.assign(value);
-		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Assign,
 				this->m_value,
 				old,
 				0, (int)(old.size()),
 				(int)(this->m_value.size())
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	const_reference operator[](size_type pos) const noexcept
@@ -373,7 +441,7 @@ public:
 	
 	ReactiveBasicStringProperty<CharT, Traits, Allocator>& assign(const str_type& value)
 	{
-		set(value);
+		this->set(value);
 		return *this;
 	}
 
@@ -381,13 +449,12 @@ public:
 	{
 		str_type old(this->m_value);
 		this->m_value.insert(index, value);
-		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Insert,
 			this->m_value,
 			old,
 			(int)index, (int)index, (int)(index + value.size())
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
@@ -395,13 +462,12 @@ public:
 	{
 		str_type old(this->m_value);
 		this->m_value.erase(index, count);
-		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Erase,
 			this->m_value,
 			old,
 			(int)index, (int)(index + count), (int)(index)
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
@@ -409,13 +475,12 @@ public:
 	{
 		str_type old(this->m_value);
 		this->m_value.replace(pos, count, value);
-		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Replace,
 			this->m_value,
 			old,
 			(int)pos, (int)(pos + count), int(pos + value.size())
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
@@ -423,13 +488,12 @@ public:
 	{
 		str_type old(this->m_value);
 		this->m_value.replace(pos, n1, s, n2);
-		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Replace,
 				this->m_value,
 				old,
 				(int)pos, (int)(pos + n1), int(pos + n2)
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 		return *this;
 	}
 
@@ -437,19 +501,18 @@ public:
 	{
 		str_type old(this->m_value);
 		this->m_value.clear();
-		this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Clear,
 			this->m_value,
 			old,
 			0, (int)old.size(), 0
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	template <class Archive>
 	void save(Archive& ar)
 	{
-		ReactiveProperty<str_type>::load(ar);
+		ReactiveDetailProperty<str_type, notify_type>::load(ar);
 	}
 
 	template <class Archive>
@@ -458,14 +521,13 @@ public:
 		str_type old(this->m_value);
 		ar("Value", this->m_value);
 		if (old != this->m_value) {
-			this->m_pDetailSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+			this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 				NotifyStringChangedAction::Assign,
 				this->m_value,
 				old,
 				0, (int)old.size(), 0
 			});
 		}
-		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	friend void to_json(json& j, const ReactiveBasicStringProperty<CharT, Traits, Allocator>& o)
@@ -528,6 +590,7 @@ class ReactiveVectorProperty:public ReactiveDetailProperty<std::vector<T, Alloca
 {
 	using base = ReactiveDetailProperty<std::vector<T, Allocator>, NotifyVectorChangedEventArgs<T>>;
 	using vector_type = std::vector<T, Allocator>;
+	using notify_type = NotifyVectorChangedEventArgs<T>;
 	using str_type = typename std::vector<T, Allocator>;
 	using size_type = typename  std::vector<T, Allocator>::size_type;
 	using iterator = typename std::vector<T, Allocator>::iterator;
@@ -544,17 +607,11 @@ public:
 
 	virtual ~ReactiveVectorProperty() = default;
 
-	virtual void set(const vector_type& value) override
-	{
-		if (this->m_value != value) {
-			force_notify_set(value);
-		}
-	}
 	virtual void force_notify_set(const vector_type& value) override
 	{
 		vector_type old(this->m_value);
 		this->m_value.assign(value.cbegin(), value.cend());
-		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		this->m_pSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Reset,
 			this->m_value,
@@ -562,7 +619,6 @@ public:
 			old,
 			0
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	const_reference operator[](size_type pos) const noexcept
@@ -609,7 +665,7 @@ public:
 	void push_back(const T& x)
 	{
 		this->m_value.push_back(x);
-		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		this->m_pSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Add,
 			{ x },
@@ -617,14 +673,13 @@ public:
 			{},
 				-1
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	iterator insert(const_iterator position, const T& x)
 	{
 		auto ret = this->m_value.insert(position, x);
 		auto index = std::distance(this->m_value.begin(), ret);
-		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		this->m_pSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Insert,
 			{ x },
@@ -632,7 +687,6 @@ public:
 			{},
 			-1
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 		return ret;
 	}
 
@@ -641,7 +695,7 @@ public:
 		auto oldItem = *position;
 		*position = x;
 		auto index = std::distance(this->m_value.begin(), position);
-		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		this->m_pSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Replace,
 			{ x },
@@ -649,7 +703,6 @@ public:
 			{ oldItem},
 			-1
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 		return position;
 	}
 
@@ -658,7 +711,7 @@ public:
 		auto oldItem = *where;
 		auto index = std::distance(this->m_value.cbegin(), where);
 		iterator ret = this->m_value.erase(where);
-		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		this->m_pSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Remove,
 			{},
@@ -666,7 +719,6 @@ public:
 			{ oldItem },
 			index
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 		return ret;
 	}
 
@@ -675,7 +727,7 @@ public:
 		auto oldItems = vector_type(first, last);
 		auto index = std::distance(this->m_value.cbegin(), first);
 		iterator ret = this->m_value.erase(first, last);
-		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		this->m_pSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Remove,
 			{},
@@ -683,7 +735,6 @@ public:
 				oldItems,
 				index
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 		return ret;
 	}
 
@@ -692,7 +743,7 @@ public:
 	{
 		auto old = this->m_value;
 		this->m_value.clear();
-		this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+		this->m_pSubject->OnNext(NotifyVectorChangedEventArgs<T>
 		{
 			NotifyVectorChangedAction::Reset,
 			{},
@@ -700,7 +751,6 @@ public:
 			old,
 			0
 		});
-		//this->m_pSubject->OnNext(this->m_value);
 		return;
 	}
 
@@ -708,7 +758,7 @@ public:
 	template <class Archive>
 	void save(Archive& ar)
 	{
-		ReactiveProperty<vector_type>::load(ar);
+		ReactiveDetailProperty<vector_type, notify_type >::load(ar);
 	}
 
 	template <class Archive>
@@ -717,7 +767,7 @@ public:
 		vector_type old(this->m_value);
 		ar("Value", this->m_value);
 		if (old != this->m_value) {
-			this->m_pDetailSubject->OnNext(NotifyVectorChangedEventArgs<T>
+			this->m_pSubject->OnNext(NotifyVectorChangedEventArgs<T>
 			{
 				NotifyVectorChangedAction::Reset,
 				this->m_value,
@@ -726,7 +776,6 @@ public:
 				0
 			});
 		}
-		//this->m_pSubject->OnNext(this->m_value);
 	}
 
 	friend void to_json(json& j, const ReactiveVectorProperty<T, Allocator>& o)
@@ -747,10 +796,10 @@ public:
 
 
 
-template<typename T>
 class CBinding
 {
 public:
+	template<typename T>
 	CBinding(IReactiveProperty<T>& source, IReactiveProperty<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
 	{
 		target.set(source.get());
@@ -766,6 +815,40 @@ public:
 			});
 	}
 
+	template <class CharT, class Traits, class Allocator>
+	CBinding(ReactiveBasicStringProperty<CharT, Traits, Allocator>& source, ReactiveBasicStringProperty<CharT, Traits, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		target.set(source.get());
+		m_sourceConnection = source.Subscribe(
+			[&](const NotifyStringChangedEventArgs<CharT>& notify)->void
+			{
+				target.set(notify.NewString);
+			}, idSource);
+		m_targetConnection = target.Subscribe(
+			[&](const NotifyStringChangedEventArgs<CharT>& notify)->void
+			{
+				source.set(notify.NewString);
+			});
+	}
+
+	template<class T, class Allocator>
+	CBinding(ReactiveVectorProperty<T, Allocator>& source, ReactiveVectorProperty<T, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		target.set(source.get());
+		m_sourceConnection = source.Subscribe(
+			[&](const NotifyVectorChangedEventArgs<T>& notify)->void
+			{
+				target.set(notify.NewItems);
+			}, idSource);
+		m_targetConnection = target.Subscribe(
+			[&](const NotifyVectorChangedEventArgs<T>& notify)->void
+			{
+				source.set(notify.NewItems);
+			});
+	}
+
+
+	template<typename T>
 	CBinding(IReactiveCommand<T>& source, IReactiveCommand<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
 	{
 		m_targetConnection = target.Subscribe(
@@ -774,6 +857,17 @@ public:
 				source.Execute(value);
 			}, idTarget);
 	}
+
+	template<>
+	inline CBinding(IReactiveCommand<void>& source, IReactiveCommand<void>& target, sigslot::group_id idSource, sigslot::group_id idTarget)
+	{
+		m_targetConnection = target.Subscribe(
+			[&](void)->void
+			{
+				source.Execute();
+			}, idTarget);
+	}
+
 
 	virtual ~CBinding()
 	{
@@ -787,15 +881,6 @@ private:
 
 };
 
-template<>
-inline CBinding<void>::CBinding(IReactiveCommand<void>& source, IReactiveCommand<void>& target, sigslot::group_id idSource, sigslot::group_id idTarget)
-{
-	m_targetConnection = target.Subscribe(
-		[&](void)->void
-		{
-			source.Execute();
-		}, idTarget);
-}
 
 
 //template <class CharT,

@@ -60,10 +60,11 @@ void CFavoritesGridView::OpenFavorites()
 	//Cursor
 	m_spCursorer->Clear();
 
-	for (auto colPtr : m_allCols) {
-		std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
-		colPtr->SetIsMeasureValid(false);
-	}
+	m_allCells.clear();
+	//for (auto colPtr : m_allCols) {
+	//	std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
+	//	colPtr->SetIsMeasureValid(false);
+	//}
 
 	PostUpdate(Updates::Sort);
 	PostUpdate(Updates::ColumnVisible);

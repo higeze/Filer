@@ -121,6 +121,11 @@ public:
 		*(e.HandledPtr) = FALSE;
 		SendFocused(&CUIElement::OnKeyDown, e);
 	}
+	virtual void OnKeyUp(const KeyUpEvent& e) 
+	{ 
+		*(e.HandledPtr) = FALSE;
+		SendFocused(&CUIElement::OnKeyUp, e);
+	}
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e) { SendFocused(&CUIElement::OnSysKeyDown, e); }
 	virtual void OnChar(const CharEvent& e) { SendFocused(&CUIElement::OnChar, e); }
 

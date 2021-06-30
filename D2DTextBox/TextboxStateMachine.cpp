@@ -42,6 +42,7 @@ struct CTextBoxStateMachine::Machine
 			//state<Normal> +event<SetCursorEvent>[call(&D2DTextbox::HScrl_Guard_SetCursor)] / call(&D2DTextbox::HScrl_SetCursor),
 			state<Normal> +event<SetCursorEvent> / call(&CTextBox::Normal_SetCursor),
 			state<Normal> +event<KeyDownEvent> / call(&CTextBox::Normal_KeyDown),
+			state<Normal> +event<KeyUpEvent> / call(&CTextBox::Normal_KeyUp),
 			state<Normal> +event<CharEvent> / call(&CTextBox::Normal_Char),
 			state<Normal> +event<SetFocusEvent> / call(&CTextBox::Normal_SetFocus),
 			state<Normal> +event<KillFocusEvent> / call(&CTextBox::Normal_KillFocus),
@@ -95,6 +96,7 @@ void CTextBoxStateMachine::process_event(const LButtonEndDragEvent& e) { m_pMach
 void CTextBoxStateMachine::process_event(const SetCursorEvent& e) { m_pMachine->process_event(e); }
 void CTextBoxStateMachine::process_event(const ContextMenuEvent& e) { m_pMachine->process_event(e); }
 void CTextBoxStateMachine::process_event(const KeyDownEvent& e) { m_pMachine->process_event(e); }
+void CTextBoxStateMachine::process_event(const KeyUpEvent& e) { m_pMachine->process_event(e); }
 void CTextBoxStateMachine::process_event(const CharEvent& e) { m_pMachine->process_event(e); }
 void CTextBoxStateMachine::process_event(const SetFocusEvent& e) { m_pMachine->process_event(e); }
 void CTextBoxStateMachine::process_event(const KillFocusEvent& e) { m_pMachine->process_event(e); }

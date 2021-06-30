@@ -138,6 +138,7 @@ void CD2DWControl::OnWndSetFocus(const SetFocusEvent& e) { SendAll(&CD2DWControl
 void CD2DWControl::OnWndKillFocus(const KillFocusEvent& e) { SendAll(&CD2DWControl::OnWndKillFocus, e); }
 
 void CD2DWControl::OnKeyDown(const KeyDownEvent& e) { SendFocused(&CD2DWControl::OnKeyDown, e); }
+void CD2DWControl::OnKeyUp(const KeyUpEvent& e) { SendFocused(&CD2DWControl::OnKeyUp, e); }
 void CD2DWControl::OnSysKeyDown(const SysKeyDownEvent& e) { SendFocused(&CD2DWControl::OnSysKeyDown, e); }
 void CD2DWControl::OnChar(const CharEvent& e) { SendFocused(&CD2DWControl::OnChar, e); }
 

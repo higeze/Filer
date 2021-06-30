@@ -49,18 +49,19 @@ CFilerWnd::CFilerWnd()
 	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
 	m_spTextEditorProp(std::make_shared<TextEditorProperty>()),
 	m_spPdfViewProp(std::make_shared<PdfViewProperty>()),
+	m_spStatusBarProp(std::make_shared<StatusBarProperty>()),
 	m_spTabControlProp(std::make_shared<TabControlProperty>()),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
 	m_spLauncherProp(std::make_shared<CLauncherProperty>()),
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
 	m_spSplitterProp(std::make_shared<SplitterProperty>()),
 	m_spLauncher(std::make_shared<CLauncherGridView>(this, m_spFilerGridViewProp, m_spLauncherProp)),
-	m_spLeftView(std::make_shared<CFilerTabGridView>(this, std::make_shared<TabControlProperty>(), m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp)),
-	m_spRightView(std::make_shared<CFilerTabGridView>(this, std::make_shared<TabControlProperty>(), m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp)),
+	m_spLeftView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp, m_spStatusBarProp)),
+	m_spRightView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp, m_spStatusBarProp)),
 	m_spSplitter(std::make_shared<CHorizontalSplitter>(this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp)),
 	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
-	m_spStatusBar(std::make_shared<CStatusBar>(this, std::make_shared<StatusBarProperty>())),
+	m_spStatusBar(std::make_shared<CFilerWndStatusBar>(this, m_spStatusBarProp)),
 	m_spCurView(m_spLeftView)
 #ifdef USE_PYTHON_EXTENSION
 	,m_spPyExProp(std::make_shared<CPythonExtensionProperty>())
@@ -95,6 +96,7 @@ CFilerWnd::CFilerWnd()
 	m_commandMap.emplace(IDM_APPLICATIONOPTION, std::bind(&CFilerWnd::OnCommandApplicationOption, this, phs::_1));
 	m_commandMap.emplace(IDM_FILERGRIDVIEWOPTION, std::bind(&CFilerWnd::OnCommandFilerGridViewOption, this, phs::_1));
 	m_commandMap.emplace(IDM_TEXTOPTION, std::bind(&CFilerWnd::OnCommandTextOption, this, phs::_1));
+	m_commandMap.emplace(IDM_LAUNCHEROPTION, std::bind(&CFilerWnd::OnCommandLauncherOption,this, phs::_1));
 	m_commandMap.emplace(IDM_FAVORITESOPTION, std::bind(&CFilerWnd::OnCommandFavoritesOption,this, phs::_1));
 	m_commandMap.emplace(IDM_EXEEXTENSIONOPTION, std::bind(&CFilerWnd::OnCommandExeExtensionOption, this, phs::_1));
 }
@@ -103,7 +105,7 @@ CFilerWnd::~CFilerWnd() = default;
 
 HWND CFilerWnd::Create(HWND hWndParent)
 {
-	m_pSplitterBinding = std::make_unique<CBinding<FLOAT>>(m_splitterLeft, m_spSplitter->GetSplitterLeft());
+	m_pSplitterBinding = std::make_unique<CBinding>(m_splitterLeft, m_spSplitter->GetSplitterLeft());
 	return CWnd::Create(hWndParent, m_rcWnd);
 }
 
@@ -714,46 +716,55 @@ void CFilerWnd::OnCommandTextOption(const CommandEvent& e)
 	//	});
 }
 
+void CFilerWnd::OnCommandLauncherOption(const CommandEvent& e)
+{
+	//Deserialize
+	std::string path = std::get<(int)json_path::launcher>(GetJsonPaths());
+
+	if (::PathFileExistsA(path.c_str())) {
+		json j;
+		std::ifstream i(path.c_str());
+		i >> j;
+		m_spLauncherProp = j;
+		m_spLauncher->SetItemsSource(m_spFavoritesProp->GetFavorites());
+
+		m_spLauncher->Reload();
+		InvalidateRect(NULL, FALSE);
+	}
+}
+
 
 void CFilerWnd::OnCommandFavoritesOption(const CommandEvent& e)
 {
 	//Deserialize
-	std::string json_favorites_path = std::get<0>(GetJsonPaths());
+	std::string json_favorites_path = std::get<(int)json_path::favorites>(GetJsonPaths());
 
 	if (::PathFileExistsA(json_favorites_path.c_str())) {
 		json j;
 		std::ifstream i(json_favorites_path.c_str());
 		i >> j;
-		//json_create_shared_ptr = false;
-		auto spFavorites = j;
 		m_spFavoritesProp = j;
 		m_spLeftFavoritesView->SetItemsSource(m_spFavoritesProp->GetFavorites());
 		m_spRightFavoritesView->SetItemsSource(m_spFavoritesProp->GetFavorites());
-		//json_create_shared_ptr = true;
+
 		m_spLeftFavoritesView->Reload();
 		m_spRightFavoritesView->Reload();
 		InvalidateRect(NULL, FALSE);
 	}
-
-
-
-	//TODOLOW
-	//return OnCommandOption<CFavoritesProperty>(L"Favorites Property", m_spFavoritesProp,
-	//	[this](const std::wstring& str)->void {
-	//	m_spLeftFavoritesView->Reload();
-	//	m_spRightFavoritesView->Reload();
-	//	InvalidateRect(NULL, FALSE);
-	//	SerializeProperty(this);
-	//});
 }
 
 void CFilerWnd::OnCommandExeExtensionOption(const CommandEvent& e)
 {
-	//TODOLOW
-	//return OnCommandOption<ExeExtensionProperty>(L"Exe extension Property", m_spExeExProp,
-	//	[this](const std::wstring& str)->void {
-	//	SerializeProperty(this);
-	//});
+	//Deserialize
+	std::string path = std::get<(int)json_path::exeextension>(GetJsonPaths());
+
+	if (::PathFileExistsA(path.c_str())) {
+		json j;
+		std::ifstream i(path.c_str());
+		i >> j;
+		m_spExeExProp = j;
+		InvalidateRect(NULL, FALSE);
+	}
 }
 
 #ifdef USE_PYTHON_EXTENSION

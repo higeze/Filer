@@ -15,6 +15,7 @@
 #define IDM_SAVE                                40001
 #define IDM_OPEN                                40003
 #define IDM_NEW                                 40005
+#define IDM_LAUNCHEROPTION						40007
 #define IDM_GRIDVIEWOPTION                      40008
 #define IDM_FAVORITESOPTION                     40009
 #define IDM_UPDATE                              40010

@@ -17,7 +17,7 @@ bool CCursorer::IsCursorTargetCell(const std::shared_ptr<CCell>& cell)
 
 }
 
-void CCursorer::UpdateCursor(std::shared_ptr<CCell>& cell, bool old, bool current, bool anchor, bool focus)
+void CCursorer::UpdateCursor(const std::shared_ptr<CCell>& cell, bool old, bool current, bool anchor, bool focus)
 {
 	if (old) { m_oldCell = m_currentCell; }//Old
 	if (current) { m_currentCell = cell; }//Current
@@ -35,7 +35,7 @@ void CCursorer::UpdateCursor(std::shared_ptr<CCell>& cell, bool old, bool curren
 	}
 }
 
-void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
+void CCursorer::OnCursor(const std::shared_ptr<CCell>& cell)
 {
 	if(!IsCursorTargetCell(cell)){
 		return;
@@ -46,7 +46,7 @@ void CCursorer::OnCursor(std::shared_ptr<CCell>& cell)
 	cell->GetRowPtr()->SetIsSelected(true);//Select
 }
 
-void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
+void CCursorer::OnCursorDown(const std::shared_ptr<CCell>& cell)
 {
 	if (!IsCursorTargetCell(cell)) {
 		return;
@@ -57,7 +57,7 @@ void CCursorer::OnCursorDown(std::shared_ptr<CCell>& cell)
 	cell->GetRowPtr()->SetIsSelected(true);//Select
 }
 
-void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
+void CCursorer::OnCursorUp(const std::shared_ptr<CCell>& cell)
 {
 	if (!IsCursorTargetCell(cell)) {
 		return;
@@ -70,7 +70,7 @@ void CCursorer::OnCursorUp(std::shared_ptr<CCell>& cell)
 	}
 }
 
-void CCursorer::OnCursorLeave(std::shared_ptr<CCell>& cell)
+void CCursorer::OnCursorLeave(const std::shared_ptr<CCell>& cell)
 {
 	if (!IsCursorTargetCell(cell)) {
 		return;
@@ -82,7 +82,7 @@ void CCursorer::OnCursorLeave(std::shared_ptr<CCell>& cell)
 	}
 }
 
-void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
+void CCursorer::OnCursorCtrl(const std::shared_ptr<CCell>& cell)
 {
 	if (!IsCursorTargetCell(cell)) {
 		return;
@@ -92,7 +92,7 @@ void CCursorer::OnCursorCtrl(std::shared_ptr<CCell>& cell)
 	cell->GetRowPtr()->SetIsSelected(!cell->GetRowPtr()->GetIsSelected());//Select
 }
 
-void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
+void CCursorer::OnCursorShift(const std::shared_ptr<CCell>& cell)
 {
 	if (!IsCursorTargetCell(cell)) {
 		return;
@@ -105,7 +105,7 @@ void CCursorer::OnCursorShift(std::shared_ptr<CCell>& cell)
 	cell->GetSheetPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_currentCell->GetRowPtr(), true);
 }
 
-void CCursorer::OnCursorCtrlShift(std::shared_ptr<CCell>& cell)
+void CCursorer::OnCursorCtrlShift(const std::shared_ptr<CCell>& cell)
 {
 	if (!IsCursorTargetCell(cell)) {
 		return;
@@ -277,7 +277,6 @@ void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 std::vector<Indexes> CCursorer::GetFocusedRCs(CSheet* pSheet)const
 {
 	std::vector<Indexes> focusedRCs;
-	//CRowColumn focusedRoCo = GetFocusedRowColumn();
 	//if(!focusedRoCo.IsInvalid()){
 	//	std::shared_ptr<CCell> focusedCell = CSheet::Cell(focusedRoCo.GetRowPtr(), focusedRoCo.GetColumnPtr());
 	//	focusedRCs.emplace_back(focusedCell->GetRowPtr()->GetIndex<AllTag>(), focusedCell->GetColumnPtr()->GetIndex<AllTag>());
@@ -298,7 +297,7 @@ std::vector<Indexes> CCursorer::GetSelectedRCs(CSheet* pSheet)const
 
 	//for(auto& rowData : rowDictionary){
 	//	for(auto& colData : colDictionary){
-	//		auto cell = CSheet::Cell(rowData.DataPtr, colData.DataPtr);
+	//		auto cell = Cell(rowData.DataPtr, colData.DataPtr);
 	//		if(cell->GetSelected()){
 	//			selectedRCs.emplace_back(cell->GetRowPtr()->GetIndex<AllTag>(), cell->GetColumnPtr()->GetIndex<AllTag>());
 	//		}

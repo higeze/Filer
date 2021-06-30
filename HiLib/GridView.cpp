@@ -84,7 +84,7 @@ void CGridView::FilterAll()
 		};
 		//Set Filter
 		for (auto colIter = std::next(m_allCols.begin(), m_frozenColumnCount), colEnd = m_allCols.end(); colIter != colEnd; ++colIter) {
-			auto strFilter = (*colIter)->Cell(GetFilterRowPtr().get())->GetString();
+			auto strFilter = Cell((*colIter), GetFilterRowPtr())->GetString();
 			if (strFilter.empty() || strFilter == std::wstring(L""))continue;
 			std::vector<std::wstring> vstrFilter;
 			boost::split(vstrFilter, strFilter, boost::is_space());
@@ -154,7 +154,7 @@ FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
 				(rowNextIter!=rowEnd && isInPage(pageTop, pageBottom, bottom, bottom + (*rowNextIter)->GetVirtualHeight()))){
 				if (HasSheetCell()) {
 					for (auto& ptr : m_visCols) {
-						std::shared_ptr<CCell> pCell = CSheet::Cell(*rowIter, ptr);
+						std::shared_ptr<CCell> pCell = Cell(*rowIter, ptr);
 						if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
 							pSheetCell->UpdateAll();
 						}
@@ -169,7 +169,7 @@ FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
 			(*rowIter)->SetTop(top, false);
 			if (HasSheetCell()) {
 				for (auto& ptr : m_visCols) {
-					std::shared_ptr<CCell> pCell = CSheet::Cell(*rowIter, ptr);
+					std::shared_ptr<CCell> pCell = Cell(*rowIter, ptr);
 					if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
 						pSheetCell->UpdateAll();
 					}
@@ -228,7 +228,7 @@ void CGridView::UpdateColumn()
 		}
 		colPtr->SetLeft(left, false);
 		for (auto rowPtr : m_visRows) {
-			std::shared_ptr<CCell> pCell = CSheet::Cell(rowPtr, colPtr);
+			std::shared_ptr<CCell> pCell = Cell(rowPtr, colPtr);
 			if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
 				pSheetCell->UpdateAll();
 			}
@@ -325,7 +325,7 @@ void CGridView::OnCommandDeleteColumn(const CommandEvent& e)
 void CGridView::OnCommandResizeSheetCell(const CommandEvent& e)
 {
 	if(!m_rocoContextMenu.IsInvalid()){
-		if(auto p = std::dynamic_pointer_cast<CSheetCell>(CSheet::Cell(m_rocoContextMenu.GetRowPtr(),m_rocoContextMenu.GetColumnPtr()))){
+		if(auto p = std::dynamic_pointer_cast<CSheetCell>(Cell(m_rocoContextMenu.GetRowPtr(),m_rocoContextMenu.GetColumnPtr()))){
 			p->Resize();
 		}
 	}
@@ -653,7 +653,7 @@ void CGridView::FindNext(const std::wstring& findWord, bool matchCase, bool matc
 	auto jumpToFindNextCell = [&](auto rowIter, auto colIter, auto rowEnd, auto colEnd)->bool{
 		while(1){
 
-			auto spCell = CSheet::Cell(*rowIter, *colIter);
+			auto spCell = Cell(*rowIter, *colIter);
 			auto str = spCell->GetString();
 
 			if(my::find(str, findWord, matchCase, matchWholeWord)){
@@ -721,7 +721,7 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 	auto jumpToFindPrevCell = [&](auto rowIter, auto colIter, auto rowEnd, auto colEnd)->bool{
 		while(1){
 
-			auto spCell = CSheet::Cell(*rowIter, *colIter);
+			auto spCell = Cell(*rowIter, *colIter);
 			auto str = spCell->GetString();
 
 			if(my::find(str, findWord, matchCase, matchWholeWord)){

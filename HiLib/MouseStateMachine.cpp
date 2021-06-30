@@ -68,6 +68,11 @@ struct CMouseStateMachine::Machine
 		pGrid->OnKeyDown(e);
 	}
 
+	void Normal_KeyUp(CD2DWWindow* pGrid, const KeyUpEvent& e)
+	{
+		pGrid->OnKeyUp(e);
+	}
+
 	void LButtonDowned_OnEntry(CD2DWWindow* pGrid, const LButtonDownEvent& e)
 	{
 		::OutputDebugString(L"LButtonDowned_OnEntry\r\n");
@@ -177,6 +182,7 @@ struct CMouseStateMachine::Machine
 			state<Normal> +event<MouseWheelEvent> / call(&Machine::Normal_MouseWheel),
 			state<Normal> +event<CharEvent> / call(&Machine::Normal_Char),
 			state<Normal> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
+			state<Normal> +event<KeyUpEvent> / call(&Machine::Normal_KeyUp),
 			state<Normal> +event<ContextMenuEvent> / call(&Machine::Normal_ContextMenu),
 
 			state<LButtonDowned> +on_entry<LButtonDownEvent> / call(&Machine::LButtonDowned_OnEntry),
@@ -188,6 +194,7 @@ struct CMouseStateMachine::Machine
 			state<LButtonDowned> +event<MouseWheelEvent> / call(&Machine::Normal_MouseWheel) = state<Normal>,
 			state<LButtonDowned> +event<CharEvent> / call(&Machine::Normal_Char),
 			state<LButtonDowned> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
+			state<LButtonDowned> +event<KeyUpEvent> / call(&Machine::Normal_KeyUp),
 
 
 			state<LButtonUpped> +event<LButtonDownEvent> / call(&Machine::Normal_LButtonDown) = state<LButtonDowned>,
@@ -198,6 +205,7 @@ struct CMouseStateMachine::Machine
 			state<LButtonUpped> +event<MouseWheelEvent> / call(&Machine::Normal_MouseWheel) = state<Normal>,
 			state<LButtonUpped> +event<CharEvent> / call(&Machine::Normal_Char),
 			state<LButtonUpped> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
+			state<LButtonUpped> +event<KeyUpEvent> / call(&Machine::Normal_KeyUp),
 			state<LButtonUpped> +event<ContextMenuEvent> / call(&Machine::Normal_ContextMenu),
 
 
@@ -207,6 +215,7 @@ struct CMouseStateMachine::Machine
 			state<LButtonDblClked> +event<MouseWheelEvent> / call(&Machine::Normal_MouseWheel) = state<Normal>,
 			state<LButtonDblClked> +event<CharEvent> / call(&Machine::Normal_Char),
 			state<LButtonDblClked> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
+			state<LButtonDblClked> +event<KeyUpEvent> / call(&Machine::Normal_KeyUp),
 
 
 			state<LButtonDrag> +on_entry<MouseMoveEvent> / call(&Machine::LButtonDrag_OnEntry),
@@ -219,6 +228,7 @@ struct CMouseStateMachine::Machine
 			state<LButtonDrag> +event<CharEvent> [call(&Machine::LButtonDrag_Guard_Char)] = state<Normal>,
 			state<LButtonDrag> +event<CharEvent> / call(&Machine::Normal_Char),
 			state<LButtonDrag> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
+			state<LButtonDrag> +event<KeyUpEvent> / call(&Machine::Normal_KeyUp),
 			state<LButtonDrag> +event<CancelModeEvent> = state<Normal>//,
 			//state<LButtonDrag> +event<CaptureChangedEvent> / call(&Machine::LButtonDrag_CaptureChanged)
 
@@ -242,5 +252,6 @@ void CMouseStateMachine::process_event(const MouseLeaveEvent& e) { m_pMachine->p
 void CMouseStateMachine::process_event(const MouseWheelEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const CharEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const KeyDownEvent& e) { m_pMachine->process_event(e); }
+void CMouseStateMachine::process_event(const KeyUpEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const CancelModeEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const CaptureChangedEvent& e) { m_pMachine->process_event(e); }

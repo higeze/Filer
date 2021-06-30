@@ -11,19 +11,12 @@
 
 #include "IBindSheet.h"
 
-enum class BindType
-{
-	Row,
-	Column,
-};
-
 
 template<typename... TItems>
 class CBindGridView :public CGridView, public IBindSheet<TItems...>
 {
 protected:
 	std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> m_spItemsSource;
-	BindType m_bindType;
 
 	std::vector<std::shared_ptr<CColumn>> m_initColumns;
 	std::vector<std::shared_ptr<CRow>> m_initRows;
@@ -105,16 +98,13 @@ public:
 			case NotifyVectorChangedAction::Remove:
 			{
 				auto spRow = m_allRows[e.OldStartingIndex + m_frozenRowCount];
-				for (const auto& colPtr : m_allCols) {
-					if (auto pMapCol = std::dynamic_pointer_cast<CMapColumn>(colPtr)) {
-						pMapCol->Erase(const_cast<CRow*>(spRow.get()));
-					}
-				}
+				m_allCells.get<row_tag>().erase(spRow.get());
 				EraseRow(spRow);
 				break;
 			}
 			case NotifyVectorChangedAction::Reset:
 				m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
+				m_allCells.clear();
 				for (auto& tup : e.NewItems) {
 					PushRow(std::make_shared<CBindRow<TItems...>>(this));
 				}
@@ -137,16 +127,13 @@ public:
 			case NotifyVectorChangedAction::Remove:
 			{
 				auto spColumn = m_allCols[e.OldStartingIndex + m_frozenColumnCount];
-				for (const auto& rowPtr : m_allRows) {
-					if (auto pMapRow = std::dynamic_pointer_cast<CMapRow>(rowPtr)) {
-						pMapRow->Erase(const_cast<CColumn*>(spColumn.get()));
-					}
-				}
+				m_allCells.get<col_tag>().erase(spColumn.get());
 				EraseColumn(spColumn);
 				break;
 			}
 			case NotifyVectorChangedAction::Reset:
 				m_allCols.idx_erase(m_allCols.begin() + m_frozenColumnCount, m_allCols.end());
+				m_allCells.clear();
 				for (auto& tup : e.NewItems) {
 					PushColumn(std::make_shared<CBindColumn<TItems...>>(this));
 				}
@@ -165,20 +152,7 @@ public:
 			{
 				//VectorChanged
 				ReactiveVectorProperty<std::tuple<TItems...>>& itemsSource = GetItemsSource();
-				itemsSource.Subscribe(
-					[this](const auto& items)->void {						
-						m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
-						for (auto spCol : m_allCols) {
-							if (auto sp = std::dynamic_pointer_cast<CMapColumn>(spCol)) {
-								sp
-							}
-							spCol->
-						}
-						for (auto& tup : items) {
-							PushRow(std::make_shared<CBindRow<TItems...>>(this));
-						}
-					});
-				itemsSource.SubscribeDetail([&](const auto& e) { this->subscribe_detail_row(e); });
+				itemsSource.Subscribe([&](const auto& e) { this->subscribe_detail_row(e); });
 
 				//PushColumn
 				for (auto& spCol : m_initColumns) {
@@ -196,14 +170,7 @@ public:
 			{
 				//VectorChanged
 				ReactiveVectorProperty<std::tuple<TItems...>>& itemsSource = GetItemsSource();
-				itemsSource.Subscribe(
-					[this](const auto& items)->void{
-						 m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
-						 for (auto& tup : items) {
-							 PushRow(std::make_shared<CBindRow<TItems...>>(this));
-						 }
-					});
-				itemsSource.SubscribeDetail([&](const auto& e) { this->subscribe_detail_column(e); });
+				itemsSource.Subscribe([&](const auto& e) { this->subscribe_detail_column(e); });
 
 				//PushRow
 				for (auto& spRow : m_initRows) {

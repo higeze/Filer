@@ -53,6 +53,12 @@ public:
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name) override;
 //	virtual SizingType GetSizingType()const override { return SizingType::None; }
+
+	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
+	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
+	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
+	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; };
+
 };
 
 class CHeaderRow:public CRow

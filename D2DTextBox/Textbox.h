@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "D2DWWindow.h"
+#include "StatusBar.h"
 #include <msctf.h>
 #include "IBridgeTSFInterface.h"
 #include "CellProperty.h"
@@ -10,6 +11,8 @@
 #include "D2DWControl.h"
 #include "ReactiveProperty.h"
 #include "DisplayAttribute.h"
+#include "property.h"
+#include "encoding_type.h"
 
 class CTextStore;
 class CTextEditSink;
@@ -37,41 +40,6 @@ bool in_range(const T& value, const T& min, const T& max)
 
 class CD2DWWindow;
 
-template<class T>
-class property
-{
-protected:
-	std::function<T()> m_get = nullptr;
-	std::function<void(const T&)> m_set = nullptr;
-
-public:
-	T value;
-	property(const std::function<T()>& get = nullptr, const std::function<void(const T&)>& set = nullptr)
-		: m_get(get), m_set(set){}
-	void operator()(const std::function<T()>& get, const std::function<void(const T&)>& set)
-	{
-		m_get = get; m_set = set;
-	}
-	T operator()() const { return m_get(); }
-	operator T() const { return m_get(); }
-	T operator ->() { return m_get(); }
-
-	T operator()(T const& val) { return m_set(val); }
-	T operator=(T const& val) { m_set(val); return value; }
-
-	//friend void to_json(json& j, const property<T>& o)
-	//{
-	//	to_json(j, m_get());
-	//}
-
-	//friend void from_json(const json& j, property<T>& o)
-	//{
-	//	T tmp;
-	//	from_json(j, tmp);
-	//	m_set(tmp);
-	//}
-
-};
 
 struct ExecutableInfo
 {
@@ -137,6 +105,8 @@ private:
 	void UninitTSF();
 public:
 	// Getter
+	void SetHasBorder(bool value) { m_hasBorder = value; }
+	void SetIsScrollable(bool value){ m_isScrollable = value; }
 	ReactiveWStringProperty& GetText() { return m_text; }
 	ReactiveProperty<CPointF>& GetCaretPos() { return m_caretPoint; }
 	ReactiveTupleProperty<int, int, int, int, int>& GetCarets() { return m_carets; }
@@ -155,6 +125,7 @@ public:
 	virtual void OnSetFocus(const SetFocusEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnKillFocus(const KillFocusEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnKeyDown(const KeyDownEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnKeyUp(const KeyUpEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override { m_pTextMachine->process_event(e); }
@@ -192,8 +163,10 @@ public:
 	virtual void Normal_MouseMove(const MouseMoveEvent& e);
 	virtual void Normal_MouseLeave(const MouseLeaveEvent& e) { /*Do nothing*/ }
 	virtual void Normal_SetCursor(const SetCursorEvent& e);
-	virtual void Normal_ContextMenu(const ContextMenuEvent& e) { /*Do nothing*/ }
+	virtual void Normal_ContextMenu(const ContextMenuEvent& e);
+
 	virtual void Normal_KeyDown(const KeyDownEvent& e);
+	virtual void Normal_KeyUp(const KeyUpEvent& e);
 	virtual void Normal_Char(const CharEvent& e);
 	virtual void Normal_SetFocus(const SetFocusEvent& e);
 	virtual void Normal_KillFocus(const KillFocusEvent& e);
@@ -229,7 +202,7 @@ public:
 	// Text Functions 
 	void Clear();
 	//std::wstring FilterInputString(LPCWSTR s, UINT len);
-private:
+protected:
 	bool CopySelectionToClipboard();
 	bool PasteFromClipboard();
 
@@ -344,44 +317,55 @@ public:
 
 };
 
-class CTextEditor :public CTextBox
+class CTextEditor :public CD2DWControl
 {
 private:
+	std::shared_ptr<CTextBox> m_spTextBox;
+	std::shared_ptr<CStatusBar>  m_spStatusBar;
+	std::shared_ptr<TextEditorProperty> m_pProp;
+
 	ReactiveWStringProperty m_path;
-	ReactiveCommand<void> m_save;
-	ReactiveCommand<void> m_open;
+	ReactiveProperty<encoding_type> m_encoding;
+	ReactiveCommand<HWND> m_save;
+	ReactiveCommand<HWND> m_open;
+	ReactiveCommand<HWND> m_save_as;
+	ReactiveCommand<HWND> m_open_as;
 
 public:
 	CTextEditor(
 		CD2DWControl* pParentControl,
-		const std::shared_ptr<TextboxProperty>& spProp);
+		const std::shared_ptr<TextEditorProperty>& spTextProp,
+		const std::shared_ptr<StatusBarProperty>& spStatusProp);
 
 	virtual ~CTextEditor() {}
 
+	std::shared_ptr<CTextBox> GetTextBoxPtr() const { return m_spTextBox; }
+	std::shared_ptr<CStatusBar>  GetStatusBarPtr() const { m_spStatusBar; }
+
+
 	ReactiveWStringProperty& GetPath() { return m_path; }
-	ReactiveCommand<void>& GetSaveCommand() { return m_save; }
-	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
+	ReactiveProperty<encoding_type>& GetEncoding() { return m_encoding; }
+	ReactiveCommand<HWND>& GetOpenCommand() { return m_open; }
+	ReactiveCommand<HWND>& GetSaveCommand() { return m_save; }
+	ReactiveCommand<HWND>& GetOpenAsCommand() { return m_open_as; }
+	ReactiveCommand<HWND>& GetSaveAsCommand() { return m_save_as; }
 
-	bool GetIsVisible() const override
-	{
-		return true;
-	}
-	
-	virtual void Normal_Paint(const PaintEvent& e) override;
-	virtual void Normal_ContextMenu(const ContextMenuEvent& e) override;
-	virtual CRectF GetRectInWnd() const override { return CD2DWControl::GetRectInWnd(); }
+	//bool GetIsVisible() const override
+	//{
+	//	return true;
+	//}
 
-	//std::wstring m_text;
+	std::tuple<CRectF, CRectF> GetRects() const;
+
+	virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnPaint(const PaintEvent& e) override;
+	virtual void OnRect(const RectEvent& e) override;
 
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
-	//virtual void OnClose(const CloseEvent& e) override;
-	//void Invalidate() override;
-
 
 	void Open();
-	//void Open(const std::wstring& path);
+	void OpenAs();
 	void Save();
-	//void Save(const std::wstring& path);
+	void SaveAs();
 	void Update();
-
 };

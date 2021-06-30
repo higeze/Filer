@@ -29,7 +29,7 @@ public:
 			this->PushRow(std::make_shared<CBindRow<TValueItem>>(this));
 		}
 
-		items.SubscribeDetail(
+		items.Subscribe(
 			[this](const NotifyVectorChangedEventArgs<std::tuple<TValueItem>>& e)->void {
 			switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
@@ -41,12 +41,9 @@ public:
 				case NotifyVectorChangedAction::Remove:
 				{
 					auto spRow = this->m_allRows[e.OldStartingIndex + this->m_frozenRowCount];
-					for (const auto& colPtr : this->m_allCols) {
-						if (auto pMapCol = std::dynamic_pointer_cast<CMapColumn>(colPtr)) {
-							pMapCol->Erase(const_cast<CRow*>(spRow.get()));
-						}
-					}
-					EraseRow(spRow);
+					this->m_allCells.get<row_tag>().erase(spRow.get());
+					this->EraseRow(spRow);
+					break;
 					break;
 				}
 				case NotifyVectorChangedAction::Reset:

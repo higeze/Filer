@@ -12,7 +12,7 @@
 #include "ViewProperty.h"
 #include "CellProperty.h"
 #include "PropertyWnd.h"
-#include "StatusBar.h"
+#include "FilerWndStatusBar.h"
 #include "Splitter.h"
 #include "FilerGridViewProperty.h"
 #include "D2DWWindow.h"
@@ -114,6 +114,7 @@ private:
 	//Common properties
 	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
+	std::shared_ptr<StatusBarProperty> m_spStatusBarProp;
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
 	std::shared_ptr<CLauncherProperty> m_spLauncherProp;
 
@@ -131,14 +132,14 @@ private:
 	std::shared_ptr<CFavoritesGridView> m_spLeftFavoritesView;
 	std::shared_ptr<CFavoritesGridView> m_spRightFavoritesView;
 	std::shared_ptr<CLauncherGridView> m_spLauncher;
-	std::shared_ptr<CStatusBar> m_spStatusBar;
+	std::shared_ptr<CFilerWndStatusBar> m_spStatusBar;
 	std::shared_ptr<CHorizontalSplitter> m_spSplitter;
 
 	//Property
 	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
 	
 	//CKonamiCommander m_konamiCommander;
-	std::unique_ptr<CBinding<FLOAT>> m_pSplitterBinding;
+	std::unique_ptr<CBinding> m_pSplitterBinding;
 
 public:
 	//Constructor
@@ -153,6 +154,8 @@ public:
 	std::shared_ptr<FilerGridViewProperty>& GetFilerGridViewPropPtr() { return m_spFilerGridViewProp; }
 	std::shared_ptr<CFavoritesProperty>& GetFavoritesPropPtr() { return m_spFavoritesProp; }
 	std::shared_ptr<CLauncherProperty>& GetLauncherPropPtr() { return m_spLauncherProp; }
+	std::shared_ptr<ExeExtensionProperty>& GetExeExtensionPropPtr() { return m_spExeExProp; }
+
 
 	std::shared_ptr<CFavoritesGridView>& GetLeftFavoritesView() { return m_spLeftFavoritesView; }
 	std::shared_ptr<CFavoritesGridView>& GetRightFavoritesView() { return m_spRightFavoritesView; }
@@ -190,6 +193,7 @@ public:
 	void OnCommandApplicationOption(const CommandEvent& e);
 	void OnCommandFilerGridViewOption(const CommandEvent& e);
 	void OnCommandTextOption(const CommandEvent& e);
+	void OnCommandLauncherOption(const CommandEvent& e);
 	void OnCommandFavoritesOption(const CommandEvent& e);
 	void OnCommandExeExtensionOption(const CommandEvent& e);
 
@@ -298,6 +302,7 @@ private:
 			{"FilerGridViewProperty", o.m_spFilerGridViewProp },
 			{"TextEditorProperty", o.m_spTextEditorProp },
 			{"PdfViewProperty", o.m_spPdfViewProp },
+			{"StatusBarProperty", o.m_spStatusBarProp},
 			{"LauncherProperty", o.m_spLauncherProp },
 			{"FavoritesProperty", o.m_spFavoritesProp },
 			{"ExeExtensionProperty", o.m_spExeExProp },
@@ -323,6 +328,7 @@ private:
 			get_to_nothrow(j, "FilerGridViewProperty", o.m_spFilerGridViewProp);
 			get_to_nothrow(j, "TextEditorProperty", o.m_spTextEditorProp);
 			get_to_nothrow(j, "PdfViewProperty", o.m_spPdfViewProp);
+			get_to_nothrow(j, "StatusBarProperty", o.m_spStatusBarProp);
 			get_to_nothrow(j, "LauncherProperty", o.m_spLauncherProp);
 			get_to_nothrow(j, "FavoritesProperty", o.m_spFavoritesProp);
 			get_to_nothrow(j, "ExeExtensionProperty", o.m_spExeExProp);
@@ -330,8 +336,8 @@ private:
 			get_to_nothrow(j, "LeftFavorites", o.m_spLeftFavoritesView, &o, o.m_spFilerGridViewProp, o.m_spFavoritesProp);
 			get_to_nothrow(j, "RightFavorites", o.m_spRightFavoritesView, &o, o.m_spFilerGridViewProp, o.m_spFavoritesProp);
 			get_to_nothrow(j, "Launcher", o.m_spLauncher, &o, o.m_spFilerGridViewProp, o.m_spLauncherProp);
-			get_to_nothrow(j, "LeftView", o.m_spLeftView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
-			get_to_nothrow(j, "RightView", o.m_spRightView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
+			get_to_nothrow(j, "LeftView", o.m_spLeftView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp, o.m_spStatusBarProp);
+			get_to_nothrow(j, "RightView", o.m_spRightView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp, o.m_spStatusBarProp);
 			get_to_nothrow(j, "HorizontalSplitter", o.m_spSplitter, &o, o.m_spLeftView.get(), o.m_spRightView.get(), o.m_spSplitterProp);
 	#ifdef USE_PYTHON_EXTENSION
 			from_json_nothrow(j, "PythonExtensionProperty", m_spPyExProp);

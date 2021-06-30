@@ -156,7 +156,7 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 
 	//Header menu items
 	//for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
-	//	auto cell = CSheet::Cell(m_rowNameHeader, iter->DataPtr);
+	//	auto cell = Cell(m_rowNameHeader, iter->DataPtr);
 	//	auto str = cell->GetString();
 	//	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
 	//		IDM_VISIBLEROWHEADERCOLUMN + std::distance(m_columnAllDictionary.begin(), iter),
@@ -426,13 +426,13 @@ void CFilerGridView::Added(const std::wstring& fileName)
 		PostUpdate(Updates::Invalidate);
 
 		if (m_isNewFile) {
-			m_spCursorer->OnCursor(CSheet::Cell(spRow, m_pNameColumn));
+			m_spCursorer->OnCursor(Cell(spRow, m_pNameColumn));
 			PostUpdate(Updates::EnsureVisibleFocusedCell);
 		}
 		PostUpdate(Updates::Sort);
 		FilterAll();
 		if (m_isNewFile) {
-			std::static_pointer_cast<CFileIconDispNameCell<std::shared_ptr<CShellFile>>>(CSheet::Cell(spRow, m_pNameColumn))->OnEdit(Event(GetWndPtr()));
+			std::static_pointer_cast<CFileIconDispNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, m_pNameColumn))->OnEdit(Event(GetWndPtr()));
 		}
 		m_isNewFile = false;
 	}
@@ -463,7 +463,8 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 			->ParseDisplayName(GetWndPtr()->m_hWnd, NULL, (LPWSTR)fileName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
 
 		if (SUCCEEDED(hRes) && newIdl) {
-			std::get<std::shared_ptr<CShellFile>>(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
+			//std::get<std::shared_ptr<CShellFile>>(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
+			itemsSource.replace(iter, std::make_tuple(m_spFolder->CreateShExFileFolder(newIdl)));
 			m_allRows[iter-itemsSource.cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
 			PostUpdate(Updates::ColumnVisible);
 			PostUpdate(Updates::RowVisible);
@@ -594,7 +595,7 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 	case VK_F2:
 		{
 			if (m_spCursorer->GetFocusedCell()) {
-				std::static_pointer_cast<CFileIconDispNameCell<std::shared_ptr<CShellFile>>>(CSheet::Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(Event(GetWndPtr()));
+				std::static_pointer_cast<CFileIconDispNameCell<std::shared_ptr<CShellFile>>>(Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(Event(GetWndPtr()));
 				(*e.HandledPtr) = true;
 			}
 		}
@@ -603,23 +604,24 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 		{
 			auto pCell = m_spCursorer->GetFocusedCell();
 			if (!pCell) { break; }
-			
-			auto spFile = std::get<std::shared_ptr<CShellFile>>(GetItemsSource()[pCell->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount]);
-			SHELLEXECUTEINFO	sei = { 0 };
-			sei.cbSize = sizeof(SHELLEXECUTEINFO);
-			//sei.fMask = SEE_MASK_INVOKEIDLIST;
-			sei.hwnd = GetWndPtr()->m_hWnd;
-			sei.lpVerb = L"open";
-			sei.lpFile = L"notepad.exe";
-			sei.lpParameters = spFile->GetPath().c_str();//NULL;
-			sei.lpDirectory = NULL;
-			sei.nShow = SW_SHOWNORMAL;
-			sei.hInstApp = NULL;
-			//sei.lpIDList = (LPVOID)(spFile->GetAbsolutePidl().m_pIDL);
+			if(auto spRow = dynamic_cast<CBindRow<std::shared_ptr<CShellFile>>*>(pCell->GetRowPtr())){
+				auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
+				auto path = spFile->GetPath();
+				SHELLEXECUTEINFO	sei = { 0 };
+				sei.cbSize = sizeof(SHELLEXECUTEINFO);
+				//sei.fMask = SEE_MASK_INVOKEIDLIST;
+				sei.hwnd = GetWndPtr()->m_hWnd;
+				sei.lpVerb = L"open";
+				sei.lpFile = L"notepad.exe";
+				sei.lpParameters = path.c_str();//NULL;
+				sei.lpDirectory = NULL;
+				sei.nShow = SW_SHOWNORMAL;
+				sei.hInstApp = NULL;
+				//sei.lpIDList = (LPVOID)(spFile->GetAbsolutePidl().m_pIDL);
 
-			::ShellExecuteEx(&sei);
-			(*e.HandledPtr) = true;
-
+				::ShellExecuteEx(&sei);
+				(*e.HandledPtr) = true;
+			}
 		}
 		break;
 	case VK_F7:
@@ -742,15 +744,16 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 
 	{
 		LOG_SCOPED_TIMER_THIS_1("OpenFolder Updating");
-		for (const auto& colPtr : m_allCols) {
-			std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
-		}
+		m_allCells.clear();
+		//for (const auto& colPtr : m_allCols) {
+		//	std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
+		//}
 
 		GetHeaderColumnPtr()->SetIsFitMeasureValid(false);
 
 
 		//PathCell
-		auto pPathCell = CSheet::Cell(m_pHeaderRow, m_pNameColumn);
+		auto pPathCell = Cell(m_pHeaderRow, m_pNameColumn);
 		pPathCell->OnPropertyChanged(L"value");
 
 		PostUpdate(Updates::Sort);
@@ -778,7 +781,7 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 
 				if (iter != itemsSource.cend()) {
 
-					if (auto cell = CSheet::Cell(m_allRows[iter-itemsSource.cbegin() + m_frozenRowCount], m_visCols[m_frozenColumnCount])) {
+					if (auto cell = Cell(m_allRows[iter-itemsSource.cbegin() + m_frozenRowCount], m_visCols[m_frozenColumnCount])) {
 						m_spCursorer->OnCursor(cell);
 						m_keepEnsureVisibleFocusedCell = true;
 						PostUpdate(Updates::EnsureVisibleFocusedCell);
@@ -969,24 +972,8 @@ void CFilerGridView::OnDirectoryWatch(const DirectoryWatchEvent& e)
 		case FILE_ACTION_ADDED:
 			LOG_THIS_1("FILE_ACTION_ADDED");
 			Added(info.second);
-
-	//::OutputDebugStringA("Added\r\n");
-	//for(const auto& spRow : m_allRows){
-	//	::OutputDebugStringA(std::format("Pointer:{}\r\n", (LONG)spRow.get()).c_str());
-	//};
-	//::OutputDebugStringA("Focus\r\n");
-	//::OutputDebugStringA(std::format("Pointer:{}\r\n", (LONG)m_spCursorer->GetFocusedCell()->GetRowPtr()).c_str());
-
-
-
 			break;
 		case FILE_ACTION_MODIFIED:
-	//::OutputDebugStringA("Modify\r\n");
-	//for(const auto& spRow : m_allRows){
-	//	::OutputDebugStringA(std::format("Pointer:{}\r\n", (LONG)spRow.get()).c_str());
-	//};
-	//::OutputDebugStringA("Focus\r\n");
-	//::OutputDebugStringA(std::format("Pointer:{}\r\n", (LONG)m_spCursorer->GetFocusedCell()->GetRowPtr()).c_str());
 			LOG_THIS_1("FILE_ACTION_MODIFIED");
 			Modified(info.second);
 			break;
@@ -1028,6 +1015,7 @@ bool CFilerGridView::InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVer
 			if (SUCCEEDED(hr)){
 				CMINVOKECOMMANDINFO cmi = {0};
 				cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
+				cmi.fMask = CMIC_MASK_NOASYNC;
 				cmi.hwnd = hWnd;
 				cmi.lpVerb = lpVerb;
 				cmi.nShow = SW_SHOWNORMAL;
@@ -1107,7 +1095,7 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		if (menu.IsNull()) { return; }
 		if (m_headerMenuItems.empty()) {
 			for (const auto& colPtr : m_allCols ) {
-				auto cell = CSheet::Cell(m_pNameHeaderRow, colPtr);
+				auto cell = Cell(m_pNameHeaderRow, colPtr);
 				auto str = cell->GetString();
 				m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
 					IDM_VISIBLEROWHEADERCOLUMN + colPtr->GetIndex<AllTag>(),

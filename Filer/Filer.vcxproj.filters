@@ -116,9 +116,6 @@
     <ClInclude Include="..\HiLib\ApplicationProperty.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\atlpartial.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\Band.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -662,6 +659,21 @@
     <ClInclude Include="..\HiLib\JsonSerializer.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\TextFileDialog.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\encoding_type.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\property.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\TextEnDecoder.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerWndStatusBar.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -975,6 +987,12 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\JsonSerializer.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\TextEnDecoder.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="FilerWndStatusBar.cpp">
+      <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

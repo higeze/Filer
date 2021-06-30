@@ -10,6 +10,31 @@
 #include "Cell.h"
 #include "index_vector.h"
 
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+
+struct rowcol_tag {};
+struct row_tag {};
+struct col_tag {};
+
+using cell_container = boost::multi_index_container <
+	std::shared_ptr<CCell>,
+	boost::multi_index::indexed_by <
+
+	boost::multi_index::hashed_unique <
+	boost::multi_index::tag<rowcol_tag>,
+	boost::multi_index::const_mem_fun<CCell, LONGLONG, &CCell::GetRowColumnPtr>>,
+
+	boost::multi_index::hashed_non_unique <
+	boost::multi_index::tag<row_tag>,
+	boost::multi_index::const_mem_fun<CCell, CRow*, &CCell::GetRowPtr>>,
+
+	boost::multi_index::hashed_non_unique<
+	boost::multi_index::tag<col_tag>,
+	boost::multi_index::const_mem_fun<CCell, CColumn*, &CCell::GetColumnPtr>>>>;
+
 class IStateMachine;
 class IDragger;
 class ITracker;
@@ -66,6 +91,14 @@ struct ColTag
 	using Container = index_vector<std::shared_ptr<CColumn>>;
 	typedef RowTag Other;
 };
+
+
+enum class BindType
+{
+	Row,
+	Column,
+};
+
 /********/
 /*CSheet*/
 /********/
@@ -78,10 +111,12 @@ class CSheet:public CD2DWControl
 	friend class CSerializeData;
 	friend class CCeller;
 public:
+	BindType m_bindType;
+
 	//static cell Accessor
-	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
-	static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow);
-	static std::shared_ptr<CCell>& Cell(CRow* pRow,  CColumn* pColumn);
+	//static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
+	//static std::shared_ptr<CCell>& Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow);
+	//static std::shared_ptr<CCell>& Cell(CRow* pRow,  CColumn* pColumn);
 protected:
 	//State machine
 	std::unique_ptr<IStateMachine> m_pMachine;
@@ -94,8 +129,16 @@ public:
 	std::shared_ptr<ICeller> m_spCeller; //Celler
 	std::shared_ptr<CCursorer> m_spCursorer; // Cursor
 
+
+	const std::shared_ptr<CCell>& Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn) ;
+	const std::shared_ptr<CCell>& Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow) ;
+	const std::shared_ptr<CCell>& Cell(CRow* const pRow,  CColumn* const pColumn) ;
+
+
 protected:
 	std::set<Updates> m_setUpdate; // Set posted update
+
+	//cell_container m_allCells;
 
 	index_vector<std::shared_ptr<CRow>> m_allRows;
 	index_vector<std::shared_ptr<CRow>> m_visRows;
@@ -106,6 +149,8 @@ protected:
 	index_vector<std::shared_ptr<CColumn>> m_visCols;
 	index_vector<std::shared_ptr<CColumn>> m_pntCols;
 	size_t m_frozenColumnCount = 0;
+
+	cell_container m_allCells;
 
 
 	std::shared_ptr<SheetProperty> m_spSheetProperty; // SheetProperty
@@ -241,7 +286,7 @@ public:
 	virtual FLOAT GetRowFitHeight(CRow* pRow);
 	virtual FLOAT GetRowHeight(CRow* pRow);
 
-	virtual std::wstring GetSheetString()const;
+	virtual std::wstring GetSheetString();
 
 	virtual CPointF GetFrozenPoint();
 	virtual CSizeF MeasureSize()const;
@@ -415,7 +460,7 @@ public:
 		auto pRow = Index2Pointer<RowTag, TAV>(row);
 		auto pCol = Index2Pointer<ColTag, TAV>(col);
 		if (pRow && pCol) {
-			return CSheet::Cell(pRow, pCol);
+			return Cell(pRow, pCol);
 		}
 		else {
 			return std::shared_ptr<CCell>();
@@ -494,7 +539,7 @@ public:
 		for(const auto& otherPtr : otherContainer) {
 			otherPtr->SetIsMeasureValid(false);
 			otherPtr->SetIsFitMeasureValid(false);
-			CSheet::Cell(ptr, otherPtr)->SetActMeasureValid(false);
+			Cell(ptr, otherPtr)->SetActMeasureValid(false);
 		};
 
 		ptr->FitLength();
@@ -516,7 +561,7 @@ public:
 		auto& otherContainer = GetContainer<TRC::Other, AllTag>();
 		for (const auto& otherPtr : otherContainer) {
 			otherPtr->SetIsMeasureValid(false);
-			CSheet::Cell(ptr, otherPtr)->OnPropertyChanged(L"size");
+			Cell(ptr, otherPtr)->OnPropertyChanged(L"size");
 		}
 
 		PostUpdate(Updates::Column);

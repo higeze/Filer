@@ -110,6 +110,13 @@ struct KeyDownEvent :public KeyEvent
 		:KeyEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
+struct KeyUpEvent :public KeyEvent
+{
+	KeyUpEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:KeyEvent(pWnd, wParam, lParam, pHandled) {}
+};
+
+
 struct SysKeyDownEvent :public KeyDownEvent
 {
 	using KeyDownEvent::KeyDownEvent;
@@ -238,6 +245,7 @@ struct SetCursorEvent:public Event
 	UINT HitTest;
 	CPointF PointInWnd;
 	SetCursorEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
+	SetCursorEvent(CD2DWWindow* pWnd, UINT hittest, BOOL* pHandled = nullptr);
 };
 
 struct SetFocusEvent :public Event
@@ -330,6 +338,7 @@ public:
 	virtual void OnCaptureChanged(const CaptureChangedEvent& e) {}
 
 	virtual void OnKeyDown(const KeyDownEvent& e) {}
+	virtual void OnKeyUp(const KeyUpEvent& e) {}
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e){}
 	virtual void OnChar(const CharEvent& e) {}
 	virtual void OnContextMenu(const ContextMenuEvent& e){}

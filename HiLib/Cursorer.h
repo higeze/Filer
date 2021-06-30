@@ -37,17 +37,17 @@ public:
 	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e);
 
 
-	virtual void OnCursorDown(std::shared_ptr<CCell>& cell);
-	virtual void OnCursorUp(std::shared_ptr<CCell>& cell);
-	virtual void OnCursorLeave(std::shared_ptr<CCell>& cell);
-	virtual void OnCursor(std::shared_ptr<CCell>& cell);
-	virtual void OnCursorCtrl(std::shared_ptr<CCell>& cell);
-	virtual void OnCursorShift(std::shared_ptr<CCell>& cell);
-	virtual void OnCursorCtrlShift(std::shared_ptr<CCell>& cell);
+	virtual void OnCursorDown(const std::shared_ptr<CCell>& cell);
+	virtual void OnCursorUp(const std::shared_ptr<CCell>& cell);
+	virtual void OnCursorLeave(const std::shared_ptr<CCell>& cell);
+	virtual void OnCursor(const std::shared_ptr<CCell>& cell);
+	virtual void OnCursorCtrl(const std::shared_ptr<CCell>& cell);
+	virtual void OnCursorShift(const std::shared_ptr<CCell>& cell);
+	virtual void OnCursorCtrlShift(const std::shared_ptr<CCell>& cell);
 	//virtual void UpdateCursor();
 protected:
 	virtual bool IsCursorTargetCell(const std::shared_ptr<CCell>& cell);
-	virtual void UpdateCursor(std::shared_ptr<CCell>& cell, bool old  = true, bool current = true, bool anchor = true, bool focus = true);
+	virtual void UpdateCursor(const std::shared_ptr<CCell>& cell, bool old  = true, bool current = true, bool anchor = true, bool focus = true);
 
 public:
 	virtual void OnCursorClear(CSheet* pSheet);

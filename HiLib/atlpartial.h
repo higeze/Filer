@@ -1,5 +1,6 @@
 #include <ole2.h>
 #include <olectl.h>
+#include <unknwn.h>
 
 //partial of atldef.h
 #ifndef ATLASSERT

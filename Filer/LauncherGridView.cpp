@@ -61,7 +61,7 @@ void CLauncherGridView::OpenFavorites()
 	//Cursor
 	m_spCursorer->Clear();
 
-
+	m_allCells.clear();
 	//for (auto colPtr : m_allCols) {
 	//	std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
 	//	colPtr->SetIsMeasureValid(false);
