@@ -15,10 +15,17 @@ bool CPathCell::IsLeftestCell()const
 
 std::wstring CPathCell::GetString()
 {
-	if (IsLeftestCell()) {
+	//if (IsLeftestCell()) {
 		return static_cast<CFilerGridView*>(m_pSheet)->GetPath();
-	} else {
-		return std::wstring();
+	//} else {
+	//	return std::wstring();
+	//}
+}
+
+void CPathCell::SetString(const std::wstring& str, bool notify)
+{
+	if (GetString() != str) {
+		SetStringCore(str);
 	}
 }
 
@@ -62,7 +69,7 @@ CSizeF CPathCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 		m_pSheet->GetContainer<ColTag, VisTag>().back()->GetRight() - m_pSheet->GetContainer<ColTag, VisTag>()[m_pSheet->GetFrozenCount<ColTag>()]->GetLeft(),0);
 	CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
 	//Calc Content Rect
-	std::basic_string<TCHAR> str=GetString();
+	std::basic_string<TCHAR> str=IsLeftestCell()?GetString():std::basic_string<TCHAR>();
 	if(str.empty()){str=_T("a");}
 	return pDirect->CalcTextSizeWithFixedWidth(*(m_spCellProperty->Format), str, rcContent.Width());
 }

@@ -152,10 +152,16 @@ void TextTabData::Open(const std::wstring& path, const encoding_type& enc)
 {
 	if (::PathFileExists(path.c_str())) {
 		Path.set(path);
-		std::ifstream ifs(path);
-		std::string str = std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
-		encoding_type enc = CTextEnDecoder::GetInstance()->DetectEncoding(str);
-		std::wstring wstr = CTextEnDecoder::GetInstance()->Decode(str, enc);
+
+		std::vector<byte> bytes = CFile::ReadAllBytes(path);
+		encoding_type enc = CTextEnDecoder::GetInstance()->DetectEncoding(bytes);
+		std::wstring wstr = CTextEnDecoder::GetInstance()->Decode(bytes, enc);
+
+
+		//std::ifstream ifs(path);
+		//std::string str = std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+		//encoding_type enc = CTextEnDecoder::GetInstance()->DetectEncoding(str);
+		//std::wstring wstr = CTextEnDecoder::GetInstance()->Decode(str, enc);
 
 		Encoding.set(enc);
 		Text.assign(wstr);
@@ -285,10 +291,8 @@ void TextTabData::Save(const std::wstring& path, const encoding_type& enc)
 	Encoding.set(enc);
 	Status.force_notify_set(TextStatus::Saved);
 	std::ofstream ofs(path);
-	std::string str = CTextEnDecoder::GetInstance()->Encode(Text.get(), enc);
-	ofs.write(str.c_str(), str.size());
-
-	//CFile::WriteAllString(path, wstr2str(Text));
+	std::vector<byte> bytes = CTextEnDecoder::GetInstance()->Encode(Text.get(), enc);
+	CFile::WriteAllBytes(Path.get(), bytes);
 }
 
 bool TextTabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)

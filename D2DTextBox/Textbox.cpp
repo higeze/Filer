@@ -766,7 +766,18 @@ void CTextBox::Normal_Paint(const PaintEvent& e)
 	//PaintBackground
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
 	//PaintLine
-	if (m_hasBorder) { GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->EditLine), GetRectInWnd()); }
+
+	//Paint Focused Line
+	CRectF rcBorder(GetRectInWnd());
+	rcBorder.DeflateRect(1.0f, 1.0f);
+	if (GetIsFocused()) {
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->FocusedLine), rcBorder);
+	} else if (m_hasBorder) {
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->Line), rcBorder);
+	} else {
+		// Do nothing
+	}
+	
 	//PaintContent
 	Render();
 	//PaintScroll
@@ -1409,26 +1420,6 @@ void CTextBox::Render()
 			}
 		}
 
-
-		//Draw cr, lf, tab, space
-		//for (size_t i = 0; i < m_text.size(); i++) {
-		//	switch (m_text[i]) {
-		//		case L'\r':
-		//			break;
-		//		case L'\n':
-		//			GetWndPtr()->GetDirectPtr()->DrawLineFeed(*(m_pProp->BlankLine), selCharRects[i]);
-		//			break;
-		//		case L'\t':
-		//			GetWndPtr()->GetDirectPtr()->DrawTab(*(m_pProp->BlankLine), selCharRects[i]);
-		//			break;
-		//		case L' ':
-		//			GetWndPtr()->GetDirectPtr()->DrawHalfSpace(*(m_pProp->BlankLine), selCharRects[i]);
-		//		case L'　':
-		//		default:
-		//			break;
-		//	}
-		//}
-
 		//Draw Selection
 		for (auto n = std::get<caret::SelBegin>(m_carets.get()); n < std::get<caret::SelEnd>(m_carets.get()); n++) {
 			GetWndPtr()->GetDirectPtr()->FillSolidRectangle(
@@ -1449,7 +1440,7 @@ void CTextBox::Render()
 					}
 					if (n == (compositionInfo.End - 1) || (charRects[n].bottom + charRects[n].Height() / 2.f) < charRects[n + 1].bottom) {
 						ptEnd.SetPoint(charRects[n].right, charRects[n].bottom);
-						GetWndPtr()->GetDirectPtr()->DrawSolidTriangleWave(*(m_pProp->EditLine), ptStart, ptEnd, 4.f, 8.f);
+						GetWndPtr()->GetDirectPtr()->DrawSolidTriangleWave(*(m_pProp->CompositionLine), ptStart, ptEnd, 4.f, 8.f);
 					}
 				}
 			}
@@ -1692,13 +1683,6 @@ void CTextEditor::OnPaint(const PaintEvent& e)
 {
 	m_spTextBox->OnPaint(e);
 	m_spStatusBar->OnPaint(e);
-
-	//Paint Focused Line
-	if (GetIsFocused() ){
-		CRectF rcFocus(GetRectInWnd());
-		rcFocus.DeflateRect(1.0f, 1.0f);
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->FocusedLine), rcFocus);
-	}
 }
 
 void CTextEditor::OnRect(const RectEvent& e)

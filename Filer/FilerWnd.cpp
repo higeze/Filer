@@ -35,6 +35,7 @@
 #include "MouseStateMachine.h"
 #include <Dbt.h>
 #include "PdfView.h"
+#include "FileOperationWnd.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -213,106 +214,33 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 			}
 
 		};
-		spFilerView->ExecCustomContextMenu = [&](int idCmd, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl)->bool {
+		spFilerView->ExecCustomContextMenu = [&](int idCmd, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files)->bool {
 			if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToFavoritesFromItem")) {
-				for (auto& pIdl : vpIdl) {
-					std::wstring path = shell::GetDisplayNameOf(psf, pIdl, SHGDN_FORPARSING);
-					GetFavoritesPropPtr()->GetFavorites().push_back(std::make_tuple(std::make_shared<CFavorite>(path, L"")));
+				for (auto& file : files) {
+					GetFavoritesPropPtr()->GetFavorites().push_back(std::make_tuple(std::make_shared<CFavorite>(file->GetPath(), L"")));
 				}
 				m_spLeftFavoritesView->SubmitUpdate();
 				m_spRightFavoritesView->SubmitUpdate();
 				return true;
 			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToLauncherFromItem")) {
-				for (auto& pIdl : vpIdl) {
-					
-					std::wstring path = shell::GetDisplayNameOf(psf, pIdl, SHGDN_FORPARSING);
-					GetLauncherPropPtr()->GetFavorites().push_back(std::make_tuple(std::make_shared<CFavorite>(path, L"")));
+				for (auto& file : files) {
+					GetLauncherPropPtr()->GetFavorites().push_back(std::make_tuple(std::make_shared<CFavorite>(file->GetPath(), L"")));
 				}
 				m_spLauncher->SubmitUpdate();
 				return true;
 			} else {
-				auto iter = std::find_if(m_spExeExProp->ExeExtensions.cbegin(), m_spExeExProp->ExeExtensions.cend(),
+				auto iter = std::find_if(m_spExeExProp->ExeExtensions.begin(), m_spExeExProp->ExeExtensions.end(),
 					[idCmd](const auto& exeex)->bool {
 					return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, std::get<ExeExtension>(exeex).Name) == idCmd;
 				});
-				if (iter != m_spExeExProp->ExeExtensions.cend()) {
-					try {
-						auto& exeExtension = std::get<ExeExtension>(*iter);
-						std::vector<std::wstring> filePaths;
-						for (auto& pIdl : vpIdl) {
-							STRRET strret;
-							psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
-							filePaths.emplace_back(L"\"" + shell::strret2wstring(strret, pIdl) + L"\"");
-						}
+				if (iter != m_spExeExProp->ExeExtensions.end()) {
+					auto pWnd = new CExeExtensionWnd(m_spFilerGridViewProp, m_spTextEditorProp, folder, files, std::get<ExeExtension>(*iter));
 
-						std::wstring fileMultiPath = boost::join(filePaths, L" ");
-
-						std::wstring parameter = exeExtension.Parameter;
-
-						std::wstring singlePathUnQuo = filePaths[0];
-						::PathUnquoteSpaces(::GetBuffer(singlePathUnQuo, MAX_PATH));
-						::ReleaseBuffer(singlePathUnQuo);
-
-						std::wstring singlePathWoExtUnQuo = singlePathUnQuo;
-						::PathRemoveExtension(::GetBuffer(singlePathWoExtUnQuo, MAX_PATH));
-						::ReleaseBuffer(singlePathWoExtUnQuo);
-
-						boost::algorithm::replace_all(parameter, L"%SinglePath%", filePaths[0]);
-						boost::algorithm::replace_all(parameter, L"%SinglePathUnQuo%", singlePathUnQuo);
-						boost::algorithm::replace_all(parameter, L"%MultiPath%", fileMultiPath);
-						boost::algorithm::replace_all(parameter, L"%DirectoryUnQuo%", ::PathFindDirectory(singlePathUnQuo.c_str()));
-						boost::algorithm::replace_all(parameter, L"%SinglePathWoExtUnQuo%", singlePathWoExtUnQuo );	
-							
-						std::wstring cmdline = L"\"" + exeExtension.Path + L"\" " + parameter;
-
-						HANDLE hRead, hWrite;
-						SECURITY_ATTRIBUTES sa = { 0 };
-						sa.nLength = sizeof(sa);
-						sa.lpSecurityDescriptor = 0;
-						sa.bInheritHandle = TRUE;
-						if (!::CreatePipe(&hRead, &hWrite, &sa, 0)) {
-							return false;
-						}
-						do {
-							STARTUPINFO si = { 0 };
-							si.cb = sizeof(si);
-							si.dwFlags = STARTF_USESTDHANDLES;
-							si.wShowWindow = SW_HIDE;
-							si.hStdOutput = hWrite;
-							si.hStdError = hWrite;
-
-							PROCESS_INFORMATION pi = { 0 };
-							DWORD len = 0;
-							LOG_THIS_2("CreateProcess:", wstr2str(cmdline));
-
-							if (!::CreateProcess(NULL, const_cast<LPWSTR>(cmdline.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) break;
-							if (!::WaitForInputIdle(pi.hProcess, INFINITE) != 0)break;
-							if (::WaitForSingleObject(pi.hProcess, INFINITE) != WAIT_OBJECT_0)break;
-
-							DWORD exitCode = 0;
-							if (!::GetExitCodeProcess(pi.hProcess, &exitCode))break;
-							LOG_THIS_2("ExitCode:", exitCode);
-
-							::CloseHandle(pi.hThread);
-							::CloseHandle(pi.hProcess);
-
-							if (!::PeekNamedPipe(hRead, NULL, 0, NULL, &len, NULL))break;
-							std::string buff;
-							if (len > 0 && ReadFile(hRead, (LPVOID)::GetBuffer(buff, len), len, &len, NULL)) {
-								::ReleaseBuffer(buff);
-								LOG_THIS_2("Output:", buff);
-							}
-
-						} while (0);
-
-						::CloseHandle(hRead);
-						::CloseHandle(hWrite);
-					} catch (...) {
-						throw;
-					}
-				return true;
-			} else {
-					return false;
+					pWnd->CreateOnCenterOfParent(GetWndPtr()->m_hWnd, CSize(300, 400));
+					pWnd->SetIsDeleteOnFinalMessage(true);
+					pWnd->ShowWindow(SW_SHOW);
+					pWnd->UpdateWindow();
+					return true;
 				}
 
 #ifdef USE_PYTHON_EXTENSION
@@ -362,12 +290,6 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 
 	applyCustomContextMenu(m_spLeftView->FilerGridViewPtr());
 	applyCustomContextMenu(m_spRightView->FilerGridViewPtr());
-
-
-
-
-
-
 
 	//SetWindowPlacement make sure Window in Monitor
 	WINDOWPLACEMENT wp = { 0 };

@@ -59,6 +59,28 @@ public:
 		return str;
 	}
 
+	std::vector<byte> ReadAllBytes()
+	{
+		DWORD dwBytes=0;
+		DWORD dwSize=::GetFileSize(m_hFile,NULL);
+		std::vector<byte> bytes(dwSize);
+		if(!::ReadFile(m_hFile,bytes.data(),dwSize,&dwBytes,NULL)){
+			throw std::exception("Error on ReadFile");
+		}
+		return bytes;
+	}
+
+	void WriteAllBytes(const std::vector<byte>& bytes)
+	{
+		DWORD dwBytes=0;
+		if(!::WriteFile(m_hFile,bytes.data(),(DWORD)bytes.size(),&dwBytes,NULL)){
+			throw std::exception("Error on WriteFile");
+		}
+		FlushFileBuffers();
+	}
+
+
+
 	template<typename T>
 	static void WriteAllString(const std::basic_string<TCHAR>& path, const std::basic_string<T>& str)
 	{
@@ -87,6 +109,34 @@ public:
 		return file.ReadAllString<T>();
 	
 	}
+
+	static void WriteAllBytes(const std::basic_string<TCHAR>& path, const std::vector<byte>& bytes)
+	{
+		CFile file(
+			path.c_str(),
+			GENERIC_WRITE,
+			FILE_SHARE_READ | FILE_SHARE_WRITE,
+			NULL,
+			CREATE_ALWAYS,
+			FILE_ATTRIBUTE_NORMAL,
+			NULL);
+		file.WriteAllBytes(bytes);
+	}
+
+	static std::vector<byte> ReadAllBytes(const std::basic_string<TCHAR>& path)
+	{
+		CFile file(
+			path.c_str(),
+			GENERIC_READ,
+			FILE_SHARE_READ | FILE_SHARE_WRITE,
+			NULL,
+			OPEN_EXISTING,
+			FILE_ATTRIBUTE_NORMAL,
+			NULL);
+		return file.ReadAllBytes();
+	
+	}
+
 
 
 	BOOL FlushFileBuffers();

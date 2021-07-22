@@ -3,44 +3,76 @@
 #include "strconv.h"
 #include <MLang.h>
 
+std::vector<byte> CTextEnDecoder::wstring_to_bytes(const std::wstring& wstr)
+{
+    return std::vector<byte>((byte*)wstr.data(), ((byte*)wstr.data()) + wstr.size() * sizeof(wchar_t));
+}
+std::vector<byte> CTextEnDecoder::string_to_bytes(const std::string& str)
+{
+    return std::vector<byte>((byte*)str.data(), ((byte*)str.data()) + str.size() * sizeof(char));
+}
+std::wstring CTextEnDecoder::bytes_to_wstring(const std::vector<byte>& bytes, const size_t offset)
+{
+    return std::wstring((wchar_t*)(bytes.data() + offset), (bytes.size() - offset) / sizeof(wchar_t));
+}
+std::string CTextEnDecoder::bytes_to_string(const std::vector<byte>& bytes, const size_t offset)
+{
+    return std::string((char*)(bytes.data() + offset), (bytes.size() - offset) / sizeof(char));
+}
+
+
+
+
 CTextEnDecoder::CTextEnDecoder()
     :m_map(
         {
             {encoding_type::UTF16LE,
             std::make_pair(
-                [this](const std::string& str) { return std::wstring(std::next(str.cbegin(), 2), str.cend()); },
-                [this](const std::wstring& wstr) { return bom_utf16le + std::string((char*)wstr.data(), wstr.size() * sizeof(wchar_t)); }
+                [this](const std::vector<byte>& bytes) { return bytes_to_wstring(bytes, bom_utf16le.size()); },
+                [this](const std::wstring& wstr)
+                {
+                    std::vector<byte> bom = bom_utf16le;
+                    std::vector<byte> bytes = wstring_to_bytes(wstr);
+                    bytes.insert(bytes.begin(), bom.begin(), bom.end());
+                    return bytes;
+                }
             )},
             {encoding_type::UTF16LEN,
             std::make_pair(
-                [this](const std::string& str) { return std::wstring(str.cbegin(), str.cend()); },
-                [this](const std::wstring& wstr) { return std::string((char*)wstr.data(), wstr.size() * sizeof(wchar_t)); }
+                [this](const std::vector<byte>& bytes) { return bytes_to_wstring(bytes, bom_non.size()); },
+                [this](const std::wstring& wstr) { return wstring_to_bytes(wstr); }
             )},
             {encoding_type::UTF8,
             std::make_pair(
-                [this](const std::string& str) { return utf8_to_wide(std::string(std::next(str.cbegin(), 3), str.cend())); },
-                [this](const std::wstring& wstr) { return bom_utf8 + wide_to_utf8(wstr); }
+                [this](const std::vector<byte>& bytes) { return utf8_to_wide(bytes_to_string(bytes, bom_utf8.size())); },
+                [this](const std::wstring& wstr) 
+                { 
+                    std::vector<byte> bom = bom_utf8;
+                    std::vector<byte> bytes = string_to_bytes(wide_to_utf8(wstr));
+                    bytes.insert(bytes.begin(), bom.begin(), bom.end());
+                    return bytes;
+                }
             )},
             {encoding_type::UTF8N,
             std::make_pair(
-                [this](const std::string& str) { return utf8_to_wide(str); },
-                [this](const std::wstring& wstr) { return wide_to_utf8(wstr); }
+                [this](const std::vector<byte>& bytes) { return utf8_to_wide(bytes_to_string(bytes, bom_non.size())); },
+                [this](const std::wstring& wstr) { return string_to_bytes(wide_to_utf8(wstr)); }
             )},
             {encoding_type::ASCII,
             std::make_pair(
-                [this](const std::string& str) { return utf8_to_wide(str); },
-                [this](const std::wstring& wstr) { return wide_to_utf8(wstr); }
+                [this](const std::vector<byte>& bytes) { return utf8_to_wide(bytes_to_string(bytes, bom_non.size())); },
+                [this](const std::wstring& wstr) { return string_to_bytes(wide_to_utf8(wstr)); }
             )},
             {encoding_type::SJIS,
             std::make_pair(
-                [this](const std::string& str) { return sjis_to_wide(str); },
-                [this](const std::wstring& wstr) { return wide_to_sjis(wstr); }
+                [this](const std::vector<byte>& bytes) { return sjis_to_wide(bytes_to_string(bytes, bom_non.size())); },
+                [this](const std::wstring& wstr) { return string_to_bytes(wide_to_sjis(wstr)); }
             )}
         })
 {}
 
 
-std::wstring CTextEnDecoder::Decode(const std::string& str, const encoding_type& enc)
+std::wstring CTextEnDecoder::Decode(const std::vector<byte>& str, const encoding_type& enc)
 {
     auto iter = m_map.find(enc);
     if (iter != m_map.end()) {
@@ -49,18 +81,18 @@ std::wstring CTextEnDecoder::Decode(const std::string& str, const encoding_type&
         return std::wstring();
     }
 }
-std::string CTextEnDecoder::Encode(const std::wstring& wstr, const encoding_type& enc)
+std::vector<byte> CTextEnDecoder::Encode(const std::wstring& wstr, const encoding_type& enc)
 {
     auto iter = m_map.find(enc);
     if (iter != m_map.end()) {
         return iter->second.second(wstr);
     } else {
-        return std::string();
+        return std::vector<byte>();
     }
 }
 
 
-encoding_type CTextEnDecoder::DetectEncoding(const std::string& str)
+encoding_type CTextEnDecoder::DetectEncoding(const std::vector<byte>& str)
 {
     if (encoding_type enc = DetectEncodingByBOM(str); enc != encoding_type::UNKNOWN) { return enc; }
     if (encoding_type enc = DetectEncodingByParse(str); enc != encoding_type::UNKNOWN) { return enc; }
@@ -69,7 +101,7 @@ encoding_type CTextEnDecoder::DetectEncoding(const std::string& str)
     return encoding_type::UNKNOWN;
 }
 
-encoding_type CTextEnDecoder::DetectEncodingByBOM(const std::string& str)
+encoding_type CTextEnDecoder::DetectEncodingByBOM(const std::vector<byte>& str)
 {
 	if (str[0] == bom_utf16be[0] && str[1] == bom_utf16be[1]){
 		return encoding_type::UTF16BE;
@@ -82,7 +114,7 @@ encoding_type CTextEnDecoder::DetectEncodingByBOM(const std::string& str)
 	}
 }
 
-encoding_type CTextEnDecoder::DetectEncodingByParse(const std::string& str)
+encoding_type CTextEnDecoder::DetectEncodingByParse(const std::vector<byte>& str)
 {
     const byte bEscape = 0x1B;
     const byte bAt = 0x40;
@@ -275,14 +307,14 @@ encoding_type CTextEnDecoder::DetectEncodingByParse(const std::string& str)
     return encoding_type::UNKNOWN;
 }
 
-encoding_type CTextEnDecoder::DetectEncodingByMultiLanguage(const std::string& str)
+encoding_type CTextEnDecoder::DetectEncodingByMultiLanguage(const std::vector<byte>& str)
 {
 	CComPtr<IMultiLanguage3> p;
 	FAILED_THROW(::CoCreateInstance(CLSID_CMultiLanguage, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&p)));
 	DetectEncodingInfo encoding = {};
 	INT size = str.size();
 	INT scores = 1;
-	FAILED_THROW(p->DetectInputCodepage(MLDETECTCP_NONE, 0, const_cast<CHAR*>(str.c_str()), &size, &encoding, &scores));
+	FAILED_THROW(p->DetectInputCodepage(MLDETECTCP_NONE, 0, (char*)(str.data()), &size, &encoding, &scores));
 	switch (encoding.nCodePage) {
 		case 932:
 			return encoding_type::SJIS;

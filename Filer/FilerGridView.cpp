@@ -744,6 +744,9 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 
 	{
 		LOG_SCOPED_TIMER_THIS_1("OpenFolder Updating");
+		//auto& cells = m_allCells.get<rowcol_tag>();
+		//auto iter = std::remove_if(m_allCells.begin(), m_allCells.end(), [this](const auto& cell)->bool { return (size_t)(cell->GetRowPtr()->GetIndex<AllTag>()) >= m_frozenRowCount; });
+		//m_allCells.erase(iter, m_allCells.end());
 		m_allCells.clear();
 		//for (const auto& colPtr : m_allCols) {
 		//	std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
@@ -1075,20 +1078,20 @@ bool CFilerGridView::InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, 
 void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
 	auto cell = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
-	std::vector<PITEMID_CHILD> vPidl;
+	std::vector<std::shared_ptr<CShellFile>> files;
 
 	if (!cell) {
 		//Folder menu
-		CIDL idl = m_spFolder->GetAbsoluteIdl().CloneParentIDL();
-		CComPtr<IShellFolder> pDesktop;
-		::SHGetDesktopFolder(&pDesktop);
-		CComPtr<IShellFolder> pFolder;
-		::SHBindToObject(pDesktop, idl.ptr(), 0, IID_IShellFolder, (void**)&pFolder);
-		if (!pFolder) {
-			pFolder = pDesktop;
-		}
-		vPidl.push_back(m_spFolder->GetAbsoluteIdl().FindLastID());
-		ShowShellContextMenu(GetWndPtr()->m_hWnd, e.PointInScreen, pFolder, vPidl, true);
+		//CIDL idl = m_spFolder->GetAbsoluteIdl().CloneParentIDL();
+		//CComPtr<IShellFolder> pDesktop;
+		//::SHGetDesktopFolder(&pDesktop);
+		//CComPtr<IShellFolder> pFolder;
+		//::SHBindToObject(pDesktop, idl.ptr(), 0, IID_IShellFolder, (void**)&pFolder);
+		//if (!pFolder) {
+		//	pFolder = pDesktop;
+		//}
+		files.push_back(m_spFolder);
+		ShowShellContextMenu(GetWndPtr()->m_hWnd, e.PointInScreen, m_spFolder->GetParent(), files, true);
 	}else if(cell->GetRowPtr() == m_pHeaderRow.get() || cell->GetRowPtr() == m_pNameHeaderRow.get()){
 		//Header menu
 		CMenu menu(::CreatePopupMenu());
@@ -1122,17 +1125,22 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 			if(rowPtr->GetIsSelected()){
 				auto spRow=std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr);
 				auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
-				vPidl.push_back(spFile->GetAbsoluteIdl().FindLastID());
+				files.push_back(spFile);
 			}
 		}
-			ShowShellContextMenu(GetWndPtr()->m_hWnd, e.PointInScreen, m_spFolder->GetShellFolderPtr(), vPidl);
+			ShowShellContextMenu(GetWndPtr()->m_hWnd, e.PointInScreen, m_spFolder, files);
 	}
 
 	//CFilerGridViewBase::Normal_ContextMenu(e);
 }
 
-void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IShellFolder> psf, std::vector<PITEMID_CHILD> vpIdl, bool hasNew)
+void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files, bool hasNew)
 {
+	std::vector<PITEMID_CHILD> vPidl;
+	for (auto file : files) {
+		vPidl.push_back(file->GetAbsoluteIdl().FindLastID());
+	}
+
 	try {
 		GetWndPtr()->AddAllMsgHandler(&CFilerGridView::OnHandleMenuMsg, this);
 
@@ -1165,7 +1173,7 @@ void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IS
 
 		//Normal Context Menu
 		CComPtr<IContextMenu> pcm;
-		hr = psf->GetUIObjectOf(hWnd, vpIdl.size(), (LPCITEMIDLIST*)(vpIdl.data()), IID_IContextMenu, nullptr, (LPVOID *)&pcm);
+		hr = folder->GetShellFolderPtr()->GetUIObjectOf(hWnd, vPidl.size(), (LPCITEMIDLIST*)(vPidl.data()), IID_IContextMenu, nullptr, (LPVOID *)&pcm);
 		hr = pcm->QueryInterface(IID_PPV_ARGS(&m_pcm2));
 		if (FAILED(hr)) { return; }
 		hr = pcm->QueryInterface(IID_PPV_ARGS(&m_pcm3));
@@ -1235,7 +1243,8 @@ void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, CComPtr<IS
 			info.nShow = SW_SHOWNORMAL;
 			info.ptInvoke = ptScreen;
 
-			if (ExecCustomContextMenu(idCmd, psf, vpIdl)) {
+			if (ExecCustomContextMenu(idCmd, folder, files)) {
+
 			} else if (idCmd == IDM_COPYTEXT) {
 				BOOL bHandled = FALSE;
 				CGridView::OnCommandCopy(CommandEvent(GetWndPtr(), (WPARAM)idCmd, (LPARAM)GetWndPtr()->m_hWnd, &bHandled));

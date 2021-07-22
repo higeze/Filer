@@ -674,6 +674,9 @@
     <ClInclude Include="FilerWndStatusBar.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="ExeExtensionProperty.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">

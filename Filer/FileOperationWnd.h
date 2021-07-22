@@ -15,6 +15,8 @@
 #include "D2DWWindow.h"
 #include "Button.h"
 #include "ReactiveProperty.h"
+#include "Textbox.h"
+#include "ExeExtensionProperty.h"
 
 
 template<typename... TItems>
@@ -41,17 +43,6 @@ protected:
 
 	std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> m_spItemsSource;
 	//std::vector< std::tuple<std::shared_ptr<CShellFile>, RenameInfo>> m_selectedItems;
-
-	std::tuple<CRectF, CRectF, CRectF> GetRects()
-	{
-		CRectF rc = GetRectInWnd();
-		CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.Width() - 5.f, rc.bottom - 30.f);
-		CRectF rcBtnCancel(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
-		CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
-
-		return { rcGrid, rcBtnDo, rcBtnCancel };
-	}
-
 
 public:
 	CFileOperationWndBase(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
@@ -85,28 +76,6 @@ public:
 	}
 	virtual ~CFileOperationWndBase() = default;
 
-	virtual void OnCreate(const CreateEvt& e) override
-	{
-		//Modal Window
-		if (m_isModal && GetParent()) {
-			::EnableWindow(GetParent(), FALSE);
-		}
-
-		//Size
-		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();
-		
-		//Create FilerControl
-		m_spFilerControl->OnCreate(CreateEvt(this, this, rcGrid));
-
-		//OK button
-		m_spButtonDo->OnCreate(CreateEvt(this, this, rcBtnDo));
-
-		//Cancel button
-		m_spButtonCancel->OnCreate(CreateEvt(this, this, rcBtnCancel));
-
-		//Focus
-		SetFocusedControlPtr(m_spButtonDo);
-	}
 
 	virtual void OnClose(const CloseEvent& e) override
 	{
@@ -121,6 +90,51 @@ public:
 		}
 		DestroyWindow();
 	}
+};
+
+/*******************************/
+/* CSimpleFileOperationWndBase */
+/*******************************/
+template<typename ...TItems>
+class CSimpleFileOperationWndBase :public CFileOperationWndBase<TItems...>
+{
+private:
+	std::tuple<CRectF, CRectF, CRectF> GetRects()
+	{
+		CRectF rc = this->GetRectInWnd();
+		CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.Width() - 5.f, rc.bottom - 30.f);
+		CRectF rcBtnCancel(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
+		CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
+
+		return { rcGrid, rcBtnDo, rcBtnCancel };
+	}
+
+public:
+	using CFileOperationWndBase<TItems...>::CFileOperationWndBase;
+	virtual ~CSimpleFileOperationWndBase() = default;
+
+	virtual void OnCreate(const CreateEvt& e) override
+	{
+		//Modal Window
+		if (this->m_isModal && this->GetParent()) {
+			::EnableWindow(this->GetParent(), FALSE);
+		}
+
+		//Size
+		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();
+		
+		//Create FilerControl
+		this->m_spFilerControl->OnCreate(CreateEvt(this, this, rcGrid));
+
+		//OK button
+		this->m_spButtonDo->OnCreate(CreateEvt(this, this, rcBtnDo));
+
+		//Cancel button
+		this->m_spButtonCancel->OnCreate(CreateEvt(this, this, rcBtnCancel));
+
+		//Focus
+		this->SetFocusedControlPtr(this->m_spButtonDo);
+	}
 
 	virtual void OnRect(const RectEvent& e) override
 	{
@@ -128,19 +142,18 @@ public:
 
 		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();		
 		//Create FilerControl
-		m_spFilerControl->OnRect(RectEvent(this, rcGrid));
+		this->m_spFilerControl->OnRect(RectEvent(this, rcGrid));
 		//OK button
-		m_spButtonDo->OnRect(RectEvent(this, rcBtnDo));
+		this->m_spButtonDo->OnRect(RectEvent(this, rcBtnDo));
 		//Cancel button
-		m_spButtonCancel->OnRect(RectEvent(this, rcBtnCancel));
+		this->m_spButtonCancel->OnRect(RectEvent(this, rcBtnCancel));
 	}
-
 };
 
 /****************/
 /* CCopyMoveWnd */
 /****************/
-class CCopyMoveWndBase :public CFileOperationWndBase<std::shared_ptr<CShellFile>, RenameInfo>
+class CCopyMoveWndBase :public CSimpleFileOperationWndBase<std::shared_ptr<CShellFile>, RenameInfo>
 {
 protected:
 	CIDL m_destIDL;
@@ -177,11 +190,44 @@ public:
 /**************/
 /* CDeleteWnd */
 /**************/
-class CDeleteWnd :public CFileOperationWndBase<std::shared_ptr<CShellFile>>
+class CDeleteWnd :public CSimpleFileOperationWndBase<std::shared_ptr<CShellFile>>
 {
 public:
 	CDeleteWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 			 const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CDeleteWnd() = default;
 	void Delete();
+};
+
+/***********/
+/* CExeWnd */
+/***********/
+
+class CExeExtensionWnd: public CFileOperationWndBase<std::shared_ptr<CShellFile>>
+{
+private:
+
+protected:
+	std::shared_ptr<CTextBox> m_spTextBox;
+	ExeExtension& m_exeExtension;
+	std::unique_ptr<CBinding> m_pBinding;
+
+	std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects();
+
+
+
+public:
+	CExeExtensionWnd(
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const std::shared_ptr<TextboxProperty>& spTextBoxProp,
+		const std::shared_ptr<CShellFolder>& folder,
+		const std::vector<std::shared_ptr<CShellFile>>& files,
+		ExeExtension& exeExtension);
+
+	virtual ~CExeExtensionWnd() = default;
+
+	void Execute();
+
+	virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnRect(const RectEvent& e) override;
 };

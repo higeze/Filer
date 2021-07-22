@@ -61,7 +61,7 @@ struct TextboxProperty
 public:
 	std::shared_ptr<FormatF> Format;
 	std::shared_ptr<SolidLine> Line;
-	std::shared_ptr<SolidLine> EditLine;
+	std::shared_ptr<SolidLine> CompositionLine;
 	std::shared_ptr<SolidLine> FocusedLine;
 	std::shared_ptr<SolidLine> BlankLine;
 	std::shared_ptr<SolidFill> NormalFill;
@@ -79,7 +79,7 @@ public:
 	TextboxProperty()
 		:Format(std::make_shared<FormatF>(L"Meiryo UI", CDirect2DWrite::Points2Dips(9),  0.0f, 0.0f, 0.0f, 1.0f)),
 		Line(std::make_shared<SolidLine>(221.f/255.f, 206.f/255.f, 188.f/255.f, 1.0f, 1.0f)),
-		EditLine(std::make_shared<SolidLine>(0.0f/255.f, 0.0f/255.f, 255.f/255.f, 1.0f, 1.0f)),
+		CompositionLine(std::make_shared<SolidLine>(0.0f/255.f, 0.0f/255.f, 255.f/255.f, 1.0f, 1.0f)),
 		FocusedLine(std::make_shared<SolidLine>(22.f/255.f, 160.f/255.f, 133.f/255.f, 1.0f, 1.0f)),
 		BlankLine(std::make_shared<SolidLine>(100.f / 255.f, 100.f / 255.f, 100.f / 255.f, 0.6f, 1.0f)),
 		NormalFill(std::make_shared<SolidFill>(246.f/255.f, 246.f/255.f, 246.f/255.f, 1.0f)),
@@ -105,7 +105,7 @@ public:
 		std::shared_ptr<CRectF> padding)
 		:Format(fontAndColor),
 		Line(line),
-		EditLine(editLine),
+		CompositionLine(editLine),
 		FocusedLine(focusedLine),
 		NormalFill(normalFill),
 		FocusedFill(focusedFill),
@@ -125,7 +125,7 @@ public:
     {
 		ar("Format",Format);
 		ar("Line",Line);
-		ar("EditLine", EditLine);
+		ar("CompositionLine", CompositionLine);
 		ar("FocusedLine",FocusedLine);
 		ar("BlankLine", BlankLine);
 		ar("NormalFill",NormalFill);
@@ -144,7 +144,7 @@ public:
     {
 		ar("Format",Format);
 		ar("Line",Line);
-		ar("EditLine", EditLine);
+		ar("CompositionLine", CompositionLine);
 		ar("FocusedLine",FocusedLine);
 		ar("BlankLine", BlankLine);
 		ar("NormalFill",NormalFill);
@@ -161,7 +161,7 @@ public:
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(TextboxProperty,
 		Format,
 		Line,
-		EditLine,
+		CompositionLine,
 		FocusedLine,
 		BlankLine,
 		NormalFill,

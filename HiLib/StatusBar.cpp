@@ -12,8 +12,10 @@ CStatusBar::~CStatusBar() = default;
 void CStatusBar::OnPaint(const PaintEvent& e)
 {
 	auto rcPaint = GetRectInWnd();
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->BackgroundFill, rcPaint);
-	GetWndPtr()->GetDirectPtr()->DrawTextLayout(m_spStatusBarProp->Format, m_text, rcPaint);
+	if (rcPaint.Width() > 0 && rcPaint.Height() > 0) {
+		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->BackgroundFill, rcPaint);
+		GetWndPtr()->GetDirectPtr()->DrawTextLayout(m_spStatusBarProp->Format, m_text, rcPaint);
+	}
 }
 
 CSizeF CStatusBar::MeasureSize(CDirect2DWrite* pDirect)

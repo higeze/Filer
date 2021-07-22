@@ -21,6 +21,7 @@ public:
 	 *  Get string from column property
 	 */
 	virtual std::wstring GetString() override;
+	virtual void SetString(const std::wstring& str, bool notify);
 
 	virtual CRectF GetRectInWnd()const override;
 	/**

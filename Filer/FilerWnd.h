@@ -18,6 +18,7 @@
 #include "D2DWWindow.h"
 #include "ReactiveProperty.h"
 #include "PdfView.h"
+#include "ExeExtensionProperty.h"
 //#include "KonamiCommander.h"
 #include "JsonSerializer.h"
 
@@ -63,43 +64,6 @@ public:
 };
 #endif
 
-struct ExeExtension
-{
-	auto operator<=>(const ExeExtension&) const = default;
-
-	std::wstring Name;
-	std::wstring Path;
-	std::wstring Parameter;
-
-	FRIEND_SERIALIZER
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		ar("Name", Name);
-		ar("Path", Path);
-		ar("Parameter", Parameter);
-	}
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(ExeExtension,
-		Name,
-		Path,
-		Parameter)
-};
-
-struct ExeExtensionProperty
-{
-public:
-	ReactiveVectorProperty<std::tuple<ExeExtension>> ExeExtensions;
-
-	FRIEND_SERIALIZER
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		ar("ExeExtensions", ExeExtensions);
-	}
-
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(ExeExtensionProperty,
-		ExeExtensions)
-};
 
 class CFilerWnd:public CD2DWWindow
 {

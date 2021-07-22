@@ -346,6 +346,7 @@
     <ClInclude Include="..\HiLib\UpdateResource.h" />
     <ClInclude Include="..\HiLib\HiLibResource.h" />
     <ClInclude Include="CheckableFileGrid.h" />
+    <ClInclude Include="ExeExtensionProperty.h" />
     <ClInclude Include="FilerWndStatusBar.h" />
     <ClInclude Include="LauncherItemDragger.h" />
     <ClInclude Include="LauncherProperty.h" />

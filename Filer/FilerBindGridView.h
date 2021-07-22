@@ -55,7 +55,7 @@ public:
 	/* Signal */
 	/**********/
 	std::function<void(CMenu&)> AddCustomContextMenu;
-	std::function<bool(int, CComPtr<IShellFolder>, std::vector<PITEMID_CHILD>)> ExecCustomContextMenu;
+	std::function<bool(int, const std::shared_ptr<CShellFolder>&, const std::vector<std::shared_ptr<CShellFile>>&)> ExecCustomContextMenu;
 
 	virtual void OnCellLButtonDblClk(const CellEventArgs& e)
 	{

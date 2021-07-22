@@ -1,5 +1,8 @@
 #include "FileOperationWnd.h"
+#include "Textbox.h"
 #include "named_arguments.h"
+#include "ShellFile.h"
+#include "ShellFolder.h"
 //TODOTODO
 //RenameWnd
 
@@ -9,7 +12,7 @@
 CCopyMoveWndBase::CCopyMoveWndBase(
 	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CFileOperationWndBase(spFilerGridViewProp, srcIDL, srcChildIDLs), m_destIDL(destIDL)
+	:CSimpleFileOperationWndBase(spFilerGridViewProp, srcIDL, srcChildIDLs), m_destIDL(destIDL)
 {
 	//Items Source
 	for (auto& childIDL : m_srcChildIDLs) {
@@ -211,7 +214,7 @@ void CMoveWnd::Move()
 /**************/
 CDeleteWnd::CDeleteWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 				   const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CFileOperationWndBase(spFilerGridViewProp, srcIDL, srcChildIDLs)
+	:CSimpleFileOperationWndBase(spFilerGridViewProp, srcIDL, srcChildIDLs)
 {
 	m_rca
 		.lpszClassName(L"CDeleteWnd");
@@ -290,6 +293,185 @@ void CDeleteWnd::Delete()
 	}, m_hWnd, delIDLs);
 }
 
+/********************/
+/* CExeExtensionWnd */
+/********************/
+
+CExeExtensionWnd::CExeExtensionWnd(
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const std::shared_ptr<TextboxProperty>& spTextBoxProp,
+		const std::shared_ptr<CShellFolder>& folder,
+		const std::vector<std::shared_ptr<CShellFile>>& files,
+		ExeExtension& exeExtension)
+	:CFileOperationWndBase(spFilerGridViewProp, CIDL(), std::vector<CIDL>()),
+	m_spTextBox(std::make_shared<CTextBox>(this, nullptr, spTextBoxProp, L"", nullptr, nullptr)),
+	m_exeExtension(exeExtension),
+	m_pBinding(std::make_unique<CBinding>(m_exeExtension.Parameter, m_spTextBox->GetText()))
+{
+	m_rca
+		.lpszClassName(L"CExeExtensionWnd");
+
+	m_cwa
+		.lpszWindowName(L"Execute")
+		.lpszClassName(L"CExeExtensionWnd");
+
+	//Items Source
+	for (auto& file : files) {
+		m_spItemsSource->push_back(
+			std::make_tuple(file));
+	}
+
+	//FileGrid
+	m_spFilerControl = std::make_unique<CFilerBindGridView<std::shared_ptr<CShellFile>>>(
+		this,
+		spFilerGridViewProp,
+		m_spItemsSource,
+		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr),
+		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Name"),
+		arg<"frzcolcnt"_s>() = 1,
+		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{
+			std::make_shared<CFilePathExtColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Ext"),
+			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileSizeArgsPtr),
+			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileTimeArgsPtr) },
+		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
+		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
+		arg<"frzrowcnt"_s>() = 2);
+
+	//TextBox
+	m_spTextBox->SetHasBorder(true);
+
+	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	{
+		Execute();
+	});
+
+	m_spButtonDo->GetContent().set(L"Exe");
+
+}
+
+void CExeExtensionWnd::Execute()
+{
+try {
+	std::vector<std::wstring> filePaths;
+	for (auto& file : m_spItemsSource->get()) {
+		filePaths.emplace_back(L"\"" + std::get<std::shared_ptr<CShellFile>>(file)->GetPath() + L"\"");
+	}
+
+	std::wstring fileMultiPath = boost::join(filePaths, L" ");
+
+	std::wstring parameter = m_exeExtension.Parameter;
+
+	std::wstring singlePathUnQuo = filePaths[0];
+	::PathUnquoteSpaces(::GetBuffer(singlePathUnQuo, MAX_PATH));
+	::ReleaseBuffer(singlePathUnQuo);
+
+	std::wstring singlePathWoExtUnQuo = singlePathUnQuo;
+	::PathRemoveExtension(::GetBuffer(singlePathWoExtUnQuo, MAX_PATH));
+	::ReleaseBuffer(singlePathWoExtUnQuo);
+
+	boost::algorithm::replace_all(parameter, L"%SinglePath%", filePaths[0]);
+	boost::algorithm::replace_all(parameter, L"%SinglePathUnQuo%", singlePathUnQuo);
+	boost::algorithm::replace_all(parameter, L"%MultiPath%", fileMultiPath);
+	boost::algorithm::replace_all(parameter, L"%DirectoryUnQuo%", ::PathFindDirectory(singlePathUnQuo.c_str()));
+	boost::algorithm::replace_all(parameter, L"%SinglePathWoExtUnQuo%", singlePathWoExtUnQuo );	
+							
+	std::wstring cmdline = L"\"" + m_exeExtension.Path + L"\" " + parameter;
+
+	HANDLE hRead, hWrite;
+	SECURITY_ATTRIBUTES sa = { 0 };
+	sa.nLength = sizeof(sa);
+	sa.lpSecurityDescriptor = 0;
+	sa.bInheritHandle = TRUE;
+	if (!::CreatePipe(&hRead, &hWrite, &sa, 0)) {
+		return;
+	}
+	do {
+		STARTUPINFO si = { 0 };
+		si.cb = sizeof(si);
+		si.dwFlags = STARTF_USESTDHANDLES;
+		si.wShowWindow = SW_HIDE;
+		si.hStdOutput = hWrite;
+		si.hStdError = hWrite;
+
+		PROCESS_INFORMATION pi = { 0 };
+		DWORD len = 0;
+		LOG_THIS_2("CreateProcess:", wstr2str(cmdline));
+
+		if (!::CreateProcess(NULL, const_cast<LPWSTR>(cmdline.c_str()), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) break;
+		if (!::WaitForInputIdle(pi.hProcess, INFINITE) != 0)break;
+		if (::WaitForSingleObject(pi.hProcess, INFINITE) != WAIT_OBJECT_0)break;
+
+		DWORD exitCode = 0;
+		if (!::GetExitCodeProcess(pi.hProcess, &exitCode))break;
+		LOG_THIS_2("ExitCode:", exitCode);
+
+		::CloseHandle(pi.hThread);
+		::CloseHandle(pi.hProcess);
+
+		if (!::PeekNamedPipe(hRead, NULL, 0, NULL, &len, NULL))break;
+		std::string buff;
+		if (len > 0 && ReadFile(hRead, (LPVOID)::GetBuffer(buff, len), len, &len, NULL)) {
+			::ReleaseBuffer(buff);
+			LOG_THIS_2("Output:", buff);
+		}
+
+	} while (0);
+
+	::CloseHandle(hRead);
+	::CloseHandle(hWrite);
+} catch (...) {
+	throw;
+}
+}
+
+std::tuple<CRectF, CRectF, CRectF, CRectF> CExeExtensionWnd::GetRects()
+{
+	CRectF rc = GetRectInWnd();
+	CRectF rcBtnCancel(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
+	CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
+	CRectF rcText(rc.left + 5.f, rc.bottom - 95.f, rc.right - 5.f, rc.bottom - 30.f);
+	CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.Width() - 5.f, rc.bottom -  100.f);
+
+	return { rcGrid, rcText, rcBtnDo, rcBtnCancel };
+}
+
+
+void CExeExtensionWnd::OnCreate(const CreateEvt& e)
+{
+	//Modal Window
+	if (m_isModal && GetParent()) {
+		::EnableWindow(GetParent(), FALSE);
+	}
+
+	//Size
+	auto [rcGrid, rcText, rcBtnDo, rcBtnCancel] = GetRects();
+		
+	//Create FilerControl
+	m_spFilerControl->OnCreate(CreateEvt(this, this, rcGrid));
+
+	//Textbox
+	m_spTextBox->OnCreate(CreateEvt(this, this, rcText));
+
+	//OK button
+	m_spButtonDo->OnCreate(CreateEvt(this, this, rcBtnDo));
+
+	//Cancel button
+	m_spButtonCancel->OnCreate(CreateEvt(this, this, rcBtnCancel));
+
+	//Focus
+	SetFocusedControlPtr(m_spButtonDo);
+}
+
+void CExeExtensionWnd::OnRect(const RectEvent& e)
+{
+	CD2DWWindow::OnRect(e);
+
+	auto [rcGrid, rcText, rcBtnDo, rcBtnCancel] = GetRects();		
+	m_spFilerControl->OnRect(RectEvent(this, rcGrid));
+	m_spTextBox->OnRect(RectEvent(this, rcText));
+	m_spButtonDo->OnRect(RectEvent(this, rcBtnDo));
+	m_spButtonCancel->OnRect(RectEvent(this, rcBtnCancel));
+}
 
 
 

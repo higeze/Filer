@@ -831,6 +831,17 @@ public:
 			});
 	}
 
+	template <class CharT, class Traits, class Allocator>
+	CBinding(std::basic_string<CharT, Traits, Allocator>& source, ReactiveBasicStringProperty<CharT, Traits, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		target.set(source);
+		m_targetConnection = target.Subscribe(
+			[&](const NotifyStringChangedEventArgs<CharT>& notify)->void
+			{
+				source = notify.NewString;
+			});
+	}
+
 	template<class T, class Allocator>
 	CBinding(ReactiveVectorProperty<T, Allocator>& source, ReactiveVectorProperty<T, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
 	{
