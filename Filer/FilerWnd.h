@@ -113,12 +113,17 @@ public:
 	HWND Create(HWND hWndParent) override;
 
 
-	//Getter
+	//Getter/Settern
 	std::shared_ptr<CApplicationProperty>& GetApplicationProperty() { return m_spApplicationProp; }
 	std::shared_ptr<FilerGridViewProperty>& GetFilerGridViewPropPtr() { return m_spFilerGridViewProp; }
 	std::shared_ptr<CFavoritesProperty>& GetFavoritesPropPtr() { return m_spFavoritesProp; }
+	void SetFavoritesPropPtr(const std::shared_ptr<CFavoritesProperty>& value) { m_spFavoritesProp = value; }
+
 	std::shared_ptr<CLauncherProperty>& GetLauncherPropPtr() { return m_spLauncherProp; }
+	void SetLauncherPropPtr(const std::shared_ptr<CLauncherProperty>& value) { m_spLauncherProp = value; }
+
 	std::shared_ptr<ExeExtensionProperty>& GetExeExtensionPropPtr() { return m_spExeExProp; }
+	void SetExeExtensionPropPtr(const std::shared_ptr<ExeExtensionProperty>& value) { m_spExeExProp = value; }
 
 
 	std::shared_ptr<CFavoritesGridView>& GetLeftFavoritesView() { return m_spLeftFavoritesView; }
@@ -277,7 +282,7 @@ private:
 			{"LeftView", o.m_spLeftView },
 			{"RightView", o.m_spRightView },
 			{"HorizontalSplitter", o.m_spSplitter }
-	#ifdef USE_PYTHON_EXTENSION‚Ó‚¡‚¥‚’
+	#ifdef USE_PYTHON_EXTENSION
 			{ "PythonExtensionProperty", m_spPyExProp }
 	#endif
 		};

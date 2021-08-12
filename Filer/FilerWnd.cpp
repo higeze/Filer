@@ -1,4 +1,4 @@
-#include "Filer.h"
+#include "FilerApplication.h"
 #include "FilerWnd.h"
 #include "FilerGridView.h"
 #include "Resource.h"
@@ -594,7 +594,7 @@ LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 
 void CFilerWnd::OnCommandSave(const CommandEvent& e)
 {
-	SerializeProperty(this);
+	CFilerApplication::GetInstance()->Serialize();
 	*(e.HandledPtr) = TRUE;
 }
 
@@ -640,53 +640,29 @@ void CFilerWnd::OnCommandTextOption(const CommandEvent& e)
 
 void CFilerWnd::OnCommandLauncherOption(const CommandEvent& e)
 {
-	//Deserialize
-	std::string path = std::get<(int)json_path::launcher>(GetJsonPaths());
+	m_spLauncherProp = CFilerApplication::GetInstance()->DeserializeLauncher();
+	m_spLauncher->SetItemsSource(m_spFavoritesProp->GetFavorites());
 
-	if (::PathFileExistsA(path.c_str())) {
-		json j;
-		std::ifstream i(path.c_str());
-		i >> j;
-		m_spLauncherProp = j;
-		m_spLauncher->SetItemsSource(m_spFavoritesProp->GetFavorites());
-
-		m_spLauncher->Reload();
-		InvalidateRect(NULL, FALSE);
-	}
+	m_spLauncher->Reload();
+	InvalidateRect(NULL, FALSE);
 }
 
 
 void CFilerWnd::OnCommandFavoritesOption(const CommandEvent& e)
 {
-	//Deserialize
-	std::string json_favorites_path = std::get<(int)json_path::favorites>(GetJsonPaths());
+	m_spFavoritesProp = CFilerApplication::GetInstance()->DeserializeFavoirtes();
+	m_spLeftFavoritesView->SetItemsSource(m_spFavoritesProp->GetFavorites());
+	m_spRightFavoritesView->SetItemsSource(m_spFavoritesProp->GetFavorites());
 
-	if (::PathFileExistsA(json_favorites_path.c_str())) {
-		json j;
-		std::ifstream i(json_favorites_path.c_str());
-		i >> j;
-		m_spFavoritesProp = j;
-		m_spLeftFavoritesView->SetItemsSource(m_spFavoritesProp->GetFavorites());
-		m_spRightFavoritesView->SetItemsSource(m_spFavoritesProp->GetFavorites());
-
-		m_spLeftFavoritesView->Reload();
-		m_spRightFavoritesView->Reload();
-		InvalidateRect(NULL, FALSE);
-	}
+	m_spLeftFavoritesView->Reload();
+	m_spRightFavoritesView->Reload();
+	InvalidateRect(NULL, FALSE);
 }
 
 void CFilerWnd::OnCommandExeExtensionOption(const CommandEvent& e)
 {
-	//Deserialize
-	std::string path = std::get<(int)json_path::exeextension>(GetJsonPaths());
-
-	if (::PathFileExistsA(path.c_str())) {
-		json j;
-		std::ifstream i(path.c_str());
-		i >> j;
-		m_spExeExProp = j;
-		InvalidateRect(NULL, FALSE);
-	}
+	m_spExeExProp = CFilerApplication::GetInstance()->DeserializeExeExtension();
+	InvalidateRect(NULL, FALSE);
 }
 
 #ifdef USE_PYTHON_EXTENSION

@@ -49,43 +49,42 @@ PITEMID_CHILD CIDL::GetLastItemId(LPITEMIDLIST pidl)
 	//return ::ILFindLastID(pIdl);
 }
 
-LPITEMIDLIST CIDL::GetPreviousItemIdList(LPITEMIDLIST pIdl)
+LPITEMIDLIST CIDL::GetPreviousItemIdList(LPITEMIDLIST pidl)
 {
-	if (pIdl == nullptr) { return nullptr; }
-	UINT uFullSize(0);
-	UINT uOneSize(0);
-	LPITEMIDLIST pIdlTmp = pIdl;
-	while (1) {
-		uOneSize = pIdlTmp->mkid.cb;
-		pIdlTmp = GetNextItemId(pIdlTmp);
-		if (pIdlTmp == NULL) {
-			break;
+	if (pidl == nullptr) { return nullptr; }
+
+	UINT prevSize(0);
+	UINT termSize(sizeof(USHORT));
+	UINT oneSize(0);
+	LPITEMIDLIST pidlTmp = pidl;
+	while (true) {
+		oneSize = pidlTmp->mkid.cb;
+		pidlTmp = (LPITEMIDLIST)(((LPBYTE)pidlTmp) + oneSize);
+		if (pidlTmp->mkid.cb != 0) {
+			prevSize += oneSize;
 		} else {
-			uFullSize += uOneSize;
+			break;
 		}
 	};
-	LPITEMIDLIST pIdlPre(NULL);
-	if (uFullSize) {
-		pIdlPre = CreateItemIdList(uFullSize + sizeof(USHORT));
-		if (pIdlPre == NULL) { return NULL; }
-		::memcpy(pIdlPre, pIdl, uFullSize);
-		::memset((LPBYTE)pIdlPre + uFullSize, 0, sizeof(USHORT));
-	}
-	return pIdlPre;
+
+	LPITEMIDLIST pidlPre(nullptr);
+	pidlPre = CreateItemIdList(prevSize + termSize);
+	if (pidlPre == nullptr) { return nullptr; }
+	::memcpy(pidlPre, pidl, prevSize);
+	::memset((LPBYTE)pidlPre + prevSize, 0, termSize);
+	return pidlPre;
 }
 
-UINT CIDL::GetItemIdListSize(LPITEMIDLIST pIdl)
+UINT CIDL::GetItemIdListSize(LPITEMIDLIST pidl)
 {
-	UINT uiRet = 0;
-	if (pIdl == NULL) { return 0; }
+	if (pidl == nullptr) { return 0; }
 
-	uiRet = sizeof(USHORT);
-
+	UINT size = sizeof(USHORT);
 	do {
-		uiRet += (int)pIdl->mkid.cb;
-		pIdl = GetNextItemId(pIdl);
-	} while (pIdl != NULL);
-	return uiRet;
+		size += (int)pidl->mkid.cb;
+		pidl = GetNextItemId(pidl);
+	} while (pidl != NULL);
+	return size;
 }
 
 LPITEMIDLIST CIDL::ConcatItemIdList(LPITEMIDLIST pIdl1, LPITEMIDLIST pIdl2)
@@ -226,6 +225,7 @@ bool CIDL::operator!=(const CIDL& idlPtr) const
 	return !operator==(idlPtr);
 }
 
+
 //Attach
 void CIDL::Attach(LPITEMIDLIST pIDL)
 {
@@ -272,10 +272,11 @@ CIDL CIDL::CloneLastID()const
 CIDL CIDL::CloneParentIDL()const
 {
 	auto pidl = ::ILCloneFull(m_pIDL);
-	::ILRemoveLastID(pidl);
+	auto b = ::ILRemoveLastID(pidl);
 	return CIDL(pidl);
 	//return CIDL(GetPreviousItemIdList(m_pIDL));
 }
+
 //
 //void CIDL::Create(UINT uSize)
 //{

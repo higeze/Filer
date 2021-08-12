@@ -638,9 +638,9 @@ CColumn* CGridView::GetParentColumnPtr(CCell* pCell)
 
 void CGridView::OnCommandFind(const CommandEvent& e)
 {
-	CFindDlg* pDlg = new CFindDlg(this);
-	g_hDlgModeless = pDlg->Create(GetWndPtr()->m_hWnd);
-	pDlg->ShowWindow(SW_SHOW);
+	//CFindDlg* pDlg = new CFindDlg(this);
+	//pDlg->Create(GetWndPtr()->m_hWnd);
+	//pDlg->ShowWindow(SW_SHOW);
 }
 
 void CGridView::FindNext(const std::wstring& findWord, bool matchCase, bool matchWholeWord)
@@ -991,6 +991,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 				//pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 			}));
 		GetEditPtr()->OnCreate(CreateEvt(GetWndPtr(), this, pCell->GetRectInWnd()));
+		SetFocusedControlPtr(GetEditPtr());
 		PostUpdate(Updates::Invalidate);
 		//SetCapture();
 	}

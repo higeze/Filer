@@ -156,24 +156,51 @@ auto get_to_nothrow(const json& j, const char* key, std::shared_ptr<T>& o, TArgs
 namespace nlohmann {
 
 
-    template <typename T>
-    struct adl_serializer<std::unique_ptr<T>> {
-        static void from_json(const json& j, std::unique_ptr<T>& ptr) {
-            if (j.is_null()) {
-                ptr = nullptr;
-            } else {
-                ptr = std::make_unique<T>();
-                *ptr = j;
-            }
-        }
-        static void to_json(json& j, const std::unique_ptr<T>& opt) {
-            if (opt.get()) {
-                j = *opt;
-            } else {
-                j = nullptr;
-            }
-        }
-    };
+    //template <typename T>
+    //struct adl_serializer<std::unique_ptr<T>> {
+    //    static void from_json(const json& j, std::unique_ptr<T>&& ptr) {
+    //        if (j.is_null()) {
+    //            ptr = nullptr;
+    //        } else {
+    //            ptr = std::make_unique<T>();
+    //            json::json_serializer<T, void>::from_json(j, *ptr);
+    //        }
+    //    }
+    //    static void to_json(json& j, const std::unique_ptr<T>& opt) {
+    //        if (opt.get()) {
+    //            j = *opt;
+    //        } else {
+    //            j = nullptr;
+    //        }
+    //    }
+    //};
+
+   template<typename T>
+   struct adl_serializer<std::unique_ptr<T>>
+   {
+      static void to_json(json& j, const std::unique_ptr<T>& value)
+      {
+         if (!value){
+            j = nullptr;
+         }
+         else{
+            j = *value;
+         }
+      }
+
+      static void from_json(json const& j, std::unique_ptr<T>& value)
+      {
+         if (j.is_null()){
+            value.reset();
+         }
+         else{
+            value = std::make_unique<T>();
+            json::json_serializer<T, void>::from_json(j, *value);
+         }
+      }
+   };
+
+
 
 
     template <typename T>

@@ -59,9 +59,6 @@
 #define SCRATCH_QCM_NEW 600//200,500 are used by system
 #define SCRATCH_QCM_LAST  0x7FFF
 
-extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
-extern HWND g_hDlgModeless;
-
 CLIPFORMAT CFilerGridView::s_cf_shellidlist = ::RegisterClipboardFormat(CFSTR_SHELLIDLIST);
 CLIPFORMAT CFilerGridView::s_cf_filecontents = ::RegisterClipboardFormat(CFSTR_FILECONTENTS);
 CLIPFORMAT CFilerGridView::s_cf_filedescriptor = ::RegisterClipboardFormat(CFSTR_FILEDESCRIPTOR);
@@ -639,6 +636,11 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 
 void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 {
+	if (!spFolder->GetIsExist()) {
+		m_spFolder = m_spFolder->GetParent();
+		return OpenFolder(m_spFolder);
+	}
+
 	//OpenFolder is called when DeviceChange, even inactive.
 	if (!spFolder) {
 		return;

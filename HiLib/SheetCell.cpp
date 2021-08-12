@@ -44,13 +44,13 @@ void CSheetCell::AddRow()
 
 void CSheetCell::Resize()
 {
-	if(CanResizeRow() || CanResizeColumn()){
-		CResizeDlg* pDlg = new CResizeDlg(this);
-		g_hDlgModeless = pDlg->Create(m_pSheet->GetWndPtr()->m_hWnd);
-		pDlg->ShowWindow(SW_SHOW);
-	}else{
-		
-	}
+	//if(CanResizeRow() || CanResizeColumn()){
+	//	CResizeDlg* pDlg = new CResizeDlg(this);
+	//	g_hDlgModeless = pDlg->Create(m_pSheet->GetWndPtr()->m_hWnd);
+	//	pDlg->ShowWindow(SW_SHOW);
+	//}else{
+	//	
+	//}
 }
 
 void CSheetCell::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)

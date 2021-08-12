@@ -419,6 +419,8 @@ try {
 
 	::CloseHandle(hRead);
 	::CloseHandle(hWrite);
+	::SendMessage(m_hWnd, WM_CLOSE, NULL, NULL);
+
 } catch (...) {
 	throw;
 }

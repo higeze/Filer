@@ -5,6 +5,14 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug UnitTests|Win32">
+      <Configuration>Debug UnitTests</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug UnitTests|x64">
+      <Configuration>Debug UnitTests</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
@@ -32,6 +40,12 @@
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -40,6 +54,12 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
@@ -60,10 +80,16 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -72,16 +98,24 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -111,7 +145,47 @@
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MinimalRebuild>false</MinimalRebuild>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/bigobj /Zm1000 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>mapistub.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\library\mapi\libs\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <LanguageStandard>
+      </LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -197,6 +271,7 @@
     <ClInclude Include="..\D2DTextBox\TextEditSink.h" />
     <ClInclude Include="..\D2DTextBox\TextStoreACP.h" />
     <ClInclude Include="..\D2DTextBox\undo.h" />
+    <ClInclude Include="..\HiLib\Application.h" />
     <ClInclude Include="..\HiLib\ApplicationProperty.h" />
     <ClInclude Include="..\HiLib\Band.h" />
     <ClInclude Include="..\HiLib\BindCheckBoxCell.h" />
@@ -346,7 +421,9 @@
     <ClInclude Include="..\HiLib\UpdateResource.h" />
     <ClInclude Include="..\HiLib\HiLibResource.h" />
     <ClInclude Include="CheckableFileGrid.h" />
+    <ClInclude Include="DriveSizeCell.h" />
     <ClInclude Include="ExeExtensionProperty.h" />
+    <ClInclude Include="FilerApplication.h" />
     <ClInclude Include="FilerWndStatusBar.h" />
     <ClInclude Include="LauncherItemDragger.h" />
     <ClInclude Include="LauncherProperty.h" />
@@ -384,7 +461,6 @@
     <ClInclude Include="FileLastWriteColumn.h" />
     <ClInclude Include="FileIconNameCell.h" />
     <ClInclude Include="FileColumn.h" />
-    <ClInclude Include="Filer.h" />
     <ClInclude Include="FilerGridView.h" />
     <ClInclude Include="FilerProperty.h" />
     <ClInclude Include="FilerWnd.h" />
@@ -481,9 +557,11 @@
     <ClCompile Include="..\HiLib\D2DWControl.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
+    <ClCompile Include="DriveSizeCell.cpp" />
     <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="FileOperationWnd.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />
+    <ClCompile Include="FilerApplication.cpp" />
     <ClCompile Include="FilerGridViewWnd.cpp" />
     <ClCompile Include="FilerWndStatusBar.cpp" />
     <ClCompile Include="LauncherGridView.cpp" />
@@ -498,7 +576,9 @@
     <ClCompile Include="Favorite.cpp" />
     <ClCompile Include="FavoritesGridView.cpp" />
     <ClCompile Include="FileDragger.cpp" />
-    <ClCompile Include="Filer.cpp" />
+    <ClCompile Include="Filer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="FilerGridView.cpp" />
     <ClCompile Include="FilerTabGridView.cpp" />
     <ClCompile Include="FilerWnd.cpp" />
@@ -510,6 +590,13 @@
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Test.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|Win32'">
+      </ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ToDoGridView.cpp" />
   </ItemGroup>

@@ -12,7 +12,7 @@
 #include "KnownFolder.h"
 #include "ResourceIDFactory.h"
 #include "FilerWnd.h"
-#include "Filer.h"
+#include "FilerApplication.h"
 
 template<typename... TItems>
 class CLauncherCell:public CFileIconCell<TItems...>
@@ -108,7 +108,7 @@ public:
 
 			itemsSource.erase(std::next(itemsSource.cbegin(), index));
 			pGrid->Reload();
-			::SerializeProperty(pFilerWnd);
+			CFilerApplication::GetInstance()->SerializeLauncher(pFilerWnd->GetLauncherPropPtr());
 		}
 
 	}

@@ -16,7 +16,7 @@
 #include "KnownFolder.h"
 #include "ResourceIDFactory.h"
 #include "FilerWnd.h"
-#include "Filer.h"
+#include "FilerApplication.h"
 
 template<typename... TItems>
 class CFavoriteCell:public CFileIconCell<TItems...>
@@ -109,7 +109,7 @@ public:
 			pFilerWnd->GetLeftFavoritesView()->Reload();
 			pFilerWnd->GetRightFavoritesView()->Reload();
 			pFilerWnd->InvalidateRect(NULL, FALSE);
-			::SerializeProperty(pFilerWnd);
+			CFilerApplication::GetInstance()->SerializeFavorites(pFilerWnd->GetFavoritesPropPtr());
 		}
 
 	}

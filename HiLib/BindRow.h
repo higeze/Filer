@@ -1,5 +1,6 @@
 #pragma once
 #include "Row.h"
+#include "Sheet.h"
 #include "Debug.h"
 #include "IBindSheet.h"
 

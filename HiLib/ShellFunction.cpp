@@ -259,14 +259,14 @@ CComPtr<IShellFolder> shell::DesktopBindToShellFolder(const CIDL& idl)
 
 	CComPtr<IShellFolder> pFolder;
 
-if (FAILED(pDesktopFolder->BindToObject(idl.ptr(), 0, IID_IShellFolder, (void**)&pFolder))) {
-	if (CIDL desktopIDL; SUCCEEDED(::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, desktopIDL.ptrptr())) && ::ILIsEqual(idl.ptr(), desktopIDL.ptr())) {
-		pFolder = pDesktopFolder;
-	} else {
-		throw std::exception(FILE_LINE_FUNC);
+	if (FAILED(pDesktopFolder->BindToObject(idl.ptr(), 0, IID_IShellFolder, (void**)&pFolder))) {
+		if (CIDL desktopIDL; SUCCEEDED(::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, desktopIDL.ptrptr())) && ::ILIsEqual(idl.ptr(), desktopIDL.ptr())) {
+			pFolder = pDesktopFolder;
+		} else {
+			throw std::exception(FILE_LINE_FUNC);
+		}
 	}
-}
-return pFolder;
+	return pFolder;
 }
 
 

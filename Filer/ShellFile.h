@@ -99,6 +99,9 @@ public:
 	UINT GetSFGAO();
 	DWORD GetAttributes();
 
+	//Non-lazy
+	bool GetIsExist();
+
 	virtual void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd = NULL);
 	virtual void SetExt(const std::wstring& wstrExt, HWND hWnd = NULL);
 

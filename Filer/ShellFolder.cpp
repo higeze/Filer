@@ -10,6 +10,7 @@
 #include "FileTimeArgs.h"
 #include "ShellFileFactory.h"
 #include "ShellFunction.h"
+#include <format>
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -96,6 +97,7 @@ std::wstring CShellFolder::GetDispExt()
 
 std::shared_ptr<CShellFolder> CShellFolder::GetParent()
 {
+	::OutputDebugStringA(std::format("Size:{}", ::ILGetSize(m_absoluteIdl.ptr())).c_str());
 	CIDL parentIDL = m_absoluteIdl.CloneParentIDL();
 	CIDL grandParentIDL = parentIDL.CloneParentIDL();
 	CComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIDL);

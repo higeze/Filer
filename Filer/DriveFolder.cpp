@@ -15,6 +15,32 @@ std::wstring CDriveFolder::GetDispExt()
 	return m_wstrExt;
 }
 
+std::pair<ULARGE_INTEGER, FileSizeStatus> CDriveFolder::GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
+{
+	auto [avail, total, free] = GetSizes();
+	if (total.QuadPart == 0) {
+		return std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable);
+	} else {
+		ULARGE_INTEGER used = { 0 };
+		used.QuadPart = total.QuadPart - free.QuadPart;
+		return std::make_pair(used, FileSizeStatus::Available);
+	}
+}
+
+std::tuple<ULARGE_INTEGER, ULARGE_INTEGER, ULARGE_INTEGER> CDriveFolder::GetSizes()
+{
+	ULARGE_INTEGER avail = { 0 };
+	ULARGE_INTEGER total = { 0 };
+	ULARGE_INTEGER free = { 0 };
+	if (::GetDiskFreeSpaceExW(GetPath().c_str(), &avail, &total, &free)) {
+		return { avail, total, free };
+	} else {
+		return { {0}, {0}, {0} };
+	}
+}
+
+
+
 CDriveFolderManager::CDriveFolderManager()
 {
 	Update();

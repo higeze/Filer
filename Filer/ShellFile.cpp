@@ -5,6 +5,8 @@
 #include "FileIconCache.h"
 #include "FileSizeArgs.h"
 #include "ShellFunction.h"
+#include "KnownFolderManager.h"
+#include "KnownFolder.h"
 
 bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<void()> checkExit)
 {
@@ -227,6 +229,32 @@ DWORD CShellFile::GetAttributes()
 	}
 	return m_fileAttributes;
 }
+
+bool CShellFile::GetIsExist()
+{
+	auto a = ::PathFileExistsW(GetPath().c_str());
+	auto b = shell::GetDisplayNameOf(m_pParentShellFolder, m_childIdl.ptr(), SHGDN_FORPARSING);
+
+	ULONG chEaten = 0;
+	ULONG dwAttributes = 0;
+	auto desktop(CKnownFolderManager::GetInstance()->GetDesktopFolder());
+	CIDL absIdl;
+	auto c = SUCCEEDED(desktop->GetShellFolderPtr()->ParseDisplayName(
+		NULL,
+		NULL,
+		const_cast<LPWSTR>(GetPath().c_str()),
+		&chEaten,
+		absIdl.ptrptr(),
+		&dwAttributes));
+
+	if (b.empty() || !c) {
+		return false;
+	} else {
+		return true;
+	}
+
+}
+
 
 
 void CShellFile::UpdateWIN32_FIND_DATA()

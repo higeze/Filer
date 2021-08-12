@@ -77,9 +77,6 @@
     <ClInclude Include="FileLastWriteColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="Filer.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="FilerGridView.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -677,6 +674,15 @@
     <ClInclude Include="ExeExtensionProperty.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\Application.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerApplication.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="DriveSizeCell.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -995,6 +1001,13 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="FilerWndStatusBar.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="Test.cpp" />
+    <ClCompile Include="FilerApplication.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="DriveSizeCell.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
