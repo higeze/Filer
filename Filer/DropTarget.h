@@ -41,28 +41,28 @@ std::basic_string<T> SanitizeFileName(const std::basic_string<T>& fileIn)
 	std::basic_string<T> fileOut(fileIn);
 	for (size_t i = 0; i < fileOut.size(); i++) {
 		switch (fileOut[i]) {
-		case TCHAR_CAST(T,'^'):
-		case TCHAR_CAST(T, '&'):
-		case TCHAR_CAST(T, '*'):
-		case TCHAR_CAST(T, '-'):
-		case TCHAR_CAST(T, '+'):
-		case TCHAR_CAST(T, '='):
-		case TCHAR_CAST(T, '['):
-		case TCHAR_CAST(T, ']'):
-		case TCHAR_CAST(T, '\\'):
-		case TCHAR_CAST(T, '|'):
-		case TCHAR_CAST(T, ';'):
-		case TCHAR_CAST(T, ':'):
-		case TCHAR_CAST(T, '\"'):
-		case TCHAR_CAST(T, ','):
-		case TCHAR_CAST(T, '<'):
-		case TCHAR_CAST(T, '>'):
-		case TCHAR_CAST(T, '/'):
-		case TCHAR_CAST(T, '?'):
-			fileOut[i] = TCHAR_CAST(T, '_');
-			break;
-		default:
-			;
+			case TCHAR_CAST(T, '^'):
+			case TCHAR_CAST(T, '&'):
+			case TCHAR_CAST(T, '*'):
+			case TCHAR_CAST(T, '-'):
+			case TCHAR_CAST(T, '+'):
+			case TCHAR_CAST(T, '='):
+			case TCHAR_CAST(T, '['):
+			case TCHAR_CAST(T, ']'):
+			case TCHAR_CAST(T, '\\'):
+			case TCHAR_CAST(T, '|'):
+			case TCHAR_CAST(T, ';'):
+			case TCHAR_CAST(T, ':'):
+			case TCHAR_CAST(T, '\"'):
+			case TCHAR_CAST(T, ','):
+			case TCHAR_CAST(T, '<'):
+			case TCHAR_CAST(T, '>'):
+			case TCHAR_CAST(T, '/'):
+			case TCHAR_CAST(T, '?'):
+				fileOut[i] = TCHAR_CAST(T, '_');
+				break;
+			default:
+				;
 		}
 	}
 	return fileOut;

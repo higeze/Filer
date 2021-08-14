@@ -15,7 +15,7 @@ class CFilerGridView:public CFilerBindGridView<std::shared_ptr<CShellFile>>
 private:
 	static CLIPFORMAT s_cf_shellidlist;
 	static CLIPFORMAT s_cf_filecontents;
-	static CLIPFORMAT s_cf_filedescriptor;
+	static CLIPFORMAT s_cf_filegroupdescriptor;
 	static CLIPFORMAT s_cf_renprivatemessages;
 
 private:	

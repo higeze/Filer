@@ -74,11 +74,13 @@ public:
 		pDirect->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
 
 		//Paint Bar
-		float ratio = uli_to_float(used) / uli_to_float(total);
-		CRectF rcBar(rcPaint);
-		rcBar.right = rcPaint.left + rcPaint.Width() * ratio;
-		SolidFill barFill = ratio >= 0.9?SolidFill(218.f/255.f, 38.f/255.f, 38.f/255.f, 1.f):SolidFill(38.f / 255.f, 160.f / 255.f, 218.f / 255.f, 1.f);
-		pDirect->FillSolidRectangle(barFill, rcBar);
+		if (total.QuadPart != 0) {
+			float ratio = uli_to_float(used) / uli_to_float(total);
+			CRectF rcBar(rcPaint);
+			rcBar.right = rcPaint.left + rcPaint.Width() * ratio;
+			SolidFill barFill = ratio >= 0.9 ? SolidFill(218.f / 255.f, 38.f / 255.f, 38.f / 255.f, 1.f) : SolidFill(38.f / 255.f, 160.f / 255.f, 218.f / 255.f, 1.f);
+			pDirect->FillSolidRectangle(barFill, rcBar);
+		}
 
 		//TODO PaintEffect
 		//Selected

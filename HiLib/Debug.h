@@ -65,6 +65,8 @@ public:
 
 #define FAILED_THROW(expression) if(FAILED(expression)){throw std::exception(FILE_LINE_FUNC);}
 
+#define FAILED_RETURN(expression) if(FAILED(expression)){return;}
+
 #define THROW_FILE_LINE_FUNC throw std::exception(FILE_LINE_FUNC)
 
 template<>

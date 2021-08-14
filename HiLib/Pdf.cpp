@@ -2,6 +2,7 @@
 #include "Direct2DWrite.h"
 #include "Debug.h"
 #include <boost/sml.hpp>
+#include <hstring.h>
 
 namespace sml = boost::sml;
 
@@ -43,34 +44,82 @@ void CPdf::Load(const std::wstring& path, std::function<void()> changed)
 {
 	Clear();
 
-	CComPtr<abistreams::IRandomAccessStream> s;
-	FAILED_THROW(::CreateRandomAccessStreamOnFile(path.c_str(), abistorage::FileAccessMode_Read, IID_PPV_ARGS(&s)));
+	//Windows::Storage::StorageFile::GetFileFromPathAsync
+	CComPtr<abistorage::IStorageFileStatics> storageFileStatics;
+	FAILED_THROW(winfoundation::GetActivationFactory(wrlwrappers::HStringReference(RuntimeClass_Windows_Storage_StorageFile).Get(), &storageFileStatics));
+
+	CComPtr<abifoundation::IAsyncOperation<abistorage::StorageFile*>> file_async;
+	FAILED_THROW(storageFileStatics->GetFileFromPathAsync(wrlwrappers::HStringReference(path.c_str()).Get(), &file_async));
+	CComPtr<abistorage::IStorageFile> file;
 	
-	CComPtr<abipdf::IPdfDocumentStatics> pdfDocumentsStatics;
-	wrlwrappers::HStringReference className(RuntimeClass_Windows_Data_Pdf_PdfDocument);
-	// 以下はRoGetActivationFactoryのラッパー
-	FAILED_THROW(winfoundation::GetActivationFactory(className.Get(), &pdfDocumentsStatics));
-	CComPtr<abifoundation::IAsyncOperation<abipdf::PdfDocument*>> async;
-	FAILED_THROW(pdfDocumentsStatics->LoadFromStreamAsync(s, &async));
-	auto callback = wrl::Callback<abifoundation::IAsyncOperationCompletedHandler<abipdf::PdfDocument*>>(
-	[this, changed](_In_ abifoundation::IAsyncOperation<abipdf::PdfDocument*>* async, AsyncStatus status)
+	auto file_callback = wrl::Callback<abifoundation::IAsyncOperationCompletedHandler<abistorage::StorageFile*>>(
+	[this, changed](_In_ abifoundation::IAsyncOperation<abistorage::StorageFile*>* async, AsyncStatus status)
 	{
 		if (*m_spCancelThread || status != AsyncStatus::Completed) { return S_OK; }
-		CComPtr<abipdf::IPdfDocument> doc;
-		FAILED_THROW(async->GetResults(&doc));
-		m_future = std::async(std::launch::async, [this, doc, changed]()
+		CComPtr<abistorage::IStorageFile> file;
+		FAILED_THROW(async->GetResults(&file));
+
+		CComPtr<abipdf::IPdfDocumentStatics> pdfDocumentsStatics;
+		wrlwrappers::HStringReference className(RuntimeClass_Windows_Data_Pdf_PdfDocument);
+		// 以下はRoGetActivationFactoryのラッパー
+		FAILED_THROW(winfoundation::GetActivationFactory(wrlwrappers::HStringReference(RuntimeClass_Windows_Data_Pdf_PdfDocument).Get(), &pdfDocumentsStatics));
+		CComPtr<abifoundation::IAsyncOperation<abipdf::PdfDocument*>> doc_async;
+		FAILED_THROW(pdfDocumentsStatics->LoadFromFileAsync(file, &doc_async));
+		auto doc_callback = wrl::Callback<abifoundation::IAsyncOperationCompletedHandler<abipdf::PdfDocument*>>(
+		[this, changed](_In_ abifoundation::IAsyncOperation<abipdf::PdfDocument*>* async, AsyncStatus status)
 		{
-			SetLockDocument(std::make_pair(std::move(doc), PdfDocStatus::Available));
-			UINT32 count;
-			GetLockDocument().first->get_PageCount(&count);
-			for (UINT32 i = 0; i < count; i++) {
-				m_pages.push_back(std::make_unique<CPdfPage>(this, i));
-			}
-			changed();
+			if (*m_spCancelThread || status != AsyncStatus::Completed) { return S_OK; }
+			CComPtr<abipdf::IPdfDocument> doc;
+			FAILED_THROW(async->GetResults(&doc));
+			m_future = std::async(std::launch::async, [this, doc, changed]()
+			{
+				SetLockDocument(std::make_pair(std::move(doc), PdfDocStatus::Available));
+				UINT32 count;
+				GetLockDocument().first->get_PageCount(&count);
+				for (UINT32 i = 0; i < count; i++) {
+					m_pages.push_back(std::make_unique<CPdfPage>(this, i));
+				}
+				changed();
+			});
+			return S_OK;
 		});
+		FAILED_THROW(doc_async->put_Completed(doc_callback.Get()));
+
 		return S_OK;
 	});
-	FAILED_THROW(async->put_Completed(callback.Get()));
+
+	FAILED_THROW(file_async->put_Completed(file_callback.Get()));
+
+	//Case of CreateRandomAccessStreamOnFile
+
+	//CComPtr<abistreams::IRandomAccessStream> s;
+	//FAILED_THROW(::CreateRandomAccessStreamOnFile(path.c_str(), abistorage::FileAccessMode_Read, IID_PPV_ARGS(&s)));
+	//
+	//CComPtr<abipdf::IPdfDocumentStatics> pdfDocumentsStatics;
+	//wrlwrappers::HStringReference className(RuntimeClass_Windows_Data_Pdf_PdfDocument);
+	//// 以下はRoGetActivationFactoryのラッパー
+	//FAILED_THROW(winfoundation::GetActivationFactory(wrlwrappers::HStringReference(RuntimeClass_Windows_Data_Pdf_PdfDocument).Get(), &pdfDocumentsStatics));
+	//CComPtr<abifoundation::IAsyncOperation<abipdf::PdfDocument*>> doc_async;
+	//FAILED_THROW(pdfDocumentsStatics->LoadFromStreamAsync(s, &doc_async));
+	//auto callback = wrl::Callback<abifoundation::IAsyncOperationCompletedHandler<abipdf::PdfDocument*>>(
+	//[this, changed](_In_ abifoundation::IAsyncOperation<abipdf::PdfDocument*>* async, AsyncStatus status)
+	//{
+	//	if (*m_spCancelThread || status != AsyncStatus::Completed) { return S_OK; }
+	//	CComPtr<abipdf::IPdfDocument> doc;
+	//	FAILED_THROW(async->GetResults(&doc));
+	//	m_future = std::async(std::launch::async, [this, doc, changed]()
+	//	{
+	//		SetLockDocument(std::make_pair(std::move(doc), PdfDocStatus::Available));
+	//		UINT32 count;
+	//		GetLockDocument().first->get_PageCount(&count);
+	//		for (UINT32 i = 0; i < count; i++) {
+	//			m_pages.push_back(std::make_unique<CPdfPage>(this, i));
+	//		}
+	//		changed();
+	//	});
+	//	return S_OK;
+	//});
+	//FAILED_THROW(doc_async->put_Completed(callback.Get()));
 }
 
 /************/
@@ -196,7 +245,7 @@ void CPdfPage::Loading_OnEntry()
 		FAILED_THROW(pPage->get_Size(&pdfPageSize));
 
 		CSizeF srcSize(pdfPageSize.Width, pdfPageSize.Height);
-		CSizeF dstSize(srcSize);
+		CSize dstSize(static_cast<LONG>(srcSize.width * scale), static_cast<LONG>(srcSize.height * scale));
 
 		CComPtr<abistreams::IRandomAccessStream> pMemStream;
 		wrlwrappers::HStringReference inmemoryname(RuntimeClass_Windows_Storage_Streams_InMemoryRandomAccessStream);
@@ -207,8 +256,8 @@ void CPdfPage::Loading_OnEntry()
 		FAILED_THROW(winfoundation::ActivateInstance(optionsname.Get(), &pOptions));
 
 		pOptions->put_SourceRect(ABI::Windows::Foundation::Rect{ 0.f, 0.f, srcSize.width, srcSize.height });
-		pOptions->put_DestinationWidth(static_cast<UINT32>(dstSize.width * scale));
-		pOptions->put_DestinationHeight(static_cast<UINT32>(dstSize.height * scale));
+		pOptions->put_DestinationWidth(dstSize.cx);
+		pOptions->put_DestinationHeight(dstSize.cy);
 
 		CComPtr<abifoundation::IAsyncAction> async;
 
@@ -295,8 +344,8 @@ void CPdfPage::Loading_Render(const RenderEvent& e)
 		CComPtr<ID2D1Effect> pBitmapEffect;
 		FAILED_THROW(e.DirectPtr->GetD2DDeviceContext()->CreateEffect(CLSID_D2D1BitmapSource, &pBitmapEffect));
 
-		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_INTERPOLATION_MODE, D2D1_BITMAPSOURCE_INTERPOLATION_MODE_MIPMAP_LINEAR);
-		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_ENABLE_DPI_CORRECTION, FALSE);
+		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_INTERPOLATION_MODE, D2D1_BITMAPSOURCE_INTERPOLATION_MODE_LINEAR);
+		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_ENABLE_DPI_CORRECTION, TRUE);
 		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_ALPHA_MODE, D2D1_BITMAPSOURCE_ALPHA_MODE_PREMULTIPLIED);
 		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_ORIENTATION, D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT);
 
@@ -322,12 +371,12 @@ void CPdfPage::Available_Render(const RenderEvent& e)
 		CComPtr<ID2D1Effect> pBitmapEffect;
 		FAILED_THROW(e.DirectPtr->GetD2DDeviceContext()->CreateEffect(CLSID_D2D1BitmapSource, &pBitmapEffect));
 
-		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_INTERPOLATION_MODE, D2D1_BITMAPSOURCE_INTERPOLATION_MODE_MIPMAP_LINEAR);
-		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_ENABLE_DPI_CORRECTION, FALSE);
+		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_INTERPOLATION_MODE, D2D1_BITMAPSOURCE_INTERPOLATION_MODE_LINEAR);
+		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_ENABLE_DPI_CORRECTION, TRUE);
 		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_ALPHA_MODE, D2D1_BITMAPSOURCE_ALPHA_MODE_PREMULTIPLIED);
 		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_ORIENTATION, D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT);
 
-		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_SCALE, D2D1::Vector2F(e.Scale/pbi.Scale, e.Scale/pbi.Scale));
+		//pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_SCALE, D2D1::Vector2F(e.Scale/pbi.Scale, e.Scale/pbi.Scale));
 		pBitmapEffect->SetValue(D2D1_BITMAPSOURCE_PROP_WIC_BITMAP_SOURCE, pbi.ConverterPtr);
 
 		e.DirectPtr->GetD2DDeviceContext()->DrawImage(pBitmapEffect, e.RenderRectInWnd.LeftTop());

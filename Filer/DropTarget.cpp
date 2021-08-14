@@ -246,10 +246,11 @@ HRESULT CDropTarget::CopyMessage(const CComPtr<IFileOperation>& pFileOperation, 
 
 	// get subject line of message to copy. This will be used as the new file name.
 	HrGetOneProp(pSrcMessage, PR_SUBJECT, &pSubject);
+	std::wstring title = pSubject != nullptr ? pSubject->Value.lpszW : L"NoTitle";
 
 	// get temp file path
 	std::wstring tempPath;
-	::PathCombineW(GetBuffer(tempPath, _MAX_PATH), GetMakeSureTempDirectory<wchar_t>().c_str(), (SanitizeFileName<wchar_t>(pSubject->Value.lpszW) + L".msg").c_str());
+	::PathCombineW(GetBuffer(tempPath, _MAX_PATH), GetMakeSureTempDirectory<wchar_t>().c_str(), (SanitizeFileName(title) + L".msg").c_str());
 	::ReleaseBuffer(tempPath);
 
 	// get memory allocation function
