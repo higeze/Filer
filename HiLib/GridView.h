@@ -31,9 +31,13 @@ public:
 	static CMenu ContextMenu;
 protected:
 	std::shared_ptr<CTextBox> m_pEdit = nullptr;
+	std::shared_ptr<CCell> m_pJumpCell = nullptr;
 	CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
 	bool m_isEditExiting = false;
+	std::vector<std::pair<size_t, size_t>> m_frozenTabStops = { std::make_pair(0, 1), std::make_pair(2, 1), std::make_pair(3, 1)};
+	//std::vector<std::pair<size_t, size_t>> m_tabStops = { std::make_pair(3, 1) };
+
 protected:
 	CDeadlineTimer m_invalidateTimer;
 
@@ -92,16 +96,20 @@ public:
 	virtual void OnKillFocus(const KillFocusEvent& e);
 	virtual void OnSetCursor(const SetCursorEvent& e);
 	virtual void OnContextMenu(const ContextMenuEvent& e);
+
+
 	//virtual void OnCommand(const CommandEvent& e);
 
 public:
+	std::shared_ptr<CCell> TabNext(const std::shared_ptr<CCell>& spCurCell);
+	std::shared_ptr<CCell> TabPrev(const std::shared_ptr<CCell>& spCurCell);
 	void BeginEdit(CCell* pCell);
 	void EndEdit();
 	virtual void ClearFilter();
 	virtual void FilterAll();
 
 	virtual void EnsureVisibleCell(const std::shared_ptr<CCell>& pCell);
-	void Jump(std::shared_ptr<CCell>& spCell);
+	void Jump(const std::shared_ptr<CCell>& spCell);
 	virtual void Clear();
 
 	virtual std::wstring FullXMLSave(){return std::wstring();}
@@ -178,9 +186,10 @@ public:
 	virtual void Edit_LButtonUp(const LButtonUpEvent& e);
 	virtual void Edit_LButtonBeginDrag(const LButtonBeginDragEvent& e);
 	virtual void Edit_LButtonEndDrag(const LButtonEndDragEvent& e);
-	virtual bool Edit_Guard_KeyDown(const KeyDownEvent& e);
-	virtual bool Edit_Guard_KeyDownWithNormal(const KeyDownEvent& e);
-	virtual bool Edit_Guard_KeyDownWithoutNormal(const KeyDownEvent& e);
+	//virtual bool Edit_Guard_KeyDown(const KeyDownEvent& e);
+	virtual bool Edit_Guard_KeyDown_ToNormal_Tab(const KeyDownEvent& e, boost::sml::back::process<BeginEditEvent> process);
+	virtual bool Edit_Guard_KeyDown_ToNormal(const KeyDownEvent& e);
+	virtual void Edit_KeyDown_Tab(const KeyDownEvent& e, boost::sml::back::process<BeginEditEvent> process);
 	virtual void Edit_KeyDown(const KeyDownEvent& e);
 	virtual void Edit_Char(const CharEvent& e);
 };

@@ -2,7 +2,7 @@
 
 class CTextBox;
 
-class CTextStore : public ITextStoreACP
+class CTextStore : public ITextStoreACP, public ITfContextOwnerCompositionSink
 {
 	public:
 		 CTextStore(CTextBox *pEditor);
@@ -47,6 +47,14 @@ class CTextStore : public ITextStoreACP
 		STDMETHODIMP    GetEmbedded(LONG acpPos, REFGUID rguidService, REFIID riid, IUnknown **ppunk){ return E_NOTIMPL; }
 		STDMETHODIMP    InsertEmbedded(DWORD dwFlags, LONG acpStart, LONG acpEnd, IDataObject *pDataObject, TS_TEXTCHANGE *pChange){ return E_NOTIMPL; }
 
+		//
+		// ITfContextOwnerCompositionSink
+		//
+		STDMETHODIMP OnStartComposition(ITfCompositionView *pComposition, BOOL *pfOk);
+		STDMETHODIMP OnUpdateComposition(ITfCompositionView *pComposition, ITfRange *pRangeNew);
+		STDMETHODIMP OnEndComposition(ITfCompositionView *pComposition);
+
+		ITfCompositionView *GetCurrentCompositionView() {return _pCurrentCompositionView;}
 
 	public :
 		void OnSelectionChange();
@@ -64,7 +72,7 @@ class CTextStore : public ITextStoreACP
 		long _cRef;
 
 
-
+		ITfCompositionView *_pCurrentCompositionView;
 
 		// from tsfapp.
 		// lock,lock,lock

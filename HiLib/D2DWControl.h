@@ -19,6 +19,7 @@ protected:
 	CRectF m_rect;
 	ReactiveProperty<bool> m_isEnabled = true;
 	ReactiveProperty<bool> m_isFocusable = true;
+	bool m_isTabStop = false;
 
 public:
 
@@ -33,6 +34,8 @@ public:
 	void SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl);
 	std::shared_ptr<CD2DWControl>& GetMouseControlPtr(){ return m_pMouseControl;}
 	void SetMouseControlPtr(const std::shared_ptr<CD2DWControl>& spControl) { m_pMouseControl = spControl; }
+	virtual bool GetIsTabStop()const { return m_isTabStop; }
+	virtual void SetIsTabStop(bool value) { m_isTabStop = value; }
 
 	std::vector<std::shared_ptr<CD2DWControl>>& GetChildControlPtrs() { return m_childControls; }
 	void AddChildControlPtr(const std::shared_ptr<CD2DWControl>& pControl);

@@ -38,6 +38,14 @@ STDAPI CTextStore::QueryInterface(REFIID riid, void **ppvObj)
     {
         *ppvObj = (ITextStoreACP *)this;
     }
+    else if (IsEqualIID(riid, IID_ITfContextOwnerCompositionSink))
+    {
+        *ppvObj = (ITfContextOwnerCompositionSink *)this;
+    }
+    else if (IsEqualIID(riid, IID_ITfMouseTrackerACP))
+    {
+        *ppvObj = (ITfMouseTrackerACP *)this;
+    }
 
     if (*ppvObj)
     {
@@ -720,4 +728,47 @@ void CTextStore::OnLayoutChange()
     {
         TextStoreACPSink_->OnLayoutChange(TS_LC_CHANGE, 0x01);
     }
+}
+
+/**********************************/
+/* ITfContextOwnerCompositionSink */
+/**********************************/
+// Same as original
+STDAPI CTextStore::OnStartComposition(ITfCompositionView *pComposition, BOOL *pfOk)
+{
+    if (_pCurrentCompositionView)
+    {
+        _pCurrentCompositionView->Release();
+        _pCurrentCompositionView = NULL;
+    }
+
+    _pCurrentCompositionView = pComposition;
+    _pCurrentCompositionView->AddRef();
+
+    *pfOk = TRUE;
+    return S_OK;
+}
+//Same as original
+STDAPI CTextStore::OnUpdateComposition(ITfCompositionView *pComposition, ITfRange *pRangeNew)
+{
+    if (_pCurrentCompositionView)
+    {
+        _pCurrentCompositionView->Release();
+        _pCurrentCompositionView = NULL;
+    }
+
+    _pCurrentCompositionView = pComposition;
+    _pCurrentCompositionView->AddRef();
+    return S_OK;
+}
+//Same as original
+STDAPI CTextStore::OnEndComposition(ITfCompositionView *pComposition)
+{
+    if (_pCurrentCompositionView)
+    {
+        _pCurrentCompositionView->Release();
+        _pCurrentCompositionView = NULL;
+    }
+
+    return S_OK;
 }

@@ -29,6 +29,8 @@ struct CGridStateMachine::Machine
 		using namespace sml;
 		return make_transition_table(
 			*state<Normal> +event<PaintEvent> / call(&CGridView::Normal_Paint),
+			state<Normal> +on_entry<_> / []() { ::OutputDebugStringA("Normal OnEntry\r\n"); },
+			state<Normal> +on_exit<_> / []() { ::OutputDebugStringA("Normal OnExit\r\n"); },
 			state<Normal> +event<LButtonDownEvent>[call(&CGridView::VScrlDrag_Guard_LButtonDown)] / call(&CGridView::VScrlDrag_LButtonDown) = state<VScrlDrag>,
 			state<Normal> +event<LButtonDownEvent>[call(&CGridView::HScrlDrag_Guard_LButtonDown)] / call(&CGridView::HScrlDrag_LButtonDown) = state<HScrlDrag>,
 			state<Normal> +event<LButtonDownEvent>[call(&CGridView::RowTrack_Guard_LButtonDown)] / call(&CGridView::RowTrack_LButtonDown) = state<RowTrack>,
@@ -102,6 +104,7 @@ struct CGridStateMachine::Machine
 			//Edit
 			state<Edit> +on_entry<BeginEditEvent> / call(&CGridView::Edit_OnEntry),
 			state<Edit> +on_exit<_> / call(&CGridView::Edit_OnExit),
+			state<Edit> +event<BeginEditEvent> = state<Edit>,
 			state<Edit> +event<PaintEvent> / call(&CGridView::Normal_Paint),
 			state<Edit> +event<LButtonDownEvent>[call(&CGridView::Edit_Guard_LButtonDown)] / call(&CGridView::Normal_LButtonDown) = state<Normal>,
 			state<Edit> +event<LButtonDownEvent> / call(&CGridView::Edit_LButtonDown),
@@ -109,8 +112,8 @@ struct CGridStateMachine::Machine
 			state<Edit> +event<LButtonBeginDragEvent> / call(&CGridView::Edit_LButtonBeginDrag),
 			state<Edit> +event<LButtonEndDragEvent> / call(&CGridView::Edit_LButtonEndDrag),
 			state<Edit> +event<MouseMoveEvent> / call(&CGridView::Edit_MouseMove),
-			state<Edit> +event<KeyDownEvent>[call(&CGridView::Edit_Guard_KeyDownWithNormal)] / call(&CGridView::Normal_KeyDown) = state<Normal>,
-			state<Edit> +event<KeyDownEvent>[call(&CGridView::Edit_Guard_KeyDownWithoutNormal)] = state<Normal>,
+			state<Edit> +event<KeyDownEvent>[call(&CGridView::Edit_Guard_KeyDown_ToNormal_Tab)] / call(&CGridView::Edit_KeyDown_Tab) = state<Normal>,
+			state<Edit> +event<KeyDownEvent>[call(&CGridView::Edit_Guard_KeyDown_ToNormal)] = state<Normal>,
 			state<Edit> +event<KeyDownEvent> / call(&CGridView::Edit_KeyDown),
 			state<Edit> +event<CharEvent> / call(&CGridView::Edit_Char),
 			state<Edit> +event<KillFocusEvent> = state<Normal>,
@@ -126,7 +129,10 @@ struct CGridStateMachine::Machine
 
 
 CGridStateMachine::CGridStateMachine(CGridView* pGrid)
-	:m_pMachine(new boost::sml::sm<Machine>{ pGrid, static_cast<CSheet*>(pGrid) })
+	://m_logger(),
+	//m_pMachine(new boost::sml::sm<Machine ,sml::logger<my_logger>>{ m_logger, pGrid, static_cast<CSheet*>(pGrid) })
+	m_pMachine(new boost::sml::sm<Machine, sml::process_queue<std::queue>>{ pGrid, static_cast<CSheet*>(pGrid) })
+	//m_pMachine(new boost::sml::sm<Machine>{ pGrid, static_cast<CSheet*>(pGrid)})
 {
 }
 

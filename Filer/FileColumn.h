@@ -38,12 +38,14 @@ public:
 
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) override
 	{
-		return std::make_shared<CFilterCell>(m_pSheet, pRow, pColumn, m_pSheet->GetFilterProperty());
+		auto cell = std::make_shared<CFilterCell>(m_pSheet, pRow, pColumn, m_pSheet->GetFilterProperty());
+		return cell;
 	}
 
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) override
 	{
-		return std::make_shared<TCell>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+		auto cell = std::make_shared<TCell>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+		return cell;
 	}
 
 public:

@@ -116,11 +116,8 @@ public:
 		SendAll(&CUIElement::OnWndKillFocus, e);
 		SendFocused(&CUIElement::OnKillFocus, e);
 	}
-	virtual void OnKeyDown(const KeyDownEvent& e) 
-	{ 
-		*(e.HandledPtr) = FALSE;
-		SendFocused(&CUIElement::OnKeyDown, e);
-	}
+	virtual void OnKeyDown(const KeyDownEvent& e);
+
 	virtual void OnKeyUp(const KeyUpEvent& e) 
 	{ 
 		*(e.HandledPtr) = FALSE;

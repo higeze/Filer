@@ -233,7 +233,7 @@ public:
 	FLOAT GetLineHeight();
 	//	BOOL Layout();
 
-
+	void TerminateCompositionString();
 	//void InvalidateRect();
 	void ClearCompositionRenderInfo();
 	BOOL AddCompositionRenderInfo(int Start, int End, TF_DISPLAYATTRIBUTE* pda);

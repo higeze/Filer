@@ -27,7 +27,7 @@ CCopyMoveWndBase::CCopyMoveWndBase(
 	}
 
 	//FileGrid
-	m_spFilerControl = std::make_unique<CFilerBindGridView<std::shared_ptr<CShellFile>, RenameInfo>>(
+	m_spFilerControl = std::make_unique<CFileOperationGridView<std::shared_ptr<CShellFile>, RenameInfo>>(
 		this,
 		spFilerGridViewProp,
 		m_spItemsSource,
@@ -234,7 +234,7 @@ CDeleteWnd::CDeleteWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGrid
 	}
 
 	//FileGrid
-	m_spFilerControl = std::make_unique<CFilerBindGridView<std::shared_ptr<CShellFile>>>(
+	m_spFilerControl = std::make_unique<CFileOperationGridView<std::shared_ptr<CShellFile>>>(
 		this,
 		spFilerGridViewProp,
 		m_spItemsSource,
@@ -304,9 +304,12 @@ CExeExtensionWnd::CExeExtensionWnd(
 		const std::vector<std::shared_ptr<CShellFile>>& files,
 		ExeExtension& exeExtension)
 	:CFileOperationWndBase(spFilerGridViewProp, CIDL(), std::vector<CIDL>()),
-	m_spTextBox(std::make_shared<CTextBox>(this, nullptr, spTextBoxProp, L"", nullptr, nullptr)),
+	m_spTextPath(std::make_shared<CTextBox>(this, nullptr, spTextBoxProp, L"", nullptr, nullptr)),
+	m_spTextParam(std::make_shared<CTextBox>(this, nullptr, spTextBoxProp, L"", nullptr, nullptr)),
 	m_exeExtension(exeExtension),
-	m_pBinding(std::make_unique<CBinding>(m_exeExtension.Parameter, m_spTextBox->GetText()))
+	m_pBindingPath(std::make_unique<CBinding>(m_exeExtension.Path, m_spTextPath->GetText())),
+	m_pBindingParam(std::make_unique<CBinding>(m_exeExtension.Parameter, m_spTextParam->GetText()))
+
 {
 	m_rca
 		.lpszClassName(L"CExeExtensionWnd");
@@ -322,7 +325,7 @@ CExeExtensionWnd::CExeExtensionWnd(
 	}
 
 	//FileGrid
-	m_spFilerControl = std::make_unique<CFilerBindGridView<std::shared_ptr<CShellFile>>>(
+	m_spFilerControl = std::make_unique<CFileOperationGridView<std::shared_ptr<CShellFile>>>(
 		this,
 		spFilerGridViewProp,
 		m_spItemsSource,
@@ -338,7 +341,8 @@ CExeExtensionWnd::CExeExtensionWnd(
 		arg<"frzrowcnt"_s>() = 2);
 
 	//TextBox
-	m_spTextBox->SetHasBorder(true);
+	m_spTextPath->SetHasBorder(true);
+	m_spTextParam->SetHasBorder(true);
 
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
 	{
@@ -352,9 +356,10 @@ CExeExtensionWnd::CExeExtensionWnd(
 void CExeExtensionWnd::Execute()
 {
 try {
+	std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
 	std::vector<std::wstring> filePaths;
-	for (auto& file : m_spItemsSource->get()) {
-		filePaths.emplace_back(L"\"" + std::get<std::shared_ptr<CShellFile>>(file)->GetPath() + L"\"");
+	for (const auto& file : files) {
+		filePaths.emplace_back(L"\"" + file->GetPath() + L"\"");
 	}
 
 	std::wstring fileMultiPath = boost::join(filePaths, L" ");
@@ -426,15 +431,16 @@ try {
 }
 }
 
-std::tuple<CRectF, CRectF, CRectF, CRectF> CExeExtensionWnd::GetRects()
+std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> CExeExtensionWnd::GetRects()
 {
 	CRectF rc = GetRectInWnd();
 	CRectF rcBtnCancel(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
 	CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
-	CRectF rcText(rc.left + 5.f, rc.bottom - 95.f, rc.right - 5.f, rc.bottom - 30.f);
-	CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.Width() - 5.f, rc.bottom -  100.f);
+	CRectF rcTextParam(rc.left + 5.f, rc.bottom - 95.f, rc.right - 5.f, rc.bottom - 30.f);
+	CRectF rcTextPath(rc.left + 5.f, rc.bottom - 120, rc.right - 5.f, rc.bottom - 100.f);
+	CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.Width() - 5.f, rc.bottom -  125.f);
 
-	return { rcGrid, rcText, rcBtnDo, rcBtnCancel };
+	return { rcGrid, rcTextPath, rcTextParam, rcBtnDo, rcBtnCancel };
 }
 
 
@@ -446,13 +452,14 @@ void CExeExtensionWnd::OnCreate(const CreateEvt& e)
 	}
 
 	//Size
-	auto [rcGrid, rcText, rcBtnDo, rcBtnCancel] = GetRects();
+	auto [rcGrid, rcTextPath, rcTextParam, rcBtnDo, rcBtnCancel] = GetRects();
 		
 	//Create FilerControl
 	m_spFilerControl->OnCreate(CreateEvt(this, this, rcGrid));
 
 	//Textbox
-	m_spTextBox->OnCreate(CreateEvt(this, this, rcText));
+	m_spTextPath->OnCreate(CreateEvt(this, this, rcTextPath));
+	m_spTextParam->OnCreate(CreateEvt(this, this, rcTextParam));
 
 	//OK button
 	m_spButtonDo->OnCreate(CreateEvt(this, this, rcBtnDo));
@@ -468,15 +475,10 @@ void CExeExtensionWnd::OnRect(const RectEvent& e)
 {
 	CD2DWWindow::OnRect(e);
 
-	auto [rcGrid, rcText, rcBtnDo, rcBtnCancel] = GetRects();		
+	auto [rcGrid, rcTextPath, rcTextParam, rcBtnDo, rcBtnCancel] = GetRects();		
 	m_spFilerControl->OnRect(RectEvent(this, rcGrid));
-	m_spTextBox->OnRect(RectEvent(this, rcText));
+	m_spTextPath->OnRect(RectEvent(this, rcTextPath));
+	m_spTextParam->OnRect(RectEvent(this, rcTextParam));
 	m_spButtonDo->OnRect(RectEvent(this, rcBtnDo));
 	m_spButtonCancel->OnRect(RectEvent(this, rcBtnCancel));
 }
-
-
-
-
-
-

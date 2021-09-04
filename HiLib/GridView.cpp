@@ -503,9 +503,13 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 	}
 }
 
-void CGridView::Jump(std::shared_ptr<CCell>& spCell)
+void CGridView::Jump(const std::shared_ptr<CCell>& spCell)
 {
-	m_spCursorer->OnCursor(spCell);
+	if (auto sp = std::dynamic_pointer_cast<CTextCell>(spCell); sp && sp->GetEditMode() == EditMode::LButtonDownEdit) {
+		sp->OnEdit(Event(GetWndPtr()));
+	} else {
+		m_spCursorer->OnCursor(spCell);
+	}
 	PostUpdate(Updates::EnsureVisibleFocusedCell);
 }
 
@@ -871,9 +875,74 @@ void CGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		CSheet::Normal_ContextMenu(e);
 	}
 }
+
+std::shared_ptr<CCell> CGridView::TabNext(const std::shared_ptr<CCell>& spCurCell)
+{
+	std::pair<size_t, size_t> firstIndexes = std::make_pair(0, 0);
+	std::shared_ptr<CCell> spJumpCell(nullptr);
+
+	// Find first indexes
+	if (!spCurCell) {
+		// (0, 0)
+	} else {
+		// Current Indexes
+		firstIndexes = std::make_pair(spCurCell->GetRowPtr()->GetIndex<VisTag>(), spCurCell->GetColumnPtr()->GetIndex<VisTag>());
+
+	}
+	// Search
+	for (auto iter = m_frozenTabStops.cbegin(); iter != m_frozenTabStops.cend(); ++iter) {
+		if ((iter->first * iter->second + iter->second)  > (firstIndexes.first * firstIndexes.second + firstIndexes.second)) {
+			auto spCell = Cell<VisTag>(iter->first, iter->second);
+			if (spCell) {
+				spJumpCell = spCell;
+				break;
+			}
+		}
+	}
+	return spJumpCell;
+}
+std::shared_ptr<CCell> CGridView::TabPrev(const std::shared_ptr<CCell>& spCurCell)
+{
+	std::pair<size_t, size_t> firstIndexes = std::make_pair(0, 0);
+	std::shared_ptr<CCell> spJumpCell(nullptr);
+
+	// Find first indexes
+	if (!spCurCell) {
+		// (0, 0)
+	} else {
+		// Current Indexes
+		firstIndexes = std::make_pair(spCurCell->GetRowPtr()->GetIndex<VisTag>(), spCurCell->GetColumnPtr()->GetIndex<VisTag>());
+
+	}
+	// Search
+	for (auto iter = m_frozenTabStops.crbegin(); iter != m_frozenTabStops.crend(); ++iter) {
+		if ((iter->first * iter->second + iter->second)  < (firstIndexes.first * firstIndexes.second + firstIndexes.second)) {
+			auto spCell = Cell<VisTag>(iter->first, iter->second);
+			if (spCell) {
+				spJumpCell = spCell;
+				break;
+			}
+		}
+	}
+	return spJumpCell;
+}
+
+
 void CGridView::Normal_KeyDown(const KeyDownEvent& e)
 {
 	switch (e.Char) {
+	case VK_TAB:
+		{
+			std::shared_ptr<CCell> spCurCell = m_spCursorer->GetCurrentCell();
+			auto shift = ::GetAsyncKeyState(VK_SHIFT);
+			std::shared_ptr<CCell> spJumpCell = shift ? TabPrev(spCurCell) : TabNext(spCurCell);
+
+			if (spJumpCell) {
+				(*e.HandledPtr) = true;
+				Jump(spJumpCell);
+			}
+		}
+		break;
 	case VK_HOME:
 		m_pVScroll->SetScrollPos(0);
 		(*e.HandledPtr) = true;
@@ -968,6 +1037,8 @@ void CGridView::HScrlDrag_MouseMove(const MouseMoveEvent& e)
 /********/
 void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 {
+	::OutputDebugStringA("Edit_OnEntry\r\n");
+
 	if (auto pCell = dynamic_cast<CTextCell*>(e.CellPtr)) {
 
 		SetEditPtr(std::make_shared<CTextBox>(
@@ -1000,6 +1071,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 
 void CGridView::Edit_OnExit()
 {
+	::OutputDebugStringA("Edit_OnExit\r\n");
 	//To avoid situation Edit_OnExit->OnKillFocus->Edit_OnExit
 	if (!m_isEditExiting){
 		m_isEditExiting = true;
@@ -1050,42 +1122,68 @@ void CGridView::Edit_LButtonEndDrag(const LButtonEndDragEvent& e)
 	GetEditPtr()->OnLButtonEndDrag(e);
 }
 
-bool CGridView::Edit_Guard_KeyDown(const KeyDownEvent& e)
-{
 
-	if ((e.Char == VK_RETURN && !(::GetKeyState(VK_MENU) & 0x8000)) ||
-		(e.Char == VK_TAB && !(::GetKeyState(VK_MENU) & 0x8000))) {
-		//Commit Edit
+// Edit to Normal to Edit
+// Edit to Normal
+//     Edit_Guard_KeyDown_Tab:true, Edit_KeyDonw_Tab:TRUE
+//     Edit_Guard_KeyDown_ToNormal
+// Edit to Other Control
+//     Edit_Guard_KeyDown_Tab:true, Edit_KeyDonw_Tab:TRUE
+// Normal to Edit
+// Normal to Normal
+// Normal to Other Control
+
+void CGridView::Edit_KeyDown_Tab(const KeyDownEvent& e, boost::sml::back::process<BeginEditEvent> process)
+{
+	if (m_pJumpCell) {
+		Jump(m_pJumpCell);
+		m_pJumpCell.reset();
+		PostUpdate(Updates::EnsureVisibleFocusedCell);
+		SubmitUpdate();
+		(*e.HandledPtr) = TRUE;
+	}
+}
+
+bool CGridView::Edit_Guard_KeyDown_ToNormal_Tab(const KeyDownEvent& e, boost::sml::back::process<BeginEditEvent> process)
+{
+	if (e.Char == VK_TAB && !(::GetKeyState(VK_MENU) & 0x8000)) {
+		//Commit Edit & Move to next Cell
+		std::shared_ptr<CCell> spCurCell = std::dynamic_pointer_cast<CCell>(GetEditPtr()->GetCellPtr()->shared_from_this());
+		auto shift = ::GetAsyncKeyState(VK_SHIFT);
+		m_pJumpCell = shift ? TabPrev(spCurCell) : TabNext(spCurCell); // Set fro action
 		return true;
 	}
-	else if (e.Char == VK_ESCAPE) {
+	return false;
+}
+
+bool CGridView::Edit_Guard_KeyDown_ToNormal(const KeyDownEvent& e)
+{
+	if (e.Char == VK_RETURN && !(::GetKeyState(VK_MENU) & 0x8000)) {
+		//Commit Edit
+		*(e.HandledPtr) = TRUE;
+		return true;
+	} else if (e.Char == VK_ESCAPE) {
 		//CancelEdit
 		GetEditPtr()->CancelEdit();
+		*(e.HandledPtr) = TRUE;
 		return true;
-	}
-	else {
+	} else {
 		return false;
 	}
 }
 
-bool CGridView::Edit_Guard_KeyDownWithNormal(const KeyDownEvent& e)
-{
-	return Edit_Guard_KeyDown(e);
-}
-
-bool CGridView::Edit_Guard_KeyDownWithoutNormal(const KeyDownEvent& e)
-{
-	return false;
-}
-
 void CGridView::Edit_KeyDown(const KeyDownEvent& e)
 {
-	GetEditPtr()->OnKeyDown(e);
+	if (!(*e.HandledPtr)) {
+		GetEditPtr()->OnKeyDown(e);
+	}
 }
 
 void CGridView::Edit_Char(const CharEvent& e)
 {
-	GetEditPtr()->OnChar(e);
+	if (!(*e.HandledPtr)) {
+		GetEditPtr()->OnChar(e);
+	}
 }
 
 

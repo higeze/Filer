@@ -309,6 +309,8 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	m_spRightFavoritesView->OnCreate(CreateEvt(this, this, rcRightFav));
 	m_spRightView->OnCreate(CreateEvt(this, this, rcRightTab));
 	m_spStatusBar->OnCreate(CreateEvt(this, this, rcStatus));
+	m_spLeftView->SetIsTabStop(true);
+	m_spRightView->SetIsTabStop(true);
 
 	SetFocusedControlPtr(m_spLeftView);
 }

@@ -18,6 +18,22 @@
 #include "Textbox.h"
 #include "ExeExtensionProperty.h"
 
+template<typename... TItems>
+class CFileOperationGridView :public CFilerBindGridView<TItems...>
+{
+	using CFilerBindGridView<TItems...>::CFilerBindGridView;
+
+	virtual bool DeleteSelectedFiles() override
+	{
+		auto indexes = this->GetSelectedIndexes();
+		auto frozen_count = this->GetFrozenCount<RowTag>();
+		for (auto i : indexes) {
+			this->GetItemsSource().erase(this->GetItemsSource().cbegin() + (i - frozen_count));
+		}
+		return true;
+	}
+};
+
 
 template<typename... TItems>
 class CFileOperationWndBase: public CD2DWWindow
@@ -30,7 +46,7 @@ protected:
 	std::shared_ptr<CButton> m_spButtonDo;
 	std::shared_ptr<CButton> m_spButtonCancel;
 
-	std::shared_ptr<CFilerBindGridView<TItems...>> m_spFilerControl;
+	std::shared_ptr<CFileOperationGridView<TItems...>> m_spFilerControl;
 
 	bool m_showDefault = true;
 	bool m_showApply = true;
@@ -208,11 +224,13 @@ class CExeExtensionWnd: public CFileOperationWndBase<std::shared_ptr<CShellFile>
 private:
 
 protected:
-	std::shared_ptr<CTextBox> m_spTextBox;
+	std::shared_ptr<CTextBox> m_spTextPath;
+	std::shared_ptr<CTextBox> m_spTextParam;
 	ExeExtension& m_exeExtension;
-	std::unique_ptr<CBinding> m_pBinding;
+	std::unique_ptr<CBinding> m_pBindingPath;
+	std::unique_ptr<CBinding> m_pBindingParam;
 
-	std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects();
+	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();
 
 
 

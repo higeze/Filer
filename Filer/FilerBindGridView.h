@@ -140,6 +140,28 @@ public:
 							});
 	}
 
+	std::vector<std::shared_ptr<CShellFile>> GetAllFiles()
+	{
+		std::vector<std::shared_ptr<CShellFile>> files;
+		for (const auto& rowPtr : this->m_visRows) {
+			if (auto spRow = std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr)) {
+				files.push_back(spRow->GetItem<std::shared_ptr<CShellFile>>());
+			}
+		}
+		return files;
+	}
+
+	std::vector<std::shared_ptr<CShellFile>> GetSelectedFiles()
+	{
+		std::vector<std::shared_ptr<CShellFile>> files;
+		for (const auto& rowPtr : this->m_visRows) {
+			if (auto spRow = std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr); spRow && spRow->GetIsSelected()) {
+				files.push_back(spRow->GetItem<std::shared_ptr<CShellFile>>());
+			}
+		}
+		return files;
+	}
+
 	virtual bool CutToClipboard() { return false; }
 	virtual bool CopyToClipboard() { return false; }
 	virtual bool PasteFromClipboard() { return false; }
@@ -217,13 +239,13 @@ public:
 
 	};
 
-	bool Edit_Guard_KeyDownWithNormal(const KeyDownEvent& e) override
-	{
-		return false;
-	}
+	//bool Edit_Guard_KeyDown_WithNormal(const KeyDownEvent& e) override
+	//{
+	//	return false;
+	//}
 
-	bool Edit_Guard_KeyDownWithoutNormal(const KeyDownEvent& e) override
-	{
-		return this->Edit_Guard_KeyDown(e);
-	}
+	//bool Edit_Guard_KeyDown_WithoutNormal(const KeyDownEvent& e) override
+	//{
+	//	return this->Edit_Guard_KeyDown(e);
+	//}
 };

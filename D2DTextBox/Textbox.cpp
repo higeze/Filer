@@ -269,7 +269,7 @@ CTextBox::CTextBox(
 	GetContext = [p = CComPtr<ITfContext>(), this]() mutable->CComPtr<ITfContext>&
 	{
 		if (!p) {
-			FAILED_THROW(GetDocumentMgr()->CreateContext(s_tfClientId, 0, GetTextStore(), &p, &m_editCookie));
+			FAILED_THROW(GetDocumentMgr()->CreateContext(s_tfClientId, 0, static_cast<ITextStoreACP*>(GetTextStore().p), &p, &m_editCookie));
 		}
 		return p;
 	};
@@ -797,6 +797,7 @@ void CTextBox::Normal_SetFocus(const SetFocusEvent& e)
 void CTextBox::Normal_KillFocus(const KillFocusEvent& e)
 {
 	m_timer.stop();
+	TerminateCompositionString();
 }
 
 void CTextBox::Normal_KeyUp(const KeyUpEvent& e)
@@ -824,6 +825,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	{
 		BOOL dummy = FALSE;
 		Normal_SetCursor(SetCursorEvent(GetWndPtr(), HTCLIENT, &dummy));
+		*e.HandledPtr = TRUE;
 		break;
 
 	}
@@ -834,8 +836,10 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 
 		if (shift) {
 			MoveCaretWithShift(position, point);
+			*e.HandledPtr = TRUE;
 		} else {
 			MoveCaret(position, point);
+			*e.HandledPtr = TRUE;
 		}
 		break;
 	}
@@ -846,8 +850,10 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 
 		if (shift) {
 			MoveCaretWithShift(position, point);
+			*e.HandledPtr = TRUE;
 		} else {
 			MoveCaret(position, point);
+			*e.HandledPtr = TRUE;
 		}
 		break;
 	}
@@ -859,8 +865,10 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 		if (auto position = GetOriginCharPosFromPoint(point)) {
 			if (shift) {
 				MoveCaretWithShift(position.value(), point);
+				*e.HandledPtr = TRUE;
 			} else {
 				MoveCaret(position.value(), point);
+				*e.HandledPtr = TRUE;
 			}
 		}
 		break;
@@ -873,8 +881,10 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 		if (auto newPos = GetOriginCharPosFromPoint(point)) {
 			if (shift) {
 				MoveCaretWithShift(newPos.value(), point);
+				*e.HandledPtr = TRUE;
 			} else {
 				MoveCaret(newPos.value(), point);
+				*e.HandledPtr = TRUE;
 			}
 		}
 		break;
@@ -885,8 +895,10 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 			auto point = OriginCharRects()[index.value()].CenterPoint();
 			if (shift) {
 				MoveCaretWithShift(index.value(), point);
+				*e.HandledPtr = TRUE;
 			} else {
 				MoveCaret(index.value(), point);
+				*e.HandledPtr = TRUE;
 			}
 		}
 		break;
@@ -897,8 +909,10 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 			auto point = OriginCharRects()[index.value()].CenterPoint();
 			if (shift) {
 				MoveCaretWithShift(index.value(), point);
+				*e.HandledPtr = TRUE;
 			} else {
 				MoveCaret(index.value(), point);
+				*e.HandledPtr = TRUE;
 			}
 		}
 		break;
@@ -908,12 +922,14 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 		if (std::get<caret::SelBegin>(m_carets.get()) == std::get<caret::SelEnd>(m_carets.get())) {
 			if (std::get<caret::CurCaret>(m_carets.get()) < (int)m_text.size()) {
 				m_text.erase(std::get<caret::CurCaret>(m_carets.get()), 1);
+				*e.HandledPtr = TRUE;
 			}
 		} else {
 			m_text.erase(std::get<caret::SelBegin>(m_carets.get()), std::get<caret::SelEnd>(m_carets.get()) - std::get<caret::SelBegin>(m_carets.get()));
 			auto index = std::get<caret::SelBegin>(m_carets.get());
 			auto point = OriginCharRects()[index].CenterPoint();
 			MoveCaret(index, point);
+			*e.HandledPtr = TRUE;
 		}
 		break;
 	}
@@ -925,6 +941,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 				auto index = std::get<caret::CurCaret>(m_carets.get()) - 1;
 				auto point = OriginCharRects()[index].CenterPoint();
 				MoveCaret(index, point);
+				*e.HandledPtr = TRUE;
 			}
 
 		} else {
@@ -932,6 +949,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 			auto index = std::get<caret::SelBegin>(m_carets.get());
 			auto point = OriginCharRects()[index].CenterPoint();
 			MoveCaret(index, point);
+			*e.HandledPtr = TRUE;
 		}
 
 		break;
@@ -944,12 +962,14 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 			m_carets.set(std::get<caret::CurCaret>(m_carets.get()), m_text.size(), 0, 0, m_text.size());
 			m_caretPoint.set(OriginCharRects()[m_text.size()].CenterPoint());
 			ResetCaret();
+			*e.HandledPtr = TRUE;
 		}
 	}
 	case 'C':
 	{
 		if (ctrl) {
 			CopySelectionToClipboard();
+			*e.HandledPtr = TRUE;
 		}
 		break;
 	}
@@ -961,6 +981,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 			auto index = std::get<caret::SelBegin>(m_carets.get());
 			auto point = OriginCharRects()[index].CenterPoint();
 			MoveCaret(index, point);
+			*e.HandledPtr = TRUE;
 		}
 		break;
 	}
@@ -969,14 +990,17 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	{
 		if (ctrl) {
 			PasteFromClipboard();
+			*e.HandledPtr = TRUE;
 		}
 		break;
 	}
 	case VK_RETURN:
 		InsertAtSelection(L"\n");
+		*e.HandledPtr = TRUE;
 		break;
 	case VK_TAB:
 		InsertAtSelection(L"\t");
+		*e.HandledPtr = TRUE;
 		break;
 
 	default:
@@ -1623,6 +1647,18 @@ void CTextBox::UpdateAll()
 	ResetOriginRects();
 	UpdateScroll();
 	ResetActualRects();
+}
+
+void CTextBox::TerminateCompositionString()
+{
+    if (GetTextStore()->GetCurrentCompositionView())
+    {
+        CComPtr<ITfContextOwnerCompositionServices> pCompositionServices;
+        if (GetContext()->QueryInterface(IID_ITfContextOwnerCompositionServices, (void **)&pCompositionServices) == S_OK)
+        {
+            pCompositionServices->TerminateComposition(GetTextStore()->GetCurrentCompositionView());
+        }
+    }
 }
 
 

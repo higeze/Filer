@@ -137,10 +137,42 @@ void CD2DWControl::OnKillFocus(const KillFocusEvent& e) { SendFocused(&CD2DWCont
 void CD2DWControl::OnWndSetFocus(const SetFocusEvent& e) { SendAll(&CD2DWControl::OnWndSetFocus, e); }
 void CD2DWControl::OnWndKillFocus(const KillFocusEvent& e) { SendAll(&CD2DWControl::OnWndKillFocus, e); }
 
-void CD2DWControl::OnKeyDown(const KeyDownEvent& e) { SendFocused(&CD2DWControl::OnKeyDown, e); }
+void CD2DWControl::OnKeyDown(const KeyDownEvent& e)
+{
+	*(e.HandledPtr) = FALSE;
+	SendFocused(&CD2DWControl::OnKeyDown, e);
+
+	if (*(e.HandledPtr) == FALSE) {
+		switch (e.Char){
+			case VK_TAB:
+				{
+					auto shift = ::GetAsyncKeyState(VK_SHIFT);
+					auto focused_iter = std::find(m_childControls.cbegin(), m_childControls.cend(), GetFocusedControlPtr());
+					if (focused_iter == m_childControls.cend()) {
+						break;
+					} else {
+						focused_iter++;
+					}
+					for (auto iter = focused_iter; iter != m_childControls.cend(); ++iter) {
+						if ((*iter)->GetIsTabStop()) {
+							SetFocusedControlPtr((*focused_iter));
+							*(e.HandledPtr) = TRUE;
+						}
+					}
+				}
+				break;
+			default:
+				break;
+		}
+	}
+}
 void CD2DWControl::OnKeyUp(const KeyUpEvent& e) { SendFocused(&CD2DWControl::OnKeyUp, e); }
 void CD2DWControl::OnSysKeyDown(const SysKeyDownEvent& e) { SendFocused(&CD2DWControl::OnSysKeyDown, e); }
-void CD2DWControl::OnChar(const CharEvent& e) { SendFocused(&CD2DWControl::OnChar, e); }
+void CD2DWControl::OnChar(const CharEvent& e)
+{ 
+	*(e.HandledPtr) = FALSE;
+	SendFocused(&CD2DWControl::OnChar, e);
+}
 
 
 void CD2DWControl::OnCommand(const CommandEvent& e)

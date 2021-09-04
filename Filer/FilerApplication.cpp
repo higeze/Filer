@@ -3,6 +3,15 @@
 #include "JsonSerializer.h"
 
 
+std::string CFilerApplication::GetJsonPath()
+{
+	std::string dir = GetModuleDirPath<char>();
+
+	std::string path;
+	::PathCombineA(::GetBuffer(path, MAX_PATH), dir.c_str(), "Filer.json");
+	::ReleaseBuffer(path);
+	return path;
+}
 
 std::tuple<std::string, std::string, std::string, std::string> CFilerApplication::GetJsonPaths()
 {
@@ -29,69 +38,53 @@ std::tuple<std::string, std::string, std::string, std::string> CFilerApplication
 
 void CFilerApplication::Deserialize()
 {
-	auto [path, favorites_path, launcher_path, exeextension_path] = GetJsonPaths();
-
-	if (::PathFileExistsA(path.c_str())) {
-		m_pWnd = DeserializeValue<std::unique_ptr<CFilerWnd>>(path);
+	if (auto path = GetJsonPath(); ::PathFileExistsA(path.c_str())) {
+		std::ifstream i(path);
+		json j;
+		i >> j;
+		j.get_to(m_pWnd);
 	} else {
 		m_pWnd = std::make_unique<CFilerWnd>();
-	}
-	if (::PathFileExistsA(favorites_path.c_str())) {
-		m_pWnd->SetFavoritesPropPtr(DeserializeValue<std::shared_ptr<CFavoritesProperty>>(favorites_path));
-	} else {
-		m_pWnd->SetFavoritesPropPtr(std::make_shared<CFavoritesProperty>());
-	}
-	if (::PathFileExistsA(launcher_path.c_str())) {
-		m_pWnd->SetLauncherPropPtr(DeserializeValue<std::shared_ptr<CLauncherProperty>>(launcher_path));
-	} else {
-		m_pWnd->SetLauncherPropPtr(std::make_shared<CLauncherProperty>());
-	}
-	if (::PathFileExistsA(exeextension_path.c_str())) {
-		m_pWnd->SetExeExtensionPropPtr(DeserializeValue<std::shared_ptr<ExeExtensionProperty>>(exeextension_path));
-	} else {
-		m_pWnd->SetExeExtensionPropPtr(std::make_shared<ExeExtensionProperty>());
 	}
 }
 
 void CFilerApplication::Serialize()
 {
-	auto [path, favorites_path, launcher_path, exeextension_path] = GetJsonPaths();
-
-	SerializeValue(path, m_pWnd);
-	SerializeValue(favorites_path, m_pWnd->GetFavoritesPropPtr());
-	SerializeValue(launcher_path, m_pWnd->GetLauncherPropPtr());
-	SerializeValue(exeextension_path, m_pWnd->GetExeExtensionPropPtr());
+	json j = m_pWnd;
+	auto path = GetJsonPath();
+	std::ofstream o(path);
+	o << std::setw(4) << j << std::endl;
 }
 
 
 std::shared_ptr<CLauncherProperty> CFilerApplication::DeserializeLauncher()
 {
-	return DeserializeValue<static_cast<int>(json_path::launcher), std::shared_ptr<CLauncherProperty>>();
+	return DeserializeValue<std::shared_ptr<CLauncherProperty>>("LauncherProperty");
 }
 
 std::shared_ptr<CFavoritesProperty> CFilerApplication::DeserializeFavoirtes()
 {
-	return DeserializeValue<static_cast<int>(json_path::favorites), std::shared_ptr<CFavoritesProperty>>();
+	return DeserializeValue<std::shared_ptr<CFavoritesProperty>>("FavoritesProperty");
 }
 
 std::shared_ptr<ExeExtensionProperty> CFilerApplication::DeserializeExeExtension()
 {
-	return DeserializeValue<static_cast<int>(json_path::exeextension), std::shared_ptr<ExeExtensionProperty>>();
+	return DeserializeValue<std::shared_ptr<ExeExtensionProperty>>("ExeExtensionProperty");
 }
 
 void CFilerApplication::SerializeLauncher(const std::shared_ptr<CLauncherProperty>& spProp)
 {
-	SerializeValue<static_cast<int>(json_path::favorites)>(spProp);
+	SerializeValue("LauncherProperty", spProp);
 }
 
 void CFilerApplication::SerializeFavorites(const std::shared_ptr<CFavoritesProperty>& spProp)
 {
-	SerializeValue<static_cast<int>(json_path::favorites)>(spProp);
+	SerializeValue("FavoritesProperty", spProp);
 }
 
 void CFilerApplication::SerializeExeExtension(const std::shared_ptr<ExeExtensionProperty>& spProp)
 {
-	SerializeValue<static_cast<int>(json_path::exeextension)>(spProp);
+	SerializeValue("ExeExtensionProperty", spProp);
 }
 
 

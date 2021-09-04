@@ -1,6 +1,7 @@
 #pragma once
 #include "Application.h"
 #include "FilerWnd.h"
+#include "Debug.h"
 
 class CFilerApplication : public CApplication<CFilerApplication>
 {
@@ -15,43 +16,47 @@ private:
 
 	std::tuple<std::string, std::string, std::string, std::string> GetJsonPaths();
 
+	std::string GetJsonPath();
+
 	std::unique_ptr<CCoInitializer> m_pCoinit;
 	std::unique_ptr<COleInitializer> m_pOleinit;
 	//RoInitialize(RO_INIT_SINGLETHREADED);
 
 	std::unique_ptr<CFilerWnd> m_pWnd;
 
-	template<int TEnum, typename T>
-	void SerializeValue(const T& value)
+
+	template<typename T>
+	void SerializeValue(const std::string& key, const T & value)
 	{
-		std::string path = std::get<static_cast<int>(TEnum)>(GetJsonPaths());
-		SerializeValue(path, value);
+		if (auto path = GetJsonPath(); ::PathFileExistsA(path.c_str())) {
+			std::ifstream i(path);
+			json j;
+			i >> j;
+
+			if (auto iter = j.find(key); iter != j.end()) {
+				*iter = json{ {key, value} };
+				std::ofstream o(path);
+				o << std::setw(4) << j << std::endl;
+			}
+		}
+		THROW_FILE_LINE_FUNC;
 	}
 
 	template<typename T>
-	void SerializeValue(const std::string& path, const T & value)
+	T DeserializeValue(const std::string& key)
 	{
-		json js = value;
-		std::ofstream o(path);
-		o << std::setw(4) << js << std::endl;
-	}
+		if (auto path = GetJsonPath(); ::PathFileExistsA(path.c_str())) {
+			std::ifstream i(path);
+			json j;
+			i >> j;
 
-	template<int TEnum, typename T>
-	T DeserializeValue()
-	{
-		std::string path = std::get<static_cast<int>(TEnum)>(GetJsonPaths());
-		return DeserializeValue<T>(path);
-	}
+			if (auto iter = j.find(key); iter != j.end()) {
+				return *iter;
+			}
+		}
+		THROW_FILE_LINE_FUNC;
 
-	template<typename T>
-	T DeserializeValue(const std::string& path)
-	{
-		json j;
-		std::ifstream i(path);
-		i >> j;
-		return j;
 	}
-
 
 
 public:

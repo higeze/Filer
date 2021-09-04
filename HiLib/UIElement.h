@@ -305,6 +305,9 @@ public:
 	/*********/
 	virtual UIElementState::Type GetState()const{return m_state;}
 	virtual void SetState(const UIElementState::Type& state);
+	
+
+
 
 	/*********/
 	/* event */

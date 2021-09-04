@@ -24,7 +24,9 @@ public:
 	virtual ~CCursorer(){}
 	//Getter/Setter
 	std::shared_ptr<CCell> GetFocusedCell(){return m_focusedCell;}
-	void SetFocusedCell(std::shared_ptr<CCell>& cell){m_focusedCell = cell;}
+	void SetFocusedCell(const std::shared_ptr<CCell>& cell){m_focusedCell = cell;}
+	std::shared_ptr<CCell> GetCurrentCell(){return m_currentCell;}
+	void SetCurrentCell(const std::shared_ptr<CCell>& cell){m_currentCell = cell;}
 	std::shared_ptr<CCell> GetDoubleFocusedCell() { return m_doubleFocusedCell; }
 	//Event handler
 	virtual void OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e);

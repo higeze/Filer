@@ -156,7 +156,8 @@ void TextTabData::Open(const std::wstring& path, const encoding_type& enc)
 		std::vector<byte> bytes = CFile::ReadAllBytes(path);
 		encoding_type enc = CTextEnDecoder::GetInstance()->DetectEncoding(bytes);
 		std::wstring wstr = CTextEnDecoder::GetInstance()->Decode(bytes, enc);
-
+		auto iter = std::remove_if(wstr.begin(), wstr.end(), [](const auto& c)->bool { return c == L'\r'; });
+		wstr.erase(iter, wstr.end());
 
 		//std::ifstream ifs(path);
 		//std::string str = std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());

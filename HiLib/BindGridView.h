@@ -81,8 +81,16 @@ public:
 
 	ReactiveVectorProperty<std::tuple<TItems...>>& GetItemsSource() override { return *(this->m_spItemsSource); }
 	void SetItemsSource(const ReactiveVectorProperty<std::tuple<TItems...>>& items) { this->m_spItemsSource->set(items); }
-	std::vector<std::tuple<TItems...>>& GetSelectedItems() { return this->m_funSelItems(); }
-
+	std::vector<int> GetSelectedIndexes() 
+	{
+		std::vector<int> indexes;
+		for (const auto& rowPtr : m_visRows) {
+			if (rowPtr->GetIsSelected()) {
+				indexes.push_back(rowPtr->GetIndex<AllTag>());
+			}
+		}
+		return indexes;
+	}
 	/******************/
 	/* Window Message */
 	/******************/

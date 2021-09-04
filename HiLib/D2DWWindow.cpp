@@ -168,5 +168,43 @@ LRESULT CD2DWWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 	return 0;
 }
 
+void CD2DWWindow::OnKeyDown(const KeyDownEvent& e)
+{
+	*(e.HandledPtr) = FALSE;
+	SendFocused(&CD2DWControl::OnKeyDown, e);
+
+	if (*(e.HandledPtr) == FALSE) {
+		switch (e.Char){
+			case VK_TAB:
+				{
+					auto shift = ::GetAsyncKeyState(VK_SHIFT);
+					auto focused_iter = std::find(m_childControls.cbegin(), m_childControls.cend(), GetFocusedControlPtr());
+					if (focused_iter == m_childControls.cend()) {
+						break;
+					}
+
+					for (auto iter = std::next(focused_iter, 1) ; iter != m_childControls.cend(); ++iter) {
+						if ((*iter)->GetIsTabStop()) {
+							*(e.HandledPtr) = TRUE;
+							SetFocusedControlPtr((*iter));
+							break;
+						}
+					}
+					for (auto iter = m_childControls.cbegin(); iter != focused_iter; ++iter) {
+						if ((*iter)->GetIsTabStop()) {
+							*(e.HandledPtr) = TRUE;
+							SetFocusedControlPtr((*iter));
+							break;
+						}
+					}
+				}
+				break;
+			default:
+				break;
+		}
+	}
+}
+
+
 
 

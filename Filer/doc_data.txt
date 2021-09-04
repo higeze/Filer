@@ -1,0 +1,75 @@
+InfoBegin
+InfoKey: Creator
+InfoValue: PowerPoint &#29992; Acrobat PDFMaker 15
+InfoBegin
+InfoKey: Producer
+InfoValue: Adobe PDF Library 15.0
+InfoBegin
+InfoKey: ModDate
+InfoValue: D:20191004110432+09'00'
+InfoBegin
+InfoKey: CreationDate
+InfoValue: D:20191004110428+09'00'
+PdfID0: d2d70e09e7aa82478aaa2048bfd46603
+PdfID1: 261c489a90c7b743b345e27e14813c82
+NumberOfPages: 12
+PageMediaBegin
+PageMediaNumber: 1
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
+PageMediaBegin
+PageMediaNumber: 2
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
+PageMediaBegin
+PageMediaNumber: 3
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
+PageMediaBegin
+PageMediaNumber: 4
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
+PageMediaBegin
+PageMediaNumber: 5
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
+PageMediaBegin
+PageMediaNumber: 6
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
+PageMediaBegin
+PageMediaNumber: 7
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
+PageMediaBegin
+PageMediaNumber: 8
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
+PageMediaBegin
+PageMediaNumber: 9
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
+PageMediaBegin
+PageMediaNumber: 10
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
+PageMediaBegin
+PageMediaNumber: 11
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
+PageMediaBegin
+PageMediaNumber: 12
+PageMediaRotation: 0
+PageMediaRect: 0 0 720 540
+PageMediaDimensions: 720 540
