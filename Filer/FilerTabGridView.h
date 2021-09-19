@@ -19,12 +19,12 @@
 class CFilerGridView;
 struct FilerGridViewProperty;
 struct GridViewProperty;
-struct StatusBarProperty;
 class CToDoGridView;
 class CD2DWWindow;
 class CShellFolder;
 class CPdfView;
 struct PdfViewProperty;
+struct TextEditorProperty;
 
 /***************/
 /* FilerTabData */
@@ -258,7 +258,6 @@ private:
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
 	std::shared_ptr<PdfViewProperty> m_spPdfViewProp;
-	std::shared_ptr<StatusBarProperty> m_spStatusProp;
 
 	std::unique_ptr<CBinding> m_pTextBinding;
 	std::unique_ptr<CBinding> m_pTextEncodingBinding;
@@ -287,8 +286,7 @@ public:
 		const std::shared_ptr<TabControlProperty>& spTabProp = nullptr, 
 		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty = nullptr,
 		const std::shared_ptr<TextEditorProperty>& spTextboxProp = nullptr,
-		const std::shared_ptr<PdfViewProperty>& spPdfViewProp = nullptr,
-		const std::shared_ptr<StatusBarProperty>& statusBarProp = nullptr);
+		const std::shared_ptr<PdfViewProperty>& spPdfViewProp = nullptr);
 	virtual ~CFilerTabGridView();
 
 	/****************/

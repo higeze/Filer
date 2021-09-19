@@ -10,7 +10,7 @@
 #include "Column.h"
 #include "GridView.h"
 #include <algorithm>
-#include "Textbox.h"
+#include "CellTextBox.h"
 
 
 void CTextCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)

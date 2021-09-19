@@ -264,6 +264,7 @@
     <Image Include="Filer.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\D2DTextBox\CellTextBox.h" />
     <ClInclude Include="..\D2DTextBox\TextboxStateMachine.h" />
     <ClInclude Include="..\D2DTextBox\Textbox.h" />
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h" />
@@ -303,7 +304,9 @@
     <ClInclude Include="..\HiLib\Console.h" />
     <ClInclude Include="..\HiLib\CShellExtension.h" />
     <ClInclude Include="..\HiLib\Cursorer.h" />
+    <ClInclude Include="..\HiLib\D2DWDialog.h" />
     <ClInclude Include="..\HiLib\DeadlineTimer.h" />
+    <ClInclude Include="..\HiLib\DialogStateMachine.h" />
     <ClInclude Include="..\HiLib\Direct2DWrite.h" />
     <ClInclude Include="..\HiLib\Debug.h" />
     <ClInclude Include="..\HiLib\Dispatcher.h" />
@@ -403,9 +406,13 @@
     <ClInclude Include="..\HiLib\SingletonMalloc.h" />
     <ClInclude Include="..\HiLIb\Splitter.h" />
     <ClInclude Include="..\HiLib\StatusBar.h" />
+    <ClInclude Include="..\HiLib\StatusBarProperty.h" />
     <ClInclude Include="..\HiLib\TabControl.h" />
     <ClInclude Include="..\HiLib\D2DWWindow.h" />
+    <ClInclude Include="..\HiLib\TextBoxProperty.h" />
     <ClInclude Include="..\HiLib\TextCell.h" />
+    <ClInclude Include="..\HiLib\TextEditor.h" />
+    <ClInclude Include="..\HiLib\TextEditorProperty.h" />
     <ClInclude Include="..\HiLib\TextEnDecoder.h" />
     <ClInclude Include="..\HiLib\TextFileDialog.h" />
     <ClInclude Include="..\HiLib\ThreadHelper.h" />
@@ -420,6 +427,7 @@
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
     <ClInclude Include="..\HiLib\UpdateResource.h" />
     <ClInclude Include="..\HiLib\HiLibResource.h" />
+    <ClInclude Include="..\HiLib\scope_exit.h" />
     <ClInclude Include="CheckableFileGrid.h" />
     <ClInclude Include="DriveSizeCell.h" />
     <ClInclude Include="ExeExtensionProperty.h" />
@@ -479,6 +487,7 @@
     <ClInclude Include="ViewProperty.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\D2DTextBox\CellTextBox.cpp" />
     <ClCompile Include="..\D2DTextBox\TextboxStateMachine.cpp" />
     <ClCompile Include="..\D2DTextBox\Textbox.cpp" />
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />
@@ -498,7 +507,9 @@
     <ClCompile Include="..\HiLib\Console.cpp" />
     <ClCompile Include="..\HiLib\CShellExtension.cpp" />
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
+    <ClCompile Include="..\HiLib\D2DWDialog.cpp" />
     <ClCompile Include="..\HiLib\DeadlineTimer.cpp" />
+    <ClCompile Include="..\HiLib\DialogStateMachine.cpp" />
     <ClCompile Include="..\HiLib\Direct2DWrite.cpp" />
     <ClCompile Include="..\HiLib\Dispatcher.cpp" />
     <ClCompile Include="..\HiLib\DropTargetManager.cpp" />
@@ -550,6 +561,7 @@
     <ClCompile Include="..\HiLib\TabControl.cpp" />
     <ClCompile Include="..\HiLib\D2DWWindow.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
+    <ClCompile Include="..\HiLib\TextEditor.cpp" />
     <ClCompile Include="..\HiLib\TextEnDecoder.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeKnownFolderManagaer.cpp" />

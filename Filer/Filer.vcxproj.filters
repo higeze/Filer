@@ -683,6 +683,30 @@
     <ClInclude Include="DriveSizeCell.h">
       <Filter>Filer</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\scope_exit.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\CellTextBox.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\TextBoxProperty.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\TextEditorProperty.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\TextEditor.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\StatusBarProperty.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\D2DWDialog.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\DialogStateMachine.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1009,6 +1033,18 @@
     </ClCompile>
     <ClCompile Include="DriveSizeCell.cpp">
       <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\TextEditor.cpp">
+      <Filter>D2DTextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\CellTextBox.cpp">
+      <Filter>D2DTextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\D2DWDialog.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\DialogStateMachine.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

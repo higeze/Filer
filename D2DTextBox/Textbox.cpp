@@ -1,14 +1,13 @@
 ﻿#include "Textbox.h"
+#include "TextBoxProperty.h"
 #include "D2DWWindow.h"
 #include "TextEditSink.h"
 #include "TextStoreACP.h"
 #include "MyClipboard.h"
-#include "CellProperty.h"
 #include "Direct2DWrite.h"
 #include "Debug.h"
 #include "UIElement.h"
 #include "GridView.h"
-#include "TextCell.h"
 #include "Scroll.h"
 #include "ScrollProperty.h"//ScrollProperty
 #include <boost/algorithm/algorithm.hpp>
@@ -17,8 +16,7 @@
 
 #include "ResourceIDFactory.h"
 
-#include <regex>
-#include <nameof/nameof.hpp>
+
 
 #define TAB_WIDTH_4CHAR 4
 
@@ -236,13 +234,10 @@ HRESULT CTextBox::GetDisplayAttributeData(TfEditCookie ec, ITfReadOnlyProperty *
 /***************/
 CTextBox::CTextBox(
 	CD2DWControl* pParentControl,
-	CTextCell* pCell,
-	const std::shared_ptr<TextboxProperty> pProp,
-	const std::wstring& text,
-	std::function<void(const std::wstring&)> changed,
-	std::function<void(const std::wstring&)> final)
-	:CD2DWControl(pParentControl), m_pCell(pCell), m_pProp(pProp),
-	m_changed(changed), m_final(final),
+	const std::shared_ptr<TextBoxProperty> pProp,
+	const std::wstring& text)
+	:CD2DWControl(pParentControl),
+	m_pProp(pProp),
 	m_initText(text),
 	m_text(text),
 	m_carets(0, text.size(), 0, 0, text.size()),
@@ -398,6 +393,41 @@ void CTextBox::EnsureVisibleCaret()
 	}
 }
 
+const CComPtr<IDWriteTextLayout1>& CTextBox::GetTextLayoutPtr()
+{
+	if (!m_pTextLayout) {
+		auto pageRect = GetPageRect();
+		auto pDirect = GetWndPtr()->GetDirectPtr();
+		auto pRender = pDirect->GetD2DDeviceContext();
+		auto pFactory = pDirect->GetDWriteFactory();
+		auto size = CSizeF(m_pProp->IsWrap ? (std::max)(0.f, pageRect.Width()) : FLT_MAX, FLT_MAX);
+
+		CComPtr<IDWriteTextLayout> pTextLayout0(nullptr);
+		const IID* piid = &__uuidof(IDWriteTextLayout1);
+		if (FAILED(pFactory->CreateTextLayout(m_text.c_str(), m_text.size(), pDirect->GetTextFormat(*m_pProp->Format), size.width, size.height, &pTextLayout0)) ||
+			FAILED(pTextLayout0->QueryInterface(*piid, (void**)&m_pTextLayout))) {
+			throw std::exception(FILE_LINE_FUNC);
+		} else {
+			//Default set up
+			CComPtr<IDWriteTypography> typo;
+			pFactory->CreateTypography(&typo);
+
+			DWRITE_FONT_FEATURE feature;
+			feature.nameTag = DWRITE_FONT_FEATURE_TAG_STANDARD_LIGATURES;
+			feature.parameter = 0;
+			typo->AddFontFeature(feature);
+			DWRITE_TEXT_RANGE range;
+			range.startPosition = 0;
+			range.length = m_text.size();
+			m_pTextLayout->SetTypography(typo, range);
+
+			m_pTextLayout->SetCharacterSpacing(0.0f, 0.0f, 0.0f, DWRITE_TEXT_RANGE{ 0, m_text.size() });
+			m_pTextLayout->SetPairKerning(FALSE, DWRITE_TEXT_RANGE{ 0, m_text.size() });
+		}
+	}
+	return m_pTextLayout;
+}
+
 /*******************/
 /* Windows Message */
 /*******************/
@@ -409,108 +439,13 @@ void CTextBox::OnCreate(const CreateEvt& e)
 
 	m_caretPoint.set(CPointF(0, GetLineHeight() * 0.5f));
 	//m_caretPoint.set(CPointF(0, pProp->Format->Font.Size * 0.5f));
-	TextLayoutPtr(
-	[&val = TextLayoutPtr.value, this]()
-	{
-		if (!val) {
-			auto pageRect = GetPageRect();
-			auto pDirect = GetWndPtr()->GetDirectPtr();
-			auto pRender = pDirect->GetD2DDeviceContext();
-			auto pFactory = pDirect->GetDWriteFactory();
-			auto size = CSizeF(m_pProp->IsWrap ? (std::max)(0.f, pageRect.Width()) : FLT_MAX, FLT_MAX);
-
-			CComPtr<IDWriteTextLayout> pTextLayout0(nullptr);
-			const IID* piid = &__uuidof(IDWriteTextLayout1);
-			if (FAILED(pFactory->CreateTextLayout(m_text.c_str(), m_text.size(), pDirect->GetTextFormat(*m_pProp->Format), size.width, size.height, &pTextLayout0)) ||
-				FAILED(pTextLayout0->QueryInterface(*piid, (void**)&val))) {
-				throw std::exception(FILE_LINE_FUNC);
-			} else {
-				//Default set up
-				CComPtr<IDWriteTypography> typo;
-				pFactory->CreateTypography(&typo);
-
-				DWRITE_FONT_FEATURE feature;
-				feature.nameTag = DWRITE_FONT_FEATURE_TAG_STANDARD_LIGATURES;
-				feature.parameter = 0;
-				typo->AddFontFeature(feature);
-				DWRITE_TEXT_RANGE range;
-				range.startPosition = 0;
-				range.length = m_text.size();
-				val->SetTypography(typo, range);
-
-				val->SetCharacterSpacing(0.0f, 0.0f, 0.0f, DWRITE_TEXT_RANGE{ 0, m_text.size() });
-				val->SetPairKerning(FALSE, DWRITE_TEXT_RANGE{ 0, m_text.size() });
-
-				//Syntax
-				if (auto pTextEditorProp = std::dynamic_pointer_cast<TextEditorProperty>(m_pProp)) {
-					for (const auto& tuple : pTextEditorProp->SyntaxAppearances.get()) {
-						auto appearance = std::get<0>(tuple);
-						if (!appearance.Regex.empty()) {
-							auto brush = pDirect->GetColorBrush(appearance.SyntaxFormat.Color);
-
-							std::wsmatch match;
-							auto begin = m_text.cbegin();
-							auto re = std::wregex(appearance.Regex);//L"/\\*.*?\\*/"
-							UINT32 beginPos = 0;
-							while (std::regex_search(begin, m_text.cend(), match, re)) {
-								DWRITE_TEXT_RANGE range{ beginPos + (UINT32)match.position(), (UINT32)match.length() };
-								val->SetDrawingEffect(brush, range);
-								if (appearance.SyntaxFormat.IsBold) {
-									val->SetFontWeight(DWRITE_FONT_WEIGHT_BOLD, range);
-								}
-
-								begin = match[0].second;
-								beginPos = std::distance(m_text.cbegin(), begin);
-							}
-						}
-					}
-				}
-				//https?://[\w!?/+\-_~;.,*&@#$%()'[\]]+
-				//(?:[a-zA-Z]:|\\\\[a-zA-Z0-9_.$●-]+\\[a-zA-Z0-9_.$●-]+)\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]* 
-				// 
-				
-
-
-				//Executable
-				//auto exePatterns = std::vector<std::wstring>{
-				//	LR"((?:[a-zA-Z]:|\\\\[a-zA-Z0-9_.$●-]+\\[a-zA-Z0-9_.$●-]+)\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*)",
-				//	LR"(https?://[\w!?/+\-_~;.,*&@#$%()'[\]]+)"
-				//};
-				if (auto pTextEditorProp = std::dynamic_pointer_cast<TextEditorProperty>(m_pProp)) {
-					m_executableInfos.clear();
-					for (const auto& apr : pTextEditorProp->ExecutableAppearances) {
-						auto brush = pDirect->GetColorBrush(apr.SyntaxFormat.Color);
-						std::wsmatch match;
-						auto begin = m_text.cbegin();
-						auto re = std::wregex(apr.Regex);
-						UINT32 beginPos = 0;
-						while (std::regex_search(begin, m_text.cend(), match, re)) {
-							DWRITE_TEXT_RANGE range{ beginPos + (UINT32)match.position(), (UINT32)match.length() };
-							val->SetDrawingEffect(brush, range);
-						if (apr.SyntaxFormat.IsBold) {
-							val->SetFontWeight(DWRITE_FONT_WEIGHT_BOLD, range);
-						}
-							val->SetUnderline(apr.SyntaxFormat.IsUnderline, range);
-
-
-							m_executableInfos.push_back(ExecutableInfo{ match.str(), range.startPosition, range.length });
-							begin = match[0].second;
-							beginPos = std::distance(m_text.cbegin(), begin);
-						}
-					}
-				}
-			}
-		}
-		return val;
-
-	}, nullptr);
 	
 	OriginCharRects([&val = OriginCharRects.value, this]()->std::vector<CRectF>&{
 		if (val.empty()) {
 			CRectF pageRect(GetPageRect());
 			CSizeF size(m_pProp->IsWrap ? pageRect.Width() : FLT_MAX, FLT_MAX);
 
-			val = CDirect2DWrite::CalcCharRects(TextLayoutPtr(), m_text.size());
+			val = CDirect2DWrite::CalcCharRects(GetTextLayoutPtr(), m_text.size());
 			if (m_text.empty()) {
 				auto size = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"");
 				val.emplace_back(
@@ -701,10 +636,9 @@ void CTextBox::OnCreate(const CreateEvt& e)
 			} else {
 				GetTextStore()->OnTextChange(e.StartIndex, e.OldEndIndex, e.NewEndIndex);
 			}
-			if (m_changed) { m_changed(e.NewString); }
 			UpdateAll();
 		}
-	);
+	,(std::numeric_limits<sigslot::group_id>::max)());
 	m_carets.Subscribe(
 		[this](const std::tuple<int, int, int, int, int>& value)->void {
 			EnsureVisibleCaret();
@@ -731,11 +665,6 @@ void CTextBox::OnDestroy(const DestroyEvent& e)
 void CTextBox::OnClose(const CloseEvent& e)
 {
 	CD2DWControl::OnClose(e);
-
-	if (!m_isClosing) {
-		m_isClosing = true;
-		if (m_final) { m_final(m_text); }
-	}
 }
 
 void CTextBox::OnWndKillFocus(const KillFocusEvent& e)
@@ -1019,27 +948,6 @@ void CTextBox::Normal_LButtonDown(const LButtonDownEvent& e)
 			MoveCaretWithShift(index.value(), point);
 			return;
 		} else {
-			if (::GetAsyncKeyState(VK_CONTROL)) {
-				if (auto pos = GetActualCharPosFromPoint(e.PointInWnd)) {
-					auto iter = std::find_if(m_executableInfos.begin(), m_executableInfos.end(), [p = static_cast<UINT32>(pos.value())](const auto& info)->bool
-					{
-						return p >= info.StartPosition && p < info.StartPosition + info.Length;
-					});
-					if (iter != m_executableInfos.end()) {
-						auto exe = iter->Link;
-						exe = ((exe.front() == L'\"') ? L"" : L"\"") + boost::algorithm::trim_copy(exe) + ((exe.back() == L'\"') ? L"" : L"\"");
-						SHELLEXECUTEINFO execInfo = {};
-						execInfo.cbSize = sizeof(execInfo);
-						execInfo.hwnd = GetWndPtr()->m_hWnd;
-						execInfo.lpVerb = L"open";
-						execInfo.lpFile = exe.c_str();
-						execInfo.nShow = SW_SHOWDEFAULT;
-						::ShellExecuteEx(&execInfo);			
-						return;
-					}
-				}
-			}
-
 			MoveCaret(index.value(), point);
 		}
 	}
@@ -1121,20 +1029,6 @@ void CTextBox::Normal_SetCursor(const SetCursorEvent& e)
 			*(e.HandledPtr) = TRUE;
 			return;
 		} else {
-			if (::GetAsyncKeyState(VK_CONTROL)) {
-				if (auto pos = GetActualCharPosFromPoint(e.PointInWnd)) {
-					auto iter = std::find_if(m_executableInfos.begin(), m_executableInfos.end(), [p = static_cast<UINT32>(pos.value())](const auto& info)->bool
-					{
-						return p >= info.StartPosition && p < info.StartPosition + info.Length;
-
-					});
-					if (iter != m_executableInfos.end()) {
-						::SetCursor(::LoadCursor(NULL, IDC_HAND));
-						*(e.HandledPtr) = TRUE;
-						return;
-					}
-				}
-			}
 		}
 		::SetCursor(::LoadCursor(NULL, IDC_IBEAM));
 		*(e.HandledPtr) = TRUE;
@@ -1332,11 +1226,7 @@ bool CTextBox::PasteFromClipboard()
 
 CRectF CTextBox::GetRectInWnd() const
 {
-	if (m_pCell) {
-		return m_pCell->GetEditRect();
-	} else {
-		return CD2DWControl::GetRectInWnd();
-	}
+	return CD2DWControl::GetRectInWnd();
 }
 
 CRectF CTextBox::GetPageRect() const
@@ -1400,11 +1290,7 @@ void CTextBox::ClearText()
 
 bool CTextBox::GetIsVisible()const
 {
-	if (m_pCell) {
-		return m_pCell->GetIsVisible();
-	} else {
-		return true;
-	}
+	return true;
 }
 
 void CTextBox::Render()
@@ -1420,7 +1306,7 @@ void CTextBox::Render()
 		auto rect = ActualContentRect();
 		auto origin = rect.LeftTop();
 
-		GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->DrawTextLayout(origin, TextLayoutPtr(), GetWndPtr()->GetDirectPtr()->GetColorBrush(m_pProp->Format->Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
+		GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->DrawTextLayout(origin, GetTextLayoutPtr(), GetWndPtr()->GetDirectPtr()->GetColorBrush(m_pProp->Format->Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
 		//GetWndPtr()->GetDirectPtr()->DrawTextLayout((*(m_pProp->Format), m_text, GetActualContentRect());
 
 		auto low_iter = std::partition_point(charRects.begin(), charRects.end(), [rcWnd](const auto& x)->bool { return x.bottom < rcWnd.top; });
@@ -1643,7 +1529,7 @@ void CTextBox::UpdateScroll()
 
 void CTextBox::UpdateAll()
 {
-	TextLayoutPtr.value = nullptr;
+	m_pTextLayout = nullptr;
 	ResetOriginRects();
 	UpdateScroll();
 	ResetActualRects();
@@ -1660,128 +1546,3 @@ void CTextBox::TerminateCompositionString()
         }
     }
 }
-
-
-/***************/
-/* CTextEditor */
-/***************/
-
-CTextEditor::CTextEditor(
-	CD2DWControl* pParentControl,
-	const std::shared_ptr<TextEditorProperty>& spProp,
-	const std::shared_ptr<StatusBarProperty>& spStatusProp)
-	:CD2DWControl(pParentControl),
-	m_pProp(spProp),
-	m_spTextBox(std::make_shared<CTextBox>(this, nullptr, spProp, L"", nullptr, nullptr)),
-	m_spStatusBar(std::make_shared<CStatusBar>(this, spStatusProp))
-{
-	m_spTextBox->SetHasBorder(false);
-	m_spTextBox->SetIsScrollable(true);
-
-	m_spStatusBar->GetIsFocusable().set(false);
-	
-	m_open.Subscribe([this](HWND hWnd)
-	{
-		m_spTextBox->UpdateAll();
-	}, 
-	100);
-	m_encoding.Subscribe([this](const encoding_type& e)
-	{
-		m_spStatusBar->SetText(str2wstr(std::string(nameof::nameof_enum(e))));
-	});
-}
-
-std::tuple<CRectF, CRectF> CTextEditor::GetRects() const
-{
-	CRectF rcClient = GetRectInWnd();
-
-	FLOAT statusHeight = m_spStatusBar->MeasureSize(GetWndPtr()->GetDirectPtr()).height;
-	CRectF rcText(rcClient.left, rcClient.top, rcClient.right, rcClient.bottom - statusHeight);
-	CRectF rcStatus(rcClient.left, rcText.bottom, rcClient.right, rcClient.bottom);
-
-	if (rcStatus.left > rcStatus.right) {
-		auto i = 10;
-	}
-
-	return { rcText, rcStatus };
-}
-
-
-void CTextEditor::OnCreate(const CreateEvt& e)
-{
-	CD2DWControl::OnCreate(e);
-	auto [rcText, rcStatus] = GetRects();
-	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, rcText));
-	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
-}
-
-void CTextEditor::OnPaint(const PaintEvent& e)
-{
-	m_spTextBox->OnPaint(e);
-	m_spStatusBar->OnPaint(e);
-}
-
-void CTextEditor::OnRect(const RectEvent& e)
-{
-	CD2DWControl::OnRect(e);
-	auto [rcText, rcStatus] = GetRects();
-	m_spTextBox->OnRect(RectEvent(GetWndPtr(), rcText));
-	m_spStatusBar->OnRect(RectEvent(GetWndPtr(), rcStatus));
-	m_spTextBox->UpdateAll();
-}
-
-
-void CTextEditor::OnKeyDown(const KeyDownEvent& e)
-{
-	bool ctrl = ::GetAsyncKeyState(VK_CONTROL);
-	bool shift = ::GetAsyncKeyState(VK_SHIFT);
-	switch (e.Char) {
-		case 'O':
-			if (ctrl && shift) {
-				OpenAs();
-				*e.HandledPtr = TRUE;
-			} else if (ctrl) {
-				Open();
-				*e.HandledPtr = TRUE;
-			}
-			break;
-		case 'S':
-			if (ctrl && shift) {
-				SaveAs();
-				*e.HandledPtr = TRUE;
-			}else if (ctrl) {
-				Save();
-				*e.HandledPtr = TRUE;
-			}
-			break;
-		default:
-			CD2DWControl::OnKeyDown(e);
-			break;
-	}
-}
-
-void CTextEditor::Open()
-{
-	m_open.Execute(GetWndPtr()->m_hWnd);
-}
-
-void CTextEditor::OpenAs()
-{
-	m_open_as.Execute(GetWndPtr()->m_hWnd);
-}
-
-void CTextEditor::Save()
-{
-	m_save.Execute(GetWndPtr()->m_hWnd);
-}
-
-void CTextEditor::SaveAs()
-{
-	m_save_as.Execute(GetWndPtr()->m_hWnd);
-}
-
-void CTextEditor::Update()
-{
-	m_spTextBox->UpdateAll();
-}
-

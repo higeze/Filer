@@ -3,7 +3,6 @@
 #include "StatusBar.h"
 #include <msctf.h>
 #include "IBridgeTSFInterface.h"
-#include "CellProperty.h"
 #include "Timer.h"
 #include "MyWnd.h"
 #include "Scroll.h"
@@ -14,11 +13,11 @@
 #include "property.h"
 #include "encoding_type.h"
 
+struct TextBoxProperty;
 class CTextStore;
 class CTextEditSink;
 class IBridgeTSFInterface;
 class CGridView;
-class CTextCell;
 
 class CVScroll;
 class CHScroll;
@@ -41,12 +40,7 @@ bool in_range(const T& value, const T& min, const T& max)
 class CD2DWWindow;
 
 
-struct ExecutableInfo
-{
-	std::wstring Link = L"";
-	UINT32 StartPosition = 0;
-	UINT32 Length = 0;
-};
+
 
 
 
@@ -89,16 +83,12 @@ protected:
 	bool m_isFirstDrawCaret = false;
 	bool m_isClosing = false;
 	std::unique_ptr<CTextBoxStateMachine> m_pTextMachine;
-	std::vector<ExecutableInfo> m_executableInfos;
 
 public:
 	CTextBox(
 		CD2DWControl* pParentControl,
-		CTextCell* pCell,
-		const std::shared_ptr<TextboxProperty> pProp,
-		const std::wstring& text,
-		std::function<void(const std::wstring&)> changed,
-		std::function<void(const std::wstring&)> final);
+		const std::shared_ptr<TextBoxProperty> pProp,
+		const std::wstring& text);
 	virtual ~CTextBox();
 private:
 	void InitTSF();
@@ -113,7 +103,6 @@ public:
 
 	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets.get()); }
 	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets.get()); }
-	CTextCell* GetCellPtr() { return m_pCell; }
 
 public:
 	/******************/
@@ -239,7 +228,7 @@ public:
 	BOOL AddCompositionRenderInfo(int Start, int End, TF_DISPLAYATTRIBUTE* pda);
 public:
 
-	property<CComPtr<IDWriteTextLayout1>> TextLayoutPtr;
+	virtual const CComPtr<IDWriteTextLayout1>& GetTextLayoutPtr();
 
 
 	property<std::vector<CRectF>> OriginCharRects;
@@ -273,13 +262,11 @@ public:
 protected:
 	CTimer m_timer;
 	std::wstring m_initText;
-	CTextCell* m_pCell;
-	std::shared_ptr<TextboxProperty> m_pProp;
+	std::shared_ptr<TextBoxProperty> m_pProp;
 	std::function<std::wstring()> m_getter;
 	std::function<void(const std::wstring&)> m_setter;
-	std::function<void(const std::wstring&)> m_changed;
-	std::function<void(const std::wstring&)> m_final;
 
+	CComPtr<IDWriteTextLayout1> m_pTextLayout;
 
 	std::function<CComPtr<CTextEditSink>&()> GetTextEditSink;
 	std::function<CComPtr<CTextStore>&()> GetTextStore;
@@ -315,57 +302,4 @@ public:
 
 	static std::function<CComPtr<ITfCategoryMgr>& ()> GetCategoryMgr;
 
-};
-
-class CTextEditor :public CD2DWControl
-{
-private:
-	std::shared_ptr<CTextBox> m_spTextBox;
-	std::shared_ptr<CStatusBar>  m_spStatusBar;
-	std::shared_ptr<TextEditorProperty> m_pProp;
-
-	ReactiveWStringProperty m_path;
-	ReactiveProperty<encoding_type> m_encoding;
-	ReactiveCommand<HWND> m_save;
-	ReactiveCommand<HWND> m_open;
-	ReactiveCommand<HWND> m_save_as;
-	ReactiveCommand<HWND> m_open_as;
-
-public:
-	CTextEditor(
-		CD2DWControl* pParentControl,
-		const std::shared_ptr<TextEditorProperty>& spTextProp,
-		const std::shared_ptr<StatusBarProperty>& spStatusProp);
-
-	virtual ~CTextEditor() {}
-
-	std::shared_ptr<CTextBox> GetTextBoxPtr() const { return m_spTextBox; }
-	std::shared_ptr<CStatusBar>  GetStatusBarPtr() const { m_spStatusBar; }
-
-
-	ReactiveWStringProperty& GetPath() { return m_path; }
-	ReactiveProperty<encoding_type>& GetEncoding() { return m_encoding; }
-	ReactiveCommand<HWND>& GetOpenCommand() { return m_open; }
-	ReactiveCommand<HWND>& GetSaveCommand() { return m_save; }
-	ReactiveCommand<HWND>& GetOpenAsCommand() { return m_open_as; }
-	ReactiveCommand<HWND>& GetSaveAsCommand() { return m_save_as; }
-
-	//bool GetIsVisible() const override
-	//{
-	//	return true;
-	//}
-
-	std::tuple<CRectF, CRectF> GetRects() const;
-
-	virtual void OnCreate(const CreateEvt& e) override;
-	virtual void OnPaint(const PaintEvent& e) override;
-	virtual void OnRect(const RectEvent& e) override;
-
-	virtual void OnKeyDown(const KeyDownEvent& e) override;
-
-	void Open();
-	void OpenAs();
-	void Save();
-	void SaveAs();
-	void Update();
 };

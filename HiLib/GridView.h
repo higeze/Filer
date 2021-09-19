@@ -18,7 +18,7 @@ class CMouseStateMachine;
 
 class CVScroll;
 class CHScroll;
-class CTextBox;
+class CCellTextBox;
 
 struct GridViewStateMachine;
 
@@ -30,7 +30,7 @@ public:
 
 	static CMenu ContextMenu;
 protected:
-	std::shared_ptr<CTextBox> m_pEdit = nullptr;
+	std::shared_ptr<CCellTextBox> m_pEdit = nullptr;
 	std::shared_ptr<CCell> m_pJumpCell = nullptr;
 	CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
@@ -60,8 +60,8 @@ public:
 	std::shared_ptr<GridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	//CRectF GetUpdateRect()const { return m_rcUpdateRect; }
 	//void SetUpdateRect(CRectF rcUpdateRect) { m_rcUpdateRect = rcUpdateRect; }
-	std::shared_ptr<CTextBox> GetEditPtr() { return m_pEdit; }
-	void SetEditPtr(std::shared_ptr<CTextBox> pEdit) { m_pEdit = pEdit; }
+	std::shared_ptr<CCellTextBox> GetEditPtr() { return m_pEdit; }
+	void SetEditPtr(std::shared_ptr<CCellTextBox> pEdit) { m_pEdit = pEdit; }
 
 protected:
 	virtual void OnCellLButtonClk(const CellEventArgs& e) {}

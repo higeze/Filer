@@ -1,5 +1,6 @@
 #include "FilerApplication.h"
 #include "Textbox.h"
+#include "TextEditorProperty.h"
 #include "JsonSerializer.h"
 
 

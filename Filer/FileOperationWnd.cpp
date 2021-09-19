@@ -1,8 +1,10 @@
 #include "FileOperationWnd.h"
 #include "Textbox.h"
+#include "TextBoxProperty.h"
 #include "named_arguments.h"
 #include "ShellFile.h"
 #include "ShellFolder.h"
+#include "scope_exit.h"
 //TODOTODO
 //RenameWnd
 
@@ -85,45 +87,32 @@ void CCopyWnd::Copy()
 		}
 	}
 
-	m_future = std::async(std::launch::async, [](HWND hWnd, CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void {
+	m_future = std::async(std::launch::async, [](HWND hWnd, CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void
+	{
+		 auto exit = make_scope_exit([hWnd]() { ::SendMessage(hWnd, WM_CLOSE, NULL, NULL); });
+		 CComPtr<IFileOperation> pFileOperation = nullptr;
+		 FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
 
-		CComPtr<IFileOperation> pFileOperation = nullptr;
-		if (FAILED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {
-			return;
-		}
-
-		CComPtr<IShellItem2> pDestShellItem;
-		if (FAILED(::SHCreateItemFromIDList(destIDL.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem)))) {
-			return;
-		}
+		 CComPtr<IShellItem2> pDestShellItem;
+		 FAILED_RETURN(::SHCreateItemFromIDList(destIDL.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem)));
 
 		if (!noRenameIDLs.empty()) {
 			std::vector<LPITEMIDLIST> pidls;
 			std::transform(std::begin(noRenameIDLs), std::end(noRenameIDLs), std::back_inserter(pidls), [](const CIDL& x) {return x.ptr(); });
 
 			CComPtr<IShellItemArray> pItemAry = nullptr;
-			if (FAILED(SHCreateShellItemArrayFromIDLists(pidls.size(), (LPCITEMIDLIST*)(pidls.data()), &pItemAry))) {
-				return;
-			}
-			if (FAILED(pFileOperation->CopyItems(pItemAry, pDestShellItem))) {
-				return;
-			}
+			FAILED_RETURN(SHCreateShellItemArrayFromIDLists(pidls.size(), (LPCITEMIDLIST*)(pidls.data()), &pItemAry));
+			FAILED_RETURN(pFileOperation->CopyItems(pItemAry, pDestShellItem));
 		}
 
 		if (!renameIDLs.empty()) {
 			for (auto& renamePair : renameIDLs) {
 				CComPtr<IShellItem2> pSrcShellItem;
-				if (FAILED(::SHCreateItemFromIDList(renamePair.first.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pSrcShellItem)))) {
-					return;
-				}
-				if (FAILED(pFileOperation->CopyItem(pSrcShellItem, pDestShellItem, renamePair.second.c_str(), nullptr))) {
-					return;
-				}
+				FAILED_RETURN(::SHCreateItemFromIDList(renamePair.first.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pSrcShellItem)));
+				FAILED_RETURN(pFileOperation->CopyItem(pSrcShellItem, pDestShellItem, renamePair.second.c_str(), nullptr));
 			}
-
 		}
 		SUCCEEDED(pFileOperation->PerformOperations());
-		::SendMessage(hWnd, WM_CLOSE, NULL, NULL);
 
 	}, m_hWnd, m_destIDL, m_srcIDL, noRenameIDLs, renameIDLs);
 }
@@ -166,45 +155,33 @@ void CMoveWnd::Move()
 		}
 	}
 
-	m_future = std::async(std::launch::async, [](HWND hWnd, CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void {
+	m_future = std::async(std::launch::async, [](HWND hWnd, CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void
+	{
+		auto exit = make_scope_exit([hWnd]() { ::SendMessage(hWnd, WM_CLOSE, NULL, NULL); });
+		 CComPtr<IFileOperation> pFileOperation = nullptr;
+		 FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
 
-		CComPtr<IFileOperation> pFileOperation = nullptr;
-		if (FAILED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {
-			return;
-		}
+		 CComPtr<IShellItem2> pDestShellItem;
+		 FAILED_RETURN(::SHCreateItemFromIDList(destIDL.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem)));
 
-		CComPtr<IShellItem2> pDestShellItem;
-		if (FAILED(::SHCreateItemFromIDList(destIDL.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem)))) {
-			return;
-		}
+		 if (!noRenameIDLs.empty()) {
+			 std::vector<LPITEMIDLIST> pidls;
+			 std::transform(std::begin(noRenameIDLs), std::end(noRenameIDLs), std::back_inserter(pidls), [](const CIDL& x) { return x.ptr(); });
 
-		if (!noRenameIDLs.empty()) {
-			std::vector<LPITEMIDLIST> pidls;
-			std::transform(std::begin(noRenameIDLs), std::end(noRenameIDLs), std::back_inserter(pidls), [](const CIDL& x) {return x.ptr(); });
+			 CComPtr<IShellItemArray> pItemAry = nullptr;
+			 FAILED_RETURN(SHCreateShellItemArrayFromIDLists(pidls.size(), (LPCITEMIDLIST*)(pidls.data()), &pItemAry));
+			 FAILED_RETURN(pFileOperation->MoveItems(pItemAry, pDestShellItem));
+		 }
 
-			CComPtr<IShellItemArray> pItemAry = nullptr;
-			if (FAILED(SHCreateShellItemArrayFromIDLists(pidls.size(), (LPCITEMIDLIST*)(pidls.data()), &pItemAry))) {
-				return;
-			}
-			if (FAILED(pFileOperation->MoveItems(pItemAry, pDestShellItem))) {
-				return;
-			}
-		}
-
-		if (!renameIDLs.empty()) {
-			for (auto& renamePair : renameIDLs) {
-				CComPtr<IShellItem2> pSrcShellItem;
-				if (FAILED(::SHCreateItemFromIDList(renamePair.first.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pSrcShellItem)))) {
-					return;
-				}
-				if (FAILED(pFileOperation->MoveItem(pSrcShellItem, pDestShellItem, renamePair.second.c_str(), nullptr))) {
-					return;
-				}
-			}
-
-		}
+		 if (!renameIDLs.empty()) {
+			 for (auto& renamePair : renameIDLs) {
+				 CComPtr<IShellItem2> pSrcShellItem;
+				 FAILED_RETURN(::SHCreateItemFromIDList(renamePair.first.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pSrcShellItem)));
+				 FAILED_RETURN(pFileOperation->MoveItem(pSrcShellItem, pDestShellItem, renamePair.second.c_str(), nullptr));
+			 }
+		 }
 		SUCCEEDED(pFileOperation->PerformOperations());
-		::SendMessage(hWnd, WM_CLOSE, NULL, NULL);
+		
 
 	}, m_hWnd, m_destIDL, m_srcIDL, noRenameIDLs, renameIDLs);
 }
@@ -267,29 +244,23 @@ void CDeleteWnd::Delete()
 		delIDLs.push_back(spFile->GetAbsoluteIdl());
 	}
 
-	m_future = std::async(std::launch::async, [](HWND hWnd, std::vector<CIDL> delIDLs)->void {
+	m_future = std::async(std::launch::async, [](HWND hWnd, std::vector<CIDL> delIDLs)->void
+	{
+		auto exit = make_scope_exit([hWnd]() { ::SendMessage(hWnd, WM_CLOSE, NULL, NULL); });
 
 		CComPtr<IFileOperation> pFileOperation = nullptr;
-		if (FAILED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {
-			return;
-		}
+		FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
 
 		if (!delIDLs.empty()) {
 			std::vector<LPITEMIDLIST> pidls;
-			std::transform(std::begin(delIDLs), std::end(delIDLs), std::back_inserter(pidls), [](const CIDL& x) {return x.ptr(); });
+			std::transform(std::begin(delIDLs), std::end(delIDLs), std::back_inserter(pidls), [](const CIDL& x) { return x.ptr(); });
 
 			CComPtr<IShellItemArray> pItemAry = nullptr;
-			if (FAILED(SHCreateShellItemArrayFromIDLists(pidls.size(), (LPCITEMIDLIST*)(pidls.data()), &pItemAry))) {
-				return;
-			}
-			if (FAILED(pFileOperation->DeleteItems(pItemAry))) {
-				return;
-			}
+			FAILED_RETURN(SHCreateShellItemArrayFromIDLists(pidls.size(), (LPCITEMIDLIST*)(pidls.data()), &pItemAry));
+			FAILED_RETURN(pFileOperation->DeleteItems(pItemAry));
 		}
 
 		SUCCEEDED(pFileOperation->PerformOperations());
-		::SendMessage(hWnd, WM_CLOSE, NULL, NULL);
-
 	}, m_hWnd, delIDLs);
 }
 
@@ -299,13 +270,13 @@ void CDeleteWnd::Delete()
 
 CExeExtensionWnd::CExeExtensionWnd(
 		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		const std::shared_ptr<TextboxProperty>& spTextBoxProp,
+		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 		const std::shared_ptr<CShellFolder>& folder,
 		const std::vector<std::shared_ptr<CShellFile>>& files,
 		ExeExtension& exeExtension)
 	:CFileOperationWndBase(spFilerGridViewProp, CIDL(), std::vector<CIDL>()),
-	m_spTextPath(std::make_shared<CTextBox>(this, nullptr, spTextBoxProp, L"", nullptr, nullptr)),
-	m_spTextParam(std::make_shared<CTextBox>(this, nullptr, spTextBoxProp, L"", nullptr, nullptr)),
+	m_spTextPath(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
+	m_spTextParam(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
 	m_exeExtension(exeExtension),
 	m_pBindingPath(std::make_unique<CBinding>(m_exeExtension.Path, m_spTextPath->GetText())),
 	m_pBindingParam(std::make_unique<CBinding>(m_exeExtension.Parameter, m_spTextParam->GetText()))

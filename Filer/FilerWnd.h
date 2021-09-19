@@ -19,6 +19,7 @@
 #include "ReactiveProperty.h"
 #include "PdfView.h"
 #include "ExeExtensionProperty.h"
+#include "TextEditorProperty.h"
 //#include "KonamiCommander.h"
 #include "JsonSerializer.h"
 
@@ -305,8 +306,8 @@ private:
 			get_to_nothrow(j, "LeftFavorites", o.m_spLeftFavoritesView, &o, o.m_spFilerGridViewProp, o.m_spFavoritesProp);
 			get_to_nothrow(j, "RightFavorites", o.m_spRightFavoritesView, &o, o.m_spFilerGridViewProp, o.m_spFavoritesProp);
 			get_to_nothrow(j, "Launcher", o.m_spLauncher, &o, o.m_spFilerGridViewProp, o.m_spLauncherProp);
-			get_to_nothrow(j, "LeftView", o.m_spLeftView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp, o.m_spStatusBarProp);
-			get_to_nothrow(j, "RightView", o.m_spRightView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp, o.m_spStatusBarProp);
+			get_to_nothrow(j, "LeftView", o.m_spLeftView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
+			get_to_nothrow(j, "RightView", o.m_spRightView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
 			get_to_nothrow(j, "HorizontalSplitter", o.m_spSplitter, &o, o.m_spLeftView.get(), o.m_spRightView.get(), o.m_spSplitterProp);
 	#ifdef USE_PYTHON_EXTENSION
 			from_json_nothrow(j, "PythonExtensionProperty", m_spPyExProp);

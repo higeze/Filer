@@ -1,6 +1,6 @@
 #pragma once
 #include "TextCell.h"
-#include "Textbox.h"
+#include "CellTextBox.h"
 #include "Direct2DWrite.h"
 #include "FileIconCache.h"
 

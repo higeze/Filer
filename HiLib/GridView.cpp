@@ -24,7 +24,7 @@
 #include "SheetEventArgs.h"
 #include "Celler.h"
 #include "Scroll.h"
-#include "Textbox.h"
+#include "CellTextbox.h"
 #include "FindDlg.h"
 
 #include "TextCell.h"
@@ -1041,11 +1041,11 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 
 	if (auto pCell = dynamic_cast<CTextCell*>(e.CellPtr)) {
 
-		SetEditPtr(std::make_shared<CTextBox>(
+		SetEditPtr(std::make_shared<CCellTextBox>(
 			this,
-			pCell,
 			pCell->GetCellPropertyPtr(),
 			pCell->GetString(),
+			pCell,
 			[pCell](const std::basic_string<TCHAR>& str) -> void {
 				if (pCell->CanSetStringOnEditing()) {
 					pCell->SetString(str);

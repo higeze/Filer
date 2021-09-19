@@ -237,7 +237,7 @@ protected:
 public:
 	CExeExtensionWnd(
 		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		const std::shared_ptr<TextboxProperty>& spTextBoxProp,
+		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 		const std::shared_ptr<CShellFolder>& folder,
 		const std::vector<std::shared_ptr<CShellFile>>& files,
 		ExeExtension& exeExtension);

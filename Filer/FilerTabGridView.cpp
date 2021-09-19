@@ -20,7 +20,9 @@
 
 #include "D2DWWindow.h"
 #include "Dispatcher.h"
-#include "Textbox.h"
+#include "CellTextBox.h"
+#include "TextEditor.h"
+#include "TextEditorProperty.h"
 #include "MyFile.h"
 #include "FileIconCache.h"
 #include "ShellFileFactory.h"
@@ -331,14 +333,11 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	const std::shared_ptr<TabControlProperty>& spTabProp,
 	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, 
 	const std::shared_ptr<TextEditorProperty>& spTextEditorProp,
-	const std::shared_ptr<PdfViewProperty>& spPdfViewProp,
-	const std::shared_ptr<StatusBarProperty>& spStatusProp)
+	const std::shared_ptr<PdfViewProperty>& spPdfViewProp)
 	:CTabControl(pParentControl, spTabProp), 
 	m_spFilerGridViewProp(spFilerGridViewProp),
 	m_spTextEditorProp(spTextEditorProp),
-	m_spPdfViewProp(spPdfViewProp),
-	m_spStatusProp(spStatusProp)
-
+	m_spPdfViewProp(spPdfViewProp)
 {
 	//Command
 	m_commandMap.emplace(IDM_NEWFILERTAB, std::bind(&CFilerTabGridView::OnCommandNewFilerTab, this, phs::_1));
@@ -465,7 +464,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	};
 
 	//TextView Closure
-	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(this, m_spTextEditorProp, m_spStatusProp), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>& {
+	GetTextViewPtr = [spTextView = std::make_shared<CTextEditor>(this, m_spTextEditorProp), isInitialized = false, this]()mutable->std::shared_ptr<CTextEditor>& {
 		return spTextView;
 	};
 
