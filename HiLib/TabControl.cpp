@@ -510,7 +510,7 @@ void CTabControl::OnPaint(const PaintEvent& e)
 		//Content
 		const auto& contentRc = GetContentRect();
 		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetIsFocused()?*(m_spProp->SelectedFill):*(m_spProp->UnfocusSelectedFill), contentRc);
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_spProp->Line), contentRc);
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(m_spProp->Line), contentRc);
 		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), contentRc.LeftTop(), CPointF(contentRc.left, contentRc.bottom));
 		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.left, contentRc.bottom), CPointF(contentRc.right, contentRc.bottom));
 		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.right, contentRc.bottom), CPointF(contentRc.right, contentRc.top));

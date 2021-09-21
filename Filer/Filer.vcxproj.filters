@@ -455,7 +455,7 @@
     <ClInclude Include="CheckableFileGrid.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="IncrementalCopyWnd.h">
+    <ClInclude Include="IncrementalCopyDlg.h">
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="FilerGridViewWnd.h">
@@ -563,7 +563,7 @@
     <ClInclude Include="..\HiLib\RowIndexColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="FileOperationWnd.h">
+    <ClInclude Include="FileOperationDlg.h">
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="FilerBindGridView.h">
@@ -705,6 +705,12 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\DialogStateMachine.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\DialogProperty.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\future_then.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -901,7 +907,7 @@
     <ClCompile Include="CheckableFileGrid.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="IncrementalCopyWnd.cpp">
+    <ClCompile Include="IncrementalCopyDlg.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FilerGridViewWnd.cpp">
@@ -964,7 +970,7 @@
     <ClCompile Include="..\HiLib\RowIndexColumn.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="FileOperationWnd.cpp">
+    <ClCompile Include="FileOperationDlg.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\StatusBar.cpp">

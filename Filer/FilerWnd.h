@@ -20,6 +20,7 @@
 #include "PdfView.h"
 #include "ExeExtensionProperty.h"
 #include "TextEditorProperty.h"
+#include "DialogProperty.h"
 //#include "KonamiCommander.h"
 #include "JsonSerializer.h"
 
@@ -88,7 +89,7 @@ private:
 	std::shared_ptr<PdfViewProperty> m_spPdfViewProp;
 	std::shared_ptr<TabControlProperty> m_spTabControlProp;
 	std::shared_ptr<SplitterProperty> m_spSplitterProp;
-
+	std::shared_ptr<DialogProperty> m_spDialogProp;
 
 	//Controls
 	std::shared_ptr<CFilerTabGridView> m_spLeftView;
@@ -125,6 +126,8 @@ public:
 
 	std::shared_ptr<ExeExtensionProperty>& GetExeExtensionPropPtr() { return m_spExeExProp; }
 	void SetExeExtensionPropPtr(const std::shared_ptr<ExeExtensionProperty>& value) { m_spExeExProp = value; }
+
+	std::shared_ptr<DialogProperty>& GetDialogPropPtr(){ return m_spDialogProp; }
 
 
 	std::shared_ptr<CFavoritesGridView>& GetLeftFavoritesView() { return m_spLeftFavoritesView; }
@@ -282,7 +285,8 @@ private:
 			{"Launcher", o.m_spLauncher},
 			{"LeftView", o.m_spLeftView },
 			{"RightView", o.m_spRightView },
-			{"HorizontalSplitter", o.m_spSplitter }
+			{"HorizontalSplitter", o.m_spSplitter },
+			{"DialogProperty", o.m_spDialogProp}
 	#ifdef USE_PYTHON_EXTENSION
 			{ "PythonExtensionProperty", m_spPyExProp }
 	#endif
@@ -309,6 +313,7 @@ private:
 			get_to_nothrow(j, "LeftView", o.m_spLeftView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
 			get_to_nothrow(j, "RightView", o.m_spRightView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
 			get_to_nothrow(j, "HorizontalSplitter", o.m_spSplitter, &o, o.m_spLeftView.get(), o.m_spRightView.get(), o.m_spSplitterProp);
+			get_to_nothrow(j, "DialogProp", o.m_spDialogProp);
 	#ifdef USE_PYTHON_EXTENSION
 			from_json_nothrow(j, "PythonExtensionProperty", m_spPyExProp);
 	#endif

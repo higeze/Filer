@@ -1,4 +1,6 @@
-#include "IncrementalCopyWnd.h"
+#include "IncrementalCopyDlg.h"
+#include "D2DWWindow.h"
+#include "Dispatcher.h"
 #include "ProgressBar.h"
 #include "Button.h"
 #include "CheckableFileGrid.h"
@@ -6,11 +8,13 @@
 #include "ShellFunction.h"
 #include "ShellFileFactory.h"
 #include "ResourceIDFactory.h"
-#include "Dispatcher.h"
 
-CIncrementalCopyWnd::CIncrementalCopyWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+CIncrementalCopyDlg::CIncrementalCopyDlg(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<DialogProperty>& spDialogProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CD2DWWindow(), 
+	:CD2DWDialog(pParentControl, spDialogProp), 
 	m_destIDL(destIDL), m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs),
 	m_spFileGrid(std::make_shared<CCheckableFileGrid>(this, spFilerGridViewProp)),
 	m_spProgressbar(std::make_shared<CProgressBar>(this, std::make_shared<ProgressProperty>())),
@@ -18,20 +22,7 @@ CIncrementalCopyWnd::CIncrementalCopyWnd(const std::shared_ptr<FilerGridViewProp
 	m_spButtonCancel(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
 	m_spButtonClose(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>()))
 {
-	m_rca
-		.lpszClassName(L"CIncrementalCopyWnd")
-		.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
-		.hCursor(::LoadCursor(NULL, IDC_ARROW))
-		.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
-
-	DWORD dwStyle = WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-	if (m_isModal)dwStyle |= WS_POPUP;
-
-	m_cwa
-		.lpszWindowName(L"Incremental Copy")
-		.lpszClassName(L"CIncrementalCopyWnd")
-		.dwStyle(dwStyle);
-
+	m_title.set(L"Incremental Copy");
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
 	{
 		m_doFuture = std::async(std::launch::async, [idlMap = m_idlMap]()->void {
@@ -68,19 +59,21 @@ CIncrementalCopyWnd::CIncrementalCopyWnd(const std::shared_ptr<FilerGridViewProp
 
 	m_spButtonClose->GetCommand().Subscribe([this]()->void
 	{
-		SendMessage(WM_CLOSE, NULL, NULL);
+		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	});
 	m_spButtonClose->GetContent().set(L"Close");
 	m_spButtonCancel->GetContent().set(L"Cancel");
 
 }
 
-CIncrementalCopyWnd::~CIncrementalCopyWnd() = default;
+CIncrementalCopyDlg::~CIncrementalCopyDlg() = default;
 
 
-std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> CIncrementalCopyWnd::GetRects()
+std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> CIncrementalCopyDlg::GetRects()
 {
 	CRectF rc = GetRectInWnd();
+	CRectF rcTitle = GetTitleRect();
+	rc.top = rcTitle.bottom;
 	CRectF rcProgress(rc.left + 5.f, rc.top + 5.f, rc.right - 5.f, rc.top + 30.f);
 	CRectF rcGrid(rc.left + 5.f, rcProgress.bottom + 5.f, rc.right - 5.f, rc.bottom - 30.f);
 	CRectF rcBtnClose(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
@@ -90,20 +83,17 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> CIncrementalCopyWnd::GetRects
 }
 
 
-void CIncrementalCopyWnd::OnCreate(const CreateEvt& e)
+void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 {
-	//Modal Window
-	if (m_isModal && GetParent()) {
-		::EnableWindow(GetParent(), FALSE);
-	}
-
+	//Dlg
+	CD2DWDialog::OnCreate(e);
 	//Size
 	auto [rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose] = GetRects();
-	m_spProgressbar->OnCreate(CreateEvt(this, this, rcProgress));
-	m_spFileGrid->OnCreate(CreateEvt(this, this, rcGrid));
-	m_spButtonDo->OnCreate(CreateEvt(this, this, rcBtnDo));
-	m_spButtonCancel->OnCreate(CreateEvt(this, this, rcBtnCancel));
-	m_spButtonClose->OnCreate(CreateEvt(this, this, rcBtnClose));
+	m_spProgressbar->OnCreate(CreateEvt(GetWndPtr(), this, rcProgress));
+	m_spFileGrid->OnCreate(CreateEvt(GetWndPtr(), this, rcGrid));
+	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnDo));
+	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
+	m_spButtonClose->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnClose));
 
 
 	m_spButtonDo->GetIsEnabled().set(false);
@@ -114,10 +104,10 @@ void CIncrementalCopyWnd::OnCreate(const CreateEvt& e)
 	//Start comparison
 	m_compFuture = std::async(std::launch::async, [this]()->void {
 		std::function<void()> readMax = [this]()->void {
-			GetDispatcherPtr()->PostInvoke([this] { OnIncrementMax(); });
+			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this] { OnIncrementMax(); });
 		};
 		std::function<void()> readValue = [this]()->void {
-			GetDispatcherPtr()->PostInvoke([this] { OnIncrementValue(); });
+			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this] { OnIncrementValue(); });
 		};
 		std::function<void(const CIDL&, const CIDL&)> find = [this](const CIDL& destIDL, const CIDL& srcIDL)->void {
 			auto iter = m_idlMap.find(destIDL);
@@ -127,7 +117,7 @@ void CIncrementalCopyWnd::OnCreate(const CreateEvt& e)
 				m_idlMap.insert(std::make_pair(destIDL, std::vector<CIDL>{srcIDL}));
 			}
 			//This should be Send Message to syncro
-			GetDispatcherPtr()->PostInvoke([this, srcIDL] { OnAddItem(srcIDL); });
+			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this, srcIDL] { OnAddItem(srcIDL); });
 		};
 
 		GetProgressBarPtr()->SetMin(0);
@@ -156,54 +146,39 @@ void CIncrementalCopyWnd::OnCreate(const CreateEvt& e)
 	});
 }
 
-void CIncrementalCopyWnd::OnClose(const CloseEvent& e)
+void CIncrementalCopyDlg::OnRect(const RectEvent& e)
 {
-	CD2DWWindow::OnClose(e);
-
-	//Modal Window
-	if (m_isModal && GetParent()) {
-		::EnableWindow(GetParent(), TRUE);
-	}
-	//Foreground Owner window
-	if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
-		::SetForegroundWindow(hWnd);
-	}
-	DestroyWindow();
-}
-
-void CIncrementalCopyWnd::OnRect(const RectEvent& e)
-{
-	CD2DWWindow::OnRect(e);
+	CD2DWDialog::OnRect(e);
 
 	auto [rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose] = GetRects();
-	m_spProgressbar->OnRect(RectEvent(this, rcProgress));
-	m_spFileGrid->OnRect(RectEvent(this, rcGrid));
-	m_spButtonDo->OnRect(RectEvent(this, rcBtnDo));
-	m_spButtonCancel->OnRect(RectEvent(this, rcBtnCancel));
-	m_spButtonClose->OnRect(RectEvent(this, rcBtnClose));
+	m_spProgressbar->OnRect(RectEvent(GetWndPtr(), rcProgress));
+	m_spFileGrid->OnRect(RectEvent(GetWndPtr(), rcGrid));
+	m_spButtonDo->OnRect(RectEvent(GetWndPtr(), rcBtnDo));
+	m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
+	m_spButtonClose->OnRect(RectEvent(GetWndPtr(), rcBtnClose));
 }
 
-void CIncrementalCopyWnd::OnAddItem(const CIDL& newIdl )
+void CIncrementalCopyDlg::OnAddItem(const CIDL& newIdl )
 {
 	m_spFileGrid->AddItem(CShellFileFactory::GetInstance()->CreateShellFilePtr(
 		shell::DesktopBindToShellFolder(newIdl.CloneParentIDL()),
 		newIdl.CloneParentIDL(),
 		newIdl.CloneLastID()));
-	InvalidateRect(NULL, FALSE);
+	GetWndPtr()->InvalidateRect(NULL, FALSE);
 	//m_periodicTimer.runperiodic([this](){InvalidateRect(NULL, FALSE); }, std::chrono::milliseconds(50));
 }
 
-void CIncrementalCopyWnd::OnIncrementMax()
+void CIncrementalCopyDlg::OnIncrementMax()
 {
 	m_spProgressbar->IncrementMax();
-	InvalidateRect(NULL, FALSE);
+	GetWndPtr()->InvalidateRect(NULL, FALSE);
 	//m_periodicTimer.runperiodic([this](){InvalidateRect(NULL, FALSE); }, std::chrono::milliseconds(50));
 }
 
-void CIncrementalCopyWnd::OnIncrementValue()
+void CIncrementalCopyDlg::OnIncrementValue()
 {
 	m_spProgressbar->IncrementValue();
-	InvalidateRect(NULL, FALSE);
+	GetWndPtr()->InvalidateRect(NULL, FALSE);
 	//m_periodicTimer.runperiodic([this](){InvalidateRect(NULL, FALSE); }, std::chrono::milliseconds(50));
 }
 

@@ -12,7 +12,7 @@ void CCheckBoxCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 	SolidLine line(0.0, 0.0, 0.0, 1.0, 1.0);
 	rcPaint.right = rcPaint.left + 16.f;
 	rcPaint.bottom = rcPaint.top + 16.f;
-	pDirect->DrawSolidRectangle(line, rcPaint);
+	pDirect->DrawSolidRectangleByLine(line, rcPaint);
 	switch(GetCheckBoxState()){
 		case CheckBoxState::True:
 		{

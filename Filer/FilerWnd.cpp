@@ -36,7 +36,7 @@
 #include "MouseStateMachine.h"
 #include <Dbt.h>
 #include "PdfView.h"
-#include "FileOperationWnd.h"
+#include "FileOperationDlg.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -235,12 +235,13 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 					return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, std::get<ExeExtension>(exeex).Name) == idCmd;
 				});
 				if (iter != m_spExeExProp->ExeExtensions.end()) {
-					auto pWnd = new CExeExtensionWnd(m_spFilerGridViewProp, m_spTextEditorProp, folder, files, std::get<ExeExtension>(*iter));
+					auto spDlg = std::make_shared<CExeExtensionDlg>(
+						this,
+						GetDialogPropPtr(),
+						m_spFilerGridViewProp, m_spTextEditorProp, folder, files, std::get<ExeExtension>(*iter));
 
-					pWnd->CreateOnCenterOfParent(GetWndPtr()->m_hWnd, CSize(300, 400));
-					pWnd->SetIsDeleteOnFinalMessage(true);
-					pWnd->ShowWindow(SW_SHOW);
-					pWnd->UpdateWindow();
+					spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
+					SetFocusedControlPtr(spDlg);
 					return true;
 				}
 

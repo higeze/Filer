@@ -322,6 +322,7 @@
     <ClInclude Include="..\HiLib\FindDlgResource.h" />
     <ClInclude Include="..\HiLib\FontCell.h" />
     <ClInclude Include="..\HiLib\FunctionMenuItem.h" />
+    <ClInclude Include="..\HiLib\future_then.h" />
     <ClInclude Include="..\HiLib\GridView.h" />
     <ClInclude Include="..\HiLib\GridViewProperty.h" />
     <ClInclude Include="..\HiLib\GridViewResource.h" />
@@ -428,6 +429,7 @@
     <ClInclude Include="..\HiLib\UpdateResource.h" />
     <ClInclude Include="..\HiLib\HiLibResource.h" />
     <ClInclude Include="..\HiLib\scope_exit.h" />
+    <ClInclude Include="..\HiLib\DialogProperty.h" />
     <ClInclude Include="CheckableFileGrid.h" />
     <ClInclude Include="DriveSizeCell.h" />
     <ClInclude Include="ExeExtensionProperty.h" />
@@ -436,7 +438,7 @@
     <ClInclude Include="LauncherItemDragger.h" />
     <ClInclude Include="LauncherProperty.h" />
     <ClInclude Include="DropTarget.h" />
-    <ClInclude Include="FileOperationWnd.h" />
+    <ClInclude Include="FileOperationDlg.h" />
     <ClInclude Include="FilerBindGridView.h" />
     <ClInclude Include="FilerGridViewProperty.h" />
     <ClInclude Include="FilerGridViewWnd.h" />
@@ -447,7 +449,7 @@
     <ClInclude Include="LauncherRow.h" />
     <ClInclude Include="LauncherCell.h" />
     <ClInclude Include="PathRow.h" />
-    <ClInclude Include="IncrementalCopyWnd.h" />
+    <ClInclude Include="IncrementalCopyDlg.h" />
     <ClInclude Include="RenameInfo.h" />
     <ClInclude Include="SearchWnd.h" />
     <ClInclude Include="ShellFileFactory.h" />
@@ -571,14 +573,14 @@
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
     <ClCompile Include="DriveSizeCell.cpp" />
     <ClCompile Include="DropTarget.cpp" />
-    <ClCompile Include="FileOperationWnd.cpp" />
+    <ClCompile Include="FileOperationDlg.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />
     <ClCompile Include="FilerApplication.cpp" />
     <ClCompile Include="FilerGridViewWnd.cpp" />
     <ClCompile Include="FilerWndStatusBar.cpp" />
     <ClCompile Include="LauncherGridView.cpp" />
     <ClCompile Include="PathRow.cpp" />
-    <ClCompile Include="IncrementalCopyWnd.cpp" />
+    <ClCompile Include="IncrementalCopyDlg.cpp" />
     <ClCompile Include="SearchWnd.cpp" />
     <ClCompile Include="ShellFileFactory.cpp" />
     <ClCompile Include="ShellZipFolder.cpp" />

@@ -1,6 +1,5 @@
 #pragma once
-#include "MyWnd.h"
-#include "Direct2DWrite.h"
+#include "D2DWDialog.h"
 #include "FilerGridViewProperty.h"
 #include "ShellFunction.h"
 #include "DeadlineTimer.h"
@@ -12,11 +11,9 @@ class CButton;
 class CIDL;
 class CCheckableFileGrid;
 
-class CIncrementalCopyWnd :public CD2DWWindow
+class CIncrementalCopyDlg :public CD2DWDialog
 {
 private:
-	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
-
 	std::shared_ptr<CProgressBar> m_spProgressbar;
 	std::shared_ptr<CCheckableFileGrid> m_spFileGrid;
 
@@ -41,16 +38,18 @@ private:
 		shell::IdlHash, shell::IdlEqual> m_idlMap;
 
 public:
-	CIncrementalCopyWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	CIncrementalCopyDlg(
+		CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
-	~CIncrementalCopyWnd();
+	~CIncrementalCopyDlg();
 	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();
 	std::shared_ptr<CProgressBar>& GetProgressBarPtr() { return m_spProgressbar; }
 
-	void OnCreate(const CreateEvt& e);
-	void OnClose(const CloseEvent& e);
-	void OnRect(const RectEvent& e);
-	void OnIncrementMax();
-	void OnIncrementValue();
-	void OnAddItem(const CIDL& newIdl);
+	virtual void OnCreate(const CreateEvt& e);
+	virtual void OnRect(const RectEvent& e);
+	virtual void OnIncrementMax();
+	virtual void OnIncrementValue();
+	virtual void OnAddItem(const CIDL& newIdl);
 };

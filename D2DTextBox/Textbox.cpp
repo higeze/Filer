@@ -700,9 +700,9 @@ void CTextBox::Normal_Paint(const PaintEvent& e)
 	CRectF rcBorder(GetRectInWnd());
 	rcBorder.DeflateRect(1.0f, 1.0f);
 	if (GetIsFocused()) {
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->FocusedLine), rcBorder);
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(m_pProp->FocusedLine), rcBorder);
 	} else if (m_hasBorder) {
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->Line), rcBorder);
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(m_pProp->Line), rcBorder);
 	} else {
 		// Do nothing
 	}

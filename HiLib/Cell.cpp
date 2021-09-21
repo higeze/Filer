@@ -161,7 +161,7 @@ void CCell::PaintBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 
 void CCell::PaintLine(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	pDirect->DrawSolidRectangle(*(m_spCellProperty->Line), rcPaint);
+	pDirect->DrawSolidRectangleByLine(*(m_spCellProperty->Line), rcPaint);
 }
 
 void CCell::PaintFocus(CDirect2DWrite* pDirect, CRectF rcPaint)
@@ -169,7 +169,7 @@ void CCell::PaintFocus(CDirect2DWrite* pDirect, CRectF rcPaint)
 	if(GetIsFocused()){
 		auto halfLineWidth = m_spCellProperty->Line->Width*0.5f;
 		rcPaint.DeflateRect(halfLineWidth, halfLineWidth);
-		pDirect->DrawSolidRectangle(*(m_spCellProperty->FocusedLine), rcPaint);
+		pDirect->DrawSolidRectangleByLine(*(m_spCellProperty->FocusedLine), rcPaint);
 	}
 }
 

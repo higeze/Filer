@@ -20,7 +20,7 @@ void CProgressBar::OnPaint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->ForegroundFill, foreRect);
 
 	//Draw border
-	GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(m_spStatusBarProp->Border, backRect);
+	GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(m_spStatusBarProp->Border, backRect);
 
 	//Draw text
 	std::wstring text = boost::lexical_cast<std::wstring>(GetValue()) + L" /  " + boost::lexical_cast<std::wstring>(GetMax() - GetMin());

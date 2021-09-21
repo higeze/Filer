@@ -725,7 +725,13 @@
 	{
 		auto rect = LayoutRound(rc);
 
-		//GetD2DDeviceContext()->DrawRectangle(LayoutRound(rect), GetColorBrush(line.Color), line.Width);
+		GetD2DDeviceContext()->DrawRectangle(LayoutRound(rect), GetColorBrush(line.Color), line.Width);
+	}
+
+	void CDirect2DWrite::DrawSolidRectangleByLine(const SolidLine& line, const D2D1_RECT_F& rc)
+	{
+		auto rect = LayoutRound(rc);
+
 		GetD2DDeviceContext()->DrawLine(CPointF(rect.left, rect.top), CPointF(rect.right, rect.top), GetColorBrush(line.Color), line.Width);
 		GetD2DDeviceContext()->DrawLine(CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom), GetColorBrush(line.Color), line.Width);
 		GetD2DDeviceContext()->DrawLine(CPointF(rect.right, rect.bottom), CPointF(rect.left, rect.bottom), GetColorBrush(line.Color), line.Width);

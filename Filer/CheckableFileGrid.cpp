@@ -43,7 +43,7 @@
 #include "ShellFileFactory.h"
 
 #include "ShellFunction.h"
-#include "IncrementalCopyWnd.h"
+#include "IncrementalCopyDlg.h"
 #include "ProgressBar.h"
 #include "ResourceIDFactory.h"
 #include "Textbox.h"

@@ -458,8 +458,8 @@ namespace std
 		void DrawTextLayout(const FormatF& fnc, const std::wstring& text, const D2D1_POINT_2F& origin, const D2D1_SIZE_F& size);
 		void DrawTextLayout(const FormatF& fnc, const std::wstring& text, const CRectF& rect);
 		void DrawTextInRect(const FormatF& fnc, const std::wstring& text, const CRectF& rect);
-
-		void DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rect);
+		void DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rc);
+		void DrawSolidRectangleByLine(const SolidLine& line, const D2D1_RECT_F& rect);
 		void FillSolidRectangle(const SolidFill& fill, const D2D1_RECT_F& rect);
 		void DrawSolidRoundedRectangle(const SolidLine& line, const D2D1_RECT_F& rect, FLOAT radiusX, FLOAT radiusY);
 		void FillSolidRoundedRectangle(const SolidFill& fill, const D2D1_RECT_F& rect, FLOAT radiusX, FLOAT radiusY);

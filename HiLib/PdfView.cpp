@@ -163,7 +163,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	if (GetIsFocused() ){
 		CRectF rcFocus(GetRectInWnd());
 		rcFocus.DeflateRect(1.0f, 1.0f);
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(m_pProp->FocusedLine), rcFocus);
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(m_pProp->FocusedLine), rcFocus);
 	}
 
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
@@ -186,7 +186,7 @@ void CPdfView::Normal_KeyDown(const KeyDownEvent& e)
 
 void CPdfView::Normal_SetCursor(const SetCursorEvent& e)
 {
-	SendPtInRect(&CUIElement::OnSetCursor, e);
+	SendPtInRectReverse(&CUIElement::OnSetCursor, e);
 	if (!(*e.HandledPtr)) {
 		HCURSOR hCur = ::LoadCursor(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_CURSOR_HANDOPEN));
 		::SetCursor(hCur);

@@ -1,6 +1,8 @@
 #include "D2DWControl.h"
 #include "D2DWWindow.h"
 
+
+
 void CD2DWControl::SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl)
 {
 	if (m_pFocusedControl != spControl && spControl->GetIsFocusable().get()) {
@@ -52,6 +54,8 @@ bool CD2DWControl::GetIsFocused()const
 /* UI Message */
 /**************/
 
+//
+
 void CD2DWControl::OnCreate(const CreateEvt& e)
 {
 	m_pParentControl = e.ParentPtr;
@@ -62,7 +66,8 @@ void CD2DWControl::OnCreate(const CreateEvt& e)
 
 void CD2DWControl::OnClose(const CloseEvent& e)
 {
-	OnDestroy(e.WndPtr);
+	SendCopyAll(&CD2DWControl::OnClose, e);
+	OnDestroy(DestroyEvent(e.WndPtr));
 }
 
 void CD2DWControl::OnDestroy(const DestroyEvent& e)
@@ -70,20 +75,20 @@ void CD2DWControl::OnDestroy(const DestroyEvent& e)
 	GetParentControlPtr()->EraseChildControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
 }
 
-void CD2DWControl::OnLButtonDown(const LButtonDownEvent& e) { SendPtInRect(&CD2DWControl::OnLButtonDown, e, true); }
-void CD2DWControl::OnLButtonUp(const LButtonUpEvent& e) { SendPtInRect(&CD2DWControl::OnLButtonUp, e, true); }
-void CD2DWControl::OnLButtonClk(const LButtonClkEvent& e) { SendPtInRect(&CD2DWControl::OnLButtonClk, e); }
-void CD2DWControl::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { SendPtInRect(&CD2DWControl::OnLButtonSnglClk, e); }
-void CD2DWControl::OnLButtonDblClk(const LButtonDblClkEvent& e) { SendPtInRect(&CD2DWControl::OnLButtonDblClk, e); }
+void CD2DWControl::OnLButtonDown(const LButtonDownEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonDown, e, true); }
+void CD2DWControl::OnLButtonUp(const LButtonUpEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonUp, e, true); }
+void CD2DWControl::OnLButtonClk(const LButtonClkEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonClk, e); }
+void CD2DWControl::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonSnglClk, e); }
+void CD2DWControl::OnLButtonDblClk(const LButtonDblClkEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonDblClk, e); }
 
-void CD2DWControl::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { SendCapturePtInRect(&CD2DWControl::OnLButtonBeginDrag, e); }
-void CD2DWControl::OnLButtonEndDrag(const LButtonEndDragEvent& e) { SendCapturePtInRect(&CD2DWControl::OnLButtonEndDrag, e); }
+void CD2DWControl::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { SendCapturePtInRectReverse(&CD2DWControl::OnLButtonBeginDrag, e); }
+void CD2DWControl::OnLButtonEndDrag(const LButtonEndDragEvent& e) { SendCapturePtInRectReverse(&CD2DWControl::OnLButtonEndDrag, e); }
 
-void CD2DWControl::OnRButtonDown(const RButtonDownEvent& e) { SendPtInRect(&CD2DWControl::OnRButtonDown, e, true); }
-void CD2DWControl::OnContextMenu(const ContextMenuEvent& e) { SendPtInRect(&CD2DWControl::OnContextMenu, e); }
+void CD2DWControl::OnRButtonDown(const RButtonDownEvent& e) { SendPtInRectReverse(&CD2DWControl::OnRButtonDown, e, true); }
+void CD2DWControl::OnContextMenu(const ContextMenuEvent& e) { SendPtInRectReverse(&CD2DWControl::OnContextMenu, e); }
 
-void CD2DWControl::OnMButtonDown(const MButtonDownEvent& e) { SendPtInRect(&CD2DWControl::OnMButtonDown, e, true); }
-void CD2DWControl::OnMButtonUp(const MButtonUpEvent& e) { SendPtInRect(&CD2DWControl::OnMButtonUp, e, true); }
+void CD2DWControl::OnMButtonDown(const MButtonDownEvent& e) { SendPtInRectReverse(&CD2DWControl::OnMButtonDown, e, true); }
+void CD2DWControl::OnMButtonUp(const MButtonUpEvent& e) { SendPtInRectReverse(&CD2DWControl::OnMButtonUp, e, true); }
 
 
 void CD2DWControl::OnMouseMove(const MouseMoveEvent& e)
@@ -92,12 +97,12 @@ void CD2DWControl::OnMouseMove(const MouseMoveEvent& e)
 		GetWndPtr()->GetCapturedControlPtr()->OnMouseMove(e);
 	} else {
 
-		auto iter = std::find_if(m_childControls.cbegin(), m_childControls.cend(),
+		auto iter = std::find_if(m_childControls.crbegin(), m_childControls.crend(),
 			[&](const std::shared_ptr<CD2DWControl>& x) {
 				return x->GetIsEnabled() && x->GetRectInWnd().PtInRect(e.PointInWnd);
 			});
 
-		if (iter == m_childControls.cend()) {//Mouse is NOT on child control, but on me.
+		if (iter == m_childControls.crend()) {//Mouse is NOT on child control, but on me.
 			if (GetMouseControlPtr()) {
 				GetMouseControlPtr()->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
 			}
@@ -122,20 +127,20 @@ void CD2DWControl::OnMouseLeave(const MouseLeaveEvent& e)
 	SetMouseControlPtr(nullptr);
 }
 
-void CD2DWControl::OnMouseWheel(const MouseWheelEvent& e) { SendPtInRect(&CD2DWControl::OnMouseWheel, e); }
+void CD2DWControl::OnMouseWheel(const MouseWheelEvent& e) { SendPtInRectReverse(&CD2DWControl::OnMouseWheel, e); }
 
 void CD2DWControl::OnSetCursor(const SetCursorEvent& e)
 {
 	if (!GetWndPtr()->GetCapturedControlPtr()) {
-		SendPtInRect(&CD2DWControl::OnSetCursor, e);
+		SendPtInRectReverse(&CD2DWControl::OnSetCursor, e);
 	}
 }
 
 void CD2DWControl::OnSetFocus(const SetFocusEvent& e) { SendFocused(&CD2DWControl::OnSetFocus, e); }
 void CD2DWControl::OnKillFocus(const KillFocusEvent& e) { SendFocused(&CD2DWControl::OnKillFocus, e); }
 
-void CD2DWControl::OnWndSetFocus(const SetFocusEvent& e) { SendAll(&CD2DWControl::OnWndSetFocus, e); }
-void CD2DWControl::OnWndKillFocus(const KillFocusEvent& e) { SendAll(&CD2DWControl::OnWndKillFocus, e); }
+void CD2DWControl::OnWndSetFocus(const SetFocusEvent& e) { SendAllReverse(&CD2DWControl::OnWndSetFocus, e); }
+void CD2DWControl::OnWndKillFocus(const KillFocusEvent& e) { SendAllReverse(&CD2DWControl::OnWndKillFocus, e); }
 
 void CD2DWControl::OnKeyDown(const KeyDownEvent& e)
 {
@@ -147,13 +152,13 @@ void CD2DWControl::OnKeyDown(const KeyDownEvent& e)
 			case VK_TAB:
 				{
 					auto shift = ::GetAsyncKeyState(VK_SHIFT);
-					auto focused_iter = std::find(m_childControls.cbegin(), m_childControls.cend(), GetFocusedControlPtr());
-					if (focused_iter == m_childControls.cend()) {
+					auto focused_iter = std::find(m_childControls.crbegin(), m_childControls.crend(), GetFocusedControlPtr());
+					if (focused_iter == m_childControls.crend()) {
 						break;
 					} else {
 						focused_iter++;
 					}
-					for (auto iter = focused_iter; iter != m_childControls.cend(); ++iter) {
+					for (auto iter = focused_iter; iter != m_childControls.crend(); ++iter) {
 						if ((*iter)->GetIsTabStop()) {
 							SetFocusedControlPtr((*focused_iter));
 							*(e.HandledPtr) = TRUE;
@@ -185,5 +190,15 @@ void CD2DWControl::OnCommand(const CommandEvent& e)
 		m_pFocusedControl->OnCommand(e);
 	}
 	GetWndPtr()->InvalidateRect(NULL, FALSE);
+}
+
+CRectF CD2DWControl::CalcCenterRectF(const CSizeF& size)
+{
+	auto rc = GetRectInWnd();
+	return CRectF(
+		rc.left + (rc.Width() - size.width) / 2,
+		rc.top + (rc.Height() - size.height) / 2,
+		rc.left + (rc.Width() + size.width) / 2,
+		rc.top + (rc.Height() + size.height) / 2);
 }
 

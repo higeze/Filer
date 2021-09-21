@@ -1,6 +1,7 @@
 #pragma once
-#include "MyWnd.h"
-#include "Direct2DWrite.h"
+#include "D2DWWindow.h"
+#include "D2DWDialog.h"
+#include "D2DWControl.h"
 #include "FilerGridViewProperty.h"
 #include "ShellFunction.h"
 #include "DeadlineTimer.h"
@@ -17,6 +18,7 @@
 #include "ReactiveProperty.h"
 #include "Textbox.h"
 #include "ExeExtensionProperty.h"
+#include "Dispatcher.h"
 
 template<typename... TItems>
 class CFileOperationGridView :public CFilerBindGridView<TItems...>
@@ -34,9 +36,11 @@ class CFileOperationGridView :public CFilerBindGridView<TItems...>
 	}
 };
 
-
+/*************************/
+/* CFileOperationDlgBase */
+/*************************/
 template<typename... TItems>
-class CFileOperationWndBase: public CD2DWWindow
+class CFileOperationDlgBase: public CD2DWDialog
 {
 private:
 
@@ -61,64 +65,45 @@ protected:
 	//std::vector< std::tuple<std::shared_ptr<CShellFile>, RenameInfo>> m_selectedItems;
 
 public:
-	CFileOperationWndBase(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	CFileOperationDlgBase(
+		CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-		:CD2DWWindow(),
+		:CD2DWDialog(pParentControl, spDialogProp),
 		m_spButtonDo(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
 		m_spButtonCancel(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
 		m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs),
 		m_spItemsSource(std::make_shared<ReactiveVectorProperty<std::tuple<TItems...>>>())
 	{
-		m_rca
-			.lpszClassName(L"CFileOperationWnd")
-			.style(CS_VREDRAW | CS_HREDRAW | CS_DBLCLKS)
-			.hCursor(::LoadCursor(NULL, IDC_ARROW))
-			.hbrBackground((HBRUSH)GetStockObject(GRAY_BRUSH));
-
-		DWORD dwStyle = WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-		if (m_isModal)dwStyle |= WS_POPUP;
-
-		m_cwa
-			.lpszWindowName(L"FileOperation")
-			.lpszClassName(L"CFileOperationWnd")
-			.dwStyle(dwStyle);
-
 		m_spButtonCancel->GetCommand().Subscribe([this]()->void
 		{
-			SendMessage(WM_CLOSE, NULL, NULL);
+			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 		});
 
 		m_spButtonCancel->GetContent().set(L"Cancel");
 	}
-	virtual ~CFileOperationWndBase() = default;
-
+	virtual ~CFileOperationDlgBase() = default;
 
 	virtual void OnClose(const CloseEvent& e) override
 	{
-		CD2DWWindow::OnClose(e);
-		//Modal Window
-		if (m_isModal && GetParent()) {
-			::EnableWindow(GetParent(), TRUE);
-		}
-		//Foreground Owner window
-		if (HWND hWnd = GetWindow(m_hWnd, GW_OWNER); (GetWindowLongPtr(GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW && hWnd != NULL) {
-			::SetForegroundWindow(hWnd);
-		}
-		DestroyWindow();
+		CD2DWDialog::OnClose(e);
 	}
 };
 
 /*******************************/
-/* CSimpleFileOperationWndBase */
+/* CSimpleFileOperationDlgBase */
 /*******************************/
 template<typename ...TItems>
-class CSimpleFileOperationWndBase :public CFileOperationWndBase<TItems...>
+class CSimpleFileOperationDlgBase :public CFileOperationDlgBase<TItems...>
 {
 private:
 	std::tuple<CRectF, CRectF, CRectF> GetRects()
 	{
 		CRectF rc = this->GetRectInWnd();
-		CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.Width() - 5.f, rc.bottom - 30.f);
+		CRectF rcTitle = this->GetTitleRect();
+		rc.top = rcTitle.bottom;
+		CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.right - 5.f, rc.bottom - 30.f);
 		CRectF rcBtnCancel(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
 		CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
 
@@ -126,27 +111,24 @@ private:
 	}
 
 public:
-	using CFileOperationWndBase<TItems...>::CFileOperationWndBase;
-	virtual ~CSimpleFileOperationWndBase() = default;
+	using CFileOperationDlgBase<TItems...>::CFileOperationDlgBase;
+	virtual ~CSimpleFileOperationDlgBase() = default;
 
 	virtual void OnCreate(const CreateEvt& e) override
 	{
-		//Modal Window
-		if (this->m_isModal && this->GetParent()) {
-			::EnableWindow(this->GetParent(), FALSE);
-		}
-
+		//Create
+		CFileOperationDlgBase<TItems...>::OnCreate(e);
 		//Size
 		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();
 		
 		//Create FilerControl
-		this->m_spFilerControl->OnCreate(CreateEvt(this, this, rcGrid));
+		this->m_spFilerControl->OnCreate(CreateEvt(this->GetWndPtr(), this, rcGrid));
 
 		//OK button
-		this->m_spButtonDo->OnCreate(CreateEvt(this, this, rcBtnDo));
+		this->m_spButtonDo->OnCreate(CreateEvt(this->GetWndPtr(), this, rcBtnDo));
 
 		//Cancel button
-		this->m_spButtonCancel->OnCreate(CreateEvt(this, this, rcBtnCancel));
+		this->m_spButtonCancel->OnCreate(CreateEvt(this->GetWndPtr(), this, rcBtnCancel));
 
 		//Focus
 		this->SetFocusedControlPtr(this->m_spButtonDo);
@@ -154,64 +136,72 @@ public:
 
 	virtual void OnRect(const RectEvent& e) override
 	{
-		CD2DWWindow::OnRect(e);
+		CD2DWControl::OnRect(e);
 
 		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();		
 		//Create FilerControl
-		this->m_spFilerControl->OnRect(RectEvent(this, rcGrid));
+		this->m_spFilerControl->OnRect(RectEvent(this->GetWndPtr(), rcGrid));
 		//OK button
-		this->m_spButtonDo->OnRect(RectEvent(this, rcBtnDo));
+		this->m_spButtonDo->OnRect(RectEvent(this->GetWndPtr(), rcBtnDo));
 		//Cancel button
-		this->m_spButtonCancel->OnRect(RectEvent(this, rcBtnCancel));
+		this->m_spButtonCancel->OnRect(RectEvent(this->GetWndPtr(), rcBtnCancel));
 	}
 };
 
 /****************/
-/* CCopyMoveWnd */
+/* CCopyMoveDlg */
 /****************/
-class CCopyMoveWndBase :public CSimpleFileOperationWndBase<std::shared_ptr<CShellFile>, RenameInfo>
+class CCopyMoveDlgBase :public CSimpleFileOperationDlgBase<std::shared_ptr<CShellFile>, RenameInfo>
 {
 protected:
 	CIDL m_destIDL;
 public:
-	CCopyMoveWndBase(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-						  const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
-	virtual ~CCopyMoveWndBase() = default;
+	CCopyMoveDlgBase(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
+	virtual ~CCopyMoveDlgBase() = default;
 };
 
 /************/
-/* CCopyWnd */
+/* CCopyDlg */
 /************/
-class CCopyWnd :public CCopyMoveWndBase
+class CCopyDlg :public CCopyMoveDlgBase
 {
 public:
-	CCopyWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-			  const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
-	virtual ~CCopyWnd() = default;
+	CCopyDlg(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
+	virtual ~CCopyDlg() = default;
 	void Copy();
 };
 
 /************/
-/* CMoveWnd */
+/* CMoveDlg */
 /************/
-class CMoveWnd :public CCopyMoveWndBase
+class CMoveDlg :public CCopyMoveDlgBase
 {
 public:
-	CMoveWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-			 const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
-	virtual ~CMoveWnd() = default;
+	CMoveDlg(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
+	virtual ~CMoveDlg() = default;
 	void Move();
 };
 
 /**************/
-/* CDeleteWnd */
+/* CDeleteDlg */
 /**************/
-class CDeleteWnd :public CSimpleFileOperationWndBase<std::shared_ptr<CShellFile>>
+class CDeleteDlg :public CSimpleFileOperationDlgBase<std::shared_ptr<CShellFile>>
 {
 public:
-	CDeleteWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-			 const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
-	virtual ~CDeleteWnd() = default;
+	CDeleteDlg(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
+	virtual ~CDeleteDlg() = default;
 	void Delete();
 };
 
@@ -219,7 +209,7 @@ public:
 /* CExeWnd */
 /***********/
 
-class CExeExtensionWnd: public CFileOperationWndBase<std::shared_ptr<CShellFile>>
+class CExeExtensionDlg: public CFileOperationDlgBase<std::shared_ptr<CShellFile>>
 {
 private:
 
@@ -235,14 +225,15 @@ protected:
 
 
 public:
-	CExeExtensionWnd(
+	CExeExtensionDlg(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
 		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 		const std::shared_ptr<CShellFolder>& folder,
 		const std::vector<std::shared_ptr<CShellFile>>& files,
 		ExeExtension& exeExtension);
 
-	virtual ~CExeExtensionWnd() = default;
+	virtual ~CExeExtensionDlg() = default;
 
 	void Execute();
 

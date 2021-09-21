@@ -155,6 +155,8 @@ public:
 
 	void OnCreate(const CreateEvt& e) override
 	{
+		CD2DWControl::OnCreate(e);
+
 		switch (m_bindType) {
 			case BindType::Row:
 			{
@@ -197,7 +199,8 @@ public:
 			break;
 		}
 
-		CD2DWControl::OnCreate(e);
+		UpdateAll();
+		SubmitUpdate();
 	}
 
 	/****************/

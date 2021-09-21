@@ -12,6 +12,15 @@ public:
 protected:
 	std::unordered_map<WORD,std::function<void(const CommandEvent&)>> m_commandMap;
 	CD2DWControl* m_pParentControl;
+	// Child control
+	// Z-order
+	//   end <- begin
+	// Paint-order
+	//   begin -> end
+	// Message order
+	//   end -> begin
+	// Tab order
+	//   begin -> end
 	std::vector<std::shared_ptr<CD2DWControl>> m_childControls;
 	std::shared_ptr<CD2DWControl> m_pFocusedControl;
 	std::shared_ptr<CD2DWControl> m_pMouseControl;
@@ -88,16 +97,26 @@ public:
 	ReactiveProperty<bool>& GetIsEnabled() { return m_isEnabled; }
 	ReactiveProperty<bool>& GetIsFocusable() { return m_isFocusable; }
 
+	CRectF CalcCenterRectF(const CSizeF& size);
+
 
 	/*************/
 	/* templates */
 	/*************/
-
 	template<typename TFunc, typename TEvent>
 	void SendAll(TFunc f, const TEvent& e, bool invalidate = true)
 	{
-		for (auto& pControl : m_childControls) {
-			(pControl.get()->*f)(e);
+		for (auto iter = m_childControls.cbegin(); iter != m_childControls.cend(); ++iter) {
+			(iter->get()->*f)(e);
+		}
+		if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
+	}
+
+	template<typename TFunc, typename TEvent>
+	void SendAllReverse(TFunc f, const TEvent& e, bool invalidate = true)
+	{
+		for (auto iter = m_childControls.crbegin(); iter != m_childControls.crend(); ++iter) {
+			(iter->get()->*f)(e);
 		}
 		if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
 	}
@@ -106,32 +125,42 @@ public:
 	void SendCopyAll(TFunc f, const TEvent& e, bool invalidate = true)
 	{
 		auto controls = m_childControls;
-		for (auto& pControl : controls) {
-			(pControl.get()->*f)(e);
+		for (auto iter = controls.cbegin(); iter != controls.cend(); ++iter) {
+			(iter->get()->*f)(e);
 		}
 		if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
 	}
 
 	template<typename TFunc, typename TEvent>
-	void SendMouse(TFunc f, const TEvent& e)
+	void SendCopyAllReverse(TFunc f, const TEvent& e, bool invalidate = true)
+	{
+		auto controls = m_childControls;
+		for (auto iter = controls.crbegin(); iter != controls.crend(); ++iter) {
+			(iter->get()->*f)(e);
+		}
+		if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
+	}
+
+	template<typename TFunc, typename TEvent>
+	void SendMouseReverse(TFunc f, const TEvent& e)
 	{
 		if (GetWndPtr()->GetCapturedControlPtr()) {
 			(GetWndPtr()->GetCapturedControlPtr().get()->*f)(e);
 			GetWndPtr()->InvalidateRect(NULL, FALSE);
 		} else {
-			SendPtInRect(f, e);
+			SendPtInRectReverse(f, e);
 		}
 	}
 
 	template<typename TFunc, typename TEvent>
-	void SendPtInRect(TFunc f, const TEvent& e, bool setFocus = false)
+	void SendPtInRectReverse(TFunc f, const TEvent& e, bool setFocus = false)
 	{
-		auto iter = std::find_if(m_childControls.cbegin(), m_childControls.cend(),
+		auto iter = std::find_if(m_childControls.crbegin(), m_childControls.crend(),
 			[&](const std::shared_ptr<CD2DWControl>& x) {
 				return x->GetIsEnabled() && x->GetRectInWnd().PtInRect(e.PointInWnd);
 			});
 
-		if (iter != m_childControls.cend()) {
+		if (iter != m_childControls.crend()) {
 			(iter->get()->*f)(e);
 			if (setFocus) {
 				SetFocusedControlPtr(*iter);
@@ -141,13 +170,13 @@ public:
 	}
 
 	template<typename TFunc, typename TEvent>
-	void SendCapturePtInRect(TFunc f, const TEvent& e)
+	void SendCapturePtInRectReverse(TFunc f, const TEvent& e)
 	{
 		if (GetWndPtr()->GetCapturedControlPtr()) {
 			(GetWndPtr()->GetCapturedControlPtr().get()->*f)(e);
 			GetWndPtr()->InvalidateRect(NULL, FALSE);
 		} else {
-			SendPtInRect(f, e);
+			SendPtInRectReverse(f, e);
 		}
 	}
 

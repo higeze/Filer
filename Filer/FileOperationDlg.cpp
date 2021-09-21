@@ -1,20 +1,24 @@
-#include "FileOperationWnd.h"
+#include "FileOperationDlg.h"
 #include "Textbox.h"
 #include "TextBoxProperty.h"
 #include "named_arguments.h"
 #include "ShellFile.h"
 #include "ShellFolder.h"
 #include "scope_exit.h"
+#include "future_then.h"
+#include "Dispatcher.h"
 //TODOTODO
 //RenameWnd
 
 /********************/
-/* CCopyMoveWndBase */
+/* CCopyMoveDlgBase */
 /********************/
-CCopyMoveWndBase::CCopyMoveWndBase(
+CCopyMoveDlgBase::CCopyMoveDlgBase(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<DialogProperty>& spDialogProp,
 	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CSimpleFileOperationWndBase(spFilerGridViewProp, srcIDL, srcChildIDLs), m_destIDL(destIDL)
+	:CSimpleFileOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, srcIDL, srcChildIDLs), m_destIDL(destIDL)
 {
 	//Items Source
 	for (auto& childIDL : m_srcChildIDLs) {
@@ -49,20 +53,16 @@ CCopyMoveWndBase::CCopyMoveWndBase(
 
 
 /************/
-/* CCopyWnd */
+/* CCopyDlg */
 /************/
-CCopyWnd::CCopyWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-				   const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CCopyMoveWndBase(spFilerGridViewProp, destIDL, srcIDL, srcChildIDLs)
+CCopyDlg::CCopyDlg(
+	CD2DWControl* pParentControl, 
+	const std::shared_ptr<DialogProperty>& spDialogProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
+	:CCopyMoveDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, destIDL, srcIDL, srcChildIDLs)
 {
-	m_rca
-		.lpszClassName(L"CCopyWnd");
-
-	m_cwa
-		.lpszWindowName(L"Copy")
-		.lpszClassName(L"CCopyWnd")
-		;//.hMenu((HMENU)CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"CCopyWnd"));
-
+	m_title.set(L"Copy");
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
 	{
 		Copy();
@@ -71,7 +71,7 @@ CCopyWnd::CCopyWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridView
 	m_spButtonDo->GetContent().set(L"Copy");
 }
 
-void CCopyWnd::Copy()
+void CCopyDlg::Copy()
 {
 	std::vector<CIDL> noRenameIDLs;
 	std::vector<std::pair<CIDL, std::wstring>> renameIDLs;
@@ -87,18 +87,17 @@ void CCopyWnd::Copy()
 		}
 	}
 
-	m_future = std::async(std::launch::async, [](HWND hWnd, CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void
+	m_future = std::async(std::launch::async, [this](CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void
 	{
-		 auto exit = make_scope_exit([hWnd]() { ::SendMessage(hWnd, WM_CLOSE, NULL, NULL); });
-		 CComPtr<IFileOperation> pFileOperation = nullptr;
-		 FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
+		CComPtr<IFileOperation> pFileOperation = nullptr;
+		FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
 
-		 CComPtr<IShellItem2> pDestShellItem;
-		 FAILED_RETURN(::SHCreateItemFromIDList(destIDL.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem)));
+		CComPtr<IShellItem2> pDestShellItem;
+		FAILED_RETURN(::SHCreateItemFromIDList(destIDL.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem)));
 
 		if (!noRenameIDLs.empty()) {
 			std::vector<LPITEMIDLIST> pidls;
-			std::transform(std::begin(noRenameIDLs), std::end(noRenameIDLs), std::back_inserter(pidls), [](const CIDL& x) {return x.ptr(); });
+			std::transform(std::begin(noRenameIDLs), std::end(noRenameIDLs), std::back_inserter(pidls), [](const CIDL& x) { return x.ptr(); });
 
 			CComPtr<IShellItemArray> pItemAry = nullptr;
 			FAILED_RETURN(SHCreateShellItemArrayFromIDLists(pidls.size(), (LPCITEMIDLIST*)(pidls.data()), &pItemAry));
@@ -114,23 +113,24 @@ void CCopyWnd::Copy()
 		}
 		SUCCEEDED(pFileOperation->PerformOperations());
 
-	}, m_hWnd, m_destIDL, m_srcIDL, noRenameIDLs, renameIDLs);
+	}, m_destIDL, m_srcIDL, noRenameIDLs, renameIDLs)
+	| then([this]() 
+	{
+		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+	});
 }
 
 /************/
-/* CMoveWnd */
+/* CMoveDlg */
 /************/
-CMoveWnd::CMoveWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-				   const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CCopyMoveWndBase(spFilerGridViewProp, destIDL, srcIDL, srcChildIDLs)
+CMoveDlg::CMoveDlg(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<DialogProperty>& spDialogProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
+	:CCopyMoveDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, destIDL, srcIDL, srcChildIDLs)
 {
-	m_rca
-		.lpszClassName(L"CMoveWnd");
-
-	m_cwa
-		.lpszWindowName(L"Move")
-		.lpszClassName(L"CMoveWnd");
-
+	m_title.set(L"Move");
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
 	{
 		Move();
@@ -139,7 +139,7 @@ CMoveWnd::CMoveWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridView
 	m_spButtonDo->GetContent().set(L"Move");
 }
 
-void CMoveWnd::Move()
+void CMoveDlg::Move()
 {
 	std::vector<CIDL> noRenameIDLs;
 	std::vector<std::pair<CIDL, std::wstring>> renameIDLs;
@@ -155,9 +155,8 @@ void CMoveWnd::Move()
 		}
 	}
 
-	m_future = std::async(std::launch::async, [](HWND hWnd, CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void
+	m_future = std::async(std::launch::async, [](CIDL destIDL, CIDL srcIDL, std::vector<CIDL> noRenameIDLs, std::vector<std::pair<CIDL, std::wstring>> renameIDLs)->void
 	{
-		auto exit = make_scope_exit([hWnd]() { ::SendMessage(hWnd, WM_CLOSE, NULL, NULL); });
 		 CComPtr<IFileOperation> pFileOperation = nullptr;
 		 FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
 
@@ -183,23 +182,25 @@ void CMoveWnd::Move()
 		SUCCEEDED(pFileOperation->PerformOperations());
 		
 
-	}, m_hWnd, m_destIDL, m_srcIDL, noRenameIDLs, renameIDLs);
+	}, m_destIDL, m_srcIDL, noRenameIDLs, renameIDLs)
+	| then([this]() 
+	{
+		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+	});
+
 }
 
 /**************/
-/* CDeleteWnd */
+/* CDeleteDlg */
 /**************/
-CDeleteWnd::CDeleteWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-				   const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CSimpleFileOperationWndBase(spFilerGridViewProp, srcIDL, srcChildIDLs)
+CDeleteDlg::CDeleteDlg(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<DialogProperty>& spDialogProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
+	:CSimpleFileOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, srcIDL, srcChildIDLs)
 {
-	m_rca
-		.lpszClassName(L"CDeleteWnd");
-
-	m_cwa
-		.lpszWindowName(L"Delete")
-		.lpszClassName(L"CDeleteWnd");
-
+	m_title.set(L"Delete");
 	//Items Source
 	for (auto& childIDL : m_srcChildIDLs) {
 		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(
@@ -235,7 +236,7 @@ CDeleteWnd::CDeleteWnd(const std::shared_ptr<FilerGridViewProperty>& spFilerGrid
 
 }
 
-void CDeleteWnd::Delete()
+void CDeleteDlg::Delete()
 {
 	std::vector<CIDL> delIDLs;
 
@@ -244,10 +245,8 @@ void CDeleteWnd::Delete()
 		delIDLs.push_back(spFile->GetAbsoluteIdl());
 	}
 
-	m_future = std::async(std::launch::async, [](HWND hWnd, std::vector<CIDL> delIDLs)->void
+	m_future = std::async(std::launch::async, [](std::vector<CIDL> delIDLs)->void
 	{
-		auto exit = make_scope_exit([hWnd]() { ::SendMessage(hWnd, WM_CLOSE, NULL, NULL); });
-
 		CComPtr<IFileOperation> pFileOperation = nullptr;
 		FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
 
@@ -261,20 +260,27 @@ void CDeleteWnd::Delete()
 		}
 
 		SUCCEEDED(pFileOperation->PerformOperations());
-	}, m_hWnd, delIDLs);
+	}, delIDLs)
+	| then([this]() 
+	{
+		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+	});
+
 }
 
 /********************/
-/* CExeExtensionWnd */
+/* CExeExtensionDlg */
 /********************/
 
-CExeExtensionWnd::CExeExtensionWnd(
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
-		const std::shared_ptr<CShellFolder>& folder,
-		const std::vector<std::shared_ptr<CShellFile>>& files,
-		ExeExtension& exeExtension)
-	:CFileOperationWndBase(spFilerGridViewProp, CIDL(), std::vector<CIDL>()),
+CExeExtensionDlg::CExeExtensionDlg(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<DialogProperty>& spDialogProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+	const std::shared_ptr<CShellFolder>& folder,
+	const std::vector<std::shared_ptr<CShellFile>>& files,
+	ExeExtension& exeExtension)
+	:CFileOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, CIDL(), std::vector<CIDL>()),
 	m_spTextPath(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
 	m_spTextParam(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
 	m_exeExtension(exeExtension),
@@ -282,17 +288,10 @@ CExeExtensionWnd::CExeExtensionWnd(
 	m_pBindingParam(std::make_unique<CBinding>(m_exeExtension.Parameter, m_spTextParam->GetText()))
 
 {
-	m_rca
-		.lpszClassName(L"CExeExtensionWnd");
-
-	m_cwa
-		.lpszWindowName(L"Execute")
-		.lpszClassName(L"CExeExtensionWnd");
-
+	m_title.set(L"Exe");
 	//Items Source
 	for (auto& file : files) {
-		m_spItemsSource->push_back(
-			std::make_tuple(file));
+		m_spItemsSource->push_back(std::make_tuple(file));
 	}
 
 	//FileGrid
@@ -324,7 +323,7 @@ CExeExtensionWnd::CExeExtensionWnd(
 
 }
 
-void CExeExtensionWnd::Execute()
+void CExeExtensionDlg::Execute()
 {
 try {
 	std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
@@ -395,61 +394,61 @@ try {
 
 	::CloseHandle(hRead);
 	::CloseHandle(hWrite);
-	::SendMessage(m_hWnd, WM_CLOSE, NULL, NULL);
+	GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 
 } catch (...) {
 	throw;
 }
 }
 
-std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> CExeExtensionWnd::GetRects()
+std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> CExeExtensionDlg::GetRects()
 {
 	CRectF rc = GetRectInWnd();
+	CRectF rcTitle = GetTitleRect();
+	rc.top = rcTitle.bottom;
 	CRectF rcBtnCancel(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
 	CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
 	CRectF rcTextParam(rc.left + 5.f, rc.bottom - 95.f, rc.right - 5.f, rc.bottom - 30.f);
 	CRectF rcTextPath(rc.left + 5.f, rc.bottom - 120, rc.right - 5.f, rc.bottom - 100.f);
-	CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.Width() - 5.f, rc.bottom -  125.f);
+	CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.right - 5.f, rc.bottom -  125.f);
 
 	return { rcGrid, rcTextPath, rcTextParam, rcBtnDo, rcBtnCancel };
 }
 
 
-void CExeExtensionWnd::OnCreate(const CreateEvt& e)
+void CExeExtensionDlg::OnCreate(const CreateEvt& e)
 {
-	//Modal Window
-	if (m_isModal && GetParent()) {
-		::EnableWindow(GetParent(), FALSE);
-	}
-
+	//Base
+	CD2DWDialog::OnCreate(e);
+	
 	//Size
 	auto [rcGrid, rcTextPath, rcTextParam, rcBtnDo, rcBtnCancel] = GetRects();
 		
 	//Create FilerControl
-	m_spFilerControl->OnCreate(CreateEvt(this, this, rcGrid));
+	m_spFilerControl->OnCreate(CreateEvt(GetWndPtr(), this, rcGrid));
 
 	//Textbox
-	m_spTextPath->OnCreate(CreateEvt(this, this, rcTextPath));
-	m_spTextParam->OnCreate(CreateEvt(this, this, rcTextParam));
+	m_spTextPath->OnCreate(CreateEvt(GetWndPtr(), this, rcTextPath));
+	m_spTextParam->OnCreate(CreateEvt(GetWndPtr(), this, rcTextParam));
 
 	//OK button
-	m_spButtonDo->OnCreate(CreateEvt(this, this, rcBtnDo));
+	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnDo));
 
 	//Cancel button
-	m_spButtonCancel->OnCreate(CreateEvt(this, this, rcBtnCancel));
+	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
 
 	//Focus
 	SetFocusedControlPtr(m_spButtonDo);
 }
 
-void CExeExtensionWnd::OnRect(const RectEvent& e)
+void CExeExtensionDlg::OnRect(const RectEvent& e)
 {
-	CD2DWWindow::OnRect(e);
+	CD2DWControl::OnRect(e);
 
 	auto [rcGrid, rcTextPath, rcTextParam, rcBtnDo, rcBtnCancel] = GetRects();		
-	m_spFilerControl->OnRect(RectEvent(this, rcGrid));
-	m_spTextPath->OnRect(RectEvent(this, rcTextPath));
-	m_spTextParam->OnRect(RectEvent(this, rcTextParam));
-	m_spButtonDo->OnRect(RectEvent(this, rcBtnDo));
-	m_spButtonCancel->OnRect(RectEvent(this, rcBtnCancel));
+	m_spFilerControl->OnRect(RectEvent(GetWndPtr(), rcGrid));
+	m_spTextPath->OnRect(RectEvent(GetWndPtr(), rcTextPath));
+	m_spTextParam->OnRect(RectEvent(GetWndPtr(), rcTextParam));
+	m_spButtonDo->OnRect(RectEvent(GetWndPtr(), rcBtnDo));
+	m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
 }

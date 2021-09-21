@@ -3,24 +3,30 @@
 #include <optional>
 
 class CD2DWWindow;
+struct DialogProperty;
 class CDialogStateMachine;
 
 class CD2DWDialog: public CD2DWControl
 {
 public:
 	const FLOAT kSizeWidth = 5.f;
+	const FLOAT kTitlePadding = 3.f;
 protected:
 	std::unique_ptr<CDialogStateMachine> m_pDialogMachine;
+	std::shared_ptr<DialogProperty> m_spProp;
+	ReactiveWStringProperty m_title;
+	CSizeF m_titleSize;
 	std::optional<CPointF> m_startPoint;
 
 public:
-	CD2DWDialog(CD2DWControl* pParentControl = nullptr);
-	virtual ~CD2DWDialog() = default;
+	CD2DWDialog(CD2DWControl* pParentControl = nullptr, const std::shared_ptr<DialogProperty>& spProp = nullptr);
+	virtual ~CD2DWDialog();
 
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnClose(const CloseEvent& e) override;
-	virtual void OnRect(const RectEvent& e) override { m_rect = e.Rect; }
+	virtual void OnRect(const RectEvent& e) override;
+	virtual void OnPaint(const PaintEvent& e) override;
 
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;
@@ -59,6 +65,11 @@ public:
 
 
 	void Error_StdException(const std::exception& e);
+
+	CSizeF GetTitleSize();
+	CRectF GetTitleRect();
+	virtual void PaintTitle();
+	virtual void PaintBorder();
 
 private:
 	bool IsPtInLeftSizingRect(const CPointF& pt);

@@ -802,7 +802,7 @@ void CGridView::Normal_Paint(const PaintEvent& e)
 	if (GetIsFocused() ){
 		CRectF rcFocus(GetRectInWnd());
 		rcFocus.DeflateRect(1.0f, 1.0f);
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(*(GetHeaderProperty()->FocusedLine), rcFocus);
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(GetHeaderProperty()->FocusedLine), rcFocus);
 	}
 
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();

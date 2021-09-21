@@ -72,7 +72,7 @@ public:
 	virtual void OnCreate(const CreateEvt& e) override = 0;
 	//virtual void OnRect(const RectEvent& e)
 	virtual void OnPaint(const PaintEvent& e) { SendAll(&CUIElement::OnPaint, e, false); }
-	virtual void OnClosing(const ClosingEvent& e) { SendCopyAll(&CUIElement::OnClosing, e); }
+	virtual void OnClosing(const ClosingEvent& e) { SendCopyAllReverse(&CUIElement::OnClosing, e); }
 	virtual void OnClose(const CloseEvent& e) { SendCopyAll(&CUIElement::OnClose, e); }
 	virtual void OnCommand(const CommandEvent& e)
 	{
@@ -81,39 +81,39 @@ public:
 	}
 
 	//virtual void OnLButtonDown(const LButtonDownEvent& e)
-	virtual void OnLButtonUp(const LButtonUpEvent& e) { SendMouse(&CUIElement::OnLButtonUp, e); }
-	virtual void OnLButtonClk(const LButtonClkEvent& e) { SendMouse(&CUIElement::OnLButtonClk, e); }
-	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) { SendMouse(&CUIElement::OnLButtonSnglClk, e); }
-	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) { SendMouse(&CUIElement::OnLButtonDblClk, e); }
-	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { SendMouse(&CUIElement::OnLButtonBeginDrag, e); }
-	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) { SendMouse(&CUIElement::OnLButtonEndDrag, e); }
+	virtual void OnLButtonUp(const LButtonUpEvent& e) { SendMouseReverse(&CUIElement::OnLButtonUp, e); }
+	virtual void OnLButtonClk(const LButtonClkEvent& e) { SendMouseReverse(&CUIElement::OnLButtonClk, e); }
+	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) { SendMouseReverse(&CUIElement::OnLButtonSnglClk, e); }
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) { SendMouseReverse(&CUIElement::OnLButtonDblClk, e); }
+	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { SendMouseReverse(&CUIElement::OnLButtonBeginDrag, e); }
+	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) { SendMouseReverse(&CUIElement::OnLButtonEndDrag, e); }
 
 	//virtual void OnRButtonDown(const RButtonDownEvent& e);
 
-	virtual void OnMButtonDown(const MButtonDownEvent& e) { SendMouse(&CUIElement::OnMButtonDown, e); }
-	virtual void OnMButtonUp(const MButtonUpEvent& e) { SendMouse(&CUIElement::OnMButtonUp, e); }
+	virtual void OnMButtonDown(const MButtonDownEvent& e) { SendMouseReverse(&CUIElement::OnMButtonDown, e); }
+	virtual void OnMButtonUp(const MButtonUpEvent& e) { SendMouseReverse(&CUIElement::OnMButtonUp, e); }
 
 	//virtual void OnMouseMove(const MouseMoveEvent& e) { SendMouse(&CUIElement::OnMouseMove, e); }
-	virtual void OnMouseWheel(const MouseWheelEvent& e) { SendPtInRect(&CUIElement::OnMouseWheel, e); }
-	virtual void OnContextMenu(const ContextMenuEvent& e) { SendMouse(&CUIElement::OnContextMenu, e); }
+	virtual void OnMouseWheel(const MouseWheelEvent& e) { SendPtInRectReverse(&CUIElement::OnMouseWheel, e); }
+	virtual void OnContextMenu(const ContextMenuEvent& e) { SendMouseReverse(&CUIElement::OnContextMenu, e); }
 
 	virtual void OnSetCursor(const SetCursorEvent& e) 
 	{
 		*(e.HandledPtr) = FALSE;
-		SendPtInRect(&CUIElement::OnSetCursor, e);
+		SendPtInRectReverse(&CUIElement::OnSetCursor, e);
 	}
 
 	//Focus
-	virtual void OnMouseEnter(const MouseEnterEvent& e) { SendPtInRect(&CUIElement::OnMouseEnter, e); }
+	virtual void OnMouseEnter(const MouseEnterEvent& e) { SendPtInRectReverse(&CUIElement::OnMouseEnter, e); }
 	virtual void OnMouseLeave(const MouseLeaveEvent& e) { SendFocused(&CUIElement::OnMouseLeave, e); }
 	virtual void OnSetFocus(const SetFocusEvent& e) 
 	{ 
-		SendAll(&CUIElement::OnWndSetFocus, e);
+		SendAllReverse(&CUIElement::OnWndSetFocus, e);
 		SendFocused(&CUIElement::OnSetFocus, e);
 	}
 	virtual void OnKillFocus(const KillFocusEvent& e)
 	{ 
-		SendAll(&CUIElement::OnWndKillFocus, e);
+		SendAllReverse(&CUIElement::OnWndKillFocus, e);
 		SendFocused(&CUIElement::OnKillFocus, e);
 	}
 	virtual void OnKeyDown(const KeyDownEvent& e);

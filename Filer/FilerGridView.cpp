@@ -44,15 +44,16 @@
 #include "ShellFileFactory.h"
 
 #include "ShellFunction.h"
-#include "IncrementalCopyWnd.h"
+#include "IncrementalCopyDlg.h"
 #include "ProgressBar.h"
 #include "SearchWnd.h"
 #include "Textbox.h"
 #include "D2DWWindow.h"
-#include "FileOperationWnd.h"
+#include "FileOperationDlg.h"
 #include "DropTargetManager.h"
 
 #include "MouseStateMachine.h"
+#include "FilerWnd.h"
 #include <format>
 
 #define SCRATCH_QCM_FIRST 1
@@ -856,13 +857,14 @@ std::vector<CIDL> CFilerGridView::GetSelectedChildIDLVector()
 
 bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 {
-	auto pPrgWnd = new CIncrementalCopyWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
+	auto pDlg = std::make_shared<CIncrementalCopyDlg>(
+		GetWndPtr(), 
+		static_cast<CFilerWnd*>(GetWndPtr())->GetDialogPropPtr(),
+		std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
 		destIDL, m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
-	pPrgWnd->CreateOnCenterOfParent(GetWndPtr()->m_hWnd, CSize(400, 600));
-	pPrgWnd->SetIsDeleteOnFinalMessage(true);
-	pPrgWnd->ShowWindow(SW_SHOW);
-	pPrgWnd->UpdateWindow();
+	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(400, 600))));
+	GetWndPtr()->SetFocusedControlPtr(pDlg);
 
 	return true;
 }
@@ -870,13 +872,14 @@ bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 bool CFilerGridView::CopySelectedFilesTo(const CIDL& destIDL)
 {
 	//Create
-	auto pWnd = new CCopyWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
+	auto pDlg = std::make_shared<CCopyDlg>(
+		GetWndPtr(), 
+		static_cast<CFilerWnd*>(GetWndPtr())->GetDialogPropPtr(),
+		std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
 		destIDL, m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
-	pWnd->CreateOnCenterOfParent(GetWndPtr()->m_hWnd, CSize(300, 400));
-	pWnd->SetIsDeleteOnFinalMessage(true);
-	pWnd->ShowWindow(SW_SHOW);
-	pWnd->UpdateWindow();
+	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
+	GetWndPtr()->SetFocusedControlPtr(pDlg);
 
 	return true;
 }
@@ -884,13 +887,14 @@ bool CFilerGridView::CopySelectedFilesTo(const CIDL& destIDL)
 bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 {
 	//Create
-	auto pWnd = new CMoveWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
-								 destIDL, m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
+	auto pDlg = std::make_shared<CMoveDlg>(
+		GetWndPtr(),
+		static_cast<CFilerWnd*>(GetWndPtr())->GetDialogPropPtr(),
+		std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
+		destIDL, m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
-	pWnd->CreateOnCenterOfParent(GetWndPtr()->m_hWnd, CSize(300, 400));
-	pWnd->SetIsDeleteOnFinalMessage(true);
-	pWnd->ShowWindow(SW_SHOW);
-	pWnd->UpdateWindow();
+	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
+	GetWndPtr()->SetFocusedControlPtr(pDlg);
 
 	return true;
 }
@@ -898,17 +902,17 @@ bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 bool CFilerGridView::DeleteSelectedFiles()
 {
 	//Create
-	auto pWnd = new CDeleteWnd(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
-							 m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
+	auto pDlg = std::make_shared<CDeleteDlg>(
+		GetWndPtr(),
+		static_cast<CFilerWnd*>(GetWndPtr())->GetDialogPropPtr(),
+		std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
+		m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
-	pWnd->CreateOnCenterOfParent(GetWndPtr()->m_hWnd, CSize(300, 400));
-	pWnd->SetIsDeleteOnFinalMessage(true);
-	pWnd->ShowWindow(SW_SHOW);
-	pWnd->UpdateWindow();
+	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
+	GetWndPtr()->SetFocusedControlPtr(pDlg);
 
 	return true;
 }
-
 
 bool CFilerGridView::NewFolder()
 {
