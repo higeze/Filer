@@ -409,7 +409,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 				}
 				case NotifyVectorChangedAction::Remove:
 				{
-					m_headers[e.OldStartingIndex]->OnDestroy(DestroyEvent(GetWndPtr()));
+					m_headers[e.OldStartingIndex]->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
 					m_headers.idx_erase(m_headers.cbegin() + e.OldStartingIndex);
 					UpdateHeaderRects();
 
@@ -420,7 +420,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 				}
 				case NotifyVectorChangedAction::Replace:
 				{
-					m_headers[e.NewStartingIndex]->OnDestroy(DestroyEvent(GetWndPtr()));
+					m_headers[e.NewStartingIndex]->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
 					m_headers.idx_erase(m_headers.cbegin() + e.NewStartingIndex);
 					auto header = std::make_shared<CTabHeaderControl>(this, m_spProp->HeaderProperty);
 					m_headers.idx_insert(m_headers.cbegin() + e.NewStartingIndex, header);
@@ -433,6 +433,9 @@ void CTabControl::OnCreate(const CreateEvt& e)
 				case NotifyVectorChangedAction::Reset:
 				{
 					if (!m_itemsSource.empty()) {
+						for (auto header : m_headers) {
+							header->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
+						}
 						m_headers.clear();
 						for (auto& item : e.NewItems) {
 							auto header = std::make_shared<CTabHeaderControl>(this, m_spProp->HeaderProperty);

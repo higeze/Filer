@@ -58,7 +58,12 @@ void CD2DWDialog::OnSetCursor(const SetCursorEvent& e){ m_pDialogMachine->proces
 /****************/
 bool CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_Moving(const LButtonBeginDragEvent& e)
 {
-	return true;
+	auto iter = std::find_if(m_childControls.crbegin(), m_childControls.crend(),
+		[&](const std::shared_ptr<CD2DWControl>& x) {
+			return x->GetIsEnabled() && x->GetRectInWnd().PtInRect(e.PointInWnd);
+		});
+
+	return iter == m_childControls.crend();
 }
 bool CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_LeftSizing(const LButtonBeginDragEvent& e)
 {

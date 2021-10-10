@@ -14,6 +14,7 @@ class CEditorTextBox:public CTextBox
 {
 protected:
 	std::vector<ExecutableInfo> m_executableInfos;
+	ReactiveWStringProperty m_filter;
 public:
 	CEditorTextBox(
 		CD2DWControl* pParentControl,

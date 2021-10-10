@@ -94,6 +94,7 @@ std::vector<byte> CTextEnDecoder::Encode(const std::wstring& wstr, const encodin
 
 encoding_type CTextEnDecoder::DetectEncoding(const std::vector<byte>& str)
 {
+    if (str.empty()) { return encoding_type::UTF8N; }
     if (encoding_type enc = DetectEncodingByBOM(str); enc != encoding_type::UNKNOWN) { return enc; }
     if (encoding_type enc = DetectEncodingByParse(str); enc != encoding_type::UNKNOWN) { return enc; }
     if (encoding_type enc = DetectEncodingByMultiLanguage(str); enc != encoding_type::UNKNOWN) { return enc; }

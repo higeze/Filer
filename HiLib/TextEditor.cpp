@@ -101,6 +101,10 @@ const CComPtr<IDWriteTextLayout1>& CEditorTextBox::GetTextLayoutPtr()
 					}
 				}
 			}
+
+			//Find Highlight
+			//m_filter.set(L"Fil");
+			//m_text.get().fin
 		}
 	}
 	return m_pTextLayout;
