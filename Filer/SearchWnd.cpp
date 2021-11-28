@@ -149,7 +149,7 @@
 //	m_buttonCancel.EnableWindow(TRUE);
 //
 //	std::wstring search = m_edit.GetWindowText();
-//	m_searchFuture = std::async(std::launch::async, [search, this]()->void {
+//	m_searchFuture = async_ex(std::launch::async, [search, this]()->void {
 //
 //		std::function<void()> readMax = [this]()->void {
 //			PostMessage(WM_INCREMENTMAX, NULL, NULL);
@@ -169,11 +169,11 @@
 //		GetProgressBarPtr()->SetMax(0);
 //		GetProgressBarPtr()->SetValue(0);
 //
-//		auto countFuture = std::async(std::launch::async, [srcIDL = m_srcIDL, readMax]()->void {
+//		auto countFuture = async_ex(std::launch::async, [srcIDL = m_srcIDL, readMax]()->void {
 //			shell::CountFileInFolder(srcIDL, readMax);
 //		});
 //
-//		auto searcher = std::async(std::launch::async, [search, srcIDL = m_srcIDL, readValue, find]()->void {
+//		auto searcher = async_ex(std::launch::async, [search, srcIDL = m_srcIDL, readValue, find]()->void {
 //			shell::SearchFileInFolder(search, srcIDL, readValue, find);
 //		});
 //

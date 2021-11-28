@@ -129,13 +129,13 @@ void CEditorTextBox::Normal_LButtonDown(const LButtonDownEvent& e)
 					if (iter != m_executableInfos.end()) {
 						auto exe = iter->Link;
 						exe = ((exe.front() == L'\"') ? L"" : L"\"") + boost::algorithm::trim_copy(exe) + ((exe.back() == L'\"') ? L"" : L"\"");
-						SHELLEXECUTEINFO execInfo = {};
-						execInfo.cbSize = sizeof(execInfo);
-						execInfo.hwnd = GetWndPtr()->m_hWnd;
-						execInfo.lpVerb = L"open";
-						execInfo.lpFile = exe.c_str();
-						execInfo.nShow = SW_SHOWDEFAULT;
-						::ShellExecuteEx(&execInfo);			
+						SHELLEXECUTEINFO sei = { 0 };
+						sei.cbSize = sizeof(sei);
+						sei.hwnd = GetWndPtr()->m_hWnd;
+						sei.lpVerb = nullptr;
+						sei.lpFile = exe.c_str();
+						sei.nShow = SW_SHOWDEFAULT;
+						::ShellExecuteEx(&sei);			
 						return;
 					}
 				}

@@ -1,8 +1,10 @@
 //#include "stdafx.h"
 #include "Favorite.h"
+#include "ShellFile.h"
 #include "ShellFileFactory.h"
 #include "Debug.h"
 #include "MyString.h"
+#include "async_catch.h"
 
 CFavorite::CFavorite()
 	:m_path(), m_shortName(), m_spFile(nullptr), m_spCancel(std::make_shared<bool>(false)){}
@@ -30,14 +32,21 @@ std::shared_ptr<CShellFile>& CFavorite::GetShellFile(const std::function<void()>
 			SetLockShellFile(m_futureFile.get());
 		//Thread not started
 		} else {
-			m_futureFile = std::async(std::launch::async, [](std::shared_ptr<bool> spCancel, const std::wstring& path, const std::function<void()>& changed) {
+			auto fun = [](std::shared_ptr<bool> spCancel, const std::wstring& path, const std::function<void()>& changed)->std::shared_ptr<CShellFile>
+			{
 				LOG_SCOPED_TIMER_1("CreateShellFilerPtr:" + wstr2str(path));
 				auto ret = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
 				if (!(*spCancel)) {
 					changed();
 				}
 				return ret;
-			}, m_spCancel, GetPath(), changed);
+			};
+			m_futureFile = std::async(
+				std::launch::async,
+				async_function_wrap<decltype(fun), std::shared_ptr<CShellFile>, std::shared_ptr<bool>, std::wstring, std::function<void()>>,
+				fun,
+				std::make_shared<CShellInvalidFile>(),
+				m_spCancel, GetPath(), changed);
 		}
 	}
 

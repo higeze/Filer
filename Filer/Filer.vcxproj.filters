@@ -320,7 +320,7 @@
     <ClInclude Include="..\HiLib\RowColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\SEHException.h">
+    <ClInclude Include="..\HiLib\se_exception.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\Sheet.h">
@@ -713,6 +713,9 @@
     <ClInclude Include="..\HiLib\future_then.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\async_catch.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -829,7 +832,7 @@
     <ClCompile Include="..\HiLib\RowColumn.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\SEHException.cpp">
+    <ClCompile Include="..\HiLib\se_exception.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\Sheet.cpp">
@@ -1050,6 +1053,9 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\DialogStateMachine.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Debug.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

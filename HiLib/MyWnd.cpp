@@ -4,6 +4,7 @@
 #include <Shlwapi.h>
 #include <spdlog/spdlog.h>
 #include <fmt/format.h>
+#include "Debug.h"
 
 
 #include "MyWin32.h"
@@ -103,28 +104,16 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 			}
 
 		}catch(std::exception& ex){
-			::OutputDebugStringA(ex.what());
-			std::string msg = fmt::format(
-				"What:{}\r\n"
-				"Last Error:{}\r\n"
-				"MSG:{:04X}\r\n"
-				"WPARAM:{:04X}\r\n"
-				"LPARAM:{:04X}",
-				ex.what() ,GetLastErrorString(),
-				uiMsg, wParam, lParam);
-
+			auto msg = exception_msg_to_string(ex, uiMsg, wParam, lParam);
 			MessageBoxA(m_hWnd, msg.c_str(), "Exception in Message Loop", MB_ICONWARNING);
-			SPDLOG_ERROR("Exception in Message Loop" + msg);
+			SPDLOG_ERROR("Exception in Message Loop\r\n" + msg);
+			::OutputDebugStringA(msg.c_str());
 			//::PostQuitMessage(0);
 		}catch(...){
-			std::string msg = fmt::format(
-				"MSG:{:04X}\r\n"
-				"WPARAM:{:04X}\r\n"
-				"LPARAM:{:04X}",
-				uiMsg, wParam, lParam);
-
+			auto msg = msg_to_string(uiMsg, wParam, lParam);
 			MessageBoxA(m_hWnd, msg.c_str(), "Exception in Message Loop", MB_ICONWARNING);
-			SPDLOG_ERROR("Exception in Message Loop" + msg);
+			SPDLOG_ERROR("Exception in Message Loop\r\n" + msg);
+			::OutputDebugStringA(msg.c_str());
 			//::PostQuitMessage(0);
 		}
 		return DefWndProc(m_hWnd,uiMsg,wParam,lParam);		

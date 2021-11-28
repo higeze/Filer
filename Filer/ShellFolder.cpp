@@ -11,6 +11,7 @@
 #include "ShellFileFactory.h"
 #include "ShellFunction.h"
 #include <format>
+#include "async_catch.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -123,22 +124,29 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(const std::share
 				{
 					SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
 					auto limit = spArgs->TimeLimitFolderSize ? spArgs->TimeLimitMs : -1;
-					m_futureSize = std::async(std::launch::async, [](std::shared_ptr<bool> spCancelThread, CComPtr<IShellFolder> pShellFolder, CIDL folderIdl, std::wstring path, int limit, std::function<void()> sizeChanged) {
-						try {
-							std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
-							ULARGE_INTEGER size = { 0 };
-							if (CShellFolder::GetFolderSize(size, spCancelThread, pShellFolder, path, tp, limit)) {
-								if (sizeChanged) { sizeChanged(); }
-								return std::make_pair(size, FileSizeStatus::Available);
-							} else {
-								if (sizeChanged) { sizeChanged(); }
-								return std::make_pair(size, FileSizeStatus::Unavailable);
-							}
-						} catch (...) {
-							LOG_1("CShellFile::GetSize Exception at size thread");
-							return std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable);
-						}					
-					}, this->m_spCancelThread, this->GetShellFolderPtr(), this->GetAbsoluteIdl(), this->GetPath(), limit, changed);
+					auto fun = [](const std::shared_ptr<bool>& spCancelThread, const CComPtr<IShellFolder>& pShellFolder, const CIDL& folderIdl, const std::wstring& path, const int& limit, const std::function<void()>& sizeChanged)
+					{
+						std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
+						ULARGE_INTEGER size = { 0 };
+						if (CShellFolder::GetFolderSize(size, spCancelThread, pShellFolder, path, tp, limit)) {
+							if (sizeChanged) { sizeChanged(); }
+							return std::make_pair(size, FileSizeStatus::Available);
+						} else {
+							if (sizeChanged) { sizeChanged(); }
+							return std::make_pair(size, FileSizeStatus::Unavailable);
+						}
+					};
+					m_futureSize = std::async(
+						std::launch::async,
+						async_function_wrap<decltype(fun),std::pair<ULARGE_INTEGER, FileSizeStatus>, std::shared_ptr<bool>, CComPtr<IShellFolder>, CIDL, std::wstring, int,std::function<void()>>,
+						fun,
+						std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable),
+						m_spCancelThread,
+						GetShellFolderPtr(),
+						GetAbsoluteIdl(),
+						GetPath(),
+						limit,
+						changed);
 				}
 				break;
 			case FileSizeStatus::Calculating:
@@ -167,24 +175,38 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(const std::share
 				SetLockFileTimes(std::make_pair(FileTimes(), FileTimeStatus::Loading));
 			}
 			auto limit = spArgs->TimeLimitFolderLastWrite ? spArgs->TimeLimitMs : -1;
-			m_futureTime = std::async(std::launch::async, [](std::shared_ptr<bool> spCancelThread, 
-				CComPtr<IShellFolder> pParentFolder, CComPtr<IShellFolder> pFolder, CIDL relativeIdl, std::wstring path,
-				int limit, bool ignoreFolderTime, std::function<void()> timeChanged) {
-				try {
-					std::chrono::time_point tim = std::chrono::system_clock::now();
-					auto times = GetFolderFileTimes(spCancelThread, pParentFolder, pFolder, relativeIdl, path, tim, limit, ignoreFolderTime);
-					if (times.has_value()) {
-						timeChanged();
-						return std::make_pair(times.value(), FileTimeStatus::Available);
-					} else {
-						timeChanged();
-						return std::make_pair(times.value(), FileTimeStatus::Unavailable);
-					}
-				} catch (...) {
-					LOG_1("CShellFile::GetFileTimes Exception at time thread");
-					return std::make_pair(FileTimes(), FileTimeStatus::Unavailable);
+			auto fun = [](const std::shared_ptr<bool>& spCancelThread,
+					const CComPtr<IShellFolder>& pParentFolder,
+					const CComPtr<IShellFolder>& pFolder,
+					const CIDL& relativeIdl,
+					const std::wstring& path,
+					const int& limit,
+					const bool& ignoreFolderTime,
+					const std::function<void()>& timeChanged)
+			{
+				std::chrono::time_point tim = std::chrono::system_clock::now();
+				auto times = GetFolderFileTimes(spCancelThread, pParentFolder, pFolder, relativeIdl, path, tim, limit, ignoreFolderTime);
+				if (times.has_value()) {
+					timeChanged();
+					return std::make_pair(times.value(), FileTimeStatus::Available);
+				} else {
+					timeChanged();
+					return std::make_pair(times.value(), FileTimeStatus::Unavailable);
 				}
-			}, this->m_spCancelThread, GetParentShellFolderPtr(), GetShellFolderPtr(), GetChildIdl(), GetPath(), limit, spArgs->IgnoreFolderTime, changed);
+			};
+			m_futureTime = std::async(
+				std::launch::async,
+				async_function_wrap<decltype(fun), std::pair<FileTimes, FileTimeStatus>, std::shared_ptr<bool>, CComPtr<IShellFolder>, CComPtr<IShellFolder>, CIDL, std::wstring, int, bool, std::function<void()>>,
+				fun,		
+				std::make_pair(FileTimes(), FileTimeStatus::Unavailable),
+				m_spCancelThread,
+				GetParentShellFolderPtr(),
+				GetShellFolderPtr(),
+				GetChildIdl(),
+				GetPath(),
+				limit,
+				spArgs->IgnoreFolderTime,
+				changed);
 		}
 		break;
 	case FileTimeStatus::Loading:

@@ -274,6 +274,7 @@
     <ClInclude Include="..\D2DTextBox\undo.h" />
     <ClInclude Include="..\HiLib\Application.h" />
     <ClInclude Include="..\HiLib\ApplicationProperty.h" />
+    <ClInclude Include="..\HiLib\async_catch.h" />
     <ClInclude Include="..\HiLib\Band.h" />
     <ClInclude Include="..\HiLib\BindCheckBoxCell.h" />
     <ClInclude Include="..\HiLib\BindCheckBoxColumn.h" />
@@ -393,7 +394,7 @@
     <ClInclude Include="..\HiLib\Row.h" />
     <ClInclude Include="..\HiLib\RowColumn.h" />
     <ClInclude Include="..\HiLib\Scroll.h" />
-    <ClInclude Include="..\HiLib\SEHException.h" />
+    <ClInclude Include="..\HiLib\se_exception.h" />
     <ClInclude Include="..\HiLib\SerializerEnableIf.h" />
     <ClInclude Include="..\HiLib\Sheet.h" />
     <ClInclude Include="..\HiLib\SheetCell.h" />
@@ -511,6 +512,7 @@
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
     <ClCompile Include="..\HiLib\D2DWDialog.cpp" />
     <ClCompile Include="..\HiLib\DeadlineTimer.cpp" />
+    <ClCompile Include="..\HiLib\Debug.cpp" />
     <ClCompile Include="..\HiLib\DialogStateMachine.cpp" />
     <ClCompile Include="..\HiLib\Direct2DWrite.cpp" />
     <ClCompile Include="..\HiLib\Dispatcher.cpp" />
@@ -551,7 +553,7 @@
     <ClCompile Include="..\HiLib\Row.cpp" />
     <ClCompile Include="..\HiLib\RowColumn.cpp" />
     <ClCompile Include="..\HiLib\Scroll.cpp" />
-    <ClCompile Include="..\HiLib\SEHException.cpp" />
+    <ClCompile Include="..\HiLib\se_exception.cpp" />
     <ClCompile Include="..\HiLib\Sheet.cpp" />
     <ClCompile Include="..\HiLib\SheetCell.cpp" />
     <ClCompile Include="..\HiLib\SheetStateMachine.cpp" />

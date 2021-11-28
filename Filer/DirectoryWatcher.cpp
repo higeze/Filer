@@ -1,11 +1,12 @@
 #include "DirectoryWatcher.h"
-#include "SEHException.h"
+#include "async_catch.h"
 #include "MyWin32.h"
 #include "MyString.h"
 #include "D2DWWindow.h"
 #include "D2DWControl.h"
 #include "Dispatcher.h"
 #include "ShellFunction.h"
+#include "async_catch.h"
 
 #include <algorithm>
 
@@ -32,7 +33,11 @@ void CDirectoryWatcher::StartWatching(const std::wstring& path, const CIDL& absI
 		}
 
 		//Create watch thread
-		m_futureWatch = std::async(std::launch::async, &CDirectoryWatcher::WatchDirectory, this);
+		m_futureWatch = std::async(
+			std::launch::async, 
+			async_action_wrap<decltype(&CDirectoryWatcher::WatchDirectory), decltype(this)>,
+			&CDirectoryWatcher::WatchDirectory,
+			this);
 	}
 	catch (std::exception& e) {
 		LOG_THIS_1("");
@@ -95,7 +100,11 @@ void CDirectoryWatcher::WatchDirectory()
 		}
 
 		//Start thread;
-		std::future<void> futureCallback = std::async(std::launch::async, &CDirectoryWatcher::IoCompletionCallback, this, pIocp.get(), pDir.get());
+		std::future<void> futureCallback = std::async(
+			std::launch::async, 
+			async_action_wrap<decltype(&CDirectoryWatcher::IoCompletionCallback), decltype(this), HANDLE, HANDLE>,
+			&CDirectoryWatcher::IoCompletionCallback,
+			this, pIocp.get(), pDir.get());
 
 		//Start observer
 		OVERLAPPED overlapped = { 0 };
@@ -131,6 +140,8 @@ std::vector<std::wstring> CDirectoryWatcher::GetFileNamesInDirectory(CIDL absIdl
 
 void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 {
+	scoped_se_translator scoped_se_trans;
+
 	try{
 		LOG_THIS_1("Start CDirectoryWatcher::IoCompletionCallback");
 

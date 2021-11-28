@@ -8,6 +8,7 @@
 #include "ShellFunction.h"
 #include "ShellFileFactory.h"
 #include "ResourceIDFactory.h"
+#include "async_catch.h"
 
 CIncrementalCopyDlg::CIncrementalCopyDlg(
 	CD2DWControl* pParentControl,
@@ -25,7 +26,8 @@ CIncrementalCopyDlg::CIncrementalCopyDlg(
 	m_title.set(L"Incremental Copy");
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
 	{
-		m_doFuture = std::async(std::launch::async, [idlMap = m_idlMap]()->void {
+		auto funDo = [idlMap = m_idlMap]()->void
+		{
 			CComPtr<IFileOperation> pFileOperation = nullptr;
 			if (FAILED(pFileOperation.CoCreateInstance(CLSID_FileOperation))) {
 				return;
@@ -34,7 +36,7 @@ CIncrementalCopyDlg::CIncrementalCopyDlg(
 			if (!idlMap.empty()) {
 				for (auto& pair : idlMap) {
 					std::vector<LPITEMIDLIST> pidls;
-					std::transform(std::begin(pair.second), std::end(pair.second), std::back_inserter(pidls), [](const CIDL& x) {return x.ptr(); });
+					std::transform(std::begin(pair.second), std::end(pair.second), std::back_inserter(pidls), [](const CIDL& x) { return x.ptr(); });
 
 					CComPtr<IShellItem2> pDestShellItem;
 					if (FAILED(::SHCreateItemFromIDList(pair.first.ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem)))) {
@@ -50,7 +52,11 @@ CIncrementalCopyDlg::CIncrementalCopyDlg(
 				}
 				SUCCEEDED(pFileOperation->PerformOperations());
 			}
-		});
+		};
+		m_doFuture = std::async(
+			std::launch::async,
+			async_action_wrap<decltype(funDo)>,
+			funDo);
 
 		m_idlMap.clear();
 		m_spButtonDo->GetIsEnabled().set(!m_idlMap.empty());
@@ -100,16 +106,19 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 
 	m_spButtonCancel->GetIsEnabled().set(false);
 	m_spButtonClose->GetIsEnabled().set(true);
-	
-	//Start comparison
-	m_compFuture = std::async(std::launch::async, [this]()->void {
-		std::function<void()> readMax = [this]()->void {
+
+	auto fun = [this]()->void
+	{
+		std::function<void()> readMax = [this]()->void
+		{
 			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this] { OnIncrementMax(); });
 		};
-		std::function<void()> readValue = [this]()->void {
+		std::function<void()> readValue = [this]()->void
+		{
 			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this] { OnIncrementValue(); });
 		};
-		std::function<void(const CIDL&, const CIDL&)> find = [this](const CIDL& destIDL, const CIDL& srcIDL)->void {
+		std::function<void(const CIDL&, const CIDL&)> find = [this](const CIDL& destIDL, const CIDL& srcIDL)->void
+		{
 			auto iter = m_idlMap.find(destIDL);
 			if (iter != m_idlMap.end()) {
 				iter->second.push_back(srcIDL);
@@ -124,17 +133,27 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 		GetProgressBarPtr()->SetMax(0);
 		GetProgressBarPtr()->SetValue(0);
 
-		auto countFuture = std::async(std::launch::async, [srcIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, readMax]()->void{
+		auto funCount = [srcIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, readMax]()->void
+		{
 			for (const auto& childIDL : srcChildIDLs) {
 				shell::CountFileOne(srcIDL, childIDL, readMax);
 			}
-		});
+		};
+		auto countFuture = std::async(
+			std::launch::async,
+			async_action_wrap<decltype(funCount)>,
+			funCount);
 
-		auto incrFuture = std::async(std::launch::async, [srcParentIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, destParentIDL = m_destIDL, readValue, find]()->void {
+		auto funIncr = [srcParentIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, destParentIDL = m_destIDL, readValue, find]()->void
+		{
 			for (const auto& srcChildIDL : srcChildIDLs) {
 				shell::FindIncrementalOne(srcParentIDL, srcChildIDL, destParentIDL, readValue, find);
 			}
-		});
+		};
+		auto incrFuture = std::async(
+			std::launch::async,
+			async_action_wrap<decltype(funIncr)>,
+			funIncr);
 
 		countFuture.get();
 		incrFuture.get();
@@ -143,7 +162,13 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 			m_spButtonDo->GetIsEnabled().set(true);
 			SetFocusedControlPtr(m_spButtonDo);
 		}
-	});
+	};
+	
+	//Start comparison
+	m_compFuture = std::async(
+		std::launch::async,
+		async_action_wrap<decltype(fun)>,
+		fun);
 }
 
 void CIncrementalCopyDlg::OnRect(const RectEvent& e)

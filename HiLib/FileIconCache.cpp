@@ -4,6 +4,7 @@
 #include "Debug.h"
 #include <VersionHelpers.h>
 #include <ntddkbd.h>
+#include "async_catch.h"
 
 
 BOOL GetOSVersion(OSVERSIONINFOEX* os)
@@ -89,13 +90,21 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetFileIconBitmap(const CIDL& absoluteIDL, 
 			return iter->second;
 		} else {
 			m_extMap.lock_emplace(std::make_pair(ext, GetDefaultIconBitmap()));
-			m_futures.emplace_back(std::async(std::launch::async, [this](const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated) {
+			auto fun = [this](const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, const std::function<void()>& updated)->void
+			{
 				CComPtr<ID2D1Bitmap> pBitmap = GetBitmapFromIcon(GetIcon(absoluteIDL));
 				m_extMap.lock_insert_or_assign(ext, std::move(pBitmap));
 				if (updated) {
 					updated();
 				}
-			}, absoluteIDL, path, ext, updated));
+			};
+			m_futures.emplace_back(
+				std::async(std::launch::async, async_action_wrap<decltype(fun)&&, const CIDL&, const std::wstring&, const std::wstring&, const std::function<void()>&>,
+					fun,
+					absoluteIDL,
+					path,
+					ext,
+					updated));
 			return GetDefaultIconBitmap();
 		}
 	} else {
@@ -103,13 +112,21 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetFileIconBitmap(const CIDL& absoluteIDL, 
 			return iter->second;
 		} else {
 			m_pathMap.lock_emplace(std::make_pair(path, GetDefaultIconBitmap()));
-			m_futures.emplace_back(std::async(std::launch::async, [this](const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, std::function<void()> updated) {
+			auto fun = [this](const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, const std::function<void()>& updated)->void
+			{
 				CComPtr<ID2D1Bitmap> pBitmap = GetBitmapFromIcon(GetIcon(absoluteIDL));
 				m_pathMap.lock_insert_or_assign(path, std::move(pBitmap));
 				if (updated) {
 					updated();
 				}
-			}, absoluteIDL, path, ext, updated));
+			};
+			m_futures.emplace_back(
+				std::async(std::launch::async, async_action_wrap<decltype(fun)&&, const CIDL&, const std::wstring&, const std::wstring&, const std::function<void()>&>,
+					fun,
+					absoluteIDL,
+					path,
+					ext,
+					updated));
 			return GetDefaultIconBitmap();
 		}
 	}

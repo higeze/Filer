@@ -3,6 +3,7 @@
 #include "Debug.h"
 #include <boost/sml.hpp>
 #include <hstring.h>
+#include "async_catch.h"
 
 namespace sml = boost::sml;
 
@@ -71,7 +72,7 @@ void CPdf::Load(const std::wstring& path, std::function<void()> changed)
 			if (*m_spCancelThread || status != AsyncStatus::Completed) { return S_OK; }
 			CComPtr<abipdf::IPdfDocument> doc;
 			FAILED_THROW(async->GetResults(&doc));
-			m_future = std::async(std::launch::async, [this, doc, changed]()
+			auto fun = [this, doc, changed]()
 			{
 				SetLockDocument(std::make_pair(std::move(doc), PdfDocStatus::Available));
 				UINT32 count;
@@ -80,7 +81,11 @@ void CPdf::Load(const std::wstring& path, std::function<void()> changed)
 					m_pages.push_back(std::make_unique<CPdfPage>(this, i));
 				}
 				changed();
-			});
+			};
+			m_future = std::async(
+				std::launch::async,
+				async_action_wrap<decltype(fun)>,
+				fun);
 			return S_OK;
 		});
 		FAILED_THROW(doc_async->put_Completed(doc_callback.Get()));
@@ -107,7 +112,7 @@ void CPdf::Load(const std::wstring& path, std::function<void()> changed)
 	//	if (*m_spCancelThread || status != AsyncStatus::Completed) { return S_OK; }
 	//	CComPtr<abipdf::IPdfDocument> doc;
 	//	FAILED_THROW(async->GetResults(&doc));
-	//	m_future = std::async(std::launch::async, [this, doc, changed]()
+	//	m_future = async_ex(std::launch::async, [this, doc, changed]()
 	//	{
 	//		SetLockDocument(std::make_pair(std::move(doc), PdfDocStatus::Available));
 	//		UINT32 count;
@@ -277,13 +282,13 @@ void CPdfPage::Loading_OnEntry()
 				SetLockBitmap({ CComPtr<IWICFormatConverter>(),  0.f });
 				process_event(ErrorEvent());
 			} else {
-				m_future = std::async(std::launch::async, [this, pMemStream, scale]()
+				auto fun = [this, pMemStream, scale]()
 				{
 					auto pbi = GetLockBitmap();
 					if (*m_spCancelThread) {
 						SetLockBitmap({ pbi.ConverterPtr, pbi.Scale });
 						process_event(CancelCompletedEvent());
-					}else{
+					} else {
 						CComPtr<IStream> pStream;
 						FAILED_THROW(CreateStreamOverRandomAccessStream(pMemStream, IID_PPV_ARGS(&pStream)));
 						CComPtr<IWICBitmapDecoder> pWicBitmapDecoder;
@@ -321,7 +326,11 @@ void CPdfPage::Loading_OnEntry()
 						//UINT imageWidth, imageHeight;
 						//FAILED_THROW(pWicBitmapSource->GetSize(&imageWidth, &imageHeight));
 					}
-				});
+				};
+				m_future = std::async(
+					std::launch::async,
+					async_action_wrap<decltype(fun)>,
+					fun);
 			}
 			return S_OK;
 		});

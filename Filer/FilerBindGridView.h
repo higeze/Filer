@@ -77,19 +77,7 @@ public:
 
 	virtual void OpenFile(const std::shared_ptr<CShellFile>& spFile)
 	{
-		SHELLEXECUTEINFO	sei = { 0 };
-		sei.cbSize = sizeof(SHELLEXECUTEINFO);
-		sei.fMask = SEE_MASK_INVOKEIDLIST;
-		sei.hwnd = this->GetWndPtr()->m_hWnd;
-		sei.lpVerb = NULL;
-		sei.lpFile = NULL;
-		sei.lpParameters = NULL;
-		sei.lpDirectory = NULL;
-		sei.nShow = SW_SHOWNORMAL;
-		sei.hInstApp = NULL;
-		sei.lpIDList = (LPVOID)(spFile->GetAbsoluteIdl().ptr());
-
-		::ShellExecuteEx(&sei);
+		spFile->Open();
 	}	
 	
 	virtual void OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)

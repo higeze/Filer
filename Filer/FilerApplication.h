@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "FilerWnd.h"
 #include "Debug.h"
+#include "async_catch.h"
 
 class CFilerApplication : public CApplication<CFilerApplication>
 {
@@ -18,6 +19,7 @@ private:
 
 	std::string GetJsonPath();
 
+	std::unique_ptr<scoped_se_translator> m_pSETrans;
 	std::unique_ptr<CCoInitializer> m_pCoinit;
 	std::unique_ptr<COleInitializer> m_pOleinit;
 	//RoInitialize(RO_INIT_SINGLETHREADED);

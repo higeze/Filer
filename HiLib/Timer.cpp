@@ -1,4 +1,5 @@
 #include "Timer.h"
+#include "async_catch.h"
 
 void CTimer::run(std::function<void()> action, const std::chrono::milliseconds& ms)
 {
@@ -11,7 +12,8 @@ void CTimer::run(std::function<void()> action, const std::chrono::milliseconds& 
 	} else {
 		m_stop.store(false);
 		m_action = action;
-		m_future = std::async(std::launch::async, [this, ms] {
+		auto fun = [this, ms]
+		{
 			std::unique_lock<std::mutex> lock(m_mtx);
 			while (!m_stop.load()) {
 				auto abs_time = std::chrono::steady_clock::now() + ms;
@@ -20,12 +22,16 @@ void CTimer::run(std::function<void()> action, const std::chrono::milliseconds& 
 					if (m_action) {
 						m_action();
 					}
-				} else if(m_stop.load()){//no_timeout. stop
+				} else if (m_stop.load()) {//no_timeout. stop
 					break;
 				}
 			}
 			return;
-			});
+		};
+		m_future = std::async(
+			std::launch::async,
+			async_action_wrap<decltype(fun)>,
+			fun);
 
 	}
 }

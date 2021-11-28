@@ -4,6 +4,7 @@
 #include <spdlog/spdlog.h>
 #include <fmt/format.h>
 #include <chrono>
+#include "MyWin32.h"
 
 /****************/
 /* scoped_timer */
@@ -29,6 +30,16 @@ public:
 		stop();
 	}
 };
+
+/*************/
+/* exception */
+/*************/
+
+std::string exception_msg_to_string(const std::exception& e, UINT msg, WPARAM wParam, LPARAM lParam);
+
+std::string exception_to_string(const std::exception& e);
+
+std::string msg_to_string(UINT msg, WPARAM wParam, LPARAM lParam);
 
 /*********/
 /* Macro */

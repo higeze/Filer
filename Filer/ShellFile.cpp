@@ -299,14 +299,9 @@ void CShellFile::Open()
 {
 	SHELLEXECUTEINFO	sei = { 0 };
 	sei.cbSize = sizeof(SHELLEXECUTEINFO);
-	sei.fMask = SEE_MASK_INVOKEIDLIST;
-	sei.hwnd = NULL;
-	sei.lpVerb = NULL;
-	sei.lpFile = NULL;
-	sei.lpParameters = NULL;
-	sei.lpDirectory = NULL;
+	sei.fMask = SEE_MASK_INVOKEIDLIST | SEE_MASK_NOASYNC ;
+	sei.lpVerb = nullptr;
 	sei.nShow = SW_SHOWNORMAL;
-	sei.hInstApp = NULL;
 	sei.lpIDList = (LPVOID)(GetAbsoluteIdl().ptr());
 
 	::ShellExecuteEx(&sei);

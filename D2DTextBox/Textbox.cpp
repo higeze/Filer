@@ -1087,7 +1087,7 @@ void CTextBox::Normal_ContextMenu(const ContextMenuEvent& e)
 	//	SHELLEXECUTEINFO execInfo = {};
 	//	execInfo.cbSize = sizeof(execInfo);
 	//	execInfo.hwnd = GetWndPtr()->m_hWnd;
-	//	execInfo.lpVerb = L"open";
+	//	execInfo.lpVerb = nullptr;
 	//	execInfo.lpFile = exe.c_str();
 	//	execInfo.nShow = SW_SHOWDEFAULT;
 	//	::ShellExecuteEx(&execInfo);

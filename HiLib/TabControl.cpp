@@ -3,6 +3,7 @@
 #include "Dispatcher.h"
 #include <fmt/format.h>
 
+namespace sml = boost::sml;
 
 /***********/
 /* TabData */
@@ -276,12 +277,58 @@ void CAddTabHeaderControl::OnLButtonDown(const LButtonDownEvent& e)
 /***************/
 /* CTabControl */
 /***************/
+
+/***********/
+/* Machine */
+/***********/
+
+struct CTabControl::Machine
+{
+	class Normal {};
+	class Dragging {};
+	class Error {};
+
+	template<class T, class R, class... Ts>
+	auto call(R(T::* f)(Ts...))const
+	{
+		return [f](T* self, Ts... args) { return (self->*f)(args...); };
+	}
+
+	auto operator()() const noexcept
+	{
+		using namespace sml;
+		return make_transition_table(
+			*state<Normal> +event<LButtonBeginDragEvent>[call(&CTabControl::Guard_LButtonBeginDrag_Normal_To_Dragging)] = state<Dragging>,
+			state<Normal> +event<LButtonBeginDragEvent> / call(&CTabControl::Normal_LButtonBeginDrag),
+
+			state<Normal> +event<MouseMoveEvent> / call(&CTabControl::Normal_MouseMove),
+			
+			//Dragging
+			state<Dragging> +on_entry<LButtonBeginDragEvent> / call(&CTabControl::Dragging_OnEntry),
+			state<Dragging> +on_exit<LButtonEndDragEvent> / call(&CTabControl::Dragging_OnExit),
+			state<Dragging> +event<LButtonEndDragEvent> = state<Normal>,
+			state<Dragging> +event<MouseMoveEvent> / call(&CTabControl::Dragging_MouseMove),
+			//Error handler
+			*state<Error> +exception<std::exception> / call(&CTabControl::Error_StdException) = state<Normal>
+		);
+	}
+};
+
+/***************/
+/* Constructor */
+/***************/
+//This should be called after Machine declared.
+
 CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<TabControlProperty>& spProp)
 	:CD2DWControl(pParentControl), m_spProp(spProp), m_selectedIndex(-1), 
 	m_headers([](std::shared_ptr<CTabHeaderControl>& sp, size_t idx) { sp->SetIndex(idx); }),
-	m_addHeader(std::make_shared<CAddTabHeaderControl>(this, spProp->HeaderProperty)){}
+	m_addHeader(std::make_shared<CAddTabHeaderControl>(this, spProp->HeaderProperty)),
+	m_pMachine(new boost::sml::sm<Machine>{ this }),
+	m_dragFrom(-1), m_dragTo(-1)
+{}
 
 CTabControl::~CTabControl() = default;
+
 
 std::optional<size_t> CTabControl::GetPtInHeaderRectIndex(const CPointF& pt)const
 {
@@ -531,6 +578,16 @@ void CTabControl::OnPaint(const PaintEvent& e)
 		}
 		m_addHeader->OnPaint(e);
 
+		if (m_dragTo >= 0 && m_dragTo < m_headers.size()) {
+			GetWndPtr()->GetDirectPtr()->DrawSolidLine(SolidLine(1.f, 0.f, 0.f, 1.f, 2.f), 
+				m_headers[m_dragTo]->GetRectInWnd().LeftTop(), 
+				CPointF(m_headers[m_dragTo]->GetRectInWnd().left, m_headers[m_dragTo]->GetRectInWnd().bottom));
+		} else if (m_dragTo == m_headers.size()) {
+			GetWndPtr()->GetDirectPtr()->DrawSolidLine(SolidLine(1.f, 0.f, 0.f, 1.f, 2.f), 
+				CPointF(m_headers.back()->GetRectInWnd().right, m_headers.back()->GetRectInWnd().top),
+				CPointF(m_headers.back()->GetRectInWnd().right, m_headers.back()->GetRectInWnd().bottom));
+		}
+
 		//Control
 		m_spCurControl->OnPaint(e);
 	}
@@ -592,6 +649,100 @@ void CTabControl::OnKeyDown(const KeyDownEvent& e)
 		break;
 	}
 }
+
+//
+
+
+void CTabControl::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pMachine->process_event(e); }
+void CTabControl::OnLButtonEndDrag(const LButtonEndDragEvent& e) { m_pMachine->process_event(e); }
+void CTabControl::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); }
+
+bool CTabControl::Guard_LButtonBeginDrag_Normal_To_Dragging(const LButtonBeginDragEvent& e)
+{
+	auto iter = std::find_if(m_headers.cbegin(), m_headers.cend(),
+		[&](const std::shared_ptr<CTabHeaderControl>& x) {
+			return x->GetIsEnabled() && x->GetRectInWnd().PtInRect(e.PointInWnd);
+		});
+
+	return iter != m_headers.cend();
+}
+
+void CTabControl::Normal_LButtonBeginDrag(const LButtonBeginDragEvent& e){ CD2DWControl::OnLButtonBeginDrag(e); }
+void CTabControl::Normal_LButtonEndDrag(const LButtonEndDragEvent& e){ CD2DWControl::OnLButtonEndDrag(e); }
+void CTabControl::Normal_MouseMove(const MouseMoveEvent& e) { CD2DWControl::OnMouseMove(e); }
+	
+void CTabControl::Dragging_OnEntry(const LButtonBeginDragEvent& e)
+{
+	auto iter = std::find_if(m_headers.cbegin(), m_headers.cend(),
+		[&](const std::shared_ptr<CTabHeaderControl>& x) {
+			return x->GetIsEnabled() && x->GetRectInWnd().PtInRect(e.PointInWnd);
+		});
+
+	if (iter != m_headers.cend()) {
+		m_dragFrom = std::distance(m_headers.cbegin(), iter);
+	} else {
+		m_dragFrom = -1;
+	}
+	e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+}
+
+void CTabControl::Dragging_OnExit(const LButtonEndDragEvent& e)
+{
+	auto iter = FindPtInDraggingHeaderRect(e.PointInWnd);
+	m_dragTo = std::distance(m_headers.cbegin(), iter);
+
+	if (m_dragFrom != m_dragTo) {
+		auto temp = m_itemsSource[m_dragFrom];
+		m_itemsSource.erase(m_itemsSource.cbegin() + m_dragFrom);
+		m_dragTo = m_dragTo > m_dragFrom ? m_dragTo - 1 : m_dragTo;
+		m_itemsSource.insert(m_itemsSource.cbegin() + m_dragTo, temp);
+		UpdateHeaderRects();
+	}
+	m_dragFrom = -1;
+	m_dragTo = -1;
+	GetWndPtr()->ReleaseCapturedControlPtr();
+}
+
+void CTabControl::Dragging_MouseMove(const MouseMoveEvent& e)
+{
+	auto iter = FindPtInDraggingHeaderRect(e.PointInWnd);
+	m_dragTo = std::distance(m_headers.cbegin(), iter);
+}
+
+void CTabControl::Error_StdException(const std::exception& e){}
+
+index_vector<std::shared_ptr<CTabHeaderControl>>::const_iterator CTabControl::FindPtInDraggingHeaderRect(const CPointF& pt)
+{
+	auto isTop = [&](const std::shared_ptr<CTabHeaderControl>& x)->bool
+	{
+		return x->GetRectInWnd().top == m_headers.front()->GetRectInWnd().top;
+	};
+	auto isBottom =  [&](const std::shared_ptr<CTabHeaderControl>& x)->bool
+	{
+		return x->GetRectInWnd().bottom == m_headers.back()->GetRectInWnd().bottom;
+	};
+	auto isLeft = [&](const std::shared_ptr<CTabHeaderControl>& x)->bool
+	{
+		return x->GetRectInWnd().left == m_headers.front()->GetRectInWnd().left;
+	};
+	auto isRight = [&](const std::shared_ptr<CTabHeaderControl>& x)->bool
+	{
+		return x != m_headers.back() && x->GetRectInWnd().top < m_headers[x->GetIndex() + 1]->GetRectInWnd().top;
+	};
+
+	return std::find_if(m_headers.cbegin(), m_headers.cend(),
+		[&](const std::shared_ptr<CTabHeaderControl>& x) {
+			auto rc = x->GetRectInWnd();
+			rc.left = isLeft(x) ? - FLT_MAX : rc.left;
+			rc.top = isTop(x) ? -FLT_MAX : rc.top;
+			rc.right = isRight(x) ? FLT_MAX : rc.right;
+			rc.bottom = isBottom(x) ? FLT_MAX : rc.bottom;
+
+			return x->GetIsEnabled() && rc.PtInRect(pt);
+		});
+}
+
+
 
 
 

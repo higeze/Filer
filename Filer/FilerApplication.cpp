@@ -2,7 +2,7 @@
 #include "Textbox.h"
 #include "TextEditorProperty.h"
 #include "JsonSerializer.h"
-
+#include "async_catch.h"
 
 std::string CFilerApplication::GetJsonPath()
 {
@@ -91,6 +91,8 @@ void CFilerApplication::SerializeExeExtension(const std::shared_ptr<ExeExtension
 
 void CFilerApplication::Init()
 {
+	//SEH
+	m_pSETrans = std::make_unique<scoped_se_translator>();
 	//Logger
 	//auto loggersink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>("FilerLog.txt", 1024*1024, 5, false);
 	//auto logger = std::make_shared<spdlog::async_logger>("logger", loggersink, spdlog::thread_pool(), spdlog::async_overflow_policy::block);
@@ -133,7 +135,8 @@ void CFilerApplication::Term()
 	//Logger
 	LOG_1("***Application Finish***");
 	spdlog::drop_all();
-
+	//SEH
+	m_pSETrans.release();
 }
 
 

@@ -581,15 +581,13 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 				auto path = spFile->GetPath();
 				SHELLEXECUTEINFO	sei = { 0 };
 				sei.cbSize = sizeof(SHELLEXECUTEINFO);
-				//sei.fMask = SEE_MASK_INVOKEIDLIST;
 				sei.hwnd = GetWndPtr()->m_hWnd;
 				sei.lpVerb = L"open";
 				sei.lpFile = L"notepad.exe";
-				sei.lpParameters = path.c_str();//NULL;
+				sei.lpParameters = path.c_str();//When open with notepad, need to pass path. ItemIDList couldn't work for this case.
 				sei.lpDirectory = NULL;
 				sei.nShow = SW_SHOWNORMAL;
 				sei.hInstApp = NULL;
-				//sei.lpIDList = (LPVOID)(spFile->GetAbsolutePidl().m_pIDL);
 
 				::ShellExecuteEx(&sei);
 				(*e.HandledPtr) = true;

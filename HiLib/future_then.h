@@ -1,5 +1,6 @@
 #pragma once
 #include <future>
+#include "async_catch.h"
 
 constexpr struct future_then
 {
@@ -19,20 +20,30 @@ public:
     template<class T,class Func>
     friend auto operator | (std::future<T> fut, Param<Func> param)->std::future<decltype(param.func(fut.get()))>
     {
-        return std::async([](std::future<T> fut, Func func)
+        auto fun = [](std::future<T> fut, Func func)
         {
             return func(fut.get());
-        }, std::move(fut), std::move(param.func));
+        };
+        return std::async(
+            std::launch::async,
+            std::move(fun),
+            std::move(fut),
+            std::move(param.func));
     }
 
     template <class Func>
     friend auto operator | (std::future<void> fut, Param<Func> param)->std::future<decltype(param.func())>
     {
-        return std::async([](std::future<void> fut, Func func)
+        auto fun = [](std::future<void> fut, Func func)
         {
             fut.wait();
-            return func(); 
-        }, std::move(fut), std::move(param.func));
+            return func();
+        };
+        return std::async(
+            std::launch::async,
+            std::move(fun),
+            std::move(fut),
+            std::move(param.func));
     }
 
 }then;

@@ -494,14 +494,28 @@ void CSheet::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
 	case Sorts::Down:
 		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
 			[pCol, this](const auto& lhs, const auto& rhs)->bool{
-				return _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str()) > 0;
+				auto cmp = _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str());
+				if (cmp > 0) {
+					return true;
+				} else if (cmp == 0) {
+					return lhs->GetIndex<AllTag>() >= rhs->GetIndex<AllTag>();
+				} else {
+					return false;
+				}
 			});
 
 		break;
 	case Sorts::Up:
 		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
 			[pCol, this](const auto& lhs, const auto& rhs)->bool {
-				return _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str()) < 0;
+				auto cmp = _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str());
+				if (cmp < 0) {
+					return true;
+				} else if (cmp == 0) {
+					return lhs->GetIndex<AllTag>() < rhs->GetIndex<AllTag>();
+				} else {
+					return false;
+				}
 			});
 		break;
 	default:

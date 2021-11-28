@@ -1,4 +1,5 @@
 #include "DeadlineTimer.h"
+#include "async_catch.h"
 
 void CDeadlineTimer::run(std::function<void()> action, const std::chrono::milliseconds& ms)
 {
@@ -8,7 +9,8 @@ void CDeadlineTimer::run(std::function<void()> action, const std::chrono::millis
 		m_cv.notify_one();
 	} else {
 		m_action = action;
-		m_future = std::async(std::launch::async, [this, ms] {
+		auto fun = [this, ms]
+		{
 			std::unique_lock<std::mutex> lock(m_mtx);
 			while (!m_stop.load()) {
 				auto abs_time = std::chrono::steady_clock::now() + ms;
@@ -18,12 +20,16 @@ void CDeadlineTimer::run(std::function<void()> action, const std::chrono::millis
 						m_action();
 					}
 					break;
-				}else if (m_stop.load()) {//no_timeout. stop
+				} else if (m_stop.load()) {//no_timeout. stop
 					break;
 				}
 			}
 			return;
-		});
+		};
+		m_future = std::async(
+			std::launch::async,
+			async_action_wrap<decltype(fun)>,
+			fun);
 	}
 }
 
@@ -35,14 +41,19 @@ void CDeadlineTimer::run_oneshot(std::function<void()> action, const std::chrono
 		m_action = action;
 	} else {
 		m_action = action;
-		m_future = std::async(std::launch::async, [this, ms] {
+		auto fun = [this, ms]()
+		{
 			std::this_thread::sleep_for(ms);
 			std::lock_guard<std::mutex> guard(m_mtx);
 			if (m_action && !m_stop.load()) {
 				m_action();
 			}
 			return;
-		});
+		};
+		m_future = std::async(
+			std::launch::async,
+			async_action_wrap<decltype(fun)>,
+			fun);
 	}
 }
 
