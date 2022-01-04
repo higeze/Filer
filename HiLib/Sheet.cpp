@@ -226,18 +226,6 @@ void CSheet::OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name)
 	}
 }
 
-void CSheet::OnVScrollPropertyChanged(const wchar_t* name)
-{
-	PostUpdate(Updates::Row);
-	PostUpdate(Updates::Invalidate);
-}
-
-void CSheet::OnHScrollPropertyChanged(const wchar_t* name)
-{
-	PostUpdate(Updates::Column);
-	PostUpdate(Updates::Invalidate);
-}
-
 void CSheet::ColumnInserted(const CColumnEventArgs& e)
 {
 	this->SetAllRowMeasureValid(false);

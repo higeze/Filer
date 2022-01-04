@@ -331,8 +331,6 @@ public:
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name);
 	virtual void OnRowPropertyChanged(CRow* pRow, const wchar_t* name);
 	virtual void OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name);
-	virtual void OnVScrollPropertyChanged(const wchar_t* name);
-	virtual void OnHScrollPropertyChanged(const wchar_t* name);
 
 	virtual void SelectAll();
 	virtual void DeselectAll();

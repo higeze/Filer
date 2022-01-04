@@ -10,7 +10,7 @@ void async_action_wrap(F&& function, Args&&... arguments)
 		std::invoke(std::forward<F>(function), std::forward<Args>(arguments)...);
 	}catch (std::exception& ex) {
 		auto msg = exception_to_string(ex);
-		MessageBoxA(NULL, msg.c_str(), "exception in thread", MB_ICONWARNING);
+		MessageBoxA(NULL, msg.c_str(), "exception in thread", MB_ICONWARNING);//TODO Need to create D2D Modal Dialog
 		SPDLOG_ERROR("exception in thread\r\n" + msg);
 		::OutputDebugStringA(msg.c_str());
 	}catch (...) {

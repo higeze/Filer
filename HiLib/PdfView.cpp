@@ -12,8 +12,8 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	:CD2DWControl(pParentControl),
     m_pProp(pProp),
 	m_pMachine(std::make_unique<CPdfViewStateMachine>(this)),
-	m_pVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr, [this](const wchar_t* name) { })),
-	m_pHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr, [this](const wchar_t* name) { })),
+	m_pVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr)),
+	m_pHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
 	m_scale(1.f), m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(InitialScaleMode::Width)
 {
 	m_scale.Subscribe([this](const FLOAT& value)

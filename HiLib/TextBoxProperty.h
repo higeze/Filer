@@ -40,6 +40,22 @@ public:
 		HScrollPropPtr(std::make_shared<ScrollProperty>()),
 		IsWrap(true){};
 
+	TextBoxProperty(const std::shared_ptr<ScrollProperty>& spVScrollProp, const std::shared_ptr<ScrollProperty>& spHScrollProp)
+		:Format(std::make_shared<FormatF>(L"Meiryo UI", CDirect2DWrite::Points2Dips(9),  0.0f, 0.0f, 0.0f, 1.0f)),
+		Line(std::make_shared<SolidLine>(221.f/255.f, 206.f/255.f, 188.f/255.f, 1.0f, 1.0f)),
+		CompositionLine(std::make_shared<SolidLine>(0.0f/255.f, 0.0f/255.f, 255.f/255.f, 1.0f, 1.0f)),
+		FocusedLine(std::make_shared<SolidLine>(22.f/255.f, 160.f/255.f, 133.f/255.f, 1.0f, 1.0f)),
+		BlankLine(std::make_shared<SolidLine>(100.f / 255.f, 100.f / 255.f, 100.f / 255.f, 0.6f, 1.0f)),
+		NormalFill(std::make_shared<SolidFill>(246.f/255.f, 246.f/255.f, 246.f/255.f, 1.0f)),
+		FocusedFill(std::make_shared<SolidFill>(0.0f/255.f, 224.f/255.f, 226.f/255.f, 1.0f)),
+		SelectedFill(std::make_shared<SolidFill>(150.f/255.f, 200.f/255.f, 240.f/255.f, 0.5f)),
+		UnfocusSelectedFill(std::make_shared<SolidFill>(224.f/255.f, 224.f/255.f, 224.f/255.f, 0.5f)),
+		HotFill(std::make_shared<SolidFill>(1.0f, 1.0f, 1.0f, 0.3f)),
+		Padding(std::make_shared<CRectF>(2.0f,2.0f,2.0f,2.0f)),
+		IsWrap(true),
+		VScrollPropPtr(spVScrollProp),
+		HScrollPropPtr(spHScrollProp){};
+
 	TextBoxProperty(
 		std::shared_ptr<FormatF> fontAndColor,
 		std::shared_ptr<SolidLine> line,

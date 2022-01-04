@@ -692,10 +692,10 @@
     <ClInclude Include="..\HiLib\TextBoxProperty.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\TextEditorProperty.h">
+    <ClInclude Include="..\HiLib\EditorProperty.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\TextEditor.h">
+    <ClInclude Include="..\HiLib\Editor.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\StatusBarProperty.h">
@@ -715,6 +715,18 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\async_catch.h">
       <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\string_extension.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\EditorScroll.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\getter_macro.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\EditorTextBox.h">
+      <Filter>D2DTextBox</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1043,7 +1055,7 @@
     <ClCompile Include="DriveSizeCell.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\TextEditor.cpp">
+    <ClCompile Include="..\HiLib\Editor.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\CellTextBox.cpp">
@@ -1057,6 +1069,12 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\Debug.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\EditorScroll.cpp">
+      <Filter>D2DTextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\EditorTextBox.cpp">
+      <Filter>D2DTextBox</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

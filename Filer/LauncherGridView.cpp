@@ -20,7 +20,7 @@
 #include "Celler.h"
 #include "Debug.h"
 #include "D2DWWindow.h"
-#include "TextEditorProperty.h"
+#include "EditorProperty.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 

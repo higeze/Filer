@@ -1,7 +1,9 @@
 #pragma once
 #include "TextBoxProperty.h"
+#include "ScrollProperty.h"
 #include "StatusBarProperty.h"
 #include "ReactiveProperty.h"
+#include "JsonSerializer.h"
 
 struct SyntaxAppearance
 {
@@ -14,20 +16,6 @@ struct SyntaxAppearance
 		:Regex(regex), SyntaxFormat(syntaxformat){}
 
 	auto operator<=>(const SyntaxAppearance&) const = default;
-
-	template <class Archive>
-	void save(Archive& ar)
-	{
-		ar("Regex", Regex);
-		ar("SyntaxFormat", SyntaxFormat);
-	}
-
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		ar("Regex", Regex);
-		ar("SyntaxFormat", SyntaxFormat);
-	}
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(SyntaxAppearance,
 		Regex,
@@ -45,73 +33,57 @@ struct ExecutableAppearance
 
 	auto operator<=>(const ExecutableAppearance&) const = default;
 
-	template <class Archive>
-	void save(Archive& ar)
-	{
-		ar("Regex", Regex);
-		ar("SyntaxFormat", SyntaxFormat);
-	}
-
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		ar("Regex", Regex);
-		ar("SyntaxFormat", SyntaxFormat);
-	}
-
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(ExecutableAppearance,
 		Regex,
 		SyntaxFormat)
 };
 
-struct TextEditorProperty :public TextBoxProperty
+struct EditorScrollProperty : public ScrollProperty
+{
+public:
+	SolidFill FindHighliteFill = SolidFill(244.f / 255, 167.f / 255, 33.f / 255, 1.f);
+
+	friend void to_json(json& j, const EditorScrollProperty& o)
+	{
+		to_json(j, static_cast<const ScrollProperty&>(o));
+		j["FindHighliteFill"] = o.FindHighliteFill;
+	}
+	friend void from_json(const json& j, EditorScrollProperty& o)
+	{
+		from_json(j, static_cast<ScrollProperty&>(o));
+		j.at("FindHighliteFill").get_to(o.FindHighliteFill);
+	}
+};
+
+struct EditorTextBoxProperty :public TextBoxProperty
 {
 	ReactiveVectorProperty<std::tuple<SyntaxAppearance>> SyntaxAppearances;
 	std::vector<ExecutableAppearance> ExecutableAppearances;
-	std::shared_ptr<StatusBarProperty> StatusBarPropPtr;
+	SolidFill FindHighliteFill = SolidFill(244.f / 255, 167.f / 255, 33.f / 255, 100.f / 255);
 
-	TextEditorProperty():TextBoxProperty(){}
+	EditorTextBoxProperty():
+		TextBoxProperty(std::make_shared<EditorScrollProperty>(), std::make_shared<EditorScrollProperty>()){}
 
-	template <class Archive>
-	void save(Archive& ar)
+	virtual ~EditorTextBoxProperty() = default;
+
+	friend void to_json(json& j, const EditorTextBoxProperty& o)
 	{
-		TextBoxProperty::save(ar);
-		ar("SyntaxAppearances", SyntaxAppearances);
-	}
+		JSON_REGISTER_POLYMORPHIC_RELATION(ScrollProperty, EditorScrollProperty);
 
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		TextBoxProperty::load(ar);
-		ar("SyntaxAppearances", SyntaxAppearances);
-
-		if (SyntaxAppearances.empty()) {
-			SyntaxAppearances.push_back(
-				std::make_tuple(
-				SyntaxAppearance(L"/\\*.*?\\*/",
-				SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false, false))));
-			SyntaxAppearances.push_back(
-				std::make_tuple(
-				SyntaxAppearance(L"//.*?\n",
-				SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false, false))));
-
-		}
-	}
-
-	friend void to_json(json& j, const TextEditorProperty& o)
-	{
 		to_json(j, static_cast<const TextBoxProperty&>(o));
 		j["SyntaxAppearances"] = o.SyntaxAppearances;
 		j["ExecutableAppearance"] = o.ExecutableAppearances;
-		j["StatusBarProperty"] = o.StatusBarPropPtr;
+		j["FindHighliteFill"] = o.FindHighliteFill;
 	}
 
-	friend void from_json(const json& j, TextEditorProperty& o)
+	friend void from_json(const json& j, EditorTextBoxProperty& o)
 	{
+		JSON_REGISTER_POLYMORPHIC_RELATION(ScrollProperty, EditorScrollProperty);
+
 		from_json(j, static_cast<TextBoxProperty&>(o));
 		j.at("SyntaxAppearances").get_to(o.SyntaxAppearances);
 		j.at("ExecutableAppearance").get_to(o.ExecutableAppearances);
-		get_to_nothrow(j, "StatusBarProperty", o.StatusBarPropPtr);
+		get_to_nothrow(j, "FindHighliteFill", o.FindHighliteFill);
 
 		if (o.SyntaxAppearances.empty()) {
 			o.SyntaxAppearances.push_back(
@@ -137,10 +109,33 @@ struct TextEditorProperty :public TextBoxProperty
 				});
 		}
 
-		if (!o.StatusBarPropPtr) {
-			o.StatusBarPropPtr = std::make_shared<StatusBarProperty>();
-		}
+		//if (!o.StatusBarPropPtr) {
+		//	o.StatusBarPropPtr = std::make_shared<StatusBarProperty>();
+		//}
 	}
 
+};
+
+struct EditorProperty
+{
+public:
+	std::shared_ptr<EditorTextBoxProperty> EditorTextBoxPropPtr = std::make_shared<EditorTextBoxProperty>();
+	std::shared_ptr<StatusBarProperty> StatusBarPropPtr = std::make_shared<StatusBarProperty>();
+
+	friend void to_json(json& j, const EditorProperty& o)
+	{
+		JSON_REGISTER_POLYMORPHIC_RELATION(TextBoxProperty, EditorTextBoxProperty);
+
+		j["EditorTextBoxPropPtr"] = o.EditorTextBoxPropPtr;
+		j["StatusBarPropPtr"] = o.StatusBarPropPtr;
+	}
+
+	friend void from_json(const json& j, EditorProperty& o)
+	{
+		JSON_REGISTER_POLYMORPHIC_RELATION(TextBoxProperty, EditorTextBoxProperty);
+
+		j.at("EditorTextBoxPropPtr").get_to(o.EditorTextBoxPropPtr);
+		j.at("StatusBarPropPtr").get_to(o.StatusBarPropPtr);
+	}
 };
 

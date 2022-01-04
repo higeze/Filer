@@ -43,9 +43,19 @@ CGridView::CGridView(
 	CMenu* pContextMenu)
 	:m_spGridViewProp(spGridViewProp),
 	CSheet(pParentControl, spGridViewProp, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
-	m_pVScroll(std::make_unique<CVScroll>(this, spGridViewProp->VScrollPropPtr, std::bind(&CGridView::OnVScrollPropertyChanged, this, phs::_1))),
-	m_pHScroll(std::make_unique<CHScroll>(this, spGridViewProp->HScrollPropPtr, std::bind(&CGridView::OnHScrollPropertyChanged, this, phs::_1)))
+	m_pVScroll(std::make_unique<CVScroll>(this, spGridViewProp->VScrollPropPtr)),
+	m_pHScroll(std::make_unique<CHScroll>(this, spGridViewProp->HScrollPropPtr))
 {
+	m_pVScroll->ScrollChanged.connect([this](){
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Invalidate);
+	});
+
+	m_pHScroll->ScrollChanged.connect([this](){
+		PostUpdate(Updates::Column);
+		PostUpdate(Updates::Invalidate);
+	});
+
 	m_pMachine.reset(new CGridStateMachine(this));
 
 	CellLButtonClk.connect(std::bind(&CGridView::OnCellLButtonClk, this, std::placeholders::_1));

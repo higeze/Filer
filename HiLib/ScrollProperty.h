@@ -13,6 +13,9 @@ public:
 	FLOAT BandWidth = 16.f;
 	FLOAT DeltaScroll = 30.f;
 
+	ScrollProperty() = default;
+	virtual ~ScrollProperty() = default;
+
 	FRIEND_SERIALIZER
 	template <class Archive>
 	void serialize(Archive& ar)

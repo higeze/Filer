@@ -19,7 +19,7 @@
 #include "ReactiveProperty.h"
 #include "PdfView.h"
 #include "ExeExtensionProperty.h"
-#include "TextEditorProperty.h"
+#include "EditorProperty.h"
 #include "DialogProperty.h"
 //#include "KonamiCommander.h"
 #include "JsonSerializer.h"
@@ -85,7 +85,7 @@ private:
 	std::shared_ptr<CLauncherProperty> m_spLauncherProp;
 
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
-	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
+	std::shared_ptr<EditorProperty> m_spEditorProp;
 	std::shared_ptr<PdfViewProperty> m_spPdfViewProp;
 	std::shared_ptr<TabControlProperty> m_spTabControlProp;
 	std::shared_ptr<SplitterProperty> m_spSplitterProp;
@@ -216,7 +216,7 @@ public:
 
 		ar("ApplicationProperty", m_spApplicationProp);
 		ar("FilerGridViewProperty",m_spFilerGridViewProp);
-		ar("TextEditorProperty", m_spTextEditorProp);
+		ar("EditorProperty", m_spEditorProp);
 		ar("PdfViewProperty", m_spPdfViewProp);
 		ar("LauncherProperty", m_spLauncherProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
@@ -243,14 +243,14 @@ public:
 
 		ar("ApplicationProperty", m_spApplicationProp);
 		ar("FilerGridViewProperty",m_spFilerGridViewProp);
-		ar("TextEditorProperty", m_spTextEditorProp);
+		ar("EditorProperty", m_spEditorProp);
 		ar("PdfViewProperty", m_spPdfViewProp);
 		ar("LauncherProperty", m_spLauncherProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
 		ar("SplitterProperty", m_spSplitterProp);
-		ar("LeftView", m_spLeftView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp);
-		ar("RightView", m_spRightView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp);
+		ar("LeftView", m_spLeftView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfViewProp);
+		ar("RightView", m_spRightView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfViewProp);
 		ar("HorizontalSplitter", m_spSplitter, this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp);
 		//ar("LeftFavoritesView", m_spLeftFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
 		//ar("RightFavoritesView", m_spRightFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
@@ -273,7 +273,7 @@ private:
 			{"LeftSplit", o.m_splitterLeft},
 			{"ApplicationProperty", o.m_spApplicationProp },
 			{"FilerGridViewProperty", o.m_spFilerGridViewProp },
-			{"TextEditorProperty", o.m_spTextEditorProp },
+			{"EditorProperty", o.m_spEditorProp },
 			{"PdfViewProperty", o.m_spPdfViewProp },
 			{"StatusBarProperty", o.m_spStatusBarProp},
 			{"LauncherProperty", o.m_spLauncherProp },
@@ -300,7 +300,7 @@ private:
 			get_to_nothrow(j, "LeftSplit", o.m_splitterLeft);
 			get_to_nothrow(j, "ApplicationProperty", o.m_spApplicationProp);
 			get_to_nothrow(j, "FilerGridViewProperty", o.m_spFilerGridViewProp);
-			get_to_nothrow(j, "TextEditorProperty", o.m_spTextEditorProp);
+			get_to_nothrow(j, "EditorProperty", o.m_spEditorProp);
 			get_to_nothrow(j, "PdfViewProperty", o.m_spPdfViewProp);
 			get_to_nothrow(j, "StatusBarProperty", o.m_spStatusBarProp);
 			get_to_nothrow(j, "LauncherProperty", o.m_spLauncherProp);
@@ -310,8 +310,8 @@ private:
 			get_to_nothrow(j, "LeftFavorites", o.m_spLeftFavoritesView, &o, o.m_spFilerGridViewProp, o.m_spFavoritesProp);
 			get_to_nothrow(j, "RightFavorites", o.m_spRightFavoritesView, &o, o.m_spFilerGridViewProp, o.m_spFavoritesProp);
 			get_to_nothrow(j, "Launcher", o.m_spLauncher, &o, o.m_spFilerGridViewProp, o.m_spLauncherProp);
-			get_to_nothrow(j, "LeftView", o.m_spLeftView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
-			get_to_nothrow(j, "RightView", o.m_spRightView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spTextEditorProp, o.m_spPdfViewProp);
+			get_to_nothrow(j, "LeftView", o.m_spLeftView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spEditorProp, o.m_spPdfViewProp);
+			get_to_nothrow(j, "RightView", o.m_spRightView, &o, o.m_spTabControlProp, o.m_spFilerGridViewProp, o.m_spEditorProp, o.m_spPdfViewProp);
 			get_to_nothrow(j, "HorizontalSplitter", o.m_spSplitter, &o, o.m_spLeftView.get(), o.m_spRightView.get(), o.m_spSplitterProp);
 			get_to_nothrow(j, "DialogProp", o.m_spDialogProp);
 	#ifdef USE_PYTHON_EXTENSION

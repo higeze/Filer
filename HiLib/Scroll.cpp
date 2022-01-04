@@ -2,10 +2,10 @@
 #include "ScrollProperty.h"
 #include "D2DWWindow.h"
 
-	CScrollBase::CScrollBase(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
+	CScrollBase::CScrollBase(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp/*, std::function<void(const wchar_t*)> onPropertyChanged*/)
 		:CD2DWControl(pParentControl),
 		m_spScrollProp(spScrollProp),
-		m_onPropertyChanged(onPropertyChanged),
+		//m_onPropertyChanged(onPropertyChanged),
 		m_visibility(Visibility::Auto){}
 
 	FLOAT CScrollBase::GetScrollBandWidth()const { return m_spScrollProp->BandWidth; }
@@ -32,7 +32,7 @@
 		FLOAT newPos = std::clamp(pos, m_range.first, (std::max)(m_range.second - m_page, m_range.first));
 		if (m_pos != newPos) {
 			m_pos = newPos;
-			OnPropertyChanged(L"position");
+			ScrollChanged();
 		}
 	}
 
@@ -41,7 +41,7 @@
 		if (m_page != page) {
 			m_page = page;
 			SetScrollPos(GetScrollPos());//Need clamp
-			OnPropertyChanged(L"page");
+			ScrollChanged();
 		}
 	}
 	
@@ -50,7 +50,7 @@
 		if (m_range.first != min || m_range.second != max) {
 			m_range.first = min; m_range.second = max;
 			SetScrollPos(GetScrollPos());//Need clamp
-			OnPropertyChanged(L"range");
+			ScrollChanged();
 		}
 	}
 
@@ -66,9 +66,19 @@
 	void CScrollBase::OnPaint(const PaintEvent& e)
 	{
 		if (!GetIsVisible())return;
-		//Draw background
+		PaintBackground(e);
+		PaintThumb(e);
+		PaintForeground(e);
+	}
+
+	void CScrollBase::PaintBackground(const PaintEvent& e)
+	{
 		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spScrollProp->BackgroundFill, GetRectInWnd());
-		//Draw thumb
+	}
+
+
+	void CScrollBase::PaintThumb(const PaintEvent& e)
+	{
 		auto thumbFill = m_spScrollProp->ThumbNormalFill;
 		if (GetState() == UIElementState::Dragged) {
 			thumbFill = m_spScrollProp->ThumbScrollFill;
@@ -81,23 +91,35 @@
 		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(thumbFill, GetThumbRect());
 	}
 
+	CRectF CScrollBase::GetThumbRangeRect()const
+	{
+		auto thumbRangeRect = GetRectInWnd();
+		thumbRangeRect.DeflateRect(m_spScrollProp->ThumbMargin);
+		return thumbRangeRect;
+	}
+
 	CRectF CVScroll::GetThumbRect()const
 	{
+		auto thumbRangeRect = GetThumbRangeRect();
 		return
 			CRectF(
-				m_rect.left + m_spScrollProp->ThumbMargin.left,
-				(std::max)(m_rect.top + m_rect.Height() * GetScrollPos() / GetScrollDistance(), m_rect.top + m_spScrollProp->ThumbMargin.top),
-				m_rect.right - m_spScrollProp->ThumbMargin.right,
-				(std::min)(m_rect.top + m_rect.Height() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), m_rect.bottom - m_spScrollProp->ThumbMargin.bottom));
+				thumbRangeRect.left,
+				(std::max)(thumbRangeRect.top + thumbRangeRect.Height() * GetScrollPos() / GetScrollDistance(), thumbRangeRect.top),
+				thumbRangeRect.right,
+				(std::min)(thumbRangeRect.top + thumbRangeRect.Height() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), thumbRangeRect.bottom));
 	}
 
 	CRectF CHScroll::GetThumbRect()const
 	{
+		auto thumbRangeRect = GetThumbRangeRect();
 		return
 			CRectF(
-				(std::max)(m_rect.left + m_rect.Width() * GetScrollPos() / GetScrollDistance(), m_rect.left + m_spScrollProp->ThumbMargin.left),
-				m_rect.top + m_spScrollProp->ThumbMargin.top,
-				(std::min)(m_rect.left + m_rect.Width() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), m_rect.right - m_spScrollProp->ThumbMargin.right),
-				m_rect.bottom - m_spScrollProp->ThumbMargin.bottom);
+				(std::max)(thumbRangeRect.left + thumbRangeRect.Width() * GetScrollPos() / GetScrollDistance(), thumbRangeRect.left),
+				thumbRangeRect.top,
+				(std::min)(thumbRangeRect.left + thumbRangeRect.Width() * (GetScrollPos() + GetScrollPage()) / GetScrollDistance(), thumbRangeRect.right),
+				thumbRangeRect.bottom);
 	}
+
+
+
 

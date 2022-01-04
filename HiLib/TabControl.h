@@ -16,7 +16,7 @@ struct FilerGridViewProperty;
 class CToDoGridView;
 struct GridViewProperty;
 class CShellFolder;
-class CTextEditor;
+class CEditor;
 class CD2DWWindow;
 
 struct TabHeaderControlProperty

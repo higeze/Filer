@@ -189,9 +189,6 @@ void CMoveDlg::Move()
 
 	auto fun = [](const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& noRenameIDLs, const std::vector<std::pair<CIDL, std::wstring>>& renameIDLs)->void
 	{
-		int* p = NULL;
-		*p = 1;
-
 		CComPtr<IFileOperation> pFileOperation = nullptr;
 		FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
 

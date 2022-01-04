@@ -24,7 +24,7 @@ class CD2DWWindow;
 class CShellFolder;
 class CPdfView;
 struct PdfViewProperty;
-struct TextEditorProperty;
+struct EditorProperty;
 
 /***************/
 /* FilerTabData */
@@ -256,7 +256,7 @@ class CFilerTabGridView :public CTabControl
 {
 private:
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
-	std::shared_ptr<TextEditorProperty> m_spTextEditorProp;
+	std::shared_ptr<EditorProperty> m_spEditorProp;
 	std::shared_ptr<PdfViewProperty> m_spPdfViewProp;
 
 	std::unique_ptr<CBinding> m_pTextBinding;
@@ -285,7 +285,7 @@ public:
 	CFilerTabGridView(CD2DWControl* pParentControl = nullptr,
 		const std::shared_ptr<TabControlProperty>& spTabProp = nullptr, 
 		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty = nullptr,
-		const std::shared_ptr<TextEditorProperty>& spTextboxProp = nullptr,
+		const std::shared_ptr<EditorProperty>& spTextboxProp = nullptr,
 		const std::shared_ptr<PdfViewProperty>& spPdfViewProp = nullptr);
 	virtual ~CFilerTabGridView();
 
@@ -300,7 +300,7 @@ public:
 	property<std::shared_ptr<CFilerGridView>> FilerGridViewPtr;
 
 	std::function<std::shared_ptr<CToDoGridView>&()> GetToDoGridViewPtr;
-	std::function<std::shared_ptr<CTextEditor>&()> GetTextViewPtr;
+	std::function<std::shared_ptr<CEditor>&()> GetTextViewPtr;
 	std::function<std::shared_ptr<CPdfView>&()> GetPdfViewPtr;
 
 	/**************/

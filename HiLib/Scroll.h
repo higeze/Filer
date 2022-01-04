@@ -1,11 +1,15 @@
 #pragma once
 #include "Direct2DWrite.h"
 #include "D2DWControl.h"
+#include <sigslot/signal.hpp>
 
 struct ScrollProperty;
 
 	class CScrollBase :public CD2DWControl
 	{
+	public:
+		sigslot::signal<> ScrollChanged;
+
 	protected:
 		Visibility m_visibility = Visibility::Auto;
 		FLOAT m_page = 0.0f;
@@ -16,11 +20,11 @@ struct ScrollProperty;
 
 		FLOAT m_startDrag;
 
-		std::function<void(const wchar_t*)> m_onPropertyChanged;
+		//std::function<void(const wchar_t*)> m_onPropertyChanged;
 
 
 	public:
-		CScrollBase(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged);
+		CScrollBase(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp/*, std::function<void(const wchar_t*)> onPropertyChanged*/);
 		virtual ~CScrollBase() = default;
 
 		FLOAT GetStartDrag()const { return m_startDrag; }
@@ -43,19 +47,24 @@ struct ScrollProperty;
 
 		virtual void OnPaint(const PaintEvent& e) override;
 		virtual void OnSetCursor(const SetCursorEvent& e) override;
+		virtual CRectF GetThumbRangeRect()const;
 		virtual CRectF GetThumbRect()const = 0;
-		virtual void OnPropertyChanged(const wchar_t* name) override
-		{
-			m_onPropertyChanged(name);
-		}
+		//virtual void OnPropertyChanged(const wchar_t* name) override
+		//{
+		//	m_onPropertyChanged(name);
+		//}
+	protected:
+		virtual void PaintBackground(const PaintEvent& e);
+		virtual void PaintThumb(const PaintEvent& e);
+		virtual void PaintForeground(const PaintEvent& e) {}
 
 	};
 
 	class CVScroll :public CScrollBase
 	{
 	public:
-		CVScroll(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
-			:CScrollBase(pParentControl, spScrollProp, onPropertyChanged){}
+		CVScroll(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp/*, std::function<void(const wchar_t*)> onPropertyChanged*/)
+			:CScrollBase(pParentControl, spScrollProp/*, onPropertyChanged*/){}
 		virtual ~CVScroll() = default;
 		virtual CRectF GetThumbRect()const override;
 	};
@@ -63,8 +72,8 @@ struct ScrollProperty;
 	class CHScroll :public CScrollBase
 	{
 	public:
-		CHScroll(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp, std::function<void(const wchar_t*)> onPropertyChanged)
-			:CScrollBase(pParentControl, spScrollProp, onPropertyChanged) {}
+		CHScroll(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp/*, std::function<void(const wchar_t*)> onPropertyChanged*/)
+			:CScrollBase(pParentControl, spScrollProp/*, onPropertyChanged*/) {}
 		virtual ~CHScroll() = default;
 		virtual CRectF GetThumbRect()const override;
 	};

@@ -12,10 +12,14 @@
 #include "DisplayAttribute.h"
 #include "property.h"
 #include "encoding_type.h"
+#include "TextStoreACP.h"
+#include "TextEditSink.h"
+#include "getter_macro.h"
+
 
 struct TextBoxProperty;
-class CTextStore;
-class CTextEditSink;
+//class CTextStore;
+//class CTextEditSink;
 class IBridgeTSFInterface;
 class CGridView;
 
@@ -40,10 +44,6 @@ bool in_range(const T& value, const T& min, const T& max)
 class CD2DWWindow;
 
 
-
-
-
-
 class CTextBox : public IBridgeTSFInterface, public CD2DWControl
 {
 	/**********/
@@ -53,12 +53,25 @@ public:
 	static void AppTSFInit();
 	static void AppTSFExit();
 
-	/*********/
-	/* Field */
-	/*********/
+	/*****************/
+	/* Static Getter */
+	/*****************/
+#if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
+	STATIC_LAZY_CCOMPTR_GETTER(ITfThreadMgr2, ThreadMgr)
+#else
+	STATIC_LAZY_CCOMPTR_GETTER(ITfThreadMgr, ThreadMgr)
+#endif
+	static TfClientId s_tfClientId;
+	STATIC_LAZY_CCOMPTR_GETTER(ITfKeystrokeMgr, KeystrokeMgr)
 
+	STATIC_LAZY_CCOMPTR_GETTER(ITfDisplayAttributeMgr, DisplayAttributeMgr);
+
+	STATIC_LAZY_CCOMPTR_GETTER(ITfCategoryMgr, CategoryMgr);
+	/*********/
+	/* Class */
+	/*********/
 protected:
-	/* Caret */
+	// Caret
 	enum caret
 	{
 		OldCaret = 0,
@@ -67,6 +80,9 @@ protected:
 		SelBegin,
 		SelEnd,
 	};
+	/*********/
+	/* Field */
+	/*********/
 	//ReactiveProperty
 	ReactiveWStringProperty m_text;
 	ReactiveProperty<CPointF> m_caretPoint;
@@ -84,7 +100,19 @@ protected:
 	bool m_isClosing = false;
 	std::unique_ptr<CTextBoxStateMachine> m_pTextMachine;
 
+	/***************/
+	/* Constructor */
+	/* Destructor  */
+	/***************/
 public:
+
+	CTextBox(
+		CD2DWControl* pParentControl,
+		std::unique_ptr<CVScroll>&& pVScroll,
+		std::unique_ptr<CHScroll>&& pHScroll,
+		const std::shared_ptr<TextBoxProperty> pProp,
+		const std::wstring& text);
+
 	CTextBox(
 		CD2DWControl* pParentControl,
 		const std::shared_ptr<TextBoxProperty> pProp,
@@ -208,17 +236,24 @@ public:
 	void CancelEdit();
 	void ClearText();
 	void EnsureVisibleCaret();
-	void UpdateAll();
-	virtual void ResetOriginRects();
-	virtual void ResetActualRects();
+	virtual void UpdateAll();
+	virtual void ClearOriginRects();
+	virtual void ClearActualRects();
 	virtual void UpdateScroll();
 
 
 	// Render
 	virtual bool GetIsVisible()const;
-	void Render();
-	void ResetCaret();
-	void DrawCaret(const CRectF& rc);
+	// Paint
+	virtual void PaintText(const PaintEvent& e);
+	virtual void PaintSelection(const PaintEvent& e);
+	virtual void PaintHighlite(const PaintEvent& e) {}
+	virtual void PaintCaret(const PaintEvent& e);
+	virtual void PaintCompositionLine(const PaintEvent& e);
+	// Caret Blink
+	virtual void StartCaretBlink();
+	virtual void StopCaretBlink();
+
 	FLOAT GetLineHeight();
 	//	BOOL Layout();
 
@@ -226,22 +261,23 @@ public:
 	//void InvalidateRect();
 	void ClearCompositionRenderInfo();
 	BOOL AddCompositionRenderInfo(int Start, int End, TF_DISPLAYATTRIBUTE* pda);
-public:
 
-	virtual const CComPtr<IDWriteTextLayout1>& GetTextLayoutPtr();
+	//Getter
+	LAZY_CCOMPTR_GETTER(IDWriteTextLayout1, TextLayout)
+	LAZY_CCOMPTR_GETTER(CTextEditSink, TextEditSink)
+	LAZY_CCOMPTR_GETTER(CTextStore, TextStore)
+	LAZY_CCOMPTR_GETTER(ITfDocumentMgr, DocumentMgr)
+	LAZY_CCOMPTR_GETTER(ITfContext, Context)
 
-
-	property<std::vector<CRectF>> OriginCharRects;
-	property<std::vector<CRectF>> OriginCursorCharRects;
-	property<std::vector<CRectF>> OriginCaptureCharRects;
-
-	property<std::vector<CRectF>> ActualCharRects;
-	property<std::vector<CRectF>> ActualSelectionCharRects;
-	property<std::vector<CRectF>> ActualCursorCharRects;
-	property<std::vector<CRectF>> ActualCaptureCharRects;
-
-	property<CRectF> OriginContentRect;
-	property<CRectF> ActualContentRect;
+	LAZY_GETTER(std::vector<CRectF>, OriginCharRects)
+	LAZY_GETTER(std::vector<CRectF>, OriginCursorCharRects)
+	LAZY_GETTER(std::vector<CRectF>, OriginCaptureCharRects)
+	LAZY_GETTER(std::vector<CRectF>, ActualCharRects)
+	LAZY_GETTER(std::vector<CRectF>, ActualSelectionCharRects)
+	LAZY_GETTER(std::vector<CRectF>, ActualCursorCharRects)
+	LAZY_GETTER(std::vector<CRectF>, ActualCaptureCharRects)
+	LAZY_GETTER(CRectF, OriginContentRect)
+	LAZY_GETTER(CRectF, ActualContentRect)
 
 	//std::optional<CRectF> GetOriginCharRect(const int& pos);
 	//std::optional<CRectF> GetActualCharRect(const int& pos);
@@ -266,13 +302,7 @@ protected:
 	std::function<std::wstring()> m_getter;
 	std::function<void(const std::wstring&)> m_setter;
 
-	CComPtr<IDWriteTextLayout1> m_pTextLayout;
 
-	std::function<CComPtr<CTextEditSink>&()> GetTextEditSink;
-	std::function<CComPtr<CTextStore>&()> GetTextStore;
-
-	std::function<CComPtr<ITfDocumentMgr>&()> GetDocumentMgr;
-	std::function<CComPtr<ITfContext>&()> GetContext;
 
 	std::vector<COMPOSITIONRENDERINFO> m_compositionInfos;
 
@@ -281,25 +311,12 @@ protected:
 	TfEditCookie m_editCookie;
 
 public:
+	std::shared_ptr<TextBoxProperty> GetTextBoxPropertyPtr() { return m_pProp; }
 	CDispAttrProps* GetDispAttrProps();
 	HRESULT GetDisplayAttributeTrackPropertyRange(TfEditCookie ec, ITfContext* pic, ITfRange* pRange, ITfReadOnlyProperty** ppProp, CDispAttrProps* pDispAttrProps);
 	HRESULT GetDisplayAttributeData(TfEditCookie ec, ITfReadOnlyProperty* pProp, ITfRange* pRange, TF_DISPLAYATTRIBUTE* pda, TfGuidAtom* pguid);
 
 
-	/***********/
-	/* Statics */
-	/***********/
-public:
-#if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
-	static std::function<CComPtr<ITfThreadMgr2>&()> GetThreadMgr;
-#else
-	static std::function<CComPtr<ITfThreadMgr>&()> GetThreadMgr;
-#endif
-	static TfClientId s_tfClientId;
-	static std::function<CComPtr<ITfKeystrokeMgr>&()> GetKeystrokeMgr;
 
-	static std::function<CComPtr<ITfDisplayAttributeMgr>& ()> GetDisplayAttributeMgr;
-
-	static std::function<CComPtr<ITfCategoryMgr>& ()> GetCategoryMgr;
 
 };

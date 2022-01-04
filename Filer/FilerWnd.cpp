@@ -29,7 +29,7 @@
 #include "BindCheckBoxCell.h"
 #include "BindSheetCellColumn.h"
 #include "BindItemsSheetCell.h"
-#include "TextEditorProperty.h"
+#include "EditorProperty.h"
 
 #include "ToDoGridView.h"
 #include "D2DWWindow.h"
@@ -49,7 +49,7 @@ CFilerWnd::CFilerWnd()
 	m_splitterLeft(0),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
 	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
-	m_spTextEditorProp(std::make_shared<TextEditorProperty>()),
+	m_spEditorProp(std::make_shared<EditorProperty>()),
 	m_spPdfViewProp(std::make_shared<PdfViewProperty>()),
 	m_spStatusBarProp(std::make_shared<StatusBarProperty>()),
 	m_spTabControlProp(std::make_shared<TabControlProperty>()),
@@ -58,8 +58,8 @@ CFilerWnd::CFilerWnd()
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
 	m_spSplitterProp(std::make_shared<SplitterProperty>()),
 	m_spLauncher(std::make_shared<CLauncherGridView>(this, m_spFilerGridViewProp, m_spLauncherProp)),
-	m_spLeftView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp)),
-	m_spRightView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spTextEditorProp, m_spPdfViewProp)),
+	m_spLeftView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfViewProp)),
+	m_spRightView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfViewProp)),
 	m_spSplitter(std::make_shared<CHorizontalSplitter>(this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp)),
 	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
@@ -204,13 +204,13 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 
 			for (auto iter = m_spExeExProp->ExeExtensions.cbegin(); iter != m_spExeExProp->ExeExtensions.cend(); ++iter) {
 
-				MENUITEMINFO mii = { 0 };
-				mii.cbSize = sizeof(MENUITEMINFO);
-				mii.fMask = MIIM_TYPE | MIIM_ID;
-				mii.fType = MFT_STRING;
-				mii.fState = MFS_ENABLED;
-				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, std::get<ExeExtension>(*iter).Name);
-				mii.dwTypeData = (LPWSTR)std::get<ExeExtension>(*iter).Name.c_str();
+					MENUITEMINFO mii = { 0 };
+					mii.cbSize = sizeof(MENUITEMINFO);
+					mii.fMask = MIIM_TYPE | MIIM_ID;
+					mii.fType = MFT_STRING;
+					mii.fState = MFS_ENABLED;
+					mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, std::get<ExeExtension>(*iter).Name);
+					mii.dwTypeData = (LPWSTR)std::get<ExeExtension>(*iter).Name.c_str();
 				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 			}
 
@@ -238,7 +238,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 					auto spDlg = std::make_shared<CExeExtensionDlg>(
 						this,
 						GetDialogPropPtr(),
-						m_spFilerGridViewProp, m_spTextEditorProp, folder, files, std::get<ExeExtension>(*iter));
+						m_spFilerGridViewProp, m_spEditorProp->EditorTextBoxPropPtr, folder, files, std::get<ExeExtension>(*iter));
 
 					spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
 					SetFocusedControlPtr(spDlg);
