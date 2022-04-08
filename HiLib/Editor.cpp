@@ -8,9 +8,6 @@
 #include "EditorScroll.h"
 #include "EditorProperty.h"
 
-
-
-
 /***************/
 /* CTextEditor */
 /***************/

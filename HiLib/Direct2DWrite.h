@@ -404,6 +404,7 @@ namespace std
 	{
 	private:
 		HWND m_hWnd;
+		HDC m_hDC;
 		std::unordered_map<CColorF, CComPtr<ID2D1SolidColorBrush>> m_solidColorBrushMap;
 		std::unordered_map<FormatF, CComPtr<IDWriteTextFormat>> m_textFormatMap;
 		//std::unordered_map<FormatF, std::unordered_map<wchar_t, CSizeF>> m_charMap;
@@ -438,7 +439,9 @@ namespace std
 		std::function<CComPtr<IDWriteFactory1>&()> GetDWriteFactory;
 		std::function<CComPtr<IWICImagingFactory2>&()> GetWICImagingFactory;
 
-		void BeginDraw();
+		HDC GetHDC() const { return m_hDC; }
+
+		void BeginDraw(HDC hDC);
 		CComPtr<ID2D1SolidColorBrush>& GetColorBrush(const CColorF& color);
 		CComPtr<IDWriteTextFormat>& GetTextFormat(const FormatF& fca);
 		CComPtr<IDWriteTextLayout>& GetTextLayout(const FormatF& format, const std::wstring& text, const CSizeF& size);

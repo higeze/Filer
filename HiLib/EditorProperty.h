@@ -68,9 +68,10 @@ struct EditorTextBoxProperty :public TextBoxProperty
 
 	friend void to_json(json& j, const EditorTextBoxProperty& o)
 	{
-		JSON_REGISTER_POLYMORPHIC_RELATION(ScrollProperty, EditorScrollProperty);
+		//JSON_REGISTER_POLYMORPHIC_RELATION(ScrollProperty, EditorScrollProperty);
 
 		to_json(j, static_cast<const TextBoxProperty&>(o));
+		j["VScrollPropPtr"] = std::static_pointer_cast<EditorScrollProperty>(o.VScrollPropPtr);
 		j["SyntaxAppearances"] = o.SyntaxAppearances;
 		j["ExecutableAppearance"] = o.ExecutableAppearances;
 		j["FindHighliteFill"] = o.FindHighliteFill;
@@ -78,9 +79,12 @@ struct EditorTextBoxProperty :public TextBoxProperty
 
 	friend void from_json(const json& j, EditorTextBoxProperty& o)
 	{
-		JSON_REGISTER_POLYMORPHIC_RELATION(ScrollProperty, EditorScrollProperty);
+		//JSON_REGISTER_POLYMORPHIC_RELATION(ScrollProperty, EditorScrollProperty);
 
 		from_json(j, static_cast<TextBoxProperty&>(o));
+		std::shared_ptr<EditorScrollProperty> spTemp;
+		get_to_nothrow(j, "VScrollPropPtr", spTemp);
+		o.VScrollPropPtr = spTemp;
 		j.at("SyntaxAppearances").get_to(o.SyntaxAppearances);
 		j.at("ExecutableAppearance").get_to(o.ExecutableAppearances);
 		get_to_nothrow(j, "FindHighliteFill", o.FindHighliteFill);
@@ -124,16 +128,12 @@ public:
 
 	friend void to_json(json& j, const EditorProperty& o)
 	{
-		JSON_REGISTER_POLYMORPHIC_RELATION(TextBoxProperty, EditorTextBoxProperty);
-
 		j["EditorTextBoxPropPtr"] = o.EditorTextBoxPropPtr;
 		j["StatusBarPropPtr"] = o.StatusBarPropPtr;
 	}
 
 	friend void from_json(const json& j, EditorProperty& o)
 	{
-		JSON_REGISTER_POLYMORPHIC_RELATION(TextBoxProperty, EditorTextBoxProperty);
-
 		j.at("EditorTextBoxPropPtr").get_to(o.EditorTextBoxPropPtr);
 		j.at("StatusBarPropPtr").get_to(o.StatusBarPropPtr);
 	}

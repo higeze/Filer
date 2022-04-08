@@ -272,7 +272,7 @@
 
 
 	//CDirect2DWrite
-	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd), m_pIconCache(std::make_unique<CFileIconCache>(this)) 
+	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd), m_hDC(nullptr), m_pIconCache(std::make_unique<CFileIconCache>(this)) 
 	{
 		GetD3DDevices = [p = CComPtr<ID3D11Device1>(), q = CComPtr<ID3D11DeviceContext1>(), this]() mutable->std::tuple<CComPtr<ID3D11Device1>&, CComPtr<ID3D11DeviceContext1>&>
 		{
@@ -548,8 +548,9 @@
 
 		return textSize;
 	}
-	void CDirect2DWrite::BeginDraw()
+	void CDirect2DWrite::BeginDraw(HDC hDC)
 	{
+		m_hDC = hDC;
 		GetD2DDeviceContext()->SetTransform(D2D1::Matrix3x2F::Identity());
 		GetD2DDeviceContext()->BeginDraw();
 
@@ -572,6 +573,7 @@
 
 	void CDirect2DWrite::EndDraw()
 	{
+		m_hDC = nullptr;
 		HRESULT hr = GetD2DDeviceContext()->EndDraw();
 		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET) {
 			Clear();

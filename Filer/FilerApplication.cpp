@@ -3,6 +3,7 @@
 #include "EditorProperty.h"
 #include "JsonSerializer.h"
 #include "async_catch.h"
+#include "PDFiumDoc.h"
 
 std::string CFilerApplication::GetJsonPath()
 {
@@ -108,6 +109,9 @@ void CFilerApplication::Init()
 	//TSF
 	CTextBox::AppTSFInit();
 
+	//PDFium
+	CPDFiumDoc::Init();
+
 	//Deserialize
 	Deserialize();
 
@@ -125,6 +129,9 @@ void CFilerApplication::Term()
 
 	//TSF
 	CTextBox::AppTSFExit();
+
+	//PDFium
+	CPDFiumDoc::Term()
 
 	//Serialize
 	Serialize();

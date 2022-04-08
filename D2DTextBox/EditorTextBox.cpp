@@ -107,11 +107,15 @@ void CEditorTextBox::LoadHighliteRects()
 
 	auto subStrSize = find.size();
 	auto pos = m_text.get() | find_ignorecase(find);
+	const auto& actualCharRects = GetActualCharRects();
  
 	while (subStrSize != 0 && pos != std::wstring::npos) {
-		for (size_t i = 0; i < subStrSize; i++) {
-			m_optHighliteRects->push_back(GetActualCharRects()[pos + i]);
-		}
+		m_optHighliteRects->emplace_back(
+			actualCharRects[pos].left,
+			actualCharRects[pos].top,
+			actualCharRects[pos + subStrSize - 1].right,
+			actualCharRects[pos].bottom
+		);
 		pos = m_text.get() | find_ignorecase(find, pos + subStrSize);
 	}
 }

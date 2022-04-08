@@ -16,10 +16,9 @@ void CEditorVScroll::PaintForeground(const PaintEvent& e)
 
 CRectF CEditorVScroll::GetHighliteRangeRect()const
 {
-	auto highliteRangeRect = GetRectInWnd();
-	highliteRangeRect.top += m_spScrollProp->ThumbMargin.top;
-	highliteRangeRect.bottom -= m_spScrollProp->ThumbMargin.bottom;
-
+	auto highliteRangeRect = GetThumbRangeRect();
+	highliteRangeRect.left += kHighliteOffset;
+	highliteRangeRect.right -= kHighliteOffset;
 	return highliteRangeRect;
 }
 
@@ -33,12 +32,14 @@ void CEditorVScroll::LoadHighliteRects()
 	const auto& textboxRect = pEditTextBox->GetActualContentRect();
 	const auto& textHighliteRects = pEditTextBox->GetHighliteRects();
 
-	for (const auto rc : textHighliteRects) {
-		m_optHighliteRects->emplace_back(
-			highliteRangeRect.left + highliteRangeRect.Width() * (rc.left - textboxRect.left) / textboxRect.Width(),
-			highliteRangeRect.top + highliteRangeRect.Height() * (rc.top - textboxRect.top) / textboxRect.Height(),
-			highliteRangeRect.left + highliteRangeRect.Width() * (rc.right - textboxRect.left) / textboxRect.Width(),
-			highliteRangeRect.top + highliteRangeRect.Height() * (rc.bottom - textboxRect.top) / textboxRect.Height()
-		);
+	for (auto iter = textHighliteRects.cbegin(); iter != textHighliteRects.cend(); ++iter) {
+		if (iter ==  textHighliteRects.cbegin() || std::prev(iter)->top != iter->top) {
+			m_optHighliteRects->emplace_back(
+				highliteRangeRect.left,
+				highliteRangeRect.top + highliteRangeRect.Height() * (iter->top - textboxRect.top) / textboxRect.Height(),
+				highliteRangeRect.right,
+				highliteRangeRect.top + highliteRangeRect.Height() * (iter->bottom - textboxRect.top) / textboxRect.Height()
+			);
+		}
 	}
 }
