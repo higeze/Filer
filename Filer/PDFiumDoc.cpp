@@ -1,6 +1,7 @@
 #include "PDFiumDoc.h"
 #include <fpdf_edit.h>
 #include <fpdfview.h>
+#include <mutex>
 #include "async_catch.h"
 
 
@@ -19,20 +20,59 @@ void CPDFiumDoc::Term()
 	FPDF_DestroyLibrary();
 }
 
-CPDFiumDoc::CPDFiumDoc(CDirect2DWrite* pDirect, const std::shared_ptr<FormatF>& pFormat)
-	:m_pDirect(pDirect),
-	m_pFormat(pFormat){}
+CPDFiumDoc::CPDFiumDoc(const std::wstring& path, const std::wstring& password, 
+		CDirect2DWrite* pDirect, const std::shared_ptr<FormatF>& pFormat, std::function<void()> changed)
+	:m_path(path),
+	m_pDirect(pDirect),
+	m_pFormat(pFormat),
+	m_changed(changed)
+{
+	GetDocPtr = [pDoc = std::shared_ptr<std::remove_pointer_t<FPDF_DOCUMENT>>(), spMtx = std::make_shared<std::mutex>(), path, password, this]() mutable
+		->std::shared_ptr<std::remove_pointer_t<FPDF_DOCUMENT>>&
+	{
+		std::lock_guard<std::mutex> lock(*spMtx);
+		if (!pDoc) {
+			pDoc.reset(FPDF_LoadDocument(wide_to_utf8(path).c_str(), wide_to_utf8(password).c_str()), FPDF_CloseDocument);
+		}
+		return pDoc;
+	};
+
+	GetPageCount = [count = int(0), spMtx = std::make_shared<std::mutex>(), this]()mutable->int
+	{
+		std::lock_guard<std::mutex> lock(*spMtx);
+		if (count == 0) {
+			count = FPDF_GetPageCount(GetDocPtr().get());
+		}
+		return count;
+	};
+
+	GetPages = [pages = std::vector<std::shared_ptr<CPDFiumPage>>(), spMtx = std::make_shared<std::mutex>(), this]() mutable
+		->std::vector<std::shared_ptr<CPDFiumPage>>&
+	{
+		std::lock_guard<std::mutex> lock(*spMtx);
+		if (pages.empty()) {
+			for (auto i = 0; i < GetPageCount(); i++) {
+				pages.push_back(std::make_shared<CPDFiumPage>(this, i));
+			}
+		}
+		return pages;
+	};
+
+	GetSourceSize = [sz = CSizeF(), spMtx = std::make_shared<std::mutex>(), this]()mutable->CSizeF
+	{	
+		std::lock_guard<std::mutex> lock(*spMtx);
+		if (sz.width == 0 || sz.height == 0) {
+			for(const auto& pPage : GetPages()){
+				sz.width = (std::max)(sz.width, pPage->GetSourceSize().width);
+				sz.height += pPage->GetSourceSize().height;
+			}
+		}
+		return sz;
+	};
+
+}
 
 CPDFiumDoc::~CPDFiumDoc() = default;
-
-void CPDFiumDoc::Open(const std::wstring& path, const std::wstring& password, std::function<void()> changed)
-{
-	m_pDoc.reset(FPDF_LoadDocument(wide_to_utf8(path).c_str(), wide_to_utf8(password).c_str()));
-	m_count = FPDF_GetPageCount(m_pDoc.get());
-	for (auto i = 0; i < m_count; i++) {
-		m_pages.push_back(std::make_unique<CPDFiumPage>(this, i));
-	}
-}
 
 /************/
 /* CPdfPage */
@@ -106,90 +146,71 @@ CPDFiumPage::CPDFiumPage(CPDFiumDoc* pDoc, int index )
 	m_loadingScale(0.f), m_requestingScale(0.f),
 	m_pMachine(new sml::sm<Machine, boost::sml::process_queue<std::queue>>{ this })
 {
-	//GetSourceSize = [sz = CSizeF(), this]()mutable->CSizeF&
-	//{		
-	//	if (sz.width == 0 || sz.height == 0) {
-	//		CComPtr<abipdf::IPdfPage> pPage;
-	//		m_pPdf->GetDocument().first->GetPage(m_pageIndex, &pPage);
-	//		ABI::Windows::Foundation::Size size;
-	//		pPage->get_Size(&size);
-	//		sz.width = size.Width;
-	//		sz.height = size.Height;
-	//	}
-	//	return sz;
-	//};
+	GetPagePtr = [pPage = std::shared_ptr<std::remove_pointer_t<FPDF_PAGE>>(), spMtx = std::make_shared<std::mutex>(), this]() mutable
+		->std::shared_ptr<std::remove_pointer_t<FPDF_PAGE>>&
+	{
+		std::lock_guard<std::mutex> lock(*spMtx);
+		if (!pPage) {
+			pPage = std::shared_ptr<std::remove_pointer_t<FPDF_PAGE>>(FPDF_LoadPage(m_pDoc->GetDocPtr().get(), m_index), FPDF_ClosePage);
+		}
+		return pPage;
+	};
+
+	GetSourceSize = [sz = CSizeF(), spMtx = std::make_shared<std::mutex>(), this]()mutable->CSizeF
+	{		
+		std::lock_guard<std::mutex> lock(*spMtx);
+		if (sz.width == 0 || sz.height == 0) {
+			sz.width = static_cast<FLOAT>(FPDF_GetPageWidth(GetPagePtr().get()));
+			sz.height = static_cast<FLOAT>(FPDF_GetPageHeight(GetPagePtr().get()));
+		}
+		return sz;
+	};
 }
 
 CPDFiumPage::~CPDFiumPage()
 {
 	*m_spCancelThread = true;
-}
-
-void CPDFiumPage::Clear()
-{
-	//GetSourceSize() = CSizeF();
-	SetLockBitmap({ CComPtr<ID2D1Bitmap>(), 0.f });
+	m_future.get();
 }
 
 void CPDFiumPage::Load()
 {
-	m_pPage.reset(FPDF_LoadPage(m_pDoc->GetDocPtr().get(), m_index));
 	auto scale = m_requestingScale;
 	m_loadingScale = scale;
 
-	auto width = static_cast<int>(FPDF_GetPageWidth(m_pPage.get()) * scale + 0.5f);
-	auto height = static_cast<int>(FPDF_GetPageHeight(m_pPage.get()) * scale + 0.5f);
-
-
-	const int bw = static_cast<int>(FPDF_GetPageWidth(m_pPage.get()) * scale + 0.5f); // Bitmap width
-	const int bh = static_cast<int>(FPDF_GetPageHeight(m_pPage.get()) * scale + 0.5f); // Bitmap height
+	const CSizeF sz = GetSourceSize();
+	const int bw = static_cast<int>(sz.width * scale + 0.5f); // Bitmap width
+	const int bh = static_cast<int>(sz.height * scale + 0.5f); // Bitmap height
 
 	BITMAPINFOHEADER bmih; RtlSecureZeroMemory(&bmih, sizeof(bmih));
 	bmih.biSize = sizeof(bmih); bmih.biWidth = bw; bmih.biHeight = -bh;
 	bmih.biPlanes = 1; bmih.biBitCount = 32; bmih.biCompression = BI_RGB;
-	bmih.biSizeImage = (bw * bh * 4); void* bitmapBits = nullptr;
-	const BITMAPINFO* bmi = (BITMAPINFO*)&bmih;
+	bmih.biSizeImage = (bw * bh * 4); 
+	
+	void* bitmapBits = nullptr;
 
-	HBITMAP hBmp = nullptr;
-	if (hBmp = CreateDIBSection(m_pDoc->GetDirectPtr()->GetHDC(), bmi, DIB_RGB_COLORS, &bitmapBits, nullptr, 0)) {
-		if (FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx(bw, bh, FPDFBitmap_BGRx, bitmapBits, (bw * 4))) {
-			FPDFBitmap_FillRect(pdfBitmap, 0, 0, bw, bh, 0xFFFFFFFF); // Fill white
+	std::unique_ptr<std::remove_pointer_t<HBITMAP>, delete_object>  pBmp(
+		::CreateDIBSection(m_pDoc->GetDirectPtr()->GetHDC(), reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0)
+	);
+	FALSE_THROW(pBmp);
 
-			//const FS_MATRIX matrix = {float(scale), 0.0f, 0.0f, float(-scale), 0.0f, float(bh)};
-			const FS_MATRIX matrix{ float(scale), 0.0f, 0.0f, float(scale), 0.0f, 0.0f };
+	std::unique_ptr<std::remove_pointer_t<FPDF_BITMAP>, fpdfbitmap_destroy> pFpdfBmp(
+		FPDFBitmap_CreateEx(bw, bh, FPDFBitmap_BGRx, bitmapBits, (bw * 4))
+	);
+	FALSE_THROW(pFpdfBmp);
 
-			const FS_RECTF clip{ 0.0f, 0.0f, float(bw), float(bh) }; // To bitmap
+	FPDFBitmap_FillRect(pFpdfBmp.get(), 0, 0, bw, bh, 0xFFFFFFFF); // Fill white
+	//const FS_RECTF clip{ 0.0f, 0.0f, float(bw), float(bh) }; // To bitmap
 
-			const int options = (FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
-
-			//FPDF_RenderPageBitmapWithMatrix(pdfBitmap, m_pdfPage, &matrix, &clip, options);
-			FPDF_RenderPageBitmap(pdfBitmap, m_pPage.get(), clip.left, clip.top, clip.right, clip.bottom, 0, options);
-
-			FPDFBitmap_Destroy(pdfBitmap); pdfBitmap = nullptr;
-		}
-	}
+	const int options = (FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
+	FPDF_RenderPageBitmap(pFpdfBmp.get(), GetPagePtr().get(), 0, 0, bw, bh, 0, options);
 
 	CComPtr<IWICBitmap> pWICBitmap;
-	FAILED_THROW(m_pDoc->GetDirectPtr()->GetWICImagingFactory()->CreateBitmapFromHBITMAP(hBmp, nullptr, WICBitmapIgnoreAlpha, &pWICBitmap));
-
-	CComPtr<IWICFormatConverter> pWICFormatConverter;
-	FAILED_THROW(m_pDoc->GetDirectPtr()->GetWICImagingFactory()->CreateFormatConverter(&pWICFormatConverter));
-
-	FAILED_THROW(pWICFormatConverter->Initialize(pWICBitmap, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeMedianCut));
-
-	double dpix = 96.0f, dpiy = 96.0f;
-	FAILED_THROW(pWICFormatConverter->GetResolution(&dpix, &dpiy));
-
-	D2D1_BITMAP_PROPERTIES bitmapProps;
-	//bitmapProps.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
-	bitmapProps.dpiX = (FLOAT)dpix;
-	bitmapProps.dpiY = (FLOAT)dpiy;
-	bitmapProps.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	bitmapProps.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
-	//bitmapProps.colorContext = nullptr;
+	FAILED_THROW(m_pDoc->GetDirectPtr()->GetWICImagingFactory()->CreateBitmapFromHBITMAP(pBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBitmap));
 
 	CComPtr<ID2D1Bitmap> pBitmap;
-	FAILED_THROW(m_pDoc->GetDirectPtr()->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProps, &pBitmap));
+	FAILED_THROW(m_pDoc->GetDirectPtr()->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap));
+
 	SetLockBitmap(PdfBmpInfo{ pBitmap, scale });
 }
 
@@ -204,7 +225,12 @@ void CPDFiumPage::None_Render(const RenderEvent& e)
 }
 void CPDFiumPage::Loading_OnEntry() 
 {
-	auto fun = [this] { Load(); };
+	auto fun = [this]()
+	{ 
+		Load();
+		process_event(LoadCompletedEvent());
+	};
+	//fun();
 	m_future = std::async(
 	std::launch::async,
 	async_action_wrap<decltype(fun)>,

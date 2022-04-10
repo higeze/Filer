@@ -158,7 +158,7 @@ LRESULT CD2DWWindow::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHand
 LRESULT CD2DWWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	CPaintDC dc(m_hWnd);
-	m_pDirect->BeginDraw();
+	m_pDirect->BeginDraw(dc);
 
 	m_pDirect->ClearSolid(CColorF(1.f, 1.f, 1.f));
 

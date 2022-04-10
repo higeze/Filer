@@ -99,12 +99,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)..\..\Library\pdfium\include;$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)..\..\library\pdfium\lib;$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)..\..\Library\pdfium\include;$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)..\..\library\pdfium\lib;$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -115,7 +115,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)..\..\Library\pdfium\include;$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)..\..\library\pdfium\lib;$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

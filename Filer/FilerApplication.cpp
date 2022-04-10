@@ -127,17 +127,17 @@ void CFilerApplication::Term()
 	m_pCoinit.release();
 	m_pOleinit.release();
 
-	//TSF
-	CTextBox::AppTSFExit();
-
-	//PDFium
-	CPDFiumDoc::Term()
-
 	//Serialize
 	Serialize();
 
 	//Window
 	m_pWnd.reset();
+
+	//TSF
+	CTextBox::AppTSFExit();
+
+	//PDFium to be called after Window destructed
+	CPDFiumDoc::Term();
 
 	//Logger
 	LOG_1("***Application Finish***");

@@ -1,10 +1,14 @@
 #pragma once
 
 #include "Direct2DWrite.h"
+#include "MyUniqueHandle.h"
 #include <queue>
 #include <future>
 #include <boost/sml.hpp>
+
 #include <fpdfview.h>
+#pragma comment(lib, "pdfium.dll.lib")
+
 
 
 struct fpdf_closedocument
@@ -46,42 +50,30 @@ public:
 private:
 	CDirect2DWrite* m_pDirect;
 	std::shared_ptr<FormatF> m_pFormat;
-	std::unique_ptr<std::remove_pointer_t<FPDF_DOCUMENT>, fpdf_closedocument> m_pDoc;
-	std::vector<std::unique_ptr<CPDFiumPage>> m_pages;
 	std::wstring m_path;
-	int m_count = 0;
+	std::function<void()> m_changed;
 public:
-	CPDFiumDoc(CDirect2DWrite* pDirect, const std::shared_ptr<FormatF>& pFormat);
+	CPDFiumDoc(
+		const std::wstring& path,
+		const std::wstring& password, 
+		CDirect2DWrite* pDirect,
+		const std::shared_ptr<FormatF>& pFormat,
+		std::function<void()> changed);
 	virtual ~CPDFiumDoc();
 
 	CDirect2DWrite* GetDirectPtr() { return m_pDirect; }
 	std::shared_ptr<FormatF> GetFormatPtr() const { return m_pFormat; }
-	std::function<CSizeF&()> GetSourceSize;
 
-	void Open(const std::wstring& path, const std::wstring& password, std::function<void()> changed);
-	//void Clear();
-
-	int GetPageCount() { return m_count; }
+	std::function<std::shared_ptr<std::remove_pointer_t<FPDF_DOCUMENT>>& ()> GetDocPtr;
+	std::function<int()> GetPageCount;
+	std::function<CSizeF()> GetSourceSize;
+	std::function<std::vector<std::shared_ptr<CPDFiumPage>>& ()> GetPages;
 	
-	std::unique_ptr<std::remove_pointer_t<FPDF_DOCUMENT>, fpdf_closedocument>& GetDocPtr() { return m_pDoc; }
-
-	UINT32 GetPageCount()const { return m_pages.size(); }
-	std::unique_ptr<CPDFiumPage>& GetPage(UINT32 index)
+	std::shared_ptr<CPDFiumPage>& GetPage(int index)
 	{
 		FALSE_THROW(GetPageCount() && 0 <= index && index < GetPageCount());
-		return m_pages[index];
+		return GetPages()[index];
 	}
-private:
-	//std::pair<CComPtr<abipdf::IPdfDocument>, PdfDocStatus> GetLockDocument()
-	//{
-	//	std::lock_guard<std::mutex> lock(m_mtxDoc);
-	//	return m_document;
-	//}
-	//void SetLockDocument(const std::pair<CComPtr<abipdf::IPdfDocument>, PdfDocStatus>& document)
-	//{
-	//	std::lock_guard<std::mutex> lock(m_mtxDoc);
-	//	m_document = document;
-	//}
 };
 
 struct RenderEvent
@@ -112,12 +104,11 @@ private:
 	/* Field */
 	CPDFiumDoc* m_pDoc;
 	int m_index;
+	PdfBmpInfo m_bmp;
 	std::mutex m_mtxBmp;
 	std::shared_ptr<bool> m_spCancelThread;
 	std::future<void> m_future;
 
-	PdfBmpInfo m_bmp;
-	std::unique_ptr<std::remove_pointer_t<FPDF_PAGE>, fpdf_closepage> m_pPage;
 	struct Machine;
 	std::unique_ptr<boost::sml::sm<Machine, boost::sml::process_queue<std::queue>>> m_pMachine;
 	std::function<void()> StateChanged;
@@ -129,12 +120,12 @@ public:
 	CPDFiumPage(CPDFiumDoc* pDoc, int index);
 	virtual ~CPDFiumPage();
 	/* Closure */
-	std::function<CSizeF&()> GetSourceSize;
+	std::function<std::shared_ptr<std::remove_pointer_t<FPDF_PAGE>>& ()> GetPagePtr;
+	std::function<CSizeF()> GetSourceSize;
 	/* Member function */	struct Machine;
-	void Load();
 	void Render(const RenderEvent& e) { process_event(e); }
-	void Clear();
 private:
+		void Load();
 	PdfBmpInfo GetLockBitmap()
 	{
 		std::lock_guard<std::mutex> lock(m_mtxBmp);

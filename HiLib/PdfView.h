@@ -16,38 +16,38 @@
 #include <d2d1_2.h>
 #include <wincodec.h>
 
-#include <windows.storage.h>
-#include <windows.storage.streams.h>
-#include <windows.data.pdf.h>
-#include <windows.data.pdf.interop.h>
-
-
-#include <wrl/client.h>
-#include <wrl/event.h>
-   
-#pragma comment(lib, "shcore.lib")
-#pragma comment(lib, "runtimeobject.lib")
-#pragma comment(lib, "windows.data.pdf.lib")
-#pragma comment(lib, "windowscodecs.lib")
+//#include <windows.storage.h>
+//#include <windows.storage.streams.h>
+//#include <windows.data.pdf.h>
+//#include <windows.data.pdf.interop.h>
+//
+//
+//#include <wrl/client.h>
+//#include <wrl/event.h>
+//   
+//#pragma comment(lib, "shcore.lib")
+//#pragma comment(lib, "runtimeobject.lib")
+//#pragma comment(lib, "windows.data.pdf.lib")
+//#pragma comment(lib, "windowscodecs.lib")
 
 #include "PdfViewStateMachine.h"
 
 
 //TODOHIGH
-namespace abipdf = ABI::Windows::Data::Pdf;
-namespace abifoundation = ABI::Windows::Foundation;
-namespace abistorage = ABI::Windows::Storage;
-namespace abistreams = ABI::Windows::Storage::Streams;
-namespace winfoundation = Windows::Foundation;
-namespace wrl = Microsoft::WRL;
-namespace wrlwrappers = Microsoft::WRL::Wrappers;
+//namespace abipdf = ABI::Windows::Data::Pdf;
+//namespace abifoundation = ABI::Windows::Foundation;
+//namespace abistorage = ABI::Windows::Storage;
+//namespace abistreams = ABI::Windows::Storage::Streams;
+//namespace winfoundation = Windows::Foundation;
+//namespace wrl = Microsoft::WRL;
+//namespace wrlwrappers = Microsoft::WRL::Wrappers;
 
 
 #include <future>
 #include <mutex>
 
-class CPdf;
-class CPdfPage;
+class CPDFiumDoc;
+class CPDFiumPage;
 class CVScroll;
 class CHScroll;
 
@@ -123,7 +123,7 @@ protected:
 	std::shared_ptr<CVScroll> m_pVScroll;
 	std::shared_ptr<CHScroll> m_pHScroll;
 
-	std::unique_ptr<CPdf> m_pdf;
+	std::unique_ptr<CPDFiumDoc> m_pdf;
     //std::vector<std::unique_ptr<CPdfPage>> m_pdfPages;
    // std::vector<CComPtr<ID2D1Bitmap1>> m_pdfBmps;
 
@@ -142,7 +142,7 @@ public:
 	ReactiveProperty<FLOAT>& GetScale() { return m_scale; }
 	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
 	
-	std::function<CComPtr<IPdfRendererNative>& ()> GetPdfRenderer;
+	//std::function<CComPtr<IPdfRendererNative>& ()> GetPdfRenderer;
 	CRectF GetRenderRectInWnd();
 	CSizeF GetRenderSize();
 	CSizeF GetRenderContentSize();

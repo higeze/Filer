@@ -212,7 +212,7 @@ struct TextTabData :public TabData
 struct PdfTabData :public TabData
 {
 	ReactiveWStringProperty Path;
-	ReactiveProperty<FLOAT> Scale;
+	ReactiveProperty<FLOAT> Scale = 1.0f;
 	
 	ReactiveCommand<void> OpenCommand;
 

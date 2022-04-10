@@ -1,5 +1,5 @@
 #include "PdfView.h"
-#include "Pdf.h"
+#include "PDFiumDoc.h"
 #include "D2DWWindow.h"
 #include "Scroll.h"
 #include "Debug.h"
@@ -11,6 +11,7 @@
 CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewProperty>& pProp)
 	:CD2DWControl(pParentControl),
     m_pProp(pProp),
+	m_pdf(),
 	m_pMachine(std::make_unique<CPdfViewStateMachine>(this)),
 	m_pVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr)),
 	m_pHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
@@ -18,13 +19,18 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 {
 	m_scale.Subscribe([this](const FLOAT& value)
 	{
-		if (m_pdf->GetDocument().second == PdfDocStatus::Available) {
 			if (m_prevScale) {
 				m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() * value / m_prevScale);
 				m_pHScroll->SetScrollPos(m_pHScroll->GetScrollPos() * value / m_prevScale);
 			}
 			m_prevScale = value;
-		}
+		//if (m_pdf->GetDocument().second == PdfDocStatus::Available) {
+		//	if (m_prevScale) {
+		//		m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() * value / m_prevScale);
+		//		m_pHScroll->SetScrollPos(m_pHScroll->GetScrollPos() * value / m_prevScale);
+		//	}
+		//	m_prevScale = value;
+		//}
 	});
 
 }
@@ -38,15 +44,15 @@ void CPdfView::OnCreate(const CreateEvt& e)
 	m_pVScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcVertical));
 	m_pHScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcHorizontal));
 
-	m_pdf = std::make_unique<CPdf>(GetWndPtr()->GetDirectPtr(), m_pProp->Format);
+	//m_pdf = std::make_unique<CPDFiumDoc>(GetWndPtr()->GetDirectPtr(), m_pProp->Format);
 
-	GetPdfRenderer = [p = CComPtr<IPdfRendererNative>(), this]() mutable->CComPtr<IPdfRendererNative>&
-	{
-		if (!p) {
-			::PdfCreateRenderer(GetWndPtr()->GetDirectPtr()->GetDXGIDevice(), &p);
-		}
-		return p;
-	};
+	//GetPdfRenderer = [p = CComPtr<IPdfRendererNative>(), this]() mutable->CComPtr<IPdfRendererNative>&
+	//{
+	//	if (!p) {
+	//		::PdfCreateRenderer(GetWndPtr()->GetDirectPtr()->GetDXGIDevice(), &p);
+	//	}
+	//	return p;
+	//};
 }
 
 CRectF CPdfView::GetRenderRectInWnd()
@@ -64,10 +70,14 @@ CSizeF CPdfView::GetRenderSize()
 
 CSizeF CPdfView::GetRenderContentSize()
 {
-	CSizeF sz = m_pdf->GetSourceSize();
-	sz.width *= m_scale.get();
-	sz.height *= m_scale.get();
-	return sz;
+	if (m_pdf) {
+		CSizeF sz = m_pdf->GetSourceSize();
+		sz.width *= m_scale.get();
+		sz.height *= m_scale.get();
+		return sz;
+	} else {
+		return CSizeF(0.f, 0.f);
+	}
 };
 
 
@@ -99,7 +109,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
 
 	//PaintContent
-	if (m_pdf->GetDocument().second == PdfDocStatus::Available) {
+	//if (m_pdf->GetDocument().second == PdfDocStatus::Available) {
 		CRectF renderRect = GetRenderRectInWnd();
 		CPointF lefttopInWnd = renderRect.LeftTop();
 		CPointF lefttopInRender = CPointF(-m_pHScroll->GetScrollPos(), -m_pVScroll->GetScrollPos());
@@ -110,7 +120,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		//Paint Pages
 
 		//Iterate Pages
-		for (size_t i = 0; i < m_pdf->GetPageCount(); i++) {
+		for (auto i = 0; i < m_pdf->GetPageCount(); i++) {
 			if ((lefttopInRender.y >= 0 && lefttopInRender.y <= GetRenderSize().height) ||
 				(lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get() >= 0 && lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get() <= GetRenderSize().height) ||
 				(lefttopInRender.y <= 0 && lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get() >= GetRenderSize().height)) {
@@ -150,9 +160,9 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 				renderRect.top + textSize.height));
 
 
-	} else {
-		GetWndPtr()->GetDirectPtr()->DrawTextInRect(*m_pProp->Format, L"Loading Document...", GetRenderRectInWnd());
-	}
+	//} else {
+	//	GetWndPtr()->GetDirectPtr()->DrawTextInRect(*m_pProp->Format, L"Loading Document...", GetRenderRectInWnd());
+	//}
 
 	//PaintScroll
 	UpdateScroll();
@@ -413,26 +423,28 @@ void CPdfView::Open()
 void CPdfView::Open(const std::wstring& path)
 {
 	if (::PathFileExists(path.c_str())) {
-		m_pdf->Load(path, [this]()->void
-		{
-			FLOAT scaleX = GetRenderSize().width / m_pdf->GetPage(0)->GetSourceSize().width;
-			FLOAT scaleY = GetRenderSize().height / m_pdf->GetPage(0)->GetSourceSize().height;
-			switch (m_initialScaleMode) {
-				case InitialScaleMode::MinWidthHeight:
-					m_scale.set((std::min)(scaleX, scaleY));
-					break;
-				case InitialScaleMode::Width:
-					m_scale.set(scaleX);
-					break;
-				case InitialScaleMode::Height:
-					m_scale.set(scaleY);
-					break;
-				default:
-					m_scale.force_notify_set(1.f);
-			}
+		m_pdf = std::make_unique<CPDFiumDoc>(
+			path, L"", 
+			GetWndPtr()->GetDirectPtr(), m_pProp->Format,
+			[this]()->void{
+				FLOAT scaleX = GetRenderSize().width / m_pdf->GetPage(0)->GetSourceSize().width;
+				FLOAT scaleY = GetRenderSize().height / m_pdf->GetPage(0)->GetSourceSize().height;
+				switch (m_initialScaleMode) {
+					case InitialScaleMode::MinWidthHeight:
+						m_scale.set((std::min)(scaleX, scaleY));
+						break;
+					case InitialScaleMode::Width:
+						m_scale.set(scaleX);
+						break;
+					case InitialScaleMode::Height:
+						m_scale.set(scaleY);
+						break;
+					default:
+						m_scale.force_notify_set(1.f);
+				}
 
-			GetWndPtr()->InvalidateRect(NULL, FALSE);
-		});
+				GetWndPtr()->InvalidateRect(NULL, FALSE);
+			});
 	}
 }
 
