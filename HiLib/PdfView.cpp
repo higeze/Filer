@@ -15,7 +15,7 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	m_pMachine(std::make_unique<CPdfViewStateMachine>(this)),
 	m_pVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr)),
 	m_pHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
-	m_scale(1.f), m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(InitialScaleMode::Width)
+	m_scale(1.f), m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(InitialScaleMode::None)
 {
 	m_scale.Subscribe([this](const FLOAT& value)
 	{
@@ -95,7 +95,7 @@ void CPdfView::OnRect(const RectEvent& e)
 void CPdfView::OnMouseWheel(const MouseWheelEvent& e)
 {
 	if(::GetAsyncKeyState(VK_CONTROL)){
-		m_scale.set(std::clamp(m_scale + 0.1f * e.Delta / WHEEL_DELTA, 0.1f, 5.f));
+		m_scale.set(std::clamp(m_scale  + 0.2f * e.Delta / WHEEL_DELTA, 0.1f, 5.f));
 	} else {
 		m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);
 	}
@@ -109,7 +109,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
 
 	//PaintContent
-	//if (m_pdf->GetDocument().second == PdfDocStatus::Available) {
+	if (m_pdf) {
 		CRectF renderRect = GetRenderRectInWnd();
 		CPointF lefttopInWnd = renderRect.LeftTop();
 		CPointF lefttopInRender = CPointF(-m_pHScroll->GetScrollPos(), -m_pVScroll->GetScrollPos());
@@ -160,9 +160,8 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 				renderRect.top + textSize.height));
 
 
-	//} else {
-	//	GetWndPtr()->GetDirectPtr()->DrawTextInRect(*m_pProp->Format, L"Loading Document...", GetRenderRectInWnd());
-	//}
+	} else {
+	}
 
 	//PaintScroll
 	UpdateScroll();
@@ -267,6 +266,9 @@ void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 	*e.HandledPtr = TRUE;
 
 }
+
+void CPdfView::Normal_KillFocus(const KillFocusEvent& e)
+{}
 
 
 /***************/
@@ -423,6 +425,17 @@ void CPdfView::Open()
 void CPdfView::Open(const std::wstring& path)
 {
 	if (::PathFileExists(path.c_str())) {
+
+		Close();
+
+		m_path.set(path);
+		HRESULT hr = CFileIsInUseImpl::s_CreateInstance(GetWndPtr()->m_hWnd, path.c_str(), FUT_DEFAULT, OF_CAP_DEFAULT, IID_PPV_ARGS(&m_pFileIsInUse));
+		GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [this](UINT,LPARAM,WPARAM,BOOL&)->LRESULT
+		{
+			Close();
+			return 0;
+		});
+
 		m_pdf = std::make_unique<CPDFiumDoc>(
 			path, L"", 
 			GetWndPtr()->GetDirectPtr(), m_pProp->Format,
@@ -446,6 +459,20 @@ void CPdfView::Open(const std::wstring& path)
 				GetWndPtr()->InvalidateRect(NULL, FALSE);
 			});
 	}
+}
+
+void CPdfView::Close()
+{
+	m_pdf.reset();
+	GetWndPtr()->RemoveMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE);
+	m_pFileIsInUse.Release();
+
+	m_path.set(L"");
+	//m_scale.set(1.f);
+	m_prevScale = 0.f;
+
+	m_pVScroll->Clear();
+	m_pHScroll->Clear();
 }
 
 std::tuple<CRectF, CRectF> CPdfView::GetRects() const

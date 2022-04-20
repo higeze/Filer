@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -320,6 +320,7 @@
     <ClInclude Include="..\HiLib\EventArgs.h" />
     <ClInclude Include="..\HiLib\FileDragger.h" />
     <ClInclude Include="..\HiLib\FileIconCache.h" />
+    <ClInclude Include="..\HiLib\FileIsInUse.h" />
     <ClInclude Include="..\HiLib\FilterCell.h" />
     <ClInclude Include="..\HiLib\FindDlg.h" />
     <ClInclude Include="..\HiLib\FindDlgResource.h" />
@@ -525,6 +526,7 @@
     <ClCompile Include="..\HiLib\Dispatcher.cpp" />
     <ClCompile Include="..\HiLib\DropTargetManager.cpp" />
     <ClCompile Include="..\HiLib\FileIconCache.cpp" />
+    <ClCompile Include="..\HiLib\FileIsInUse.cpp" />
     <ClCompile Include="..\HiLib\FilterCell.cpp" />
     <ClCompile Include="..\HiLib\FontCell.cpp" />
     <ClCompile Include="..\HiLib\GridView.cpp" />

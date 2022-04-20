@@ -511,7 +511,11 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderTemplate.emplace(typeid(PdfTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
 		{
 			if (auto p = std::dynamic_pointer_cast<PdfTabData>(pTabData)) {
-				return std::wstring(::PathFindFileName(p->Path.c_str()));
+				if (p->Path.empty()) {
+					return L"No file";
+				} else {
+					return std::wstring(::PathFindFileName(p->Path.c_str()));
+				}
 			} else {
 				return L"nullptr";
 			}

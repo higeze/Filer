@@ -31,6 +31,8 @@
 //#pragma comment(lib, "windowscodecs.lib")
 
 #include "PdfViewStateMachine.h"
+#include "FileIsInUse.h"
+
 
 
 //TODOHIGH
@@ -124,6 +126,8 @@ protected:
 	std::shared_ptr<CHScroll> m_pHScroll;
 
 	std::unique_ptr<CPDFiumDoc> m_pdf;
+	CComPtr<IFileIsInUse> m_pFileIsInUse;
+
     //std::vector<std::unique_ptr<CPdfPage>> m_pdfPages;
    // std::vector<CComPtr<ID2D1Bitmap1>> m_pdfBmps;
 
@@ -197,7 +201,7 @@ public:
 	virtual void Normal_KeyDown(const KeyDownEvent& e);
 	virtual void Normal_Char(const CharEvent& e) { /*Do nothing*/ }
 	virtual void Normal_SetFocus(const SetFocusEvent& e) { /*Do nothing*/ }
-	virtual void Normal_KillFocus(const KillFocusEvent& e) { /*Do nothing*/ }
+	virtual void Normal_KillFocus(const KillFocusEvent& e);
 
 	virtual void VScrlDrag_OnEntry(const LButtonBeginDragEvent& e);
 	virtual void VScrlDrag_OnExit(const LButtonEndDragEvent& e);
@@ -222,6 +226,8 @@ public:
 
 	void Open();
 	void Open(const std::wstring& path);
+	void Close();
+
 	void UpdateScroll();
 
 	void Update();

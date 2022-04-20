@@ -731,6 +731,9 @@
     <ClInclude Include="..\HiLib\PDFiumDoc.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\FileInUse.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1080,6 +1083,9 @@
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="PDFiumDoc.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\FileInUse.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

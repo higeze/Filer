@@ -49,6 +49,7 @@ struct ScrollProperty;
 		virtual void OnSetCursor(const SetCursorEvent& e) override;
 		virtual CRectF GetThumbRangeRect()const;
 		virtual CRectF GetThumbRect()const = 0;
+		virtual void Clear();
 		//virtual void OnPropertyChanged(const wchar_t* name) override
 		//{
 		//	m_onPropertyChanged(name);

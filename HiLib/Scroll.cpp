@@ -98,6 +98,15 @@
 		return thumbRangeRect;
 	}
 
+	void CScrollBase::Clear()
+	{
+		m_visibility = Visibility::Auto;
+		m_page = 0.f;
+		m_range = std::make_pair(0.f, 0.f);
+		m_pos = 0.f;
+		m_startDrag = 0.f;
+	}
+
 	CRectF CVScroll::GetThumbRect()const
 	{
 		auto thumbRangeRect = GetThumbRangeRect();

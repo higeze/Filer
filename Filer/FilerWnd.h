@@ -115,7 +115,7 @@ public:
 	HWND Create(HWND hWndParent) override;
 
 
-	//Getter/Settern
+	//Getter/Setter
 	std::shared_ptr<CApplicationProperty>& GetApplicationProperty() { return m_spApplicationProp; }
 	std::shared_ptr<FilerGridViewProperty>& GetFilerGridViewPropPtr() { return m_spFilerGridViewProp; }
 	std::shared_ptr<CFavoritesProperty>& GetFavoritesPropPtr() { return m_spFavoritesProp; }

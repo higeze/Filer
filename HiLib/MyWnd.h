@@ -180,7 +180,7 @@ public:
 	LPCTSTR lpszClassName()const{return m_cwx.lpszClassName;}
 };
 
-typedef std::function<LRESULT(UINT,LPARAM,WPARAM,BOOL&)> FunMsg;
+typedef std::function<LRESULT(UINT,WPARAM,LPARAM,BOOL&)> FunMsg;
 typedef std::function<LRESULT(WORD,WORD,HWND,BOOL&)> FunCmd;
 typedef std::function<LRESULT(int,LPNMHDR,BOOL&)> FunNtfy;
 
@@ -293,6 +293,12 @@ public:
 		return true;
 	}
 
+	BOOL RemoveMsgHandler(UINT uMsg)
+	{	
+		m_msgMap.erase(uMsg);
+		return TRUE;
+	}
+
 	//FunMsg GetMsgHandler(UINT uMsg)
 	//{
 	//	auto iter = m_msgMap.find(uMsg);
@@ -310,6 +316,7 @@ public:
 	{	
 		return AddMsgHandler(uMsg, std::bind(memberfunc,that,phs::_1,phs::_2,phs::_3,phs::_4));
 	}
+
 
 	//template<class U>
 	//BOOL ReplaceMsgHandler(UINT uMsg,LRESULT(U::*memberfunc)(UINT,WPARAM,LPARAM,BOOL&),U* that)
