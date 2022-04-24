@@ -95,7 +95,10 @@ void CPdfView::OnRect(const RectEvent& e)
 void CPdfView::OnMouseWheel(const MouseWheelEvent& e)
 {
 	if(::GetAsyncKeyState(VK_CONTROL)){
-		m_scale.set(std::clamp(m_scale  + 0.2f * e.Delta / WHEEL_DELTA, 0.1f, 5.f));
+		FLOAT factor = std::pow(1.1, (std::abs(e.Delta) / WHEEL_DELTA));
+		FLOAT multiply = (e.Delta > 0) ? factor : 1/factor;
+		m_scale.set(std::clamp(m_scale.get() * multiply, 0.1f, 8.f));
+		//::OutputDebugString(std::format(L"delta:{}, multiply:{}, scale:{}\r\n", e.Delta, multiply, m_scale.get()).c_str());
 	} else {
 		m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);
 	}
@@ -437,8 +440,9 @@ void CPdfView::Open(const std::wstring& path)
 		});
 
 		m_pdf = std::make_unique<CPDFiumDoc>(
+			m_pProp,
 			path, L"", 
-			GetWndPtr()->GetDirectPtr(), m_pProp->Format,
+			GetWndPtr()->GetDirectPtr(),
 			[this]()->void{
 				FLOAT scaleX = GetRenderSize().width / m_pdf->GetPage(0)->GetSourceSize().width;
 				FLOAT scaleY = GetRenderSize().height / m_pdf->GetPage(0)->GetSourceSize().height;

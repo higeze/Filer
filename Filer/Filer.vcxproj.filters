@@ -731,7 +731,11 @@
     <ClInclude Include="..\HiLib\PDFiumDoc.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\FileInUse.h">
+    <ClInclude Include="..\HiLib\FileIsInUse.h" />
+    <ClInclude Include="..\HiLib\ThreadPool.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLIb\PDFiumSingleThread.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1082,10 +1086,14 @@
     <ClCompile Include="..\D2DTextBox\EditorTextBox.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
-    <ClCompile Include="PDFiumDoc.cpp">
+    <ClCompile Include="..\HiLib\FileIsInUse.cpp" />
+    <ClCompile Include="..\HiLib\ThreadPool.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\FileInUse.cpp">
+    <ClCompile Include="..\HiLib\PDFiumDoc.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLIb\PDFiumSingleThread.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

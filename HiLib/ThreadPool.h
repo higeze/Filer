@@ -34,6 +34,7 @@ public:
 
 	int GetTotalTheadCount() { return workers.size(); }
 	int GetActiveThreadCount() { return activeCount.load(); }
+	std::thread::id GetThreadId(int n) { return workers[n].get_id(); }
 
 // add new work item to the pool
 	template<class F, class... Args>

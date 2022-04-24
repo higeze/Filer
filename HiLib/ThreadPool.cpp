@@ -1,5 +1,5 @@
 #include "ThreadPool.h"
-#include "SEHException.h"
+#include "se_exception.h"
 #include <fmt/format.h>
 
 // the constructor just launches some amount of workers
@@ -12,7 +12,7 @@ CThreadPool::CThreadPool(size_t threads)
 		//CoInitialize
 		CCoInitializer coinit;
 		//Catch SEH exception as CEH
-		_set_se_translator(CSEHException::TransferSEHtoCEH);
+		scoped_se_translator se_trans;
 		for (;;) {
 				std::function<void()> task;
 				{
@@ -63,7 +63,7 @@ CThreadPool::~CThreadPool()
 
 CThreadPool* CThreadPool::GetInstance()
 {
-	static CThreadPool pool(16);
+	static CThreadPool pool(1);
 	return &pool;
 }
 

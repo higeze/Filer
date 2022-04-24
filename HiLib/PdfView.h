@@ -49,7 +49,6 @@
 #include <mutex>
 
 class CPDFiumDoc;
-class CPDFiumPage;
 class CVScroll;
 class CHScroll;
 
@@ -59,15 +58,22 @@ public:
 	std::shared_ptr<FormatF> Format;
 	std::shared_ptr<SolidLine> FocusedLine;
 	std::shared_ptr<SolidFill> NormalFill;
+	//std::shared_ptr<SolidFill> SelectedFill;
+	//std::shared_ptr<SolidFill> UnfocusSelectedFill;
+	//std::shared_ptr<SolidFill> HotFill;
+	std::shared_ptr<SolidFill> FindHighliteFill;
+
 	std::shared_ptr<CRectF> Padding;
 	std::shared_ptr<ScrollProperty> VScrollPropPtr;
 	std::shared_ptr<ScrollProperty> HScrollPropPtr;
+
 
 public:
 	PdfViewProperty()
 		:Format(std::make_shared<FormatF>(L"Meiryo UI", CDirect2DWrite::Points2Dips(9),  0.0f, 0.0f, 0.0f, 1.0f)),
 		FocusedLine(std::make_shared<SolidLine>(22.f/255.f, 160.f/255.f, 133.f/255.f, 1.0f, 1.0f)),
 		NormalFill(std::make_shared<SolidFill>(246.f/255.f, 246.f/255.f, 246.f/255.f, 1.0f)),
+		FindHighliteFill(std::make_shared<SolidFill>(244.f / 255, 167.f / 255, 33.f / 255, 100.f / 255)),
 		Padding(std::make_shared<CRectF>(2.0f,2.0f,2.0f,2.0f)),
 		VScrollPropPtr(std::make_shared<ScrollProperty>()),
 		HScrollPropPtr(std::make_shared<ScrollProperty>()){};
