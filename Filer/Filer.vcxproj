@@ -377,8 +377,12 @@
     <ClInclude Include="..\HiLib\named_arguments.h" />
     <ClInclude Include="..\HiLib\ColumnIndexCell.h" />
     <ClInclude Include="..\HiLib\Pdf.h" />
+    <ClInclude Include="..\HiLib\PDFCaret.h" />
+    <ClInclude Include="..\HiLib\PDFEditorProperty.h" />
     <ClInclude Include="..\HiLib\PDFiumDoc.h" />
     <ClInclude Include="..\HiLib\PdfView.h" />
+    <ClInclude Include="..\HiLib\PDFViewport.h" />
+    <ClInclude Include="..\HiLib\PDFViewProperty.h" />
     <ClInclude Include="..\HiLib\PdfViewStateMachine.h" />
     <ClInclude Include="..\HiLib\property.h" />
     <ClInclude Include="..\HiLib\ReactiveProperty.h" />
@@ -439,6 +443,7 @@
     <ClInclude Include="..\HiLib\HiLibResource.h" />
     <ClInclude Include="..\HiLib\scope_exit.h" />
     <ClInclude Include="..\HiLib\DialogProperty.h" />
+    <ClInclude Include="..\HiLib\PDFEditor.h" />
     <ClInclude Include="CheckableFileGrid.h" />
     <ClInclude Include="DriveSizeCell.h" />
     <ClInclude Include="ExeExtensionProperty.h" />
@@ -551,8 +556,10 @@
     <ClCompile Include="..\HiLib\MyXMLSerializer.cpp" />
     <ClCompile Include="..\HiLib\ColumnIndexCell.cpp" />
     <ClCompile Include="..\HiLib\Pdf.cpp" />
+    <ClCompile Include="..\HiLib\PDFEditor.cpp" />
     <ClCompile Include="..\HiLib\PDFiumDoc.cpp" />
     <ClCompile Include="..\HiLib\PdfView.cpp" />
+    <ClCompile Include="..\HiLib\PDFViewport.cpp" />
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp" />
     <ClCompile Include="..\HiLIb\PDFiumSingleThread.cpp" />
     <ClCompile Include="..\HiLib\SortCell.cpp" />
@@ -587,6 +594,7 @@
     <ClCompile Include="..\HiLib\D2DWControl.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
+    <ClCompile Include="..\HiLib\PDFCaret.cpp" />
     <ClCompile Include="DriveSizeCell.cpp" />
     <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="FileOperationDlg.cpp" />

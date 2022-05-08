@@ -42,9 +42,12 @@ struct YTag;
 		void SetPoint(FLOAT a, FLOAT b);
 		void Offset(FLOAT xOffset, FLOAT yOffset);
 		void Offset(CPointF& pt);
+		CPointF OffsetCopy(CPointF& pt);
 		CPointF operator -() const;
 		CPointF operator +(CPointF pt) const;
 		CPointF operator -(CPointF pt) const;
+		CPointF operator *(const FLOAT& z) const;
+		CPointF operator /(const FLOAT& z) const;
 		CPointF& operator +=(const CPointF& pt);
 		bool operator!=(const CPointF& pt)const;
 
@@ -118,12 +121,17 @@ struct YTag;
 		CRectF IntersectRect(const CRectF& rc) const;
 		CPointF LeftTop() const;
 		CPointF CenterPoint() const;
+		FLOAT CenterX() const;
+		FLOAT CenterY() const;
 		CSizeF Size() const;
 		//bool IntersectRect(LPCRECT lpRect1, LPCRECT lpRect2) { return ::IntersectRect(this, lpRect1, lpRect2); }
 		CRectF operator+(CRectF rc)const;
+		CRectF operator+(CPointF pt)const;
 		CRectF& operator+=(CRectF rc);
 		CRectF operator-(CRectF rc)const;
+		CRectF operator-(CPointF pt)const;
 		CRectF& operator-=(CRectF rc);
+		CRectF operator*(FLOAT z)const;
 		bool operator==(const CRectF& rc)const;
 		bool operator!=(const CRectF& rc)const;
 		//void operator &=(const CRectF& rect) { ::IntersectRect(this, this, &rect); }

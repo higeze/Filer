@@ -1,10 +1,12 @@
 #pragma once
 #include "D2DWWindow.h"
-#include <msctf.h>
+#include "D2DWControl.h"
 #include "Scroll.h"
 #include "ScrollProperty.h"
-#include "D2DWControl.h"
 #include "ReactiveProperty.h"
+
+#include "PDFViewProperty.h"
+#include <msctf.h>
 
 #include <cstdlib>
 #include <utility>
@@ -16,87 +18,21 @@
 #include <d2d1_2.h>
 #include <wincodec.h>
 
-//#include <windows.storage.h>
-//#include <windows.storage.streams.h>
-//#include <windows.data.pdf.h>
-//#include <windows.data.pdf.interop.h>
-//
-//
-//#include <wrl/client.h>
-//#include <wrl/event.h>
-//   
-//#pragma comment(lib, "shcore.lib")
-//#pragma comment(lib, "runtimeobject.lib")
-//#pragma comment(lib, "windows.data.pdf.lib")
-//#pragma comment(lib, "windowscodecs.lib")
-
 #include "PdfViewStateMachine.h"
 #include "FileIsInUse.h"
 
-
-
-//TODOHIGH
-//namespace abipdf = ABI::Windows::Data::Pdf;
-//namespace abifoundation = ABI::Windows::Foundation;
-//namespace abistorage = ABI::Windows::Storage;
-//namespace abistreams = ABI::Windows::Storage::Streams;
-//namespace winfoundation = Windows::Foundation;
-//namespace wrl = Microsoft::WRL;
-//namespace wrlwrappers = Microsoft::WRL::Wrappers;
-
+#include "getter_macro.h"
 
 #include <future>
 #include <mutex>
 
-class CPDFiumDoc;
+#include "PDFViewport.h"
+
+class CPDFDoc;
 class CVScroll;
 class CHScroll;
 
-struct PdfViewProperty
-{
-public:
-	std::shared_ptr<FormatF> Format;
-	std::shared_ptr<SolidLine> FocusedLine;
-	std::shared_ptr<SolidFill> NormalFill;
-	//std::shared_ptr<SolidFill> SelectedFill;
-	//std::shared_ptr<SolidFill> UnfocusSelectedFill;
-	//std::shared_ptr<SolidFill> HotFill;
-	std::shared_ptr<SolidFill> FindHighliteFill;
 
-	std::shared_ptr<CRectF> Padding;
-	std::shared_ptr<ScrollProperty> VScrollPropPtr;
-	std::shared_ptr<ScrollProperty> HScrollPropPtr;
-
-
-public:
-	PdfViewProperty()
-		:Format(std::make_shared<FormatF>(L"Meiryo UI", CDirect2DWrite::Points2Dips(9),  0.0f, 0.0f, 0.0f, 1.0f)),
-		FocusedLine(std::make_shared<SolidLine>(22.f/255.f, 160.f/255.f, 133.f/255.f, 1.0f, 1.0f)),
-		NormalFill(std::make_shared<SolidFill>(246.f/255.f, 246.f/255.f, 246.f/255.f, 1.0f)),
-		FindHighliteFill(std::make_shared<SolidFill>(244.f / 255, 167.f / 255, 33.f / 255, 100.f / 255)),
-		Padding(std::make_shared<CRectF>(2.0f,2.0f,2.0f,2.0f)),
-		VScrollPropPtr(std::make_shared<ScrollProperty>()),
-		HScrollPropPtr(std::make_shared<ScrollProperty>()){};
-
-	virtual ~PdfViewProperty() = default;
-
-	template <class Archive>
-    void serialize(Archive& ar)
-    {
-		ar("FocusedLine",FocusedLine);
-		ar("NormalFill",NormalFill);
-		ar("Padding",Padding);
-		ar("VScrollProperty", VScrollPropPtr);
-		ar("HScrollProperty", HScrollPropPtr);
-	}
-
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(PdfViewProperty,
-		FocusedLine,
-		NormalFill,
-		Padding,
-		VScrollPropPtr,
-		HScrollPropPtr)
-};
 
 enum class InitialScaleMode
 {
@@ -106,9 +42,38 @@ enum class InitialScaleMode
 	Height
 };
 
+enum class PDFMode
+{
+	Pan,
+	Text
+};
+
+class CPDFCaret
+{
+public:
+	std::tuple<int, int> Old = { 0, 0 };
+	std::tuple<int, int> Current = { 0, 0 };
+	std::tuple<int, int> Anchor = { 0, 0 };
+	std::tuple<int, int> SelectBegin = { 0, 0 };
+	std::tuple<int, int> SelectEnd = { 0, 0 };
+	std::tuple<int, CPointF> Point = { 0, { 0.f, 0.f } };
+
+	void Move(const int page_index, const int& char_index, const CPointF& point);
+	void MoveWithShift(const int page_index, const int& char_index, const CPointF& point);
+	void MoveSelection(const int sel_begin_page, const int& sel_begin_char, const int sel_end_page, const int& sel_end_char);
+	void StartBlink() {}
+
+};
+
 
 class CPdfView : public CD2DWControl
 {
+public:
+	/* Scroll */
+	SHAREDPTR_GETTER(CVScroll, VScroll)
+	SHAREDPTR_GETTER(CHScroll, HScroll)
+	//LAZY_GETTER_NO_CLEAR_IMPL(std::vector<CRectF>, OriginHighliteRects)
+
 	/**********/
 	/* Static */
 	/**********/
@@ -118,20 +83,23 @@ public:
 	/* Field */
 	/*********/
 protected:
+	CPDFViewport m_viewport;
+	CPDFCaret m_caret;
+
+	CRectF m_rect;
 	std::shared_ptr<PdfViewProperty> m_pProp;
 	
 	//ReactiveProperty
 	ReactiveWStringProperty m_path;
 	ReactiveCommand<void> m_open;
 	ReactiveProperty<FLOAT> m_scale;
+	ReactiveWStringProperty m_find;
 	ReactiveProperty<D2D1_BITMAPSOURCE_ORIENTATION> m_rotate;
 	FLOAT m_prevScale;
 
-	/* Scroll */
-	std::shared_ptr<CVScroll> m_pVScroll;
-	std::shared_ptr<CHScroll> m_pHScroll;
 
-	std::unique_ptr<CPDFiumDoc> m_pdf;
+
+	std::unique_ptr<CPDFDoc> m_pdf;
 	CComPtr<IFileIsInUse> m_pFileIsInUse;
 
     //std::vector<std::unique_ptr<CPdfPage>> m_pdfPages;
@@ -140,16 +108,19 @@ protected:
 	std::unique_ptr<CPdfViewStateMachine> m_pMachine;
 
 	InitialScaleMode m_initialScaleMode;
-
+	PDFMode m_mode = PDFMode::Text;
 
 
 public:
 	CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewProperty>& pProp);
 	virtual ~CPdfView();
 public:
+	//
+	std::unique_ptr<CPDFDoc>& GetDocPtr() { return m_pdf; }
 	// Getter
 	ReactiveWStringProperty& GetPath() { return m_path; }
 	ReactiveProperty<FLOAT>& GetScale() { return m_scale; }
+	ReactiveWStringProperty& GetFind() { return m_find; }
 	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
 	
 	//std::function<CComPtr<IPdfRendererNative>& ()> GetPdfRenderer;
@@ -194,20 +165,25 @@ public:
 	/* SM Message */
 	/**************/
 	virtual void Normal_Paint(const PaintEvent& e);
-	virtual void Normal_LButtonDown(const LButtonDownEvent& e){ /*Do nothing*/ }
+	virtual void Normal_LButtonDown(const LButtonDownEvent& e);
 	virtual void Normal_LButtonUp(const LButtonUpEvent& e) { /*Do nothing*/ }
 	virtual void Normal_LButtonClk(const LButtonClkEvent& e) { /*Do nothing*/ }
 	virtual void Normal_LButtonSnglClk(const LButtonSnglClkEvent& e) { /*Do nothing*/ }
-	virtual void Normal_LButtonDblClk(const LButtonDblClkEvent& e) { /*Do nothing*/ }
+	virtual void Normal_LButtonDblClk(const LButtonDblClkEvent& e);
 	virtual void Normal_RButtonDown(const RButtonDownEvent& e) { /*Do nothing*/ }
 	virtual void Normal_MouseMove(const MouseMoveEvent& e) { /*Do nothing*/ }
 	virtual void Normal_MouseLeave(const MouseLeaveEvent& e) { /*Do nothing*/ }
-	virtual void Normal_SetCursor(const SetCursorEvent& e);
 	virtual void Normal_ContextMenu(const ContextMenuEvent& e);
 	virtual void Normal_KeyDown(const KeyDownEvent& e);
 	virtual void Normal_Char(const CharEvent& e) { /*Do nothing*/ }
 	virtual void Normal_SetFocus(const SetFocusEvent& e) { /*Do nothing*/ }
 	virtual void Normal_KillFocus(const KillFocusEvent& e);
+
+	virtual void NormalPan_LButtonDown(const LButtonDownEvent& e) {}
+	virtual void NormalPan_SetCursor(const SetCursorEvent& e);
+
+	virtual void NormalText_LButtonDown(const LButtonDownEvent& e);
+	virtual void NormalText_SetCursor(const SetCursorEvent& e);
 
 	virtual void VScrlDrag_OnEntry(const LButtonBeginDragEvent& e);
 	virtual void VScrlDrag_OnExit(const LButtonEndDragEvent& e);
@@ -227,6 +203,13 @@ public:
 	virtual void Panning_OnExit(const LButtonEndDragEvent& e);
 	virtual void Panning_MouseMove(const MouseMoveEvent& e);
 	virtual void Panning_SetCursor(const SetCursorEvent& e);
+	virtual bool Panning_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
+
+	virtual void TextDrag_OnEntry(const LButtonBeginDragEvent& e);
+	virtual void TextDrag_OnExit(const LButtonEndDragEvent& e);
+	virtual void TextDrag_MouseMove(const MouseMoveEvent& e);
+	virtual void TextDrag_SetCursor(const SetCursorEvent& e);
+	virtual bool TextDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
 
 	virtual void Error_StdException(const std::exception& e);
 

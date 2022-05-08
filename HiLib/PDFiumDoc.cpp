@@ -2,27 +2,29 @@
 #include <fpdf_edit.h>
 #include <fpdfview.h>
 #include <mutex>
+#include <boost/algorithm/string.hpp>
 #include "async_catch.h"
 #include "ThreadPool.h"
 #include "PdfView.h"
+#include "PDFViewport.h"
 
 
 #include "strconv.h"
 
 namespace sml = boost::sml;
 
-void CPDFiumDoc::Init()
+void CPDFDoc::Init()
 {
 	const FPDF_LIBRARY_CONFIG config{ 2, nullptr, nullptr, 0 };
 	FPDF_InitLibraryWithConfig(&config);
 }
 
-void CPDFiumDoc::Term()
+void CPDFDoc::Term()
 {
 	FPDF_DestroyLibrary();
 }
 
-CPDFiumDoc::CPDFiumDoc(const std::shared_ptr<PdfViewProperty>& spProp, const std::wstring& path, const std::wstring& password, 
+CPDFDoc::CPDFDoc(const std::shared_ptr<PdfViewProperty>& spProp, const std::wstring& path, const std::wstring& password, 
 		CDirect2DWrite* pDirect, std::function<void()> changed)
 	:m_pProp(spProp),
 	m_path(path),
@@ -37,30 +39,40 @@ CPDFiumDoc::CPDFiumDoc(const std::shared_ptr<PdfViewProperty>& spProp, const std
 	m_pageCount = m_pPDFium->GetPageCount(m_pDoc.get());
 
 	for (auto i = 0; i < m_pageCount; i++) {
-		m_pages.emplace_back(std::make_unique<CPDFiumPage>(this, i));
+		m_pages.emplace_back(std::make_unique<CPDFPage>(this, i));
 	}
 
 	for (const auto& pPage : m_pages) {
+		m_sourceRectsInDoc.emplace_back(0.f, m_sourceSize.height, pPage->GetSourceSize().width, m_sourceSize.height + pPage->GetSourceSize().height);
+
 		m_sourceSize.width = (std::max)(m_sourceSize.width, pPage->GetSourceSize().width);
 		m_sourceSize.height += pPage->GetSourceSize().height;
 	}
 }
 
-CPDFiumDoc::~CPDFiumDoc() = default;
+CPDFDoc::~CPDFDoc() = default;
+
+void CPDFDoc::RenderHighliteLine(const FindRenderLineEvent& e)
+{
+	FLOAT fullHeight = GetSourceSize().height;
+	FLOAT top = 0.f;
+	for (auto i = 0; i < GetPageCount(); i++) {
+		auto rectHighlite = CRectF(
+			e.RenderRectInWnd.left + 2.f,
+			e.RenderRectInWnd.top + e.RenderRectInWnd.Height() * m_sourceRectsInDoc[i].top / fullHeight,
+			e.RenderRectInWnd.right - 2.f,
+			e.RenderRectInWnd.top + e.RenderRectInWnd.Height() * m_sourceRectsInDoc[i].bottom / fullHeight);
+
+		GetPage(i)->RenderHighliteLine(FindRenderLineEvent(e.DirectPtr, e.ViewportPtr, rectHighlite, e.Scale, e.Find));
+	}
+}
 
 /************/
 /* CPdfPage */
 /************/
 
-struct CPDFiumPage::Machine
+struct CPDFPage::MachineBase
 {
-	//Status
-	class None {};
-	class Loading {};
-	class Available {};
-	class WaitCancel {};
-	class Error {};
-
 	template<class T, class R, class E>
 	auto call(R(T::* f)(E))const
 	{
@@ -72,32 +84,43 @@ struct CPDFiumPage::Machine
 	{
 		return [f](T* self) { return (self->*f)(); };
 	}
+};
+
+
+struct CPDFPage::BitmapMachine: public CPDFPage::MachineBase
+{
+	//Status
+	class None {};
+	class Loading {};
+	class Available {};
+	class WaitCancel {};
+	class Error {};
 
 	auto operator()() const noexcept
 	{
 		using namespace sml;
 		return make_transition_table(
-			*state<None> +event<RenderEvent> / call(&CPDFiumPage::None_Render),
-			state<None> +event<LoadEvent> = state<Loading>,
+			*state<None> +event<BitmapRenderEvent> / call(&CPDFPage::Bitmap_None_Render),
+			state<None> +event<BitmapLoadEvent> = state<Loading>,
 
-			state<Loading> +on_entry<_> / call(&CPDFiumPage::Loading_OnEntry),
+			state<Loading> +on_entry<_> / call(&CPDFPage::Bitmap_Loading_OnEntry),
 
-			state<Loading> +event<RenderEvent> / call(&CPDFiumPage::Loading_Render),
-			state<Loading> +event<LoadCompletedEvent> = state<Available>,
-			state<Loading> +event<ReloadEvent> = state<WaitCancel>,
-			state<Loading> +event<ErrorEvent> = state<Error>,
+			state<Loading> +event<BitmapRenderEvent> / call(&CPDFPage::Bitmap_Loading_Render),
+			state<Loading> +event<BitmapLoadCompletedEvent> = state<Available>,
+			state<Loading> +event<BitmapReloadEvent> = state<WaitCancel>,
+			state<Loading> +event<BitmapErrorEvent> = state<Error>,
 
-			state<Available> +event<RenderEvent> / call(&CPDFiumPage::Available_Render),
-			state<Available> +event<ReloadEvent> = state<Loading>,
+			state<Available> +event<BitmapRenderEvent> / call(&CPDFPage::Bitmap_Available_Render),
+			state<Available> +event<BitmapReloadEvent> = state<Loading>,
 
-			state<WaitCancel> +on_entry<_> / call(&CPDFiumPage::WaitCancel_OnEntry),
-			state<WaitCancel> +on_exit<_> / call(&CPDFiumPage::WaitCancel_OnExit),
+			state<WaitCancel> +on_entry<_> / call(&CPDFPage::Bitmap_WaitCancel_OnEntry),
+			state<WaitCancel> +on_exit<_> / call(&CPDFPage::Bitmap_WaitCancel_OnExit),
 
-			state<WaitCancel> +event<RenderEvent> / call(&CPDFiumPage::WaitCancel_Render),
-			state<WaitCancel> +event<LoadCompletedEvent> = state<Loading>,
-			state<WaitCancel> +event<CancelCompletedEvent> = state<Loading>,
+			state<WaitCancel> +event<BitmapRenderEvent> / call(&CPDFPage::Bitmap_WaitCancel_Render),
+			state<WaitCancel> +event<BitmapLoadCompletedEvent> = state<Loading>,
+			state<WaitCancel> +event<BitmapCancelCompletedEvent> = state<Loading>,
 
-			state<Error> +event<RenderEvent> / call(&CPDFiumPage::Error_Render)
+			state<Error> +event<BitmapRenderEvent> / call(&CPDFPage::Bitmap_Error_Render)
 
 			//Error handler
 			//*state<Error> +exception<std::exception> = state<Error>
@@ -105,20 +128,77 @@ struct CPDFiumPage::Machine
 	}
 };
 
+struct CPDFPage::FindMachine: public CPDFPage::MachineBase
+{
+	//Status
+	class None {};
+	class Loading {};
+	class Available {};
+	class WaitCancel {};
+	class Error {};
 
-void CPDFiumPage::process_event(const RenderEvent& e) { m_pMachine->process_event(e); }
-void CPDFiumPage::process_event(const LoadEvent& e) { m_pMachine->process_event(e); }
-void CPDFiumPage::process_event(const ReloadEvent& e) { m_pMachine->process_event(e); }
-void CPDFiumPage::process_event(const LoadCompletedEvent& e) { m_pMachine->process_event(e); }
-void CPDFiumPage::process_event(const CancelCompletedEvent& e) { m_pMachine->process_event(e); }
-void CPDFiumPage::process_event(const ErrorEvent& e) { m_pMachine->process_event(e); }
+	auto operator()() const noexcept
+	{
+		using namespace sml;
+		return make_transition_table(
+			*state<None> +event<FindRenderEvent> / call(&CPDFPage::Find_None_Render),
+			state<None> +event<FindRenderLineEvent> / call(&CPDFPage::Find_None_RenderLine),
+			state<None> +event<FindLoadEvent> = state<Loading>,
 
-CPDFiumPage::CPDFiumPage(CPDFiumDoc* pDoc, int index )
+			state<Loading> +on_entry<FindLoadEvent> / call(&CPDFPage::Find_Loading_OnEntry),
+			state<Loading> +on_entry<FindReloadEvent> / call(&CPDFPage::Find_Loading_OnReEntry),
+
+			state<Loading> +event<FindRenderEvent> / call(&CPDFPage::Find_Loading_Render),
+			state<Loading> +event<FindRenderLineEvent> / call(&CPDFPage::Find_Loading_RenderLine),
+			state<Loading> +event<FindLoadCompletedEvent> = state<Available>,
+			state<Loading> +event<FindReloadEvent> = state<WaitCancel>,
+			state<Loading> +event<FindErrorEvent> = state<Error>,
+
+			state<Available> +event<FindRenderEvent> / call(&CPDFPage::Find_Available_Render),
+			state<Available> +event<FindRenderLineEvent> / call(&CPDFPage::Find_Available_RenderLine),
+			state<Available> +event<FindReloadEvent> = state<Loading>,
+
+			state<WaitCancel> +on_entry<_> / call(&CPDFPage::Find_WaitCancel_OnEntry),
+			state<WaitCancel> +on_exit<_> / call(&CPDFPage::Find_WaitCancel_OnExit),
+
+			state<WaitCancel> +event<FindRenderEvent> / call(&CPDFPage::Find_WaitCancel_Render),
+			state<WaitCancel> +event<FindRenderLineEvent> / call(&CPDFPage::Find_WaitCancel_RenderLine),
+			state<WaitCancel> +event<FindLoadCompletedEvent> = state<Loading>,
+			state<WaitCancel> +event<FindCancelCompletedEvent> = state<Loading>,
+
+			state<Error> +event<FindRenderEvent> / call(&CPDFPage::Find_Error_Render),
+			state<Error> +event<FindRenderLineEvent> / call(&CPDFPage::Find_Error_RenderLine)
+			//Error handler
+			//*state<Error> +exception<std::exception> = state<Error>
+		);
+	}
+};
+
+
+void CPDFPage::process_event(const BitmapRenderEvent& e) { m_pBitmapMachine->process_event(e); }
+void CPDFPage::process_event(const BitmapLoadEvent& e) { m_pBitmapMachine->process_event(e); }
+void CPDFPage::process_event(const BitmapReloadEvent& e) { m_pBitmapMachine->process_event(e); }
+void CPDFPage::process_event(const BitmapLoadCompletedEvent& e) { m_pBitmapMachine->process_event(e); }
+void CPDFPage::process_event(const BitmapCancelCompletedEvent& e) { m_pBitmapMachine->process_event(e); }
+void CPDFPage::process_event(const BitmapErrorEvent& e) { m_pBitmapMachine->process_event(e); }
+
+void CPDFPage::process_event(const FindRenderEvent& e) { m_pFindMachine->process_event(e); }
+void CPDFPage::process_event(const FindRenderLineEvent& e) { m_pFindMachine->process_event(e); }
+void CPDFPage::process_event(const FindLoadEvent& e) { m_pFindMachine->process_event(e); }
+void CPDFPage::process_event(const FindReloadEvent& e) { m_pFindMachine->process_event(e); }
+void CPDFPage::process_event(const FindLoadCompletedEvent& e) { m_pFindMachine->process_event(e); }
+void CPDFPage::process_event(const FindCancelCompletedEvent& e) { m_pFindMachine->process_event(e); }
+void CPDFPage::process_event(const FindErrorEvent& e) { m_pFindMachine->process_event(e); }
+
+CPDFPage::CPDFPage(CPDFDoc* pDoc, int index )
 	:m_pDoc(pDoc), m_index(index),
-	m_spCancelThread(std::make_shared<bool>(false)),
+	m_spCancelBitmapThread(std::make_shared<bool>(false)),
+	m_spCancelFindThread(std::make_shared<bool>(false)),
 	m_bmp{ CComPtr<ID2D1Bitmap>(), 0.f },
+	m_fnd{ std::vector<CRectF>(), L"" },
 	m_loadingScale(0.f), m_requestingScale(0.f),
-	m_pMachine(new sml::sm<Machine, boost::sml::process_queue<std::queue>>{ this })
+	m_pBitmapMachine(new sml::sm<BitmapMachine, boost::sml::process_queue<std::queue>>{ this }),
+	m_pFindMachine(new sml::sm<FindMachine, boost::sml::process_queue<std::queue>>{ this })
 {
 
 	m_pPage = std::move(GetPDFiumPtr()->UnqLoadPage(pDoc->GetDocPtr().get(), m_index));
@@ -126,9 +206,9 @@ CPDFiumPage::CPDFiumPage(CPDFiumDoc* pDoc, int index )
 	m_sourceSize.height = static_cast<FLOAT>(GetPDFiumPtr()->GetPageHeight(GetPagePtr().get()));
 }
 
-CPDFiumPage::~CPDFiumPage() = default;
+CPDFPage::~CPDFPage() = default;
 
-void CPDFiumPage::Load()
+void CPDFPage::LoadBitmap()
 {
 	m_loadingScale = m_requestingScale;
 
@@ -171,28 +251,18 @@ void CPDFiumPage::Load()
 	SetLockBitmap(PdfBmpInfo{ pBitmap, m_loadingScale });
 }
 
-
-/**************/
-/* SML Action */
-/**************/
-void CPDFiumPage::None_Render(const RenderEvent& e)
+void CPDFPage::LoadFind(const std::wstring& find_string)
 {
-	m_requestingScale = e.Scale;
-	process_event(LoadEvent());
-}
-void CPDFiumPage::Loading_OnEntry() 
-{
-	auto fun = [this]()
-	{ 
-		Load();
-		process_event(LoadCompletedEvent());
-	};
-	
-	m_future = GetPDFiumPtr()->GetThreadPtr()->enqueue(fun);
+	auto find = boost::trim_copy(find_string);
+	auto rects = std::vector<CRectF>();
+	if(find.empty())
+	{
+		SetLockFind(PdfFndInfo(rects, find.c_str()));
+		return;
+	}
 
-	m_findRects.clear();
 	UNQ_FPDF_TEXTPAGE pTextPage(GetPDFiumPtr()->Text_UnqLoadPage(GetPagePtr().get()));
-	FPDF_WIDESTRING text = reinterpret_cast<FPDF_WIDESTRING>(L"PDF");
+	FPDF_WIDESTRING text = reinterpret_cast<FPDF_WIDESTRING>(find.c_str());
 	UNQ_FPDF_SCHHANDLE pSchHdl(GetPDFiumPtr()->Text_UnqFindStart(pTextPage.get(), text, 0, 0));
 	CSizeF sz = GetSourceSize();
 	while (GetPDFiumPtr()->Text_FindNext(pSchHdl.get())) {
@@ -208,22 +278,143 @@ void CPDFiumPage::Loading_OnEntry()
 				&top, 
 				&right,
 				&bottom);
-			m_findRects.emplace_back(
+			rects.emplace_back(
 				static_cast<FLOAT>(left), 
 				static_cast<FLOAT>(sz.height - top), 
 				static_cast<FLOAT>(right), 
 				static_cast<FLOAT>(sz.height - bottom));
 		}
 	}
+	SetLockFind(PdfFndInfo(rects, find.c_str()));
 }
 
-void CPDFiumPage::Loading_Render(const RenderEvent& e) 
+void CPDFPage::LoadText()
+{
+	//TextPage
+	UNQ_FPDF_TEXTPAGE pTextPage(GetPDFiumPtr()->Text_UnqLoadPage(GetPagePtr().get()));
+	int char_count = GetPDFiumPtr()->Text_CountChars(pTextPage.get());
+	//Str
+	std::wstring text;
+	int text_count = GetPDFiumPtr()->Text_GetText(pTextPage.get(), 0, char_count, reinterpret_cast<unsigned short*>(::GetBuffer(text, 10000)));
+	::ReleaseBuffer(text);
+	//Original Char Rects
+	auto orgCharRects = std::vector<CRectF>();
+	for (auto i = 0; i < char_count; i++) {
+		int rect_count = GetPDFiumPtr()->Text_CountRects(pTextPage.get(), i, 1);
+		if (rect_count == 1) {
+			double left, top, right, bottom = 0.f;
+			m_pDoc->GetPDFiumPtr()->Text_GetRect(
+				pTextPage.get(),
+				0,
+				&left,
+				&top,
+				&right,
+				&bottom);
+			orgCharRects.emplace_back(
+				static_cast<FLOAT>(left),
+				static_cast<FLOAT>(top),
+				static_cast<FLOAT>(right),
+				static_cast<FLOAT>(bottom));
+		} else {
+			auto stop = true;
+		}
+	}
+	//Char Rects modified for CRLF
+	auto crlfCharRects = orgCharRects;
+	for (std::size_t i = 0; i < crlfCharRects.size(); i++) {
+		//TODO if i == 0 & isCRLF
+		bool isCRLF =  text[i] == L'\r' || text[i] == L'\n';
+		if (isCRLF) {
+			crlfCharRects[i].SetRect(
+				crlfCharRects[i - 1].right,
+				crlfCharRects[i - 1].top,
+				crlfCharRects[i - 1].right,
+				crlfCharRects[i - 1].bottom
+			);
+		}
+	}
+	//Mouse Rects
+	auto mouseRects = crlfCharRects;
+	auto sz = GetSourceSize();
+	auto prevBottom = sz.height;
+	auto curBottom = sz.height;
+	for (std::size_t i = 0; i < crlfCharRects.size(); i++) {
+		bool isFirstCharInLine = i == 0 || crlfCharRects[i].CenterY() < crlfCharRects[i-1].bottom;
+		bool isLastCharInLine = i == (text.size() - 1) || crlfCharRects[i].bottom > crlfCharRects[i+1].CenterY();
+		bool isLastLine = crlfCharRects[i].bottom < crlfCharRects.back().CenterY();
+
+		if (isFirstCharInLine) {
+			prevBottom = curBottom;
+		}
+		curBottom = std::min(curBottom, crlfCharRects[i].bottom);
+
+		//top
+		mouseRects[i].top = prevBottom;
+		//left
+		if (isFirstCharInLine) {
+			mouseRects[i].left = 0;
+		}
+		//right
+		if (isLastCharInLine) {
+			mouseRects[i].right = sz.width;
+		}
+		//bottom
+		if (isLastLine) {
+			mouseRects[i].bottom = 0;
+		}
+	}
+
+	SetLockTxt(PdfTxtInfo(orgCharRects, mouseRects, text));
+}
+
+int CPDFPage::GetCursorCharIndexAtPos(const CPointF& ptInPdfiumPage)
+{
+	const auto& txt = GetLockTxt();
+	auto iter = std::find_if(txt.MouseRects.cbegin(), txt.MouseRects.cend(),
+		[ptInPdfiumPage](const CRectF& rc)->bool {
+			return rc.left <= ptInPdfiumPage.x && ptInPdfiumPage.x < rc.right &&
+				rc.top >= ptInPdfiumPage.y && ptInPdfiumPage.y > rc.bottom;
+		});
+	if (iter == txt.MouseRects.cend()) {
+		return -1;
+	} else {
+		return std::distance(txt.MouseRects.cbegin(), iter);
+	}
+}
+
+CRectF CPDFPage::GetCursorRect(const int& index)
+{
+	return GetLockTxt().Rects[index];
+}
+
+
+/**************/
+/* SML Action */
+/**************/
+void CPDFPage::Bitmap_None_Render(const BitmapRenderEvent& e)
+{
+	m_requestingScale = e.Scale;
+	process_event(BitmapLoadEvent());
+}
+void CPDFPage::Bitmap_Loading_OnEntry() 
+{
+	auto fun = [this]()
+	{ 
+		LoadBitmap();
+		LoadText();
+		process_event(BitmapLoadCompletedEvent());
+	};
+	
+	m_futureBitmap = GetPDFiumPtr()->GetThreadPtr()->enqueue(fun);
+}
+
+void CPDFPage::Bitmap_Loading_Render(const BitmapRenderEvent& e) 
 {
 	m_requestingScale = e.Scale;
 
 	auto pbi = GetLockBitmap();
 	if (e.Scale != m_loadingScale) {
-		process_event(ReloadEvent());
+		process_event(BitmapReloadEvent());
 	}
 
 	if (pbi.BitmapPtr) {
@@ -240,13 +431,13 @@ void CPDFiumPage::Loading_Render(const RenderEvent& e)
 	}
 }
 
-void CPDFiumPage::Available_Render(const RenderEvent& e) 
+void CPDFPage::Bitmap_Available_Render(const BitmapRenderEvent& e) 
 {
 	m_requestingScale = e.Scale;
 
 	auto pbi = GetLockBitmap();
 	if (e.Scale != pbi.Scale) {
-		process_event(ReloadEvent());
+		process_event(BitmapReloadEvent());
 	}
 
 	if (pbi.BitmapPtr) {
@@ -259,31 +450,28 @@ void CPDFiumPage::Available_Render(const RenderEvent& e)
 
 		e.DirectPtr->GetD2DDeviceContext()->DrawBitmap(pbi.BitmapPtr, rc, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
 
-		for (const auto& ch_rc : m_findRects) {
-			e.DirectPtr->FillSolidRectangle(
-				*(m_pDoc->GetPropPtr()->FindHighliteFill),
-				CRectF(
-					rc.left + ch_rc.left * e.Scale, 
-					rc.top + ch_rc.top * e.Scale,
-					rc.left + ch_rc.right * e.Scale,
-					rc.top + ch_rc.bottom * e.Scale));
+		auto txt = GetLockTxt();
+		for (const auto& rc : txt.MouseRects) {
+			e.DirectPtr->DrawSolidRectangle(SolidLine(1.f, 0.f, 0.f, 1.f, 1.f), e.ViewportPtr->PdfiumPageToWnd(0, rc, e.Scale));
 		}
+
 
 	} else {
 		e.DirectPtr->DrawTextInRect(*(m_pDoc->GetPropPtr()->Format), L"Loading Page...", e.RenderRectInWnd);
 	}
 }
 
-void CPDFiumPage::WaitCancel_OnEntry()
+
+void CPDFPage::Bitmap_WaitCancel_OnEntry()
 {
-	*m_spCancelThread = true;
+	*m_spCancelBitmapThread = true;
 }
-void CPDFiumPage::WaitCancel_OnExit()
+void CPDFPage::Bitmap_WaitCancel_OnExit()
 {
-	*m_spCancelThread = false;
+	*m_spCancelBitmapThread = false;
 }
 
-void CPDFiumPage::WaitCancel_Render(const RenderEvent& e) 
+void CPDFPage::Bitmap_WaitCancel_Render(const BitmapRenderEvent& e) 
 {
 	m_requestingScale = e.Scale;
 
@@ -304,11 +492,110 @@ void CPDFiumPage::WaitCancel_Render(const RenderEvent& e)
 	}
 }
 
-void CPDFiumPage::Error_Render(const RenderEvent& e)
+void CPDFPage::Bitmap_Error_Render(const BitmapRenderEvent& e)
 {
 	m_requestingScale = e.Scale;
 
 	e.DirectPtr->DrawTextInRect(*(m_pDoc->GetPropPtr()->Format), L"Error on Page loading.", e.RenderRectInWnd);
 }
 
+/********/
+/* Find */
+/********/
 
+void CPDFPage::Find_None_Render(const FindRenderEvent& e)
+{
+	process_event(FindLoadEvent{e.Find});
+}
+
+void CPDFPage::Find_None_RenderLine(const FindRenderLineEvent& e)
+{
+	process_event(FindLoadEvent{e.Find});
+}
+
+void CPDFPage::Find_Loading_OnEntry(const FindLoadEvent& e) 
+{
+	auto fun = [this, find = e.Find]()
+	{ 
+		LoadFind(find);
+		process_event(FindLoadCompletedEvent());
+	};
+	
+	m_futureFind = GetPDFiumPtr()->GetThreadPtr()->enqueue(fun);
+}
+
+void CPDFPage::Find_Loading_OnReEntry(const FindReloadEvent& e)
+{
+	Find_Loading_OnEntry(FindLoadEvent{ e.Find });
+}
+
+void CPDFPage::Find_Loading_Render(const FindRenderEvent& e) {}
+void CPDFPage::Find_Loading_RenderLine(const FindRenderLineEvent& e) {}
+
+void CPDFPage::Find_Available_Render(const FindRenderEvent& e) 
+{
+	auto fnd = GetLockFind();
+	if (e.Find != fnd.Find) {
+		process_event(FindReloadEvent{ e.Find });
+	}
+
+	for (const auto& ch_rc : fnd.FindRects) {
+		e.DirectPtr->FillSolidRectangle(
+			*(m_pDoc->GetPropPtr()->FindHighliteFill),
+			CRectF(
+				e.RenderRectInWnd.left + ch_rc.left * e.Scale, 
+				e.RenderRectInWnd.top + ch_rc.top * e.Scale,
+				e.RenderRectInWnd.left + ch_rc.right * e.Scale,
+				e.RenderRectInWnd.top + ch_rc.bottom * e.Scale));
+	}
+
+	//auto txt = GetLockTxt();
+	//
+	//for (const auto& rc : txt.Rects) {
+	//	e.DirectPtr->FillSolidRectangle(
+	//		*(m_pDoc->GetPropPtr()->FindHighliteFill),
+	//		CRectF(
+	//			e.RenderRectInWnd.left + rc.left * e.Scale, 
+	//			e.RenderRectInWnd.top + rc.top * e.Scale,
+	//			e.RenderRectInWnd.left + rc.right * e.Scale,
+	//			e.RenderRectInWnd.top + rc.bottom * e.Scale));
+	//}
+}
+
+void CPDFPage::Find_Available_RenderLine(const FindRenderLineEvent& e) 
+{
+	auto fnd = GetLockFind();
+	if (e.Find != fnd.Find) {
+		process_event(FindReloadEvent{ e.Find });
+	}
+
+	CSizeF srcSize = GetSourceSize();
+	SolidFill fill(*m_pDoc->GetPropPtr()->FindHighliteFill);
+	fill.Color.a = 1.f;
+
+	for (const auto& ch_rc : fnd.FindRects) {
+		auto rectHighlite = CRectF(
+				e.RenderRectInWnd.left,
+				e.RenderRectInWnd.top + e.RenderRectInWnd.Height() * ch_rc.top / srcSize.height,
+				e.RenderRectInWnd.right,
+				e.RenderRectInWnd.top + e.RenderRectInWnd.Height() * ch_rc.bottom / srcSize.height);
+		if (rectHighlite.Height() < 1.f) {
+			rectHighlite.bottom = rectHighlite.top + 1.f;
+		}
+		e.DirectPtr->FillSolidRectangle(fill, rectHighlite);
+	}
+}
+
+void CPDFPage::Find_WaitCancel_OnEntry()
+{
+	*m_spCancelFindThread = true;
+}
+void CPDFPage::Find_WaitCancel_OnExit()
+{
+	*m_spCancelFindThread = false;
+}
+
+void CPDFPage::Find_WaitCancel_Render(const FindRenderEvent& e) {}
+void CPDFPage::Find_WaitCancel_RenderLine(const FindRenderLineEvent& e) {}
+void CPDFPage::Find_Error_Render(const FindRenderEvent& e){}
+void CPDFPage::Find_Error_RenderLine(const FindRenderLineEvent& e){}

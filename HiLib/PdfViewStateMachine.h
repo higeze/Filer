@@ -10,8 +10,11 @@ private:
 	struct Machine;
 	std::unique_ptr<boost::sml::sm<Machine>> m_pMachine;
 public:
+
 	CPdfViewStateMachine(CPdfView* pPdfView);
 	~CPdfViewStateMachine();
+
+	bool IsStateNormalPan()const;
 
 	virtual void process_event(const PaintEvent& e) override;
 	virtual void process_event(const RButtonDownEvent& e) override;

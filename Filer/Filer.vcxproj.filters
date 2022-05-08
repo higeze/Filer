@@ -738,6 +738,21 @@
     <ClInclude Include="..\HiLIb\PDFiumSingleThread.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\PDFEditor.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFEditorProperty.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFViewProperty.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFCaret.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFViewport.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1094,6 +1109,15 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLIb\PDFiumSingleThread.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFEditor.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFCaret.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFViewport.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

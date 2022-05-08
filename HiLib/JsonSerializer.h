@@ -79,14 +79,18 @@ template<typename T, typename... TArgs>
 class get_to_t
 {
 public:
-    std::shared_ptr<T> m_new_ptr;
+    std::tuple<TArgs...> m_tuple;
     std::shared_ptr<T>& m_ptr;
     get_to_t(std::shared_ptr<T>& ptr, TArgs... args)
-        :m_ptr(ptr), m_new_ptr(std::make_shared<T>(args...)){}
+        :m_ptr(ptr), m_tuple(args...){}
     auto operator()(const json& j)
     {
         std::string name(typeid(T).name());
-        json_make_shared_map.insert_or_assign(name, [new_ptr = m_new_ptr]() { return new_ptr; });
+        std::shared_ptr<T> new_ptr = m_ptr ? m_ptr : std::apply([](auto&&... args)
+        {
+            return std::make_shared<T>(args...);
+        }, m_tuple);
+        json_make_shared_map.insert_or_assign(name, [new_ptr]{ return new_ptr; });
         auto ret = j.get_to(m_ptr);
         json_make_shared_map.erase(name);
         return ret;

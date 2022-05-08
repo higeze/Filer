@@ -9,6 +9,8 @@
 	void CPointF::SetPoint(FLOAT a, FLOAT b) { x = a; y = b; }
 	void CPointF::Offset(FLOAT xOffset, FLOAT yOffset) { x += xOffset; y += yOffset; }
 	void CPointF::Offset(CPointF& pt) { x += pt.x; y += pt.y; }
+	CPointF CPointF::OffsetCopy(CPointF& pt) { return CPointF(x + pt.x, y + pt.y); }
+
 	CPointF CPointF::operator -() const { return CPointF(-x, -y); }
 	CPointF CPointF::operator +(CPointF pt) const
 	{
@@ -21,6 +23,14 @@
 	CPointF& CPointF::operator +=(const CPointF& pt)
 	{
 		x += pt.x; y += pt.y; return *this;
+	}
+	CPointF CPointF::operator *(const FLOAT& z) const
+	{
+		return CPointF(x * z, y * z);
+	}
+	CPointF CPointF::operator /(const FLOAT& z) const
+	{
+		return CPointF(x / z, y / z);
 	}
 
 	bool CPointF::operator!=(const CPointF& pt)const
@@ -77,7 +87,6 @@
 	}
 	void CRectF::OffsetRect(FLOAT x, FLOAT y) { left += x; right += x; top += y; bottom += y; }
 	void CRectF::OffsetRect(const CPointF& pt) { OffsetRect(pt.x, pt.y); }
-
 	FLOAT CRectF::Width()const { return right - left; }
 	FLOAT CRectF::Height()const { return bottom - top; }
 
@@ -103,6 +112,16 @@
 	{
 		return CPointF((left + right) / 2, (top + bottom) / 2);
 	}
+
+	FLOAT CRectF::CenterX() const
+	{
+		return (left + right) / 2.f;
+	}
+	FLOAT CRectF::CenterY() const
+	{
+		return (top + bottom) / 2.f;
+	}
+
 
 	CSizeF CRectF::Size() const
 	{
@@ -132,6 +151,12 @@
 		ret.InflateRect(rc);
 		return ret;
 	}
+	CRectF CRectF::operator+(CPointF pt)const
+	{
+		CRectF ret(*this);
+		ret.OffsetRect(pt);
+		return ret;
+	}
 	CRectF& CRectF::operator+=(CRectF rc)
 	{
 		this->InflateRect(rc);
@@ -144,6 +169,12 @@
 		ret.DeflateRect(rc);
 		return ret;
 	}
+	CRectF CRectF::operator-(CPointF pt)const
+	{
+		CRectF ret(*this);
+		ret.OffsetRect(-pt);
+		return ret;
+	}
 	CRectF& CRectF::operator-=(CRectF rc)
 	{
 		this->DeflateRect(rc);
@@ -151,6 +182,10 @@
 	}
 	bool CRectF::operator==(const CRectF& rc)const { return left == rc.left && top == rc.top && right == rc.right && bottom == rc.bottom; }
 	bool CRectF::operator!=(const CRectF& rc)const { return !operator==(rc); }
+	CRectF CRectF::operator*(FLOAT z)const
+	{
+		return CRectF(left * z, top * z, right * z, bottom * z);
+	}
 	//void operator &=(const CRectF& rect) { ::IntersectRect(this, this, &rect); }
 
 	//CColor

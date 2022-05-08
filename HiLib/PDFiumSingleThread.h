@@ -201,14 +201,25 @@ public:
     {
         return ThreadRun(FPDFText_GetSchCount, handle);
     }
+    int Text_CountChars(FPDF_TEXTPAGE text_page)
+    {
+        return ThreadRun(FPDFText_CountChars, text_page);
+    }
     int Text_CountRects(FPDF_TEXTPAGE text_page,
                         int start_index,
                         int count)
     {
         return ThreadRun(FPDFText_CountRects, text_page, start_index, count);
     }
+    int Text_GetText(FPDF_TEXTPAGE text_page, int start_index, int count, unsigned short* result)
+    {
+        return ThreadRun(FPDFText_GetText, text_page, start_index, count, result);
+    }
 
-
+    int Text_GetCharIndexAtPos(FPDF_TEXTPAGE text_page, double x, double y, double xTolerance, double yTolerance)
+    {
+        return ThreadRun(FPDFText_GetCharIndexAtPos, text_page, x, y, xTolerance, yTolerance);
+    }
 
     FPDF_BOOL Text_GetRect(FPDF_TEXTPAGE text_page,
                             int rect_index,

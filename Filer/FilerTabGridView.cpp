@@ -27,7 +27,9 @@
 #include "MyFile.h"
 #include "FileIconCache.h"
 #include "ShellFileFactory.h"
-#include "PdfView.h"
+#include "PDFEditor.h"
+#include "PDFView.h"
+#include "PDFEditorProperty.h"
 #include "StatusBar.h"
 
 #include "ResourceIDFactory.h"
@@ -334,11 +336,11 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	const std::shared_ptr<TabControlProperty>& spTabProp,
 	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, 
 	const std::shared_ptr<EditorProperty>& spEditorProp,
-	const std::shared_ptr<PdfViewProperty>& spPdfViewProp)
+	const std::shared_ptr<PDFEditorProperty>& spPdfViewProp)
 	:CTabControl(pParentControl, spTabProp), 
 	m_spFilerGridViewProp(spFilerGridViewProp),
 	m_spEditorProp(spEditorProp),
-	m_spPdfViewProp(spPdfViewProp)
+	m_spPdfEditorProp(spPdfViewProp)
 {
 	//Command
 	m_commandMap.emplace(IDM_NEWFILERTAB, std::bind(&CFilerTabGridView::OnCommandNewFilerTab, this, phs::_1));
@@ -470,7 +472,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	};
 
 	//PdfView Closure
-	GetPdfViewPtr = [spPdfView = std::make_shared<CPdfView>(this, m_spPdfViewProp), isInitialized = false, this]()mutable->std::shared_ptr<CPdfView>& {
+	GetPdfViewPtr = [spPdfView = std::make_shared<CPDFEditor>(this, m_spPdfEditorProp), isInitialized = false, this]()mutable->std::shared_ptr<CPDFEditor>& {
 		return spPdfView;
 	};
 }
@@ -640,18 +642,18 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 
 		//Path
 		m_pPdfPathBinding.reset(nullptr);//Need to dispose first to disconnect
-		m_pPdfPathBinding.reset(new CBinding(spViewModel->Path, spView->GetPath()));
-		m_pPdfPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
+		m_pPdfPathBinding.reset(new CBinding(spViewModel->Path, spView->GetPDFViewPtr()->GetPath()));
+		m_pPdfPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPDFViewPtr()->GetPath().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Scale
 		m_pPdfScaleBinding.reset(nullptr);//Need to dispose first to disconnect
-		m_pPdfScaleBinding.reset(new CBinding(spViewModel->Scale, spView->GetScale()));
+		m_pPdfScaleBinding.reset(new CBinding(spViewModel->Scale, spView->GetPDFViewPtr()->GetScale()));
 
 		//Open
 		//m_pOpenBinding.reset(nullptr);
 		//m_pOpenBinding.reset(new CBinding<void>(spViewModel->OpenCommand, spView->GetOpenCommand()));
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
-		spView->Open(spViewModel->Path);//TODOHIGH
+		spView->GetPDFViewPtr()->Open(spViewModel->Path);//TODOHIGH
 
 		return spView;
 	});

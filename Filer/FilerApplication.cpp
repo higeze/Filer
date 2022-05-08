@@ -110,7 +110,7 @@ void CFilerApplication::Init()
 	CTextBox::AppTSFInit();
 
 	//PDFium
-	CPDFiumDoc::Init();
+	CPDFDoc::Init();
 
 	//Deserialize
 	Deserialize();
@@ -137,7 +137,7 @@ void CFilerApplication::Term()
 	CTextBox::AppTSFExit();
 
 	//PDFium to be called after Window destructed
-	CPDFiumDoc::Term();
+	CPDFDoc::Term();
 
 	//Logger
 	LOG_1("***Application Finish***");

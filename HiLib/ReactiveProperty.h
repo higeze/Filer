@@ -879,6 +879,26 @@ public:
 			}, idTarget);
 	}
 
+	CBinding(CBinding&& rhs)
+	{
+		m_sourceConnection.disconnect();
+		m_targetConnection.disconnect();
+
+		m_sourceConnection = std::move(rhs.m_sourceConnection);
+		m_targetConnection = std::move(rhs.m_targetConnection);
+	}
+
+	CBinding& operator=(CBinding&& rhs)
+	{
+		if (this != &rhs) {
+			m_sourceConnection.disconnect();
+			m_targetConnection.disconnect();
+
+			m_sourceConnection = std::move(rhs.m_sourceConnection);
+			m_targetConnection = std::move(rhs.m_targetConnection);
+		}
+		return *this;
+	}
 
 	virtual ~CBinding()
 	{
