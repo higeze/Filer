@@ -28,9 +28,9 @@ CLauncherGridView::CLauncherGridView(
 	CD2DWControl* pParentControl,
 	const std::shared_ptr<GridViewProperty>& spGridViewProp,
 	const std::shared_ptr<CLauncherProperty>& spLauncherProp)
-	:CBindGridView(pParentControl, spGridViewProp, spLauncherProp->GetFavoritesPtr(),
+	:CBindGridView(pParentControl, spGridViewProp, spLauncherProp->GetLaunchersPtr(),
 		arg<"bindtype"_s>() = BindType::Column,
-		arg<"rows"_s>() = std::vector<std::shared_ptr<CRow>>{std::make_shared<CLauncherRow<std::shared_ptr<CFavorite>>>(this)}),
+		arg<"rows"_s>() = std::vector<std::shared_ptr<CRow>>{std::make_shared<CLauncherRow<std::shared_ptr<CLauncher>>>(this)}),
 	m_spLauncherProp(spLauncherProp)
 {
 	GetIsFocusable().set(false);

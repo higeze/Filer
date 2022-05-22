@@ -3,7 +3,7 @@
 #include "EditorProperty.h"
 #include "JsonSerializer.h"
 #include "async_catch.h"
-#include "PDFiumDoc.h"
+#include "PDFDoc.h"
 
 std::string CFilerApplication::GetJsonPath()
 {

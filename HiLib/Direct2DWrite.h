@@ -132,6 +132,7 @@ struct YTag;
 		CRectF operator-(CPointF pt)const;
 		CRectF& operator-=(CRectF rc);
 		CRectF operator*(FLOAT z)const;
+		CRectF operator/(FLOAT z)const;
 		bool operator==(const CRectF& rc)const;
 		bool operator!=(const CRectF& rc)const;
 		//void operator &=(const CRectF& rect) { ::IntersectRect(this, this, &rect); }

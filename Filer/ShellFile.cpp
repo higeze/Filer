@@ -295,16 +295,25 @@ bool CShellFile::IsDirectory()
 	return GetAttributes() & FILE_ATTRIBUTE_DIRECTORY;
 }
 
-void CShellFile::Open()
+void CShellFile::Execute(const wchar_t* lpVerb)
 {
 	SHELLEXECUTEINFO	sei = { 0 };
 	sei.cbSize = sizeof(SHELLEXECUTEINFO);
 	sei.fMask = SEE_MASK_INVOKEIDLIST | SEE_MASK_NOASYNC ;
-	sei.lpVerb = nullptr;
+	sei.lpVerb = lpVerb;
 	sei.nShow = SW_SHOWNORMAL;
 	sei.lpIDList = (LPVOID)(GetAbsoluteIdl().ptr());
 
 	::ShellExecuteEx(&sei);
+}
+void CShellFile::Open()
+{
+	Execute(nullptr);
+}
+
+void CShellFile::RunAs()
+{
+	Execute(L"RunAs");
 }
 
 

@@ -2,7 +2,7 @@
 #include "FileIconCell.h"
 #include "LauncherRow.h"
 #include "BindColumn.h"
-#include "Favorite.h"
+#include "Launcher.h"
 
 #include "PropertyWnd.h"
 #include "PropertySerializer.h"
@@ -22,7 +22,7 @@ private:
 	virtual std::wstring GetShortName()
 	{
 		if (auto pBindColumn = dynamic_cast<CBindColumn<TItems...>*>(this->m_pColumn)) {
-			return std::get<std::shared_ptr<CFavorite>>(pBindColumn->GetTupleItems())->GetShortName();
+			return std::get<std::shared_ptr<CLauncher>>(pBindColumn->GetTupleItems())->GetShortName();
 		} else {
 			return nullptr;
 		}
@@ -34,7 +34,7 @@ public:
 	virtual std::shared_ptr<CShellFile> GetShellFile() override
 	{
 		if (auto pBindColumn = dynamic_cast<CBindColumn<TItems...>*>(this->m_pColumn)) {
-			return std::get<std::shared_ptr<CFavorite>>(pBindColumn->GetTupleItems())->GetShellFile(
+			return std::get<std::shared_ptr<CLauncher>>(pBindColumn->GetTupleItems())->GetShellFile(
 				[pSheet = this->m_pSheet]() {
 					pSheet->GetGridPtr()->DelayUpdate();
 				});
@@ -54,7 +54,14 @@ public:
 
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override
 	{
-		this->GetShellFile()->Open();
+		if (auto pBindColumn = dynamic_cast<CBindColumn<TItems...>*>(this->m_pColumn)) {
+			auto pItem = std::get<std::shared_ptr<CLauncher>>(pBindColumn->GetTupleItems());
+			if (pItem->RunAs) {
+				this->GetShellFile()->RunAs();
+			} else {
+				this->GetShellFile()->Open();
+			}
+		}
 		(*e.HandledPtr) = true;
 	}
 
@@ -85,12 +92,12 @@ public:
 			//auto pFilerWnd = static_cast<CFilerWnd*>(this->m_pSheet->GetWndPtr());
 
 			//auto pRow = static_cast<CBindRow<TItems...>*>(this->m_pRow);
-			//auto pCol = static_cast<const CFavoritesColumn<TItems...>*>(this->m_pColumn);
-			//auto& itemsSource = static_cast<CFavoritesGridView*>(this->m_pSheet)->GetItemsSource();
+			//auto pCol = static_cast<const CLaunchersColumn<TItems...>*>(this->m_pColumn);
+			//auto& itemsSource = static_cast<CLaunchersGridView*>(this->m_pSheet)->GetItemsSource();
 			//auto order = pRow->GetIndex<AllTag>();
 
 			//TODOLOW
-			//pFilerWnd->OnCommandOption<CFavorite>(L"Favorite", std::get<std::shared_ptr<CFavorite>>(itemsSource[order]),
+			//pFilerWnd->OnCommandOption<CLauncher>(L"Favorite", std::get<std::shared_ptr<CLauncher>>(itemsSource[order]),
 			//									  [pFilerWnd](const std::wstring& prop)->void {
 			//										  pFilerWnd->GetLeftFavoritesView()->Reload();
 			//										  pFilerWnd->GetRightFavoritesView()->Reload();

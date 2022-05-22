@@ -17,6 +17,9 @@
     <Filter Include="D2DTextBox">
       <UniqueIdentifier>{cce17a06-89bc-4334-81bb-ab715ac5fcf1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HiLib\PDF">
+      <UniqueIdentifier>{a55461a7-fe93-45fe-8004-30f0719d1ac5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -728,7 +731,7 @@
     <ClInclude Include="..\D2DTextBox\EditorTextBox.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\PDFiumDoc.h">
+    <ClInclude Include="..\HiLib\PDFDoc.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\FileIsInUse.h" />
@@ -752,6 +755,15 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\PDFViewport.h">
       <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFEvent.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFPage.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Launcher.h">
+      <Filter>Filer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1105,7 +1117,7 @@
     <ClCompile Include="..\HiLib\ThreadPool.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\PDFiumDoc.cpp">
+    <ClCompile Include="..\HiLib\PDFDoc.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLIb\PDFiumSingleThread.cpp">
@@ -1118,6 +1130,9 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\PDFViewport.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFPage.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

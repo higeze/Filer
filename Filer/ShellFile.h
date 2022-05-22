@@ -120,7 +120,9 @@ public:
 	//bool HasIconInCache();
 	bool IsDirectory();
 	virtual void Reset();
+	virtual void Execute(const wchar_t* lpVerb);
 	virtual void Open();
+	virtual void RunAs();
 
 private:
 	void UpdateWIN32_FIND_DATA();

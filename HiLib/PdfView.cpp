@@ -1,72 +1,17 @@
 #include "PdfView.h"
-#include "PDFiumDoc.h"
+#include "PDFDoc.h"
+#include "PDFPage.h"
+#include "PDFCaret.h"
 #include "D2DWWindow.h"
 #include "Scroll.h"
 #include "Debug.h"
 #include "MyMenu.h"
 #include "ResourceIDFactory.h"
 #include <functional>
+#include <ranges>
 #include "HiLibResource.h"
 #include "PDFViewport.h"
 #include "PdfViewStateMachine.h"
-
-void CPDFCaret::Move(const int page_index, const int& char_index, const CPointF& point)
-{
-	auto index = std::make_tuple(page_index, char_index);
-	Old = Current;
-	Current = index;
-	Anchor =  index;
-	SelectBegin = index;
-	SelectEnd = index;
-	Point = std::make_tuple(page_index, point);
-
-	StartBlink();
-}
-void CPDFCaret::MoveWithShift(const int page_index, const int& char_index, const CPointF& point)
-{
-	auto compare = [](const std::tuple<int, int>& lhs, const std::tuple<int, int>& rhs)->int
-	{
-		if (lhs == rhs) {
-			return 0;
-		} else if (std::get<0>(lhs) < std::get<0>(rhs)) {
-			return -1;
-		} else if (std::get<0>(lhs) > std::get<0>(rhs)) {
-			return 1;
-		} else {
-			if (std::get<1>(lhs) < std::get<1>(rhs)) {
-				return -1;
-			} else if (std::get<1>(lhs) > std::get<1>(rhs)) {
-				return 1;
-			} else {
-				return 0;
-			}
-		}
-	};
-
-	auto index = std::make_tuple(page_index, char_index);
-	Old = Current;
-	Current = std::make_tuple(page_index, char_index);
-	//Anchor
-	SelectBegin = compare(index, Anchor) < 0 ? index : Anchor;
-	SelectEnd = compare(index, Anchor) > 0 ? index : Anchor;
-	Point = std::make_tuple(page_index, point);
-
-	StartBlink();
-}
-void CPDFCaret::MoveSelection(const int sel_begin_page, const int& sel_begin_char, const int sel_end_page, const int& sel_end_char)
-{
-	auto begin_index = std::make_tuple(sel_begin_page, sel_begin_char);
-	auto end_index = std::make_tuple(sel_end_page, sel_end_char);
-
-	Old = Current;
-	Current = end_index;
-	Anchor = begin_index;
-	SelectBegin = begin_index;
-	SelectEnd = end_index;
-	//Point = std::make_tuple(page_index, point);
-
-	StartBlink();
-}
 
 /**************************/
 /* Constructor/Destructor */
@@ -76,6 +21,7 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	:CD2DWControl(pParentControl),
     m_pProp(pProp),
 	m_pdf(),
+	m_caret(this),
 	m_viewport(this),
 	m_pMachine(std::make_unique<CPdfViewStateMachine>(this)),
 	m_spVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr)),
@@ -149,6 +95,13 @@ void CPdfView::OnClose(const CloseEvent& e)
 	CD2DWControl::OnClose(e);
 }
 
+void CPdfView::OnDestroy(const DestroyEvent& e)
+{
+	m_caret.StopBlink();
+
+	CD2DWControl::OnDestroy(e);
+}
+
 void CPdfView::OnRect(const RectEvent& e)
 {
 	CD2DWControl::OnRect(e);
@@ -166,118 +119,26 @@ void CPdfView::OnMouseWheel(const MouseWheelEvent& e)
 	}
 }
 
+void CPdfView::OnWndKillFocus(const KillFocusEvent& e)
+{
+	m_caret.StopBlink();
+}
+
 /**********/
 /* Normal */
 /**********/
 
 void CPdfView::Normal_LButtonDown(const LButtonDownEvent& e)
 {
-	auto ptInCtrl = m_viewport.WndToCtrl(e.PointInWnd);
-	auto ptInDoc = m_viewport.CtrlToDoc(ptInCtrl, m_scale);
-	auto [page, ptInPage] = m_viewport.DocToPage(ptInDoc);
-	auto ptInPdfiumPage = m_viewport.PageToPdfiumPage(page, ptInPage);
-
-	CSizeF sz = m_pdf->GetPage(page)->GetSourceSize();
-	UNQ_FPDF_TEXTPAGE pTextPage(m_pdf->GetPDFiumPtr()->Text_UnqLoadPage(m_pdf->GetPage(page)->GetPagePtr().get()));
-	int index = m_pdf->GetPDFiumPtr()->Text_GetCharIndexAtPos(pTextPage.get(), ptInPdfiumPage.x, ptInPdfiumPage.y, sz.width, sz.height);
-	if (index >= 0) {
-		int rect_count = m_pdf->GetPDFiumPtr()->Text_CountRects(pTextPage.get(), index, 1);
-		for (int i = 0; i < rect_count; i++) {
-			double left, top, right, bottom;
-			m_pdf->GetPDFiumPtr()->Text_GetRect(
-				pTextPage.get(),
-				i,
-				&left,
-				&top,
-				&right,
-				&bottom);
-			auto rcInPdfiumPage = CRectF(
-				static_cast<FLOAT>(left),
-				static_cast<FLOAT>(top),
-				static_cast<FLOAT>(right),
-				static_cast<FLOAT>(bottom));
-
-			auto rcInPage = m_viewport.PdfiumPageToPage(page, rcInPdfiumPage);
-			auto rcInDoc = m_viewport.PageToDoc(page, rcInPage);
-			auto rcInCtrl = m_viewport.DocToCtrl(rcInDoc, m_scale);
-			auto rcInWnd = m_viewport.CtrlToWnd(rcInCtrl);
-			m_rect = rcInWnd;
-		}
-	}
-
-	//auto newPoint = GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
-	//m_pdf->LButtonDown()
-	//if (GetKeyState(VK_SHIFT) & 0x8000) {
-	//	MoveCaretWithShift(index.value(), point);
-	//	return;
-	//} else {
-	//	MoveCaret(index.value(), point);
-	//}
 }
 
 void CPdfView::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 {
-	CRectF renderRect = GetRenderRectInWnd();
-	CPointF lefttopInWnd = renderRect.LeftTop();
-	CPointF lefttopInRender = CPointF(-m_spHScroll->GetScrollPos(), -m_spVScroll->GetScrollPos());
-	for (auto i = 0; i < m_pdf->GetPageCount(); i++) {
-		CSizeF sz = m_pdf->GetPage(i)->GetSourceSize();
-		auto rect = CRectF(
-						lefttopInWnd.x + lefttopInRender.x,
-						lefttopInWnd.y + lefttopInRender.y,
-						lefttopInWnd.x + lefttopInRender.x + m_pdf->GetPage(i)->GetSourceSize().width * m_scale.get(),
-						lefttopInWnd.y + lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get());
-		if (rect.PtInRect(e.PointInWnd)) {
-			UNQ_FPDF_TEXTPAGE pTextPage(m_pdf->GetPDFiumPtr()->Text_UnqLoadPage(m_pdf->GetPage(i)->GetPagePtr().get()));
-			int index = m_pdf->GetPDFiumPtr()->Text_GetCharIndexAtPos(pTextPage.get(), e.PointInWnd.x - rect.left, sz.height - (e.PointInWnd.y - rect.top), sz.width, sz.height);
-			if (index >= 0) {
-				int rect_count = m_pdf->GetPDFiumPtr()->Text_CountRects(pTextPage.get(), index, 1);
-				for (int i = 0; i < rect_count; i++) {
-					double left, top, right, bottom;
-					m_pdf->GetPDFiumPtr()->Text_GetRect(
-						pTextPage.get(),
-						i,
-						&left,
-						&top,
-						&right,
-						&bottom);
-
-					m_rect.SetRect(
-						rect.left + static_cast<FLOAT>(left),
-						rect.top + static_cast<FLOAT>(sz.height - top),
-						rect.left + static_cast<FLOAT>(right),
-						rect.top + static_cast<FLOAT>(sz.height - bottom));
-				}
-			}
-		}
-		lefttopInRender.y += m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get();
-	}
-
-	//auto newPoint = GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
-	//std::vector<wchar_t> delimiters{ L' ', L'\t', L'\n' };
-
-	//if (auto index = GetActualCharPosFromPoint(newPoint)) {
-	//	if (std::find(delimiters.begin(), delimiters.end(), m_text[index.value()]) == delimiters.end()) {
-	//		size_t selBegin = index.value() - 1;
-	//		for (; selBegin > 0; --selBegin) {
-	//			if (std::find(delimiters.begin(), delimiters.end(), m_text[selBegin]) != delimiters.end()) {
-	//				selBegin++;
-	//				break;
-	//			}
-	//		}
-	//		size_t selEnd = index.value() + 1;
-	//		for (; selEnd < m_text.size(); ++selEnd) {
-	//			if (std::find(delimiters.begin(), delimiters.end(), m_text[selEnd]) != delimiters.end()) {
-	//				break;
-	//			}
-	//		}
-	//		MoveSelection(selBegin, selEnd);
-	//	}
-	//}
 }
 
 void CPdfView::Normal_Paint(const PaintEvent& e)
 {
+	if (!m_pdf) { return; }
 	//Clip
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
@@ -285,117 +146,65 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
 
 	//PaintContent
-	if (m_pdf) {
-		CRectF renderRect = GetRenderRectInWnd();
-		CPointF lefttopInWnd = renderRect.LeftTop();
-		CPointF lefttopInRender = CPointF(-m_spHScroll->GetScrollPos(), -m_spVScroll->GetScrollPos());
-		UINT32 curPageNo = 0;
-		FLOAT maxIntersectHeight = 0.f;
-		bool curPageNoDecided = false;
-		//[this]() { GetWndPtr()->InvalidateRect(NULL, FALSE); }
-		//Paint Pages
+	CRectF rcInDoc = m_viewport.CtrlToDoc(m_viewport.WndToCtrl(GetRenderRectInWnd()));
 
-		//Iterate Pages
-		for (auto i = 0; i < m_pdf->GetPageCount(); i++) {
-			if ((lefttopInRender.y >= 0 && lefttopInRender.y <= GetRenderSize().height) ||
-				(lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get() >= 0 && lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get() <= GetRenderSize().height) ||
-				(lefttopInRender.y <= 0 && lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get() >= GetRenderSize().height)) {
+	std::vector<CRectF> intersectRectsInDoc;
+	std::vector<CRectF> rectsInDoc = m_pdf->GetPageRects();
 
-				auto rect = CRectF(
-								lefttopInWnd.x + lefttopInRender.x,
-								lefttopInWnd.y + lefttopInRender.y,
-								lefttopInWnd.x + lefttopInRender.x + m_pdf->GetPage(i)->GetSourceSize().width * m_scale.get(),
-								lefttopInWnd.y + lefttopInRender.y + m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get());
-				m_pdf->GetPage(i)->Render(BitmapRenderEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, rect, m_scale));
+	std::transform(rectsInDoc.cbegin(), rectsInDoc.cend(), std::back_inserter(intersectRectsInDoc), [rcInDoc](const CRectF& rc) { return rc.IntersectRect(rcInDoc); });
+	auto iter = std::max_element(intersectRectsInDoc.cbegin(), intersectRectsInDoc.cend(), [](const CRectF& a, const CRectF& b) { return a.Height() < b.Height(); });
+	int curPageNo = std::distance(intersectRectsInDoc.cbegin(), iter) + 1;
+	auto first = std::find_if(intersectRectsInDoc.cbegin(), intersectRectsInDoc.cend(), [](const CRectF& rc) { return rc.Height() > 0; });
+	auto last = std::find_if(intersectRectsInDoc.crbegin(), intersectRectsInDoc.crend(), [](const CRectF& rc) { return rc.Height() > 0; });
 
-				m_pdf->GetPage(i)->RenderHighlite(FindRenderEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, rect, m_scale, GetFind().get()));
+	auto begin = std::distance(intersectRectsInDoc.cbegin(), first);
+	auto end = std::min(std::distance(intersectRectsInDoc.cbegin(), last.base()), m_pdf->GetPageCount());
+	m_pdf->RenderContent(
+		RenderDocContentEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, m_scale, begin, end));
 
-				//Current Page
-				if (!curPageNoDecided) {
-					CRectF intersectRect = renderRect.IntersectRect(rect);
-					if (intersectRect == rect) {
-						curPageNoDecided = true;
-						curPageNo = i + 1;
-					} else if (intersectRect.Height() > maxIntersectHeight) {
-						maxIntersectHeight = intersectRect.Height();
-						curPageNo = i + 1;
-					}
-				}
-			}
+	//Paint Find	
+	m_pdf->RenderFind(
+		RenderDocFindEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, GetFind().get(), begin, end));
 
-			lefttopInRender.y += m_pdf->GetPage(i)->GetSourceSize().height * m_scale.get();
-			if (lefttopInRender.y > GetRenderSize().height) {
-				break;
-			}
-		}
-
-		std::wstring pageText = fmt::format(L"{} / {}", curPageNo, m_pdf->GetPageCount());
-		CSizeF textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), pageText);
-		GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), pageText,
-			CRectF(renderRect.right - textSize.width - m_spVScroll->GetRectInWnd().Width(),
-				renderRect.top,
-				renderRect.right - m_spVScroll->GetRectInWnd().Width(),
-				renderRect.top + textSize.height));
-
-
-	} else {
-	}
+	std::wstring pageText = fmt::format(L"{} / {}:{},{}", curPageNo, m_pdf->GetPageCount(),begin, end);
+	CSizeF textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), pageText);
+	GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), pageText,
+		CRectF(GetRenderRectInWnd().right - textSize.width - m_spVScroll->GetRectInWnd().Width(),
+				GetRenderRectInWnd().top,
+				GetRenderRectInWnd().right - m_spVScroll->GetRectInWnd().Width(),
+				GetRenderRectInWnd().top + textSize.height));
 
 	//PaintCaret
-	{
+	if (m_caret.IsCaret()) {
 		auto [page_index, char_index] = m_caret.Current;
-		UNQ_FPDF_TEXTPAGE pTextPage(m_pdf->GetPDFiumPtr()->Text_UnqLoadPage(m_pdf->GetPage(page_index)->GetPagePtr().get()));
-		int rect_count = m_pdf->GetPDFiumPtr()->Text_CountRects(pTextPage.get(), char_index, 1);
-		if (rect_count > 0) {
-			double left, top, right, bottom;
-			m_pdf->GetPDFiumPtr()->Text_GetRect(
-				pTextPage.get(),
-				0,
-				&left,
-				&top,
-				&right,
-				&bottom);
-			auto rcInPdfiumPage = CRectF(
-				static_cast<FLOAT>(left),
-				static_cast<FLOAT>(top),
-				static_cast<FLOAT>(right),
-				static_cast<FLOAT>(bottom));
-			auto rcCaretInWnd = m_viewport.PdfiumPageToWnd(page_index, rcInPdfiumPage, m_scale);
-			rcCaretInWnd.right = rcCaretInWnd.left + 1;
-			GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-			GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, rcCaretInWnd);
-			GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-		}
+		m_pdf
+			->RenderCaret(RenderDocCaretEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, page_index, char_index));
 	}
-	//PaintSelection
-	{
-		auto [page_begin_index, char_begin_index] = m_caret.SelectBegin;
-		auto [page_end_index, char_end_index] = m_caret.SelectEnd;
-
-		if (page_begin_index == page_end_index) {
-			UNQ_FPDF_TEXTPAGE pTextPage(m_pdf->GetPDFiumPtr()->Text_UnqLoadPage(m_pdf->GetPage(page_begin_index)->GetPagePtr().get()));
-			int rect_count = m_pdf->GetPDFiumPtr()->Text_CountRects(pTextPage.get(), char_begin_index, char_end_index - char_begin_index);
-			for (auto i = 0; i < rect_count; i++) {
-				double left, top, right, bottom;
-				m_pdf->GetPDFiumPtr()->Text_GetRect(
-					pTextPage.get(),
-					i,
-					&left,
-					&top,
-					&right,
-					&bottom);
-				auto rcInPdfiumPage = CRectF(
-					static_cast<FLOAT>(left),
-					static_cast<FLOAT>(top),
-					static_cast<FLOAT>(right),
-					static_cast<FLOAT>(bottom));
-				auto rcSelectInWnd = m_viewport.PdfiumPageToWnd(page_begin_index, rcInPdfiumPage, m_scale);
-				GetWndPtr()->GetDirectPtr()->FillSolidRectangle(
-						*(m_pdf->GetPropPtr()->SelectedFill), rcSelectInWnd);
-			}
-		}
-	}
-
+		//UNQ_FPDF_TEXTPAGE pTextPage(m_pdf->GetPDFiumPtr()->Text_UnqLoadPage(m_pdf->GetPage(page_index)->GetPagePtr().get()));
+		//int rect_count = m_pdf->GetPDFiumPtr()->Text_CountRects(pTextPage.get(), char_index, 1);
+		//if (rect_count > 0) {
+		//	double left, top, right, bottom;
+		//	m_pdf->GetPDFiumPtr()->Text_GetRect(
+		//		pTextPage.get(),
+		//		0,
+		//		&left,
+		//		&top,
+		//		&right,
+		//		&bottom);
+		//	auto rcInPdfiumPage = CRectF(
+		//		static_cast<FLOAT>(left),
+		//		static_cast<FLOAT>(top),
+		//		static_cast<FLOAT>(right),
+		//		static_cast<FLOAT>(bottom));
+		//	auto rcCaretInWnd = m_viewport.PdfiumPageToWnd(page_index, rcInPdfiumPage);
+		//	rcCaretInWnd.right = rcCaretInWnd.left + 1;
+		//	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+		//	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, rcCaretInWnd);
+		//	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+		//}
+	//}
+	//Paint Selected Text
+	m_pdf->RenderSelectedText(RenderDocSelectedTextEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, m_caret.SelectBegin, m_caret.SelectEnd));
 
 	//PaintScroll
 	UpdateScroll();
@@ -403,10 +212,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	m_spHScroll->OnPaint(e);
 
 	//PaintScrollHighlite;
-	m_pdf->RenderHighliteLine(FindRenderLineEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, m_spVScroll->GetThumbRangeRect(), m_scale, GetFind().get()));
-
-	//GetWndPtr()->GetDirectPtr()->FillSolidRectangle(
-	//		*(m_pdf->GetPropPtr()->FindHighliteFill),m_rect);
+	m_pdf->RenderFindLine(RenderDocFindLineEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, GetFind().get(), m_spVScroll->GetThumbRangeRect()));
 
 	//Paint Focused Line
 	if (GetIsFocused() ){
@@ -420,13 +226,35 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 
 void CPdfView::Normal_KeyDown(const KeyDownEvent& e)
 {
-	bool ctrl = ::GetAsyncKeyState(VK_CONTROL);
+	bool shift = (::GetKeyState(VK_SHIFT) & 0x80) != 0;
+	bool ctrl = (::GetKeyState(VK_CONTROL) & 0x80) != 0;
+
 	switch (e.Char) {
 		case 'O':
 			if (ctrl) {
 				Open();
 			}
 			break;
+	case 'A':
+	{
+		if (ctrl) {
+			//m_carets.set(std::get<caret::CurCaret>(m_carets.get()), m_text.size(), 0, 0, m_text.size());
+			//m_caretPoint.set(GetOriginCharRects()[m_text.size()].CenterPoint());
+			//StartCaretBlink();
+			*e.HandledPtr = TRUE;
+		}
+	}
+	case 'C':
+	{
+		if (ctrl) {
+			if (m_pdf) {
+				m_pdf->CopyTextToClipboard(CopyDocTextEvent(GetWndPtr(), m_caret.SelectBegin, m_caret.SelectEnd));
+			}
+			*e.HandledPtr = TRUE;
+		}
+		break;
+	}
+
 		default:
 			CD2DWControl::OnKeyDown(e);
 			break;
@@ -498,7 +326,9 @@ void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 }
 
 void CPdfView::Normal_KillFocus(const KillFocusEvent& e)
-{}
+{
+	m_caret.StopBlink();
+}
 
 /*************/
 /* NormalPan */
@@ -519,50 +349,20 @@ void CPdfView::NormalPan_SetCursor(const SetCursorEvent& e)
 /**************/
 void CPdfView::NormalText_LButtonDown(const LButtonDownEvent& e)
 {
-	auto [page, ptInPdfiumPage] = m_viewport.WndToPdfiumPage(e.PointInWnd, m_scale);
-	int index = m_pdf->GetPage(page)->GetCursorCharIndexAtPos(ptInPdfiumPage);
-	if (index >= 0) {
-		auto rcInWnd = m_viewport.PdfiumPageToWnd(page, m_pdf->GetPage(page)->GetCursorRect(index), m_scale);
-		auto point = rcInWnd.CenterPoint();
-		if (GetKeyState(VK_SHIFT) & 0x8000) {
-			m_caret.MoveWithShift(page, index, point);
-			return;
-		} else {
-			m_caret.Move(page, index, point);
+	auto [page, ptInPdfiumPage] = m_viewport.WndToPdfiumPage(e.PointInWnd);
+	if (page >= 0) {
+		int index = m_pdf->GetPage(page)->GetCursorCharIndexAtPos(ptInPdfiumPage);
+		if (index >= 0) {
+			auto rcInWnd = m_viewport.PdfiumPageToWnd(page, m_pdf->GetPage(page)->GetCursorRect(index));
+			auto point = rcInWnd.CenterPoint();
+			if (GetKeyState(VK_SHIFT) & 0x8000) {
+				m_caret.MoveWithShift(page, index, point);
+				return;
+			} else {
+				m_caret.Move(page, index, point);
+			}
 		}
 	}
-
-	//auto [page, ptInPdfiumPage] = m_viewport.WndToPdfiumPage(e.PointInWnd, m_scale);
-
-	//CSizeF sz = m_pdf->GetPage(page)->GetSourceSize();
-	//UNQ_FPDF_TEXTPAGE pTextPage(m_pdf->GetPDFiumPtr()->Text_UnqLoadPage(m_pdf->GetPage(page)->GetPagePtr().get()));
-	//int index = m_pdf->GetPDFiumPtr()->Text_GetCharIndexAtPos(pTextPage.get(), ptInPdfiumPage.x, ptInPdfiumPage.y, sz.width, sz.height);
-	//if (index >= 0) {
-	//	int rect_count = m_pdf->GetPDFiumPtr()->Text_CountRects(pTextPage.get(), index, 1);
-	//	if (rect_count > 0) {
-	//		double left, top, right, bottom;
-	//		m_pdf->GetPDFiumPtr()->Text_GetRect(
-	//			pTextPage.get(),
-	//			0,
-	//			&left,
-	//			&top,
-	//			&right,
-	//			&bottom);
-	//		auto rcInPdfiumPage = CRectF(
-	//			static_cast<FLOAT>(left),
-	//			static_cast<FLOAT>(top),
-	//			static_cast<FLOAT>(right),
-	//			static_cast<FLOAT>(bottom));
-	//		auto rcInWnd = m_viewport.PdfiumPageToWnd(page, rcInPdfiumPage, m_scale);
-	//		auto point = rcInWnd.CenterPoint();
-	//		if (GetKeyState(VK_SHIFT) & 0x8000) {
-	//			m_caret.MoveWithShift(page, index, point);
-	//			return;
-	//		} else {
-	//			m_caret.Move(page, index, point);
-	//		}
-	//	}
-	//}
 }
 
 void CPdfView::NormalText_SetCursor(const SetCursorEvent& e)
@@ -703,39 +503,15 @@ void CPdfView::TextDrag_OnEntry(const LButtonBeginDragEvent& e) {}
 void CPdfView::TextDrag_OnExit(const LButtonEndDragEvent& e) {}
 void CPdfView::TextDrag_MouseMove(const MouseMoveEvent& e) 
 {
-	auto [page, ptInPdfiumPage] = m_viewport.WndToPdfiumPage(e.PointInWnd, m_scale);
-	int index = m_pdf->GetPage(page)->GetCursorCharIndexAtPos(ptInPdfiumPage);
-	if (index >= 0) {
-		auto rcInWnd = m_viewport.PdfiumPageToWnd(page, m_pdf->GetPage(page)->GetCursorRect(index), m_scale);
-		auto point = rcInWnd.CenterPoint();
-		m_caret.MoveWithShift(page, index, point);
+	auto [page, ptInPdfiumPage] = m_viewport.WndToPdfiumPage(e.PointInWnd);
+	if (page >= 0) {
+		int index = m_pdf->GetPage(page)->GetCursorCharIndexAtPos(ptInPdfiumPage);
+		if (index >= 0) {
+			auto rcInWnd = m_viewport.PdfiumPageToWnd(page, m_pdf->GetPage(page)->GetCursorRect(index));
+			auto point = rcInWnd.CenterPoint();
+			m_caret.MoveWithShift(page, index, point);
+		}
 	}
-	//auto [page, ptInPdfiumPage] = m_viewport.WndToPdfiumPage(e.PointInWnd, m_scale);
-
-	//CSizeF sz = m_pdf->GetPage(page)->GetSourceSize();
-	//UNQ_FPDF_TEXTPAGE pTextPage(m_pdf->GetPDFiumPtr()->Text_UnqLoadPage(m_pdf->GetPage(page)->GetPagePtr().get()));
-	//int index = m_pdf->GetPDFiumPtr()->Text_GetCharIndexAtPos(pTextPage.get(), ptInPdfiumPage.x, ptInPdfiumPage.y, sz.width, sz.height);
-	//if (index >= 0) {
-	//	int rect_count = m_pdf->GetPDFiumPtr()->Text_CountRects(pTextPage.get(), index, 1);
-	//	if (rect_count > 0) {
-	//		double left, top, right, bottom;
-	//		m_pdf->GetPDFiumPtr()->Text_GetRect(
-	//			pTextPage.get(),
-	//			0,
-	//			&left,
-	//			&top,
-	//			&right,
-	//			&bottom);
-	//		auto rcInPdfiumPage = CRectF(
-	//			static_cast<FLOAT>(left),
-	//			static_cast<FLOAT>(top),
-	//			static_cast<FLOAT>(right),
-	//			static_cast<FLOAT>(bottom));
-	//		auto rcInWnd = m_viewport.PdfiumPageToWnd(page, rcInPdfiumPage, m_scale);
-	//		auto point = rcInWnd.CenterPoint();
-	//		m_caret.MoveWithShift(page, index, point);
-	//	}
-	//}
 }
 void CPdfView::TextDrag_SetCursor(const SetCursorEvent& e) 
 {
@@ -745,8 +521,6 @@ bool CPdfView::TextDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
 {
 	return true;
 }
-
-
 
 void CPdfView::Error_StdException(const std::exception& e)
 {

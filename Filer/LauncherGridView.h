@@ -1,11 +1,11 @@
 #pragma once
 #include "BindGridview.h"
-#include "Favorite.h"
+#include "Launcher.h"
 
 struct GridViewProperty;
 class CLauncherProperty;
 
-class CLauncherGridView : public CBindGridView<std::shared_ptr<CFavorite>>
+class CLauncherGridView : public CBindGridView<std::shared_ptr<CLauncher>>
 {
 private:
 	std::shared_ptr<CLauncherProperty> m_spLauncherProp;

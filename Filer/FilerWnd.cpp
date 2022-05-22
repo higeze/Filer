@@ -14,6 +14,8 @@
 #include "MyFile.h"
 #include "ViewProperty.h"
 #include "FavoritesProperty.h"
+#include "LauncherProperty.h"
+
 #include "ResourceIDFactory.h"
 #include "CellProperty.h"
 #include "DriveFolder.h"
@@ -225,7 +227,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 				return true;
 			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToLauncherFromItem")) {
 				for (auto& file : files) {
-					GetLauncherPropPtr()->GetFavorites().push_back(std::make_tuple(std::make_shared<CFavorite>(file->GetPath(), L"")));
+					GetLauncherPropPtr()->GetLaunchers().push_back(std::make_tuple(std::make_shared<CLauncher>(file->GetPath(), L"")));
 				}
 				m_spLauncher->SubmitUpdate();
 				return true;
@@ -645,7 +647,7 @@ void CFilerWnd::OnCommandTextOption(const CommandEvent& e)
 void CFilerWnd::OnCommandLauncherOption(const CommandEvent& e)
 {
 	m_spLauncherProp = CFilerApplication::GetInstance()->DeserializeLauncher();
-	m_spLauncher->SetItemsSource(m_spFavoritesProp->GetFavorites());
+	m_spLauncher->SetItemsSource(m_spLauncherProp->GetLaunchers());
 
 	m_spLauncher->Reload();
 	InvalidateRect(NULL, FALSE);

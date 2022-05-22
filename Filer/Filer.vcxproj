@@ -379,7 +379,9 @@
     <ClInclude Include="..\HiLib\Pdf.h" />
     <ClInclude Include="..\HiLib\PDFCaret.h" />
     <ClInclude Include="..\HiLib\PDFEditorProperty.h" />
-    <ClInclude Include="..\HiLib\PDFiumDoc.h" />
+    <ClInclude Include="..\HiLib\PDFDoc.h" />
+    <ClInclude Include="..\HiLib\PDFEvent.h" />
+    <ClInclude Include="..\HiLib\PDFPage.h" />
     <ClInclude Include="..\HiLib\PdfView.h" />
     <ClInclude Include="..\HiLib\PDFViewport.h" />
     <ClInclude Include="..\HiLib\PDFViewProperty.h" />
@@ -449,6 +451,7 @@
     <ClInclude Include="ExeExtensionProperty.h" />
     <ClInclude Include="FilerApplication.h" />
     <ClInclude Include="FilerWndStatusBar.h" />
+    <ClInclude Include="Launcher.h" />
     <ClInclude Include="LauncherItemDragger.h" />
     <ClInclude Include="LauncherProperty.h" />
     <ClInclude Include="DropTarget.h" />
@@ -557,7 +560,8 @@
     <ClCompile Include="..\HiLib\ColumnIndexCell.cpp" />
     <ClCompile Include="..\HiLib\Pdf.cpp" />
     <ClCompile Include="..\HiLib\PDFEditor.cpp" />
-    <ClCompile Include="..\HiLib\PDFiumDoc.cpp" />
+    <ClCompile Include="..\HiLib\PDFDoc.cpp" />
+    <ClCompile Include="..\HiLib\PDFPage.cpp" />
     <ClCompile Include="..\HiLib\PdfView.cpp" />
     <ClCompile Include="..\HiLib\PDFViewport.cpp" />
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp" />

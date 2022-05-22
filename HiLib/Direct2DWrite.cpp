@@ -186,6 +186,10 @@
 	{
 		return CRectF(left * z, top * z, right * z, bottom * z);
 	}
+	CRectF CRectF::operator/(FLOAT z)const
+	{
+		return CRectF(left / z, top / z, right / z, bottom / z);
+	}
 	//void operator &=(const CRectF& rect) { ::IntersectRect(this, this, &rect); }
 
 	//CColor

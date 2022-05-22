@@ -27,12 +27,11 @@
 #include <mutex>
 
 #include "PDFViewport.h"
+#include "PDFCaret.h"
 
 class CPDFDoc;
 class CVScroll;
 class CHScroll;
-
-
 
 enum class InitialScaleMode
 {
@@ -46,23 +45,6 @@ enum class PDFMode
 {
 	Pan,
 	Text
-};
-
-class CPDFCaret
-{
-public:
-	std::tuple<int, int> Old = { 0, 0 };
-	std::tuple<int, int> Current = { 0, 0 };
-	std::tuple<int, int> Anchor = { 0, 0 };
-	std::tuple<int, int> SelectBegin = { 0, 0 };
-	std::tuple<int, int> SelectEnd = { 0, 0 };
-	std::tuple<int, CPointF> Point = { 0, { 0.f, 0.f } };
-
-	void Move(const int page_index, const int& char_index, const CPointF& point);
-	void MoveWithShift(const int page_index, const int& char_index, const CPointF& point);
-	void MoveSelection(const int sel_begin_page, const int& sel_begin_char, const int sel_end_page, const int& sel_end_char);
-	void StartBlink() {}
-
 };
 
 
@@ -157,9 +139,12 @@ public:
 	virtual void OnContextMenu(const ContextMenuEvent& e) override { m_pMachine->process_event(e); }
 	virtual void OnChar(const CharEvent& e) override { m_pMachine->process_event(e); }
 
-	virtual void OnMouseWheel(const MouseWheelEvent& e);
-	virtual void OnClose(const CloseEvent& e);
-	virtual void OnRect(const RectEvent& e);
+	virtual void OnMouseWheel(const MouseWheelEvent& e) override;
+	virtual void OnClose(const CloseEvent& e) override;
+	virtual void OnDestroy(const DestroyEvent& e) override;
+
+	virtual void OnRect(const RectEvent& e) override;
+	virtual void OnWndKillFocus(const KillFocusEvent& e) override;
 
 	/**************/
 	/* SM Message */
