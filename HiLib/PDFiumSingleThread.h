@@ -49,7 +49,7 @@ public:
     /*****************/
     /* FPDF_DOCUMENT */
     /*****************/
-
+private:
     FPDF_DOCUMENT LoadDocument(FPDF_STRING file_path, FPDF_BYTESTRING password)
     {
         return ThreadRun(FPDF_LoadDocument, file_path, password);
@@ -58,11 +58,12 @@ public:
     { 
         return ThreadRun(FPDF_CloseDocument, document); 
     }
+public:
     UNQ_FPDF_DOCUMENT UnqLoadDocument(FPDF_STRING file_path, FPDF_BYTESTRING password)
     {
         return UNQ_FPDF_DOCUMENT(
             LoadDocument(file_path, password),
-            [this](FPDF_DOCUMENT p) { if (!p) { return CloseDocument(p); } });
+            [this](FPDF_DOCUMENT p) { if (p) { return CloseDocument(p); } });
     }
 
     int GetPageCount(FPDF_DOCUMENT document)
@@ -73,6 +74,7 @@ public:
     /*************/
     /* FPDF_PAGE */
     /*************/
+private:
     FPDF_PAGE LoadPage(FPDF_DOCUMENT document, int page_index)
     {
         return ThreadRun(FPDF_LoadPage, document, page_index);
@@ -81,11 +83,12 @@ public:
     {
         return ThreadRun(FPDF_ClosePage, page);
     }
+public:
     UNQ_FPDF_PAGE UnqLoadPage(FPDF_DOCUMENT document, int page_index)
     {
         return UNQ_FPDF_PAGE(
             LoadPage(document, page_index),
-            [this](FPDF_PAGE p) { if (!p) { return ClosePage(p); } });
+            [this](FPDF_PAGE p) { if (p) { return ClosePage(p); } });
     }
 
     double GetPageWidth(FPDF_PAGE page)
@@ -100,6 +103,7 @@ public:
     /***************/
     /* FPDF_BITMAP */
     /***************/
+private:
     FPDF_BITMAP Bitmap_CreateEx(int width,
                                 int height,
                                 int format,
@@ -112,6 +116,7 @@ public:
     {
         return ThreadRun(FPDFBitmap_Destroy, bitmap);
     }
+public:
     UNQ_FPDF_BITMAP Bitmap_UnqCreateEx(int width,
                                         int height,
                                         int format,
@@ -120,7 +125,7 @@ public:
     {
         return UNQ_FPDF_BITMAP(
             Bitmap_CreateEx(width, height, format, first_scan, stride),
-            [this](FPDF_BITMAP p) { if (!p) { return Bitmap_Destroy(p); } });
+            [this](FPDF_BITMAP p) { if (p) { return Bitmap_Destroy(p); } });
     }
 
     void Bitmap_FillRect(FPDF_BITMAP bitmap,
@@ -128,7 +133,8 @@ public:
                         int top,
                         int width,
                         int height,
-                        FPDF_DWORD color)
+       
+                 FPDF_DWORD color)
     {
         return ThreadRun(FPDFBitmap_FillRect, bitmap, left, top, width, height, color);
     }
@@ -146,7 +152,7 @@ public:
     /*****************/
     /* FPDF_TEXTPAGE */
     /*****************/
-
+private:
     FPDF_TEXTPAGE Text_LoadPage(FPDF_PAGE pPage)
     {
         return ThreadRun(FPDFText_LoadPage, pPage);
@@ -156,17 +162,18 @@ public:
     {
         return ThreadRun(FPDFText_ClosePage, pPage);
     }
+public:
     UNQ_FPDF_TEXTPAGE Text_UnqLoadPage(FPDF_PAGE pPage)
     {
         return UNQ_FPDF_TEXTPAGE(
             Text_LoadPage(pPage),
-            [this](FPDF_TEXTPAGE p) { if (!p) { return Text_ClosePage(p); } });
+            [this](FPDF_TEXTPAGE p) { if (p) { return Text_ClosePage(p); } });
     }
 
     /******************/
     /* FPDF_SCHHANDLE */
     /******************/
-
+private:
     FPDF_SCHHANDLE Text_FindStart(FPDF_TEXTPAGE text_page,
                        FPDF_WIDESTRING findwhat,
                        unsigned long flags,
@@ -178,6 +185,7 @@ public:
     {
         return ThreadRun(FPDFText_FindClose, handle);
     }
+public:
     UNQ_FPDF_SCHHANDLE Text_UnqFindStart(FPDF_TEXTPAGE text_page,
                                         FPDF_WIDESTRING findwhat,
                                         unsigned long flags,
@@ -185,7 +193,7 @@ public:
     {
         return UNQ_FPDF_SCHHANDLE(
             Text_FindStart(text_page, findwhat, flags, start_index),
-            [this](FPDF_SCHHANDLE pFind) { if (!pFind) { return Text_FindClose(pFind); } });
+            [this](FPDF_SCHHANDLE p) { if (p) { return Text_FindClose(p); } });
     }
 
     FPDF_BOOL Text_FindNext(FPDF_SCHHANDLE handle)

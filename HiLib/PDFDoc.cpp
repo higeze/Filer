@@ -28,10 +28,10 @@ void CPDFDoc::Term()
 
 CPDFDoc::CPDFDoc(const std::shared_ptr<PdfViewProperty>& spProp, const std::wstring& path, const std::wstring& password, 
 		CDirect2DWrite* pDirect, std::function<void()> changed)
-	:m_pProp(spProp),
+	:m_pPDFium(std::make_unique<CPDFiumSingleThread>()),
+	m_pProp(spProp),
 	m_path(path),
 	m_password(password),
-	m_pPDFium(std::make_unique<CPDFiumSingleThread>()),
 	m_pDirect(pDirect),
 	m_changed(changed)
 {

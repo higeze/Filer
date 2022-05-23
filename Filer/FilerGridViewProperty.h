@@ -11,6 +11,9 @@ struct FilerGridViewProperty:public GridViewProperty
 
 	FilerGridViewProperty():GridViewProperty()
 	{
+		*SizeCellPropPtr = *CellPropPtr;
+		SizeCellPropPtr->Format = std::make_shared<FormatF>();
+		*(SizeCellPropPtr->Format) = *CellPropPtr->Format;
 		SizeCellPropPtr->Format->Alignment.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_TRAILING;
 	}
 	virtual ~FilerGridViewProperty(){}
@@ -34,6 +37,11 @@ struct FilerGridViewProperty:public GridViewProperty
 	friend void from_json(const json& j, FilerGridViewProperty& o)
 	{
 		from_json(j, static_cast<GridViewProperty&>(o));
+		*o.SizeCellPropPtr = *o.CellPropPtr;
+		o.SizeCellPropPtr->Format = std::make_shared<FormatF>();
+		*(o.SizeCellPropPtr->Format) = *o.CellPropPtr->Format;
+		o.SizeCellPropPtr->Format->Alignment.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_TRAILING;
+
 		j.at("FileSizeArgsProperty").get_to(o.FileSizeArgsPtr);
 		j.at("FileTimeArgsProperty").get_to(o.FileTimeArgsPtr);
 	}

@@ -18,6 +18,8 @@ public:
 	static void Term();
 
 private:
+	//it is necessary to delare thread first. Constructor call first to last, Destructor call last to first.
+	std::unique_ptr<CPDFiumSingleThread> m_pPDFium;
 	std::shared_ptr<PdfViewProperty> m_pProp;
 	CDirect2DWrite* m_pDirect;
 	std::wstring m_path;
@@ -29,7 +31,6 @@ private:
 	CSizeF m_sourceSize;
 	std::vector<CRectF> m_sourceRectsInDoc;
 	std::vector<std::unique_ptr<CPDFPage>> m_pages;
-	std::unique_ptr<CPDFiumSingleThread> m_pPDFium;
 
 public:
 	CPDFDoc(
