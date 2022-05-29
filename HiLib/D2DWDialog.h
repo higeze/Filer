@@ -22,6 +22,9 @@ public:
 	CD2DWDialog(CD2DWControl* pParentControl = nullptr, const std::shared_ptr<DialogProperty>& spProp = nullptr);
 	virtual ~CD2DWDialog();
 
+	ReactiveWStringProperty& GetTitle() { return m_title; }
+
+
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnClose(const CloseEvent& e) override;

@@ -11,15 +11,40 @@ class CPDFDoc;
 
 struct InitialLoadEvent
 {
+	InitialLoadEvent(CDirect2DWrite* pDirect, const FLOAT& scale)
+		:DirectPtr(pDirect), Scale(scale){}
+	CDirect2DWrite* DirectPtr;
 	FLOAT Scale;
 };
+
 struct BitmapReloadEvent
+{
+	BitmapReloadEvent(CDirect2DWrite* pDirect, const FLOAT& scale)
+		:DirectPtr(pDirect), Scale(scale){}
+	CDirect2DWrite* DirectPtr;
+	FLOAT Scale;
+};
+
+struct BitmapLoadCompletedEvent 
+{
+	BitmapLoadCompletedEvent(CDirect2DWrite* pDirect, const FLOAT& scale)
+		:DirectPtr(pDirect), Scale(scale){}
+	CDirect2DWrite* DirectPtr;
+	FLOAT Scale;
+};
+
+struct BitmapCancelCompletedEvent 
+{
+	BitmapCancelCompletedEvent(CDirect2DWrite* pDirect, const FLOAT& scale)
+		:DirectPtr(pDirect), Scale(scale){}
+	CDirect2DWrite* DirectPtr;
+	FLOAT Scale;
+};
+
+struct BitmapErrorEvent 
 {
 	FLOAT Scale;
 };
-struct BitmapLoadCompletedEvent {};
-struct BitmapCancelCompletedEvent {};
-struct BitmapErrorEvent {};
 
 struct FindLoadEvent 
 {
@@ -82,12 +107,13 @@ private:
 	std::unique_ptr<boost::sml::sm<FindMachine, boost::sml::process_queue<std::queue>>> m_pFindMachine;
 
 	std::function<void()> StateChanged;
-	FLOAT m_requestingScale;
+	//FLOAT m_requestingScale;
 	FLOAT m_loadingScale;
 
 
 
 	UNQ_FPDF_PAGE m_pPage;
+	UNQ_FPDF_TEXTPAGE m_pTextPage;
 	CSizeF m_sourceSize;
 
 public:
@@ -114,7 +140,7 @@ public:
 	std::wstring GetText();
 
 private:
-	void LoadBitmap();
+	void LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale);
 	void LoadText();
 	void LoadFind(const std::wstring& find_string);
 
@@ -171,8 +197,8 @@ private:
 
 
 	void Bitmap_None_Render(const RenderPageContentEvent& e);
-	void Bitmap_InitialLoading_OnEntry();
-	void Bitmap_Loading_OnEntry();
+	void Bitmap_InitialLoading_OnEntry(const InitialLoadEvent& e);
+	void Bitmap_Loading_OnEntry(CDirect2DWrite* pDirect, const FLOAT& scale);
 	void Bitmap_Loading_Render(const RenderPageContentEvent& e);
 	void Bitmap_Available_Render(const RenderPageContentEvent& e);
 	void Bitmap_Available_RenderSelectedText(const RenderPageSelectedTextEvent& e);

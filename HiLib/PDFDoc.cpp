@@ -26,15 +26,17 @@ void CPDFDoc::Term()
 	FPDF_DestroyLibrary();
 }
 
-CPDFDoc::CPDFDoc(const std::shared_ptr<PdfViewProperty>& spProp, const std::wstring& path, const std::wstring& password, 
-		CDirect2DWrite* pDirect, std::function<void()> changed)
+CPDFDoc::CPDFDoc(const std::shared_ptr<PdfViewProperty>& spProp, std::function<void()> changed)
 	:m_pPDFium(std::make_unique<CPDFiumSingleThread>()),
 	m_pProp(spProp),
-	m_path(path),
-	m_password(password),
-	m_pDirect(pDirect),
-	m_changed(changed)
+	m_changed(changed){}
+
+CPDFDoc::~CPDFDoc() = default;
+
+void CPDFDoc::Open(const std::wstring& path, const std::wstring& password)
 {
+	m_path = path;
+	m_password = password;
 
 	m_pDoc = std::move(m_pPDFium->UnqLoadDocument(wide_to_utf8(m_path).c_str(), wide_to_utf8(m_password).c_str()));
 
@@ -52,10 +54,9 @@ CPDFDoc::CPDFDoc(const std::shared_ptr<PdfViewProperty>& spProp, const std::wstr
 	}
 }
 
-CPDFDoc::~CPDFDoc() = default;
-
 void CPDFDoc::RenderContent(const RenderDocContentEvent& e)
 {
+	if (!GetPageCount()) { return; }
 	for (auto i = e.PageIndexBegin; i < e.PageIndexEnd; i++) {
 		GetPage(i)->RenderContent(
 			RenderPageContentEvent(e.DirectPtr, e.ViewportPtr, e.Scale, i));
@@ -64,6 +65,7 @@ void CPDFDoc::RenderContent(const RenderDocContentEvent& e)
 
 void CPDFDoc::RenderFind(const RenderDocFindEvent& e)
 {
+	if (!GetPageCount()) { return; }
 	for (auto i = e.PageIndexBegin; i < e.PageIndexEnd; i++) {
 		GetPage(i)->RenderFind(
 			RenderPageFindEvent(e.DirectPtr, e.ViewportPtr, e.Find, i));
@@ -72,6 +74,7 @@ void CPDFDoc::RenderFind(const RenderDocFindEvent& e)
 
 void CPDFDoc::RenderFindLine(const RenderDocFindLineEvent& e)
 {
+	if (!GetPageCount()) { return; }
 	FLOAT fullHeight = GetSourceSize().height;
 	FLOAT top = 0.f;
 	for (auto i = 0; i < GetPageCount(); i++) {
@@ -87,6 +90,8 @@ void CPDFDoc::RenderFindLine(const RenderDocFindLineEvent& e)
 
 void CPDFDoc::RenderSelectedText(const RenderDocSelectedTextEvent& e)
 {
+	if (!GetPageCount()) { return; }
+
 	auto [page_begin_index, char_begin_index] = e.SelectedBegin;
 	auto [page_end_index, char_end_index] = e.SelectedEnd;
 
@@ -111,6 +116,8 @@ void CPDFDoc::RenderSelectedText(const RenderDocSelectedTextEvent& e)
 
 void CPDFDoc::RenderCaret(const RenderDocCaretEvent& e)
 {
+	if (!GetPageCount()) { return; }
+
 	GetPage(e.PageIndex)->RenderCaret(RenderPageCaretEvent(e.DirectPtr, e.ViewportPtr, e.PageIndex, e.CharIndex));
 }
 

@@ -27,6 +27,6 @@ public:
 	}
 	friend void from_json(const json& j, CLauncherProperty& o)
 	{
-		get_to_nothrow(j, "Launchers", o.m_spLauncher);
+		get_to(j, "Launchers", o.m_spLauncher);
 	}
 };

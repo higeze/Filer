@@ -881,8 +881,8 @@ public:
 
 	CBinding(CBinding&& rhs)
 	{
-		m_sourceConnection.disconnect();
-		m_targetConnection.disconnect();
+		if (m_sourceConnection.connected()) { m_sourceConnection.disconnect(); }
+		if (m_targetConnection.connected()) { m_targetConnection.disconnect(); }
 
 		m_sourceConnection = std::move(rhs.m_sourceConnection);
 		m_targetConnection = std::move(rhs.m_targetConnection);
@@ -891,8 +891,8 @@ public:
 	CBinding& operator=(CBinding&& rhs)
 	{
 		if (this != &rhs) {
-			m_sourceConnection.disconnect();
-			m_targetConnection.disconnect();
+			if (m_sourceConnection.connected()) { m_sourceConnection.disconnect(); }
+			if (m_targetConnection.connected()) { m_targetConnection.disconnect(); }
 
 			m_sourceConnection = std::move(rhs.m_sourceConnection);
 			m_targetConnection = std::move(rhs.m_targetConnection);
@@ -902,8 +902,8 @@ public:
 
 	virtual ~CBinding()
 	{
-		m_sourceConnection.disconnect();
-		m_targetConnection.disconnect();
+		if (m_sourceConnection.connected()) { m_sourceConnection.disconnect(); }
+		if (m_targetConnection.connected()) { m_targetConnection.disconnect(); }
 	}
 private:
 	sigslot::connection m_sourceConnection;

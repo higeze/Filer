@@ -12,6 +12,14 @@
 #include "HiLibResource.h"
 #include "PDFViewport.h"
 #include "PdfViewStateMachine.h"
+#include "TextBoxDialog.h"
+#include "DialogProperty.h"
+#include "TextBlock.h"
+#include "TextBox.h"
+#include "Button.h"
+#include "strconv.h"
+#include "Dispatcher.h"
+
 
 /**************************/
 /* Constructor/Destructor */
@@ -180,29 +188,6 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		m_pdf
 			->RenderCaret(RenderDocCaretEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, page_index, char_index));
 	}
-		//UNQ_FPDF_TEXTPAGE pTextPage(m_pdf->GetPDFiumPtr()->Text_UnqLoadPage(m_pdf->GetPage(page_index)->GetPagePtr().get()));
-		//int rect_count = m_pdf->GetPDFiumPtr()->Text_CountRects(pTextPage.get(), char_index, 1);
-		//if (rect_count > 0) {
-		//	double left, top, right, bottom;
-		//	m_pdf->GetPDFiumPtr()->Text_GetRect(
-		//		pTextPage.get(),
-		//		0,
-		//		&left,
-		//		&top,
-		//		&right,
-		//		&bottom);
-		//	auto rcInPdfiumPage = CRectF(
-		//		static_cast<FLOAT>(left),
-		//		static_cast<FLOAT>(top),
-		//		static_cast<FLOAT>(right),
-		//		static_cast<FLOAT>(bottom));
-		//	auto rcCaretInWnd = m_viewport.PdfiumPageToWnd(page_index, rcInPdfiumPage);
-		//	rcCaretInWnd.right = rcCaretInWnd.left + 1;
-		//	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-		//	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, rcCaretInWnd);
-		//	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
-		//}
-	//}
 	//Paint Selected Text
 	m_pdf->RenderSelectedText(RenderDocSelectedTextEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, m_caret.SelectBegin, m_caret.SelectEnd));
 
@@ -220,6 +205,13 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		rcFocus.DeflateRect(1.0f, 1.0f);
 		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(m_pProp->FocusedLine), rcFocus);
 	}
+
+	//Paint Dialog
+	//for (auto iter = m_childControls.rbegin(); iter != m_childControls.rend(); ++iter) {
+	//	if (auto sp = std::dynamic_pointer_cast<CD2DWDialog>(*iter)) {
+	//		sp->OnPaint(e);
+	//	}
+	//}
 
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
 }
@@ -575,8 +567,6 @@ void CPdfView::Open(const std::wstring& path)
 
 		m_pdf = std::make_unique<CPDFDoc>(
 			m_pProp,
-			path, L"", 
-			GetWndPtr()->GetDirectPtr(),
 			[this]()->void{
 				FLOAT scaleX = GetRenderSize().width / m_pdf->GetPage(0)->GetSourceSize().width;
 				FLOAT scaleY = GetRenderSize().height / m_pdf->GetPage(0)->GetSourceSize().height;
@@ -596,12 +586,60 @@ void CPdfView::Open(const std::wstring& path)
 
 				GetWndPtr()->InvalidateRect(NULL, FALSE);
 			});
+		try {
+			m_pdf->Open(path, L"");
+		}
+		catch(const CPDFException& e){
+		switch (e.GetError()) {
+			//case FPDF_ERR_SUCCESS:
+			//  break;
+			//case FPDF_ERR_UNKNOWN:
+			//  break;
+			//case FPDF_ERR_FILE:
+			//  break;
+			//case FPDF_ERR_FORMAT:
+			//  break;
+			case FPDF_ERR_PASSWORD:
+			{
+				std::shared_ptr<CTextBoxDialog> spDlg = std::make_shared<CTextBoxDialog>(GetWndPtr(), std::make_shared<DialogProperty>());
+				spDlg->GetTitle().set(L"Password");
+				spDlg->GetTextBlockPtr()->GetText().set(ansi_to_wide(e.what()));
+				spDlg->GetOKButtonPtr()->GetContent().set(L"OK");
+				spDlg->GetOKButtonPtr()->GetCommand().Subscribe([this, spDlg, path]() 
+					{ 
+						m_pdf->Open(path, spDlg->GetTextBoxPtr()->GetText().get()); 
+						//Need to call with dispatcher, otherwise remaing message in message que is not properly handled
+						GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
+					});
+				spDlg->GetCancelButtonPtr()->GetContent().set(L"Cancel");
+				spDlg->GetCancelButtonPtr()->GetCommand().Subscribe([this, spDlg]() 
+					{ 
+						//Need to call with dispatcher, otherwise remaing message in message que is not properly handled
+						GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
+					});
+				spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CalcCenterRectF(CSizeF(300, 200))));
+				GetWndPtr()->SetFocusedControlPtr(spDlg);
+
+				break;
+			}
+			//case FPDF_ERR_SECURITY:
+			//  break;
+			//case FPDF_ERR_PAGE:
+			//  break;
+			default:
+			m_pdf.reset();
+		}
+
+
+
+		}
 	}
 }
 
 void CPdfView::Close()
 {
 	m_pdf.reset();
+	m_caret.Clear();
 	GetWndPtr()->RemoveMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE);
 	m_pFileIsInUse.Release();
 

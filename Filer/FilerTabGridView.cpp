@@ -653,7 +653,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		//m_pOpenBinding.reset(new CBinding<void>(spViewModel->OpenCommand, spView->GetOpenCommand()));
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
-		spView->GetPDFViewPtr()->Open(spViewModel->Path);//TODOHIGH
+		//spView->GetPDFViewPtr()->Open(spViewModel->Path);//TODOHIGH
 
 		return spView;
 	});

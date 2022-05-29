@@ -48,7 +48,9 @@ struct CPDFPage::BitmapMachine: public CPDFPage::MachineBase
 			state<None> +event<InitialLoadEvent> = state<Loading>,
 
 			state<Loading> +on_entry<InitialLoadEvent> / call(&CPDFPage::Bitmap_InitialLoading_OnEntry),
-			state<Loading> +on_entry<_> / call(&CPDFPage::Bitmap_Loading_OnEntry),
+			state<Loading> +on_entry<BitmapReloadEvent> / [](CPDFPage* p, const BitmapReloadEvent& e) { return p->Bitmap_Loading_OnEntry(e.DirectPtr, e.Scale); },
+			state<Loading> +on_entry<BitmapLoadCompletedEvent> / [](CPDFPage* p, const BitmapLoadCompletedEvent& e) { return p->Bitmap_Loading_OnEntry(e.DirectPtr, e.Scale); },
+			state<Loading> +on_entry<BitmapCancelCompletedEvent> / [](CPDFPage* p, const BitmapCancelCompletedEvent& e) { return p->Bitmap_Loading_OnEntry(e.DirectPtr, e.Scale); },
 
 			state<Loading> +event<RenderPageContentEvent> / call(&CPDFPage::Bitmap_Loading_Render),
 			state<Loading> +event<BitmapLoadCompletedEvent> = state<Available>,
@@ -154,12 +156,13 @@ CPDFPage::CPDFPage(CPDFDoc* pDoc, int index )
 	m_spCancelFindThread(std::make_shared<bool>(false)),
 	m_bmp{ CComPtr<ID2D1Bitmap>(), 0.f },
 	m_fnd{ std::vector<CRectF>(), L"" },
-	m_loadingScale(0.f), m_requestingScale(0.f),
+	m_loadingScale(0.f),
 	m_pBitmapMachine(new sml::sm<BitmapMachine, boost::sml::process_queue<std::queue>>{ this }),
 	m_pFindMachine(new sml::sm<FindMachine, boost::sml::process_queue<std::queue>>{ this })
 {
 
 	m_pPage = std::move(GetPDFiumPtr()->UnqLoadPage(pDoc->GetDocPtr().get(), m_index));
+	m_pTextPage = std::move(GetPDFiumPtr()->Text_UnqLoadPage(GetPagePtr().get()));
 	m_sourceSize.width = static_cast<FLOAT>(GetPDFiumPtr()->GetPageWidth(GetPagePtr().get()));
 	m_sourceSize.height = static_cast<FLOAT>(GetPDFiumPtr()->GetPageHeight(GetPagePtr().get()));
 }
@@ -168,13 +171,13 @@ CPDFPage::~CPDFPage() = default;
 
 std::unique_ptr<CPDFiumSingleThread>& CPDFPage::GetPDFiumPtr() { return m_pDoc->GetPDFiumPtr(); }
 
-void CPDFPage::LoadBitmap()
+void CPDFPage::LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale)
 {
-	m_loadingScale = m_requestingScale;
+	m_loadingScale = scale;
 
 	const CSizeF sz = GetSourceSize();
-	const int bw = static_cast<int>(std::round(sz.width * m_requestingScale)); // Bitmap width
-	const int bh = static_cast<int>(std::round(sz.height * m_requestingScale)); // Bitmap height
+	const int bw = static_cast<int>(std::round(sz.width * scale)); // Bitmap width
+	const int bh = static_cast<int>(std::round(sz.height * scale)); // Bitmap height
 
 	BITMAPINFOHEADER bmih{};
 	bmih.biSize = sizeof(BITMAPINFOHEADER);
@@ -188,7 +191,7 @@ void CPDFPage::LoadBitmap()
 	void* bitmapBits = nullptr;
 
 	std::unique_ptr<std::remove_pointer_t<HBITMAP>, delete_object>  pBmp(
-		::CreateDIBSection(m_pDoc->GetDirectPtr()->GetHDC(), reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0)
+		::CreateDIBSection(pDirect->GetHDC(), reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0)
 	);
 	FALSE_THROW(pBmp);
 
@@ -203,10 +206,10 @@ void CPDFPage::LoadBitmap()
 	GetPDFiumPtr()->RenderPageBitmap(pFpdfBmp.get(), GetPagePtr().get(), 0, 0, bw, bh, 0, options);
 
 	CComPtr<IWICBitmap> pWICBitmap;
-	FAILED_THROW(m_pDoc->GetDirectPtr()->GetWICImagingFactory()->CreateBitmapFromHBITMAP(pBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBitmap));
+	FAILED_THROW(pDirect->GetWICImagingFactory()->CreateBitmapFromHBITMAP(pBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBitmap));
 
 	CComPtr<ID2D1Bitmap> pBitmap;
-	FAILED_THROW(m_pDoc->GetDirectPtr()->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap));
+	FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap));
 
 	SetLockBitmap(PdfBmpInfo{ pBitmap, m_loadingScale });
 }
@@ -221,17 +224,16 @@ void CPDFPage::LoadFind(const std::wstring& find_string)
 		return;
 	}
 
-	UNQ_FPDF_TEXTPAGE pTextPage(GetPDFiumPtr()->Text_UnqLoadPage(GetPagePtr().get()));
 	FPDF_WIDESTRING text = reinterpret_cast<FPDF_WIDESTRING>(find.c_str());
-	UNQ_FPDF_SCHHANDLE pSchHdl(GetPDFiumPtr()->Text_UnqFindStart(pTextPage.get(), text, 0, 0));
+	UNQ_FPDF_SCHHANDLE pSchHdl(GetPDFiumPtr()->Text_UnqFindStart(m_pTextPage.get(), text, 0, 0));
 	while (GetPDFiumPtr()->Text_FindNext(pSchHdl.get())) {
 		int index = GetPDFiumPtr()->Text_GetSchResultIndex(pSchHdl.get());
 		int ch_count = GetPDFiumPtr()->Text_GetSchCount(pSchHdl.get());
-		int rc_count = GetPDFiumPtr()->Text_CountRects(pTextPage.get(), index, ch_count);
+		int rc_count = GetPDFiumPtr()->Text_CountRects(m_pTextPage.get(), index, ch_count);
 		for (int i = 0; i < rc_count; i++) {
 			double left, top, right, bottom;
 			m_pDoc->GetPDFiumPtr()->Text_GetRect(
-				pTextPage.get(), 
+				m_pTextPage.get(), 
 				i,
 				&left, 
 				&top, 
@@ -249,21 +251,19 @@ void CPDFPage::LoadFind(const std::wstring& find_string)
 
 void CPDFPage::LoadText()
 {
-	//TextPage
-	UNQ_FPDF_TEXTPAGE pTextPage(GetPDFiumPtr()->Text_UnqLoadPage(GetPagePtr().get()));
-	int char_count = GetPDFiumPtr()->Text_CountChars(pTextPage.get());
+	int char_count = GetPDFiumPtr()->Text_CountChars(m_pTextPage.get());
 	//Str
 	std::wstring text;
-	int text_count = GetPDFiumPtr()->Text_GetText(pTextPage.get(), 0, char_count, reinterpret_cast<unsigned short*>(::GetBuffer(text, 10000)));
+	int text_count = GetPDFiumPtr()->Text_GetText(m_pTextPage.get(), 0, char_count, reinterpret_cast<unsigned short*>(::GetBuffer(text, 10000)));
 	::ReleaseBuffer(text);
 	//Original Char Rects
 	auto orgCharRects = std::vector<CRectF>();
 	for (auto i = 0; i < char_count; i++) {
-		int rect_count = GetPDFiumPtr()->Text_CountRects(pTextPage.get(), i, 1);
+		int rect_count = GetPDFiumPtr()->Text_CountRects(m_pTextPage.get(), i, 1);
 		if (rect_count == 1) {
 			double left, top, right, bottom = 0.f;
 			m_pDoc->GetPDFiumPtr()->Text_GetRect(
-				pTextPage.get(),
+				m_pTextPage.get(),
 				0,
 				&left,
 				&top,
@@ -375,26 +375,25 @@ std::wstring CPDFPage::GetText()
 /**************/
 void CPDFPage::Bitmap_None_Render(const RenderPageContentEvent& e)
 {
-	m_requestingScale = e.Scale;
-	process_event(InitialLoadEvent());
+	process_event(InitialLoadEvent(e.DirectPtr, e.Scale));
 }
-void CPDFPage::Bitmap_InitialLoading_OnEntry() 
+void CPDFPage::Bitmap_InitialLoading_OnEntry(const InitialLoadEvent& e) 
 {
-	auto fun = [this]()
+	auto fun = [this, e]()
 	{ 
-		LoadBitmap();
+		LoadBitmap(e.DirectPtr, e.Scale);
 		LoadText();
-		process_event(BitmapLoadCompletedEvent());
+		process_event(BitmapLoadCompletedEvent(e.DirectPtr, e.Scale));
 	};
 	
 	m_futureBitmap = GetPDFiumPtr()->GetThreadPtr()->enqueue(fun);
 }
-void CPDFPage::Bitmap_Loading_OnEntry() 
+void CPDFPage::Bitmap_Loading_OnEntry(CDirect2DWrite* pDirect, const FLOAT& scale) 
 {
-	auto fun = [this]()
+	auto fun = [this, pDirect, scale]()
 	{ 
-		LoadBitmap();
-		process_event(BitmapLoadCompletedEvent());
+		LoadBitmap(pDirect, scale);
+		process_event(BitmapLoadCompletedEvent(pDirect, scale));
 	};
 	
 	m_futureBitmap = GetPDFiumPtr()->GetThreadPtr()->enqueue(fun);
@@ -402,64 +401,61 @@ void CPDFPage::Bitmap_Loading_OnEntry()
 
 void CPDFPage::Bitmap_Loading_Render(const RenderPageContentEvent& e) 
 {
-	m_requestingScale = e.Scale;
-
 	auto pbi = GetLockBitmap();
 	if (e.Scale != m_loadingScale) {
-		process_event(BitmapReloadEvent());
+		process_event(BitmapReloadEvent(e.DirectPtr, e.Scale));
 	}
-
-	auto sz = pbi.BitmapPtr->GetSize();
-	auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
-	auto rc = CRectF(
-			std::round(ptInWnd.x),
-			std::round(ptInWnd.y),
-			std::round(ptInWnd.x + sz.width * e.Scale / pbi.Scale) ,
-			std::round(ptInWnd.y + sz.height * e.Scale / pbi.Scale));
-
 	if (pbi.BitmapPtr) {
-		e.DirectPtr->GetD2DDeviceContext()->DrawBitmap(pbi.BitmapPtr, rc, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
-	} else {
-		e.DirectPtr->DrawTextInRect(*(m_pDoc->GetPropPtr()->Format), L"Loading Page...", rc);
+		auto sz = pbi.BitmapPtr->GetSize();
+		auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
+		auto rc = CRectF(
+				std::round(ptInWnd.x),
+				std::round(ptInWnd.y),
+				std::round(ptInWnd.x + sz.width * e.Scale / pbi.Scale),
+				std::round(ptInWnd.y + sz.height * e.Scale / pbi.Scale));
+
+		if (pbi.BitmapPtr) {
+			e.DirectPtr->GetD2DDeviceContext()->DrawBitmap(pbi.BitmapPtr, rc, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+		} else {
+			e.DirectPtr->DrawTextInRect(*(m_pDoc->GetPropPtr()->Format), L"Loading Page...", rc);
+		}
 	}
 }
 
 void CPDFPage::Bitmap_Available_Render(const RenderPageContentEvent& e) 
 {
-	m_requestingScale = e.Scale;
-
 	auto pbi = GetLockBitmap();
 	if (e.Scale != pbi.Scale) {
-		process_event(BitmapReloadEvent());
+		process_event(BitmapReloadEvent(e.DirectPtr, e.Scale));
 	}
-
-	auto sz = pbi.BitmapPtr->GetSize();
-	auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
-	auto rc = CRectF(
-			std::round(ptInWnd.x),
-			std::round(ptInWnd.y),
-			std::round(ptInWnd.x + sz.width * e.Scale / pbi.Scale) ,
-			std::round(ptInWnd.y + sz.height * e.Scale / pbi.Scale));
-
 	if (pbi.BitmapPtr) {
-		e.DirectPtr->GetD2DDeviceContext()->DrawBitmap(pbi.BitmapPtr, rc, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
-		//auto txt = GetLockTxt();
-		//for (const auto& rc : txt.MouseRects) {
-		//	e.DirectPtr->DrawSolidRectangle(SolidLine(1.f, 0.f, 0.f, 1.f, 1.f), e.ViewportPtr->PdfiumPageToWnd(e.PageIndex, rc));
-		//}
-	} else {
-		e.DirectPtr->DrawTextInRect(*(m_pDoc->GetPropPtr()->Format), L"Loading Page...", rc);
+		auto sz = pbi.BitmapPtr->GetSize();
+		auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
+		auto rc = CRectF(
+				std::round(ptInWnd.x),
+				std::round(ptInWnd.y),
+				std::round(ptInWnd.x + sz.width * e.Scale / pbi.Scale),
+				std::round(ptInWnd.y + sz.height * e.Scale / pbi.Scale));
+
+		if (pbi.BitmapPtr) {
+			e.DirectPtr->GetD2DDeviceContext()->DrawBitmap(pbi.BitmapPtr, rc, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+			//auto txt = GetLockTxt();
+			//for (const auto& rc : txt.MouseRects) {
+			//	e.DirectPtr->DrawSolidRectangle(SolidLine(1.f, 0.f, 0.f, 1.f, 1.f), e.ViewportPtr->PdfiumPageToWnd(e.PageIndex, rc));
+			//}
+		} else {
+			e.DirectPtr->DrawTextInRect(*(m_pDoc->GetPropPtr()->Format), L"Loading Page...", rc);
+		}
 	}
 }
 
 void CPDFPage::Bitmap_Available_RenderSelectedText(const RenderPageSelectedTextEvent& e)
 {
-	UNQ_FPDF_TEXTPAGE pTextPage(m_pDoc->GetPDFiumPtr()->Text_UnqLoadPage(GetPagePtr().get()));
-	int rect_count = m_pDoc->GetPDFiumPtr()->Text_CountRects(pTextPage.get(), e.SelectedBegin, e.SelectedEnd - e.SelectedBegin);
+	int rect_count = m_pDoc->GetPDFiumPtr()->Text_CountRects(m_pTextPage.get(), e.SelectedBegin, e.SelectedEnd - e.SelectedBegin);
 	for (auto i = 0; i < rect_count; i++) {
 		double left, top, right, bottom;
 		m_pDoc->GetPDFiumPtr()->Text_GetRect(
-			pTextPage.get(),
+			m_pTextPage.get(),
 			i,
 			&left,
 			&top,
@@ -479,12 +475,14 @@ void CPDFPage::Bitmap_Available_RenderSelectedText(const RenderPageSelectedTextE
 void CPDFPage::Bitmap_Available_RenderCaret(const RenderPageCaretEvent& e)
 {
 	auto txt = GetLockTxt();
-	auto rcInPdfiumPage = txt.CRLFRects[e.CharIndex];
-	rcInPdfiumPage.right = rcInPdfiumPage.left + 1.f;
+	if (!txt.CRLFRects.empty()) {
+		auto rcInPdfiumPage = txt.CRLFRects[e.CharIndex];
+		rcInPdfiumPage.right = rcInPdfiumPage.left + 1.f;
 
-	e.DirectPtr->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-	e.DirectPtr->FillSolidRectangle(m_pDoc->GetPropPtr()->Format->Color, e.ViewportPtr->PdfiumPageToWnd(e.PageIndex, rcInPdfiumPage));
-	e.DirectPtr->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+		e.DirectPtr->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+		e.DirectPtr->FillSolidRectangle(m_pDoc->GetPropPtr()->Format->Color, e.ViewportPtr->PdfiumPageToWnd(e.PageIndex, rcInPdfiumPage));
+		e.DirectPtr->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+	}
 }
 
 void CPDFPage::Bitmap_WaitCancel_OnEntry()
@@ -498,28 +496,26 @@ void CPDFPage::Bitmap_WaitCancel_OnExit()
 
 void CPDFPage::Bitmap_WaitCancel_Render(const RenderPageContentEvent& e) 
 {
-	m_requestingScale = e.Scale;
-
 	auto pbi = GetLockBitmap();
-
-	auto sz = pbi.BitmapPtr->GetSize();
-	auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
-	auto rc = CRectF(
-			std::round(ptInWnd.x),
-			std::round(ptInWnd.y),
-			std::round(ptInWnd.x + sz.width * e.Scale / pbi.Scale) ,
-			std::round(ptInWnd.y + sz.height * e.Scale / pbi.Scale));
-
 	if (pbi.BitmapPtr) {
-		e.DirectPtr->GetD2DDeviceContext()->DrawBitmap(pbi.BitmapPtr, rc, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
-	} else {
-		e.DirectPtr->DrawTextInRect(*(m_pDoc->GetPropPtr()->Format), L"Loading Page...", rc);
+		auto sz = pbi.BitmapPtr->GetSize();
+		auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
+		auto rc = CRectF(
+				std::round(ptInWnd.x),
+				std::round(ptInWnd.y),
+				std::round(ptInWnd.x + sz.width * e.Scale / pbi.Scale),
+				std::round(ptInWnd.y + sz.height * e.Scale / pbi.Scale));
+
+		if (pbi.BitmapPtr) {
+			e.DirectPtr->GetD2DDeviceContext()->DrawBitmap(pbi.BitmapPtr, rc, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+		} else {
+			e.DirectPtr->DrawTextInRect(*(m_pDoc->GetPropPtr()->Format), L"Loading Page...", rc);
+		}
 	}
 }
 
 void CPDFPage::Bitmap_Error_Render(const RenderPageContentEvent& e)
 {
-	m_requestingScale = e.Scale;
 	auto pbi = GetLockBitmap();
 	auto sz = pbi.BitmapPtr->GetSize();
 	auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
@@ -568,34 +564,37 @@ void CPDFPage::Find_Available_Render(const RenderPageFindEvent& e)
 	if (e.Find != fnd.Find) {
 		process_event(FindReloadEvent{ e.Find });
 	}
-
-	for (const auto& ch_rc : fnd.FindRects) {
-		e.DirectPtr->FillSolidRectangle( //TODO Find rect is not proper
-			*(m_pDoc->GetPropPtr()->FindHighliteFill), e.ViewportPtr->PdfiumPageToWnd(e.PageIndex, ch_rc));
+	if (!fnd.FindRects.empty()) {
+		for (const auto& ch_rc : fnd.FindRects) {
+			e.DirectPtr->FillSolidRectangle( //TODO Find rect is not proper
+				*(m_pDoc->GetPropPtr()->FindHighliteFill), e.ViewportPtr->PdfiumPageToWnd(e.PageIndex, ch_rc));
+		}
 	}
 }
 
-void CPDFPage::Find_Available_RenderLine(const RenderPageFindLineEvent& e) 
+void CPDFPage::Find_Available_RenderLine(const RenderPageFindLineEvent& e)
 {
 	auto fnd = GetLockFind();
 	if (e.Find != fnd.Find) {
 		process_event(FindReloadEvent{ e.Find });
 	}
 
-	CSizeF srcSize = GetSourceSize();
-	SolidFill fill(*m_pDoc->GetPropPtr()->FindHighliteFill);
-	fill.Color.a = 1.f;
+	if (!fnd.FindRects.empty()){
+		CSizeF srcSize = GetSourceSize();
+		SolidFill fill(*m_pDoc->GetPropPtr()->FindHighliteFill);
+		fill.Color.a = 1.f;
 
-	for (const auto& ch_rc : fnd.FindRects) {
-		auto rectHighlite = CRectF(
-				e.Rect.left,
-				e.Rect.top + e.Rect.Height() * ch_rc.top / srcSize.height,
-				e.Rect.right,
-				e.Rect.top + e.Rect.Height() * ch_rc.bottom / srcSize.height);
-		if (rectHighlite.Height() < 1.f) {
-			rectHighlite.bottom = rectHighlite.top + 1.f;
+		for (const auto& ch_rc : fnd.FindRects) {
+			auto rectHighlite = CRectF(
+					e.Rect.left,
+					e.Rect.top + e.Rect.Height() * ch_rc.top / srcSize.height,
+					e.Rect.right,
+					e.Rect.top + e.Rect.Height() * ch_rc.bottom / srcSize.height);
+			if (rectHighlite.Height() < 1.f) {
+				rectHighlite.bottom = rectHighlite.top + 1.f;
+			}
+			e.DirectPtr->FillSolidRectangle(fill, rectHighlite);
 		}
-		e.DirectPtr->FillSolidRectangle(fill, rectHighlite);
 	}
 }
 

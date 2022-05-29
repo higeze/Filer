@@ -20,7 +20,7 @@ public:
 	friend void from_json(const json& j, CLauncher& o)
 	{
 		from_json(j, static_cast<CFavorite&>(o));
-		get_to_nothrow(j, "RunAs", o.RunAs);
+		get_to(j, "RunAs", o.RunAs);
 	}
 };
 

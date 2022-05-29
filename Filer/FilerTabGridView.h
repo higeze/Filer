@@ -367,9 +367,9 @@ public:
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 
 		from_json(j, static_cast<CTabControl&>(o));
-		std::shared_ptr<CFilerGridView> tmp;
-		get_to_nothrow(j, "FilerView", tmp, &o, o.m_spFilerGridViewProp);
-		o.FilerGridViewPtr = tmp;
+		//std::shared_ptr<CFilerGridView> tmp;
+		get_to(j, "FilerView", /*tmp, &o, */o.m_spFilerGridViewProp);
+		//o.FilerGridViewPtr = tmp;
 	}
 };
 

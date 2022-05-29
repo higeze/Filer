@@ -62,13 +62,17 @@ struct EditorTextBoxProperty :public TextBoxProperty
 	SolidFill FindHighliteFill = SolidFill(244.f / 255, 167.f / 255, 33.f / 255, 100.f / 255);
 
 	EditorTextBoxProperty():
-		TextBoxProperty(std::make_shared<EditorScrollProperty>(), std::make_shared<EditorScrollProperty>()){}
+		TextBoxProperty(std::make_shared<EditorScrollProperty>(), std::make_shared<EditorScrollProperty>())
+	
+	{
+		auto a = 9;
+	}
 
 	virtual ~EditorTextBoxProperty() = default;
 
 	friend void to_json(json& j, const EditorTextBoxProperty& o)
 	{
-		//JSON_REGISTER_POLYMORPHIC_RELATION(ScrollProperty, EditorScrollProperty);
+		JSON_REGISTER_POLYMORPHIC_RELATION(ScrollProperty, EditorScrollProperty);
 
 		to_json(j, static_cast<const TextBoxProperty&>(o));
 		j["VScrollPropPtr"] = std::static_pointer_cast<EditorScrollProperty>(o.VScrollPropPtr);
@@ -79,15 +83,13 @@ struct EditorTextBoxProperty :public TextBoxProperty
 
 	friend void from_json(const json& j, EditorTextBoxProperty& o)
 	{
-		//JSON_REGISTER_POLYMORPHIC_RELATION(ScrollProperty, EditorScrollProperty);
+		JSON_REGISTER_POLYMORPHIC_RELATION(ScrollProperty, EditorScrollProperty);
 
 		from_json(j, static_cast<TextBoxProperty&>(o));
-		std::shared_ptr<EditorScrollProperty> spTemp;
-		get_to_nothrow(j, "VScrollPropPtr", spTemp);
-		o.VScrollPropPtr = spTemp;
-		j.at("SyntaxAppearances").get_to(o.SyntaxAppearances);
-		j.at("ExecutableAppearance").get_to(o.ExecutableAppearances);
-		get_to_nothrow(j, "FindHighliteFill", o.FindHighliteFill);
+		get_to(j, "VScrollPropPtr", o.VScrollPropPtr);
+		get_to(j, "SyntaxAppearances", o.SyntaxAppearances);
+		get_to(j, "FindHighliteFill", o.FindHighliteFill);
+		get_to(j, "ExecutableAppearance", o.ExecutableAppearances);
 
 		if (o.SyntaxAppearances.empty()) {
 			o.SyntaxAppearances.push_back(
@@ -99,7 +101,7 @@ struct EditorTextBoxProperty :public TextBoxProperty
 					SyntaxAppearance(L"//.*?\n",
 						SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false, false))));
 		}
-
+		
 		if (o.ExecutableAppearances.empty()) {
 			o.ExecutableAppearances.push_back(
 				ExecutableAppearance{
@@ -112,10 +114,6 @@ struct EditorTextBoxProperty :public TextBoxProperty
 				SyntaxFormatF(CColorF(0.0f, 0.0f, 1.0f, 1.0f), false, true)
 				});
 		}
-
-		//if (!o.StatusBarPropPtr) {
-		//	o.StatusBarPropPtr = std::make_shared<StatusBarProperty>();
-		//}
 	}
 
 };
@@ -134,8 +132,8 @@ public:
 
 	friend void from_json(const json& j, EditorProperty& o)
 	{
-		j.at("EditorTextBoxPropPtr").get_to(o.EditorTextBoxPropPtr);
-		j.at("StatusBarPropPtr").get_to(o.StatusBarPropPtr);
+		get_to(j, "EditorTextBoxPropPtr", o.EditorTextBoxPropPtr);
+		get_to(j, "StatusBarPropPtr", o.StatusBarPropPtr);
 	}
 };
 

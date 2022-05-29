@@ -14,6 +14,16 @@ using UNQ_FPDF_BITMAP = std::unique_ptr<std::remove_pointer_t<FPDF_BITMAP>, std:
 using UNQ_FPDF_TEXTPAGE = std::unique_ptr<std::remove_pointer_t<FPDF_TEXTPAGE>, std::function<void(FPDF_TEXTPAGE)>>;
 using UNQ_FPDF_SCHHANDLE = std::unique_ptr<std::remove_pointer_t<FPDF_SCHHANDLE>, std::function<void(FPDF_SCHHANDLE)>>;
 
+class CPDFException :public std::exception
+{
+private:
+    unsigned long m_error;
+public:
+    CPDFException(unsigned long error, const char* what)
+        :std::exception(what), m_error(error) {}
+    unsigned long GetError()const { return m_error; }
+};
+
 class CPDFiumSingleThread
 {
 private:
@@ -45,7 +55,16 @@ public:
     {
         return ThreadRun(FPDF_DestroyLibrary);
     }
-
+    /*********************/
+    /* FPDF_GetLastError */
+    /*********************/
+public:
+    //GetLastError need to be called just after subjected function call in same scope.
+    //If split by ThreadRun, GetLastError couldn't return Error.
+    //unsigned long GetLastError()
+    //{
+    //    return ThreadRun(FPDF_GetLastError);
+    //}
     /*****************/
     /* FPDF_DOCUMENT */
     /*****************/
@@ -54,6 +73,58 @@ private:
     {
         return ThreadRun(FPDF_LoadDocument, file_path, password);
     }
+    FPDF_DOCUMENT LoadDocumentEx(FPDF_STRING file_path, FPDF_BYTESTRING password)
+    {
+        std::exception_ptr ex_ptr;
+
+        FPDF_DOCUMENT pDoc = ThreadRun([&](FPDF_STRING file_path, FPDF_BYTESTRING password)
+        {
+            try {
+                FPDF_DOCUMENT p = FPDF_LoadDocument(file_path, password);
+                if (!p) {
+                    auto err = FPDF_GetLastError();
+
+                    switch (err) {
+                        case FPDF_ERR_SUCCESS:
+                            throw CPDFException(err, "Success");
+                            break;
+                        case FPDF_ERR_UNKNOWN:
+                            throw CPDFException(err, "Unknown error");
+                            break;
+                        case FPDF_ERR_FILE:
+                            throw CPDFException(err, "File not found or could not be opened");
+                            break;
+                        case FPDF_ERR_FORMAT:
+                            throw CPDFException(err, "File not in PDF format or corrupted");
+                            break;
+                        case FPDF_ERR_PASSWORD:
+                            throw CPDFException(err, "Password required or incorrect password");
+                            break;
+                        case FPDF_ERR_SECURITY:
+                            throw CPDFException(err, "Unsupported security scheme");
+                            break;
+                        case FPDF_ERR_PAGE:
+                            throw CPDFException(err, "Page not found or content error");
+                            break;
+                        default:
+                            throw CPDFException(err, std::format("Unknown error %ld", err).c_str());
+                    }
+                }
+                return p;                
+            } catch (...) {
+                ex_ptr = std::current_exception();
+                return FPDF_DOCUMENT();
+            }
+
+        }, file_path, password);
+
+        if (ex_ptr != nullptr) {
+            std::rethrow_exception(ex_ptr);
+        }
+        
+        return pDoc;
+    }
+
     void CloseDocument(FPDF_DOCUMENT document)
     { 
         return ThreadRun(FPDF_CloseDocument, document); 
@@ -62,8 +133,8 @@ public:
     UNQ_FPDF_DOCUMENT UnqLoadDocument(FPDF_STRING file_path, FPDF_BYTESTRING password)
     {
         return UNQ_FPDF_DOCUMENT(
-            LoadDocument(file_path, password),
-            [this](FPDF_DOCUMENT p) { if (p) { return CloseDocument(p); } });
+                        LoadDocumentEx(file_path, password),
+                        [this](FPDF_DOCUMENT p) { if (p) { return CloseDocument(p); } });
     }
 
     int GetPageCount(FPDF_DOCUMENT document)

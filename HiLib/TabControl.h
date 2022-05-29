@@ -78,7 +78,7 @@ struct TabData
 	}
 	friend void from_json(const json& j, TabData& o) 
 	{
-		get_to_nothrow(j, "Unlock", o.Unlock);
+		get_to(j, "Unlock", o.Unlock);
 	}
 };
 

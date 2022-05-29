@@ -59,6 +59,18 @@ void CPDFCaret::MoveSelection(const int sel_begin_page, const int& sel_begin_cha
 	StartBlink();
 }
 
+void CPDFCaret::Clear()
+{
+	bool m_bCaret = true;
+	m_timer.stop();
+	Old = { 0, 0 };
+	Current = { 0, 0 };
+	Anchor = { 0, 0 };
+	SelectBegin = { 0, 0 };
+	SelectEnd = { 0, 0 };
+	Point = { 0, { 0.f, 0.f } };
+}
+
 void CPDFCaret::StartBlink()
 {
 	m_bCaret = true;

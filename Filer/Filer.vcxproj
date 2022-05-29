@@ -424,6 +424,8 @@
     <ClInclude Include="..\HiLib\string_extension.h" />
     <ClInclude Include="..\HiLib\TabControl.h" />
     <ClInclude Include="..\HiLib\D2DWWindow.h" />
+    <ClInclude Include="..\HiLib\TextBlock.h" />
+    <ClInclude Include="..\HiLib\TextBoxDialog.h" />
     <ClInclude Include="..\HiLib\TextBoxProperty.h" />
     <ClInclude Include="..\HiLib\TextCell.h" />
     <ClInclude Include="..\HiLib\Editor.h" />
@@ -588,6 +590,8 @@
     <ClCompile Include="..\HiLib\StatusBar.cpp" />
     <ClCompile Include="..\HiLib\TabControl.cpp" />
     <ClCompile Include="..\HiLib\D2DWWindow.cpp" />
+    <ClCompile Include="..\HiLib\TextBlock.cpp" />
+    <ClCompile Include="..\HiLib\TextBoxDialog.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
     <ClCompile Include="..\HiLib\Editor.cpp" />
     <ClCompile Include="..\HiLib\TextEnDecoder.cpp" />

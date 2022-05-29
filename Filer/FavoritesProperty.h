@@ -32,7 +32,7 @@ public:
 	}
 	friend void from_json(const json& j, CFavoritesProperty& o)
 	{
-		get_to_nothrow(j, "Favorites", o.m_spFavorites);
+		get_to(j, "Favorites", o.m_spFavorites);
 	}
 };
 

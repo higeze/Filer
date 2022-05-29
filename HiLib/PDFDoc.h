@@ -35,21 +35,26 @@ private:
 public:
 	CPDFDoc(
 		const std::shared_ptr<PdfViewProperty>& spProp,
-		const std::wstring& path,
-		const std::wstring& password, 
-		CDirect2DWrite* pDirect,
 		std::function<void()> changed);
 	virtual ~CPDFDoc();
 
+	void Open(const std::wstring& path, const std::wstring& password);
+
 	std::unique_ptr<CPDFiumSingleThread>& GetPDFiumPtr() { return m_pPDFium; }
-	CDirect2DWrite* GetDirectPtr() { return m_pDirect; }
 	std::shared_ptr<PdfViewProperty> GetPropPtr() const { return m_pProp; }
 	std::vector<CRectF>& GetPageRects() { return m_sourceRectsInDoc; }
 	UNQ_FPDF_DOCUMENT& GetDocPtr() { return m_pDoc; }
+	std::wstring GetPath() { return m_path; }
+
 	int GetPageCount() const { return m_pageCount; }
 	CSizeF GetSourceSize() const { return m_sourceSize; }
 
 	std::vector<std::unique_ptr<CPDFPage>>& GetPages() { return m_pages; }
+
+	//bool IsPageAvalable(int index)
+	//{
+	//	return GetPageCount() && 0 <= index && index < GetPageCount();
+	//}
 
 	std::unique_ptr<CPDFPage>& GetPage(int index)
 	{
