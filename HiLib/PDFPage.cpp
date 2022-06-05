@@ -584,7 +584,8 @@ void CPDFPage::Find_Available_RenderLine(const RenderPageFindLineEvent& e)
 		SolidFill fill(*m_pDoc->GetPropPtr()->FindHighliteFill);
 		fill.Color.a = 1.f;
 
-		for (const auto& ch_rc : fnd.FindRects) {
+		for (auto ch_rc : fnd.FindRects) {
+			ch_rc = e.ViewportPtr->PdfiumPageToPage(e.PageIndex, ch_rc);
 			auto rectHighlite = CRectF(
 					e.Rect.left,
 					e.Rect.top + e.Rect.Height() * ch_rc.top / srcSize.height,

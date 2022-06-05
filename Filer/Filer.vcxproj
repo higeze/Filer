@@ -376,7 +376,6 @@
     <ClInclude Include="..\HiLib\MyXMLSerializer.h" />
     <ClInclude Include="..\HiLib\named_arguments.h" />
     <ClInclude Include="..\HiLib\ColumnIndexCell.h" />
-    <ClInclude Include="..\HiLib\Pdf.h" />
     <ClInclude Include="..\HiLib\PDFCaret.h" />
     <ClInclude Include="..\HiLib\PDFEditorProperty.h" />
     <ClInclude Include="..\HiLib\PDFDoc.h" />
@@ -560,7 +559,6 @@
     <ClCompile Include="..\HiLib\MyWnd.cpp" />
     <ClCompile Include="..\HiLib\MyXMLSerializer.cpp" />
     <ClCompile Include="..\HiLib\ColumnIndexCell.cpp" />
-    <ClCompile Include="..\HiLib\Pdf.cpp" />
     <ClCompile Include="..\HiLib\PDFEditor.cpp" />
     <ClCompile Include="..\HiLib\PDFDoc.cpp" />
     <ClCompile Include="..\HiLib\PDFPage.cpp" />

@@ -75,6 +75,7 @@ void CD2DWControl::OnDestroy(const DestroyEvent& e)
 	GetParentControlPtr()->EraseChildControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
 }
 
+void CD2DWControl::OnEnable(const EnableEvent& e) { SendAll(&CD2DWControl::OnEnable, e); }
 void CD2DWControl::OnLButtonDown(const LButtonDownEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonDown, e, true); }
 void CD2DWControl::OnLButtonUp(const LButtonUpEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonUp, e, true); }
 void CD2DWControl::OnLButtonClk(const LButtonClkEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonClk, e); }

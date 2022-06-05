@@ -27,10 +27,12 @@ private:
 	std::function<void()> m_changed;
 
 	UNQ_FPDF_DOCUMENT m_pDoc;
-	int m_pageCount;
+	//int m_pageCount;
 	CSizeF m_sourceSize;
 	std::vector<CRectF> m_sourceRectsInDoc;
 	std::vector<std::unique_ptr<CPDFPage>> m_pages;
+
+	LAZY_GETTER(int, PageCount)
 
 public:
 	CPDFDoc(
@@ -39,6 +41,7 @@ public:
 	virtual ~CPDFDoc();
 
 	void Open(const std::wstring& path, const std::wstring& password);
+	void Create();
 
 	std::unique_ptr<CPDFiumSingleThread>& GetPDFiumPtr() { return m_pPDFium; }
 	std::shared_ptr<PdfViewProperty> GetPropPtr() const { return m_pProp; }
@@ -46,15 +49,9 @@ public:
 	UNQ_FPDF_DOCUMENT& GetDocPtr() { return m_pDoc; }
 	std::wstring GetPath() { return m_path; }
 
-	int GetPageCount() const { return m_pageCount; }
 	CSizeF GetSourceSize() const { return m_sourceSize; }
 
 	std::vector<std::unique_ptr<CPDFPage>>& GetPages() { return m_pages; }
-
-	//bool IsPageAvalable(int index)
-	//{
-	//	return GetPageCount() && 0 <= index && index < GetPageCount();
-	//}
 
 	std::unique_ptr<CPDFPage>& GetPage(int index)
 	{
@@ -74,4 +71,14 @@ public:
 	void RenderCaret(const RenderDocCaretEvent& e);
 
 	void CopyTextToClipboard(const CopyDocTextEvent& e);
+	void ImportPages(const CPDFDoc& src_doc,
+					FPDF_BYTESTRING pagerange,
+					int index);
+	void SaveAsCopy(const std::wstring& path);
+
+	void SplitSaveAsCopy();
+	void Merge(const std::vector<std::wstring>& srcPathes);
+
+
+
 };

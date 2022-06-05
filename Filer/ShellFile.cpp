@@ -80,6 +80,14 @@ std::wstring CShellFile::GetFileNameWithoutExt()
 	return m_wstrFileNameWithoutExt;
 }
 
+std::wstring CShellFile::GetPathWithoutExt()
+{
+	std::wstring ret = GetPath();
+	::PathRemoveExtension(::GetBuffer(ret, MAX_PATH));
+	::ReleaseBuffer(ret);
+	return ret;
+}
+
 std::wstring CShellFile::GetDispName()
 {
 	if (m_wstrFileName.empty()) {

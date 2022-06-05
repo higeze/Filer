@@ -13,7 +13,7 @@
 #include "KnownFolder.h"
 #include <functional>
 #include "JsonSerializer.h"
-
+#include "ReactiveProperty.h"
 #include "encoding_type.h"
 
 class CFilerGridView;
@@ -259,18 +259,18 @@ private:
 	std::shared_ptr<EditorProperty> m_spEditorProp;
 	std::shared_ptr<PDFEditorProperty> m_spPdfEditorProp;
 
-	std::unique_ptr<CBinding> m_pTextBinding;
-	std::unique_ptr<CBinding> m_pTextEncodingBinding;
-	std::unique_ptr<CBinding> m_pTextPathBinding;
-	std::unique_ptr<CBinding> m_pPdfPathBinding;
-	std::unique_ptr<CBinding> m_pPdfScaleBinding;
-	std::unique_ptr<CBinding> m_pStatusBinding;
-	std::unique_ptr<CBinding> m_pCaretPosBinding;
-	std::unique_ptr<CBinding> m_pCaretsBinding;
-	std::unique_ptr<CBinding> m_pOpenBinding;
-	std::unique_ptr<CBinding> m_pOpenAsBinding;
-	std::unique_ptr<CBinding> m_pSaveBinding;
-	std::unique_ptr<CBinding> m_pSaveAsBinding;
+	CBinding m_textBinding;
+	CBinding m_textEncodingBinding;
+	CBinding m_textPathBinding;
+	CBinding m_pdfPathBinding;
+	CBinding m_pdfScaleBinding;
+	CBinding m_statusBinding;
+	CBinding m_caretPosBinding;
+	CBinding m_caretsBinding;
+	CBinding m_openBinding;
+	CBinding m_openAsBinding;
+	CBinding m_saveBinding;
+	CBinding m_saveAsBinding;
 
 
 	std::unique_ptr<sigslot::scoped_connection> m_pTextPathConnection;

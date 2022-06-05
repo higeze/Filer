@@ -50,6 +50,7 @@ CFilerWnd::CFilerWnd()
 	m_rcPropWnd(0, 0, 300, 400),
 	m_splitterLeft(0),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
+	m_spDialogProp(std::make_shared<DialogProperty>()),
 	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
 	m_spEditorProp(std::make_shared<EditorProperty>()),
 	m_spPdfEditorProp(std::make_shared<PDFEditorProperty>()),
@@ -109,7 +110,7 @@ CFilerWnd::~CFilerWnd() = default;
 
 HWND CFilerWnd::Create(HWND hWndParent)
 {
-	m_pSplitterBinding = std::make_unique<CBinding>(m_splitterLeft, m_spSplitter->GetSplitterLeft());
+	m_splitterBinding.Attach(m_splitterLeft, m_spSplitter->GetSplitterLeft());
 	return CWnd::Create(hWndParent, m_rcWnd);
 }
 
@@ -202,6 +203,24 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 			}
 #endif
+			//PDF
+			{
+				menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
+				MENUITEMINFO mii = { 0 };
+				mii.cbSize = sizeof(MENUITEMINFO);
+				mii.fMask = MIIM_TYPE | MIIM_ID;
+				mii.fType = MFT_STRING;
+				mii.fState = MFS_ENABLED;
+				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFSplit");
+				mii.dwTypeData = (LPWSTR)L"PDF Split";
+				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFMerge");
+				mii.dwTypeData = (LPWSTR)L"PDF Merge";
+				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+			}
+
+
 			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
 
 			for (auto iter = m_spExeExProp->ExeExtensions.cbegin(); iter != m_spExeExProp->ExeExtensions.cend(); ++iter) {
@@ -230,6 +249,24 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 					GetLauncherPropPtr()->GetLaunchers().push_back(std::make_tuple(std::make_shared<CLauncher>(file->GetPath(), L"")));
 				}
 				m_spLauncher->SubmitUpdate();
+				return true;
+			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFSplit")) {
+				auto spDlg = std::make_shared<CPDFSplitDlg>(
+					this,
+					GetDialogPropPtr(),
+					m_spFilerGridViewProp, m_spEditorProp->EditorTextBoxPropPtr, folder, files);
+
+				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 200))));
+				SetFocusedControlPtr(spDlg);
+				return true;
+			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFMerge")) {
+				auto spDlg = std::make_shared<CPDFMergeDlg>(
+					this,
+					GetDialogPropPtr(),
+					m_spFilerGridViewProp, m_spEditorProp->EditorTextBoxPropPtr, folder, files);
+
+				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
+				SetFocusedControlPtr(spDlg);
 				return true;
 			} else {
 				auto iter = std::find_if(m_spExeExProp->ExeExtensions.begin(), m_spExeExProp->ExeExtensions.end(),

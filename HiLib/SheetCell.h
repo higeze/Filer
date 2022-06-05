@@ -45,6 +45,8 @@ public:
 	//Event
 	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnDestroy(const DestroyEvent& e);
+	virtual void OnEnable(const EnableEvent& e);
+
 	virtual void OnPaint(const PaintEvent& e) override {}
 	virtual void OnClose(const CloseEvent & e) override {}
 	virtual void OnRect(const RectEvent& e) override {}

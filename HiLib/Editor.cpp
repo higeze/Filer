@@ -67,6 +67,8 @@ void CEditor::OnCreate(const CreateEvt& e)
 	m_spFilterBox->OnCreate(CreateEvt(GetWndPtr(), this, rcFilter));
 	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, rcText));
 	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
+	//m_spFilterBox->SetIsTabStop(true);
+	//m_spTextBox->SetIsTabStop(true);
 }
 
 void CEditor::OnPaint(const PaintEvent& e)

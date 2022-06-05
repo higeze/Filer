@@ -110,12 +110,13 @@ struct RenderDocFindLineEvent
 
 struct RenderPageFindLineEvent
 {
-	RenderPageFindLineEvent(CDirect2DWrite* pDirect, CPDFViewport* pViewport, const std::wstring& find, const CRectF& rc)
-	:DirectPtr(pDirect), ViewportPtr(pViewport), Find(find), Rect(rc) {}
+	RenderPageFindLineEvent(CDirect2DWrite* pDirect, CPDFViewport* pViewport, const std::wstring& find, const int& index, const CRectF& rc)
+	:DirectPtr(pDirect), ViewportPtr(pViewport), Find(find), PageIndex(index), Rect(rc) {}
 
 	CDirect2DWrite* DirectPtr;
 	CPDFViewport* ViewportPtr;
 	std::wstring Find;
+	int PageIndex;
 	CRectF Rect;
 };
 

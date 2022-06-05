@@ -88,6 +88,7 @@ public:
 
 	//Lazy Evaluation Getter
 	virtual std::wstring GetPath();
+	virtual std::wstring GetPathWithoutExt();
 	virtual std::wstring GetFileNameWithoutExt();
 	virtual std::wstring GetDispName();
 	virtual std::wstring GetDispExt();

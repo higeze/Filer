@@ -623,19 +623,10 @@
     <ClInclude Include="..\HiLIb\Splitter.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\PdfView.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PdfViewStateMachine.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\IStateMachine.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\HiLibResource.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\Pdf.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="LauncherCell.h">
@@ -731,35 +722,8 @@
     <ClInclude Include="..\D2DTextBox\EditorTextBox.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\PDFDoc.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\FileIsInUse.h" />
     <ClInclude Include="..\HiLib\ThreadPool.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLIb\PDFiumSingleThread.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFEditor.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFEditorProperty.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFViewProperty.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFCaret.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFViewport.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFEvent.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFPage.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="Launcher.h">
@@ -770,6 +734,39 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\TextBlock.h">
       <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFCaret.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFDoc.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFEditor.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFEditorProperty.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFEvent.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLIb\PDFiumSingleThread.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFPage.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PdfView.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFViewport.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFViewProperty.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PdfViewStateMachine.h">
+      <Filter>HiLib\PDF</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1070,15 +1067,6 @@
     <ClCompile Include="..\HiLIb\Splitter.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\PdfView.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\Pdf.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="LauncherGridView.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
@@ -1123,29 +1111,35 @@
     <ClCompile Include="..\HiLib\ThreadPool.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\PDFDoc.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLIb\PDFiumSingleThread.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PDFEditor.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PDFCaret.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PDFViewport.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PDFPage.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\TextBoxDialog.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\TextBlock.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFCaret.cpp">
+      <Filter>HiLib\PDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFDoc.cpp">
+      <Filter>HiLib\PDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFEditor.cpp">
+      <Filter>HiLib\PDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLIb\PDFiumSingleThread.cpp">
+      <Filter>HiLib\PDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFPage.cpp">
+      <Filter>HiLib\PDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PdfView.cpp">
+      <Filter>HiLib\PDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFViewport.cpp">
+      <Filter>HiLib\PDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp">
+      <Filter>HiLib\PDF</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

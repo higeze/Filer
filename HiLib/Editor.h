@@ -23,9 +23,6 @@ class CEditor :public CD2DWControl
 	ReactiveCommand<HWND> m_save_as;
 	ReactiveCommand<HWND> m_open_as;
 
-	std::unique_ptr<CBinding> m_pFilterToTextBinding;
-	std::unique_ptr<CBinding> m_pFilterToScrollBinding;
-
 public:
 	CEditor(
 		CD2DWControl* pParentControl,

@@ -799,9 +799,14 @@ public:
 class CBinding
 {
 public:
+	CBinding() {}
+
 	template<typename T>
-	CBinding(IReactiveProperty<T>& source, IReactiveProperty<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	void Attach(IReactiveProperty<T>& source, IReactiveProperty<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
 	{
+		if (m_sourceConnection.connected()) { m_sourceConnection.disconnect(); }
+		if (m_targetConnection.connected()) { m_targetConnection.disconnect(); }
+
 		target.set(source.get());
 		m_sourceConnection = source.Subscribe(
 			[&](T value)->void
@@ -815,9 +820,17 @@ public:
 			});
 	}
 
-	template <class CharT, class Traits, class Allocator>
-	CBinding(ReactiveBasicStringProperty<CharT, Traits, Allocator>& source, ReactiveBasicStringProperty<CharT, Traits, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	template<typename T>
+	CBinding(IReactiveProperty<T>& source, IReactiveProperty<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
 	{
+		Attach(source, target, idSource, idTarget);
+	}
+
+	template <class CharT, class Traits, class Allocator>
+	void Attach(ReactiveBasicStringProperty<CharT, Traits, Allocator>& source, ReactiveBasicStringProperty<CharT, Traits, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		if (m_sourceConnection.connected()) { m_sourceConnection.disconnect(); }
+		if (m_targetConnection.connected()) { m_targetConnection.disconnect(); }
 		target.set(source.get());
 		m_sourceConnection = source.Subscribe(
 			[&](const NotifyStringChangedEventArgs<CharT>& notify)->void
@@ -830,6 +843,14 @@ public:
 				source.set(notify.NewString);
 			});
 	}
+
+	template <class CharT, class Traits, class Allocator>
+	CBinding(ReactiveBasicStringProperty<CharT, Traits, Allocator>& source, ReactiveBasicStringProperty<CharT, Traits, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		Attach(source, target, idSource, idTarget);
+	}
+
+
 
 	template <class CharT, class Traits, class Allocator>
 	CBinding(std::basic_string<CharT, Traits, Allocator>& source, ReactiveBasicStringProperty<CharT, Traits, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
@@ -858,15 +879,21 @@ public:
 			});
 	}
 
-
 	template<typename T>
-	CBinding(IReactiveCommand<T>& source, IReactiveCommand<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	void Attach(IReactiveCommand<T>& source, IReactiveCommand<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
 	{
+		if (m_targetConnection.connected()) { m_targetConnection.disconnect(); }
 		m_targetConnection = target.Subscribe(
 			[&](T value)->void
 			{
 				source.Execute(value);
 			}, idTarget);
+	}
+
+	template<typename T>
+	CBinding(IReactiveCommand<T>& source, IReactiveCommand<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		Attach(source, target, idSource, idTarget);
 	}
 
 	template<>
@@ -905,6 +932,7 @@ public:
 		if (m_sourceConnection.connected()) { m_sourceConnection.disconnect(); }
 		if (m_targetConnection.connected()) { m_targetConnection.disconnect(); }
 	}
+
 private:
 	sigslot::connection m_sourceConnection;
 	sigslot::connection m_targetConnection;

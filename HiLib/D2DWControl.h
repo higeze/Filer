@@ -53,6 +53,7 @@ public:
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnClose(const CloseEvent& e) override;
+	virtual void OnEnable(const EnableEvent& e) override;
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override;

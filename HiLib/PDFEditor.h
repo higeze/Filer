@@ -23,8 +23,7 @@ private:
 	ReactiveCommand<HWND> m_save_as;
 	ReactiveCommand<HWND> m_open_as;
 
-	std::unique_ptr<CBinding> m_pFilterToTextBinding;
-	std::unique_ptr<CBinding> m_pFilterToScrollBinding;
+	CBinding m_bindFilterText;
 
 public:
 	CPDFEditor(
@@ -38,7 +37,6 @@ public:
 	ReactiveCommand<HWND>& GetOpenAsCommand() { return m_open_as; }
 	ReactiveCommand<HWND>& GetSaveAsCommand() { return m_save_as; }
 
-	CBinding m_bindFilterText;
 
 	std::tuple<CRectF, CRectF, CRectF> GetRects() const;
 

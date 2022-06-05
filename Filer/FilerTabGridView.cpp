@@ -599,34 +599,24 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		auto spView = GetTextViewPtr();
 
 		//Path
-		m_pTextPathBinding.reset(nullptr);//Need to dispose first to disconnect
-		m_pTextPathBinding.reset(new CBinding(spViewModel->Path, spView->GetPath()));
+		m_textPathBinding.Attach(spViewModel->Path, spView->GetPath());
 		m_pTextPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Status
-		m_pStatusBinding.reset(nullptr);
 		m_pStatusConnection = std::make_unique<sigslot::scoped_connection>(spViewModel->Status.Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Text
-		m_pTextBinding.reset(nullptr);
-		m_pTextBinding.reset(new CBinding(spViewModel->Text, spView->GetTextBoxPtr()->GetText()));
+		m_textBinding.Attach(spViewModel->Text, spView->GetTextBoxPtr()->GetText());
 		//Encoding
-		m_pTextEncodingBinding.reset(nullptr);
-		m_pTextEncodingBinding.reset(new CBinding(spViewModel->Encoding, spView->GetEncoding()));		
+		m_textEncodingBinding.Attach(spViewModel->Encoding, spView->GetEncoding());		
 		//Carets
-		m_pCaretsBinding.reset(nullptr);
-		m_pCaretsBinding.reset(new CBinding(spViewModel->Carets, spView->GetTextBoxPtr()->GetCarets()));
+		m_caretsBinding.Attach(spViewModel->Carets, spView->GetTextBoxPtr()->GetCarets());
 		//CaretPos
-		m_pCaretPosBinding.reset(nullptr);
-		m_pCaretPosBinding.reset(new CBinding(spViewModel->CaretPos, spView->GetTextBoxPtr()->GetCaretPos()));
+		m_caretPosBinding.Attach(spViewModel->CaretPos, spView->GetTextBoxPtr()->GetCaretPos());
 		//Open
-		m_pOpenBinding.reset(nullptr);
-		m_pOpenBinding.reset(new CBinding(spViewModel->OpenCommand, spView->GetOpenCommand()));
-		m_pOpenAsBinding.reset(nullptr);
-		m_pOpenAsBinding.reset(new CBinding(spViewModel->OpenAsCommand, spView->GetOpenAsCommand()));
+		m_openBinding.Attach(spViewModel->OpenCommand, spView->GetOpenCommand());
+		m_openAsBinding.Attach(spViewModel->OpenAsCommand, spView->GetOpenAsCommand());
 		//Save()
-		m_pSaveBinding.reset(nullptr);
-		m_pSaveBinding.reset(new CBinding(spViewModel->SaveCommand, spView->GetSaveCommand()));
-		m_pSaveAsBinding.reset(nullptr);
-		m_pSaveAsBinding.reset(new CBinding(spViewModel->SaveAsCommand, spView->GetSaveAsCommand()));
+		m_saveBinding.Attach(spViewModel->SaveCommand, spView->GetSaveCommand());
+		m_saveAsBinding.Attach(spViewModel->SaveAsCommand, spView->GetSaveAsCommand());
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
 		if (spViewModel->Status.get() == TextStatus::None) {
@@ -641,12 +631,10 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		auto spView = GetPdfViewPtr();
 
 		//Path
-		m_pPdfPathBinding.reset(nullptr);//Need to dispose first to disconnect
-		m_pPdfPathBinding.reset(new CBinding(spViewModel->Path, spView->GetPDFViewPtr()->GetPath()));
+		m_pdfPathBinding.Attach(spViewModel->Path, spView->GetPDFViewPtr()->GetPath());
 		m_pPdfPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPDFViewPtr()->GetPath().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Scale
-		m_pPdfScaleBinding.reset(nullptr);//Need to dispose first to disconnect
-		m_pPdfScaleBinding.reset(new CBinding(spViewModel->Scale, spView->GetPDFViewPtr()->GetScale()));
+		m_pdfScaleBinding.Attach(spViewModel->Scale, spView->GetPDFViewPtr()->GetScale());
 
 		//Open
 		//m_pOpenBinding.reset(nullptr);

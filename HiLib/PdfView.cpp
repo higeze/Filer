@@ -110,6 +110,20 @@ void CPdfView::OnDestroy(const DestroyEvent& e)
 	CD2DWControl::OnDestroy(e);
 }
 
+void CPdfView::OnEnable(const EnableEvent& e)
+{
+	if (e.Enable) {
+		if (!m_pdf) {
+			Open(m_path.get());
+		}
+	} else {
+		if (m_pdf) {
+			Close();
+		}
+
+	}
+}
+
 void CPdfView::OnRect(const RectEvent& e)
 {
 	CD2DWControl::OnRect(e);
@@ -174,7 +188,8 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	m_pdf->RenderFind(
 		RenderDocFindEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, GetFind().get(), begin, end));
 
-	std::wstring pageText = fmt::format(L"{} / {}:{},{}", curPageNo, m_pdf->GetPageCount(),begin, end);
+	//Paint Page
+	std::wstring pageText = fmt::format(L"{} / {}", curPageNo, m_pdf->GetPageCount());
 	CSizeF textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), pageText);
 	GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), pageText,
 		CRectF(GetRenderRectInWnd().right - textSize.width - m_spVScroll->GetRectInWnd().Width(),
@@ -205,13 +220,6 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		rcFocus.DeflateRect(1.0f, 1.0f);
 		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(m_pProp->FocusedLine), rcFocus);
 	}
-
-	//Paint Dialog
-	//for (auto iter = m_childControls.rbegin(); iter != m_childControls.rend(); ++iter) {
-	//	if (auto sp = std::dynamic_pointer_cast<CD2DWDialog>(*iter)) {
-	//		sp->OnPaint(e);
-	//	}
-	//}
 
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
 }

@@ -288,6 +288,14 @@ public:
 		:Event(pWnd, pHandled), HWnd(reinterpret_cast<HWND>(lParam)){ }
 };
 
+struct EnableEvent :public Event
+{
+public:
+	bool Enable;
+	EnableEvent(CD2DWWindow* pWnd, bool enable, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled), Enable(enable){ }
+};
+
 
 
 class CUIElement:public std::enable_shared_from_this<CUIElement>
@@ -316,6 +324,7 @@ public:
 	virtual void OnDestroy(const DestroyEvent& e) {}
 	virtual void OnPaint(const PaintEvent& e) {}
 	virtual void OnClosing(const ClosingEvent& e) {}
+	virtual void OnEnable(const EnableEvent& e) {}
 	virtual void OnClose(const CloseEvent& e) {}
 	virtual void OnCommand(const CommandEvent& e) {}
 	virtual void OnRect(const RectEvent& e) {}

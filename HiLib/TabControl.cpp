@@ -109,7 +109,7 @@ void CTabHeaderControl::OnCreate(const CreateEvt& e)
 	m_spButton->GetContent().set(L"x");
 	m_spButton->GetDisableContent().set(L"l");
 	m_spButton->GetIsFocusable().set(false);
-	m_isEnableBinding.reset(new CBinding(static_cast<CTabControl*>(m_pParentControl)->m_itemsSource[GetIndex()]->Unlock, m_spButton->GetIsEnabled()));
+	m_isEnableBinding.Attach(static_cast<CTabControl*>(m_pParentControl)->m_itemsSource[GetIndex()]->Unlock, m_spButton->GetIsEnabled());
 
 	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 }
@@ -518,9 +518,11 @@ void CTabControl::OnCreate(const CreateEvt& e)
 				auto spControl = m_itemsControlTemplate[typeid(*spData).name()](spData);
 				if (m_spCurControl != spControl) {
 					if (m_spCurControl) {
+						m_spCurControl->OnEnable(EnableEvent(GetWndPtr(), false));
 						m_spCurControl->GetIsEnabled().set(false);
 					}
 					m_spCurControl = spControl;
+					m_spCurControl->OnEnable(EnableEvent(GetWndPtr(), true));
 					m_spCurControl->GetIsEnabled().set(true);
 					SetFocusedControlPtr(spControl);
 				}

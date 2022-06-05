@@ -25,7 +25,7 @@ CPDFEditor::CPDFEditor(
 	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr)),
 	m_bindFilterText(m_spFilterBox->GetText(), m_spPDFView->GetFind())
 {
-	m_spFilterBox->SetIsScrollable(false);
+	m_spFilterBox->SetIsScrollable(false); 
 
 	m_spStatusBar->GetIsFocusable().set(false);
 }
@@ -52,6 +52,8 @@ void CPDFEditor::OnCreate(const CreateEvt& e)
 	m_spFilterBox->OnCreate(CreateEvt(GetWndPtr(), this, rcFilter));
 	m_spPDFView->OnCreate(CreateEvt(GetWndPtr(), this, rcPDF));
 	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
+	m_spFilterBox->SetIsTabStop(true);
+	m_spPDFView->SetIsTabStop(true);
 }
 
 void CPDFEditor::OnPaint(const PaintEvent& e)

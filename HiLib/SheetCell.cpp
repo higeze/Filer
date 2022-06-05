@@ -142,6 +142,12 @@ void CSheetCell::OnDestroy(const DestroyEvent& e)
 	CSheet::OnDestroy(e);
 }
 
+void CSheetCell::OnEnable(const EnableEvent& e)
+{
+	CCell::OnEnable(e);
+	CSheet::OnEnable(e);
+}
+
 
 void CSheetCell::OnLButtonDown(const LButtonDownEvent& e)
 {

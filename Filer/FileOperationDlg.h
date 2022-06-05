@@ -217,8 +217,8 @@ protected:
 	std::shared_ptr<CTextBox> m_spTextPath;
 	std::shared_ptr<CTextBox> m_spTextParam;
 	ExeExtension& m_exeExtension;
-	std::unique_ptr<CBinding> m_pBindingPath;
-	std::unique_ptr<CBinding> m_pBindingParam;
+	CBinding m_bindingPath;
+	CBinding m_bindingParam;
 
 	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();
 
@@ -240,3 +240,49 @@ public:
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnRect(const RectEvent& e) override;
 };
+
+class CPDFOperationDlgBase: public CFileOperationDlgBase<std::shared_ptr<CShellFile>>
+{
+private:
+protected:
+	std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects();
+	std::shared_ptr<CTextBox> m_spParameter;
+
+public:
+	CPDFOperationDlgBase(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+		const std::shared_ptr<CShellFolder>& folder,
+		const std::vector<std::shared_ptr<CShellFile>>& files);
+	virtual ~CPDFOperationDlgBase() = default;
+
+	virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnRect(const RectEvent& e) override;
+};
+
+class CPDFSplitDlg : public CPDFOperationDlgBase
+{
+public:
+	CPDFSplitDlg(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+		const std::shared_ptr<CShellFolder>& folder,
+		const std::vector<std::shared_ptr<CShellFile>>& files);
+	virtual ~CPDFSplitDlg() = default;
+};
+
+class CPDFMergeDlg : public CPDFOperationDlgBase
+{
+public:
+	CPDFMergeDlg(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+		const std::shared_ptr<CShellFolder>& folder,
+		const std::vector<std::shared_ptr<CShellFile>>& files);
+	virtual ~CPDFMergeDlg() = default;
+};
+
+

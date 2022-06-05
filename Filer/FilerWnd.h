@@ -105,7 +105,7 @@ private:
 	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
 	
 	//CKonamiCommander m_konamiCommander;
-	std::unique_ptr<CBinding> m_pSplitterBinding;
+	CBinding m_splitterBinding;
 
 public:
 	//Constructor

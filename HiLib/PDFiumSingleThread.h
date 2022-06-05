@@ -2,6 +2,8 @@
 #include <fpdfview.h>
 #include <fpdf_edit.h>
 #include <fpdf_text.h>
+#include <fpdf_ppo.h>
+#include <fpdf_save.h>
 #pragma comment(lib, "pdfium.dll.lib")
 
 #include "ThreadPool.h"
@@ -14,7 +16,7 @@ using UNQ_FPDF_BITMAP = std::unique_ptr<std::remove_pointer_t<FPDF_BITMAP>, std:
 using UNQ_FPDF_TEXTPAGE = std::unique_ptr<std::remove_pointer_t<FPDF_TEXTPAGE>, std::function<void(FPDF_TEXTPAGE)>>;
 using UNQ_FPDF_SCHHANDLE = std::unique_ptr<std::remove_pointer_t<FPDF_SCHHANDLE>, std::function<void(FPDF_SCHHANDLE)>>;
 
-class CPDFException :public std::exception
+class CPDFException : public std::exception
 {
 private:
     unsigned long m_error;
@@ -22,6 +24,38 @@ public:
     CPDFException(unsigned long error, const char* what)
         :std::exception(what), m_error(error) {}
     unsigned long GetError()const { return m_error; }
+};
+
+class CPDFiumFileWrite : public FPDF_FILEWRITE
+{
+private:
+	FILE* m_pFile = nullptr;
+public:
+	CPDFiumFileWrite(const std::string& path)
+	{
+		fopen_s(&m_pFile, path.c_str(), "wb");
+
+		version = 1;
+		WriteBlock = [](FPDF_FILEWRITE* pThis, const void* pData, unsigned long size)->int
+		{
+			return fwrite(pData, 1, size, static_cast<CPDFiumFileWrite*>(pThis)->m_pFile);
+		};
+	}
+	CPDFiumFileWrite(const std::wstring& path)
+	{
+		_wfopen_s(&m_pFile, path.c_str(), L"wb");
+
+		version = 1;
+		WriteBlock = [](FPDF_FILEWRITE* pThis, const void* pData, unsigned long size)->int
+		{
+			return fwrite(pData, 1, size, static_cast<CPDFiumFileWrite*>(pThis)->m_pFile);
+		};
+	}
+
+	virtual ~CPDFiumFileWrite()
+	{
+		fclose(m_pFile);
+	}
 };
 
 class CPDFiumSingleThread
@@ -72,6 +106,10 @@ private:
     FPDF_DOCUMENT LoadDocument(FPDF_STRING file_path, FPDF_BYTESTRING password)
     {
         return ThreadRun(FPDF_LoadDocument, file_path, password);
+    }
+    FPDF_DOCUMENT CreateDocument()
+    {
+        return ThreadRun(FPDF_CreateNewDocument);
     }
     FPDF_DOCUMENT LoadDocumentEx(FPDF_STRING file_path, FPDF_BYTESTRING password)
     {
@@ -136,10 +174,40 @@ public:
                         LoadDocumentEx(file_path, password),
                         [this](FPDF_DOCUMENT p) { if (p) { return CloseDocument(p); } });
     }
+    UNQ_FPDF_DOCUMENT UnqCreateDocument()
+    {
+        return UNQ_FPDF_DOCUMENT(
+                        CreateDocument(),
+                        [this](FPDF_DOCUMENT p) { if (p) { return CloseDocument(p); } });
+    }
 
     int GetPageCount(FPDF_DOCUMENT document)
     {
         return ThreadRun(FPDF_GetPageCount, document);
+    }
+
+    FPDF_BOOL ImportPagesByIndex(FPDF_DOCUMENT dest_doc,
+                            FPDF_DOCUMENT src_doc,
+                            const int* page_indices,
+                            unsigned long length,
+                            int index)
+    {
+        return ThreadRun(FPDF_ImportPagesByIndex, dest_doc, src_doc, page_indices, length, index);
+    }
+
+    FPDF_BOOL ImportPages(FPDF_DOCUMENT dest_doc,
+                        FPDF_DOCUMENT src_doc,
+                        FPDF_BYTESTRING pagerange,
+                        int index)
+    {
+        return ThreadRun(FPDF_ImportPages, dest_doc, src_doc, pagerange, index);
+    }
+
+    FPDF_BOOL SaveAsCopy(FPDF_DOCUMENT document,
+                        FPDF_FILEWRITE* pFileWrite,
+                        FPDF_DWORD flags)
+    {
+        return ThreadRun(FPDF_SaveAsCopy, document, pFileWrite, flags);
     }
 
     /*************/

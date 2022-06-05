@@ -8,6 +8,8 @@
 #include "future_then.h"
 #include "Dispatcher.h"
 #include "async_catch.h"
+#include "PDFDoc.h"
+#include "PDFViewProperty.h"
 //TODOTODO
 //RenameWnd
 
@@ -18,7 +20,7 @@ CCopyMoveDlgBase::CCopyMoveDlgBase(
 	CD2DWControl* pParentControl,
 	const std::shared_ptr<DialogProperty>& spDialogProp,
 	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
+	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)//TOOD quit idl, change shellfile, folder
 	:CSimpleFileOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, srcIDL, srcChildIDLs), m_destIDL(destIDL)
 {
 	//Items Source
@@ -332,8 +334,8 @@ CExeExtensionDlg::CExeExtensionDlg(
 	m_spTextPath(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
 	m_spTextParam(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
 	m_exeExtension(exeExtension),
-	m_pBindingPath(std::make_unique<CBinding>(m_exeExtension.Path, m_spTextPath->GetText())),
-	m_pBindingParam(std::make_unique<CBinding>(m_exeExtension.Parameter, m_spTextParam->GetText()))
+	m_bindingPath(m_exeExtension.Path, m_spTextPath->GetText()),
+	m_bindingParam(m_exeExtension.Parameter, m_spTextParam->GetText())
 
 {
 	m_title.set(L"Exe");
@@ -499,4 +501,131 @@ void CExeExtensionDlg::OnRect(const RectEvent& e)
 	m_spTextParam->OnRect(RectEvent(GetWndPtr(), rcTextParam));
 	m_spButtonDo->OnRect(RectEvent(GetWndPtr(), rcBtnDo));
 	m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
+}
+
+CPDFOperationDlgBase::CPDFOperationDlgBase(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<DialogProperty>& spDialogProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+	const std::shared_ptr<CShellFolder>& folder,
+	const std::vector<std::shared_ptr<CShellFile>>& files)
+	:CFileOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, CIDL(), std::vector<CIDL>()),
+	m_spParameter(std::make_shared<CTextBox>(this, spTextBoxProp, L""))
+{
+	//Items Source
+	for (auto& file : files) {
+		m_spItemsSource->push_back(std::make_tuple(file));
+	}
+
+	//FileGrid
+	m_spFilerControl = std::make_unique<CFileOperationGridView<std::shared_ptr<CShellFile>>>(
+		this,
+		spFilerGridViewProp,
+		m_spItemsSource,
+		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr),
+		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Name"),
+		arg<"frzcolcnt"_s>() = 1,
+		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{
+			std::make_shared<CFilePathExtColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Ext"),
+			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileSizeArgsPtr),
+			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileTimeArgsPtr) },
+		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
+		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
+		arg<"frzrowcnt"_s>() = 2);
+}
+
+std::tuple<CRectF, CRectF, CRectF, CRectF> CPDFOperationDlgBase::GetRects()
+{
+	CRectF rc = GetRectInWnd();
+	CRectF rcTitle = GetTitleRect();
+	rc.top = rcTitle.bottom;
+	CRectF rcBtnCancel(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
+	CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
+	CRectF rcParam(rc.left + 5.f, rc.bottom - 95.f, rc.right - 5.f, rc.bottom - 30.f);
+	CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.right - 5.f, rc.bottom - 100.f);
+
+	return { rcGrid, rcParam, rcBtnDo, rcBtnCancel };
+}
+
+
+void CPDFOperationDlgBase::OnCreate(const CreateEvt& e)
+{
+	//Base
+	CD2DWDialog::OnCreate(e);
+	
+	//Size
+	auto [rcGrid, rcParam, rcBtnDo, rcBtnCancel] = GetRects();
+		
+	m_spFilerControl->OnCreate(CreateEvt(GetWndPtr(), this, rcGrid));
+	m_spParameter->OnCreate(CreateEvt(GetWndPtr(), this, rcParam));
+	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnDo));
+	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
+	SetFocusedControlPtr(m_spButtonDo);
+}
+
+void CPDFOperationDlgBase::OnRect(const RectEvent& e)
+{
+	CD2DWControl::OnRect(e);
+
+	auto [rcGrid, rcParam, rcBtnDo, rcBtnCancel] = GetRects();		
+
+	m_spFilerControl->OnRect(RectEvent(GetWndPtr(), rcGrid));
+	m_spParameter->OnRect(RectEvent(GetWndPtr(), rcParam));
+	m_spButtonDo->OnRect(RectEvent(GetWndPtr(), rcBtnDo));
+	m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
+}
+
+CPDFSplitDlg::CPDFSplitDlg(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<DialogProperty>& spDialogProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+	const std::shared_ptr<CShellFolder>& folder,
+	const std::vector<std::shared_ptr<CShellFile>>& files)
+	:CPDFOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, spTextBoxProp, folder, files)
+{
+	m_title.set(L"PDF Split");
+	m_spButtonDo->GetContent().set(L"Split");
+	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	{
+		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
+		for (auto& file : files) {
+			CPDFDoc doc(std::make_shared<PdfViewProperty>(), nullptr);
+			doc.Open(file->GetPath(), L"");
+			doc.SplitSaveAsCopy();
+		}
+		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+	});
+}
+
+CPDFMergeDlg::CPDFMergeDlg(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<DialogProperty>& spDialogProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+	const std::shared_ptr<CShellFolder>& folder,
+	const std::vector<std::shared_ptr<CShellFile>>& files)
+	:CPDFOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, spTextBoxProp, folder, files)
+{
+	m_title.set(L"PDF Merge");
+
+	m_spParameter->GetText().set(files[0]->GetPathWithoutExt() + L"_merge.pdf");
+	m_spButtonDo->GetContent().set(L"Merge");
+	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	{
+		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
+		std::vector<std::wstring> filePathes;
+		std::transform(files.cbegin(), files.cend(), std::back_inserter(filePathes), [](const std::shared_ptr<CShellFile>& spFile)->std::wstring
+		{
+			return spFile->GetPath();
+		});
+
+		CPDFDoc doc(std::make_shared<PdfViewProperty>(), nullptr);
+		doc.Create();
+		doc.Merge(filePathes);
+		doc.SaveAsCopy(m_spParameter->GetText().get());
+		
+		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+	});
 }

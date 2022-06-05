@@ -92,7 +92,7 @@ class CTabHeaderControl :public CD2DWControl
 private:
 	std::shared_ptr<TabHeaderControlProperty> m_spProp;
 	std::shared_ptr<CButton> m_spButton;
-	std::unique_ptr<CBinding> m_isEnableBinding;
+	CBinding m_isEnableBinding;
 
 	CSizeF m_size = CSizeF();
 	CSizeF m_iconSize = CSizeF();

@@ -142,6 +142,7 @@ public:
 	virtual void OnMouseWheel(const MouseWheelEvent& e) override;
 	virtual void OnClose(const CloseEvent& e) override;
 	virtual void OnDestroy(const DestroyEvent& e) override;
+	virtual void OnEnable(const EnableEvent& e) override;
 
 	virtual void OnRect(const RectEvent& e) override;
 	virtual void OnWndKillFocus(const KillFocusEvent& e) override;
