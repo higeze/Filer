@@ -39,6 +39,8 @@ public:
 		const std::shared_ptr<PdfViewProperty>& spProp,
 		std::function<void()> changed);
 	virtual ~CPDFDoc();
+	CPDFDoc(CPDFDoc&& doc) = default;
+	CPDFDoc& operator=(CPDFDoc&& doc) = default;
 
 	void Open(const std::wstring& path, const std::wstring& password);
 	void Create();
@@ -74,10 +76,11 @@ public:
 	void ImportPages(const CPDFDoc& src_doc,
 					FPDF_BYTESTRING pagerange,
 					int index);
-	void SaveAsCopy(const std::wstring& path);
+	void SaveAsCopy(const std::wstring& path, FPDF_DWORD flags = 0);
 
 	void SplitSaveAsCopy();
 	void Merge(const std::vector<std::wstring>& srcPathes);
+	CPDFDoc Extract(const std::wstring& page_indices);
 
 
 

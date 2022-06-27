@@ -503,6 +503,10 @@ void CExeExtensionDlg::OnRect(const RectEvent& e)
 	m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
 }
 
+/************************/
+/* CPDFOperationDlgBase */
+/************************/
+
 CPDFOperationDlgBase::CPDFOperationDlgBase(
 	CD2DWControl* pParentControl,
 	const std::shared_ptr<DialogProperty>& spDialogProp,
@@ -576,6 +580,9 @@ void CPDFOperationDlgBase::OnRect(const RectEvent& e)
 	m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
 }
 
+/****************/
+/* CPDFSplitDlg */
+/****************/
 CPDFSplitDlg::CPDFSplitDlg(
 	CD2DWControl* pParentControl,
 	const std::shared_ptr<DialogProperty>& spDialogProp,
@@ -599,6 +606,9 @@ CPDFSplitDlg::CPDFSplitDlg(
 	});
 }
 
+/****************/
+/* CPDFMergeDlg */
+/****************/
 CPDFMergeDlg::CPDFMergeDlg(
 	CD2DWControl* pParentControl,
 	const std::shared_ptr<DialogProperty>& spDialogProp,
@@ -627,5 +637,62 @@ CPDFMergeDlg::CPDFMergeDlg(
 		doc.SaveAsCopy(m_spParameter->GetText().get());
 		
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+	});
+}
+
+/******************/
+/* CPDFExtractDlg */
+/******************/
+CPDFExtractDlg::CPDFExtractDlg(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<DialogProperty>& spDialogProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+	const std::shared_ptr<CShellFolder>& folder,
+	const std::vector<std::shared_ptr<CShellFile>>& files)
+	:CPDFOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, spTextBoxProp, folder, files)
+{
+	m_title.set(L"PDF Extract");
+
+	m_spParameter->GetText().set(L"");
+	m_spButtonDo->GetContent().set(L"Extract");
+
+	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	{
+		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
+		for (auto& file : files) {
+			CPDFDoc doc(std::make_shared<PdfViewProperty>(), nullptr);
+			doc.Open(file->GetPath(), L"");
+			CPDFDoc dst_doc(doc.Extract(m_spParameter->GetText().get()));
+			dst_doc.SaveAsCopy(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), m_spParameter->GetText().get()));
+		}
+	});
+}
+
+/*************************/
+/* CPDFUnlockDlg */
+/*************************/
+CPDFUnlockDlg::CPDFUnlockDlg(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<DialogProperty>& spDialogProp,
+	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+	const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+	const std::shared_ptr<CShellFolder>& folder,
+	const std::vector<std::shared_ptr<CShellFile>>& files)
+	:CPDFOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, spTextBoxProp, folder, files)
+{
+	m_title.set(L"PDF Unlock");
+
+	m_spParameter->GetText().set(L"");
+	m_spButtonDo->GetContent().set(L"Unlock");
+
+	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	{
+		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
+		for (auto& file : files) {
+			CPDFDoc doc(std::make_shared<PdfViewProperty>(), nullptr);
+			doc.Open(file->GetPath(), m_spParameter->GetText().get());
+			doc.SaveAsCopy(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), L"_unlock.pdf"),  FPDF_REMOVE_SECURITY);
+		}
 	});
 }

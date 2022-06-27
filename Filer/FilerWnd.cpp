@@ -160,7 +160,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 
 	//CFilerTabGridView
 	auto setUpFilerTabGridView = [this](std::shared_ptr<CFilerTabGridView>& spView, unsigned short id)->void {
-		spView->FilerGridViewPtr()->StatusLog = [this](const std::wstring& log) {
+		spView->GetFilerGridViewPtr()->StatusLog = [this](const std::wstring& log) {
 			m_spStatusBar->SetText(log);
 			InvalidateRect(GetDirectPtr()->Dips2Pixels(m_spStatusBar->GetRectInWnd()), FALSE);
 		};
@@ -218,6 +218,14 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFMerge");
 				mii.dwTypeData = (LPWSTR)L"PDF Merge";
 				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFExtract");
+				mii.dwTypeData = (LPWSTR)L"PDF Extract";
+				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFUnlock");
+				mii.dwTypeData = (LPWSTR)L"PDF Unlock";
+				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 			}
 
 
@@ -261,6 +269,24 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 				return true;
 			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFMerge")) {
 				auto spDlg = std::make_shared<CPDFMergeDlg>(
+					this,
+					GetDialogPropPtr(),
+					m_spFilerGridViewProp, m_spEditorProp->EditorTextBoxPropPtr, folder, files);
+
+				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
+				SetFocusedControlPtr(spDlg);
+				return true;
+			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFExtract")) {
+				auto spDlg = std::make_shared<CPDFExtractDlg>(
+					this,
+					GetDialogPropPtr(),
+					m_spFilerGridViewProp, m_spEditorProp->EditorTextBoxPropPtr, folder, files);
+
+				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
+				SetFocusedControlPtr(spDlg);
+				return true;
+			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFUnlock")) {
+				auto spDlg = std::make_shared<CPDFUnlockDlg>(
 					this,
 					GetDialogPropPtr(),
 					m_spFilerGridViewProp, m_spEditorProp->EditorTextBoxPropPtr, folder, files);
@@ -329,8 +355,8 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		};
 	};
 
-	applyCustomContextMenu(m_spLeftView->FilerGridViewPtr());
-	applyCustomContextMenu(m_spRightView->FilerGridViewPtr());
+	applyCustomContextMenu(m_spLeftView->GetFilerGridViewPtr());
+	applyCustomContextMenu(m_spRightView->GetFilerGridViewPtr());
 
 	//SetWindowPlacement make sure Window in Monitor
 	WINDOWPLACEMENT wp = { 0 };
@@ -626,8 +652,8 @@ LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 			m_spLauncher->Reload();
 			m_spLeftFavoritesView->Reload();
 			m_spRightFavoritesView->Reload();
-			m_spLeftView->FilerGridViewPtr()->Reload();
-			m_spRightView->FilerGridViewPtr()->Reload();
+			m_spLeftView->GetFilerGridViewPtr()->Reload();
+			m_spRightView->GetFilerGridViewPtr()->Reload();
 			InvalidateRect(NULL, FALSE);
 		default:
 			break;

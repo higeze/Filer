@@ -285,4 +285,27 @@ public:
 	virtual ~CPDFMergeDlg() = default;
 };
 
+class CPDFExtractDlg : public CPDFOperationDlgBase
+{
+public:
+	CPDFExtractDlg(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+		const std::shared_ptr<CShellFolder>& folder,
+		const std::vector<std::shared_ptr<CShellFile>>& files);
+	virtual ~CPDFExtractDlg() = default;
+};
+
+class CPDFUnlockDlg : public CPDFOperationDlgBase
+{
+public:
+	CPDFUnlockDlg(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
+		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+		const std::shared_ptr<CShellFolder>& folder,
+		const std::vector<std::shared_ptr<CShellFile>>& files);
+	virtual ~CPDFUnlockDlg() = default;
+};
 

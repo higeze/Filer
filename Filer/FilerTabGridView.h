@@ -1,7 +1,5 @@
 #pragma once
 #include "MyWnd.h"
-#include "MyXmlSerializer.h"
-#include "MyFriendSerializer.h"
 #include "MyRect.h"
 #include "MyFont.h"
 #include "ShellFolder.h"
@@ -49,27 +47,6 @@ struct FilerTabData:public TabData
 		FolderPtr = data.FolderPtr->Clone();
 	}
 
-	template<class Archive>
-	void save(Archive& ar)
-	{
-		Path = FolderPtr->GetPath();
-		ar("Path", Path);
-	}
-
-	template<class Archive>
-	void load(Archive& ar)
-	{
-		ar("Path", Path);
-		if (!Path.empty()) {
-			auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(Path);
-			if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-				FolderPtr = sp;
-			} else {
-				FolderPtr = CKnownFolderManager::GetInstance()->GetDesktopFolder();
-				Path = FolderPtr->GetPath();
-			}
-		}
-	}
 	friend void to_json(json& j, const FilerTabData& o)
 	{
 		to_json(j, static_cast<const TabData&>(o));
@@ -102,17 +79,6 @@ struct ToDoTabData:public TabData
 		:TabData(), Path(path){}
 
 	virtual ~ToDoTabData() = default;
-
-	template<class Archive>
-	void save(Archive& ar)
-	{
-		ar("Path", Path);
-	}
-	template<class Archive>
-	void load(Archive& ar)
-	{
-		ar("Path", Path);
-	}
 
 	friend void to_json(json& j, const ToDoTabData& o)
 	{
@@ -181,18 +147,6 @@ struct TextTabData :public TabData
 
 	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
 
-
-	template<class Archive>
-	void save(Archive & ar)
-	{
-		ar("Path", Path);
-	}
-	template<class Archive>
-	void load(Archive & ar)
-	{
-		ar("Path", Path);
-	}
-
 	friend void to_json(json& j, const TextTabData& o)
 	{
 		to_json(j, static_cast<const TabData&>(o));
@@ -227,16 +181,6 @@ struct PdfTabData :public TabData
 	void Open() {}
 	void Open(const std::wstring& path) {}
 
-	template<class Archive>
-	void save(Archive & ar)
-	{
-		ar("Path", Path);
-	}
-	template<class Archive>
-	void load(Archive & ar)
-	{
-		ar("Path", Path);
-	}
 	friend void to_json(json& j, const PdfTabData& o)
 	{
 		to_json(j, static_cast<const TabData&>(o));
@@ -293,15 +237,14 @@ public:
 	/* Pure Virtual */
 	/****************/
 
-	/***********/
-	/* Closure */
-	/***********/
-	//std::function<std::shared_ptr<CFilerGridView>&()> GetFilerGridViewPtr;
-	property<std::shared_ptr<CFilerGridView>> FilerGridViewPtr;
+	/**********/
+	/* Getter */
+	/**********/
 
-	std::function<std::shared_ptr<CToDoGridView>&()> GetToDoGridViewPtr;
-	std::function<std::shared_ptr<CEditor>&()> GetTextViewPtr;
-	std::function<std::shared_ptr<CPDFEditor>&()> GetPdfViewPtr;
+	SHAREDPTR_GETTER(CFilerGridView, FilerGridView)
+	SHAREDPTR_GETTER(CEditor, TextView)
+	SHAREDPTR_GETTER(CPDFEditor, PdfView)
+	SHAREDPTR_GETTER(CToDoGridView, ToDoGridView)
 
 	/**************/
 	/* UI Message */
@@ -321,33 +264,6 @@ public:
 	void OnCommandOpenSameAsOther(const CommandEvent& e);
 
 public:
-	FRIEND_SERIALIZER
-	template <class Archive>
-	void save(Archive& ar)
-	{
-		REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
-		REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData );
-		REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
-		REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
-
-		CTabControl::save(ar);
-		auto spGrid = FilerGridViewPtr();
-		ar("FilerView", spGrid);
-	}
-
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
-		REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData);
-		REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
-		REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
-
-		CTabControl::load(ar);
-		auto spGrid = FilerGridViewPtr();
-		ar("FilerView", spGrid, this, m_spFilerGridViewProp);
-	}
-
 	friend void to_json(json& j, const CFilerTabGridView& o)
 	{
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
@@ -356,7 +272,7 @@ public:
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 
 		to_json(j, static_cast<const CTabControl&>(o));
-		j["FilerView"] = o.FilerGridViewPtr();
+		j["FilerView"] = o.m_spFilerGridView;
 	}
 
 	friend void from_json(const json& j, CFilerTabGridView& o)
@@ -367,9 +283,7 @@ public:
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 
 		from_json(j, static_cast<CTabControl&>(o));
-		//std::shared_ptr<CFilerGridView> tmp;
-		get_to(j, "FilerView", /*tmp, &o, */o.m_spFilerGridViewProp);
-		//o.FilerGridViewPtr = tmp;
+		get_to(j, "FilerView", o.m_spFilerGridView);
 	}
 };
 

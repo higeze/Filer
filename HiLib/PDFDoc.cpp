@@ -167,10 +167,10 @@ void CPDFDoc::CopyTextToClipboard(const CopyDocTextEvent& e)
 
 }
 
-void CPDFDoc::SaveAsCopy(const std::wstring& path)
+void CPDFDoc::SaveAsCopy(const std::wstring& path, FPDF_DWORD flags)
 {
 	CPDFiumFileWrite fileWrite(path);
-	GetPDFiumPtr()->SaveAsCopy(GetDocPtr().get(), &fileWrite, 0);
+	GetPDFiumPtr()->SaveAsCopy(GetDocPtr().get(), &fileWrite, flags);
 }
 
 void CPDFDoc::ImportPages(const CPDFDoc& src_doc,
@@ -212,6 +212,14 @@ void CPDFDoc::Merge(const std::vector<std::wstring>& srcPathes)
 		auto count = GetPageCount();
 		ImportPages(srcDoc, NULL, count);
 	}
+}
+
+CPDFDoc CPDFDoc::Extract(const std::wstring& page_indices)
+{
+	auto dstDoc = CPDFDoc(m_pProp, nullptr);
+	dstDoc.Create();
+	m_pPDFium->ImportPages(dstDoc.m_pDoc.get(), m_pDoc.get(), wide_to_sjis(page_indices).c_str(), 0);
+	return dstDoc;
 }
 
 
