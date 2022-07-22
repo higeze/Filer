@@ -67,7 +67,7 @@ void CPDFDoc::RenderContent(const RenderDocContentEvent& e)
 	if (!GetPageCount()) { return; }
 	for (auto i = e.PageIndexBegin; i < e.PageIndexEnd; i++) {
 		GetPage(i)->RenderContent(
-			RenderPageContentEvent(e.DirectPtr, e.ViewportPtr, e.Scale, i));
+			RenderPageContentEvent(e.DirectPtr, e.ViewportPtr, e.Scale, i, e.Debug));
 	}
 }
 

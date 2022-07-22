@@ -11,6 +11,7 @@ struct CPdfViewStateMachine::Machine
 	{
 		class NormalPan {};
 		class NormalText {};
+		class NormalDebug {};
 
 		template<class T, class R, class... Ts>
 		auto call(R(T::* f)(Ts...))const
@@ -27,7 +28,11 @@ struct CPdfViewStateMachine::Machine
 
 				state<NormalText> +event<LButtonDownEvent> / call(&CPdfView::NormalText_LButtonDown),
 				state<NormalText> + event<SetCursorEvent> / call(&CPdfView::NormalText_SetCursor),
-				state<NormalText> + event<LButtonDblClkEvent> = state<NormalPan>
+				state<NormalText> + event<LButtonDblClkEvent> = state<NormalDebug>,
+
+				state<NormalDebug> +event<LButtonDownEvent> / call(&CPdfView::NormalText_LButtonDown),
+				state<NormalDebug> + event<SetCursorEvent> / call(&CPdfView::NormalText_SetCursor),
+				state<NormalDebug> + event<LButtonDblClkEvent> = state<NormalPan>
 			);
 		}
 	};
@@ -134,6 +139,11 @@ bool CPdfViewStateMachine::IsStateNormalPan()const
 {
 	using namespace sml;
 	return m_pMachine->is<decltype(state<Machine::Normal>)>(state<Machine::Normal::NormalPan>);
+}
+bool CPdfViewStateMachine::IsStateNormalDebug()const
+{
+	using namespace sml;
+	return m_pMachine->is<decltype(state<Machine::Normal>)>(state<Machine::Normal::NormalDebug>);
 }
 
 void CPdfViewStateMachine::process_event(const PaintEvent& e) { m_pMachine->process_event(e); }

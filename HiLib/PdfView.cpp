@@ -181,8 +181,9 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 
 	auto begin = std::distance(intersectRectsInDoc.cbegin(), first);
 	auto end = std::min(std::distance(intersectRectsInDoc.cbegin(), last.base()), m_pdf->GetPageCount());
+	bool debug = m_pMachine->IsStateNormalDebug();
 	m_pdf->RenderContent(
-		RenderDocContentEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, m_scale, begin, end));
+		RenderDocContentEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, m_scale, begin, end, debug));
 
 	//Paint Find	
 	m_pdf->RenderFind(
@@ -361,6 +362,8 @@ void CPdfView::NormalText_LButtonDown(const LButtonDownEvent& e)
 			} else {
 				m_caret.Move(page, index, point);
 			}
+		} else {
+			m_caret.Clear();
 		}
 	}
 }

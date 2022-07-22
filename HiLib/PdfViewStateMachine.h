@@ -15,6 +15,7 @@ public:
 	~CPdfViewStateMachine();
 
 	bool IsStateNormalPan()const;
+	bool IsStateNormalDebug()const;
 
 	virtual void process_event(const PaintEvent& e) override;
 	virtual void process_event(const RButtonDownEvent& e) override;

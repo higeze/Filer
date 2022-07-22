@@ -148,3 +148,4 @@ CComPtr<ID2D1Bitmap> CFileIconCache::GetDefaultIconBitmap()
 	}
 	return m_defaultIconBmp;
 }
+

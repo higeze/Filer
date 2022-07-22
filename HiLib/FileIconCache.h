@@ -76,3 +76,4 @@ public:
 	CComPtr<ID2D1Bitmap> GetDefaultIconBitmap();
 	void Clear();
 };
+

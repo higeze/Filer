@@ -48,19 +48,21 @@ struct RenderContentEventBase : public PDFRenderEventBase
 
 struct RenderDocContentEvent : public RenderContentEventBase
 {
-	RenderDocContentEvent(CDirect2DWrite* pDirect, CPDFViewport* pViewport, const FLOAT& scale, int begin, int end)
-	:RenderContentEventBase(pDirect, pViewport, scale), PageIndexBegin(begin), PageIndexEnd(end){}
+	RenderDocContentEvent(CDirect2DWrite* pDirect, CPDFViewport* pViewport, const FLOAT& scale, int begin, int end, bool debug = false)
+	:RenderContentEventBase(pDirect, pViewport, scale), PageIndexBegin(begin), PageIndexEnd(end), Debug(debug) {}
 
 	int PageIndexBegin;
 	int PageIndexEnd;
+	bool Debug;
 };
 
 struct RenderPageContentEvent : public RenderContentEventBase
 {
-	RenderPageContentEvent(CDirect2DWrite* pDirect, CPDFViewport* pViewport, const FLOAT& scale, const int& index)
-	:RenderContentEventBase(pDirect, pViewport, scale),PageIndex(index) {}
+	RenderPageContentEvent(CDirect2DWrite* pDirect, CPDFViewport* pViewport, const FLOAT& scale, const int& index, bool debug = false)
+	:RenderContentEventBase(pDirect, pViewport, scale),PageIndex(index), Debug(debug) {}
 
 	int PageIndex;
+	bool Debug;
 };
 
 /**************/
