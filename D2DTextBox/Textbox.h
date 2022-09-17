@@ -16,6 +16,8 @@
 #include "TextEditSink.h"
 #include "getter_macro.h"
 
+#include "UndoReDoManager.h"
+
 
 struct TextBoxProperty;
 //class CTextStore;
@@ -99,6 +101,8 @@ protected:
 	bool m_isFirstDrawCaret = false;
 	bool m_isClosing = false;
 	std::unique_ptr<CTextBoxStateMachine> m_pTextMachine;
+
+	CUnDoReDoManager m_doMgr;
 
 	/***************/
 	/* Constructor */
@@ -229,9 +233,14 @@ public:
 	void MoveCaret(const int& position, const CPointF& point);
 	void MoveCaretWithShift(const int& position, const CPointF& point);
 	void MoveSelection(const int& selFirst, const int& selLast);
-	BOOL InsertAtSelection(LPCWSTR psz);
-	//BOOL DeleteAtSelection(BOOL fBack);
-	//BOOL DeleteSelection();
+
+	void Insert(const std::wstring& text);
+	void ReplaceSelection(const std::wstring& text);
+	void Replace(const std::size_t& index, const std::size_t& count, const std::wstring& text);
+	void DeleteOne();
+	void BackspaceOne();
+	void DeleteSelection();
+
 	//void SetText(LPCWSTR str);
 	void CancelEdit();
 	void ClearText();

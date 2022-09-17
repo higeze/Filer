@@ -43,11 +43,11 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 
 	m_scale.Subscribe([this](const FLOAT& value)
 	{
-		if (m_prevScale) {
-			m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() * value / m_prevScale);
-			m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() * value / m_prevScale);
-		}
-		m_prevScale = value;
+		//if (m_prevScale) {
+		//	m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() * value / m_prevScale);
+		//	m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() * value / m_prevScale);
+		//}
+		//m_prevScale = value;
 	});
 
 	m_find.Subscribe([this](const NotifyStringChangedEventArgs<wchar_t>& arg)
@@ -135,7 +135,11 @@ void CPdfView::OnMouseWheel(const MouseWheelEvent& e)
 	if(::GetAsyncKeyState(VK_CONTROL)){
 		FLOAT factor = static_cast<FLOAT>(std::pow(1.1f, (std::abs(e.Delta) / WHEEL_DELTA)));
 		FLOAT multiply = (e.Delta > 0) ? factor : 1/factor;
+		FLOAT prevScale = m_scale.get();
 		m_scale.set(std::clamp(m_scale.get() * multiply, 0.1f, 8.f));
+		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() * m_scale / prevScale + m_spVScroll->GetScrollPage() / 2.f *(m_scale / prevScale - 1.f));
+		m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() * m_scale / prevScale + m_spHScroll->GetScrollPage() / 2.f *(m_scale / prevScale - 1.f));
+
 	} else {
 		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() - m_spVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);
 	}
@@ -171,11 +175,11 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	CRectF rcInDoc = m_viewport.CtrlToDoc(m_viewport.WndToCtrl(GetRenderRectInWnd()));
 
 	std::vector<CRectF> intersectRectsInDoc;
-	std::vector<CRectF> rectsInDoc = m_pdf->GetPageRects();
+	std::vector<CRectF> rectsInDoc = m_pdf->GetSourceRectsInDoc();
 
 	std::transform(rectsInDoc.cbegin(), rectsInDoc.cend(), std::back_inserter(intersectRectsInDoc), [rcInDoc](const CRectF& rc) { return rc.IntersectRect(rcInDoc); });
 	auto iter = std::max_element(intersectRectsInDoc.cbegin(), intersectRectsInDoc.cend(), [](const CRectF& a, const CRectF& b) { return a.Height() < b.Height(); });
-	int curPageNo = std::distance(intersectRectsInDoc.cbegin(), iter) + 1;
+	m_curPageNo = std::distance(intersectRectsInDoc.cbegin(), iter) + 1;
 	auto first = std::find_if(intersectRectsInDoc.cbegin(), intersectRectsInDoc.cend(), [](const CRectF& rc) { return rc.Height() > 0; });
 	auto last = std::find_if(intersectRectsInDoc.crbegin(), intersectRectsInDoc.crend(), [](const CRectF& rc) { return rc.Height() > 0; });
 
@@ -190,7 +194,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		RenderDocFindEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, GetFind().get(), begin, end));
 
 	//Paint Page
-	std::wstring pageText = fmt::format(L"{} / {}", curPageNo, m_pdf->GetPageCount());
+	std::wstring pageText = fmt::format(L"{} / {}", m_curPageNo, m_pdf->GetPageCount());
 	CSizeF textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), pageText);
 	GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), pageText,
 		CRectF(GetRenderRectInWnd().right - textSize.width - m_spVScroll->GetRectInWnd().Width(),
@@ -288,39 +292,44 @@ void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 		GetWndPtr()->m_hWnd);
 
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateClockwise")) {
-		switch (m_rotate) {
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
-				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90;
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90:
-				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180;
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180:
-				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270;
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270:
-				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT;
-				break;
-			default:
-				break;
-		}
+		std::unique_ptr<CPDFPage>& pPage = m_pdf->GetPage(m_curPageNo - 1);
+		pPage->Rotate.set((pPage->Rotate.get() + 1) % 4);
+		//switch (m_rotate) {
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
+		//		m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90;
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90:
+		//		m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180;
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180:
+		//		m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270;
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270:
+		//		m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT;
+		//		break;
+		//	default:
+		//		break;
+		//}
 	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateCounterClockwise")) {
-		switch (m_rotate) {
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
-				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270;
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90:
-				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT;
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180:
-				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90;
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270:
-				m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180;
-				break;
-			default:
-				break;
-		}
+		std::unique_ptr<CPDFPage>& pPage = m_pdf->GetPage(m_curPageNo - 1);
+		int rotate = pPage->Rotate.get() == 0 ? 4 : pPage->Rotate.get();
+		pPage->Rotate.set((rotate - 1) % 4);
+		//switch (m_rotate) {
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
+		//		m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270;
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90:
+		//		m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT;
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180:
+		//		m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90;
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270:
+		//		m_rotate = D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180;
+		//		break;
+		//	default:
+		//		break;
+		//}
 	}
 	*e.HandledPtr = TRUE;
 
@@ -685,16 +694,10 @@ std::tuple<CRectF, CRectF> CPdfView::GetRects() const
 void CPdfView::UpdateScroll()
 {
 	//VScroll
-	//Page
-	m_spVScroll->SetScrollPage(GetRenderSize().height);
-	//Range
-	m_spVScroll->SetScrollRange(0, GetRenderContentSize().height);
+	m_spVScroll->SetScrollRangePage(0, GetRenderContentSize().height, GetRenderSize().height);
 
 	//HScroll
-	//Page
-	m_spHScroll->SetScrollPage(GetRenderSize().width);
-	//Range
-	m_spHScroll->SetScrollRange(0, GetRenderContentSize().width);
+	m_spHScroll->SetScrollRangePage(0, GetRenderContentSize().width, GetRenderSize().width);
 
 	//VScroll/HScroll Rect
 	auto [rcVertical, rcHorizontal] = GetRects();

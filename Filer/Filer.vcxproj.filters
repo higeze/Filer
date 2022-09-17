@@ -768,6 +768,15 @@
     <ClInclude Include="..\HiLib\PdfViewStateMachine.h">
       <Filter>HiLib\PDF</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\UnDoReDoManager.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\IDoCommand.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PreviewHandlerFrame.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1140,6 +1149,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp">
       <Filter>HiLib\PDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\UnDoReDoManager.cpp">
+      <Filter>D2DTextBox</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

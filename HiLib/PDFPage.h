@@ -6,6 +6,9 @@
 #include <queue>
 #include <future>
 #include <boost/sml.hpp>
+#include "ReactiveProperty.h"
+
+#include "getter_macro.h"
 
 class CPDFDoc;
 
@@ -62,6 +65,7 @@ struct PdfBmpInfo
 {
 	CComPtr<ID2D1Bitmap> BitmapPtr;
 	FLOAT Scale;
+	int Rotate;
 };
 
 struct PdfTxtInfo
@@ -109,6 +113,8 @@ private:
 	std::function<void()> StateChanged;
 	//FLOAT m_requestingScale;
 	FLOAT m_loadingScale;
+	int m_loadingRotate;
+	//int m_rotate;
 
 
 
@@ -116,17 +122,19 @@ private:
 	UNQ_FPDF_TEXTPAGE m_pTextPage;
 	CSizeF m_sourceSize;
 
+	LAZY_GETTER(CSizeF, SourceSize)
+
 public:
 	/* Constructor/Destructor */
 	CPDFPage(CPDFDoc* pDoc, int index);
 	virtual ~CPDFPage();
 	std::unique_ptr<CPDFiumSingleThread>& GetPDFiumPtr();
-
+	/* Reactive */
+	ReactiveProperty<int> Rotate;	
 	/* Closure */
-	//std::function<std::shared_ptr<std::remove_pointer_t<FPDF_PAGE>>& ()> GetPagePtr;
-	//std::function<CSizeF()> GetSourceSize;
+
 	UNQ_FPDF_PAGE& GetPagePtr() { return m_pPage; }
-	CSizeF GetSourceSize() { return m_sourceSize; }
+
 	/* Member function */
 	void RenderContent(const RenderPageContentEvent& e);
 	void RenderFind(const RenderPageFindEvent& e);
@@ -140,7 +148,7 @@ public:
 	std::wstring GetText();
 
 private:
-	void LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale);
+	void LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale/*, const int& rotate*/);
 	void LoadText();
 	void LoadFind(const std::wstring& find_string);
 

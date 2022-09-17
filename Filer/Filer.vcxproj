@@ -334,6 +334,7 @@
     <ClInclude Include="..\HiLib\GridViewStateMachine.h" />
     <ClInclude Include="..\HiLib\IBindSheet.h" />
     <ClInclude Include="..\HiLib\IDL.h" />
+    <ClInclude Include="..\HiLib\IDoCommand.h" />
     <ClInclude Include="..\HiLib\IDragger.h" />
     <ClInclude Include="..\HiLib\IKeyObserver.h" />
     <ClInclude Include="..\HiLib\IMouseObserver.h" />
@@ -385,6 +386,7 @@
     <ClInclude Include="..\HiLib\PDFViewport.h" />
     <ClInclude Include="..\HiLib\PDFViewProperty.h" />
     <ClInclude Include="..\HiLib\PdfViewStateMachine.h" />
+    <ClInclude Include="..\HiLib\PreviewHandlerFrame.h" />
     <ClInclude Include="..\HiLib\property.h" />
     <ClInclude Include="..\HiLib\ReactiveProperty.h" />
     <ClInclude Include="..\HiLib\ScrollProperty.h" />
@@ -439,6 +441,7 @@
     <ClInclude Include="..\HiLib\Tracker.h" />
     <ClInclude Include="..\HiLib\D2DWControl.h" />
     <ClInclude Include="..\HiLib\UIElement.h" />
+    <ClInclude Include="..\HiLib\UnDoReDoManager.h" />
     <ClInclude Include="..\HiLib\UniqueIDFactory.h" />
     <ClInclude Include="..\HiLib\Unknown.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
@@ -599,6 +602,7 @@
     <ClCompile Include="..\HiLib\Timer.cpp" />
     <ClCompile Include="..\HiLib\D2DWControl.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
+    <ClCompile Include="..\HiLib\UnDoReDoManager.cpp" />
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
     <ClCompile Include="..\HiLib\PDFCaret.cpp" />
     <ClCompile Include="DriveSizeCell.cpp" />

@@ -33,6 +33,25 @@ CPDFDoc::CPDFDoc(const std::shared_ptr<PdfViewProperty>& spProp, std::function<v
 
 CPDFDoc::~CPDFDoc() = default;
 
+void CPDFDoc::LoadSourceSize()
+{
+	m_optSourceSize = CSizeF();
+	for (const auto& pPage : m_pages) {
+		m_optSourceSize->width = (std::max)(m_optSourceSize->width, pPage->GetSourceSize().width);
+		m_optSourceSize->height += pPage->GetSourceSize().height;
+	}	
+}
+
+void CPDFDoc::LoadSourceRectsInDoc()
+{
+	m_optSourceRectsInDoc = std::vector<CRectF>();
+	FLOAT height = 0.f;
+	for (const auto& pPage : m_pages) {
+		m_optSourceRectsInDoc->emplace_back(0.f, height, pPage->GetSourceSize().width, height + pPage->GetSourceSize().height);
+		height += pPage->GetSourceSize().height + 10.f;
+	}	
+}
+
 void CPDFDoc::LoadPageCount()
 {
 	m_optPageCount = m_pPDFium->GetPageCount(m_pDoc.get());
@@ -42,18 +61,18 @@ void CPDFDoc::Open(const std::wstring& path, const std::wstring& password)
 {
 	m_path = path;
 	m_password = password;
+	m_isDirty = false;
 
 	m_pDoc = std::move(m_pPDFium->UnqLoadDocument(wide_to_utf8(m_path).c_str(), wide_to_utf8(m_password).c_str()));
 
+	m_pages.clear();
 	for (auto i = 0; i < GetPageCount(); i++) {
-		m_pages.emplace_back(std::make_unique<CPDFPage>(this, i));
-	}
-
-	for (const auto& pPage : m_pages) {
-		m_sourceRectsInDoc.emplace_back(0.f, m_sourceSize.height, pPage->GetSourceSize().width, m_sourceSize.height + pPage->GetSourceSize().height);
-
-		m_sourceSize.width = (std::max)(m_sourceSize.width, pPage->GetSourceSize().width);
-		m_sourceSize.height += pPage->GetSourceSize().height;
+		m_pages.emplace_back(std::make_unique<CPDFPage>(this, i))->Rotate.Subscribe([this](const auto& i) 
+			{ 
+				ClearSourceSize();
+				ClearSourceRectsInDoc();
+				m_isDirty = true;
+			});
 	}
 }
 
@@ -88,9 +107,9 @@ void CPDFDoc::RenderFindLine(const RenderDocFindLineEvent& e)
 	for (auto i = 0; i < GetPageCount(); i++) {
 		auto rectHighlite = CRectF(
 			e.Rect.left + 2.f,
-			e.Rect.top + e.Rect.Height() * m_sourceRectsInDoc[i].top / fullHeight,
+			e.Rect.top + e.Rect.Height() * GetSourceRectsInDoc()[i].top / fullHeight,
 			e.Rect.right - 2.f,
-			e.Rect.top + e.Rect.Height() * m_sourceRectsInDoc[i].bottom / fullHeight);
+			e.Rect.top + e.Rect.Height() * GetSourceRectsInDoc()[i].bottom / fullHeight);
 
 		GetPage(i)->RenderFindLine(RenderPageFindLineEvent(e.DirectPtr, e.ViewportPtr, e.Find, i, rectHighlite));
 	}
@@ -167,6 +186,30 @@ void CPDFDoc::CopyTextToClipboard(const CopyDocTextEvent& e)
 
 }
 
+void CPDFDoc::Save()
+{
+	//To release binding between FPDF_DOCUMENT and File, Copy to new FPDF_DOCUMENT and Swap
+	UNQ_FPDF_DOCUMENT pNew = std::move(m_pPDFium->UnqCreateDocument());
+	m_pPDFium->ImportPages(pNew.get(), m_pDoc.get(), nullptr, 0);
+	m_pDoc = std::move(pNew);
+	m_pages.clear();
+
+	SaveAsCopy(m_path, 0);
+
+	ClearPageCount();
+	ClearSourceSize();
+	ClearSourceRectsInDoc();
+	m_isDirty = false;
+
+	for (auto i = 0; i < GetPageCount(); i++) {
+		m_pages.emplace_back(std::make_unique<CPDFPage>(this, i))->Rotate.Subscribe([this](const auto& i) 
+			{ 
+				ClearSourceSize();
+				ClearSourceRectsInDoc();
+				m_isDirty = true;
+			});
+	}
+}
 void CPDFDoc::SaveAsCopy(const std::wstring& path, FPDF_DWORD flags)
 {
 	CPDFiumFileWrite fileWrite(path);
@@ -219,6 +262,14 @@ CPDFDoc CPDFDoc::Extract(const std::wstring& page_indices)
 	auto dstDoc = CPDFDoc(m_pProp, nullptr);
 	dstDoc.Create();
 	m_pPDFium->ImportPages(dstDoc.m_pDoc.get(), m_pDoc.get(), wide_to_sjis(page_indices).c_str(), 0);
+	return dstDoc;
+}
+
+CPDFDoc CPDFDoc::Clone()
+{
+	auto dstDoc = CPDFDoc(m_pProp, nullptr);
+	dstDoc.Create();
+	m_pPDFium->ImportPages(dstDoc.m_pDoc.get(), m_pDoc.get(), nullptr, 0);
 	return dstDoc;
 }
 

@@ -24,15 +24,15 @@ private:
 	CDirect2DWrite* m_pDirect;
 	std::wstring m_path;
 	std::wstring m_password;
+	bool m_isDirty;
 	std::function<void()> m_changed;
 
 	UNQ_FPDF_DOCUMENT m_pDoc;
-	//int m_pageCount;
-	CSizeF m_sourceSize;
-	std::vector<CRectF> m_sourceRectsInDoc;
 	std::vector<std::unique_ptr<CPDFPage>> m_pages;
 
+	LAZY_GETTER(CSizeF, SourceSize)
 	LAZY_GETTER(int, PageCount)
+	LAZY_GETTER(std::vector<CRectF>, SourceRectsInDoc)
 
 public:
 	CPDFDoc(
@@ -47,11 +47,11 @@ public:
 
 	std::unique_ptr<CPDFiumSingleThread>& GetPDFiumPtr() { return m_pPDFium; }
 	std::shared_ptr<PdfViewProperty> GetPropPtr() const { return m_pProp; }
-	std::vector<CRectF>& GetPageRects() { return m_sourceRectsInDoc; }
 	UNQ_FPDF_DOCUMENT& GetDocPtr() { return m_pDoc; }
 	std::wstring GetPath() { return m_path; }
+	bool GetIsDirty()const { return m_isDirty; }
 
-	CSizeF GetSourceSize() const { return m_sourceSize; }
+
 
 	std::vector<std::unique_ptr<CPDFPage>>& GetPages() { return m_pages; }
 
@@ -76,11 +76,13 @@ public:
 	void ImportPages(const CPDFDoc& src_doc,
 					FPDF_BYTESTRING pagerange,
 					int index);
+	void Save();
 	void SaveAsCopy(const std::wstring& path, FPDF_DWORD flags = 0);
 
 	void SplitSaveAsCopy();
 	void Merge(const std::vector<std::wstring>& srcPathes);
 	CPDFDoc Extract(const std::wstring& page_indices);
+	CPDFDoc Clone();
 
 
 

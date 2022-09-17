@@ -78,6 +78,7 @@ protected:
 	ReactiveWStringProperty m_find;
 	ReactiveProperty<D2D1_BITMAPSOURCE_ORIENTATION> m_rotate;
 	FLOAT m_prevScale;
+	int m_curPageNo;
 
 
 

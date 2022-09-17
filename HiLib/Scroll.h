@@ -2,6 +2,7 @@
 #include "Direct2DWrite.h"
 #include "D2DWControl.h"
 #include <sigslot/signal.hpp>
+#include "ReactiveProperty.h"
 
 struct ScrollProperty;
 
@@ -14,7 +15,7 @@ struct ScrollProperty;
 		Visibility m_visibility = Visibility::Auto;
 		FLOAT m_page = 0.0f;
 		std::pair<FLOAT, FLOAT> m_range = std::make_pair(0.0f, 0.0f);
-		FLOAT m_pos = 0.0f;
+		ReactiveProperty<FLOAT> m_pos = 0.0f;
 
 		std::shared_ptr<ScrollProperty> m_spScrollProp;
 
@@ -34,12 +35,14 @@ struct ScrollProperty;
 		FLOAT GetScrollPage()const { return m_page; }
 		std::pair<FLOAT, FLOAT> GetScrollRange()const { return m_range; }
 		FLOAT GetScrollDistance()const { return m_range.second - m_range.first; }
-		FLOAT GetScrollPos()const { return m_pos; }
+		FLOAT GetScrollPos()const { return m_pos.get(); }
+		ReactiveProperty<FLOAT>& PropScrollPos() { return m_pos; }
 		CSizeF GetSize()const { return GetRectInWnd().Size(); }
 
 		void SetScrollPos(const FLOAT pos);
 		void SetScrollPage(const FLOAT page);
 		void SetScrollRange(const FLOAT min, FLOAT max);
+		void SetScrollRangePage(const FLOAT min, const FLOAT max, const FLOAT page);
 
 		Visibility GetVisibility()const { return m_visibility; }
 		void SetVisibility(const Visibility& value) { m_visibility = value; }

@@ -166,6 +166,8 @@ struct TextTabData :public TabData
 struct PdfTabData :public TabData
 {
 	ReactiveWStringProperty Path;
+	ReactiveProperty<FLOAT> VScroll = 0.0f;
+	ReactiveProperty<FLOAT> HScroll = 0.0f;
 	ReactiveProperty<FLOAT> Scale = 1.0f;
 	
 	ReactiveCommand<void> OpenCommand;
@@ -208,6 +210,8 @@ private:
 	CBinding m_textPathBinding;
 	CBinding m_pdfPathBinding;
 	CBinding m_pdfScaleBinding;
+	CBinding m_pdfVScrollBinding;
+	CBinding m_pdfHScrollBinding;
 	CBinding m_statusBinding;
 	CBinding m_caretPosBinding;
 	CBinding m_caretsBinding;

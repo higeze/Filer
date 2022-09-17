@@ -118,7 +118,16 @@ public:
 	ReactiveProperty(ReactiveProperty&& val) = default;
 	ReactiveProperty& operator=(const ReactiveProperty& val) = default;
 	ReactiveProperty& operator=(ReactiveProperty&& val) = default;
-
+	ReactiveProperty& operator=(const T& val) 
+	{
+		set(val);
+		return *this;
+	}
+	ReactiveProperty& operator=(T&& val)
+	{
+		set(val);
+		return *this;
+	}
 	virtual sigslot::connection Subscribe(std::function<void(const T& value)> next, sigslot::group_id id = 0)
 	{
 		return m_pSubject->Subscribe(next, id);
@@ -343,9 +352,8 @@ struct NotifyStringChangedEventArgs
 	NotifyStringChangedAction Action;
 	std::basic_string<CharT, Traits, Allocator> NewString;
 	std::basic_string<CharT, Traits, Allocator> OldString;
-	int StartIndex = -1;
-	int OldEndIndex = -1;
-	int NewEndIndex = -1;
+	int NewStartingIndex = -1;
+	int OldStartingIndex = -1;
 };
 
 template <class CharT,
@@ -377,10 +385,10 @@ public:
 		this->m_value.assign(value);
 		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Assign,
-				this->m_value,
+				value,
 				old,
-				0, (int)(old.size()),
-				(int)(this->m_value.size())
+				0, 
+				0
 		});
 	}
 
@@ -447,52 +455,56 @@ public:
 
 	ReactiveBasicStringProperty<CharT, Traits, Allocator>& insert(size_type index, const str_type& value)
 	{
-		str_type old(this->m_value);
 		this->m_value.insert(index, value);
 		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Insert,
-			this->m_value,
-			old,
-			(int)index, (int)index, (int)(index + value.size())
+			value,
+			str_type(),
+			(int)index, 
+			-1
 		});
 		return *this;
 	}
 
 	ReactiveBasicStringProperty<CharT, Traits, Allocator>& erase(size_type index = 0, size_type count = std::basic_string<CharT, Traits, Allocator>::npos)
 	{
-		str_type old(this->m_value);
+		str_type old(this->m_value.substr(index, count));
 		this->m_value.erase(index, count);
 		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Erase,
-			this->m_value,
+			str_type(),
 			old,
-			(int)index, (int)(index + count), (int)(index)
+			-1,
+			(int)index
 		});
 		return *this;
 	}
 
 	ReactiveBasicStringProperty<CharT, Traits, Allocator>& replace(size_type pos, size_type count, const str_type& value)
 	{
-		str_type old(this->m_value);
+		str_type old(this->m_value.substr(pos, count));
 		this->m_value.replace(pos, count, value);
 		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Replace,
-			this->m_value,
+			value,
 			old,
-			(int)pos, (int)(pos + count), int(pos + value.size())
+			(int)pos,
+			(int)pos
 		});
 		return *this;
 	}
 
 	ReactiveBasicStringProperty<CharT, Traits, Allocator>& replace(size_type pos, size_type n1, const CharT* s, size_type n2)
 	{
-		str_type old(this->m_value);
+		str_type neww(s, n2);
+		str_type old(this->m_value.substr(pos, n1));
 		this->m_value.replace(pos, n1, s, n2);
 		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Replace,
-				this->m_value,
-				old,
-				(int)pos, (int)(pos + n1), int(pos + n2)
+			neww,
+			old,
+			(int)pos,
+			(int)pos
 		});
 		return *this;
 	}
@@ -503,32 +515,33 @@ public:
 		this->m_value.clear();
 		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
 			NotifyStringChangedAction::Clear,
-			this->m_value,
+			nullptr,
 			old,
-			0, (int)old.size(), 0
+			-1,
+			0
 		});
 	}
 
-	template <class Archive>
-	void save(Archive& ar)
-	{
-		ReactiveDetailProperty<str_type, notify_type>::load(ar);
-	}
+	//template <class Archive>
+	//void save(Archive& ar)
+	//{
+	//	ReactiveDetailProperty<str_type, notify_type>::load(ar);
+	//}
 
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		str_type old(this->m_value);
-		ar("Value", this->m_value);
-		if (old != this->m_value) {
-			this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
-				NotifyStringChangedAction::Assign,
-				this->m_value,
-				old,
-				0, (int)old.size(), 0
-			});
-		}
-	}
+	//template <class Archive>
+	//void load(Archive& ar)
+	//{
+	//	str_type old(this->m_value);
+	//	ar("Value", this->m_value);
+	//	if (old != this->m_value) {
+	//		this->m_pSubject->OnNext(NotifyStringChangedEventArgs<CharT, Traits, Allocator>{
+	//			NotifyStringChangedAction::Assign,
+	//			this->m_value,
+	//			old,
+	//			0, (int)old.size(), 0
+	//		});
+	//	}
+	//}
 
 	friend void to_json(json& j, const ReactiveBasicStringProperty<CharT, Traits, Allocator>& o)
 	{
@@ -826,6 +839,30 @@ public:
 		Attach(source, target, idSource, idTarget);
 	}
 
+	template<typename T,typename CharT> void copy_notify_string_changed( T& target, const NotifyStringChangedEventArgs<CharT>& e)
+	{
+		switch (e.Action) {
+			case NotifyStringChangedAction::Assign://new,old,0,0
+				target.assign(e.NewString);
+				break;
+			case NotifyStringChangedAction::Insert://new,null,idx,-1
+				target.insert(e.NewStartingIndex, e.NewString);
+				break;
+			case NotifyStringChangedAction::Erase://null,old,-1, idx
+				target.erase(e.OldStartingIndex, e.OldString.size());
+				break;
+			case NotifyStringChangedAction::Replace://new,old,idx,idx
+				target.replace(e.OldStartingIndex, e.OldString.size(), e.NewString);
+				break;
+			case NotifyStringChangedAction::Clear://null,old,-1,idx
+				target.clear();
+				break;
+			default:
+				break;
+		}
+	}
+
+
 	template <class CharT, class Traits, class Allocator>
 	void Attach(ReactiveBasicStringProperty<CharT, Traits, Allocator>& source, ReactiveBasicStringProperty<CharT, Traits, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
 	{
@@ -835,12 +872,16 @@ public:
 		m_sourceConnection = source.Subscribe(
 			[&](const NotifyStringChangedEventArgs<CharT>& notify)->void
 			{
-				target.set(notify.NewString);
+				if (target.get() != source.get()) {
+					copy_notify_string_changed(target, notify);
+				}
 			}, idSource);
 		m_targetConnection = target.Subscribe(
 			[&](const NotifyStringChangedEventArgs<CharT>& notify)->void
 			{
-				source.set(notify.NewString);
+				if (target.get() != source.get()) {
+					copy_notify_string_changed(source, notify);
+				}
 			});
 	}
 
@@ -859,7 +900,9 @@ public:
 		m_targetConnection = target.Subscribe(
 			[&](const NotifyStringChangedEventArgs<CharT>& notify)->void
 			{
-				source = notify.NewString;
+				if (target.get() != source) {
+					copy_notify_string_changed(source, notify);
+				}
 			});
 	}
 

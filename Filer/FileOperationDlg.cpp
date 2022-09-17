@@ -537,18 +537,6 @@ CPDFOperationDlgBase::CPDFOperationDlgBase(
 		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
 		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
 		arg<"frzrowcnt"_s>() = 2);
-
-	m_spButtonDo->GetContent().set(L"Split");
-	m_spButtonDo->GetCommand().Subscribe([this]()->void
-	{
-		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
-		for (auto& file : files) {
-			CPDFDoc doc(std::make_shared<PdfViewProperty>(), nullptr);
-			doc.Open(file->GetPath(), L"");
-			doc.SplitSaveAsCopy();
-		}
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	});
 }
 
 std::tuple<CRectF, CRectF, CRectF, CRectF> CPDFOperationDlgBase::GetRects()
@@ -679,7 +667,7 @@ CPDFExtractDlg::CPDFExtractDlg(
 			boost::algorithm::replace_all(param, L"first", L"1");
 			boost::algorithm::replace_all(param, L"last", std::to_wstring(doc.GetPageCount()));
 			CPDFDoc dst_doc(doc.Extract(param));
-			dst_doc.SaveAsCopy(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), m_spParameter->GetText().get()));
+			dst_doc.SaveAsCopy(std::format(L"{}_{}.pdf", file->GetPathWithoutExt(), m_spParameter->GetText().get()));
 		}
 
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });

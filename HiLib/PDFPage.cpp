@@ -163,17 +163,43 @@ CPDFPage::CPDFPage(CPDFDoc* pDoc, int index )
 
 	m_pPage = std::move(GetPDFiumPtr()->UnqLoadPage(pDoc->GetDocPtr().get(), m_index));
 	m_pTextPage = std::move(GetPDFiumPtr()->Text_UnqLoadPage(GetPagePtr().get()));
-	m_sourceSize.width = static_cast<FLOAT>(GetPDFiumPtr()->GetPageWidth(GetPagePtr().get()));
-	m_sourceSize.height = static_cast<FLOAT>(GetPDFiumPtr()->GetPageHeight(GetPagePtr().get()));
+
+	//m_sourceSize.width = static_cast<FLOAT>(GetPDFiumPtr()->GetPageWidth(GetPagePtr().get()));
+	//m_sourceSize.height = static_cast<FLOAT>(GetPDFiumPtr()->GetPageHeight(GetPagePtr().get()));
+	Rotate.set(GetPDFiumPtr()->Page_GetRotation(m_pPage.get()));
+	Rotate.Subscribe([this](const int& value) 
+		{
+			GetPDFiumPtr()->Page_SetRotation(m_pPage.get(), value);
+			ClearSourceSize();
+		
+		},(std::numeric_limits<sigslot::group_id>::min)());
 }
 
 CPDFPage::~CPDFPage() = default;
 
 std::unique_ptr<CPDFiumSingleThread>& CPDFPage::GetPDFiumPtr() { return m_pDoc->GetPDFiumPtr(); }
 
+//void CPDFPage::SetRotate(const int& rotate)
+//{
+//	if (m_rotate != rotate) {
+//		GetPDFiumPtr()->Page_SetRotation(m_pPage.get(), rotate);
+//		m_rotate = GetPDFiumPtr()->Page_GetRotation(m_pPage.get());
+//		PropertyChanged("Rotate");
+//	}
+//	
+//}
+
+void CPDFPage::LoadSourceSize()
+{
+	m_optSourceSize = CSizeF();
+	m_optSourceSize->width = static_cast<FLOAT>(GetPDFiumPtr()->GetPageWidth(GetPagePtr().get()));
+	m_optSourceSize->height = static_cast<FLOAT>(GetPDFiumPtr()->GetPageHeight(GetPagePtr().get()));
+}
+
 void CPDFPage::LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale)
 {
 	m_loadingScale = scale;
+	m_loadingRotate = Rotate.get();
 
 	const CSizeF sz = GetSourceSize();
 	const int bw = static_cast<int>(std::round(sz.width * scale)); // Bitmap width
@@ -211,7 +237,7 @@ void CPDFPage::LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale)
 	CComPtr<ID2D1Bitmap> pBitmap;
 	FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap));
 
-	SetLockBitmap(PdfBmpInfo{ pBitmap, m_loadingScale });
+	SetLockBitmap(PdfBmpInfo{ pBitmap, m_loadingScale, m_loadingRotate });
 }
 
 void CPDFPage::LoadFind(const std::wstring& find_string)
@@ -257,9 +283,9 @@ void CPDFPage::LoadText()
 	auto is_lf = [](const wchar_t ch)->bool { return ch == L'\n'; };
 	int char_count = GetPDFiumPtr()->Text_CountChars(m_pTextPage.get());
 	//Str
-	std::wstring text;
-	int text_count = GetPDFiumPtr()->Text_GetText(m_pTextPage.get(), 0, char_count, reinterpret_cast<unsigned short*>(::GetBuffer(text, 10000)));
-	::ReleaseBuffer(text);
+	std::wstring text(char_count, 0);
+	int text_count = GetPDFiumPtr()->Text_GetText(m_pTextPage.get(), 0, char_count, reinterpret_cast<unsigned short*>(text.data()));
+	//::ReleaseBuffer(text);
 
 	//Original Char Rects
 	auto orgCharRects = std::vector<CRectF>();
@@ -283,20 +309,31 @@ void CPDFPage::LoadText()
 			auto stop = true;
 		}
 	}
-	//Cursor Rects
-	auto cursorRects = orgCharRects;
-	for (std::size_t i = 1; i < cursorRects.size(); i++) {//If i = 0  is Space or CRLF, ignore
-		bool isFirst = i == 0;
-		bool isAfterLF = !isFirst && is_lf(text[i - 1]);
-		if (is_space(text[i])) {
-			if (isFirst || isAfterLF) {
-				cursorRects[i].SetRect(
-					cursorRects[i + 1].right,
-					cursorRects[i + 1].top,
-					cursorRects[i + 1].right,
-					cursorRects[i + 1].bottom
-				);
-			} else {
+
+	if (!orgCharRects.empty()) {
+		//Cursor Rects
+		auto cursorRects = orgCharRects;
+		for (std::size_t i = 1; i < cursorRects.size(); i++) {//If i = 0  is Space or CRLF, ignore
+			bool isFirst = i == 0;
+			bool isAfterLF = !isFirst && is_lf(text[i - 1]);
+			if (is_space(text[i])) {
+				if (isFirst || isAfterLF) {
+					cursorRects[i].SetRect(
+						cursorRects[i + 1].right,
+						cursorRects[i + 1].top,
+						cursorRects[i + 1].right,
+						cursorRects[i + 1].bottom
+					);
+				} else {
+					cursorRects[i].SetRect(
+						cursorRects[i - 1].right,
+						cursorRects[i - 1].top,
+						cursorRects[i - 1].right,
+						cursorRects[i - 1].bottom
+					);
+				}
+			}
+			if (isCRorLF(text[i])) {
 				cursorRects[i].SetRect(
 					cursorRects[i - 1].right,
 					cursorRects[i - 1].top,
@@ -305,71 +342,65 @@ void CPDFPage::LoadText()
 				);
 			}
 		}
-		if (isCRorLF(text[i])) {
-			cursorRects[i].SetRect(
-				cursorRects[i - 1].right,
-				cursorRects[i - 1].top,
-				cursorRects[i - 1].right,
-				cursorRects[i - 1].bottom
-			);
-		}
-	}
-	cursorRects.emplace_back(
-		cursorRects.back().right, cursorRects.back().top,
-		cursorRects.back().right, cursorRects.back().bottom);
+		cursorRects.emplace_back(
+			cursorRects.back().right, cursorRects.back().top,
+			cursorRects.back().right, cursorRects.back().bottom);
 
-	//Mouse Rects
-	auto mouseRects = cursorRects;
+		//Mouse Rects
+		auto mouseRects = cursorRects;
 
-	CSizeF sz = GetSourceSize();
-	//FLOAT prevBottom = sz.height;
-	//FLOAT curBottom = sz.height;
-	//FLOAT curTop = 0.f;
-	//std::size_t curbegIndex = 0;
-	//std::size_t curlastIndex = 0;
-	//std::size_t prevbegIndex = 0;
-	//std::size_t prevlastIndex = 0;
+		CSizeF sz = GetSourceSize();
+		//FLOAT prevBottom = sz.height;
+		//FLOAT curBottom = sz.height;
+		//FLOAT curTop = 0.f;
+		//std::size_t curbegIndex = 0;
+		//std::size_t curlastIndex = 0;
+		//std::size_t prevbegIndex = 0;
+		//std::size_t prevlastIndex = 0;
 
-	for (std::size_t i = 0; i < mouseRects.size(); i++) {
-		bool isFirst = i == 0;
-		bool isLast = i == mouseRects.size() - 1;
-		bool isAfterLF = !isFirst && is_lf(text[i - 1]);
-		bool isBeforeLast = i == mouseRects.size() - 2;
-		bool isBeforeCR = !isLast && !isBeforeLast && is_cr(text[i + 1]);
-		bool isAfterSpace = !isFirst && is_space(text[i - 1]);
-		bool isBeforeSpace = !isLast && !isBeforeLast && is_space(text[i + 1]);
-		bool isSpaceMid = !isFirst && is_space(text[i]);
-		bool isCR = text[i] == L'\r';
-		bool isLF = text[i] == L'\n';
+		for (std::size_t i = 0; i < mouseRects.size(); i++) {
+			bool isFirst = i == 0;
+			bool isLast = i == mouseRects.size() - 1;
+			bool isAfterLF = !isFirst && is_lf(text[i - 1]);
+			bool isBeforeLast = i == mouseRects.size() - 2;
+			bool isBeforeCR = !isLast && !isBeforeLast && is_cr(text[i + 1]);
+			bool isAfterSpace = !isFirst && is_space(text[i - 1]);
+			bool isBeforeSpace = !isLast && !isBeforeLast && is_space(text[i + 1]);
+			bool isSpaceMid = !isFirst && is_space(text[i]);
+			bool isCR = text[i] == L'\r';
+			bool isLF = text[i] == L'\n';
 
-		//left & right
-		if (isCR || isSpaceMid || isLast) {
-			mouseRects[i].left = mouseRects[i - 1].right;
-			mouseRects[i].right = (std::min)(cursorRects[i - 1].right + cursorRects[i - 1].Width() * 0.5f, sz.width);
-		} else if (isLF) {
-			mouseRects[i].left = mouseRects[i - 1].left;
-			mouseRects[i].right = mouseRects[i - 1].right;
-		} else {
-			//left
-			if (isFirst || isAfterLF || isAfterSpace) {
-				mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * 0.5f, 0.f);
+			//left & right
+			if (isCR || isSpaceMid || isLast) {
+				mouseRects[i].left = mouseRects[i - 1].right;
+				mouseRects[i].right = (std::min)(cursorRects[i - 1].right + cursorRects[i - 1].Width() * 0.5f, sz.width);
+			} else if (isLF) {
+				mouseRects[i].left = mouseRects[i - 1].left;
+				mouseRects[i].right = mouseRects[i - 1].right;
 			} else {
-				mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * 0.5f, mouseRects[i - 1].right);
+				//left
+				if (isFirst || isAfterLF || isAfterSpace) {
+					mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * 0.5f, 0.f);
+				} else {
+					mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * 0.5f, mouseRects[i - 1].right);
+				}
+				//right
+				if (isBeforeCR || isBeforeSpace || isBeforeLast) {
+					mouseRects[i].right = (std::min)(cursorRects[i].right - cursorRects[i].Width() * 0.5f, sz.width);
+				} else {
+					mouseRects[i].right = (std::min)(cursorRects[i].right + cursorRects[i].Width() * 0.5f, (cursorRects[i].right + cursorRects[i + 1].left) * 0.5f);
+				}
 			}
-			//right
-			if (isBeforeCR || isBeforeSpace || isBeforeLast) {
-				mouseRects[i].right = (std::min)(cursorRects[i].right - cursorRects[i].Width() * 0.5f, sz.width);
-			} else {
-				mouseRects[i].right = (std::min)(cursorRects[i].right + cursorRects[i].Width() * 0.5f, (cursorRects[i].right + cursorRects[i + 1].left) * 0.5f);
-			}
+			//top & bottom
+			//Since line order is not always top to bottom, it's hard to adjust context.
+			mouseRects[i].top = (std::min)(cursorRects[i].top + (-cursorRects[i].Height()) * 0.2f, sz.height);
+			mouseRects[i].bottom = (std::max)(cursorRects[i].bottom - (-cursorRects[i].Height()) * 0.2f, 0.f);
 		}
-		//top & bottom
-		//Since line order is not always top to bottom, it's hard to adjust context.
-		mouseRects[i].top = (std::min)(cursorRects[i].top + (-cursorRects[i].Height()) * 0.2f, sz.height);
-		mouseRects[i].bottom = (std::max)(cursorRects[i].bottom - (-cursorRects[i].Height()) * 0.2f, 0.f);
-	}
 
-	SetLockTxt(PdfTxtInfo(orgCharRects, cursorRects, mouseRects, text));
+		SetLockTxt(PdfTxtInfo(orgCharRects, cursorRects, mouseRects, text));
+	} else {
+		SetLockTxt(PdfTxtInfo(std::vector<CRectF>(), std::vector<CRectF>(), std::vector<CRectF>(), text));
+	}
 }
 
 int CPDFPage::GetCursorCharIndexAtPos(const CPointF& ptInPdfiumPage)
@@ -437,7 +468,7 @@ void CPDFPage::Bitmap_Loading_OnEntry(CDirect2DWrite* pDirect, const FLOAT& scal
 void CPDFPage::Bitmap_Loading_Render(const RenderPageContentEvent& e) 
 {
 	auto pbi = GetLockBitmap();
-	if (e.Scale != m_loadingScale) {
+	if (e.Scale != m_loadingScale || Rotate.get() != m_loadingRotate) {
 		process_event(BitmapReloadEvent(e.DirectPtr, e.Scale));
 	}
 	if (pbi.BitmapPtr) {
@@ -460,7 +491,7 @@ void CPDFPage::Bitmap_Loading_Render(const RenderPageContentEvent& e)
 void CPDFPage::Bitmap_Available_Render(const RenderPageContentEvent& e) 
 {
 	auto pbi = GetLockBitmap();
-	if (e.Scale != pbi.Scale) {
+	if (e.Scale != pbi.Scale || Rotate.get() != pbi.Rotate) {
 		process_event(BitmapReloadEvent(e.DirectPtr, e.Scale));
 	}
 	if (pbi.BitmapPtr) {

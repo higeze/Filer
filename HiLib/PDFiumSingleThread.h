@@ -239,6 +239,16 @@ public:
         return ThreadRun(FPDF_GetPageHeight, page);
     }
 
+    int Page_GetRotation(FPDF_PAGE page)
+    {
+        return ThreadRun(FPDFPage_GetRotation, page);
+    }
+
+    void Page_SetRotation(FPDF_PAGE page, int rotate)
+    {
+        return ThreadRun(FPDFPage_SetRotation, page, rotate);
+    }
+
     /***************/
     /* FPDF_BITMAP */
     /***************/

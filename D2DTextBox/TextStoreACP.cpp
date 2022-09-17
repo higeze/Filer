@@ -350,6 +350,7 @@ STDAPI CTextStore::GetText(LONG acpStart, LONG acpEnd, __out_ecount(cchPlainReq)
     return S_OK;
 }
 
+
 //----------------------------------------------------------------------------
 //
 //
@@ -369,7 +370,8 @@ STDAPI CTextStore::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, __in_ecoun
         return E_INVALIDARG;
 
     LONG acpRemovingEnd = (std::min)(acpEnd, (LONG)_pEditor->GetText().size() + 1);
-    _pEditor->GetText().replace(acpStart, acpRemovingEnd - acpStart, pchText, cch);
+    //_pEditor->GetText().replace(acpStart, acpRemovingEnd - acpStart, pchText, cch);
+    _pEditor->Replace((std::size_t)(acpStart), (std::size_t)(acpRemovingEnd - acpStart), std::wstring(pchText, cch));
 
     pChange->acpStart = acpStart;
     pChange->acpOldEnd = acpEnd;
@@ -576,7 +578,8 @@ STDAPI CTextStore::InsertTextAtSelection(DWORD dwFlags, __in_ecount(cch) const W
         return S_OK;
     }
 
-	_pEditor->GetText().replace(acpStart, acpEnd - acpStart, pchText);
+    _pEditor->Replace((std::size_t)(acpStart), (std::size_t)(acpEnd - acpStart), pchText);
+	//_pEditor->GetText().replace(acpStart, acpEnd - acpStart, pchText);
 	//_pEditor->EraseText(acpStart, acpEnd - acpStart);
 
 	////UINT nrCnt;

@@ -15,7 +15,7 @@ CPointF CPDFViewport::CtrlToDoc(const CPointF& ptInCtrl)
 }
 std::tuple<int, CPointF> CPDFViewport::DocToPage(const CPointF& ptInDoc)
 {
-	auto& rects = m_pView->GetDocPtr()->GetPageRects();
+	auto& rects = m_pView->GetDocPtr()->GetSourceRectsInDoc();
 	auto iter = std::find_if(rects.cbegin(), rects.cend(), [pt = ptInDoc](const CRectF& rc) { return rc.PtInRect(pt); });
 	if (iter != rects.cend()) {
 		return {std::distance(rects.cbegin(), iter), ptInDoc - iter->LeftTop()};
@@ -39,7 +39,7 @@ CPointF CPDFViewport::PdfiumPageToPage(const int& page, const CPointF& ptInPdfiu
 }
 CPointF CPDFViewport::PageToDoc(const int& page, const CPointF& ptInPage)
 {
-	auto& rects = m_pView->GetDocPtr()->GetPageRects();
+	auto& rects = m_pView->GetDocPtr()->GetSourceRectsInDoc();
 	return ptInPage + rects[page].LeftTop();
 }
 CPointF CPDFViewport::DocToCtrl(const CPointF& ptInDoc)
@@ -105,7 +105,7 @@ CRectF CPDFViewport::PdfiumPageToPage(const int& page, const CRectF& rcInPdfiumP
 }
 CRectF CPDFViewport::PageToDoc(const int& page, const CRectF& rcInPage)
 {
-	auto& rects = m_pView->GetDocPtr()->GetPageRects();
+	auto& rects = m_pView->GetDocPtr()->GetSourceRectsInDoc();
 	return rcInPage + rects[page].LeftTop();
 }
 CRectF CPDFViewport::DocToCtrl(const CRectF& rcInDoc)

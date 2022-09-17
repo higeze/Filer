@@ -40,7 +40,7 @@
 	{ 
 		if (m_page != page) {
 			m_page = page;
-			SetScrollPos(GetScrollPos());//Need clamp
+			//SetScrollPos(GetScrollPos());//Need clamp
 			ScrollChanged();
 		}
 	}
@@ -50,6 +50,22 @@
 		if (m_range.first != min || m_range.second != max) {
 			m_range.first = min; m_range.second = max;
 			SetScrollPos(GetScrollPos());//Need clamp
+			ScrollChanged();
+		}
+	}
+
+	void CScrollBase::SetScrollRangePage(const FLOAT min, const FLOAT max, const FLOAT page)
+	{
+		bool isRangeChange = m_range.first != min || m_range.second != max;
+		if (isRangeChange) {
+			m_range.first = min; m_range.second = max;
+			m_pos = std::clamp(GetScrollPos(), m_range.first, (std::max)(m_range.second - m_page, m_range.first));
+		}
+		bool isPageChange = m_page != page;
+		if (isPageChange) {
+			m_page = page;
+		}
+		if (isRangeChange || isPageChange) {
 			ScrollChanged();
 		}
 	}
@@ -103,7 +119,7 @@
 		m_visibility = Visibility::Auto;
 		m_page = 0.f;
 		m_range = std::make_pair(0.f, 0.f);
-		m_pos = 0.f;
+		//m_pos = 0.f;
 		m_startDrag = 0.f;
 	}
 

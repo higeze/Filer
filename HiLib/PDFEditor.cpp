@@ -1,6 +1,7 @@
 #include "PDFEditor.h"
 #include "PDFEditorProperty.h"
 #include "PDFView.h"
+#include "PDFDoc.h"
 #include "TextBox.h"
 #include "EditorScroll.h"
 #include "EditorProperty.h"
@@ -114,12 +115,41 @@ void CPDFEditor::OpenAs()
 
 void CPDFEditor::Save()
 {
-	m_save.Execute(GetWndPtr()->m_hWnd);
+	m_spPDFView->GetDocPtr()->Save();
 }
 
 void CPDFEditor::SaveAs()
 {
-	m_save_as.Execute(GetWndPtr()->m_hWnd);
+	//m_save_as.Execute(GetWndPtr()->m_hWnd);
+	std::wstring path;
+	OPENFILENAME ofn = { 0 };
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = NULL;// GetWndPtr()->m_hWnd;
+	ofn.lpstrFilter = L"PDF file(*.pdf)\0*.pdf\0\0";
+	ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrTitle = L"Save as";
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
+	ofn.lpstrDefExt = L"pdf";
+
+	if (!GetSaveFileName(&ofn)) {
+		DWORD errCode = CommDlgExtendedError();
+		if (errCode) {
+			//throw std::exception(FILE_LINE_FUNC);
+		}
+	} else {
+		::ReleaseBuffer(path);
+		bool same = path == m_spPDFView->GetDocPtr()->GetPath();
+		if (!same) {
+			m_spPDFView->GetDocPtr()->SaveAsCopy(path, 0);
+			m_spPDFView->Open(path);
+		} else {
+			m_spPDFView->GetDocPtr()->Save();
+			/*auto doc(m_spPDFView->GetDocPtr()->Clone());
+			m_spPDFView->GetDocPtr().reset();
+			doc.SaveAsCopy(path, 0);*/
+		}
+	}
 }
 
 void CPDFEditor::Update()

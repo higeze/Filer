@@ -12,7 +12,7 @@ CCellTextBox::CCellTextBox(
 {
 	m_text.Subscribe(
 		[this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
-			if (m_changed) { m_changed(e.NewString); }
+			if (m_changed) { m_changed(m_text); }
 		}
 	);
 }
