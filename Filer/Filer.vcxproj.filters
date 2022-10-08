@@ -777,6 +777,9 @@
     <ClInclude Include="..\HiLib\PreviewHandlerFrame.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\D2DImage.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1152,6 +1155,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\UnDoReDoManager.cpp">
       <Filter>D2DTextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\D2DImage.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

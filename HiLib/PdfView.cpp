@@ -137,8 +137,8 @@ void CPdfView::OnMouseWheel(const MouseWheelEvent& e)
 		FLOAT multiply = (e.Delta > 0) ? factor : 1/factor;
 		FLOAT prevScale = m_scale.get();
 		m_scale.set(std::clamp(m_scale.get() * multiply, 0.1f, 8.f));
-		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() * m_scale / prevScale + m_spVScroll->GetScrollPage() / 2.f *(m_scale / prevScale - 1.f));
-		m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() * m_scale / prevScale + m_spHScroll->GetScrollPage() / 2.f *(m_scale / prevScale - 1.f));
+		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() * m_scale / prevScale/* + m_spVScroll->GetScrollPage() / 2.f *(m_scale / prevScale - 1.f)*/);
+		m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() * m_scale / prevScale/*+ m_spHScroll->GetScrollPage() / 2.f *(m_scale / prevScale - 1.f)*/);
 
 	} else {
 		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() - m_spVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);

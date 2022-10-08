@@ -14,6 +14,7 @@ class CPDFPage;
 class CPDFDoc
 {
 public:
+	FLOAT totalsize = 0;
 	static void Init();
 	static void Term();
 

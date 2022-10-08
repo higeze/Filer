@@ -236,7 +236,9 @@ void CPDFPage::LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale)
 
 	CComPtr<ID2D1Bitmap> pBitmap;
 	FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap));
-
+	auto mysize = pBitmap->GetSize().width * pBitmap->GetSize().height * 4;
+	m_pDoc->totalsize += mysize;
+	::OutputDebugString(std::format(L"{}:\t{}\t{}\r\n",this->m_index, mysize, m_pDoc->totalsize).c_str());
 	SetLockBitmap(PdfBmpInfo{ pBitmap, m_loadingScale, m_loadingRotate });
 }
 

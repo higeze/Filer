@@ -307,6 +307,7 @@
     <ClInclude Include="..\HiLib\Console.h" />
     <ClInclude Include="..\HiLib\CShellExtension.h" />
     <ClInclude Include="..\HiLib\Cursorer.h" />
+    <ClInclude Include="..\HiLib\D2DImage.h" />
     <ClInclude Include="..\HiLib\D2DWDialog.h" />
     <ClInclude Include="..\HiLib\DeadlineTimer.h" />
     <ClInclude Include="..\HiLib\DialogStateMachine.h" />
@@ -532,6 +533,7 @@
     <ClCompile Include="..\HiLib\Console.cpp" />
     <ClCompile Include="..\HiLib\CShellExtension.cpp" />
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
+    <ClCompile Include="..\HiLib\D2DImage.cpp" />
     <ClCompile Include="..\HiLib\D2DWDialog.cpp" />
     <ClCompile Include="..\HiLib\DeadlineTimer.cpp" />
     <ClCompile Include="..\HiLib\Debug.cpp" />

@@ -40,6 +40,7 @@ void CPDFDoc::LoadSourceSize()
 		m_optSourceSize->width = (std::max)(m_optSourceSize->width, pPage->GetSourceSize().width);
 		m_optSourceSize->height += pPage->GetSourceSize().height;
 	}	
+	m_optSourceSize->height += (m_pages.size() - 1) * 10.f;
 }
 
 void CPDFDoc::LoadSourceRectsInDoc()
