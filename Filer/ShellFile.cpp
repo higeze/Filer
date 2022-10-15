@@ -2,7 +2,6 @@
 #include "MyIcon.h"
 #include "MyString.h"
 #include "MyCom.h"
-#include "FileIconCache.h"
 #include "FileSizeArgs.h"
 #include "ShellFunction.h"
 #include "KnownFolderManager.h"
@@ -233,6 +232,7 @@ UINT CShellFile::GetSFGAO()
 DWORD CShellFile::GetAttributes()
 {
 	if (m_fileAttributes == 0) {	
+		
 		UpdateWIN32_FIND_DATA();
 	}
 	return m_fileAttributes;

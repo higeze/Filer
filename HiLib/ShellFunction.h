@@ -68,13 +68,13 @@ namespace shell
 	std::tuple<std::wstring, std::wstring, std::wstring> GetPathNameExt(const CComPtr<IShellFolder>& pParentFolder, const LPITEMIDLIST& relativeIDL);
 	std::optional<FileTimes> GetFileTimes(const CComPtr<IShellFolder>& pParentFolder, const CIDL& relativeIDL);
 
-	template<typename T>
+	template<typename TRect>
 	auto RunFunctionEachFileFolderVirtual(
 		const CComPtr<IShellFolder>& pFolder,
 		const CIDL& childIDL,
-		const std::function<T()>& f,
-		const std::function<T(const CComPtr<IShellFolder>&, const CComPtr<IEnumIDList>&)>& d,
-		const std::function<T()>& v)->T
+		const std::function<TRect()>& f,
+		const std::function<TRect(const CComPtr<IShellFolder>&, const CComPtr<IEnumIDList>&)>& d,
+		const std::function<TRect()>& v)->TRect
 	{
 		CComPtr<IShellFolder> pItemFolder;
 		CComPtr<IEnumIDList> pItemEnumIDL;

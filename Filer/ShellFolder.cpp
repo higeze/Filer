@@ -3,7 +3,6 @@
 #include "ShellZipFolder.h"
 #include "KnownFolder.h"
 #include "DriveFolder.h"
-#include "FileIconCache.h"
 #include "Debug.h"
 #include "ApplicationProperty.h"
 #include "FileSizeArgs.h"

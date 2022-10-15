@@ -2,7 +2,7 @@
 #include "Cell.h"
 #include "BindRow.h"
 #include "Direct2DWrite.h"
-#include "FileIconCache.h"
+#include "D2DFileIconDrawer.h"
 #include "ShellFile.h"
 #include <sigslot/signal.hpp>
 
@@ -37,7 +37,7 @@ public:
 					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 				}
 			};
-			pDirect->DrawBitmap(pDirect->GetIconCachePtr()->GetFileIconBitmap(spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), updated), rc);
+			pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(rc, spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(),spFile->GetAttributes(), updated);
 		}
 	}
 

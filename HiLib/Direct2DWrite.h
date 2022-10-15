@@ -21,136 +21,10 @@
 #include "MyFont.h"
 #include "Debug.h"
 #include <fmt/format.h>
-
+#include "D2DWTypes.h"
 #include "JsonSerializer.h"
 
-
-struct XTag;
-struct YTag;
-
-	template<typename ...>
-	constexpr bool false_v = false;
-
-	struct CPointF :public D2D1_POINT_2F
-	{
-		struct XTag{};
-		struct YTag{};
-
-		CPointF();
-		CPointF(FLOAT a, FLOAT b);
-
-		void SetPoint(FLOAT a, FLOAT b);
-		void Offset(FLOAT xOffset, FLOAT yOffset);
-		void Offset(CPointF& pt);
-		CPointF OffsetCopy(CPointF& pt);
-		CPointF operator -() const;
-		CPointF operator +(CPointF pt) const;
-		CPointF operator -(CPointF pt) const;
-		CPointF operator *(const FLOAT& z) const;
-		CPointF operator /(const FLOAT& z) const;
-		CPointF& operator +=(const CPointF& pt);
-		bool operator!=(const CPointF& pt)const;
-
-		template<typename TXY>
-		FLOAT Get() const
-		{
-			if constexpr (std::is_same_v<TXY, XTag>) {
-				return x;
-			} else if constexpr (std::is_same_v<TXY, YTag>) {
-				return y;
-			} else {
-				static_assert(false_v<TXY>);
-			}
-		}
-
-		template <class Archive>
-		void serialize(Archive& ar)
-		{
-			ar("x", x);
-			ar("y", y);
-		}
-
-		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CPointF,
-			x,
-			y)
-	};
-
-	struct CSizeF :public D2D1_SIZE_F
-	{
-		CSizeF();
-		CSizeF(FLOAT w, FLOAT h);
-		CSizeF(const D2D1_SIZE_F& size);
-		bool operator==(const CSizeF& rhs) const;
-		bool operator!=(const CSizeF& rhs) const;
-		std::size_t GetHashCode() const;
-
-		template <class Archive>
-		void serialize(Archive& ar)
-		{
-			ar("width", width);
-			ar("height", height);
-		}
-
-		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CSizeF,
-			width,
-			height)
-	};
-
-	struct CRectF :public D2D1_RECT_F
-	{
-		CRectF();
-		CRectF(FLOAT l, FLOAT t, FLOAT r, FLOAT b);
-		CRectF(const CSizeF& size);
-
-		void SetRect(FLOAT l, FLOAT t, FLOAT r, FLOAT b);
-		void MoveToX(FLOAT x);
-		void MoveToY(FLOAT y);
-		void MoveToXY(FLOAT x, FLOAT y);
-		void MoveToXY(const CPointF& pt);
-		void OffsetRect(FLOAT x, FLOAT y);
-		void OffsetRect(const CPointF& pt);
-		FLOAT Width()const;
-		FLOAT Height()const;
-		void InflateRect(FLOAT x, FLOAT y);
-		void DeflateRect(FLOAT x, FLOAT y);
-		void InflateRect(FLOAT x);
-		void DeflateRect(FLOAT x);
-		void InflateRect(const CRectF& rc);
-		void DeflateRect(const CRectF& rc);
-		bool PtInRect(const CPointF& pt) const;
-		CRectF IntersectRect(const CRectF& rc) const;
-		CPointF LeftTop() const;
-		CPointF CenterPoint() const;
-		FLOAT CenterX() const;
-		FLOAT CenterY() const;
-		CSizeF Size() const;
-		//bool IntersectRect(LPCRECT lpRect1, LPCRECT lpRect2) { return ::IntersectRect(this, lpRect1, lpRect2); }
-		CRectF operator+(CRectF rc)const;
-		CRectF operator+(CPointF pt)const;
-		CRectF& operator+=(CRectF rc);
-		CRectF operator-(CRectF rc)const;
-		CRectF operator-(CPointF pt)const;
-		CRectF& operator-=(CRectF rc);
-		CRectF operator*(FLOAT z)const;
-		CRectF operator/(FLOAT z)const;
-		bool operator==(const CRectF& rc)const;
-		bool operator!=(const CRectF& rc)const;
-		//void operator &=(const CRectF& rect) { ::IntersectRect(this, this, &rect); }
-		template <class Archive>
-		void serialize(Archive& ar)
-		{
-			ar("left", left);
-			ar("top", top);
-			ar("right", right);
-			ar("bottom", bottom);
-		}
-
-		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CRectF,
-			left,
-			top,
-			right,
-			bottom)
-	};
+class CD2DFileIconDrawer;
 
 	struct CColorF :public D2D1::ColorF
 	{
@@ -407,8 +281,6 @@ namespace std
 		}
 	};
 
-	class CFileIconCache;
-
 	class CDirect2DWrite
 	{
 	private:
@@ -419,19 +291,16 @@ namespace std
 		//std::unordered_map<FormatF, std::unordered_map<wchar_t, CSizeF>> m_charMap;
 		std::unordered_map<FormatF, std::unordered_map<std::pair<std::wstring, CSizeF>, CComPtr<IDWriteTextLayout>, StrSizeHash, StrSizeEqual>> m_textLayoutMap;
 		std::unordered_map<FormatF, FLOAT> m_defaultHeightMap;
+		std::unique_ptr<CD2DFileIconDrawer> m_pIconDrawer;
 
 		FLOAT m_xPixels2Dips = 0.0f;
 		FLOAT m_yPixels2Dips = 0.0f;
-
-		std::unique_ptr<CFileIconCache> m_pIconCache;//TODO Create only when necessary
 
 	public:
 		CDirect2DWrite(HWND hWnd);
 		~CDirect2DWrite();
 		CDirect2DWrite(const CDirect2DWrite&) = delete;
 		CDirect2DWrite& operator=(const CDirect2DWrite&) = delete;
-
-		std::unique_ptr<CFileIconCache>& GetIconCachePtr() { return m_pIconCache; }
 		
 		//Closure
 		std::function<CComPtr<ID2D1Device>& ()> GetD2DDevice;
@@ -447,6 +316,7 @@ namespace std
 		std::function<CComPtr<ID2D1Factory1>&()> GetD2DFactory;
 		std::function<CComPtr<IDWriteFactory1>&()> GetDWriteFactory;
 		std::function<CComPtr<IWICImagingFactory2>&()> GetWICImagingFactory;
+		std::unique_ptr<CD2DFileIconDrawer>& GetFileIconDrawerPtr() { return m_pIconDrawer; }
 
 		HDC GetHDC() const { return m_hDC; }
 

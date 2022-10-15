@@ -615,11 +615,11 @@ public:
 
 
 	virtual void SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& cell2, bool doSelect);
-	template<class T>
-	void SelectBandRange(T* pBand1, T* pBand2, bool doSelect)
+	template<class TRect>
+	void SelectBandRange(TRect* pBand1, TRect* pBand2, bool doSelect)
 	{
 		if (!pBand1 || !pBand2)return;
-		auto& container = GetContainer<T::Tag, VisTag>();
+		auto& container = GetContainer<TRect::Tag, VisTag>();
 		auto idx1 = pBand1->GetIndex<VisTag>();
 		auto idx2 = pBand2->GetIndex<VisTag>();
 		auto beg = (std::min)(idx1, idx2);

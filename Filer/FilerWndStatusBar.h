@@ -3,8 +3,8 @@
 #include "Timer.h"
 #include <pdh.h>
 
-template<typename T>
-std::wstring ConvertCommaSeparatedNumber(T n, int separate_digit)
+template<typename TRect>
+std::wstring ConvertCommaSeparatedNumber(TRect n, int separate_digit)
 {
 	bool is_minus = n < 0;
 	is_minus ? n *= -1 : 0;

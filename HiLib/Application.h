@@ -1,6 +1,6 @@
 #pragma once
 
-template<class T>
+template<class TRect>
 class CApplication
 {
 protected:
@@ -26,9 +26,9 @@ public:
 
 	virtual void Term() = 0;
 
-	static T* GetInstance()
+	static TRect* GetInstance()
 	{
-		static T app;
+		static TRect app;
 		return &app;
 	}
 

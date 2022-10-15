@@ -178,8 +178,8 @@ json_make_shared_map.insert_or_assign(\
 
 
 
-template<typename T>
-auto get_to(const json& j, const char* key, T& obj)
+template<typename TRect>
+auto get_to(const json& j, const char* key, TRect& obj)
 {
     try {
         if (j.find(key) != j.end()){
@@ -256,10 +256,10 @@ namespace nlohmann {
     //    }
     //};
 
-   template<typename T>
-   struct adl_serializer<std::unique_ptr<T>>
+   template<typename TRect>
+   struct adl_serializer<std::unique_ptr<TRect>>
    {
-      static void to_json(json& j, const std::unique_ptr<T>& value)
+      static void to_json(json& j, const std::unique_ptr<TRect>& value)
       {
          if (!value){
             j = nullptr;
@@ -269,14 +269,14 @@ namespace nlohmann {
          }
       }
 
-      static void from_json(json const& j, std::unique_ptr<T>& value)
+      static void from_json(json const& j, std::unique_ptr<TRect>& value)
       {
          if (j.is_null()){
             value.reset();
          }
          else{
-            value = std::make_unique<T>();
-            json::json_serializer<T, void>::from_json(j, *value);
+            value = std::make_unique<TRect>();
+            json::json_serializer<TRect, void>::from_json(j, *value);
          }
       }
    };
@@ -284,8 +284,8 @@ namespace nlohmann {
 
 
 
-    template <typename T>
-    struct adl_serializer<std::shared_ptr<T>> {
+    template <typename TRect>
+    struct adl_serializer<std::shared_ptr<TRect>> {
 
         //template<typename U, typename std::enable_if_t<!std::is_abstract<U>::value, std::nullptr_t> = nullptr>
         //static void create_shared_ptr(const std::string name, std::shared_ptr<U>&ptr)
@@ -311,25 +311,25 @@ namespace nlohmann {
         //    }
         //}
 
-        static void from_json(const json& j, std::shared_ptr<T>& ptr) {
+        static void from_json(const json& j, std::shared_ptr<TRect>& ptr) {
             //typeinfoname
             std::string name;
             if (j.find("typeinfoname") != j.end()) {
                 j["typeinfoname"].get_to(name);
             } else {
-                name = typeid(T).name();
+                name = typeid(TRect).name();
             }
 
             //make_shared
             if (!ptr) {
                 auto iter_make_shared = json_make_shared_map.find(name);
                 if (iter_make_shared != json_make_shared_map.end()) {
-                    ptr = std::static_pointer_cast<T>(iter_make_shared->second());
+                    ptr = std::static_pointer_cast<TRect>(iter_make_shared->second());
                 } else {
-                    if constexpr (std::is_abstract<T>::value){
+                    if constexpr (std::is_abstract<TRect>::value){
                         ptr = nullptr;
                     } else {
-                        ptr = std::make_shared<T>();
+                        ptr = std::make_shared<TRect>();
                     }
                 }
             }
@@ -341,14 +341,14 @@ namespace nlohmann {
                 if (iter != json_polymorphic_map.end()) {
                     std::shared_ptr<void> p = std:: static_pointer_cast<void>(ptr);
                     iter->second.first(j, p);
-                    ptr = std::static_pointer_cast<T>(p);
+                    ptr = std::static_pointer_cast<TRect>(p);
                 } else {
-                    json::json_serializer<T, void>::from_json(j, *ptr);
+                    json::json_serializer<TRect, void>::from_json(j, *ptr);
                 }
             }
         }
 
-        static void to_json(json& j, const std::shared_ptr<T>& ptr)
+        static void to_json(json& j, const std::shared_ptr<TRect>& ptr)
         {
 
             if (ptr.get()) {

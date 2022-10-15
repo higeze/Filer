@@ -49,10 +49,10 @@ struct GetOpenFileNameArg
 std::vector<std::basic_string<TCHAR>>
 	GetOpenFileName(GetOpenFileNameArg arg);
 
-template<typename T>
-inline std::basic_string<T> GetModuleFilePath(HMODULE hModule = nullptr)
+template<typename TRect>
+inline std::basic_string<TRect> GetModuleFilePath(HMODULE hModule = nullptr)
 {
-	std::basic_string<T> strPath;
+	std::basic_string<TRect> strPath;
 	::GetModuleFileNameA(hModule,::GetBuffer(strPath,MAX_PATH),MAX_PATH);
 	ReleaseBuffer(strPath);
 	return strPath;
@@ -67,10 +67,10 @@ inline std::basic_string<wchar_t> GetModuleFilePath<wchar_t>(HMODULE hModule)
 	return strPath;
 }
 
-template<typename T>
-inline std::basic_string<T> GetModuleDirPath(HMODULE hModule = nullptr)
+template<typename TRect>
+inline std::basic_string<TRect> GetModuleDirPath(HMODULE hModule = nullptr)
 {
-	std::basic_string<T> strPath = GetModuleFilePath<T>(hModule);
+	std::basic_string<TRect> strPath = GetModuleFilePath<TRect>(hModule);
 	::PathRemoveFileSpecA(strPath.data());
 	ReleaseBuffer(strPath);
 	return strPath;

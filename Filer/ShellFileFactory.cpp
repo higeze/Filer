@@ -16,11 +16,24 @@ shell::ParsedFileType CShellFileFactory::ParseFileType(
 {
 	shell::ParsedFileType ret;
 	ret.FilePath = shell::GetDisplayNameOf(pParentFolder, childIDL, SHGDN_FORPARSING);
+
 	if (ret.FilePath.empty()) {
 		ret.FileType = shell::FileType::None;
 	} else {
 		ret.FileName = ::PathFindFileName(ret.FilePath.c_str());
 		ret.FileExt = ::PathFindExtension(ret.FilePath.c_str());
+		//{
+		//	::OutputDebugString(std::format(L"name:{}\r\n", ret.FileName.c_str()).c_str());
+
+		//	ULONG sfgao = SFGAO_CAPABILITYMASK | SFGAO_GHOSTED | SFGAO_LINK | SFGAO_SHARE | SFGAO_FOLDER | SFGAO_FILESYSTEM;
+		//	pParentFolder->GetAttributesOf(1, (LPCITEMIDLIST*)(childIDL.ptrptr()), &sfgao);
+		//	::OutputDebugString(std::format(L"sfgao:{}\r\n", sfgao).c_str());
+
+		//	WIN32_FIND_DATA wfd = { 0 };
+		//	::SHGetDataFromIDList(pParentFolder, childIDL.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA));
+		//	::OutputDebugString(std::format(L"attr:{}\r\n", wfd.dwFileAttributes).c_str());
+		//}
+
 		SFGAOF sfgao = SFGAO_FOLDER;
 		if (shell::CThreadSafeKnownFolderManager::GetInstance()->IsExist(ret.FilePath)) {
 			ret.FileType = shell::FileType::Known;

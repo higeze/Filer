@@ -66,6 +66,7 @@ public:
 };
 #endif
 
+class CD2DFileIconDrawer;
 
 class CFilerWnd:public CD2DWWindow
 {

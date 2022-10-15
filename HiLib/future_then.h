@@ -17,10 +17,10 @@ public:
         return { std::move(f) };
     }
 
-    template<class T,class Func>
-    friend auto operator | (std::future<T> fut, Param<Func> param)->std::future<decltype(param.func(fut.get()))>
+    template<class TRect,class Func>
+    friend auto operator | (std::future<TRect> fut, Param<Func> param)->std::future<decltype(param.func(fut.get()))>
     {
-        auto fun = [](std::future<T> fut, Func func)
+        auto fun = [](std::future<TRect> fut, Func func)
         {
             return func(fut.get());
         };

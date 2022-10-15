@@ -37,8 +37,8 @@ struct COMPOSITIONRENDERINFO
 	TF_DISPLAYATTRIBUTE DisplayAttribute;
 };
 
-template<typename T>
-bool in_range(const T& value, const T& min, const T& max)
+template<typename TRect>
+bool in_range(const TRect& value, const TRect& min, const TRect& max)
 {
 	return min <= value && value <= max;
 }

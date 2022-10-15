@@ -5,11 +5,11 @@
 class CIDL;
 class CShellFolder;
 
-template<typename T>
-inline std::basic_string<T> GetMakeSureTempDirectory()
+template<typename TRect>
+inline std::basic_string<TRect> GetMakeSureTempDirectory()
 {
 	//create temp directory if not exist
-	T tempDir[MAX_PATH];
+	TRect tempDir[MAX_PATH];
 	::GetModuleFileNameA(NULL, tempDir, MAX_PATH);
 	::PathRemoveFileSpecA(tempDir);
 	::PathCombineA(tempDir, tempDir, "Temp");
@@ -35,31 +35,31 @@ inline std::basic_string<wchar_t> GetMakeSureTempDirectory()
 	return tempDir;
 }
 
-template<typename T>
-std::basic_string<T> SanitizeFileName(const std::basic_string<T>& fileIn)
+template<typename TRect>
+std::basic_string<TRect> SanitizeFileName(const std::basic_string<TRect>& fileIn)
 {
-	std::basic_string<T> fileOut(fileIn);
+	std::basic_string<TRect> fileOut(fileIn);
 	for (size_t i = 0; i < fileOut.size(); i++) {
 		switch (fileOut[i]) {
-			case TCHAR_CAST(T, '^'):
-			case TCHAR_CAST(T, '&'):
-			case TCHAR_CAST(T, '*'):
-			case TCHAR_CAST(T, '-'):
-			case TCHAR_CAST(T, '+'):
-			case TCHAR_CAST(T, '='):
-			case TCHAR_CAST(T, '['):
-			case TCHAR_CAST(T, ']'):
-			case TCHAR_CAST(T, '\\'):
-			case TCHAR_CAST(T, '|'):
-			case TCHAR_CAST(T, ';'):
-			case TCHAR_CAST(T, ':'):
-			case TCHAR_CAST(T, '\"'):
-			case TCHAR_CAST(T, ','):
-			case TCHAR_CAST(T, '<'):
-			case TCHAR_CAST(T, '>'):
-			case TCHAR_CAST(T, '/'):
-			case TCHAR_CAST(T, '?'):
-				fileOut[i] = TCHAR_CAST(T, '_');
+			case TCHAR_CAST(TRect, '^'):
+			case TCHAR_CAST(TRect, '&'):
+			case TCHAR_CAST(TRect, '*'):
+			case TCHAR_CAST(TRect, '-'):
+			case TCHAR_CAST(TRect, '+'):
+			case TCHAR_CAST(TRect, '='):
+			case TCHAR_CAST(TRect, '['):
+			case TCHAR_CAST(TRect, ']'):
+			case TCHAR_CAST(TRect, '\\'):
+			case TCHAR_CAST(TRect, '|'):
+			case TCHAR_CAST(TRect, ';'):
+			case TCHAR_CAST(TRect, ':'):
+			case TCHAR_CAST(TRect, '\"'):
+			case TCHAR_CAST(TRect, ','):
+			case TCHAR_CAST(TRect, '<'):
+			case TCHAR_CAST(TRect, '>'):
+			case TCHAR_CAST(TRect, '/'):
+			case TCHAR_CAST(TRect, '?'):
+				fileOut[i] = TCHAR_CAST(TRect, '_');
 				break;
 			default:
 				;

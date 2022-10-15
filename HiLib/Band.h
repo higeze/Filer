@@ -80,12 +80,12 @@ public:
 	virtual void BoundLength(bool notify = true);
 
 	
-	template<typename T>
+	template<typename TRect>
 	int GetIndex() const{return kInvalidIndex; }
 	template<> inline int GetIndex<AllTag>() const { return m_allIndex; }
 	template<> inline int GetIndex<VisTag>() const { return m_visIndex; }
 
-	template<typename T>
+	template<typename TRect>
 	void SetIndex(const int index){}
 	template<> inline void SetIndex<AllTag>(const int index){ m_allIndex = index; }
 	template<> inline void SetIndex<VisTag>(const int index){ m_visIndex = index; }

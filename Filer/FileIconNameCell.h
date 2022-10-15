@@ -2,7 +2,7 @@
 #include "TextCell.h"
 #include "CellTextBox.h"
 #include "Direct2DWrite.h"
-#include "FileIconCache.h"
+#include "D2DFileIconDrawer.h"
 
 class CShellFile;
 
@@ -47,7 +47,7 @@ public:
 			}
 		};
 
-		pDirect->DrawBitmap(pDirect->GetIconCachePtr()->GetFileIconBitmap(spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), updated), rcIcon);
+		pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(rcIcon, spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
 
 		//Space
 		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;

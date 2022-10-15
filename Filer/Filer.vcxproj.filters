@@ -440,7 +440,7 @@
     <ClInclude Include="..\HiLib\DeadlineTimer.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\FileIconCache.h">
+    <ClInclude Include="..\HiLib\D2DAtlasBitmap.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\IDL.h">
@@ -780,6 +780,12 @@
     <ClInclude Include="..\HiLib\D2DImage.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\D2DWTypes.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\D2DFileIconDrawer.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -956,7 +962,7 @@
     <ClCompile Include="..\HiLib\DeadlineTimer.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\FileIconCache.cpp">
+    <ClCompile Include="..\HiLib\D2DAtlasBitmap.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\IDL.cpp">
@@ -1157,6 +1163,12 @@
       <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\D2DImage.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\D2DWTypes.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\D2DFileIconDrawer.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

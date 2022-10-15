@@ -13,7 +13,7 @@
 
 
 
-template<class T>
+template<class TRect>
 class CTextFileDialog
 {
 private:
@@ -27,7 +27,7 @@ private:
 
 
 protected:
-	CComPtr<T> m_pDlg;
+	CComPtr<TRect> m_pDlg;
 	CComPtr<IFileDialogCustomize> m_pDlgCust;
 
 	std::vector<encoding_type> m_encoding_types;
@@ -39,9 +39,9 @@ public:
 	CTextFileDialog()
 	{
 		//Create COM
-		if constexpr (std::is_same<T, IFileOpenDialog>::value) {
+		if constexpr (std::is_same<TRect, IFileOpenDialog>::value) {
 			FAILED_THROW(m_pDlg.CoCreateInstance(CLSID_FileOpenDialog));
-		} else if constexpr (std::is_same<T, IFileSaveDialog>::value) {
+		} else if constexpr (std::is_same<TRect, IFileSaveDialog>::value) {
 			FAILED_THROW(m_pDlg.CoCreateInstance(CLSID_FileSaveDialog));
 		} else {
 			THROW_FILE_LINE_FUNC;

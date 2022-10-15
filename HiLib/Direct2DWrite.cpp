@@ -1,195 +1,195 @@
 //#include "stdafx.h"
 #include "Direct2DWrite.h"
-#include "FileIconCache.h"
+#include "D2DFileIconDrawer.h"
 #include <fmt/format.h>
 
 	//CPointF
-	CPointF::CPointF() :D2D1_POINT_2F{ 0.0f } {}
-	CPointF::CPointF(FLOAT a, FLOAT b) :D2D1_POINT_2F{ a, b } {}
-	void CPointF::SetPoint(FLOAT a, FLOAT b) { x = a; y = b; }
-	void CPointF::Offset(FLOAT xOffset, FLOAT yOffset) { x += xOffset; y += yOffset; }
-	void CPointF::Offset(CPointF& pt) { x += pt.x; y += pt.y; }
-	CPointF CPointF::OffsetCopy(CPointF& pt) { return CPointF(x + pt.x, y + pt.y); }
+	//CPointF::CPointF() :D2D1_POINT_2F{ 0.0f } {}
+	//CPointF::CPointF(FLOAT a, FLOAT b) :D2D1_POINT_2F{ a, b } {}
+	//void CPointF::SetPoint(FLOAT a, FLOAT b) { x = a; y = b; }
+	//void CPointF::Offset(FLOAT xOffset, FLOAT yOffset) { x += xOffset; y += yOffset; }
+	//void CPointF::Offset(CPointF& pt) { x += pt.x; y += pt.y; }
+	//CPointF CPointF::OffsetCopy(CPointF& pt) { return CPointF(x + pt.x, y + pt.y); }
 
-	CPointF CPointF::operator -() const { return CPointF(-x, -y); }
-	CPointF CPointF::operator +(CPointF pt) const
-	{
-		return CPointF(x + pt.x, y + pt.y);
-	}
-	CPointF CPointF::operator -(CPointF pt) const
-	{
-		return CPointF(x - pt.x, y - pt.y);
-	}
-	CPointF& CPointF::operator +=(const CPointF& pt)
-	{
-		x += pt.x; y += pt.y; return *this;
-	}
-	CPointF CPointF::operator *(const FLOAT& z) const
-	{
-		return CPointF(x * z, y * z);
-	}
-	CPointF CPointF::operator /(const FLOAT& z) const
-	{
-		return CPointF(x / z, y / z);
-	}
+	//CPointF CPointF::operator -() const { return CPointF(-x, -y); }
+	//CPointF CPointF::operator +(CPointF pt) const
+	//{
+	//	return CPointF(x + pt.x, y + pt.y);
+	//}
+	//CPointF CPointF::operator -(CPointF pt) const
+	//{
+	//	return CPointF(x - pt.x, y - pt.y);
+	//}
+	//CPointF& CPointF::operator +=(const CPointF& pt)
+	//{
+	//	x += pt.x; y += pt.y; return *this;
+	//}
+	//CPointF CPointF::operator *(const FLOAT& z) const
+	//{
+	//	return CPointF(x * z, y * z);
+	//}
+	//CPointF CPointF::operator /(const FLOAT& z) const
+	//{
+	//	return CPointF(x / z, y / z);
+	//}
 
-	bool CPointF::operator!=(const CPointF& pt)const
-	{
-		return (x != pt.x || y != pt.y);
-	}
+	//bool CPointF::operator!=(const CPointF& pt)const
+	//{
+	//	return (x != pt.x || y != pt.y);
+	//}
 
 	//CSizeF
-	CSizeF::CSizeF() :D2D1_SIZE_F{ 0.0f } {}
-	CSizeF::CSizeF(FLOAT w, FLOAT h) :D2D1_SIZE_F{ w, h } {}
-	CSizeF::CSizeF(const D2D1_SIZE_F& size)
-	{
-		width = size.width;
-		height = size.height;
-	}
-	bool CSizeF::operator==(const CSizeF& rhs) const
-	{
-		return width == rhs.width && height == rhs.height;
-	}
+	//CSizeF::CSizeF() :D2D1_SIZE_F{ 0.0f } {}
+	//CSizeF::CSizeF(FLOAT w, FLOAT h) :D2D1_SIZE_F{ w, h } {}
+	//CSizeF::CSizeF(const D2D1_SIZE_F& size)
+	//{
+	//	width = size.width;
+	//	height = size.height;
+	//}
+	//bool CSizeF::operator==(const CSizeF& rhs) const
+	//{
+	//	return width == rhs.width && height == rhs.height;
+	//}
 
-	bool CSizeF::operator!=(const CSizeF& rhs) const
-	{
-		return !operator==(rhs);
-	}
+	//bool CSizeF::operator!=(const CSizeF& rhs) const
+	//{
+	//	return !operator==(rhs);
+	//}
 
-	std::size_t CSizeF::GetHashCode() const
-	{
-		std::size_t seed = 0;
-		boost::hash_combine(seed, std::hash<decltype(width)>()(width));
-		boost::hash_combine(seed, std::hash<decltype(height)>()(height));
-		return seed;
-	}
+	//std::size_t CSizeF::GetHashCode() const
+	//{
+	//	std::size_t seed = 0;
+	//	boost::hash_combine(seed, std::hash<decltype(width)>()(width));
+	//	boost::hash_combine(seed, std::hash<decltype(height)>()(height));
+	//	return seed;
+	//}
 
 	//CRectF
-	CRectF::CRectF() :D2D1_RECT_F{ 0.0f } {}
-	CRectF::CRectF(FLOAT l, FLOAT t, FLOAT r, FLOAT b) :D2D1_RECT_F{ l,t,r,b } {}
-	CRectF::CRectF(const CSizeF& size) :D2D1_RECT_F{ 0, 0, size.width, size.height } {}
-	void CRectF::SetRect(FLOAT l, FLOAT t, FLOAT r, FLOAT b)
-	{
-		left = l; top = t; right = r; bottom = b;
-	}
-	void CRectF::MoveToX(FLOAT x) { right = x + right - left; left = x; }
-	void CRectF::MoveToY(FLOAT y) { bottom = y + bottom - top; top = y; }
-	void CRectF::MoveToXY(FLOAT x, FLOAT y)
-	{
-		right += x - left;
-		bottom += y - top;
-		left = x;
-		top = y;
-	}
-	void CRectF::MoveToXY(const CPointF& pt)
-	{
-		MoveToXY(pt.x, pt.y);
-	}
-	void CRectF::OffsetRect(FLOAT x, FLOAT y) { left += x; right += x; top += y; bottom += y; }
-	void CRectF::OffsetRect(const CPointF& pt) { OffsetRect(pt.x, pt.y); }
-	FLOAT CRectF::Width()const { return right - left; }
-	FLOAT CRectF::Height()const { return bottom - top; }
+	//CRectF::CRectF() :D2D1_RECT_F{ 0.0f } {}
+	//CRectF::CRectF(FLOAT l, FLOAT t, FLOAT r, FLOAT b) :D2D1_RECT_F{ l,t,r,b } {}
+	//CRectF::CRectF(const CSizeF& size) :D2D1_RECT_F{ 0, 0, size.width, size.height } {}
+	//void CRectF::SetRect(FLOAT l, FLOAT t, FLOAT r, FLOAT b)
+	//{
+	//	left = l; top = t; right = r; bottom = b;
+	//}
+	//void CRectF::MoveToX(FLOAT x) { right = x + right - left; left = x; }
+	//void CRectF::MoveToY(FLOAT y) { bottom = y + bottom - top; top = y; }
+	//void CRectF::MoveToXY(FLOAT x, FLOAT y)
+	//{
+	//	right += x - left;
+	//	bottom += y - top;
+	//	left = x;
+	//	top = y;
+	//}
+	//void CRectF::MoveToXY(const CPointF& pt)
+	//{
+	//	MoveToXY(pt.x, pt.y);
+	//}
+	//void CRectF::OffsetRect(FLOAT x, FLOAT y) { left += x; right += x; top += y; bottom += y; }
+	//void CRectF::OffsetRect(const CPointF& pt) { OffsetRect(pt.x, pt.y); }
+	//FLOAT CRectF::Width()const { return right - left; }
+	//FLOAT CRectF::Height()const { return bottom - top; }
 
-	void CRectF::InflateRect(FLOAT x, FLOAT y) { left -= x; right += x; top -= y; bottom += y; }
-	void CRectF::DeflateRect(FLOAT x, FLOAT y) { left += x; right -= x; top += y; bottom -= y; }
-	void CRectF::InflateRect(FLOAT x) { left -= x; right += x; top -= x; bottom += x; }
-	void CRectF::DeflateRect(FLOAT x) { left += x; right -= x; top += x; bottom -= x; }
-	bool CRectF::PtInRect(const CPointF& pt) const { return pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom; }
-	CRectF CRectF::IntersectRect(const CRectF& rc) const 
-	{
-		FLOAT l = (std::max)(left, rc.left);
-		FLOAT t = (std::max)(top, rc.top);
-		FLOAT r = (std::min)(right, rc.right);
-		FLOAT b = (std::min)(bottom, rc.bottom);
-		if (l > r || t > b) {
-			return CRectF();
-		} else {
-			return CRectF(l, t, r, b);
-		}
-	}
-	CPointF CRectF::LeftTop() const { return CPointF(left, top); }
-	CPointF CRectF::CenterPoint() const
-	{
-		return CPointF((left + right) / 2, (top + bottom) / 2);
-	}
+	//void CRectF::InflateRect(FLOAT x, FLOAT y) { left -= x; right += x; top -= y; bottom += y; }
+	//void CRectF::DeflateRect(FLOAT x, FLOAT y) { left += x; right -= x; top += y; bottom -= y; }
+	//void CRectF::InflateRect(FLOAT x) { left -= x; right += x; top -= x; bottom += x; }
+	//void CRectF::DeflateRect(FLOAT x) { left += x; right -= x; top += x; bottom -= x; }
+	//bool CRectF::PtInRect(const CPointF& pt) const { return pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom; }
+	//CRectF CRectF::IntersectRect(const CRectF& rc) const 
+	//{
+	//	FLOAT l = (std::max)(left, rc.left);
+	//	FLOAT t = (std::max)(top, rc.top);
+	//	FLOAT r = (std::min)(right, rc.right);
+	//	FLOAT b = (std::min)(bottom, rc.bottom);
+	//	if (l > r || t > b) {
+	//		return CRectF();
+	//	} else {
+	//		return CRectF(l, t, r, b);
+	//	}
+	//}
+	//CPointF CRectF::LeftTop() const { return CPointF(left, top); }
+	//CPointF CRectF::CenterPoint() const
+	//{
+	//	return CPointF((left + right) / 2, (top + bottom) / 2);
+	//}
 
-	FLOAT CRectF::CenterX() const
-	{
-		return (left + right) / 2.f;
-	}
-	FLOAT CRectF::CenterY() const
-	{
-		return (top + bottom) / 2.f;
-	}
+	//FLOAT CRectF::CenterX() const
+	//{
+	//	return (left + right) / 2.f;
+	//}
+	//FLOAT CRectF::CenterY() const
+	//{
+	//	return (top + bottom) / 2.f;
+	//}
 
 
-	CSizeF CRectF::Size() const
-	{
-		return CSizeF(Width(), Height());
-	}
+	//CSizeF CRectF::Size() const
+	//{
+	//	return CSizeF(Width(), Height());
+	//}
 
-	void CRectF::InflateRect(const CRectF& rc)
-	{
-		left -= rc.left;
-		top -= rc.top;
-		right += rc.right;
-		bottom += rc.bottom;
-	}
-	void CRectF::DeflateRect(const CRectF& rc)
-	{
-		left += rc.left;
-		top += rc.top;
-		right -= rc.right;
-		bottom -= rc.bottom;
-	}
+	//void CRectF::InflateRect(const CRectF& rc)
+	//{
+	//	left -= rc.left;
+	//	top -= rc.top;
+	//	right += rc.right;
+	//	bottom += rc.bottom;
+	//}
+	//void CRectF::DeflateRect(const CRectF& rc)
+	//{
+	//	left += rc.left;
+	//	top += rc.top;
+	//	right -= rc.right;
+	//	bottom -= rc.bottom;
+	//}
 
-	//bool IntersectRect(LPCRECT lpRect1, LPCRECT lpRect2) { return ::IntersectRect(this, lpRect1, lpRect2); }
+	////bool IntersectRect(LPCRECT lpRect1, LPCRECT lpRect2) { return ::IntersectRect(this, lpRect1, lpRect2); }
 
-	CRectF CRectF::operator+(CRectF rc)const
-	{
-		CRectF ret(*this);
-		ret.InflateRect(rc);
-		return ret;
-	}
-	CRectF CRectF::operator+(CPointF pt)const
-	{
-		CRectF ret(*this);
-		ret.OffsetRect(pt);
-		return ret;
-	}
-	CRectF& CRectF::operator+=(CRectF rc)
-	{
-		this->InflateRect(rc);
-		return *this;
-	}
+	//CRectF CRectF::operator+(CRectF rc)const
+	//{
+	//	CRectF ret(*this);
+	//	ret.InflateRect(rc);
+	//	return ret;
+	//}
+	//CRectF CRectF::operator+(CPointF pt)const
+	//{
+	//	CRectF ret(*this);
+	//	ret.OffsetRect(pt);
+	//	return ret;
+	//}
+	//CRectF& CRectF::operator+=(CRectF rc)
+	//{
+	//	this->InflateRect(rc);
+	//	return *this;
+	//}
 
-	CRectF CRectF::operator-(CRectF rc)const
-	{
-		CRectF ret(*this);
-		ret.DeflateRect(rc);
-		return ret;
-	}
-	CRectF CRectF::operator-(CPointF pt)const
-	{
-		CRectF ret(*this);
-		ret.OffsetRect(-pt);
-		return ret;
-	}
-	CRectF& CRectF::operator-=(CRectF rc)
-	{
-		this->DeflateRect(rc);
-		return *this;
-	}
-	bool CRectF::operator==(const CRectF& rc)const { return left == rc.left && top == rc.top && right == rc.right && bottom == rc.bottom; }
-	bool CRectF::operator!=(const CRectF& rc)const { return !operator==(rc); }
-	CRectF CRectF::operator*(FLOAT z)const
-	{
-		return CRectF(left * z, top * z, right * z, bottom * z);
-	}
-	CRectF CRectF::operator/(FLOAT z)const
-	{
-		return CRectF(left / z, top / z, right / z, bottom / z);
-	}
+	//CRectF CRectF::operator-(CRectF rc)const
+	//{
+	//	CRectF ret(*this);
+	//	ret.DeflateRect(rc);
+	//	return ret;
+	//}
+	//CRectF CRectF::operator-(CPointF pt)const
+	//{
+	//	CRectF ret(*this);
+	//	ret.OffsetRect(-pt);
+	//	return ret;
+	//}
+	//CRectF& CRectF::operator-=(CRectF rc)
+	//{
+	//	this->DeflateRect(rc);
+	//	return *this;
+	//}
+	//bool CRectF::operator==(const CRectF& rc)const { return left == rc.left && top == rc.top && right == rc.right && bottom == rc.bottom; }
+	//bool CRectF::operator!=(const CRectF& rc)const { return !operator==(rc); }
+	//CRectF CRectF::operator*(FLOAT z)const
+	//{
+	//	return CRectF(left * z, top * z, right * z, bottom * z);
+	//}
+	//CRectF CRectF::operator/(FLOAT z)const
+	//{
+	//	return CRectF(left / z, top / z, right / z, bottom / z);
+	//}
 	//void operator &=(const CRectF& rect) { ::IntersectRect(this, this, &rect); }
 
 	//CColor
@@ -311,7 +311,7 @@
 
 
 	//CDirect2DWrite
-	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd), m_hDC(nullptr), m_pIconCache(std::make_unique<CFileIconCache>(this)) 
+	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd), m_hDC(nullptr), m_pIconDrawer(std::make_unique<CD2DFileIconDrawer>(this))
 	{
 		GetD3DDevices = [p = CComPtr<ID3D11Device1>(), q = CComPtr<ID3D11DeviceContext1>(), this]() mutable->std::tuple<CComPtr<ID3D11Device1>&, CComPtr<ID3D11DeviceContext1>&>
 		{
@@ -1008,5 +1008,5 @@
 		m_xPixels2Dips = 0.0f;
 		m_yPixels2Dips = 0.0f;
 
-		m_pIconCache->Clear();
+		m_pIconDrawer->Clear();
 	}

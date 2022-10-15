@@ -17,16 +17,16 @@ namespace sml = boost::sml;
 /************/
 struct CPDFPage::MachineBase
 {
-	template<class T, class R, class E>
-	auto call(R(T::* f)(E))const
+	template<class TRect, class R, class E>
+	auto call(R(TRect::* f)(E))const
 	{
-		return [f](T* self, E e, boost::sml::back::process<E> process) { return (self->*f)(e); };
+		return [f](TRect* self, E e, boost::sml::back::process<E> process) { return (self->*f)(e); };
 	}
 	
-	template<class T, class R>
-	auto call(R(T::* f)())const
+	template<class TRect, class R>
+	auto call(R(TRect::* f)())const
 	{
-		return [f](T* self) { return (self->*f)(); };
+		return [f](TRect* self) { return (self->*f)(); };
 	}
 };
 
@@ -238,7 +238,7 @@ void CPDFPage::LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale)
 	FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap));
 	auto mysize = pBitmap->GetSize().width * pBitmap->GetSize().height * 4;
 	m_pDoc->totalsize += mysize;
-	::OutputDebugString(std::format(L"{}:\t{}\t{}\r\n",this->m_index, mysize, m_pDoc->totalsize).c_str());
+	::OutputDebugString(std::format(L"{}:{}x{}\t{}\t{}\r\n",this->m_index, pBitmap->GetSize().width,pBitmap->GetSize().height, mysize, m_pDoc->totalsize).c_str());
 	SetLockBitmap(PdfBmpInfo{ pBitmap, m_loadingScale, m_loadingRotate });
 }
 

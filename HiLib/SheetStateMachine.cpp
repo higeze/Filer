@@ -13,10 +13,10 @@ struct CSheetStateMachine::Machine
 	class ColTrack {};
 	class Error {};
 
-	template<class T, class R, class... Ts>
-	auto call(R(T::* f)(Ts...))const
+	template<class TRect, class R, class... Ts>
+	auto call(R(TRect::* f)(Ts...))const
 	{
-		return [f](T* self, Ts... args) {return (self->*f)(args...); };
+		return [f](TRect* self, Ts... args) {return (self->*f)(args...); };
 	}
 
 	auto operator()() const noexcept

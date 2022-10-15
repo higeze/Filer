@@ -4,7 +4,7 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 
-template<class T> class CUnknown : public T
+template<class TRect> class CUnknown : public TRect
 {
 private:
 	LONG m_refCount;
@@ -29,8 +29,8 @@ public:
 	{
 		*ppvObject = NULL;
 
-		if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, _uuidof(T))){
-			*ppvObject = static_cast<T*>(this);
+		if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, _uuidof(TRect))){
+			*ppvObject = static_cast<TRect*>(this);
 		}else{
 			return E_NOINTERFACE;
 		}

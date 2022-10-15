@@ -146,7 +146,7 @@ void CTabHeaderControl::OnPaint(const PaintEvent& e)
 	}
 
 	auto iterIcon = pTabControl->m_itemsHeaderIconTemplate.find(typeid(*pTabControl->m_itemsSource[GetIndex()]).name());
-	GetWndPtr()->GetDirectPtr()->DrawBitmap(iterIcon->second.operator()(pTabControl->m_itemsSource[GetIndex()]),iconRect);
+	iterIcon->second.operator()(pTabControl->m_itemsSource[GetIndex()],iconRect);
 
 	auto iterText = pTabControl->m_itemsHeaderTemplate.find(typeid(*pTabControl->m_itemsSource[GetIndex()]).name());
 	auto text = iterText->second.operator()(pTabControl->m_itemsSource[GetIndex()]);
@@ -288,10 +288,10 @@ struct CTabControl::Machine
 	class Dragging {};
 	class Error {};
 
-	template<class T, class R, class... Ts>
-	auto call(R(T::* f)(Ts...))const
+	template<class TRect, class R, class... Ts>
+	auto call(R(TRect::* f)(Ts...))const
 	{
-		return [f](T* self, Ts... args) { return (self->*f)(args...); };
+		return [f](TRect* self, Ts... args) { return (self->*f)(args...); };
 	}
 
 	auto operator()() const noexcept

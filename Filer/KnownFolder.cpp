@@ -1,7 +1,7 @@
 #include "KnownFolder.h"
-#include "FileIconCache.h"
 #include "MyCom.h"
 #include "MyIcon.h"
+#include "Debug.h"
 #include <fmt/format.h>
 
 CKnownDriveBaseFolder::CKnownDriveBaseFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder)

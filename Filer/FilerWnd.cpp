@@ -21,7 +21,6 @@
 #include "DriveFolder.h"
 #include "ShellFunction.h"
 #include "Direct2DWrite.h"
-#include "FileIconCache.h"
 #include "ThreadSafeDriveFolderManager.h"
 #include "BindGridView.h"
 #include "BindRow.h"

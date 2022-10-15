@@ -160,59 +160,59 @@ struct TextTabData :public TabData
 };
 
 /***************/
-/* TextTabData */
+/* ImageTabData */
 /***************/
 
 
 
-struct ImageTabData :public TabData
-{
-	ReactiveWStringProperty Path;
-
-	ReactiveCommand<HWND> OpenCommand;
-	ReactiveCommand<HWND> SaveCommand;
-	ReactiveCommand<HWND> OpenAsCommand;
-	ReactiveCommand<HWND> SaveAsCommand;
-
-
-	ImageTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(path)
-	{
-		OpenCommand.Subscribe([this](HWND hWnd) { Open(hWnd); });
-		SaveCommand.Subscribe([this](HWND hWnd) { Save(hWnd); });
-		OpenAsCommand.Subscribe([this](HWND hWnd) { OpenAs(hWnd); });
-		SaveAsCommand.Subscribe([this](HWND hWnd) { SaveAs(hWnd); });
-
-		//CloseCommand.Subscribe([this]() { Close(); });
-		Text.Subscribe([this](const auto&)
-		{
-			Status.set(TextStatus::Dirty);
-		});
-	}
-
-	virtual ~ImageTabData() = default;
-
-	void Open(HWND hWnd);
-	void OpenAs(HWND hWnd);
-	void Open(const std::wstring& path, const encoding_type& enc);
-
-	void Save(HWND hWnd);
-	void SaveAs(HWND hWnd);
-	void Save(const std::wstring& path, const encoding_type& enc);
-
-	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
-
-	friend void to_json(json& j, const TextTabData& o)
-	{
-		to_json(j, static_cast<const TabData&>(o));
-		j["Path"] = o.Path;
-	}
-	friend void from_json(const json& j, TextTabData& o)
-	{
-		from_json(j, static_cast<TabData&>(o));
-		j.at("Path").get_to(o.Path);
-	}
-};
+//struct ImageTabData :public TabData
+//{
+//	ReactiveWStringProperty Path;
+//
+//	ReactiveCommand<HWND> OpenCommand;
+//	ReactiveCommand<HWND> SaveCommand;
+//	ReactiveCommand<HWND> OpenAsCommand;
+//	ReactiveCommand<HWND> SaveAsCommand;
+//
+//
+//	ImageTabData(const std::wstring& path = std::wstring())
+//		:TabData(), Path(path)
+//	{
+//		OpenCommand.Subscribe([this](HWND hWnd) { Open(hWnd); });
+//		SaveCommand.Subscribe([this](HWND hWnd) { Save(hWnd); });
+//		OpenAsCommand.Subscribe([this](HWND hWnd) { OpenAs(hWnd); });
+//		SaveAsCommand.Subscribe([this](HWND hWnd) { SaveAs(hWnd); });
+//
+//		//CloseCommand.Subscribe([this]() { Close(); });
+//		Text.Subscribe([this](const auto&)
+//		{
+//			Status.set(TextStatus::Dirty);
+//		});
+//	}
+//
+//	virtual ~ImageTabData() = default;
+//
+//	void Open(HWND hWnd);
+//	void OpenAs(HWND hWnd);
+//	void Open(const std::wstring& path, const encoding_type& enc);
+//
+//	void Save(HWND hWnd);
+//	void SaveAs(HWND hWnd);
+//	void Save(const std::wstring& path, const encoding_type& enc);
+//
+//	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
+//
+//	friend void to_json(json& j, const TextTabData& o)
+//	{
+//		to_json(j, static_cast<const TabData&>(o));
+//		j["Path"] = o.Path;
+//	}
+//	friend void from_json(const json& j, TextTabData& o)
+//	{
+//		from_json(j, static_cast<TabData&>(o));
+//		j.at("Path").get_to(o.Path);
+//	}
+//};
 
 /**************/
 /* PdfTabData */

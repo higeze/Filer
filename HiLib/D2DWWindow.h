@@ -13,7 +13,7 @@ class CDropTargetManager;
 
 class CD2DWWindow:public CWnd, public CD2DWControl
 {
-private:
+protected:
 	std::unique_ptr<CDispatcher> m_pDispatcher;
 	std::shared_ptr<CDirect2DWrite> m_pDirect;
 	std::unique_ptr<CMouseStateMachine> m_pMouseMachine;
@@ -50,10 +50,10 @@ public:
 			return 0;
 		};
 	}
-	template<typename T>
+	template<typename TRect>
 	LRESULT UserInputMachine_Message(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 	{
-		m_pMouseMachine->process_event(T(this, wParam, lParam, &bHandled));
+		m_pMouseMachine->process_event(TRect(this, wParam, lParam, &bHandled));
 		InvalidateRect(NULL, FALSE);
 		return 0;
 	}

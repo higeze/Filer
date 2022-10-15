@@ -11,8 +11,8 @@ typedef std::basic_string<TCHAR> tstring;
 /****************/
 /* tstring_cast */
 /****************/
-template<typename T>
-inline const T* tstring_cast(const char* str,const wchar_t* wstr)
+template<typename TRect>
+inline const TRect* tstring_cast(const char* str,const wchar_t* wstr)
 {
 	return str;
 }
@@ -65,8 +65,8 @@ struct tchar_cast<wchar_t,c,w> {
 /* GetBuffer */
 /*************/
 
-template<typename T>
-T* GetBuffer(std::basic_string<T>& str,int n)
+template<typename TRect>
+TRect* GetBuffer(std::basic_string<TRect>& str,int n)
 {
 	str.resize(n+1);
 	return &str[0];
@@ -75,10 +75,10 @@ T* GetBuffer(std::basic_string<T>& str,int n)
 /*****************/
 /* ReleaseBuffer */
 /*****************/
-template<typename T>
-void ReleaseBuffer(std::basic_string<T>& str)
+template<typename TRect>
+void ReleaseBuffer(std::basic_string<TRect>& str)
 {
-	typename std::basic_string<T>::size_type size=str.find_first_of(TCHAR_CAST(T,'\0'));
+	typename std::basic_string<TRect>::size_type size=str.find_first_of(TCHAR_CAST(TRect,'\0'));
 	str.resize(size);
 }
 
@@ -115,21 +115,21 @@ std::wstring str2wstr(const std::string& str);
 std::string wstr2str(const std::wstring& wstr);
 
 
-template<typename T>
-std::basic_string<T> RoundDouble2String(const double& arg, int precision)
+template<typename TRect>
+std::basic_string<TRect> RoundDouble2String(const double& arg, int precision)
 {
-	std::basic_string<T> result;
-	std::basic_stringstream<T> sstream;
+	std::basic_string<TRect> result;
+	std::basic_stringstream<TRect> sstream;
 	sstream.setf(std::ios::fixed);
 	sstream.precision(precision);
 	if(!(sstream<<arg && sstream>>result)){
 		throw std::exception("Error on RoundDouble2String");
 	}	
-	int dotIndex=result.find_first_of(TCHAR_CAST(T,'.'));
-	if(dotIndex!=std::basic_string<T>::npos){
+	int dotIndex=result.find_first_of(TCHAR_CAST(TRect,'.'));
+	if(dotIndex!=std::basic_string<TRect>::npos){
 		int nonZeroIndex=dotIndex-1;
 		for(unsigned i=dotIndex+1;i<result.size();i++){
-			if(i == dotIndex+1 || result[i]!=TCHAR_CAST(T,'0')){
+			if(i == dotIndex+1 || result[i]!=TCHAR_CAST(TRect,'0')){
 				nonZeroIndex=i;
 			}		
 		}
@@ -138,19 +138,19 @@ std::basic_string<T> RoundDouble2String(const double& arg, int precision)
 	return result;
 }
 
-template<typename T,typename U>
-std::basic_string<T> roundtostring(const U& arg, int precision)
+template<typename TRect,typename U>
+std::basic_string<TRect> roundtostring(const U& arg, int precision)
 {
-	std::basic_string<T> result;
-	std::basic_stringstream<T> sstream;
+	std::basic_string<TRect> result;
+	std::basic_stringstream<TRect> sstream;
 	sstream.setf(std::ios::fixed);
 	sstream.precision(precision);
 	if(!(sstream<<arg && sstream>>result))throw std::exception("Error on roundtostring");
 	int dotIndex=result.find_first_of(L'.');
-	if(dotIndex!=std::basic_string<T>::npos){
+	if(dotIndex!=std::basic_string<TRect>::npos){
 		int nonZeroIndex=dotIndex-1;
 		for(unsigned i=dotIndex+1;i<result.size();i++){
-			if(result[i]!=TCHAR_CAST(T,'0')){
+			if(result[i]!=TCHAR_CAST(TRect,'0')){
 				nonZeroIndex=i;
 			}		
 		}
@@ -161,8 +161,8 @@ std::basic_string<T> roundtostring(const U& arg, int precision)
 
 namespace my
 {
-	template<typename T>
-	bool find(const std::basic_string<T>& str1, const std::basic_string<T>& str2, bool matchCase, bool matchWholeWord)
+	template<typename TRect>
+	bool find(const std::basic_string<TRect>& str1, const std::basic_string<TRect>& str2, bool matchCase, bool matchWholeWord)
 	{
 		bool find = false;
 		if(matchCase && matchWholeWord){

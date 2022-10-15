@@ -1,26 +1,26 @@
 #pragma once
 #include <vector>
 
-template<class T, class Allocator = std::allocator<T>>
-class index_vector :public std::vector<T, Allocator>
+template<class TRect, class Allocator = std::allocator<TRect>>
+class index_vector :public std::vector<TRect, Allocator>
 {
 public:
-	using size_type = typename std::vector<T, Allocator>::size_type;
-	using iterator = typename std::vector<T, Allocator>::iterator;
-	using const_iterator = typename std::vector<T, Allocator>::const_iterator;
+	using size_type = typename std::vector<TRect, Allocator>::size_type;
+	using iterator = typename std::vector<TRect, Allocator>::iterator;
+	using const_iterator = typename std::vector<TRect, Allocator>::const_iterator;
 public:
-	index_vector(const std::function<void(T&, size_type idx)>& setter)
-		:std::vector<T, Allocator>(), m_setter(setter){}
+	index_vector(const std::function<void(TRect&, size_type idx)>& setter)
+		:std::vector<TRect, Allocator>(), m_setter(setter){}
 
-	std::function<void(T&, size_type idx)> m_setter;
+	std::function<void(TRect&, size_type idx)> m_setter;
 
-	void idx_push_back(const T& x)
+	void idx_push_back(const TRect& x)
 	{
 		this->push_back(x);
 		m_setter(this->operator[](this->size() - 1), this->size() - 1);
 	}
 
-	iterator idx_insert(const_iterator position, const T& x)
+	iterator idx_insert(const_iterator position, const TRect& x)
 	{
 		size_type posIdx = std::distance(this->cbegin(), position);
 		auto ret = this->insert(position, x);

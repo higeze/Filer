@@ -71,7 +71,8 @@ public:
 	BOOL PtInRect(POINT pt){return ::PtInRect(this,pt);}
 	CPoint& TopLeft(){return *((CPoint*)this);}
 	const CPoint& TopLeft()const{return *((CPoint*)this);}
-
+	CPoint& LeftTop(){return *((CPoint*)this);}
+	const CPoint& LeftTop()const{return *((CPoint*)this);}
 	CPoint TopRight(){return CPoint(right,top);}
 	CPoint CenterPoint() const
 	{
