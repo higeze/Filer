@@ -600,7 +600,7 @@ CPDFSplitDlg::CPDFSplitDlg(
 		for (auto& file : files) {
 			CPDFDoc doc(std::make_shared<PdfViewProperty>(), nullptr);
 			doc.Open(file->GetPath(), L"");
-			doc.SplitSaveAsCopy();
+			doc.SplitSave();
 		}
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	});
@@ -625,16 +625,17 @@ CPDFMergeDlg::CPDFMergeDlg(
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
 	{
 		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
-		std::vector<std::wstring> filePathes;
-		std::transform(files.cbegin(), files.cend(), std::back_inserter(filePathes), [](const std::shared_ptr<CShellFile>& spFile)->std::wstring
-		{
-			return spFile->GetPath();
-		});
-
 		CPDFDoc doc(std::make_shared<PdfViewProperty>(), nullptr);
 		doc.Create();
-		doc.Merge(filePathes);
-		doc.SaveAsCopy(m_spParameter->GetText().get());
+		int minVersion = 0;
+		for (auto spFile : files) {
+			auto srcDoc = CPDFDoc(nullptr, nullptr);
+			srcDoc.Open(spFile->GetPath(), L"");
+			minVersion = std::min(minVersion, srcDoc.GetFileVersion());
+			auto count = doc.GetPageCount();
+			doc.ImportPages(srcDoc, NULL, count);		
+		}
+		doc.SaveWithVersion(m_spParameter->GetText().get(), 0,  minVersion);
 		
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	});
@@ -667,7 +668,7 @@ CPDFExtractDlg::CPDFExtractDlg(
 			boost::algorithm::replace_all(param, L"first", L"1");
 			boost::algorithm::replace_all(param, L"last", std::to_wstring(doc.GetPageCount()));
 			CPDFDoc dst_doc(doc.Extract(param));
-			dst_doc.SaveAsCopy(std::format(L"{}_{}.pdf", file->GetPathWithoutExt(), m_spParameter->GetText().get()));
+			dst_doc.SaveWithVersion(std::format(L"{}_{}.pdf", file->GetPathWithoutExt(), m_spParameter->GetText().get()),0, doc.GetFileVersion());
 		}
 
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
@@ -697,7 +698,7 @@ CPDFUnlockDlg::CPDFUnlockDlg(
 		for (auto& file : files) {
 			CPDFDoc doc(std::make_shared<PdfViewProperty>(), nullptr);
 			doc.Open(file->GetPath(), m_spParameter->GetText().get());
-			doc.SaveAsCopy(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), L"_unlock.pdf"),  FPDF_REMOVE_SECURITY);
+			doc.SaveWithVersion(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), L"_unlock.pdf"),  FPDF_REMOVE_SECURITY, doc.GetFileVersion());
 		}
 
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });

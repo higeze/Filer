@@ -37,6 +37,8 @@
 #include "MouseStateMachine.h"
 #include <Dbt.h>
 #include "PdfEditorProperty.h"
+#include "ImageEditorProperty.h"
+
 #include "FileOperationDlg.h"
 
 #ifdef USE_PYTHON_EXTENSION
@@ -53,6 +55,8 @@ CFilerWnd::CFilerWnd()
 	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
 	m_spEditorProp(std::make_shared<EditorProperty>()),
 	m_spPdfEditorProp(std::make_shared<PDFEditorProperty>()),
+	m_spImageEditorProp(std::make_shared<ImageEditorProperty>()),
+	
 	m_spStatusBarProp(std::make_shared<StatusBarProperty>()),
 	m_spTabControlProp(std::make_shared<TabControlProperty>()),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
@@ -60,8 +64,8 @@ CFilerWnd::CFilerWnd()
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
 	m_spSplitterProp(std::make_shared<SplitterProperty>()),
 	m_spLauncher(std::make_shared<CLauncherGridView>(this, m_spFilerGridViewProp, m_spLauncherProp)),
-	m_spLeftView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp)),
-	m_spRightView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp)),
+	m_spLeftView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp)),
+	m_spRightView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp)),
 	m_spSplitter(std::make_shared<CHorizontalSplitter>(this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp)),
 	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
@@ -384,6 +388,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 {
 	*(e.HandledPtr) = FALSE;
+	static std::vector<std::wstring> imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff" };
 	switch (e.Char)
 	{
 	case 'Q':
@@ -397,6 +402,8 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 						spNewData = std::make_shared<TextTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
 					} else if (boost::iequals(spCurFilerGrid->GetFocusedFile()->GetPathExt(), L".pdf")) {
 						spNewData = std::make_shared<PdfTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
+					} else if (std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spCurFilerGrid->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })){
+						spNewData = std::make_shared<ImageTabData>(GetWndPtr()->GetDirectPtr(), spCurFilerGrid->GetFocusedFile()->GetPath());
 					}
 
 					if (spNewData) {
@@ -419,7 +426,10 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 						spNewData = std::make_shared<TextTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
 					} else if (boost::iequals(spCurFilerGrid->GetFocusedFile()->GetPathExt(), L".pdf")) {
 						spNewData = std::make_shared<PdfTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
+					} else if (std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spCurFilerGrid->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })){
+						spNewData = std::make_shared<ImageTabData>(GetWndPtr()->GetDirectPtr(), spCurFilerGrid->GetFocusedFile()->GetPath());
 					}
+
 					if (spNewData) {
 						spOtherTab->GetItemsSource().push_back(spNewData);
 						*(e.HandledPtr) = TRUE;

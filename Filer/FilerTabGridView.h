@@ -24,6 +24,10 @@ class CPDFEditor;
 struct PDFEditorProperty;
 struct EditorProperty;
 
+class CImageEditor;
+struct ImageEditorProperty;
+#include "D2DImage.h"
+
 /***************/
 /* FilerTabData */
 /***************/
@@ -162,57 +166,53 @@ struct TextTabData :public TabData
 /***************/
 /* ImageTabData */
 /***************/
+struct ImageTabData :public TabData
+{
+	//ReactiveWStringProperty Path;
+	ReactiveProperty<CD2DImage> Image;
+	ReactiveProperty<FLOAT> VScroll = 0.0f;
+	ReactiveProperty<FLOAT> HScroll = 0.0f;
+	ReactiveProperty<FLOAT> Scale = 1.0f;
+
+	//ReactiveCommand<HWND> OpenCommand;
+	//ReactiveCommand<HWND> SaveCommand;
+	//ReactiveCommand<HWND> OpenAsCommand;
+	//ReactiveCommand<HWND> SaveAsCommand;
 
 
+	ImageTabData(CDirect2DWrite* pDirect = nullptr, const std::wstring& path = std::wstring())
+		:TabData(),Image(CD2DImage(path))
+	{
+		
+		//OpenCommand.Subscribe([this](HWND hWnd) { Open(hWnd); });
+		//SaveCommand.Subscribe([this](HWND hWnd) { Save(hWnd); });
+		//OpenAsCommand.Subscribe([this](HWND hWnd) { OpenAs(hWnd); });
+		//SaveAsCommand.Subscribe([this](HWND hWnd) { SaveAs(hWnd); });
+	}
 
-//struct ImageTabData :public TabData
-//{
-//	ReactiveWStringProperty Path;
-//
-//	ReactiveCommand<HWND> OpenCommand;
-//	ReactiveCommand<HWND> SaveCommand;
-//	ReactiveCommand<HWND> OpenAsCommand;
-//	ReactiveCommand<HWND> SaveAsCommand;
-//
-//
-//	ImageTabData(const std::wstring& path = std::wstring())
-//		:TabData(), Path(path)
-//	{
-//		OpenCommand.Subscribe([this](HWND hWnd) { Open(hWnd); });
-//		SaveCommand.Subscribe([this](HWND hWnd) { Save(hWnd); });
-//		OpenAsCommand.Subscribe([this](HWND hWnd) { OpenAs(hWnd); });
-//		SaveAsCommand.Subscribe([this](HWND hWnd) { SaveAs(hWnd); });
-//
-//		//CloseCommand.Subscribe([this]() { Close(); });
-//		Text.Subscribe([this](const auto&)
-//		{
-//			Status.set(TextStatus::Dirty);
-//		});
-//	}
-//
-//	virtual ~ImageTabData() = default;
-//
-//	void Open(HWND hWnd);
-//	void OpenAs(HWND hWnd);
-//	void Open(const std::wstring& path, const encoding_type& enc);
-//
-//	void Save(HWND hWnd);
-//	void SaveAs(HWND hWnd);
-//	void Save(const std::wstring& path, const encoding_type& enc);
-//
-//	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
-//
-//	friend void to_json(json& j, const TextTabData& o)
-//	{
-//		to_json(j, static_cast<const TabData&>(o));
-//		j["Path"] = o.Path;
-//	}
-//	friend void from_json(const json& j, TextTabData& o)
-//	{
-//		from_json(j, static_cast<TabData&>(o));
-//		j.at("Path").get_to(o.Path);
-//	}
-//};
+	virtual ~ImageTabData() = default;
+
+	//void Open(HWND hWnd);
+	//void OpenAs(HWND hWnd);
+	//void Open(const std::wstring& path, const encoding_type& enc);
+
+	//void Save(HWND hWnd);
+	//void SaveAs(HWND hWnd);
+	//void Save(const std::wstring& path, const encoding_type& enc);
+
+	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override { return true; }
+
+	friend void to_json(json& j, const ImageTabData& o)
+	{
+		to_json(j, static_cast<const TabData&>(o));
+		j["Image"] = o.Image;
+	}
+	friend void from_json(const json& j, ImageTabData& o)
+	{
+		from_json(j, static_cast<TabData&>(o));
+		j.at("Image").get_to(o.Image);
+	}
+};
 
 /**************/
 /* PdfTabData */
@@ -259,6 +259,7 @@ private:
 	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
 	std::shared_ptr<EditorProperty> m_spEditorProp;
 	std::shared_ptr<PDFEditorProperty> m_spPdfEditorProp;
+	std::shared_ptr<ImageEditorProperty> m_spImageEditorProp;
 
 	CBinding m_textBinding;
 	CBinding m_textEncodingBinding;
@@ -267,6 +268,10 @@ private:
 	CBinding m_pdfScaleBinding;
 	CBinding m_pdfVScrollBinding;
 	CBinding m_pdfHScrollBinding;
+	CBinding m_imageBinding;
+	CBinding m_imageScaleBinding;
+	CBinding m_imageVScrollBinding;
+	CBinding m_imageHScrollBinding;
 	CBinding m_statusBinding;
 	CBinding m_caretPosBinding;
 	CBinding m_caretsBinding;
@@ -278,6 +283,7 @@ private:
 
 	std::unique_ptr<sigslot::scoped_connection> m_pTextPathConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pPdfPathConnection;
+	std::unique_ptr<sigslot::scoped_connection> m_pImageConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pStatusConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pCloseConnection;
 
@@ -289,7 +295,8 @@ public:
 		const std::shared_ptr<TabControlProperty>& spTabProp = nullptr, 
 		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty = nullptr,
 		const std::shared_ptr<EditorProperty>& spTextboxProp = nullptr,
-		const std::shared_ptr<PDFEditorProperty>& spPdfViewProp = nullptr);
+		const std::shared_ptr<PDFEditorProperty>& spPdfViewProp = nullptr,
+		const std::shared_ptr<ImageEditorProperty>& spImageEditorProp = nullptr);
 	virtual ~CFilerTabGridView();
 
 	/****************/
@@ -303,6 +310,7 @@ public:
 	SHAREDPTR_GETTER(CFilerGridView, FilerGridView)
 	SHAREDPTR_GETTER(CEditor, TextView)
 	SHAREDPTR_GETTER(CPDFEditor, PdfView)
+	SHAREDPTR_GETTER(CImageEditor, ImageView)
 	SHAREDPTR_GETTER(CToDoGridView, ToDoGridView)
 
 	/**************/
@@ -319,6 +327,7 @@ public:
 	void OnCommandNewToDoTab(const CommandEvent& e);
 	void OnCommandNewTextTab(const CommandEvent& e);
 	void OnCommandNewPdfTab(const CommandEvent& e);
+	void OnCommandNewImageTab(const CommandEvent& e);
 	void OnCommandAddToFavorite(const CommandEvent& e);
 	void OnCommandOpenSameAsOther(const CommandEvent& e);
 
@@ -329,6 +338,7 @@ public:
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData );
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ImageTabData);
 
 		to_json(j, static_cast<const CTabControl&>(o));
 		j["FilerView"] = o.m_spFilerGridView;
@@ -340,6 +350,7 @@ public:
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ToDoTabData);
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ImageTabData);
 
 		from_json(j, static_cast<CTabControl&>(o));
 		get_to(j, "FilerView", o.m_spFilerGridView);

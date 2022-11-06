@@ -10,7 +10,8 @@ CD2DFileIconDrawer::CD2DFileIconDrawer(CDirect2DWrite* pDirect)
 CIcon CD2DFileIconDrawer::GetDefaultIcon() const
 {
 	HINSTANCE hDll = ::LoadLibrary(L"SHELL32.dll");
-	return CIcon(::LoadIcon(hDll, MAKEINTRESOURCE(1)));
+	//return CIcon(::LoadIcon(hDll, MAKEINTRESOURCE(1)));
+	return CIcon(HICON(::LoadImageW(hDll, MAKEINTRESOURCE(1), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR)));
 }
 
 CIcon CD2DFileIconDrawer::GetIcon(const CIDL& absoluteIDL) const

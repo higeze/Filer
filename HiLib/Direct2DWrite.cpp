@@ -848,15 +848,19 @@
 		GetD2DDeviceContext()->DrawBitmap(pBitmap, rect);
 	}
 
-	void CDirect2DWrite::DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap, const CRectF& rect)
+	void CDirect2DWrite::DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap,
+									const CRectF& destinationRectangle,
+									FLOAT opacity,
+									D2D1_BITMAP_INTERPOLATION_MODE interpolationMode,
+									const D2D1_RECT_F *sourceRectangle)
 	{
 		if (pBitmap) {
 			auto bmpRect = CRectF(
-				std::round(rect.left),
-				std::round(rect.top),
-				std::round(rect.right),
-				std::round(rect.bottom));
-			GetD2DDeviceContext()->DrawBitmap(pBitmap, bmpRect);
+				std::round(destinationRectangle.left),
+				std::round(destinationRectangle.top),
+				std::round(destinationRectangle.right),
+				std::round(destinationRectangle.bottom));
+			GetD2DDeviceContext()->DrawBitmap(pBitmap, bmpRect, opacity, interpolationMode, sourceRectangle);
 		}
 	}
 	void CDirect2DWrite::DrawBitmap(const CComPtr<ID2D1Bitmap1>& pBitmap, const CRectF& rect)

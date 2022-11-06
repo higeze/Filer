@@ -186,6 +186,12 @@ public:
         return ThreadRun(FPDF_GetPageCount, document);
     }
 
+    FPDF_BOOL GetFileVersion(FPDF_DOCUMENT doc,
+                                   int* fileVersion)
+    {
+        return ThreadRun(FPDF_GetFileVersion, doc, fileVersion);
+    }
+
     FPDF_BOOL ImportPagesByIndex(FPDF_DOCUMENT dest_doc,
                             FPDF_DOCUMENT src_doc,
                             const int* page_indices,
@@ -208,6 +214,14 @@ public:
                         FPDF_DWORD flags)
     {
         return ThreadRun(FPDF_SaveAsCopy, document, pFileWrite, flags);
+    }
+
+    FPDF_BOOL SaveWithVersion(FPDF_DOCUMENT document,
+                     FPDF_FILEWRITE* pFileWrite,
+                     FPDF_DWORD flags,
+                     int fileVersion)
+    {
+        return ThreadRun(FPDF_SaveWithVersion, document, pFileWrite, flags, fileVersion);
     }
 
     /*************/

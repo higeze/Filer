@@ -20,6 +20,9 @@
     <Filter Include="HiLib\PDF">
       <UniqueIdentifier>{a55461a7-fe93-45fe-8004-30f0719d1ac5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HiLib\Image">
+      <UniqueIdentifier>{f89607a2-8976-403d-89d2-7785addea202}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -786,6 +789,21 @@
     <ClInclude Include="..\HiLib\D2DFileIconDrawer.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\ImageEditorProperty.h">
+      <Filter>HiLib\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ImageEditor.h">
+      <Filter>HiLib\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ImageViewProperty.h">
+      <Filter>HiLib\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ImageView.h">
+      <Filter>HiLib\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ImageViewStateMachine.h">
+      <Filter>HiLib\Image</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1170,6 +1188,15 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\D2DFileIconDrawer.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ImageEditor.cpp">
+      <Filter>HiLib\Image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ImageView.cpp">
+      <Filter>HiLib\Image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ImageViewStateMachine.cpp">
+      <Filter>HiLib\Image</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

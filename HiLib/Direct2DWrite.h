@@ -348,7 +348,11 @@ namespace std
 		void DrawSolidGeometry(const SolidLine& line, CComPtr<ID2D1PathGeometry>& path);
 		void FillSolidGeometry(const SolidFill& fill, CComPtr<ID2D1PathGeometry>& path);
 		void DrawIcon(HICON hIcon, CRectF& rect);
-		void DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap, const CRectF& rect);
+		void DrawBitmap(const CComPtr<ID2D1Bitmap>& pBitmap,
+			const CRectF& destinationRectangle,
+			FLOAT opacity = 1.0f,
+			D2D1_BITMAP_INTERPOLATION_MODE interpolationMode = D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+			const D2D1_RECT_F *sourceRectangle = NULL );
 		void DrawBitmap(const CComPtr<ID2D1Bitmap1>& pBitmap, const CRectF& rect);
 
 		CSizeF CalcTextSize(const FormatF& format, const std::wstring& text);

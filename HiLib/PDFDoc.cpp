@@ -25,7 +25,6 @@ void CPDFDoc::Term()
 {
 	FPDF_DestroyLibrary();
 }
-
 CPDFDoc::CPDFDoc(const std::shared_ptr<PdfViewProperty>& spProp, std::function<void()> changed)
 	:m_pPDFium(std::make_unique<CPDFiumSingleThread>()),
 	m_pProp(spProp),
@@ -51,6 +50,14 @@ void CPDFDoc::LoadSourceRectsInDoc()
 		m_optSourceRectsInDoc->emplace_back(0.f, height, pPage->GetSourceSize().width, height + pPage->GetSourceSize().height);
 		height += pPage->GetSourceSize().height + 10.f;
 	}	
+}
+
+void CPDFDoc::LoadFileVersion()
+{
+	int version;
+	if (m_pPDFium->GetFileVersion(m_pDoc.get(), &version)) {
+		m_optFileVersion = version;
+	}
 }
 
 void CPDFDoc::LoadPageCount()
@@ -195,7 +202,7 @@ void CPDFDoc::Save()
 	m_pDoc = std::move(pNew);
 	m_pages.clear();
 
-	SaveAsCopy(m_path, 0);
+	SaveWithVersion(m_path, 0, GetFileVersion());
 
 	ClearPageCount();
 	ClearSourceSize();
@@ -211,10 +218,10 @@ void CPDFDoc::Save()
 			});
 	}
 }
-void CPDFDoc::SaveAsCopy(const std::wstring& path, FPDF_DWORD flags)
+void CPDFDoc::SaveWithVersion(const std::wstring& path, FPDF_DWORD flags, int fileVersion)
 {
 	CPDFiumFileWrite fileWrite(path);
-	GetPDFiumPtr()->SaveAsCopy(GetDocPtr().get(), &fileWrite, flags);
+	GetPDFiumPtr()->SaveWithVersion(GetDocPtr().get(), &fileWrite, flags, fileVersion);
 }
 
 void CPDFDoc::ImportPages(const CPDFDoc& src_doc,
@@ -225,7 +232,7 @@ void CPDFDoc::ImportPages(const CPDFDoc& src_doc,
 	ClearPageCount();
 }
 
-void CPDFDoc::SplitSaveAsCopy()
+void CPDFDoc::SplitSave()
 {
 	for (auto i = 0; i < GetPageCount(); i++) {
 		wchar_t srcPathWoExt[MAX_PATH] = { 0 };
@@ -243,9 +250,18 @@ void CPDFDoc::SplitSaveAsCopy()
 
 		CPDFiumFileWrite fileWrite(dstPath);
 
-		m_pPDFium->SaveAsCopy(dstDoc.m_pDoc.get(), &fileWrite, 0);
+		m_pPDFium->SaveWithVersion(dstDoc.m_pDoc.get(), &fileWrite, 0, GetFileVersion());
 	}
 }
+
+void CPDFDoc::Merge(const std::vector<CPDFDoc>& srcDocs)
+{
+	for (const auto& srcDoc : srcDocs) {
+		auto count = GetPageCount();
+		ImportPages(srcDoc, NULL, count);
+	}
+}
+
 
 
 void CPDFDoc::Merge(const std::vector<std::wstring>& srcPathes)

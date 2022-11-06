@@ -27,9 +27,16 @@
 #include "MyFile.h"
 #include "D2DFileIconDrawer.h"
 #include "ShellFileFactory.h"
+
 #include "PDFEditor.h"
 #include "PDFView.h"
 #include "PDFEditorProperty.h"
+
+#include "ImageEditor.h"
+#include "ImageView.h"
+#include "D2DImage.h"
+#include "ImageEditorProperty.h"
+
 #include "StatusBar.h"
 
 #include "ResourceIDFactory.h"
@@ -336,14 +343,17 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	const std::shared_ptr<TabControlProperty>& spTabProp,
 	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, 
 	const std::shared_ptr<EditorProperty>& spEditorProp,
-	const std::shared_ptr<PDFEditorProperty>& spPdfEditorProp)
+	const std::shared_ptr<PDFEditorProperty>& spPdfEditorProp,
+	const std::shared_ptr<ImageEditorProperty>& spImageEditorProp)
 	:CTabControl(pParentControl, spTabProp), 
 	m_spFilerGridViewProp(spFilerGridViewProp),
 	m_spEditorProp(spEditorProp),
 	m_spPdfEditorProp(spPdfEditorProp),
+	m_spImageEditorProp(spImageEditorProp),
 	m_spFilerGridView(std::make_shared<CFilerGridView>(this, spFilerGridViewProp)),
 	m_spTextView(std::make_shared<CEditor>(this, spEditorProp)),
 	m_spPdfView(std::make_shared<CPDFEditor>(this, spPdfEditorProp)),
+	m_spImageView(std::make_shared<CImageEditor>(this, spImageEditorProp)),
 	m_spToDoGridView(std::make_shared<CToDoGridView>(this, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp)))
 
 {
@@ -352,6 +362,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	m_commandMap.emplace(IDM_NEWTODOTAB, std::bind(&CFilerTabGridView::OnCommandNewToDoTab, this, phs::_1));
 	m_commandMap.emplace(IDM_NEWTEXTTAB, std::bind(&CFilerTabGridView::OnCommandNewTextTab, this, phs::_1));
 	m_commandMap.emplace(IDM_NEWPDFTAB, std::bind(&CFilerTabGridView::OnCommandNewPdfTab, this, phs::_1));
+	m_commandMap.emplace(IDM_NEWIMAGETAB, std::bind(&CFilerTabGridView::OnCommandNewImageTab, this, phs::_1));
 
 	m_commandMap.emplace(IDM_LOCKTAB, std::bind(&CFilerTabGridView::OnCommandLockTab, this, phs::_1));
 	m_commandMap.emplace(IDM_CLONETAB, std::bind(&CFilerTabGridView::OnCommandCloneTab, this, phs::_1));
@@ -488,6 +499,18 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 				return L"nullptr";
 			}
 		});
+	m_itemsHeaderTemplate.emplace(typeid(ImageTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
+		{
+			if (auto p = std::dynamic_pointer_cast<ImageTabData>(pTabData)) {
+				if (p->Image.get().GetPath().empty()) {
+					return L"No file";
+				} else {
+					return std::wstring(::PathFindFileName(p->Image.get().GetPath().c_str()));
+				}
+			} else {
+				return L"nullptr";
+			}
+		});
 
 	//ItemsHeaderIcon
 	std::function<void()> updated = [this]()->void
@@ -528,6 +551,16 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		{
 			if (auto p = std::dynamic_pointer_cast<PdfTabData>(pTabData)) {
 				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Path);
+				return GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(dstRect, spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
+			} else {
+				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
+			}
+		});
+
+	m_itemsHeaderIconTemplate.emplace(typeid(ImageTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
+		{
+			if (auto p = std::dynamic_pointer_cast<ImageTabData>(pTabData)) {
+				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Image.get().GetPath());
 				return GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(dstRect, spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
 			} else {
 				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
@@ -612,6 +645,28 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		return spView;
 	});
 
+	m_itemsControlTemplate.emplace(typeid(ImageTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
+		auto spViewModel = std::static_pointer_cast<ImageTabData>(pTabData);
+		auto spView = GetImageViewPtr();
+
+		//Path
+		m_imageBinding.Attach(spViewModel->Image, spView->GetImageViewPtr()->PropImage());
+		m_pImageConnection = std::make_unique<sigslot::scoped_connection>(spView->GetImageViewPtr()->PropImage().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
+		//Scale
+		m_imageScaleBinding.Attach(spViewModel->Scale, spView->GetImageViewPtr()->GetScale());
+		//Scroll
+		m_imageVScrollBinding.Attach(spViewModel->VScroll, spView->GetImageViewPtr()->GetVScrollPtr()->PropScrollPos());
+		m_imageHScrollBinding.Attach(spViewModel->HScroll, spView->GetImageViewPtr()->GetHScrollPtr()->PropScrollPos());
+
+		//Open
+		//m_pOpenBinding.reset(nullptr);
+		//m_pOpenBinding.reset(new CBinding<void>(spViewModel->OpenCommand, spView->GetOpenCommand()));
+
+		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
+		//spView->GetPDFViewPtr()->Open(spViewModel->Path);//TODOHIGH
+
+		return spView;
+	});
 
 	/**********/
 	/* Create */
@@ -621,11 +676,13 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	GetToDoGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetTextViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetPdfViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
+	GetImageViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 
 	GetFilerGridViewPtr()->GetIsEnabled().set(false);
 	GetToDoGridViewPtr()->GetIsEnabled().set(false);
 	GetTextViewPtr()->GetIsEnabled().set(false);
 	GetPdfViewPtr()->GetIsEnabled().set(false);
+	GetImageViewPtr()->GetIsEnabled().set(false);
 
 	//ItemsSource
 	if (m_itemsSource.empty()) {
@@ -679,6 +736,13 @@ void CFilerTabGridView::OnCommandNewPdfTab(const CommandEvent& e)
 	m_itemsSource.push_back(std::make_shared<PdfTabData>(L""));
 	m_selectedIndex.set(m_itemsSource.size() - 1);
 }
+
+void CFilerTabGridView::OnCommandNewImageTab(const CommandEvent& e)
+{
+	m_itemsSource.push_back(std::make_shared<ImageTabData>(GetWndPtr()->GetDirectPtr(), L""));
+	m_selectedIndex.set(m_itemsSource.size() - 1);
+}
+
 
 void CFilerTabGridView::OnCommandAddToFavorite(const CommandEvent& e)
 {

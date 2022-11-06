@@ -31,6 +31,7 @@ private:
 	UNQ_FPDF_DOCUMENT m_pDoc;
 	std::vector<std::unique_ptr<CPDFPage>> m_pages;
 
+	LAZY_GETTER(int, FileVersion)
 	LAZY_GETTER(CSizeF, SourceSize)
 	LAZY_GETTER(int, PageCount)
 	LAZY_GETTER(std::vector<CRectF>, SourceRectsInDoc)
@@ -78,9 +79,10 @@ public:
 					FPDF_BYTESTRING pagerange,
 					int index);
 	void Save();
-	void SaveAsCopy(const std::wstring& path, FPDF_DWORD flags = 0);
+	void SaveWithVersion(const std::wstring& path, FPDF_DWORD flags, int fileVersion);
 
-	void SplitSaveAsCopy();
+	void SplitSave();
+	void Merge(const std::vector<CPDFDoc>& srcDocs);
 	void Merge(const std::vector<std::wstring>& srcPathes);
 	CPDFDoc Extract(const std::wstring& page_indices);
 	CPDFDoc Clone();

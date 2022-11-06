@@ -3,6 +3,7 @@
 #include <vector>
 #include <tuple>
 #include <sigslot/signal.hpp>
+#include "JsonSerializer.h"
 
 template <class T>
 class Subject

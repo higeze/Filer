@@ -13,7 +13,7 @@
 
 
 /***************/
-/* CTextEditor */
+/* CPDFEditor */
 /***************/
 
 CPDFEditor::CPDFEditor(
@@ -141,7 +141,7 @@ void CPDFEditor::SaveAs()
 		::ReleaseBuffer(path);
 		bool same = path == m_spPDFView->GetDocPtr()->GetPath();
 		if (!same) {
-			m_spPDFView->GetDocPtr()->SaveAsCopy(path, 0);
+			m_spPDFView->GetDocPtr()->SaveWithVersion(path, 0, m_spPDFView->GetDocPtr()->GetFileVersion());
 			m_spPDFView->Open(path);
 		} else {
 			m_spPDFView->GetDocPtr()->Save();

@@ -18,6 +18,7 @@
 #include "D2DWWindow.h"
 #include "ReactiveProperty.h"
 #include "PdfEditorProperty.h"
+#include "ImageEditorProperty.h"
 #include "ExeExtensionProperty.h"
 #include "EditorProperty.h"
 #include "DialogProperty.h"
@@ -88,6 +89,7 @@ private:
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
 	std::shared_ptr<EditorProperty> m_spEditorProp;
 	std::shared_ptr<PDFEditorProperty> m_spPdfEditorProp;
+	std::shared_ptr<ImageEditorProperty> m_spImageEditorProp;
 	std::shared_ptr<TabControlProperty> m_spTabControlProp;
 	std::shared_ptr<SplitterProperty> m_spSplitterProp;
 	std::shared_ptr<DialogProperty> m_spDialogProp;
@@ -204,34 +206,34 @@ public:
 	//	return 0;
 	//}
 
-	FRIEND_SERIALIZER
-    template <class Archive>
-    void save(Archive& ar)
-    {
-        const type_info& info = typeid(ar);
-		if(info == typeid(CSerializer&) || info == typeid(CDeserializer&)){ 
-			ar("WindowRectangle", m_rcWnd);
-			ar("PropertyWindowRectangle", m_rcPropWnd);
-		}
-		ar("LeftSplit", m_splitterLeft);
-
-		ar("ApplicationProperty", m_spApplicationProp);
-		ar("FilerGridViewProperty",m_spFilerGridViewProp);
-		ar("EditorProperty", m_spEditorProp);
-		ar("PdfEditorProperty", m_spPdfEditorProp);
-		ar("LauncherProperty", m_spLauncherProp);
-		ar("FavoritesProperty", m_spFavoritesProp);
-		ar("ExeExtensionProperty", m_spExeExProp);
-		ar("LeftView", m_spLeftView);
-		ar("RightView", m_spRightView);
-		ar("HorizontalSplitter", m_spSplitter);
-		//ar("LeftFavoritesView", m_spLeftFavoritesView);
-		//ar("RightFavoritesView", m_spRightFavoritesView);
-#ifdef USE_PYTHON_EXTENSION
-		ar("PythonExtensionProperty", m_spPyExProp);
-#endif
-	}
-
+//	FRIEND_SERIALIZER
+//    template <class Archive>
+//    void save(Archive& ar)
+//    {
+//        const type_info& info = typeid(ar);
+//		if(info == typeid(CSerializer&) || info == typeid(CDeserializer&)){ 
+//			ar("WindowRectangle", m_rcWnd);
+//			ar("PropertyWindowRectangle", m_rcPropWnd);
+//		}
+//		ar("LeftSplit", m_splitterLeft);
+//
+//		ar("ApplicationProperty", m_spApplicationProp);
+//		ar("FilerGridViewProperty",m_spFilerGridViewProp);
+//		ar("EditorProperty", m_spEditorProp);
+//		ar("PdfEditorProperty", m_spPdfEditorProp);
+//		ar("LauncherProperty", m_spLauncherProp);
+//		ar("FavoritesProperty", m_spFavoritesProp);
+//		ar("ExeExtensionProperty", m_spExeExProp);
+//		ar("LeftView", m_spLeftView);
+//		ar("RightView", m_spRightView);
+//		ar("HorizontalSplitter", m_spSplitter);
+//		//ar("LeftFavoritesView", m_spLeftFavoritesView);
+//		//ar("RightFavoritesView", m_spRightFavoritesView);
+//#ifdef USE_PYTHON_EXTENSION
+//		ar("PythonExtensionProperty", m_spPyExProp);
+//#endif
+//	}
+//
     template <class Archive>
     void load(Archive& ar)
     {
@@ -246,12 +248,13 @@ public:
 		ar("FilerGridViewProperty",m_spFilerGridViewProp);
 		ar("EditorProperty", m_spEditorProp);
 		ar("PdfEditorProperty", m_spPdfEditorProp);
+		ar("ImageEditorProperty", m_spImageEditorProp);
 		ar("LauncherProperty", m_spLauncherProp);
 		ar("FavoritesProperty", m_spFavoritesProp);
 		ar("ExeExtensionProperty", m_spExeExProp);
 		ar("SplitterProperty", m_spSplitterProp);
-		ar("LeftView", m_spLeftView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp);
-		ar("RightView", m_spRightView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp);
+		ar("LeftView", m_spLeftView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp);
+		ar("RightView", m_spRightView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp);
 		ar("HorizontalSplitter", m_spSplitter, this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp);
 		//ar("LeftFavoritesView", m_spLeftFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
 		//ar("RightFavoritesView", m_spRightFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
@@ -276,6 +279,7 @@ private:
 			{"FilerGridViewProperty", o.m_spFilerGridViewProp },
 			{"EditorProperty", o.m_spEditorProp },
 			{"PdfEditorProperty", o.m_spPdfEditorProp },
+			{"ImageEditorProperty", o.m_spImageEditorProp },
 			{"StatusBarProperty", o.m_spStatusBarProp},
 			{"LauncherProperty", o.m_spLauncherProp },
 			{"FavoritesProperty", o.m_spFavoritesProp },
@@ -303,6 +307,7 @@ private:
 			get_to(j, "FilerGridViewProperty", o.m_spFilerGridViewProp);
 			get_to(j, "EditorProperty", o.m_spEditorProp);
 			get_to(j, "PdfEditorProperty", o.m_spPdfEditorProp);
+			get_to(j, "ImageEditorProperty", o.m_spImageEditorProp);
 			get_to(j, "StatusBarProperty", o.m_spStatusBarProp);
 			get_to(j, "LauncherProperty", o.m_spLauncherProp);
 			get_to(j, "FavoritesProperty", o.m_spFavoritesProp);
