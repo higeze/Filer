@@ -92,16 +92,11 @@ void CImageView::OnDestroy(const DestroyEvent& e)
 
 void CImageView::OnEnable(const EnableEvent& e)
 {
-	//if (e.Enable) {
-	//	if (!m_pdf) {
-	//		Open(m_path.get());
-	//	}
-	//} else {
-	//	if (m_pdf) {
-	//		Close();
-	//	}
+	if (e.Enable) {
 
-	//}
+	} else {
+		m_image.get_unconst().Clear();
+	}
 }
 
 void CImageView::OnRect(const RectEvent& e)

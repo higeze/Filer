@@ -51,6 +51,7 @@ public:
 	virtual sigslot::connection Subscribe(std::function<void(const T& value)> next, sigslot::group_id id = 0) = 0;
 	virtual operator T() const { return get(); }
 	virtual const T& get() const = 0;
+	virtual T& get_unconst() = 0;
 	virtual void set(const T& value) = 0;
 };
 
@@ -134,6 +135,7 @@ public:
 		return m_pSubject->Subscribe(next, id);
 	}
 	virtual const T& get() const override { return m_value; }
+	virtual T& get_unconst() override { return m_value; }
 	virtual void set(const T& value) override
 	{
 		if (m_value != value) {

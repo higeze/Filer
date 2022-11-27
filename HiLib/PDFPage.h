@@ -89,9 +89,6 @@ private:
 	CPDFDoc* m_pDoc;
 	int m_index;
 
-	PdfBmpInfo m_bmp;
-	std::mutex m_mtxBmp;
-
 	PdfFndInfo m_fnd;
 	std::mutex m_mtxFnd;
 
@@ -111,12 +108,9 @@ private:
 	std::unique_ptr<boost::sml::sm<FindMachine, boost::sml::process_queue<std::queue>>> m_pFindMachine;
 
 	std::function<void()> StateChanged;
-	//FLOAT m_requestingScale;
+
 	FLOAT m_loadingScale;
 	int m_loadingRotate;
-	//int m_rotate;
-
-
 
 	UNQ_FPDF_PAGE m_pPage;
 	UNQ_FPDF_TEXTPAGE m_pTextPage;
@@ -152,16 +146,6 @@ private:
 	void LoadText();
 	void LoadFind(const std::wstring& find_string);
 
-	const PdfBmpInfo& GetLockBitmap()
-	{
-		std::lock_guard<std::mutex> lock(m_mtxBmp);
-		return m_bmp;
-	}
-	void SetLockBitmap(const PdfBmpInfo& bmp)
-	{
-		std::lock_guard<std::mutex> lock(m_mtxBmp);
-		m_bmp = bmp;
-	}
 	const PdfTxtInfo& GetLockTxt()
 	{
 		std::lock_guard<std::mutex> lock(m_mtxTxt);
@@ -183,7 +167,6 @@ private:
 		m_fnd = fnd;
 	}
 
-
 	virtual void process_event(const RenderPageContentEvent& e);
 	virtual void process_event(const RenderPageFindEvent& e);
 	virtual void process_event(const RenderPageFindLineEvent& e);
@@ -202,7 +185,6 @@ private:
 	virtual void process_event(const FindErrorEvent& e);
 
 	virtual void process_event(const RenderPageSelectedTextEvent& e);
-
 
 	void Bitmap_None_Render(const RenderPageContentEvent& e);
 	void Bitmap_InitialLoading_OnEntry(const InitialLoadEvent& e);

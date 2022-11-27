@@ -390,6 +390,7 @@
     <ClInclude Include="..\HiLib\PDFDoc.h" />
     <ClInclude Include="..\HiLib\PDFEvent.h" />
     <ClInclude Include="..\HiLib\PDFPage.h" />
+    <ClInclude Include="..\HiLib\PDFPageCache.h" />
     <ClInclude Include="..\HiLib\PdfView.h" />
     <ClInclude Include="..\HiLib\PDFViewport.h" />
     <ClInclude Include="..\HiLib\PDFViewProperty.h" />
@@ -579,6 +580,7 @@
     <ClCompile Include="..\HiLib\PDFEditor.cpp" />
     <ClCompile Include="..\HiLib\PDFDoc.cpp" />
     <ClCompile Include="..\HiLib\PDFPage.cpp" />
+    <ClCompile Include="..\HiLib\PdfPageCache.cpp" />
     <ClCompile Include="..\HiLib\PdfView.cpp" />
     <ClCompile Include="..\HiLib\PDFViewport.cpp" />
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp" />

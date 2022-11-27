@@ -698,7 +698,7 @@ CPDFUnlockDlg::CPDFUnlockDlg(
 		for (auto& file : files) {
 			CPDFDoc doc(std::make_shared<PdfViewProperty>(), nullptr);
 			doc.Open(file->GetPath(), m_spParameter->GetText().get());
-			doc.SaveWithVersion(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), L"_unlock.pdf"),  FPDF_REMOVE_SECURITY, doc.GetFileVersion());
+			doc.SaveWithVersion(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), L"_unlock"),  FPDF_REMOVE_SECURITY, doc.GetFileVersion());
 		}
 
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });

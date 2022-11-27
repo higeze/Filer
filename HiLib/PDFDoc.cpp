@@ -1,5 +1,6 @@
 #include "PDFDoc.h"
 #include "PDFPage.h"
+#include "PDFPageCache.h"
 #include <fpdf_edit.h>
 #include <fpdfview.h>
 #include <mutex>
@@ -28,7 +29,8 @@ void CPDFDoc::Term()
 CPDFDoc::CPDFDoc(const std::shared_ptr<PdfViewProperty>& spProp, std::function<void()> changed)
 	:m_pPDFium(std::make_unique<CPDFiumSingleThread>()),
 	m_pProp(spProp),
-	m_changed(changed){}
+	m_changed(changed),
+	m_pPDFPageCache(std::make_unique<CPDFPageCache>()){}
 
 CPDFDoc::~CPDFDoc() = default;
 
@@ -132,18 +134,18 @@ void CPDFDoc::RenderSelectedText(const RenderDocSelectedTextEvent& e)
 
 	if (page_begin_index == page_end_index) {
 		GetPage(page_begin_index)->RenderSelectedText(
-			RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, page_begin_index, char_begin_index, char_end_index));
+			RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, page_begin_index, char_begin_index, char_end_index, e.Debug));
 	} else {
 		for (auto i = page_begin_index; i <= page_end_index; i++) {
 			if (i == page_begin_index) {
 				GetPage(i)->RenderSelectedText(
-							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, char_begin_index, GetPage(i)->GetTextSize()));
+							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, char_begin_index, GetPage(i)->GetTextSize(), e.Debug));
 			} else if (i == page_end_index) {
 				GetPage(i)->RenderSelectedText(
-							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, 0, char_end_index));
+							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, 0, char_end_index, e.Debug));
 			} else {
 				GetPage(i)->RenderSelectedText(
-							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, 0, GetPage(i)->GetTextSize()));
+							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, 0, GetPage(i)->GetTextSize(), e.Debug));
 			}
 		}
 	}

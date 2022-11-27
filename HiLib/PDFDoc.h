@@ -10,6 +10,7 @@ struct PdfViewProperty;
 class CD2DWWindow;
 class CPDFViewport;
 class CPDFPage;
+class CPDFPageCache;
 
 class CPDFDoc
 {
@@ -30,11 +31,14 @@ private:
 
 	UNQ_FPDF_DOCUMENT m_pDoc;
 	std::vector<std::unique_ptr<CPDFPage>> m_pages;
+	std::unique_ptr<CPDFPageCache> m_pPDFPageCache;
+
 
 	LAZY_GETTER(int, FileVersion)
 	LAZY_GETTER(CSizeF, SourceSize)
 	LAZY_GETTER(int, PageCount)
 	LAZY_GETTER(std::vector<CRectF>, SourceRectsInDoc)
+	
 
 public:
 	CPDFDoc(
@@ -52,6 +56,7 @@ public:
 	UNQ_FPDF_DOCUMENT& GetDocPtr() { return m_pDoc; }
 	std::wstring GetPath() { return m_path; }
 	bool GetIsDirty()const { return m_isDirty; }
+	std::unique_ptr<CPDFPageCache>& GetPDFPageCachePtr() { return m_pPDFPageCache; }
 
 
 

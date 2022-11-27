@@ -129,21 +129,23 @@ struct RenderPageFindLineEvent
 
 struct RenderDocSelectedTextEvent : public PDFRenderEventBase
 {
-	RenderDocSelectedTextEvent(CDirect2DWrite* pDirect, CPDFViewport* pViewport, const std::tuple<int, int>& selBegin, const std::tuple<int, int>& selEnd)
-	:PDFRenderEventBase(pDirect, pViewport), SelectedBegin(selBegin), SelectedEnd(selEnd)  {}
+	RenderDocSelectedTextEvent(CDirect2DWrite* pDirect, CPDFViewport* pViewport, const std::tuple<int, int>& selBegin, const std::tuple<int, int>& selEnd, bool debug = false)
+	:PDFRenderEventBase(pDirect, pViewport), SelectedBegin(selBegin), SelectedEnd(selEnd), Debug(debug)  {}
 
 	std::tuple<int, int> SelectedBegin;
 	std::tuple<int, int> SelectedEnd;
+	bool Debug;
 };
 
 struct RenderPageSelectedTextEvent: public PDFRenderEventBase
 {
-	RenderPageSelectedTextEvent(CDirect2DWrite* pDirect, CPDFViewport* pViewport, int index, int selBegin, int selEnd)
-	:PDFRenderEventBase(pDirect, pViewport), PageIndex(index), SelectedBegin(selBegin), SelectedEnd(selEnd) {}
+	RenderPageSelectedTextEvent(CDirect2DWrite* pDirect, CPDFViewport* pViewport, int index, int selBegin, int selEnd, bool debug = false)
+	:PDFRenderEventBase(pDirect, pViewport), PageIndex(index), SelectedBegin(selBegin), SelectedEnd(selEnd), Debug(debug) {}
 
 	int PageIndex;
 	int SelectedBegin;
 	int SelectedEnd;
+	bool Debug;
 };
 
 /***************/

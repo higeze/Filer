@@ -209,7 +209,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 			->RenderCaret(RenderDocCaretEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, page_index, char_index));
 	}
 	//Paint Selected Text
-	m_pdf->RenderSelectedText(RenderDocSelectedTextEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, m_caret.SelectBegin, m_caret.SelectEnd));
+	m_pdf->RenderSelectedText(RenderDocSelectedTextEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, m_caret.SelectBegin, m_caret.SelectEnd, debug));
 
 	//PaintScroll
 	UpdateScroll();

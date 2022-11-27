@@ -804,6 +804,9 @@
     <ClInclude Include="..\HiLib\ImageViewStateMachine.h">
       <Filter>HiLib\Image</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\PDFPageCache.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -945,9 +948,6 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="FilerTabGridView.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="KnownFolder.cpp">
@@ -1197,6 +1197,12 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\ImageViewStateMachine.cpp">
       <Filter>HiLib\Image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp">
+      <Filter>HiLib\Image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PdfPageCache.cpp">
+      <Filter>HiLib\PDF</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

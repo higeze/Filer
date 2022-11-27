@@ -46,7 +46,8 @@ public:
 		return !operator==(rhs);
 	}
 
-	void Open(const std::wstring& path);
+
+	void Clear();
 	void Save(const std::wstring& path);
 
 	friend void to_json(json& j, const CD2DImage& o)

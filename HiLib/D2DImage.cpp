@@ -2,8 +2,8 @@
 
 const CComPtr<ID2D1Bitmap> CD2DImage::GetBitmapPtr(CDirect2DWrite* pDirect) const
 {
-    if (!m_pBitmap || m_isPathChanged || m_pCurDirect != pDirect) {
-        IWICBitmapDecoder* pWICBitmapDecoder = NULL;
+    if (::PathFileExists(m_path.c_str()) && (!m_pBitmap || m_isPathChanged || m_pCurDirect != pDirect)) {
+        CComPtr<IWICBitmapDecoder> pWICBitmapDecoder = NULL;
         FAILED_THROW(pDirect->GetWICImagingFactory()->CreateDecoderFromFilename(
             m_path.c_str()
             , NULL
@@ -11,9 +11,9 @@ const CComPtr<ID2D1Bitmap> CD2DImage::GetBitmapPtr(CDirect2DWrite* pDirect) cons
             , WICDecodeMetadataCacheOnLoad
             , &pWICBitmapDecoder
         ));
-        IWICBitmapFrameDecode* pWICBitmapFrame = NULL;
+        CComPtr<IWICBitmapFrameDecode> pWICBitmapFrame = NULL;
         FAILED_THROW(pWICBitmapDecoder->GetFrame( 0, &pWICBitmapFrame ));
-        IWICFormatConverter* pFormatConverter = NULL;
+        CComPtr<IWICFormatConverter> pFormatConverter = NULL;
         FAILED_THROW(pDirect->GetWICImagingFactory()->CreateFormatConverter( &pFormatConverter ));
         FAILED_THROW(pFormatConverter->Initialize(
             pWICBitmapFrame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 1.0f, WICBitmapPaletteTypeMedianCut));
@@ -22,6 +22,11 @@ const CComPtr<ID2D1Bitmap> CD2DImage::GetBitmapPtr(CDirect2DWrite* pDirect) cons
         m_isPathChanged = false;
     }
     return m_pBitmap;
+}
+
+void CD2DImage::Clear() 
+{
+    m_pBitmap.Release();
 }
 
 void CD2DImage::Save(const std::wstring& path) {}

@@ -696,6 +696,17 @@
 		DrawTextLayout(format, text, rect.LeftTop(), rect.Size());
 	}
 
+	void CDirect2DWrite::DrawTextFromPoint(const FormatF& format, const std::wstring& text, const CPointF& point)
+	{
+		FormatF tmpFormat(format);
+		tmpFormat.Alignment.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_LEADING;
+		tmpFormat.Alignment.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
+
+		CSizeF size = CalcTextSize(tmpFormat, text);
+		
+		DrawTextLayout(tmpFormat, text, CRectF(point.x, point.y, point.x + size.width, point.y + size.height));
+	}
+
 	void CDirect2DWrite::DrawTextInRect(const FormatF& format, const std::wstring& text, const CRectF& rect)
 	{
 		FormatF tmpFormat(format);
@@ -708,7 +719,7 @@
 			tmpFormat.Font.Size -= 1.0f;
 			size = CalcTextSize(tmpFormat, text);
 		}
-
+		
 		DrawTextLayout(tmpFormat, text, rect);
 	}
 
