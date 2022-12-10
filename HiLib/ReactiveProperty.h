@@ -811,29 +811,41 @@ public:
 
 
 
-
+enum class BindingMode
+{
+	TwoWay,
+	OneWay,
+	OneTime,
+	OneWayToSource,
+};
 class CBinding
 {
 public:
 	CBinding() {}
 
 	template<typename T>
-	void Attach(IReactiveProperty<T>& source, IReactiveProperty<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	void Attach(IReactiveProperty<T>& source, IReactiveProperty<T>& target, const BindingMode& mode = BindingMode::TwoWay, const sigslot::group_id idSource = 0, const sigslot::group_id idTarget = 0)
 	{
 		if (m_sourceConnection.connected()) { m_sourceConnection.disconnect(); }
 		if (m_targetConnection.connected()) { m_targetConnection.disconnect(); }
 
-		target.set(source.get());
-		m_sourceConnection = source.Subscribe(
-			[&](T value)->void
-			{
-				target.set(value);
-			}, idSource);
-		m_targetConnection = target.Subscribe(
-			[&](T value)->void
-			{
-				source.set(value);
-			});
+
+		if (mode == BindingMode::TwoWay || mode == BindingMode::OneWay) {
+			target.set(source.get());
+	
+			m_sourceConnection = source.Subscribe(
+				[&](T value)->void
+				{
+						target.set(value);
+				}, idSource);
+		}
+		if (mode == BindingMode::TwoWay || mode == BindingMode::OneWayToSource) {
+			m_targetConnection = target.Subscribe(
+				[&](T value)->void
+				{
+						source.set(value);
+				});
+		}
 	}
 
 	template<typename T>

@@ -10,6 +10,7 @@
 #include "MyClipboard.h"
 
 #include "strconv.h"
+#include <math.h>
 
 namespace sml = boost::sml;
 
@@ -38,7 +39,7 @@ struct CPDFPage::BitmapMachine: public CPDFPage::MachineBase
 	class None {};
 	class Loading {};
 	class Available {};
-	class WaitCancel {};
+	//class WaitCancel {};
 	class Error {};
 
 	auto operator()() const noexcept
@@ -55,7 +56,7 @@ struct CPDFPage::BitmapMachine: public CPDFPage::MachineBase
 
 			state<Loading> +event<RenderPageContentEvent> / call(&CPDFPage::Bitmap_Loading_Render),
 			state<Loading> +event<BitmapLoadCompletedEvent> = state<Available>,
-			state<Loading> +event<BitmapReloadEvent> = state<WaitCancel>,
+			state<Loading> +event<BitmapReloadEvent> = state<Loading>,//state<WaitCancel>,
 			state<Loading> +event<BitmapErrorEvent> = state<Error>,
 
 			state<Available> +event<RenderPageContentEvent> / call(&CPDFPage::Bitmap_Available_Render),
@@ -63,12 +64,12 @@ struct CPDFPage::BitmapMachine: public CPDFPage::MachineBase
 			state<Available> +event<RenderPageCaretEvent> / call(&CPDFPage::Bitmap_Available_RenderCaret),
 			state<Available> +event<BitmapReloadEvent> = state<Loading>,
 
-			state<WaitCancel> +on_entry<_> / call(&CPDFPage::Bitmap_WaitCancel_OnEntry),
-			state<WaitCancel> +on_exit<_> / call(&CPDFPage::Bitmap_WaitCancel_OnExit),
+			//state<WaitCancel> +on_entry<_> / call(&CPDFPage::Bitmap_WaitCancel_OnEntry),
+			//state<WaitCancel> +on_exit<_> / call(&CPDFPage::Bitmap_WaitCancel_OnExit),
 
-			state<WaitCancel> +event<RenderPageContentEvent> / call(&CPDFPage::Bitmap_WaitCancel_Render),
-			state<WaitCancel> +event<BitmapLoadCompletedEvent> = state<Loading>,
-			state<WaitCancel> +event<BitmapCancelCompletedEvent> = state<Loading>,
+			//state<WaitCancel> +event<RenderPageContentEvent> / call(&CPDFPage::Bitmap_WaitCancel_Render),
+			//state<WaitCancel> +event<BitmapLoadCompletedEvent> = state<Loading>,
+			//state<WaitCancel> +event<BitmapCancelCompletedEvent> = state<Loading>,
 
 			state<Error> +event<RenderPageContentEvent> / call(&CPDFPage::Bitmap_Error_Render)
 
@@ -84,7 +85,7 @@ struct CPDFPage::FindMachine: public CPDFPage::MachineBase
 	class None {};
 	class Loading {};
 	class Available {};
-	class WaitCancel {};
+	//class WaitCancel {};
 	class Error {};
 
 	auto operator()() const noexcept
@@ -101,20 +102,20 @@ struct CPDFPage::FindMachine: public CPDFPage::MachineBase
 			state<Loading> +event<RenderPageFindEvent> / call(&CPDFPage::Find_Loading_Render),
 			state<Loading> +event<RenderPageFindLineEvent> / call(&CPDFPage::Find_Loading_RenderLine),
 			state<Loading> +event<FindLoadCompletedEvent> = state<Available>,
-			state<Loading> +event<FindReloadEvent> = state<WaitCancel>,
+			state<Loading> +event<FindReloadEvent> = state<Loading>,//state<WaitCancel>,
 			state<Loading> +event<FindErrorEvent> = state<Error>,
 
 			state<Available> +event<RenderPageFindEvent> / call(&CPDFPage::Find_Available_Render),
 			state<Available> +event<RenderPageFindLineEvent> / call(&CPDFPage::Find_Available_RenderLine),
 			state<Available> +event<FindReloadEvent> = state<Loading>,
 
-			state<WaitCancel> +on_entry<_> / call(&CPDFPage::Find_WaitCancel_OnEntry),
-			state<WaitCancel> +on_exit<_> / call(&CPDFPage::Find_WaitCancel_OnExit),
+			//state<WaitCancel> +on_entry<_> / call(&CPDFPage::Find_WaitCancel_OnEntry),
+			//state<WaitCancel> +on_exit<_> / call(&CPDFPage::Find_WaitCancel_OnExit),
 
-			state<WaitCancel> +event<RenderPageFindEvent> / call(&CPDFPage::Find_WaitCancel_Render),
-			state<WaitCancel> +event<RenderPageFindLineEvent> / call(&CPDFPage::Find_WaitCancel_RenderLine),
-			state<WaitCancel> +event<FindLoadCompletedEvent> = state<Loading>,
-			state<WaitCancel> +event<FindCancelCompletedEvent> = state<Loading>,
+			//state<WaitCancel> +event<RenderPageFindEvent> / call(&CPDFPage::Find_WaitCancel_Render),
+			//state<WaitCancel> +event<RenderPageFindLineEvent> / call(&CPDFPage::Find_WaitCancel_RenderLine),
+			//state<WaitCancel> +event<FindLoadCompletedEvent> = state<Loading>,
+			//state<WaitCancel> +event<FindCancelCompletedEvent> = state<Loading>,
 
 			state<Error> +event<RenderPageFindEvent> / call(&CPDFPage::Find_Error_Render),
 			state<Error> +event<RenderPageFindLineEvent> / call(&CPDFPage::Find_Error_RenderLine)
@@ -151,10 +152,12 @@ void CPDFPage::process_event(const FindErrorEvent& e) { m_pFindMachine->process_
 
 CPDFPage::CPDFPage(CPDFDoc* pDoc, int index )
 	:m_pDoc(pDoc), m_index(index),
-	m_spCancelBitmapThread(std::make_shared<bool>(false)),
-	m_spCancelFindThread(std::make_shared<bool>(false)),
-	m_fnd{ std::vector<CRectF>(), L"" },
+	//m_spCancelBitmapThread(std::make_shared<bool>(false)),
+	//m_spCancelFindThread(std::make_shared<bool>(false)),
+	m_fnd(),
+	m_txt(),
 	m_loadingScale(0.f),
+	m_loadingRotate(0),
 	m_pBitmapMachine(new sml::sm<BitmapMachine, boost::sml::process_queue<std::queue>>{ this }),
 	m_pFindMachine(new sml::sm<FindMachine, boost::sml::process_queue<std::queue>>{ this })
 {
@@ -182,10 +185,10 @@ void CPDFPage::LoadSourceSize()
 	m_optSourceSize->height = static_cast<FLOAT>(GetPDFiumPtr()->GetPageHeight(GetPagePtr().get()));
 }
 
-void CPDFPage::LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale)
+void CPDFPage::LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale, const int& rotate)
 {
-	m_loadingScale = scale;
-	m_loadingRotate = Rotate.get();
+	m_loadingScale.set(scale);
+	m_loadingRotate.set(rotate);
 
 	const CSizeF sz = GetSourceSize();
 	const int bw = static_cast<int>(std::round(sz.width * scale)); // Bitmap width
@@ -202,31 +205,30 @@ void CPDFPage::LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale)
 	
 	void* bitmapBits = nullptr;
 
+	if (scale != m_loadingScale.get() || rotate != m_loadingRotate.get()) { return; }
 	std::unique_ptr<std::remove_pointer_t<HBITMAP>, delete_object>  pBmp(
 		::CreateDIBSection(pDirect->GetHDC(), reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0)
 	);
 	FALSE_THROW(pBmp);
 
+	if (scale != m_loadingScale.get() || rotate != m_loadingRotate.get()) { return; }
 	UNQ_FPDF_BITMAP pFpdfBmp(GetPDFiumPtr()->Bitmap_UnqCreateEx(bw, bh, FPDFBitmap_BGRx, bitmapBits, (bw * 4)));
-
 	FALSE_THROW(pFpdfBmp);
 
+	if (scale != m_loadingScale.get() || rotate != m_loadingRotate.get()) { return; }
 	GetPDFiumPtr()->Bitmap_FillRect(pFpdfBmp.get(), 0, 0, bw, bh, 0xFFFFFFFF); // Fill white
-	//const FS_RECTF clip{ 0.0f, 0.0f, float(bw), float(bh) }; // To bitmap
+	GetPDFiumPtr()->RenderPageBitmap(pFpdfBmp.get(), GetPagePtr().get(), 0, 0, bw, bh, 0, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
 
-	const int options = (FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
-	GetPDFiumPtr()->RenderPageBitmap(pFpdfBmp.get(), GetPagePtr().get(), 0, 0, bw, bh, 0, options);
-
+	if (scale != m_loadingScale.get() || rotate != m_loadingRotate.get()) { return; }
 	CComPtr<IWICBitmap> pWICBitmap;
 	FAILED_THROW(pDirect->GetWICImagingFactory()->CreateBitmapFromHBITMAP(pBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBitmap));
-
+	
+	if (scale != m_loadingScale.get() || rotate != m_loadingRotate.get()) { return; }
 	CComPtr<ID2D1Bitmap> pBitmap;
 	FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap));
-	auto mysize = pBitmap->GetSize().width * pBitmap->GetSize().height * 4;
-	m_pDoc->totalsize += mysize;
-	::OutputDebugString(std::format(L"{}:{}x{}\t{}\t{}\r\n",this->m_index, pBitmap->GetSize().width,pBitmap->GetSize().height, mysize, m_pDoc->totalsize).c_str());
-
-	m_pDoc->GetPDFPageCachePtr()->InsertOrAssign(m_index, PdfBmpInfo{ pBitmap, m_loadingScale, m_loadingRotate });
+	
+	if (scale != m_loadingScale.get() || rotate != m_loadingRotate.get()) { return; }
+	m_pDoc->GetPDFPageCachePtr()->InsertOrAssign(m_index, PdfBmpInfo{ pBitmap, scale, rotate });
 }
 
 void CPDFPage::LoadFind(const std::wstring& find_string)
@@ -235,7 +237,7 @@ void CPDFPage::LoadFind(const std::wstring& find_string)
 	auto rects = std::vector<CRectF>();
 	if(find.empty())
 	{
-		SetLockFind(PdfFndInfo(rects, find.c_str()));
+		m_fnd.set(PdfFndInfo(rects, find.c_str()));
 		return;
 	}
 
@@ -261,7 +263,7 @@ void CPDFPage::LoadFind(const std::wstring& find_string)
 				static_cast<FLOAT>(bottom));
 		}
 	}
-	SetLockFind(PdfFndInfo(rects, find.c_str()));
+	m_fnd.set(PdfFndInfo(rects, find.c_str()));
 }
 
 void CPDFPage::LoadText()
@@ -378,16 +380,18 @@ void CPDFPage::LoadText()
 			mouseRects[i].top = (std::min)(cursorRects[i].top + (-cursorRects[i].Height()) * 0.2f, sz.height);
 			mouseRects[i].bottom = (std::max)(cursorRects[i].bottom - (-cursorRects[i].Height()) * 0.2f, 0.f);
 		}
+		//float deg = Rotate.get() * 90.f;
+		//float rad = deg * M_PI / 180.f;
 
-		SetLockTxt(PdfTxtInfo(orgCharRects, cursorRects, mouseRects, text));
+		m_txt.set(PdfTxtInfo(orgCharRects, cursorRects, mouseRects, text));
 	} else {
-		SetLockTxt(PdfTxtInfo(std::vector<CRectF>(), std::vector<CRectF>(), std::vector<CRectF>(), text));
+		m_txt.set(PdfTxtInfo(std::vector<CRectF>(), std::vector<CRectF>(), std::vector<CRectF>(), text));
 	}
 }
 
 int CPDFPage::GetCursorCharIndexAtPos(const CPointF& ptInPdfiumPage)
 {
-	const auto& txt = GetLockTxt();
+	const auto& txt = m_txt.get();
 	auto iter = std::find_if(txt.MouseRects.cbegin(), txt.MouseRects.cend(),
 		[ptInPdfiumPage](const CRectF& rc)->bool {
 			return rc.left <= ptInPdfiumPage.x && ptInPdfiumPage.x < rc.right &&
@@ -402,18 +406,16 @@ int CPDFPage::GetCursorCharIndexAtPos(const CPointF& ptInPdfiumPage)
 
 CRectF CPDFPage::GetCursorRect(const int& index)
 {
-	return GetLockTxt().CRLFRects[index];
+	return m_txt.get().CRLFRects[index];
 }
 
 int CPDFPage::GetTextSize()
 {
-	auto txt = GetLockTxt();
-	return txt.String.size();
+	return m_txt.get().String.size();
 }
 std::wstring CPDFPage::GetText()
 {
-	auto txt = GetLockTxt();
-	return txt.String;	
+	return m_txt.get().String;	
 }
 
 /**************/
@@ -427,7 +429,7 @@ void CPDFPage::Bitmap_InitialLoading_OnEntry(const InitialLoadEvent& e)
 {
 	auto fun = [this, e]()
 	{ 
-		LoadBitmap(e.DirectPtr, e.Scale);
+		this->LoadBitmap(e.DirectPtr, e.Scale, Rotate.get());
 		LoadText();
 		process_event(BitmapLoadCompletedEvent(e.DirectPtr, e.Scale));
 	};
@@ -438,7 +440,7 @@ void CPDFPage::Bitmap_Loading_OnEntry(CDirect2DWrite* pDirect, const FLOAT& scal
 {
 	auto fun = [this, pDirect, scale]()
 	{ 
-		LoadBitmap(pDirect, scale);
+		this->LoadBitmap(pDirect, scale, Rotate.get());
 		process_event(BitmapLoadCompletedEvent(pDirect, scale));
 	};
 	
@@ -449,11 +451,11 @@ void CPDFPage::Bitmap_Loading_Render(const RenderPageContentEvent& e)
 {
 	auto iter = m_pDoc->GetPDFPageCachePtr()->Find(m_index);
 
-	if (iter == m_pDoc->GetPDFPageCachePtr()->CEnd() || e.Scale != m_loadingScale || Rotate.get() != m_loadingRotate) {
+	if (iter == m_pDoc->GetPDFPageCachePtr()->CEnd() || e.Scale != m_loadingScale.get() || Rotate.get() != m_loadingRotate.get()) {
 		process_event(BitmapReloadEvent(e.DirectPtr, e.Scale));
 	}
 
-	if (iter != m_pDoc->GetPDFPageCachePtr()->CEnd() && Rotate.get() == m_loadingRotate) {
+	if (iter != m_pDoc->GetPDFPageCachePtr()->CEnd() && Rotate.get() == m_loadingRotate.get()) {
 		auto sz = iter->second.BitmapPtr->GetSize();
 		auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
 		auto rc = CRectF(
@@ -475,11 +477,11 @@ void CPDFPage::Bitmap_Available_Render(const RenderPageContentEvent& e)
 {
 	auto iter = m_pDoc->GetPDFPageCachePtr()->Find(m_index);
 
-	if (iter == m_pDoc->GetPDFPageCachePtr()->CEnd() || e.Scale != m_loadingScale || Rotate.get() != m_loadingRotate) {
+	if (iter == m_pDoc->GetPDFPageCachePtr()->CEnd() || e.Scale != m_loadingScale.get() || Rotate.get() != m_loadingRotate.get()) {
 		process_event(BitmapReloadEvent(e.DirectPtr, e.Scale));
 	}
 
-	if (iter != m_pDoc->GetPDFPageCachePtr()->CEnd() && Rotate.get() == m_loadingRotate) {
+	if (iter != m_pDoc->GetPDFPageCachePtr()->CEnd() && Rotate.get() == m_loadingRotate.get()) {
 		auto sz = iter->second.BitmapPtr->GetSize();
 		auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
 		auto rc = CRectF(
@@ -520,7 +522,7 @@ void CPDFPage::Bitmap_Available_RenderSelectedText(const RenderPageSelectedTextE
 	}
 
 	if (e.Debug) {
-		auto txt = GetLockTxt();
+		const auto& txt = m_txt.get();
 		for (const auto& rc : txt.MouseRects) {
 			e.DirectPtr->DrawSolidRectangle(SolidLine(1.f, 0.f, 0.f, 1.f, 1.f), e.ViewportPtr->PdfiumPageToWnd(e.PageIndex, rc));
 		}
@@ -529,7 +531,7 @@ void CPDFPage::Bitmap_Available_RenderSelectedText(const RenderPageSelectedTextE
 
 void CPDFPage::Bitmap_Available_RenderCaret(const RenderPageCaretEvent& e)
 {
-	auto txt = GetLockTxt();
+	const auto& txt = m_txt.get();
 	if (!txt.CRLFRects.empty()) {
 		auto rcInPdfiumPage = txt.CRLFRects[e.CharIndex];
 		rcInPdfiumPage.right = rcInPdfiumPage.left + 1.f;
@@ -540,40 +542,40 @@ void CPDFPage::Bitmap_Available_RenderCaret(const RenderPageCaretEvent& e)
 	}
 }
 
-void CPDFPage::Bitmap_WaitCancel_OnEntry()
-{
-	*m_spCancelBitmapThread = true;
-}
-void CPDFPage::Bitmap_WaitCancel_OnExit()
-{
-	*m_spCancelBitmapThread = false;
-}
-
-void CPDFPage::Bitmap_WaitCancel_Render(const RenderPageContentEvent& e) 
-{
-	auto iter = m_pDoc->GetPDFPageCachePtr()->Find(m_index);
-
-	//if (iter == m_pDoc->GetPDFPageCachePtr()->CEnd() || e.Scale != m_loadingScale || Rotate.get() != m_loadingRotate) {
-	//	process_event(BitmapReloadEvent(e.DirectPtr, e.Scale));
-	//}
-
-	if (iter != m_pDoc->GetPDFPageCachePtr()->CEnd() && Rotate.get() != m_loadingRotate) {
-		auto sz = iter->second.BitmapPtr->GetSize();
-		auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
-		auto rc = CRectF(
-				std::round(ptInWnd.x),
-				std::round(ptInWnd.y),
-				std::round(ptInWnd.x + sz.width * e.Scale / iter->second.Scale),
-				std::round(ptInWnd.y + sz.height * e.Scale / iter->second.Scale));
-
-		e.DirectPtr->GetD2DDeviceContext()->DrawBitmap(iter->second.BitmapPtr, rc, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
-		m_pDoc->GetPDFPageCachePtr()->Prune();
-
-	} else {
-		auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
-		e.DirectPtr->DrawTextFromPoint(*(m_pDoc->GetPropPtr()->Format), L"Loading Page...", ptInWnd);
-	}
-}
+//void CPDFPage::Bitmap_WaitCancel_OnEntry()
+//{
+//	*m_spCancelBitmapThread = true;
+//}
+//void CPDFPage::Bitmap_WaitCancel_OnExit()
+//{
+//	*m_spCancelBitmapThread = false;
+//}
+//
+//void CPDFPage::Bitmap_WaitCancel_Render(const RenderPageContentEvent& e) 
+//{
+//	auto iter = m_pDoc->GetPDFPageCachePtr()->Find(m_index);
+//
+//	//if (iter == m_pDoc->GetPDFPageCachePtr()->CEnd() || e.Scale != m_loadingScale || Rotate.get() != m_loadingRotate) {
+//	//	process_event(BitmapReloadEvent(e.DirectPtr, e.Scale));
+//	//}
+//
+//	if (iter != m_pDoc->GetPDFPageCachePtr()->CEnd() && Rotate.get() == m_loadingRotate) {
+//		auto sz = iter->second.BitmapPtr->GetSize();
+//		auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
+//		auto rc = CRectF(
+//				std::round(ptInWnd.x),
+//				std::round(ptInWnd.y),
+//				std::round(ptInWnd.x + sz.width * e.Scale / iter->second.Scale),
+//				std::round(ptInWnd.y + sz.height * e.Scale / iter->second.Scale));
+//
+//		e.DirectPtr->GetD2DDeviceContext()->DrawBitmap(iter->second.BitmapPtr, rc, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+//		m_pDoc->GetPDFPageCachePtr()->Prune();
+//
+//	} else {
+//		auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
+//		e.DirectPtr->DrawTextFromPoint(*(m_pDoc->GetPropPtr()->Format), L"Loading Page...", ptInWnd);
+//	}
+//}
 
 void CPDFPage::Bitmap_Error_Render(const RenderPageContentEvent& e)
 {
@@ -613,7 +615,7 @@ void CPDFPage::Find_Loading_OnReEntry(const FindReloadEvent& e)
 
 void CPDFPage::Find_Available_Render(const RenderPageFindEvent& e) 
 {
-	auto fnd = GetLockFind();
+	const auto& fnd = m_fnd.get();
 	if (e.Find != fnd.Find) {
 		process_event(FindReloadEvent{ e.Find });
 	}
@@ -627,7 +629,7 @@ void CPDFPage::Find_Available_Render(const RenderPageFindEvent& e)
 
 void CPDFPage::Find_Available_RenderLine(const RenderPageFindLineEvent& e)
 {
-	auto fnd = GetLockFind();
+	const auto& fnd = m_fnd.get();
 	if (e.Find != fnd.Find) {
 		process_event(FindReloadEvent{ e.Find });
 	}
@@ -652,11 +654,11 @@ void CPDFPage::Find_Available_RenderLine(const RenderPageFindLineEvent& e)
 	}
 }
 
-void CPDFPage::Find_WaitCancel_OnEntry()
-{
-	*m_spCancelFindThread = true;
-}
-void CPDFPage::Find_WaitCancel_OnExit()
-{
-	*m_spCancelFindThread = false;
-}
+//void CPDFPage::Find_WaitCancel_OnEntry()
+//{
+//	//*m_spCancelFindThread = true;
+//}
+//void CPDFPage::Find_WaitCancel_OnExit()
+//{
+//	//*m_spCancelFindThread = false;
+//}

@@ -34,7 +34,7 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	m_pMachine(std::make_unique<CPdfViewStateMachine>(this)),
 	m_spVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr)),
 	m_spHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
-	m_scale(1.f), m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(InitialScaleMode::None)
+	m_scale(1.f), m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(InitialScaleMode::Width)
 {
 	m_path.Subscribe([this](const NotifyStringChangedEventArgs<wchar_t>& arg)
 	{
@@ -43,6 +43,7 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 
 	m_scale.Subscribe([this](const FLOAT& value)
 	{
+		::OutputDebugString(std::format(L"{}", value).c_str());
 		//if (m_prevScale) {
 		//	m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() * value / m_prevScale);
 		//	m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() * value / m_prevScale);
@@ -608,8 +609,25 @@ void CPdfView::Open(const std::wstring& path)
 			});
 		try {
 			m_pdf->Open(path, L"");
-		}
-		catch(const CPDFException& e){
+			if (m_scale.get() < 0) {// < 0 means auto-scale
+				FLOAT scaleX = GetRenderSize().width / m_pdf->GetPage(0)->GetSourceSize().width;
+				FLOAT scaleY = GetRenderSize().height / m_pdf->GetPage(0)->GetSourceSize().height;
+				switch (m_initialScaleMode) {
+					case InitialScaleMode::MinWidthHeight:
+						m_scale.set((std::min)(scaleX, scaleY));
+						break;
+					case InitialScaleMode::Width:
+						m_scale.set(scaleX);
+						break;
+					case InitialScaleMode::Height:
+						m_scale.set(scaleY);
+						break;
+					default:
+						m_scale.force_notify_set(1.f);
+				}
+			}
+
+		}catch(const CPDFException& e){
 		switch (e.GetError()) {
 			//case FPDF_ERR_SUCCESS:
 			//  break;

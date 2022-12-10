@@ -9,6 +9,7 @@
 #include "ShellFunction.h"
 #include "ThreadSafeKnownFolderManager.h"
 #include "ThreadSafeDriveFolderManager.h"
+#include "Debug.h"
 
 shell::ParsedFileType CShellFileFactory::ParseFileType(
 	const CComPtr<IShellFolder>& pParentFolder,
@@ -77,29 +78,47 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<
 //static
 std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const std::wstring& path)
 {
-	if (path.empty()) {
+	if (path.empty() ||
+		path[0] != L':' && !::PathFileExists(path.c_str()))
+	{
 		return std::make_shared<CShellInvalidFile>();
 	} else {
-		auto desktop(CKnownFolderManager::GetInstance()->GetDesktopFolder());
-		CIDL absIdl;
+		//{
+		//	LOG_SCOPED_TIMER_THIS_1("PathFileExists");
+		//	::PathFileExists(path.c_str());
+		//}
+		//{
+		//	LOG_SCOPED_TIMER_THIS_1("GetFileAttributes");
+		//	::GetFileAttributes(path.c_str());
+		//}
+		//{
+		//	LOG_SCOPED_TIMER_THIS_1("PathFileExists");
+		//	::ILCreateFromPath(path.c_str());
+		//}
+		{
+			LOG_SCOPED_TIMER_THIS_1("ParseDisplayName");
 
-		ULONG         chEaten;
-		ULONG         dwAttributes;
-		HRESULT hr = desktop->GetShellFolderPtr()->ParseDisplayName(
-			NULL,
-			NULL,
-			const_cast<LPWSTR>(path.c_str()),
-			&chEaten,
-			absIdl.ptrptr(),
-			&dwAttributes);
+			auto desktop(CKnownFolderManager::GetInstance()->GetDesktopFolder());
+			CIDL absIdl;
 
-		if (FAILED(hr)) {//Not Exist
-			return std::make_shared<CShellInvalidFile>();
-		} else {
-			CIDL parentIDL = absIdl.CloneParentIDL();
-			CComPtr<IShellFolder>  pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
+			ULONG         chEaten;
+			ULONG         dwAttributes;
+			HRESULT hr = desktop->GetShellFolderPtr()->ParseDisplayName(
+				NULL,
+				NULL,
+				const_cast<LPWSTR>(path.c_str()),
+				&chEaten,
+				absIdl.ptrptr(),
+				&dwAttributes);
 
-			return CreateShellFilePtr(pParentFolder, parentIDL, absIdl.CloneLastID());
+			if (FAILED(hr)) {//Not Exist
+				return std::make_shared<CShellInvalidFile>();
+			} else {
+				CIDL parentIDL = absIdl.CloneParentIDL();
+				CComPtr<IShellFolder>  pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
+
+				return CreateShellFilePtr(pParentFolder, parentIDL, absIdl.CloneLastID());
+			}
 		}
 	}
 }

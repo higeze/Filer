@@ -172,7 +172,7 @@ struct ImageTabData :public TabData
 	ReactiveProperty<CD2DImage> Image;
 	ReactiveProperty<FLOAT> VScroll = 0.0f;
 	ReactiveProperty<FLOAT> HScroll = 0.0f;
-	ReactiveProperty<FLOAT> Scale = 1.0f;
+	ReactiveProperty<FLOAT> Scale = -1.0f;
 
 	//ReactiveCommand<HWND> OpenCommand;
 	//ReactiveCommand<HWND> SaveCommand;
@@ -223,7 +223,7 @@ struct PdfTabData :public TabData
 	ReactiveWStringProperty Path;
 	ReactiveProperty<FLOAT> VScroll = 0.0f;
 	ReactiveProperty<FLOAT> HScroll = 0.0f;
-	ReactiveProperty<FLOAT> Scale = 1.0f;
+	ReactiveProperty<FLOAT> Scale = -1.0f;
 	
 	ReactiveCommand<void> OpenCommand;
 

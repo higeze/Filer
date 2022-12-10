@@ -9,6 +9,7 @@
 #include "ReactiveProperty.h"
 
 #include "getter_macro.h"
+#include "shared_lock_property.h"
 
 class CPDFDoc;
 
@@ -89,14 +90,11 @@ private:
 	CPDFDoc* m_pDoc;
 	int m_index;
 
-	PdfFndInfo m_fnd;
-	std::mutex m_mtxFnd;
+	shared_lock_property<PdfFndInfo> m_fnd;
+	shared_lock_property<PdfTxtInfo> m_txt;
+	shared_lock_property<FLOAT> m_loadingScale;
+	shared_lock_property<int> m_loadingRotate;
 
-	PdfTxtInfo m_txt;
-	std::mutex m_mtxTxt;
-
-	std::shared_ptr<bool> m_spCancelBitmapThread;
-	std::shared_ptr<bool> m_spCancelFindThread;
 	std::future<void> m_futureBitmap;
 	std::future<void> m_futureFind;
 
@@ -108,10 +106,6 @@ private:
 	std::unique_ptr<boost::sml::sm<FindMachine, boost::sml::process_queue<std::queue>>> m_pFindMachine;
 
 	std::function<void()> StateChanged;
-
-	FLOAT m_loadingScale;
-	int m_loadingRotate;
-
 	UNQ_FPDF_PAGE m_pPage;
 	UNQ_FPDF_TEXTPAGE m_pTextPage;
 	CSizeF m_sourceSize;
@@ -142,30 +136,30 @@ public:
 	std::wstring GetText();
 
 private:
-	void LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale/*, const int& rotate*/);
+	void LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale, const int& rotate);
 	void LoadText();
 	void LoadFind(const std::wstring& find_string);
 
-	const PdfTxtInfo& GetLockTxt()
-	{
-		std::lock_guard<std::mutex> lock(m_mtxTxt);
-		return m_txt;
-	}
-	void SetLockTxt(const PdfTxtInfo& txt)
-	{
-		std::lock_guard<std::mutex> lock(m_mtxTxt);
-		m_txt = txt;
-	}
-	const PdfFndInfo& GetLockFind()
-	{
-		std::lock_guard<std::mutex> lock(m_mtxFnd);
-		return m_fnd;
-	}
-	void SetLockFind(const PdfFndInfo& fnd)
-	{
-		std::lock_guard<std::mutex> lock(m_mtxFnd);
-		m_fnd = fnd;
-	}
+	//const PdfTxtInfo& GetLockTxt()
+	//{
+	//	std::lock_guard<std::mutex> lock(m_mtxTxt);
+	//	return m_txt;
+	//}
+	//void SetLockTxt(const PdfTxtInfo& txt)
+	//{
+	//	std::lock_guard<std::mutex> lock(m_mtxTxt);
+	//	m_txt = txt;
+	//}
+	//const PdfFndInfo& GetLockFind()
+	//{
+	//	std::lock_guard<std::mutex> lock(m_mtxFnd);
+	//	return m_fnd;
+	//}
+	//void SetLockFind(const PdfFndInfo& fnd)
+	//{
+	//	std::lock_guard<std::mutex> lock(m_mtxFnd);
+	//	m_fnd = fnd;
+	//}
 
 	virtual void process_event(const RenderPageContentEvent& e);
 	virtual void process_event(const RenderPageFindEvent& e);
@@ -193,9 +187,9 @@ private:
 	void Bitmap_Available_Render(const RenderPageContentEvent& e);
 	void Bitmap_Available_RenderSelectedText(const RenderPageSelectedTextEvent& e);
 	void Bitmap_Available_RenderCaret(const RenderPageCaretEvent& e);
-	void Bitmap_WaitCancel_OnEntry();
-	void Bitmap_WaitCancel_OnExit();
-	void Bitmap_WaitCancel_Render(const RenderPageContentEvent& e);
+	//void Bitmap_WaitCancel_OnEntry();
+	//void Bitmap_WaitCancel_OnExit();
+	//void Bitmap_WaitCancel_Render(const RenderPageContentEvent& e);
 	void Bitmap_Error_Render(const RenderPageContentEvent& e);
 
 	void Find_None_Render(const RenderPageFindEvent& e);

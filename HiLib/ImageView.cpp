@@ -29,7 +29,7 @@ CImageView::CImageView(CD2DWControl* pParentControl, const std::shared_ptr<Image
 	m_pMachine(std::make_unique<CImageViewStateMachine>(this)),
 	m_spVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr)),
 	m_spHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
-	m_scale(1.f), m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(ImageScaleMode::None),
+	m_scale(1.f), m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(ImageScaleMode::Width),
 	m_image(CD2DImage())
 {
 	m_image.Subscribe([this](const CD2DImage& value)
@@ -38,6 +38,26 @@ CImageView::CImageView(CD2DWControl* pParentControl, const std::shared_ptr<Image
 
 	m_scale.Subscribe([this](const FLOAT& value)
 	{
+		if (m_scale.get() < 0 && m_image.get().GetBitmapPtr(GetWndPtr()->GetDirectPtr())) {// < 0 means auto-scale
+			CSizeF sz = m_image.get().GetBitmapPtr(GetWndPtr()->GetDirectPtr())->GetSize();
+
+			FLOAT scaleX = GetRenderSize().width / sz.width;
+			FLOAT scaleY = GetRenderSize().height / sz.height;
+			switch (m_initialScaleMode) {
+				case ImageScaleMode::MinWidthHeight:
+					m_scale.set((std::min)(scaleX, scaleY));
+					break;
+				case ImageScaleMode::Width:
+					m_scale.set(scaleX);
+					break;
+				case ImageScaleMode::Height:
+					m_scale.set(scaleY);
+					break;
+				default:
+					m_scale.force_notify_set(1.f);
+			}
+		}
+
 	});
 }
 

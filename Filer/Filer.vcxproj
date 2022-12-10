@@ -400,6 +400,7 @@
     <ClInclude Include="..\HiLib\ReactiveProperty.h" />
     <ClInclude Include="..\HiLib\ScrollProperty.h" />
     <ClInclude Include="..\HiLIb\PDFiumSingleThread.h" />
+    <ClInclude Include="..\HiLib\shared_lock_property.h" />
     <ClInclude Include="..\HiLib\SortCell.h" />
     <ClInclude Include="..\HiLib\MapColumn.h" />
     <ClInclude Include="..\HiLib\RowIndexCell.h" />

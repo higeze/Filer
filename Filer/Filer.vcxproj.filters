@@ -807,6 +807,9 @@
     <ClInclude Include="..\HiLib\PDFPageCache.h">
       <Filter>HiLib\PDF</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\shared_lock_property.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
