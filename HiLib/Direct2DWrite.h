@@ -383,7 +383,7 @@ namespace std
 
 		CRectF LayoutRound(const CRectF& rc, FLOAT unit = 0.5f)
 		{
-			return CRectF{ LayoutRound(rc.left), LayoutRound(rc.top), LayoutRound(rc.right), LayoutRound(rc.bottom) };
+			return CRectF( LayoutRound(rc.left), LayoutRound(rc.top), LayoutRound(rc.right), LayoutRound(rc.bottom) );
 		}
 
 		FLOAT GetPixels2DipsRatioX();

@@ -36,10 +36,7 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	m_spHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
 	m_scale(1.f), m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(InitialScaleMode::Width)
 {
-	m_path.Subscribe([this](const NotifyStringChangedEventArgs<wchar_t>& arg)
-	{
-		Open(arg.NewString);
-	});
+	m_path.Subscribe([this](const NotifyStringChangedEventArgs<wchar_t>& arg){});
 
 	m_scale.Subscribe([this](const FLOAT& value)
 	{
@@ -188,7 +185,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	auto end = std::min(std::distance(intersectRectsInDoc.cbegin(), last.base()), m_pdf->GetPageCount());
 	bool debug = m_pMachine->IsStateNormalDebug();
 	m_pdf->RenderContent(
-		RenderDocContentEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, m_scale, begin, end, debug));
+		RenderDocContentEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, m_scale, begin, end, rcInDoc, debug));
 
 	//Paint Find	
 	m_pdf->RenderFind(
@@ -206,8 +203,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	//PaintCaret
 	if (m_caret.IsCaret()) {
 		auto [page_index, char_index] = m_caret.Current;
-		m_pdf
-			->RenderCaret(RenderDocCaretEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, page_index, char_index));
+		m_pdf->RenderCaret(RenderDocCaretEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, page_index, char_index));
 	}
 	//Paint Selected Text
 	m_pdf->RenderSelectedText(RenderDocSelectedTextEvent(GetWndPtr()->GetDirectPtr(), &m_viewport, m_caret.SelectBegin, m_caret.SelectEnd, debug));
@@ -579,7 +575,7 @@ void CPdfView::Open(const std::wstring& path)
 		Close();
 
 		m_path.set(path);
-		HRESULT hr = CFileIsInUseImpl::s_CreateInstance(GetWndPtr()->m_hWnd, path.c_str(), FUT_DEFAULT, OF_CAP_DEFAULT, IID_PPV_ARGS(&m_pFileIsInUse));
+		m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(GetWndPtr()->m_hWnd, path.c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
 		GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [this](UINT,LPARAM,WPARAM,BOOL&)->LRESULT
 		{
 			Close();

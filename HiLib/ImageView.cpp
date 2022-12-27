@@ -38,8 +38,28 @@ CImageView::CImageView(CD2DWControl* pParentControl, const std::shared_ptr<Image
 
 	m_scale.Subscribe([this](const FLOAT& value)
 	{
-		if (m_scale.get() < 0 && m_image.get().GetBitmapPtr(GetWndPtr()->GetDirectPtr())) {// < 0 means auto-scale
-			CSizeF sz = m_image.get().GetBitmapPtr(GetWndPtr()->GetDirectPtr())->GetSize();
+	});
+}
+
+CImageView::~CImageView() = default;
+
+void CImageView::Open(const std::wstring& path)
+{
+	if (::PathFileExists(path.c_str())) {
+
+		Close();
+
+		m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(GetWndPtr()->m_hWnd, path.c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
+		GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [this](UINT, LPARAM, WPARAM, BOOL&)->LRESULT
+		{
+			Close();
+			return 0;
+		});
+
+		m_image.get_unconst().Open(GetWndPtr()->GetDirectPtr(), path);
+
+		if (m_scale.get() < 0 && m_image.get().GetBitmapPtr()) {// < 0 means auto-scale
+			CSizeF sz = m_image.get().GetBitmapPtr()->GetSize();
 
 			FLOAT scaleX = GetRenderSize().width / sz.width;
 			FLOAT scaleY = GetRenderSize().height / sz.height;
@@ -57,11 +77,14 @@ CImageView::CImageView(CD2DWControl* pParentControl, const std::shared_ptr<Image
 					m_scale.force_notify_set(1.f);
 			}
 		}
-
-	});
+	}
 }
-
-CImageView::~CImageView() = default;
+void CImageView::Close()
+{
+	GetWndPtr()->RemoveMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE);
+	m_pFileIsInUse.Release();
+	m_image.get_unconst().Close();
+}
 
 /****************/
 /* EventHandler */
@@ -90,8 +113,8 @@ CSizeF CImageView::GetRenderSize()
 
 CSizeF CImageView::GetRenderContentSize()
 {
-	if (m_image.get().GetBitmapPtr(GetWndPtr()->GetDirectPtr())) {
-		CSizeF sz = m_image.get().GetBitmapPtr(GetWndPtr()->GetDirectPtr())->GetSize();
+	if (m_image.get().GetBitmapPtr()) {
+		CSizeF sz = m_image.get().GetBitmapPtr()->GetSize();
 		sz.width *= m_scale.get();
 		sz.height *= m_scale.get();
 		return sz;
@@ -115,7 +138,7 @@ void CImageView::OnEnable(const EnableEvent& e)
 	if (e.Enable) {
 
 	} else {
-		m_image.get_unconst().Clear();
+		Close();
 	}
 }
 
@@ -158,7 +181,7 @@ void CImageView::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 
 void CImageView::Normal_Paint(const PaintEvent& e)
 {
-	if (!m_image.get().GetBitmapPtr(GetWndPtr()->GetDirectPtr())) { return; }
+	if (!m_image.get().GetBitmapPtr()) { return; }
 	//Clip
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
@@ -170,7 +193,7 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 	rc.OffsetRect(GetRenderRectInWnd().LeftTop());
 	rc.OffsetRect(-m_spHScroll->GetScrollPos(), -m_spVScroll->GetScrollPos());
 	GetWndPtr()->GetDirectPtr()->DrawBitmap(
-		m_image.get().GetBitmapPtr(GetWndPtr()->GetDirectPtr()),
+		m_image.get().GetBitmapPtr(),
 		rc,
 		1.0f,
 		D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
@@ -455,107 +478,8 @@ void CImageView::Open()
 		::ReleaseBuffer(path);
 		CD2DImage image(path);
 		m_image.set(image);
+		Open();
 	}
-}
-
-void CImageView::Open(const std::wstring& path)
-{
-	//if (::PathFileExists(path.c_str())) {
-
-	//	Close();
-
-	//	m_path.set(path);
-	//	HRESULT hr = CFileIsInUseImpl::s_CreateInstance(GetWndPtr()->m_hWnd, path.c_str(), FUT_DEFAULT, OF_CAP_DEFAULT, IID_PPV_ARGS(&m_pFileIsInUse));
-	//	GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [this](UINT,LPARAM,WPARAM,BOOL&)->LRESULT
-	//	{
-	//		Close();
-	//		return 0;
-	//	});
-
-	//	m_pdf = std::make_unique<CPDFDoc>(
-	//		m_pProp,
-	//		[this]()->void{
-	//			FLOAT scaleX = GetRenderSize().width / m_pdf->GetPage(0)->GetSourceSize().width;
-	//			FLOAT scaleY = GetRenderSize().height / m_pdf->GetPage(0)->GetSourceSize().height;
-	//			switch (m_initialScaleMode) {
-	//				case InitialScaleMode::MinWidthHeight:
-	//					m_scale.set((std::min)(scaleX, scaleY));
-	//					break;
-	//				case InitialScaleMode::Width:
-	//					m_scale.set(scaleX);
-	//					break;
-	//				case InitialScaleMode::Height:
-	//					m_scale.set(scaleY);
-	//					break;
-	//				default:
-	//					m_scale.force_notify_set(1.f);
-	//			}
-
-	//			GetWndPtr()->InvalidateRect(NULL, FALSE);
-	//		});
-	//	try {
-	//		m_pdf->Open(path, L"");
-	//	}
-	//	catch(const CPDFException& e){
-	//	switch (e.GetError()) {
-	//		//case FPDF_ERR_SUCCESS:
-	//		//  break;
-	//		//case FPDF_ERR_UNKNOWN:
-	//		//  break;
-	//		//case FPDF_ERR_FILE:
-	//		//  break;
-	//		//case FPDF_ERR_FORMAT:
-	//		//  break;
-	//		case FPDF_ERR_PASSWORD:
-	//		{
-	//			std::shared_ptr<CTextBoxDialog> spDlg = std::make_shared<CTextBoxDialog>(GetWndPtr(), std::make_shared<DialogProperty>());
-	//			spDlg->GetTitle().set(L"Password");
-	//			spDlg->GetTextBlockPtr()->GetText().set(ansi_to_wide(e.what()));
-	//			spDlg->GetOKButtonPtr()->GetContent().set(L"OK");
-	//			spDlg->GetOKButtonPtr()->GetCommand().Subscribe([this, spDlg, path]() 
-	//				{ 
-	//					m_pdf->Open(path, spDlg->GetTextBoxPtr()->GetText().get()); 
-	//					//Need to call with dispatcher, otherwise remaing message in message que is not properly handled
-	//					GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
-	//				});
-	//			spDlg->GetCancelButtonPtr()->GetContent().set(L"Cancel");
-	//			spDlg->GetCancelButtonPtr()->GetCommand().Subscribe([this, spDlg]() 
-	//				{ 
-	//					//Need to call with dispatcher, otherwise remaing message in message que is not properly handled
-	//					GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
-	//				});
-	//			spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CalcCenterRectF(CSizeF(300, 200))));
-	//			GetWndPtr()->SetFocusedControlPtr(spDlg);
-
-	//			break;
-	//		}
-	//		//case FPDF_ERR_SECURITY:
-	//		//  break;
-	//		//case FPDF_ERR_PAGE:
-	//		//  break;
-	//		default:
-	//		m_pdf.reset();
-	//	}
-
-
-
-	//	}
-	//}
-}
-
-void CImageView::Close()
-{
-	//m_pdf.reset();
-	//m_caret.Clear();
-	//GetWndPtr()->RemoveMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE);
-	//m_pFileIsInUse.Release();
-
-	////m_path.set(L"");
-	////m_scale.set(1.f);
-	//m_prevScale = 0.f;
-
-	//m_spVScroll->Clear();
-	//m_spHScroll->Clear();
 }
 
 std::tuple<CRectF, CRectF> CImageView::GetRects() const

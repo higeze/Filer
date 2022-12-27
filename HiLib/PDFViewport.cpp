@@ -92,11 +92,24 @@ CRectF CPDFViewport::CtrlToDoc(const CRectF& rcInCtrl)
 	CPointF pt = CPointF(m_pView->GetHScrollPtr()->GetScrollPos(), m_pView->GetVScrollPtr()->GetScrollPos());
 	return (rcInCtrl + pt) / m_pView->GetScale();
 }
-//CRectF CPDFViewport::DocToPage(const CRectF& ptInDoc);
+CRectF CPDFViewport::DocToPage(const int& page, const CRectF& rcInDoc)
+{
+	return rcInDoc - m_pView->GetDocPtr()->GetSourceRectsInDoc()[page].LeftTop();
+}
+
+CRectF CPDFViewport::PageToPdfiumPage(const int& page, const CRectF& rcInPage)
+{
+	CSizeF sz = m_pView->GetDocPtr()->GetPage(page)->GetSourceSize();
+	return CRectF(
+		rcInPage.left,
+		sz.height - rcInPage.top,
+		rcInPage.right,
+		sz.height - rcInPage.bottom);
+}
 
 CRectF CPDFViewport::PdfiumPageToPage(const int& page, const CRectF& rcInPdfiumPage)
 {
-	auto sz = m_pView->GetDocPtr()->GetPage(page)->GetSourceSize();
+	CSizeF sz = m_pView->GetDocPtr()->GetPage(page)->GetSourceSize();
 	return CRectF(
 		rcInPdfiumPage.left,
 		sz.height - rcInPdfiumPage.top,
@@ -126,3 +139,4 @@ CRectF CPDFViewport::PdfiumPageToWnd(const int& page, const CRectF& rcInPdfiumPa
 	auto rcInCtrl = DocToCtrl(rcInDoc);
 	return CtrlToWnd(rcInCtrl);
 }
+

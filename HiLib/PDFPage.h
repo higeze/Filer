@@ -90,8 +90,15 @@ private:
 	CPDFDoc* m_pDoc;
 	int m_index;
 
+
+
 	shared_lock_property<PdfFndInfo> m_fnd;
 	shared_lock_property<PdfTxtInfo> m_txt;
+	//shared_lock_property<std::wstring> m_text;
+	//shared_lock_property<std::vector<CRectF>> m_orgRects;
+	//shared_lock_property<std::vector<CRectF>> m_crlfRects;
+	//shared_lock_property<std::vector<CRectF>> m_mouseRects;
+
 	shared_lock_property<FLOAT> m_loadingScale;
 	shared_lock_property<int> m_loadingRotate;
 
@@ -111,6 +118,9 @@ private:
 	CSizeF m_sourceSize;
 
 	LAZY_GETTER(CSizeF, SourceSize)
+
+	CRectF RotateRect(const CRectF& rc, const int& rotate);
+	void RotateRects(std::vector<CRectF>& rc, const int& rotate);
 
 public:
 	/* Constructor/Destructor */
@@ -200,10 +210,10 @@ private:
 	void Find_Loading_RenderLine(const RenderPageFindLineEvent& e) {}
 	void Find_Available_Render(const RenderPageFindEvent& e);
 	void Find_Available_RenderLine(const RenderPageFindLineEvent& e);
-	void Find_WaitCancel_OnEntry();
-	void Find_WaitCancel_OnExit();
-	void Find_WaitCancel_Render(const RenderPageFindEvent& e) {}
-	void Find_WaitCancel_RenderLine(const RenderPageFindLineEvent& e) {}
+	//void Find_WaitCancel_OnEntry();
+	//void Find_WaitCancel_OnExit();
+	//void Find_WaitCancel_Render(const RenderPageFindEvent& e) {}
+	//void Find_WaitCancel_RenderLine(const RenderPageFindLineEvent& e) {}
 	void Find_Error_Render(const RenderPageFindEvent& e) {}
 	void Find_Error_RenderLine(const RenderPageFindLineEvent& e) {}
 };

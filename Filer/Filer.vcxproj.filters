@@ -725,7 +725,6 @@
     <ClInclude Include="..\D2DTextBox\EditorTextBox.h">
       <Filter>D2DTextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\FileIsInUse.h" />
     <ClInclude Include="..\HiLib\ThreadPool.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -808,6 +807,9 @@
       <Filter>HiLib\PDF</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\shared_lock_property.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\FileIsInUse.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1146,7 +1148,6 @@
     <ClCompile Include="..\D2DTextBox\EditorTextBox.cpp">
       <Filter>D2DTextBox</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\FileIsInUse.cpp" />
     <ClCompile Include="..\HiLib\ThreadPool.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -1206,6 +1207,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\PdfPageCache.cpp">
       <Filter>HiLib\PDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\FileIsInUse.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

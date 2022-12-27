@@ -626,22 +626,17 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		auto spViewModel = std::static_pointer_cast<PdfTabData>(pTabData);
 		auto spView = GetPdfViewPtr();
 
-		//Scale have to be bound before binding path to open
-		//TODO if lazy Open, Scale can be bound after path is bound.
-		m_pdfScaleBinding.Attach(spViewModel->Scale, spView->GetPDFViewPtr()->GetScale());
 		//Path
 		m_pdfPathBinding.Attach(spViewModel->Path, spView->GetPDFViewPtr()->GetPath());
 		m_pPdfPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPDFViewPtr()->GetPath().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
+		//Scale
+		m_pdfScaleBinding.Attach(spViewModel->Scale, spView->GetPDFViewPtr()->GetScale());
 		//Scroll
 		m_pdfVScrollBinding.Attach(spViewModel->VScroll, spView->GetPDFViewPtr()->GetVScrollPtr()->PropScrollPos());
 		m_pdfHScrollBinding.Attach(spViewModel->HScroll, spView->GetPDFViewPtr()->GetHScrollPtr()->PropScrollPos());
 
-		//Open
-		//m_pOpenBinding.reset(nullptr);
-		//m_pOpenBinding.reset(new CBinding<void>(spViewModel->OpenCommand, spView->GetOpenCommand()));
-
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
-		//spView->GetPDFViewPtr()->Open(spViewModel->Path);//TODOHIGH
+		spView->GetPDFViewPtr()->Open(spViewModel->Path);
 
 		return spView;
 	});
@@ -653,22 +648,14 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		//Path
 		m_imageBinding.Attach(spViewModel->Image, spView->GetImageViewPtr()->PropImage());
 		m_pImageConnection = std::make_unique<sigslot::scoped_connection>(spView->GetImageViewPtr()->PropImage().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
-		//Scale Since Image is lazy Open, scale can be open
-		//if (spViewModel->Scale.get() < 0.f) { //Initial
-		//	m_imageScaleBinding.Attach(spViewModel->Scale, spView->GetImageViewPtr()->GetScale(), BindingMode::OneWayToSource);
-		//} else {
-			m_imageScaleBinding.Attach(spViewModel->Scale, spView->GetImageViewPtr()->GetScale());
-		//}
+		//Scale
+		m_imageScaleBinding.Attach(spViewModel->Scale, spView->GetImageViewPtr()->GetScale());
 		//Scroll
 		m_imageVScrollBinding.Attach(spViewModel->VScroll, spView->GetImageViewPtr()->GetVScrollPtr()->PropScrollPos());
 		m_imageHScrollBinding.Attach(spViewModel->HScroll, spView->GetImageViewPtr()->GetHScrollPtr()->PropScrollPos());
 
-		//Open
-		//m_pOpenBinding.reset(nullptr);
-		//m_pOpenBinding.reset(new CBinding<void>(spViewModel->OpenCommand, spView->GetOpenCommand()));
-
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
-		//spView->GetPDFViewPtr()->Open(spViewModel->Path);//TODOHIGH
+		spView->GetImageViewPtr()->Open(spViewModel->Image.get().GetPath());
 
 		return spView;
 	});

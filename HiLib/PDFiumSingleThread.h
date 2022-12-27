@@ -301,6 +301,17 @@ public:
     {
         return ThreadRun(FPDFBitmap_FillRect, bitmap, left, top, width, height, color);
     }
+    void RenderPage(HDC dc,
+                    FPDF_PAGE page,
+                    int start_x,
+                    int start_y,
+                    int size_x,
+                    int size_y,
+                    int rotate,
+                    int flags)
+    {
+        return ThreadRun(FPDF_RenderPage, dc, page, start_x, start_y, size_x, size_y, rotate, flags);
+    }
     void RenderPageBitmap(FPDF_BITMAP bitmap,
                                 FPDF_PAGE page,
                                 int start_x,
@@ -312,6 +323,16 @@ public:
     {
         return ThreadRun(FPDF_RenderPageBitmap, bitmap, page, start_x, start_y, size_x, size_y, rotate, flags);
     }
+
+    void RenderPageBitmapWithMatrix(FPDF_BITMAP bitmap,
+                                FPDF_PAGE page,
+                                const FS_MATRIX* matrix,
+                                const FS_RECTF* clipping,
+                                int flags)
+    {
+        return ThreadRun(FPDF_RenderPageBitmapWithMatrix, bitmap, page, matrix, clipping, flags);
+    }
+
     /*****************/
     /* FPDF_TEXTPAGE */
     /*****************/

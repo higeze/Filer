@@ -5,6 +5,7 @@
 #include <strsafe.h>
 #include <new>
 #include <shlobj.h>
+#include "Unknown.h"
 
 // Default usage type flag to use with our IFileIsInUse implementation
 #define FUT_DEFAULT FUT_EDITING
@@ -18,25 +19,21 @@
 // this class implements the interface necessary to negotiate with the explorer
 // when it hits sharing violations due to the file being open
 
-class CFileIsInUseImpl : public IFileIsInUse
+class CFileIsInUseImpl : public CUnknown<IFileIsInUse>
 {
 public:
     static UINT WM_FILEINUSE_CLOSEFILE;
+    static CComPtr<IFileIsInUse> CreateInstance(HWND hwnd, PCWSTR pszFilePath, FILE_USAGE_TYPE fut, DWORD dwCapabilities);
+private:
+    static HRESULT s_CreateInstance(HWND hwnd, PCWSTR pszFilePath, FILE_USAGE_TYPE fut, DWORD dwCapabilities, REFIID riid, void **ppv);
 
 public:
-    // IUnknown
-    IFACEMETHODIMP QueryInterface(REFIID riid, void **ppv);
-    IFACEMETHODIMP_(ULONG) AddRef();
-    IFACEMETHODIMP_(ULONG) Release();
-
     // IFileIsInUse
     IFACEMETHODIMP GetAppName(PWSTR *ppszName);
     IFACEMETHODIMP GetUsage(FILE_USAGE_TYPE *pfut);
     IFACEMETHODIMP GetCapabilities(DWORD *pdwCapabilitiesFlags);
     IFACEMETHODIMP GetSwitchToHWND(HWND *phwnd);
     IFACEMETHODIMP CloseFile();
-
-    static HRESULT s_CreateInstance(HWND hwnd, PCWSTR pszFilePath, FILE_USAGE_TYPE fut, DWORD dwCapabilities, REFIID riid, void **ppv);
 
 private:
     CFileIsInUseImpl();
@@ -46,7 +43,6 @@ private:
     HRESULT _AddFileToROT();
     HRESULT _RemoveFileFromROT();
 
-    long _cRef;
     WCHAR _szFilePath[MAX_PATH];
     HWND _hwnd;
     DWORD _dwCapabilities;

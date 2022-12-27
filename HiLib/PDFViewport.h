@@ -28,8 +28,8 @@ public:
 
 	CRectF WndToCtrl(const CRectF& ptInWnd);
 	CRectF CtrlToDoc(const CRectF& ptInWnd);
-	//CRectF DocToPage(const CRectF& ptInDoc);
-	//CRectF PageToPdfiumPage(const CRectF& ptInPage);
+	CRectF DocToPage(const int& page, const CRectF& ptInDoc);
+	CRectF PageToPdfiumPage(const int& page, const CRectF& ptInPage);
 
 	//std::tuple<int, CRectF> WndToPdfiumPage(const CRectF& ptInWnd);
 

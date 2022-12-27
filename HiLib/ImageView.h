@@ -89,6 +89,10 @@ public:
 
 	std::tuple<CRectF, CRectF> GetRects() const;
 
+	void Open(const std::wstring& path);
+	void Open();
+	void Close();
+
 public:
 	/******************/
 	/* Windows Message*/
@@ -175,10 +179,6 @@ public:
 	//virtual bool TextDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e);
 
 	virtual void Error_StdException(const std::exception& e);
-
-	void Open();
-	void Open(const std::wstring& path);
-	void Close();
 
 	void UpdateScroll();
 

@@ -119,7 +119,7 @@ struct CRectT :public TRect
 	using point_type = CPointT<TRect, TSize, TPoint, T>;
 
 	CRectT() :TRect{ 0 } {}
-	CRectT(T l, T t, T r, T b) :TRect{ l,t,r,b } {}
+	CRectT(const T& l, const T& t, const T& r, const T& b) :TRect{ l, t, r, b } {}
 	CRectT(const rect_type& rc) :CRectT(rc.left, rc.top, rc.right, rc.bottom) {}
 	CRectT(const TRect& rc) :CRectT(rc.left, rc.top, rc.right, rc.bottom) {}
 	CRectT(const size_type& size) :TRect{ 0, 0, size.width, size.height } {}

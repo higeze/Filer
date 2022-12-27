@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ole2.h>
 #include <olectl.h>
 #include <unknwn.h>

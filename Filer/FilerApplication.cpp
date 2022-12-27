@@ -148,7 +148,7 @@ HRESULT Open(HWND hWnd, const std::wstring& path)
 
 	RECT rc;
 	GetClientRect(hWnd, &rc);
-	rc.right = (rc.left + rc.right) * 0.5;
+	rc.right = (rc.left + rc.right) / 2;
 
 	FAILED_THROW(handler->SetWindow(hWnd, &rc));
 	FAILED_THROW(handler->DoPreview());

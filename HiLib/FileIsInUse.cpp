@@ -1,8 +1,33 @@
 #include "FileIsInUse.h"
+#include "Debug.h"
 
+//static
 UINT CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE = ::RegisterWindowMessageA("WM_FILEINUSE_CLOSEFILE");
 
-CFileIsInUseImpl::CFileIsInUseImpl(): _cRef(1), _hwnd(NULL), _fut(FUT_GENERIC), _dwCapabilities(0), _dwCookie(0)
+CComPtr<IFileIsInUse> CFileIsInUseImpl::CreateInstance(HWND hwnd, PCWSTR pszFilePath, FILE_USAGE_TYPE fut, DWORD dwCapabilities)
+{
+    CComPtr<IFileIsInUse> ptr;
+    FAILED_THROW(s_CreateInstance(hwnd, pszFilePath, fut, dwCapabilities, IID_PPV_ARGS(&ptr)));
+    return ptr;
+}
+
+HRESULT CFileIsInUseImpl::s_CreateInstance(HWND hwnd, PCWSTR pszFilePath, FILE_USAGE_TYPE fut, DWORD dwCapabilities, REFIID riid, void **ppv)
+{
+    CFileIsInUseImpl *pfiu = new (std::nothrow) CFileIsInUseImpl();
+    HRESULT hr = (pfiu) ? S_OK : E_OUTOFMEMORY;
+    if (SUCCEEDED(hr))
+    {
+        hr = pfiu->_Initialize(hwnd, pszFilePath, fut, dwCapabilities);
+        if (SUCCEEDED(hr))
+        {
+            hr = pfiu->QueryInterface(riid, ppv);
+        }
+        pfiu->Release();
+    }
+    return hr;
+}
+
+CFileIsInUseImpl::CFileIsInUseImpl(): _hwnd(NULL), _fut(FUT_GENERIC), _dwCapabilities(0), _dwCookie(0)
 {
     _szFilePath[0]  = '\0';
 }
@@ -23,47 +48,6 @@ HRESULT CFileIsInUseImpl::_Initialize(HWND hwnd, PCWSTR pszFilePath, FILE_USAGE_
         hr = _AddFileToROT();
     }
     return hr;
-}
-
-HRESULT CFileIsInUseImpl::s_CreateInstance(HWND hwnd, PCWSTR pszFilePath, FILE_USAGE_TYPE fut, DWORD dwCapabilities, REFIID riid, void **ppv)
-{
-    CFileIsInUseImpl *pfiu = new (std::nothrow) CFileIsInUseImpl();
-    HRESULT hr = (pfiu) ? S_OK : E_OUTOFMEMORY;
-    if (SUCCEEDED(hr))
-    {
-        hr = pfiu->_Initialize(hwnd, pszFilePath, fut, dwCapabilities);
-        if (SUCCEEDED(hr))
-        {
-            hr = pfiu->QueryInterface(riid, ppv);
-        }
-        pfiu->Release();
-    }
-    return hr;
-}
-
-HRESULT CFileIsInUseImpl::QueryInterface(REFIID riid, void **ppv)
-{
-    static const QITAB qit[] =
-    {
-        QITABENT(CFileIsInUseImpl, IFileIsInUse),
-        { 0 },
-    };
-    return QISearch(this, qit, riid, ppv);
-}
-
-ULONG CFileIsInUseImpl::AddRef()
-{
-    return InterlockedIncrement(&_cRef);
-}
-
-ULONG CFileIsInUseImpl::Release()
-{
-    ULONG cRef = InterlockedDecrement(&_cRef);
-    if (!cRef)
-    {
-        delete this;
-    }
-    return cRef;
 }
 
 // IFileIsInUse

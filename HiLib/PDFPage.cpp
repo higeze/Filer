@@ -126,6 +126,64 @@ struct CPDFPage::FindMachine: public CPDFPage::MachineBase
 };
 
 void CPDFPage::RenderContent(const RenderPageContentEvent& e) { process_event(e); }
+//{ 
+//	const CSizeF szf = GetSourceSize();
+//	const CSize sz(static_cast<int>(std::round(szf.width * e.Scale)), static_cast<int>(std::round(szf.height * e.Scale)));
+//	const CRectF rcInPdfium(e.ViewportPtr->PageToPdfiumPage(m_index, e.RectInPage));
+//
+//	//GetPDFiumPtr()->RenderPage(
+//	//	e.DirectPtr->GetHDC(),
+//	//	GetPagePtr().get()
+//	//	lefttop.x,
+//	//	lefttop.y,
+//	//	bw, bh, 0,
+//	//	FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
+//
+//	BITMAPINFOHEADER bmih
+//	{
+//		.biSize = sizeof(BITMAPINFOHEADER),
+//		.biWidth = static_cast<int>(std::round(rcInPdfium.Width())),
+//		.biHeight = - static_cast<int>(std::round(std::abs(rcInPdfium.Height()))),
+//		.biPlanes = 1,
+//		.biBitCount = 32,
+//		.biCompression = BI_RGB,
+//		.biSizeImage = 0,	
+//	};
+//	
+//	void* bitmapBits = nullptr;
+//
+//	std::unique_ptr<std::remove_pointer_t<HBITMAP>, delete_object>  pBmp(
+//		::CreateDIBSection(e.DirectPtr->GetHDC(), reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0)
+//	);
+//	FALSE_THROW(pBmp);
+//
+//	UNQ_FPDF_BITMAP pFpdfBmp(GetPDFiumPtr()->Bitmap_UnqCreateEx(bmih.biWidth, - bmih.biHeight, FPDFBitmap_BGRx, bitmapBits, ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3)));
+//	FALSE_THROW(pFpdfBmp);
+//
+//	GetPDFiumPtr()->Bitmap_FillRect(pFpdfBmp.get(), 0, 0, bmih.biWidth, - bmih.biHeight, 0xFFFFFFFF); // Fill white
+//	FS_MATRIX mat{ e.Scale, 0, 0, e.Scale,0,0 };
+//	//FS_RECTF rcf{ rcInPdfium.left, rcInPdfium.top, rcInPdfium.right, rcInPdfium.bottom };
+//	FS_RECTF rcf{ 0, 0, 400, 400 };
+//	GetPDFiumPtr()->RenderPageBitmapWithMatrix(pFpdfBmp.get(), GetPagePtr().get(), &mat, &rcf, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
+//
+//	CComPtr<IWICBitmap> pWICBitmap;
+//	FAILED_THROW(e.DirectPtr->GetWICImagingFactory()->CreateBitmapFromHBITMAP(pBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBitmap));
+//	
+//	CComPtr<ID2D1Bitmap> pBitmap;
+//	FAILED_THROW(e.DirectPtr->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap));
+//
+//	auto ptInWnd = e.ViewportPtr->PageToWnd(e.PageIndex, CPointF());
+//	auto rc = CRectF(
+//			std::round(ptInWnd.x),
+//			std::round(ptInWnd.y),
+//			std::round(ptInWnd.x) + bmih.biWidth,
+//			std::round(ptInWnd.y) - bmih.biHeight);
+//
+//		e.DirectPtr->GetD2DDeviceContext()->DrawBitmap(pBitmap, rc, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+//
+//	
+//	//e.DirectPtr->GetD2DDeviceContext()->DrawBitmap(pBitmap, e.ViewportPtr->PdfiumPageToWnd(m_index, rcInPdfium), 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+//}
 void CPDFPage::RenderFind(const RenderPageFindEvent& e) { process_event(e); }
 void CPDFPage::RenderFindLine(const RenderPageFindLineEvent& e) { process_event(e); }
 void CPDFPage::RenderSelectedText(const RenderPageSelectedTextEvent& e) { process_event(e); }
@@ -266,6 +324,67 @@ void CPDFPage::LoadFind(const std::wstring& find_string)
 	m_fnd.set(PdfFndInfo(rects, find.c_str()));
 }
 
+CRectF CPDFPage::RotateRect(const CRectF& rc, const int& rotate)
+{
+	CSizeF size = GetSourceSize();
+	const FLOAT pw = size.width;
+	const FLOAT ph = size.height;
+
+
+	auto RectTransform = [](const CRectF& rc, FLOAT a, FLOAT b, FLOAT c, FLOAT d, FLOAT tx, FLOAT ty)->CRectF
+	{
+		auto PointTransform = [](const CPointF& pt, FLOAT a, FLOAT b, FLOAT c, FLOAT d, FLOAT tx, FLOAT ty)->CPointF
+		{
+			return CPointF(((a * pt.x) + (c * pt.y) + tx), ((b * pt.x) + (d * pt.y) + ty));
+		};
+		CPointF pt1(rc.left, rc.top); pt1 = PointTransform(pt1, a, b, c, d, tx, ty);
+		CPointF pt2(rc.right, rc.bottom); pt2 = PointTransform(pt2, a, b, c, d, tx, ty);
+
+		if (pt1.x > pt2.x) { std::swap(pt1.x, pt2.x); }
+		if (pt1.y < pt2.y) { std::swap(pt1.y, pt2.y); }
+
+		return CRectF(pt1.x, pt1.y, pt2.x, pt2.y);
+	};
+
+	switch (rotate) {
+		default:
+		case 0: // 0 degrees
+		{
+			//const UXMatrix t = { 1.0, 0.0, 0.0, -1.0, 0.0, ph };
+			return RectTransform(rc, 1.f, 0.f, 0.f, 1.f, 0.f, 0.f);
+			break;
+		}
+
+		case 1: // 90 degrees
+		{
+			//const UXMatrix t = { 0.0, 1.0, 1.0, 0.0, 0.0, 0.0 };
+			return  RectTransform(rc, 0.f, -1.f, 1.f, 0.f, 0.f, ph);
+			break;
+		}
+
+		case 2: // 180 degrees
+		{
+			//const UXMatrix t = { -1.0, 0.0, 0.0, 1.0, pw, 0.0 };
+			return RectTransform(rc, -1.f, 0.f, 0.f, -1.f, pw, ph);
+			break;
+		}
+
+		case 3: // 270 degrees
+		{
+			//const UXMatrix t = { 0.0, -1.0, -1.0, 0.0, pw, ph };
+			return RectTransform(rc, 0.f, 1.f, -1.f, 0.f, pw, 0.f);
+			break;
+		}
+	}
+}
+
+void CPDFPage::RotateRects(std::vector<CRectF>& rects, const int& rotate)
+{
+	for (CRectF& rc : rects) {
+		rc = RotateRect(rc, rotate);
+	}
+}
+
 void CPDFPage::LoadText()
 {
 	auto isCRorLF = [](const wchar_t ch)->bool { return ch == L'\r' || ch == L'\n'; };
@@ -340,8 +459,6 @@ void CPDFPage::LoadText()
 		//Mouse Rects
 		auto mouseRects = cursorRects;
 
-		CSizeF sz = GetSourceSize();
-
 		for (std::size_t i = 0; i < mouseRects.size(); i++) {
 			bool isFirst = i == 0;
 			bool isLast = i == mouseRects.size() - 1;
@@ -357,7 +474,7 @@ void CPDFPage::LoadText()
 			//left & right
 			if (isCR || isSpaceMid || isLast) {
 				mouseRects[i].left = mouseRects[i - 1].right;
-				mouseRects[i].right = (std::min)(cursorRects[i - 1].right + cursorRects[i - 1].Width() * 0.5f, sz.width);
+				mouseRects[i].right = cursorRects[i - 1].right + cursorRects[i - 1].Width() * 0.5f;
 			} else if (isLF) {
 				mouseRects[i].left = mouseRects[i - 1].left;
 				mouseRects[i].right = mouseRects[i - 1].right;
@@ -370,18 +487,18 @@ void CPDFPage::LoadText()
 				}
 				//right
 				if (isBeforeCR || isBeforeSpace || isBeforeLast) {
-					mouseRects[i].right = (std::min)(cursorRects[i].right - cursorRects[i].Width() * 0.5f, sz.width);
+					mouseRects[i].right = cursorRects[i].right - cursorRects[i].Width() * 0.5f;
 				} else {
 					mouseRects[i].right = (std::min)(cursorRects[i].right + cursorRects[i].Width() * 0.5f, (cursorRects[i].right + cursorRects[i + 1].left) * 0.5f);
 				}
 			}
 			//top & bottom
 			//Since line order is not always top to bottom, it's hard to adjust context.
-			mouseRects[i].top = (std::min)(cursorRects[i].top + (-cursorRects[i].Height()) * 0.2f, sz.height);
+			mouseRects[i].top = cursorRects[i].top + (-cursorRects[i].Height()) * 0.2f;
 			mouseRects[i].bottom = (std::max)(cursorRects[i].bottom - (-cursorRects[i].Height()) * 0.2f, 0.f);
 		}
-		//float deg = Rotate.get() * 90.f;
-		//float rad = deg * M_PI / 180.f;
+		RotateRects(cursorRects, Rotate.get());
+		RotateRects(mouseRects, Rotate.get());
 
 		m_txt.set(PdfTxtInfo(orgCharRects, cursorRects, mouseRects, text));
 	} else {
@@ -441,6 +558,7 @@ void CPDFPage::Bitmap_Loading_OnEntry(CDirect2DWrite* pDirect, const FLOAT& scal
 	auto fun = [this, pDirect, scale]()
 	{ 
 		this->LoadBitmap(pDirect, scale, Rotate.get());
+		LoadText();
 		process_event(BitmapLoadCompletedEvent(pDirect, scale));
 	};
 	
@@ -511,12 +629,15 @@ void CPDFPage::Bitmap_Available_RenderSelectedText(const RenderPageSelectedTextE
 			&top,
 			&right,
 			&bottom);
-		auto rcInPdfiumPage = CRectF(
-			static_cast<FLOAT>(left),
-			static_cast<FLOAT>(top),
-			static_cast<FLOAT>(right),
-			static_cast<FLOAT>(bottom));
+		auto rcInPdfiumPage = RotateRect(
+			CRectF(
+				static_cast<FLOAT>(left),
+				static_cast<FLOAT>(top),
+				static_cast<FLOAT>(right),
+				static_cast<FLOAT>(bottom)),
+			Rotate.get());
 		auto rcSelectInWnd = e.ViewportPtr->PdfiumPageToWnd(e.PageIndex, rcInPdfiumPage);
+
 		e.DirectPtr->FillSolidRectangle(
 				*(m_pDoc->GetPropPtr()->SelectedFill), rcSelectInWnd);
 	}
@@ -534,7 +655,20 @@ void CPDFPage::Bitmap_Available_RenderCaret(const RenderPageCaretEvent& e)
 	const auto& txt = m_txt.get();
 	if (!txt.CRLFRects.empty()) {
 		auto rcInPdfiumPage = txt.CRLFRects[e.CharIndex];
-		rcInPdfiumPage.right = rcInPdfiumPage.left + 1.f;
+		switch (Rotate.get()) {
+			case 0:
+				rcInPdfiumPage.right = rcInPdfiumPage.left + 1.f;
+				break;
+			case 1:
+				rcInPdfiumPage.bottom = rcInPdfiumPage.top + 1.f;
+				break;
+			case 2:
+				rcInPdfiumPage.left = rcInPdfiumPage.right - 1.f;
+				break;
+			case 3:
+				rcInPdfiumPage.top = rcInPdfiumPage.bottom - 1.f;
+				break;
+		}
 
 		e.DirectPtr->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 		e.DirectPtr->FillSolidRectangle(m_pDoc->GetPropPtr()->Format->Color, e.ViewportPtr->PdfiumPageToWnd(e.PageIndex, rcInPdfiumPage));
