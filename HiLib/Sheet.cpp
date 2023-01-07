@@ -144,6 +144,13 @@ void CSheet::SetAllRowMeasureValid(bool valid)
 	}
 }
 
+void CSheet::SetAllRowFitMeasureValid(bool valid)
+{
+	for (const auto& ptr : m_allRows) {
+		ptr->SetIsFitMeasureValid(valid);
+	}
+}
+
 void CSheet::SetAllColumnMeasureValid(bool valid)
 {
 	for (const auto& ptr : m_allCols) {
@@ -485,10 +492,13 @@ void CSheet::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
 				auto cmp = _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str());
 				if (cmp > 0) {
 					return true;
-				} else if (cmp == 0) {
-					return lhs->GetIndex<AllTag>() >= rhs->GetIndex<AllTag>();
-				} else {
+				} else if (cmp < 0) {
 					return false;
+				} else {
+					if (lhs->GetIndex<AllTag>() == rhs->GetIndex<AllTag>()) {
+						::OutputDebugString(std::format(L"{}=={}", lhs->GetIndex<AllTag>(), rhs->GetIndex<AllTag>()).c_str());
+					}
+					return lhs->GetIndex<AllTag>() > rhs->GetIndex<AllTag>();
 				}
 			});
 

@@ -812,6 +812,15 @@
     <ClInclude Include="..\HiLib\FileIsInUse.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\FileThumbnailColumn.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\D2DThumbnailDrawer.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="FileThumbnailCell.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1209,6 +1218,9 @@
       <Filter>HiLib\PDF</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\FileIsInUse.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\D2DThumbnailDrawer.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>

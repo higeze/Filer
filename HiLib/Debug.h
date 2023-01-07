@@ -70,13 +70,15 @@ std::string msg_to_string(UINT msg, WPARAM wParam, LPARAM lParam);
 	std::unique_ptr<scoped_time_logger> pStl;\
 	if(cond)pStl.reset(new scoped_time_logger(message))
 
-#define FILE_LINE_FUNC fmt::format("File:{}, Line:{}, Func:{}", ::PathFindFileNameA(__FILE__), __LINE__, __FUNCTION__).c_str()
+#define FILE_LINE_FUNC std::format("File:{}, Line:{}, Func:{}", ::PathFindFileNameA(__FILE__), __LINE__, __FUNCTION__).c_str()
 
 #define FALSE_THROW(expression) if(!(expression)){throw std::exception(FILE_LINE_FUNC);}
 
-#define FAILED_THROW(expression) if(FAILED(expression)){throw std::exception(FILE_LINE_FUNC);}
+#define FAILED_THROW(expression) if(HRESULT hr = expression; FAILED(hr)){throw std::exception(std::format("HRESULT:{:#X}, {}", hr, FILE_LINE_FUNC).c_str());}
 
 #define FAILED_RETURN(expression) if(FAILED(expression)){return;}
+
+#define FAILED_BREAK(expression) if(FAILED(expression)){break;}
 
 #define THROW_FILE_LINE_FUNC throw std::exception(FILE_LINE_FUNC)
 

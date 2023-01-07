@@ -25,6 +25,7 @@
 #include "JsonSerializer.h"
 
 class CD2DFileIconDrawer;
+class CD2DThumbnailDrawer;
 
 	struct CColorF :public D2D1::ColorF
 	{
@@ -283,7 +284,7 @@ namespace std
 
 	class CDirect2DWrite
 	{
-	private:
+	public:
 		HWND m_hWnd;
 		HDC m_hDC;
 		std::unordered_map<CColorF, CComPtr<ID2D1SolidColorBrush>> m_solidColorBrushMap;
@@ -292,6 +293,7 @@ namespace std
 		std::unordered_map<FormatF, std::unordered_map<std::pair<std::wstring, CSizeF>, CComPtr<IDWriteTextLayout>, StrSizeHash, StrSizeEqual>> m_textLayoutMap;
 		std::unordered_map<FormatF, FLOAT> m_defaultHeightMap;
 		std::unique_ptr<CD2DFileIconDrawer> m_pIconDrawer;
+		std::unique_ptr<CD2DThumbnailDrawer> m_pThumbnailDrawer;
 
 		FLOAT m_xPixels2Dips = 0.0f;
 		FLOAT m_yPixels2Dips = 0.0f;
@@ -317,7 +319,9 @@ namespace std
 		std::function<CComPtr<IDWriteFactory1>&()> GetDWriteFactory;
 		std::function<CComPtr<IWICImagingFactory2>&()> GetWICImagingFactory;
 		std::unique_ptr<CD2DFileIconDrawer>& GetFileIconDrawerPtr() { return m_pIconDrawer; }
+		std::unique_ptr<CD2DThumbnailDrawer>& GetFileThumbnailDrawerPtr() { return m_pThumbnailDrawer; }
 
+		HWND GetHWnd() const { return m_hWnd; }
 		HDC GetHDC() const { return m_hDC; }
 
 		void BeginDraw(HDC hDC);
@@ -364,6 +368,8 @@ namespace std
 		static std::vector<CRectF> CalcCharRects(const CComPtr<IDWriteTextLayout1>& pTextLayout, const size_t& count);
 		void PushAxisAlignedClip(const CRectF& clipRect, D2D1_ANTIALIAS_MODE antialiasMode);
 		void PopAxisAlignedClip();
+
+		void SaveBitmap(const std::wstring& dstPath, const CComPtr<ID2D1Bitmap1>& pSrcBitmap) const;
 
 		FLOAT LayoutRound(FLOAT value, FLOAT unit = 0.5f)
 		{

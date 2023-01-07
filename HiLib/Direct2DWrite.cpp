@@ -1,6 +1,7 @@
 //#include "stdafx.h"
 #include "Direct2DWrite.h"
 #include "D2DFileIconDrawer.h"
+#include "D2DThumbnailDrawer.h"
 #include <fmt/format.h>
 
 	//CPointF
@@ -311,7 +312,8 @@
 
 
 	//CDirect2DWrite
-	CDirect2DWrite::CDirect2DWrite(HWND hWnd) :m_hWnd(hWnd), m_hDC(nullptr), m_pIconDrawer(std::make_unique<CD2DFileIconDrawer>(this))
+	CDirect2DWrite::CDirect2DWrite(HWND hWnd)
+		:m_hWnd(hWnd), m_hDC(nullptr), m_pIconDrawer(std::make_unique<CD2DFileIconDrawer>(this)), m_pThumbnailDrawer(std::make_unique<CD2DThumbnailDrawer>())
 	{
 		GetD3DDevices = [p = CComPtr<ID3D11Device1>(), q = CComPtr<ID3D11DeviceContext1>(), this]() mutable->std::tuple<CComPtr<ID3D11Device1>&, CComPtr<ID3D11DeviceContext1>&>
 		{
@@ -613,9 +615,13 @@
 	void CDirect2DWrite::EndDraw()
 	{
 		m_hDC = nullptr;
-		HRESULT hr = GetD2DDeviceContext()->EndDraw();
-		if (FAILED(hr) || hr == D2DERR_RECREATE_TARGET) {
+		D2D1_TAG tag1, tag2;
+		HRESULT hr = GetD2DDeviceContext()->EndDraw(&tag1, &tag2);
+		if (hr == D2DERR_RECREATE_TARGET) {
 			Clear();
+		} else if (FAILED(hr)){
+			//hr = GetD2DDeviceContext()->Flush(&tag1, &tag2);
+			//::DebugBreak();
 		}
 		// Present (new for Direct2D 1.1)
 		DXGI_PRESENT_PARAMETERS parameters = { 0 };
@@ -931,6 +937,29 @@
 		GetD2DDeviceContext()->PopAxisAlignedClip();
 	}
 
+	void CDirect2DWrite::SaveBitmap(const std::wstring& dstPath, const CComPtr<ID2D1Bitmap1>& pSrcBitmap) const
+	{
+		CComPtr<IWICStream> pStream;
+		FAILED_THROW(GetWICImagingFactory()->CreateStream(&pStream));
+		FAILED_THROW(pStream->InitializeFromFilename(dstPath.c_str(), GENERIC_WRITE));
+
+		CComPtr<IWICBitmapEncoder> pBmpEncoder;
+		FAILED_THROW(GetWICImagingFactory()->CreateEncoder(GUID_ContainerFormatPng, NULL, &pBmpEncoder));
+		FAILED_THROW(pBmpEncoder->Initialize(pStream, WICBitmapEncoderNoCache));
+
+		CComPtr<IWICBitmapFrameEncode> pBmpFrameEncode;
+		FAILED_THROW(pBmpEncoder->CreateNewFrame(&pBmpFrameEncode, NULL));
+		FAILED_THROW(pBmpFrameEncode->Initialize(NULL));
+
+		CComPtr<IWICImageEncoder> pImageEncoder;
+		FAILED_THROW(GetWICImagingFactory()->CreateImageEncoder(GetD2DDevice(), &pImageEncoder));
+		FAILED_THROW(pImageEncoder->WriteFrame(pSrcBitmap, pBmpFrameEncode, nullptr));
+
+		FAILED_THROW(pBmpFrameEncode->Commit());
+		FAILED_THROW(pBmpEncoder->Commit());
+		FAILED_THROW(pStream->Commit(STGC_DEFAULT));
+	}
+
 
 
 	FLOAT CDirect2DWrite::GetPixels2DipsRatioX()
@@ -1024,4 +1053,5 @@
 		m_yPixels2Dips = 0.0f;
 
 		m_pIconDrawer->Clear();
+		m_pThumbnailDrawer->Clear();
 	}

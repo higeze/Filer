@@ -309,6 +309,7 @@
     <ClInclude Include="..\HiLib\Cursorer.h" />
     <ClInclude Include="..\HiLib\D2DFileIconDrawer.h" />
     <ClInclude Include="..\HiLib\D2DImage.h" />
+    <ClInclude Include="..\HiLib\D2DThumbnailDrawer.h" />
     <ClInclude Include="..\HiLib\D2DWDialog.h" />
     <ClInclude Include="..\HiLib\D2DWTypes.h" />
     <ClInclude Include="..\HiLib\DeadlineTimer.h" />
@@ -324,6 +325,7 @@
     <ClInclude Include="..\HiLib\FileDragger.h" />
     <ClInclude Include="..\HiLib\D2DAtlasBitmap.h" />
     <ClInclude Include="..\HiLib\FileIsInUse.h" />
+    <ClInclude Include="..\HiLib\FileThumbnailColumn.h" />
     <ClInclude Include="..\HiLib\FilterCell.h" />
     <ClInclude Include="..\HiLib\FindDlg.h" />
     <ClInclude Include="..\HiLib\FindDlgResource.h" />
@@ -465,6 +467,7 @@
     <ClInclude Include="ExeExtensionProperty.h" />
     <ClInclude Include="FilerApplication.h" />
     <ClInclude Include="FilerWndStatusBar.h" />
+    <ClInclude Include="FileThumbnailCell.h" />
     <ClInclude Include="Launcher.h" />
     <ClInclude Include="LauncherItemDragger.h" />
     <ClInclude Include="LauncherProperty.h" />
@@ -544,6 +547,7 @@
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
     <ClCompile Include="..\HiLib\D2DFileIconDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DImage.cpp" />
+    <ClCompile Include="..\HiLib\D2DThumbnailDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DWDialog.cpp" />
     <ClCompile Include="..\HiLib\D2DWTypes.cpp" />
     <ClCompile Include="..\HiLib\DeadlineTimer.cpp" />

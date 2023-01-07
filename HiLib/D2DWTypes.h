@@ -30,7 +30,10 @@ struct CPointT :public TPoint
 	void Offset(T xOffset, T yOffset) { this->x += xOffset; this->y += yOffset; }
 	void Offset(point_type& pt) { this->x += pt.x; this->y += pt.y; }
 	point_type OffsetCopy(point_type& pt) { return point_type(this->x + pt.x, this->y + pt.y); }
-
+	const TPoint* operator&() const
+	{
+		return static_cast<const TPoint*>(this);
+	}
 	point_type operator -() const { return point_type(-this->x, -this->y); }
 	point_type operator +(point_type pt) const
 	{
@@ -87,6 +90,10 @@ struct CSizeT :public TSize
 	CSizeT(T w, T h) :TSize{ w, h } {}
 	CSizeT(const size_type& size) :CSizeT(size.width, size.height) {}
 	CSizeT(const TSize& size) :CSizeT(size.width, size.height) {}
+	const TSize* operator&() const
+	{
+		return static_cast<const TSize*>(this);
+	}
 	bool operator==(const size_type& rhs) const
 	{
 		return this->width == rhs.width && this->height == rhs.height;
@@ -127,6 +134,10 @@ struct CRectT :public TRect
 	{
 		this->left = l; this->top = t; this->right = r; this->bottom = b;
 	}
+	bool IsRectNull() const
+	{
+		return this->left == 0 && this->top == 0 && this->right == 0 && this->bottom == 0;
+	}
 	void MoveToX(T x) { this->right = x + this->right - this->left; this->left = x; }
 	void MoveToY(T y) { this->bottom = y + this->bottom - this->top; this->top = y; }
 	void MoveToXY(T x, T y)
@@ -142,14 +153,16 @@ struct CRectT :public TRect
 	}
 	void OffsetRect(T x, T y) { this->left += x; this->right += x; this->top += y;this-> bottom += y; }
 	void OffsetRect(const point_type& pt) { OffsetRect(pt.x, pt.y); }
-	FLOAT Width()const { return this->right - this->left; }
-	FLOAT Height()const { return this->bottom - this->top; }
+	T Width()const { return this->right - this->left; }
+	T Height()const { return this->bottom - this->top; }
 
 	void InflateRect(T x, T y) { this->left -= x; this->right += x; this->top -= y; this->bottom += y; }
 	void DeflateRect(T x, T y) { this->left += x; this->right -= x; this->top += y; this->bottom -= y; }
 	void InflateRect(T x) { this->left -= x; this->right += x; this->top -= x; this->bottom += x; }
 	void DeflateRect(T x) { this->left += x; this->right -= x; this->top += x; this->bottom -= x; }
 	bool PtInRect(const point_type& pt) const { return pt.x >= this->left && pt.x <= this->right && pt.y >= this->top && pt.y <= this->bottom; }
+	bool RectInRect(const rect_type& rc) const { return rc.left >= this->left && rc.top >= this->top && rc.right <= this->right && rc.bottom <= this->bottom; }
+	bool SizeInRect(const size_type& sz) const { return sz.width <= this->Width() && sz.height <= this->Height(); }
 	rect_type IntersectRect(const rect_type& rc) const 
 	{
 		T l = (std::max)(this->left, rc.left);
@@ -194,6 +207,11 @@ struct CRectT :public TRect
 		this->top += rc.top;
 		this->right -= rc.right;
 		this->bottom -= rc.bottom;
+	}
+
+	const TRect* operator&() const
+	{
+		return static_cast<const TRect*>(this);
 	}
 
 	rect_type operator+(rect_type rc)const
@@ -264,3 +282,4 @@ using CSizeU = CSizeT<D2D1_RECT_U, D2D1_SIZE_U, D2D1_POINT_2U, UINT32>;
 using CPointU = CPointT<D2D1_RECT_U, D2D1_SIZE_U, D2D1_POINT_2U, UINT32>;
 
 CRectF CRectU2CRectF(const CRectU& rc);
+CSizeU CSizeF2CSizeU(const CSizeF& sz);

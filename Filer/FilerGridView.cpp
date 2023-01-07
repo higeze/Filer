@@ -10,6 +10,7 @@
 #include "FileColumn.h"
 #include "FileSizeColumn.h"
 #include "FileLastWriteColumn.h"
+#include "FileThumbnailColumn.h"
 #include "shlwapi.h"
 
 #include "SheetEventArgs.h"
@@ -55,6 +56,8 @@
 #include "MouseStateMachine.h"
 #include "FilerWnd.h"
 #include <format>
+
+#include "ResourceIDFactory.h"
 
 #define SCRATCH_QCM_FIRST 1
 #define SCRATCH_QCM_NEW 600//200,500 are used by system
@@ -140,18 +143,35 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 	m_frozenRowCount = 3;
 
 	//Insert columns if not initialized
-	if (m_allCols.empty()) {
-		m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this);
-		m_pNameColumn = std::make_shared<CFileDispNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
 
-		m_allCols.idx_push_back(m_pHeaderColumn);
-		m_allCols.idx_push_back(m_pNameColumn);
-		m_allCols.idx_push_back(std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"));
-		m_allCols.idx_push_back(std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr));
-		m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
+	
+	//if (m_allCols.empty()) {
+
+		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CRowIndexColumn); })) 
+		{ 
+			m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this);
+			m_allCols.idx_push_back(m_pHeaderColumn);
+		}
+		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileDispNameColumn<std::shared_ptr<CShellFile>>); })) 
+		{ 
+			m_pNameColumn = std::make_shared<CFileDispNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
+			m_allCols.idx_push_back(m_pNameColumn);
+		}
+		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileThumbnailColumn<std::shared_ptr<CShellFile>>); })) {
+			m_allCols.idx_push_back(std::make_shared<CFileThumbnailColumn<std::shared_ptr<CShellFile>>>(this));
+		}
+		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileDispExtColumn<std::shared_ptr<CShellFile>>); })) {
+			m_allCols.idx_push_back(std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"));
+		}
+		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileSizeColumn<std::shared_ptr<CShellFile>>); })) {
+			m_allCols.idx_push_back(std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr));
+		}
+		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileLastWriteColumn<std::shared_ptr<CShellFile>>); })) {
+			m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
+		}
 
 		m_frozenColumnCount = 1;
-	}
+	//}
 
 	//Header menu items
 	//for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
@@ -637,6 +657,7 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 		//Direct2DWrite
 		if (!isUpdate) {
 			GetWndPtr()->GetDirectPtr()->ClearTextLayoutMap();
+			GetWndPtr()->GetDirectPtr()->GetFileThumbnailDrawerPtr()->Clear();
 		}
 		//Celler
 		m_spCeller->Clear();
@@ -1074,29 +1095,72 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		//Header menu
 		CMenu menu(::CreatePopupMenu());
 		if (menu.IsNull()) { return; }
-		if (m_headerMenuItems.empty()) {
-			for (const auto& colPtr : m_allCols ) {
-				auto cell = Cell(m_pNameHeaderRow, colPtr);
-				auto str = cell->GetString();
-				m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
-					IDM_VISIBLEROWHEADERCOLUMN + colPtr->GetIndex<AllTag>(),
-					Cell(m_pNameHeaderRow, colPtr)->GetString(), this, colPtr.get()));
-			}
 
-			for (auto& item : m_headerMenuItems) {
-				GetWndPtr()->AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
-			}
+		MENUITEMINFO mii = { 0 };
+		mii.cbSize = sizeof(MENUITEMINFO);
+		mii.fMask = MIIM_FTYPE | MIIM_STRING | MIIM_STATE | MIIM_ID;
+		mii.fType = MFT_STRING;
+		for (const std::shared_ptr<CColumn>& colPtr : m_allCols) {
+			mii.fState = colPtr->GetIsVisible() ? MFS_CHECKED : MFS_UNCHECKED;
+			mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, Cell(m_pNameHeaderRow, colPtr)->GetString());
+			std::wstring dwTypeData = Cell(m_pNameHeaderRow, colPtr)->GetString();
+			//std::array<wchar_t, 256> dwTypeData; 
+			//std::copy(Cell(m_pNameHeaderRow, colPtr)->GetString().cbegin(), Cell(m_pNameHeaderRow, colPtr)->GetString().cend(), dwTypeData.begin());
+			//dwTypeData[Cell(m_pNameHeaderRow, colPtr)->GetString().size()] = L'\0';
+			mii.dwTypeData = const_cast<LPWSTR>(dwTypeData.c_str());
+			menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 		}
 
-		for (auto& item : m_headerMenuItems) {
-			menu.InsertMenuItemW(menu.GetMenuItemCount(), TRUE, item.get());
-		}
-
-		menu.TrackPopupMenu(
-			TPM_LEFTALIGN | TPM_RIGHTBUTTON,
+		int idCmd = menu.TrackPopupMenu(
+			TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON,
 			e.PointInScreen.x,
 			e.PointInScreen.y,
 			GetWndPtr()->m_hWnd);
+
+		if (idCmd) {
+			for (const std::shared_ptr<CColumn>& colPtr : m_allCols) {
+				if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, Cell(m_pNameHeaderRow, colPtr)->GetString())){
+					colPtr->SetIsVisible(!colPtr->GetIsVisible());
+					Reload();
+					/*std::ranges::for_each(m_allCells, [](const std::shared_ptr<CCell>& pCell) { pCell->SetActMeasureValid(false); });
+					SetAllRowMeasureValid(false);
+					PostUpdate(Updates::Column);
+					PostUpdate(Updates::ColumnVisible);
+					PostUpdate(Updates::Row);
+					PostUpdate(Updates::RowVisible);
+					PostUpdate(Updates::Scrolls);
+					PostUpdate(Updates::Invalidate);
+					SubmitUpdate();*/
+				}
+			}
+		}
+		
+
+
+
+		//if (m_headerMenuItems.empty()) {
+		//	for (const auto& colPtr : m_allCols ) {
+		//		auto cell = Cell(m_pNameHeaderRow, colPtr);
+		//		auto str = cell->GetString();
+		//		m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
+		//			IDM_VISIBLEROWHEADERCOLUMN + colPtr->GetIndex<AllTag>(),
+		//			Cell(m_pNameHeaderRow, colPtr)->GetString(), this, colPtr.get()));
+		//	}
+
+		//	for (auto& item : m_headerMenuItems) {
+		//		GetWndPtr()->AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
+		//	}
+		//}
+
+		//for (auto& item : m_headerMenuItems) {
+		//	menu.InsertMenuItemW(menu.GetMenuItemCount(), TRUE, item.get());
+		//}
+
+		//menu.TrackPopupMenu(
+		//	TPM_LEFTALIGN | TPM_RIGHTBUTTON,
+		//	e.PointInScreen.x,
+		//	e.PointInScreen.y,
+		//	GetWndPtr()->m_hWnd);
 	}else{
 		//Cell menu
 		for(auto rowPtr : m_visRows){

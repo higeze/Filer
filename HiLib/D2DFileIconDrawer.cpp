@@ -65,7 +65,7 @@ void CD2DFileIconDrawer::DrawFileIconBitmap(const CRectF& dstRect, const CIDL& a
 	}
 
 	if (!m_pAtlasBitmap->Exist(key)) {
-		::OutputDebugString(std::format(L"{}\r\n", key).c_str());
+		//::OutputDebugString(std::format(L"{}\r\n", key).c_str());
 		m_pAtlasBitmap->AddAsync(key, funbmp, std::forward<decltype(funupd)>(funupd), L"DEFAULT");
 	}
 	m_pAtlasBitmap->DrawBitmapByKey(key, dstRect);

@@ -65,8 +65,8 @@ struct tchar_cast<wchar_t,c,w> {
 /* GetBuffer */
 /*************/
 
-template<typename TRect>
-TRect* GetBuffer(std::basic_string<TRect>& str,int n)
+template<typename char_type>
+char_type* GetBuffer(std::basic_string<char_type>& str,int n)
 {
 	str.resize(n+1);
 	return &str[0];
@@ -75,10 +75,10 @@ TRect* GetBuffer(std::basic_string<TRect>& str,int n)
 /*****************/
 /* ReleaseBuffer */
 /*****************/
-template<typename TRect>
-void ReleaseBuffer(std::basic_string<TRect>& str)
+template<typename char_type>
+void ReleaseBuffer(std::basic_string<char_type>& str)
 {
-	typename std::basic_string<TRect>::size_type size=str.find_first_of(TCHAR_CAST(TRect,'\0'));
+	typename std::basic_string<char_type>::size_type size=str.find_first_of(TCHAR_CAST(char_type,'\0'));
 	str.resize(size);
 }
 
