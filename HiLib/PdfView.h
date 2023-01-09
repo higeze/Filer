@@ -114,6 +114,36 @@ public:
 	std::tuple<CRectF, CRectF> GetRects() const;
 
 public:
+	/************/
+	/* Viewport */
+	/************/	
+
+	CRectF Wnd2Ctrl(const CRectF& rcInWnd);
+	CPointF Wnd2Ctrl(const CPointF& ptInWnd);
+	CRectF Ctrl2Wnd(const CRectF& rcInCtrl);
+	CPointF Ctrl2Wnd(const CPointF& ptInCtrl);
+
+	CRectF Ctrl2Doc(const CRectF& rcInCtrl);
+	CPointF Ctrl2Doc(const CPointF& ptInCtrl);
+	CRectF Doc2Ctrl(const CRectF& rcInDoc);
+	CPointF Doc2Ctrl(const CPointF& ptInDoc);
+
+	CRectF Doc2Page(const int& i, const CRectF& rcInDoc);
+	CPointF Doc2Page(const int& i, const CPointF& ptInDoc);
+	CRectF Page2Doc(const int& i, const CRectF& rcInPage);
+	CPointF Page2Doc(const int& i, const CPointF& ptInPage);
+	std::tuple<int, CPointF> Doc2Page(const CPointF& ptInDoc);
+
+	CRectF Page2PdfiumPage(const int& page, const CRectF& rcInPage);
+	CPointF Page2PdfiumPage(const int& page, const CPointF& ptInPage);
+	CRectF PdfiumPage2Page(const int& page, const CRectF& rcInPdfiumPage);
+	CPointF PdfiumPage2Page(const int& page, const CPointF& ptInPdfiumPage);
+
+	std::tuple<int, CPointF> Wnd2PdfiumPage(const CPointF& ptInWnd);
+	CRectF PdfiumPage2Wnd(const int& i, const CRectF rcInPdfiumPage);
+	CPointF PdfiumPage2Wnd(const int& i, const CPointF ptInPdfiumPage);
+
+public:
 	/******************/
 	/* Windows Message*/
 	/******************/

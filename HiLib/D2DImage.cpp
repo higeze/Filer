@@ -16,8 +16,11 @@ void CD2DImage::Open(CDirect2DWrite* pDirect, const std::wstring& path)
     CComPtr<IWICFormatConverter> pFormatConverter = NULL;
     FAILED_THROW(pDirect->GetWICImagingFactory()->CreateFormatConverter( &pFormatConverter ));
     FAILED_THROW(pFormatConverter->Initialize(
-        pWICBitmapFrame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 1.0f, WICBitmapPaletteTypeMedianCut));
-    FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap( pFormatConverter, NULL, &m_pBitmap ));
+        pWICBitmapFrame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 1.0f, WICBitmapPaletteTypeCustom));
+    FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(
+        pFormatConverter, 
+        nullptr, //D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_NONE, D2D1::PixelFormat(DXGI_FORMAT_BC1_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+        &m_pBitmap ));
 }
 
 void CD2DImage::Close() 

@@ -657,7 +657,7 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 		//Direct2DWrite
 		if (!isUpdate) {
 			GetWndPtr()->GetDirectPtr()->ClearTextLayoutMap();
-			GetWndPtr()->GetDirectPtr()->GetFileThumbnailDrawerPtr()->Clear();
+			//GetWndPtr()->GetDirectPtr()->GetFileThumbnailDrawerPtr()->Clear();
 		}
 		//Celler
 		m_spCeller->Clear();

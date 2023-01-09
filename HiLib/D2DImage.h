@@ -7,11 +7,11 @@ class CD2DImage
 {
 private:
 	std::wstring m_path;
-	CComPtr<ID2D1Bitmap> m_pBitmap;
+	CComPtr<ID2D1Bitmap1> m_pBitmap;
 
 public:
 	const std::wstring& GetPath() const { return m_path; }
-	const CComPtr<ID2D1Bitmap>& GetBitmapPtr() const { return m_pBitmap; }
+	const CComPtr<ID2D1Bitmap1>& GetBitmapPtr() const { return m_pBitmap; }
 
 	CD2DImage(const std::wstring& path = std::wstring())
 		:m_path(path), m_pBitmap(){}

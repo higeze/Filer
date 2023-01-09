@@ -73,11 +73,11 @@ public:
 		return m_pages[index];
 	}
 
-	void RenderContent(const RenderDocContentEvent& e);
-	void RenderFind(const RenderDocFindEvent& e);
-	void RenderFindLine(const RenderDocFindLineEvent& e);
-	void RenderSelectedText(const RenderDocSelectedTextEvent& e);
-	void RenderCaret(const RenderDocCaretEvent& e);
+	//void RenderContent(const RenderDocContentEvent& e);
+	//void RenderFind(const RenderDocFindEvent& e);
+	//void RenderFindLine(const RenderDocFindLineEvent& e);
+	//void RenderSelectedText(const RenderDocSelectedTextEvent& e);
+	//void RenderCaret(const RenderDocCaretEvent& e);
 
 	void CopyTextToClipboard(const CopyDocTextEvent& e);
 	void ImportPages(const CPDFDoc& src_doc,

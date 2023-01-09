@@ -93,7 +93,7 @@ private:
 
 
 	shared_lock_property<PdfFndInfo> m_fnd;
-	shared_lock_property<PdfTxtInfo> m_txt;
+	//shared_lock_property<PdfTxtInfo> m_txt;
 	//shared_lock_property<std::wstring> m_text;
 	//shared_lock_property<std::vector<CRectF>> m_orgRects;
 	//shared_lock_property<std::vector<CRectF>> m_crlfRects;
@@ -106,10 +106,10 @@ private:
 	std::future<void> m_futureFind;
 
 	struct MachineBase;
-	struct BitmapMachine;
+	//struct BitmapMachine;
 	struct FindMachine;
 
-	std::unique_ptr<boost::sml::sm<BitmapMachine, boost::sml::process_queue<std::queue>>> m_pBitmapMachine;
+	//std::unique_ptr<boost::sml::sm<BitmapMachine, boost::sml::process_queue<std::queue>>> m_pBitmapMachine;
 	std::unique_ptr<boost::sml::sm<FindMachine, boost::sml::process_queue<std::queue>>> m_pFindMachine;
 
 	std::function<void()> StateChanged;
@@ -134,11 +134,17 @@ public:
 	UNQ_FPDF_PAGE& GetPagePtr() { return m_pPage; }
 
 	/* Member function */
-	void RenderContent(const RenderPageContentEvent& e);
-	void RenderFind(const RenderPageFindEvent& e);
-	void RenderFindLine(const RenderPageFindLineEvent& e);
-	void RenderSelectedText(const RenderPageSelectedTextEvent& e);
-	void RenderCaret(const RenderPageCaretEvent& e);
+	//void RenderContent(const RenderPageContentEvent& e);
+	//void RenderFind(const RenderPageFindEvent& e);
+	//void RenderFindLine(const RenderPageFindLineEvent& e);
+	//void RenderSelectedText(const RenderPageSelectedTextEvent& e);
+	//void RenderCaret(const RenderPageCaretEvent& e);
+
+	CComPtr<ID2D1Bitmap1> GetBitmap(const CDirect2DWrite* pDirect, const FLOAT& scale, const int& rotate, const CRectU& rect);
+	CRectF GetCaretRect(const int index);
+	PdfTxtInfo GetTextInfo();
+	std::vector<CRectF> GetSelectedTextRects(const int& begin, const int& end);
+
 
 	int GetCursorCharIndexAtPos(const CPointF& ptInPdfiumPage);
 	CRectF GetCursorRect(const int& index);
@@ -146,8 +152,8 @@ public:
 	std::wstring GetText();
 
 private:
-	void LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale, const int& rotate);
-	void LoadText();
+	//void LoadBitmap(CDirect2DWrite* pDirect, const FLOAT& scale, const int& rotate);
+	//void LoadText();
 	void LoadFind(const std::wstring& find_string);
 
 	//const PdfTxtInfo& GetLockTxt()
@@ -171,16 +177,16 @@ private:
 	//	m_fnd = fnd;
 	//}
 
-	virtual void process_event(const RenderPageContentEvent& e);
-	virtual void process_event(const RenderPageFindEvent& e);
-	virtual void process_event(const RenderPageFindLineEvent& e);
-	virtual void process_event(const RenderPageCaretEvent& e);
+	//virtual void process_event(const RenderPageContentEvent& e);
+	//virtual void process_event(const RenderPageFindEvent& e);
+	//virtual void process_event(const RenderPageFindLineEvent& e);
+	//virtual void process_event(const RenderPageCaretEvent& e);
 
-	virtual void process_event(const InitialLoadEvent& e);
-	virtual void process_event(const BitmapReloadEvent& e);
-	virtual void process_event(const BitmapLoadCompletedEvent& e);
-	virtual void process_event(const BitmapCancelCompletedEvent& e);
-	virtual void process_event(const BitmapErrorEvent& e);
+	//virtual void process_event(const InitialLoadEvent& e);
+	//virtual void process_event(const BitmapReloadEvent& e);
+	//virtual void process_event(const BitmapLoadCompletedEvent& e);
+	//virtual void process_event(const BitmapCancelCompletedEvent& e);
+	//virtual void process_event(const BitmapErrorEvent& e);
 
 	virtual void process_event(const FindLoadEvent& e);
 	virtual void process_event(const FindReloadEvent& e);
@@ -188,19 +194,19 @@ private:
 	virtual void process_event(const FindCancelCompletedEvent& e);
 	virtual void process_event(const FindErrorEvent& e);
 
-	virtual void process_event(const RenderPageSelectedTextEvent& e);
+	//virtual void process_event(const RenderPageSelectedTextEvent& e);
 
-	void Bitmap_None_Render(const RenderPageContentEvent& e);
-	void Bitmap_InitialLoading_OnEntry(const InitialLoadEvent& e);
-	void Bitmap_Loading_OnEntry(CDirect2DWrite* pDirect, const FLOAT& scale);
-	void Bitmap_Loading_Render(const RenderPageContentEvent& e);
-	void Bitmap_Available_Render(const RenderPageContentEvent& e);
-	void Bitmap_Available_RenderSelectedText(const RenderPageSelectedTextEvent& e);
-	void Bitmap_Available_RenderCaret(const RenderPageCaretEvent& e);
+	//void Bitmap_None_Render(const RenderPageContentEvent& e);
+	//void Bitmap_InitialLoading_OnEntry(const InitialLoadEvent& e);
+	//void Bitmap_Loading_OnEntry(CDirect2DWrite* pDirect, const FLOAT& scale);
+	//void Bitmap_Loading_Render(const RenderPageContentEvent& e);
+	//void Bitmap_Available_Render(const RenderPageContentEvent& e);
+	//void Bitmap_Available_RenderSelectedText(const RenderPageSelectedTextEvent& e);
+	//void Bitmap_Available_RenderCaret(const RenderPageCaretEvent& e);
 	//void Bitmap_WaitCancel_OnEntry();
 	//void Bitmap_WaitCancel_OnExit();
 	//void Bitmap_WaitCancel_Render(const RenderPageContentEvent& e);
-	void Bitmap_Error_Render(const RenderPageContentEvent& e);
+	//void Bitmap_Error_Render(const RenderPageContentEvent& e);
 
 	void Find_None_Render(const RenderPageFindEvent& e);
 	void Find_None_RenderLine(const RenderPageFindLineEvent& e);

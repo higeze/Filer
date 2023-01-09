@@ -27,9 +27,9 @@ CComPtr<ID2D1Bitmap> CD2DThumbnailDrawer::GetThumbnailBitmapByThumbnailProvider(
 		HBITMAP hBitmap;
 		FAILED_BREAK(pThumbProvider->GetThumbnail(thumbSize, &hBitmap, &wtsAlpha));
 		std::unique_ptr<std::remove_pointer_t<HBITMAP>, delete_object>  pBmp(hBitmap);
-		//CComPtr<IWICBitmap> pWICBitmap;
-		//FAILED_BREAK(pDirect->GetWICImagingFactory()->CreateBitmapFromHBITMAP(pBmp.get(), nullptr, WICBitmapUsePremultipliedAlpha  , &pWICBitmap));
-		//FAILED_BREAK(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap));
+		CComPtr<IWICBitmap> pWICBitmap;
+		FAILED_BREAK(pDirect->GetWICImagingFactory()->CreateBitmapFromHBITMAP(pBmp.get(), nullptr, WICBitmapUsePremultipliedAlpha  , &pWICBitmap));
+		FAILED_BREAK(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap));
 	} while (false);
 	return pBitmap;
 }
@@ -51,21 +51,18 @@ CComPtr<ID2D1Bitmap1> CD2DThumbnailDrawer::GetThumbnailBitmapByShellImageFactory
 			FAILED_BREAK(::SHCreateItemFromParsingName(dispName.c_str(), NULL, IID_PPV_ARGS(&pImageFactory)));
 			HBITMAP hBitmap;
 			FAILED_BREAK(pImageFactory->GetImage(thumbSize, SIIGBF_RESIZETOFIT, &hBitmap));
-			//::DeleteObject(hBitmap);
-			//BITMAP bitmap;
-			//::GetObject(hBitmap, sizeof(BITMAP), &bitmap);
 			std::unique_ptr<std::remove_pointer_t<HBITMAP>, delete_object>  pBmp(hBitmap);
 			CComPtr<IWICBitmap> pWICBitmap;
 			FAILED_BREAK(pDirect->GetWICImagingFactory()->CreateBitmapFromHBITMAP(pBmp.get(), nullptr, WICBitmapUsePremultipliedAlpha, &pWICBitmap));
-			////CComPtr<IWICFormatConverter> pWICFormatConverter;
-			////FAILED_THROW(pDirect->GetWICImagingFactory()->CreateFormatConverter(&pWICFormatConverter))
-			////FAILED_THROW(pWICFormatConverter->Initialize(pWICBitmap, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeCustom));
-			////FAILED_BREAK(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICFormatConverter, nullptr, &pBitmap));
+			//CComPtr<IWICFormatConverter> pWICFormatConverter;
+			//FAILED_THROW(pDirect->GetWICImagingFactory()->CreateFormatConverter(&pWICFormatConverter))
+			//FAILED_THROW(pWICFormatConverter->Initialize(pWICBitmap, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeCustom));
+			//FAILED_BREAK(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICFormatConverter, nullptr, &pBitmap));
 
-			////D2D1_BITMAP_PROPERTIES1 bitmapProperties =
-			////	D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_NONE,
-			////	D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
-			////FAILED_BREAK(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProperties, &pBitmap));
+			//D2D1_BITMAP_PROPERTIES1 bitmapProperties =
+			//	D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_NONE,
+			//	D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
+			//FAILED_BREAK(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, bitmapProperties, &pBitmap));
 
 			FAILED_BREAK(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBitmap, &pBitmap));
 		} while (false);
@@ -131,34 +128,8 @@ void CD2DThumbnailDrawer::DrawThumbnailBitmap(
 	
 	if (!m_pAtlasBitmap->Exist(dispName)) {
 		m_futures.emplace_back(std::async(std::launch::async, async_action_wrap<decltype(funadd)>, funadd) | then([this]()->void {}));
-		//CComPtr<ID2D1Bitmap1> pBitmap = GetThumbnailBitmapByShellImageFactory(pDirect, dispName, CSize(thumbSize, thumbSize));
-		//m_pAtlasBitmap->AddOrAssign(pDirect, dispName, pBitmap);
 	}
 	m_pAtlasBitmap->DrawBitmap(pDirect, dispName, dstRect);
-
-	////CComPtr<ID2D1Bitmap> pBitmap = GetIconBitmap(pDirect, dispName);
-	//CComPtr<ID2D1Bitmap1> pBitmap = GetThumbnailBitmapByShellImageFactory(pDirect, dispName, CSize(thumbSize, thumbSize));
-	////CComPtr<ID2D1Bitmap> pBitmap = GetThumbnailBitmapByThumbnailProvider(pDirect, dispName, thumbSize);
-	////CComPtr<ID2D1Bitmap1> pBitmap = GetThumbnailBitmapByThumbnailCache(pDirect, dispName, thumbSize);
-	//if (pBitmap) {
-	//	CSizeU size(pBitmap->GetPixelSize());
-	//	CRectF dstRc(
-	//		std::round(dstRect.left),
-	//		std::round(dstRect.top),
-	//		std::round(dstRect.left + size.width),
-	//		std::round(dstRect.top + size.height));
-	//	CRectF srcRc(0, 0, static_cast<FLOAT>(size.width), static_cast<FLOAT>(size.height));
-	//	pDirect->GetD2DDeviceContext()->DrawBitmap(
-	//		pBitmap,
-	//		dstRc,
-	//		1.f,
-	//		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
-	//		srcRc);
-	//	//if (HRESULT hr = pDirect->GetD2DDeviceContext()->Flush(); FAILED(hr)){
-	//	//	::DebugBreak();
-	//	//}
-	//}
-
 }
 
 void CD2DThumbnailDrawer::Clear()

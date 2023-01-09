@@ -91,72 +91,72 @@ void CPDFDoc::Create()
 	m_pDoc = std::move(m_pPDFium->UnqCreateDocument());
 }
 
-void CPDFDoc::RenderContent(const RenderDocContentEvent& e)
-{
-	if (!GetPageCount()) { return; }
-	for (auto i = e.PageIndexBegin; i < e.PageIndexEnd; i++) {
-		GetPage(i)->RenderContent(
-			RenderPageContentEvent(e.DirectPtr, e.ViewportPtr, e.Scale, i, e.ViewportPtr->DocToPage(i, e.RectInDoc), e.Debug));
-	}
-}
-
-void CPDFDoc::RenderFind(const RenderDocFindEvent& e)
-{
-	if (!GetPageCount()) { return; }
-	for (auto i = e.PageIndexBegin; i < e.PageIndexEnd; i++) {
-		GetPage(i)->RenderFind(
-			RenderPageFindEvent(e.DirectPtr, e.ViewportPtr, e.Find, i));
-	}
-}
-
-void CPDFDoc::RenderFindLine(const RenderDocFindLineEvent& e)
-{
-	if (!GetPageCount()) { return; }
-	FLOAT fullHeight = GetSourceSize().height;
-	FLOAT top = 0.f;
-	for (auto i = 0; i < GetPageCount(); i++) {
-		auto rectHighlite = CRectF(
-			e.Rect.left + 2.f,
-			e.Rect.top + e.Rect.Height() * GetSourceRectsInDoc()[i].top / fullHeight,
-			e.Rect.right - 2.f,
-			e.Rect.top + e.Rect.Height() * GetSourceRectsInDoc()[i].bottom / fullHeight);
-
-		GetPage(i)->RenderFindLine(RenderPageFindLineEvent(e.DirectPtr, e.ViewportPtr, e.Find, i, rectHighlite));
-	}
-}
-
-void CPDFDoc::RenderSelectedText(const RenderDocSelectedTextEvent& e)
-{
-	if (!GetPageCount()) { return; }
-
-	auto [page_begin_index, char_begin_index] = e.SelectedBegin;
-	auto [page_end_index, char_end_index] = e.SelectedEnd;
-
-	if (page_begin_index == page_end_index) {
-		GetPage(page_begin_index)->RenderSelectedText(
-			RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, page_begin_index, char_begin_index, char_end_index, e.Debug));
-	} else {
-		for (auto i = page_begin_index; i <= page_end_index; i++) {
-			if (i == page_begin_index) {
-				GetPage(i)->RenderSelectedText(
-							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, char_begin_index, GetPage(i)->GetTextSize(), e.Debug));
-			} else if (i == page_end_index) {
-				GetPage(i)->RenderSelectedText(
-							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, 0, char_end_index, e.Debug));
-			} else {
-				GetPage(i)->RenderSelectedText(
-							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, 0, GetPage(i)->GetTextSize(), e.Debug));
-			}
-		}
-	}
-}
-
-void CPDFDoc::RenderCaret(const RenderDocCaretEvent& e)
-{
-	if (!GetPageCount()) { return; }
-
-	GetPage(e.PageIndex)->RenderCaret(RenderPageCaretEvent(e.DirectPtr, e.ViewportPtr, e.PageIndex, e.CharIndex));
-}
+//void CPDFDoc::RenderContent(const RenderDocContentEvent& e)
+//{
+//	if (!GetPageCount()) { return; }
+//	for (auto i = e.PageIndexBegin; i < e.PageIndexEnd; i++) {
+//		GetPage(i)->RenderContent(
+//			RenderPageContentEvent(e.DirectPtr, e.ViewportPtr, e.Scale, i, e.ViewportPtr->DocToPage(i, e.RectInDoc), e.Debug));
+//	}
+//}
+//
+//void CPDFDoc::RenderFind(const RenderDocFindEvent& e)
+//{
+//	if (!GetPageCount()) { return; }
+//	for (auto i = e.PageIndexBegin; i < e.PageIndexEnd; i++) {
+//		GetPage(i)->RenderFind(
+//			RenderPageFindEvent(e.DirectPtr, e.ViewportPtr, e.Find, i));
+//	}
+//}
+//
+//void CPDFDoc::RenderFindLine(const RenderDocFindLineEvent& e)
+//{
+//	if (!GetPageCount()) { return; }
+//	FLOAT fullHeight = GetSourceSize().height;
+//	FLOAT top = 0.f;
+//	for (auto i = 0; i < GetPageCount(); i++) {
+//		auto rectHighlite = CRectF(
+//			e.Rect.left + 2.f,
+//			e.Rect.top + e.Rect.Height() * GetSourceRectsInDoc()[i].top / fullHeight,
+//			e.Rect.right - 2.f,
+//			e.Rect.top + e.Rect.Height() * GetSourceRectsInDoc()[i].bottom / fullHeight);
+//
+//		GetPage(i)->RenderFindLine(RenderPageFindLineEvent(e.DirectPtr, e.ViewportPtr, e.Find, i, rectHighlite));
+//	}
+//}
+//
+//void CPDFDoc::RenderSelectedText(const RenderDocSelectedTextEvent& e)
+//{
+//	if (!GetPageCount()) { return; }
+//
+//	auto [page_begin_index, char_begin_index] = e.SelectedBegin;
+//	auto [page_end_index, char_end_index] = e.SelectedEnd;
+//
+//	if (page_begin_index == page_end_index) {
+//		GetPage(page_begin_index)->RenderSelectedText(
+//			RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, page_begin_index, char_begin_index, char_end_index, e.Debug));
+//	} else {
+//		for (auto i = page_begin_index; i <= page_end_index; i++) {
+//			if (i == page_begin_index) {
+//				GetPage(i)->RenderSelectedText(
+//							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, char_begin_index, GetPage(i)->GetTextSize(), e.Debug));
+//			} else if (i == page_end_index) {
+//				GetPage(i)->RenderSelectedText(
+//							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, 0, char_end_index, e.Debug));
+//			} else {
+//				GetPage(i)->RenderSelectedText(
+//							RenderPageSelectedTextEvent(e.DirectPtr, e.ViewportPtr, i, 0, GetPage(i)->GetTextSize(), e.Debug));
+//			}
+//		}
+//	}
+//}
+//
+//void CPDFDoc::RenderCaret(const RenderDocCaretEvent& e)
+//{
+//	if (!GetPageCount()) { return; }
+//
+//	GetPage(e.PageIndex)->RenderCaret(RenderPageCaretEvent(e.DirectPtr, e.ViewportPtr, e.PageIndex, e.CharIndex));
+//}
 
 
 void CPDFDoc::CopyTextToClipboard(const CopyDocTextEvent& e)

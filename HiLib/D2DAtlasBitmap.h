@@ -74,16 +74,95 @@ public:
 
 #include <shared_mutex>
 
+class CIndexRect
+{
+public:
+	UINT32 left = 0;
+	UINT32 top = 0;
+	UINT32 right = 0;
+	UINT32 bottom = 0;
 
-template<class _Kty, class _Hasher = std::hash<_Kty>, class _Keyeq = std::equal_to<_Kty>, class _Alloc = std::allocator<std::pair<const _Kty, CRectU>>>
+	CIndexRect(UINT32 l = 0, UINT32 t = 0, UINT32 r = 0, UINT32 b = 0)
+		:left(l), top(t), right(r),bottom(b) {}
+	void SetRect(UINT32 l, UINT32 t, UINT32 r, UINT32 b) 
+	{
+		left = l; top = t; right = r; bottom = b;
+	}
+	bool SizeInRect(const CSizeU& sz) const
+	{
+		return sz.width <= this->Width() && sz.height <= this->Height();
+	}
+	bool RectInRect(const CIndexRect& rc) const
+	{ 
+		return rc.left >= this->left && rc.top >= this->top && rc.right <= this->right && rc.bottom <= this->bottom;
+	}
+
+	bool Overlap(const CIndexRect& rc) const
+	{
+		return (std::max)(this->left, rc.left) < (std::min)(this->right, rc.right) && (std::max)(this->top, rc.top) < (std::min)(this->bottom, rc.bottom);
+	}
+	std::vector<CIndexRect> Subtract(const CIndexRect& rc) const
+	{
+		std::vector<CIndexRect> rects;
+		if (Overlap(rc)) {
+			//if ((l.left < r.left && r.left < l.right) && (std::max)(l.top, r.top) < (std::min)(l.bottom, r.bottom))
+			//	rects.emplace_back(l.left, l.top, l.left + r.left - l.left, l.top + l.Height());
+
+			//if ((l.left < r.right && r.right < l.right) && (std::max)(l.top, r.top) < (std::min)(l.bottom, r.bottom))
+			//	rects.emplace_back(r.right, l.top, r.right + l.right - r.right, l.top + l.Height());
+
+			//if ((l.top < r.top && r.top < l.bottom) && (std::max)(l.left, r.left) < (std::min)(l.right, r.right))
+			//	rects.emplace_back(l.left, l.top, l.left + l.Width(), l.top + r.top - l.top);
+
+			//if ((l.top < r.bottom && r.bottom < l.bottom) && (std::max)(l.left, r.left) < (std::min)(l.right, r.right))
+			//	rects.emplace_back(l.left, r.bottom, l.left + l.Width(), r.bottom + l.bottom - r.bottom);
+			if ((this->left < rc.left && rc.left < this->right) && (std::max)(this->top, rc.top) < (std::min)(this->bottom, rc.bottom))
+				rects.emplace_back(this->left, this->top, rc.left - 1, this->bottom);
+
+			if ((this->left < rc.right && rc.right < this->right) && (std::max)(this->top, rc.top) < (std::min)(this->bottom, rc.bottom))
+				rects.emplace_back(rc.right + 1, this->top, this->right, this->bottom);
+
+			if ((this->top < rc.top && rc.top < this->bottom) && (std::max)(this->left, rc.left) < (std::min)(this->right, rc.right))
+				rects.emplace_back(this->left, this->top, this->right, rc.top - 1);
+
+			if ((this->top < rc.bottom && rc.bottom < this->bottom) && (std::max)(this->left, rc.left) < (std::min)(this->right, rc.right))
+				rects.emplace_back(this->left, rc.bottom + 1, this->right, this->bottom);
+		} else {
+			rects.push_back(*this);
+		}
+		return rects;
+	}
+
+	auto operator<=>(const CIndexRect& rc) const
+	{
+		const auto topCmp = this->top <=> rc.top;
+		if (topCmp != std::strong_ordering::equal) {
+			return topCmp;
+		} else {
+			const auto leftCmp = this->left <=> rc.left;
+			return leftCmp;
+		}
+	}
+	bool operator==(const CIndexRect& rc) const
+	{
+		return this->left == rc.left && this->top == rc.top && this->right == rc.right && this->bottom == rc.bottom;
+	}
+	bool IsRectNull() const { return left == 0 && top == 0 && right == 0 && bottom == 0; }
+	UINT32 Width() const { return right - left + 1; }
+	UINT32 Height() const { return bottom - top + 1; }
+
+
+};
+
+template<class _Kty, class _Hasher = std::hash<_Kty>, class _Keyeq = std::equal_to<_Kty>, class _Alloc = std::allocator<std::pair<const _Kty, CIndexRect>>>
 class CD2DAtlasBitmap
 {
 protected:
-	using map_type = std::unordered_map<_Kty, CRectU, _Hasher, _Keyeq, _Alloc>;
+	using map_type = std::unordered_map<_Kty, CIndexRect, _Hasher, _Keyeq, _Alloc>;
 	static const UINT s_size = 512;
 	map_type m_map;
 	CComPtr<ID2D1Bitmap1> m_pAtlasBitmap;
-	std::vector<CRectU> m_rooms;
+	std::vector<CIndexRect> m_rooms;
 	std::shared_mutex m_mtx;
 
 public:
@@ -119,7 +198,7 @@ public:
 
 		auto iter = m_map.find(key);
 		if(pBitmap){
-			CRectU newRect;
+			CIndexRect newRect;
 			CSizeU size(pBitmap->GetPixelSize());
 			if (iter == m_map.cend() || iter->second.IsRectNull()) {
 				newRect = FindRect(size);
@@ -140,70 +219,14 @@ public:
 			FAILED_THROW(GetAtlasBitmapPtr(pDirect)->CopyFromBitmap(&dstLeftTop, pBitmap, &srcRect));
 			m_map.insert_or_assign(key, newRect);
 		} else {
-			m_map.insert_or_assign(key, CRectU());
+			m_map.insert_or_assign(key, CIndexRect());
 		}
-
-		//if (pBitmap) {
-		//	auto iter = m_map.find(key);
-		//	if (iter == m_map.cend()) {
-		//		UINT32 padding = 10;
-		//		CSizeU size(pBitmap->GetPixelSize());
-		//		CSizeU sizeWithPadding(size.width + padding * 2, size.height + padding * 2);
-		//		CRectU newRectWithPadding = FindRect(sizeWithPadding);
-		//		if (newRectWithPadding.IsRectNull()) {
-		//			Save(pDirect, L"Test.png", GetAtlasBitmapPtr(pDirect));
-		//			if (HRESULT hr = pDirect->GetD2DDeviceContext()->Flush(); FAILED(hr)){
-		//				//::DebugBreak();
-		//			}
-		//			Clear();
-		//			newRectWithPadding = FindRect(sizeWithPadding);
-		//		}
-		//		CRectU newRect(newRectWithPadding); newRect.DeflateRect(10);
-		//		
-		//		D2D1_POINT_2U dstLeftTop{ newRect.left, newRect.top };
-		//		D2D1_RECT_U srcRect{ 0, 0, size.width, size.height };
-
-		//		FAILED_THROW(GetAtlasBitmapPtr(pDirect)->CopyFromBitmap(&dstLeftTop, pBitmap, &srcRect));
-		//		if (HRESULT hr = pDirect->GetD2DDeviceContext()->Flush(); FAILED(hr)){
-		//			//::DebugBreak();
-		//		}
-		//		m_map.insert_or_assign(key, newRect);
-		//	} else {
-		//		
-		//	}			
-		//} else {
-		//	m_map.insert_or_assign(key, CRectU());
-		//}
 	}
 	bool Exist(const _Kty& key)
 	{
 		std::shared_lock<std::shared_mutex> lock(m_mtx);
 		return m_map.find(key) != m_map.end();
 	}
-
-	//void Save(const CDirect2DWrite* pDirect, const std::wstring& path, const CComPtr<ID2D1Bitmap>& pBitmap)
-	//{
-	//	std::shared_lock<std::shared_mutex> lock(m_mtx);
-	//	CComPtr<IWICStream> pStream;
-	//	FAILED_THROW(pDirect->GetWICImagingFactory()->CreateStream(&pStream));
-	//	FAILED_THROW(pStream->InitializeFromFilename(path.c_str(), GENERIC_WRITE));
-
-	//	CComPtr<IWICBitmapEncoder> pBmpEncoder;
-	//	FAILED_THROW(pDirect->GetWICImagingFactory()->CreateEncoder(GUID_ContainerFormatPng, NULL, &pBmpEncoder));
-	//	FAILED_THROW(pBmpEncoder->Initialize(pStream, WICBitmapEncoderNoCache));
-
-	//	CComPtr<IWICBitmapFrameEncode> pBmpFrameEncode;
-	//	FAILED_THROW(pBmpEncoder->CreateNewFrame(&pBmpFrameEncode, NULL));
-	//	FAILED_THROW(pBmpFrameEncode->Initialize(NULL));
-
-	//	CComPtr<IWICImageEncoder> pImageEncoder;
-	//	FAILED_THROW(pDirect->GetWICImagingFactory()->CreateImageEncoder(pDirect->GetD2DDevice(), &pImageEncoder));
-	//	FAILED_THROW(pImageEncoder->WriteFrame(pBitmap, pBmpFrameEncode, nullptr));
-
-	//	FAILED_THROW(pBmpFrameEncode->Commit());
-	//	FAILED_THROW(pBmpEncoder->Commit());
-	//	FAILED_THROW(pStream->Commit(STGC_DEFAULT));
-	//}
 
 	void Clear()
 	{
@@ -230,62 +253,12 @@ private:
 		return m_pAtlasBitmap;
 	}
 
-	const CRectU FindRect(const CSizeU& size)
+	const CIndexRect FindRect(const CSizeU& size)
 	{
-		auto sizeable = [](const CRectU& rc, const CSizeU& sz)->bool
-		{
-			return sz.width <= rc.Width() + 1 && sz.height <= rc.Height();
-		};
-		auto overlap = [](const CRectU& rc1, const CRectU& rc2)->bool
-		{
-			return (std::max)(rc1.left, rc2.left) < (std::min)(rc1.right, rc2.right) && (std::max)(rc1.top, rc2.top) < (std::min)(rc1.bottom, rc2.bottom);
-		};
-		auto subtract = [&overlap](const CRectU& l, const CRectU& r)->std::vector<CRectU>
-		{
-			std::vector<CRectU> rects;
-			if (overlap(l, r)) {
-				//if ((l.left < r.left && r.left < l.right) && (std::max)(l.top, r.top) < (std::min)(l.bottom, r.bottom))
-				//	rects.emplace_back(l.left, l.top, l.left + r.left - l.left, l.top + l.Height());
-
-				//if ((l.left < r.right && r.right < l.right) && (std::max)(l.top, r.top) < (std::min)(l.bottom, r.bottom))
-				//	rects.emplace_back(r.right, l.top, r.right + l.right - r.right, l.top + l.Height());
-
-				//if ((l.top < r.top && r.top < l.bottom) && (std::max)(l.left, r.left) < (std::min)(l.right, r.right))
-				//	rects.emplace_back(l.left, l.top, l.left + l.Width(), l.top + r.top - l.top);
-
-				//if ((l.top < r.bottom && r.bottom < l.bottom) && (std::max)(l.left, r.left) < (std::min)(l.right, r.right))
-				//	rects.emplace_back(l.left, r.bottom, l.left + l.Width(), r.bottom + l.bottom - r.bottom);
-				if ((l.left < r.left && r.left < l.right) && (std::max)(l.top, r.top) < (std::min)(l.bottom, r.bottom))
-					rects.emplace_back(l.left, l.top, r.left - 1, l.bottom);
-
-				if ((l.left < r.right && r.right < l.right) && (std::max)(l.top, r.top) < (std::min)(l.bottom, r.bottom))
-					rects.emplace_back(r.right + 1, l.top, l.right, l.bottom);
-
-				if ((l.top < r.top && r.top < l.bottom) && (std::max)(l.left, r.left) < (std::min)(l.right, r.right))
-					rects.emplace_back(l.left, l.top, l.right, r.top - 1);
-
-				if ((l.top < r.bottom && r.bottom < l.bottom) && (std::max)(l.left, r.left) < (std::min)(l.right, r.right))
-					rects.emplace_back(l.left, r.bottom + 1, l.right, l.bottom);
-			} else {
-				rects.push_back(l);
-			}
-			return rects;
-		};
-
-		auto comp = [](const CRectU& l, const CRectU& r)->bool
-		{
-			const auto topCmp = l.top <=> r.top;
-			if (topCmp == std::strong_ordering::less) { return true; }
-			if (topCmp == std::strong_ordering::greater) { return false; }
-			const auto leftCmp = l.left <=> r.left;
-			if (leftCmp == std::strong_ordering::less) { return true; }
-			if (leftCmp == std::strong_ordering::greater) { return false; }
-			return false;
-		};
 		//New Rect
-		CRectU newRect;
-		for (const CRectU& room : m_rooms) {
-			if (sizeable(room, size)) {
+		CIndexRect newRect;
+		for (const CIndexRect& room : m_rooms) {
+			if (room.SizeInRect(size)) {
 				newRect.SetRect(room.left, room.top, room.left + size.width - 1, room.top + size.height - 1);
 				break;
 			}
@@ -294,9 +267,9 @@ private:
 		if (newRect.IsRectNull()) { return newRect; }
 
 		//Subtract
-		std::vector<CRectU> newRooms;
-		for (const CRectU& room : m_rooms) {
-			std::vector<CRectU> subtractRooms(subtract(room, newRect));
+		std::vector<CIndexRect> newRooms;
+		for (const CIndexRect& room : m_rooms) {
+			std::vector<CIndexRect> subtractRooms(room.Subtract(newRect));
 			newRooms.insert(newRooms.cend(), subtractRooms.cbegin(), subtractRooms.cend());
 		}
 		for (std::size_t i = 0; i < newRooms.size(); i++) {
@@ -304,12 +277,12 @@ private:
 		}
 		//Remove Rect in Rect
 		m_rooms.clear();
-		std::copy_if(newRooms.cbegin(), newRooms.cend(), std::back_inserter(m_rooms), [newRooms](const CRectU& l)->bool
+		std::copy_if(newRooms.cbegin(), newRooms.cend(), std::back_inserter(m_rooms), [newRooms](const CIndexRect& l)->bool
 			{
-				return !std::any_of(newRooms.cbegin(), newRooms.cend(), [l](const CRectU& r)->bool { return l != r && r.RectInRect(l); });
+				return !std::any_of(newRooms.cbegin(), newRooms.cend(), [l](const CIndexRect& r)->bool { return l != r && r.RectInRect(l); });
 			});
 
-		std::sort(m_rooms.begin(), m_rooms.end(), comp);
+		std::sort(m_rooms.begin(), m_rooms.end());
 		for (std::size_t i = 0; i < m_rooms.size(); i++) {
 			::OutputDebugString(std::format(L"Rooms[{}]: {}, {}, {}, {}\r\n", i, m_rooms[i].left, m_rooms[i].top, m_rooms[i].right, m_rooms[i].bottom).c_str());
 		}

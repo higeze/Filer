@@ -112,6 +112,11 @@ struct CSizeT :public TSize
 		return seed;
 	}
 
+	size_type operator*(FLOAT z)const
+	{
+		return size_type(this->width * z, this->height * z);
+	}
+
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
 		size_type,
 		width,
@@ -282,4 +287,5 @@ using CSizeU = CSizeT<D2D1_RECT_U, D2D1_SIZE_U, D2D1_POINT_2U, UINT32>;
 using CPointU = CPointT<D2D1_RECT_U, D2D1_SIZE_U, D2D1_POINT_2U, UINT32>;
 
 CRectF CRectU2CRectF(const CRectU& rc);
+CRectU CRectF2CRectU(const CRectF& rc);
 CSizeU CSizeF2CSizeU(const CSizeF& sz);
