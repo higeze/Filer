@@ -761,9 +761,6 @@
     <ClInclude Include="..\HiLib\PdfView.h">
       <Filter>HiLib\PDF</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\PDFViewport.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\PDFViewProperty.h">
       <Filter>HiLib\PDF</Filter>
     </ClInclude>
@@ -820,6 +817,9 @@
     </ClInclude>
     <ClInclude Include="FileThumbnailCell.h">
       <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\D2DPDFBitmapDrawer.h">
+      <Filter>HiLib\PDF</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1184,9 +1184,6 @@
     <ClCompile Include="..\HiLib\PdfView.cpp">
       <Filter>HiLib\PDF</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\PDFViewport.cpp">
-      <Filter>HiLib\PDF</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp">
       <Filter>HiLib\PDF</Filter>
     </ClCompile>
@@ -1222,6 +1219,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\D2DThumbnailDrawer.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\D2DPDFBitmapDrawer.cpp">
+      <Filter>HiLib\PDF</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

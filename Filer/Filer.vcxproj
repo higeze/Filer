@@ -309,6 +309,7 @@
     <ClInclude Include="..\HiLib\Cursorer.h" />
     <ClInclude Include="..\HiLib\D2DFileIconDrawer.h" />
     <ClInclude Include="..\HiLib\D2DImage.h" />
+    <ClInclude Include="..\HiLib\D2DPDFBitmapDrawer.h" />
     <ClInclude Include="..\HiLib\D2DThumbnailDrawer.h" />
     <ClInclude Include="..\HiLib\D2DWDialog.h" />
     <ClInclude Include="..\HiLib\D2DWTypes.h" />
@@ -394,7 +395,6 @@
     <ClInclude Include="..\HiLib\PDFPage.h" />
     <ClInclude Include="..\HiLib\PDFPageCache.h" />
     <ClInclude Include="..\HiLib\PdfView.h" />
-    <ClInclude Include="..\HiLib\PDFViewport.h" />
     <ClInclude Include="..\HiLib\PDFViewProperty.h" />
     <ClInclude Include="..\HiLib\PdfViewStateMachine.h" />
     <ClInclude Include="..\HiLib\PreviewHandlerFrame.h" />
@@ -547,6 +547,7 @@
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
     <ClCompile Include="..\HiLib\D2DFileIconDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DImage.cpp" />
+    <ClCompile Include="..\HiLib\D2DPDFBitmapDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DThumbnailDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DWDialog.cpp" />
     <ClCompile Include="..\HiLib\D2DWTypes.cpp" />
@@ -587,7 +588,6 @@
     <ClCompile Include="..\HiLib\PDFPage.cpp" />
     <ClCompile Include="..\HiLib\PdfPageCache.cpp" />
     <ClCompile Include="..\HiLib\PdfView.cpp" />
-    <ClCompile Include="..\HiLib\PDFViewport.cpp" />
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp" />
     <ClCompile Include="..\HiLIb\PDFiumSingleThread.cpp" />
     <ClCompile Include="..\HiLib\SortCell.cpp" />

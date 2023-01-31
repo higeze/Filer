@@ -1,5 +1,9 @@
 #pragma once
 
+#define DECLARE_LAZY_GETTER(type, name) \
+protected: std::optional<type> m_opt##name; \
+public: virtual const type& Get##name()
+
 #define LAZY_GETTER(type, val) \
 protected: std::optional<type> m_opt##val; \
 protected: virtual void Load##val(); \

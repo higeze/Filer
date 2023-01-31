@@ -1230,11 +1230,7 @@ bool CTextBox::PasteFromClipboard()
 			boost::algorithm::replace_all(str, L"\r", L"");
 			//str = FilterInputString(str);
 			ReplaceSelection(str);
-			//m_text.replace(std::get<caret::SelBegin>(m_carets.get()), std::get<caret::SelEnd>(m_carets.get()) - std::get<caret::SelBegin>(m_carets.get()), str);
-			auto index = std::get<caret::SelBegin>(m_carets.get()) + str.size();
-			auto point = GetOriginCharRects()[index].CenterPoint();
 
-			MoveCaret(index, point);
 			GlobalUnlock(hGlobal);
 		}
 	}

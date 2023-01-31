@@ -152,6 +152,8 @@ HRESULT Open(HWND hWnd, const std::wstring& path)
 
 	FAILED_THROW(handler->SetWindow(hWnd, &rc));
 	FAILED_THROW(handler->DoPreview());
+
+	return 0;
 }
 
 

@@ -1,0 +1,77 @@
+#pragma once
+#include "D2DAtlasBitmap.h"
+#include "D2DWTypes.h"
+#include "shared_lock_property.h"
+
+class CPDFPage;
+
+struct PdfBmpKey
+{
+	CPDFPage* PagePtr;
+	FLOAT Scale;
+	int Rotate;
+	CRectF Rect;
+
+	//PdfBmpKey(CPDFPage* pPage, const FLOAT& scale, const int& rotate, const CRectF& rect)
+	//:PagePtr(pPage), Scale(scale), Rotate(rotate), Rect(rect){}
+
+	std::size_t GetHashCode() const
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, std::hash<decltype(PagePtr)>()(PagePtr));
+		boost::hash_combine(seed, std::hash<decltype(Scale)>()(Scale));
+		boost::hash_combine(seed, std::hash<decltype(Rotate)>()(Rotate));
+		boost::hash_combine(seed, std::hash<decltype(Rect.left)>()(Rect.left));
+		boost::hash_combine(seed, std::hash<decltype(Rect.top)>()(Rect.top));
+		boost::hash_combine(seed, std::hash<decltype(Rect.right)>()(Rect.right));
+		boost::hash_combine(seed, std::hash<decltype(Rect.bottom)>()(Rect.bottom));
+		return seed;
+	}
+
+	bool operator==(const PdfBmpKey& key) const
+	{
+		return 
+			PagePtr == key.PagePtr &&
+			Scale == key.Scale &&
+			Rotate == key.Rotate &&
+			Rect == key.Rect;
+	}
+};
+
+namespace std
+{
+	template <>
+	struct hash<PdfBmpKey>
+	{
+		std::size_t operator() (PdfBmpKey const & key) const
+		{
+			return key.GetHashCode();
+		}
+	};
+}
+
+class CD2DPDFBitmapDrawer
+{
+private:
+	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasClipBitmap;
+	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasSmallBitmap;
+	shared_lock_property<PdfBmpKey> m_curClipKey;
+public:
+	CD2DPDFBitmapDrawer();
+	~CD2DPDFBitmapDrawer() = default;
+
+	bool DrawPDFPageClipBitmap(
+		const CDirect2DWrite* pDirect,
+		const PdfBmpKey& key,
+		const CRectF& dstRect,
+		std::function<void()>&& callback);
+	bool DrawPDFPageBitmap(
+		const CDirect2DWrite* pDirect,
+		const PdfBmpKey& key,
+		const CRectF& dstRect,
+		std::function<void()>&& callback);
+
+	std::vector<PdfBmpKey> FindClipKeys(std::function<bool(const PdfBmpKey&)>&& pred);
+
+	void Clear();
+};

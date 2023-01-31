@@ -28,10 +28,13 @@
 
 #include "PDFViewport.h"
 #include "PDFCaret.h"
+//#include "D2DPDFBitmapDrawer.h"
 
 class CPDFDoc;
+class CD2DPDFBitmapDrawer;
 class CVScroll;
 class CHScroll;
+
 
 enum class InitialScaleMode
 {
@@ -65,7 +68,8 @@ public:
 	/* Field */
 	/*********/
 protected:
-	CPDFViewport m_viewport;
+	//CPDFViewport m_viewport;
+	//PdfBmpKey m_prevKey;
 	CPDFCaret m_caret;
 
 	CRectF m_rect;
@@ -83,6 +87,7 @@ protected:
 
 
 	std::unique_ptr<CPDFDoc> m_pdf;
+	std::unique_ptr<CD2DPDFBitmapDrawer> m_pdfDrawer;
 	CComPtr<IFileIsInUse> m_pFileIsInUse;
 
     //std::vector<std::unique_ptr<CPdfPage>> m_pdfPages;

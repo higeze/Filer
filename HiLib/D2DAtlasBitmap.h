@@ -159,26 +159,37 @@ class CD2DAtlasBitmap
 {
 protected:
 	using map_type = std::unordered_map<_Kty, CIndexRect, _Hasher, _Keyeq, _Alloc>;
-	static const UINT s_size = 512;
+	using que_type = std::vector<_Kty>;
+	CSizeU m_size;
+	D2D1_BITMAP_PROPERTIES1 m_bitmapProperties;
 	map_type m_map;
+	//que_type m_que;
 	CComPtr<ID2D1Bitmap1> m_pAtlasBitmap;
 	std::vector<CIndexRect> m_rooms;
 	std::shared_mutex m_mtx;
 
 public:
-	CD2DAtlasBitmap() { m_rooms.emplace_back(0, 0, s_size - 1, s_size - 1); }
+	CD2DAtlasBitmap(
+		const CSizeU& size = CSizeU(512, 512), 
+		const D2D1_BITMAP_PROPERTIES1& bitmapProperties = D2D1::BitmapProperties1(
+					D2D1_BITMAP_OPTIONS_NONE,
+					D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)))
+		:m_size(size), m_bitmapProperties(bitmapProperties) { m_rooms.emplace_back(0, 0, m_size.width - 1, m_size.height - 1); }
 
-	void DrawBitmap(const CDirect2DWrite* pDirect, const _Kty& key, const CRectF& dstRect)
+	bool DrawBitmap(const CDirect2DWrite* pDirect, const _Kty& key, const CRectF& dstRect)
 	{
 		std::shared_lock<std::shared_mutex> lock(m_mtx);
 		
-		typename map_type::const_iterator iter = m_map.find(key);
-		if (iter != m_map.cend() && !(iter->second.IsRectNull())) {
+		//typename map_type::const_iterator iter = m_map.find(key);
+		if (auto iter = m_map.find(key); iter != m_map.cend() && !(iter->second.IsRectNull())) {
+			//m_que.erase(std::remove(std::begin(m_que), std::end(m_que), key), std::cend(m_que));
+			//m_que.push_back(key);
+
 			CRectF dstRc(
 				std::round(dstRect.left),
 				std::round(dstRect.top),
-				std::round(dstRect.left + iter->second.Width() + 1),
-				std::round(dstRect.top + iter->second.Height() + 1));
+				std::round(dstRect.right),
+				std::round(dstRect.bottom));
 			CRectF srcRc(
 				static_cast<FLOAT>(iter->second.left),
 				static_cast<FLOAT>(iter->second.top),
@@ -190,12 +201,41 @@ public:
 				1.f,
 				D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
 				srcRc);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	bool DrawBitmap(const CDirect2DWrite* pDirect, const _Kty& key, const CPointF& dstPoint)
+	{
+		std::shared_lock<std::shared_mutex> lock(m_mtx);
+		
+		//typename map_type::const_iterator iter = m_map.find(key);
+		if (auto iter = m_map.find(key); iter != m_map.cend() && !(iter->second.IsRectNull())) {
+			CRectF dstRc(
+				std::round(dstPoint.x),
+				std::round(dstPoint.y),
+				std::round(dstPoint.x + iter->second.Width() + 1),
+				std::round(dstPoint.y + iter->second.Height() + 1));
+			CRectF srcRc(
+				static_cast<FLOAT>(iter->second.left),
+				static_cast<FLOAT>(iter->second.top),
+				static_cast<FLOAT>(iter->second.right + 1),
+				static_cast<FLOAT>(iter->second.bottom + 1));
+			pDirect->GetD2DDeviceContext()->DrawBitmap(
+				GetAtlasBitmapPtr(pDirect),
+				dstRc,
+				1.f,
+				D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+				srcRc);
+			return true;
+		} else {
+			return false;
 		}
 	}
 	void AddOrAssign(const CDirect2DWrite* pDirect, const _Kty& key, const CComPtr<ID2D1Bitmap1>& pBitmap)
 	{
 		std::lock_guard<std::shared_mutex> lock(m_mtx);
-
 		auto iter = m_map.find(key);
 		if(pBitmap){
 			CIndexRect newRect;
@@ -207,7 +247,7 @@ public:
 					m_pAtlasBitmap.Release();
 					m_map.clear();
 					m_rooms.clear();
-					m_rooms.emplace_back(0, 0, s_size - 1, s_size - 1);
+					m_rooms.emplace_back(0, 0, m_size.width - 1, m_size.height - 1);
 					newRect = FindRect(size);
 				}
 			} else {
@@ -222,6 +262,15 @@ public:
 			m_map.insert_or_assign(key, CIndexRect());
 		}
 	}
+
+	std::vector<_Kty> Keys()
+	{
+		std::shared_lock<std::shared_mutex> lock(m_mtx);
+		std::vector<_Kty> keys;
+		std::transform(m_map.cbegin(), m_map.cend(), std::back_inserter(keys), [](const std::pair<const _Kty, CIndexRect>& pair) { return pair.first; });
+		return keys;
+	}
+
 	bool Exist(const _Kty& key)
 	{
 		std::shared_lock<std::shared_mutex> lock(m_mtx);
@@ -234,7 +283,7 @@ public:
 		m_pAtlasBitmap.Release();
 		m_map.clear();
 		m_rooms.clear();
-		m_rooms.emplace_back(0, 0, s_size - 1, s_size - 1);
+		m_rooms.emplace_back(0, 0, m_size.width - 1, m_size.height - 1);
 	}
 
 private:	 
@@ -242,11 +291,9 @@ private:
 	{
 		if (!m_pAtlasBitmap) {
 			FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmap(
-				CSizeU(s_size, s_size),
+				m_size,
 				nullptr, 0,
-				D2D1::BitmapProperties1(
-					D2D1_BITMAP_OPTIONS_NONE,
-					D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+				m_bitmapProperties,
 				&m_pAtlasBitmap
 			));
 		}

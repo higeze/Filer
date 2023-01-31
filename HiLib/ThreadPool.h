@@ -29,7 +29,7 @@ private:
 	bool stop;
 
 public:
-	CThreadPool(size_t);
+	CThreadPool(size_t = std::thread::hardware_concurrency());
 	~CThreadPool();
 
 	int GetTotalTheadCount() { return workers.size(); }
