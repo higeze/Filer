@@ -392,6 +392,7 @@
     <ClInclude Include="..\HiLib\PDFEditorProperty.h" />
     <ClInclude Include="..\HiLib\PDFDoc.h" />
     <ClInclude Include="..\HiLib\PDFEvent.h" />
+    <ClInclude Include="..\HiLib\PDFiumMultiThread.h" />
     <ClInclude Include="..\HiLib\PDFPage.h" />
     <ClInclude Include="..\HiLib\PDFPageCache.h" />
     <ClInclude Include="..\HiLib\PdfView.h" />
@@ -585,6 +586,7 @@
     <ClCompile Include="..\HiLib\ColumnIndexCell.cpp" />
     <ClCompile Include="..\HiLib\PDFEditor.cpp" />
     <ClCompile Include="..\HiLib\PDFDoc.cpp" />
+    <ClCompile Include="..\HiLib\PDFiumMultiThread.cpp" />
     <ClCompile Include="..\HiLib\PDFPage.cpp" />
     <ClCompile Include="..\HiLib\PdfPageCache.cpp" />
     <ClCompile Include="..\HiLib\PdfView.cpp" />

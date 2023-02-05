@@ -21,12 +21,12 @@ void CPDFDoc::Term()
 	FPDF_DestroyLibrary();
 }
 
-CPDFDoc::CPDFDoc()
-	:m_pPDFium(std::make_unique<CPDFiumSingleThread>()){}
+CPDFDoc::CPDFDoc(size_t threads)
+	:m_pPDFium(std::make_unique<CPDFiumMultiThread>(threads)){}
 
 CPDFDoc::~CPDFDoc() = default;
 
-const CSizeF& CPDFDoc::GetSize()
+const CSizeF& CPDFDoc::GetSize() const
 {
 	if (!m_optSize.has_value()) {
 		m_optSize.emplace();
@@ -34,12 +34,12 @@ const CSizeF& CPDFDoc::GetSize()
 			m_optSize->width = (std::max)(m_optSize->width, pPage->GetSize().width);
 			m_optSize->height += pPage->GetSize().height;
 		}
-		m_optSize->height += (m_pages.size() - 1) * 10.f;
+		m_optSize->height += (m_pages.size() - 1) * pagespan;
 	}
 	return m_optSize.value();
 }
 
-const std::vector<CRectF>& CPDFDoc::GetPageRects()
+const std::vector<CRectF>& CPDFDoc::GetPageRects() const
 {
 	if (!m_optPageRects.has_value()) {
 		std::vector<CRectF> rects;
@@ -53,11 +53,11 @@ const std::vector<CRectF>& CPDFDoc::GetPageRects()
 	return m_optPageRects.value();
 }
 
-const int& CPDFDoc::GetFileVersion()
+const int& CPDFDoc::GetFileVersion() const
 {
 	if (!m_optFileVersion.has_value()) {
 		int version;
-		if (m_pPDFium->GetFileVersion(m_pDoc.get(), &version)) {
+		if (m_pPDFium->GetFileVersion(&version)) {
 			m_optFileVersion.emplace(version);
 		} else {
 			m_optFileVersion.emplace(0);
@@ -66,57 +66,59 @@ const int& CPDFDoc::GetFileVersion()
 	return m_optFileVersion.value();
 }
 
-const int& CPDFDoc::GetPageCount()
+const int& CPDFDoc::GetPageCount() const
 {
 	if (!m_optPageCount.has_value()) {
-		m_optPageCount.emplace(m_pPDFium->GetPageCount(m_pDoc.get()));
+		m_optPageCount.emplace(m_pPDFium->GetPageCount());
 	}
 	return m_optPageCount.value();
 }
 
-void CPDFDoc::Open(const std::wstring& path, const std::wstring& password)
+unsigned long CPDFDoc::Open(const std::wstring& path, const std::wstring& password)
 {
 	m_path = path;
 	m_password = password;
 	m_isDirty = false;
 
-	m_pDoc = std::move(m_pPDFium->UnqLoadDocument(wide_to_utf8(m_path).c_str(), wide_to_utf8(m_password).c_str()));
-
+	auto err = m_pPDFium->LoadDocument(wide_to_utf8(m_path).c_str(), wide_to_utf8(m_password).c_str());
 	m_pages.clear();
-	for (auto i = 0; i < GetPageCount(); i++) {
-		m_pages.emplace_back(std::make_unique<CPDFPage>(this, i))->Rotate.Subscribe([this](const auto& i) 
-			{ 
+
+	if (err == FPDF_ERR_SUCCESS) {
+		for (auto i = 0; i < GetPageCount(); i++) {
+			m_pages.emplace_back(std::make_unique<CPDFPage>(this, i))->Rotate.Subscribe([this](const auto& i) {
 				m_optSize.reset();
 				m_optPageRects.reset();
 				m_isDirty = true;
 			});
+		}
 	}
+	return err;
 }
 
-void CPDFDoc::Create()
+unsigned long  CPDFDoc::Create()
 {
 	m_path = L"";
 	m_password = L"";
 	m_isDirty = true;
-	m_pDoc = std::move(m_pPDFium->UnqCreateDocument());
+	return m_pPDFium->CreateDocument();
 }
 
-void CPDFDoc::CopyTextToClipboard(const CopyDocTextEvent& e)
+void CPDFDoc::CopyTextToClipboard(const CopyDocTextEvent& e) const
 {
 	auto [page_begin_index, char_begin_index] = e.Begin;
 	auto [page_end_index, char_end_index] = e.End;
 
 	std::wstring copyText;
 	if (page_begin_index == page_end_index) {
-		copyText = GetPage(page_begin_index)->GetText().substr(char_begin_index, char_end_index - char_begin_index);
+		copyText = m_pages[page_begin_index]->GetText().substr(char_begin_index, char_end_index - char_begin_index);
 	} else {
 		for (auto i = page_begin_index; i <= page_end_index; i++) {
 			if (i == page_begin_index) {
-				copyText.append(GetPage(page_begin_index)->GetText().substr(char_begin_index, GetPage(i)->GetTextSize()-char_begin_index));
+				copyText.append(m_pages[page_begin_index]->GetText().substr(char_begin_index, m_pages[i]->GetTextSize()-char_begin_index));
 			} else if (i == page_end_index) {
-				copyText.append(GetPage(i)->GetText().substr(0, char_end_index));
+				copyText.append(m_pages[i]->GetText().substr(0, char_end_index));
 			} else {
-				copyText.append(GetPage(i)->GetText().substr(0, GetPage(i)->GetTextSize()));
+				copyText.append(m_pages[i]->GetText().substr(0, m_pages[i]->GetTextSize()));
 			}
 		}
 	}
@@ -141,13 +143,21 @@ void CPDFDoc::CopyTextToClipboard(const CopyDocTextEvent& e)
 void CPDFDoc::Save()
 {
 	//To release binding between FPDF_DOCUMENT and File, Copy to new FPDF_DOCUMENT and Swap
-	UNQ_FPDF_DOCUMENT pNew = std::move(m_pPDFium->UnqCreateDocument());
-	m_pPDFium->ImportPages(pNew.get(), m_pDoc.get(), nullptr, 0);
-	m_pDoc = std::move(pNew);
+	std::unique_ptr<CPDFiumMultiThread> pNewPDFium(std::make_unique<CPDFiumMultiThread>());
+	pNewPDFium->CreateDocument();
+	pNewPDFium->ImportPages(*m_pPDFium, nullptr, 0);
+	m_pPDFium = std::move(pNewPDFium);
 	m_pages.clear();
 
 	SaveWithVersion(m_path, 0, GetFileVersion());
+}
 
+void CPDFDoc::SaveWithVersion(const std::wstring& path, FPDF_DWORD flags, int fileVersion)
+{
+	CPDFiumFileWrite fileWrite(path);
+	GetPDFiumPtr()->SaveWithVersion(&fileWrite, flags, fileVersion);
+
+	m_optFileVersion.reset();
 	m_optPageCount.reset();
 	m_optSize.reset();
 	m_optPageRects.reset();
@@ -162,23 +172,28 @@ void CPDFDoc::Save()
 			});
 	}
 }
-void CPDFDoc::SaveWithVersion(const std::wstring& path, FPDF_DWORD flags, int fileVersion)
-{
-	CPDFiumFileWrite fileWrite(path);
-	GetPDFiumPtr()->SaveWithVersion(GetDocPtr().get(), &fileWrite, flags, fileVersion);
-}
 
 void CPDFDoc::ImportPages(const CPDFDoc& src_doc,
 				FPDF_BYTESTRING pagerange,
 				int index)
 {
-	m_pPDFium->ImportPages(m_pDoc.get(), src_doc.m_pDoc.get(), pagerange, index);
+	GetPDFiumPtr()->ImportPages(*src_doc.GetPDFiumPtr(), pagerange, index);
+	m_optFileVersion.reset();
 	m_optPageCount.reset();
 	m_optSize.reset();
 	m_optPageRects.reset();
+	m_isDirty = true;
 }
 
-void CPDFDoc::SplitSave()
+void CPDFDoc::ImportPagesByIndex(const CPDFDoc& src_doc,
+	const int* page_indices,
+	unsigned long length,
+	int index)
+{
+	GetPDFiumPtr()->ImportPagesByIndex(*src_doc.GetPDFiumPtr(), page_indices, length, index);
+}
+
+void CPDFDoc::SplitSave() const
 {
 	for (auto i = 0; i < GetPageCount(); i++) {
 		wchar_t srcPathWoExt[MAX_PATH] = { 0 };
@@ -188,51 +203,47 @@ void CPDFDoc::SplitSave()
 		wchar_t dstPath[MAX_PATH] = { 0 };
 		swprintf_s(dstPath, L"%s_%02d.pdf", srcPathWoExt, i + 1);
 
-		auto dstDoc = CPDFDoc();
+		CPDFDoc dstDoc(1);
 		dstDoc.Create();
 
 		std::array<int, 1> indices{ i };
-		m_pPDFium->ImportPagesByIndex(dstDoc.m_pDoc.get(), m_pDoc.get(), indices.data(), indices.size(),  0);
+		dstDoc.ImportPagesByIndex(*this, indices.data(), indices.size(),  0);
 
-		CPDFiumFileWrite fileWrite(dstPath);
-
-		m_pPDFium->SaveWithVersion(dstDoc.m_pDoc.get(), &fileWrite, 0, GetFileVersion());
+		dstDoc.SaveWithVersion(dstPath, 0, GetFileVersion());
 	}
 }
 
 void CPDFDoc::Merge(const std::vector<CPDFDoc>& srcDocs)
 {
-	for (const auto& srcDoc : srcDocs) {
+	for (auto& srcDoc : srcDocs) {
 		auto count = GetPageCount();
 		ImportPages(srcDoc, NULL, count);
 	}
 }
 
-
-
 void CPDFDoc::Merge(const std::vector<std::wstring>& srcPathes)
 {
 	for (const auto& srcPath : srcPathes) {
-		CPDFDoc srcDoc;
+		CPDFDoc srcDoc(1);
 		srcDoc.Open(srcPath);
 		auto count = GetPageCount();
 		ImportPages(srcDoc, NULL, count);
 	}
 }
 
-CPDFDoc CPDFDoc::Extract(const std::wstring& page_indices)
+CPDFDoc CPDFDoc::Extract(const std::wstring& page_indices) const
 {
-	CPDFDoc dstDoc;
+	CPDFDoc dstDoc(1);
 	dstDoc.Create();
-	m_pPDFium->ImportPages(dstDoc.m_pDoc.get(), m_pDoc.get(), wide_to_sjis(page_indices).c_str(), 0);
+	dstDoc.ImportPages(*this, wide_to_sjis(page_indices).c_str(), 0);
 	return dstDoc;
 }
 
-CPDFDoc CPDFDoc::Clone()
+CPDFDoc CPDFDoc::Clone() const
 {
-	CPDFDoc dstDoc;
+	CPDFDoc dstDoc(1);
 	dstDoc.Create();
-	m_pPDFium->ImportPages(dstDoc.m_pDoc.get(), m_pDoc.get(), nullptr, 0);
+	dstDoc.ImportPages(*this, nullptr, 0);
 	return dstDoc;
 }
 

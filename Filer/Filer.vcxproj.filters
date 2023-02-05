@@ -821,6 +821,9 @@
     <ClInclude Include="..\HiLib\D2DPDFBitmapDrawer.h">
       <Filter>HiLib\PDF</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\PDFiumMultiThread.h">
+      <Filter>HiLib\PDF</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1221,6 +1224,9 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\D2DPDFBitmapDrawer.cpp">
+      <Filter>HiLib\PDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFiumMultiThread.cpp">
       <Filter>HiLib\PDF</Filter>
     </ClCompile>
   </ItemGroup>

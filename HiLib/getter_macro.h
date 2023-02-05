@@ -1,8 +1,8 @@
 #pragma once
 
 #define DECLARE_LAZY_GETTER(type, name) \
-protected: std::optional<type> m_opt##name; \
-public: virtual const type& Get##name()
+protected: mutable std::optional<type> m_opt##name; \
+public: virtual const type& Get##name() const
 
 #define LAZY_GETTER(type, val) \
 protected: std::optional<type> m_opt##val; \

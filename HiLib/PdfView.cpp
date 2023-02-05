@@ -846,8 +846,8 @@ void CPdfView::Open(const std::wstring& path)
 		});
 
 		m_pdf = std::make_unique<CPDFDoc>();
-		try {
-			m_pdf->Open(path, L"");
+
+		if (auto err = m_pdf->Open(path, L""); err == FPDF_ERR_SUCCESS) {
 			if (m_scale.get() < 0) {// < 0 means auto-scale
 				FLOAT scaleX = GetRenderSize().width / m_pdf->GetPage(0)->GetSize().width;
 				FLOAT scaleY = GetRenderSize().height / m_pdf->GetPage(0)->GetSize().height;
@@ -865,56 +865,34 @@ void CPdfView::Open(const std::wstring& path)
 						m_scale.force_notify_set(1.f);
 				}
 			}
-
-		}catch(const CPDFException& e){
-		switch (e.GetError()) {
-			//case FPDF_ERR_SUCCESS:
-			//  break;
-			//case FPDF_ERR_UNKNOWN:
-			//  break;
-			//case FPDF_ERR_FILE:
-			//  break;
-			//case FPDF_ERR_FORMAT:
-			//  break;
-			case FPDF_ERR_PASSWORD:
-			{
-				std::shared_ptr<CTextBoxDialog> spDlg = std::make_shared<CTextBoxDialog>(GetWndPtr(), std::make_shared<DialogProperty>());
-				spDlg->GetTitle().set(L"Password");
-				spDlg->GetTextBlockPtr()->GetText().set(ansi_to_wide(e.what()));
-				spDlg->GetOKButtonPtr()->GetContent().set(L"OK");
-				spDlg->GetOKButtonPtr()->GetCommand().Subscribe([this, spDlg, path]() 
-					{ 
-						m_pdf->Open(path, spDlg->GetTextBoxPtr()->GetText().get()); 
-						//Need to call with dispatcher, otherwise remaing message in message que is not properly handled
-						GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
-					});
-				spDlg->GetCancelButtonPtr()->GetContent().set(L"Cancel");
-				spDlg->GetCancelButtonPtr()->GetCommand().Subscribe([this, spDlg]() 
-					{ 
-						//Need to call with dispatcher, otherwise remaing message in message que is not properly handled
-						GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
-					});
-				spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CalcCenterRectF(CSizeF(300, 200))));
-				GetWndPtr()->SetFocusedControlPtr(spDlg);
-
-				break;
-			}
-			//case FPDF_ERR_SECURITY:
-			//  break;
-			//case FPDF_ERR_PAGE:
-			//  break;
-			default:
+		} else if (err == FPDF_ERR_PASSWORD){
+			std::shared_ptr<CTextBoxDialog> spDlg = std::make_shared<CTextBoxDialog>(GetWndPtr(), std::make_shared<DialogProperty>());
+			spDlg->GetTitle().set(L"Password");
+			spDlg->GetTextBlockPtr()->GetText().set(L"Please input password");
+			spDlg->GetOKButtonPtr()->GetContent().set(L"OK");
+			spDlg->GetOKButtonPtr()->GetCommand().Subscribe([this, spDlg, path]() 
+				{ 
+					m_pdf->Open(path, spDlg->GetTextBoxPtr()->GetText().get()); 
+					//Need to call with dispatcher, otherwise remaing message in message que is not properly handled
+					GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
+				});
+			spDlg->GetCancelButtonPtr()->GetContent().set(L"Cancel");
+			spDlg->GetCancelButtonPtr()->GetCommand().Subscribe([this, spDlg]() 
+				{ 
+					//Need to call with dispatcher, otherwise remaing message in message que is not properly handled
+					GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
+				});
+			spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CalcCenterRectF(CSizeF(300, 200))));
+			GetWndPtr()->SetFocusedControlPtr(spDlg);
+		} else {
 			m_pdf.reset();
-		}
-
-
-
 		}
 	}
 }
 
 void CPdfView::Close()
 {
+	m_pdfDrawer->WaitAll();
 	m_pdf.reset();
 	m_caret.Clear();
 	GetWndPtr()->RemoveMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE);

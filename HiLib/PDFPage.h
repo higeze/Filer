@@ -1,6 +1,6 @@
 #pragma once
 #include "Direct2DWrite.h"
-#include "PDFiumSingleThread.h"
+#include "PDFiumMultiThread.h"
 #include <queue>
 #include <future>
 #include "ReactiveProperty.h"
@@ -52,8 +52,8 @@ private:
 	/* Field */
 	CPDFDoc* m_pDoc;
 	int m_index;
-	UNQ_FPDF_PAGE m_pPage;
-	UNQ_FPDF_TEXTPAGE m_pTextPage;
+	//UNQ_FPDF_PAGE m_pPage;
+	//UNQ_FPDF_TEXTPAGE m_pTextPage;
 	//struct BitmapMachine;
 	//std::unique_ptr<boost::sml::sm<BitmapMachine, boost::sml::process_queue<std::queue>>> m_pBitmapMachine;
 /**********/
@@ -66,13 +66,12 @@ public:
 /***************/
 	DECLARE_LAZY_GETTER(CSizeF, Size);
 	DECLARE_LAZY_GETTER(std::wstring, Text);
-	int GetTextSize();
+	int GetTextSize() const;
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextOrgRects);
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextOrgCursorRects);
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextCursorRects);
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextOrgMouseRects);	
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextMouseRects);	
-
 
 protected:
 	std::optional<PdfFndInfo> m_optFind;
@@ -102,15 +101,16 @@ public:
 	int GetCursorCharIndexAtPos(const CPointF& ptInPdfiumPage);
 
 private:
-	CRectF RotateRect(const CRectF& rc, const int& rotate);
-	void RotateRects(std::vector<CRectF>& rc, const int& rotate);
+	CRectF RotateRect(const CRectF& rc, const int& rotate) const;
+	void RotateRects(std::vector<CRectF>& rc, const int& rotate) const;
 
 public:
 	/* Constructor/Destructor */
 	CPDFPage(CPDFDoc* pDoc, int index);
 	virtual ~CPDFPage();
-	std::unique_ptr<CPDFiumSingleThread>& GetPDFiumPtr();
-	UNQ_FPDF_PAGE& GetPagePtr() { return m_pPage; }
+	std::unique_ptr<CPDFiumMultiThread>& GetPDFiumPtr();
+	const std::unique_ptr<CPDFiumMultiThread>& GetPDFiumPtr() const;
+	//UNQ_FPDF_PAGE& GetPagePtr() { return m_pPage; }
 	/* Reactive */
 	ReactiveProperty<int> Rotate;	
 };
