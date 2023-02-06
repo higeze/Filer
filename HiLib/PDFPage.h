@@ -50,7 +50,7 @@ class CPDFPage
 {
 private:
 	/* Field */
-	CPDFDoc* m_pDoc;
+	const CPDFDoc* m_pDoc;
 	int m_index;
 	//UNQ_FPDF_PAGE m_pPage;
 	//UNQ_FPDF_TEXTPAGE m_pTextPage;
@@ -106,9 +106,8 @@ private:
 
 public:
 	/* Constructor/Destructor */
-	CPDFPage(CPDFDoc* pDoc, int index);
+	CPDFPage(const CPDFDoc* pDoc, int index);
 	virtual ~CPDFPage();
-	std::unique_ptr<CPDFiumMultiThread>& GetPDFiumPtr();
 	const std::unique_ptr<CPDFiumMultiThread>& GetPDFiumPtr() const;
 	//UNQ_FPDF_PAGE& GetPagePtr() { return m_pPage; }
 	/* Reactive */

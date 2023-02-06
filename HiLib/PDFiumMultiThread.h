@@ -114,6 +114,7 @@ private:
         std::vector<UNQ_FPDF_TEXTPAGE> TextPages;
         std::vector<UNQ_FPDF_SCHHANDLE> SchHandles;
 
+        void UpdatePages();
         unsigned long LoadDocument(FPDF_STRING file_path, FPDF_BYTESTRING password);
         unsigned long CreateDocument();
         int GetPageCount();
@@ -123,19 +124,23 @@ private:
         int Page_GetRotation(int page_index);
         void Page_SetRotation(int page_index, int rotate);
         int Text_CountChars(int index);
-        int Text_CountRects(int index,
-            int start_index,
-            int count);
+        //Text_CountRects & Text_GetRect should be called at same sequence. Not available for multithread case.
+        //int Text_CountRects(int index,
+        //    int start_index,
+        //    int count);
         int Text_GetText(int index, int start_index, int count, unsigned short* result);
 
         int Text_GetCharIndexAtPos(int index, double x, double y, double xTolerance, double yTolerance);
 
-        FPDF_BOOL Text_GetRect(int index,
-            int rect_index,
-            double* left,
-            double* top,
-            double* right,
-            double* bottom);
+        //FPDF_BOOL Text_GetRect(int index,
+        //    int rect_index,
+        //    double* left,
+        //    double* top,
+        //    double* right,
+        //    double* bottom);
+
+        std::vector<CRectF> Text_GetRects(int index);
+        std::vector<CRectF> Text_GetRangeRects(int index, int begin, int end);
 
         CComPtr<ID2D1Bitmap1> Bitmap_GetPageBitmap(const int index,
             HDC hDC,
@@ -457,12 +462,12 @@ public:
     {
         return single_run(std::bind(&PDFObject::Text_CountChars, std::placeholders::_1, index));
     }
-    int Text_CountRects(int index,
-                        int start_index,
-                        int count)
-    {
-        return single_run(std::bind(&PDFObject::Text_CountRects, std::placeholders::_1, index, start_index, count));
-    }
+    //int Text_CountRects(int index,
+    //                    int start_index,
+    //                    int count)
+    //{
+    //    return single_run(std::bind(&PDFObject::Text_CountRects, std::placeholders::_1, index, start_index, count));
+    //}
     int Text_GetText(int index, int start_index, int count, unsigned short* result)
     {
         return single_run(std::bind(&PDFObject::Text_GetText, std::placeholders::_1, index, start_index, count, result));
@@ -473,14 +478,24 @@ public:
         return single_run(std::bind(&PDFObject::Text_GetCharIndexAtPos, std::placeholders::_1, index, x, y, xTolerance, yTolerance));
     }
 
-    FPDF_BOOL Text_GetRect(int index,
-                            int rect_index,
-                            double* left,
-                            double* top,
-                            double* right,
-                            double* bottom)
+    //FPDF_BOOL Text_GetRect(int index,
+    //                        int rect_index,
+    //                        double* left,
+    //                        double* top,
+    //                        double* right,
+    //                        double* bottom)
+    //{
+    //    return single_run(std::bind(&PDFObject::Text_GetRect, std::placeholders::_1, index, rect_index, left, top, right, bottom));
+    //}
+
+    std::vector<CRectF> Text_GetRects(int index)
     {
-        return single_run(std::bind(&PDFObject::Text_GetRect, std::placeholders::_1, index, rect_index, left, top, right, bottom));
+        return single_run(std::bind(&PDFObject::Text_GetRects, std::placeholders::_1, index));
+    }
+
+    std::vector<CRectF> Text_GetRangeRects(int index, int begin, int end)
+    {
+        return single_run(std::bind(&PDFObject::Text_GetRangeRects, std::placeholders::_1, index, begin, end));
     }
 
     /******************/

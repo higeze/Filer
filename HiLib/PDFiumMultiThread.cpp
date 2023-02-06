@@ -7,6 +7,16 @@
 /* PDFObject */
 /*************/
 
+void CPDFiumMultiThread::PDFObject::UpdatePages()
+{
+	int count = FPDF_GetPageCount(Doc.get());
+	for (auto i = 0; i < count; i++) {
+		auto pPage = FPDF_LoadPage(Doc.get(), i);
+		Pages.emplace_back(pPage);
+		TextPages.emplace_back(FPDFText_LoadPage(pPage));
+	}
+}
+
 unsigned long CPDFiumMultiThread::PDFObject::LoadDocument(FPDF_STRING file_path, FPDF_BYTESTRING password)
 {
 	std::lock_guard<std::mutex> lock(Mutex);
@@ -16,13 +26,7 @@ unsigned long CPDFiumMultiThread::PDFObject::LoadDocument(FPDF_STRING file_path,
     if (!Doc) {
         return err;
 	} else {
-		//PAGES, TEXTPAGES
-		int count = FPDF_GetPageCount(Doc.get());
-		for (auto i = 0; i < count; i++) {
-			auto pPage = FPDF_LoadPage(Doc.get(), i);
-			Pages.emplace_back(pPage);
-			TextPages.emplace_back(FPDFText_LoadPage(pPage));
-		}
+		UpdatePages();
 		return FPDF_ERR_SUCCESS;
 	}
 }
@@ -71,12 +75,12 @@ int CPDFiumMultiThread::PDFObject::Text_CountChars(int index)
 {
     return FPDFText_CountChars(TextPages[index].get());
 }
-int CPDFiumMultiThread::PDFObject::Text_CountRects(int index,
-                    int start_index,
-                    int count)
-{
-    return FPDFText_CountRects(TextPages[index].get(), start_index, count);
-}
+//int CPDFiumMultiThread::PDFObject::Text_CountRects(int index,
+//                    int start_index,
+//                    int count)
+//{
+//    return FPDFText_CountRects(TextPages[index].get(), start_index, count);
+//}
 int CPDFiumMultiThread::PDFObject::Text_GetText(int index, int start_index, int count, unsigned short* result)
 {
 	return FPDFText_GetText(TextPages[index].get(), start_index, count, result);
@@ -87,15 +91,63 @@ int CPDFiumMultiThread::PDFObject::Text_GetCharIndexAtPos(int index, double x, d
 	return FPDFText_GetCharIndexAtPos(TextPages[index].get(), x, y, xTolerance, yTolerance);
 }
 
-FPDF_BOOL CPDFiumMultiThread::PDFObject::Text_GetRect(int index,
-                        int rect_index,
-                        double* left,
-                        double* top,
-                        double* right,
-                        double* bottom)
+//FPDF_BOOL CPDFiumMultiThread::PDFObject::Text_GetRect(int index,
+//                        int rect_index,
+//                        double* left,
+//                        double* top,
+//                        double* right,
+//                        double* bottom)
+//{
+//	return FPDFText_GetRect(TextPages[index].get(), rect_index, left, top, right, bottom);
+//}
+
+std::vector<CRectF> CPDFiumMultiThread::PDFObject::Text_GetRects(int index)
 {
-	return FPDFText_GetRect(TextPages[index].get(), rect_index, left, top, right, bottom);
+	std::vector<CRectF> rects;
+	int charCount = FPDFText_CountChars(TextPages[index].get());
+	for (auto i = 0; i < charCount; i++) {
+		int rect_count = FPDFText_CountRects(TextPages[index].get(), i, 1);
+		if (rect_count == 1) {
+			double left, top, right, bottom = 0.f;
+			FPDFText_GetRect(
+				TextPages[index].get(),
+				0,
+				&left,
+				&top,
+				&right,
+				&bottom);
+			rects.emplace_back(
+				static_cast<FLOAT>(left),
+				static_cast<FLOAT>(top),
+				static_cast<FLOAT>(right),
+				static_cast<FLOAT>(bottom));
+		}
+	}
+	return rects;
 }
+
+std::vector<CRectF> CPDFiumMultiThread::PDFObject::Text_GetRangeRects(int index, int begin, int end)
+{
+	int rect_count = FPDFText_CountRects(TextPages[index].get(), begin, end - begin);
+	std::vector<CRectF> rects;
+	for (auto i = 0; i < rect_count; i++) {
+		double left, top, right, bottom;
+		FPDFText_GetRect(
+			TextPages[index].get(),
+			i,
+			&left,
+			&top,
+			&right,
+			&bottom);
+		rects.emplace_back(
+			static_cast<FLOAT>(left),
+			static_cast<FLOAT>(top),
+			static_cast<FLOAT>(right),
+			static_cast<FLOAT>(bottom));
+	}
+	return rects;
+}
+
 
 CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(const int index,
 	HDC hDC,
@@ -188,15 +240,24 @@ FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPagesByIndex(FPDF_DOCUMENT src_do
 	const int* page_indices,
 	unsigned long length,
 	int index)
-{
-	return FPDF_ImportPagesByIndex(Doc.get(), src_doc, page_indices, length, index);
+{		
+	FPDF_BOOL ret = FPDF_ImportPagesByIndex(Doc.get(), src_doc, page_indices, length, index);
+	if (ret) {
+		UpdatePages();
+	}
+	return ret;
 }
 
 FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPages(FPDF_DOCUMENT src_doc,
 	FPDF_BYTESTRING pagerange,
 	int index)
-{
-	return FPDF_ImportPages(Doc.get(), src_doc, pagerange, index);
+{		UpdatePages();
+
+	FPDF_BOOL ret = FPDF_ImportPages(Doc.get(), src_doc, pagerange, index);
+	if (ret) {
+		UpdatePages();
+	}
+	return ret;
 }
 
 FPDF_BOOL CPDFiumMultiThread::PDFObject::SaveAsCopy(FPDF_FILEWRITE* pFileWrite,
@@ -212,7 +273,7 @@ FPDF_BOOL CPDFiumMultiThread::PDFObject::SaveWithVersion(FPDF_FILEWRITE* pFileWr
 	return FPDF_SaveWithVersion(Doc.get(), pFileWrite, flags, fileVersion);
 }
 
-std::vector<std::tuple<int, int, std::vector<CRectF>>> CPDFiumMultiThread::PDFObject::Text_FindResults(int index,
+std::vector<std::tuple<int, int, std::vector<CRectF>>> CPDFiumMultiThread::PDFObject::Text_FindResults(int page_index,
 	const std::wstring& find_string)
 {
 	auto find = boost::trim_copy(find_string);
@@ -220,16 +281,16 @@ std::vector<std::tuple<int, int, std::vector<CRectF>>> CPDFiumMultiThread::PDFOb
 	if (find.empty()) {
 	} else {
 		FPDF_WIDESTRING text = reinterpret_cast<FPDF_WIDESTRING>(find.c_str());
-		UNQ_FPDF_SCHHANDLE pSchHdl(FPDFText_FindStart(TextPages[index].get(), text, 0, 0));
+		UNQ_FPDF_SCHHANDLE pSchHdl(FPDFText_FindStart(TextPages[page_index].get(), text, 0, 0));
 		while (FPDFText_FindNext(pSchHdl.get())) {
 			int index = FPDFText_GetSchResultIndex(pSchHdl.get());
 			int ch_count = FPDFText_GetSchCount(pSchHdl.get());
-			int rc_count = FPDFText_CountRects(TextPages[index].get(), index, ch_count);
+			int rc_count = FPDFText_CountRects(TextPages[page_index].get(), index, ch_count);
 			std::vector<CRectF> rects;
 			for (int i = 0; i < rc_count; i++) {
 				double left, top, right, bottom;
 				FPDFText_GetRect(
-					TextPages[index].get(),
+					TextPages[page_index].get(),
 					i,
 					&left,
 					&top,

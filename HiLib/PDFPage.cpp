@@ -71,7 +71,7 @@
 //		);
 //	}
 //};
-CPDFPage::CPDFPage(CPDFDoc* pDoc, int index )
+CPDFPage::CPDFPage(const CPDFDoc* pDoc, int index )
 	:m_pDoc(pDoc), m_index(index)
 {
 	Rotate.set(GetPDFiumPtr()->Page_GetRotation(m_index));
@@ -93,7 +93,6 @@ CPDFPage::CPDFPage(CPDFDoc* pDoc, int index )
 
 CPDFPage::~CPDFPage() = default;
 
-std::unique_ptr<CPDFiumMultiThread>& CPDFPage::GetPDFiumPtr() { return m_pDoc->GetPDFiumPtr(); }
 const std::unique_ptr<CPDFiumMultiThread>& CPDFPage::GetPDFiumPtr() const { return m_pDoc->GetPDFiumPtr(); }
 
 const CSizeF& CPDFPage::GetSize() const
@@ -124,27 +123,7 @@ int CPDFPage::GetTextSize() const
 const std::vector<CRectF>& CPDFPage::GetTextOrgRects() const
 {
 	if (!m_optTextOrgRects.has_value()) {
-		std::vector<CRectF> textRects;
-		int charCount = GetPDFiumPtr()->Text_CountChars(m_index);
-		for (auto i = 0; i < charCount; i++) {
-			int rect_count = GetPDFiumPtr()->Text_CountRects(m_index, i, 1);
-			if (rect_count == 1) {
-				double left, top, right, bottom = 0.f;
-				m_pDoc->GetPDFiumPtr()->Text_GetRect(
-					m_index,
-					0,
-					&left,
-					&top,
-					&right,
-					&bottom);
-				textRects.emplace_back(
-					static_cast<FLOAT>(left),
-					static_cast<FLOAT>(top),
-					static_cast<FLOAT>(right),
-					static_cast<FLOAT>(bottom));
-			}
-		}
-		m_optTextOrgRects.emplace(textRects);
+		m_optTextOrgRects.emplace(GetPDFiumPtr()->Text_GetRects(m_index));
 	}
 	return m_optTextOrgRects.value();
 }
@@ -270,38 +249,15 @@ const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_strin
 	if (!m_optFind.has_value() || m_optFind->Find != find) {
 		std::vector<CRectF> rects;
 		if (find.empty()) {
-			m_optFind.emplace(find, rects);
 		} else {
 			auto results  = GetPDFiumPtr()->Text_FindResults(m_index, find);
 			std::vector<CRectF> rects;
 			for (const auto res : results) {
 				rects.insert(rects.end(), std::get<2>(res).cbegin(), std::get<2>(res).cend());
 			}
-		//	FPDF_WIDESTRING text = reinterpret_cast<FPDF_WIDESTRING>(find.c_str());
-		//	UNQ_FPDF_SCHHANDLE pSchHdl(GetPDFiumPtr()->Text_UnqFindStart(m_pTextPage.get(), text, 0, 0));
-		//	while (GetPDFiumPtr()->Text_FindNext(pSchHdl.get())) {
-		//		int index = GetPDFiumPtr()->Text_GetSchResultIndex(pSchHdl.get());
-		//		int ch_count = GetPDFiumPtr()->Text_GetSchCount(pSchHdl.get());
-		//		int rc_count = GetPDFiumPtr()->Text_CountRects(m_pTextPage.get(), index, ch_count);
-		//		for (int i = 0; i < rc_count; i++) {
-		//			double left, top, right, bottom;
-		//			m_pDoc->GetPDFiumPtr()->Text_GetRect(
-		//				m_pTextPage.get(),
-		//				i,
-		//				&left,
-		//				&top,
-		//				&right,
-		//				&bottom);
-		//			rects.emplace_back(
-		//				static_cast<FLOAT>(left),
-		//				static_cast<FLOAT>(top),
-		//				static_cast<FLOAT>(right),
-		//				static_cast<FLOAT>(bottom));
-		//		}
-		//	}
 			RotateRects(rects, Rotate.get());
-			m_optFind.emplace(find, rects);
 		}
+		m_optFind.emplace(find, rects);
 	}
 	return m_optFind->FindRects;
 }
@@ -404,24 +360,7 @@ void CPDFPage::RotateRects(std::vector<CRectF>& rects, const int& rotate) const
 const std::vector<CRectF>& CPDFPage::GetSelectedTextRects(const int& begin, const int& end)
 {
 	if (!m_optSelectedText.has_value() || m_optSelectedText->Begin != begin || m_optSelectedText->End != end) {
-
-		int rect_count = m_pDoc->GetPDFiumPtr()->Text_CountRects(m_index, begin, end - begin);
-		std::vector<CRectF> rectsInPdfiumPage;
-		for (auto i = 0; i < rect_count; i++) {
-			double left, top, right, bottom;
-			m_pDoc->GetPDFiumPtr()->Text_GetRect(
-				m_index,
-				i,
-				&left,
-				&top,
-				&right,
-				&bottom);
-			rectsInPdfiumPage.emplace_back(
-				static_cast<FLOAT>(left),
-				static_cast<FLOAT>(top),
-				static_cast<FLOAT>(right),
-				static_cast<FLOAT>(bottom));
-		}
+		std::vector<CRectF> rectsInPdfiumPage(GetPDFiumPtr()->Text_GetRangeRects(m_index, begin, end));
 		RotateRects(rectsInPdfiumPage, Rotate.get());
 		m_optSelectedText.emplace(begin, end, rectsInPdfiumPage);
 	}

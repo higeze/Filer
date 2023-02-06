@@ -23,14 +23,20 @@ private:
 	CDirect2DWrite* m_pDirect;
 	std::wstring m_path;
 	std::wstring m_password;
-	bool m_isDirty;
+	mutable bool m_isDirty;
 
-	std::vector<std::unique_ptr<CPDFPage>> m_pages;
+	//std::vector<std::unique_ptr<CPDFPage>> m_pages;
 
 	DECLARE_LAZY_GETTER(int, FileVersion);
 	DECLARE_LAZY_GETTER(int, PageCount);
 	DECLARE_LAZY_GETTER(CSizeF, Size);
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, PageRects);
+
+protected:
+	mutable std::optional<std::vector<std::unique_ptr<CPDFPage>>> m_optPages;
+public:
+	const std::unique_ptr<CPDFPage>& GetPage(const int& index) const;
+	std::unique_ptr<CPDFPage>& GetPage(const int& index);
 	
 public:
 	CPDFDoc(size_t threads = 3);
@@ -41,22 +47,21 @@ public:
 	unsigned long  Open(const std::wstring& path, const std::wstring& password = std::wstring());
 	unsigned long  Create();
 
-	std::unique_ptr<CPDFiumMultiThread>& GetPDFiumPtr() { return m_pPDFium; }
 	const std::unique_ptr<CPDFiumMultiThread>& GetPDFiumPtr() const { return m_pPDFium; }
 
 	std::wstring GetPath() const { return m_path; }
 	bool GetIsDirty()const { return m_isDirty; }
 
-	std::unique_ptr<CPDFPage>& GetPage(int index)
-	{
-		FALSE_THROW(GetPageCount() && 0 <= index && index < GetPageCount());
-		return m_pages[index];
-	}
-	const std::unique_ptr<CPDFPage>& GetPage(int index) const
-	{
-		FALSE_THROW(GetPageCount() && 0 <= index && index < GetPageCount());
-		return m_pages[index];
-	}
+	//std::unique_ptr<CPDFPage>& GetPage(int index)
+	//{
+	//	FALSE_THROW(GetPageCount() && 0 <= index && index < GetPageCount());
+	//	return m_pages[index];
+	//}
+	//const std::unique_ptr<CPDFPage>& GetPage(int index) const
+	//{
+	//	FALSE_THROW(GetPageCount() && 0 <= index && index < GetPageCount());
+	//	return m_pages[index];
+	//}
 
 	void CopyTextToClipboard(const CopyDocTextEvent& e) const;
 	void ImportPages(const CPDFDoc& src_doc,
