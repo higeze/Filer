@@ -11,7 +11,6 @@ void se_exception::TransferSEHtoCEH ( unsigned int exceptionCode, PEXCEPTION_POI
 		"Exception Flags:   {:08X}\n"
 		"Exception Address: {:08X}\n",
 		p->ExceptionCode, p->ExceptionFlags, reinterpret_cast<long>(p->ExceptionAddress));
-
 	throw se_exception(exceptionCode, exceptionPointers, what);
 }
 

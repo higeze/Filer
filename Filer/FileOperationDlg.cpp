@@ -625,11 +625,11 @@ CPDFMergeDlg::CPDFMergeDlg(
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
 	{
 		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
-		CPDFDoc doc;
+		CPDFDoc doc(1);
 		doc.Create();
 		int minVersion = 0;
 		for (auto spFile : files) {
-			CPDFDoc srcDoc;
+			CPDFDoc srcDoc(1);
 			srcDoc.Open(spFile->GetPath(), L"");
 			minVersion = std::min(minVersion, srcDoc.GetFileVersion());
 			auto count = doc.GetPageCount();
@@ -662,7 +662,7 @@ CPDFExtractDlg::CPDFExtractDlg(
 	{
 		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
 		for (auto& file : files) {
-			CPDFDoc doc;
+			CPDFDoc doc(1);
 			doc.Open(file->GetPath(), L"");
 			std::wstring param = m_spParameter->GetText().get();
 			boost::algorithm::replace_all(param, L"first", L"1");
@@ -696,7 +696,7 @@ CPDFUnlockDlg::CPDFUnlockDlg(
 	{
 		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
 		for (auto& file : files) {
-			CPDFDoc doc;
+			CPDFDoc doc(1);
 			doc.Open(file->GetPath(), m_spParameter->GetText().get());
 			doc.SaveWithVersion(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), L"_unlock"),  FPDF_REMOVE_SECURITY, doc.GetFileVersion());
 		}

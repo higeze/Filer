@@ -362,12 +362,12 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 				std::round(ptLeftTopInWnd.y) + std::round(szPixcelPntBmp.height));
 			m_pdfDrawer->DrawPDFPageBitmap(GetWndPtr()->GetDirectPtr(), smallKey, rcBmpPaint, callback);
 
-			std::vector<PdfBmpKey> keys = m_pdfDrawer->FindClipKeys([curKey, pPage = m_pdf->GetPage(i).get(), smallScale](const PdfBmpKey& key)->bool
+			std::vector<PdfBmpKey> keys = m_pdfDrawer->FindClipKeys([curKey, pPage = m_pdf->GetPage(i).get(), scale = m_scale](const PdfBmpKey& key)->bool
 			{
 				return 
 					key != curKey &&
 					key.PagePtr == pPage && 
-					//key.Scale > smallScale &&
+					key.Scale == scale &&
 					key.Rotate == key.PagePtr->Rotate.get() &&
 					!key.Rect.IsRectNull();
 			});
@@ -837,6 +837,7 @@ void CPdfView::Open(const std::wstring& path)
 
 		Close();
 
+
 		m_path.set(path);
 		m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(GetWndPtr()->m_hWnd, path.c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
 		GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [this](UINT,LPARAM,WPARAM,BOOL&)->LRESULT
@@ -893,6 +894,8 @@ void CPdfView::Open(const std::wstring& path)
 void CPdfView::Close()
 {
 	m_pdfDrawer->WaitAll();
+	m_pdfDrawer->Clear();
+
 	m_pdf.reset();
 	m_caret.Clear();
 	GetWndPtr()->RemoveMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE);

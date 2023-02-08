@@ -27,11 +27,12 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageClipBitmap(
 	m_curClipKey.set(key);
 	auto funadd = [pDirect, key, callback, this]()->void
 	{
-		CComPtr<ID2D1Bitmap1> pBitmap = key.PagePtr->GetClipBitmap(pDirect, key.Scale, key.Rotate, key.Rect);
-		
-		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, pBitmap);
-		if (key == m_curClipKey.get()) {
+		if (key == m_curClipKey.get()){
+			CComPtr<ID2D1Bitmap1> pBitmap = key.PagePtr->GetClipBitmap(pDirect, key.Scale, key.Rotate, key.Rect);
+			m_pAtlasClipBitmap->AddOrAssign(pDirect, key, pBitmap);
 			callback();
+		} else {
+			m_pAtlasClipBitmap->Erase(key);
 		}
 	};
 	

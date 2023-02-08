@@ -112,8 +112,8 @@ private:
         UNQ_FPDF_DOCUMENT& GetDocPtr() { return Doc; }
         std::vector<UNQ_FPDF_PAGE> Pages;
         std::vector<UNQ_FPDF_TEXTPAGE> TextPages;
-        std::vector<UNQ_FPDF_SCHHANDLE> SchHandles;
-
+        //std::vector<UNQ_FPDF_SCHHANDLE> SchHandles;
+        void Clear();
         void UpdatePages();
         unsigned long LoadDocument(FPDF_STRING file_path, FPDF_BYTESTRING password);
         unsigned long CreateDocument();

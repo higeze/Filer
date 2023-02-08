@@ -233,6 +233,12 @@ public:
 			return false;
 		}
 	}
+
+	void Erase(const _Kty& key)
+	{
+		m_map.erase(key);
+	}
+
 	void AddOrAssign(const CDirect2DWrite* pDirect, const _Kty& key, const CComPtr<ID2D1Bitmap1>& pBitmap)
 	{
 		std::lock_guard<std::shared_mutex> lock(m_mtx);

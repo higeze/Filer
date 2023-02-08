@@ -7,20 +7,35 @@
 /* PDFObject */
 /*************/
 
+void CPDFiumMultiThread::PDFObject::Clear()
+{
+	Doc.reset();
+	Pages.clear();
+	TextPages.clear();
+}
+
 void CPDFiumMultiThread::PDFObject::UpdatePages()
 {
+	Pages.clear();
+	TextPages.clear();
 	int count = FPDF_GetPageCount(Doc.get());
 	for (auto i = 0; i < count; i++) {
-		auto pPage = FPDF_LoadPage(Doc.get(), i);
-		Pages.emplace_back(pPage);
-		TextPages.emplace_back(FPDFText_LoadPage(pPage));
+		try {
+			::OutputDebugString(std::format(L"Doc:{}, i:{}\r\n", (LONG)Doc.get(), i).c_str());
+			FPDF_PAGE pPage(FPDF_LoadPage(Doc.get(), i));
+			Pages.emplace_back(pPage);
+			TextPages.emplace_back(FPDFText_LoadPage(pPage));
+		} catch (...) {
+			auto a = 1.f;
+		}
 	}
 }
 
 unsigned long CPDFiumMultiThread::PDFObject::LoadDocument(FPDF_STRING file_path, FPDF_BYTESTRING password)
 {
 	std::lock_guard<std::mutex> lock(Mutex);
-    //DOCUMENT
+    
+	Clear();
     Doc = std::move(UNQ_FPDF_DOCUMENT(FPDF_LoadDocument(file_path, password)));
     unsigned long err = FPDF_GetLastError();
     if (!Doc) {
@@ -33,6 +48,7 @@ unsigned long CPDFiumMultiThread::PDFObject::LoadDocument(FPDF_STRING file_path,
 
 unsigned long CPDFiumMultiThread::PDFObject::CreateDocument()
 {
+	Clear();
 	Doc = std::move(UNQ_FPDF_DOCUMENT(FPDF_CreateNewDocument()));
 	unsigned long err = FPDF_GetLastError();
 	if (!Doc) {
@@ -251,8 +267,7 @@ FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPagesByIndex(FPDF_DOCUMENT src_do
 FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPages(FPDF_DOCUMENT src_doc,
 	FPDF_BYTESTRING pagerange,
 	int index)
-{		UpdatePages();
-
+{
 	FPDF_BOOL ret = FPDF_ImportPages(Doc.get(), src_doc, pagerange, index);
 	if (ret) {
 		UpdatePages();
