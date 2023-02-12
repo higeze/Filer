@@ -14,20 +14,20 @@ CThreadPool::CThreadPool(size_t threads)
 		//Catch SEH exception as CEH
 		scoped_se_translator se_trans;
 		for (;;) {
-				std::function<void()> task;
+				std::pair<std::function<void()>, int> task;
 				{
 					std::unique_lock<std::mutex> lock(this->queue_mutex);
 					this->condition.wait(lock,
 						[this] { return this->stop || !this->tasks.empty(); });
 					if (this->stop && this->tasks.empty())
 						return;
-					task = std::move(this->tasks.front());
+					task = std::move(this->tasks.top());
 					this->tasks.pop();
 				}
 
 				activeCount++;
 				try {
-					task();
+					task.first();
 				}catch (std::exception& ex) {
 					std::string msg = fmt::format(
 						"What:{}\r\n"
@@ -57,15 +57,16 @@ CThreadPool::~CThreadPool()
 		stop = true;
 	}
 	condition.notify_all();
-	for (std::thread &worker : workers)
+	for (std::thread& worker : workers) {
 		worker.join();
+	}
 }
 
-CThreadPool* CThreadPool::GetInstance()
-{
-	static CThreadPool pool(1);
-	return &pool;
-}
+//CThreadPool* CThreadPool::GetInstance()
+//{
+//	static CThreadPool pool(4);
+//	return &pool;
+//}
 
 
 

@@ -3,9 +3,9 @@
 #include "ThreadPool.h"
 
 
-/************************/
+/***********************/
 /* CD2DPDFBitmapDrawer */
-/************************/
+/***********************/
 CD2DPDFBitmapDrawer::CD2DPDFBitmapDrawer()
 	:m_pAtlasClipBitmap(std::make_unique<CD2DAtlasBitmap<PdfBmpKey>>(
 		CSizeU(4096, 4096),
@@ -17,6 +17,16 @@ CD2DPDFBitmapDrawer::CD2DPDFBitmapDrawer()
 			D2D1::BitmapProperties1(
 						D2D1_BITMAP_OPTIONS_NONE,
 						D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)))){}
+
+CD2DPDFBitmapDrawer::~CD2DPDFBitmapDrawer() = default;
+
+const std::unique_ptr<CThreadPool>& CD2DPDFBitmapDrawer::GetThreadPoolPtr() const
+{
+	if (!m_optThreadPoolPtr.has_value()) {
+		m_optThreadPoolPtr.emplace(std::make_unique<CThreadPool>(4));
+	}
+	return m_optThreadPoolPtr.value();
+}
 
 bool CD2DPDFBitmapDrawer::DrawPDFPageClipBitmap(
 		const CDirect2DWrite* pDirect,
@@ -41,7 +51,7 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageClipBitmap(
 		::OutputDebugString(std::format(L"NOT EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
 			(LONG)(key.PagePtr), key.Scale, key.Rect.left, key.Rect.top, key.Rect.right, key.Rect.bottom).c_str());
 		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, nullptr);
-		m_futures.emplace_back(CThreadPool::GetInstance()->enqueue(funadd));
+		m_futures.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
 		return false;
 	} else {
 		::OutputDebugString(std::format(L"EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
@@ -65,7 +75,7 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageBitmap(
 	
 	if (!m_pAtlasSmallBitmap->Exist(key)) {
 		m_pAtlasSmallBitmap->AddOrAssign(pDirect, key, nullptr);
-		m_futures.emplace_back(CThreadPool::GetInstance()->enqueue(funadd));
+		m_futures.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 10));
 		return false;
 	} else {
 		return m_pAtlasSmallBitmap->DrawBitmap(pDirect, key, dstRect);

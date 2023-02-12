@@ -20,14 +20,14 @@ void CPDFiumMultiThread::PDFObject::UpdatePages()
 	TextPages.clear();
 	int count = FPDF_GetPageCount(Doc.get());
 	for (auto i = 0; i < count; i++) {
-		try {
-			::OutputDebugString(std::format(L"Doc:{}, i:{}\r\n", (LONG)Doc.get(), i).c_str());
+		//try {
+			//::OutputDebugString(std::format(L"Doc:{}, i:{}\r\n", (LONG)Doc.get(), i).c_str());
 			FPDF_PAGE pPage(FPDF_LoadPage(Doc.get(), i));
 			Pages.emplace_back(pPage);
 			TextPages.emplace_back(FPDFText_LoadPage(pPage));
-		} catch (...) {
-			auto a = 1.f;
-		}
+		//} catch (...) {
+		//	auto a = 1.f;
+		//}
 	}
 }
 
@@ -192,7 +192,7 @@ CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(const 
     FALSE_THROW(pFpdfBmp);
 
 	FPDFBitmap_FillRect(pFpdfBmp.get(), 0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF); // Fill white
-	FPDF_RenderPageBitmap(pFpdfBmp.get(), this->Pages[index].get(),0,0,bmih.biWidth, -bmih.biHeight, FPDFPage_GetRotation(this->Pages[index].get()), FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
+	FPDF_RenderPageBitmap(pFpdfBmp.get(), this->Pages[index].get(),0,0,bmih.biWidth, -bmih.biHeight, 0, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
 
     CComPtr<IWICBitmap> pWICBmp;
 	FAILED_THROW(pFactory->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
@@ -392,6 +392,7 @@ CPDFiumMultiThread::~CPDFiumMultiThread()
 		stop = true;
 	}
 	condition.notify_all();
-	for (std::thread &worker : workers)
+	for (std::thread& worker : workers) {
 		worker.join();
+	}
 }

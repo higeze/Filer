@@ -251,9 +251,8 @@ const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_strin
 		if (find.empty()) {
 		} else {
 			auto results  = GetPDFiumPtr()->Text_FindResults(m_index, find);
-			std::vector<CRectF> rects;
 			for (const auto res : results) {
-				rects.insert(rects.end(), std::get<2>(res).cbegin(), std::get<2>(res).cend());
+				std::copy(std::get<2>(res).cbegin(), std::get<2>(res).cend(), std::back_inserter(rects));
 			}
 			RotateRects(rects, Rotate.get());
 		}

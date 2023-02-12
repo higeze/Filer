@@ -194,8 +194,18 @@ public:
 	CPDFiumMultiThread(size_t = 3/*std::thread::hardware_concurrency()*/);
 	~CPDFiumMultiThread();
 
-	int GetTotalTheadCount() { return workers.size(); }
-	int GetActiveThreadCount() { return activeCount.load(); }
+	int GetTotalThreadCount() const { return workers.size(); }
+	int GetActiveThreadCount() const { return activeCount.load(); }
+    int GetQueuedTaskCount() const { return tasks.size(); }
+    std::vector<int> GetQueuedSpecificTaskCounts() const
+    {
+        std::vector<int> result;
+        std::transform(spetasks.cbegin(), spetasks.cend(), std::back_inserter(result),
+            [](const std::pair<std::thread::id, std::queue<std::function<void(PDFObject&)>>>& pair) {
+            return pair.second.size();
+        });
+        return result;
+    }
 
 	template<class F, class... Args>
 	auto single_enqueue(F&& f, Args&&... args)

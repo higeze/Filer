@@ -2,8 +2,10 @@
 #include "D2DAtlasBitmap.h"
 #include "D2DWTypes.h"
 #include "shared_lock_property.h"
+#include "getter_macro.h"
 
 class CPDFPage;
+class CThreadPool;
 
 struct PdfBmpKey
 {
@@ -52,6 +54,8 @@ namespace std
 
 class CD2DPDFBitmapDrawer
 {
+	DECLARE_LAZY_GETTER(std::unique_ptr<CThreadPool>, ThreadPoolPtr);
+
 private:
 	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasClipBitmap;
 	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasSmallBitmap;
@@ -59,7 +63,7 @@ private:
 	std::vector<std::future<void>> m_futures;
 public:
 	CD2DPDFBitmapDrawer();
-	~CD2DPDFBitmapDrawer() = default;
+	~CD2DPDFBitmapDrawer();
 
 	bool DrawPDFPageClipBitmap(
 		const CDirect2DWrite* pDirect,

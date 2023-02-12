@@ -5,7 +5,7 @@ unsigned int CUniqueIDFactory::NewID()
 {
 	unsigned int id = 0;
 	while (true) {
-		if (auto iter = m_ids.find(id); iter == m_ids.end()) {
+		if (m_ids.find(id) == m_ids.cend()) {
 			break;
 		} else {
 			id++;

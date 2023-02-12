@@ -215,8 +215,8 @@ public:
 			CRectF dstRc(
 				std::round(dstPoint.x),
 				std::round(dstPoint.y),
-				std::round(dstPoint.x + iter->second.Width() + 1),
-				std::round(dstPoint.y + iter->second.Height() + 1));
+				std::round(dstPoint.x + iter->second.Width()),
+				std::round(dstPoint.y + iter->second.Height()));
 			CRectF srcRc(
 				static_cast<FLOAT>(iter->second.left),
 				static_cast<FLOAT>(iter->second.top),

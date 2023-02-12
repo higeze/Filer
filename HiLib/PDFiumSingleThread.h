@@ -78,7 +78,7 @@ public:
         if (std::this_thread::get_id() == GetThreadPtr()->GetThreadId(0)) {
             return f(args...);
         } else {
-            auto future = GetThreadPtr()->enqueue(f, args...);
+            auto future = GetThreadPtr()->enqueue(f, 0, args...);
             return future.get();
         }
     }

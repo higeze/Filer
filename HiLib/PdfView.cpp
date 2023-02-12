@@ -1,4 +1,6 @@
 #include "PdfView.h"
+#include <format>
+#include <boost/algorithm/string/join.hpp>
 #include "PDFDoc.h"
 #include "PDFPage.h"
 #include "PDFCaret.h"
@@ -20,6 +22,7 @@
 #include "Button.h"
 #include "strconv.h"
 #include "Dispatcher.h"
+#include "ThreadPool.h"
 
 
 /**************************/
@@ -415,6 +418,28 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 				GetRenderRectInWnd().right - m_spVScroll->GetRectInWnd().Width(),
 				GetRenderRectInWnd().top + textSize.height));
 
+	if(debug || true){
+		std::vector<int> spetskvec = m_pdf->GetPDFiumPtr()->GetQueuedSpecificTaskCounts();
+		std::wstring spetskcnts = std::to_wstring(spetskvec[0]);
+		for (auto i = 1; i < spetskvec.size(); i++) {
+			spetskcnts += L", " + std::to_wstring(spetskvec[i]);
+		}
+		std::wstring debugText = std::format(
+			L"PDF Threads\r\n\tThread:{}/{}\r\n\tTask:{}\r\n\tSpecificTask:{}\r\nThread Pool\r\n\tThread:{}/{}\r\n\tTask:{}\r\n",
+			m_pdf->GetPDFiumPtr()->GetActiveThreadCount(),m_pdf->GetPDFiumPtr()->GetTotalThreadCount(),
+			m_pdf->GetPDFiumPtr()->GetQueuedTaskCount(),
+			spetskcnts,
+			m_pdfDrawer->GetThreadPoolPtr()->GetActiveThreadCount(),m_pdfDrawer->GetThreadPoolPtr()->GetTotalThreadCount(),
+			m_pdfDrawer->GetThreadPoolPtr()->GetQueuedTaskCount());
+		CSizeF debugTextSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), debugText);
+		GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), debugText,
+			CRectF(GetRenderRectInWnd().left,
+			GetRenderRectInWnd().top,
+			GetRenderRectInWnd().left + debugTextSize.width,
+			GetRenderRectInWnd().top + debugTextSize.height));
+	}
+
+
 	//Paint Caret
 	if (m_caret.IsCaret()) {
 		auto [page_index, char_index] = m_caret.Current;
@@ -482,7 +507,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	//PaintScrollHighlite
 	FLOAT fullHeight = m_pdf->GetSize().height;
 	CRectF rcThumbInWnd = m_spVScroll->GetThumbRangeRect();
-	for (auto i = begin; i < end; i++) {
+	for (auto i = 0; i < m_pdf->GetPageCount(); i++) {
 		SolidFill fill(*m_pProp->FindHighliteFill);
 		fill.Color.a = 1.f;
 		CRectF rcThumbPageInWnd(

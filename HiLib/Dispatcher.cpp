@@ -40,6 +40,7 @@ LRESULT CDispatcher::OnDispatcher(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& 
 			fun = iter->second;
 			m_map.erase(iter);
 		}
+		std::lock_guard<std::mutex> lock(m_mtx);
 		m_pIDFactory->DeleteID(id);
 	}
 	fun();

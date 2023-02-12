@@ -19,7 +19,17 @@ private:
 	// need to keep track of threads so we can join them
 	std::vector< std::thread > workers;
 	// the task queue
-	std::queue< std::function<void()> > tasks;
+	struct compare_task
+	{
+		bool operator()(const std::pair<std::function<void()>, int>& left, const std::pair<std::function<void()>, int>& right) {
+			return left.second < right.second;
+		};
+	};
+	std::priority_queue<
+		std::pair<std::function<void()>, int>,
+		std::vector<std::pair<std::function<void()>, int>>,
+		CThreadPool::compare_task
+	> tasks;
 	// active thread count
 	std::atomic<int> activeCount = 0;
 
@@ -32,13 +42,15 @@ public:
 	CThreadPool(size_t = std::thread::hardware_concurrency());
 	~CThreadPool();
 
-	int GetTotalTheadCount() { return workers.size(); }
-	int GetActiveThreadCount() { return activeCount.load(); }
+
+	int GetTotalThreadCount() const { return workers.size(); }
+	int GetActiveThreadCount() const { return activeCount.load(); }
+	int GetQueuedTaskCount() const { return tasks.size(); }
 	std::thread::id GetThreadId(int n) { return workers[n].get_id(); }
 
 // add new work item to the pool
 	template<class F, class... Args>
-	auto enqueue(F&& f, Args&&... args)
+	auto enqueue(F&& f, int priority, Args&&... args)
 		-> std::future<typename std::invoke_result_t<F, Args...>>
 	{
 		using return_type = typename std::invoke_result_t<F, Args...>;
@@ -55,13 +67,13 @@ public:
 			if (stop)
 				throw std::runtime_error("enqueue on stopped ThreadPool");
 
-			tasks.emplace([task]() { (*task)(); });
+			tasks.emplace([task]() { (*task)(); }, priority);
 		}
 		condition.notify_one();
 		return res;
 	}
 
-	static CThreadPool* GetInstance();
+	//static CThreadPool* GetInstance();
 };
 
 
