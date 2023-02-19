@@ -7,7 +7,7 @@
 #include "scope_exit.h"
 #include "future_then.h"
 #include "Dispatcher.h"
-#include "async_catch.h"
+#include "ThreadPool.h"
 #include "PDFDoc.h"
 #include "PDFViewProperty.h"
 //TODOTODO
@@ -89,30 +89,8 @@ void CCopyDlg::Copy()
 			renameIDLs.emplace_back(spFile->GetAbsoluteIdl(), newname);
 		}
 	}
-	//auto test1 = async_action_nothrow(std::launch::async, [](int&&, int&&) { }, 10, 11);//works
 
-	//auto test2 = async_action_nothrow(std::launch::async, [](const int&, const int&) { }, 10, 11);//works
-
-	//int a = 29;
-	//auto test3 = async_action_nothrow(std::launch::async, [](int&&, int&&) { }, std::forward<int>(a), std::forward<int>(a));//works
-
-	//auto test4 = async_action_nothrow(std::launch::async, [](int&&, int&&) { }, 10, std::forward<int>(a));//works
-
-	//auto test5 = async_action_nothrow(std::launch::async, [](const int&, const int&) { }, std::forward<int>(a), std::forward<int>(a));//works
-
-	//auto test6 = async_action_nothrow(std::launch::async, [](const int&, const int&) { }, 10, std::forward<int>(a));//works
-
-	//auto test7 = async_action_nothrow(std::launch::async, [](const int&, const int&) { }, std::move(a), std::move(a));//works
-
-	//auto test8 = async_action_nothrow(std::launch::async, [](const int&, const int&) { }, 10, std::move(a));//works
-
-	//auto test9 = async_action_nothrow(std::launch::async, [](int&&, const int&) { }, 10, std::ref(a));//works
-
-	//auto test10 = async_action_nothrow(std::launch::async, std::forward<std::function<void(int&, const int)>>([]( int&, const int)->void { }), 10, a);// not works
-	//auto fun = [](const int&, const int&)->void {};
-	//auto test11 = std::async(std::launch::async, async_action_wrap<decltype(fun)&&, const int&, const int&>, fun, 10, a);
-
-	auto fun = [](const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& noRenameIDLs, const std::vector<std::pair<CIDL, std::wstring>>& renameIDLs)->void
+	auto fun = [this](const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& noRenameIDLs, const std::vector<std::pair<CIDL, std::wstring>>& renameIDLs)->void
 	{
 		CComPtr<IFileOperation> pFileOperation = nullptr;
 		FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
@@ -136,22 +114,18 @@ void CCopyDlg::Copy()
 				FAILED_RETURN(pFileOperation->CopyItem(pSrcShellItem, pDestShellItem, renamePair.second.c_str(), nullptr));
 			}
 		}
-		SUCCEEDED(pFileOperation->PerformOperations());
+		if (SUCCEEDED(pFileOperation->PerformOperations())) {
+			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+		}
 
 	};
-	m_future = std::async(
-		std::launch::async, 
-		async_action_wrap<decltype(fun), const CIDL&, const CIDL&, const std::vector<CIDL>&, const std::vector<std::pair<CIDL, std::wstring>>&>,
+	m_future = CThreadPool::GetInstance()->enqueue(
 		fun,
-		m_destIDL, 
-		m_srcIDL, 
-		noRenameIDLs, 
-		renameIDLs)
-	| then(
-		[this]() 
-		{
-			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-		});
+		0,
+		m_destIDL,
+		m_srcIDL,
+		noRenameIDLs,
+		renameIDLs);
 }
 
 /************/
@@ -189,7 +163,7 @@ void CMoveDlg::Move()
 		}
 	}
 
-	auto fun = [](const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& noRenameIDLs, const std::vector<std::pair<CIDL, std::wstring>>& renameIDLs)->void
+	auto fun = [this](const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& noRenameIDLs, const std::vector<std::pair<CIDL, std::wstring>>& renameIDLs)->void
 	{
 		CComPtr<IFileOperation> pFileOperation = nullptr;
 		FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
@@ -213,24 +187,18 @@ void CMoveDlg::Move()
 				FAILED_RETURN(pFileOperation->MoveItem(pSrcShellItem, pDestShellItem, renamePair.second.c_str(), nullptr));
 			}
 		}
-		SUCCEEDED(pFileOperation->PerformOperations());
+		if (SUCCEEDED(pFileOperation->PerformOperations())) {
+			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+		}
 
 	};
-
-	m_future = std::async(
-		std::launch::async,
-		async_action_wrap<decltype(fun), CIDL, CIDL, std::vector<CIDL>, std::vector<std::pair<CIDL, std::wstring>>>,
+	m_future = CThreadPool::GetInstance()->enqueue(
 		fun,
+		0,
 		m_destIDL,
 		m_srcIDL,
 		noRenameIDLs,
-		renameIDLs)
-	| then(
-		[this]() 
-		{
-			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-		});
-
+		renameIDLs);
 }
 
 /**************/
@@ -288,7 +256,7 @@ void CDeleteDlg::Delete()
 		delIDLs.push_back(spFile->GetAbsoluteIdl());
 	}
 
-	auto fun = [](const std::vector<CIDL>& delIDLs)->void
+	auto fun = [this](const std::vector<CIDL>& delIDLs)->void
 	{
 		CComPtr<IFileOperation> pFileOperation = nullptr;
 		FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
@@ -301,21 +269,15 @@ void CDeleteDlg::Delete()
 			FAILED_RETURN(SHCreateShellItemArrayFromIDLists(pidls.size(), (LPCITEMIDLIST*)(pidls.data()), &pItemAry));
 			FAILED_RETURN(pFileOperation->DeleteItems(pItemAry));
 		}
-
-		SUCCEEDED(pFileOperation->PerformOperations());
+		if (SUCCEEDED(pFileOperation->PerformOperations())) {
+			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+		}
 	};
 
-	m_future = std::async(
-		std::launch::async,
-		async_action_wrap<decltype(fun), std::vector<CIDL>>,
+	m_future = CThreadPool::GetInstance()->enqueue(
 		fun,
-		delIDLs)
-	| then(
-		[this]() 
-		{
-			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-		});
-
+		0,
+		delIDLs);
 }
 
 /********************/

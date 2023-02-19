@@ -1,5 +1,5 @@
 #include "DeadlineTimer.h"
-#include "async_catch.h"
+#include "ThreadPool.h"
 
 void CDeadlineTimer::run(std::function<void()> action, const std::chrono::milliseconds& ms)
 {
@@ -26,10 +26,8 @@ void CDeadlineTimer::run(std::function<void()> action, const std::chrono::millis
 			}
 			return;
 		};
-		m_future = std::async(
-			std::launch::async,
-			async_action_wrap<decltype(fun)>,
-			fun);
+		m_future = CThreadPool::GetInstance()->enqueue(
+			fun, 0);
 	}
 }
 
@@ -50,10 +48,8 @@ void CDeadlineTimer::run_oneshot(std::function<void()> action, const std::chrono
 			}
 			return;
 		};
-		m_future = std::async(
-			std::launch::async,
-			async_action_wrap<decltype(fun)>,
-			fun);
+		m_future = CThreadPool::GetInstance()->enqueue(
+			fun, 0);
 	}
 }
 

@@ -16,6 +16,7 @@ struct closehandle
 };
 
 class CD2DWControl;
+class CThreadPool;
 
 struct DirectoryWatchEvent
 {
@@ -26,6 +27,7 @@ struct DirectoryWatchEvent
 class CDirectoryWatcher
 {
 private:
+	//std::unique_ptr<CThreadPool> m_pThreadPool;
 	using UniqueHandlePtr = std::unique_ptr<std::remove_pointer<HANDLE>::type, closehandle>;
 	const size_t kBufferSize = 1024;
 	const ULONG_PTR COMPKEY_QUIT = -1;

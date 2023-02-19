@@ -2,7 +2,7 @@
 #include "Application.h"
 #include "FilerWnd.h"
 #include "Debug.h"
-#include "async_catch.h"
+#include "se_exception.h"
 
 class CFilerApplication : public CApplication<CFilerApplication>
 {

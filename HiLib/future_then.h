@@ -1,6 +1,6 @@
 #pragma once
 #include <future>
-#include "async_catch.h"
+#include "ThreadPool.h"
 
 constexpr struct future_then
 {
@@ -24,9 +24,9 @@ public:
         {
             return func(fut.get());
         };
-        return std::async(
-            std::launch::async,
+        return CThreadPool::GetInstance()->enqueue(
             std::move(fun),
+            0,
             std::move(fut),
             std::move(param.func));
     }
@@ -39,9 +39,9 @@ public:
             fut.wait();
             return func();
         };
-        return std::async(
-            std::launch::async,
+        return CThreadPool::GetInstance()->enqueue(
             std::move(fun),
+            0,
             std::move(fut),
             std::move(param.func));
     }

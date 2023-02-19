@@ -1,5 +1,5 @@
 #include "Timer.h"
-#include "async_catch.h"
+#include "ThreadPool.h"
 
 void CTimer::run(std::function<void()> action, const std::chrono::milliseconds& ms)
 {
@@ -28,10 +28,8 @@ void CTimer::run(std::function<void()> action, const std::chrono::milliseconds& 
 			}
 			return;
 		};
-		m_future = std::async(
-			std::launch::async,
-			async_action_wrap<decltype(fun)>,
-			fun);
+		m_future = CThreadPool::GetInstance()->enqueue(
+			fun, 0);
 
 	}
 }

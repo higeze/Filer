@@ -88,6 +88,10 @@ public:
 	{
 		left = l; top = t; right = r; bottom = b;
 	}
+	bool IsInvalid() const
+	{
+		return this->left >= this->right || this->top >= this->bottom;
+	}
 	bool SizeInRect(const CSizeU& sz) const
 	{
 		return sz.width <= this->Width() && sz.height <= this->Height();
@@ -101,6 +105,11 @@ public:
 	{
 		return (std::max)(this->left, rc.left) < (std::min)(this->right, rc.right) && (std::max)(this->top, rc.top) < (std::min)(this->bottom, rc.bottom);
 	}
+	bool TouchOrOverlap(const CIndexRect& rc) const
+	{
+		return (std::max)(this->left-1, rc.left-1) <= (std::min)(this->right, rc.right) && (std::max)(this->top-1, rc.top-1) <= (std::min)(this->bottom, rc.bottom);
+	}
+
 	std::vector<CIndexRect> Subtract(const CIndexRect& rc) const
 	{
 		std::vector<CIndexRect> rects;
@@ -130,6 +139,32 @@ public:
 		} else {
 			rects.push_back(*this);
 		}
+		return rects;
+	}
+	std::vector<CIndexRect> Add(const CIndexRect& rc) const
+	{
+		std::vector<CIndexRect> tempRects;
+		tempRects.push_back(*this);
+		tempRects.push_back(rc);
+		if (TouchOrOverlap(rc)) {
+			tempRects.emplace_back(
+				(std::min)(this->left, rc.left),
+				(std::max)(this->top, rc.top),
+				(std::max)(this->right, rc.right),
+				(std::min)(this->bottom, rc.bottom)
+			);
+			tempRects.emplace_back(
+				(std::max)(this->left, rc.left),
+				(std::min)(this->top, rc.top),
+				(std::min)(this->right, rc.right),
+				(std::max)(this->bottom, rc.bottom)
+			);
+		}
+		std::vector<CIndexRect> rects;
+		std::copy_if(tempRects.cbegin(), tempRects.cend(), std::back_inserter(rects), [&tempRects](const CIndexRect& rc) {
+			return !rc.IsInvalid() &&
+				std::any_of(tempRects.cbegin(), tempRects.cend(), [&rc](const CIndexRect& rect) { return rect.RectInRect(rc); });
+		});
 		return rects;
 	}
 
@@ -163,7 +198,7 @@ protected:
 	CSizeU m_size;
 	D2D1_BITMAP_PROPERTIES1 m_bitmapProperties;
 	map_type m_map;
-	//que_type m_que;
+	que_type m_que;
 	CComPtr<ID2D1Bitmap1> m_pAtlasBitmap;
 	std::vector<CIndexRect> m_rooms;
 	std::shared_mutex m_mtx;
@@ -176,14 +211,15 @@ public:
 					D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)))
 		:m_size(size), m_bitmapProperties(bitmapProperties) { m_rooms.emplace_back(0, 0, m_size.width - 1, m_size.height - 1); }
 
+	CSizeU GetSize() const { return m_size; }
+
 	bool DrawBitmap(const CDirect2DWrite* pDirect, const _Kty& key, const CRectF& dstRect)
 	{
 		std::shared_lock<std::shared_mutex> lock(m_mtx);
 		
-		//typename map_type::const_iterator iter = m_map.find(key);
 		if (auto iter = m_map.find(key); iter != m_map.cend() && !(iter->second.IsRectNull())) {
-			//m_que.erase(std::remove(std::begin(m_que), std::end(m_que), key), std::cend(m_que));
-			//m_que.push_back(key);
+			m_que.erase(std::remove(std::begin(m_que), std::end(m_que), key), std::cend(m_que));
+			m_que.push_back(key);
 
 			CRectF dstRc(
 				std::round(dstRect.left),
@@ -210,8 +246,9 @@ public:
 	{
 		std::shared_lock<std::shared_mutex> lock(m_mtx);
 		
-		//typename map_type::const_iterator iter = m_map.find(key);
 		if (auto iter = m_map.find(key); iter != m_map.cend() && !(iter->second.IsRectNull())) {
+			m_que.erase(std::remove(std::begin(m_que), std::end(m_que), key), std::cend(m_que));
+			m_que.push_back(key);
 			CRectF dstRc(
 				std::round(dstPoint.x),
 				std::round(dstPoint.y),
@@ -236,8 +273,39 @@ public:
 
 	void Erase(const _Kty& key)
 	{
-		m_map.erase(key);
+		if (auto iter = m_map.find(key); iter != m_map.cend()) {
+			m_map.erase(key);
+			m_que.erase(std::remove(std::begin(m_que), std::end(m_que), key), std::cend(m_que));
+		}
 	}
+
+	//void OptimizeRooms()
+	//{
+	//	std::vector<CIndexRect> newRooms;
+	//	for (const CIndexRect& thisRect : m_rooms) {
+	//		//Check if this Rect can Combine
+	//		//Check if this Rect in Rects
+	//		bool isThisRectInRects = std::any_of(m_rooms.cbegin(), m_rooms.cend(), [&thisRect](const CIndexRect& rect) {return rect.RectInRect(thisRect)});
+	//	}
+	//}
+
+	//void PopRect()
+	//{
+	//	CIndexRect rcAdd(m_map[m_que.front()]);
+	//	std::vector<CIndexRect> newRooms;
+	//	for (const CIndexRect& rc : m_rooms) {
+	//		std::vector<CIndexRect> addRooms(rcAdd.Add(rc));
+	//		newRooms.insert(newRooms.end(), addRooms.cbegin(), addRooms.cend());
+	//	}
+	//	m_rooms.clear();
+	//	std::copy_if(newRooms.cbegin(), newRooms.cend(), std::back_inserter(m_rooms), [newRooms](const CIndexRect& l)->bool
+	//		{
+	//			return !std::any_of(newRooms.cbegin(), newRooms.cend(), [l](const CIndexRect& r)->bool { return l != r && r.RectInRect(l); });
+	//		});
+
+	//	m_map.erase(m_que.front());
+	//	m_que.erase(std::remove(std::begin(m_que), std::end(m_que), m_que.front()), std::cend(m_que));
+	//}
 
 	void AddOrAssign(const CDirect2DWrite* pDirect, const _Kty& key, const CComPtr<ID2D1Bitmap1>& pBitmap)
 	{
@@ -246,12 +314,24 @@ public:
 		if(pBitmap){
 			CIndexRect newRect;
 			CSizeU size(pBitmap->GetPixelSize());
+			//Check size
+			if (size.width > m_size.width || size.height > m_size.height) {
+				return;
+			}
 			if (iter == m_map.cend() || iter->second.IsRectNull()) {
 				newRect = FindRect(size);
+				//while (newRect.IsRectNull()) {
+				//	PopRect();
+				//	newRect = FindRect(size);
+				//}
+				//pDirect->SaveBitmap(L"Test.png", GetAtlasBitmapPtr(pDirect));
 				if (newRect.IsRectNull()) {
+#ifdef _DEBUG
 					pDirect->SaveBitmap(L"Test.png", GetAtlasBitmapPtr(pDirect));
-					m_pAtlasBitmap.Release();
+#endif
+					//m_pAtlasBitmap.Release();
 					m_map.clear();
+					m_que.clear();
 					m_rooms.clear();
 					m_rooms.emplace_back(0, 0, m_size.width - 1, m_size.height - 1);
 					newRect = FindRect(size);
@@ -264,8 +344,10 @@ public:
 
 			FAILED_THROW(GetAtlasBitmapPtr(pDirect)->CopyFromBitmap(&dstLeftTop, pBitmap, &srcRect));
 			m_map.insert_or_assign(key, newRect);
+			m_que.push_back(key);
 		} else {
 			m_map.insert_or_assign(key, CIndexRect());
+			m_que.push_back(key);
 		}
 	}
 
@@ -283,11 +365,19 @@ public:
 		return m_map.find(key) != m_map.end();
 	}
 
+	//bool ExistAndAvailable(const _Kty& key)
+	//{
+	//	std::shared_lock<std::shared_mutex> lock(m_mtx);
+	//	auto iter = m_map.find(key);
+	//	return iter!= m_map.end() && !iter->second.IsRectNull()
+	//}
+
 	void Clear()
 	{
 		std::lock_guard<std::shared_mutex> lock(m_mtx);
 		m_pAtlasBitmap.Release();
 		m_map.clear();
+		m_que.clear();
 		m_rooms.clear();
 		m_rooms.emplace_back(0, 0, m_size.width - 1, m_size.height - 1);
 	}
@@ -308,8 +398,13 @@ private:
 
 	const CIndexRect FindRect(const CSizeU& size)
 	{
-		//New Rect
 		CIndexRect newRect;
+
+		//Check size
+		if (size.width > m_size.width || size.height > m_size.height) {
+			return newRect;
+		}
+		//New Rect
 		for (const CIndexRect& room : m_rooms) {
 			if (room.SizeInRect(size)) {
 				newRect.SetRect(room.left, room.top, room.left + size.width - 1, room.top + size.height - 1);

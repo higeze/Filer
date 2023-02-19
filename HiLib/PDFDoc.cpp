@@ -5,7 +5,6 @@
 #include <fpdfview.h>
 #include <mutex>
 #include <boost/algorithm/string.hpp>
-#include "async_catch.h"
 #include "ThreadPool.h"
 #include "MyClipboard.h"
 #include "strconv.h"

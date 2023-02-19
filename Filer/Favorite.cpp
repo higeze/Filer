@@ -4,7 +4,7 @@
 #include "ShellFileFactory.h"
 #include "Debug.h"
 #include "MyString.h"
-#include "async_catch.h"
+#include "ThreadPool.h"
 
 CFavorite::CFavorite()
 	:m_path(), m_shortName(), m_spFile(nullptr), m_spCancel(std::make_shared<bool>(false)){}
@@ -41,12 +41,13 @@ std::shared_ptr<CShellFile>& CFavorite::GetShellFile(const std::function<void()>
 				}
 				return ret;
 			};
-			m_futureFile = std::async(
-				std::launch::async,
-				async_function_wrap<decltype(fun), std::shared_ptr<CShellFile>, std::shared_ptr<bool>, std::wstring, std::function<void()>>,
+			m_futureFile = CThreadPool::GetInstance()->enqueue(
 				fun,
-				std::make_shared<CShellInvalidFile>(),
-				m_spCancel, GetPath(), changed);
+				0,
+				//std::make_shared<CShellInvalidFile>(),
+				m_spCancel, 
+				GetPath(),
+				changed);
 		}
 	}
 

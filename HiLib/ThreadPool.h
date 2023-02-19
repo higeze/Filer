@@ -73,7 +73,7 @@ public:
 		return res;
 	}
 
-	//static CThreadPool* GetInstance();
+	static CThreadPool* GetInstance();
 };
 
 

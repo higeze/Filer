@@ -8,7 +8,7 @@
 #include "ShellFunction.h"
 #include "ShellFileFactory.h"
 #include "ResourceIDFactory.h"
-#include "async_catch.h"
+#include "ThreadPool.h"
 
 CIncrementalCopyDlg::CIncrementalCopyDlg(
 	CD2DWControl* pParentControl,
@@ -53,10 +53,8 @@ CIncrementalCopyDlg::CIncrementalCopyDlg(
 				SUCCEEDED(pFileOperation->PerformOperations());
 			}
 		};
-		m_doFuture = std::async(
-			std::launch::async,
-			async_action_wrap<decltype(funDo)>,
-			funDo);
+		m_doFuture = CThreadPool::GetInstance()->enqueue(
+			funDo, 0);
 
 		m_idlMap.clear();
 		m_spButtonDo->GetIsEnabled().set(!m_idlMap.empty());
@@ -139,10 +137,8 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 				shell::CountFileOne(srcIDL, childIDL, readMax);
 			}
 		};
-		auto countFuture = std::async(
-			std::launch::async,
-			async_action_wrap<decltype(funCount)>,
-			funCount);
+		auto countFuture = CThreadPool::GetInstance()->enqueue(
+			funCount, 0);
 
 		auto funIncr = [srcParentIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, destParentIDL = m_destIDL, readValue, find]()->void
 		{
@@ -150,10 +146,8 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 				shell::FindIncrementalOne(srcParentIDL, srcChildIDL, destParentIDL, readValue, find);
 			}
 		};
-		auto incrFuture = std::async(
-			std::launch::async,
-			async_action_wrap<decltype(funIncr)>,
-			funIncr);
+		auto incrFuture = CThreadPool::GetInstance()->enqueue(
+			funIncr, 0);
 
 		countFuture.get();
 		incrFuture.get();
@@ -165,10 +159,8 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 	};
 	
 	//Start comparison
-	m_compFuture = std::async(
-		std::launch::async,
-		async_action_wrap<decltype(fun)>,
-		fun);
+	m_compFuture = CThreadPool::GetInstance()->enqueue(
+		fun, 0);
 }
 
 void CIncrementalCopyDlg::OnRect(const RectEvent& e)

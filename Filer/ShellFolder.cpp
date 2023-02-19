@@ -10,7 +10,7 @@
 #include "ShellFileFactory.h"
 #include "ShellFunction.h"
 #include <format>
-#include "async_catch.h"
+#include "ThreadPool.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
@@ -135,11 +135,10 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(const std::share
 							return std::make_pair(size, FileSizeStatus::Unavailable);
 						}
 					};
-					m_futureSize = std::async(
-						std::launch::async,
-						async_function_wrap<decltype(fun),std::pair<ULARGE_INTEGER, FileSizeStatus>, std::shared_ptr<bool>, CComPtr<IShellFolder>, CIDL, std::wstring, int,std::function<void()>>,
+					m_futureSize = CThreadPool::GetInstance()->enqueue(
 						fun,
-						std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable),
+						0,
+						//std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable),
 						m_spCancelThread,
 						GetShellFolderPtr(),
 						GetAbsoluteIdl(),
@@ -193,11 +192,10 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(const std::share
 					return std::make_pair(times.value(), FileTimeStatus::Unavailable);
 				}
 			};
-			m_futureTime = std::async(
-				std::launch::async,
-				async_function_wrap<decltype(fun), std::pair<FileTimes, FileTimeStatus>, std::shared_ptr<bool>, CComPtr<IShellFolder>, CComPtr<IShellFolder>, CIDL, std::wstring, int, bool, std::function<void()>>,
-				fun,		
-				std::make_pair(FileTimes(), FileTimeStatus::Unavailable),
+			m_futureTime = CThreadPool::GetInstance()->enqueue(
+				fun,	
+				0,
+				//std::make_pair(FileTimes(), FileTimeStatus::Unavailable),
 				m_spCancelThread,
 				GetParentShellFolderPtr(),
 				GetShellFolderPtr(),

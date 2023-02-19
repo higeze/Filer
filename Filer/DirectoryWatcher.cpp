@@ -1,12 +1,11 @@
 #include "DirectoryWatcher.h"
-#include "async_catch.h"
 #include "MyWin32.h"
 #include "MyString.h"
 #include "D2DWWindow.h"
 #include "D2DWControl.h"
 #include "Dispatcher.h"
 #include "ShellFunction.h"
-#include "async_catch.h"
+#include "ThreadPool.h"
 
 #include <algorithm>
 
@@ -33,11 +32,7 @@ void CDirectoryWatcher::StartWatching(const std::wstring& path, const CIDL& absI
 		}
 
 		//Create watch thread
-		m_futureWatch = std::async(
-			std::launch::async, 
-			async_action_wrap<decltype(&CDirectoryWatcher::WatchDirectory), decltype(this)>,
-			&CDirectoryWatcher::WatchDirectory,
-			this);
+		m_futureWatch = CThreadPool::GetInstance()->enqueue( &CDirectoryWatcher::WatchDirectory, 0, this);
 	}
 	catch (std::exception& e) {
 		LOG_THIS_1("");
@@ -100,11 +95,7 @@ void CDirectoryWatcher::WatchDirectory()
 		}
 
 		//Start thread;
-		std::future<void> futureCallback = std::async(
-			std::launch::async, 
-			async_action_wrap<decltype(&CDirectoryWatcher::IoCompletionCallback), decltype(this), HANDLE, HANDLE>,
-			&CDirectoryWatcher::IoCompletionCallback,
-			this, pIocp.get(), pDir.get());
+		std::future<void> futureCallback = CThreadPool::GetInstance()->enqueue(&CDirectoryWatcher::IoCompletionCallback, 0, this, pIocp.get(), pDir.get());
 
 		//Start observer
 		OVERLAPPED overlapped = { 0 };
@@ -140,162 +131,156 @@ std::vector<std::wstring> CDirectoryWatcher::GetFileNamesInDirectory(CIDL absIdl
 
 void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 {
-	scoped_se_translator scoped_se_trans;
+	LOG_THIS_1("Start CDirectoryWatcher::IoCompletionCallback");
 
-	try{
-		LOG_THIS_1("Start CDirectoryWatcher::IoCompletionCallback");
+	while (true) {
+		DWORD dwBytes = 0L;
+		ULONG_PTR ulCompKey = 0L;
+		LPOVERLAPPED pOverlapped = nullptr;
+		::GetQueuedCompletionStatus(hIocp, &dwBytes, &ulCompKey, &pOverlapped, INFINITE);
 
-		while (true) {
-			DWORD dwBytes = 0L;
-			ULONG_PTR ulCompKey = 0L;
-			LPOVERLAPPED pOverlapped = nullptr;
-			::GetQueuedCompletionStatus(hIocp, &dwBytes, &ulCompKey, &pOverlapped, INFINITE);
+		if (ulCompKey == COMPKEY_QUIT) {
+			break;
+		}
 
-			if (ulCompKey == COMPKEY_QUIT) {
-				break;
-			}
+		PFILE_NOTIFY_INFORMATION pFileNotifyInfo = nullptr;
+		if (dwBytes > 0) {
+			pFileNotifyInfo = (PFILE_NOTIFY_INFORMATION)new BYTE[dwBytes];
+			::CopyMemory((PVOID)pFileNotifyInfo, (CONST PVOID)m_vData.data(), dwBytes);
+		}
 
-			PFILE_NOTIFY_INFORMATION pFileNotifyInfo = nullptr;
-			if (dwBytes > 0) {
-				pFileNotifyInfo = (PFILE_NOTIFY_INFORMATION)new BYTE[dwBytes];
-				::CopyMemory((PVOID)pFileNotifyInfo, (CONST PVOID)m_vData.data(), dwBytes);
-			}
-
-			//Keep watching
-			if (pOverlapped) {
-				LOG_THIS_1("ReadDirectoryChangesW");
-				//Associate iocompletionobject to thread pool
-				if (!ReadDirectoryChangesW(
-					hDir,
-					m_vData.data(),
-					m_vData.size(),
-					FALSE,
-					FILE_NOTIFY_CHANGE_FILE_NAME |
-					FILE_NOTIFY_CHANGE_DIR_NAME |
-					FILE_NOTIFY_CHANGE_ATTRIBUTES |
-					FILE_NOTIFY_CHANGE_SIZE |
-					FILE_NOTIFY_CHANGE_LAST_WRITE |
-					//FILE_NOTIFY_CHANGE_LAST_ACCESS |
-					//FILE_NOTIFY_CHANGE_SECURITY    |
-					FILE_NOTIFY_CHANGE_CREATION,
-					NULL,
-					(LPOVERLAPPED)pOverlapped,
-					NULL)) {
-					throw std::exception(
-						("ReadDirectoryChangesW FAILED\r\n"
-							"Last Error:" + GetLastErrorString() +
-							"Path:" + wstr2str(m_path) + "\r\n").c_str());
-				}
-			}
-
-			if (dwBytes > 0) {
-				//Scan
-				//::Sleep(100);
-				std::vector<std::wstring> fileNames = GetFileNamesInDirectory(m_absIdl);
-				std::sort(fileNames.begin(), fileNames.end());
-				//Diff
-				std::vector<std::wstring> addDiff, remDiff;
-				std::set_difference(fileNames.begin(), fileNames.end(), m_names.begin(), m_names.end(), std::back_inserter(addDiff));
-				std::set_difference(m_names.begin(), m_names.end(), fileNames.begin(), fileNames.end(), std::back_inserter(remDiff));
-
-				auto pInfo = pFileNotifyInfo;
-				std::vector<std::pair<DWORD, std::wstring>> infos;
-				auto oldIter = remDiff.end();
-				while (true) {
-					std::wstring fileName;
-					memcpy(::GetBuffer(fileName, pInfo->FileNameLength / sizeof(wchar_t)), pInfo->FileName, pInfo->FileNameLength);
-					::ReleaseBuffer(fileName);
-
-					switch (pInfo->Action) {
-					case FILE_ACTION_ADDED:
-						LOG_THIS_1("FILE_ACTION_ADDED");
-						{
-							auto iter = std::find(addDiff.begin(), addDiff.end(), fileName);
-							if (iter != addDiff.end()) {
-								infos.emplace_back(FILE_ACTION_ADDED, fileName);
-								addDiff.erase(iter);
-							}
-							break;
-						}
-					case FILE_ACTION_MODIFIED:
-						LOG_THIS_1("FILE_ACTION_MODIFIED");
-						{
-							auto iter = std::find(fileNames.begin(), fileNames.end(), fileName);
-							if (iter != fileNames.end()) {
-								infos.emplace_back(FILE_ACTION_MODIFIED, fileName);
-							}
-							break;
-						}
-						break;
-					case FILE_ACTION_REMOVED:
-						LOG_THIS_1("FILE_ACTION_REMOVED");
-						{
-							auto iter = std::find(remDiff.begin(), remDiff.end(), fileName);
-							if (iter != remDiff.end()) {
-								infos.emplace_back(FILE_ACTION_REMOVED, fileName);
-								remDiff.erase(iter);
-							}
-							break;
-						}
-						break;
-					case FILE_ACTION_RENAMED_NEW_NAME:
-						LOG_THIS_1("FILE_ACTION_RENAMED_NEW_NAME");
-						{
-							auto newIter = std::find(addDiff.begin(), addDiff.end(), fileName);
-							if (newIter != addDiff.end() && oldIter != remDiff.end()) {
-								infos.emplace_back(FILE_ACTION_RENAMED_NEW_NAME, *oldIter + L"/" + *newIter);
-								addDiff.erase(newIter);
-								remDiff.erase(oldIter);
-							} else {
-								LOG_THIS_1("");
-							}
-							oldIter = remDiff.end();
-						}
-						break;
-					case FILE_ACTION_RENAMED_OLD_NAME:
-						LOG_THIS_1("FILE_ACTION_RENAMED_OLD_NAME");
-						{
-							oldIter = std::find(remDiff.begin(), remDiff.end(), fileName);
-						}
-						break;
-					default:
-						break;
-					}
-
-					if (pInfo->NextEntryOffset == 0) { break; }
-
-					pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<PBYTE>(pInfo) + pInfo->NextEntryOffset);
-				}
-
-				//Check if there is mis-catch
-				if (!addDiff.empty()) {
-					for (const auto& add : addDiff) {
-						infos.emplace_back(FILE_ACTION_ADDED, add);
-					}
-				}
-
-				if (!remDiff.empty()) {
-					for (const auto& rem : remDiff) {
-						infos.emplace_back(FILE_ACTION_REMOVED, rem);
-					}
-				}
-
-				//std::sort(infos.begin(), infos.end());
-				//infos.erase(std::unique(infos.begin(), infos.end()), infos.end());
-				if (!infos.empty()) {
-					//::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)&infos, NULL);
-					m_pControl->GetWndPtr()->GetDispatcherPtr()->SendInvoke([&]()->void
-					{
-						m_callback(DirectoryWatchEvent(infos));
-
-					});
-				}
-				delete[](PBYTE)pFileNotifyInfo;
-				m_names = fileNames;
+		//Keep watching
+		if (pOverlapped) {
+			LOG_THIS_1("ReadDirectoryChangesW");
+			//Associate iocompletionobject to thread pool
+			if (!ReadDirectoryChangesW(
+				hDir,
+				m_vData.data(),
+				m_vData.size(),
+				FALSE,
+				FILE_NOTIFY_CHANGE_FILE_NAME |
+				FILE_NOTIFY_CHANGE_DIR_NAME |
+				FILE_NOTIFY_CHANGE_ATTRIBUTES |
+				FILE_NOTIFY_CHANGE_SIZE |
+				FILE_NOTIFY_CHANGE_LAST_WRITE |
+				//FILE_NOTIFY_CHANGE_LAST_ACCESS |
+				//FILE_NOTIFY_CHANGE_SECURITY    |
+				FILE_NOTIFY_CHANGE_CREATION,
+				NULL,
+				(LPOVERLAPPED)pOverlapped,
+				NULL)) {
+				throw std::exception(
+					("ReadDirectoryChangesW FAILED\r\n"
+						"Last Error:" + GetLastErrorString() +
+						"Path:" + wstr2str(m_path) + "\r\n").c_str());
 			}
 		}
-	}catch(std::exception&){
-		LOG_THIS_1("");
+
+		if (dwBytes > 0) {
+			//Scan
+			//::Sleep(100);
+			std::vector<std::wstring> fileNames = GetFileNamesInDirectory(m_absIdl);
+			std::sort(fileNames.begin(), fileNames.end());
+			//Diff
+			std::vector<std::wstring> addDiff, remDiff;
+			std::set_difference(fileNames.begin(), fileNames.end(), m_names.begin(), m_names.end(), std::back_inserter(addDiff));
+			std::set_difference(m_names.begin(), m_names.end(), fileNames.begin(), fileNames.end(), std::back_inserter(remDiff));
+
+			auto pInfo = pFileNotifyInfo;
+			std::vector<std::pair<DWORD, std::wstring>> infos;
+			auto oldIter = remDiff.end();
+			while (true) {
+				std::wstring fileName;
+				memcpy(::GetBuffer(fileName, pInfo->FileNameLength / sizeof(wchar_t)), pInfo->FileName, pInfo->FileNameLength);
+				::ReleaseBuffer(fileName);
+
+				switch (pInfo->Action) {
+				case FILE_ACTION_ADDED:
+					LOG_THIS_1("FILE_ACTION_ADDED");
+					{
+						auto iter = std::find(addDiff.begin(), addDiff.end(), fileName);
+						if (iter != addDiff.end()) {
+							infos.emplace_back(FILE_ACTION_ADDED, fileName);
+							addDiff.erase(iter);
+						}
+						break;
+					}
+				case FILE_ACTION_MODIFIED:
+					LOG_THIS_1("FILE_ACTION_MODIFIED");
+					{
+						auto iter = std::find(fileNames.begin(), fileNames.end(), fileName);
+						if (iter != fileNames.end()) {
+							infos.emplace_back(FILE_ACTION_MODIFIED, fileName);
+						}
+						break;
+					}
+					break;
+				case FILE_ACTION_REMOVED:
+					LOG_THIS_1("FILE_ACTION_REMOVED");
+					{
+						auto iter = std::find(remDiff.begin(), remDiff.end(), fileName);
+						if (iter != remDiff.end()) {
+							infos.emplace_back(FILE_ACTION_REMOVED, fileName);
+							remDiff.erase(iter);
+						}
+						break;
+					}
+					break;
+				case FILE_ACTION_RENAMED_NEW_NAME:
+					LOG_THIS_1("FILE_ACTION_RENAMED_NEW_NAME");
+					{
+						auto newIter = std::find(addDiff.begin(), addDiff.end(), fileName);
+						if (newIter != addDiff.end() && oldIter != remDiff.end()) {
+							infos.emplace_back(FILE_ACTION_RENAMED_NEW_NAME, *oldIter + L"/" + *newIter);
+							addDiff.erase(newIter);
+							remDiff.erase(oldIter);
+						} else {
+							LOG_THIS_1("");
+						}
+						oldIter = remDiff.end();
+					}
+					break;
+				case FILE_ACTION_RENAMED_OLD_NAME:
+					LOG_THIS_1("FILE_ACTION_RENAMED_OLD_NAME");
+					{
+						oldIter = std::find(remDiff.begin(), remDiff.end(), fileName);
+					}
+					break;
+				default:
+					break;
+				}
+
+				if (pInfo->NextEntryOffset == 0) { break; }
+
+				pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<PBYTE>(pInfo) + pInfo->NextEntryOffset);
+			}
+
+			//Check if there is mis-catch
+			if (!addDiff.empty()) {
+				for (const auto& add : addDiff) {
+					infos.emplace_back(FILE_ACTION_ADDED, add);
+				}
+			}
+
+			if (!remDiff.empty()) {
+				for (const auto& rem : remDiff) {
+					infos.emplace_back(FILE_ACTION_REMOVED, rem);
+				}
+			}
+
+			//std::sort(infos.begin(), infos.end());
+			//infos.erase(std::unique(infos.begin(), infos.end()), infos.end());
+			if (!infos.empty()) {
+				//::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)&infos, NULL);
+				m_pControl->GetWndPtr()->GetDispatcherPtr()->SendInvoke([&]()->void
+				{
+					m_callback(DirectoryWatchEvent(infos));
+
+				});
+			}
+			delete[](PBYTE)pFileNotifyInfo;
+			m_names = fileNames;
+		}
 	}
 }
 

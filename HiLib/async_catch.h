@@ -66,7 +66,7 @@ R async_function_wrap(F&& function, R&& error, Args&&... arguments)
 //	//	}
 //	//};
 //
-//	return std::async(policy, async_action_wrap<F, Args...>, std::forward<F>(function), std::forward<Args>(arguments)...);
+//	return std::async(policy, ]<F, Args...>, std::forward<F>(function), std::forward<Args>(arguments)...);
 //};
 //
 //template <class F, class R, class... Args>

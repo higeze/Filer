@@ -2,7 +2,6 @@
 #include "Textbox.h"
 #include "EditorProperty.h"
 #include "JsonSerializer.h"
-#include "async_catch.h"
 #include "PDFDoc.h"
 
 std::string CFilerApplication::GetJsonPath()

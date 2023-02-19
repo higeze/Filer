@@ -4,6 +4,7 @@
 #include "Debug.h"
 #include "MyUniqueHandle.h"
 #include "future_then.h"
+#include "ThreadPool.h"
 
 
 /************************/
@@ -127,7 +128,7 @@ void CD2DThumbnailDrawer::DrawThumbnailBitmap(
 	};
 	
 	if (!m_pAtlasBitmap->Exist(dispName)) {
-		m_futures.emplace_back(std::async(std::launch::async, async_action_wrap<decltype(funadd)>, funadd) | then([this]()->void {}));
+		m_futures.emplace_back(CThreadPool::GetInstance()->enqueue(funadd, 0));
 	}
 	m_pAtlasBitmap->DrawBitmap(pDirect, dispName, dstRect.LeftTop());
 }

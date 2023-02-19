@@ -175,8 +175,8 @@ CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(const 
 	BITMAPINFOHEADER bmih
 	{
 		.biSize = sizeof(BITMAPINFOHEADER),
-		.biWidth = static_cast<LONG>(sz.width),
-		.biHeight = -static_cast<LONG>(sz.height),
+		.biWidth = static_cast<LONG>(std::round(sz.width)),
+		.biHeight = -static_cast<LONG>(std::round(sz.height)),
 		.biPlanes = 1,
 		.biBitCount = 32,
 		.biCompression = BI_RGB,
@@ -331,6 +331,7 @@ std::vector<std::tuple<int, int, std::vector<CRectF>>> CPDFiumMultiThread::PDFOb
 CPDFiumMultiThread::CPDFiumMultiThread(size_t threads)
 	: stop(false), spetasks(threads)
 {
+	threads = 1;
 	for (size_t i = 0; i < threads; ++i) {
 		workers.emplace_back([this]
 		{

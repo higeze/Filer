@@ -55,6 +55,7 @@ namespace std
 class CD2DPDFBitmapDrawer
 {
 	DECLARE_LAZY_GETTER(std::unique_ptr<CThreadPool>, ThreadPoolPtr);
+	DECLARE_LAZY_GETTER(CSizeU, PrimaryBitmapSize);
 
 private:
 	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasClipBitmap;
@@ -68,7 +69,12 @@ public:
 	bool DrawPDFPageClipBitmap(
 		const CDirect2DWrite* pDirect,
 		const PdfBmpKey& key,
-		const CRectF& dstRect,
+		const CPointF& dstPoint,
+		std::function<void()>&& callback);
+	bool DrawPDFPageBitmap(
+		const CDirect2DWrite* pDirect,
+		const PdfBmpKey& key,
+		const CPointF& dstRect,
 		std::function<void()>&& callback);
 	bool DrawPDFPageBitmap(
 		const CDirect2DWrite* pDirect,
@@ -76,6 +82,7 @@ public:
 		const CRectF& dstRect,
 		std::function<void()>&& callback);
 
+	bool ExistInPrimary(const PdfBmpKey&) const;
 	std::vector<PdfBmpKey> FindClipKeys(std::function<bool(const PdfBmpKey&)>&& pred);
 
 	void Clear();

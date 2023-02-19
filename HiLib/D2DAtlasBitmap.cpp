@@ -3,7 +3,7 @@
 #include "Debug.h"
 #include <VersionHelpers.h>
 #include <ntddkbd.h>
-#include "async_catch.h"
+#include "ThreadPool.h"
 
 
 
@@ -117,7 +117,7 @@ void CD2DAtlasFixedSizeBitmap::AddAsync(const std::wstring& key, std::function<C
 			funupd();
 		}
 	};
-	m_futures.emplace_back(std::async(std::launch::async, async_action_wrap<decltype(funadd)>, funadd));
+	m_futures.emplace_back(CThreadPool::GetInstance()->enqueue(funadd, 0));
 }
 bool CD2DAtlasFixedSizeBitmap::Exist(const std::wstring& key)
 {

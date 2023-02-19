@@ -339,73 +339,99 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	auto callback = [this]()->void { GetWndPtr()->GetDispatcherPtr()->PostInvoke([pWnd = GetWndPtr()]() { pWnd->InvalidateRect(NULL, FALSE); }); };
 
 	for (auto i = begin; i < end; i++){
-		CRectF rcClipInPage = Doc2Page(i, intersectRectsInDoc[i]);
-		PdfBmpKey curKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = m_scale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcClipInPage };
-		CRectU scaledRectInPage = CRectF2CRectU(rcClipInPage * m_scale);
-		//GetWndPtr()->GetDirectPtr()->SaveBitmap(L"pdf.png", pBitmap);
-		CSizeU szPixcelBmp(scaledRectInPage.Size());
-		CRectF rcBmpPaint(
-			std::round(intersectRectsInWnd[i].left),
-			std::round(intersectRectsInWnd[i].top),
-			std::round(intersectRectsInWnd[i].left) + szPixcelBmp.width,
-			std::round(intersectRectsInWnd[i].top) + szPixcelBmp.height);
+		CRectF rcClipInPage(Doc2Page(i, intersectRectsInDoc[i]));
+		CRectU rcScaledClipInWnd(CRectF2CRectU(rcClipInPage * m_scale));
+		CRectF rcFullInPage(m_pdf->GetPage(i)->GetSize());
+		CRectF rcScaledFullInPage(rcFullInPage * m_scale);
+		CSizeU szBitmap(m_pdfDrawer->GetPrimaryBitmapSize());
 
-		if (m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), curKey, rcBmpPaint, callback)) {
-			//Do nothing
-		} else {
-			const FLOAT smallScale = 0.2f;
-			CPointF ptLeftTopInPage;
-			CPointF ptLeftTopInWnd(Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, ptLeftTopInPage))));
-			CSizeF szPixcelPntBmp(m_pdf->GetPage(i)->GetSize() * m_scale);
-			PdfBmpKey smallKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = smallScale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = CRectF() };
-			rcBmpPaint.SetRect(
-				std::round(ptLeftTopInWnd.x),
-				std::round(ptLeftTopInWnd.y),
-				std::round(ptLeftTopInWnd.x) + std::round(szPixcelPntBmp.width),
-				std::round(ptLeftTopInWnd.y) + std::round(szPixcelPntBmp.height));
-			m_pdfDrawer->DrawPDFPageBitmap(GetWndPtr()->GetDirectPtr(), smallKey, rcBmpPaint, callback);
+		CSizeF szPixcelPntBmp(m_pdf->GetPage(i)->GetSize() * m_scale);
+	
+		CPointF ptDstClipInWnd(std::round(intersectRectsInWnd[i].left),
+			std::round(intersectRectsInWnd[i].top));
 
-			std::vector<PdfBmpKey> keys = m_pdfDrawer->FindClipKeys([curKey, pPage = m_pdf->GetPage(i).get(), scale = m_scale](const PdfBmpKey& key)->bool
-			{
-				return 
-					key != curKey &&
-					key.PagePtr == pPage && 
-					key.Scale == scale &&
-					key.Rotate == key.PagePtr->Rotate.get() &&
-					!key.Rect.IsRectNull();
-			});
-			for (const PdfBmpKey& key : keys) {
-				rcBmpPaint = Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, key.Rect)));
-				m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), key, rcBmpPaint, callback);
+		CPointF ptDstLeftTopInWnd(Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, CPointF()))));
+
+		CRectF rcDstInWnd(
+			std::round(ptDstLeftTopInWnd.x),
+			std::round(ptDstLeftTopInWnd.y),
+			std::round(ptDstLeftTopInWnd.x) + std::round(rcScaledFullInPage.Width()),
+			std::round(ptDstLeftTopInWnd.y) + std::round(rcScaledFullInPage.Height()));
+
+		bool drawFullPage = (rcScaledFullInPage.Width() * rcScaledFullInPage.Height()) < (szBitmap.width * szBitmap.height / 8);
+		PdfBmpKey fullKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = m_scale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcFullInPage };
+		PdfBmpKey blurKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = 0.2f, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcFullInPage };
+		PdfBmpKey clipKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = m_scale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcClipInPage };
+
+		if (drawFullPage) {
+			if (!m_pdfDrawer->DrawPDFPageBitmap(GetWndPtr()->GetDirectPtr(), fullKey, ptDstLeftTopInWnd, callback)) {
+				m_pdfDrawer->DrawPDFPageBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
 			}
-			//if (m_prevKey.PagePtr) {
-			//	rcBmpPaint = Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, m_prevKey.Rect)));
-			//	m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), m_prevKey, rcBmpPaint);
-			//}
+		} else {
+			if (m_pdfDrawer->ExistInPrimary(clipKey) &&
+				m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback)) {
+
+			} else {
+				m_pdfDrawer->DrawPDFPageBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
+				m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback);//Just order
+
+				std::vector<PdfBmpKey> keys = m_pdfDrawer->FindClipKeys([clipKey, pPage = m_pdf->GetPage(i).get(), scale = m_scale](const PdfBmpKey& key)->bool{
+					return 
+						key != clipKey &&
+						key.PagePtr == clipKey.PagePtr && 
+						key.Scale == clipKey.Scale &&
+						key.Rotate == clipKey.Rotate &&
+						!key.Rect.IsRectNull();
+				});
+				for (const PdfBmpKey& key : keys) {
+					CPointF ptClipInWnd = Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, key.Rect.LeftTop())));
+					m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback);
+				}
+			}
 		}
-		//CComPtr<ID2D1Bitmap1> pBitmap = m_pdf->GetPage(i)->GetBitmap(GetWndPtr()->GetDirectPtr(), m_scale, rcClipInPage);
-		//if (pBitmap) {
-		//	//GetWndPtr()->GetDirectPtr()->SaveBitmap(L"pdf.png", pBitmap);
-		//	CSizeU szPixcelBmp(pBitmap->GetPixelSize());
-		//	CSizeF szBmp(pBitmap->GetSize());
-		//	CRectF rcBmpPaint(
-		//		std::round(intersectRectsInWnd[i].left),
-		//		std::round(intersectRectsInWnd[i].top),
-		//		std::round(intersectRectsInWnd[i].left) + szPixcelBmp.width,
-		//		std::round(intersectRectsInWnd[i].top) + szPixcelBmp.height);
-		//	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->DrawBitmap(pBitmap, rcBmpPaint, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+
+		//CRectF rcClipInPage = Doc2Page(i, intersectRectsInDoc[i]);
+		//PdfBmpKey curKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = m_scale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcClipInPage };
+		//CRectU scaledRectInPage = CRectF2CRectU(rcClipInPage * m_scale);
+ 	//	//GetWndPtr()->GetDirectPtr()->SaveBitmap(L"pdf.png", pBitmap);
+		//CSizeU szPixcelBmp(scaledRectInPage.Size());
+		//CRectF rcBmpPaint(
+		//	std::round(intersectRectsInWnd[i].left),
+		//	std::round(intersectRectsInWnd[i].top),
+		//	std::round(intersectRectsInWnd[i].left) + szPixcelBmp.width,
+		//	std::round(intersectRectsInWnd[i].top) + szPixcelBmp.height);
+
+		////Draw small image first to load this first
+		////const FLOAT smallScale = m_scale;
+		//CPointF ptLeftTopInPage;
+		//CPointF ptLeftTopInWnd(Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, ptLeftTopInPage))));
+		//CSizeF szPixcelPntBmp(m_pdf->GetPage(i)->GetSize() * m_scale);
+		//PdfBmpKey smallKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = m_scale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcClipInPage };
+		//CRectF rcBmpPaint(
+		//	std::round(ptLeftTopInWnd.x),
+		//	std::round(ptLeftTopInWnd.y),
+		//	std::round(ptLeftTopInWnd.x) + std::round(szPixcelPntBmp.width),
+		//	std::round(ptLeftTopInWnd.y) + std::round(szPixcelPntBmp.height));
+		//m_pdfDrawer->DrawPDFPage(GetWndPtr()->GetDirectPtr(), smallKey, rcBmpPaint, callback);
+
+		////Draw clip image
+		//if (m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), curKey, rcBmpPaint, callback)) {
+		//	
+		////If not, draw past image
 		//} else {
-		//	pBitmap = m_pdf->GetPage(i)->GetSmallBitmap(GetWndPtr()->GetDirectPtr());
-		//	CPointF ptLeftTopInPage;
-		//	CPointF ptLeftTopInWnd(Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, ptLeftTopInPage))));
-		//	CSizeU szPixcelSmlBmp(pBitmap->GetPixelSize());
-		//	CSizeF szPixcelPntBmp(m_pdf->GetPage(i)->GetSize() * m_scale);
-		//	CRectF rcBmpPaint(
-		//		std::round(ptLeftTopInWnd.x),
-		//		std::round(ptLeftTopInWnd.y),
-		//		std::round(ptLeftTopInWnd.x) + std::round(szPixcelPntBmp.width),
-		//		std::round(ptLeftTopInWnd.y) + std::round(szPixcelPntBmp.height));
-		//	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->DrawBitmap(pBitmap, rcBmpPaint, 1.f, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);			
+		//	std::vector<PdfBmpKey> keys = m_pdfDrawer->FindClipKeys([curKey, pPage = m_pdf->GetPage(i).get(), scale = m_scale](const PdfBmpKey& key)->bool
+		//	{
+		//		return 
+		//			key != curKey &&
+		//			key.PagePtr == pPage && 
+		//			key.Scale == scale &&
+		//			key.Rotate == key.PagePtr->Rotate.get() &&
+		//			!key.Rect.IsRectNull();
+		//	});
+		//	for (const PdfBmpKey& key : keys) {
+		//		rcBmpPaint = Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, key.Rect)));
+		//		m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), key, rcBmpPaint, callback);
+		//	}
 		//}
 	}
 
@@ -418,10 +444,10 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 				GetRenderRectInWnd().right - m_spVScroll->GetRectInWnd().Width(),
 				GetRenderRectInWnd().top + textSize.height));
 
-	if(debug || true){
+	if(debug){
 		std::vector<int> spetskvec = m_pdf->GetPDFiumPtr()->GetQueuedSpecificTaskCounts();
 		std::wstring spetskcnts = std::to_wstring(spetskvec[0]);
-		for (auto i = 1; i < spetskvec.size(); i++) {
+		for (size_t i = 1; i < spetskvec.size(); i++) {
 			spetskcnts += L", " + std::to_wstring(spetskvec[i]);
 		}
 		std::wstring debugText = std::format(

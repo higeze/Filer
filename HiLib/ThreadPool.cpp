@@ -62,11 +62,11 @@ CThreadPool::~CThreadPool()
 	}
 }
 
-//CThreadPool* CThreadPool::GetInstance()
-//{
-//	static CThreadPool pool(4);
-//	return &pool;
-//}
+CThreadPool* CThreadPool::GetInstance()
+{
+	static CThreadPool pool(8);
+	return &pool;
+}
 
 
 
