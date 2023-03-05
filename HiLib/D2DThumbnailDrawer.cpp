@@ -7,11 +7,15 @@
 #include "ThreadPool.h"
 
 
-/************************/
-/* CShellFileIconDrawer */
-/************************/
+/********************/
+/* CThumbnailDrawer */
+/********************/
 CD2DThumbnailDrawer::CD2DThumbnailDrawer()
-	:m_pAtlasBitmap(std::make_unique<CD2DAtlasBitmap<std::wstring>>()){}
+	:m_pAtlasBitmap(std::make_unique<CD2DAtlasBitmap<ThumbnailBmpKey>>(
+	CSizeU(1024, 1024),
+	D2D1::BitmapProperties1(
+		D2D1_BITMAP_OPTIONS_NONE,
+		D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)))){}
 
 CComPtr<ID2D1Bitmap> CD2DThumbnailDrawer::GetThumbnailBitmapByThumbnailProvider(
 		const CDirect2DWrite* pDirect,
@@ -114,26 +118,28 @@ CComPtr<ID2D1Bitmap> CD2DThumbnailDrawer::GetIconBitmap(
 	return pBitmap;
 }
 
-void CD2DThumbnailDrawer::DrawThumbnailBitmap(
+bool CD2DThumbnailDrawer::DrawThumbnailBitmap(
 		const CDirect2DWrite* pDirect,
-		const std::wstring& dispName,
-		const CRectF& dstRect,
-		const UINT& thumbSize)
+		const ThumbnailBmpKey& key,
+		const CPointF& dstPoint)
 {
-	auto funadd = [pDirect, dispName, thumbSize, this]()->void
+	auto funadd = [pDirect, key, this]()->void
 	{
-		m_pAtlasBitmap->AddOrAssign(pDirect, dispName, nullptr);
-		CComPtr<ID2D1Bitmap1> pBitmap = GetThumbnailBitmapByShellImageFactory(pDirect, dispName, CSize(thumbSize, thumbSize));
-		m_pAtlasBitmap->AddOrAssign(pDirect, dispName, pBitmap);
+		CComPtr<ID2D1Bitmap1> pBitmap = GetThumbnailBitmapByShellImageFactory(pDirect, key.Name, CSize(key.Size, key.Size));
+		m_pAtlasBitmap->AddOrAssign(pDirect, key, pBitmap);
 	};
 	
-	if (!m_pAtlasBitmap->Exist(dispName)) {
-		m_futures.emplace_back(CThreadPool::GetInstance()->enqueue(funadd, 0));
+	if (!m_pAtlasBitmap->Exist(key)) {
+		m_pAtlasBitmap->AddOrAssign(pDirect, key, nullptr);
+		m_futureGroup.emplace_back(CThreadPool::GetInstance()->enqueue(funadd, 0));
+		return false;
+	} else {
+		return m_pAtlasBitmap->DrawBitmap(pDirect, key, dstPoint);
 	}
-	m_pAtlasBitmap->DrawBitmap(pDirect, dispName, dstRect.LeftTop());
 }
 
 void CD2DThumbnailDrawer::Clear()
 {
 	m_pAtlasBitmap->Clear();
+	m_futureGroup.clean_up();
 }

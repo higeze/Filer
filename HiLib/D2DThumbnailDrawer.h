@@ -20,11 +20,42 @@ namespace std
 	};
 }
 
+struct ThumbnailBmpKey
+{
+	UINT32 Size;
+	std::wstring Name;
+
+	std::size_t GetHashCode() const
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, std::hash<decltype(Size)>()(Size));
+		boost::hash_combine(seed, std::hash<decltype(Name)>()(Name));
+		return seed;
+	}
+
+	bool operator==(const ThumbnailBmpKey& key) const
+	{
+		return Size == key.Size && Name == key.Name;
+	}
+};
+
+namespace std
+{
+	template <>
+	struct hash<ThumbnailBmpKey>
+	{
+		std::size_t operator() (ThumbnailBmpKey const & key) const
+		{
+			return key.GetHashCode();
+		}
+	};
+}
+
 class CD2DThumbnailDrawer
 {
 private:
-	std::unique_ptr<CD2DAtlasBitmap<std::wstring>> m_pAtlasBitmap;
-	std::vector<std::future<void>> m_futures;
+	std::unique_ptr<CD2DAtlasBitmap<ThumbnailBmpKey>> m_pAtlasBitmap;
+	future_group<void> m_futureGroup;
 
 public:
 	CD2DThumbnailDrawer();
@@ -48,10 +79,9 @@ public:
 		const CDirect2DWrite* pDirect,
 		const std::wstring& dispName);
 
-	void DrawThumbnailBitmap(
+	bool DrawThumbnailBitmap(
 		const CDirect2DWrite* pDirect,
-		const std::wstring& dispName,
-		const CRectF& dstRect,
-		const UINT& thumbSize);
+		const ThumbnailBmpKey& key,
+		const CPointF& dstPoint);
 	void Clear();
 };

@@ -10,6 +10,36 @@ class CIcon;
 class CShellFile;
 //class CIDLPtr;
 
+template<class _Ty>
+class future_group
+{
+private:
+	std::vector<std::future<_Ty>> m_futures;
+public:
+	future_group() = default;
+	~future_group()
+	{
+		wait_all();
+	}
+	size_t size() const 
+	{ 
+		return m_futures.size();
+	}
+	template <class... _Valty>
+	decltype(auto) emplace_back(_Valty&&... _Val)
+	{
+		return m_futures.emplace_back(std::forward<_Valty>(_Val)...);
+	}
+	void clean_up()
+	{
+		m_futures.erase(std::remove_if(m_futures.begin(), m_futures.end(), [](const std::future<void>& ftr)->bool { return ftr.valid(); }), m_futures.end());
+	}
+	void wait_all()
+	{
+		std::for_each(m_futures.begin(), m_futures.end(), [](const std::future<_Ty>& ftr) { ftr.wait(); });
+	}
+};
+
 template<typename Key, typename Value>
 class lockable_unordered_map : public std::unordered_map<Key, Value>
 {

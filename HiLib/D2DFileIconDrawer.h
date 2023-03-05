@@ -13,18 +13,25 @@ class CD2DFileIconDrawer
 {
 private:
 	bool m_isWin10;
-	CDirect2DWrite* m_pDirect;
 	std::unordered_set<std::wstring> m_excludeExtSet;
-	std::unique_ptr<CD2DAtlasFixedSizeBitmap> m_pAtlasBitmap;
+	std::unique_ptr<CD2DAtlasBitmap<std::wstring>> m_pAtlasBitmap;
+	future_group<void> m_futureGroup;
 
 	CIcon GetDefaultIcon() const;
 	CIcon GetIcon(const CIDL& absoluteIDL) const;
-	CComPtr<ID2D1Bitmap> GetBitmapFromIcon(const CIcon& icon) const;
+	CComPtr<ID2D1Bitmap1> GetBitmapFromIcon(const CDirect2DWrite* pDirect, const CIcon& icon) const;
 
 public:
-	CD2DFileIconDrawer(CDirect2DWrite* pDirect);
+	CD2DFileIconDrawer();
 	~CD2DFileIconDrawer() = default;
 
-	void DrawFileIconBitmap(const CRectF& dstRect, const CIDL& absoluteIDL, const std::wstring& path, const std::wstring& ext, const DWORD& data, std::function<void()> funupd);
+	bool DrawFileIconBitmap(
+		const CDirect2DWrite* pDirect,
+		const CPointF& dstPoint,
+		const CIDL& absoluteIDL,
+		const std::wstring& path,
+		const std::wstring& ext,
+		const DWORD& data,
+		std::function<void()>&& callback);
 	void Clear();
 };

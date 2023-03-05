@@ -10,7 +10,7 @@
 #include "FileColumn.h"
 #include "FileSizeColumn.h"
 #include "FileLastWriteColumn.h"
-#include "FileThumbnailColumn.h"
+#include "IImageColumn.h"
 #include "shlwapi.h"
 
 #include "SheetEventArgs.h"
@@ -152,14 +152,14 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 			m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this);
 			m_allCols.idx_push_back(m_pHeaderColumn);
 		}
-		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileDispNameColumn<std::shared_ptr<CShellFile>>); })) 
+		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); })) 
 		{ 
-			m_pNameColumn = std::make_shared<CFileDispNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
+			m_pNameColumn = std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
 			m_allCols.idx_push_back(m_pNameColumn);
 		}
-		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileThumbnailColumn<std::shared_ptr<CShellFile>>); })) {
-			m_allCols.idx_push_back(std::make_shared<CFileThumbnailColumn<std::shared_ptr<CShellFile>>>(this));
-		}
+		//if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); })) {
+		//	m_allCols.idx_push_back(std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this));
+		//}
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileDispExtColumn<std::shared_ptr<CShellFile>>); })) {
 			m_allCols.idx_push_back(std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"));
 		}
@@ -424,7 +424,7 @@ void CFilerGridView::Added(const std::wstring& fileName)
 		PostUpdate(Updates::Sort);
 		FilterAll();
 		if (m_isNewFile) {
-			std::static_pointer_cast<CFileIconDispNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, m_pNameColumn))->OnEdit(Event(GetWndPtr()));
+			std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, m_pNameColumn))->OnEdit(Event(GetWndPtr()));
 		}
 		m_isNewFile = false;
 	}
@@ -587,7 +587,7 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 	case VK_F2:
 		{
 			if (m_spCursorer->GetFocusedCell()) {
-				std::static_pointer_cast<CFileIconDispNameCell<std::shared_ptr<CShellFile>>>(Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(Event(GetWndPtr()));
+				std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(Event(GetWndPtr()));
 				(*e.HandledPtr) = true;
 			}
 		}
@@ -1000,6 +1000,28 @@ void CFilerGridView::OnDirectoryWatch(const DirectoryWatchEvent& e)
 	}
 	
 	SubmitUpdate();
+}
+
+void CFilerGridView::OnMouseWheel(const MouseWheelEvent& e)
+{
+	bool ctrl = (::GetKeyState(VK_CONTROL) & 0x80) != 0;
+	if (ctrl) {
+		bool changed = false;
+		std::for_each(m_allCols.cbegin(), m_allCols.cend(), [&](const std::shared_ptr<CColumn>& spCol)->void {
+			if (auto p = std::dynamic_pointer_cast<IImageColumn>(spCol)) {
+				UINT32 size = static_cast<UINT32>(std::clamp(static_cast<int>(p->GetImageSize()) + 16l * e.Delta / WHEEL_DELTA, 16l, 256l));
+				if (p->GetImageSize() != size) {
+					p->SetImageSize(size);
+					changed = true;
+				}
+			}
+		});
+		if (changed) {
+			Reload();
+		}
+	} else {
+		CGridView::OnMouseWheel(e);
+	}
 }
 
 bool CFilerGridView::InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<std::shared_ptr<CShellFile>> files)

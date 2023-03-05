@@ -326,7 +326,6 @@
     <ClInclude Include="..\HiLib\FileDragger.h" />
     <ClInclude Include="..\HiLib\D2DAtlasBitmap.h" />
     <ClInclude Include="..\HiLib\FileIsInUse.h" />
-    <ClInclude Include="..\HiLib\FileThumbnailColumn.h" />
     <ClInclude Include="..\HiLib\FilterCell.h" />
     <ClInclude Include="..\HiLib\FindDlg.h" />
     <ClInclude Include="..\HiLib\FindDlgResource.h" />
@@ -468,7 +467,7 @@
     <ClInclude Include="ExeExtensionProperty.h" />
     <ClInclude Include="FilerApplication.h" />
     <ClInclude Include="FilerWndStatusBar.h" />
-    <ClInclude Include="FileThumbnailCell.h" />
+    <ClInclude Include="IImageColumn.h" />
     <ClInclude Include="Launcher.h" />
     <ClInclude Include="LauncherItemDragger.h" />
     <ClInclude Include="LauncherProperty.h" />

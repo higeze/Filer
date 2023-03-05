@@ -313,7 +313,7 @@
 
 	//CDirect2DWrite
 	CDirect2DWrite::CDirect2DWrite(HWND hWnd)
-		:m_hWnd(hWnd), m_hDC(nullptr), m_pIconDrawer(std::make_unique<CD2DFileIconDrawer>(this)), m_pThumbnailDrawer(std::make_unique<CD2DThumbnailDrawer>())
+		:m_hWnd(hWnd), m_hDC(nullptr), m_pIconDrawer(std::make_unique<CD2DFileIconDrawer>()), m_pThumbnailDrawer(std::make_unique<CD2DThumbnailDrawer>())
 	{
 		GetD3DDevices = [p = CComPtr<ID3D11Device1>(), q = CComPtr<ID3D11DeviceContext1>(), this]() mutable->std::tuple<CComPtr<ID3D11Device1>&, CComPtr<ID3D11DeviceContext1>&>
 		{

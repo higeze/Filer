@@ -26,7 +26,7 @@ public:
 			rc.bottom = rc.top + pDirect->Pixels2DipsY(16);
 			rc.right = rc.left + pDirect->Pixels2DipsX(16);
 
-			std::function<void()> updated = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileIconCell>(shared_from_this()))]()->void {
+			auto updated = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileIconCell>(shared_from_this()))]()->void {
 				if (auto sp = wp.lock()) {
 					sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
 						[wp]()->void {
@@ -37,7 +37,7 @@ public:
 					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 				}
 			};
-			pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(rc, spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(),spFile->GetAttributes(), updated);
+			pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(pDirect, rc.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(),spFile->GetAttributes(), updated);
 		}
 	}
 

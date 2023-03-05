@@ -61,7 +61,7 @@ private:
 	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasClipBitmap;
 	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasSmallBitmap;
 	shared_lock_property<PdfBmpKey> m_curClipKey;
-	std::vector<std::future<void>> m_futures;
+	future_group<void> m_futureGroup;
 public:
 	CD2DPDFBitmapDrawer();
 	~CD2DPDFBitmapDrawer();
@@ -86,6 +86,6 @@ public:
 	std::vector<PdfBmpKey> FindClipKeys(std::function<bool(const PdfBmpKey&)>&& pred);
 
 	void Clear();
-	void CleanFutures();
+	//void CleanFutures();
 	void WaitAll();
 };

@@ -809,20 +809,17 @@
     <ClInclude Include="..\HiLib\FileIsInUse.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\FileThumbnailColumn.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\D2DThumbnailDrawer.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="FileThumbnailCell.h">
-      <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\D2DPDFBitmapDrawer.h">
       <Filter>HiLib\PDF</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\PDFiumMultiThread.h">
       <Filter>HiLib\PDF</Filter>
+    </ClInclude>
+    <ClInclude Include="IImageColumn.h">
+      <Filter>Filer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

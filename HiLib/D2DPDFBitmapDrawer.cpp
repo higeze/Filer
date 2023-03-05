@@ -91,7 +91,7 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageClipBitmap(
 		::OutputDebugString(std::format(L"NOT EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
 			(LONG)(key.PagePtr), key.Scale, key.Rect.left, key.Rect.top, key.Rect.right, key.Rect.bottom).c_str());
 		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, nullptr);
-		m_futures.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
+		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
 		return false;
 	} else {
 		::OutputDebugString(std::format(L"EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
@@ -115,7 +115,7 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageBitmap(
 	
 	if (!m_pAtlasClipBitmap->Exist(key)) {
 		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, nullptr);
-		m_futures.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
+		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
 		return false;
 	} else {
 		return m_pAtlasClipBitmap->DrawBitmap(pDirect, key, dstPoint);
@@ -137,7 +137,7 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageBitmap(
 	
 	if (!m_pAtlasSmallBitmap->Exist(key)) {
 		m_pAtlasSmallBitmap->AddOrAssign(pDirect, key, nullptr);
-		m_futures.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 10));
+		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 10));
 		return false;
 	} else {
 		return m_pAtlasSmallBitmap->DrawBitmap(pDirect, key, dstRect);
@@ -161,17 +161,15 @@ void CD2DPDFBitmapDrawer::Clear()
 {
 	m_pAtlasClipBitmap->Clear();
 	m_pAtlasSmallBitmap->Clear();
-	CleanFutures();
+	m_futureGroup.clean_up();
 }
 
-void CD2DPDFBitmapDrawer::CleanFutures()
-{
-	m_futures.erase(std::remove_if(m_futures.begin(), m_futures.end(), [](const std::future<void>& ftr)->bool { return ftr.valid(); }), m_futures.end());
-}
+//void CD2DPDFBitmapDrawer::CleanFutures()
+//{
+//	m_futureGroup.clean_up();
+//}
 
 void CD2DPDFBitmapDrawer::WaitAll()
 {
-	for (const auto& ftr : m_futures) {
-		ftr.wait();
-	}
+	m_futureGroup.wait_all();
 }

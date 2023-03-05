@@ -12,7 +12,6 @@
 #include "FileColumn.h"
 #include "FileSizeColumn.h"
 #include "FileLastWriteColumn.h"
-#include "FileThumbnailColumn.h"
 #include "MyXMLSerializer.h"
 #include "ShellFile.h"
 #include "ShellFolder.h"

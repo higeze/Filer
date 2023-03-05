@@ -1,25 +1,30 @@
 #pragma once
 #include "TextCell.h"
+#include "IImageColumn.h"
 #include "CellTextBox.h"
 #include "Direct2DWrite.h"
+
 #include "D2DFileIconDrawer.h"
+#include "D2DThumbnailDrawer.h"
 
 class CShellFile;
+//template <typename... TItems> class CFileNameColumn;
 
 /*************************/
 /* CFileIconNameCellBase */
 /*************************/
 template<typename... TItems>
-class CFileIconNameCellBase :public CTextCell//, public std::enable_shared_from_this<CFileIconNameCellBase<TItems...>>
+class CFileNameCellBase :public CTextCell//, public std::enable_shared_from_this<CFileIconNameCellBase<TItems...>>
 {
 protected:
 	mutable sigslot::connection m_conDelayUpdateAction;
-public:
-	CFileIconNameCellBase(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit){ }
-	virtual ~CFileIconNameCellBase() = default;
 
-	virtual std::shared_ptr<CShellFile> GetShellFile()
+public:
+	CFileNameCellBase(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit){ }
+	virtual ~CFileNameCellBase() = default;
+protected:
+	std::shared_ptr<CShellFile> GetShellFile()
 	{
 		if (auto pBindRow = dynamic_cast<CBindRow<TItems...>*>(m_pRow)) {
 			return std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems());
@@ -28,91 +33,20 @@ public:
 		}
 	}
 
-	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override
+	UINT32 GetImageSize() const
 	{
-		//Paint Icon
-		auto spFile = GetShellFile();
-		CRectF rcIcon = GetIconSizeF(pDirect);
-		rcIcon.MoveToXY(rcPaint.left, rcPaint.top);
-
-		std::function<void()> updated = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileIconNameCellBase>(shared_from_this())) ]()->void {
-			if (auto sp = wp.lock()) {
-				sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
-					[wp]()->void {
-						if (auto sp = wp.lock()) {
-							sp->OnPropertyChanged(L"value");
-						}
-					});
-				sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
-			}
-		};
-
-		pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(rcIcon, spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
-
-		//Space
-		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
-
-		//Paint Text
-		CRectF rcText(rcIcon.right + space, rcPaint.top, rcPaint.right, rcPaint.bottom);
-		CTextCell::PaintContent(pDirect, rcText);
+		if (auto p = dynamic_cast<IImageColumn*>(this->m_pColumn)) {
+			return p->GetImageSize();
+		} else {
+			return 0;
+		}
 	}
 
-	virtual CSizeF MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect) override
+	FLOAT GetImageSizeF() const
 	{
-		//Calc Icon Size
-		CSizeF iconSize(GetIconSizeF(pDirect));
-		//Space
-		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
-		//Calc Text Size
-		CRectF rcCenter(0, 0, m_pColumn->GetWidth(), 0);
-		CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
-
-		CSizeF textSize = pDirect->CalcTextSizeWithFixedWidth(*(m_spCellProperty->Format), GetViewString(), rcContent.Width() - iconSize.width - space);
-		//Return
-		return CSizeF(iconSize.width + space + textSize.width, (std::max)(iconSize.height, textSize.height));
+		return static_cast<FLOAT>(GetImageSize());
 	}
 
-	virtual CSizeF MeasureContentSize(CDirect2DWrite* pDirect) override
-	{
-		//Calc Icon Size
-		CSizeF iconSize(GetIconSizeF(pDirect));
-		//Space
-		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
-		//Calc Text Size
-		CSizeF textSize = pDirect->CalcTextSize(*(m_spCellProperty->Format), GetViewString());
-		//Return
-		return CSizeF(iconSize.width + space + textSize.width, (std::max)(iconSize.height, textSize.height));
-	}
-
-	virtual CRectF GetEditRect() const override
-	{
-		//Icon Size
-		CSizeF iconSize(GetIconSizeF(m_pSheet->GetWndPtr()->GetDirectPtr()));
-		//Space
-		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
-		//Edit Rect
-		CRectF rcEdit(GetRectInWnd());
-		rcEdit.left += iconSize.width + space;
-		return rcEdit;
-	}
-
-	virtual void OnEdit(const Event& e) override
-	{
-		m_pSheet->GetGridPtr()->BeginEdit(this);
-	}
-
-	virtual bool CanSetStringOnEditing()const override { return false; }
-
-protected:
-	CSizeF GetIconSizeF(CDirect2DWrite* pDirect)const
-	{
-		return pDirect->Pixels2Dips(GetIconSize(pDirect));
-	}
-
-	CSize GetIconSize(CDirect2DWrite* pDirect)const
-	{
-		return CSize(16, 16);
-	}
 	std::wstring GetViewString()
 	{
 		std::wstring text;
@@ -125,16 +59,93 @@ protected:
 
 		return text;
 	}
+public:
+	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override
+	{
+		//Paint Image
+		std::shared_ptr<CShellFile> spFile = this->GetShellFile();
+		UINT32 size = this->GetImageSize();
+
+		auto updated = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileNameCell<TItems...>>(shared_from_this())) ]()->void {
+			if (auto sp = wp.lock()) {
+				sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					[wp]()->void {
+						if (auto sp = wp.lock()) {
+							sp->OnPropertyChanged(L"value");
+						}
+					});
+				sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+			}
+		};
+
+		if (size == 16u) {
+			pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(pDirect, rcPaint.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
+		} else {
+			pDirect->GetFileThumbnailDrawerPtr()->DrawThumbnailBitmap(pDirect, ThumbnailBmpKey{.Size = size , .Name = spFile->GetPath()}, rcPaint.LeftTop());
+		}
+
+		//Space
+		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
+
+		//Paint Text
+		CRectF rcText(rcPaint.left + size + space, rcPaint.top, rcPaint.right, rcPaint.bottom);
+		CTextCell::PaintContent(pDirect, rcText);
+	}
+
+	virtual CSizeF MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect) override
+	{
+		//Calc Icon Size
+		CSizeF imageSize(this->GetImageSizeF(), this->GetImageSizeF());
+		//Space
+		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
+		//Calc Text Size
+		CRectF rcCenter(0, 0, m_pColumn->GetWidth(), 0);
+		CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
+		CSizeF textSize = pDirect->CalcTextSizeWithFixedWidth(*(m_spCellProperty->Format), GetViewString(), rcContent.Width() - imageSize.width - space);
+		//Return
+		return CSizeF(imageSize.width + space + textSize.width, (std::max)(imageSize.height, textSize.height));
+	}
+
+	virtual CSizeF MeasureContentSize(CDirect2DWrite* pDirect) override
+	{
+		//Calc Icon Size
+		CSizeF imageSize(this->GetImageSizeF(), this->GetImageSizeF());
+		//Space
+		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
+		//Calc Text Size
+		CSizeF textSize = pDirect->CalcTextSize(*(m_spCellProperty->Format), GetViewString());
+		//Return
+		return CSizeF(imageSize.width + space + textSize.width, (std::max)(imageSize.height, textSize.height));
+	}
+
+	virtual CRectF GetEditRect() const override
+	{
+		//Icon Size
+		CSizeF imageSize(this->GetImageSizeF(), this->GetImageSizeF());
+		//Space
+		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
+		//Edit Rect
+		CRectF rcEdit(GetRectInWnd());
+		rcEdit.left += imageSize.width + space;
+		return rcEdit;
+	}
+
+	virtual void OnEdit(const Event& e) override
+	{
+		m_pSheet->GetGridPtr()->BeginEdit(this);
+	}
+
+	virtual bool CanSetStringOnEditing()const override { return false; }
 };
 
-/*************************/
-/* CFileIconDispNameCell */
-/*************************/
+/*****************/
+/* CFileNameCell */
+/*****************/
 template<typename... TItems>
-class CFileIconDispNameCell:public CFileIconNameCellBase<TItems...>
+class CFileNameCell:public CFileNameCellBase<TItems...>
 {
 public:
-	using CFileIconNameCellBase<TItems...>::CFileIconNameCellBase;
+	using CFileNameCellBase<TItems...>::CFileNameCellBase;
 	virtual std::wstring GetString() override
 	{
 		auto pBindRow = static_cast<CBindRow<TItems...>*>(this->m_pRow);
@@ -153,10 +164,10 @@ public:
 /* CFileIconPathNameCell */
 /*************************/
 template<typename... TItems>
-class CFileIconPathNameCell :public CFileIconNameCellBase<TItems...>
+class CFileIconPathNameCell :public CFileNameCellBase<TItems...>
 {
 public:
-	using CFileIconNameCellBase<TItems...>::CFileIconNameCellBase;
+	using CFileNameCellBase<TItems...>::CFileNameCellBase;
 
 	virtual std::wstring GetString() override
 	{
@@ -175,10 +186,10 @@ public:
 /* CFileIconPathCell */
 /*********************/
 template<typename... TItems>
-class CFileIconPathCell :public CFileIconNameCellBase<TItems...>
+class CFileIconPathCell :public CFileNameCellBase<TItems...>
 {
 public:
-	using CFileIconNameCellBase<TItems...>::CFileIconNameCellBase;
+	using CFileNameCellBase<TItems...>::CFileNameCellBase;
 
 	virtual std::wstring GetString() override
 	{
