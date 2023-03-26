@@ -654,8 +654,8 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		m_imageVScrollBinding.Attach(spViewModel->VScroll, spView->GetImageViewPtr()->GetVScrollPtr()->PropScrollPos());
 		m_imageHScrollBinding.Attach(spViewModel->HScroll, spView->GetImageViewPtr()->GetHScrollPtr()->PropScrollPos());
 
-		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
 		spView->GetImageViewPtr()->Open(spViewModel->Image.get().GetPath());
+		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
 
 		return spView;
 	});

@@ -289,3 +289,4 @@ using CPointU = CPointT<D2D1_RECT_U, D2D1_SIZE_U, D2D1_POINT_2U, UINT32>;
 CRectF CRectU2CRectF(const CRectU& rc);
 CRectU CRectF2CRectU(const CRectF& rc);
 CSizeU CSizeF2CSizeU(const CSizeF& sz);
+CSizeF CSizeU2CSizeF(const CSizeU& sz);

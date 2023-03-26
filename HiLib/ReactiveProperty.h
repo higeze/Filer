@@ -823,6 +823,12 @@ class CBinding
 public:
 	CBinding() {}
 
+	template<typename T, typename U>
+	CBinding(IReactiveProperty<T>& source, IReactiveProperty<U>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		Attach(source, target, idSource, idTarget);
+	}
+
 	template<typename T>
 	void Attach(IReactiveProperty<T>& source, IReactiveProperty<T>& target, const BindingMode& mode = BindingMode::TwoWay, const sigslot::group_id idSource = 0, const sigslot::group_id idTarget = 0)
 	{
@@ -848,10 +854,29 @@ public:
 		}
 	}
 
-	template<typename T>
-	CBinding(IReactiveProperty<T>& source, IReactiveProperty<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	template<typename T, typename U>
+	void Attach(IReactiveProperty<T>& source, IReactiveProperty<U>& target, const BindingMode& mode = BindingMode::TwoWay, const sigslot::group_id idSource = 0, const sigslot::group_id idTarget = 0)
 	{
-		Attach(source, target, idSource, idTarget);
+		if (m_sourceConnection.connected()) { m_sourceConnection.disconnect(); }
+		if (m_targetConnection.connected()) { m_targetConnection.disconnect(); }
+
+
+		if (mode == BindingMode::TwoWay || mode == BindingMode::OneWay) {
+			target.set(source.get());
+	
+			m_sourceConnection = source.Subscribe(
+				[&](T value)->void
+				{
+						target.set(boost::lexical_cast<T>(value));
+				}, idSource);
+		}
+		if (mode == BindingMode::TwoWay || mode == BindingMode::OneWayToSource) {
+			m_targetConnection = target.Subscribe(
+				[&](T value)->void
+				{
+						source.set(boost::lexical_cast<U>(value));
+				});
+		}
 	}
 
 	template<typename T,typename CharT> void copy_notify_string_changed( T& target, const NotifyStringChangedEventArgs<CharT>& e)
@@ -900,8 +925,36 @@ public:
 			});
 	}
 
+	template <class CharT, class Traits, class Allocator, class T>
+	void Attach(ReactiveBasicStringProperty<CharT, Traits, Allocator>& source, ReactiveProperty<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		if (m_sourceConnection.connected()) { m_sourceConnection.disconnect(); }
+		if (m_targetConnection.connected()) { m_targetConnection.disconnect(); }
+		target.set(boost::lexical_cast<T>(source.get()));
+		m_sourceConnection = source.Subscribe(
+			[&](const NotifyStringChangedEventArgs<CharT>& notify)->void
+			{
+				if (target.get() != boost::lexical_cast<T>(source.get())) {
+					target.set(boost::lexical_cast<T>(source.get()));
+				}
+			}, idSource);
+		m_targetConnection = target.Subscribe(
+			[&](const T& value)->void
+			{
+				if (boost::lexical_cast<std::basic_string<CharT, Traits, Allocator>>(value) != source.get()) {
+					source.set(boost::lexical_cast<std::basic_string<CharT, Traits, Allocator>>(value));
+				}
+			});
+	}
+
 	template <class CharT, class Traits, class Allocator>
 	CBinding(ReactiveBasicStringProperty<CharT, Traits, Allocator>& source, ReactiveBasicStringProperty<CharT, Traits, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		Attach(source, target, idSource, idTarget);
+	}
+
+	template <class CharT, class Traits, class Allocator, class T>
+	CBinding(ReactiveBasicStringProperty<CharT, Traits, Allocator>& source, ReactiveProperty<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
 	{
 		Attach(source, target, idSource, idTarget);
 	}

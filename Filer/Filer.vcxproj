@@ -342,6 +342,7 @@
     <ClInclude Include="..\HiLib\IDoCommand.h" />
     <ClInclude Include="..\HiLib\IDragger.h" />
     <ClInclude Include="..\HiLib\IKeyObserver.h" />
+    <ClInclude Include="..\HiLib\ImageDrawer.h" />
     <ClInclude Include="..\HiLib\ImageEditor.h" />
     <ClInclude Include="..\HiLib\ImageEditorProperty.h" />
     <ClInclude Include="..\HiLib\ImageView.h" />
@@ -564,6 +565,7 @@
     <ClCompile Include="..\HiLib\GridView.cpp" />
     <ClCompile Include="..\HiLib\GridViewStateMachine.cpp" />
     <ClCompile Include="..\HiLib\IDL.cpp" />
+    <ClCompile Include="..\HiLib\ImageDrawer.cpp" />
     <ClCompile Include="..\HiLib\ImageEditor.cpp" />
     <ClCompile Include="..\HiLib\ImageView.cpp" />
     <ClCompile Include="..\HiLib\ImageViewStateMachine.cpp" />

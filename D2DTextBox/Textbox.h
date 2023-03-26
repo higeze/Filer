@@ -87,6 +87,7 @@ protected:
 	/*********/
 	//ReactiveProperty
 	ReactiveWStringProperty m_text;
+	ReactiveWStringProperty m_enterText;
 	ReactiveProperty<CPointF> m_caretPoint;
 	ReactiveTupleProperty<int, int, int, int, int> m_carets;
 
@@ -95,6 +96,7 @@ protected:
 	std::unique_ptr<CVScroll> m_pVScroll;
 	std::unique_ptr<CHScroll> m_pHScroll;
 	/* Other */
+	bool m_isEnterText = false;
 	bool m_hasBorder = true;
 	bool m_isScrollable = false;
 	bool m_bCaret = false;
@@ -129,7 +131,9 @@ public:
 	// Getter
 	void SetHasBorder(bool value) { m_hasBorder = value; }
 	void SetIsScrollable(bool value){ m_isScrollable = value; }
+	void SetIsEnterText(bool value){ m_isEnterText = value; }
 	ReactiveWStringProperty& GetText() { return m_text; }
+	ReactiveWStringProperty& GetEnterText() { return m_enterText; }
 	ReactiveProperty<CPointF>& GetCaretPos() { return m_caretPoint; }
 	ReactiveTupleProperty<int, int, int, int, int>& GetCarets() { return m_carets; }
 

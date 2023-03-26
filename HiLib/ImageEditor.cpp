@@ -21,34 +21,79 @@ CImageEditor::CImageEditor(
 	:CD2DWControl(pParentControl),
 	m_spProp(spProp),
 	m_spImageView(std::make_shared<CImageView>(this, spProp->ImageViewPropPtr)),
-	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr))
+	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr)),
+	m_spScaleBox(std::make_shared<CTextBox>(this, spProp->TextBoxPropPtr, L"0"))//,
+	//m_bindScaleText(m_spScaleBox->GetEnterText(), m_spImageView->GetScale())
 {
-	m_spStatusBar->GetIsFocusable().set(false);
+
+
+	//m_spStatusBar->GetIsFocusable().set(false);
 }
 
-std::tuple<CRectF, CRectF> CImageEditor::GetRects() const
+std::tuple<CRectF, CRectF, CRectF> CImageEditor::GetRects() const
 {
 	CRectF rcClient = GetRectInWnd();
 
+	FLOAT scaleHeight = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_spScaleBox->GetTextBoxPropertyPtr()->Format), L"").height
+		+ m_spScaleBox->GetTextBoxPropertyPtr()->Padding->top + m_spScaleBox->GetTextBoxPropertyPtr()->Padding->bottom + m_spScaleBox->GetTextBoxPropertyPtr()->Line->Width;
+
 	FLOAT statusHeight = m_spStatusBar->MeasureSize(GetWndPtr()->GetDirectPtr()).height;
-	CRectF rcImage(rcClient.left, rcClient.top, rcClient.right, rcClient.bottom - statusHeight);
+	CRectF rcScale(rcClient.left, rcClient.top, rcClient.right, rcClient.top + scaleHeight);
+	CRectF rcImage(rcClient.left, rcClient.top + scaleHeight + 2.f, rcClient.right, rcClient.bottom - statusHeight);
 	CRectF rcStatus(rcClient.left, rcImage.bottom, rcClient.right, rcClient.bottom);
 
-	return { rcImage, rcStatus };
+	return { rcScale, rcImage, rcStatus };
 }
 
 
 void CImageEditor::OnCreate(const CreateEvt& e)
 {
 	CD2DWControl::OnCreate(e);
-	auto [rcImage, rcStatus] = GetRects();
+	auto [rcScale, rcImage, rcStatus] = GetRects();
+	m_spScaleBox->OnCreate(CreateEvt(GetWndPtr(), this, rcScale));
 	m_spImageView->OnCreate(CreateEvt(GetWndPtr(), this, rcImage));
 	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
 	m_spImageView->SetIsTabStop(true);
+
+	m_spScaleBox->SetIsEnterText(true);
+
+	auto ratio_to_percent = [](const FLOAT& value)->std::wstring {
+		return std::format(L"{:.1f}", std::round(value * 1000.f) / 1000.f * 100.f).c_str();
+	};
+
+	auto percent_to_ratio = [](const std::wstring& percent)->FLOAT {
+		wchar_t* stopstring;
+		return std::round(std::wcstof(percent.c_str(), &stopstring) * 1000.f) / 1000.f / 100.f;
+	};
+
+	m_spScaleBox->GetText().set(ratio_to_percent(m_spImageView->GetScale().get()));
+	m_spImageView->GetScale().Subscribe(
+	[&](const FLOAT& ratio)->void{
+		std::wstring percent = ratio_to_percent(ratio);
+		if (percent != m_spScaleBox->GetText().get()) {
+			m_spScaleBox->GetText().set(percent);
+		}
+	});
+
+	m_spScaleBox->GetEnterText().Subscribe(
+	[&](const NotifyStringChangedEventArgs<wchar_t>& notify)->void {
+		FLOAT ratio = percent_to_ratio(m_spScaleBox->GetText().get());
+		if (ratio != m_spImageView->GetScale().get()) {
+			//Validate
+			if(ratio == 0.f || m_spImageView->GetMinScale() > ratio || m_spImageView->GetMaxScale() < ratio){ 
+				m_spScaleBox->GetText().set(ratio_to_percent(m_spImageView->GetScale().get()));
+			} else {
+				m_spImageView->GetScale().set(ratio);
+			}
+		}
+	});
+
+
 }
 
 void CImageEditor::OnPaint(const PaintEvent& e)
 {
+	m_spScaleBox->OnPaint(e);
 	m_spImageView->OnPaint(e);
 	m_spStatusBar->OnPaint(e);
 }
@@ -56,7 +101,8 @@ void CImageEditor::OnPaint(const PaintEvent& e)
 void CImageEditor::OnRect(const RectEvent& e)
 {
 	CD2DWControl::OnRect(e);
-	auto [rcImage, rcStatus] = GetRects();
+	auto [rcScale, rcImage, rcStatus] = GetRects();
+	m_spScaleBox->OnRect(RectEvent(GetWndPtr(), rcScale));
 	m_spImageView->OnRect(RectEvent(GetWndPtr(), rcImage));
 	m_spStatusBar->OnRect(RectEvent(GetWndPtr(), rcStatus));
 }

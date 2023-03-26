@@ -368,12 +368,11 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 				m_pdfDrawer->DrawPDFPageBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
 			}
 		} else {
-			if (m_pdfDrawer->ExistInPrimary(clipKey) &&
-				m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback)) {
+			if (m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback)) {
 
 			} else {
 				m_pdfDrawer->DrawPDFPageBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
-				m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback);//Just order
+				//m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback);//Just order
 
 				std::vector<PdfBmpKey> keys = m_pdfDrawer->FindClipKeys([clipKey, pPage = m_pdf->GetPage(i).get(), scale = m_scale](const PdfBmpKey& key)->bool{
 					return 

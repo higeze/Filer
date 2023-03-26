@@ -28,6 +28,7 @@
 
 class CVScroll;
 class CHScroll;
+class CImageDrawer;
 #include "D2DImage.h"
 
 enum class ImageScaleMode
@@ -55,6 +56,9 @@ public:
 	/*********/
 protected:
 
+	FLOAT m_minScale = 0.1f;
+	FLOAT m_maxScale = 8.f;
+
 	CRectF m_rect;
 	std::shared_ptr<ImageViewProperty> m_pProp;
 	
@@ -71,6 +75,7 @@ protected:
 	std::unique_ptr<CImageViewStateMachine> m_pMachine;
 
 	ImageScaleMode m_initialScaleMode;
+	std::unique_ptr<CImageDrawer> m_imgDrawer;
 
 
 public:
@@ -82,6 +87,9 @@ public:
 	ReactiveProperty<FLOAT>& GetScale() { return m_scale; }
 	ReactiveWStringProperty& GetFind() { return m_find; }
 	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
+
+	FLOAT GetMinScale() const { return m_minScale; }
+	FLOAT GetMaxScale() const { return m_maxScale; }
 	
 	CRectF GetRenderRectInWnd();
 	CSizeF GetRenderSize();

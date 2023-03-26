@@ -668,6 +668,10 @@ void CTextBox::OnClose(const CloseEvent& e)
 
 void CTextBox::OnWndKillFocus(const KillFocusEvent& e)
 {
+	if (m_isEnterText) {
+		m_enterText.set(m_text.get());
+	}
+
 	StopCaretBlink();
 }
 
@@ -940,7 +944,11 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 		break;
 	}
 	case VK_RETURN:
-		ReplaceSelection(L"\n");
+		if (m_isEnterText) {
+			m_enterText.set(m_text.get());
+		} else {
+			ReplaceSelection(L"\n");
+		}
 		*e.HandledPtr = TRUE;
 		break;
 	case VK_TAB:

@@ -15,5 +15,10 @@ CRectU CRectF2CRectU(const CRectF& rc)
 
 CSizeU CSizeF2CSizeU(const CSizeF& sz)
 {
-	return CSizeU(static_cast<UINT32>(sz.width), static_cast<UINT32>(sz.height));
+	return CSizeU(static_cast<UINT32>(std::round(sz.width)), static_cast<UINT32>(std::round(sz.height)));
+}
+
+CSizeF CSizeU2CSizeF(const CSizeU& sz)
+{
+	return CSizeF(static_cast<FLOAT>(sz.width), static_cast<FLOAT>(sz.height));
 }
