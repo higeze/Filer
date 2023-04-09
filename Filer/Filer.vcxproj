@@ -439,6 +439,7 @@
     <ClInclude Include="..\HiLib\TabControl.h" />
     <ClInclude Include="..\HiLib\D2DWWindow.h" />
     <ClInclude Include="..\HiLib\TextBlock.h" />
+    <ClInclude Include="..\HiLib\TextBlockProperty.h" />
     <ClInclude Include="..\HiLib\TextBoxDialog.h" />
     <ClInclude Include="..\HiLib\TextBoxProperty.h" />
     <ClInclude Include="..\HiLib\TextCell.h" />

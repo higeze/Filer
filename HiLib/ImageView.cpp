@@ -18,6 +18,7 @@
 #include "Dispatcher.h"
 #include "D2DImage.h"
 #include "ImageDrawer.h"
+#include "D2DWTypes.h"
 
 
 /**************************/
@@ -193,24 +194,25 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 	auto callback = [this]()->void { GetWndPtr()->GetDispatcherPtr()->PostInvoke([pWnd = GetWndPtr()]() { pWnd->InvalidateRect(NULL, FALSE); }); };
 
 	CSizeF szImage(m_image.get().GetSizeF());
+	CRectF rcInWnd(GetRenderRectInWnd());
 	CRectF rcFullInPage(m_image.get().GetSizeF());
 	CRectF rcScaledFullInPage(rcFullInPage * m_scale);
 
 	CRectF rcScaledClipInPage(rcScaledFullInPage.IntersectRect(
-		CRectF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos(), GetRenderRectInWnd().Width(), GetRenderRectInWnd().Height())));
+		CRectF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos(), m_spHScroll->GetScrollPos() + rcInWnd.Width(), m_spVScroll->GetScrollPos() + rcInWnd.Height())));
 	CRectF rcClipInPage(rcScaledClipInPage / m_scale);
 
 	CSizeU szBitmap(m_imgDrawer->GetPrimaryBitmapSize());
 
-	CPointF ptDstClipInWnd(GetRenderRectInWnd().LeftTop());
-	CPointF ptDstLeftTopInWnd(GetRenderRectInWnd().LeftTop() - CPointF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()));
+	CPointF ptDstClipInWnd(rcInWnd.LeftTop());
+	CPointF ptDstLeftTopInWnd(rcInWnd.LeftTop() - CPointF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()));
 
 	CRectF rcDstInWnd(
 		std::round(ptDstLeftTopInWnd.x),
 		std::round(ptDstLeftTopInWnd.y),
 		std::round(ptDstLeftTopInWnd.x) + std::round(rcScaledFullInPage.Width()),
 		std::round(ptDstLeftTopInWnd.y) + std::round(rcScaledFullInPage.Height()));
-	CRectF rcDstClipInWnd(rcDstInWnd.IntersectRect(GetRenderRectInWnd()));
+	CRectF rcDstClipInWnd(rcDstInWnd.IntersectRect(rcInWnd));
 
 	FLOAT blurScale = ((std::min)(512.f / szImage.width, 512.f / szImage.height));
 
@@ -227,6 +229,10 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 	ImgBmpKey cliponeKey{ .ImagePtr = &(m_image.get()), .Scale = 1.f, .Rotate = 0, .Rect = CRectF2CRectU(rcClipInPage) };
 	ImgBmpKey clipscaleKey{ .ImagePtr = &(m_image.get()), .Scale = m_scale, .Rotate = 0, .Rect = CRectF2CRectU(rcScaledClipInPage) };
 
+	if (cliponeKey.Rect.IsRectNull() || clipscaleKey.Rect.IsRectNull()) {
+		auto a = 1;
+	}
+
 	if (drawOnePageOneScale) {
 		if (!m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), oneKey, rcDstInWnd, callback)) {
 			m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
@@ -239,35 +245,35 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 		if (!m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), cliponeKey, rcDstClipInWnd, callback)) {
 			m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
 
-			//std::vector<ImgBmpKey> keys = m_imgDrawer->FindClipKeys([clipKey, pPage = &(m_image.get()), scale = m_scale](const ImgBmpKey& key)->bool{
+			//std::vector<ImgBmpKey> keys = m_imgDrawer->FindClipKeys([cliponeKey, pPage = &(m_image.get()), scale = m_scale](const ImgBmpKey& key)->bool{
 			//	return 
-			//		key != clipKey &&
-			//		key.ImagePtr->GetPath() == clipKey.ImagePtr->GetPath() && 
-			//		key.Scale == clipKey.Scale &&
-			//		key.Rotate == clipKey.Rotate &&
+			//		key != cliponeKey &&
+			//		key.ImagePtr->GetPath() == cliponeKey.ImagePtr->GetPath() && 
+			//		key.Scale == cliponeKey.Scale &&
+			//		key.Rotate == cliponeKey.Rotate &&
 			//		!key.Rect.IsRectNull();
 			//});
 			//for (const ImgBmpKey& key : keys) {
 			//	CPointF ptClipInWnd = Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, key.Rect.LeftTop())));
-			//	m_imgDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback);
+			//	m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback);
 			//}
 		}
 	} else if (drawClipPageLessScale) {
 		if (!m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), clipscaleKey, ptDstClipInWnd, callback)) {
 			m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
 
-			//std::vector<ImgBmpKey> keys = m_imgDrawer->FindClipKeys([clipKey, pPage = &(m_image.get()), scale = m_scale](const ImgBmpKey& key)->bool{
-			//	return 
-			//		key != clipKey &&
-			//		key.ImagePtr->GetPath() == clipKey.ImagePtr->GetPath() && 
-			//		key.Scale == clipKey.Scale &&
-			//		key.Rotate == clipKey.Rotate &&
-			//		!key.Rect.IsRectNull();
-			//});
-			//for (const ImgBmpKey& key : keys) {
-			//	CPointF ptClipInWnd = Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, key.Rect.LeftTop())));
-			//	m_imgDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback);
-			//}
+			std::vector<ImgBmpKey> keys = m_imgDrawer->FindClipKeys([clipscaleKey, pPage = &(m_image.get()), scale = m_scale](const ImgBmpKey& key)->bool{
+				return 
+					key != clipscaleKey &&
+					key.ImagePtr->GetPath() == clipscaleKey.ImagePtr->GetPath() && 
+					key.Scale == clipscaleKey.Scale &&
+					key.Rotate == clipscaleKey.Rotate &&
+					!key.Rect.IsRectNull();
+			});
+			for (const ImgBmpKey& key : keys) {
+				CPointF ptClipInWnd = ptDstClipInWnd + CPointF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()) + CPointU2CPointF(key.Rect.LeftTop());
+				m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback);
+			}
 		}
 	}
 

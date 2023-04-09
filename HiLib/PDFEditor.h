@@ -6,6 +6,7 @@
 
 class CPdfView;
 class CTextBox;
+class CTextBlock;
 class CEditorTextBox;
 class CStatusBar;
 struct PDFEditorProperty;
@@ -13,8 +14,13 @@ struct PDFEditorProperty;
 class CPDFEditor :public CD2DWControl
 {
 	SHAREDPTR_GETTER(CTextBox, FilterBox)
+	SHAREDPTR_GETTER(CTextBox, PageBox)
+	SHAREDPTR_GETTER(CTextBlock, TotalPageBlock)
+	SHAREDPTR_GETTER(CTextBox, ScaleBox)
+	SHAREDPTR_GETTER(CTextBlock, PercentBlock)
 	SHAREDPTR_GETTER(CPdfView, PDFView)
 	SHAREDPTR_GETTER(CStatusBar, StatusBar)
+
 	SHAREDPTR_GETTER(PDFEditorProperty, Prop)
 
 private:
@@ -38,7 +44,7 @@ public:
 	ReactiveCommand<HWND>& GetSaveAsCommand() { return m_save_as; }
 
 
-	std::tuple<CRectF, CRectF, CRectF> GetRects() const;
+	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> GetRects() const;
 
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnPaint(const PaintEvent& e) override;

@@ -22,3 +22,13 @@ CSizeF CSizeU2CSizeF(const CSizeU& sz)
 {
 	return CSizeF(static_cast<FLOAT>(sz.width), static_cast<FLOAT>(sz.height));
 }
+
+CPointU CPointF2CPointU(const CPointF& pt)
+{
+	return CPointU(static_cast<UINT32>(std::round(pt.x)), static_cast<UINT32>(std::round(pt.y)));
+}
+
+CPointF CPointU2CPointF(const CPointU& pt)
+{
+	return CPointF(static_cast<FLOAT>(pt.x), static_cast<FLOAT>(pt.y));
+}

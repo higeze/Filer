@@ -139,9 +139,12 @@ CComPtr<ID2D1Bitmap1> CD2DImage::GetBitmap(const CComPtr<ID2D1DeviceContext>& pC
 
 }
 
-CComPtr<ID2D1Bitmap1> CD2DImage::GetClipBitmap(const CComPtr<ID2D1DeviceContext>& pContext, const FLOAT& scale, const CRectU& rcClip) const
+CComPtr<ID2D1Bitmap1> CD2DImage::GetClipBitmap(const CComPtr<ID2D1DeviceContext>& pContext, const FLOAT& scale, const CRectU& rcClip, std::function<bool()> cancel) const
 {
     CSizeU size(GetSizeU());
+
+    //Scale
+    if (cancel && cancel()) { return nullptr; }
     CComPtr<IWICBitmapScaler> pScaler;
     FAILED_THROW(GetFactory()->CreateBitmapScaler(&pScaler));
     FAILED_THROW(pScaler->Initialize(
@@ -150,6 +153,8 @@ CComPtr<ID2D1Bitmap1> CD2DImage::GetClipBitmap(const CComPtr<ID2D1DeviceContext>
         static_cast<UINT>(std::round(size.height * scale)),
         WICBitmapInterpolationModeNearestNeighbor));
 
+    //Clip
+    if (cancel && cancel()) { return nullptr; }
     CComPtr<IWICBitmapClipper> pClipper;
     FAILED_THROW(GetFactory()->CreateBitmapClipper(&pClipper));
     WICRect rcwicClip{
@@ -160,13 +165,15 @@ CComPtr<ID2D1Bitmap1> CD2DImage::GetClipBitmap(const CComPtr<ID2D1DeviceContext>
     FAILED_THROW(pClipper->Initialize(
         pScaler, 
         &rcwicClip));
-    
+    //Convert
+    if (cancel && cancel()) { return nullptr; }
     CComPtr<IWICFormatConverter> pFormatConverter;
     FAILED_THROW(GetFactory()->CreateFormatConverter( &pFormatConverter ));
     FAILED_THROW(pFormatConverter->Initialize(
         pClipper, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 1.0f, WICBitmapPaletteTypeCustom));
-
-	CComPtr<ID2D1Bitmap1> m_pBitmap;
+    //D2D
+    if (cancel && cancel()) { return nullptr; }
+    CComPtr<ID2D1Bitmap1> m_pBitmap;
     FAILED_THROW(pContext->CreateBitmapFromWicBitmap(
         pFormatConverter, 
         nullptr, //D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_NONE, D2D1::PixelFormat(DXGI_FORMAT_BC1_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),

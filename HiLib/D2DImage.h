@@ -26,7 +26,7 @@ public:
 	bool IsValid() const { return ::PathFileExists(m_path.c_str()); }
 	const std::wstring& GetPath() const { return m_path; }
 	CComPtr<ID2D1Bitmap1> GetBitmap(const CComPtr<ID2D1DeviceContext>& pContext, const FLOAT& scale) const;
-	CComPtr<ID2D1Bitmap1> GetClipBitmap(const CComPtr<ID2D1DeviceContext>& pContext, const FLOAT& scale, const CRectU& rcClip) const;
+	CComPtr<ID2D1Bitmap1> GetClipBitmap(const CComPtr<ID2D1DeviceContext>& pContext, const FLOAT& scale, const CRectU& rcClip, std::function<bool()> cancelz = nullptr) const;
 
 	//const CComPtr<ID2D1Bitmap1>& GetBitmapPtr() const { return m_pBitmap; }
 

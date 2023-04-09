@@ -67,6 +67,8 @@ public:
 	CImageDrawer();
 	~CImageDrawer();
 
+	const ImgBmpKey& GetCurClipKey() { return m_curClipKey.get(); }
+
 	bool DrawClipBitmap(
 		const CDirect2DWrite* pDirect,
 		const ImgBmpKey& key,

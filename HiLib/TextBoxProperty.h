@@ -17,7 +17,7 @@ public:
 	std::shared_ptr<SolidFill> SelectedFill;
 	std::shared_ptr<SolidFill> UnfocusSelectedFill;
 	std::shared_ptr<SolidFill> HotFill;
-	std::shared_ptr<CRectF> Padding;
+	std::shared_ptr<CRectF> Padding; 
 	std::shared_ptr<ScrollProperty> VScrollPropPtr;
 	std::shared_ptr<ScrollProperty> HScrollPropPtr;
 	bool IsWrap = true;

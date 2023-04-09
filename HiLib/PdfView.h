@@ -84,6 +84,9 @@ protected:
 	FLOAT m_prevScale;
 	int m_curPageNo;
 
+	FLOAT m_minScale = 0.1f;
+	FLOAT m_maxScale = 8.f;
+
 
 
 	std::unique_ptr<CPDFDoc> m_pdf;
@@ -110,6 +113,9 @@ public:
 	ReactiveProperty<FLOAT>& GetScale() { return m_scale; }
 	ReactiveWStringProperty& GetFind() { return m_find; }
 	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
+
+	FLOAT GetMinScale() const { return m_minScale; }
+	FLOAT GetMaxScale() const { return m_maxScale; }
 	
 	//std::function<CComPtr<IPdfRendererNative>& ()> GetPdfRenderer;
 	CRectF GetRenderRectInWnd();

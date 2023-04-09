@@ -46,13 +46,25 @@ bool CImageDrawer::DrawClipBitmap(
 	m_curClipKey.set(key);
 	auto funadd = [pDirect, key, callback, this]()->void
 	{
-		if (key == m_curClipKey.get()){
-			CComPtr<ID2D1Bitmap1> pBitmap = key.ImagePtr->GetClipBitmap(pDirect->GetD2DDeviceContext(), key.Scale, key.Rect);
+		CComPtr<ID2D1Bitmap1> pBitmap = key.ImagePtr->GetClipBitmap(pDirect->GetD2DDeviceContext(), key.Scale, key.Rect, [this, key]()->bool { return key != GetCurClipKey(); });
+		if (pBitmap) {
+			::OutputDebugString(std::format(L"ADDORASSIGN: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
+				(LONG)(key.ImagePtr), key.Scale, key.Rect.left, key.Rect.top, key.Rect.right, key.Rect.bottom).c_str());
 			m_pAtlasClipBitmap->AddOrAssign(pDirect, key, pBitmap);
 			callback();
 		} else {
+			::OutputDebugString(std::format(L"ERASE: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
+				(LONG)(key.ImagePtr), key.Scale, key.Rect.left, key.Rect.top, key.Rect.right, key.Rect.bottom).c_str());
 			m_pAtlasClipBitmap->Erase(key);
 		}
+
+		//if (key == m_curClipKey.get()){
+		//	CComPtr<ID2D1Bitmap1> pBitmap = key.ImagePtr->GetClipBitmap(pDirect->GetD2DDeviceContext(), key.Scale, key.Rect);
+		//	m_pAtlasClipBitmap->AddOrAssign(pDirect, key, pBitmap);
+		//	callback();
+		//} else {
+		//	m_pAtlasClipBitmap->Erase(key);
+		//}
 	};
 	
 	if (!m_pAtlasClipBitmap->Exist(key)) {
@@ -77,8 +89,8 @@ bool CImageDrawer::DrawClipBitmap(
 	m_curClipKey.set(key);
 	auto funadd = [pDirect, key, callback, this]()->void
 	{
-		if (key == m_curClipKey.get()){
-			CComPtr<ID2D1Bitmap1> pBitmap = key.ImagePtr->GetClipBitmap(pDirect->GetD2DDeviceContext(), key.Scale, key.Rect);
+		CComPtr<ID2D1Bitmap1> pBitmap = key.ImagePtr->GetClipBitmap(pDirect->GetD2DDeviceContext(), key.Scale, key.Rect, [this, key]()->bool { return key != GetCurClipKey(); });
+		if (pBitmap) {
 			m_pAtlasClipBitmap->AddOrAssign(pDirect, key, pBitmap);
 			callback();
 		} else {

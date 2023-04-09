@@ -1,20 +1,7 @@
 #pragma once
 #include "D2DWControl.h"
+#include "TextBlockProperty.h"
 #include "ReactiveProperty.h"
-
-struct TextBlockProperty
-{
-public:
-	FormatF Format = FormatF(L"Meiryo UI", CDirect2DWrite::Points2Dips(9), 0.0f, 0.0f, 0.0f, 1.0f);
-	FormatF DisableFormat = FormatF(L"Meiryo UI", CDirect2DWrite::Points2Dips(9), 200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
-
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		ar("Format", Format);
-	}
-};
-
 
 class CTextBlock:public CD2DWControl
 {
@@ -27,6 +14,8 @@ public:
 	virtual ~CTextBlock() = default;
 	//
 	ReactiveProperty<std::wstring>& GetText() { return m_text; }
+
+	CSizeF MeasureSize();
 
 	//Event
 	virtual void OnPaint(const PaintEvent& e) override;

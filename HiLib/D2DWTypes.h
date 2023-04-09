@@ -290,3 +290,5 @@ CRectF CRectU2CRectF(const CRectU& rc);
 CRectU CRectF2CRectU(const CRectF& rc);
 CSizeU CSizeF2CSizeU(const CSizeF& sz);
 CSizeF CSizeU2CSizeF(const CSizeU& sz);
+CPointU CPointF2CPointU(const CPointF& pt);
+CPointF CPointU2CPointF(const CPointU& pt);
