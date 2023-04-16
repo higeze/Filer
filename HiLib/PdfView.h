@@ -81,8 +81,11 @@ protected:
 	ReactiveProperty<FLOAT> m_scale;
 	ReactiveWStringProperty m_find;
 	ReactiveProperty<D2D1_BITMAPSOURCE_ORIENTATION> m_rotate;
+	ReactiveProperty<int> m_currentPage;
+	ReactiveProperty<int> m_totalPage;
+
+
 	FLOAT m_prevScale;
-	int m_curPageNo;
 
 	FLOAT m_minScale = 0.1f;
 	FLOAT m_maxScale = 8.f;
@@ -113,6 +116,9 @@ public:
 	ReactiveProperty<FLOAT>& GetScale() { return m_scale; }
 	ReactiveWStringProperty& GetFind() { return m_find; }
 	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
+	ReactiveProperty<int>& GetCurrentPage() { return m_currentPage; }
+	ReactiveProperty<int>& GetTotalPage() { return m_totalPage; }
+
 
 	FLOAT GetMinScale() const { return m_minScale; }
 	FLOAT GetMaxScale() const { return m_maxScale; }
@@ -244,6 +250,7 @@ public:
 	void Open();
 	void Open(const std::wstring& path);
 	void Close();
+	bool Jump(const int& page);
 
 	void UpdateScroll();
 

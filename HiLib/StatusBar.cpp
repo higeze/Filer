@@ -18,10 +18,13 @@ void CStatusBar::OnPaint(const PaintEvent& e)
 	}
 }
 
-CSizeF CStatusBar::MeasureSize(CDirect2DWrite* pDirect)
+CSizeF CStatusBar::MeasureSize(const std::wstring& text)
 {
-	//Calc Content Rect
-	std::wstring text;
-	if (text.empty()) { text = L"a"; }
-	return pDirect->CalcTextSize(m_spStatusBarProp->Format, text);
+	CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(
+		m_spStatusBarProp->Format, text);
+	size.width += m_spStatusBarProp->Padding.top
+		+ m_spStatusBarProp->Padding.bottom;
+	size.height += m_spStatusBarProp->Padding.left
+		+ m_spStatusBarProp->Padding.right;
+	return size;
 }

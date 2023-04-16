@@ -40,41 +40,38 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CPDFEditor::G
 {
 	CRectF rcClient = GetRectInWnd();
 
-	FLOAT filterHeight = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_spFilterBox->GetTextBoxPropertyPtr()->Format), L"").height
-		+ m_spFilterBox->GetTextBoxPropertyPtr()->Padding->top + m_spFilterBox->GetTextBoxPropertyPtr()->Padding->bottom + m_spFilterBox->GetTextBoxPropertyPtr()->Line->Width;
-
-	CSizeF pageSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(
-		*(m_spPageBox->GetTextBoxPropertyPtr()->Format), L"000");
-	pageSize.width += m_spScaleBox->GetTextBoxPropertyPtr()->Padding->top
-		+ m_spPageBox->GetTextBoxPropertyPtr()->Padding->bottom
-		+ m_spPageBox->GetTextBoxPropertyPtr()->Line->Width;
-	pageSize.height += m_spScaleBox->GetTextBoxPropertyPtr()->Padding->left
-		+ m_spPageBox->GetTextBoxPropertyPtr()->Padding->right
-		+ m_spPageBox->GetTextBoxPropertyPtr()->Line->Width;
-
-	CSizeF totalPageSize = m_spTotalPageBlock->MeasureSize();
-
-	CSizeF scaleSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(
-		*(m_spScaleBox->GetTextBoxPropertyPtr()->Format), L"000.0");
-	scaleSize.width += m_spScaleBox->GetTextBoxPropertyPtr()->Padding->top
-		+ m_spScaleBox->GetTextBoxPropertyPtr()->Padding->bottom
-		+ m_spScaleBox->GetTextBoxPropertyPtr()->Line->Width;
-	scaleSize.height += m_spScaleBox->GetTextBoxPropertyPtr()->Padding->left
-		+ m_spScaleBox->GetTextBoxPropertyPtr()->Padding->right
-		+ m_spScaleBox->GetTextBoxPropertyPtr()->Line->Width;
-
+	FLOAT filterHeight = m_spFilterBox->MeasureSize(L"").height;
+	CSizeF pageSize = m_spPageBox->MeasureSize(L"000");
+	CSizeF totalPageSize = m_spTotalPageBlock->MeasureSize(L"000");
+	CSizeF scaleSize = m_spScaleBox->MeasureSize(L"000.0");
 	CSizeF percentSize = m_spPercentBlock->MeasureSize();
+	FLOAT statusHeight = m_spStatusBar->MeasureSize(L"").height;
 
-	FLOAT statusHeight = m_spStatusBar->MeasureSize(GetWndPtr()->GetDirectPtr()).height;
+	FLOAT maxHeight = (std::max)({filterHeight, pageSize.height, totalPageSize.height, scaleSize.height, percentSize.height});
 
+	CRectF rcPercent(rcClient.right - percentSize.width, 
+		rcClient.top + (maxHeight - percentSize.height)*0.5f, 
+		rcClient.right, 
+		rcClient.top + (maxHeight - percentSize.height)*0.5f+ percentSize.height);
+	CRectF rcScale(rcPercent.left - scaleSize.width -2.f,
+		rcClient.top + (maxHeight - scaleSize.height)*0.5f,
+		rcPercent.left -2.f,
+		rcClient.top + (maxHeight - scaleSize.height)*0.5f + scaleSize.height);
 
-	CRectF rcPercent(rcClient.right - percentSize.width, rcClient.top, rcClient.right, rcClient.top + percentSize.height);
-	CRectF rcScale(rcPercent.left - scaleSize.width -2.f, rcClient.top, rcPercent.left -2.f, rcClient.top + scaleSize.height);
-
-	CRectF rcTotalPage(rcScale.left - totalPageSize.width -2.f, rcClient.top, rcScale.left -2.f, rcClient.top + totalPageSize.height);
-	CRectF rcPage(rcTotalPage.left - pageSize.width -2.f, rcClient.top, rcTotalPage.left -2.f, rcClient.top + pageSize.height);
+	CRectF rcTotalPage(rcScale.left - totalPageSize.width -2.f,
+		rcClient.top + (maxHeight - totalPageSize.height)*0.5f, 
+		rcScale.left -2.f,
+		rcClient.top + (maxHeight - totalPageSize.height)*0.5f + totalPageSize.height);
+	CRectF rcPage(rcTotalPage.left - pageSize.width -2.f,
+		rcClient.top + (maxHeight - pageSize.height)*0.5f,
+		rcTotalPage.left -2.f, 
+		rcClient.top +(maxHeight - pageSize.height)*0.5f+ pageSize.height);
 	
-	CRectF rcFilter(rcClient.left, rcClient.top, rcPage.left - 2.f, rcClient.top + filterHeight);
+	CRectF rcFilter(rcClient.left,
+		rcClient.top + (maxHeight - filterHeight)*0.5f, 
+		rcPage.left - 2.f, 
+		rcClient.top +(maxHeight - filterHeight)*0.5f + filterHeight);
+
 	CRectF rcPDF(rcClient.left, rcClient.top + filterHeight + 2.f, rcClient.right, rcClient.bottom - statusHeight);
 	CRectF rcStatus(rcClient.left, rcPDF.bottom, rcClient.right, rcClient.bottom);
 
@@ -94,11 +91,15 @@ void CPDFEditor::OnCreate(const CreateEvt& e)
 	m_spPDFView->OnCreate(CreateEvt(GetWndPtr(), this, rcPDF));
 	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
 
+	m_spScaleBox->SetIsEnterText(true);
+	m_spPageBox->SetIsEnterText(true);
+
 	m_spFilterBox->SetIsTabStop(true);
 	m_spPageBox->SetIsTabStop(true);
 	m_spScaleBox->SetIsTabStop(true);
 	m_spPDFView->SetIsTabStop(true);
 
+	//Scale binding
 	auto ratio_to_percent = [](const FLOAT& value)->std::wstring {
 		return std::format(L"{:.1f}", std::round(value * 1000.f) / 1000.f * 100.f).c_str();
 	};
@@ -119,7 +120,7 @@ void CPDFEditor::OnCreate(const CreateEvt& e)
 
 	m_spScaleBox->GetEnterText().Subscribe(
 	[&](const NotifyStringChangedEventArgs<wchar_t>& notify)->void {
-		FLOAT ratio = percent_to_ratio(m_spScaleBox->GetText().get());
+		FLOAT ratio = percent_to_ratio(m_spScaleBox->GetEnterText().get());
 		if (ratio != m_spPDFView->GetScale().get()) {
 			//Validate
 			if(ratio == 0.f || m_spPDFView->GetMinScale() > ratio || m_spPDFView->GetMaxScale() < ratio){ 
@@ -129,11 +130,40 @@ void CPDFEditor::OnCreate(const CreateEvt& e)
 			}
 		}
 	});
+	//Page binding
+	//m_bindings.emplace_back(
+	//	m_spPDFView->GetCurrentPage(),
+	//	m_spPageBox->GetText()
+	//);
+	m_spPDFView->GetCurrentPage().Subscribe([this](const int& value) {
+		wchar_t* endptr = nullptr;
+		int page = std::wcstol(m_spPageBox->GetEnterText().get().c_str(), &endptr, 10);
+		if (page != value) {
+			m_spPageBox->GetText().set(std::to_wstring(value));
+		}
+	});
+	m_spPageBox->GetEnterText().Subscribe([this](const NotifyStringChangedEventArgs<wchar_t>& notify) {
+		wchar_t* endptr = nullptr;
+		int page = std::wcstol(m_spPageBox->GetEnterText().get().c_str(), &endptr, 10);
+		if (!m_spPDFView->Jump(page)) {
+			m_spPageBox->GetText().set(boost::lexical_cast<std::wstring>(m_spPDFView->GetCurrentPage()));
+		}
+	});
+	m_bindings.emplace_back(
+		m_spPDFView->GetTotalPage(),
+		m_spTotalPageBlock->GetText()
+	);
+
+
 }
 
 void CPDFEditor::OnPaint(const PaintEvent& e)
 {
 	m_spFilterBox->OnPaint(e);
+	m_spPageBox->OnPaint(e);
+	m_spTotalPageBlock->OnPaint(e);
+	m_spScaleBox->OnPaint(e);
+	m_spPercentBlock->OnPaint(e);
 	m_spPDFView->OnPaint(e);
 	m_spStatusBar->OnPaint(e);
 }

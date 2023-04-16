@@ -39,7 +39,11 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	m_pMachine(std::make_unique<CPdfViewStateMachine>(this)),
 	m_spVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr)),
 	m_spHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
-	m_scale(1.f), m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(InitialScaleMode::Width)
+	m_scale(1.f), 
+	m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT),
+	m_prevScale(0.f),
+	m_initialScaleMode(InitialScaleMode::Width),
+	m_currentPage(0), m_totalPage(0)
 {
 	m_path.Subscribe([this](const NotifyStringChangedEventArgs<wchar_t>& arg){});
 
@@ -92,10 +96,11 @@ CSizeF CPdfView::GetRenderSize()
 CSizeF CPdfView::GetRenderContentSize()
 {
 	if (m_pdf) {
-		CSizeF sz = m_pdf->GetSize();
-		sz.width *= m_scale.get();
-		sz.height *= m_scale.get();
-		return sz;
+		return m_pdf->GetSize() * m_scale;
+		//CSizeF sz = m_pdf->GetSize();
+		//sz.width *= m_scale.get();
+		//sz.height *= m_scale.get();
+		//return sz;
 	} else {
 		return CSizeF(0.f, 0.f);
 	}
@@ -328,7 +333,8 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	std::transform(intersectRectsInDoc.cbegin(), intersectRectsInDoc.cend(), std::back_inserter(intersectRectsInWnd), [this](const CRectF& rc) { return Ctrl2Wnd(Doc2Ctrl(rc)); });
 
 	auto cur = std::max_element(intersectRectsInDoc.cbegin(), intersectRectsInDoc.cend(), [](const CRectF& a, const CRectF& b) { return a.Height() < b.Height(); });
-	m_curPageNo = std::distance(intersectRectsInDoc.cbegin(), cur) + 1;
+	m_currentPage.set(std::distance(intersectRectsInDoc.cbegin(), cur) + 1);
+	m_totalPage.set(m_pdf->GetPageCount());
 	auto first = std::find_if(intersectRectsInDoc.cbegin(), intersectRectsInDoc.cend(), [](const CRectF& rc) { return rc.Height() > 0; });
 	auto last = std::find_if(intersectRectsInDoc.crbegin(), intersectRectsInDoc.crend(), [](const CRectF& rc) { return rc.Height() > 0; });
 
@@ -435,14 +441,15 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	}
 
 	//Paint Page No
-	std::wstring pageText = fmt::format(L"{} / {}", m_curPageNo, m_pdf->GetPageCount());
-	CSizeF textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), pageText);
-	GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), pageText,
-		CRectF(GetRenderRectInWnd().right - textSize.width - m_spVScroll->GetRectInWnd().Width(),
-				GetRenderRectInWnd().top,
-				GetRenderRectInWnd().right - m_spVScroll->GetRectInWnd().Width(),
-				GetRenderRectInWnd().top + textSize.height));
+	//std::wstring pageText = fmt::format(L"{} / {}", m_currentPage.get(), m_pdf->GetPageCount());
+	//CSizeF textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), pageText);
+	//GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), pageText,
+	//	CRectF(GetRenderRectInWnd().right - textSize.width - m_spVScroll->GetRectInWnd().Width(),
+	//			GetRenderRectInWnd().top,
+	//			GetRenderRectInWnd().right - m_spVScroll->GetRectInWnd().Width(),
+	//			GetRenderRectInWnd().top + textSize.height));
 
+	//Debug
 	if(debug){
 		std::vector<int> spetskvec = m_pdf->GetPDFiumPtr()->GetQueuedSpecificTaskCounts();
 		std::wstring spetskcnts = std::to_wstring(spetskvec[0]);
@@ -463,7 +470,6 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 			GetRenderRectInWnd().left + debugTextSize.width,
 			GetRenderRectInWnd().top + debugTextSize.height));
 	}
-
 
 	//Paint Caret
 	if (m_caret.IsCaret()) {
@@ -634,10 +640,10 @@ void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 		GetWndPtr()->m_hWnd);
 
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateClockwise")) {
-		std::unique_ptr<CPDFPage>& pPage = m_pdf->GetPage(m_curPageNo - 1);
+		std::unique_ptr<CPDFPage>& pPage = m_pdf->GetPage(m_currentPage.get() - 1);
 		pPage->Rotate.set((pPage->Rotate.get() + 1) % 4);
 	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateCounterClockwise")) {
-		std::unique_ptr<CPDFPage>& pPage = m_pdf->GetPage(m_curPageNo - 1);
+		std::unique_ptr<CPDFPage>& pPage = m_pdf->GetPage(m_currentPage.get() - 1);
 		int rotate = pPage->Rotate.get() == 0 ? 4 : pPage->Rotate.get();
 		pPage->Rotate.set((rotate - 1) % 4);
 	}
@@ -958,6 +964,21 @@ void CPdfView::Close()
 	m_spVScroll->Clear();
 	m_spHScroll->Clear();
 }
+
+bool CPdfView::Jump(const int& page)
+{
+	if (page < 1 || m_pdf->GetPageCount() < page) { return false; }
+
+	std::vector<CRectF> rectsInDoc = m_pdf->GetPageRects();
+	std::vector<CRectF> scaledRectsInDoc;
+	std::transform(rectsInDoc.cbegin(), rectsInDoc.cend(), std::back_inserter(scaledRectsInDoc), 
+		[scale = m_scale](const CRectF& rc) { return rc * scale; });
+
+	m_spVScroll->SetScrollPos(scaledRectsInDoc[page - 1].top);
+
+	return true;
+}
+
 
 std::tuple<CRectF, CRectF> CPdfView::GetRects() const
 {

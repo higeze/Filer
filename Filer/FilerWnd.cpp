@@ -541,7 +541,7 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::Ge
 		m_spFilerGridViewProp->CellPropPtr->Padding->left + //default:2
 		m_spFilerGridViewProp->CellPropPtr->Padding->right + //default:2
 		16.f);//icon
-	LONG statusHeight = GetDirectPtr()->Dips2PixelsY(m_spStatusBar->MeasureSize(GetDirectPtr()).height);
+	LONG statusHeight = GetDirectPtr()->Dips2PixelsY(m_spStatusBar->MeasureSize(L"").height);
 
 	CRectF rcLauncher, rcLeftFavorites, rcRightFavorites, rcSplitter, rcLeftGrid, rcRightGrid, rcStatusBar;
 

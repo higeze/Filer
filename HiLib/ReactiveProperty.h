@@ -944,7 +944,32 @@ public:
 				if (boost::lexical_cast<std::basic_string<CharT, Traits, Allocator>>(value) != source.get()) {
 					source.set(boost::lexical_cast<std::basic_string<CharT, Traits, Allocator>>(value));
 				}
-			});
+			}, idTarget);
+	}
+
+	template <class CharT, class Traits, class Allocator, class T>
+	void Attach(ReactiveProperty<T>& source, ReactiveBasicStringProperty<CharT, Traits, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		if (m_sourceConnection.connected()) { m_sourceConnection.disconnect(); }
+		if (m_targetConnection.connected()) { m_targetConnection.disconnect(); }
+		target.set(boost::lexical_cast<std::basic_string<CharT, Traits, Allocator>>(source.get()));
+
+		m_sourceConnection = source.Subscribe(
+				[&](const T& value)->void
+			{
+				if (boost::lexical_cast<std::basic_string<CharT, Traits, Allocator>>(value) != target.get()) {
+					target.set(boost::lexical_cast<std::basic_string<CharT, Traits, Allocator>>(value));
+				}
+			}, idSource);
+
+		m_targetConnection = target.Subscribe(
+			[&](const NotifyStringChangedEventArgs<CharT>& notify)->void
+			{
+				if (source.get() != boost::lexical_cast<T>(target.get())) {
+					source.set(boost::lexical_cast<T>(target.get()));
+				}
+			}, idTarget);
+
 	}
 
 	template <class CharT, class Traits, class Allocator>
@@ -955,6 +980,11 @@ public:
 
 	template <class CharT, class Traits, class Allocator, class T>
 	CBinding(ReactiveBasicStringProperty<CharT, Traits, Allocator>& source, ReactiveProperty<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	{
+		Attach(source, target, idSource, idTarget);
+	}
+	template <class CharT, class Traits, class Allocator, class T>
+	CBinding(ReactiveProperty<T>& source, ReactiveBasicStringProperty<CharT, Traits, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
 	{
 		Attach(source, target, idSource, idTarget);
 	}

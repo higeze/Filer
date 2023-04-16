@@ -33,20 +33,19 @@ std::tuple<CRectF, CRectF, CRectF, CRectF> CImageEditor::GetRects() const
 	CRectF rcClient = GetRectInWnd();
 
 	CSizeF percentSize = m_spPercentBlock->MeasureSize();
+	CSizeF scaleSize = m_spScaleBox->MeasureSize(L"000.0");
+	FLOAT statusHeight = m_spStatusBar->MeasureSize(L"").height;
+	FLOAT maxHeight = (std::max)(percentSize.height, scaleSize.height);
 
-	CSizeF scaleSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(
-		*(m_spScaleBox->GetTextBoxPropertyPtr()->Format), L"000.0");
-	scaleSize.width += m_spScaleBox->GetTextBoxPropertyPtr()->Padding->top
-		+ m_spScaleBox->GetTextBoxPropertyPtr()->Padding->bottom
-		+ m_spScaleBox->GetTextBoxPropertyPtr()->Line->Width;
-	scaleSize.height += m_spScaleBox->GetTextBoxPropertyPtr()->Padding->left
-		+ m_spScaleBox->GetTextBoxPropertyPtr()->Padding->right
-		+ m_spScaleBox->GetTextBoxPropertyPtr()->Line->Width;
+	CRectF rcPercent(rcClient.right - percentSize.width,
+		rcClient.top + (maxHeight - percentSize.height)*0.5f, 
+		rcClient.right, 
+		rcClient.top + (maxHeight - percentSize.height)*0.5f+ percentSize.height);
+	CRectF rcScale(rcPercent.left - scaleSize.width -2.f,
+		rcClient.top+ (maxHeight - scaleSize.height)*0.5f, 
+		rcPercent.left -2.f, 
+		rcClient.top+ (maxHeight - scaleSize.height)*0.5f + scaleSize.height);
 
-	FLOAT statusHeight = m_spStatusBar->MeasureSize(GetWndPtr()->GetDirectPtr()).height;
-
-	CRectF rcPercent(rcClient.right - percentSize.width, rcClient.top, rcClient.right, rcClient.top + percentSize.height);
-	CRectF rcScale(rcPercent.left - scaleSize.width -2.f, rcClient.top, rcPercent.left -2.f, rcClient.top + scaleSize.height);
 	CRectF rcImage(rcClient.left, rcClient.top + scaleSize.height + 2.f, rcClient.right, rcClient.bottom - statusHeight);
 	CRectF rcStatus(rcClient.left, rcImage.bottom, rcClient.right, rcClient.bottom);
 

@@ -51,7 +51,7 @@ std::tuple<CRectF, CRectF, CRectF> CEditor::GetRects() const
 
 	FLOAT filterHeight = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_spFilterBox->GetTextBoxPropertyPtr()->Format), L"").height
 		+ m_spFilterBox->GetTextBoxPropertyPtr()->Padding->top + m_spFilterBox->GetTextBoxPropertyPtr()->Padding->bottom;
-	FLOAT statusHeight = m_spStatusBar->MeasureSize(GetWndPtr()->GetDirectPtr()).height;
+	FLOAT statusHeight = m_spStatusBar->MeasureSize(L"").height;
 	CRectF rcFilter(rcClient.left, rcClient.top, rcClient.right, rcClient.top + filterHeight);
 	CRectF rcText(rcClient.left, rcClient.top + filterHeight + 2.f, rcClient.right, rcClient.bottom - statusHeight);
 	CRectF rcStatus(rcClient.left, rcText.bottom, rcClient.right, rcClient.bottom);

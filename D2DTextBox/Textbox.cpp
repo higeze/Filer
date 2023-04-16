@@ -603,6 +603,7 @@ void CTextBox::OnCreate(const CreateEvt& e)
 	 
 	m_text.Subscribe(
 		[this](const NotifyStringChangedEventArgs<wchar_t>& e)->void {
+		UpdateAll();
 			switch (e.Action) {
 				case NotifyStringChangedAction::Assign://new,old,0,0
 					GetTextStorePtr()->OnTextChange(0, 0, 0);
@@ -627,7 +628,7 @@ void CTextBox::OnCreate(const CreateEvt& e)
 				default:
 					break;
 			}
-			UpdateAll();
+
 
 
 			
@@ -1665,4 +1666,18 @@ void CTextBox::TerminateCompositionString()
             pCompositionServices->TerminateComposition(GetTextStorePtr()->GetCurrentCompositionView());
         }
     }
+}
+
+CSizeF CTextBox::MeasureSize(const std::wstring& text)
+{
+	CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(
+		*(GetTextBoxPropertyPtr()->Format), text);
+	size.width += GetTextBoxPropertyPtr()->Padding->top
+		+ GetTextBoxPropertyPtr()->Padding->bottom
+		+ GetTextBoxPropertyPtr()->Line->Width * 2;
+	size.height += GetTextBoxPropertyPtr()->Padding->left
+		+ GetTextBoxPropertyPtr()->Padding->right
+		+ GetTextBoxPropertyPtr()->Line->Width * 2;
+
+	return size;
 }

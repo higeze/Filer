@@ -18,5 +18,5 @@ public:
 	void SetText(const std::wstring& text) { m_text = text; }
 	CSizeF GetSize()const { return CSizeF(m_rect.Width(), m_rect.Height()); }
 	virtual void OnPaint(const PaintEvent& e);
-	virtual CSizeF MeasureSize(CDirect2DWrite* pDirect);
+	virtual CSizeF MeasureSize(const std::wstring& text);
 };

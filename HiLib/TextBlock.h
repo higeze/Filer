@@ -7,16 +7,16 @@ class CTextBlock:public CD2DWControl
 {
 private:
 	std::shared_ptr<TextBlockProperty> m_spProperty;
-	ReactiveProperty<std::wstring> m_text;
+	ReactiveWStringProperty m_text;
 public:
 	CTextBlock(CD2DWControl* pControl, const std::shared_ptr<TextBlockProperty>& spProperty)
 		:CD2DWControl(pControl), m_spProperty(spProperty){}
 	virtual ~CTextBlock() = default;
 	//
-	ReactiveProperty<std::wstring>& GetText() { return m_text; }
+	ReactiveWStringProperty& GetText() { return m_text; }
 
 	CSizeF MeasureSize();
-
+	CSizeF MeasureSize(const std::wstring& text);
 	//Event
 	virtual void OnPaint(const PaintEvent& e) override;
 };

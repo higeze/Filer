@@ -232,8 +232,9 @@ protected:
 	bool PasteFromClipboard();
 
 public:
-
-	/* Caret */
+	// Size
+	CSizeF MeasureSize(const std::wstring& text);
+	// Caret
 	void MoveCaret(const int& position, const CPointF& point);
 	void MoveCaretWithShift(const int& position, const CPointF& point);
 	void MoveSelection(const int& selFirst, const int& selLast);

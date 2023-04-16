@@ -1,6 +1,7 @@
 #pragma once
 #include "PDFViewProperty.h"
 #include "TextBoxProperty.h"
+#include "TextBlockProperty.h"
 #include "ScrollProperty.h"
 #include "StatusBarProperty.h"
 #include "ReactiveProperty.h"
@@ -14,7 +15,7 @@ public:
 	std::shared_ptr<TextBlockProperty> TextBlockPropPtr = std::make_shared<TextBlockProperty>();
 	std::shared_ptr<StatusBarProperty> StatusBarPropPtr = std::make_shared<StatusBarProperty>();
 
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(PDFEditorProperty,
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(PDFEditorProperty,
 		PDFViewPropPtr,
 		TextBoxPropPtr,
 		TextBlockPropPtr,

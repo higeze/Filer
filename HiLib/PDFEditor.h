@@ -24,6 +24,7 @@ class CPDFEditor :public CD2DWControl
 	SHAREDPTR_GETTER(PDFEditorProperty, Prop)
 
 private:
+	std::vector<CBinding> m_bindings;
 	ReactiveCommand<HWND> m_save;
 	ReactiveCommand<HWND> m_open;
 	ReactiveCommand<HWND> m_save_as;
