@@ -24,6 +24,9 @@ class CPDFEditor;
 struct PDFEditorProperty;
 struct EditorProperty;
 
+class CPreviewControl;
+struct PreviewControlProperty;
+
 class CImageEditor;
 struct ImageEditorProperty;
 #include "D2DImage.h"
@@ -238,16 +241,27 @@ struct PdfTabData :public TabData
 	void Open() {}
 	void Open(const std::wstring& path) {}
 
-	friend void to_json(json& j, const PdfTabData& o)
-	{
-		to_json(j, static_cast<const TabData&>(o));
-		j["Path"] = o.Path;
-	}
-	friend void from_json(const json& j, PdfTabData& o)
-	{
-		from_json(j, static_cast<TabData&>(o));
-		j.at("Path").get_to(o.Path);
-	}
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
+		PdfTabData,
+		Path)
+};
+
+/******************/
+/* PreviewTabData */
+/******************/
+
+struct PreviewTabData :public TabData
+{
+	ReactiveWStringProperty Path;
+
+	PreviewTabData(const std::wstring& path = std::wstring())
+		:TabData(), Path(path){}
+
+	virtual ~PreviewTabData() = default;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
+		PreviewTabData,
+		Path)
 };
 
 /*************/
@@ -260,6 +274,7 @@ private:
 	std::shared_ptr<EditorProperty> m_spEditorProp;
 	std::shared_ptr<PDFEditorProperty> m_spPdfEditorProp;
 	std::shared_ptr<ImageEditorProperty> m_spImageEditorProp;
+	std::shared_ptr<PreviewControlProperty> m_spPreviewControlProp;
 
 	CBinding m_textBinding;
 	CBinding m_textEncodingBinding;
@@ -279,16 +294,15 @@ private:
 	CBinding m_openAsBinding;
 	CBinding m_saveBinding;
 	CBinding m_saveAsBinding;
+	CBinding m_previewPathBinding;
 
 
 	std::unique_ptr<sigslot::scoped_connection> m_pTextPathConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pPdfPathConnection;
+	std::unique_ptr<sigslot::scoped_connection> m_pPreviewPathConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pImageConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pStatusConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pCloseConnection;
-
-
-
 
 public:
 	CFilerTabGridView(CD2DWControl* pParentControl = nullptr,
@@ -296,7 +310,8 @@ public:
 		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty = nullptr,
 		const std::shared_ptr<EditorProperty>& spTextboxProp = nullptr,
 		const std::shared_ptr<PDFEditorProperty>& spPdfViewProp = nullptr,
-		const std::shared_ptr<ImageEditorProperty>& spImageEditorProp = nullptr);
+		const std::shared_ptr<ImageEditorProperty>& spImageEditorProp = nullptr,
+		const std::shared_ptr<PreviewControlProperty>& spPreviewControlProp = nullptr);
 	virtual ~CFilerTabGridView();
 
 	/****************/
@@ -312,6 +327,7 @@ public:
 	SHAREDPTR_GETTER(CPDFEditor, PdfView)
 	SHAREDPTR_GETTER(CImageEditor, ImageView)
 	SHAREDPTR_GETTER(CToDoGridView, ToDoGridView)
+	SHAREDPTR_GETTER(CPreviewControl, PreviewControl)
 
 	/**************/
 	/* UI Message */
@@ -328,6 +344,8 @@ public:
 	void OnCommandNewTextTab(const CommandEvent& e);
 	void OnCommandNewPdfTab(const CommandEvent& e);
 	void OnCommandNewImageTab(const CommandEvent& e);
+	void OnCommandNewPreviewTab(const CommandEvent& e);
+
 	void OnCommandAddToFavorite(const CommandEvent& e);
 	void OnCommandOpenSameAsOther(const CommandEvent& e);
 
@@ -339,6 +357,7 @@ public:
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ImageTabData);
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PreviewTabData);
 
 		to_json(j, static_cast<const CTabControl&>(o));
 		j["FilerView"] = o.m_spFilerGridView;
@@ -351,6 +370,7 @@ public:
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, TextTabData);
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PdfTabData);
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, ImageTabData);
+		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PreviewTabData);
 
 		from_json(j, static_cast<CTabControl&>(o));
 		get_to(j, "FilerView", o.m_spFilerGridView);

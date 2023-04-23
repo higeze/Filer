@@ -3,6 +3,7 @@
 #include "Dispatcher.h"
 #include "ProgressBar.h"
 #include "Button.h"
+#include "ButtonProperty.h"
 #include "CheckableFileGrid.h"
 #include "IDL.h"
 #include "ShellFunction.h"

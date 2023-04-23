@@ -10,6 +10,7 @@
 #include "ThreadPool.h"
 #include "PDFDoc.h"
 #include "PDFViewProperty.h"
+#include "ButtonProperty.h"
 //TODOTODO
 //RenameWnd
 

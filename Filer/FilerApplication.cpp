@@ -87,9 +87,9 @@ void CFilerApplication::SerializeExeExtension(const std::shared_ptr<ExeExtension
 {
 	SerializeValue("ExeExtensionProperty", spProp);
 }
-
 #include "PreviewHandlerFrame.h"
 #include <propkey.h>
+
 CPreviewHandlerFrame test;
 CComPtr<IPreviewHandler> handler;
 

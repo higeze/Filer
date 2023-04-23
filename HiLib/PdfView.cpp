@@ -20,6 +20,7 @@
 #include "TextBlock.h"
 #include "TextBox.h"
 #include "Button.h"
+#include "ButtonProperty.h"
 #include "strconv.h"
 #include "Dispatcher.h"
 #include "ThreadPool.h"

@@ -23,6 +23,18 @@
     <Filter Include="HiLib\Image">
       <UniqueIdentifier>{f89607a2-8976-403d-89d2-7785addea202}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HiLib\TabControl">
+      <UniqueIdentifier>{238b0388-7cd6-40b4-beea-0b01ec12e4b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HiLib\Button">
+      <UniqueIdentifier>{b6c818b5-1ef3-445b-bd1c-0fb36bcf93b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HiLib\TextBox">
+      <UniqueIdentifier>{13d7a7ba-943a-4588-a2e1-52b7868a5380}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HiLib\PreviewControl">
+      <UniqueIdentifier>{7c606cf2-95dc-4d27-be6a-6ee80ae2abc7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -129,9 +141,6 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\BoolCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ButtonState.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\CDataString.h">
@@ -482,24 +491,6 @@
     <ClInclude Include="..\HiLib\ThreadSafeKnownFolderManager.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\DisplayAttribute.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\undo.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\TextStoreACP.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\Textbox.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\TextEditSink.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\GridViewStateMachine.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -590,12 +581,6 @@
     <ClInclude Include="..\HiLib\ScrollProperty.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\TextboxStateMachine.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\TabControl.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\D2DWControl.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -618,9 +603,6 @@
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\ReactiveProperty.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\Button.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLIb\Splitter.h">
@@ -767,15 +749,6 @@
     <ClInclude Include="..\HiLib\PdfViewStateMachine.h">
       <Filter>HiLib\PDF</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\UnDoReDoManager.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\IDoCommand.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PreviewHandlerFrame.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\D2DImage.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -826,6 +799,51 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\TextBlockProperty.h">
       <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\TabControlProperty.h">
+      <Filter>HiLib\TabControl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ButtonProperty.h">
+      <Filter>HiLib\Button</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\Button.h">
+      <Filter>HiLib\Button</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\TabControl.h">
+      <Filter>HiLib\TabControl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\Textbox.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\TextboxStateMachine.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\TextEditSink.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\TextStoreACP.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\UnDoReDoManager.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\IDoCommand.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\DisplayAttribute.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PreviewHandlerFrame.h">
+      <Filter>HiLib\PreviewControl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PreviewControl.h">
+      <Filter>HiLib\PreviewControl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PreviewControlProperty.h">
+      <Filter>HiLib\PreviewControl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1036,21 +1054,6 @@
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\undo.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\Textbox.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\TextEditSink.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\SheetStateMachine.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -1090,13 +1093,7 @@
     <ClCompile Include="ToDoGridView.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="..\D2DTextBox\TextboxStateMachine.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\MouseStateMachine.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\TabControl.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\D2DWControl.cpp">
@@ -1115,9 +1112,6 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\DropTargetManager.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\Button.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLIb\Splitter.cpp">
@@ -1193,9 +1187,6 @@
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp">
       <Filter>HiLib\PDF</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\UnDoReDoManager.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\D2DImage.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -1234,6 +1225,33 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\ImageDrawer.cpp">
       <Filter>HiLib\Image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Button.cpp">
+      <Filter>HiLib\Button</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\TabControl.cpp">
+      <Filter>HiLib\TabControl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\Textbox.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\TextboxStateMachine.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\TextEditSink.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\UnDoReDoManager.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PreviewControl.cpp">
+      <Filter>HiLib\PreviewControl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

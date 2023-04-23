@@ -24,6 +24,9 @@
 #include "DialogProperty.h"
 //#include "KonamiCommander.h"
 #include "JsonSerializer.h"
+#include "ButtonProperty.h"
+#include "TabControlProperty.h"
+#include "PreviewControlProperty.h"
 
 class CFilerGridView;
 class CLauncherGridView;
@@ -90,6 +93,7 @@ private:
 	std::shared_ptr<EditorProperty> m_spEditorProp;
 	std::shared_ptr<PDFEditorProperty> m_spPdfEditorProp;
 	std::shared_ptr<ImageEditorProperty> m_spImageEditorProp;
+	std::shared_ptr<PreviewControlProperty> m_spPreviewControlProp;
 	std::shared_ptr<TabControlProperty> m_spTabControlProp;
 	std::shared_ptr<SplitterProperty> m_spSplitterProp;
 	std::shared_ptr<DialogProperty> m_spDialogProp;
@@ -280,6 +284,7 @@ private:
 			{"EditorProperty", o.m_spEditorProp },
 			{"PdfEditorProperty", o.m_spPdfEditorProp },
 			{"ImageEditorProperty", o.m_spImageEditorProp },
+			{"PreviewControlProperty", o.m_spPreviewControlProp },
 			{"StatusBarProperty", o.m_spStatusBarProp},
 			{"LauncherProperty", o.m_spLauncherProp },
 			{"FavoritesProperty", o.m_spFavoritesProp },
@@ -308,6 +313,7 @@ private:
 			get_to(j, "EditorProperty", o.m_spEditorProp);
 			get_to(j, "PdfEditorProperty", o.m_spPdfEditorProp);
 			get_to(j, "ImageEditorProperty", o.m_spImageEditorProp);
+			get_to(j, "PreviewControlProperty", o.m_spPreviewControlProp);
 			get_to(j, "StatusBarProperty", o.m_spStatusBarProp);
 			get_to(j, "LauncherProperty", o.m_spLauncherProp);
 			get_to(j, "FavoritesProperty", o.m_spFavoritesProp);

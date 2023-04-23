@@ -52,6 +52,8 @@
 #define IDM_TEXTOPTION							40049
 #define IDM_LOCKTAB								40050
 #define IDM_NEWIMAGETAB							40051
+#define IDM_NEWPREVIEWTAB                       40052
+
 
 
 

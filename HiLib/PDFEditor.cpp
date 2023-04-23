@@ -91,6 +91,7 @@ void CPDFEditor::OnCreate(const CreateEvt& e)
 	m_spPDFView->OnCreate(CreateEvt(GetWndPtr(), this, rcPDF));
 	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
 
+	m_spFilterBox->SetIsEnterText(true);
 	m_spScaleBox->SetIsEnterText(true);
 	m_spPageBox->SetIsEnterText(true);
 
@@ -187,6 +188,11 @@ void CPDFEditor::OnKeyDown(const KeyDownEvent& e)
 	bool ctrl = ::GetAsyncKeyState(VK_CONTROL);
 	bool shift = ::GetAsyncKeyState(VK_SHIFT);
 	switch (e.Char) {
+		case 'F':
+			if (ctrl) {
+				SetFocusedControlPtr(m_spFilterBox);
+			}
+			break;
 		case 'O':
 			if (ctrl && shift) {
 				OpenAs();

@@ -2,29 +2,7 @@
 #include "D2DWControl.h"
 #include "ReactiveProperty.h"
 
-struct ButtonProperty
-{
-public:
-	SolidFill NormalFill = SolidFill(222.f / 255.f, 222.f / 255.f, 222.f / 255.f, 1.0f);
-	SolidFill HotFill = SolidFill(244.f / 255.f, 244.f / 255.f, 244.f / 255.f, 1.0f);
-	SolidFill PressedFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
-
-	SolidLine BorderLine = SolidLine(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
-	SolidLine FocusedLine = SolidLine(22.f / 255.f, 160.f / 255, 133.f / 255.f, 1.0f, 1.0f);
-	FormatF Format = FormatF(L"Meiryo UI", CDirect2DWrite::Points2Dips(9), 0.0f, 0.0f, 0.0f, 1.0f);
-	FormatF DisableFormat = FormatF(L"Meiryo UI", CDirect2DWrite::Points2Dips(9), 200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
-
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		ar("NormalFill", NormalFill);
-		ar("HotFillFill", NormalFill);
-		ar("PressedFill", NormalFill);
-		ar("BorderLine", BorderLine);
-		ar("Format", Format);
-	}
-};
-
+struct ButtonProperty;
 
 class CButton:public CD2DWControl
 {

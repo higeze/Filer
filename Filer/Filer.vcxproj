@@ -273,7 +273,6 @@
     <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h" />
     <ClInclude Include="..\D2DTextBox\TextEditSink.h" />
     <ClInclude Include="..\D2DTextBox\TextStoreACP.h" />
-    <ClInclude Include="..\D2DTextBox\undo.h" />
     <ClInclude Include="..\HiLib\Application.h" />
     <ClInclude Include="..\HiLib\ApplicationProperty.h" />
     <ClInclude Include="..\HiLib\async_catch.h" />
@@ -292,7 +291,7 @@
     <ClInclude Include="..\HiLib\BoolCell.h" />
     <ClInclude Include="..\HiLib\BoostPythonHelper.h" />
     <ClInclude Include="..\HiLib\Button.h" />
-    <ClInclude Include="..\HiLib\ButtonState.h" />
+    <ClInclude Include="..\HiLib\ButtonProperty.h" />
     <ClInclude Include="..\HiLib\CDataString.h" />
     <ClInclude Include="..\HiLib\Cell.h" />
     <ClInclude Include="..\HiLib\Celler.h" />
@@ -398,6 +397,8 @@
     <ClInclude Include="..\HiLib\PdfView.h" />
     <ClInclude Include="..\HiLib\PDFViewProperty.h" />
     <ClInclude Include="..\HiLib\PdfViewStateMachine.h" />
+    <ClInclude Include="..\HiLib\PreviewControl.h" />
+    <ClInclude Include="..\HiLib\PreviewControlProperty.h" />
     <ClInclude Include="..\HiLib\PreviewHandlerFrame.h" />
     <ClInclude Include="..\HiLib\property.h" />
     <ClInclude Include="..\HiLib\ReactiveProperty.h" />
@@ -438,6 +439,7 @@
     <ClInclude Include="..\HiLib\string_extension.h" />
     <ClInclude Include="..\HiLib\TabControl.h" />
     <ClInclude Include="..\HiLib\D2DWWindow.h" />
+    <ClInclude Include="..\HiLib\TabControlProperty.h" />
     <ClInclude Include="..\HiLib\TextBlock.h" />
     <ClInclude Include="..\HiLib\TextBlockProperty.h" />
     <ClInclude Include="..\HiLib\TextBoxDialog.h" />
@@ -533,7 +535,6 @@
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />
     <ClCompile Include="..\D2DTextBox\TextEditSink.cpp" />
     <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp" />
-    <ClCompile Include="..\D2DTextBox\undo.cpp" />
     <ClCompile Include="..\HiLib\Band.cpp" />
     <ClCompile Include="..\HiLib\BoostPythonHelper.cpp" />
     <ClCompile Include="..\HiLib\Button.cpp" />
@@ -594,6 +595,7 @@
     <ClCompile Include="..\HiLib\PdfView.cpp" />
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp" />
     <ClCompile Include="..\HiLIb\PDFiumSingleThread.cpp" />
+    <ClCompile Include="..\HiLib\PreviewControl.cpp" />
     <ClCompile Include="..\HiLib\SortCell.cpp" />
     <ClCompile Include="..\HiLib\MapColumn.cpp" />
     <ClCompile Include="..\HiLib\RowIndexCell.cpp" />

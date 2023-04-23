@@ -49,8 +49,7 @@ std::tuple<CRectF, CRectF, CRectF> CEditor::GetRects() const
 {
 	CRectF rcClient = GetRectInWnd();
 
-	FLOAT filterHeight = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_spFilterBox->GetTextBoxPropertyPtr()->Format), L"").height
-		+ m_spFilterBox->GetTextBoxPropertyPtr()->Padding->top + m_spFilterBox->GetTextBoxPropertyPtr()->Padding->bottom;
+	FLOAT filterHeight = m_spFilterBox->MeasureSize(L"").height;
 	FLOAT statusHeight = m_spStatusBar->MeasureSize(L"").height;
 	CRectF rcFilter(rcClient.left, rcClient.top, rcClient.right, rcClient.top + filterHeight);
 	CRectF rcText(rcClient.left, rcClient.top + filterHeight + 2.f, rcClient.right, rcClient.bottom - statusHeight);
@@ -67,6 +66,8 @@ void CEditor::OnCreate(const CreateEvt& e)
 	m_spFilterBox->OnCreate(CreateEvt(GetWndPtr(), this, rcFilter));
 	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, rcText));
 	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
+
+	m_spFilterBox->SetIsEnterText(true);
 	//m_spFilterBox->SetIsTabStop(true);
 	//m_spTextBox->SetIsTabStop(true);
 }
@@ -94,6 +95,11 @@ void CEditor::OnKeyDown(const KeyDownEvent& e)
 	bool ctrl = ::GetAsyncKeyState(VK_CONTROL);
 	bool shift = ::GetAsyncKeyState(VK_SHIFT);
 	switch (e.Char) {
+		case 'F':
+			if (ctrl) {
+				SetFocusedControlPtr(m_spFilterBox);
+			}
+			break;
 		case 'O':
 			if (ctrl && shift) {
 				OpenAs();

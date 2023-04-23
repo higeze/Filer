@@ -56,6 +56,7 @@ CFilerWnd::CFilerWnd()
 	m_spEditorProp(std::make_shared<EditorProperty>()),
 	m_spPdfEditorProp(std::make_shared<PDFEditorProperty>()),
 	m_spImageEditorProp(std::make_shared<ImageEditorProperty>()),
+	m_spPreviewControlProp(std::make_shared<PreviewControlProperty>()),
 	
 	m_spStatusBarProp(std::make_shared<StatusBarProperty>()),
 	m_spTabControlProp(std::make_shared<TabControlProperty>()),
@@ -64,8 +65,8 @@ CFilerWnd::CFilerWnd()
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
 	m_spSplitterProp(std::make_shared<SplitterProperty>()),
 	m_spLauncher(std::make_shared<CLauncherGridView>(this, m_spFilerGridViewProp, m_spLauncherProp)),
-	m_spLeftView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp)),
-	m_spRightView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp)),
+	m_spLeftView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp, m_spPreviewControlProp)),
+	m_spRightView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp, m_spPreviewControlProp)),
 	m_spSplitter(std::make_shared<CHorizontalSplitter>(this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp)),
 	m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
 	m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFilerGridViewProp, m_spFavoritesProp)),
@@ -389,11 +390,12 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 {
 	*(e.HandledPtr) = FALSE;
 	static std::vector<std::wstring> imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff" };
+	static std::vector<std::wstring> previewExts = {L".docx", L".doc", L".xlsx", L".xls", L".ppt", L".pptx"};
 	switch (e.Char)
 	{
 	case 'Q':
-		//Replace
-		if (::GetAsyncKeyState(VK_CONTROL) && ::GetAsyncKeyState(VK_SHIFT)) {
+		//Replace or PushBack
+		if (::GetAsyncKeyState(VK_CONTROL)) {
 			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
 				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
 					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
@@ -402,36 +404,20 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 						spNewData = std::make_shared<TextTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
 					} else if (boost::iequals(spCurFilerGrid->GetFocusedFile()->GetPathExt(), L".pdf")) {
 						spNewData = std::make_shared<PdfTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
-					} else if (std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spCurFilerGrid->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })){
+					} else if (std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spCurFilerGrid->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
 						spNewData = std::make_shared<ImageTabData>(GetWndPtr()->GetDirectPtr(), spCurFilerGrid->GetFocusedFile()->GetPath());
+					} else if (std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spCurFilerGrid->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+						spNewData = std::make_shared<PreviewTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
 					}
 
 					if (spNewData) {
-						if (spOtherTab->GetItemsSource()[spOtherTab->GetSelectedIndex()]->AcceptClosing(this, false)) {
+						//Replace
+						if (::GetAsyncKeyState(VK_SHIFT) && spOtherTab->GetItemsSource()[spOtherTab->GetSelectedIndex()]->AcceptClosing(this, false)) {
 							spOtherTab->GetItemsSource().replace(spOtherTab->GetItemsSource().begin() + spOtherTab->GetSelectedIndex(), spNewData);
+						//Push back	
 						} else {
 							spOtherTab->GetItemsSource().push_back(spNewData);
 						}
-						*(e.HandledPtr) = TRUE;
-					}
-				}
-			}
-		//Push back
-		}else if(::GetAsyncKeyState(VK_CONTROL)){
-			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
-				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
-					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
-					std::shared_ptr<TabData> spNewData;
-					if (boost::iequals(spCurFilerGrid->GetFocusedFile()->GetPathExt(), L".txt")) {
-						spNewData = std::make_shared<TextTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
-					} else if (boost::iequals(spCurFilerGrid->GetFocusedFile()->GetPathExt(), L".pdf")) {
-						spNewData = std::make_shared<PdfTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
-					} else if (std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spCurFilerGrid->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })){
-						spNewData = std::make_shared<ImageTabData>(GetWndPtr()->GetDirectPtr(), spCurFilerGrid->GetFocusedFile()->GetPath());
-					}
-
-					if (spNewData) {
-						spOtherTab->GetItemsSource().push_back(spNewData);
 						*(e.HandledPtr) = TRUE;
 					}
 				}

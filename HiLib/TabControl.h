@@ -19,40 +19,8 @@ class CShellFolder;
 class CEditor;
 class CD2DWWindow;
 
-struct TabHeaderControlProperty
-{
-	std::shared_ptr<FormatF> Format;
-	std::shared_ptr<CRectF> Padding;
-	std::shared_ptr<ButtonProperty> ButtonProp;
-	TabHeaderControlProperty()
-		:Format(std::make_shared<FormatF>(L"Meiryo UI", CDirect2DWrite::Points2Dips(9),  0.0f, 0.0f, 0.0f, 1.0f)),
-		Padding(std::make_shared<CRectF>(2.0f,2.0f,2.0f,2.0f)),
-		ButtonProp(std::make_shared<ButtonProperty>())
-	{
-		ButtonProp->BorderLine = SolidLine(0.f, 0.f, 0.f, 0.f, 0.f);
-	};
-};
-
-struct TabControlProperty
-{
-	std::shared_ptr<TabHeaderControlProperty> HeaderProperty;
-	std::shared_ptr<SolidLine> Line;
-	std::shared_ptr<SolidFill> SelectedFill;
-	std::shared_ptr<SolidFill> UnfocusSelectedFill;
-	std::shared_ptr<SolidFill> NormalFill;
-	std::shared_ptr<SolidFill> HotFill;
-	std::shared_ptr<CRectF> Padding;
-
-	TabControlProperty()
-		:HeaderProperty(std::make_shared<TabHeaderControlProperty>()),
-		Line(std::make_shared<SolidLine>(221.f/255.f, 206.f/255.f, 188.f/255.f, 1.0f, 1.0f)),
-		NormalFill(std::make_shared<SolidFill>(239.f/255.f, 239.f/255.f, 239.f/255.f, 1.0f)),
-		SelectedFill(std::make_shared<SolidFill>(255.f/255.f, 255.f/255.f, 255.f/255.f, 1.0f)),
-		UnfocusSelectedFill(std::make_shared<SolidFill>(224.f/255.f, 224.f/255.f, 224.f/255.f, 0.5f)),
-		HotFill(std::make_shared<SolidFill>(1.0f, 1.0f, 1.0f, 0.3f)),
-		Padding(std::make_shared<CRectF>(2.0f,2.0f,2.0f,2.0f)){};
-};
-
+struct TabControlProperty;
+struct TabHeaderControlProperty;
 
 struct TabData
 {

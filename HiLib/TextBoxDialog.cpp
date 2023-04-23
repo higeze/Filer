@@ -1,6 +1,7 @@
 #include "TextBoxDialog.h"
 #include "TextBlock.h"
 #include "Button.h"
+#include "ButtonProperty.h"
 #include "TextBox.h"
 #include "TextBoxProperty.h"
 

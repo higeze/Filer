@@ -4,13 +4,21 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 
-template<class TRect> class CUnknown : public TRect
+template<class T> class CUnknown : public T
 {
 private:
 	LONG m_refCount;
 public:
 	CUnknown():m_refCount(1){}
 	virtual ~CUnknown(){}
+
+	template<class U, class... UArgs>
+	static void CreateInstance(T **pp, UArgs... args) {
+		if (pp != NULL) {
+			U *p = new U(args...);
+			p->QueryInterface(IID_PPV_ARGS(pp));
+		}
+	}
 
 	STDMETHODIMP_(ULONG) AddRef() override
 	{
@@ -29,8 +37,8 @@ public:
 	{
 		*ppvObject = NULL;
 
-		if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, _uuidof(TRect))){
-			*ppvObject = static_cast<TRect*>(this);
+		if (IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, _uuidof(T))){
+			*ppvObject = static_cast<T*>(this);
 		}else{
 			return E_NOINTERFACE;
 		}

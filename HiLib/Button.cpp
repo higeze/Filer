@@ -1,4 +1,5 @@
 #include "Button.h"
+#include "ButtonProperty.h"
 #include "D2DWWindow.h"
 
 void CButton::OnLButtonDown(const LButtonDownEvent& e)
