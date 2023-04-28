@@ -400,6 +400,7 @@
     <ClInclude Include="..\HiLib\PreviewControl.h" />
     <ClInclude Include="..\HiLib\PreviewControlProperty.h" />
     <ClInclude Include="..\HiLib\PreviewHandlerFrame.h" />
+    <ClInclude Include="..\HiLib\PreviewWnd.h" />
     <ClInclude Include="..\HiLib\property.h" />
     <ClInclude Include="..\HiLib\ReactiveProperty.h" />
     <ClInclude Include="..\HiLib\ScrollProperty.h" />
@@ -596,6 +597,7 @@
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp" />
     <ClCompile Include="..\HiLIb\PDFiumSingleThread.cpp" />
     <ClCompile Include="..\HiLib\PreviewControl.cpp" />
+    <ClCompile Include="..\HiLib\PreviewWnd.cpp" />
     <ClCompile Include="..\HiLib\SortCell.cpp" />
     <ClCompile Include="..\HiLib\MapColumn.cpp" />
     <ClCompile Include="..\HiLib\RowIndexCell.cpp" />

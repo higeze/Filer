@@ -75,82 +75,93 @@ void CD2DWControl::OnDestroy(const DestroyEvent& e)
 	GetParentControlPtr()->EraseChildControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
 }
 
-void CD2DWControl::OnEnable(const EnableEvent& e) { SendAll(&CD2DWControl::OnEnable, e); }
-void CD2DWControl::OnLButtonDown(const LButtonDownEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonDown, e, true); }
-void CD2DWControl::OnLButtonUp(const LButtonUpEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonUp, e, true); }
-void CD2DWControl::OnLButtonClk(const LButtonClkEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonClk, e); }
-void CD2DWControl::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonSnglClk, e); }
-void CD2DWControl::OnLButtonDblClk(const LButtonDblClkEvent& e) { SendPtInRectReverse(&CD2DWControl::OnLButtonDblClk, e); }
+void CD2DWControl::OnEnable(const EnableEvent& e) 
+{
+	m_isEnabled.set(e.Enable);
+	SendAll(&CD2DWControl::OnEnable, e);
+}
+void CD2DWControl::OnLButtonDown(const LButtonDownEvent& e) { if (GetIsEnabled()) { SendPtInRectReverse(&CD2DWControl::OnLButtonDown, e, true); } }
+void CD2DWControl::OnLButtonUp(const LButtonUpEvent& e) {  if (GetIsEnabled()){ SendPtInRectReverse(&CD2DWControl::OnLButtonUp, e, true); }}
+void CD2DWControl::OnLButtonClk(const LButtonClkEvent& e) {  if (GetIsEnabled()) {SendPtInRectReverse(&CD2DWControl::OnLButtonClk, e); }}
+void CD2DWControl::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { if (GetIsEnabled()) { SendPtInRectReverse(&CD2DWControl::OnLButtonSnglClk, e); } }
+void CD2DWControl::OnLButtonDblClk(const LButtonDblClkEvent& e) { if (GetIsEnabled()) { SendPtInRectReverse(&CD2DWControl::OnLButtonDblClk, e); } }
 
-void CD2DWControl::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { SendCapturePtInRectReverse(&CD2DWControl::OnLButtonBeginDrag, e); }
-void CD2DWControl::OnLButtonEndDrag(const LButtonEndDragEvent& e) { SendCapturePtInRectReverse(&CD2DWControl::OnLButtonEndDrag, e); }
+void CD2DWControl::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { if (GetIsEnabled()) { SendCapturePtInRectReverse(&CD2DWControl::OnLButtonBeginDrag, e); } }
+void CD2DWControl::OnLButtonEndDrag(const LButtonEndDragEvent& e) { if (GetIsEnabled()){SendCapturePtInRectReverse(&CD2DWControl::OnLButtonEndDrag, e); }}
 
-void CD2DWControl::OnRButtonDown(const RButtonDownEvent& e) { SendPtInRectReverse(&CD2DWControl::OnRButtonDown, e, true); }
-void CD2DWControl::OnContextMenu(const ContextMenuEvent& e) { SendPtInRectReverse(&CD2DWControl::OnContextMenu, e); }
+void CD2DWControl::OnRButtonDown(const RButtonDownEvent& e) { if (GetIsEnabled()){SendPtInRectReverse(&CD2DWControl::OnRButtonDown, e, true); }}
+void CD2DWControl::OnContextMenu(const ContextMenuEvent& e) { if (GetIsEnabled()) { SendPtInRectReverse(&CD2DWControl::OnContextMenu, e); } }
 
-void CD2DWControl::OnMButtonDown(const MButtonDownEvent& e) { SendPtInRectReverse(&CD2DWControl::OnMButtonDown, e, true); }
-void CD2DWControl::OnMButtonUp(const MButtonUpEvent& e) { SendPtInRectReverse(&CD2DWControl::OnMButtonUp, e, true); }
+void CD2DWControl::OnMButtonDown(const MButtonDownEvent& e) { if (GetIsEnabled()){SendPtInRectReverse(&CD2DWControl::OnMButtonDown, e, true); }}
+void CD2DWControl::OnMButtonUp(const MButtonUpEvent& e) { if (GetIsEnabled()) { SendPtInRectReverse(&CD2DWControl::OnMButtonUp, e, true); } }
 
 
 void CD2DWControl::OnMouseMove(const MouseMoveEvent& e)
 {
-	if (GetWndPtr()->GetCapturedControlPtr()) {
-		GetWndPtr()->GetCapturedControlPtr()->OnMouseMove(e);
-	} else {
+	if (GetIsEnabled()) {
+		if (GetWndPtr()->GetCapturedControlPtr()) {
+			GetWndPtr()->GetCapturedControlPtr()->OnMouseMove(e);
+		} else {
 
-		auto iter = std::find_if(m_childControls.crbegin(), m_childControls.crend(),
-			[&](const std::shared_ptr<CD2DWControl>& x) {
+			auto iter = std::find_if(m_childControls.crbegin(), m_childControls.crend(),
+				[&](const std::shared_ptr<CD2DWControl>& x) {
 				return x->GetIsEnabled() && x->GetRectInWnd().PtInRect(e.PointInWnd);
 			});
 
-		if (iter == m_childControls.crend()) {//Mouse is NOT on child control, but on me.
-			if (GetMouseControlPtr()) {
-				GetMouseControlPtr()->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
+			if (iter == m_childControls.crend()) {//Mouse is NOT on child control, but on me.
+				if (GetMouseControlPtr()) {
+					GetMouseControlPtr()->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
+				}
+				SetMouseControlPtr(nullptr);
+			} else if (GetMouseControlPtr() != *iter) {//Mouse is on child control and different with previous one
+				if (GetMouseControlPtr()) {
+					GetMouseControlPtr()->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
+				}
+				SetMouseControlPtr(*iter);
+				GetMouseControlPtr()->OnMouseEnter(MouseEnterEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
 			}
-			SetMouseControlPtr(nullptr);
-		} else if (GetMouseControlPtr() != *iter) {//Mouse is on child control and different with previous one
-			if (GetMouseControlPtr()) {
-				GetMouseControlPtr()->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
-			}
-			SetMouseControlPtr(*iter);
-			GetMouseControlPtr()->OnMouseEnter(MouseEnterEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
-		}
 
-		if (GetMouseControlPtr()) { GetMouseControlPtr()->OnMouseMove(e); }
+			if (GetMouseControlPtr()) { GetMouseControlPtr()->OnMouseMove(e); }
+		}
 	}
 }
 
 void CD2DWControl::OnMouseLeave(const MouseLeaveEvent& e)
 {
-	if (GetMouseControlPtr()) {
-		GetMouseControlPtr()->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
+	if (GetIsEnabled()) {
+		if (GetMouseControlPtr()) {
+			GetMouseControlPtr()->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
+		}
+		SetMouseControlPtr(nullptr);
 	}
-	SetMouseControlPtr(nullptr);
 }
 
-void CD2DWControl::OnMouseWheel(const MouseWheelEvent& e) { SendPtInRectReverse(&CD2DWControl::OnMouseWheel, e); }
+void CD2DWControl::OnMouseWheel(const MouseWheelEvent& e) { if (GetIsEnabled()) { SendPtInRectReverse(&CD2DWControl::OnMouseWheel, e); } }
 
 void CD2DWControl::OnSetCursor(const SetCursorEvent& e)
 {
-	if (!GetWndPtr()->GetCapturedControlPtr()) {
-		SendPtInRectReverse(&CD2DWControl::OnSetCursor, e);
+	if (GetIsEnabled()) {
+		if (!GetWndPtr()->GetCapturedControlPtr()) {
+			SendPtInRectReverse(&CD2DWControl::OnSetCursor, e);
+		}
 	}
 }
 
-void CD2DWControl::OnSetFocus(const SetFocusEvent& e) { SendFocused(&CD2DWControl::OnSetFocus, e); }
-void CD2DWControl::OnKillFocus(const KillFocusEvent& e) { SendFocused(&CD2DWControl::OnKillFocus, e); }
+void CD2DWControl::OnSetFocus(const SetFocusEvent& e) { if (GetIsEnabled()) { SendFocused(&CD2DWControl::OnSetFocus, e); } }
+void CD2DWControl::OnKillFocus(const KillFocusEvent& e) { if (GetIsEnabled()){SendFocused(&CD2DWControl::OnKillFocus, e); }}
 
-void CD2DWControl::OnWndSetFocus(const SetFocusEvent& e) { SendAllReverse(&CD2DWControl::OnWndSetFocus, e); }
-void CD2DWControl::OnWndKillFocus(const KillFocusEvent& e) { SendAllReverse(&CD2DWControl::OnWndKillFocus, e); }
+void CD2DWControl::OnWndSetFocus(const SetFocusEvent& e) { if (GetIsEnabled()){SendAllReverse(&CD2DWControl::OnWndSetFocus, e); }}
+void CD2DWControl::OnWndKillFocus(const KillFocusEvent& e) { if (GetIsEnabled()){SendAllReverse(&CD2DWControl::OnWndKillFocus, e); }}
 
 void CD2DWControl::OnKeyDown(const KeyDownEvent& e)
 {
-	*(e.HandledPtr) = FALSE;
-	SendFocused(&CD2DWControl::OnKeyDown, e);
+	if (GetIsEnabled()) {
+		*(e.HandledPtr) = FALSE;
+		SendFocused(&CD2DWControl::OnKeyDown, e);
 
-	if (*(e.HandledPtr) == FALSE) {
-		switch (e.Char){
-			case VK_TAB:
+		if (*(e.HandledPtr) == FALSE) {
+			switch (e.Char) {
+				case VK_TAB:
 				{
 					auto shift = ::GetAsyncKeyState(VK_SHIFT);
 					auto focused_iter = std::find(m_childControls.crbegin(), m_childControls.crend(), GetFocusedControlPtr());
@@ -167,30 +178,35 @@ void CD2DWControl::OnKeyDown(const KeyDownEvent& e)
 					}
 				}
 				break;
-			default:
-				break;
+				default:
+					break;
+			}
 		}
 	}
 }
-void CD2DWControl::OnKeyUp(const KeyUpEvent& e) { SendFocused(&CD2DWControl::OnKeyUp, e); }
-void CD2DWControl::OnSysKeyDown(const SysKeyDownEvent& e) { SendFocused(&CD2DWControl::OnSysKeyDown, e); }
+void CD2DWControl::OnKeyUp(const KeyUpEvent& e) { if (GetIsEnabled()) { SendFocused(&CD2DWControl::OnKeyUp, e); } }
+void CD2DWControl::OnSysKeyDown(const SysKeyDownEvent& e) { if (GetIsEnabled()) { SendFocused(&CD2DWControl::OnSysKeyDown, e); } }
 void CD2DWControl::OnChar(const CharEvent& e)
 { 
-	*(e.HandledPtr) = FALSE;
-	SendFocused(&CD2DWControl::OnChar, e);
+	if (GetIsEnabled()) {
+		*(e.HandledPtr) = FALSE;
+		SendFocused(&CD2DWControl::OnChar, e);
+	}
 }
 
 
 void CD2DWControl::OnCommand(const CommandEvent& e)
 {
-	if (auto iter = m_commandMap.find(e.ID); iter != m_commandMap.end()) {
-		iter->second(e);
-	}
+	if (GetIsEnabled()) {
+		if (auto iter = m_commandMap.find(e.ID); iter != m_commandMap.end()) {
+			iter->second(e);
+		}
 
-	if (!(*e.HandledPtr) && m_pFocusedControl) {
-		m_pFocusedControl->OnCommand(e);
+		if (!(*e.HandledPtr) && m_pFocusedControl) {
+			m_pFocusedControl->OnCommand(e);
+		}
+		GetWndPtr()->InvalidateRect(NULL, FALSE);
 	}
-	GetWndPtr()->InvalidateRect(NULL, FALSE);
 }
 
 CRectF CD2DWControl::CalcCenterRectF(const CSizeF& size)

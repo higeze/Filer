@@ -845,6 +845,9 @@
     <ClInclude Include="..\HiLib\PreviewControlProperty.h">
       <Filter>HiLib\PreviewControl</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\PreviewWnd.h">
+      <Filter>HiLib\PreviewControl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1251,6 +1254,9 @@
       <Filter>HiLib\TextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\PreviewControl.cpp">
+      <Filter>HiLib\PreviewControl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PreviewWnd.cpp">
       <Filter>HiLib\PreviewControl</Filter>
     </ClCompile>
   </ItemGroup>

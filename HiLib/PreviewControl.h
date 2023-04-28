@@ -10,15 +10,17 @@
 #include "PreviewHandlerFrame.h"
 #include "getter_macro.h"
 
+class CPreviewWnd;
 struct PreviewControlProperty;
 
 class CPreviewControl : public CD2DWControl
 {
 protected:
+	std::unique_ptr<CPreviewWnd> m_pWnd;
 	std::shared_ptr<PreviewControlProperty> m_pProp;
-	CComPtr<IFileIsInUse> m_pFileIsInUse;
-	CComPtr<IPreviewHandler> m_pPreviewHandler;
-	DECLARE_LAZY_GETTER(CComPtr<IPreviewHandlerFrame>, PreviewHandlerFramePtr);
+	//CComPtr<IFileIsInUse> m_pFileIsInUse;
+	//CComPtr<IPreviewHandler> m_pPreviewHandler;
+	//DECLARE_LAZY_GETTER(CComPtr<IPreviewHandlerFrame>, PreviewHandlerFramePtr);
 
 public:
 	CPreviewControl(CD2DWControl* pParentControl, const std::shared_ptr<PreviewControlProperty>& pProp);
