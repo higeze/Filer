@@ -35,6 +35,9 @@
     <Filter Include="HiLib\PreviewControl">
       <UniqueIdentifier>{7c606cf2-95dc-4d27-be6a-6ee80ae2abc7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FilerHook">
+      <UniqueIdentifier>{9adffe30-c1da-4878-95ec-c519c7260145}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -847,6 +850,9 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\PreviewWnd.h">
       <Filter>HiLib\PreviewControl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FilerHook\FilerHook.h">
+      <Filter>FilerHook</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

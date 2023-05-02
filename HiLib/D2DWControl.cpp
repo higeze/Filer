@@ -1,8 +1,6 @@
 #include "D2DWControl.h"
 #include "D2DWWindow.h"
 
-
-
 void CD2DWControl::SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl)
 {
 	if (m_pFocusedControl != spControl && spControl->GetIsFocusable().get()) {

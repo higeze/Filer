@@ -87,73 +87,73 @@ void CFilerApplication::SerializeExeExtension(const std::shared_ptr<ExeExtension
 {
 	SerializeValue("ExeExtensionProperty", spProp);
 }
-#include "PreviewHandlerFrame.h"
-#include <propkey.h>
-
-CPreviewHandlerFrame test;
-CComPtr<IPreviewHandler> handler;
-
-HRESULT Open(HWND hWnd, const std::wstring& path)
-{
-	CComPtr<IShellItem> item1;
-	::SHCreateItemFromParsingName(path.c_str(), nullptr, IID_PPV_ARGS(&item1));
-	CComQIPtr<IShellItem2> item2(item1);
-
-	CComHeapPtr<wchar_t> ext;
-	FAILED_THROW(item2->GetString(PKEY_ItemType, &ext));
-
-	CComHeapPtr<wchar_t> parsingName;
-	FAILED_THROW(item2->GetDisplayName(SIGDN::SIGDN_DESKTOPABSOLUTEPARSING, &parsingName));
-
-	CComPtr<IQueryAssociations> assoc;
-	FAILED_THROW(item2->BindToHandler(NULL, BHID_AssociationArray, IID_PPV_ARGS(&assoc)));
-
-	WCHAR sclsid[48] = { 0 };
-	DWORD size = 48;
-	FAILED_THROW(assoc->GetString(ASSOCF_INIT_DEFAULTTOSTAR, ASSOCSTR_SHELLEXTENSION, L"{8895b1c6-b41f-4c1c-a562-0d564250836f}", sclsid, &size));
-
-	CLSID clsid;
-	SHCLSIDFromString(sclsid, &clsid);
-	FAILED_THROW(handler.CoCreateInstance(clsid, NULL, CLSCTX_LOCAL_SERVER));
-
-	CComPtr<IInitializeWithItem> iitem;
-	if (SUCCEEDED(handler->QueryInterface(&iitem)))
-	{
-		FAILED_THROW(iitem->Initialize(item2, STGM_READ));
-	}
-	else
-	{
-		CComPtr<IInitializeWithFile> ifile;
-		if (SUCCEEDED(handler->QueryInterface(&ifile)))
-		{
-			FAILED_THROW(ifile->Initialize(parsingName, STGM_READ));
-		}
-		else
-		{
-			CComPtr<IInitializeWithStream> istream;
-			FAILED_THROW(handler->QueryInterface(&istream));
-
-			CComPtr<IStream> stream;
-			FAILED_THROW(SHCreateStreamOnFile(parsingName, STGM_READ, &stream));
-			FAILED_THROW(istream->Initialize(stream, STGM_READ));
-		}
-	}
-
-	CComPtr<IObjectWithSite> site;
-	if (SUCCEEDED(handler->QueryInterface(&site)))
-	{
-		site->SetSite(&test);
-	}
-
-	RECT rc;
-	GetClientRect(hWnd, &rc);
-	rc.right = (rc.left + rc.right) / 2;
-
-	FAILED_THROW(handler->SetWindow(hWnd, &rc));
-	FAILED_THROW(handler->DoPreview());
-
-	return 0;
-}
+//#include "PreviewHandlerFrame.h"
+//#include <propkey.h>
+//
+//CPreviewHandlerFrame test;
+//CComPtr<IPreviewHandler> handler;
+//
+//HRESULT Open(HWND hWnd, const std::wstring& path)
+//{
+//	CComPtr<IShellItem> item1;
+//	::SHCreateItemFromParsingName(path.c_str(), nullptr, IID_PPV_ARGS(&item1));
+//	CComQIPtr<IShellItem2> item2(item1);
+//
+//	CComHeapPtr<wchar_t> ext;
+//	FAILED_THROW(item2->GetString(PKEY_ItemType, &ext));
+//
+//	CComHeapPtr<wchar_t> parsingName;
+//	FAILED_THROW(item2->GetDisplayName(SIGDN::SIGDN_DESKTOPABSOLUTEPARSING, &parsingName));
+//
+//	CComPtr<IQueryAssociations> assoc;
+//	FAILED_THROW(item2->BindToHandler(NULL, BHID_AssociationArray, IID_PPV_ARGS(&assoc)));
+//
+//	WCHAR sclsid[48] = { 0 };
+//	DWORD size = 48;
+//	FAILED_THROW(assoc->GetString(ASSOCF_INIT_DEFAULTTOSTAR, ASSOCSTR_SHELLEXTENSION, L"{8895b1c6-b41f-4c1c-a562-0d564250836f}", sclsid, &size));
+//
+//	CLSID clsid;
+//	SHCLSIDFromString(sclsid, &clsid);
+//	FAILED_THROW(handler.CoCreateInstance(clsid, NULL, CLSCTX_LOCAL_SERVER));
+//
+//	CComPtr<IInitializeWithItem> iitem;
+//	if (SUCCEEDED(handler->QueryInterface(&iitem)))
+//	{
+//		FAILED_THROW(iitem->Initialize(item2, STGM_READ));
+//	}
+//	else
+//	{
+//		CComPtr<IInitializeWithFile> ifile;
+//		if (SUCCEEDED(handler->QueryInterface(&ifile)))
+//		{
+//			FAILED_THROW(ifile->Initialize(parsingName, STGM_READ));
+//		}
+//		else
+//		{
+//			CComPtr<IInitializeWithStream> istream;
+//			FAILED_THROW(handler->QueryInterface(&istream));
+//
+//			CComPtr<IStream> stream;
+//			FAILED_THROW(SHCreateStreamOnFile(parsingName, STGM_READ, &stream));
+//			FAILED_THROW(istream->Initialize(stream, STGM_READ));
+//		}
+//	}
+//
+//	CComPtr<IObjectWithSite> site;
+//	if (SUCCEEDED(handler->QueryInterface(&site)))
+//	{
+//		site->SetSite(&test);
+//	}
+//
+//	RECT rc;
+//	GetClientRect(hWnd, &rc);
+//	rc.right = (rc.left + rc.right) / 2;
+//
+//	FAILED_THROW(handler->SetWindow(hWnd, &rc));
+//	FAILED_THROW(handler->DoPreview());
+//
+//	return 0;
+//}
 
 
 
@@ -187,6 +187,9 @@ void CFilerApplication::Init()
 	m_pWnd->ShowWindow(SW_SHOW);
 	m_pWnd->UpdateWindow();
 
+	//Hook
+	//SetHook(m_pWnd->m_hWnd);
+
 	//Open(m_pWnd->m_hWnd, LR"(C:\Users\kuuna\Downloads\VersyPDF (1).pdf)");
 }
 
@@ -213,6 +216,9 @@ void CFilerApplication::Term()
 	spdlog::drop_all();
 	//SEH
 	m_pSETrans.release();
+
+	//Hook
+	//ResetHook();
 }
 
 

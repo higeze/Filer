@@ -9,13 +9,12 @@
 class CPreviewWnd :public CWnd
 {
 private:
+	std::wstring m_path;
 	CComPtr<IFileIsInUse> m_pFileIsInUse;
 	CComPtr<IPreviewHandler> m_pPreviewHandler;
 	DECLARE_LAZY_GETTER(CComPtr<IPreviewHandlerFrame>, PreviewHandlerFramePtr);
 
 public:
-	//ReactiveProperty
-	ReactiveWStringProperty Path;
 	//Constructor/Destructor
 	CPreviewWnd();
 	~CPreviewWnd();

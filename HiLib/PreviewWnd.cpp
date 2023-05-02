@@ -42,72 +42,66 @@ const CComPtr<IPreviewHandlerFrame>& CPreviewWnd::GetPreviewHandlerFramePtr() co
 
 void CPreviewWnd::Open(const std::wstring& path)
 {
-	Close();
+	if (m_path != path && ::PathFileExists(path.c_str())) {
 
-	if (!::PathFileExists(path.c_str())) { return; }
-
-	m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(m_hWnd, path.c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
-	AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [this](UINT, LPARAM, WPARAM, BOOL&)->LRESULT
-	{
 		Close();
-		return 0;
-	});
 
-	CComPtr<IShellItem> pItem1;
-	::SHCreateItemFromParsingName(path.c_str(), nullptr, IID_PPV_ARGS(&pItem1));
-	CComQIPtr<IShellItem2> pItem2(pItem1);
+		//m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(m_hWnd, path.c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
+		//AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [this](UINT, LPARAM, WPARAM, BOOL&)->LRESULT {
+		//	Close();
+		//	return 0;
+		//});
 
-	CComHeapPtr<wchar_t> ext;
-	FAILED_THROW(pItem2->GetString(PKEY_ItemType, &ext));
+		CComPtr<IShellItem> pItem1;
+		::SHCreateItemFromParsingName(path.c_str(), nullptr, IID_PPV_ARGS(&pItem1));
+		CComQIPtr<IShellItem2> pItem2(pItem1);
 
-	CComHeapPtr<wchar_t> parsingName;
-	FAILED_THROW(pItem2->GetDisplayName(SIGDN::SIGDN_DESKTOPABSOLUTEPARSING, &parsingName));
+		CComHeapPtr<wchar_t> ext;
+		FAILED_THROW(pItem2->GetString(PKEY_ItemType, &ext));
 
-	CComPtr<IQueryAssociations> assoc;
-	FAILED_THROW(pItem2->BindToHandler(NULL, BHID_AssociationArray, IID_PPV_ARGS(&assoc)));
+		CComHeapPtr<wchar_t> parsingName;
+		FAILED_THROW(pItem2->GetDisplayName(SIGDN::SIGDN_DESKTOPABSOLUTEPARSING, &parsingName));
 
-	WCHAR sclsid[48] = { 0 };
-	DWORD size = 48;
-	FAILED_THROW(assoc->GetString(ASSOCF_INIT_DEFAULTTOSTAR, ASSOCSTR_SHELLEXTENSION, L"{8895b1c6-b41f-4c1c-a562-0d564250836f}", sclsid, &size));
+		CComPtr<IQueryAssociations> assoc;
+		FAILED_THROW(pItem2->BindToHandler(NULL, BHID_AssociationArray, IID_PPV_ARGS(&assoc)));
 
-	CLSID clsid;
-	SHCLSIDFromString(sclsid, &clsid);
-	FAILED_THROW(m_pPreviewHandler.CoCreateInstance(clsid, NULL, CLSCTX_LOCAL_SERVER));
+		WCHAR sclsid[48] = {0};
+		DWORD size = 48;
+		FAILED_THROW(assoc->GetString(ASSOCF_INIT_DEFAULTTOSTAR, ASSOCSTR_SHELLEXTENSION, L"{8895b1c6-b41f-4c1c-a562-0d564250836f}", sclsid, &size));
 
-	CComPtr<IInitializeWithItem> iitem;
-	if (SUCCEEDED(m_pPreviewHandler->QueryInterface(&iitem)))
-	{
-		FAILED_THROW(iitem->Initialize(pItem2, STGM_READ));
-	}
-	else
-	{
-		CComPtr<IInitializeWithFile> ifile;
-		if (SUCCEEDED(m_pPreviewHandler->QueryInterface(&ifile)))
-		{
-			FAILED_THROW(ifile->Initialize(parsingName, STGM_READ));
+		CLSID clsid;
+		SHCLSIDFromString(sclsid, &clsid);
+		FAILED_THROW(m_pPreviewHandler.CoCreateInstance(clsid, NULL, CLSCTX_LOCAL_SERVER));
+
+		CComPtr<IInitializeWithItem> iitem;
+		if (SUCCEEDED(m_pPreviewHandler->QueryInterface(&iitem))) {
+			FAILED_THROW(iitem->Initialize(pItem2, STGM_READ));
+		} else {
+			CComPtr<IInitializeWithFile> ifile;
+			if (SUCCEEDED(m_pPreviewHandler->QueryInterface(&ifile))) {
+				FAILED_THROW(ifile->Initialize(parsingName, STGM_READ));
+			} else {
+				CComPtr<IInitializeWithStream> istream;
+				FAILED_THROW(m_pPreviewHandler->QueryInterface(&istream));
+
+				CComPtr<IStream> stream;
+				FAILED_THROW(SHCreateStreamOnFile(parsingName, STGM_READ, &stream));
+				FAILED_THROW(istream->Initialize(stream, STGM_READ));
+			}
 		}
-		else
-		{
-			CComPtr<IInitializeWithStream> istream;
-			FAILED_THROW(m_pPreviewHandler->QueryInterface(&istream));
 
-			CComPtr<IStream> stream;
-			FAILED_THROW(SHCreateStreamOnFile(parsingName, STGM_READ, &stream));
-			FAILED_THROW(istream->Initialize(stream, STGM_READ));
+		CComPtr<IObjectWithSite> site;
+		if (SUCCEEDED(m_pPreviewHandler->QueryInterface(&site))) {
+			site->SetSite(GetPreviewHandlerFramePtr());
 		}
+
+		CRect rc(GetClientRect());
+
+		FAILED_THROW(m_pPreviewHandler->SetWindow(m_hWnd, &rc));
+		FAILED_THROW(m_pPreviewHandler->SetRect(&rc));
+		FAILED_THROW(m_pPreviewHandler->DoPreview());
+		m_path = path;
 	}
-
-	CComPtr<IObjectWithSite> site;
-	if (SUCCEEDED(m_pPreviewHandler->QueryInterface(&site)))
-	{
-		site->SetSite(GetPreviewHandlerFramePtr());
-	}
-
-	CRect rc(GetClientRect());
-
-	FAILED_THROW(m_pPreviewHandler->SetWindow(m_hWnd, &rc));
-	FAILED_THROW(m_pPreviewHandler->SetRect(&rc));
-	FAILED_THROW(m_pPreviewHandler->DoPreview());
 }
 
 void CPreviewWnd::Open()
@@ -136,10 +130,10 @@ void CPreviewWnd::Open()
 
 void CPreviewWnd::Close()
 {
-	if (m_pFileIsInUse) {
-		RemoveMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE);
-		m_pFileIsInUse.Release();
-	}
+	//if (m_pFileIsInUse) {
+	//	RemoveMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE);
+	//	m_pFileIsInUse.Release();
+	//}
 
 	if (m_pPreviewHandler) {
 		FAILED_THROW(m_pPreviewHandler->Unload());

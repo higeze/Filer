@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="FilerHook">
+      <UniqueIdentifier>{e0621d5e-ec71-46d8-bf37-2f989b7a0d9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HiLib">
+      <UniqueIdentifier>{15b751ab-5b17-4166-9976-5ca6fbf12d47}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>FilerHook</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>FilerHook</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerHook.h">
+      <Filter>FilerHook</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="FilerHook.cpp">
+      <Filter>FilerHook</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>FilerHook</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FilerHook.def">
+      <Filter>FilerHook</Filter>
+    </None>
+  </ItemGroup>
+</Project>

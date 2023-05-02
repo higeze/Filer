@@ -10,6 +10,61 @@
 #include "Dispatcher.h"
 #include "DropTargetManager.h"
 
+LRESULT CALLBACK CD2DWWindow::StaticHostWndSubProc(
+	HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+	HWND hWndOwner;
+	HWND hWndTemp = hWnd;
+	while (1){
+		HWND hWndParent = ::GetParent(hWndTemp);
+		if (hWndParent) {
+			hWndTemp = hWndParent;
+			continue;
+		} else {
+			hWndOwner = hWndTemp;
+			break;
+		}
+	}
+	CD2DWWindow *pWnd=(CD2DWWindow*)::GetWindowLongPtr(hWndOwner, GWLP_USERDATA);
+	return pWnd->HostWndSubProc(hWnd, uMsg, wParam, lParam, uIdSubclass, dwRefData);
+}
+
+LRESULT CD2DWWindow::HostWndSubProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+	switch (uMsg) {
+		case WM_ACTIVATE:
+			if (!LOWORD(wParam)) {
+				break;
+			}
+		case WM_SHOWWINDOW:
+			if (!wParam) {
+				break;
+			}
+		case WM_SETFOCUS:
+		{
+			//auto spControl = FindHostWndControlPtr(hWnd);
+			//if (spControl && spControl->GetHostHWnd() == hWnd) {
+			//	SetFocusedControlPtr(spControl);
+			//}
+			CD2DWControl* pControl = reinterpret_cast<CD2DWControl*>(dwRefData);
+			SetFocusedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(pControl->shared_from_this()));
+		}
+		break;
+	};
+	return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+
+std::shared_ptr<CD2DWHostWndControl> CD2DWWindow::FindHostWndControlPtr(HWND hWnd)
+{
+	for (auto iter = m_childControls.cbegin(); iter != m_childControls.cend(); ++iter) {
+		if (auto p = std::dynamic_pointer_cast<CD2DWHostWndControl>(*iter); p && p->GetHostHWnd() == hWnd) {
+			return p;
+		}
+	}
+	return nullptr;
+}
+
 CD2DWWindow::CD2DWWindow()
 	:CWnd(),CD2DWControl(nullptr),
 	m_pDispatcher(std::make_unique<CDispatcher>(this)),
@@ -37,14 +92,25 @@ CD2DWWindow::CD2DWWindow()
 	AddMsgHandler(WM_DISPLAYCHANGE, &CD2DWWindow::OnPaint, this);
 
 	AddMsgHandler(WM_ERASEBKGND, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
-		{
-			bHandled = TRUE;
-			return 1;
-		});
+	{
+		bHandled = TRUE;
+		return 1;
+	});
 
 	AddMsgHandler(WM_SETCURSOR, Normal_Message(&CD2DWWindow::OnSetCursor));
 	AddMsgHandler(WM_SETFOCUS, Normal_Message(&CD2DWWindow::OnSetFocus));
 	AddMsgHandler(WM_KILLFOCUS, Normal_Message(&CD2DWWindow::OnKillFocus));
+
+	AddMsgHandler(::RegisterWindowMessage(L"PreviewWindowSetFocus"), [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
+	{
+		CD2DWControl* pControl = reinterpret_cast<CD2DWControl*>(wParam);
+		while (auto pParent = pControl->GetParentControlPtr()) {
+			pParent->SetFocusedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(pControl->shared_from_this()));
+			pControl = pParent;
+		};
+		bHandled = TRUE;
+		return 1;
+	});
 
 
 	//UserInput

@@ -1,26 +1,37 @@
 #pragma once
 #include "D2DWWindow.h"
 #include "D2DWControl.h"
-#include "Scroll.h"
-#include "ScrollProperty.h"
 #include "ReactiveProperty.h"
-#include "ImageViewStateMachine.h"
-#include "FileIsInUse.h"
 #include "getter_macro.h"
-#include "PreviewHandlerFrame.h"
-#include "getter_macro.h"
+//#include "FilerHook.h"
+//#pragma comment(lib, "FilerHook.lib")
+
 
 class CPreviewWnd;
 struct PreviewControlProperty;
 
-class CPreviewControl : public CD2DWControl
+//class CPreviewWindowsHooker
+//{
+//public:
+//	CPreviewWindowsHooker(HWND hWndOwner, void* pControl, HWND hWndPreview)
+//	{
+//		::SetPreviewWindowHook(hWndOwner, pControl, hWndPreview);
+//	}
+//
+//	~CPreviewWindowsHooker()
+//	{
+//		::ResetPreviewWindowHook();
+//	}
+//
+//};
+
+class CPreviewControl : public CD2DWHostWndControl
 {
 protected:
 	std::unique_ptr<CPreviewWnd> m_pWnd;
+	//std::unique_ptr<CPreviewWindowsHooker> m_pHooker;
 	std::shared_ptr<PreviewControlProperty> m_pProp;
-	//CComPtr<IFileIsInUse> m_pFileIsInUse;
-	//CComPtr<IPreviewHandler> m_pPreviewHandler;
-	//DECLARE_LAZY_GETTER(CComPtr<IPreviewHandlerFrame>, PreviewHandlerFramePtr);
+	FARPROC m_previewProc;
 
 public:
 	CPreviewControl(CD2DWControl* pParentControl, const std::shared_ptr<PreviewControlProperty>& pProp);
@@ -28,14 +39,11 @@ public:
 public:
 	//ReactiveProperty
 	ReactiveWStringProperty Path;
-	
-	//CRectF GetRenderRectInWnd();
-	//CSizeF GetRenderSize();
-	//CSizeF GetRenderContentSize();
 
 	void Open(const std::wstring& path);
 	void Open();
 	void Close();
+	std::tuple<CRect> GetRects() const;
 
 public:
 	/******************/
@@ -45,7 +53,7 @@ public:
 	virtual void OnRect(const RectEvent& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
 
-	//virtual void OnPaint(const PaintEvent& e) { m_pMachine->process_event(e); }
+	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnSetFocus(const SetFocusEvent& e) override;
 	//virtual void OnKillFocus(const KillFocusEvent& e) override { m_pMachine->process_event(e); }
 	//virtual void OnKeyDown(const KeyDownEvent& e) override { m_pMachine->process_event(e); }
@@ -72,8 +80,4 @@ public:
 	virtual void OnEnable(const EnableEvent& e) override;
 
 	virtual void OnWndKillFocus(const KillFocusEvent& e) override;
-
-	/**************/
-	/* SM Message */
-	/**************/
 };

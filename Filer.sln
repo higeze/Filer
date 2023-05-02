@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.31515.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Filer", "Filer\Filer.vcxproj", "{CF962017-0112-4F65-911D-F399D628C47B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FilerHook", "FilerHook\FilerHook.vcxproj", "{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -27,6 +29,18 @@ Global
 		{CF962017-0112-4F65-911D-F399D628C47B}.Release|x64.Build.0 = Release|x64
 		{CF962017-0112-4F65-911D-F399D628C47B}.Release|x86.ActiveCfg = Release|Win32
 		{CF962017-0112-4F65-911D-F399D628C47B}.Release|x86.Build.0 = Release|Win32
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Debug|x64.ActiveCfg = Debug|x64
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Debug|x64.Build.0 = Debug|x64
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Debug|x86.ActiveCfg = Debug|Win32
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Debug|x86.Build.0 = Debug|Win32
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Debut UnitTests|x64.ActiveCfg = Debug|x64
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Debut UnitTests|x64.Build.0 = Debug|x64
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Debut UnitTests|x86.ActiveCfg = Debug|Win32
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Debut UnitTests|x86.Build.0 = Debug|Win32
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Release|x64.ActiveCfg = Release|x64
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Release|x64.Build.0 = Release|x64
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Release|x86.ActiveCfg = Release|Win32
+		{6F21D8C3-8FBC-44B4-8431-F15D5A5E50F9}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

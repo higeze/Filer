@@ -9,6 +9,7 @@ class CD2DWControl: public virtual CUIElement
 {
 public:
 	static UINT WM_CONTROLMESSAGE;
+
 protected:
 	std::unordered_map<WORD,std::function<void(const CommandEvent&)>> m_commandMap;
 	CD2DWControl* m_pParentControl;
@@ -187,4 +188,17 @@ public:
 		if (m_pFocusedControl) { (m_pFocusedControl.get()->*f)(e); }
 		GetWndPtr()->InvalidateRect(NULL, FALSE);
 	}
+};
+
+class CD2DWHostWndControl : public CD2DWControl
+{
+protected:
+	HWND m_hostHWnd;
+	WNDPROC m_hostProc;
+public:
+	CD2DWHostWndControl(CD2DWControl* pParentControl = nullptr)
+		:CD2DWControl(pParentControl){}
+	virtual ~CD2DWHostWndControl(){}
+	HWND GetHostHWnd() const { return m_hostHWnd; }
+	WNDPROC GetHostOrgProc() const { return m_hostProc; }
 };

@@ -13,7 +13,12 @@ class CDropTargetManager;
 
 class CD2DWWindow:public CWnd, public CD2DWControl
 {
+public:
+	static LRESULT CALLBACK StaticHostWndSubProc(HWND hWnd, UINT uMsg, WPARAM wParam,
+		LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+
 protected:
+	std::unordered_map<HWND, std::tuple<std::shared_ptr<CD2DWControl>, WNDPROC>> m_host_map;
 	std::unique_ptr<CDispatcher> m_pDispatcher;
 	std::shared_ptr<CDirect2DWrite> m_pDirect;
 	std::unique_ptr<CMouseStateMachine> m_pMouseMachine;
@@ -24,6 +29,9 @@ protected:
 public :
 	CD2DWWindow();
 	virtual ~CD2DWWindow();
+
+	std::shared_ptr<CD2DWHostWndControl> FindHostWndControlPtr(HWND hWnd);
+	LRESULT HostWndSubProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
 	CD2DWWindow* GetWndPtr()const override{ return const_cast<CD2DWWindow*>(this); }
 	CDirect2DWrite* GetDirectPtr() const { return  m_pDirect.get(); }
