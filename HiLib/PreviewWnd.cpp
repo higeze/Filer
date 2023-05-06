@@ -42,8 +42,8 @@ const CComPtr<IPreviewHandlerFrame>& CPreviewWnd::GetPreviewHandlerFramePtr() co
 
 void CPreviewWnd::Open(const std::wstring& path)
 {
-	if (m_path != path && ::PathFileExists(path.c_str())) {
-
+	//if (m_path != path && ::PathFileExists(path.c_str())) {
+	do {
 		Close();
 
 		//m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(m_hWnd, path.c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
@@ -53,55 +53,50 @@ void CPreviewWnd::Open(const std::wstring& path)
 		//});
 
 		CComPtr<IShellItem> pItem1;
-		::SHCreateItemFromParsingName(path.c_str(), nullptr, IID_PPV_ARGS(&pItem1));
+		FAILED_BREAK(::SHCreateItemFromParsingName(path.c_str(), nullptr, IID_PPV_ARGS(&pItem1)));
 		CComQIPtr<IShellItem2> pItem2(pItem1);
 
 		CComHeapPtr<wchar_t> ext;
-		FAILED_THROW(pItem2->GetString(PKEY_ItemType, &ext));
+		FAILED_BREAK(pItem2->GetString(PKEY_ItemType, &ext));
 
 		CComHeapPtr<wchar_t> parsingName;
-		FAILED_THROW(pItem2->GetDisplayName(SIGDN::SIGDN_DESKTOPABSOLUTEPARSING, &parsingName));
+		FAILED_BREAK(pItem2->GetDisplayName(SIGDN::SIGDN_DESKTOPABSOLUTEPARSING, &parsingName));
 
 		CComPtr<IQueryAssociations> assoc;
-		FAILED_THROW(pItem2->BindToHandler(NULL, BHID_AssociationArray, IID_PPV_ARGS(&assoc)));
+		FAILED_BREAK(pItem2->BindToHandler(NULL, BHID_AssociationArray, IID_PPV_ARGS(&assoc)));
 
 		WCHAR sclsid[48] = {0};
 		DWORD size = 48;
-		FAILED_THROW(assoc->GetString(ASSOCF_INIT_DEFAULTTOSTAR, ASSOCSTR_SHELLEXTENSION, L"{8895b1c6-b41f-4c1c-a562-0d564250836f}", sclsid, &size));
+		FAILED_BREAK(assoc->GetString(ASSOCF_INIT_DEFAULTTOSTAR, ASSOCSTR_SHELLEXTENSION, L"{8895b1c6-b41f-4c1c-a562-0d564250836f}", sclsid, &size));
 
 		CLSID clsid;
 		SHCLSIDFromString(sclsid, &clsid);
-		FAILED_THROW(m_pPreviewHandler.CoCreateInstance(clsid, NULL, CLSCTX_LOCAL_SERVER));
+		FAILED_BREAK(m_pPreviewHandler.CoCreateInstance(clsid, NULL, CLSCTX_LOCAL_SERVER));
 
-		CComPtr<IInitializeWithItem> iitem;
-		if (SUCCEEDED(m_pPreviewHandler->QueryInterface(&iitem))) {
-			FAILED_THROW(iitem->Initialize(pItem2, STGM_READ));
+		if (CComPtr<IInitializeWithItem> iitem; SUCCEEDED(m_pPreviewHandler->QueryInterface(&iitem))) {
+			FAILED_BREAK(iitem->Initialize(pItem2, STGM_READ));
+		} else if (CComPtr<IInitializeWithStream> istream; SUCCEEDED(m_pPreviewHandler->QueryInterface(&istream))) {
+			CComPtr<IStream> stream;
+			FAILED_BREAK(SHCreateStreamOnFile(parsingName, STGM_READ, &stream));
+			FAILED_BREAK(istream->Initialize(stream, STGM_READ));
+		} else if (CComPtr<IInitializeWithFile> ifile; SUCCEEDED(m_pPreviewHandler->QueryInterface(&ifile))) {
+			FAILED_BREAK(ifile->Initialize(parsingName, STGM_READ));
 		} else {
-			CComPtr<IInitializeWithFile> ifile;
-			if (SUCCEEDED(m_pPreviewHandler->QueryInterface(&ifile))) {
-				FAILED_THROW(ifile->Initialize(parsingName, STGM_READ));
-			} else {
-				CComPtr<IInitializeWithStream> istream;
-				FAILED_THROW(m_pPreviewHandler->QueryInterface(&istream));
-
-				CComPtr<IStream> stream;
-				FAILED_THROW(SHCreateStreamOnFile(parsingName, STGM_READ, &stream));
-				FAILED_THROW(istream->Initialize(stream, STGM_READ));
-			}
+			break;
 		}
 
 		CComPtr<IObjectWithSite> site;
-		if (SUCCEEDED(m_pPreviewHandler->QueryInterface(&site))) {
-			site->SetSite(GetPreviewHandlerFramePtr());
-		}
+		FAILED_BREAK(m_pPreviewHandler->QueryInterface(&site));
+		FAILED_BREAK(site->SetSite(GetPreviewHandlerFramePtr()));
 
 		CRect rc(GetClientRect());
+		FAILED_BREAK(m_pPreviewHandler->SetWindow(m_hWnd, &rc));
+		FAILED_BREAK(m_pPreviewHandler->SetRect(&rc));
+		FAILED_BREAK(m_pPreviewHandler->DoPreview());
 
-		FAILED_THROW(m_pPreviewHandler->SetWindow(m_hWnd, &rc));
-		FAILED_THROW(m_pPreviewHandler->SetRect(&rc));
-		FAILED_THROW(m_pPreviewHandler->DoPreview());
 		m_path = path;
-	}
+	} while (false);
+	//}
 }
 
 void CPreviewWnd::Open()

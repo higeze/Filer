@@ -5,6 +5,8 @@
 #include "ReactiveProperty.h"
 #include "getter_macro.h"
 #include "Debug.h"
+#include <atlbase.h>
+#include <atlcom.h>
 
 class CPreviewWnd :public CWnd
 {
@@ -12,7 +14,7 @@ private:
 	std::wstring m_path;
 	CComPtr<IFileIsInUse> m_pFileIsInUse;
 	CComPtr<IPreviewHandler> m_pPreviewHandler;
-	DECLARE_LAZY_GETTER(CComPtr<IPreviewHandlerFrame>, PreviewHandlerFramePtr);
+	DECLARE_LAZY_GETTER(CComPtr<IPreviewHandlerFrame>, PreviewHandlerFramePtr)
 
 public:
 	//Constructor/Destructor
