@@ -1,7 +1,6 @@
 #include "PDFiumMultiThread.h"
 #include <boost/algorithm/string.hpp>
 #include "se_exception.h"
-#include "MyUniqueHandle.h"
 
 /*************/
 /* PDFObject */
@@ -164,14 +163,52 @@ std::vector<CRectF> CPDFiumMultiThread::PDFObject::Text_GetRangeRects(int index,
 	return rects;
 }
 
+//CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(const int index,
+//	HDC hDC,
+//	CComPtr<ID2D1DeviceContext>& pDC,
+//	CComPtr<IWICImagingFactory2>& pFactory,
+//	const FLOAT& scale)
+//{
+//	CSizeF sz(FPDF_GetPageWidthF(this->Pages[index].get()) * scale, FPDF_GetPageHeightF(this->Pages[index].get()) * scale);
+//
+//	BITMAPINFOHEADER bmih
+//	{
+//		.biSize = sizeof(BITMAPINFOHEADER),
+//		.biWidth = static_cast<LONG>(std::round(sz.width)),
+//		.biHeight = -static_cast<LONG>(std::round(sz.height)),
+//		.biPlanes = 1,
+//		.biBitCount = 24,
+//		.biCompression = BI_RGB,
+//		.biSizeImage = 0,
+//	};
+//
+//	void* bitmapBits = nullptr;
+//
+//	UHBITMAP phBmp(::CreateDIBSection(hDC, reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0));
+//	FALSE_THROW(phBmp);
+//
+//	UNQ_FPDF_BITMAP pFpdfBmp(FPDFBitmap_CreateEx(bmih.biWidth, -bmih.biHeight, FPDFBitmap_BGR, bitmapBits, (bmih.biWidth * bmih.biBitCount + 31) / 32 * 4));
+//    FALSE_THROW(pFpdfBmp);
+//
+//	FPDFBitmap_FillRect(pFpdfBmp.get(), 0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF); // Fill white
+//	FPDF_RenderPageBitmap(pFpdfBmp.get(), this->Pages[index].get(),0,0,bmih.biWidth, -bmih.biHeight, 0, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE);
+//	
+//    CComPtr<IWICBitmap> pWICBmp;
+//	FAILED_THROW(pFactory->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapAlphaChannelOption::WICBitmapIgnoreAlpha, &pWICBmp));
+//
+//	CComPtr<ID2D1Bitmap1> pD2DBmp;
+//	FAILED_THROW(pDC->CreateBitmapFromWicBitmap(pWICBmp,&pD2DBmp));
+//	
+//	return pD2DBmp;
+//}
 
-CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(const int index,
+UHBITMAP CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(
+	const int index,
 	HDC hDC,
-	CComPtr<ID2D1DeviceContext>& pDC,
-	CComPtr<IWICImagingFactory2>& pFactory,
 	const FLOAT& scale)
 {
 	CSizeF sz(FPDF_GetPageWidthF(this->Pages[index].get()) * scale, FPDF_GetPageHeightF(this->Pages[index].get()) * scale);
+
 	BITMAPINFOHEADER bmih
 	{
 		.biSize = sizeof(BITMAPINFOHEADER),
@@ -192,21 +229,90 @@ CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(const 
     FALSE_THROW(pFpdfBmp);
 
 	FPDFBitmap_FillRect(pFpdfBmp.get(), 0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF); // Fill white
-	FPDF_RenderPageBitmap(pFpdfBmp.get(), this->Pages[index].get(),0,0,bmih.biWidth, -bmih.biHeight, 0, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
+	FPDF_RenderPageBitmap(pFpdfBmp.get(), this->Pages[index].get(),0,0,bmih.biWidth, -bmih.biHeight, 0, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE);
 
-    CComPtr<IWICBitmap> pWICBmp;
-	FAILED_THROW(pFactory->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
-
-	CComPtr<ID2D1Bitmap1> pD2DBmp;
-	FAILED_THROW(pDC->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
-	
-	return pD2DBmp;
+	return phBmp;
 }
 
-CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageClippedBitmap(const int index,
+
+//CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(const int index,
+//	HDC hDC,
+//	CComPtr<ID2D1DeviceContext>& pDC,
+//	CComPtr<IWICImagingFactory2>& pFactory,
+//	const FLOAT& scale)
+//{
+//	CSizeF sz(FPDF_GetPageWidthF(this->Pages[index].get()) * scale, FPDF_GetPageHeightF(this->Pages[index].get()) * scale);
+//
+//	BITMAPINFOHEADER bmih
+//	{
+//		.biSize = sizeof(BITMAPINFOHEADER),
+//		.biWidth = static_cast<LONG>(std::round(sz.width)),
+//		.biHeight = -static_cast<LONG>(std::round(sz.height)),
+//		.biPlanes = 1,
+//		.biBitCount = 32,
+//		.biCompression = BI_RGB,
+//		.biSizeImage = 0,
+//	};
+//
+//	void* bitmapBits = nullptr;
+//
+//	UHBITMAP phBmp(::CreateDIBSection(hDC, reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0));
+//	FALSE_THROW(phBmp);
+//
+//	UNQ_FPDF_BITMAP pFpdfBmp(FPDFBitmap_CreateEx(bmih.biWidth, -bmih.biHeight, FPDFBitmap_BGRx, bitmapBits, ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3)));
+//    FALSE_THROW(pFpdfBmp);
+//
+//	FPDFBitmap_FillRect(pFpdfBmp.get(), 0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF); // Fill white
+//	FPDF_RenderPageBitmap(pFpdfBmp.get(), this->Pages[index].get(),0,0,bmih.biWidth, -bmih.biHeight, 0, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE);
+//	
+//    CComPtr<IWICBitmap> pWICBmp;
+//	FAILED_THROW(pFactory->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
+//
+//	CComPtr<ID2D1Bitmap1> pD2DBmp;
+//	FAILED_THROW(pDC->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
+//	
+//	return pD2DBmp;
+//}
+
+//
+//CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(const int index,
+//	HDC hDC,
+//	CComPtr<ID2D1DeviceContext>& pDC,
+//	CComPtr<IWICImagingFactory2>& pFactory,
+//	const FLOAT& scale)
+//{
+//	//CSizeF sz(FPDF_GetPageWidthF(this->Pages[index].get()) * scale, FPDF_GetPageHeightF(this->Pages[index].get()) * scale);
+//	CSizeU sz(static_cast<UINT32>(std::round(FPDF_GetPageWidthF(this->Pages[index].get()))) * scale, 
+//		static_cast<UINT32>(std::round(FPDF_GetPageHeightF(this->Pages[index].get()) * scale)));
+//	hDC = GetDC(NULL);
+//	HDC hMemDC(::CreateCompatibleDC(hDC));
+//	HBITMAP hMemBmp(::CreateCompatibleBitmap(hDC, sz.width, sz.height));
+//	HBRUSH hBrush(::CreateSolidBrush(RGB(255, 255, 255)));
+//	HBITMAP hPrevMemBmp((HBITMAP)::SelectObject(hMemDC, hMemBmp));
+//	HBRUSH hPrevBrush((HBRUSH)::SelectObject(hMemDC, hBrush));
+//	RECT rc{0, 0, sz.width, sz.height};
+//	::FillRect(hMemDC, &rc, hBrush);
+//
+//	::FPDF_RenderPage(hMemDC, this->Pages[index].get(), 0, 0, sz.width, sz.height, 0, 0);
+//	hMemBmp = (HBITMAP)::SelectObject(hMemDC, hPrevMemBmp); 
+//	hBrush = (HBRUSH)::SelectObject(hMemDC, hPrevBrush);
+//
+//	CComPtr<IWICBitmap> pWICBmp;
+//	FAILED_THROW(pFactory->CreateBitmapFromHBITMAP(hMemBmp, nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
+//
+//	CComPtr<ID2D1Bitmap1> pD2DBmp;
+//	FAILED_THROW(pDC->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
+//
+//
+//	::DeleteObject(hMemBmp);
+//	::DeleteDC(hMemDC);
+//	
+//	return pD2DBmp;
+//}
+
+UHBITMAP CPDFiumMultiThread::PDFObject::Bitmap_GetPageClippedBitmap(
+	const int index,
 	HDC hDC,
-	CComPtr<ID2D1DeviceContext>& pDC,
-	CComPtr<IWICImagingFactory2>& pFactory,
 	const CRectF& rectInPage,
 	const FLOAT& scale)
 {
@@ -239,18 +345,58 @@ CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageClippedBitmap
 		FS_RECTF rcf{0, 0, static_cast<float>(bmih.biWidth), static_cast<float>(-bmih.biHeight)};
 		FPDF_RenderPageBitmapWithMatrix(pFpdfBmp.get(), this->Pages[index].get(), &mat, &rcf, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
 
-		BITMAP bmp;
-		::GetObject(phBmp.get(), sizeof(BITMAP), LPVOID(&bmp));
-
-		CComPtr<IWICBitmap> pWICBmp;
-		FAILED_THROW(pFactory->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
-
-		CComPtr<ID2D1Bitmap1> pD2DBmp;
-		FAILED_THROW(pDC->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
-
-		return pD2DBmp;
+		return phBmp;
 	}
 }
+//
+//CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageClippedBitmap(const int index,
+//	HDC hDC,
+//	CComPtr<ID2D1DeviceContext>& pDC,
+//	CComPtr<IWICImagingFactory2>& pFactory,
+//	const CRectF& rectInPage,
+//	const FLOAT& scale)
+//{
+//    CRectU scaledRectInPage = CRectF2CRectU(rectInPage * scale);
+//    BITMAPINFOHEADER bmih
+//    {
+//        .biSize = sizeof(BITMAPINFOHEADER),
+//        .biWidth = static_cast<LONG>(scaledRectInPage.Width()),
+//        .biHeight = -static_cast<LONG>(scaledRectInPage.Height()),
+//        .biPlanes = 1,
+//        .biBitCount = 32,
+//        .biCompression = BI_RGB,
+//        .biSizeImage = 0,
+//    };
+//
+//    if (bmih.biWidth == 0 || bmih.biHeight == 0) {
+//        return nullptr;
+//	} else {
+//
+//		void* bitmapBits = nullptr;
+//
+//		UHBITMAP phBmp(::CreateDIBSection(hDC, reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0));
+//		FALSE_THROW(phBmp);
+//
+//		UNQ_FPDF_BITMAP pFpdfBmp(FPDFBitmap_CreateEx(bmih.biWidth, -bmih.biHeight, FPDFBitmap_BGRx, bitmapBits, ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3)));
+//		FALSE_THROW(pFpdfBmp);
+//
+//		FPDFBitmap_FillRect(pFpdfBmp.get(), 0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF); // Fill white
+//		FS_MATRIX mat{scale, 0.f, 0.f, scale, -static_cast<float>(scaledRectInPage.left), -static_cast<float>(scaledRectInPage.top)};
+//		FS_RECTF rcf{0, 0, static_cast<float>(bmih.biWidth), static_cast<float>(-bmih.biHeight)};
+//		FPDF_RenderPageBitmapWithMatrix(pFpdfBmp.get(), this->Pages[index].get(), &mat, &rcf, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
+//
+//		BITMAP bmp;
+//		::GetObject(phBmp.get(), sizeof(BITMAP), LPVOID(&bmp));
+//
+//		CComPtr<IWICBitmap> pWICBmp;
+//		FAILED_THROW(pFactory->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
+//
+//		CComPtr<ID2D1Bitmap1> pD2DBmp;
+//		FAILED_THROW(pDC->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
+//
+//		return pD2DBmp;
+//	}
+//}
 
 FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPagesByIndex(FPDF_DOCUMENT src_doc,
 	const int* page_indices,

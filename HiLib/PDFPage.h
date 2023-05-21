@@ -81,11 +81,11 @@ public:
 //protected:
 //	std::optional<PdfBmpInfo> m_optBitmapInfo;
 public:
-	CComPtr<ID2D1Bitmap1> GetClipBitmap(const CDirect2DWrite* pDirect, const FLOAT& scale, const int& rotate, const CRectF& rect);
+	UHBITMAP GetClipBitmap(HDC hDC, const FLOAT& scale, const int& rotate, const CRectF& rect);
 //protected:
 //	std::optional<PdfBmpInfo> m_optSmallBitmap;
 public:
-	CComPtr<ID2D1Bitmap1> GetBitmap(const CDirect2DWrite* pDirect, const FLOAT& scale, const int& rotate);
+	UHBITMAP GetBitmap(HDC hDC, const FLOAT& scale, const int& rotate);
 
 protected:
 	std::optional<SelectedTextInfo> m_optSelectedText;

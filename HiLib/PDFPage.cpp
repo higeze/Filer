@@ -260,14 +260,14 @@ const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_strin
 	return m_optFind->FindRects;
 }
 
-CComPtr<ID2D1Bitmap1> CPDFPage::GetClipBitmap(const CDirect2DWrite* pDirect, const FLOAT& scale, const int& rotate, const CRectF& rectInPage)
+UHBITMAP CPDFPage::GetClipBitmap(HDC hDC, const FLOAT& scale, const int& rotate, const CRectF& rectInPage)
 {
-	return GetPDFiumPtr()->Bitmap_GetPageClippedBitmap(m_index, pDirect->GetHDC(), pDirect->GetD2DDeviceContext(), pDirect->GetWICImagingFactory(), rectInPage, scale);
+	return GetPDFiumPtr()->Bitmap_GetPageClippedBitmap(m_index, hDC, rectInPage, scale);
 }
 
-CComPtr<ID2D1Bitmap1> CPDFPage::GetBitmap(const CDirect2DWrite* pDirect, const FLOAT& scale, const int& rotate)
+UHBITMAP CPDFPage::GetBitmap(HDC hDC, const FLOAT& scale, const int& rotate)
 {
-	return GetPDFiumPtr()->Bitmap_GetPageBitmap(m_index, pDirect->GetHDC(), pDirect->GetD2DDeviceContext(), pDirect->GetWICImagingFactory(), scale);
+	return GetPDFiumPtr()->Bitmap_GetPageBitmap(m_index, hDC, scale);
 }
 
 CRectF CPDFPage::GetCaretRect(const int index)

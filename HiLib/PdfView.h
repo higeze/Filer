@@ -50,6 +50,32 @@ enum class PDFMode
 	Text
 };
 
+class CPdfViewLog
+{
+private:
+	std::size_t m_maxLine;
+	std::deque<std::wstring> m_logs;
+public:
+	CPdfViewLog(long maxLine)
+		:m_maxLine(maxLine){}
+
+	void Add(const std::wstring& log)
+	{
+		m_logs.push_back(log);
+		if(m_logs.size() > m_maxLine){
+			m_logs.pop_front();
+		}
+	}
+
+	void DrawLog(CDirect2DWrite* pDirect, const FormatF& format, const CPointF& point)
+	{
+		std::wstring text = boost::algorithm::join(m_logs, L"\n");
+		pDirect->DrawTextFromPoint(format, text, point);
+	}
+
+
+};
+
 
 class CPdfView : public CD2DWControl
 {

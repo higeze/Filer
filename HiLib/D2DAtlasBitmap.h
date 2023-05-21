@@ -231,7 +231,7 @@ protected:
 	que_type m_que;
 	CComPtr<ID2D1Bitmap1> m_pAtlasBitmap;
 	std::vector<CIndexRect> m_rooms;
-	std::shared_mutex m_mtx;
+	mutable std::shared_mutex m_mtx;
 
 public:
 	CD2DAtlasBitmap(
@@ -359,7 +359,7 @@ public:
 #ifdef _DEBUG
 					pDirect->SaveBitmap(L"Test.png", GetAtlasBitmapPtr(pDirect));
 #endif
-					//m_pAtlasBitmap.Release();
+					m_pAtlasBitmap.Release();
 					m_map.clear();
 					m_que.clear();
 					m_rooms.clear();
@@ -381,7 +381,7 @@ public:
 		}
 	}
 
-	std::vector<_Kty> Keys()
+	std::vector<_Kty> Keys() const
 	{
 		std::shared_lock<std::shared_mutex> lock(m_mtx);
 		std::vector<_Kty> keys;
@@ -389,7 +389,13 @@ public:
 		return keys;
 	}
 
-	bool Exist(const _Kty& key)
+	std::size_t Count() const
+	{
+		std::shared_lock<std::shared_mutex> lock(m_mtx);
+		return m_map.size();
+	}
+
+	bool Exist(const _Kty& key) const
 	{
 		std::shared_lock<std::shared_mutex> lock(m_mtx);
 		return m_map.find(key) != m_map.end();

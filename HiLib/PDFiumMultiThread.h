@@ -30,6 +30,7 @@
 #include "MyWin32.h"
 #include "MyCom.h"
 #include "D2DWTypes.h"
+#include "MyUniqueHandle.h"
 
 /******************/
 /* unique deleter */
@@ -142,17 +143,29 @@ private:
         std::vector<CRectF> Text_GetRects(int index);
         std::vector<CRectF> Text_GetRangeRects(int index, int begin, int end);
 
-        CComPtr<ID2D1Bitmap1> Bitmap_GetPageBitmap(const int index,
+        UHBITMAP Bitmap_GetPageBitmap(
+            const int index,
             HDC hDC,
-            CComPtr<ID2D1DeviceContext>& pDC,
-            CComPtr<IWICImagingFactory2>& pFactory,
             const FLOAT& scale);
-        CComPtr<ID2D1Bitmap1> Bitmap_GetPageClippedBitmap(const int index,
+
+        //CComPtr<ID2D1Bitmap1> Bitmap_GetPageBitmap(const int index,
+        //    HDC hDC,
+        //    CComPtr<ID2D1DeviceContext>& pDC,
+        //    CComPtr<IWICImagingFactory2>& pFactory,
+        //    const FLOAT& scale);
+
+        UHBITMAP Bitmap_GetPageClippedBitmap(
+            const int index,
             HDC hDC,
-            CComPtr<ID2D1DeviceContext>& pDC,
-            CComPtr<IWICImagingFactory2>& pFactory,
             const CRectF& rectInPage,
             const FLOAT& scale);
+
+        //CComPtr<ID2D1Bitmap1> Bitmap_GetPageClippedBitmap(const int index,
+        //    HDC hDC,
+        //    CComPtr<ID2D1DeviceContext>& pDC,
+        //    CComPtr<IWICImagingFactory2>& pFactory,
+        //    const CRectF& rectInPage,
+        //    const FLOAT& scale);
 
         FPDF_BOOL ImportPagesByIndex(FPDF_DOCUMENT src_doc,
             const int* page_indices,
@@ -446,24 +459,41 @@ public:
     /* FPDF_BITMAP */
     /***************/
 public:
-    CComPtr<ID2D1Bitmap1> Bitmap_GetPageBitmap(const int index,
+    UHBITMAP Bitmap_GetPageBitmap(
+        const int index,
         HDC hDC, 
-        CComPtr<ID2D1DeviceContext>& pDC,
-        CComPtr<IWICImagingFactory2>& pFactory,
         const FLOAT& scale)
     {
-        return single_run(std::bind(&PDFObject::Bitmap_GetPageBitmap, std::placeholders::_1, index, hDC, pDC, pFactory, scale));
+        return single_run(std::bind(&PDFObject::Bitmap_GetPageBitmap, std::placeholders::_1, index, hDC, scale));
     }
 
-    CComPtr<ID2D1Bitmap1> Bitmap_GetPageClippedBitmap(const int index,
+    //CComPtr<ID2D1Bitmap1> Bitmap_GetPageBitmap(const int index,
+    //    HDC hDC, 
+    //    CComPtr<ID2D1DeviceContext>& pDC,
+    //    CComPtr<IWICImagingFactory2>& pFactory,
+    //    const FLOAT& scale)
+    //{
+    //    return single_run(std::bind(&PDFObject::Bitmap_GetPageBitmap, std::placeholders::_1, index, hDC, pDC, pFactory, scale));
+    //}
+
+    UHBITMAP Bitmap_GetPageClippedBitmap(
+        const int index,
         HDC hDC, 
-        CComPtr<ID2D1DeviceContext>& pDC,
-        CComPtr<IWICImagingFactory2>& pFactory,
         const CRectF& rectInPage, 
         const FLOAT& scale)
     {
-        return single_run(std::bind(&PDFObject::Bitmap_GetPageClippedBitmap, std::placeholders::_1, index, hDC, pDC, pFactory, rectInPage, scale));
+        return single_run(std::bind(&PDFObject::Bitmap_GetPageClippedBitmap, std::placeholders::_1, index, hDC, rectInPage, scale));
     }
+
+    //CComPtr<ID2D1Bitmap1> Bitmap_GetPageClippedBitmap(const int index,
+    //    HDC hDC, 
+    //    CComPtr<ID2D1DeviceContext>& pDC,
+    //    CComPtr<IWICImagingFactory2>& pFactory,
+    //    const CRectF& rectInPage, 
+    //    const FLOAT& scale)
+    //{
+    //    return single_run(std::bind(&PDFObject::Bitmap_GetPageClippedBitmap, std::placeholders::_1, index, hDC, pDC, pFactory, rectInPage, scale));
+    //}
 
     /*****************/
     /* FPDF_TEXTPAGE */

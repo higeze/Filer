@@ -8,13 +8,13 @@
 /* CD2DPDFBitmapDrawer */
 /***********************/
 CD2DPDFBitmapDrawer::CD2DPDFBitmapDrawer()
-	:m_pAtlasClipBitmap(std::make_unique<CD2DAtlasBitmap<PdfBmpKey>>(
+	:m_pAtlasFullOrClipBitmap(std::make_unique<CD2DAtlasBitmap<PdfBmpKey>>(
 		CSizeU(4096, 8196),
 		D2D1::BitmapProperties1(
 					D2D1_BITMAP_OPTIONS_NONE,
 					D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)))),
-	m_pAtlasSmallBitmap(std::make_unique<CD2DAtlasBitmap<PdfBmpKey>>(
-			CSizeU(1024, 2024),
+	m_pAtlasBlurBitmap(std::make_unique<CD2DAtlasBitmap<PdfBmpKey>>(
+			CSizeU(2048, 4096),
 			D2D1::BitmapProperties1(
 						D2D1_BITMAP_OPTIONS_NONE,
 						D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)))){}
@@ -32,7 +32,7 @@ const std::unique_ptr<CThreadPool>& CD2DPDFBitmapDrawer::GetThreadPoolPtr() cons
 const CSizeU& CD2DPDFBitmapDrawer::GetPrimaryBitmapSize() const
 {
 	if (!m_optPrimaryBitmapSize.has_value()) {
-		m_optPrimaryBitmapSize.emplace(m_pAtlasClipBitmap->GetSize());
+		m_optPrimaryBitmapSize.emplace(m_pAtlasFullOrClipBitmap->GetSize());
 	}
 	return m_optPrimaryBitmapSize.value();
 }
@@ -79,24 +79,31 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageClipBitmap(
 	auto funadd = [pDirect, key, callback, this]()->void
 	{
 		if (key == m_curClipKey.get()){
-			CComPtr<ID2D1Bitmap1> pBitmap = key.PagePtr->GetClipBitmap(pDirect, key.Scale, key.Rotate, key.Rect);
-			m_pAtlasClipBitmap->AddOrAssign(pDirect, key, pBitmap);
+			UHBITMAP phBmp = key.PagePtr->GetClipBitmap(pDirect->GetHDC(), key.Scale, key.Rotate, key.Rect);
+
+			CComPtr<IWICBitmap> pWICBmp;
+			FAILED_THROW(pDirect->GetWICImagingFactory()->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
+
+			CComPtr<ID2D1Bitmap1> pD2DBmp;
+			FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
+
+			m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, pD2DBmp);
 			callback();
 		} else {
-			m_pAtlasClipBitmap->Erase(key);
+			m_pAtlasFullOrClipBitmap->Erase(key);
 		}
 	};
 	
-	if (!m_pAtlasClipBitmap->Exist(key)) {
+	if (!m_pAtlasFullOrClipBitmap->Exist(key)) {
 		::OutputDebugString(std::format(L"NOT EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
 			(LONG)(key.PagePtr), key.Scale, key.Rect.left, key.Rect.top, key.Rect.right, key.Rect.bottom).c_str());
-		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, nullptr);
+		m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, nullptr);
 		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
 		return false;
 	} else {
 		::OutputDebugString(std::format(L"EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
 			(LONG)(key.PagePtr), key.Scale, key.Rect.left, key.Rect.top, key.Rect.right, key.Rect.bottom).c_str());
-		return m_pAtlasClipBitmap->DrawBitmap(pDirect, key, dstPoint);
+		return m_pAtlasFullOrClipBitmap->DrawBitmap(pDirect, key, dstPoint);
 	}
 }
 
@@ -108,21 +115,28 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageBitmap(
 {
 	auto funadd = [pDirect, key, callback, this]()->void
 	{
-		CComPtr<ID2D1Bitmap1> pBitmap = key.PagePtr->GetBitmap(pDirect, key.Scale, key.Rotate);
-		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, pBitmap);
+		UHBITMAP phBmp = key.PagePtr->GetBitmap(pDirect->GetHDC(), key.Scale, key.Rotate);
+
+		CComPtr<IWICBitmap> pWICBmp;
+		FAILED_THROW(pDirect->GetWICImagingFactory()->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
+
+		CComPtr<ID2D1Bitmap1> pD2DBmp;
+		FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
+
+		m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, pD2DBmp);
 		callback();
 	};
 	
-	if (!m_pAtlasClipBitmap->Exist(key)) {
-		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, nullptr);
+	if (!m_pAtlasFullOrClipBitmap->Exist(key)) {
+		m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, nullptr);
 		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
 		return false;
 	} else {
-		return m_pAtlasClipBitmap->DrawBitmap(pDirect, key, dstPoint);
+		return m_pAtlasFullOrClipBitmap->DrawBitmap(pDirect, key, dstPoint);
 	}
 }
 
-bool CD2DPDFBitmapDrawer::DrawPDFPageBitmap(
+bool CD2DPDFBitmapDrawer::DrawPDFPageBlurBitmap(
 		const CDirect2DWrite* pDirect,
 		const PdfBmpKey& key,
 		const CRectF& dstRect,
@@ -130,28 +144,35 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageBitmap(
 {
 	auto funadd = [pDirect, key, callback, this]()->void
 	{
-		CComPtr<ID2D1Bitmap1> pBitmap = key.PagePtr->GetBitmap(pDirect, key.Scale, key.Rotate);
-		m_pAtlasSmallBitmap->AddOrAssign(pDirect, key, pBitmap);
+		UHBITMAP phBmp = key.PagePtr->GetBitmap(pDirect->GetHDC(), key.Scale, key.Rotate);
+
+		CComPtr<IWICBitmap> pWICBmp;
+		FAILED_THROW(pDirect->GetWICImagingFactory()->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
+
+		CComPtr<ID2D1Bitmap1> pD2DBmp;
+		FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
+
+		m_pAtlasBlurBitmap->AddOrAssign(pDirect, key, pD2DBmp);
 		callback();
 	};
 	
-	if (!m_pAtlasSmallBitmap->Exist(key)) {
-		m_pAtlasSmallBitmap->AddOrAssign(pDirect, key, nullptr);
+	if (!m_pAtlasBlurBitmap->Exist(key)) {
+		m_pAtlasBlurBitmap->AddOrAssign(pDirect, key, nullptr);
 		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 10));
 		return false;
 	} else {
-		return m_pAtlasSmallBitmap->DrawBitmap(pDirect, key, dstRect);
+		return m_pAtlasBlurBitmap->DrawBitmap(pDirect, key, dstRect);
 	}
 }
 
-bool CD2DPDFBitmapDrawer::ExistInPrimary(const PdfBmpKey& key) const
+bool CD2DPDFBitmapDrawer::ExistInFullOrClipBitmap(const PdfBmpKey& key) const
 {
-	return m_pAtlasClipBitmap->Exist(key);
+	return m_pAtlasFullOrClipBitmap->Exist(key);
 }
 
-std::vector<PdfBmpKey> CD2DPDFBitmapDrawer::FindClipKeys(std::function<bool(const PdfBmpKey&)>&& pred)
+std::vector<PdfBmpKey> CD2DPDFBitmapDrawer::FindFulKeys(std::function<bool(const PdfBmpKey&)>&& pred)
 {
-	std::vector<PdfBmpKey> keys(m_pAtlasClipBitmap->Keys());
+	std::vector<PdfBmpKey> keys(m_pAtlasFullOrClipBitmap->Keys());
 	std::vector<PdfBmpKey> findKeys;
 	std::copy_if(keys.cbegin(), keys.cend(), std::back_inserter(findKeys), pred);
 	return findKeys;
@@ -159,8 +180,8 @@ std::vector<PdfBmpKey> CD2DPDFBitmapDrawer::FindClipKeys(std::function<bool(cons
 
 void CD2DPDFBitmapDrawer::Clear()
 {
-	m_pAtlasClipBitmap->Clear();
-	m_pAtlasSmallBitmap->Clear();
+	m_pAtlasFullOrClipBitmap->Clear();
+	m_pAtlasBlurBitmap->Clear();
 	m_futureGroup.clean_up();
 }
 

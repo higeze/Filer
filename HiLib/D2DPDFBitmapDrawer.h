@@ -58,8 +58,8 @@ class CD2DPDFBitmapDrawer
 	DECLARE_LAZY_GETTER(CSizeU, PrimaryBitmapSize);
 
 private:
-	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasClipBitmap;
-	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasSmallBitmap;
+	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasFullOrClipBitmap;
+	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasBlurBitmap;
 	shared_lock_property<PdfBmpKey> m_curClipKey;
 	future_group<void> m_futureGroup;
 public:
@@ -76,14 +76,22 @@ public:
 		const PdfBmpKey& key,
 		const CPointF& dstRect,
 		std::function<void()>&& callback);
-	bool DrawPDFPageBitmap(
+	bool DrawPDFPageBlurBitmap(
 		const CDirect2DWrite* pDirect,
 		const PdfBmpKey& key,
 		const CRectF& dstRect,
 		std::function<void()>&& callback);
 
-	bool ExistInPrimary(const PdfBmpKey&) const;
-	std::vector<PdfBmpKey> FindClipKeys(std::function<bool(const PdfBmpKey&)>&& pred);
+	//int GetAtlasFullOrClipBitmapCount()const;
+	//int GetAtlasBlurBitmapCount()const;
+
+	const std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>>& GetAtlasFullOrClipBitmap() const { return m_pAtlasFullOrClipBitmap;}
+	const std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>>& GetAtlasBlurBitmap() const { return m_pAtlasBlurBitmap;}
+
+	bool ExistInFullOrClipBitmap(const PdfBmpKey&) const;
+	std::vector<PdfBmpKey> FindFulKeys(std::function<bool(const PdfBmpKey&)>&& pred);
+
+
 
 	void Clear();
 	//void CleanFutures();
