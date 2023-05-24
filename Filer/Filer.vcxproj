@@ -463,6 +463,12 @@
     <ClInclude Include="..\HiLib\D2DWControl.h" />
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UnDoReDoManager.h" />
+    <ClInclude Include="..\HiLib\UniqueFpdf.h" />
+    <ClInclude Include="..\HiLib\UniqueFPdfBitmap.h" />
+    <ClInclude Include="..\HiLib\UniqueFPdfDocument.h" />
+    <ClInclude Include="..\HiLib\UniqueFPdfPage.h" />
+    <ClInclude Include="..\HiLib\UniqueFPdfSchHandle.h" />
+    <ClInclude Include="..\HiLib\UniqueFPdfTextPage.h" />
     <ClInclude Include="..\HiLib\UniqueIDFactory.h" />
     <ClInclude Include="..\HiLib\Unknown.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
@@ -636,6 +642,11 @@
     <ClCompile Include="..\HiLib\D2DWControl.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="..\HiLib\UnDoReDoManager.cpp" />
+    <ClCompile Include="..\HiLib\UniqueFpdf.cpp" />
+    <ClCompile Include="..\HiLib\UniqueFpdfBitmap.cpp" />
+    <ClCompile Include="..\HiLib\UniqueFPdfDocument.cpp" />
+    <ClCompile Include="..\HiLib\UniqueFPdfPage.cpp" />
+    <ClCompile Include="..\HiLib\UniqueFPdfTextPage.cpp" />
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
     <ClCompile Include="..\HiLib\PDFCaret.cpp" />
     <ClCompile Include="DriveSizeCell.cpp" />

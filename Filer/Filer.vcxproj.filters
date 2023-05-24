@@ -38,6 +38,9 @@
     <Filter Include="FilerHook">
       <UniqueIdentifier>{9adffe30-c1da-4878-95ec-c519c7260145}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HiLib\PDF\FPDF">
+      <UniqueIdentifier>{1189bf54-6dc5-4168-85d5-9bfab9376580}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -854,6 +857,24 @@
     <ClInclude Include="..\FilerHook\FilerHook.h">
       <Filter>FilerHook</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\UniqueFPdfBitmap.h">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\UniqueFPdfDocument.h">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\UniqueFPdfPage.h">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\UniqueFPdfTextPage.h">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\UniqueFPdfSchHandle.h">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\UniqueFpdf.h">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1264,6 +1285,21 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\PreviewWnd.cpp">
       <Filter>HiLib\PreviewControl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\UniqueFpdfBitmap.cpp">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\UniqueFPdfDocument.cpp">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\UniqueFPdfPage.cpp">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\UniqueFPdfTextPage.cpp">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\UniqueFpdf.cpp">
+      <Filter>HiLib\PDF\FPDF</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

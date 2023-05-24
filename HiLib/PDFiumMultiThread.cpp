@@ -17,16 +17,12 @@ void CPDFiumMultiThread::PDFObject::UpdatePages()
 {
 	Pages.clear();
 	TextPages.clear();
-	int count = FPDF_GetPageCount(Doc.get());
+	int count = Doc.GetPageCount();
 	for (auto i = 0; i < count; i++) {
-		//try {
-			//::OutputDebugString(std::format(L"Doc:{}, i:{}\r\n", (LONG)Doc.get(), i).c_str());
-			FPDF_PAGE pPage(FPDF_LoadPage(Doc.get(), i));
-			Pages.emplace_back(pPage);
-			TextPages.emplace_back(FPDFText_LoadPage(pPage));
-		//} catch (...) {
-		//	auto a = 1.f;
-		//}
+		CUniqueFPdfPage page(Doc.LoadPage(i));
+		CUniqueFPdfTextPage textPage(page.LoadTextPage());
+		Pages.emplace_back(std::move(page));
+		TextPages.emplace_back(std::move(textPage));
 	}
 }
 
@@ -35,7 +31,7 @@ unsigned long CPDFiumMultiThread::PDFObject::LoadDocument(FPDF_STRING file_path,
 	std::lock_guard<std::mutex> lock(Mutex);
     
 	Clear();
-    Doc = std::move(UNQ_FPDF_DOCUMENT(FPDF_LoadDocument(file_path, password)));
+    Doc.LoadDocument(file_path, password);
     unsigned long err = FPDF_GetLastError();
     if (!Doc) {
         return err;
@@ -48,7 +44,7 @@ unsigned long CPDFiumMultiThread::PDFObject::LoadDocument(FPDF_STRING file_path,
 unsigned long CPDFiumMultiThread::PDFObject::CreateDocument()
 {
 	Clear();
-	Doc = std::move(UNQ_FPDF_DOCUMENT(FPDF_CreateNewDocument()));
+	Doc.CreateNewDocument();
 	unsigned long err = FPDF_GetLastError();
 	if (!Doc) {
 		return err;
@@ -59,256 +55,65 @@ unsigned long CPDFiumMultiThread::PDFObject::CreateDocument()
 
 int CPDFiumMultiThread::PDFObject::GetPageCount()
 {
-	return FPDF_GetPageCount(Doc.get());
+	return Doc.GetPageCount();
 }
 
 FPDF_BOOL CPDFiumMultiThread::PDFObject::GetFileVersion(int* fileVersion)
 {
-	return FPDF_GetFileVersion(Doc.get(), fileVersion);
+	return Doc.GetFileVersion(fileVersion);
 }
 
 float CPDFiumMultiThread::PDFObject::GetPageWidthF(int page_index)
 {
-	return FPDF_GetPageWidthF(Pages[page_index].get());
+	return Pages[page_index].GetPageWidthF();
 }
 float CPDFiumMultiThread::PDFObject::GetPageHeightF(int page_index)
 {
-	return FPDF_GetPageHeightF(Pages[page_index].get());
+	return Pages[page_index].GetPageHeightF();
 }
 
 int CPDFiumMultiThread::PDFObject::Page_GetRotation(int page_index)
 {
-	return FPDFPage_GetRotation(Pages[page_index].get());
+	return Pages[page_index].GetRotation();
 }
 
 void CPDFiumMultiThread::PDFObject::Page_SetRotation(int page_index, int rotate)
 {
-	return FPDFPage_SetRotation(Pages[page_index].get(), rotate);
+	return Pages[page_index].SetRotation(rotate);
 }
 
 int CPDFiumMultiThread::PDFObject::Text_CountChars(int index)
 {
-    return FPDFText_CountChars(TextPages[index].get());
+    return TextPages[index].CountChars();
 }
-//int CPDFiumMultiThread::PDFObject::Text_CountRects(int index,
-//                    int start_index,
-//                    int count)
-//{
-//    return FPDFText_CountRects(TextPages[index].get(), start_index, count);
-//}
+
 int CPDFiumMultiThread::PDFObject::Text_GetText(int index, int start_index, int count, unsigned short* result)
 {
-	return FPDFText_GetText(TextPages[index].get(), start_index, count, result);
+	return TextPages[index].GetText(start_index, count, result);
 }
 
 int CPDFiumMultiThread::PDFObject::Text_GetCharIndexAtPos(int index, double x, double y, double xTolerance, double yTolerance)
 {
-	return FPDFText_GetCharIndexAtPos(TextPages[index].get(), x, y, xTolerance, yTolerance);
+	return TextPages[index].GetCharIndexAtPos(x, y, xTolerance, yTolerance);
 }
-
-//FPDF_BOOL CPDFiumMultiThread::PDFObject::Text_GetRect(int index,
-//                        int rect_index,
-//                        double* left,
-//                        double* top,
-//                        double* right,
-//                        double* bottom)
-//{
-//	return FPDFText_GetRect(TextPages[index].get(), rect_index, left, top, right, bottom);
-//}
 
 std::vector<CRectF> CPDFiumMultiThread::PDFObject::Text_GetRects(int index)
 {
-	std::vector<CRectF> rects;
-	int charCount = FPDFText_CountChars(TextPages[index].get());
-	for (auto i = 0; i < charCount; i++) {
-		int rect_count = FPDFText_CountRects(TextPages[index].get(), i, 1);
-		if (rect_count == 1) {
-			double left, top, right, bottom = 0.f;
-			FPDFText_GetRect(
-				TextPages[index].get(),
-				0,
-				&left,
-				&top,
-				&right,
-				&bottom);
-			rects.emplace_back(
-				static_cast<FLOAT>(left),
-				static_cast<FLOAT>(top),
-				static_cast<FLOAT>(right),
-				static_cast<FLOAT>(bottom));
-		}
-	}
-	return rects;
+	return TextPages[index].GetRects();
 }
 
 std::vector<CRectF> CPDFiumMultiThread::PDFObject::Text_GetRangeRects(int index, int begin, int end)
 {
-	int rect_count = FPDFText_CountRects(TextPages[index].get(), begin, end - begin);
-	std::vector<CRectF> rects;
-	for (auto i = 0; i < rect_count; i++) {
-		double left, top, right, bottom;
-		FPDFText_GetRect(
-			TextPages[index].get(),
-			i,
-			&left,
-			&top,
-			&right,
-			&bottom);
-		rects.emplace_back(
-			static_cast<FLOAT>(left),
-			static_cast<FLOAT>(top),
-			static_cast<FLOAT>(right),
-			static_cast<FLOAT>(bottom));
-	}
-	return rects;
+	return TextPages[index].GetRangeRects(begin, end);
 }
-
-//CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(const int index,
-//	HDC hDC,
-//	CComPtr<ID2D1DeviceContext>& pDC,
-//	CComPtr<IWICImagingFactory2>& pFactory,
-//	const FLOAT& scale)
-//{
-//	CSizeF sz(FPDF_GetPageWidthF(this->Pages[index].get()) * scale, FPDF_GetPageHeightF(this->Pages[index].get()) * scale);
-//
-//	BITMAPINFOHEADER bmih
-//	{
-//		.biSize = sizeof(BITMAPINFOHEADER),
-//		.biWidth = static_cast<LONG>(std::round(sz.width)),
-//		.biHeight = -static_cast<LONG>(std::round(sz.height)),
-//		.biPlanes = 1,
-//		.biBitCount = 24,
-//		.biCompression = BI_RGB,
-//		.biSizeImage = 0,
-//	};
-//
-//	void* bitmapBits = nullptr;
-//
-//	UHBITMAP phBmp(::CreateDIBSection(hDC, reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0));
-//	FALSE_THROW(phBmp);
-//
-//	UNQ_FPDF_BITMAP pFpdfBmp(FPDFBitmap_CreateEx(bmih.biWidth, -bmih.biHeight, FPDFBitmap_BGR, bitmapBits, (bmih.biWidth * bmih.biBitCount + 31) / 32 * 4));
-//    FALSE_THROW(pFpdfBmp);
-//
-//	FPDFBitmap_FillRect(pFpdfBmp.get(), 0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF); // Fill white
-//	FPDF_RenderPageBitmap(pFpdfBmp.get(), this->Pages[index].get(),0,0,bmih.biWidth, -bmih.biHeight, 0, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE);
-//	
-//    CComPtr<IWICBitmap> pWICBmp;
-//	FAILED_THROW(pFactory->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapAlphaChannelOption::WICBitmapIgnoreAlpha, &pWICBmp));
-//
-//	CComPtr<ID2D1Bitmap1> pD2DBmp;
-//	FAILED_THROW(pDC->CreateBitmapFromWicBitmap(pWICBmp,&pD2DBmp));
-//	
-//	return pD2DBmp;
-//}
 
 UHBITMAP CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(
 	const int index,
 	HDC hDC,
 	const FLOAT& scale)
 {
-	CSizeF sz(FPDF_GetPageWidthF(this->Pages[index].get()) * scale, FPDF_GetPageHeightF(this->Pages[index].get()) * scale);
-
-	BITMAPINFOHEADER bmih
-	{
-		.biSize = sizeof(BITMAPINFOHEADER),
-		.biWidth = static_cast<LONG>(std::round(sz.width)),
-		.biHeight = -static_cast<LONG>(std::round(sz.height)),
-		.biPlanes = 1,
-		.biBitCount = 32,
-		.biCompression = BI_RGB,
-		.biSizeImage = 0,
-	};
-
-	void* bitmapBits = nullptr;
-
-	UHBITMAP phBmp(::CreateDIBSection(hDC, reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0));
-	FALSE_THROW(phBmp);
-
-	UNQ_FPDF_BITMAP pFpdfBmp(FPDFBitmap_CreateEx(bmih.biWidth, -bmih.biHeight, FPDFBitmap_BGRx, bitmapBits, ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3)));
-    FALSE_THROW(pFpdfBmp);
-
-	FPDFBitmap_FillRect(pFpdfBmp.get(), 0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF); // Fill white
-	FPDF_RenderPageBitmap(pFpdfBmp.get(), this->Pages[index].get(),0,0,bmih.biWidth, -bmih.biHeight, 0, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE);
-
-	return phBmp;
+	return Pages[index].GetBitmap(hDC, scale);
 }
-
-
-//CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(const int index,
-//	HDC hDC,
-//	CComPtr<ID2D1DeviceContext>& pDC,
-//	CComPtr<IWICImagingFactory2>& pFactory,
-//	const FLOAT& scale)
-//{
-//	CSizeF sz(FPDF_GetPageWidthF(this->Pages[index].get()) * scale, FPDF_GetPageHeightF(this->Pages[index].get()) * scale);
-//
-//	BITMAPINFOHEADER bmih
-//	{
-//		.biSize = sizeof(BITMAPINFOHEADER),
-//		.biWidth = static_cast<LONG>(std::round(sz.width)),
-//		.biHeight = -static_cast<LONG>(std::round(sz.height)),
-//		.biPlanes = 1,
-//		.biBitCount = 32,
-//		.biCompression = BI_RGB,
-//		.biSizeImage = 0,
-//	};
-//
-//	void* bitmapBits = nullptr;
-//
-//	UHBITMAP phBmp(::CreateDIBSection(hDC, reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0));
-//	FALSE_THROW(phBmp);
-//
-//	UNQ_FPDF_BITMAP pFpdfBmp(FPDFBitmap_CreateEx(bmih.biWidth, -bmih.biHeight, FPDFBitmap_BGRx, bitmapBits, ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3)));
-//    FALSE_THROW(pFpdfBmp);
-//
-//	FPDFBitmap_FillRect(pFpdfBmp.get(), 0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF); // Fill white
-//	FPDF_RenderPageBitmap(pFpdfBmp.get(), this->Pages[index].get(),0,0,bmih.biWidth, -bmih.biHeight, 0, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE);
-//	
-//    CComPtr<IWICBitmap> pWICBmp;
-//	FAILED_THROW(pFactory->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
-//
-//	CComPtr<ID2D1Bitmap1> pD2DBmp;
-//	FAILED_THROW(pDC->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
-//	
-//	return pD2DBmp;
-//}
-
-//
-//CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageBitmap(const int index,
-//	HDC hDC,
-//	CComPtr<ID2D1DeviceContext>& pDC,
-//	CComPtr<IWICImagingFactory2>& pFactory,
-//	const FLOAT& scale)
-//{
-//	//CSizeF sz(FPDF_GetPageWidthF(this->Pages[index].get()) * scale, FPDF_GetPageHeightF(this->Pages[index].get()) * scale);
-//	CSizeU sz(static_cast<UINT32>(std::round(FPDF_GetPageWidthF(this->Pages[index].get()))) * scale, 
-//		static_cast<UINT32>(std::round(FPDF_GetPageHeightF(this->Pages[index].get()) * scale)));
-//	hDC = GetDC(NULL);
-//	HDC hMemDC(::CreateCompatibleDC(hDC));
-//	HBITMAP hMemBmp(::CreateCompatibleBitmap(hDC, sz.width, sz.height));
-//	HBRUSH hBrush(::CreateSolidBrush(RGB(255, 255, 255)));
-//	HBITMAP hPrevMemBmp((HBITMAP)::SelectObject(hMemDC, hMemBmp));
-//	HBRUSH hPrevBrush((HBRUSH)::SelectObject(hMemDC, hBrush));
-//	RECT rc{0, 0, sz.width, sz.height};
-//	::FillRect(hMemDC, &rc, hBrush);
-//
-//	::FPDF_RenderPage(hMemDC, this->Pages[index].get(), 0, 0, sz.width, sz.height, 0, 0);
-//	hMemBmp = (HBITMAP)::SelectObject(hMemDC, hPrevMemBmp); 
-//	hBrush = (HBRUSH)::SelectObject(hMemDC, hPrevBrush);
-//
-//	CComPtr<IWICBitmap> pWICBmp;
-//	FAILED_THROW(pFactory->CreateBitmapFromHBITMAP(hMemBmp, nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
-//
-//	CComPtr<ID2D1Bitmap1> pD2DBmp;
-//	FAILED_THROW(pDC->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
-//
-//
-//	::DeleteObject(hMemBmp);
-//	::DeleteDC(hMemDC);
-//	
-//	return pD2DBmp;
-//}
 
 UHBITMAP CPDFiumMultiThread::PDFObject::Bitmap_GetPageClippedBitmap(
 	const int index,
@@ -316,105 +121,28 @@ UHBITMAP CPDFiumMultiThread::PDFObject::Bitmap_GetPageClippedBitmap(
 	const CRectF& rectInPage,
 	const FLOAT& scale)
 {
-    CRectU scaledRectInPage = CRectF2CRectU(rectInPage * scale);
-    BITMAPINFOHEADER bmih
-    {
-        .biSize = sizeof(BITMAPINFOHEADER),
-        .biWidth = static_cast<LONG>(scaledRectInPage.Width()),
-        .biHeight = -static_cast<LONG>(scaledRectInPage.Height()),
-        .biPlanes = 1,
-        .biBitCount = 32,
-        .biCompression = BI_RGB,
-        .biSizeImage = 0,
-    };
-
-    if (bmih.biWidth == 0 || bmih.biHeight == 0) {
-        return nullptr;
-	} else {
-
-		void* bitmapBits = nullptr;
-
-		UHBITMAP phBmp(::CreateDIBSection(hDC, reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0));
-		FALSE_THROW(phBmp);
-
-		UNQ_FPDF_BITMAP pFpdfBmp(FPDFBitmap_CreateEx(bmih.biWidth, -bmih.biHeight, FPDFBitmap_BGRx, bitmapBits, ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3)));
-		FALSE_THROW(pFpdfBmp);
-
-		FPDFBitmap_FillRect(pFpdfBmp.get(), 0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF); // Fill white
-		FS_MATRIX mat{scale, 0.f, 0.f, scale, -static_cast<float>(scaledRectInPage.left), -static_cast<float>(scaledRectInPage.top)};
-		FS_RECTF rcf{0, 0, static_cast<float>(bmih.biWidth), static_cast<float>(-bmih.biHeight)};
-		FPDF_RenderPageBitmapWithMatrix(pFpdfBmp.get(), this->Pages[index].get(), &mat, &rcf, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
-
-		return phBmp;
-	}
+	return Pages[index].GetClippedBitmap(hDC, scale, rectInPage);
 }
-//
-//CComPtr<ID2D1Bitmap1> CPDFiumMultiThread::PDFObject::Bitmap_GetPageClippedBitmap(const int index,
-//	HDC hDC,
-//	CComPtr<ID2D1DeviceContext>& pDC,
-//	CComPtr<IWICImagingFactory2>& pFactory,
-//	const CRectF& rectInPage,
-//	const FLOAT& scale)
-//{
-//    CRectU scaledRectInPage = CRectF2CRectU(rectInPage * scale);
-//    BITMAPINFOHEADER bmih
-//    {
-//        .biSize = sizeof(BITMAPINFOHEADER),
-//        .biWidth = static_cast<LONG>(scaledRectInPage.Width()),
-//        .biHeight = -static_cast<LONG>(scaledRectInPage.Height()),
-//        .biPlanes = 1,
-//        .biBitCount = 32,
-//        .biCompression = BI_RGB,
-//        .biSizeImage = 0,
-//    };
-//
-//    if (bmih.biWidth == 0 || bmih.biHeight == 0) {
-//        return nullptr;
-//	} else {
-//
-//		void* bitmapBits = nullptr;
-//
-//		UHBITMAP phBmp(::CreateDIBSection(hDC, reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0));
-//		FALSE_THROW(phBmp);
-//
-//		UNQ_FPDF_BITMAP pFpdfBmp(FPDFBitmap_CreateEx(bmih.biWidth, -bmih.biHeight, FPDFBitmap_BGRx, bitmapBits, ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3)));
-//		FALSE_THROW(pFpdfBmp);
-//
-//		FPDFBitmap_FillRect(pFpdfBmp.get(), 0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF); // Fill white
-//		FS_MATRIX mat{scale, 0.f, 0.f, scale, -static_cast<float>(scaledRectInPage.left), -static_cast<float>(scaledRectInPage.top)};
-//		FS_RECTF rcf{0, 0, static_cast<float>(bmih.biWidth), static_cast<float>(-bmih.biHeight)};
-//		FPDF_RenderPageBitmapWithMatrix(pFpdfBmp.get(), this->Pages[index].get(), &mat, &rcf, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH);
-//
-//		BITMAP bmp;
-//		::GetObject(phBmp.get(), sizeof(BITMAP), LPVOID(&bmp));
-//
-//		CComPtr<IWICBitmap> pWICBmp;
-//		FAILED_THROW(pFactory->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
-//
-//		CComPtr<ID2D1Bitmap1> pD2DBmp;
-//		FAILED_THROW(pDC->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
-//
-//		return pD2DBmp;
-//	}
-//}
 
-FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPagesByIndex(FPDF_DOCUMENT src_doc,
+FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPagesByIndex(
+	const CUniqueFPdfDocument& src_doc,
 	const int* page_indices,
 	unsigned long length,
 	int index)
 {		
-	FPDF_BOOL ret = FPDF_ImportPagesByIndex(Doc.get(), src_doc, page_indices, length, index);
+	FPDF_BOOL ret = Doc.ImportPagesByIndex(src_doc, page_indices, length, index);
 	if (ret) {
 		UpdatePages();
 	}
 	return ret;
 }
 
-FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPages(FPDF_DOCUMENT src_doc,
+FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPages(
+	const CUniqueFPdfDocument& src_doc,
 	FPDF_BYTESTRING pagerange,
 	int index)
 {
-	FPDF_BOOL ret = FPDF_ImportPages(Doc.get(), src_doc, pagerange, index);
+	FPDF_BOOL ret = Doc.ImportPages(src_doc, pagerange, index);
 	if (ret) {
 		UpdatePages();
 	}
@@ -424,49 +152,27 @@ FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPages(FPDF_DOCUMENT src_doc,
 FPDF_BOOL CPDFiumMultiThread::PDFObject::SaveAsCopy(FPDF_FILEWRITE* pFileWrite,
 	FPDF_DWORD flags)
 {
-	return FPDF_SaveAsCopy(Doc.get(), pFileWrite, flags);
+	return Doc.SaveAsCopy(pFileWrite, flags);
 }
 
 FPDF_BOOL CPDFiumMultiThread::PDFObject::SaveWithVersion(FPDF_FILEWRITE* pFileWrite,
 	FPDF_DWORD flags,
 	int fileVersion)
 {
-	return FPDF_SaveWithVersion(Doc.get(), pFileWrite, flags, fileVersion);
+	return Doc.SaveWithVersion(pFileWrite, flags, fileVersion);
 }
 
 std::vector<std::tuple<int, int, std::vector<CRectF>>> CPDFiumMultiThread::PDFObject::Text_FindResults(int page_index,
 	const std::wstring& find_string)
 {
 	auto find = boost::trim_copy(find_string);
-	std::vector<std::tuple<int, int, std::vector<CRectF>>> results;
-	if (find.empty()) {
-	} else {
+	if (!find.empty()) {
+
 		FPDF_WIDESTRING text = reinterpret_cast<FPDF_WIDESTRING>(find.c_str());
-		UNQ_FPDF_SCHHANDLE pSchHdl(FPDFText_FindStart(TextPages[page_index].get(), text, 0, 0));
-		while (FPDFText_FindNext(pSchHdl.get())) {
-			int index = FPDFText_GetSchResultIndex(pSchHdl.get());
-			int ch_count = FPDFText_GetSchCount(pSchHdl.get());
-			int rc_count = FPDFText_CountRects(TextPages[page_index].get(), index, ch_count);
-			std::vector<CRectF> rects;
-			for (int i = 0; i < rc_count; i++) {
-				double left, top, right, bottom;
-				FPDFText_GetRect(
-					TextPages[page_index].get(),
-					i,
-					&left,
-					&top,
-					&right,
-					&bottom);
-				rects.emplace_back(
-					static_cast<FLOAT>(left),
-					static_cast<FLOAT>(top),
-					static_cast<FLOAT>(right),
-					static_cast<FLOAT>(bottom));
-			}
-			results.emplace_back(index, ch_count, rects);
-		}
+		return TextPages[page_index].SearchResults(text);
+	} else {
+		return std::vector<std::tuple<int, int, std::vector<CRectF>>>();
 	}
-	return results;
 }
 
 /**********************/
@@ -475,7 +181,7 @@ std::vector<std::tuple<int, int, std::vector<CRectF>>> CPDFiumMultiThread::PDFOb
 
 // the constructor just launches some amount of workers
 CPDFiumMultiThread::CPDFiumMultiThread(size_t threads)
-	: stop(false), spetasks(threads)
+	: stop(false), spetasks(threads), Pdf(pdf_mutex)
 {
 	threads = 1;
 	for (size_t i = 0; i < threads; ++i) {
