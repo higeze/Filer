@@ -28,7 +28,7 @@
 
 #include "PDFViewport.h"
 #include "PDFCaret.h"
-//#include "D2DPDFBitmapDrawer.h"
+//#include "PDFBitmapDrawer.h"
 
 class CPDFDoc;
 class CD2DPDFBitmapDrawer;
@@ -153,6 +153,7 @@ public:
 	CRectF GetRenderRectInWnd();
 	CSizeF GetRenderSize();
 	CSizeF GetRenderContentSize();
+	std::tuple<int, int> GetPageAndIndexFromWndPoint(const CPointF& ptInWnd);
 
 	std::tuple<CRectF, CRectF> GetRects() const;
 

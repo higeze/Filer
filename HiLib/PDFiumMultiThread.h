@@ -33,40 +33,40 @@
 #include "MyUniqueHandle.h"
 
 
-#include "UniqueFPdfDocument.h"
-#include "UniqueFPdfPage.h"
-#include "UniqueFPdfTextPage.h"
+#include "FPdfDocument.h"
+#include "FPdfPage.h"
+#include "FPdfTextPage.h"
 
 /********************/
 /* CPDFiumFileWrite */
 /********************/
-class CPDFiumFileWrite : public FPDF_FILEWRITE
+class CPDFFileWrite : public FPDF_FILEWRITE
 {
 private:
 	FILE* m_pFile = nullptr;
 public:
-	CPDFiumFileWrite(const std::string& path)
+	CPDFFileWrite(const std::string& path)
 	{
 		fopen_s(&m_pFile, path.c_str(), "wb");
 
 		version = 1;
 		WriteBlock = [](FPDF_FILEWRITE* pThis, const void* pData, unsigned long size)->int
 		{
-			return fwrite(pData, 1, size, static_cast<CPDFiumFileWrite*>(pThis)->m_pFile);
+			return fwrite(pData, 1, size, static_cast<CPDFFileWrite*>(pThis)->m_pFile);
 		};
 	}
-	CPDFiumFileWrite(const std::wstring& path)
+	CPDFFileWrite(const std::wstring& path)
 	{
 		_wfopen_s(&m_pFile, path.c_str(), L"wb");
 
 		version = 1;
 		WriteBlock = [](FPDF_FILEWRITE* pThis, const void* pData, unsigned long size)->int
 		{
-			return fwrite(pData, 1, size, static_cast<CPDFiumFileWrite*>(pThis)->m_pFile);
+			return fwrite(pData, 1, size, static_cast<CPDFFileWrite*>(pThis)->m_pFile);
 		};
 	}
 
-	virtual ~CPDFiumFileWrite()
+	virtual ~CPDFFileWrite()
 	{
 		fclose(m_pFile);
 	}
@@ -85,10 +85,10 @@ private:
     {
         PDFObject(std::mutex& pdf_mutex):Mutex(pdf_mutex){}
         std::mutex& Mutex;
-        CUniqueFPdfDocument Doc;
+        CFPdfDocument Doc;
         //UNQ_FPDF_DOCUMENT& GetDocPtr() { return Doc; }
-        std::vector<CUniqueFPdfPage> Pages;
-        std::vector<CUniqueFPdfTextPage> TextPages;
+        std::vector<CFPdfPage> Pages;
+        std::vector<CFPdfTextPage> TextPages;
         //std::vector<UNQ_FPDF_SCHHANDLE> SchHandles;
         void Clear();
         void UpdatePages();
@@ -144,12 +144,12 @@ private:
         //    const FLOAT& scale);
 
         FPDF_BOOL ImportPagesByIndex(
-            const CUniqueFPdfDocument& src_doc,
+            const CFPdfDocument& src_doc,
             const int* page_indices,
             unsigned long length,
             int index);
         FPDF_BOOL ImportPages(
-            const CUniqueFPdfDocument& src_doc,
+            const CFPdfDocument& src_doc,
             FPDF_BYTESTRING pagerange,
             int index);
 

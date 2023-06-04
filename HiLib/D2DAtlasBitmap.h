@@ -303,6 +303,7 @@ public:
 
 	void Erase(const _Kty& key)
 	{
+		std::lock_guard<std::shared_mutex> lock(m_mtx);
 		if (auto iter = m_map.find(key); iter != m_map.cend()) {
 			m_map.erase(key);
 			m_que.erase(std::remove(std::begin(m_que), std::end(m_que), key), std::cend(m_que));

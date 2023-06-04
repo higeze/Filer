@@ -4,7 +4,10 @@
 #include "Sheet.h"
 
 CCheckBoxCell::CCheckBoxCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-	:CCell(pSheet, pRow, pColumn, spProperty){}
+	:CCell(pSheet, pRow, pColumn, spProperty)
+{
+	SetCheckBoxType(CheckBoxType::ThreeState);
+}
 
 void CCheckBoxCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
@@ -14,6 +17,11 @@ void CCheckBoxCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 	rcPaint.bottom = rcPaint.top + 16.f;
 	pDirect->DrawSolidRectangleByLine(line, rcPaint);
 	switch(GetCheckBoxState()){
+		case CheckBoxState::None:
+		{
+			pDirect->DrawSolidLine(line, CPointF(rcPaint.left + 2, (rcPaint.top + rcPaint.bottom) / 2), CPointF(rcPaint.right - 2, (rcPaint.top + rcPaint.bottom) / 2));
+		}
+		break;
 		case CheckBoxState::True:
 		{
 			CComPtr<ID2D1PathGeometry> pPathGeo;
@@ -64,26 +72,19 @@ CSizeF CCheckBoxCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 
 CheckBoxState CCheckBoxCell::Str2State(const std::wstring& str)
 {
-	if (str == L"1") {
-		return CheckBoxState::True;
-	} else if (str == L"0") {
-		return CheckBoxState::False;
-	} else {
-		return CheckBoxState::Intermediate;
-	}
+	return str.empty()? CheckBoxState::None : static_cast<CheckBoxState>(_wtoi(str.c_str()));
+	//if (str == L"1") {
+	//	return CheckBoxState::True;
+	//} else if (str == L"0") {
+	//	return CheckBoxState::False;
+	//} else {
+	//	return CheckBoxState::Intermediate;
+	//}
 }
 
 std::wstring CCheckBoxCell::State2Str(const CheckBoxState& state)
 {
-	switch (state) {
-	case CheckBoxState::True:
-		return L"1";
-	case CheckBoxState::False:
-		return L"0";
-	case CheckBoxState::Intermediate:
-	default:
-		return L"";
-	}
+	return state == CheckBoxState::None ? L"" : std::to_wstring(static_cast<int>(state));
 }
 
 std::wstring CCheckBoxCell::GetString()
@@ -101,21 +102,22 @@ void CCheckBoxCell::OnLButtonDown(const LButtonDownEvent& e)
 	switch (GetCheckBoxType()) {
 		case CheckBoxType::Normal:
 			switch (GetCheckBoxState()) {
-			case CheckBoxState::True:
-				return SetString(L"0");
 			case CheckBoxState::False:
+				return SetString(State2Str(CheckBoxState::True));
+			case CheckBoxState::True:
 			default:
-				return SetString(L"1");
+				return SetString(State2Str(CheckBoxState::False));
 			}
 		case CheckBoxType::ThreeState:
+			//return SetString(std::to_wstring((static_cast<int>(GetCheckBoxState()) + 1) % 4));
 			switch (GetCheckBoxState()) {
-			case CheckBoxState::True:
-				return SetString(L"");
 			case CheckBoxState::False:
-				return SetString(L"1");
+				return SetString(State2Str(CheckBoxState::Intermediate));
 			case CheckBoxState::Intermediate:
+				return SetString(State2Str(CheckBoxState::True));
+			case CheckBoxState::True:
 			default:
-				return SetString(L"0");
+				return SetString(State2Str(CheckBoxState::False));
 			}
 	}
 }

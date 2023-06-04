@@ -102,6 +102,9 @@ public:
 
 	//Paint
 	virtual void PaintBackground(CDirect2DWrite* pDirect, CRectF rc);
+	virtual void PaintNormalBackground(CDirect2DWrite* pDirect, CRectF rc);
+	virtual void PaintSelectedBackground(CDirect2DWrite* pDirect, CRectF rc);
+	virtual void PaintHotBackground(CDirect2DWrite* pDirect, CRectF rc);
 	virtual void PaintLine(CDirect2DWrite* pDirect, CRectF rc);
 	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rc) {/*Do Nothing*/ }
 	virtual void PaintFocus(CDirect2DWrite* pDirect, CRectF rc);

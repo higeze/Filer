@@ -28,33 +28,33 @@ public:
     unsigned long GetError()const { return m_error; }
 };
 
-class CPDFiumFileWrite : public FPDF_FILEWRITE
+class CPDFFileWrite : public FPDF_FILEWRITE
 {
 private:
 	FILE* m_pFile = nullptr;
 public:
-	CPDFiumFileWrite(const std::string& path)
+	CPDFFileWrite(const std::string& path)
 	{
 		fopen_s(&m_pFile, path.c_str(), "wb");
 
 		version = 1;
 		WriteBlock = [](FPDF_FILEWRITE* pThis, const void* pData, unsigned long size)->int
 		{
-			return fwrite(pData, 1, size, static_cast<CPDFiumFileWrite*>(pThis)->m_pFile);
+			return fwrite(pData, 1, size, static_cast<CPDFFileWrite*>(pThis)->m_pFile);
 		};
 	}
-	CPDFiumFileWrite(const std::wstring& path)
+	CPDFFileWrite(const std::wstring& path)
 	{
 		_wfopen_s(&m_pFile, path.c_str(), L"wb");
 
 		version = 1;
 		WriteBlock = [](FPDF_FILEWRITE* pThis, const void* pData, unsigned long size)->int
 		{
-			return fwrite(pData, 1, size, static_cast<CPDFiumFileWrite*>(pThis)->m_pFile);
+			return fwrite(pData, 1, size, static_cast<CPDFFileWrite*>(pThis)->m_pFile);
 		};
 	}
 
-	virtual ~CPDFiumFileWrite()
+	virtual ~CPDFFileWrite()
 	{
 		fclose(m_pFile);
 	}

@@ -1,33 +1,34 @@
 #pragma once
-#include <fpdfview.h>
-#include <fpdf_text.h>
-#include "UniqueFpdf.h"
+#include "FPDF.h"
 #include "D2DWTypes.h"
 #include "MyUniqueHandle.h"
 
-class CUniqueFPdfSchHandle;
+class CFPDFSchHandle;
 
-struct delete_fpdf_textpage
+class CFPDFTextPage
 {
-	void operator()(FPDF_TEXTPAGE p)
-	{ 
-		if(p){
-			FPDF_LOCK;
-			FPDFText_ClosePage(p);
+private:
+	struct delete_fpdf_textpage
+	{
+		void operator()(FPDF_TEXTPAGE p)
+		{ 
+			if(p){
+				FPDF_LOCK;
+				FPDFText_ClosePage(p);
+			}
 		}
-	}
-};
-
-class CUniqueFPdfTextPage :public std::unique_ptr<std::remove_pointer_t<FPDF_TEXTPAGE>, delete_fpdf_textpage>
-{
+	};
+	std::unique_ptr<std::remove_pointer_t<FPDF_TEXTPAGE>, delete_fpdf_textpage> m_p;
 public:
-	CUniqueFPdfTextPage(FPDF_TEXTPAGE p = nullptr)
-		:std::unique_ptr<std::remove_pointer_t<FPDF_TEXTPAGE>, delete_fpdf_textpage>(p){}
+	CFPDFTextPage(FPDF_TEXTPAGE p = nullptr)
+		:m_p(p){}
+
+	operator bool() const { return m_p.get(); }
 
 	int CountChars() const
 	{
 		FPDF_LOCK;
-		return FPDFText_CountChars(get());
+		return FPDFText_CountChars(m_p.get());
 	}
 
 	int CountRects(
@@ -35,7 +36,7 @@ public:
 		int count) const
 	{
 		FPDF_LOCK;
-		return FPDFText_CountRects(get(), start_index, count);
+		return FPDFText_CountRects(m_p.get(), start_index, count);
 	}
 
 	int GetText(
@@ -44,7 +45,7 @@ public:
 		unsigned short* result) const
 	{
 		FPDF_LOCK;
-		return FPDFText_GetText(get(), start_index, count, result);
+		return FPDFText_GetText(m_p.get(), start_index, count, result);
 	}
 
 	int GetCharIndexAtPos(
@@ -54,7 +55,7 @@ public:
 		double yTolerance) const
 	{
 		FPDF_LOCK;
-		return FPDFText_GetCharIndexAtPos(get(), x, y, xTolerance, yTolerance);
+		return FPDFText_GetCharIndexAtPos(m_p.get(), x, y, xTolerance, yTolerance);
 	}
 
 	FPDF_BOOL GetRect(
@@ -65,13 +66,13 @@ public:
 		double* bottom)
 	{
 		FPDF_LOCK;
-		return FPDFText_GetRect(get(), rect_index, left, top, right, bottom);
+		return FPDFText_GetRect(m_p.get(), rect_index, left, top, right, bottom);
 	}
 
 	std::vector<CRectF> GetRects();
 	std::vector<CRectF> GetRangeRects(int begin, int end);
 
-	CUniqueFPdfSchHandle FindStart(
+	CFPDFSchHandle FindStart(
 		FPDF_WIDESTRING findwhat,
 		unsigned long flags,
 		int start_index);

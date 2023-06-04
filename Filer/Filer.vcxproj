@@ -305,6 +305,7 @@
     <ClInclude Include="..\HiLib\CExpandCollapseCell.h" />
     <ClInclude Include="..\HiLib\CheckBoxCell.h" />
     <ClInclude Include="..\HiLib\CheckBoxFilterCell.h" />
+    <ClInclude Include="..\HiLib\CheckBoxState.h" />
     <ClInclude Include="..\HiLib\ColorCell.h" />
     <ClInclude Include="..\HiLib\Column.h" />
     <ClInclude Include="..\HiLib\Console.h" />
@@ -312,7 +313,8 @@
     <ClInclude Include="..\HiLib\Cursorer.h" />
     <ClInclude Include="..\HiLib\D2DFileIconDrawer.h" />
     <ClInclude Include="..\HiLib\D2DImage.h" />
-    <ClInclude Include="..\HiLib\D2DPDFBitmapDrawer.h" />
+    <ClInclude Include="..\HiLib\Date.h" />
+    <ClInclude Include="..\HiLib\PDFBitmapDrawer.h" />
     <ClInclude Include="..\HiLib\D2DThumbnailDrawer.h" />
     <ClInclude Include="..\HiLib\D2DWDialog.h" />
     <ClInclude Include="..\HiLib\D2DWTypes.h" />
@@ -394,10 +396,8 @@
     <ClInclude Include="..\HiLib\PDFCaret.h" />
     <ClInclude Include="..\HiLib\PDFEditorProperty.h" />
     <ClInclude Include="..\HiLib\PDFDoc.h" />
-    <ClInclude Include="..\HiLib\PDFEvent.h" />
-    <ClInclude Include="..\HiLib\PDFiumMultiThread.h" />
+    <ClInclude Include="..\HiLib\FPDFFileWrite.h" />
     <ClInclude Include="..\HiLib\PDFPage.h" />
-    <ClInclude Include="..\HiLib\PDFPageCache.h" />
     <ClInclude Include="..\HiLib\PdfView.h" />
     <ClInclude Include="..\HiLib\PDFViewProperty.h" />
     <ClInclude Include="..\HiLib\PdfViewStateMachine.h" />
@@ -408,7 +408,6 @@
     <ClInclude Include="..\HiLib\property.h" />
     <ClInclude Include="..\HiLib\ReactiveProperty.h" />
     <ClInclude Include="..\HiLib\ScrollProperty.h" />
-    <ClInclude Include="..\HiLIb\PDFiumSingleThread.h" />
     <ClInclude Include="..\HiLib\shared_lock_property.h" />
     <ClInclude Include="..\HiLib\SortCell.h" />
     <ClInclude Include="..\HiLib\MapColumn.h" />
@@ -463,12 +462,12 @@
     <ClInclude Include="..\HiLib\D2DWControl.h" />
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UnDoReDoManager.h" />
-    <ClInclude Include="..\HiLib\UniqueFpdf.h" />
-    <ClInclude Include="..\HiLib\UniqueFPdfBitmap.h" />
-    <ClInclude Include="..\HiLib\UniqueFPdfDocument.h" />
-    <ClInclude Include="..\HiLib\UniqueFPdfPage.h" />
-    <ClInclude Include="..\HiLib\UniqueFPdfSchHandle.h" />
-    <ClInclude Include="..\HiLib\UniqueFPdfTextPage.h" />
+    <ClInclude Include="..\HiLib\FPDF.h" />
+    <ClInclude Include="..\HiLib\FPDFBitmap.h" />
+    <ClInclude Include="..\HiLib\FPDFDocument.h" />
+    <ClInclude Include="..\HiLib\FPDFPage.h" />
+    <ClInclude Include="..\HiLib\FPDFSchHandle.h" />
+    <ClInclude Include="..\HiLib\FPDFTextPage.h" />
     <ClInclude Include="..\HiLib\UniqueIDFactory.h" />
     <ClInclude Include="..\HiLib\Unknown.h" />
     <ClInclude Include="..\HiLib\UpdateDialog.h" />
@@ -534,6 +533,11 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Task.h" />
+    <ClInclude Include="TaskDateCell.h" />
+    <ClInclude Include="TaskDateColumn.h" />
+    <ClInclude Include="TaskMemoCell.h" />
+    <ClInclude Include="TaskMemoColumn.h" />
+    <ClInclude Include="TaskRow.h" />
     <ClInclude Include="ToDoGridView.h" />
     <ClInclude Include="ViewProperty.h" />
   </ItemGroup>
@@ -561,7 +565,7 @@
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
     <ClCompile Include="..\HiLib\D2DFileIconDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DImage.cpp" />
-    <ClCompile Include="..\HiLib\D2DPDFBitmapDrawer.cpp" />
+    <ClCompile Include="..\HiLib\PDFBitmapDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DThumbnailDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DWDialog.cpp" />
     <ClCompile Include="..\HiLib\D2DWTypes.cpp" />
@@ -600,12 +604,9 @@
     <ClCompile Include="..\HiLib\ColumnIndexCell.cpp" />
     <ClCompile Include="..\HiLib\PDFEditor.cpp" />
     <ClCompile Include="..\HiLib\PDFDoc.cpp" />
-    <ClCompile Include="..\HiLib\PDFiumMultiThread.cpp" />
     <ClCompile Include="..\HiLib\PDFPage.cpp" />
-    <ClCompile Include="..\HiLib\PdfPageCache.cpp" />
     <ClCompile Include="..\HiLib\PdfView.cpp" />
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp" />
-    <ClCompile Include="..\HiLIb\PDFiumSingleThread.cpp" />
     <ClCompile Include="..\HiLib\PreviewControl.cpp" />
     <ClCompile Include="..\HiLib\PreviewWnd.cpp" />
     <ClCompile Include="..\HiLib\SortCell.cpp" />
@@ -642,11 +643,11 @@
     <ClCompile Include="..\HiLib\D2DWControl.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="..\HiLib\UnDoReDoManager.cpp" />
-    <ClCompile Include="..\HiLib\UniqueFpdf.cpp" />
-    <ClCompile Include="..\HiLib\UniqueFpdfBitmap.cpp" />
-    <ClCompile Include="..\HiLib\UniqueFPdfDocument.cpp" />
-    <ClCompile Include="..\HiLib\UniqueFPdfPage.cpp" />
-    <ClCompile Include="..\HiLib\UniqueFPdfTextPage.cpp" />
+    <ClCompile Include="..\HiLib\FPDF.cpp" />
+    <ClCompile Include="..\HiLib\FPDFBitmap.cpp" />
+    <ClCompile Include="..\HiLib\FPDFDocument.cpp" />
+    <ClCompile Include="..\HiLib\FPDFPage.cpp" />
+    <ClCompile Include="..\HiLib\FPDFTextPage.cpp" />
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
     <ClCompile Include="..\HiLib\PDFCaret.cpp" />
     <ClCompile Include="DriveSizeCell.cpp" />
@@ -684,6 +685,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="TaskRow.cpp" />
     <ClCompile Include="Test.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

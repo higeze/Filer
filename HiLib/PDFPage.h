@@ -1,14 +1,14 @@
 #pragma once
-#include "Direct2DWrite.h"
-#include "PDFiumMultiThread.h"
 #include <queue>
 #include <future>
+#include "Direct2DWrite.h"
 #include "ReactiveProperty.h"
 #include "getter_macro.h"
 #include "shared_lock_property.h"
-#include <boost/sml.hpp>
+#include "MyUniqueHandle.h"
 
-class CPDFDoc;
+class CFPDFPage;
+class CFPDFTextPage;
 
 enum class PdfBmpState
 {
@@ -50,17 +50,12 @@ class CPDFPage
 {
 private:
 	/* Field */
-	const CPDFDoc* m_pDoc;
-	int m_index;
-	//UNQ_FPDF_PAGE m_pPage;
-	//UNQ_FPDF_TEXTPAGE m_pTextPage;
-	//struct BitmapMachine;
-	//std::unique_ptr<boost::sml::sm<BitmapMachine, boost::sml::process_queue<std::queue>>> m_pBitmapMachine;
+	std::unique_ptr<CFPDFPage> m_pPage;
+	std::unique_ptr<CFPDFTextPage> m_pTextPage;
 /**********/
 /* Getter */
 /**********/
 public:
-	int GetIndex() const { return m_index; }
 /***************/
 /* Lazy Getter */
 /***************/
@@ -78,14 +73,9 @@ protected:
 public:
 	const std::vector<CRectF>& GetFindRects(const std::wstring& find);
 
-//protected:
-//	std::optional<PdfBmpInfo> m_optBitmapInfo;
 public:
-	UHBITMAP GetClipBitmap(HDC hDC, const FLOAT& scale, const int& rotate, const CRectF& rect);
-//protected:
-//	std::optional<PdfBmpInfo> m_optSmallBitmap;
-public:
-	UHBITMAP GetBitmap(HDC hDC, const FLOAT& scale, const int& rotate);
+	UHBITMAP GetClipBitmap(HDC hDC, const FLOAT& scale, const int& rotate, const CRectF& rect, std::function<bool()> cancel = []()->bool { return false; });
+	UHBITMAP GetBitmap(HDC hDC, const FLOAT& scale, const int& rotate, std::function<bool()> cancel = []()->bool { return false; });
 
 protected:
 	std::optional<SelectedTextInfo> m_optSelectedText;
@@ -106,10 +96,8 @@ private:
 
 public:
 	/* Constructor/Destructor */
-	CPDFPage(const CPDFDoc* pDoc, int index);
+	CPDFPage(std::unique_ptr<CFPDFPage>&& pPage, std::unique_ptr<CFPDFTextPage>&& pTextPage);
 	virtual ~CPDFPage();
-	const std::unique_ptr<CPDFiumMultiThread>& GetPDFiumPtr() const;
-	//UNQ_FPDF_PAGE& GetPagePtr() { return m_pPage; }
 	/* Reactive */
 	ReactiveProperty<int> Rotate;	
 };

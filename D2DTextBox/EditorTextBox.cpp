@@ -10,6 +10,7 @@
 
 CEditorTextBox::CEditorTextBox(
 	CD2DWControl* pParentControl,
+
 	const std::shared_ptr<EditorTextBoxProperty>& pProp,
 	const std::wstring& text)
 	:CTextBox(pParentControl, 

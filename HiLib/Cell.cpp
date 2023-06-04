@@ -145,15 +145,27 @@ CRectF CCell::InnerBorder2CenterBorder(CRectF rcInner)
 
 void CCell::PaintBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	//Paint Normal
-	pDirect->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
-	//Selected
+	PaintNormalBackground(pDirect, rcPaint);
+	PaintSelectedBackground(pDirect, rcPaint);
+	PaintHotBackground(pDirect, rcPaint);
+}
+
+void CCell::PaintNormalBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
+{
+	//pDirect->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
+}
+
+void CCell::PaintSelectedBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
+{
 	if (GetIsSelected() && m_pSheet->GetIsFocused()  /*::GetFocus() == m_pSheet->GetGridPtr()->m_hWnd*/) {
 		pDirect->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rcPaint);
 	} else if (GetIsSelected()) {
 		pDirect->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rcPaint);
 	}
-	//Hot, Pressed
+}
+
+void CCell::PaintHotBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
+{
 	if (m_state == UIElementState::Hot || m_state == UIElementState::Pressed) {
 		pDirect->FillSolidRectangle(*(m_spCellProperty->HotFill), rcPaint);
 	}

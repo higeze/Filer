@@ -4,7 +4,7 @@
 #include "PDFDoc.h"
 #include "PDFPage.h"
 #include "PDFCaret.h"
-#include "D2DPDFBitmapDrawer.h"
+#include "PDFBitmapDrawer.h"
 #include "D2DWWindow.h"
 #include "Scroll.h"
 #include "Debug.h"
@@ -106,6 +106,16 @@ CSizeF CPdfView::GetRenderContentSize()
 		return CSizeF(0.f, 0.f);
 	}
 };
+
+std::tuple<int, int> CPdfView::GetPageAndIndexFromWndPoint(const CPointF& ptInWnd)
+{
+	auto [page, ptInPdfiumPage] = Wnd2PdfiumPage(ptInWnd);
+	if (page >= 0) {
+		return std::make_tuple(page, m_pdf->GetPage(page)->GetCursorCharIndexAtPos(ptInPdfiumPage));
+	} else {
+		return std::make_tuple(page, -1);
+	}
+}
 
 void CPdfView::OnClose(const CloseEvent& e)
 {
@@ -311,7 +321,15 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 {
 	if (!m_pdf) { return; }
 	
+	bool debug = m_pMachine->IsStateNormalDebug();
 	std::vector<std::wstring> logs;
+
+	logs.push_back(std::format(
+		L"Drawer Thread:{}/{}, Task:{}",
+		m_pdfDrawer->GetThreadPoolPtr()->GetActiveThreadCount(),
+		m_pdfDrawer->GetThreadPoolPtr()->GetTotalThreadCount(),
+		m_pdfDrawer->GetThreadPoolPtr()->GetQueuedTaskCount()));
+
 	//Clip
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
@@ -343,7 +361,6 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 
 	auto begin = std::distance(intersectRectsInDoc.cbegin(), first);
 	auto end = (std::min)(std::distance(intersectRectsInDoc.cbegin(), last.base()), m_pdf->GetPageCount());
-	bool debug = m_pMachine->IsStateNormalDebug();
 
 	auto callback = [this]()->void { GetWndPtr()->GetDispatcherPtr()->PostInvoke([pWnd = GetWndPtr()]() { pWnd->InvalidateRect(NULL, FALSE); }); };
 
@@ -378,6 +395,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		logs.push_back(std::format(L"OriginalSize:\t({},{})", szPixcelBmp.width, szPixcelBmp.height));
 		logs.push_back(std::format(L"ScaledSize:\t({},{})", szPixcelPntBmp.width, szPixcelPntBmp.height));
 		//logs.push_back(std::format(L"DrawMode:\t{}", drawFullPage ? L"Full":L"Partial").c_str());
+
 
 		if (drawFullPage) {
 			if (m_pdfDrawer->DrawPDFPageBitmap(GetWndPtr()->GetDirectPtr(), fullKey, ptDstLeftTopInWnd, callback)) {
@@ -418,56 +436,12 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 				}
 			}
 		}
-
-		//CRectF rcClipInPage = Doc2Page(i, intersectRectsInDoc[i]);
-		//PdfBmpKey curKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = m_scale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcClipInPage };
-		//CRectU scaledRectInPage = CRectF2CRectU(rcClipInPage * m_scale);
- 	//	//GetWndPtr()->GetDirectPtr()->SaveBitmap(L"pdf.png", pBitmap);
-		//CSizeU szPixcelBmp(scaledRectInPage.Size());
-		//CRectF rcBmpPaint(
-		//	std::round(intersectRectsInWnd[i].left),
-		//	std::round(intersectRectsInWnd[i].top),
-		//	std::round(intersectRectsInWnd[i].left) + szPixcelBmp.width,
-		//	std::round(intersectRectsInWnd[i].top) + szPixcelBmp.height);
-
-		////Draw small image first to load this first
-		////const FLOAT smallScale = m_scale;
-		//CPointF ptLeftTopInPage;
-		//CPointF ptLeftTopInWnd(Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, ptLeftTopInPage))));
-		//CSizeF szPixcelPntBmp(m_pdf->GetPage(i)->GetSize() * m_scale);
-		//PdfBmpKey smallKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = m_scale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcClipInPage };
-		//CRectF rcBmpPaint(
-		//	std::round(ptLeftTopInWnd.x),
-		//	std::round(ptLeftTopInWnd.y),
-		//	std::round(ptLeftTopInWnd.x) + std::round(szPixcelPntBmp.width),
-		//	std::round(ptLeftTopInWnd.y) + std::round(szPixcelPntBmp.height));
-		//m_pdfDrawer->DrawPDFPage(GetWndPtr()->GetDirectPtr(), smallKey, rcBmpPaint, callback);
-
-		////Draw clip image
-		//if (m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), curKey, rcBmpPaint, callback)) {
-		//	
-		////If not, draw past image
-		//} else {
-		//	std::vector<PdfBmpKey> keys = m_pdfDrawer->FindClipKeys([curKey, pPage = m_pdf->GetPage(i).get(), scale = m_scale](const PdfBmpKey& key)->bool
-		//	{
-		//		return 
-		//			key != curKey &&
-		//			key.PagePtr == pPage && 
-		//			key.Scale == scale &&
-		//			key.Rotate == key.PagePtr->Rotate.get() &&
-		//			!key.Rect.IsRectNull();
-		//	});
-		//	for (const PdfBmpKey& key : keys) {
-		//		rcBmpPaint = Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, key.Rect)));
-		//		m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), key, rcBmpPaint, callback);
-		//	}
-		//}
 	}
 
-	auto bitmapKeyPages = [](const std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>>& pBmp) {
+	auto bitmapKeyPages = [this](const std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>>& pBmp) {
 		std::vector<PdfBmpKey> keys = pBmp->Keys();
 		std::vector<int> pages;
-		std::transform(keys.cbegin(), keys.cend(), std::back_inserter(pages), [](const PdfBmpKey& key) {return key.PagePtr->GetIndex() + 1; });
+		std::transform(keys.cbegin(), keys.cend(), std::back_inserter(pages), [this](const PdfBmpKey& key) {return m_pdf->GetPageIndex(key.PagePtr) + 1; });
 		std::wstring pagesString;
 		std::for_each(pages.cbegin(), pages.cend(), [&pagesString](const int page) { pagesString += std::to_wstring(page) + L" "; });
 		return pagesString;
@@ -478,35 +452,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	logs.push_back(std::format(L"BlurBitmapCount:\t{}", m_pdfDrawer->GetAtlasBlurBitmap()->Count()).c_str());
 	logs.push_back(std::format(L"BlurBitmapKeys:\t{}", bitmapKeyPages(m_pdfDrawer->GetAtlasBlurBitmap())).c_str());
 
-	//Paint Page No
-	//std::wstring pageText = fmt::format(L"{} / {}", m_currentPage.get(), m_pdf->GetPageCount());
-	//CSizeF textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), pageText);
-	//GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), pageText,
-	//	CRectF(GetRenderRectInWnd().right - textSize.width - m_spVScroll->GetRectInWnd().Width(),
-	//			GetRenderRectInWnd().top,
-	//			GetRenderRectInWnd().right - m_spVScroll->GetRectInWnd().Width(),
-	//			GetRenderRectInWnd().top + textSize.height));
-
-	//Debug
 	if(debug){
-		//std::vector<int> spetskvec = m_pdf->GetPDFiumPtr()->GetQueuedSpecificTaskCounts();
-		//std::wstring spetskcnts = std::to_wstring(spetskvec[0]);
-		//for (size_t i = 1; i < spetskvec.size(); i++) {
-		//	spetskcnts += L", " + std::to_wstring(spetskvec[i]);
-		//}
-		//std::wstring debugText = std::format(
-		//	L"PDF Threads\r\n\tThread:{}/{}\r\n\tTask:{}\r\n\tSpecificTask:{}\r\nThread Pool\r\n\tThread:{}/{}\r\n\tTask:{}\r\n",
-		//	m_pdf->GetPDFiumPtr()->GetActiveThreadCount(),m_pdf->GetPDFiumPtr()->GetTotalThreadCount(),
-		//	m_pdf->GetPDFiumPtr()->GetQueuedTaskCount(),
-		//	spetskcnts,
-		//	m_pdfDrawer->GetThreadPoolPtr()->GetActiveThreadCount(),m_pdfDrawer->GetThreadPoolPtr()->GetTotalThreadCount(),
-		//	m_pdfDrawer->GetThreadPoolPtr()->GetQueuedTaskCount());
-		//CSizeF debugTextSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), debugText);
-		//GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), debugText,
-		//	CRectF(GetRenderRectInWnd().left,
-		//	GetRenderRectInWnd().top,
-		//	GetRenderRectInWnd().left + debugTextSize.width,
-		//	GetRenderRectInWnd().top + debugTextSize.height));
 		std::wstring text = boost::algorithm::join(logs, L"\n");
 		GetWndPtr()->GetDirectPtr()->DrawTextFromPoint(*(m_pProp->Format), text, GetRenderRectInWnd().LeftTop());
 	}
@@ -644,7 +590,7 @@ void CPdfView::Normal_KeyDown(const KeyDownEvent& e)
 		{
 			if (ctrl) {
 				if (m_pdf) {
-					m_pdf->CopyTextToClipboard(CopyDocTextEvent(GetWndPtr(), m_caret.SelectBegin, m_caret.SelectEnd));
+					m_pdf->CopyTextToClipboard(GetWndPtr()->m_hWnd, m_caret.SelectBegin, m_caret.SelectEnd);
 				}
 				*e.HandledPtr = TRUE;
 			}
@@ -751,9 +697,8 @@ void CPdfView::NormalPan_SetCursor(const SetCursorEvent& e)
 /**************/
 void CPdfView::NormalText_LButtonDown(const LButtonDownEvent& e)
 {
-	auto [page, ptInPdfiumPage] = Wnd2PdfiumPage(e.PointInWnd);
+	auto [page, index] = GetPageAndIndexFromWndPoint(e.PointInWnd);
 	if (page >= 0) {
-		int index = m_pdf->GetPage(page)->GetCursorCharIndexAtPos(ptInPdfiumPage);
 		if (index >= 0) {
 			auto rcInWnd = PdfiumPage2Wnd(page, m_pdf->GetPage(page)->GetTextCursorRects()[index]);
 			auto point = rcInWnd.CenterPoint();
@@ -773,9 +718,17 @@ void CPdfView::NormalText_SetCursor(const SetCursorEvent& e)
 {
 	SendPtInRectReverse(&CUIElement::OnSetCursor, e);
 	if (!(*e.HandledPtr)) {
-		HCURSOR hCur = ::LoadCursor(NULL, IDC_IBEAM);
-		::SetCursor(hCur);
-		*(e.HandledPtr) = TRUE;
+		auto [page, index] = GetPageAndIndexFromWndPoint(e.PointInWnd);
+		if (page >= 0) {
+			if (index >= 0) {
+				HCURSOR hCur = ::LoadCursor(NULL, IDC_IBEAM);
+				::SetCursor(hCur);
+				*(e.HandledPtr) = TRUE;
+			} else {
+				//HCURSOR hCur = ::LoadCursor(NULL, IDC_ARROW);
+				//::SetCursor(hCur);
+			}
+		}
 	}
 }
 
@@ -907,15 +860,25 @@ void CPdfView::TextDrag_OnEntry(const LButtonBeginDragEvent& e) {}
 void CPdfView::TextDrag_OnExit(const LButtonEndDragEvent& e) {}
 void CPdfView::TextDrag_MouseMove(const MouseMoveEvent& e) 
 {
-	auto [page, ptInPdfiumPage] = Wnd2PdfiumPage(e.PointInWnd);
+	auto [page, index] = GetPageAndIndexFromWndPoint(e.PointInWnd);
 	if (page >= 0) {
-		int index = m_pdf->GetPage(page)->GetCursorCharIndexAtPos(ptInPdfiumPage);
 		if (index >= 0) {
 			auto rcInWnd = PdfiumPage2Wnd(page, m_pdf->GetPage(page)->GetTextCursorRects()[index]);
 			auto point = rcInWnd.CenterPoint();
 			m_caret.MoveWithShift(page, index, point);
 		}
 	}
+	
+	if (page >= 0) {
+		if (index >= 0) {
+			HCURSOR hCur = ::LoadCursor(NULL, IDC_IBEAM);
+			::SetCursor(hCur);
+			//*(e.HandledPtr) = TRUE;
+		} else {
+			HCURSOR hCur = ::LoadCursor(NULL, IDC_ARROW);
+			::SetCursor(hCur);
+		}
+	}	
 }
 void CPdfView::TextDrag_SetCursor(const SetCursorEvent& e) 
 {
@@ -1043,14 +1006,14 @@ void CPdfView::Close()
 
 bool CPdfView::Jump(const int& page)
 {
-	if (page < 0 || page <= m_pdf->GetPageCount()) { return false; }
+	if (page < 1 || m_pdf->GetPageCount() < page) { return false; }
 
 	std::vector<CRectF> rectsInDoc = m_pdf->GetPageRects();
 	std::vector<CRectF> scaledRectsInDoc;
 	std::transform(rectsInDoc.cbegin(), rectsInDoc.cend(), std::back_inserter(scaledRectsInDoc), 
 		[scale = m_scale](const CRectF& rc) { return rc * scale; });
 
-	m_spVScroll->SetScrollPos(scaledRectsInDoc[page].top);
+	m_spVScroll->SetScrollPos(scaledRectsInDoc[page - 1].top);
 
 	return true;
 }

@@ -1,18 +1,11 @@
 #pragma once
 #include "TextCell.h"
+#include "CheckBoxState.h"
 
 enum class CheckBoxType
 {
 	Normal,
 	ThreeState,
-};
-
-enum class CheckBoxState
-{
-	True,
-	False,
-	Intermediate,
-
 };
 
 class CCheckBoxCell :public CCell

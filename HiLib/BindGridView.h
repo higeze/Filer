@@ -12,7 +12,7 @@
 #include "IBindSheet.h"
 
 
-template<typename... TItems>
+template<typename TRow, typename TCol, typename... TItems>
 class CBindGridView :public CGridView, public IBindSheet<TItems...>
 {
 protected:
@@ -98,10 +98,10 @@ public:
 	{
 		switch (e.Action) {
 			case NotifyVectorChangedAction::Add:
-				PushRow(std::make_shared<CBindRow<TItems...>>(this));
+				PushRow(std::make_shared<TRow>(this));
 				break;
 			case NotifyVectorChangedAction::Insert:
-				InsertRow(e.NewStartingIndex, std::make_shared<CBindRow<TItems...>>(this));
+				InsertRow(e.NewStartingIndex, std::make_shared<TRow>(this));
 				break;
 			case NotifyVectorChangedAction::Remove:
 			{
@@ -114,7 +114,7 @@ public:
 				m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
 				m_allCells.clear();
 				for (auto& tup : e.NewItems) {
-					PushRow(std::make_shared<CBindRow<TItems...>>(this));
+					PushRow(std::make_shared<TRow>(this));
 				}
 
 				break;
@@ -127,10 +127,10 @@ public:
 	{
 		switch (e.Action) {
 			case NotifyVectorChangedAction::Add:
-				this->PushColumn(std::make_shared<CBindColumn<TItems...>>(this));
+				this->PushColumn(std::make_shared<TCol>(this));
 				break;
 			case NotifyVectorChangedAction::Insert:
-				this->InsertColumn(e.NewStartingIndex, std::make_shared<CBindColumn<TItems...>>(this));
+				this->InsertColumn(e.NewStartingIndex, std::make_shared<TCol>(this));
 				break;
 			case NotifyVectorChangedAction::Remove:
 			{
@@ -143,7 +143,7 @@ public:
 				m_allCols.idx_erase(m_allCols.begin() + m_frozenColumnCount, m_allCols.end());
 				m_allCells.clear();
 				for (auto& tup : e.NewItems) {
-					PushColumn(std::make_shared<CBindColumn<TItems...>>(this));
+					PushColumn(std::make_shared<TCol>(this));
 				}
 
 				break;
@@ -172,7 +172,7 @@ public:
 
 				//PushRow
 				for (auto& tup : itemsSource) {
-					PushRow(std::make_shared<CBindRow<TItems...>>(this));
+					PushRow(std::make_shared<TRow>(this));
 				}
 			}
 			break;
@@ -190,7 +190,7 @@ public:
 
 				//PushColumn
 				for (auto& tup : itemsSource) {
-					PushColumn(std::make_shared<CBindColumn<TItems...>>(this));
+					PushColumn(std::make_shared<TCol>(this));
 				}
 
 			}

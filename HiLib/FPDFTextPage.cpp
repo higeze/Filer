@@ -1,7 +1,7 @@
-#include "UniqueFPdfTextPage.h"
-#include "UniqueFPdfSchHandle.h"
+#include "FPDFTextPage.h"
+#include "FPDFSchHandle.h"
 
-std::vector<CRectF> CUniqueFPdfTextPage::GetRects()
+std::vector<CRectF> CFPDFTextPage::GetRects()
 {
 	FPDF_LOCK;
 	std::vector<CRectF> rects;
@@ -9,7 +9,7 @@ std::vector<CRectF> CUniqueFPdfTextPage::GetRects()
 	for (auto i = 0; i < charCount; i++) {
 		int rect_count = CountRects(i, 1);
 		if (rect_count == 1) {
-			double left, top, right, bottom = 0.f;
+			double left, top, right, bottom;
 			GetRect(0, &left, &top, &right, &bottom);
 			rects.emplace_back(
 				static_cast<FLOAT>(left),
@@ -20,14 +20,14 @@ std::vector<CRectF> CUniqueFPdfTextPage::GetRects()
 	}
 	return rects;
 }
-std::vector<CRectF> CUniqueFPdfTextPage::GetRangeRects(int begin, int end)
+std::vector<CRectF> CFPDFTextPage::GetRangeRects(int begin, int end)
 {
 	FPDF_LOCK;
 	int rect_count = CountRects(begin, end - begin);
 	std::vector<CRectF> rects;
 	for (auto i = 0; i < rect_count; i++) {
 		double left, top, right, bottom;
-		GetRect(0, &left, &top, &right, &bottom);
+		GetRect(i, &left, &top, &right, &bottom);
 		rects.emplace_back(
 			static_cast<FLOAT>(left),
 			static_cast<FLOAT>(top),
@@ -37,21 +37,21 @@ std::vector<CRectF> CUniqueFPdfTextPage::GetRangeRects(int begin, int end)
 	return rects;
 }
 
-CUniqueFPdfSchHandle CUniqueFPdfTextPage::FindStart(
+CFPDFSchHandle CFPDFTextPage::FindStart(
 	FPDF_WIDESTRING findwhat,
     unsigned long flags,
     int start_index)
 {
 	FPDF_LOCK;
-	return CUniqueFPdfSchHandle(FPDFText_FindStart(get(), findwhat, flags, start_index));
+	return CFPDFSchHandle(FPDFText_FindStart(m_p.get(), findwhat, flags, start_index));
 }
 
-std::vector<std::tuple<int, int, std::vector<CRectF>>> CUniqueFPdfTextPage::SearchResults(FPDF_WIDESTRING findwhat)
+std::vector<std::tuple<int, int, std::vector<CRectF>>> CFPDFTextPage::SearchResults(FPDF_WIDESTRING findwhat)
 {
 	FPDF_LOCK;
 	std::vector<std::tuple<int, int, std::vector<CRectF>>> results;
 
-	CUniqueFPdfSchHandle schHdl(FindStart(findwhat, 0, 0));
+	CFPDFSchHandle schHdl(FindStart(findwhat, 0, 0));
 	while (schHdl.FindNext()) {
 		int index = schHdl.GetSchResultIndex();
 		int ch_count = schHdl.GetSchCount();

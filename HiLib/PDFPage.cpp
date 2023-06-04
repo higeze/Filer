@@ -9,74 +9,19 @@
 #include "strconv.h"
 #include <math.h>
 #include "ThreadPool.h"
+#include "FPdfPage.h"
+#include "FPdfTextPage.h"
 
 /************/
 /* CPdfPage */
 /************/
-//struct CPDFPage::MachineBase
-//{
-//	template<class TRect, class R, class E>
-//	auto call(R(TRect::* f)(E))const
-//	{
-//		return [f](TRect* self, E e, boost::sml::back::process<E> process) { return (self->*f)(e); };
-//	}
-//	
-//	template<class TRect, class R>
-//	auto call(R(TRect::* f)())const
-//	{
-//		return [f](TRect* self) { return (self->*f)(); };
-//	}
-//};
-//struct CPDFPage::BitmapMachine: public CPDFPage::MachineBase
-//{
-//	//Status
-//	class None {};
-//	class Loading {};
-//	class Available {};
-//	class Error {};
-//
-//	auto operator()() const noexcept
-//	{
-//		using namespace sml;
-//		return make_transition_table(
-//			*state<None> +event<GetBitmapEvent> = state<Loading>,
-//
-//			state<Loading> +on_entry<GetBitmapEvent> / call(&CPDFPage::BitmapLoading_OnEntry),
-//			state<Loading> +on_entry<BitmapReloadEvent> / [](CPDFPage* p, const BitmapReloadEvent& e) { return p->Bitmap_Loading_OnEntry(e.DirectPtr, e.Scale); },
-//			state<Loading> +on_entry<BitmapLoadCompletedEvent> / [](CPDFPage* p, const BitmapLoadCompletedEvent& e) { return p->Bitmap_Loading_OnEntry(e.DirectPtr, e.Scale); },
-//			state<Loading> +on_entry<BitmapCancelCompletedEvent> / [](CPDFPage* p, const BitmapCancelCompletedEvent& e) { return p->Bitmap_Loading_OnEntry(e.DirectPtr, e.Scale); },
-//
-//			state<Loading> +event<RenderPageContentEvent> / call(&CPDFPage::Bitmap_Loading_Render),
-//			state<Loading> +event<BitmapLoadCompletedEvent> = state<Available>,
-//			state<Loading> +event<BitmapReloadEvent> = state<Loading>,//state<WaitCancel>,
-//			state<Loading> +event<BitmapErrorEvent> = state<Error>,
-//
-//			state<Available> +event<RenderPageContentEvent> / call(&CPDFPage::Bitmap_Available_Render),
-//			state<Available> +event<RenderPageSelectedTextEvent> / call(&CPDFPage::Bitmap_Available_RenderSelectedText),
-//			state<Available> +event<RenderPageCaretEvent> / call(&CPDFPage::Bitmap_Available_RenderCaret),
-//			state<Available> +event<BitmapReloadEvent> = state<Loading>,
-//
-//			//state<WaitCancel> +on_entry<_> / call(&CPDFPage::Bitmap_WaitCancel_OnEntry),
-//			//state<WaitCancel> +on_exit<_> / call(&CPDFPage::Bitmap_WaitCancel_OnExit),
-//
-//			//state<WaitCancel> +event<RenderPageContentEvent> / call(&CPDFPage::Bitmap_WaitCancel_Render),
-//			//state<WaitCancel> +event<BitmapLoadCompletedEvent> = state<Loading>,
-//			//state<WaitCancel> +event<BitmapCancelCompletedEvent> = state<Loading>,
-//
-//			state<Error> +event<RenderPageContentEvent> / call(&CPDFPage::Bitmap_Error_Render)
-//
-//			//Error handler
-//			//*state<Error> +exception<std::exception> = state<Error>
-//		);
-//	}
-//};
-CPDFPage::CPDFPage(const CPDFDoc* pDoc, int index )
-	:m_pDoc(pDoc), m_index(index)
+CPDFPage::CPDFPage(std::unique_ptr<CFPDFPage>&& pPage, std::unique_ptr<CFPDFTextPage>&& pTextPage)
+	:m_pPage(std::move(pPage)), m_pTextPage(std::move(pTextPage))
 {
-	Rotate.set(GetPDFiumPtr()->Page_GetRotation(m_index));
+	Rotate.set(m_pPage->GetRotation());
 	Rotate.Subscribe([this](const int& value) 
 		{
-			GetPDFiumPtr()->Page_SetRotation(m_index, value);
+			m_pPage->SetRotation(value);
 			//m_optBitmap.reset();
 			m_optSize.reset();
 			m_optTextOrgRects.reset();
@@ -92,13 +37,11 @@ CPDFPage::CPDFPage(const CPDFDoc* pDoc, int index )
 
 CPDFPage::~CPDFPage() = default;
 
-const std::unique_ptr<CPDFiumMultiThread>& CPDFPage::GetPDFiumPtr() const { return m_pDoc->GetPDFiumPtr(); }
-
 const CSizeF& CPDFPage::GetSize() const
 {
 	if (!m_optSize.has_value()) {
-		m_optSize.emplace(GetPDFiumPtr()->GetPageWidthF(m_index),
-			GetPDFiumPtr()->GetPageHeightF(m_index));
+		m_optSize.emplace(m_pPage->GetPageWidthF(),
+			m_pPage->GetPageHeightF());
 	}
 	return m_optSize.value();
 }
@@ -106,9 +49,9 @@ const CSizeF& CPDFPage::GetSize() const
 const std::wstring& CPDFPage::GetText() const
 {
 	if (!m_optText.has_value()) {
-		int charCount = GetPDFiumPtr()->Text_CountChars(m_index);
+		int charCount = m_pTextPage->CountChars();
 		std::wstring text(charCount, 0);
-		int textCount = GetPDFiumPtr()->Text_GetText(m_index, 0, charCount, reinterpret_cast<unsigned short*>(text.data()));
+		int textCount = m_pTextPage->GetText(0, charCount, reinterpret_cast<unsigned short*>(text.data()));
 		m_optText.emplace(text);
 	}
 	return m_optText.value();
@@ -122,7 +65,7 @@ int CPDFPage::GetTextSize() const
 const std::vector<CRectF>& CPDFPage::GetTextOrgRects() const
 {
 	if (!m_optTextOrgRects.has_value()) {
-		m_optTextOrgRects.emplace(GetPDFiumPtr()->Text_GetRects(m_index));
+		m_optTextOrgRects.emplace(m_pTextPage->GetRects());
 	}
 	return m_optTextOrgRects.value();
 }
@@ -185,6 +128,9 @@ const std::vector<CRectF>& CPDFPage::GetTextCursorRects() const
 
 const std::vector<CRectF>& CPDFPage::GetTextOrgMouseRects() const
 {
+	const float lr_factor = 0.8f;
+	const float half_factor = 0.5f;
+	const float tb_factor = 0.4f;
 	if(!m_optTextOrgMouseRects.has_value()){
 		const auto& cursorRects = GetTextOrgCursorRects();
 		auto mouseRects = GetTextCursorRects();
@@ -201,31 +147,30 @@ const std::vector<CRectF>& CPDFPage::GetTextOrgMouseRects() const
 				bool isCR = GetText()[i] == L'\r';
 				bool isLF = GetText()[i] == L'\n';
 
-				//left & right
 				if (isCR || isSpaceMid || isLast) {
 					mouseRects[i].left = mouseRects[i - 1].right;
-					mouseRects[i].right = cursorRects[i - 1].right + cursorRects[i - 1].Width() * 0.5f;
+					mouseRects[i].right = cursorRects[i - 1].right + cursorRects[i - 1].Width() * lr_factor;
 				} else if (isLF) {
 					mouseRects[i].left = mouseRects[i - 1].left;
 					mouseRects[i].right = mouseRects[i - 1].right;
 				} else {
 					//left
 					if (isFirst || isAfterLF || isAfterSpace) {
-						mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * 0.5f, 0.f);
+						mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * lr_factor, 0.f);
 					} else {
-						mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * 0.5f, mouseRects[i - 1].right);
+						mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * half_factor, mouseRects[i - 1].right);
 					}
 					//right
 					if (isBeforeCR || isBeforeSpace || isBeforeLast) {
-						mouseRects[i].right = cursorRects[i].right - cursorRects[i].Width() * 0.5f;
+						mouseRects[i].right = cursorRects[i].right - cursorRects[i].Width() * lr_factor;
 					} else {
-						mouseRects[i].right = (std::min)(cursorRects[i].right + cursorRects[i].Width() * 0.5f, (cursorRects[i].right + cursorRects[i + 1].left) * 0.5f);
+						mouseRects[i].right = (std::min)(cursorRects[i].right + cursorRects[i].Width() * half_factor, (cursorRects[i].right + cursorRects[i + 1].left) * half_factor);
 					}
 				}
 				//top & bottom
 				//Since line order is not always top to bottom, it's hard to adjust context.
-				mouseRects[i].top = cursorRects[i].top + (-cursorRects[i].Height()) * 0.2f;
-				mouseRects[i].bottom = (std::max)(cursorRects[i].bottom - (-cursorRects[i].Height()) * 0.2f, 0.f);
+				mouseRects[i].top = cursorRects[i].top + (-cursorRects[i].Height()) * tb_factor;
+				mouseRects[i].bottom = (std::max)(cursorRects[i].bottom - (-cursorRects[i].Height()) * tb_factor, 0.f);
 			}
 		}
 		m_optTextOrgMouseRects.emplace(mouseRects);
@@ -249,7 +194,7 @@ const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_strin
 		std::vector<CRectF> rects;
 		if (find.empty()) {
 		} else {
-			auto results  = GetPDFiumPtr()->Text_FindResults(m_index, find);
+			auto results  = m_pTextPage->SearchResults(reinterpret_cast<FPDF_WIDESTRING>(find.c_str()));
 			for (const auto res : results) {
 				std::copy(std::get<2>(res).cbegin(), std::get<2>(res).cend(), std::back_inserter(rects));
 			}
@@ -260,14 +205,14 @@ const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_strin
 	return m_optFind->FindRects;
 }
 
-UHBITMAP CPDFPage::GetClipBitmap(HDC hDC, const FLOAT& scale, const int& rotate, const CRectF& rectInPage)
+UHBITMAP CPDFPage::GetClipBitmap(HDC hDC, const FLOAT& scale, const int& rotate, const CRectF& rectInPage, std::function<bool()> cancel)
 {
-	return GetPDFiumPtr()->Bitmap_GetPageClippedBitmap(m_index, hDC, rectInPage, scale);
+	return m_pPage->GetClippedBitmap(hDC, scale, rectInPage, cancel);
 }
 
-UHBITMAP CPDFPage::GetBitmap(HDC hDC, const FLOAT& scale, const int& rotate)
+UHBITMAP CPDFPage::GetBitmap(HDC hDC, const FLOAT& scale, const int& rotate, std::function<bool()> cancel)
 {
-	return GetPDFiumPtr()->Bitmap_GetPageBitmap(m_index, hDC, scale);
+	return m_pPage->GetBitmap(hDC, scale, cancel);
 }
 
 CRectF CPDFPage::GetCaretRect(const int index)
@@ -358,7 +303,7 @@ void CPDFPage::RotateRects(std::vector<CRectF>& rects, const int& rotate) const
 const std::vector<CRectF>& CPDFPage::GetSelectedTextRects(const int& begin, const int& end)
 {
 	if (!m_optSelectedText.has_value() || m_optSelectedText->Begin != begin || m_optSelectedText->End != end) {
-		std::vector<CRectF> rectsInPdfiumPage(GetPDFiumPtr()->Text_GetRangeRects(m_index, begin, end));
+		std::vector<CRectF> rectsInPdfiumPage(m_pTextPage->GetRangeRects(begin, end));
 		RotateRects(rectsInPdfiumPage, Rotate.get());
 		m_optSelectedText.emplace(begin, end, rectsInPdfiumPage);
 	}

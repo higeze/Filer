@@ -2,6 +2,83 @@
 #include "ResourceIDFactory.h"
 #include "D2DWWindow.h"
 
+#include "RowIndexColumn.h"
+#include "BindTextColumn.h"
+#include "BindTextCell.h"
+#include "BindCheckBoxColumn.h"
+#include "TaskDateColumn.h"
+
+
+void CToDoGridView::Initialize()
+{
+	//Columns
+	SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(this));
+	PushColumns(
+		GetHeaderColumnPtr(),
+		std::make_shared<CBindCheckBoxColumn<MainTask>>(
+			this,
+			L"State",
+			[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).State; },
+			[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).State = state; }),
+		std::make_shared<CBindTextColumn<MainTask>>(
+			this,
+			L"Name",
+			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name; },
+			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name = str; }),
+		std::make_shared<CBindTextColumn<MainTask>>(
+			this,
+			L"Memo",
+			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo; },
+			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo = str; }),
+		std::make_shared<CDateColumn>(
+			this,
+			L"Due date")//,
+		//std::make_shared<CBindSheetCellColumn< MainTask, SubTask>>(
+		//	m_spToDoGridView.get(),
+		//	L"Sub Task",
+		//	[](std::tuple<MainTask>& tk)->ReactiveVectorProperty<std::tuple<SubTask>>& {return std::get<MainTask>(tk).SubTasks; },
+		//	[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void {
+		//		pCell->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pCell));
+		//		pCell->PushColumns(
+		//			pCell->GetHeaderColumnPtr(),
+		//			std::make_shared<CBindCheckBoxColumn<SubTask>>(
+		//				pCell,
+		//				L"Done",
+		//				[](const std::tuple<SubTask>& tk)->CheckBoxState {return std::get<SubTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
+		//				[](std::tuple<SubTask>& tk, const CheckBoxState& state)->void {std::get<SubTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
+		//			std::make_shared<CBindTextColumn<SubTask>>(
+		//				pCell,
+		//				L"Name",
+		//				[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Name; },
+		//				[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Name = str; }),
+		//			std::make_shared<CBindTextColumn<SubTask>>(
+		//				pCell,
+		//				L"Memo",
+		//				[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Memo; },
+		//				[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Memo = str; })
+		//		);
+		//		pCell->SetFrozenCount<ColTag>(1);
+
+		//		pCell->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pCell));
+		//		pCell->InsertRow(0, pCell->GetNameHeaderRowPtr());
+		//		pCell->SetFrozenCount<RowTag>(1);
+		//	},
+		//	arg<"maxwidth"_s>() = FLT_MAX)
+	);
+	SetFrozenCount<ColTag>(1);
+
+	//Rows
+	SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(this));
+	SetFilterRowPtr(std::make_shared<CRow>(this));
+
+	PushRows(
+		GetNameHeaderRowPtr(),
+		GetFilterRowPtr());
+
+	SetFrozenCount<RowTag>(2);
+
+}
+
 void CToDoGridView::Open()
 {
 	std::wstring path;
@@ -40,8 +117,12 @@ void CToDoGridView::Open(const std::wstring& path)
 		try {
 			//Serialize
 			std::vector<MainTask> tempItemsSource;
-			CXMLSerializer<std::vector<MainTask>> serializer;
-				serializer.Deserialize(m_path.get().c_str(), L"Task", tempItemsSource);
+			std::ifstream i(path);
+			json j;
+			i >> j;
+			j.get_to(tempItemsSource);
+			//CXMLSerializer<std::vector<MainTask>> serializer;
+			//	serializer.Deserialize(m_path.get().c_str(), L"Task", tempItemsSource);
 			for (const auto& item : tempItemsSource) {
 				itemsSource.push_back(std::make_tuple(item));
 			}
@@ -64,12 +145,12 @@ void CToDoGridView::Save()
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hwndOwner = GetWndPtr()->m_hWnd;
-		ofn.lpstrFilter = L"XML file(*.xml)\0*.xml\0\0";
+		ofn.lpstrFilter = L"JSON file(*.json)\0*.json\0\0";
 		ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
 		ofn.nMaxFile = MAX_PATH;
 		ofn.lpstrTitle = L"Save as";
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
-		ofn.lpstrDefExt = L"xml";
+		ofn.lpstrDefExt = L"json";
 
 		if (!GetSaveFileName(&ofn)) {
 			DWORD errCode = CommDlgExtendedError();
@@ -100,8 +181,11 @@ void CToDoGridView::Save(const std::wstring& path)
 		for (const auto& item : itemsSource) {
 			tempItemsSource.push_back(std::get<MainTask>(item));
 		}
-		CXMLSerializer<std::vector<MainTask>> serializer;
-		serializer.Serialize(m_path.get().c_str(), L"Task", tempItemsSource);
+		//CXMLSerializer<std::vector<MainTask>> serializer;
+		//serializer.Serialize(m_path.get().c_str(), L"Task", tempItemsSource);
+		json j = tempItemsSource;
+		std::ofstream o(path);
+		o << std::setw(4) << j << std::endl;
 	}
 	catch (/*_com_error &e*/...) {
 	}

@@ -56,3 +56,21 @@ void CCheckBoxFilterCell::OnPropertyChanged(const wchar_t* name)
 	m_pRow->OnCellPropertyChanged(this, name);
 	m_pColumn->OnCellPropertyChanged(this, name);
 }
+
+void CCheckBoxFilterCell::OnLButtonDown(const LButtonDownEvent& e)
+{
+	switch (GetCheckBoxType()) {
+		case CheckBoxType::Normal:
+			switch (GetCheckBoxState()) {
+			case CheckBoxState::None:
+				return SetString(State2Str(CheckBoxState::False));
+			case CheckBoxState::False:
+				return SetString(State2Str(CheckBoxState::True));
+			case CheckBoxState::True:
+			default:
+				return SetString(State2Str(CheckBoxState::None));
+			}
+		case CheckBoxType::ThreeState:
+			return SetString(std::to_wstring((static_cast<int>(GetCheckBoxState()) + 1) % 4));
+	}
+}

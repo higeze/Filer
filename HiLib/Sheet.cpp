@@ -39,7 +39,8 @@ CSheet::CSheet(
 	m_pntRows([](std::shared_ptr<CRow>& sp, size_t idx) { /* Do Nothing */ }),
 	m_allCols([](std::shared_ptr<CColumn>& sp, size_t idx) { sp->SetIndex<AllTag>(idx); }),
 	m_visCols([](std::shared_ptr<CColumn>& sp, size_t idx) { sp->SetIndex<VisTag>(idx); }),
-	m_pntCols([](std::shared_ptr<CColumn>& sp, size_t idx) { /* Do Nothing */ })
+	m_pntCols([](std::shared_ptr<CColumn>& sp, size_t idx) { /* Do Nothing */ }),
+	m_bindType(BindType::Row)
 {
 
 	if(!m_spRowTracker){
@@ -758,6 +759,7 @@ void CSheet::Normal_Paint(const PaintEvent& e)
 
 	//Paint
 	for (auto rowIter = m_pntRows.rbegin(), rowEnd = m_pntRows.rend(); rowIter != rowEnd; ++rowIter) {
+		(*rowIter)->OnPaint(e);
 		for (auto colIter = m_pntCols.rbegin(), colEnd = m_pntCols.rend(); colIter != colEnd; ++colIter) {
 			Cell(*rowIter, *colIter)->OnPaint(e);
 		}

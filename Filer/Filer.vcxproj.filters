@@ -41,6 +41,15 @@
     <Filter Include="HiLib\PDF\FPDF">
       <UniqueIdentifier>{1189bf54-6dc5-4168-85d5-9bfab9376580}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HiLib\PDF\PDFModel">
+      <UniqueIdentifier>{78282c7f-270a-4754-8e90-195202d7574f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HiLib\PDF\PDFView">
+      <UniqueIdentifier>{e6e8ac42-f7a0-4390-9786-b8ccecd89c63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Filer\ToDo">
+      <UniqueIdentifier>{dd245e45-391e-448c-999d-634364d7af2f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -515,9 +524,6 @@
     <ClInclude Include="..\HiLib\named_arguments.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="Task.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\BindCheckBoxCell.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -580,9 +586,6 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\StatusBar.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="ToDoGridView.h">
-      <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\ScrollProperty.h">
       <Filter>HiLib</Filter>
@@ -725,36 +728,6 @@
     <ClInclude Include="..\HiLib\TextBlock.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\PDFCaret.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFDoc.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFEditor.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFEditorProperty.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFEvent.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLIb\PDFiumSingleThread.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFPage.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PdfView.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFViewProperty.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PdfViewStateMachine.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\D2DImage.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -779,9 +752,6 @@
     <ClInclude Include="..\HiLib\ImageViewStateMachine.h">
       <Filter>HiLib\Image</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\PDFPageCache.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\shared_lock_property.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -790,12 +760,6 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\D2DThumbnailDrawer.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\D2DPDFBitmapDrawer.h">
-      <Filter>HiLib\PDF</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PDFiumMultiThread.h">
-      <Filter>HiLib\PDF</Filter>
     </ClInclude>
     <ClInclude Include="IImageColumn.h">
       <Filter>Filer</Filter>
@@ -857,23 +821,80 @@
     <ClInclude Include="..\FilerHook\FilerHook.h">
       <Filter>FilerHook</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\UniqueFPdfBitmap.h">
+    <ClInclude Include="..\HiLib\FPDFBitmap.h">
       <Filter>HiLib\PDF\FPDF</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\UniqueFPdfDocument.h">
+    <ClInclude Include="..\HiLib\FPDFDocument.h">
       <Filter>HiLib\PDF\FPDF</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\UniqueFPdfPage.h">
+    <ClInclude Include="..\HiLib\FPDFPage.h">
       <Filter>HiLib\PDF\FPDF</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\UniqueFPdfTextPage.h">
+    <ClInclude Include="..\HiLib\FPDFTextPage.h">
       <Filter>HiLib\PDF\FPDF</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\UniqueFPdfSchHandle.h">
+    <ClInclude Include="..\HiLib\FPDFSchHandle.h">
       <Filter>HiLib\PDF\FPDF</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\UniqueFpdf.h">
+    <ClInclude Include="..\HiLib\FPDF.h">
       <Filter>HiLib\PDF\FPDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\FPDFFileWrite.h">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFPage.h">
+      <Filter>HiLib\PDF\PDFModel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFDoc.h">
+      <Filter>HiLib\PDF\PDFModel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFBitmapDrawer.h">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFCaret.h">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFEditor.h">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFEditorProperty.h">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PdfView.h">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PDFViewProperty.h">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\PdfViewStateMachine.h">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\Date.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CheckBoxState.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskRow.h">
+      <Filter>Filer\ToDo</Filter>
+    </ClInclude>
+    <ClInclude Include="Task.h">
+      <Filter>Filer\ToDo</Filter>
+    </ClInclude>
+    <ClInclude Include="ToDoGridView.h">
+      <Filter>Filer\ToDo</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskDateCell.h">
+      <Filter>Filer\ToDo</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskDateColumn.h">
+      <Filter>Filer\ToDo</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskMemoColumn.h">
+      <Filter>Filer\ToDo</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskMemoCell.h">
+      <Filter>Filer\ToDo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1120,9 +1141,6 @@
     <ClCompile Include="..\HiLib\StatusBar.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="ToDoGridView.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\MouseStateMachine.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -1196,27 +1214,6 @@
     <ClCompile Include="..\HiLib\TextBlock.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\PDFCaret.cpp">
-      <Filter>HiLib\PDF</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PDFDoc.cpp">
-      <Filter>HiLib\PDF</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PDFEditor.cpp">
-      <Filter>HiLib\PDF</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLIb\PDFiumSingleThread.cpp">
-      <Filter>HiLib\PDF</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PDFPage.cpp">
-      <Filter>HiLib\PDF</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PdfView.cpp">
-      <Filter>HiLib\PDF</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp">
-      <Filter>HiLib\PDF</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\D2DImage.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -1238,20 +1235,11 @@
     <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp">
       <Filter>HiLib\Image</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\PdfPageCache.cpp">
-      <Filter>HiLib\PDF</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\FileIsInUse.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\D2DThumbnailDrawer.cpp">
       <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\D2DPDFBitmapDrawer.cpp">
-      <Filter>HiLib\PDF</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PDFiumMultiThread.cpp">
-      <Filter>HiLib\PDF</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\ImageDrawer.cpp">
       <Filter>HiLib\Image</Filter>
@@ -1286,20 +1274,47 @@
     <ClCompile Include="..\HiLib\PreviewWnd.cpp">
       <Filter>HiLib\PreviewControl</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\UniqueFpdfBitmap.cpp">
+    <ClCompile Include="..\HiLib\FPDFBitmap.cpp">
       <Filter>HiLib\PDF\FPDF</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\UniqueFPdfDocument.cpp">
+    <ClCompile Include="..\HiLib\FPDFDocument.cpp">
       <Filter>HiLib\PDF\FPDF</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\UniqueFPdfPage.cpp">
+    <ClCompile Include="..\HiLib\FPDFPage.cpp">
       <Filter>HiLib\PDF\FPDF</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\UniqueFPdfTextPage.cpp">
+    <ClCompile Include="..\HiLib\FPDFTextPage.cpp">
       <Filter>HiLib\PDF\FPDF</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\UniqueFpdf.cpp">
+    <ClCompile Include="..\HiLib\FPDF.cpp">
       <Filter>HiLib\PDF\FPDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFDoc.cpp">
+      <Filter>HiLib\PDF\PDFModel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFPage.cpp">
+      <Filter>HiLib\PDF\PDFModel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFBitmapDrawer.cpp">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFCaret.cpp">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PDFEditor.cpp">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PdfView.cpp">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp">
+      <Filter>HiLib\PDF\PDFView</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskRow.cpp">
+      <Filter>Filer\ToDo</Filter>
+    </ClCompile>
+    <ClCompile Include="ToDoGridView.cpp">
+      <Filter>Filer\ToDo</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -19,4 +19,5 @@ public:
 	virtual void SetStringCore(const std::wstring& str)override;
 
 	virtual void OnPropertyChanged(const wchar_t* name) override;
+	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 };

@@ -23,9 +23,9 @@
 #define WM_UAHMEASUREMENUITEM 0x0094
 
 template<typename... TItems>
-class CFilerBindGridView :public CBindGridView<TItems...>
+class CFilerBindGridView :public CBindGridView<CBindRow<TItems...>, CBindColumn<TItems...>, TItems...>
 {
-	using base = CBindGridView<TItems...>;
+	using base = CBindGridView<CBindRow<TItems...>, CBindColumn<TItems...>, TItems...>;
 protected:
 	//HeaderMenuItems
 	std::vector<std::shared_ptr<CShowHideColumnMenuItem>> m_headerMenuItems;

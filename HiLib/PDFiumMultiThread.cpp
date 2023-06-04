@@ -19,39 +19,39 @@ void CPDFiumMultiThread::PDFObject::UpdatePages()
 	TextPages.clear();
 	int count = Doc.GetPageCount();
 	for (auto i = 0; i < count; i++) {
-		CUniqueFPdfPage page(Doc.LoadPage(i));
-		CUniqueFPdfTextPage textPage(page.LoadTextPage());
+		CFPdfPage page(Doc.LoadPage(i));
+		CFPdfTextPage textPage(page.LoadTextPage());
 		Pages.emplace_back(std::move(page));
 		TextPages.emplace_back(std::move(textPage));
 	}
 }
 
-unsigned long CPDFiumMultiThread::PDFObject::LoadDocument(FPDF_STRING file_path, FPDF_BYTESTRING password)
-{
-	std::lock_guard<std::mutex> lock(Mutex);
-    
-	Clear();
-    Doc.LoadDocument(file_path, password);
-    unsigned long err = FPDF_GetLastError();
-    if (!Doc) {
-        return err;
-	} else {
-		UpdatePages();
-		return FPDF_ERR_SUCCESS;
-	}
-}
+//unsigned long CPDFiumMultiThread::PDFObject::LoadDocument(FPDF_STRING file_path, FPDF_BYTESTRING password)
+//{
+//	std::lock_guard<std::mutex> lock(Mutex);
+//    
+//	Clear();
+//    Doc.LoadDocument(file_path, password);
+//    unsigned long err = FPDF_GetLastError();
+//    if (!Doc) {
+//        return err;
+//	} else {
+//		UpdatePages();
+//		return FPDF_ERR_SUCCESS;
+//	}
+//}
 
-unsigned long CPDFiumMultiThread::PDFObject::CreateDocument()
-{
-	Clear();
-	Doc.CreateNewDocument();
-	unsigned long err = FPDF_GetLastError();
-	if (!Doc) {
-		return err;
-	} else {
-		return FPDF_ERR_SUCCESS;
-	}
-}
+//unsigned long CPDFiumMultiThread::PDFObject::CreateDocument()
+//{
+//	Clear();
+//	Doc.CreateNewDocument();
+//	unsigned long err = FPDF_GetLastError();
+//	if (!Doc) {
+//		return err;
+//	} else {
+//		return FPDF_ERR_SUCCESS;
+//	}
+//}
 
 int CPDFiumMultiThread::PDFObject::GetPageCount()
 {
@@ -125,7 +125,7 @@ UHBITMAP CPDFiumMultiThread::PDFObject::Bitmap_GetPageClippedBitmap(
 }
 
 FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPagesByIndex(
-	const CUniqueFPdfDocument& src_doc,
+	const CFPdfDocument& src_doc,
 	const int* page_indices,
 	unsigned long length,
 	int index)
@@ -138,7 +138,7 @@ FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPagesByIndex(
 }
 
 FPDF_BOOL CPDFiumMultiThread::PDFObject::ImportPages(
-	const CUniqueFPdfDocument& src_doc,
+	const CFPdfDocument& src_doc,
 	FPDF_BYTESTRING pagerange,
 	int index)
 {

@@ -74,6 +74,10 @@ std::string msg_to_string(UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define FALSE_THROW(expression) if(!(expression)){throw std::exception(FILE_LINE_FUNC);}
 
+#define TRUE_BREAK(expression) if(expression){break;}
+#define FALSE_BREAK(expression) if(!(expression)){break;}
+
+
 #define FAILED_THROW(expression) if(HRESULT hr = expression; FAILED(hr)){throw std::exception(std::format("HRESULT:{:#X}, {}", hr, FILE_LINE_FUNC).c_str());}
 
 #define FAILED_RETURN(expression) if(FAILED(expression)){return;}

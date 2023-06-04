@@ -60,8 +60,10 @@ class CD2DPDFBitmapDrawer
 private:
 	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasFullOrClipBitmap;
 	std::unique_ptr<CD2DAtlasBitmap<PdfBmpKey>> m_pAtlasBlurBitmap;
+	shared_lock_property<PdfBmpKey> m_curKey;
 	shared_lock_property<PdfBmpKey> m_curClipKey;
 	future_group<void> m_futureGroup;
+
 public:
 	CD2DPDFBitmapDrawer();
 	~CD2DPDFBitmapDrawer();

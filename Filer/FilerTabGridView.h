@@ -78,14 +78,24 @@ struct FilerTabData:public TabData
 /***************/
 /* ToDoTabData */
 /***************/
+enum class FileStatus
+{
+	None,
+	Dirty,
+	Saved
+};
+
 struct ToDoTabData:public TabData
 {
 	std::wstring Path;
+	ReactiveProperty<FileStatus> Status;
 
 	ToDoTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(path){}
+		:TabData(), Path(path), Status(FileStatus::None){}
 
 	virtual ~ToDoTabData() = default;
+
+	//virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
 
 	friend void to_json(json& j, const ToDoTabData& o)
 	{
@@ -103,12 +113,7 @@ struct ToDoTabData:public TabData
 /* TextTabData */
 /***************/
 
-enum class TextStatus
-{
-	None,
-	Dirty,
-	Saved
-};
+
 
 
 struct TextTabData :public TabData
@@ -119,7 +124,7 @@ struct TextTabData :public TabData
 	ReactiveProperty<encoding_type> Encoding;
 	ReactiveProperty<CPointF> CaretPos;
 	ReactiveTupleProperty<int, int, int, int, int> Carets;
-	ReactiveProperty<TextStatus> Status;
+	ReactiveProperty<FileStatus> Status;
 
 	ReactiveCommand<HWND> OpenCommand;
 	ReactiveCommand<HWND> SaveCommand;
@@ -128,7 +133,7 @@ struct TextTabData :public TabData
 
 
 	TextTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(path), Text(), Status(TextStatus::None), Carets(0,0,0,0,0)
+		:TabData(), Path(path), Text(), Status(FileStatus::None), Carets(0,0,0,0,0)
 	{
 		OpenCommand.Subscribe([this](HWND hWnd) { Open(hWnd); });
 		SaveCommand.Subscribe([this](HWND hWnd) { Save(hWnd); });
@@ -138,7 +143,7 @@ struct TextTabData :public TabData
 		//CloseCommand.Subscribe([this]() { Close(); });
 		Text.Subscribe([this](const auto&)
 		{
-			Status.set(TextStatus::Dirty);
+			Status.set(FileStatus::Dirty);
 		});
 	}
 

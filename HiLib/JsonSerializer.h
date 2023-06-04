@@ -200,6 +200,13 @@ auto get_to(const json& j, const char* key, T& obj) noexcept
     friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
     friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_NOTHROW, __VA_ARGS__)) }
 
+#define NLOHMANN_JSON_M_TO(v1) nlohmann_json_j[#v1] = nlohmann_json_t.m_##v1;
+#define NLOHMANN_JSON_M_FROM_NOTHROW(v1) get_to(nlohmann_json_j, #v1, nlohmann_json_t.m_##v1);
+//nlohmann_json_j.at(#v1).get_to(nlohmann_json_t.v1);
+
+#define NLOHMANN_DEFINE_TYPE_M_INTRUSIVE_NOTHROW(Type, ...)  \
+    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_M_TO, __VA_ARGS__)) } \
+    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_M_FROM_NOTHROW, __VA_ARGS__)) }
 //template<typename T>
 //auto get_to(const json& j, const char* key, std::shared_ptr<T>& obj)
 //{
