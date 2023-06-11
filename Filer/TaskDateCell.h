@@ -18,7 +18,7 @@ public:
 	virtual std::wstring GetString() override
 	{
 		auto pBindRow = static_cast<CBindRow<MainTask>*>(m_pRow);
-		const CDate& dt = pBindRow->GetItem<MainTask>().Date;
+		const CDate& dt = pBindRow->GetItem<MainTask>().Date.get();
 
 		return dt.IsInvalid()? L"" : std::format(L"{}/{}({})", dt.GetMonth(), dt.GetDay(), dt.GetJpnWeekDay());
 	}
@@ -26,7 +26,7 @@ public:
 	virtual void SetStringCore(const std::wstring& str) override
 	{
 		auto pBindRow = static_cast<CBindRow<MainTask>*>(m_pRow);
-		pBindRow->GetItem<MainTask>().Date.Parse(str);
+		pBindRow->GetItem<MainTask>().Date.get_unconst().Parse(str);
 	}
 
 	//virtual void PaintNormalBackground(CDirect2DWrite* pDirect, CRectF rcPaint) override

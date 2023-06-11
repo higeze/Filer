@@ -18,17 +18,17 @@ void CToDoGridView::Initialize()
 		std::make_shared<CBindCheckBoxColumn<MainTask>>(
 			this,
 			L"State",
-			[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).State; },
+			[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).State.get(); },
 			[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).State = state; }),
 		std::make_shared<CBindTextColumn<MainTask>>(
 			this,
 			L"Name",
-			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name; },
+			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name.get(); },
 			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name = str; }),
 		std::make_shared<CBindTextColumn<MainTask>>(
 			this,
 			L"Memo",
-			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo; },
+			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo.get(); },
 			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo = str; }),
 		std::make_shared<CDateColumn>(
 			this,
@@ -85,12 +85,12 @@ void CToDoGridView::Open()
 	OPENFILENAME ofn = { 0 };
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = GetWndPtr()->m_hWnd;
-	ofn.lpstrFilter = L"XML file(*.xml)\0*.xml\0\0";
+	ofn.lpstrFilter = L"JSON file(*.json)\0*.json\0\0";
 	ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
 	ofn.nMaxFile = MAX_PATH;
 	ofn.lpstrTitle = L"Open";
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-	ofn.lpstrDefExt = L"xml";
+	ofn.lpstrDefExt = L"json";
 
 	if (!GetOpenFileName(&ofn)) {
 		DWORD errCode = CommDlgExtendedError();
@@ -106,42 +106,43 @@ void CToDoGridView::Open()
 
 void CToDoGridView::Open(const std::wstring& path)
 {
-	if (::PathFileExists(path.c_str())){
-		m_path.set(path);
-		auto& itemsSource = GetItemsSource();
-		//itemsSource.notify_clear();//TODOTODO
-		while (!itemsSource.empty()) {
-			itemsSource.erase(GetItemsSource().cbegin());
-		}
-		//Deserialize
-		try {
-			//Serialize
-			std::vector<MainTask> tempItemsSource;
-			std::ifstream i(path);
-			json j;
-			i >> j;
-			j.get_to(tempItemsSource);
-			//CXMLSerializer<std::vector<MainTask>> serializer;
-			//	serializer.Deserialize(m_path.get().c_str(), L"Task", tempItemsSource);
-			for (const auto& item : tempItemsSource) {
-				itemsSource.push_back(std::make_tuple(item));
-			}
-			for (auto& colPtr : m_allCols) {
-				colPtr->SetIsFitMeasureValid(false);
-				colPtr->SetIsMeasureValid(false);
-			}
-			UpdateAll();
-		}
-		catch (/*_com_error &e*/...) {
-		}
-	}
+	OpenCommand.execute(path);
+	//if (::PathFileExists(path.c_str())){
+	//	m_path.set(path);
+	//	auto& itemsSource = GetItemsSource();
+	//	//itemsSource.notify_clear();//TODOTODO
+	//	while (!itemsSource.empty()) {
+	//		itemsSource.erase(GetItemsSource().cbegin());
+	//	}
+	//	//Deserialize
+	//	try {
+	//		//Serialize
+	//		std::vector<MainTask> tempItemsSource;
+	//		std::ifstream i(path);
+	//		json j;
+	//		i >> j;
+	//		j.get_to(tempItemsSource);
+	//		//CXMLSerializer<std::vector<MainTask>> serializer;
+	//		//	serializer.Deserialize(m_path.get().c_str(), L"Task", tempItemsSource);
+	//		for (const auto& item : tempItemsSource) {
+	//			itemsSource.push_back(std::make_tuple(item));
+	//		}
+	//		for (auto& colPtr : m_allCols) {
+	//			colPtr->SetIsFitMeasureValid(false);
+	//			colPtr->SetIsMeasureValid(false);
+	//		}
+	//		UpdateAll();
+	//	}
+	//	catch (/*_com_error &e*/...) {
+	//	}
+	//}
 }
 
 
 void CToDoGridView::Save()
 {
 	std::wstring path;
-	if (m_path.get().empty()) {
+	if (Status == FileStatus::None) {
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hwndOwner = GetWndPtr()->m_hWnd;
@@ -173,22 +174,7 @@ void CToDoGridView::Save()
 
 void CToDoGridView::Save(const std::wstring& path)
 {
-	m_path.set(path);
-	//Serialize
-	try {
-		auto itemsSource = GetItemsSource().get();
-		std::vector<MainTask> tempItemsSource;
-		for (const auto& item : itemsSource) {
-			tempItemsSource.push_back(std::get<MainTask>(item));
-		}
-		//CXMLSerializer<std::vector<MainTask>> serializer;
-		//serializer.Serialize(m_path.get().c_str(), L"Task", tempItemsSource);
-		json j = tempItemsSource;
-		std::ofstream o(path);
-		o << std::setw(4) << j << std::endl;
-	}
-	catch (/*_com_error &e*/...) {
-	}
+	SaveCommand.execute(path);
 }
 
 
@@ -224,12 +210,11 @@ void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		e.PointInScreen.y,
 		GetWndPtr()->m_hWnd);
 
-	auto& itemsSource = GetItemsSource();
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
-		itemsSource.push_back(std::make_tuple(MainTask()));
+		ItemsSource.push_back(std::make_tuple(MainTask()));
 	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
 		auto a = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
-		itemsSource.erase(itemsSource.cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
+		ItemsSource.erase(ItemsSource.cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
 	}
 	*e.HandledPtr = TRUE;
 }
@@ -239,11 +224,7 @@ void CToDoGridView::Normal_KeyDown(const KeyDownEvent& e)
 	if ((e.Char == 'O') && ::GetAsyncKeyState(VK_CONTROL)) {
 		Open();
 	} else if ((e.Char == 'S') && ::GetAsyncKeyState(VK_CONTROL)) {
-		if (m_path.get().empty()) {
-			Save();
-		} else {
-			Save(m_path);
-		}
+		Save();
 	} else {
 		CGridView::Normal_KeyDown(e);
 	}

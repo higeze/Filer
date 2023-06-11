@@ -13,6 +13,11 @@
 #include "JsonSerializer.h"
 #include "ReactiveProperty.h"
 #include "encoding_type.h"
+#include "FileStatus.h"
+#include "ToDoDoc.h"
+
+#include "reactive_property.h"
+#include "reactive_command.h"
 
 class CFilerGridView;
 struct FilerGridViewProperty;
@@ -78,20 +83,18 @@ struct FilerTabData:public TabData
 /***************/
 /* ToDoTabData */
 /***************/
-enum class FileStatus
-{
-	None,
-	Dirty,
-	Saved
-};
-
 struct ToDoTabData:public TabData
 {
-	std::wstring Path;
-	ReactiveProperty<FileStatus> Status;
+	CToDoDoc Doc;
+	reactive_command<std::wstring> OpenCommand;
+	reactive_command<std::wstring> SaveCommand;
 
 	ToDoTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(path), Status(FileStatus::None){}
+		:TabData()
+	{
+		OpenCommand.subscribe([this](const std::wstring& path) { Doc.Open(path); });
+		SaveCommand.subscribe([this](const std::wstring& path) { Doc.Save(path); });
+	};
 
 	virtual ~ToDoTabData() = default;
 
@@ -100,12 +103,13 @@ struct ToDoTabData:public TabData
 	friend void to_json(json& j, const ToDoTabData& o)
 	{
 		to_json(j, static_cast<const TabData&>(o));
-		j["Path"] = o.Path;
+		j["Path"] = o.Doc.Path;
 	}
 	friend void from_json(const json& j, ToDoTabData& o)
 	{
 		from_json(j, static_cast<TabData&>(o));
-		j.at("Path").get_to(o.Path);
+		j.at("Path").get_to(o.Doc.Path);
+		o.Doc.Open(o.Doc.Path);
 	}
 };
 
@@ -301,6 +305,9 @@ private:
 	CBinding m_saveAsBinding;
 	CBinding m_previewPathBinding;
 
+	rxcpp::composite_subscription m_todoSubs;
+	std::vector<rxcpp::composite_subscription> m_todoViewTaskSubs;
+	std::vector<rxcpp::composite_subscription> m_todoViewModelTaskSubs;
 
 	std::unique_ptr<sigslot::scoped_connection> m_pTextPathConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pPdfPathConnection;

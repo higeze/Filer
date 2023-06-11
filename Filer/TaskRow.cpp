@@ -9,7 +9,7 @@ void CTaskRow::OnPaint(const PaintEvent& e)
 	rcPaint.bottom = GetBottom();
 
 	const MainTask& task = GetItem<MainTask>();
-	switch (task.State) {
+	switch (task.State.get()) {
 		case CheckBoxState::True:
 			e.WndPtr->GetDirectPtr()->FillSolidRectangle(SolidFill(0.5f, 0.5f, 0.5f, 0.5f), rcPaint);
 			break;
@@ -20,7 +20,7 @@ void CTaskRow::OnPaint(const PaintEvent& e)
 		default:
 			if (task.Date == CDate::Now()) {
 				e.WndPtr->GetDirectPtr()->FillSolidRectangle(SolidFill(1.f, 1.f, 0.f, 0.3f), rcPaint);
-			} else if (!task.Date.IsInvalid() && task.Date < CDate::Now()) {
+			} else if (!task.Date.get().IsInvalid() && task.Date.get() < CDate::Now()) {
 				e.WndPtr->GetDirectPtr()->FillSolidRectangle(SolidFill(1.f, 0.f, 0.f, 0.3f), rcPaint);
 			} else {
 				//Do nothing

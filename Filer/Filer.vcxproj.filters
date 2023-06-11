@@ -50,6 +50,9 @@
     <Filter Include="Filer\ToDo">
       <UniqueIdentifier>{dd245e45-391e-448c-999d-634364d7af2f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HiLib\Rx">
+      <UniqueIdentifier>{bd8d67e4-d175-4522-a35a-4602cdcdf73c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -896,6 +899,24 @@
     <ClInclude Include="TaskMemoCell.h">
       <Filter>Filer\ToDo</Filter>
     </ClInclude>
+    <ClInclude Include="ToDoDoc.h">
+      <Filter>Filer\ToDo</Filter>
+    </ClInclude>
+    <ClInclude Include="FileStatus.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\reactive_property.h">
+      <Filter>HiLib\Rx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\reactive_binding.h">
+      <Filter>HiLib\Rx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\reactive_command.h">
+      <Filter>HiLib\Rx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\reactive_vector.h">
+      <Filter>HiLib\Rx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1314,6 +1335,9 @@
       <Filter>Filer\ToDo</Filter>
     </ClCompile>
     <ClCompile Include="ToDoGridView.cpp">
+      <Filter>Filer\ToDo</Filter>
+    </ClCompile>
+    <ClCompile Include="ToDoDoc.cpp">
       <Filter>Filer\ToDo</Filter>
     </ClCompile>
   </ItemGroup>

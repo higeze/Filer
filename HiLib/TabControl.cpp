@@ -33,7 +33,7 @@ CTabHeaderControl::CTabHeaderControl(CTabControl* pTabControl, const std::shared
 
 bool CTabHeaderControl::GetIsSelected()const
 {
-	return GetIndex() == static_cast<CTabControl*>(m_pParentControl)->m_selectedIndex;
+	return GetIndex() == static_cast<CTabControl*>(m_pParentControl)->m_selectedIndex.get();
 }
 
 std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> CTabHeaderControl::MeasureSizes()

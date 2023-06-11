@@ -116,6 +116,11 @@ public:
 		m_pSubject(std::make_shared<Subject<T>>()),
 		m_value(value){};
 	virtual ~ReactiveProperty() = default;
+	auto operator<=>(const ReactiveProperty&) const = default;
+	bool operator==(const ReactiveProperty& val) const
+	{
+		return this->m_value == val.m_value;
+	}
 	ReactiveProperty(const ReactiveProperty& val) = default;
 	ReactiveProperty(ReactiveProperty&& val) = default;
 	ReactiveProperty& operator=(const ReactiveProperty& val) = default;
@@ -243,6 +248,7 @@ public:
 	virtual sigslot::connection Subscribe(std::function<void(const U& value)> next, sigslot::group_id id = 0) = 0;
 	virtual operator T() const { return get(); }
 	virtual const T& get() const = 0;
+	virtual T& get_unconst() = 0;
 	virtual void set(const T& value) = 0;
 };
 
@@ -275,6 +281,8 @@ public:
 		return m_pSubject->Subscribe(next, id);
 	}
 	virtual const T& get() const override { return m_value; }
+	virtual T& get_unconst() override { return m_value; }
+
 	virtual void set(const T& value) override
 	{
 		if (m_value != value) {
@@ -823,11 +831,11 @@ class CBinding
 public:
 	CBinding() {}
 
-	template<typename T, typename U>
-	CBinding(IReactiveProperty<T>& source, IReactiveProperty<U>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
-	{
-		Attach(source, target, idSource, idTarget);
-	}
+	//template<typename T, typename U>
+	//CBinding(IReactiveProperty<T>& source, IReactiveProperty<U>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	//{
+	//	Attach(source, target, idSource, idTarget);
+	//}
 
 	template<typename T>
 	void Attach(IReactiveProperty<T>& source, IReactiveProperty<T>& target, const BindingMode& mode = BindingMode::TwoWay, const sigslot::group_id idSource = 0, const sigslot::group_id idTarget = 0)
@@ -1004,21 +1012,58 @@ public:
 			});
 	}
 
-	template<class T, class Allocator>
-	CBinding(ReactiveVectorProperty<T, Allocator>& source, ReactiveVectorProperty<T, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
-	{
-		target.set(source.get());
-		m_sourceConnection = source.Subscribe(
-			[&](const NotifyVectorChangedEventArgs<T>& notify)->void
-			{
-				target.set(notify.NewItems);
-			}, idSource);
-		m_targetConnection = target.Subscribe(
-			[&](const NotifyVectorChangedEventArgs<T>& notify)->void
-			{
-				source.set(notify.NewItems);
-			});
-	}
+	//template<class T, class Allocator>
+	//CBinding(ReactiveVectorProperty<T, Allocator>& source, ReactiveVectorProperty<T, Allocator>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)
+	//{
+	//	target.set(source.get());
+	//	m_sourceConnection = source.Subscribe(
+	//		[&](const NotifyVectorChangedEventArgs<T>& notify)->void
+	//		{
+	//			switch (notify.Action) {
+	//				case NotifyVectorChangedAction::Add:
+	//					target.get_unconst().push_back(notify.NewItems[0]);
+	//					break;
+	//				case NotifyVectorChangedAction::Insert:
+	//					target.get_unconst().insert(target.get().cbegin() + notify.NewStartingIndex, notify.NewItems[0]);
+	//					break;
+	//				case NotifyVectorChangedAction::Move:
+	//					break;
+	//				case NotifyVectorChangedAction::Remove:
+	//					target.get_unconst().erase(std::find(target.get().cbegin(), target.get().cend(), notify.OldItems[0]));
+	//					break;
+	//				case NotifyVectorChangedAction::Replace:
+	//					break;
+	//				case NotifyVectorChangedAction::Reset:
+	//					target.set(source.get());
+	//					break;
+	//				
+	//			}
+	//		}, idSource);
+
+	//	m_targetConnection = target.Subscribe(
+	//		[&](const NotifyVectorChangedEventArgs<T>& notify)->void
+	//		{
+	//			switch (notify.Action) {
+	//				case NotifyVectorChangedAction::Add:
+	//					source.get_unconst().push_back(notify.NewItems[0]);
+	//					break;
+	//				case NotifyVectorChangedAction::Insert:
+	//					source.get_unconst().insert(source.get().cbegin() + notify.NewStartingIndex, notify.NewItems[0]);
+	//					break;
+	//				case NotifyVectorChangedAction::Move:
+	//					break;
+	//				case NotifyVectorChangedAction::Remove:
+	//					source.get_unconst().erase(std::find(source.get().cbegin(), source.get().cend(), notify.OldItems[0]));
+	//					break;
+	//				case NotifyVectorChangedAction::Replace:
+	//					break;
+	//				case NotifyVectorChangedAction::Reset:
+	//					source.set(source.get());
+	//					break;
+	//				
+	//			}
+	//		});
+	//}
 
 	template<typename T>
 	void Attach(IReactiveCommand<T>& source, IReactiveCommand<T>& target, sigslot::group_id idSource = 0, sigslot::group_id idTarget = 0)

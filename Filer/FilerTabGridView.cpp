@@ -48,6 +48,8 @@
 #include "TextFileDialog.h"
 #include "TextEnDecoder.h"
 
+#include "reactive_binding.h"
+
 
 /****************/
 /* FilerTabData */
@@ -486,11 +488,11 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	//m_spToDoGridView->SetFrozenCount<RowTag>(2);
 
 	//Path Changed
-	m_spToDoGridView->GetPath().Subscribe([&](const auto& notify) {
-		auto pData = std::static_pointer_cast<ToDoTabData>(m_itemsSource[m_selectedIndex.get()]);
-		pData->Path = m_spToDoGridView->GetPath().get();
-		m_spToDoGridView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
-	});
+	//m_spToDoGridView->Doc.get().Path.Subscribe([&](const auto& notify) {
+	//	auto pData = std::static_pointer_cast<ToDoTabData>(m_itemsSource[m_selectedIndex.get()]);
+	//	pData->Doc.get().Path = m_spToDoGridView->Doc.get().Path;
+	//	m_spToDoGridView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
+	//});
 }
 
 CFilerTabGridView::~CFilerTabGridView() = default;
@@ -513,10 +515,10 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderTemplate.emplace(typeid(ToDoTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
 		{
 			if (auto p = std::dynamic_pointer_cast<ToDoTabData>(pTabData)) {
-				if (p->Path.empty()) {
+				if (p->Doc.Path.empty()) {
 					return L"No file";
 				} else {
-					return std::wstring(::PathFindFileName(p->Path.c_str()));
+					return std::wstring(::PathFindFileName(p->Doc.Path.c_str()));
 				}
 			} else {
 				return L"nullptr";
@@ -589,7 +591,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderIconTemplate.emplace(typeid(ToDoTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
 			if (auto p = std::dynamic_pointer_cast<ToDoTabData>(pTabData)) {
-				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Path);
+				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Doc.Path);
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
 			} else {
 				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
@@ -647,9 +649,69 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	});
 
 	m_itemsControlTemplate.emplace(typeid(ToDoTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
-		auto pData = std::static_pointer_cast<ToDoTabData>(pTabData);
+		auto spViewModel = std::static_pointer_cast<ToDoTabData>(pTabData);
 		auto spView = GetToDoGridViewPtr();
-		spView->Open(pData->Path);
+		m_todoSubs.clear();
+		m_todoViewTaskSubs.clear();
+		m_todoViewModelTaskSubs.clear();
+
+		m_todoSubs.add(reactive_command_binding(spView->OpenCommand, spViewModel->OpenCommand));
+		m_todoSubs.add(reactive_command_binding(spView->SaveCommand, spViewModel->SaveCommand));
+		m_todoSubs.add(reactive_binding(spViewModel->Doc.Status, spView->Status));
+
+		auto add_reactive_task_binding = [](rxcpp::composite_subscription& tasksub, MainTask& left, MainTask& right)->void {
+			tasksub.add(reactive_binding(left.State, right.State));
+			tasksub.add(reactive_binding(left.Name, right.Name));
+			tasksub.add(reactive_binding(left.Memo, right.Memo));
+			tasksub.add(reactive_binding(left.Date, right.Date));
+		};
+
+		auto reactive_binding_vector = ([this, add_reactive_task_binding](reactive_vector<std::tuple<MainTask>>& left, reactive_vector<std::tuple<MainTask>>& right, std::vector<rxcpp::composite_subscription>& subs)->rxcpp::composite_subscription {
+			return left.subscribe(
+			[&](const notify_vector_changed_event_args<std::tuple<MainTask>>& notify)->void
+			{
+				switch (notify.action) {
+					case notify_vector_changed_action::push_back:
+						right.get_unconst().push_back(notify.new_items.front());
+						subs.push_back(rxcpp::composite_subscription());
+						add_reactive_task_binding(subs.back(),
+							std::get<MainTask>(left.get_unconst().operator[](notify.new_starting_index)),
+							std::get<MainTask>(right.get_unconst().operator[](notify.new_starting_index)));
+						break;
+					case notify_vector_changed_action::insert:
+						right.get_unconst().insert(right.get().cbegin() + notify.new_starting_index, notify.new_items.front());
+						subs.insert(subs.cbegin() + notify.new_starting_index, rxcpp::composite_subscription());
+						add_reactive_task_binding(subs[notify.new_starting_index], 
+							std::get<MainTask>(left.get_unconst().operator[](notify.new_starting_index)),
+							std::get<MainTask>(right.get_unconst().operator[](notify.new_starting_index)));
+						break;
+					case notify_vector_changed_action::Move:
+						break;
+					case notify_vector_changed_action::erase:
+						right.get_unconst().erase(right.cbegin() + notify.old_starting_index);
+						subs.erase(subs.cbegin() + notify.old_starting_index);
+						break;
+					case notify_vector_changed_action::replace:
+						break;
+					case notify_vector_changed_action::reset:
+						right.set(left.get());
+						subs.clear();
+						for (size_t i = 0; i < left.size(); i++) {
+							subs.push_back(rxcpp::composite_subscription());
+							add_reactive_task_binding(subs.back(),
+								std::get<MainTask>(left.get_unconst().operator[](notify.new_starting_index)),
+								std::get<MainTask>(right.get_unconst().operator[](notify.new_starting_index)));
+						}
+						break;
+				}
+			});
+		});
+
+		m_todoSubs.add(reactive_binding_vector(spView->ItemsSource, spViewModel->Doc.Tasks, m_todoViewTaskSubs));
+		m_todoSubs.add(reactive_binding_vector(spViewModel->Doc.Tasks, spView->ItemsSource, m_todoViewModelTaskSubs));
+		spView->ItemsSource.set(spViewModel->Doc.Tasks.get());
+
+		//spView->Open(spViewModel->Doc.Path);
 		spView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
 		spView->PostUpdate(Updates::All);
 		spView->SubmitUpdate();

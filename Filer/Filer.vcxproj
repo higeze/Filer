@@ -98,12 +98,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\Library\pdfium\include;$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\FilerHook;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\Library\pdfium\include;$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)..\..\Library\Rx\v2\src;$(SolutionDir)\FilerHook;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\library\pdfium\lib;$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)Debug;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug UnitTests|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\Library\pdfium\include;$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\Library\pdfium\include;$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)..\..\Library\Rx\v2\src;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\..\library\pdfium\lib;$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -114,7 +114,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\Library\pdfium\include;$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)\FilerHook;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\Library\pdfium\include;$(SolutionDir)..\..\Library\nameof\include;$(SolutionDir)..\..\Library\strconv\include;$(SolutionDir)..\..\Library\json\include;$(VCInstallDir)Auxiliary\VS\UnitTest\include;$(SolutionDir)..\..\Library\cereal\include;$(SolutionDir)..\..\Library\fmt-master\include;$(SolutionDir)..\..\library\mapi\include;$(SolutionDir)..\..\Library\sigslot\include;$(SolutionDir)..\..\library\boost;$(SolutionDir)\D2DTextBox;$(SolutionDir)..\..\library\spdlog;$(SolutionDir)..\..\Library\Rx\v2\src;$(SolutionDir)\FilerHook;$(SolutionDir)\HiLib;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Release;$(SolutionDir)..\..\library\pdfium\lib;$(VCInstallDir)Auxiliary\VS\UnitTest\lib;$(SolutionDir)..\..\library\boost\stage\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -407,6 +407,10 @@
     <ClInclude Include="..\HiLib\PreviewWnd.h" />
     <ClInclude Include="..\HiLib\property.h" />
     <ClInclude Include="..\HiLib\ReactiveProperty.h" />
+    <ClInclude Include="..\HiLib\reactive_binding.h" />
+    <ClInclude Include="..\HiLib\reactive_command.h" />
+    <ClInclude Include="..\HiLib\reactive_property.h" />
+    <ClInclude Include="..\HiLib\reactive_vector.h" />
     <ClInclude Include="..\HiLib\ScrollProperty.h" />
     <ClInclude Include="..\HiLib\shared_lock_property.h" />
     <ClInclude Include="..\HiLib\SortCell.h" />
@@ -481,6 +485,7 @@
     <ClInclude Include="ExeExtensionProperty.h" />
     <ClInclude Include="FilerApplication.h" />
     <ClInclude Include="FilerWndStatusBar.h" />
+    <ClInclude Include="FileStatus.h" />
     <ClInclude Include="IImageColumn.h" />
     <ClInclude Include="Launcher.h" />
     <ClInclude Include="LauncherItemDragger.h" />
@@ -538,6 +543,7 @@
     <ClInclude Include="TaskMemoCell.h" />
     <ClInclude Include="TaskMemoColumn.h" />
     <ClInclude Include="TaskRow.h" />
+    <ClInclude Include="ToDoDoc.h" />
     <ClInclude Include="ToDoGridView.h" />
     <ClInclude Include="ViewProperty.h" />
   </ItemGroup>
@@ -650,6 +656,7 @@
     <ClCompile Include="..\HiLib\FPDFTextPage.cpp" />
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
     <ClCompile Include="..\HiLib\PDFCaret.cpp" />
+    <ClCompile Include="ToDoDoc.cpp" />
     <ClCompile Include="DriveSizeCell.cpp" />
     <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="FileOperationDlg.cpp" />

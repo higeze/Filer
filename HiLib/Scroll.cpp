@@ -30,7 +30,7 @@
 	void CScrollBase::SetScrollPos(const FLOAT pos)
 	{
 		FLOAT newPos = std::clamp(pos, m_range.first, (std::max)(m_range.second - m_page, m_range.first));
-		if (m_pos != newPos) {
+		if (m_pos.get() != newPos) {
 			m_pos = newPos;
 			ScrollChanged();
 		}

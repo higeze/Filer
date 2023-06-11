@@ -219,16 +219,16 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 
 	bool drawFullPage = (rcScaledFullInPage.Width() * rcScaledFullInPage.Height()) < (szBitmap.width * szBitmap.height / 8);
 	
-	bool drawOnePageOneScale = m_scale >= 1.f && szImage.width <= szBitmap.width/2 && szImage.height <= szBitmap.height/2;
-	bool drawOnePageLessScale = m_scale < 1.f && szImage.width * m_scale <= szBitmap.width/2 && szImage.height * m_scale <= szBitmap.height/2;
-	bool drawClipPageOneScale = m_scale >= 1.f && !drawOnePageLessScale && !drawOnePageLessScale;
-	bool drawClipPageLessScale = m_scale < 1.f && !drawOnePageLessScale && !drawOnePageLessScale;
+	bool drawOnePageOneScale = m_scale.get() >= 1.f && szImage.width <= szBitmap.width/2 && szImage.height <= szBitmap.height/2;
+	bool drawOnePageLessScale = m_scale.get() < 1.f && szImage.width * m_scale.get() <= szBitmap.width/2 && szImage.height * m_scale.get() <= szBitmap.height/2;
+	bool drawClipPageOneScale = m_scale.get() >= 1.f && !drawOnePageLessScale && !drawOnePageLessScale;
+	bool drawClipPageLessScale = m_scale.get() < 1.f && !drawOnePageLessScale && !drawOnePageLessScale;
 
 	ImgBmpKey blurKey{ .ImagePtr = &(m_image.get()), .Scale = blurScale, .Rotate = 0, .Rect = CRectF2CRectU(CRectF(szImage * blurScale)) };
 	ImgBmpKey oneKey{ .ImagePtr = &(m_image.get()), .Scale = 1.f, .Rotate = 0, .Rect = CRectF2CRectU(CRectF(szImage)) };
-	ImgBmpKey scaleKey{ .ImagePtr = &(m_image.get()), .Scale = m_scale, .Rotate = 0, .Rect = CRectF2CRectU(rcFullInPage) };
+	ImgBmpKey scaleKey{ .ImagePtr = &(m_image.get()), .Scale = m_scale.get(), .Rotate = 0, .Rect = CRectF2CRectU(rcFullInPage) };
 	ImgBmpKey cliponeKey{ .ImagePtr = &(m_image.get()), .Scale = 1.f, .Rotate = 0, .Rect = CRectF2CRectU(rcClipInPage) };
-	ImgBmpKey clipscaleKey{ .ImagePtr = &(m_image.get()), .Scale = m_scale, .Rotate = 0, .Rect = CRectF2CRectU(rcScaledClipInPage) };
+	ImgBmpKey clipscaleKey{ .ImagePtr = &(m_image.get()), .Scale = m_scale.get(), .Rotate = 0, .Rect = CRectF2CRectU(rcScaledClipInPage) };
 
 	if (cliponeKey.Rect.IsRectNull() || clipscaleKey.Rect.IsRectNull()) {
 		auto a = 1;
