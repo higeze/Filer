@@ -69,3 +69,13 @@ void CRow::OnPropertyChanged(const wchar_t* name)
 {
 	m_pSheet->OnRowPropertyChanged(this, name);
 }
+
+void CRow::OnPaint(const PaintEvent& e)
+{
+	//TODO
+	//CRectF rcPaint(m_pSheet->GetCellsRect());
+	//rcPaint.top = GetTop();
+	//rcPaint.bottom = GetBottom();
+
+	//e.WndPtr->GetDirectPtr()->FillSolidRectangle(, rcPaint);
+}

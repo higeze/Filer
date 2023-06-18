@@ -109,7 +109,7 @@ struct ToDoTabData:public TabData
 	{
 		from_json(j, static_cast<TabData&>(o));
 		j.at("Path").get_to(o.Doc.Path);
-		o.Doc.Open(o.Doc.Path);
+		o.Doc.Open(o.Doc.Path.get());
 	}
 };
 
@@ -306,7 +306,7 @@ private:
 	CBinding m_previewPathBinding;
 
 	rxcpp::composite_subscription m_todoSubs;
-	std::vector<rxcpp::composite_subscription> m_todoViewTaskSubs;
+	std::vector<rxcpp::composite_subscription> m_todoItemsSubs;
 	std::vector<rxcpp::composite_subscription> m_todoViewModelTaskSubs;
 
 	std::unique_ptr<sigslot::scoped_connection> m_pTextPathConnection;

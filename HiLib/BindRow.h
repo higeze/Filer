@@ -29,7 +29,8 @@ public:
 		}
 	}
 
-	template<typename TItem> TItem& GetItem()
+	template<typename TItem> 
+	TItem& GetItem()
 	{
 		return std::get<TItem>(GetTupleItems());
 	}

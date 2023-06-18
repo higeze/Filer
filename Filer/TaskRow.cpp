@@ -14,13 +14,13 @@ void CTaskRow::OnPaint(const PaintEvent& e)
 			e.WndPtr->GetDirectPtr()->FillSolidRectangle(SolidFill(0.5f, 0.5f, 0.5f, 0.5f), rcPaint);
 			break;
 		case CheckBoxState::Intermediate:
-			e.WndPtr->GetDirectPtr()->FillSolidRectangle(SolidFill(0.5f, 0.5f, 0.5f, 0.3f), rcPaint);
+			e.WndPtr->GetDirectPtr()->FillSolidRectangle(SolidFill(0.f, 0.f, 1.f, 0.3f), rcPaint);
 			break;
 		case CheckBoxState::False:
 		default:
-			if (task.Date == CDate::Now()) {
+			if (task.YearMonthDay.get() == CYearMonthDay::Now()) {
 				e.WndPtr->GetDirectPtr()->FillSolidRectangle(SolidFill(1.f, 1.f, 0.f, 0.3f), rcPaint);
-			} else if (!task.Date.get().IsInvalid() && task.Date.get() < CDate::Now()) {
+			} else if (task.YearMonthDay.get().IsValid() && task.YearMonthDay.get() < CYearMonthDay::Now()) {
 				e.WndPtr->GetDirectPtr()->FillSolidRectangle(SolidFill(1.f, 0.f, 0.f, 0.3f), rcPaint);
 			} else {
 				//Do nothing

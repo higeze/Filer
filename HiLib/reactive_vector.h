@@ -40,33 +40,50 @@ public:
 	using const_reference = typename std::vector<T, Allocator>::const_reference;
 	using reference = typename std::vector<T, Allocator>::reference;
 
+	using subscriber_type = typename rxcpp::subjects::subject<notify_vector_changed_event_args<T>>::subscriber_type;
+
 public:
-	reactive_vector(const vector_type& value = vector_type())
+	explicit reactive_vector(const vector_type& value = vector_type())
 		:m_value(value){};
 
 	virtual ~reactive_vector() = default;
-	//auto operator<=>(const reactive_vector&) const = default;
-	bool operator==(const reactive_vector& val) const
+	auto operator<=>(const reactive_vector& rhs) const
 	{
-		return this->m_value == val.m_value;
+		return this->m_value <=> rhs.m_value;
+	}
+	bool operator==(const reactive_vector& rhs) const
+	{
+		return this->m_value == rhs.m_value;
 	}
 	reactive_vector(const reactive_vector& val) = default;
-	reactive_vector(reactive_vector&& val) = default;
 	reactive_vector& operator=(const reactive_vector& val) = default;
-	reactive_vector& operator=(reactive_vector&& val) = default;
-	reactive_vector& operator=(const T& val) 
-	{
-		set(val);
-		return *this;
-	}
-	reactive_vector& operator=(T&& val)
-	{
-		set(val);
-		return *this;
-	}
+	reactive_vector(reactive_vector&& val) noexcept = default;
+	reactive_vector& operator=(reactive_vector&& val) noexcept = default;
+	//reactive_vector& operator=(const vector_type& val) 
+	//{
+	//	set(val);
+	//	return *this;
+	//}
+	//reactive_vector& operator=(vector_type&& val) 
+	//{
+	//	set(val);
+	//	return *this;
+	//}
+	mutable std::shared_ptr<int> m_pCount = std::make_shared<int>(0);
+	int get_subscriber_count() const { return *m_pCount; }
+
+  //  subscriber_type get_subscriber() const {
+  //      return m_subject.get_subscriber();
+  //  }
+
+  //  rxcpp::observable<T> get_observable() const {
+		//return m_subject.get_observable();
+  //  }
+
 	template<class... ArgN>
 	auto subscribe(ArgN&&... an) const -> rxcpp::composite_subscription
 	{
+		(*m_pCount)++;
 		return m_subject.get_observable().subscribe(std::forward<ArgN>(an)...);
 	}
 	const vector_type& get() const 
@@ -140,7 +157,21 @@ public:
 		this->m_subject.get_subscriber().on_next(notify_vector_changed_event_args<T>
 		{
 			notify_vector_changed_action::push_back,
-			{ x },
+			{ this->m_value.back() },
+			(int)size() - 1,
+			{},
+			-1
+		});
+	}
+
+    template <class... _Valty>
+	void emplace_back(_Valty&&... _Val)
+	{
+		this->m_value.emplace_back(std::forward<_Valty>(_Val)...);
+		this->m_subject.get_subscriber().on_next(notify_vector_changed_event_args<T>
+		{
+			notify_vector_changed_action::push_back,
+			{ this->m_value.back() },
 			(int)size() - 1,
 			{},
 			-1
@@ -151,10 +182,10 @@ public:
 	{
 		auto ret = this->m_value.insert(position, x);
 		auto index = std::distance(this->m_value.begin(), ret);
-		this->m_subject.get_subscriber.on_next(notify_vector_changed_event_args<T>
+		this->m_subject.get_subscriber().on_next(notify_vector_changed_event_args<T>
 		{
 			notify_vector_changed_action::insert,
-			{ x },
+			{ *ret },
 			index,
 			{},
 			-1
@@ -170,7 +201,7 @@ public:
 		this->m_subject.get_subscriber.on_next(notify_vector_changed_event_args<T>
 		{
 			notify_vector_changed_action::replace,
-			{ x },
+			{ *position },
 			index,
 			{ oldItem},
 			-1

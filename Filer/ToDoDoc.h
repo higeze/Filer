@@ -11,20 +11,16 @@
 class CToDoDoc
 {
 public:
-	ReactiveWStringProperty Path;
+	reactive_property<std::wstring> Path;
 	reactive_vector<std::tuple<MainTask>> Tasks;
-	reactive_property<FileStatus> Status = FileStatus::None;
+	reactive_property<FileStatus> Status;
 public:
-	CToDoDoc() {};
+	CToDoDoc():Status(FileStatus::None) {};
 	~CToDoDoc() = default;
-	auto operator<=>(const CToDoDoc&) const = default;
+	//auto operator<=>(const CToDoDoc&) const = default;
 	bool operator == (const CToDoDoc & doc) const
 	{
 		return Path.get() == doc.Path.get();
-	};
-	bool operator != (const CToDoDoc & doc) const
-	{
-		return Path.get() != doc.Path.get();
 	};
 
 

@@ -3,29 +3,30 @@
 #include "reactive_binding.h"
 
 template<class T>
-rxcpp::composite_subscription reactive_binding(reactive_property<T>& left, reactive_property<T>& right)
+rxcpp::composite_subscription reactive_binding(reactive_property<T>& src, reactive_property<T>& dst)
 {
+    dst.set(src.get());
     rxcpp::composite_subscription ret;
     {
         ret.add(
-        left.subscribe([&](const T& value) {
-            right.set(value);
+        dst.subscribe([&src](const T& value) {
+            src.set(value);
         }));
     }
     {
         ret.add(
-        right.subscribe([&](const T& value) {
-            left.set(value);
+        src.subscribe([&dst](const T& value) {
+            dst.set(value);
         }));
     }
     return ret;
 }
 
 template<class T>
-rxcpp::composite_subscription reactive_command_binding(reactive_command<T>& dest, reactive_command<T>& src)
+rxcpp::composite_subscription reactive_command_binding(reactive_command<T> src, reactive_command<T> dst)
 {
-	return dest.subscribe(
-		[&](T value)->void
+	return dst.subscribe(
+		[src](T value)->void
 		{
 			src.execute(value);
 		});

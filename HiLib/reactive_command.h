@@ -22,7 +22,7 @@ public:
 		return m_subject.get_observable().subscribe(std::forward<ArgN>(an)...);
 	}
 
-	void execute(const T& value)
+	void execute(const T& value) const
 	{
 		m_subject.get_subscriber().on_next(value);
 	}

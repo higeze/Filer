@@ -27,7 +27,7 @@ public:
 	virtual bool HasSheetCell() override { return true; }
 
 
-	reactive_property<FileStatus> Status;
+	reactive_property<std::wstring> Path;
 	reactive_command<std::wstring> OpenCommand;
 	reactive_command<std::wstring> SaveCommand;
 

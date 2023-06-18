@@ -19,17 +19,17 @@ void CToDoGridView::Initialize()
 			this,
 			L"State",
 			[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).State.get(); },
-			[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).State = state; }),
+			[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).State.set(state); }),
 		std::make_shared<CBindTextColumn<MainTask>>(
 			this,
 			L"Name",
 			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name.get(); },
-			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name = str; }),
+			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name.set(str); }),
 		std::make_shared<CBindTextColumn<MainTask>>(
 			this,
 			L"Memo",
 			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo.get(); },
-			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo = str; }),
+			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo.set(str); }),
 		std::make_shared<CDateColumn>(
 			this,
 			L"Due date")//,
@@ -142,7 +142,7 @@ void CToDoGridView::Open(const std::wstring& path)
 void CToDoGridView::Save()
 {
 	std::wstring path;
-	if (Status == FileStatus::None) {
+	if (Path.get().empty()) {
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hwndOwner = GetWndPtr()->m_hWnd;
@@ -161,15 +161,13 @@ void CToDoGridView::Save()
 			}
 		} else {
 			::ReleaseBuffer(path);
+			Path.set(path);
 		}
 	}
-	//Serialize
-	try {
-		Save(path);
-	}
-	catch (/*_com_error &e*/...) {
-	}
 
+	if(!Path.get().empty()){
+		Save(Path.get());
+	}
 }
 
 void CToDoGridView::Save(const std::wstring& path)

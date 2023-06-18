@@ -480,6 +480,7 @@
     <ClInclude Include="..\HiLib\scope_exit.h" />
     <ClInclude Include="..\HiLib\DialogProperty.h" />
     <ClInclude Include="..\HiLib\PDFEditor.h" />
+    <ClInclude Include="..\HiLib\YearMonthDay.h" />
     <ClInclude Include="CheckableFileGrid.h" />
     <ClInclude Include="DriveSizeCell.h" />
     <ClInclude Include="ExeExtensionProperty.h" />

@@ -60,7 +60,7 @@ public:
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; };
 
-	virtual void OnPaint(const PaintEvent& e) {}
+	virtual void OnPaint(const PaintEvent& e);
 
 };
 

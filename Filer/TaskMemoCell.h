@@ -3,7 +3,7 @@
 #include "BindGridView.h"
 #include "BindRow.h"
 #include "BindTextColumn.h"
-#include "Date.h"
+#include "YearMonthDay.h"
 #include "Task.h"
 
 class CTaskMemoCell :public CTextCell
@@ -18,16 +18,19 @@ public:
 	virtual void PaintNormalBackground(CDirect2DWrite* pDirect, CRectF rcPaint) override
 	{
 		auto pBindRow = static_cast<CBindRow<MainTask>*>(m_pRow);
-		CDate dt = pBindRow->GetItem<MainTask>().Date;
-		CDate now = CDate::Now();
-		if (dt == now) {
+		CYearMonthDay ymd = pBindRow->GetItem<MainTask>().YearMonthDay.get();
+		CYearMonthDay now = CYearMonthDay::Now();
+		if (ymd == now) {
 			pDirect->FillSolidRectangle(SolidFill(1.f,1.f,0.f,0.3f), rcPaint);
-		} else if (!dt.IsInvalid() && dt < now) {
+		} else if (ymd.IsValid() && ymd < now) {
 			pDirect->FillSolidRectangle(SolidFill(1.f,0.f,0.f,0.3f), rcPaint);
 		} else {
 			pDirect->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
 		}
 	}
+
+	virtual bool CanSetStringOnEditing()const override{return false;}
+
 };
 
 

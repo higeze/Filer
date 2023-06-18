@@ -515,10 +515,10 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderTemplate.emplace(typeid(ToDoTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
 		{
 			if (auto p = std::dynamic_pointer_cast<ToDoTabData>(pTabData)) {
-				if (p->Doc.Path.empty()) {
+				if (p->Doc.Path.get().empty()) {
 					return L"No file";
 				} else {
-					return std::wstring(::PathFindFileName(p->Doc.Path.c_str()));
+					return std::wstring(::PathFindFileName(p->Doc.Path.get().c_str()));
 				}
 			} else {
 				return L"nullptr";
@@ -591,7 +591,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderIconTemplate.emplace(typeid(ToDoTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
 			if (auto p = std::dynamic_pointer_cast<ToDoTabData>(pTabData)) {
-				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Doc.Path);
+				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Doc.Path.get());
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
 			} else {
 				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
@@ -648,70 +648,162 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		return spView;
 	});
 
+	//rxcpp::composite_subscription subs;
+	//rxcpp::subjects::behavior<int> test(19);
+	//subs.add(test.get_observable().subscribe([](auto) {OutputDebugString(L"A"); }));
+	//test.get_observable().subscribe([](auto) {OutputDebugString(L"B"); });
+	//rxcpp::subjects::behavior<int> test2 = test;
+	//test.get_subscriber().on_next(10);
+	//subs.add(test.get_observable().subscribe([](auto) {OutputDebugString(L"C"); }));
+	//subs.add(test.get_observable().subscribe([](auto) {OutputDebugString(L"D"); }));
+	//test2.get_subscriber().on_next(3);
+	//test.get_subscriber().on_next(5);
+	//subs.clear();
+	//test.get_subscriber().on_next(99);
+	//test2.get_subscriber().on_next(98);
+
+
+
+	//ReactiveProperty<int> test(19);
+	//test.Subscribe([](auto) {OutputDebugString(L"A"); });
+	//test.Subscribe([](auto) {OutputDebugString(L"B"); });
+
+	//ReactiveProperty<int> test2;
+	//test2 = test;
+
+	//test.set(10);
+
+	//test.Subscribe([](auto) {OutputDebugString(L"C"); });
+	//test.Subscribe([](auto) {OutputDebugString(L"D"); });
+	//test2.set(3);
+
+	//test.set(5);
+
 	m_itemsControlTemplate.emplace(typeid(ToDoTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto spViewModel = std::static_pointer_cast<ToDoTabData>(pTabData);
 		auto spView = GetToDoGridViewPtr();
 		m_todoSubs.clear();
-		m_todoViewTaskSubs.clear();
-		m_todoViewModelTaskSubs.clear();
+		m_todoItemsSubs.clear();
+		//m_todoViewModelTaskSubs.clear();
 
-		m_todoSubs.add(reactive_command_binding(spView->OpenCommand, spViewModel->OpenCommand));
-		m_todoSubs.add(reactive_command_binding(spView->SaveCommand, spViewModel->SaveCommand));
-		m_todoSubs.add(reactive_binding(spViewModel->Doc.Status, spView->Status));
+		m_todoSubs.add(reactive_command_binding(spViewModel->OpenCommand, spView->OpenCommand));
+		m_todoSubs.add(reactive_command_binding(spViewModel->SaveCommand, spView->SaveCommand));
+		m_todoSubs.add(reactive_binding(spViewModel->Doc.Path, spView->Path));
 
-		auto add_reactive_task_binding = [](rxcpp::composite_subscription& tasksub, MainTask& left, MainTask& right)->void {
-			tasksub.add(reactive_binding(left.State, right.State));
-			tasksub.add(reactive_binding(left.Name, right.Name));
-			tasksub.add(reactive_binding(left.Memo, right.Memo));
-			tasksub.add(reactive_binding(left.Date, right.Date));
+		auto output_vector_subscriber_count = [](const reactive_vector<std::tuple<MainTask>>& tasks) {
+			::OutputDebugString(std::format(L"Vector : {}\r\n", tasks.get_subscriber_count()).c_str());
+			for (const auto& task : tasks.get()) {
+				::OutputDebugString(std::format(L"Item : {}, {}, {}, {}\r\n",
+					std::get<MainTask>(task).State.get_subscriber_count(),
+					std::get<MainTask>(task).Name.get_subscriber_count(),
+					std::get<MainTask>(task).Memo.get_subscriber_count(),
+					std::get<MainTask>(task).YearMonthDay.get().YearMonthDay.get_subscriber_count()).c_str());
+			}
 		};
 
-		auto reactive_binding_vector = ([this, add_reactive_task_binding](reactive_vector<std::tuple<MainTask>>& left, reactive_vector<std::tuple<MainTask>>& right, std::vector<rxcpp::composite_subscription>& subs)->rxcpp::composite_subscription {
-			return left.subscribe(
+		auto reactive_task_binding = [](MainTask& src, MainTask& dst)->rxcpp::composite_subscription {
+			rxcpp::composite_subscription subs;
+			subs.add(reactive_binding(src.State, dst.State));
+			subs.add(reactive_binding(src.Name, dst.Name));
+			subs.add(reactive_binding(src.Memo, dst.Memo));
+			subs.add(reactive_binding(src.YearMonthDay.get_unconst().YearMonthDay, dst.YearMonthDay.get_unconst().YearMonthDay));
+			return subs;
+		};
+
+		//When reflect change to the other, it is necessar to call clone. Otherwise subscription is also copied.
+		auto reactive_tasks_one_side_binding = ([this, reactive_task_binding, output_vector_subscriber_count](
+			reactive_vector<std::tuple<MainTask>>& src,
+			reactive_vector<std::tuple<MainTask>>& dst, 
+			std::vector<rxcpp::composite_subscription>& subs)->rxcpp::composite_subscription {
+
+			return src.subscribe(
 			[&](const notify_vector_changed_event_args<std::tuple<MainTask>>& notify)->void
 			{
+				if (dst == src)return;
+
 				switch (notify.action) {
 					case notify_vector_changed_action::push_back:
-						right.get_unconst().push_back(notify.new_items.front());
-						subs.push_back(rxcpp::composite_subscription());
-						add_reactive_task_binding(subs.back(),
-							std::get<MainTask>(left.get_unconst().operator[](notify.new_starting_index)),
-							std::get<MainTask>(right.get_unconst().operator[](notify.new_starting_index)));
+						dst.push_back(std::make_tuple(std::get<MainTask>(notify.new_items.front()).Clone()));
+
+						subs.push_back(reactive_task_binding(
+							std::get<MainTask>(src.get_unconst().operator[](notify.new_starting_index)),
+							std::get<MainTask>(dst.get_unconst().operator[](notify.new_starting_index))));
 						break;
 					case notify_vector_changed_action::insert:
-						right.get_unconst().insert(right.get().cbegin() + notify.new_starting_index, notify.new_items.front());
-						subs.insert(subs.cbegin() + notify.new_starting_index, rxcpp::composite_subscription());
-						add_reactive_task_binding(subs[notify.new_starting_index], 
-							std::get<MainTask>(left.get_unconst().operator[](notify.new_starting_index)),
-							std::get<MainTask>(right.get_unconst().operator[](notify.new_starting_index)));
+						dst.insert(dst.get().cbegin() + notify.new_starting_index, std::make_tuple(std::get<MainTask>(notify.new_items.front()).Clone()));
+						subs.insert(subs.cbegin() + notify.new_starting_index,
+							reactive_task_binding(
+								std::get<MainTask>(src.get_unconst().operator[](notify.new_starting_index)),
+								std::get<MainTask>(dst.get_unconst().operator[](notify.new_starting_index))));
 						break;
 					case notify_vector_changed_action::Move:
+						THROW_FILE_LINE_FUNC;
 						break;
 					case notify_vector_changed_action::erase:
-						right.get_unconst().erase(right.cbegin() + notify.old_starting_index);
+						dst.erase(dst.cbegin() + notify.old_starting_index);
 						subs.erase(subs.cbegin() + notify.old_starting_index);
 						break;
 					case notify_vector_changed_action::replace:
+						THROW_FILE_LINE_FUNC;
 						break;
 					case notify_vector_changed_action::reset:
-						right.set(left.get());
 						subs.clear();
-						for (size_t i = 0; i < left.size(); i++) {
-							subs.push_back(rxcpp::composite_subscription());
-							add_reactive_task_binding(subs.back(),
-								std::get<MainTask>(left.get_unconst().operator[](notify.new_starting_index)),
-								std::get<MainTask>(right.get_unconst().operator[](notify.new_starting_index)));
+						for (size_t i = 0; i < notify.new_items.size(); i++) {
+							dst.push_back(std::make_tuple(std::get<MainTask>(notify.new_items[i]).Clone()));
+							subs.push_back(reactive_task_binding(
+								std::get<MainTask>(src.get_unconst().operator[](notify.new_starting_index)),
+								std::get<MainTask>(dst.get_unconst().operator[](notify.new_starting_index))));
 						}
 						break;
 				}
+				::OutputDebugString(L"NotifyChanged\r\n");
+				::OutputDebugString(L"src\r\n");
+				output_vector_subscriber_count(src);
+				::OutputDebugString(L"dst\r\n");
+				output_vector_subscriber_count(dst);
 			});
 		});
 
-		m_todoSubs.add(reactive_binding_vector(spView->ItemsSource, spViewModel->Doc.Tasks, m_todoViewTaskSubs));
-		m_todoSubs.add(reactive_binding_vector(spViewModel->Doc.Tasks, spView->ItemsSource, m_todoViewModelTaskSubs));
-		spView->ItemsSource.set(spViewModel->Doc.Tasks.get());
+		//Vector binding
 
-		//spView->Open(spViewModel->Doc.Path);
+		::OutputDebugString(L"Before Copy\t\n");
+		::OutputDebugString(L"Doc.Tasks\r\n");
+		output_vector_subscriber_count(spViewModel->Doc.Tasks);
+		::OutputDebugString(L"ItemsSource\r\n");
+		output_vector_subscriber_count(spView->ItemsSource);
+		
+		spView->ItemsSource.clear();
+		for (size_t i = 0; i < spViewModel->Doc.Tasks.size(); i++) {
+			spView->ItemsSource.push_back(std::get<MainTask>(spViewModel->Doc.Tasks[i]).Clone());
+		}
+
+		for (size_t i = 0; i < spViewModel->Doc.Tasks.size(); i++) {
+			m_todoItemsSubs.push_back(reactive_task_binding(
+				std::get<MainTask>(spViewModel->Doc.Tasks.get_unconst().operator[](i)),
+				std::get<MainTask>(spView->ItemsSource.get_unconst().operator[](i))));
+		}
+
+		::OutputDebugString(L"After Copy, Before Vector Binding\t\n");
+		::OutputDebugString(L"Doc.Tasks\r\n");
+		output_vector_subscriber_count(spViewModel->Doc.Tasks);
+		::OutputDebugString(L"ItemsSource\r\n");
+		output_vector_subscriber_count(spView->ItemsSource);
+
+
+		m_todoSubs.add(reactive_tasks_one_side_binding(spViewModel->Doc.Tasks, spView->ItemsSource, m_todoItemsSubs));
+		m_todoSubs.add(reactive_tasks_one_side_binding(spView->ItemsSource, spViewModel->Doc.Tasks, m_todoItemsSubs));
+
+		::OutputDebugString(L"After Vector Binding\t\n");
+		::OutputDebugString(L"Doc.Tasks");
+		output_vector_subscriber_count(spViewModel->Doc.Tasks);
+		::OutputDebugString(L"ItemsSource");
+		output_vector_subscriber_count(spView->ItemsSource);
+
+		::OutputDebugString(std::format(L"Vector composite_subscription: {}\r\n", m_todoSubs.get_weak().use_count()).c_str());
+		for (rxcpp::composite_subscription& sub : m_todoItemsSubs) {
+			::OutputDebugString(std::format(L"Item composite_subscription: {}\r\n", sub.get_weak().use_count()).c_str());
+		}
+
 		spView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
 		spView->PostUpdate(Updates::All);
 		spView->SubmitUpdate();

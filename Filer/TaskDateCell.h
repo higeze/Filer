@@ -3,7 +3,7 @@
 #include "BindGridView.h"
 #include "BindRow.h"
 #include "BindTextColumn.h"
-#include "Date.h"
+#include "YearMonthDay.h"
 #include "Task.h"
 
 class CDateCell :public CTextCell
@@ -18,16 +18,54 @@ public:
 	virtual std::wstring GetString() override
 	{
 		auto pBindRow = static_cast<CBindRow<MainTask>*>(m_pRow);
-		const CDate& dt = pBindRow->GetItem<MainTask>().Date.get();
+		const CYearMonthDay& ymd = pBindRow->GetItem<MainTask>().YearMonthDay.get();
 
-		return dt.IsInvalid()? L"" : std::format(L"{}/{}({})", dt.GetMonth(), dt.GetDay(), dt.GetJpnWeekDay());
+		return ymd.IsInvalid()? L"" : std::format(L"{}/{}({})", ymd.YearMonthDay.get().month().operator size_t(), ymd.YearMonthDay.get().day().operator size_t(), ymd.GetJpnWeekDay());
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override
 	{
 		auto pBindRow = static_cast<CBindRow<MainTask>*>(m_pRow);
-		pBindRow->GetItem<MainTask>().Date.get_unconst().Parse(str);
+		pBindRow->GetItem<MainTask>().YearMonthDay.get_unconst().Parse(str);
 	}
+
+	virtual bool CanSetStringOnEditing()const override{return false;}
+
+	virtual void OnContextMenu(const ContextMenuEvent& e) override
+	{
+		CMenu menu(::CreatePopupMenu());
+		MENUITEMINFO mii = { 0 };
+		mii.cbSize = sizeof(MENUITEMINFO);
+		mii.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
+		mii.fType = MFT_STRING;
+		mii.fState = MFS_ENABLED;
+		mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Today");
+		mii.dwTypeData = const_cast<LPWSTR>(L"Today");
+		mii.cch = 4;
+		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+		mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Tomorrow");
+		mii.dwTypeData = const_cast<LPWSTR>(L"Tomorrow");
+		mii.cch = 6;
+		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+
+		::SetForegroundWindow(this->m_pSheet->GetWndPtr()->m_hWnd);
+		WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, this->m_pSheet->GetWndPtr()->m_hWnd);
+		
+		auto pBindRow = static_cast<CBindRow<MainTask>*>(m_pRow);
+		MainTask& task = pBindRow->GetItem<MainTask>();
+		
+		if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Today")) {
+			task.YearMonthDay.get_unconst().YearMonthDay.set(CYearMonthDay::Today().YearMonthDay.get());
+		} else if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Tomorrow")) {
+			task.YearMonthDay.get_unconst().YearMonthDay.set(CYearMonthDay::Tomorrow().YearMonthDay.get());
+		}
+
+		*e.HandledPtr = TRUE;
+
+	}
+
 
 	//virtual void PaintNormalBackground(CDirect2DWrite* pDirect, CRectF rcPaint) override
 	//{

@@ -3,14 +3,19 @@
 #include <vector>
 #include <memory>
 
+/************/
+/* is_tuple */
+/************/
+template <typename> struct is_tuple: std::false_type {};
+template <typename ...T> struct is_tuple<std::tuple<T...>>: std::true_type {};
+
 /*************/
 /* is_vector */
 /*************/
-template<class TRect>
-struct is_vector :std::false_type {};
+template<typename> struct is_vector :std::false_type {};
 
-template<class TRect, class A>
-struct is_vector<std::vector<TRect, A>> :std::true_type {};
+template<typename T, typename A>
+struct is_vector<std::vector<T, A>> :std::true_type {};
 
 /*****************/
 /* is_shared_ptr */

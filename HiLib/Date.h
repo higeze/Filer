@@ -6,32 +6,34 @@
 #include <chrono>
 #include <ctime>
 #include "JsonSerializer.h"
+#include "reactive_property.h"
 
 class CDate
 {
 private:
-    int m_year = -1;
-    int m_month = -1;
-    int m_day = -1;
+    static const int INVALID = -1;
+public:
+    reactive_property<int> Year;
+    reactive_property<int> Month;
+    reactive_property<int> Day;
 
 public:
-    CDate():m_year(-1), m_month(-1), m_day(-1)
-    {
-        //time_t tt = time(NULL);
-        //struct tm local_tm;
-        //localtime_s(&local_tm, &tt);
+    CDate(int year = INVALID, int month = INVALID, int day = INVALID)
+        :Year(year), Month(month), Day(day){}
 
-        //m_year = local_tm.tm_year + 1900;
-        //m_month = local_tm.tm_mon + 1;
-        //m_day = local_tm.tm_mday;
-    }
-
-    CDate(const std::wstring& str):m_year(-1), m_month(-1), m_day(-1)
+    CDate(const std::wstring& str):Year(-1), Month(-1), Day(-1)
     {
         Parse(str);
     }
 
-    auto operator<=>(const CDate&) const = default;
+    auto operator<=>(const CDate& rhs) const
+    {
+        return (Year.get() * 10000 + Month.get() * 100 + Day.get()) <=> (rhs.Year.get() * 10000 + rhs.Month.get() * 100 + rhs.Day.get());
+    }
+    bool operator==(const CDate& rhs)const
+    {
+        return Year.get() == rhs.Year.get() && Month.get() == rhs.Month.get() && Day.get() == rhs.Day.get();
+    }
 
     static const CDate& Now()
     {
@@ -42,23 +44,25 @@ public:
             struct tm local_tm;
             localtime_s(&local_tm, &tt);
 
-            now.m_year = local_tm.tm_year + 1900;
-            now.m_month = local_tm.tm_mon + 1;
-            now.m_day = local_tm.tm_mday;
+            now.Year.set(local_tm.tm_year + 1900);
+            now.Month.set(local_tm.tm_mon + 1);
+            now.Day.set(local_tm.tm_mday);
         }
 
         return now;
     }
 
-    int GetYear()const { return m_year; }
-    int GetMonth()const { return m_month; }
-    int GetDay()const { return m_day; }
+    std::tuple<int, int, int> GetYMD() const
+    {
+        return { Year.get(), Month.get(), Day.get() };
+    }
+
     int GetWeekDay()const
     {
-        int year = m_year;
-        int month = m_month;
+        int year = Year.get();
+        int month = Month.get();
         if (month < 3) { year--;  month += 12;  }
-        return (year + year / 4 - year / 100 + year / 400 + (13 * month + 8) / 5 + m_day) % 7;
+        return (year + year / 4 - year / 100 + year / 400 + (13 * month + 8) / 5 + Day.get()) % 7;
     }
     std::wstring GetEngWeekDay()const
     {
@@ -95,25 +99,27 @@ public:
         struct tm local_tm;
         localtime_s(&local_tm, &tt);
         std::wsmatch m;
-        m_year = local_tm.tm_year + 1900; int mm = 0; int dd = 0;
+        Year.set(local_tm.tm_year + 1900);
         if (std::regex_match(str, m, std::wregex(LR"(([0-9]{4})/([0-9]{1,2})/([0-9]{1,2}))"))) {
-            m_year = _wtoi(m[1].str().c_str());
-            m_month = _wtoi(m[2].str().c_str());
-            m_day = _wtoi(m[3].str().c_str());
+            Year.set(_wtoi(m[1].str().c_str()));
+            Month.set(_wtoi(m[2].str().c_str()));
+            Day.set(_wtoi(m[3].str().c_str()));
             return true;
         } else if (std::regex_match(str, m, std::wregex(LR"(([0-9]{1,2})/([0-9]{1,2}))"))) {
-            m_month = _wtoi(m[1].str().c_str());
-            m_day = _wtoi(m[2].str().c_str());
+            Month.set(_wtoi(m[1].str().c_str()));
+            Day.set(_wtoi(m[2].str().c_str()));
             return true;
         } else {
-            m_year = m_month = m_day = -1;
+            Year.set(INVALID);
+            Month.set(INVALID);
+            Day.set(INVALID);
             return false;
         }
     }
 
     bool IsInvalid() const
     {
-        return m_year < 0 || m_month < 0 || m_day < 0;
+        return Year.get() < 0 || Month.get() < 0 || Day.get() < 0;
     }
 
     operator bool() const
@@ -121,9 +127,9 @@ public:
         return !IsInvalid();
     }
 
-    NLOHMANN_DEFINE_TYPE_M_INTRUSIVE_NOTHROW(
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
         CDate,
-        year,
-        month,
-        day);
+        Year,
+        Month,
+        Day);
 };
