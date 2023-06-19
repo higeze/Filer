@@ -8,6 +8,7 @@
 #include "Cursorer.h"
 #include "MapRow.h"
 #include "MapColumn.h"
+#include "Celler.h"
 
 #include "IBindSheet.h"
 
@@ -300,15 +301,20 @@ public:
 			{
 				auto spRow = m_allRows[e.old_starting_index + m_frozenRowCount];
 				m_allCells.get<row_tag>().erase(spRow.get());
-				EraseRow(spRow);
+				EraseRow(spRow);//TODO Refactor
+				m_spCursorer->Clear();
+				m_spCeller->Clear();
 				break;
 			}
 			case notify_vector_changed_action::reset:
 				m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
 				m_allCells.clear();
+				m_spCursorer->Clear();//TOOD Refactor
+				m_spCeller->Clear();
 				for (auto& tup : e.new_items) {
 					PushRow(std::make_shared<TRow>(this));
 				}
+
 
 				break;
 			default:

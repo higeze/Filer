@@ -43,7 +43,8 @@ public:
 
     static const CYearMonthDay Now()
     {
-        return {std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now())};
+        auto sys_ymd = std::chrono::year_month_day{std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now())};
+        return std::chrono::year_month_day(sys_ymd.operator std::chrono::local_days());
     }
 
     static const CYearMonthDay Today()
