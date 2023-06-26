@@ -33,7 +33,18 @@ bool CCellTextBox::GetIsVisible()const
 
 CRectF CCellTextBox::GetRectInWnd() const
 {
-	return m_pCell->GetEditRect();
+	//return m_pCell->GetEditRect();
+	CRectF rc = m_pCell->GetEditRect();
+	//rc.DeflateRect(m_pProp->Line->Width * 0.5f);
+	//rc.DeflateRect(*(m_pProp->Padding));
+
+	CSizeF sz = m_pParentControl->GetWndPtr()->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), m_text, rc.Width());
+
+	rc.bottom = (std::max)(rc.bottom, 
+		rc.top + sz.height + m_pProp->Line->Width * 0.5f *2.f + m_pProp->Padding->top + m_pProp->Padding->bottom);
+	return rc;
+
+
 }
 
 CEditorCellTextBox::CEditorCellTextBox(
@@ -68,5 +79,14 @@ bool CEditorCellTextBox::GetIsVisible()const
 
 CRectF CEditorCellTextBox::GetRectInWnd() const
 {
-	return m_pCell->GetEditRect();
+	//return m_pCell->GetEditRect();
+
+	CRectF rc = m_pCell->GetEditRect();
+	rc.DeflateRect(m_pProp->Line->Width * 0.5f);
+	rc.DeflateRect(*(m_pProp->Padding));
+
+	CSizeF sz = m_pParentControl->GetWndPtr()->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), m_text, rc.Width());
+
+	rc.bottom = rc.top + sz.height + m_pProp->Line->Width * 0.5f *2.f + m_pProp->Padding->top + m_pProp->Padding->bottom;
+	return rc;
 }

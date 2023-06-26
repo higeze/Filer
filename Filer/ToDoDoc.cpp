@@ -1,4 +1,48 @@
 #include "ToDoDoc.h"
+#include "Debug.h"
+
+CToDoDoc::CToDoDoc()
+	:Status(FileStatus::None)
+{
+	auto reactive_task_subscription = [this](MainTask& src)->rxcpp::composite_subscription {
+		auto dirty = [this](auto) { Status.set(FileStatus::Dirty); };
+		rxcpp::composite_subscription subs;
+		subs.add(src.State.subscribe(dirty));
+		subs.add(src.Name.subscribe(dirty));
+		subs.add(src.Memo.subscribe(dirty));
+		subs.add(src.YearMonthDay.get_unconst().YearMonthDay.subscribe(dirty));
+		return subs;
+	};
+
+	Tasks.subscribe([this, reactive_task_subscription](const notify_vector_changed_event_args<std::tuple<MainTask>>& notify) {
+		switch (notify.action) {
+			case notify_vector_changed_action::push_back:
+			case notify_vector_changed_action::insert:
+				Status.set(FileStatus::Dirty);
+				m_subscriptions.push_back(
+					reactive_task_subscription(std::get<MainTask>(Tasks.get_unconst().operator[](notify.new_starting_index))));
+				break;
+			case notify_vector_changed_action::Move:
+				THROW_FILE_LINE_FUNC;
+				break;
+			case notify_vector_changed_action::erase:
+				Status.set(FileStatus::Dirty);
+				m_subscriptions.erase(m_subscriptions.cbegin() + notify.old_starting_index);
+				break;
+			case notify_vector_changed_action::replace:
+				THROW_FILE_LINE_FUNC;
+				break;
+			case notify_vector_changed_action::reset:
+				Status.set(FileStatus::Dirty);
+				m_subscriptions.clear();
+				for (size_t i = 0; i < notify.new_items.size(); i++) {
+					m_subscriptions.push_back(reactive_task_subscription(
+						std::get<MainTask>(Tasks.get_unconst().operator[](i))));
+				}
+				break;
+		}
+	});
+}
 
 void CToDoDoc::Open(const std::wstring& path)
 {

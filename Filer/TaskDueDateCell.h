@@ -1,19 +1,21 @@
 #pragma once
 #include "TextCell.h"
+#include "D2DWWindow.h"
+#include "ResourceIDFactory.h"
 #include "BindGridView.h"
 #include "BindRow.h"
 #include "BindTextColumn.h"
 #include "YearMonthDay.h"
 #include "Task.h"
 
-class CDateCell :public CTextCell
+class CTaskDueDateCell :public CTextCell
 {
 public:
 	template<typename... Args>
-	CDateCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
+	CTaskDueDateCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
 		:CTextCell(pSheet, pRow, pColumn, spProperty, args...){}
 
-	virtual ~CDateCell() = default;
+	virtual ~CTaskDueDateCell() = default;
 
 	virtual std::wstring GetString() override
 	{

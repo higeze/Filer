@@ -1,5 +1,6 @@
 #include "FavoritesGridView.h"
 #include "FavoritesProperty.h"
+#include "BindColumn.h"
 #include "BindRow.h"
 #include "FavoritesColumn.h"
 #include "FavoriteCell.h"

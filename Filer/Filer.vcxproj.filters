@@ -887,10 +887,10 @@
     <ClInclude Include="ToDoGridView.h">
       <Filter>Filer\ToDo</Filter>
     </ClInclude>
-    <ClInclude Include="TaskDateCell.h">
+    <ClInclude Include="TaskDueDateCell.h">
       <Filter>Filer\ToDo</Filter>
     </ClInclude>
-    <ClInclude Include="TaskDateColumn.h">
+    <ClInclude Include="TaskDueDateColumn.h">
       <Filter>Filer\ToDo</Filter>
     </ClInclude>
     <ClInclude Include="TaskMemoColumn.h">
@@ -919,6 +919,12 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\YearMonthDay.h">
       <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskCheckBoxColumn.h">
+      <Filter>Filer\ToDo</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskNameColumn.h">
+      <Filter>Filer\ToDo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

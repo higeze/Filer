@@ -766,6 +766,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 {
 	bool shift = (::GetKeyState(VK_SHIFT) & 0x80) != 0;
 	bool ctrl = (::GetKeyState(VK_CONTROL) & 0x80) != 0;
+	bool alt = (::GetKeyState(VK_MENU) & 0x80) != 0;
 
 	switch (e.Char) {
 	case VK_CONTROL:
@@ -947,7 +948,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 		break;
 	}
 	case VK_RETURN:
-		if (m_isEnterText) {
+		if (m_isEnterText && !alt) {
 			m_enterText.set(m_text.get());
 		} else {
 			ReplaceSelection(L"\n");

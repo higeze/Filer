@@ -10,12 +10,14 @@
 
 class CToDoDoc
 {
+private:
+	std::vector<rxcpp::composite_subscription> m_subscriptions;
 public:
 	reactive_property<std::wstring> Path;
 	reactive_vector<std::tuple<MainTask>> Tasks;
 	reactive_property<FileStatus> Status;
 public:
-	CToDoDoc():Status(FileStatus::None) {};
+	CToDoDoc();
 	~CToDoDoc() = default;
 	//auto operator<=>(const CToDoDoc&) const = default;
 	bool operator == (const CToDoDoc & doc) const

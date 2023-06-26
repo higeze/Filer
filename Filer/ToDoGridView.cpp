@@ -2,69 +2,32 @@
 #include "ResourceIDFactory.h"
 #include "D2DWWindow.h"
 
-#include "RowIndexColumn.h"
-#include "BindTextColumn.h"
-#include "BindTextCell.h"
-#include "BindCheckBoxColumn.h"
-#include "TaskDateColumn.h"
-
-
 void CToDoGridView::Initialize()
 {
 	//Columns
-	SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(this));
-	PushColumns(
-		GetHeaderColumnPtr(),
-		std::make_shared<CBindCheckBoxColumn<MainTask>>(
-			this,
-			L"State",
-			[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).State.get(); },
-			[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).State.set(state); }),
-		std::make_shared<CBindTextColumn<MainTask>>(
-			this,
-			L"Name",
-			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name.get(); },
-			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name.set(str); }),
-		std::make_shared<CBindTextColumn<MainTask>>(
-			this,
-			L"Memo",
-			[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo.get(); },
-			[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo.set(str); }),
-		std::make_shared<CDateColumn>(
-			this,
-			L"Due date")//,
-		//std::make_shared<CBindSheetCellColumn< MainTask, SubTask>>(
-		//	m_spToDoGridView.get(),
-		//	L"Sub Task",
-		//	[](std::tuple<MainTask>& tk)->ReactiveVectorProperty<std::tuple<SubTask>>& {return std::get<MainTask>(tk).SubTasks; },
-		//	[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void {
-		//		pCell->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pCell));
-		//		pCell->PushColumns(
-		//			pCell->GetHeaderColumnPtr(),
-		//			std::make_shared<CBindCheckBoxColumn<SubTask>>(
-		//				pCell,
-		//				L"Done",
-		//				[](const std::tuple<SubTask>& tk)->CheckBoxState {return std::get<SubTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
-		//				[](std::tuple<SubTask>& tk, const CheckBoxState& state)->void {std::get<SubTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
-		//			std::make_shared<CBindTextColumn<SubTask>>(
-		//				pCell,
-		//				L"Name",
-		//				[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Name; },
-		//				[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Name = str; }),
-		//			std::make_shared<CBindTextColumn<SubTask>>(
-		//				pCell,
-		//				L"Memo",
-		//				[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Memo; },
-		//				[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Memo = str; })
-		//		);
-		//		pCell->SetFrozenCount<ColTag>(1);
+	if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CRowIndexColumn); })) 
+	{ 
+		m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this);
+		m_allCols.idx_push_back(m_pHeaderColumn);
+	}
+	if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CTaskCheckBoxColumn); })) 
+	{ 
+		m_allCols.idx_push_back(std::make_shared<CTaskCheckBoxColumn>(this));
+	}
+	if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CTaskNameColumn); })) 
+	{ 
+		m_pNameColumn = std::make_shared<CTaskNameColumn>(this);
+		m_allCols.idx_push_back(m_pNameColumn);
+	}
+	if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CTaskMemoColumn); })) 
+	{ 
+		m_allCols.idx_push_back(std::make_shared<CTaskMemoColumn>(this));
+	}
+	if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CTaskDueDateColumn); })) 
+	{ 
+		m_allCols.idx_push_back(std::make_shared<CTaskDueDateColumn>(this));
+	}
 
-		//		pCell->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pCell));
-		//		pCell->InsertRow(0, pCell->GetNameHeaderRowPtr());
-		//		pCell->SetFrozenCount<RowTag>(1);
-		//	},
-		//	arg<"maxwidth"_s>() = FLT_MAX)
-	);
 	SetFrozenCount<ColTag>(1);
 
 	//Rows

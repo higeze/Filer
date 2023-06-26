@@ -99,6 +99,16 @@ void CCheckBoxCell::SetStringCore(const std::wstring& str)
 
 void CCheckBoxCell::OnLButtonDown(const LButtonDownEvent& e)
 {
+	NextCheckBoxState();
+}
+
+void CCheckBoxCell::OnChar(const CharEvent& e)
+{
+	NextCheckBoxState();
+}
+
+void CCheckBoxCell::NextCheckBoxState()
+{
 	switch (GetCheckBoxType()) {
 		case CheckBoxType::Normal:
 			switch (GetCheckBoxState()) {
@@ -121,3 +131,4 @@ void CCheckBoxCell::OnLButtonDown(const LButtonDownEvent& e)
 			}
 	}
 }
+

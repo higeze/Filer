@@ -482,6 +482,7 @@
     <ClInclude Include="..\HiLib\PDFEditor.h" />
     <ClInclude Include="..\HiLib\YearMonthDay.h" />
     <ClInclude Include="CheckableFileGrid.h" />
+    <ClInclude Include="TaskCheckBoxColumn.h" />
     <ClInclude Include="DriveSizeCell.h" />
     <ClInclude Include="ExeExtensionProperty.h" />
     <ClInclude Include="FilerApplication.h" />
@@ -539,10 +540,11 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Task.h" />
-    <ClInclude Include="TaskDateCell.h" />
-    <ClInclude Include="TaskDateColumn.h" />
+    <ClInclude Include="TaskDueDateCell.h" />
+    <ClInclude Include="TaskDueDateColumn.h" />
     <ClInclude Include="TaskMemoCell.h" />
     <ClInclude Include="TaskMemoColumn.h" />
+    <ClInclude Include="TaskNameColumn.h" />
     <ClInclude Include="TaskRow.h" />
     <ClInclude Include="ToDoDoc.h" />
     <ClInclude Include="ToDoGridView.h" />

@@ -403,7 +403,8 @@
 				swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 				swapChainDesc.Flags = 0;
 				// Create DXGI swap chain targeting a window handle (the only Windows 7-compatible option)
-				GetDXGIFactory()->CreateSwapChainForHwnd(std::get<0>(GetD3DDevices()), m_hWnd, &swapChainDesc, nullptr, nullptr, &p);
+				FAILED_THROW(GetDXGIFactory()->CreateSwapChainForHwnd(std::get<0>(GetD3DDevices()), m_hWnd, &swapChainDesc, nullptr, nullptr, &p));
+				FAILED_THROW(GetDXGIFactory()->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_WINDOW_CHANGES | DXGI_MWA_NO_ALT_ENTER));
 			}
 			return p;
 		};

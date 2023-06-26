@@ -43,8 +43,17 @@ public:
 
     static const CYearMonthDay Now()
     {
-        auto sys_ymd = std::chrono::year_month_day{std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now())};
-        return std::chrono::year_month_day(sys_ymd.operator std::chrono::local_days());
+        time_t tm = time(NULL);
+        struct tm local_tm;
+        localtime_s(&local_tm, &tm);
+
+        return std::chrono::year_month_day(
+            std::chrono::year(local_tm.tm_year + 1900), 
+            std::chrono::month(local_tm.tm_mon + 1),
+            std::chrono::day(local_tm.tm_mday));
+
+        //auto sys_ymd = std::chrono::year_month_day{std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now())};
+        //return std::chrono::year_month_day(sys_ymd.operator std::chrono::local_days());
     }
 
     static const CYearMonthDay Today()

@@ -6,6 +6,7 @@
 #include "ShellFileFactory.h"
 #include "FilerGridView.h"
 #include "FilerGridViewProperty.h"
+#include "ToDoGridView.h"
 #include "TabControl.h"
 #include "ReactiveProperty.h"
 #include "KnownFolder.h"
@@ -98,7 +99,7 @@ struct ToDoTabData:public TabData
 
 	virtual ~ToDoTabData() = default;
 
-	//virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
+	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
 
 	friend void to_json(json& j, const ToDoTabData& o)
 	{
@@ -372,7 +373,9 @@ public:
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PreviewTabData);
 
 		to_json(j, static_cast<const CTabControl&>(o));
+
 		j["FilerView"] = o.m_spFilerGridView;
+		j["ToDoView"] = o.m_spToDoGridView;
 	}
 
 	friend void from_json(const json& j, CFilerTabGridView& o)
@@ -385,7 +388,9 @@ public:
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, PreviewTabData);
 
 		from_json(j, static_cast<CTabControl&>(o));
+
 		get_to(j, "FilerView", o.m_spFilerGridView);
+		get_to(j, "ToDoView", o.m_spToDoGridView);
 	}
 };
 

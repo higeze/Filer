@@ -2,7 +2,6 @@
 #include "TextCell.h"
 #include "BindGridView.h"
 #include "BindRow.h"
-#include "BindTextColumn.h"
 
 template<typename... TItems>
 class CBindTextCell :public CTextCell

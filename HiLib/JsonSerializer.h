@@ -176,6 +176,13 @@ json_make_shared_map.insert_or_assign(\
 //    }
 //}
 
+//template<typename T>
+//void update_to(const json& j, const char* key, T& obj) noexcept
+//{
+//    if (j.find(key) != j.end()) {
+//        from_json(j[key], o);
+//    }
+//}
 
 
 template<typename T>

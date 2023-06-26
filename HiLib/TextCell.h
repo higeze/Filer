@@ -88,7 +88,7 @@ public:
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
 	virtual void OnChar(const CharEvent& e);
 
-	virtual bool CanSetStringOnEditing()const{return true;}
+	virtual bool CanSetStringOnEditing()const{return false;}
 };
 
 //class CStringCell:public CTextCell

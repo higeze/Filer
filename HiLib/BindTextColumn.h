@@ -12,6 +12,8 @@ private:
 
 	std::function<std::wstring(const std::tuple<TItems...>&)> m_getFunction;
 	std::function<void(std::tuple<TItems...>&, const std::wstring&)> m_setFunction;
+	EditMode m_cellEditMode = EditMode::LButtonDownEdit;
+
 
 public:
 	template<typename... Args>
@@ -21,7 +23,9 @@ public:
 		std::function<void(std::tuple<TItems...>&, const std::wstring&)> setter,
 		Args... args)
 		:CMapColumn(pSheet, args...), m_header(header), m_getFunction(getter), m_setFunction(setter)
-	{}
+	{
+		m_cellEditMode = ::get(arg<"celleditmode"_s>(), args..., default_(EditMode::ReadOnly));
+	}
 
 	virtual ~CBindTextColumn(void) = default;
 
@@ -47,7 +51,7 @@ public:
 	{
 		return std::make_shared<CBindTextCell<TItems...>>(
 			m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty(),
-			arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit);
+			arg<"editmode"_s>() = m_cellEditMode);
 	}
 };
 

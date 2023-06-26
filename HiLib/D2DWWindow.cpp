@@ -90,6 +90,13 @@ CD2DWWindow::CD2DWWindow()
 	AddMsgHandler(WM_SIZE, &CD2DWWindow::OnSize, this);
 	AddMsgHandler(WM_PAINT, &CD2DWWindow::OnPaint, this);
 	AddMsgHandler(WM_DISPLAYCHANGE, &CD2DWWindow::OnPaint, this);
+	AddMsgHandler(WM_SYSCHAR, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
+	{
+		if (wParam == VK_RETURN) {
+			bHandled = TRUE;
+		}
+		return 1;
+	});
 
 	AddMsgHandler(WM_ERASEBKGND, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)-> LRESULT
 	{

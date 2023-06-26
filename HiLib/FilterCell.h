@@ -19,4 +19,6 @@ public:
 	virtual std::wstring GetString() override;
 	virtual void SetStringCore(const std::wstring& str)override;
 	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)override;
+
+	virtual bool CanSetStringOnEditing()const{return true;}
 };

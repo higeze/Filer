@@ -1,16 +1,18 @@
 #pragma once
-#include "BindColumn.h"
-#include "Sheet.h"
+#include "BindTextColumn.h"
+#include "BindTextCell.h"
 #include "Task.h"
-#include "TaskMemoCell.h"
 
-class CTaskMemoColumn :public CBindColumn<MainTask>
+class CTaskMemoColumn : public CBindTextColumn<MainTask>
 {
 public:
-	using CBindColumn<MainTask>::CBindColumn;
-
-	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) override
-	{
-		return std::make_shared<CTaskMemoCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
-	}
+	template<typename... Args>
+	CTaskMemoColumn(CSheet* pSheet = nullptr, Args... args)
+		:CBindTextColumn(
+		pSheet,
+		L"Memo",
+		[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo.get(); },
+		[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo.set(str); },
+		arg<"celleditmode"_s>() = EditMode::ExcelLike){}
 };
+

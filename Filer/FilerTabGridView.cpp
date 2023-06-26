@@ -71,32 +71,32 @@ FilerTabData::FilerTabData(const std::wstring& path)
 /***************/
 /* ToDoTabData */
 /***************/
-//bool ToDoTabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
-//{
-//	if (!TabData::AcceptClosing(pWnd, isWndClosing)) {
-//		return false;
-//	} else {
-//		if (Status.get() == FileStatus::Dirty) {
-//			int ync = pWnd->MessageBox(
-//				fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(Path.c_str())).c_str(),
-//				L"Save?",
-//				MB_YESNOCANCEL);
-//			switch (ync) {
-//				case IDYES:
-//					Save(pWnd->m_hWnd);
-//					return true;
-//				case IDNO:
-//					return true;
-//				case IDCANCEL:
-//					return false;
-//				default:
-//					return true;
-//			}
-//		} else {
-//			return true;
-//		}
-//	}
-//}
+bool ToDoTabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
+{
+	if (!TabData::AcceptClosing(pWnd, isWndClosing)) {
+		return false;
+	} else {
+		if (Doc.Status.get() == FileStatus::Dirty) {
+			int ync = pWnd->MessageBox(
+				fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(Doc.Path.get().c_str())).c_str(),
+				L"Save?",
+				MB_YESNOCANCEL);
+			switch (ync) {
+				case IDYES:
+					Doc.Save(Doc.Path.get().c_str());
+					return true;
+				case IDNO:
+					return true;
+				case IDCANCEL:
+					return false;
+				default:
+					return true;
+			}
+		} else {
+			return true;
+		}
+	}
+}
 
 /***************/
 /* TextTabData */
@@ -518,7 +518,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 				if (p->Doc.Path.get().empty()) {
 					return L"No file";
 				} else {
-					return std::wstring(::PathFindFileName(p->Doc.Path.get().c_str()));
+					return std::wstring(p->Doc.Status.get() == FileStatus::Dirty ? L"*" : L"") + ::PathFindFileName(p->Doc.Path.get().c_str());
 				}
 			} else {
 				return L"nullptr";
@@ -639,7 +639,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	//ItemsTemplate
 	m_itemsControlTemplate.emplace(typeid(FilerTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto pData = std::static_pointer_cast<FilerTabData>(pTabData);
-		auto spView = GetFilerGridViewPtr();
+		auto &spView = GetFilerGridViewPtr();
 		spView->OpenFolder(pData->FolderPtr);
 		spView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
 		spView->PostUpdate(Updates::All);
@@ -751,8 +751,8 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 						for (size_t i = 0; i < notify.new_items.size(); i++) {
 							dst.push_back(std::make_tuple(std::get<MainTask>(notify.new_items[i]).Clone()));
 							subs.push_back(reactive_task_binding(
-								std::get<MainTask>(src.get_unconst().operator[](notify.new_starting_index)),
-								std::get<MainTask>(dst.get_unconst().operator[](notify.new_starting_index))));
+								std::get<MainTask>(src.get_unconst().operator[](i)),
+								std::get<MainTask>(dst.get_unconst().operator[](i))));
 						}
 						break;
 				}

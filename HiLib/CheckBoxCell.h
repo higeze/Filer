@@ -33,4 +33,8 @@ public:
 	virtual void SetStringCore(const std::wstring& str);
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
+	virtual void OnChar(const CharEvent& e) override;
+
+private:
+	void NextCheckBoxState();
 };

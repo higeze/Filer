@@ -160,10 +160,10 @@ public:
 		ar("RowFrozenCount", m_frozenRowCount);
 		ar("ColFrozenCount", m_frozenColumnCount);
 	}
+
 	friend void to_json(json& j, const CFilerGridView& o)
 	{
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>);
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>);
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>);
@@ -177,10 +177,8 @@ public:
 	}
 	friend void from_json(const json& j, CFilerGridView& o)
 	{
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);// , this);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
 		json_make_shared_map.insert_or_assign(typeid(CRowIndexColumn).name(), [&]() { return std::make_shared<CRowIndexColumn>(&o); });
-		//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>);// , this, L"Name");
-		//json_make_shared_map.insert_or_assign(typeid(CFileNameColumn<std::shared_ptr<CShellFile>>).name(), [&]() { return std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(&o); });
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>);// , this, L"Name");
 		json_make_shared_map.insert_or_assign(typeid(CFileNameColumn<std::shared_ptr<CShellFile>>).name(), [&]() { return std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(&o, L"Name"); });
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);// , this, L"Exe");
@@ -191,8 +189,8 @@ public:
 		json_make_shared_map.insert_or_assign(typeid(CFileLastWriteColumn<std::shared_ptr<CShellFile>>).name(), [&]() { return std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(&o, o.GetFilerGridViewPropPtr()->FileTimeArgsPtr); });
 
 		j.at("Columns").get_to(static_cast<std::vector<std::shared_ptr<CColumn>>&>(o.m_allCols));
-
-
+		j.at("RowFrozenCount").get_to(o.m_frozenRowCount);
+		j.at("ColFrozenCount").get_to(o.m_frozenColumnCount);
 
 		for (auto& colPtr : o.m_allCols) {
 			if (auto p = std::dynamic_pointer_cast<CFileNameColumn<std::shared_ptr<CShellFile>>>(colPtr)) {
@@ -202,10 +200,6 @@ public:
 			}
 		}
 
-
-
-		j.at("RowFrozenCount").get_to(o.m_frozenRowCount);
-		j.at("ColFrozenCount").get_to(o.m_frozenColumnCount);
 	}
 };
 

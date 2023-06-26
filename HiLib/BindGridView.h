@@ -2,6 +2,7 @@
 #include "GridView.h"
 #include "BindRow.h"
 #include "BindColumn.h"
+#include "BindTextColumn.h"
 #include "ReactiveProperty.h"
 #include "MyString.h"
 #include "MyXmlSerializer.h"
