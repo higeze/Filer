@@ -1,31 +1,32 @@
 #pragma once
-#include "rxcpp/rx.hpp"
+#include "subject.h"
 #include "JsonSerializer.h"
 
 template <class T>
 class reactive_property
 {
 private:
-	rxcpp::subjects::subject<T> m_subject;
-	std::shared_ptr<T> m_spValue;
+	subject<T> m_subject;
+	T m_value;
 public:
 	explicit reactive_property(const T& value = T())
-		: m_spValue(std::make_shared<T>(value)) {}
+		: m_value(value) {}
 
 	virtual ~reactive_property() = default;
 
 	auto operator<=>(const reactive_property& rhs) const
 	{
-		return this->get() <=> rhs.get();
+		return this->get_const() <=> rhs.get_const();
 	}
 	bool operator==(const reactive_property& rhs) const
 	{
-		return this->get() == rhs.get();
+		return this->get_const() == rhs.get_const();
 	}
 	reactive_property(const reactive_property& val) = default;
 	reactive_property& operator=(const reactive_property& val) = default;
 	reactive_property(reactive_property&& val) noexcept = default;
 	reactive_property& operator=(reactive_property&& val) noexcept = default;
+
 	//reactive_property& operator=(const T& val) 
 	//{
 	//	set(val);
@@ -36,37 +37,34 @@ public:
 	//	set(val);
 	//	return *this;
 	//}
-	mutable std::shared_ptr<int> m_pCount = std::make_shared<int>(0);
-	int get_subscriber_count() const { return *m_pCount; }
 
-	template<class... ArgN>
-	auto subscribe(ArgN&&... an) const -> rxcpp::composite_subscription
+	template<class... Args>
+	auto subscribe(Args&&... args) const -> sigslot::connection
 	{
-		(*m_pCount)++;
-		return m_subject.get_observable().subscribe(std::forward<ArgN>(an)...);
+		return m_subject.subscribe(std::forward<Args>(args)...);
 	}
 
 
-	const T& get() const 
+	const T& get_const() const 
 	{ 
-		return *m_spValue;
+		return m_value;
 	}
 	T& get_unconst() 
 	{ 
-		return *m_spValue;
+		return m_value;
 	}
 	virtual void set(const T& value)
 	{
-		if (*m_spValue != value) {
-			*m_spValue = value;
-			m_subject.get_subscriber().on_next(value);
+		if (m_value != value) {
+			m_value = value;
+			m_subject.on_next(value);
 		}
 	}
 
 	friend void to_json(json& j, const reactive_property<T>& o)
 	{
 		j = {
-			{"Value", o.get()}
+			{"Value", o.get_const()}
 		};
 	}
 
@@ -77,3 +75,24 @@ public:
 		//o.set(value);
 	}
 };
+
+template<class T> using reactive_property_ptr = std::shared_ptr<reactive_property<T>>;
+
+template<class T, class... Args>
+auto make_reactive_property(Args&&... args) -> reactive_property_ptr<T>
+{
+	return std::make_shared<reactive_property<T>>(std::forward<Args>(args)...);
+}
+
+template<class T>
+auto operator<=>(const reactive_property_ptr<T>& lhs, const reactive_property_ptr<T>& rhs)
+{
+	return *lhs.get() <=> *rhs.get();
+}
+
+
+template<class T>
+bool operator==(const reactive_property_ptr<T>& lhs, const reactive_property_ptr<T>& rhs)
+{
+	return *lhs.get() == *rhs.get();
+}

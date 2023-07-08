@@ -1,46 +1,122 @@
 #include "CheckBoxFilterCell.h"
-#include "MyRect.h"
-#include "MyDC.h"
 #include "Sheet.h"
 #include "GridView.h"
 #include "Column.h"
 #include "D2DWWindow.h"
 #include "Dispatcher.h"
-//
+
+//TOOD why constructor called 3 times
+//TODO filter should be OR
 
 CCheckBoxFilterCell::CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-	:CCheckBoxCell(pSheet, pRow, pColumn, spProperty)
+	:CCell(pSheet, pRow, pColumn, spProperty), m_checkBoxes()
 {
-	SetCheckBoxType(CheckBoxType::ThreeState);
+
+	if (pColumn->GetFilter().size() == 1) {
+		CheckBoxState include = Str2State(std::wstring(1, pColumn->GetFilter()[0]));
+		for (size_t i = 0; i < CHECK_BOX_SIZE; i++) {
+			m_checkBoxes.emplace_back(CheckBoxType::ThreeState, include);
+		}
+	} else if (pColumn->GetFilter().size() == 2 && pColumn->GetFilter()[0] == L'-') {
+		const std::vector<CheckBoxState> threeStates = {CheckBoxState::False, CheckBoxState::Intermediate, CheckBoxState::True};
+		std::vector<CheckBoxState> states;
+		std::copy_if(threeStates.cbegin(), threeStates.cend(), std::back_inserter(states),
+			[exclude = Str2State(std::wstring(1, pColumn->GetFilter()[1]))](const CheckBoxState& state)->bool {
+			return exclude != state;
+		});
+		m_checkBoxes.emplace_back(CheckBoxType::ThreeState, states[0]);
+		m_checkBoxes.emplace_back(CheckBoxType::ThreeState, states[1]);
+		m_checkBoxes.emplace_back(CheckBoxType::ThreeState, states[1]);
+	} else {
+		for (size_t i = 0; i < CHECK_BOX_SIZE; i++) {
+			m_checkBoxes.emplace_back(CheckBoxType::ThreeState, static_cast<CheckBoxState>(i + 1));
+		}
+	}
+
+	auto FilterStr = [this]()->std::wstring {
+		const std::vector<CheckBoxState> threeStates = {CheckBoxState::False, CheckBoxState::Intermediate, CheckBoxState::True};
+		std::wstring filter;
+		std::vector<CheckBoxState> states;
+		std::transform(m_checkBoxes.cbegin(), m_checkBoxes.cend(), std::back_inserter(states), [](const CCheckBox& checkBox)->CheckBoxState {
+			return checkBox.State->get_const();
+		});
+		std::sort(states.begin(), states.end());
+		states.erase(std::unique(states.begin(), states.end()), states.end());
+		switch (states.size()) {
+			case 1:
+				filter = State2Str(states[0]);
+				break;
+			case 2:
+			{
+				std::vector<CheckBoxState> diff;
+				std::set_difference(threeStates.cbegin(), threeStates.cend(), states.cbegin(), states.cend(), std::back_inserter(diff));
+				filter = L"-" + State2Str(diff[0]);
+				break;
+			}
+			case 3:
+			default:
+				filter = L"";
+				break;
+		}
+		return filter;
+	};
+
+	for (const auto& checkBox : m_checkBoxes) {
+		checkBox.State->subscribe([this, FilterStr](const CheckBoxState& state) { SetString(FilterStr()); });
+	}
 }
 
-CheckBoxState CCheckBoxFilterCell::GetCheckBoxState() const
-{ 
-	return Str2State(m_pColumn->GetFilter());
-}
-
-void CCheckBoxFilterCell::SetCheckBoxState(const CheckBoxState& state)
-{ 
-	return m_pColumn->SetFilter(State2Str(state));
-}
-
-std::wstring CCheckBoxFilterCell::GetString()
+void CCheckBoxFilterCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	return m_pColumn->GetFilter();
+	CPointF leftTop = rcPaint.LeftTop();
+	for (auto& checkBox : m_checkBoxes) {
+		checkBox.Arrange(CRectF(leftTop, checkBox.DesiredSize()));
+		checkBox.Render(pDirect);
+		leftTop.x += checkBox.DesiredSize().width;
+	}
+}
+
+CSizeF CCheckBoxFilterCell::MeasureContentSize(CDirect2DWrite* pDirect)
+{
+	CSizeF sz;
+	for (auto& checkBox : m_checkBoxes) {
+		checkBox.Measure(CSizeF(16.f, 16.f));
+		sz.width += checkBox.DesiredSize().width;
+		sz.height = (std::max)(sz.height, checkBox.DesiredSize().height);
+	}
+	return sz;
+}
+
+CSizeF CCheckBoxFilterCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
+{
+	return MeasureContentSize(pDirect);
+}
+
+void CCheckBoxFilterCell::OnLButtonDown(const LButtonDownEvent& e)
+{
+	auto iter = std::find_if(m_checkBoxes.begin(), m_checkBoxes.end(), [ ptInWnd = e.PointInWnd](const auto& checkBox)->bool {
+		return checkBox.HitTestCore(ptInWnd) != nullptr;
+	});
+	if (iter != m_checkBoxes.end()) {
+		iter->Toggle();
+	}
 }
 
 void CCheckBoxFilterCell::SetStringCore(const std::wstring& str)
 {
-	m_deadlinetimer.run([pSheet = m_pSheet, pCell = this, newString = str]()->void {
-		pCell->CCheckBoxCell::SetStringCore(newString);
+	//Filter cell undo redo is set when Post WM_FILTER
+	m_deadlinetimer.run([pWnd = m_pSheet->GetWndPtr(), newString = str, pSheet = m_pSheet, pColumn = m_pColumn]()->void
+	{
+		pColumn->SetFilter(newString);
 		if (auto pGrid = dynamic_cast<CGridView*>(pSheet)) {
-			pGrid->GetWndPtr()->GetDispatcherPtr()->PostInvoke([pGrid]()->void
-			{
-				pGrid->OnFilter();
-			});
-
+			pWnd->GetDispatcherPtr()->PostInvoke([pGrid]()->void { pGrid->OnFilter(); });
 		}
 	}, std::chrono::milliseconds(200));
+}
+
+std::wstring CCheckBoxFilterCell::GetString()
+{ 
+	return m_pColumn->GetFilter();
 }
 
 void CCheckBoxFilterCell::OnPropertyChanged(const wchar_t* name)
@@ -55,22 +131,4 @@ void CCheckBoxFilterCell::OnPropertyChanged(const wchar_t* name)
 	//Notify to Row, Column and Sheet
 	m_pRow->OnCellPropertyChanged(this, name);
 	m_pColumn->OnCellPropertyChanged(this, name);
-}
-
-void CCheckBoxFilterCell::OnLButtonDown(const LButtonDownEvent& e)
-{
-	switch (GetCheckBoxType()) {
-		case CheckBoxType::Normal:
-			switch (GetCheckBoxState()) {
-			case CheckBoxState::None:
-				return SetString(State2Str(CheckBoxState::False));
-			case CheckBoxState::False:
-				return SetString(State2Str(CheckBoxState::True));
-			case CheckBoxState::True:
-			default:
-				return SetString(State2Str(CheckBoxState::None));
-			}
-		case CheckBoxType::ThreeState:
-			return SetString(std::to_wstring((static_cast<int>(GetCheckBoxState()) + 1) % 4));
-	}
 }

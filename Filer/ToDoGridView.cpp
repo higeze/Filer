@@ -69,7 +69,7 @@ void CToDoGridView::Open()
 
 void CToDoGridView::Open(const std::wstring& path)
 {
-	OpenCommand.execute(path);
+	OpenCommand->execute(path);
 	//if (::PathFileExists(path.c_str())){
 	//	m_path.set(path);
 	//	auto& itemsSource = GetItemsSource();
@@ -105,7 +105,7 @@ void CToDoGridView::Open(const std::wstring& path)
 void CToDoGridView::Save()
 {
 	std::wstring path;
-	if (Path.get().empty()) {
+	if (Path->get_const().empty()) {
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hwndOwner = GetWndPtr()->m_hWnd;
@@ -124,18 +124,18 @@ void CToDoGridView::Save()
 			}
 		} else {
 			::ReleaseBuffer(path);
-			Path.set(path);
+			Path->set(path);
 		}
 	}
 
-	if(!Path.get().empty()){
-		Save(Path.get());
+	if(!Path->get_const().empty()){
+		Save(Path->get_const());
 	}
 }
 
 void CToDoGridView::Save(const std::wstring& path)
 {
-	SaveCommand.execute(path);
+	SaveCommand->execute(path);
 }
 
 
@@ -172,10 +172,12 @@ void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		GetWndPtr()->m_hWnd);
 
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
-		ItemsSource.push_back(std::make_tuple(MainTask()));
+		ItemsSource->push_back(std::make_tuple(MainTask()));
+		m_spCursorer->OnCursor(Cell(m_allRows.back(), m_pNameColumn));
+		PostUpdate(Updates::EnsureVisibleFocusedCell);
 	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
 		auto a = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
-		ItemsSource.erase(ItemsSource.cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
+		ItemsSource->erase(ItemsSource->cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
 	}
 	*e.HandledPtr = TRUE;
 }

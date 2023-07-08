@@ -13,13 +13,13 @@ class CDate
 private:
     static const int INVALID = -1;
 public:
-    reactive_property<int> Year;
-    reactive_property<int> Month;
-    reactive_property<int> Day;
+    reactive_property_ptr<int> Year;
+    reactive_property_ptr<int> Month;
+    reactive_property_ptr<int> Day;
 
 public:
     CDate(int year = INVALID, int month = INVALID, int day = INVALID)
-        :Year(year), Month(month), Day(day){}
+        :Year(make_reactive_property<int>(year)), Month(make_reactive_property<int>(month)), Day(make_reactive_property<int>(day)){}
 
     CDate(const std::wstring& str):Year(-1), Month(-1), Day(-1)
     {

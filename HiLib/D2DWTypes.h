@@ -134,6 +134,7 @@ struct CRectT :public TRect
 	CRectT(const T& l, const T& t, const T& r, const T& b) :TRect{ l, t, r, b } {}
 	CRectT(const rect_type& rc) :CRectT(rc.left, rc.top, rc.right, rc.bottom) {}
 	CRectT(const TRect& rc) :CRectT(rc.left, rc.top, rc.right, rc.bottom) {}
+	CRectT(const TPoint& pt, const TSize& sz) :TRect(pt.x, pt.y, pt.x + sz.width, pt.y + sz.height) {}
 	CRectT(const size_type& size) :TRect{ 0, 0, size.width, size.height } {}
 	void SetRect(T l, T t, T r, T b)
 	{

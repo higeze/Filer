@@ -303,9 +303,11 @@
     <ClInclude Include="..\HiLib\CellState.h" />
     <ClInclude Include="..\HiLib\CellStringCommand.h" />
     <ClInclude Include="..\HiLib\CExpandCollapseCell.h" />
+    <ClInclude Include="..\HiLib\CheckBox.h" />
     <ClInclude Include="..\HiLib\CheckBoxCell.h" />
     <ClInclude Include="..\HiLib\CheckBoxFilterCell.h" />
     <ClInclude Include="..\HiLib\CheckBoxState.h" />
+    <ClInclude Include="..\HiLib\CheckBoxType.h" />
     <ClInclude Include="..\HiLib\ColorCell.h" />
     <ClInclude Include="..\HiLib\Column.h" />
     <ClInclude Include="..\HiLib\Console.h" />
@@ -445,6 +447,7 @@
     <ClInclude Include="..\HiLib\StatusBar.h" />
     <ClInclude Include="..\HiLib\StatusBarProperty.h" />
     <ClInclude Include="..\HiLib\string_extension.h" />
+    <ClInclude Include="..\HiLIb\subject.h" />
     <ClInclude Include="..\HiLib\TabControl.h" />
     <ClInclude Include="..\HiLib\D2DWWindow.h" />
     <ClInclude Include="..\HiLib\TabControlProperty.h" />
@@ -565,8 +568,10 @@
     <ClCompile Include="..\HiLib\Cell.cpp" />
     <ClCompile Include="..\HiLib\Celler.cpp" />
     <ClCompile Include="..\HiLib\CellStringCommand.cpp" />
+    <ClCompile Include="..\HiLib\CheckBox.cpp" />
     <ClCompile Include="..\HiLib\CheckBoxCell.cpp" />
     <ClCompile Include="..\HiLib\CheckBoxFilterCell.cpp" />
+    <ClCompile Include="..\HiLib\CheckBoxState.cpp" />
     <ClCompile Include="..\HiLib\ColorCell.cpp" />
     <ClCompile Include="..\HiLib\Column.cpp" />
     <ClCompile Include="..\HiLib\Console.cpp" />
@@ -659,6 +664,7 @@
     <ClCompile Include="..\HiLib\FPDFTextPage.cpp" />
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
     <ClCompile Include="..\HiLib\PDFCaret.cpp" />
+    <ClCompile Include="..\HiLIb\YearMonthDay.cpp" />
     <ClCompile Include="ToDoDoc.cpp" />
     <ClCompile Include="DriveSizeCell.cpp" />
     <ClCompile Include="DropTarget.cpp" />

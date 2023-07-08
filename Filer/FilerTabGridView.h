@@ -87,14 +87,14 @@ struct FilerTabData:public TabData
 struct ToDoTabData:public TabData
 {
 	CToDoDoc Doc;
-	reactive_command<std::wstring> OpenCommand;
-	reactive_command<std::wstring> SaveCommand;
+	reactive_command_ptr<std::wstring> OpenCommand;
+	reactive_command_ptr<std::wstring> SaveCommand;
 
 	ToDoTabData(const std::wstring& path = std::wstring())
-		:TabData()
+		:TabData(), OpenCommand(make_reactive_command<std::wstring>()),SaveCommand(make_reactive_command<std::wstring>())
 	{
-		OpenCommand.subscribe([this](const std::wstring& path) { Doc.Open(path); });
-		SaveCommand.subscribe([this](const std::wstring& path) { Doc.Save(path); });
+		OpenCommand->subscribe([this](const std::wstring& path) { Doc.Open(path); });
+		SaveCommand->subscribe([this](const std::wstring& path) { Doc.Save(path); });
 	};
 
 	virtual ~ToDoTabData() = default;
@@ -110,7 +110,7 @@ struct ToDoTabData:public TabData
 	{
 		from_json(j, static_cast<TabData&>(o));
 		j.at("Path").get_to(o.Doc.Path);
-		o.Doc.Open(o.Doc.Path.get());
+		o.Doc.Open(o.Doc.Path->get_const());
 	}
 };
 
@@ -306,16 +306,14 @@ private:
 	CBinding m_saveAsBinding;
 	CBinding m_previewPathBinding;
 
-	rxcpp::composite_subscription m_todoSubs;
-	std::vector<rxcpp::composite_subscription> m_todoItemsSubs;
-	std::vector<rxcpp::composite_subscription> m_todoViewModelTaskSubs;
-
 	std::unique_ptr<sigslot::scoped_connection> m_pTextPathConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pPdfPathConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pPreviewPathConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pImageConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pStatusConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pCloseConnection;
+
+	std::vector<sigslot::scoped_connection> m_todoTasksConnections;
 
 public:
 	CFilerTabGridView(CD2DWControl* pParentControl = nullptr,

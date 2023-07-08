@@ -20,15 +20,27 @@ public:
 	virtual std::wstring GetString() override
 	{
 		auto pBindRow = static_cast<CBindRow<MainTask>*>(m_pRow);
-		const CYearMonthDay& ymd = pBindRow->GetItem<MainTask>().YearMonthDay.get();
+		const CYearMonthDay& ymd = pBindRow->GetItem<MainTask>().YearMonthDay->get_const();
 
-		return ymd.IsInvalid()? L"" : std::format(L"{}/{}({})", ymd.YearMonthDay.get().month().operator size_t(), ymd.YearMonthDay.get().day().operator size_t(), ymd.GetJpnWeekDay());
+		return ymd.IsInvalid()? L"" : std::format(L"{}/{}({})", ymd.YearMonthDay->get_const().month().operator size_t(), ymd.YearMonthDay->get_const().day().operator size_t(), ymd.GetJpnWeekDay());
+	}
+
+	virtual std::wstring GetSortString() override
+	{
+		auto pBindRow = static_cast<CBindRow<MainTask>*>(m_pRow);
+		const CYearMonthDay& ymd = pBindRow->GetItem<MainTask>().YearMonthDay->get_const();
+
+		return ymd.IsInvalid()? L"99999999":
+			std::format(L"{}{}{}",
+			ymd.YearMonthDay->get_const().year().operator int(),
+			ymd.YearMonthDay->get_const().month().operator size_t(),
+			ymd.YearMonthDay->get_const().day().operator size_t());
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override
 	{
 		auto pBindRow = static_cast<CBindRow<MainTask>*>(m_pRow);
-		pBindRow->GetItem<MainTask>().YearMonthDay.get_unconst().Parse(str);
+		pBindRow->GetItem<MainTask>().YearMonthDay->get_unconst().Parse(str);
 	}
 
 	virtual bool CanSetStringOnEditing()const override{return false;}
@@ -59,9 +71,9 @@ public:
 		MainTask& task = pBindRow->GetItem<MainTask>();
 		
 		if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Today")) {
-			task.YearMonthDay.get_unconst().YearMonthDay.set(CYearMonthDay::Today().YearMonthDay.get());
+			task.YearMonthDay->get_unconst().YearMonthDay->set(CYearMonthDay::Today().YearMonthDay->get_const());
 		} else if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Tomorrow")) {
-			task.YearMonthDay.get_unconst().YearMonthDay.set(CYearMonthDay::Tomorrow().YearMonthDay.get());
+			task.YearMonthDay->get_unconst().YearMonthDay->set(CYearMonthDay::Tomorrow().YearMonthDay->get_const());
 		}
 
 		*e.HandledPtr = TRUE;

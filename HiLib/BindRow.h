@@ -19,7 +19,7 @@ public:
 		if (auto pBindSheet = dynamic_cast<IBindSheet2<TItems...>*>(this->m_pSheet)) {
 			auto& itemsSource = pBindSheet->GetItemsSource();
 			auto index = GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<RowTag>();
-			return itemsSource.get_unconst()[index];		
+			return itemsSource->get_unconst()[index];		
 		} if(auto pBindSheet = dynamic_cast<IBindSheet<TItems...>*>(this->m_pSheet)){
 			auto& itemsSource = pBindSheet->GetItemsSource();
 			auto index = GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<RowTag>();

@@ -926,6 +926,13 @@
     <ClInclude Include="TaskNameColumn.h">
       <Filter>Filer\ToDo</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLIb\subject.h" />
+    <ClInclude Include="..\HiLib\CheckBox.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CheckBoxType.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1348,6 +1355,15 @@
     </ClCompile>
     <ClCompile Include="ToDoDoc.cpp">
       <Filter>Filer\ToDo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLIb\YearMonthDay.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CheckBox.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CheckBoxState.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

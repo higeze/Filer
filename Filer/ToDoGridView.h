@@ -20,24 +20,26 @@ class CToDoGridView :public CBindGridView2<CTaskRow, CBindColumn<MainTask>, Main
 {
 public:
 	template<typename... TArgs>
-	CToDoGridView(CD2DWControl* pParentControl = nullptr, 
-				const std::shared_ptr<GridViewProperty>& spGridViewProp = nullptr,
-				const std::shared_ptr<ReactiveVectorProperty<std::tuple<MainTask>>> spItemsSource = nullptr,
-				  TArgs... args)
-		:CBindGridView2<CTaskRow, CBindColumn<MainTask>, MainTask>(pParentControl, spGridViewProp, spItemsSource, args...)
+	CToDoGridView(CD2DWControl* pParentControl = nullptr,
+		const std::shared_ptr<GridViewProperty>& spGridViewProp = nullptr,
+		const std::shared_ptr<ReactiveVectorProperty<std::tuple<MainTask>>> spItemsSource = nullptr,
+		TArgs... args)
+		:CBindGridView2<CTaskRow, CBindColumn<MainTask>, MainTask>(pParentControl, spGridViewProp, spItemsSource, args...),
+		Path(make_reactive_property<std::wstring>()),
+		OpenCommand(make_reactive_command<std::wstring>()),
+		SaveCommand(make_reactive_command<std::wstring>())
 	{
 		Initialize();
 	}
-
 	void Initialize();
 
 
 	virtual bool HasSheetCell() override { return true; }
 
 
-	reactive_property<std::wstring> Path;
-	reactive_command<std::wstring> OpenCommand;
-	reactive_command<std::wstring> SaveCommand;
+	reactive_property_ptr<std::wstring> Path;
+	reactive_command_ptr<std::wstring> OpenCommand;
+	reactive_command_ptr<std::wstring> SaveCommand;
 
 	void Open();
 	void Open(const std::wstring& path);

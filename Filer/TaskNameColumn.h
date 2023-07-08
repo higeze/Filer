@@ -13,8 +13,8 @@ public:
 		:CBindTextColumn(
 		pSheet,
 		L"Name",
-		[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name.get(); },
-		[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name.set(str); },
+		[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name->get_const(); },
+		[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name->set(str); },
 		arg<"celleditmode"_s>() = EditMode::ExcelLike){}
 };
 

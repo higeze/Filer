@@ -14,5 +14,5 @@ template<typename... TValueItem>
 class IBindSheet2
 {
 public:
-	virtual reactive_vector<std::tuple<TValueItem...>>& GetItemsSource() = 0;
+	virtual reactive_vector_ptr<std::tuple<TValueItem...>>& GetItemsSource() = 0;
 };

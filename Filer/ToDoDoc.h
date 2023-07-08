@@ -11,20 +11,19 @@
 class CToDoDoc
 {
 private:
-	std::vector<rxcpp::composite_subscription> m_subscriptions;
+	std::vector<sigslot::connection> m_connections;
 public:
-	reactive_property<std::wstring> Path;
-	reactive_vector<std::tuple<MainTask>> Tasks;
-	reactive_property<FileStatus> Status;
+	reactive_property_ptr<std::wstring> Path;
+	reactive_vector_ptr<std::tuple<MainTask>> Tasks;
+	reactive_property_ptr<FileStatus> Status;
 public:
 	CToDoDoc();
-	~CToDoDoc() = default;
+	~CToDoDoc();
 	//auto operator<=>(const CToDoDoc&) const = default;
 	bool operator == (const CToDoDoc & doc) const
 	{
 		return Path.get() == doc.Path.get();
 	};
-
 
 	void Open(const std::wstring& path);
 	void Save(const std::wstring& path);

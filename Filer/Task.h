@@ -8,12 +8,15 @@
 struct Task
 {
 public:
-	reactive_property<CheckBoxState> State;
-	reactive_property<std::wstring> Name;
-	reactive_property<std::wstring> Memo;
-	reactive_property<CYearMonthDay> YearMonthDay;
+	reactive_property_ptr<CheckBoxState> State;
+	reactive_property_ptr<std::wstring> Name;
+	reactive_property_ptr<std::wstring> Memo;
+	reactive_property_ptr<CYearMonthDay> YearMonthDay;
 
-	Task():State(CheckBoxState::False), Name(), Memo(), YearMonthDay(){}
+	Task():State(make_reactive_property<CheckBoxState>(CheckBoxState::False)),
+		Name(make_reactive_property<std::wstring>()), 
+		Memo(make_reactive_property<std::wstring>()),
+		YearMonthDay(make_reactive_property<CYearMonthDay>()){}
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
 		Task,
@@ -32,10 +35,10 @@ struct MainTask:public Task
 	MainTask Clone() const
 	{
 		MainTask clone;
-		clone.State.set(State.get());
-		clone.Name.set(Name.get());
-		clone.Memo.set(Memo.get());
-		clone.YearMonthDay.set(YearMonthDay.get().Clone());
+		clone.State->set(State->get_const());
+		clone.Name->set(Name->get_const());
+		clone.Memo->set(Memo->get_const());
+		clone.YearMonthDay->set(CYearMonthDay(YearMonthDay->get_const().YearMonthDay->get_const()));
 		return clone;
 	}
 	//auto operator<=>(const MainTask&) const = default;
@@ -43,14 +46,5 @@ struct MainTask:public Task
 	{
 		return State == value.State && Name == value.Name && Memo == value.Memo && YearMonthDay == value.YearMonthDay;
 	}
-
-	//ReactiveVectorProperty<std::tuple<std::wstring>> Links;
 	//ReactiveVectorProperty<std::tuple<SubTask>> SubTasks;
-
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		Task::serialize(ar);
-		//ar("SubTasks", SubTasks);
-	}
 };

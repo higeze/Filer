@@ -11,20 +11,17 @@ class CBindCheckBoxColumn : public CMapColumn
 private:
 	std::wstring m_header;
 
-	std::function<CheckBoxState(const std::tuple<TItems...>&)> m_getFunction;
-	std::function<void(std::tuple<TItems...>&, const CheckBoxState&)> m_setFunction;
+	std::function<reactive_property_ptr<CheckBoxState>&(std::tuple<TItems...>&)> m_path;
 
 public:
 	CBindCheckBoxColumn(CSheet* pSheet,
 		const std::wstring& header,
-		std::function<CheckBoxState(const std::tuple<TItems...>&)> getter,
-		std::function<void(std::tuple<TItems...>&, const CheckBoxState&)> setter)
-		:CMapColumn(pSheet), m_header(header), m_getFunction(getter), m_setFunction(setter){}
+		std::function<reactive_property_ptr<CheckBoxState>&(std::tuple<TItems...>&)> path)
+		:CMapColumn(pSheet), m_header(header), m_path(path){}
 
 	virtual ~CBindCheckBoxColumn(void) = default;
 
-	std::function<CheckBoxState(const std::tuple<TItems...>&)> GetGetter() const { return m_getFunction; }
-	std::function<void(std::tuple<TItems...>&, const CheckBoxState&)> GetSetter() const { return m_setFunction; }
+	reactive_property_ptr<CheckBoxState>& GetProperty(std::tuple<TItems...>& data) const { return m_path(data); }
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{

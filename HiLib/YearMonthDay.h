@@ -13,24 +13,28 @@ class CYearMonthDay
 private:
     static const size_t INVALID = 0;
 public:
-    reactive_property<std::chrono::year_month_day> YearMonthDay;
+    reactive_property_ptr<std::chrono::year_month_day> YearMonthDay;
 public:
     CYearMonthDay(int year = INVALID, size_t month = INVALID, size_t day = INVALID)
-        :YearMonthDay(std::chrono::year_month_day{std::chrono::year{year}, std::chrono::month{month}, std::chrono::day{day}}){}
+        :YearMonthDay(make_reactive_property<std::chrono::year_month_day>(std::chrono::year_month_day{std::chrono::year{year}, std::chrono::month{month}, std::chrono::day{day}})){}
 
     CYearMonthDay(const std::chrono::year_month_day& yearmonthday)
-        :YearMonthDay(yearmonthday) {}
+        :YearMonthDay(make_reactive_property<std::chrono::year_month_day>(yearmonthday)){}
 
     CYearMonthDay(const std::wstring& str)
-        :YearMonthDay()
+        :YearMonthDay(make_reactive_property<std::chrono::year_month_day>())
     {
         Parse(str);
     }
 
-    CYearMonthDay Clone() const
-    {
-        return CYearMonthDay(YearMonthDay.get());
-    }
+    CYearMonthDay(const CYearMonthDay& ymd) = default;
+    
+    ~CYearMonthDay() = default;
+
+    //CYearMonthDay Clone() const
+    //{
+    //    return CYearMonthDay(YearMonthDay->get());
+    //}
 
     auto operator<=>(const CYearMonthDay& rhs) const
     {
@@ -63,7 +67,7 @@ public:
 
     static const CYearMonthDay Tomorrow()
     {
-        return {Now().YearMonthDay.get().operator std::chrono::sys_days() + std::chrono::days{1}};
+        return {Now().YearMonthDay->get_const().operator std::chrono::sys_days() + std::chrono::days{1}};
     }
 
     //std::tuple<int, int, int> GetYMD() const
@@ -73,7 +77,7 @@ public:
 
     std::chrono::weekday GetWeekDay()const
     {
-        return std::chrono::weekday{YearMonthDay.get()};
+        return std::chrono::weekday{YearMonthDay->get_const()};
     }
     std::wstring GetEngWeekDay()const
     {
@@ -106,7 +110,7 @@ public:
 
     bool Parse(const std::wstring& str)
     {
-        std::chrono::year year = Now().YearMonthDay.get().year();
+        std::chrono::year year = Now().YearMonthDay->get_const().year();
         std::chrono::month month;
         std::chrono::day day;
         std::wsmatch m;
@@ -115,25 +119,25 @@ public:
             year = std::chrono::year{static_cast<int>(_wtol(m[1].str().c_str()))};
             month = std::chrono::month{static_cast<size_t>(_wtol(m[2].str().c_str()))};
             day = std::chrono::day{static_cast<size_t>(_wtol(m[3].str().c_str()))};
-            YearMonthDay.set(std::chrono::year_month_day{year, month, day});
+            YearMonthDay->set(std::chrono::year_month_day{year, month, day});
             return true;
         } else if (std::regex_match(str, m, std::wregex(LR"(([0-9]{1,2})/([0-9]{1,2}))"))) {
             month = std::chrono::month{static_cast<size_t>(_wtol(m[1].str().c_str()))};
             day = std::chrono::day{static_cast<size_t>(_wtol(m[2].str().c_str()))};
-            YearMonthDay.set(std::chrono::year_month_day{year, month, day});
+            YearMonthDay->set(std::chrono::year_month_day{year, month, day});
             return true;
         } else {
             year = std::chrono::year{INVALID};;
             month = std::chrono::month{INVALID};
             day = std::chrono::day{INVALID};
-            YearMonthDay.set(std::chrono::year_month_day{year, month, day});
+            YearMonthDay->set(std::chrono::year_month_day{year, month, day});
             return false;
         }
     }
 
     bool IsValid() const
     {
-        return YearMonthDay.get().year().operator int() > INVALID || YearMonthDay.get().month().operator size_t() > INVALID || YearMonthDay.get().day().operator size_t() > INVALID;
+        return YearMonthDay->get_const().year().operator int() > INVALID || YearMonthDay->get_const().month().operator size_t() > INVALID || YearMonthDay->get_const().day().operator size_t() > INVALID;
     }
 
     bool IsInvalid() const
@@ -148,9 +152,9 @@ public:
 
 	friend void to_json(json& j, const CYearMonthDay& o)
 	{
-        j["Year"] = o.YearMonthDay.get().year().operator int();
-        j["Month"] = o.YearMonthDay.get().month().operator size_t();
-        j["Day"] = o.YearMonthDay.get().day().operator size_t();
+        j["Year"] = o.YearMonthDay->get_const().year().operator int();
+        j["Month"] = o.YearMonthDay->get_const().month().operator size_t();
+        j["Day"] = o.YearMonthDay->get_const().day().operator size_t();
 	}
 
 	friend void from_json(const json& j, CYearMonthDay& o)
@@ -161,11 +165,6 @@ public:
         get_to(j, "Year", year);
         get_to(j, "Month", month);
         get_to(j, "Day", day);
-        o.YearMonthDay.set(std::chrono::year_month_day{std::chrono::year{year}, std::chrono::month{month}, std::chrono::day{day}});
+        o.YearMonthDay->set(std::chrono::year_month_day{std::chrono::year{year}, std::chrono::month{month}, std::chrono::day{day}});
 	}
-
-    //NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
-    //    CYearMonthDay,
-    //    YearMonthDay);
-
 };

@@ -165,7 +165,11 @@ public:
 			{
 				//VectorChanged
 				ReactiveVectorProperty<std::tuple<TItems...>>& itemsSource = GetItemsSource();
-				itemsSource.Subscribe([&](const auto& e) { this->subscribe_detail_row(e); });
+				itemsSource.Subscribe([&](const auto& e) { 
+					//itemsSource.block_subject();
+					this->subscribe_detail_row(e);
+					//itemsSource.unblock_subject();
+				});
 
 				//PushColumn
 				for (auto& spCol : m_initColumns) {
@@ -221,7 +225,7 @@ protected:
 	std::vector<std::shared_ptr<CRow>> m_initRows;
 
 public:
-	reactive_vector<std::tuple<TItems...>> ItemsSource;
+	reactive_vector_ptr<std::tuple<TItems...>> ItemsSource;
 
 public:
 	template<typename... TArgs> 
@@ -229,7 +233,8 @@ public:
 		CD2DWControl* pParentControl,
 		const std::shared_ptr<GridViewProperty>& spGridViewProp,
 		TArgs... args)
-		:CGridView(pParentControl, spGridViewProp)
+		:CGridView(pParentControl, spGridViewProp),
+		ItemsSource(make_reactive_vector<std::tuple<TItems...>>())
 	{
 		//TArg...
 		m_bindType = ::get(arg<"bindtype"_s>(), args..., default_(BindType::Row));
@@ -274,7 +279,7 @@ public:
 		m_initRows = ::get(arg<"rows"_s>(), args..., default_(m_initRows));
 	}
 
-	reactive_vector<std::tuple<TItems...>>& GetItemsSource() override { return ItemsSource; }
+	reactive_vector_ptr<std::tuple<TItems...>>& GetItemsSource() override { return ItemsSource; }
 
 	std::vector<int> GetSelectedIndexes() 
 	{
@@ -308,16 +313,21 @@ public:
 				break;
 			}
 			case notify_vector_changed_action::reset:
+			{
+				for (size_t i = m_frozenRowCount; i < m_allRows.size(); i++) {
+					m_allCells.get<row_tag>().erase(m_allRows[i].get());
+				}
 				m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
-				m_allCells.clear();
+				//m_allCells.clear();
 				m_spCursorer->Clear();//TOOD Refactor
 				m_spCeller->Clear();
 				for (auto& tup : e.new_items) {
 					PushRow(std::make_shared<TRow>(this));
 				}
-
-
+				//PostUpdate(Updates::All);
+				//SubmitUpdate();
 				break;
+			}
 			default:
 				break;
 		}
@@ -361,7 +371,12 @@ public:
 			case BindType::Row:
 			{
 				//VectorChanged
-				ItemsSource.subscribe([&](const auto& e) { this->subscribe_detail_row(e); });
+				ItemsSource->subscribe([&](const auto& e) 
+				{
+					//ItemsSource->block_subject();
+					this->subscribe_detail_row(e); 
+					//ItemsSource->unblock_subject();
+				});
 
 				//PushColumn
 				for (auto& spCol : m_initColumns) {
@@ -370,7 +385,7 @@ public:
 				}
 
 				//PushRow
-				for (size_t i = 0; i < ItemsSource.size(); i++) {
+				for (size_t i = 0; i < ItemsSource->size(); i++) {
 					PushRow(std::make_shared<TRow>(this));
 				}
 			}
@@ -378,7 +393,7 @@ public:
 			case BindType::Column:
 			{
 				//VectorChanged
-				ItemsSource.subscribe([&](const auto& e) { this->subscribe_detail_column(e); });
+				ItemsSource->subscribe([&](const auto& e) { this->subscribe_detail_column(e); });
 
 				//PushRow
 				for (auto& spRow : m_initRows) {
@@ -387,7 +402,7 @@ public:
 				}
 
 				//PushColumn
-				for (size_t i = 0; i < ItemsSource.size(); i++) {
+				for (size_t i = 0; i < ItemsSource->size(); i++) {
 					PushColumn(std::make_shared<TCol>(this));
 				}
 

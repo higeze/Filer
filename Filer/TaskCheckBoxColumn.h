@@ -9,7 +9,6 @@ public:
 		:CBindCheckBoxColumn<MainTask>(
 		pSheet,
 		L"State",
-		[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).State.get(); },
-		[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).State.set(state); }){}
+		[](std::tuple<MainTask>& tk)->reactive_property_ptr<CheckBoxState>& {return std::get<MainTask>(tk).State; }){}
 };
 
