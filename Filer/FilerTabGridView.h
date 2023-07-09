@@ -313,7 +313,7 @@ private:
 	std::unique_ptr<sigslot::scoped_connection> m_pStatusConnection;
 	std::unique_ptr<sigslot::scoped_connection> m_pCloseConnection;
 
-	std::vector<sigslot::scoped_connection> m_todoTasksConnections;
+	std::pair<sigslot::scoped_connection, sigslot::scoped_connection> m_todoTasksConnections;
 
 public:
 	CFilerTabGridView(CD2DWControl* pParentControl = nullptr,

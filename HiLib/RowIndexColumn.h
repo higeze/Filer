@@ -1,5 +1,6 @@
 #pragma once
 #include "MapColumn.h"
+#include "CellProperty.h"
 
 /**
  *  CParentRowHeaderColumn
@@ -7,9 +8,11 @@
  */
 class CRowIndexColumn:public CMapColumn
 {
+protected:
+	std::shared_ptr<CellProperty> m_spCellProperty;
 public:
-	CRowIndexColumn(CSheet* pSheet = nullptr)
-		:CMapColumn(pSheet, arg<"isminfit"_s>() = true, arg<"ismaxfit"_s>() = true){}
+	CRowIndexColumn(CSheet* pSheet = nullptr, std::shared_ptr<CellProperty> spProperty = nullptr)
+		:CMapColumn(pSheet, arg<"isminfit"_s>() = true, arg<"ismaxfit"_s>() = true),m_spCellProperty(spProperty){}
 
 	virtual ~CRowIndexColumn() = default;
 
@@ -28,5 +31,7 @@ public:
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn);
 
 	virtual bool IsTrackable()const override { return true; }
+
+	virtual void OnPaint(const PaintEvent& e) override;
 
 };

@@ -38,7 +38,7 @@ struct MainTask:public Task
 		clone.State->set(State->get_const());
 		clone.Name->set(Name->get_const());
 		clone.Memo->set(Memo->get_const());
-		clone.YearMonthDay->set(CYearMonthDay(YearMonthDay->get_const().YearMonthDay->get_const()));
+		clone.YearMonthDay->set(YearMonthDay->get_const());
 		return clone;
 	}
 	//auto operator<=>(const MainTask&) const = default;

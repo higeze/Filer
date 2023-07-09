@@ -62,8 +62,8 @@ void CCheckableFileGrid::OnCreate(const CreateEvt& e)
 	CFilerBindGridView::OnCreate(e);
 
 	//Insert rows
-	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this);
-	m_pFilterRow = std::make_shared<CRow>(this);
+	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this, GetCellProperty());
+	m_pFilterRow = std::make_shared<CRow>(this, GetCellProperty());
 
 	m_allRows.idx_push_back(m_pNameHeaderRow);
 	m_allRows.idx_push_back(m_pFilterRow);
@@ -75,7 +75,7 @@ void CCheckableFileGrid::OnCreate(const CreateEvt& e)
 	if (m_allCols.empty()) {
 		m_pNameColumn = std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
 		PushColumns(
-			std::make_shared<CRowIndexColumn>(this),
+			std::make_shared<CRowIndexColumn>(this, GetHeaderProperty()),
 			m_pNameColumn,
 			std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"),
 			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr),

@@ -22,6 +22,7 @@ struct notify_vector_changed_event_args
 	int new_starting_index = -1;
 	std::vector<T> old_items;
 	int old_starting_index = -1;
+	std::vector<T> all_items;
 };
 
 template<typename T>
@@ -109,7 +110,8 @@ public:
 				this->get_const(),
 				0,
 				old,
-				0
+				0,
+				this->get_const()
 			});
 		}
 	}
@@ -174,7 +176,8 @@ public:
 			{ this->m_value.back() },
 			(int)size() - 1,
 			{},
-			-1
+			-1,
+			this->get_const()
 		});
 	}
 
@@ -188,7 +191,8 @@ public:
 			{ this->m_value.back() },
 			(int)size() - 1,
 			{},
-			-1
+			-1,
+			this->get_const()
 		});
 	}
 
@@ -202,7 +206,8 @@ public:
 			{ *ret },
 			index,
 			{},
-			-1
+			-1,
+			this->get_const()
 		});
 		return ret;
 	}
@@ -218,7 +223,8 @@ public:
 			{ *position },
 			index,
 			{ oldItem},
-			-1
+			-1,
+			this->get_const()
 		});
 		return position;
 	}
@@ -234,7 +240,8 @@ public:
 			{},
 			-1,
 			{ oldItem },
-			index
+			index,
+			this->get_const()
 		});
 		return ret;
 	}
@@ -248,9 +255,10 @@ public:
 		{
 			notify_vector_changed_action::erase,
 			{},
-				-1,
-				oldItems,
-				index
+			-1,
+			oldItems,
+			index,
+			this->get_const()
 		});
 		return ret;
 	}
@@ -266,14 +274,15 @@ public:
 			{},
 			-1,
 			old,
-			0
+			0,
+			this->get_const()
 		});
 		return;
 	}
 
 	void observe(notify_vector_changed_event_args<T>& notify)
 	{
-		this->block_subject();
+		if (this->get_const() == notify.all_items) { return; }
 
 		switch (notify.action) {
 			case notify_vector_changed_action::push_back:
@@ -305,8 +314,7 @@ public:
 						this->get_unconst().operator[](i));
 				}
 				break;
-		}
-		this->unblock_subject();
+		}		this->unblock_subject();
 	}
 
 	friend void to_json(json& j, const reactive_vector<T, Allocator>& o)

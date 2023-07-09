@@ -50,16 +50,6 @@ void CTextCell::OnEdit(const Event& e)
 	}
 }
 
-void CTextCell::PaintLine(CDirect2DWrite* pDirect, CRectF rcPaint)
-{
-	CCell::PaintLine(pDirect, rcPaint);
-}
-
-void CTextCell::PaintBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
-{
-	CCell::PaintBackground(pDirect, rcPaint);
-}
-
 void CTextCell::OnLButtonDown(const LButtonDownEvent& e)
 {
 	if (m_editMode == EditMode::LButtonDownEdit) {
@@ -106,13 +96,13 @@ void CTextCell::OnChar(const CharEvent& e)
 	}
 	CCell::OnChar(e);
 }
-
-std::wstring CTextCell::GetString()
-{
-	return m_text;
-}
-
-void CTextCell::SetStringCore(const std::wstring& str)
-{
-	m_text = str;
-}
+//
+//std::wstring CTextCell::GetString()
+//{
+//	return m_text;
+//}
+//
+//void CTextCell::SetStringCore(const std::wstring& str)
+//{
+//	m_text = str;
+//}

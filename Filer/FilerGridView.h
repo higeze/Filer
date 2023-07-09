@@ -178,7 +178,7 @@ public:
 	friend void from_json(const json& j, CFilerGridView& o)
 	{
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		json_make_shared_map.insert_or_assign(typeid(CRowIndexColumn).name(), [&]() { return std::make_shared<CRowIndexColumn>(&o); });
+		json_make_shared_map.insert_or_assign(typeid(CRowIndexColumn).name(), [&]() { return std::make_shared<CRowIndexColumn>(&o, o.GetHeaderProperty()); });
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>);// , this, L"Name");
 		json_make_shared_map.insert_or_assign(typeid(CFileNameColumn<std::shared_ptr<CShellFile>>).name(), [&]() { return std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(&o, L"Name"); });
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);// , this, L"Exe");

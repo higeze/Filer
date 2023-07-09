@@ -6,6 +6,7 @@
 class CCell;
 class Sheet;
 class CColumn;
+struct CellProperty;
 struct RowTag;
 
 class CRow:public CBand
@@ -14,9 +15,11 @@ public:
 	typedef RowTag Tag;
 protected:
 	bool m_isVirtualMeasureValid = false;
+	std::shared_ptr<CellProperty> m_spCellProperty;
 public:
 	template<typename... Args>
-	CRow(CSheet* pSheet, Args... args):CBand(pSheet)
+	CRow(CSheet* pSheet, std::shared_ptr<CellProperty> spProperty, Args... args)
+		:CBand(pSheet),m_spCellProperty(spProperty)
 	{
 		m_isMinLengthFit = ::get(arg<"isminfit"_s>(), args..., default_(true));
 		m_isMaxLengthFit = ::get(arg<"ismaxfit"_s>(), args..., default_(true));
@@ -35,6 +38,7 @@ public:
 	virtual FLOAT GetTop(){ return GetStart(); }
 	virtual void SetTop(const FLOAT top, bool notify = true) { SetStart(top, notify); }
 	virtual FLOAT GetBottom() { return GetEnd(); }
+	virtual CRectF GetRectInWnd();
 
 	//Length
 	virtual FLOAT GetLength() override;

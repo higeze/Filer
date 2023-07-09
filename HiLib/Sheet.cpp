@@ -761,6 +761,11 @@ void CSheet::Normal_Paint(const PaintEvent& e)
 	for (auto rowIter = m_pntRows.rbegin(), rowEnd = m_pntRows.rend(); rowIter != rowEnd; ++rowIter) {
 		(*rowIter)->OnPaint(e);
 		for (auto colIter = m_pntCols.rbegin(), colEnd = m_pntCols.rend(); colIter != colEnd; ++colIter) {
+			(*colIter)->OnPaint(e);
+		}
+	}
+	for (auto rowIter = m_pntRows.rbegin(), rowEnd = m_pntRows.rend(); rowIter != rowEnd; ++rowIter) {
+		for (auto colIter = m_pntCols.rbegin(), colEnd = m_pntCols.rend(); colIter != colEnd; ++colIter) {
 			Cell(*rowIter, *colIter)->OnPaint(e);
 		}
 	}

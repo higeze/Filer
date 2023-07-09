@@ -3,6 +3,7 @@
 #include "Cell.h"
 #include "RowIndexCell.h"
 #include "CellProperty.h"
+#include "D2DWWindow.h"
 
 std::shared_ptr<CCell> CRowIndexColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
@@ -27,4 +28,10 @@ std::shared_ptr<CCell> CRowIndexColumn::FilterCellTemplate(CRow* pRow, CColumn* 
 std::shared_ptr<CCell> CRowIndexColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CRowIndexCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
+}
+
+void CRowIndexColumn::OnPaint(const PaintEvent& e)
+{
+	CRectF rcPaint(GetRectInWnd());
+	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
 }

@@ -5,6 +5,8 @@
 #include "named_arguments.h"
 #include <float.h>
 #include "JsonSerializer.h"
+#include "D2DWTypes.h"
+#include "UIElement.h"
 
 class CCell;
 class CRow;
@@ -73,7 +75,7 @@ public:
 	virtual FLOAT GetLeft() { return GetStart(); }
 	virtual void SetLeft(const FLOAT left, bool notify = true) { SetStart(left); }
 	virtual FLOAT GetRight() { return GetEnd(); }
-
+	virtual CRectF GetRectInWnd();
 
 	virtual Sorts GetSort()const{return m_sort;};
 	virtual void SetSort(const Sorts& sort);
@@ -94,6 +96,8 @@ public:
 	virtual SizeType GetSizeType()const { return m_sizeType; }
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name);
+
+	virtual void OnPaint(const PaintEvent& e) {}
 
 public:
 	template <class Archive>

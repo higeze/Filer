@@ -7,6 +7,15 @@ FLOAT CRow::GetStart() { return m_start/* + m_pSheet->GetRectInWnd().top*/; }
 
 FLOAT CRow::GetEnd() { return m_start + m_length /* + +m_pSheet->GetRectInWnd().top*/; }
 
+CRectF CRow::GetRectInWnd()
+{
+	auto visCols = m_pSheet->GetContainer<ColTag, VisTag>();
+	return CRectF(visCols.front()->GetLeft(),
+		GetTop(),
+		visCols.back()->GetRight(),
+		GetBottom());
+}
+
 FLOAT CRow::GetLength()
 {
 	if(!m_isMeasureValid){
@@ -72,10 +81,12 @@ void CRow::OnPropertyChanged(const wchar_t* name)
 
 void CRow::OnPaint(const PaintEvent& e)
 {
-	//TODO
-	//CRectF rcPaint(m_pSheet->GetCellsRect());
-	//rcPaint.top = GetTop();
-	//rcPaint.bottom = GetBottom();
+	CRectF rcPaint(GetRectInWnd());
+	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
 
-	//e.WndPtr->GetDirectPtr()->FillSolidRectangle(, rcPaint);
+	if (GetIsSelected() && m_pSheet->GetIsFocused()  /*::GetFocus() == m_pSheet->GetGridPtr()->m_hWnd*/) {
+		e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rcPaint);
+	} else if (GetIsSelected()) {
+		e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rcPaint);
+	}
 }

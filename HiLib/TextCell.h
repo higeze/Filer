@@ -50,8 +50,8 @@ class CTextCell:public CCell
 {
 private:
 	EditMode m_editMode = EditMode::LButtonDownEdit;
-protected:
-	std::wstring m_text;
+//protected:
+//	std::wstring m_text;
 
 
 public:
@@ -60,20 +60,18 @@ public:
 		:CCell(pSheet, pRow, pColumn, spProperty, args...)
 	{
 		m_editMode = ::get(arg<"editmode"_s>(), args..., default_(EditMode::ReadOnly));
-		m_text = ::get(arg<"text"_s>(), args..., default_(std::wstring()));
+		//m_text = ::get(arg<"text"_s>(), args..., default_(std::wstring()));
 	}
 	virtual ~CTextCell() = default;
 	//Accesser
 	EditMode GetEditMode()const { return m_editMode; }
 	void SetEditMode(const EditMode& value) { m_editMode = value; }
 
-	virtual std::wstring GetString() override;
-	virtual void SetStringCore(const std::wstring& str) override;
+	//virtual std::wstring GetString() override;
+	//virtual void SetStringCore(const std::wstring& str) override;
 
 
 	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override;
-	virtual void PaintLine(CDirect2DWrite* pDirect, CRectF rcPaint) override;
-	virtual void PaintBackground(CDirect2DWrite* pDirect, CRectF rcPaint) override;
 
 	//virtual CSize MeasureSize(CDC* pDC);
 	//virtual CSize MeasureSizeWithFixedWidth(CDC* pDC);
@@ -90,17 +88,4 @@ public:
 
 	virtual bool CanSetStringOnEditing()const{return false;}
 };
-
-//class CStringCell:public CTextCell
-//{
-//protected:
-//	std::wstring m_string;
-//public:
-//	template<typename... Args>
-//	CStringCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty, std::wstring str, Args... args)
-//		:CTextCell(pSheet,pRow, pColumn,spProperty,args...),m_string(str){}
-//	virtual ~CStringCell() = default;
-//	virtual std::wstring GetString();
-//	virtual void SetStringCore(const std::wstring& str);
-//};
 

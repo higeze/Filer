@@ -13,11 +13,20 @@ private:
 	static const CRectF TRIANGLE_MARGIN;
 	static const FLOAT MIN_COLUMN_WIDTH;
 
+	std::wstring m_text;
+
 public:
 	template<typename... Args>
 	CSortCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::ReadOnly, args...){}
+		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::ReadOnly, args...)
+	{
+		m_text = ::get(arg<"text"_s>(), args..., default_(std::wstring()));
+	}
 	virtual ~CSortCell() = default;
+
+	virtual std::wstring GetString() override { return m_text; }
+	virtual void SetStringCore(const std::wstring& str) override { m_text = str; }
+
 
 	CSizeF GetSortSize()const;
 	//virtual CSizeF GetInitSize(CDirect2DWrite& direct) override {return CSizeF(MIN_COLUMN_WIDTH,0);}

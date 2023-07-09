@@ -111,8 +111,7 @@ struct adl_vector_item<std::tuple<MainTask>>
 		reactive_binding(std::get<MainTask>(src).State, std::get<MainTask>(dst).State);
 		reactive_binding(std::get<MainTask>(src).Name, std::get<MainTask>(dst).Name);
 		reactive_binding(std::get<MainTask>(src).Memo, std::get<MainTask>(dst).Memo);
-		reactive_binding(std::get<MainTask>(src).YearMonthDay->get_unconst().YearMonthDay,
-			std::get<MainTask>(dst).YearMonthDay->get_unconst().YearMonthDay);
+		reactive_binding(std::get<MainTask>(src).YearMonthDay, std::get<MainTask>(dst).YearMonthDay);
 	}
 };
 
@@ -706,98 +705,27 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		reactive_command_binding(spViewModel->SaveCommand, spView->SaveCommand);
 		reactive_binding(spViewModel->Doc.Path, spView->Path);
 
-		auto task_cloning = [](const std::tuple<MainTask>& task)->std::tuple<MainTask> {
-			return std::make_tuple(std::get<MainTask>(task).Clone());
-		};
+		//Vector binding
+	
+		//for (auto& conn : m_todoTasksConnections) {
+		//	conn.disconnect();
+		//}
+		//m_todoTasksConnections.clear();
 
-		auto task_binding = [](std::tuple<MainTask>& src, std::tuple<MainTask>& dst)->void {
-			reactive_binding(std::get<MainTask>(src).State, std::get<MainTask>(dst).State);
-			reactive_binding(std::get<MainTask>(src).Name, std::get<MainTask>(dst).Name);
-			reactive_binding(std::get<MainTask>(src).Memo, std::get<MainTask>(dst).Memo);
-			reactive_binding(std::get<MainTask>(src).YearMonthDay->get_unconst().YearMonthDay,
-				std::get<MainTask>(dst).YearMonthDay->get_unconst().YearMonthDay);
-		};
+		//spView->ItemsSource->clear();
+		//for (size_t i = 0; i < spViewModel->Doc.Tasks->size(); i++) {
+		//	spView->ItemsSource->push_back(std::get<MainTask>(spViewModel->Doc.Tasks->operator[](i)).Clone());
+		//}
 
-
-
-
-		//auto reactive_task_binding = [](MainTask& src, MainTask& dst)->void {
-		//	reactive_binding(src.State, dst.State);
-		//	reactive_binding(src.Name, dst.Name);
-		//	reactive_binding(src.Memo, dst.Memo);
-		//	reactive_binding(src.YearMonthDay->get_unconst().YearMonthDay, dst.YearMonthDay->get_unconst().YearMonthDay);
-		//};
-
-		////When reflect change to the other, it is necessar to call clone. Otherwise subscription is also copied.
-		//auto reactive_tasks_one_side_binding = ([this, reactive_task_binding](
-		//	reactive_vector_ptr<std::tuple<MainTask>>& src,
-		//	reactive_vector_ptr<std::tuple<MainTask>>& dst)->sigslot::connection {
-
-		//	return src->subscribe(
-		//	[&](const notify_vector_changed_event_args<std::tuple<MainTask>>& notify)->void
-		//	{
-		//		dst->block_subject();
-		//		//if (dst == src)return;
-
-		//		switch (notify.action) {
-		//			case notify_vector_changed_action::push_back:
-		//				dst->push_back(std::make_tuple(std::get<MainTask>(notify.new_items.front()).Clone()));
-
-		//				reactive_task_binding(
-		//					std::get<MainTask>(src->get_unconst().operator[](notify.new_starting_index)),
-		//					std::get<MainTask>(dst->get_unconst().operator[](notify.new_starting_index)));
-		//				break;
-		//			case notify_vector_changed_action::insert:
-		//				dst->insert(dst->get_const().cbegin() + notify.new_starting_index, std::make_tuple(std::get<MainTask>(notify.new_items.front()).Clone()));
-		//				reactive_task_binding(
-		//					std::get<MainTask>(src->get_unconst().operator[](notify.new_starting_index)),
-		//					std::get<MainTask>(dst->get_unconst().operator[](notify.new_starting_index)));
-		//				break;
-		//			case notify_vector_changed_action::Move:
-		//				THROW_FILE_LINE_FUNC;
-		//				break;
-		//			case notify_vector_changed_action::erase:
-		//				dst->erase(dst->cbegin() + notify.old_starting_index);
-		//				break;
-		//			case notify_vector_changed_action::replace:
-		//				THROW_FILE_LINE_FUNC;
-		//				break;
-		//			case notify_vector_changed_action::reset:
-		//				for (size_t i = 0; i < notify.new_items.size(); i++) {
-		//					dst->push_back(std::make_tuple(std::get<MainTask>(notify.new_items[i]).Clone()));
-		//					reactive_task_binding(
-		//						std::get<MainTask>(src->get_unconst().operator[](i)),
-		//						std::get<MainTask>(dst->get_unconst().operator[](i)));
-		//				}
-		//				break;
-		//		}
-		//		dst->unblock_subject();
-		//	});
-		//});
-
-		//Vector binding		
-		for (auto& conn : m_todoTasksConnections) {
-			conn.disconnect();
-		}
-		m_todoTasksConnections.clear();
-
-		spView->ItemsSource->clear();
-		for (size_t i = 0; i < spViewModel->Doc.Tasks->size(); i++) {
-			spView->ItemsSource->push_back(std::get<MainTask>(spViewModel->Doc.Tasks->operator[](i)).Clone());
-		}
-
-		for (size_t i = 0; i < spViewModel->Doc.Tasks->size(); i++) {
-			task_binding(
-				spViewModel->Doc.Tasks->get_unconst().operator[](i),
-				spView->ItemsSource->get_unconst().operator[](i));
-		}
+		//for (size_t i = 0; i < spViewModel->Doc.Tasks->size(); i++) {
+		//	adl_vector_item<std::tuple<MainTask>>::bind(
+		//		spViewModel->Doc.Tasks->get_unconst().operator[](i),
+		//		spView->ItemsSource->get_unconst().operator[](i));
+		//}
 		
-		auto pair = reactive_vector_binding(spViewModel->Doc.Tasks, spView->ItemsSource);
-		////m_todoTasksConnections.push_back(reactive_tasks_one_side_binding(spViewModel->Doc.Tasks, spView->ItemsSource));
-		////m_todoTasksConnections.push_back(reactive_tasks_one_side_binding(spView->ItemsSource, spViewModel->Doc.Tasks));
-
-		////m_todoTasksConnections.push_back(reactive_tasks_one_side_binding(spViewModel->Doc.Tasks, spView->ItemsSource));
-		////m_todoTasksConnections.push_back(reactive_tasks_one_side_binding(spView->ItemsSource, spViewModel->Doc.Tasks));
+		m_todoTasksConnections.first.disconnect();
+		m_todoTasksConnections.second.disconnect();
+		m_todoTasksConnections = reactive_vector_binding(spViewModel->Doc.Tasks, spView->ItemsSource);
 
 		spView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
 		spView->PostUpdate(Updates::All);

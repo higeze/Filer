@@ -933,6 +933,12 @@
     <ClInclude Include="..\HiLib\CheckBoxType.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\BindYearMonthDayColumn.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindYearMonthDayCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">

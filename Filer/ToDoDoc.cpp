@@ -12,11 +12,11 @@ CToDoDoc::CToDoDoc()
 		subs.push_back(src.State->subscribe(dirty));
 		subs.push_back(src.Name->subscribe(dirty));
 		subs.push_back(src.Memo->subscribe(dirty));
-		subs.push_back(src.YearMonthDay->get_unconst().YearMonthDay->subscribe(dirty));
+		subs.push_back(src.YearMonthDay->subscribe(dirty));
 		return subs;
 	};
 
-	Tasks->subscribe([this, reactive_task_subscription](const notify_vector_changed_event_args<std::tuple<MainTask>>& notify) {
+	m_connections.push_back(Tasks->subscribe([this, reactive_task_subscription](const notify_vector_changed_event_args<std::tuple<MainTask>>& notify) {
 		switch (notify.action) {
 			case notify_vector_changed_action::push_back:
 			case notify_vector_changed_action::insert:
@@ -45,7 +45,7 @@ CToDoDoc::CToDoDoc()
 				}
 				break;
 		}
-	});
+	}));
 }
 
 CToDoDoc::~CToDoDoc()

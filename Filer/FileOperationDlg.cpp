@@ -41,7 +41,7 @@ CCopyMoveDlgBase::CCopyMoveDlgBase(
 		this,
 		spFilerGridViewProp,
 		m_spItemsSource,
-		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr),
+		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr, spFilerGridViewProp->HeaderPropPtr),
 		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, L"Name"),
 		arg<"frzcolcnt"_s>() = 1,
 		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{
@@ -50,8 +50,8 @@ CCopyMoveDlgBase::CCopyMoveDlgBase(
 			std::make_shared<CFileReextColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, L"Reext"),
 			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, spFilerGridViewProp->FileSizeArgsPtr),
 			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, spFilerGridViewProp->FileTimeArgsPtr)},
-		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
-		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
+		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr, spFilerGridViewProp->HeaderPropPtr),
+		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr, spFilerGridViewProp->CellPropPtr),
 		arg<"frzrowcnt"_s>() = 2);
 }
 
@@ -228,15 +228,15 @@ CDeleteDlg::CDeleteDlg(
 		this,
 		spFilerGridViewProp,
 		m_spItemsSource,
-		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr),
+		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr, spFilerGridViewProp->HeaderPropPtr),
 		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Name"),
 		arg<"frzcolcnt"_s>() = 1,
 		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{
 			std::make_shared<CFilePathExtColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Ext"),
 			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileSizeArgsPtr),
 			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileTimeArgsPtr) },
-		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
-		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
+		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr, spFilerGridViewProp->HeaderPropPtr),
+		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr, spFilerGridViewProp->CellPropPtr),
 		arg<"frzrowcnt"_s>() = 2);
 
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
@@ -312,15 +312,15 @@ CExeExtensionDlg::CExeExtensionDlg(
 		this,
 		spFilerGridViewProp,
 		m_spItemsSource,
-		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr),
+		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr, spFilerGridViewProp->HeaderPropPtr),
 		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Name"),
 		arg<"frzcolcnt"_s>() = 1,
 		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{
 			std::make_shared<CFilePathExtColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Ext"),
 			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileSizeArgsPtr),
 			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileTimeArgsPtr) },
-		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
-		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
+		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr, spFilerGridViewProp->HeaderPropPtr),
+		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr, spFilerGridViewProp->CellPropPtr),
 		arg<"frzrowcnt"_s>() = 2);
 
 	//TextBox
@@ -490,15 +490,15 @@ CPDFOperationDlgBase::CPDFOperationDlgBase(
 		this,
 		spFilerGridViewProp,
 		m_spItemsSource,
-		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr),
+		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr, spFilerGridViewProp->HeaderPropPtr),
 		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Name"),
 		arg<"frzcolcnt"_s>() = 1,
 		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{
 			std::make_shared<CFilePathExtColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Ext"),
 			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileSizeArgsPtr),
 			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(nullptr, spFilerGridViewProp->FileTimeArgsPtr) },
-		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
-		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
+		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr, spFilerGridViewProp->HeaderPropPtr),
+		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr, spFilerGridViewProp->CellPropPtr),
 		arg<"frzrowcnt"_s>() = 2);
 }
 

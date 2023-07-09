@@ -132,9 +132,9 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 	m_pDragSourceHelper.CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER);
 
 	//Insert rows
-	m_pHeaderRow = std::make_shared<CPathRow>(this);
-	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this);
-	m_pFilterRow = std::make_shared<CRow>(this);
+	m_pHeaderRow = std::make_shared<CPathRow>(this, GetHeaderProperty());
+	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this, GetHeaderProperty());
+	m_pFilterRow = std::make_shared<CRow>(this, GetCellProperty());
 
 	m_allRows.idx_push_back(m_pHeaderRow);
 	m_allRows.idx_push_back(m_pNameHeaderRow);
@@ -149,7 +149,7 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CRowIndexColumn); })) 
 		{ 
-			m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this);
+			m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this, GetHeaderProperty());
 			m_allCols.idx_push_back(m_pHeaderColumn);
 		}
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); })) 

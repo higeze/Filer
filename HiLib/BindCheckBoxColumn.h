@@ -14,7 +14,8 @@ private:
 	std::function<reactive_property_ptr<CheckBoxState>&(std::tuple<TItems...>&)> m_path;
 
 public:
-	CBindCheckBoxColumn(CSheet* pSheet,
+	CBindCheckBoxColumn(
+		CSheet* pSheet,
 		const std::wstring& header,
 		std::function<reactive_property_ptr<CheckBoxState>&(std::tuple<TItems...>&)> path)
 		:CMapColumn(pSheet), m_header(header), m_path(path){}

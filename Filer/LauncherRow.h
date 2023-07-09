@@ -11,8 +11,8 @@ protected:
 	std::unordered_map<const CColumn*,std::shared_ptr<CCell>> m_mapCell; /**<Map to hold cell*/
 
 public:
-	CLauncherRow(CSheet* pSheet)
-		:CMapRow(pSheet){}
+	CLauncherRow(CSheet* pSheet, std::shared_ptr<CellProperty> spProperty)
+		:CMapRow(pSheet, spProperty){}
 	
 	virtual ~CLauncherRow(void) = default;
 

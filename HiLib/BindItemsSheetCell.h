@@ -26,17 +26,17 @@ public:
 		auto& items = this->GetItemsSource();
 
 		for (auto& item : items) {
-			this->PushRow(std::make_shared<CBindRow<TValueItem>>(this));
+			this->PushRow(std::make_shared<CBindRow<TValueItem>>(this, spCellProperty));
 		}
 
 		items.Subscribe(
 			[this](const NotifyVectorChangedEventArgs<std::tuple<TValueItem>>& e)->void {
 			switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
-					this->PushRow(std::make_shared<CBindRow<TValueItem>>(this));
+					this->PushRow(std::make_shared<CBindRow<TValueItem>>(this, spCellProperty));
 					break;
 				case NotifyVectorChangedAction::Insert:
-					this->InsertRow(e.NewStartingIndex, std::make_shared<CBindRow<TValueItem>>(this));
+					this->InsertRow(e.NewStartingIndex, std::make_shared<CBindRow<TValueItem>>(this, spCellProperty));
 					break;
 				case NotifyVectorChangedAction::Remove:
 				{

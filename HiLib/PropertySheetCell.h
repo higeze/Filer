@@ -40,14 +40,14 @@ public:
 
 		auto spColValue = std::make_shared<CPropertyValueColumn>(this);
 		PushColumns(
-			std::make_shared<CRowIndexColumn>(this),
+			std::make_shared<CRowIndexColumn>(this, spCellProperty),
 			spColValue);
 		SetFrozenCount<ColTag>(1);
 
 		CCellSerializer serializer(this);
 		auto& items = this->GetItemsSource();
 		for (auto& val : items) {
-			auto spRow = std::make_shared<CBindRow<TValueItem>>(this);
+			auto spRow = std::make_shared<CBindRow<TValueItem>>(this, spCellProperty);
 			PushRow(spRow);
 			serializer.SerializeValue(val, spRow.get(), spColValue.get());
 		}
@@ -57,7 +57,7 @@ public:
 				switch (e.Action) {
 				case NotifyVectorChangedAction::Add:
 				{
-					auto spRow = std::make_shared<CBindRow<TValueItem>>(this);
+					auto spRow = std::make_shared<CBindRow<TValueItem>>(this, spCellProperty);
 					PushRow(spRow);
 					CCellSerializer serializer(this);
 					auto val = CreateInstance<TValueItem>();

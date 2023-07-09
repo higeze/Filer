@@ -26,14 +26,14 @@ public:
 		auto& items = this->GetItemsSource();
 
 		for (auto& item : items) {
-			PushRow(std::make_shared<CBindRowTest<TValueItem>>(this));
+			PushRow(std::make_shared<CBindRowTest<TValueItem>>(this, GetCellProperty()));
 		}
 
 		items.VectorChanged =
 			[this](const NotifyVectorChangedEventArgs<TValueItem>& e)->void {
 			switch (e.Action) {
 			case NotifyVectorChangedAction::Add:
-				PushRow(std::make_shared<CBindRowTest<TValueItem>>(this));
+				PushRow(std::make_shared<CBindRowTest<TValueItem>>(this, GetCellProperty()));
 				break;
 			case NotifyVectorChangedAction::Remove:
 				EraseRow(m_allRows.back());

@@ -292,6 +292,8 @@
     <ClInclude Include="..\HiLib\BindSheetCellColumn.h" />
     <ClInclude Include="..\HiLib\BindTextCell.h" />
     <ClInclude Include="..\HiLib\BindTextColumn.h" />
+    <ClInclude Include="..\HiLib\BindYearMonthDayCell.h" />
+    <ClInclude Include="..\HiLib\BindYearMonthDayColumn.h" />
     <ClInclude Include="..\HiLib\BoolCell.h" />
     <ClInclude Include="..\HiLib\BoostPythonHelper.h" />
     <ClInclude Include="..\HiLib\Button.h" />

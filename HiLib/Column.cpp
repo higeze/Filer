@@ -6,6 +6,15 @@ FLOAT CColumn::GetStart() { return m_start/* + m_pSheet->GetRectInWnd().left*/; 
 
 FLOAT CColumn::GetEnd() { return m_start + m_length /* + +m_pSheet->GetRectInWnd().left*/; }
 
+CRectF CColumn::GetRectInWnd()
+{
+	auto visRows = m_pSheet->GetContainer<RowTag, VisTag>();
+	return CRectF(GetLeft(),
+		visRows.front()->GetTop(),
+		GetRight(),
+		visRows.back()->GetBottom());
+}
+
 FLOAT CColumn::GetLength()
 {
 	if (m_isInit) {

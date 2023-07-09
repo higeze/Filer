@@ -11,8 +11,8 @@ template<typename... TItems>
 class CBindRow :public CRow
 {
 public:
-	CBindRow(CSheet* pSheet)
-		:CRow(pSheet){ }
+	CBindRow(CSheet* pSheet, std::shared_ptr<CellProperty> spProperty)
+		:CRow(pSheet, spProperty){ }
 
 	std::tuple<TItems...>& GetTupleItems()
 	{

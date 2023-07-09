@@ -76,7 +76,7 @@ public:
 	friend void from_json(const json& j, CToDoGridView& o)
 	{
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		json_make_shared_map.insert_or_assign(typeid(CRowIndexColumn).name(), [&]() { return std::make_shared<CRowIndexColumn>(&o); });
+		json_make_shared_map.insert_or_assign(typeid(CRowIndexColumn).name(), [&]() { return std::make_shared<CRowIndexColumn>(&o, o.GetHeaderProperty()); });
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskCheckBoxColumn);
 		json_make_shared_map.insert_or_assign(typeid(CTaskCheckBoxColumn).name(), [&]() { return std::make_shared<CTaskCheckBoxColumn>(&o); });
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskNameColumn);

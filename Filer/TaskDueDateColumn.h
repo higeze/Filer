@@ -1,36 +1,25 @@
 #pragma once
 #include "FilterCell.h"
-#include "MapColumn.h"
+#include "BindColumn.h"
 #include "SortCell.h"
 #include "Sheet.h"
 #include "named_arguments.h"
 #include "TaskDueDateCell.h"
 #include "Task.h"
 
-class CTaskDueDateColumn: public CMapColumn
+class CTaskDueDateColumn: public CBindYearMonthDayColumn<MainTask>
 {
 public:
 	template<typename... Args>
 	CTaskDueDateColumn(CSheet* pSheet = nullptr, Args... args)
-		:CMapColumn(pSheet, args...)
+		:CBindYearMonthDayColumn<MainTask>(
+		pSheet, 
+		L"Due Date",
+		[](std::tuple<MainTask>& tk)->reactive_property_ptr<CYearMonthDay>& {return std::get<MainTask>(tk).YearMonthDay; },
+		args...)
 	{}
 
 	virtual ~CTaskDueDateColumn(void) = default;
-
-	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-	{
-		return std::make_shared<CCell>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
-	}
-
-	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-	{
-		return std::make_shared<CSortCell>(m_pSheet, pRow, pColumn, m_pSheet->GetHeaderProperty(), arg<"text"_s>() = L"Due Date");
-	}
-
-	std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)
-	{
-		return std::make_shared<CFilterCell>(m_pSheet, pRow, pColumn, m_pSheet->GetFilterProperty());
-	}
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{

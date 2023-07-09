@@ -145,8 +145,8 @@ CRectF CCell::InnerBorder2CenterBorder(CRectF rcInner)
 
 void CCell::PaintBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	PaintNormalBackground(pDirect, rcPaint);
-	PaintSelectedBackground(pDirect, rcPaint);
+	//PaintNormalBackground(pDirect, rcPaint);
+	//PaintSelectedBackground(pDirect, rcPaint);
 	PaintHotBackground(pDirect, rcPaint);
 }
 
@@ -157,11 +157,11 @@ void CCell::PaintNormalBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 
 void CCell::PaintSelectedBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	if (GetIsSelected() && m_pSheet->GetIsFocused()  /*::GetFocus() == m_pSheet->GetGridPtr()->m_hWnd*/) {
-		pDirect->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rcPaint);
-	} else if (GetIsSelected()) {
-		pDirect->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rcPaint);
-	}
+	//if (GetIsSelected() && m_pSheet->GetIsFocused()  /*::GetFocus() == m_pSheet->GetGridPtr()->m_hWnd*/) {
+	//	pDirect->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rcPaint);
+	//} else if (GetIsSelected()) {
+	//	pDirect->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rcPaint);
+	//}
 }
 
 void CCell::PaintHotBackground(CDirect2DWrite* pDirect, CRectF rcPaint)

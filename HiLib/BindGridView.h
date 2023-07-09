@@ -101,10 +101,10 @@ public:
 	{
 		switch (e.Action) {
 			case NotifyVectorChangedAction::Add:
-				PushRow(std::make_shared<TRow>(this));
+				PushRow(std::make_shared<TRow>(this, GetCellProperty()));
 				break;
 			case NotifyVectorChangedAction::Insert:
-				InsertRow(e.NewStartingIndex, std::make_shared<TRow>(this));
+				InsertRow(e.NewStartingIndex, std::make_shared<TRow>(this, GetCellProperty()));
 				break;
 			case NotifyVectorChangedAction::Remove:
 			{
@@ -117,7 +117,7 @@ public:
 				m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
 				m_allCells.clear();
 				for (auto& tup : e.NewItems) {
-					PushRow(std::make_shared<TRow>(this));
+					PushRow(std::make_shared<TRow>(this, GetCellProperty()));
 				}
 
 				break;
@@ -179,7 +179,7 @@ public:
 
 				//PushRow
 				for (auto& tup : itemsSource) {
-					PushRow(std::make_shared<TRow>(this));
+					PushRow(std::make_shared<TRow>(this, GetCellProperty()));
 				}
 			}
 			break;
@@ -298,10 +298,10 @@ public:
 	{
 		switch (e.action) {
 			case notify_vector_changed_action::push_back:
-				PushRow(std::make_shared<TRow>(this));
+				PushRow(std::make_shared<TRow>(this, GetCellProperty()));
 				break;
 			case notify_vector_changed_action::insert:
-				InsertRow(e.new_starting_index, std::make_shared<TRow>(this));
+				InsertRow(e.new_starting_index, std::make_shared<TRow>(this, GetCellProperty()));
 				break;
 			case notify_vector_changed_action::erase:
 			{
@@ -322,7 +322,7 @@ public:
 				m_spCursorer->Clear();//TOOD Refactor
 				m_spCeller->Clear();
 				for (auto& tup : e.new_items) {
-					PushRow(std::make_shared<TRow>(this));
+					PushRow(std::make_shared<TRow>(this, GetCellProperty()));
 				}
 				//PostUpdate(Updates::All);
 				//SubmitUpdate();
@@ -386,7 +386,7 @@ public:
 
 				//PushRow
 				for (size_t i = 0; i < ItemsSource->size(); i++) {
-					PushRow(std::make_shared<TRow>(this));
+					PushRow(std::make_shared<TRow>(this, GetCellProperty()));
 				}
 			}
 			break;

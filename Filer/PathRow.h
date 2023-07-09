@@ -11,7 +11,8 @@ private:
 	std::shared_ptr<CCell> m_spPathCell;
 	std::shared_ptr<CCell> m_spHeaderCell;
 public:
-	CPathRow(CSheet* pSheet) :CHeaderRow(pSheet) {}
+	CPathRow(CSheet* pSheet, std::shared_ptr<CellProperty> spProperty) 
+		:CHeaderRow(pSheet, spProperty) {}
 
 	virtual bool HasCell()const override{ return true; }
 	virtual std::shared_ptr<CCell>& Cell(CColumn* pCol) override;
