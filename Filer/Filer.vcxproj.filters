@@ -939,6 +939,9 @@
     <ClInclude Include="..\HiLib\BindYearMonthDayCell.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\FPDFFormHandle.h">
+      <Filter>HiLib\PDF\FPDF</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1370,6 +1373,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\CheckBoxState.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\FPDFFormHandle.cpp">
+      <Filter>HiLib\PDF\FPDF</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

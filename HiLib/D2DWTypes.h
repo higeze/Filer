@@ -135,6 +135,7 @@ struct CRectT :public TRect
 	CRectT(const rect_type& rc) :CRectT(rc.left, rc.top, rc.right, rc.bottom) {}
 	CRectT(const TRect& rc) :CRectT(rc.left, rc.top, rc.right, rc.bottom) {}
 	CRectT(const TPoint& pt, const TSize& sz) :TRect(pt.x, pt.y, pt.x + sz.width, pt.y + sz.height) {}
+	CRectT(const TPoint& pt1, const TPoint& pt2) :TRect(pt1.x, pt1.y, pt2.x, pt2.y) {}
 	CRectT(const size_type& size) :TRect{ 0, 0, size.width, size.height } {}
 	void SetRect(T l, T t, T r, T b)
 	{
@@ -182,6 +183,7 @@ struct CRectT :public TRect
 		}
 	}
 	point_type LeftTop() const { return point_type(this->left, this->top); }
+	point_type RightBottom() const { return point_type(this->right, this->bottom); }
 	point_type CenterPoint() const
 	{
 		return point_type((this->left + this->right) / 2, (this->top + this->bottom) / 2);

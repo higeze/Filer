@@ -64,8 +64,9 @@ public:
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; };
 
-	virtual void OnPaint(const PaintEvent& e);
-
+	virtual void RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc);
+	virtual void RenderHighlight(CDirect2DWrite* pDirect, const CRectF& rc);
+	//virtual void OnPaint(const PaintEvent& e);
 };
 
 class CHeaderRow:public CRow

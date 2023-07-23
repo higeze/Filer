@@ -330,6 +330,8 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		m_pdfDrawer->GetThreadPoolPtr()->GetTotalThreadCount(),
 		m_pdfDrawer->GetThreadPoolPtr()->GetQueuedTaskCount()));
 
+	logs.push_back(std::format(L"Scroll(x, y):\t({}, {})", m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()));
+
 	//Clip
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
@@ -340,6 +342,8 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	CRectF rcInWnd = GetRenderRectInWnd();
 	CRectF rcInCtrl = Wnd2Ctrl(rcInWnd);
 	CRectF rcInDoc = Ctrl2Doc(rcInCtrl);
+
+	logs.push_back(std::format(L"Paint Rect in Doc:\t({}, {}, {}, {})", rcInDoc.left, rcInDoc.top, rcInDoc.right, rcInDoc.bottom));
 
 	const std::vector<CRectF>& orgRectsInDoc = m_pdf->GetPageRects();
 	
@@ -355,6 +359,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 
 	auto cur = std::max_element(intersectRectsInDoc.cbegin(), intersectRectsInDoc.cend(), [](const CRectF& a, const CRectF& b) { return a.Height() < b.Height(); });
 	m_currentPage.set(std::distance(intersectRectsInDoc.cbegin(), cur) + 1);
+	logs.push_back(std::format(L"Current Page:\t{}", m_currentPage.get()));
 	m_totalPage.set(m_pdf->GetPageCount());
 	auto first = std::find_if(intersectRectsInDoc.cbegin(), intersectRectsInDoc.cend(), [](const CRectF& rc) { return rc.Height() > 0; });
 	auto last = std::find_if(intersectRectsInDoc.crbegin(), intersectRectsInDoc.crend(), [](const CRectF& rc) { return rc.Height() > 0; });
@@ -385,11 +390,11 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 			std::round(ptDstLeftTopInWnd.x) + std::round(rcScaledFullInPage.Width()),
 			std::round(ptDstLeftTopInWnd.y) + std::round(rcScaledFullInPage.Height()));
 
-		FLOAT blurScale = ((std::min)(512.f / szPixcelBmp.width, 512.f / szPixcelBmp.height), 0.2f);
+		FLOAT blurScale = (std::min)({512.f / szPixcelBmp.width, 512.f / szPixcelBmp.height, 0.2f});
 		bool drawFullPage = (rcScaledFullInPage.Width() * rcScaledFullInPage.Height()) < (szBitmap.width * szBitmap.height / 8);
-		PdfBmpKey fullKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = m_scale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcFullInPage };
-		PdfBmpKey blurKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = blurScale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcFullInPage };
-		PdfBmpKey clipKey{ .PagePtr = m_pdf->GetPage(i).get(), .Scale = m_scale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcClipInPage };
+		PdfBmpKey fullKey{ .PagePtr = m_pdf->GetPage(i).get(), .HashCode = m_pdf->GetPage(i)->GetHashCode(), .Scale = m_scale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcFullInPage };
+		PdfBmpKey blurKey{ .PagePtr = m_pdf->GetPage(i).get(), .HashCode = m_pdf->GetPage(i)->GetHashCode(), .Scale = blurScale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcFullInPage };
+		PdfBmpKey clipKey{ .PagePtr = m_pdf->GetPage(i).get(), .HashCode = m_pdf->GetPage(i)->GetHashCode(), .Scale = m_scale, .Rotate = m_pdf->GetPage(i)->Rotate.get(), .Rect = rcClipInPage };
 
 		logs.push_back(std::format(L"Page:\t{}", i + 1));
 		logs.push_back(std::format(L"OriginalSize:\t({},{})", szPixcelBmp.width, szPixcelBmp.height));
@@ -472,6 +477,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	}
 
 	//Paint Selected Text
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND::D2D1_PRIMITIVE_BLEND_MIN);
 	auto [page_first_index, char_begin_index] = m_caret.SelectBegin;
 	auto [page_last_index, char_end_index] = m_caret.SelectEnd;
 
@@ -494,7 +500,9 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		}
 	}
 	std::for_each(rcSelsInWnd.cbegin(), rcSelsInWnd.cend(), [this](const CRectF& rcSelInWnd) { GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->SelectedFill), rcSelInWnd); });
-	
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND::D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
+
+	//Mouse Rects
 	if (debug) {
 		for (auto i = begin; i < end; i++) {
 			const std::vector<CRectF>& rcMousInPdfium = m_pdf->GetPage(i)->GetTextMouseRects();
@@ -506,7 +514,9 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		}
 	}	 
 
+
 	//Paint Find
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND::D2D1_PRIMITIVE_BLEND_MIN);
 	for (auto i = begin; i < end; i++) {
 		const std::vector<CRectF>& rcFndsInPdfium = m_pdf->GetPage(i)->GetFindRects(GetFind().get());
 		std::vector<CRectF> rcFndsInWnd;
@@ -515,6 +525,8 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		std::for_each(rcFndsInWnd.cbegin(), rcFndsInWnd.cend(),
 			[this](const CRectF& rcFndInWnd) { GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->FindHighliteFill), rcFndInWnd); });
 	}
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND::D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
+	
 
 	//Paint Scroll
 	UpdateScroll();
@@ -654,6 +666,10 @@ void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 	mii.dwTypeData = const_cast<LPWSTR>(L"Rotate Counter Clockwise");
 	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
+	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeletePage");
+	mii.dwTypeData = const_cast<LPWSTR>(L"Delete Page");
+	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
 	::SetForegroundWindow(GetWndPtr()->m_hWnd);
 	int idCmd = menu.TrackPopupMenu(
 		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
@@ -662,12 +678,14 @@ void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 		GetWndPtr()->m_hWnd);
 
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateClockwise")) {
-		std::unique_ptr<CPDFPage>& pPage = m_pdf->GetPage(m_currentPage.get() - 1);
+		const std::unique_ptr<CPDFPage>& pPage = m_pdf->GetPage(m_currentPage.get() - 1);
 		pPage->Rotate.set((pPage->Rotate.get() + 1) % 4);
 	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateCounterClockwise")) {
-		std::unique_ptr<CPDFPage>& pPage = m_pdf->GetPage(m_currentPage.get() - 1);
+		const std::unique_ptr<CPDFPage>& pPage = m_pdf->GetPage(m_currentPage.get() - 1);
 		int rotate = pPage->Rotate.get() == 0 ? 4 : pPage->Rotate.get();
 		pPage->Rotate.set((rotate - 1) % 4);
+	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeletePage")) {
+		m_pdf->DeletePage(m_currentPage.get() - 1);
 	}
 	*e.HandledPtr = TRUE;
 

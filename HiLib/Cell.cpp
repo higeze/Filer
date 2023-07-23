@@ -145,23 +145,21 @@ CRectF CCell::InnerBorder2CenterBorder(CRectF rcInner)
 
 void CCell::PaintBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	//PaintNormalBackground(pDirect, rcPaint);
-	//PaintSelectedBackground(pDirect, rcPaint);
+	PaintNormalBackground(pDirect, rcPaint);
+	PaintSelectedBackground(pDirect, rcPaint);
 	PaintHotBackground(pDirect, rcPaint);
 }
 
 void CCell::PaintNormalBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	//pDirect->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
+	m_pRow->RenderBackground(pDirect, rcPaint);
+	m_pColumn->RenderBackground(pDirect, rcPaint);
 }
 
 void CCell::PaintSelectedBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	//if (GetIsSelected() && m_pSheet->GetIsFocused()  /*::GetFocus() == m_pSheet->GetGridPtr()->m_hWnd*/) {
-	//	pDirect->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rcPaint);
-	//} else if (GetIsSelected()) {
-	//	pDirect->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rcPaint);
-	//}
+	m_pRow->RenderHighlight(pDirect, rcPaint);
+	m_pColumn->RenderHighlight(pDirect, rcPaint);
 }
 
 void CCell::PaintHotBackground(CDirect2DWrite* pDirect, CRectF rcPaint)

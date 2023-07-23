@@ -699,29 +699,10 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsControlTemplate.emplace(typeid(ToDoTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto spViewModel = std::static_pointer_cast<ToDoTabData>(pTabData);
 		auto spView = GetToDoGridViewPtr();
-		//m_todoViewModelTaskSubs.clear();
 
 		reactive_command_binding(spViewModel->OpenCommand, spView->OpenCommand);
 		reactive_command_binding(spViewModel->SaveCommand, spView->SaveCommand);
 		reactive_binding(spViewModel->Doc.Path, spView->Path);
-
-		//Vector binding
-	
-		//for (auto& conn : m_todoTasksConnections) {
-		//	conn.disconnect();
-		//}
-		//m_todoTasksConnections.clear();
-
-		//spView->ItemsSource->clear();
-		//for (size_t i = 0; i < spViewModel->Doc.Tasks->size(); i++) {
-		//	spView->ItemsSource->push_back(std::get<MainTask>(spViewModel->Doc.Tasks->operator[](i)).Clone());
-		//}
-
-		//for (size_t i = 0; i < spViewModel->Doc.Tasks->size(); i++) {
-		//	adl_vector_item<std::tuple<MainTask>>::bind(
-		//		spViewModel->Doc.Tasks->get_unconst().operator[](i),
-		//		spView->ItemsSource->get_unconst().operator[](i));
-		//}
 		
 		m_todoTasksConnections.first.disconnect();
 		m_todoTasksConnections.second.disconnect();

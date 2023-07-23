@@ -32,6 +32,6 @@ public:
 
 	virtual bool IsTrackable()const override { return true; }
 
-	virtual void OnPaint(const PaintEvent& e) override;
+	virtual void RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc);
 
 };

@@ -34,19 +34,16 @@ public:
 	virtual std::wstring GetString() override
 	{
 		return YearMonthDay->get_const().IsInvalid() ? L"" : 
-			std::format(L"{}/{}({})", 
-			YearMonthDay->get_const().month().operator size_t(), 
-			YearMonthDay->get_const().day().operator size_t(),
+			std::format(L"{:%m/%d}({})", 
+			std::chrono::year_month_day(YearMonthDay->get_const()),
 			YearMonthDay->get_const().GetJpnWeekDay());
 	}
 
 	virtual std::wstring GetSortString() override
 	{
-		return YearMonthDay->get_const().IsInvalid() ? L"99999999" :
-			std::format(L"{}{}{}",
-			YearMonthDay->get_const().year().operator int(),
-			YearMonthDay->get_const().month().operator size_t(),
-			YearMonthDay->get_const().day().operator size_t());
+		return YearMonthDay->get_const().IsInvalid() ? L"9999-99-99" :
+			std::format(L"{:%F}",
+			std::chrono::year_month_day(YearMonthDay->get_const()));
 	}
 
 	virtual void SetString(const std::wstring& str, bool notify = true) override

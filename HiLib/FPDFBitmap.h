@@ -7,6 +7,7 @@ class CFPDFPage;
 
 class CFPDFBitmap
 {
+    friend class CFPDFFormHandle;
 private:
     struct delete_fpdf_bitmap
     {

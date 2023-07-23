@@ -30,8 +30,7 @@ std::shared_ptr<CCell> CRowIndexColumn::CellTemplate(CRow* pRow, CColumn* pColum
 	return std::make_shared<CRowIndexCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
 }
 
-void CRowIndexColumn::OnPaint(const PaintEvent& e)
+void  CRowIndexColumn::RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc) 
 {
-	CRectF rcPaint(GetRectInWnd());
-	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
+	pDirect->FillSolidRectangle(*(m_spCellProperty->NormalFill), rc);
 }

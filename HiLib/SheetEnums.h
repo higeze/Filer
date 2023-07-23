@@ -101,9 +101,9 @@ enum class Updates{
 	RowVisible,//AllContainer->VisContainer
 	ColumnVisible,//AllContainer->VisContainer
 	Sort,//Sort VisContainer
-	Scrolls,
 	Column,//Start&Length
 	Row,//Start&Length
+	Scrolls,
 	EnsureVisibleFocusedCell,
 	Invalidate,
 	All

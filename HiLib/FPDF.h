@@ -4,6 +4,7 @@
 #include <fpdf_text.h>
 #include <fpdf_ppo.h>
 #include <fpdf_save.h>
+#include <fpdf_formfill.h>
 #include <fpdf_thumbnail.h>
 #pragma comment(lib, "pdfium.dll.lib")
 

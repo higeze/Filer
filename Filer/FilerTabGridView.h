@@ -117,10 +117,6 @@ struct ToDoTabData:public TabData
 /***************/
 /* TextTabData */
 /***************/
-
-
-
-
 struct TextTabData :public TabData
 {
 	ReactiveWStringProperty Path;
@@ -230,7 +226,6 @@ struct ImageTabData :public TabData
 /**************/
 /* PdfTabData */
 /**************/
-
 struct PdfTabData :public TabData
 {
 	ReactiveWStringProperty Path;

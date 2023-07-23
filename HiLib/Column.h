@@ -97,7 +97,8 @@ public:
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name) override;
 	virtual void OnPropertyChanged(const wchar_t* name);
 
-	virtual void OnPaint(const PaintEvent& e) {}
+	virtual void RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc) {}
+	virtual void RenderHighlight(CDirect2DWrite* pDirect, const CRectF& rc) {}
 
 public:
 	template <class Archive>

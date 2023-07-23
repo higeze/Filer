@@ -138,8 +138,6 @@ void CToDoGridView::Save(const std::wstring& path)
 	SaveCommand->execute(path);
 }
 
-
-
 void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
 	auto spCell = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
@@ -175,9 +173,11 @@ void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		ItemsSource->push_back(std::make_tuple(MainTask()));
 		m_spCursorer->OnCursor(Cell(m_allRows.back(), m_pNameColumn));
 		PostUpdate(Updates::EnsureVisibleFocusedCell);
+		SubmitUpdate();
 	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
 		auto a = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
 		ItemsSource->erase(ItemsSource->cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
+		SubmitUpdate();
 	}
 	*e.HandledPtr = TRUE;
 }

@@ -5,10 +5,12 @@
 
 class CFPDFTextPage;
 class CFPDFBitmap;
+class CFPDFFormHandle;
 
 class CFPDFPage
 {
     friend class CFPDFBitmap;
+    friend class CFPDFFormHandle;
 private:
     struct delete_fpdf_page
     {
@@ -62,4 +64,8 @@ public:
     UHBITMAP GetBitmap(HDC hDC, const float& scale, std::function<bool()> cancel = []()->bool { return false; });
     UHBITMAP GetClippedBitmap(HDC hDC, const float& scale, const CRectF& rectInPage, std::function<bool()> cancel = []()->bool { return false; });
     CFPDFTextPage LoadTextPage() const;
+
+	void OnAfterLoadPage(const CFPDFFormHandle& form);
+    void OnBeforeClosePage(const CFPDFFormHandle& form);
+    void DoPageAAction(const CFPDFFormHandle& form, int aaType);
 };

@@ -79,14 +79,28 @@ void CRow::OnPropertyChanged(const wchar_t* name)
 	m_pSheet->OnRowPropertyChanged(this, name);
 }
 
-void CRow::OnPaint(const PaintEvent& e)
+void CRow::RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc)
 {
-	CRectF rcPaint(GetRectInWnd());
-	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
+	pDirect->FillSolidRectangle(*(m_spCellProperty->NormalFill), rc);
+}
 
-	if (GetIsSelected() && m_pSheet->GetIsFocused()  /*::GetFocus() == m_pSheet->GetGridPtr()->m_hWnd*/) {
-		e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rcPaint);
+void CRow::RenderHighlight(CDirect2DWrite* pDirect, const CRectF& rc)
+{
+	if (GetIsSelected() && m_pSheet->GetIsFocused()) {
+		pDirect->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rc);
 	} else if (GetIsSelected()) {
-		e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rcPaint);
+		pDirect->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rc);
 	}
 }
+
+//void CRow::OnPaint(const PaintEvent& e)
+//{
+//	CRectF rcPaint(GetRectInWnd());
+//	e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
+//
+//	if (GetIsSelected() && m_pSheet->GetIsFocused()  /*::GetFocus() == m_pSheet->GetGridPtr()->m_hWnd*/) {
+//		e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rcPaint);
+//	} else if (GetIsSelected()) {
+//		e.WndPtr->GetDirectPtr()->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rcPaint);
+//	}
+//}

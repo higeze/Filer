@@ -6,9 +6,11 @@
 #include "getter_macro.h"
 #include "shared_lock_property.h"
 #include "MyUniqueHandle.h"
+#include "reactive_property.h"
 
 class CFPDFPage;
 class CFPDFTextPage;
+class CFPDFFormHandle;
 
 enum class PdfBmpState
 {
@@ -52,10 +54,16 @@ private:
 	/* Field */
 	std::unique_ptr<CFPDFPage> m_pPage;
 	std::unique_ptr<CFPDFTextPage> m_pTextPage;
+	std::shared_ptr<CFPDFFormHandle> m_pForm;
 /**********/
 /* Getter */
 /**********/
 public:
+/************/
+/* Reactive */
+/************/
+	reactive_property_ptr<bool> IsDirty;
+
 /***************/
 /* Lazy Getter */
 /***************/
@@ -74,6 +82,7 @@ public:
 	const std::vector<CRectF>& GetFindRects(const std::wstring& find);
 
 public:
+	int GetHashCode()const { return reinterpret_cast<int>(m_pPage.get()); }
 	UHBITMAP GetClipBitmap(HDC hDC, const FLOAT& scale, const int& rotate, const CRectF& rect, std::function<bool()> cancel = []()->bool { return false; });
 	UHBITMAP GetBitmap(HDC hDC, const FLOAT& scale, const int& rotate, std::function<bool()> cancel = []()->bool { return false; });
 
@@ -96,7 +105,7 @@ private:
 
 public:
 	/* Constructor/Destructor */
-	CPDFPage(std::unique_ptr<CFPDFPage>&& pPage, std::unique_ptr<CFPDFTextPage>&& pTextPage);
+	CPDFPage(std::unique_ptr<CFPDFPage>&& pPage, std::unique_ptr<CFPDFTextPage>&& pTextPage, const std::shared_ptr<CFPDFFormHandle>& pForm);
 	virtual ~CPDFPage();
 	/* Reactive */
 	ReactiveProperty<int> Rotate;	

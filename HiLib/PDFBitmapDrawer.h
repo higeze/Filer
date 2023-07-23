@@ -5,11 +5,13 @@
 #include "getter_macro.h"
 
 class CPDFPage;
+class CFPDFPage;
 class CThreadPool;
 
 struct PdfBmpKey
 {
 	CPDFPage* PagePtr;
+	int HashCode;
 	FLOAT Scale;
 	int Rotate;
 	CRectF Rect;
@@ -21,6 +23,7 @@ struct PdfBmpKey
 	{
 		std::size_t seed = 0;
 		boost::hash_combine(seed, std::hash<decltype(PagePtr)>()(PagePtr));
+		boost::hash_combine(seed, std::hash<decltype(HashCode)>()(HashCode));
 		boost::hash_combine(seed, std::hash<decltype(Scale)>()(Scale));
 		boost::hash_combine(seed, std::hash<decltype(Rotate)>()(Rotate));
 		boost::hash_combine(seed, std::hash<decltype(Rect.left)>()(Rect.left));
@@ -34,6 +37,7 @@ struct PdfBmpKey
 	{
 		return 
 			PagePtr == key.PagePtr &&
+			HashCode == key.HashCode &&
 			Scale == key.Scale &&
 			Rotate == key.Rotate &&
 			Rect == key.Rect;

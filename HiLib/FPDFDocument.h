@@ -4,9 +4,11 @@
 #include "MyUniqueHandle.h"
 
 class CFPDFPage;
+class CFPDFFormHandle;
 
 class CFPDFDocument
 {
+    friend class CFPDFFormHandle;
 private:
     struct delete_fpdf_document
     {
@@ -49,6 +51,12 @@ public:
         return FPDF_GetFileVersion(m_p.get(), fileVersion);
     }
 
+    void Page_Delete(int page_index)
+    {
+        FPDF_LOCK;
+        return FPDFPage_Delete(m_p.get(), page_index);
+    }
+
     CFPDFPage LoadPage(int page_index);
 
     FPDF_BOOL ImportPagesByIndex(
@@ -87,6 +95,6 @@ public:
         return FPDF_SaveWithVersion(m_p.get(), pFileWrite, flags, fileVersion);
     }
 
-
+    CFPDFFormHandle InitFormFillEnvironment(FPDF_FORMFILLINFO* formInfo);
 
 };

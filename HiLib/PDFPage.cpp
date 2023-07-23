@@ -9,15 +9,20 @@
 #include "strconv.h"
 #include <math.h>
 #include "ThreadPool.h"
-#include "FPdfPage.h"
-#include "FPdfTextPage.h"
+#include "FPDFPage.h"
+#include "FPDFTextPage.h"
+#include "FPDFFormHandle.h"
+#include "FPDFBitmap.h"
 
 /************/
 /* CPdfPage */
 /************/
-CPDFPage::CPDFPage(std::unique_ptr<CFPDFPage>&& pPage, std::unique_ptr<CFPDFTextPage>&& pTextPage)
-	:m_pPage(std::move(pPage)), m_pTextPage(std::move(pTextPage))
+CPDFPage::CPDFPage(std::unique_ptr<CFPDFPage>&& pPage, std::unique_ptr<CFPDFTextPage>&& pTextPage, const std::shared_ptr<CFPDFFormHandle>& pForm)
+	:m_pPage(std::move(pPage)), m_pTextPage(std::move(pTextPage)), m_pForm(pForm)
 {
+	//m_pPage->OnAfterLoadPage(*m_pForm);
+	//m_pPage->DoPageAAction(*m_pForm, FPDFPAGE_AACTION_OPEN);
+
 	Rotate.set(m_pPage->GetRotation());
 	Rotate.Subscribe([this](const int& value) 
 		{
@@ -31,11 +36,16 @@ CPDFPage::CPDFPage(std::unique_ptr<CFPDFPage>&& pPage, std::unique_ptr<CFPDFText
 			m_optTextMouseRects.reset();
 			m_optFind.reset();
 			m_optSelectedText.reset();
+			IsDirty->set(true);
 
 		},(std::numeric_limits<sigslot::group_id>::min)());
 }
 
-CPDFPage::~CPDFPage() = default;
+CPDFPage::~CPDFPage() 
+{
+	//m_pPage->DoPageAAction(*m_pForm, FPDFPAGE_AACTION_CLOSE);
+	//m_pPage->OnBeforeClosePage(*m_pForm);
+}
 
 const CSizeF& CPDFPage::GetSize() const
 {
@@ -205,15 +215,89 @@ const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_strin
 	return m_optFind->FindRects;
 }
 
-UHBITMAP CPDFPage::GetClipBitmap(HDC hDC, const FLOAT& scale, const int& rotate, const CRectF& rectInPage, std::function<bool()> cancel)
+
+UHBITMAP CPDFPage::GetBitmap(HDC hDC, const FLOAT& scale, const int&, std::function<bool()> cancel)
 {
-	return m_pPage->GetClippedBitmap(hDC, scale, rectInPage, cancel);
+	do {
+		CSizeF sz(m_pPage->GetPageWidthF() * scale, m_pPage->GetPageHeightF() * scale);
+
+		BITMAPINFOHEADER bmih
+		{
+			.biSize = sizeof(BITMAPINFOHEADER),
+			.biWidth = static_cast<LONG>(std::round(sz.width)),
+			.biHeight = -static_cast<LONG>(std::round(sz.height)),
+			.biPlanes = 1,
+			.biBitCount = 32,
+			.biCompression = BI_RGB,
+			.biSizeImage = 0,
+		};
+
+		void* bitmapBits = nullptr;
+
+		UHBITMAP phBmp(::CreateDIBSection(hDC, reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0));
+		FALSE_BREAK(phBmp);
+
+		CFPDFBitmap fpdfBmp;
+		FALSE_BREAK(fpdfBmp.CreateEx(bmih.biWidth, -bmih.biHeight, FPDFBitmap_BGRx, bitmapBits, ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3), cancel));
+		FALSE_BREAK(fpdfBmp);
+
+		FALSE_BREAK(fpdfBmp.FillRect(0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF, cancel)); // Fill white
+		int flags = FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE;
+		FALSE_BREAK(fpdfBmp.RenderPageBitmap(*m_pPage, 0, 0, bmih.biWidth, -bmih.biHeight, 0, flags, cancel));
+		m_pForm->FFLDraw(fpdfBmp, *m_pPage, 0, 0, bmih.biWidth, -bmih.biHeight, 0, flags);
+
+		return phBmp;
+	} while (1);
+
+	return nullptr;
 }
 
-UHBITMAP CPDFPage::GetBitmap(HDC hDC, const FLOAT& scale, const int& rotate, std::function<bool()> cancel)
+UHBITMAP CPDFPage::GetClipBitmap(HDC hDC, const FLOAT& scale, const int&, const CRectF& rectInPage, std::function<bool()> cancel)
 {
-	return m_pPage->GetBitmap(hDC, scale, cancel);
+	do {
+		CRectU scaledRectInPage = CRectF2CRectU(rectInPage * scale);
+		BITMAPINFOHEADER bmih
+		{
+			.biSize = sizeof(BITMAPINFOHEADER),
+			.biWidth = static_cast<LONG>(scaledRectInPage.Width()),
+			.biHeight = -static_cast<LONG>(scaledRectInPage.Height()),
+			.biPlanes = 1,
+			.biBitCount = 32,
+			.biCompression = BI_RGB,
+			.biSizeImage = 0,
+		};
+
+		TRUE_BREAK(bmih.biWidth == 0 || bmih.biHeight == 0);
+
+		void* bitmapBits = nullptr;
+
+		UHBITMAP phBmp(::CreateDIBSection(hDC, reinterpret_cast<const BITMAPINFO*>(&bmih), DIB_RGB_COLORS, &bitmapBits, nullptr, 0));
+		FALSE_BREAK(phBmp);
+
+		CFPDFBitmap fpdfBmp;
+		fpdfBmp.CreateEx(bmih.biWidth, -bmih.biHeight, FPDFBitmap_BGRx, bitmapBits, ((((bmih.biWidth * bmih.biBitCount) + 31) & ~31) >> 3));
+		FALSE_BREAK(fpdfBmp);
+
+		FALSE_BREAK(fpdfBmp.FillRect(0, 0, bmih.biWidth, -bmih.biHeight, 0xFFFFFFFF)); // Fill white
+		FS_MATRIX mat{scale, 0.f, 0.f, scale, -static_cast<float>(scaledRectInPage.left), -static_cast<float>(scaledRectInPage.top)};
+		FS_RECTF rcf{0, 0, static_cast<float>(bmih.biWidth), static_cast<float>(-bmih.biHeight)};
+		FALSE_BREAK(fpdfBmp.RenderPageBitmapWithMatrix(*m_pPage, &mat, &rcf, FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE));
+
+		return phBmp;
+	} while (1);
+
+	return nullptr;
 }
+
+//UHBITMAP CPDFPage::GetClipBitmap(HDC hDC, const FLOAT& scale, const int& rotate, const CRectF& rectInPage, std::function<bool()> cancel)
+//{
+//	return m_pPage->GetClippedBitmap(hDC, scale, rectInPage, cancel);
+//}
+//
+//UHBITMAP CPDFPage::GetBitmap(HDC hDC, const FLOAT& scale, const int& rotate, std::function<bool()> cancel)
+//{
+//	return m_pPage->GetBitmap(hDC, scale, cancel);
+//}
 
 CRectF CPDFPage::GetCaretRect(const int index)
 {

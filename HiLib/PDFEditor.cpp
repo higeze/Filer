@@ -141,6 +141,7 @@ void CPDFEditor::OnCreate(const CreateEvt& e)
 		int page = std::wcstol(m_spPageBox->GetEnterText().get().c_str(), &endptr, 10);
 		if (page != value) {
 			m_spPageBox->GetText().set(std::to_wstring(value));
+			m_spPageBox->GetEnterText().set(std::to_wstring(value));
 		}
 	});
 	m_spPageBox->GetEnterText().Subscribe([this](const NotifyStringChangedEventArgs<wchar_t>& notify) {
@@ -150,6 +151,7 @@ void CPDFEditor::OnCreate(const CreateEvt& e)
 		if (pageAtBox != pageAtView) {
 			if (!m_spPDFView->Jump(pageAtBox)) {
 				m_spPageBox->GetText().set(boost::lexical_cast<std::wstring>(m_spPDFView->GetCurrentPage()));
+				m_spPageBox->GetEnterText().set(boost::lexical_cast<std::wstring>(m_spPDFView->GetCurrentPage()));
 			}
 		}
 	});

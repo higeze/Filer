@@ -7,5 +7,5 @@ class CTaskRow: public CBindRow<MainTask>
 public:
 	using CBindRow<MainTask>::CBindRow;
 
-	virtual void OnPaint(const PaintEvent& e) override;
+	virtual void RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc) override;
 };

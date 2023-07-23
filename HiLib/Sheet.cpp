@@ -757,18 +757,55 @@ void CSheet::Normal_Paint(const PaintEvent& e)
 	UpdateRowPaintDictionary();
 	UpdateColumnPaintDictionary();
 
-	//Paint
-	for (auto rowIter = m_pntRows.rbegin(), rowEnd = m_pntRows.rend(); rowIter != rowEnd; ++rowIter) {
-		(*rowIter)->OnPaint(e);
-		for (auto colIter = m_pntCols.rbegin(), colEnd = m_pntCols.rend(); colIter != colEnd; ++colIter) {
-			(*colIter)->OnPaint(e);
-		}
-	}
 	for (auto rowIter = m_pntRows.rbegin(), rowEnd = m_pntRows.rend(); rowIter != rowEnd; ++rowIter) {
 		for (auto colIter = m_pntCols.rbegin(), colEnd = m_pntCols.rend(); colIter != colEnd; ++colIter) {
 			Cell(*rowIter, *colIter)->OnPaint(e);
 		}
 	}
+
+	//Paint Unfrozen
+	//for (auto rowIter = m_pntRows.begin() + m_frozenRowCount, rowEnd = m_pntRows.end(); rowIter != rowEnd; ++rowIter) {
+	//	(*rowIter)->OnPaint(e);
+	//}
+	//for (auto colIter = m_pntCols.begin() + m_frozenColumnCount, colEnd = m_pntCols.end(); colIter != colEnd; ++colIter) {
+	//	(*colIter)->OnPaint(e);
+	//}
+	//for (auto rowIter = m_pntRows.begin() + m_frozenRowCount, rowEnd = m_pntRows.end(); rowIter != rowEnd; ++rowIter) {
+	//	for (auto colIter = m_pntCols.begin() + m_frozenColumnCount, colEnd = m_pntCols.end(); colIter != colEnd; ++colIter) {
+	//		Cell(*rowIter, *colIter)->OnPaint(e);
+	//	}
+	//}
+	////Paint Frozen
+	//for (auto rowIter = m_pntRows.begin(), rowEnd = m_pntRows.begin() + m_frozenRowCount; rowIter != rowEnd; ++rowIter) {
+	//	(*rowIter)->OnPaint(e);
+	//}
+	//for (auto colIter = m_pntCols.begin(), colEnd = m_pntCols.begin() + m_frozenColumnCount; colIter != colEnd; ++colIter) {
+	//	(*colIter)->OnPaint(e);
+	//}
+
+	//CRectF rcClipRow(
+	//	(*(m_pntCols.begin() + m_frozenColumnCount))->GetLeft(), m_pntRows.front()->GetTop(),
+	//	m_pntCols.back()->GetRight(), (*(m_pntRows.begin() + m_frozenRowCount))->GetTop()
+	//);
+	//GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(rcClipRow, D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+	//for (auto rowIter = m_pntRows.begin(), rowEnd = m_pntRows.begin() + m_frozenRowCount; rowIter != rowEnd; ++rowIter) {
+	//	for (auto colIter = m_pntCols.begin(), colEnd = m_pntCols.end(); colIter != colEnd; ++colIter) {
+	//		Cell(*rowIter, *colIter)->OnPaint(e);
+	//	}
+	//}
+	//GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
+
+	//CRectF rcClipColumn(
+	//	m_pntCols.front()->GetLeft(), (*(m_pntRows.begin() + m_frozenRowCount))->GetTop(),
+	//	(*(m_pntCols.begin() + m_frozenColumnCount))->GetLeft(), m_pntRows.back()->GetBottom()
+	//);
+	//GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(rcClipColumn, D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+	//for (auto colIter = m_pntCols.begin(), colEnd = m_pntCols.begin() + m_frozenColumnCount; colIter != colEnd; ++colIter) {
+	//	for (auto rowIter = m_pntRows.begin(), rowEnd = m_pntRows.end(); rowIter != rowEnd; ++rowIter) {
+	//		Cell(*rowIter, *colIter)->OnPaint(e);
+	//	}
+	//}
+	//GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
 
 	//Paint Drag Target Line
 	m_spRowDragger->OnPaintDragLine(this, e);
