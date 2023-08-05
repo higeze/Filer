@@ -43,10 +43,10 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	Scale(make_reactive_property<FLOAT>(0.f)),
 	CurrentPage(make_reactive_property<int>(0)),
 	TotalPage(make_reactive_property<int>(0)),
-	Find(make_reactive_property<std::wstring>(L""))
+	Find(make_reactive_wstring(L""))
 
 {
-	Find->subscribe([this](const std::wstring&)
+	Find->subscribe([this](const decltype(Find)::element_type::notify_type&)
 	{
 		GetWndPtr()->InvalidateRect(NULL, FALSE);
 	});

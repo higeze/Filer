@@ -29,8 +29,7 @@ CPDFEditor::CPDFEditor(
 	m_spScaleBox(std::make_shared<CTextBox>(this, spProp->TextBoxPropPtr, L"")),
 	m_spPercentBlock(std::make_shared<CTextBlock>(this, spProp->TextBlockPropPtr)),
 	m_spPDFView(std::make_shared<CPdfView>(this, spProp->PDFViewPropPtr)),
-	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr))//,TODOTODO
-	//m_bindFilterText(m_spFilterBox->GetText(), m_spPDFView->Find)
+	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr))
 {
 	m_spFilterBox->SetIsScrollable(false); 
 	m_spPercentBlock->Text->set(L"%");
@@ -156,12 +155,12 @@ void CPDFEditor::OnCreate(const CreateEvt& e)
 			}
 		}
 	});
-	//reactive_property_string_binding(
-	//	m_spPDFView->TotalPage,
-	//	m_spTotalPageBlock->Text
-	//);
+	reactive_property_string_binding(
+		m_spPDFView->TotalPage,
+		m_spTotalPageBlock->Text
+	);
 
-
+	reactive_string_binding(m_spFilterBox->Text, m_spPDFView->Find);
 }
 
 void CPDFEditor::OnPaint(const PaintEvent& e)

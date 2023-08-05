@@ -11,7 +11,7 @@ public:
 	reactive_wstring_ptr Text;
 public:
 	CTextBlock(CD2DWControl* pControl, const std::shared_ptr<TextBlockProperty>& spProperty)
-		:CD2DWControl(pControl), m_spProperty(spProperty){}
+		:CD2DWControl(pControl), m_spProperty(spProperty), Text(make_reactive_wstring()){}
 	virtual ~CTextBlock() = default;
 
 	CSizeF MeasureSize();

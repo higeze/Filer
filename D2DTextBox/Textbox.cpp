@@ -416,7 +416,7 @@ void CTextBox::LoadOriginCaptureCharRects()
 {
 	auto charRects = GetOriginCharRects();
 	m_optOriginCaptureCharRects = charRects;
-	for (std::size_t i = 0; i < m_optOriginCaptureCharRects->size(); i++) {
+	for (std::size_t i = 0; i < Text->size(); i++) {
 		//top
 		if (charRects[i].top == charRects.front().top) {
 			m_optOriginCaptureCharRects->at(i).top = -FLT_MAX;
@@ -1427,8 +1427,10 @@ void CTextBox::PaintText(const PaintEvent& e)
 				break;
 			case L' ':
 				GetWndPtr()->GetDirectPtr()->DrawHalfSpace(*(m_pProp->BlankLine), selCharRects[i]);
+				break;
 			case L'　':
 				GetWndPtr()->GetDirectPtr()->DrawFullSpace(*(m_pProp->BlankLine), selCharRects[i]);
+				break;
 			default:
 				break;
 		}

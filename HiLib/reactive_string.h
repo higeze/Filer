@@ -82,7 +82,7 @@ public:
 		return *this;
 	}
 
-	void observe(base::notify_type& notify)
+	void observe_string(const notify_type& notify)
 	{
 		if (this->get_const() == notify.all_items) { return; }
 
@@ -103,6 +103,13 @@ public:
 				break;
 		}
 	}
+
+	template<class U>
+	void observe_property(const U& value)
+	{
+		this->set(boost::lexical_cast<container_type>(value));
+	}
+
 
 	friend void to_json(json& j, const reactive_basic_string& o)
 	{

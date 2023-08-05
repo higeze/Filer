@@ -1,9 +1,11 @@
 #pragma once
 #include "subject.h"
+#include "notify_container_changed.h"
+#include "reactive_string.h"
 #include "JsonSerializer.h"
 
 template <class T>
-class reactive_property: sigslot::observer
+class reactive_property
 {
 private:
 	subject<T> m_subject;
@@ -15,10 +17,7 @@ public:
 	explicit reactive_property(T&& value)
 		: m_value(std::forward<T>(value)) {}
 
-	virtual ~reactive_property()
-	{
-		this->disconnect_all();
-	}
+	virtual ~reactive_property() = default;
 
 	auto operator<=>(const reactive_property& rhs) const
 	{
@@ -65,6 +64,12 @@ public:
 			m_value = value;
 			m_subject.on_next(value);
 		}
+	}
+
+	//template<class U, class Traits, class Allocator>
+	void observe_string(reactive_wstring::notify_type& notify)
+	{
+		this->set(boost::lexical_cast<T>(notify.all_items));
 	}
 
 	friend void to_json(json& j, const reactive_property<T>& o)

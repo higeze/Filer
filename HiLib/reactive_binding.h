@@ -46,21 +46,18 @@ auto reactive_string_binding(
 	dst->set(src->get_const());
 
 	return std::make_pair(
-		dst->subscribe(&reactive_basic_string<T, Traits, Allocator>::observe, src),
-		src->subscribe(&reactive_basic_string<T, Traits, Allocator>::observe, dst));
+		dst->subscribe(&reactive_basic_string<T, Traits, Allocator>::observe_string, src),
+		src->subscribe(&reactive_basic_string<T, Traits, Allocator>::observe_string, dst));
 }
 
-template <class U, class T, class Traits, class Allocator>
+template <class T, class U, class Traits, class Allocator>
 auto reactive_property_string_binding(
-	reactive_property_ptr<U>& src, 
-	reactive_basic_string_ptr<T, Traits, Allocator>& dst) -> std::pair<sigslot::connection, sigslot::connection>
+	reactive_property_ptr<T>& src, 
+	reactive_basic_string_ptr<U, Traits, Allocator>& dst) /*-> std::pair<sigslot::connection, sigslot::connection>*/
 {
-	//dst->set(src->get_const());
+	dst->set(boost::lexical_cast<std::basic_string<U, Traits, Allocator>>(src->get_const()));
 
 	return std::make_pair(
-		dst->subscribe([](reactive_property<U>* that, const reactive_basic_string<T, Traits, Allocator>::notify_type& notify)
-		{
-		}, src),
-		src->subscribe([](reactive_basic_string<T, Traits, Allocator>* that, const U& value) {
-		}, dst));
+		dst->subscribe(&reactive_property<T>::observe_string, src),
+		src->subscribe(&reactive_basic_string<U, Traits, Allocator>::template observe_property<T>, dst));
 }

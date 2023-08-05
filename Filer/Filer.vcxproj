@@ -319,6 +319,7 @@
     <ClInclude Include="..\HiLib\D2DImage.h" />
     <ClInclude Include="..\HiLib\Date.h" />
     <ClInclude Include="..\HiLib\FPDFFormHandle.h" />
+    <ClInclude Include="..\HiLib\notify_container_changed.h" />
     <ClInclude Include="..\HiLib\PDFBitmapDrawer.h" />
     <ClInclude Include="..\HiLib\D2DThumbnailDrawer.h" />
     <ClInclude Include="..\HiLib\D2DWDialog.h" />

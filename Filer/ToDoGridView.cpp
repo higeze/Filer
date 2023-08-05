@@ -70,35 +70,6 @@ void CToDoGridView::Open()
 void CToDoGridView::Open(const std::wstring& path)
 {
 	OpenCommand->execute(path);
-	//if (::PathFileExists(path.c_str())){
-	//	m_path.set(path);
-	//	auto& itemsSource = GetItemsSource();
-	//	//itemsSource.notify_clear();//TODOTODO
-	//	while (!itemsSource.empty()) {
-	//		itemsSource.erase(GetItemsSource().cbegin());
-	//	}
-	//	//Deserialize
-	//	try {
-	//		//Serialize
-	//		std::vector<MainTask> tempItemsSource;
-	//		std::ifstream i(path);
-	//		json j;
-	//		i >> j;
-	//		j.get_to(tempItemsSource);
-	//		//CXMLSerializer<std::vector<MainTask>> serializer;
-	//		//	serializer.Deserialize(m_path.get().c_str(), L"Task", tempItemsSource);
-	//		for (const auto& item : tempItemsSource) {
-	//			itemsSource.push_back(std::make_tuple(item));
-	//		}
-	//		for (auto& colPtr : m_allCols) {
-	//			colPtr->SetIsFitMeasureValid(false);
-	//			colPtr->SetIsMeasureValid(false);
-	//		}
-	//		UpdateAll();
-	//	}
-	//	catch (/*_com_error &e*/...) {
-	//	}
-	//}
 }
 
 

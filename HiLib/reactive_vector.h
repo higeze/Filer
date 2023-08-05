@@ -35,14 +35,14 @@ public:
 	}
 
 
-	void observe(base::notify_type& notify)
+	void observe(notify_type& notify)
 	{
 		if (this->get_const() == notify.all_items) { return; }
 
 		switch (notify.action) {
 			case notify_container_changed_action::push_back:
 				this->push_back(adl_vector_item<base::value_type>::clone(notify.new_items.front()));
-				adl_vector_item<T>::bind(
+				adl_vector_item<base::value_type>::bind(
 					notify.new_items.front(),
 					this->get_unconst().operator[](notify.new_starting_index));
 				break;

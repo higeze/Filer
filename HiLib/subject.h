@@ -9,7 +9,7 @@ private:
 public:
 	subject() {}
 	virtual ~subject() = default;
-	virtual void on_next(const T& value) const
+	virtual void on_next(T value) const
 	{
 		m_on_next(value);
 	}

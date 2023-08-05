@@ -948,6 +948,9 @@
     <ClInclude Include="..\HiLib\reactive_container.h">
       <Filter>HiLib\Reactive</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\notify_container_changed.h">
+      <Filter>HiLib\Reactive</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">

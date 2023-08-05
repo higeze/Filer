@@ -101,7 +101,7 @@ public:
 
 	reactive_property_ptr<int> CurrentPage;
 	reactive_property_ptr<int> TotalPage;
-	reactive_property_ptr<std::wstring> Find;
+	reactive_wstring_ptr Find;
 	/*********/
 	/* Field */
 	/*********/

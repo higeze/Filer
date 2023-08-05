@@ -783,7 +783,7 @@
 	void CDirect2DWrite::DrawFullSpace(const SolidLine& line, const CRectF& rc)
 	{
 		FLOAT x = rc.Width() * 0.1f;
-		FLOAT y = rc.Height() * 0.1f;
+		FLOAT y = rc.Height() * 0.2f;
 		CRectF rcRect = rc.DeflateRectCopy(CRectF(x, y, x, y));
 		DrawSolidRectangle(line, rcRect);
 	}
