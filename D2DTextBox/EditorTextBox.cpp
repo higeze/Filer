@@ -46,10 +46,10 @@ void CEditorTextBox::LoadTextLayoutPtr()
 				auto brush = pDirect->GetColorBrush(appearance.SyntaxFormat.Color);
 
 				std::wsmatch match;
-				auto begin = m_text.cbegin();
+				auto begin = Text->cbegin();
 				auto re = std::wregex(appearance.Regex);//L"/\\*.*?\\*/"
 				UINT32 beginPos = 0;
-				while (std::regex_search(begin, m_text.cend(), match, re)) {
+				while (std::regex_search(begin, Text->cend(), match, re)) {
 					DWRITE_TEXT_RANGE range{ beginPos + (UINT32)match.position(), (UINT32)match.length() };
 					m_pTextLayout->SetDrawingEffect(brush, range);
 					if (appearance.SyntaxFormat.IsBold) {
@@ -57,7 +57,7 @@ void CEditorTextBox::LoadTextLayoutPtr()
 					}
 
 					begin = match[0].second;
-					beginPos = std::distance(m_text.cbegin(), begin);
+					beginPos = std::distance(Text->cbegin(), begin);
 				}
 			}
 		}
@@ -78,10 +78,10 @@ void CEditorTextBox::LoadTextLayoutPtr()
 		for (const auto& apr : pTextEditorProp->ExecutableAppearances) {
 			auto brush = pDirect->GetColorBrush(apr.SyntaxFormat.Color);
 			std::wsmatch match;
-			auto begin = m_text.cbegin();
+			auto begin = Text->cbegin();
 			auto re = std::wregex(apr.Regex);
 			UINT32 beginPos = 0;
-			while (std::regex_search(begin, m_text.cend(), match, re)) {
+			while (std::regex_search(begin, Text->cend(), match, re)) {
 				DWRITE_TEXT_RANGE range{ beginPos + (UINT32)match.position(), (UINT32)match.length() };
 				m_pTextLayout->SetDrawingEffect(brush, range);
 			if (apr.SyntaxFormat.IsBold) {
@@ -92,7 +92,7 @@ void CEditorTextBox::LoadTextLayoutPtr()
 
 				m_executableInfos.push_back(ExecutableInfo{ match.str(), range.startPosition, range.length });
 				begin = match[0].second;
-				beginPos = std::distance(m_text.cbegin(), begin);
+				beginPos = std::distance(Text->cbegin(), begin);
 			}
 		}
 	}
@@ -104,10 +104,10 @@ void CEditorTextBox::LoadHighliteRects()
 	m_optHighliteRects = std::vector<CRectF>();
 	const auto pEditor = static_cast<CEditor*>(GetParentControlPtr());
 	const auto spFilter = pEditor->GetFilterBoxPtr();
-	const auto& find = spFilter->GetText().get();
+	const auto& find = spFilter->Text->get_const();
 
 	auto subStrSize = find.size();
-	auto pos = m_text.get() | find_ignorecase(find);
+	auto pos = Text->get_const() | find_ignorecase(find);
 	const auto& actualCharRects = GetActualCharRects();
  
 	while (subStrSize != 0 && pos != std::wstring::npos) {
@@ -117,7 +117,7 @@ void CEditorTextBox::LoadHighliteRects()
 			actualCharRects[pos + subStrSize - 1].right,
 			actualCharRects[pos].bottom
 		);
-		pos = m_text.get() | find_ignorecase(find, pos + subStrSize);
+		pos = Text->get_const() | find_ignorecase(find, pos + subStrSize);
 	}
 }
 

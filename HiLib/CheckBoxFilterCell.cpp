@@ -13,9 +13,8 @@ CCheckBoxFilterCell::CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pC
 {
 
 	if (pColumn->GetFilter().size() == 1) {
-		CheckBoxState include = Str2State(std::wstring(1, pColumn->GetFilter()[0]));
 		for (size_t i = 0; i < CHECK_BOX_SIZE; i++) {
-			m_checkBoxes.emplace_back(CheckBoxType::ThreeState, include);
+			m_checkBoxes.emplace_back(CheckBoxType::ThreeState, Str2State(std::wstring(1, pColumn->GetFilter()[0])));
 		}
 	} else if (pColumn->GetFilter().size() == 2 && pColumn->GetFilter()[0] == L'-') {
 		const std::vector<CheckBoxState> threeStates = {CheckBoxState::False, CheckBoxState::Intermediate, CheckBoxState::True};
@@ -24,9 +23,9 @@ CCheckBoxFilterCell::CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pC
 			[exclude = Str2State(std::wstring(1, pColumn->GetFilter()[1]))](const CheckBoxState& state)->bool {
 			return exclude != state;
 		});
-		m_checkBoxes.emplace_back(CheckBoxType::ThreeState, states[0]);
-		m_checkBoxes.emplace_back(CheckBoxType::ThreeState, states[1]);
-		m_checkBoxes.emplace_back(CheckBoxType::ThreeState, states[1]);
+		m_checkBoxes.emplace_back(CheckBoxType::ThreeState, CheckBoxState(states[0]));
+		m_checkBoxes.emplace_back(CheckBoxType::ThreeState, CheckBoxState(states[1]));
+		m_checkBoxes.emplace_back(CheckBoxType::ThreeState, CheckBoxState(states[1]));
 	} else {
 		for (size_t i = 0; i < CHECK_BOX_SIZE; i++) {
 			m_checkBoxes.emplace_back(CheckBoxType::ThreeState, static_cast<CheckBoxState>(i + 1));

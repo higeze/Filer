@@ -50,7 +50,7 @@
     <Filter Include="Filer\ToDo">
       <UniqueIdentifier>{dd245e45-391e-448c-999d-634364d7af2f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="HiLib\Rx">
+    <Filter Include="HiLib\Reactive">
       <UniqueIdentifier>{bd8d67e4-d175-4522-a35a-4602cdcdf73c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -906,16 +906,16 @@
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\reactive_property.h">
-      <Filter>HiLib\Rx</Filter>
+      <Filter>HiLib\Reactive</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\reactive_binding.h">
-      <Filter>HiLib\Rx</Filter>
+      <Filter>HiLib\Reactive</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\reactive_command.h">
-      <Filter>HiLib\Rx</Filter>
+      <Filter>HiLib\Reactive</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\reactive_vector.h">
-      <Filter>HiLib\Rx</Filter>
+      <Filter>HiLib\Reactive</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\YearMonthDay.h">
       <Filter>HiLib</Filter>
@@ -941,6 +941,12 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\FPDFFormHandle.h">
       <Filter>HiLib\PDF\FPDF</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\reactive_string.h">
+      <Filter>HiLib\Reactive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\reactive_container.h">
+      <Filter>HiLib\Reactive</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

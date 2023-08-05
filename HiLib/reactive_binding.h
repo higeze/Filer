@@ -2,6 +2,7 @@
 #include "reactive_property.h"
 #include "reactive_command.h"
 #include "reactive_vector.h"
+#include "reactive_string.h"
 #include <functional>
 
 template<class T>
@@ -35,4 +36,31 @@ auto reactive_vector_binding(reactive_vector_ptr<T, Allocator>& src, reactive_ve
 		dst->subscribe(&reactive_vector<T, Allocator>::observe, src),
 		src->subscribe(&reactive_vector<T, Allocator>::observe, dst));
 	return pair;
+}
+
+template <class T, class Traits, class Allocator>
+auto reactive_string_binding(
+	reactive_basic_string_ptr<T, Traits, Allocator>& src, 
+	reactive_basic_string_ptr<T, Traits, Allocator>& dst) -> std::pair<sigslot::connection, sigslot::connection>
+{
+	dst->set(src->get_const());
+
+	return std::make_pair(
+		dst->subscribe(&reactive_basic_string<T, Traits, Allocator>::observe, src),
+		src->subscribe(&reactive_basic_string<T, Traits, Allocator>::observe, dst));
+}
+
+template <class U, class T, class Traits, class Allocator>
+auto reactive_property_string_binding(
+	reactive_property_ptr<U>& src, 
+	reactive_basic_string_ptr<T, Traits, Allocator>& dst) -> std::pair<sigslot::connection, sigslot::connection>
+{
+	//dst->set(src->get_const());
+
+	return std::make_pair(
+		dst->subscribe([](reactive_property<U>* that, const reactive_basic_string<T, Traits, Allocator>::notify_type& notify)
+		{
+		}, src),
+		src->subscribe([](reactive_basic_string<T, Traits, Allocator>* that, const U& value) {
+		}, dst));
 }

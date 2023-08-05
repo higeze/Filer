@@ -2,6 +2,7 @@
 #include "Direct2DWrite.h"
 #include "getter_macro.h"
 #include "reactive_property.h"
+#include "JsonSerializer.h"
 #include "FPdfDocument.h"
 
 class CD2DWWindow;
@@ -13,6 +14,10 @@ class CPDFDoc
 public:
 	static void Init();
 	static void Term();
+public:
+	reactive_property_ptr<std::wstring> Path;
+	reactive_property_ptr<std::wstring> Password;
+	reactive_property_ptr<bool> IsDirty;
 
 private:
 	std::unique_ptr<CFPDFDocument> m_pDoc;
@@ -20,13 +25,8 @@ private:
 	IPDF_JSPLATFORM m_jsPlatForm;
 	FPDF_FORMFILLINFO m_formFillInfo;
 
-	std::wstring m_path;
-	std::wstring m_password;
 	FLOAT totalsize = 0;
 	FLOAT pagespan = 10.f;
-
-	reactive_property_ptr<bool> IsDirty;
-	//std::vector<std::unique_ptr<CPDFPage>> m_pages;
 
 	DECLARE_LAZY_GETTER(std::shared_ptr<CFPDFFormHandle>, FormHandlePtr);
 	DECLARE_LAZY_GETTER(std::vector<std::unique_ptr<CPDFPage>>, Pages);
@@ -37,20 +37,26 @@ public: const std::unique_ptr<CPDFPage>& GetPage(const int& index) const;
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, PageRects);
 
 public:
-
-	//std::unique_ptr<CPDFPage>& GetPage(const int& index);
-	int GetPageIndex(const std::unique_ptr<CPDFPage>& pPage);
-	int GetPageIndex(const CPDFPage* pPage);
+	bool IsOpen() const
+	{
+		return m_pDoc->operator bool();
+	}
+	int GetPageIndex(const std::unique_ptr<CPDFPage>& pPage) const;
+	int GetPageIndex(const CPDFPage* pPage) const;
 public:
 	CPDFDoc();
 	virtual ~CPDFDoc();
+	CPDFDoc(const CPDFDoc& doc);
+	CPDFDoc& operator=(const CPDFDoc& doc);
 	CPDFDoc(CPDFDoc&& doc) = default;
 	CPDFDoc& operator=(CPDFDoc&& doc) = default;
+	bool operator==(const CPDFDoc& doc) const;
+
+	void InitializeFormFillInfo();
 
 	unsigned long  Open(const std::wstring& path, const std::wstring& password = std::wstring());
+	void Close();
 	unsigned long  Create();
-
-	std::wstring GetPath() const { return m_path; }
 
 	void CopyTextToClipboard(HWND hWnd, const std::tuple<int, int>& begin, const std::tuple<int, int>& end) const;
 	void DeletePage(int page_index);
@@ -62,6 +68,7 @@ public:
 		unsigned long length,
 		int index);
 	void Save();
+	void Save(const std::wstring& path);
 	void SaveWithVersion(const std::wstring& path, FPDF_DWORD flags, int fileVersion);
 
 	void SplitSave() const;
@@ -70,5 +77,8 @@ public:
 	CPDFDoc Extract(const std::wstring& page_indices) const;
 	CPDFDoc Clone() const;
 
-
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
+		CPDFDoc,
+		Path,
+		Password)
 };

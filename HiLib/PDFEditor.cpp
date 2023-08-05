@@ -11,6 +11,7 @@
 #include <nameof/nameof.hpp>
 
 #include "ReactiveProperty.h"
+#include "reactive_binding.h"
 
 
 /***************/
@@ -28,11 +29,11 @@ CPDFEditor::CPDFEditor(
 	m_spScaleBox(std::make_shared<CTextBox>(this, spProp->TextBoxPropPtr, L"")),
 	m_spPercentBlock(std::make_shared<CTextBlock>(this, spProp->TextBlockPropPtr)),
 	m_spPDFView(std::make_shared<CPdfView>(this, spProp->PDFViewPropPtr)),
-	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr)),
-	m_bindFilterText(m_spFilterBox->GetText(), m_spPDFView->GetFind())
+	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr))//,TODOTODO
+	//m_bindFilterText(m_spFilterBox->GetText(), m_spPDFView->Find)
 {
 	m_spFilterBox->SetIsScrollable(false); 
-	m_spPercentBlock->GetText().set(L"%");
+	m_spPercentBlock->Text->set(L"%");
 	m_spStatusBar->GetIsFocusable().set(false);
 }
 
@@ -110,24 +111,24 @@ void CPDFEditor::OnCreate(const CreateEvt& e)
 		return std::round(std::wcstof(percent.c_str(), &stopstring) * 1000.f) / 1000.f / 100.f;
 	};
 
-	m_spScaleBox->GetText().set(ratio_to_percent(m_spPDFView->GetScale().get()));
-	m_spPDFView->GetScale().Subscribe(
+	m_spScaleBox->Text->set(ratio_to_percent(m_spPDFView->Scale->get_const()));
+	m_spPDFView->Scale->subscribe(
 	[&](const FLOAT& ratio)->void{
 		std::wstring percent = ratio_to_percent(ratio);
-		if (percent != m_spScaleBox->GetText().get()) {
-			m_spScaleBox->GetText().set(percent);
+		if (percent != m_spScaleBox->Text->get_const()) {
+			m_spScaleBox->Text->set(percent);
 		}
 	});
 
-	m_spScaleBox->GetEnterText().Subscribe(
-	[&](const NotifyStringChangedEventArgs<wchar_t>& notify)->void {
-		FLOAT ratio = percent_to_ratio(m_spScaleBox->GetEnterText().get());
-		if (ratio != m_spPDFView->GetScale().get()) {
+	m_spScaleBox->EnterText->subscribe(
+	[&](const decltype(m_spScaleBox->EnterText)::element_type::notify_type& notify)->void {
+		FLOAT ratio = percent_to_ratio(m_spScaleBox->EnterText->get_const());
+		if (ratio != m_spPDFView->Scale->get_const()) {
 			//Validate
 			if(ratio == 0.f || m_spPDFView->GetMinScale() > ratio || m_spPDFView->GetMaxScale() < ratio){ 
-				m_spScaleBox->GetText().set(ratio_to_percent(m_spPDFView->GetScale().get()));
+				m_spScaleBox->Text->set(ratio_to_percent(m_spPDFView->Scale->get_const()));
 			} else {
-				m_spPDFView->GetScale().set(ratio);
+				m_spPDFView->Scale->set(ratio);
 			}
 		}
 	});
@@ -136,29 +137,29 @@ void CPDFEditor::OnCreate(const CreateEvt& e)
 	//	m_spPDFView->GetCurrentPage(),
 	//	m_spPageBox->GetText()
 	//);
-	m_spPDFView->GetCurrentPage().Subscribe([this](const int& value) {
+	m_spPDFView->CurrentPage->subscribe([this](const int& value) {
 		wchar_t* endptr = nullptr;
-		int page = std::wcstol(m_spPageBox->GetEnterText().get().c_str(), &endptr, 10);
+		int page = std::wcstol(m_spPageBox->EnterText->c_str(), &endptr, 10);
 		if (page != value) {
-			m_spPageBox->GetText().set(std::to_wstring(value));
-			m_spPageBox->GetEnterText().set(std::to_wstring(value));
+			m_spPageBox->Text->set(std::to_wstring(value));
+			m_spPageBox->EnterText->set(std::to_wstring(value));
 		}
 	});
-	m_spPageBox->GetEnterText().Subscribe([this](const NotifyStringChangedEventArgs<wchar_t>& notify) {
+	m_spPageBox->EnterText->subscribe([this](const decltype(m_spScaleBox->EnterText)::element_type::notify_type& notify) {
 		wchar_t* endptr = nullptr;
-		int pageAtBox = std::wcstol(m_spPageBox->GetEnterText().get().c_str(), &endptr, 10);
-		int pageAtView = m_spPDFView->GetCurrentPage().get();
+		int pageAtBox = std::wcstol(m_spPageBox->EnterText->c_str(), &endptr, 10);
+		int pageAtView = m_spPDFView->CurrentPage->get_const();
 		if (pageAtBox != pageAtView) {
 			if (!m_spPDFView->Jump(pageAtBox)) {
-				m_spPageBox->GetText().set(boost::lexical_cast<std::wstring>(m_spPDFView->GetCurrentPage()));
-				m_spPageBox->GetEnterText().set(boost::lexical_cast<std::wstring>(m_spPDFView->GetCurrentPage()));
+				m_spPageBox->Text->set(boost::lexical_cast<std::wstring>(m_spPDFView->CurrentPage->get_const()));
+				m_spPageBox->EnterText->set(boost::lexical_cast<std::wstring>(m_spPDFView->CurrentPage->get_const()));
 			}
 		}
 	});
-	m_bindings.emplace_back(
-		m_spPDFView->GetTotalPage(),
-		m_spTotalPageBlock->GetText()
-	);
+	//reactive_property_string_binding(
+	//	m_spPDFView->TotalPage,
+	//	m_spTotalPageBlock->Text
+	//);
 
 
 }
@@ -234,7 +235,7 @@ void CPDFEditor::OpenAs()
 
 void CPDFEditor::Save()
 {
-	m_spPDFView->GetDocPtr()->Save();
+	m_spPDFView->PDF->get_unconst().Save(m_spPDFView->PDF->get_const().Path->get_const());
 }
 
 void CPDFEditor::SaveAs()
@@ -258,12 +259,12 @@ void CPDFEditor::SaveAs()
 		}
 	} else {
 		::ReleaseBuffer(path);
-		bool same = path == m_spPDFView->GetDocPtr()->GetPath();
+		bool same = path == m_spPDFView->PDF->get_const().Path->get_const();
 		if (!same) {
-			m_spPDFView->GetDocPtr()->SaveWithVersion(path, 0, m_spPDFView->GetDocPtr()->GetFileVersion());
+			m_spPDFView->PDF->get_unconst().SaveWithVersion(path, 0, m_spPDFView->PDF->get_const().GetFileVersion());
 			m_spPDFView->Open(path);
 		} else {
-			m_spPDFView->GetDocPtr()->Save();
+			Save();
 			/*auto doc(m_spPDFView->GetDocPtr()->Clone());
 			m_spPDFView->GetDocPtr().reset();
 			doc.SaveAsCopy(path, 0);*/

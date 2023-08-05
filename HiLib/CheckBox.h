@@ -13,7 +13,7 @@ public:
 	reactive_property_ptr<CheckBoxType> Type;
 	reactive_property_ptr<CheckBoxState> State;
 
-	CCheckBox(const CheckBoxType& type, const CheckBoxState& state);
+	CCheckBox(CheckBoxType&& type, CheckBoxState&& state);
 	void Measure(const CSizeF& availableSize) { m_size = availableSize; }
 	const CSizeF& DesiredSize() const { return m_size; }
 	void Arrange(const CRectF& rc) { m_rect = rc; }

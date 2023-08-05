@@ -68,6 +68,37 @@ FilerTabData::FilerTabData(const std::wstring& path)
 		}
 	}
 }
+
+/**************/
+/* PdfTabData */
+/**************/
+bool PdfTabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
+{
+	if (!TabData::AcceptClosing(pWnd, isWndClosing)) {
+		return false;
+	} else {
+		if (Doc->get_const().IsDirty->get_const()) {
+			int ync = pWnd->MessageBox(
+				fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(Doc->get_const().Path->get_const().c_str())).c_str(),
+				L"Save?",
+				MB_YESNOCANCEL);
+			switch (ync) {
+				case IDYES:
+					Doc->get_unconst().Save();
+					return true;
+				case IDNO:
+					return true;
+				case IDCANCEL:
+					return false;
+				default:
+					return true;
+			}
+		} else {
+			return true;
+		}
+	}
+}
+
 /***************/
 /* ToDoTabData */
 /***************/
@@ -151,7 +182,7 @@ void TextTabData::Open(HWND hWnd)
 
 void TextTabData::OpenAs(HWND hWnd)
 {
-	if (::PathFileExists(Path.c_str())) {
+	if (::PathFileExists(Path->c_str())) {
 		CTextFileOpenDialog dlg;
 
 		dlg.SetEncodingTypes(
@@ -170,8 +201,8 @@ void TextTabData::OpenAs(HWND hWnd)
 		);
 		dlg.SetFileTypes({ {L"Text (*.txt)", L"*.txt"}, {L"All (*.*)", L"*.*"} });
 
-		dlg.SetFolder(::PathFindDirectory(Path));
-		dlg.SetFileName(::PathFindFileNameW(Path.c_str()));
+		dlg.SetFolder(::PathFindDirectory(Path->get_const()));
+		dlg.SetFileName(::PathFindFileNameW(Path->c_str()));
 		dlg.SetSelectedEncodingType(Encoding);
 
 		dlg.Show(hWnd);
@@ -214,7 +245,7 @@ void TextTabData::OpenAs(HWND hWnd)
 void TextTabData::Open(const std::wstring& path, const encoding_type& enc)
 {
 	if (::PathFileExists(path.c_str())) {
-		Path.set(path);
+		Path->set(path);
 
 		std::vector<byte> bytes = CFile::ReadAllBytes(path);
 		encoding_type enc = CTextEnDecoder::GetInstance()->DetectEncoding(bytes);
@@ -228,12 +259,12 @@ void TextTabData::Open(const std::wstring& path, const encoding_type& enc)
 		//std::wstring wstr = CTextEnDecoder::GetInstance()->Decode(str, enc);
 
 		Encoding.set(enc);
-		Text.assign(wstr);
+		Text->assign(wstr);
 		Status.force_notify_set(FileStatus::Saved);
 		Carets.set(0, 0, 0, 0, 0);
 		CaretPos.set(CPointF(0, 10 * 0.5f));//TODOLOW
 	} else {
-		Path.set(L"");
+		Path->set(L"");
 		Status.force_notify_set(FileStatus::Saved);
 		Carets.set(0, 0, 0, 0, 0);
 		CaretPos.set(CPointF(0, 10 * 0.5f));//TODOLOW
@@ -254,7 +285,7 @@ void TextTabData::Open(const std::wstring& path, const encoding_type& enc)
 
 void TextTabData::Save(HWND hWnd)
 {
-	if (!::PathFileExistsW(Path.c_str())) {
+	if (!::PathFileExistsW(Path->c_str())) {
 		CTextFileSaveDialog dlg;
 
 		dlg.SetEncodingTypes(
@@ -282,13 +313,13 @@ void TextTabData::Save(HWND hWnd)
 			return;
 		}
 	} else {
-		Save(Path.get(), Encoding.get());
+		Save(Path->get_const(), Encoding.get());
 	}
 }
 
 void TextTabData::SaveAs(HWND hWnd)
 {
-	if (::PathFileExistsW(Path.c_str())) {
+	if (::PathFileExistsW(Path->c_str())) {
 		CTextFileSaveDialog dlg;
 
 		dlg.SetEncodingTypes(
@@ -307,8 +338,8 @@ void TextTabData::SaveAs(HWND hWnd)
 		);
 		dlg.SetFileTypes({ {L"Text (*.txt)", L"*.txt"}, {L"All (*.*)", L"*.*"} });
 
-		dlg.SetFolder(::PathFindDirectory(Path));
-		dlg.SetFileName(::PathFindFileNameW(Path.c_str()));
+		dlg.SetFolder(::PathFindDirectory(Path->get_const()));
+		dlg.SetFileName(::PathFindFileNameW(Path->c_str()));
 		dlg.SetSelectedEncodingType(Encoding);
 
 		dlg.Show(hWnd);
@@ -351,12 +382,12 @@ void TextTabData::SaveAs(HWND hWnd)
 
 void TextTabData::Save(const std::wstring& path, const encoding_type& enc)
 {
-	Path.set(path);
+	Path->set(path);
 	Encoding.set(enc);
 	Status.force_notify_set(FileStatus::Saved);
 	std::ofstream ofs(path);
-	std::vector<byte> bytes = CTextEnDecoder::GetInstance()->Encode(Text.get(), enc);
-	CFile::WriteAllBytes(Path.get(), bytes);
+	std::vector<byte> bytes = CTextEnDecoder::GetInstance()->Encode(Text->get_const(), enc);
+	CFile::WriteAllBytes(Path->get_const(), bytes);
 }
 
 bool TextTabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
@@ -366,7 +397,7 @@ bool TextTabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
 	} else {
 		if (Status.get() == FileStatus::Dirty) {
 			int ync = pWnd->MessageBox(
-				fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(Path.c_str())).c_str(),
+				fmt::format(L"\"{}\" is not saved.\r\nDo you like to save?", ::PathFindFileName(Path->c_str())).c_str(),
 				L"Save?",
 				MB_YESNOCANCEL);
 			switch (ync) {
@@ -544,7 +575,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderTemplate.emplace(typeid(TextTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
 		{
 			if (auto p = std::dynamic_pointer_cast<TextTabData>(pTabData)) {
-				return std::wstring(p->Status.get() == FileStatus::Dirty?L"*":L"") + ::PathFindFileName(p->Path.c_str());
+				return std::wstring(p->Status.get() == FileStatus::Dirty?L"*":L"") + ::PathFindFileName(p->Path->c_str());
 			} else {
 				return L"nullptr";
 			}
@@ -552,10 +583,10 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderTemplate.emplace(typeid(PdfTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
 		{
 			if (auto p = std::dynamic_pointer_cast<PdfTabData>(pTabData)) {
-				if (p->Path.empty()) {
+				if (p->Doc->get_const().Path->get_const().empty()) {
 					return L"No file";
 				} else {
-					return std::wstring(::PathFindFileName(p->Path.c_str()));
+					return std::wstring(p->Doc->get_const().IsDirty->get_const()? L"*" : L"") + ::PathFindFileName(p->Doc->get_const().Path->get_const().c_str());
 				}
 			} else {
 				return L"nullptr";
@@ -617,7 +648,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderIconTemplate.emplace(typeid(TextTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
 			if (auto p = std::dynamic_pointer_cast<TextTabData>(pTabData)) {
-				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Path);
+				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Path->get_const());
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
 			} else {
 				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
@@ -626,7 +657,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderIconTemplate.emplace(typeid(PdfTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
 			if (auto p = std::dynamic_pointer_cast<PdfTabData>(pTabData)) {
-				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Path);
+				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Doc->get_const().Path->get_const());
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
 			} else {
 				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
@@ -720,12 +751,12 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		auto spView = GetTextViewPtr();
 
 		//Path
-		m_textPathBinding.Attach(spViewModel->Path, spView->GetPath());
-		m_pTextPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPath().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
+		reactive_string_binding(spViewModel->Path, spView->Path);
+		m_pTextPathConnection = std::make_unique<sigslot::scoped_connection>(spView->Path->subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Status
 		m_pStatusConnection = std::make_unique<sigslot::scoped_connection>(spViewModel->Status.Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Text
-		m_textBinding.Attach(spViewModel->Text, spView->GetTextBoxPtr()->GetText());
+		reactive_string_binding(spViewModel->Text, spView->GetTextBoxPtr()->Text);
 		//Encoding
 		m_textEncodingBinding.Attach(spViewModel->Encoding, spView->GetEncoding());		
 		//Carets
@@ -741,7 +772,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
 		if (spViewModel->Status.get() == FileStatus::None) {
-			spViewModel->Open(spViewModel->Path, spViewModel->Encoding);
+			spViewModel->Open(spViewModel->Path->get_const(), spViewModel->Encoding);
 		}
 
 		return spView;
@@ -751,17 +782,14 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		auto spViewModel = std::static_pointer_cast<PdfTabData>(pTabData);
 		auto spView = GetPdfViewPtr();
 
-		//Path
-		m_pdfPathBinding.Attach(spViewModel->Path, spView->GetPDFViewPtr()->GetPath());
-		m_pPdfPathConnection = std::make_unique<sigslot::scoped_connection>(spView->GetPDFViewPtr()->GetPath().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Scale
-		m_pdfScaleBinding.Attach(spViewModel->Scale, spView->GetPDFViewPtr()->GetScale());
+		reactive_binding(spViewModel->Scale, spView->GetPDFViewPtr()->Scale);
 		//Scroll
-		m_pdfVScrollBinding.Attach(spViewModel->VScroll, spView->GetPDFViewPtr()->GetVScrollPtr()->PropScrollPos());
-		m_pdfHScrollBinding.Attach(spViewModel->HScroll, spView->GetPDFViewPtr()->GetHScrollPtr()->PropScrollPos());
+		reactive_binding(spViewModel->VScroll, spView->GetPDFViewPtr()->GetVScrollPtr()->Position);
+		reactive_binding(spViewModel->HScroll, spView->GetPDFViewPtr()->GetHScrollPtr()->Position);
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
-		spView->GetPDFViewPtr()->Open(spViewModel->Path);
+		spView->GetPDFViewPtr()->Reset(spViewModel->Doc);
 
 		return spView;
 	});
@@ -774,10 +802,10 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		m_imageBinding.Attach(spViewModel->Image, spView->GetImageViewPtr()->PropImage());
 		m_pImageConnection = std::make_unique<sigslot::scoped_connection>(spView->GetImageViewPtr()->PropImage().Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Scale
-		m_imageScaleBinding.Attach(spViewModel->Scale, spView->GetImageViewPtr()->GetScale());
+		reactive_binding(spViewModel->Scale, spView->GetImageViewPtr()->Scale);
 		//Scroll
-		m_imageVScrollBinding.Attach(spViewModel->VScroll, spView->GetImageViewPtr()->GetVScrollPtr()->PropScrollPos());
-		m_imageHScrollBinding.Attach(spViewModel->HScroll, spView->GetImageViewPtr()->GetHScrollPtr()->PropScrollPos());
+		reactive_binding(spViewModel->VScroll, spView->GetImageViewPtr()->GetVScrollPtr()->Position);
+		reactive_binding(spViewModel->HScroll, spView->GetImageViewPtr()->GetHScrollPtr()->Position);
 
 		spView->GetImageViewPtr()->Open(spViewModel->Image.get().GetPath());
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));

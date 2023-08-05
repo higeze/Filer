@@ -217,6 +217,15 @@ struct CRectT :public TRect
 		this->bottom -= rc.bottom;
 	}
 
+	rect_type DeflateRectCopy(const rect_type& rc) const
+	{
+		return rect_type(
+			this->left + rc.left,
+			this->top + rc.top,
+			this->right - rc.right,
+			this->bottom - rc.bottom);
+	}
+
 	const TRect* operator&() const
 	{
 		return static_cast<const TRect*>(this);

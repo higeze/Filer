@@ -18,6 +18,8 @@
 
 #include "UndoReDoManager.h"
 
+#include "reactive_string.h"
+
 
 struct TextBoxProperty;
 //class CTextStore;
@@ -69,9 +71,12 @@ public:
 	STATIC_LAZY_CCOMPTR_GETTER(ITfDisplayAttributeMgr, DisplayAttributeMgr);
 
 	STATIC_LAZY_CCOMPTR_GETTER(ITfCategoryMgr, CategoryMgr);
-	/*********/
-	/* Class */
-	/*********/
+
+	/************/
+	/* Reactive */
+	/************/
+	reactive_wstring_ptr Text;
+	reactive_wstring_ptr EnterText;
 protected:
 	// Caret
 	enum caret
@@ -86,8 +91,6 @@ protected:
 	/* Field */
 	/*********/
 	//ReactiveProperty
-	ReactiveWStringProperty m_text;
-	ReactiveWStringProperty m_enterText;
 	ReactiveProperty<CPointF> m_caretPoint;
 	ReactiveTupleProperty<int, int, int, int, int> m_carets;
 
@@ -132,8 +135,6 @@ public:
 	void SetHasBorder(bool value) { m_hasBorder = value; }
 	void SetIsScrollable(bool value){ m_isScrollable = value; }
 	void SetIsEnterText(bool value){ m_isEnterText = value; }
-	ReactiveWStringProperty& GetText() { return m_text; }
-	ReactiveWStringProperty& GetEnterText() { return m_enterText; }
 	ReactiveProperty<CPointF>& GetCaretPos() { return m_caretPoint; }
 	ReactiveTupleProperty<int, int, int, int, int>& GetCarets() { return m_carets; }
 

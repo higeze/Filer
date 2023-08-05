@@ -16,27 +16,27 @@ CToDoDoc::CToDoDoc()
 		return subs;
 	};
 
-	m_connections.push_back(Tasks->subscribe([this, reactive_task_subscription](const notify_vector_changed_event_args<std::tuple<MainTask>>& notify) {
+	m_connections.push_back(Tasks->subscribe([this, reactive_task_subscription](const notify_container_changed_event_args<std::vector<std::tuple<MainTask>>>& notify) {
 		switch (notify.action) {
-			case notify_vector_changed_action::push_back:
-			case notify_vector_changed_action::insert:
+			case notify_container_changed_action::push_back:
+			case notify_container_changed_action::insert:
 			{
 				Status->set(FileStatus::Dirty);
 				std::vector<sigslot::connection> subs = reactive_task_subscription(std::get<MainTask>(Tasks->get_unconst().operator[](notify.new_starting_index)));
 				std::copy(subs.cbegin(), subs.cend(), std::back_inserter(m_connections));
 				break;
 			}
-			case notify_vector_changed_action::Move:
+			case notify_container_changed_action::Move:
 				THROW_FILE_LINE_FUNC;
 				break;
-			case notify_vector_changed_action::erase:
+			case notify_container_changed_action::erase:
 				Status->set(FileStatus::Dirty);
 				m_connections.erase(m_connections.cbegin() + notify.old_starting_index);
 				break;
-			case notify_vector_changed_action::replace:
+			case notify_container_changed_action::replace:
 				THROW_FILE_LINE_FUNC;
 				break;
-			case notify_vector_changed_action::reset:
+			case notify_container_changed_action::reset:
 				Status->set(FileStatus::Dirty);
 				m_connections.clear();
 				for (size_t i = 0; i < notify.new_items.size(); i++) {

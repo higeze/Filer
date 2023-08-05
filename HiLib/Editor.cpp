@@ -19,9 +19,10 @@ CEditor::CEditor(
 	m_spProp(spProp),
 	m_spFilterBox(std::make_shared<CTextBox>(this, spProp->EditorTextBoxPropPtr, L"")),
 	m_spTextBox(std::make_shared<CEditorTextBox>(this, spProp->EditorTextBoxPropPtr, L"")),
-	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr))
+	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr)),
+	Path(make_reactive_wstring())
 {
-	m_spFilterBox->GetText().Subscribe([this](auto)
+	m_spFilterBox->Text->subscribe([this](auto)
 	{
 		m_spTextBox->ClearHighliteRects();
 	});

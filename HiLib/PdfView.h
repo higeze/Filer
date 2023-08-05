@@ -89,7 +89,19 @@ public:
 	/* Static */
 	/**********/
 public:
+	/************/
+	/* Reactive */
+	/************/
+	reactive_property_ptr<CPDFDoc> PDF;
 
+	reactive_property_ptr<void> OpenCommand;
+	reactive_property_ptr<void> SaveCommand;
+
+	reactive_property_ptr<FLOAT> Scale;
+
+	reactive_property_ptr<int> CurrentPage;
+	reactive_property_ptr<int> TotalPage;
+	reactive_property_ptr<std::wstring> Find;
 	/*********/
 	/* Field */
 	/*********/
@@ -100,25 +112,12 @@ protected:
 
 	CRectF m_rect;
 	std::shared_ptr<PdfViewProperty> m_pProp;
-	
-	//ReactiveProperty
-	ReactiveWStringProperty m_path;
-	ReactiveCommand<void> m_open;
-	ReactiveProperty<FLOAT> m_scale;
-	ReactiveWStringProperty m_find;
-	ReactiveProperty<D2D1_BITMAPSOURCE_ORIENTATION> m_rotate;
-	ReactiveProperty<int> m_currentPage;
-	ReactiveProperty<int> m_totalPage;
-
 
 	FLOAT m_prevScale;
 
 	FLOAT m_minScale = 0.1f;
 	FLOAT m_maxScale = 8.f;
 
-
-
-	std::unique_ptr<CPDFDoc> m_pdf;
 	std::unique_ptr<CD2DPDFBitmapDrawer> m_pdfDrawer;
 	CComPtr<IFileIsInUse> m_pFileIsInUse;
 
@@ -135,17 +134,6 @@ public:
 	CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewProperty>& pProp);
 	virtual ~CPdfView();
 public:
-	//
-	std::unique_ptr<CPDFDoc>& GetDocPtr() { return m_pdf; }
-	// Getter
-	ReactiveWStringProperty& GetPath() { return m_path; }
-	ReactiveProperty<FLOAT>& GetScale() { return m_scale; }
-	ReactiveWStringProperty& GetFind() { return m_find; }
-	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
-	ReactiveProperty<int>& GetCurrentPage() { return m_currentPage; }
-	ReactiveProperty<int>& GetTotalPage() { return m_totalPage; }
-
-
 	FLOAT GetMinScale() const { return m_minScale; }
 	FLOAT GetMaxScale() const { return m_maxScale; }
 	
@@ -274,13 +262,19 @@ public:
 
 	virtual void Error_StdException(const std::exception& e);
 
-	void Open();
+	void Reset(const reactive_property_ptr<CPDFDoc>& pdf);
+	void OpenWithFileDialog();
 	void Open(const std::wstring& path);
 	void Close();
+	void Clear();
+
 	bool Jump(const int& page);
 
 	void UpdateScroll();
 
 	void Update();
+private:
+	void OpenWithPasswordHandling(const std::wstring& path);
+
 
 };

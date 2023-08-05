@@ -296,11 +296,24 @@ CExeExtensionDlg::CExeExtensionDlg(
 	:CFileOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, CIDL(), std::vector<CIDL>()),
 	m_spTextPath(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
 	m_spTextParam(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
-	m_exeExtension(exeExtension),
-	m_bindingPath(m_exeExtension.Path, m_spTextPath->GetText()),
-	m_bindingParam(m_exeExtension.Parameter, m_spTextParam->GetText())
-
+	m_exeExtension(exeExtension)
 {
+	m_spTextParam->Text->set(m_exeExtension.Parameter);
+	m_connections.emplace_back(
+		m_spTextParam->Text->subscribe([this](const decltype(m_spTextParam->Text)::element_type::notify_type & notify)
+		{
+			m_exeExtension.Parameter = notify.all_items;
+		}	
+	));
+
+	m_spTextPath->Text->set(m_exeExtension.Path);
+	m_connections.emplace_back(
+		m_spTextPath->Text->subscribe([this](const decltype(m_spTextPath->Text)::element_type::notify_type & notify)
+		{
+			m_exeExtension.Path = notify.all_items;
+		}	
+	));
+
 	m_title.set(L"Exe");
 	//Items Source
 	for (auto& file : files) {
@@ -583,7 +596,7 @@ CPDFMergeDlg::CPDFMergeDlg(
 {
 	m_title.set(L"PDF Merge");
 
-	m_spParameter->GetText().set(files[0]->GetPathWithoutExt() + L"_merge.pdf");
+	m_spParameter->Text->set(files[0]->GetPathWithoutExt() + L"_merge.pdf");
 	m_spButtonDo->GetContent().set(L"Merge");
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
 	{
@@ -598,7 +611,7 @@ CPDFMergeDlg::CPDFMergeDlg(
 			auto count = doc.GetPageCount();
 			doc.ImportPages(srcDoc, NULL, count);		
 		}
-		doc.SaveWithVersion(m_spParameter->GetText().get(), 0,  minVersion);
+		doc.SaveWithVersion(m_spParameter->Text->get_const(), 0,  minVersion);
 		
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	});
@@ -618,7 +631,7 @@ CPDFExtractDlg::CPDFExtractDlg(
 {
 	m_title.set(L"PDF Extract");
 
-	m_spParameter->GetText().set(L"");
+	m_spParameter->Text->set(L"");
 	m_spButtonDo->GetContent().set(L"Extract");
 
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
@@ -627,11 +640,11 @@ CPDFExtractDlg::CPDFExtractDlg(
 		for (auto& file : files) {
 			CPDFDoc doc;
 			doc.Open(file->GetPath(), L"");
-			std::wstring param = m_spParameter->GetText().get();
+			std::wstring param = m_spParameter->Text->get_const();
 			boost::algorithm::replace_all(param, L"first", L"1");
 			boost::algorithm::replace_all(param, L"last", std::to_wstring(doc.GetPageCount()));
 			CPDFDoc dst_doc(doc.Extract(param));
-			dst_doc.SaveWithVersion(std::format(L"{}_{}.pdf", file->GetPathWithoutExt(), m_spParameter->GetText().get()),0, doc.GetFileVersion());
+			dst_doc.SaveWithVersion(std::format(L"{}_{}.pdf", file->GetPathWithoutExt(), m_spParameter->Text->get_const()),0, doc.GetFileVersion());
 		}
 
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
@@ -652,7 +665,7 @@ CPDFUnlockDlg::CPDFUnlockDlg(
 {
 	m_title.set(L"PDF Unlock");
 
-	m_spParameter->GetText().set(L"");
+	m_spParameter->Text->set(L"");
 	m_spButtonDo->GetContent().set(L"Unlock");
 
 	m_spButtonDo->GetCommand().Subscribe([this]()->void
@@ -660,7 +673,7 @@ CPDFUnlockDlg::CPDFUnlockDlg(
 		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
 		for (auto& file : files) {
 			CPDFDoc doc;
-			doc.Open(file->GetPath(), m_spParameter->GetText().get());
+			doc.Open(file->GetPath(), m_spParameter->Text->get_const());
 			doc.SaveWithVersion(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), L"_unlock"),  FPDF_REMOVE_SECURITY, doc.GetFileVersion());
 		}
 

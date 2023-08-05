@@ -1,6 +1,7 @@
 #pragma once
 #include "D2DWControl.h"
 #include "ReactiveProperty.h"
+#include "reactive_string.h"
 #include "getter_macro.h"
 #include "encoding_type.h"
 
@@ -16,7 +17,6 @@ class CEditor :public CD2DWControl
 	SHAREDPTR_GETTER(CStatusBar, StatusBar)
 	SHAREDPTR_GETTER(EditorProperty, Prop)
 
-	ReactiveWStringProperty m_path;
 	ReactiveProperty<encoding_type> m_encoding;
 	ReactiveCommand<HWND> m_save;
 	ReactiveCommand<HWND> m_open;
@@ -30,7 +30,7 @@ public:
 
 	virtual ~CEditor() {}
 
-	ReactiveWStringProperty& GetPath() { return m_path; }
+	reactive_wstring_ptr Path;
 	ReactiveProperty<encoding_type>& GetEncoding() { return m_encoding; }
 	ReactiveCommand<HWND>& GetOpenCommand() { return m_open; }
 	ReactiveCommand<HWND>& GetSaveCommand() { return m_save; }

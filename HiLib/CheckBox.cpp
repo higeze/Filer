@@ -1,7 +1,8 @@
 #include "CheckBox.h"
 
-CCheckBox::CCheckBox(const CheckBoxType& type, const CheckBoxState& state)
-	:Type(make_reactive_property<CheckBoxType>(type)), State(make_reactive_property<CheckBoxState>(state)){}
+CCheckBox::CCheckBox(CheckBoxType&& type, CheckBoxState&& state)
+	:Type(make_reactive_property<CheckBoxType>(std::forward<CheckBoxType>(type))),
+	State(make_reactive_property<CheckBoxState>(std::forward<CheckBoxState>(state))){}
 
 void CCheckBox::Render(CDirect2DWrite* pDirect)
 {

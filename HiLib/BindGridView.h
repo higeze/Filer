@@ -294,16 +294,16 @@ public:
 	/******************/
 	/* Window Message */
 	/******************/
-	void subscribe_detail_row(const notify_vector_changed_event_args<std::tuple<TItems...>>& e)
+	void subscribe_detail_row(const notify_container_changed_event_args<std::vector<std::tuple<TItems...>>>& e)
 	{
 		switch (e.action) {
-			case notify_vector_changed_action::push_back:
+			case notify_container_changed_action::push_back:
 				PushRow(std::make_shared<TRow>(this, GetCellProperty()));
 				break;
-			case notify_vector_changed_action::insert:
+			case notify_container_changed_action::insert:
 				InsertRow(e.new_starting_index, std::make_shared<TRow>(this, GetCellProperty()));
 				break;
-			case notify_vector_changed_action::erase:
+			case notify_container_changed_action::erase:
 			{
 				auto spRow = m_allRows[e.old_starting_index + m_frozenRowCount];
 				m_allCells.get<row_tag>().erase(spRow.get());
@@ -312,7 +312,7 @@ public:
 				m_spCeller->Clear();
 				break;
 			}
-			case notify_vector_changed_action::reset:
+			case notify_container_changed_action::reset:
 			{
 				for (size_t i = m_frozenRowCount; i < m_allRows.size(); i++) {
 					m_allCells.get<row_tag>().erase(m_allRows[i].get());
@@ -333,23 +333,23 @@ public:
 		}
 	}
 
-	void subscribe_detail_column(const notify_vector_changed_event_args<std::tuple<TItems...>>& e)
+	void subscribe_detail_column(const notify_container_changed_event_args<std::vector<std::tuple<TItems...>>>& e)
 	{
 		switch (e.action) {
-			case notify_vector_changed_action::push_back:
+			case notify_container_changed_action::push_back:
 				this->PushColumn(std::make_shared<TCol>(this));
 				break;
-			case notify_vector_changed_action::insert:
+			case notify_container_changed_action::insert:
 				this->InsertColumn(e.new_starting_index, std::make_shared<TCol>(this));
 				break;
-			case notify_vector_changed_action::erase:
+			case notify_container_changed_action::erase:
 			{
 				auto spColumn = m_allCols[e.old_starting_index + m_frozenColumnCount];
 				m_allCells.get<col_tag>().erase(spColumn.get());
 				EraseColumn(spColumn);
 				break;
 			}
-			case notify_vector_changed_action::reset:
+			case notify_container_changed_action::reset:
 				m_allCols.idx_erase(m_allCols.begin() + m_frozenColumnCount, m_allCols.end());
 				m_allCells.clear();
 				for (auto& tup : e.new_items) {

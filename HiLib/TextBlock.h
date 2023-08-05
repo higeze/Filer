@@ -1,19 +1,18 @@
 #pragma once
 #include "D2DWControl.h"
 #include "TextBlockProperty.h"
-#include "ReactiveProperty.h"
+#include "reactive_string.h"
 
 class CTextBlock:public CD2DWControl
 {
 private:
 	std::shared_ptr<TextBlockProperty> m_spProperty;
-	ReactiveWStringProperty m_text;
+public:
+	reactive_wstring_ptr Text;
 public:
 	CTextBlock(CD2DWControl* pControl, const std::shared_ptr<TextBlockProperty>& spProperty)
 		:CD2DWControl(pControl), m_spProperty(spProperty){}
 	virtual ~CTextBlock() = default;
-	//
-	ReactiveWStringProperty& GetText() { return m_text; }
 
 	CSizeF MeasureSize();
 	CSizeF MeasureSize(const std::wstring& text);

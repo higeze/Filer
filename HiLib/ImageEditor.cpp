@@ -25,7 +25,7 @@ CImageEditor::CImageEditor(
 	m_spScaleBox(std::make_shared<CTextBox>(this, spProp->TextBoxPropPtr, L"0")),
 	m_spPercentBlock(std::make_shared<CTextBlock>(this, spProp->TextBlockPropPtr))
 {
-	m_spPercentBlock->GetText().set(L"%");
+	m_spPercentBlock->Text->set(L"%");
 }
 
 std::tuple<CRectF, CRectF, CRectF, CRectF> CImageEditor::GetRects() const
@@ -74,24 +74,24 @@ void CImageEditor::OnCreate(const CreateEvt& e)
 		return std::round(std::wcstof(percent.c_str(), &stopstring) * 1000.f) / 1000.f / 100.f;
 	};
 
-	m_spScaleBox->GetText().set(ratio_to_percent(m_spImageView->GetScale().get()));
-	m_spImageView->GetScale().Subscribe(
+	m_spScaleBox->Text->set(ratio_to_percent(m_spImageView->Scale->get_const()));
+	m_spImageView->Scale->subscribe(
 	[&](const FLOAT& ratio)->void{
 		std::wstring percent = ratio_to_percent(ratio);
-		if (percent != m_spScaleBox->GetText().get()) {
-			m_spScaleBox->GetText().set(percent);
+		if (percent != m_spScaleBox->Text->get_const()) {
+			m_spScaleBox->Text->set(percent);
 		}
 	});
 
-	m_spScaleBox->GetEnterText().Subscribe(
-	[&](const NotifyStringChangedEventArgs<wchar_t>& notify)->void {
-		FLOAT ratio = percent_to_ratio(m_spScaleBox->GetText().get());
-		if (ratio != m_spImageView->GetScale().get()) {
+	m_spScaleBox->EnterText->subscribe(
+	[&](const decltype(m_spScaleBox->EnterText)::element_type::notify_type& notify)->void {
+		FLOAT ratio = percent_to_ratio(m_spScaleBox->Text->get_const());
+		if (ratio != m_spImageView->Scale->get_const()) {
 			//Validate
 			if(ratio == 0.f || m_spImageView->GetMinScale() > ratio || m_spImageView->GetMaxScale() < ratio){ 
-				m_spScaleBox->GetText().set(ratio_to_percent(m_spImageView->GetScale().get()));
+				m_spScaleBox->Text->set(ratio_to_percent(m_spImageView->Scale->get_const()));
 			} else {
-				m_spImageView->GetScale().set(ratio);
+				m_spImageView->Scale->set(ratio);
 			}
 		}
 	});

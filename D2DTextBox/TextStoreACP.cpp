@@ -328,12 +328,12 @@ STDAPI CTextStore::GetText(LONG acpStart, LONG acpEnd, __out_ecount(cchPlainReq)
     }
 
     if (acpEnd == -1)
-        acpEnd = _pEditor->GetText().size();
+        acpEnd = _pEditor->Text->size();
 
     acpEnd = (std::min)(acpEnd, acpStart + (int)cchPlainReq);
 
     if (acpStart != acpEnd){
-		memcpy(pchPlain, _pEditor->GetText().data() + acpStart, (acpEnd - acpStart) * sizeof(WCHAR));
+		memcpy(pchPlain, _pEditor->Text->data() + acpStart, (acpEnd - acpStart) * sizeof(WCHAR));
     }
 
     *pcchPlainOut = acpEnd - acpStart;
@@ -366,10 +366,10 @@ STDAPI CTextStore::SetText(DWORD dwFlags, LONG acpStart, LONG acpEnd, __in_ecoun
         return TS_E_NOLOCK;
     }
 
-    if (acpStart > (LONG)_pEditor->GetText().size())
+    if (acpStart > (LONG)_pEditor->Text->size())
         return E_INVALIDARG;
 
-    LONG acpRemovingEnd = (std::min)(acpEnd, (LONG)_pEditor->GetText().size() + 1);
+    LONG acpRemovingEnd = (std::min)(acpEnd, (LONG)_pEditor->Text->size() + 1);
     //_pEditor->GetText().replace(acpStart, acpRemovingEnd - acpStart, pchText, cch);
     _pEditor->Replace((std::size_t)(acpStart), (std::size_t)(acpRemovingEnd - acpStart), std::wstring(pchText, cch));
 
@@ -462,7 +462,7 @@ STDAPI CTextStore::GetEndACP(LONG *pacp)
     }
 
 	
-	*pacp = _pEditor->GetText().size();
+	*pacp = _pEditor->Text->size();
     return S_OK;
 }
 

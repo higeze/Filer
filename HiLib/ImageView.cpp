@@ -32,14 +32,10 @@ CImageView::CImageView(CD2DWControl* pParentControl, const std::shared_ptr<Image
 	m_pMachine(std::make_unique<CImageViewStateMachine>(this)),
 	m_spVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr)),
 	m_spHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
-	m_scale(1.f), m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(ImageScaleMode::Width),
-	m_image(CD2DImage()), m_imgDrawer(std::make_unique<CImageDrawer>())
+	m_rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(ImageScaleMode::Width),
+	m_image(CD2DImage()), m_imgDrawer(std::make_unique<CImageDrawer>()), Scale(make_reactive_property<FLOAT>(1.f))
 {
 	m_image.Subscribe([this](const CD2DImage& value)
-	{
-	});
-
-	m_scale.Subscribe([this](const FLOAT& value)
 	{
 	});
 }
@@ -61,23 +57,23 @@ void CImageView::Open(const std::wstring& path)
 
 		m_image.get_unconst().Open(path);
 
-		if (m_scale.get() < 0 && m_image.get().IsValid()) {// < 0 means auto-scale
+		if (Scale->get_const() < 0 && m_image.get().IsValid()) {// < 0 means auto-scale
 			CSizeF sz = m_image.get().GetSizeF();
 
 			FLOAT scaleX = GetRenderSize().width / sz.width;
 			FLOAT scaleY = GetRenderSize().height / sz.height;
 			switch (m_initialScaleMode) {
 				case ImageScaleMode::MinWidthHeight:
-					m_scale.set((std::min)(scaleX, scaleY));
+					Scale->set((std::min)(scaleX, scaleY));
 					break;
 				case ImageScaleMode::Width:
-					m_scale.set(scaleX);
+					Scale->set(scaleX);
 					break;
 				case ImageScaleMode::Height:
-					m_scale.set(scaleY);
+					Scale->set(scaleY);
 					break;
 				default:
-					m_scale.force_notify_set(1.f);
+					Scale->set(1.f);
 			}
 		}
 	}
@@ -118,8 +114,8 @@ CSizeF CImageView::GetRenderContentSize()
 {
 	if (m_image.get().IsValid()) {
 		CSizeF sz = m_image.get().GetSizeF();
-		sz.width *= m_scale.get();
-		sz.height *= m_scale.get();
+		sz.width *= Scale->get_const();
+		sz.height *= Scale->get_const();
 		return sz;
 	} else {
 		return CSizeF(0.f, 0.f);
@@ -156,10 +152,10 @@ void CImageView::OnMouseWheel(const MouseWheelEvent& e)
 	if(::GetAsyncKeyState(VK_CONTROL)){
 		FLOAT factor = static_cast<FLOAT>(std::pow(1.1f, (std::abs(e.Delta) / WHEEL_DELTA)));
 		FLOAT multiply = (e.Delta > 0) ? factor : 1/factor;
-		FLOAT prevScale = m_scale.get();
-		m_scale.set(std::clamp(m_scale.get() * multiply, GetMinScale(), GetMaxScale()));
-		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() * m_scale / prevScale/* + m_spVScroll->GetScrollPage() / 2.f *(m_scale / prevScale - 1.f)*/);
-		m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() * m_scale / prevScale/*+ m_spHScroll->GetScrollPage() / 2.f *(m_scale / prevScale - 1.f)*/);
+		FLOAT prevScale = Scale->get_const();
+		Scale->set(std::clamp(Scale->get_const() * multiply, GetMinScale(), GetMaxScale()));
+		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() * Scale->get_const() / prevScale/* + m_spVScroll->GetScrollPage() / 2.f *(m_scale / prevScale - 1.f)*/);
+		m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() * Scale->get_const() / prevScale/*+ m_spHScroll->GetScrollPage() / 2.f *(m_scale / prevScale - 1.f)*/);
 
 	} else {
 		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() - m_spVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);
@@ -197,11 +193,11 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 	CSizeF szImage(m_image.get().GetSizeF());
 	CRectF rcInWnd(GetRenderRectInWnd());
 	CRectF rcFullInPage(m_image.get().GetSizeF());
-	CRectF rcScaledFullInPage(rcFullInPage * m_scale);
+	CRectF rcScaledFullInPage(rcFullInPage * Scale->get_const());
 
 	CRectF rcScaledClipInPage(rcScaledFullInPage.IntersectRect(
 		CRectF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos(), m_spHScroll->GetScrollPos() + rcInWnd.Width(), m_spVScroll->GetScrollPos() + rcInWnd.Height())));
-	CRectF rcClipInPage(rcScaledClipInPage / m_scale);
+	CRectF rcClipInPage(rcScaledClipInPage / Scale->get_const());
 
 	CSizeU szBitmap(m_imgDrawer->GetPrimaryBitmapSize());
 
@@ -219,16 +215,16 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 
 	bool drawFullPage = (rcScaledFullInPage.Width() * rcScaledFullInPage.Height()) < (szBitmap.width * szBitmap.height / 8);
 	
-	bool drawOnePageOneScale = m_scale.get() >= 1.f && szImage.width <= szBitmap.width/2 && szImage.height <= szBitmap.height/2;
-	bool drawOnePageLessScale = m_scale.get() < 1.f && szImage.width * m_scale.get() <= szBitmap.width/2 && szImage.height * m_scale.get() <= szBitmap.height/2;
-	bool drawClipPageOneScale = m_scale.get() >= 1.f && !drawOnePageLessScale && !drawOnePageLessScale;
-	bool drawClipPageLessScale = m_scale.get() < 1.f && !drawOnePageLessScale && !drawOnePageLessScale;
+	bool drawOnePageOneScale = Scale->get_const() >= 1.f && szImage.width <= szBitmap.width/2 && szImage.height <= szBitmap.height/2;
+	bool drawOnePageLessScale = Scale->get_const() < 1.f && szImage.width * Scale->get_const() <= szBitmap.width/2 && szImage.height * Scale->get_const() <= szBitmap.height/2;
+	bool drawClipPageOneScale = Scale->get_const() >= 1.f && !drawOnePageLessScale && !drawOnePageLessScale;
+	bool drawClipPageLessScale = Scale->get_const() < 1.f && !drawOnePageLessScale && !drawOnePageLessScale;
 
 	ImgBmpKey blurKey{ .ImagePtr = &(m_image.get()), .Scale = blurScale, .Rotate = 0, .Rect = CRectF2CRectU(CRectF(szImage * blurScale)) };
 	ImgBmpKey oneKey{ .ImagePtr = &(m_image.get()), .Scale = 1.f, .Rotate = 0, .Rect = CRectF2CRectU(CRectF(szImage)) };
-	ImgBmpKey scaleKey{ .ImagePtr = &(m_image.get()), .Scale = m_scale.get(), .Rotate = 0, .Rect = CRectF2CRectU(rcFullInPage) };
+	ImgBmpKey scaleKey{ .ImagePtr = &(m_image.get()), .Scale = Scale->get_const(), .Rotate = 0, .Rect = CRectF2CRectU(rcFullInPage) };
 	ImgBmpKey cliponeKey{ .ImagePtr = &(m_image.get()), .Scale = 1.f, .Rotate = 0, .Rect = CRectF2CRectU(rcClipInPage) };
-	ImgBmpKey clipscaleKey{ .ImagePtr = &(m_image.get()), .Scale = m_scale.get(), .Rotate = 0, .Rect = CRectF2CRectU(rcScaledClipInPage) };
+	ImgBmpKey clipscaleKey{ .ImagePtr = &(m_image.get()), .Scale = Scale->get_const(), .Rotate = 0, .Rect = CRectF2CRectU(rcScaledClipInPage) };
 
 	if (cliponeKey.Rect.IsRectNull() || clipscaleKey.Rect.IsRectNull()) {
 		auto a = 1;
@@ -263,7 +259,7 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 		if (!m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), clipscaleKey, ptDstClipInWnd, callback)) {
 			m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
 
-			std::vector<ImgBmpKey> keys = m_imgDrawer->FindClipKeys([clipscaleKey, pPage = &(m_image.get()), scale = m_scale](const ImgBmpKey& key)->bool{
+			std::vector<ImgBmpKey> keys = m_imgDrawer->FindClipKeys([clipscaleKey, pPage = &(m_image.get()), scale = Scale->get_const()](const ImgBmpKey& key)->bool{
 				return 
 					key != clipscaleKey &&
 					key.ImagePtr->GetPath() == clipscaleKey.ImagePtr->GetPath() && 

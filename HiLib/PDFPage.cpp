@@ -18,7 +18,7 @@
 /* CPdfPage */
 /************/
 CPDFPage::CPDFPage(std::unique_ptr<CFPDFPage>&& pPage, std::unique_ptr<CFPDFTextPage>&& pTextPage, const std::shared_ptr<CFPDFFormHandle>& pForm)
-	:m_pPage(std::move(pPage)), m_pTextPage(std::move(pTextPage)), m_pForm(pForm)
+	:m_pPage(std::move(pPage)), m_pTextPage(std::move(pTextPage)), m_pForm(pForm), IsDirty(make_reactive_property<bool>(false))
 {
 	//m_pPage->OnAfterLoadPage(*m_pForm);
 	//m_pPage->DoPageAAction(*m_pForm, FPDFPAGE_AACTION_OPEN);

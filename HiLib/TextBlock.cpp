@@ -3,7 +3,7 @@
 
 CSizeF CTextBlock::MeasureSize()
 {
-	return MeasureSize(m_text.get());
+	return MeasureSize(Text->get_const());
 }
 
 CSizeF CTextBlock::MeasureSize(const std::wstring& text)
@@ -19,7 +19,7 @@ CSizeF CTextBlock::MeasureSize(const std::wstring& text)
 
 void CTextBlock::OnPaint(const PaintEvent& e)
 {
-	std::wstring text = m_text.get();
+	std::wstring text = Text->get_const();
 
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 	CRectF rect = GetRectInWnd();

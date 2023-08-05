@@ -3,7 +3,7 @@
 #include "JsonSerializer.h"
 
 template <class T>
-class reactive_property
+class reactive_property: sigslot::observer
 {
 private:
 	subject<T> m_subject;
@@ -12,7 +12,13 @@ public:
 	explicit reactive_property(const T& value = T())
 		: m_value(value) {}
 
-	virtual ~reactive_property() = default;
+	explicit reactive_property(T&& value)
+		: m_value(std::forward<T>(value)) {}
+
+	virtual ~reactive_property()
+	{
+		this->disconnect_all();
+	}
 
 	auto operator<=>(const reactive_property& rhs) const
 	{

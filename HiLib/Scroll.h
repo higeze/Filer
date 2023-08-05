@@ -2,7 +2,7 @@
 #include "Direct2DWrite.h"
 #include "D2DWControl.h"
 #include <sigslot/signal.hpp>
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 
 struct ScrollProperty;
 
@@ -10,20 +10,15 @@ struct ScrollProperty;
 	{
 	public:
 		sigslot::signal<> ScrollChanged;
-
+		reactive_property_ptr<FLOAT> Position;
 	protected:
 		Visibility m_visibility = Visibility::Auto;
 		FLOAT m_page = 0.0f;
 		std::pair<FLOAT, FLOAT> m_range = std::make_pair(0.0f, 0.0f);
-		ReactiveProperty<FLOAT> m_pos = 0.0f;
 
 		std::shared_ptr<ScrollProperty> m_spScrollProp;
 
 		FLOAT m_startDrag;
-
-		//std::function<void(const wchar_t*)> m_onPropertyChanged;
-
-
 	public:
 		CScrollBase(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp/*, std::function<void(const wchar_t*)> onPropertyChanged*/);
 		virtual ~CScrollBase() = default;
@@ -35,8 +30,7 @@ struct ScrollProperty;
 		FLOAT GetScrollPage()const { return m_page; }
 		std::pair<FLOAT, FLOAT> GetScrollRange()const { return m_range; }
 		FLOAT GetScrollDistance()const { return m_range.second - m_range.first; }
-		FLOAT GetScrollPos()const { return m_pos.get(); }
-		ReactiveProperty<FLOAT>& PropScrollPos() { return m_pos; }
+		FLOAT GetScrollPos()const { return Position->get_const(); }
 		CSizeF GetSize()const { return GetRectInWnd().Size(); }
 
 		void SetScrollPos(const FLOAT pos);

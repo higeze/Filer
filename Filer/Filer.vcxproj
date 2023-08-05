@@ -414,7 +414,9 @@
     <ClInclude Include="..\HiLib\ReactiveProperty.h" />
     <ClInclude Include="..\HiLib\reactive_binding.h" />
     <ClInclude Include="..\HiLib\reactive_command.h" />
+    <ClInclude Include="..\HiLib\reactive_container.h" />
     <ClInclude Include="..\HiLib\reactive_property.h" />
+    <ClInclude Include="..\HiLib\reactive_string.h" />
     <ClInclude Include="..\HiLib\reactive_vector.h" />
     <ClInclude Include="..\HiLib\ScrollProperty.h" />
     <ClInclude Include="..\HiLib\shared_lock_property.h" />

@@ -780,6 +780,14 @@
 		GetD2DDeviceContext()->FillEllipse(&ellipse, GetColorBrush(line.Color));
 	}
 
+	void CDirect2DWrite::DrawFullSpace(const SolidLine& line, const CRectF& rc)
+	{
+		FLOAT x = rc.Width() * 0.1f;
+		FLOAT y = rc.Height() * 0.1f;
+		CRectF rcRect = rc.DeflateRectCopy(CRectF(x, y, x, y));
+		DrawSolidRectangle(line, rcRect);
+	}
+
 	void CDirect2DWrite::DrawSolidRectangle(const SolidLine& line, const D2D1_RECT_F& rc)
 	{
 		auto rect = LayoutRound(rc);

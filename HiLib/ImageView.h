@@ -50,6 +50,7 @@ public:
 	/* Static */
 	/**********/
 public:
+	reactive_property_ptr<FLOAT> Scale;
 
 	/*********/
 	/* Field */
@@ -65,7 +66,6 @@ protected:
 	//ReactiveProperty
 	ReactiveProperty<CD2DImage> m_image;
 	ReactiveCommand<void> m_open;
-	ReactiveProperty<FLOAT> m_scale;
 	ReactiveWStringProperty m_find;
 	ReactiveProperty<D2D1_BITMAPSOURCE_ORIENTATION> m_rotate;
 	FLOAT m_prevScale;
@@ -84,7 +84,6 @@ public:
 public:
 	// Getter
 	ReactiveProperty<CD2DImage>& PropImage() { return m_image; }
-	ReactiveProperty<FLOAT>& GetScale() { return m_scale; }
 	ReactiveWStringProperty& GetFind() { return m_find; }
 	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
 

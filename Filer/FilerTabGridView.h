@@ -16,6 +16,7 @@
 #include "encoding_type.h"
 #include "FileStatus.h"
 #include "ToDoDoc.h"
+#include "PDFDoc.h"
 
 #include "reactive_property.h"
 #include "reactive_command.h"
@@ -119,9 +120,9 @@ struct ToDoTabData:public TabData
 /***************/
 struct TextTabData :public TabData
 {
-	ReactiveWStringProperty Path;
+	reactive_wstring_ptr Path;
 	
-	ReactiveWStringProperty Text;
+	reactive_wstring_ptr Text;
 	ReactiveProperty<encoding_type> Encoding;
 	ReactiveProperty<CPointF> CaretPos;
 	ReactiveTupleProperty<int, int, int, int, int> Carets;
@@ -134,7 +135,7 @@ struct TextTabData :public TabData
 
 
 	TextTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(path), Text(), Status(FileStatus::None), Carets(0,0,0,0,0)
+		:TabData(), Path(make_reactive_wstring(path)), Text(make_reactive_wstring()), Status(FileStatus::None), Carets(0,0,0,0,0)
 	{
 		OpenCommand.Subscribe([this](HWND hWnd) { Open(hWnd); });
 		SaveCommand.Subscribe([this](HWND hWnd) { Save(hWnd); });
@@ -142,7 +143,7 @@ struct TextTabData :public TabData
 		SaveAsCommand.Subscribe([this](HWND hWnd) { SaveAs(hWnd); });
 
 		//CloseCommand.Subscribe([this]() { Close(); });
-		Text.Subscribe([this](const auto&)
+		Text->subscribe([this](const auto&)
 		{
 			Status.set(FileStatus::Dirty);
 		});
@@ -179,9 +180,9 @@ struct ImageTabData :public TabData
 {
 	//ReactiveWStringProperty Path;
 	ReactiveProperty<CD2DImage> Image;
-	ReactiveProperty<FLOAT> VScroll = 0.0f;
-	ReactiveProperty<FLOAT> HScroll = 0.0f;
-	ReactiveProperty<FLOAT> Scale = -1.0f;
+	reactive_property_ptr<FLOAT> VScroll;
+	reactive_property_ptr<FLOAT> HScroll;
+	reactive_property_ptr<FLOAT> Scale;
 
 	//ReactiveCommand<HWND> OpenCommand;
 	//ReactiveCommand<HWND> SaveCommand;
@@ -190,7 +191,10 @@ struct ImageTabData :public TabData
 
 
 	ImageTabData(CDirect2DWrite* pDirect = nullptr, const std::wstring& path = std::wstring())
-		:TabData(),Image(CD2DImage(path))
+		:TabData(),Image(CD2DImage(path)),
+		VScroll(make_reactive_property<FLOAT>(0.f)),
+		HScroll(make_reactive_property<FLOAT>(0.f)),
+		Scale(make_reactive_property<FLOAT>(-1.f))
 	{
 		
 		//OpenCommand.Subscribe([this](HWND hWnd) { Open(hWnd); });
@@ -228,27 +232,28 @@ struct ImageTabData :public TabData
 /**************/
 struct PdfTabData :public TabData
 {
-	ReactiveWStringProperty Path;
-	ReactiveProperty<FLOAT> VScroll = 0.0f;
-	ReactiveProperty<FLOAT> HScroll = 0.0f;
-	ReactiveProperty<FLOAT> Scale = -1.0f;
+	reactive_property_ptr<CPDFDoc> Doc;
+	reactive_property_ptr<FLOAT> VScroll;
+	reactive_property_ptr<FLOAT> HScroll;
+	reactive_property_ptr<FLOAT> Scale;
 	
-	ReactiveCommand<void> OpenCommand;
-
 	PdfTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(path)
+		:TabData(),
+		Doc(make_reactive_property<CPDFDoc>()),
+		VScroll(make_reactive_property<FLOAT>(0.f)),
+		HScroll(make_reactive_property<FLOAT>(0.f)),
+		Scale(make_reactive_property<FLOAT>(-1.f))
 	{
-		OpenCommand.Subscribe([this]() { Open(); });
+		Doc->get_const().Path->set(path);
 	}
 
 	virtual ~PdfTabData() = default;
 
-	void Open() {}
-	void Open(const std::wstring& path) {}
+	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
 		PdfTabData,
-		Path)
+		Doc)
 };
 
 /******************/
