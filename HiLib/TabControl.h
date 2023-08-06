@@ -22,7 +22,7 @@ class CD2DWWindow;
 struct TabControlProperty;
 struct TabHeaderControlProperty;
 
-struct TabData
+struct TabData:public std::enable_shared_from_this<TabData>
 {
 	ReactiveProperty<bool> Unlock = true;
 

@@ -376,7 +376,7 @@ public:
 					//ItemsSource->block_subject();
 					this->subscribe_detail_row(e); 
 					//ItemsSource->unblock_subject();
-				});
+				}, shared_from_this());
 
 				//PushColumn
 				for (auto& spCol : m_initColumns) {
@@ -393,7 +393,7 @@ public:
 			case BindType::Column:
 			{
 				//VectorChanged
-				ItemsSource->subscribe([&](const auto& e) { this->subscribe_detail_column(e); });
+				ItemsSource->subscribe([this](const auto& e) { this->subscribe_detail_column(e); }, shared_from_this());
 
 				//PushRow
 				for (auto& spRow : m_initRows) {

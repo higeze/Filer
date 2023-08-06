@@ -22,11 +22,6 @@ CEditor::CEditor(
 	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr)),
 	Path(make_reactive_wstring())
 {
-	m_spFilterBox->Text->subscribe([this](auto)
-	{
-		m_spTextBox->ClearHighliteRects();
-	});
-
 	m_spFilterBox->SetIsScrollable(false);
 
 	m_spTextBox->SetIsScrollable(true);
@@ -71,6 +66,11 @@ void CEditor::OnCreate(const CreateEvt& e)
 	m_spFilterBox->SetIsEnterText(true);
 	//m_spFilterBox->SetIsTabStop(true);
 	//m_spTextBox->SetIsTabStop(true);
+
+	m_spFilterBox->Text->subscribe([this](auto)
+	{
+		m_spTextBox->ClearHighliteRects();
+	}, shared_from_this());
 }
 
 void CEditor::OnPaint(const PaintEvent& e)

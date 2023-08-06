@@ -44,10 +44,16 @@ public:
 	//}
 
 	template<class... Args>
-	auto subscribe(Args&&... args) const -> sigslot::connection
+	auto subscribe(Args&&... args) -> sigslot::connection
 	{
 		return m_subject.subscribe(std::forward<Args>(args)...);
 	}
+
+	//template<typename Pmf, typename Ptr>
+	//auto subscribe(Pmf&& pmf, Ptr&& ptr)->sigslot::connection
+	//{
+	//	return m_subject.subscribe(std::forward<Pmf>(pmf), std::forward<Ptr>(ptr));
+	//}
 
 
 	const T& get_const() const 

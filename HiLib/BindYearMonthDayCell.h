@@ -13,16 +13,17 @@ template<typename... TItems>
 class CBindYearMonthDayCell :public CTextCell
 {
 protected:
+	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<CYearMonthDay> YearMonthDay;
 	std::wstring m_sortString;
 public:
 	template<typename... Args>
 	CBindYearMonthDayCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, args...), YearMonthDay(make_reactive_property<CYearMonthDay>())
+		:CTextCell(pSheet, pRow, pColumn, spProperty, args...), YearMonthDay(make_reactive_property<CYearMonthDay>()), Dummy(std::make_shared<int>(0))
 	{
 		YearMonthDay->subscribe([this](const CYearMonthDay& ymd) {
 			OnPropertyChanged(L"value");
-		});
+		}, Dummy);
 
 		auto pBindColumn = static_cast<const CBindYearMonthDayColumn<TItems...>*>(this->m_pColumn);
 		auto pBindRow = static_cast<CBindRow<TItems...>*>(this->m_pRow);

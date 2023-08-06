@@ -8,13 +8,16 @@ CCellTextBox::CCellTextBox(
 	CTextCell* pCell,
 	std::function<void(const std::wstring&)> changed,
 	std::function<void(const std::wstring&)> final)
-	:CTextBox(pParentControl, pProp, text), m_pCell(pCell),m_changed(changed), m_final(final)
+	:CTextBox(pParentControl, pProp, text), m_pCell(pCell),m_changed(changed), m_final(final){}
+
+void CCellTextBox::OnCreate(const CreateEvt& e)
 {
-	Text->subscribe(
-		[this](const decltype(Text)::element_type::notify_type& e)->void {
-			if (m_changed) { m_changed(Text->get_const()); }
-		}
-	);
+	CTextBox::OnCreate(e);
+
+	Text->subscribe([this](const decltype(Text)::element_type::notify_type& e)->void
+	{
+		if (m_changed) { m_changed(Text->get_const()); }
+	}, shared_from_this());
 }
 
 void CCellTextBox::OnClose(const CloseEvent& e)
@@ -56,11 +59,10 @@ CEditorCellTextBox::CEditorCellTextBox(
 	std::function<void(const std::wstring&)> final)
 	:CEditorTextBox(pParentControl, pProp, text), m_pCell(pCell),m_changed(changed), m_final(final)
 {
-	Text->subscribe(
-		[this](const reactive_wstring::notify_type& notify)->void {
-			if (m_changed) { m_changed(notify.all_items); }
-		}
-	);
+	Text->subscribe([this](const reactive_wstring::notify_type& notify)->void 
+	{
+		if (m_changed) { m_changed(notify.all_items); }
+	}, shared_from_this());
 }
 
 void CEditorCellTextBox::OnClose(const CloseEvent& e)

@@ -9,7 +9,7 @@
 //TODO filter should be OR
 
 CCheckBoxFilterCell::CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-	:CCell(pSheet, pRow, pColumn, spProperty), m_checkBoxes()
+	:CCell(pSheet, pRow, pColumn, spProperty), m_checkBoxes(), Dummy(std::make_shared<int>(0))
 {
 
 	if (pColumn->GetFilter().size() == 1) {
@@ -61,7 +61,7 @@ CCheckBoxFilterCell::CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pC
 	};
 
 	for (const auto& checkBox : m_checkBoxes) {
-		checkBox.State->subscribe([this, FilterStr](const CheckBoxState& state) { SetString(FilterStr()); });
+		checkBox.State->subscribe([this, FilterStr](const CheckBoxState& state) { SetString(FilterStr()); }, Dummy);
 	}
 }
 

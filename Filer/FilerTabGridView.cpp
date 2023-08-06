@@ -752,7 +752,10 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 
 		//Path
 		reactive_string_binding(spViewModel->Path, spView->Path);
-		m_pTextPathConnection = std::make_unique<sigslot::scoped_connection>(spView->Path->subscribe([this](const auto&) { UpdateHeaderRects(); }));
+		spView->Path->subscribe([this](const reactive_wstring::notify_type&)
+		{
+			UpdateHeaderRects();
+		}, shared_from_this());
 		//Status
 		m_pStatusConnection = std::make_unique<sigslot::scoped_connection>(spViewModel->Status.Subscribe([this](const auto&) { UpdateHeaderRects(); }));
 		//Text
@@ -934,6 +937,14 @@ void CFilerTabGridView::OnCommandOpenSameAsOther(const CommandEvent& e)
 			m_itemsSource.push_back(otherView->GetItemsSource()[otherView->GetSelectedIndex()]);
 		}
 	}
+}
+
+/***********/
+/* Observe */
+/***********/
+void CFilerTabGridView::ObservePath(const reactive_wstring::notify_type&)
+{
+	UpdateHeaderRects();
 }
 
 

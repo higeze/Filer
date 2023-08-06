@@ -7,6 +7,7 @@ class CCheckBoxFilterCell :public CCell
 {
 private:
 	const size_t CHECK_BOX_SIZE = 3;
+	std::shared_ptr<int> Dummy;
 	std::vector<CCheckBox> m_checkBoxes;
 	CDeadlineTimer m_deadlinetimer;
 public:

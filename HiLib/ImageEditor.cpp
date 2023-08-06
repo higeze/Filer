@@ -81,7 +81,7 @@ void CImageEditor::OnCreate(const CreateEvt& e)
 		if (percent != m_spScaleBox->Text->get_const()) {
 			m_spScaleBox->Text->set(percent);
 		}
-	});
+	}, shared_from_this());
 
 	m_spScaleBox->EnterText->subscribe(
 	[&](const decltype(m_spScaleBox->EnterText)::element_type::notify_type& notify)->void {
@@ -94,7 +94,7 @@ void CImageEditor::OnCreate(const CreateEvt& e)
 				m_spImageView->Scale->set(ratio);
 			}
 		}
-	});
+	}, shared_from_this());
 }
 
 void CImageEditor::OnPaint(const PaintEvent& e)

@@ -602,51 +602,31 @@ void CTextBox::OnCreate(const CreateEvt& e)
 
 	FAILED_THROW(GetThreadMgrPtr()->SetFocus(GetDocumentMgrPtr()));
 	 
-	Text->subscribe(
-		[this](const reactive_basic_string<wchar_t>::notify_type& e)->void {
+	Text->subscribe([this](const reactive_wstring::notify_type& e)
+	{
 		UpdateAll();
-			switch (e.action) {
-				case notify_container_changed_action::insert://new,null,idx,-1
-					GetTextStorePtr()->OnTextChange(e.new_starting_index, e.new_starting_index, e.new_starting_index + e.new_items.size());
-					MoveCaret(e.new_starting_index + e.new_items.size(), GetOriginCharRects()[e.new_starting_index + e.new_items.size()].CenterPoint());
-					break;
-				case notify_container_changed_action::erase://null,old,-1, idx
-					GetTextStorePtr()->OnTextChange(e.old_starting_index, e.old_starting_index + e.old_items.size(), e.old_starting_index);
-					MoveCaret(e.old_starting_index, GetOriginCharRects()[e.old_starting_index].CenterPoint());
-					break;
-				case notify_container_changed_action::replace://new,old,idx,idx
-					GetTextStorePtr()->OnTextChange(e.new_starting_index, e.old_starting_index + e.old_items.size(), e.new_starting_index + e.new_items.size());
-					MoveCaret(e.new_starting_index + e.new_items.size(), GetOriginCharRects()[e.new_starting_index + e.new_items.size()].CenterPoint());
-					break;
-				case notify_container_changed_action::reset://new,old,0,0
-					GetTextStorePtr()->OnTextChange(0, 0, 0);
-					MoveCaret(0, CPointF(0, GetLineHeight() * 0.5f));
-					break;
-				//case notify_container_changed_action::Clear://null,old,-1,idx
-				//	GetTextStorePtr()->OnTextChange(0, e.OldString.size(), 0);
-				//	MoveCaret(0, CPointF(0, GetLineHeight() * 0.5f));
-				//	break;
-				default:
-					break;
-			}
-
-
-
-			
-			//if (e.Action == NotifyStringChangedAction::Assign) {
-			//	GetTextStorePtr()->OnTextChange(0, 0, 0);
-			//} else {
-			//	GetTextStorePtr()->OnTextChange(e.StartIndex, e.OldEndIndex, e.NewEndIndex);
-			//}
-			//UpdateAll();
-
-
-			//::OutputDebugStringA(std::format("{}: {}, {}, {}",
-			//	nameof::nameof_enum(e.Action).data(),
-			//	e.StartIndex, e.OldEndIndex, e.NewEndIndex).c_str());
-
+		switch (e.action) {
+			case notify_container_changed_action::insert://new,null,idx,-1
+				GetTextStorePtr()->OnTextChange(e.new_starting_index, e.new_starting_index, e.new_starting_index + e.new_items.size());
+				MoveCaret(e.new_starting_index + e.new_items.size(), GetOriginCharRects()[e.new_starting_index + e.new_items.size()].CenterPoint());
+				break;
+			case notify_container_changed_action::erase://null,old,-1, idx
+				GetTextStorePtr()->OnTextChange(e.old_starting_index, e.old_starting_index + e.old_items.size(), e.old_starting_index);
+				MoveCaret(e.old_starting_index, GetOriginCharRects()[e.old_starting_index].CenterPoint());
+				break;
+			case notify_container_changed_action::replace://new,old,idx,idx
+				GetTextStorePtr()->OnTextChange(e.new_starting_index, e.old_starting_index + e.old_items.size(), e.new_starting_index + e.new_items.size());
+				MoveCaret(e.new_starting_index + e.new_items.size(), GetOriginCharRects()[e.new_starting_index + e.new_items.size()].CenterPoint());
+				break;
+			case notify_container_changed_action::reset://new,old,0,0
+				GetTextStorePtr()->OnTextChange(0, 0, 0);
+				MoveCaret(0, CPointF(0, GetLineHeight() * 0.5f));
+				break;
+			default:
+				break;
 		}
-	,(std::numeric_limits<sigslot::group_id>::max)());
+	}
+	, shared_from_this());
 
 	m_carets.Subscribe(
 		[this](const std::tuple<int, int, int, int, int>& value)->void {

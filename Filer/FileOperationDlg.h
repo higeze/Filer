@@ -217,7 +217,6 @@ protected:
 	std::shared_ptr<CTextBox> m_spTextPath;
 	std::shared_ptr<CTextBox> m_spTextParam;
 	ExeExtension& m_exeExtension;
-	std::vector<sigslot::scoped_connection> m_connections;
 
 	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();
 

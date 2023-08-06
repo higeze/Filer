@@ -44,10 +44,15 @@ public:
 	reactive_container& operator=(reactive_container&& val) noexcept = default;
 
 	template<class... Args>
-	auto subscribe(Args&&... args) const -> sigslot::connection
+	auto subscribe(Args&&... args) -> sigslot::connection
 	{
 		return m_subject.subscribe(std::forward<Args>(args)...);
 	}
+	//template<typename Pmf, typename Ptr>
+	//auto subscribe(Pmf&& pmf, Ptr&& ptr)->sigslot::connection
+	//{
+	//	return m_subject.subscribe(std::forward<Pmf>(pmf), std::forward<Ptr>(ptr));
+	//}
 	const container_type& get_const() const 
 	{ 
 		return m_value;

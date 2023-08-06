@@ -43,14 +43,7 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	Scale(make_reactive_property<FLOAT>(0.f)),
 	CurrentPage(make_reactive_property<int>(0)),
 	TotalPage(make_reactive_property<int>(0)),
-	Find(make_reactive_wstring(L""))
-
-{
-	Find->subscribe([this](const decltype(Find)::element_type::notify_type&)
-	{
-		GetWndPtr()->InvalidateRect(NULL, FALSE);
-	});
-}
+	Find(make_reactive_wstring(L"")){}
 
 CPdfView::~CPdfView() = default;
 
@@ -64,6 +57,11 @@ void CPdfView::OnCreate(const CreateEvt& e)
 	auto [rcVertical, rcHorizontal] = GetRects();
 	m_spVScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcVertical));
 	m_spHScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcHorizontal));
+	Find->subscribe([this](const reactive_wstring::notify_type& notify)
+	{
+		GetWndPtr()->InvalidateRect(NULL, FALSE);
+	}
+	, shared_from_this());
 }
 
 CRectF CPdfView::GetRenderRectInWnd()

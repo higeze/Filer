@@ -87,15 +87,18 @@ struct FilerTabData:public TabData
 /***************/
 struct ToDoTabData:public TabData
 {
+private:
+	std::shared_ptr<int> Dummy;
+public:
 	CToDoDoc Doc;
 	reactive_command_ptr<std::wstring> OpenCommand;
 	reactive_command_ptr<std::wstring> SaveCommand;
 
 	ToDoTabData(const std::wstring& path = std::wstring())
-		:TabData(), OpenCommand(make_reactive_command<std::wstring>()),SaveCommand(make_reactive_command<std::wstring>())
+		:TabData(), Dummy(std::make_shared<int>(0)),OpenCommand(make_reactive_command<std::wstring>()),SaveCommand(make_reactive_command<std::wstring>())
 	{
-		OpenCommand->subscribe([this](const std::wstring& path) { Doc.Open(path); });
-		SaveCommand->subscribe([this](const std::wstring& path) { Doc.Save(path); });
+		OpenCommand->subscribe([this](const std::wstring& path) { Doc.Open(path); }, Dummy);
+		SaveCommand->subscribe([this](const std::wstring& path) { Doc.Save(path); }, Dummy);
 	};
 
 	virtual ~ToDoTabData() = default;
@@ -135,7 +138,7 @@ struct TextTabData :public TabData
 
 
 	TextTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(make_reactive_wstring(path)), Text(make_reactive_wstring()), Status(FileStatus::None), Carets(0,0,0,0,0)
+		:TabData(), Path(make_reactive_wstring(path)), Text(make_reactive_wstring()), Status(FileStatus::None), Carets(0, 0, 0, 0, 0)
 	{
 		OpenCommand.Subscribe([this](HWND hWnd) { Open(hWnd); });
 		SaveCommand.Subscribe([this](HWND hWnd) { Save(hWnd); });
@@ -143,10 +146,10 @@ struct TextTabData :public TabData
 		SaveAsCommand.Subscribe([this](HWND hWnd) { SaveAs(hWnd); });
 
 		//CloseCommand.Subscribe([this]() { Close(); });
-		Text->subscribe([this](const auto&)
+		Text->subscribe([this](const reactive_wstring::notify_type&)
 		{
 			Status.set(FileStatus::Dirty);
-		});
+		}, shared_from_this());
 	}
 
 	virtual ~TextTabData() = default;
@@ -359,6 +362,11 @@ public:
 
 	void OnCommandAddToFavorite(const CommandEvent& e);
 	void OnCommandOpenSameAsOther(const CommandEvent& e);
+
+	/***********/
+	/* Observe */
+	/***********/
+	void ObservePath(const reactive_wstring::notify_type&);
 
 public:
 	friend void to_json(json& j, const CFilerTabGridView& o)

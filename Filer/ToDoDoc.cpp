@@ -9,21 +9,20 @@ CToDoDoc::CToDoDoc()
 	auto reactive_task_subscription = [this](MainTask& src)->std::vector<sigslot::connection> {
 		auto dirty = [this](auto) { Status->set(FileStatus::Dirty); };
 		std::vector<sigslot::connection> subs;
-		subs.push_back(src.State->subscribe(dirty));
-		subs.push_back(src.Name->subscribe(dirty));
-		subs.push_back(src.Memo->subscribe(dirty));
-		subs.push_back(src.YearMonthDay->subscribe(dirty));
+		subs.push_back(src.State->subscribe(dirty, Status));
+		subs.push_back(src.Name->subscribe(dirty, Status));
+		subs.push_back(src.Memo->subscribe(dirty, Status));
+		subs.push_back(src.YearMonthDay->subscribe(dirty, Status));
 		return subs;
 	};
 
-	m_connections.push_back(Tasks->subscribe([this, reactive_task_subscription](const notify_container_changed_event_args<std::vector<std::tuple<MainTask>>>& notify) {
+	Tasks->subscribe([this, reactive_task_subscription](const notify_container_changed_event_args<std::vector<std::tuple<MainTask>>>& notify) {
 		switch (notify.action) {
 			case notify_container_changed_action::push_back:
 			case notify_container_changed_action::insert:
 			{
 				Status->set(FileStatus::Dirty);
-				std::vector<sigslot::connection> subs = reactive_task_subscription(std::get<MainTask>(Tasks->get_unconst().operator[](notify.new_starting_index)));
-				std::copy(subs.cbegin(), subs.cend(), std::back_inserter(m_connections));
+				reactive_task_subscription(std::get<MainTask>(Tasks->get_unconst().operator[](notify.new_starting_index)));
 				break;
 			}
 			case notify_container_changed_action::Move:
@@ -31,30 +30,19 @@ CToDoDoc::CToDoDoc()
 				break;
 			case notify_container_changed_action::erase:
 				Status->set(FileStatus::Dirty);
-				m_connections.erase(m_connections.cbegin() + notify.old_starting_index);
 				break;
 			case notify_container_changed_action::replace:
 				THROW_FILE_LINE_FUNC;
 				break;
 			case notify_container_changed_action::reset:
 				Status->set(FileStatus::Dirty);
-				m_connections.clear();
 				for (size_t i = 0; i < notify.new_items.size(); i++) {
-					std::vector<sigslot::connection> subs = reactive_task_subscription(std::get<MainTask>(Tasks->get_unconst().operator[](i)));
-					std::copy(subs.cbegin(), subs.cend(), std::back_inserter(m_connections));
+					reactive_task_subscription(std::get<MainTask>(Tasks->get_unconst().operator[](i)));
 				}
 				break;
 		}
-	}));
+	}, Status);
 }
-
-CToDoDoc::~CToDoDoc()
-{
-	for (auto& conn : m_connections) {
-		conn.disconnect();
-	}
-}
-
 
 void CToDoDoc::Open(const std::wstring& path)
 {

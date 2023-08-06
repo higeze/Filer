@@ -299,20 +299,18 @@ CExeExtensionDlg::CExeExtensionDlg(
 	m_exeExtension(exeExtension)
 {
 	m_spTextParam->Text->set(m_exeExtension.Parameter);
-	m_connections.emplace_back(
-		m_spTextParam->Text->subscribe([this](const decltype(m_spTextParam->Text)::element_type::notify_type & notify)
-		{
-			m_exeExtension.Parameter = notify.all_items;
-		}	
-	));
+
+	m_spTextParam->Text->subscribe([this](const reactive_wstring::notify_type & notify)
+	{
+		m_exeExtension.Parameter = notify.all_items;
+	}	
+	, shared_from_this());
 
 	m_spTextPath->Text->set(m_exeExtension.Path);
-	m_connections.emplace_back(
-		m_spTextPath->Text->subscribe([this](const decltype(m_spTextPath->Text)::element_type::notify_type & notify)
-		{
-			m_exeExtension.Path = notify.all_items;
-		}	
-	));
+	m_spTextPath->Text->subscribe([this](const reactive_wstring::notify_type & notify)
+	{
+		m_exeExtension.Path = notify.all_items;
+	}, shared_from_this());
 
 	m_title.set(L"Exe");
 	//Items Source

@@ -180,6 +180,10 @@ public:
 	/* Windows Message*/
 	/******************/
 	virtual void OnCreate(const CreateEvt& e);
+private:
+	void ObserveFind(const reactive_wstring::notify_type& notify);
+public:
+
 	virtual void OnPaint(const PaintEvent& e) { m_pMachine->process_event(e); }
 	virtual void OnSetFocus(const SetFocusEvent& e) override { m_pMachine->process_event(e); }
 	virtual void OnKillFocus(const KillFocusEvent& e) override { m_pMachine->process_event(e); }

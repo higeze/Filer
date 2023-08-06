@@ -17,7 +17,7 @@ public:
 	reactive_command& operator=(reactive_command&& val) = default;
 
 	template<class... Args>
-	auto subscribe(Args&&... args) const -> sigslot::connection
+	auto subscribe(Args&&... args) -> sigslot::connection
 	{
 		return m_subject.subscribe(std::forward<Args>(args)...);
 	}

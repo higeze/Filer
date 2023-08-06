@@ -3,6 +3,7 @@
 #include "ReactiveProperty.h"
 #include "getter_macro.h"
 #include "encoding_type.h"
+#include "reactive_string.h"
 
 class CPdfView;
 class CTextBox;

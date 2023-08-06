@@ -10,15 +10,13 @@
 
 class CToDoDoc
 {
-private:
-	std::vector<sigslot::connection> m_connections;
 public:
 	reactive_property_ptr<std::wstring> Path;
 	reactive_vector_ptr<std::tuple<MainTask>> Tasks;
 	reactive_property_ptr<FileStatus> Status;
 public:
 	CToDoDoc();
-	~CToDoDoc();
+	~CToDoDoc() = default;
 	//auto operator<=>(const CToDoDoc&) const = default;
 	bool operator == (const CToDoDoc & doc) const
 	{

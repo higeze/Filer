@@ -6,6 +6,7 @@
 class CCheckBoxCell :public CCell
 {
 protected:
+	std::shared_ptr<int> Dummy;
 	CCheckBox m_checkBox;
 public:
 	CCheckBoxCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty);
