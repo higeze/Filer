@@ -123,6 +123,7 @@ public:
 /***************/
 struct TextTabData :public TabData
 {
+	std::shared_ptr<int> Dummy;
 	reactive_wstring_ptr Path;
 	
 	reactive_wstring_ptr Text;
@@ -138,7 +139,7 @@ struct TextTabData :public TabData
 
 
 	TextTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(make_reactive_wstring(path)), Text(make_reactive_wstring()), Status(FileStatus::None), Carets(0, 0, 0, 0, 0)
+		:TabData(), Path(make_reactive_wstring(path)), Text(make_reactive_wstring()), Status(FileStatus::None), Carets(0, 0, 0, 0, 0), Dummy(std::shared_ptr<int>(0))
 	{
 		OpenCommand.Subscribe([this](HWND hWnd) { Open(hWnd); });
 		SaveCommand.Subscribe([this](HWND hWnd) { Save(hWnd); });
@@ -149,7 +150,7 @@ struct TextTabData :public TabData
 		Text->subscribe([this](const reactive_wstring::notify_type&)
 		{
 			Status.set(FileStatus::Dirty);
-		}, shared_from_this());
+		}, Dummy);
 	}
 
 	virtual ~TextTabData() = default;

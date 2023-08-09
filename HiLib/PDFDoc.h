@@ -39,7 +39,7 @@ public: const std::unique_ptr<CPDFPage>& GetPage(const int& index) const;
 public:
 	bool IsOpen() const
 	{
-		return m_pDoc->operator bool();
+		return m_pDoc && m_pDoc->operator bool();
 	}
 	int GetPageIndex(const std::unique_ptr<CPDFPage>& pPage) const;
 	int GetPageIndex(const CPDFPage* pPage) const;

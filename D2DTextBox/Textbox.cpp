@@ -232,7 +232,7 @@ CTextBox::CTextBox(
 	:CD2DWControl(pParentControl),
 	m_pProp(pProp),
 	m_initText(text),
-	Text(make_reactive_wstring()),
+	Text(make_reactive_wstring(text)),
 	EnterText(make_reactive_wstring()),
 	m_carets(0, text.size(), 0, 0, text.size()),
 	m_pTextMachine(std::make_unique<CTextBoxStateMachine>(this)),
@@ -405,8 +405,8 @@ void CTextBox::LoadOriginCursorCharRects()
 	/*vwxzy\n      */
 	/*             */
 
-	for (std::size_t i = 0; i < Text->size(); i++) {
-		if (Text->at(i) == L'\n' || i == Text->size()) {
+	for (std::size_t i = 0; i < m_optOriginCursorCharRects->size(); i++) {
+		if (i == Text->size() || Text->at(i) == L'\n') {
 			m_optOriginCursorCharRects->at(i).right = maxRight;
 		}
 	}
@@ -416,7 +416,7 @@ void CTextBox::LoadOriginCaptureCharRects()
 {
 	auto charRects = GetOriginCharRects();
 	m_optOriginCaptureCharRects = charRects;
-	for (std::size_t i = 0; i < Text->size(); i++) {
+	for (std::size_t i = 0; i < m_optOriginCaptureCharRects->size(); i++) {
 		//top
 		if (charRects[i].top == charRects.front().top) {
 			m_optOriginCaptureCharRects->at(i).top = -FLT_MAX;
@@ -426,7 +426,7 @@ void CTextBox::LoadOriginCaptureCharRects()
 			m_optOriginCaptureCharRects->at(i).left = -FLT_MAX;
 		}
 		//right
-		if (Text->at(i) == L'\n' || i == Text->size()) {
+		if (i == Text->size() || Text->at(i) == L'\n') {
 			m_optOriginCaptureCharRects->at(i).right = FLT_MAX;
 		}
 		//bottom
@@ -465,8 +465,8 @@ void CTextBox::LoadActualSelectionCharRects()
 {
 	m_optActualSelectionCharRects = GetActualCharRects();
 	auto size = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"a");
-	for (size_t i = 0; i < Text->size(); i++) {
-		if (Text->at(i) == L'\r' || Text->at(i) == L'\n') {
+	for (size_t i = 0; i < m_optActualSelectionCharRects->size(); i++) {
+		if (i == Text->size() || Text->at(i) == L'\n') {
 			m_optActualSelectionCharRects->at(i).right += size.width;
 		}
 	}
