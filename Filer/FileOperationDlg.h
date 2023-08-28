@@ -5,7 +5,6 @@
 #include "FilerGridViewProperty.h"
 #include "ShellFunction.h"
 #include "DeadlineTimer.h"
-#include "ReactiveProperty.h"
 #include "FilerBindGridView.h"
 #include "RenameInfo.h"
 #include "IDL.h"
@@ -15,10 +14,10 @@
 #include "ShellFile.h"
 #include "D2DWWindow.h"
 #include "Button.h"
-#include "ReactiveProperty.h"
 #include "Textbox.h"
 #include "ExeExtensionProperty.h"
 #include "Dispatcher.h"
+#include "reactive_vector.h"
 
 template<typename... TItems>
 class CFileOperationGridView :public CFilerBindGridView<TItems...>
@@ -30,7 +29,7 @@ class CFileOperationGridView :public CFilerBindGridView<TItems...>
 		auto indexes = this->GetSelectedIndexes();
 		auto frozen_count = this->GetFrozenCount<RowTag>();
 		for (auto i : indexes) {
-			this->GetItemsSource().erase(this->GetItemsSource().cbegin() + (i - frozen_count));
+			this->GetItemsSource().erase(this->GetItemsSource()->cbegin() + (i - frozen_count));
 		}
 		return true;
 	}
@@ -61,7 +60,8 @@ protected:
 
 	std::future<void> m_future;
 
-	std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> m_spItemsSource;
+public:
+	reactive_vector_ptr<std::tuple<TItems...>> ItemsSource;
 	//std::vector< std::tuple<std::shared_ptr<CShellFile>, RenameInfo>> m_selectedItems;
 
 public:
@@ -73,15 +73,13 @@ public:
 		:CD2DWDialog(pParentControl, spDialogProp),
 		m_spButtonDo(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
 		m_spButtonCancel(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
-		m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs),
-		m_spItemsSource(std::make_shared<ReactiveVectorProperty<std::tuple<TItems...>>>())
+		m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs)
 	{
-		m_spButtonCancel->GetCommand().Subscribe([this]()->void
-		{
+		m_spButtonCancel->Command.subscribe([this]()->void{
 			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-		});
+		}, shared_from_this());
 
-		m_spButtonCancel->GetContent().set(L"Cancel");
+		m_spButtonCancel->Content.set(L"Cancel");
 	}
 	virtual ~CFileOperationDlgBase() = default;
 
@@ -216,7 +214,7 @@ private:
 protected:
 	std::shared_ptr<CTextBox> m_spTextPath;
 	std::shared_ptr<CTextBox> m_spTextParam;
-	ExeExtension& m_exeExtension;
+	ExeExtension m_exeExtension;
 
 	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();
 
@@ -229,7 +227,7 @@ public:
 		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 		const std::shared_ptr<CShellFolder>& folder,
 		const std::vector<std::shared_ptr<CShellFile>>& files,
-		ExeExtension& exeExtension);
+		const ExeExtension& exeExtension);
 
 	virtual ~CExeExtensionDlg() = default;
 

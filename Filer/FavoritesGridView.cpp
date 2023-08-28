@@ -26,12 +26,13 @@ CFavoritesGridView::CFavoritesGridView(
 	CD2DWControl* pParentControl,
 	const std::shared_ptr<GridViewProperty>& spGridViewProp,
 	const std::shared_ptr<CFavoritesProperty>& spFavoritesProp)
-	:CBindGridView(pParentControl, spGridViewProp, spFavoritesProp->GetFavoritesPtr(),
+	:CBindGridView2(pParentControl, spGridViewProp,
 		arg<"bindtype"_s>() = BindType::Row,
+	arg<"itemssource"_s>() = spFavoritesProp->Favorites,
 		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{std::make_shared<CFavoritesColumn<std::shared_ptr<CFavorite>>>(this)}),
 	m_spFavoritesProp(spFavoritesProp)
 {
-	GetIsFocusable().set(false);
+	IsFocusable.set(false);
 	m_pVScroll->SetVisibility(Visibility::Hidden);
 	m_pHScroll->SetVisibility(Visibility::Disabled);
 
@@ -43,7 +44,7 @@ CFavoritesGridView::CFavoritesGridView(
 void CFavoritesGridView::OnCreate(const CreateEvt& e)
 {
 	//Base Create
-	CBindGridView::OnCreate(e);
+	CBindGridView2::OnCreate(e);
 
 	//List
 	OpenFavorites();
@@ -92,19 +93,18 @@ void CFavoritesGridView::MoveRow(int indexTo, typename RowTag::SharedPtr spFrom)
 	int from = spFrom->GetIndex<VisTag>();
 	int to = indexTo > from ? indexTo - 1 : indexTo;
 
-	auto& itemsSource = GetItemsSource();
-	auto fromIter = itemsSource.cbegin() + (from - GetFrozenCount<RowTag>());
+	auto fromIter = ItemsSource->cbegin() + (from - GetFrozenCount<RowTag>());
 	auto temp = *fromIter;
-	itemsSource.erase(fromIter);
-	auto toIter = itemsSource.cbegin() + (to - GetFrozenCount<RowTag>());
-	itemsSource.insert(toIter, temp);
+	ItemsSource.erase(fromIter);
+	auto toIter = ItemsSource->cbegin() + (to - GetFrozenCount<RowTag>());
+	ItemsSource.insert(toIter, temp);
 
 	Reload();
 }
 
 void CFavoritesGridView::Reload()
 {
-	for (auto iter = m_spFavoritesProp->GetFavorites().cbegin(); iter != m_spFavoritesProp->GetFavorites().cend(); ++iter) {
+	for (auto iter = m_spFavoritesProp->Favorites->cbegin(); iter != m_spFavoritesProp->Favorites->cend(); ++iter) {
 		(std::get<0>((*iter)))->SetLockShellFile(nullptr);
 	}
 	OpenFavorites();

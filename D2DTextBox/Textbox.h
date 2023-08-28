@@ -8,7 +8,6 @@
 #include "Scroll.h"
 #include "TextboxStateMachine.h"
 #include "D2DWControl.h"
-#include "ReactiveProperty.h"
 #include "DisplayAttribute.h"
 #include "property.h"
 #include "encoding_type.h"
@@ -18,7 +17,10 @@
 
 #include "UndoReDoManager.h"
 
+#include "reactive_property.h"
 #include "reactive_string.h"
+
+#include "TextCaret.h"
 
 
 struct TextBoxProperty;
@@ -77,6 +79,7 @@ public:
 	/************/
 	reactive_wstring_ptr Text;
 	reactive_wstring_ptr EnterText;
+	reactive_property_ptr<CTextCaret> Caret;
 protected:
 	// Caret
 	enum caret
@@ -90,11 +93,6 @@ protected:
 	/*********/
 	/* Field */
 	/*********/
-	//ReactiveProperty
-	ReactiveProperty<CPointF> m_caretPoint;
-	ReactiveTupleProperty<int, int, int, int, int> m_carets;
-
-	/* Text */
 	/* Scroll */
 	std::unique_ptr<CVScroll> m_pVScroll;
 	std::unique_ptr<CHScroll> m_pHScroll;
@@ -135,11 +133,6 @@ public:
 	void SetHasBorder(bool value) { m_hasBorder = value; }
 	void SetIsScrollable(bool value){ m_isScrollable = value; }
 	void SetIsEnterText(bool value){ m_isEnterText = value; }
-	ReactiveProperty<CPointF>& GetCaretPos() { return m_caretPoint; }
-	ReactiveTupleProperty<int, int, int, int, int>& GetCarets() { return m_carets; }
-
-	int GetSelectionStart() { return std::get<caret::SelBegin>(m_carets.get()); }
-	int GetSelectionEnd() { return std::get<caret::SelEnd>(m_carets.get()); }
 
 public:
 	/******************/

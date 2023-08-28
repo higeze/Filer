@@ -10,7 +10,7 @@
 #include <regex>
 #include <nameof/nameof.hpp>
 
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 #include "reactive_binding.h"
 
 /***********/
@@ -43,8 +43,8 @@ CPDFEditor::CPDFEditor(
 	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr))
 {
 	m_spFilterBox->SetIsScrollable(false); 
-	m_spPercentBlock->Text->set(L"%");
-	m_spStatusBar->GetIsFocusable().set(false);
+	m_spPercentBlock->Text.set(L"%");
+	m_spStatusBar->IsFocusable.set(false);
 }
 
 std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CPDFEditor::GetRects() const
@@ -112,56 +112,52 @@ void CPDFEditor::OnCreate(const CreateEvt& e)
 	m_spPDFView->SetIsTabStop(true);
 
 	//Bindings
-	m_spScaleBox->Text->set(ratio_to_percent(m_spPDFView->Scale->get_const()));
+	m_spScaleBox->Text.set(ratio_to_percent(*m_spPDFView->Scale));
 
-	m_spPDFView->Scale->subscribe([this](const FLOAT& ratio)
+	m_spPDFView->Scale.subscribe([this](const FLOAT& ratio)
 	{
 		std::wstring percent = ratio_to_percent(ratio);
-		if (percent != m_spScaleBox->Text->get_const()) {
-			m_spScaleBox->Text->set(percent);
+		if (percent != *m_spScaleBox->Text) {
+			m_spScaleBox->Text.set(percent);
 		}
 	}, shared_from_this());
-	m_spScaleBox->EnterText->subscribe([this](const reactive_wstring::notify_type& notify)
+	m_spScaleBox->EnterText.subscribe([this](auto notify)
 	{
-		FLOAT ratio = percent_to_ratio(m_spScaleBox->EnterText->get_const());
-		if (ratio != m_spPDFView->Scale->get_const()) {
+		FLOAT ratio = percent_to_ratio(*m_spScaleBox->EnterText);
+		if (ratio != *m_spPDFView->Scale) {
 			//Validate
 			if (ratio == 0.f || m_spPDFView->GetMinScale() > ratio || m_spPDFView->GetMaxScale() < ratio) {
-				m_spScaleBox->Text->set(ratio_to_percent(m_spPDFView->Scale->get_const()));
+				m_spScaleBox->Text.set(ratio_to_percent(*m_spPDFView->Scale));
 			} else {
-				m_spPDFView->Scale->set(ratio);
+				m_spPDFView->Scale.set(ratio);
 			}
 		}
 	}, shared_from_this());
 
-	m_spPDFView->CurrentPage->subscribe([this](const int& value)
+	m_spPDFView->CurrentPage.subscribe([this](const int& value)
 	{
 		wchar_t* endptr = nullptr;
 		int page = std::wcstol(m_spPageBox->EnterText->c_str(), &endptr, 10);
 		if (page != value) {
-			m_spPageBox->Text->set(std::to_wstring(value));
-			m_spPageBox->EnterText->set(std::to_wstring(value));
+			m_spPageBox->Text.set(std::to_wstring(value));
+			m_spPageBox->EnterText.set(std::to_wstring(value));
 		}
 	}, shared_from_this());
-	m_spPageBox->EnterText->subscribe([this](const reactive_wstring::notify_type& notify)
+	m_spPageBox->EnterText.subscribe([this](auto notify)
 	{
 		wchar_t* endptr = nullptr;
 		int pageAtBox = std::wcstol(m_spPageBox->EnterText->c_str(), &endptr, 10);
-		int pageAtView = m_spPDFView->CurrentPage->get_const();
+		int pageAtView = *m_spPDFView->CurrentPage;
 		if (pageAtBox != pageAtView) {
 			if (!m_spPDFView->Jump(pageAtBox)) {
-				m_spPageBox->Text->set(boost::lexical_cast<std::wstring>(m_spPDFView->CurrentPage->get_const()));
-				m_spPageBox->EnterText->set(boost::lexical_cast<std::wstring>(m_spPDFView->CurrentPage->get_const()));
+				m_spPageBox->Text.set(std::to_wstring(*m_spPDFView->CurrentPage));
+				m_spPageBox->EnterText.set(std::to_wstring(*m_spPDFView->CurrentPage));
 			}
 		}
 	}, shared_from_this());
 
-	reactive_property_string_binding(
-		m_spPDFView->TotalPage,
-		m_spTotalPageBlock->Text
-	);
-
-	reactive_string_binding(m_spFilterBox->Text, m_spPDFView->Find);
+	m_spPDFView->TotalPage.binding(m_spTotalPageBlock->Text);
+	m_spFilterBox->Text.binding(m_spPDFView->Find);
 }
 
 void CPDFEditor::OnPaint(const PaintEvent& e)
@@ -225,17 +221,17 @@ void CPDFEditor::OnKeyDown(const KeyDownEvent& e)
 
 void CPDFEditor::Open()
 {
-	m_open.Execute(GetWndPtr()->m_hWnd);
+	OpenCommand.execute(GetWndPtr()->m_hWnd);
 }
 
 void CPDFEditor::OpenAs()
 {
-	m_open_as.Execute(GetWndPtr()->m_hWnd);
+	OpenAsCommand.execute(GetWndPtr()->m_hWnd);
 }
 
 void CPDFEditor::Save()
 {
-	m_spPDFView->PDF->get_unconst().Save(m_spPDFView->PDF->get_const().Path->get_const());
+	m_spPDFView->PDF.get_unconst()->Save(*m_spPDFView->PDF->Path);
 }
 
 void CPDFEditor::SaveAs()
@@ -259,9 +255,9 @@ void CPDFEditor::SaveAs()
 		}
 	} else {
 		::ReleaseBuffer(path);
-		bool same = path == m_spPDFView->PDF->get_const().Path->get_const();
+		bool same = path == *m_spPDFView->PDF->Path;
 		if (!same) {
-			m_spPDFView->PDF->get_unconst().SaveWithVersion(path, 0, m_spPDFView->PDF->get_const().GetFileVersion());
+			m_spPDFView->PDF.get_unconst()->SaveWithVersion(path, 0, m_spPDFView->PDF->GetFileVersion());
 			m_spPDFView->Open(path);
 		} else {
 			Save();

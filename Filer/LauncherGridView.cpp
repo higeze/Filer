@@ -28,12 +28,14 @@ CLauncherGridView::CLauncherGridView(
 	CD2DWControl* pParentControl,
 	const std::shared_ptr<GridViewProperty>& spGridViewProp,
 	const std::shared_ptr<CLauncherProperty>& spLauncherProp)
-	:CBindGridView(pParentControl, spGridViewProp, spLauncherProp->GetLaunchersPtr(),
-		arg<"bindtype"_s>() = BindType::Column,
-		arg<"rows"_s>() = std::vector<std::shared_ptr<CRow>>{std::make_shared<CLauncherRow<std::shared_ptr<CLauncher>>>(this, spGridViewProp->CellPropPtr)}),
+	:CBindGridView2(pParentControl, 
+	spGridViewProp,
+	arg<"bindtype"_s>() = BindType::Column,
+	arg<"itemssource"_s>() = spLauncherProp->Launchers,
+	arg<"rows"_s>() = std::vector<std::shared_ptr<CRow>>{std::make_shared<CLauncherRow<std::shared_ptr<CLauncher>>>(this, spGridViewProp->CellPropPtr)}),
 	m_spLauncherProp(spLauncherProp)
 {
-	GetIsFocusable().set(false);
+	IsFocusable.set(false);
 	m_pVScroll->SetVisibility(Visibility::Disabled);
 	m_pHScroll->SetVisibility(Visibility::Hidden);
 
@@ -43,7 +45,7 @@ CLauncherGridView::CLauncherGridView(
 void CLauncherGridView::OnCreate(const CreateEvt& e)
 {
 	//Base Create
-	CBindGridView::OnCreate(e);
+	CBindGridView2::OnCreate(e);
 
 	//List
 	OpenFavorites();
@@ -91,12 +93,11 @@ void CLauncherGridView::MoveColumn(int indexTo, typename ColTag::SharedPtr spFro
 	int from = spFrom->GetIndex<VisTag>();
 	int to = indexTo > from ? indexTo - 1 : indexTo;
 
-	auto& itemsSource = GetItemsSource();
-	auto fromIter = itemsSource.cbegin() + (from - GetFrozenCount<RowTag>());
+	auto fromIter = ItemsSource->cbegin() + (from - GetFrozenCount<RowTag>());
 	auto temp = *fromIter;
-	itemsSource.erase(fromIter);
-	auto toIter = itemsSource.cbegin() + (to - GetFrozenCount<RowTag>());
-	itemsSource.insert(toIter, temp);
+	ItemsSource.erase(fromIter);
+	auto toIter = ItemsSource->cbegin() + (to - GetFrozenCount<RowTag>());
+	ItemsSource.insert(toIter, temp);
 
 	Reload();
 }

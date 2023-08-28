@@ -1,6 +1,6 @@
 #pragma once
 #include "SheetCell.h"
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 #include "Debug.h"
 #include "ResourceIDFactory.h"
 #include "named_arguments.h"

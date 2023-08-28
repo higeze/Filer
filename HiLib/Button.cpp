@@ -10,7 +10,7 @@ void CButton::OnLButtonDown(const LButtonDownEvent& e)
 void CButton::OnLButtonUp(const LButtonUpEvent& e)
 {
 	if (GetState() == UIElementState::Pressed) {
-		GetCommand().Execute();
+		Command.execute();
 	}
 	CUIElement::OnLButtonUp(e);
 }
@@ -36,8 +36,8 @@ void CButton::OnPaint(const PaintEvent& e)
 	SolidFill fill = m_spButtonProperty->NormalFill;
 	SolidLine line = m_spButtonProperty->BorderLine;
 	FormatF format = m_spButtonProperty->Format;
-	std::wstring content = m_content.get();
-	if (GetIsEnabled().get()) {
+	std::wstring content = *Content;
+	if (*IsEnabled) {
 		switch (GetState()) {
 			case UIElementState::Hot:
 				fill = m_spButtonProperty->HotFill;
@@ -55,8 +55,8 @@ void CButton::OnPaint(const PaintEvent& e)
 		}
 	} else {
 		format = m_spButtonProperty->DisableFormat;
-		if (!m_disable_content.get().empty()) {
-			content = m_disable_content;
+		if (!DisableContent->empty()) {
+			content = *DisableContent;
 		}
 	}
 
@@ -76,7 +76,7 @@ void CButton::OnLButtonSnglClk(const LButtonSnglClkEvent& e)
 void CButton::OnKeyDown(const KeyDownEvent& e)
 {
 	if (e.Char == VK_RETURN) {
-		GetCommand().Execute();
+		Command.execute();
 		*e.HandledPtr = TRUE;
 	}
 }

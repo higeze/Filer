@@ -14,11 +14,11 @@ public:
 
 	std::tuple<TItems...>& GetTupleItems()
 	{
-		if(auto pBindSheet = dynamic_cast<IBindSheet<TItems...>*>(this->m_pSheet)){
+		if(auto pBindSheet = dynamic_cast<IBindSheet2<TItems...>*>(this->m_pSheet)){
 			auto& itemsSource = pBindSheet->GetItemsSource();
 			auto index = GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<ColTag>();
 
-			return itemsSource[index];
+			return itemsSource.get_unconst()->at(index);
 
 		} else {
 			throw std::exception(FILE_LINE_FUNC);

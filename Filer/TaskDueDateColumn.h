@@ -15,7 +15,7 @@ public:
 		:CBindYearMonthDayColumn<MainTask>(
 		pSheet, 
 		L"Due Date",
-		[](std::tuple<MainTask>& tk)->reactive_property_ptr<CYearMonthDay>& {return std::get<MainTask>(tk).YearMonthDay; },
+		[](std::tuple<MainTask>& tk)->reactive_property_ptr<CYearMonthDay>& { return std::get<MainTask>(tk).YearMonthDay; },
 		args...)
 	{}
 

@@ -1,7 +1,6 @@
 #pragma once
 #include "BindGridView.h"
 #include "Task.h"
-#include "ReactiveProperty.h"
 #include "TaskRow.h"
 #include "ToDoDoc.h"
 
@@ -22,20 +21,15 @@ public:
 	template<typename... TArgs>
 	CToDoGridView(CD2DWControl* pParentControl = nullptr,
 		const std::shared_ptr<GridViewProperty>& spGridViewProp = nullptr,
-		const std::shared_ptr<ReactiveVectorProperty<std::tuple<MainTask>>> spItemsSource = nullptr,
 		TArgs... args)
-		:CBindGridView2<CTaskRow, CBindColumn<MainTask>, MainTask>(pParentControl, spGridViewProp, spItemsSource, args...),
-		Path(make_reactive_property<std::wstring>()),
-		OpenCommand(make_reactive_command<std::wstring>()),
-		SaveCommand(make_reactive_command<std::wstring>())
+		:CBindGridView2<CTaskRow, CBindColumn<MainTask>, MainTask>(pParentControl, spGridViewProp, args...),
+		Path()
 	{
 		Initialize();
 	}
 	void Initialize();
 
-
 	virtual bool HasSheetCell() override { return true; }
-
 
 	reactive_property_ptr<std::wstring> Path;
 	reactive_command_ptr<std::wstring> OpenCommand;

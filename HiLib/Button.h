@@ -1,6 +1,8 @@
 #pragma once
 #include "D2DWControl.h"
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
+#include "reactive_command.h"
+
 
 struct ButtonProperty;
 
@@ -8,17 +10,14 @@ class CButton:public CD2DWControl
 {
 private:
 	std::shared_ptr<ButtonProperty> m_spButtonProperty;
-	ReactiveCommand<void> m_command;
-	ReactiveProperty<std::wstring> m_content;
-	ReactiveProperty<std::wstring> m_disable_content;
+public:
+	reactive_command_ptr<void> Command;
+	reactive_property_ptr<std::wstring> Content;
+	reactive_property_ptr<std::wstring> DisableContent;
 public:
 	CButton(CD2DWControl* pControl, const std::shared_ptr<ButtonProperty>& spButtonProperty)
 		:CD2DWControl(pControl), m_spButtonProperty(spButtonProperty){}
 	virtual ~CButton() = default;
-	//
-	ReactiveCommand<void>& GetCommand() { return m_command; }
-	ReactiveProperty<std::wstring>& GetContent() { return m_content; }
-	ReactiveProperty<std::wstring>& GetDisableContent() { return m_disable_content; }
 
 	//Event
 	virtual void OnPaint(const PaintEvent& e) override;

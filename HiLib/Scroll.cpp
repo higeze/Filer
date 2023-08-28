@@ -4,7 +4,7 @@
 
 	CScrollBase::CScrollBase(CD2DWControl* pParentControl, const std::shared_ptr<ScrollProperty>& spScrollProp/*, std::function<void(const wchar_t*)> onPropertyChanged*/)
 		:CD2DWControl(pParentControl),
-		Position(make_reactive_property<FLOAT>(0.f)),
+		Position(0.f),
 		m_spScrollProp(spScrollProp),
 		//m_onPropertyChanged(onPropertyChanged),
 		m_visibility(Visibility::Auto){}
@@ -31,8 +31,8 @@
 	void CScrollBase::SetScrollPos(const FLOAT pos)
 	{
 		FLOAT newPos = std::clamp(pos, m_range.first, (std::max)(m_range.second - m_page, m_range.first));
-		if (Position->get_const() != newPos) {
-			Position->set(newPos);
+		if (*Position != newPos) {
+			Position.set(newPos);
 			ScrollChanged();
 		}
 	}
@@ -60,7 +60,7 @@
 		bool isRangeChange = m_range.first != min || m_range.second != max;
 		if (isRangeChange) {
 			m_range.first = min; m_range.second = max;
-			Position->set(std::clamp(GetScrollPos(), m_range.first, (std::max)(m_range.second - m_page, m_range.first)));
+			Position.set(std::clamp(GetScrollPos(), m_range.first, (std::max)(m_range.second - m_page, m_range.first)));
 		}
 		bool isPageChange = m_page != page;
 		if (isPageChange) {

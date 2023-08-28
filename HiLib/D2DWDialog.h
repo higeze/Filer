@@ -11,19 +11,18 @@ class CD2DWDialog: public CD2DWControl
 public:
 	const FLOAT kSizeWidth = 5.f;
 	const FLOAT kTitlePadding = 3.f;
+public:
+	reactive_wstring_ptr Title;
 protected:
 	std::unique_ptr<CDialogStateMachine> m_pDialogMachine;
 	std::shared_ptr<DialogProperty> m_spProp;
-	ReactiveWStringProperty m_title;
+
 	CSizeF m_titleSize;
 	std::optional<CPointF> m_startPoint;
 
 public:
 	CD2DWDialog(CD2DWControl* pParentControl = nullptr, const std::shared_ptr<DialogProperty>& spProp = nullptr);
 	virtual ~CD2DWDialog();
-
-	ReactiveWStringProperty& GetTitle() { return m_title; }
-
 
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnDestroy(const DestroyEvent& e) override;

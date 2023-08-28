@@ -14,9 +14,9 @@ void CCellTextBox::OnCreate(const CreateEvt& e)
 {
 	CTextBox::OnCreate(e);
 
-	Text->subscribe([this](const decltype(Text)::element_type::notify_type& e)->void
+	Text.subscribe([this](auto notify)->void
 	{
-		if (m_changed) { m_changed(Text->get_const()); }
+		if (m_changed) { m_changed(*Text); }
 	}, shared_from_this());
 }
 
@@ -26,7 +26,7 @@ void CCellTextBox::OnClose(const CloseEvent& e)
 
 	if (!m_isClosing) {
 		m_isClosing = true;
-		if (m_final) { m_final(Text->get_const()); }
+		if (m_final) { m_final(*Text); }
 	}
 }
 bool CCellTextBox::GetIsVisible()const
@@ -41,7 +41,7 @@ CRectF CCellTextBox::GetRectInWnd() const
 	//rc.DeflateRect(m_pProp->Line->Width * 0.5f);
 	//rc.DeflateRect(*(m_pProp->Padding));
 
-	CSizeF sz = m_pParentControl->GetWndPtr()->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), Text->get_const(), rc.Width());
+	CSizeF sz = m_pParentControl->GetWndPtr()->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), *Text, rc.Width());
 
 	rc.bottom = (std::max)(rc.bottom, 
 		rc.top + sz.height + m_pProp->Line->Width * 0.5f *2.f + m_pProp->Padding->top + m_pProp->Padding->bottom);
@@ -59,7 +59,7 @@ CEditorCellTextBox::CEditorCellTextBox(
 	std::function<void(const std::wstring&)> final)
 	:CEditorTextBox(pParentControl, pProp, text), m_pCell(pCell),m_changed(changed), m_final(final)
 {
-	Text->subscribe([this](const reactive_wstring::notify_type& notify)->void 
+	Text.subscribe([this](auto notify)->void 
 	{
 		if (m_changed) { m_changed(notify.all_items); }
 	}, shared_from_this());
@@ -71,7 +71,7 @@ void CEditorCellTextBox::OnClose(const CloseEvent& e)
 
 	if (!m_isClosing) {
 		m_isClosing = true;
-		if (m_final) { m_final(Text->get_const()); }
+		if (m_final) { m_final(*Text); }
 	}
 }
 bool CEditorCellTextBox::GetIsVisible()const
@@ -87,7 +87,7 @@ CRectF CEditorCellTextBox::GetRectInWnd() const
 	rc.DeflateRect(m_pProp->Line->Width * 0.5f);
 	rc.DeflateRect(*(m_pProp->Padding));
 
-	CSizeF sz = m_pParentControl->GetWndPtr()->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), Text->get_const(), rc.Width());
+	CSizeF sz = m_pParentControl->GetWndPtr()->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), *Text, rc.Width());
 
 	rc.bottom = rc.top + sz.height + m_pProp->Line->Width * 0.5f *2.f + m_pProp->Padding->top + m_pProp->Padding->bottom;
 	return rc;

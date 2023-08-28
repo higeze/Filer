@@ -45,6 +45,21 @@ public:
 		return m_on_next.connect(std::forward<Callable>(c), std::forward<Trackable>(ptr));
 	}
 
+    template <typename Callable, typename Obj>
+    size_t disconnect(const Callable &c, const Obj &obj)
+	{
+		return m_on_next.disconnect(c, obj);
+	}
+
+    template <typename Callable, typename Trackable>
+    std::enable_if_t<sigslot::trait::is_callable_v<arg_list, Callable> &&
+                     sigslot::trait::is_weak_ptr_compatible_v<Trackable>, sigslot::connection>
+	disconnect(Callable&& c, Trackable&& ptr)
+	{
+		return m_on_next.disconnect(std::forward<Callable>(c), std::forward<Trackable>(ptr));
+	}
+
+
 	void block()
 	{
 		return m_on_next.block();
@@ -53,6 +68,11 @@ public:
 	void unblock()
 	{
 		return m_on_next.unblock();
+	}
+
+	void disconnect_all()
+	{
+		return m_on_next.disconnect_all();
 	}
 
 };

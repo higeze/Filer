@@ -5,22 +5,18 @@
 template <class T>
 class reactive_command
 {
+	template <class U> friend class reactive_command_ptr;
 private:
 	subject<T> m_subject;
 public:
 	reactive_command():
 		m_subject(){};
 	virtual ~reactive_command() = default;
+
 	reactive_command(const reactive_command& val) = default;
 	reactive_command(reactive_command&& val) = default;
 	reactive_command& operator=(const reactive_command& val) = default;
 	reactive_command& operator=(reactive_command&& val) = default;
-
-	template<class... Args>
-	auto subscribe(Args&&... args) -> sigslot::connection
-	{
-		return m_subject.subscribe(std::forward<Args>(args)...);
-	}
 
 	void execute(const T& value) const
 	{
@@ -28,10 +24,94 @@ public:
 	}
 };
 
-template<class T> using reactive_command_ptr = std::shared_ptr<reactive_command<T>>;
-
-template<class T, class... Args>
-auto make_reactive_command(Args&&... args) -> reactive_command_ptr<T>
+template <>
+class reactive_command<void>
 {
-	return std::make_shared<reactive_command<T>>(std::forward<Args>(args)...);
-}
+	template <class U> friend class reactive_command_ptr;
+private:
+	subject<> m_subject;
+public:
+	reactive_command():
+		m_subject(){};
+	virtual ~reactive_command() = default;
+
+	reactive_command(const reactive_command& val) = default;
+	reactive_command(reactive_command&& val) = default;
+	reactive_command& operator=(const reactive_command& val) = default;
+	reactive_command& operator=(reactive_command&& val) = default;
+
+	void execute(void) const
+	{
+		m_subject.on_next();
+	}
+};
+
+template <class T>
+class reactive_command_ptr
+{
+public:
+	using reactive_command_type = typename reactive_command<T>;
+private:
+	std::shared_ptr<reactive_command_type> m_preactive;
+public:
+	reactive_command_ptr()
+		:m_preactive(std::make_shared<reactive_command_type>()){}
+
+	virtual ~reactive_command_ptr() = default;
+
+	reactive_command_ptr(const reactive_command_ptr& val) = default;
+	reactive_command_ptr(reactive_command_ptr&& val) = default;
+	reactive_command_ptr& operator=(const reactive_command_ptr& val) = default;
+	reactive_command_ptr& operator=(reactive_command_ptr&& val) = default;
+
+	template<class... Args>
+	auto subscribe(Args&&... args) -> sigslot::connection
+	{
+		return m_preactive->m_subject.subscribe(std::forward<Args>(args)...);
+	}
+
+	void execute(const T& value) const
+	{
+		m_preactive->m_subject.on_next(value);
+	}
+
+	sigslot::connection binding(reactive_command_ptr& dst)
+	{
+		return dst.subscribe(&reactive_command_type::execute, m_preactive);
+	}
+};
+
+template <>
+class reactive_command_ptr<void>
+{
+public:
+	using reactive_command_type = typename reactive_command<void>;
+private:
+	std::shared_ptr<reactive_command_type> m_preactive;
+public:
+	reactive_command_ptr()
+		:m_preactive(std::make_shared<reactive_command_type>()){}
+	virtual ~reactive_command_ptr() = default;
+
+	reactive_command_ptr(const reactive_command_ptr& val) = default;
+	reactive_command_ptr(reactive_command_ptr&& val) = default;
+	reactive_command_ptr& operator=(const reactive_command_ptr& val) = default;
+	reactive_command_ptr& operator=(reactive_command_ptr&& val) = default;
+
+	template<class... Args>
+	auto subscribe(Args&&... args) -> sigslot::connection
+	{
+		return m_preactive->m_subject.subscribe(std::forward<Args>(args)...);
+	}
+
+	void execute(void) const
+	{
+		m_preactive->m_subject.on_next();
+	}
+
+	sigslot::connection binding(reactive_command_ptr& dst)
+	{
+		return dst.subscribe(&reactive_command_type::execute, m_preactive);
+	}
+};
+

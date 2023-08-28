@@ -2,7 +2,6 @@
 #include <queue>
 #include <future>
 #include "Direct2DWrite.h"
-#include "ReactiveProperty.h"
 #include "getter_macro.h"
 #include "shared_lock_property.h"
 #include "MyUniqueHandle.h"
@@ -62,6 +61,7 @@ public:
 /************/
 /* Reactive */
 /************/
+	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<bool> IsDirty;
 
 /***************/
@@ -108,6 +108,6 @@ public:
 	CPDFPage(std::unique_ptr<CFPDFPage>&& pPage, std::unique_ptr<CFPDFTextPage>&& pTextPage, const std::shared_ptr<CFPDFFormHandle>& pForm);
 	virtual ~CPDFPage();
 	/* Reactive */
-	ReactiveProperty<int> Rotate;	
+	reactive_property_ptr<int> Rotate;	
 };
 

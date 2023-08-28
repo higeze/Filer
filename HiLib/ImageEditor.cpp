@@ -8,8 +8,6 @@
 #include <regex>
 #include <nameof/nameof.hpp>
 
-#include "ReactiveProperty.h"
-
 
 /***************/
 /* CImageEditor */
@@ -25,7 +23,7 @@ CImageEditor::CImageEditor(
 	m_spScaleBox(std::make_shared<CTextBox>(this, spProp->TextBoxPropPtr, L"0")),
 	m_spPercentBlock(std::make_shared<CTextBlock>(this, spProp->TextBlockPropPtr))
 {
-	m_spPercentBlock->Text->set(L"%");
+	m_spPercentBlock->Text.set(L"%");
 }
 
 std::tuple<CRectF, CRectF, CRectF, CRectF> CImageEditor::GetRects() const
@@ -74,24 +72,24 @@ void CImageEditor::OnCreate(const CreateEvt& e)
 		return std::round(std::wcstof(percent.c_str(), &stopstring) * 1000.f) / 1000.f / 100.f;
 	};
 
-	m_spScaleBox->Text->set(ratio_to_percent(m_spImageView->Scale->get_const()));
-	m_spImageView->Scale->subscribe(
+	m_spScaleBox->Text.set(ratio_to_percent(*m_spImageView->Scale));
+	m_spImageView->Scale.subscribe(
 	[&](const FLOAT& ratio)->void{
 		std::wstring percent = ratio_to_percent(ratio);
-		if (percent != m_spScaleBox->Text->get_const()) {
-			m_spScaleBox->Text->set(percent);
+		if (percent != *m_spScaleBox->Text) {
+			m_spScaleBox->Text.set(percent);
 		}
 	}, shared_from_this());
 
-	m_spScaleBox->EnterText->subscribe(
-	[&](const decltype(m_spScaleBox->EnterText)::element_type::notify_type& notify)->void {
-		FLOAT ratio = percent_to_ratio(m_spScaleBox->Text->get_const());
-		if (ratio != m_spImageView->Scale->get_const()) {
+	m_spScaleBox->EnterText.subscribe(
+	[&](auto notify)->void {
+		FLOAT ratio = percent_to_ratio(*m_spScaleBox->Text);
+		if (ratio != *m_spImageView->Scale) {
 			//Validate
 			if(ratio == 0.f || m_spImageView->GetMinScale() > ratio || m_spImageView->GetMaxScale() < ratio){ 
-				m_spScaleBox->Text->set(ratio_to_percent(m_spImageView->Scale->get_const()));
+				m_spScaleBox->Text.set(ratio_to_percent(*m_spImageView->Scale));
 			} else {
-				m_spImageView->Scale->set(ratio);
+				m_spImageView->Scale.set(ratio);
 			}
 		}
 	}, shared_from_this());
@@ -146,51 +144,22 @@ void CImageEditor::OnKeyDown(const KeyDownEvent& e)
 
 void CImageEditor::Open()
 {
-	m_open.Execute(GetWndPtr()->m_hWnd);
+	OpenCommand.execute(GetWndPtr()->m_hWnd);
 }
 
 void CImageEditor::OpenAs()
 {
-	m_open_as.Execute(GetWndPtr()->m_hWnd);
+	OpenAsCommand.execute(GetWndPtr()->m_hWnd);
 }
 
 void CImageEditor::Save()
 {
-	//m_spPDFView->GetDocPtr()->Save();
+	SaveCommand.execute(GetWndPtr()->m_hWnd);
 }
 
 void CImageEditor::SaveAs()
 {
-	////m_save_as.Execute(GetWndPtr()->m_hWnd);
-	//std::wstring path;
-	//OPENFILENAME ofn = { 0 };
-	//ofn.lStructSize = sizeof(OPENFILENAME);
-	//ofn.hwndOwner = NULL;// GetWndPtr()->m_hWnd;
-	//ofn.lpstrFilter = L"PDF file(*.pdf)\0*.pdf\0\0";
-	//ofn.lpstrFile = ::GetBuffer(path, MAX_PATH);
-	//ofn.nMaxFile = MAX_PATH;
-	//ofn.lpstrTitle = L"Save as";
-	//ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
-	//ofn.lpstrDefExt = L"pdf";
-
-	//if (!GetSaveFileName(&ofn)) {
-	//	DWORD errCode = CommDlgExtendedError();
-	//	if (errCode) {
-	//		//throw std::exception(FILE_LINE_FUNC);
-	//	}
-	//} else {
-	//	::ReleaseBuffer(path);
-	//	bool same = path == m_spPDFView->GetDocPtr()->GetPath();
-	//	if (!same) {
-	//		m_spPDFView->GetDocPtr()->SaveWithVersion(path, 0, m_spPDFView->GetDocPtr()->GetFileVersion());
-	//		m_spPDFView->Open(path);
-	//	} else {
-	//		m_spPDFView->GetDocPtr()->Save();
-	//		/*auto doc(m_spPDFView->GetDocPtr()->Clone());
-	//		m_spPDFView->GetDocPtr().reset();
-	//		doc.SaveAsCopy(path, 0);*/
-	//	}
-	//}
+	SaveAsCommand.execute(GetWndPtr()->m_hWnd);
 }
 
 void CImageEditor::Update()

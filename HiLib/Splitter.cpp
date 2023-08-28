@@ -26,7 +26,7 @@ void CHorizontalSplitter::OnMouseMove(const MouseMoveEvent& e)
 	if (m_inDrag) {
 		auto rc = GetRectInWnd();
 
-		m_splitterLeft.set(m_splitterLeft + (e.PointInWnd.x - m_ptBeginDrag.x));
+		SplitterLeft.set(*SplitterLeft + (e.PointInWnd.x - m_ptBeginDrag.x));
 		m_ptBeginDrag = e.PointInWnd;
 
 		auto spParent = GetParentControlPtr();

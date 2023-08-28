@@ -1,7 +1,6 @@
 #pragma once
 #include "CheckBoxCell.h"
 #include "BindCheckBoxColumn.h"
-#include "reactive_binding.h"
 
 template<typename... TItems>
 class CBindCheckBoxCell :public CCheckBoxCell
@@ -12,7 +11,7 @@ public:
 	{
 		auto pBindColumn = static_cast<const CBindCheckBoxColumn<TItems...>*>(this->m_pColumn);
 		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		reactive_binding(pBindColumn->GetProperty(pBindRow->GetTupleItems()), m_checkBox.State);
+		pBindColumn->GetProperty(pBindRow->GetTupleItems()).binding(m_checkBox.State);
 	}
 	virtual ~CBindCheckBoxCell() = default;
 

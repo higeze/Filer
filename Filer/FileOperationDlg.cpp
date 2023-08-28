@@ -30,7 +30,7 @@ CCopyMoveDlgBase::CCopyMoveDlgBase(
 			shell::DesktopBindToShellFolder(m_srcIDL),
 			m_srcIDL,
 			childIDL);
-		m_spItemsSource->push_back(
+		ItemsSource.push_back(
 			std::make_tuple(
 				spFile,
 				RenameInfo{ spFile->GetPathNameWithoutExt(), spFile->GetPathExt() }));
@@ -40,7 +40,7 @@ CCopyMoveDlgBase::CCopyMoveDlgBase(
 	m_spFilerControl = std::make_unique<CFileOperationGridView<std::shared_ptr<CShellFile>, RenameInfo>>(
 		this,
 		spFilerGridViewProp,
-		m_spItemsSource,
+		arg<"itemssource"_s>() = ItemsSource,
 		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr, spFilerGridViewProp->HeaderPropPtr),
 		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, L"Name"),
 		arg<"frzcolcnt"_s>() = 1,
@@ -66,13 +66,13 @@ CCopyDlg::CCopyDlg(
 	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
 	:CCopyMoveDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, destIDL, srcIDL, srcChildIDLs)
 {
-	m_title.set(L"Copy");
-	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	Title.set(L"Copy");
+	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		Copy();
-	});
+	}, shared_from_this());
 
-	m_spButtonDo->GetContent().set(L"Copy");
+	m_spButtonDo->Content.set(L"Copy");
 }
 
 void CCopyDlg::Copy()
@@ -80,7 +80,7 @@ void CCopyDlg::Copy()
 	std::vector<CIDL> noRenameIDLs;
 	std::vector<std::pair<CIDL, std::wstring>> renameIDLs;
 
-	for (auto& tup : m_spItemsSource->get()) {
+	for (auto& tup : *ItemsSource) {
 		auto& spFile = std::get<std::shared_ptr<CShellFile>>(tup);
 		auto& rename = std::get<RenameInfo>(tup);
 		std::wstring newname = rename.Name + rename.Ext;
@@ -139,13 +139,13 @@ CMoveDlg::CMoveDlg(
 	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
 	:CCopyMoveDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, destIDL, srcIDL, srcChildIDLs)
 {
-	m_title.set(L"Move");
-	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	Title.set(L"Move");
+	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		Move();
-	});
+	}, shared_from_this());
 
-	m_spButtonDo->GetContent().set(L"Move");
+	m_spButtonDo->Content.set(L"Move");
 }
 
 void CMoveDlg::Move()
@@ -153,7 +153,7 @@ void CMoveDlg::Move()
 	std::vector<CIDL> noRenameIDLs;
 	std::vector<std::pair<CIDL, std::wstring>> renameIDLs;
 
-	for (auto iter = m_spItemsSource->cbegin(); iter != m_spItemsSource->cend(); ++ iter) {
+	for (auto iter = ItemsSource->cbegin(); iter != ItemsSource->cend(); ++ iter) {
 		auto& spFile = std::get<std::shared_ptr<CShellFile>>(*iter);
 		auto& rename = std::get<RenameInfo>(*iter);
 		std::wstring newname = rename.Name + rename.Ext;
@@ -212,14 +212,14 @@ CDeleteDlg::CDeleteDlg(
 	const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
 	:CSimpleFileOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, srcIDL, srcChildIDLs)
 {
-	m_title.set(L"Delete");
+	Title.set(L"Delete");
 	//Items Source
 	for (auto& childIDL : m_srcChildIDLs) {
 		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(
 			shell::DesktopBindToShellFolder(m_srcIDL),
 			m_srcIDL,
 			childIDL);
-		m_spItemsSource->push_back(
+		ItemsSource.push_back(
 			std::make_tuple(spFile));
 	}
 
@@ -227,7 +227,7 @@ CDeleteDlg::CDeleteDlg(
 	m_spFilerControl = std::make_unique<CFileOperationGridView<std::shared_ptr<CShellFile>>>(
 		this,
 		spFilerGridViewProp,
-		m_spItemsSource,
+		arg<"itemssource"_s>() = ItemsSource,
 		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr, spFilerGridViewProp->HeaderPropPtr),
 		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Name"),
 		arg<"frzcolcnt"_s>() = 1,
@@ -239,12 +239,12 @@ CDeleteDlg::CDeleteDlg(
 		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr, spFilerGridViewProp->CellPropPtr),
 		arg<"frzrowcnt"_s>() = 2);
 
-	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		Delete();
-	});
+	}, shared_from_this());
 
-	m_spButtonDo->GetContent().set(L"Delete");
+	m_spButtonDo->Content.set(L"Delete");
 
 }
 
@@ -252,7 +252,7 @@ void CDeleteDlg::Delete()
 {
 	std::vector<CIDL> delIDLs;
 
-	for (auto iter = m_spItemsSource->cbegin(); iter != m_spItemsSource->cend(); ++iter) {
+	for (auto iter = ItemsSource->cbegin(); iter != ItemsSource->cend(); ++iter) {
 		auto& spFile = std::get<std::shared_ptr<CShellFile>>(*iter);
 		delIDLs.push_back(spFile->GetAbsoluteIdl());
 	}
@@ -292,37 +292,36 @@ CExeExtensionDlg::CExeExtensionDlg(
 	const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 	const std::shared_ptr<CShellFolder>& folder,
 	const std::vector<std::shared_ptr<CShellFile>>& files,
-	ExeExtension& exeExtension)
+	const ExeExtension& exeExtension)
 	:CFileOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, CIDL(), std::vector<CIDL>()),
 	m_spTextPath(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
 	m_spTextParam(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
 	m_exeExtension(exeExtension)
 {
-	m_spTextParam->Text->set(m_exeExtension.Parameter);
+	m_spTextParam->Text.set(m_exeExtension.Parameter);
 
-	m_spTextParam->Text->subscribe([this](const reactive_wstring::notify_type & notify)
+	m_spTextParam->Text.subscribe([this](auto notify)
 	{
 		m_exeExtension.Parameter = notify.all_items;
-	}	
-	, shared_from_this());
+	}, shared_from_this());
 
-	m_spTextPath->Text->set(m_exeExtension.Path);
-	m_spTextPath->Text->subscribe([this](const reactive_wstring::notify_type & notify)
+	m_spTextPath->Text.set(m_exeExtension.Path);
+	m_spTextPath->Text.subscribe([this](auto notify)
 	{
 		m_exeExtension.Path = notify.all_items;
 	}, shared_from_this());
 
-	m_title.set(L"Exe");
+	Title.set(L"Exe");
 	//Items Source
 	for (auto& file : files) {
-		m_spItemsSource->push_back(std::make_tuple(file));
+		ItemsSource.push_back(std::make_tuple(file));
 	}
 
 	//FileGrid
 	m_spFilerControl = std::make_unique<CFileOperationGridView<std::shared_ptr<CShellFile>>>(
 		this,
 		spFilerGridViewProp,
-		m_spItemsSource,
+		arg<"itemssource"_s>() = ItemsSource,
 		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr, spFilerGridViewProp->HeaderPropPtr),
 		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Name"),
 		arg<"frzcolcnt"_s>() = 1,
@@ -338,12 +337,12 @@ CExeExtensionDlg::CExeExtensionDlg(
 	m_spTextPath->SetHasBorder(true);
 	m_spTextParam->SetHasBorder(true);
 
-	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		Execute();
-	});
+	}, shared_from_this());
 
-	m_spButtonDo->GetContent().set(L"Exe");
+	m_spButtonDo->Content.set(L"Exe");
 
 }
 
@@ -493,14 +492,14 @@ CPDFOperationDlgBase::CPDFOperationDlgBase(
 {
 	//Items Source
 	for (auto& file : files) {
-		m_spItemsSource->push_back(std::make_tuple(file));
+		ItemsSource.push_back(std::make_tuple(file));
 	}
 
 	//FileGrid
 	m_spFilerControl = std::make_unique<CFileOperationGridView<std::shared_ptr<CShellFile>>>(
 		this,
 		spFilerGridViewProp,
-		m_spItemsSource,
+		arg<"itemssource"_s>() = ItemsSource,
 		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr, spFilerGridViewProp->HeaderPropPtr),
 		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>>>(nullptr, L"Name"),
 		arg<"frzcolcnt"_s>() = 1,
@@ -566,9 +565,9 @@ CPDFSplitDlg::CPDFSplitDlg(
 	const std::vector<std::shared_ptr<CShellFile>>& files)
 	:CPDFOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, spTextBoxProp, folder, files)
 {
-	m_title.set(L"PDF Split");
-	m_spButtonDo->GetContent().set(L"Split");
-	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	Title.set(L"PDF Split");
+	m_spButtonDo->Content.set(L"Split");
+	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
 		for (auto& file : files) {
@@ -577,7 +576,7 @@ CPDFSplitDlg::CPDFSplitDlg(
 			doc.SplitSave();
 		}
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	});
+	}, shared_from_this());
 }
 
 /****************/
@@ -592,11 +591,11 @@ CPDFMergeDlg::CPDFMergeDlg(
 	const std::vector<std::shared_ptr<CShellFile>>& files)
 	:CPDFOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, spTextBoxProp, folder, files)
 {
-	m_title.set(L"PDF Merge");
+	Title.set(L"PDF Merge");
 
-	m_spParameter->Text->set(files[0]->GetPathWithoutExt() + L"_merge.pdf");
-	m_spButtonDo->GetContent().set(L"Merge");
-	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	m_spParameter->Text.set(files[0]->GetPathWithoutExt() + L"_merge.pdf");
+	m_spButtonDo->Content.set(L"Merge");
+	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
 		CPDFDoc doc;
@@ -609,10 +608,10 @@ CPDFMergeDlg::CPDFMergeDlg(
 			auto count = doc.GetPageCount();
 			doc.ImportPages(srcDoc, NULL, count);		
 		}
-		doc.SaveWithVersion(m_spParameter->Text->get_const(), 0,  minVersion);
+		doc.SaveWithVersion(*m_spParameter->Text, 0,  minVersion);
 		
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	});
+	}, shared_from_this());
 }
 
 /******************/
@@ -627,26 +626,26 @@ CPDFExtractDlg::CPDFExtractDlg(
 	const std::vector<std::shared_ptr<CShellFile>>& files)
 	:CPDFOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, spTextBoxProp, folder, files)
 {
-	m_title.set(L"PDF Extract");
+	Title.set(L"PDF Extract");
 
-	m_spParameter->Text->set(L"");
-	m_spButtonDo->GetContent().set(L"Extract");
+	m_spParameter->Text.set(L"");
+	m_spButtonDo->Content.set(L"Extract");
 
-	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
 		for (auto& file : files) {
 			CPDFDoc doc;
 			doc.Open(file->GetPath(), L"");
-			std::wstring param = m_spParameter->Text->get_const();
+			std::wstring param = *m_spParameter->Text;
 			boost::algorithm::replace_all(param, L"first", L"1");
 			boost::algorithm::replace_all(param, L"last", std::to_wstring(doc.GetPageCount()));
 			CPDFDoc dst_doc(doc.Extract(param));
-			dst_doc.SaveWithVersion(std::format(L"{}_{}.pdf", file->GetPathWithoutExt(), m_spParameter->Text->get_const()),0, doc.GetFileVersion());
+			dst_doc.SaveWithVersion(std::format(L"{}_{}.pdf", file->GetPathWithoutExt(), *m_spParameter->Text),0, doc.GetFileVersion());
 		}
 
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	});
+	}, shared_from_this());
 }
 
 /*************************/
@@ -661,20 +660,20 @@ CPDFUnlockDlg::CPDFUnlockDlg(
 	const std::vector<std::shared_ptr<CShellFile>>& files)
 	:CPDFOperationDlgBase(pParentControl, spDialogProp, spFilerGridViewProp, spTextBoxProp, folder, files)
 {
-	m_title.set(L"PDF Unlock");
+	Title.set(L"PDF Unlock");
 
-	m_spParameter->Text->set(L"");
-	m_spButtonDo->GetContent().set(L"Unlock");
+	m_spParameter->Text.set(L"");
+	m_spButtonDo->Content.set(L"Unlock");
 
-	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		std::vector<std::shared_ptr<CShellFile>> files = m_spFilerControl->GetAllFiles();
 		for (auto& file : files) {
 			CPDFDoc doc;
-			doc.Open(file->GetPath(), m_spParameter->Text->get_const());
+			doc.Open(file->GetPath(), *m_spParameter->Text);
 			doc.SaveWithVersion(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), L"_unlock"),  FPDF_REMOVE_SECURITY, doc.GetFileVersion());
 		}
 
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	});
+	}, shared_from_this());
 }

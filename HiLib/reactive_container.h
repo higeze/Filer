@@ -4,8 +4,6 @@
 #include "JsonSerializer.h"
 #include "Debug.h"
 
-
-
 template<class TContainer>
 class reactive_container
 {
@@ -21,130 +19,98 @@ public:
 	using const_pointer = typename TContainer::const_pointer;
 	using reference = typename TContainer::reference;
 
-protected:
 	subject_type m_subject;
 	container_type m_value;
 
 public:
-	explicit reactive_container(const container_type& value = container_type())
-		:m_subject(), m_value(value){};
 
-	virtual ~reactive_container() = default;
-	auto operator<=>(const reactive_container& rhs) const
-	{
-		return this->get_const() <=> rhs.get_const();
-	}
-	bool operator==(const reactive_container& rhs) const
-	{
-		return this->get_const() == rhs.get_const();
-	}
-	reactive_container(const reactive_container& val) = delete;
-	reactive_container& operator=(const reactive_container& val) = delete;
-	reactive_container(reactive_container&& val) noexcept = default;
-	reactive_container& operator=(reactive_container&& val) noexcept = default;
+	explicit reactive_container()
+		: m_subject(), 
+		m_value(){};
 
 	template<class... Args>
-	auto subscribe(Args&&... args) -> sigslot::connection
-	{
-		return m_subject.subscribe(std::forward<Args>(args)...);
-	}
-	//template<typename Pmf, typename Ptr>
-	//auto subscribe(Pmf&& pmf, Ptr&& ptr)->sigslot::connection
+	explicit reactive_container(const Args&... args)
+		: m_subject(), 
+		m_value(args...){};
+
+	template<class... Args>
+	explicit reactive_container(Args&&... args)
+		: m_subject(), 
+		m_value(std::forward<Args>(args)...){};
+
+	virtual ~reactive_container() = default;
+
+	reactive_container(const reactive_container&) = default;
+	reactive_container& operator=(const reactive_container&) = default;
+	reactive_container(reactive_container&&) noexcept = default;
+	reactive_container& operator=(reactive_container&&) noexcept = default;
+
+	//const container_type& operator*() const noexcept
 	//{
-	//	return m_subject.subscribe(std::forward<Pmf>(pmf), std::forward<Ptr>(ptr));
+	//	return m_pvalue.operator*();
 	//}
-	const container_type& get_const() const 
-	{ 
-		return m_value;
-	}
-	container_type& get_unconst() 
-	{ 
-		return m_value;
-	}
 
-	void block_subject()
-	{
-		m_subject.block();
-	}
+	//const container_type* operator->() const noexcept
+	//{
+	//	return m_pvalue.operator->();
+	//}
 
-	void unblock_subject()
-	{
-		m_subject.unblock();
-	}
+	//container_type* get_unconst() const noexcept
+	//{
+	//	return m_pvalue.operator->();
+	//}
 
-	void set(const container_type& value)
+	//auto operator<=>(const reactive_container_ptr& rhs) const
+	//{
+	//	return *m_pvalue <=> *rhs.m_pvalue;
+	//}
+	//bool operator==(const reactive_container_ptr& rhs) const
+	//{
+	//	return *m_pvalue == *rhs.m_pvalue;
+	//}
+
+	//void disconnect_all()
+	//{
+	//	this->m_psubject->disconnect_all();
+	//	this->m_pvalue = std::make_shared<container_type>(*m_pvalue);
+	//}
+
+	//void block_subject()
+	//{
+	//	m_psubject->block();
+	//}
+
+	//void unblock_subject()
+	//{
+	//	m_psubject->unblock();
+	//}
+
+	void observe_container(const container_type& value)
 	{
-		if (this->get_const() != value) {
-			container_type old(this->get_const());
-			this->m_value.assign(value.cbegin(), value.cend());
-			this->m_subject.on_next(notify_type
+		if (m_value != value) {
+			container_type old(m_value);
+			m_value.assign(value.cbegin(), value.cend());
+			m_subject.on_next(notify_type
 			{
 				notify_container_changed_action::reset,
-				this->get_const(),
+				m_value,
 				0,
 				old,
 				0,
-				this->get_const()
+				m_value
 			});
 		}
 	}
-
-	/*********/
-	/* Const */
-	/*********/
-
-	const_reference operator[](size_type pos) const noexcept
-	{
-		return this->m_value.operator[](pos);
-	}
-
-	const_reference at(size_type pos) const
-	{
-		return this->m_value.at(pos);
-	}
-
-	const_iterator cbegin() const noexcept
-	{
-		return this->m_value.cbegin();
-	}
-
-	const_iterator cend() const noexcept
-	{
-		return this->m_value.cend();
-	}
-
-	size_type size() const noexcept
-	{
-		return this->m_value.size();
-	}
-
-	bool empty() const noexcept
-	{
-		return this->m_value.empty();
-	}
-
-	const_reference front() const
-	{
-		return this->m_value.front();
-	}
-	
-	const_reference back() const
-	{
-		return this->m_value.back();
-	}
-
-	const_pointer data() const noexcept
-	{
-		return this->m_value.data();
-	}
-
 	/***********/
 	/* Unconst */
 	/***********/
 	
 	void assign(const container_type& value)
 	{
-		this->set(value);
+		if (m_value != value) {
+			m_value = value;
+			m_subject.on_next(value);
+		}
 	}
 
 	void push_back(const value_type& x)
@@ -154,10 +120,10 @@ public:
 		{
 			notify_container_changed_action::push_back,
 			{ this->m_value.back() },
-			(int)size() - 1,
+			(int)m_value.size() - 1,
 			{},
 			-1,
-			this->get_const()
+			this->m_value
 		});
 	}
 
@@ -171,7 +137,7 @@ public:
 			(int)index, 
 			container_type(),
 			-1,
-			this->get_const()
+			this->m_value
 		});
 		return ret;
 	}
@@ -187,7 +153,7 @@ public:
 			index,
 			{},
 			-1,
-			this->get_const()
+			this->m_value
 		});
 		return ret;
 	}
@@ -204,7 +170,7 @@ public:
 			index,
 			{ oldItem},
 			-1,
-			this->get_const()
+			this->m_value
 		});
 		return position;
 	}
@@ -221,7 +187,7 @@ public:
 			-1,
 			{ oldItem },
 			index,
-			this->get_const()
+			this->m_value
 		});
 		return ret;
 	}
@@ -231,14 +197,14 @@ public:
 		auto oldItems = container_type(first, last);
 		auto index = std::distance(this->m_value.cbegin(), first);
 		iterator ret = this->m_value.erase(first, last);
-		this->m_subject->on_next(notify_type
+		this->m_subject.on_next(notify_type
 		{
 			notify_container_changed_action::erase,
 			{},
 			-1,
 			oldItems,
 			index,
-			this->get_const()
+			this->m_value
 		});
 		return ret;
 	}
@@ -255,23 +221,138 @@ public:
 			-1,
 			old,
 			0,
-			this->get_const()
+			this->m_value
 		});
 		return;
 	}
-
-	friend void to_json(json& j, const reactive_container& o)
-	{
-		j = {
-			{"Value", o.get_const()}
-		};
-	}
-
-	friend void from_json(const json& j, reactive_container& o)
-	{
-		container_type value;
-		o.set(j.at("Value").get_to(value));
-	}
 };
+
+template<class TReactiveContainer>
+class reactive_container_ptr
+{
+public:
+	using reactive_container_type = typename TReactiveContainer;
+	using container_type = reactive_container_type::container_type;
+	using subject_type = typename subject<notify_container_changed_event_args<container_type>>;
+	using value_type = typename container_type::value_type;
+	using notify_type = typename notify_container_changed_event_args<container_type>;
+	using size_type = typename container_type::size_type;
+	using iterator = typename container_type::iterator;
+	using const_iterator = typename container_type::const_iterator;
+	using const_reference = typename container_type::const_reference;
+	using const_pointer = typename container_type::const_pointer;
+	using reference = typename container_type::reference;
+protected:
+	std::shared_ptr<reactive_container_type> m_preactive;
+
+public:
+	explicit reactive_container_ptr()
+		: m_preactive(std::make_shared<TReactiveContainer>()){};
+
+	template<class... Args>
+	explicit reactive_container_ptr(const Args&... args)
+		: m_preactive(std::make_shared<TReactiveContainer>(args...)){};
+
+	template<class... Args>
+	explicit reactive_container_ptr(Args&&... args)
+		: m_preactive(std::make_shared<TReactiveContainer>(std::forward<Args>(args)...)){}
+
+	virtual ~reactive_container_ptr() = default;
+
+	reactive_container_ptr(const reactive_container_ptr&) = default;
+	reactive_container_ptr& operator=(const reactive_container_ptr&) = default;
+	reactive_container_ptr(reactive_container_ptr&&) noexcept = default;
+	reactive_container_ptr& operator=(reactive_container_ptr&&) noexcept = default;
+
+	const container_type& operator*() const noexcept
+	{
+		return m_preactive->m_value;
+	}
+
+	const container_type* operator->() const noexcept
+	{
+		return &m_preactive->m_value;
+	}
+
+	container_type* get_unconst() const noexcept
+	{
+		return &m_preactive->m_value;
+	}
+
+	auto operator<=>(const reactive_container_ptr& rhs) const
+	{
+		return m_preactive <=> rhs.m_preactive;
+	}
+	bool operator==(const reactive_container_ptr& rhs) const
+	{
+		return m_preactive == rhs.m_preactive;
+	}
+
+	explicit operator bool() const noexcept
+	{
+		return static_cast<bool>(m_preactive);
+	}
+
+	template<class... Args>
+	auto subscribe(Args&&... args) -> sigslot::connection
+	{
+		return m_preactive->m_subject.subscribe(std::forward<Args>(args)...);
+	}
+
+	template<class... Args>
+	auto disconnect(Args&&... args) -> size_t
+	{
+		return m_preactive->m_subject.disconnect(std::forward<Args>(args)...);
+	}
+
+	void set(const container_type& value)
+	{
+		m_preactive->observe_container(value);
+	}
+
+	void assign(const container_type& value)
+	{
+		this->set(value);
+	}
+
+	void push_back(const value_type& value)
+	{
+		return m_preactive->push_back(value);
+	}
+
+	auto insert(size_type index, const container_type& value)
+	{
+		return m_preactive->insert(index, value);
+	}
+
+	iterator insert(const_iterator position, const value_type& value)
+	{
+		return m_preactive->insert(position, value);
+	}
+
+	iterator replace(iterator position, const value_type& value)
+	{
+		return m_preactive->replace(position, value);
+	}
+
+	iterator erase(const_iterator where)
+	{
+		return m_preactive->erase(where);
+	}
+
+	iterator erase(const_iterator first, const_iterator last)
+	{
+		return m_preactive->erase(first, last);
+	}
+
+
+	void clear()
+	{
+		return m_preactive->clear();
+	}
+
+
+};
+
 
 

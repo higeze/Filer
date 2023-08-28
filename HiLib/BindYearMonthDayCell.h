@@ -7,7 +7,6 @@
 #include "BindYearMonthDayColumn.h"
 #include "YearMonthDay.h"
 #include "reactive_property.h"
-#include "reactive_binding.h"
 
 template<typename... TItems>
 class CBindYearMonthDayCell :public CTextCell
@@ -19,37 +18,37 @@ protected:
 public:
 	template<typename... Args>
 	CBindYearMonthDayCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, args...), YearMonthDay(make_reactive_property<CYearMonthDay>()), Dummy(std::make_shared<int>(0))
+		:CTextCell(pSheet, pRow, pColumn, spProperty, args...), YearMonthDay(), Dummy(std::make_shared<int>(0))
 	{
-		YearMonthDay->subscribe([this](const CYearMonthDay& ymd) {
+		YearMonthDay.subscribe([this](const CYearMonthDay& ymd) {
 			OnPropertyChanged(L"value");
 		}, Dummy);
 
 		auto pBindColumn = static_cast<const CBindYearMonthDayColumn<TItems...>*>(this->m_pColumn);
 		auto pBindRow = static_cast<CBindRow<TItems...>*>(this->m_pRow);
-		reactive_binding(pBindColumn->GetProperty(pBindRow->GetTupleItems()), YearMonthDay);
+		pBindColumn->GetProperty(pBindRow->GetTupleItems()).binding(YearMonthDay);
 	}
 
 	virtual ~CBindYearMonthDayCell() = default;
 
 	virtual std::wstring GetString() override
 	{
-		return YearMonthDay->get_const().IsInvalid() ? L"" : 
+		return YearMonthDay->IsInvalid() ? L"" : 
 			std::format(L"{:%m/%d}({})", 
-			std::chrono::year_month_day(YearMonthDay->get_const()),
-			YearMonthDay->get_const().GetJpnWeekDay());
+			std::chrono::year_month_day(*YearMonthDay),
+			YearMonthDay->GetJpnWeekDay());
 	}
 
 	virtual std::wstring GetSortString() override
 	{
-		return YearMonthDay->get_const().IsInvalid() ? L"9999-99-99" :
+		return YearMonthDay->IsInvalid() ? L"9999-99-99" :
 			std::format(L"{:%F}",
-			std::chrono::year_month_day(YearMonthDay->get_const()));
+			std::chrono::year_month_day(*YearMonthDay));
 	}
 
 	virtual void SetString(const std::wstring& str, bool notify = true) override
 	{
-		YearMonthDay->set(CYearMonthDay::Parse(str));
+		YearMonthDay.set(CYearMonthDay::Parse(str));
 	}
 
 	virtual bool CanSetStringOnEditing()const override{return false;}
@@ -77,9 +76,9 @@ public:
 		WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, this->m_pSheet->GetWndPtr()->m_hWnd);
 		
 		if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Today")) {
-			YearMonthDay->set(CYearMonthDay::Today());
+			YearMonthDay.set(CYearMonthDay::Today());
 		} else if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Tomorrow")) {
-			YearMonthDay->set(CYearMonthDay::Tomorrow());
+			YearMonthDay.set(CYearMonthDay::Tomorrow());
 		}
 
 		*e.HandledPtr = TRUE;

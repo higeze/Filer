@@ -15,9 +15,10 @@ public:
 	static void Init();
 	static void Term();
 public:
+	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<std::wstring> Path;
 	reactive_property_ptr<std::wstring> Password;
-	reactive_property_ptr<bool> IsDirty;
+	mutable reactive_property_ptr<bool> IsDirty;
 
 private:
 	std::unique_ptr<CFPDFDocument> m_pDoc;
@@ -51,6 +52,10 @@ public:
 	CPDFDoc(CPDFDoc&& doc) = default;
 	CPDFDoc& operator=(CPDFDoc&& doc) = default;
 	bool operator==(const CPDFDoc& doc) const;
+	explicit operator bool() const noexcept
+	{
+		return m_pDoc.operator bool() && m_pDoc->operator bool();
+	}
 
 	void InitializeFormFillInfo();
 

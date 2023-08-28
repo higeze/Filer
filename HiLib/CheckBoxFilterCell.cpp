@@ -37,7 +37,7 @@ CCheckBoxFilterCell::CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pC
 		std::wstring filter;
 		std::vector<CheckBoxState> states;
 		std::transform(m_checkBoxes.cbegin(), m_checkBoxes.cend(), std::back_inserter(states), [](const CCheckBox& checkBox)->CheckBoxState {
-			return checkBox.State->get_const();
+			return *checkBox.State;
 		});
 		std::sort(states.begin(), states.end());
 		states.erase(std::unique(states.begin(), states.end()), states.end());
@@ -60,8 +60,8 @@ CCheckBoxFilterCell::CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pC
 		return filter;
 	};
 
-	for (const auto& checkBox : m_checkBoxes) {
-		checkBox.State->subscribe([this, FilterStr](const CheckBoxState& state) { SetString(FilterStr()); }, Dummy);
+	for (auto& checkBox : m_checkBoxes) {
+		checkBox.State.subscribe([this, FilterStr](const CheckBoxState& state) { SetString(FilterStr()); }, Dummy);
 	}
 }
 

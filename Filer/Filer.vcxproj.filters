@@ -53,6 +53,9 @@
     <Filter Include="HiLib\Reactive">
       <UniqueIdentifier>{bd8d67e4-d175-4522-a35a-4602cdcdf73c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Filer\FilerTab">
+      <UniqueIdentifier>{ce828361-085d-40fb-a5d6-8285e88b8eb0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -326,24 +329,6 @@
     <ClInclude Include="..\HiLib\MyXMLSerializer.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\PropertyColumn.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PropertyGridView.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PropertyNameCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PropertySerializer.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PropertySheetCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\PropertyWnd.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\ResizeDlg.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -554,15 +539,6 @@
     <ClInclude Include="..\HiLib\SheetProperty.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\BindItemsSheetCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindItemsSheetCellBase.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindItemsFilterSheetCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\SortCell.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -612,9 +588,6 @@
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\Unknown.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ReactiveProperty.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLIb\Splitter.h">
@@ -785,7 +758,7 @@
     <ClInclude Include="..\HiLib\TabControl.h">
       <Filter>HiLib\TabControl</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\Textbox.h">
+    <ClInclude Include="..\D2DTextBox\TextBox.h">
       <Filter>HiLib\TextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\D2DTextBox\TextboxStateMachine.h">
@@ -908,9 +881,6 @@
     <ClInclude Include="..\HiLib\reactive_property.h">
       <Filter>HiLib\Reactive</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\reactive_binding.h">
-      <Filter>HiLib\Reactive</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\reactive_command.h">
       <Filter>HiLib\Reactive</Filter>
     </ClInclude>
@@ -950,6 +920,27 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\notify_container_changed.h">
       <Filter>HiLib\Reactive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\TextCaret.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="TextTabData.h">
+      <Filter>Filer\FilerTab</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerTabData.h">
+      <Filter>Filer\FilerTab</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageTabData.h">
+      <Filter>Filer\FilerTab</Filter>
+    </ClInclude>
+    <ClInclude Include="PDFTabData.h">
+      <Filter>Filer\FilerTab</Filter>
+    </ClInclude>
+    <ClInclude Include="ToDoTabData.h">
+      <Filter>Filer\FilerTab</Filter>
+    </ClInclude>
+    <ClInclude Include="PreviewTabData.h">
+      <Filter>D2DTextBox</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1053,12 +1044,6 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\MyXMLSerializer.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PropertyColumn.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\PropertyGridView.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\Row.cpp">
@@ -1305,7 +1290,7 @@
     <ClCompile Include="..\HiLib\TabControl.cpp">
       <Filter>HiLib\TabControl</Filter>
     </ClCompile>
-    <ClCompile Include="..\D2DTextBox\Textbox.cpp">
+    <ClCompile Include="..\D2DTextBox\TextBox.cpp">
       <Filter>HiLib\TextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\D2DTextBox\TextboxStateMachine.cpp">
@@ -1385,6 +1370,24 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\FPDFFormHandle.cpp">
       <Filter>HiLib\PDF\FPDF</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\TextCaret.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="TextTabData.cpp">
+      <Filter>Filer\FilerTab</Filter>
+    </ClCompile>
+    <ClCompile Include="FilerTabData.cpp">
+      <Filter>Filer\FilerTab</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageTabData.cpp">
+      <Filter>Filer\FilerTab</Filter>
+    </ClCompile>
+    <ClCompile Include="PDFTabData.cpp">
+      <Filter>Filer\FilerTab</Filter>
+    </ClCompile>
+    <ClCompile Include="ToDoTabData.cpp">
+      <Filter>Filer\FilerTab</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

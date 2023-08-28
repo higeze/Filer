@@ -11,7 +11,6 @@
 #include "MyString.h"
 #include "SerializerEnableIf.h"
 #include "CellProperty.h"
-//#include "ReactiveProperty.h"
 
 
 /*********************/
@@ -75,14 +74,6 @@ public:
 	{
 		pElem->Puttext(_bstr_t(boost::lexical_cast<std::wstring>(tValue).c_str()));
 	}
-
-	//For ReactiveProperty
-	//template<class T>
-	//void SerializeValue(ReactiveProperty<T>& tValue,MSXML2::IXMLDOMElementPtr pElem)
-	//{
-	//	pElem->Puttext(_bstr_t(boost::lexical_cast<std::wstring>(tValue).c_str()));
-	//}
-
 
 	//For string
 	void SerializeValue(std::string& tValue, MSXML2::IXMLDOMElementPtr pElem)
@@ -222,12 +213,6 @@ public:
 	{
 		tValue=boost::lexical_cast<T>(std::wstring(pElem->Gettext()));
 	}
-	//For ReactiveProperty
-	//template<class T>
-	//void DeserializeElement(ReactiveProperty<T>& tValue,MSXML2::IXMLDOMElementPtr pElem)
-	//{
-	//	tValue.set(boost::lexical_cast<T>(std::wstring(pElem->Gettext())));
-	//}
 
 	//For string
 	void DeserializeElement(std::string& tValue, MSXML2::IXMLDOMElementPtr pElem)

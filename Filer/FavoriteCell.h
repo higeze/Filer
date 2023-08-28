@@ -4,9 +4,6 @@
 #include "BindRow.h"
 #include "Favorite.h"
 #include "FileIconCell.h"
-
-#include "PropertyWnd.h"
-#include "PropertySerializer.h"
 #include "Column.h"
 #include "ShellFile.h"
 #include "ShellFolder.h"
@@ -105,7 +102,7 @@ public:
 			auto& itemsSource = static_cast<CFavoritesGridView*>(this->m_pSheet)->GetItemsSource();
 			auto order = pRow->GetIndex<AllTag>();
 
-			itemsSource.erase(std::next(itemsSource.cbegin(), order));
+			itemsSource.erase(std::next(itemsSource->cbegin(), order));
 			pFilerWnd->GetLeftFavoritesView()->Reload();
 			pFilerWnd->GetRightFavoritesView()->Reload();
 			pFilerWnd->InvalidateRect(NULL, FALSE);

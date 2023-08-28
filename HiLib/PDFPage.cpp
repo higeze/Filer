@@ -18,27 +18,27 @@
 /* CPdfPage */
 /************/
 CPDFPage::CPDFPage(std::unique_ptr<CFPDFPage>&& pPage, std::unique_ptr<CFPDFTextPage>&& pTextPage, const std::shared_ptr<CFPDFFormHandle>& pForm)
-	:m_pPage(std::move(pPage)), m_pTextPage(std::move(pTextPage)), m_pForm(pForm), IsDirty(make_reactive_property<bool>(false))
+	:m_pPage(std::move(pPage)), m_pTextPage(std::move(pTextPage)), m_pForm(pForm), IsDirty(false), Dummy(std::make_shared<int>(0))
 {
 	//m_pPage->OnAfterLoadPage(*m_pForm);
 	//m_pPage->DoPageAAction(*m_pForm, FPDFPAGE_AACTION_OPEN);
 
 	Rotate.set(m_pPage->GetRotation());
-	Rotate.Subscribe([this](const int& value) 
-		{
-			m_pPage->SetRotation(value);
-			//m_optBitmap.reset();
-			m_optSize.reset();
-			m_optTextOrgRects.reset();
-			m_optTextOrgCursorRects.reset();
-			m_optTextCursorRects.reset();
-			m_optTextOrgMouseRects.reset();
-			m_optTextMouseRects.reset();
-			m_optFind.reset();
-			m_optSelectedText.reset();
-			IsDirty->set(true);
+	Rotate.subscribe([this](const int& value) 
+	{
+		m_pPage->SetRotation(value);
+		//m_optBitmap.reset();
+		m_optSize.reset();
+		m_optTextOrgRects.reset();
+		m_optTextOrgCursorRects.reset();
+		m_optTextCursorRects.reset();
+		m_optTextOrgMouseRects.reset();
+		m_optTextMouseRects.reset();
+		m_optFind.reset();
+		m_optSelectedText.reset();
+		IsDirty.set(true);
 
-		},(std::numeric_limits<sigslot::group_id>::min)());
+	},Dummy);
 }
 
 CPDFPage::~CPDFPage() 
@@ -131,7 +131,7 @@ const std::vector<CRectF>& CPDFPage::GetTextCursorRects() const
 {
 	if (!m_optTextCursorRects.has_value()) {
 		m_optTextCursorRects = GetTextOrgCursorRects();
-		RotateRects(m_optTextCursorRects.value(), Rotate.get());
+		RotateRects(m_optTextCursorRects.value(), *Rotate);
 	}
 	return m_optTextCursorRects.value();
 }
@@ -192,7 +192,7 @@ const std::vector<CRectF>& CPDFPage::GetTextMouseRects() const
 {
 	if (!m_optTextMouseRects.has_value()) {
 		m_optTextMouseRects = GetTextOrgMouseRects();
-		RotateRects(m_optTextMouseRects.value(), Rotate.get());
+		RotateRects(m_optTextMouseRects.value(), *Rotate);
 	}
 	return m_optTextMouseRects.value();
 }
@@ -208,7 +208,7 @@ const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_strin
 			for (const auto res : results) {
 				std::copy(std::get<2>(res).cbegin(), std::get<2>(res).cend(), std::back_inserter(rects));
 			}
-			RotateRects(rects, Rotate.get());
+			RotateRects(rects, *Rotate);
 		}
 		m_optFind.emplace(find, rects);
 	}
@@ -303,7 +303,7 @@ CRectF CPDFPage::GetCaretRect(const int index)
 {
 	if (!GetTextCursorRects().empty()) {
 		auto rcInPdfiumPage = GetTextCursorRects()[index];
-		switch (Rotate.get()) {
+		switch (*Rotate) {
 			case 0:
 				rcInPdfiumPage.right = rcInPdfiumPage.left + 1.f;
 				break;
@@ -388,7 +388,7 @@ const std::vector<CRectF>& CPDFPage::GetSelectedTextRects(const int& begin, cons
 {
 	if (!m_optSelectedText.has_value() || m_optSelectedText->Begin != begin || m_optSelectedText->End != end) {
 		std::vector<CRectF> rectsInPdfiumPage(m_pTextPage->GetRangeRects(begin, end));
-		RotateRects(rectsInPdfiumPage, Rotate.get());
+		RotateRects(rectsInPdfiumPage, *Rotate);
 		m_optSelectedText.emplace(begin, end, rectsInPdfiumPage);
 	}
 	return m_optSelectedText->SelectedRects;

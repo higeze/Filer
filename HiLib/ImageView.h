@@ -3,7 +3,6 @@
 #include "D2DWControl.h"
 #include "Scroll.h"
 #include "ScrollProperty.h"
-#include "ReactiveProperty.h"
 
 #include "ImageViewProperty.h"
 #include <msctf.h>
@@ -25,6 +24,9 @@
 
 #include <future>
 #include <mutex>
+#include "reactive_property.h"
+#include "reactive_string.h"
+#include "reactive_command.h"
 
 class CVScroll;
 class CHScroll;
@@ -51,6 +53,10 @@ public:
 	/**********/
 public:
 	reactive_property_ptr<FLOAT> Scale;
+	reactive_property_ptr<CD2DImage> Image;
+	reactive_command_ptr<void> OpenCommand;
+	reactive_wstring_ptr Find;
+	reactive_property_ptr<D2D1_BITMAPSOURCE_ORIENTATION> Rotate;
 
 	/*********/
 	/* Field */
@@ -62,12 +68,7 @@ protected:
 
 	CRectF m_rect;
 	std::shared_ptr<ImageViewProperty> m_pProp;
-	
-	//ReactiveProperty
-	ReactiveProperty<CD2DImage> m_image;
-	ReactiveCommand<void> m_open;
-	ReactiveWStringProperty m_find;
-	ReactiveProperty<D2D1_BITMAPSOURCE_ORIENTATION> m_rotate;
+
 	FLOAT m_prevScale;
 
 	CComPtr<IFileIsInUse> m_pFileIsInUse;
@@ -83,10 +84,6 @@ public:
 	virtual ~CImageView();
 public:
 	// Getter
-	ReactiveProperty<CD2DImage>& PropImage() { return m_image; }
-	ReactiveWStringProperty& GetFind() { return m_find; }
-	ReactiveCommand<void>& GetOpenCommand() { return m_open; }
-
 	FLOAT GetMinScale() const { return m_minScale; }
 	FLOAT GetMaxScale() const { return m_maxScale; }
 	

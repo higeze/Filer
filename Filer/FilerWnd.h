@@ -11,12 +11,11 @@
 #include "ApplicationProperty.h"
 #include "ViewProperty.h"
 #include "CellProperty.h"
-#include "PropertyWnd.h"
 #include "FilerWndStatusBar.h"
 #include "Splitter.h"
 #include "FilerGridViewProperty.h"
 #include "D2DWWindow.h"
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 #include "PdfEditorProperty.h"
 #include "ImageEditorProperty.h"
 #include "ExeExtensionProperty.h"
@@ -77,7 +76,6 @@ class CFilerWnd:public CD2DWWindow
 private:
 	CRect m_rcWnd;
 	CRect m_rcPropWnd;
-	ReactiveProperty<FLOAT> m_splitterLeft;
 
 	bool m_isSizing = false;
 	CPoint m_ptBeginClient;
@@ -112,7 +110,9 @@ private:
 	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
 	
 	//CKonamiCommander m_konamiCommander;
-	CBinding m_splitterBinding;
+
+public:
+	reactive_property_ptr<FLOAT> SplitterLeft;
 
 public:
 	//Constructor
@@ -210,63 +210,6 @@ public:
 	//	return 0;
 	//}
 
-//	FRIEND_SERIALIZER
-//    template <class Archive>
-//    void save(Archive& ar)
-//    {
-//        const type_info& info = typeid(ar);
-//		if(info == typeid(CSerializer&) || info == typeid(CDeserializer&)){ 
-//			ar("WindowRectangle", m_rcWnd);
-//			ar("PropertyWindowRectangle", m_rcPropWnd);
-//		}
-//		ar("LeftSplit", m_splitterLeft);
-//
-//		ar("ApplicationProperty", m_spApplicationProp);
-//		ar("FilerGridViewProperty",m_spFilerGridViewProp);
-//		ar("EditorProperty", m_spEditorProp);
-//		ar("PdfEditorProperty", m_spPdfEditorProp);
-//		ar("LauncherProperty", m_spLauncherProp);
-//		ar("FavoritesProperty", m_spFavoritesProp);
-//		ar("ExeExtensionProperty", m_spExeExProp);
-//		ar("LeftView", m_spLeftView);
-//		ar("RightView", m_spRightView);
-//		ar("HorizontalSplitter", m_spSplitter);
-//		//ar("LeftFavoritesView", m_spLeftFavoritesView);
-//		//ar("RightFavoritesView", m_spRightFavoritesView);
-//#ifdef USE_PYTHON_EXTENSION
-//		ar("PythonExtensionProperty", m_spPyExProp);
-//#endif
-//	}
-//
-    template <class Archive>
-    void load(Archive& ar)
-    {
-        const type_info& info = typeid(ar);
-		if(info == typeid(CSerializer&) || info == typeid(CDeserializer&)){ 
-			ar("WindowRectangle", m_rcWnd);
-			ar("PropertyWindowRectangle", m_rcPropWnd);
-		}
-		ar("LeftSplit", m_splitterLeft);
-
-		ar("ApplicationProperty", m_spApplicationProp);
-		ar("FilerGridViewProperty",m_spFilerGridViewProp);
-		ar("EditorProperty", m_spEditorProp);
-		ar("PdfEditorProperty", m_spPdfEditorProp);
-		ar("ImageEditorProperty", m_spImageEditorProp);
-		ar("LauncherProperty", m_spLauncherProp);
-		ar("FavoritesProperty", m_spFavoritesProp);
-		ar("ExeExtensionProperty", m_spExeExProp);
-		ar("SplitterProperty", m_spSplitterProp);
-		ar("LeftView", m_spLeftView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp);
-		ar("RightView", m_spRightView, this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp);
-		ar("HorizontalSplitter", m_spSplitter, this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp);
-		//ar("LeftFavoritesView", m_spLeftFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
-		//ar("RightFavoritesView", m_spRightFavoritesView, this, m_spFilerGridViewProp, m_spFavoritesProp);
-#ifdef USE_PYTHON_EXTENSION
-		ar("PythonExtensionProperty", m_spPyExProp);
-#endif
-	}
-
 #ifdef USE_PYTHON_EXTENSION
 private:
 	std::shared_ptr<CPythonExtensionProperty> m_spPyExProp;
@@ -278,7 +221,7 @@ private:
 		j = json{
 			{"WindowRectangle", o.m_rcWnd},
 			{"PropertyWindowRectangle", o.m_rcPropWnd},
-			{"LeftSplit", o.m_splitterLeft},
+			{"LeftSplit", o.SplitterLeft},
 			{"ApplicationProperty", o.m_spApplicationProp },
 			{"FilerGridViewProperty", o.m_spFilerGridViewProp },
 			{"EditorProperty", o.m_spEditorProp },
@@ -307,7 +250,7 @@ private:
 	{
 			get_to(j, "WindowRectangle", o.m_rcWnd);
 			get_to(j, "PropertyWindowRectangle", o.m_rcPropWnd);
-			get_to(j, "LeftSplit", o.m_splitterLeft);
+			get_to(j, "LeftSplit", o.SplitterLeft);
 			get_to(j, "ApplicationProperty", o.m_spApplicationProp);
 			get_to(j, "FilerGridViewProperty", o.m_spFilerGridViewProp);
 			get_to(j, "EditorProperty", o.m_spEditorProp);

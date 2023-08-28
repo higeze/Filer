@@ -1,6 +1,6 @@
 #pragma once
 #include "D2DWControl.h"
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 #include "JsonSerializer.h"
 
 struct SplitterProperty
@@ -18,7 +18,8 @@ public:
 		ar("Width", Width);
 	}
 
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(SplitterProperty,
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+		SplitterProperty,
 		BackgroundFill,
 		Width)
 };
@@ -27,18 +28,18 @@ class CHorizontalSplitter:public CD2DWControl
 {
 private:
 	std::shared_ptr<SplitterProperty> m_spSplitterProperty;
-	ReactiveProperty<FLOAT> m_splitterLeft;
 
 	CD2DWControl* m_pLeftControl;
 	CD2DWControl* m_pRightControl;
 	bool m_inDrag = false;
 	CPointF m_ptBeginDrag;
 public:
+	reactive_property_ptr<FLOAT> SplitterLeft;
+public:
 	CHorizontalSplitter(CD2DWControl* pParentControl = nullptr, CD2DWControl* pLeftControl = nullptr, CD2DWControl* pRightControl = nullptr, const std::shared_ptr<SplitterProperty>& spButtonProperty = nullptr)
-		:CD2DWControl(pParentControl), m_pLeftControl(pLeftControl), m_pRightControl(pRightControl), m_spSplitterProperty(spButtonProperty){}
+		:CD2DWControl(pParentControl), SplitterLeft(0.f), m_pLeftControl(pLeftControl), m_pRightControl(pRightControl), m_spSplitterProperty(spButtonProperty){}
 	virtual ~CHorizontalSplitter() = default;
 
-	ReactiveProperty<FLOAT>& GetSplitterLeft() { return m_splitterLeft; }
 	void SetLeftRightControl(CD2DWControl* pLeft, CD2DWControl* pRight)
 	{
 		m_pLeftControl = pLeft;

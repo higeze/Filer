@@ -20,23 +20,13 @@ CEditor::CEditor(
 	m_spFilterBox(std::make_shared<CTextBox>(this, spProp->EditorTextBoxPropPtr, L"")),
 	m_spTextBox(std::make_shared<CEditorTextBox>(this, spProp->EditorTextBoxPropPtr, L"")),
 	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr)),
-	Path(make_reactive_wstring())
+	Path(), Encoding(encoding_type::UNKNOWN)
 {
 	m_spFilterBox->SetIsScrollable(false);
 
 	m_spTextBox->SetIsScrollable(true);
 
-	m_spStatusBar->GetIsFocusable().set(false);
-	
-	m_open.Subscribe([this](HWND hWnd)
-	{
-		m_spTextBox->UpdateAll();
-	}, 
-	100);
-	m_encoding.Subscribe([this](const encoding_type& e)
-	{
-		m_spStatusBar->SetText(str2wstr(std::string(nameof::nameof_enum(e))));
-	});
+	m_spStatusBar->IsFocusable.set(false);
 }
 
 
@@ -58,6 +48,17 @@ std::tuple<CRectF, CRectF, CRectF> CEditor::GetRects() const
 void CEditor::OnCreate(const CreateEvt& e)
 {
 	CD2DWControl::OnCreate(e);
+
+	OpenCommand.subscribe([this](HWND hWnd)
+	{
+		m_spTextBox->UpdateAll();
+	}, shared_from_this());
+
+	Encoding.subscribe([this](const encoding_type& e)
+	{
+		m_spStatusBar->SetText(str2wstr(std::string(nameof::nameof_enum(e))));
+	}, shared_from_this());
+
 	auto [rcFilter, rcText, rcStatus] = GetRects();
 	m_spFilterBox->OnCreate(CreateEvt(GetWndPtr(), this, rcFilter));
 	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, rcText));
@@ -67,7 +68,7 @@ void CEditor::OnCreate(const CreateEvt& e)
 	//m_spFilterBox->SetIsTabStop(true);
 	//m_spTextBox->SetIsTabStop(true);
 
-	m_spFilterBox->Text->subscribe([this](auto)
+	m_spFilterBox->Text.subscribe([this](auto)
 	{
 		m_spTextBox->ClearHighliteRects();
 	}, shared_from_this());
@@ -127,22 +128,22 @@ void CEditor::OnKeyDown(const KeyDownEvent& e)
 
 void CEditor::Open()
 {
-	m_open.Execute(GetWndPtr()->m_hWnd);
+	OpenCommand.execute(GetWndPtr()->m_hWnd);
 }
 
 void CEditor::OpenAs()
 {
-	m_open_as.Execute(GetWndPtr()->m_hWnd);
+	OpenAsCommand.execute(GetWndPtr()->m_hWnd);
 }
 
 void CEditor::Save()
 {
-	m_save.Execute(GetWndPtr()->m_hWnd);
+	SaveCommand.execute(GetWndPtr()->m_hWnd);
 }
 
 void CEditor::SaveAs()
 {
-	m_save_as.Execute(GetWndPtr()->m_hWnd);
+	SaveAsCommand.execute(GetWndPtr()->m_hWnd);
 }
 
 void CEditor::Update()

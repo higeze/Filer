@@ -2,7 +2,8 @@
 #include "TextBoxProperty.h"
 #include "ScrollProperty.h"
 #include "StatusBarProperty.h"
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
+#include "reactive_vector.h"
 #include "JsonSerializer.h"
 
 struct SyntaxAppearance
@@ -57,16 +58,12 @@ public:
 
 struct EditorTextBoxProperty :public TextBoxProperty
 {
-	ReactiveVectorProperty<std::tuple<SyntaxAppearance>> SyntaxAppearances;
+	reactive_vector_ptr<std::tuple<SyntaxAppearance>> SyntaxAppearances;
 	std::vector<ExecutableAppearance> ExecutableAppearances;
 	SolidFill FindHighliteFill = SolidFill(244.f / 255, 167.f / 255, 33.f / 255, 100.f / 255);
 
 	EditorTextBoxProperty():
-		TextBoxProperty(std::make_shared<EditorScrollProperty>(), std::make_shared<EditorScrollProperty>())
-	
-	{
-		auto a = 9;
-	}
+		TextBoxProperty(std::make_shared<EditorScrollProperty>(), std::make_shared<EditorScrollProperty>()){}
 
 	virtual ~EditorTextBoxProperty() = default;
 
@@ -91,7 +88,7 @@ struct EditorTextBoxProperty :public TextBoxProperty
 		get_to(j, "FindHighliteFill", o.FindHighliteFill);
 		get_to(j, "ExecutableAppearance", o.ExecutableAppearances);
 
-		if (o.SyntaxAppearances.empty()) {
+		if (o.SyntaxAppearances->empty()) {
 			o.SyntaxAppearances.push_back(
 				std::make_tuple(
 					SyntaxAppearance(L"/\\*.*?\\*/",

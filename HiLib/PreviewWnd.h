@@ -2,7 +2,6 @@
 #include "MyWnd.h"
 #include "FileIsInUse.h"
 #include "PreviewHandlerFrame.h"
-#include "ReactiveProperty.h"
 #include "getter_macro.h"
 #include "Debug.h"
 #include <atlbase.h>

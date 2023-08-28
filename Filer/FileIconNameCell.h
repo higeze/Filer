@@ -51,7 +51,7 @@ protected:
 	{
 		std::wstring text;
 		if (m_pSheet->GetGridPtr()->GetEditPtr() && m_pSheet->GetGridPtr()->GetEditPtr()->GetCellPtr() == this) {
-			text = m_pSheet->GetGridPtr()->GetEditPtr()->Text->get_const();
+			text = *m_pSheet->GetGridPtr()->GetEditPtr()->Text;
 		} else {
 			text = GetString();
 		}

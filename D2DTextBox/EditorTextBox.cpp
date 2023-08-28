@@ -40,7 +40,7 @@ void CEditorTextBox::LoadTextLayoutPtr()
 
 	//Syntax
 	if (auto pTextEditorProp = std::dynamic_pointer_cast<EditorTextBoxProperty>(m_pProp)) {
-		for (const auto& tuple : pTextEditorProp->SyntaxAppearances.get()) {
+		for (const auto& tuple : *pTextEditorProp->SyntaxAppearances) {
 			auto appearance = std::get<0>(tuple);
 			if (!appearance.Regex.empty()) {
 				auto brush = pDirect->GetColorBrush(appearance.SyntaxFormat.Color);
@@ -104,10 +104,10 @@ void CEditorTextBox::LoadHighliteRects()
 	m_optHighliteRects = std::vector<CRectF>();
 	const auto pEditor = static_cast<CEditor*>(GetParentControlPtr());
 	const auto spFilter = pEditor->GetFilterBoxPtr();
-	const auto& find = spFilter->Text->get_const();
+	const auto& find = *spFilter->Text;
 
 	auto subStrSize = find.size();
-	auto pos = Text->get_const() | find_ignorecase(find);
+	auto pos = *Text | find_ignorecase(find);
 	const auto& actualCharRects = GetActualCharRects();
  
 	while (subStrSize != 0 && pos != std::wstring::npos) {
@@ -117,7 +117,7 @@ void CEditorTextBox::LoadHighliteRects()
 			actualCharRects[pos + subStrSize - 1].right,
 			actualCharRects[pos].bottom
 		);
-		pos = Text->get_const() | find_ignorecase(find, pos + subStrSize);
+		pos = *Text | find_ignorecase(find, pos + subStrSize);
 	}
 }
 

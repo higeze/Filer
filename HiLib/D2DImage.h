@@ -1,5 +1,5 @@
 #pragma once
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 #include "Direct2DWrite.h"
 #include "D2DWTypes.h"
 #include "getter_macro.h"

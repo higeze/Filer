@@ -271,7 +271,7 @@
     <ClInclude Include="..\D2DTextBox\EditorScroll.h" />
     <ClInclude Include="..\D2DTextBox\EditorTextBox.h" />
     <ClInclude Include="..\D2DTextBox\TextboxStateMachine.h" />
-    <ClInclude Include="..\D2DTextBox\Textbox.h" />
+    <ClInclude Include="..\D2DTextBox\TextBox.h" />
     <ClInclude Include="..\D2DTextBox\DisplayAttribute.h" />
     <ClInclude Include="..\D2DTextBox\IBridgeTSFInterface.h" />
     <ClInclude Include="..\D2DTextBox\TextEditSink.h" />
@@ -285,10 +285,7 @@
     <ClInclude Include="..\HiLib\BindCheckBoxColumn.h" />
     <ClInclude Include="..\HiLib\BindColumn.h" />
     <ClInclude Include="..\HiLib\BindGridView.h" />
-    <ClInclude Include="..\HiLib\BindItemsFilterSheetCell.h" />
-    <ClInclude Include="..\HiLib\BindItemsSheetCellBase.h" />
     <ClInclude Include="..\HiLib\BindRow.h" />
-    <ClInclude Include="..\HiLib\BindItemsSheetCell.h" />
     <ClInclude Include="..\HiLib\BindSheetCellColumn.h" />
     <ClInclude Include="..\HiLib\BindTextCell.h" />
     <ClInclude Include="..\HiLib\BindTextColumn.h" />
@@ -412,8 +409,6 @@
     <ClInclude Include="..\HiLib\PreviewHandlerFrame.h" />
     <ClInclude Include="..\HiLib\PreviewWnd.h" />
     <ClInclude Include="..\HiLib\property.h" />
-    <ClInclude Include="..\HiLib\ReactiveProperty.h" />
-    <ClInclude Include="..\HiLib\reactive_binding.h" />
     <ClInclude Include="..\HiLib\reactive_command.h" />
     <ClInclude Include="..\HiLib\reactive_container.h" />
     <ClInclude Include="..\HiLib\reactive_property.h" />
@@ -426,12 +421,6 @@
     <ClInclude Include="..\HiLib\RowIndexCell.h" />
     <ClInclude Include="..\HiLib\RowIndexColumn.h" />
     <ClInclude Include="..\HiLib\ProgressBar.h" />
-    <ClInclude Include="..\HiLib\PropertyColumn.h" />
-    <ClInclude Include="..\HiLib\PropertyGridView.h" />
-    <ClInclude Include="..\HiLib\PropertyNameCell.h" />
-    <ClInclude Include="..\HiLib\PropertySerializer.h" />
-    <ClInclude Include="..\HiLib\PropertySheetCell.h" />
-    <ClInclude Include="..\HiLib\PropertyWnd.h" />
     <ClInclude Include="..\HiLib\ResizeDlg.h" />
     <ClInclude Include="..\HiLib\ResourceIDFactory.h" />
     <ClInclude Include="..\HiLib\Row.h" />
@@ -461,6 +450,7 @@
     <ClInclude Include="..\HiLib\TextBlockProperty.h" />
     <ClInclude Include="..\HiLib\TextBoxDialog.h" />
     <ClInclude Include="..\HiLib\TextBoxProperty.h" />
+    <ClInclude Include="..\HiLib\TextCaret.h" />
     <ClInclude Include="..\HiLib\TextCell.h" />
     <ClInclude Include="..\HiLib\Editor.h" />
     <ClInclude Include="..\HiLib\EditorProperty.h" />
@@ -491,6 +481,10 @@
     <ClInclude Include="..\HiLib\PDFEditor.h" />
     <ClInclude Include="..\HiLib\YearMonthDay.h" />
     <ClInclude Include="CheckableFileGrid.h" />
+    <ClInclude Include="FilerTabData.h" />
+    <ClInclude Include="ImageTabData.h" />
+    <ClInclude Include="PDFTabData.h" />
+    <ClInclude Include="PreviewTabData.h" />
     <ClInclude Include="TaskCheckBoxColumn.h" />
     <ClInclude Include="DriveSizeCell.h" />
     <ClInclude Include="ExeExtensionProperty.h" />
@@ -555,8 +549,10 @@
     <ClInclude Include="TaskMemoColumn.h" />
     <ClInclude Include="TaskNameColumn.h" />
     <ClInclude Include="TaskRow.h" />
+    <ClInclude Include="TextTabData.h" />
     <ClInclude Include="ToDoDoc.h" />
     <ClInclude Include="ToDoGridView.h" />
+    <ClInclude Include="ToDoTabData.h" />
     <ClInclude Include="ViewProperty.h" />
   </ItemGroup>
   <ItemGroup>
@@ -564,7 +560,7 @@
     <ClCompile Include="..\D2DTextBox\EditorScroll.cpp" />
     <ClCompile Include="..\D2DTextBox\EditorTextBox.cpp" />
     <ClCompile Include="..\D2DTextBox\TextboxStateMachine.cpp" />
-    <ClCompile Include="..\D2DTextBox\Textbox.cpp" />
+    <ClCompile Include="..\D2DTextBox\TextBox.cpp" />
     <ClCompile Include="..\D2DTextBox\DisplayAttribute.cpp" />
     <ClCompile Include="..\D2DTextBox\TextEditSink.cpp" />
     <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp" />
@@ -635,8 +631,6 @@
     <ClCompile Include="..\HiLib\RowIndexCell.cpp" />
     <ClCompile Include="..\HiLib\RowIndexColumn.cpp" />
     <ClCompile Include="..\HiLib\ProgressBar.cpp" />
-    <ClCompile Include="..\HiLib\PropertyColumn.cpp" />
-    <ClCompile Include="..\HiLib\PropertyGridView.cpp" />
     <ClCompile Include="..\HiLib\ResourceIDFactory.cpp" />
     <ClCompile Include="..\HiLib\Row.cpp" />
     <ClCompile Include="..\HiLib\RowColumn.cpp" />
@@ -654,6 +648,7 @@
     <ClCompile Include="..\HiLib\D2DWWindow.cpp" />
     <ClCompile Include="..\HiLib\TextBlock.cpp" />
     <ClCompile Include="..\HiLib\TextBoxDialog.cpp" />
+    <ClCompile Include="..\HiLib\TextCaret.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
     <ClCompile Include="..\HiLib\Editor.cpp" />
     <ClCompile Include="..\HiLib\TextEnDecoder.cpp" />
@@ -672,6 +667,10 @@
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
     <ClCompile Include="..\HiLib\PDFCaret.cpp" />
     <ClCompile Include="..\HiLIb\YearMonthDay.cpp" />
+    <ClCompile Include="FilerTabData.cpp" />
+    <ClCompile Include="ImageTabData.cpp" />
+    <ClCompile Include="PDFTabData.cpp" />
+    <ClCompile Include="TextTabData.cpp" />
     <ClCompile Include="ToDoDoc.cpp" />
     <ClCompile Include="DriveSizeCell.cpp" />
     <ClCompile Include="DropTarget.cpp" />
@@ -716,6 +715,7 @@
       </ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ToDoGridView.cpp" />
+    <ClCompile Include="ToDoTabData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\HiLib\Gradius.cur" />

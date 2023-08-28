@@ -1,7 +1,7 @@
 #pragma once
 #include "D2DWWindow.h"
 #include "D2DWControl.h"
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 #include "getter_macro.h"
 //#include "FilerHook.h"
 //#pragma comment(lib, "FilerHook.lib")
@@ -37,8 +37,7 @@ public:
 	CPreviewControl(CD2DWControl* pParentControl, const std::shared_ptr<PreviewControlProperty>& pProp);
 	virtual ~CPreviewControl();
 public:
-	//ReactiveProperty
-	ReactiveWStringProperty Path;
+	reactive_wstring_ptr Path;
 
 	void Open(const std::wstring& path);
 	void Open();

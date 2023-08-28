@@ -2,7 +2,7 @@
 #include "D2DWControl.h"
 #include "Textbox.h"
 #include "TextBlock.h"
-#include "ReactiveProperty.h"
+#include "reactive_command.h"
 #include "getter_macro.h"
 
 class CImageView;
@@ -17,13 +17,11 @@ class CImageEditor :public CD2DWControl
 	SHAREDPTR_GETTER(CStatusBar, StatusBar)
 	SHAREDPTR_GETTER(ImageEditorProperty, Prop)
 
-private:
-	ReactiveCommand<HWND> m_save;
-	ReactiveCommand<HWND> m_open;
-	ReactiveCommand<HWND> m_save_as;
-	ReactiveCommand<HWND> m_open_as;
-
-	CBinding m_bindScaleText;
+public:
+	reactive_command_ptr<HWND> SaveCommand;
+	reactive_command_ptr<HWND> OpenCommand;
+	reactive_command_ptr<HWND> SaveAsCommand;
+	reactive_command_ptr<HWND> OpenAsCommand;
 
 public:
 	CImageEditor(
@@ -31,11 +29,6 @@ public:
 		const std::shared_ptr<ImageEditorProperty>& spTextProp);
 
 	virtual ~CImageEditor() {}
-
-	ReactiveCommand<HWND>& GetOpenCommand() { return m_open; }
-	ReactiveCommand<HWND>& GetSaveCommand() { return m_save; }
-	ReactiveCommand<HWND>& GetOpenAsCommand() { return m_open_as; }
-	ReactiveCommand<HWND>& GetSaveAsCommand() { return m_save_as; }
 
 	std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects() const;
 

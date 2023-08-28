@@ -2,7 +2,7 @@
 #include "Direct2DWrite.h"
 #include "ScrollProperty.h"
 #include <regex>
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 #include "JsonSerializer.h"
 #include "TextBoxProperty.h"
 

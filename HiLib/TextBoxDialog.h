@@ -1,7 +1,6 @@
 #pragma once
 #include "D2DWDialog.h"
 #include "D2DWWindow.h"
-#include "ReactiveProperty.h"
 
 class CTextBlock;
 class CTextBox;

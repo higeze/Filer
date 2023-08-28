@@ -1,6 +1,5 @@
 #pragma once
 #include "FilerBindGridView.h"
-#include "ReactiveProperty.h"
 
 class CCheckableFileGrid :public CFilerBindGridView<std::shared_ptr<CShellFile>>
 {

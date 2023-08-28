@@ -1,5 +1,5 @@
 #pragma once
-#include "ReactiveProperty.h"
+#include "reactive_vector.h"
 #include "JsonSerializer.h"
 
 struct ExeExtension
@@ -10,14 +10,8 @@ struct ExeExtension
 	std::wstring Path;
 	std::wstring Parameter;
 
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		ar("Name", Name);
-		ar("Path", Path);
-		ar("Parameter", Parameter);
-	}
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(ExeExtension,
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+		ExeExtension,
 		Name,
 		Path,
 		Parameter)
@@ -26,14 +20,9 @@ struct ExeExtension
 struct ExeExtensionProperty
 {
 public:
-	ReactiveVectorProperty<std::tuple<ExeExtension>> ExeExtensions;
+	reactive_vector_ptr<std::tuple<ExeExtension>> ExeExtensions;
 
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		ar("ExeExtensions", ExeExtensions);
-	}
-
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(ExeExtensionProperty,
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+		ExeExtensionProperty,
 		ExeExtensions)
 };

@@ -1,9 +1,9 @@
 #pragma once
 #include "D2DWControl.h"
-#include "ReactiveProperty.h"
 #include "getter_macro.h"
 #include "encoding_type.h"
 #include "reactive_string.h"
+#include "reactive_command.h"
 
 class CPdfView;
 class CTextBox;
@@ -24,14 +24,11 @@ class CPDFEditor :public CD2DWControl
 
 	SHAREDPTR_GETTER(PDFEditorProperty, Prop)
 
-private:
-	std::vector<CBinding> m_bindings;
-	ReactiveCommand<HWND> m_save;
-	ReactiveCommand<HWND> m_open;
-	ReactiveCommand<HWND> m_save_as;
-	ReactiveCommand<HWND> m_open_as;
-
-	CBinding m_bindFilterText;
+public:
+	reactive_command_ptr<HWND> SaveCommand;
+	reactive_command_ptr<HWND> OpenCommand;
+	reactive_command_ptr<HWND> SaveAsCommand;
+	reactive_command_ptr<HWND> OpenAsCommand;
 
 public:
 	CPDFEditor(
@@ -39,12 +36,6 @@ public:
 		const std::shared_ptr<PDFEditorProperty>& spTextProp);
 
 	virtual ~CPDFEditor() {}
-
-	ReactiveCommand<HWND>& GetOpenCommand() { return m_open; }
-	ReactiveCommand<HWND>& GetSaveCommand() { return m_save; }
-	ReactiveCommand<HWND>& GetOpenAsCommand() { return m_open_as; }
-	ReactiveCommand<HWND>& GetSaveAsCommand() { return m_save_as; }
-
 
 	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> GetRects() const;
 

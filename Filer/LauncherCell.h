@@ -3,9 +3,6 @@
 #include "LauncherRow.h"
 #include "BindColumn.h"
 #include "Launcher.h"
-
-#include "PropertyWnd.h"
-#include "PropertySerializer.h"
 #include "ShellFile.h"
 #include "ShellFolder.h"
 #include "CellProperty.h"
@@ -113,7 +110,7 @@ public:
 			auto& itemsSource = pGrid->GetItemsSource();
 			auto index = pCol->GetIndex<AllTag>();
 
-			itemsSource.erase(std::next(itemsSource.cbegin(), index));
+			itemsSource.erase(std::next(itemsSource->cbegin(), index));
 			pGrid->Reload();
 			CFilerApplication::GetInstance()->SerializeLauncher(pFilerWnd->GetLauncherPropPtr());
 		}

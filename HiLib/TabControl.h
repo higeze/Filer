@@ -2,12 +2,13 @@
 #include "Direct2DWrite.h"
 #include "D2DWControl.h"
 #include "Button.h"
-#include "ReactiveProperty.h"
 #include "index_vector.h"
 #include <Shlwapi.h>
 
 #include "IStateMachine.h"
 #include <boost/sml.hpp>
+#include "reactive_property.h"
+#include "reactive_vector.h"
 
 
 
@@ -24,9 +25,10 @@ struct TabHeaderControlProperty;
 
 struct TabData:public std::enable_shared_from_this<TabData>
 {
-	ReactiveProperty<bool> Unlock = true;
+	reactive_property_ptr<bool> Unlock;
 
-	TabData(){}
+	TabData()
+		:Unlock(true){}
 	virtual ~TabData() = default;
 
 	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing);
@@ -60,7 +62,6 @@ class CTabHeaderControl :public CD2DWControl
 private:
 	std::shared_ptr<TabHeaderControlProperty> m_spProp;
 	std::shared_ptr<CButton> m_spButton;
-	CBinding m_isEnableBinding;
 
 	CSizeF m_size = CSizeF();
 	CSizeF m_iconSize = CSizeF();
@@ -144,7 +145,6 @@ class CTabControl :public CD2DWControl
 	friend class CAddTabHeaderControl;
 protected:
 	std::shared_ptr<TabControlProperty> m_spProp;
-	ReactiveVectorProperty<std::shared_ptr<TabData>> m_itemsSource;
 	index_vector<std::shared_ptr<CTabHeaderControl>> m_headers;
 	std::shared_ptr<CAddTabHeaderControl> m_addHeader;
 
@@ -152,16 +152,17 @@ protected:
 	std::unordered_map<std::string, std::function<void(const std::shared_ptr<TabData>&, const CRectF&)>> m_itemsHeaderIconTemplate;
 	std::unordered_map<std::string, std::function<std::shared_ptr<CD2DWControl>(const std::shared_ptr<TabData>&)>> m_itemsControlTemplate;
 	std::shared_ptr<CD2DWControl> m_spCurControl;
-	ReactiveProperty<int> m_selectedIndex;
 	std::optional<size_t> m_contextIndex;
+public:
+	reactive_property_ptr<int> SelectedIndex;
+	reactive_vector_ptr<std::shared_ptr<TabData>> ItemsSource;
+
 public:
 	CTabControl(CD2DWControl* pParentControl = nullptr,
 		const std::shared_ptr<TabControlProperty>& spProp = nullptr);
 	virtual ~CTabControl();
 
 	//Getter Setter
-	ReactiveVectorProperty<std::shared_ptr<TabData>>& GetItemsSource(){ return m_itemsSource; }
-	int GetSelectedIndex()const{ return m_selectedIndex.get(); }
 	std::shared_ptr<CD2DWControl>& GetCurrentControlPtr() { return m_spCurControl; }
 	std::optional<size_t> GetPtInHeaderRectIndex(const CPointF& pt)const;
 
@@ -246,32 +247,18 @@ private:
 
 
 public:
-	FRIEND_SERIALIZER
-	template <class Archive>
-	void save(Archive& ar)
-	{
-		ar("ItemsSource", m_itemsSource);
-		ar("SelectedIndex", m_selectedIndex);
-	}
-
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		ar("ItemsSource", m_itemsSource);
-		ar("SelectedIndex", m_selectedIndex);
-	}
 
 	friend void to_json(json& j, const CTabControl& o)
 	{
 		j = json{
-			{"ItemsSource", o.m_itemsSource},
-			{"SelectedIndex", o.m_selectedIndex }
+			{"ItemsSource", o.ItemsSource},
+			{"SelectedIndex", o.SelectedIndex }
 		};
 	}
 	friend void from_json(const json& j, CTabControl& o)
 	{
-		j.at("ItemsSource").get_to(o.m_itemsSource);
-		j.at("SelectedIndex").get_to(o.m_selectedIndex);
+		j.at("ItemsSource").get_to(o.ItemsSource);
+		j.at("SelectedIndex").get_to(o.SelectedIndex);
 	}
 };
 

@@ -30,7 +30,7 @@ struct ScrollProperty;
 		FLOAT GetScrollPage()const { return m_page; }
 		std::pair<FLOAT, FLOAT> GetScrollRange()const { return m_range; }
 		FLOAT GetScrollDistance()const { return m_range.second - m_range.first; }
-		FLOAT GetScrollPos()const { return Position->get_const(); }
+		FLOAT GetScrollPos()const { return *Position; }
 		CSizeF GetSize()const { return GetRectInWnd().Size(); }
 
 		void SetScrollPos(const FLOAT pos);

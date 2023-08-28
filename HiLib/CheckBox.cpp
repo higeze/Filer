@@ -1,14 +1,14 @@
 #include "CheckBox.h"
 
 CCheckBox::CCheckBox(CheckBoxType&& type, CheckBoxState&& state)
-	:Type(make_reactive_property<CheckBoxType>(std::forward<CheckBoxType>(type))),
-	State(make_reactive_property<CheckBoxState>(std::forward<CheckBoxState>(state))){}
+	:Type(type),
+	State(state){}
 
 void CCheckBox::Render(CDirect2DWrite* pDirect)
 {
 	SolidLine line(0.0, 0.0, 0.0, 1.0, 1.0);
 	pDirect->DrawSolidRectangleByLine(line, m_rect);
-	switch(State->get_const()){
+	switch(*State){
 		case CheckBoxState::None:
 		{
 			pDirect->DrawSolidLine(line, CPointF(m_rect.left + 2, (m_rect.top + m_rect.bottom) / 2), CPointF(m_rect.right - 2, (m_rect.top + m_rect.bottom) / 2));
@@ -55,25 +55,25 @@ void CCheckBox::Render(CDirect2DWrite* pDirect)
 void CCheckBox::Toggle()
 {
 
-	switch (Type->get_const()) {
+	switch (*Type) {
 		case CheckBoxType::Normal:
-			switch (State->get_const()) {
+			switch (*State) {
 				case CheckBoxState::False:
-					return State->set(CheckBoxState::True);
+					return State.set(CheckBoxState::True);
 				case CheckBoxState::True:
 				default:
-					return State->set(CheckBoxState::False);
+					return State.set(CheckBoxState::False);
 			}
 		case CheckBoxType::ThreeState:
 			//return SetString(std::to_wstring((static_cast<int>(GetCheckBoxState()) + 1) % 4));
-			switch (State->get_const()) {
+			switch (*State) {
 				case CheckBoxState::False:
-					return State->set(CheckBoxState::Intermediate);
+					return State.set(CheckBoxState::Intermediate);
 				case CheckBoxState::Intermediate:
-					return State->set(CheckBoxState::True);
+					return State.set(CheckBoxState::True);
 				case CheckBoxState::True:
 				default:
-					return State->set(CheckBoxState::False);
+					return State.set(CheckBoxState::False);
 			}
 	}
 }

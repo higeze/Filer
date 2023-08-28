@@ -1,7 +1,7 @@
 #pragma once
 #include "Direct2DWrite.h"
 #include "UIElement.h"
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 
 class CD2DWWindow;
 
@@ -27,13 +27,16 @@ protected:
 	std::shared_ptr<CD2DWControl> m_pMouseControl;
 
 	CRectF m_rect;
-	ReactiveProperty<bool> m_isEnabled = true;
-	ReactiveProperty<bool> m_isFocusable = true;
+
 	bool m_isTabStop = false;
+public:
+	reactive_property_ptr<bool> IsEnabled;
+	reactive_property_ptr<bool> IsFocusable;
 
 public:
 
-	CD2DWControl(CD2DWControl* pParentControl = nullptr):m_pParentControl(pParentControl){}
+	CD2DWControl(CD2DWControl* pParentControl = nullptr):
+		m_pParentControl(pParentControl), IsEnabled(true), IsFocusable(true){}
 	virtual ~CD2DWControl(){}
 
 	virtual CD2DWWindow* GetWndPtr()const { return m_pParentControl->GetWndPtr(); }
@@ -96,9 +99,6 @@ public:
 	virtual void OnRect(const RectEvent& e) override { m_rect = e.Rect; }
 	virtual bool GetIsFocused()const;
 
-	ReactiveProperty<bool>& GetIsEnabled() { return m_isEnabled; }
-	ReactiveProperty<bool>& GetIsFocusable() { return m_isFocusable; }
-
 	CRectF CalcCenterRectF(const CSizeF& size);
 
 
@@ -159,7 +159,7 @@ public:
 	{
 		auto iter = std::find_if(m_childControls.crbegin(), m_childControls.crend(),
 			[&](const std::shared_ptr<CD2DWControl>& x) {
-				return x->GetIsEnabled() && x->GetRectInWnd().PtInRect(e.PointInWnd);
+				return *x->IsEnabled && x->GetRectInWnd().PtInRect(e.PointInWnd);
 			});
 
 		if (iter != m_childControls.crend()) {

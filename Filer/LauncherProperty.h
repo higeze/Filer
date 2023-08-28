@@ -1,32 +1,29 @@
 #pragma once
 #include "Launcher.h"
 #include "KnownFolder.h"
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 
 class CLauncherProperty
 {
-private:
-	std::shared_ptr<ReactiveVectorProperty<std::tuple<std::shared_ptr<CLauncher>>>> m_spLauncher;
+public:
+	reactive_vector_ptr<std::tuple<std::shared_ptr<CLauncher>>> Launchers;
 
 public:
-	CLauncherProperty():m_spLauncher(std::make_shared<ReactiveVectorProperty<std::tuple<std::shared_ptr<CLauncher>>>>())
+	CLauncherProperty()
+		:Launchers()
 	{
-		m_spLauncher->push_back(std::make_tuple(std::make_shared<CLauncher>(CKnownFolderManager::GetInstance()->GetDesktopFolder()->GetPath(),L"DT")));
+		Launchers.push_back(std::make_tuple(std::make_shared<CLauncher>(CKnownFolderManager::GetInstance()->GetDesktopFolder()->GetPath(),L"DT")));
 	};
 	~CLauncherProperty(){};
-
-	std::shared_ptr<ReactiveVectorProperty<std::tuple<std::shared_ptr<CLauncher>>>>& GetLaunchersPtr() { return m_spLauncher; }
-	ReactiveVectorProperty<std::tuple<std::shared_ptr<CLauncher>>>& GetLaunchers(){return *m_spLauncher;}
-
 
 	friend void to_json(json& j, const CLauncherProperty& o)
 	{
 		j = json{
-			{"Launchers", o.m_spLauncher}
+			{"Launchers", o.Launchers}
 		};
 	}
 	friend void from_json(const json& j, CLauncherProperty& o)
 	{
-		get_to(j, "Launchers", o.m_spLauncher);
+		get_to(j, "Launchers", o.Launchers);
 	}
 };

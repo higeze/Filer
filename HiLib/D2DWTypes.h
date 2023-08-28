@@ -23,13 +23,13 @@ struct CPointT :public TPoint
 	struct YTag{};
 
 	CPointT() :TPoint{ 0.0f } {}
-	CPointT(T a, T b) :TPoint{ a, b } {}
+	CPointT(const T& a, const T& b) :TPoint{ a, b } {}
 	CPointT(const point_type& pt) :CPointT(pt.x, pt.y) {}
 	CPointT(const TPoint& pt) : CPointT(pt.x, pt.y) {}
-	void SetPoint(T a, T b) { this->x = a; this->y = b; }
-	void Offset(T xOffset, T yOffset) { this->x += xOffset; this->y += yOffset; }
-	void Offset(point_type& pt) { this->x += pt.x; this->y += pt.y; }
-	point_type OffsetCopy(point_type& pt) { return point_type(this->x + pt.x, this->y + pt.y); }
+	void SetPoint(const T& a, const T& b) { this->x = a; this->y = b; }
+	void Offset(const T& xOffset, const T& yOffset) { this->x += xOffset; this->y += yOffset; }
+	void Offset(const point_type& pt) { this->x += pt.x; this->y += pt.y; }
+	point_type OffsetCopy(const point_type& pt) { return point_type(this->x + pt.x, this->y + pt.y); }
 	const TPoint* operator&() const
 	{
 		return static_cast<const TPoint*>(this);
@@ -55,7 +55,10 @@ struct CPointT :public TPoint
 	{
 		return point_type(this->x / z, this->y / z);
 	}
-
+	bool operator==(const point_type& pt)const
+	{
+		return (this->x == pt.x && this->y == pt.y);
+	}
 	bool operator!=(const point_type& pt)const
 	{
 		return (this->x != pt.x || this->y != pt.y);
@@ -87,7 +90,7 @@ struct CSizeT :public TSize
 	using point_type = CPointT<TRect, TSize, TPoint, T>;
 
 	CSizeT() :TSize{ 0.0f } {}
-	CSizeT(T w, T h) :TSize{ w, h } {}
+	CSizeT(const T& w, const T& h) :TSize{ w, h } {}
 	CSizeT(const size_type& size) :CSizeT(size.width, size.height) {}
 	CSizeT(const TSize& size) :CSizeT(size.width, size.height) {}
 	const TSize* operator&() const
@@ -137,7 +140,7 @@ struct CRectT :public TRect
 	CRectT(const TPoint& pt, const TSize& sz) :TRect(pt.x, pt.y, pt.x + sz.width, pt.y + sz.height) {}
 	CRectT(const TPoint& pt1, const TPoint& pt2) :TRect(pt1.x, pt1.y, pt2.x, pt2.y) {}
 	CRectT(const size_type& size) :TRect{ 0, 0, size.width, size.height } {}
-	void SetRect(T l, T t, T r, T b)
+	void SetRect(const T& l, const T& t, const T& r, const T& b)
 	{
 		this->left = l; this->top = t; this->right = r; this->bottom = b;
 	}

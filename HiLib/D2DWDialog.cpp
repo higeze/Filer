@@ -60,7 +60,7 @@ bool CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_Moving(const LButtonBeginDrag
 {
 	auto iter = std::find_if(m_childControls.crbegin(), m_childControls.crend(),
 		[&](const std::shared_ptr<CD2DWControl>& x) {
-			return x->GetIsEnabled() && x->GetRectInWnd().PtInRect(e.PointInWnd);
+			return *x->IsEnabled && x->GetRectInWnd().PtInRect(e.PointInWnd);
 		});
 
 	return iter == m_childControls.crend();
@@ -200,8 +200,8 @@ void CD2DWDialog::Error_StdException(const std::exception& e)
 
 CSizeF CD2DWDialog::GetTitleSize()
 {
-	if (!m_title.get().empty()) {
-		m_titleSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(m_spProp->TitleFormat, m_title.get());
+	if (!Title->empty()) {
+		m_titleSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(m_spProp->TitleFormat, *Title);
 	}
 	return m_titleSize;
 }
@@ -219,7 +219,7 @@ void CD2DWDialog::PaintTitle()
 {
 	auto rc = GetTitleRect();
 	rc.DeflateRect(kTitlePadding);
-	GetWndPtr()->GetDirectPtr()->DrawTextLayout(m_spProp->TitleFormat, m_title.get(), rc);
+	GetWndPtr()->GetDirectPtr()->DrawTextLayout(m_spProp->TitleFormat, *Title, rc);
 }
 
 void CD2DWDialog::PaintBorder()

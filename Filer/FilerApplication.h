@@ -27,8 +27,8 @@ private:
 	std::unique_ptr<CFilerWnd> m_pWnd;
 
 
-	template<typename TRect>
-	void SerializeValue(const std::string& key, const TRect & value)
+	template<typename T>
+	void SerializeValue(const std::string& key, const T & value)
 	{
 		if (auto path = GetJsonPath(); ::PathFileExistsA(path.c_str())) {
 			std::ifstream i(path);
@@ -44,8 +44,8 @@ private:
 		THROW_FILE_LINE_FUNC;
 	}
 
-	template<typename TRect>
-	TRect DeserializeValue(const std::string& key)
+	template<typename T>
+	T DeserializeValue(const std::string& key)
 	{
 		if (auto path = GetJsonPath(); ::PathFileExistsA(path.c_str())) {
 			std::ifstream i(path);
@@ -57,7 +57,6 @@ private:
 			}
 		}
 		THROW_FILE_LINE_FUNC;
-
 	}
 
 

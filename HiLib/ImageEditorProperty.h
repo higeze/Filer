@@ -4,7 +4,6 @@
 #include "TextBoxProperty.h"
 #include "TextBlockProperty.h"
 #include "StatusBarProperty.h"
-#include "ReactiveProperty.h"
 #include "JsonSerializer.h"
 
 struct ImageEditorProperty

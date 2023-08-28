@@ -4,7 +4,7 @@
 #include "TextBlockProperty.h"
 #include "ScrollProperty.h"
 #include "StatusBarProperty.h"
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 #include "JsonSerializer.h"
 
 struct PDFEditorProperty
@@ -20,17 +20,5 @@ public:
 		TextBoxPropPtr,
 		TextBlockPropPtr,
 		StatusBarPropPtr)
-
-	//friend void to_json(json& j, const PDFEditorProperty& o)
-	//{
-	//	j["PdfViewPropPtr"] = o.PDFViewPropPtr;
-	//	j["StatusBarPropPtr"] = o.StatusBarPropPtr;
-	//}
-
-	//friend void from_json(const json& j, PDFEditorProperty& o)
-	//{
-	//	j.at("PdfViewPropPtr").get_to(o.PDFViewPropPtr);
-	//	j.at("StatusBarPropPtr").get_to(o.StatusBarPropPtr);
-	//}
 };
 

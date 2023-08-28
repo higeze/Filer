@@ -3,7 +3,9 @@
 #include "D2DWControl.h"
 #include "Scroll.h"
 #include "ScrollProperty.h"
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
+#include "reactive_command.h"
+#include "reactive_string.h"
 
 #include "PDFViewProperty.h"
 #include <msctf.h>
@@ -26,11 +28,11 @@
 #include <future>
 #include <mutex>
 
+#include "PDFDOc.h"
 #include "PDFViewport.h"
 #include "PDFCaret.h"
 //#include "PDFBitmapDrawer.h"
 
-class CPDFDoc;
 class CD2DPDFBitmapDrawer;
 class CVScroll;
 class CHScroll;
@@ -93,9 +95,6 @@ public:
 	/* Reactive */
 	/************/
 	reactive_property_ptr<CPDFDoc> PDF;
-
-	reactive_property_ptr<void> OpenCommand;
-	reactive_property_ptr<void> SaveCommand;
 
 	reactive_property_ptr<FLOAT> Scale;
 
@@ -180,8 +179,6 @@ public:
 	/* Windows Message*/
 	/******************/
 	virtual void OnCreate(const CreateEvt& e);
-private:
-	void ObserveFind(const reactive_wstring::notify_type& notify);
 public:
 
 	virtual void OnPaint(const PaintEvent& e) { m_pMachine->process_event(e); }

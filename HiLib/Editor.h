@@ -1,7 +1,8 @@
 #pragma once
 #include "D2DWControl.h"
-#include "ReactiveProperty.h"
+#include "reactive_property.h"
 #include "reactive_string.h"
+#include "reactive_command.h"
 #include "getter_macro.h"
 #include "encoding_type.h"
 
@@ -16,13 +17,6 @@ class CEditor :public CD2DWControl
 	SHAREDPTR_GETTER(CEditorTextBox, TextBox)
 	SHAREDPTR_GETTER(CStatusBar, StatusBar)
 	SHAREDPTR_GETTER(EditorProperty, Prop)
-
-	ReactiveProperty<encoding_type> m_encoding;
-	ReactiveCommand<HWND> m_save;
-	ReactiveCommand<HWND> m_open;
-	ReactiveCommand<HWND> m_save_as;
-	ReactiveCommand<HWND> m_open_as;
-
 public:
 	CEditor(
 		CD2DWControl* pParentControl,
@@ -31,11 +25,11 @@ public:
 	virtual ~CEditor() {}
 
 	reactive_wstring_ptr Path;
-	ReactiveProperty<encoding_type>& GetEncoding() { return m_encoding; }
-	ReactiveCommand<HWND>& GetOpenCommand() { return m_open; }
-	ReactiveCommand<HWND>& GetSaveCommand() { return m_save; }
-	ReactiveCommand<HWND>& GetOpenAsCommand() { return m_open_as; }
-	ReactiveCommand<HWND>& GetSaveAsCommand() { return m_save_as; }
+	reactive_property_ptr<encoding_type> Encoding;
+	reactive_command_ptr<HWND> SaveCommand;
+	reactive_command_ptr<HWND> OpenCommand;
+	reactive_command_ptr<HWND> SaveAsCommand;
+	reactive_command_ptr<HWND> OpenAsCommand;
 
 	std::tuple<CRectF, CRectF, CRectF> GetRects() const;
 

@@ -5,7 +5,6 @@
 #include "D2DWWindow.h"
 #include "TextStoreACP.h"
 #include "TextEditSink.h"
-#include "ReactiveProperty.h"
 #include "GridView.h"
 
 #define Round(x)	((LONG)(x+0.5f))
@@ -271,8 +270,8 @@ STDAPI CTextStore::GetSelection(ULONG ulIndex, ULONG ulCount, TS_SELECTION_ACP *
     *pcFetched = 0;
     if ((ulCount > 0) && ((ulIndex == 0) || (ulIndex == TS_DEFAULT_SELECTION)))
     {
-        pSelection[0].acpStart = _pEditor->GetSelectionStart();
-        pSelection[0].acpEnd = _pEditor->GetSelectionEnd();
+        pSelection[0].acpStart = *_pEditor->Caret->SelectedBegin;
+        pSelection[0].acpEnd = *_pEditor->Caret->SelectedEnd;
         pSelection[0].style.ase = TS_AE_END;
         pSelection[0].style.fInterimChar = FALSE;
         *pcFetched = 1;
@@ -568,8 +567,8 @@ STDAPI CTextStore::InsertTextAtSelection(DWORD dwFlags, __in_ecount(cch) const W
     }
 
 
-    LONG acpStart = _pEditor->GetSelectionStart();
-    LONG acpEnd = _pEditor->GetSelectionEnd();
+    LONG acpStart = *_pEditor->Caret->SelectedBegin;
+    LONG acpEnd = *_pEditor->Caret->SelectedEnd;
 
     if (dwFlags & TS_IAS_QUERYONLY)
     {

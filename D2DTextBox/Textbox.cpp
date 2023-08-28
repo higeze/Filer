@@ -27,6 +27,8 @@
 //HRESULT InitDisplayAttrbute();
 //HRESULT UninitDisplayAttrbute();
 
+
+
 /*****************/
 /* static member */
 /*****************/
@@ -232,9 +234,9 @@ CTextBox::CTextBox(
 	:CD2DWControl(pParentControl),
 	m_pProp(pProp),
 	m_initText(text),
-	Text(make_reactive_wstring(text)),
-	EnterText(make_reactive_wstring()),
-	m_carets(0, text.size(), 0, 0, text.size()),
+	Text(text),
+	EnterText(text),
+	Caret(0, text.size(), 0, 0, text.size()),
 	m_pTextMachine(std::make_unique<CTextBoxStateMachine>(this)),
 	m_pVScroll(std::forward<std::unique_ptr<CVScroll>>(pVScroll)),
 	m_pHScroll(std::forward<std::unique_ptr<CHScroll>>(pHScroll))
@@ -500,8 +502,8 @@ void CTextBox::LoadActualContentRect()
 
 void CTextBox::Clear()
 {
-	m_carets.set(0, 0, 0, 0, 0);
-	Text->clear();
+	Caret.get_unconst()->Clear();
+	Text.clear();
 
 	m_pVScroll->SetScrollPage(GetPageRect().Height());
 	m_pVScroll->SetScrollPos(0.f);
@@ -514,15 +516,7 @@ void CTextBox::Clear()
 
 void CTextBox::MoveCaret(const int& index, const CPointF& point)
 {
-//	auto modPos = (newPos == m_text.size() - 1 && m_text[m_text.size() - 1] == L'\n' && std::get<caret::CurCaret>(m_carets) != newPos +1) ? newPos + 1 : newPos;
-	m_carets.set(
-		std::get<caret::CurCaret>(m_carets.get()), 
-		index,
-		index,
-		index,
-		index);
-
-	m_caretPoint.set(point);
+	Caret.get_unconst()->Move(index, point);
 	if (GetIsFocused()) {
 		StartCaretBlink();
 	}
@@ -530,27 +524,15 @@ void CTextBox::MoveCaret(const int& index, const CPointF& point)
 
 void CTextBox::MoveCaretWithShift(const int& index, const CPointF& point)
 {
-	m_carets.set(
-		std::get<caret::CurCaret>(m_carets.get()),
-		index,
-		std::get<caret::AncCaret>(m_carets.get()),
-		(std::min)(std::get<caret::AncCaret>(m_carets.get()), index),
-		(std::max)(std::get<caret::AncCaret>(m_carets.get()), index));
-
-	m_caretPoint.set(point);
+	Caret.get_unconst()->MoveWithShift(index, point);
 	if (GetIsFocused()) {
 		StartCaretBlink();
 	}
 }
 
-void CTextBox::MoveSelection(const int& selBegin, const int& selEnd)
+void CTextBox::MoveSelection(const int& selectedBegin, const int& selectedEnd)
 {
-	m_carets.set(
-		std::get<caret::CurCaret>(m_carets.get()),
-		selEnd,
-		selBegin,
-		selBegin,
-		selEnd);
+	Caret.get_unconst()->Select(selectedBegin, selectedEnd, GetOriginCharRects()[Text->size()].CenterPoint());
 	if (GetIsFocused()) {
 		StartCaretBlink();
 	}
@@ -567,7 +549,7 @@ void CTextBox::EnsureVisibleCaret()
 			m_pVScroll->SetScrollRange(0, contentRect.Height());
 			m_pHScroll->SetScrollRange(0, contentRect.Width());
 			//Pos
-			auto curRect = charRects[std::get<caret::CurCaret>(m_carets.get())];
+			auto curRect = charRects[*Caret->Current];
 			auto orgRect = charRects[0];
 
 			if ((curRect.top - m_pVScroll->GetScrollPos() + pageRect.top) < pageRect.top) {
@@ -595,14 +577,11 @@ void CTextBox::OnCreate(const CreateEvt& e)
 
 	CD2DWControl::OnCreate(e);
 
-	m_caretPoint.set(CPointF(0, GetLineHeight() * 0.5f));
-	//m_caretPoint.set(CPointF(0, pProp->Format->Font.Size * 0.5f));
-	
-
+	Caret.get_unconst()->Point.set(CPointF(0, GetLineHeight() * 0.5f));
 
 	FAILED_THROW(GetThreadMgrPtr()->SetFocus(GetDocumentMgrPtr()));
 	 
-	Text->subscribe([this](const reactive_wstring::notify_type& e)
+	Text.subscribe([this](auto e)
 	{
 		UpdateAll();
 		switch (e.action) {
@@ -628,11 +607,12 @@ void CTextBox::OnCreate(const CreateEvt& e)
 	}
 	, shared_from_this());
 
-	m_carets.Subscribe(
-		[this](const std::tuple<int, int, int, int, int>& value)->void {
-			EnsureVisibleCaret();
-		}
-	);
+	Caret.get_unconst()->Current.subscribe([this](auto) { EnsureVisibleCaret(); }, shared_from_this());
+	//m_carets.Subscribe(
+	//	[this](const std::tuple<int, int, int, int, int>& value)->void {
+	//		EnsureVisibleCaret();
+	//	}
+	//);
 
 	if (GetIsFocused()) {
 		m_isFirstDrawCaret = true;
@@ -657,7 +637,7 @@ void CTextBox::OnClose(const CloseEvent& e)
 void CTextBox::OnWndKillFocus(const KillFocusEvent& e)
 {
 	if (m_isEnterText) {
-		EnterText->set(Text->get_const());
+		EnterText.set(*Text);
 	}
 
 	StopCaretBlink();
@@ -760,7 +740,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	case VK_LEFT:
 	{
-		auto position = std::clamp(std::get<caret::CurCaret>(m_carets.get()) - 1, 0, (int)Text->size());
+		auto position = std::clamp(*Caret->Current - 1, 0, (int)Text->size());
 		auto point = GetOriginCharRects()[position].CenterPoint();
 
 		if (shift) {
@@ -774,7 +754,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	case VK_RIGHT:
 	{
-		auto position = std::clamp(std::get<caret::CurCaret>(m_carets.get()) + 1, 0, (int)Text->size());
+		auto position = std::clamp(*Caret->Current + 1, 0, (int)Text->size());
 		auto point = GetOriginCharRects()[position].CenterPoint();
 
 		if (shift) {
@@ -788,9 +768,10 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	case VK_UP:
 	{
-		auto curCharRect = GetOriginCharRects()[std::get<caret::CurCaret>(m_carets.get())];
-		auto point = CPointF(m_caretPoint.get().x,
-			(std::max)(GetOriginCharRects().front().CenterPoint().y, m_caretPoint.get().y - curCharRect.Height()));
+		auto curCharRect = GetOriginCharRects()[*Caret->Current];
+		auto caret_point = *Caret->Point;
+		auto point = CPointF(caret_point.x,
+			(std::max)(GetOriginCharRects().front().CenterPoint().y, caret_point.y - curCharRect.Height()));
 		if (auto position = GetOriginCharPosFromPoint(point)) {
 			if (shift) {
 				MoveCaretWithShift(position.value(), point);
@@ -804,9 +785,10 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	case VK_DOWN:
 	{
-		auto curCharRect = GetOriginCharRects()[std::get<caret::CurCaret>(m_carets.get())];
-		auto point = CPointF(m_caretPoint.get().x,
-			(std::min)(GetOriginCharRects().back().CenterPoint().y, m_caretPoint.get().y + curCharRect.Height()));
+		auto curCharRect = GetOriginCharRects()[*Caret->Current];
+		auto caret_point = *Caret->Point;
+		auto point = CPointF(caret_point.x,
+			(std::min)(GetOriginCharRects().back().CenterPoint().y, caret_point.y + curCharRect.Height()));
 		if (auto newPos = GetOriginCharPosFromPoint(point)) {
 			if (shift) {
 				MoveCaretWithShift(newPos.value(), point);
@@ -820,7 +802,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	case VK_HOME:
 	{
-		if (auto index = GetFirstCharPosInLine(std::get<caret::CurCaret>(m_carets.get()))){
+		if (auto index = GetFirstCharPosInLine(*Caret->Current)){
 			auto point = GetOriginCharRects()[index.value()].CenterPoint();
 			if (shift) {
 				MoveCaretWithShift(index.value(), point);
@@ -834,7 +816,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	case VK_END:
 	{
-		if (auto index = GetLastCharPosInLine(std::get<caret::CurCaret>(m_carets.get()))) {
+		if (auto index = GetLastCharPosInLine(*Caret->Current)) {
 			auto point = GetOriginCharRects()[index.value()].CenterPoint();
 			if (shift) {
 				MoveCaretWithShift(index.value(), point);
@@ -848,8 +830,8 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	case VK_DELETE:
 	{
-		if (std::get<caret::SelBegin>(m_carets.get()) == std::get<caret::SelEnd>(m_carets.get())) {
-			if (std::get<caret::CurCaret>(m_carets.get()) < (int)Text->size()) {
+		if (Caret->IsNotSelected()) {
+			if (*Caret->Current < (int)Text->size()) {
 				DeleteOne();
 				*e.HandledPtr = TRUE;
 			}
@@ -861,8 +843,8 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	case VK_BACK:
 	{
-		if (std::get<caret::SelBegin>(m_carets.get()) == std::get<caret::SelEnd>(m_carets.get())) {
-			if (std::get<caret::CurCaret>(m_carets.get()) > 0) {
+		if (Caret->IsNotSelected()) {
+			if (*Caret->Current > 0) {
 				BackspaceOne();
 				*e.HandledPtr = TRUE;
 			}
@@ -895,8 +877,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	case 'A':
 	{
 		if (ctrl) {
-			m_carets.set(std::get<caret::CurCaret>(m_carets.get()), Text->size(), 0, 0, Text->size());
-			m_caretPoint.set(GetOriginCharRects()[Text->size()].CenterPoint());
+			Caret.get_unconst()->Select(0, Text->size(), GetOriginCharRects()[Text->size()].CenterPoint());
 			StartCaretBlink();
 			*e.HandledPtr = TRUE;
 		}
@@ -930,7 +911,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	case VK_RETURN:
 		if (m_isEnterText && !alt) {
-			EnterText->set(Text->get_const());
+			EnterText.set(*Text);
 		} else {
 			ReplaceSelection(L"\n");
 		}
@@ -1187,9 +1168,9 @@ void CTextBox::Error_StdException(const std::exception& e)
 
 bool CTextBox::CopySelectionToClipboard()
 {
-	int selLen = std::get<caret::SelEnd>(m_carets.get()) - std::get<caret::SelBegin>(m_carets.get());
+	int selLen = *Caret->SelectedEnd - *Caret->SelectedBegin;
 	if (selLen > 0) {
-		std::wstring strCopy = Text->substr(std::get<caret::SelBegin>(m_carets.get()), selLen);
+		std::wstring strCopy = Text->substr(*Caret->SelectedBegin, selLen);
 		boost::algorithm::replace_all(strCopy, L"\n", L"\r\n");
 
 		HGLOBAL hGlobal = ::GlobalAlloc(GHND | GMEM_SHARE, (strCopy.size() + 1) * sizeof(wchar_t));
@@ -1263,40 +1244,41 @@ void CTextBox::StopCaretBlink()
 
 void CTextBox::CancelEdit()
 {
-	Text->assign(m_initText);
-	m_carets.set(std::get<caret::CurCaret>(m_carets.get()), Text->size(), Text->size(), Text->size(), Text->size());
+	Text.assign(m_initText);
+	Caret.get_unconst()->Move(Text->size(), GetOriginCharRects()[Text->size()].CenterPoint());
+	//m_carets.set(std::get<caret::CurCaret>(m_carets.get()), Text->size(), Text->size(), Text->size(), Text->size());
 }
 
 void CTextBox::Insert(const std::wstring& text)
 {
-	auto cur = std::get<caret::CurCaret>(m_carets.get());
+	auto cur = *Caret->Current;
 	m_doMgr.Do(std::make_shared<CDoCommand>(
 		[this, index = cur, value=text]()
 		{ 
-			Text->insert(index, value);
+			Text.insert(index, value);
 			//MoveCaret(index + value.size(), GetOriginCharRects()[index].CenterPoint());
 		},
-		[this, index = cur, count = text.size(), car = m_carets]()
+		[this, index = cur, count = text.size(), car = Caret->Clone()]()
 		{
-			Text->erase(index, count);
-			m_carets = car;
+			Text.erase(index, count);
+			Caret.get_unconst()->CopyValueOnly(car);
 		}
 		));
 }
 void CTextBox::ReplaceSelection(const std::wstring& text)
 {
-	auto selBeg = std::get<caret::SelBegin>(m_carets.get());
-	auto selEnd = std::get<caret::SelEnd>(m_carets.get());
+	auto selBeg = *Caret->SelectedBegin;
+	auto selEnd = *Caret->SelectedEnd;
 	m_doMgr.Do(std::make_shared<CDoCommand>(
 		[this, index = selBeg, count = selEnd-selBeg, value=text]()
 		{ 
-			Text->replace(index, count, value);
+			Text.replace(index, count, value);
 			//MoveCaret(index + value.size(), GetOriginCharRects()[index].CenterPoint());
 		},
-		[this, index = selBeg, count = text.size(), value = Text->substr(selBeg, selEnd-selBeg), car = m_carets]()
+		[this, index = selBeg, count = text.size(), value = Text->substr(selBeg, selEnd-selBeg), car = Caret->Clone()]()
 		{
-			Text->replace(index, count, value);
-			m_carets = car;
+			Text.replace(index, count, value);
+			Caret.get_unconst()->CopyValueOnly(car);
 		}
 		));
 }
@@ -1306,71 +1288,71 @@ void CTextBox::Replace(const std::size_t& index, const std::size_t& count, const
 	m_doMgr.Do(std::make_shared<CDoCommand>(
 		[this, index = index, count = count, value=text]()
 		{ 
-			Text->replace(index, count, value);
+			Text.replace(index, count, value);
 			//MoveCaret(index + value.size(), GetOriginCharRects()[index].CenterPoint());
 		},
-		[this, index = index, count = text.size(), value = Text->substr(index, count), car = m_carets]()
+		[this, index = index, count = text.size(), value = Text->substr(index, count), car = Caret->Clone()]()
 		{
-			Text->replace(index, count, value);
-			m_carets = car;
+			Text.replace(index, count, value);
+			Caret.get_unconst()->CopyValueOnly(car);
 		}
 		));
 }
 
 void CTextBox::DeleteOne()
 {
-	auto cur = std::get<caret::CurCaret>(m_carets.get());
+	auto cur = *Caret->Current;
 	m_doMgr.Do(std::make_shared<CDoCommand>(
 		[this, index = cur, count = 1]()
 		{ 
-			Text->erase(index, count);
+			Text.erase(index, count);
 			//MoveCaret(index, GetOriginCharRects()[index].CenterPoint());
 		},
-		[this, index = cur, value = Text->substr(cur, 1), car = m_carets]()
+		[this, index = cur, value = Text->substr(cur, 1), car = Caret->Clone()]()
 		{
-			Text->insert(index, value);
-			m_carets = car;
+			Text.insert(index, value);
+			Caret.get_unconst()->CopyValueOnly(car);
 		}
 		));
 }
 void CTextBox::BackspaceOne()
 {
-	auto cur = std::get<caret::CurCaret>(m_carets.get());
+	auto cur = *Caret->Current;
 	m_doMgr.Do(std::make_shared<CDoCommand>(
 		[this, index = cur-1, count = 1]()
 		{ 
-			Text->erase(index, count);
+			Text.erase(index, count);
 			//MoveCaret(index, GetOriginCharRects()[index].CenterPoint());
 		},
-		[this, index = cur-1, value = Text->substr(cur-1, 1), car = m_carets]()
+		[this, index = cur-1, value = Text->substr(cur-1, 1), car = Caret->Clone()]()
 		{
-			Text->insert(index, value);
-			m_carets = car;
+			Text.insert(index, value);
+			Caret.get_unconst()->CopyValueOnly(car);
 		}
 		));
 }
 
 void CTextBox::DeleteSelection()
 {
-	auto selBeg = std::get<caret::SelBegin>(m_carets.get());
-	auto selEnd = std::get<caret::SelEnd>(m_carets.get());
+	auto selBeg = *Caret->SelectedBegin;
+	auto selEnd = *Caret->SelectedEnd;
 	m_doMgr.Do(std::make_shared<CDoCommand>(
 		[this, index = selBeg , count = selEnd-selBeg]
 		{
-			Text->erase(index, count);
+			Text.erase(index, count);
 			//MoveCaret(index, GetOriginCharRects()[index].CenterPoint());
 		},
-		[this, index = selBeg , value = Text->substr(selBeg, selEnd-selBeg), car = m_carets]
+		[this, index = selBeg , value = Text->substr(selBeg, selEnd-selBeg), car = Caret->Clone()]
 		{
-			Text->insert(index, value);
-			m_carets = car;
+			Text.insert(index, value);
+			Caret.get_unconst()->CopyValueOnly(car);
 		}
 		));
 }
 
 void CTextBox::ClearText()
 {
-	Text->clear();
+	Text.clear();
 	//auto index = 0;
 	//auto point = CPointF(0, GetLineHeight() * 0.5f);
 	//MoveCaret(index, point);
@@ -1442,7 +1424,7 @@ void CTextBox::PaintText(const PaintEvent& e)
 void CTextBox::PaintSelection(const PaintEvent& e)
 {
 	const std::vector<CRectF>& selCharRects = GetActualSelectionCharRects();
-	for (auto n = std::get<caret::SelBegin>(m_carets.get()); n < std::get<caret::SelEnd>(m_carets.get()); n++) {
+	for (auto n = *Caret->SelectedBegin; n < *Caret->SelectedEnd; n++) {
 		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(
 			SolidFill(CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)),
 			selCharRects[n]);
@@ -1455,7 +1437,7 @@ void CTextBox::PaintCaret(const PaintEvent& e)
 {
 	//Draw Caret
 	const std::vector<CRectF>& charRects = GetActualCharRects();
-	CRectF caretRect = charRects[std::get<caret::CurCaret>(m_carets.get())];
+	CRectF caretRect = charRects[*Caret->Current];
 	caretRect.right = caretRect.left + 1;
 	if (m_isFirstDrawCaret) {
 		m_isFirstDrawCaret = false;

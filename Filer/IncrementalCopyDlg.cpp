@@ -24,8 +24,8 @@ CIncrementalCopyDlg::CIncrementalCopyDlg(
 	m_spButtonCancel(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
 	m_spButtonClose(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>()))
 {
-	m_title.set(L"Incremental Copy");
-	m_spButtonDo->GetCommand().Subscribe([this]()->void
+	Title.set(L"Incremental Copy");
+	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		auto funDo = [idlMap = m_idlMap]()->void
 		{
@@ -58,16 +58,16 @@ CIncrementalCopyDlg::CIncrementalCopyDlg(
 			funDo, 0);
 
 		m_idlMap.clear();
-		m_spButtonDo->GetIsEnabled().set(!m_idlMap.empty());
-	});
-	m_spButtonDo->GetContent().set(L"Copy");
+		m_spButtonDo->IsEnabled.set(!m_idlMap.empty());
+	}, shared_from_this());
+	m_spButtonDo->Content.set(L"Copy");
 
-	m_spButtonClose->GetCommand().Subscribe([this]()->void
+	m_spButtonClose->Command.subscribe([this]()->void
 	{
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	});
-	m_spButtonClose->GetContent().set(L"Close");
-	m_spButtonCancel->GetContent().set(L"Cancel");
+	}, shared_from_this());
+	m_spButtonClose->Content.set(L"Close");
+	m_spButtonCancel->Content.set(L"Cancel");
 
 }
 
@@ -101,10 +101,10 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 	m_spButtonClose->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnClose));
 
 
-	m_spButtonDo->GetIsEnabled().set(false);
+	m_spButtonDo->IsEnabled.set(false);
 
-	m_spButtonCancel->GetIsEnabled().set(false);
-	m_spButtonClose->GetIsEnabled().set(true);
+	m_spButtonCancel->IsEnabled.set(false);
+	m_spButtonClose->IsEnabled.set(true);
 
 	auto fun = [this]()->void
 	{
@@ -154,7 +154,7 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 		incrFuture.get();
 
 		if (!m_idlMap.empty()) {
-			m_spButtonDo->GetIsEnabled().set(true);
+			m_spButtonDo->IsEnabled.set(true);
 			SetFocusedControlPtr(m_spButtonDo);
 		}
 	};

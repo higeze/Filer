@@ -9,7 +9,6 @@
 #include "FavoritesGridView.h"
 #include "LauncherGridView.h"
 #include "FilerProperty.h"
-#include "PropertyWnd.h"
 #include "FilerTabGridView.h"
 #include "MyFile.h"
 #include "ViewProperty.h"
@@ -28,8 +27,6 @@
 #include "BindTextCell.h"
 #include "BindCheckBoxColumn.h"
 #include "BindCheckBoxCell.h"
-#include "BindSheetCellColumn.h"
-#include "BindItemsSheetCell.h"
 #include "EditorProperty.h"
 
 #include "ToDoGridView.h"
@@ -49,7 +46,7 @@ CFilerWnd::CFilerWnd()
 	:CD2DWWindow(),
 	m_rcWnd(0, 0, 1000, 600), 
 	m_rcPropWnd(0, 0, 300, 400),
-	m_splitterLeft(0),
+	SplitterLeft(0.f),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
 	m_spDialogProp(std::make_shared<DialogProperty>()),
 	m_spFilerGridViewProp(std::make_shared<FilerGridViewProperty>()),
@@ -114,7 +111,7 @@ CFilerWnd::~CFilerWnd() = default;
 
 HWND CFilerWnd::Create(HWND hWndParent)
 {
-	m_splitterBinding.Attach(m_splitterLeft, m_spSplitter->GetSplitterLeft());
+	SplitterLeft.binding(m_spSplitter->SplitterLeft);
 	return CWnd::Create(hWndParent, m_rcWnd);
 }
 
@@ -140,16 +137,16 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		spFavoritesGridView->FileChosen = [wpView, this](const std::shared_ptr<CShellFile>& spFile)->void {
 			if (auto spView = wpView.lock()) {
 				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {//Open Filer
-					auto& itemsSource = spView->GetItemsSource();
-					if (itemsSource[spView->GetSelectedIndex()]->AcceptClosing(GetWndPtr(), false)) {
-						itemsSource.replace(itemsSource.begin() + spView->GetSelectedIndex(), std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
+					auto& itemsSource = spView->ItemsSource;
+					if (itemsSource->at(*spView->SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
+						itemsSource.replace(itemsSource.get_unconst()->begin() + *spView->SelectedIndex, std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
 					} else {
 						itemsSource.push_back(std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
 					}
 				} else if (boost::iequals(spFile->GetPathExt(), L".txt")) {//Open Text
-					auto& itemsSource = spView->GetItemsSource();
-					if (itemsSource[spView->GetSelectedIndex()]->AcceptClosing(GetWndPtr(), false)) {
-						itemsSource.replace(itemsSource.begin() + spView->GetSelectedIndex(), std::make_shared<TextTabData>(spFile->GetPath()));
+					auto& itemsSource = spView->ItemsSource;
+					if (itemsSource->at(*spView->SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
+						itemsSource.replace(itemsSource.get_unconst()->begin() + *spView->SelectedIndex, std::make_shared<TextTabData>(spFile->GetPath()));
 					} else {
 						itemsSource.push_back(std::make_shared<TextTabData>(spFile->GetPath()));
 					}
@@ -235,7 +232,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 
 			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
 
-			for (auto iter = m_spExeExProp->ExeExtensions.cbegin(); iter != m_spExeExProp->ExeExtensions.cend(); ++iter) {
+			for (auto iter = m_spExeExProp->ExeExtensions->cbegin(); iter != m_spExeExProp->ExeExtensions->cend(); ++iter) {
 
 					MENUITEMINFO mii = { 0 };
 					mii.cbSize = sizeof(MENUITEMINFO);
@@ -251,14 +248,14 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		spFilerView->ExecCustomContextMenu = [&](int idCmd, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files)->bool {
 			if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToFavoritesFromItem")) {
 				for (auto& file : files) {
-					GetFavoritesPropPtr()->GetFavorites().push_back(std::make_tuple(std::make_shared<CFavorite>(file->GetPath(), L"")));
+					GetFavoritesPropPtr()->Favorites.push_back(std::make_tuple(std::make_shared<CFavorite>(file->GetPath(), L"")));
 				}
 				m_spLeftFavoritesView->SubmitUpdate();
 				m_spRightFavoritesView->SubmitUpdate();
 				return true;
 			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToLauncherFromItem")) {
 				for (auto& file : files) {
-					GetLauncherPropPtr()->GetLaunchers().push_back(std::make_tuple(std::make_shared<CLauncher>(file->GetPath(), L"")));
+					GetLauncherPropPtr()->Launchers.push_back(std::make_tuple(std::make_shared<CLauncher>(file->GetPath(), L"")));
 				}
 				m_spLauncher->SubmitUpdate();
 				return true;
@@ -299,11 +296,11 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 				SetFocusedControlPtr(spDlg);
 				return true;
 			} else {
-				auto iter = std::find_if(m_spExeExProp->ExeExtensions.begin(), m_spExeExProp->ExeExtensions.end(),
+				auto iter = std::find_if(m_spExeExProp->ExeExtensions->cbegin(), m_spExeExProp->ExeExtensions->cend(),
 					[idCmd](const auto& exeex)->bool {
 					return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, std::get<ExeExtension>(exeex).Name) == idCmd;
 				});
-				if (iter != m_spExeExProp->ExeExtensions.end()) {
+				if (iter != m_spExeExProp->ExeExtensions->cend()) {
 					auto spDlg = std::make_shared<CExeExtensionDlg>(
 						this,
 						GetDialogPropPtr(),
@@ -412,11 +409,11 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 
 					if (spNewData) {
 						//Replace
-						if (::GetAsyncKeyState(VK_SHIFT) && spOtherTab->GetItemsSource()[spOtherTab->GetSelectedIndex()]->AcceptClosing(this, false)) {
-							spOtherTab->GetItemsSource().replace(spOtherTab->GetItemsSource().begin() + spOtherTab->GetSelectedIndex(), spNewData);
+						if (::GetAsyncKeyState(VK_SHIFT) && spOtherTab->ItemsSource.get_unconst()->at(*spOtherTab->SelectedIndex)->AcceptClosing(this, false)) {
+							spOtherTab->ItemsSource.replace(spOtherTab->ItemsSource.get_unconst()->begin() + *spOtherTab->SelectedIndex, spNewData);
 						//Push back	
 						} else {
-							spOtherTab->GetItemsSource().push_back(spNewData);
+							spOtherTab->ItemsSource.push_back(spNewData);
 						}
 						*(e.HandledPtr) = TRUE;
 					}
@@ -539,7 +536,7 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::Ge
 		rcClient.left, rcClient.top + launcherHeight,
 		rcClient.left + favoriteWidth, rcClient.bottom - statusHeight);
 
-	if (m_splitterLeft.get() == 0) {//Initial = No serialize
+	if (*SplitterLeft == 0) {//Initial = No serialize
 
 		if (rcClient.Width() >= 800) {
 			FLOAT viewWidth = (rcClient.Width() - 2 * favoriteWidth - m_spSplitterProp->Width) / 2;
@@ -560,31 +557,31 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::Ge
 				rcClient.top  + launcherHeight,
 				rcClient.right,
 				rcClient.bottom - statusHeight);
-			m_splitterLeft.set(favoriteWidth + viewWidth);
+			SplitterLeft.set(favoriteWidth + viewWidth);
 		} else {
 			rcLeftGrid.SetRect(
 				rcClient.left + favoriteWidth,
 				rcClient.top  + launcherHeight,
 				rcClient.right,
 				rcClient.bottom - statusHeight);
-			m_splitterLeft.set(rcClient.right);
+			SplitterLeft.set(rcClient.right);
 		}
 	} else {
-		if (rcClient.Width() >= m_splitterLeft.get() + m_spSplitterProp->Width) {
+		if (rcClient.Width() >= *SplitterLeft + m_spSplitterProp->Width) {
 			rcLeftGrid.SetRect(
 				rcClient.left + favoriteWidth,
 				rcClient.top  + launcherHeight,
-				m_splitterLeft.get(),
+				*SplitterLeft,
 				rcClient.bottom - statusHeight);
 
 			rcRightFavorites.SetRect(
-				m_splitterLeft.get() + m_spSplitterProp->Width,
+				*SplitterLeft + m_spSplitterProp->Width,
 				rcClient.top + launcherHeight,
-				m_splitterLeft.get() + m_spSplitterProp->Width + favoriteWidth,
+				*SplitterLeft + m_spSplitterProp->Width + favoriteWidth,
 				rcClient.bottom - statusHeight);
 
 			rcRightGrid.SetRect(
-				m_splitterLeft.get() + m_spSplitterProp->Width + favoriteWidth,
+				*SplitterLeft + m_spSplitterProp->Width + favoriteWidth,
 				rcClient.top + launcherHeight,
 				rcClient.right,// - (m_splitterLeft + kSplitterWidth + favoriteWidth), 
 				rcClient.bottom - statusHeight);
@@ -599,7 +596,7 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::Ge
 
 	rcLeftGrid.DeflateRect(2.f);
 	rcRightGrid.DeflateRect(2.f);
-	rcSplitter.SetRect(m_splitterLeft.get(), rcClient.top + launcherHeight, m_splitterLeft.get() + m_spSplitterProp->Width, rcClient.bottom);
+	rcSplitter.SetRect(*SplitterLeft, rcClient.top + launcherHeight, *SplitterLeft + m_spSplitterProp->Width, rcClient.bottom);
 
 	return {
 		rcLauncher,
@@ -705,7 +702,7 @@ void CFilerWnd::OnCommandTextOption(const CommandEvent& e)
 void CFilerWnd::OnCommandLauncherOption(const CommandEvent& e)
 {
 	m_spLauncherProp = CFilerApplication::GetInstance()->DeserializeLauncher();
-	m_spLauncher->SetItemsSource(m_spLauncherProp->GetLaunchers());
+	m_spLauncher->ItemsSource = m_spLauncherProp->Launchers;
 
 	m_spLauncher->Reload();
 	InvalidateRect(NULL, FALSE);
@@ -715,8 +712,8 @@ void CFilerWnd::OnCommandLauncherOption(const CommandEvent& e)
 void CFilerWnd::OnCommandFavoritesOption(const CommandEvent& e)
 {
 	m_spFavoritesProp = CFilerApplication::GetInstance()->DeserializeFavoirtes();
-	m_spLeftFavoritesView->SetItemsSource(m_spFavoritesProp->GetFavorites());
-	m_spRightFavoritesView->SetItemsSource(m_spFavoritesProp->GetFavorites());
+	m_spLeftFavoritesView->ItemsSource = m_spFavoritesProp->Favorites;
+	m_spRightFavoritesView->ItemsSource = m_spFavoritesProp->Favorites;
 
 	m_spLeftFavoritesView->Reload();
 	m_spRightFavoritesView->Reload();

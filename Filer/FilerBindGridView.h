@@ -23,9 +23,9 @@
 #define WM_UAHMEASUREMENUITEM 0x0094
 
 template<typename... TItems>
-class CFilerBindGridView :public CBindGridView<CBindRow<TItems...>, CBindColumn<TItems...>, TItems...>
+class CFilerBindGridView :public CBindGridView2<CBindRow<TItems...>, CBindColumn<TItems...>, TItems...>
 {
-	using base = CBindGridView<CBindRow<TItems...>, CBindColumn<TItems...>, TItems...>;
+	using base = CBindGridView2<CBindRow<TItems...>, CBindColumn<TItems...>, TItems...>;
 protected:
 	//HeaderMenuItems
 	std::vector<std::shared_ptr<CShowHideColumnMenuItem>> m_headerMenuItems;
@@ -35,9 +35,8 @@ public:
 	CFilerBindGridView(
 		CD2DWControl* pParentControl = nullptr,
 		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp = nullptr,
-		const std::shared_ptr<ReactiveVectorProperty<std::tuple<TItems...>>> spItemsSource = nullptr,
 		TArgs... args)
-		:base(pParentControl, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), spItemsSource, args...)
+		:base(pParentControl, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), args...)
 	{
 		this->m_spItemDragger = std::make_shared<CFileDragger>();
 
