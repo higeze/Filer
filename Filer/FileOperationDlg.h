@@ -46,6 +46,7 @@ private:
 protected:
 	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
 
+	std::shared_ptr<int> Dummy;
 	std::shared_ptr<CButton> m_spButtonDo;
 	std::shared_ptr<CButton> m_spButtonCancel;
 
@@ -73,11 +74,11 @@ public:
 		:CD2DWDialog(pParentControl, spDialogProp),
 		m_spButtonDo(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
 		m_spButtonCancel(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
-		m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs)
+		m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs), Dummy(std::make_shared<int>(0))
 	{
 		m_spButtonCancel->Command.subscribe([this]()->void{
 			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-		}, shared_from_this());
+		}, Dummy);
 
 		m_spButtonCancel->Content.set(L"Cancel");
 	}

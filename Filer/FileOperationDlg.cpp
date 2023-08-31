@@ -70,7 +70,7 @@ CCopyDlg::CCopyDlg(
 	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		Copy();
-	}, shared_from_this());
+	}, Dummy);
 
 	m_spButtonDo->Content.set(L"Copy");
 }
@@ -143,7 +143,7 @@ CMoveDlg::CMoveDlg(
 	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		Move();
-	}, shared_from_this());
+	}, Dummy);
 
 	m_spButtonDo->Content.set(L"Move");
 }
@@ -242,7 +242,7 @@ CDeleteDlg::CDeleteDlg(
 	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		Delete();
-	}, shared_from_this());
+	}, Dummy);
 
 	m_spButtonDo->Content.set(L"Delete");
 
@@ -303,13 +303,13 @@ CExeExtensionDlg::CExeExtensionDlg(
 	m_spTextParam->Text.subscribe([this](auto notify)
 	{
 		m_exeExtension.Parameter = notify.all_items;
-	}, shared_from_this());
+	}, Dummy);
 
 	m_spTextPath->Text.set(m_exeExtension.Path);
 	m_spTextPath->Text.subscribe([this](auto notify)
 	{
 		m_exeExtension.Path = notify.all_items;
-	}, shared_from_this());
+	}, Dummy);
 
 	Title.set(L"Exe");
 	//Items Source
@@ -340,7 +340,7 @@ CExeExtensionDlg::CExeExtensionDlg(
 	m_spButtonDo->Command.subscribe([this]()->void
 	{
 		Execute();
-	}, shared_from_this());
+	}, Dummy);
 
 	m_spButtonDo->Content.set(L"Exe");
 
@@ -576,7 +576,7 @@ CPDFSplitDlg::CPDFSplitDlg(
 			doc.SplitSave();
 		}
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	}, shared_from_this());
+	}, Dummy);
 }
 
 /****************/
@@ -611,7 +611,7 @@ CPDFMergeDlg::CPDFMergeDlg(
 		doc.SaveWithVersion(*m_spParameter->Text, 0,  minVersion);
 		
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	}, shared_from_this());
+	}, Dummy);
 }
 
 /******************/
@@ -645,7 +645,7 @@ CPDFExtractDlg::CPDFExtractDlg(
 		}
 
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	}, shared_from_this());
+	}, Dummy);
 }
 
 /*************************/
@@ -675,5 +675,5 @@ CPDFUnlockDlg::CPDFUnlockDlg(
 		}
 
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	}, shared_from_this());
+	}, Dummy);
 }
