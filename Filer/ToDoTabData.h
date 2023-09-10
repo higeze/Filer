@@ -21,11 +21,7 @@ public:
 	ToDoTabData(const std::wstring& path = std::wstring())
 		:TabData(),
 		Dummy(std::make_shared<int>(0)),
-		OpenCommand(),SaveCommand()
-	{
-		OpenCommand.subscribe([this](const std::wstring& path) { Doc.Open(path); }, Dummy);
-		SaveCommand.subscribe([this](const std::wstring& path) { Doc.Save(path); }, Dummy);
-	};
+		OpenCommand(),SaveCommand() {};
 
 	virtual ~ToDoTabData() = default;
 

@@ -9,6 +9,7 @@
 #include <boost/sml.hpp>
 #include "reactive_property.h"
 #include "reactive_vector.h"
+#include "JsonSerializer.h"
 
 
 
@@ -19,6 +20,8 @@ struct GridViewProperty;
 class CShellFolder;
 class CEditor;
 class CD2DWWindow;
+
+class CTabTemplate;
 
 struct TabControlProperty;
 struct TabHeaderControlProperty;
@@ -148,13 +151,17 @@ protected:
 	index_vector<std::shared_ptr<CTabHeaderControl>> m_headers;
 	std::shared_ptr<CAddTabHeaderControl> m_addHeader;
 
+	std::unordered_map<std::string, std::shared_ptr<CTabTemplate>> m_templates;
+
 	std::unordered_map<std::string, std::function<std::wstring(const std::shared_ptr<TabData>&)>> m_itemsHeaderTemplate;
 	std::unordered_map<std::string, std::function<void(const std::shared_ptr<TabData>&, const CRectF&)>> m_itemsHeaderIconTemplate;
 	std::unordered_map<std::string, std::function<std::shared_ptr<CD2DWControl>(const std::shared_ptr<TabData>&)>> m_itemsControlTemplate;
+	std::unordered_map<std::string, std::function<void(const std::shared_ptr<TabData>&, const std::shared_ptr<TabData>&)>> m_itemsBindingTemplate;
 	std::shared_ptr<CD2DWControl> m_spCurControl;
 	std::optional<size_t> m_contextIndex;
 public:
 	reactive_property_ptr<int> SelectedIndex;
+	int m_prevSelectedIndex = -1;
 	reactive_vector_ptr<std::shared_ptr<TabData>> ItemsSource;
 
 public:
@@ -248,17 +255,9 @@ private:
 
 public:
 
-	friend void to_json(json& j, const CTabControl& o)
-	{
-		j = json{
-			{"ItemsSource", o.ItemsSource},
-			{"SelectedIndex", o.SelectedIndex }
-		};
-	}
-	friend void from_json(const json& j, CTabControl& o)
-	{
-		j.at("ItemsSource").get_to(o.ItemsSource);
-		j.at("SelectedIndex").get_to(o.SelectedIndex);
-	}
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
+		CTabControl,
+		ItemsSource,
+		SelectedIndex);
 };
 

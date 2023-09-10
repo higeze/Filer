@@ -64,6 +64,8 @@ protected:
 	std::wstring m_wstrExt;
 	std::wstring m_wstrType;
 
+	std::wstring m_wstrIconKey;
+
 	std::pair<FileTimes, FileTimeStatus> m_fileTimes = std::make_pair(FileTimes(), FileTimeStatus::None);
 
 	std::pair<ULARGE_INTEGER, FileSizeStatus> m_size = std::make_pair(ULARGE_INTEGER(), FileSizeStatus::None);

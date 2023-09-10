@@ -1,5 +1,6 @@
 #pragma once
 #include "D2DWControl.h"
+#include "TextDoc.h"
 #include "reactive_property.h"
 #include "reactive_string.h"
 #include "reactive_command.h"
@@ -24,8 +25,10 @@ public:
 
 	virtual ~CEditor() {}
 
-	reactive_wstring_ptr Path;
+	reactive_wstring_ptr Path;	
 	reactive_property_ptr<encoding_type> Encoding;
+	reactive_property_ptr<FileStatus> Status;
+
 	reactive_command_ptr<HWND> SaveCommand;
 	reactive_command_ptr<HWND> OpenCommand;
 	reactive_command_ptr<HWND> SaveAsCommand;

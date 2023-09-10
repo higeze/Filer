@@ -875,9 +875,6 @@
     <ClInclude Include="ToDoDoc.h">
       <Filter>Filer\ToDo</Filter>
     </ClInclude>
-    <ClInclude Include="FileStatus.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\reactive_property.h">
       <Filter>HiLib\Reactive</Filter>
     </ClInclude>
@@ -941,6 +938,18 @@
     </ClInclude>
     <ClInclude Include="PreviewTabData.h">
       <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\TextDoc.h">
+      <Filter>D2DTextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\FileStatus.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="TabTemplate.h">
+      <Filter>Filer\FilerTab</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\scoped_connections.h">
+      <Filter>HiLib\Reactive</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1388,6 +1397,9 @@
     </ClCompile>
     <ClCompile Include="ToDoTabData.cpp">
       <Filter>Filer\FilerTab</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\TextDoc.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

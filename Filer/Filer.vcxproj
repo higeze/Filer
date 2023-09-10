@@ -315,6 +315,7 @@
     <ClInclude Include="..\HiLib\D2DFileIconDrawer.h" />
     <ClInclude Include="..\HiLib\D2DImage.h" />
     <ClInclude Include="..\HiLib\Date.h" />
+    <ClInclude Include="..\HiLib\FileStatus.h" />
     <ClInclude Include="..\HiLib\FPDFFormHandle.h" />
     <ClInclude Include="..\HiLib\notify_container_changed.h" />
     <ClInclude Include="..\HiLib\PDFBitmapDrawer.h" />
@@ -414,6 +415,7 @@
     <ClInclude Include="..\HiLib\reactive_property.h" />
     <ClInclude Include="..\HiLib\reactive_string.h" />
     <ClInclude Include="..\HiLib\reactive_vector.h" />
+    <ClInclude Include="..\HiLib\scoped_connections.h" />
     <ClInclude Include="..\HiLib\ScrollProperty.h" />
     <ClInclude Include="..\HiLib\shared_lock_property.h" />
     <ClInclude Include="..\HiLib\SortCell.h" />
@@ -480,17 +482,18 @@
     <ClInclude Include="..\HiLib\DialogProperty.h" />
     <ClInclude Include="..\HiLib\PDFEditor.h" />
     <ClInclude Include="..\HiLib\YearMonthDay.h" />
+    <ClInclude Include="..\HiLib\TextDoc.h" />
     <ClInclude Include="CheckableFileGrid.h" />
     <ClInclude Include="FilerTabData.h" />
     <ClInclude Include="ImageTabData.h" />
     <ClInclude Include="PDFTabData.h" />
     <ClInclude Include="PreviewTabData.h" />
+    <ClInclude Include="TabTemplate.h" />
     <ClInclude Include="TaskCheckBoxColumn.h" />
     <ClInclude Include="DriveSizeCell.h" />
     <ClInclude Include="ExeExtensionProperty.h" />
     <ClInclude Include="FilerApplication.h" />
     <ClInclude Include="FilerWndStatusBar.h" />
-    <ClInclude Include="FileStatus.h" />
     <ClInclude Include="IImageColumn.h" />
     <ClInclude Include="Launcher.h" />
     <ClInclude Include="LauncherItemDragger.h" />
@@ -651,6 +654,7 @@
     <ClCompile Include="..\HiLib\TextCaret.cpp" />
     <ClCompile Include="..\HiLib\TextCell.cpp" />
     <ClCompile Include="..\HiLib\Editor.cpp" />
+    <ClCompile Include="..\HiLib\TextDoc.cpp" />
     <ClCompile Include="..\HiLib\TextEnDecoder.cpp" />
     <ClCompile Include="..\HiLib\ThreadPool.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp" />

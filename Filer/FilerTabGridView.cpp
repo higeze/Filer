@@ -204,7 +204,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderTemplate.emplace(typeid(TextTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
 		{
 			if (auto p = std::dynamic_pointer_cast<TextTabData>(pTabData)) {
-				return std::wstring(*p->Status == FileStatus::Dirty?L"*":L"") + ::PathFindFileName(p->Path->c_str());
+				return std::wstring(*p->Doc->Status == FileStatus::Dirty?L"*":L"") + ::PathFindFileName(p->Doc->Path->c_str());
 			} else {
 				return L"nullptr";
 			}
@@ -277,7 +277,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderIconTemplate.emplace(typeid(TextTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
 			if (auto p = std::dynamic_pointer_cast<TextTabData>(pTabData)) {
-				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(*p->Path);
+				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(*p->Doc->Path);
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
 			} else {
 				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
@@ -314,6 +314,9 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		});
 
 	//ItemsTemplate
+	auto disconnect = [](sigslot::connection& con) { return con.disconnect(); };
+	auto disconnect2 = [](std::pair<sigslot::connection, sigslot::connection>& paircon) { return paircon.first.disconnect() && paircon.second.disconnect(); };
+
 	m_itemsControlTemplate.emplace(typeid(FilerTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto pData = std::static_pointer_cast<FilerTabData>(pTabData);
 		auto &spView = GetFilerGridViewPtr();
@@ -325,14 +328,17 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		return spView;
 	});
 
-	m_itemsControlTemplate.emplace(typeid(ToDoTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
+	m_itemsControlTemplate.emplace(typeid(ToDoTabData).name(), [this, disconnect, disconnect2](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto spViewModel = std::static_pointer_cast<ToDoTabData>(pTabData);
 		auto spView = GetToDoGridViewPtr();
 
-		spViewModel->OpenCommand.binding(spView->OpenCommand);
-		spViewModel->SaveCommand.binding(spView->SaveCommand);
-		spViewModel->Doc.Path.binding(spView->Path);
-		spViewModel->Doc.Tasks.binding(spView->ItemsSource);
+		m_todoConnections.clear();
+
+		m_todoConnections.push_back(
+			spViewModel->OpenCommand.binding(spView->OpenCommand),
+			spViewModel->SaveCommand.binding(spView->SaveCommand),
+			spViewModel->Doc.Path.binding(spView->Path),
+			spViewModel->Doc.Tasks.binding(spView->ItemsSource));
 
 		spView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
 		spView->PostUpdate(Updates::All);
@@ -341,52 +347,55 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		return spView;
 	});
 
-	m_itemsControlTemplate.emplace(typeid(TextTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
+	m_itemsControlTemplate.emplace(typeid(TextTabData).name(), [this, disconnect, disconnect2](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto spViewModel = std::static_pointer_cast<TextTabData>(pTabData);
 		auto spView = GetTextViewPtr();
 
-		//Path
-		spViewModel->Path.binding(spView->Path);
-		spView->Path.subscribe([this](auto)
-		{
-			UpdateHeaderRects();
-		}, shared_from_this());
-		//Status
-		spViewModel->Status.subscribe([this](const auto&) { UpdateHeaderRects(); }, shared_from_this());
-		//Text
-		spViewModel->Text.binding(spView->GetTextBoxPtr()->Text);
-		//Encoding
-		spViewModel->Encoding.binding(spView->Encoding);		
-		//Carets
-		spViewModel->Caret.get_unconst()->Old.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->Old);
-		spViewModel->Caret.get_unconst()->Current.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->Current);
-		spViewModel->Caret.get_unconst()->Anchor.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->Anchor);
-		spViewModel->Caret.get_unconst()->SelectedBegin.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->SelectedBegin);
-		spViewModel->Caret.get_unconst()->SelectedEnd.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->SelectedEnd);
-		spViewModel->Caret.get_unconst()->Point.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->Point);
-		//Command
-		spViewModel->OpenCommand.binding(spView->OpenCommand);
-		spViewModel->OpenAsCommand.binding(spView->OpenAsCommand);
-		spViewModel->SaveCommand.binding(spView->SaveCommand);
-		spViewModel->SaveAsCommand.binding(spView->SaveAsCommand);
+		m_textConnections.clear();
+
+		m_textConnections.push_back(
+			//Doc
+			spViewModel->Doc.get_unconst()->Path.binding(spView->Path),
+			spViewModel->Doc.get_unconst()->Encoding.binding(spView->Encoding),
+			spViewModel->Doc.get_unconst()->Status.binding(spView->Status),
+			spViewModel->Doc.get_unconst()->Text.binding(spView->GetTextBoxPtr()->Text),
+			//Subscribe
+			spViewModel->Doc.get_unconst()->Path.subscribe([this](const auto&) { UpdateHeaderRects(); }, shared_from_this()),
+			spViewModel->Doc.get_unconst()->Status.subscribe([this](const auto&) { UpdateHeaderRects(); }, shared_from_this()),
+			//Command
+			spViewModel->OpenCommand.binding(spView->OpenCommand),
+			spViewModel->OpenAsCommand.binding(spView->OpenAsCommand),
+			spViewModel->SaveCommand.binding(spView->SaveCommand),
+			spViewModel->SaveAsCommand.binding(spView->SaveAsCommand));
+		//In functio argument, order is not defined. Therefore it is necessary to make sure calling caret last.
+		m_textConnections.push_back(
+			//Carets
+			spViewModel->Caret.get_unconst()->Old.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->Old),
+			spViewModel->Caret.get_unconst()->Current.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->Current),
+			spViewModel->Caret.get_unconst()->Anchor.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->Anchor),
+			spViewModel->Caret.get_unconst()->SelectedBegin.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->SelectedBegin),
+			spViewModel->Caret.get_unconst()->SelectedEnd.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->SelectedEnd),
+			spViewModel->Caret.get_unconst()->Point.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->Point));
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
-		if (*spViewModel->Status == FileStatus::None) {
-			spViewModel->Open(*spViewModel->Path, *spViewModel->Encoding);
+		if (*spViewModel->Doc->Status == FileStatus::None) {
+			spViewModel->Doc.get_unconst()->Open(*spViewModel->Doc->Path, *spViewModel->Doc->Encoding);
 		}
 
 		return spView;
 	});
 
-	m_itemsControlTemplate.emplace(typeid(PdfTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
+	m_itemsControlTemplate.emplace(typeid(PdfTabData).name(), [this, disconnect, disconnect2](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto spViewModel = std::static_pointer_cast<PdfTabData>(pTabData);
 		auto spView = GetPdfViewPtr();
 
+		m_pdfConnections.clear();
+
 		//Scale
-		spViewModel->Scale.binding(spView->GetPDFViewPtr()->Scale);
-		//Scroll
-		spViewModel->VScroll.binding(spView->GetPDFViewPtr()->GetVScrollPtr()->Position);
-		spViewModel->HScroll.binding(spView->GetPDFViewPtr()->GetHScrollPtr()->Position);
+		m_pdfConnections.push_back(
+			spViewModel->Scale.binding(spView->GetPDFViewPtr()->Scale),
+			spViewModel->VScroll.binding(spView->GetPDFViewPtr()->GetVScrollPtr()->Position),
+			spViewModel->HScroll.binding(spView->GetPDFViewPtr()->GetHScrollPtr()->Position));
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
 		spView->GetPDFViewPtr()->Reset(spViewModel->Doc);
@@ -394,18 +403,19 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		return spView;
 	});
 
-	m_itemsControlTemplate.emplace(typeid(ImageTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
+	m_itemsControlTemplate.emplace(typeid(ImageTabData).name(), [this, disconnect, disconnect2](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto spViewModel = std::static_pointer_cast<ImageTabData>(pTabData);
 		auto spView = GetImageViewPtr();
 
+		m_imageConnections.clear();
+
 		//Path
-		spViewModel->Image.binding(spView->GetImageViewPtr()->Image);
-		spView->GetImageViewPtr()->Image.subscribe([this](auto) { UpdateHeaderRects(); }, shared_from_this());
-		//Scale
-		spViewModel->Scale.binding(spView->GetImageViewPtr()->Scale);
-		//Scroll
-		spViewModel->VScroll.binding(spView->GetImageViewPtr()->GetVScrollPtr()->Position);
-		spViewModel->HScroll.binding(spView->GetImageViewPtr()->GetHScrollPtr()->Position);
+		m_imageConnections.push_back(
+			spViewModel->Image.binding(spView->GetImageViewPtr()->Image),
+			spView->GetImageViewPtr()->Image.subscribe([this](auto) { UpdateHeaderRects(); }, shared_from_this()),
+			spViewModel->Scale.binding(spView->GetImageViewPtr()->Scale),
+			spViewModel->VScroll.binding(spView->GetImageViewPtr()->GetVScrollPtr()->Position),
+			spViewModel->HScroll.binding(spView->GetImageViewPtr()->GetHScrollPtr()->Position));
 
 		spView->GetImageViewPtr()->Open(spViewModel->Image->GetPath());
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
@@ -413,12 +423,14 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		return spView;
 	});
 
-	m_itemsControlTemplate.emplace(typeid(PreviewTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
+	m_itemsControlTemplate.emplace(typeid(PreviewTabData).name(), [this, disconnect, disconnect2](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
 		auto spViewModel = std::static_pointer_cast<PreviewTabData>(pTabData);
 		auto spView = GetPreviewControlPtr();
 
+		m_prevConnections.clear();
+
 		//Path
-		spViewModel->Path.binding(spView->Path);
+		m_prevConnections.push_back(spViewModel->Path.binding(spView->Path));
 		spView->Path.subscribe([this](auto) { UpdateHeaderRects(); }, shared_from_this());
 
 		spView->Open(*spViewModel->Path);

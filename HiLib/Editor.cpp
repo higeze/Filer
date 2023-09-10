@@ -20,7 +20,7 @@ CEditor::CEditor(
 	m_spFilterBox(std::make_shared<CTextBox>(this, spProp->EditorTextBoxPropPtr, L"")),
 	m_spTextBox(std::make_shared<CEditorTextBox>(this, spProp->EditorTextBoxPropPtr, L"")),
 	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr)),
-	Path(), Encoding(encoding_type::UNKNOWN)
+	Path(), Encoding(encoding_type::UNKNOWN), Status(FileStatus::None)
 {
 	m_spFilterBox->SetIsScrollable(false);
 
@@ -51,6 +51,7 @@ void CEditor::OnCreate(const CreateEvt& e)
 
 	OpenCommand.subscribe([this](HWND hWnd)
 	{
+		m_spTextBox->Caret.set(CTextCaret());
 		m_spTextBox->UpdateAll();
 	}, shared_from_this());
 

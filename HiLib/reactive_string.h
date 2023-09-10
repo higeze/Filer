@@ -423,10 +423,15 @@ public:
 		return this->m_preactive->replace(pos, n1, s, n2);
 	}
 
-	std::pair<sigslot::connection, sigslot::connection> binding(reactive_basic_string_ptr& dst)
+	void unbinding(reactive_basic_string_ptr& dst)
 	{
 		dst.disconnect(&reactive_container_type::observe_string, this->m_preactive);
 		this->disconnect(&reactive_container_type::observe_string, dst.m_preactive);
+	}
+
+	std::pair<sigslot::connection, sigslot::connection> binding(reactive_basic_string_ptr& dst)
+	{
+		unbinding(dst);
 
 		dst.set(this->operator*());
 

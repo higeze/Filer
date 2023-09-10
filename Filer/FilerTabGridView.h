@@ -17,6 +17,7 @@
 
 #include "reactive_property.h"
 #include "reactive_command.h"
+#include "scoped_connections.h"
 
 #include "FilerTabData.h"
 #include "TextTabData.h"
@@ -64,6 +65,11 @@ public:
 		const std::shared_ptr<PreviewControlProperty>& spPreviewControlProp = nullptr);
 	virtual ~CFilerTabGridView();
 
+	scoped_connections m_textConnections;
+	scoped_connections m_pdfConnections;
+	scoped_connections m_imageConnections;
+	scoped_connections m_todoConnections;
+	scoped_connections m_prevConnections;
 	/****************/
 	/* Pure Virtual */
 	/****************/

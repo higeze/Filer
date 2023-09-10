@@ -258,11 +258,15 @@ public:
 		this->m_preactive->m_subject.on_next(value);
 	}
 
-	std::pair<sigslot::connection, sigslot::connection> binding(reactive_property_ptr<T>& dst)
+	void unbinding(reactive_property_ptr<T>& dst)
 	{
-
 		dst.disconnect(&reactive_property<T>::observe_property, this->m_preactive);
 		this->disconnect(&reactive_property<T>::observe_property, dst.m_preactive);
+	}
+
+	std::pair<sigslot::connection, sigslot::connection> binding(reactive_property_ptr<T>& dst)
+	{
+		unbinding(dst);
 
 		dst.set(this->operator*());
 
@@ -272,10 +276,16 @@ public:
 	}
 
 	template <class U, class Traits, class Allocator>
-	std::pair<sigslot::connection, sigslot::connection> binding(reactive_basic_string_ptr<U, Traits, Allocator>& dst)
+	void unbinding(reactive_basic_string_ptr<U, Traits, Allocator>& dst)
 	{
 		dst.disconnect(&reactive_property<T>::template observe_string<U, Traits, Allocator>, this->m_preactive);
 		this->disconnect(&reactive_basic_string<U, Traits, Allocator>::template observe_property<T>, dst.m_preactive);
+	}
+
+	template <class U, class Traits, class Allocator>
+	std::pair<sigslot::connection, sigslot::connection> binding(reactive_basic_string_ptr<U, Traits, Allocator>& dst)
+	{
+		unbinding(dst);
 
 		dst.set(boost::lexical_cast<std::basic_string<U, Traits, Allocator>>(this->m_preactive->m_value));
 
