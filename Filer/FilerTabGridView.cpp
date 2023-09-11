@@ -192,10 +192,10 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderTemplate.emplace(typeid(ToDoTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
 		{
 			if (auto p = std::dynamic_pointer_cast<ToDoTabData>(pTabData)) {
-				if (p->Doc.Path->empty()) {
+				if (p->Doc->Path->empty()) {
 					return L"No file";
 				} else {
-					return std::wstring(*p->Doc.Status == FileStatus::Dirty ? L"*" : L"") + ::PathFindFileName(p->Doc.Path->c_str());
+					return std::wstring(*p->Doc->Status == FileStatus::Dirty ? L"*" : L"") + ::PathFindFileName(p->Doc->Path->c_str());
 				}
 			} else {
 				return L"nullptr";
@@ -268,7 +268,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderIconTemplate.emplace(typeid(ToDoTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
 			if (auto p = std::dynamic_pointer_cast<ToDoTabData>(pTabData)) {
-				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(*p->Doc.Path);
+				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(*p->Doc->Path);
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
 			} else {
 				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
@@ -337,8 +337,8 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		m_todoConnections.push_back(
 			spViewModel->OpenCommand.binding(spView->OpenCommand),
 			spViewModel->SaveCommand.binding(spView->SaveCommand),
-			spViewModel->Doc.Path.binding(spView->Path),
-			spViewModel->Doc.Tasks.binding(spView->ItemsSource));
+			spViewModel->Doc.get_unconst()->Path.binding(spView->Path),
+			spViewModel->Doc.get_unconst()->Tasks.binding(spView->ItemsSource));
 
 		spView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
 		spView->PostUpdate(Updates::All);
