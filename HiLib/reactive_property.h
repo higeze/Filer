@@ -206,6 +206,11 @@ public:
 	reactive_property_ptr(reactive_property_ptr&&) noexcept = default;
 	reactive_property_ptr& operator=(reactive_property_ptr&&) noexcept = default;
 
+	const std::shared_ptr<reactive_property<T>> life() const
+	{
+		return m_preactive;
+	}
+
 	const T& operator*() const noexcept
 	{
 		return m_preactive->m_value;

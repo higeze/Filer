@@ -10,10 +10,10 @@ CTextDoc::CTextDoc(const std::wstring& path, const encoding_type& encoding)
 	//Caret(0, 0, 0, 0, 0),
 	Dummy(std::make_shared<int>(0))
 {
-	Text.subscribe([this](auto)
+	Text.subscribe([sta = Status](auto) mutable
 	{
-		Status.set(FileStatus::Dirty);
-	}, Dummy);
+		sta.set(FileStatus::Dirty);
+	}, Status.life());
 }
 
 void CTextDoc::Open(const std::wstring& path, const encoding_type& encode)

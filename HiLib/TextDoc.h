@@ -18,6 +18,10 @@ public:
 
 	CTextDoc(const std::wstring& path = std::wstring(), const encoding_type& encoding = encoding_type::UNKNOWN);
 	~CTextDoc() = default;
+	//CTextDoc(const CTextDoc&) = delete;
+	//CTextDoc& operator=(const CTextDoc&) = delete;
+	//CTextDoc(CTextDoc&&) noexcept = default;
+	//CTextDoc& operator=(CTextDoc&&) noexcept = default;
 	//auto operator<=>(const CToDoDoc&) const = default;
 	bool operator == (const CTextDoc & doc) const
 	{

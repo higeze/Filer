@@ -21,7 +21,7 @@ struct TextTabData :public TabData
 	reactive_command_ptr<HWND> SaveAsCommand;
 
 	TextTabData(const std::wstring& path = std::wstring())
-		:TabData(), Doc(path)
+		:TabData(), Dummy(std::make_shared<int>(0)), Doc(path)
 	{
 		OpenCommand.subscribe([this](HWND hWnd) { Open(hWnd); }, Dummy);
 		SaveCommand.subscribe([this](HWND hWnd) { Save(hWnd); }, Dummy);
@@ -47,6 +47,7 @@ struct TextTabData :public TabData
 	friend void from_json(const json& j, TextTabData& o)
 	{
 		from_json(j, static_cast<TabData&>(o));
-		j.at("Doc").get_to(o.Doc);
+		CTextDoc doc;
+		o.Doc.set(j.at("Doc").get_to(doc));
 	}
 };
