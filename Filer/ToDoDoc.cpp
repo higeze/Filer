@@ -7,42 +7,41 @@ CToDoDoc::CToDoDoc()
 	Path(),
 	Tasks()
 {
-	auto reactive_task_subscription = [this](MainTask& src)->std::vector<sigslot::connection> {
-		auto dirty = [this](auto) { Status.set(FileStatus::Dirty); };
-		std::vector<sigslot::connection> subs;
-		subs.push_back(src.State.subscribe(dirty, Dummy));
-		subs.push_back(src.Name.subscribe(dirty, Dummy));
-		subs.push_back(src.Memo.subscribe(dirty, Dummy));
-		subs.push_back(src.YearMonthDay.subscribe(dirty, Dummy));
-		return subs;
-	};
+	Tasks.subscribe([status = Status](auto notify) mutable {
 
-	Tasks.subscribe([this, reactive_task_subscription](auto notify) {
+		auto reactive_task_subscription = [status](std::tuple<MainTask>& src) mutable {
+			auto dirty = [status](auto) mutable { status.set(FileStatus::Dirty); };
+			std::vector<sigslot::connection> subs;
+			subs.push_back(std::get<MainTask>(src).State.subscribe(dirty, status.life()));
+			subs.push_back(std::get<MainTask>(src).Name.subscribe(dirty, status.life()));
+			subs.push_back(std::get<MainTask>(src).Memo.subscribe(dirty, status.life()));
+			subs.push_back(std::get<MainTask>(src).YearMonthDay.subscribe(dirty, status.life()));
+			return subs;
+		};
+
 		switch (notify.action) {
 			case notify_container_changed_action::push_back:
 			case notify_container_changed_action::insert:
 			{
-				Status.set(FileStatus::Dirty);
-				reactive_task_subscription(std::get<MainTask>(Tasks.get_unconst()->at(notify.new_starting_index)));
+				status.set(FileStatus::Dirty);
+				std::ranges::for_each(notify.new_items, reactive_task_subscription);
 				break;
 			}
 			case notify_container_changed_action::Move:
 				THROW_FILE_LINE_FUNC;
 				break;
 			case notify_container_changed_action::erase:
-				Status.set(FileStatus::Dirty);
+				status.set(FileStatus::Dirty);
 				break;
 			case notify_container_changed_action::replace:
 				THROW_FILE_LINE_FUNC;
 				break;
 			case notify_container_changed_action::reset:
-				Status.set(FileStatus::Dirty);
-				for (size_t i = 0; i < notify.new_items.size(); i++) {
-					reactive_task_subscription(std::get<MainTask>(Tasks.get_unconst()->at(i)));
-				}
+				status.set(FileStatus::Dirty);
+				std::ranges::for_each(notify.new_items, reactive_task_subscription);
 				break;
 		}
-	}, Dummy);
+	}, Status.life());
 }
 
 void CToDoDoc::Open(const std::wstring& path)

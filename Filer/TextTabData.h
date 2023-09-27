@@ -47,7 +47,6 @@ struct TextTabData :public TabData
 	friend void from_json(const json& j, TextTabData& o)
 	{
 		from_json(j, static_cast<TabData&>(o));
-		CTextDoc doc;
-		o.Doc.set(j.at("Doc").get_to(doc));
+		get_to(j, "Doc", o.Doc);
 	}
 };

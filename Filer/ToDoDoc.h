@@ -2,6 +2,7 @@
 #include "Task.h"
 #include "FileStatus.h"
 
+#include "JsonSerializer.h"
 #include "reactive_property.h"
 #include "reactive_vector.h"
 
@@ -24,4 +25,13 @@ public:
 	void Open(const std::wstring& path);
 	void Save(const std::wstring& path);
 
+	friend void to_json(json& j, const CToDoDoc& o)
+	{
+		j["Path"] = o.Path;
+	}
+	friend void from_json(const json& j, CToDoDoc& o)
+	{
+		get_to(j, "Path", o.Path);
+		o.Open(*o.Path);
+	}
 };

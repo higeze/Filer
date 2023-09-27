@@ -951,6 +951,9 @@
     <ClInclude Include="..\HiLib\scoped_connections.h">
       <Filter>HiLib\Reactive</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\TSFManager.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1400,6 +1403,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\TextDoc.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\TSFManager.cpp">
+      <Filter>HiLib\TextBox</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

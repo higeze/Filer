@@ -8,6 +8,11 @@ public: virtual const type& Get##name() const;
 protected: mutable std::optional<type> m_opt##name; \
 public: virtual const type& Get##name(const arg1type&) const
 
+#define DECLARE_LAZY_COMPTR_GETTER(type, name) \
+protected: mutable CComPtr<type> m_p##name; \
+public: virtual const CComPtr<type>& Get##name##Ptr() const;
+
+
 
 #define LAZY_GETTER(type, val) \
 protected: std::optional<type> m_opt##val; \

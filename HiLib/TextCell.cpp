@@ -82,6 +82,13 @@ void CTextCell::OnKeyDown(const KeyDownEvent& e)
 	case VK_F2:
 		OnEdit(e);
 		break;
+	case VK_PROCESSKEY:
+		if (m_editMode == EditMode::ExcelLike) {
+			OnEdit(e);
+			m_pSheet->GetGridPtr()->GetEditPtr()->OnKeyDown(e);
+		}
+	default:
+		break;
 	}
 	CCell::OnKeyDown(e);
 }
@@ -89,10 +96,8 @@ void CTextCell::OnKeyDown(const KeyDownEvent& e)
 void CTextCell::OnChar(const CharEvent& e)
 {
 	if (m_editMode == EditMode::ExcelLike) {
-		if ((UINT)(L' ') < e.Char && e.Char < 256) {
-			OnEdit(e);
-			m_pSheet->GetGridPtr()->GetEditPtr()->OnChar(e);
-		}
+		OnEdit(e);
+		m_pSheet->GetGridPtr()->GetEditPtr()->OnChar(e);
 	}
 	CCell::OnChar(e);
 }

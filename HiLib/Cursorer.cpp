@@ -263,10 +263,12 @@ void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 	case VK_DOWN:
 		arrow = e.Char;
 		moveCursor(arrow, ctrl, shift);
+		*e.HandledPtr = TRUE;
 		break;
 	case VK_ESCAPE:
 		OnCursorClear(pSheet);
 		break;
+		*e.HandledPtr = TRUE;
 	default:
 		*e.HandledPtr = FALSE;
 	}

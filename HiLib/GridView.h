@@ -22,6 +22,12 @@ class CCellTextBox;
 
 struct GridViewStateMachine;
 
+enum class GridViewMode
+{
+	None,
+	ExcelLike,
+};
+
 class CGridView: public CSheet
 {
 public:
@@ -35,6 +41,7 @@ protected:
 	CRectF m_rcUpdateRect;
 	bool m_isUpdating = false;
 	bool m_isEditExiting = false;
+	GridViewMode m_gridViewMode = GridViewMode::None;
 	std::vector<std::pair<size_t, size_t>> m_frozenTabStops = { std::make_pair(0, 1), std::make_pair(2, 1), std::make_pair(3, 1)};
 	//std::vector<std::pair<size_t, size_t>> m_tabStops = { std::make_pair(3, 1) };
 

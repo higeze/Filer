@@ -38,7 +38,7 @@ public:
 	}
 	friend void from_json(const json& j, CTextDoc& o)
 	{
-		j.at("Path").get_to(o.Path);
+		get_to(j, "Path", o.Path);
 		o.Open(*o.Path);
 	}
 };

@@ -465,6 +465,7 @@
     <ClInclude Include="..\HiLib\Timer.h" />
     <ClInclude Include="..\HiLib\Tracker.h" />
     <ClInclude Include="..\HiLib\D2DWControl.h" />
+    <ClInclude Include="..\HiLib\TSFManager.h" />
     <ClInclude Include="..\HiLib\UIElement.h" />
     <ClInclude Include="..\HiLib\UnDoReDoManager.h" />
     <ClInclude Include="..\HiLib\FPDF.h" />
@@ -661,6 +662,7 @@
     <ClCompile Include="..\HiLib\ThreadSafeKnownFolderManagaer.cpp" />
     <ClCompile Include="..\HiLib\Timer.cpp" />
     <ClCompile Include="..\HiLib\D2DWControl.cpp" />
+    <ClCompile Include="..\HiLib\TSFManager.cpp" />
     <ClCompile Include="..\HiLib\UIElement.cpp" />
     <ClCompile Include="..\HiLib\UnDoReDoManager.cpp" />
     <ClCompile Include="..\HiLib\FPDF.cpp" />

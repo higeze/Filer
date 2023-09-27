@@ -25,6 +25,7 @@ public:
 		:CBindGridView2<CTaskRow, CBindColumn<MainTask>, MainTask>(pParentControl, spGridViewProp, args...),
 		Path()
 	{
+		m_gridViewMode = GridViewMode::ExcelLike;
 		Initialize();
 	}
 	void Initialize();

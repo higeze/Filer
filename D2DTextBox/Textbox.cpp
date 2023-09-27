@@ -924,7 +924,6 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 
 	default:
 		break;
-
 	}
 }
 

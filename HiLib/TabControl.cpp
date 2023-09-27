@@ -11,7 +11,7 @@ namespace sml = boost::sml;
 /***********/
 bool TabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
 {
-	if (!isWndClosing && !Unlock) {
+	if (!isWndClosing && !*Unlock) {
 		int ync = pWnd->MessageBox(
 		L"This tab is locked",
 		L"Locked",

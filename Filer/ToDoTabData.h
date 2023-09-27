@@ -33,12 +33,11 @@ public:
 	friend void to_json(json& j, const ToDoTabData& o)
 	{
 		to_json(j, static_cast<const TabData&>(o));
-		j["Path"] = o.Doc->Path;
+		j["Doc"] = o.Doc;
 	}
 	friend void from_json(const json& j, ToDoTabData& o)
 	{
 		from_json(j, static_cast<TabData&>(o));
-		j.at("Path").get_to(o.Doc.get_unconst()->Path);
-		o.Doc.get_unconst()->Open(*o.Doc->Path);
+		get_to(j, "Doc", o.Doc);
 	}
 };
