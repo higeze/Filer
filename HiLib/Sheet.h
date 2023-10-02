@@ -318,6 +318,7 @@ protected:
 	virtual void OnKillFocus(const KillFocusEvent& e);
 	virtual void OnKeyDown(const KeyDownEvent& e);
 	virtual void OnChar(const CharEvent& e);
+	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e);
 	virtual void OnBeginEdit(const BeginEditEvent& e);
 	virtual void OnEndEdit(const EndEditEvent& e);
 
@@ -363,6 +364,7 @@ public:
 	virtual void Normal_ContextMenu(const ContextMenuEvent& e);
 	virtual void Normal_KeyDown(const KeyDownEvent& e);
 	virtual void Normal_Char(const CharEvent& e);
+	virtual void Normal_ImeStartComposition(const ImeStartCompositionEvent& e);
 	virtual void Normal_SetFocus(const SetFocusEvent& e);
 	virtual void Normal_KillFocus(const KillFocusEvent& e);
 	//RowTrack

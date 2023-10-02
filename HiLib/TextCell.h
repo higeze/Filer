@@ -85,6 +85,7 @@ public:
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e);
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
 	virtual void OnChar(const CharEvent& e);
+	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e);
 
 	virtual bool CanSetStringOnEditing()const{return false;}
 };

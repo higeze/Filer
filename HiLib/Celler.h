@@ -20,6 +20,8 @@ public:
 	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) = 0;
 	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) = 0;
 	virtual void OnChar(CSheet* pSheet, const CharEvent& e) = 0;
+	virtual void OnImeStartComposition(CSheet* pSheet, const ImeStartCompositionEvent& e) = 0;
+
 
 	virtual void OnClear() = 0;
 	virtual void Clear() = 0;
@@ -44,6 +46,7 @@ public:
 	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) override;
 	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) override;
 	virtual void OnChar(CSheet* pSheet, const CharEvent& e) override;;
+	virtual void OnImeStartComposition(CSheet* pSheet, const ImeStartCompositionEvent& e) override;
 
 	virtual void OnClear() override;
 	virtual void Clear() override;

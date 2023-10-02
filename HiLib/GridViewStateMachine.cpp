@@ -48,6 +48,7 @@ struct CGridStateMachine::Machine
 			state<Normal> +event<SetCursorEvent>[call(&CGridView::Normal_Guard_SetCursor)] / call(&CGridView::Normal_SetCursor),
 			state<Normal> +event<KeyDownEvent> / call(&CGridView::Normal_KeyDown),
 			state<Normal> +event<CharEvent> / call(&CGridView::Normal_Char),
+			state<Normal> +event<ImeStartCompositionEvent> / call(&CGridView::Normal_ImeStartComposition),
 			state<Normal> +event<SetFocusEvent> / call(&CGridView::Normal_SetFocus),
 			state<Normal> +event<KillFocusEvent> / call(&CGridView::Normal_KillFocus),
 
@@ -153,6 +154,7 @@ void CGridStateMachine::process_event(const SetCursorEvent & e) { m_pMachine->pr
 void CGridStateMachine::process_event(const ContextMenuEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const KeyDownEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const CharEvent & e) { m_pMachine->process_event(e); }
+void CGridStateMachine::process_event(const ImeStartCompositionEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const BeginEditEvent & e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const EndEditEvent& e) { m_pMachine->process_event(e); }
 void CGridStateMachine::process_event(const SetFocusEvent & e) { m_pMachine->process_event(e); }

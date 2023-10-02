@@ -150,6 +150,7 @@ CD2DWWindow::CD2DWWindow()
 	AddMsgHandler(WM_KEYUP, &CD2DWWindow::UserInputMachine_Message<KeyUpEvent>, this);
 	AddMsgHandler(WM_SYSKEYDOWN, &CD2DWWindow::UserInputMachine_Message<SysKeyDownEvent>, this);
 	AddMsgHandler(WM_CHAR, &CD2DWWindow::UserInputMachine_Message<CharEvent>, this);
+	AddMsgHandler(WM_IME_STARTCOMPOSITION, &CD2DWWindow::UserInputMachine_Message<ImeStartCompositionEvent>, this);
 	AddMsgHandler(CDispatcher::WM_DISPATCHER, &CDispatcher::OnDispatcher, m_pDispatcher.get());
 }
 

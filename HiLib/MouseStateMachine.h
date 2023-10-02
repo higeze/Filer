@@ -26,6 +26,7 @@ public:
 	void process_event(const CharEvent& e);
 	void process_event(const KeyDownEvent& e);
 	void process_event(const KeyUpEvent& e);
+	void process_event(const ImeStartCompositionEvent& e);
 	void process_event(const CancelModeEvent& e);
 	void process_event(const CaptureChangedEvent& e);
 };

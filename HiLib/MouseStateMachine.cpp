@@ -73,6 +73,11 @@ struct CMouseStateMachine::Machine
 		pGrid->OnKeyUp(e);
 	}
 
+	void Normal_ImeStartComposition(CD2DWWindow* pGrid, const ImeStartCompositionEvent& e)
+	{
+		pGrid->OnImeStartComposition(e);
+	}
+
 	void LButtonDowned_OnEntry(CD2DWWindow* pGrid, const LButtonDownEvent& e)
 	{
 		::OutputDebugString(L"LButtonDowned_OnEntry\r\n");
@@ -183,6 +188,7 @@ struct CMouseStateMachine::Machine
 			state<Normal> +event<CharEvent> / call(&Machine::Normal_Char),
 			state<Normal> +event<KeyDownEvent> / call(&Machine::Normal_KeyDown),
 			state<Normal> +event<KeyUpEvent> / call(&Machine::Normal_KeyUp),
+			state<Normal> +event<ImeStartCompositionEvent> / call(&Machine::Normal_ImeStartComposition),
 			state<Normal> +event<ContextMenuEvent> / call(&Machine::Normal_ContextMenu),
 
 			state<LButtonDowned> +on_entry<LButtonDownEvent> / call(&Machine::LButtonDowned_OnEntry),
@@ -253,5 +259,6 @@ void CMouseStateMachine::process_event(const MouseWheelEvent& e) { m_pMachine->p
 void CMouseStateMachine::process_event(const CharEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const KeyDownEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const KeyUpEvent& e) { m_pMachine->process_event(e); }
+void CMouseStateMachine::process_event(const ImeStartCompositionEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const CancelModeEvent& e) { m_pMachine->process_event(e); }
 void CMouseStateMachine::process_event(const CaptureChangedEvent& e) { m_pMachine->process_event(e); }

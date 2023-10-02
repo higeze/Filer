@@ -31,6 +31,7 @@ public:
 	virtual void process_event(const KeyDownEvent& e) override;
 	virtual void process_event(const KeyUpEvent& e) override;
 	virtual void process_event(const CharEvent& e) override;
+	virtual void process_event(const ImeStartCompositionEvent& e) override {}
 	virtual void process_event(const BeginEditEvent& e) override {}
 	virtual void process_event(const EndEditEvent& e) override {}
 };

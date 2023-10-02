@@ -241,6 +241,12 @@ void CSheetCell::OnChar(const CharEvent& e)
 	CSheet::OnChar(e);
 }
 
+void CSheetCell::OnImeStartComposition(const ImeStartCompositionEvent& e)
+{
+	CCell::OnImeStartComposition(e);
+	CSheet::OnImeStartComposition(e);
+}
+
 void CSheetCell::OnWndSetFocus(const SetFocusEvent& e)
 {
 	CCell::OnWndSetFocus(e);

@@ -113,6 +113,14 @@ void CCeller::OnChar(CSheet* pSheet, const CharEvent& e)
 	}
 }
 
+void CCeller::OnImeStartComposition(CSheet* pSheet, const ImeStartCompositionEvent& e)
+{
+	auto cell = pSheet->GetCursorerPtr()->GetFocusedCell();
+	if (cell != nullptr) {
+		cell->OnImeStartComposition(e);
+	}
+}
+
 
 void CCeller::OnClear()
 {

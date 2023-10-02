@@ -890,6 +890,10 @@ void CSheet::Normal_Char(const CharEvent& e)
 {
 	m_spCeller->OnChar(this, e);
 }
+void CSheet::Normal_ImeStartComposition(const ImeStartCompositionEvent& e)
+{
+	m_spCeller->OnImeStartComposition(this, e);
+}
 
 void CSheet::Normal_SetFocus(const SetFocusEvent& e)
 {
@@ -1095,6 +1099,7 @@ void CSheet::OnKeyDown(const KeyDownEvent& e) { m_pMachine->process_event(e); Po
 void CSheet::OnSetFocus(const SetFocusEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnKillFocus(const KillFocusEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnChar(const CharEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
+void CSheet::OnImeStartComposition(const ImeStartCompositionEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnBeginEdit(const BeginEditEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnEndEdit(const EndEditEvent& e){ m_pMachine->process_event(e);  SubmitUpdate();}
 

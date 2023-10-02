@@ -191,7 +191,7 @@ void CD2DWControl::OnChar(const CharEvent& e)
 		SendFocused(&CD2DWControl::OnChar, e);
 	}
 }
-
+void CD2DWControl::OnImeStartComposition(const ImeStartCompositionEvent& e) { if (*IsEnabled) { SendFocused(&CD2DWControl::OnImeStartComposition, e); } }
 
 void CD2DWControl::OnCommand(const CommandEvent& e)
 {

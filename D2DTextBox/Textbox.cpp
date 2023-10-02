@@ -998,13 +998,9 @@ void CTextBox::Normal_Char(const CharEvent& e)
 	}
 
 	// normal character input. not TSF.
-	if (e.Char >= L' ') {
-		if (e.Char < 256) {
-			WCHAR wc[] = { static_cast<WCHAR>(e.Char), '\0' };
-			ReplaceSelection(wc);
-		}
-		else {
-		}
+	if (e.Char >= L' ' && e.Char < 256) {
+		WCHAR wc[] = { static_cast<WCHAR>(e.Char), '\0' };
+		ReplaceSelection(wc);
 	}
 }
 

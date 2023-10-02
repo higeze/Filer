@@ -82,11 +82,6 @@ void CTextCell::OnKeyDown(const KeyDownEvent& e)
 	case VK_F2:
 		OnEdit(e);
 		break;
-	case VK_PROCESSKEY:
-		if (m_editMode == EditMode::ExcelLike) {
-			OnEdit(e);
-			m_pSheet->GetGridPtr()->GetEditPtr()->OnKeyDown(e);
-		}
 	default:
 		break;
 	}
@@ -95,12 +90,22 @@ void CTextCell::OnKeyDown(const KeyDownEvent& e)
 
 void CTextCell::OnChar(const CharEvent& e)
 {
-	if (m_editMode == EditMode::ExcelLike) {
+	if (m_editMode == EditMode::ExcelLike && e.Char >= L' ' && e.Char < 256) {
 		OnEdit(e);
 		m_pSheet->GetGridPtr()->GetEditPtr()->OnChar(e);
 	}
 	CCell::OnChar(e);
 }
+
+void CTextCell::OnImeStartComposition(const ImeStartCompositionEvent& e)
+{
+	if (m_editMode == EditMode::ExcelLike) {
+		OnEdit(e);
+		DefWindowProc(e.WndPtr->m_hWnd, WM_IME_STARTCOMPOSITION, NULL, NULL);
+		*e.HandledPtr = FALSE;
+	}
+}
+
 //
 //std::wstring CTextCell::GetString()
 //{

@@ -75,6 +75,7 @@ public:
 	virtual void OnKeyUp(const KeyUpEvent& e) override;
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e)  override {}
 	virtual void OnChar(const CharEvent& e)  override;
+	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e)  override;
 	
 	virtual void OnContextMenu(const ContextMenuEvent& e) override;
 	virtual void OnSetFocus(const SetFocusEvent& e) override;

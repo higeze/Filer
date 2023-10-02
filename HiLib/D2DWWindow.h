@@ -70,6 +70,7 @@ public:
 	virtual LRESULT OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) override;
 	virtual LRESULT OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	virtual LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	//virtual LRESULT OnImeStartComposition(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	void OnFinalMessage(HWND hWnd) override {}
 
 	/***************/
@@ -94,7 +95,6 @@ public:
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) { SendMouseReverse(&CUIElement::OnLButtonDblClk, e); }
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { SendMouseReverse(&CUIElement::OnLButtonBeginDrag, e); }
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) { SendMouseReverse(&CUIElement::OnLButtonEndDrag, e); }
-
 	//virtual void OnRButtonDown(const RButtonDownEvent& e);
 
 	virtual void OnMButtonDown(const MButtonDownEvent& e) { SendMouseReverse(&CUIElement::OnMButtonDown, e); }
@@ -132,6 +132,7 @@ public:
 	}
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e) { SendFocused(&CUIElement::OnSysKeyDown, e); }
 	virtual void OnChar(const CharEvent& e) { SendFocused(&CUIElement::OnChar, e); }
+	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e) { SendFocused(&CUIElement::OnImeStartComposition, e); }
 
 	virtual void OnPropertyChanged(const wchar_t* name) {}
 };

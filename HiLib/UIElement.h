@@ -50,6 +50,12 @@ struct EndEditEvent :public Event
 		:Event() {}
 };
 
+struct ImeStartCompositionEvent : public Event
+{
+	ImeStartCompositionEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:Event(pWnd, pHandled){}
+};
+
 
 struct CreateEvt :public Event
 {
@@ -354,6 +360,8 @@ public:
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e){}
 	virtual void OnChar(const CharEvent& e) {}
 	virtual void OnContextMenu(const ContextMenuEvent& e){}
+	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e) {}
+
 	virtual void OnSetCursor(const SetCursorEvent& e) {}
 
 	virtual void OnSetFocus(const SetFocusEvent& e) {}
