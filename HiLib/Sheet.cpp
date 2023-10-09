@@ -886,6 +886,11 @@ void CSheet::Normal_KeyDown(const KeyDownEvent& e)
 	m_spCursorer->OnKeyDown(this, e);
 	m_spCeller->OnKeyDown(this, e);
 }
+void CSheet::Normal_KeyTraceDown(const KeyTraceDownEvent& e)
+{
+	m_spCeller->OnKeyTraceDown(this, e);
+}
+void CSheet::Normal_KeyTraceUp(const KeyTraceUpEvent& e){}
 void CSheet::Normal_Char(const CharEvent& e)
 {
 	m_spCeller->OnChar(this, e);
@@ -1096,6 +1101,7 @@ void CSheet::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e)
 void CSheet::OnSetCursor(const SetCursorEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnMouseLeave(const MouseLeaveEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnKeyDown(const KeyDownEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
+void CSheet::OnKeyTraceDown(const KeyTraceDownEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
 void CSheet::OnSetFocus(const SetFocusEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnKillFocus(const KillFocusEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnChar(const CharEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }

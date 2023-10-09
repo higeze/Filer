@@ -954,6 +954,15 @@
     <ClInclude Include="..\HiLib\TSFManager.h">
       <Filter>HiLib\TextBox</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\KeyTraceEventSink.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CalendarControl.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CalendarDialog.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1406,6 +1415,15 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\TSFManager.cpp">
       <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\KeyTraceEventSink.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CalendarControl.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CalendarDialog.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

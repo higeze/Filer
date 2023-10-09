@@ -18,6 +18,7 @@
 
 #include <nameof/nameof.hpp>
 #include "IDoCommand.h"
+#include "TSFManager.h"
 
 
 
@@ -28,198 +29,6 @@
 //HRESULT UninitDisplayAttrbute();
 
 
-
-/*****************/
-/* static member */
-/*****************/
-
-decltype(CTextBox::m_pThreadMgr) CTextBox::m_pThreadMgr = nullptr;
-#if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
-void CTextBox::LoadThreadMgrPtr()
-{
-	FAILED_THROW(::CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr2, (void**)&m_pThreadMgr));
-};
-#else
-void CTextBox::LoadThreadMgrPtr()
-{
-	FAILED_THROW(::CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr, (void**)&m_pThreadMgr));
-};
-#endif
-
-decltype(CTextBox::m_pKeystrokeMgr) CTextBox::m_pKeystrokeMgr = nullptr;
-void CTextBox::LoadKeystrokeMgrPtr()
-{
-	FAILED_THROW(GetThreadMgrPtr()->QueryInterface(IID_ITfKeystrokeMgr, (void**)&m_pKeystrokeMgr));
-};
-
-decltype(CTextBox::m_pDisplayAttributeMgr) CTextBox::m_pDisplayAttributeMgr = nullptr;
-void CTextBox::LoadDisplayAttributeMgrPtr()
-{
-	FAILED_THROW(::CoCreateInstance(
-		CLSID_TF_DisplayAttributeMgr,
-		NULL,
-		CLSCTX_INPROC_SERVER,
-		IID_ITfDisplayAttributeMgr,
-		(void**)&m_pDisplayAttributeMgr));
-};
-
-decltype(CTextBox::m_pCategoryMgr) CTextBox::m_pCategoryMgr = nullptr;
-void CTextBox::LoadCategoryMgrPtr()
-{
-	FAILED_THROW(::CoCreateInstance(
-		CLSID_TF_CategoryMgr,
-		NULL,
-		CLSCTX_INPROC_SERVER,
-		IID_ITfCategoryMgr,
-		(void**)&m_pCategoryMgr));
-};
-
-decltype(CTextBox::s_tfClientId) CTextBox::s_tfClientId = TF_CLIENTID_NULL;
-
-/*******************/
-/* static function */
-/*******************/
-void CTextBox::AppTSFInit()
-{
-	FAILED_THROW(GetThreadMgrPtr()->Activate(&s_tfClientId));
-	//FAILED_THROW(InitDisplayAttrbute());
-}
-void CTextBox::AppTSFExit()
-{
-	//UninitDisplayAttrbute();
-
-	if (GetThreadMgrPtr()) {
-		FAILED_THROW(GetThreadMgrPtr()->Deactivate());
-		ClearThreadMgrPtr();
-	}
-
-	if (GetKeystrokeMgrPtr()) {
-		ClearKeystrokeMgrPtr();
-	}
-}
-
-
-CDispAttrProps* CTextBox::GetDispAttrProps()
-{
-    CComPtr<IEnumGUID> pEnumProp;
-    CDispAttrProps *pProps = NULL;
-	FAILED_THROW(GetCategoryMgrPtr()->EnumItemsInCategory(GUID_TFCAT_DISPLAYATTRIBUTEPROPERTY, &pEnumProp));
-
-    // Make a database for Display Attribute Properties.
-    GUID guidProp;
-    pProps = new CDispAttrProps;
-
-    // Add System Display Attribute first.
-    // So no other Display Attribute property overwrite it.
-    pProps->Add(GUID_PROP_ATTRIBUTE);
-	// SUCCEEDED:>=0
-	// FAILED:<0
-	// S_OK:0
-	// S_FALSE:1
-    while(pEnumProp->Next(1, &guidProp, NULL) == S_OK)
-    {
-		if (!::IsEqualGUID(guidProp, GUID_PROP_ATTRIBUTE)) {
-			pProps->Add(guidProp);
-		}
-    }
-
-	return pProps;
-}
-
-HRESULT CTextBox::GetDisplayAttributeTrackPropertyRange(TfEditCookie ec, ITfContext *pic, ITfRange *pRange, ITfReadOnlyProperty **ppProp, CDispAttrProps *pDispAttrProps)
-{
-    ITfReadOnlyProperty *pProp = NULL;
-    GUID  *pguidProp = NULL;
-    const GUID **ppguidProp;
-    ULONG ulNumProp = 0;
-    ULONG i;
- 
-    pguidProp = pDispAttrProps->GetPropTable();
-
-    ulNumProp = pDispAttrProps->Count();
-
-    // TrackProperties wants an array of GUID *'s
-    //if ((ppguidProp = (const GUID **)LocalAlloc(LMEM_ZEROINIT, sizeof(GUID *)*ulNumProp)) == NULL)
-	if ((ppguidProp = (const GUID **)new byte[sizeof(GUID* )*ulNumProp]) == NULL)
-        return E_OUTOFMEMORY;
-
-    for (i=0; i<ulNumProp; i++)
-    {
-        ppguidProp[i] = pguidProp++;
-    }
-    
-    if (SUCCEEDED(pic->TrackProperties(ppguidProp, ulNumProp, 0, NULL, &pProp))){
-        *ppProp = pProp;
-    }
-
-	delete [] (byte*)ppguidProp;
-    //LocalFree(ppguidProp);
-	return S_OK;
-}
-
-//+---------------------------------------------------------------------------
-//
-//  GetDisplayAttributeData
-//
-//----------------------------------------------------------------------------
-
-HRESULT CTextBox::GetDisplayAttributeData(TfEditCookie ec, ITfReadOnlyProperty *pProp, ITfRange *pRange, TF_DISPLAYATTRIBUTE *pda, TfGuidAtom *pguid)
-{
-    VARIANT var;
-    IEnumTfPropertyValue *pEnumPropertyVal;
-    TF_PROPERTYVAL tfPropVal;
-    GUID guid;
-    TfGuidAtom gaVal;
-    ITfDisplayAttributeInfo *pDAI;
-
-    HRESULT hr = E_FAIL;
-
-    hr = S_FALSE;
-    if (SUCCEEDED(pProp->GetValue(ec, pRange, &var)))
-    {
-        if (SUCCEEDED(var.punkVal->QueryInterface(IID_IEnumTfPropertyValue, 
-                                                  (void **)&pEnumPropertyVal)))
-        {
-            while (pEnumPropertyVal->Next(1, &tfPropVal, NULL) == S_OK)
-            {
-                if (tfPropVal.varValue.vt == VT_EMPTY)
-                    continue; // prop has no value over this span
-
-                gaVal = (TfGuidAtom)tfPropVal.varValue.lVal;
-
-                GetCategoryMgrPtr()->GetGUID(gaVal, &guid);
-
-                if (SUCCEEDED(GetDisplayAttributeMgrPtr()->GetDisplayAttributeInfo(guid, &pDAI, NULL)))
-                {
-                    //
-                    // Issue: for simple apps.
-                    // 
-                    // Small apps can not show multi underline. So
-                    // this helper function returns only one 
-                    // DISPLAYATTRIBUTE structure.
-                    //
-                    if (pda)
-                    {
-                        pDAI->GetAttributeInfo(pda);
-                    }
-
-                    if (pguid)
-                    {
-                        *pguid = gaVal;
-                    }
-
-                    pDAI->Release();
-                    hr = S_OK;
-                    break;
-                }
-            }
-            pEnumPropertyVal->Release();
-        }
-        VariantClear(&var);
-    }
-
-    return hr;
-}
 
 
 /***************/
@@ -253,62 +62,60 @@ CTextBox::CTextBox(
 		std::make_unique<CVScroll>(this, pProp->VScrollPropPtr),
 		std::make_unique<CHScroll>(this, pProp->HScrollPropPtr),
 		pProp,
-		text){}
+		text)
+{}
 /**************/
 /* destructor */
 /**************/
-CTextBox::~CTextBox(){}
+CTextBox::~CTextBox()
+{}
 
 void CTextBox::InitTSF()
 {
-
 	FAILED_THROW(GetDocumentMgrPtr()->Push(GetContextPtr()));
-
-
-#if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
-	FAILED_THROW(GetThreadMgrPtr()->SetFocus(GetDocumentMgrPtr()));
-#else
-	CComPtr<ITfDocumentMgr> pDocumentMgrPrev = NULL;
-	FAILED_THROW(GetThreadMgrPtr()->AssociateFocus(GetWndPtr()->m_hWnd, GetDocumentMgr(), &pDocumentMgrPrev));
-#endif
-
 	FAILED_THROW(GetTextEditSinkPtr()->_Advise(GetContextPtr()));
 }
-
 void CTextBox::UninitTSF()
 {
-	if (GetTextEditSinkPtr()) {
-		FAILED_THROW(GetTextEditSinkPtr()->_Unadvise());
-	}
-
-	if (GetDocumentMgrPtr()) {
-		FAILED_THROW(GetDocumentMgrPtr()->Pop(TF_POPF_ALL));
-	}
+	FAILED_THROW(GetDocumentMgrPtr()->Pop(TF_POPF_ALL));
+	FAILED_THROW(GetTextEditSinkPtr()->_Unadvise());
 }
 
 /***************/
 /* Lazy Getter */
 /***************/
 
-void CTextBox::LoadTextStorePtr()
+const CComPtr<ITfDocumentMgr>& CTextBox::GetDocumentMgrPtr() const
 {
-	m_pTextStore.Attach(new CTextStore(this));
-};
+	if (!m_pDocumentMgr) {
+		FAILED_THROW(CTSFManager::GetInstance()->GetThreadMgrPtr()->CreateDocumentMgr(&m_pDocumentMgr))
+	}
+	return m_pDocumentMgr;
+}
 
-void CTextBox::LoadDocumentMgrPtr()
+const CComPtr<ITfContext>& CTextBox::GetContextPtr() const
 {
-	FAILED_THROW(GetThreadMgrPtr()->CreateDocumentMgr(&m_pDocumentMgr))
-};
+	if (!m_pContext) {
+		FAILED_THROW(GetDocumentMgrPtr()->CreateContext(CTSFManager::GetInstance()->GetID(), 0, static_cast<ITextStoreACP*>(GetTextStorePtr().p), &m_pContext, &m_editCookie));
+	}
+	return m_pContext;
+}
 
-void CTextBox::LoadContextPtr()
+const CComPtr<CTextStore>& CTextBox::GetTextStorePtr() const
 {
-	FAILED_THROW(GetDocumentMgrPtr()->CreateContext(s_tfClientId, 0, static_cast<ITextStoreACP*>(GetTextStorePtr().p), &m_pContext, &m_editCookie));
-};
+	if (!m_pTextStore) {
+		m_pTextStore.Attach(new CTextStore(const_cast<CTextBox*>(this)));
+	}
+	return m_pTextStore;
+}
 
-void CTextBox::LoadTextEditSinkPtr()
+const CComPtr<CTextEditSink>& CTextBox::GetTextEditSinkPtr() const
 {
-	m_pTextEditSink.Attach(new CTextEditSink(this));
-};
+	if (!m_pTextEditSink) {
+		m_pTextEditSink.Attach(new CTextEditSink(const_cast<CTextBox*>(this)));
+	}
+	return m_pTextEditSink;
+}
 
 void CTextBox::LoadTextLayoutPtr()
 {
@@ -578,8 +385,6 @@ void CTextBox::OnCreate(const CreateEvt& e)
 	CD2DWControl::OnCreate(e);
 
 	Caret.get_unconst()->Point.set(CPointF(0, GetLineHeight() * 0.5f));
-
-	FAILED_THROW(GetThreadMgrPtr()->SetFocus(GetDocumentMgrPtr()));
 	 
 	Text.subscribe([this](auto e)
 	{
@@ -697,7 +502,7 @@ void CTextBox::Normal_Paint(const PaintEvent& e)
 
 void CTextBox::Normal_SetFocus(const SetFocusEvent& e)
 {
-	FAILED_THROW(GetThreadMgrPtr()->SetFocus(GetDocumentMgrPtr()));
+	FAILED_THROW(CTSFManager::GetInstance()->GetThreadMgrPtr()->SetFocus(GetDocumentMgrPtr()));
 	m_isFirstDrawCaret = true;
 }
 

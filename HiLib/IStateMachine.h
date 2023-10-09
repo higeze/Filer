@@ -21,6 +21,8 @@ public:
 	virtual void process_event(const KillFocusEvent& e) = 0;
 	virtual void process_event(const KeyDownEvent& e) = 0;
 	virtual void process_event(const KeyUpEvent& e) = 0;
+	virtual void process_event(const KeyTraceDownEvent& e) = 0;
+	virtual void process_event(const KeyTraceUpEvent& e) = 0;
 	virtual void process_event(const CharEvent& e) = 0;
 	virtual void process_event(const ImeStartCompositionEvent& e) = 0;
 	virtual void process_event(const BeginEditEvent& e) = 0;

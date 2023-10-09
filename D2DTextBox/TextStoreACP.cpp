@@ -3,88 +3,25 @@
 #include <tsattrs.h>
 #include "Textbox.h"
 #include "D2DWWindow.h"
+#include "TSFManager.h"
 #include "TextStoreACP.h"
 #include "TextEditSink.h"
 #include "GridView.h"
 
 #define Round(x)	((LONG)(x+0.5f))
 
-CTextStore::CTextStore(CTextBox *pEditor):_pEditor(pEditor)
+CTextStore::CTextStore(CTextBox* pTextBox):_pEditor(pTextBox)
 {
-	_cRef = 1;
 	TextStoreACPSink_ = NULL;
 	_nAttrVals = NULL;
 
 	m_fLocked =FALSE;
 	m_dwLockType = 0;
 	m_fPendingLockUpgrade = FALSE;
-
-
 }
-#pragma region IUnknown
-//+---------------------------------------------------------------------------
-//
-// IUnknown
-//
-//----------------------------------------------------------------------------
-
-STDAPI CTextStore::QueryInterface(REFIID riid, void **ppvObj)
-{
-    *ppvObj = NULL;
-
-    if (IsEqualIID(riid, IID_IUnknown) ||
-        IsEqualIID(riid, IID_ITextStoreACP))
-    {
-        *ppvObj = (ITextStoreACP *)this;
-    }
-    else if (IsEqualIID(riid, IID_ITfContextOwnerCompositionSink))
-    {
-        *ppvObj = (ITfContextOwnerCompositionSink *)this;
-    }
-    else if (IsEqualIID(riid, IID_ITfMouseTrackerACP))
-    {
-        *ppvObj = (ITfMouseTrackerACP *)this;
-    }
-
-    if (*ppvObj)
-    {
-        AddRef();
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
-}
-
-STDAPI_(ULONG) CTextStore::AddRef()
-{
-    return ++_cRef;
-}
-
-STDAPI_(ULONG) CTextStore::Release()
-{
-    long cr;
-
-    cr = --_cRef;
-
-    if (cr == 0)
-    {
-        delete this;
-    }
-
-    return cr;
-}
-#pragma endregion
-
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
 
 STDAPI CTextStore::AdviseSink(REFIID riid, IUnknown *punk, DWORD dwMask)
 {
-
     if (!IsEqualGUID(riid, IID_ITextStoreACPSink))
     {
         return TS_E_NOOBJECT;
@@ -98,12 +35,6 @@ STDAPI CTextStore::AdviseSink(REFIID riid, IUnknown *punk, DWORD dwMask)
     return S_OK;
 }
 
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
 STDAPI CTextStore::UnadviseSink(IUnknown *punk)
 {
     // we're dealing with TSF. We don't have to check punk is same instance of TextStoreACPSink_.
@@ -112,12 +43,6 @@ STDAPI CTextStore::UnadviseSink(IUnknown *punk)
 
     return S_OK;
 }
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
 
 STDAPI CTextStore::RequestLock(DWORD dwLockFlags, HRESULT *phrSession)
 {
@@ -128,11 +53,7 @@ STDAPI CTextStore::RequestLock(DWORD dwLockFlags, HRESULT *phrSession)
 	if(NULL == phrSession)
     {
         return E_INVALIDARG;
-    }
-
-	//if ( _pEditor->m_text.empty() )
-	//	return S_OK;
-		
+    }	
 
 	if(m_fLocked)
     {
@@ -222,7 +143,7 @@ BOOL CTextStore::_IsLocked(DWORD dwLockType)
    //     return TRUE;
   //  }
 
-    return m_fLocked && (m_dwLockType & dwLockType); 
+    return m_fLocked && (m_dwLockType & dwLockType);
 }
 
 //----------------------------------------------------------------------------
@@ -460,7 +381,6 @@ STDAPI CTextStore::GetEndACP(LONG *pacp)
         return E_INVALIDARG;
     }
 
-	
 	*pacp = _pEditor->Text->size();
     return S_OK;
 }

@@ -73,6 +73,8 @@ public:
 
 	virtual void OnKeyDown(const KeyDownEvent& e)  override;
 	virtual void OnKeyUp(const KeyUpEvent& e) override;
+	virtual void OnKeyTraceDown(const KeyTraceDownEvent& e)  override;
+	virtual void OnKeyTraceUp(const KeyTraceUpEvent& e) override;
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e)  override {}
 	virtual void OnChar(const CharEvent& e)  override;
 	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e)  override;

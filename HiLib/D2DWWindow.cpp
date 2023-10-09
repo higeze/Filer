@@ -9,6 +9,7 @@
 #include "MouseStateMachine.h"
 #include "Dispatcher.h"
 #include "DropTargetManager.h"
+#include "TSFManager.h"
 
 LRESULT CALLBACK CD2DWWindow::StaticHostWndSubProc(
 	HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
@@ -146,12 +147,32 @@ CD2DWWindow::CD2DWWindow()
 	AddMsgHandler(WM_MOUSEWHEEL, &CD2DWWindow::UserInputMachine_Message<MouseWheelEvent>, this);
 	AddMsgHandler(WM_CANCELMODE, &CD2DWWindow::UserInputMachine_Message<CancelModeEvent>, this);
 	AddMsgHandler(WM_CAPTURECHANGED, &CD2DWWindow::UserInputMachine_Message<CaptureChangedEvent>, this);
-	AddMsgHandler(WM_KEYDOWN, &CD2DWWindow::UserInputMachine_Message<KeyDownEvent>, this);
-	AddMsgHandler(WM_KEYUP, &CD2DWWindow::UserInputMachine_Message<KeyUpEvent>, this);
+
 	AddMsgHandler(WM_SYSKEYDOWN, &CD2DWWindow::UserInputMachine_Message<SysKeyDownEvent>, this);
 	AddMsgHandler(WM_CHAR, &CD2DWWindow::UserInputMachine_Message<CharEvent>, this);
-	AddMsgHandler(WM_IME_STARTCOMPOSITION, &CD2DWWindow::UserInputMachine_Message<ImeStartCompositionEvent>, this);
+	AddMsgHandler(CTSFManager::WM_TSF_STARTCOMPOSITION, &CD2DWWindow::UserInputMachine_Message<ImeStartCompositionEvent>, this);
 	AddMsgHandler(CDispatcher::WM_DISPATCHER, &CDispatcher::OnDispatcher, m_pDispatcher.get());
+	AddMsgHandler(WM_KEYDOWN, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
+		//BOOL fEaten;
+		//if (!(CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->TestKeyDown(wParam, lParam, &fEaten) == S_OK && fEaten &&
+		//	CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->KeyDown(wParam, lParam, &fEaten) == S_OK && fEaten)) {
+			m_pMouseMachine->process_event(KeyDownEvent(this, wParam, lParam, &bHandled));
+			InvalidateRect(NULL, FALSE);
+		//}
+		return 0;
+	});
+	AddMsgHandler(WM_KEYUP, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {	
+		//BOOL fEaten;
+		//if (!(CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->TestKeyUp(wParam, lParam, &fEaten) == S_OK && fEaten &&
+		//	CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->KeyUp(wParam, lParam, &fEaten) == S_OK && fEaten)) {
+			m_pMouseMachine->process_event(KeyUpEvent(this, wParam, lParam, &bHandled));
+			InvalidateRect(NULL, FALSE);
+		//}
+		return 0;
+	});
+	AddMsgHandler(CKeyTraceEventSink::WM_KEYTRACEDOWN, &CD2DWWindow::UserInputMachine_Message<KeyTraceDownEvent>, this);
+	AddMsgHandler(CKeyTraceEventSink::WM_KEYTRACEUP, &CD2DWWindow::UserInputMachine_Message<KeyTraceUpEvent>, this);
+
 }
 
 CD2DWWindow::~CD2DWWindow() = default;

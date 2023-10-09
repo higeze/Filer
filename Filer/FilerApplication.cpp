@@ -3,6 +3,7 @@
 #include "EditorProperty.h"
 #include "JsonSerializer.h"
 #include "PDFDoc.h"
+#include "TSFManager.h"
 
 std::string CFilerApplication::GetJsonPath()
 {
@@ -174,16 +175,16 @@ void CFilerApplication::Init()
 	m_pOleinit = std::make_unique<COleInitializer>();
 
 	//TSF
-	CTextBox::AppTSFInit();
-
-	//PDFium
-	CPDFDoc::Init();
+	CTSFManager::GetInstance()->Init();
 
 	//Deserialize
 	Deserialize();
 
-	//Window
+	//Create
 	m_pWnd->Create(NULL);
+	CTSFManager::GetInstance()->GetKeyTraceEventSinkPtr()->SetHwnd(m_pWnd->m_hWnd);
+
+	//Show & Update
 	m_pWnd->ShowWindow(SW_SHOW);
 	m_pWnd->UpdateWindow();
 
@@ -192,6 +193,39 @@ void CFilerApplication::Init()
 
 	//Open(m_pWnd->m_hWnd, LR"(C:\Users\kuuna\Downloads\VersyPDF (1).pdf)");
 }
+
+//int CFilerApplication::Run()
+//{
+//	BOOL fResult;
+//	//BOOL fEaten;
+//	MSG msg;
+//        BOOL focus;
+//
+//	while (SUCCEEDED(CTSFManager::GetInstance()->GetMessagePumpPtr()->GetMessageW(&msg, NULL, 0, 0, &fResult))) {
+//        //CTSFManager::GetInstance()->GetThreadMgrPtr()->IsThreadFocus(&focus);
+//        //OutputDebugStringA(focus ? "" : "~");
+//		if (fResult == 0 || fResult == -1) {
+//			break;
+//		} else /*if (msg.message == WM_KEYDOWN) {
+//			if (CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->TestKeyDown(msg.wParam, msg.lParam, &fEaten) == S_OK && fEaten &&
+//				CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->KeyDown(msg.wParam, msg.lParam, &fEaten) == S_OK && fEaten) {
+//				continue;
+//			}
+//
+//        } else if (msg.message == WM_KEYUP){
+//			if (CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->TestKeyUp(msg.wParam, msg.lParam, &fEaten) == S_OK && fEaten &&
+//				CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->KeyUp(msg.wParam, msg.lParam, &fEaten) == S_OK && fEaten) {
+//				continue;
+//			}
+//		}*/
+//			
+//		if ((m_hDlgModeless == (HWND)NULL || !IsDialogMessage(m_hDlgModeless, &msg))) {
+//			TranslateMessage(&msg);
+//			DispatchMessage(&msg);
+//		}
+//	}
+//	return msg.wParam;
+//}
 
 void CFilerApplication::Term()
 {
@@ -206,7 +240,7 @@ void CFilerApplication::Term()
 	m_pWnd.reset();
 
 	//TSF
-	CTextBox::AppTSFExit();
+	CTSFManager::GetInstance()->Term();
 
 	//PDFium to be called after Window destructed
 	CPDFDoc::Term();

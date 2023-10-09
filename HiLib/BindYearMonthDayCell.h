@@ -7,6 +7,10 @@
 #include "BindYearMonthDayColumn.h"
 #include "YearMonthDay.h"
 #include "reactive_property.h"
+#include "CalendarDialog.h"
+#include "CalendarControl.h"
+#include "DialogProperty.h"
+#include "TextBoxProperty.h"
 
 template<typename... TItems>
 class CBindYearMonthDayCell :public CTextCell
@@ -52,6 +56,20 @@ public:
 	}
 
 	virtual bool CanSetStringOnEditing()const override{return false;}
+
+	virtual void OnLButtonDown(const LButtonDownEvent& e) override
+	{
+		auto spDlg = std::make_shared<CCalendarDialog>(
+			m_pSheet->GetWndPtr(),
+			std::make_shared<DialogProperty>(),
+			std::make_shared<CalendarControlProperty>(),
+			std::make_shared<TextBoxProperty>());
+
+		spDlg->Measure(CSizeF(300, 200));
+		spDlg->OnCreate(CreateEvt(m_pSheet->GetWndPtr(), m_pSheet->GetWndPtr(), CRectF(e.PointInWnd, spDlg->DesiredSize())));
+		spDlg->Arrange(CRectF(e.PointInWnd, spDlg->DesiredSize()));
+		m_pSheet->GetWndPtr()->SetFocusedControlPtr(spDlg);
+	}
 
 	virtual void OnContextMenu(const ContextMenuEvent& e) override
 	{

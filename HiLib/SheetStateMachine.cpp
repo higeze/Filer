@@ -40,6 +40,7 @@ struct CSheetStateMachine::Machine
 			state<Normal> +event<ContextMenuEvent> / call(&CSheet::Normal_ContextMenu),
 			state<Normal> +event<SetCursorEvent>[call(&CSheet::Normal_Guard_SetCursor)] / call(&CSheet::Normal_SetCursor),
 			state<Normal> +event<KeyDownEvent> / call(&CSheet::Normal_KeyDown),
+			state<Normal> +event<KeyTraceDownEvent> / call(&CSheet::Normal_KeyTraceDown),
 			state<Normal> +event<CharEvent> / call(&CSheet::Normal_Char),
 			state<Normal> +event<ImeStartCompositionEvent> / call(&CSheet::Normal_ImeStartComposition),
 			state<Normal> +event<SetFocusEvent> / call(&CSheet::Normal_SetFocus),
@@ -105,6 +106,7 @@ void CSheetStateMachine::process_event(const LButtonEndDragEvent& e) { m_pMachin
 void CSheetStateMachine::process_event(const SetCursorEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const ContextMenuEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const KeyDownEvent& e) { m_pMachine->process_event(e); }
+void CSheetStateMachine::process_event(const KeyTraceDownEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const CharEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const ImeStartCompositionEvent& e) { m_pMachine->process_event(e); }
 void CSheetStateMachine::process_event(const BeginEditEvent& e) { m_pMachine->process_event(e); }

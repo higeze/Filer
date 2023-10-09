@@ -39,5 +39,7 @@ void CCheckBoxCell::OnLButtonDown(const LButtonDownEvent& e)
 
 void CCheckBoxCell::OnChar(const CharEvent& e)
 {
-	m_checkBox.Toggle();
+	if (e.Char == VK_SPACE) {
+		m_checkBox.Toggle();
+	}
 }

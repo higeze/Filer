@@ -78,20 +78,25 @@ void CTextCell::OnLButtonSnglClk(const LButtonSnglClkEvent& e)
 
 void CTextCell::OnKeyDown(const KeyDownEvent& e)
 {
-	switch (e.Char) {
-	case VK_F2:
-		OnEdit(e);
-		break;
-	default:
-		break;
-	}
 	CCell::OnKeyDown(e);
+}
+
+void CTextCell::OnKeyTraceDown(const KeyTraceDownEvent& e)
+{
+	if (m_editMode == EditMode::ExcelLike &&
+		(!IsKeyDown(VK_SHIFT) && !IsKeyDown(VK_CONTROL) && !IsKeyDown(VK_MENU)) &&
+		(e.Char == VK_F2 ||
+		(e.Char >= '0' && e.Char <= '9') ||
+		(e.Char >='A' && e.Char <='Z'))) {
+		OnEdit(e);
+		*e.HandledPtr = FALSE;
+	}
+	CCell::OnKeyTraceDown(e);
 }
 
 void CTextCell::OnChar(const CharEvent& e)
 {
-	if (m_editMode == EditMode::ExcelLike && e.Char >= L' ' && e.Char < 256) {
-		OnEdit(e);
+	if(m_pSheet->GetGridPtr()->GetEditPtr()){
 		m_pSheet->GetGridPtr()->GetEditPtr()->OnChar(e);
 	}
 	CCell::OnChar(e);
@@ -101,7 +106,6 @@ void CTextCell::OnImeStartComposition(const ImeStartCompositionEvent& e)
 {
 	if (m_editMode == EditMode::ExcelLike) {
 		OnEdit(e);
-		DefWindowProc(e.WndPtr->m_hWnd, WM_IME_STARTCOMPOSITION, NULL, NULL);
 		*e.HandledPtr = FALSE;
 	}
 }

@@ -2,21 +2,12 @@
 
 class CTextBox;
 
-class CTextStore : public ITextStoreACP, public ITfContextOwnerCompositionSink
+class CTextStore : public CUnknown2<ITextStoreACP, ITfContextOwnerCompositionSink>
 {
-	public:
-		 CTextStore(CTextBox *pEditor);
+public:
+		CTextStore(CTextBox* pEditor);
 
-		//
-		// IUnknown methods
-		//
-		STDMETHODIMP QueryInterface(REFIID riid, void **ppvObj);
-		STDMETHODIMP_(ULONG) AddRef(void);
-		STDMETHODIMP_(ULONG) Release(void);
-
-		//
 		// ITextStoreACP
-		//
 		STDMETHODIMP    AdviseSink(REFIID riid, IUnknown *punk, DWORD dwMask);
 		STDMETHODIMP    UnadviseSink(IUnknown *punk);
 
@@ -39,7 +30,7 @@ class CTextStore : public ITextStoreACP, public ITfContextOwnerCompositionSink
 		STDMETHODIMP    InsertTextAtSelection(DWORD dwFlags, __in_ecount(cch) const WCHAR *pchText, ULONG cch, LONG *pacpStart,LONG *pacpEnd, TS_TEXTCHANGE *pChange);
 		STDMETHODIMP    InsertEmbeddedAtSelection(DWORD dwFlags, IDataObject *pDataObject, LONG *pacpStart,LONG *pacpEnd, TS_TEXTCHANGE *pChange);
 
-		// not implement
+		// Not implement
 		STDMETHODIMP    QueryInsertEmbedded(const GUID *pguidService, const FORMATETC *pFormatEtc, BOOL *pfInsertable){ return E_NOTIMPL; }
 		STDMETHODIMP    GetACPFromPoint(TsViewCookie vcView, const POINT *pt, DWORD dwFlags, LONG *pacp){ return E_NOTIMPL; }
 		STDMETHODIMP    RequestAttrsTransitioningAtPosition(LONG acpPos, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs, DWORD dwFlags){ return E_NOTIMPL; }
@@ -47,9 +38,7 @@ class CTextStore : public ITextStoreACP, public ITfContextOwnerCompositionSink
 		STDMETHODIMP    GetEmbedded(LONG acpPos, REFGUID rguidService, REFIID riid, IUnknown **ppunk){ return E_NOTIMPL; }
 		STDMETHODIMP    InsertEmbedded(DWORD dwFlags, LONG acpStart, LONG acpEnd, IDataObject *pDataObject, TS_TEXTCHANGE *pChange){ return E_NOTIMPL; }
 
-		//
 		// ITfContextOwnerCompositionSink
-		//
 		STDMETHODIMP OnStartComposition(ITfCompositionView *pComposition, BOOL *pfOk);
 		STDMETHODIMP OnUpdateComposition(ITfCompositionView *pComposition, ITfRange *pRangeNew);
 		STDMETHODIMP OnEndComposition(ITfCompositionView *pComposition);

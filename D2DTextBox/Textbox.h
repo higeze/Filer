@@ -8,10 +8,8 @@
 #include "Scroll.h"
 #include "TextboxStateMachine.h"
 #include "D2DWControl.h"
-#include "DisplayAttribute.h"
 #include "property.h"
 #include "encoding_type.h"
-#include "TextStoreACP.h"
 #include "TextEditSink.h"
 #include "getter_macro.h"
 
@@ -24,8 +22,6 @@
 
 
 struct TextBoxProperty;
-//class CTextStore;
-//class CTextEditSink;
 class IBridgeTSFInterface;
 class CGridView;
 
@@ -52,31 +48,10 @@ class CD2DWWindow;
 
 class CTextBox : public IBridgeTSFInterface, public CD2DWControl
 {
-	/**********/
-	/* Static */
-	/**********/
-public:
-	static void AppTSFInit();
-	static void AppTSFExit();
-
-	/*****************/
-	/* Static Getter */
-	/*****************/
-#if ( _WIN32_WINNT_WIN8 <= _WIN32_WINNT )
-	STATIC_LAZY_CCOMPTR_GETTER(ITfThreadMgr2, ThreadMgr)
-#else
-	STATIC_LAZY_CCOMPTR_GETTER(ITfThreadMgr, ThreadMgr)
-#endif
-	static TfClientId s_tfClientId;
-	STATIC_LAZY_CCOMPTR_GETTER(ITfKeystrokeMgr, KeystrokeMgr)
-
-	STATIC_LAZY_CCOMPTR_GETTER(ITfDisplayAttributeMgr, DisplayAttributeMgr);
-
-	STATIC_LAZY_CCOMPTR_GETTER(ITfCategoryMgr, CategoryMgr);
-
 	/************/
 	/* Reactive */
 	/************/
+public:
 	reactive_wstring_ptr Text;
 	reactive_wstring_ptr EnterText;
 	reactive_property_ptr<CTextCaret> Caret;
@@ -106,6 +81,13 @@ protected:
 	std::unique_ptr<CTextBoxStateMachine> m_pTextMachine;
 
 	CUnDoReDoManager m_doMgr;
+
+	/* TSF */
+		mutable TfEditCookie m_editCookie;
+	DECLARE_LAZY_COMPTR_GETTER(ITfDocumentMgr, DocumentMgr)
+	DECLARE_LAZY_COMPTR_GETTER(ITfContext, Context)
+	DECLARE_LAZY_COMPTR_GETTER(CTextStore, TextStore)
+	DECLARE_LAZY_COMPTR_GETTER(CTextEditSink, TextEditSink)
 
 	/***************/
 	/* Constructor */
@@ -272,10 +254,6 @@ public:
 
 	//Getter
 	LAZY_CCOMPTR_GETTER(IDWriteTextLayout1, TextLayout)
-	LAZY_CCOMPTR_GETTER(CTextEditSink, TextEditSink)
-	LAZY_CCOMPTR_GETTER(CTextStore, TextStore)
-	LAZY_CCOMPTR_GETTER(ITfDocumentMgr, DocumentMgr)
-	LAZY_CCOMPTR_GETTER(ITfContext, Context)
 
 	LAZY_GETTER(std::vector<CRectF>, OriginCharRects)
 	LAZY_GETTER(std::vector<CRectF>, OriginCursorCharRects)
@@ -316,13 +294,9 @@ protected:
 
 	//COMPOSITIONRENDERINFO *pCompositionRenderInfo_;
 	//UINT nCompositionRenderInfo_;
-	TfEditCookie m_editCookie;
 
 public:
 	std::shared_ptr<TextBoxProperty> GetTextBoxPropertyPtr() { return m_pProp; }
-	CDispAttrProps* GetDispAttrProps();
-	HRESULT GetDisplayAttributeTrackPropertyRange(TfEditCookie ec, ITfContext* pic, ITfRange* pRange, ITfReadOnlyProperty** ppProp, CDispAttrProps* pDispAttrProps);
-	HRESULT GetDisplayAttributeData(TfEditCookie ec, ITfReadOnlyProperty* pProp, ITfRange* pRange, TF_DISPLAYATTRIBUTE* pda, TfGuidAtom* pguid);
 
 
 

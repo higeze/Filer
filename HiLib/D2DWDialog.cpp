@@ -198,7 +198,7 @@ void CD2DWDialog::Error_StdException(const std::exception& e)
 
 }
 
-CSizeF CD2DWDialog::GetTitleSize()
+CSizeF CD2DWDialog::GetTitleSize() const
 {
 	if (!Title->empty()) {
 		m_titleSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(m_spProp->TitleFormat, *Title);

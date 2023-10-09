@@ -17,7 +17,7 @@ protected:
 	std::unique_ptr<CDialogStateMachine> m_pDialogMachine;
 	std::shared_ptr<DialogProperty> m_spProp;
 
-	CSizeF m_titleSize;
+	mutable CSizeF m_titleSize;
 	std::optional<CPointF> m_startPoint;
 
 public:
@@ -68,7 +68,7 @@ public:
 
 	void Error_StdException(const std::exception& e);
 
-	CSizeF GetTitleSize();
+	CSizeF GetTitleSize() const;
 	CRectF GetTitleRect();
 	virtual void PaintTitle();
 	virtual void PaintBorder();

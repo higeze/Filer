@@ -19,6 +19,7 @@ public:
 	//virtual void OnKillFocus(CSheet* pSheet, const EventArgs& e) = 0;
 	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) = 0;
 	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) = 0;
+	virtual void OnKeyTraceDown(CSheet* pSheet, const KeyTraceDownEvent& e) = 0;
 	virtual void OnChar(CSheet* pSheet, const CharEvent& e) = 0;
 	virtual void OnImeStartComposition(CSheet* pSheet, const ImeStartCompositionEvent& e) = 0;
 
@@ -45,6 +46,7 @@ public:
 	//virtual void OnKillFocus(CSheet* pSheet, const EventArgs& e);
 	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) override;
 	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) override;
+	virtual void OnKeyTraceDown(CSheet* pSheet, const KeyTraceDownEvent& e) override;
 	virtual void OnChar(CSheet* pSheet, const CharEvent& e) override;;
 	virtual void OnImeStartComposition(CSheet* pSheet, const ImeStartCompositionEvent& e) override;
 

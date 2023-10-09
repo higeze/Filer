@@ -30,6 +30,7 @@ struct CPointT :public TPoint
 	void Offset(const T& xOffset, const T& yOffset) { this->x += xOffset; this->y += yOffset; }
 	void Offset(const point_type& pt) { this->x += pt.x; this->y += pt.y; }
 	point_type OffsetCopy(const point_type& pt) { return point_type(this->x + pt.x, this->y + pt.y); }
+	point_type OffsetXCopy(const T& xOffset) { return point_type(this->x + xOffset, this->y); }
 	const TPoint* operator&() const
 	{
 		return static_cast<const TPoint*>(this);
@@ -144,6 +145,10 @@ struct CRectT :public TRect
 	{
 		this->left = l; this->top = t; this->right = r; this->bottom = b;
 	}
+	void SetPointSize(const TPoint& pt, const TSize& sz)
+	{
+		this->left = pt.x; this->top = pt.y; this->right = pt.x + sz.width; this->bottom = pt.y + sz.height;
+	}
 	bool IsRectNull() const
 	{
 		return this->left == 0 && this->top == 0 && this->right == 0 && this->bottom == 0;
@@ -163,6 +168,8 @@ struct CRectT :public TRect
 	}
 	void OffsetRect(T x, T y) { this->left += x; this->right += x; this->top += y;this-> bottom += y; }
 	void OffsetRect(const point_type& pt) { OffsetRect(pt.x, pt.y); }
+	void OffsetX(T x) { this->left += x; this->right += x; }
+	void OffsetY(T y) { this->top += y;this-> bottom += y; }
 	T Width()const { return this->right - this->left; }
 	T Height()const { return this->bottom - this->top; }
 

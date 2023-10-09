@@ -235,6 +235,18 @@ void CSheetCell::OnKeyUp(const KeyUpEvent& e)
 	CSheet::OnKeyUp(e);
 }
 
+void CSheetCell::OnKeyTraceDown(const KeyTraceDownEvent& e)
+{
+	CCell::OnKeyTraceDown(e);
+	CSheet::OnKeyTraceDown(e);
+}
+
+void CSheetCell::OnKeyTraceUp(const KeyTraceUpEvent& e)
+{
+	CCell::OnKeyTraceUp(e);
+	CSheet::OnKeyTraceUp(e);
+}
+
 void CSheetCell::OnChar(const CharEvent& e)
 {
 	CCell::OnChar(e);

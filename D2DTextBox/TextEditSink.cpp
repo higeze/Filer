@@ -8,81 +8,40 @@
 #include "CellProperty.h"
 #include "Direct2DWrite.h"
 #include "Debug.h"
-
-/**/
-//
-// CTextEditSink
-//
-/**/
+#include "TSFManager.h"
 #include "DisplayAttribute.h"
-#pragma region IUnknown
-//+---------------------------------------------------------------------------
-//
-// IUnknown
-//
-//----------------------------------------------------------------------------
 
-STDAPI CTextEditSink::QueryInterface(REFIID riid, void **ppvObj)
+DWORD CTextEditSink::TES_INVALID_COOKIE = ((DWORD)(-1));
+
+CTextEditSink::CTextEditSink(CTextBox* pTextBox)
+    :m_pEditor(pTextBox), m_dwEditCookie(TES_INVALID_COOKIE){}
+
+HRESULT CTextEditSink::_Advise(const CComPtr<ITfContext>& pContext)
 {
-    *ppvObj = NULL;
+    CComPtr<ITfSource> pSource;
 
-    if (IsEqualIID(riid, IID_IUnknown) ||
-        IsEqualIID(riid, IID_ITfTextEditSink))
-    {
-        *ppvObj = (ITfTextEditSink *)this;
-    }
+    FAILED_THROW(pContext->QueryInterface(IID_ITfSource, (void**)&pSource));
+    FAILED_THROW(pSource->AdviseSink(IID_ITfTextEditSink, (ITfTextEditSink*)this, &m_dwEditCookie));
 
-    if (*ppvObj)
-    {
-        AddRef();
-        return S_OK;
-    }
+    m_pContext = CComPtr<ITfContext>(pContext);
 
-    return E_NOINTERFACE;
+    return S_OK;
 }
 
-STDAPI_(ULONG) CTextEditSink::AddRef()
+HRESULT CTextEditSink::_Unadvise()
 {
-    return ++_cRef;
+    CComPtr<ITfSource> pSource;
+
+    FAILED_THROW(m_pContext->QueryInterface(IID_ITfSource, (void**)&pSource));
+    FAILED_THROW(pSource->UnadviseSink(m_dwEditCookie));
+    m_pContext.Release();
+
+    return S_OK;
 }
-
-STDAPI_(ULONG) CTextEditSink::Release()
-{
-    long cr;
-
-    cr = --_cRef;
-
-    if (cr == 0)
-    {
-        delete this;
-    }
-
-    return cr;
-}
-#pragma endregion
-//+---------------------------------------------------------------------------
-//
-// ctor
-//
-//----------------------------------------------------------------------------
-#define TES_INVALID_COOKIE  ((DWORD)(-1))
-
-CTextEditSink::CTextEditSink(CTextBox *pEditor)
-{
-    _cRef = 1;
-    _dwEditCookie = TES_INVALID_COOKIE;
-    _pEditor = pEditor;
-}
-
-//+---------------------------------------------------------------------------
-//
-// EndEdit
-//
-//----------------------------------------------------------------------------
 
 STDAPI CTextEditSink::OnEndEdit(ITfContext *pic, TfEditCookie ecReadOnly, ITfEditRecord *pEditRecord)
 {
-    CDispAttrProps *pDispAttrProps = _pEditor->GetDispAttrProps();
+    CDispAttrProps *pDispAttrProps = CTSFManager::GetInstance()->GetDispAttrProps();
     if (pDispAttrProps)
     {
         
@@ -96,7 +55,7 @@ STDAPI CTextEditSink::OnEndEdit(ITfContext *pic, TfEditCookie ecReadOnly, ITfEdi
             if (CComPtr<ITfRange> pTestRange;
                 pEnum->Next(1, &pTestRange, NULL) == S_OK)
             {
-                _pEditor->ClearCompositionRenderInfo();
+                m_pEditor->ClearCompositionRenderInfo();
 
                 // We read the display attribute for entire range.
                 // It could be optimized by filtering the only delta with ITfEditRecord interface. 
@@ -108,7 +67,7 @@ STDAPI CTextEditSink::OnEndEdit(ITfContext *pic, TfEditCookie ecReadOnly, ITfEdi
                 {
                     CComPtr<ITfReadOnlyProperty> pProp;
 
-                    _pEditor->GetDisplayAttributeTrackPropertyRange(ecReadOnly, pic, pRangeEntire, &pProp, pDispAttrProps);
+                    CTSFManager::GetInstance()->GetDisplayAttributeTrackPropertyRange(ecReadOnly, pic, pRangeEntire, &pProp, pDispAttrProps);
 
                     if (CComPtr<IEnumTfRanges> pEnumRanges;
                         SUCCEEDED(pProp->EnumRanges(ecReadOnly, &pEnumRanges, pRangeEntire))){
@@ -117,12 +76,12 @@ STDAPI CTextEditSink::OnEndEdit(ITfContext *pic, TfEditCookie ecReadOnly, ITfEdi
                         {
                             TF_DISPLAYATTRIBUTE DisplayAttribute;
                             TfGuidAtom guid;
-                            if (_pEditor->GetDisplayAttributeData(ecReadOnly, pProp, pRange, &DisplayAttribute, &guid) == S_OK)
+                            if (CTSFManager::GetInstance()->GetDisplayAttributeData(ecReadOnly, pProp, pRange, &DisplayAttribute, &guid) == S_OK)
                             {
                                 if(auto pRangeACP = CComQIPtr<ITfRangeACP>(pRange)){
                                     LONG start, end;
                                     pRangeACP->GetExtent(&start, &end);
-									_pEditor->AddCompositionRenderInfo(start, start + end, &DisplayAttribute);
+									m_pEditor->AddCompositionRenderInfo(start, start + end, &DisplayAttribute);
                                 }
                             }
                             pRange.Release();
@@ -135,80 +94,6 @@ STDAPI CTextEditSink::OnEndEdit(ITfContext *pic, TfEditCookie ecReadOnly, ITfEdi
         delete pDispAttrProps;
     }
 
-	if ( OnChanged_ )
-		OnChanged_();
-
-	
-
     return S_OK;
 }
 
-#pragma region Advise_Unadvice
-//+---------------------------------------------------------------------------
-//
-// CTextEditSink::Advise
-//
-//----------------------------------------------------------------------------
-
-HRESULT CTextEditSink::_Advise(ITfContext *pic)
-{
-    HRESULT hr;
-    ITfSource *source = NULL;
-
-    _pic = NULL;
-    hr = E_FAIL;
-
-    if (FAILED(pic->QueryInterface(IID_ITfSource, (void **)&source)))
-        goto Exit;
-
-    if (FAILED(source->AdviseSink(IID_ITfTextEditSink, (ITfTextEditSink *)this, &_dwEditCookie)))
-        goto Exit;
-
-    _pic = pic;
-    _pic->AddRef();
-
-    hr = S_OK;
-
-Exit:
-    if (source)
-        source->Release();
-    return hr;
-}
-
-//+---------------------------------------------------------------------------
-//
-// CTextEditSink::Unadvise
-//
-//----------------------------------------------------------------------------
-
-HRESULT CTextEditSink::_Unadvise()
-{
-    HRESULT hr;
-    ITfSource *source = NULL;
-
-    hr = E_FAIL;
-
-    if (_pic == NULL)
-        goto Exit;
-
-    if (FAILED(_pic->QueryInterface(IID_ITfSource, (void **)&source)))
-        goto Exit;
-
-    if (FAILED(source->UnadviseSink(_dwEditCookie)))
-        goto Exit;
-
-    hr = S_OK;
-
-Exit:
-    if (source)
-        source->Release();
-
-    if (_pic)
-    {
-        _pic->Release();
-        _pic = NULL;
-    }
-
-    return hr;
-}
-#pragma endregion

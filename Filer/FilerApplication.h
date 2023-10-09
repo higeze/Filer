@@ -63,6 +63,7 @@ private:
 public:
 
 	virtual void Init() override;
+	//virtual int Run() override;
 	virtual void Term() override;
 	virtual void Deserialize();
 	virtual void Serialize();

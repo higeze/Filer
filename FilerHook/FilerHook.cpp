@@ -193,13 +193,6 @@ EXPORT_API_ LRESULT CALLBACK KeyHookProc(int nCode, WPARAM wp, LPARAM lp)
 
 EXPORT_API_ LRESULT CALLBACK CallHookProc(int nCode, WPARAM wParam, LPARAM lParam) 
 { 
-    CHAR szCWPBuf[256]; 
-    CHAR szMsg[16]; 
-    HDC hdc; 
-    static int c = 0; 
-    size_t cch;
-    HRESULT hResult; 
- 
     if (nCode < 0)  // do not process message 
         return CallNextHookEx(hCallHook, nCode, wParam, lParam); 
     if (nCode == HC_ACTION) {

@@ -1,33 +1,25 @@
 #pragma once
+#include "Unknown.h"
 
 class CTextBox;
 
-class CTextEditSink : public ITfTextEditSink
+class CTextEditSink : public CUnknown<ITfTextEditSink>
 {
-	public:
-		CTextEditSink(CTextBox *pEditor);
+public:
+	static DWORD TES_INVALID_COOKIE;
+private:
+	CComPtr<ITfContext> m_pContext;
+	DWORD m_dwEditCookie;
+	CTextBox *m_pEditor;
+public:
+	CTextEditSink(CTextBox* pTextBox);
 
-		//
-		// IUnknown methods
-		//
-		STDMETHODIMP QueryInterface(REFIID riid, void **ppvObj);
-		STDMETHODIMP_(ULONG) AddRef(void);
-		STDMETHODIMP_(ULONG) Release(void);
-
-		//
-		// ITfTextEditSink
-		//
-		STDMETHODIMP OnEndEdit(ITfContext *pic, TfEditCookie ecReadOnly, ITfEditRecord *pEditRecord);
-
-		HRESULT _Advise(ITfContext *pic);
-		HRESULT _Unadvise();
+	HRESULT _Advise(const CComPtr<ITfContext>& pContext);
+	HRESULT _Unadvise();
+	// ITfTextEditSink
+	STDMETHODIMP OnEndEdit(ITfContext *pic, TfEditCookie ecReadOnly, ITfEditRecord *pEditRecord);
 
 
-		std::function<void()> OnChanged_;
-
-	private:
-		long _cRef;
-		ITfContext *_pic;
-		DWORD _dwEditCookie;
-		CTextBox *_pEditor;
 };
+
+

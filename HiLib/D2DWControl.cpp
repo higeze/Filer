@@ -183,6 +183,8 @@ void CD2DWControl::OnKeyDown(const KeyDownEvent& e)
 	}
 }
 void CD2DWControl::OnKeyUp(const KeyUpEvent& e) { if (*IsEnabled) { SendFocused(&CD2DWControl::OnKeyUp, e); } }
+void CD2DWControl::OnKeyTraceDown(const KeyTraceDownEvent& e) { if (*IsEnabled) { SendFocused(&CD2DWControl::OnKeyTraceDown, e); } }
+void CD2DWControl::OnKeyTraceUp(const KeyTraceUpEvent& e) { if (*IsEnabled) { SendFocused(&CD2DWControl::OnKeyTraceUp, e); } }
 void CD2DWControl::OnSysKeyDown(const SysKeyDownEvent& e) { if (*IsEnabled) { SendFocused(&CD2DWControl::OnSysKeyDown, e); } }
 void CD2DWControl::OnChar(const CharEvent& e)
 { 

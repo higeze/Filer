@@ -59,13 +59,13 @@ CIncrementalCopyDlg::CIncrementalCopyDlg(
 
 		m_idlMap.clear();
 		m_spButtonDo->IsEnabled.set(!m_idlMap.empty());
-	}, shared_from_this());
+	}, m_spButtonDo);
 	m_spButtonDo->Content.set(L"Copy");
 
 	m_spButtonClose->Command.subscribe([this]()->void
 	{
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	}, shared_from_this());
+	}, m_spButtonClose);
 	m_spButtonClose->Content.set(L"Close");
 	m_spButtonCancel->Content.set(L"Cancel");
 

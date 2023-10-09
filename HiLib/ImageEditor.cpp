@@ -101,6 +101,25 @@ void CImageEditor::OnPaint(const PaintEvent& e)
 	m_spPercentBlock->OnPaint(e);
 	m_spImageView->OnPaint(e);
 	m_spStatusBar->OnPaint(e);
+
+  using namespace std::chrono;
+  const std::chrono::year_month ym(std::chrono::year{2023}, std::chrono::month{10});
+  unsigned weekday_offset{ weekday{sys_days{ym/1}}.c_encoding() };  // P1466R3
+  unsigned lastday_in_month{ (ym/last).day() };
+
+
+  std::wstring text =
+  L"      " + std::to_wstring(ym.year().operator int()) + std::to_wstring(ym.month().operator size_t()) + L"\n" +
+  L"Su Mo Tu We Th Fr Sa\n";
+  unsigned wd = 0;
+  while (wd++ < weekday_offset) {
+      text += L"   ";
+  }
+  for (unsigned d = 1; d <= lastday_in_month; ++d, ++wd) {
+      text += std::to_wstring(d) + (wd % 7 == 0 ? L'\n' : L' ');
+  }
+
+  GetWndPtr()->GetDirectPtr()->DrawTextFromPoint(FormatF(), text, GetRectInWnd().LeftTop());
 }
 
 void CImageEditor::OnRect(const RectEvent& e)

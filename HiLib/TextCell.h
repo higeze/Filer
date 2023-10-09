@@ -84,6 +84,7 @@ public:
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e);
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e);
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
+	virtual void OnKeyTraceDown(const KeyTraceDownEvent& e);
 	virtual void OnChar(const CharEvent& e);
 	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e);
 

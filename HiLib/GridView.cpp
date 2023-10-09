@@ -918,7 +918,7 @@ std::shared_ptr<CCell> CGridView::TabNext(const std::shared_ptr<CCell>& spCurCel
 		int col_cur = spCurCell->GetColumnPtr()->GetIndex<VisTag>() - m_frozenColumnCount;
 		if ((row_cur == row_count - 1 && col_cur == col_count - 1) ||
 			(row_cur < 0 || col_cur < 0)){
-			return Cell<VisTag>(0, 0);
+			return Cell<VisTag>(m_frozenRowCount, m_frozenColumnCount);
 		} else {
 			int sum = (row_cur * col_count) + (col_cur + 1);
 			int row_new = sum / col_count;
@@ -926,33 +926,51 @@ std::shared_ptr<CCell> CGridView::TabNext(const std::shared_ptr<CCell>& spCurCel
 			return Cell<VisTag>(row_new + m_frozenRowCount, col_new + m_frozenColumnCount);
 		}
 	} else {
-		return Cell<VisTag>(0, 0);
+		return Cell<VisTag>(m_frozenRowCount, m_frozenColumnCount);
 	}
 }
 std::shared_ptr<CCell> CGridView::TabPrev(const std::shared_ptr<CCell>& spCurCell)
 {
-	std::pair<size_t, size_t> firstIndexes = std::make_pair(0, 0);
-	std::shared_ptr<CCell> spJumpCell(nullptr);
+	if (m_gridViewMode == GridViewMode::None) {
+		std::pair<size_t, size_t> firstIndexes = std::make_pair(0, 0);
+		std::shared_ptr<CCell> spJumpCell(nullptr);
 
-	// Find first indexes
-	if (!spCurCell) {
-		// (0, 0)
-	} else {
-		// Current Indexes
-		firstIndexes = std::make_pair(spCurCell->GetRowPtr()->GetIndex<VisTag>(), spCurCell->GetColumnPtr()->GetIndex<VisTag>());
+		// Find first indexes
+		if (!spCurCell) {
+			// (0, 0)
+		} else {
+			// Current Indexes
+			firstIndexes = std::make_pair(spCurCell->GetRowPtr()->GetIndex<VisTag>(), spCurCell->GetColumnPtr()->GetIndex<VisTag>());
 
-	}
-	// Search
-	for (auto iter = m_frozenTabStops.crbegin(); iter != m_frozenTabStops.crend(); ++iter) {
-		if ((iter->first * iter->second + iter->second)  < (firstIndexes.first * firstIndexes.second + firstIndexes.second)) {
-			auto spCell = Cell<VisTag>(iter->first, iter->second);
-			if (spCell) {
-				spJumpCell = spCell;
-				break;
+		}
+		// Search
+		for (auto iter = m_frozenTabStops.crbegin(); iter != m_frozenTabStops.crend(); ++iter) {
+			if ((iter->first * iter->second + iter->second) < (firstIndexes.first * firstIndexes.second + firstIndexes.second)) {
+				auto spCell = Cell<VisTag>(iter->first, iter->second);
+				if (spCell) {
+					spJumpCell = spCell;
+					break;
+				}
 			}
 		}
+		return spJumpCell;
+	} else if (m_gridViewMode == GridViewMode::ExcelLike) {
+		int row_count = m_visRows.size() - m_frozenRowCount;
+		int col_count = m_visCols.size() - m_frozenColumnCount;
+		int row_cur = spCurCell->GetRowPtr()->GetIndex<VisTag>() - m_frozenRowCount;
+		int col_cur = spCurCell->GetColumnPtr()->GetIndex<VisTag>() - m_frozenColumnCount;
+		if ((row_cur == 0 && col_cur == 0) ||
+			(row_cur < 0 || col_cur < 0)){
+			return Cell<VisTag>(row_count - 1 + m_frozenRowCount, col_count - 1+ m_frozenColumnCount);
+		} else {
+			int sum = (row_cur * col_count) + (col_cur - 1);
+			int row_new = sum / col_count;
+			int col_new = sum % col_count;
+			return Cell<VisTag>(row_new + m_frozenRowCount, col_new + m_frozenColumnCount);
+		}
+	} else {
+		return Cell<VisTag>(m_frozenRowCount, m_frozenColumnCount);
 	}
-	return spJumpCell;
 }
 
 

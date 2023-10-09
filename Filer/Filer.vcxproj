@@ -295,6 +295,8 @@
     <ClInclude Include="..\HiLib\BoostPythonHelper.h" />
     <ClInclude Include="..\HiLib\Button.h" />
     <ClInclude Include="..\HiLib\ButtonProperty.h" />
+    <ClInclude Include="..\HiLib\CalendarControl.h" />
+    <ClInclude Include="..\HiLib\CalendarDialog.h" />
     <ClInclude Include="..\HiLib\CDataString.h" />
     <ClInclude Include="..\HiLib\Cell.h" />
     <ClInclude Include="..\HiLib\Celler.h" />
@@ -317,6 +319,7 @@
     <ClInclude Include="..\HiLib\Date.h" />
     <ClInclude Include="..\HiLib\FileStatus.h" />
     <ClInclude Include="..\HiLib\FPDFFormHandle.h" />
+    <ClInclude Include="..\HiLib\KeyTraceEventSink.h" />
     <ClInclude Include="..\HiLib\notify_container_changed.h" />
     <ClInclude Include="..\HiLib\PDFBitmapDrawer.h" />
     <ClInclude Include="..\HiLib\D2DThumbnailDrawer.h" />
@@ -571,6 +574,8 @@
     <ClCompile Include="..\HiLib\Band.cpp" />
     <ClCompile Include="..\HiLib\BoostPythonHelper.cpp" />
     <ClCompile Include="..\HiLib\Button.cpp" />
+    <ClCompile Include="..\HiLib\CalendarControl.cpp" />
+    <ClCompile Include="..\HiLib\CalendarDialog.cpp" />
     <ClCompile Include="..\HiLib\Cell.cpp" />
     <ClCompile Include="..\HiLib\Celler.cpp" />
     <ClCompile Include="..\HiLib\CellStringCommand.cpp" />
@@ -586,6 +591,7 @@
     <ClCompile Include="..\HiLib\D2DFileIconDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DImage.cpp" />
     <ClCompile Include="..\HiLib\FPDFFormHandle.cpp" />
+    <ClCompile Include="..\HiLib\KeyTraceEventSink.cpp" />
     <ClCompile Include="..\HiLib\PDFBitmapDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DThumbnailDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DWDialog.cpp" />

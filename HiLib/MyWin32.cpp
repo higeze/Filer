@@ -19,3 +19,8 @@ std::string GetLastErrorString()
     }
     return error;
 }
+
+bool IsKeyDown(int vKey)
+{
+	return ::GetAsyncKeyState(vKey) && 0x8000;
+}

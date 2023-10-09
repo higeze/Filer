@@ -105,6 +105,13 @@ void CCeller::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 	}
 }
 
+void CCeller::OnKeyTraceDown(CSheet* pSheet, const KeyTraceDownEvent& e)
+{
+	auto cell = pSheet->GetCursorerPtr()->GetFocusedCell();
+	if (cell != nullptr) {
+		cell->OnKeyTraceDown(e);
+	}
+}
 void CCeller::OnChar(CSheet* pSheet, const CharEvent& e)
 {
 	auto cell = pSheet->GetCursorerPtr()->GetFocusedCell();

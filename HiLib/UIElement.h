@@ -122,6 +122,18 @@ struct KeyUpEvent :public KeyEvent
 		:KeyEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
+struct KeyTraceDownEvent :public KeyEvent
+{
+	KeyTraceDownEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:KeyEvent(pWnd, wParam, lParam, pHandled) {}
+};
+
+struct KeyTraceUpEvent :public KeyEvent
+{
+	KeyTraceUpEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:KeyEvent(pWnd, wParam, lParam, pHandled) {}
+};
+
 
 struct SysKeyDownEvent :public KeyDownEvent
 {
@@ -360,6 +372,8 @@ public:
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e){}
 	virtual void OnChar(const CharEvent& e) {}
 	virtual void OnContextMenu(const ContextMenuEvent& e){}
+	virtual void OnKeyTraceDown(const KeyTraceDownEvent& e) {}
+	virtual void OnKeyTraceUp(const KeyTraceUpEvent& e) {}
 	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e) {}
 
 	virtual void OnSetCursor(const SetCursorEvent& e) {}
