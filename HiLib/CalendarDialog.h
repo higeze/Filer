@@ -34,6 +34,9 @@ public:
 	void Arrange(const CRectF& rc);
 	//std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects();
 
-	virtual void OnCreate(const CreateEvt& e);
-	virtual void OnRect(const RectEvent& e);
+	const std::shared_ptr<CCalendarControl>& GetCalendarPtr() { return m_spCalendar; }
+
+	virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnPaint(const PaintEvent& e) override;
+	virtual void OnRect(const RectEvent& e) override;
 };

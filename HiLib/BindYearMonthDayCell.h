@@ -65,6 +65,10 @@ public:
 			std::make_shared<CalendarControlProperty>(),
 			std::make_shared<TextBoxProperty>());
 
+		spDlg->GetCalendarPtr()->Year.set(YearMonthDay->year());
+		spDlg->GetCalendarPtr()->Month.set(YearMonthDay->month());
+		YearMonthDay.binding(spDlg->GetCalendarPtr()->SelectedYearMonthDay);
+
 		spDlg->Measure(CSizeF(300, 200));
 		spDlg->OnCreate(CreateEvt(m_pSheet->GetWndPtr(), m_pSheet->GetWndPtr(), CRectF(e.PointInWnd, spDlg->DesiredSize())));
 		spDlg->Arrange(CRectF(e.PointInWnd, spDlg->DesiredSize()));

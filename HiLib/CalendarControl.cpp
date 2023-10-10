@@ -34,7 +34,7 @@ void CCalendarControl::Measure(const CSizeF& availableSize)
         unsigned lastday_in_month{ (ym/last).day() };
         m_opt_size.emplace(
             m_opt_cell_size->width * 7.f,
-            m_opt_cell_size->height * std::ceilf((weekday_offset + lastday_in_month)/7.f)
+            m_opt_cell_size->height * (1 + std::ceilf((weekday_offset + lastday_in_month)/7.f))
         );
     }
 }
@@ -44,7 +44,7 @@ void CCalendarControl::Render(CDirect2DWrite* pDirect)
 {
     using namespace std::chrono;
     const std::chrono::year_month ym(*Year, *Month);
-    const std::chrono::year_month_day today(CYearMonthDay::Today());
+    const CYearMonthDay today(CYearMonthDay::Today());
     unsigned weekday_offset{ weekday{sys_days{ym/1}}.c_encoding() };  // P1466R3
     unsigned lastday_in_month{ (ym/last).day() };
     std::vector<std::wstring> weekday_texts = {L"Su", L"Mo", L"Tu", L"We", L"Th", L"Fr", L"Sa"};
@@ -61,29 +61,37 @@ void CCalendarControl::Render(CDirect2DWrite* pDirect)
         CPointF(m_rect.LeftTop().x + m_opt_cell_size->width * weekday_offset, m_rect.LeftTop().y + m_opt_cell_size->height),
         m_opt_cell_size.value());
     for (unsigned day = 1, wd = weekday_offset; day <= lastday_in_month; day++, wd++) {
+        //Today
+        if (CYearMonthDay(Year->operator int(), Month->operator size_t(), day) == today) {
+            pDirect->FillSolidRoundedRectangle(m_spProp->TodayFill, cell_rect, 3.f, 3.f);
+        } else if (CYearMonthDay(Year->operator int(), Month->operator size_t(), day) == *SelectedYearMonthDay){
+            pDirect->DrawSolidRoundedRectangle(m_spProp->SelectedLine, cell_rect, 3.f, 3.f);
+        }
+
         pDirect->DrawTextLayout(m_spProp->Format, std::to_wstring(day), cell_rect);
-        if (wd % 7 == 0) {
+        //pDirect->DrawSolidRectangle(SolidLine(), cell_rect);
+        if (wd % 7 == 6) {
             cell_rect.MoveToX(m_rect.LeftTop().x);
             cell_rect.OffsetY(m_opt_cell_size->height);
         } else {
             cell_rect.OffsetX(m_opt_cell_size->width);
         }
     }
+}
 
-  //
+void CCalendarControl::OnLButtonClk(const LButtonClkEvent& e)
+{
+    using namespace std::chrono;
+    const std::chrono::year_month ym(*Year, *Month);
+    unsigned weekday_offset{ weekday{sys_days{ym/1}}.c_encoding() };  // P1466R3
+    unsigned lastday_in_month{ (ym/last).day() };
 
+    CPointF pt(e.PointInWnd - m_rect.LeftTop());
+    int x = static_cast<int>(std::floorf(pt.x / m_opt_cell_size->width) + 1.f);
+    int y = static_cast<int>(std::floorf(pt.y / m_opt_cell_size->height));
 
-  //std::wstring text =
-  //L"      " + std::to_wstring(ym.year().operator int()) + std::to_wstring(ym.month().operator size_t()) + L"\n" +
-  //L"Su Mo Tu We Th Fr Sa\n";
-  //unsigned wd = 0;
-  //while (wd++ < weekday_offset) {
-  //    text += L"   ";
-  //}
-  //for (unsigned d = 1; d <= lastday_in_month; ++d, ++wd) {
-  //    text += std::to_wstring(d) + (wd % 7 == 0 ? L'\n' : L' ');
-  //}
-
-  //GetWndPtr()->GetDirectPtr()->DrawTextFromPoint(FormatF(), text, GetRectInWnd().LeftTop());
-
+    int day = (y - 1) * 7 - weekday_offset + x;
+    if (1 <= day && day <= lastday_in_month) {
+        SelectedYearMonthDay.set(CYearMonthDay(Year->operator int(), Month->operator unsigned int(), day));
+    }
 }

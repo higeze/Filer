@@ -6,6 +6,7 @@
 #include "TextBoxProperty.h"
 #include "CalendarControl.h"
 #include "Dispatcher.h"
+#include "DialogProperty.h"
 
 
 CCalendarDialog::CCalendarDialog(
@@ -19,15 +20,42 @@ CCalendarDialog::CCalendarDialog(
 	m_spMonthTextBox(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
 	m_spButtonClose(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>()))
 {
-	Title.set(L"Calendar");
-	m_spCalendar->Year.set(std::chrono::year{2023});
-	m_spCalendar->Month.set(std::chrono::month{10});
-
 	m_spButtonClose->Command.subscribe([this]()->void
 	{
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	}, m_spButtonClose);
 	m_spButtonClose->Content.set(L"~");
+	//m_spCalendar->SelectedYearMonthDay.subscribe([this](auto) 
+	//{ 
+	//	GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+	//}, m_spCalendar);
+
+	m_spYearTextBox->SetIsEnterText(true);
+	m_spMonthTextBox->SetIsEnterText(true);
+
+	m_spCalendar->Year.subscribe([spYearTextBox = m_spYearTextBox](const std::chrono::year& value) {
+		if (value.operator int() != _wtoi(spYearTextBox->Text->c_str())) {
+			spYearTextBox->Text.set(std::to_wstring(value.operator int()));
+		}
+	}, m_spYearTextBox);
+	m_spYearTextBox->EnterText.subscribe([spCalender = m_spCalendar](auto notify) {
+		if (_wtoi(notify.new_items.c_str()) != spCalender->Year->operator int()) {
+			spCalender->Year.set(std::chrono::year{_wtoi(notify.new_items.c_str())});
+		}
+	}, m_spCalendar);
+
+	m_spCalendar->Month.subscribe([spMonthTextBox = m_spMonthTextBox](const std::chrono::month& value) {
+		if (value.operator unsigned int() != _wtoi(spMonthTextBox->Text->c_str())) {
+			spMonthTextBox->Text.set(std::to_wstring(value.operator unsigned int()));
+		}
+	}, m_spMonthTextBox);
+	m_spMonthTextBox->EnterText.subscribe([spCalender = m_spCalendar](auto notify) {
+		if (_wtoi(notify.new_items.c_str()) != spCalender->Month->operator unsigned int()) {
+			spCalender->Month.set(std::chrono::month{static_cast<unsigned int>(_wtoi(notify.new_items.c_str()))});
+		}
+	}, m_spCalendar);
+
+
 }
 
 CCalendarDialog::~CCalendarDialog() = default;
@@ -39,29 +67,28 @@ void CCalendarDialog::Measure(const CSizeF& availableSize)
 
 const CSizeF CCalendarDialog::DesiredSize() const
 {
-	CSizeF szTitle = GetTitleSize();
+	const FLOAT padding = 2.f;
 	CSizeF szTextBox = m_spYearTextBox->MeasureSize(L"2023");
 	CSizeF szX = m_spYearTextBox->MeasureSize(L"~");
 	CSizeF szCalendar = m_spCalendar->DesiredSize();
 
 	return CSizeF(
-		(std::max)(szTextBox.width * 2.f + szX.width, szCalendar.width),
-		szTitle.height + szTextBox.height + szCalendar.height
+		(std::max)(szTextBox.width * 2.f + szX.width + padding * 4.f, szCalendar.width + padding * 2.f),
+		szTextBox.height + szCalendar.height + padding * padding * 3.f
 	);
 }
 
 void CCalendarDialog::Arrange(const CRectF& rc)
 {
-	CPointF pt(rc.LeftTop());
-	pt.y += GetTitleSize().height;
-
+	const FLOAT padding = 2.f;
+	CPointF pt(rc.LeftTop().OffsetCopy(CPointF(padding, padding)));
 	CSizeF szTextBox = m_spYearTextBox->MeasureSize(L"2023");
 	CSizeF szX = m_spYearTextBox->MeasureSize(L"~");
 	
 	m_spYearTextBox->OnRect(RectEvent(GetWndPtr(), CRectF(pt, szTextBox)));
-	m_spMonthTextBox->OnRect(RectEvent(GetWndPtr(), CRectF(pt.OffsetXCopy(szTextBox.width), szTextBox)));
-	m_spButtonClose->OnRect(RectEvent(GetWndPtr(), CRectF(rc.right - szX.width, pt.y, rc.right, pt.y + szTextBox.height)));
-	pt.y += szTextBox.height;
+	m_spMonthTextBox->OnRect(RectEvent(GetWndPtr(), CRectF(pt.OffsetXCopy(szTextBox.width + padding), szTextBox)));
+	m_spButtonClose->OnRect(RectEvent(GetWndPtr(), CRectF(rc.right - szX.width - padding, pt.y, rc.right - padding , pt.y + szTextBox.height)));
+	pt.y += szTextBox.height + padding;
 	m_spCalendar->Arrange(CRectF(pt, m_spCalendar->DesiredSize()));
 }
 
@@ -108,7 +135,20 @@ void CCalendarDialog::OnRect(const RectEvent& e)
 {
 	CD2DWDialog::OnRect(e);
 
-	Arrange(GetRectInWnd());
+	Arrange(e.Rect);
+}
+
+void CCalendarDialog::OnPaint(const PaintEvent& e)
+{
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spProp->BackgroundFill, GetRectInWnd());
+
+	SendAllReverse(&CD2DWControl::OnPaint, e);
+
+	PaintBorder();
+
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
 }
 
 
