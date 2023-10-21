@@ -57,6 +57,7 @@ public:
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnClose(const CloseEvent& e) override;
+	virtual void OnPaint(const PaintEvent& e) override;
 	virtual void OnEnable(const EnableEvent& e) override;
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
@@ -159,6 +160,19 @@ public:
 		}
 	}
 
+	template<typename _Tunnel, typename _Bubble, typename _Self, typename _Event>
+	void ProcessMessage(_Tunnel&& tunnel, _Bubble&& bubble, _Self&& self, _Event&& e)
+	{
+		if (!*e.HandledPtr){ return; }
+		if (!*IsEnabled) { return; }
+		for (auto iter = m_childControls.begin(); iter != m_childControls.end(); iter++) {
+			if (!*e.HandledPtr) { break; }
+			if (!*(*iter->IsEnabled)) { continue; }
+			
+		}
+
+	}
+
 	template<typename TFunc, typename TEvent>
 	void SendPtInRectReverse(TFunc f, const TEvent& e, bool setFocus = false)
 	{
@@ -182,6 +196,7 @@ public:
 		if (GetWndPtr()->GetCapturedControlPtr()) {
 			(GetWndPtr()->GetCapturedControlPtr().get()->*f)(e);
 			GetWndPtr()->InvalidateRect(NULL, FALSE);
+			*e.HandledPtr = TRUE;
 		} else {
 			SendPtInRectReverse(f, e);
 		}

@@ -2,6 +2,23 @@
 #include "ButtonProperty.h"
 #include "D2DWWindow.h"
 
+void CButton::Measure(const CSizeF& availableSize)
+{
+	if (!m_opt_size.has_value()) {
+		CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(m_spButtonProperty->Format, *Content);
+		size.width += m_spButtonProperty->Padding.top
+			+ m_spButtonProperty->Padding.bottom
+			+ m_spButtonProperty->BorderLine.Width * 2;
+		size.height += m_spButtonProperty->Padding.left
+			+ m_spButtonProperty->Padding.right
+			+ m_spButtonProperty->BorderLine.Width * 2;
+		m_opt_size.emplace(size);
+	}
+}
+const CSizeF& CButton::DesiredSize() const
+{
+	return m_opt_size.value();
+}
 void CButton::OnLButtonDown(const LButtonDownEvent& e)
 {
 	CUIElement::OnLButtonDown(e);
@@ -67,10 +84,6 @@ void CButton::OnPaint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->DrawTextInRect(format, content, GetRectInWnd());
 
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
-}
-
-void CButton::OnLButtonSnglClk(const LButtonSnglClkEvent& e)
-{
 }
 
 void CButton::OnKeyDown(const KeyDownEvent& e)

@@ -11,6 +11,7 @@
 #include "CalendarControl.h"
 #include "DialogProperty.h"
 #include "TextBoxProperty.h"
+#include "ButtonProperty.h"
 
 template<typename... TItems>
 class CBindYearMonthDayCell :public CTextCell
@@ -60,19 +61,26 @@ public:
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override
 	{
 		auto spDlg = std::make_shared<CCalendarDialog>(
-			m_pSheet->GetWndPtr(),
+			m_pSheet->GetGridPtr(),
 			std::make_shared<DialogProperty>(),
 			std::make_shared<CalendarControlProperty>(),
-			std::make_shared<TextBoxProperty>());
+			std::make_shared<TextBoxProperty>(),
+			std::make_shared<ButtonProperty>());
 
-		spDlg->GetCalendarPtr()->Year.set(YearMonthDay->year());
-		spDlg->GetCalendarPtr()->Month.set(YearMonthDay->month());
+		if (YearMonthDay->IsValid()) {
+			spDlg->GetCalendarPtr()->Year.set(YearMonthDay->year());
+			spDlg->GetCalendarPtr()->Month.set(YearMonthDay->month());
+		} else {
+			auto today = CYearMonthDay::Today();
+			spDlg->GetCalendarPtr()->Year.set(today.year());
+			spDlg->GetCalendarPtr()->Month.set(today.month());
+		}
 		YearMonthDay.binding(spDlg->GetCalendarPtr()->SelectedYearMonthDay);
 
 		spDlg->Measure(CSizeF(300, 200));
-		spDlg->OnCreate(CreateEvt(m_pSheet->GetWndPtr(), m_pSheet->GetWndPtr(), CRectF(e.PointInWnd, spDlg->DesiredSize())));
+		spDlg->OnCreate(CreateEvt(m_pSheet->GetWndPtr(), m_pSheet->GetGridPtr(), CRectF(e.PointInWnd, spDlg->DesiredSize())));
 		spDlg->Arrange(CRectF(e.PointInWnd, spDlg->DesiredSize()));
-		m_pSheet->GetWndPtr()->SetFocusedControlPtr(spDlg);
+		m_pSheet->GetGridPtr()->SetFocusedControlPtr(spDlg);
 	}
 
 	virtual void OnContextMenu(const ContextMenuEvent& e) override

@@ -89,7 +89,7 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 		try{
 
 			LRESULT lResult=0;
-			BOOL bHandled = TRUE;
+			BOOL bHandled = FALSE;
 			if (m_allMsg) {
 				lResult = m_allMsg(uiMsg, wParam, lParam, bHandled);
 				if (bHandled == TRUE) { return lResult; }

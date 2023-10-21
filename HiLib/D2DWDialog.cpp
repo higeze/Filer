@@ -85,18 +85,22 @@ bool CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_BottomSizing(const LButtonBeg
 void CD2DWDialog::Normal_LButtonBeginDrag(const LButtonBeginDragEvent& e)
 {
 	CD2DWControl::OnLButtonBeginDrag(e);
+	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::Normal_LButtonEndDrag(const LButtonEndDragEvent& e)
 {
 	CD2DWControl::OnLButtonEndDrag(e);
+	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::Normal_MouseMove(const MouseMoveEvent& e)
 {
 	CD2DWControl::OnMouseMove(e);
+	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::Normal_MouseLeave(const MouseLeaveEvent& e)
 {
 	CD2DWControl::OnMouseLeave(e);
+	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::Normal_SetCursor(const SetCursorEvent& e)
 {
@@ -111,12 +115,14 @@ void CD2DWDialog::Normal_SetCursor(const SetCursorEvent& e)
 	} else {
 		CD2DWControl::OnSetCursor(e);
 	}
+	*e.HandledPtr = TRUE;
 }
 	
 void CD2DWDialog::Moving_OnEntry(const LButtonBeginDragEvent& e)
 {
 	e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
 	m_startPoint = e.PointInWnd;
+	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::Moving_OnExit()
 {
@@ -129,12 +135,14 @@ void CD2DWDialog::Moving_MouseMove(const MouseMoveEvent& e)
 	rc.OffsetRect(CPointF(e.PointInWnd.x - m_startPoint.value().x, e.PointInWnd.y - m_startPoint.value().y));
 	m_startPoint = e.PointInWnd;
 	OnRect(RectEvent(GetWndPtr(), rc));
+	*e.HandledPtr = TRUE;
 }
 
 void CD2DWDialog::Sizing_OnEntry(const LButtonBeginDragEvent& e)
 {
 	e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
 	m_startPoint = e.PointInWnd;
+	*e.HandledPtr = TRUE;
 }
 
 void CD2DWDialog::Sizing_OnExit()
@@ -148,24 +156,28 @@ void CD2DWDialog::LeftSizing_MouseMove(const MouseMoveEvent& e)
 	auto rc = GetRectInWnd();
 	rc.left = e.PointInWnd.x;
 	OnRect(RectEvent(GetWndPtr(), rc));
+	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::RightSizing_MouseMove(const MouseMoveEvent& e)
 {
 	auto rc = GetRectInWnd();
 	rc.right = e.PointInWnd.x;
 	OnRect(RectEvent(GetWndPtr(), rc));
+	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::TopSizing_MouseMove(const MouseMoveEvent& e)
 {
 	auto rc = GetRectInWnd();
 	rc.top = e.PointInWnd.y;
 	OnRect(RectEvent(GetWndPtr(), rc));
+	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::BottomSizing_MouseMove(const MouseMoveEvent& e)
 {
 	auto rc = GetRectInWnd();
 	rc.bottom = e.PointInWnd.y;
 	OnRect(RectEvent(GetWndPtr(), rc));
+	*e.HandledPtr = TRUE;
 }
 
 void CD2DWDialog::LeftSizing_SetCursor(const SetCursorEvent& e)

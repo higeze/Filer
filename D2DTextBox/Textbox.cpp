@@ -81,6 +81,17 @@ void CTextBox::UninitTSF()
 	FAILED_THROW(GetTextEditSinkPtr()->_Unadvise());
 }
 
+void CTextBox::Measure(const CSizeF& availableSize, const std::wstring& text)
+{
+	if (!m_opt_size.has_value()) {
+		m_opt_size.emplace(MeasureSize(Text->empty()? text : *Text));
+	}
+}
+const CSizeF& CTextBox::DesiredSize() const
+{
+	return m_opt_size.value();
+}
+
 /***************/
 /* Lazy Getter */
 /***************/

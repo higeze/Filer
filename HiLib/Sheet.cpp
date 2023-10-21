@@ -1082,29 +1082,74 @@ void CSheet::Error_StdException(const std::exception& e)
 void CSheet::OnPaint(const PaintEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnContextMenu(const ContextMenuEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnRButtonDown(const RButtonDownEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
-void CSheet::OnLButtonDown(const LButtonDownEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
-void CSheet::OnLButtonUp(const LButtonUpEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
-void CSheet::OnLButtonClk(const LButtonClkEvent& e) { m_pMachine->process_event(e); SubmitUpdate();  }
+void CSheet::OnLButtonDown(const LButtonDownEvent& e) 
+{ 
+	CD2DWControl::OnLButtonDown(e);
+	if (!*e.HandledPtr) { m_pMachine->process_event(e); SubmitUpdate(); }
+}
+void CSheet::OnLButtonUp(const LButtonUpEvent& e) 
+{
+	CD2DWControl::OnLButtonUp(e);
+	if (!*e.HandledPtr) { m_pMachine->process_event(e); SubmitUpdate(); }
+}
+void CSheet::OnLButtonClk(const LButtonClkEvent& e) 
+{ 
+	CD2DWControl::OnLButtonClk(e);
+	if (!*e.HandledPtr) { m_pMachine->process_event(e); SubmitUpdate(); }
+}
 void CSheet::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
 void CSheet::OnLButtonDblClk(const LButtonDblClkEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) 
 {
-	e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
-	m_pMachine->process_event(e); SubmitUpdate();
+	SendPtInRectReverse(&CD2DWControl::OnLButtonBeginDrag, e);
+	if (!*e.HandledPtr) {
+		e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+		m_pMachine->process_event(e); SubmitUpdate();
+	}
 }
 void CSheet::OnLButtonEndDrag(const LButtonEndDragEvent& e)
 {
-	e.WndPtr->ReleaseCapturedControlPtr();
-	m_pMachine->process_event(e); SubmitUpdate();
+	SendPtInRectReverse(&CD2DWControl::OnLButtonEndDrag, e);
+	if (!*e.HandledPtr) {
+		e.WndPtr->ReleaseCapturedControlPtr();
+		m_pMachine->process_event(e); SubmitUpdate();
+	}
 }
-void CSheet::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
+void CSheet::OnMouseMove(const MouseMoveEvent& e)
+{ 
+	CD2DWControl::OnMouseMove(e);
+	if (!*e.HandledPtr) {
+		m_pMachine->process_event(e);
+		PostUpdate(Updates::Invalidate);
+		SubmitUpdate();
+	}
+	
+}
 void CSheet::OnSetCursor(const SetCursorEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnMouseLeave(const MouseLeaveEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
-void CSheet::OnKeyDown(const KeyDownEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
-void CSheet::OnKeyTraceDown(const KeyTraceDownEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
+void CSheet::OnKeyDown(const KeyDownEvent& e) 
+{ 
+	CD2DWControl::OnKeyDown(e);
+	if (!*e.HandledPtr) {
+		m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate();
+	}
+}
+void CSheet::OnKeyTraceDown(const KeyTraceDownEvent& e)
+{ 
+	CD2DWControl::OnKeyTraceDown(e);
+	if (!*e.HandledPtr) {
+		m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate();
+	}
+}
 void CSheet::OnSetFocus(const SetFocusEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnKillFocus(const KillFocusEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
-void CSheet::OnChar(const CharEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
+void CSheet::OnChar(const CharEvent& e) 
+{ 
+	CD2DWControl::OnChar(e);
+	if (!*e.HandledPtr) {
+		m_pMachine->process_event(e);  SubmitUpdate();
+	}
+}
 void CSheet::OnImeStartComposition(const ImeStartCompositionEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
 void CSheet::OnBeginEdit(const BeginEditEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnEndEdit(const EndEditEvent& e){ m_pMachine->process_event(e);  SubmitUpdate();}

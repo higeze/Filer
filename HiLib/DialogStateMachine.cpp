@@ -24,11 +24,11 @@ struct CDialogStateMachine::Machine
 	{
 		using namespace sml;
 		return make_transition_table(
-			*state<Normal> +event<LButtonBeginDragEvent>[call(&CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_LeftSizing)] = state<LeftSizing>,
-			state<Normal> +event<LButtonBeginDragEvent>[call(&CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_RightSizing)] = state<RightSizing>,
-			state<Normal> +event<LButtonBeginDragEvent>[call(&CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_TopSizing)] = state<TopSizing>,
-			state<Normal> +event<LButtonBeginDragEvent>[call(&CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_BottomSizing)] = state<BottomSizing>,
-			state<Normal> +event<LButtonBeginDragEvent>[call(&CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_Moving)] = state<Moving>,
+			*state<Normal> +event<LButtonBeginDragEvent>[call(&CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_LeftSizing)] / call(&CD2DWDialog::Normal_LButtonBeginDrag) = state<LeftSizing>,
+			state<Normal> +event<LButtonBeginDragEvent>[call(&CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_RightSizing)] / call(&CD2DWDialog::Normal_LButtonBeginDrag)  = state<RightSizing>,
+			state<Normal> +event<LButtonBeginDragEvent>[call(&CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_TopSizing)] / call(&CD2DWDialog::Normal_LButtonBeginDrag)  = state<TopSizing>,
+			state<Normal> +event<LButtonBeginDragEvent>[call(&CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_BottomSizing)] / call(&CD2DWDialog::Normal_LButtonBeginDrag)  = state<BottomSizing>,
+			state<Normal> +event<LButtonBeginDragEvent>[call(&CD2DWDialog::Guard_LButtonBeginDrag_Normal_To_Moving)] / call(&CD2DWDialog::Normal_LButtonBeginDrag)  = state<Moving>,
 			state<Normal> +event<LButtonBeginDragEvent> / call(&CD2DWDialog::Normal_LButtonBeginDrag),
 
 			state<Normal> +event<MouseMoveEvent> / call(&CD2DWDialog::Normal_MouseMove),
@@ -52,10 +52,10 @@ struct CDialogStateMachine::Machine
 			state<TopSizing> +on_exit<_> / call(&CD2DWDialog::Sizing_OnExit),
 			state<BottomSizing> +on_exit<_> / call(&CD2DWDialog::Sizing_OnExit),
 
-			state<LeftSizing> +event<LButtonEndDragEvent> = state<Normal>,
-			state<RightSizing> +event<LButtonEndDragEvent> = state<Normal>,
-			state<TopSizing> +event<LButtonEndDragEvent> = state<Normal>,
-			state<BottomSizing> +event<LButtonEndDragEvent> = state<Normal>,
+			state<LeftSizing> +event<LButtonEndDragEvent> / call(&CD2DWDialog::Normal_LButtonEndDrag) = state<Normal>,
+			state<RightSizing> +event<LButtonEndDragEvent> / call(&CD2DWDialog::Normal_LButtonEndDrag) = state<Normal>,
+			state<TopSizing> +event<LButtonEndDragEvent> / call(&CD2DWDialog::Normal_LButtonEndDrag) = state<Normal>,
+			state<BottomSizing> +event<LButtonEndDragEvent> / call(&CD2DWDialog::Normal_LButtonEndDrag) = state<Normal>,
 
 			state<LeftSizing> +event<MouseLeaveEvent> = state<Normal>,
 			state<RightSizing> +event<MouseLeaveEvent> = state<Normal>,

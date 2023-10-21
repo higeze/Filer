@@ -177,6 +177,9 @@ void CFilerApplication::Init()
 	//TSF
 	CTSFManager::GetInstance()->Init();
 
+	//PDFium
+	CPDFDoc::Init();
+
 	//Deserialize
 	Deserialize();
 

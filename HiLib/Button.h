@@ -10,6 +10,7 @@ class CButton:public CD2DWControl
 {
 private:
 	std::shared_ptr<ButtonProperty> m_spButtonProperty;
+	std::optional<CSizeF> m_opt_size;
 public:
 	reactive_command_ptr<void> Command;
 	reactive_property_ptr<std::wstring> Content;
@@ -19,6 +20,10 @@ public:
 		:CD2DWControl(pControl), m_spButtonProperty(spButtonProperty){}
 	virtual ~CButton() = default;
 
+	void Measure(const CSizeF& availableSize);
+	const CSizeF& DesiredSize() const;
+	void Arrange(const CRectF& rc) { m_rect = rc; }
+
 	//Event
 	virtual void OnPaint(const PaintEvent& e) override;
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
@@ -27,7 +32,6 @@ public:
 	virtual void OnMouseEnter(const MouseEnterEvent& e) override;
 	virtual void OnMouseLeave(const MouseLeaveEvent& e) override;
 
-	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
 
 

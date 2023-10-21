@@ -68,6 +68,11 @@ void CD2DWControl::OnClose(const CloseEvent& e)
 	OnDestroy(DestroyEvent(e.WndPtr));
 }
 
+void CD2DWControl::OnPaint(const PaintEvent& e)
+{
+	SendAll(&CD2DWControl::OnPaint, e);
+}
+
 void CD2DWControl::OnDestroy(const DestroyEvent& e)
 {
 	GetParentControlPtr()->EraseChildControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));

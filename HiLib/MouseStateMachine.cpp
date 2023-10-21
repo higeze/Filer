@@ -28,7 +28,8 @@ struct CMouseStateMachine::Machine
 
 	void Normal_LButtonUp(CD2DWWindow* pGrid, const LButtonUpEvent& e)
 	{
-		pGrid->OnLButtonClk(LButtonClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
+		BOOL bHandled = FALSE;
+		pGrid->OnLButtonClk(LButtonClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), &bHandled));
 		pGrid->OnLButtonUp(e);
 	}
 
@@ -136,8 +137,8 @@ struct CMouseStateMachine::Machine
 		//if (iter != e.WndPtr->GetChildControlPtrs().cend()) {
 		//	e.WndPtr->SetCapturedControlPtr(*iter);
 		//}
-
-		pGrid->OnLButtonBeginDrag(LButtonBeginDragEvent(e.WndPtr, e.Flags, MAKELPARAM(m_ptBeginClient.value().x, m_ptBeginClient.value().y)));
+		BOOL bHandled = FALSE;
+		pGrid->OnLButtonBeginDrag(LButtonBeginDragEvent(e.WndPtr, e.Flags, MAKELPARAM(m_ptBeginClient.value().x, m_ptBeginClient.value().y), &bHandled));
 		m_ptBeginClient = std::nullopt;
 	}
 
@@ -146,7 +147,8 @@ struct CMouseStateMachine::Machine
 		::OutputDebugString(L"LButtonDrag_OnExit\r\n");
 		::ReleaseCapture();
 
-		pGrid->OnLButtonEndDrag(LButtonEndDragEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
+		BOOL bHandled = FALSE;
+		pGrid->OnLButtonEndDrag(LButtonEndDragEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), &bHandled));
 		//pGrid->ReleaseCapturedControlPtr();
 	}
 
@@ -156,7 +158,8 @@ struct CMouseStateMachine::Machine
 		::ReleaseCapture();
 
 		auto pt = e.WndPtr->GetCursorPosInClient();
-		pGrid->OnLButtonEndDrag(LButtonEndDragEvent(e.WndPtr, MK_LBUTTON, MAKELPARAM(pt.x, pt.y)));
+		BOOL bHandled = FALSE;
+		pGrid->OnLButtonEndDrag(LButtonEndDragEvent(e.WndPtr, MK_LBUTTON, MAKELPARAM(pt.x, pt.y), &bHandled));
 		//pGrid->ReleaseCapturedControlPtr();
 	}
 

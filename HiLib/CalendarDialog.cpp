@@ -13,18 +13,48 @@ CCalendarDialog::CCalendarDialog(
 	CD2DWControl* pParentControl,
 	const std::shared_ptr<DialogProperty>& spDialogProp,
 	const std::shared_ptr<CalendarControlProperty>& spCalendarProp,
-	const std::shared_ptr<TextBoxProperty>& spTextBoxProp)
+	const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+	const std::shared_ptr<ButtonProperty>& spButtonProp)
 	:CD2DWDialog(pParentControl, spDialogProp), 
 	m_spCalendar(std::make_shared<CCalendarControl>(this, spCalendarProp)),
 	m_spYearTextBox(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
 	m_spMonthTextBox(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
-	m_spButtonClose(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>()))
+	m_spButtonPrev(std::make_shared<CButton>(this, spButtonProp)),
+	m_spButtonNext(std::make_shared<CButton>(this, spButtonProp)),
+	m_spButtonClose(std::make_shared<CButton>(this, spButtonProp))
 {
+	m_spButtonPrev->Command.subscribe([this]()->void
+	{
+		size_t ye = m_spCalendar->Year->operator int();
+		size_t mo = m_spCalendar->Month->operator size_t();
+		if (mo == 1) {
+			m_spCalendar->Year.set(std::chrono::year(ye - 1));
+			m_spCalendar->Month.set(std::chrono::month(12));
+		} else {
+			m_spCalendar->Month.set(std::chrono::month(mo - 1));
+		}
+	}, m_spButtonPrev);
+	m_spButtonPrev->Content.set(L"<");
+
+	m_spButtonNext->Command.subscribe([this]()->void
+	{
+		size_t ye = m_spCalendar->Year->operator int();
+		size_t mo = m_spCalendar->Month->operator size_t();
+		if (mo == 12) {
+			m_spCalendar->Year.set(std::chrono::year(ye + 1));
+			m_spCalendar->Month.set(std::chrono::month(1));
+		} else {
+			m_spCalendar->Month.set(std::chrono::month(mo + 1));
+		}
+	}, m_spButtonNext);
+	m_spButtonNext->Content.set(L">");
+
 	m_spButtonClose->Command.subscribe([this]()->void
 	{
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	}, m_spButtonClose);
-	m_spButtonClose->Content.set(L"~");
+	m_spButtonClose->Content.set(L"X");
+
 	//m_spCalendar->SelectedYearMonthDay.subscribe([this](auto) 
 	//{ 
 	//	GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
@@ -62,19 +92,28 @@ CCalendarDialog::~CCalendarDialog() = default;
 
 void CCalendarDialog::Measure(const CSizeF& availableSize)
 {
+	m_spYearTextBox->Measure(availableSize, L"2023");
+	m_spMonthTextBox->Measure(availableSize, L"12");
+	m_spButtonPrev->Measure(availableSize);
+	m_spButtonNext->Measure(availableSize);
+	m_spButtonClose->Measure(availableSize);
 	m_spCalendar->Measure(availableSize);
+
 }
 
 const CSizeF CCalendarDialog::DesiredSize() const
 {
 	const FLOAT padding = 2.f;
-	CSizeF szTextBox = m_spYearTextBox->MeasureSize(L"2023");
-	CSizeF szX = m_spYearTextBox->MeasureSize(L"~");
-	CSizeF szCalendar = m_spCalendar->DesiredSize();
 
 	return CSizeF(
-		(std::max)(szTextBox.width * 2.f + szX.width + padding * 4.f, szCalendar.width + padding * 2.f),
-		szTextBox.height + szCalendar.height + padding * padding * 3.f
+		(std::max)(
+		padding + m_spYearTextBox->DesiredSize().width +
+		padding + m_spMonthTextBox->DesiredSize().width + 
+		padding + m_spButtonPrev->DesiredSize().width + m_spButtonNext->DesiredSize().width +
+		padding + m_spButtonClose->DesiredSize().width,
+		padding + m_spCalendar->DesiredSize().width + padding),
+
+		padding + m_spYearTextBox->DesiredSize().height + padding + m_spCalendar->DesiredSize().height + padding
 	);
 }
 
@@ -82,13 +121,13 @@ void CCalendarDialog::Arrange(const CRectF& rc)
 {
 	const FLOAT padding = 2.f;
 	CPointF pt(rc.LeftTop().OffsetCopy(CPointF(padding, padding)));
-	CSizeF szTextBox = m_spYearTextBox->MeasureSize(L"2023");
-	CSizeF szX = m_spYearTextBox->MeasureSize(L"~");
 	
-	m_spYearTextBox->OnRect(RectEvent(GetWndPtr(), CRectF(pt, szTextBox)));
-	m_spMonthTextBox->OnRect(RectEvent(GetWndPtr(), CRectF(pt.OffsetXCopy(szTextBox.width + padding), szTextBox)));
-	m_spButtonClose->OnRect(RectEvent(GetWndPtr(), CRectF(rc.right - szX.width - padding, pt.y, rc.right - padding , pt.y + szTextBox.height)));
-	pt.y += szTextBox.height + padding;
+	m_spYearTextBox->Arrange(CRectF(pt, m_spYearTextBox->DesiredSize()));
+	m_spMonthTextBox->Arrange(CRectF(CPointF(m_spYearTextBox->GetRectInWnd().right + padding, pt.y), m_spMonthTextBox->DesiredSize()));
+	m_spButtonPrev->Arrange(CRectF(CPointF(m_spMonthTextBox->GetRectInWnd().right + padding, pt.y), m_spButtonPrev->DesiredSize()));
+	m_spButtonNext->Arrange(CRectF(CPointF(m_spButtonPrev->GetRectInWnd().right, pt.y), m_spButtonNext->DesiredSize()));
+	m_spButtonClose->Arrange(CRectF(CPointF(rc.right - m_spButtonClose->DesiredSize().width - padding, pt.y), m_spButtonClose->DesiredSize()));
+	pt.y += m_spYearTextBox->DesiredSize().height + padding;
 	m_spCalendar->Arrange(CRectF(pt, m_spCalendar->DesiredSize()));
 }
 
@@ -123,8 +162,11 @@ void CCalendarDialog::OnCreate(const CreateEvt& e)
 	//auto [rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose] = GetRects();
 	m_spYearTextBox->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_spMonthTextBox->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-	m_spCalendar->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spButtonPrev->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spButtonNext->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_spButtonClose->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spCalendar->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+
 
 	Arrange(GetRectInWnd());
 
@@ -149,6 +191,11 @@ void CCalendarDialog::OnPaint(const PaintEvent& e)
 	PaintBorder();
 
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
+}
+
+void CCalendarDialog::OnKillFocus(const KillFocusEvent& e)
+{
+	GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 }
 
 

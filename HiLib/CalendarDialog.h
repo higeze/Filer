@@ -8,6 +8,7 @@ struct CalendarControlProperty;
 class CTextBox;
 struct TextBoxProperty;
 class CButton;
+struct ButtonProperty;
 
 class CCalendarDialog :public CD2DWDialog
 {
@@ -16,6 +17,8 @@ private:
 	std::shared_ptr<CTextBox> m_spYearTextBox;
 	std::shared_ptr<CTextBox> m_spMonthTextBox;
 
+	std::shared_ptr<CButton> m_spButtonPrev;
+	std::shared_ptr<CButton> m_spButtonNext;
 	std::shared_ptr<CButton> m_spButtonClose;
 
 	bool m_showDefault = true;
@@ -27,7 +30,8 @@ public:
 		CD2DWControl* pParentControl,
 		const std::shared_ptr<DialogProperty>& spDialogProp,
 		const std::shared_ptr<CalendarControlProperty>& spCalendarProp,
-		const std::shared_ptr<TextBoxProperty>& spTextBoxProp);
+		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+		const std::shared_ptr<ButtonProperty>& spButtonProp);
 	~CCalendarDialog();
 	void Measure(const CSizeF& availableSize);
 	const CSizeF DesiredSize() const;
@@ -39,4 +43,15 @@ public:
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnPaint(const PaintEvent& e) override;
 	virtual void OnRect(const RectEvent& e) override;
+	virtual void OnKillFocus(const KillFocusEvent& e) override;
+	virtual void OnLButtonDown(const LButtonDownEvent& e) override 
+	{ 
+		CD2DWDialog::OnLButtonDown(e);
+		*e.HandledPtr = TRUE;
+	}
+	virtual void OnLButtonUp(const LButtonUpEvent& e) override  
+	{ 
+		CD2DWDialog::OnLButtonUp(e);
+		*e.HandledPtr = TRUE;
+	}
 };

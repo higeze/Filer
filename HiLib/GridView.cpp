@@ -1311,6 +1311,7 @@ void CGridView::OnPaint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), GetRectInWnd());
 	
 	CSheet::OnPaint(e);
+	SendAll(&CD2DWControl::OnPaint, e);
 
 	if (m_pEdit && m_pEdit->GetIsVisible()) {
 		m_pEdit->OnPaint(e);
