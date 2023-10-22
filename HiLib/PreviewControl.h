@@ -78,5 +78,5 @@ public:
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnEnable(const EnableEvent& e) override;
 
-	virtual void OnWndKillFocus(const KillFocusEvent& e) override;
+	virtual void OnKillFocus(const KillFocusEvent& e) override;
 };

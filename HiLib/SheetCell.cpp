@@ -130,6 +130,12 @@ void CSheetCell::OnRButtonDown(const RButtonDownEvent& e)
 	CSheet::OnRButtonDown(e);
 }
 
+void CSheetCell::OnRButtonUp(const RButtonUpEvent& e)
+{
+	CCell::OnRButtonUp(e);
+	CSheet::OnRButtonUp(e);
+}
+
 void CSheetCell::OnCreate(const CreateEvt& e)
 {
 	CCell::OnCreate(e);
@@ -257,18 +263,6 @@ void CSheetCell::OnImeStartComposition(const ImeStartCompositionEvent& e)
 {
 	CCell::OnImeStartComposition(e);
 	CSheet::OnImeStartComposition(e);
-}
-
-void CSheetCell::OnWndSetFocus(const SetFocusEvent& e)
-{
-	CCell::OnWndSetFocus(e);
-	CSheet::OnWndSetFocus(e);
-}
-
-void CSheetCell::OnWndKillFocus(const KillFocusEvent& e)
-{
-	CCell::OnWndKillFocus(e);
-	CSheet::OnWndKillFocus(e);
 }
 
 

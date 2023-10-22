@@ -111,11 +111,11 @@ void CFilerWndStatusBar::OnPaint(const PaintEvent& e)
 		rcPaint);
 }
 
-void CFilerWndStatusBar::OnWndSetFocus(const SetFocusEvent& e)
+void CFilerWndStatusBar::OnSetFocus(const SetFocusEvent& e)
 {
 	m_timer.run([this]()->void { Update(); }, std::chrono::milliseconds(3000));
 }
-void CFilerWndStatusBar::OnWndKillFocus(const KillFocusEvent& e)
+void CFilerWndStatusBar::OnKillFocus(const KillFocusEvent& e)
 {
 	m_timer.stop();
 }

@@ -46,7 +46,7 @@ void CFilerApplication::Deserialize()
 		i >> j;
 		j.get_to(m_pWnd);
 	} else {
-		m_pWnd = std::make_unique<CFilerWnd>();
+		m_pWnd = std::shared_ptr<CFilerWnd>();
 	}
 }
 

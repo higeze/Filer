@@ -1101,7 +1101,6 @@ void CSheet::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { m_pMachine->proces
 void CSheet::OnLButtonDblClk(const LButtonDblClkEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
 void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) 
 {
-	SendPtInRectReverse(&CD2DWControl::OnLButtonBeginDrag, e);
 	if (!*e.HandledPtr) {
 		e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
 		m_pMachine->process_event(e); SubmitUpdate();
@@ -1109,7 +1108,6 @@ void CSheet::OnLButtonBeginDrag(const LButtonBeginDragEvent& e)
 }
 void CSheet::OnLButtonEndDrag(const LButtonEndDragEvent& e)
 {
-	SendPtInRectReverse(&CD2DWControl::OnLButtonEndDrag, e);
 	if (!*e.HandledPtr) {
 		e.WndPtr->ReleaseCapturedControlPtr();
 		m_pMachine->process_event(e); SubmitUpdate();

@@ -209,7 +209,6 @@ public:
 	virtual void OnEnable(const EnableEvent& e) override;
 
 	virtual void OnRect(const RectEvent& e) override;
-	virtual void OnWndKillFocus(const KillFocusEvent& e) override;
 
 	/**************/
 	/* SM Message */

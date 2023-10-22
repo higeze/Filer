@@ -7,6 +7,7 @@ class CD2DWWindow;
 
 class CD2DWControl: public virtual CUIElement
 {
+	friend class CD2DWWindow;
 public:
 	static UINT WM_CONTROLMESSAGE;
 
@@ -54,55 +55,55 @@ public:
 	void AddChildControlPtr(const std::shared_ptr<CD2DWControl>& pControl);
 	void EraseChildControlPtr(const std::shared_ptr<CD2DWControl>& pControl);
 
+	/***************/
+	/* Control Msg */
+	/***************/
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnClose(const CloseEvent& e) override;
-	virtual void OnPaint(const PaintEvent& e) override;
+	virtual void OnPaint(const PaintEvent& e) override { ProcessMessageToAll(&CD2DWControl::OnPaint, e); }
 	virtual void OnEnable(const EnableEvent& e) override;
 
-	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
-	virtual void OnLButtonUp(const LButtonUpEvent& e) override;
-	virtual void OnLButtonClk(const LButtonClkEvent& e) override;
-	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override;
-	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override;
-	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
-	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;
+	//Mouse Message
+	virtual void OnLButtonDown(const LButtonDownEvent& e) override {}
+	virtual void OnLButtonUp(const LButtonUpEvent& e) override {}
+	virtual void OnLButtonClk(const LButtonClkEvent& e) override {}
+	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override {}
+	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override {}
 
+	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override {}
+	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override {}
 
-	virtual void OnRButtonDown(const RButtonDownEvent& e) override;
-	virtual void OnContextMenu(const ContextMenuEvent& e) override;
+	virtual void OnRButtonDown(const RButtonDownEvent& e) override {}
+	virtual void OnRButtonUp(const RButtonUpEvent& e) override {}
+	virtual void OnContextMenu(const ContextMenuEvent& e) override {}
 
-	virtual void OnMButtonDown(const MButtonDownEvent& e) override;
-	virtual void OnMButtonUp(const MButtonUpEvent& e) override;
+	virtual void OnMButtonDown(const MButtonDownEvent& e) override {}
+	virtual void OnMButtonUp(const MButtonUpEvent& e) override {}
 
+	virtual void OnMouseMove(const MouseMoveEvent& e) override {}
+	virtual void OnMouseWheel(const MouseWheelEvent& e) override {}
 
-	virtual void OnMouseMove(const MouseMoveEvent& e) override;
-	virtual void OnMouseLeave(const MouseLeaveEvent& e) override;
-	virtual void OnSetCursor(const SetCursorEvent& e) override;
+	virtual void OnSetCursor(const SetCursorEvent& e) override {}
 
-	virtual void OnMouseWheel(const MouseWheelEvent& e) override;
+	//Keyboard Message
+	virtual void OnKeyDown(const KeyDownEvent& e) override;
+	virtual void OnKeyUp(const KeyUpEvent& e) override {}
+	virtual void OnChar(const CharEvent& e) override {}
+	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e) override {}
+	virtual void OnKeyTraceDown(const KeyTraceDownEvent& e) override {}
+	virtual void OnKeyTraceUp(const KeyTraceUpEvent& e) override {}
+	virtual void OnSysKeyDown(const SysKeyDownEvent& e) override {}
 
-	virtual void OnSetFocus(const SetFocusEvent& e) override;
-	virtual void OnKillFocus(const KillFocusEvent& e) override;
-
-	virtual void OnWndSetFocus(const SetFocusEvent& e) override;
-	virtual void OnWndKillFocus(const KillFocusEvent& e) override;
 
 	virtual void OnCommand(const CommandEvent& e) override;
-
-	virtual void OnKeyDown(const KeyDownEvent& e) override;
-	virtual void OnKeyUp(const KeyUpEvent& e) override;
-
-	virtual void OnKeyTraceDown(const KeyTraceDownEvent& e) override;
-	virtual void OnKeyTraceUp(const KeyTraceUpEvent& e) override;
-	virtual void OnSysKeyDown(const SysKeyDownEvent& e) override;
-	virtual void OnChar(const CharEvent& e) override;
-	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e) override;
-
-
-
+	virtual void OnMouseLeave(const MouseLeaveEvent& e) override {}
+	virtual void OnSetFocus(const SetFocusEvent& e) override {}
+	virtual void OnKillFocus(const KillFocusEvent& e) override {}
 
 	virtual void OnRect(const RectEvent& e) override { m_rect = e.Rect; }
+
+	virtual bool IsFocused()const;
 	virtual bool GetIsFocused()const;
 
 	CRectF CalcCenterRectF(const CSizeF& size);
@@ -111,103 +112,123 @@ public:
 	/*************/
 	/* templates */
 	/*************/
-	template<typename TFunc, typename TEvent>
-	void SendAll(TFunc f, const TEvent& e, bool invalidate = true)
+	template<typename _Bubble, typename _Event>
+	void ProcessMessageToAll(_Bubble bubble, const _Event& e)
 	{
-		for (auto iter = m_childControls.cbegin(); iter != m_childControls.cend(); ++iter) {
-			(iter->get()->*f)(e);
-		}
-		if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
-	}
-
-	template<typename TFunc, typename TEvent>
-	void SendAllReverse(TFunc f, const TEvent& e, bool invalidate = true)
-	{
-		for (auto iter = m_childControls.crbegin(); iter != m_childControls.crend(); ++iter) {
-			(iter->get()->*f)(e);
-		}
-		if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
-	}
-
-	template<typename TFunc, typename TEvent>
-	void SendCopyAll(TFunc f, const TEvent& e, bool invalidate = true)
-	{
-		auto controls = m_childControls;
-		for (auto iter = controls.cbegin(); iter != controls.cend(); ++iter) {
-			(iter->get()->*f)(e);
-		}
-		if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
-	}
-
-	template<typename TFunc, typename TEvent>
-	void SendCopyAllReverse(TFunc f, const TEvent& e, bool invalidate = true)
-	{
-		auto controls = m_childControls;
-		for (auto iter = controls.crbegin(); iter != controls.crend(); ++iter) {
-			(iter->get()->*f)(e);
-		}
-		if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
-	}
-
-	template<typename TFunc, typename TEvent>
-	void SendMouseReverse(TFunc f, const TEvent& e)
-	{
-		if (GetWndPtr()->GetCapturedControlPtr()) {
-			(GetWndPtr()->GetCapturedControlPtr().get()->*f)(e);
-			GetWndPtr()->InvalidateRect(NULL, FALSE);
-		} else {
-			SendPtInRectReverse(f, e);
+		std::vector<std::shared_ptr<CD2DWControl>> childControls = m_childControls;
+		for (auto iter = childControls.cbegin(); iter != childControls.cend(); ++iter) {
+			(iter->get()->*bubble)(e);
 		}
 	}
 
-	template<typename _Tunnel, typename _Bubble, typename _Self, typename _Event>
-	void ProcessMessage(_Tunnel&& tunnel, _Bubble&& bubble, _Self&& self, _Event&& e)
+	template<typename _Bubble, typename _Event>
+	void ProcessMessageToAllReverse(_Bubble bubble, const _Event& e)
 	{
-		if (!*e.HandledPtr){ return; }
-		if (!*IsEnabled) { return; }
-		for (auto iter = m_childControls.begin(); iter != m_childControls.end(); iter++) {
-			if (!*e.HandledPtr) { break; }
-			if (!*(*iter->IsEnabled)) { continue; }
-			
-		}
-
-	}
-
-	template<typename TFunc, typename TEvent>
-	void SendPtInRectReverse(TFunc f, const TEvent& e, bool setFocus = false)
-	{
-		auto iter = std::find_if(m_childControls.crbegin(), m_childControls.crend(),
-			[&](const std::shared_ptr<CD2DWControl>& x) {
-				return *x->IsEnabled && x->GetRectInWnd().PtInRect(e.PointInWnd);
-			});
-
-		if (iter != m_childControls.crend()) {
-			(iter->get()->*f)(e);
-			if (setFocus) {
-				SetFocusedControlPtr(*iter);
-			}
-		}
-		GetWndPtr()->InvalidateRect(NULL, FALSE);
-	}
-
-	template<typename TFunc, typename TEvent>
-	void SendCapturePtInRectReverse(TFunc f, const TEvent& e)
-	{
-		if (GetWndPtr()->GetCapturedControlPtr()) {
-			(GetWndPtr()->GetCapturedControlPtr().get()->*f)(e);
-			GetWndPtr()->InvalidateRect(NULL, FALSE);
-			*e.HandledPtr = TRUE;
-		} else {
-			SendPtInRectReverse(f, e);
+		std::vector<std::shared_ptr<CD2DWControl>> childControls = m_childControls;
+		for (auto iter = childControls.crbegin(); iter != childControls.crend(); ++iter) {
+			(iter->get()->*bubble)(e);
 		}
 	}
 
-	template<typename TFunc, typename TEvent>
-	void SendFocused(TFunc f, const TEvent& e)
-	{
-		if (m_pFocusedControl) { (m_pFocusedControl.get()->*f)(e); }
-		GetWndPtr()->InvalidateRect(NULL, FALSE);
-	}
+
+
+	//template<typename TFunc, typename TEvent>
+	//void SendAll(TFunc f, const TEvent& e, bool invalidate = true)
+	//{
+	//	for (auto iter = m_childControls.cbegin(); iter != m_childControls.cend(); ++iter) {
+	//		(iter->get()->*f)(e);
+	//	}
+	//	if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
+	//}
+
+	//template<typename TFunc, typename TEvent>
+	//void SendAllReverse(TFunc f, const TEvent& e, bool invalidate = true)
+	//{
+	//	for (auto iter = m_childControls.crbegin(); iter != m_childControls.crend(); ++iter) {
+	//		(iter->get()->*f)(e);
+	//	}
+	//	if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
+	//}
+
+	//template<typename TFunc, typename TEvent>
+	//void SendCopyAll(TFunc f, const TEvent& e, bool invalidate = true)
+	//{
+	//	auto controls = m_childControls;
+	//	for (auto iter = controls.cbegin(); iter != controls.cend(); ++iter) {
+	//		(iter->get()->*f)(e);
+	//	}
+	//	if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
+	//}
+
+	//template<typename TFunc, typename TEvent>
+	//void SendCopyAllReverse(TFunc f, const TEvent& e, bool invalidate = true)
+	//{
+	//	auto controls = m_childControls;
+	//	for (auto iter = controls.crbegin(); iter != controls.crend(); ++iter) {
+	//		(iter->get()->*f)(e);
+	//	}
+	//	if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
+	//}
+
+	//template<typename TFunc, typename TEvent>
+	//void SendMouseReverse(TFunc f, const TEvent& e)
+	//{
+	//	if (GetWndPtr()->GetCapturedControlPtr()) {
+	//		(GetWndPtr()->GetCapturedControlPtr().get()->*f)(e);
+	//		GetWndPtr()->InvalidateRect(NULL, FALSE);
+	//	} else {
+	//		SendPtInRectReverse(f, e);
+	//	}
+	//}
+
+	//template<typename _Tunnel, typename _Bubble, typename _Self, typename _Event>
+	//void ProcessMessage(_Tunnel&& tunnel, _Bubble&& bubble, _Self&& self, _Event&& e)
+	//{
+	//	if (!*e.HandledPtr){ return; }
+	//	if (!*IsEnabled) { return; }
+	//	for (auto iter = m_childControls.begin(); iter != m_childControls.end(); iter++) {
+	//		if (!*e.HandledPtr) { break; }
+	//		if (!*(*iter->IsEnabled)) { continue; }
+	//		
+	//	}
+
+	//}
+
+	//template<typename TFunc, typename TEvent>
+	//void SendPtInRectReverse(TFunc f, const TEvent& e, bool setFocus = false)
+	//{
+	//	auto iter = std::find_if(m_childControls.crbegin(), m_childControls.crend(),
+	//		[&](const std::shared_ptr<CD2DWControl>& x) {
+	//			return *x->IsEnabled && x->GetRectInWnd().PtInRect(e.PointInWnd);
+	//		});
+
+	//	if (iter != m_childControls.crend()) {
+	//		(iter->get()->*f)(e);
+	//		if (setFocus) {
+	//			SetFocusedControlPtr(*iter);
+	//		}
+	//	}
+	//	GetWndPtr()->InvalidateRect(NULL, FALSE);
+	//}
+
+	//template<typename TFunc, typename TEvent>
+	//void SendCapturePtInRectReverse(TFunc f, const TEvent& e)
+	//{
+	//	if (GetWndPtr()->GetCapturedControlPtr()) {
+	//		(GetWndPtr()->GetCapturedControlPtr().get()->*f)(e);
+	//		GetWndPtr()->InvalidateRect(NULL, FALSE);
+	//		*e.HandledPtr = TRUE;
+	//	} else {
+	//		SendPtInRectReverse(f, e);
+	//	}
+	//}
+
+	//template<typename TFunc, typename TEvent>
+	//void SendFocused(TFunc f, const TEvent& e)
+	//{
+	//	if (m_pFocusedControl) { (m_pFocusedControl.get()->*f)(e); }
+	//	GetWndPtr()->InvalidateRect(NULL, FALSE);
+	//}
 };
 
 class CD2DWHostWndControl : public CD2DWControl

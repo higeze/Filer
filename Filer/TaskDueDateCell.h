@@ -15,5 +15,5 @@ public:
 
 	virtual ~CTaskDueDateCell() = default;
 
-	virtual bool CanSetStringOnEditing()const override{return false;}
+	//virtual bool CanSetStringOnEditing()const override{return false;}
 };

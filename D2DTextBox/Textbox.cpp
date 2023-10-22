@@ -450,15 +450,6 @@ void CTextBox::OnClose(const CloseEvent& e)
 	CD2DWControl::OnClose(e);
 }
 
-void CTextBox::OnWndKillFocus(const KillFocusEvent& e)
-{
-	if (m_isEnterText) {
-		EnterText.set(*Text);
-	}
-
-	StopCaretBlink();
-}
-
 void CTextBox::OnRect(const RectEvent& e)
 {
 	CD2DWControl::OnRect(e);
@@ -520,6 +511,10 @@ void CTextBox::Normal_SetFocus(const SetFocusEvent& e)
 
 void CTextBox::Normal_KillFocus(const KillFocusEvent& e)
 {
+	if (m_isEnterText) {
+		EnterText.set(*Text);
+	}
+
 	StopCaretBlink();
 	TerminateCompositionString();
 }
@@ -833,7 +828,6 @@ void CTextBox::Normal_SetCursor(const SetCursorEvent& e)
 		}
 		::SetCursor(::LoadCursor(NULL, IDC_IBEAM));
 		*(e.HandledPtr) = TRUE;
-
 	}
 }
 

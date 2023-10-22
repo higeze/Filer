@@ -53,7 +53,7 @@ private:
 public:
 	void Measure(const CSizeF& availableSize, const std::wstring& text);
 	const CSizeF& DesiredSize() const;
-	void Arrange(const CRectF& rc) { m_rect = rc; }
+	void Arrange(const CRectF& rc) { m_rect = rc; UpdateAll(); }
 	/************/
 	/* Reactive */
 	/************/
@@ -89,7 +89,7 @@ protected:
 	CUnDoReDoManager m_doMgr;
 
 	/* TSF */
-		mutable TfEditCookie m_editCookie;
+	mutable TfEditCookie m_editCookie;
 	DECLARE_LAZY_COMPTR_GETTER(ITfDocumentMgr, DocumentMgr)
 	DECLARE_LAZY_COMPTR_GETTER(ITfContext, Context)
 	DECLARE_LAZY_COMPTR_GETTER(CTextStore, TextStore)
@@ -150,8 +150,6 @@ public:
 	virtual void OnSetCursor(const SetCursorEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnContextMenu(const ContextMenuEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnChar(const CharEvent& e) override { m_pTextMachine->process_event(e); }
-
-	virtual void OnWndKillFocus(const KillFocusEvent& e) override;
 
 	virtual void OnMouseWheel(const MouseWheelEvent& e);
 	virtual void OnClose(const CloseEvent& e);

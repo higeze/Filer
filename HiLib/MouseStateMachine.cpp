@@ -121,7 +121,8 @@ struct CMouseStateMachine::Machine
 
 	void LButtonUpped_LButtonDblClkTimeExceed(CD2DWWindow* pGrid, const LButtonDblClkTimeExceedEvent& e)
 	{
-		pGrid->OnLButtonSnglClk(LButtonSnglClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
+		BOOL bHandled = FALSE;
+		pGrid->OnLButtonSnglClk(LButtonSnglClkEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), &bHandled));
 		m_pDeadlineTimer->stop();
 	}
 

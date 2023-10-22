@@ -40,7 +40,7 @@ struct CDialogStateMachine::Machine
 			state<Moving> +on_exit<_> / call(&CD2DWDialog::Moving_OnExit),
 			state<Moving> +event<LButtonEndDragEvent> = state<Normal>,
 			state<Moving> +event<MouseMoveEvent> / call(&CD2DWDialog::Moving_MouseMove),
-			state<Moving> +event<MouseLeaveEvent> = state<Normal>,
+			//state<Moving> +event<MouseLeaveEvent> = state<Normal>,
 			//Sizing
 			state<LeftSizing> +on_entry<LButtonBeginDragEvent> / call(&CD2DWDialog::Sizing_OnEntry),
 			state<RightSizing> +on_entry<LButtonBeginDragEvent> / call(&CD2DWDialog::Sizing_OnEntry),
@@ -57,10 +57,10 @@ struct CDialogStateMachine::Machine
 			state<TopSizing> +event<LButtonEndDragEvent> / call(&CD2DWDialog::Normal_LButtonEndDrag) = state<Normal>,
 			state<BottomSizing> +event<LButtonEndDragEvent> / call(&CD2DWDialog::Normal_LButtonEndDrag) = state<Normal>,
 
-			state<LeftSizing> +event<MouseLeaveEvent> = state<Normal>,
-			state<RightSizing> +event<MouseLeaveEvent> = state<Normal>,
-			state<TopSizing> +event<MouseLeaveEvent> = state<Normal>,
-			state<BottomSizing> +event<MouseLeaveEvent> = state<Normal>,
+			//state<LeftSizing> +event<MouseLeaveEvent> = state<Normal>,
+			//state<RightSizing> +event<MouseLeaveEvent> = state<Normal>,
+			//state<TopSizing> +event<MouseLeaveEvent> = state<Normal>,
+			//state<BottomSizing> +event<MouseLeaveEvent> = state<Normal>,
 
 			state<LeftSizing> +event<SetCursorEvent> / call(&CD2DWDialog::LeftSizing_SetCursor),
 			state<RightSizing> +event<SetCursorEvent> / call(&CD2DWDialog::RightSizing_SetCursor),

@@ -68,8 +68,9 @@ void CCalendarControl::Render(CDirect2DWrite* pDirect)
         //Today
         if (CYearMonthDay(Year->operator int(), Month->operator size_t(), day) == today) {
             pDirect->FillSolidRoundedRectangle(m_spProp->TodayFill, cell_rect, 3.f, 3.f);
+        } 
         //Selected
-        } else if (CYearMonthDay(Year->operator int(), Month->operator size_t(), day) == *SelectedYearMonthDay){
+        if (CYearMonthDay(Year->operator int(), Month->operator size_t(), day) == *SelectedYearMonthDay){
             pDirect->DrawSolidRoundedRectangle(m_spProp->SelectedLine, cell_rect, 3.f, 3.f);
         }
         //Text

@@ -216,6 +216,12 @@ struct RButtonDownEvent :public MouseEvent
 		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
 };
 
+struct RButtonUpEvent :public MouseEvent
+{
+	RButtonUpEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr)
+		:MouseEvent(pWnd, wParam, lParam, pHandled) {}
+};
+
 struct MButtonDownEvent :public MouseEvent
 {
 	MButtonDownEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr):
@@ -356,6 +362,8 @@ public:
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) {}
 
 	virtual void OnRButtonDown(const RButtonDownEvent& e) {}
+	virtual void OnRButtonUp(const RButtonUpEvent& e) {}
+	virtual void OnContextMenu(const ContextMenuEvent& e){}
 
 	virtual void OnMButtonDown(const MButtonDownEvent& e){}
 	virtual void OnMButtonUp(const MButtonUpEvent& e){}
@@ -371,7 +379,7 @@ public:
 	virtual void OnKeyUp(const KeyUpEvent& e) {}
 	virtual void OnSysKeyDown(const SysKeyDownEvent& e){}
 	virtual void OnChar(const CharEvent& e) {}
-	virtual void OnContextMenu(const ContextMenuEvent& e){}
+
 	virtual void OnKeyTraceDown(const KeyTraceDownEvent& e) {}
 	virtual void OnKeyTraceUp(const KeyTraceUpEvent& e) {}
 	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e) {}
@@ -381,8 +389,8 @@ public:
 	virtual void OnSetFocus(const SetFocusEvent& e) {}
 	virtual void OnKillFocus(const KillFocusEvent& e) {}
 
-	virtual void OnWndSetFocus(const SetFocusEvent& e) {};
-	virtual void OnWndKillFocus(const KillFocusEvent& e) {};
+
+
 
 	virtual void OnPropertyChanged(const wchar_t* name){}
 	

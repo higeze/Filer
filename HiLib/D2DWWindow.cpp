@@ -185,7 +185,7 @@ CPointF CD2DWWindow::GetCursorPosInWnd() const
 	return GetDirectPtr()->Pixels2Dips(pt);
 }
 
-bool CD2DWWindow::GetIsFocused()const
+bool CD2DWWindow::IsFocused()const
 {
 	auto hWndAct = ::GetActiveWindow();
 	auto hWndFcs = ::GetFocus();
@@ -201,6 +201,12 @@ bool CD2DWWindow::GetIsFocused()const
 		(HWND)::GetParent(hWndAct) == m_hWnd ||
 		(HWND)::GetParent(hWndFcs) == m_hWnd ||
 		(HWND)::GetParent(hWndFore) == m_hWnd;
+}
+
+
+bool CD2DWWindow::GetIsFocused()const
+{
+	return IsFocused();
 }
 
 void CD2DWWindow::Update()
@@ -265,10 +271,9 @@ LRESULT CD2DWWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 
 void CD2DWWindow::OnKeyDown(const KeyDownEvent& e)
 {
-	*(e.HandledPtr) = FALSE;
-	SendFocused(&CD2DWControl::OnKeyDown, e);
+	BubbleFocusMessage(&CD2DWControl::OnKeyDown, e);
 
-	if (*(e.HandledPtr) == FALSE) {
+	if (!*e.HandledPtr) {
 		switch (e.Char){
 			case VK_TAB:
 				{
@@ -298,6 +303,72 @@ void CD2DWWindow::OnKeyDown(const KeyDownEvent& e)
 				break;
 		}
 	}
+}
+
+void CD2DWWindow::ProcessMouseLeaveRecursive(const std::shared_ptr<CD2DWControl> pLeave, const MouseMoveEvent& e)
+{
+	if (pLeave) {
+		if (pLeave->m_pMouseControl) {
+			ProcessMouseLeaveRecursive(pLeave->m_pMouseControl, e);
+			pLeave->m_pMouseControl = nullptr;
+		}
+		pLeave->OnMouseLeave(MouseLeaveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
+	}
+}
+void CD2DWWindow::ProcessMouseEntryRecursive(const std::shared_ptr<CD2DWControl> pEntry, const MouseMoveEvent& e)
+{
+	if (pEntry) {
+		auto iter = std::find_if(pEntry->m_childControls.crbegin(), pEntry->m_childControls.crend(),
+			[&](const std::shared_ptr<CD2DWControl>& pChild) {
+			return *pChild->IsEnabled && pChild->GetRectInWnd().PtInRect(e.PointInWnd);
+		});
+
+		if (iter == pEntry->m_childControls.crend()) {//Mouse is NOT on child control, but on me.
+			ProcessMouseLeaveRecursive(pEntry->m_pMouseControl, e);
+		} else if (pEntry->m_pMouseControl != *iter) {//Mouse is on child control and different with previous one
+			ProcessMouseLeaveRecursive(pEntry->m_pMouseControl, e);
+			pEntry->m_pMouseControl = *iter;
+			ProcessMouseEntryRecursive(pEntry->m_pMouseControl, e);
+		} else {//Mouse is on same child control
+
+		}
+		pEntry->OnMouseEnter(MouseEnterEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
+	}
+}
+
+void CD2DWWindow::ProcessMouseInRecursive(const std::shared_ptr<CD2DWControl> pEntry, const MouseMoveEvent& e)
+{
+	if (pEntry) {
+		auto iter = std::find_if(pEntry->m_childControls.crbegin(), pEntry->m_childControls.crend(),
+			[&](const std::shared_ptr<CD2DWControl>& pChild) {
+			return *pChild->IsEnabled && pChild->GetRectInWnd().PtInRect(e.PointInWnd);
+		});
+
+		if (iter == pEntry->m_childControls.crend()) {//Mouse is NOT on child control, but on me.
+			ProcessMouseLeaveRecursive(pEntry->m_pMouseControl, e);
+		} else if (pEntry->m_pMouseControl != *iter) {//Mouse is on child control and different with previous one
+			ProcessMouseLeaveRecursive(pEntry->m_pMouseControl, e);
+			pEntry->m_pMouseControl = *iter;
+			ProcessMouseEntryRecursive(pEntry->m_pMouseControl, e);
+		} else {//Mouse is on same child control
+			ProcessMouseInRecursive(pEntry->m_pMouseControl, e);
+		}
+	}
+}
+
+void CD2DWWindow::ProcessMouseEntryLeave(const MouseMoveEvent& e)
+{
+	if (GetRectInWnd().PtInRect(e.PointInWnd)) {
+		ProcessMouseInRecursive(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()), e);
+	} else {
+		ProcessMouseLeaveRecursive(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()), e);
+	}
+}
+
+void CD2DWWindow::OnMouseMove(const MouseMoveEvent& e)
+{
+	ProcessMouseEntryLeave(e);
+	BubbleMouseMessage(&CD2DWControl::OnMouseMove, e);
 }
 
 

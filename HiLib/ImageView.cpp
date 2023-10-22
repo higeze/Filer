@@ -158,10 +158,6 @@ void CImageView::OnMouseWheel(const MouseWheelEvent& e)
 	}
 }
 
-void CImageView::OnWndKillFocus(const KillFocusEvent& e)
-{
-}
-
 /**********/
 /* Normal */
 /**********/
@@ -449,7 +445,6 @@ void CImageView::Normal_KillFocus(const KillFocusEvent& e)
 
 void CImageView::NormalPan_SetCursor(const SetCursorEvent& e)
 {
-	SendPtInRectReverse(&CUIElement::OnSetCursor, e);
 	if (!(*e.HandledPtr)) {
 		HCURSOR hCur = ::LoadCursor(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_CURSOR_HANDOPEN));
 		::SetCursor(hCur);

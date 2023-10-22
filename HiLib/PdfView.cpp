@@ -142,11 +142,6 @@ void CPdfView::OnMouseWheel(const MouseWheelEvent& e)
 	}
 }
 
-void CPdfView::OnWndKillFocus(const KillFocusEvent& e)
-{
-	m_caret.StopBlink();
-}
-
 /**********/
 /* Normal */
 /**********/
@@ -680,7 +675,6 @@ void CPdfView::Normal_KillFocus(const KillFocusEvent& e)
 
 void CPdfView::NormalPan_SetCursor(const SetCursorEvent& e)
 {
-	SendPtInRectReverse(&CUIElement::OnSetCursor, e);
 	if (!(*e.HandledPtr)) {
 		HCURSOR hCur = ::LoadCursor(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_CURSOR_HANDOPEN));
 		::SetCursor(hCur);
@@ -712,7 +706,6 @@ void CPdfView::NormalText_LButtonDown(const LButtonDownEvent& e)
 
 void CPdfView::NormalText_SetCursor(const SetCursorEvent& e)
 {
-	SendPtInRectReverse(&CUIElement::OnSetCursor, e);
 	if (!(*e.HandledPtr)) {
 		auto [page, index] = GetPageAndIndexFromWndPoint(e.PointInWnd);
 		if (page >= 0) {

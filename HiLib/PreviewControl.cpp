@@ -121,7 +121,7 @@ void CPreviewControl::OnEnable(const EnableEvent& e)
 	}
 }
 
-void CPreviewControl::OnWndKillFocus(const KillFocusEvent& e)
+void CPreviewControl::OnKillFocus(const KillFocusEvent& e)
 {
 }
 

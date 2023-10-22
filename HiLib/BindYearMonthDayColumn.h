@@ -44,8 +44,7 @@ public:
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		return std::make_shared<CBindYearMonthDayCell<TItems...>>(
-			m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty(),
-			arg<"editmode"_s>() = EditMode::ExcelLike);
+			m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
 	}
 };
 

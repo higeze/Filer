@@ -24,7 +24,7 @@ private:
 	std::unique_ptr<COleInitializer> m_pOleinit;
 	//RoInitialize(RO_INIT_SINGLETHREADED);
 
-	std::unique_ptr<CFilerWnd> m_pWnd;
+	std::shared_ptr<CFilerWnd> m_pWnd;
 
 
 	template<typename T>

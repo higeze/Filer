@@ -61,6 +61,7 @@ public:
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;
 
 	virtual void OnRButtonDown(const RButtonDownEvent& e) override;
+	virtual void OnRButtonUp(const RButtonUpEvent& e) override;
 
 	virtual void OnMButtonDown(const MButtonDownEvent& e) override {}
 	virtual void OnMButtonUp(const MButtonUpEvent& e) override {}
@@ -83,9 +84,6 @@ public:
 	virtual void OnSetFocus(const SetFocusEvent& e) override;
 	virtual void OnSetCursor(const SetCursorEvent& e) override;
 	virtual void OnKillFocus(const KillFocusEvent& e) override;
-
-	virtual void OnWndSetFocus(const SetFocusEvent& e) override;
-	virtual void OnWndKillFocus(const KillFocusEvent& e) override;
 
 	//String
 	virtual std::wstring GetString() override {return CSheet::GetSheetString();}

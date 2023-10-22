@@ -1,4 +1,4 @@
-#include "CalendarDialog.h"
+﻿#include "CalendarDialog.h"
 #include "D2DWWindow.h"
 #include "Button.h"
 #include "ButtonProperty.h"
@@ -21,6 +21,8 @@ CCalendarDialog::CCalendarDialog(
 	m_spMonthTextBox(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
 	m_spButtonPrev(std::make_shared<CButton>(this, spButtonProp)),
 	m_spButtonNext(std::make_shared<CButton>(this, spButtonProp)),
+	m_spButtonToday(std::make_shared<CButton>(this, spButtonProp)),
+	m_spButtonTomorrow(std::make_shared<CButton>(this, spButtonProp)),
 	m_spButtonClose(std::make_shared<CButton>(this, spButtonProp))
 {
 	m_spButtonPrev->Command.subscribe([this]()->void
@@ -48,6 +50,20 @@ CCalendarDialog::CCalendarDialog(
 		}
 	}, m_spButtonNext);
 	m_spButtonNext->Content.set(L">");
+
+	m_spButtonToday->Command.subscribe([this]()->void
+	{
+		m_spCalendar->SelectedYearMonthDay.set(CYearMonthDay::Today());
+
+	}, m_spButtonToday);
+	m_spButtonToday->Content.set(L"✓");
+
+	m_spButtonTomorrow->Command.subscribe([this]()->void
+	{
+		m_spCalendar->SelectedYearMonthDay.set(CYearMonthDay::Tomorrow());
+
+	}, m_spButtonTomorrow);
+	m_spButtonTomorrow->Content.set(L"+1");
 
 	m_spButtonClose->Command.subscribe([this]()->void
 	{
@@ -96,6 +112,8 @@ void CCalendarDialog::Measure(const CSizeF& availableSize)
 	m_spMonthTextBox->Measure(availableSize, L"12");
 	m_spButtonPrev->Measure(availableSize);
 	m_spButtonNext->Measure(availableSize);
+	m_spButtonToday->Measure(availableSize);
+	m_spButtonTomorrow->Measure(availableSize);
 	m_spButtonClose->Measure(availableSize);
 	m_spCalendar->Measure(availableSize);
 
@@ -110,6 +128,7 @@ const CSizeF CCalendarDialog::DesiredSize() const
 		padding + m_spYearTextBox->DesiredSize().width +
 		padding + m_spMonthTextBox->DesiredSize().width + 
 		padding + m_spButtonPrev->DesiredSize().width + m_spButtonNext->DesiredSize().width +
+		padding + m_spButtonToday->DesiredSize().width + m_spButtonTomorrow->DesiredSize().width +
 		padding + m_spButtonClose->DesiredSize().width,
 		padding + m_spCalendar->DesiredSize().width + padding),
 
@@ -126,6 +145,8 @@ void CCalendarDialog::Arrange(const CRectF& rc)
 	m_spMonthTextBox->Arrange(CRectF(CPointF(m_spYearTextBox->GetRectInWnd().right + padding, pt.y), m_spMonthTextBox->DesiredSize()));
 	m_spButtonPrev->Arrange(CRectF(CPointF(m_spMonthTextBox->GetRectInWnd().right + padding, pt.y), m_spButtonPrev->DesiredSize()));
 	m_spButtonNext->Arrange(CRectF(CPointF(m_spButtonPrev->GetRectInWnd().right, pt.y), m_spButtonNext->DesiredSize()));
+	m_spButtonToday->Arrange(CRectF(CPointF(m_spButtonNext->GetRectInWnd().right + padding, pt.y), m_spButtonToday->DesiredSize()));
+	m_spButtonTomorrow->Arrange(CRectF(CPointF(m_spButtonToday->GetRectInWnd().right, pt.y), m_spButtonTomorrow->DesiredSize()));
 	m_spButtonClose->Arrange(CRectF(CPointF(rc.right - m_spButtonClose->DesiredSize().width - padding, pt.y), m_spButtonClose->DesiredSize()));
 	pt.y += m_spYearTextBox->DesiredSize().height + padding;
 	m_spCalendar->Arrange(CRectF(pt, m_spCalendar->DesiredSize()));
@@ -164,6 +185,8 @@ void CCalendarDialog::OnCreate(const CreateEvt& e)
 	m_spMonthTextBox->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_spButtonPrev->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_spButtonNext->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spButtonToday->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spButtonTomorrow->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_spButtonClose->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_spCalendar->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 
@@ -186,7 +209,7 @@ void CCalendarDialog::OnPaint(const PaintEvent& e)
 
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spProp->BackgroundFill, GetRectInWnd());
 
-	SendAllReverse(&CD2DWControl::OnPaint, e);
+	ProcessMessageToAll(&CD2DWControl::OnPaint, e);
 
 	PaintBorder();
 

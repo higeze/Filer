@@ -23,7 +23,9 @@ protected:
 public:
 	template<typename... Args>
 	CBindYearMonthDayCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, args...), YearMonthDay(), Dummy(std::make_shared<int>(0))
+		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::ReadOnly, args...), 
+		YearMonthDay(), 
+		Dummy(std::make_shared<int>(0))
 	{
 		YearMonthDay.subscribe([this](const CYearMonthDay& ymd) {
 			OnPropertyChanged(L"value");
@@ -85,33 +87,33 @@ public:
 
 	virtual void OnContextMenu(const ContextMenuEvent& e) override
 	{
-		CMenu menu(::CreatePopupMenu());
-		MENUITEMINFO mii = { 0 };
-		mii.cbSize = sizeof(MENUITEMINFO);
-		mii.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
-		mii.fType = MFT_STRING;
-		mii.fState = MFS_ENABLED;
-		mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Today");
-		mii.dwTypeData = const_cast<LPWSTR>(L"Today");
-		mii.cch = 4;
-		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+		//CMenu menu(::CreatePopupMenu());
+		//MENUITEMINFO mii = { 0 };
+		//mii.cbSize = sizeof(MENUITEMINFO);
+		//mii.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
+		//mii.fType = MFT_STRING;
+		//mii.fState = MFS_ENABLED;
+		//mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Today");
+		//mii.dwTypeData = const_cast<LPWSTR>(L"Today");
+		//mii.cch = 4;
+		//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
-		mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Tomorrow");
-		mii.dwTypeData = const_cast<LPWSTR>(L"Tomorrow");
-		mii.cch = 6;
-		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+		//mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Tomorrow");
+		//mii.dwTypeData = const_cast<LPWSTR>(L"Tomorrow");
+		//mii.cch = 6;
+		//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 
-		::SetForegroundWindow(this->m_pSheet->GetWndPtr()->m_hWnd);
-		WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, this->m_pSheet->GetWndPtr()->m_hWnd);
-		
-		if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Today")) {
-			YearMonthDay.set(CYearMonthDay::Today());
-		} else if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Tomorrow")) {
-			YearMonthDay.set(CYearMonthDay::Tomorrow());
-		}
+		//::SetForegroundWindow(this->m_pSheet->GetWndPtr()->m_hWnd);
+		//WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, this->m_pSheet->GetWndPtr()->m_hWnd);
+		//
+		//if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Today")) {
+		//	YearMonthDay.set(CYearMonthDay::Today());
+		//} else if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Tomorrow")) {
+		//	YearMonthDay.set(CYearMonthDay::Tomorrow());
+		//}
 
-		*e.HandledPtr = TRUE;
+		//*e.HandledPtr = TRUE;
 
 	}
 };

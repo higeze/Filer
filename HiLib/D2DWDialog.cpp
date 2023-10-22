@@ -38,7 +38,7 @@ void CD2DWDialog::OnPaint(const PaintEvent& e)
 
 	PaintTitle();
 
-	SendAllReverse(&CD2DWControl::OnPaint, e);
+	ProcessMessageToAll(&CD2DWControl::OnPaint, e);
 
 	PaintBorder();
 
@@ -112,10 +112,7 @@ void CD2DWDialog::Normal_SetCursor(const SetCursorEvent& e)
 		TopSizing_SetCursor(e);
 	} else if (IsPtInBottomSizingRect(e.PointInWnd)) {
 		BottomSizing_SetCursor(e);
-	} else {
-		CD2DWControl::OnSetCursor(e);
 	}
-	*e.HandledPtr = TRUE;
 }
 	
 void CD2DWDialog::Moving_OnEntry(const LButtonBeginDragEvent& e)
