@@ -635,7 +635,7 @@ void CTabControl::OnSetCursor(const SetCursorEvent& e)
 	CD2DWControl::OnSetCursor(e);
 	if (!*e.HandledPtr) {
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
-		*(e.HandledPtr) = true;
+		*(e.HandledPtr) = TRUE;
 	}
 }
 
@@ -647,15 +647,16 @@ void CTabControl::OnKeyDown(const KeyDownEvent& e)
 	case 'T':
 		if (::GetAsyncKeyState(VK_CONTROL)) {
 			OnCommandNewTab(CommandEvent(e.WndPtr, 0, 0));
+			*(e.HandledPtr) = TRUE;
 		}
 		break;
 	case 'W':
 		if (::GetAsyncKeyState(VK_CONTROL)) {
 			OnCommandCloseTab(CommandEvent(e.WndPtr, 0, 0));
+			*(e.HandledPtr) = TRUE;
 		}
 		break;
 	default:
-		m_spCurControl->OnKeyDown(e);
 		break;
 	}
 }

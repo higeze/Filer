@@ -722,11 +722,11 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	case VK_RETURN:
 		if (m_isEnterText && !alt) {
-			EnterText.set(*Text);
+			EnterText.set(*Text);//TODOTODO Cannot call *e.HandledPtr = TRUE, since this Enter message is used at GridView Edit_Guard_KeyDown
 		} else {
 			ReplaceSelection(L"\n");
+			*e.HandledPtr = TRUE;
 		}
-		*e.HandledPtr = TRUE;
 		break;
 	case VK_TAB:
 		ReplaceSelection(L"\t");
@@ -802,9 +802,7 @@ void CTextBox::Normal_MouseMove(const MouseMoveEvent& e){}
 
 void CTextBox::Normal_Char(const CharEvent& e)
 {
-	bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
-
-	if (heldControl) {
+	if (::IsKeyDown(VK_CONTROL)) {
 		return;
 	}
 
@@ -812,6 +810,7 @@ void CTextBox::Normal_Char(const CharEvent& e)
 	if (e.Char >= L' ' && e.Char < 256) {
 		WCHAR wc[] = { static_cast<WCHAR>(e.Char), '\0' };
 		ReplaceSelection(wc);
+		*e.HandledPtr = TRUE;
 	}
 }
 

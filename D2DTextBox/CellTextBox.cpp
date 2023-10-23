@@ -8,7 +8,10 @@ CCellTextBox::CCellTextBox(
 	CTextCell* pCell,
 	std::function<void(const std::wstring&)> changed,
 	std::function<void(const std::wstring&)> final)
-	:CTextBox(pParentControl, pProp, text), m_pCell(pCell),m_changed(changed), m_final(final){}
+	:CTextBox(pParentControl, pProp, text), m_pCell(pCell),m_changed(changed), m_final(final)
+{
+	m_isEnterText = true;
+}
 
 void CCellTextBox::OnCreate(const CreateEvt& e)
 {

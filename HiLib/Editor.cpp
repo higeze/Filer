@@ -101,6 +101,7 @@ void CEditor::OnKeyDown(const KeyDownEvent& e)
 		case 'F':
 			if (ctrl) {
 				SetFocusedControlPtr(m_spFilterBox);
+				*e.HandledPtr = TRUE;
 			}
 			break;
 		case 'O':
@@ -122,7 +123,6 @@ void CEditor::OnKeyDown(const KeyDownEvent& e)
 			}
 			break;
 		default:
-			CD2DWControl::OnKeyDown(e);
 			break;
 	}
 }
