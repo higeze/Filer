@@ -297,7 +297,7 @@ public:
 	virtual void OnCreate(const CreateEvt& e) override { ProcessMessageToAllReverse(&CD2DWControl::OnCreate, e); }
 	virtual void OnDestroy(const DestroyEvent& e) override { ProcessMessageToAllReverse(&CD2DWControl::OnDestroy, e); }
 	//virtual void OnRect(const RectEvent& e)
-	virtual void OnPaint(const PaintEvent& e) override { ProcessMessageToAllReverse(&CD2DWControl::OnPaint, e); }
+	virtual void OnPaint(const PaintEvent& e) override { ProcessMessageToAll(&CD2DWControl::OnPaint, e); }
 	virtual void OnClosing(const ClosingEvent& e) override { ProcessMessageToAllReverse(&CUIElement::OnClosing, e); }
 	virtual void OnClose(const CloseEvent& e) override { ProcessMessageToAllReverse(&CUIElement::OnClose, e); }
 

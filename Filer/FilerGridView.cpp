@@ -1109,6 +1109,7 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		//}
 		files.push_back(m_spFolder);
 		ShowShellContextMenu(GetWndPtr()->m_hWnd, e.PointInScreen, m_spFolder->GetParent(), files, true);
+		*e.HandledPtr = TRUE;
 	}else if(cell->GetRowPtr() == m_pHeaderRow.get() || cell->GetRowPtr() == m_pNameHeaderRow.get()){
 		//Header menu
 		CMenu menu(::CreatePopupMenu());
@@ -1179,6 +1180,7 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		//	e.PointInScreen.x,
 		//	e.PointInScreen.y,
 		//	GetWndPtr()->m_hWnd);
+		*e.HandledPtr = TRUE;
 	}else{
 		//Cell menu
 		for(auto rowPtr : m_visRows){
@@ -1188,7 +1190,8 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 				files.push_back(spFile);
 			}
 		}
-			ShowShellContextMenu(GetWndPtr()->m_hWnd, e.PointInScreen, m_spFolder, files);
+		ShowShellContextMenu(GetWndPtr()->m_hWnd, e.PointInScreen, m_spFolder, files);
+		*e.HandledPtr = TRUE;
 	}
 
 	//CFilerGridViewBase::Normal_ContextMenu(e);
