@@ -36,6 +36,7 @@ public:
 	reactive_property_ptr<CYearMonthDay> SelectedYearMonthDay;
 	reactive_property_ptr<std::chrono::year> Year;
 	reactive_property_ptr<std::chrono::month> Month;
+	reactive_command_ptr<const LButtonClkEvent&> Selected;
 public:
 	CCalendarControl(CD2DWControl* pControl, const std::shared_ptr<CalendarControlProperty>& spProp)
 		:CD2DWControl(pControl), m_spProp(spProp){}

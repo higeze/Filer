@@ -729,8 +729,10 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 		}
 		break;
 	case VK_TAB:
-		ReplaceSelection(L"\t");
-		*e.HandledPtr = TRUE;
+		if (m_acceptsTab) {
+			ReplaceSelection(L"\t");
+			*e.HandledPtr = TRUE;
+		}
 		break;
 
 	default:

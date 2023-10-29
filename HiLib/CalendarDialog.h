@@ -21,6 +21,8 @@ private:
 	std::shared_ptr<CButton> m_spButtonNext;
 	std::shared_ptr<CButton> m_spButtonToday;
 	std::shared_ptr<CButton> m_spButtonTomorrow;
+	std::shared_ptr<CButton> m_spButtonBlank;
+
 	std::shared_ptr<CButton> m_spButtonClose;
 
 	bool m_showDefault = true;

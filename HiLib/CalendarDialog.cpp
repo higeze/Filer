@@ -23,6 +23,7 @@ CCalendarDialog::CCalendarDialog(
 	m_spButtonNext(std::make_shared<CButton>(this, spButtonProp)),
 	m_spButtonToday(std::make_shared<CButton>(this, spButtonProp)),
 	m_spButtonTomorrow(std::make_shared<CButton>(this, spButtonProp)),
+	m_spButtonBlank(std::make_shared<CButton>(this, spButtonProp)),
 	m_spButtonClose(std::make_shared<CButton>(this, spButtonProp))
 {
 	m_spButtonPrev->Command.subscribe([this]()->void
@@ -54,27 +55,29 @@ CCalendarDialog::CCalendarDialog(
 	m_spButtonToday->Command.subscribe([this]()->void
 	{
 		m_spCalendar->SelectedYearMonthDay.set(CYearMonthDay::Today());
-
+		OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
 	}, m_spButtonToday);
 	m_spButtonToday->Content.set(L"✓");
 
 	m_spButtonTomorrow->Command.subscribe([this]()->void
 	{
 		m_spCalendar->SelectedYearMonthDay.set(CYearMonthDay::Tomorrow());
-
+		OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
 	}, m_spButtonTomorrow);
 	m_spButtonTomorrow->Content.set(L"+1");
 
+	m_spButtonBlank->Command.subscribe([this]()->void
+	{
+		m_spCalendar->SelectedYearMonthDay.set(CYearMonthDay());
+		OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
+	}, m_spButtonBlank);
+	m_spButtonBlank->Content.set(L"  ");
+
 	m_spButtonClose->Command.subscribe([this]()->void
 	{
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+		OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
 	}, m_spButtonClose);
 	m_spButtonClose->Content.set(L"X");
-
-	//m_spCalendar->SelectedYearMonthDay.subscribe([this](auto) 
-	//{ 
-	//	GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-	//}, m_spCalendar);
 
 	m_spYearTextBox->SetIsEnterText(true);
 	m_spMonthTextBox->SetIsEnterText(true);
@@ -100,7 +103,9 @@ CCalendarDialog::CCalendarDialog(
 			spCalender->Month.set(std::chrono::month{static_cast<unsigned int>(_wtoi(notify.new_items.c_str()))});
 		}
 	}, m_spCalendar);
-
+	m_spCalendar->Selected.subscribe([this](auto) {
+		OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
+	}, m_spCalendar);
 
 }
 
@@ -114,6 +119,7 @@ void CCalendarDialog::Measure(const CSizeF& availableSize)
 	m_spButtonNext->Measure(availableSize);
 	m_spButtonToday->Measure(availableSize);
 	m_spButtonTomorrow->Measure(availableSize);
+	m_spButtonBlank->Measure(availableSize);
 	m_spButtonClose->Measure(availableSize);
 	m_spCalendar->Measure(availableSize);
 
@@ -128,7 +134,7 @@ const CSizeF CCalendarDialog::DesiredSize() const
 		padding + m_spYearTextBox->DesiredSize().width +
 		padding + m_spMonthTextBox->DesiredSize().width + 
 		padding + m_spButtonPrev->DesiredSize().width + m_spButtonNext->DesiredSize().width +
-		padding + m_spButtonToday->DesiredSize().width + m_spButtonTomorrow->DesiredSize().width +
+		padding + m_spButtonToday->DesiredSize().width + m_spButtonTomorrow->DesiredSize().width + m_spButtonBlank->DesiredSize().width +
 		padding + m_spButtonClose->DesiredSize().width,
 		padding + m_spCalendar->DesiredSize().width + padding),
 
@@ -147,6 +153,7 @@ void CCalendarDialog::Arrange(const CRectF& rc)
 	m_spButtonNext->Arrange(CRectF(CPointF(m_spButtonPrev->GetRectInWnd().right, pt.y), m_spButtonNext->DesiredSize()));
 	m_spButtonToday->Arrange(CRectF(CPointF(m_spButtonNext->GetRectInWnd().right + padding, pt.y), m_spButtonToday->DesiredSize()));
 	m_spButtonTomorrow->Arrange(CRectF(CPointF(m_spButtonToday->GetRectInWnd().right, pt.y), m_spButtonTomorrow->DesiredSize()));
+	m_spButtonBlank->Arrange(CRectF(CPointF(m_spButtonTomorrow->GetRectInWnd().right, pt.y), m_spButtonBlank->DesiredSize()));
 	m_spButtonClose->Arrange(CRectF(CPointF(rc.right - m_spButtonClose->DesiredSize().width - padding, pt.y), m_spButtonClose->DesiredSize()));
 	pt.y += m_spYearTextBox->DesiredSize().height + padding;
 	m_spCalendar->Arrange(CRectF(pt, m_spCalendar->DesiredSize()));
@@ -187,6 +194,7 @@ void CCalendarDialog::OnCreate(const CreateEvt& e)
 	m_spButtonNext->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_spButtonToday->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_spButtonTomorrow->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spButtonBlank->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_spButtonClose->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_spCalendar->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 

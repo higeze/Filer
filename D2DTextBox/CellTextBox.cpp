@@ -10,6 +10,7 @@ CCellTextBox::CCellTextBox(
 	std::function<void(const std::wstring&)> final)
 	:CTextBox(pParentControl, pProp, text), m_pCell(pCell),m_changed(changed), m_final(final)
 {
+	m_acceptsTab = false;
 	m_isEnterText = true;
 }
 

@@ -101,5 +101,6 @@ void CCalendarControl::OnLButtonClk(const LButtonClkEvent& e)
     if (1 <= day && day <= lastday_in_month) {
         SelectedYearMonthDay.set(CYearMonthDay(Year->operator int(), Month->operator unsigned int(), day));
     }
+    Selected.execute(e);
     *e.HandledPtr = TRUE;
 }

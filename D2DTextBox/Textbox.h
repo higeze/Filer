@@ -78,6 +78,7 @@ protected:
 	std::unique_ptr<CVScroll> m_pVScroll;
 	std::unique_ptr<CHScroll> m_pHScroll;
 	/* Other */
+	bool m_acceptsTab = true;
 	bool m_isEnterText = false;
 	bool m_hasBorder = true;
 	bool m_isScrollable = false;

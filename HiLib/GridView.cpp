@@ -979,14 +979,15 @@ void CGridView::Normal_KeyDown(const KeyDownEvent& e)
 	switch (e.Char) {
 	case VK_TAB:
 		{
-			std::shared_ptr<CCell> spCurCell = m_spCursorer->GetCurrentCell();
+		if (std::shared_ptr<CCell> spCurCell = m_spCursorer->GetCurrentCell()) {
 			auto shift = ::GetAsyncKeyState(VK_SHIFT);
 			std::shared_ptr<CCell> spJumpCell = shift ? TabPrev(spCurCell) : TabNext(spCurCell);
 
 			if (spJumpCell) {
-				(*e.HandledPtr) = true;
 				Jump(spJumpCell);
+				(*e.HandledPtr) = true;
 			}
+		}
 		}
 		break;
 	case VK_HOME:

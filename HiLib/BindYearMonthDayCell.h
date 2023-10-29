@@ -60,7 +60,7 @@ public:
 
 	virtual bool CanSetStringOnEditing()const override{return false;}
 
-	virtual void OnLButtonDown(const LButtonDownEvent& e) override
+	virtual void OnLButtonClk(const LButtonClkEvent& e) override
 	{
 		auto spDlg = std::make_shared<CCalendarDialog>(
 			m_pSheet->GetGridPtr(),
@@ -80,40 +80,14 @@ public:
 		YearMonthDay.binding(spDlg->GetCalendarPtr()->SelectedYearMonthDay);
 
 		spDlg->Measure(CSizeF(300, 200));
-		spDlg->OnCreate(CreateEvt(m_pSheet->GetWndPtr(), m_pSheet->GetGridPtr(), CRectF(e.PointInWnd, spDlg->DesiredSize())));
-		spDlg->Arrange(CRectF(e.PointInWnd, spDlg->DesiredSize()));
+		CPointF pt(
+			std::clamp(e.PointInWnd.x, m_pSheet->GetRectInWnd().left, m_pSheet->GetRectInWnd().right - spDlg->DesiredSize().width),
+			std::clamp(e.PointInWnd.y, m_pSheet->GetRectInWnd().top, m_pSheet->GetRectInWnd().bottom - spDlg->DesiredSize().height)
+		);
+		spDlg->OnCreate(CreateEvt(m_pSheet->GetWndPtr(), m_pSheet->GetGridPtr(), CRectF(pt, spDlg->DesiredSize())));
+		spDlg->Arrange(CRectF(pt, spDlg->DesiredSize()));
 		m_pSheet->GetGridPtr()->SetFocusedControlPtr(spDlg);
 	}
 
-	virtual void OnContextMenu(const ContextMenuEvent& e) override
-	{
-		//CMenu menu(::CreatePopupMenu());
-		//MENUITEMINFO mii = { 0 };
-		//mii.cbSize = sizeof(MENUITEMINFO);
-		//mii.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
-		//mii.fType = MFT_STRING;
-		//mii.fState = MFS_ENABLED;
-		//mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Today");
-		//mii.dwTypeData = const_cast<LPWSTR>(L"Today");
-		//mii.cch = 4;
-		//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
-		//mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Tomorrow");
-		//mii.dwTypeData = const_cast<LPWSTR>(L"Tomorrow");
-		//mii.cch = 6;
-		//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
-
-		//::SetForegroundWindow(this->m_pSheet->GetWndPtr()->m_hWnd);
-		//WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, this->m_pSheet->GetWndPtr()->m_hWnd);
-		//
-		//if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Today")) {
-		//	YearMonthDay.set(CYearMonthDay::Today());
-		//} else if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Tomorrow")) {
-		//	YearMonthDay.set(CYearMonthDay::Tomorrow());
-		//}
-
-		//*e.HandledPtr = TRUE;
-
-	}
 };

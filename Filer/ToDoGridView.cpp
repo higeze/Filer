@@ -157,8 +157,10 @@ void CToDoGridView::Normal_KeyDown(const KeyDownEvent& e)
 {
 	if ((e.Char == 'O') && ::GetAsyncKeyState(VK_CONTROL)) {
 		Open();
+		*e.HandledPtr = TRUE;
 	} else if ((e.Char == 'S') && ::GetAsyncKeyState(VK_CONTROL)) {
 		Save();
+		*e.HandledPtr = TRUE;
 	} else {
 		CGridView::Normal_KeyDown(e);
 	}
