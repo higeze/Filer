@@ -48,7 +48,7 @@ LRESULT CD2DWWindow::HostWndSubProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			//	SetFocusedControlPtr(spControl);
 			//}
 			CD2DWControl* pControl = reinterpret_cast<CD2DWControl*>(dwRefData);
-			SetFocusedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(pControl->shared_from_this()));
+			GetWndPtr()->SetFocusToControl(std::dynamic_pointer_cast<CD2DWControl>(pControl->shared_from_this()));
 		}
 		break;
 	};
@@ -113,7 +113,7 @@ CD2DWWindow::CD2DWWindow()
 	{
 		CD2DWControl* pControl = reinterpret_cast<CD2DWControl*>(wParam);
 		while (auto pParent = pControl->GetParentControlPtr()) {
-			pParent->SetFocusedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(pControl->shared_from_this()));
+			GetWndPtr()->SetFocusToControl(std::dynamic_pointer_cast<CD2DWControl>(pControl->shared_from_this()));
 			pControl = pParent;
 		};
 		bHandled = TRUE;
@@ -286,14 +286,14 @@ void CD2DWWindow::OnKeyDown(const KeyDownEvent& e)
 					for (auto iter = std::next(focused_iter, 1) ; iter != m_childControls.cend(); ++iter) {
 						if ((*iter)->GetIsTabStop()) {
 							*(e.HandledPtr) = TRUE;
-							SetFocusedControlPtr((*iter));
+							GetWndPtr()->SetFocusToControl((*iter));
 							break;
 						}
 					}
 					for (auto iter = m_childControls.cbegin(); iter != focused_iter; ++iter) {
 						if ((*iter)->GetIsTabStop()) {
 							*(e.HandledPtr) = TRUE;
-							SetFocusedControlPtr((*iter));
+							GetWndPtr()->SetFocusToControl((*iter));
 							break;
 						}
 					}
@@ -364,6 +364,27 @@ void CD2DWWindow::ProcessMouseEntryLeave(const MouseMoveEvent& e)
 		ProcessMouseLeaveRecursive(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()), e);
 	}
 }
+
+void CD2DWWindow::OnPaint(const PaintEvent& e)
+{ 
+	ProcessMessageToAll(&CD2DWControl::OnPaint, e); 
+	//Cur Focused
+	std::vector<std::shared_ptr<CD2DWControl>> tunnelCurControls;
+	std::shared_ptr<CD2DWControl> pParentControl = std::dynamic_pointer_cast<CD2DWControl>(shared_from_this());
+	while (pParentControl->m_pFocusedControl) {
+		tunnelCurControls.push_back(pParentControl->m_pFocusedControl);
+		pParentControl = pParentControl->m_pFocusedControl;
+	}
+
+	SolidLine FocusedLine = SolidLine(22.f / 255.f, 160.f / 255.f, 133.f / 255.f, 1.0f, 1.0f);
+	for (auto iter = tunnelCurControls.rbegin(); iter != tunnelCurControls.rend(); iter++) {
+		CRectF rcFocus((*iter)->GetRectInWnd());
+		rcFocus.DeflateRect(1.0f, 1.0f);
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(FocusedLine, rcFocus);
+	}
+
+}
+
 
 void CD2DWWindow::OnMouseMove(const MouseMoveEvent& e)
 {

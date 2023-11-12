@@ -477,9 +477,7 @@ void CTextBox::Normal_Paint(const PaintEvent& e)
 	//Paint Focused Line
 	CRectF rcBorder(GetRectInWnd());
 	rcBorder.DeflateRect(1.0f, 1.0f);
-	if (GetIsFocused()) {
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(m_pProp->FocusedLine), rcBorder);
-	} else if (m_hasBorder) {
+	if (m_hasBorder) {
 		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(m_pProp->Line), rcBorder);
 	} else {
 		// Do nothing

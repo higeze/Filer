@@ -14,11 +14,12 @@ class CFPDFPage
 private:
     struct delete_fpdf_page
     {
-	    void operator()(FPDF_PAGE p)
+	    void operator()(FPDF_PAGE& p)
         { 
             if(p){
                 FPDF_LOCK;
                 FPDF_ClosePage(p);
+                p = nullptr;
             }
         }
     };

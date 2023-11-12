@@ -86,12 +86,6 @@ void CPreviewControl::OnPaint(const PaintEvent& e)
 {
 	//Paint Background
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_pProp->NormalFill, GetRectInWnd());
-	//Paint Focused Line
-	CRectF rcBorder(GetRectInWnd());
-	rcBorder.DeflateRect(1.0f, 1.0f);
-	if (GetIsFocused()) {
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(m_pProp->FocusedLine, rcBorder);
-	}
 }
 
 void CPreviewControl::OnClose(const CloseEvent& e)

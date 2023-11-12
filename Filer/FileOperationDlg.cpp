@@ -461,7 +461,7 @@ void CExeExtensionDlg::OnCreate(const CreateEvt& e)
 	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
 
 	//Focus
-	SetFocusedControlPtr(m_spButtonDo);
+	GetWndPtr()->SetFocusToControl(m_spButtonDo);
 }
 
 void CExeExtensionDlg::OnRect(const RectEvent& e)
@@ -538,7 +538,7 @@ void CPDFOperationDlgBase::OnCreate(const CreateEvt& e)
 	m_spParameter->OnCreate(CreateEvt(GetWndPtr(), this, rcParam));
 	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnDo));
 	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
-	SetFocusedControlPtr(m_spButtonDo);
+	GetWndPtr()->SetFocusToControl(m_spButtonDo);
 }
 
 void CPDFOperationDlgBase::OnRect(const RectEvent& e)
@@ -608,7 +608,7 @@ CPDFMergeDlg::CPDFMergeDlg(
 			auto count = doc.GetPageCount();
 			doc.ImportPages(srcDoc, NULL, count);		
 		}
-		doc.SaveWithVersion(*m_spParameter->Text, 0,  minVersion);
+		doc.SaveAs(*m_spParameter->Text, minVersion, false);
 		
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	}, Dummy);
@@ -641,7 +641,7 @@ CPDFExtractDlg::CPDFExtractDlg(
 			boost::algorithm::replace_all(param, L"first", L"1");
 			boost::algorithm::replace_all(param, L"last", std::to_wstring(doc.GetPageCount()));
 			CPDFDoc dst_doc(doc.Extract(param));
-			dst_doc.SaveWithVersion(std::format(L"{}_{}.pdf", file->GetPathWithoutExt(), *m_spParameter->Text),0, doc.GetFileVersion());
+			dst_doc.SaveAs(std::format(L"{}_{}.pdf", file->GetPathWithoutExt(), *m_spParameter->Text), doc.GetFileVersion(), false);
 		}
 
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
@@ -671,7 +671,7 @@ CPDFUnlockDlg::CPDFUnlockDlg(
 		for (auto& file : files) {
 			CPDFDoc doc;
 			doc.Open(file->GetPath(), *m_spParameter->Text);
-			doc.SaveWithVersion(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), L"_unlock"),  FPDF_REMOVE_SECURITY, doc.GetFileVersion());
+			doc.SaveAs(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), L"_unlock"),  doc.GetFileVersion(), true);
 		}
 
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });

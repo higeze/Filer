@@ -45,7 +45,7 @@ public:
 	virtual CRectF GetRectInWnd()const override { return m_rect; }
 
 	std::shared_ptr<CD2DWControl>& GetFocusedControlPtr(){ return m_pFocusedControl;}
-	void SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl);
+	//void SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl);
 	std::shared_ptr<CD2DWControl>& GetMouseControlPtr(){ return m_pMouseControl;}
 	void SetMouseControlPtr(const std::shared_ptr<CD2DWControl>& spControl) { m_pMouseControl = spControl; }
 	virtual bool GetIsTabStop()const { return m_isTabStop; }

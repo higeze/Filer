@@ -155,7 +155,7 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 
 		if (!m_idlMap.empty()) {
 			m_spButtonDo->IsEnabled.set(true);
-			SetFocusedControlPtr(m_spButtonDo);
+			GetWndPtr()->SetFocusToControl(m_spButtonDo);
 		}
 	};
 	

@@ -100,7 +100,7 @@ void CEditor::OnKeyDown(const KeyDownEvent& e)
 	switch (e.Char) {
 		case 'F':
 			if (ctrl) {
-				SetFocusedControlPtr(m_spFilterBox);
+				GetWndPtr()->SetFocusToControl(m_spFilterBox);
 				*e.HandledPtr = TRUE;
 			}
 			break;

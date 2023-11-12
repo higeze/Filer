@@ -248,7 +248,7 @@ void CCell::SetIsSelected(const bool& selected)
 
 bool CCell::GetIsFocused()const
 {
-	return m_pSheet->IsFocusedCell(this) /* || m_pSheet->GetFocused()*/;
+	return m_pSheet->IsFocusedCell(this) && m_pSheet->IsFocused();
 }
 
 bool CCell::GetIsDoubleFocused()const

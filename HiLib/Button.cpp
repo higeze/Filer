@@ -67,9 +67,6 @@ void CButton::OnPaint(const PaintEvent& e)
 				break;
 		}
 
-		if (GetIsFocused()) {
-			line = m_spButtonProperty->FocusedLine;
-		}
 	} else {
 		format = m_spButtonProperty->DisableFormat;
 		if (!DisableContent->empty()) {

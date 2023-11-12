@@ -879,7 +879,7 @@ bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 		destIDL, m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
 	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(400, 600))));
-	GetWndPtr()->SetFocusedControlPtr(pDlg);
+	GetWndPtr()->SetFocusToControl(pDlg);
 
 	return true;
 }
@@ -894,7 +894,7 @@ bool CFilerGridView::CopySelectedFilesTo(const CIDL& destIDL)
 		destIDL, m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
 	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
-	GetWndPtr()->SetFocusedControlPtr(pDlg);
+	GetWndPtr()->SetFocusToControl(pDlg);
 
 	return true;
 }
@@ -909,7 +909,7 @@ bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 		destIDL, m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
 	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
-	GetWndPtr()->SetFocusedControlPtr(pDlg);
+	GetWndPtr()->SetFocusToControl(pDlg);
 
 	return true;
 }
@@ -924,7 +924,7 @@ bool CFilerGridView::DeleteSelectedFiles()
 		m_spFolder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
 	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
-	GetWndPtr()->SetFocusedControlPtr(pDlg);
+	GetWndPtr()->SetFocusToControl(pDlg);
 
 	return true;
 }
@@ -1026,35 +1026,33 @@ bool CFilerGridView::InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVer
 	for (auto file : files) {
 		vpIdl.push_back(file->GetAbsoluteIdl().FindLastID());
 	}
-    CComPtr<IContextMenu> pcm;
-	HRESULT hr=psf->GetUIObjectOf(hWnd, vpIdl.size(),(LPCITEMIDLIST*)(vpIdl.data()),IID_IContextMenu,nullptr,(LPVOID *)&pcm);
-    if(SUCCEEDED(hr)){
+
+	do {
+		CComPtr<IContextMenu> pcm;
+		FAILED_BREAK(psf->GetUIObjectOf(hWnd, vpIdl.size(),(LPCITEMIDLIST*)(vpIdl.data()),IID_IContextMenu,nullptr,(LPVOID *)&pcm));
 		CMenu menu=CMenu(CreatePopupMenu());
-		if(!menu.IsNull()){
-			hr=pcm->QueryContextMenu(menu,0,1,0x7FFF, CMF_NORMAL);
-			if (SUCCEEDED(hr)){
-				CMINVOKECOMMANDINFO cmi = {0};
-				cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
-				cmi.fMask = CMIC_MASK_NOASYNC;
-				cmi.hwnd = hWnd;
-				cmi.lpVerb = lpVerb;
-				cmi.nShow = SW_SHOWNORMAL;
+		FALSE_BREAK(!menu.IsNull());
+		FAILED_BREAK(pcm->QueryContextMenu(menu,0,1,0x7FFF, CMF_NORMAL));
 
-				hr=pcm->InvokeCommand((LPCMINVOKECOMMANDINFO)&cmi);
+		CMINVOKECOMMANDINFO cmi = {0};
+		cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
+		cmi.fMask = CMIC_MASK_NOASYNC;
+		cmi.hwnd = hWnd;
+		cmi.lpVerb = lpVerb;
+		cmi.nShow = SW_SHOWNORMAL;
+
+		if (SUCCEEDED(pcm->InvokeCommand((LPCMINVOKECOMMANDINFO)&cmi))) {
+			if (StatusLog) {
+				StatusLog(fmt::format(L"SUCCEEDED {}:{}", str2wstr(lpVerb), files[0]->GetPathName()));
 			}
+			return true;
+		} else {
+			if (StatusLog) {
+				StatusLog(fmt::format(L"FAILED {}:{}", str2wstr(lpVerb), files[0]->GetPathName()));
+			}
+			return false;
 		}
-    }
-
-	if (SUCCEEDED(hr)) {
-		if (StatusLog) {
-			StatusLog(fmt::format(L"SUCCEEDED {}:{}", str2wstr(lpVerb), files[0]->GetPathName()));
-		}
-	} else {
-		if (StatusLog) {
-			StatusLog(fmt::format(L"FAILED {}:{}", str2wstr(lpVerb), files[0]->GetPathName()));
-		}
-	}
-	return SUCCEEDED(hr);
+	} while (false);
 }
 
 bool CFilerGridView::InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf)

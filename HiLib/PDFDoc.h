@@ -73,8 +73,8 @@ public:
 		unsigned long length,
 		int index);
 	void Save();
-	void Save(const std::wstring& path);
-	void SaveWithVersion(const std::wstring& path, FPDF_DWORD flags, int fileVersion);
+	void SaveAs(const std::wstring& path, int fileVersion, bool removeSecurity);
+
 
 	void SplitSave() const;
 	void Merge(const std::vector<CPDFDoc>& srcDocs);

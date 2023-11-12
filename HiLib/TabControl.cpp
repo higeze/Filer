@@ -528,8 +528,8 @@ void CTabControl::OnCreate(const CreateEvt& e)
 					m_spCurControl = spControl;
 					m_spCurControl->OnEnable(EnableEvent(GetWndPtr(), true));
 					m_spCurControl->IsEnabled.set(true);
-					SetFocusedControlPtr(spControl);
 				}
+				GetWndPtr()->SetFocusToControl(spControl);
 			}
 			//for (auto p : m_childControls) {
 			//	if (std::string(typeid(*p).name()).find("CFilerGridView") != std::string::npos) {

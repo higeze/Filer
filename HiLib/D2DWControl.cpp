@@ -1,16 +1,17 @@
 #include "D2DWControl.h"
 #include "D2DWWindow.h"
 
-void CD2DWControl::SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl)
-{
-	if (m_pFocusedControl != spControl && *spControl->IsFocusable) {
-		if (m_pFocusedControl) {
-			m_pFocusedControl->OnKillFocus(KillFocusEvent(GetWndPtr(), 0, 0, nullptr));
-		}
-		m_pFocusedControl = spControl;
-		m_pFocusedControl->OnSetFocus(SetFocusEvent(GetWndPtr(), 0, 0, nullptr));
-	}
-}
+//void CD2DWControl::SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl)
+//{
+//	//if (m_pFocusedControl != spControl && *spControl->IsFocusable) {
+//	//	if (m_pFocusedControl) {
+//
+//	//		m_pFocusedControl->OnKillFocus(KillFocusEvent(GetWndPtr(), 0, 0, nullptr));
+//	//	}
+//	//	m_pFocusedControl = spControl;
+//	//	m_pFocusedControl->OnSetFocus(SetFocusEvent(GetWndPtr(), 0, 0, nullptr));
+//	//}
+//}
 
 void CD2DWControl::AddChildControlPtr(const std::shared_ptr<CD2DWControl>& pControl)
 {
@@ -34,7 +35,8 @@ void CD2DWControl::EraseChildControlPtr(const std::shared_ptr<CD2DWControl>& pCo
 
 bool CD2DWControl::IsFocused()const
 {
-	return GetParentControlPtr()->GetFocusedControlPtr().get() == const_cast<CD2DWControl*>(this);
+	return m_pParentControl->IsFocused() &&
+		m_pParentControl->m_pFocusedControl.get() == const_cast<CD2DWControl*>(this);
 }
 
 bool CD2DWControl::GetIsFocused()const
@@ -94,7 +96,7 @@ void CD2DWControl::OnKeyDown(const KeyDownEvent& e)
 			}
 			for (auto iter = focused_iter; iter != m_childControls.crend(); ++iter) {
 				if ((*iter)->GetIsTabStop()) {
-					SetFocusedControlPtr((*focused_iter));
+					GetWndPtr()->SetFocusToControl((*focused_iter));
 					*(e.HandledPtr) = TRUE;
 				}
 			}

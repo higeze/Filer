@@ -117,8 +117,10 @@ protected:
 	FLOAT m_minScale = 0.1f;
 	FLOAT m_maxScale = 8.f;
 
-	std::unique_ptr<CD2DPDFBitmapDrawer> m_pdfDrawer;
+
 	CComPtr<IFileIsInUse> m_pFileIsInUse;
+
+	std::unique_ptr<CD2DPDFBitmapDrawer> m_pdfDrawer;
 
     //std::vector<std::unique_ptr<CPdfPage>> m_pdfPages;
    // std::vector<CComPtr<ID2D1Bitmap1>> m_pdfBmps;
@@ -143,6 +145,8 @@ public:
 	std::tuple<int, int> GetPageAndIndexFromWndPoint(const CPointF& ptInWnd);
 
 	std::tuple<CRectF, CRectF> GetRects() const;
+
+	const std::unique_ptr<CD2DPDFBitmapDrawer>& GetPDFDrawer() const { return m_pdfDrawer; }
 
 public:
 	/************/

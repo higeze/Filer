@@ -56,7 +56,7 @@ void CTextBoxDialog::OnCreate(const CreateEvt& e)
 	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
 
 	//Focus
-	SetFocusedControlPtr(m_spButtonOK);
+	GetWndPtr()->SetFocusToControl(m_spButtonOK);
 }
 
 void CTextBoxDialog::OnRect(const RectEvent& e)

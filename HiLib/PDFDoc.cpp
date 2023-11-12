@@ -154,7 +154,6 @@ const std::shared_ptr<CFPDFFormHandle>& CPDFDoc::GetFormHandlePtr() const
 const std::vector<std::unique_ptr<CPDFPage>>& CPDFDoc::GetPages() const
 {
 	if (!m_optPages.has_value()) {
-
 		std::vector<std::unique_ptr<CPDFPage>> pages;
 		for (auto i = 0; i < GetPageCount(); i++) {
 			std::unique_ptr<CFPDFPage> pPage(std::make_unique<CFPDFPage>(m_pDoc->LoadPage(i)));
@@ -299,34 +298,32 @@ void CPDFDoc::DeletePage(int page_index)
 
 void CPDFDoc::Save()
 {
-	Save(*Path);
-}
+	//FPDF_LOCK;
+	if (!*IsDirty || !::PathFileExistsW(Path->c_str())) { return; }
 
-void CPDFDoc::Save(const std::wstring& path)
-{
-	//To release binding between FPDF_DOCUMENT and File, Copy to new FPDF_DOCUMENT and Swap
-	std::unique_ptr<CFPDFDocument> pNewDoc(std::make_unique<CFPDFDocument>());
-	pNewDoc->CreateNewDocument();
-	pNewDoc->ImportPages(*m_pDoc, nullptr, 0);
-	int version = GetFileVersion();
-
-	m_pDoc = std::move(pNewDoc);
-
-	SaveWithVersion(path, 0, version);
-}
-
-void CPDFDoc::SaveWithVersion(const std::wstring& path, FPDF_DWORD flags, int fileVersion)
-{
-	CFPDFFileWrite fileWrite(path);
-	FPDF_BOOL b = m_pDoc->SaveWithVersion(&fileWrite, flags, fileVersion);
-
+	//To release binding between FPDF_DOCUMENT and File, Clone and Swap
+	//Before those reset, it is necessary to make sure the other thread not to touch those element (Call CD2DPDFBitmapDrawer::WaitAll) 
 	m_optFileVersion.reset();
 	m_optPageCount.reset();
 	m_optSize.reset();
 	m_optPageRects.reset();
 	m_optFormHandlePtr.reset();
 	m_optPages.reset();
-	IsDirty.set(false);
+
+	m_pDoc.reset(m_pDoc->Clone());
+
+	//Save
+	if (CFPDFFileWrite fileWrite(*Path); m_pDoc->SaveWithVersion(&fileWrite, FPDF_NO_INCREMENTAL, GetFileVersion())) {
+		IsDirty.set(false);
+	}
+}
+
+void CPDFDoc::SaveAs(const std::wstring& path, int fileVersion, bool removeSecurity)
+{
+	FPDF_DWORD flags = removeSecurity ? FPDF_REMOVE_SECURITY : FPDF_NO_INCREMENTAL;
+	if (CFPDFFileWrite fileWrite(path); m_pDoc->SaveWithVersion(&fileWrite, flags, fileVersion)) {
+		IsDirty.set(false);
+	}
 }
 
 void CPDFDoc::ImportPages(const CPDFDoc& src_doc,
@@ -367,7 +364,7 @@ void CPDFDoc::SplitSave() const
 		std::array<int, 1> indices{ i };
 		dstDoc.ImportPagesByIndex(*this, indices.data(), indices.size(),  0);
 
-		dstDoc.SaveWithVersion(dstPath, 0, GetFileVersion());
+		dstDoc.SaveAs(dstPath, GetFileVersion(), false);
 	}
 }
 

@@ -266,7 +266,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 					m_spFilerGridViewProp, m_spEditorProp->EditorTextBoxPropPtr, folder, files);
 
 				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 200))));
-				SetFocusedControlPtr(spDlg);
+				GetWndPtr()->SetFocusToControl(spDlg);
 				return true;
 			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFMerge")) {
 				auto spDlg = std::make_shared<CPDFMergeDlg>(
@@ -275,7 +275,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 					m_spFilerGridViewProp, m_spEditorProp->EditorTextBoxPropPtr, folder, files);
 
 				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
-				SetFocusedControlPtr(spDlg);
+				GetWndPtr()->SetFocusToControl(spDlg);
 				return true;
 			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFExtract")) {
 				auto spDlg = std::make_shared<CPDFExtractDlg>(
@@ -284,7 +284,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 					m_spFilerGridViewProp, m_spEditorProp->EditorTextBoxPropPtr, folder, files);
 
 				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
-				SetFocusedControlPtr(spDlg);
+				GetWndPtr()->SetFocusToControl(spDlg);
 				return true;
 			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFUnlock")) {
 				auto spDlg = std::make_shared<CPDFUnlockDlg>(
@@ -293,7 +293,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 					m_spFilerGridViewProp, m_spEditorProp->EditorTextBoxPropPtr, folder, files);
 
 				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
-				SetFocusedControlPtr(spDlg);
+				GetWndPtr()->SetFocusToControl(spDlg);
 				return true;
 			} else {
 				auto iter = std::find_if(m_spExeExProp->ExeExtensions->cbegin(), m_spExeExProp->ExeExtensions->cend(),
@@ -307,7 +307,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 						m_spFilerGridViewProp, m_spEditorProp->EditorTextBoxPropPtr, folder, files, std::get<ExeExtension>(*iter));
 
 					spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
-					SetFocusedControlPtr(spDlg);
+					GetWndPtr()->SetFocusToControl(spDlg);
 					return true;
 				}
 
@@ -380,7 +380,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	m_spLeftView->SetIsTabStop(true);
 	m_spRightView->SetIsTabStop(true);
 
-	SetFocusedControlPtr(m_spLeftView);
+	GetWndPtr()->SetFocusToControl(m_spLeftView);
 }
 
 void CFilerWnd::OnKeyDown(const KeyDownEvent& e)

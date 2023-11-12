@@ -130,7 +130,7 @@ public:
 		this->m_spButtonCancel->OnCreate(CreateEvt(this->GetWndPtr(), this, rcBtnCancel));
 
 		//Focus
-		this->SetFocusedControlPtr(this->m_spButtonDo);
+		this->GetWndPtr()->SetFocusToControl(this->m_spButtonDo);
 	}
 
 	virtual void OnRect(const RectEvent& e) override

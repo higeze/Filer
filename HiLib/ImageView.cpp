@@ -331,13 +331,6 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 	m_spVScroll->OnPaint(e);
 	m_spHScroll->OnPaint(e);
 
-	//Paint Focused Line
-	if (GetIsFocused() ){
-		CRectF rcFocus(GetRectInWnd());
-		rcFocus.DeflateRect(1.0f, 1.0f);
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(m_pProp->FocusedLine), rcFocus);
-	}
-
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
 }
 

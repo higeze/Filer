@@ -98,7 +98,7 @@ void CCalendarControl::OnLButtonClk(const LButtonClkEvent& e)
     int y = static_cast<int>(std::floorf(pt.y / m_opt_cell_size->height));
 
     int day = (y - 1) * 7 - weekday_offset + x;
-    if (1 <= day && day <= lastday_in_month) {
+    if (1 <= day && day <= static_cast<int>(lastday_in_month)) {
         SelectedYearMonthDay.set(CYearMonthDay(Year->operator int(), Month->operator unsigned int(), day));
     }
     Selected.execute(e);

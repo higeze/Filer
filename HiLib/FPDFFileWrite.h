@@ -11,7 +11,7 @@ private:
 public:
 	CFPDFFileWrite(const std::string& path)
 	{
-		fopen_s(&m_pFile, path.c_str(), "wb");
+		fopen_s(&m_pFile, path.c_str(), "w+b");
 
 		version = 1;
 		WriteBlock = [](FPDF_FILEWRITE* pThis, const void* pData, unsigned long size)->int
@@ -21,7 +21,7 @@ public:
 	}
 	CFPDFFileWrite(const std::wstring& path)
 	{
-		_wfopen_s(&m_pFile, path.c_str(), L"wb");
+		_wfopen_s(&m_pFile, path.c_str(), L"w+b");
 
 		version = 1;
 		WriteBlock = [](FPDF_FILEWRITE* pThis, const void* pData, unsigned long size)->int

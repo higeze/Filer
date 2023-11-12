@@ -537,14 +537,6 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 			[this, fill](const CRectF& rcHighInWnd) { GetWndPtr()->GetDirectPtr()->FillSolidRectangle(fill, rcHighInWnd); });
 	}
 
-
-	//Paint Focused Line
-	if (GetIsFocused() ){
-		CRectF rcFocus(GetRectInWnd());
-		rcFocus.DeflateRect(1.0f, 1.0f);
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(m_pProp->FocusedLine), rcFocus);
-	}
-
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
 }
 
@@ -974,7 +966,7 @@ void CPdfView::OpenWithPasswordHandling(const std::wstring& path)
 					GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
 				}, shared_from_this());
 			spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CalcCenterRectF(CSizeF(300, 200))));
-			GetWndPtr()->SetFocusedControlPtr(spDlg);
+			GetWndPtr()->SetFocusToControl(spDlg);
 		} else {
 			PDF.get_unconst()->Close();
 		}

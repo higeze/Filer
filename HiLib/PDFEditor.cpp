@@ -12,6 +12,7 @@
 
 #include "reactive_property.h"
 #include "reactive_binding.h"
+#include "PDFBitmapDrawer.h"
 
 /***********/
 /* Globals */
@@ -192,7 +193,7 @@ void CPDFEditor::OnKeyDown(const KeyDownEvent& e)
 	switch (e.Char) {
 		case 'F':
 			if (ctrl) {
-				SetFocusedControlPtr(m_spFilterBox);
+				GetWndPtr()->SetFocusToControl(m_spFilterBox);
 			}
 			break;
 		case 'O':
@@ -231,7 +232,8 @@ void CPDFEditor::OpenAs()
 
 void CPDFEditor::Save()
 {
-	m_spPDFView->PDF.get_unconst()->Save(*m_spPDFView->PDF->Path);
+	m_spPDFView->GetPDFDrawer()->WaitAll();
+	m_spPDFView->PDF.get_unconst()->Save();
 }
 
 void CPDFEditor::SaveAs()
@@ -257,7 +259,7 @@ void CPDFEditor::SaveAs()
 		::ReleaseBuffer(path);
 		bool same = path == *m_spPDFView->PDF->Path;
 		if (!same) {
-			m_spPDFView->PDF.get_unconst()->SaveWithVersion(path, 0, m_spPDFView->PDF->GetFileVersion());
+			m_spPDFView->PDF.get_unconst()->SaveAs(path, m_spPDFView->PDF->GetFileVersion(), false);
 			m_spPDFView->Open(path);
 		} else {
 			Save();

@@ -86,7 +86,7 @@ public:
 		);
 		spDlg->OnCreate(CreateEvt(m_pSheet->GetWndPtr(), m_pSheet->GetGridPtr(), CRectF(pt, spDlg->DesiredSize())));
 		spDlg->Arrange(CRectF(pt, spDlg->DesiredSize()));
-		m_pSheet->GetGridPtr()->SetFocusedControlPtr(spDlg);
+		m_pSheet->GetWndPtr()->SetFocusToControl(spDlg);
 	}
 
 

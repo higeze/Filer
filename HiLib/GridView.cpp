@@ -808,13 +808,6 @@ void CGridView::Normal_Paint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), GetRectInWnd());
 	CSheet::Normal_Paint(e);
 
-	//Paint Focused Line
-	if (GetIsFocused() ){
-		CRectF rcFocus(GetRectInWnd());
-		rcFocus.DeflateRect(1.0f, 1.0f);
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(GetHeaderProperty()->FocusedLine), rcFocus);
-	}
-
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
 }
 
@@ -1109,7 +1102,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 				//pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 			}));
 		GetEditPtr()->OnCreate(CreateEvt(GetWndPtr(), this, pCell->GetRectInWnd()));
-		SetFocusedControlPtr(GetEditPtr());
+		GetWndPtr()->SetFocusToControl(GetEditPtr());
 		PostUpdate(Updates::Invalidate);
 		//SetCapture();
 	}

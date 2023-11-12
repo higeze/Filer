@@ -25,6 +25,15 @@ public:
     CFPDFDocument(FPDF_DOCUMENT p = nullptr)
         :m_p(p){}
 
+    CFPDFDocument* Clone() const
+    {
+        FPDF_LOCK;
+	    CFPDFDocument* pNewDoc = new CFPDFDocument();
+	    pNewDoc->CreateNewDocument();
+	    pNewDoc->ImportPages(*this, nullptr, 0);
+        return pNewDoc;
+    }
+
     operator bool() const { return m_p.get(); }
 
     void LoadDocument(FPDF_STRING file_path, FPDF_BYTESTRING password)

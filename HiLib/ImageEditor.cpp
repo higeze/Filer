@@ -101,6 +101,8 @@ void CImageEditor::OnPaint(const PaintEvent& e)
 	m_spPercentBlock->OnPaint(e);
 	m_spImageView->OnPaint(e);
 	m_spStatusBar->OnPaint(e);
+
+
 }
 
 void CImageEditor::OnRect(const RectEvent& e)
