@@ -38,7 +38,7 @@ public:
 		const std::shared_ptr<ButtonProperty>& spButtonProp);
 	~CCalendarDialog();
 	void Measure(const CSizeF& availableSize);
-	const CSizeF DesiredSize() const;
+	CSizeF DesiredSize() const;
 	void Arrange(const CRectF& rc);
 	//std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects();
 

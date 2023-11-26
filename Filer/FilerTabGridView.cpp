@@ -72,19 +72,19 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 
 {
 	//Command
-	m_commandMap.emplace(IDM_NEWFILERTAB, std::bind(&CFilerTabGridView::OnCommandNewFilerTab, this, phs::_1));
-	m_commandMap.emplace(IDM_NEWTODOTAB, std::bind(&CFilerTabGridView::OnCommandNewToDoTab, this, phs::_1));
-	m_commandMap.emplace(IDM_NEWTEXTTAB, std::bind(&CFilerTabGridView::OnCommandNewTextTab, this, phs::_1));
-	m_commandMap.emplace(IDM_NEWPDFTAB, std::bind(&CFilerTabGridView::OnCommandNewPdfTab, this, phs::_1));
-	m_commandMap.emplace(IDM_NEWIMAGETAB, std::bind(&CFilerTabGridView::OnCommandNewImageTab, this, phs::_1));
-	m_commandMap.emplace(IDM_NEWPREVIEWTAB, std::bind(&CFilerTabGridView::OnCommandNewPreviewTab, this, phs::_1));
+	//m_commandMap.emplace(IDM_NEWFILERTAB, std::bind(&CFilerTabGridView::OnCommandNewFilerTab, this, phs::_1));
+	//m_commandMap.emplace(IDM_NEWTODOTAB, std::bind(&CFilerTabGridView::OnCommandNewToDoTab, this, phs::_1));
+	//m_commandMap.emplace(IDM_NEWTEXTTAB, std::bind(&CFilerTabGridView::OnCommandNewTextTab, this, phs::_1));
+	//m_commandMap.emplace(IDM_NEWPDFTAB, std::bind(&CFilerTabGridView::OnCommandNewPdfTab, this, phs::_1));
+	//m_commandMap.emplace(IDM_NEWIMAGETAB, std::bind(&CFilerTabGridView::OnCommandNewImageTab, this, phs::_1));
+	//m_commandMap.emplace(IDM_NEWPREVIEWTAB, std::bind(&CFilerTabGridView::OnCommandNewPreviewTab, this, phs::_1));
 
-	m_commandMap.emplace(IDM_LOCKTAB, std::bind(&CFilerTabGridView::OnCommandLockTab, this, phs::_1));
-	m_commandMap.emplace(IDM_CLONETAB, std::bind(&CFilerTabGridView::OnCommandCloneTab, this, phs::_1));
-	m_commandMap.emplace(IDM_CLOSETAB, std::bind(&CFilerTabGridView::OnCommandCloseTab, this, phs::_1));
-	m_commandMap.emplace(IDM_CLOSEALLBUTTHISTAB, std::bind(&CFilerTabGridView::OnCommandCloseAllButThisTab, this, phs::_1));
-	m_commandMap.emplace(IDM_ADDTOFAVORITE, std::bind(&CFilerTabGridView::OnCommandAddToFavorite, this, phs::_1));
-	m_commandMap.emplace(IDM_OPENSAMEASOTHER, std::bind(&CFilerTabGridView::OnCommandOpenSameAsOther, this, phs::_1));
+	//m_commandMap.emplace(IDM_LOCKTAB, std::bind(&CFilerTabGridView::OnCommandLockTab, this, phs::_1));
+	//m_commandMap.emplace(IDM_CLONETAB, std::bind(&CFilerTabGridView::OnCommandCloneTab, this, phs::_1));
+	//m_commandMap.emplace(IDM_CLOSETAB, std::bind(&CFilerTabGridView::OnCommandCloseTab, this, phs::_1));
+	//m_commandMap.emplace(IDM_CLOSEALLBUTTHISTAB, std::bind(&CFilerTabGridView::OnCommandCloseAllButThisTab, this, phs::_1));
+	//m_commandMap.emplace(IDM_ADDTOFAVORITE, std::bind(&CFilerTabGridView::OnCommandAddToFavorite, this, phs::_1));
+	//m_commandMap.emplace(IDM_OPENSAMEASOTHER, std::bind(&CFilerTabGridView::OnCommandOpenSameAsOther, this, phs::_1));
 
 
 	//FilerGridView
@@ -475,55 +475,78 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 void CFilerTabGridView::OnContextMenu(const ContextMenuEvent& e)
 {
 	CTabControl::OnContextMenu(e);
+	
+	auto me = std::dynamic_pointer_cast<CFilerTabGridView>(shared_from_this());
+	CContextMenu2 menu;
+	menu.Add(
+		std::make_unique<CMenuItem2>(L"New Filer tab\tCtrl+T", &CFilerTabGridView::OnCommandNewFilerTab, me),
+		std::make_unique<CMenuItem2>(L"New ToDo tab", &CFilerTabGridView::OnCommandNewToDoTab, me),
+		std::make_unique<CMenuItem2>(L"New Text tab", &CFilerTabGridView::OnCommandNewTextTab, me),
+		std::make_unique<CMenuItem2>(L"New Pdf tab", &CFilerTabGridView::OnCommandNewPdfTab, me),
+		std::make_unique<CMenuItem2>(L"New Image tab", &CFilerTabGridView::OnCommandNewImageTab, me),
+		std::make_unique<CMenuSeparator2>(),
+		std::make_unique<CMenuItem2>(L"Clone", &CFilerTabGridView::OnCommandCloneTab, me),
+		std::make_unique<CMenuSeparator2>(),
+		std::make_unique<CMenuItem2>(L"Open same as other", &CFilerTabGridView::OnCommandOpenSameAsOther, me),
+		std::make_unique<CMenuSeparator2>(),
+		std::make_unique<CMenuItem2>(L"Lock", &CFilerTabGridView::OnCommandLockTab, me),
+		std::make_unique<CMenuSeparator2>(),
+		std::make_unique<CMenuItem2>(L"Close\tCtrl+W", &CFilerTabGridView::OnCommandCloseTab, me),
+		std::make_unique<CMenuItem2>(L"Close all but this", &CFilerTabGridView::OnCommandCloseAllButThisTab, me),
+		std::make_unique<CMenuSeparator2>(),
+		std::make_unique<CMenuItem2>(L"Add to Favorite", &CFilerTabGridView::OnCommandAddToFavorite, me)
+	);
+	menu.Popup(GetWndPtr()->m_hWnd, CPointU(e.PointInScreen.x, e.PointInScreen.y));
+	//CTabControl::OnContextMenu(e);
 
-	if (m_contextIndex) {
-		CMenu menu;
-		menu.Attach(::GetSubMenu(::LoadMenu(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_CONTEXTMENU_TAB)), 0));
-		GetWndPtr()->SetForegroundWindow();
-		menu.TrackPopupMenu(0, e.PointInScreen.x, e.PointInScreen.y, GetWndPtr()->m_hWnd);
-	} else if (m_spCurControl->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))){
-		m_spCurControl->OnContextMenu(e);
-	}
+	//if (m_contextIndex) {
+	//	CMenu menu;
+	//	menu.Attach(::GetSubMenu(::LoadMenu(::GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_CONTEXTMENU_TAB)), 0));
+	//	GetWndPtr()->SetForegroundWindow();
+	//	menu.TrackPopupMenu(0, e.PointInScreen.x, e.PointInScreen.y, GetWndPtr()->m_hWnd);
+	//} else if (m_spCurControl->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))){
+	//	m_spCurControl->OnContextMenu(e);
+	//}
 }
 
-void CFilerTabGridView::OnCommandNewFilerTab(const CommandEvent& e)
+void CFilerTabGridView::OnCommandNewFilerTab()
 {
 	ItemsSource.push_back(std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(CKnownFolderManager::GetInstance()->GetDesktopFolder())));
 	SelectedIndex.set(ItemsSource->size() - 1);
 }
 
-void CFilerTabGridView::OnCommandNewToDoTab(const CommandEvent& e)
+void CFilerTabGridView::OnCommandNewToDoTab()
 {
 	ItemsSource.push_back(std::make_shared<ToDoTabData>(L""));
 	SelectedIndex.set(ItemsSource->size() - 1);
 }
 
-void CFilerTabGridView::OnCommandNewTextTab(const CommandEvent& e)
+void CFilerTabGridView::OnCommandNewTextTab()
 {
 	ItemsSource.push_back(std::make_shared<TextTabData>(L""));
 	SelectedIndex.set(ItemsSource->size() - 1);
 }
 
-void CFilerTabGridView::OnCommandNewPdfTab(const CommandEvent& e)
+void CFilerTabGridView::OnCommandNewPdfTab()
 {
 	ItemsSource.push_back(std::make_shared<PdfTabData>(L""));
 	SelectedIndex.set(ItemsSource->size() - 1);
 }
 
-void CFilerTabGridView::OnCommandNewImageTab(const CommandEvent& e)
+void CFilerTabGridView::OnCommandNewImageTab()
 {
 	ItemsSource.push_back(std::make_shared<ImageTabData>(GetWndPtr()->GetDirectPtr(), L""));
 	SelectedIndex.set(ItemsSource->size() - 1);
 }
 
-void CFilerTabGridView::OnCommandNewPreviewTab(const CommandEvent& e)
+void CFilerTabGridView::OnCommandNewPreviewTab()
 {
 	ItemsSource.push_back(std::make_shared<PreviewTabData>(L""));
 	SelectedIndex.set(ItemsSource->size() - 1);
 }
 
 
-void CFilerTabGridView::OnCommandAddToFavorite(const CommandEvent& e)
+void CFilerTabGridView::OnCommandAddToFavorite()
 {
 	//TODOLOW Bad connection between FilerTabGridView and FavoritesView
 	if(auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())){
@@ -533,7 +556,7 @@ void CFilerTabGridView::OnCommandAddToFavorite(const CommandEvent& e)
 	}
 }
 
-void CFilerTabGridView::OnCommandOpenSameAsOther(const CommandEvent& e)
+void CFilerTabGridView::OnCommandOpenSameAsOther()
 {
 	//TODO Bad connection between FilerTabGridView and FavoritesView
 	if (auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())) {

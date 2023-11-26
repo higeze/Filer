@@ -15,7 +15,7 @@ void CButton::Measure(const CSizeF& availableSize)
 		m_opt_size.emplace(size);
 	}
 }
-const CSizeF& CButton::DesiredSize() const
+CSizeF CButton::DesiredSize() const
 {
 	return m_opt_size.value();
 }

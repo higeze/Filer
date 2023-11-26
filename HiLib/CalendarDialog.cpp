@@ -125,7 +125,7 @@ void CCalendarDialog::Measure(const CSizeF& availableSize)
 
 }
 
-const CSizeF CCalendarDialog::DesiredSize() const
+CSizeF CCalendarDialog::DesiredSize() const
 {
 	const FLOAT padding = 2.f;
 

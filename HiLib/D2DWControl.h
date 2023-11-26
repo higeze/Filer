@@ -103,6 +103,11 @@ public:
 
 	virtual void OnRect(const RectEvent& e) override { m_rect = e.Rect; }
 
+	CSizeF m_size;
+	virtual void Measure(const CSizeF& availableSize) { m_size = availableSize; }
+	virtual CSizeF DesiredSize() const { return m_size; }
+	virtual void Arrange(const CRectF& rc) { m_rect = rc; }
+
 	virtual bool IsFocused()const;
 	virtual bool GetIsFocused()const;
 

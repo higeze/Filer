@@ -1,6 +1,115 @@
 #pragma once
 #include "MenuItem.h"
 
+#include "reactive_property.h"
+#include "reactive_string.h"
+#include "reactive_command.h"
+#include "ResourceIDFactory.h"
+
+class CMenuItem2
+{
+protected:
+	MENUITEMINFO mii = { 0 };
+public:
+	reactive_wstring_ptr Header;
+	reactive_command_ptr<void> Command;
+
+	template<class... Args>
+	CMenuItem2(std::wstring&& header, Args&&... args)
+		:Header(header), Command(std::forward<Args>(args)...)
+	{
+		mii.cbSize = sizeof(MENUITEMINFO);
+		mii.fMask = MIIM_TYPE | MIIM_ID;
+		mii.fType = MFT_STRING;
+		mii.fState = MFS_ENABLED;	
+	}
+	CMenuItem2()
+	{
+		mii.cbSize = sizeof(MENUITEMINFO);
+		mii.fMask = MIIM_TYPE | MIIM_ID;
+		mii.fType = MFT_STRING;
+		mii.fState = MFS_ENABLED;
+	}
+
+	virtual ~CMenuItem2(){}
+
+	virtual const MENUITEMINFO& GetMII()
+	{
+		mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, Header->c_str());
+		mii.dwTypeData = const_cast<LPWSTR>(Header->c_str());
+		return mii;
+	}
+};
+
+class CMenuSeparator2:public CMenuItem2
+{
+public:
+	CMenuSeparator2()
+	{
+		MENUITEMINFO mii = {0};
+		mii.cbSize = sizeof(MENUITEMINFO);
+		mii.fMask = MIIM_FTYPE;
+		mii.fType = MFT_SEPARATOR;
+	}
+	virtual const MENUITEMINFO& GetMII() override
+	{
+		return mii;
+	}
+};
+
+class CContextMenu2
+{
+private:
+    struct delete_menu
+    {
+	    void operator()(HMENU p)
+        { 
+            if(p){
+                ::DestroyMenu(p);
+            }
+        }
+    };
+
+	std::vector<std::unique_ptr<CMenuItem2>> m_items;
+public:
+
+	void Add() {}
+	template<class _Head>
+	void Add(_Head&& item)
+	{
+		m_items.emplace_back(std::forward<_Head>(item));
+	}
+	template<class _Head, class... _Tail>
+	void Add(_Head&& head, _Tail&&... tail)
+	{
+		Add(std::forward<_Head>(head));
+		Add(std::forward<_Tail>(tail)...);
+	}
+
+	void Popup(HWND hWnd, const CPointU& pt)
+	{
+		std::unique_ptr<std::remove_pointer_t<HMENU>, delete_menu> pMenu(::CreatePopupMenu());
+
+		for (const auto& item : m_items) {
+			::InsertMenuItemW(pMenu.get(), ::GetMenuItemCount(pMenu.get()), TRUE, &item->GetMII());
+		}
+			::SetForegroundWindow(hWnd);
+		int id = ::TrackPopupMenu(pMenu.get(), 
+			TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
+			pt.x, pt.y, 0, hWnd, NULL);
+
+		auto iter = std::find_if(m_items.cbegin(), m_items.cend(),
+			[id](const std::unique_ptr<CMenuItem2>& item) {
+			return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, item->Header->c_str()) == id;
+		});
+
+		if (iter != m_items.cend()) {
+			(*iter)->Command.execute();
+		}
+	}
+};
+
+
 class CMenu
 {
 private:

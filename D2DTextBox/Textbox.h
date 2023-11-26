@@ -52,7 +52,7 @@ private:
 	std::optional<CSizeF> m_opt_size;
 public:
 	void Measure(const CSizeF& availableSize, const std::wstring& text);
-	const CSizeF& DesiredSize() const;
+	CSizeF DesiredSize() const;
 	void Arrange(const CRectF& rc) { m_rect = rc; UpdateAll(); }
 	/************/
 	/* Reactive */

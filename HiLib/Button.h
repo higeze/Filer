@@ -21,7 +21,7 @@ public:
 	virtual ~CButton() = default;
 
 	void Measure(const CSizeF& availableSize);
-	const CSizeF& DesiredSize() const;
+	CSizeF DesiredSize() const;
 	void Arrange(const CRectF& rc) { m_rect = rc; }
 
 	//Event

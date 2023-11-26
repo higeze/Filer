@@ -40,7 +40,7 @@ void CCalendarControl::Measure(const CSizeF& availableSize)
         );
     }
 }
-const CSizeF& CCalendarControl::DesiredSize() const { return m_opt_size.value(); }
+CSizeF CCalendarControl::DesiredSize() const { return m_opt_size.value(); }
 
 void CCalendarControl::Render(CDirect2DWrite* pDirect)
 {

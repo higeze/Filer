@@ -62,6 +62,9 @@ class CTabControl;
 
 class CTabHeaderControl :public CD2DWControl
 {
+public:
+	static CRectF FOCUS_PADDING;
+	
 private:
 	std::shared_ptr<TabHeaderControlProperty> m_spProp;
 	std::shared_ptr<CButton> m_spButton;
@@ -73,6 +76,7 @@ private:
 
 	FLOAT m_minWidth = 30.f;
 	FLOAT m_maxWidth = 300.f;
+
 
 	int m_index = -1;
 	bool m_isMeasureValid = false;
@@ -146,6 +150,8 @@ class CTabControl :public CD2DWControl
 {
 	friend class CTabHeaderControl;
 	friend class CAddTabHeaderControl;
+	static CRectF MARGIN;
+
 protected:
 	std::shared_ptr<TabControlProperty> m_spProp;
 	index_vector<std::shared_ptr<CTabHeaderControl>> m_headers;
@@ -175,6 +181,7 @@ public:
 
 	void UpdateHeaderRects();
 
+	virtual CRectF GetRectInWnd()const override { return m_rect; }
 	std::function<CRectF&()> GetContentRect;
 	std::function<CRectF&()> GetControlRect;
 
@@ -195,11 +202,11 @@ public:
 	/***********/
 	/* Command */
 	/***********/
-	virtual void OnCommandLockTab(const CommandEvent& e);
-	virtual void OnCommandCloneTab(const CommandEvent& e);
-	virtual void OnCommandNewTab(const CommandEvent& e) {}
-	virtual void OnCommandCloseTab(const CommandEvent& e);
-	virtual void OnCommandCloseAllButThisTab(const CommandEvent& e);
+	virtual void OnCommandLockTab();
+	virtual void OnCommandCloneTab();
+	virtual void OnCommandNewTab() {}
+	virtual void OnCommandCloseTab();
+	virtual void OnCommandCloseAllButThisTab();
 
 private:
 	struct Machine;

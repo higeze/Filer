@@ -11,6 +11,12 @@ private:
 public:
 	reactive_command():
 		m_subject(){};
+	template<class... Args>
+	explicit reactive_command(Args&&... args)
+		: m_subject()
+	{
+		m_subject.subscribe(std::forward<Args>(args)...);
+	}
 	virtual ~reactive_command() = default;
 
 	reactive_command(const reactive_command& val) = default;
@@ -31,8 +37,14 @@ class reactive_command<void>
 private:
 	subject<> m_subject;
 public:
-	reactive_command():
-		m_subject(){};
+	reactive_command(): m_subject(){};
+
+	template<class... Args>
+	explicit reactive_command(Args&&... args) : reactive_command()
+	{
+		m_subject.subscribe(std::forward<Args>(args)...);
+	}
+
 	virtual ~reactive_command() = default;
 
 	reactive_command(const reactive_command& val) = default;
@@ -56,6 +68,10 @@ private:
 public:
 	reactive_command_ptr()
 		:m_preactive(std::make_shared<reactive_command_type>()){}
+
+	template<class... Args>
+	explicit reactive_command_ptr(Args&&... args)
+		: m_preactive(std::make_shared<reactive_command_type>(std::forward<Args>(args)...)) {}
 
 	virtual ~reactive_command_ptr() = default;
 
@@ -91,6 +107,11 @@ private:
 public:
 	reactive_command_ptr()
 		:m_preactive(std::make_shared<reactive_command_type>()){}
+
+	template<class... Args>
+	explicit reactive_command_ptr(Args&&... args)
+		: m_preactive(std::make_shared<reactive_command_type>(std::forward<Args>(args)...)) {}
+
 	virtual ~reactive_command_ptr() = default;
 
 	reactive_command_ptr(const reactive_command_ptr& val) = default;

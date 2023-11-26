@@ -15,7 +15,7 @@ public:
 
 	CCheckBox(CheckBoxType&& type, CheckBoxState&& state);
 	void Measure(const CSizeF& availableSize) { m_size = availableSize; }
-	const CSizeF& DesiredSize() const { return m_size; }
+	CSizeF DesiredSize() const { return m_size; }
 	void Arrange(const CRectF& rc) { m_rect = rc; }
 	void Render(CDirect2DWrite* pDirect);
 	void Toggle();

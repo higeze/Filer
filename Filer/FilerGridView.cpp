@@ -538,8 +538,10 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 
 void CFilerGridView::Reload()
 {
-	OpenFolder(m_spFolder);
-	SubmitUpdate();
+	if (m_spFolder) {
+		OpenFolder(m_spFolder);
+		SubmitUpdate();
+	}
 }
 
 void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
@@ -626,14 +628,12 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 
 void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 {
-	if (!spFolder->GetIsExist()) {
-		m_spFolder = m_spFolder->GetParent();
-		return OpenFolder(m_spFolder);
-	}
-
 	//OpenFolder is called when DeviceChange, even inactive.
 	if (!spFolder) {
 		return;
+	} else if (!spFolder->GetIsExist()) {
+		m_spFolder = m_spFolder->GetParent();
+		return OpenFolder(m_spFolder);
 	}
 
 	if (m_pEdit) {

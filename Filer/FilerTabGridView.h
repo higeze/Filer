@@ -94,16 +94,16 @@ public:
 	/***********/
 	/* Command */
 	/***********/
-	void OnCommandNewTab(const CommandEvent& e) override { return OnCommandNewFilerTab(e); }
-	void OnCommandNewFilerTab(const CommandEvent& e);
-	void OnCommandNewToDoTab(const CommandEvent& e);
-	void OnCommandNewTextTab(const CommandEvent& e);
-	void OnCommandNewPdfTab(const CommandEvent& e);
-	void OnCommandNewImageTab(const CommandEvent& e);
-	void OnCommandNewPreviewTab(const CommandEvent& e);
+	void OnCommandNewTab() override { return OnCommandNewFilerTab(); }
+	void OnCommandNewFilerTab();
+	void OnCommandNewToDoTab();
+	void OnCommandNewTextTab();
+	void OnCommandNewPdfTab();
+	void OnCommandNewImageTab();
+	void OnCommandNewPreviewTab();
 
-	void OnCommandAddToFavorite(const CommandEvent& e);
-	void OnCommandOpenSameAsOther(const CommandEvent& e);
+	void OnCommandAddToFavorite();
+	void OnCommandOpenSameAsOther();
 
 public:
 	friend void to_json(json& j, const CFilerTabGridView& o)

@@ -3,6 +3,7 @@
 #include "D2DWWindow.h"
 #include "Dispatcher.h"
 #include <fmt/format.h>
+#include <stack>
 
 namespace sml = boost::sml;
 
@@ -25,6 +26,8 @@ bool TabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
 /*********************/
 /* CTabHeaderControl */
 /*********************/
+CRectF CTabHeaderControl::FOCUS_PADDING = CRectF(2.f, 2.f, 2.f, 0.f);
+
 CTabHeaderControl::CTabHeaderControl(CTabControl* pTabControl, const std::shared_ptr<TabHeaderControlProperty>& spProp)
 	:CD2DWControl(pTabControl),m_spProp(spProp), m_spButton(std::make_shared<CButton>(this, spProp->ButtonProp))
 {
@@ -126,7 +129,7 @@ void CTabHeaderControl::OnPaint(const PaintEvent& e)
 	auto pTabControl = static_cast<CTabControl*>(m_pParentControl);
 	auto [iconRect, textRect, buttonRect, rect] = GetRects();
 	if (GetIsSelected()) {
-		rect += CRectF(2.f, 2.f, 2.f, 0.f);
+		rect += FOCUS_PADDING;
 	}
 	auto bkgndFill = GetIsSelected() ?
 		(pTabControl->GetIsFocused() ?
@@ -232,7 +235,7 @@ void CAddTabHeaderControl::OnCreate(const CreateEvt& e)
 		GetWndPtr()->GetDispatcherPtr()->PostInvoke(
 			[pTabControl = static_cast<CTabControl*>(m_pParentControl)]()->void
 			{
-				pTabControl->OnCommandNewTab(CommandEvent(pTabControl->GetWndPtr(), 0,0));
+				pTabControl->OnCommandNewTab();
 			});
 	}, shared_from_this());
 
@@ -281,6 +284,7 @@ void CAddTabHeaderControl::OnLButtonDown(const LButtonDownEvent& e)
 /***************/
 /* CTabControl */
 /***************/
+CRectF CTabControl::MARGIN = CRectF(1.f, 1.f, 1.f, 1.f);
 
 /***********/
 /* Machine */
@@ -347,7 +351,7 @@ std::optional<size_t> CTabControl::GetPtInHeaderRectIndex(const CPointF& pt)cons
 
 void CTabControl::UpdateHeaderRects()
 {
-	auto rcInWnd = GetRectInWnd();
+	auto rcInWnd = GetRectInWnd() - MARGIN - CTabHeaderControl::FOCUS_PADDING;
 	auto left = rcInWnd.left;
 	auto top = rcInWnd.top;
 
@@ -378,13 +382,13 @@ void CTabControl::UpdateHeaderRects()
 /***********/
 /* Command */
 /***********/
-void CTabControl::OnCommandCloneTab(const CommandEvent& e)
+void CTabControl::OnCommandCloneTab()
 {
 	//TODOLOW should deep clone
 	ItemsSource.push_back(ItemsSource->at(*SelectedIndex));
 	SelectedIndex.set(*SelectedIndex - 1);
 }
-void CTabControl::OnCommandLockTab(const CommandEvent& e)
+void CTabControl::OnCommandLockTab()
 {
 	if (m_contextIndex) {
 		auto& item = ItemsSource->at(m_contextIndex.value());
@@ -392,7 +396,7 @@ void CTabControl::OnCommandLockTab(const CommandEvent& e)
 	}
 }
 
-void CTabControl::OnCommandCloseTab(const CommandEvent& e)
+void CTabControl::OnCommandCloseTab()
 {
 	if (m_contextIndex) {
 		if (ItemsSource.get_unconst()->at(m_contextIndex.value())->AcceptClosing(GetWndPtr(), false)) {
@@ -400,26 +404,21 @@ void CTabControl::OnCommandCloseTab(const CommandEvent& e)
 		}
 	}
 }
-void CTabControl::OnCommandCloseAllButThisTab(const CommandEvent& e)
+void CTabControl::OnCommandCloseAllButThisTab()
 {
 	if (m_contextIndex) {
-		//Erase larger tab
-		for (auto iter = ItemsSource->cbegin() + (m_contextIndex.value() + 1), end = ItemsSource->cend(); iter != end; ++iter) {
-			if (!((*iter)->AcceptClosing(GetWndPtr(), false))) {
-				return;
+		std::vector<decltype(ItemsSource)::const_iterator> iterCloses;
+
+		for (auto iter = ItemsSource->cbegin(); iter != ItemsSource->cend(); ++iter) {
+			if (m_contextIndex.value() != std::distance(ItemsSource->cbegin(), iter) &&
+				(*iter)->AcceptClosing(GetWndPtr(), false)) {
+				iterCloses.push_back(iter);
 			}
 		}
-		//TODO HIGH
-		ItemsSource.erase(ItemsSource->cbegin() + (m_contextIndex.value() + 1), ItemsSource->cend());
-		
-		//Erase smaller tab
-		for (auto iter = ItemsSource->cbegin(), end = ItemsSource->cbegin() + m_contextIndex.value(); iter != end; ++iter) {
-			if (!((*iter)->AcceptClosing(GetWndPtr(), false))) {
-				return;
-			}
+
+		for (auto iter = iterCloses.crbegin(); iter != iterCloses.crend(); ++iter) {
+			ItemsSource.erase(*iter);
 		}
-		//TODO HIGH
-		ItemsSource.erase(ItemsSource->cbegin(), ItemsSource->cbegin() + m_contextIndex.value());
 
 		SelectedIndex.force_notify_set(0);
 	}
@@ -460,8 +459,13 @@ void CTabControl::OnCreate(const CreateEvt& e)
 				}
 				case notify_container_changed_action::erase:
 				{
-					m_headers[notify.old_starting_index]->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
-					m_headers.idx_erase(m_headers.cbegin() + notify.old_starting_index);
+					for (size_t i = notify.old_starting_index; i < notify.old_starting_index + notify.old_items.size(); i++) {
+						m_headers[i]->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
+					}
+					m_headers.idx_erase(
+						m_headers.cbegin() + notify.old_starting_index,
+						m_headers.cbegin() + notify.old_starting_index + notify.old_items.size());
+
 					UpdateHeaderRects();
 
 					if (!ItemsSource->empty()) {
@@ -545,7 +549,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 
 	GetContentRect = [rect = CRectF(), this]()mutable->CRectF&
 	{
-		rect = GetRectInWnd();
+		rect = GetRectInWnd() - MARGIN;
 		if (!m_headers.empty()) {
 			rect.top = m_headers.back()->GetRectInWnd().bottom;
 		}
@@ -562,10 +566,10 @@ void CTabControl::OnCreate(const CreateEvt& e)
 void CTabControl::OnPaint(const PaintEvent& e)
 {
 	if (*SelectedIndex >= 0) {
-		auto rc = GetRectInWnd();
+		//auto rc = GetRectInWnd();
 		//Content
 		const auto& contentRc = GetContentRect();
-		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetIsFocused()?m_spProp->SelectedFill:m_spProp->UnfocusSelectedFill, contentRc);
+		//GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetIsFocused()?m_spProp->SelectedFill:m_spProp->UnfocusSelectedFill, contentRc);
 		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(m_spProp->Line, contentRc);
 		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), contentRc.LeftTop(), CPointF(contentRc.left, contentRc.bottom));
 		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.left, contentRc.bottom), CPointF(contentRc.right, contentRc.bottom));
@@ -620,9 +624,11 @@ void CTabControl::OnRect(const RectEvent& e)
 { 
 	CD2DWControl::OnRect(e);
 	UpdateHeaderRects();
-	GetContentRect().SetRect(0, 0, 0, 0);
-	GetControlRect().SetRect(0, 0, 0, 0);
-	if (m_spCurControl) { m_spCurControl->OnRect(RectEvent(GetWndPtr(), GetControlRect())); }
+	//GetContentRect().SetRect(0, 0, 0, 0);
+	//GetControlRect().SetRect(0, 0, 0, 0);
+	if (m_spCurControl) { m_spCurControl->Arrange(GetControlRect()); }
+	//if (m_spCurControl) { m_spCurControl->OnRect(RectEvent(GetWndPtr(), GetControlRect())); }
+
 }
 
 void CTabControl::OnContextMenu(const ContextMenuEvent& e)
@@ -642,17 +648,18 @@ void CTabControl::OnSetCursor(const SetCursorEvent& e)
 
 void CTabControl::OnKeyDown(const KeyDownEvent& e)
 {
+	bool ctrl = ::IsKeyDown(VK_CONTROL);
 	switch (e.Char)
 	{
 	case 'T':
-		if (::GetAsyncKeyState(VK_CONTROL)) {
-			OnCommandNewTab(CommandEvent(e.WndPtr, 0, 0));
+		if (ctrl) {
+			OnCommandNewTab();
 			*(e.HandledPtr) = TRUE;
 		}
 		break;
 	case 'W':
-		if (::GetAsyncKeyState(VK_CONTROL)) {
-			OnCommandCloseTab(CommandEvent(e.WndPtr, 0, 0));
+		if (ctrl) {
+			OnCommandCloseTab();
 			*(e.HandledPtr) = TRUE;
 		}
 		break;
