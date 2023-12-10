@@ -1382,12 +1382,14 @@ std::wstring CFilerGridView::GetPath()const
 
 void CFilerGridView::SetPath(const std::wstring& path)
 {
-	if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(path))) {
-		OpenFolder(pFolder);
-	}
-	else {
-		//Do nothing
-	}
+	std::shared_ptr<CShellFile> spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
+	Open(spFile);
+	//if (auto pFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+	//	OpenFolder(pFolder);
+	//}
+	//else {
+	//	//Do nothing
+	//}
 }
 
 void CFilerGridView::Drag()

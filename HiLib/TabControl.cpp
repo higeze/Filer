@@ -626,8 +626,8 @@ void CTabControl::OnRect(const RectEvent& e)
 	UpdateHeaderRects();
 	//GetContentRect().SetRect(0, 0, 0, 0);
 	//GetControlRect().SetRect(0, 0, 0, 0);
-	if (m_spCurControl) { m_spCurControl->Arrange(GetControlRect()); }
-	//if (m_spCurControl) { m_spCurControl->OnRect(RectEvent(GetWndPtr(), GetControlRect())); }
+	//if (m_spCurControl) { m_spCurControl->Arrange(GetControlRect()); }
+	if (m_spCurControl) { m_spCurControl->OnRect(RectEvent(GetWndPtr(), GetControlRect())); }
 
 }
 

@@ -126,6 +126,7 @@ public:
 	virtual void Execute(const wchar_t* lpVerb);
 	virtual void Open();
 	virtual void RunAs();
+	virtual void AddToRecentDocs();
 
 private:
 	void UpdateWIN32_FIND_DATA();

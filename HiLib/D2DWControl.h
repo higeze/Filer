@@ -33,6 +33,9 @@ protected:
 public:
 	reactive_property_ptr<bool> IsEnabled;
 	reactive_property_ptr<bool> IsFocusable;
+	reactive_property_ptr<CRectF> Margin;
+
+
 
 public:
 

@@ -67,6 +67,7 @@ public:
 	virtual void Term() override;
 	virtual void Deserialize();
 	virtual void Serialize();
+	virtual HWND GetHWnd() { return m_pWnd->m_hWnd; }
 
 
 

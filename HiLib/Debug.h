@@ -84,6 +84,10 @@ std::string msg_to_string(UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define FAILED_BREAK(expression) if(FAILED(expression)){break;}
 
+#define FAILED_CONTINUE(expression) if(FAILED(expression)){continue;}
+
+#define FALSE_CONTINUE(expression) if(expression){continue;}
+
 #define THROW_FILE_LINE_FUNC throw std::exception(FILE_LINE_FUNC)
 
 template<>

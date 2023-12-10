@@ -68,8 +68,10 @@ public:
 	virtual void Open(const std::shared_ptr<CShellFile>& spFile)
 	{
 		if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+			spFolder->AddToRecentDocs();
 			OpenFolder(spFolder);
 		} else {
+			spFile->AddToRecentDocs();
 			OpenFile(spFile);
 		}
 	}

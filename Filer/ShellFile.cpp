@@ -324,5 +324,10 @@ void CShellFile::RunAs()
 	Execute(L"RunAs");
 }
 
+void CShellFile::AddToRecentDocs()
+{
+	::SHAddToRecentDocs(SHARD::SHARD_PIDL, m_absoluteIdl.m_pIDL);
+}
+
 
 
