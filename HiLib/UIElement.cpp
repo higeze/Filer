@@ -66,7 +66,7 @@ void CUIElement::OnMouseMove(const MouseMoveEvent& e)
 	case UIElementState::None:
 	case UIElementState::Normal:
 	case UIElementState::PressedLeave:
-		OnMouseEnter(MouseEnterEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
+		//OnMouseEnter(MouseEnterEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
 		break;
 	//Already in element
 	case UIElementState::Hot:

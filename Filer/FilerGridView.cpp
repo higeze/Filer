@@ -1053,6 +1053,7 @@ bool CFilerGridView::InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVer
 			return false;
 		}
 	} while (false);
+	return false;
 }
 
 bool CFilerGridView::InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf)

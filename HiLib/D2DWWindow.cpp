@@ -305,6 +305,10 @@ void CD2DWWindow::OnKeyDown(const KeyDownEvent& e)
 	}
 }
 
+//In:Already Mouse In
+//Entry:First entry
+//Leave:First exit
+
 void CD2DWWindow::ProcessMouseLeaveRecursive(const std::shared_ptr<CD2DWControl> pLeave, const MouseMoveEvent& e)
 {
 	if (pLeave) {
@@ -383,6 +387,10 @@ void CD2DWWindow::OnPaint(const PaintEvent& e)
 		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(FocusedLine, rcFocus);
 	}
 
+	if (m_pToolTip) {
+		m_pToolTip->OnPaint(e);
+	}
+
 }
 
 
@@ -390,6 +398,14 @@ void CD2DWWindow::OnMouseMove(const MouseMoveEvent& e)
 {
 	ProcessMouseEntryLeave(e);
 	BubbleMouseMessage(&CD2DWControl::OnMouseMove, e);
+}
+
+void CD2DWWindow::OnMouseLeave(const MouseLeaveEvent& e)
+{
+	if (m_pMouseControl) {
+		ProcessMouseLeaveRecursive(m_pMouseControl, MouseMoveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
+		m_pMouseControl = nullptr;
+	}
 }
 
 

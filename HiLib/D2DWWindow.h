@@ -6,6 +6,8 @@
 #include "MouseStateMachine.h"
 #include "TSFManager.h"
 #include "Debug.h"
+#include "DeadlineTimer.h"
+
 
 class CD2DWControl;
 class CDispatcher;
@@ -153,6 +155,8 @@ protected:
 	std::unique_ptr<CDropTargetManager> m_pDropTargetManager;
 
 	std::shared_ptr<CD2DWControl> m_pCapturedControl;
+	std::shared_ptr<CD2DWControl> m_pToolTip;
+	CDeadlineTimer m_toolTipDeadlineTimer;
 
 public :
 	CD2DWWindow();
@@ -174,6 +178,20 @@ public :
 	std::shared_ptr<CD2DWControl>& GetCapturedControlPtr() { return m_pCapturedControl; }
 	void SetCapturedControlPtr(const std::shared_ptr<CD2DWControl>& spControl){ m_pCapturedControl = spControl; }
 	void ReleaseCapturedControlPtr() { m_pCapturedControl = nullptr; }
+
+	std::shared_ptr<CD2DWControl>& GetToolTipControlPtr() { return m_pToolTip; }
+	void SetToolTipControlPtr(const std::shared_ptr<CD2DWControl>& spControl) {m_pToolTip = spControl; }
+	CDeadlineTimer& GetToolTipDeadlineTimer() { return m_toolTipDeadlineTimer; }
+
+	//template<class _Control>
+	//void CloseChildControl()
+	//{
+	//	for(std::shared_ptr<CD2DWControl>& spControl : m_childControls) {
+	//		if (auto p = std::dynamic_pointer_cast<_Control>(spControl)) {
+	//			spControl->OnClose(CloseEvent(this, NULL, NULL));
+	//		}
+	//	}
+	//}
 
 
 public:
@@ -396,6 +414,7 @@ public:
 	virtual void OnMButtonUp(const MButtonUpEvent& e) override { BubbleMouseMessage(&CD2DWControl::OnMButtonUp, e); }
 
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
+	virtual void OnMouseLeave(const MouseLeaveEvent& e);
 	void ProcessMouseEntryLeave(const MouseMoveEvent& e);
 	void ProcessMouseLeaveRecursive(const std::shared_ptr<CD2DWControl> pLeave, const MouseMoveEvent& e);
 	void ProcessMouseEntryRecursive(const std::shared_ptr<CD2DWControl> pEntry, const MouseMoveEvent& e);
@@ -415,7 +434,6 @@ public:
 
 	//Focus
 	virtual void OnCommand(const CommandEvent& e) override{ BubbleFocusMessage(&CD2DWControl::OnCommand, e); }
-	virtual void OnMouseLeave(const MouseLeaveEvent& e) override { BubbleFocusMessage(&CD2DWControl::OnMouseLeave, e); }
 	virtual void OnSetFocus(const SetFocusEvent& e) override { BubbleFocusMessage(&CD2DWControl::OnSetFocus, e); }
 	virtual void OnKillFocus(const KillFocusEvent& e) override { BubbleFocusMessage(&CD2DWControl::OnKillFocus, e); }
 

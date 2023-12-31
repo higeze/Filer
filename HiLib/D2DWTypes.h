@@ -108,6 +108,12 @@ struct CSizeT :public TSize
 		return !operator==(rhs);
 	}
 
+	size_type operator+(size_type rhs)const
+	{
+		return size_type(this->width + rhs.width, this->height + rhs.height);
+	}
+
+
 	std::size_t GetHashCode() const
 	{
 		std::size_t seed = 0;
@@ -177,6 +183,7 @@ struct CRectT :public TRect
 	void DeflateRect(T x, T y) { this->left += x; this->right -= x; this->top += y; this->bottom -= y; }
 	void InflateRect(T x) { this->left -= x; this->right += x; this->top -= x; this->bottom += x; }
 	void DeflateRect(T x) { this->left += x; this->right -= x; this->top += x; this->bottom -= x; }
+	rect_type DeflateRectCopy(T x) { return rect_type(this->left + x, this->top + x, this->right - x, this->bottom - x); }
 	bool PtInRect(const point_type& pt) const { return pt.x >= this->left && pt.x <= this->right && pt.y >= this->top && pt.y <= this->bottom; }
 	bool RectInRect(const rect_type& rc) const { return rc.left >= this->left && rc.top >= this->top && rc.right <= this->right && rc.bottom <= this->bottom; }
 	bool SizeInRect(const size_type& sz) const { return sz.width <= this->Width() && sz.height <= this->Height(); }

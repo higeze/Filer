@@ -6,9 +6,7 @@
 #include "ShellFile.h"
 #include <sigslot/signal.hpp>
 
-
-template<typename... TItems>
-class CFileIconCell:public CCell//, public std::enable_shared_from_this<CFileIconCell<TItems...>>
+class CFileIconCell:public CCell
 {
 protected:
 	mutable sigslot::connection m_conDelayUpdateAction;

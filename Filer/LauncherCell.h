@@ -12,9 +12,9 @@
 #include "FilerApplication.h"
 
 template<typename... TItems>
-class CLauncherCell:public CFileIconCell<TItems...>
+class CLauncherCell:public CFileIconCell
 {
-	using base = CFileIconCell<TItems...>;
+	using base = CFileIconCell;
 private:
 	virtual std::wstring GetShortName()
 	{
@@ -25,7 +25,7 @@ private:
 		}
 	}
 public:
-	using CFileIconCell<TItems...>::CFileIconCell;
+	using CFileIconCell::CFileIconCell;
 	virtual ~CLauncherCell() = default;
 
 	virtual std::shared_ptr<CShellFile> GetShellFile() override
