@@ -30,7 +30,7 @@ public:
 	virtual ~CMessageTimer()
 	{
 		MessageBoxT<char_type>(m_hWnd,
-			(m_strMessage + TSTRING_CAST(char_type, " : ") + boost::lexical_cast<std::basic_string<char_type>>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - tp).count())).c_str(),
+			(m_strMessage + TSTRING_CAST(char_type, " : ") + boost::lexical_cast<std::basic_string<char_type>>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - m_tp).count())).c_str(),
 			TSTRING_CAST(char_type, "MessageTimer"),
 			MB_OK | MB_ICONINFORMATION);
 	}
