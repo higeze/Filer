@@ -13,14 +13,14 @@ class CBindSheetCellColumn : public CMapColumn
 private:
 	std::wstring m_header;
 	std::function<ReactiveVectorProperty<std::tuple<TValueItem>>&(std::tuple<TItem>&)> m_itemser;
-	std::function<void(CBindItemsSheetCell<TItem, TValueItem>*)> m_initialize;
+	std::function<void(CBindItemsSheetCell*)> m_initialize;
 public:
 	template<typename... Args>
 	CBindSheetCellColumn(
 		CSheet* pSheet,
 		const std::wstring& header,
 		std::function<ReactiveVectorProperty<std::tuple<TValueItem>>&(std::tuple<TItem>&)> itemser,
-		std::function<void(CBindItemsSheetCell<TItem, TValueItem>*)> initializer,
+		std::function<void(CBindItemsSheetCell*)> initializer,
 		Args... args)
 		:CMapColumn(pSheet, args...), m_header(header), m_itemser(itemser), m_initialize(initializer)
 	{
@@ -58,7 +58,7 @@ public:
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		auto spCell = std::make_shared<CBindItemsSheetCell<TItem, TValueItem>>(
+		auto spCell = std::make_shared<CBindItemsSheetCell>(
 			m_pSheet, pRow, pColumn,
 			m_pSheet->GetSheetProperty(),
 			m_pSheet->GetCellProperty(),

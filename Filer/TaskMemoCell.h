@@ -17,7 +17,7 @@ public:
 
 	virtual void PaintNormalBackground(CDirect2DWrite* pDirect, CRectF rcPaint) override
 	{
-		auto pBindRow = static_cast<CBindRow<MainTask>*>(m_pRow);
+		auto pBindRow = static_cast<CBindRow*>(m_pRow);
 		CYearMonthDay ymd = pBindRow->GetItem<MainTask>().YearMonthDay.get();
 		CYearMonthDay now = CYearMonthDay::Now();
 		if (ymd == now) {

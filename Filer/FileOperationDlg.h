@@ -19,17 +19,16 @@
 #include "Dispatcher.h"
 #include "reactive_vector.h"
 
-template<typename... TItems>
-class CFileOperationGridView :public CFilerBindGridView<TItems...>
+class CFileOperationGridView :public CFilerBindGridView
 {
-	using CFilerBindGridView<TItems...>::CFilerBindGridView;
+	using CFilerBindGridView::CFilerBindGridView;
 
 	virtual bool DeleteSelectedFiles() override
 	{
 		auto indexes = this->GetSelectedIndexes();
 		auto frozen_count = this->GetFrozenCount<RowTag>();
 		for (auto i : indexes) {
-			this->GetItemsSource().erase(this->GetItemsSource()->cbegin() + (i - frozen_count));
+			this->ItemsSource.erase(this->ItemsSource->cbegin() + (i - frozen_count));
 		}
 		return true;
 	}
@@ -38,7 +37,6 @@ class CFileOperationGridView :public CFilerBindGridView<TItems...>
 /*************************/
 /* CFileOperationDlgBase */
 /*************************/
-template<typename... TItems>
 class CFileOperationDlgBase: public CD2DWDialog
 {
 private:
@@ -50,7 +48,7 @@ protected:
 	std::shared_ptr<CButton> m_spButtonDo;
 	std::shared_ptr<CButton> m_spButtonCancel;
 
-	std::shared_ptr<CFileOperationGridView<TItems...>> m_spFilerControl;
+	std::shared_ptr<CFileOperationGridView> m_spFilerControl;
 
 	bool m_showDefault = true;
 	bool m_showApply = true;
@@ -62,95 +60,36 @@ protected:
 	std::future<void> m_future;
 
 public:
-	reactive_vector_ptr<std::tuple<TItems...>> ItemsSource;
-	//std::vector< std::tuple<std::shared_ptr<CShellFile>, RenameInfo>> m_selectedItems;
+	reactive_vector_ptr<any_tuple> ItemsSource;
 
 public:
 	CFileOperationDlgBase(
 		CD2DWControl* pParentControl,
 		const std::shared_ptr<DialogProperty>& spDialogProp,
 		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-		:CD2DWDialog(pParentControl, spDialogProp),
-		m_spButtonDo(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
-		m_spButtonCancel(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
-		m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs), Dummy(std::make_shared<int>(0))
-	{
-		m_spButtonCancel->Command.subscribe([this]()->void{
-			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-		}, Dummy);
-
-		m_spButtonCancel->Content.set(L"Cancel");
-	}
+		const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CFileOperationDlgBase() = default;
-
-	virtual void OnClose(const CloseEvent& e) override
-	{
-		CD2DWDialog::OnClose(e);
-	}
 };
 
 /*******************************/
 /* CSimpleFileOperationDlgBase */
 /*******************************/
-template<typename ...TItems>
-class CSimpleFileOperationDlgBase :public CFileOperationDlgBase<TItems...>
+class CSimpleFileOperationDlgBase :public CFileOperationDlgBase
 {
 private:
-	std::tuple<CRectF, CRectF, CRectF> GetRects()
-	{
-		CRectF rc = this->GetRectInWnd();
-		CRectF rcTitle = this->GetTitleRect();
-		rc.top = rcTitle.bottom;
-		CRectF rcGrid(rc.left + 5.f, rc.top + 5.f, rc.right - 5.f, rc.bottom - 30.f);
-		CRectF rcBtnCancel(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
-		CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
-
-		return { rcGrid, rcBtnDo, rcBtnCancel };
-	}
-
+	std::tuple<CRectF, CRectF, CRectF> GetRects();
 public:
-	using CFileOperationDlgBase<TItems...>::CFileOperationDlgBase;
+	using CFileOperationDlgBase::CFileOperationDlgBase;
 	virtual ~CSimpleFileOperationDlgBase() = default;
 
-	virtual void OnCreate(const CreateEvt& e) override
-	{
-		//Create
-		CFileOperationDlgBase<TItems...>::OnCreate(e);
-		//Size
-		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();
-		
-		//Create FilerControl
-		this->m_spFilerControl->OnCreate(CreateEvt(this->GetWndPtr(), this, rcGrid));
-
-		//OK button
-		this->m_spButtonDo->OnCreate(CreateEvt(this->GetWndPtr(), this, rcBtnDo));
-
-		//Cancel button
-		this->m_spButtonCancel->OnCreate(CreateEvt(this->GetWndPtr(), this, rcBtnCancel));
-
-		//Focus
-		this->GetWndPtr()->SetFocusToControl(this->m_spButtonDo);
-	}
-
-	virtual void OnRect(const RectEvent& e) override
-	{
-		CD2DWControl::OnRect(e);
-
-		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();		
-		//Create FilerControl
-		this->m_spFilerControl->OnRect(RectEvent(this->GetWndPtr(), rcGrid));
-		//OK button
-		this->m_spButtonDo->OnRect(RectEvent(this->GetWndPtr(), rcBtnDo));
-		//Cancel button
-		this->m_spButtonCancel->OnRect(RectEvent(this->GetWndPtr(), rcBtnCancel));
-	}
+	virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnRect(const RectEvent& e) override;
 };
 
 /****************/
 /* CCopyMoveDlg */
 /****************/
-class CCopyMoveDlgBase :public CSimpleFileOperationDlgBase<std::shared_ptr<CShellFile>, RenameInfo>
+class CCopyMoveDlgBase :public CSimpleFileOperationDlgBase
 {
 protected:
 	CIDL m_destIDL;
@@ -193,7 +132,7 @@ public:
 /**************/
 /* CDeleteDlg */
 /**************/
-class CDeleteDlg :public CSimpleFileOperationDlgBase<std::shared_ptr<CShellFile>>
+class CDeleteDlg :public CSimpleFileOperationDlgBase
 {
 public:
 	CDeleteDlg(CD2DWControl* pParentControl,
@@ -208,7 +147,7 @@ public:
 /* CExeWnd */
 /***********/
 
-class CExeExtensionDlg: public CFileOperationDlgBase<std::shared_ptr<CShellFile>>
+class CExeExtensionDlg: public CFileOperationDlgBase
 {
 private:
 
@@ -238,7 +177,7 @@ public:
 	virtual void OnRect(const RectEvent& e) override;
 };
 
-class CPDFOperationDlgBase: public CFileOperationDlgBase<std::shared_ptr<CShellFile>>
+class CPDFOperationDlgBase: public CFileOperationDlgBase
 {
 private:
 protected:

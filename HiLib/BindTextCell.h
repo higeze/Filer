@@ -1,9 +1,9 @@
 #pragma once
 #include "TextCell.h"
 #include "BindGridView.h"
+#include "BindTextColumn.h"
 #include "BindRow.h"
 
-template<typename... TItems>
 class CBindTextCell :public CTextCell
 {
 public:
@@ -15,20 +15,19 @@ public:
 
 	virtual std::wstring GetString() override
 	{
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindTextColumn<TItems...>*>(m_pColumn);
+		auto pBindRow = static_cast<CBindRow*>(m_pRow);
+		auto pBindColumn = static_cast<CBindTextColumn*>(m_pColumn);
 		return pBindColumn->GetGetter()(pBindRow->GetTupleItems());
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override
 	{
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindTextColumn<TItems...>*>(m_pColumn);
+		auto pBindRow = static_cast<CBindRow*>(m_pRow);
+		auto pBindColumn = static_cast<CBindTextColumn*>(m_pColumn);
 		pBindColumn->GetSetter()(pBindRow->GetTupleItems(), str);
 	}
 };
 
-template<typename... TItems>
 class CBindTextCell2 :public CTextCell
 {
 private:

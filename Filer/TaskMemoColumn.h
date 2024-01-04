@@ -3,7 +3,7 @@
 #include "BindTextCell.h"
 #include "Task.h"
 
-class CTaskMemoColumn : public CBindTextColumn<MainTask>
+class CTaskMemoColumn : public CBindTextColumn
 {
 public:
 	template<typename... Args>
@@ -11,8 +11,8 @@ public:
 		:CBindTextColumn(
 		pSheet,
 		L"Memo",
-		[](const std::tuple<MainTask>& tk)->std::wstring {return *std::get<MainTask>(tk).Memo; },
-		[](std::tuple<MainTask>& tk, const std::wstring& str)->void { std::get<MainTask>(tk).Memo.set(str); },
+		[](const any_tuple& tk)->std::wstring {return *tk.get<MainTask>().Memo; },
+		[](any_tuple& tk, const std::wstring& str)->void { tk.get<MainTask>().Memo.set(str); },
 		arg<"celleditmode"_s>() = EditMode::ExcelLike){}
 };
 

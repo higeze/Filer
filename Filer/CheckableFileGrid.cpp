@@ -73,13 +73,13 @@ void CCheckableFileGrid::OnCreate(const CreateEvt& e)
 
 	//Insert columns if not initialized
 	if (m_allCols.empty()) {
-		m_pNameColumn = std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
+		m_pNameColumn = std::make_shared<CFileIconPathColumn>(this, L"Name");
 		PushColumns(
 			std::make_shared<CRowIndexColumn>(this, GetHeaderProperty()),
 			m_pNameColumn,
-			std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"),
-			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr),
-			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
+			std::make_shared<CFileDispExtColumn>(this, L"Ext"),
+			std::make_shared<CFileSizeColumn>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr),
+			std::make_shared<CFileLastWriteColumn>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
 
 		m_frozenColumnCount = 1;
 	}
@@ -99,7 +99,7 @@ void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 	//Cursor
 	m_spCursorer->Clear();
 
-	ItemsSource.push_back(std::make_tuple(spFile));
+	ItemsSource.emplace_back(std::move(spFile));
 
 	for (auto& spCol : m_allCols) {
 		spCol->SetIsFitMeasureValid(false);
@@ -112,7 +112,7 @@ void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 void CCheckableFileGrid::OnCellLButtonDblClk(const CellEventArgs& e)
 {
 	auto pCell = e.CellPtr;
-	if (auto spRow = dynamic_cast<CBindRow<std::shared_ptr<CShellFile>>*>(e.CellPtr->GetRowPtr())) {
+	if (auto spRow = dynamic_cast<CBindRow*>(e.CellPtr->GetRowPtr())) {
 		auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 		Open(spFile);
 	}

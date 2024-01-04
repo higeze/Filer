@@ -5,7 +5,7 @@
 #include "YearMonthDay.h"
 #include "Task.h"
 
-class CTaskDueDateCell :public CBindYearMonthDayCell<MainTask>
+class CTaskDueDateCell :public CBindYearMonthDayCell
 {
 public:
 	template<typename... Args>

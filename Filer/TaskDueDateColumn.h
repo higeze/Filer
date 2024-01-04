@@ -1,4 +1,5 @@
 #pragma once
+#include "BindYearMonthDayColumn.h"
 #include "FilterCell.h"
 #include "BindColumn.h"
 #include "SortCell.h"
@@ -7,15 +8,15 @@
 #include "TaskDueDateCell.h"
 #include "Task.h"
 
-class CTaskDueDateColumn: public CBindYearMonthDayColumn<MainTask>
+class CTaskDueDateColumn: public CBindYearMonthDayColumn
 {
 public:
 	template<typename... Args>
 	CTaskDueDateColumn(CSheet* pSheet = nullptr, Args... args)
-		:CBindYearMonthDayColumn<MainTask>(
+		:CBindYearMonthDayColumn(
 		pSheet, 
 		L"Due Date",
-		[](std::tuple<MainTask>& tk)->reactive_property_ptr<CYearMonthDay>& { return std::get<MainTask>(tk).YearMonthDay; },
+		[](any_tuple& tk)->reactive_property_ptr<CYearMonthDay>& { return tk.get<MainTask>().YearMonthDay; },
 		args...)
 	{}
 

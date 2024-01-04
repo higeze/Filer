@@ -152,22 +152,22 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 			m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this, GetHeaderProperty());
 			m_allCols.idx_push_back(m_pHeaderColumn);
 		}
-		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); })) 
+		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn); })) 
 		{ 
-			m_pNameColumn = std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
+			m_pNameColumn = std::make_shared<CFileNameColumn>(this, L"Name");
 			m_allCols.idx_push_back(m_pNameColumn);
 		}
-		//if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); })) {
-		//	m_allCols.idx_push_back(std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this));
+		//if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn); })) {
+		//	m_allCols.idx_push_back(std::make_shared<CFileNameColumn>(this));
 		//}
-		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileDispExtColumn<std::shared_ptr<CShellFile>>); })) {
-			m_allCols.idx_push_back(std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"));
+		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileDispExtColumn); })) {
+			m_allCols.idx_push_back(std::make_shared<CFileDispExtColumn>(this, L"Ext"));
 		}
-		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileSizeColumn<std::shared_ptr<CShellFile>>); })) {
-			m_allCols.idx_push_back(std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr));
+		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileSizeColumn); })) {
+			m_allCols.idx_push_back(std::make_shared<CFileSizeColumn>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr));
 		}
-		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileLastWriteColumn<std::shared_ptr<CShellFile>>); })) {
-			m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
+		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileLastWriteColumn); })) {
+			m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
 		}
 
 		m_frozenColumnCount = 1;
@@ -408,7 +408,7 @@ void CFilerGridView::Added(const std::wstring& fileName)
 	ULONG dwAttributes;
 	HRESULT hr = m_spFolder->GetShellFolderPtr()->ParseDisplayName(GetWndPtr()->m_hWnd, NULL, const_cast<LPWSTR>(fileName.c_str()), &chEaten, idl.ptrptr(), &dwAttributes);
 	if (SUCCEEDED(hr) && idl) {
-		GetItemsSource().push_back(m_spFolder->CreateShExFileFolder(idl));
+		ItemsSource.push_back(m_spFolder->CreateShExFileFolder(idl));
 		auto spRow = m_allRows.back();
 
 		PostUpdate(Updates::ColumnVisible);
@@ -424,7 +424,7 @@ void CFilerGridView::Added(const std::wstring& fileName)
 		PostUpdate(Updates::Sort);
 		FilterAll();
 		if (m_isNewFile) {
-			std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, m_pNameColumn))->OnEdit(Event(GetWndPtr()));
+			std::static_pointer_cast<CFileNameCell>(Cell(spRow, m_pNameColumn))->OnEdit(Event(GetWndPtr()));
 		}
 		m_isNewFile = false;
 	}
@@ -438,7 +438,7 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 	LOG_THIS_1("Modified " + wstr2str(fileName));
 	auto iter = std::find_if(ItemsSource.get_unconst()->begin(), ItemsSource.get_unconst()->end(),
 							[fileName](const auto& value)->bool {
-								return std::get<std::shared_ptr<CShellFile>>(value)->GetPathName() == fileName;
+								return value.get<std::shared_ptr<CShellFile>>()->GetPathName() == fileName;
 							});
 //	auto iter = FindIfRowIterByFileNameExt(fileName);
 
@@ -450,12 +450,12 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 		ULONG chEaten;
 		ULONG dwAttributes;
 		CIDL newIdl;
-		HRESULT hRes = std::get<std::shared_ptr<CShellFile>>(*iter)->GetParentShellFolderPtr()
+		HRESULT hRes = iter->get<std::shared_ptr<CShellFile>>()->GetParentShellFolderPtr()
 			->ParseDisplayName(GetWndPtr()->m_hWnd, NULL, (LPWSTR)fileName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
 
 		if (SUCCEEDED(hRes) && newIdl) {
 			//std::get<std::shared_ptr<CShellFile>>(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
-			ItemsSource.replace(iter, std::make_tuple(m_spFolder->CreateShExFileFolder(newIdl)));
+			ItemsSource.replace(iter, m_spFolder->CreateShExFileFolder(newIdl));
 			m_allRows[iter-ItemsSource->cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
 			PostUpdate(Updates::ColumnVisible);
 			PostUpdate(Updates::RowVisible);
@@ -475,7 +475,7 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 
 	auto iter = std::find_if(ItemsSource->cbegin(), ItemsSource->cend(),
 							 [fileName](const auto& value)->bool {
-								 return std::get<std::shared_ptr<CShellFile>>(value)->GetPathName() == fileName;
+								 return value.get<std::shared_ptr<CShellFile>>()->GetPathName() == fileName;
 							 });
 
 	if (iter == ItemsSource->cend()) {
@@ -504,7 +504,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 	LOG_THIS_1("Renamed " + wstr2str(oldName) + "=>"+ wstr2str(newName));
 	auto iter = std::find_if(ItemsSource.get_unconst()->begin(), ItemsSource.get_unconst()->end(),
 							 [oldName](const auto& value)->bool {
-								 return std::get<std::shared_ptr<CShellFile>>(value)->GetPathName() == oldName;
+								 return value.get<std::shared_ptr<CShellFile>>()->GetPathName() == oldName;
 							 });
 
 	if (iter == ItemsSource.get_unconst()->end()) 
@@ -515,11 +515,11 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 		ULONG dwAttributes;
 		CIDL newIdl;
 
-		HRESULT hRes = std::get<std::shared_ptr<CShellFile>>(*iter)->GetParentShellFolderPtr()
+		HRESULT hRes = iter->get<std::shared_ptr<CShellFile>>()->GetParentShellFolderPtr()
 			->ParseDisplayName(GetWndPtr()->m_hWnd, NULL, (LPWSTR)newName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
 
 		if (SUCCEEDED(hRes) && newIdl) {
-			std::get<std::shared_ptr<CShellFile>>(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
+			iter->get<std::shared_ptr<CShellFile>>() = m_spFolder->CreateShExFileFolder(newIdl);
 			m_allRows[iter - ItemsSource->cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
 			PostUpdate(Updates::ColumnVisible);
 			PostUpdate(Updates::RowVisible);
@@ -586,7 +586,7 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 	case VK_F2:
 		{
 			if (m_spCursorer->GetFocusedCell()) {
-				std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(Event(GetWndPtr()));
+				std::static_pointer_cast<CFileNameCell>(Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(Event(GetWndPtr()));
 				(*e.HandledPtr) = true;
 			}
 		}
@@ -595,7 +595,7 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 		{
 			auto pCell = m_spCursorer->GetFocusedCell();
 			if (!pCell) { break; }
-			if(auto spRow = dynamic_cast<CBindRow<std::shared_ptr<CShellFile>>*>(pCell->GetRowPtr())){
+			if(auto spRow = dynamic_cast<CBindRow*>(pCell->GetRowPtr())){
 				auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 				auto path = spFile->GetPath();
 				SHELLEXECUTEINFO	sei = { 0 };
@@ -700,7 +700,7 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 		}
 
 		//Clear RowDictionary From 0 to last
-		GetItemsSource().clear();
+		ItemsSource.clear();
 		//m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
 	}
 
@@ -711,7 +711,7 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 			shell::for_each_idl_in_shellfolder(GetWndPtr()->m_hWnd, m_spFolder->GetShellFolderPtr(),
 				[this](const CIDL& idl) {
 					if (auto spFile = m_spFolder->CreateShExFileFolder(idl)) {
-						GetItemsSource().push_back(std::make_tuple(spFile));
+						ItemsSource.push_back(spFile);
 					}
 				});
 		} catch (std::exception&) {
@@ -770,8 +770,8 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 
 			//If previous folder is found, set cursor for that.
 			if (m_spPreviousFolder) {
-				auto iter = std::find_if(ItemsSource->cbegin(), ItemsSource->cend(), [this](const auto& tup)->bool {
-					return std::get<std::shared_ptr<CShellFile>>(tup)->GetAbsoluteIdl() == m_spPreviousFolder->GetAbsoluteIdl();
+				auto iter = std::find_if(ItemsSource->cbegin(), ItemsSource->cend(), [this](const auto& value)->bool {
+					return value.get<std::shared_ptr<CShellFile>>()->GetAbsoluteIdl() == m_spPreviousFolder->GetAbsoluteIdl();
 				});
 
 				if (iter != ItemsSource->cend()) {
@@ -797,7 +797,7 @@ void CFilerGridView::OnBkGndLButtondDblClk(const LButtonDblClkEvent& e)
 void CFilerGridView::OnCellLButtonDblClk(const CellEventArgs& e)
 {
 	auto pCell = e.CellPtr;
-	if(auto spRow = dynamic_cast<CBindRow<std::shared_ptr<CShellFile>>*>(e.CellPtr->GetRowPtr())){
+	if(auto spRow = dynamic_cast<CBindRow*>(e.CellPtr->GetRowPtr())){
 		auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 		Open(spFile);
 	}
@@ -806,7 +806,7 @@ void CFilerGridView::OnCellLButtonDblClk(const CellEventArgs& e)
 std::shared_ptr<CShellFile> CFilerGridView::GetFocusedFile()
 {
 	CRow* pRow = GetCursorerPtr()->GetFocusedCell()->GetRowPtr();
-	if (auto pBindRow = dynamic_cast<CBindRow<std::shared_ptr<CShellFile>>*>(pRow)) {
+	if (auto pBindRow = dynamic_cast<CBindRow*>(pRow)) {
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>();
 	}
 	return nullptr;
@@ -818,7 +818,7 @@ std::vector<std::shared_ptr<CShellFile>> CFilerGridView::GetSelectedFiles()
 	std::vector<std::shared_ptr<CShellFile>> files;
 	for (const auto& rowPtr : m_visRows) {
 		if (rowPtr->GetIsSelected()) {
-			if (auto spRow = std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr)) {
+			if (auto spRow = std::dynamic_pointer_cast<CBindRow>(rowPtr)) {
 				files.push_back(spRow->GetItem<std::shared_ptr<CShellFile>>());
 			}
 		}
@@ -832,7 +832,7 @@ std::vector<LPITEMIDLIST> CFilerGridView::GetSelectedLastPIDLVector()
 	std::vector<LPITEMIDLIST> vPidl;
 	for (const auto& rowPtr : m_visRows) {
 		if (rowPtr->GetIsSelected()) {
-			if (auto spRow = std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr)) {
+			if (auto spRow = std::dynamic_pointer_cast<CBindRow>(rowPtr)) {
 				auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 				vPidl.push_back(spFile->GetAbsoluteIdl().FindLastID());
 			}
@@ -846,7 +846,7 @@ std::vector<LPITEMIDLIST> CFilerGridView::GetSelectedAbsolutePIDLVector()
 	std::vector<LPITEMIDLIST> vPidl;
 	for (const auto& rowPtr : m_visRows) {
 		if (rowPtr->GetIsSelected()) {
-			if (auto spRow = std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr)) {
+			if (auto spRow = std::dynamic_pointer_cast<CBindRow>(rowPtr)) {
 				auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 				vPidl.push_back(spFile->GetAbsoluteIdl().m_pIDL);
 			}
@@ -860,7 +860,7 @@ std::vector<CIDL> CFilerGridView::GetSelectedChildIDLVector()
 	std::vector<CIDL> childIDLs;
 	for (const auto& rowPtr : m_visRows) {
 		if (rowPtr->GetIsSelected()) {
-			if (auto spRow = std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr)) {
+			if (auto spRow = std::dynamic_pointer_cast<CBindRow>(rowPtr)) {
 				auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 				childIDLs.push_back(spFile->GetChildIdl());
 			}
@@ -1184,7 +1184,7 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		//Cell menu
 		for(auto rowPtr : m_visRows){
 			if(rowPtr->GetIsSelected()){
-				auto spRow=std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr);
+				auto spRow=std::dynamic_pointer_cast<CBindRow>(rowPtr);
 				auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 				files.push_back(spFile);
 			}
@@ -1399,7 +1399,7 @@ void CFilerGridView::Drag()
 	CIDL pFirstIdl;
 	for(const auto& rowPtr : m_visRows){
 		if(rowPtr->GetIsSelected()){
-			if(auto spRow=std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr)){
+			if(auto spRow=std::dynamic_pointer_cast<CBindRow>(rowPtr)){
 				auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 				if(vPidl.empty()){
 					pFirstIdl = spFile->GetAbsoluteIdl();

@@ -8,7 +8,6 @@
 /********************/
 /* CFileDispExtCell */
 /********************/
-template<typename... TItems>
 class CFileDispExtCell:public CTextCell
 {
 public:
@@ -20,14 +19,14 @@ public:
 
 	std::wstring GetString()
 	{
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		return std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems())->GetDispExt();
+		auto pBindRow = static_cast<CBindRow*>(m_pRow);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetDispExt();
 	}
 
 	void SetStringCore(const std::wstring& str)
 	{
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		return std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems())->SetExt(str, m_pSheet->GetWndPtr()->m_hWnd);
+		auto pBindRow = static_cast<CBindRow*>(m_pRow);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetExt(str, m_pSheet->GetWndPtr()->m_hWnd);
 	}
 
 	virtual bool CanSetStringOnEditing()const override { return false; }
@@ -36,7 +35,6 @@ public:
 /********************/
 /* CFilePathExtCell */
 /********************/
-template<typename... TItems>
 class CFilePathExtCell :public CTextCell
 {
 public:
@@ -48,14 +46,14 @@ public:
 
 	std::wstring GetString()
 	{
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		return std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems())->GetPathExt();
+		auto pBindRow = static_cast<CBindRow*>(m_pRow);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetPathExt();
 	}
 
 	void SetStringCore(const std::wstring& str)
 	{
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		return std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems())->SetExt(str, m_pSheet->GetWndPtr()->m_hWnd);
+		auto pBindRow = static_cast<CBindRow*>(m_pRow);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetExt(str, m_pSheet->GetWndPtr()->m_hWnd);
 	}
 
 	virtual bool CanSetStringOnEditing()const override { return false; }
@@ -65,7 +63,6 @@ public:
 /********************/
 /* CFilePathExtCell */
 /********************/
-template<typename... TItems>
 class CFileReextCell :public CTextCell
 {
 public:
@@ -77,14 +74,14 @@ public:
 
 	std::wstring GetString()
 	{
-		auto pFileRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		return std::get<RenameInfo>(pFileRow->GetTupleItems()).Ext;
+		auto pFileRow = static_cast<CBindRow*>(m_pRow);
+		return pFileRow->GetItem<RenameInfo>().Ext;
 	}
 
 	void SetStringCore(const std::wstring& str)
 	{
-		auto pFileRow = static_cast<CBindRow<TItems...>*>(m_pRow);
-		std::get<RenameInfo>(pFileRow->GetTupleItems()).Ext = str;
+		auto pFileRow = static_cast<CBindRow*>(m_pRow);
+		pFileRow->GetItem<RenameInfo>().Ext = str;
 	}
 	virtual bool CanSetStringOnEditing()const override { return false; }
 

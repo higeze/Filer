@@ -102,17 +102,17 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	//m_spToDoGridView->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(m_spToDoGridView.get()));
 	//m_spToDoGridView->PushColumns(
 	//	m_spToDoGridView->GetHeaderColumnPtr(),
-	//	std::make_shared<CBindCheckBoxColumn<MainTask>>(
+	//	std::make_shared<CBindCheckBoxColumn>(
 	//		m_spToDoGridView.get(),
 	//		L"State",
 	//		[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).State; },
 	//		[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).State = state; }),
-	//	std::make_shared<CBindTextColumn<MainTask>>(
+	//	std::make_shared<CBindTextColumn>(
 	//		m_spToDoGridView.get(),
 	//		L"Name",
 	//		[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name; },
 	//		[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name = str; }),
-	//	std::make_shared<CBindTextColumn<MainTask>>(
+	//	std::make_shared<CBindTextColumn>(
 	//		m_spToDoGridView.get(),
 	//		L"Memo",
 	//		[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo; },
@@ -120,25 +120,25 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	//	std::make_shared<CDateColumn>(
 	//		m_spToDoGridView.get(),
 	//		L"Due date")//,
-	//	//std::make_shared<CBindSheetCellColumn< MainTask, SubTask>>(
+	//	//std::make_shared<CBindSheetCellColumn>(
 	//	//	m_spToDoGridView.get(),
 	//	//	L"Sub Task",
 	//	//	[](std::tuple<MainTask>& tk)->ReactiveVectorProperty<std::tuple<SubTask>>& {return std::get<MainTask>(tk).SubTasks; },
-	//	//	[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void {
+	//	//	[](CBindItemsSheetCell* pCell)->void {
 	//	//		pCell->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pCell));
 	//	//		pCell->PushColumns(
 	//	//			pCell->GetHeaderColumnPtr(),
-	//	//			std::make_shared<CBindCheckBoxColumn<SubTask>>(
+	//	//			std::make_shared<CBindCheckBoxColumn>(
 	//	//				pCell,
 	//	//				L"Done",
 	//	//				[](const std::tuple<SubTask>& tk)->CheckBoxState {return std::get<SubTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
 	//	//				[](std::tuple<SubTask>& tk, const CheckBoxState& state)->void {std::get<SubTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
-	//	//			std::make_shared<CBindTextColumn<SubTask>>(
+	//	//			std::make_shared<CBindTextColumn>(
 	//	//				pCell,
 	//	//				L"Name",
 	//	//				[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Name; },
 	//	//				[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Name = str; }),
-	//	//			std::make_shared<CBindTextColumn<SubTask>>(
+	//	//			std::make_shared<CBindTextColumn>(
 	//	//				pCell,
 	//	//				L"Memo",
 	//	//				[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Memo; },

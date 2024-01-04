@@ -1,14 +1,15 @@
 #pragma once
 #include "BindCheckBoxColumn.h"
 #include "Task.h"
+#include "any_tuple.h"
 
-class CTaskCheckBoxColumn : public CBindCheckBoxColumn<MainTask>
+class CTaskCheckBoxColumn : public CBindCheckBoxColumn
 {
 public:
 	CTaskCheckBoxColumn(CSheet* pSheet = nullptr)
-		:CBindCheckBoxColumn<MainTask>(
+		:CBindCheckBoxColumn(
 		pSheet,
 		L"State",
-		[](std::tuple<MainTask>& tk)->reactive_property_ptr<CheckBoxState>& {return std::get<MainTask>(tk).State; }){}
+		[](any_tuple& tk)->reactive_property_ptr<CheckBoxState>& {return tk.get<MainTask>().State; }){}
 };
 

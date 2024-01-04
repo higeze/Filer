@@ -1,48 +1,32 @@
 #pragma once
 #include "Column.h"
-#include "TextCell.h"
-#include "Debug.h"
-#include "IBindSheet.h"
-#include "Debug.h"
+#include "any_tuple.h"
 
-template<typename... TItems>
 class CBindColumn :public CColumn
 {
 public:
 	CBindColumn(CSheet* pSheet)
 		:CColumn(pSheet){ }
 
-	std::tuple<TItems...>& GetTupleItems()
+	any_tuple& GetTupleItems();
+
+	const any_tuple& GetTupleItems() const;
+
+	template<typename T> 
+	T& GetItem()
 	{
-		if(auto pBindSheet = dynamic_cast<IBindSheet2<TItems...>*>(this->m_pSheet)){
-			auto& itemsSource = pBindSheet->GetItemsSource();
-			auto index = GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<ColTag>();
-
-			return itemsSource.get_unconst()->at(index);
-
-		} else {
-			throw std::exception(FILE_LINE_FUNC);
-		}
+		return this->GetTupleItems().get<T>();
 	}
 
-	template<typename TItem> TItem& GetItem()
+	template<typename T> 
+	const T& GetItem() const
 	{
-		return std::get<TItem>(GetTupleItems());
+		return const_cast<T&>(this->GetItem<T>());
 	}
 
-	std::shared_ptr<CCell>& Cell(CRow* pRow )
-	{
-		if (pRow->HasCell()) {
-			return pRow->Cell(this);
-		} else {
-			THROW_FILE_LINE_FUNC;
-		}
-	}
+	std::shared_ptr<CCell>& Cell(CRow* pRow);
 
-	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
-	{
-		return std::make_shared<CTextCell>(m_pSheet,pRow,pColumn,m_pSheet->GetCellProperty());
-	}
+	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn);
 
 };
 

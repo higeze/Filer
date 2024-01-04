@@ -58,7 +58,7 @@ public:
 
 struct EditorTextBoxProperty :public TextBoxProperty
 {
-	reactive_vector_ptr<std::tuple<SyntaxAppearance>> SyntaxAppearances;
+	reactive_vector_ptr<SyntaxAppearance> SyntaxAppearances;
 	std::vector<ExecutableAppearance> ExecutableAppearances;
 	SolidFill FindHighliteFill = SolidFill(244.f / 255, 167.f / 255, 33.f / 255, 100.f / 255);
 
@@ -84,19 +84,17 @@ struct EditorTextBoxProperty :public TextBoxProperty
 
 		from_json(j, static_cast<TextBoxProperty&>(o));
 		get_to(j, "VScrollPropPtr", o.VScrollPropPtr);
-		get_to(j, "SyntaxAppearances", o.SyntaxAppearances);
+		//get_to(j, "SyntaxAppearances", o.SyntaxAppearances);
 		get_to(j, "FindHighliteFill", o.FindHighliteFill);
 		get_to(j, "ExecutableAppearance", o.ExecutableAppearances);
 
 		if (o.SyntaxAppearances->empty()) {
-			o.SyntaxAppearances.push_back(
-				std::make_tuple(
+			o.SyntaxAppearances.push_back(		
 					SyntaxAppearance(L"/\\*.*?\\*/",
-						SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false, false))));
+						SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false, false)));
 			o.SyntaxAppearances.push_back(
-				std::make_tuple(
 					SyntaxAppearance(L"//.*?\n",
-						SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false, false))));
+						SyntaxFormatF(CColorF(0.0f, 0.5f, 0.0f), false, false)));
 		}
 		
 		if (o.ExecutableAppearances.empty()) {

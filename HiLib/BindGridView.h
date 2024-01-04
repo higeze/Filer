@@ -11,16 +11,16 @@
 #include "Celler.h"
 #include "IBindSheet.h"
 #include "reactive_vector.h"
+#include "any_tuple.h"
 
-template<typename TRow, typename TCol, typename... TItems>
-class CBindGridView2 :public CGridView, public IBindSheet2<TItems...>
+class CBindGridView2 :public CGridView
 {
 protected:
 	std::vector<std::shared_ptr<CColumn>> m_initColumns;
 	std::vector<std::shared_ptr<CRow>> m_initRows;
 
 public:
-	reactive_vector_ptr<std::tuple<TItems...>> ItemsSource;
+	reactive_vector_ptr<any_tuple> ItemsSource;
 
 public:
 	template<typename... TArgs> 
@@ -34,7 +34,7 @@ public:
 		//TArg...
 		m_bindType = ::get(arg<"bindtype"_s>(), args..., default_(BindType::Row));
 
-		ItemsSource = ::get(arg<"itemssource"_s>(), args..., default_(reactive_vector_ptr<std::tuple<TItems...>>()));
+		ItemsSource = ::get(arg<"itemssource"_s>(), args..., default_(reactive_vector_ptr<any_tuple>()));
 
 		m_pHeaderColumn = ::get(arg<"hdrcol"_s>(), args..., default_(nullptr));
 		if (m_pHeaderColumn) {
@@ -76,8 +76,6 @@ public:
 		m_initRows = ::get(arg<"rows"_s>(), args..., default_(m_initRows));
 	}
 
-	reactive_vector_ptr<std::tuple<TItems...>>& GetItemsSource() override { return ItemsSource; }
-
 	std::vector<int> GetSelectedIndexes() 
 	{
 		std::vector<int> indexes;
@@ -91,14 +89,14 @@ public:
 	/******************/
 	/* Window Message */
 	/******************/
-	void subscribe_detail_row(const notify_container_changed_event_args<std::vector<std::tuple<TItems...>>>& e)
+	void subscribe_detail_row(const notify_container_changed_event_args<std::vector<any_tuple>>& e)
 	{
 		switch (e.action) {
 			case notify_container_changed_action::push_back:
-				PushRow(std::make_shared<TRow>(this, GetCellProperty()));
+				PushRow(std::make_shared<CBindRow>(this, GetCellProperty()));
 				break;
 			case notify_container_changed_action::insert:
-				InsertRow(e.new_starting_index, std::make_shared<TRow>(this, GetCellProperty()));
+				InsertRow(e.new_starting_index, std::make_shared<CBindRow>(this, GetCellProperty()));
 				break;
 			case notify_container_changed_action::erase:
 			{
@@ -119,7 +117,7 @@ public:
 				m_spCursorer->Clear();//TOOD Refactor
 				m_spCeller->Clear();
 				for (auto& tup : e.new_items) {
-					PushRow(std::make_shared<TRow>(this, GetCellProperty()));
+					PushRow(std::make_shared<CBindRow>(this, GetCellProperty()));
 				}
 				//PostUpdate(Updates::All);
 				//SubmitUpdate();
@@ -130,14 +128,14 @@ public:
 		}
 	}
 
-	void subscribe_detail_column(const notify_container_changed_event_args<std::vector<std::tuple<TItems...>>>& e)
+	void subscribe_detail_column(const notify_container_changed_event_args<std::vector<any_tuple>>& e)
 	{
 		switch (e.action) {
 			case notify_container_changed_action::push_back:
-				this->PushColumn(std::make_shared<TCol>(this));
+				this->PushColumn(std::make_shared<CBindColumn>(this));
 				break;
 			case notify_container_changed_action::insert:
-				this->InsertColumn(e.new_starting_index, std::make_shared<TCol>(this));
+				this->InsertColumn(e.new_starting_index, std::make_shared<CBindColumn>(this));
 				break;
 			case notify_container_changed_action::erase:
 			{
@@ -150,7 +148,7 @@ public:
 				m_allCols.idx_erase(m_allCols.begin() + m_frozenColumnCount, m_allCols.end());
 				m_allCells.clear();
 				for (auto& tup : e.new_items) {
-					PushColumn(std::make_shared<TCol>(this));
+					PushColumn(std::make_shared<CBindColumn>(this));
 				}
 
 				break;
@@ -183,7 +181,7 @@ public:
 
 				//PushRow
 				for (size_t i = 0; i < ItemsSource->size(); i++) {
-					PushRow(std::make_shared<TRow>(this, GetCellProperty()));
+					PushRow(std::make_shared<CBindRow>(this, GetCellProperty()));
 				}
 			}
 			break;
@@ -200,7 +198,7 @@ public:
 
 				//PushColumn
 				for (size_t i = 0; i < ItemsSource->size(); i++) {
-					PushColumn(std::make_shared<TCol>(this));
+					PushColumn(std::make_shared<CBindColumn>(this));
 				}
 
 			}

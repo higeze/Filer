@@ -22,10 +22,9 @@
 
 #define WM_UAHMEASUREMENUITEM 0x0094
 
-template<typename... TItems>
-class CFilerBindGridView :public CBindGridView2<CBindRow<TItems...>, CBindColumn<TItems...>, TItems...>
+class CFilerBindGridView :public CBindGridView2
 {
-	using base = CBindGridView2<CBindRow<TItems...>, CBindColumn<TItems...>, TItems...>;
+	using base = CBindGridView2;
 protected:
 	//HeaderMenuItems
 	std::vector<std::shared_ptr<CShowHideColumnMenuItem>> m_headerMenuItems;
@@ -59,7 +58,7 @@ public:
 	virtual void OnCellLButtonDblClk(const CellEventArgs& e)
 	{
 		auto pCell = e.CellPtr;
-		if (auto spRow = dynamic_cast<CBindRow<TItems...>*>(e.CellPtr->GetRowPtr())) {
+		if (auto spRow = dynamic_cast<CBindRow*>(e.CellPtr->GetRowPtr())) {
 			auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 			OpenFile(spFile);
 		}
@@ -117,23 +116,23 @@ public:
 		//pWnd->UpdateWindow();
 	}
 
-	index_vector<std::shared_ptr<CColumn>>::const_iterator FindIfRowIterByFileNameExt(const std::wstring& fileNameExt)
-	{
-		return std::find_if(this->m_allRows.begin(), this->m_allRows.end(),
-							[&](const std::shared_ptr<CRow>& rowPtr)->bool {
-								if (auto p = std::dynamic_pointer_cast<CBindRow<TItems...>>(rowPtr)) {
-									return p->GetFilePointer()->GetDispName() == fileNameExt;
-								} else {
-									return false;
-								}
-							});
-	}
+	//index_vector<std::shared_ptr<CColumn>>::const_iterator FindIfRowIterByFileNameExt(const std::wstring& fileNameExt)
+	//{
+	//	return std::find_if(this->m_allRows.begin(), this->m_allRows.end(),
+	//						[&](const std::shared_ptr<CRow>& rowPtr)->bool {
+	//							if (auto p = std::dynamic_pointer_cast<CBindRow>(rowPtr)) {
+	//								return p->GetFilePointer()->GetDispName() == fileNameExt;
+	//							} else {
+	//								return false;
+	//							}
+	//						});
+	//}
 
 	std::vector<std::shared_ptr<CShellFile>> GetAllFiles()
 	{
 		std::vector<std::shared_ptr<CShellFile>> files;
 		for (const auto& rowPtr : this->m_visRows) {
-			if (auto spRow = std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr)) {
+			if (auto spRow = std::dynamic_pointer_cast<CBindRow>(rowPtr)) {
 				files.push_back(spRow->GetItem<std::shared_ptr<CShellFile>>());
 			}
 		}
@@ -144,7 +143,7 @@ public:
 	{
 		std::vector<std::shared_ptr<CShellFile>> files;
 		for (const auto& rowPtr : this->m_visRows) {
-			if (auto spRow = std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr); spRow && spRow->GetIsSelected()) {
+			if (auto spRow = std::dynamic_pointer_cast<CBindRow>(rowPtr); spRow && spRow->GetIsSelected()) {
 				files.push_back(spRow->GetItem<std::shared_ptr<CShellFile>>());
 			}
 		}
@@ -211,7 +210,7 @@ public:
 			case VK_RETURN:
 				{
 					if (this->m_spCursorer->GetFocusedCell()) {
-						if (auto spRow = dynamic_cast<CBindRow<TItems...>*>(this->m_spCursorer->GetFocusedCell()->GetRowPtr())) {
+						if (auto spRow = dynamic_cast<CBindRow*>(this->m_spCursorer->GetFocusedCell()->GetRowPtr())) {
 							auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 							Open(spFile);
 							(*e.HandledPtr) = true;

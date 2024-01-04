@@ -22,6 +22,7 @@
 #include "D2DWWindow.h"
 #include "EditorProperty.h"
 
+
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CLauncherGridView::CLauncherGridView(
@@ -32,7 +33,7 @@ CLauncherGridView::CLauncherGridView(
 	spGridViewProp,
 	arg<"bindtype"_s>() = BindType::Column,
 	arg<"itemssource"_s>() = spLauncherProp->Launchers,
-	arg<"rows"_s>() = std::vector<std::shared_ptr<CRow>>{std::make_shared<CLauncherRow<std::shared_ptr<CLauncher>>>(this, spGridViewProp->CellPropPtr)}),
+	arg<"rows"_s>() = std::vector<std::shared_ptr<CRow>>{std::make_shared<CLauncherRow>(this, spGridViewProp->CellPropPtr)}),
 	m_spLauncherProp(spLauncherProp)
 {
 	IsFocusable.set(false);
@@ -80,7 +81,7 @@ void CLauncherGridView::OpenFavorites()
 
 //void CLauncherGridView::OnCellLButtonDblClk(const CellEventArgs& e)
 //{
-//	if(auto p = dynamic_cast<CLauncherCell<std::shared_ptr<CFavorite>>*>(e.CellPtr)){
+//	if(auto p = dynamic_cast<CLauncherCell*>(e.CellPtr)){
 //		auto spFile = p->GetShellFile();
 //		if (spFile != nullptr) {
 //			spFile->Open();

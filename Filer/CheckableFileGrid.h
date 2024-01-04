@@ -1,7 +1,7 @@
 #pragma once
 #include "FilerBindGridView.h"
 
-class CCheckableFileGrid :public CFilerBindGridView<std::shared_ptr<CShellFile>>
+class CCheckableFileGrid :public CFilerBindGridView
 {
 public:
 	//Constructor
