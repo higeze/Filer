@@ -248,14 +248,14 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		spFilerView->ExecCustomContextMenu = [&](int idCmd, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files)->bool {
 			if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToFavoritesFromItem")) {
 				for (auto& file : files) {
-					GetFavoritesPropPtr()->Favorites.push_back(std::make_shared<CFavorite>(file->GetPath(), L""));
+					GetFavoritesPropPtr()->Favorites.push_back(std::make_tuple(std::make_shared<CFavorite>(file->GetPath(), L"")));
 				}
 				m_spLeftFavoritesView->SubmitUpdate();
 				m_spRightFavoritesView->SubmitUpdate();
 				return true;
 			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToLauncherFromItem")) {
 				for (auto& file : files) {
-					GetLauncherPropPtr()->Launchers.push_back(std::make_shared<CLauncher>(file->GetPath(), L""));
+					GetLauncherPropPtr()->Launchers.push_back(std::make_tuple(std::make_shared<CLauncher>(file->GetPath(), L"")));
 				}
 				m_spLauncher->SubmitUpdate();
 				return true;

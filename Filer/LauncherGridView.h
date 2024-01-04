@@ -5,7 +5,7 @@
 struct GridViewProperty;
 class CLauncherProperty;
 
-class CLauncherGridView : public CBindGridView2
+class CLauncherGridView : public CBindGridView2<CBindRow<std::shared_ptr<CLauncher>>, CBindColumn<std::shared_ptr<CLauncher>>, std::shared_ptr<CLauncher>>
 {
 private:
 	std::shared_ptr<CLauncherProperty> m_spLauncherProp;

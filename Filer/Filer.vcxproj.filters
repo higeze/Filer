@@ -966,9 +966,6 @@
     <ClInclude Include="..\HiLib\ToolTip.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\any_tuple.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -993,6 +990,9 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="FilerWnd.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSizeCell.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="PathCell.cpp">
@@ -1430,48 +1430,6 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\ToolTip.cpp">
       <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\BindRow.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\BindColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\BindTextColumn.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="FileSizeCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileSizeColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileLastWriteCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileLastWriteColumn.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\BindCheckBoxCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\BindCheckBoxColumn.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="FavoriteCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileIconCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\BindYearMonthDayColumn.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\BindYearMonthDayCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="LauncherCell.cpp">
-      <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

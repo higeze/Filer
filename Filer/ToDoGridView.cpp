@@ -141,7 +141,7 @@ void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		GetWndPtr()->m_hWnd);
 
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
-		ItemsSource.push_back(MainTask());
+		ItemsSource.push_back(std::make_tuple(MainTask()));
 		m_spCursorer->OnCursor(Cell(m_allRows.back(), m_pNameColumn));
 		PostUpdate(Updates::EnsureVisibleFocusedCell);
 		SubmitUpdate();

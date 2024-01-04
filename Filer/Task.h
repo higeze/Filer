@@ -4,7 +4,6 @@
 #include "CheckBoxState.h"
 #include "reactive_property.h"
 #include "reactive_vector.h"
-#include "any_tuple.h"
 
 struct Task
 {
@@ -51,18 +50,18 @@ struct MainTask:public Task
 };
 
 template<>
-struct adl_vector_item<any_tuple>
+struct adl_vector_item<std::tuple<MainTask>>
 {
-	static any_tuple clone(const any_tuple& item) 
+	static std::tuple<MainTask> clone(const std::tuple<MainTask>& item) 
 	{
-		return any_tuple(item.get<MainTask>().Clone());
+		return std::make_tuple(std::get<MainTask>(item).Clone());
 	}
 
-	static void bind(any_tuple& src, any_tuple& dst)
+	static void bind(std::tuple<MainTask>& src, std::tuple<MainTask>& dst)
 	{
-		src.get<MainTask>().State.binding(dst.get<MainTask>().State);
-		src.get<MainTask>().Name.binding(dst.get<MainTask>().Name);
-		src.get<MainTask>().Memo.binding(dst.get<MainTask>().Memo);
-		src.get<MainTask>().YearMonthDay.binding(dst.get<MainTask>().YearMonthDay);
+		std::get<MainTask>(src).State.binding(std::get<MainTask>(dst).State);
+		std::get<MainTask>(src).Name.binding(std::get<MainTask>(dst).Name);
+		std::get<MainTask>(src).Memo.binding(std::get<MainTask>(dst).Memo);
+		std::get<MainTask>(src).YearMonthDay.binding(std::get<MainTask>(dst).YearMonthDay);
 	}
 };

@@ -20,8 +20,6 @@ private:
 public:
 	CFavorite(void);
 	CFavorite(std::wstring path, std::wstring shortName);
-	CFavorite(const CFavorite& value)
-		:CFavorite(value.m_path, value.m_shortName){}
 	virtual ~CFavorite(void);
 
 	std::wstring GetPath()const{return m_path;}

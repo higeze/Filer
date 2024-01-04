@@ -2,10 +2,10 @@
 #include "BindRow.h"
 #include "Task.h"
 
-class CTaskRow: public CBindRow
+class CTaskRow: public CBindRow<MainTask>
 {
 public:
-	using CBindRow::CBindRow;
+	using CBindRow<MainTask>::CBindRow;
 
 	virtual void RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc) override;
 };

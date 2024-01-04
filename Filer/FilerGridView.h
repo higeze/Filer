@@ -8,7 +8,7 @@ class CDirectoryWatcher;
 struct CreateEvt;
 struct DirectoryWatchEvent;
 
-class CFilerGridView:public CFilerBindGridView
+class CFilerGridView:public CFilerBindGridView<std::shared_ptr<CShellFile>>
 {
 	/*******************/
 	/* Static variable */
@@ -130,10 +130,10 @@ public:
 	void save(Archive& ar)
 	{
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>);
 	
 		ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
 		ar("RowFrozenCount", m_frozenRowCount);
@@ -144,14 +144,14 @@ public:
 	void load(Archive& ar)
 	{
 		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn, this);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn, this, L"Name");
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn, this, L"Exe");
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn, this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>, this, L"Name");
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>, this, L"Exe");
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
+		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
 
 		ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
 		for (auto& colPtr : m_allCols) {
-			if (auto p = std::dynamic_pointer_cast<CFileNameColumn>(colPtr)) {
+			if (auto p = std::dynamic_pointer_cast<CFileNameColumn<std::shared_ptr<CShellFile>>>(colPtr)) {
 				m_pNameColumn = p;
 			} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
 				m_pHeaderColumn = p;
@@ -164,10 +164,10 @@ public:
 	friend void to_json(json& j, const CFilerGridView& o)
 	{
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>);
 	
 		j = json{
 			{"Columns", o.m_allCols},
@@ -177,28 +177,28 @@ public:
 	}
 	friend void from_json(const json& j, CFilerGridView& o)
 	{
-		//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		//json_make_shared_map.insert_or_assign(typeid(CRowIndexColumn).name(), [&]() { return std::make_shared<CRowIndexColumn>(&o, o.GetHeaderProperty()); });
-		//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn);// , this, L"Name");
-		//json_make_shared_map.insert_or_assign(typeid(CFileNameColumn).name(), [&]() { return std::make_shared<CFileNameColumn>(&o, L"Name"); });
-		//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn);// , this, L"Exe");
-		//json_make_shared_map.insert_or_assign(typeid(CFileDispExtColumn).name(), [&]() { return std::make_shared<CFileDispExtColumn>(&o, L"Exe"); });
-		//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn);// , this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
-		//json_make_shared_map.insert_or_assign(typeid(CFileSizeColumn).name(), [&]() { return std::make_shared<CFileSizeColumn>(&o, o.GetFilerGridViewPropPtr()->FileSizeArgsPtr); });
-		//JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn);// , this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
-		//json_make_shared_map.insert_or_assign(typeid(CFileLastWriteColumn).name(), [&]() { return std::make_shared<CFileLastWriteColumn>(&o, o.GetFilerGridViewPropPtr()->FileTimeArgsPtr); });
+		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
+		json_make_shared_map.insert_or_assign(typeid(CRowIndexColumn).name(), [&]() { return std::make_shared<CRowIndexColumn>(&o, o.GetHeaderProperty()); });
+		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>);// , this, L"Name");
+		json_make_shared_map.insert_or_assign(typeid(CFileNameColumn<std::shared_ptr<CShellFile>>).name(), [&]() { return std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(&o, L"Name"); });
+		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);// , this, L"Exe");
+		json_make_shared_map.insert_or_assign(typeid(CFileDispExtColumn<std::shared_ptr<CShellFile>>).name(), [&]() { return std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(&o, L"Exe"); });
+		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>);// , this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
+		json_make_shared_map.insert_or_assign(typeid(CFileSizeColumn<std::shared_ptr<CShellFile>>).name(), [&]() { return std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(&o, o.GetFilerGridViewPropPtr()->FileSizeArgsPtr); });
+		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>);// , this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
+		json_make_shared_map.insert_or_assign(typeid(CFileLastWriteColumn<std::shared_ptr<CShellFile>>).name(), [&]() { return std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(&o, o.GetFilerGridViewPropPtr()->FileTimeArgsPtr); });
 
-		//get_to(j, "Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(o.m_allCols));
-		//get_to(j, "RowFrozenCount", o.m_frozenRowCount);
-		//get_to(j, "ColFrozenCount", o.m_frozenColumnCount);
+		j.at("Columns").get_to(static_cast<std::vector<std::shared_ptr<CColumn>>&>(o.m_allCols));
+		j.at("RowFrozenCount").get_to(o.m_frozenRowCount);
+		j.at("ColFrozenCount").get_to(o.m_frozenColumnCount);
 
-		//for (auto& colPtr : o.m_allCols) {
-		//	if (auto p = std::dynamic_pointer_cast<CFileNameColumn>(colPtr)) {
-		//		o.m_pNameColumn = p;
-		//	} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
-		//		o.m_pHeaderColumn = p;
-		//	}
-		//}
+		for (auto& colPtr : o.m_allCols) {
+			if (auto p = std::dynamic_pointer_cast<CFileNameColumn<std::shared_ptr<CShellFile>>>(colPtr)) {
+				o.m_pNameColumn = p;
+			} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
+				o.m_pHeaderColumn = p;
+			}
+		}
 
 	}
 };

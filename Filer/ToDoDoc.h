@@ -5,14 +5,13 @@
 #include "JsonSerializer.h"
 #include "reactive_property.h"
 #include "reactive_vector.h"
-#include "any_tuple.h"
 
 class CToDoDoc
 {
 public:
 	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<std::wstring> Path;
-	reactive_vector_ptr<any_tuple> Tasks;
+	reactive_vector_ptr<std::tuple<MainTask>> Tasks;
 	reactive_property_ptr<FileStatus> Status;
 public:
 	CToDoDoc();

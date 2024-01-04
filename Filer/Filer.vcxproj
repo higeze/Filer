@@ -277,7 +277,6 @@
     <ClInclude Include="..\D2DTextBox\TextEditSink.h" />
     <ClInclude Include="..\D2DTextBox\TextStoreACP.h" />
     <ClInclude Include="..\FilerHook\FilerHook.h" />
-    <ClInclude Include="..\HiLib\any_tuple.h" />
     <ClInclude Include="..\HiLib\Application.h" />
     <ClInclude Include="..\HiLib\ApplicationProperty.h" />
     <ClInclude Include="..\HiLib\async_catch.h" />
@@ -574,13 +573,6 @@
     <ClCompile Include="..\D2DTextBox\TextEditSink.cpp" />
     <ClCompile Include="..\D2DTextBox\TextStoreACP.cpp" />
     <ClCompile Include="..\HiLib\Band.cpp" />
-    <ClCompile Include="..\HiLib\BindCheckBoxCell.cpp" />
-    <ClCompile Include="..\HiLib\BindCheckBoxColumn.cpp" />
-    <ClCompile Include="..\HiLib\BindColumn.cpp" />
-    <ClCompile Include="..\HiLib\BindRow.cpp" />
-    <ClCompile Include="..\HiLib\BindTextColumn.cpp" />
-    <ClCompile Include="..\HiLib\BindYearMonthDayCell.cpp" />
-    <ClCompile Include="..\HiLib\BindYearMonthDayColumn.cpp" />
     <ClCompile Include="..\HiLib\BoostPythonHelper.cpp" />
     <ClCompile Include="..\HiLib\Button.cpp" />
     <ClCompile Include="..\HiLib\CalendarControl.cpp" />
@@ -689,15 +681,8 @@
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
     <ClCompile Include="..\HiLib\PDFCaret.cpp" />
     <ClCompile Include="..\HiLIb\YearMonthDay.cpp" />
-    <ClCompile Include="FavoriteCell.cpp" />
-    <ClCompile Include="FileIconCell.cpp" />
-    <ClCompile Include="FileLastWriteCell.cpp" />
-    <ClCompile Include="FileLastWriteColumn.cpp" />
     <ClCompile Include="FilerTabData.cpp" />
-    <ClCompile Include="FileSizeCell.cpp" />
-    <ClCompile Include="FileSizeColumn.cpp" />
     <ClCompile Include="ImageTabData.cpp" />
-    <ClCompile Include="LauncherCell.cpp" />
     <ClCompile Include="PDFTabData.cpp" />
     <ClCompile Include="TextTabData.cpp" />
     <ClCompile Include="ToDoDoc.cpp" />
@@ -726,6 +711,7 @@
     <ClCompile Include="FilerGridView.cpp" />
     <ClCompile Include="FilerTabGridView.cpp" />
     <ClCompile Include="FilerWnd.cpp" />
+    <ClCompile Include="FileSizeCell.cpp" />
     <ClCompile Include="KnownFolder.cpp" />
     <ClCompile Include="PathCell.cpp" />
     <ClCompile Include="ShellFile.cpp" />

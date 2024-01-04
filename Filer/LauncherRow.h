@@ -4,6 +4,7 @@
 #include "LauncherCell.h"
 #include "CellProperty.h"
 
+template<typename... TItems>
 class CLauncherRow:public CMapRow
 {
 protected:
@@ -19,7 +20,7 @@ public:
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CLauncherCell>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+		return std::make_shared<CLauncherCell<TItems...>>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
 	}
 
 	std::shared_ptr<CCell>& Cell(CColumn* pColumn ) override

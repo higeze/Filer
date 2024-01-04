@@ -40,7 +40,8 @@ void CEditorTextBox::LoadTextLayoutPtr()
 
 	//Syntax
 	if (auto pTextEditorProp = std::dynamic_pointer_cast<EditorTextBoxProperty>(m_pProp)) {
-		for (const auto& appearance : *pTextEditorProp->SyntaxAppearances) {
+		for (const auto& tuple : *pTextEditorProp->SyntaxAppearances) {
+			auto appearance = std::get<0>(tuple);
 			if (!appearance.Regex.empty()) {
 				auto brush = pDirect->GetColorBrush(appearance.SyntaxFormat.Color);
 

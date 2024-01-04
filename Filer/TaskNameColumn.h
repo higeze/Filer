@@ -3,18 +3,18 @@
 #include "BindTextCell.h"
 #include "Task.h"
 
-class CTaskNameColumn : public CBindTextColumn
+class CTaskNameColumn : public CBindTextColumn<MainTask>
 {
 private:
-	using base = CBindTextColumn;
+	using base = CBindTextColumn<MainTask>;
 public:
 	template<typename... Args>
 	CTaskNameColumn(CSheet* pSheet = nullptr, Args... args)
 		:CBindTextColumn(
 		pSheet,
 		L"Name",
-		[](const any_tuple& tk)->std::wstring {return *tk.get<MainTask>().Name; },
-		[](any_tuple& tk, const std::wstring& str)->void { tk.get<MainTask>().Name.set(str); },
+		[](const std::tuple<MainTask>& tk)->std::wstring {return *std::get<MainTask>(tk).Name; },
+		[](std::tuple<MainTask>& tk, const std::wstring& str)->void { std::get<MainTask>(tk).Name.set(str); },
 		arg<"celleditmode"_s>() = EditMode::ExcelLike){}
 };
 
