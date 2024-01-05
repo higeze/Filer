@@ -6,13 +6,13 @@
 class CLauncherProperty
 {
 public:
-	reactive_vector_ptr<std::tuple<std::shared_ptr<CLauncher>>> Launchers;
+	reactive_vector_ptr<std::shared_ptr<CLauncher>> Launchers;
 
 public:
 	CLauncherProperty()
 		:Launchers()
 	{
-		Launchers.push_back(std::make_tuple(std::make_shared<CLauncher>(CKnownFolderManager::GetInstance()->GetDesktopFolder()->GetPath(),L"DT")));
+		Launchers.push_back(std::make_shared<CLauncher>(CKnownFolderManager::GetInstance()->GetDesktopFolder()->GetPath(),L"DT"));
 	};
 	~CLauncherProperty(){};
 

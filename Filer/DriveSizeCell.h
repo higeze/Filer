@@ -8,7 +8,7 @@
 #include "DriveFolder.h"
 
 
-template<typename... TItems>
+template<typename T>
 class CDriveSizeCell:public CTextCell
 {
 private:
@@ -98,8 +98,8 @@ public:
 private:
 	virtual std::shared_ptr<CDriveFolder> GetDrivePtr()
 	{
-		if (auto pBindRow = dynamic_cast<CBindRow<TItems...>*>(m_pRow)) {
-			auto spFile = std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems());
+		if (auto pBindRow = dynamic_cast<CBindRow<T>*>(m_pRow)) {
+			auto spFile = pBindRow->GetItem<std::shared_ptr<CShellFile>>();
 			if (auto spDrive = std::dynamic_pointer_cast<CDriveFolder>(spFile)) {
 				return spDrive;
 			}

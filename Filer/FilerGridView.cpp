@@ -437,8 +437,8 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 {
 	LOG_THIS_1("Modified " + wstr2str(fileName));
 	auto iter = std::find_if(ItemsSource.get_unconst()->begin(), ItemsSource.get_unconst()->end(),
-							[fileName](const auto& value)->bool {
-								return std::get<std::shared_ptr<CShellFile>>(value)->GetPathName() == fileName;
+							[fileName](const std::shared_ptr<CShellFile>& value)->bool {
+								return value->GetPathName() == fileName;
 							});
 //	auto iter = FindIfRowIterByFileNameExt(fileName);
 
@@ -450,12 +450,12 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 		ULONG chEaten;
 		ULONG dwAttributes;
 		CIDL newIdl;
-		HRESULT hRes = std::get<std::shared_ptr<CShellFile>>(*iter)->GetParentShellFolderPtr()
+		HRESULT hRes = (*iter)->GetParentShellFolderPtr()
 			->ParseDisplayName(GetWndPtr()->m_hWnd, NULL, (LPWSTR)fileName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
 
 		if (SUCCEEDED(hRes) && newIdl) {
 			//std::get<std::shared_ptr<CShellFile>>(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
-			ItemsSource.replace(iter, std::make_tuple(m_spFolder->CreateShExFileFolder(newIdl)));
+			ItemsSource.replace(iter, m_spFolder->CreateShExFileFolder(newIdl));
 			m_allRows[iter-ItemsSource->cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
 			PostUpdate(Updates::ColumnVisible);
 			PostUpdate(Updates::RowVisible);
@@ -474,8 +474,8 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 	LOG_THIS_1("Removed " + wstr2str(fileName));
 
 	auto iter = std::find_if(ItemsSource->cbegin(), ItemsSource->cend(),
-							 [fileName](const auto& value)->bool {
-								 return std::get<std::shared_ptr<CShellFile>>(value)->GetPathName() == fileName;
+							 [fileName](const std::shared_ptr<CShellFile>& value)->bool {
+								 return value->GetPathName() == fileName;
 							 });
 
 	if (iter == ItemsSource->cend()) {
@@ -503,8 +503,8 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 {
 	LOG_THIS_1("Renamed " + wstr2str(oldName) + "=>"+ wstr2str(newName));
 	auto iter = std::find_if(ItemsSource.get_unconst()->begin(), ItemsSource.get_unconst()->end(),
-							 [oldName](const auto& value)->bool {
-								 return std::get<std::shared_ptr<CShellFile>>(value)->GetPathName() == oldName;
+							 [oldName](const std::shared_ptr<CShellFile>& value)->bool {
+								 return value->GetPathName() == oldName;
 							 });
 
 	if (iter == ItemsSource.get_unconst()->end()) 
@@ -515,11 +515,11 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 		ULONG dwAttributes;
 		CIDL newIdl;
 
-		HRESULT hRes = std::get<std::shared_ptr<CShellFile>>(*iter)->GetParentShellFolderPtr()
+		HRESULT hRes = (*iter)->GetParentShellFolderPtr()
 			->ParseDisplayName(GetWndPtr()->m_hWnd, NULL, (LPWSTR)newName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
 
 		if (SUCCEEDED(hRes) && newIdl) {
-			std::get<std::shared_ptr<CShellFile>>(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
+			(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
 			m_allRows[iter - ItemsSource->cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
 			PostUpdate(Updates::ColumnVisible);
 			PostUpdate(Updates::RowVisible);
@@ -711,7 +711,7 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 			shell::for_each_idl_in_shellfolder(GetWndPtr()->m_hWnd, m_spFolder->GetShellFolderPtr(),
 				[this](const CIDL& idl) {
 					if (auto spFile = m_spFolder->CreateShExFileFolder(idl)) {
-						GetItemsSource().push_back(std::make_tuple(spFile));
+						GetItemsSource().push_back(spFile);
 					}
 				});
 		} catch (std::exception&) {
@@ -770,8 +770,8 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
 
 			//If previous folder is found, set cursor for that.
 			if (m_spPreviousFolder) {
-				auto iter = std::find_if(ItemsSource->cbegin(), ItemsSource->cend(), [this](const auto& tup)->bool {
-					return std::get<std::shared_ptr<CShellFile>>(tup)->GetAbsoluteIdl() == m_spPreviousFolder->GetAbsoluteIdl();
+				auto iter = std::find_if(ItemsSource->cbegin(), ItemsSource->cend(), [this](const auto& value)->bool {
+					return value->GetAbsoluteIdl() == m_spPreviousFolder->GetAbsoluteIdl();
 				});
 
 				if (iter != ItemsSource->cend()) {

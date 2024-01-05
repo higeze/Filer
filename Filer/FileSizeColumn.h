@@ -10,7 +10,7 @@
 #include "CellProperty.h"
 #include "FilerGridViewProperty.h"
 
-template<typename... TItems>
+template<typename T>
 class CFileSizeColumn:public CMapColumn
 {
 private:
@@ -39,14 +39,14 @@ public:
 
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) override
 	{
-		if (auto pBindRow = dynamic_cast<CBindRow<TItems...>*>(pRow)) {
-			auto spFile = std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems());
+		if (auto p = dynamic_cast<CBindRow<T>*>(pRow)) {
+			auto spFile = p->GetItem<std::shared_ptr<CShellFile>>();
 			if (auto spDrive = std::dynamic_pointer_cast<CDriveFolder>(spFile)) {
-				return std::make_shared<CDriveSizeCell<TItems...>>(m_pSheet, pRow, pColumn, std::static_pointer_cast<FilerGridViewProperty>(m_pSheet->GetGridPtr()->GetGridViewPropPtr())->SizeCellPropPtr);
+				return std::make_shared<CDriveSizeCell<T>>(m_pSheet, pRow, pColumn, std::static_pointer_cast<FilerGridViewProperty>(m_pSheet->GetGridPtr()->GetGridViewPropPtr())->SizeCellPropPtr);
 			}
 		}
 
-		return std::make_shared<CFileSizeCell<TItems...>>(m_pSheet, pRow, pColumn, std::static_pointer_cast<FilerGridViewProperty>(m_pSheet->GetGridPtr()->GetGridViewPropPtr())->SizeCellPropPtr);
+		return std::make_shared<CFileSizeCell<T>>(m_pSheet, pRow, pColumn, std::static_pointer_cast<FilerGridViewProperty>(m_pSheet->GetGridPtr()->GetGridViewPropPtr())->SizeCellPropPtr);
 	}
 
 	std::shared_ptr<FileSizeArgs> GetSizeArgsPtr() const { return m_spSizeArgs; }

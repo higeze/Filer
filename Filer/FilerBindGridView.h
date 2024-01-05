@@ -22,10 +22,10 @@
 
 #define WM_UAHMEASUREMENUITEM 0x0094
 
-template<typename... TItems>
-class CFilerBindGridView :public CBindGridView2<CBindRow<TItems...>, CBindColumn<TItems...>, TItems...>
+template<typename T>
+class CFilerBindGridView :public CBindGridView<T>
 {
-	using base = CBindGridView2<CBindRow<TItems...>, CBindColumn<TItems...>, TItems...>;
+	using base = CBindGridView<T>;
 protected:
 	//HeaderMenuItems
 	std::vector<std::shared_ptr<CShowHideColumnMenuItem>> m_headerMenuItems;
@@ -59,7 +59,7 @@ public:
 	virtual void OnCellLButtonDblClk(const CellEventArgs& e)
 	{
 		auto pCell = e.CellPtr;
-		if (auto spRow = dynamic_cast<CBindRow<TItems...>*>(e.CellPtr->GetRowPtr())) {
+		if (auto spRow = dynamic_cast<CBindRow<T>*>(e.CellPtr->GetRowPtr())) {
 			auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 			OpenFile(spFile);
 		}
@@ -117,12 +117,12 @@ public:
 		//pWnd->UpdateWindow();
 	}
 
-	index_vector<std::shared_ptr<CColumn>>::const_iterator FindIfRowIterByFileNameExt(const std::wstring& fileNameExt)
+	index_vector<std::shared_ptr<CRow>>::const_iterator FindIfRowIterByFileNameExt(const std::wstring& fileNameExt)
 	{
 		return std::find_if(this->m_allRows.begin(), this->m_allRows.end(),
 							[&](const std::shared_ptr<CRow>& rowPtr)->bool {
-								if (auto p = std::dynamic_pointer_cast<CBindRow<TItems...>>(rowPtr)) {
-									return p->GetFilePointer()->GetDispName() == fileNameExt;
+								if (auto p = std::dynamic_pointer_cast<CBindRow<T>>(rowPtr)) {
+									return p->GetItem<std::shared_ptr<CShellFile>>()->GetDispName() == fileNameExt;
 								} else {
 									return false;
 								}
@@ -211,7 +211,7 @@ public:
 			case VK_RETURN:
 				{
 					if (this->m_spCursorer->GetFocusedCell()) {
-						if (auto spRow = dynamic_cast<CBindRow<TItems...>*>(this->m_spCursorer->GetFocusedCell()->GetRowPtr())) {
+						if (auto spRow = dynamic_cast<CBindRow<T>*>(this->m_spCursorer->GetFocusedCell()->GetRowPtr())) {
 							auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
 							Open(spFile);
 							(*e.HandledPtr) = true;

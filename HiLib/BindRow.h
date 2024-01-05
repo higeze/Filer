@@ -1,57 +1,56 @@
 #pragma once
 #include "Row.h"
-#include "Sheet.h"
-#include "Debug.h"
 #include "IBindSheet.h"
 #include "BindGridView.h"
+#include "Debug.h"
+#include "MyMPL.h"
 
-#include "reactive_vector.h"
-
-template<typename... TItems>
+template<typename T>
 class CBindRow :public CRow
 {
 public:
 	CBindRow(CSheet* pSheet, std::shared_ptr<CellProperty> spProperty)
 		:CRow(pSheet, spProperty){ }
 
-	std::tuple<TItems...>& GetTupleItems()
+	template<typename U>
+	U& GetItem()
 	{
-		if (auto pBindSheet = dynamic_cast<IBindSheet2<TItems...>*>(this->m_pSheet)) {
-			auto& itemsSource = pBindSheet->GetItemsSource();
-			auto index = GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<RowTag>();
-			return itemsSource.get_unconst()->at(index);		
+		if (auto p = dynamic_cast<IBindSheet<T>*>(this->m_pSheet)) {
+			auto index = this->GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<RowTag>();
+			return p->GetItemsSource().get_unconst()->at(index);		
 		} else {
 			throw std::exception(FILE_LINE_FUNC);
 		}
 	}
 
-	template<typename TItem> 
-	TItem& GetItem()
+	template<class U>
+	const U& GetItem() const
 	{
-		return std::get<TItem>(GetTupleItems());
+		return const_cast<CBindRow&>(*this).GetItem<U>();
 	}
 };
 
-template<typename... TItems>
-class CBindRow2 :public CRow
+template<typename... V>
+class CBindRow<std::tuple<V...>> : public CRow
 {
 public:
-	CBindRow2(CSheet* pSheet)
-		:CRow(pSheet){ }
+	CBindRow(CSheet* pSheet, std::shared_ptr<CellProperty> spProperty)
+		:CRow(pSheet, spProperty){}
 
-	std::tuple<TItems...>& GetTupleItems()
+	template<typename U>
+	U& GetItem()
 	{
-		if (auto pBindSheet = dynamic_cast<IBindSheet2<TItems...>*>(this->m_pSheet)) {
-			auto& itemsSource = pBindSheet->GetItemsSource();
-			auto index = GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<RowTag>();
-			return itemsSource.get_unconst()[index];		
+		if (auto p = dynamic_cast<IBindSheet<std::tuple<V...>>*>(this->m_pSheet)) {
+			auto index = this->GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<RowTag>();
+			return std::get<U>(p->GetItemsSource().get_unconst()->at(index));		
 		} else {
 			throw std::exception(FILE_LINE_FUNC);
 		}
 	}
 
-	template<typename TItem> TItem& GetItem()
-	{
-		return std::get<TItem>(GetTupleItems());
-	}
+     template<class U>
+     const U& GetItem() const
+     {
+         return const_cast<CBindRow&>(*this).GetItem<U>();
+     }
 };

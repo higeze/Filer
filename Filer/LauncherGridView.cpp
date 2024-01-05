@@ -28,7 +28,7 @@ CLauncherGridView::CLauncherGridView(
 	CD2DWControl* pParentControl,
 	const std::shared_ptr<GridViewProperty>& spGridViewProp,
 	const std::shared_ptr<CLauncherProperty>& spLauncherProp)
-	:CBindGridView2(pParentControl, 
+	:CBindGridView(pParentControl, 
 	spGridViewProp,
 	arg<"bindtype"_s>() = BindType::Column,
 	arg<"itemssource"_s>() = spLauncherProp->Launchers,
@@ -45,7 +45,7 @@ CLauncherGridView::CLauncherGridView(
 void CLauncherGridView::OnCreate(const CreateEvt& e)
 {
 	//Base Create
-	CBindGridView2::OnCreate(e);
+	CBindGridView::OnCreate(e);
 
 	//List
 	OpenFavorites();

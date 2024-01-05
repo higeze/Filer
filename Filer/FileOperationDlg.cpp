@@ -37,19 +37,19 @@ CCopyMoveDlgBase::CCopyMoveDlgBase(
 	}
 
 	//FileGrid
-	m_spFilerControl = std::make_unique<CFileOperationGridView<std::shared_ptr<CShellFile>, RenameInfo>>(
+	m_spFilerControl = std::make_unique<CFileOperationGridView<std::tuple<std::shared_ptr<CShellFile>, RenameInfo>>>(
 		this,
 		spFilerGridViewProp,
 		arg<"itemssource"_s>() = ItemsSource,
 		arg<"hdrcol"_s>() = std::make_shared<CRowIndexColumn>(nullptr, spFilerGridViewProp->HeaderPropPtr),
-		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, L"Name"),
+		arg<"namecol"_s>() = std::make_shared<CFilePathNameColumn<std::tuple<std::shared_ptr<CShellFile>, RenameInfo>>>(nullptr, L"Name"),
 		arg<"frzcolcnt"_s>() = 1,
 		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{
-			std::make_shared<CFilePathExtColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, L"Ext"),
-			std::make_shared<CFilePathRenameColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, L"Rename"),
-			std::make_shared<CFileReextColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, L"Reext"),
-			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, spFilerGridViewProp->FileSizeArgsPtr),
-			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>, RenameInfo>>(nullptr, spFilerGridViewProp->FileTimeArgsPtr)},
+			std::make_shared<CFilePathExtColumn<std::tuple<std::shared_ptr<CShellFile>, RenameInfo>>>(nullptr, L"Ext"),
+			std::make_shared<CFilePathRenameColumn<std::tuple<std::shared_ptr<CShellFile>, RenameInfo>>>(nullptr, L"Rename"),
+			std::make_shared<CFileReextColumn<std::tuple<std::shared_ptr<CShellFile>, RenameInfo>>>(nullptr, L"Reext"),
+			std::make_shared<CFileSizeColumn<std::tuple<std::shared_ptr<CShellFile>, RenameInfo>>>(nullptr, spFilerGridViewProp->FileSizeArgsPtr),
+			std::make_shared<CFileLastWriteColumn<std::tuple<std::shared_ptr<CShellFile>, RenameInfo>>>(nullptr, spFilerGridViewProp->FileTimeArgsPtr)},
 		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr, spFilerGridViewProp->HeaderPropPtr),
 		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr, spFilerGridViewProp->CellPropPtr),
 		arg<"frzrowcnt"_s>() = 2);
@@ -80,9 +80,9 @@ void CCopyDlg::Copy()
 	std::vector<CIDL> noRenameIDLs;
 	std::vector<std::pair<CIDL, std::wstring>> renameIDLs;
 
-	for (auto& tup : *ItemsSource) {
-		auto& spFile = std::get<std::shared_ptr<CShellFile>>(tup);
-		auto& rename = std::get<RenameInfo>(tup);
+	for (auto& value : *ItemsSource) {
+		auto& spFile = std::get<std::shared_ptr<CShellFile>>(value);
+		auto& rename = std::get<RenameInfo>(value);
 		std::wstring newname = rename.Name + rename.Ext;
 		if (spFile->GetPathName() == newname) {
 			noRenameIDLs.push_back(spFile->GetAbsoluteIdl());
@@ -219,8 +219,7 @@ CDeleteDlg::CDeleteDlg(
 			shell::DesktopBindToShellFolder(m_srcIDL),
 			m_srcIDL,
 			childIDL);
-		ItemsSource.push_back(
-			std::make_tuple(spFile));
+		ItemsSource.push_back(spFile);
 	}
 
 	//FileGrid
@@ -253,7 +252,7 @@ void CDeleteDlg::Delete()
 	std::vector<CIDL> delIDLs;
 
 	for (auto iter = ItemsSource->cbegin(); iter != ItemsSource->cend(); ++iter) {
-		auto& spFile = std::get<std::shared_ptr<CShellFile>>(*iter);
+		auto& spFile = (*iter);
 		delIDLs.push_back(spFile->GetAbsoluteIdl());
 	}
 
@@ -314,7 +313,7 @@ CExeExtensionDlg::CExeExtensionDlg(
 	Title.set(L"Exe");
 	//Items Source
 	for (auto& file : files) {
-		ItemsSource.push_back(std::make_tuple(file));
+		ItemsSource.push_back(file);
 	}
 
 	//FileGrid
@@ -492,7 +491,7 @@ CPDFOperationDlgBase::CPDFOperationDlgBase(
 {
 	//Items Source
 	for (auto& file : files) {
-		ItemsSource.push_back(std::make_tuple(file));
+		ItemsSource.push_back(file);
 	}
 
 	//FileGrid

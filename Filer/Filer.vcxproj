@@ -681,6 +681,7 @@
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp" />
     <ClCompile Include="..\HiLib\PDFCaret.cpp" />
     <ClCompile Include="..\HiLIb\YearMonthDay.cpp" />
+    <ClCompile Include="BindTest.cpp" />
     <ClCompile Include="FilerTabData.cpp" />
     <ClCompile Include="ImageTabData.cpp" />
     <ClCompile Include="PDFTabData.cpp" />

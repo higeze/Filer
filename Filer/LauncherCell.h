@@ -11,15 +11,15 @@
 #include "FilerWnd.h"
 #include "FilerApplication.h"
 
-template<typename... TItems>
+template<typename T>
 class CLauncherCell:public CFileIconCell
 {
 	using base = CFileIconCell;
 private:
 	virtual std::wstring GetShortName()
 	{
-		if (auto pBindColumn = dynamic_cast<CBindColumn<TItems...>*>(this->m_pColumn)) {
-			return std::get<std::shared_ptr<CLauncher>>(pBindColumn->GetTupleItems())->GetShortName();
+		if (auto pBindColumn = dynamic_cast<CBindColumn<T>*>(this->m_pColumn)) {
+			return pBindColumn->GetItem<std::shared_ptr<CLauncher>>()->GetShortName();
 		} else {
 			return nullptr;
 		}
@@ -30,8 +30,8 @@ public:
 
 	virtual std::shared_ptr<CShellFile> GetShellFile() override
 	{
-		if (auto pBindColumn = dynamic_cast<CBindColumn<TItems...>*>(this->m_pColumn)) {
-			return std::get<std::shared_ptr<CLauncher>>(pBindColumn->GetTupleItems())->GetShellFile(
+		if (auto pBindColumn = dynamic_cast<CBindColumn<T>*>(this->m_pColumn)) {
+			return pBindColumn->GetItem<std::shared_ptr<CLauncher>>()->GetShellFile(
 				[pSheet = this->m_pSheet]() {
 					pSheet->GetGridPtr()->DelayUpdate();
 				});
@@ -51,8 +51,8 @@ public:
 
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override
 	{
-		if (auto pBindColumn = dynamic_cast<CBindColumn<TItems...>*>(this->m_pColumn)) {
-			auto pItem = std::get<std::shared_ptr<CLauncher>>(pBindColumn->GetTupleItems());
+		if (auto pBindColumn = dynamic_cast<CBindColumn<T>*>(this->m_pColumn)) {
+			auto pItem = pBindColumn->GetItem<std::shared_ptr<CLauncher>>();
 			if (pItem->RunAs) {
 				this->GetShellFile()->RunAs();
 			} else {
@@ -105,7 +105,7 @@ public:
 			auto pFilerWnd = static_cast<CFilerWnd*>(this->m_pSheet->GetWndPtr());
 
 			//auto pRow = static_cast<const CLauncherRow<TItems...>*>(this->m_pRow);
-			auto pCol = static_cast<const CBindColumn<TItems...>*>(this->m_pColumn);
+			auto pCol = static_cast<const CBindColumn<T>*>(this->m_pColumn);
 			auto pGrid = static_cast<CLauncherGridView*>(this->m_pSheet);
 			auto& itemsSource = pGrid->GetItemsSource();
 			auto index = pCol->GetIndex<AllTag>();

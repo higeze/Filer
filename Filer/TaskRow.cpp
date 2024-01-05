@@ -1,4 +1,5 @@
 #include "TaskRow.h"
+#include "ToDoGridView.h"
 #include "D2DWWindow.h"
 #include "Direct2DWrite.h"
 

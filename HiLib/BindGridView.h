@@ -9,22 +9,23 @@
 #include "MapRow.h"
 #include "MapColumn.h"
 #include "Celler.h"
-#include "IBindSheet.h"
 #include "reactive_vector.h"
+#include "IBindSheet.h"
 
-template<typename TRow, typename TCol, typename... TItems>
-class CBindGridView2 :public CGridView, public IBindSheet2<TItems...>
+template<typename T, typename TRow = CBindRow<T>, typename TCol = CBindColumn<T>>
+class CBindGridView :public CGridView, public IBindSheet<T>
 {
 protected:
 	std::vector<std::shared_ptr<CColumn>> m_initColumns;
 	std::vector<std::shared_ptr<CRow>> m_initRows;
 
 public:
-	reactive_vector_ptr<std::tuple<TItems...>> ItemsSource;
+	reactive_vector_ptr<T> ItemsSource;
+	reactive_vector_ptr<T>& GetItemsSource() override { return ItemsSource; }
 
 public:
 	template<typename... TArgs> 
-	CBindGridView2(
+	CBindGridView(
 		CD2DWControl* pParentControl,
 		const std::shared_ptr<GridViewProperty>& spGridViewProp,
 		TArgs... args)
@@ -34,7 +35,7 @@ public:
 		//TArg...
 		m_bindType = ::get(arg<"bindtype"_s>(), args..., default_(BindType::Row));
 
-		ItemsSource = ::get(arg<"itemssource"_s>(), args..., default_(reactive_vector_ptr<std::tuple<TItems...>>()));
+		ItemsSource = ::get(arg<"itemssource"_s>(), args..., default_(reactive_vector_ptr<T>()));
 
 		m_pHeaderColumn = ::get(arg<"hdrcol"_s>(), args..., default_(nullptr));
 		if (m_pHeaderColumn) {
@@ -76,8 +77,6 @@ public:
 		m_initRows = ::get(arg<"rows"_s>(), args..., default_(m_initRows));
 	}
 
-	reactive_vector_ptr<std::tuple<TItems...>>& GetItemsSource() override { return ItemsSource; }
-
 	std::vector<int> GetSelectedIndexes() 
 	{
 		std::vector<int> indexes;
@@ -91,7 +90,7 @@ public:
 	/******************/
 	/* Window Message */
 	/******************/
-	void subscribe_detail_row(const notify_container_changed_event_args<std::vector<std::tuple<TItems...>>>& e)
+	void subscribe_detail_row(const notify_container_changed_event_args<std::vector<T>>& e)
 	{
 		switch (e.action) {
 			case notify_container_changed_action::push_back:
@@ -130,7 +129,7 @@ public:
 		}
 	}
 
-	void subscribe_detail_column(const notify_container_changed_event_args<std::vector<std::tuple<TItems...>>>& e)
+	void subscribe_detail_column(const notify_container_changed_event_args<std::vector<T>>& e)
 	{
 		switch (e.action) {
 			case notify_container_changed_action::push_back:

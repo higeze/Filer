@@ -12,8 +12,8 @@
 #include <sigslot/signal.hpp>
 
 
-template<typename... TItems>
-class CFileSizeCell:public CTextCell//, public std::enable_shared_from_this<CFileSizeCell<TItems...>>
+template<typename T>
+class CFileSizeCell:public CTextCell
 {
 private:
 	mutable sigslot::connection m_conDelayUpdateAction;
@@ -70,7 +70,7 @@ public:
 					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 				}
 			};
-			auto size = spFile->GetSize(static_cast<const CFileSizeColumn<TItems...>*>(m_pColumn)->GetSizeArgsPtr(), changed);
+			auto size = spFile->GetSize(static_cast<const CFileSizeColumn<T>*>(m_pColumn)->GetSizeArgsPtr(), changed);
 			switch (size.second) {
 				case FileSizeStatus::None:
 					return L"none";
@@ -93,7 +93,7 @@ public:
 	{
 		try {
 			auto spFile = GetShellFile();
-			auto changed = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileSizeCell<TItems...>>(shared_from_this()))]()->void {
+			auto changed = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileSizeCell<T>>(shared_from_this()))]()->void {
 				if (auto sp = wp.lock()) {
 					sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
 						[wp]()->void {
@@ -104,7 +104,7 @@ public:
 					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 				}
 			};
-			auto size = spFile->GetSize(static_cast<const CFileSizeColumn<TItems...>*>(m_pColumn)->GetSizeArgsPtr(), changed);
+			auto size = spFile->GetSize(static_cast<const CFileSizeColumn<T>*>(m_pColumn)->GetSizeArgsPtr(), changed);
 			switch (size.second) {
 				case FileSizeStatus::None:
 					return L"none";
@@ -127,8 +127,8 @@ public:
 private:
 	virtual std::shared_ptr<CShellFile> GetShellFile()
 	{
-		if (auto pBindRow = dynamic_cast<CBindRow<TItems...>*>(m_pRow)) {
-			return std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems());
+		if (auto p = dynamic_cast<CBindRow<T>*>(m_pRow)) {
+			return p->GetItem<std::shared_ptr<CShellFile>>();
 		} else {
 			return nullptr;
 		}

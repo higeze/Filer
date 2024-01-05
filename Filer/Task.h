@@ -50,18 +50,18 @@ struct MainTask:public Task
 };
 
 template<>
-struct adl_vector_item<std::tuple<MainTask>>
+struct adl_vector_item<MainTask>
 {
-	static std::tuple<MainTask> clone(const std::tuple<MainTask>& item) 
+	static MainTask clone(const MainTask& item) 
 	{
-		return std::make_tuple(std::get<MainTask>(item).Clone());
+		return item.Clone();
 	}
 
-	static void bind(std::tuple<MainTask>& src, std::tuple<MainTask>& dst)
+	static void bind(MainTask& src, MainTask& dst)
 	{
-		std::get<MainTask>(src).State.binding(std::get<MainTask>(dst).State);
-		std::get<MainTask>(src).Name.binding(std::get<MainTask>(dst).Name);
-		std::get<MainTask>(src).Memo.binding(std::get<MainTask>(dst).Memo);
-		std::get<MainTask>(src).YearMonthDay.binding(std::get<MainTask>(dst).YearMonthDay);
+		src.State.binding(dst.State);
+		src.Name.binding(dst.Name);
+		src.Memo.binding(dst.Memo);
+		src.YearMonthDay.binding(dst.YearMonthDay);
 	}
 };

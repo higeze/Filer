@@ -8,9 +8,9 @@
 //	virtual ReactiveVectorProperty<std::tuple<TValueItem...>>& GetItemsSource() = 0;
 //};
 
-template<typename... TValueItem>
-class IBindSheet2
+template<typename T>
+class IBindSheet
 {
 public:
-	virtual reactive_vector_ptr<std::tuple<TValueItem...>>& GetItemsSource() = 0;
+	virtual reactive_vector_ptr<T>& GetItemsSource() = 0;
 };

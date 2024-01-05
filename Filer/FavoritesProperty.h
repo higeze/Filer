@@ -6,13 +6,13 @@
 class CFavoritesProperty
 {
 public:
-	reactive_vector_ptr<std::tuple<std::shared_ptr<CFavorite>>> Favorites;
+	reactive_vector_ptr<std::shared_ptr<CFavorite>> Favorites;
 
 public:
 	CFavoritesProperty()
 		:Favorites()
 	{
-		Favorites.push_back(std::make_tuple(std::make_shared<CFavorite>(CKnownFolderManager::GetInstance()->GetDesktopFolder()->GetPath(),L"DT")));
+		Favorites.push_back(std::make_shared<CFavorite>(CKnownFolderManager::GetInstance()->GetDesktopFolder()->GetPath(),L"DT"));
 	};
 	~CFavoritesProperty(){};
 

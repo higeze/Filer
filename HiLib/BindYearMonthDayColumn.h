@@ -6,25 +6,25 @@
 #include "Sheet.h"
 #include "named_arguments.h"
 
-template<typename... TItems>
+template<typename T>
 class CBindYearMonthDayColumn: public CMapColumn
 {
 private:
 	std::wstring m_header;
-	std::function<reactive_property_ptr<CYearMonthDay>&(std::tuple<TItems...>&)> m_path;
+	std::function<reactive_property_ptr<CYearMonthDay>&(T&)> m_path;
 public:
 	template<typename... Args>
 	CBindYearMonthDayColumn(
 		CSheet* pSheet,		
 		const std::wstring& header,
-		std::function<reactive_property_ptr<CYearMonthDay>&(std::tuple<TItems...>&)> path,
+		std::function<reactive_property_ptr<CYearMonthDay>&(T&)> path,
 		Args... args)
 		:CMapColumn(pSheet, args...),m_header(header), m_path(path)
 	{}
 
 	virtual ~CBindYearMonthDayColumn(void) = default;
 
-	reactive_property_ptr<CYearMonthDay>& GetProperty(std::tuple<TItems...>& data) const { return m_path(data); }
+	reactive_property_ptr<CYearMonthDay>& GetProperty(T& data) const { return m_path(data); }
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
@@ -43,7 +43,7 @@ public:
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CBindYearMonthDayCell<TItems...>>(
+		return std::make_shared<CBindYearMonthDayCell<T>>(
 			m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
 	}
 };

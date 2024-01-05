@@ -4,14 +4,14 @@
 #include "SortCell.h"
 #include "named_arguments.h"
 
-template<typename... TItems>
+template<typename T>
 class CBindTextColumn: public CMapColumn
 {
 private:
 	std::wstring m_header;
 
-	std::function<std::wstring(const std::tuple<TItems...>&)> m_getFunction;
-	std::function<void(std::tuple<TItems...>&, const std::wstring&)> m_setFunction;
+	std::function<std::wstring(const T&)> m_getFunction;
+	std::function<void(T&, const std::wstring&)> m_setFunction;
 	EditMode m_cellEditMode = EditMode::LButtonDownEdit;
 
 
@@ -19,8 +19,8 @@ public:
 	template<typename... Args>
 	CBindTextColumn(CSheet* pSheet,
 		const std::wstring& header,
-		std::function<std::wstring(const std::tuple<TItems...>&)> getter,
-		std::function<void(std::tuple<TItems...>&, const std::wstring&)> setter,
+		std::function<std::wstring(const T&)> getter,
+		std::function<void(T&, const std::wstring&)> setter,
 		Args... args)
 		:CMapColumn(pSheet, args...), m_header(header), m_getFunction(getter), m_setFunction(setter)
 	{
@@ -29,8 +29,8 @@ public:
 
 	virtual ~CBindTextColumn(void) = default;
 
-	std::function<std::wstring(const std::tuple<TItems...>&)> GetGetter() const { return m_getFunction; }
-	std::function<void(std::tuple<TItems...>&, const std::wstring&)> GetSetter() const { return m_setFunction; }
+	std::function<std::wstring(const T&)> GetGetter() const { return m_getFunction; }
+	std::function<void(T&, const std::wstring&)> GetSetter() const { return m_setFunction; }
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
@@ -49,7 +49,7 @@ public:
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CBindTextCell<TItems...>>(
+		return std::make_shared<CBindTextCell<T>>(
 			m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty(),
 			arg<"editmode"_s>() = m_cellEditMode);
 	}

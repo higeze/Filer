@@ -1431,6 +1431,9 @@
     <ClCompile Include="..\HiLib\ToolTip.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
+    <ClCompile Include="BindTest.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\HiLib\msxml6.tli">

@@ -26,7 +26,7 @@ CFavoritesGridView::CFavoritesGridView(
 	CD2DWControl* pParentControl,
 	const std::shared_ptr<GridViewProperty>& spGridViewProp,
 	const std::shared_ptr<CFavoritesProperty>& spFavoritesProp)
-	:CBindGridView2(pParentControl, spGridViewProp,
+	:CBindGridView(pParentControl, spGridViewProp,
 		arg<"bindtype"_s>() = BindType::Row,
 	arg<"itemssource"_s>() = spFavoritesProp->Favorites,
 		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{std::make_shared<CFavoritesColumn<std::shared_ptr<CFavorite>>>(this)}),
@@ -44,7 +44,7 @@ CFavoritesGridView::CFavoritesGridView(
 void CFavoritesGridView::OnCreate(const CreateEvt& e)
 {
 	//Base Create
-	CBindGridView2::OnCreate(e);
+	CBindGridView::OnCreate(e);
 
 	//List
 	OpenFavorites();
@@ -105,7 +105,7 @@ void CFavoritesGridView::MoveRow(int indexTo, typename RowTag::SharedPtr spFrom)
 void CFavoritesGridView::Reload()
 {
 	for (auto iter = m_spFavoritesProp->Favorites->cbegin(); iter != m_spFavoritesProp->Favorites->cend(); ++iter) {
-		(std::get<0>((*iter)))->SetLockShellFile(nullptr);
+		(*iter)->SetLockShellFile(nullptr);
 	}
 	OpenFavorites();
 	SubmitUpdate();

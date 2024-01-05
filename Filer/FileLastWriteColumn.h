@@ -11,7 +11,7 @@
 
 struct FileTimeArgs;
 
-template<typename... TItems>
+template<typename T>
 class CFileLastWriteColumn:public CMapColumn
 {
 private:
@@ -41,7 +41,7 @@ public:
 
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) override
 	{
-		return std::make_shared<CFileLastWriteCell<TItems...>>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+		return std::make_shared<CFileLastWriteCell<T>>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
 	}
 
 	std::shared_ptr<FileTimeArgs> GetTimeArgsPtr() const { return m_spTimeArgs; }

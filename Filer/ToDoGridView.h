@@ -15,14 +15,14 @@
 
 
 
-class CToDoGridView :public CBindGridView2<CTaskRow, CBindColumn<MainTask>, MainTask>
+class CToDoGridView :public CBindGridView<MainTask, CTaskRow>
 {
 public:
 	template<typename... TArgs>
 	CToDoGridView(CD2DWControl* pParentControl = nullptr,
 		const std::shared_ptr<GridViewProperty>& spGridViewProp = nullptr,
 		TArgs... args)
-		:CBindGridView2<CTaskRow, CBindColumn<MainTask>, MainTask>(pParentControl, spGridViewProp, args...),
+		:CBindGridView<MainTask, CTaskRow>(pParentControl, spGridViewProp, args...),
 		Path()
 	{
 		m_gridViewMode = GridViewMode::ExcelLike;

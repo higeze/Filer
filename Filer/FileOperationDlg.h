@@ -19,10 +19,10 @@
 #include "Dispatcher.h"
 #include "reactive_vector.h"
 
-template<typename... TItems>
-class CFileOperationGridView :public CFilerBindGridView<TItems...>
+template<typename T>
+class CFileOperationGridView :public CFilerBindGridView<T>
 {
-	using CFilerBindGridView<TItems...>::CFilerBindGridView;
+	using CFilerBindGridView<T>::CFilerBindGridView;
 
 	virtual bool DeleteSelectedFiles() override
 	{
@@ -38,7 +38,7 @@ class CFileOperationGridView :public CFilerBindGridView<TItems...>
 /*************************/
 /* CFileOperationDlgBase */
 /*************************/
-template<typename... TItems>
+template<typename T>
 class CFileOperationDlgBase: public CD2DWDialog
 {
 private:
@@ -50,7 +50,7 @@ protected:
 	std::shared_ptr<CButton> m_spButtonDo;
 	std::shared_ptr<CButton> m_spButtonCancel;
 
-	std::shared_ptr<CFileOperationGridView<TItems...>> m_spFilerControl;
+	std::shared_ptr<CFileOperationGridView<T>> m_spFilerControl;
 
 	bool m_showDefault = true;
 	bool m_showApply = true;
@@ -62,8 +62,7 @@ protected:
 	std::future<void> m_future;
 
 public:
-	reactive_vector_ptr<std::tuple<TItems...>> ItemsSource;
-	//std::vector< std::tuple<std::shared_ptr<CShellFile>, RenameInfo>> m_selectedItems;
+	reactive_vector_ptr<T> ItemsSource;
 
 public:
 	CFileOperationDlgBase(
@@ -93,8 +92,8 @@ public:
 /*******************************/
 /* CSimpleFileOperationDlgBase */
 /*******************************/
-template<typename ...TItems>
-class CSimpleFileOperationDlgBase :public CFileOperationDlgBase<TItems...>
+template<typename T>
+class CSimpleFileOperationDlgBase :public CFileOperationDlgBase<T>
 {
 private:
 	std::tuple<CRectF, CRectF, CRectF> GetRects()
@@ -110,13 +109,13 @@ private:
 	}
 
 public:
-	using CFileOperationDlgBase<TItems...>::CFileOperationDlgBase;
+	using CFileOperationDlgBase<T>::CFileOperationDlgBase;
 	virtual ~CSimpleFileOperationDlgBase() = default;
 
 	virtual void OnCreate(const CreateEvt& e) override
 	{
 		//Create
-		CFileOperationDlgBase<TItems...>::OnCreate(e);
+		CFileOperationDlgBase<T>::OnCreate(e);
 		//Size
 		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();
 		
@@ -150,7 +149,7 @@ public:
 /****************/
 /* CCopyMoveDlg */
 /****************/
-class CCopyMoveDlgBase :public CSimpleFileOperationDlgBase<std::shared_ptr<CShellFile>, RenameInfo>
+class CCopyMoveDlgBase :public CSimpleFileOperationDlgBase<std::tuple<std::shared_ptr<CShellFile>, RenameInfo>>
 {
 protected:
 	CIDL m_destIDL;

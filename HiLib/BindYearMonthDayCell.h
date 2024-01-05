@@ -13,7 +13,7 @@
 #include "TextBoxProperty.h"
 #include "ButtonProperty.h"
 
-template<typename... TItems>
+template<typename T>
 class CBindYearMonthDayCell :public CTextCell
 {
 protected:
@@ -31,9 +31,9 @@ public:
 			OnPropertyChanged(L"value");
 		}, Dummy);
 
-		auto pBindColumn = static_cast<const CBindYearMonthDayColumn<TItems...>*>(this->m_pColumn);
-		auto pBindRow = static_cast<CBindRow<TItems...>*>(this->m_pRow);
-		pBindColumn->GetProperty(pBindRow->GetTupleItems()).binding(YearMonthDay);
+		auto pBindColumn = static_cast<const CBindYearMonthDayColumn<T>*>(this->m_pColumn);
+		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
+		pBindColumn->GetProperty(pBindRow->GetItem<T>()).binding(YearMonthDay);
 	}
 
 	virtual ~CBindYearMonthDayCell() = default;

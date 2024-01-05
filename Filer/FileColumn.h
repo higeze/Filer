@@ -13,7 +13,7 @@
 /***********************/
 /* CFileNameColumnBase */
 /***********************/
-template<typename TCell, typename... TItems>
+template<typename TCell, typename T>
 class CFileColumnBase : public CMapColumn
 {
 private:
@@ -70,13 +70,13 @@ public:
 /***********************/
 /* CFileNameColumnBase */
 /***********************/
-template<typename TCell, typename... TItems>
-class CFileNameColumnBase : public CFileColumnBase<TCell, TItems...>, public IImageColumn
+template<typename TCell, typename T>
+class CFileNameColumnBase : public CFileColumnBase<TCell, T>, public IImageColumn
 {
 private:
 	UINT32 m_size = 16;
 public:
-	using CFileColumnBase<TCell, TItems...>::CFileColumnBase;
+	using CFileColumnBase<TCell, T>::CFileColumnBase;
 	UINT32 GetImageSize() const override { return m_size; }
 	void SetImageSize(const UINT32& size) override { m_size = size; }
 };
@@ -84,43 +84,43 @@ public:
 /*******************/
 /* CFileNameColumn */
 /*******************/
-template<typename... TItems>
-using CFileNameColumn = CFileNameColumnBase<CFileNameCell<TItems...>, TItems...>;
+template<typename T>
+using CFileNameColumn = CFileNameColumnBase<CFileNameCell<T>, T>;
 
 /***********************/
 /* CFilePathNameColumn */
 /***********************/
-template<typename... TItems>
-using CFilePathNameColumn = CFileNameColumnBase<CFileIconPathNameCell<TItems...>, TItems...>;
+template<typename T>
+using CFilePathNameColumn = CFileNameColumnBase<CFileIconPathNameCell<T>, T>;
 
 /*************************/
 /* CFilePathRenameColumn */
 /*************************/
-template<typename... TItems>
-using CFilePathRenameColumn = CFileColumnBase<CFileRenameCell<TItems...>, TItems...>;
+template<typename T>
+using CFilePathRenameColumn = CFileColumnBase<CFileRenameCell<T>, T>;
 
 /***********************/
 /* CFileIconPathColumn */
 /***********************/
-template<typename... TItems>
-using CFileIconPathColumn = CFileNameColumnBase<CFileIconPathCell<TItems...>, TItems...>;
+template<typename T>
+using CFileIconPathColumn = CFileNameColumnBase<CFileIconPathCell<T>, T>;
 
 /**********************/
 /* CFileDispExtColumn */
 /**********************/
-template<typename... TItems>
-using CFileDispExtColumn = CFileColumnBase<CFileDispExtCell<TItems...>, TItems...>;
+template<typename T>
+using CFileDispExtColumn = CFileColumnBase<CFileDispExtCell<T>, T>;
 
 /**********************/
 /* CFilePathExtColumn */
 /**********************/
-template<typename... TItems>
-using CFilePathExtColumn = CFileColumnBase<CFilePathExtCell<TItems...>, TItems...>;
+template<typename T>
+using CFilePathExtColumn = CFileColumnBase<CFilePathExtCell<T>, T>;
 
 /********************/
 /* CFileReextColumn */
 /********************/
-template<typename... TItems>
-using CFileReextColumn = CFileColumnBase<CFileReextCell<TItems...>, TItems...>;
+template<typename T>
+using CFileReextColumn = CFileColumnBase<CFileReextCell<T>, T>;
 
 

@@ -11,7 +11,7 @@ class CToDoDoc
 public:
 	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<std::wstring> Path;
-	reactive_vector_ptr<std::tuple<MainTask>> Tasks;
+	reactive_vector_ptr<MainTask> Tasks;
 	reactive_property_ptr<FileStatus> Status;
 public:
 	CToDoDoc();

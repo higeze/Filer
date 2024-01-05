@@ -7,8 +7,8 @@
 #include "CellProperty.h"
 #include <sigslot/signal.hpp>
 
-template<typename... TItems>
-class CFileLastWriteCell:public CTextCell//, public std::enable_shared_from_this<CFileLastWriteCell<TItems...>>
+template<typename T>
+class CFileLastWriteCell:public CTextCell
 {
 private:
 	mutable sigslot::connection m_conDelayUpdateAction;
@@ -30,7 +30,7 @@ public:
 	{
 		try {
 			auto spFile = GetShellFile();
-			std::weak_ptr<CFileLastWriteCell<TItems...>> wp(std::dynamic_pointer_cast<CFileLastWriteCell<TItems...>>(shared_from_this()));
+			std::weak_ptr<CFileLastWriteCell<T>> wp(std::dynamic_pointer_cast<CFileLastWriteCell<T>>(shared_from_this()));
 			auto changed = [wp]()->void {
 				if (auto sp = wp.lock()) {
 					sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
@@ -43,7 +43,7 @@ public:
 				}
 			};
 
-			auto times = spFile->GetFileTimes((static_cast<const CFileLastWriteColumn<TItems...>*>(this->m_pColumn))->GetTimeArgsPtr(), changed);
+			auto times = spFile->GetFileTimes((static_cast<const CFileLastWriteColumn<T>*>(this->m_pColumn))->GetTimeArgsPtr(), changed);
 			switch (times.second) {
 				case FileTimeStatus::None:
 					return L"-";
@@ -71,8 +71,8 @@ public:
 private:
 	virtual std::shared_ptr<CShellFile> GetShellFile()
 	{
-		if (auto pBindRow = dynamic_cast<CBindRow<TItems...>*>(m_pRow)) {
-			return std::get<std::shared_ptr<CShellFile>>(pBindRow->GetTupleItems());
+		if (auto p = dynamic_cast<CBindRow<T>*>(m_pRow)) {
+			return p->GetItem<std::shared_ptr<CShellFile>>();
 		} else {
 			return nullptr;
 		}

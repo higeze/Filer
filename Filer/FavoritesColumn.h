@@ -7,7 +7,7 @@
 #include "PathCell.h"
 #include "CellProperty.h"
 
-template<typename... TItems>
+template<typename T>
 class CFavoritesColumn:public CMapColumn
 {
 public:
@@ -34,7 +34,7 @@ public:
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CFavoriteCell<TItems...>>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+		return std::make_shared<CFavoriteCell<T>>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
 	}
 
 	bool IsDragTrackable()const { return true; }

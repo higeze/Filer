@@ -11,8 +11,8 @@ public:
 		:CBindTextColumn(
 		pSheet,
 		L"Memo",
-		[](const std::tuple<MainTask>& tk)->std::wstring {return *std::get<MainTask>(tk).Memo; },
-		[](std::tuple<MainTask>& tk, const std::wstring& str)->void { std::get<MainTask>(tk).Memo.set(str); },
+		[](const MainTask& value)->std::wstring {return *value.Memo; },
+		[](MainTask& value, const std::wstring& str)->void { value.Memo.set(str); },
 		arg<"celleditmode"_s>() = EditMode::ExcelLike){}
 };
 

@@ -99,7 +99,7 @@ void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 	//Cursor
 	m_spCursorer->Clear();
 
-	ItemsSource.push_back(std::make_tuple(spFile));
+	ItemsSource.push_back(spFile);
 
 	for (auto& spCol : m_allCols) {
 		spCol->SetIsFitMeasureValid(false);

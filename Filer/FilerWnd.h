@@ -262,9 +262,6 @@ private:
 			get_to(j, "FavoritesProperty", o.m_spFavoritesProp);
 			get_to(j, "ExeExtensionProperty", o.m_spExeExProp);
 			get_to(j, "SplitterProperty", o.m_spSplitterProp);
-			get_to(j, "LeftFavorites", o.m_spLeftFavoritesView);
-			get_to(j, "RightFavorites", o.m_spRightFavoritesView);
-			get_to(j, "Launcher", o.m_spLauncher);
 			get_to(j, "LeftView", o.m_spLeftView);
 			get_to(j, "RightView", o.m_spRightView);
 			get_to(j, "HorizontalSplitter", o.m_spSplitter);

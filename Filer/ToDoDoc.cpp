@@ -9,13 +9,13 @@ CToDoDoc::CToDoDoc()
 {
 	Tasks.subscribe([status = Status](auto notify) mutable {
 
-		auto reactive_task_subscription = [status](std::tuple<MainTask>& src) mutable {
+		auto reactive_task_subscription = [status](MainTask& src) mutable {
 			auto dirty = [status](auto) mutable { status.set(FileStatus::Dirty); };
 			std::vector<sigslot::connection> subs;
-			subs.push_back(std::get<MainTask>(src).State.subscribe(dirty, status.life()));
-			subs.push_back(std::get<MainTask>(src).Name.subscribe(dirty, status.life()));
-			subs.push_back(std::get<MainTask>(src).Memo.subscribe(dirty, status.life()));
-			subs.push_back(std::get<MainTask>(src).YearMonthDay.subscribe(dirty, status.life()));
+			subs.push_back(src.State.subscribe(dirty, status.life()));
+			subs.push_back(src.Name.subscribe(dirty, status.life()));
+			subs.push_back(src.Memo.subscribe(dirty, status.life()));
+			subs.push_back(src.YearMonthDay.subscribe(dirty, status.life()));
 			return subs;
 		};
 
@@ -58,7 +58,7 @@ void CToDoDoc::Open(const std::wstring& path)
 		j.get_to(tempTasks);
 
 		for (const auto& item : tempTasks) {
-			Tasks.push_back(std::make_tuple(item));
+			Tasks.push_back(item);
 		}
 		Status.set(FileStatus::Saved);
 	}
@@ -70,7 +70,7 @@ void CToDoDoc::Save(const std::wstring& path)
 	try {
 		std::vector<MainTask> tempTasks;
 		for (auto iter = Tasks->cbegin(); iter != Tasks->cend(); ++iter) {
-			tempTasks.push_back(std::get<MainTask>(*iter));
+			tempTasks.push_back(*iter);
 		}
 		json j = tempTasks;
 		std::ofstream o(path);

@@ -7,7 +7,7 @@ class CFavoritesProperty;
 class CShellFile;
 class CFilerWnd;
 
-class CFavoritesGridView : public CBindGridView2<CBindRow<std::shared_ptr<CFavorite>>, CBindColumn<std::shared_ptr<CFavorite>>, std::shared_ptr<CFavorite>>
+class CFavoritesGridView : public CBindGridView<std::shared_ptr<CFavorite>>
 {
 private:
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
