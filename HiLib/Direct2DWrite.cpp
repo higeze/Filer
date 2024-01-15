@@ -522,7 +522,7 @@
 	{
 		auto mapIter = m_textLayoutMap.find(format);
 		if (mapIter == m_textLayoutMap.end()) {
-			m_textLayoutMap.emplace(format, std::unordered_map<std::pair<std::wstring, CSizeF>, CComPtr<IDWriteTextLayout>, StrSizeHash, StrSizeEqual>());
+			m_textLayoutMap.insert(std::make_pair(format, concurrency::concurrent_unordered_map<std::pair<std::wstring, CSizeF>, CComPtr<IDWriteTextLayout>, StrSizeHash, StrSizeEqual>()));
 			mapIter = m_textLayoutMap.find(format);
 		}
 
@@ -546,7 +546,7 @@
 				range.length = text.size();
 				pTextLayout->SetTypography(typo, range);
 
-				auto ret = mapIter->second.emplace(std::make_pair(text, size), pTextLayout);
+				auto ret = mapIter->second.insert(std::make_pair(std::make_pair(text, size), pTextLayout));
 				return ret.first->second;
 			}
 		}
@@ -961,7 +961,7 @@
 		GetD2DDeviceContext()->PopAxisAlignedClip();
 	}
 
-	void CDirect2DWrite::SaveBitmap(const std::wstring& dstPath, const CComPtr<ID2D1Bitmap1>& pSrcBitmap) const
+	void CDirect2DWrite::SaveBitmap(const CComPtr<ID2D1Bitmap1>& pSrcBitmap, const std::wstring& dstPath) const
 	{
 		CComPtr<IWICStream> pStream;
 		FAILED_THROW(GetWICImagingFactory()->CreateStream(&pStream));

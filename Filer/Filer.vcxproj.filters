@@ -14,9 +14,6 @@
     <Filter Include="Release">
       <UniqueIdentifier>{23fdc6c8-000e-44b9-9991-497e66d8619d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="D2DTextBox">
-      <UniqueIdentifier>{cce17a06-89bc-4334-81bb-ab715ac5fcf1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="HiLib\PDF">
       <UniqueIdentifier>{a55461a7-fe93-45fe-8004-30f0719d1ac5}</UniqueIdentifier>
     </Filter>
@@ -56,6 +53,15 @@
     <Filter Include="Filer\FilerTab">
       <UniqueIdentifier>{ce828361-085d-40fb-a5d6-8285e88b8eb0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HiLib\Calender">
+      <UniqueIdentifier>{6b2d6355-ec96-435d-a8b2-629f5e786288}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HiLib\GridView">
+      <UniqueIdentifier>{d8d335c1-e5dc-4041-9c3a-915bc2192af2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HiLib\CheckBox">
+      <UniqueIdentifier>{b45fe677-64fe-4bf4-86a6-801c401d6f1c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -70,11 +76,11 @@
     <ResourceCompile Include="..\HiLib\Konami.rc">
       <Filter>HiLib</Filter>
     </ResourceCompile>
-    <ResourceCompile Include="..\HiLib\SheetCell.rc">
-      <Filter>HiLib</Filter>
-    </ResourceCompile>
     <ResourceCompile Include="..\HiLib\Update.rc">
       <Filter>HiLib</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\HiLib\SheetCell.rc">
+      <Filter>HiLib\GridView</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
@@ -152,40 +158,13 @@
     <ClInclude Include="..\HiLib\ApplicationProperty.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\Band.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindColumn.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindRow.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BoolCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\CDataString.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\Cell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\CellProperty.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\CellState.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\CellStringCommand.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\CExpandCollapseCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ColorCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\Column.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\CShellExtension.h">
@@ -341,21 +320,6 @@
     <ClInclude Include="..\HiLib\se_exception.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\Sheet.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\SheetCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\SheetCellResource.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\SheetEnums.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\SheetEventArgs.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\TextCell.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -377,13 +341,7 @@
     <ClInclude Include="ShellFolder.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\SheetStateMachine.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\IDragger.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\Celler.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\MouseStateMachine.h">
@@ -500,31 +458,7 @@
     <ClInclude Include="..\HiLib\index_vector.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\BindGridView.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindTextColumn.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindTextCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\named_arguments.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindCheckBoxCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\CheckBoxFilterCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\CheckBoxCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindCheckBoxColumn.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindSheetCellColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\Timer.h">
@@ -536,13 +470,7 @@
     <ClInclude Include="..\HiLib\IBindSheet.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\SheetProperty.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\SortCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\ColumnIndexCell.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\RowIndexCell.h">
@@ -650,17 +578,8 @@
     <ClInclude Include="..\HiLib\scope_exit.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\CellTextBox.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\TextBoxProperty.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\EditorProperty.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\Editor.h">
-      <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\StatusBarProperty.h">
       <Filter>HiLib</Filter>
@@ -683,14 +602,8 @@
     <ClInclude Include="..\HiLib\string_extension.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\D2DTextBox\EditorScroll.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\getter_macro.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\D2DTextBox\EditorTextBox.h">
-      <Filter>D2DTextBox</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\ThreadPool.h">
       <Filter>HiLib</Filter>
@@ -848,9 +761,6 @@
     <ClInclude Include="..\HiLib\Date.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\CheckBoxState.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="TaskRow.h">
       <Filter>Filer\ToDo</Filter>
     </ClInclude>
@@ -894,18 +804,6 @@
       <Filter>Filer\ToDo</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLIb\subject.h" />
-    <ClInclude Include="..\HiLib\CheckBox.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\CheckBoxType.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindYearMonthDayColumn.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\BindYearMonthDayCell.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\FPDFFormHandle.h">
       <Filter>HiLib\PDF\FPDF</Filter>
     </ClInclude>
@@ -936,12 +834,6 @@
     <ClInclude Include="ToDoTabData.h">
       <Filter>Filer\FilerTab</Filter>
     </ClInclude>
-    <ClInclude Include="PreviewTabData.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLib\TextDoc.h">
-      <Filter>D2DTextBox</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\FileStatus.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -957,13 +849,130 @@
     <ClInclude Include="..\HiLib\KeyTraceEventSink.h">
       <Filter>HiLib\TextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\CalendarControl.h">
+    <ClInclude Include="..\HiLib\ToolTip.h">
       <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\TextDoc.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\EditorTextBox.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\Editor.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\EditorProperty.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\EditorScroll.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\D2DTextBox\CellTextBox.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="PreviewTabData.h">
+      <Filter>Filer\FilerTab</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CalendarControl.h">
+      <Filter>HiLib\Calender</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\CalendarDialog.h">
-      <Filter>HiLib</Filter>
+      <Filter>HiLib\Calender</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\ToolTip.h">
+    <ClInclude Include="..\HiLib\Band.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindColumn.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindCheckBoxColumn.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindGridView.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindRow.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindSheetCellColumn.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindTextCell.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindTextColumn.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindYearMonthDayCell.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindYearMonthDayColumn.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BindCheckBoxCell.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\BoolCell.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\Cell.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\Celler.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CellProperty.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CellState.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CheckBoxCell.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CheckBoxFilterCell.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ColumnIndexCell.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\Column.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\Sheet.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\SheetCell.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\SheetCellResource.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\SheetEnums.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\SheetEventArgs.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\SheetProperty.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\SheetStateMachine.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ColorCell.h">
+      <Filter>HiLib\GridView</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CheckBox.h">
+      <Filter>HiLib\CheckBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CheckBoxState.h">
+      <Filter>HiLib\CheckBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\CheckBoxType.h">
+      <Filter>HiLib\CheckBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\MyGdiplusHelper.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1004,19 +1013,7 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\Band.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\Cell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\CellStringCommand.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ColorCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\Column.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\CShellExtension.cpp">
@@ -1079,12 +1076,6 @@
     <ClCompile Include="..\HiLib\se_exception.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\Sheet.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\SheetCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\TextCell.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -1096,9 +1087,6 @@
     </ClCompile>
     <ClCompile Include="ShellFolder.cpp">
       <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\Celler.cpp">
-      <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="FilerTabGridView.cpp">
       <Filter>Filer</Filter>
@@ -1169,16 +1157,7 @@
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\SheetStateMachine.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\GridViewStateMachine.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\CheckBoxFilterCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\CheckBoxCell.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\Timer.cpp">
@@ -1188,9 +1167,6 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\SortCell.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\ColumnIndexCell.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\RowIndexCell.cpp">
@@ -1248,12 +1224,6 @@
     <ClCompile Include="DriveSizeCell.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\Editor.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\CellTextBox.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\D2DWDialog.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -1262,12 +1232,6 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\Debug.cpp">
       <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\EditorScroll.cpp">
-      <Filter>D2DTextBox</Filter>
-    </ClCompile>
-    <ClCompile Include="..\D2DTextBox\EditorTextBox.cpp">
-      <Filter>D2DTextBox</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\ThreadPool.cpp">
       <Filter>HiLib</Filter>
@@ -1386,12 +1350,6 @@
     <ClCompile Include="..\HiLIb\YearMonthDay.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\CheckBox.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\CheckBoxState.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\FPDFFormHandle.cpp">
       <Filter>HiLib\PDF\FPDF</Filter>
     </ClCompile>
@@ -1422,26 +1380,77 @@
     <ClCompile Include="..\HiLib\KeyTraceEventSink.cpp">
       <Filter>HiLib\TextBox</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\CalendarControl.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\CalendarDialog.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\ToolTip.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="BindTest.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
+    <ClCompile Include="..\D2DTextBox\EditorTextBox.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Editor.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\EditorScroll.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\D2DTextBox\CellTextBox.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CalendarControl.cpp">
+      <Filter>HiLib\Calender</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CalendarDialog.cpp">
+      <Filter>HiLib\Calender</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Band.cpp">
+      <Filter>HiLib\GridView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Cell.cpp">
+      <Filter>HiLib\GridView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Celler.cpp">
+      <Filter>HiLib\GridView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CheckBoxCell.cpp">
+      <Filter>HiLib\GridView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CheckBoxFilterCell.cpp">
+      <Filter>HiLib\GridView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ColumnIndexCell.cpp">
+      <Filter>HiLib\GridView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Column.cpp">
+      <Filter>HiLib\GridView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Sheet.cpp">
+      <Filter>HiLib\GridView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\SheetCell.cpp">
+      <Filter>HiLib\GridView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\SheetStateMachine.cpp">
+      <Filter>HiLib\GridView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ColorCell.cpp">
+      <Filter>HiLib\GridView</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CheckBox.cpp">
+      <Filter>HiLib\CheckBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\CheckBoxState.cpp">
+      <Filter>HiLib\CheckBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\MyGdiplusHelper.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\MyClipboard.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\HiLib\msxml6.tli">
-      <Filter>HiLib</Filter>
-    </None>
-    <None Include="..\HiLib\msxml6.tlh">
-      <Filter>HiLib</Filter>
-    </None>
     <None Include="..\HiLib\Gradius.cur">
       <Filter>HiLib</Filter>
     </None>

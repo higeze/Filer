@@ -40,49 +40,49 @@ public:
 	}
 };
 
-template<typename Key, typename Value>
-class lockable_unordered_map : public std::unordered_map<Key, Value>
-{
-private:
-
-	std::mutex m_mtx;
-public:
-
-	auto lock_emplace(const std::pair<Key, Value>& pair)
-	{
-		std::lock_guard<std::mutex> lock(m_mtx);
-		return this->emplace(pair);
-	}
-
-	auto lock_insert(const std::pair<Key, Value>& pair) 
-	{
-		std::lock_guard<std::mutex> lock(m_mtx);
-		return this->insert(pair);
-	}
-
-	auto lock_insert_or_assign(const Key& key, const Value&& value)
-	{
-		std::lock_guard<std::mutex> lock(m_mtx);
-		return this->insert_or_assign(key, value);
-	}
-
-
-	void lock_foreach(std::function<void(std::pair<Key, Value>&)> fun)
-	{
-		std::lock_guard<std::mutex> lock(m_mtx);
-		for (auto& pair : *this)
-		{
-			fun(pair);
-		}
-	}
-
-	auto lock_find(const Key& key)
-	{
-		std::lock_guard<std::mutex> lock(m_mtx);
-		return this->find(key);
-	}
-
-};
+//template<typename Key, typename Value>
+//class lockable_unordered_map : public std::unordered_map<Key, Value>
+//{
+//private:
+//
+//	std::mutex m_mtx;
+//public:
+//
+//	auto lock_emplace(const std::pair<Key, Value>& pair)
+//	{
+//		std::lock_guard<std::mutex> lock(m_mtx);
+//		return this->emplace(pair);
+//	}
+//
+//	auto lock_insert(const std::pair<Key, Value>& pair) 
+//	{
+//		std::lock_guard<std::mutex> lock(m_mtx);
+//		return this->insert(pair);
+//	}
+//
+//	auto lock_insert_or_assign(const Key& key, const Value&& value)
+//	{
+//		std::lock_guard<std::mutex> lock(m_mtx);
+//		return this->insert_or_assign(key, value);
+//	}
+//
+//
+//	void lock_foreach(std::function<void(std::pair<Key, Value>&)> fun)
+//	{
+//		std::lock_guard<std::mutex> lock(m_mtx);
+//		for (auto& pair : *this)
+//		{
+//			fun(pair);
+//		}
+//	}
+//
+//	auto lock_find(const Key& key)
+//	{
+//		std::lock_guard<std::mutex> lock(m_mtx);
+//		return this->find(key);
+//	}
+//
+//};
 
 class CD2DAtlasBitmapBase
 {
@@ -358,7 +358,7 @@ public:
 				//pDirect->SaveBitmap(L"Test.png", GetAtlasBitmapPtr(pDirect));
 				if (newRect.IsRectNull()) {
 #ifdef _DEBUG
-					pDirect->SaveBitmap(L"Test.png", GetAtlasBitmapPtr(pDirect));
+					pDirect->SaveBitmap(GetAtlasBitmapPtr(pDirect), L"Test.png");
 #endif
 					m_pAtlasBitmap.Release();
 					m_map.clear();

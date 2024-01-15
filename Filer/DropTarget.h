@@ -34,39 +34,41 @@ inline std::basic_string<wchar_t> GetMakeSureTempDirectory()
 	}
 	return tempDir;
 }
+//
+//template<typename TRect>
+//std::basic_string<TRect> SanitizeFileName(const std::basic_string<TRect>& fileIn)
+//{
+//	std::basic_string<TRect> fileOut(fileIn);
+//	for (size_t i = 0; i < fileOut.size(); i++) {
+//		switch (fileOut[i]) {
+//			case TCHAR_CAST(TRect, '^'):
+//			case TCHAR_CAST(TRect, '&'):
+//			case TCHAR_CAST(TRect, '*'):
+//			case TCHAR_CAST(TRect, '-'):
+//			case TCHAR_CAST(TRect, '+'):
+//			case TCHAR_CAST(TRect, '='):
+//			case TCHAR_CAST(TRect, '['):
+//			case TCHAR_CAST(TRect, ']'):
+//			case TCHAR_CAST(TRect, '\\'):
+//			case TCHAR_CAST(TRect, '|'):
+//			case TCHAR_CAST(TRect, ';'):
+//			case TCHAR_CAST(TRect, ':'):
+//			case TCHAR_CAST(TRect, '\"'):
+//			case TCHAR_CAST(TRect, ','):
+//			case TCHAR_CAST(TRect, '<'):
+//			case TCHAR_CAST(TRect, '>'):
+//			case TCHAR_CAST(TRect, '/'):
+//			case TCHAR_CAST(TRect, '?'):
+//				fileOut[i] = TCHAR_CAST(TRect, '_');
+//				break;
+//			default:
+//				;
+//		}
+//	}
+//	return fileOut;
+//}
 
-template<typename TRect>
-std::basic_string<TRect> SanitizeFileName(const std::basic_string<TRect>& fileIn)
-{
-	std::basic_string<TRect> fileOut(fileIn);
-	for (size_t i = 0; i < fileOut.size(); i++) {
-		switch (fileOut[i]) {
-			case TCHAR_CAST(TRect, '^'):
-			case TCHAR_CAST(TRect, '&'):
-			case TCHAR_CAST(TRect, '*'):
-			case TCHAR_CAST(TRect, '-'):
-			case TCHAR_CAST(TRect, '+'):
-			case TCHAR_CAST(TRect, '='):
-			case TCHAR_CAST(TRect, '['):
-			case TCHAR_CAST(TRect, ']'):
-			case TCHAR_CAST(TRect, '\\'):
-			case TCHAR_CAST(TRect, '|'):
-			case TCHAR_CAST(TRect, ';'):
-			case TCHAR_CAST(TRect, ':'):
-			case TCHAR_CAST(TRect, '\"'):
-			case TCHAR_CAST(TRect, ','):
-			case TCHAR_CAST(TRect, '<'):
-			case TCHAR_CAST(TRect, '>'):
-			case TCHAR_CAST(TRect, '/'):
-			case TCHAR_CAST(TRect, '?'):
-				fileOut[i] = TCHAR_CAST(TRect, '_');
-				break;
-			default:
-				;
-		}
-	}
-	return fileOut;
-}
+std::wstring SanitizeFileName(const std::wstring& dir, const std::wstring& file);
 
 class CD2DWControl;
 

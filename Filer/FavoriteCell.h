@@ -33,18 +33,6 @@ public:
 	using CFileIconCell::CFileIconCell;
 	virtual ~CFavoriteCell(){}
 
-	virtual std::wstring GetString() override
-	{
-		if (auto pBindRow = dynamic_cast<CBindRow<T>*>(this->m_pRow)) {
-			if (GetShellFile()) {
-				return GetShellFile()->GetDispName();
-			}
-			return nullptr;
-		} else {
-			return nullptr;
-		}
-	}
-
 	virtual std::shared_ptr<CShellFile> GetShellFile() override
 	{
 		if (auto pBindRow = dynamic_cast<CBindRow<T>*>(this->m_pRow)) {
@@ -122,73 +110,5 @@ public:
 			CFilerApplication::GetInstance()->SerializeFavorites(pFilerWnd->GetFavoritesPropPtr());
 		}
 
-	}
-
-	virtual void OnMouseEnter(const MouseEnterEvent& e) override
-	{
-		::OutputDebugStringA("OnMouseEnter\r\n");
-		auto InitialShowDelay = ::GetDoubleClickTime();
-		auto BetweenShowDelay = InitialShowDelay / 5;
-		auto ShowDuration = InitialShowDelay * 10;
-
-		auto GetCursorSize = []()->CSize {
-			return CSize(::GetSystemMetrics(SM_CXCURSOR), ::GetSystemMetrics(SM_CYCURSOR));
-		};
-
-	//auto GetCursorIconSize = []()->CSize {
-	//	CIcon icon(::GetCursor());
-	//	CSize iconSize;
-	//	ICONINFO ii;
-	//	if (::GetIconInfo(icon, &ii)) {
-	//		if (BITMAP bm; ::GetObjectW(ii.hbmMask, sizeof(bm), &bm) == sizeof(bm)) {
-	//			iconSize.cx = bm.bmWidth;
-	//			iconSize.cy = ii.hbmColor ? bm.bmHeight : bm.bmHeight / 2;
-	//		}
-	//		if (ii.hbmMask)  ::DeleteObject(ii.hbmMask);
-	//		if (ii.hbmColor) ::DeleteObject(ii.hbmColor);
-	//	}
-	//	return iconSize;
-	//};
-
-
-		auto initialEnter = false;
-		auto betweenEnter = true;
-
-
-	//if (leave) {
-	//	if (pSheet->GetWndPtr()->GetToolTipControlPtr()) {
-	//		pSheet->GetWndPtr()->GetToolTipControlPtr()->OnClose(CloseEvent(e.WndPtr, NULL, NULL));
-	//	}
-	//} else if (initialEnter || betweenEnter) {
-		auto delay = initialEnter ? InitialShowDelay : BetweenShowDelay;
-
-		if (this->m_pSheet->GetWndPtr()->GetToolTipControlPtr()) {
-			this->m_pSheet->GetWndPtr()->GetToolTipControlPtr()->OnClose(CloseEvent(e.WndPtr, NULL, NULL));
-		}
-
-		if (!GetString().empty()) {
-			e.WndPtr->GetToolTipDeadlineTimer().run([pSheet = this->m_pSheet, content = GetString(), sz = GetCursorSize()]()->void
-			{
-				auto spTT = std::make_shared<CToolTip>(
-					pSheet->GetWndPtr(),
-					std::make_shared<ToolTipProperty>());
-				CPointF pt = pSheet->GetWndPtr()->GetCursorPosInWnd();
-				pt.x += sz.cx / 2;
-				spTT->OnCreate(CreateEvt(pSheet->GetWndPtr(), pSheet->GetWndPtr(), CRectF()));
-				spTT->Content.set(content);
-				spTT->Measure(CSizeF(FLT_MAX, FLT_MAX));
-				spTT->Arrange(CRectF(pt, spTT->DesiredSize()));
-
-			}, std::chrono::milliseconds(delay));
-		}
-	//} 
-	}
-	virtual void OnMouseLeave(const MouseLeaveEvent& e) override
-	{
-		e.WndPtr->GetToolTipDeadlineTimer().stop();
-		::OutputDebugStringA("OnMouseLeave\r\n");
-		if (this->m_pSheet->GetWndPtr()->GetToolTipControlPtr()) {
-			this->m_pSheet->GetWndPtr()->GetToolTipControlPtr()->OnClose(CloseEvent(e.WndPtr, NULL, NULL));
-		}
 	}
 };

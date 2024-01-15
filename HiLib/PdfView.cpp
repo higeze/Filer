@@ -612,46 +612,172 @@ void CPdfView::Normal_KeyDown(const KeyDownEvent& e)
 		break;
 	}
 }
+#include "MyClipboard.h"
+
+//HBITMAP DIBToDDB(HANDLE hDIB)
+//{
+//	LPBITMAPINFOHEADER	lpbi;
+//	HBITMAP 		hbm;
+//	CPalette		pal;
+//	CPalette		palOld;
+//	CClientDC		dc(NULL);
+//
+//	if (hDIB == NULL)
+//		return NULL;
+//
+//	lpbi = reinterpret_cast<LPBITMAPINFOHEADER>(hDIB);
+//
+//	int nColors = lpbi->biClrUsed ? lpbi->biClrUsed :
+//		1 << lpbi->biBitCount;
+//	//int nColors = 1 << 32;
+//
+//	LPBITMAPINFO bmInfo = reinterpret_cast<LPBITMAPINFO>(hDIB);
+//	LPVOID lpDIBBits;
+//	if (bmInfo->bmiHeader.biBitCount > 8)
+//		lpDIBBits = (LPVOID)((LPDWORD)(bmInfo->bmiColors +
+//		bmInfo->bmiHeader.biClrUsed) +
+//		((bmInfo->bmiHeader.biCompression == BI_BITFIELDS) ? 3 : 0));
+//	else
+//		lpDIBBits = (LPVOID)(bmInfo->bmiColors + nColors);
+//
+//	// Create and select a logical palette if needed
+//	if (nColors <= 256 && dc.GetDeviceCaps(RASTERCAPS) & RC_PALETTE) {
+//		UINT nSize = sizeof(LOGPALETTE) + (sizeof(PALETTEENTRY) * nColors);
+//		LOGPALETTE* pLP = (LOGPALETTE*) new BYTE[nSize];
+//
+//		pLP->palVersion = 0x300;
+//		pLP->palNumEntries = nColors;
+//
+//		for (int i = 0; i < nColors; i++) {
+//			pLP->palPalEntry[i].peRed = bmInfo->bmiColors[i].rgbRed;
+//			pLP->palPalEntry[i].peGreen = bmInfo->bmiColors[i].rgbGreen;
+//			pLP->palPalEntry[i].peBlue = bmInfo->bmiColors[i].rgbBlue;
+//			pLP->palPalEntry[i].peFlags = 0;
+//		}
+//
+//		pal.CreatePalette(pLP);
+//
+//		delete[] pLP;
+//
+//		// Select and realize the palette
+//		palOld.Attach(dc.SelectPalette(pal, FALSE));
+//		dc.RealizePalette();
+//	}
+//
+//
+//	hbm = CreateDIBitmap(dc,		// handle to device context
+//		(LPBITMAPINFOHEADER)lpbi,	// pointer to bitmap info header 
+//		(LONG)CBM_INIT,			// initialization flag
+//		lpDIBBits,			// pointer to initialization data 
+//		(LPBITMAPINFO)lpbi,		// pointer to bitmap info
+//		DIB_RGB_COLORS);		// color-data usage 
+//
+//	if (pal) {
+//		dc.SelectPalette(palOld, FALSE);
+//	}
+//
+//	return hbm;
+//}
 
 void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
-	//CreateMenu
-	CMenu menu(::CreatePopupMenu());
-	//Add Row
-	MENUITEMINFO mii = { 0 };
-	mii.cbSize = sizeof(MENUITEMINFO);
-	mii.fMask = MIIM_TYPE | MIIM_ID;
-	mii.fType = MFT_STRING;
-	mii.fState = MFS_ENABLED;
-	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateClockwise");
-	mii.dwTypeData = const_cast<LPWSTR>(L"Rotate Clockwise");
-	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
-	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateCounterClockwise");
-	mii.dwTypeData = const_cast<LPWSTR>(L"Rotate Counter Clockwise");
-	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
-	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeletePage");
-	mii.dwTypeData = const_cast<LPWSTR>(L"Delete Page");
-	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
-	::SetForegroundWindow(GetWndPtr()->m_hWnd);
-	int idCmd = menu.TrackPopupMenu(
-		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
-		e.PointInScreen.x,
-		e.PointInScreen.y,
-		GetWndPtr()->m_hWnd);
-
-	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateClockwise")) {
+	auto me = std::dynamic_pointer_cast<CPdfView>(shared_from_this());
+	CContextMenu2 menu;
+	menu.Add(
+		std::make_unique<CMenuItem2>(L"RotateClockwise", [this]() {
 		const std::unique_ptr<CPDFPage>& pPage = PDF->GetPage(*CurrentPage - 1);
-		pPage->Rotate.set((*pPage->Rotate + 1) % 4);
-	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateCounterClockwise")) {
+		pPage->Rotate.set((*pPage->Rotate + 1) % 4);}, me
+	),
+		std::make_unique<CMenuItem2>(L"Rotate Counter Clockwise", [this, e]() {
 		const std::unique_ptr<CPDFPage>& pPage = PDF->GetPage(*CurrentPage - 1);
 		int rotate = *pPage->Rotate == 0 ? 4 : *pPage->Rotate;
-		pPage->Rotate.set((rotate - 1) % 4);
-	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeletePage")) {
-		PDF.get_unconst()->DeletePage(*CurrentPage - 1);
-	}
+		pPage->Rotate.set((rotate - 1) % 4);}, me
+	),
+		std::make_unique<CMenuItem2>(L"Delete Page", [this]() {
+		PDF.get_unconst()->DeletePage(*CurrentPage - 1);}, me
+	),
+		std::make_unique<CMenuItem2>(L"Copy Image 100%", [this]() {
+		const std::unique_ptr<CPDFPage>& pPage = PDF->GetPage(*CurrentPage - 1);
+		CClientDC dc(GetWndPtr()->m_hWnd);
+		UHBITMAP ddb(pPage->GetDDBitmap(dc, 1.f, *pPage->Rotate));
+		CClipboard clipboard;
+		if(clipboard.Open(GetWndPtr()->m_hWnd)!=0){
+			auto a = clipboard.Empty();
+			auto b = clipboard.SetDdb(ddb.get());
+			auto c = clipboard.SetJpegFromDdb(ddb.get());
+			auto d = clipboard.SetPngFromDdb(ddb.get());
+			auto e = clipboard.SetGifFromDdb(ddb.get());
+			auto f = clipboard.SetTiffFromDdb(ddb.get());
+			auto g = clipboard.Close();
+		}
+		}, me
+	),
+		std::make_unique<CMenuItem2>(L"Copy Image As Shown", [this]() {
+		const std::unique_ptr<CPDFPage>& pPage = PDF->GetPage(*CurrentPage - 1);
+		CClientDC dc(GetWndPtr()->m_hWnd);
+		UHBITMAP ddb(pPage->GetDDBitmap(dc, *Scale, *pPage->Rotate));
+		CClipboard clipboard;
+		if(clipboard.Open(GetWndPtr()->m_hWnd)!=0){
+			auto a = clipboard.Empty();
+			auto b = clipboard.SetDdb(ddb.get());
+			auto c = clipboard.SetJpegFromDdb(ddb.get());
+			auto d = clipboard.SetPngFromDdb(ddb.get());
+			auto e = clipboard.SetGifFromDdb(ddb.get());
+			auto f = clipboard.SetTiffFromDdb(ddb.get());
+			auto g = clipboard.Close();
+		}
+		}, me
+	)
+	);
+
+	::SetForegroundWindow(GetWndPtr()->m_hWnd);
+	menu.Popup(GetWndPtr()->m_hWnd, CPointU(e.PointInScreen.x, e.PointInScreen.y));
+
+	//CreateMenu
+	//CMenu menu(::CreatePopupMenu());
+	////Add Row
+	//MENUITEMINFO mii = { 0 };
+	//mii.cbSize = sizeof(MENUITEMINFO);
+	//mii.fMask = MIIM_TYPE | MIIM_ID;
+	//mii.fType = MFT_STRING;
+	//mii.fState = MFS_ENABLED;
+
+	//mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateClockwise");
+	//mii.dwTypeData = const_cast<LPWSTR>(L"Rotate Clockwise");
+	//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+	//mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateCounterClockwise");
+	//mii.dwTypeData = const_cast<LPWSTR>(L"Rotate Counter Clockwise");
+	//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+	//mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeletePage");
+	//mii.dwTypeData = const_cast<LPWSTR>(L"Delete Page");
+	//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+	//mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"CopyImage");
+	//mii.dwTypeData = const_cast<LPWSTR>(L"Copy Image");
+	//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+	//::SetForegroundWindow(GetWndPtr()->m_hWnd);
+	//int idCmd = menu.TrackPopupMenu(
+	//	TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
+	//	e.PointInScreen.x,
+	//	e.PointInScreen.y,
+	//	GetWndPtr()->m_hWnd);
+
+	//if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateClockwise")) {
+	//	const std::unique_ptr<CPDFPage>& pPage = PDF->GetPage(*CurrentPage - 1);
+	//	pPage->Rotate.set((*pPage->Rotate + 1) % 4);
+	//} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateCounterClockwise")) {
+	//	const std::unique_ptr<CPDFPage>& pPage = PDF->GetPage(*CurrentPage - 1);
+	//	int rotate = *pPage->Rotate == 0 ? 4 : *pPage->Rotate;
+	//	pPage->Rotate.set((rotate - 1) % 4);
+	//} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeletePage")) {
+	//	PDF.get_unconst()->DeletePage(*CurrentPage - 1);
+	//} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"CopyImage")) {
+	//	const std::unique_ptr<CPDFPage>& pPage = PDF->GetPage(*CurrentPage - 1);
+	//	pPage->CopyImageToClipboard(GetWndPtr()->m_hWnd, GetWndPtr()->GetDirectPtr()->m_hDC, 1.f, *pPage->Rotate);
+	//}
 	*e.HandledPtr = TRUE;
 
 }

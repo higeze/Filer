@@ -117,39 +117,58 @@ void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		if (*e.HandledPtr) { return; }
 	}
 
-	//CreateMenu
-	CMenu menu(::CreatePopupMenu());
-	//Add Row
-	MENUITEMINFO mii = { 0 };
-	mii.cbSize = sizeof(MENUITEMINFO);
-	mii.fMask = MIIM_TYPE | MIIM_ID;
-	mii.fType = MFT_STRING;
-	mii.fState = MFS_ENABLED;
-	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row");
-	mii.dwTypeData = const_cast<LPWSTR>(L"Add Row");
-	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+	auto me = std::dynamic_pointer_cast<CToDoGridView>(shared_from_this());
 
-	mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row");
-	mii.dwTypeData = const_cast<LPWSTR>(L"Remove Row");
-	menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
-	::SetForegroundWindow(GetWndPtr()->m_hWnd);
-	int idCmd = menu.TrackPopupMenu(
-		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
-		e.PointInScreen.x,
-		e.PointInScreen.y,
-		GetWndPtr()->m_hWnd);
-
-	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
+	CContextMenu2 menu;
+	menu.Add(
+		std::make_unique<CMenuItem2>(L"Add Row", [this]() {
 		ItemsSource.push_back(MainTask());
 		m_spCursorer->OnCursor(Cell(m_allRows.back(), m_pNameColumn));
 		PostUpdate(Updates::EnsureVisibleFocusedCell);
 		SubmitUpdate();
-	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
+	}, me),
+		std::make_unique<CMenuItem2>(L"Remove Row", [this, e]() {
 		auto a = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
 		ItemsSource.erase(ItemsSource->cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
 		SubmitUpdate();
-	}
+	}, me));
+
+	::SetForegroundWindow(GetWndPtr()->m_hWnd);
+	menu.Popup(GetWndPtr()->m_hWnd, CPointU(e.PointInScreen.x, e.PointInScreen.y));
+
+	////CreateMenu
+	//CMenu menu(::CreatePopupMenu());
+	////Add Row
+	//MENUITEMINFO mii = { 0 };
+	//mii.cbSize = sizeof(MENUITEMINFO);
+	//mii.fMask = MIIM_TYPE | MIIM_ID;
+	//mii.fType = MFT_STRING;
+	//mii.fState = MFS_ENABLED;
+	//mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row");
+	//mii.dwTypeData = const_cast<LPWSTR>(L"Add Row");
+	//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+	//mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row");
+	//mii.dwTypeData = const_cast<LPWSTR>(L"Remove Row");
+	//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
+
+	//::SetForegroundWindow(GetWndPtr()->m_hWnd);
+	//int idCmd = menu.TrackPopupMenu(
+	//	TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
+	//	e.PointInScreen.x,
+	//	e.PointInScreen.y,
+	//	GetWndPtr()->m_hWnd);
+
+	//if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Add Row")) {
+	//	ItemsSource.push_back(MainTask());
+	//	m_spCursorer->OnCursor(Cell(m_allRows.back(), m_pNameColumn));
+	//	PostUpdate(Updates::EnsureVisibleFocusedCell);
+	//	SubmitUpdate();
+	//} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"Remove Row")) {
+	//	auto a = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>();
+	//	ItemsSource.erase(ItemsSource->cbegin() + (Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))->GetRowPtr()->GetIndex<AllTag>() - m_frozenRowCount));
+	//	SubmitUpdate();
+	//}
 	*e.HandledPtr = TRUE;
 }
 

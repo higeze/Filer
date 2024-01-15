@@ -7,6 +7,17 @@ class CFont;
 class CBrush;
 class CPen;
 
+class CPalette:public CGdiObj<HPALETTE>
+{
+public:
+	using CGdiObj<HPALETTE>::CGdiObj;
+
+	void CreatePalette(const LOGPALETTE *plpal)
+	{
+		Attach(::CreatePalette(plpal));
+	}
+};
+
 class CDC
 {
 protected:
@@ -108,6 +119,22 @@ public:
 	{
 		Attach(::CreateCompatibleDC(hDC));
 		return m_hDC;
+	}
+
+
+	int GetDeviceCaps(int index)
+	{
+		return ::GetDeviceCaps(m_hDC, index);
+	}
+
+	HPALETTE SelectPalette(HPALETTE hPal, BOOL bForceBkgd)
+	{
+		return ::SelectPalette(m_hDC, hPal, bForceBkgd);
+	}
+
+	UINT RealizePalette()
+	{
+		return ::RealizePalette(m_hDC);
 	}
 
 };

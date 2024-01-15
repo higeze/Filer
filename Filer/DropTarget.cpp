@@ -235,6 +235,33 @@ HRESULT CDropTarget::CopyStream(const CComPtr<IFileOperation>& pFileOperation, c
 	}
 }
 
+std::wstring SanitizeFileName(const std::wstring& dir, const std::wstring& file)
+{
+	const int slash_size = 1;
+	const int nullterm_size = 1;
+	if (dir.size() + slash_size + nullterm_size > MAX_PATH) {
+		return std::wstring();
+	}
+	std::wstring file_sanitized = file;
+	int pcs = ::PathCleanupSpec(dir.c_str(), ::GetBuffer(file_sanitized, MAX_PATH));
+	::ReleaseBuffer(file_sanitized);
+
+	if (pcs & PCS_FATAL){
+		if(pcs & PCS_PATHTOOLONG) {
+			std::wstring  file_wo_ext = file_sanitized;
+			::PathRemoveExtensionW(::GetBuffer(file_wo_ext, MAX_PATH));
+			::ReleaseBuffer(file_wo_ext);
+			std::wstring ext = ::PathFindExtensionW(file_sanitized.c_str());
+			std::wstring file_wo_ext_truncated = file_wo_ext.substr(0, MAX_PATH - dir.size() - slash_size - ext.size() - nullterm_size);
+			return file_wo_ext_truncated + ext;
+		} else {
+			return std::wstring();
+		}
+	} else {
+		return file_sanitized;
+	}
+}
+
 HRESULT CDropTarget::CopyMessage(const CComPtr<IFileOperation>& pFileOperation, const std::shared_ptr<CShellFolder>& pDestFolder, LPMESSAGE pSrcMessage)
 {
 	HRESULT hRes = S_OK;
@@ -248,9 +275,17 @@ HRESULT CDropTarget::CopyMessage(const CComPtr<IFileOperation>& pFileOperation, 
 	HrGetOneProp(pSrcMessage, PR_SUBJECT, &pSubject);
 	std::wstring title = pSubject != nullptr ? pSubject->Value.lpszW : L"NoTitle";
 
+	//get file name
+	std::wstring longerDir = pDestFolder->GetPath().size() > GetMakeSureTempDirectory<wchar_t>().size() ?
+		pDestFolder->GetPath() : GetMakeSureTempDirectory<wchar_t>();
+	std::wstring fileName = SanitizeFileName(longerDir, title + L".msg");
+	if (fileName.empty()) {
+		return S_FALSE;
+	}
+
 	// get temp file path
 	std::wstring tempPath;
-	::PathCombineW(GetBuffer(tempPath, _MAX_PATH), GetMakeSureTempDirectory<wchar_t>().c_str(), (SanitizeFileName(title) + L".msg").c_str());
+	::PathCombineW(GetBuffer(tempPath, _MAX_PATH), GetMakeSureTempDirectory<wchar_t>().c_str(), fileName.c_str());
 	::ReleaseBuffer(tempPath);
 
 	// get memory allocation function

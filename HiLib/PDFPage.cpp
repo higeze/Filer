@@ -13,6 +13,7 @@
 #include "FPDFTextPage.h"
 #include "FPDFFormHandle.h"
 #include "FPDFBitmap.h"
+#include "MyClipboard.h"
 
 /************/
 /* CPdfPage */
@@ -251,6 +252,176 @@ UHBITMAP CPDFPage::GetBitmap(HDC hDC, const FLOAT& scale, const int&, std::funct
 
 	return nullptr;
 }
+
+UHBITMAP CPDFPage::GetDDBitmap(HDC hDC, const FLOAT& scale, const int&, std::function<bool()> cancel)
+{
+	do {
+		CSizeF sz(m_pPage->GetPageWidthF() * scale, m_pPage->GetPageHeightF() * scale);
+		BITMAPINFO bmi
+		{
+			.bmiHeader = BITMAPINFOHEADER
+			{
+			.biSize = sizeof(BITMAPINFOHEADER),
+			.biWidth = static_cast<LONG>(std::round(sz.width)),
+			.biHeight = -static_cast<LONG>(std::round(sz.height)),
+			.biPlanes = 1,
+			.biBitCount = 32,
+			.biCompression = BI_RGB,
+			.biSizeImage = 0,},
+		};
+
+		void* bitmapBits = nullptr;
+
+		UHBITMAP phDIB(::CreateDIBSection(hDC, &bmi, DIB_RGB_COLORS, &bitmapBits, nullptr, 0));
+		FALSE_BREAK(phDIB);
+
+		CFPDFBitmap fpdfBmp;
+		FALSE_BREAK(fpdfBmp.CreateEx(bmi.bmiHeader.biWidth, -bmi.bmiHeader.biHeight, FPDFBitmap_BGRx, bitmapBits, ((((bmi.bmiHeader.biWidth * bmi.bmiHeader.biBitCount) + 31) & ~31) >> 3), cancel));
+		FALSE_BREAK(fpdfBmp);
+
+		FALSE_BREAK(fpdfBmp.FillRect(0, 0, bmi.bmiHeader.biWidth, -bmi.bmiHeader.biHeight, 0xFFFFFFFF, cancel)); // Fill white
+		int flags = FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE;
+		FALSE_BREAK(fpdfBmp.RenderPageBitmap(*m_pPage, 0, 0, bmi.bmiHeader.biWidth, -bmi.bmiHeader.biHeight, 0, flags, cancel));
+		m_pForm->FFLDraw(fpdfBmp, *m_pPage, 0, 0, bmi.bmiHeader.biWidth, -bmi.bmiHeader.biHeight, 0, flags);
+
+		//Convert to DDB
+		BITMAP bm;
+		::GetObject(phDIB.get(), sizeof(BITMAP), &bm);
+		UHBITMAP phDDB(::CreateCompatibleBitmap(hDC, bm.bmWidth, bm.bmHeight));
+		FALSE_BREAK(::SetDIBits(hDC, phDDB.get(), 0, bm.bmHeight, bm.bmBits, &bmi, 0));
+
+		return phDDB;
+	} while (1);
+
+	return nullptr;
+}
+//#include "MyDC.h"
+//#include "MyGdiplusHelper.h"
+//
+//void CPDFPage::CopyImageToClipboard(HWND hWnd, HDC hDC, const FLOAT& scale, const int& rotate)
+//{
+//	UHBITMAP ddb = GetDDBitmap(hDC, scale, rotate);
+//	//BMP
+//	CClipboard clipboard;
+//	if(clipboard.Open(hWnd)!=0){
+//		auto a = clipboard.Empty();
+//		auto b = clipboard.SetData(CF_BITMAP, ddb.get());
+//		auto c = clipboard.Close();
+//	}
+//
+//	//UHBITMAP dib = GetBitmap(hDC, scale, rotate);
+//	//BITMAP bm;
+//	//::GetObject(dib.get(), sizeof(BITMAP), &bm);
+//	//CBufferDC dcDibBuff(hDC, bm.bmWidth, bm.bmHeight);
+//	//dcDibBuff.SelectBitmap(dib.get());
+//
+//	//CBufferDC dcDdbBuff(hDC, bm.bmWidth, bm.bmHeight);
+//
+//	//auto bo = ::BitBlt(dcDdbBuff, 0, 0, bm.bmWidth, bm.bmHeight, dcDibBuff, 0, 0, SRCCOPY);
+//
+//	//CClipboard clipboard;
+//	//if (clipboard.Open(hWnd) != 0) {
+//	//	auto a = clipboard.Empty();
+//	//	auto b = clipboard.SetData(CF_BITMAP, dcDdbBuff.GetBitMap());
+//	//	auto c = clipboard.Close();
+//	//}
+//
+//	//JPEG,PNG,GIF
+//	{
+//		//Initialize GDI+
+//		GdiplusStartupInput gdiplusStartupInput;
+//		ULONG_PTR gdiplusToken;
+//		GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+//		{
+//			std::function<void(HBITMAP,LPCTSTR,LPCTSTR)> setNonRegisteredTypeToClipboard =  [hWnd,this](HBITMAP hBitmap, LPCTSTR mimetype, LPCTSTR format)->void 
+//			{
+//				IStream* pIStream = NULL;
+//				if(::CreateStreamOnHGlobal(NULL, TRUE, (LPSTREAM*)&pIStream)!=S_OK){
+//					throw std::exception("Error on OnCommandPrintScreen");
+//				}
+//
+//				CLSID clsid;	
+//
+//				Bitmap bitmap(hBitmap, (HPALETTE)GetStockObject(DEFAULT_PALETTE));
+//
+//				if (GdiplusHelper::GetEncoderClsid(mimetype, &clsid) < 0){
+//					throw std::exception("Error on OnCommandPrintScreen");
+//				}
+//
+//				//Status status = SaveGIFWithNewColorTable(&bitmap,
+//				//						  pIStream,
+//				//						  &clsid,
+//				//						  256,
+//				//						  FALSE);
+//				Status status;
+//
+//
+//				if(_tcsicmp(mimetype, L"image/jpeg")==0){
+//					EncoderParameters encs[1];
+//					ULONG quality = 80;
+//					encs->Count = 1;
+//
+//					encs->Parameter[0].Guid = EncoderQuality;
+//					encs->Parameter[0].NumberOfValues = 1;
+//					encs->Parameter[0].Type = EncoderParameterValueTypeLong;
+//					encs->Parameter[0].Value = &quality;
+//					status = bitmap.Save(pIStream, &clsid, encs);
+//				}else if(_tcsicmp(mimetype, L"image/tiff")==0){
+//					EncoderParameters encs[2];
+//					ULONG depth = 24;
+//					ULONG compression = EncoderValueCompressionLZW;
+//					encs->Count = 2;
+//
+//					encs->Parameter[0].Guid = EncoderColorDepth;
+//					encs->Parameter[0].NumberOfValues = 1;
+//					encs->Parameter[0].Type = EncoderParameterValueTypeLong;
+//					encs->Parameter[0].Value = &depth;
+//
+//					encs->Parameter[1].Guid = EncoderCompression;
+//					encs->Parameter[1].NumberOfValues = 1;
+//					encs->Parameter[1].Type = EncoderParameterValueTypeLong;
+//					encs->Parameter[1].Value = &compression;
+//
+//
+//					status = bitmap.Save(pIStream, &clsid, encs);
+//				}else{
+//					status = bitmap.Save(pIStream, &clsid, NULL);
+//				}
+//
+//				if(status != Status::Ok){
+//					pIStream->Release();
+//					throw std::exception("Error on OnCommandPrintScreen");
+//				}
+//
+//				HGLOBAL hGlobal = NULL;
+//				if(::GetHGlobalFromStream(pIStream, &hGlobal)!=S_OK){
+//					pIStream->Release();
+//					throw std::exception("Error on OnCommandPrintScreen");
+//				}
+//
+//				//Copy to Clipboard
+//				CClipboard clipboard;
+//				if(clipboard.Open(hWnd)!=0){
+//					//::EmptyClipboard();
+//					if(_tcsicmp(mimetype, L"image/tiff")==0){
+//						clipboard.SetData(CF_TIFF, hGlobal);
+//					}else{
+//						clipboard.SetData(::RegisterClipboardFormat(format), hGlobal);
+//					}
+//					clipboard.Close();
+//				}
+//				pIStream->Release();
+//			};
+//
+//			setNonRegisteredTypeToClipboard(ddb.get(), L"image/jpeg", L"JFIF");
+//			setNonRegisteredTypeToClipboard(ddb.get(), L"image/png", L"PNG");
+//			setNonRegisteredTypeToClipboard(ddb.get(), L"image/gif", L"GIF");
+//			setNonRegisteredTypeToClipboard(ddb.get(), L"image/tiff", L"TIFF");
+//		}
+//		//Terminate GDI+
+//		GdiplusShutdown(gdiplusToken);
+//	}
+//}
 
 UHBITMAP CPDFPage::GetClipBitmap(HDC hDC, const FLOAT& scale, const int&, const CRectF& rectInPage, std::function<bool()> cancel)
 {

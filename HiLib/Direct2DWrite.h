@@ -15,6 +15,8 @@
 #include <exception>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
+#include <ppl.h>
+#include <concurrent_unordered_map.h>
 
 #include "MyPoint.h"
 #include "MyRect.h"
@@ -290,7 +292,7 @@ namespace std
 		std::unordered_map<CColorF, CComPtr<ID2D1SolidColorBrush>> m_solidColorBrushMap;
 		std::unordered_map<FormatF, CComPtr<IDWriteTextFormat>> m_textFormatMap;
 		//std::unordered_map<FormatF, std::unordered_map<wchar_t, CSizeF>> m_charMap;
-		std::unordered_map<FormatF, std::unordered_map<std::pair<std::wstring, CSizeF>, CComPtr<IDWriteTextLayout>, StrSizeHash, StrSizeEqual>> m_textLayoutMap;
+		concurrency::concurrent_unordered_map<FormatF, concurrency::concurrent_unordered_map<std::pair<std::wstring, CSizeF>, CComPtr<IDWriteTextLayout>, StrSizeHash, StrSizeEqual>> m_textLayoutMap;
 		std::unordered_map<FormatF, FLOAT> m_defaultHeightMap;
 		std::unique_ptr<CD2DFileIconDrawer> m_pIconDrawer;
 		std::unique_ptr<CD2DThumbnailDrawer> m_pThumbnailDrawer;
@@ -375,7 +377,7 @@ namespace std
 		void PushAxisAlignedClip(const CRectF& clipRect, D2D1_ANTIALIAS_MODE antialiasMode);
 		void PopAxisAlignedClip();
 
-		void SaveBitmap(const std::wstring& dstPath, const CComPtr<ID2D1Bitmap1>& pSrcBitmap) const;
+		void SaveBitmap(const CComPtr<ID2D1Bitmap1>& pSrcBitmap, const std::wstring& dstPath) const;
 
 		FLOAT LayoutRound(FLOAT value, FLOAT unit = 0.5f)
 		{

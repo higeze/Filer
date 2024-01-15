@@ -85,6 +85,8 @@ public:
 	int GetHashCode()const { return reinterpret_cast<int>(m_pPage.get()); }
 	UHBITMAP GetClipBitmap(HDC hDC, const FLOAT& scale, const int& rotate, const CRectF& rect, std::function<bool()> cancel = []()->bool { return false; });
 	UHBITMAP GetBitmap(HDC hDC, const FLOAT& scale, const int& rotate, std::function<bool()> cancel = []()->bool { return false; });
+	UHBITMAP GetDDBitmap(HDC hDC, const FLOAT& scale, const int&, std::function<bool()> cancel = []()->bool { return false; });
+	//void CopyImageToClipboard(HWND hWnd, HDC hDC, const FLOAT& scale, const int& rotate);
 
 protected:
 	std::optional<SelectedTextInfo> m_optSelectedText;
