@@ -42,6 +42,9 @@ public:
 	void OnBeginDrag(CSheet* pSheet, const MouseEvent& e) override
 	{
 		m_dragFromVisIndex = pSheet->Point2Index<TRC>(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
+		if (static_cast<size_t>(m_dragFromVisIndex) >= pSheet->GetContainer<TRC, VisTag>().size()) {
+			m_dragFromVisIndex = CBand::kInvalidIndex;
+		}
 		m_dragToVisIndex = CBand::kInvalidIndex;
 		//m_dragFromIndex = pSheet->Vis2AllIndex<TRC>(pSheet->Point2Index<TRC>(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.Point)));
 		//m_dragToIndex = CBand::kInvalidIndex;

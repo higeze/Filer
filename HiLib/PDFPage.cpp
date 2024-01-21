@@ -216,6 +216,88 @@ const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_strin
 	return m_optFind->FindRects;
 }
 
+//CComPtr<IWICBitmap> CPDFPage::GetWICBitmap(const CDirect2DWrite* pDirect, const FLOAT& scale, const int&, std::function<bool()> cancel)
+//{
+//	do {
+//		CSizeU sz(static_cast<LONG>(std::round(m_pPage->GetPageWidthF() * scale)), static_cast<LONG>(std::round(m_pPage->GetPageHeightF() * scale)));
+//
+//		LONG byteSize = sz.width * sz.height * 4;
+//		UINT bitCount = 32;
+//		UINT stride = ((((sz.width * bitCount) + 31) & ~31) >> 3);
+//		BYTE* bitmapBits = nullptr; new BYTE[byteSize];
+//
+//		CComPtr<IWICBitmap> pBitmap;
+//		pDirect->GetWICImagingFactory()->CreateBitmap(sz.width, sz.height, GUID_WICPixelFormat32bppBGR, WICBitmapCacheOnDemand, &pBitmap);
+//
+//
+//
+//
+//		CFPDFBitmap fpdfBmp;
+//		FALSE_BREAK(fpdfBmp.CreateEx(sz.width, sz.height, FPDFBitmap_BGRx, bitmapBits, stride, cancel));
+//		FALSE_BREAK(fpdfBmp);
+//
+//		FALSE_BREAK(fpdfBmp.FillRect(0, 0, sz.width, sz.height, 0xFFFFFFFF, cancel)); // Fill white
+//		int flags = FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE;
+//		FALSE_BREAK(fpdfBmp.RenderPageBitmap(*m_pPage, 0, 0, sz.width, sz.height, 0, flags, cancel));
+//		m_pForm->FFLDraw(fpdfBmp, *m_pPage, 0, 0, sz.width, sz.height, 0, flags);
+//
+//		CComPtr<IWICBitmap> pBitmap;
+//		FAILED_BREAK(pDirect->GetWICImagingFactory()->CreateBitmapFromMemory(sz.width, sz.height, GUID_WICPixelFormat32bppBGRA, stride, byteSize, bitmapBits, &pBitmap));
+//
+//		return pBitmap;
+//	} while (1);
+//
+//	return nullptr;
+//}
+//
+//
+
+CFPDFBitmap CPDFPage::GetFPDFBitmap(const FLOAT& scale, const int& rotate, std::function<bool()> cancel)
+{
+	do {
+		CSizeU sz(static_cast<UINT32>(std::round(m_pPage->GetPageWidthF() * scale)),
+			static_cast<UINT32>(std::round(m_pPage->GetPageHeightF() * scale)));
+
+		CFPDFBitmap fpdfBmp;
+		FALSE_BREAK(fpdfBmp.CreateEx(sz.width, sz.height, FPDFBitmap_BGRA, NULL, 0, cancel));
+		FALSE_BREAK(fpdfBmp);
+
+		FALSE_BREAK(fpdfBmp.FillRect(0, 0, sz.width, sz.height, 0xFFFFFFFF, cancel)); // Fill white
+		int flags = FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE;
+		FALSE_BREAK(fpdfBmp.RenderPageBitmap(*m_pPage, 0, 0, sz.width, sz.height, 0, flags, cancel));
+		m_pForm->FFLDraw(fpdfBmp, *m_pPage, 0, 0, sz.width, sz.height, 0, flags);
+
+		return fpdfBmp;
+	} while (1);
+
+	return nullptr;
+}
+
+CFPDFBitmap CPDFPage::GetClipFPDFBitmap(const FLOAT& scale, const int& rotate, const CRectF& rect, std::function<bool()> cancel)
+{
+	do {
+		CRectU scaledRect = CRectF2CRectU(rect * scale);
+
+		TRUE_BREAK(scaledRect.Width() <= 0 || scaledRect.Height() <= 0);
+
+		CFPDFBitmap fpdfBmp;
+		fpdfBmp.CreateEx(scaledRect.Width(), scaledRect.Height(), FPDFBitmap_BGRA, NULL, 0);
+		FALSE_BREAK(fpdfBmp);
+
+		FALSE_BREAK(fpdfBmp.FillRect(0, 0, scaledRect.Width(), scaledRect.Height(), 0xFFFFFFFF)); // Fill white
+		FS_MATRIX mat{scale, 0.f, 0.f, scale, -static_cast<float>(scaledRect.left), -static_cast<float>(scaledRect.top)};
+		FS_RECTF rcf{0, 0, static_cast<float>(scaledRect.Width()), static_cast<float>(scaledRect.Height())};
+		int flags = FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE;
+		FALSE_BREAK(fpdfBmp.RenderPageBitmapWithMatrix(*m_pPage, &mat, &rcf, flags));
+		m_pForm->FFLDraw(fpdfBmp, *m_pPage, scaledRect.left, scaledRect.right, scaledRect.Width(), scaledRect.Height(), 0, flags);
+
+		return fpdfBmp;
+	} while (1);
+
+	return nullptr;
+
+}
+
 
 UHBITMAP CPDFPage::GetBitmap(HDC hDC, const FLOAT& scale, const int&, std::function<bool()> cancel)
 {
@@ -252,6 +334,43 @@ UHBITMAP CPDFPage::GetBitmap(HDC hDC, const FLOAT& scale, const int&, std::funct
 
 	return nullptr;
 }
+
+CComPtr<ID2D1Bitmap1> CPDFPage::GetD2D1Bitmap(const CDirect2DWrite* pDirect, const FLOAT& scale, const int&, std::function<bool()> cancel)
+{
+	do {
+		CSizeU sz(static_cast<UINT32>(std::round(m_pPage->GetPageWidthF() * scale)),
+			static_cast<UINT32>(std::round(m_pPage->GetPageHeightF() * scale)));
+
+		CFPDFBitmap fpdfBmp;
+		FALSE_BREAK(fpdfBmp.CreateEx(sz.width, sz.height, FPDFBitmap_BGRx, NULL, 0, cancel));
+		FALSE_BREAK(fpdfBmp);
+
+		FALSE_BREAK(fpdfBmp.FillRect(0, 0, sz.width, sz.height, 0xFFFFFFFF, cancel)); // Fill white
+		int flags = FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE;
+		FALSE_BREAK(fpdfBmp.RenderPageBitmap(*m_pPage, 0, 0, sz.width, sz.height, 0, flags, cancel));
+		m_pForm->FFLDraw(fpdfBmp, *m_pPage, 0, 0, sz.width, sz.height, 0, flags);
+
+		UINT32 pitch = fpdfBmp.GetStride();
+		void* srcData = fpdfBmp.GetBuffer();
+
+		CComPtr<ID2D1Bitmap1> pD2D1Bitmap;
+		FAILED_BREAK(pDirect->GetD2DDeviceContext()->CreateBitmap(
+					sz,
+					nullptr, 0,
+					D2D1::BitmapProperties1(
+						D2D1_BITMAP_OPTIONS_NONE,
+						D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)),
+						&pD2D1Bitmap
+					));
+		CRectU rc(sz);
+		FAILED_BREAK(pD2D1Bitmap->CopyFromMemory(&rc, srcData, pitch));
+
+		return pD2D1Bitmap;
+	} while (1);
+
+	return nullptr;
+}
+
 
 UHBITMAP CPDFPage::GetDDBitmap(HDC hDC, const FLOAT& scale, const int&, std::function<bool()> cancel)
 {

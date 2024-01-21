@@ -32,8 +32,7 @@ int FormAlert(IPDF_JSPLATFORM*, FPDF_WIDESTRING, FPDF_WIDESTRING, int, int)
 }
 
 CPDFDoc::CPDFDoc()
-	:m_pDoc(std::make_unique<CFPDFDocument>()),
-	Path(),
+	:Path(),
 	Password(),
 	IsDirty(false),
 	Dummy(std::make_shared<int>(0))
@@ -197,6 +196,7 @@ int CPDFDoc::GetPageIndex(const CPDFPage* pPage) const
 
 unsigned long CPDFDoc::Open(const std::wstring& path, const std::wstring& password)
 {
+	m_pDoc = std::make_unique<CFPDFDocument>();
 	Path.set(path);
 	Password.set(password);
 	IsDirty.set(false);
@@ -231,6 +231,8 @@ void CPDFDoc::Close()
 
 unsigned long  CPDFDoc::Create()
 {
+	m_pDoc = std::make_unique<CFPDFDocument>();
+
 	Path.set(L"");
 	Password.set(L"");
 	IsDirty.set(true);

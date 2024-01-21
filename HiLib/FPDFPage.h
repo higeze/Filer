@@ -62,8 +62,6 @@ public:
         return FPDFPage_SetRotation(m_p.get(), rotate);
     }
 
-    UHBITMAP GetBitmap(HDC hDC, const float& scale, std::function<bool()> cancel = []()->bool { return false; });
-    UHBITMAP GetClippedBitmap(HDC hDC, const float& scale, const CRectF& rectInPage, std::function<bool()> cancel = []()->bool { return false; });
     CFPDFTextPage LoadTextPage() const;
 
 	void OnAfterLoadPage(const CFPDFFormHandle& form);

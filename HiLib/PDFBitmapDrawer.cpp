@@ -2,6 +2,7 @@
 #include "PDFPage.h"
 #include "ThreadPool.h"
 #include "D2DWTypes.h"
+#include "FPDFBitmap.h"
 
 
 /***********************/
@@ -12,12 +13,12 @@ CD2DPDFBitmapDrawer::CD2DPDFBitmapDrawer()
 		CSizeU(4096, 8196),
 		D2D1::BitmapProperties1(
 					D2D1_BITMAP_OPTIONS_NONE,
-					D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)))),
+					D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)))),
 	m_pAtlasBlurBitmap(std::make_unique<CD2DAtlasBitmap<PdfBmpKey>>(
 			CSizeU(2048, 4096),
 			D2D1::BitmapProperties1(
 						D2D1_BITMAP_OPTIONS_NONE,
-						D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)))){}
+						D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)))){}
 
 CD2DPDFBitmapDrawer::~CD2DPDFBitmapDrawer() = default;
 
@@ -80,16 +81,9 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageClipBitmap(
 		do {
 			FALSE_BREAK(key == m_curClipKey.get());
 
-			UHBITMAP phBmp = key.PagePtr->GetClipBitmap(pDirect->GetHDC(), key.Scale, key.Rotate, key.Rect, [this, key]()->bool {return key != m_curClipKey.get(); });
-			FALSE_BREAK(phBmp);
-
-			CComPtr<IWICBitmap> pWICBmp;
-			FAILED_BREAK(pDirect->GetWICImagingFactory()->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
-
-			CComPtr<ID2D1Bitmap1> pD2DBmp;
-			FAILED_BREAK(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
-
-			m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, pD2DBmp);
+			CFPDFBitmap fpdfBmp = key.PagePtr->GetClipFPDFBitmap(key.Scale, key.Rotate, key.Rect, [this, key]()->bool {return key != m_curKey.get(); });
+			FALSE_BREAK(fpdfBmp);
+			m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, fpdfBmp);
 			callback();
 			return;
 
@@ -100,7 +94,7 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageClipBitmap(
 	};
 	
 	if (!m_pAtlasFullOrClipBitmap->Exist(key)) {
-		m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, nullptr);
+		m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, CFPDFBitmap());
 		m_curClipKey.set(key);
 		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
 		return false;
@@ -120,16 +114,10 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageBitmap(
 		do {
 			FALSE_BREAK(key == m_curKey.get());
 
-			UHBITMAP phBmp = key.PagePtr->GetBitmap(pDirect->GetHDC(), key.Scale, key.Rotate, [this, key]()->bool {return key != m_curKey.get(); });
-			FALSE_BREAK(phBmp);
+			CFPDFBitmap fpdfBmp = key.PagePtr->GetFPDFBitmap(key.Scale, key.Rotate, [this, key]()->bool {return key != m_curKey.get(); });
+			FALSE_BREAK(fpdfBmp);
+			m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, fpdfBmp);
 
-			CComPtr<IWICBitmap> pWICBmp;
-			FAILED_BREAK(pDirect->GetWICImagingFactory()->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
-
-			CComPtr<ID2D1Bitmap1> pD2DBmp;
-			FAILED_BREAK(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
-
-			m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, pD2DBmp);
 			callback();
 			return;
 		} while (1);
@@ -139,7 +127,7 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageBitmap(
 	};
 	
 	if (!m_pAtlasFullOrClipBitmap->Exist(key)) {
-		m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, nullptr);
+		m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, CFPDFBitmap());
 		m_curKey.set(key);
 		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
 		return false;
@@ -156,20 +144,21 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageBlurBitmap(
 {
 	auto funadd = [pDirect, key, callback, this]()->void
 	{
-		UHBITMAP phBmp = key.PagePtr->GetBitmap(pDirect->GetHDC(), key.Scale, key.Rotate);
+		do {
+			CFPDFBitmap fpdfBmp = key.PagePtr->GetFPDFBitmap(key.Scale, key.Rotate);
+			FALSE_BREAK(fpdfBmp);
+			m_pAtlasBlurBitmap->AddOrAssign(pDirect, key, fpdfBmp);
 
-		CComPtr<IWICBitmap> pWICBmp;
-		FAILED_THROW(pDirect->GetWICImagingFactory()->CreateBitmapFromHBITMAP(phBmp.get(), nullptr, WICBitmapIgnoreAlpha, &pWICBmp));
+			callback();
+			return;
+		} while (1);
 
-		CComPtr<ID2D1Bitmap1> pD2DBmp;
-		FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICBmp, &pD2DBmp));
-
-		m_pAtlasBlurBitmap->AddOrAssign(pDirect, key, pD2DBmp);
-		callback();
+		m_pAtlasBlurBitmap->Erase(key);
+		return;
 	};
 	
 	if (!m_pAtlasBlurBitmap->Exist(key)) {
-		m_pAtlasBlurBitmap->AddOrAssign(pDirect, key, nullptr);
+		m_pAtlasBlurBitmap->AddOrAssign(pDirect, key, CFPDFBitmap());
 		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 10));
 		return false;
 	} else {

@@ -41,6 +41,31 @@ public:
         return true;
     }
 
+    int GetStride() const
+    {
+        FPDF_LOCK;
+        return FPDFBitmap_GetStride(m_p.get());    
+    }
+
+
+    void* GetBuffer() const
+    {
+        FPDF_LOCK;
+        return FPDFBitmap_GetBuffer(m_p.get());
+    }
+
+    int GetWidth() const
+    {
+        FPDF_LOCK;
+        return FPDFBitmap_GetWidth(m_p.get());
+    }
+
+    int GetHeight() const
+    {
+        FPDF_LOCK;
+        return FPDFBitmap_GetHeight(m_p.get());
+    }
+
     bool FillRect(
         int left,
         int top,

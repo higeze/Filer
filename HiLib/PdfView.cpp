@@ -19,11 +19,102 @@
 #include "DialogProperty.h"
 #include "TextBlock.h"
 #include "TextBox.h"
+#include "TextBoxProperty.h"
 #include "Button.h"
 #include "ButtonProperty.h"
 #include "strconv.h"
 #include "Dispatcher.h"
 #include "ThreadPool.h"
+
+CPdfViewDlgBase::CPdfViewDlgBase(
+	CD2DWControl* pParentControl,
+	const std::shared_ptr<DialogProperty>& spDialogProp,
+	CPDFDoc& doc)
+	:CD2DWDialog(pParentControl, spDialogProp),
+	m_spButtonDo(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
+	m_spButtonCancel(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
+	m_doc(doc), Dummy(std::make_shared<int>(0))
+{
+	m_spButtonCancel->Command.subscribe([this]()->void{
+		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+	}, Dummy);
+
+	m_spButtonCancel->Content.set(L"Cancel");
+}
+
+
+/**********************/
+/* CPdfViewExtractDlg */
+/**********************/
+CPdfViewExtractDlg::CPdfViewExtractDlg(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+		CPDFDoc& doc)
+	:CPdfViewDlgBase(pParentControl, spDialogProp, doc),
+	m_spParameter(std::make_shared<CTextBox>(this, spTextBoxProp, L""))
+{
+	Title.set(L"PDF Extract");
+
+	m_spParameter->Text.set(L"");
+	m_spButtonDo->Content.set(L"Extract");
+
+	m_spButtonDo->Command.subscribe([this]()->void
+	{
+		std::wstring param = *m_spParameter->Text;
+		boost::algorithm::replace_all(param, L"first", L"1");
+		boost::algorithm::replace_all(param, L"last", std::to_wstring(m_doc.GetPageCount()));
+		CPDFDoc dst_doc(m_doc.Extract(param));
+		std::wstring nameWoExt = *m_doc.Path;
+		::PathRemoveExtension(::GetBuffer(nameWoExt, MAX_PATH));
+		::ReleaseBuffer(nameWoExt);
+		dst_doc.SaveAs(std::format(L"{}_{}.pdf", nameWoExt, *m_spParameter->Text), m_doc.GetFileVersion(), false);
+
+		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+	}, Dummy);
+}
+
+void CPdfViewExtractDlg::OnCreate(const CreateEvt& e)
+{
+	//Base
+	CD2DWDialog::OnCreate(e);
+	
+	//Textbox
+	m_spParameter->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+
+	//OK button
+	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+
+	//Cancel button
+	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+}
+
+
+void CPdfViewExtractDlg::Measure(const CSizeF& availableSize)
+{
+	m_spParameter->Measure(availableSize, L"AAAAAAAAAAAAAAAAAAAA");
+	m_spButtonCancel->Measure(availableSize);
+	m_spButtonDo->Measure(availableSize);
+
+	m_size.width = 5.f + m_spParameter->DesiredSize().width + 5.f;
+	m_size.height =
+		5.f + m_spParameter->DesiredSize().height
+		+ 5.f + m_spButtonCancel->DesiredSize().height
+		+ 5.f + std::max(m_spButtonCancel->DesiredSize().height, m_spButtonDo->DesiredSize().height) + 5.f;
+}
+
+void CPdfViewExtractDlg::Arrange(const CRectF& rc)
+{
+	CRectF rcTitle = GetTitleRect();
+	m_spParameter->Arrange(CRectF(
+		rc.left + 5.f, rc.top + rcTitle.Height() + 5.f,
+		rc.right - 5.f, rc.top + rcTitle.Height() + 5.f + m_spParameter->DesiredSize().height));
+	CRectF rcBtnCancel(rc.right - 5.f - 50.f, rc.bottom - 5.f - m_spButtonCancel->DesiredSize().height, rc.right - 5.f, rc.bottom - 5.f);
+	CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 5.f  - m_spButtonDo->DesiredSize().height, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
+	m_spButtonCancel->Arrange(rcBtnCancel);
+	m_spButtonDo->Arrange(rcBtnDo);
+
+	m_rect = rc;
+}
 
 /**************************/
 /* Constructor/Destructor */
@@ -310,6 +401,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 
 	//PaintBackground
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
+	//GetWndPtr()->GetDirectPtr()->FillSolidRectangle(SolidFill(0, 1.f, 1.f,1.f), GetRectInWnd());
 
 	//PaintContent
 	CRectF rcInWnd = GetRenderRectInWnd();
@@ -679,6 +771,8 @@ void CPdfView::Normal_KeyDown(const KeyDownEvent& e)
 //	return hbm;
 //}
 
+
+
 void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
 	auto me = std::dynamic_pointer_cast<CPdfView>(shared_from_this());
@@ -692,6 +786,19 @@ void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 		const std::unique_ptr<CPDFPage>& pPage = PDF->GetPage(*CurrentPage - 1);
 		int rotate = *pPage->Rotate == 0 ? 4 : *pPage->Rotate;
 		pPage->Rotate.set((rotate - 1) % 4);}, me
+	),
+		std::make_unique<CMenuItem2>(L"Extract Page", [this]() {
+		auto spDlg = std::make_shared<CPdfViewExtractDlg>(
+			this,
+			std::make_shared<DialogProperty>(),
+			std::make_shared<TextBoxProperty>(),
+			*PDF.get_unconst());
+
+		spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CRectF()));
+		spDlg->Measure(CSizeF(FLT_MAX, FLT_MAX));
+		spDlg->Arrange(CalcCenterRectF(spDlg->DesiredSize()));
+		GetWndPtr()->SetFocusToControl(spDlg);
+		return true; }, me
 	),
 		std::make_unique<CMenuItem2>(L"Delete Page", [this]() {
 		PDF.get_unconst()->DeletePage(*CurrentPage - 1);}, me
@@ -1036,6 +1143,7 @@ void CPdfView::Reset(const reactive_property_ptr<CPDFDoc>& pdf)
 {
 	//Clear Current
 	Clear();
+	PDF.get_unconst()->Close();
 	//Reset New
 	PDF = pdf;
 	//New FileIsInUse

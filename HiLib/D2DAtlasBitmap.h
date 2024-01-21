@@ -1,6 +1,7 @@
 #pragma once
 #include "IDL.h"
 #include "Direct2DWrite.h"
+#include "FPDFBitmap.h"
 #include <future>
 #include <mutex>
 #include <unordered_set>
@@ -104,16 +105,11 @@ public:
 
 #include <shared_mutex>
 
-class CIndexRect
+class CIndexRect: public D2D1_RECT_U
 {
 public:
-	UINT32 left = 0;
-	UINT32 top = 0;
-	UINT32 right = 0;
-	UINT32 bottom = 0;
-
 	CIndexRect(UINT32 l = 0, UINT32 t = 0, UINT32 r = 0, UINT32 b = 0)
-		:left(l), top(t), right(r),bottom(b) {}
+		:D2D1_RECT_U{l, t, r, b} {}
 	void SetRect(UINT32 l, UINT32 t, UINT32 r, UINT32 b) 
 	{
 		left = l; top = t; right = r; bottom = b;
@@ -215,8 +211,6 @@ public:
 	bool IsRectNull() const { return left == 0 && top == 0 && right == 0 && bottom == 0; }
 	UINT32 Width() const { return right - left + 1; }
 	UINT32 Height() const { return bottom - top + 1; }
-
-
 };
 
 template<class _Kty, class _Hasher = std::hash<_Kty>, class _Keyeq = std::equal_to<_Kty>, class _Alloc = std::allocator<std::pair<const _Kty, CIndexRect>>>
@@ -351,11 +345,6 @@ public:
 			}
 			if (iter == m_map.cend() || iter->second.IsRectNull()) {
 				newRect = FindRect(size);
-				//while (newRect.IsRectNull()) {
-				//	PopRect();
-				//	newRect = FindRect(size);
-				//}
-				//pDirect->SaveBitmap(L"Test.png", GetAtlasBitmapPtr(pDirect));
 				if (newRect.IsRectNull()) {
 #ifdef _DEBUG
 					pDirect->SaveBitmap(GetAtlasBitmapPtr(pDirect), L"Test.png");
@@ -381,6 +370,46 @@ public:
 			m_que.push_back(key);
 		}
 	}
+
+	void AddOrAssign(const CDirect2DWrite* pDirect, const _Kty& key, const CFPDFBitmap& fpdfBmp)
+	{
+		std::lock_guard<std::shared_mutex> lock(m_mtx);
+		auto iter = m_map.find(key);
+		if(fpdfBmp){
+			CIndexRect newRect;
+			CSizeU size(fpdfBmp.GetWidth(), fpdfBmp.GetHeight());
+			//Check size
+			if (size.width > m_size.width || size.height > m_size.height) {
+				return;
+			}
+			if (iter == m_map.cend() || iter->second.IsRectNull()) {
+				newRect = FindRect(size);
+				if (newRect.IsRectNull()) {
+#ifdef _DEBUG
+					pDirect->SaveBitmap(GetAtlasBitmapPtr(pDirect), L"Test.png");
+#endif
+					m_pAtlasBitmap.Release();
+					m_map.clear();
+					m_que.clear();
+					m_rooms.clear();
+					m_rooms.emplace_back(0, 0, m_size.width - 1, m_size.height - 1);
+					newRect = FindRect(size);
+				}
+			} else {
+				newRect = iter->second;
+			}
+			UINT32 pitch = fpdfBmp.GetStride();
+			void* srcData = fpdfBmp.GetBuffer();
+
+			FAILED_THROW(GetAtlasBitmapPtr(pDirect)->CopyFromMemory(&newRect, srcData, pitch));//CopyFromBitmap(&dstLeftTop, pBitmap, &srcRect));
+			m_map.insert_or_assign(key, newRect);
+			m_que.push_back(key);
+		} else {
+			m_map.insert_or_assign(key, CIndexRect());
+			m_que.push_back(key);
+		}
+	}
+
 
 	std::vector<_Kty> Keys() const
 	{

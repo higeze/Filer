@@ -70,7 +70,7 @@ bool CImageDrawer::DrawClipBitmap(
 	if (!m_pAtlasClipBitmap->Exist(key)) {
 		::OutputDebugString(std::format(L"NOT EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
 			(LONG)(key.ImagePtr), key.Scale, key.Rect.left, key.Rect.top, key.Rect.right, key.Rect.bottom).c_str());
-		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, nullptr);
+		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, CComPtr<ID2D1Bitmap1>(nullptr));
 		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
 		return false;
 	} else {
@@ -101,7 +101,7 @@ bool CImageDrawer::DrawClipBitmap(
 	if (!m_pAtlasClipBitmap->Exist(key)) {
 		::OutputDebugString(std::format(L"NOT EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
 			(LONG)(key.ImagePtr), key.Scale, key.Rect.left, key.Rect.top, key.Rect.right, key.Rect.bottom).c_str());
-		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, nullptr);
+		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, CComPtr<ID2D1Bitmap1>(nullptr));
 		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
 		return false;
 	} else {
@@ -125,7 +125,7 @@ bool CImageDrawer::DrawBitmap(
 	};
 	
 	if (!m_pAtlasClipBitmap->Exist(key)) {
-		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, nullptr);
+		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, CComPtr<ID2D1Bitmap1>(nullptr));
 		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
 		return false;
 	} else {
@@ -147,7 +147,7 @@ bool CImageDrawer::DrawBitmap(
 	};
 	
 	if (!m_pAtlasSmallBitmap->Exist(key)) {
-		m_pAtlasSmallBitmap->AddOrAssign(pDirect, key, nullptr);
+		m_pAtlasSmallBitmap->AddOrAssign(pDirect, key, CComPtr<ID2D1Bitmap1>(nullptr));
 		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 10));
 		return false;
 	} else {

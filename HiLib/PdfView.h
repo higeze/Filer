@@ -33,9 +33,14 @@
 #include "PDFCaret.h"
 //#include "PDFBitmapDrawer.h"
 
+#include "D2DWDialog.h"
+
 class CD2DPDFBitmapDrawer;
 class CVScroll;
 class CHScroll;
+class CButton;
+struct ButtonProperty;
+struct TextBoxProperty;
 
 
 enum class InitialScaleMode
@@ -77,6 +82,61 @@ public:
 
 
 };
+
+class CPdfViewDlgBase: public CD2DWDialog
+{
+protected:
+	std::shared_ptr<int> Dummy;
+	std::shared_ptr<CButton> m_spButtonDo;
+	std::shared_ptr<CButton> m_spButtonCancel;
+
+	bool m_showDefault = true;
+	bool m_showApply = true;
+	bool m_isModal = false;
+
+	CPDFDoc&  m_doc;
+
+	std::future<void> m_future;
+	CSizeF m_size;
+
+public:
+	CPdfViewDlgBase(
+		CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		CPDFDoc& doc);
+	virtual ~CPdfViewDlgBase() = default;
+
+	virtual void Measure(const CSizeF& availableSize) = 0;
+	virtual CSizeF DesiredSize() const { return m_size; }
+	virtual void Arrange(const CRectF& rc) = 0;
+
+	virtual void OnRect(const RectEvent& e) override
+	{
+		Arrange(e.Rect);
+	}
+
+	virtual void OnClose(const CloseEvent& e) override
+	{
+		CD2DWDialog::OnClose(e);
+	}
+};
+
+class CPdfViewExtractDlg : public CPdfViewDlgBase
+{
+protected:
+	std::shared_ptr<CTextBox> m_spParameter;
+public:
+	CPdfViewExtractDlg(CD2DWControl* pParentControl,
+		const std::shared_ptr<DialogProperty>& spDialogProp,
+		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
+		CPDFDoc& doc);
+	virtual ~CPdfViewExtractDlg() = default;
+	void OnCreate(const CreateEvt& e) override;
+	virtual void Measure(const CSizeF& availableSize) override;
+	virtual void Arrange(const CRectF& rc) override;
+};
+
+
 
 
 class CPdfView : public CD2DWControl

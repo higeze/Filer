@@ -8,6 +8,7 @@
 #include "reactive_property.h"
 
 class CFPDFPage;
+class CFPDFBitmap;
 class CFPDFTextPage;
 class CFPDFFormHandle;
 
@@ -84,8 +85,14 @@ public:
 public:
 	int GetHashCode()const { return reinterpret_cast<int>(m_pPage.get()); }
 	UHBITMAP GetClipBitmap(HDC hDC, const FLOAT& scale, const int& rotate, const CRectF& rect, std::function<bool()> cancel = []()->bool { return false; });
+
+	CFPDFBitmap GetFPDFBitmap(const FLOAT& scale, const int& rotate, std::function<bool()> cancel = []()->bool { return false; });
+	CFPDFBitmap GetClipFPDFBitmap(const FLOAT& scale, const int& rotate, const CRectF& rect, std::function<bool()> cancel = []()->bool { return false; });
+
 	UHBITMAP GetBitmap(HDC hDC, const FLOAT& scale, const int& rotate, std::function<bool()> cancel = []()->bool { return false; });
 	UHBITMAP GetDDBitmap(HDC hDC, const FLOAT& scale, const int&, std::function<bool()> cancel = []()->bool { return false; });
+	//CComPtr<IWICBitmap> GetWICBitmap(const CDirect2DWrite* pDirect, const FLOAT& scale, const int&, std::function<bool()> cancel);
+	CComPtr<ID2D1Bitmap1> GetD2D1Bitmap(const CDirect2DWrite* pDirect, const FLOAT& scale, const int&, std::function<bool()> cancel = []()->bool { return false; });
 	//void CopyImageToClipboard(HWND hWnd, HDC hDC, const FLOAT& scale, const int& rotate);
 
 protected:

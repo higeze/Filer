@@ -69,7 +69,7 @@ bool CD2DFileIconDrawer::DrawFileIconBitmap(
 	
 	bool ret = false;
 	if (!m_pAtlasBitmap->Exist(key)) {
-		m_pAtlasBitmap->AddOrAssign(pDirect, key, nullptr);
+		m_pAtlasBitmap->AddOrAssign(pDirect, key, CComPtr<ID2D1Bitmap1>(nullptr));
 		m_futureGroup.emplace_back(CThreadPool::GetInstance()->enqueue(funadd, 0));
 		ret =  false;
 	} else {
