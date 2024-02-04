@@ -1,6 +1,9 @@
 #pragma once
 #include <queue>
 #include <future>
+#include <vector>
+#include <tuple>
+#include <regex>
 #include "Direct2DWrite.h"
 #include "getter_macro.h"
 #include "shared_lock_property.h"
@@ -11,6 +14,57 @@ class CFPDFPage;
 class CFPDFBitmap;
 class CFPDFTextPage;
 class CFPDFFormHandle;
+
+using const_paragraph_iterator = std::tuple<std::wstring::const_iterator, std::wstring::const_iterator, std::wstring::const_iterator>;
+
+////	std::wstring text = L"AAArnBBBrCCCnDDDrnEEErnrnGGGrn";
+
+std::vector<const_paragraph_iterator> text_to_paragraph_iterators(const std::wstring& text);
+//{
+//	using const_iterator = std::wstring::const_iterator;
+//	std::vector<std::tuple<const_iterator, const_iterator, const_iterator>> paras;
+//	const_iterator beg = text.cbegin();
+//	const_iterator end = text.cend();
+//	std::wregex re{L"rn|r|n"};
+//	const_iterator para_prev_end = text.begin();
+//	for (std::wsregex_iterator re_iter{beg, beg, re}, re_end; re_iter != re_end; ++re_iter) {
+//		const_iterator para_beg = para_prev_end;
+//		const_iterator para_crlfbeg = std::next(beg, re_iter->position());
+//		const_iterator para_end = std::next(beg, re_iter->position() + re_iter->length());
+//		paras.emplace_back(para_beg, para_crlfbeg, para_end);
+//		para_prev_end = para_end;
+//	}
+//	if (para_prev_end != end) {
+//		paras.emplace_back(para_prev_end, end, end);
+//	}
+//	return paras;
+//}
+
+
+//class CPDFText
+//{
+//public:
+//private:
+//	std::unique_ptr<CFPDFTextPage> m_pTextPage;
+//public:
+//	CPDFText(std::unique_ptr<CFPDFTextPage>&& pTextPage);
+//	virtual ~CPDFText() = default;
+//
+//	DECLARE_LAZY_GETTER(std::wstring, Text);
+//	DECLARE_LAZY_GETTER(std::vector<const_paragraph_iterator>, ParagraphIterators);
+//	int GetTextSize() const;
+//	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextOrgRects);
+//	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextOrgCursorRects);
+//	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextCursorRects);
+//	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextOrgMouseRects);	
+//	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextMouseRects);	
+//};
+//
+//class CPDFParagraph
+//{
+//	std::size_t 
+//}
+
 
 enum class PdfBmpState
 {
@@ -70,11 +124,13 @@ public:
 /***************/
 	DECLARE_LAZY_GETTER(CSizeF, Size);
 	DECLARE_LAZY_GETTER(std::wstring, Text);
+	DECLARE_LAZY_GETTER(std::vector<const_paragraph_iterator>, ParagraphIterators);
 	int GetTextSize() const;
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextOrgRects);
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextOrgCursorRects);
-	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextCursorRects);
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextOrgMouseRects);	
+	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextCursorRects);
+	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextRects);
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextMouseRects);	
 
 protected:

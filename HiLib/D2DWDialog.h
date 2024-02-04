@@ -13,6 +13,7 @@ public:
 	const FLOAT kTitlePadding = 3.f;
 public:
 	reactive_wstring_ptr Title;
+	reactive_property_ptr<bool> IsModal;
 protected:
 	std::unique_ptr<CDialogStateMachine> m_pDialogMachine;
 	std::shared_ptr<DialogProperty> m_spProp;

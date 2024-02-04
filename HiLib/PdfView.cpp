@@ -570,12 +570,16 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	//Mouse Rects
 	if (debug) {
 		for (auto i = begin; i < end; i++) {
-			const std::vector<CRectF>& rcMousInPdfium = PDF->GetPage(i)->GetTextMouseRects();
-			std::vector<CRectF> rcMousInWnd;
-			std::transform(rcMousInPdfium.cbegin(), rcMousInPdfium.cend(), std::back_inserter(rcMousInWnd),
-				[i = i, this](const CRectF& rcInPdfium) { return PdfiumPage2Wnd(i, rcInPdfium); });
-			std::for_each(rcMousInWnd.cbegin(), rcMousInWnd.cend(),
-				[this](const CRectF& rcMouInWnd) { GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(SolidLine(1.f, 0.f, 0.f, 1.f, 1.f), rcMouInWnd); });
+			auto draw_rects = [&](const std::vector<CRectF>& rectsInPdfium, const SolidLine& line) {
+				std::vector<CRectF> rectsInWnd;
+				std::transform(rectsInPdfium.cbegin(), rectsInPdfium.cend(), std::back_inserter(rectsInWnd),
+					[i, this](const CRectF& rcInPdfium) { return PdfiumPage2Wnd(i, rcInPdfium); });
+				std::for_each(rectsInWnd.cbegin(), rectsInWnd.cend(),
+					[line, this](const CRectF& rcInWnd) { GetWndPtr()->GetDirectPtr()->DrawSolidRectangle(line, rcInWnd); });
+			};
+			draw_rects(PDF->GetPage(i)->GetTextRects(), SolidLine(0.f, 1.f, 0.f, 1.f, 1.f));
+			draw_rects(PDF->GetPage(i)->GetTextCursorRects(), SolidLine(0.f, 0.f, 1.f, 1.f, 1.f));
+			draw_rects(PDF->GetPage(i)->GetTextMouseRects(), SolidLine(1.f, 0.f, 0.f, 1.f, 1.f));
 		}
 	}	 
 

@@ -15,6 +15,204 @@
 #include "FPDFBitmap.h"
 #include "MyClipboard.h"
 
+std::vector<const_paragraph_iterator> text_to_paragraph_iterators(const std::wstring& text)
+{
+	using const_iterator = std::wstring::const_iterator;
+	std::vector<std::tuple<const_iterator, const_iterator, const_iterator>> paras;
+	const_iterator beg = text.cbegin();
+	const_iterator end = text.cend();
+	std::wregex re{L"\r\n?|\n"};
+	const_iterator para_prev_end = text.begin();
+	for (std::wsregex_iterator re_iter{beg, end, re}, re_end; re_iter != re_end; ++re_iter) {
+		const_iterator para_beg = para_prev_end;
+		const_iterator para_crlfbeg = std::next(beg, re_iter->position());
+		const_iterator para_end = std::next(beg, re_iter->position() + re_iter->length());
+		paras.emplace_back(para_beg, para_crlfbeg, para_end);
+		para_prev_end = para_end;
+	}
+	if (para_prev_end != end) {
+		paras.emplace_back(para_prev_end, end, end);
+	}
+	return paras;
+}
+
+/************/
+/* CPdfText */
+/************/
+//CPDFText::CPDFText(std::unique_ptr<CFPDFTextPage>&& pTextPage)
+//	:m_pTextPage(std::move(pTextPage)){}
+//
+//const std::wstring& CPDFText::GetText() const
+//{
+//	if (!m_optText.has_value()) {
+//		int charCount = m_pTextPage->CountChars();
+//		std::wstring text(charCount, 0);
+//		int textCount = m_pTextPage->GetText(0, charCount, reinterpret_cast<unsigned short*>(text.data()));
+//		m_optText.emplace(text);
+//	}
+//	return m_optText.value();
+//}
+//
+//const std::vector<const_paragraph_iterator>& CPDFText::GetParagraphIterators() const
+//{
+//	if (!m_optParagraphIterators.has_value()) {
+//		m_optParagraphIterators.emplace(text_to_paragraph_iterators(GetText()));
+//	}
+//	return m_optParagraphIterators.value();
+//}
+//
+//int CPDFText::GetTextSize() const
+//{
+//	return GetText().size();
+//}
+//
+//const std::vector<CRectF>& CPDFText::GetTextOrgRects() const
+//{
+//	if (!m_optTextOrgRects.has_value()) {
+//		std::vector<CRectF> rects = m_pTextPage->GetRects();
+//		const std::wstring& text = GetText();
+//		if (!rects.empty() && !text.empty()) {
+//			const std::vector<const_paragraph_iterator>& paras = GetParagraphIterators();
+//			for (auto iter = paras.cbegin(); iter != paras.cend(); ++iter) {
+//				std::vector<CRectF>::iterator firstRect = rects.begin() + std::distance(text.cbegin(), std::get<0>(*iter));
+//				std::vector<CRectF>::iterator lastRect = rects.begin() + std::distance(text.cbegin(), std::get<2>(*iter));
+//				FLOAT max_top = std::max_element(firstRect, lastRect, [](CRectF& left, CRectF& right) { return left.top < right.top; })->top;
+//				FLOAT min_btm = std::min_element(firstRect, lastRect, [](CRectF& left, CRectF& right) { return left.bottom < right.bottom; })->bottom;
+//				std::for_each(firstRect, lastRect, [&](CRectF& rc) {rc.top = max_top; rc.bottom = min_btm; });
+//			}
+//		}
+//		m_optTextOrgRects.emplace(rects);
+//	}
+//	return m_optTextOrgRects.value();
+//}
+//auto isCRorLF = [](const wchar_t ch)->bool { return ch == L'\r' || ch == L'\n'; };
+//auto is_space = [](const wchar_t ch)->bool { return ch == L' ' || ch == L'Å@'; };
+//auto is_cr = [](const wchar_t ch)->bool { return ch == L'\r'; };
+//auto is_lf = [](const wchar_t ch)->bool { return ch == L'\n'; };
+//
+//const std::vector<CRectF>& CPDFText::GetTextOrgCursorRects() const
+//{
+//	if (!m_optTextOrgCursorRects.has_value()){
+//		auto cursorRects = GetTextOrgRects();
+//		if (!cursorRects.empty()) {
+//			//const std::vector<const_paragraph_iterator>& paras = GetParagraphIterators();
+//			//for (auto iter = paras.cbegin(); iter != paras.cend(); ++iter) {
+//			//	*
+//			//
+//			//}
+//
+//
+//
+//			for (std::size_t i = 1; i < cursorRects.size(); i++) {//If i = 0  is Space or CRLF, ignore
+//				bool isFirst = i == 0;
+//				bool isAfterLF = !isFirst && is_lf(GetText()[i - 1]);
+//				if (is_space(GetText()[i])) {
+//					if (isFirst || isAfterLF) {
+//						cursorRects[i].SetRect(
+//							cursorRects[i + 1].right,
+//							cursorRects[i + 1].top,
+//							cursorRects[i + 1].right,
+//							cursorRects[i + 1].bottom
+//						);
+//					} else {
+//						cursorRects[i].SetRect(
+//							cursorRects[i - 1].right,
+//							cursorRects[i - 1].top,
+//							cursorRects[i - 1].right,
+//							cursorRects[i - 1].bottom
+//						);
+//					}
+//				}
+//				if (isCRorLF(GetText()[i])) {
+//					cursorRects[i].SetRect(
+//						cursorRects[i - 1].right,
+//						cursorRects[i - 1].top,
+//						cursorRects[i - 1].right,
+//						cursorRects[i - 1].bottom
+//					);
+//				}
+//			}
+//			cursorRects.emplace_back(
+//				cursorRects.back().right, cursorRects.back().top,
+//				cursorRects.back().right, cursorRects.back().bottom);
+//		}
+//		m_optTextOrgCursorRects.emplace(cursorRects);
+//	}
+//	return m_optTextOrgCursorRects.value();
+//}
+//
+//const std::vector<CRectF>& CPDFText::GetTextCursorRects() const
+//{
+//	if (!m_optTextCursorRects.has_value()) {
+//		m_optTextCursorRects = GetTextOrgCursorRects();
+//		RotateRects(m_optTextCursorRects.value(), *Rotate);
+//	}
+//	return m_optTextCursorRects.value();
+//}
+//
+//const std::vector<CRectF>& CPDFText::GetTextOrgMouseRects() const
+//{
+//	const float lr_factor = 0.8f;
+//	const float half_factor = 0.5f;
+//	const float tb_factor = 0.4f;
+//	if(!m_optTextOrgMouseRects.has_value()){
+//		const auto& cursorRects = GetTextOrgCursorRects();
+//		auto mouseRects = GetTextCursorRects();
+//		if (!mouseRects.empty()) {
+//			for (std::size_t i = 0; i < mouseRects.size(); i++) {
+//				bool isFirst = i == 0;
+//				bool isLast = i == mouseRects.size() - 1;
+//				bool isAfterLF = !isFirst && is_lf(GetText()[i - 1]);
+//				bool isBeforeLast = i == mouseRects.size() - 2;
+//				bool isBeforeCR = !isLast && !isBeforeLast && is_cr(GetText()[i + 1]);
+//				bool isAfterSpace = !isFirst && is_space(GetText()[i - 1]);
+//				bool isBeforeSpace = !isLast && !isBeforeLast && is_space(GetText()[i + 1]);
+//				bool isSpaceMid = !isFirst && is_space(GetText()[i]);
+//				bool isCR = GetText()[i] == L'\r';
+//				bool isLF = GetText()[i] == L'\n';
+//
+//				if (isCR || isSpaceMid || isLast) {
+//					mouseRects[i].left = mouseRects[i - 1].right;
+//					mouseRects[i].right = cursorRects[i - 1].right + cursorRects[i - 1].Width() * lr_factor;
+//				} else if (isLF) {
+//					mouseRects[i].left = mouseRects[i - 1].left;
+//					mouseRects[i].right = mouseRects[i - 1].right;
+//				} else {
+//					//left
+//					if (isFirst || isAfterLF || isAfterSpace) {
+//						mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * lr_factor, 0.f);
+//					} else {
+//						mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * half_factor, mouseRects[i - 1].right);
+//					}
+//					//right
+//					if (isBeforeCR || isBeforeSpace || isBeforeLast) {
+//						mouseRects[i].right = cursorRects[i].right - cursorRects[i].Width() * lr_factor;
+//					} else {
+//						mouseRects[i].right = (std::min)(cursorRects[i].right + cursorRects[i].Width() * half_factor, (cursorRects[i].right + cursorRects[i + 1].left) * half_factor);
+//					}
+//				}
+//				//top & bottom
+//				//Since line order is not always top to bottom, it's hard to adjust context.
+//				mouseRects[i].top = cursorRects[i].top + (-cursorRects[i].Height()) * tb_factor;
+//				mouseRects[i].bottom = (std::max)(cursorRects[i].bottom - (-cursorRects[i].Height()) * tb_factor, 0.f);
+//			}
+//		}
+//		m_optTextOrgMouseRects.emplace(mouseRects);
+//	}
+//	return m_optTextOrgMouseRects.value();
+//}
+//
+//const std::vector<CRectF>& CPDFText::GetTextMouseRects() const
+//{
+//	if (!m_optTextMouseRects.has_value()) {
+//		m_optTextMouseRects = GetTextOrgMouseRects();
+//		RotateRects(m_optTextMouseRects.value(), *Rotate);
+//	}
+//	return m_optTextMouseRects.value();
+//}
+//
+//
+
 /************/
 /* CPdfPage */
 /************/
@@ -68,17 +266,56 @@ const std::wstring& CPDFPage::GetText() const
 	return m_optText.value();
 }
 
+const std::vector<const_paragraph_iterator>& CPDFPage::GetParagraphIterators() const
+{
+	if (!m_optParagraphIterators.has_value()) {
+		m_optParagraphIterators.emplace(text_to_paragraph_iterators(GetText()));
+	}
+	return m_optParagraphIterators.value();
+}
+
+
 int CPDFPage::GetTextSize() const
 {
 	return GetText().size();
 }
 
+// Pdfium Coordinates
+// Å™Y Å®X
 const std::vector<CRectF>& CPDFPage::GetTextOrgRects() const
 {
 	if (!m_optTextOrgRects.has_value()) {
 		m_optTextOrgRects.emplace(m_pTextPage->GetRects());
 	}
 	return m_optTextOrgRects.value();
+
+	//if (!m_optTextOrgRects.has_value()) {
+	//	std::vector<CRectF> rects = m_pTextPage->GetRects();
+	//	const std::wstring& text = GetText();
+	//	if (!rects.empty() && !text.empty()) {
+	//		std::wstring::const_iterator firstText = text.cbegin();
+	//		std::wstring::const_iterator lastText = text.cend();
+	//		while (true) {
+	//			lastText = std::find_if(firstText, text.cend(), [](const auto ch) {return isCRorLF(ch); });
+	//			//std::wstring temp(firstText, lastText+1);
+	//			//if (lastText == text.cend()) { break; }
+	//			std::vector<CRectF>::iterator firstRect = rects.begin() + std::distance(text.cbegin(), firstText);
+	//			std::vector<CRectF>::iterator lastRect = rects.begin() + std::distance(text.cbegin(), lastText);
+
+	//			FLOAT maxTop = std::max_element(firstRect, lastRect, [](CRectF& left, CRectF& right) { return left.top < right.top; })->top;
+	//			FLOAT minBottom = std::min_element(firstRect, lastRect, [](CRectF& left, CRectF& right) { return left.bottom < right.bottom; })->bottom;
+	//			std::for_each(firstRect, lastRect, [&](CRectF& rc) {rc.top = maxTop; rc.bottom = minBottom; });
+
+	//			if (lastText == text.cend()) {
+	//				break;
+	//			} else {
+	//				firstText = lastText + 1;
+	//			}
+	//		}
+	//	}
+	//	m_optTextOrgRects.emplace(rects);
+	//}
+	//return m_optTextOrgRects.value();
 }
 auto isCRorLF = [](const wchar_t ch)->bool { return ch == L'\r' || ch == L'\n'; };
 auto is_space = [](const wchar_t ch)->bool { return ch == L' ' || ch == L'Å@'; };
@@ -87,45 +324,172 @@ auto is_lf = [](const wchar_t ch)->bool { return ch == L'\n'; };
 
 const std::vector<CRectF>& CPDFPage::GetTextOrgCursorRects() const
 {
-	if (!m_optTextOrgCursorRects.has_value()){
-		auto cursorRects = GetTextOrgRects();
-		if (!cursorRects.empty()) {
-			for (std::size_t i = 1; i < cursorRects.size(); i++) {//If i = 0  is Space or CRLF, ignore
-				bool isFirst = i == 0;
-				bool isAfterLF = !isFirst && is_lf(GetText()[i - 1]);
-				if (is_space(GetText()[i])) {
-					if (isFirst || isAfterLF) {
-						cursorRects[i].SetRect(
-							cursorRects[i + 1].right,
-							cursorRects[i + 1].top,
-							cursorRects[i + 1].right,
-							cursorRects[i + 1].bottom
-						);
-					} else {
-						cursorRects[i].SetRect(
-							cursorRects[i - 1].right,
-							cursorRects[i - 1].top,
-							cursorRects[i - 1].right,
-							cursorRects[i - 1].bottom
-						);
-					}
-				}
-				if (isCRorLF(GetText()[i])) {
-					cursorRects[i].SetRect(
-						cursorRects[i - 1].right,
-						cursorRects[i - 1].top,
-						cursorRects[i - 1].right,
-						cursorRects[i - 1].bottom
-					);
+	if (!m_optTextOrgCursorRects.has_value()) {
+		std::vector<CRectF> rects = GetTextOrgRects();
+		const std::wstring& text = GetText();
+		if (!rects.empty() && !text.empty()) {
+			const std::vector<const_paragraph_iterator>& paras = GetParagraphIterators();
+			for (auto iter = paras.cbegin(); iter != paras.cend(); ++iter) {
+				::OutputDebugStringW(std::format(L"{}, {}, {}",
+					std::distance(text.cbegin(), std::get<0>(*iter)),
+					std::distance(text.cbegin(), std::get<1>(*iter)),
+					std::distance(text.cbegin(), std::get<2>(*iter))).c_str());
+				std::vector<CRectF>::iterator beg_rect = rects.begin() + std::distance(text.cbegin(), std::get<0>(*iter));
+				std::vector<CRectF>::iterator crlf_rect = rects.begin() + std::distance(text.cbegin(), std::get<1>(*iter));
+				std::vector<CRectF>::iterator end_rect = rects.begin() + std::distance(text.cbegin(), std::get<2>(*iter));
+				FLOAT max_top = std::max_element(beg_rect, crlf_rect, [](CRectF& left, CRectF& right) { return left.top < right.top; })->top;
+				FLOAT min_btm = std::min_element(beg_rect, crlf_rect, [](CRectF& left, CRectF& right) { return left.bottom < right.bottom; })->bottom;
+				std::for_each(beg_rect, end_rect, [&](CRectF& rc) {rc.top = max_top; rc.bottom = min_btm; });
+				if (beg_rect != crlf_rect) {
+					std::for_each(crlf_rect, end_rect, [&](CRectF& rc) {
+						rc.left = rc.right = std::prev(crlf_rect)->right;
+					});
+				} else {
+					auto a = 1;
 				}
 			}
-			cursorRects.emplace_back(
-				cursorRects.back().right, cursorRects.back().top,
-				cursorRects.back().right, cursorRects.back().bottom);
 		}
-		m_optTextOrgCursorRects.emplace(cursorRects);
+		m_optTextOrgCursorRects.emplace(rects);
 	}
 	return m_optTextOrgCursorRects.value();
+
+
+
+	//if (!m_optTextOrgCursorRects.has_value()){
+	//	auto cursorRects = GetTextOrgRects();
+	//	if (!cursorRects.empty()) {
+	//		for (std::size_t i = 1; i < cursorRects.size(); i++) {//If i = 0  is Space or CRLF, ignore
+	//			bool isFirst = i == 0;
+	//			bool isAfterLF = !isFirst && is_lf(GetText()[i - 1]);
+	//			if (is_space(GetText()[i])) {
+	//				if (isFirst || isAfterLF) {
+	//					cursorRects[i].SetRect(
+	//						cursorRects[i + 1].right,
+	//						cursorRects[i + 1].top,
+	//						cursorRects[i + 1].right,
+	//						cursorRects[i + 1].bottom
+	//					);
+	//				} else {
+	//					cursorRects[i].SetRect(
+	//						cursorRects[i - 1].right,
+	//						cursorRects[i - 1].top,
+	//						cursorRects[i - 1].right,
+	//						cursorRects[i - 1].bottom
+	//					);
+	//				}
+	//			}
+	//			if (isCRorLF(GetText()[i])) {
+	//				cursorRects[i].SetRect(
+	//					cursorRects[i - 1].right,
+	//					cursorRects[i - 1].top,
+	//					cursorRects[i - 1].right,
+	//					cursorRects[i - 1].bottom
+	//				);
+	//			}
+	//		}
+	//		cursorRects.emplace_back(
+	//			cursorRects.back().right, cursorRects.back().top,
+	//			cursorRects.back().right, cursorRects.back().bottom);
+	//	}
+	//	m_optTextOrgCursorRects.emplace(cursorRects);
+	//}
+	//return m_optTextOrgCursorRects.value();
+}
+
+
+const std::vector<CRectF>& CPDFPage::GetTextOrgMouseRects() const
+{
+	const float lr_factor = 0.8f;
+	const float half_factor = 0.5f;
+	const float tb_factor = 0.4f;
+	if (!m_optTextOrgMouseRects.has_value()) {
+		auto& text = GetText();
+		auto mouseRects = GetTextOrgCursorRects();
+		if (!mouseRects.empty()) {
+			std::ranges::for_each(mouseRects, [&](CRectF& rc) {
+				rc.top = rc.top - rc.Height() * tb_factor;
+				rc.bottom = (std::max)(rc.bottom + rc.Height() * tb_factor, 0.f);
+			});
+
+			const std::vector<const_paragraph_iterator>& paras = GetParagraphIterators();
+			for (auto para_iter = paras.cbegin(); para_iter != paras.cend(); ++para_iter) {
+				for (auto iter = std::get<0>(*para_iter); iter != std::get<2>(*para_iter); ++iter) {
+					size_t index = std::distance(text.cbegin(), iter);
+					//left
+					if (iter == std::get<0>(*para_iter)) {
+						mouseRects[index].left = (std::max)(mouseRects[index].left - mouseRects[index].Width() * lr_factor, 0.f);
+					} else {
+						mouseRects[index].left = (mouseRects[index - 1].right + mouseRects[index].left) * 0.5;
+					}
+					//right
+					if (iter == std::prev(std::get<2>(*para_iter))) {
+						size_t last_str_index = std::distance(text.cbegin(), std::prev(std::get<1>(*para_iter)));
+						mouseRects[index].right = (std::max)(mouseRects[index].right + mouseRects[last_str_index].Width() * lr_factor, 0.f);
+					} else {
+						mouseRects[index].right = (mouseRects[index].right + mouseRects[index + 1].left) * 0.5;
+					}
+				}
+			}
+		}
+		m_optTextOrgMouseRects.emplace(mouseRects);
+	}
+	return m_optTextOrgMouseRects.value();
+
+
+	//if(!m_optTextOrgMouseRects.has_value()){
+	//	const auto& cursorRects = GetTextOrgCursorRects();
+	//	auto mouseRects = GetTextCursorRects();
+	//	if (!mouseRects.empty()) {
+	//		for (std::size_t i = 0; i < mouseRects.size(); i++) {
+	//			bool isFirst = i == 0;
+	//			bool isLast = i == mouseRects.size() - 1;
+	//			bool isAfterLF = !isFirst && is_lf(GetText()[i - 1]);
+	//			bool isBeforeLast = i == mouseRects.size() - 2;
+	//			bool isBeforeCR = !isLast && !isBeforeLast && is_cr(GetText()[i + 1]);
+	//			bool isAfterSpace = !isFirst && is_space(GetText()[i - 1]);
+	//			bool isBeforeSpace = !isLast && !isBeforeLast && is_space(GetText()[i + 1]);
+	//			bool isSpaceMid = !isFirst && is_space(GetText()[i]);
+	//			bool isCR = GetText()[i] == L'\r';
+	//			bool isLF = GetText()[i] == L'\n';
+
+	//			if (isCR || isSpaceMid || isLast) {
+	//				mouseRects[i].left = mouseRects[i - 1].right;
+	//				mouseRects[i].right = cursorRects[i - 1].right + cursorRects[i - 1].Width() * lr_factor;
+	//			} else if (isLF) {
+	//				mouseRects[i].left = mouseRects[i - 1].left;
+	//				mouseRects[i].right = mouseRects[i - 1].right;
+	//			} else {
+	//				//left
+	//				if (isFirst || isAfterLF || isAfterSpace) {
+	//					mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * lr_factor, 0.f);
+	//				} else {
+	//					mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * half_factor, mouseRects[i - 1].right);
+	//				}
+	//				//right
+	//				if (isBeforeCR || isBeforeSpace || isBeforeLast) {
+	//					mouseRects[i].right = cursorRects[i].right - cursorRects[i].Width() * lr_factor;
+	//				} else {
+	//					mouseRects[i].right = (std::min)(cursorRects[i].right + cursorRects[i].Width() * half_factor, (cursorRects[i].right + cursorRects[i + 1].left) * half_factor);
+	//				}
+	//			}
+	//			//top & bottom
+	//			//Since line order is not always top to bottom, it's hard to adjust context.
+	//			mouseRects[i].top = cursorRects[i].top + (-cursorRects[i].Height()) * tb_factor;
+	//			mouseRects[i].bottom = (std::max)(cursorRects[i].bottom - (-cursorRects[i].Height()) * tb_factor, 0.f);
+	//		}
+	//	}
+	//	m_optTextOrgMouseRects.emplace(mouseRects);
+	//}
+	//return m_optTextOrgMouseRects.value();
+}
+
+const std::vector<CRectF>& CPDFPage::GetTextRects() const
+{
+	if (!m_optTextRects.has_value()) {
+		m_optTextRects = GetTextOrgRects();
+		RotateRects(m_optTextRects.value(), *Rotate);
+	}
+	return m_optTextRects.value();
 }
 
 const std::vector<CRectF>& CPDFPage::GetTextCursorRects() const
@@ -135,58 +499,6 @@ const std::vector<CRectF>& CPDFPage::GetTextCursorRects() const
 		RotateRects(m_optTextCursorRects.value(), *Rotate);
 	}
 	return m_optTextCursorRects.value();
-}
-
-const std::vector<CRectF>& CPDFPage::GetTextOrgMouseRects() const
-{
-	const float lr_factor = 0.8f;
-	const float half_factor = 0.5f;
-	const float tb_factor = 0.4f;
-	if(!m_optTextOrgMouseRects.has_value()){
-		const auto& cursorRects = GetTextOrgCursorRects();
-		auto mouseRects = GetTextCursorRects();
-		if (!mouseRects.empty()) {
-			for (std::size_t i = 0; i < mouseRects.size(); i++) {
-				bool isFirst = i == 0;
-				bool isLast = i == mouseRects.size() - 1;
-				bool isAfterLF = !isFirst && is_lf(GetText()[i - 1]);
-				bool isBeforeLast = i == mouseRects.size() - 2;
-				bool isBeforeCR = !isLast && !isBeforeLast && is_cr(GetText()[i + 1]);
-				bool isAfterSpace = !isFirst && is_space(GetText()[i - 1]);
-				bool isBeforeSpace = !isLast && !isBeforeLast && is_space(GetText()[i + 1]);
-				bool isSpaceMid = !isFirst && is_space(GetText()[i]);
-				bool isCR = GetText()[i] == L'\r';
-				bool isLF = GetText()[i] == L'\n';
-
-				if (isCR || isSpaceMid || isLast) {
-					mouseRects[i].left = mouseRects[i - 1].right;
-					mouseRects[i].right = cursorRects[i - 1].right + cursorRects[i - 1].Width() * lr_factor;
-				} else if (isLF) {
-					mouseRects[i].left = mouseRects[i - 1].left;
-					mouseRects[i].right = mouseRects[i - 1].right;
-				} else {
-					//left
-					if (isFirst || isAfterLF || isAfterSpace) {
-						mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * lr_factor, 0.f);
-					} else {
-						mouseRects[i].left = (std::max)(cursorRects[i].left - cursorRects[i].Width() * half_factor, mouseRects[i - 1].right);
-					}
-					//right
-					if (isBeforeCR || isBeforeSpace || isBeforeLast) {
-						mouseRects[i].right = cursorRects[i].right - cursorRects[i].Width() * lr_factor;
-					} else {
-						mouseRects[i].right = (std::min)(cursorRects[i].right + cursorRects[i].Width() * half_factor, (cursorRects[i].right + cursorRects[i + 1].left) * half_factor);
-					}
-				}
-				//top & bottom
-				//Since line order is not always top to bottom, it's hard to adjust context.
-				mouseRects[i].top = cursorRects[i].top + (-cursorRects[i].Height()) * tb_factor;
-				mouseRects[i].bottom = (std::max)(cursorRects[i].bottom - (-cursorRects[i].Height()) * tb_factor, 0.f);
-			}
-		}
-		m_optTextOrgMouseRects.emplace(mouseRects);
-	}
-	return m_optTextOrgMouseRects.value();
 }
 
 const std::vector<CRectF>& CPDFPage::GetTextMouseRects() const

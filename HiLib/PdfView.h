@@ -91,8 +91,6 @@ protected:
 	std::shared_ptr<CButton> m_spButtonCancel;
 
 	bool m_showDefault = true;
-	bool m_showApply = true;
-	bool m_isModal = false;
 
 	CPDFDoc&  m_doc;
 
