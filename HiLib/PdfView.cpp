@@ -935,7 +935,7 @@ void CPdfView::NormalText_LButtonDown(const LButtonDownEvent& e)
 
 void CPdfView::NormalText_SetCursor(const SetCursorEvent& e)
 {
-	if (!(*e.HandledPtr)) {
+	if (!(*e.HandledPtr) && PDF->IsOpen()) {
 		auto [page, index] = GetPageAndIndexFromWndPoint(e.PointInWnd);
 		if (page >= 0) {
 			if (index >= 0) {

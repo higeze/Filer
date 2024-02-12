@@ -10,6 +10,9 @@ class CD2DWControl: public virtual CUIElement
 	friend class CD2DWWindow;
 public:
 	static UINT WM_CONTROLMESSAGE;
+public:
+	//reactive_property_ptr<CRectF> Margin = reactive_property_ptr<CRectF>(2.f, 2.f, 2.f, 2.f);
+
 
 protected:
 	std::unordered_map<WORD,std::function<void(const CommandEvent&)>> m_commandMap;
@@ -33,8 +36,9 @@ protected:
 public:
 	reactive_property_ptr<bool> IsEnabled;
 	reactive_property_ptr<bool> IsFocusable;
-	reactive_property_ptr<CRectF> Margin;
 
+	reactive_property_ptr<CRectF> Margin = reactive_property_ptr<CRectF>(2.f, 2.f, 2.f, 2.f);
+	reactive_property_ptr<SolidFill> Background = reactive_property_ptr<SolidFill>(246.0f / 255, 246.0f / 255, 246.0f / 255, 1.0f);
 
 
 public:
@@ -109,6 +113,7 @@ public:
 	CSizeF m_size;
 	virtual void Measure(const CSizeF& availableSize) { m_size = availableSize; }
 	virtual CSizeF DesiredSize() const { return m_size; }
+	virtual CSizeF RenderSize() const { return CSizeF(m_size.width - Margin->Width(), m_size.height - Margin->Height()); }
 	virtual void Arrange(const CRectF& rc) { m_rect = rc; }
 
 	virtual bool IsFocused()const;

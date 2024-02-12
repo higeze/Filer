@@ -243,10 +243,10 @@ struct CRectT :public TRect
 			this->bottom - rc.bottom);
 	}
 
-	const TRect* operator&() const
-	{
-		return static_cast<const TRect*>(this);
-	}
+	//const TRect* operator&() const
+	//{
+	//	return static_cast<const TRect*>(this);
+	//}
 
 	rect_type operator+(rect_type rc)const
 	{

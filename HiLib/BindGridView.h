@@ -12,6 +12,85 @@
 #include "reactive_vector.h"
 #include "IBindSheet.h"
 
+#include "Cursorer.h"
+
+//template<typename T> class CBindCursorer;
+template<typename T, typename TRow, typename TCol> class CBindGridView;
+
+template<typename T, typename TRow, typename TCol>
+class CBindCursorer : public CCursorer
+{
+	using CCursorer::CCursorer;
+
+public:
+
+	void OnCursor(const std::shared_ptr<CCell>& cell)
+	{
+		if(!IsCursorTargetCell(cell)){
+			return;
+		}
+	
+		UpdateCursor(cell);
+		cell->GetSheetPtr()->DeselectAll();
+		cell->GetRowPtr()->SetIsSelected(true);//Select
+		if (auto pGrid = dynamic_cast<CBindGridView<T, TRow, TCol>*>(cell->GetSheetPtr())){//dynamic_cast<CBindGridView<T>*>(cell->GetSheetPtr())) {
+			if (auto pRow = dynamic_cast<TRow*>(cell->GetRowPtr())){//dynamic_cast<CBindRow<T>*>(cell->GetRowPtr())) {
+				pGrid->SelectedItem.set(pRow->GetItem<T>());
+			}
+		}
+	}
+
+	void OnCursorDown(const std::shared_ptr<CCell>& cell)
+	{
+		if (!IsCursorTargetCell(cell)) {
+			return;
+		}
+
+		UpdateCursor(cell);
+		m_isDragPossible = true;
+		cell->GetRowPtr()->SetIsSelected(true);//Select
+	}
+
+	void OnCursorUp(const std::shared_ptr<CCell>& cell)
+	{
+		if (!IsCursorTargetCell(cell)) {
+			return;
+		}
+
+		if (m_isDragPossible) {
+			m_isDragPossible = false;
+			cell->GetSheetPtr()->DeselectAll();
+			cell->GetRowPtr()->SetIsSelected(true);//Select
+		}
+	}
+
+	void OnCursorLeave(const std::shared_ptr<CCell>& cell)
+	{
+		if (!IsCursorTargetCell(cell)) {
+			return;
+		}
+		if (m_isDragPossible) {
+			m_isDragPossible = false;
+			//cell->GetSheetPtr()->DeselectAll();
+			//cell->GetRowPtr()->SetSelected(true);//Select
+		}
+	}
+
+	void OnCursorCtrl(const std::shared_ptr<CCell>& cell)
+	{
+		if (!IsCursorTargetCell(cell)) {
+			return;
+		}
+		UpdateCursor(cell);
+
+		cell->GetRowPtr()->SetIsSelected(!cell->GetRowPtr()->GetIsSelected());//Select
+	}
+};
+
+
+
+
+
 template<typename T, typename TRow = CBindRow<T>, typename TCol = CBindColumn<T>>
 class CBindGridView :public CGridView, public IBindSheet<T>
 {
@@ -21,6 +100,7 @@ protected:
 
 public:
 	reactive_vector_ptr<T> ItemsSource;
+	reactive_property_ptr<T> SelectedItem;
 	reactive_vector_ptr<T>& GetItemsSource() override { return ItemsSource; }
 
 public:
@@ -32,6 +112,8 @@ public:
 		:CGridView(pParentControl, spGridViewProp),
 		ItemsSource()
 	{
+		m_spCursorer = std::make_shared<CBindCursorer<T, TRow, TCol>>();
+
 		//TArg...
 		m_bindType = ::get(arg<"bindtype"_s>(), args..., default_(BindType::Row));
 
@@ -216,5 +298,3 @@ public:
 	/* StateMachine */
 	/****************/
 };
-
-

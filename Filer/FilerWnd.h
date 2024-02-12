@@ -27,6 +27,8 @@
 #include "TabControlProperty.h"
 #include "PreviewControlProperty.h"
 
+#include "ToolBar.h"
+
 class CFilerGridView;
 class CLauncherGridView;
 struct FilerGridViewProperty;
@@ -74,11 +76,15 @@ class CD2DFileIconDrawer;
 class CFilerWnd:public CD2DWWindow
 {
 private:
+	static std::vector<std::wstring> imageExts;
+	static std::vector<std::wstring> previewExts;
+
 	CRect m_rcWnd;
 	CRect m_rcPropWnd;
 
 	bool m_isSizing = false;
 	CPoint m_ptBeginClient;
+	bool m_isPreview = false;
 
 	//Common properties
 	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
@@ -105,6 +111,7 @@ private:
 	std::shared_ptr<CLauncherGridView> m_spLauncher;
 	std::shared_ptr<CFilerWndStatusBar> m_spStatusBar;
 	std::shared_ptr<CHorizontalSplitter> m_spSplitter;
+	std::shared_ptr<CToolBar> m_spToolBar;
 
 	//Property
 	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
@@ -143,7 +150,7 @@ public:
 	std::shared_ptr<CFilerTabGridView>& GetRightWnd() { return m_spRightView; }
 
 	// Launcher, LeftFavorite, LeftTab, Splitter, RightFavorite, RightTab, StatusBar
-	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();
+	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();
 
 	/******************/
 	/* Window Message */
@@ -163,6 +170,9 @@ public:
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override;
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
+
+	void SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer);
+
 	
 	/***********/
 	/* Command */

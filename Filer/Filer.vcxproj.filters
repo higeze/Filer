@@ -65,6 +65,9 @@
     <Filter Include="HiLib\Shell">
       <UniqueIdentifier>{17d18bd5-ec7e-4ab1-902d-478b98cd6194}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HiLib\ToolBar">
+      <UniqueIdentifier>{482542bb-3fb4-4dea-9ce4-d93567aa2696}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -981,6 +984,9 @@
     <ClInclude Include="..\HiLib\DriveFolder.h">
       <Filter>HiLib\Shell</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\ToolBar.h">
+      <Filter>HiLib\ToolBar</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1454,6 +1460,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\DriveFolder.cpp">
       <Filter>HiLib\Shell</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ToolBar.cpp">
+      <Filter>HiLib\ToolBar</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

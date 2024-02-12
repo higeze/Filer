@@ -42,6 +42,10 @@
 #include "BoostPythonHelper.h"
 #endif
 
+std::vector<std::wstring> CFilerWnd::imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff" };
+std::vector<std::wstring> CFilerWnd::previewExts = {L".docx", L".doc", L".xlsx", L".xls", L".ppt", L".pptx"};
+
+
 CFilerWnd::CFilerWnd()
 	:CD2DWWindow(),
 	m_rcWnd(0, 0, 1000, 600), 
@@ -62,6 +66,7 @@ CFilerWnd::CFilerWnd()
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
 	m_spSplitterProp(std::make_shared<SplitterProperty>()),
 	m_spLauncher(std::make_shared<CLauncherGridView>(this, m_spFilerGridViewProp, m_spLauncherProp)),
+	m_spToolBar(std::make_shared<CToolBar>(this)),
 	m_spLeftView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp, m_spPreviewControlProp)),
 	m_spRightView(std::make_shared<CFilerTabGridView>(this, m_spTabControlProp, m_spFilerGridViewProp, m_spEditorProp, m_spPdfEditorProp, m_spImageEditorProp, m_spPreviewControlProp)),
 	m_spSplitter(std::make_shared<CHorizontalSplitter>(this, m_spLeftView.get(), m_spRightView.get(), m_spSplitterProp)),
@@ -120,6 +125,36 @@ void CFilerWnd::OnPaint(const PaintEvent& e)
 	GetDirectPtr()->FillSolidRectangle(CColorF(1.f, 1.f, 1.f), GetRectInWnd());
 	CD2DWWindow::OnPaint(e);
 }
+
+void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer)
+{
+	subject->GetFilerGridViewPtr()->SelectedItem.subscribe([this, observer](const std::shared_ptr<CShellFile>& spFile) {
+
+		if (!m_isPreview) return;
+
+		std::shared_ptr<TabData> spObsData = observer->ItemsSource.get_unconst()->at(*observer->SelectedIndex);
+
+		//Text
+		if (auto spTxtData = std::dynamic_pointer_cast<TextTabData>(spObsData);
+			spTxtData && boost::iequals(spFile->GetPathExt(), L".txt")) {
+			spTxtData->Doc.get_unconst()->Open(spFile->GetPath());
+		//PDF
+		} else if (auto spPdfData = std::dynamic_pointer_cast<PdfTabData>(spObsData);
+			spPdfData && boost::iequals(spFile->GetPathExt(), L".pdf")) {
+			spPdfData->Doc.get_unconst()->Open(spFile->GetPath());
+		//Image
+		} else if (auto spImgData = std::dynamic_pointer_cast<ImageTabData>(spObsData);
+			spImgData && std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+			spImgData->Image.get_unconst()->Open(spFile->GetPath());
+		//Preview
+		} else if (auto spPrvData = std::dynamic_pointer_cast<PreviewTabData>(spObsData);
+			spPrvData && std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+			// TODO PreviewControl to Open
+		}
+
+	}, shared_from_this());
+}
+
 
 void CFilerWnd::OnCreate(const CreateEvt& e)
 {
@@ -368,9 +403,20 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	//Konami
 	//m_konamiCommander.SetHwnd(m_hWnd);
 	
-	auto [rcLauncher, rcLeftFav, rcLeftTab, rcSplitter, rcRightFav, rcRightTab, rcStatus] = GetRects();
+
+
+	auto [rcLauncher, rcToolBar, rcLeftFav, rcLeftTab, rcSplitter, rcRightFav, rcRightTab, rcStatus] = GetRects();
 
 	m_spLauncher->OnCreate(CreateEvt(this, this, rcLauncher));
+	m_spToolBar->OnCreate(CreateEvt(this, this, rcToolBar));
+	auto spBtn = std::make_shared<CButton>(m_spToolBar.get(), std::make_shared<ButtonProperty>());
+	spBtn->Content.set(m_isPreview?L"Prv":L"Nrm");
+	spBtn->Command.subscribe([this, spBtn]() {
+		m_isPreview = !m_isPreview;
+		spBtn->Content.set(m_isPreview ? L"Prv" : L"Nrm");
+	}, shared_from_this());
+	spBtn->OnCreate(CreateEvt(this, m_spToolBar.get(), CRectF()));
+
 	m_spLeftFavoritesView->OnCreate(CreateEvt(this, this, rcLeftFav));
 	m_spLeftView->OnCreate(CreateEvt(this, this, rcLeftTab));
 	m_spSplitter->OnCreate(CreateEvt(this, this, rcSplitter));
@@ -380,14 +426,15 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	m_spLeftView->SetIsTabStop(true);
 	m_spRightView->SetIsTabStop(true);
 
+	SetUpPreview(m_spLeftView, m_spRightView);
+	SetUpPreview(m_spRightView, m_spLeftView);
+
 	GetWndPtr()->SetFocusToControl(m_spLeftView);
 }
 
 void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 {
 	*(e.HandledPtr) = FALSE;
-	static std::vector<std::wstring> imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff" };
-	static std::vector<std::wstring> previewExts = {L".docx", L".doc", L".xlsx", L".xls", L".ppt", L".pptx"};
 	switch (e.Char)
 	{
 	case 'Q':
@@ -510,7 +557,7 @@ void CFilerWnd::OnMouseMove(const MouseMoveEvent& e)
 	//m_konamiCommander.OnMouseMove(uMsg, wParam, lParam, bHandled);
 }
 
-std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
+std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
 {
 	CRectF rcClient = GetRectInWnd();
 
@@ -519,6 +566,7 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::Ge
 		m_spFilerGridViewProp->CellPropPtr->Padding->left + //default:2
 		m_spFilerGridViewProp->CellPropPtr->Padding->right + //default:2
 		16.f);//icon
+
 	LONG favoriteWidth = GetDirectPtr()->Dips2PixelsX(
 		m_spFilerGridViewProp->CellPropPtr->Line->Width * 2 + //def:GridLine=0.5*2, CellLine=0.5*2
 		m_spFilerGridViewProp->CellPropPtr->Padding->left + //default:2
@@ -526,9 +574,12 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::Ge
 		16.f);//icon
 	LONG statusHeight = GetDirectPtr()->Dips2PixelsY(m_spStatusBar->MeasureSize(L"").height);
 
-	CRectF rcLauncher, rcLeftFavorites, rcRightFavorites, rcSplitter, rcLeftGrid, rcRightGrid, rcStatusBar;
+	CRectF rcLauncher, rcToolBar, rcLeftFavorites, rcRightFavorites, rcSplitter, rcLeftGrid, rcRightGrid, rcStatusBar;
 
-	rcLauncher.SetRect(rcClient.left, rcClient.top, rcClient.right, rcClient.top + launcherHeight);
+	rcLauncher.SetRect(rcClient.left, rcClient.top, (rcClient.left + rcClient.right)*0.5f, rcClient.top + launcherHeight);
+
+	m_spToolBar->Measure(CSizeF(FLT_MAX, FLT_MAX));
+	rcToolBar.SetRect((rcClient.left + rcClient.right)*0.5f, rcClient.top, rcClient.right , rcClient.top + launcherHeight);
 
 	rcStatusBar.SetRect(rcClient.left, rcClient.bottom - statusHeight, rcClient.right, rcClient.bottom);
 
@@ -600,6 +651,7 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::Ge
 
 	return {
 		rcLauncher,
+		rcToolBar,
 		rcLeftFavorites,
 		rcLeftGrid,
 		rcSplitter,
@@ -614,9 +666,10 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::Ge
 //TODOTODO CWnd m_pdirect, create, erasebkgnd, onsize
 void CFilerWnd::OnRect(const RectEvent& e)
 {
-	auto [rcLauncher, rcLeftFav, rcLeftTab, rcSplitter, rcRightFav, rcRightTab, rcStatus] = GetRects();
+	auto [rcLauncher, rcToolBar, rcLeftFav, rcLeftTab, rcSplitter, rcRightFav, rcRightTab, rcStatus] = GetRects();
 	
 	m_spLauncher->OnRect(RectEvent(this, rcLauncher));
+	m_spToolBar->Arrange(rcToolBar);
 	m_spLeftFavoritesView->OnRect(RectEvent(this, rcLeftFav));
 	m_spRightFavoritesView->OnRect(RectEvent(this, rcRightFav));
 	m_spStatusBar->OnRect(RectEvent(this, rcStatus));

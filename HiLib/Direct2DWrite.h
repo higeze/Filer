@@ -181,6 +181,11 @@ namespace std
 		SolidFill(const FLOAT r = 1.0f, const FLOAT g = 1.0f, const FLOAT b = 1.0f, const FLOAT a = 1.0f)
 			:Color(r, g, b, a){}
 
+		bool operator !=(const SolidFill& right) const
+		{
+			return Color != right.Color;
+		}
+
 		CColorF Color;
 
 		template <class Archive>

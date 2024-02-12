@@ -27,7 +27,7 @@ public: virtual void Clear##val(); \
 public: virtual const type& Get##val() { if (!m_opt##val.has_value()) { Load##val(); } return m_opt##val.value(); }
 
 #define SHAREDPTR_GETTER(type, val) \
-protected: std::shared_ptr<type> m_sp##val; \
+public: std::shared_ptr<type> m_sp##val; \
 public: virtual const std::shared_ptr<type>& Get##val##Ptr() { return m_sp##val; }
 
 

@@ -327,6 +327,11 @@ const std::vector<CRectF>& CPDFPage::GetTextOrgCursorRects() const
 	if (!m_optTextOrgCursorRects.has_value()) {
 		std::vector<CRectF> rects = GetTextOrgRects();
 		const std::wstring& text = GetText();
+		for (size_t i = 0; i < rects.size(); i++) {
+			if (rects[i].top == 0 || rects[i].bottom == 0) {
+				::OutputDebugString(std::format(L"'{}:{}'", i, int(text[i])).c_str());
+			}
+		}
 		if (!rects.empty() && !text.empty()) {
 			const std::vector<const_paragraph_iterator>& paras = GetParagraphIterators();
 			for (auto iter = paras.cbegin(); iter != paras.cend(); ++iter) {
@@ -334,11 +339,26 @@ const std::vector<CRectF>& CPDFPage::GetTextOrgCursorRects() const
 					std::distance(text.cbegin(), std::get<0>(*iter)),
 					std::distance(text.cbegin(), std::get<1>(*iter)),
 					std::distance(text.cbegin(), std::get<2>(*iter))).c_str());
+				int beg_pos = std::distance(text.cbegin(), std::get<0>(*iter));
+				int crlf_pos = std::distance(text.cbegin(), std::get<1>(*iter));
+				int end_pos = std::distance(text.cbegin(), std::get<2>(*iter));
 				std::vector<CRectF>::iterator beg_rect = rects.begin() + std::distance(text.cbegin(), std::get<0>(*iter));
 				std::vector<CRectF>::iterator crlf_rect = rects.begin() + std::distance(text.cbegin(), std::get<1>(*iter));
 				std::vector<CRectF>::iterator end_rect = rects.begin() + std::distance(text.cbegin(), std::get<2>(*iter));
-				FLOAT max_top = std::max_element(beg_rect, crlf_rect, [](CRectF& left, CRectF& right) { return left.top < right.top; })->top;
-				FLOAT min_btm = std::min_element(beg_rect, crlf_rect, [](CRectF& left, CRectF& right) { return left.bottom < right.bottom; })->bottom;
+
+				//Left Right
+				for (auto iter_rect = beg_rect; iter_rect != end_rect; ++iter_rect) {
+					if (iter_rect != beg_rect && iter_rect->IsRectNull()) {
+						iter_rect->left = std::prev(iter_rect)->left;
+						iter_rect->right = std::prev(iter_rect)->right;
+					} else if (iter_rect->IsRectNull()) {
+						auto a = 1;
+					}
+				}
+				//Top Bottom
+				std::vector<CRectF> range_rects = m_pTextPage->GetRangeRects(beg_pos, end_pos);
+				FLOAT max_top = std::max_element(range_rects.cbegin(), range_rects.cend(), [](const CRectF& left, const CRectF& right) { return left.top < right.top; })->top;
+				FLOAT min_btm = std::min_element(range_rects.cbegin(), range_rects.cend(), [](const CRectF& left, const CRectF& right) { return left.bottom < right.bottom; })->bottom;
 				std::for_each(beg_rect, end_rect, [&](CRectF& rc) {rc.top = max_top; rc.bottom = min_btm; });
 				if (beg_rect != crlf_rect) {
 					std::for_each(crlf_rect, end_rect, [&](CRectF& rc) {
@@ -401,14 +421,15 @@ const std::vector<CRectF>& CPDFPage::GetTextOrgMouseRects() const
 {
 	const float lr_factor = 0.8f;
 	const float half_factor = 0.5f;
-	const float tb_factor = 0.4f;
+	const float tb_factor = 0.3f;
 	if (!m_optTextOrgMouseRects.has_value()) {
 		auto& text = GetText();
 		auto mouseRects = GetTextOrgCursorRects();
 		if (!mouseRects.empty()) {
 			std::ranges::for_each(mouseRects, [&](CRectF& rc) {
-				rc.top = rc.top - rc.Height() * tb_factor;
-				rc.bottom = (std::max)(rc.bottom + rc.Height() * tb_factor, 0.f);
+				auto tb_offset = - rc.Height() * tb_factor;
+				rc.top = (std::min)(rc.top + tb_offset, GetSize().height);
+				rc.bottom = (std::max)(rc.bottom - tb_offset, 0.f);
 			});
 
 			const std::vector<const_paragraph_iterator>& paras = GetParagraphIterators();
@@ -419,14 +440,14 @@ const std::vector<CRectF>& CPDFPage::GetTextOrgMouseRects() const
 					if (iter == std::get<0>(*para_iter)) {
 						mouseRects[index].left = (std::max)(mouseRects[index].left - mouseRects[index].Width() * lr_factor, 0.f);
 					} else {
-						mouseRects[index].left = (mouseRects[index - 1].right + mouseRects[index].left) * 0.5;
+						mouseRects[index].left = (std::max)((mouseRects[index - 1].right + mouseRects[index].left) * 0.5f, mouseRects[index - 1].right);
 					}
 					//right
 					if (iter == std::prev(std::get<2>(*para_iter))) {
 						size_t last_str_index = std::distance(text.cbegin(), std::prev(std::get<1>(*para_iter)));
 						mouseRects[index].right = (std::max)(mouseRects[index].right + mouseRects[last_str_index].Width() * lr_factor, 0.f);
 					} else {
-						mouseRects[index].right = (mouseRects[index].right + mouseRects[index + 1].left) * 0.5;
+						mouseRects[index].right = (std::max)((mouseRects[index].right + mouseRects[index + 1].left) * 0.5f, mouseRects[index + 1].left);
 					}
 				}
 			}
