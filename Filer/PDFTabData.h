@@ -25,6 +25,7 @@ struct PdfTabData :public TabData
 		Scale(-1.f)
 	{
 		Doc.get_unconst()->Path.set(path);
+		Doc.get_unconst()->Load(path);
 	}
 
 	virtual ~PdfTabData() = default;

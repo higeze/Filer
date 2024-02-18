@@ -72,12 +72,15 @@ public:
 #endif
 
 class CD2DFileIconDrawer;
+class CNetworkMessanger;
 
 class CFilerWnd:public CD2DWWindow
 {
 private:
 	static std::vector<std::wstring> imageExts;
 	static std::vector<std::wstring> previewExts;
+
+	std::unique_ptr<CNetworkMessanger> m_pNetworkMessanger;
 
 	CRect m_rcWnd;
 	CRect m_rcPropWnd;
@@ -156,6 +159,7 @@ public:
 	/* Window Message */
 	/******************/
 	virtual LRESULT OnDestroy(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
+	virtual LRESULT OnConnectivityChanged(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
 	/**************/

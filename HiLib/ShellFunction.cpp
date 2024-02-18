@@ -60,7 +60,7 @@ std::wstring shell::GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder,
 {
 	STRRET strret{ 0 };
 	std::wstring ret;
-	if (SUCCEEDED(pParentFolder->GetDisplayNameOf(childIDL, uFlags, &strret))) {
+	if (pParentFolder && SUCCEEDED(pParentFolder->GetDisplayNameOf(childIDL, uFlags, &strret))) {
 		return strret2wstring(strret, childIDL);
 	}
 	return ret;

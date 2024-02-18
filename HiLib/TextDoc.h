@@ -7,7 +7,9 @@
 #include "reactive_string.h"
 #include "encoding_type.h"
 
-class CTextDoc
+#include "ShellFile.h"
+
+class CTextDoc: public CShellFile
 {
 public:
 	std::shared_ptr<int> Dummy;

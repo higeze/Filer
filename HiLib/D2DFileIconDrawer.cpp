@@ -1,5 +1,6 @@
 #include "D2DFileIconDrawer.h"
 #include "ThreadPool.h"
+#include "ShellFile.h"
 
 /************************/
 /* CShellFileIconDrawer */
@@ -108,6 +109,39 @@ bool CD2DFileIconDrawer::DrawFileIconBitmap(
 	//}
 	//m_pAtlasBitmap->DrawBitmapByKey(key, dstRect);
 }
+
+bool CD2DFileIconDrawer::DrawFileIconBitmap(
+	const CDirect2DWrite* pDirect,
+	const CPointF& dstPoint,
+	const CShellFile* pFile,
+	std::function<void()>&& callback)
+{
+	if (!m_pAtlasBitmap->Exist(L"DEFAULT")) {
+		m_pAtlasBitmap->AddOrAssign(pDirect, L"DEFAULT", GetBitmapFromIcon(pDirect, GetDefaultIcon()));
+	}
+
+	auto funadd = [pDirect, pFile, callback, this]()->void
+	{
+		CComPtr<ID2D1Bitmap1> pBitmap = GetBitmapFromIcon(pDirect, pFile->GetIcon());
+		m_pAtlasBitmap->AddOrAssign(pDirect, pFile->GetIconKey(), pBitmap);
+		callback();
+	};
+	
+	bool ret = false;
+	if (!m_pAtlasBitmap->Exist(pFile->GetIconKey())) {
+		m_pAtlasBitmap->AddOrAssign(pDirect, pFile->GetIconKey(), CComPtr<ID2D1Bitmap1>(nullptr));
+		m_futureGroup.emplace_back(CThreadPool::GetInstance()->enqueue(funadd, 0));
+		ret =  false;
+	} else {
+		ret =  m_pAtlasBitmap->DrawBitmap(pDirect, pFile->GetIconKey(), dstPoint);
+	}
+
+	if (!ret) {
+		m_pAtlasBitmap->DrawBitmap(pDirect, L"DEFAULT", dstPoint);
+	}
+	return ret;
+}
+
 
 void CD2DFileIconDrawer::Clear()
 {

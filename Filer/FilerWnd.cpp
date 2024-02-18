@@ -37,6 +37,7 @@
 #include "ImageEditorProperty.h"
 
 #include "FileOperationDlg.h"
+#include "NetworkMessanger.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -100,6 +101,7 @@ CFilerWnd::CFilerWnd()
 
 
 	AddMsgHandler(WM_DESTROY, &CFilerWnd::OnDestroy, this);
+	AddMsgHandler(CNetworkMessanger::WM_CONNECTIVITYCHANGED, &CFilerWnd::OnConnectivityChanged, this);
 	AddMsgHandler(WM_DEVICECHANGE, &CFilerWnd::OnDeviceChange, this);
 
 	m_commandMap.emplace(IDM_SAVE, std::bind(&CFilerWnd::OnCommandSave, this, phs::_1));
@@ -117,7 +119,8 @@ CFilerWnd::~CFilerWnd() = default;
 HWND CFilerWnd::Create(HWND hWndParent)
 {
 	SplitterLeft.binding(m_spSplitter->SplitterLeft);
-	return CWnd::Create(hWndParent, m_rcWnd);
+	HWND hWnd = CWnd::Create(hWndParent, m_rcWnd);
+	return hWnd;
 }
 
 void CFilerWnd::OnPaint(const PaintEvent& e)
@@ -141,7 +144,12 @@ void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, 
 		//PDF
 		} else if (auto spPdfData = std::dynamic_pointer_cast<PdfTabData>(spObsData);
 			spPdfData && boost::iequals(spFile->GetPathExt(), L".pdf")) {
-			spPdfData->Doc.get_unconst()->Open(spFile->GetPath());
+			CPDFDoc newDoc;
+			newDoc.Open(spFile->GetPath());
+			spPdfData->Scale.set(-1);
+			spPdfData->VScroll.set(0.f);
+			spPdfData->HScroll.set(0.f);
+			spPdfData->Doc.set(newDoc);
 		//Image
 		} else if (auto spImgData = std::dynamic_pointer_cast<ImageTabData>(spObsData);
 			spImgData && std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
@@ -152,12 +160,40 @@ void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, 
 			// TODO PreviewControl to Open
 		}
 
+		//std::shared_ptr<TabData> spNewData;
+		////Text
+		//if (auto spTxtData = std::dynamic_pointer_cast<TextTabData>(spObsData);
+		//	spTxtData && boost::iequals(spFile->GetPathExt(), L".txt")) {
+		//	spNewData = std::make_shared<TextTabData>(spFile->GetPath());
+		////PDF
+		//} else if (auto spPdfData = std::dynamic_pointer_cast<PdfTabData>(spObsData);
+		//	spPdfData && boost::iequals(spFile->GetPathExt(), L".pdf")) {
+		//	spNewData = std::make_shared<PdfTabData>(spFile->GetPath());
+		////Image
+		//} else if (auto spImgData = std::dynamic_pointer_cast<ImageTabData>(spObsData);
+		//	spImgData && std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+		//	spNewData = std::make_shared<ImageTabData>(GetWndPtr()->GetDirectPtr(), spFile->GetPath());
+		////Preview
+		//} else if (auto spPrvData = std::dynamic_pointer_cast<PreviewTabData>(spObsData);
+		//	spPrvData && std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+		//	spNewData = std::make_shared<PreviewTabData>(spFile->GetPath());
+		//}
+
+		//if (spNewData) {
+		//	//Replace
+		//	if (spObsData->AcceptClosing(this, false)) {
+		//		observer->ItemsSource.replace(observer->ItemsSource.get_unconst()->begin() + *observer->SelectedIndex, spNewData);
+		//	}
+		//}
+
+
 	}, shared_from_this());
 }
 
 
 void CFilerWnd::OnCreate(const CreateEvt& e)
 {
+	m_pNetworkMessanger = std::make_unique<CNetworkMessanger>(m_hWnd);
 
 #ifdef USE_PYTHON_EXTENSION
 	m_commandMap.emplace(IDM_PYTHONEXTENSIONOPTION, std::bind(&CFilerWnd::OnCommandPythonExtensionOption, this, phs::_1));
@@ -685,6 +721,17 @@ void CFilerWnd::OnRect(const RectEvent& e)
 //		::SetFocus(m_spCurView->GetContentWnd()->m_hWnd);
 //	}
 //}
+LRESULT CFilerWnd::OnConnectivityChanged(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	CDriveFolderManager::GetInstance()->Update();
+	m_spLauncher->Reload();
+	m_spLeftFavoritesView->Reload();
+	m_spRightFavoritesView->Reload();
+	m_spLeftView->GetFilerGridViewPtr()->Reload();
+	m_spRightView->GetFilerGridViewPtr()->Reload();
+	InvalidateRect(NULL, FALSE);
+	return 0;
+}
 
 LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {

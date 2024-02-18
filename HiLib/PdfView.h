@@ -152,6 +152,7 @@ public:
 	/************/
 	/* Reactive */
 	/************/
+	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<CPDFDoc> PDF;
 
 	reactive_property_ptr<FLOAT> Scale;

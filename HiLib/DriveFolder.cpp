@@ -7,12 +7,12 @@ CDriveFolder::CDriveFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parent
 {
 }
 
-std::wstring CDriveFolder::GetDispExt()
+const std::wstring& CDriveFolder::GetDispExt() const
 {
-	if (m_wstrExt.empty()) {
-		m_wstrExt = L"drive";
+	if (!m_optDispExt.has_value()) {
+		m_optDispExt.emplace(L"drive");
 	}
-	return m_wstrExt;
+	return m_optDispExt.value();
 }
 
 std::pair<ULARGE_INTEGER, FileSizeStatus> CDriveFolder::GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)

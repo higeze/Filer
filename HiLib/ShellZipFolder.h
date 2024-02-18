@@ -7,9 +7,9 @@ public:
 	CShellZipFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl);
 	virtual ~CShellZipFolder(){}
 
-	virtual std::wstring GetFileNameWithoutExt()override;
-	virtual std::wstring GetDispName()override;
-	virtual std::wstring GetDispExt()override;
+	virtual const std::wstring& GetDispName() const override;
+	virtual const std::wstring& GetDispExt() const override;
+	virtual const std::wstring& GetDispNameWithoutExt() const override;
 
 	virtual void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd = NULL) override;
 	virtual void SetExt(const std::wstring& wstrExt, HWND hWnd = NULL) override;

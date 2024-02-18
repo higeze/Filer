@@ -65,33 +65,26 @@ void CShellFolder::SetLockSize(const std::pair<ULARGE_INTEGER, FileSizeStatus>& 
 //	return GetLockIcon();
 //}
 
-
-std::wstring CShellFolder::GetFileNameWithoutExt()
+const std::wstring& CShellFolder::GetDispName() const
 {
-	if (m_wstrFileNameWithoutExt.empty()) {
-		STRRET strret;
-		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
-		m_wstrFileNameWithoutExt = m_childIdl.strret2wstring(strret);
+	if (!m_optDispName.has_value()) {
+		m_optDispName.emplace(shell::GetDisplayNameOf(m_pParentShellFolder, m_childIdl.ptr(), SHGDN_NORMAL));
 	}
-	return m_wstrFileNameWithoutExt;
+	return m_optDispName.value();
 }
 
-std::wstring CShellFolder::GetDispName()
+const std::wstring& CShellFolder::GetDispNameWithoutExt() const
 {
-	if (m_wstrFileName.empty()) {
-		STRRET strret;
-		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
-		m_wstrFileName = m_childIdl.strret2wstring(strret);
-	}
-	return m_wstrFileName;
+	return GetDispName();
 }
 
-std::wstring CShellFolder::GetDispExt()
+
+const std::wstring& CShellFolder::GetDispExt() const
 {
-	if (m_wstrExt.empty()) {
-		m_wstrExt = L"folder";
+	if (!m_optDispExt.has_value()) {
+		m_optDispExt.emplace(L"folder");
 	}
-	return m_wstrExt;
+	return m_optDispExt.value();
 }
 
 

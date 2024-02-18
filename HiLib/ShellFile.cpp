@@ -49,6 +49,12 @@ bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<void()> c
 	}
 }
 
+CShellFile::CShellFile(const std::wstring& path)
+	:m_optPath(path)
+{
+	Load(path);
+}
+
 CShellFile::CShellFile(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl)
 	:m_pParentShellFolder(pParentShellFolder),m_absoluteIdl(parentIdl + childIdl), m_parentIdl(parentIdl), m_childIdl(childIdl)
 {
@@ -59,68 +65,67 @@ CShellFile::CShellFile(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl,
 
 CShellFile::~CShellFile() = default;
 
-std::wstring CShellFile::GetPath()
+const std::wstring& CShellFile::GetPath() const
 {
-	if (m_wstrPath.empty()) {
-		STRRET strret;
-		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_FORPARSING, &strret);
-		m_wstrPath = m_childIdl.strret2wstring(strret);
+	if (!m_optPath.has_value()) {
+		m_optPath.emplace(shell::GetDisplayNameOf(m_pParentShellFolder, m_childIdl.ptr(), SHGDN_FORPARSING));
 	}
-	return m_wstrPath;
+	return m_optPath.value();
 }
 
-std::wstring CShellFile::GetFileNameWithoutExt()
+const std::wstring& CShellFile::GetPathName() const
 {
-	if (m_wstrFileNameWithoutExt.empty()) {
-		m_wstrFileNameWithoutExt = GetDispName();
-		::PathRemoveExtension(::GetBuffer(m_wstrFileNameWithoutExt, MAX_PATH));
-		::ReleaseBuffer(m_wstrFileNameWithoutExt);
+	if (!m_optPathName.has_value()) {
+		m_optPathName.emplace(::PathFindFileNameW(GetPath().c_str()));
 	}
-	return m_wstrFileNameWithoutExt;
+	return m_optPathName.value();
 }
 
-std::wstring CShellFile::GetPathWithoutExt()
+const std::wstring& CShellFile::GetPathNameWithoutExt() const
 {
-	std::wstring ret = GetPath();
-	::PathRemoveExtension(::GetBuffer(ret, MAX_PATH));
-	::ReleaseBuffer(ret);
-	return ret;
-}
-
-std::wstring CShellFile::GetDispName()
-{
-	if (m_wstrFileName.empty()) {
-		m_wstrFileName = ::PathFindFileName(GetPath().c_str());
+	if (!m_optPathNameWithoutExt.has_value()) {
+		std::wstring ret = GetPathName();
+		::PathRemoveExtensionW(::GetBuffer(ret, MAX_PATH));
+		::ReleaseBuffer(ret);
+		m_optPathNameWithoutExt.emplace(ret);
 	}
-	return m_wstrFileName;
+	return m_optPathNameWithoutExt.value();
 }
 
-std::wstring CShellFile::GetDispExt()
+
+const std::wstring& CShellFile::GetPathExt() const
 {
-	if (m_wstrExt.empty()) {
-		m_wstrExt = ::PathFindExtension(GetDispName().c_str());
+	if(!m_optPathExt.has_value()){
+		m_optPathExt.emplace(::PathFindExtensionW(GetPath().c_str()));
 	}
-	return m_wstrExt;
+	return m_optPathExt.value();
 }
 
-std::wstring CShellFile::GetPathName()
+const std::wstring& CShellFile::GetPathWithoutExt() const
 {
-	return ::PathFindFileName(GetPath().c_str());
+	if (!m_optPathWithoutExt.has_value()) {
+		std::wstring ret = GetPath();
+		::PathRemoveExtensionW(::GetBuffer(ret, MAX_PATH));
+		::ReleaseBuffer(ret);
+		m_optPathWithoutExt.emplace(ret);
+	}
+	return m_optPathWithoutExt.value();
 }
 
-std::wstring CShellFile::GetPathNameWithoutExt()
+const std::wstring& CShellFile::GetDispName() const
 {
-	std::wstring ret = ::PathFindFileName(GetPath().c_str());
-	::PathRemoveExtension(::GetBuffer(ret, MAX_PATH));
-	::ReleaseBuffer(ret);
-	return ret;
+	return GetPathName();
 }
 
-std::wstring CShellFile::GetPathExt()
+const std::wstring& CShellFile::GetDispNameWithoutExt() const
 {
-	return ::PathFindExtension(GetPath().c_str());
+	return GetPathNameWithoutExt();
 }
 
+const std::wstring& CShellFile::GetDispExt() const
+{
+	return GetPathExt();
+}
 
 void CShellFile::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd)
 {
@@ -137,20 +142,73 @@ void CShellFile::SetExt(const std::wstring& wstrExt, HWND hWnd)
 	HRESULT hr = m_pParentShellFolder->SetNameOf(
 		hWnd,
 		m_childIdl.ptr(),
-		(GetFileNameWithoutExt() + wstrExt).c_str(),
+		(GetDispNameWithoutExt() + wstrExt).c_str(),
 		SHGDN_FORPARSING | SHGDN_INFOLDER,
 		nullptr);
 }
 
-std::wstring CShellFile::GetTypeName()
+const std::wstring& CShellFile::GetTypeName() const
 {
-	if (m_wstrType.empty()) {
+	if (!m_optTypeName.has_value()) {
 		SHFILEINFO sfi = { 0 };
 		::SHGetFileInfo((LPCTSTR)m_childIdl.ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_TYPENAME);
-		m_wstrType = sfi.szTypeName;
+		m_optTypeName.emplace(sfi.szTypeName);
 	}
-	return m_wstrType;
+	return m_optTypeName.value();
 }
+
+const DWORD& CShellFile::GetAttributes() const
+{
+	if (!m_optAttributes.has_value()) {	
+		WIN32_FIND_DATA wfd = { 0 };
+		if (SUCCEEDED(::SHGetDataFromIDList(m_pParentShellFolder, m_childIdl.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
+			m_optAttributes.emplace(wfd.dwFileAttributes);
+		} else {
+			m_optAttributes.emplace(0);
+		}
+	}
+	return m_optAttributes.value();
+}
+
+const SFGAOF& CShellFile::GetSFGAO() const
+{
+	if (!m_optSFGAO.has_value()) {
+		SFGAOF sfgao{SFGAO_CAPABILITYMASK | SFGAO_GHOSTED | SFGAO_LINK | SFGAO_SHARE | SFGAO_FOLDER | SFGAO_FILESYSTEM};
+		m_pParentShellFolder->GetAttributesOf(1, (LPCITEMIDLIST*)(m_childIdl.ptrptr()), &sfgao);
+		m_optSFGAO.emplace(sfgao);
+	}
+	return m_optSFGAO.value();
+}
+
+const std::wstring& CShellFile::GetIconKey() const
+{
+	//if (IsInvalid()) {
+	//	static std::wstring def{L"DEFAULT"};
+	//	return def;
+	//}
+
+	if (!m_optIconKey.has_value()) {
+		static std::set<std::wstring> excludeExtSet({L".exe", L".ico", L".lnk", L"known", L"drive"});
+		std::wstring key = L"DEFAULT";
+		if (!m_absoluteIdl || GetPath().empty()) {
+			key = L"DEFAULT";
+		} else if (!GetPathExt().empty() && excludeExtSet.find(GetPathExt()) == excludeExtSet.end() && GetAttributes() != 0) {
+			key = GetPathExt();
+		} else {
+			key = GetPath();
+		}
+		m_optIconKey.emplace(key);
+	}
+	return m_optIconKey.value();
+}
+
+CIcon CShellFile::GetIcon() const
+{
+	SHFILEINFO sfi = { 0 };
+	::SHGetFileInfo((LPCTSTR)m_absoluteIdl.ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+	return CIcon(sfi.hIcon);
+}
+
 
 //std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetLockIcon()
 //{
@@ -220,24 +278,6 @@ std::pair<FileTimes, FileTimeStatus> CShellFile::GetFileTimes(const std::shared_
 	return m_fileTimes;
 }
 
-UINT CShellFile::GetSFGAO()
-{
-	if (m_sfgao == 0) {
-		m_sfgao = SFGAO_CAPABILITYMASK | SFGAO_GHOSTED | SFGAO_LINK | SFGAO_SHARE | SFGAO_FOLDER | SFGAO_FILESYSTEM;
-		m_pParentShellFolder->GetAttributesOf(1, (LPCITEMIDLIST*)(m_childIdl.ptrptr()), &m_sfgao);
-	}
-	return m_sfgao;
-}
-
-DWORD CShellFile::GetAttributes()
-{
-	if (m_fileAttributes == 0) {	
-		
-		UpdateWIN32_FIND_DATA();
-	}
-	return m_fileAttributes;
-}
-
 bool CShellFile::GetIsExist()
 {
 	auto a = ::PathFileExistsW(GetPath().c_str());
@@ -264,15 +304,6 @@ bool CShellFile::GetIsExist()
 }
 
 
-
-void CShellFile::UpdateWIN32_FIND_DATA()
-{
-	WIN32_FIND_DATA wfd = { 0 };
-	if (!FAILED(::SHGetDataFromIDList(m_pParentShellFolder, m_childIdl.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
-		m_fileAttributes = wfd.dwFileAttributes;
-	}
-}
-
 void CShellFile::ResetSize()
 {
 	m_size = std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::None);
@@ -285,20 +316,19 @@ void CShellFile::ResetTime()
 
 void CShellFile::Reset()
 {
-	m_wstrPath.clear();
-	m_wstrFileNameWithoutExt.clear();
-	m_wstrFileName.clear();
-	m_wstrExt.clear();
-	m_wstrType.clear();
-
-	m_fileAttributes = 0;
-	m_sfgao = 0;
+	ResetOpts();
 
 	ResetSize();
 	ResetTime();
 }
 
-bool CShellFile::IsDirectory()
+bool CShellFile::IsInvalid() const
+{
+	return !::PathFileExists(GetPath().c_str());
+}
+
+
+bool CShellFile::IsDirectory() const
 {
 	return GetAttributes() & FILE_ATTRIBUTE_DIRECTORY;
 }
@@ -314,6 +344,20 @@ void CShellFile::Execute(const wchar_t* lpVerb)
 
 	::ShellExecuteEx(&sei);
 }
+
+void CShellFile::Load(const std::wstring& path)
+{
+	m_optPath.emplace(path);
+	if (path.empty() || path[0] != L':' && !::PathFileExistsW(path.c_str())) {
+		//Invalid
+	} else {
+		m_absoluteIdl = CIDL(path.c_str());
+		m_parentIdl = m_absoluteIdl.CloneParentIDL();
+		m_childIdl = m_absoluteIdl.CloneLastID();
+		m_pParentShellFolder = shell::DesktopBindToShellFolder(m_parentIdl);
+	}
+}
+
 void CShellFile::Open()
 {
 	Execute(nullptr);

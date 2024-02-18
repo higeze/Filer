@@ -46,6 +46,8 @@ CToDoDoc::CToDoDoc()
 
 void CToDoDoc::Open(const std::wstring& path)
 {
+	CShellFile::Load(path);
+
 	if (::PathFileExists(path.c_str())){
 		Path.set(path);
 		Tasks.clear();

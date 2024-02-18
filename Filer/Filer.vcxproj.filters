@@ -68,6 +68,9 @@
     <Filter Include="HiLib\ToolBar">
       <UniqueIdentifier>{482542bb-3fb4-4dea-9ce4-d93567aa2696}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HiLib\Network">
+      <UniqueIdentifier>{e30c5da6-017b-461b-a047-68d77f42ef13}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -385,9 +388,6 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\Scroll.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="FileTimeArgs.h">
-      <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="FileIconNameCell.h">
       <Filter>Filer</Filter>
@@ -987,6 +987,12 @@
     <ClInclude Include="..\HiLib\ToolBar.h">
       <Filter>HiLib\ToolBar</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\NetworkMessanger.h">
+      <Filter>HiLib\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\FileTimeArgs.h">
+      <Filter>HiLib\Shell</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1463,6 +1469,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\ToolBar.cpp">
       <Filter>HiLib\ToolBar</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\NetworkMessanger.cpp">
+      <Filter>HiLib\Network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

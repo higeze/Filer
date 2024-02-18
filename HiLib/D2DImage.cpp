@@ -5,7 +5,7 @@ const CComPtr<IWICBitmapDecoder>& CD2DImage::GetDecoder() const
     if (!m_optDecoder.has_value()) {
         CComPtr<IWICBitmapDecoder> pDecoder;
         FAILED_THROW(GetFactory()->CreateDecoderFromFilename(
-            m_path.c_str()
+            GetPath().c_str()
             , NULL
             , GENERIC_READ
             , WICDecodeMetadataCacheOnLoad
@@ -184,7 +184,8 @@ CComPtr<ID2D1Bitmap1> CD2DImage::GetClipBitmap(const CComPtr<ID2D1DeviceContext>
 
 void CD2DImage::Open(const std::wstring& path)
 {
-    m_path = path;
+    CShellFile::Load(path);
+
     m_optDecoder.reset();
     m_optFrameDecode.reset();
     m_optSizeU.reset();
@@ -221,7 +222,8 @@ void CD2DImage::Open(const std::wstring& path)
 
 void CD2DImage::Close() 
 {
-    m_path = L"";
+    CShellFile::ResetOpts();
+
     m_optDecoder.reset();
     m_optFrameDecode.reset();
     m_optSizeU.reset();

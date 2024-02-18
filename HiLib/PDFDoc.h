@@ -4,12 +4,13 @@
 #include "reactive_property.h"
 #include "JsonSerializer.h"
 #include "FPdfDocument.h"
+#include "ShellFile.h"
 
 class CD2DWWindow;
 class CPDFViewport;
 class CPDFPage;
 
-class CPDFDoc
+class CPDFDoc: public CShellFile
 {
 public:
 	static void Init();
@@ -82,8 +83,21 @@ public:
 	CPDFDoc Extract(const std::wstring& page_indices) const;
 	CPDFDoc Clone() const;
 
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
-		CPDFDoc,
-		Path,
-		Password)
+	//NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
+	//	CPDFDoc,
+	//	Path,
+	//	Password)
+public:
+	friend void to_json(json& j, const CPDFDoc& o)
+	{
+		j["Path"] = o.Path;
+		j["Password"] = o.Password;
+	}
+
+	friend void from_json(const json& j, CPDFDoc& o)
+	{
+		get_to(j, "Path", o.Path);
+		get_to(j, "Password", o.Password);
+		o.Load(*o.Path);
+	}
 };

@@ -320,11 +320,13 @@
     <ClInclude Include="..\HiLib\DriveFolder.h" />
     <ClInclude Include="..\HiLib\FileSizeArgs.h" />
     <ClInclude Include="..\HiLib\FileStatus.h" />
+    <ClInclude Include="..\HiLib\FileTimeArgs.h" />
     <ClInclude Include="..\HiLib\FPDFFormHandle.h" />
     <ClInclude Include="..\HiLib\KeyTraceEventSink.h" />
     <ClInclude Include="..\HiLib\KnownFolder.h" />
     <ClInclude Include="..\HiLib\KnownFolderManager.h" />
     <ClInclude Include="..\HiLib\MyGdiplusHelper.h" />
+    <ClInclude Include="..\HiLib\NetworkMessanger.h" />
     <ClInclude Include="..\HiLib\notify_container_changed.h" />
     <ClInclude Include="..\HiLib\PDFBitmapDrawer.h" />
     <ClInclude Include="..\HiLib\D2DThumbnailDrawer.h" />
@@ -519,7 +521,6 @@
     <ClInclude Include="FilerBindGridView.h" />
     <ClInclude Include="FilerGridViewProperty.h" />
     <ClInclude Include="FilerGridViewWnd.h" />
-    <ClInclude Include="FileTimeArgs.h" />
     <ClInclude Include="KnownFolderManager.h" />
     <ClInclude Include="LauncherGridView.h" />
     <ClInclude Include="LauncherRow.h" />
@@ -600,6 +601,7 @@
     <ClCompile Include="..\HiLib\KnownFolder.cpp" />
     <ClCompile Include="..\HiLib\MyClipboard.cpp" />
     <ClCompile Include="..\HiLib\MyGdiplusHelper.cpp" />
+    <ClCompile Include="..\HiLib\NetworkMessanger.cpp" />
     <ClCompile Include="..\HiLib\PDFBitmapDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DThumbnailDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DWDialog.cpp" />

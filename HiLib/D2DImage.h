@@ -2,14 +2,12 @@
 #include "reactive_property.h"
 #include "Direct2DWrite.h"
 #include "D2DWTypes.h"
+#include "ShellFile.h"
 #include "getter_macro.h"
 
-class CD2DImage
+class CD2DImage: public CShellFile
 {
 private:
-	std::wstring m_path;
-	//CComPtr<ID2D1Bitmap1> m_pBitmap;
-
 	DECLARE_LAZY_GETTER(CComPtr<IWICImagingFactory2>, Factory);
 
 	DECLARE_LAZY_GETTER(CComPtr<IWICBitmapDecoder>, Decoder);
@@ -20,22 +18,19 @@ private:
 	//DECLARE_LAZY_GETTER(CComPtr<IWICBitmapClipper>, Clipper);
 	//DECLARE_LAZY_GETTER(CComPtr<IWICFormatConverter>, FormatConverter);
 
-
-
 public:
-	bool IsValid() const { return ::PathFileExists(m_path.c_str()); }
-	const std::wstring& GetPath() const { return m_path; }
+	bool IsValid() const { return ::PathFileExists(m_optPath->c_str()); }
 	CComPtr<ID2D1Bitmap1> GetBitmap(const CComPtr<ID2D1DeviceContext>& pContext, const FLOAT& scale) const;
 	CComPtr<ID2D1Bitmap1> GetClipBitmap(const CComPtr<ID2D1DeviceContext>& pContext, const FLOAT& scale, const CRectU& rcClip, std::function<bool()> cancelz = nullptr) const;
 
 	//const CComPtr<ID2D1Bitmap1>& GetBitmapPtr() const { return m_pBitmap; }
 
 	CD2DImage(const std::wstring& path = std::wstring())
-		:m_path(path)/*, m_pBitmap()*/{}
+		:CShellFile(path)/*, m_pBitmap()*/{}
 	virtual ~CD2DImage() = default;
 	CD2DImage(const CD2DImage& rhs)
 	{
-		m_path = rhs.m_path;
+		CShellFile::Load(rhs.GetPath());
 		m_optDecoder.reset();
 		m_optFrameDecode.reset();
 		m_optSizeU.reset();
@@ -44,7 +39,7 @@ public:
 	
 	CD2DImage& operator=(const CD2DImage& rhs)
 	{
-		m_path = rhs.m_path;
+		CShellFile::Load(rhs.GetPath());
 		m_optDecoder.reset();
 		m_optFrameDecode.reset();
 		m_optSizeU.reset();
@@ -54,7 +49,7 @@ public:
 
 	bool operator==(const CD2DImage& rhs) const
 	{
-		return m_path == rhs.m_path;
+		return GetPath() == rhs.GetPath();
 		//&&
 		//m_pBitmap == rhs.m_pBitmap;
 	}
@@ -69,11 +64,13 @@ public:
 
 	friend void to_json(json& j, const CD2DImage& o)
 	{
-		j["Path"] = o.m_path;
+		j["Path"] = o.GetPath();
 	}
 	friend void from_json(const json& j, CD2DImage& o)
 	{
-		j.at("Path").get_to(o.m_path);
+		std::wstring path;
+		j.at("Path").get_to(path);
+		o.CShellFile::Load(path);
 	}
 
 };

@@ -130,11 +130,33 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	m_spHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
 	m_prevScale(0.f),
 	m_initialScaleMode(InitialScaleMode::Width),
+	Dummy(std::make_shared<int>(0)),
 	PDF(),
 	Scale(0.f),
 	CurrentPage(0),
 	TotalPage(0),
-	Find(){}
+	Find()
+{
+	PDF.subscribe([this](auto doc) {
+		//Clear Current
+		Clear();
+		//Close Current
+		PDF.get_unconst()->Close();
+		//New FileIsInUse
+		m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(GetWndPtr()->m_hWnd, PDF->Path->c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
+		GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [pdf = PDF](UINT,LPARAM,WPARAM,BOOL&)->LRESULT
+		{
+			pdf.get_unconst()->Close();
+			return 0;
+		});
+		//Open
+		if (!doc.IsOpen()) {
+			OpenWithPasswordHandling(*doc.Path);
+		} else {
+			//Do nothing
+		}
+	}, Dummy);
+}
 
 CPdfView::~CPdfView() = default;
 

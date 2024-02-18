@@ -1,12 +1,13 @@
 #pragma once
 #include "Task.h"
 #include "FileStatus.h"
+#include "ShellFile.h"
 
 #include "JsonSerializer.h"
 #include "reactive_property.h"
 #include "reactive_vector.h"
 
-class CToDoDoc
+class CToDoDoc: public CShellFile
 {
 public:
 	std::shared_ptr<int> Dummy;

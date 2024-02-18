@@ -32,7 +32,8 @@ int FormAlert(IPDF_JSPLATFORM*, FPDF_WIDESTRING, FPDF_WIDESTRING, int, int)
 }
 
 CPDFDoc::CPDFDoc()
-	:Path(),
+	:CShellFile(),
+	Path(),
 	Password(),
 	IsDirty(false),
 	Dummy(std::make_shared<int>(0))
@@ -76,6 +77,7 @@ CPDFDoc& CPDFDoc::operator=(const CPDFDoc& doc)
 		Path.set(*doc.Path);
 		Password.set(*doc.Password);
 		IsDirty.set(*doc.IsDirty);
+		Load(*Path);
 	}
 
 	return *this;
@@ -196,6 +198,8 @@ int CPDFDoc::GetPageIndex(const CPDFPage* pPage) const
 
 unsigned long CPDFDoc::Open(const std::wstring& path, const std::wstring& password)
 {
+	CShellFile::Load(path);
+
 	m_pDoc = std::make_unique<CFPDFDocument>();
 	Path.set(path);
 	Password.set(password);
@@ -210,7 +214,7 @@ unsigned long CPDFDoc::Open(const std::wstring& path, const std::wstring& passwo
     if (!*m_pDoc) {
         return err;
 	} else {
-		m_optPages.reset();
+		//m_optPages.reset();
 
 		return FPDF_ERR_SUCCESS;
 	}
@@ -218,7 +222,7 @@ unsigned long CPDFDoc::Open(const std::wstring& path, const std::wstring& passwo
 
 void CPDFDoc::Close()
 {
-	m_pDoc.reset();
+	CShellFile::ResetOpts();
 
 	m_optFileVersion.reset();
 	m_optPageCount.reset();
@@ -226,6 +230,8 @@ void CPDFDoc::Close()
 	m_optPageRects.reset();
 	m_optFormHandlePtr.reset();
 	m_optPages.reset();
+	m_pDoc.reset();
+
 	Dummy.reset();
 }
 

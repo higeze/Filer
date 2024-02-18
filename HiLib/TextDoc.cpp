@@ -3,7 +3,8 @@
 #include "TextEnDecoder.h"
 
 CTextDoc::CTextDoc(const std::wstring& path, const encoding_type& encoding)
-	:Path(path),
+	:CShellFile(path),
+	Path(path),
 	Encoding(encoding),
 	Text(L""),
 	Status(FileStatus::None),
@@ -18,6 +19,8 @@ CTextDoc::CTextDoc(const std::wstring& path, const encoding_type& encoding)
 
 void CTextDoc::Open(const std::wstring& path, const encoding_type& encode)
 {
+	CShellFile::Load(path);
+
 	if (::PathFileExists(path.c_str())) {
 		Path.set(path);
 

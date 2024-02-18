@@ -222,11 +222,13 @@ void CPDFEditor::OnKeyDown(const KeyDownEvent& e)
 
 void CPDFEditor::Open()
 {
+	m_spPDFView->GetPDFDrawer()->WaitAll();
 	OpenCommand.execute(GetWndPtr()->m_hWnd);
 }
 
 void CPDFEditor::OpenAs()
 {
+	m_spPDFView->GetPDFDrawer()->WaitAll();
 	OpenAsCommand.execute(GetWndPtr()->m_hWnd);
 }
 

@@ -148,7 +148,7 @@ public:
 	virtual std::wstring GetString() override
 	{
 		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
-		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetFileNameWithoutExt();
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetDispNameWithoutExt();
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override

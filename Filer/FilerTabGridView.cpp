@@ -184,7 +184,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		{
 
 			if (auto p = std::dynamic_pointer_cast<FilerTabData>(pTabData)) {
-				return p->FolderPtr->GetFileNameWithoutExt().c_str();
+				return p->FolderPtr->GetDispNameWithoutExt().c_str();
 			} else {
 				return L"nullptr";
 			}
@@ -259,17 +259,33 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderIconTemplate.emplace(typeid(FilerTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
 
+			//if (auto p = std::dynamic_pointer_cast<FilerTabData>(pTabData)) {
+			//	GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), p->FolderPtr->GetAbsoluteIdl(), p->FolderPtr->GetPath(), p->FolderPtr->GetDispExt(), p->FolderPtr->GetAttributes(), updated);
+			//} else {
+			//	/*return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();*/
+			//}
 			if (auto p = std::dynamic_pointer_cast<FilerTabData>(pTabData)) {
-				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), p->FolderPtr->GetAbsoluteIdl(), p->FolderPtr->GetPath(), p->FolderPtr->GetDispExt(), p->FolderPtr->GetAttributes(), updated);
+				if (p->FolderPtr->IsInvalid()) {
+					GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), 
+						CIDL(), std::wstring(), std::wstring(), 0, updated);
+				} else {
+					GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(),
+						p->FolderPtr->GetAbsoluteIdl(), p->FolderPtr->GetPath(), p->FolderPtr->GetDispExt(), p->FolderPtr->GetAttributes(), updated);
+				}
 			} else {
-				/*return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();*/
+				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
 		});
 	m_itemsHeaderIconTemplate.emplace(typeid(ToDoTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
 			if (auto p = std::dynamic_pointer_cast<ToDoTabData>(pTabData)) {
-				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(*p->Doc->Path);
-				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
+				if (p->Doc->IsInvalid()) {
+					GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), 
+						CIDL(), std::wstring(), std::wstring(), 0, updated);
+				} else {
+					GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(),
+						p->Doc->GetAbsoluteIdl(), p->Doc->GetPath(), p->Doc->GetDispExt(), p->Doc->GetAttributes(), updated);
+				}
 			} else {
 				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
@@ -277,8 +293,13 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderIconTemplate.emplace(typeid(TextTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
 			if (auto p = std::dynamic_pointer_cast<TextTabData>(pTabData)) {
-				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(*p->Doc->Path);
-				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
+				if (p->Doc->IsInvalid()) {
+					GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), 
+						CIDL(), std::wstring(), std::wstring(), 0, updated);
+				} else {
+					GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(),
+						p->Doc->GetAbsoluteIdl(), p->Doc->GetPath(), p->Doc->GetDispExt(), p->Doc->GetAttributes(), updated);
+				}
 			} else {
 				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
@@ -286,8 +307,15 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderIconTemplate.emplace(typeid(PdfTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
 			if (auto p = std::dynamic_pointer_cast<PdfTabData>(pTabData)) {
-				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(*p->Doc->Path);
-				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
+				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(
+					GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), p->Doc.operator->(), updated);
+				//if (p->Doc->IsInvalid()) {
+				//	GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), 
+				//		CIDL(), std::wstring(), std::wstring(), 0, updated);
+				//} else {
+				//	GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(),
+				//		p->Doc->GetAbsoluteIdl(), p->Doc->GetPath(), p->Doc->GetDispExt(), p->Doc->GetAttributes(), updated);
+				//}
 			} else {
 				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
@@ -296,8 +324,13 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	m_itemsHeaderIconTemplate.emplace(typeid(ImageTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
 			if (auto p = std::dynamic_pointer_cast<ImageTabData>(pTabData)) {
-				auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(p->Image->GetPath());
-				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
+				if (p->Image->IsInvalid()) {
+					GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), 
+						CIDL(), std::wstring(), std::wstring(), 0, updated);
+				} else {
+					GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(),
+						p->Image->GetAbsoluteIdl(), p->Image->GetPath(), p->Image->GetDispExt(), p->Image->GetAttributes(), updated);
+				}
 			} else {
 				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
@@ -398,7 +431,8 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			spViewModel->HScroll.binding(spView->GetPDFViewPtr()->GetHScrollPtr()->Position));
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
-		spView->GetPDFViewPtr()->Reset(spViewModel->Doc);
+		//spView->GetPDFViewPtr()->Reset(spViewModel->Doc);
+		m_pdfConnections.push_back(spViewModel->Doc.binding(spView->GetPDFViewPtr()->PDF));
 
 		return spView;
 	});

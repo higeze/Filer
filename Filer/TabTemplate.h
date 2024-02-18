@@ -41,7 +41,7 @@ class CFilerTabTemplate: public CTabTemplate
 	virtual std::wstring Header() const override
 	{
 		if (auto p = std::dynamic_pointer_cast<FilerTabData>(m_pTabData)) {
-			return p->FolderPtr->GetFileNameWithoutExt().c_str();
+			return p->FolderPtr->GetDispNameWithoutExt().c_str();
 		} else {
 			return L"nullptr";
 		}

@@ -7,30 +7,6 @@
 CKnownDriveBaseFolder::CKnownDriveBaseFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder)
 	:CShellFolder(pParentShellFolder, parentIdl, childIdl, pShellFolder){}
 
-std::wstring CKnownDriveBaseFolder::GetFileNameWithoutExt()
-{
-	if (m_wstrFileNameWithoutExt.empty()) {
-		STRRET strret;
-		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
-		m_wstrFileNameWithoutExt = m_childIdl.strret2wstring(strret);
-	}
-	return m_wstrFileNameWithoutExt;
-}
-
-std::wstring CKnownDriveBaseFolder::GetDispName()
-{
-	if (m_wstrFileName.empty()) {
-		STRRET strret;
-		m_pParentShellFolder->GetDisplayNameOf(m_childIdl.ptr(), SHGDN_NORMAL, &strret);
-		m_wstrFileName = m_childIdl.strret2wstring(strret);
-	}
-	return m_wstrFileName;
-}
-
-
-
-
-
 
 
 CKnownFolder::CKnownFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IKnownFolder>& pKnownFolder, CComPtr<IShellFolder> pShellFolder)
@@ -68,12 +44,12 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CKnownFolder::GetSize(const std::share
 	return m_size;
 }
 
-std::wstring CKnownFolder::GetDispExt()
+const std::wstring& CKnownFolder::GetDispExt() const
 {
-	if (m_wstrExt.empty()) {
-		m_wstrExt = L"known";
+	if (!m_optDispExt.has_value()) {
+		m_optDispExt.emplace(L"known");
 	}
-	return m_wstrExt;
+	return m_optDispExt.value();
 }
 
 

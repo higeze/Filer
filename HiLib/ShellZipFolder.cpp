@@ -3,17 +3,18 @@
 CShellZipFolder::CShellZipFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl)
 	:CShellFolder(pParentShellFolder, parentIdl, childIdl){}
 
-std::wstring CShellZipFolder::GetFileNameWithoutExt()
-{
-	return CShellFile::GetFileNameWithoutExt();
-}
 
-std::wstring CShellZipFolder::GetDispName()
+const std::wstring& CShellZipFolder::GetDispName() const
 {
 	return CShellFile::GetDispName();
 }
 
-std::wstring CShellZipFolder::GetDispExt()
+const std::wstring& CShellZipFolder::GetDispNameWithoutExt() const
+{
+	return CShellFile::GetDispNameWithoutExt();
+}
+
+const std::wstring& CShellZipFolder::GetDispExt() const
 {
 	return CShellFile::GetDispExt();
 }
