@@ -141,7 +141,7 @@ public:
 	{
 		unbinding(dst);
 
-		dst.set(this->operator*());
+		dst.force_notify_set(this->operator*());
 
 		return std::make_pair(
 			dst.subscribe(&reactive_property<T>::observe_property, this->m_preactive),

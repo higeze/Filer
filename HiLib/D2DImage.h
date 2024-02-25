@@ -19,7 +19,7 @@ private:
 	//DECLARE_LAZY_GETTER(CComPtr<IWICFormatConverter>, FormatConverter);
 
 public:
-	bool IsValid() const { return ::PathFileExists(m_optPath->c_str()); }
+	bool IsValid() const { return ::PathFileExists(GetPath().c_str()); }
 	CComPtr<ID2D1Bitmap1> GetBitmap(const CComPtr<ID2D1DeviceContext>& pContext, const FLOAT& scale) const;
 	CComPtr<ID2D1Bitmap1> GetClipBitmap(const CComPtr<ID2D1DeviceContext>& pContext, const FLOAT& scale, const CRectU& rcClip, std::function<bool()> cancelz = nullptr) const;
 

@@ -52,6 +52,7 @@ public:
 	/* Static */
 	/**********/
 public:
+	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<FLOAT> Scale;
 	reactive_property_ptr<CD2DImage> Image;
 	reactive_command_ptr<void> OpenCommand;

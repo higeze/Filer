@@ -33,8 +33,14 @@ CImageView::CImageView(CD2DWControl* pParentControl, const std::shared_ptr<Image
 	m_spVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr)),
 	m_spHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
 	Rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(ImageScaleMode::Width),
-	Image(CD2DImage()), m_imgDrawer(std::make_unique<CImageDrawer>()), Scale(1.f)
-{}
+	Dummy(std::make_shared<int>(0)), Image(CD2DImage()), m_imgDrawer(std::make_unique<CImageDrawer>()), Scale(1.f)
+{
+	Image.subscribe([this](auto doc) {
+		Open(doc.GetPath());
+	}, Dummy);
+
+
+}
 
 CImageView::~CImageView() = default;
 
@@ -71,11 +77,16 @@ void CImageView::Open(const std::wstring& path)
 				default:
 					Scale.set(1.f);
 			}
+		} else if (*Scale < 0) {
+			auto b = 1.f;
 		}
 	}
 }
 void CImageView::Close()
 {
+	m_imgDrawer->WaitAll();
+	m_imgDrawer->Clear();
+
 	GetWndPtr()->RemoveMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE);
 	m_pFileIsInUse.Release();
 	Image.get_unconst()->Close();

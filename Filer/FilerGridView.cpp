@@ -551,7 +551,7 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 	{
 	case 'R':
 		if (::GetAsyncKeyState(VK_CONTROL)) {
-			OpenFolder(m_spFolder);
+			Reload();
 			(*e.HandledPtr) = true;
 		}
 		break;

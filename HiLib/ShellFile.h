@@ -151,6 +151,8 @@ private:
 
 class CShellInvalidFile :public CShellFile
 {
+private:
+	std::wstring m_null = std::wstring();
 public:
 	//Constructor
 	CShellInvalidFile() {}
@@ -158,10 +160,10 @@ public:
 	//Destructor
 	virtual ~CShellInvalidFile(){}
 
-	virtual const std::wstring& GetPath() const override{ return std::wstring(); }
-	virtual const std::wstring& GetDispNameWithoutExt() const override { return std::wstring(); }
-	virtual const std::wstring& GetDispName() const override { return std::wstring(); }
-	virtual const std::wstring& GetDispExt() const override { return std::wstring(); }
+	virtual const std::wstring& GetPath() const override{ return m_null; }
+	virtual const std::wstring& GetDispNameWithoutExt() const override { return m_null; }
+	virtual const std::wstring& GetDispName() const override { return m_null; }
+	virtual const std::wstring& GetDispExt() const override { return m_null; }
 	virtual void Open() override {/* Do Nothing */ }
 
 	//Icon

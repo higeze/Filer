@@ -52,6 +52,21 @@ void CFavoritesGridView::OnCreate(const CreateEvt& e)
 	SubmitUpdate();
 }
 
+void CFavoritesGridView::OnKeyDown(const KeyDownEvent& e)
+{
+	m_keepEnsureVisibleFocusedCell = false;
+	switch (e.Char) {
+		case 'R':
+			if (::IsKeyDown(VK_CONTROL)) {
+				Reload();
+				(*e.HandledPtr) = true;
+			}
+			break;
+		default:
+			CBindGridView::OnKeyDown(e);
+	}
+}
+
 void CFavoritesGridView::OpenFavorites()
 {
 	LOG_THIS_1("CFavoritesGridView::OpenFavorites");

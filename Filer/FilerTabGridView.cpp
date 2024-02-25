@@ -445,14 +445,16 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 
 		//Path
 		m_imageConnections.push_back(
-			spViewModel->Image.binding(spView->GetImageViewPtr()->Image),
 			spView->GetImageViewPtr()->Image.subscribe([this](auto) { UpdateHeaderRects(); }, shared_from_this()),
 			spViewModel->Scale.binding(spView->GetImageViewPtr()->Scale),
 			spViewModel->VScroll.binding(spView->GetImageViewPtr()->GetVScrollPtr()->Position),
 			spViewModel->HScroll.binding(spView->GetImageViewPtr()->GetHScrollPtr()->Position));
 
-		spView->GetImageViewPtr()->Open(spViewModel->Image->GetPath());
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
+
+		m_imageConnections.push_back(spViewModel->Image.binding(spView->GetImageViewPtr()->Image));
+
+		//spView->GetImageViewPtr()->Open(spViewModel->Image->GetPath());
 
 		return spView;
 	});

@@ -1,4 +1,9 @@
 #pragma once
+//#include <boost/asio.hpp>
+//#include <boost/date_time/posix_time/posix_time.hpp>
+//#include <boost/asio/deadline_timer.hpp>
+//#include <boost/asio/io_service.hpp>
+
 #include "MyWnd.h"
 #include "MyFriendSerializer.h"
 #include "MyRect.h"
@@ -79,6 +84,11 @@ class CFilerWnd:public CD2DWWindow
 private:
 	static std::vector<std::wstring> imageExts;
 	static std::vector<std::wstring> previewExts;
+
+	//boost::asio::io_service m_reloadIosv;
+	//boost::asio::io_service::work m_reloadWork;
+	//boost::asio::deadline_timer m_reloadTimer;
+	CDeadlineTimer m_reloadTimer;
 
 	std::unique_ptr<CNetworkMessanger> m_pNetworkMessanger;
 
@@ -161,6 +171,7 @@ public:
 	virtual LRESULT OnDestroy(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnConnectivityChanged(UINT uiMsg,WPARAM wParam,LPARAM lParam,BOOL& bHandled);
 	virtual LRESULT OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	virtual void Reload();
 
 	/**************/
 	/* UI Message */

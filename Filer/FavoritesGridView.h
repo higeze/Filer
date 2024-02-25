@@ -27,6 +27,7 @@ public:
 	std::shared_ptr<CFavoritesProperty>& GetFavoritesProp() { return m_spFavoritesProp; }
 
 	virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnKeyDown(const KeyDownEvent& e) override;
 	
 	void OnCellLButtonDblClk(const CellEventArgs& e);
 	void OpenFavorites();

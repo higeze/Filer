@@ -38,6 +38,7 @@
 
 #include "FileOperationDlg.h"
 #include "NetworkMessanger.h"
+#include "Dispatcher.h"
 
 #ifdef USE_PYTHON_EXTENSION
 #include "BoostPythonHelper.h"
@@ -49,6 +50,7 @@ std::vector<std::wstring> CFilerWnd::previewExts = {L".docx", L".doc", L".xlsx",
 
 CFilerWnd::CFilerWnd()
 	:CD2DWWindow(),
+	//m_reloadIosv(), m_reloadWork(m_reloadIosv), m_reloadTimer(m_reloadIosv),
 	m_rcWnd(0, 0, 1000, 600), 
 	m_rcPropWnd(0, 0, 300, 400),
 	SplitterLeft(0.f),
@@ -79,6 +81,9 @@ CFilerWnd::CFilerWnd()
 	,m_spPyExProp(std::make_shared<CPythonExtensionProperty>())
 #endif
 {
+	//std::thread th(boost::bind(&boost::asio::io_service::run, &m_reloadIosv));
+	//th.detach();
+
 
 	m_rca
 	.lpszClassName(L"CFilerWnd")
@@ -140,7 +145,6 @@ void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, 
 		//Text
 		if (auto spTxtData = std::dynamic_pointer_cast<TextTabData>(spObsData);
 			spTxtData && boost::iequals(spFile->GetPathExt(), L".txt")) {
-			spTxtData->Doc.get_unconst()->Open(spFile->GetPath());
 		//PDF
 		} else if (auto spPdfData = std::dynamic_pointer_cast<PdfTabData>(spObsData);
 			spPdfData && boost::iequals(spFile->GetPathExt(), L".pdf")) {
@@ -153,7 +157,11 @@ void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, 
 		//Image
 		} else if (auto spImgData = std::dynamic_pointer_cast<ImageTabData>(spObsData);
 			spImgData && std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
-			spImgData->Image.get_unconst()->Open(spFile->GetPath());
+			CD2DImage newDoc(spFile->GetPath());
+			spImgData->Scale.set(-1);
+			spImgData->VScroll.set(0.f);
+			spImgData->HScroll.set(0.f);
+			spImgData->Image.set(newDoc);			
 		//Preview
 		} else if (auto spPrvData = std::dynamic_pointer_cast<PreviewTabData>(spObsData);
 			spPrvData && std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
@@ -721,7 +729,8 @@ void CFilerWnd::OnRect(const RectEvent& e)
 //		::SetFocus(m_spCurView->GetContentWnd()->m_hWnd);
 //	}
 //}
-LRESULT CFilerWnd::OnConnectivityChanged(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+
+void CFilerWnd::Reload()
 {
 	CDriveFolderManager::GetInstance()->Update();
 	m_spLauncher->Reload();
@@ -730,6 +739,27 @@ LRESULT CFilerWnd::OnConnectivityChanged(UINT uMsg, WPARAM wParam, LPARAM lParam
 	m_spLeftView->GetFilerGridViewPtr()->Reload();
 	m_spRightView->GetFilerGridViewPtr()->Reload();
 	InvalidateRect(NULL, FALSE);
+}
+
+LRESULT CFilerWnd::OnConnectivityChanged(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	m_reloadTimer.run([this]()->void {
+		GetDispatcherPtr()->PostInvoke([this] {
+			::OutputDebugStringW(L"Reload\r\n");
+			Reload();
+		});
+	}, std::chrono::milliseconds(2000));
+	//m_reloadTimer.expires_from_now(boost::posix_time::milliseconds(30));
+	//m_reloadTimer.async_wait([this](const boost::system::error_code& error)->void {
+
+	//	if (error == boost::asio::error::operation_aborted) {
+	//	} else {
+	//		GetDispatcherPtr()->PostInvoke([this] {
+	//			Reload();
+	//		});
+	//	}
+	//});
+
 	return 0;
 }
 
@@ -740,13 +770,21 @@ LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 	switch (wParam) {
 		case DBT_DEVICEARRIVAL:
 		case DBT_DEVICEREMOVECOMPLETE:
-			CDriveFolderManager::GetInstance()->Update();
-			m_spLauncher->Reload();
-			m_spLeftFavoritesView->Reload();
-			m_spRightFavoritesView->Reload();
-			m_spLeftView->GetFilerGridViewPtr()->Reload();
-			m_spRightView->GetFilerGridViewPtr()->Reload();
-			InvalidateRect(NULL, FALSE);
+			m_reloadTimer.run([this]()->void {
+				GetDispatcherPtr()->PostInvoke([this] {
+					Reload();
+				});
+			}, std::chrono::milliseconds(2000));
+			//m_reloadTimer.expires_from_now(boost::posix_time::milliseconds(30));
+			//m_reloadTimer.async_wait([this](const boost::system::error_code& error)->void {
+
+			//	if (error == boost::asio::error::operation_aborted) {
+			//	} else {
+			//		GetDispatcherPtr()->PostInvoke([this] {
+			//			Reload();
+			//		});
+			//	}
+			//});
 		default:
 			break;
 	}
