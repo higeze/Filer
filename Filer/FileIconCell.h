@@ -49,7 +49,7 @@ public:
 					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
 				}
 			};
-			pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(pDirect, rc.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(),spFile->GetAttributes(), updated);
+			pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(pDirect, rc.LeftTop(), spFile.get(), updated);
 		}
 	}
 

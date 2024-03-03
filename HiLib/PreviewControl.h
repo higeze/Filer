@@ -3,6 +3,7 @@
 #include "D2DWControl.h"
 #include "reactive_property.h"
 #include "getter_macro.h"
+#include "ShellFile.h"
 //#include "FilerHook.h"
 //#pragma comment(lib, "FilerHook.lib")
 
@@ -37,7 +38,8 @@ public:
 	CPreviewControl(CD2DWControl* pParentControl, const std::shared_ptr<PreviewControlProperty>& pProp);
 	virtual ~CPreviewControl();
 public:
-	reactive_wstring_ptr Path;
+	std::shared_ptr<int> Dummy;
+	reactive_property_ptr<CShellFile> Doc;
 
 	void Open(const std::wstring& path);
 	void Open();

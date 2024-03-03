@@ -78,7 +78,7 @@ public:
 		};
 
 		if (size == 16u) {
-			pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(pDirect, rcPaint.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
+			pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(pDirect, rcPaint.LeftTop(), spFile.get(), updated);
 		} else {
 			pDirect->GetFileThumbnailDrawerPtr()->DrawThumbnailBitmap(pDirect, ThumbnailBmpKey{.Size = size , .Name = spFile->GetPath()}, rcPaint.LeftTop());
 		}

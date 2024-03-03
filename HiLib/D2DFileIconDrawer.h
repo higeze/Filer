@@ -28,15 +28,16 @@ public:
 	bool DrawFileIconBitmap(
 		const CDirect2DWrite* pDirect,
 		const CPointF& dstPoint,
+		const CShellFile* pFile,
+		std::function<void()>&& callback);
+	void Clear();
+private:
+	bool DrawFileIconBitmap(
+		const CDirect2DWrite* pDirect,
+		const CPointF& dstPoint,
 		const CIDL& absoluteIDL,
 		const std::wstring& path,
 		const std::wstring& ext,
 		const DWORD& data,
 		std::function<void()>&& callback);
-	bool DrawFileIconBitmap(
-		const CDirect2DWrite* pDirect,
-		const CPointF& dstPoint,
-		const CShellFile* pFile,
-		std::function<void()>&& callback);
-	void Clear();
 };

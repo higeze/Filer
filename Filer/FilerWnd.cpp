@@ -145,6 +145,7 @@ void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, 
 		//Text
 		if (auto spTxtData = std::dynamic_pointer_cast<TextTabData>(spObsData);
 			spTxtData && boost::iequals(spFile->GetPathExt(), L".txt")) {
+			//TODO
 		//PDF
 		} else if (auto spPdfData = std::dynamic_pointer_cast<PdfTabData>(spObsData);
 			spPdfData && boost::iequals(spFile->GetPathExt(), L".pdf")) {
@@ -165,7 +166,11 @@ void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, 
 		//Preview
 		} else if (auto spPrvData = std::dynamic_pointer_cast<PreviewTabData>(spObsData);
 			spPrvData && std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
-			// TODO PreviewControl to Open
+			CShellFile newDoc(spFile->GetPath());
+			//spPrvData->Scale.set(-1);
+			//spPrvData->VScroll.set(0.f);
+			//spPrvData->HScroll.set(0.f);
+			spPrvData->Doc.set(newDoc);	
 		}
 
 		//std::shared_ptr<TabData> spNewData;

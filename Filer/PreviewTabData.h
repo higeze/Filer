@@ -11,14 +11,14 @@
 
 struct PreviewTabData :public TabData
 {
-	reactive_wstring_ptr Path;
+	reactive_property_ptr<CShellFile> Doc;
 
 	PreviewTabData(const std::wstring& path = std::wstring())
-		:TabData(), Path(path){}
+		:TabData(), Doc(path){}
 
 	virtual ~PreviewTabData() = default;
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
 		PreviewTabData,
-		Path)
+		Doc)
 };

@@ -13,8 +13,15 @@
 
 CPreviewControl::CPreviewControl(CD2DWControl* pParentControl, const std::shared_ptr<PreviewControlProperty>& pProp)
 	:CD2DWHostWndControl(pParentControl),
+	Dummy(std::make_shared<int>(0)),
+	Doc(),
 	m_pWnd(std::make_unique<CPreviewWnd>()),
-    m_pProp(pProp){}
+    m_pProp(pProp)
+{
+	Doc.subscribe([this](auto doc) {
+		Open(doc.GetPath());
+	}, Dummy);
+}
 
 CPreviewControl::~CPreviewControl() = default;
 

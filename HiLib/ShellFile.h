@@ -4,6 +4,7 @@
 #include "MyIcon.h"
 #include "IDL.h"
 #include "ShellFunction.h"
+#include "JsonSerializer.h"
 #include <future>
 #include <chrono>
 #include <optional>
@@ -80,7 +81,12 @@ public:
 	CShellFile() {}
 	CShellFile(const std::wstring& path);
 	CShellFile(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl);
-	//CShellFile(const std::wstring& path);
+	
+	//Operator
+	bool operator != (const CShellFile& rhs) const
+	{
+		return GetPath() != rhs.GetPath();
+	}
 
 	//Destructor
 	virtual ~CShellFile();
@@ -146,6 +152,17 @@ private:
 
 	//std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetLockIcon();
 	//void SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& icon);
+
+	friend void to_json(json& j, const CShellFile& o)
+	{
+		j["Path"] = o.GetPath();
+	}
+	friend void from_json(const json& j, CShellFile& o)
+	{
+		std::wstring path;
+		j.at("Path").get_to(path);
+		o.CShellFile::Load(path);
+	}
 };
 
 
