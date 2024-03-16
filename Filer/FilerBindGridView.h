@@ -68,8 +68,7 @@ public:
 	virtual void Open(const std::shared_ptr<CShellFile>& spFile)
 	{
 		if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-			spFolder->AddToRecentDocs();
-			OpenFolder(spFolder);
+			OpenFolder(spFolder, false);
 		} else {
 			spFile->AddToRecentDocs();
 			OpenFile(spFile);
@@ -81,7 +80,7 @@ public:
 		spFile->Open();
 	}	
 	
-	virtual void OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
+	virtual void OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, bool isReload)
 	{
 		//auto pWnd = new CFilerGridView(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
 

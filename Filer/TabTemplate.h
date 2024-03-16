@@ -41,7 +41,7 @@ class CFilerTabTemplate: public CTabTemplate
 	virtual std::wstring Header() const override
 	{
 		if (auto p = std::dynamic_pointer_cast<FilerTabData>(m_pTabData)) {
-			return p->FolderPtr->GetDispNameWithoutExt().c_str();
+			return p->Folder->GetDispNameWithoutExt().c_str();
 		} else {
 			return L"nullptr";
 		}
@@ -58,7 +58,7 @@ class CFilerTabTemplate: public CTabTemplate
 
 		if (auto p = std::dynamic_pointer_cast<FilerTabData>(m_pTabData)) {
 			pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(
-				pDirect, rect.LeftTop(), p->FolderPtr->GetAbsoluteIdl(), p->FolderPtr->GetPath(), p->FolderPtr->GetDispExt(), p->FolderPtr->GetAttributes(), updated);
+				pDirect, rect.LeftTop(), p->Folder->GetAbsoluteIdl(), p->Folder->GetPath(), p->Folder->GetDispExt(), p->Folder->GetAttributes(), updated);
 		} else {
 			//Do nothing
 		}	
@@ -71,7 +71,7 @@ class CFilerTabTemplate: public CTabTemplate
 	virtual void Attach(const std::shared_ptr<TabData>& pTabData) 
 	{
 		if (auto p = std::dynamic_pointer_cast<FilerTabData>(m_pTabData)) {
-			m_spFilerGridView->OpenFolder(p->FolderPtr);
+			m_spFilerGridView->OpenFolder(p->Folder);
 			//m_spFilerGridView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
 			//m_spFilerGridView->PostUpdate(Updates::All);
 			//m_spFilerGridView->SubmitUpdate();

@@ -3,7 +3,7 @@
 #include "MyRect.h"
 #include "MyFont.h"
 #include "ShellFileFactory.h"
-#include "FilerGridView.h"
+#include "FilerView.h"
 #include "FilerGridViewProperty.h"
 #include "ToDoGridView.h"
 #include "TabControl.h"
@@ -26,7 +26,7 @@
 #include "PreviewTabData.h"
 #include "ToDoTabData.h"
 
-class CFilerGridView;
+class CFilerView;
 struct FilerGridViewProperty;
 struct GridViewProperty;
 class CToDoGridView;
@@ -65,6 +65,7 @@ public:
 		const std::shared_ptr<PreviewControlProperty>& spPreviewControlProp = nullptr);
 	virtual ~CFilerTabGridView();
 
+	scoped_connections m_filerConnections;
 	scoped_connections m_textConnections;
 	scoped_connections m_pdfConnections;
 	scoped_connections m_imageConnections;
@@ -78,7 +79,7 @@ public:
 	/* Getter */
 	/**********/
 
-	SHAREDPTR_GETTER(CFilerGridView, FilerGridView)
+	SHAREDPTR_GETTER(CFilerView, FilerView)
 	SHAREDPTR_GETTER(CEditor, TextView)
 	SHAREDPTR_GETTER(CPDFEditor, PdfView)
 	SHAREDPTR_GETTER(CImageEditor, ImageView)
@@ -117,7 +118,7 @@ public:
 
 		to_json(j, static_cast<const CTabControl&>(o));
 
-		j["FilerView"] = o.m_spFilerGridView;
+		j["FilerView"] = o.m_spFilerView;
 		j["ToDoView"] = o.m_spToDoGridView;
 	}
 
@@ -132,7 +133,7 @@ public:
 
 		from_json(j, static_cast<CTabControl&>(o));
 
-		get_to(j, "FilerView", o.m_spFilerGridView);
+		get_to(j, "FilerView", o.m_spFilerView);
 		get_to(j, "ToDoView", o.m_spToDoGridView);
 	}
 };

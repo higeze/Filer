@@ -131,7 +131,7 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 	m_prevScale(0.f),
 	m_initialScaleMode(InitialScaleMode::Width),
 	Dummy(std::make_shared<int>(0)),
-	PDF(),
+	PDF(std::make_shared<CPDFDoc>()),
 	Scale(0.f),
 	CurrentPage(0),
 	TotalPage(0),
@@ -144,14 +144,13 @@ CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewPr
 		PDF.get_unconst()->Close();
 		//New FileIsInUse
 		m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(GetWndPtr()->m_hWnd, PDF->Path->c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
-		GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [pdf = PDF](UINT,LPARAM,WPARAM,BOOL&)->LRESULT
-		{
+		GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [pdf = PDF](UINT, LPARAM, WPARAM, BOOL&)->LRESULT {
 			pdf.get_unconst()->Close();
 			return 0;
 		});
 		//Open
-		if (!doc.IsOpen()) {
-			OpenWithPasswordHandling(*doc.Path);
+		if (!doc->IsOpen()) {
+			OpenWithPasswordHandling(*doc->Path);
 		} else {
 			//Do nothing
 		}
@@ -1165,27 +1164,27 @@ void CPdfView::OpenWithFileDialog()
 	}
 }
 
-void CPdfView::Reset(const reactive_property_ptr<CPDFDoc>& pdf)
-{
-	//Clear Current
-	Clear();
-	PDF.get_unconst()->Close();
-	//Reset New
-	PDF = pdf;
-	//New FileIsInUse
-	m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(GetWndPtr()->m_hWnd, PDF->Path->c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
-	GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [pdf = PDF](UINT,LPARAM,WPARAM,BOOL&)->LRESULT
-	{
-		pdf.get_unconst()->Close();
-		return 0;
-	});
-	//Open
-	if (!pdf->IsOpen()) {
-		OpenWithPasswordHandling(*PDF->Path);
-	} else {
-		//Do nothing
-	}
-}
+//void CPdfView::Reset(const reactive_property_ptr<CPDFDoc>& pdf)
+//{
+//	//Clear Current
+//	Clear();
+//	PDF.get_unconst()->Close();
+//	//Reset New
+//	PDF = pdf;
+//	//New FileIsInUse
+//	m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(GetWndPtr()->m_hWnd, PDF->Path->c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
+//	GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [pdf = PDF](UINT,LPARAM,WPARAM,BOOL&)->LRESULT
+//	{
+//		pdf.get_unconst()->Close();
+//		return 0;
+//	});
+//	//Open
+//	if (!pdf->IsOpen()) {
+//		OpenWithPasswordHandling(*PDF->Path);
+//	} else {
+//		//Do nothing
+//	}
+//}
 
 void CPdfView::OpenWithPasswordHandling(const std::wstring& path)
 {

@@ -503,6 +503,8 @@
     <ClInclude Include="..\HiLib\TextDoc.h" />
     <ClInclude Include="CheckableFileGrid.h" />
     <ClInclude Include="FilerTabData.h" />
+    <ClInclude Include="FilerView.h" />
+    <ClInclude Include="FolderHistory.h" />
     <ClInclude Include="ImageTabData.h" />
     <ClInclude Include="PDFTabData.h" />
     <ClInclude Include="PreviewTabData.h" />
@@ -697,6 +699,8 @@
     <ClCompile Include="..\HiLIb\YearMonthDay.cpp" />
     <ClCompile Include="BindTest.cpp" />
     <ClCompile Include="FilerTabData.cpp" />
+    <ClCompile Include="FilerView.cpp" />
+    <ClCompile Include="FolderHistory.cpp" />
     <ClCompile Include="ImageTabData.cpp" />
     <ClCompile Include="PDFTabData.cpp" />
     <ClCompile Include="TextTabData.cpp" />

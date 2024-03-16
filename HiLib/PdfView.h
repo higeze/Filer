@@ -153,7 +153,7 @@ public:
 	/* Reactive */
 	/************/
 	std::shared_ptr<int> Dummy;
-	reactive_property_ptr<CPDFDoc> PDF;
+	reactive_property_ptr<std::shared_ptr<CPDFDoc>> PDF;
 
 	reactive_property_ptr<FLOAT> Scale;
 
@@ -325,7 +325,7 @@ public:
 
 	virtual void Error_StdException(const std::exception& e);
 
-	void Reset(const reactive_property_ptr<CPDFDoc>& pdf);
+	//void Reset(const reactive_property_ptr<CPDFDoc>& pdf);
 	void OpenWithFileDialog();
 	void Open(const std::wstring& path);
 	void Close();

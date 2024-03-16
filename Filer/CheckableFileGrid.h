@@ -10,7 +10,7 @@ public:
 
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnCellLButtonDblClk(const CellEventArgs& e)override;
-	virtual void OpenFolder(const std::shared_ptr<CShellFolder>& spFile) override;
+	virtual void OpenFolder(const std::shared_ptr<CShellFolder>& spFile, bool isReload) override;
 
 	void AddItem(const std::shared_ptr<CShellFile>& spFile);
 };

@@ -5,15 +5,14 @@
 /****************/
 
 FilerTabData::FilerTabData(const std::wstring& path)
-	:TabData(), Path(path)
+	:TabData()
 {
-	if (!Path.empty()) {
+	if (!path.empty()) {
 		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
 		if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-			FolderPtr = sp;
+			Folder.set(sp);
 		} else {
-			FolderPtr = CKnownFolderManager::GetInstance()->GetDesktopFolder();
-			Path = FolderPtr->GetPath();
+			Folder.set(CKnownFolderManager::GetInstance()->GetDesktopFolder());
 		}
 	}
 }

@@ -157,7 +157,7 @@ protected:
 
 	std::shared_ptr<CColumn> m_pHeaderColumn; // Header column
 	std::shared_ptr<CColumn> m_pNameColumn;
-	std::shared_ptr<CRow> m_pHeaderRow; // Header row
+	//std::shared_ptr<CRow> m_pHeaderRow; // Header row
 	std::shared_ptr<CRow> m_pNameHeaderRow; /**< Name Header row */
 	std::shared_ptr<CRow> m_pFilterRow; /**< Filter row */
 
@@ -198,8 +198,8 @@ public:
 	virtual void SetHeaderColumnPtr(std::shared_ptr<CColumn> column){m_pHeaderColumn=column;} /** Setter for Header Column */
 	virtual std::shared_ptr<CColumn> GetNameColumnPtr() { return m_pNameColumn; }
 	virtual void SetNameColumnPtr(const std::shared_ptr<CColumn>& spCol) { m_pNameColumn = spCol; }
-	virtual std::shared_ptr<CRow> GetHeaderRowPtr()const{return m_pHeaderRow;} /** Getter for Header Row */
-	virtual void SetHeaderRowPtr(std::shared_ptr<CRow> row){m_pHeaderRow=row;} /** Setter for Header Row */
+	//virtual std::shared_ptr<CRow> GetHeaderRowPtr()const{return m_pHeaderRow;} /** Getter for Header Row */
+	//virtual void SetHeaderRowPtr(std::shared_ptr<CRow> row){m_pHeaderRow=row;} /** Setter for Header Row */
 	virtual std::shared_ptr<CRow> GetNameHeaderRowPtr()const { return m_pNameHeaderRow; }
 	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_pNameHeaderRow = row; }
 	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_pFilterRow; }

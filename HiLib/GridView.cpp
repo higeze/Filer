@@ -1276,6 +1276,21 @@ void CGridView::OnCreate(const CreateEvt& e)
 	SubmitUpdate();
 }
 
+void CGridView::Arrange(const CRectF& rc)
+{
+	CRectF prevRect = m_rect;
+	CD2DWControl::Arrange(rc);
+
+	if (prevRect.left != m_rect.left) {
+		PostUpdate(Updates::Column);
+	}
+	if (prevRect.top != m_rect.top) {
+		PostUpdate(Updates::Row);
+	}
+
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+}
 
 void CGridView::OnRect(const RectEvent& e)
 {

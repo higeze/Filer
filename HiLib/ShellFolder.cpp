@@ -23,12 +23,10 @@ CShellFolder::~CShellFolder()
 	*m_spCancelThread = true;
 }
 
-CComPtr<IShellFolder> CShellFolder::GetShellFolderPtr()
+const CComPtr<IShellFolder>& CShellFolder::GetShellFolderPtr() const
 {
 	if (!m_pShellFolder) {
-		if (FAILED(m_pParentShellFolder->BindToObject(m_childIdl.ptr(), 0, IID_IShellFolder, (void**)&m_pShellFolder))){
-			throw std::exception("CShellFolder::GetShellFolderPtr");
-		}
+		FAILED_THROW(GetParentFolderPtr()->GetShellFolderPtr()->BindToObject(m_childIdl.ptr(), 0, IID_IShellFolder, (void**)&m_pShellFolder));
 	}
 	return m_pShellFolder;
 }
@@ -68,7 +66,7 @@ void CShellFolder::SetLockSize(const std::pair<ULARGE_INTEGER, FileSizeStatus>& 
 const std::wstring& CShellFolder::GetDispName() const
 {
 	if (!m_optDispName.has_value()) {
-		m_optDispName.emplace(shell::GetDisplayNameOf(m_pParentShellFolder, m_childIdl.ptr(), SHGDN_NORMAL));
+		m_optDispName.emplace(shell::GetDisplayNameOf(GetParentFolderPtr()->GetShellFolderPtr(), m_childIdl.ptr(), SHGDN_NORMAL));
 	}
 	return m_optDispName.value();
 }
@@ -88,20 +86,23 @@ const std::wstring& CShellFolder::GetDispExt() const
 }
 
 
-std::shared_ptr<CShellFolder> CShellFolder::GetParent()
+const std::shared_ptr<CShellFolder>& CShellFolder::GetParentFolderPtr() const
 {
-	::OutputDebugStringA(std::format("Size:{}", ::ILGetSize(m_absoluteIdl.ptr())).c_str());
-	CIDL parentIDL = m_absoluteIdl.CloneParentIDL();
-	CIDL grandParentIDL = parentIDL.CloneParentIDL();
-	CComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
-	CComPtr<IShellFolder> pGrandParentFolder = shell::DesktopBindToShellFolder(grandParentIDL);
-	return std::static_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pGrandParentFolder, grandParentIDL, parentIDL.CloneLastID()));
+	if (!m_pParentFolder) {
+		::OutputDebugStringA(std::format("Size:{}", ::ILGetSize(m_absoluteIdl.ptr())).c_str());
+		CIDL parentIDL = m_absoluteIdl.CloneParentIDL();
+		CIDL grandParentIDL = parentIDL.CloneParentIDL();
+		CComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
+		CComPtr<IShellFolder> pGrandParentFolder = shell::DesktopBindToShellFolder(grandParentIDL);
+		m_pParentFolder =  std::static_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pGrandParentFolder, grandParentIDL, parentIDL.CloneLastID()));
+	}
+	return m_pParentFolder;
 	//return std::make_shared<CShellFolder>(pGrandParentFolder, grandParentIDL, parentIDL.CloneLastID(), pParentFolder);
 }
 
 std::shared_ptr<CShellFolder> CShellFolder::Clone()const
 {
-	return std::make_shared<CShellFolder>(m_pParentShellFolder, m_parentIdl, m_childIdl, m_pShellFolder);
+	return std::make_shared<CShellFolder>(m_pParentShellFolder, m_parentIdl, m_childIdl, GetShellFolderPtr());
 }
 
 std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
@@ -190,7 +191,7 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(const std::share
 				0,
 				//std::make_pair(FileTimes(), FileTimeStatus::Unavailable),
 				m_spCancelThread,
-				GetParentShellFolderPtr(),
+				GetParentFolderPtr()->GetShellFolderPtr(),
 				GetShellFolderPtr(),
 				GetChildIdl(),
 				GetPath(),
@@ -360,7 +361,7 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 
 void CShellFolder::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND  hWnd) 
 {
-	HRESULT hr = m_pParentShellFolder->SetNameOf(
+	HRESULT hr = GetParentFolderPtr()->GetShellFolderPtr()->SetNameOf(
 		hWnd,
 		m_childIdl.ptr(),
 		wstrNameWoExt.c_str(),
@@ -373,7 +374,7 @@ void CShellFolder::SetExt(const std::wstring& wstrExt, HWND hWnd)
 	//Do nothing
 }
 
-std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const CIDL& childIdl)
+std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const CIDL& childIdl) const
 {
 	return CShellFileFactory::GetInstance()->CreateShellFilePtr(GetShellFolderPtr(), GetAbsoluteIdl(), childIdl);
 }

@@ -12,14 +12,14 @@
 /**************/
 struct PdfTabData :public TabData
 {
-	reactive_property_ptr<CPDFDoc> Doc;
+	reactive_property_ptr<std::shared_ptr<CPDFDoc>> Doc;
 	reactive_property_ptr<FLOAT> VScroll;
 	reactive_property_ptr<FLOAT> HScroll;
 	reactive_property_ptr<FLOAT> Scale;
 	
 	PdfTabData(const std::wstring& path = std::wstring())
 		:TabData(),
-		Doc(),
+		Doc(std::make_shared<CPDFDoc>()),
 		VScroll(0.f),
 		HScroll(0.f),
 		Scale(-1.f)

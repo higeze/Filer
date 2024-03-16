@@ -1,6 +1,7 @@
 #pragma once
 #include "FilerBindGridView.h"
 #include "FileColumn.h"
+#include "reactive_property.h"
 #include "JsonSerializer.h"
 
 class CShellFile;
@@ -23,7 +24,6 @@ private:
 	//For DirectoryWatch
 	std::shared_ptr<CDirectoryWatcher> m_spWatcher;
 
-	std::shared_ptr<CShellFolder> m_spFolder;
 	std::shared_ptr<CShellFolder> m_spPreviousFolder;
 
 	//For Drag & Drop 
@@ -45,15 +45,16 @@ private:
 
 	//Remember past filter
 	std::unordered_map<std::wstring, std::unordered_map<std::shared_ptr<CColumn>, std::wstring>> m_filterMap;
+public:
+	std::shared_ptr<int> Dummy;
+	reactive_property_ptr<std::shared_ptr<CShellFolder>> Folder;
 
 public:
 	//Constructor
 	CFilerGridView(CD2DWControl* pParentControl = nullptr, const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp = nullptr);
 	virtual ~CFilerGridView();
-	//getter
-	std::shared_ptr<CShellFolder>& GetFolder() { return m_spFolder; }
 	//signal
-	std::function<void(std::shared_ptr<CShellFolder>&)> FolderChanged;
+	//std::function<void(const std::shared_ptr<CShellFolder>&)> FolderChanged;
 	std::function<void(const std::wstring&)> StatusLog;
 
 	/******************/
@@ -83,7 +84,8 @@ public:
 	/* Function */
 	/************/
 	virtual void Reload();
-	virtual void OpenFolder(const std::shared_ptr<CShellFolder>& spFolder) override;
+	virtual void Open(const std::shared_ptr<CShellFile>& spFile) override;
+	virtual void OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, bool isReload) override;
 
 	std::wstring GetPath()const;
 	void SetPath(const std::wstring& path);

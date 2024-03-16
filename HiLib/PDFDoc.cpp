@@ -233,6 +233,7 @@ void CPDFDoc::Close()
 	m_pDoc.reset();
 
 	Dummy.reset();
+	Dummy = std::make_shared<int>(0);
 }
 
 unsigned long  CPDFDoc::Create()

@@ -118,7 +118,7 @@ void CCheckableFileGrid::OnCellLButtonDblClk(const CellEventArgs& e)
 	}
 }
 
-void CCheckableFileGrid::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder)
+void CCheckableFileGrid::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, bool isReload)
 {
 	auto pFilerWnd = new CD2DWSingleControlWnd<CFilerGridView>(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
 
@@ -136,12 +136,12 @@ void CCheckableFileGrid::OpenFolder(const std::shared_ptr<CShellFolder>& spFolde
 		.dwExStyle(WS_EX_ACCEPTFILES)
 		.hMenu(NULL);
 
-	pFilerWnd->GetChildControlPtr()->FolderChanged = [pFilerWnd](std::shared_ptr<CShellFolder>& pFolder) {
-		pFilerWnd->SetWindowTextW(pFolder->GetDispName().c_str());};
+	//pFilerWnd->GetChildControlPtr()->FolderChanged = [pFilerWnd](const std::shared_ptr<CShellFolder>& pFolder) {
+	//	pFilerWnd->SetWindowTextW(pFolder->GetDispName().c_str());};
 	pFilerWnd->SetIsDeleteOnFinalMessage(true);
 
 	pFilerWnd->CreateOnCenterOfParent(GetWndPtr()->m_hWnd, CSize(300, 500));
-	pFilerWnd->GetChildControlPtr()->OpenFolder(spFolder);
+	pFilerWnd->GetChildControlPtr()->OpenFolder(spFolder, isReload);
 	pFilerWnd->ShowWindow(SW_SHOW);
 	pFilerWnd->UpdateWindow();
 }

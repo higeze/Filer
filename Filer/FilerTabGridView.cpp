@@ -10,14 +10,6 @@
 #include "ShellFileFactory.h"
 #include "Debug.h"
 
-//#include "BindRow.h"
-//#include "BindTextColumn.h"
-//#include "BindTextCell.h"
-//#include "BindCheckBoxColumn.h"
-//#include "BindCheckBoxCell.h"
-//#include "BindSheetCellColumn.h"
-//#include "BindItemsSheetCell.h"
-
 #include "D2DWWindow.h"
 #include "Dispatcher.h"
 #include "CellTextBox.h"
@@ -63,7 +55,7 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	m_spPdfEditorProp(spPdfEditorProp),
 	m_spImageEditorProp(spImageEditorProp),
 	m_spPreviewControlProp(spPreviewControlProp),
-	m_spFilerGridView(std::make_shared<CFilerGridView>(this, spFilerGridViewProp)),
+	m_spFilerView(std::make_shared<CFilerView>(this, spFilerGridViewProp, std::static_pointer_cast<TextBoxProperty>(spEditorProp->EditorTextBoxPropPtr))),
 	m_spTextView(std::make_shared<CEditor>(this, spEditorProp)),
 	m_spPdfView(std::make_shared<CPDFEditor>(this, spPdfEditorProp)),
 	m_spImageView(std::make_shared<CImageEditor>(this, spImageEditorProp)),
@@ -71,105 +63,6 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl,
 	m_spPreviewControl(std::make_shared<CPreviewControl>(this, spPreviewControlProp))
 
 {
-	//Command
-	//m_commandMap.emplace(IDM_NEWFILERTAB, std::bind(&CFilerTabGridView::OnCommandNewFilerTab, this, phs::_1));
-	//m_commandMap.emplace(IDM_NEWTODOTAB, std::bind(&CFilerTabGridView::OnCommandNewToDoTab, this, phs::_1));
-	//m_commandMap.emplace(IDM_NEWTEXTTAB, std::bind(&CFilerTabGridView::OnCommandNewTextTab, this, phs::_1));
-	//m_commandMap.emplace(IDM_NEWPDFTAB, std::bind(&CFilerTabGridView::OnCommandNewPdfTab, this, phs::_1));
-	//m_commandMap.emplace(IDM_NEWIMAGETAB, std::bind(&CFilerTabGridView::OnCommandNewImageTab, this, phs::_1));
-	//m_commandMap.emplace(IDM_NEWPREVIEWTAB, std::bind(&CFilerTabGridView::OnCommandNewPreviewTab, this, phs::_1));
-
-	//m_commandMap.emplace(IDM_LOCKTAB, std::bind(&CFilerTabGridView::OnCommandLockTab, this, phs::_1));
-	//m_commandMap.emplace(IDM_CLONETAB, std::bind(&CFilerTabGridView::OnCommandCloneTab, this, phs::_1));
-	//m_commandMap.emplace(IDM_CLOSETAB, std::bind(&CFilerTabGridView::OnCommandCloseTab, this, phs::_1));
-	//m_commandMap.emplace(IDM_CLOSEALLBUTTHISTAB, std::bind(&CFilerTabGridView::OnCommandCloseAllButThisTab, this, phs::_1));
-	//m_commandMap.emplace(IDM_ADDTOFAVORITE, std::bind(&CFilerTabGridView::OnCommandAddToFavorite, this, phs::_1));
-	//m_commandMap.emplace(IDM_OPENSAMEASOTHER, std::bind(&CFilerTabGridView::OnCommandOpenSameAsOther, this, phs::_1));
-
-
-	//FilerGridView
-	m_spFilerGridView->FolderChanged = [&](std::shared_ptr<CShellFolder>& pFolder)
-	{
-		auto pData = std::static_pointer_cast<FilerTabData>(ItemsSource->at(*SelectedIndex));
-		pData->FolderPtr = pFolder;
-		pData->Path = pFolder->GetPath();
-		UpdateHeaderRects();
-		m_spFilerGridView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
-	};
-
-	//ToDoGridView Closure
-	////Columns
-	//m_spToDoGridView->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(m_spToDoGridView.get()));
-	//m_spToDoGridView->PushColumns(
-	//	m_spToDoGridView->GetHeaderColumnPtr(),
-	//	std::make_shared<CBindCheckBoxColumn<MainTask>>(
-	//		m_spToDoGridView.get(),
-	//		L"State",
-	//		[](const std::tuple<MainTask>& tk)->CheckBoxState {return std::get<MainTask>(tk).State; },
-	//		[](std::tuple<MainTask>& tk, const CheckBoxState& state)->void {std::get<MainTask>(tk).State = state; }),
-	//	std::make_shared<CBindTextColumn<MainTask>>(
-	//		m_spToDoGridView.get(),
-	//		L"Name",
-	//		[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Name; },
-	//		[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Name = str; }),
-	//	std::make_shared<CBindTextColumn<MainTask>>(
-	//		m_spToDoGridView.get(),
-	//		L"Memo",
-	//		[](const std::tuple<MainTask>& tk)->std::wstring {return std::get<MainTask>(tk).Memo; },
-	//		[](std::tuple<MainTask>& tk, const std::wstring& str)->void {std::get<MainTask>(tk).Memo = str; }),
-	//	std::make_shared<CDateColumn>(
-	//		m_spToDoGridView.get(),
-	//		L"Due date")//,
-	//	//std::make_shared<CBindSheetCellColumn< MainTask, SubTask>>(
-	//	//	m_spToDoGridView.get(),
-	//	//	L"Sub Task",
-	//	//	[](std::tuple<MainTask>& tk)->ReactiveVectorProperty<std::tuple<SubTask>>& {return std::get<MainTask>(tk).SubTasks; },
-	//	//	[](CBindItemsSheetCell<MainTask, SubTask>* pCell)->void {
-	//	//		pCell->SetHeaderColumnPtr(std::make_shared<CRowIndexColumn>(pCell));
-	//	//		pCell->PushColumns(
-	//	//			pCell->GetHeaderColumnPtr(),
-	//	//			std::make_shared<CBindCheckBoxColumn<SubTask>>(
-	//	//				pCell,
-	//	//				L"Done",
-	//	//				[](const std::tuple<SubTask>& tk)->CheckBoxState {return std::get<SubTask>(tk).Done ? CheckBoxState::True : CheckBoxState::False; },
-	//	//				[](std::tuple<SubTask>& tk, const CheckBoxState& state)->void {std::get<SubTask>(tk).Done = state == CheckBoxState::True ? true : false; }),
-	//	//			std::make_shared<CBindTextColumn<SubTask>>(
-	//	//				pCell,
-	//	//				L"Name",
-	//	//				[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Name; },
-	//	//				[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Name = str; }),
-	//	//			std::make_shared<CBindTextColumn<SubTask>>(
-	//	//				pCell,
-	//	//				L"Memo",
-	//	//				[](const std::tuple<SubTask>& tk)->std::wstring {return std::get<SubTask>(tk).Memo; },
-	//	//				[](std::tuple<SubTask>& tk, const std::wstring& str)->void {std::get<SubTask>(tk).Memo = str; })
-	//	//		);
-	//	//		pCell->SetFrozenCount<ColTag>(1);
-
-	//	//		pCell->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(pCell));
-	//	//		pCell->InsertRow(0, pCell->GetNameHeaderRowPtr());
-	//	//		pCell->SetFrozenCount<RowTag>(1);
-	//	//	},
-	//	//	arg<"maxwidth"_s>() = FLT_MAX)
-	//);
-	//m_spToDoGridView->SetFrozenCount<ColTag>(1);
-
-	////Rows
-	//m_spToDoGridView->SetNameHeaderRowPtr(std::make_shared<CHeaderRow>(m_spToDoGridView.get()));
-	//m_spToDoGridView->SetFilterRowPtr(std::make_shared<CRow>(m_spToDoGridView.get()));
-
-	//m_spToDoGridView->PushRows(
-	//	m_spToDoGridView->GetNameHeaderRowPtr(),
-	//	m_spToDoGridView->GetFilterRowPtr());
-
-	//m_spToDoGridView->SetFrozenCount<RowTag>(2);
-
-	//Path Changed
-	//m_spToDoGridView->Doc.get().Path.Subscribe([&](const auto& notify) {
-	//	auto pData = std::static_pointer_cast<ToDoTabData>(m_itemsSource[m_selectedIndex.get()]);
-	//	pData->Doc.get().Path = m_spToDoGridView->Doc.get().Path;
-	//	m_spToDoGridView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
-	//});
 }
 
 CFilerTabGridView::~CFilerTabGridView() = default;
@@ -184,7 +77,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		{
 
 			if (auto p = std::dynamic_pointer_cast<FilerTabData>(pTabData)) {
-				return p->FolderPtr->GetDispNameWithoutExt().c_str();
+				return p->Folder->GetDispNameWithoutExt().c_str();
 			} else {
 				return L"nullptr";
 			}
@@ -258,25 +151,9 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 
 	m_itemsHeaderIconTemplate.emplace(typeid(FilerTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
 		{
-
-			//if (auto p = std::dynamic_pointer_cast<FilerTabData>(pTabData)) {
-			//	GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), p->FolderPtr->GetAbsoluteIdl(), p->FolderPtr->GetPath(), p->FolderPtr->GetDispExt(), p->FolderPtr->GetAttributes(), updated);
-			//} else {
-			//	/*return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();*/
-			//}
 			if (auto p = std::dynamic_pointer_cast<FilerTabData>(pTabData)) {
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(
-					GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), p->FolderPtr.get(), updated);
-
-			//	if (p->FolderPtr->IsInvalid()) {
-			//		GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), 
-			//			CIDL(), std::wstring(), std::wstring(), 0, updated);
-			//	} else {
-			//		GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(),
-			//			p->FolderPtr->GetAbsoluteIdl(), p->FolderPtr->GetPath(), p->FolderPtr->GetDispExt(), p->FolderPtr->GetAttributes(), updated);
-			//	}
-			//} else {
-			//	//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
+					GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), p->Folder.get_shared_unconst().get(), updated);
 			}
 		});
 	m_itemsHeaderIconTemplate.emplace(typeid(ToDoTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
@@ -284,16 +161,6 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			if (auto p = std::dynamic_pointer_cast<ToDoTabData>(pTabData)) {
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(
 					GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), p->Doc.operator->(), updated);
-
-			//	if (p->Doc->IsInvalid()) {
-			//		GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), 
-			//			CIDL(), std::wstring(), std::wstring(), 0, updated);
-			//	} else {
-			//		GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(),
-			//			p->Doc->GetAbsoluteIdl(), p->Doc->GetPath(), p->Doc->GetDispExt(), p->Doc->GetAttributes(), updated);
-			//	}
-			//} else {
-			//	//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
 		});
 	m_itemsHeaderIconTemplate.emplace(typeid(TextTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
@@ -301,16 +168,6 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			if (auto p = std::dynamic_pointer_cast<TextTabData>(pTabData)) {
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(
 					GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), p->Doc.operator->(), updated);
-
-			//	if (p->Doc->IsInvalid()) {
-			//		GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), 
-			//			CIDL(), std::wstring(), std::wstring(), 0, updated);
-			//	} else {
-			//		GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(),
-			//			p->Doc->GetAbsoluteIdl(), p->Doc->GetPath(), p->Doc->GetDispExt(), p->Doc->GetAttributes(), updated);
-			//	}
-			//} else {
-				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
 		});
 	m_itemsHeaderIconTemplate.emplace(typeid(PdfTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
@@ -318,15 +175,6 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			if (auto p = std::dynamic_pointer_cast<PdfTabData>(pTabData)) {
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(
 					GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), p->Doc.operator->(), updated);
-				//if (p->Doc->IsInvalid()) {
-				//	GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), 
-				//		CIDL(), std::wstring(), std::wstring(), 0, updated);
-				//} else {
-				//	GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(),
-				//		p->Doc->GetAbsoluteIdl(), p->Doc->GetPath(), p->Doc->GetDispExt(), p->Doc->GetAttributes(), updated);
-				//}
-			} else {
-				//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
 		});
 
@@ -335,16 +183,6 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			if (auto p = std::dynamic_pointer_cast<ImageTabData>(pTabData)) {
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(
 					GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), p->Image.operator->(), updated);
-
-			//	if (p->Image->IsInvalid()) {
-			//		GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), 
-			//			CIDL(), std::wstring(), std::wstring(), 0, updated);
-			//	} else {
-			//		GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(),
-			//			p->Image->GetAbsoluteIdl(), p->Image->GetPath(), p->Image->GetDispExt(), p->Image->GetAttributes(), updated);
-			//	}
-			//} else {
-			//	//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
 		});
 
@@ -353,11 +191,6 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			if (auto p = std::dynamic_pointer_cast<PreviewTabData>(pTabData)) {
 				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(
 					GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), p->Doc.operator->(), updated);
-
-			//	auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(*p->Path);
-			//	GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawFileIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop(), spFile->GetAbsoluteIdl(), spFile->GetPath(), spFile->GetDispExt(), spFile->GetAttributes(), updated);
-			//} else {
-			//	//return GetWndPtr()->GetDirectPtr()->GetIconCachePtr()->GetDefaultIconBitmap();
 			}
 		});
 
@@ -366,14 +199,21 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	auto disconnect2 = [](std::pair<sigslot::connection, sigslot::connection>& paircon) { return paircon.first.disconnect() && paircon.second.disconnect(); };
 
 	m_itemsControlTemplate.emplace(typeid(FilerTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
-		auto pData = std::static_pointer_cast<FilerTabData>(pTabData);
-		auto &spView = GetFilerGridViewPtr();
-		spView->OpenFolder(pData->FolderPtr);
-		spView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
-		spView->PostUpdate(Updates::All);
-		spView->SubmitUpdate();
+		auto spViewModel = std::static_pointer_cast<FilerTabData>(pTabData);
 
-		return spView;
+		m_filerConnections.clear();
+		
+		m_filerConnections.push_back(
+			GetFilerViewPtr()->GetGridViewPtr()->Folder.subscribe([&](auto value) { UpdateHeaderRects(); }, shared_from_this()),
+			spViewModel->Folder.binding(GetFilerViewPtr()->GetGridViewPtr()->Folder)
+		);
+		//spView->GetGridViewPtr()->OpenFolder(pData->FolderPtr);
+
+		GetFilerViewPtr()->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
+		GetFilerViewPtr()->GetGridViewPtr()->PostUpdate(Updates::All);
+		GetFilerViewPtr()->GetGridViewPtr()->SubmitUpdate();
+
+		return GetFilerViewPtr();
 	});
 
 	m_itemsControlTemplate.emplace(typeid(ToDoTabData).name(), [this, disconnect, disconnect2](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
@@ -447,7 +287,8 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 
 		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
 		//spView->GetPDFViewPtr()->Reset(spViewModel->Doc);
-		m_pdfConnections.push_back(spViewModel->Doc.binding(spView->GetPDFViewPtr()->PDF));
+		m_pdfConnections.push_back(
+			spViewModel->Doc.binding(spView->GetPDFViewPtr()->PDF));
 
 		return spView;
 	});
@@ -493,14 +334,14 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	/* Create */
 	/**********/
 	CTabControl::OnCreate(e);
-	GetFilerGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
+	GetFilerViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetToDoGridViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetTextViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetPdfViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetImageViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetPreviewControlPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 
-	GetFilerGridViewPtr()->IsEnabled.set(false);
+	GetFilerViewPtr()->IsEnabled.set(false);
 	GetToDoGridViewPtr()->IsEnabled.set(false);
 	GetTextViewPtr()->IsEnabled.set(false);
 	GetPdfViewPtr()->IsEnabled.set(false);
@@ -600,7 +441,7 @@ void CFilerTabGridView::OnCommandAddToFavorite()
 {
 	//TODOLOW Bad connection between FilerTabGridView and FavoritesView
 	if(auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())){
-		p->GetFavoritesPropPtr()->Favorites.push_back(std::make_shared<CFavorite>(std::static_pointer_cast<FilerTabData>(ItemsSource->at(*SelectedIndex))->Path, L""));
+		p->GetFavoritesPropPtr()->Favorites.push_back(std::make_shared<CFavorite>(std::static_pointer_cast<FilerTabData>(ItemsSource->at(*SelectedIndex))->Folder->GetPath(), L""));
 		p->GetLeftFavoritesView()->SubmitUpdate();
 		p->GetRightFavoritesView()->SubmitUpdate();
 	}

@@ -12,6 +12,10 @@ public: virtual const type& Get##name(const arg1type&) const
 protected: mutable CComPtr<type> m_p##name; \
 public: virtual const CComPtr<type>& Get##name##Ptr() const;
 
+#define DECLARE_LAZY_SHAREDPTR_GETTER(type, name) \
+protected: mutable std::shared_ptr<type> m_p##name; \
+public: virtual const std::shared_ptr<type>& Get##name##Ptr() const;
+
 
 
 #define LAZY_GETTER(type, val) \

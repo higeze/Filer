@@ -138,7 +138,7 @@ void CCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
 	}
 
 	//Focus, Select
-	if(cell->GetRowPtr()==pSheet->GetHeaderRowPtr().get() && cell->GetColumnPtr()==pSheet->GetHeaderColumnPtr().get()){
+	if(cell->GetRowPtr()==pSheet->GetNameHeaderRowPtr().get() && cell->GetColumnPtr()==pSheet->GetHeaderColumnPtr().get()){
 		pSheet->SelectAll();//TODO Make RowColumnHeaderCell
 	}
 	else {

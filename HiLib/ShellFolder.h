@@ -5,7 +5,7 @@
 class CShellFolder :public CShellFile
 {
 private:
-	CComPtr<IShellFolder> m_pShellFolder;
+
 
 	std::shared_ptr<bool> m_spCancelThread = std::make_shared<bool>(false);
 
@@ -14,6 +14,10 @@ private:
 
 	mutable std::mutex m_mtxSize;
 	mutable std::mutex m_mtxTime;
+public:
+	DECLARE_LAZY_COMPTR_GETTER(IShellFolder, ShellFolder);
+	DECLARE_LAZY_SHAREDPTR_GETTER(CShellFolder, ParentFolder);
+
 public:
 	CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CShellFolder();
@@ -25,12 +29,10 @@ public:
 	virtual void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd = NULL) override;
 	virtual void SetExt(const std::wstring& wstrExt, HWND hWnd = NULL) override;
 
-	CComPtr<IShellFolder> GetShellFolderPtr();
-	std::shared_ptr<CShellFolder> GetParent();
 	std::shared_ptr<CShellFolder> Clone()const;
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed = nullptr)override;
 	virtual std::pair<FileTimes, FileTimeStatus> GetFileTimes(const std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed = nullptr)override;
-	std::shared_ptr<CShellFile> CreateShExFileFolder(const CIDL& relativeIdl);
+	std::shared_ptr<CShellFile> CreateShExFileFolder(const CIDL& relativeIdl) const;
 	static std::optional<FileTimes> GetFolderFileTimes(const std::shared_ptr<bool>& cancel,
 		const CComPtr<IShellFolder>& pParentFolder, const CComPtr<IShellFolder>& pFolder, const CIDL& relativeIdl, const std::wstring& path,
 		std::chrono::system_clock::time_point& tp, int limit, bool ignoreFolderTime);

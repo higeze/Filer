@@ -53,7 +53,7 @@ private:
 public:
 	void Measure(const CSizeF& availableSize, const std::wstring& text);
 	CSizeF DesiredSize() const;
-	void Arrange(const CRectF& rc) { m_rect = rc; UpdateAll(); }
+	void Arrange(const CRectF& rc) override;
 	/************/
 	/* Reactive */
 	/************/
@@ -226,6 +226,7 @@ public:
 	void DeleteOne();
 	void BackspaceOne();
 	void DeleteSelection();
+	void SelectAll();
 
 	//void SetText(LPCWSTR str);
 	void CancelEdit();

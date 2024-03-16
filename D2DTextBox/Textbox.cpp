@@ -1154,6 +1154,11 @@ void CTextBox::DeleteSelection()
 		));
 }
 
+void CTextBox::SelectAll()
+{
+	Caret.get_unconst()->Select(0, Text->size(), GetOriginCharRects()[Text->size()].CenterPoint());
+}
+
 void CTextBox::ClearText()
 {
 	Text.clear();
@@ -1471,3 +1476,10 @@ CSizeF CTextBox::MeasureSize(const std::wstring& text)
 
 	return size;
 }
+
+void CTextBox::Arrange(const CRectF& rc)
+{
+	CD2DWControl::Arrange(rc);
+	UpdateAll();
+}
+

@@ -154,6 +154,8 @@ public:
 	virtual void SubmitUpdate();
 	virtual CColumn* GetParentColumnPtr(CCell* pCell)override;	
 
+	virtual void Arrange(const CRectF& rc) override;
+
 
 public:
 	//Normal

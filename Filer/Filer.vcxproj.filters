@@ -993,6 +993,12 @@
     <ClInclude Include="..\HiLib\FileTimeArgs.h">
       <Filter>HiLib\Shell</Filter>
     </ClInclude>
+    <ClInclude Include="FilerView.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FolderHistory.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1472,6 +1478,12 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\NetworkMessanger.cpp">
       <Filter>HiLib\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="FilerView.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="FolderHistory.cpp">
+      <Filter>Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

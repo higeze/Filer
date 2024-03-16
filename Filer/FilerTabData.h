@@ -13,40 +13,43 @@
 /***************/
 struct FilerTabData:public TabData
 {
-	std::wstring Path;
-	std::shared_ptr<CShellFolder> FolderPtr;
+	//std::wstring Path;
+	reactive_property_ptr<std::shared_ptr<CShellFolder>> Folder;
 
 	FilerTabData()
 		:TabData(){ }
 
 	FilerTabData(const std::wstring& path);
 	FilerTabData(const std::shared_ptr<CShellFolder>& spFolder)
-		:TabData(), FolderPtr(spFolder), Path(spFolder->GetPath()){}
+		:TabData(), Folder(spFolder)/*, Path(spFolder->GetPath())*/{}
 
 	virtual ~FilerTabData() = default;
 
 	FilerTabData(const FilerTabData& data)
 	{
-		Path = data.Path;
-		FolderPtr = data.FolderPtr->Clone();
+		//Path = data.Path;
+		Folder.set(data.Folder->Clone());
 	}
 
 	friend void to_json(json& j, const FilerTabData& o)
 	{
 		to_json(j, static_cast<const TabData&>(o));
-		j["Path"] = o.FolderPtr->GetPath();
+		j["Path"] = o.Folder->GetPath();
 	}
 	friend void from_json(const json& j, FilerTabData& o)
 	{
 		from_json(j, static_cast<TabData&>(o));
-		j.at("Path").get_to(o.Path);
-		if (!o.Path.empty()) {
-			auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(o.Path);
+		std::wstring path;
+
+		j.at("Path").get_to(path);
+
+		if (!path.empty()) {
+			auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
 			if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-				o.FolderPtr = sp;
+				o.Folder.set(sp);
 			} else {
-				o.FolderPtr = CKnownFolderManager::GetInstance()->GetDesktopFolder();
-				o.Path = o.FolderPtr->GetPath();
+				o.Folder.set(CKnownFolderManager::GetInstance()->GetDesktopFolder());
+				//o.Path.set(o.Folder->GetPath());
 			}
 		}
 	}

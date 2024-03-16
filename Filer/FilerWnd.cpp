@@ -136,41 +136,43 @@ void CFilerWnd::OnPaint(const PaintEvent& e)
 
 void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer)
 {
-	subject->GetFilerGridViewPtr()->SelectedItem.subscribe([this, observer](const std::shared_ptr<CShellFile>& spFile) {
+	subject->GetFilerViewPtr()->GetGridViewPtr()->SelectedItem.subscribe([this, wp = std::weak_ptr(observer)](const std::shared_ptr<CShellFile>& spFile) {
 
-		if (!m_isPreview) return;
+		if (auto observer = wp.lock()) {
+			if (!m_isPreview) return;
 
-		std::shared_ptr<TabData> spObsData = observer->ItemsSource.get_unconst()->at(*observer->SelectedIndex);
+			std::shared_ptr<TabData> spObsData = observer->ItemsSource.get_unconst()->at(*observer->SelectedIndex);
 
-		//Text
-		if (auto spTxtData = std::dynamic_pointer_cast<TextTabData>(spObsData);
-			spTxtData && boost::iequals(spFile->GetPathExt(), L".txt")) {
-			//TODO
-		//PDF
-		} else if (auto spPdfData = std::dynamic_pointer_cast<PdfTabData>(spObsData);
-			spPdfData && boost::iequals(spFile->GetPathExt(), L".pdf")) {
-			CPDFDoc newDoc;
-			newDoc.Open(spFile->GetPath());
-			spPdfData->Scale.set(-1);
-			spPdfData->VScroll.set(0.f);
-			spPdfData->HScroll.set(0.f);
-			spPdfData->Doc.set(newDoc);
-		//Image
-		} else if (auto spImgData = std::dynamic_pointer_cast<ImageTabData>(spObsData);
-			spImgData && std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
-			CD2DImage newDoc(spFile->GetPath());
-			spImgData->Scale.set(-1);
-			spImgData->VScroll.set(0.f);
-			spImgData->HScroll.set(0.f);
-			spImgData->Image.set(newDoc);			
-		//Preview
-		} else if (auto spPrvData = std::dynamic_pointer_cast<PreviewTabData>(spObsData);
-			spPrvData && std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
-			CShellFile newDoc(spFile->GetPath());
-			//spPrvData->Scale.set(-1);
-			//spPrvData->VScroll.set(0.f);
-			//spPrvData->HScroll.set(0.f);
-			spPrvData->Doc.set(newDoc);	
+			//Text
+			if (auto spTxtData = std::dynamic_pointer_cast<TextTabData>(spObsData);
+				spTxtData && boost::iequals(spFile->GetPathExt(), L".txt")) {
+				//TODO
+			//PDF
+			} else if (auto spPdfData = std::dynamic_pointer_cast<PdfTabData>(spObsData);
+				spPdfData && boost::iequals(spFile->GetPathExt(), L".pdf")) {
+				std::shared_ptr<CPDFDoc> newDoc;
+				newDoc->Open(spFile->GetPath());
+				spPdfData->Scale.set(-1);
+				spPdfData->VScroll.set(0.f);
+				spPdfData->HScroll.set(0.f);
+				spPdfData->Doc.set(newDoc);
+				//Image
+			} else if (auto spImgData = std::dynamic_pointer_cast<ImageTabData>(spObsData);
+				spImgData && std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+				CD2DImage newDoc(spFile->GetPath());
+				spImgData->Scale.set(-1);
+				spImgData->VScroll.set(0.f);
+				spImgData->HScroll.set(0.f);
+				spImgData->Image.set(newDoc);
+				//Preview
+			} else if (auto spPrvData = std::dynamic_pointer_cast<PreviewTabData>(spObsData);
+				spPrvData && std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+				CShellFile newDoc(spFile->GetPath());
+				//spPrvData->Scale.set(-1);
+				//spPrvData->VScroll.set(0.f);
+				//spPrvData->HScroll.set(0.f);
+				spPrvData->Doc.set(newDoc);
+			}
 		}
 
 		//std::shared_ptr<TabData> spNewData;
@@ -245,7 +247,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 
 	//CFilerTabGridView
 	auto setUpFilerTabGridView = [this](std::shared_ptr<CFilerTabGridView>& spView, unsigned short id)->void {
-		spView->GetFilerGridViewPtr()->StatusLog = [this](const std::wstring& log) {
+		spView->GetFilerViewPtr()->GetGridViewPtr()->StatusLog = [this](const std::wstring& log) {
 			m_spStatusBar->SetText(log);
 			InvalidateRect(GetDirectPtr()->Dips2Pixels(m_spStatusBar->GetRectInWnd()), FALSE);
 		};
@@ -440,8 +442,8 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		};
 	};
 
-	applyCustomContextMenu(m_spLeftView->GetFilerGridViewPtr());
-	applyCustomContextMenu(m_spRightView->GetFilerGridViewPtr());
+	applyCustomContextMenu(m_spLeftView->GetFilerViewPtr()->GetGridViewPtr());
+	applyCustomContextMenu(m_spRightView->GetFilerViewPtr()->GetGridViewPtr());
 
 	//SetWindowPlacement make sure Window in Monitor
 	WINDOWPLACEMENT wp = { 0 };
@@ -490,22 +492,22 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 		//Replace or PushBack
 		if (::GetAsyncKeyState(VK_CONTROL)) {
 			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
-				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
+				if (auto spCurView = std::dynamic_pointer_cast<CFilerView>(spCurTab->GetCurrentControlPtr())) {
 					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
 					std::shared_ptr<TabData> spNewData;
-					if (boost::iequals(spCurFilerGrid->GetFocusedFile()->GetPathExt(), L".txt")) {
-						spNewData = std::make_shared<TextTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
-					} else if (boost::iequals(spCurFilerGrid->GetFocusedFile()->GetPathExt(), L".pdf")) {
-						spNewData = std::make_shared<PdfTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
-					} else if (std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spCurFilerGrid->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
-						spNewData = std::make_shared<ImageTabData>(GetWndPtr()->GetDirectPtr(), spCurFilerGrid->GetFocusedFile()->GetPath());
-					} else if (std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spCurFilerGrid->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
-						spNewData = std::make_shared<PreviewTabData>(spCurFilerGrid->GetFocusedFile()->GetPath());
+					if (boost::iequals(spCurView->GetGridViewPtr()->GetFocusedFile()->GetPathExt(), L".txt")) {
+						spNewData = std::make_shared<TextTabData>(spCurView->GetGridViewPtr()->GetFocusedFile()->GetPath());
+					} else if (boost::iequals(spCurView->GetGridViewPtr()->GetFocusedFile()->GetPathExt(), L".pdf")) {
+						spNewData = std::make_shared<PdfTabData>(spCurView->GetGridViewPtr()->GetFocusedFile()->GetPath());
+					} else if (std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spCurView->GetGridViewPtr()->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+						spNewData = std::make_shared<ImageTabData>(GetWndPtr()->GetDirectPtr(), spCurView->GetGridViewPtr()->GetFocusedFile()->GetPath());
+					} else if (std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spCurView->GetGridViewPtr()->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+						spNewData = std::make_shared<PreviewTabData>(spCurView->GetGridViewPtr()->GetFocusedFile()->GetPath());
 					}
 
 					if (spNewData) {
 						//Replace
-						if (::GetAsyncKeyState(VK_SHIFT) && spOtherTab->ItemsSource.get_unconst()->at(*spOtherTab->SelectedIndex)->AcceptClosing(this, false)) {
+						if (::IsKeyDown(VK_SHIFT) && spOtherTab->ItemsSource.get_unconst()->at(*spOtherTab->SelectedIndex)->AcceptClosing(this, false)) {
 							spOtherTab->ItemsSource.replace(spOtherTab->ItemsSource.get_unconst()->begin() + *spOtherTab->SelectedIndex, spNewData);
 						//Push back	
 						} else {
@@ -529,10 +531,10 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 	case VK_F5:
 		{
 			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
-				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
+				if (auto spFilerView = std::dynamic_pointer_cast<CFilerView>(spCurTab->GetCurrentControlPtr())) {
 					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
-					if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spOtherTab->GetCurrentControlPtr())) {
-						spCurFilerGrid->CopySelectedFilesTo(spOtherFilerGrid->GetFolder()->GetAbsoluteIdl());
+					if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerView>(spOtherTab->GetCurrentControlPtr())) {
+						spFilerView->GetGridViewPtr()->CopySelectedFilesTo(spOtherFilerGrid->GetGridViewPtr()->Folder->GetAbsoluteIdl());
 						*(e.HandledPtr) = TRUE;
 					}
 				}
@@ -542,10 +544,10 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 	case VK_F6:
 		{
 			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
-				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
+				if (auto spFilerView = std::dynamic_pointer_cast<CFilerView>(spCurTab->GetCurrentControlPtr())) {
 					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
-					if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spOtherTab->GetCurrentControlPtr())) {
-						spCurFilerGrid->MoveSelectedFilesTo(spOtherFilerGrid->GetFolder()->GetAbsoluteIdl());
+					if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerView>(spOtherTab->GetCurrentControlPtr())) {
+						spFilerView->GetGridViewPtr()->MoveSelectedFilesTo(spOtherFilerGrid->GetGridViewPtr()->Folder->GetAbsoluteIdl());
 						*(e.HandledPtr) = TRUE;
 					}
 				}
@@ -555,10 +557,10 @@ void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 	case VK_F9:
 		{
 			if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
-				if (auto spCurFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spCurTab->GetCurrentControlPtr())) {
+				if (auto spFilerView = std::dynamic_pointer_cast<CFilerView>(spCurTab->GetCurrentControlPtr())) {
 					std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
-					if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerGridView>(spOtherTab->GetCurrentControlPtr())) {
-						spCurFilerGrid->CopyIncrementalSelectedFilesTo(spOtherFilerGrid->GetFolder()->GetAbsoluteIdl());
+					if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerView>(spOtherTab->GetCurrentControlPtr())) {
+						spFilerView->GetGridViewPtr()->CopyIncrementalSelectedFilesTo(spOtherFilerGrid->GetGridViewPtr()->Folder->GetAbsoluteIdl());
 						*(e.HandledPtr) = TRUE;
 					}
 				}
@@ -741,8 +743,8 @@ void CFilerWnd::Reload()
 	m_spLauncher->Reload();
 	m_spLeftFavoritesView->Reload();
 	m_spRightFavoritesView->Reload();
-	m_spLeftView->GetFilerGridViewPtr()->Reload();
-	m_spRightView->GetFilerGridViewPtr()->Reload();
+	m_spLeftView->GetFilerViewPtr()->GetGridViewPtr()->Reload();
+	m_spRightView->GetFilerViewPtr()->GetGridViewPtr()->Reload();
 	InvalidateRect(NULL, FALSE);
 }
 

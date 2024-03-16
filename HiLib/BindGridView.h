@@ -131,11 +131,11 @@ public:
 			PushColumn(m_pNameColumn);
 		}
 
-		m_pHeaderRow = ::get(arg<"hdrrow"_s>(), args..., default_(nullptr));
-		if (m_pHeaderRow){
-			m_pHeaderRow->SetSheetPtr(this);
-			PushRow(m_pHeaderRow);
-		}
+		//m_pHeaderRow = ::get(arg<"hdrrow"_s>(), args..., default_(nullptr));
+		//if (m_pHeaderRow){
+		//	m_pHeaderRow->SetSheetPtr(this);
+		//	PushRow(m_pHeaderRow);
+		//}
 
 		m_pNameHeaderRow = ::get(arg<"namerow"_s>(), args..., default_(nullptr));
 		if (m_pNameHeaderRow) {

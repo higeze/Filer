@@ -192,8 +192,8 @@ const std::wstring& CShellFile::GetIconKey() const
 		std::wstring key = L"DEFAULT";
 		if (!m_absoluteIdl || GetPath().empty()) {
 			key = L"DEFAULT";
-		} else if (!GetPathExt().empty() && excludeExtSet.find(GetPathExt()) == excludeExtSet.end() && GetAttributes() != 0) {
-			key = GetPathExt();
+		} else if (!GetDispExt().empty() && excludeExtSet.find(GetDispExt()) == excludeExtSet.end() && GetAttributes() != 0) {
+			key = GetDispExt();
 		} else {
 			key = GetPath();
 		}
@@ -370,6 +370,7 @@ void CShellFile::RunAs()
 
 void CShellFile::AddToRecentDocs()
 {
+	::SHAddToRecentDocs(SHARD::SHARD_PIDL, m_parentIdl.m_pIDL);
 	::SHAddToRecentDocs(SHARD::SHARD_PIDL, m_absoluteIdl.m_pIDL);
 }
 
