@@ -1,6 +1,6 @@
 #pragma once
 #include "IDragger.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "Band.h"
 #include "CellProperty.h"
 #include "MyPen.h"
@@ -24,7 +24,7 @@ public:
 	//int GetDragToAllIndex() { return m_dragToIndex; }
 	//int GetDragFromAllIndex() { return m_dragFromIndex; }
 
-	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override
+	virtual bool IsTarget(CGridView* pSheet, const MouseEvent& e) override
 	{
 		auto visIndexes = pSheet->Point2Indexes(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 		auto v = visIndexes.Get<TRCYou::IndexesTag>();
@@ -39,7 +39,7 @@ public:
 		}
 	}
 
-	void OnBeginDrag(CSheet* pSheet, const MouseEvent& e) override
+	void OnBeginDrag(CGridView* pSheet, const MouseEvent& e) override
 	{
 		m_dragFromVisIndex = pSheet->Point2Index<TRC>(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 		if (static_cast<size_t>(m_dragFromVisIndex) >= pSheet->GetContainer<TRC, VisTag>().size()) {
@@ -50,7 +50,7 @@ public:
 		//m_dragToIndex = CBand::kInvalidIndex;
 	}
 
-	void OnDrag(CSheet* pSheet, const MouseEvent& e) override
+	void OnDrag(CGridView* pSheet, const MouseEvent& e) override
 	{
 		auto curVisIndex = pSheet->Point2Index<TRC>(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
 
@@ -91,7 +91,7 @@ public:
 		//}
 	}
 
-	void OnEndDrag(CSheet* pSheet, const MouseEvent& e) override
+	void OnEndDrag(CGridView* pSheet, const MouseEvent& e) override
 	{
 		//Drag to from check
 		if (m_dragToVisIndex == CBand::kInvalidIndex || m_dragFromVisIndex == CBand::kInvalidIndex || m_dragToVisIndex == m_dragFromVisIndex) {
@@ -116,7 +116,7 @@ public:
 		//m_dragToIndex = CBand::kInvalidIndex;
 	}
 
-	void OnLeaveDrag(CSheet* pSheet, const MouseEvent& e) override
+	void OnLeaveDrag(CGridView* pSheet, const MouseEvent& e) override
 	{
 		m_dragFromVisIndex = CBand::kInvalidIndex;
 		m_dragToVisIndex = CBand::kInvalidIndex;
@@ -125,7 +125,7 @@ public:
 		//m_dragToIndex = CBand::kInvalidIndex;
 	}
 
-	virtual void OnPaintDragLine(CSheet* pSheet, const PaintEvent& e)
+	virtual void OnPaintDragLine(CGridView* pSheet, const PaintEvent& e)
 	{
 		//Drag to from check
 		if (m_dragFromVisIndex == CBand::kInvalidIndex ||
@@ -213,7 +213,7 @@ public:
     /*! Constructor*/
 	CSheetCellDragger():base(){}
 	virtual ~CSheetCellDragger(){}
-	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) override { return false; }
+	virtual bool IsTarget(CGridView* pSheet, const MouseEvent& e) override { return false; }
 };
 
 typedef CSheetCellDragger<RowTag, ColTag> CSheetCellRowDragger;

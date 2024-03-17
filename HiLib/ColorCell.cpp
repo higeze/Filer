@@ -2,11 +2,11 @@
 #include "MyColor.h"
 #include "MyBrush.h"
 #include "MyDC.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "GridView.h"
 #include "D2DWWindow.h"
 
-CColorCell::CColorCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CColorF color)
+CColorCell::CColorCell(CGridView* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CColorF color)
 	:CTextCell(pSheet,pRow,pColumn,spProperty),
 	m_color(color){}
 
@@ -24,7 +24,7 @@ void CColorCell::OnLButtonClk(const LButtonClkEvent& e)
 	COLORREF CustColors[16];
 	CHOOSECOLOR cc={0};
 	cc.lStructSize=sizeof(CHOOSECOLOR);
-	cc.hwndOwner=m_pSheet->GetWndPtr()->m_hWnd;
+	cc.hwndOwner=m_pGrid->GetWndPtr()->m_hWnd;
 	COLORREF rgb = RGB(m_color.r * 255, m_color.g * 255, m_color.b * 255);
 	cc.rgbResult=rgb;
 	cc.lpCustColors=CustColors;

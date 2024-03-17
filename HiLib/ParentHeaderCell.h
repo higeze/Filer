@@ -6,7 +6,7 @@ class CColor;
 class CParentHeaderCell:public CTextCell
 {
 public:
-	CParentHeaderCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr)
+	CParentHeaderCell(CGridView* pSheet,CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, CMenu* pMenu = nullptr)
 		:CTextCell(pSheet,pRow, pColumn,spProperty,pMenu){}
 	virtual ~CParentHeaderCell(){}
 //	virtual void PaintBackground(CDC* pDC,CRect rc);

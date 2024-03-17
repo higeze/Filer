@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MenuItem.h"
-class CSheet;
+class CGridView;
 class CColumn;
 
 class CCheckableMenuItem:public CMenuItem
@@ -19,13 +19,13 @@ protected:
 class CShowHideColumnMenuItem :public CCheckableMenuItem
 {
 protected:
-	CSheet * m_pSheet;
+	CGridView* m_pGrid;
 	CColumn* m_pColumn;
 	std::wstring m_name;
 	void Update();
 
 public:
-	CShowHideColumnMenuItem(const WORD wID, const std::wstring& str, CSheet* pSheet, CColumn* pColumn);
+	CShowHideColumnMenuItem(const WORD wID, const std::wstring& str, CGridView* pSheet, CColumn* pColumn);
 	virtual ~CShowHideColumnMenuItem() {}
 
 	virtual bool GetIsChecked() override;

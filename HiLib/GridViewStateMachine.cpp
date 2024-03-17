@@ -132,9 +132,9 @@ struct CGridStateMachine::Machine
 
 CGridStateMachine::CGridStateMachine(CGridView* pGrid)
 	://m_logger(),
-	//m_pMachine(new boost::sml::sm<Machine ,sml::logger<my_logger>>{ m_logger, pGrid, static_cast<CSheet*>(pGrid) })
-	m_pMachine(new boost::sml::sm<Machine, sml::process_queue<std::queue>>{ pGrid, static_cast<CSheet*>(pGrid) })
-	//m_pMachine(new boost::sml::sm<Machine>{ pGrid, static_cast<CSheet*>(pGrid)})
+	//m_pMachine(new boost::sml::sm<Machine ,sml::logger<my_logger>>{ m_logger, pGrid, static_cast<CGridView*>(pGrid) })
+	m_pMachine(new boost::sml::sm<Machine, sml::process_queue<std::queue>>{ pGrid, static_cast<CGridView*>(pGrid) })
+	//m_pMachine(new boost::sml::sm<Machine>{ pGrid, static_cast<CGridView*>(pGrid)})
 {
 }
 

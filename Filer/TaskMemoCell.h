@@ -10,7 +10,7 @@ class CTaskMemoCell :public CTextCell
 {
 public:
 	template<typename... Args>
-	CTaskMemoCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
+	CTaskMemoCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
 		:CTextCell(pSheet, pRow, pColumn, spProperty, args...){}
 
 	virtual ~CTaskMemoCell() = default;

@@ -15,7 +15,7 @@ private:
 	mutable sigslot::connection m_conLastWriteChanged;
 
 public:
-	CFileLastWriteCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+	CFileLastWriteCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CTextCell(pSheet, pRow, pColumn, spProperty)
 	{
 	}
@@ -33,13 +33,13 @@ public:
 			std::weak_ptr<CFileLastWriteCell<T>> wp(std::dynamic_pointer_cast<CFileLastWriteCell<T>>(shared_from_this()));
 			auto changed = [wp]()->void {
 				if (auto sp = wp.lock()) {
-					sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					sp->m_conDelayUpdateAction = sp->GetGridPtr()->SignalPreDelayUpdate.connect(
 						[wp]()->void {
 							if (auto sp = wp.lock()) {
 								sp->OnPropertyChanged(L"value");
 							}
 						});
-					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+					sp->GetGridPtr()->DelayUpdate();
 				}
 			};
 

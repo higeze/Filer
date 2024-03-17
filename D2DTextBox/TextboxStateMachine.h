@@ -1,5 +1,5 @@
 #pragma once
-#include "SheetStateMachine.h"
+#include "IStateMachine.h"
 #include <boost/sml.hpp>
 
 class CTextBox;

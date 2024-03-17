@@ -3,7 +3,7 @@
 #include "IDragger.h"
 #include "MyPoint.h"
 //Pre-Declaration
-class CSheet;
+class CGridView;
 
 
 
@@ -17,11 +17,11 @@ public:
 
 public:
 
-	bool IsTarget(CSheet* pSheet, MouseEvent const & e) override;
-	void OnBeginDrag(CSheet* pSheet, MouseEvent const & e) override;
-	void OnDrag(CSheet* pSheet, MouseEvent const & e) override;
-	void OnEndDrag(CSheet* pSheet, MouseEvent const & e) override;
-	void OnLeaveDrag(CSheet* pSheet, MouseEvent const & e) override;
-	void OnPaintDragLine(CSheet* pSheet, const PaintEvent & e)override{/*Do Nothing*/}
+	bool IsTarget(CGridView* pSheet, MouseEvent const & e) override;
+	void OnBeginDrag(CGridView* pSheet, MouseEvent const & e) override;
+	void OnDrag(CGridView* pSheet, MouseEvent const & e) override;
+	void OnEndDrag(CGridView* pSheet, MouseEvent const & e) override;
+	void OnLeaveDrag(CGridView* pSheet, MouseEvent const & e) override;
+	void OnPaintDragLine(CGridView* pSheet, const PaintEvent & e)override{/*Do Nothing*/}
 
 };

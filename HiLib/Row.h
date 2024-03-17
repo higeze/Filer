@@ -18,7 +18,7 @@ protected:
 	std::shared_ptr<CellProperty> m_spCellProperty;
 public:
 	template<typename... Args>
-	CRow(CSheet* pSheet, std::shared_ptr<CellProperty> spProperty, Args... args)
+	CRow(CGridView* pSheet, std::shared_ptr<CellProperty> spProperty, Args... args)
 		:CBand(pSheet),m_spCellProperty(spProperty)
 	{
 		m_isMinLengthFit = ::get(arg<"isminfit"_s>(), args..., default_(true));

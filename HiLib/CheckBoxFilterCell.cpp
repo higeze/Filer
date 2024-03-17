@@ -1,5 +1,5 @@
 #include "CheckBoxFilterCell.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "GridView.h"
 #include "Column.h"
 #include "D2DWWindow.h"
@@ -8,7 +8,7 @@
 //TOOD why constructor called 3 times
 //TODO filter should be OR
 
-CCheckBoxFilterCell::CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+CCheckBoxFilterCell::CCheckBoxFilterCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 	:CCell(pSheet, pRow, pColumn, spProperty), m_checkBoxes(), Dummy(std::make_shared<int>(0))
 {
 
@@ -104,7 +104,7 @@ void CCheckBoxFilterCell::OnLButtonDown(const LButtonDownEvent& e)
 void CCheckBoxFilterCell::SetStringCore(const std::wstring& str)
 {
 	//Filter cell undo redo is set when Post WM_FILTER
-	m_deadlinetimer.run([pWnd = m_pSheet->GetWndPtr(), newString = str, pSheet = m_pSheet, pColumn = m_pColumn]()->void
+	m_deadlinetimer.run([pWnd = m_pGrid->GetWndPtr(), newString = str, pSheet = m_pGrid, pColumn = m_pColumn]()->void
 	{
 		pColumn->SetFilter(newString);
 		if (auto pGrid = dynamic_cast<CGridView*>(pSheet)) {

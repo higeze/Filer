@@ -19,7 +19,7 @@ protected:
 	mutable sigslot::connection m_conDelayUpdateAction;
 
 public:
-	CFileNameCellBase(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+	CFileNameCellBase(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit){ }
 	virtual ~CFileNameCellBase() = default;
 protected:
@@ -49,8 +49,8 @@ protected:
 	std::wstring GetViewString()
 	{
 		std::wstring text;
-		if (m_pSheet->GetGridPtr()->GetEditPtr() && m_pSheet->GetGridPtr()->GetEditPtr()->GetCellPtr() == this) {
-			text = *m_pSheet->GetGridPtr()->GetEditPtr()->Text;
+		if (m_pGrid->GetEditPtr() && m_pGrid->GetEditPtr()->GetCellPtr() == this) {
+			text = *m_pGrid->GetEditPtr()->Text;
 		} else {
 			text = GetString();
 		}
@@ -67,13 +67,13 @@ public:
 
 		auto updated = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileNameCell<T>>(shared_from_this())) ]()->void {
 			if (auto sp = wp.lock()) {
-				sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+				sp->m_conDelayUpdateAction = sp->GetGridPtr()->SignalPreDelayUpdate.connect(
 					[wp]()->void {
 						if (auto sp = wp.lock()) {
 							sp->OnPropertyChanged(L"value");
 						}
 					});
-				sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+				sp->GetGridPtr()->DelayUpdate();
 			}
 		};
 
@@ -131,7 +131,7 @@ public:
 
 	virtual void OnEdit(const Event& e) override
 	{
-		m_pSheet->GetGridPtr()->BeginEdit(this);
+		m_pGrid->BeginEdit(this);
 	}
 
 	virtual bool CanSetStringOnEditing()const override { return false; }
@@ -154,7 +154,7 @@ public:
 	virtual void SetStringCore(const std::wstring& str) override
 	{
 		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
-		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, this->m_pSheet->GetWndPtr()->m_hWnd);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, this->m_pGrid->GetWndPtr()->m_hWnd);
 
 	}
 };
@@ -177,7 +177,7 @@ public:
 	virtual void SetStringCore(const std::wstring& str) override
 	{
 		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
-		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, this->m_pSheet->GetWndPtr()->m_hWnd);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, this->m_pGrid->GetWndPtr()->m_hWnd);
 	}
 };
 
@@ -211,7 +211,7 @@ template<typename T>
 class CFileRenameCell :public CTextCell
 {
 public:
-	CFileRenameCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+	CFileRenameCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
 	{
 	}

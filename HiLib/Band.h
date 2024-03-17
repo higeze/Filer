@@ -4,7 +4,7 @@
 #include <float.h>
 #include "JsonSerializer.h"
 
-class CSheet;
+class CGridView;
 class CCell;
 
 struct AllTag{};
@@ -20,7 +20,7 @@ public:
 	inline static const FLOAT kResizeAreaHarfWidth = 4.0f;
 protected:
 	//Field
-	CSheet* m_pSheet = nullptr; // Parent sheet pointer
+	CGridView* m_pGrid = nullptr; // Parent sheet pointer
 	std::shared_ptr<bool> m_spVisible = std::make_shared<bool>(true); // Visible or not
 	bool m_bSelected = false; // Selected or not
 
@@ -39,22 +39,22 @@ protected:
 
 public:
 	//Constructor
-	CBand(CSheet* pSheet = nullptr)
-		:m_pSheet(pSheet){}
+	CBand(CGridView* pSheet = nullptr)
+		:m_pGrid(pSheet){}
 	//Destructor
 	virtual ~CBand(){}
 
 	CBand& ShallowCopy(const CBand& band)
 	{
-		m_pSheet = band.m_pSheet;
+		m_pGrid = band.m_pGrid;
 		*m_spVisible = *(band.m_spVisible);
 		m_bSelected = band.m_bSelected;
 		m_isMeasureValid = band.m_isMeasureValid;
 		m_isFitMeasureValid = band.m_isFitMeasureValid;	
 		return *this;
 	}
-	CSheet* GetSheetPtr()const{return m_pSheet;}
-	void SetSheetPtr(CSheet* pSheet){m_pSheet = pSheet;}
+	CGridView* GetGridPtr()const{return m_pGrid;}
+	void SetSheetPtr(CGridView* pSheet){m_pGrid = pSheet;}
 	bool GetIsMeasureValid()const{return m_isMeasureValid;}
 	void SetIsMeasureValid(bool bMeasureValid){m_isMeasureValid = bMeasureValid;}
 	void SetIsFitMeasureValid(bool isFitMeasureValid) { m_isFitMeasureValid = isFitMeasureValid; }

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Sheet.h"
+#include "GridView.h"
 //Pre-Declaration
-class CSheet;
+class CGridView;
 class CCell;
 class CGridView;
 class ISheetState;
@@ -29,14 +29,14 @@ public:
 	void SetCurrentCell(const std::shared_ptr<CCell>& cell){m_currentCell = cell;}
 	std::shared_ptr<CCell> GetDoubleFocusedCell() { return m_doubleFocusedCell; }
 	//Event handler
-	virtual void OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e);
-	virtual void OnLButtonUp(CSheet* pSheet, const LButtonUpEvent& e);
-	virtual void OnLButtonDblClk(CSheet* pSheet, const LButtonDblClkEvent& e){/*Do Nothing*/}
-	virtual void OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e);
-	virtual void OnMouseMove(CSheet* pSheet, const MouseMoveEvent& e) {/*Do Nothing*/ }
-	virtual void OnMouseLeave(CSheet* pSheet, const MouseLeaveEvent& e);
-	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) {/*Do Nothing*/ }
-	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e);
+	virtual void OnLButtonDown(CGridView* pSheet, const LButtonDownEvent& e);
+	virtual void OnLButtonUp(CGridView* pSheet, const LButtonUpEvent& e);
+	virtual void OnLButtonDblClk(CGridView* pSheet, const LButtonDblClkEvent& e){/*Do Nothing*/}
+	virtual void OnRButtonDown(CGridView* pSheet, const RButtonDownEvent& e);
+	virtual void OnMouseMove(CGridView* pSheet, const MouseMoveEvent& e) {/*Do Nothing*/ }
+	virtual void OnMouseLeave(CGridView* pSheet, const MouseLeaveEvent& e);
+	virtual void OnSetCursor(CGridView* pSheet, const SetCursorEvent& e) {/*Do Nothing*/ }
+	virtual void OnKeyDown(CGridView* pSheet, const KeyDownEvent& e);
 
 
 	virtual void OnCursorDown(const std::shared_ptr<CCell>& cell);
@@ -52,16 +52,16 @@ protected:
 	virtual void UpdateCursor(const std::shared_ptr<CCell>& cell, bool old  = true, bool current = true, bool anchor = true, bool focus = true);
 
 public:
-	virtual void OnCursorClear(CSheet* pSheet);
+	virtual void OnCursorClear(CGridView* pSheet);
 
-	std::vector<Indexes> GetFocusedRCs(CSheet* pSheet)const;
-	std::vector<Indexes> GetSelectedRCs(CSheet* pSheet)const;
-	std::vector<std::shared_ptr<CRow>> GetSelectedRows(CSheet* pSheet)const;
-	std::vector<std::shared_ptr<CColumn>> GetSelectedColumns(CSheet* pSheet)const;
-	void SetFocusedRCs(CSheet* pSheet, std::vector<Indexes> rcs);
-	void SetSelectedRCs(CSheet* pSheet, std::vector<Indexes> rocos);
-	void SetSelectedRows(CSheet* pSheet, std::vector<std::shared_ptr<CRow>> rcs);
-	void SetSelectedColumns(CSheet* pSheet, std::vector<std::shared_ptr<CColumn>> cols);
+	std::vector<Indexes> GetFocusedRCs(CGridView* pSheet)const;
+	std::vector<Indexes> GetSelectedRCs(CGridView* pSheet)const;
+	std::vector<std::shared_ptr<CRow>> GetSelectedRows(CGridView* pSheet)const;
+	std::vector<std::shared_ptr<CColumn>> GetSelectedColumns(CGridView* pSheet)const;
+	void SetFocusedRCs(CGridView* pSheet, std::vector<Indexes> rcs);
+	void SetSelectedRCs(CGridView* pSheet, std::vector<Indexes> rocos);
+	void SetSelectedRows(CGridView* pSheet, std::vector<std::shared_ptr<CRow>> rcs);
+	void SetSelectedColumns(CGridView* pSheet, std::vector<std::shared_ptr<CColumn>> cols);
 
 	void Clear()
 	{
@@ -78,13 +78,13 @@ class CSheetCellCursorer:public CCursorer
 public:
 	CSheetCellCursorer():CCursorer(){}
 	virtual ~CSheetCellCursorer(){}
-	virtual void OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e) override;
-	virtual void OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e) override;
-	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) override;
+	virtual void OnLButtonDown(CGridView* pSheet, const LButtonDownEvent& e) override;
+	virtual void OnRButtonDown(CGridView* pSheet, const RButtonDownEvent& e) override;
+	virtual void OnKeyDown(CGridView* pSheet, const KeyDownEvent& e) override;
 };
 
 class CExcelLikeCursorer :public CCursorer
 {
 	using CCursorer::CCursorer;
-	virtual void OnKeyDown(CSheet* pSheet, const KeyDownEvent& e) override;
+	virtual void OnKeyDown(CGridView* pSheet, const KeyDownEvent& e) override;
 };

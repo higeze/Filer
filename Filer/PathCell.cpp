@@ -10,13 +10,13 @@
 
 bool CPathCell::IsLeftestCell()const
 {
-	return m_pColumn->GetIndex<VisTag>() == m_pSheet->GetFrozenCount<ColTag>();
+	return m_pColumn->GetIndex<VisTag>() == m_pGrid->GetFrozenCount<ColTag>();
 }
 
 std::wstring CPathCell::GetString()
 {
 	//if (IsLeftestCell()) {
-		return static_cast<CFilerGridView*>(m_pSheet)->GetPath();
+		return static_cast<CFilerGridView*>(m_pGrid)->GetPath();
 	//} else {
 	//	return std::wstring();
 	//}
@@ -32,9 +32,9 @@ void CPathCell::SetString(const std::wstring& str, bool notify)
 CRectF CPathCell::GetRectInWnd()const
 {
 	return CRectF(
-		m_pSheet->GetContainer<ColTag, VisTag>()[m_pSheet->GetFrozenCount<ColTag>()]->GetLeft(),
+		m_pGrid->GetContainer<ColTag, VisTag>()[m_pGrid->GetFrozenCount<ColTag>()]->GetLeft(),
 		m_pRow->GetTop(),
-		m_pSheet->GetContainer<ColTag, VisTag>().back()->GetRight(),
+		m_pGrid->GetContainer<ColTag, VisTag>().back()->GetRight(),
 		m_pRow->GetBottom());
 }
 
@@ -48,7 +48,7 @@ CSizeF CPathCell::GetFitSize(CDirect2DWrite* pDirect)
 CSizeF CPathCell::GetActSize(CDirect2DWrite* pDirect)
 {
 	if(!m_isActMeasureValid){
-		auto width = m_pSheet->GetContainer<ColTag, VisTag>().back()->GetRight() - m_pSheet->GetContainer<ColTag, VisTag>()[m_pSheet->GetFrozenCount<ColTag>()]->GetLeft();
+		auto width = m_pGrid->GetContainer<ColTag, VisTag>().back()->GetRight() - m_pGrid->GetContainer<ColTag, VisTag>()[m_pGrid->GetFrozenCount<ColTag>()]->GetLeft();
 		auto fitSize = MeasureSize(pDirect);
 		if(fitSize.width <= width){
 			m_actSize.width = width;
@@ -66,7 +66,7 @@ CSizeF CPathCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 {
 	//Calc Content Rect
 	CRectF rcCenter(0,0,
-		m_pSheet->GetContainer<ColTag, VisTag>().back()->GetRight() - m_pSheet->GetContainer<ColTag, VisTag>()[m_pSheet->GetFrozenCount<ColTag>()]->GetLeft(),0);
+		m_pGrid->GetContainer<ColTag, VisTag>().back()->GetRight() - m_pGrid->GetContainer<ColTag, VisTag>()[m_pGrid->GetFrozenCount<ColTag>()]->GetLeft(),0);
 	CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
 	//Calc Content Rect
 	std::basic_string<TCHAR> str=IsLeftestCell()?GetString():std::basic_string<TCHAR>();
@@ -83,5 +83,5 @@ void CPathCell::OnPaint(const PaintEvent& e)
 
 void CPathCell::SetStringCore(const std::wstring& str)
 {
-	static_cast<CFilerGridView*>(m_pSheet)->SetPath(str);
+	static_cast<CFilerGridView*>(m_pGrid)->SetPath(str);
 }

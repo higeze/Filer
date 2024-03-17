@@ -11,7 +11,7 @@ private:
 	std::vector<CCheckBox> m_checkBoxes;
 	CDeadlineTimer m_deadlinetimer;
 public:
-	CCheckBoxFilterCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty);
+	CCheckBoxFilterCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty);
 	virtual ~CCheckBoxFilterCell() = default;
 	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override;
 	virtual CSizeF MeasureContentSize(CDirect2DWrite* pDirect) override;

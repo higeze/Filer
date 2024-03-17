@@ -17,7 +17,7 @@ private:
 public:
 	template<typename... Args>
 	CBindSheetCellColumn(
-		CSheet* pSheet,
+		CGridView* pSheet,
 		const std::wstring& header,
 		std::function<ReactiveVectorProperty<std::tuple<TValueItem>>&(std::tuple<TItem>&)> itemser,
 		std::function<void(CBindItemsSheetCell<TItem, TValueItem>*)> initializer,
@@ -43,25 +43,25 @@ public:
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CCell>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+		return std::make_shared<CCell>(m_pGrid, pRow, pColumn, m_pGrid->GetCellProperty());
 	}
 
 	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CSortCell>(m_pSheet, pRow, pColumn, m_pSheet->GetHeaderProperty(), arg<"text"_s>() = m_header);
+		return std::make_shared<CSortCell>(m_pGrid, pRow, pColumn, m_pGrid->GetHeaderProperty(), arg<"text"_s>() = m_header);
 	}
 
 	std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CFilterCell>(m_pSheet, pRow, pColumn, m_pSheet->GetFilterProperty());
+		return std::make_shared<CFilterCell>(m_pGrid, pRow, pColumn, m_pGrid->GetFilterProperty());
 	}
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		auto spCell = std::make_shared<CBindItemsSheetCell<TItem, TValueItem>>(
-			m_pSheet, pRow, pColumn,
-			m_pSheet->GetSheetProperty(),
-			m_pSheet->GetCellProperty(),
+			m_pGrid, pRow, pColumn,
+			m_pGrid->GetSheetProperty(),
+			m_pGrid->GetCellProperty(),
 			m_initialize);
 		spCell->UpdateAll();
 		return spCell;

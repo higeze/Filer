@@ -1,14 +1,14 @@
 #include "Column.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "CellProperty.h"
 
-FLOAT CColumn::GetStart() { return m_start/* + m_pSheet->GetRectInWnd().left*/; }
+FLOAT CColumn::GetStart() { return m_start/* + m_pGrid->GetRectInWnd().left*/; }
 
-FLOAT CColumn::GetEnd() { return m_start + m_length /* + +m_pSheet->GetRectInWnd().left*/; }
+FLOAT CColumn::GetEnd() { return m_start + m_length /* + +m_pGrid->GetRectInWnd().left*/; }
 
 CRectF CColumn::GetRectInWnd()
 {
-	auto visRows = m_pSheet->GetContainer<RowTag, VisTag>();
+	auto visRows = m_pGrid->GetContainer<RowTag, VisTag>();
 	return CRectF(GetLeft(),
 		visRows.front()->GetTop(),
 		GetRight(),
@@ -18,7 +18,7 @@ CRectF CColumn::GetRectInWnd()
 FLOAT CColumn::GetLength()
 {
 	if (m_isInit) {
-		SetLength(m_pSheet->GetColumnInitWidth(this), false);
+		SetLength(m_pGrid->GetColumnInitWidth(this), false);
 		m_isInit = false;
 		m_isMeasureValid = true;
 	}
@@ -43,7 +43,7 @@ FLOAT CColumn::GetVirtualLength()
 FLOAT CColumn::GetFitLength()
 {
 	if (!m_isFitMeasureValid) {
-		m_fitLength = m_pSheet->GetColumnFitWidth(this);
+		m_fitLength = m_pGrid->GetColumnFitWidth(this);
 		if (m_fitLength < 1.f) {
 			auto aa = 1;
 		}
@@ -76,7 +76,7 @@ void CColumn::SetIsSelected(const bool& bSelected)
 void CColumn::SetSort(const Sorts& sort)
 {
 	if(sort!=Sorts::None){
-		m_pSheet->ResetColumnSort();
+		m_pGrid->ResetColumnSort();
 	}
 	if(m_sort!=sort){
 		m_sort=sort;
@@ -96,5 +96,5 @@ void CColumn::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
 
 void CColumn::OnPropertyChanged(const wchar_t* name)
 {
-	m_pSheet->OnColumnPropertyChanged(this, name);
+	m_pGrid->OnColumnPropertyChanged(this, name);
 }

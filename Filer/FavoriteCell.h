@@ -39,7 +39,7 @@ public:
 			return pBindRow->GetItem<std::shared_ptr<CFavorite>>()->GetShellFile(
 				[wp = std::weak_ptr(std::dynamic_pointer_cast<CFavoriteCell<T>>(this->shared_from_this()))]() {
 					if (auto sp = wp.lock()) {
-						sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+						sp->GetGridPtr()->DelayUpdate();
 					}
 				});
 		} else {
@@ -77,14 +77,14 @@ public:
 		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 
-		::SetForegroundWindow(this->m_pSheet->GetWndPtr()->m_hWnd);
-		WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, this->m_pSheet->GetWndPtr()->m_hWnd);
+		::SetForegroundWindow(this->m_pGrid->GetWndPtr()->m_hWnd);
+		WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, this->m_pGrid->GetWndPtr()->m_hWnd);
 		if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"EditFavorite")) {
-			auto pFilerWnd = static_cast<CFilerWnd*>(this->m_pSheet->GetWndPtr());
+			auto pFilerWnd = static_cast<CFilerWnd*>(this->m_pGrid->GetWndPtr());
 
 			auto pRow = static_cast<CBindRow<T>*>(this->m_pRow);
 			auto pCol = static_cast<const CFavoritesColumn<T>*>(this->m_pColumn);
-			auto& itemsSource = static_cast<CFavoritesGridView*>(this->m_pSheet)->GetItemsSource();
+			auto& itemsSource = static_cast<CFavoritesGridView*>(this->m_pGrid)->GetItemsSource();
 			auto order = pRow->GetIndex<AllTag>();
 
 			//TODOLOW
@@ -96,11 +96,11 @@ public:
 			//										  ::SerializeProperty(pFilerWnd);
 			//									  });
 		} else if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeleteFavorite")) {
-			auto pFilerWnd = static_cast<CFilerWnd*>(this->m_pSheet->GetWndPtr());
+			auto pFilerWnd = static_cast<CFilerWnd*>(this->m_pGrid->GetWndPtr());
 
 			auto pRow = static_cast<CBindRow<T>*>(this->m_pRow);
 			auto pCol = static_cast<const CFavoritesColumn<T>*>(this->m_pColumn);
-			auto& itemsSource = static_cast<CFavoritesGridView*>(this->m_pSheet)->GetItemsSource();
+			auto& itemsSource = static_cast<CFavoritesGridView*>(this->m_pGrid)->GetItemsSource();
 			auto order = pRow->GetIndex<AllTag>();
 
 			itemsSource.erase(std::next(itemsSource->cbegin(), order));

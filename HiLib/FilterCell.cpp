@@ -1,5 +1,5 @@
 #include "FilterCell.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "CellProperty.h"
 #include "Column.h"
 #include "GridView.h"
@@ -15,7 +15,7 @@ std::wstring CFilterCell::GetString()
 void CFilterCell::SetStringCore(const std::wstring& str)
 {
 	//Filter cell undo redo is set when Post WM_FILTER
-	m_deadlinetimer.run([pWnd = m_pSheet->GetWndPtr(), newString = str, pSheet = m_pSheet, pColumn = m_pColumn]()->void
+	m_deadlinetimer.run([pWnd = m_pGrid->GetWndPtr(), newString = str, pSheet = m_pGrid, pColumn = m_pColumn]()->void
 	{
 		pColumn->SetFilter(newString);
 		if (auto pGrid = dynamic_cast<CGridView*>(pSheet)) {

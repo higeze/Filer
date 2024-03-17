@@ -4,7 +4,7 @@
 class CEmptyCell:public CCell
 {
 public:
-	CEmptyCell(CSheet* pSheet = nullptr, CRow* pRow = nullptr, CColumn* pColumn = nullptr,
+	CEmptyCell(CGridView* pSheet = nullptr, CRow* pRow = nullptr, CColumn* pColumn = nullptr,
 		std::shared_ptr<CellProperty> spProperty = nullptr)
 		:CCell(pSheet, pRow, pColumn, spProperty){}
 	virtual ~CEmptyCell(){}

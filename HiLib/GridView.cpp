@@ -35,17 +35,50 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
-CMenu CGridView::ContextMenu;
-
+/***********/
+/* Default */
+/***********/
 CGridView::CGridView(
 	CD2DWControl* pParentControl,
-	const std::shared_ptr<GridViewProperty>& spGridViewProp,
-	CMenu* pContextMenu)
-	:m_spGridViewProp(spGridViewProp),
-	CSheet(pParentControl, spGridViewProp, pContextMenu ? pContextMenu : &CGridView::ContextMenu),
+	const std::shared_ptr<GridViewProperty>& spGridViewProp)
+	:CD2DWControl(pParentControl),
+	m_spGridViewProp(spGridViewProp),
+	m_spSheetProperty(spGridViewProp),
 	m_pVScroll(std::make_unique<CVScroll>(this, spGridViewProp->VScrollPropPtr)),
-	m_pHScroll(std::make_unique<CHScroll>(this, spGridViewProp->HScrollPropPtr))
+	m_pHScroll(std::make_unique<CHScroll>(this, spGridViewProp->HScrollPropPtr)),
+	m_bSelected(false),
+	//m_bFocused(false),
+	m_pMachine(new CGridStateMachine(this)),
+	m_allRows([](std::shared_ptr<CRow>& sp, size_t idx) { sp->SetIndex<AllTag>(idx); }),
+	m_visRows([](std::shared_ptr<CRow>& sp, size_t idx) { sp->SetIndex<VisTag>(idx); }),
+	m_pntRows([](std::shared_ptr<CRow>& sp, size_t idx) { /* Do Nothing */ }),
+	m_allCols([](std::shared_ptr<CColumn>& sp, size_t idx) { sp->SetIndex<AllTag>(idx); }),
+	m_visCols([](std::shared_ptr<CColumn>& sp, size_t idx) { sp->SetIndex<VisTag>(idx); }),
+	m_pntCols([](std::shared_ptr<CColumn>& sp, size_t idx) { /* Do Nothing */ })
+
 {
+	if(!m_spRowTracker){
+		m_spRowTracker = std::make_shared<CTracker<RowTag>>();
+	}
+	if (!m_spColTracker) {
+		m_spColTracker = std::make_shared<CTracker<ColTag>>();
+	}
+	if(!m_spRowDragger){
+		m_spRowDragger = std::make_shared<CDragger<RowTag, ColTag>>();
+	}
+	if (!m_spColDragger) {
+		m_spColDragger = std::make_shared<CDragger<ColTag, RowTag>>();
+	}
+	if (!m_spItemDragger) {
+		m_spItemDragger = std::make_shared<CNullDragger>();
+	}
+	if(!m_spCursorer){
+		m_spCursorer = std::make_shared<CCursorer>();
+	}
+	if (!m_spCeller) {
+		m_spCeller = std::make_shared<CCeller>();
+	}
+
 	m_pVScroll->ScrollChanged.connect([this](){
 		PostUpdate(Updates::Row);
 		PostUpdate(Updates::Invalidate);
@@ -55,14 +88,190 @@ CGridView::CGridView(
 		PostUpdate(Updates::Column);
 		PostUpdate(Updates::Invalidate);
 	});
-
-	m_pMachine.reset(new CGridStateMachine(this));
-
-	CellLButtonClk.connect(std::bind(&CGridView::OnCellLButtonClk, this, std::placeholders::_1));
-	CellContextMenu.connect(std::bind(&CGridView::OnCellContextMenu, this, std::placeholders::_1));
 }
 
 CGridView::~CGridView() = default;
+
+/**********/
+/* Update */
+/**********/
+FLOAT CGridView::UpdateHeadersRow(FLOAT top)
+{
+	//Minus Cells
+	for (auto iter = m_visRows.begin(), end = std::next(m_visRows.begin(), m_frozenRowCount); iter != end; ++iter) {
+		(*iter)->SetTop(top, false);
+		top += (*iter)->GetHeight();
+	}
+	return top;
+}
+
+FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
+{
+	//Helper functions
+	std::function<bool(FLOAT, FLOAT, FLOAT, FLOAT)> isInPage = [](FLOAT min, FLOAT max, FLOAT top, FLOAT bottom)->bool {
+		return (min < top && top < max) ||
+			(min < bottom && bottom < max) ||
+			(top < min && max < bottom);
+	};
+	//Plus Cells
+	for (auto rowIter = m_visRows.begin() + m_frozenRowCount, rowEnd = m_visRows.end(); rowIter != rowEnd; ++rowIter) {
+		auto rowNextIter = std::next(rowIter);
+		if (IsVirtualPage()) {
+			(*rowIter)->SetTop(top, false);
+	
+			FLOAT defaultHeight = (*rowIter)->GetVirtualHeight();
+			FLOAT bottom = top + defaultHeight;
+			if (isInPage(pageTop, pageBottom, top, top + defaultHeight) ||
+				(rowNextIter!=rowEnd && isInPage(pageTop, pageBottom, bottom, bottom + (*rowNextIter)->GetVirtualHeight()))){
+				//if (HasSheetCell()) {
+				//	for (auto& ptr : m_visCols) {
+				//		std::shared_ptr<CCell> pCell = Cell(*rowIter, ptr);
+				//		if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
+				//			pSheetCell->UpdateAll();
+				//		}
+				//	}
+				//}
+				top += (*rowIter)->GetHeight();
+			} else {
+				top += defaultHeight;
+			}
+			//std::cout << top << std::endl;
+		} else {
+			(*rowIter)->SetTop(top, false);
+			//if (HasSheetCell()) {
+			//	for (auto& ptr : m_visCols) {
+			//		std::shared_ptr<CCell> pCell = Cell(*rowIter, ptr);
+			//		if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
+			//			pSheetCell->UpdateAll();
+			//		}
+			//	}
+			//}
+			top += (*rowIter)->GetHeight();
+		}
+//		prevRowIter = rowIter;
+	}
+	return top;
+}
+
+void CGridView::UpdateRow()
+{
+	if (!Visible()) { return; }
+
+	FLOAT top = GetRectInWnd().top + GetCellProperty()->Line->Width * 0.5f;
+
+	//Headers
+	top = UpdateHeadersRow(top);
+
+	//Page
+	CRectF rcPage(GetPageRect());
+	//rcPage.MoveToXY(0, 0);
+	//rcPage.MoveToY(top);
+	//FLOAT pageHeight = rcPage.Height();
+	FLOAT scrollPos = GetVerticalScrollPos();
+
+	//Cells
+	top = UpdateCellsRow(top - scrollPos, rcPage.top, rcPage.bottom);
+
+	//Scroll Virtical Range
+	if (IsVirtualPage()) {
+		m_pVScroll->SetScrollRange(0.f, GetCellsHeight());
+		if (scrollPos != GetVerticalScrollPos()) {
+			UpdateRow();
+		}
+	}
+
+	//::OutputDebugStringA(fmt::format("Row of {}\r\n", typeid(*this).name()).c_str());
+	//for (const auto& r : m_allRows) {
+	//	::OutputDebugStringA(fmt::format("{}\r\n", r->GetStart()).c_str());
+	//}
+
+}
+
+void CGridView::UpdateColumn()
+{
+	if (!Visible()) { return; }
+
+	FLOAT left = GetRectInWnd().left + GetCellProperty()->Line->Width * 0.5f;
+
+	for (auto& colPtr : m_visCols) {
+		if (colPtr->GetIndex<VisTag>() == GetFrozenCount<ColTag>()) {
+			left -= GetHorizontalScrollPos();
+		}
+		colPtr->SetLeft(left, false);
+		for (auto rowPtr : m_visRows) {
+			std::shared_ptr<CCell> pCell = Cell(rowPtr, colPtr);
+			//if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
+			//	pSheetCell->UpdateAll();
+			//}
+		}
+		left += colPtr->GetWidth();
+	}
+}
+
+void CGridView::UpdateScrolls()
+{
+	if (!Visible()) { return; }
+
+	//Client
+	CRectF rcClient(GetRectInWnd());
+
+	//Origin
+	//CPointF ptOrigin(GetOriginPoint());
+
+	//Scroll Range
+	CRectF rcCells(GetCellsRect());
+	m_pVScroll->SetScrollRange(0.f, rcCells.Height());
+	m_pHScroll->SetScrollRange(0.f, rcCells.Width());
+
+	//Scroll Page
+	CRectF rcPage(GetPageRect());
+	m_pVScroll->SetScrollPage(rcPage.Height());
+	m_pHScroll->SetScrollPage(rcPage.Width());
+
+	//Position scroll
+	CRectF rcVertical;
+	CRectF rcHorizontal;
+	FLOAT lineHalfWidth = GetCellProperty()->Line->Width * 0.5f;
+
+	rcVertical.left = rcClient.right - ::GetSystemMetrics(SM_CXVSCROLL) - lineHalfWidth;
+	rcVertical.top = rcClient.top + lineHalfWidth;
+	rcVertical.right = rcClient.right - lineHalfWidth;
+	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetIsVisible()?(m_pHScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	m_pVScroll->OnRect(RectEvent(GetWndPtr(), rcVertical));
+
+	rcHorizontal.left= rcClient.left + lineHalfWidth;
+	rcHorizontal.top = rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
+	rcHorizontal.right = rcClient.right - (m_pVScroll->GetIsVisible()?(m_pVScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
+	m_pHScroll->OnRect(RectEvent(GetWndPtr(), rcHorizontal));
+
+}
+
+
+/********/
+/* Cell */
+/********/
+
+std::shared_ptr<CCell> CGridView::Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn) 
+{
+	return Cell(spRow.get(), spColumn.get());
+}
+std::shared_ptr<CCell> CGridView::Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow) 
+{
+	return Cell(spRow, spColumn);
+}
+
+std::shared_ptr<CCell> CGridView::Cell(const CPointF& pt)
+{
+	auto rowPtr = Coordinate2Pointer<RowTag>(pt.y);
+	auto colPtr = Coordinate2Pointer<ColTag>(pt.x);
+	if (rowPtr.get() != nullptr && colPtr.get() != nullptr){
+		return Cell(rowPtr, colPtr);
+	}
+	else {
+		return nullptr;
+	}
+}
 
 void CGridView::SortAllInSubmitUpdate()
 {
@@ -133,165 +342,6 @@ void CGridView::DelayUpdate()
 	}, std::chrono::milliseconds(50));
 }
 
-FLOAT CGridView::UpdateHeadersRow(FLOAT top)
-{
-	//Minus Cells
-	for (auto iter = m_visRows.begin(), end = std::next(m_visRows.begin(), m_frozenRowCount); iter != end; ++iter) {
-		(*iter)->SetTop(top, false);
-		top += (*iter)->GetHeight();
-	}
-	return top;
-}
-
-
-FLOAT CGridView::UpdateCellsRow(FLOAT top, FLOAT pageTop, FLOAT pageBottom)
-{
-	//Helper functions
-	std::function<bool(FLOAT, FLOAT, FLOAT, FLOAT)> isInPage = [](FLOAT min, FLOAT max, FLOAT top, FLOAT bottom)->bool {
-		return (min < top && top < max) ||
-			(min < bottom && bottom < max) ||
-			(top < min && max < bottom);
-	};
-	//Plus Cells
-	for (auto rowIter = m_visRows.begin() + m_frozenRowCount, rowEnd = m_visRows.end(); rowIter != rowEnd; ++rowIter) {
-		auto rowNextIter = std::next(rowIter);
-		if (IsVirtualPage()) {
-			(*rowIter)->SetTop(top, false);
-	
-			FLOAT defaultHeight = (*rowIter)->GetVirtualHeight();
-			FLOAT bottom = top + defaultHeight;
-			if (isInPage(pageTop, pageBottom, top, top + defaultHeight) ||
-				(rowNextIter!=rowEnd && isInPage(pageTop, pageBottom, bottom, bottom + (*rowNextIter)->GetVirtualHeight()))){
-				if (HasSheetCell()) {
-					for (auto& ptr : m_visCols) {
-						std::shared_ptr<CCell> pCell = Cell(*rowIter, ptr);
-						if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
-							pSheetCell->UpdateAll();
-						}
-					}
-				}
-				top += (*rowIter)->GetHeight();
-			} else {
-				top += defaultHeight;
-			}
-			//std::cout << top << std::endl;
-		} else {
-			(*rowIter)->SetTop(top, false);
-			if (HasSheetCell()) {
-				for (auto& ptr : m_visCols) {
-					std::shared_ptr<CCell> pCell = Cell(*rowIter, ptr);
-					if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
-						pSheetCell->UpdateAll();
-					}
-				}
-			}
-			top += (*rowIter)->GetHeight();
-		}
-//		prevRowIter = rowIter;
-	}
-	return top;
-}
-
-void CGridView::UpdateRow()
-{
-	if (!Visible()) { return; }
-
-	FLOAT top = GetRectInWnd().top + GetCellProperty()->Line->Width * 0.5f;
-
-	//Headers
-	top = UpdateHeadersRow(top);
-
-	//Page
-	CRectF rcPage(GetPageRect());
-	//rcPage.MoveToXY(0, 0);
-	//rcPage.MoveToY(top);
-	//FLOAT pageHeight = rcPage.Height();
-	FLOAT scrollPos = GetVerticalScrollPos();
-
-	//Cells
-	top = UpdateCellsRow(top - scrollPos, rcPage.top, rcPage.bottom);
-
-	//Scroll Virtical Range
-	if (IsVirtualPage()) {
-		m_pVScroll->SetScrollRange(0.f, GetCellsHeight());
-		if (scrollPos != GetVerticalScrollPos()) {
-			UpdateRow();
-		}
-	}
-
-	//::OutputDebugStringA(fmt::format("Row of {}\r\n", typeid(*this).name()).c_str());
-	//for (const auto& r : m_allRows) {
-	//	::OutputDebugStringA(fmt::format("{}\r\n", r->GetStart()).c_str());
-	//}
-
-}
-
-void CGridView::UpdateColumn()
-{
-	if (!Visible()) { return; }
-
-	FLOAT left = GetRectInWnd().left + GetCellProperty()->Line->Width * 0.5f;
-
-	for (auto& colPtr : m_visCols) {
-		if (colPtr->GetIndex<VisTag>() == GetFrozenCount<ColTag>()) {
-			left -= GetHorizontalScrollPos();
-		}
-		colPtr->SetLeft(left, false);
-		for (auto rowPtr : m_visRows) {
-			std::shared_ptr<CCell> pCell = Cell(rowPtr, colPtr);
-			if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
-				pSheetCell->UpdateAll();
-			}
-		}
-		left += colPtr->GetWidth();
-	}
-
-	//::OutputDebugStringA(fmt::format("Column of {}\r\n", typeid(*this).name()).c_str());
-	//for (const auto& r : m_allCols) {
-	//	::OutputDebugStringA(fmt::format("{}\r\n", r->GetStart()).c_str());
-	//}
-
-}
-
-void CGridView::UpdateScrolls()
-{
-	if(!Visible())return;
-
-	//Client
-	CRectF rcClient(GetRectInWnd());
-
-	//Origin
-	//CPointF ptOrigin(GetOriginPoint());
-
-	//Scroll Range
-	CRectF rcCells(GetCellsRect());
-	m_pVScroll->SetScrollRange(0.f, rcCells.Height());
-	m_pHScroll->SetScrollRange(0.f, rcCells.Width());
-
-	//Scroll Page
-	CRectF rcPage(GetPageRect());
-	m_pVScroll->SetScrollPage(rcPage.Height());
-	m_pHScroll->SetScrollPage(rcPage.Width());
-
-	//Position scroll
-	CRectF rcVertical;
-	CRectF rcHorizontal;
-	FLOAT lineHalfWidth = GetCellProperty()->Line->Width * 0.5f;
-
-	rcVertical.left = rcClient.right - ::GetSystemMetrics(SM_CXVSCROLL) - lineHalfWidth;
-	rcVertical.top = rcClient.top + lineHalfWidth;
-	rcVertical.right = rcClient.right - lineHalfWidth;
-	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetIsVisible()?(m_pHScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
-	m_pVScroll->OnRect(RectEvent(GetWndPtr(), rcVertical));
-
-	rcHorizontal.left= rcClient.left + lineHalfWidth;
-	rcHorizontal.top = rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
-	rcHorizontal.right = rcClient.right - (m_pVScroll->GetIsVisible()?(m_pVScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
-	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
-	m_pHScroll->OnRect(RectEvent(GetWndPtr(), rcHorizontal));
-
-}
-
 CPointF CGridView::GetScrollPos()const
 {
 	return CPointF(m_pHScroll->GetScrollPos(), m_pVScroll->GetScrollPos());
@@ -331,15 +381,15 @@ void CGridView::OnCommandDeleteColumn(const CommandEvent& e)
 		EraseColumn(m_rocoContextMenu.GetColumnPtr());
 	}
 }
-
-void CGridView::OnCommandResizeSheetCell(const CommandEvent& e)
-{
-	if(!m_rocoContextMenu.IsInvalid()){
-		if(auto p = std::dynamic_pointer_cast<CSheetCell>(Cell(m_rocoContextMenu.GetRowPtr(),m_rocoContextMenu.GetColumnPtr()))){
-			p->Resize();
-		}
-	}
-}
+//
+//void CGridView::OnCommandResizeSheetCell(const CommandEvent& e)
+//{
+//	if(!m_rocoContextMenu.IsInvalid()){
+//		if(auto p = std::dynamic_pointer_cast<CSheetCell>(Cell(m_rocoContextMenu.GetRowPtr(),m_rocoContextMenu.GetColumnPtr()))){
+//			p->Resize();
+//		}
+//	}
+//}
 
 
 void CGridView::OnCommandSelectAll(const CommandEvent& e)
@@ -409,7 +459,10 @@ void CGridView::OnCommandCopy(const CommandEvent& e)
 void CGridView::UpdateAll()
 {
 	FilterAll();
-	CSheet::UpdateAll();
+	UpdateRowVisibleDictionary();//TODO today
+	UpdateColumnVisibleDictionary();
+	UpdateColumn();
+	UpdateRow();	
 	UpdateScrolls();
 }
 
@@ -430,7 +483,7 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 		FLOAT pageHeight = rcPage.Height();
 		FLOAT scrollPos = GetVerticalScrollPos();
 		//Frozen
-		if(pCell->GetRowPtr()->GetIndex<AllTag>() < pCell->GetSheetPtr()->GetFrozenCount<RowTag>() || pCell->GetColumnPtr()->GetIndex<AllTag>() < pCell->GetSheetPtr()->GetFrozenCount<ColTag>()){
+		if(pCell->GetRowPtr()->GetIndex<AllTag>() < pCell->GetGridPtr()->GetFrozenCount<RowTag>() || pCell->GetColumnPtr()->GetIndex<AllTag>() < pCell->GetGridPtr()->GetFrozenCount<ColTag>()){
 			//Do nothing
 		//Check if in page
 		}  else if (isAllInPage(rcPage.top, rcPage.bottom, m_spCursorer->GetFocusedCell()->GetRowPtr()->GetTop(), m_spCursorer->GetFocusedCell()->GetRowPtr()->GetBottom())) {
@@ -637,14 +690,6 @@ void CGridView::SubmitUpdate()
 	}
 }
 
-void CGridView::Clear()
-{
-	CSheet::Clear();
-	//m_rowHeaderHeader = std::shared_ptr<CRow>();
-	//m_rowNameHeader=std::shared_ptr<CRow>();
-	//m_rowFilter=std::shared_ptr<CRow>();
-}
-
 CColumn* CGridView::GetParentColumnPtr(CCell* pCell)
 {
 	return pCell->GetColumnPtr();
@@ -795,7 +840,9 @@ void CGridView::FindPrev(const std::wstring& findWord, bool matchCase, bool matc
 	GetWndPtr()->MessageBox((L"\"" + findWord + L"\" is not found!").c_str(), L"Find",MB_OK);
 
 }
-
+/****************/
+/* StateMachine */
+/****************/
 /**********/
 /* Normal */
 /**********/
@@ -806,39 +853,79 @@ void CGridView::Normal_Paint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), GetRectInWnd());
-	CSheet::Normal_Paint(e);
+
+	UpdateRowPaintDictionary();
+	UpdateColumnPaintDictionary();
+
+	//Paint Cells
+	for (auto rowIter = m_pntRows.rbegin(), rowEnd = m_pntRows.rend(); rowIter != rowEnd; ++rowIter) {
+		for (auto colIter = m_pntCols.rbegin(), colEnd = m_pntCols.rend(); colIter != colEnd; ++colIter) {
+			Cell(*rowIter, *colIter)->OnPaint(e);
+		}
+	}
+	//Paint Drag Target Line
+	m_spRowDragger->OnPaintDragLine(this, e);
+	m_spColDragger->OnPaintDragLine(this, e);
+	if (m_spItemDragger) { m_spItemDragger->OnPaintDragLine(this, e); }
+
+	ProcessMessageToAll(&CD2DWControl::OnPaint, e);
+
+	if (m_pEdit && m_pEdit->GetIsVisible()) {
+		m_pEdit->OnPaint(e);
+	}
+	m_pVScroll->OnPaint(e);
+	m_pHScroll->OnPaint(e);
 
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
 }
-
 void CGridView::Normal_LButtonDown(const LButtonDownEvent& e)
 {
 	m_keepEnsureVisibleFocusedCell = false;
-	CSheet::Normal_LButtonDown(e);
+	m_spCeller->OnLButtonDown(this, e);
+	m_spCursorer->OnLButtonDown(this, e);
+
 }
 void CGridView::Normal_LButtonUp(const LButtonUpEvent& e)
 {
-	//setcapture	ReleaseCapture();
-
-	CSheet::Normal_LButtonUp(e);
+	m_spCursorer->OnLButtonUp(this, e);
+	m_spCeller->OnLButtonUp(this, e);
 }
+
 void CGridView::Normal_LButtonClk(const LButtonClkEvent& e)
 {
-	CSheet::Normal_LButtonClk(e);
+	m_spCeller->OnLButtonClk(this, e);
 }
+
 void CGridView::Normal_LButtonSnglClk(const LButtonSnglClkEvent& e)
 {
-	CSheet::Normal_LButtonSnglClk(e);
+	m_spCeller->OnLButtonSnglClk(this, e);
 }
+
 void CGridView::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 {
-	CSheet::Normal_LButtonDblClk(e);
+	if (m_spColTracker->IsTarget(this, e)) {
+		m_spColTracker->OnDividerDblClk(this, e);
+	}
+	else if (m_spRowTracker->IsTarget(this, e)) {
+		m_spRowTracker->OnDividerDblClk(this, e);
+	}
+	else {
+		m_spCursorer->OnLButtonDblClk(this, e);
+		m_spCeller->OnLButtonDblClk(this, e);
+	}
 }
+
+void CGridView::Normal_LButtonBeginDrag(const LButtonBeginDragEvent& e)
+{
+	m_spCeller->OnLButtonBeginDrag(this, e);
+}
+
 void CGridView::Normal_RButtonDown(const RButtonDownEvent& e)
 {
 	m_keepEnsureVisibleFocusedCell = false;
-	CSheet::Normal_RButtonDown(e);
+	m_spCursorer->OnRButtonDown(this, e);
 }
+
 void CGridView::Normal_MouseMove(const MouseMoveEvent& e)
 {
 	//TrackMouseEvent
@@ -848,36 +935,33 @@ void CGridView::Normal_MouseMove(const MouseMoveEvent& e)
 	stTrackMouseEvent.hwndTrack = GetWndPtr()->m_hWnd;
 	::TrackMouseEvent(&stTrackMouseEvent);
 
-	CSheet::Normal_MouseMove(e);
+	m_spCeller->OnMouseMove(this, e);
 }
+
 void CGridView::Normal_MouseLeave(const MouseLeaveEvent& e)
 {
-	CSheet::Normal_MouseLeave(e);
+	m_spCeller->OnMouseLeave(this, e);
 }
+
 bool CGridView::Normal_Guard_SetCursor(const SetCursorEvent& e)
 {
-	return CSheet::Normal_Guard_SetCursor(e);
+	return e.HitTest == HTCLIENT;
 }
+
 void CGridView::Normal_SetCursor(const SetCursorEvent& e)
 {
-	CSheet::Normal_SetCursor(e);
-}
-void CGridView::Normal_ContextMenu(const ContextMenuEvent& e)
-{
-	if (!Visible())return;
-	auto cell = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
-	if (!cell) {
-		CMenu* pMenu = GetContextMenuPtr();
-		if (pMenu) {
-			HWND hWnd = GetWndPtr()->m_hWnd;
-			SetContextMenuRowColumn(CRowColumn());
-			::SetForegroundWindow(hWnd);
-			pMenu->TrackPopupMenu(0, e.PointInScreen.x, e.PointInScreen.y, hWnd);
-		}
-	} else {
-		CSheet::Normal_ContextMenu(e);
+	if (!*e.HandledPtr) { 
+		m_spRowTracker->OnSetCursor(this, e);
+	}
+	if (!*e.HandledPtr) {
+		m_spColTracker->OnSetCursor(this, e);
+	}
+	if (!*e.HandledPtr) {
+		m_spCeller->OnSetCursor(this, e);
 	}
 }
+
+void CGridView::Normal_ContextMenu(const ContextMenuEvent& e){}
 
 std::shared_ptr<CCell> CGridView::TabNext(const std::shared_ptr<CCell>& spCurCell)
 {
@@ -922,6 +1006,7 @@ std::shared_ptr<CCell> CGridView::TabNext(const std::shared_ptr<CCell>& spCurCel
 		return Cell<VisTag>(m_frozenRowCount, m_frozenColumnCount);
 	}
 }
+
 std::shared_ptr<CCell> CGridView::TabPrev(const std::shared_ptr<CCell>& spCurCell)
 {
 	if (m_gridViewMode == GridViewMode::None) {
@@ -966,7 +1051,6 @@ std::shared_ptr<CCell> CGridView::TabPrev(const std::shared_ptr<CCell>& spCurCel
 	}
 }
 
-
 void CGridView::Normal_KeyDown(const KeyDownEvent& e)
 {
 	switch (e.Char) {
@@ -1003,8 +1087,181 @@ void CGridView::Normal_KeyDown(const KeyDownEvent& e)
 		break;
 	}	
 	if (!(*e.HandledPtr)) {
-		CSheet::Normal_KeyDown(e);
+		m_spCursorer->OnKeyDown(this, e);
+		m_spCeller->OnKeyDown(this, e);
 	}
+}
+
+void CGridView::Normal_KeyTraceDown(const KeyTraceDownEvent& e)
+{
+	m_spCeller->OnKeyTraceDown(this, e);
+}
+
+void CGridView::Normal_KeyTraceUp(const KeyTraceUpEvent& e){}
+
+void CGridView::Normal_Char(const CharEvent& e)
+{
+	m_spCeller->OnChar(this, e);
+}
+
+void CGridView::Normal_ImeStartComposition(const ImeStartCompositionEvent& e)
+{
+	m_spCeller->OnImeStartComposition(this, e);
+}
+
+void CGridView::Normal_SetFocus(const SetFocusEvent& e)
+{
+	if (e.HandledPtr) { *e.HandledPtr = FALSE; }
+}
+
+void CGridView::Normal_KillFocus(const KillFocusEvent& e)
+{
+	if (e.HandledPtr) { *e.HandledPtr = FALSE; }
+}
+/************/
+/* RowTrack */
+/************/
+void CGridView::RowTrack_LButtonDown(const LButtonDownEvent& e)
+{
+	m_spRowTracker->OnBeginTrack(this, e);
+}
+
+bool CGridView::RowTrack_Guard_LButtonDown(const LButtonDownEvent& e)
+{
+	return m_spRowTracker->IsTarget(this, e);
+}
+
+void CGridView::RowTrack_MouseMove(const MouseMoveEvent& e)
+{
+	m_spRowTracker->OnTrack(this, e);
+}
+
+void CGridView::RowTrack_LButtonUp(const LButtonUpEvent& e)
+{
+	m_spRowTracker->OnEndTrack(this, e);
+}
+
+void CGridView::RowTrack_MouseLeave(const MouseLeaveEvent& e)
+{
+	m_spRowTracker->OnLeaveTrack(this, e);
+}
+
+/************/
+/* ColTrack */
+/************/
+void CGridView::ColTrack_LButtonDown(const LButtonDownEvent& e)
+{
+	m_spColTracker->OnBeginTrack(this, e);
+}
+
+bool CGridView::ColTrack_Guard_LButtonDown(const LButtonDownEvent& e)
+{
+	return m_spColTracker->IsTarget(this, e);
+}
+
+void CGridView::ColTrack_MouseMove(const MouseMoveEvent& e)
+{
+	m_spColTracker->OnTrack(this, e);
+}
+
+void CGridView::ColTrack_LButtonUp(const LButtonUpEvent& e)
+{
+	m_spColTracker->OnEndTrack(this, e);
+}
+
+void CGridView::ColTrack_MouseLeave(const MouseLeaveEvent& e)
+{
+	m_spColTracker->OnLeaveTrack(this, e);
+}
+
+/***********/
+/* RowDrag */
+/***********/
+void CGridView::RowDrag_OnEntry(const LButtonBeginDragEvent& e)
+{
+	m_spRowDragger->OnBeginDrag(this, e);
+}
+
+void CGridView::RowDrag_OnExit(const LButtonEndDragEvent& e)
+{
+	m_spRowDragger->OnEndDrag(this, e);
+}
+
+bool CGridView::RowDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
+{
+	return m_spRowDragger->IsTarget(this, e);
+}
+
+void CGridView::RowDrag_MouseMove(const MouseMoveEvent& e)
+{
+	m_spRowDragger->OnDrag(this, e);
+}
+
+void CGridView::RowDrag_MouseLeave(const MouseLeaveEvent& e)
+{
+	m_spRowDragger->OnLeaveDrag(this, e);
+}
+/***********/
+/* ColDrag */
+/***********/
+void CGridView::ColDrag_OnEntry(const LButtonBeginDragEvent& e)
+{
+	m_spColDragger->OnBeginDrag(this, e);
+}
+
+void CGridView::ColDrag_OnExit(const LButtonEndDragEvent& e)
+{
+	m_spColDragger->OnEndDrag(this, e);
+}
+
+bool CGridView::ColDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
+{
+	return m_spColDragger->IsTarget(this, e);
+}
+
+void CGridView::ColDrag_MouseMove(const MouseMoveEvent& e)
+{
+	m_spColDragger->OnDrag(this, e);
+}
+
+void CGridView::ColDrag_MouseLeave(const MouseLeaveEvent& e)
+{
+	m_spColDragger->OnLeaveDrag(this, e);
+}
+
+/************/
+/* ItemDrag */
+/************/
+void CGridView::ItemDrag_OnEntry(const LButtonBeginDragEvent& e)
+{
+	::OutputDebugString(L"ItemDrag_BeginDrag\r\n");
+	m_spItemDragger->OnBeginDrag(this, e);
+}
+
+void CGridView::ItemDrag_OnExit(const LButtonEndDragEvent& e)
+{
+	::OutputDebugString(L"ItemDrag_LButtonUp\r\n");
+	//m_spCursorer->OnLButtonEndDrag(this, e);
+	//m_spCeller->OnLButtonEndDrag(this, e);
+
+	m_spItemDragger->OnEndDrag(this, e);
+}
+
+bool CGridView::ItemDrag_Guard_LButtonBeginDrag(const LButtonBeginDragEvent& e)
+{
+	return m_spItemDragger->IsTarget(this, e);
+}
+
+void CGridView::ItemDrag_MouseMove(const MouseMoveEvent& e)
+{
+	::OutputDebugString(L"ItemDrag_MouseMove\r\n");
+	m_spItemDragger->OnDrag(this, e);
+}
+
+void CGridView::ItemDrag_MouseLeave(const MouseLeaveEvent& e)
+{
+	::OutputDebugString(L"ItemDrag_Leave\r\n");
+	m_spItemDragger->OnLeaveDrag(this, e);
 }
 
 /***************/
@@ -1097,7 +1354,7 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 			},
 			[pCell](const std::basic_string<TCHAR>& str)->void {
 				// Need to EditPtr to nullptr first. Otherwise exception occur
-				//pCell->GetSheetPtr()->GetGridPtr()->SetEditPtr(nullptr);
+				//pCell->GetGridPtr()->GetGridPtr()->SetEditPtr(nullptr);
 				pCell->SetString(str);
 				//pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 			}));
@@ -1226,6 +1483,21 @@ void CGridView::Edit_Char(const CharEvent& e)
 	}
 }
 
+/*********/
+/* Error */
+/*********/
+void CGridView::Error_StdException(const std::exception& e)
+{
+	::OutputDebugStringA(e.what());
+
+	std::string msg = fmt::format(
+		"What:{}\r\n"
+		"Last Error:{}\r\n",
+		e.what(), GetLastErrorString());
+
+	MessageBoxA(GetWndPtr()->m_hWnd, msg.c_str(), "Exception in StateMachine", MB_ICONWARNING);
+	Clear();
+}
 
 /******************/
 /* Window Message */
@@ -1268,6 +1540,9 @@ void CGridView::OnDelayUpdate()
 	SubmitUpdate();
 }
 
+/******************/
+/* Window Message */
+/******************/
 
 void CGridView::OnCreate(const CreateEvt& e)
 {
@@ -1301,7 +1576,7 @@ void CGridView::OnRect(const RectEvent& e)
 void CGridView::OnRectWoSubmit(const RectEvent& e)
 {
 	CRectF prevRect = m_rect;
-	CSheet::OnRect(e);
+	CD2DWControl::OnRect(e);
 
 	if (prevRect.left != m_rect.left) {
 		PostUpdate(Updates::Column);
@@ -1315,19 +1590,7 @@ void CGridView::OnRectWoSubmit(const RectEvent& e)
 
 void CGridView::OnPaint(const PaintEvent& e)
 {
-	if (!Visible()) { return; }
-	//GetWndPtr()->GetDirectPtr()->ClearSolid(*(m_spGridViewProp->BackgroundPropPtr->m_brush));
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), GetRectInWnd());
-	
-	CSheet::OnPaint(e);
-	ProcessMessageToAll(&CD2DWControl::OnPaint, e);
-
-	if (m_pEdit && m_pEdit->GetIsVisible()) {
-		m_pEdit->OnPaint(e);
-	}
-	m_pVScroll->OnPaint(e);
-	m_pHScroll->OnPaint(e);
-	SubmitUpdate();
+	m_pMachine->process_event(e);
 }
 
 void CGridView::OnMouseWheel(const MouseWheelEvent& e)
@@ -1339,29 +1602,725 @@ void CGridView::OnMouseWheel(const MouseWheelEvent& e)
 
 void CGridView::OnSetFocus(const SetFocusEvent& e)
 {
-	CSheet::OnSetFocus(e);
 	SubmitUpdate();
 }
 
 void CGridView::OnKillFocus(const KillFocusEvent& e)
 {
-	CSheet::OnKillFocus(e);
+	m_pMachine->process_event(e);
 	SubmitUpdate();
 }
 
 void CGridView::OnSetCursor(const SetCursorEvent& e)
 {
 	*e.HandledPtr = FALSE; //Default Handled = FALSE means Arrow
-	CSheet::OnSetCursor(e);
+	m_pMachine->process_event(e);
 	SubmitUpdate();
 }
 
 void CGridView::OnContextMenu(const ContextMenuEvent& e)
 {
 	*e.HandledPtr = FALSE;
-	CSheet::OnContextMenu(e);
+	m_pMachine->process_event(e);
 	SubmitUpdate();
 }
+void CGridView::OnRButtonDown(const RButtonDownEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CGridView::OnLButtonDown(const LButtonDownEvent& e) 
+{ 
+	CD2DWControl::OnLButtonDown(e);
+	if (!*e.HandledPtr) { m_pMachine->process_event(e); SubmitUpdate(); }
+}
+void CGridView::OnLButtonUp(const LButtonUpEvent& e) 
+{
+	CD2DWControl::OnLButtonUp(e);
+	if (!*e.HandledPtr) { m_pMachine->process_event(e); SubmitUpdate(); }
+}
+void CGridView::OnLButtonClk(const LButtonClkEvent& e) 
+{ 
+	CD2DWControl::OnLButtonClk(e);
+	if (!*e.HandledPtr) { m_pMachine->process_event(e); SubmitUpdate(); }
+}
+void CGridView::OnLButtonSnglClk(const LButtonSnglClkEvent& e) { m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate(); }
+void CGridView::OnLButtonDblClk(const LButtonDblClkEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CGridView::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) 
+{
+	if (!*e.HandledPtr) {
+		e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+		m_pMachine->process_event(e); SubmitUpdate();
+	}
+}
+void CGridView::OnLButtonEndDrag(const LButtonEndDragEvent& e)
+{
+	if (!*e.HandledPtr) {
+		e.WndPtr->ReleaseCapturedControlPtr();
+		m_pMachine->process_event(e); SubmitUpdate();
+	}
+}
+void CGridView::OnMouseMove(const MouseMoveEvent& e)
+{ 
+	CD2DWControl::OnMouseMove(e);
+	if (!*e.HandledPtr) {
+		m_pMachine->process_event(e);
+		PostUpdate(Updates::Invalidate);
+		SubmitUpdate();
+	}
+	
+}
+void CGridView::OnMouseLeave(const MouseLeaveEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CGridView::OnKeyDown(const KeyDownEvent& e) 
+{ 
+	CD2DWControl::OnKeyDown(e);
+	if (!*e.HandledPtr) {
+		m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate();
+	}
+}
+void CGridView::OnKeyTraceDown(const KeyTraceDownEvent& e)
+{ 
+	CD2DWControl::OnKeyTraceDown(e);
+	if (!*e.HandledPtr) {
+		m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate();
+	}
+}
+
+void CGridView::OnChar(const CharEvent& e) 
+{ 
+	CD2DWControl::OnChar(e);
+	if (!*e.HandledPtr) {
+		m_pMachine->process_event(e);  SubmitUpdate();
+	}
+}
+void CGridView::OnImeStartComposition(const ImeStartCompositionEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
+void CGridView::OnBeginEdit(const BeginEditEvent& e) { m_pMachine->process_event(e); SubmitUpdate(); }
+void CGridView::OnEndEdit(const EndEditEvent& e){ m_pMachine->process_event(e);  SubmitUpdate();}
+
+void CGridView::SelectRange(std::shared_ptr<CCell>& cell1, std::shared_ptr<CCell>& cell2, bool doSelect)
+{
+	if (cell1 || cell2) { return; }
+
+	auto	rowBeg= (std::min)(cell1->GetRowPtr()->GetIndex<VisTag>(), cell2->GetRowPtr()->GetIndex<VisTag>());
+	auto	rowLast= (std::max)(cell1->GetRowPtr()->GetIndex<VisTag>(), cell2->GetRowPtr()->GetIndex<VisTag>());
+	auto	colBeg= (std::min)(cell1->GetColumnPtr()->GetIndex<VisTag>(), cell2->GetColumnPtr()->GetIndex<VisTag>());
+	auto	colLast= (std::max)(cell1->GetColumnPtr()->GetIndex<VisTag>(), cell2->GetColumnPtr()->GetIndex<VisTag>());
+
+	for(auto col = colBeg; col<=colLast; col++){
+		for(auto row = rowBeg; row<=rowLast; row++){
+			Cell(m_visRows[row], m_visCols[col])->SetIsSelected(doSelect);
+		}
+	}	
+}
+
+FLOAT CGridView::GetCellsHeight()
+{
+	if (GetContainer<RowTag, VisTag>().size() == 0 || GetContainer<RowTag, VisTag>().size() <= m_frozenRowCount) {
+		return 0.0f;
+	}
+
+	FLOAT top = m_visRows[m_frozenRowCount]->GetTop();
+	FLOAT bottom = m_visRows.back()->GetBottom();
+
+	return bottom - top;
+}
+
+FLOAT CGridView::GetCellsWidth()
+{
+	if (GetContainer<ColTag, VisTag>().size() == 0 || GetContainer<ColTag, VisTag>().size() <= m_frozenColumnCount) {
+		return 0.0f;
+	}
+
+	FLOAT left = m_visCols[m_frozenColumnCount]->GetLeft();
+	FLOAT right = m_visCols.back()->GetRight();
+
+	return right - left;
+}
+
+CRectF CGridView::GetCellsRect()
+{
+	if(GetContainer<RowTag, VisTag>().size() == 0 || GetContainer<RowTag, VisTag>().size() <= m_frozenRowCount || GetContainer<ColTag, VisTag>().size() <= m_frozenColumnCount){
+		return CRectF(0,0,0,0);
+	}
+
+	FLOAT left=m_visCols[m_frozenColumnCount]->GetLeft();
+	FLOAT top= m_visRows[m_frozenRowCount]->GetTop();
+	FLOAT right=m_visCols.back()->GetRight();
+	FLOAT bottom=m_visRows.back()->GetBottom();
+
+	return CRectF(left,top,right,bottom);
+}
+
+void CGridView::SelectAll()
+{
+	for (auto iter = std::next(m_visRows.begin(), m_frozenRowCount); iter!=m_visRows.end(); ++iter) {
+		(*iter)->SetIsSelected(true);
+	}
+}
+
+void CGridView::DeselectAll()
+{
+	auto setSelected = [](auto ptr) {ptr->SetIsSelected(false); };
+
+	for(auto& colPtr : m_allCols){
+		for(auto& rowPtr : m_allRows){
+			setSelected(Cell(rowPtr, colPtr));
+		}
+	}
+	std::for_each(m_allCols.begin(), m_allCols.end(), setSelected);
+	std::for_each(m_allRows.begin(), m_allRows.end(), setSelected);
+}
+
+void CGridView::UnhotAll()
+{
+	for (const auto& colPtr : m_allCols) {
+		for (const auto& rowPtr : m_allRows) {
+			Cell(rowPtr, colPtr)->SetState(UIElementState::Normal);
+		}
+	}
+}
+
+bool CGridView::IsFocusedCell(const CCell* pCell)const
+{
+	return m_spCursorer->GetFocusedCell().get() == pCell;
+}
+
+bool CGridView::IsDoubleFocusedCell(const CCell* pCell)const
+{
+	return m_spCursorer->GetDoubleFocusedCell().get() == pCell;
+}
+
+
+
+
+void CGridView::Clear()
+{
+	m_setUpdate.clear();
+
+	m_allRows.clear();
+	m_visRows.clear();
+	m_pntRows.clear();
+
+	m_allCols.clear();
+	m_visCols.clear();
+	m_pntCols.clear();
+
+	m_spCursorer->Clear();
+	m_spCeller->Clear();
+	//m_spColDragger->Clear();
+	//m_spRowDragger->Clear();
+	//m_spColTracker->Clear();
+	//m_spRowTracker->Clear();
+
+	m_rocoContextMenu=CRowColumn();
+
+	//m_pHeaderColumn=std::shared_ptr<CColumn>();
+	//m_rowHeader=std::shared_ptr<CRow>();
+
+	m_bSelected = false;
+	//m_bFocused = false;
+	m_keepEnsureVisibleFocusedCell = false;
+}
+
+void CGridView::SetAllRowMeasureValid(bool valid)
+{
+	for (const auto& ptr : m_allRows) {
+		ptr->SetIsMeasureValid(valid);
+	}
+}
+
+void CGridView::SetAllRowFitMeasureValid(bool valid)
+{
+	for (const auto& ptr : m_allRows) {
+		ptr->SetIsFitMeasureValid(valid);
+	}
+}
+
+void CGridView::SetAllColumnMeasureValid(bool valid)
+{
+	for (const auto& ptr : m_allCols) {
+		ptr->SetIsMeasureValid(valid);
+	}
+}
+
+void CGridView::SetAllColumnFitMeasureValid(bool valid)
+{
+	for (const auto& ptr : m_allCols) {
+		ptr->SetIsFitMeasureValid(valid);
+	}
+}
+
+
+void CGridView::SetColumnAllCellMeasureValid(CColumn* pColumn, bool valid)
+{
+	for (const auto& ptr : m_allRows) {
+		Cell(ptr.get(), pColumn)->SetActMeasureValid(false);
+	}
+}
+
+void CGridView::OnCellPropertyChanged(CCell* pCell, const wchar_t* name)
+{
+	if (!_tcsicmp(L"value", name)) {
+		PostUpdate(Updates::Sort);
+		PostUpdate(Updates::Column);
+		PostUpdate(Updates::Row);
+		//PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+	} else if (!_tcsicmp(L"size", name)) {
+		//PostUpdate(Updates::Sort);
+		PostUpdate(Updates::Column);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+	}else if (!_tcsicmp(L"state", name)) {
+		PostUpdate(Updates::Invalidate);
+	} else if (!_tcsicmp(L"focus", name)) {
+		PostUpdate(Updates::Invalidate);		
+	} else if (!_tcsicmp(L"selected", name)) {
+		PostUpdate(Updates::Invalidate);
+	} else if (!_tcsicmp(L"checked", name)) {
+		PostUpdate(Updates::Invalidate);
+	}
+}
+
+void CGridView::OnRowPropertyChanged(CRow* pRow, const wchar_t* name)
+{
+	if (!_tcsicmp(name, L"selected")) {
+		////0506PostUpdate(Updates::RowVisible);
+		////0506PostUpdate(Updates::Column);
+		////0506PostUpdate(Updates::Row);
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+	} else if (_tcsicmp(name, L"visible") == 0) {
+		PostUpdate(Updates::RowVisible);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Column);
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);//
+	}
+}
+
+void CGridView::OnColumnPropertyChanged(CColumn* pCol, const wchar_t* name)
+{
+	if (!_tcsicmp(name, L"visible") || !_tcsicmp(name, L"size")) {
+		for (const auto& ptr : m_allRows) {
+			ptr->SetIsMeasureValid(false);
+		}
+		PostUpdate(Updates::ColumnVisible);
+		PostUpdate(Updates::Column);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+	} else if (!_tcsicmp(name, L"selected")) {
+		PostUpdate(Updates::Invalidate);
+	} else if (!_tcsicmp(name, L"sort")) {
+		PostUpdate(Updates::Sort);
+	}
+}
+
+void CGridView::ColumnInserted(const CColumnEventArgs& e)
+{
+	this->SetAllRowMeasureValid(false);
+
+	PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::Column);
+	PostUpdate(Updates::RowVisible);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+}
+
+void CGridView::ColumnErased(const CColumnEventArgs& e)
+{
+	this->SetAllRowMeasureValid(false);
+
+	PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::Column);
+	PostUpdate(Updates::RowVisible);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+}
+
+void CGridView::ColumnMoved(const CMovedEventArgs<ColTag>& e)
+{
+	PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::Column);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+}
+
+
+void CGridView::ColumnHeaderFitWidth(const CColumnEventArgs& e)
+{
+	e.m_pColumn->SetIsMeasureValid(false);
+	for(const auto& ptr : m_allRows){
+		Cell(ptr, e.m_pColumn)->SetActMeasureValid(false);
+	}
+	this->SetAllColumnMeasureValid(false);
+	
+	PostUpdate(Updates::Column);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+}
+
+void CGridView::RowInserted(const CRowEventArgs& e)
+{
+	for(auto& spCol : m_allCols){
+		spCol->SetIsFitMeasureValid(false);
+	};
+	PostUpdate(Updates::RowVisible);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);//
+}
+
+void CGridView::RowErased(const CRowEventArgs& e)
+{
+	this->SetAllColumnFitMeasureValid(false);
+
+	PostUpdate(Updates::RowVisible);
+	PostUpdate(Updates::Column);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);//
+}
+
+void CGridView::RowsErased(const CRowsEventArgs& e)
+{
+	//Remeasure column width irritate user, therefore Column measure doesn't run.
+	//boost::for_each(m_columnAllDictionary,[&](const ColumnData& colData){
+	//	colData.DataPtr->SetMeasureValid(false);
+	//});
+	this->SetAllColumnFitMeasureValid(false);
+	PostUpdate(Updates::RowVisible);
+	PostUpdate(Updates::Column);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);//
+}
+
+void CGridView::RowMoved(const CMovedEventArgs<RowTag>& e)
+{
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+}
+
+
+void CGridView::SizeChanged()
+{
+	PostUpdate(Updates::Scrolls);
+	PostUpdate(Updates::Invalidate);
+}
+void CGridView::Scroll()
+{
+	PostUpdate(Updates::Invalidate);
+}
+
+void CGridView::PostUpdate(Updates type)
+{
+	switch (type) {
+	case Updates::All:
+		m_setUpdate.insert(Updates::RowVisible);
+		m_setUpdate.insert(Updates::Row);
+		m_setUpdate.insert(Updates::ColumnVisible);
+		m_setUpdate.insert(Updates::Column);
+		m_setUpdate.insert(Updates::Scrolls);
+		m_setUpdate.insert(Updates::Sort);
+		m_setUpdate.insert(Updates::Filter);
+		m_setUpdate.insert(Updates::Invalidate);
+		break;
+	case Updates::EnsureVisibleFocusedCell:
+		////0506m_setUpdate.insert(Updates::RowVisible);
+		m_setUpdate.insert(Updates::Row);
+		////0506m_setUpdate.insert(Updates::ColumnVisible);
+		m_setUpdate.insert(Updates::Column);
+		m_setUpdate.insert(Updates::Scrolls);
+		////0506m_setUpdate.insert(Updates::Sort);
+		m_setUpdate.insert(type);
+		m_setUpdate.insert(Updates::Invalidate);
+		break;
+	case Updates::Sort:
+		////0506m_setUpdate.insert(Updates::RowVisible);
+		m_setUpdate.insert(Updates::Row);
+		m_setUpdate.insert(type);
+		m_setUpdate.insert(Updates::Invalidate);
+		PostUpdate(Updates::EnsureVisibleFocusedCell);
+	case Updates::Filter:
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+		m_setUpdate.insert(type);
+	case Updates::RowVisible:
+		m_setUpdate.insert(Updates::Sort);
+	default:
+		m_setUpdate.insert(type);
+		break;
+	}
+
+}
+
+std::wstring CGridView::GetSheetString()
+{
+	std::wstring str;
+
+	for(const auto& rowPtr : m_visRows){
+		bool bFirstLine=true;
+		for(const auto& colPtr : m_visCols){
+			const auto& pCell = Cell(rowPtr, colPtr);
+			if(bFirstLine){
+				bFirstLine=false;
+			}else{
+				str.append(L"\t");
+			}
+			str.append(pCell->GetString());
+		}
+		str.append(L"\r\n");
+	}
+	return str;
+}
+
+void CGridView::UpdateRowVisibleDictionary()
+{
+	UpdateVisibleContainer<RowTag>();
+}
+
+void CGridView::UpdateColumnVisibleDictionary()
+{
+	UpdateVisibleContainer<ColTag>();
+}
+
+void CGridView::UpdateRowPaintDictionary()
+{
+	CRectF rcClip(GetPaintRect());
+	CPointF ptOrigin(GetFrozenPoint());
+	rcClip.left = ptOrigin.x;
+	rcClip.top = ptOrigin.y;
+	UpdatePaintContainer<RowTag>(
+		rcClip.top,
+		rcClip.bottom);
+}
+
+void CGridView::UpdateColumnPaintDictionary()
+{
+	CRectF rcClip(GetPaintRect());
+	CPointF ptOrigin(GetFrozenPoint());
+	rcClip.left = ptOrigin.x;
+	rcClip.top = ptOrigin.y;
+	UpdatePaintContainer<ColTag>(
+		rcClip.left,
+		rcClip.right);
+}
+
+void CGridView::ResetColumnSort()
+{
+	//Reset Sort Mark
+	for(auto& ptr : m_allCols){
+		ptr->SetSort(Sorts::None);
+	}
+}
+
+void CGridView::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
+{
+	//Sort
+	switch(sort){
+	case Sorts::Down:
+		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
+			[pCol, this](const auto& lhs, const auto& rhs)->bool{
+				auto cmp = _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str());
+				if (cmp > 0) {
+					return true;
+				} else if (cmp < 0) {
+					return false;
+				} else {
+					if (lhs->GetIndex<AllTag>() == rhs->GetIndex<AllTag>()) {
+						::OutputDebugString(std::format(L"{}=={}", lhs->GetIndex<AllTag>(), rhs->GetIndex<AllTag>()).c_str());
+					}
+					return lhs->GetIndex<AllTag>() > rhs->GetIndex<AllTag>();
+				}
+			});
+
+		break;
+	case Sorts::Up:
+		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
+			[pCol, this](const auto& lhs, const auto& rhs)->bool {
+				auto cmp = _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str());
+				if (cmp < 0) {
+					return true;
+				} else if (cmp == 0) {
+					return lhs->GetIndex<AllTag>() < rhs->GetIndex<AllTag>();
+				} else {
+					return false;
+				}
+			});
+		break;
+	default:
+		break;
+	}
+}
+
+void CGridView::Filter(int colDisp,std::function<bool(const std::shared_ptr<CCell>&)> predicate)
+{
+	for(auto rowIter= m_allRows.begin() + m_frozenRowCount;rowIter!=m_allRows.end(); ++rowIter){
+		if(predicate(Cell(*rowIter, m_allCols[colDisp]))){
+			(*rowIter)->SetIsVisible(true);
+		}else{
+			(*rowIter)->SetIsVisible(false);		
+		}
+	}
+}
+
+void CGridView::ResetFilter()
+{
+	auto setVisible = [](const auto& ptr) {ptr->SetIsVisible(true); };
+	std::for_each(m_allRows.begin(), m_allRows.end(), setVisible);
+	std::for_each(m_allCols.begin(), m_allCols.end(), setVisible);
+}
+
+void CGridView::EraseColumn(const std::shared_ptr<CColumn>& spCol, bool notify)
+{
+	m_allCols.idx_erase(std::find(m_allCols.begin(), m_allCols.end(), spCol));
+	m_spCursorer->OnCursorClear(this);
+	if (notify) {
+		ColumnErased(CColumnEventArgs(spCol));
+	}
+}
+
+void CGridView::EraseRow(const std::shared_ptr<CRow>& spRow, bool notify)
+{
+	m_allRows.idx_erase(std::find(m_allRows.begin(), m_allRows.end(), spRow));
+	m_spCursorer->OnCursorClear(this);
+	if (notify) {
+		RowErased(CRowEventArgs(spRow));
+	}
+}
+
+void CGridView::EraseRows(const std::vector<std::shared_ptr<CRow>>& vspRow, bool notify)
+{
+	for (auto rowPtr : vspRow) {
+		EraseRow(rowPtr);
+	}
+}
+
+void CGridView::InsertColumn(int pos, const std::shared_ptr<CColumn>& spColumn, bool notify)
+{
+	m_allCols.idx_insert(m_allCols.cbegin() + pos, spColumn);
+	if (notify) {
+		ColumnInserted(CColumnEventArgs(spColumn));
+	}
+}
+
+
+void CGridView::PushColumn(const std::shared_ptr<CColumn>& spCol, bool notify)
+{
+	//spCol->InsertNecessaryRows();
+	m_allCols.idx_push_back(spCol);
+	if (notify) {
+		ColumnInserted(CColumnEventArgs(spCol));
+	}
+}
+
+void CGridView::InsertRow(int row, const std::shared_ptr<CRow>& spRow, bool notify)
+{
+	m_allRows.idx_insert(m_allRows.cbegin() + row, spRow);
+	if (notify) {
+		RowInserted(CRowEventArgs(spRow));
+	}
+}
+
+
+void CGridView::PushRow(const std::shared_ptr<CRow>& spRow, bool notify)
+{
+	m_allRows.idx_push_back(spRow);
+	if(notify){
+		RowInserted(CRowEventArgs(spRow));
+	}
+}
+
+FLOAT CGridView::GetColumnInitWidth(CColumn* pColumn)
+{
+	return std::accumulate(m_visRows.begin(), m_visRows.end(), 0.f,
+		[this, pColumn](const FLOAT val, const std::shared_ptr<CRow>& rowPtr)->FLOAT {
+			return (std::max)(Cell(rowPtr.get(), pColumn)->GetInitSize(GetWndPtr()->GetDirectPtr()).width, val);
+		});
+}
+
+FLOAT CGridView::GetColumnFitWidth(CColumn* pColumn)
+{
+	return std::accumulate(m_visRows.begin(), m_visRows.end(), 0.f,
+		[this, pColumn](const FLOAT val, const std::shared_ptr<CRow>& rowPtr)->FLOAT {
+			return (std::max)(Cell(rowPtr.get(), pColumn)->GetFitSize(GetWndPtr()->GetDirectPtr()).width, val);
+		});
+}
+
+FLOAT CGridView::GetRowHeight(CRow* pRow)
+{
+	return std::accumulate(m_visCols.begin(), m_visCols.end(), 0.f,
+		[this, pRow](const FLOAT val, const std::shared_ptr<CColumn>& colPtr)->FLOAT {
+			return (std::max)(Cell(pRow, colPtr.get())->GetActSize(GetWndPtr()->GetDirectPtr()).height, val);
+		});
+}
+
+FLOAT CGridView::GetRowFitHeight(CRow* pRow)
+{
+	return std::accumulate(m_visCols.begin(), m_visCols.end(), 0.f,
+						   [this, pRow](const FLOAT val, const std::shared_ptr<CColumn>& colPtr)->FLOAT {
+							   return (std::max)(Cell(pRow, colPtr.get())->GetFitSize(GetWndPtr()->GetDirectPtr()).height, val);
+						   });
+}
+
+bool CGridView::Empty()const
+{
+	return m_allRows.empty() || m_allCols.empty();
+}
+bool CGridView::Visible()const
+{
+	return (!m_visRows.empty()) && (!m_visCols.empty()) && GetRectInWnd().Width() > 0 && GetRectInWnd().Height() > 0;
+}
+
+CPointF CGridView::GetFrozenPoint()
+{
+	if(!Visible()){
+		return GetRectInWnd().LeftTop();
+	}
+
+	FLOAT x = 0;
+	FLOAT y = 0;
+	if (m_frozenRowCount == 0) {
+		y = GetRectInWnd().top + GetCellProperty()->Line->Width * 0.5f;
+	} else {
+		y = m_visRows[m_frozenRowCount - 1]->GetBottom();
+	}
+
+	if (m_frozenColumnCount == 0) {
+		x = GetRectInWnd().left + GetCellProperty()->Line->Width * 0.5f;
+	} else {
+		x = m_visCols[m_frozenColumnCount - 1]->GetRight();
+	}
+
+	return CPointF(x,y);
+}
+
+
+CSizeF CGridView::MeasureSize()const
+{
+	//CRectF rc(CSheet::GetRectInWnd());
+	//return CSizeF(rc.Width(), rc.Height());
+	if(!Visible()){return CSizeF();}
+	FLOAT left=m_visCols.front()->GetLeft();
+	FLOAT top=m_visRows.front()->GetTop();
+	FLOAT right=m_visCols.back()->GetRight();
+	FLOAT bottom=m_visRows.back()->GetBottom();
+
+	CRectF rc(left, top, right, bottom);
+
+	auto outerPenWidth = m_spSheetProperty->CellPropPtr->Line->Width/2.0f;
+	rc.InflateRect(outerPenWidth, outerPenWidth);
+	return rc.Size();
+}
+
+
+
+
+
+
 //
 //void CGridView::OnCommand(const CommandEvent& e)
 //{

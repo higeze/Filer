@@ -5,7 +5,7 @@
 #include "MySize.h"
 #include "MyDC.h"
 #include "MyRgn.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "Row.h"
 #include "Column.h"
 #include "GridView.h"
@@ -46,7 +46,7 @@ CRectF CTextCell::GetEditRect() const
 void CTextCell::OnEdit(const Event& e)
 {
 	if (GetIsVisible()) {
-		m_pSheet->GetGridPtr()->BeginEdit(this);
+		m_pGrid->BeginEdit(this);
 	}
 }
 
@@ -96,8 +96,8 @@ void CTextCell::OnKeyTraceDown(const KeyTraceDownEvent& e)
 
 void CTextCell::OnChar(const CharEvent& e)
 {
-	if(m_pSheet->GetGridPtr()->GetEditPtr()){
-		m_pSheet->GetGridPtr()->GetEditPtr()->OnChar(e);
+	if(m_pGrid->GetEditPtr()){
+		m_pGrid->GetEditPtr()->OnChar(e);
 	}
 	CCell::OnChar(e);
 }

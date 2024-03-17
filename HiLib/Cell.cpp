@@ -1,6 +1,6 @@
 #include "Cell.h"
 #include "CellProperty.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "GridView.h"
 #include "SheetEventArgs.h"
 #include "Row.h"
@@ -92,7 +92,7 @@ void CCell::OnPropertyChanged(const wchar_t* name)
 	//Notify to Row, Column and Sheet
 	m_pRow->OnCellPropertyChanged(this, name);
 	m_pColumn->OnCellPropertyChanged(this, name);
-	m_pSheet->OnCellPropertyChanged(this, name);
+	m_pGrid->OnCellPropertyChanged(this, name);
 }
 
 FLOAT CCell::GetLeft()const
@@ -189,17 +189,17 @@ void CCell::OnPaint(const PaintEvent& e)
 		CRectF rcClient(GetRectInWnd());
 		CRectF rcInner(CenterBorder2InnerBorder(rcClient));
 		CRectF rcContent(InnerBorder2Content(rcInner));
-		PaintLine(m_pSheet->GetWndPtr()->GetDirectPtr(), rcClient);
-		PaintBackground(m_pSheet->GetWndPtr()->GetDirectPtr(), rcInner);
-		PaintContent(m_pSheet->GetWndPtr()->GetDirectPtr(), rcContent);
-		PaintFocus(m_pSheet->GetWndPtr()->GetDirectPtr(), rcInner);
+		PaintLine(m_pGrid->GetWndPtr()->GetDirectPtr(), rcClient);
+		PaintBackground(m_pGrid->GetWndPtr()->GetDirectPtr(), rcInner);
+		PaintContent(m_pGrid->GetWndPtr()->GetDirectPtr(), rcContent);
+		PaintFocus(m_pGrid->GetWndPtr()->GetDirectPtr(), rcInner);
 	}
 }
 
 void CCell::OnLButtonDown(const LButtonDownEvent& e)
 {
 	CUIElement::OnLButtonDown(e);
-	m_pSheet->CellLButtonDown(CellEventArgs(this));
+	m_pGrid->CellLButtonDown(CellEventArgs(this));
 }
 
 void CCell::OnLButtonUp(const LButtonUpEvent& e)
@@ -210,7 +210,7 @@ void CCell::OnLButtonUp(const LButtonUpEvent& e)
 
 void CCell::OnLButtonDblClk(const LButtonDblClkEvent& e)
 {
-	m_pSheet->CellLButtonDblClk(CellEventArgs(this));
+	m_pGrid->CellLButtonDblClk(CellEventArgs(this));
 }
 
 void CCell::OnSetFocus(const SetFocusEvent& e)
@@ -248,12 +248,12 @@ void CCell::SetIsSelected(const bool& selected)
 
 bool CCell::GetIsFocused()const
 {
-	return m_pSheet->IsFocusedCell(this) && m_pSheet->IsFocused();
+	return m_pGrid->IsFocusedCell(this) && m_pGrid->IsFocused();
 }
 
 bool CCell::GetIsDoubleFocused()const
 {
-	return m_pSheet->IsDoubleFocusedCell(this) /* || m_pSheet->GetFocused()*/;
+	return m_pGrid->IsDoubleFocusedCell(this) /* || m_pGrid->GetFocused()*/;
 }
 
 

@@ -1,5 +1,5 @@
 #include "Cursorer.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "GridView.h"
 #include "SheetState.h"
 #include "RowColumn.h"
@@ -12,8 +12,8 @@
 bool CCursorer::IsCursorTargetCell(const std::shared_ptr<CCell>& cell)
 {
 	return cell &&
-		cell->GetRowPtr()->GetIndex<AllTag>() >= cell->GetSheetPtr()->GetFrozenCount<RowTag>() &&
-		cell->GetColumnPtr()->GetIndex<AllTag>() >= cell->GetSheetPtr()->GetFrozenCount<ColTag>();
+		cell->GetRowPtr()->GetIndex<AllTag>() >= cell->GetGridPtr()->GetFrozenCount<RowTag>() &&
+		cell->GetColumnPtr()->GetIndex<AllTag>() >= cell->GetGridPtr()->GetFrozenCount<ColTag>();
 
 }
 
@@ -25,9 +25,9 @@ void CCursorer::UpdateCursor(const std::shared_ptr<CCell>& cell, bool old, bool 
 	if (focus) {
 		if (m_focusedCell != cell) {
 			BOOL bDummy(TRUE);
-			if (m_focusedCell) { m_focusedCell->OnKillFocus(KillFocusEvent(cell->GetSheetPtr()->GetWndPtr(), NULL, NULL, &bDummy)); }//Blur
+			if (m_focusedCell) { m_focusedCell->OnKillFocus(KillFocusEvent(cell->GetGridPtr()->GetWndPtr(), NULL, NULL, &bDummy)); }//Blur
 			m_focusedCell = cell;
-			m_focusedCell->OnSetFocus(SetFocusEvent(cell->GetSheetPtr()->GetWndPtr(), 0,0,&bDummy));//Focus
+			m_focusedCell->OnSetFocus(SetFocusEvent(cell->GetGridPtr()->GetWndPtr(), 0,0,&bDummy));//Focus
 			m_doubleFocusedCell = nullptr;//DoubleFocus
 		} else if (m_focusedCell == cell) {
 			m_doubleFocusedCell = cell;//DoubleFocus
@@ -42,7 +42,7 @@ void CCursorer::OnCursor(const std::shared_ptr<CCell>& cell)
 	}
 	
 	UpdateCursor(cell);
-	cell->GetSheetPtr()->DeselectAll();
+	cell->GetGridPtr()->DeselectAll();
 	cell->GetRowPtr()->SetIsSelected(true);//Select
 }
 
@@ -65,7 +65,7 @@ void CCursorer::OnCursorUp(const std::shared_ptr<CCell>& cell)
 
 	if (m_isDragPossible) {
 		m_isDragPossible = false;
-		cell->GetSheetPtr()->DeselectAll();
+		cell->GetGridPtr()->DeselectAll();
 		cell->GetRowPtr()->SetIsSelected(true);//Select
 	}
 }
@@ -77,7 +77,7 @@ void CCursorer::OnCursorLeave(const std::shared_ptr<CCell>& cell)
 	}
 	if (m_isDragPossible) {
 		m_isDragPossible = false;
-		//cell->GetSheetPtr()->DeselectAll();
+		//cell->GetGridPtr()->DeselectAll();
 		//cell->GetRowPtr()->SetSelected(true);//Select
 	}
 }
@@ -101,8 +101,8 @@ void CCursorer::OnCursorShift(const std::shared_ptr<CCell>& cell)
 	//m_oldCell=m_currentCell;//Old
 	//m_currentCell=cell;//Current
 
-	cell->GetSheetPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_oldCell->GetRowPtr(), false);
-	cell->GetSheetPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_currentCell->GetRowPtr(), true);
+	cell->GetGridPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_oldCell->GetRowPtr(), false);
+	cell->GetGridPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_currentCell->GetRowPtr(), true);
 }
 
 void CCursorer::OnCursorCtrlShift(const std::shared_ptr<CCell>& cell)
@@ -112,10 +112,10 @@ void CCursorer::OnCursorCtrlShift(const std::shared_ptr<CCell>& cell)
 	}
 
 	UpdateCursor(cell, true, true, false, true);
-	cell->GetSheetPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_currentCell->GetRowPtr(), true);
+	cell->GetGridPtr()->SelectBandRange(m_anchorCell->GetRowPtr(), m_currentCell->GetRowPtr(), true);
 }
 
-void CCursorer::OnCursorClear(CSheet* pSheet)
+void CCursorer::OnCursorClear(CGridView* pSheet)
 {
 	if(m_focusedCell){
 		m_focusedCell->OnKillFocus(KillFocusEvent(pSheet->GetWndPtr(), NULL, NULL));//Blur
@@ -125,7 +125,7 @@ void CCursorer::OnCursorClear(CSheet* pSheet)
 	pSheet->UnhotAll();//Hot
 }
 
-void CCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
+void CCursorer::OnLButtonDown(CGridView* pSheet, const LButtonDownEvent& e)
 {
 	if(pSheet->Empty()){
 		return;
@@ -159,7 +159,7 @@ void CCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
 	}
 }
 
-void CCursorer::OnLButtonUp(CSheet* pSheet, const LButtonUpEvent& e)
+void CCursorer::OnLButtonUp(CGridView* pSheet, const LButtonUpEvent& e)
 {
 	if (pSheet->Empty()) {
 		return;
@@ -174,7 +174,7 @@ void CCursorer::OnLButtonUp(CSheet* pSheet, const LButtonUpEvent& e)
 	return OnCursorUp(m_currentCell);
 }
 
-void CCursorer::OnMouseLeave(CSheet* pSheet, const MouseLeaveEvent& e)
+void CCursorer::OnMouseLeave(CGridView* pSheet, const MouseLeaveEvent& e)
 {
 	if (pSheet->Empty()) {
 		return;
@@ -189,7 +189,7 @@ void CCursorer::OnMouseLeave(CSheet* pSheet, const MouseLeaveEvent& e)
 	return OnCursorLeave(m_currentCell);
 }
 
-void CCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e)
+void CCursorer::OnRButtonDown(CGridView* pSheet, const RButtonDownEvent& e)
 {
 	if(pSheet->Empty()){
 		return;
@@ -210,7 +210,7 @@ void CCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e)
 	return;
 }
 
-void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
+void CCursorer::OnKeyDown(CGridView* pSheet, const KeyDownEvent& e)
 {
 	if(pSheet->Empty()){
 		*e.HandledPtr= FALSE;
@@ -276,7 +276,7 @@ void CCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 }
 
 
-std::vector<Indexes> CCursorer::GetFocusedRCs(CSheet* pSheet)const
+std::vector<Indexes> CCursorer::GetFocusedRCs(CGridView* pSheet)const
 {
 	std::vector<Indexes> focusedRCs;
 	//if(!focusedRoCo.IsInvalid()){
@@ -291,7 +291,7 @@ std::vector<Indexes> CCursorer::GetFocusedRCs(CSheet* pSheet)const
 }
 
 
-std::vector<Indexes> CCursorer::GetSelectedRCs(CSheet* pSheet)const
+std::vector<Indexes> CCursorer::GetSelectedRCs(CGridView* pSheet)const
 {
 	std::vector<Indexes> selectedRCs;
 	//auto& rowDictionary=pSheet->m_rowVisibleDictionary.get<IndexTag>();
@@ -307,7 +307,7 @@ std::vector<Indexes> CCursorer::GetSelectedRCs(CSheet* pSheet)const
 	//}
 	return selectedRCs;
 }
-std::vector<std::shared_ptr<CRow>> CCursorer::GetSelectedRows(CSheet* pSheet)const
+std::vector<std::shared_ptr<CRow>> CCursorer::GetSelectedRows(CGridView* pSheet)const
 {
 	std::vector<std::shared_ptr<CRow>> selectedRows;
 	auto& rowContainer=pSheet->GetContainer<RowTag, VisTag>();
@@ -319,7 +319,7 @@ std::vector<std::shared_ptr<CRow>> CCursorer::GetSelectedRows(CSheet* pSheet)con
 	}
 	return selectedRows;
 }
-std::vector<std::shared_ptr<CColumn>> CCursorer::GetSelectedColumns(CSheet* pSheet)const
+std::vector<std::shared_ptr<CColumn>> CCursorer::GetSelectedColumns(CGridView* pSheet)const
 {
 	std::vector<std::shared_ptr<CColumn>> selectedCols;
 	//auto& colDictionary=pSheet->m_columnVisibleDictionary.get<IndexTag>();
@@ -332,7 +332,7 @@ std::vector<std::shared_ptr<CColumn>> CCursorer::GetSelectedColumns(CSheet* pShe
 	return selectedCols;
 }
 
-void CCursorer::SetFocusedRCs(CSheet* pSheet, std::vector<Indexes> rcs)
+void CCursorer::SetFocusedRCs(CGridView* pSheet, std::vector<Indexes> rcs)
 {
 	//TODO
 	//if(rcs.empty() || rcs.size()==0)return;
@@ -351,7 +351,7 @@ void CCursorer::SetFocusedRCs(CSheet* pSheet, std::vector<Indexes> rcs)
 	//}
 
 }
-void CCursorer::SetSelectedRCs(CSheet* pSheet, std::vector<Indexes> rcs)
+void CCursorer::SetSelectedRCs(CGridView* pSheet, std::vector<Indexes> rcs)
 {
 	//if(rcs.empty() || rcs.size()==0)return;
 	//auto rowMinMax = pSheet->GetMinMaxAllRowIndex();
@@ -365,7 +365,7 @@ void CCursorer::SetSelectedRCs(CSheet* pSheet, std::vector<Indexes> rcs)
 	//}
 }
 
-void CCursorer::SetSelectedRows(CSheet* pSheet, std::vector<std::shared_ptr<CRow>> rows)
+void CCursorer::SetSelectedRows(CGridView* pSheet, std::vector<std::shared_ptr<CRow>> rows)
 {
 	//if(rows.empty() || rows.size()==0)return;
 
@@ -374,7 +374,7 @@ void CCursorer::SetSelectedRows(CSheet* pSheet, std::vector<std::shared_ptr<CRow
 	//}
 }
 
-void CCursorer::SetSelectedColumns(CSheet* pSheet, std::vector<std::shared_ptr<CColumn>> cols)
+void CCursorer::SetSelectedColumns(CGridView* pSheet, std::vector<std::shared_ptr<CColumn>> cols)
 {
 	//if(cols.empty() || cols.size()==0)return;
 
@@ -384,7 +384,7 @@ void CCursorer::SetSelectedColumns(CSheet* pSheet, std::vector<std::shared_ptr<C
 }
 
 
-void CSheetCellCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e)
+void CSheetCellCursorer::OnLButtonDown(CGridView* pSheet, const LButtonDownEvent& e)
 {
 	if(pSheet->Empty()){
 		return;
@@ -408,7 +408,7 @@ void CSheetCellCursorer::OnLButtonDown(CSheet* pSheet, const LButtonDownEvent& e
 	return;
 }
 
-void CSheetCellCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e)
+void CSheetCellCursorer::OnRButtonDown(CGridView* pSheet, const RButtonDownEvent& e)
 {
 	if(pSheet->Empty()){
 		return;
@@ -423,7 +423,7 @@ void CSheetCellCursorer::OnRButtonDown(CSheet* pSheet, const RButtonDownEvent& e
 	return OnCursor(cell);
 }
 
-void CSheetCellCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
+void CSheetCellCursorer::OnKeyDown(CGridView* pSheet, const KeyDownEvent& e)
 {
 	if (pSheet->Empty()) {
 		return;
@@ -439,7 +439,7 @@ void CSheetCellCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
 	return;
 }
 
-void CExcelLikeCursorer::OnKeyDown(CSheet* pSheet, const KeyDownEvent& e)
+void CExcelLikeCursorer::OnKeyDown(CGridView* pSheet, const KeyDownEvent& e)
 {
 	if (pSheet->Empty()) {
 		return;

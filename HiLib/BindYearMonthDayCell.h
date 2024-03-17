@@ -22,7 +22,7 @@ protected:
 	std::wstring m_sortString;
 public:
 	template<typename... Args>
-	CBindYearMonthDayCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
+	CBindYearMonthDayCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
 		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::ReadOnly, args...), 
 		YearMonthDay(), 
 		Dummy(std::make_shared<int>(0))
@@ -63,7 +63,7 @@ public:
 	virtual void OnLButtonClk(const LButtonClkEvent& e) override
 	{
 		auto spDlg = std::make_shared<CCalendarDialog>(
-			m_pSheet->GetGridPtr(),
+			m_pGrid,
 			std::make_shared<DialogProperty>(),
 			std::make_shared<CalendarControlProperty>(),
 			std::make_shared<TextBoxProperty>(),
@@ -81,12 +81,12 @@ public:
 
 		spDlg->Measure(CSizeF(300, 200));
 		CPointF pt(
-			std::clamp(e.PointInWnd.x, m_pSheet->GetRectInWnd().left, m_pSheet->GetRectInWnd().right - spDlg->DesiredSize().width),
-			std::clamp(e.PointInWnd.y, m_pSheet->GetRectInWnd().top, m_pSheet->GetRectInWnd().bottom - spDlg->DesiredSize().height)
+			std::clamp(e.PointInWnd.x, m_pGrid->GetRectInWnd().left, m_pGrid->GetRectInWnd().right - spDlg->DesiredSize().width),
+			std::clamp(e.PointInWnd.y, m_pGrid->GetRectInWnd().top, m_pGrid->GetRectInWnd().bottom - spDlg->DesiredSize().height)
 		);
-		spDlg->OnCreate(CreateEvt(m_pSheet->GetWndPtr(), m_pSheet->GetGridPtr(), CRectF(pt, spDlg->DesiredSize())));
+		spDlg->OnCreate(CreateEvt(m_pGrid->GetWndPtr(), m_pGrid, CRectF(pt, spDlg->DesiredSize())));
 		spDlg->Arrange(CRectF(pt, spDlg->DesiredSize()));
-		m_pSheet->GetWndPtr()->SetFocusToControl(spDlg);
+		m_pGrid->GetWndPtr()->SetFocusToControl(spDlg);
 	}
 
 

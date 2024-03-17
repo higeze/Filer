@@ -1,5 +1,5 @@
 #pragma once
-#include "Sheet.h"
+#include "GridView.h"
 #include "MapRow.h"
 #include "LauncherCell.h"
 #include "CellProperty.h"
@@ -11,7 +11,7 @@ protected:
 	std::unordered_map<const CColumn*,std::shared_ptr<CCell>> m_mapCell; /**<Map to hold cell*/
 
 public:
-	CLauncherRow(CSheet* pSheet, std::shared_ptr<CellProperty> spProperty)
+	CLauncherRow(CGridView* pSheet, std::shared_ptr<CellProperty> spProperty)
 		:CMapRow(pSheet, spProperty){}
 	
 	virtual ~CLauncherRow(void) = default;
@@ -20,7 +20,7 @@ public:
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CLauncherCell<T>>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+		return std::make_shared<CLauncherCell<T>>(m_pGrid, pRow, pColumn, m_pGrid->GetCellProperty());
 	}
 
 	std::shared_ptr<CCell>& Cell(CColumn* pColumn ) override

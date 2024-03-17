@@ -32,8 +32,8 @@ public:
 	{
 		if (auto pBindColumn = dynamic_cast<CBindColumn<T>*>(this->m_pColumn)) {
 			return pBindColumn->GetItem<std::shared_ptr<CLauncher>>()->GetShellFile(
-				[pSheet = this->m_pSheet]() {
-					pSheet->GetGridPtr()->DelayUpdate();
+				[pSheet = this->m_pGrid]() {
+					pSheet->DelayUpdate();
 				});
 		} else {
 			return nullptr;
@@ -83,14 +83,14 @@ public:
 		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
 
-		::SetForegroundWindow(this->m_pSheet->GetWndPtr()->m_hWnd);
-		WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, this->m_pSheet->GetWndPtr()->m_hWnd);
+		::SetForegroundWindow(this->m_pGrid->GetWndPtr()->m_hWnd);
+		WORD retID = menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON, e.PointInScreen.x, e.PointInScreen.y, this->m_pGrid->GetWndPtr()->m_hWnd);
 		if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"EditLauncher")) {
-			//auto pFilerWnd = static_cast<CFilerWnd*>(this->m_pSheet->GetWndPtr());
+			//auto pFilerWnd = static_cast<CFilerWnd*>(this->m_pGrid->GetWndPtr());
 
 			//auto pRow = static_cast<CBindRow<TItems...>*>(this->m_pRow);
 			//auto pCol = static_cast<const CLaunchersColumn<TItems...>*>(this->m_pColumn);
-			//auto& itemsSource = static_cast<CLaunchersGridView*>(this->m_pSheet)->GetItemsSource();
+			//auto& itemsSource = static_cast<CLaunchersGridView*>(this->m_pGrid)->GetItemsSource();
 			//auto order = pRow->GetIndex<AllTag>();
 
 			//TODOLOW
@@ -102,11 +102,11 @@ public:
 			//										  ::SerializeProperty(pFilerWnd);
 			//									  });
 		} else if (retID == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"DeleteLauncher")) {
-			auto pFilerWnd = static_cast<CFilerWnd*>(this->m_pSheet->GetWndPtr());
+			auto pFilerWnd = static_cast<CFilerWnd*>(this->m_pGrid->GetWndPtr());
 
 			//auto pRow = static_cast<const CLauncherRow<TItems...>*>(this->m_pRow);
 			auto pCol = static_cast<const CBindColumn<T>*>(this->m_pColumn);
-			auto pGrid = static_cast<CLauncherGridView*>(this->m_pSheet);
+			auto pGrid = static_cast<CLauncherGridView*>(this->m_pGrid);
 			auto& itemsSource = pGrid->GetItemsSource();
 			auto index = pCol->GetIndex<AllTag>();
 

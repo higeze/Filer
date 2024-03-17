@@ -40,13 +40,13 @@ public:
 
 			auto updated = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileIconCell>(shared_from_this()))]()->void {
 				if (auto sp = wp.lock()) {
-					sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					sp->m_conDelayUpdateAction = sp->GetGridPtr()->SignalPreDelayUpdate.connect(
 						[wp]()->void {
 							if (auto sp = wp.lock()) {
 								sp->OnPropertyChanged(L"value");
 							}
 						});
-					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+					sp->GetGridPtr()->DelayUpdate();
 				}
 			};
 			pDirect->GetFileIconDrawerPtr()->DrawFileIconBitmap(pDirect, rc.LeftTop(), spFile.get(), updated);
@@ -101,12 +101,12 @@ public:
 	//} else if (initialEnter || betweenEnter) {
 		auto delay = initialEnter ? InitialShowDelay : BetweenShowDelay;
 
-		if (this->m_pSheet->GetWndPtr()->GetToolTipControlPtr()) {
-			this->m_pSheet->GetWndPtr()->GetToolTipControlPtr()->OnClose(CloseEvent(e.WndPtr, NULL, NULL));
+		if (this->m_pGrid->GetWndPtr()->GetToolTipControlPtr()) {
+			this->m_pGrid->GetWndPtr()->GetToolTipControlPtr()->OnClose(CloseEvent(e.WndPtr, NULL, NULL));
 		}
 
 		if (!GetString().empty()) {
-			e.WndPtr->GetToolTipDeadlineTimer().run([pSheet = this->m_pSheet, content = GetString(), sz = GetCursorSize()]()->void
+			e.WndPtr->GetToolTipDeadlineTimer().run([pSheet = this->m_pGrid, content = GetString(), sz = GetCursorSize()]()->void
 			{
 				auto spTT = std::make_shared<CToolTip>(
 					pSheet->GetWndPtr(),
@@ -126,8 +126,8 @@ public:
 	{
 		e.WndPtr->GetToolTipDeadlineTimer().stop();
 		::OutputDebugStringA("OnMouseLeave\r\n");
-		if (this->m_pSheet->GetWndPtr()->GetToolTipControlPtr()) {
-			this->m_pSheet->GetWndPtr()->GetToolTipControlPtr()->OnClose(CloseEvent(e.WndPtr, NULL, NULL));
+		if (this->m_pGrid->GetWndPtr()->GetToolTipControlPtr()) {
+			this->m_pGrid->GetWndPtr()->GetToolTipControlPtr()->OnClose(CloseEvent(e.WndPtr, NULL, NULL));
 		}
 	}
 

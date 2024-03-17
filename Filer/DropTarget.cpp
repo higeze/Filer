@@ -193,7 +193,7 @@ void CDropTarget::InitializeMenuItem(HMENU hmenu, LPTSTR lpszItemName, int nId)
 /******************/
 /* Helper function*/
 /******************/
-HRESULT CDropTarget::CopyStream(const CComPtr<IFileOperation>& pFileOperation, const std::shared_ptr<CShellFolder>& pDestFolder, IStream* pSrcStream, const std::wstring& fileName)
+HRESULT CDropTarget::CopyStream(const CComPtr<IFileOperation>& pFileOperation, const std::shared_ptr<CShellFolder>& pDestFolder, IStream* pSrcStream, const std::wstring& originalFileName)
 {
 	HRESULT       hr = S_OK;
 	unsigned char buffer[1024];
@@ -201,11 +201,20 @@ HRESULT CDropTarget::CopyStream(const CComPtr<IFileOperation>& pFileOperation, c
 	int           bytes_written = 0;
 	int* pFileHandle = new int();	//handle to a file
 
-	std::wstring filePath;
-	::PathCombine(GetBuffer(filePath, MAX_PATH), GetMakeSureTempDirectory<wchar_t>().c_str(), fileName.c_str());
-	::ReleaseBuffer(filePath);
+	//get file name
+	std::wstring longerDir = pDestFolder->GetPath().size() > GetMakeSureTempDirectory<wchar_t>().size() ?
+		pDestFolder->GetPath() : GetMakeSureTempDirectory<wchar_t>();
+	std::wstring fileName = SanitizeFileName(longerDir, originalFileName);
+	if (fileName.empty()) {
+		return S_FALSE;
+	}
 
-	errno_t errorNo = _wsopen_s(pFileHandle, filePath.c_str(), O_RDWR | O_BINARY | O_CREAT, SH_DENYNO, S_IREAD | S_IWRITE);
+	// get temp file path
+	std::wstring tempPath;
+	::PathCombineW(GetBuffer(tempPath, _MAX_PATH), GetMakeSureTempDirectory<wchar_t>().c_str(), fileName.c_str());
+	::ReleaseBuffer(tempPath);
+
+	errno_t errorNo = _wsopen_s(pFileHandle, tempPath.c_str(), O_RDWR | O_BINARY | O_CREAT, SH_DENYNO, S_IREAD | S_IWRITE);
 	if ((*pFileHandle) != -1) {
 		do {
 			hr = pSrcStream->Read(buffer, 1024, &bytes_read);
@@ -214,7 +223,7 @@ HRESULT CDropTarget::CopyStream(const CComPtr<IFileOperation>& pFileOperation, c
 		} while (S_OK == hr && bytes_read == 1024);
 		_close((*pFileHandle));
 		if (bytes_written == 0)
-			_tunlink(filePath.c_str());
+			_tunlink(tempPath.c_str());
 	} else {
 		unsigned long  error;
 		if ((error = GetLastError()) == 0L)
@@ -227,7 +236,7 @@ HRESULT CDropTarget::CopyStream(const CComPtr<IFileOperation>& pFileOperation, c
 	CComPtr<IShellItem2> pDestShellItem;
 
 	if (SUCCEEDED(::SHCreateItemFromIDList(pDestFolder->GetAbsoluteIdl().ptr(), IID_IShellItem2, reinterpret_cast<LPVOID*>(&pDestShellItem))) &&
-		SUCCEEDED(::SHCreateItemFromParsingName(filePath.c_str(), nullptr, IID_IShellItem2, reinterpret_cast<LPVOID*>(&pSrcShellItem))) &&
+		SUCCEEDED(::SHCreateItemFromParsingName(tempPath.c_str(), nullptr, IID_IShellItem2, reinterpret_cast<LPVOID*>(&pSrcShellItem))) &&
 		SUCCEEDED(pFileOperation->MoveItems(pSrcShellItem, pDestShellItem))) {
 		return S_OK;
 	} else {

@@ -9,7 +9,7 @@ private:
 	using base = CBindTextColumn<MainTask>;
 public:
 	template<typename... Args>
-	CTaskNameColumn(CSheet* pSheet = nullptr, Args... args)
+	CTaskNameColumn(CGridView* pSheet = nullptr, Args... args)
 		:CBindTextColumn(
 		pSheet,
 		L"Name",

@@ -2,14 +2,14 @@
 #include "MyFont.h"
 #include "MyDC.h"
 #include "CellProperty.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "MySize.h"
 #include "Row.h"
 #include "Column.h"
 #include "GridView.h"
 #include "D2DWWindow.h"
 
-CFontCell::CFontCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CFontF font)
+CFontCell::CFontCell(CGridView* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CFontF font)
 	:CTextCell(pSheet,pRow,pColumn,spProperty),
 	m_font(font){}
 
@@ -28,7 +28,7 @@ void CFontCell::OnLButtonClk(MouseEvent& e)
 	LOGFONT srcLogFont = m_font.GetGDIFont().GetLogFont();
 	memcpy(reinterpret_cast<void*>(&logFont),reinterpret_cast<const void*>(&srcLogFont),sizeof(LOGFONT));
 	cf.lStructSize=sizeof(CHOOSEFONT);
-	cf.hwndOwner=m_pSheet->GetWndPtr()->m_hWnd;
+	cf.hwndOwner=m_pGrid->GetWndPtr()->m_hWnd;
 	cf.lpLogFont=&logFont;
 	cf.Flags=CF_SCREENFONTS|CF_INITTOLOGFONTSTRUCT;
 	if(!ChooseFont(&cf))return;
@@ -45,6 +45,6 @@ std::wstring CFontCell::GetString()
 	std::wstring wstr;
 	wstr.append(m_font.FamilyName);
 	wstr.append(L", ");
-	wstr.append(boost::lexical_cast<std::wstring>((int)(m_pSheet->GetWndPtr()->GetDirectPtr()->Dips2Points(m_font.Size))));
+	wstr.append(boost::lexical_cast<std::wstring>((int)(m_pGrid->GetWndPtr()->GetDirectPtr()->Dips2Points(m_font.Size))));
 	return wstr;
 }

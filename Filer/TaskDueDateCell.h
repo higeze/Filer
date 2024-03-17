@@ -9,7 +9,7 @@ class CTaskDueDateCell :public CBindYearMonthDayCell<MainTask>
 {
 public:
 	template<typename... Args>
-	CTaskDueDateCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
+	CTaskDueDateCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
 		:CBindYearMonthDayCell(pSheet, pRow, pColumn, spProperty, args...)
 	{}
 

@@ -1,5 +1,5 @@
 #include "RowIndexColumn.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "Cell.h"
 #include "RowIndexCell.h"
 #include "CellProperty.h"
@@ -7,27 +7,27 @@
 
 std::shared_ptr<CCell> CRowIndexColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
+	return std::make_shared<CCell>(m_pGrid,pRow,pColumn,m_pGrid->GetHeaderProperty());
 }
 
 std::shared_ptr<CCell> CRowIndexColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
+	return std::make_shared<CCell>(m_pGrid,pRow,pColumn,m_pGrid->GetHeaderProperty());
 }
 
 std::shared_ptr<CCell> CRowIndexColumn::HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
+	return std::make_shared<CCell>(m_pGrid,pRow,pColumn,m_pGrid->GetHeaderProperty());
 }
 
 std::shared_ptr<CCell> CRowIndexColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
+	return std::make_shared<CCell>(m_pGrid,pRow,pColumn,m_pGrid->GetHeaderProperty());
 }
 
 std::shared_ptr<CCell> CRowIndexColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CRowIndexCell>(m_pSheet,pRow,pColumn,m_pSheet->GetHeaderProperty());
+	return std::make_shared<CRowIndexCell>(m_pGrid,pRow,pColumn,m_pGrid->GetHeaderProperty());
 }
 
 void  CRowIndexColumn::RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc) 

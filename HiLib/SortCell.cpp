@@ -2,7 +2,7 @@
 #include "CellProperty.h"
 #include "MyRect.h"
 #include "MyColor.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "Column.h"
 #include "SheetEventArgs.h"
 
@@ -111,7 +111,7 @@ void CSortCell::OnLButtonClk(const LButtonClkEvent& e)
 	//Get current Sort before all reset 
 	auto sort = m_pColumn->GetSort();
 	//Reset All Sort
-	m_pSheet->ResetColumnSort();
+	m_pGrid->ResetColumnSort();
 	//Sort
 	switch(sort){
 		case Sorts::None:
@@ -125,5 +125,5 @@ void CSortCell::OnLButtonClk(const LButtonClkEvent& e)
 			m_pColumn->SetSort(Sorts::None);
 			break;
 	}
-	//m_pSheet->SubmitUpdate();
+	//m_pGrid->SubmitUpdate();
 }

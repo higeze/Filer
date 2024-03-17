@@ -6,7 +6,7 @@
 struct CellProperty;
 class CRect;
 class CSize;
-class CSheet;
+class CGridView;
 class CCell;
 class CEmptyCell;
 class CTextCell;
@@ -30,7 +30,7 @@ class CCell :virtual public CUIElement
 {
 protected:
 
-	CSheet* m_pSheet;
+	CGridView* m_pGrid;
 	CRow* m_pRow;
 	CColumn* m_pColumn;
 	std::shared_ptr<CellProperty> m_spCellProperty;
@@ -47,8 +47,8 @@ protected:
 public:
 	//Constructor
 	template<typename... Args>
-	CCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
-		:m_pSheet(pSheet),
+	CCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
+		:m_pGrid(pSheet),
 		m_pRow(pRow),
 		m_pColumn(pColumn),
 		m_spCellProperty(spProperty)
@@ -61,7 +61,7 @@ public:
 	bool operator<(CCell& rhs);
 	bool operator>(CCell& rhs);
 	//Accesser
-	CSheet* GetSheetPtr()const { return m_pSheet; }
+	CGridView* GetGridPtr()const { return m_pGrid; }
 	CRow* GetRowPtr()const { return m_pRow; }
 	CColumn* GetColumnPtr()const { return m_pColumn; }
 	LONGLONG GetRowColumnPtr()const { return MAKELONGLONG(m_pRow, m_pColumn); }

@@ -11,7 +11,7 @@ protected:
 	std::unordered_map<const CColumn*,std::shared_ptr<CCell>> m_mapCell; /**<Map to hold row-cell*/
 public:
 	template<typename... Args>
-	CMapRow(CSheet* pSheet = nullptr, std::shared_ptr<CellProperty> spProperty = nullptr, Args... args):CRow(pSheet, spProperty, args...){}
+	CMapRow(CGridView* pSheet = nullptr, std::shared_ptr<CellProperty> spProperty = nullptr, Args... args):CRow(pSheet, spProperty, args...){}
 	virtual ~CMapRow() = default;
 
 	virtual void Clear(){m_mapCell.clear();}

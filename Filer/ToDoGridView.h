@@ -30,7 +30,7 @@ public:
 	}
 	void Initialize();
 
-	virtual bool HasSheetCell() override { return true; }
+	//virtual bool HasSheetCell() override { return true; }
 
 	reactive_property_ptr<std::wstring> Path;
 	reactive_command_ptr<std::wstring> OpenCommand;

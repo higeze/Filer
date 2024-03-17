@@ -1,5 +1,5 @@
 #include "ShowHideMenuItem.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "Column.h"
 
 LRESULT CCheckableMenuItem::OnCommand(WORD wNotifyCode,WORD wID,HWND hWndCtl,BOOL& bHandled)
@@ -24,8 +24,8 @@ LRESULT CCheckableMenuItem::OnInitMenu(UINT uMsg,WPARAM wParam,LPARAM lParam,BOO
 	return 0;
 }
 
-CShowHideColumnMenuItem::CShowHideColumnMenuItem(const WORD wID, const std::wstring& str, CSheet* pSheet, CColumn* pColumn)
-	:CCheckableMenuItem(wID), m_pSheet(pSheet), m_pColumn(pColumn), m_name(str)
+CShowHideColumnMenuItem::CShowHideColumnMenuItem(const WORD wID, const std::wstring& str, CGridView* pSheet, CColumn* pColumn)
+	:CCheckableMenuItem(wID), m_pGrid(pSheet), m_pColumn(pColumn), m_name(str)
 {
 	m_mii.fMask = MIIM_ID | MIIM_STATE | MIIM_STRING;
 	m_mii.dwTypeData = (LPWSTR)m_name.c_str();
@@ -46,5 +46,5 @@ void CShowHideColumnMenuItem::SetIsChecked(bool isChecked)
 void CShowHideColumnMenuItem::Update()
 {
 	//PostUpdate is already called in ColumnVisibleChanged
-	m_pSheet->SubmitUpdate();
+	m_pGrid->SubmitUpdate();
 }

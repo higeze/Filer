@@ -31,9 +31,9 @@ public:
 		}
 	
 		UpdateCursor(cell);
-		cell->GetSheetPtr()->DeselectAll();
+		cell->GetGridPtr()->DeselectAll();
 		cell->GetRowPtr()->SetIsSelected(true);//Select
-		if (auto pGrid = dynamic_cast<CBindGridView<T, TRow, TCol>*>(cell->GetSheetPtr())){//dynamic_cast<CBindGridView<T>*>(cell->GetSheetPtr())) {
+		if (auto pGrid = dynamic_cast<CBindGridView<T, TRow, TCol>*>(cell->GetGridPtr())){//dynamic_cast<CBindGridView<T>*>(cell->GetGridPtr())) {
 			if (auto pRow = dynamic_cast<TRow*>(cell->GetRowPtr())){//dynamic_cast<CBindRow<T>*>(cell->GetRowPtr())) {
 				pGrid->SelectedItem.set(pRow->GetItem<T>());
 			}
@@ -59,7 +59,7 @@ public:
 
 		if (m_isDragPossible) {
 			m_isDragPossible = false;
-			cell->GetSheetPtr()->DeselectAll();
+			cell->GetGridPtr()->DeselectAll();
 			cell->GetRowPtr()->SetIsSelected(true);//Select
 		}
 	}
@@ -71,7 +71,7 @@ public:
 		}
 		if (m_isDragPossible) {
 			m_isDragPossible = false;
-			//cell->GetSheetPtr()->DeselectAll();
+			//cell->GetGridPtr()->DeselectAll();
 			//cell->GetRowPtr()->SetSelected(true);//Select
 		}
 	}
@@ -89,12 +89,17 @@ public:
 
 
 
-
+enum class BindType
+{
+	Row,
+	Column,
+};
 
 template<typename T, typename TRow = CBindRow<T>, typename TCol = CBindColumn<T>>
 class CBindGridView :public CGridView, public IBindSheet<T>
 {
 protected:
+	BindType m_bindType;
 	std::vector<std::shared_ptr<CColumn>> m_initColumns;
 	std::vector<std::shared_ptr<CRow>> m_initRows;
 
@@ -110,7 +115,8 @@ public:
 		const std::shared_ptr<GridViewProperty>& spGridViewProp,
 		TArgs... args)
 		:CGridView(pParentControl, spGridViewProp),
-		ItemsSource()
+		ItemsSource(),
+		m_bindType(BindType::Row)
 	{
 		m_spCursorer = std::make_shared<CBindCursorer<T, TRow, TCol>>();
 
@@ -158,6 +164,50 @@ public:
 		//std::vector<std::shared_ptr<CRow>> rows;
 		m_initRows = ::get(arg<"rows"_s>(), args..., default_(m_initRows));
 	}
+
+	virtual std::shared_ptr<CCell> Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn)override
+	{
+		return CGridView::Cell(spRow, spColumn);
+	}
+	virtual std::shared_ptr<CCell> Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow)override
+	{
+		return CGridView::Cell(spRow, spColumn);
+	}
+	virtual std::shared_ptr<CCell> Cell(const CPointF& pt)override
+	{
+		return CGridView::Cell(pt);
+	}
+	std::shared_ptr<CCell> Cell(CRow* pRow, CColumn* pColumn) override
+	{
+		auto& container = m_allCells.get<rowcol_tag>();
+		auto iter = container.find(MAKELONGLONG(pRow, pColumn));
+		if (iter == container.end()) {
+			if (m_bindType == BindType::Row) {
+				/*if (pRow == GetHeaderRowPtr().get()) {
+					iter = container.insert(pColumn->HeaderCellTemplate(pRow, pColumn)).first;
+				} else */if (pRow == GetNameHeaderRowPtr().get()) {
+					iter = container.insert(pColumn->NameHeaderCellTemplate(pRow, pColumn)).first;
+				} else if (pRow == GetFilterRowPtr().get()) {
+					iter = container.insert(pColumn->FilterCellTemplate(pRow, pColumn)).first;
+				} else {
+					iter = container.insert(pColumn->CellTemplate(pRow, pColumn)).first;
+				}
+			} else if (m_bindType == BindType::Column) {
+				/*if (pRow == GetHeaderRowPtr().get()) {
+					iter = container.insert(pRow->HeaderCellTemplate(pRow, pColumn)).first;
+				} else*/ if (pRow == GetNameHeaderRowPtr().get()) {
+					iter = container.insert(pRow->NameHeaderCellTemplate(pRow, pColumn)).first;
+				} else if (pRow == GetFilterRowPtr().get()) {
+					iter = container.insert(pRow->FilterCellTemplate(pRow, pColumn)).first;
+				} else {
+					iter = container.insert(pRow->CellTemplate(pRow, pColumn)).first;
+				}
+			}
+		}
+		return const_cast<std::shared_ptr<CCell>&>(*iter);
+
+	}
+
 
 	std::vector<int> GetSelectedIndexes() 
 	{

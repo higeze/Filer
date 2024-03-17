@@ -6,7 +6,7 @@ template<typename T>
 class CBindCheckBoxCell :public CCheckBoxCell
 {
 public:
-	CBindCheckBoxCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+	CBindCheckBoxCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CCheckBoxCell(pSheet, pRow, pColumn, spProperty)
 	{
 		auto pBindColumn = static_cast<const CBindCheckBoxColumn<T>*>(this->m_pColumn);

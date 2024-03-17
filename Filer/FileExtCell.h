@@ -12,7 +12,7 @@ template<typename T>
 class CFileDispExtCell:public CTextCell
 {
 public:
-	CFileDispExtCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+	CFileDispExtCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
 	{
 	}
@@ -27,7 +27,7 @@ public:
 	void SetStringCore(const std::wstring& str)
 	{
 		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
-		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetExt(str, m_pSheet->GetWndPtr()->m_hWnd);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetExt(str, m_pGrid->GetWndPtr()->m_hWnd);
 	}
 
 	virtual bool CanSetStringOnEditing()const override { return false; }
@@ -40,7 +40,7 @@ template<typename T>
 class CFilePathExtCell :public CTextCell
 {
 public:
-	CFilePathExtCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+	CFilePathExtCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
 	{
 	}
@@ -55,7 +55,7 @@ public:
 	void SetStringCore(const std::wstring& str)
 	{
 		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
-		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetExt(str, m_pSheet->GetWndPtr()->m_hWnd);
+		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetExt(str, m_pGrid->GetWndPtr()->m_hWnd);
 	}
 
 	virtual bool CanSetStringOnEditing()const override { return false; }
@@ -69,7 +69,7 @@ template<typename T>
 class CFileReextCell :public CTextCell
 {
 public:
-	CFileReextCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+	CFileReextCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
 	{
 	}

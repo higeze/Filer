@@ -7,7 +7,7 @@ class CTaskMemoColumn : public CBindTextColumn<MainTask>
 {
 public:
 	template<typename... Args>
-	CTaskMemoColumn(CSheet* pSheet = nullptr, Args... args)
+	CTaskMemoColumn(CGridView* pSheet = nullptr, Args... args)
 		:CBindTextColumn(
 		pSheet,
 		L"Memo",

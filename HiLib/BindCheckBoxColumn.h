@@ -15,7 +15,7 @@ private:
 
 public:
 	CBindCheckBoxColumn(
-		CSheet* pSheet,
+		CGridView* pSheet,
 		const std::wstring& header,
 		std::function<reactive_property_ptr<CheckBoxState>&(T&)> path)
 		:CMapColumn(pSheet), m_header(header), m_path(path){}
@@ -26,23 +26,23 @@ public:
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CCell>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+		return std::make_shared<CCell>(m_pGrid, pRow, pColumn, m_pGrid->GetCellProperty());
 	}
 
 	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CSortCell>(m_pSheet, pRow, pColumn, m_pSheet->GetHeaderProperty(), arg<"text"_s>() = m_header);
+		return std::make_shared<CSortCell>(m_pGrid, pRow, pColumn, m_pGrid->GetHeaderProperty(), arg<"text"_s>() = m_header);
 	}
 
 	std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CCheckBoxFilterCell>(m_pSheet, pRow, pColumn, m_pSheet->GetFilterProperty());
+		return std::make_shared<CCheckBoxFilterCell>(m_pGrid, pRow, pColumn, m_pGrid->GetFilterProperty());
 	}
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		return std::make_shared<CBindCheckBoxCell<T>>(
-			m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+			m_pGrid, pRow, pColumn, m_pGrid->GetCellProperty());
 	}
 };
 

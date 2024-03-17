@@ -3,5 +3,5 @@
 
 class CFavoritesItemDragger :public CRowDragger
 {
-	virtual bool IsTarget(CSheet* pSheet, MouseEvent const & e) override{return true;}
+	virtual bool IsTarget(CGridView* pSheet, MouseEvent const & e) override{return true;}
 };

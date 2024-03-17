@@ -28,7 +28,7 @@ protected:
 public:
 	//Constructor
 	template<typename... Args>
-	CColumn(CSheet* pSheet = nullptr, Args... args)
+	CColumn(CGridView* pSheet = nullptr, Args... args)
 		:CBand(pSheet),m_sort(Sorts::None),m_isInit(true)
 	{
 		m_isMinLengthFit = ::get(arg<"isminfit"_s>(), args..., default_(false));

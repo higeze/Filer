@@ -5,7 +5,7 @@
 class CTaskCheckBoxColumn : public CBindCheckBoxColumn<MainTask>
 {
 public:
-	CTaskCheckBoxColumn(CSheet* pSheet = nullptr)
+	CTaskCheckBoxColumn(CGridView* pSheet = nullptr)
 		:CBindCheckBoxColumn<MainTask>(
 		pSheet,
 		L"State",

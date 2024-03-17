@@ -7,7 +7,7 @@ class CFontCell:public CTextCell
 private:
 	CFontF m_font;
 public:
-	CFontCell(CSheet* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty, CFontF font);
+	CFontCell(CGridView* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty, CFontF font);
 	virtual ~CFontCell(){}
 	CFontF GetFont();
 

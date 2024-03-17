@@ -1,7 +1,7 @@
 #include "RowColumn.h"
 #include "Row.h"
 #include "Column.h"
-#include "Sheet.h"
+#include "GridView.h"
 
 bool CRowColumn::operator<(const CRowColumn& rhs)const
 {

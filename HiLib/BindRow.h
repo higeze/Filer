@@ -10,15 +10,15 @@ template<typename T>
 class CBindRow :public CRow
 {
 public:
-	CBindRow(CSheet* pSheet, std::shared_ptr<CellProperty> spProperty)
+	CBindRow(CGridView* pSheet, std::shared_ptr<CellProperty> spProperty)
 		:CRow(pSheet, spProperty){ }
 
 	template<typename U>
 	typename std::enable_if<std::is_same_v<T, U>, U&>::type
 	GetItem()
 	{
-		if (auto p = dynamic_cast<IBindSheet<T>*>(this->m_pSheet)) {
-			auto index = this->GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<RowTag>();
+		if (auto p = dynamic_cast<IBindSheet<T>*>(this->m_pGrid)) {
+			auto index = this->GetIndex<AllTag>() - this->m_pGrid->GetFrozenCount<RowTag>();
 			return p->GetItemsSource().get_unconst()->at(index);		
 		} else {
 			throw std::exception(FILE_LINE_FUNC);
@@ -30,8 +30,8 @@ public:
 	//typename std::enable_if<!is_tuple_v<T>, U&>::type
 	//GetItem()
 	//{
-	//	if (auto p = dynamic_cast<IBindSheet<T>*>(this->m_pSheet)) {
-	//		auto index = this->GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<RowTag>();
+	//	if (auto p = dynamic_cast<IBindSheet<T>*>(this->m_pGrid)) {
+	//		auto index = this->GetIndex<AllTag>() - this->m_pGrid->GetFrozenCount<RowTag>();
 	//		return p->GetItemsSource().get_unconst()->at(index);		
 	//	} else {
 	//		throw std::exception(FILE_LINE_FUNC);
@@ -42,8 +42,8 @@ public:
 	typename std::enable_if<!std::is_same_v<T, U> && is_tuple_v<T>, U&>::type
 	GetItem()
 	{
-		if (auto p = dynamic_cast<IBindSheet<T>*>(this->m_pSheet)) {
-			auto index = this->GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<RowTag>();
+		if (auto p = dynamic_cast<IBindSheet<T>*>(this->m_pGrid)) {
+			auto index = this->GetIndex<AllTag>() - this->m_pGrid->GetFrozenCount<RowTag>();
 			return std::get<U>(p->GetItemsSource().get_unconst()->at(index));		
 		} else {
 			throw std::exception(FILE_LINE_FUNC);
@@ -62,14 +62,14 @@ public:
 //class CBindRow<std::tuple<V...>> : public CRow
 //{
 //public:
-//	CBindRow(CSheet* pSheet, std::shared_ptr<CellProperty> spProperty)
+//	CBindRow(CGridView* pSheet, std::shared_ptr<CellProperty> spProperty)
 //		:CRow(pSheet, spProperty){}
 //
 //	template<typename U>
 //	U& GetItem()
 //	{
-//		if (auto p = dynamic_cast<IBindSheet<std::tuple<V...>>*>(this->m_pSheet)) {
-//			auto index = this->GetIndex<AllTag>() - this->m_pSheet->GetFrozenCount<RowTag>();
+//		if (auto p = dynamic_cast<IBindSheet<std::tuple<V...>>*>(this->m_pGrid)) {
+//			auto index = this->GetIndex<AllTag>() - this->m_pGrid->GetFrozenCount<RowTag>();
 //			return std::get<U>(p->GetItemsSource().get_unconst()->at(index));		
 //		} else {
 //			throw std::exception(FILE_LINE_FUNC);

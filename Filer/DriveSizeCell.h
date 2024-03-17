@@ -2,7 +2,7 @@
 #include "TextCell.h"
 #include "BindRow.h"
 #include "CellProperty.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "GridView.h"
 #include <fmt/format.h>
 #include "DriveFolder.h"
@@ -23,7 +23,7 @@ private:
 	}
 
 public:
-	CDriveSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+	CDriveSizeCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CTextCell(pSheet, pRow, pColumn, spProperty){}
 
 	virtual ~CDriveSizeCell() = default;
@@ -84,7 +84,7 @@ public:
 
 		//TODO PaintEffect
 		//Selected
-		if (GetIsSelected() && m_pSheet->GetIsFocused()  /*::GetFocus() == m_pSheet->GetGridPtr()->m_hWnd*/) {
+		if (GetIsSelected() && m_pGrid->GetIsFocused()  /*::GetFocus() == m_pGrid->m_hWnd*/) {
 			pDirect->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rcPaint);
 		} else if (GetIsSelected()) {
 			pDirect->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rcPaint);

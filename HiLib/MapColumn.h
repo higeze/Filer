@@ -7,7 +7,7 @@ protected:
 	//std::unordered_map<const CRow*,std::shared_ptr<CCell>> m_mapCell; /**<Map to hold row-cell*/
 public:
 	template<typename... Args>
-	CMapColumn(CSheet* pSheet = nullptr, Args... args):CColumn(pSheet, args...){}
+	CMapColumn(CGridView* pSheet = nullptr, Args... args):CColumn(pSheet, args...){}
 	virtual ~CMapColumn(){}
 	CMapColumn(const CMapColumn& column):CColumn(column)
 	{

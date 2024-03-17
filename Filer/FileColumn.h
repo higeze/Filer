@@ -2,7 +2,7 @@
 #include "MapColumn.h"
 #include "SortCell.h"
 #include "FilterCell.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "FileIconNameCell.h"
 #include "PathCell.h"
 #include "CellProperty.h"
@@ -20,7 +20,7 @@ private:
 	std::wstring m_header;
 public:
 	template<typename... Args>
-	CFileColumnBase(CSheet* pSheet = nullptr, const std::wstring& header = L"", Args... args)
+	CFileColumnBase(CGridView* pSheet = nullptr, const std::wstring& header = L"", Args... args)
 		:CMapColumn(pSheet, args...), m_header(header)
 	{
 		m_minLength = ::get(arg<"minwidth"_s>(), args..., default_(30.f));
@@ -29,23 +29,23 @@ public:
 
 	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn) override
 	{
-		return std::make_shared<CPathCell>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+		return std::make_shared<CPathCell>(m_pGrid, pRow, pColumn, m_pGrid->GetCellProperty());
 	}
 
 	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn) override
 	{
-		return std::make_shared<CSortCell>(m_pSheet, pRow, pColumn, m_pSheet->GetHeaderProperty(), arg<"text"_s>() = m_header);
+		return std::make_shared<CSortCell>(m_pGrid, pRow, pColumn, m_pGrid->GetHeaderProperty(), arg<"text"_s>() = m_header);
 	}
 
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) override
 	{
-		auto cell = std::make_shared<CFilterCell>(m_pSheet, pRow, pColumn, m_pSheet->GetFilterProperty());
+		auto cell = std::make_shared<CFilterCell>(m_pGrid, pRow, pColumn, m_pGrid->GetFilterProperty());
 		return cell;
 	}
 
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) override
 	{
-		auto cell = std::make_shared<TCell>(m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+		auto cell = std::make_shared<TCell>(m_pGrid, pRow, pColumn, m_pGrid->GetCellProperty());
 		return cell;
 	}
 

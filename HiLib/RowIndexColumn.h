@@ -11,7 +11,7 @@ class CRowIndexColumn:public CMapColumn
 protected:
 	std::shared_ptr<CellProperty> m_spCellProperty;
 public:
-	CRowIndexColumn(CSheet* pSheet = nullptr, std::shared_ptr<CellProperty> spProperty = nullptr)
+	CRowIndexColumn(CGridView* pSheet = nullptr, std::shared_ptr<CellProperty> spProperty = nullptr)
 		:CMapColumn(pSheet, arg<"isminfit"_s>() = true, arg<"ismaxfit"_s>() = true),m_spCellProperty(spProperty){}
 
 	virtual ~CRowIndexColumn() = default;

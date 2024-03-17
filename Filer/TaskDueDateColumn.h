@@ -2,7 +2,7 @@
 #include "FilterCell.h"
 #include "BindColumn.h"
 #include "SortCell.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "named_arguments.h"
 #include "TaskDueDateCell.h"
 #include "Task.h"
@@ -11,7 +11,7 @@ class CTaskDueDateColumn: public CBindYearMonthDayColumn<MainTask>
 {
 public:
 	template<typename... Args>
-	CTaskDueDateColumn(CSheet* pSheet = nullptr, Args... args)
+	CTaskDueDateColumn(CGridView* pSheet = nullptr, Args... args)
 		:CBindYearMonthDayColumn<MainTask>(
 		pSheet, 
 		L"Due Date",
@@ -24,7 +24,7 @@ public:
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		return std::make_shared<CTaskDueDateCell>(
-			m_pSheet, pRow, pColumn, m_pSheet->GetCellProperty());
+			m_pGrid, pRow, pColumn, m_pGrid->GetCellProperty());
 	}
 };
 

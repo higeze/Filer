@@ -1,10 +1,10 @@
 #pragma once
-#include "Sheet.h"
+#include "GridView.h"
 #include "GridView.h"
 #include "Column.h"
 
 //Pre-Declaration
-class CSheet;
+class CGridView;
 struct RowTag;
 struct ColTag;
 struct MouseEvent;
@@ -13,13 +13,13 @@ struct SetCursorEvent;
 class ITracker
 {
 public:
-	virtual void OnDividerDblClk(CSheet* pSheet, const MouseEvent& e) = 0;
-	virtual void OnBeginTrack(CSheet* pSheet, const MouseEvent& e) = 0;
-	virtual void OnTrack(CSheet* pSheet, const MouseEvent& e) = 0;
-	virtual void OnEndTrack(CSheet* pSheet, const MouseEvent& e) = 0;
-	virtual void OnLeaveTrack(CSheet* pSheet, const MouseEvent& e) = 0;
-	virtual void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e) = 0;
-	virtual bool IsTarget(CSheet* pSheet, const MouseEvent& e) = 0;
+	virtual void OnDividerDblClk(CGridView* pSheet, const MouseEvent& e) = 0;
+	virtual void OnBeginTrack(CGridView* pSheet, const MouseEvent& e) = 0;
+	virtual void OnTrack(CGridView* pSheet, const MouseEvent& e) = 0;
+	virtual void OnEndTrack(CGridView* pSheet, const MouseEvent& e) = 0;
+	virtual void OnLeaveTrack(CGridView* pSheet, const MouseEvent& e) = 0;
+	virtual void OnSetCursor(CGridView* pSheet, const SetCursorEvent& e) = 0;
+	virtual bool IsTarget(CGridView* pSheet, const MouseEvent& e) = 0;
 };
 
 template<typename TRC>
@@ -31,29 +31,29 @@ public:
 	CTracker():m_trackLeftVisib(CColumn::kInvalidIndex){}
 	virtual ~CTracker(){}
 
-	//CSheetState* OnLButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
-	//CSheetState* OnLButtonUp(CSheet* pSheet, MouseEventArgs& e) override;
-	//CSheetState* OnLButtonDblClk(CSheet* pSheet, MouseEventArgs& e) override;
+	//CSheetState* OnLButtonDown(CGridView* pSheet, MouseEventArgs& e) override;
+	//CSheetState* OnLButtonUp(CGridView* pSheet, MouseEventArgs& e) override;
+	//CSheetState* OnLButtonDblClk(CGridView* pSheet, MouseEventArgs& e) override;
 
-	//CSheetState* OnRButtonDown(CSheet* pSheet, MouseEventArgs& e) override;
+	//CSheetState* OnRButtonDown(CGridView* pSheet, MouseEventArgs& e) override;
 
-	//CSheetState* OnMouseMove(CSheet* pSheet, MouseEventArgs& e) override;
-	//CSheetState* OnMouseLeave(CSheet* pSheet, MouseEventArgs& e) override;
+	//CSheetState* OnMouseMove(CGridView* pSheet, MouseEventArgs& e) override;
+	//CSheetState* OnMouseLeave(CGridView* pSheet, MouseEventArgs& e) override;
 
-	//CSheetState* OnSetCursor(CSheet* pSheet, SetCursorEventArgs& e) override;
+	//CSheetState* OnSetCursor(CGridView* pSheet, SetCursorEventArgs& e) override;
 
 
-	//CSheetState* OnTrackLButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	//CSheetState* OnTrackLButtonUp(CSheet* pSheet, MouseEventArgs& e);
-	//CSheetState* OnTrackLButtonDblClk(CSheet* pSheet, MouseEventArgs& e);
-	//CSheetState* OnTrackRButtonDown(CSheet* pSheet, MouseEventArgs& e);
-	//CSheetState* OnTrackMouseMove(CSheet* pSheet, MouseEventArgs& e);
-	//CSheetState* OnTrackMouseLeave(CSheet* pSheet, MouseEventArgs& e);
-	//CSheetState* OnTrackSetCursor(CSheet* pSheet, SetCursorEventArgs& e);
+	//CSheetState* OnTrackLButtonDown(CGridView* pSheet, MouseEventArgs& e);
+	//CSheetState* OnTrackLButtonUp(CGridView* pSheet, MouseEventArgs& e);
+	//CSheetState* OnTrackLButtonDblClk(CGridView* pSheet, MouseEventArgs& e);
+	//CSheetState* OnTrackRButtonDown(CGridView* pSheet, MouseEventArgs& e);
+	//CSheetState* OnTrackMouseMove(CGridView* pSheet, MouseEventArgs& e);
+	//CSheetState* OnTrackMouseLeave(CGridView* pSheet, MouseEventArgs& e);
+	//CSheetState* OnTrackSetCursor(CGridView* pSheet, SetCursorEventArgs& e);
 
 public:
 
-	void OnDividerDblClk(CSheet* pSheet, const MouseEvent& e) override
+	void OnDividerDblClk(CGridView* pSheet, const MouseEvent& e) override
 	{
 		int idx = GetTrackLeftTopIndex(pSheet, e);
 		if (idx != CBand::kInvalidIndex) {
@@ -64,7 +64,7 @@ public:
 		}
 	}
 
-	void OnSetCursor(CSheet* pSheet, const SetCursorEvent& e)
+	void OnSetCursor(CGridView* pSheet, const SetCursorEvent& e)
 	{
 		CPoint pt;
 		::GetCursorPos(&pt);
@@ -77,13 +77,13 @@ public:
 		}
 	}
 
-	void OnBeginTrack(CSheet* pSheet, const MouseEvent& e) override
+	void OnBeginTrack(CGridView* pSheet, const MouseEvent& e) override
 	{
 		m_trackLeftVisib = GetTrackLeftTopIndex(pSheet, e);
 		SetSizeCursor();
 	}
 
-	void OnTrack(CSheet* pSheet, const MouseEvent& e) override
+	void OnTrack(CGridView* pSheet, const MouseEvent& e) override
 	{
 		SetSizeCursor();
 		auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib);
@@ -91,7 +91,7 @@ public:
 		pSheet->Track<TRC>(p);
 	}
 
-	void OnEndTrack(CSheet* pSheet, const MouseEvent& e) override
+	void OnEndTrack(CGridView* pSheet, const MouseEvent& e) override
 	{
 		::SetCursor(::LoadCursor(NULL, IDC_ARROW));
 		if (auto p = pSheet->Index2Pointer<TRC, VisTag>(m_trackLeftVisib)) {
@@ -100,13 +100,13 @@ public:
 		}
 	}
 
-	void OnLeaveTrack(CSheet* pSheet, const MouseEvent& e) override
+	void OnLeaveTrack(CGridView* pSheet, const MouseEvent& e) override
 	{
 		//TODO
 		//Should Candel?
 	}
 
-	int GetTrackLeftTopIndex(CSheet* pSheet, const MouseEvent& e)
+	int GetTrackLeftTopIndex(CGridView* pSheet, const MouseEvent& e)
 	{
 		if (!pSheet->Visible()) {
 			return CBand::kInvalidIndex;
@@ -149,7 +149,7 @@ public:
 
 	}
 
-	bool IsTarget(CSheet* pSheet, const MouseEvent& e) override
+	bool IsTarget(CGridView* pSheet, const MouseEvent& e) override
 	{
 		if (!pSheet->Visible()) {
 			return false;

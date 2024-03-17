@@ -47,7 +47,7 @@ public:
 
 	//Getter
 	std::shared_ptr<FilerGridViewProperty> GetFilerGridViewPropPtr() { return std::static_pointer_cast<FilerGridViewProperty>(this->m_spGridViewProp); }
-	virtual bool HasSheetCell()override { return false; }
+	//virtual bool HasSheetCell()override { return false; }
 	virtual bool IsVirtualPage()override { return true; }
 
 	/**********/

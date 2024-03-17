@@ -30,16 +30,18 @@ public:
 	using arg_list = sigslot::trait::typelist<T...>;
 
 	template <typename Pmf, typename Ptr>
-    std::enable_if_t<!sigslot::trait::is_callable_v<arg_list, Pmf> &&
-                     sigslot::trait::is_weak_ptr_compatible_v<Ptr>, sigslot::connection>
+    std::enable_if_t<
+		!sigslot::trait::is_callable_v<arg_list, Pmf> &&
+        sigslot::trait::is_weak_ptr_compatible_v<Ptr>, sigslot::connection>
 	subscribe(Pmf&& pmf, Ptr&& ptr)
 	{
 		return m_on_next.connect(std::forward<Pmf>(pmf), std::forward<Ptr>(ptr));
 	}
 
     template <typename Callable, typename Trackable>
-    std::enable_if_t<sigslot::trait::is_callable_v<arg_list, Callable> &&
-                     sigslot::trait::is_weak_ptr_compatible_v<Trackable>, sigslot::connection>
+    std::enable_if_t<
+		sigslot::trait::is_callable_v<arg_list, Callable> &&
+        sigslot::trait::is_weak_ptr_compatible_v<Trackable>, sigslot::connection>
 	subscribe(Callable&& c, Trackable&& ptr)
 	{
 		return m_on_next.connect(std::forward<Callable>(c), std::forward<Trackable>(ptr));

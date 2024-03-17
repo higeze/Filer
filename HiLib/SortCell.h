@@ -17,7 +17,7 @@ private:
 
 public:
 	template<typename... Args>
-	CSortCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
+	CSortCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
 		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::ReadOnly, args...)
 	{
 		m_text = ::get(arg<"text"_s>(), args..., default_(std::wstring()));

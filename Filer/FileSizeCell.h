@@ -6,7 +6,7 @@
 #include "ShellFolder.h"
 #include "BindRow.h"
 #include "CellProperty.h"
-#include "Sheet.h"
+#include "GridView.h"
 #include "GridView.h"
 #include <fmt/format.h>
 #include <sigslot/signal.hpp>
@@ -21,7 +21,7 @@ private:
 public:
 
 
-	CFileSizeCell(CSheet* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
+	CFileSizeCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
 		:CTextCell(pSheet, pRow, pColumn, spProperty)
 	{
 	}
@@ -60,14 +60,14 @@ public:
 			std::weak_ptr<CFileSizeCell> wp(std::dynamic_pointer_cast<CFileSizeCell>(shared_from_this()));
 			auto changed = [wp]()->void {
 				if (auto sp = wp.lock()) {
-					auto con = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					auto con = sp->GetGridPtr()->SignalPreDelayUpdate.connect(
 						[wp]()->void {
 							if (auto sp = wp.lock()) {
 								sp->OnPropertyChanged(L"value");
 							}
 						});
 					sp->m_conDelayUpdateAction = con;
-					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+					sp->GetGridPtr()->DelayUpdate();
 				}
 			};
 			auto size = spFile->GetSize(static_cast<const CFileSizeColumn<T>*>(m_pColumn)->GetSizeArgsPtr(), changed);
@@ -95,13 +95,13 @@ public:
 			auto spFile = GetShellFile();
 			auto changed = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileSizeCell<T>>(shared_from_this()))]()->void {
 				if (auto sp = wp.lock()) {
-					sp->m_conDelayUpdateAction = sp->GetSheetPtr()->GetGridPtr()->SignalPreDelayUpdate.connect(
+					sp->m_conDelayUpdateAction = sp->GetGridPtr()->SignalPreDelayUpdate.connect(
 						[wp]()->void {
 							if (auto sp = wp.lock()) {
 								sp->OnPropertyChanged(L"value");
 							}
 						});
-					sp->GetSheetPtr()->GetGridPtr()->DelayUpdate();
+					sp->GetGridPtr()->DelayUpdate();
 				}
 			};
 			auto size = spFile->GetSize(static_cast<const CFileSizeColumn<T>*>(m_pColumn)->GetSizeArgsPtr(), changed);
