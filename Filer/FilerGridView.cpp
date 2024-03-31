@@ -156,13 +156,15 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CRowIndexColumn); })) 
 		{ 
-			m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this, GetHeaderProperty());
-			m_allCols.idx_push_back(m_pHeaderColumn);
+			//m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this, GetHeaderProperty());
+			//m_allCols.idx_push_back(m_pHeaderColumn);
+			m_allCols.idx_push_back(std::make_shared<CRowIndexColumn>(this, GetHeaderProperty()));
 		}
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); })) 
 		{ 
-			m_pNameColumn = std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
-			m_allCols.idx_push_back(m_pNameColumn);
+			//m_pNameColumn = std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
+			//m_allCols.idx_push_back(m_pNameColumn);
+			m_allCols.idx_push_back(std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name"));
 		}
 		//if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); })) {
 		//	m_allCols.idx_push_back(std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this));
@@ -425,13 +427,13 @@ void CFilerGridView::Added(const std::wstring& fileName)
 		PostUpdate(Updates::Invalidate);
 
 		if (m_isNewFile) {
-			m_spCursorer->OnCursor(Cell(spRow, m_pNameColumn));
+			m_spCursorer->OnCursor(Cell(spRow, m_allCols.at(m_frozenColumnCount)));
 			PostUpdate(Updates::EnsureVisibleFocusedCell);
 		}
 		PostUpdate(Updates::Sort);
-		FilterAll();
+		UpdateFilter();
 		if (m_isNewFile) {
-			std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, m_pNameColumn))->OnEdit(Event(GetWndPtr()));
+			std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, m_allCols.at(m_frozenColumnCount)))->OnEdit(Event(GetWndPtr()));
 		}
 		m_isNewFile = false;
 	}
@@ -470,7 +472,7 @@ void CFilerGridView::Modified(const std::wstring& fileName)
 			PostUpdate(Updates::Scrolls);
 			PostUpdate(Updates::Invalidate);
 			PostUpdate(Updates::Sort);
-			FilterAll();
+			UpdateFilter();
 		} else {
 			LOG_THIS_1("Modified FAILED " + wstr2str(fileName));
 		}
@@ -502,7 +504,7 @@ void CFilerGridView::Removed(const std::wstring& fileName)
 		PostUpdate(Updates::Invalidate);
 		PostUpdate(Updates::Sort);
 
-		FilterAll();
+		UpdateFilter();
 	}
 
 }
@@ -534,7 +536,7 @@ void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& ne
 			PostUpdate(Updates::Scrolls);
 			PostUpdate(Updates::Invalidate);
 			PostUpdate(Updates::Sort);
-			FilterAll();
+			UpdateFilter();
 		}
 		else {
 			LOG_THIS_1("Renamed FAILED " + wstr2str(oldName) + "=>" + wstr2str(newName));
@@ -593,8 +595,11 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 	case VK_F2:
 		{
 			if (m_spCursorer->GetFocusedCell()) {
-				std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), m_pNameColumn.get()))->OnEdit(Event(GetWndPtr()));
-				(*e.HandledPtr) = true;
+				if (auto iter = std::find_if(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); });
+					iter != m_allCols.cend()) {
+					std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), iter->get()))->OnEdit(Event(GetWndPtr()));
+					(*e.HandledPtr) = true;
+				}
 			}
 		}
 		break;
@@ -758,7 +763,7 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 		//	std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
 		//}
 
-		GetHeaderColumnPtr()->SetIsFitMeasureValid(false);
+		//GetHeaderColumnPtr()->SetIsFitMeasureValid(false);
 
 
 		//PathCell

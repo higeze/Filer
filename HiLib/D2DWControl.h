@@ -110,11 +110,20 @@ public:
 
 	virtual void OnRect(const RectEvent& e) override { m_rect = e.Rect; }
 
+	//DesiredSize includes Margin
+	//RenderSize doesnt include Margin
+	//RenderRect doesnt include Margin
+	//Arrange includes Margin
+	//GetRectInWnd includes Margin
+
 	CSizeF m_size;
 	virtual void Measure(const CSizeF& availableSize) { m_size = availableSize; }
 	virtual CSizeF DesiredSize() const { return m_size; }
 	virtual CSizeF RenderSize() const { return CSizeF(m_size.width - Margin->Width(), m_size.height - Margin->Height()); }
+
+	virtual CRectF RenderRect() const { return GetRectInWnd().DeflateRectCopy(*Margin); }
 	virtual void Arrange(const CRectF& rc) { m_rect = rc; }
+	virtual CRectF ArrangedRect() const { return m_rect; }
 
 	virtual bool IsFocused()const;
 	virtual bool GetIsFocused()const;

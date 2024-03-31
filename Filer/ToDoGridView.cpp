@@ -7,8 +7,9 @@ void CToDoGridView::Initialize()
 	//Columns
 	if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CRowIndexColumn); })) 
 	{ 
-		m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this, GetHeaderProperty());
-		m_allCols.idx_push_back(m_pHeaderColumn);
+		//m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this, GetHeaderProperty());
+		//m_allCols.idx_push_back(m_pHeaderColumn);
+		m_allCols.idx_push_back(std::make_shared<CRowIndexColumn>(this, GetHeaderProperty()));
 	}
 	if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CTaskCheckBoxColumn); })) 
 	{ 
@@ -16,8 +17,9 @@ void CToDoGridView::Initialize()
 	}
 	if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CTaskNameColumn); })) 
 	{ 
-		m_pNameColumn = std::make_shared<CTaskNameColumn>(this);
-		m_allCols.idx_push_back(m_pNameColumn);
+		//m_pNameColumn = std::make_shared<CTaskNameColumn>(this);
+		//m_allCols.idx_push_back(m_pNameColumn);
+		m_allCols.idx_push_back(std::make_shared<CTaskNameColumn>(this));
 	}
 	if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CTaskMemoColumn); })) 
 	{ 
@@ -123,7 +125,7 @@ void CToDoGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 	menu.Add(
 		std::make_unique<CMenuItem2>(L"Add Row", [this]() {
 		ItemsSource.push_back(MainTask());
-		m_spCursorer->OnCursor(Cell(m_allRows.back(), m_pNameColumn));
+		m_spCursorer->OnCursor(Cell(m_allRows.back(), m_allCols.at(m_frozenColumnCount)));
 		PostUpdate(Updates::EnsureVisibleFocusedCell);
 		SubmitUpdate();
 	}, me),

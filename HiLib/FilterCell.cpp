@@ -19,7 +19,7 @@ void CFilterCell::SetStringCore(const std::wstring& str)
 	{
 		pColumn->SetFilter(newString);
 		if (auto pGrid = dynamic_cast<CGridView*>(pSheet)) {
-			pWnd->GetDispatcherPtr()->PostInvoke([pGrid]()->void { pGrid->OnFilter(); });
+			pWnd->GetDispatcherPtr()->PostInvoke([pGrid]()->void { pGrid->Filter(); });
 		}
 	}, std::chrono::milliseconds(200));
 }

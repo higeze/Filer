@@ -2,16 +2,30 @@
 #include "D2DWControl.h"
 #include "FilerGridView.h"
 #include "TextBox.h"
+#include "Button.h"
 #include "TextBoxProperty.h"
 #include "JsonSerializer.h"
 
+class CShellFile;
 
+class CRecentFolderGridView :public CFilerBindGridView<std::shared_ptr<CShellFile>>
+{
+public:
+	CRecentFolderGridView(CD2DWControl* pParentControl = nullptr,
+		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp = nullptr);
+	virtual void OnPaint(const PaintEvent& e) override;
+
+
+};
 
 class CFilerView:public CD2DWControl
 {
 public:
 	SHAREDPTR_GETTER(CTextBox, TextBox)
+	SHAREDPTR_GETTER(CButton, RecentButton)
 	SHAREDPTR_GETTER(CFilerGridView, GridView)
+
+	
 
 	CFilerView(CD2DWControl* pParentControl = nullptr, 
 		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp = nullptr,

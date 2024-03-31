@@ -85,13 +85,13 @@ public:
 		j.at("RowFrozenCount").get_to(o.m_frozenRowCount);
 		j.at("ColFrozenCount").get_to(o.m_frozenColumnCount);
 
-		for (auto& colPtr : o.m_allCols) {
-			if (auto p = std::dynamic_pointer_cast<CTaskNameColumn>(colPtr)) {
-				o.m_pNameColumn = p;
-			} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
-				o.m_pHeaderColumn = p;
-			}
-		}
+		//for (auto& colPtr : o.m_allCols) {
+		//	if (auto p = std::dynamic_pointer_cast<CTaskNameColumn>(colPtr)) {
+		//		o.m_pNameColumn = p;
+		//	}/* else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
+		//		o.m_pHeaderColumn = p;
+		//	}*/
+		//}
 	}
 
 };

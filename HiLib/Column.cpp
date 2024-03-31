@@ -76,7 +76,7 @@ void CColumn::SetIsSelected(const bool& bSelected)
 void CColumn::SetSort(const Sorts& sort)
 {
 	if(sort!=Sorts::None){
-		m_pGrid->ResetColumnSort();
+		m_pGrid->ResetSort();
 	}
 	if(m_sort!=sort){
 		m_sort=sort;

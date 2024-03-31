@@ -111,7 +111,7 @@ void CSortCell::OnLButtonClk(const LButtonClkEvent& e)
 	//Get current Sort before all reset 
 	auto sort = m_pColumn->GetSort();
 	//Reset All Sort
-	m_pGrid->ResetColumnSort();
+	m_pGrid->ResetSort();
 	//Sort
 	switch(sort){
 		case Sorts::None:

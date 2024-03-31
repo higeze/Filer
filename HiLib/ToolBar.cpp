@@ -4,8 +4,10 @@
 
 //DesiredSize includes Margin
 //RenderSize doesnt include Margin
-//ActualSize doesnt include Margin
+//RenderSize
 //Arrange includes Margin
+//GetRectInWnd includes Margin
+
 
 CToolBar::CToolBar(CD2DWControl* pParentControl)
 	:CD2DWControl(pParentControl)

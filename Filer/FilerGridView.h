@@ -142,26 +142,26 @@ public:
 		ar("ColFrozenCount", m_frozenColumnCount);
 	}
 
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn, this);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>, this, L"Name");
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>, this, L"Exe");
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
+	//template <class Archive>
+	//void load(Archive& ar)
+	//{
+	//	REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn, this);
+	//	REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>, this, L"Name");
+	//	REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>, this, L"Exe");
+	//	REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileSizeArgsPtr);
+	//	REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>, this, GetFilerGridViewPropPtr()->FileTimeArgsPtr);
 
-		ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
-		for (auto& colPtr : m_allCols) {
-			if (auto p = std::dynamic_pointer_cast<CFileNameColumn<std::shared_ptr<CShellFile>>>(colPtr)) {
-				m_pNameColumn = p;
-			} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
-				m_pHeaderColumn = p;
-			}
-		}
-		ar("RowFrozenCount", m_frozenRowCount);
-		ar("ColFrozenCount", m_frozenColumnCount);
-	}
+	//	ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
+	//	for (auto& colPtr : m_allCols) {
+	//		if (auto p = std::dynamic_pointer_cast<CFileNameColumn<std::shared_ptr<CShellFile>>>(colPtr)) {
+	//			m_pNameColumn = p;
+	//		} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
+	//			m_pHeaderColumn = p;
+	//		}
+	//	}
+	//	ar("RowFrozenCount", m_frozenRowCount);
+	//	ar("ColFrozenCount", m_frozenColumnCount);
+	//}
 
 	friend void to_json(json& j, const CFilerGridView& o)
 	{
@@ -194,13 +194,13 @@ public:
 		j.at("RowFrozenCount").get_to(o.m_frozenRowCount);
 		j.at("ColFrozenCount").get_to(o.m_frozenColumnCount);
 
-		for (auto& colPtr : o.m_allCols) {
-			if (auto p = std::dynamic_pointer_cast<CFileNameColumn<std::shared_ptr<CShellFile>>>(colPtr)) {
-				o.m_pNameColumn = p;
-			} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
-				o.m_pHeaderColumn = p;
-			}
-		}
+		//for (auto& colPtr : o.m_allCols) {
+		//	if (auto p = std::dynamic_pointer_cast<CFileNameColumn<std::shared_ptr<CShellFile>>>(colPtr)) {
+		//		o.m_pNameColumn = p;
+		//	} else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
+		//		o.m_pHeaderColumn = p;
+		//	}
+		//}
 
 	}
 };

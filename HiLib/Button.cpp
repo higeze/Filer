@@ -49,7 +49,8 @@ void CButton::OnMouseLeave(const MouseLeaveEvent& e)
 
 void CButton::OnPaint(const PaintEvent& e)
 {
-	FLOAT radius = GetRectInWnd().Height() * 0.1f;
+	CRectF renderRect = RenderRect();
+	FLOAT radius = renderRect.Height() * 0.1f;
 	SolidFill fill = m_spButtonProperty->NormalFill;
 	SolidLine line = m_spButtonProperty->BorderLine;
 	FormatF format = m_spButtonProperty->Format;
@@ -74,11 +75,11 @@ void CButton::OnPaint(const PaintEvent& e)
 		}
 	}
 
-	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(renderRect, D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
-	GetWndPtr()->GetDirectPtr()->FillSolidRoundedRectangle(fill, GetRectInWnd(), radius, radius);
-	GetWndPtr()->GetDirectPtr()->DrawSolidRoundedRectangle(line, GetRectInWnd(), radius, radius);
-	GetWndPtr()->GetDirectPtr()->DrawTextInRect(format, content, GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRoundedRectangle(fill, renderRect, radius, radius);
+	GetWndPtr()->GetDirectPtr()->DrawSolidRoundedRectangle(line, renderRect, radius, radius);
+	GetWndPtr()->GetDirectPtr()->DrawTextInRect(format, content, renderRect);
 
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
 }

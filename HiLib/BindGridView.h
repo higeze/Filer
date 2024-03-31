@@ -125,17 +125,17 @@ public:
 
 		ItemsSource = ::get(arg<"itemssource"_s>(), args..., default_(reactive_vector_ptr<T>()));
 
-		m_pHeaderColumn = ::get(arg<"hdrcol"_s>(), args..., default_(nullptr));
-		if (m_pHeaderColumn) {
-			m_pHeaderColumn->SetSheetPtr(this);
-			PushColumn(m_pHeaderColumn);
-		}
+		//m_pHeaderColumn = ::get(arg<"hdrcol"_s>(), args..., default_(nullptr));
+		//if (m_pHeaderColumn) {
+		//	m_pHeaderColumn->SetSheetPtr(this);
+		//	PushColumn(m_pHeaderColumn);
+		//}
 
-		m_pNameColumn = ::get(arg<"namecol"_s>(), args..., default_(nullptr));
-		if (m_pNameColumn) {
-			m_pNameColumn->SetSheetPtr(this);
-			PushColumn(m_pNameColumn);
-		}
+		//m_pNameColumn = ::get(arg<"namecol"_s>(), args..., default_(nullptr));
+		//if (m_pNameColumn) {
+		//	m_pNameColumn->SetSheetPtr(this);
+		//	PushColumn(m_pNameColumn);
+		//}
 
 		//m_pHeaderRow = ::get(arg<"hdrrow"_s>(), args..., default_(nullptr));
 		//if (m_pHeaderRow){
@@ -143,11 +143,11 @@ public:
 		//	PushRow(m_pHeaderRow);
 		//}
 
-		m_pNameHeaderRow = ::get(arg<"namerow"_s>(), args..., default_(nullptr));
-		if (m_pNameHeaderRow) {
-			m_pNameHeaderRow->SetSheetPtr(this);
-			PushRow(m_pNameHeaderRow);
-		}
+		//m_pNameHeaderRow = ::get(arg<"namerow"_s>(), args..., default_(nullptr));
+		//if (m_pNameHeaderRow) {
+		//	m_pNameHeaderRow->SetSheetPtr(this);
+		//	PushRow(m_pNameHeaderRow);
+		//}
 
 		m_pFilterRow = ::get(arg<"fltrow"_s>(), args..., default_(nullptr));
 		if (m_pFilterRow) {

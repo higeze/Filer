@@ -138,10 +138,10 @@ void CCursorer::OnLButtonDown(CGridView* pSheet, const LButtonDownEvent& e)
 	}
 
 	//Focus, Select
-	if(cell->GetRowPtr()==pSheet->GetNameHeaderRowPtr().get() && cell->GetColumnPtr()==pSheet->GetHeaderColumnPtr().get()){
-		pSheet->SelectAll();//TODO Make RowColumnHeaderCell
-	}
-	else {
+	//if(cell->GetRowPtr()==pSheet->GetNameHeaderRowPtr().get() && cell->GetColumnPtr()==pSheet->GetHeaderColumnPtr().get()){
+	//	pSheet->SelectAll();//TODO Make RowColumnHeaderCell
+	//}
+	//else {
 		if (e.Flags & MK_CONTROL && e.Flags & MK_SHIFT) {
 			return OnCursorCtrlShift(cell);
 		}else if (e.Flags & MK_CONTROL) {
@@ -156,7 +156,7 @@ void CCursorer::OnLButtonDown(CGridView* pSheet, const LButtonDownEvent& e)
 				return OnCursor(cell);
 			}
 		}
-	}
+	//}
 }
 
 void CCursorer::OnLButtonUp(CGridView* pSheet, const LButtonUpEvent& e)

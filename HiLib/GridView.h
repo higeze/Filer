@@ -67,10 +67,6 @@ class IMouseObserver;
 struct SheetStateMachine;
 class CGridView;
 
-class CVScroll;
-class CHScroll;
-
-
 struct Indexes
 {
 	struct RowIdxTag {};
@@ -145,8 +141,6 @@ public:
 	std::shared_ptr<ICeller> m_spCeller; //Celler
 	std::shared_ptr<CCursorer> m_spCursorer; // Cursor
 
-
-
 	std::set<Updates> m_setUpdate; // Set posted update
 
 	//cell_container m_allCells;
@@ -166,8 +160,8 @@ public:
 
 	std::shared_ptr<GridViewProperty> m_spSheetProperty; // SheetProperty
 
-	std::shared_ptr<CColumn> m_pHeaderColumn; // Header column
-	std::shared_ptr<CColumn> m_pNameColumn;
+	//std::shared_ptr<CColumn> m_pHeaderColumn; // Header column
+	//std::shared_ptr<CColumn> m_pNameColumn;
 	//std::shared_ptr<CRow> m_pHeaderRow; // Header row
 	std::shared_ptr<CRow> m_pNameHeaderRow; /**< Name Header row */
 	std::shared_ptr<CRow> m_pFilterRow; /**< Filter row */
@@ -209,10 +203,10 @@ public:
 	void DelayUpdate();
 
 
-public:
 	/***********/
 	/* Default */
 	/***********/
+public:
 	CGridView(
 		CD2DWControl* pParentControl,
 		const std::shared_ptr<GridViewProperty>& spGridViewProp);
@@ -222,6 +216,7 @@ public:
 	/**********/
 	/* Update */
 	/**********/
+protected:
 	//virtual bool HasSheetCell(){ return false; }
 	virtual bool IsVirtualPage() { return false; }
 	virtual FLOAT UpdateHeadersRow(FLOAT top);
@@ -230,13 +225,17 @@ public:
 	virtual void UpdateColumn();
 	virtual void UpdateScrolls();
 	virtual void Invalidate();
+	virtual void UpdateFilter();
+	virtual void UpdateSort();
 	virtual void UpdateAll();
+public:
 	virtual void PostUpdate(Updates type);
 	virtual void SubmitUpdate();
 
 	/********/
 	/* Cell */
 	/********/
+public:
 	virtual std::shared_ptr<CCell> Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn);
 	virtual std::shared_ptr<CCell> Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow);
 	virtual std::shared_ptr<CCell> Cell(CRow* pRow, CColumn* pColumn) = 0;
@@ -245,6 +244,7 @@ public:
 	/*****************/
 	/* Getter Setter */
 	/*****************/
+public:
 	std::shared_ptr<GridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	std::shared_ptr<CCellTextBox> GetEditPtr() { return m_pEdit; }
 	void SetEditPtr(std::shared_ptr<CCellTextBox> pEdit) { m_pEdit = pEdit; }
@@ -254,16 +254,32 @@ public:
 	virtual std::shared_ptr<HeaderProperty> GetHeaderProperty(){return m_spSheetProperty->HeaderPropPtr;}
 	virtual std::shared_ptr<CellProperty> GetFilterProperty(){return m_spSheetProperty->CellPropPtr;}
 	virtual std::shared_ptr<CellProperty> GetCellProperty(){return m_spSheetProperty->CellPropPtr;}
-	virtual std::shared_ptr<CColumn> GetHeaderColumnPtr()const{return m_pHeaderColumn;}
-	virtual void SetHeaderColumnPtr(std::shared_ptr<CColumn> column){m_pHeaderColumn=column;}
-	virtual std::shared_ptr<CColumn> GetNameColumnPtr() { return m_pNameColumn; }
-	virtual void SetNameColumnPtr(const std::shared_ptr<CColumn>& spCol) { m_pNameColumn = spCol; }
+	//virtual std::shared_ptr<CColumn> GetHeaderColumnPtr()const{return m_pHeaderColumn;}
+	//virtual void SetHeaderColumnPtr(std::shared_ptr<CColumn> column){m_pHeaderColumn=column;}
+	//virtual std::shared_ptr<CColumn> GetNameColumnPtr() { return m_pNameColumn; }
+	//virtual void SetNameColumnPtr(const std::shared_ptr<CColumn>& spCol) { m_pNameColumn = spCol; }
 	virtual std::shared_ptr<CRow> GetNameHeaderRowPtr()const { return m_pNameHeaderRow; }
 	virtual void SetNameHeaderRowPtr(std::shared_ptr<CRow> row) { m_pNameHeaderRow = row; }
 	virtual std::shared_ptr<CRow> GetFilterRowPtr()const { return m_pFilterRow; }
 	virtual void SetFilterRowPtr(std::shared_ptr<CRow> row) { m_pFilterRow = row; }
 	virtual bool GetIsSelected()const{return m_bSelected;};
 	virtual void SetIsSelected(const bool& bSelected){m_bSelected=bSelected;};
+	virtual CPointF GetScrollPos()const;
+	virtual void SetScrollPos(const CPoint& ptScroll);
+	virtual FLOAT GetVerticalScrollPos()const;
+	virtual FLOAT GetHorizontalScrollPos()const;
+
+	/**********/
+	/* Action */
+	/**********/
+public:
+	virtual void ResetSort();
+	virtual void Filter();
+	virtual void ClearFilter();
+	virtual void Sort(CColumn* pCol, Sorts sort, bool postUpdate = true);
+	virtual void Filter(int colDisp, std::function<bool(const std::shared_ptr<CCell>&)> predicate);
+	virtual void ResetFilter();
+
 
 	//Function
 	void SetAllRowMeasureValid(bool valid);
@@ -286,10 +302,6 @@ public:
 	virtual void SizeChanged();
 	virtual void Scroll();
 
-	//Sort
-	virtual void ResetColumnSort();
-
-	virtual CPointF GetScrollPos()const;
 	virtual bool Empty()const;
 	virtual bool Visible()const;
 
@@ -340,12 +352,13 @@ public:
 	virtual CRectF GetCellsRect();
 	virtual CRectF GetPaintRect();
 
+
+
 	/******************/
 	/* Window Message */
 	/******************/
 public:
 
-	virtual void OnFilter();
 	virtual void OnDelayUpdate();
 
 	virtual void OnCommandEditHeader(const CommandEvent& e);
@@ -402,8 +415,6 @@ public:
 	std::shared_ptr<CCell> TabPrev(const std::shared_ptr<CCell>& spCurCell);
 	void BeginEdit(CCell* pCell);
 	void EndEdit();
-	virtual void ClearFilter();
-	virtual void FilterAll();
 
 	virtual void EnsureVisibleCell(const std::shared_ptr<CCell>& pCell);
 	void Jump(const std::shared_ptr<CCell>& spCell);
@@ -417,21 +428,12 @@ public:
 	void FindNext(const std::wstring& findWord, bool matchCase, bool matchWholeWord);
 	void FindPrev(const std::wstring& findWord, bool matchCase, bool matchWholeWord);
 
-	virtual void SetScrollPos(const CPoint& ptScroll);
-
-	virtual FLOAT GetVerticalScrollPos()const;
-	virtual FLOAT GetHorizontalScrollPos()const;
 	virtual CRectF GetPageRect();
 	std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
-	
-
-	virtual void SortAllInSubmitUpdate();
-
-
-
 	//virtual void ColumnErased(CColumnEventArgs& e);
 	virtual CColumn* GetParentColumnPtr(CCell* pCell);	
 
+	virtual void Measure(const CSizeF& sz) override;
 	virtual void Arrange(const CRectF& rc) override;
 
 
@@ -444,9 +446,6 @@ public:
 	virtual void UnhotAll();
 	virtual bool IsFocusedCell(const CCell* pCell)const;
 	virtual bool IsDoubleFocusedCell(const CCell* pCell)const;
-	virtual void Sort(CColumn* pCol, Sorts sort, bool postUpdate = true);
-	virtual void Filter(int colDisp, std::function<bool(const std::shared_ptr<CCell>&)> predicate);
-	virtual void ResetFilter();
 
 
 /****************/

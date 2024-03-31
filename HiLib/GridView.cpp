@@ -247,54 +247,7 @@ void CGridView::UpdateScrolls()
 
 }
 
-
-/********/
-/* Cell */
-/********/
-
-std::shared_ptr<CCell> CGridView::Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn) 
-{
-	return Cell(spRow.get(), spColumn.get());
-}
-std::shared_ptr<CCell> CGridView::Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow) 
-{
-	return Cell(spRow, spColumn);
-}
-
-std::shared_ptr<CCell> CGridView::Cell(const CPointF& pt)
-{
-	auto rowPtr = Coordinate2Pointer<RowTag>(pt.y);
-	auto colPtr = Coordinate2Pointer<ColTag>(pt.x);
-	if (rowPtr.get() != nullptr && colPtr.get() != nullptr){
-		return Cell(rowPtr, colPtr);
-	}
-	else {
-		return nullptr;
-	}
-}
-
-void CGridView::SortAllInSubmitUpdate()
-{
-	for (const auto& ptr : m_visCols) {
-		if (ptr->GetSort() != Sorts::None) {
-			this->Sort(ptr.get(), ptr->GetSort(), false);
-		}
-	}
-}
-
-void CGridView::ClearFilter()
-{
-	//Reset Filter
-	for(auto iter=std::next(m_allRows.begin(), m_frozenRowCount), end=m_allRows.end(); iter!=end; ++iter){
-		(*iter)->SetIsVisible(true);
-	};
-	//Clear Filter
-	for(auto ptr : m_allCols ){
-		Cell(GetFilterRowPtr(), ptr)->SetString(L"");	
-	}
-}
-
-void CGridView::FilterAll()
+void CGridView::UpdateFilter()
 {
 	if (GetFilterRowPtr()) {
 		//Reset Filter
@@ -326,6 +279,16 @@ void CGridView::FilterAll()
 	}
 }
 
+void CGridView::UpdateSort()
+{
+	for (const auto& ptr : m_visCols) {
+		if (ptr->GetSort() != Sorts::None) {
+			this->Sort(ptr.get(), ptr->GetSort(), false);
+		}
+	}
+}
+
+
 void CGridView::Invalidate()
 {
 	GetWndPtr()->InvalidateRect(NULL,FALSE);
@@ -341,6 +304,80 @@ void CGridView::DelayUpdate()
 		});
 	}, std::chrono::milliseconds(50));
 }
+
+
+void CGridView::PostUpdate(Updates type)
+{
+	switch (type) {
+	case Updates::All:
+		m_setUpdate.insert(Updates::RowVisible);
+		m_setUpdate.insert(Updates::Row);
+		m_setUpdate.insert(Updates::ColumnVisible);
+		m_setUpdate.insert(Updates::Column);
+		m_setUpdate.insert(Updates::Scrolls);
+		m_setUpdate.insert(Updates::Sort);
+		m_setUpdate.insert(Updates::Filter);
+		m_setUpdate.insert(Updates::Invalidate);
+		break;
+	case Updates::EnsureVisibleFocusedCell:
+		////0506m_setUpdate.insert(Updates::RowVisible);
+		m_setUpdate.insert(Updates::Row);
+		////0506m_setUpdate.insert(Updates::ColumnVisible);
+		m_setUpdate.insert(Updates::Column);
+		m_setUpdate.insert(Updates::Scrolls);
+		////0506m_setUpdate.insert(Updates::Sort);
+		m_setUpdate.insert(type);
+		m_setUpdate.insert(Updates::Invalidate);
+		break;
+	case Updates::Sort:
+		////0506m_setUpdate.insert(Updates::RowVisible);
+		m_setUpdate.insert(Updates::Row);
+		m_setUpdate.insert(type);
+		m_setUpdate.insert(Updates::Invalidate);
+		PostUpdate(Updates::EnsureVisibleFocusedCell);
+	case Updates::Filter:
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+		m_setUpdate.insert(type);
+	case Updates::RowVisible:
+		m_setUpdate.insert(Updates::Sort);
+	default:
+		m_setUpdate.insert(type);
+		break;
+	}
+
+}
+
+
+
+/********/
+/* Cell */
+/********/
+
+std::shared_ptr<CCell> CGridView::Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn) 
+{
+	return Cell(spRow.get(), spColumn.get());
+}
+std::shared_ptr<CCell> CGridView::Cell(const std::shared_ptr<CColumn>& spColumn, const std::shared_ptr<CRow>& spRow) 
+{
+	return Cell(spRow, spColumn);
+}
+
+std::shared_ptr<CCell> CGridView::Cell(const CPointF& pt)
+{
+	auto rowPtr = Coordinate2Pointer<RowTag>(pt.y);
+	auto colPtr = Coordinate2Pointer<ColTag>(pt.x);
+	if (rowPtr.get() != nullptr && colPtr.get() != nullptr){
+		return Cell(rowPtr, colPtr);
+	}
+	else {
+		return nullptr;
+	}
+}
+
+/*****************/
+/* Getter Setter */
+/*****************/
 
 CPointF CGridView::GetScrollPos()const
 {
@@ -362,6 +399,97 @@ FLOAT CGridView::GetHorizontalScrollPos()const
 {
 	return m_pHScroll->GetScrollPos();
 }
+
+/**********/
+/* Action */
+/**********/
+
+void CGridView::Filter()
+{
+	UpdateFilter();
+	SubmitUpdate();
+}
+
+void CGridView::ClearFilter()
+{
+	//Reset Filter
+	for(auto iter=std::next(m_allRows.begin(), m_frozenRowCount), end=m_allRows.end(); iter!=end; ++iter){
+		(*iter)->SetIsVisible(true);
+	};
+	//Clear Filter
+	for(auto ptr : m_allCols ){
+		Cell(GetFilterRowPtr(), ptr)->SetString(L"");	
+	}
+}
+
+void CGridView::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
+{
+	//Sort
+	switch(sort){
+	case Sorts::Down:
+		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
+			[pCol, this](const auto& lhs, const auto& rhs)->bool{
+				auto cmp = _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str());
+				if (cmp > 0) {
+					return true;
+				} else if (cmp < 0) {
+					return false;
+				} else {
+					if (lhs->GetIndex<AllTag>() == rhs->GetIndex<AllTag>()) {
+						::OutputDebugString(std::format(L"{}=={}", lhs->GetIndex<AllTag>(), rhs->GetIndex<AllTag>()).c_str());
+					}
+					return lhs->GetIndex<AllTag>() > rhs->GetIndex<AllTag>();
+				}
+			});
+
+		break;
+	case Sorts::Up:
+		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
+			[pCol, this](const auto& lhs, const auto& rhs)->bool {
+				auto cmp = _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str());
+				if (cmp < 0) {
+					return true;
+				} else if (cmp == 0) {
+					return lhs->GetIndex<AllTag>() < rhs->GetIndex<AllTag>();
+				} else {
+					return false;
+				}
+			});
+		break;
+	default:
+		break;
+	}
+}
+
+void CGridView::ResetSort()
+{
+	//Reset Sort Mark
+	for(auto& ptr : m_allCols){
+		ptr->SetSort(Sorts::None);
+	}
+}
+
+
+void CGridView::Filter(int colDisp,std::function<bool(const std::shared_ptr<CCell>&)> predicate)
+{
+	for(auto rowIter= m_allRows.begin() + m_frozenRowCount;rowIter!=m_allRows.end(); ++rowIter){
+		if(predicate(Cell(*rowIter, m_allCols[colDisp]))){
+			(*rowIter)->SetIsVisible(true);
+		}else{
+			(*rowIter)->SetIsVisible(false);		
+		}
+	}
+}
+
+void CGridView::ResetFilter()
+{
+	auto setVisible = [](const auto& ptr) {ptr->SetIsVisible(true); };
+	std::for_each(m_allRows.begin(), m_allRows.end(), setVisible);
+	std::for_each(m_allCols.begin(), m_allCols.end(), setVisible);
+}
+
+
+
 
 
 void CGridView::OnCommandEditHeader(const CommandEvent& e)
@@ -458,7 +586,7 @@ void CGridView::OnCommandCopy(const CommandEvent& e)
 
 void CGridView::UpdateAll()
 {
-	FilterAll();
+	UpdateFilter();
 	UpdateRowVisibleDictionary();//TODO today
 	UpdateColumnVisibleDictionary();
 	UpdateColumn();
@@ -631,13 +759,13 @@ void CGridView::SubmitUpdate()
 			case Updates::Sort:
 			{
 				LOG_SCOPED_TIMER_THIS_1("Updates::Sort");
-				SortAllInSubmitUpdate();
+				UpdateSort();
 				break;
 			}
 			case Updates::Filter:
 			{
 				LOG_SCOPED_TIMER_THIS_1("Updates::Filter");
-					FilterAll();
+					UpdateFilter();
 				break;
 			}
 			case Updates::RowVisible:
@@ -1518,12 +1646,6 @@ void CGridView::EndEdit()
 /**************/
 /* UI Message */
 /**************/
-void CGridView::OnFilter()
-{
-	FilterAll();
-	SubmitUpdate();
-}
-
 void CGridView::OnDelayUpdate()
 {
 	LOG_SCOPED_TIMER_THIS_1("OnDelayUpdate Total");
@@ -1549,6 +1671,11 @@ void CGridView::OnCreate(const CreateEvt& e)
 	CD2DWControl::OnCreate(e);
 	UpdateAll();
 	SubmitUpdate();
+}
+
+void CGridView::Measure(const CSizeF& sz)
+{
+	m_size = MeasureSize();
 }
 
 void CGridView::Arrange(const CRectF& rc)
@@ -2015,48 +2142,6 @@ void CGridView::Scroll()
 	PostUpdate(Updates::Invalidate);
 }
 
-void CGridView::PostUpdate(Updates type)
-{
-	switch (type) {
-	case Updates::All:
-		m_setUpdate.insert(Updates::RowVisible);
-		m_setUpdate.insert(Updates::Row);
-		m_setUpdate.insert(Updates::ColumnVisible);
-		m_setUpdate.insert(Updates::Column);
-		m_setUpdate.insert(Updates::Scrolls);
-		m_setUpdate.insert(Updates::Sort);
-		m_setUpdate.insert(Updates::Filter);
-		m_setUpdate.insert(Updates::Invalidate);
-		break;
-	case Updates::EnsureVisibleFocusedCell:
-		////0506m_setUpdate.insert(Updates::RowVisible);
-		m_setUpdate.insert(Updates::Row);
-		////0506m_setUpdate.insert(Updates::ColumnVisible);
-		m_setUpdate.insert(Updates::Column);
-		m_setUpdate.insert(Updates::Scrolls);
-		////0506m_setUpdate.insert(Updates::Sort);
-		m_setUpdate.insert(type);
-		m_setUpdate.insert(Updates::Invalidate);
-		break;
-	case Updates::Sort:
-		////0506m_setUpdate.insert(Updates::RowVisible);
-		m_setUpdate.insert(Updates::Row);
-		m_setUpdate.insert(type);
-		m_setUpdate.insert(Updates::Invalidate);
-		PostUpdate(Updates::EnsureVisibleFocusedCell);
-	case Updates::Filter:
-		PostUpdate(Updates::Scrolls);
-		PostUpdate(Updates::Invalidate);
-		m_setUpdate.insert(type);
-	case Updates::RowVisible:
-		m_setUpdate.insert(Updates::Sort);
-	default:
-		m_setUpdate.insert(type);
-		break;
-	}
-
-}
-
 std::wstring CGridView::GetSheetString()
 {
 	std::wstring str;
@@ -2109,70 +2194,7 @@ void CGridView::UpdateColumnPaintDictionary()
 		rcClip.right);
 }
 
-void CGridView::ResetColumnSort()
-{
-	//Reset Sort Mark
-	for(auto& ptr : m_allCols){
-		ptr->SetSort(Sorts::None);
-	}
-}
 
-void CGridView::Sort(CColumn* pCol, Sorts sort, bool postUpdate)
-{
-	//Sort
-	switch(sort){
-	case Sorts::Down:
-		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
-			[pCol, this](const auto& lhs, const auto& rhs)->bool{
-				auto cmp = _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str());
-				if (cmp > 0) {
-					return true;
-				} else if (cmp < 0) {
-					return false;
-				} else {
-					if (lhs->GetIndex<AllTag>() == rhs->GetIndex<AllTag>()) {
-						::OutputDebugString(std::format(L"{}=={}", lhs->GetIndex<AllTag>(), rhs->GetIndex<AllTag>()).c_str());
-					}
-					return lhs->GetIndex<AllTag>() > rhs->GetIndex<AllTag>();
-				}
-			});
-
-		break;
-	case Sorts::Up:
-		m_visRows.idx_stable_sort(m_visRows.begin() + m_frozenRowCount, m_visRows.end(),
-			[pCol, this](const auto& lhs, const auto& rhs)->bool {
-				auto cmp = _tcsicmp(Cell(lhs.get(), pCol)->GetSortString().c_str(), Cell(rhs.get(), pCol)->GetSortString().c_str());
-				if (cmp < 0) {
-					return true;
-				} else if (cmp == 0) {
-					return lhs->GetIndex<AllTag>() < rhs->GetIndex<AllTag>();
-				} else {
-					return false;
-				}
-			});
-		break;
-	default:
-		break;
-	}
-}
-
-void CGridView::Filter(int colDisp,std::function<bool(const std::shared_ptr<CCell>&)> predicate)
-{
-	for(auto rowIter= m_allRows.begin() + m_frozenRowCount;rowIter!=m_allRows.end(); ++rowIter){
-		if(predicate(Cell(*rowIter, m_allCols[colDisp]))){
-			(*rowIter)->SetIsVisible(true);
-		}else{
-			(*rowIter)->SetIsVisible(false);		
-		}
-	}
-}
-
-void CGridView::ResetFilter()
-{
-	auto setVisible = [](const auto& ptr) {ptr->SetIsVisible(true); };
-	std::for_each(m_allRows.begin(), m_allRows.end(), setVisible);
-	std::for_each(m_allCols.begin(), m_allCols.end(), setVisible);
-}
 
 void CGridView::EraseColumn(const std::shared_ptr<CColumn>& spCol, bool notify)
 {
@@ -2272,7 +2294,7 @@ bool CGridView::Empty()const
 }
 bool CGridView::Visible()const
 {
-	return (!m_visRows.empty()) && (!m_visCols.empty()) && GetRectInWnd().Width() > 0 && GetRectInWnd().Height() > 0;
+	return (!m_visRows.empty()) && (!m_visCols.empty()) /*&& GetRectInWnd().Width() > 0 && GetRectInWnd().Height() > 0*/;
 }
 
 CPointF CGridView::GetFrozenPoint()

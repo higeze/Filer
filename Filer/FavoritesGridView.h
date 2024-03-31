@@ -31,7 +31,7 @@ public:
 	
 	void OnCellLButtonDblClk(const CellEventArgs& e);
 	void OpenFavorites();
-	void FilterAll() override {/*Do nothing*/}
+	void UpdateFilter() override {/*Do nothing*/}
 	void Reload();
 
 	virtual void MoveRow(int indexTo, typename RowTag::SharedPtr spFrom) override;
