@@ -19,10 +19,22 @@ private:
 	mutable sigslot::connection m_conDelayUpdateAction;
 
 public:
+	virtual const FormatF& GetFormat() const override
+	{
+		static FormatF value(
+			CFontF(L"Meiryo UI", CDirect2DWrite::Points2Dips(9)),
+			CColorF(0.0f, 0.0f, 0.0f, 1.0f),
+			CAlignmentF(DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_TRAILING)); return value;
+	}
 
+	virtual const FileSizeArgs& GetFileSizeArgs() const
+	{
+		static const FileSizeArgs value; return value;
+	}
 
-	CFileSizeCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet, pRow, pColumn, spProperty)
+public:
+	CFileSizeCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+		:CTextCell(pSheet, pRow, pColumn)
 	{
 	}
 
@@ -48,7 +60,7 @@ public:
 				break;
 		}
 		if (str.empty()) { str = _T("a"); }
-		return pDirect->CalcTextSize(*(m_spCellProperty->Format), str);
+		return pDirect->CalcTextSize(GetFormat(), str);
 		//return rcContent.Size();
 	}
 
@@ -70,7 +82,7 @@ public:
 					sp->GetGridPtr()->DelayUpdate();
 				}
 			};
-			auto size = spFile->GetSize(static_cast<const CFileSizeColumn<T>*>(m_pColumn)->GetSizeArgsPtr(), changed);
+			auto size = spFile->GetSize(GetFileSizeArgs(), changed);
 			switch (size.second) {
 				case FileSizeStatus::None:
 					return L"none";
@@ -104,7 +116,7 @@ public:
 					sp->GetGridPtr()->DelayUpdate();
 				}
 			};
-			auto size = spFile->GetSize(static_cast<const CFileSizeColumn<T>*>(m_pColumn)->GetSizeArgsPtr(), changed);
+			auto size = spFile->GetSize(GetFileSizeArgs(), changed);
 			switch (size.second) {
 				case FileSizeStatus::None:
 					return L"none";

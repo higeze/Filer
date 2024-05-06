@@ -5,8 +5,8 @@
 #include "D2DWWindow.h"
 #pragma comment(lib, "pdh.lib")
 
-CFilerWndStatusBar::CFilerWndStatusBar(CD2DWControl* pParentControl, const std::shared_ptr<StatusBarProperty>& spStatusBarProp)
-	:CStatusBar(pParentControl, spStatusBarProp), 
+CFilerWndStatusBar::CFilerWndStatusBar(CD2DWControl* pParentControl)
+	:CStatusBar(pParentControl), 
 	m_initialized(false),
 	m_hQuery(nullptr),
 	m_hCounterCPU(nullptr),
@@ -86,7 +86,7 @@ void CFilerWndStatusBar::Update()
 				m_handleCount = -1;//Error
 			}
 		}
-		GetWndPtr()->InvalidateRect(GetWndPtr()->GetDirectPtr()->Dips2Pixels(this->GetRectInWnd()), FALSE);
+		GetWndPtr()->InvalidateRect(NULL, FALSE);
 	}
 	catch (...) {
 		throw std::exception(FILE_LINE_FUNC);
@@ -97,17 +97,17 @@ void CFilerWndStatusBar::OnPaint(const PaintEvent& e)
 {
 	std::lock_guard<std::mutex> lock(m_mtx);
 	auto rcPaint = GetRectInWnd();
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->BackgroundFill, rcPaint);
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), rcPaint);
 
 	GetWndPtr()->GetDirectPtr()->DrawTextLayout(
-		m_spStatusBarProp->Format,
+		GetFormat(),
 		fmt::format(
 		L"CPU:{:.1f}%, PrivateMemory:{:.1f}MB, HandleCount:{}, ThreadCount:{}\t{}",
 		m_cpu,
 		m_mem / 1024.f / 1024.f,
 		m_handleCount,
 		m_threadCount,
-		m_text),
+		*Text),
 		rcPaint);
 }
 

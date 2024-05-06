@@ -310,6 +310,7 @@
     <ClInclude Include="..\HiLib\CheckBoxState.h" />
     <ClInclude Include="..\HiLib\CheckBoxType.h" />
     <ClInclude Include="..\HiLib\ColorCell.h" />
+    <ClInclude Include="..\HiLib\ColoredTextBox.h" />
     <ClInclude Include="..\HiLib\Column.h" />
     <ClInclude Include="..\HiLib\Console.h" />
     <ClInclude Include="..\HiLib\CShellExtension.h" />
@@ -317,17 +318,21 @@
     <ClInclude Include="..\HiLib\D2DFileIconDrawer.h" />
     <ClInclude Include="..\HiLib\D2DImage.h" />
     <ClInclude Include="..\HiLib\Date.h" />
+    <ClInclude Include="..\HiLib\dependency_property.h" />
     <ClInclude Include="..\HiLib\DriveFolder.h" />
     <ClInclude Include="..\HiLib\FileSizeArgs.h" />
     <ClInclude Include="..\HiLib\FileStatus.h" />
     <ClInclude Include="..\HiLib\FileTimeArgs.h" />
     <ClInclude Include="..\HiLib\FPDFFormHandle.h" />
+    <ClInclude Include="..\HiLib\Grid.h" />
     <ClInclude Include="..\HiLib\KeyTraceEventSink.h" />
     <ClInclude Include="..\HiLib\KnownFolder.h" />
     <ClInclude Include="..\HiLib\KnownFolderManager.h" />
     <ClInclude Include="..\HiLib\MyGdiplusHelper.h" />
     <ClInclude Include="..\HiLib\NetworkMessanger.h" />
     <ClInclude Include="..\HiLib\notify_container_changed.h" />
+    <ClInclude Include="..\HiLib\HeaderCell.h" />
+    <ClInclude Include="..\HiLib\OutputTabControl.h" />
     <ClInclude Include="..\HiLib\PDFBitmapDrawer.h" />
     <ClInclude Include="..\HiLib\D2DThumbnailDrawer.h" />
     <ClInclude Include="..\HiLib\D2DWDialog.h" />
@@ -415,6 +420,7 @@
     <ClInclude Include="..\HiLib\PdfView.h" />
     <ClInclude Include="..\HiLib\PDFViewProperty.h" />
     <ClInclude Include="..\HiLib\PdfViewStateMachine.h" />
+    <ClInclude Include="..\HiLib\Performance.h" />
     <ClInclude Include="..\HiLib\PreviewControl.h" />
     <ClInclude Include="..\HiLib\PreviewControlProperty.h" />
     <ClInclude Include="..\HiLib\PreviewHandlerFrame.h" />
@@ -433,7 +439,7 @@
     <ClInclude Include="..\HiLib\ShellFileFactory.h" />
     <ClInclude Include="..\HiLib\ShellFolder.h" />
     <ClInclude Include="..\HiLib\ShellZipFolder.h" />
-    <ClInclude Include="..\HiLib\SortCell.h" />
+    <ClInclude Include="..\HiLib\HeaderSortCell.h" />
     <ClInclude Include="..\HiLib\MapColumn.h" />
     <ClInclude Include="..\HiLib\RowIndexCell.h" />
     <ClInclude Include="..\HiLib\RowIndexColumn.h" />
@@ -455,6 +461,7 @@
     <ClInclude Include="..\HiLib\ShellFunction.h" />
     <ClInclude Include="..\HiLib\ShowHideMenuItem.h" />
     <ClInclude Include="..\HiLib\SingletonMalloc.h" />
+    <ClInclude Include="..\HiLib\SplitContainer.h" />
     <ClInclude Include="..\HiLIb\Splitter.h" />
     <ClInclude Include="..\HiLib\StatusBar.h" />
     <ClInclude Include="..\HiLib\StatusBarProperty.h" />
@@ -509,6 +516,7 @@
     <ClInclude Include="PDFTabData.h" />
     <ClInclude Include="PreviewTabData.h" />
     <ClInclude Include="TabTemplate.h" />
+    <ClInclude Include="TaskCheckBoxCell.h" />
     <ClInclude Include="TaskCheckBoxColumn.h" />
     <ClInclude Include="DriveSizeCell.h" />
     <ClInclude Include="ExeExtensionProperty.h" />
@@ -561,6 +569,7 @@
     <ClInclude Include="TaskDueDateColumn.h" />
     <ClInclude Include="TaskMemoCell.h" />
     <ClInclude Include="TaskMemoColumn.h" />
+    <ClInclude Include="TaskNameCell.h" />
     <ClInclude Include="TaskNameColumn.h" />
     <ClInclude Include="TaskRow.h" />
     <ClInclude Include="TextTabData.h" />
@@ -591,6 +600,7 @@
     <ClCompile Include="..\HiLib\CheckBoxFilterCell.cpp" />
     <ClCompile Include="..\HiLib\CheckBoxState.cpp" />
     <ClCompile Include="..\HiLib\ColorCell.cpp" />
+    <ClCompile Include="..\HiLib\ColoredTextBox.cpp" />
     <ClCompile Include="..\HiLib\Column.cpp" />
     <ClCompile Include="..\HiLib\Console.cpp" />
     <ClCompile Include="..\HiLib\CShellExtension.cpp" />
@@ -599,11 +609,13 @@
     <ClCompile Include="..\HiLib\D2DImage.cpp" />
     <ClCompile Include="..\HiLib\DriveFolder.cpp" />
     <ClCompile Include="..\HiLib\FPDFFormHandle.cpp" />
+    <ClCompile Include="..\HiLib\Grid.cpp" />
     <ClCompile Include="..\HiLib\KeyTraceEventSink.cpp" />
     <ClCompile Include="..\HiLib\KnownFolder.cpp" />
     <ClCompile Include="..\HiLib\MyClipboard.cpp" />
     <ClCompile Include="..\HiLib\MyGdiplusHelper.cpp" />
     <ClCompile Include="..\HiLib\NetworkMessanger.cpp" />
+    <ClCompile Include="..\HiLib\HeaderCell.cpp" />
     <ClCompile Include="..\HiLib\PDFBitmapDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DThumbnailDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DWDialog.cpp" />
@@ -646,13 +658,14 @@
     <ClCompile Include="..\HiLib\PDFPage.cpp" />
     <ClCompile Include="..\HiLib\PdfView.cpp" />
     <ClCompile Include="..\HiLib\PdfViewStateMachine.cpp" />
+    <ClCompile Include="..\HiLib\Performance.cpp" />
     <ClCompile Include="..\HiLib\PreviewControl.cpp" />
     <ClCompile Include="..\HiLib\PreviewWnd.cpp" />
     <ClCompile Include="..\HiLib\ShellFile.cpp" />
     <ClCompile Include="..\HiLib\ShellFileFactory.cpp" />
     <ClCompile Include="..\HiLib\ShellFolder.cpp" />
     <ClCompile Include="..\HiLib\ShellZipFolder.cpp" />
-    <ClCompile Include="..\HiLib\SortCell.cpp" />
+    <ClCompile Include="..\HiLib\HeaderSortCell.cpp" />
     <ClCompile Include="..\HiLib\MapColumn.cpp" />
     <ClCompile Include="..\HiLib\RowIndexCell.cpp" />
     <ClCompile Include="..\HiLib\RowIndexColumn.cpp" />
@@ -668,6 +681,7 @@
     <ClCompile Include="..\HiLib\ShellFunction.cpp" />
     <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp" />
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp" />
+    <ClCompile Include="..\HiLib\SplitContainer.cpp" />
     <ClCompile Include="..\HiLIb\Splitter.cpp" />
     <ClCompile Include="..\HiLib\StatusBar.cpp" />
     <ClCompile Include="..\HiLib\TabControl.cpp" />
@@ -703,6 +717,10 @@
     <ClCompile Include="FolderHistory.cpp" />
     <ClCompile Include="ImageTabData.cpp" />
     <ClCompile Include="PDFTabData.cpp" />
+    <ClCompile Include="TaskCheckBoxCell.cpp" />
+    <ClCompile Include="TaskDueDateCell.cpp" />
+    <ClCompile Include="TaskMemoCell.cpp" />
+    <ClCompile Include="TaskNameCell.cpp" />
     <ClCompile Include="TextTabData.cpp" />
     <ClCompile Include="ToDoDoc.cpp" />
     <ClCompile Include="DriveSizeCell.cpp" />

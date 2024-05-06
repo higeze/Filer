@@ -11,12 +11,11 @@
 /* Constructor/Destructor */
 /**************************/
 
-CPreviewControl::CPreviewControl(CD2DWControl* pParentControl, const std::shared_ptr<PreviewControlProperty>& pProp)
+CPreviewControl::CPreviewControl(CD2DWControl* pParentControl)
 	:CD2DWHostWndControl(pParentControl),
 	Dummy(std::make_shared<int>(0)),
 	Doc(),
-	m_pWnd(std::make_unique<CPreviewWnd>()),
-    m_pProp(pProp)
+	m_pWnd(std::make_unique<CPreviewWnd>())
 {
 	Doc.subscribe([this](auto doc) {
 		Open(doc.GetPath());
@@ -50,7 +49,7 @@ void CPreviewControl::Close()
 std::tuple<CRect> CPreviewControl::GetRects() const
 {
 	CRectF rcClient(GetRectInWnd());
-	FLOAT lineWidth = m_pProp->FocusedLine.Width + 0.5f;
+	FLOAT lineWidth = GetFocusedBorder().Width + 0.5f;
 	rcClient.DeflateRect(lineWidth);
 
 	return { CRect(
@@ -92,7 +91,7 @@ void CPreviewControl::OnRect(const RectEvent& e)
 void CPreviewControl::OnPaint(const PaintEvent& e)
 {
 	//Paint Background
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_pProp->NormalFill, GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
 }
 
 void CPreviewControl::OnClose(const CloseEvent& e)

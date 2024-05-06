@@ -26,12 +26,11 @@
 /* Constructor/Destructor */
 /**************************/
 
-CImageView::CImageView(CD2DWControl* pParentControl, const std::shared_ptr<ImageViewProperty>& pProp)
+CImageView::CImageView(CD2DWControl* pParentControl)
 	:CD2DWControl(pParentControl),
-    m_pProp(pProp),
 	m_pMachine(std::make_unique<CImageViewStateMachine>(this)),
-	m_spVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr)),
-	m_spHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
+	m_spVScroll(std::make_shared<CVScroll>(this)),
+	m_spHScroll(std::make_shared<CHScroll>(this)),
 	Rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(ImageScaleMode::Width),
 	Dummy(std::make_shared<int>(0)), Image(CD2DImage()), m_imgDrawer(std::make_unique<CImageDrawer>()), Scale(1.f)
 {
@@ -107,8 +106,8 @@ void CImageView::OnCreate(const CreateEvt& e)
 CRectF CImageView::GetRenderRectInWnd()
 {
     CRectF rc = GetRectInWnd();
-	rc.DeflateRect(m_pProp->FocusedLine->Width * 0.5f);
-	rc.DeflateRect(*(m_pProp->Padding));
+	rc.DeflateRect(GetFocusedBorder().Width * 0.5f);
+	rc.DeflateRect(GetPadding());
 	return rc;
 }
 
@@ -165,7 +164,7 @@ void CImageView::OnMouseWheel(const MouseWheelEvent& e)
 		m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() * *Scale / prevScale/*+ m_spHScroll->GetScrollPage() / 2.f *(m_scale / prevScale - 1.f)*/);
 
 	} else {
-		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() - m_spVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);
+		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() - m_spVScroll->GetDeltaScroll() * e.Delta / WHEEL_DELTA);
 	}
 }
 
@@ -188,7 +187,7 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
 	//PaintBackground
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
 
 	//PaintContent
 	auto callback = [this]()->void { GetWndPtr()->GetDispatcherPtr()->PostInvoke([pWnd = GetWndPtr()]() { pWnd->InvalidateRect(NULL, FALSE); }); };
@@ -617,17 +616,17 @@ std::tuple<CRectF, CRectF> CImageView::GetRects() const
 {
 	CRectF rcClient(GetRectInWnd());
 	CRectF rcVertical;
-	FLOAT lineHalfWidth = m_pProp->FocusedLine->Width * 0.5f;
+	FLOAT lineHalfWidth = GetFocusedBorder().Width * 0.5f;
 
 	rcVertical.left = rcClient.right - ::GetSystemMetrics(SM_CXVSCROLL) - lineHalfWidth;
 	rcVertical.top = rcClient.top + lineHalfWidth;
 	rcVertical.right = rcClient.right - lineHalfWidth;
-	rcVertical.bottom = rcClient.bottom - (m_spHScroll->GetIsVisible() ? (m_spHScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	rcVertical.bottom = rcClient.bottom - (m_spHScroll->GetIsVisible() ? (m_spHScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 
 	CRectF rcHorizontal;
 	rcHorizontal.left = rcClient.left + lineHalfWidth;
 	rcHorizontal.top = rcClient.bottom - ::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
-	rcHorizontal.right = rcClient.right - (m_spVScroll->GetIsVisible() ? (m_spVScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	rcHorizontal.right = rcClient.right - (m_spVScroll->GetIsVisible() ? (m_spVScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
 
 	return { rcVertical, rcHorizontal };

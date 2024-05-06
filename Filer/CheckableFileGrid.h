@@ -5,7 +5,7 @@ class CCheckableFileGrid :public CFilerBindGridView<std::shared_ptr<CShellFile>>
 {
 public:
 	//Constructor
-	CCheckableFileGrid(CD2DWControl* pParentControl, const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp);
+	CCheckableFileGrid(CD2DWControl* pParentControl);
 	virtual ~CCheckableFileGrid() = default;
 
 	virtual void OnCreate(const CreateEvt& e) override;

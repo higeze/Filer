@@ -15,7 +15,6 @@ protected:
 public:
 	CCellTextBox(
 		CD2DWControl* pParentControl,
-		const std::shared_ptr<TextBoxProperty> pProp,
 		const std::wstring& text,
 		CTextCell* pCell,
 		std::function<void(const std::wstring&)> changed,
@@ -29,16 +28,17 @@ public:
 	CRectF GetRectInWnd() const;
 };
 
+
 class CEditorCellTextBox :public CEditorTextBox
 {
 protected:
 	CTextCell* m_pCell;
 	std::function<void(const std::wstring&)> m_changed;
 	std::function<void(const std::wstring&)> m_final;
+
 public:
 	CEditorCellTextBox(
 		CD2DWControl* pParentControl,
-		const std::shared_ptr<EditorTextBoxProperty> pProp,
 		const std::wstring& text,
 		CTextCell* pCell,
 		std::function<void(const std::wstring&)> changed,

@@ -1,12 +1,10 @@
 #include "D2DWDialog.h"
-#include "DialogProperty.h"
 #include "D2DWWindow.h"
 #include "Direct2DWrite.h"
 #include "DialogStateMachine.h"
 
-CD2DWDialog::CD2DWDialog(CD2DWControl* pParentControl, const std::shared_ptr<DialogProperty>& spProp)
+CD2DWDialog::CD2DWDialog(CD2DWControl* pParentControl)
 	:CD2DWControl(pParentControl),
-	m_spProp(spProp),
 	m_pDialogMachine(std::make_unique<CDialogStateMachine>(this))
 {}
 
@@ -34,7 +32,7 @@ void CD2DWDialog::OnPaint(const PaintEvent& e)
 {
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spProp->BackgroundFill, GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
 
 	PaintTitle();
 
@@ -210,7 +208,7 @@ void CD2DWDialog::Error_StdException(const std::exception& e)
 CSizeF CD2DWDialog::GetTitleSize() const
 {
 	if (!Title->empty()) {
-		m_titleSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(m_spProp->TitleFormat, *Title);
+		m_titleSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), *Title);
 	}
 	return m_titleSize;
 }
@@ -228,14 +226,14 @@ void CD2DWDialog::PaintTitle()
 {
 	auto rc = GetTitleRect();
 	rc.DeflateRect(kTitlePadding);
-	GetWndPtr()->GetDirectPtr()->DrawTextLayout(m_spProp->TitleFormat, *Title, rc);
+	GetWndPtr()->GetDirectPtr()->DrawTextLayout(GetFormat(), *Title, rc);
 }
 
 void CD2DWDialog::PaintBorder()
 {
 	auto rc = GetRectInWnd();
-	rc.DeflateRect(m_spProp->Line.Width * 0.5f);
-	GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(m_spProp->Line, rc);
+	rc.DeflateRect(GetNormalBorder().Width * 0.5f);
+	GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(GetNormalBorder(), rc);
 }
 
 

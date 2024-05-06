@@ -105,18 +105,18 @@ std::shared_ptr<CShellFolder> CShellFolder::Clone()const
 	return std::make_shared<CShellFolder>(m_pParentShellFolder, m_parentIdl, m_childIdl, GetShellFolderPtr());
 }
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(const FileSizeArgs& args, std::function<void()> changed)
 {
-	if (spArgs->NoFolderSize) {
+	if (args.NoFolderSize) {
 		SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable));
-	} else if(spArgs->NoFolderSizeOnNetwork && ::PathIsNetworkPath(GetPath().c_str())) {
+	} else if(args.NoFolderSizeOnNetwork && ::PathIsNetworkPath(GetPath().c_str())) {
 		SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable));
 	} else {
 		switch (GetLockSize().second) {
 			case FileSizeStatus::None:
 				{
 					SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
-					auto limit = spArgs->TimeLimitFolderSize ? spArgs->TimeLimitMs : -1;
+					auto limit = args.TimeLimitFolderSize ? args.TimeLimitMs : -1;
 					auto fun = [](const std::shared_ptr<bool>& spCancelThread, const CComPtr<IShellFolder>& pShellFolder, const CIDL& folderIdl, const std::wstring& path, const int& limit, const std::function<void()>& sizeChanged)
 					{
 						std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
@@ -130,9 +130,9 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(const std::share
 						}
 					};
 					m_futureSize = CThreadPool::GetInstance()->enqueue(
-						fun,
+						FILE_LINE_FUNC,
 						0,
-						//std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Unavailable),
+						fun,
 						m_spCancelThread,
 						GetShellFolderPtr(),
 						GetAbsoluteIdl(),
@@ -156,17 +156,17 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(const std::share
 	return GetLockSize();
 }
 
-std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(const std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
+std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(const FileTimeArgs& args, std::function<void()> changed)
 {
 	switch (GetLockFileTimes().second) {
 	case FileTimeStatus::None:
 		{
-		if (auto times = CShellFile::GetFileTimes(); !spArgs->IgnoreFolderTime && times.has_value()) {
+		if (auto times = CShellFile::GetFileTimes(); !args.IgnoreFolderTime && times.has_value()) {
 				SetLockFileTimes(std::make_pair(times.value(), FileTimeStatus::AvailableLoading));
 			} else {
 				SetLockFileTimes(std::make_pair(FileTimes(), FileTimeStatus::Loading));
 			}
-			auto limit = spArgs->TimeLimitFolderLastWrite ? spArgs->TimeLimitMs : -1;
+			auto limit = args.TimeLimitFolderLastWrite ? args.TimeLimitMs : -1;
 			auto fun = [](const std::shared_ptr<bool>& spCancelThread,
 					const CComPtr<IShellFolder>& pParentFolder,
 					const CComPtr<IShellFolder>& pFolder,
@@ -187,16 +187,16 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(const std::share
 				}
 			};
 			m_futureTime = CThreadPool::GetInstance()->enqueue(
-				fun,	
+				FILE_LINE_FUNC,
 				0,
-				//std::make_pair(FileTimes(), FileTimeStatus::Unavailable),
+				fun,	
 				m_spCancelThread,
 				GetParentFolderPtr()->GetShellFolderPtr(),
 				GetShellFolderPtr(),
 				GetChildIdl(),
 				GetPath(),
 				limit,
-				spArgs->IgnoreFolderTime,
+				args.IgnoreFolderTime,
 				changed);
 		}
 		break;

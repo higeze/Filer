@@ -117,7 +117,7 @@ void CD2DAtlasFixedSizeBitmap::AddAsync(const std::wstring& key, std::function<C
 			funupd();
 		}
 	};
-	m_futures.emplace_back(CThreadPool::GetInstance()->enqueue(funadd, 0));
+	m_futures.emplace_back(CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, funadd));
 }
 bool CD2DAtlasFixedSizeBitmap::Exist(const std::wstring& key)
 {

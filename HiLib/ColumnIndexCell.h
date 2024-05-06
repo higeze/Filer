@@ -7,8 +7,8 @@ class CColumnIndexCell:public CTextCell
 public:
 	static CMenu ContextMenu;
 public:
-	CColumnIndexCell(CGridView* pSheet,CRow* pRow,CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet,pRow,pColumn,spProperty, arg<"editmode"_s>() = EditMode::ReadOnly){}
+	CColumnIndexCell(CGridView* pSheet,CRow* pRow,CColumn* pColumn)
+		:CTextCell(pSheet,pRow,pColumn, arg<"editmode"_s>() = EditMode::ReadOnly){}
 	virtual ~CColumnIndexCell() = default;
 	virtual std::wstring GetString();
 };

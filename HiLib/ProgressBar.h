@@ -9,10 +9,15 @@ protected:
 	int m_min = 0;
 	int m_max = 100;
 	int m_value = 0;
-
-	std::shared_ptr<ProgressProperty> m_spStatusBarProp;
 public:
-	CProgressBar(CD2DWControl* pParentControl, const std::shared_ptr<ProgressProperty>& spProgressProp);
+	const SolidFill& GetForeground() const
+	{
+		static const SolidFill value(0.f / 255.f, 200.f / 255.f, 0.f / 255.f, 1.0f); return value;
+	}
+
+
+public:
+	CProgressBar(CD2DWControl* pParentControl);
 	virtual ~CProgressBar() = default;
 
 	int GetMax()const { return m_max; }

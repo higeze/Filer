@@ -8,8 +8,8 @@ class CBindTextCell :public CTextCell
 {
 public:
 	template<typename... Args>
-	CBindTextCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, args...){}
+	CBindTextCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, Args... args)
+		:CTextCell(pSheet, pRow, pColumn, args...){}
 
 	virtual ~CBindTextCell() = default;
 
@@ -36,11 +36,11 @@ private:
 	std::function<void(const std::wstring&)> m_setter;
 public:
 	template<typename... Args>
-	CBindTextCell2(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, 
+	CBindTextCell2(CGridView* pSheet, CRow* pRow, CColumn* pColumn,  
 		std::function<std::wstring()> getter,
 		std::function<void(const std::wstring&)> setter,
 		Args... args)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, args...), m_getter(getter), m_setter(setter)
+		:CTextCell(pSheet, pRow, pColumn, args...), m_getter(getter), m_setter(setter)
 	{
 	}
 

@@ -9,8 +9,8 @@
 #include "GridView.h"
 #include "D2DWWindow.h"
 
-CFontCell::CFontCell(CGridView* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CFontF font)
-	:CTextCell(pSheet,pRow,pColumn,spProperty),
+CFontCell::CFontCell(CGridView* pSheet,CRow* pRow, CColumn* pColumn, CFontF font)
+	:CTextCell(pSheet,pRow,pColumn),
 	m_font(font){}
 
 CFontF CFontCell::GetFont(){return m_font;}

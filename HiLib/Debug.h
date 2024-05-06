@@ -72,6 +72,8 @@ std::string msg_to_string(UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define FILE_LINE_FUNC std::format("File:{}, Line:{}, Func:{}", ::PathFindFileNameA(__FILE__), __LINE__, __FUNCTION__).c_str()
 
+#define FILE_LINE_FUNC_W std::format(L"File:{}, Line:{}, Func:{}", ::PathFindFileNameA(__FILE__), __LINE__, __FUNCTION__).c_str()
+
 #define FALSE_THROW(expression) if(!(expression)){throw std::exception(FILE_LINE_FUNC);}
 
 #define TRUE_BREAK(expression) if(expression){break;}

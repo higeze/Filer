@@ -163,7 +163,7 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 		CRect rcParent;
 		if (hWndParent == nullptr) {
 			CPoint ptScreen;
-			::GetCursorPos(ptScreen);
+			::GetCursorPos(&ptScreen);
 			HMONITOR hMonitor = ::MonitorFromPoint(ptScreen, MONITOR_DEFAULTTONULL);
 			MONITORINFO mi = { 0 };
 			mi.cbSize = sizeof(MONITORINFO);
@@ -178,7 +178,7 @@ std::wstring GetModuleDirectory(HMODULE hModule)
 
 
 		} else {
-			::GetWindowRect(hWndParent, rcParent);
+			::GetWindowRect(hWndParent, &rcParent);
 		}
 
 		m_cwa

@@ -22,8 +22,8 @@ protected:
 	std::wstring m_sortString;
 public:
 	template<typename... Args>
-	CBindYearMonthDayCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::ReadOnly, args...), 
+	CBindYearMonthDayCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, Args... args)
+		:CTextCell(pSheet, pRow, pColumn, arg<"editmode"_s>() = EditMode::ReadOnly, args...), 
 		YearMonthDay(), 
 		Dummy(std::make_shared<int>(0))
 	{
@@ -62,12 +62,7 @@ public:
 
 	virtual void OnLButtonClk(const LButtonClkEvent& e) override
 	{
-		auto spDlg = std::make_shared<CCalendarDialog>(
-			m_pGrid,
-			std::make_shared<DialogProperty>(),
-			std::make_shared<CalendarControlProperty>(),
-			std::make_shared<TextBoxProperty>(),
-			std::make_shared<ButtonProperty>());
+		auto spDlg = std::make_shared<CCalendarDialog>(m_pGrid);
 
 		if (YearMonthDay->IsValid()) {
 			spDlg->GetCalendarPtr()->Year.set(YearMonthDay->year());

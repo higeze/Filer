@@ -5,10 +5,11 @@
 //#include <boost/asio/io_service.hpp>
 
 #include "MyWnd.h"
+#include "D2DWTypes.h"
 #include "MyFriendSerializer.h"
 #include "MyRect.h"
 #include "FilerTabGridView.h"
-#include "FavoritesGridView.h"
+//#include "FavoritesGridView.h"
 #include "FavoritesProperty.h"
 #include "LauncherGridView.h"
 #include "LauncherProperty.h"
@@ -16,7 +17,7 @@
 #include "ApplicationProperty.h"
 #include "ViewProperty.h"
 #include "CellProperty.h"
-#include "FilerWndStatusBar.h"
+#include "StatusBar.h"
 #include "Splitter.h"
 #include "FilerGridViewProperty.h"
 #include "D2DWWindow.h"
@@ -28,16 +29,19 @@
 #include "DialogProperty.h"
 //#include "KonamiCommander.h"
 #include "JsonSerializer.h"
-#include "ButtonProperty.h"
 #include "TabControlProperty.h"
 #include "PreviewControlProperty.h"
 
 #include "ToolBar.h"
+#include "Timer.h"
 
 class CFilerGridView;
 class CLauncherGridView;
 struct FilerGridViewProperty;
 class CShellFolder;
+class CPerformance;
+class CVerticalSplitContainer;
+class CHorizontalSplitContainer;
 //struct PdfViewProperty;
 
 
@@ -88,12 +92,10 @@ private:
 	//boost::asio::io_service m_reloadIosv;
 	//boost::asio::io_service::work m_reloadWork;
 	//boost::asio::deadline_timer m_reloadTimer;
+	CTimer m_timer;
 	CDeadlineTimer m_reloadTimer;
 
 	std::unique_ptr<CNetworkMessanger> m_pNetworkMessanger;
-
-	CRect m_rcWnd;
-	CRect m_rcPropWnd;
 
 	bool m_isSizing = false;
 	CPoint m_ptBeginClient;
@@ -101,38 +103,44 @@ private:
 
 	//Common properties
 	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
-	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
-	std::shared_ptr<StatusBarProperty> m_spStatusBarProp;
 	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
 	std::shared_ptr<CLauncherProperty> m_spLauncherProp;
-
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
-	std::shared_ptr<EditorProperty> m_spEditorProp;
-	std::shared_ptr<PDFEditorProperty> m_spPdfEditorProp;
-	std::shared_ptr<ImageEditorProperty> m_spImageEditorProp;
-	std::shared_ptr<PreviewControlProperty> m_spPreviewControlProp;
-	std::shared_ptr<TabControlProperty> m_spTabControlProp;
-	std::shared_ptr<SplitterProperty> m_spSplitterProp;
-	std::shared_ptr<DialogProperty> m_spDialogProp;
 
 	//Controls
-	std::shared_ptr<CFilerTabGridView> m_spLeftView;
-	std::shared_ptr<CFilerTabGridView> m_spRightView;
-	std::shared_ptr<CFilerTabGridView> m_spCurView;
-	std::shared_ptr<CFavoritesGridView> m_spLeftFavoritesView;
-	std::shared_ptr<CFavoritesGridView> m_spRightFavoritesView;
 	std::shared_ptr<CLauncherGridView> m_spLauncher;
-	std::shared_ptr<CFilerWndStatusBar> m_spStatusBar;
-	std::shared_ptr<CHorizontalSplitter> m_spSplitter;
 	std::shared_ptr<CToolBar> m_spToolBar;
+	std::shared_ptr<CStatusBar> m_spStatusBar;
+	std::shared_ptr<CHorizontalSplitContainer> m_spHorizontalSplit;
+	//std::shared_ptr<CVerticalSplitContainer> m_spTopVerticalSplit;
+	//std::shared_ptr<CVerticalSplitContainer> m_spBottomVerticalSplit;
 
-	//Property
-	SolidFill BackgroundFill = SolidFill(200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f);
+	//std::shared_ptr<CFilerTabGridView> m_spLeftView;
+	//std::shared_ptr<CFilerTabGridView> m_spRightView;
+	//std::shared_ptr<CFilerTabGridView> m_spCurView;
+	//std::shared_ptr<CFavoritesGridView> m_spLeftFavoritesView;
+	//std::shared_ptr<CFavoritesGridView> m_spRightFavoritesView;
+	//std::shared_ptr<CColoredTextBox> m_spLogText;
+	//std::shared_ptr<CHorizontalSplitter> m_spHSplitter;
+	//std::shared_ptr<CVerticalSplitter> m_spVSplitter;
+
+
+
+
+	//Other
+	std::unique_ptr<CPerformance> m_pPerformance;
 	
 	//CKonamiCommander m_konamiCommander;
 
 public:
-	reactive_property_ptr<FLOAT> SplitterLeft;
+	reactive_property_ptr<CRect> Rectangle;
+	reactive_wstring_ptr PerformanceLog;
+	reactive_wstring_ptr ThreadPoolLog;
+
+
+	virtual void Measure(const CSizeF& availableSize) override;
+	virtual void Arrange(const CRectF& rc) override;
+	
 
 public:
 	//Constructor
@@ -144,7 +152,6 @@ public:
 
 	//Getter/Setter
 	std::shared_ptr<CApplicationProperty>& GetApplicationProperty() { return m_spApplicationProp; }
-	std::shared_ptr<FilerGridViewProperty>& GetFilerGridViewPropPtr() { return m_spFilerGridViewProp; }
 	std::shared_ptr<CFavoritesProperty>& GetFavoritesPropPtr() { return m_spFavoritesProp; }
 	void SetFavoritesPropPtr(const std::shared_ptr<CFavoritesProperty>& value) { m_spFavoritesProp = value; }
 
@@ -154,16 +161,13 @@ public:
 	std::shared_ptr<ExeExtensionProperty>& GetExeExtensionPropPtr() { return m_spExeExProp; }
 	void SetExeExtensionPropPtr(const std::shared_ptr<ExeExtensionProperty>& value) { m_spExeExProp = value; }
 
-	std::shared_ptr<DialogProperty>& GetDialogPropPtr(){ return m_spDialogProp; }
+	//std::shared_ptr<CFavoritesGridView>& GetLeftFavoritesView() { return m_spLeftFavoritesView; }
+	//std::shared_ptr<CFavoritesGridView>& GetRightFavoritesView() { return m_spRightFavoritesView; }
+	//std::shared_ptr<CFilerTabGridView>& GetLeftWnd() { return m_spLeftView; }
+	//std::shared_ptr<CFilerTabGridView>& GetRightWnd() { return m_spRightView; }
 
-
-	std::shared_ptr<CFavoritesGridView>& GetLeftFavoritesView() { return m_spLeftFavoritesView; }
-	std::shared_ptr<CFavoritesGridView>& GetRightFavoritesView() { return m_spRightFavoritesView; }
-	std::shared_ptr<CFilerTabGridView>& GetLeftWnd() { return m_spLeftView; }
-	std::shared_ptr<CFilerTabGridView>& GetRightWnd() { return m_spRightView; }
-
-	// Launcher, LeftFavorite, LeftTab, Splitter, RightFavorite, RightTab, StatusBar
-	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();
+	// Launcher, ToolBar, LeftFavorite, LeftTab, Splitter, RightFavorite, RightTab, Splitter, Log,  StatusBar
+	//std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();
 
 	/******************/
 	/* Window Message */
@@ -244,27 +248,15 @@ private:
 	friend void to_json(json& j, const CFilerWnd& o) 
 	{
 		j = json{
-			{"WindowRectangle", o.m_rcWnd},
-			{"PropertyWindowRectangle", o.m_rcPropWnd},
-			{"LeftSplit", o.SplitterLeft},
+			{"Rectangle", o.Rectangle},
 			{"ApplicationProperty", o.m_spApplicationProp },
-			{"FilerGridViewProperty", o.m_spFilerGridViewProp },
-			{"EditorProperty", o.m_spEditorProp },
-			{"PdfEditorProperty", o.m_spPdfEditorProp },
-			{"ImageEditorProperty", o.m_spImageEditorProp },
-			{"PreviewControlProperty", o.m_spPreviewControlProp },
-			{"StatusBarProperty", o.m_spStatusBarProp},
 			{"LauncherProperty", o.m_spLauncherProp },
 			{"FavoritesProperty", o.m_spFavoritesProp },
 			{"ExeExtensionProperty", o.m_spExeExProp },
-			{"SplitterProperty", o.m_spSplitterProp},
-			{"LeftFavorites", o.m_spLeftFavoritesView},
-			{"RightFavorites", o.m_spRightFavoritesView},
-			{"Launcher", o.m_spLauncher},
-			{"LeftView", o.m_spLeftView },
-			{"RightView", o.m_spRightView },
-			{"HorizontalSplitter", o.m_spSplitter },
-			{"DialogProperty", o.m_spDialogProp}
+			//{"LeftView", o.m_spLeftView },
+			//{"RightView", o.m_spRightView },
+			//{"HorizontalSplitter", o.m_spHSplitter},
+			//{"VerticalSplitter", o.m_spVSplitter}
 	#ifdef USE_PYTHON_EXTENSION
 			{ "PythonExtensionProperty", m_spPyExProp }
 	#endif
@@ -273,24 +265,15 @@ private:
 
 	friend void from_json(const json& j, CFilerWnd& o)
 	{
-			get_to(j, "WindowRectangle", o.m_rcWnd);
-			get_to(j, "PropertyWindowRectangle", o.m_rcPropWnd);
-			get_to(j, "LeftSplit", o.SplitterLeft);
+			get_to(j, "Rectangle", o.Rectangle);
 			get_to(j, "ApplicationProperty", o.m_spApplicationProp);
-			get_to(j, "FilerGridViewProperty", o.m_spFilerGridViewProp);
-			get_to(j, "EditorProperty", o.m_spEditorProp);
-			get_to(j, "PdfEditorProperty", o.m_spPdfEditorProp);
-			get_to(j, "ImageEditorProperty", o.m_spImageEditorProp);
-			get_to(j, "PreviewControlProperty", o.m_spPreviewControlProp);
-			get_to(j, "StatusBarProperty", o.m_spStatusBarProp);
 			get_to(j, "LauncherProperty", o.m_spLauncherProp);
 			get_to(j, "FavoritesProperty", o.m_spFavoritesProp);
 			get_to(j, "ExeExtensionProperty", o.m_spExeExProp);
-			get_to(j, "SplitterProperty", o.m_spSplitterProp);
-			get_to(j, "LeftView", o.m_spLeftView);
-			get_to(j, "RightView", o.m_spRightView);
-			get_to(j, "HorizontalSplitter", o.m_spSplitter);
-			get_to(j, "DialogProp", o.m_spDialogProp);
+			//get_to(j, "LeftView", o.m_spLeftView);
+			//get_to(j, "RightView", o.m_spRightView);
+			//get_to(j, "HorizontalSplitter", o.m_spHSplitter);
+			//get_to(j, "VerticalSplitter", o.m_spVSplitter);
 	#ifdef USE_PYTHON_EXTENSION
 			get_to(j, "PythonExtensionProperty", m_spPyExProp);
 	#endif

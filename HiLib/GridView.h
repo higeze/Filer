@@ -2,7 +2,6 @@
 #include "D2DWControl.h"
 #include "DeadlineTimer.h"
 
-#include "GridViewProperty.h"
 #include "MyMenu.h"
 #include "SheetEnums.h"
 #include "SheetEventArgs.h"
@@ -24,8 +23,6 @@
 namespace sml = boost::sml;
 
 class CDirect2DWrite;
-struct BackgroundProperty;
-struct GridViewProperty;
 class CMouseStateMachine;
 
 class CVScroll;
@@ -59,10 +56,6 @@ class IDragger;
 class ITracker;
 class ICeller;
 class CCursorer;
-struct HeaderProperty;
-struct CellProperty;
-class CRect;
-class CPoint;
 class IMouseObserver;
 struct SheetStateMachine;
 class CGridView;
@@ -127,6 +120,11 @@ class CGridView: public CD2DWControl
 	friend class CFileDragger;
 	friend class CSerializeData;
 	friend class CCeller;
+public:
+	virtual const SolidLine& GetDragLine()
+	{
+		static const SolidLine value(1.0f, 0.0f, 0.0f, 1.0f, 1.0f); return value;
+	}
 
 public:
 	std::unique_ptr<CVScroll> m_pVScroll;
@@ -156,9 +154,6 @@ public:
 	size_t m_frozenColumnCount = 0;
 
 	cell_container m_allCells;
-
-
-	std::shared_ptr<GridViewProperty> m_spSheetProperty; // SheetProperty
 
 	//std::shared_ptr<CColumn> m_pHeaderColumn; // Header column
 	//std::shared_ptr<CColumn> m_pNameColumn;
@@ -195,8 +190,6 @@ protected:
 
 protected:
 	CDeadlineTimer m_invalidateTimer;
-
-	std::shared_ptr<GridViewProperty> m_spGridViewProp;
 public:
 
 	sigslot::signal<> SignalPreDelayUpdate;
@@ -208,8 +201,7 @@ public:
 	/***********/
 public:
 	CGridView(
-		CD2DWControl* pParentControl,
-		const std::shared_ptr<GridViewProperty>& spGridViewProp);
+		CD2DWControl* pParentControl);
 	//Destructor
 	virtual ~CGridView();
 
@@ -245,15 +237,11 @@ public:
 	/* Getter Setter */
 	/*****************/
 public:
-	std::shared_ptr<GridViewProperty>& GetGridViewPropPtr() { return m_spGridViewProp; }
 	std::shared_ptr<CCellTextBox> GetEditPtr() { return m_pEdit; }
 	void SetEditPtr(std::shared_ptr<CCellTextBox> pEdit) { m_pEdit = pEdit; }
 	std::shared_ptr<CCursorer> GetCursorerPtr(){return m_spCursorer;}
 	void SetContextMenuRowColumn(const CRowColumn& roco){m_rocoContextMenu = roco;}
-	virtual std::shared_ptr<SheetProperty> GetSheetProperty() { return m_spSheetProperty; }
-	virtual std::shared_ptr<HeaderProperty> GetHeaderProperty(){return m_spSheetProperty->HeaderPropPtr;}
-	virtual std::shared_ptr<CellProperty> GetFilterProperty(){return m_spSheetProperty->CellPropPtr;}
-	virtual std::shared_ptr<CellProperty> GetCellProperty(){return m_spSheetProperty->CellPropPtr;}
+
 	//virtual std::shared_ptr<CColumn> GetHeaderColumnPtr()const{return m_pHeaderColumn;}
 	//virtual void SetHeaderColumnPtr(std::shared_ptr<CColumn> column){m_pHeaderColumn=column;}
 	//virtual std::shared_ptr<CColumn> GetNameColumnPtr() { return m_pNameColumn; }
@@ -352,6 +340,9 @@ public:
 	virtual CRectF GetCellsRect();
 	virtual CRectF GetPaintRect();
 
+	//MeasureArrange
+	virtual void Measure(const CSizeF& sz) override;
+	virtual void Arrange(const CRectF& rc) override;
 
 
 	/******************/
@@ -432,9 +423,6 @@ public:
 	std::pair<bool, bool> GetHorizontalVerticalScrollNecessity();
 	//virtual void ColumnErased(CColumnEventArgs& e);
 	virtual CColumn* GetParentColumnPtr(CCell* pCell);	
-
-	virtual void Measure(const CSizeF& sz) override;
-	virtual void Arrange(const CRectF& rc) override;
 
 
 	virtual void OnCellPropertyChanged(CCell* pCell, const wchar_t* name);

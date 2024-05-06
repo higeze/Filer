@@ -13,16 +13,14 @@
 
 CIncrementalCopyDlg::CIncrementalCopyDlg(
 	CD2DWControl* pParentControl,
-	const std::shared_ptr<DialogProperty>& spDialogProp,
-	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 	const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-	:CD2DWDialog(pParentControl, spDialogProp), 
+	:CD2DWDialog(pParentControl), 
 	m_destIDL(destIDL), m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs),
-	m_spFileGrid(std::make_shared<CCheckableFileGrid>(this, spFilerGridViewProp)),
-	m_spProgressbar(std::make_shared<CProgressBar>(this, std::make_shared<ProgressProperty>())),
-	m_spButtonDo(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
-	m_spButtonCancel(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
-	m_spButtonClose(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>()))
+	m_spFileGrid(std::make_shared<CCheckableFileGrid>(this)),
+	m_spProgressbar(std::make_shared<CProgressBar>(this)),
+	m_spButtonDo(std::make_shared<CButton>(this)),
+	m_spButtonCancel(std::make_shared<CButton>(this)),
+	m_spButtonClose(std::make_shared<CButton>(this))
 {
 	Title.set(L"Incremental Copy");
 	m_spButtonDo->Command.subscribe([this]()->void
@@ -54,8 +52,7 @@ CIncrementalCopyDlg::CIncrementalCopyDlg(
 				SUCCEEDED(pFileOperation->PerformOperations());
 			}
 		};
-		m_doFuture = CThreadPool::GetInstance()->enqueue(
-			funDo, 0);
+		m_doFuture = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, funDo);
 
 		m_idlMap.clear();
 		m_spButtonDo->IsEnabled.set(!m_idlMap.empty());
@@ -138,8 +135,7 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 				shell::CountFileOne(srcIDL, childIDL, readMax);
 			}
 		};
-		auto countFuture = CThreadPool::GetInstance()->enqueue(
-			funCount, 0);
+		auto countFuture = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, funCount);
 
 		auto funIncr = [srcParentIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, destParentIDL = m_destIDL, readValue, find]()->void
 		{
@@ -147,8 +143,7 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 				shell::FindIncrementalOne(srcParentIDL, srcChildIDL, destParentIDL, readValue, find);
 			}
 		};
-		auto incrFuture = CThreadPool::GetInstance()->enqueue(
-			funIncr, 0);
+		auto incrFuture = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, funIncr);
 
 		countFuture.get();
 		incrFuture.get();
@@ -160,8 +155,7 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 	};
 	
 	//Start comparison
-	m_compFuture = CThreadPool::GetInstance()->enqueue(
-		fun, 0);
+	m_compFuture = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, fun);
 }
 
 void CIncrementalCopyDlg::OnRect(const RectEvent& e)

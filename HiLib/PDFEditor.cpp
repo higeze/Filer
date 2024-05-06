@@ -30,18 +30,15 @@ auto percent_to_ratio = [](const std::wstring& percent)->FLOAT {
 /* CPDFEditor */
 /***************/
 
-CPDFEditor::CPDFEditor(
-	CD2DWControl* pParentControl,
-	const std::shared_ptr<PDFEditorProperty>& spProp)
+CPDFEditor::CPDFEditor(CD2DWControl* pParentControl)
 	:CD2DWControl(pParentControl),
-	m_spProp(spProp),
-	m_spFilterBox(std::make_shared<CTextBox>(this, spProp->TextBoxPropPtr, L"")),
-	m_spPageBox(std::make_shared<CTextBox>(this, spProp->TextBoxPropPtr, L"")),
-	m_spTotalPageBlock(std::make_shared<CTextBlock>(this, spProp->TextBlockPropPtr)),
-	m_spScaleBox(std::make_shared<CTextBox>(this, spProp->TextBoxPropPtr, L"")),
-	m_spPercentBlock(std::make_shared<CTextBlock>(this, spProp->TextBlockPropPtr)),
-	m_spPDFView(std::make_shared<CPdfView>(this, spProp->PDFViewPropPtr)),
-	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr))
+	m_spFilterBox(std::make_shared<CTextBox>(this, L"")),
+	m_spPageBox(std::make_shared<CTextBox>(this, L"")),
+	m_spTotalPageBlock(std::make_shared<CTextBlock>(this)),
+	m_spScaleBox(std::make_shared<CTextBox>(this, L"")),
+	m_spPercentBlock(std::make_shared<CTextBlock>(this)),
+	m_spPDFView(std::make_shared<CPdfView>(this)),
+	m_spStatusBar(std::make_shared<CStatusBar>(this))
 {
 	m_spFilterBox->SetIsScrollable(false); 
 	m_spPercentBlock->Text.set(L"%");

@@ -28,11 +28,10 @@
 
 CPdfViewDlgBase::CPdfViewDlgBase(
 	CD2DWControl* pParentControl,
-	const std::shared_ptr<DialogProperty>& spDialogProp,
 	CPDFDoc& doc)
-	:CD2DWDialog(pParentControl, spDialogProp),
-	m_spButtonDo(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
-	m_spButtonCancel(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
+	:CD2DWDialog(pParentControl),
+	m_spButtonDo(std::make_shared<CButton>(this)),
+	m_spButtonCancel(std::make_shared<CButton>(this)),
 	m_doc(doc), Dummy(std::make_shared<int>(0))
 {
 	m_spButtonCancel->Command.subscribe([this]()->void{
@@ -46,12 +45,9 @@ CPdfViewDlgBase::CPdfViewDlgBase(
 /**********************/
 /* CPdfViewExtractDlg */
 /**********************/
-CPdfViewExtractDlg::CPdfViewExtractDlg(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
-		CPDFDoc& doc)
-	:CPdfViewDlgBase(pParentControl, spDialogProp, doc),
-	m_spParameter(std::make_shared<CTextBox>(this, spTextBoxProp, L""))
+CPdfViewExtractDlg::CPdfViewExtractDlg(CD2DWControl* pParentControl, CPDFDoc& doc)
+	:CPdfViewDlgBase(pParentControl, doc),
+	m_spParameter(std::make_shared<CTextBox>(this, L""))
 {
 	Title.set(L"PDF Extract");
 
@@ -120,14 +116,13 @@ void CPdfViewExtractDlg::Arrange(const CRectF& rc)
 /* Constructor/Destructor */
 /**************************/
 
-CPdfView::CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewProperty>& pProp)
+CPdfView::CPdfView(CD2DWControl* pParentControl)
 	:CD2DWControl(pParentControl),
-    m_pProp(pProp),
 	m_pdfDrawer(std::make_unique<CD2DPDFBitmapDrawer>()),
 	m_caret(this),
 	m_pMachine(std::make_unique<CPdfViewStateMachine>(this)),
-	m_spVScroll(std::make_shared<CVScroll>(this, pProp->VScrollPropPtr)),
-	m_spHScroll(std::make_shared<CHScroll>(this, pProp->HScrollPropPtr)),
+	m_spVScroll(std::make_shared<CVScroll>(this)),
+	m_spHScroll(std::make_shared<CHScroll>(this)),
 	m_prevScale(0.f),
 	m_initialScaleMode(InitialScaleMode::Width),
 	Dummy(std::make_shared<int>(0)),
@@ -179,8 +174,8 @@ void CPdfView::OnCreate(const CreateEvt& e)
 CRectF CPdfView::GetRenderRectInWnd()
 {
     CRectF rc = GetRectInWnd();
-	rc.DeflateRect(m_pProp->FocusedLine->Width * 0.5f);
-	rc.DeflateRect(*(m_pProp->Padding));
+	rc.DeflateRect(GetFocusedBorder().Width * 0.5f);
+	rc.DeflateRect(GetPadding());
 	return rc;
 }
 
@@ -250,7 +245,7 @@ void CPdfView::OnMouseWheel(const MouseWheelEvent& e)
 		m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() * *Scale / prevScale);
 
 	} else {
-		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() - m_spVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);
+		m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() - m_spVScroll->GetDeltaScroll() * e.Delta / WHEEL_DELTA);
 	}
 }
 
@@ -411,7 +406,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 
 	logs.push_back(std::format(
 		L"Drawer Thread:{}/{}, Task:{}",
-		m_pdfDrawer->GetThreadPoolPtr()->GetActiveThreadCount(),
+		m_pdfDrawer->GetThreadPoolPtr()->GetRunnningTaskCount(),
 		m_pdfDrawer->GetThreadPoolPtr()->GetTotalThreadCount(),
 		m_pdfDrawer->GetThreadPoolPtr()->GetQueuedTaskCount()));
 
@@ -421,7 +416,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
 	//PaintBackground
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
 	//GetWndPtr()->GetDirectPtr()->FillSolidRectangle(SolidFill(0, 1.f, 1.f,1.f), GetRectInWnd());
 
 	//PaintContent
@@ -545,7 +540,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 
 	if(debug){
 		std::wstring text = boost::algorithm::join(logs, L"\n");
-		GetWndPtr()->GetDirectPtr()->DrawTextFromPoint(*(m_pProp->Format), text, GetRenderRectInWnd().LeftTop());
+		GetWndPtr()->GetDirectPtr()->DrawTextFromPoint(GetFormat(), text, GetRenderRectInWnd().LeftTop());
 	}
 
 	//Paint Caret
@@ -558,7 +553,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		}
 
 		GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, PdfiumPage2Wnd(page_index, rcCaretInPdfiumpage));
+		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetFormat().Color, PdfiumPage2Wnd(page_index, rcCaretInPdfiumpage));
 		GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	}
 
@@ -585,7 +580,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 				[i = i, this](const CRectF& rcInPdfium) { return PdfiumPage2Wnd(i, rcInPdfium); });
 		}
 	}
-	std::for_each(rcSelsInWnd.cbegin(), rcSelsInWnd.cend(), [this](const CRectF& rcSelInWnd) { GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->SelectedFill), rcSelInWnd); });
+	std::for_each(rcSelsInWnd.cbegin(), rcSelsInWnd.cend(), [this](const CRectF& rcSelInWnd) { GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetSelectedOverlay(), rcSelInWnd); });
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND::D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
 
 	//Mouse Rects
@@ -613,7 +608,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		std::transform(rcFndsInPdfium.cbegin(), rcFndsInPdfium.cend(), std::back_inserter(rcFndsInWnd),
 			[i = i, this](const CRectF& rcInPdfium) { return PdfiumPage2Wnd(i, rcInPdfium); });
 		std::for_each(rcFndsInWnd.cbegin(), rcFndsInWnd.cend(),
-			[this](const CRectF& rcFndInWnd) { GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->FindHighliteFill), rcFndInWnd); });
+			[this](const CRectF& rcFndInWnd) { GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetFindHighlite(), rcFndInWnd); });
 	}
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND::D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
 	
@@ -627,7 +622,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	FLOAT fullHeight = PDF->GetSize().height;
 	CRectF rcThumbInWnd = m_spVScroll->GetThumbRangeRect();
 	for (auto i = 0; i < PDF->GetPageCount(); i++) {
-		SolidFill fill(*m_pProp->FindHighliteFill);
+		SolidFill fill(GetFindHighlite());
 		fill.Color.a = 1.f;
 		CRectF rcThumbPageInWnd(
 			rcThumbInWnd.left + 2.f,
@@ -692,22 +687,22 @@ void CPdfView::Normal_KeyDown(const KeyDownEvent& e)
 		break;
 		case VK_UP:
 		{
-			m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() - m_spVScroll->GetScrollDelta() * 1);	
+			m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() - m_spVScroll->GetDeltaScroll() * 1);	
 		}
 		break;
 		case VK_DOWN:
 		{
-			m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() + m_spVScroll->GetScrollDelta() * 1);	
+			m_spVScroll->SetScrollPos(m_spVScroll->GetScrollPos() + m_spVScroll->GetDeltaScroll() * 1);	
 		}
 		break;
 		case VK_LEFT:
 		{
-			m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() - m_spHScroll->GetScrollDelta() * 1);	
+			m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() - m_spHScroll->GetDeltaScroll() * 1);	
 		}
 		break;
 		case VK_RIGHT:
 		{
-			m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() + m_spHScroll->GetScrollDelta() * 1);	
+			m_spHScroll->SetScrollPos(m_spHScroll->GetScrollPos() + m_spHScroll->GetDeltaScroll() * 1);	
 		}
 		break;
 		case VK_PRIOR:
@@ -815,8 +810,6 @@ void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 		std::make_unique<CMenuItem2>(L"Extract Page", [this]() {
 		auto spDlg = std::make_shared<CPdfViewExtractDlg>(
 			this,
-			std::make_shared<DialogProperty>(),
-			std::make_shared<TextBoxProperty>(),
 			*PDF.get_unconst());
 
 		spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CRectF()));
@@ -1208,7 +1201,7 @@ void CPdfView::OpenWithPasswordHandling(const std::wstring& path)
 				}
 			}
 		} else if (err == FPDF_ERR_PASSWORD){
-			std::shared_ptr<CTextBoxDialog> spDlg = std::make_shared<CTextBoxDialog>(GetWndPtr(), std::make_shared<DialogProperty>());
+			std::shared_ptr<CTextBoxDialog> spDlg = std::make_shared<CTextBoxDialog>(GetWndPtr());
 			spDlg->Title.set(L"Password");
 			spDlg->GetTextBlockPtr()->Text.set(L"Please input password");
 			spDlg->GetOKButtonPtr()->Content.set(L"OK");
@@ -1288,17 +1281,17 @@ std::tuple<CRectF, CRectF> CPdfView::GetRects() const
 {
 	CRectF rcClient(GetRectInWnd());
 	CRectF rcVertical;
-	FLOAT lineHalfWidth = m_pProp->FocusedLine->Width * 0.5f;
+	FLOAT lineHalfWidth = GetFocusedBorder().Width * 0.5f;
 
 	rcVertical.left = rcClient.right - ::GetSystemMetrics(SM_CXVSCROLL) - lineHalfWidth;
 	rcVertical.top = rcClient.top + lineHalfWidth;
 	rcVertical.right = rcClient.right - lineHalfWidth;
-	rcVertical.bottom = rcClient.bottom - (m_spHScroll->GetIsVisible() ? (m_spHScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	rcVertical.bottom = rcClient.bottom - (m_spHScroll->GetIsVisible() ? (m_spHScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 
 	CRectF rcHorizontal;
 	rcHorizontal.left = rcClient.left + lineHalfWidth;
 	rcHorizontal.top = rcClient.bottom - ::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
-	rcHorizontal.right = rcClient.right - (m_spVScroll->GetIsVisible() ? (m_spVScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	rcHorizontal.right = rcClient.right - (m_spVScroll->GetIsVisible() ? (m_spVScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
 
 	return { rcVertical, rcHorizontal };

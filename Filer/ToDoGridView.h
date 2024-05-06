@@ -20,9 +20,8 @@ class CToDoGridView :public CBindGridView<MainTask, CTaskRow>
 public:
 	template<typename... TArgs>
 	CToDoGridView(CD2DWControl* pParentControl = nullptr,
-		const std::shared_ptr<GridViewProperty>& spGridViewProp = nullptr,
 		TArgs... args)
-		:CBindGridView<MainTask, CTaskRow>(pParentControl, spGridViewProp, args...),
+		:CBindGridView<MainTask, CTaskRow>(pParentControl, args...),
 		Path()
 	{
 		m_gridViewMode = GridViewMode::ExcelLike;
@@ -71,7 +70,7 @@ public:
 	friend void from_json(const json& j, CToDoGridView& o)
 	{
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		json_make_shared_map.insert_or_assign(typeid(CRowIndexColumn).name(), [&]() { return std::make_shared<CRowIndexColumn>(&o, o.GetHeaderProperty()); });
+		json_make_shared_map.insert_or_assign(typeid(CRowIndexColumn).name(), [&]() { return std::make_shared<CRowIndexColumn>(&o); });
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskCheckBoxColumn);
 		json_make_shared_map.insert_or_assign(typeid(CTaskCheckBoxColumn).name(), [&]() { return std::make_shared<CTaskCheckBoxColumn>(&o); });
 		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskNameColumn);
@@ -84,14 +83,6 @@ public:
 		j.at("Columns").get_to(static_cast<std::vector<std::shared_ptr<CColumn>>&>(o.m_allCols));
 		j.at("RowFrozenCount").get_to(o.m_frozenRowCount);
 		j.at("ColFrozenCount").get_to(o.m_frozenColumnCount);
-
-		//for (auto& colPtr : o.m_allCols) {
-		//	if (auto p = std::dynamic_pointer_cast<CTaskNameColumn>(colPtr)) {
-		//		o.m_pNameColumn = p;
-		//	}/* else if (auto p = std::dynamic_pointer_cast<CRowIndexColumn>(colPtr)) {
-		//		o.m_pHeaderColumn = p;
-		//	}*/
-		//}
 	}
 
 };

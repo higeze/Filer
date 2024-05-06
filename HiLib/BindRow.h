@@ -5,13 +5,12 @@
 #include "Debug.h"
 #include "MyMPL.h"
 
-
 template<typename T>
 class CBindRow :public CRow
 {
 public:
-	CBindRow(CGridView* pSheet, std::shared_ptr<CellProperty> spProperty)
-		:CRow(pSheet, spProperty){ }
+	CBindRow(CGridView* pSheet)
+		:CRow(pSheet){ }
 
 	template<typename U>
 	typename std::enable_if<std::is_same_v<T, U>, U&>::type
@@ -25,19 +24,6 @@ public:
 		}
 	}
 
-
-	//template<typename U>
-	//typename std::enable_if<!is_tuple_v<T>, U&>::type
-	//GetItem()
-	//{
-	//	if (auto p = dynamic_cast<IBindSheet<T>*>(this->m_pGrid)) {
-	//		auto index = this->GetIndex<AllTag>() - this->m_pGrid->GetFrozenCount<RowTag>();
-	//		return p->GetItemsSource().get_unconst()->at(index);		
-	//	} else {
-	//		throw std::exception(FILE_LINE_FUNC);
-	//	}
-	//}
-
 	template<typename U>
 	typename std::enable_if<!std::is_same_v<T, U> && is_tuple_v<T>, U&>::type
 	GetItem()
@@ -50,35 +36,9 @@ public:
 		}
 	}
 
-
 	template<class U>
 	const U& GetItem() const
 	{
 		return const_cast<CBindRow&>(*this).GetItem<U>();
 	}
 };
-//
-//template<typename... V>
-//class CBindRow<std::tuple<V...>> : public CRow
-//{
-//public:
-//	CBindRow(CGridView* pSheet, std::shared_ptr<CellProperty> spProperty)
-//		:CRow(pSheet, spProperty){}
-//
-//	template<typename U>
-//	U& GetItem()
-//	{
-//		if (auto p = dynamic_cast<IBindSheet<std::tuple<V...>>*>(this->m_pGrid)) {
-//			auto index = this->GetIndex<AllTag>() - this->m_pGrid->GetFrozenCount<RowTag>();
-//			return std::get<U>(p->GetItemsSource().get_unconst()->at(index));		
-//		} else {
-//			throw std::exception(FILE_LINE_FUNC);
-//		}
-//	}
-//
-//     template<class U>
-//     const U& GetItem() const
-//     {
-//         return const_cast<CBindRow&>(*this).GetItem<U>();
-//     }
-//};

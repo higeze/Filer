@@ -22,8 +22,6 @@ class CPDFEditor :public CD2DWControl
 	SHAREDPTR_GETTER(CPdfView, PDFView)
 	SHAREDPTR_GETTER(CStatusBar, StatusBar)
 
-	SHAREDPTR_GETTER(PDFEditorProperty, Prop)
-
 public:
 	reactive_command_ptr<HWND> SaveCommand;
 	reactive_command_ptr<HWND> OpenCommand;
@@ -31,9 +29,7 @@ public:
 	reactive_command_ptr<HWND> OpenAsCommand;
 
 public:
-	CPDFEditor(
-		CD2DWControl* pParentControl,
-		const std::shared_ptr<PDFEditorProperty>& spTextProp);
+	CPDFEditor(CD2DWControl* pParentControl);
 
 	virtual ~CPDFEditor() {}
 

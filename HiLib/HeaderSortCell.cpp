@@ -1,4 +1,4 @@
-#include "SortCell.h"
+#include "HeaderSortCell.h"
 #include "CellProperty.h"
 #include "MyRect.h"
 #include "MyColor.h"
@@ -6,13 +6,13 @@
 #include "Column.h"
 #include "SheetEventArgs.h"
 
-const FLOAT CSortCell::TRIANGLE_WIDTH = 12.f;
-const FLOAT CSortCell::TRIANGLE_HEIGHT = 6.f;
-const CRectF CSortCell::TRIANGLE_MARGIN=CRectF(2.f,0.f,2.f,0.f);
-const FLOAT CSortCell::MIN_COLUMN_WIDTH = 16.f;
+const FLOAT CHeaderSortCell::TRIANGLE_WIDTH = 12.f;
+const FLOAT CHeaderSortCell::TRIANGLE_HEIGHT = 6.f;
+const CRectF CHeaderSortCell::TRIANGLE_MARGIN=CRectF(2.f,0.f,2.f,0.f);
+const FLOAT CHeaderSortCell::MIN_COLUMN_WIDTH = 16.f;
 
 
-void CSortCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
+void CHeaderSortCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	switch(m_pColumn->GetSort()){
 	case Sorts::Up:
@@ -32,7 +32,7 @@ void CSortCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 	}
 }
 
-void CSortCell::PaintSortMark(CDirect2DWrite* pDirect, CRectF rcPaint)
+void CHeaderSortCell::PaintSortMark(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	std::array<CPointF,3> arPoint;
 
@@ -69,7 +69,7 @@ void CSortCell::PaintSortMark(CDirect2DWrite* pDirect, CRectF rcPaint)
 	pDirect->DrawSolidLine(line, arPoint[2], arPoint[0]);
 }
 
-CSizeF CSortCell::GetSortSize()const
+CSizeF CHeaderSortCell::GetSortSize()const
 {
 	switch(m_pColumn->GetSort()){
 	case Sorts::Up:
@@ -84,7 +84,7 @@ CSizeF CSortCell::GetSortSize()const
 
 }
 
-CSizeF CSortCell::MeasureContentSize(CDirect2DWrite* pDirect)
+CSizeF CHeaderSortCell::MeasureContentSize(CDirect2DWrite* pDirect)
 {
 	CSizeF size = CTextCell::MeasureContentSize(pDirect);
 	CSizeF sizeTri = GetSortSize();
@@ -95,7 +95,7 @@ CSizeF CSortCell::MeasureContentSize(CDirect2DWrite* pDirect)
 	return size;
 }
 
-CSizeF CSortCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
+CSizeF CHeaderSortCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 {
 	CSizeF size = CTextCell::MeasureContentSizeWithFixedWidth(pDirect);
 	CSizeF sizeTri = GetSortSize();
@@ -106,7 +106,7 @@ CSizeF CSortCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 	return size;
 }
 
-void CSortCell::OnLButtonClk(const LButtonClkEvent& e)
+void CHeaderSortCell::OnLButtonClk(const LButtonClkEvent& e)
 {
 	//Get current Sort before all reset 
 	auto sort = m_pColumn->GetSort();

@@ -19,8 +19,8 @@ protected:
 	mutable sigslot::connection m_conDelayUpdateAction;
 
 public:
-	CFileNameCellBase(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit){ }
+	CFileNameCellBase(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+		:CTextCell(pSheet, pRow, pColumn, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit){ }
 	virtual ~CFileNameCellBase() = default;
 protected:
 	std::shared_ptr<CShellFile> GetShellFile()
@@ -84,7 +84,7 @@ public:
 		}
 
 		//Space
-		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
+		FLOAT space = GetPadding().left + GetPadding().right;
 
 		//Paint Text
 		CRectF rcText(rcPaint.left + size + space, rcPaint.top, rcPaint.right, rcPaint.bottom);
@@ -96,11 +96,11 @@ public:
 		//Calc Icon Size
 		CSizeF imageSize(this->GetImageSizeF(), this->GetImageSizeF());
 		//Space
-		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
+		FLOAT space = GetPadding().left + GetPadding().right;
 		//Calc Text Size
 		CRectF rcCenter(0, 0, m_pColumn->GetWidth(), 0);
 		CRectF rcContent(InnerBorder2Content(CenterBorder2InnerBorder(rcCenter)));
-		CSizeF textSize = pDirect->CalcTextSizeWithFixedWidth(*(m_spCellProperty->Format), GetViewString(), rcContent.Width() - imageSize.width - space);
+		CSizeF textSize = pDirect->CalcTextSizeWithFixedWidth(GetFormat(), GetViewString(), rcContent.Width() - imageSize.width - space);
 		//Return
 		return CSizeF(imageSize.width + space + textSize.width, (std::max)(imageSize.height, textSize.height));
 	}
@@ -110,9 +110,9 @@ public:
 		//Calc Icon Size
 		CSizeF imageSize(this->GetImageSizeF(), this->GetImageSizeF());
 		//Space
-		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
+		FLOAT space = GetPadding().left + GetPadding().right;
 		//Calc Text Size
-		CSizeF textSize = pDirect->CalcTextSize(*(m_spCellProperty->Format), GetViewString());
+		CSizeF textSize = pDirect->CalcTextSize(GetFormat(), GetViewString());
 		//Return
 		return CSizeF(imageSize.width + space + textSize.width, (std::max)(imageSize.height, textSize.height));
 	}
@@ -122,7 +122,7 @@ public:
 		//Icon Size
 		CSizeF imageSize(this->GetImageSizeF(), this->GetImageSizeF());
 		//Space
-		FLOAT space = m_spCellProperty->Padding->left + m_spCellProperty->Padding->right;
+		FLOAT space = GetPadding().left + GetPadding().right;
 		//Edit Rect
 		CRectF rcEdit(GetRectInWnd());
 		rcEdit.left += imageSize.width + space;
@@ -211,8 +211,8 @@ template<typename T>
 class CFileRenameCell :public CTextCell
 {
 public:
-	CFileRenameCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
+	CFileRenameCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+		:CTextCell(pSheet, pRow, pColumn, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
 	{
 	}
 

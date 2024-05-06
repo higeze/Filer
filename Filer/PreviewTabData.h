@@ -18,6 +18,11 @@ struct PreviewTabData :public TabData
 
 	virtual ~PreviewTabData() = default;
 
+	PreviewTabData(const PreviewTabData& other)
+		:PreviewTabData(other.Doc->GetPath()){}
+
+	virtual std::shared_ptr<TabData> ClonePtr() const override { return std::make_shared<PreviewTabData>(*this); }
+
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
 		PreviewTabData,
 		Doc)

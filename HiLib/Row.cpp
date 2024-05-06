@@ -31,11 +31,12 @@ FLOAT CRow::GetLength()
 FLOAT CRow::GetVirtualLength()
 {
 	if (!m_isVirtualMeasureValid) {
+		std::shared_ptr<CCell> cell = m_pGrid->Cell<VisTag>(GetIndex<VisTag>() + m_pGrid->GetFrozenCount<RowTag>(), m_pGrid->GetFrozenCount<ColTag>());
 		m_length =
-			m_pGrid->GetWndPtr()->GetDirectPtr()->GetVirtualHeight(*(m_pGrid->GetCellProperty()->Format)) +
-			m_pGrid->GetCellProperty()->Line->Width * 0.5f * 2.f +
-			m_pGrid->GetCellProperty()->Padding->top +
-			m_pGrid->GetCellProperty()->Padding->bottom;
+			m_pGrid->GetWndPtr()->GetDirectPtr()->GetVirtualHeight(cell->GetFormat()) +
+			cell->GetNormalBorder().Width * 0.5f * 2.f +
+			cell->GetPadding().top +
+			cell->GetPadding().bottom;
 		m_isVirtualMeasureValid = true;
 	}
 	return m_length;
@@ -79,19 +80,21 @@ void CRow::OnPropertyChanged(const wchar_t* name)
 	m_pGrid->OnRowPropertyChanged(this, name);
 }
 
-void CRow::RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc)
-{
-	pDirect->FillSolidRectangle(*(m_spCellProperty->NormalFill), rc);
-}
+//void CRow::RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc)
+//{
+//	auto cell = m_pGrid->Cell<VisTag>(GetIndex<VisTag>() + m_pGrid->GetFrozenCount<RowTag>(), m_pGrid->GetFrozenCount<ColTag>());
+//	pDirect->FillSolidRectangle(cell->GetNormalBackground(), rc);
+//}
 
-void CRow::RenderHighlight(CDirect2DWrite* pDirect, const CRectF& rc)
-{
-	if (GetIsSelected() && m_pGrid->GetIsFocused()) {
-		pDirect->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rc);
-	} else if (GetIsSelected()) {
-		pDirect->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rc);
-	}
-}
+//void CRow::RenderHighlight(CDirect2DWrite* pDirect, const CRectF& rc)
+//{
+//	auto cell = m_pGrid->Cell<VisTag>(GetIndex<VisTag>() + m_pGrid->GetFrozenCount<RowTag>(), m_pGrid->GetFrozenCount<ColTag>());
+//	if (GetIsSelected() && m_pGrid->GetIsFocused()) {
+//		pDirect->FillSolidRectangle(cell->GetSelectedOverlay(), rc);
+//	} else if (GetIsSelected()) {
+//		pDirect->FillSolidRectangle(cell->GetUnfocusSelectedOverlay(), rc);
+//	}
+//}
 
 //void CRow::OnPaint(const PaintEvent& e)
 //{

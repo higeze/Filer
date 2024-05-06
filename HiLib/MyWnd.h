@@ -404,7 +404,7 @@ public:
 	BOOL InvalidateRect(const RECT *lpRect,BOOL bErase){return ::InvalidateRect(m_hWnd,lpRect,bErase);}
 	std::optional<CPoint> ClientToScreen(CPoint pt)
 	{
-		if (::ClientToScreen(m_hWnd, pt)) {
+		if (::ClientToScreen(m_hWnd, &pt)) {
 			return pt;
 		} else {
 			return std::nullopt;
@@ -477,7 +477,7 @@ public:
 	std::optional<CPoint> ScreenToClient(CPoint ptScreen)
 	{
 		CPoint ptClient(ptScreen);
-		if (::ScreenToClient(m_hWnd, ptClient)) {
+		if (::ScreenToClient(m_hWnd, &ptClient)) {
 			return ptClient;
 		} else {
 			return CPoint();
@@ -911,7 +911,7 @@ public:
 
 	void SetRect(const CRect& rc)
 	{
-		SendMessage(EM_SETRECT,0,(LPARAM)(LPCRECT)rc);
+		SendMessage(EM_SETRECT,0,(LPARAM)(LPCRECT)&rc);
 	}
 
 	DWORD SetMargins(UINT uLeft, UINT uRight)

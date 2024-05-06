@@ -34,9 +34,8 @@ public:
 	template<typename... TArgs>
 	CFilerBindGridView(
 		CD2DWControl* pParentControl = nullptr,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp = nullptr,
 		TArgs... args)
-		:base(pParentControl, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp), args...)
+		:base(pParentControl, args...)
 	{
 		this->m_spItemDragger = std::make_shared<CFileDragger>();
 
@@ -46,9 +45,8 @@ public:
 	virtual ~CFilerBindGridView() = default;
 
 	//Getter
-	std::shared_ptr<FilerGridViewProperty> GetFilerGridViewPropPtr() { return std::static_pointer_cast<FilerGridViewProperty>(this->m_spGridViewProp); }
 	//virtual bool HasSheetCell()override { return false; }
-	virtual bool IsVirtualPage()override { return true; }
+	virtual bool IsVirtualPage()override { return false; }
 
 	/**********/
 	/* Signal */

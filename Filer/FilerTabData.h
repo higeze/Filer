@@ -21,15 +21,19 @@ struct FilerTabData:public TabData
 
 	FilerTabData(const std::wstring& path);
 	FilerTabData(const std::shared_ptr<CShellFolder>& spFolder)
-		:TabData(), Folder(spFolder)/*, Path(spFolder->GetPath())*/{}
+		:TabData(), Folder(spFolder){}
+	FilerTabData(const FilerTabData& other)
+		:FilerTabData(other.Folder->GetPath()){}
 
 	virtual ~FilerTabData() = default;
 
-	FilerTabData(const FilerTabData& data)
-	{
-		//Path = data.Path;
-		Folder.set(data.Folder->Clone());
-	}
+	virtual std::shared_ptr<TabData> ClonePtr() const override { return std::make_shared<FilerTabData>(*this); }
+
+	//FilerTabData(const FilerTabData& data)
+	//{
+	//	//Path = data.Path;
+	//	Folder.set(data.Folder->Clone());
+	//}
 
 	friend void to_json(json& j, const FilerTabData& o)
 	{
@@ -49,7 +53,6 @@ struct FilerTabData:public TabData
 				o.Folder.set(sp);
 			} else {
 				o.Folder.set(CKnownFolderManager::GetInstance()->GetDesktopFolder());
-				//o.Path.set(o.Folder->GetPath());
 			}
 		}
 	}

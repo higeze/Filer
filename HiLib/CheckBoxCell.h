@@ -9,7 +9,7 @@ protected:
 	std::shared_ptr<int> Dummy;
 	CCheckBox m_checkBox;
 public:
-	CCheckBoxCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty);
+	CCheckBoxCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn);
 	virtual ~CCheckBoxCell() = default;
 
 	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override;

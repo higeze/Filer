@@ -1,6 +1,6 @@
 #pragma once
 #include "MapColumn.h"
-#include "SortCell.h"
+#include "HeaderSortCell.h"
 #include "FilterCell.h"
 #include "GridView.h"
 #include "FavoriteCell.h"
@@ -19,22 +19,22 @@ public:
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CCell>(m_pGrid, pRow, pColumn, m_pGrid->GetHeaderProperty());
+		return std::make_shared<CCell>(m_pGrid, pRow, pColumn);
 	}
 
 	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CSortCell>(m_pGrid, pRow, pColumn, m_pGrid->GetHeaderProperty(), arg<"text"_s>() = L"Icon");
+		return std::make_shared<CHeaderSortCell>(m_pGrid, pRow, pColumn, arg<"text"_s>() = L"Icon");
 	}
 
 	std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CFilterCell>(m_pGrid, pRow, pColumn, m_pGrid->GetFilterProperty());
+		return std::make_shared<CFilterCell>(m_pGrid, pRow, pColumn);
 	}
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CFavoriteCell<T>>(m_pGrid, pRow, pColumn, m_pGrid->GetCellProperty());
+		return std::make_shared<CFavoriteCell<T>>(m_pGrid, pRow, pColumn);
 	}
 
 	bool IsDragTrackable()const { return true; }

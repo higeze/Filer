@@ -96,7 +96,7 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageClipBitmap(
 	if (!m_pAtlasFullOrClipBitmap->Exist(key)) {
 		m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, CFPDFBitmap());
 		m_curClipKey.set(key);
-		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
+		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(FILE_LINE_FUNC, 0, funadd));
 		return false;
 	} else {
 		return m_pAtlasFullOrClipBitmap->DrawBitmap(pDirect, key, dstPoint);
@@ -129,7 +129,7 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageBitmap(
 	if (!m_pAtlasFullOrClipBitmap->Exist(key)) {
 		m_pAtlasFullOrClipBitmap->AddOrAssign(pDirect, key, CFPDFBitmap());
 		m_curKey.set(key);
-		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
+		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(FILE_LINE_FUNC, 0, funadd));
 		return false;
 	} else {
 		return m_pAtlasFullOrClipBitmap->DrawBitmap(pDirect, key, dstPoint);
@@ -159,7 +159,7 @@ bool CD2DPDFBitmapDrawer::DrawPDFPageBlurBitmap(
 	
 	if (!m_pAtlasBlurBitmap->Exist(key)) {
 		m_pAtlasBlurBitmap->AddOrAssign(pDirect, key, CFPDFBitmap());
-		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 10));
+		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(FILE_LINE_FUNC, 10, funadd));
 		return false;
 	} else {
 		return m_pAtlasBlurBitmap->DrawBitmap(pDirect, key, dstRect);

@@ -7,8 +7,8 @@ public:
 	/**
 	 *  Constructor
 	 */
-	CPathCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet,pRow, pColumn,spProperty, arg<"editmode"_s>() = EditMode::LButtonDownEdit){}
+	CPathCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+		:CTextCell(pSheet,pRow, pColumn, arg<"editmode"_s>() = EditMode::LButtonDownEdit){}
 	/**
 	 *  Destructor
 	 */

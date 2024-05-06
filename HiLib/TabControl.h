@@ -23,9 +23,6 @@ class CD2DWWindow;
 
 class CTabTemplate;
 
-struct TabControlProperty;
-struct TabHeaderControlProperty;
-
 struct TabData:public std::enable_shared_from_this<TabData>
 {
 	reactive_property_ptr<bool> Unlock;
@@ -34,6 +31,7 @@ struct TabData:public std::enable_shared_from_this<TabData>
 		:Unlock(true){}
 	virtual ~TabData() = default;
 
+	virtual std::shared_ptr<TabData> ClonePtr() const = 0;
 	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing);
 
 	//In case of REGISTER_POLYMORPHIC_RELATION, Base and Derived class have to be same function structure
@@ -66,7 +64,6 @@ public:
 	static CRectF FOCUS_PADDING;
 	
 private:
-	std::shared_ptr<TabHeaderControlProperty> m_spProp;
 	std::shared_ptr<CButton> m_spButton;
 
 	CSizeF m_size = CSizeF();
@@ -82,7 +79,25 @@ private:
 	bool m_isMeasureValid = false;
 
 public:
-	CTabHeaderControl(CTabControl* pTabControl, const std::shared_ptr<TabHeaderControlProperty>& spProp);
+	const SolidFill& GetNormalBackground() const override
+	{
+		const static SolidFill value(239.f / 255.f, 239.f / 255.f, 239.f / 255.f, 1.0f); return value;
+	}
+	const SolidFill& GetSelectedOverlay() const override
+	{
+		const static SolidFill value(255.f / 255.f, 255.f / 255.f, 255.f / 255.f, 1.0f); return value;
+	}
+	const SolidFill& GetUnfocusSelectedOverlay() const override
+	{
+		const static SolidFill value(247.f / 255.f, 247.f / 255.f, 247.f / 255.f, 1.0f); return value;
+	}
+	const SolidFill& GetHotOverlay() const override
+	{
+		const static SolidFill value(1.0f, 1.0f, 1.0f, 0.3f); return value;
+	}
+
+public:
+	CTabHeaderControl(CTabControl* pTabControl);
 	virtual ~CTabHeaderControl() = default;
 	bool GetMeasureValid()const { return m_isMeasureValid; }
 	void SetMeasureValid(const bool& b) { m_isMeasureValid = b; }
@@ -110,7 +125,6 @@ public:
 class CAddTabHeaderControl :public CD2DWControl
 {
 private:
-	std::shared_ptr<TabHeaderControlProperty> m_spProp;
 	std::shared_ptr<CButton> m_spButton;
 
 	CSizeF m_buttonSize = CSizeF();
@@ -122,7 +136,7 @@ private:
 	bool m_isMeasureValid = false;
 
 public:
-	CAddTabHeaderControl(CTabControl* pTabControl, const std::shared_ptr<TabHeaderControlProperty>& spProp);
+	CAddTabHeaderControl(CTabControl* pTabControl);
 	virtual ~CAddTabHeaderControl() = default;
 	bool GetMeasureValid()const { return m_isMeasureValid; }
 	void SetMeasureValid(const bool& b) { m_isMeasureValid = b; }
@@ -153,7 +167,6 @@ class CTabControl :public CD2DWControl
 	static CRectF MARGIN;
 
 protected:
-	std::shared_ptr<TabControlProperty> m_spProp;
 	index_vector<std::shared_ptr<CTabHeaderControl>> m_headers;
 	std::shared_ptr<CAddTabHeaderControl> m_addHeader;
 
@@ -171,8 +184,7 @@ public:
 	reactive_vector_ptr<std::shared_ptr<TabData>> ItemsSource;
 
 public:
-	CTabControl(CD2DWControl* pParentControl = nullptr,
-		const std::shared_ptr<TabControlProperty>& spProp = nullptr);
+	CTabControl(CD2DWControl* pParentControl = nullptr);
 	virtual ~CTabControl();
 
 	//Getter Setter
@@ -184,6 +196,9 @@ public:
 	virtual CRectF GetRectInWnd()const override { return m_rect; }
 	std::function<CRectF&()> GetContentRect;
 	std::function<CRectF&()> GetControlRect;
+
+
+	virtual void Arrange(const CRectF& rc) override;
 
 	/***************/
 	/* UI MessageÅ@*/

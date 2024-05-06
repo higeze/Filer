@@ -12,14 +12,11 @@
 /* CTextEditor */
 /***************/
 
-CEditor::CEditor(
-	CD2DWControl* pParentControl,
-	const std::shared_ptr<EditorProperty>& spProp)
+CEditor::CEditor(CD2DWControl* pParentControl)
 	:CD2DWControl(pParentControl),
-	m_spProp(spProp),
-	m_spFilterBox(std::make_shared<CTextBox>(this, spProp->EditorTextBoxPropPtr, L"")),
-	m_spTextBox(std::make_shared<CEditorTextBox>(this, spProp->EditorTextBoxPropPtr, L"")),
-	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr)),
+	m_spFilterBox(std::make_shared<CTextBox>(this, L"")),
+	m_spTextBox(std::make_shared<CEditorTextBox>(this, L"")),
+	m_spStatusBar(std::make_shared<CStatusBar>(this)),
 	Path(), Encoding(encoding_type::UNKNOWN), Status(FileStatus::None)
 {
 	m_spFilterBox->SetIsScrollable(false);
@@ -57,7 +54,7 @@ void CEditor::OnCreate(const CreateEvt& e)
 
 	Encoding.subscribe([this](const encoding_type& e)
 	{
-		m_spStatusBar->SetText(str2wstr(std::string(nameof::nameof_enum(e))));
+		m_spStatusBar->Text.set(str2wstr(std::string(nameof::nameof_enum(e))));
 	}, shared_from_this());
 
 	auto [rcFilter, rcText, rcStatus] = GetRects();

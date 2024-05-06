@@ -7,7 +7,7 @@
 #include "Cell.h"
 #include "CellProperty.h"
 #include "Row.h"
-#include "ParentHeaderCell.h"
+#include "HeaderCell.h"
 #include "MapColumn.h"
 #include "GridViewResource.h"
 #include "SheetCell.h"
@@ -39,13 +39,10 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 /* Default */
 /***********/
 CGridView::CGridView(
-	CD2DWControl* pParentControl,
-	const std::shared_ptr<GridViewProperty>& spGridViewProp)
+	CD2DWControl* pParentControl)
 	:CD2DWControl(pParentControl),
-	m_spGridViewProp(spGridViewProp),
-	m_spSheetProperty(spGridViewProp),
-	m_pVScroll(std::make_unique<CVScroll>(this, spGridViewProp->VScrollPropPtr)),
-	m_pHScroll(std::make_unique<CHScroll>(this, spGridViewProp->HScrollPropPtr)),
+	m_pVScroll(std::make_unique<CVScroll>(this)),
+	m_pHScroll(std::make_unique<CHScroll>(this)),
 	m_bSelected(false),
 	//m_bFocused(false),
 	m_pMachine(new CGridStateMachine(this)),
@@ -157,7 +154,7 @@ void CGridView::UpdateRow()
 {
 	if (!Visible()) { return; }
 
-	FLOAT top = GetRectInWnd().top + GetCellProperty()->Line->Width * 0.5f;
+	FLOAT top = GetRectInWnd().top + GetNormalBorder().Width * 0.5f;
 
 	//Headers
 	top = UpdateHeadersRow(top);
@@ -191,7 +188,7 @@ void CGridView::UpdateColumn()
 {
 	if (!Visible()) { return; }
 
-	FLOAT left = GetRectInWnd().left + GetCellProperty()->Line->Width * 0.5f;
+	FLOAT left = GetRectInWnd().left + GetNormalBorder().Width * 0.5f;
 
 	for (auto& colPtr : m_visCols) {
 		if (colPtr->GetIndex<VisTag>() == GetFrozenCount<ColTag>()) {
@@ -231,17 +228,17 @@ void CGridView::UpdateScrolls()
 	//Position scroll
 	CRectF rcVertical;
 	CRectF rcHorizontal;
-	FLOAT lineHalfWidth = GetCellProperty()->Line->Width * 0.5f;
+	FLOAT lineHalfWidth = GetNormalBorder().Width * 0.5f;
 
 	rcVertical.left = rcClient.right - ::GetSystemMetrics(SM_CXVSCROLL) - lineHalfWidth;
 	rcVertical.top = rcClient.top + lineHalfWidth;
 	rcVertical.right = rcClient.right - lineHalfWidth;
-	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetIsVisible()?(m_pHScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetIsVisible()?(m_pHScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 	m_pVScroll->OnRect(RectEvent(GetWndPtr(), rcVertical));
 
 	rcHorizontal.left= rcClient.left + lineHalfWidth;
 	rcHorizontal.top = rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
-	rcHorizontal.right = rcClient.right - (m_pVScroll->GetIsVisible()?(m_pVScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	rcHorizontal.right = rcClient.right - (m_pVScroll->GetIsVisible()?(m_pVScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
 	m_pHScroll->OnRect(RectEvent(GetWndPtr(), rcHorizontal));
 
@@ -496,7 +493,7 @@ void CGridView::OnCommandEditHeader(const CommandEvent& e)
 {
 	if(!m_rocoContextMenu.IsInvalid()){
 		if(m_rocoContextMenu.GetRowPtr()==GetNameHeaderRowPtr()){
-			if(auto pCell=std::dynamic_pointer_cast<CParentHeaderCell>(Cell(m_rocoContextMenu.GetRowPtr(), m_rocoContextMenu.GetColumnPtr()))){
+			if(auto pCell=std::dynamic_pointer_cast<CHeaderCell>(Cell(m_rocoContextMenu.GetRowPtr(), m_rocoContextMenu.GetColumnPtr()))){
 				pCell->OnEdit(Event());
 			}
 		}
@@ -639,7 +636,7 @@ void CGridView::EnsureVisibleCell(const std::shared_ptr<CCell>& pCell)
 			scroll = std::ceilf(scroll);
 
 			FLOAT top = UpdateCellsRow(rcPage.top - scroll, rcPage.top, rcPage.bottom);
-			//Scroll Virtical Range
+			//Scroll Vertical Range
 			if (IsVirtualPage()) {
 				m_pVScroll->SetScrollRange(0, GetCellsHeight());
 				m_pVScroll->SetScrollPage(rcPage.Height());
@@ -980,7 +977,7 @@ void CGridView::Normal_Paint(const PaintEvent& e)
 
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_spGridViewProp->BackgroundPropPtr->m_brush), GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
 
 	UpdateRowPaintDictionary();
 	UpdateColumnPaintDictionary();
@@ -1468,7 +1465,6 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 
 		SetEditPtr(std::make_shared<CCellTextBox>(
 			this,
-			pCell->GetCellPropertyPtr(),
 			pCell->GetString(),
 			pCell,
 			[pCell](const std::basic_string<TCHAR>& str) -> void {
@@ -1692,6 +1688,7 @@ void CGridView::Arrange(const CRectF& rc)
 
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
+	SubmitUpdate();
 }
 
 void CGridView::OnRect(const RectEvent& e)
@@ -1723,7 +1720,7 @@ void CGridView::OnPaint(const PaintEvent& e)
 void CGridView::OnMouseWheel(const MouseWheelEvent& e)
 {
 	m_keepEnsureVisibleFocusedCell = false;
-	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);
+	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetDeltaScroll() * e.Delta / WHEEL_DELTA);
 	SubmitUpdate();
 }
 
@@ -2306,13 +2303,13 @@ CPointF CGridView::GetFrozenPoint()
 	FLOAT x = 0;
 	FLOAT y = 0;
 	if (m_frozenRowCount == 0) {
-		y = GetRectInWnd().top + GetCellProperty()->Line->Width * 0.5f;
+		y = GetRectInWnd().top + GetNormalBorder().Width * 0.5f;
 	} else {
 		y = m_visRows[m_frozenRowCount - 1]->GetBottom();
 	}
 
 	if (m_frozenColumnCount == 0) {
-		x = GetRectInWnd().left + GetCellProperty()->Line->Width * 0.5f;
+		x = GetRectInWnd().left + GetNormalBorder().Width * 0.5f;
 	} else {
 		x = m_visCols[m_frozenColumnCount - 1]->GetRight();
 	}
@@ -2333,15 +2330,10 @@ CSizeF CGridView::MeasureSize()const
 
 	CRectF rc(left, top, right, bottom);
 
-	auto outerPenWidth = m_spSheetProperty->CellPropPtr->Line->Width/2.0f;
+	auto outerPenWidth = GetNormalBorder().Width * 0.5f;
 	rc.InflateRect(outerPenWidth, outerPenWidth);
 	return rc.Size();
 }
-
-
-
-
-
 
 //
 //void CGridView::OnCommand(const CommandEvent& e)

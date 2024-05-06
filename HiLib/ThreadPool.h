@@ -7,6 +7,7 @@
 #include <memory>
 #include <thread>
 #include <mutex>
+#include <shared_mutex>
 #include <condition_variable>
 #include <future>
 #include <functional>
@@ -15,42 +16,81 @@
 
 class CThreadPool
 {
-private:
-	// need to keep track of threads so we can join them
-	std::vector< std::thread > workers;
-	// the task queue
-	struct compare_task
+public:
+	struct CTask
 	{
-		bool operator()(const std::pair<std::function<void()>, int>& left, const std::pair<std::function<void()>, int>& right) {
-			return left.second < right.second;
-		};
+		std::string Name;
+		int Priority;
+		std::function<void()> Task;
+
+		template<typename F>
+		CTask(const std::string& name, const int& priority, F&& task)
+			:Name(name), Priority(priority),Task(std::forward<F>(task))
+		{}
+		//auto operator<=>(const CTask& rhs)
+		//{
+		//	return Priority <=> rhs.Priority;
+		//}
 	};
-	std::priority_queue<
-		std::pair<std::function<void()>, int>,
-		std::vector<std::pair<std::function<void()>, int>>,
-		CThreadPool::compare_task
-	> tasks;
-	// active thread count
-	std::atomic<int> activeCount = 0;
+private:
+	//struct compare_shared_task
+	//{
+	//	bool operator()(const std::shared_ptr<CTask>& left, const std::shared_ptr<CTask>& right) {
+	//		return left->Priority < right->Priority;
+	//	};
+	//};
+	using queued_container_type = std::vector<std::shared_ptr<CTask>>;
+	using running_container_type = std::vector<std::shared_ptr<CTask>>;
+private:
+	std::vector<std::thread> m_workers;
+	// the task queue
+
+
+	//std::priority_queue<
+	//	std::pair<std::function<void()>, int>,
+	//	std::vector<std::pair<std::function<void()>, int>>,
+	//	CThreadPool::compare_task
+	//> tasks;
+	mutable std::shared_mutex m_queued_mutex;
+	queued_container_type m_queued_tasks;
+
+	mutable std::shared_mutex m_running_mutex;
+	running_container_type m_running_tasks;
 
 	// synchronization
-	std::mutex queue_mutex;
-	std::condition_variable condition;
-	bool stop;
+	std::condition_variable_any m_condition;
+	bool m_stop;
 
 public:
 	CThreadPool(size_t = std::thread::hardware_concurrency());
 	~CThreadPool();
 
-
-	int GetTotalThreadCount() const { return workers.size(); }
-	int GetActiveThreadCount() const { return activeCount.load(); }
-	int GetQueuedTaskCount() const { return tasks.size(); }
-	std::thread::id GetThreadId(int n) { return workers[n].get_id(); }
+	int GetTotalThreadCount() const { return m_workers.size(); }
+	int GetRunnningTaskCount() const 
+	{ 
+		std::shared_lock<std::shared_mutex> lock(m_running_mutex);
+		return m_running_tasks.size();
+	}
+	int GetQueuedTaskCount() const
+	{
+		std::shared_lock<std::shared_mutex> lock(m_queued_mutex);
+		return m_queued_tasks.size();
+	}
+	std::thread::id GetThreadId(int n) { return m_workers[n].get_id(); }
+	const running_container_type& GetRunningTasks() const 
+	{
+		std::shared_lock<std::shared_mutex> lock(m_running_mutex);
+		return m_running_tasks;
+	}
+	const queued_container_type& GetQueuedTasks() const
+	{ 
+		std::shared_lock<std::shared_mutex> lock(m_queued_mutex);
+		return m_queued_tasks;
+	}
 
 // add new work item to the pool
 	template<class F, class... Args>
-	auto enqueue(F&& f, int priority, Args&&... args)
+	auto enqueue(const char* name, int&& priority, F&& f, Args&&... args)
 		-> std::future<typename std::invoke_result_t<F, Args...>>
 	{
 		using return_type = typename std::invoke_result_t<F, Args...>;
@@ -61,17 +101,25 @@ public:
 
 		std::future<return_type> res = task->get_future();
 		{
-			std::unique_lock<std::mutex> lock(queue_mutex);
+			std::lock_guard<std::shared_mutex> lock(m_queued_mutex);
 
 			// don't allow enqueueing after stopping the pool
-			if (stop)
+			if (m_stop) {
 				throw std::runtime_error("enqueue on stopped ThreadPool");
+			}
 
-			tasks.emplace([task]() { (*task)(); }, priority);
+			m_queued_tasks.push_back(std::make_shared<CTask>(name, priority, [task]() { (*task)(); }));
+			std::stable_sort(m_queued_tasks.begin(), m_queued_tasks.end(),
+				[](const std::shared_ptr<CTask>& left, const std::shared_ptr<CTask>& right) {
+					return left->Priority < right->Priority;
+				}
+			);
 		}
-		condition.notify_one();
+		m_condition.notify_one();
 		return res;
 	}
+
+	const std::wstring OutputString();
 
 	static CThreadPool* GetInstance();
 };

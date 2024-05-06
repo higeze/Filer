@@ -131,7 +131,7 @@ bool CD2DThumbnailDrawer::DrawThumbnailBitmap(
 	
 	if (!m_pAtlasBitmap->Exist(key)) {
 		m_pAtlasBitmap->AddOrAssign(pDirect, key, CComPtr<ID2D1Bitmap1>(nullptr));
-		m_futureGroup.emplace_back(CThreadPool::GetInstance()->enqueue(funadd, 0));
+		m_futureGroup.emplace_back(CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, funadd));
 		return false;
 	} else {
 		return m_pAtlasBitmap->DrawBitmap(pDirect, key, dstPoint);

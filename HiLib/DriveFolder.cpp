@@ -15,7 +15,7 @@ const std::wstring& CDriveFolder::GetDispExt() const
 	return m_optDispExt.value();
 }
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CDriveFolder::GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
+std::pair<ULARGE_INTEGER, FileSizeStatus> CDriveFolder::GetSize(const FileSizeArgs& spArgs, std::function<void()> changed)
 {
 	auto [avail, total, free] = GetSizes();
 	if (total.QuadPart == 0) {

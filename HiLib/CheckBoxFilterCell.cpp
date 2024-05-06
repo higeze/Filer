@@ -8,8 +8,8 @@
 //TOOD why constructor called 3 times
 //TODO filter should be OR
 
-CCheckBoxFilterCell::CCheckBoxFilterCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-	:CCell(pSheet, pRow, pColumn, spProperty), m_checkBoxes(), Dummy(std::make_shared<int>(0))
+CCheckBoxFilterCell::CCheckBoxFilterCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+	:CCell(pSheet, pRow, pColumn), m_checkBoxes(), Dummy(std::make_shared<int>(0))
 {
 
 	if (pColumn->GetFilter().size() == 1) {

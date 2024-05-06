@@ -16,7 +16,7 @@ std::shared_ptr<CCell>& CPathRow::Cell(CColumn* pCol)
 	//	return m_spHeaderCell;
 	} else {
 		if (!m_spPathCell) {
-			m_spPathCell = std::make_shared<CPathCell>(m_pGrid, this, pCol, m_pGrid->GetCellProperty());
+			m_spPathCell = std::make_shared<CPathCell>(m_pGrid, this, pCol);
 		}
 		return m_spPathCell;
 	}

@@ -24,9 +24,8 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CFavoritesGridView::CFavoritesGridView(
 	CD2DWControl* pParentControl,
-	const std::shared_ptr<GridViewProperty>& spGridViewProp,
 	const std::shared_ptr<CFavoritesProperty>& spFavoritesProp)
-	:CBindGridView(pParentControl, spGridViewProp,
+	:CBindGridView(pParentControl,
 		arg<"bindtype"_s>() = BindType::Row,
 	arg<"itemssource"_s>() = spFavoritesProp->Favorites,
 		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{std::make_shared<CFavoritesColumn<std::shared_ptr<CFavorite>>>(this)}),

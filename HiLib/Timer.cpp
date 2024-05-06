@@ -28,8 +28,7 @@ void CTimer::run(std::function<void()> action, const std::chrono::milliseconds& 
 			}
 			return;
 		};
-		m_future = CThreadPool::GetInstance()->enqueue(
-			fun, 0);
+		m_future = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, fun);
 
 	}
 }

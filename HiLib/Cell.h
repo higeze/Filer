@@ -3,9 +3,6 @@
 #include "SheetEnums.h"
 #include "named_arguments.h"
 
-struct CellProperty;
-class CRect;
-class CSize;
 class CGridView;
 class CCell;
 class CEmptyCell;
@@ -33,7 +30,6 @@ protected:
 	CGridView* m_pGrid;
 	CRow* m_pRow;
 	CColumn* m_pColumn;
-	std::shared_ptr<CellProperty> m_spCellProperty;
 
 	bool m_bSelected = false;
 	bool m_bChecked = false;
@@ -47,11 +43,10 @@ protected:
 public:
 	//Constructor
 	template<typename... Args>
-	CCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
+	CCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, Args... args)
 		:m_pGrid(pSheet),
 		m_pRow(pRow),
-		m_pColumn(pColumn),
-		m_spCellProperty(spProperty)
+		m_pColumn(pColumn)
 	{
 		m_isWrappable = ::get(arg<"iswrap"_s>(), args..., default_(true));
 	}
@@ -68,7 +63,6 @@ public:
 	virtual bool GetIsWrappable()const { return m_isWrappable; }
 	void SetFitMeasureValid(const bool& b) { m_isFitMeasureValid = b; }
 	void SetActMeasureValid(const bool& b) { m_isActMeasureValid = b; }
-	std::shared_ptr<CellProperty> GetCellPropertyPtr() { return m_spCellProperty; }
 
 	//Size, Rect method
 	virtual CSizeF GetInitSize(CDirect2DWrite* pDirect);

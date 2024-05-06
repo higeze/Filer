@@ -2,12 +2,9 @@
 #include "D2DWWindow.h"
 #include "D2DWControl.h"
 #include "Scroll.h"
-#include "ScrollProperty.h"
 #include "reactive_property.h"
 #include "reactive_command.h"
 #include "reactive_string.h"
-
-#include "PDFViewProperty.h"
 #include <msctf.h>
 
 #include <cstdlib>
@@ -39,8 +36,6 @@ class CD2DPDFBitmapDrawer;
 class CVScroll;
 class CHScroll;
 class CButton;
-struct ButtonProperty;
-struct TextBoxProperty;
 
 
 enum class InitialScaleMode
@@ -100,7 +95,6 @@ protected:
 public:
 	CPdfViewDlgBase(
 		CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
 		CPDFDoc& doc);
 	virtual ~CPdfViewDlgBase() = default;
 
@@ -125,8 +119,6 @@ protected:
 	std::shared_ptr<CTextBox> m_spParameter;
 public:
 	CPdfViewExtractDlg(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 		CPDFDoc& doc);
 	virtual ~CPdfViewExtractDlg() = default;
 	void OnCreate(const CreateEvt& e) override;
@@ -149,6 +141,12 @@ public:
 	/* Static */
 	/**********/
 public:
+	const SolidFill& GetFindHighlite() const
+	{
+		static const SolidFill value(244.f / 255, 167.f / 255, 33.f / 255, 100.f / 255); return value;
+	}
+
+public:
 	/************/
 	/* Reactive */
 	/************/
@@ -169,7 +167,6 @@ protected:
 	CPDFCaret m_caret;
 
 	CRectF m_rect;
-	std::shared_ptr<PdfViewProperty> m_pProp;
 
 	FLOAT m_prevScale;
 
@@ -191,7 +188,7 @@ protected:
 
 
 public:
-	CPdfView(CD2DWControl* pParentControl, const std::shared_ptr<PdfViewProperty>& pProp);
+	CPdfView(CD2DWControl* pParentControl);
 	virtual ~CPdfView();
 public:
 	FLOAT GetMinScale() const { return m_minScale; }

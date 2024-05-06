@@ -31,6 +31,11 @@ struct TextTabData :public TabData
 
 	virtual ~TextTabData() = default;
 
+	TextTabData(const TextTabData& other)
+		:TextTabData(other.Doc->GetPath()){}
+
+	virtual std::shared_ptr<TabData> ClonePtr() const override { return std::make_shared<TextTabData>(*this); }
+
 	void Open(HWND hWnd);
 	void OpenAs(HWND hWnd);
 

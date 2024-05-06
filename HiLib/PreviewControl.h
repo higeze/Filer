@@ -31,11 +31,10 @@ class CPreviewControl : public CD2DWHostWndControl
 protected:
 	std::unique_ptr<CPreviewWnd> m_pWnd;
 	//std::unique_ptr<CPreviewWindowsHooker> m_pHooker;
-	std::shared_ptr<PreviewControlProperty> m_pProp;
 	FARPROC m_previewProc;
 
 public:
-	CPreviewControl(CD2DWControl* pParentControl, const std::shared_ptr<PreviewControlProperty>& pProp);
+	CPreviewControl(CD2DWControl* pParentControl);
 	virtual ~CPreviewControl();
 public:
 	std::shared_ptr<int> Dummy;

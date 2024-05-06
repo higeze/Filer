@@ -71,6 +71,9 @@
     <Filter Include="HiLib\Network">
       <UniqueIdentifier>{e30c5da6-017b-461b-a047-68d77f42ef13}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Filer\Filer">
+      <UniqueIdentifier>{746eb198-836d-4695-88fc-cc09889a8819}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -104,46 +107,10 @@
     <ClInclude Include="DropSource.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="Favorite.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FavoritesColumn.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FavoritesGridView.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FavoritesProperty.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FileDragger.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FileExtCell.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FileIconCell.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FileLastWriteCell.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FileLastWriteColumn.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FilerGridView.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="FilerProperty.h">
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="FilerWnd.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FileSizeCell.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FileSizeColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="PathCell.h">
@@ -347,17 +314,8 @@
     <ClInclude Include="..\HiLib\MouseStateMachine.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="FavoritesItemDragger.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FavoriteCell.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\Debug.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="FilerTabGridView.h">
-      <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\ShowHideMenuItem.h">
       <Filter>Filer</Filter>
@@ -377,9 +335,6 @@
     <ClInclude Include="ViewProperty.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="FilerGridViewProperty.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\ResourceIDFactory.h">
       <Filter>HiLib</Filter>
     </ClInclude>
@@ -388,9 +343,6 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\Scroll.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="FileIconNameCell.h">
-      <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\Console.h">
       <Filter>HiLib</Filter>
@@ -452,7 +404,7 @@
     <ClInclude Include="..\HiLib\IBindSheet.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\SortCell.h">
+    <ClInclude Include="..\HiLib\HeaderSortCell.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\RowIndexCell.h">
@@ -461,16 +413,7 @@
     <ClInclude Include="..\HiLib\RowIndexColumn.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="FileOperationDlg.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FilerBindGridView.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="RenameInfo.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
-    <ClInclude Include="FileColumn.h">
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\StatusBar.h">
@@ -993,11 +936,98 @@
     <ClInclude Include="..\HiLib\FileTimeArgs.h">
       <Filter>HiLib\Shell</Filter>
     </ClInclude>
-    <ClInclude Include="FilerView.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="FolderHistory.h">
       <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\dependency_property.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskCheckBoxCell.h">
+      <Filter>Filer\ToDo</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskNameCell.h">
+      <Filter>Filer\ToDo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\HeaderCell.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ColoredTextBox.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\Performance.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\OutputTabControl.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\Grid.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\SplitContainer.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="FavoritesGridView.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FavoriteCell.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileColumn.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileDragger.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileExtCell.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileIconCell.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FavoritesColumn.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FavoritesItemDragger.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FavoritesProperty.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="Favorite.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileIconNameCell.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileLastWriteCell.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileLastWriteColumn.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileOperationDlg.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerBindGridView.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerGridView.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerGridViewProperty.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerTabGridView.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FilerView.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSizeCell.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSizeColumn.h">
+      <Filter>Filer\Filer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1007,25 +1037,10 @@
     <ClCompile Include="DropSource.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="Favorite.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FavoritesGridView.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileDragger.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="Filer.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="FilerGridView.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="FilerWnd.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="FileSizeCell.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="PathCell.cpp">
@@ -1106,9 +1121,6 @@
     <ClCompile Include="..\HiLib\SingletonMalloc.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="FilerTabGridView.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="..\HiLib\BoostPythonHelper.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
@@ -1172,7 +1184,7 @@
     <ClCompile Include="..\HiLib\MapColumn.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\SortCell.cpp">
+    <ClCompile Include="..\HiLib\HeaderSortCell.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\RowIndexCell.cpp">
@@ -1180,9 +1192,6 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\RowIndexColumn.cpp">
       <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="FileOperationDlg.cpp">
-      <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\StatusBar.cpp">
       <Filter>HiLib</Filter>
@@ -1479,11 +1488,59 @@
     <ClCompile Include="..\HiLib\NetworkMessanger.cpp">
       <Filter>HiLib\Network</Filter>
     </ClCompile>
+    <ClCompile Include="TaskCheckBoxCell.cpp">
+      <Filter>Filer\ToDo</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskDueDateCell.cpp">
+      <Filter>Filer\ToDo</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskMemoCell.cpp">
+      <Filter>Filer\ToDo</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskNameCell.cpp">
+      <Filter>Filer\ToDo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\HeaderCell.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ColoredTextBox.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Performance.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\Grid.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\SplitContainer.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="FavoritesGridView.cpp">
+      <Filter>Filer\Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="FileDragger.cpp">
+      <Filter>Filer\Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="Favorite.cpp">
+      <Filter>Filer\Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="FileOperationDlg.cpp">
+      <Filter>Filer\Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="FilerGridView.cpp">
+      <Filter>Filer\Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="FilerTabGridView.cpp">
+      <Filter>Filer\Filer</Filter>
+    </ClCompile>
     <ClCompile Include="FilerView.cpp">
-      <Filter>Filer</Filter>
+      <Filter>Filer\Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSizeCell.cpp">
+      <Filter>Filer\Filer</Filter>
     </ClCompile>
     <ClCompile Include="FolderHistory.cpp">
-      <Filter>Filer</Filter>
+      <Filter>Filer\Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

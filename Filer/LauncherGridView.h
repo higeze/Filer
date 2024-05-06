@@ -13,7 +13,6 @@ private:
 public:
 	CLauncherGridView(
 		CD2DWControl* pParentControl = nullptr, 
-		const std::shared_ptr<GridViewProperty>& spGridViewProp = nullptr,
 		const std::shared_ptr<CLauncherProperty>& spLauncherProp = nullptr);
 	
 	virtual ~CLauncherGridView(void) = default;

@@ -28,8 +28,8 @@ bool TabData::AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing)
 /*********************/
 CRectF CTabHeaderControl::FOCUS_PADDING = CRectF(2.f, 2.f, 2.f, 0.f);
 
-CTabHeaderControl::CTabHeaderControl(CTabControl* pTabControl, const std::shared_ptr<TabHeaderControlProperty>& spProp)
-	:CD2DWControl(pTabControl),m_spProp(spProp), m_spButton(std::make_shared<CButton>(this, spProp->ButtonProp))
+CTabHeaderControl::CTabHeaderControl(CTabControl* pTabControl)
+	:CD2DWControl(pTabControl), m_spButton(std::make_shared<CButton>(this))
 {
 	IsFocusable.set(false);
 }
@@ -50,14 +50,14 @@ std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> CTabHeaderControl::MeasureSizes()
 	auto iterHeader = pTabControl->m_itemsHeaderTemplate.find(typeid(*pItem).name());
 	if (iterHeader != pTabControl->m_itemsHeaderTemplate.end() && GetWndPtr()->GetDirectPtr()) {
 		auto text = iterHeader->second.operator()(pItem);
-		textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(m_spProp->Format, text);
+		textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), text);
 	}
 
 	auto size = CSizeF(
-			m_spProp->Padding.left + iconSize.width + m_spProp->Padding.right
-			+ (std::max)(textSize.width, m_minWidth) + m_spProp->Padding.right
-			+ buttonSize.width + m_spProp->Padding.right,
-			m_spProp->Padding.top + textSize.height + m_spProp->Padding.bottom);
+			GetPadding().left + iconSize.width + GetPadding().right
+			+ (std::max)(textSize.width, m_minWidth) + GetPadding().right
+			+ buttonSize.width + GetPadding().right,
+			GetPadding().top + textSize.height + GetPadding().bottom);
 
 	return { iconSize, textSize, buttonSize, size};
 }
@@ -66,7 +66,9 @@ std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> CTabHeaderControl::GetSizes()
 {
 	if (!m_isMeasureValid) {
 		auto [iconSize, textSize, buttonSize, size] = MeasureSizes();
-		m_iconSize = iconSize; m_textSize = textSize; m_buttonSize = buttonSize; m_size = size;
+		m_iconSize = iconSize; m_textSize = textSize; 
+		m_buttonSize = buttonSize + CSizeF(m_spButton->GetMargin().left + m_spButton->GetMargin().right, m_spButton->GetMargin().top + m_spButton->GetMargin().bottom);
+		m_size = size;
 		if (m_textSize.width && m_textSize.height ) {
 			m_isMeasureValid = true;
 		}
@@ -86,9 +88,9 @@ std::tuple<CRectF, CRectF, CRectF, CRectF> CTabHeaderControl::GetRects()
 	auto iconRect = CRectF(iconSize);
 	auto textRect = CRectF(textSize);
 	auto buttonRect = CRectF(buttonSize);
-	iconRect.MoveToXY(rc.left + m_spProp->Padding.left, rc.top + m_spProp->Padding.top );
-	textRect.MoveToXY(iconRect.right + m_spProp->Padding.left, rc.top + m_spProp->Padding.top );
-	buttonRect.MoveToXY(rc.right - m_spProp->Padding.right - buttonSize.width, rc.top + m_spProp->Padding.top );
+	iconRect.MoveToXY(rc.left + GetPadding().left, rc.top + GetPadding().top );
+	textRect.MoveToXY(iconRect.right + GetPadding().left, rc.top + GetPadding().top );
+	buttonRect.MoveToXY(rc.right - buttonSize.width, rc.top);
 
 	return { iconRect, textRect, buttonRect, rc };
 }
@@ -132,24 +134,24 @@ void CTabHeaderControl::OnPaint(const PaintEvent& e)
 		rect += FOCUS_PADDING;
 	}
 	auto bkgndFill = GetIsSelected() ?
-		(pTabControl->GetIsFocused() ?
-			pTabControl->m_spProp->SelectedFill :
-			pTabControl->m_spProp->UnfocusSelectedFill) :
-		pTabControl->m_spProp->NormalFill;
+		(GetIsFocused() ?
+			GetSelectedOverlay() :
+			GetUnfocusSelectedOverlay()) :
+		GetNormalBackground();
 
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(bkgndFill, rect);
 
 	if (auto pt = GetWndPtr()->GetDirectPtr()->Pixels2Dips(GetWndPtr()->GetCursorPosInClient()); rect.PtInRect(pt)) {
-		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(pTabControl->m_spProp->HotFill, rect);
+		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetHotOverlay(), rect);
 	}
-	GetWndPtr()->GetDirectPtr()->DrawSolidLine(pTabControl->m_spProp->Line, CPointF(rect.left, rect.bottom), rect.LeftTop());
-	GetWndPtr()->GetDirectPtr()->DrawSolidLine(pTabControl->m_spProp->Line, rect.LeftTop(), CPointF(rect.right, rect.top));
-	GetWndPtr()->GetDirectPtr()->DrawSolidLine(pTabControl->m_spProp->Line, CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom));
+	GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), CPointF(rect.left, rect.bottom), rect.LeftTop());
+	GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), rect.LeftTop(), CPointF(rect.right, rect.top));
+	GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom));
 
-	if (GetIndex() == *pTabControl->SelectedIndex) {
-		GetWndPtr()->GetDirectPtr()->DrawSolidLine(bkgndFill.Color, pTabControl->m_spProp->Line.Width, CPointF(rect.left, rect.bottom), CPointF(rect.right, rect.bottom));
+	if (GetIsSelected()) {
+		GetWndPtr()->GetDirectPtr()->DrawSolidLine(bkgndFill.Color, GetNormalBorder().Width, CPointF(rect.left, rect.bottom), CPointF(rect.right, rect.bottom));
 	} else {
-		GetWndPtr()->GetDirectPtr()->DrawSolidLine(pTabControl->m_spProp->Line, CPointF(rect.left, rect.bottom), CPointF(rect.right, rect.bottom));
+		GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), CPointF(rect.left, rect.bottom), CPointF(rect.right, rect.bottom));
 	}
 
 	auto iterIcon = pTabControl->m_itemsHeaderIconTemplate.find(typeid(*pTabControl->ItemsSource->at(GetIndex())).name());
@@ -158,7 +160,7 @@ void CTabHeaderControl::OnPaint(const PaintEvent& e)
 	auto iterText = pTabControl->m_itemsHeaderTemplate.find(typeid(*pTabControl->ItemsSource->at(GetIndex())).name());
 	auto text = iterText->second.operator()(pTabControl->ItemsSource->at(GetIndex()));
 	if (!text.empty()) {
-		GetWndPtr()->GetDirectPtr()->DrawTextLayout(m_spProp->Format, text, textRect);
+		GetWndPtr()->GetDirectPtr()->DrawTextLayout(GetFormat(), text, textRect);
 	}
 
 	m_spButton->OnPaint(e);
@@ -178,8 +180,8 @@ void CTabHeaderControl::OnLButtonDown(const LButtonDownEvent& e)
 /* CAddTabHeaderControl */
 /************************/
 
-CAddTabHeaderControl::CAddTabHeaderControl(CTabControl* pTabControl, const std::shared_ptr<TabHeaderControlProperty>& spProp)
-	:CD2DWControl(pTabControl),m_spProp(spProp), m_spButton(std::make_shared<CButton>(this, spProp->ButtonProp))
+CAddTabHeaderControl::CAddTabHeaderControl(CTabControl* pTabControl)
+	:CD2DWControl(pTabControl), m_spButton(std::make_shared<CButton>(this))
 {
 	IsFocusable.set(false);
 }
@@ -191,11 +193,8 @@ bool CAddTabHeaderControl::GetIsSelected()const
 
 std::tuple<CSizeF, CSizeF> CAddTabHeaderControl::MeasureSizes()
 {
-	auto buttonSize = CSizeF(16.f, 16.f);
-
-	auto size = CSizeF(
-			m_spProp->Padding.left + buttonSize.width + m_spProp->Padding.right,
-			m_spProp->Padding.top + buttonSize.height + m_spProp->Padding.bottom);
+	auto buttonSize = CSizeF(16.f, 16.f) + CSizeF(m_spButton->GetMargin().left + m_spButton->GetMargin().right, m_spButton->GetMargin().top + m_spButton->GetMargin().bottom);
+	auto size = buttonSize;
 
 	return {buttonSize, size};
 }
@@ -204,7 +203,8 @@ std::tuple<CSizeF, CSizeF> CAddTabHeaderControl::GetSizes()
 {
 	if (!m_isMeasureValid) {
 		auto [buttonSize, size] = MeasureSizes();
-		m_buttonSize = buttonSize; m_size = size;
+		m_buttonSize = buttonSize;
+		m_size = size;
 		m_isMeasureValid = true;
 	}
 	return { m_buttonSize, m_size };
@@ -220,7 +220,7 @@ std::tuple<CRectF, CRectF> CAddTabHeaderControl::GetRects()
 	auto rc = GetRectInWnd();
 	auto [buttonSize, size] = GetSizes();
 	auto buttonRect = CRectF(buttonSize);
-	buttonRect.MoveToXY(rc.left + m_spProp->Padding.left, rc.top + m_spProp->Padding.top);
+	buttonRect.MoveToXY(rc.left, rc.top);
 
 	return { buttonRect, rc };
 }
@@ -257,19 +257,19 @@ void CAddTabHeaderControl::OnPaint(const PaintEvent& e)
 	auto [buttonRect, rect] = GetRects();
 	auto bkgndFill = GetIsSelected() ?
 		(pTabControl->GetIsFocused() ?
-			pTabControl->m_spProp->SelectedFill :
-			pTabControl->m_spProp->UnfocusSelectedFill) :
-		pTabControl->m_spProp->NormalFill;
+			GetSelectedOverlay() :
+			GetUnfocusSelectedOverlay()) :
+		GetNormalBackground();
 
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(bkgndFill, rect);
 
 	if (auto pt = GetWndPtr()->GetDirectPtr()->Pixels2Dips(GetWndPtr()->GetCursorPosInClient()); rect.PtInRect(pt)) {
-		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(pTabControl->m_spProp->HotFill, rect);
+		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetHotOverlay(), rect);
 	}
-	GetWndPtr()->GetDirectPtr()->DrawSolidLine(pTabControl->m_spProp->Line, CPointF(rect.left, rect.bottom), rect.LeftTop());
-	GetWndPtr()->GetDirectPtr()->DrawSolidLine(pTabControl->m_spProp->Line, rect.LeftTop(), CPointF(rect.right, rect.top));
-	GetWndPtr()->GetDirectPtr()->DrawSolidLine(pTabControl->m_spProp->Line, CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom));
-	GetWndPtr()->GetDirectPtr()->DrawSolidLine(pTabControl->m_spProp->Line, CPointF(rect.left, rect.bottom), CPointF(rect.right, rect.bottom));
+	GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), CPointF(rect.left, rect.bottom), rect.LeftTop());
+	GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), rect.LeftTop(), CPointF(rect.right, rect.top));
+	GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom));
+	GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), CPointF(rect.left, rect.bottom), CPointF(rect.right, rect.bottom));
 
 	m_spButton->OnPaint(e);
 }
@@ -327,10 +327,10 @@ struct CTabControl::Machine
 /***************/
 //This should be called after Machine declared.
 
-CTabControl::CTabControl(CD2DWControl* pParentControl, const std::shared_ptr<TabControlProperty>& spProp)
-	:CD2DWControl(pParentControl), m_spProp(spProp), SelectedIndex(-1), 
+CTabControl::CTabControl(CD2DWControl* pParentControl)
+	:CD2DWControl(pParentControl), SelectedIndex(-1), 
 	m_headers([](std::shared_ptr<CTabHeaderControl>& sp, size_t idx) { sp->SetIndex(idx); }),
-	m_addHeader(std::make_shared<CAddTabHeaderControl>(this, spProp->HeaderProperty)),
+	m_addHeader(std::make_shared<CAddTabHeaderControl>(this)),
 	m_pMachine(new boost::sml::sm<Machine>{ this }),
 	m_dragFrom(-1), m_dragTo(-1)
 {}
@@ -439,7 +439,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 			switch (notify.action) {
 				case notify_container_changed_action::push_back:
 				{
-					auto header = std::make_shared<CTabHeaderControl>(this, m_spProp->HeaderProperty);
+					auto header = std::make_shared<CTabHeaderControl>(this);
 					m_headers.idx_push_back(header);
 					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 					UpdateHeaderRects();
@@ -449,7 +449,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 				}
 				case notify_container_changed_action::insert:
 				{
-					auto header = std::make_shared<CTabHeaderControl>(this, m_spProp->HeaderProperty);
+					auto header = std::make_shared<CTabHeaderControl>(this);
 					m_headers.idx_insert(m_headers.cbegin() + notify.new_starting_index, header);
 					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 					UpdateHeaderRects();
@@ -477,7 +477,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 				{
 					m_headers[notify.new_starting_index]->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
 					m_headers.idx_erase(m_headers.cbegin() + notify.new_starting_index);
-					auto header = std::make_shared<CTabHeaderControl>(this, m_spProp->HeaderProperty);
+					auto header = std::make_shared<CTabHeaderControl>(this);
 					m_headers.idx_insert(m_headers.cbegin() + notify.new_starting_index, header);
 					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 					UpdateHeaderRects();
@@ -493,7 +493,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 						}
 						m_headers.clear();
 						for (auto& item : notify.new_items) {
-							auto header = std::make_shared<CTabHeaderControl>(this, m_spProp->HeaderProperty);
+							auto header = std::make_shared<CTabHeaderControl>(this);
 							m_headers.idx_push_back(header);
 							header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 						}
@@ -511,7 +511,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 	/* Headers */
 	/***********/
 	for (auto& item : *ItemsSource) {
-		auto header = std::make_shared<CTabHeaderControl>(this, m_spProp->HeaderProperty);
+		auto header = std::make_shared<CTabHeaderControl>(this);
 		m_headers.idx_push_back(header);
 		header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	}
@@ -558,7 +558,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 
 	GetControlRect = [rect = CRectF(), this]()mutable->CRectF&
 	{
-		rect = GetContentRect(); rect.DeflateRect(m_spProp->Padding);
+		rect = GetContentRect(); rect.DeflateRect(GetPadding());
 		return rect;
 	};
 }
@@ -570,7 +570,7 @@ void CTabControl::OnPaint(const PaintEvent& e)
 		//Content
 		const auto& contentRc = GetContentRect();
 		//GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetIsFocused()?m_spProp->SelectedFill:m_spProp->UnfocusSelectedFill, contentRc);
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(m_spProp->Line, contentRc);
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(GetNormalBorder(), contentRc);
 		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), contentRc.LeftTop(), CPointF(contentRc.left, contentRc.bottom));
 		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.left, contentRc.bottom), CPointF(contentRc.right, contentRc.bottom));
 		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.right, contentRc.bottom), CPointF(contentRc.right, contentRc.top));
@@ -620,15 +620,16 @@ void CTabControl::OnClosing(const ClosingEvent& e)
 	CD2DWControl::OnClosing(e);
 }
 
+void CTabControl::Arrange(const CRectF& rc)
+{
+	CD2DWControl::Arrange(rc);
+	UpdateHeaderRects();
+	if (m_spCurControl) { m_spCurControl->OnRect(RectEvent(GetWndPtr(), GetControlRect())); }
+}
+
 void CTabControl::OnRect(const RectEvent& e)
 { 
-	CD2DWControl::OnRect(e);
-	UpdateHeaderRects();
-	//GetContentRect().SetRect(0, 0, 0, 0);
-	//GetControlRect().SetRect(0, 0, 0, 0);
-	//if (m_spCurControl) { m_spCurControl->Arrange(GetControlRect()); }
-	if (m_spCurControl) { m_spCurControl->OnRect(RectEvent(GetWndPtr(), GetControlRect())); }
-
+	Arrange(e.Rect);
 }
 
 void CTabControl::OnContextMenu(const ContextMenuEvent& e)

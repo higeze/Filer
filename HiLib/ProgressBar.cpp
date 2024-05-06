@@ -2,14 +2,14 @@
 #include "D2DWWindow.h"
 #include <boost/lexical_cast.hpp>
 
-CProgressBar::CProgressBar(CD2DWControl* pParentControl, const std::shared_ptr<ProgressProperty>& spProgressProp)
-	:CD2DWControl(pParentControl), m_spStatusBarProp(spProgressProp){}
+CProgressBar::CProgressBar(CD2DWControl* pParentControl)
+	:CD2DWControl(pParentControl){}
 
 void CProgressBar::OnPaint(const PaintEvent& e)
 {
 	//Draw background
 	CRectF backRect(GetRectInWnd());
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->BackgroundFill, backRect);
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), backRect);
 
 	//Draw foreground
 	CRectF foreRect(
@@ -17,12 +17,12 @@ void CProgressBar::OnPaint(const PaintEvent& e)
 		backRect.top,
 		backRect.left + backRect.Width()*GetValue() / (GetMax() - GetMin()),
 		backRect.bottom);
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spStatusBarProp->ForegroundFill, foreRect);
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetForeground(), foreRect);
 
 	//Draw border
-	GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(m_spStatusBarProp->Border, backRect);
+	GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(GetNormalBorder(), backRect);
 
 	//Draw text
 	std::wstring text = boost::lexical_cast<std::wstring>(GetValue()) + L" /  " + boost::lexical_cast<std::wstring>(GetMax() - GetMin());
-	GetWndPtr()->GetDirectPtr()->DrawTextInRect(m_spStatusBarProp->Format, text, backRect);
+	GetWndPtr()->GetDirectPtr()->DrawTextInRect(GetFormat(), text, backRect);
 }

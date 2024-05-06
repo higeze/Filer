@@ -71,7 +71,7 @@ bool CImageDrawer::DrawClipBitmap(
 		::OutputDebugString(std::format(L"NOT EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
 			(LONG)(key.ImagePtr), key.Scale, key.Rect.left, key.Rect.top, key.Rect.right, key.Rect.bottom).c_str());
 		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, CComPtr<ID2D1Bitmap1>(nullptr));
-		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
+		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(FILE_LINE_FUNC, 0, funadd));
 		return false;
 	} else {
 		::OutputDebugString(std::format(L"EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
@@ -102,7 +102,7 @@ bool CImageDrawer::DrawClipBitmap(
 		::OutputDebugString(std::format(L"NOT EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
 			(LONG)(key.ImagePtr), key.Scale, key.Rect.left, key.Rect.top, key.Rect.right, key.Rect.bottom).c_str());
 		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, CComPtr<ID2D1Bitmap1>(nullptr));
-		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
+		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(FILE_LINE_FUNC, 0, funadd));
 		return false;
 	} else {
 		::OutputDebugString(std::format(L"EXIST: Page:{}, Scale:{}, Rect:{},{},{},{}\r\n",
@@ -126,7 +126,7 @@ bool CImageDrawer::DrawBitmap(
 	
 	if (!m_pAtlasClipBitmap->Exist(key)) {
 		m_pAtlasClipBitmap->AddOrAssign(pDirect, key, CComPtr<ID2D1Bitmap1>(nullptr));
-		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 0));
+		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(FILE_LINE_FUNC, 0, funadd));
 		return false;
 	} else {
 		return m_pAtlasClipBitmap->DrawBitmap(pDirect, key, dstPoint);
@@ -148,7 +148,7 @@ bool CImageDrawer::DrawBitmap(
 	
 	if (!m_pAtlasSmallBitmap->Exist(key)) {
 		m_pAtlasSmallBitmap->AddOrAssign(pDirect, key, CComPtr<ID2D1Bitmap1>(nullptr));
-		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(funadd, 10));
+		m_futureGroup.emplace_back(GetThreadPoolPtr()->enqueue(FILE_LINE_FUNC, 10, funadd));
 		return false;
 	} else {
 		return m_pAtlasSmallBitmap->DrawBitmap(pDirect, key, dstRect);

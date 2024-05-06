@@ -15,8 +15,15 @@ private:
 	mutable sigslot::connection m_conLastWriteChanged;
 
 public:
-	CFileLastWriteCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet, pRow, pColumn, spProperty)
+	virtual const FileTimeArgs& GetFileTimeArgs() const
+	{
+		static const FileTimeArgs value; return value;
+	}
+
+
+public:
+	CFileLastWriteCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+		:CTextCell(pSheet, pRow, pColumn)
 	{
 	}
 
@@ -43,7 +50,7 @@ public:
 				}
 			};
 
-			auto times = spFile->GetFileTimes((static_cast<const CFileLastWriteColumn<T>*>(this->m_pColumn))->GetTimeArgsPtr(), changed);
+			auto times = spFile->GetFileTimes(GetFileTimeArgs(), changed);
 			switch (times.second) {
 				case FileTimeStatus::None:
 					return L"-";

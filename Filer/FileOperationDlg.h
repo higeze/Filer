@@ -2,7 +2,6 @@
 #include "D2DWWindow.h"
 #include "D2DWDialog.h"
 #include "D2DWControl.h"
-#include "FilerGridViewProperty.h"
 #include "ShellFunction.h"
 #include "DeadlineTimer.h"
 #include "FilerBindGridView.h"
@@ -67,12 +66,10 @@ public:
 public:
 	CFileOperationDlgBase(
 		CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-		:CD2DWDialog(pParentControl, spDialogProp),
-		m_spButtonDo(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
-		m_spButtonCancel(std::make_shared<CButton>(this, std::make_shared<ButtonProperty>())),
+		:CD2DWDialog(pParentControl),
+		m_spButtonDo(std::make_shared<CButton>(this)),
+		m_spButtonCancel(std::make_shared<CButton>(this)),
 		m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs), Dummy(std::make_shared<int>(0))
 	{
 		m_spButtonCancel->Command.subscribe([this]()->void{
@@ -155,8 +152,6 @@ protected:
 	CIDL m_destIDL;
 public:
 	CCopyMoveDlgBase(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CCopyMoveDlgBase() = default;
 };
@@ -168,8 +163,6 @@ class CCopyDlg :public CCopyMoveDlgBase
 {
 public:
 	CCopyDlg(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CCopyDlg() = default;
 	void Copy();
@@ -182,8 +175,6 @@ class CMoveDlg :public CCopyMoveDlgBase
 {
 public:
 	CMoveDlg(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CMoveDlg() = default;
 	void Move();
@@ -196,8 +187,6 @@ class CDeleteDlg :public CSimpleFileOperationDlgBase<std::shared_ptr<CShellFile>
 {
 public:
 	CDeleteDlg(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	virtual ~CDeleteDlg() = default;
 	void Delete();
@@ -222,9 +211,6 @@ protected:
 
 public:
 	CExeExtensionDlg(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 		const std::shared_ptr<CShellFolder>& folder,
 		const std::vector<std::shared_ptr<CShellFile>>& files,
 		const ExeExtension& exeExtension);
@@ -246,9 +232,6 @@ protected:
 
 public:
 	CPDFOperationDlgBase(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 		const std::shared_ptr<CShellFolder>& folder,
 		const std::vector<std::shared_ptr<CShellFile>>& files);
 	virtual ~CPDFOperationDlgBase() = default;
@@ -261,9 +244,6 @@ class CPDFSplitDlg : public CPDFOperationDlgBase
 {
 public:
 	CPDFSplitDlg(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 		const std::shared_ptr<CShellFolder>& folder,
 		const std::vector<std::shared_ptr<CShellFile>>& files);
 	virtual ~CPDFSplitDlg() = default;
@@ -273,9 +253,6 @@ class CPDFMergeDlg : public CPDFOperationDlgBase
 {
 public:
 	CPDFMergeDlg(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 		const std::shared_ptr<CShellFolder>& folder,
 		const std::vector<std::shared_ptr<CShellFile>>& files);
 	virtual ~CPDFMergeDlg() = default;
@@ -285,9 +262,6 @@ class CPDFExtractDlg : public CPDFOperationDlgBase
 {
 public:
 	CPDFExtractDlg(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 		const std::shared_ptr<CShellFolder>& folder,
 		const std::vector<std::shared_ptr<CShellFile>>& files);
 	virtual ~CPDFExtractDlg() = default;
@@ -297,9 +271,6 @@ class CPDFUnlockDlg : public CPDFOperationDlgBase
 {
 public:
 	CPDFUnlockDlg(CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
-		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
 		const std::shared_ptr<CShellFolder>& folder,
 		const std::vector<std::shared_ptr<CShellFile>>& files);
 	virtual ~CPDFUnlockDlg() = default;

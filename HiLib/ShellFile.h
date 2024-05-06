@@ -125,11 +125,11 @@ public:
 
 	//LastWrite
 	std::optional<FileTimes> GetFileTimes();
-	virtual std::pair<FileTimes, FileTimeStatus> GetFileTimes(const std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed = nullptr);
+	virtual std::pair<FileTimes, FileTimeStatus> GetFileTimes(const FileTimeArgs& args, std::function<void()> changed = nullptr);
 
 	//Size
 	bool GetFileSize(ULARGE_INTEGER& size/*, std::shared_future<void> future*/);
-	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed = nullptr);
+	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(const FileSizeArgs& args, std::function<void()> changed = nullptr);
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> ReadSize();
 
 	//Icon

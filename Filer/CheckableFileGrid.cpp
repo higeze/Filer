@@ -52,8 +52,8 @@
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 extern HWND g_main;
 
-CCheckableFileGrid::CCheckableFileGrid(CD2DWControl* pParentControl, const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
-	:CFilerBindGridView(pParentControl, spFilerGridViewProp){}
+CCheckableFileGrid::CCheckableFileGrid(CD2DWControl* pParentControl)
+	:CFilerBindGridView(pParentControl){}
 
 
 void CCheckableFileGrid::OnCreate(const CreateEvt& e)
@@ -62,8 +62,8 @@ void CCheckableFileGrid::OnCreate(const CreateEvt& e)
 	CFilerBindGridView::OnCreate(e);
 
 	//Insert rows
-	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this, GetCellProperty());
-	m_pFilterRow = std::make_shared<CRow>(this, GetCellProperty());
+	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this);
+	m_pFilterRow = std::make_shared<CRow>(this);
 
 	m_allRows.idx_push_back(m_pNameHeaderRow);
 	m_allRows.idx_push_back(m_pFilterRow);
@@ -75,11 +75,11 @@ void CCheckableFileGrid::OnCreate(const CreateEvt& e)
 	if (m_allCols.empty()) {
 		//m_pNameColumn = std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
 		PushColumns(
-			std::make_shared<CRowIndexColumn>(this, GetHeaderProperty()),
+			std::make_shared<CRowIndexColumn>(this),
 			std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this, L"Name"),
 			std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"),
-			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr),
-			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
+			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this),
+			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this));
 
 		m_frozenColumnCount = 1;
 	}
@@ -120,7 +120,7 @@ void CCheckableFileGrid::OnCellLButtonDblClk(const CellEventArgs& e)
 
 void CCheckableFileGrid::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, bool isReload)
 {
-	auto pFilerWnd = new CD2DWSingleControlWnd<CFilerGridView>(std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp));
+	auto pFilerWnd = new CD2DWSingleControlWnd<CFilerGridView>();
 
 
 	pFilerWnd->RegisterClassExArgument()

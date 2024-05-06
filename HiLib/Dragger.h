@@ -152,7 +152,7 @@ public:
 			FLOAT cooyou1 = pSheet->GetContainer<TRCYou, VisTag>().back()->GetEnd();
 
 			//Paint DragLine
-			PaintLine(pSheet->GetWndPtr()->GetDirectPtr(), *(pSheet->GetHeaderProperty()->DragLine), coome, cooyou0, cooyou1);
+			PaintLine(pSheet->GetWndPtr()->GetDirectPtr(), pSheet->GetDragLine(), coome, cooyou0, cooyou1);
 		}
 
 
@@ -185,18 +185,18 @@ public:
 		//}
 	}
 
-	void PaintLine(CDirect2DWrite* pDirect, SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1) {}
+	void PaintLine(CDirect2DWrite* pDirect, const SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1) {}
 
 };
 
 template <>
-inline void CDragger<RowTag, ColTag>::PaintLine(CDirect2DWrite* pDirect, SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
+inline void CDragger<RowTag, ColTag>::PaintLine(CDirect2DWrite* pDirect, const SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
 {
 	pDirect->DrawSolidLine(line, CPointF(cooyou0, coome), CPointF(cooyou1, coome));
 }
 
 template <>
-inline void CDragger<ColTag, RowTag>::PaintLine(CDirect2DWrite* pDirect, SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
+inline void CDragger<ColTag, RowTag>::PaintLine(CDirect2DWrite* pDirect, const SolidLine& line, FLOAT coome, FLOAT cooyou0, FLOAT cooyou1)
 {
 	pDirect->DrawSolidLine(line, CPointF(coome, cooyou0), CPointF(coome, cooyou1));
 }

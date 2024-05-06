@@ -238,7 +238,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::ReadSize()
 }
 
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize(const FileSizeArgs& args, std::function<void()> changed)
 {
 	switch (m_size.second) {
 	case FileSizeStatus::None:
@@ -259,7 +259,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFile::GetSize(const std::shared_
 	return m_size;
 }
 
-std::pair<FileTimes, FileTimeStatus> CShellFile::GetFileTimes(const std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
+std::pair<FileTimes, FileTimeStatus> CShellFile::GetFileTimes(const FileTimeArgs& args, std::function<void()> changed)
 {
 	switch (m_fileTimes.second) {
 	case FileTimeStatus::None:

@@ -24,14 +24,14 @@ const std::wstring& CShellZipFolder::GetDispExt() const
 //	return CShellFile::GetIcon(changedAction);
 //}
 
-std::pair<FileTimes, FileTimeStatus> CShellZipFolder::GetFileTimes(const std::shared_ptr<FileTimeArgs>& spArgs, std::function<void()> changed)
+std::pair<FileTimes, FileTimeStatus> CShellZipFolder::GetFileTimes(const FileTimeArgs& args, std::function<void()> changed)
 {
-	return CShellFile::GetFileTimes(spArgs);
+	return CShellFile::GetFileTimes(args);
 }
 
-std::pair<ULARGE_INTEGER, FileSizeStatus> CShellZipFolder::GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed)
+std::pair<ULARGE_INTEGER, FileSizeStatus> CShellZipFolder::GetSize(const FileSizeArgs& args, std::function<void()> changed)
 {
-	return CShellFile::GetSize(spArgs);
+	return CShellFile::GetSize(args);
 }
 
 void CShellZipFolder::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd)

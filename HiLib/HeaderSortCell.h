@@ -1,11 +1,10 @@
 #pragma once
-
-#include "TextCell.h"
+#include "HeaderCell.h"
 #include "SheetEnums.h"
 #include "named_arguments.h"
 
 
-class CSortCell:public CTextCell
+class CHeaderSortCell:public CHeaderCell
 {
 private:
 	static const FLOAT TRIANGLE_WIDTH;
@@ -17,12 +16,12 @@ private:
 
 public:
 	template<typename... Args>
-	CSortCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::ReadOnly, args...)
+	CHeaderSortCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, Args... args)
+		:CHeaderCell(pSheet, pRow, pColumn, arg<"editmode"_s>() = EditMode::ReadOnly, args...)
 	{
 		m_text = ::get(arg<"text"_s>(), args..., default_(std::wstring()));
 	}
-	virtual ~CSortCell() = default;
+	virtual ~CHeaderSortCell() = default;
 
 	virtual std::wstring GetString() override { return m_text; }
 	virtual void SetStringCore(const std::wstring& str) override { m_text = str; }

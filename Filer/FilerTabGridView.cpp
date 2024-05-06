@@ -42,28 +42,14 @@
 /* FilerTabGridView */
 /********************/
 
-CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl, 
-	const std::shared_ptr<TabControlProperty>& spTabProp,
-	const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp, 
-	const std::shared_ptr<EditorProperty>& spEditorProp,
-	const std::shared_ptr<PDFEditorProperty>& spPdfEditorProp,
-	const std::shared_ptr<ImageEditorProperty>& spImageEditorProp,
-	const std::shared_ptr<PreviewControlProperty>& spPreviewControlProp)
-	:CTabControl(pParentControl, spTabProp), 
-	m_spFilerGridViewProp(spFilerGridViewProp),
-	m_spEditorProp(spEditorProp),
-	m_spPdfEditorProp(spPdfEditorProp),
-	m_spImageEditorProp(spImageEditorProp),
-	m_spPreviewControlProp(spPreviewControlProp),
-	m_spFilerView(std::make_shared<CFilerView>(this, spFilerGridViewProp, std::static_pointer_cast<TextBoxProperty>(spEditorProp->EditorTextBoxPropPtr))),
-	m_spTextView(std::make_shared<CEditor>(this, spEditorProp)),
-	m_spPdfView(std::make_shared<CPDFEditor>(this, spPdfEditorProp)),
-	m_spImageView(std::make_shared<CImageEditor>(this, spImageEditorProp)),
-	m_spToDoGridView(std::make_shared<CToDoGridView>(this, std::static_pointer_cast<GridViewProperty>(spFilerGridViewProp))),
-	m_spPreviewControl(std::make_shared<CPreviewControl>(this, spPreviewControlProp))
-
-{
-}
+CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl)
+	:CTabControl(pParentControl), 
+	m_spFilerView(std::make_shared<CFilerView>(this)),
+	m_spTextView(std::make_shared<CEditor>(this)),
+	m_spPdfView(std::make_shared<CPDFEditor>(this)),
+	m_spImageView(std::make_shared<CImageEditor>(this)),
+	m_spToDoGridView(std::make_shared<CToDoGridView>(this)),
+	m_spPreviewControl(std::make_shared<CPreviewControl>(this)){}
 
 CFilerTabGridView::~CFilerTabGridView() = default;
 
@@ -204,14 +190,14 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		m_filerConnections.clear();
 		
 		m_filerConnections.push_back(
-			GetFilerViewPtr()->GetGridViewPtr()->Folder.subscribe([&](auto value) { UpdateHeaderRects(); }, shared_from_this()),
-			spViewModel->Folder.binding(GetFilerViewPtr()->GetGridViewPtr()->Folder)
+			GetFilerViewPtr()->GetFileGridPtr()->Folder.subscribe([&](auto value) { UpdateHeaderRects(); }, shared_from_this()),
+			spViewModel->Folder.binding(GetFilerViewPtr()->GetFileGridPtr()->Folder)
 		);
-		//spView->GetGridViewPtr()->OpenFolder(pData->FolderPtr);
+		//spView->GetFileGridPtr()->OpenFolder(pData->FolderPtr);
 
 		GetFilerViewPtr()->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
-		GetFilerViewPtr()->GetGridViewPtr()->PostUpdate(Updates::All);
-		GetFilerViewPtr()->GetGridViewPtr()->SubmitUpdate();
+		GetFilerViewPtr()->GetFileGridPtr()->PostUpdate(Updates::All);
+		GetFilerViewPtr()->GetFileGridPtr()->SubmitUpdate();
 
 		return GetFilerViewPtr();
 	});
@@ -426,7 +412,7 @@ void CFilerTabGridView::OnCommandNewPdfTab()
 
 void CFilerTabGridView::OnCommandNewImageTab()
 {
-	ItemsSource.push_back(std::make_shared<ImageTabData>(GetWndPtr()->GetDirectPtr(), L""));
+	ItemsSource.push_back(std::make_shared<ImageTabData>(L""));
 	SelectedIndex.set(ItemsSource->size() - 1);
 }
 
@@ -440,26 +426,29 @@ void CFilerTabGridView::OnCommandNewPreviewTab()
 void CFilerTabGridView::OnCommandAddToFavorite()
 {
 	//TODOLOW Bad connection between FilerTabGridView and FavoritesView
-	if(auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())){
-		p->GetFavoritesPropPtr()->Favorites.push_back(std::make_shared<CFavorite>(std::static_pointer_cast<FilerTabData>(ItemsSource->at(*SelectedIndex))->Folder->GetPath(), L""));
-		p->GetLeftFavoritesView()->SubmitUpdate();
-		p->GetRightFavoritesView()->SubmitUpdate();
-	}
+
+	// TODOTODO
+	//if(auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())){
+	//	p->GetFavoritesPropPtr()->Favorites.push_back(std::make_shared<CFavorite>(std::static_pointer_cast<FilerTabData>(ItemsSource->at(*SelectedIndex))->Folder->GetPath(), L""));
+	//	p->GetLeftFavoritesView()->SubmitUpdate();
+	//	p->GetRightFavoritesView()->SubmitUpdate();
+	//}
 }
 
 void CFilerTabGridView::OnCommandOpenSameAsOther()
 {
 	//TODO Bad connection between FilerTabGridView and FavoritesView
-	if (auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())) {
-			
-		std::shared_ptr<CFilerTabGridView> otherView = (this == p->GetLeftWnd().get())? p->GetRightWnd(): p->GetLeftWnd();
-		
-		if (ItemsSource->at(*SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
-			ItemsSource.replace(ItemsSource.get_unconst()->begin() + *SelectedIndex, otherView->ItemsSource->at(*otherView->SelectedIndex));
-		} else {
-			ItemsSource.push_back(otherView->ItemsSource->at(*otherView->SelectedIndex));
-		}
-	}
+	// TODOTODO
+	//if (auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())) {
+	//		
+	//	std::shared_ptr<CFilerTabGridView> otherView = (this == p->GetLeftWnd().get())? p->GetRightWnd(): p->GetLeftWnd();
+	//	
+	//	if (ItemsSource->at(*SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
+	//		ItemsSource.replace(ItemsSource.get_unconst()->begin() + *SelectedIndex, otherView->ItemsSource->at(*otherView->SelectedIndex)->ClonePtr());
+	//	} else {
+	//		ItemsSource.push_back(otherView->ItemsSource->at(*otherView->SelectedIndex));
+	//	}
+	//}
 }
 
 

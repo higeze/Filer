@@ -68,7 +68,6 @@ protected:
 	FLOAT m_maxScale = 8.f;
 
 	CRectF m_rect;
-	std::shared_ptr<ImageViewProperty> m_pProp;
 
 	FLOAT m_prevScale;
 
@@ -81,7 +80,7 @@ protected:
 
 
 public:
-	CImageView(CD2DWControl* pParentControl, const std::shared_ptr<ImageViewProperty>& pProp);
+	CImageView(CD2DWControl* pParentControl);
 	virtual ~CImageView();
 public:
 	// Getter

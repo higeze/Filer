@@ -12,8 +12,8 @@ template<typename T>
 class CFileDispExtCell:public CTextCell
 {
 public:
-	CFileDispExtCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
+	CFileDispExtCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+		:CTextCell(pSheet, pRow, pColumn, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
 	{
 	}
 	virtual ~CFileDispExtCell(void){}
@@ -40,8 +40,8 @@ template<typename T>
 class CFilePathExtCell :public CTextCell
 {
 public:
-	CFilePathExtCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
+	CFilePathExtCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+		:CTextCell(pSheet, pRow, pColumn, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
 	{
 	}
 	virtual ~CFilePathExtCell() = default;
@@ -69,8 +69,8 @@ template<typename T>
 class CFileReextCell :public CTextCell
 {
 public:
-	CFileReextCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
+	CFileReextCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+		:CTextCell(pSheet, pRow, pColumn, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
 	{
 	}
 	virtual ~CFileReextCell() = default;

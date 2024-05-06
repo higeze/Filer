@@ -9,22 +9,17 @@
 #include "DialogProperty.h"
 
 
-CCalendarDialog::CCalendarDialog(
-	CD2DWControl* pParentControl,
-	const std::shared_ptr<DialogProperty>& spDialogProp,
-	const std::shared_ptr<CalendarControlProperty>& spCalendarProp,
-	const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
-	const std::shared_ptr<ButtonProperty>& spButtonProp)
-	:CD2DWDialog(pParentControl, spDialogProp), 
-	m_spCalendar(std::make_shared<CCalendarControl>(this, spCalendarProp)),
-	m_spYearTextBox(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
-	m_spMonthTextBox(std::make_shared<CTextBox>(this, spTextBoxProp, L"")),
-	m_spButtonPrev(std::make_shared<CButton>(this, spButtonProp)),
-	m_spButtonNext(std::make_shared<CButton>(this, spButtonProp)),
-	m_spButtonToday(std::make_shared<CButton>(this, spButtonProp)),
-	m_spButtonTomorrow(std::make_shared<CButton>(this, spButtonProp)),
-	m_spButtonBlank(std::make_shared<CButton>(this, spButtonProp)),
-	m_spButtonClose(std::make_shared<CButton>(this, spButtonProp))
+CCalendarDialog::CCalendarDialog(CD2DWControl* pParentControl)
+	:CD2DWDialog(pParentControl), 
+	m_spCalendar(std::make_shared<CCalendarControl>(this)),
+	m_spYearTextBox(std::make_shared<CTextBox>(this, L"")),
+	m_spMonthTextBox(std::make_shared<CTextBox>(this, L"")),
+	m_spButtonPrev(std::make_shared<CButton>(this)),
+	m_spButtonNext(std::make_shared<CButton>(this)),
+	m_spButtonToday(std::make_shared<CButton>(this)),
+	m_spButtonTomorrow(std::make_shared<CButton>(this)),
+	m_spButtonBlank(std::make_shared<CButton>(this)),
+	m_spButtonClose(std::make_shared<CButton>(this))
 {
 	m_spButtonPrev->Command.subscribe([this]()->void
 	{
@@ -215,7 +210,7 @@ void CCalendarDialog::OnPaint(const PaintEvent& e)
 {
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_spProp->BackgroundFill, GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
 
 	ProcessMessageToAll(&CD2DWControl::OnPaint, e);
 

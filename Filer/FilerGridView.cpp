@@ -94,8 +94,8 @@ CLIPFORMAT CFilerGridView::s_cf_renprivatemessages = ::RegisterClipboardFormat(L
     }
 
 
-CFilerGridView::CFilerGridView(CD2DWControl* pParentControl, const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp)
-	:CFilerBindGridView(pParentControl, spFilerGridViewProp), Dummy(std::make_shared<int>(0))
+CFilerGridView::CFilerGridView(CD2DWControl* pParentControl)
+	:CFilerBindGridView(pParentControl), Dummy(std::make_shared<int>(0))
 {
 	m_commandMap.emplace(IDM_SELECTALL, std::bind(&CFilerGridView::OnCommandSelectAll, this, phs::_1));
 	m_commandMap.emplace(IDM_CUT, std::bind(&CFilerGridView::OnCommandCut, this, phs::_1));
@@ -140,8 +140,8 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 
 	//Insert rows
 	//m_pHeaderRow = std::make_shared<CPathRow>(this, GetHeaderProperty());
-	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this, GetHeaderProperty());
-	m_pFilterRow = std::make_shared<CRow>(this, GetCellProperty());
+	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this);
+	m_pFilterRow = std::make_shared<CRow>(this);
 
 	//m_allRows.idx_push_back(m_pHeaderRow);
 	m_allRows.idx_push_back(m_pNameHeaderRow);
@@ -156,27 +156,20 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CRowIndexColumn); })) 
 		{ 
-			//m_pHeaderColumn = std::make_shared<CRowIndexColumn>(this, GetHeaderProperty());
-			//m_allCols.idx_push_back(m_pHeaderColumn);
-			m_allCols.idx_push_back(std::make_shared<CRowIndexColumn>(this, GetHeaderProperty()));
+			m_allCols.idx_push_back(std::make_shared<CRowIndexColumn>(this));
 		}
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); })) 
 		{ 
-			//m_pNameColumn = std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
-			//m_allCols.idx_push_back(m_pNameColumn);
 			m_allCols.idx_push_back(std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name"));
 		}
-		//if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); })) {
-		//	m_allCols.idx_push_back(std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this));
-		//}
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileDispExtColumn<std::shared_ptr<CShellFile>>); })) {
 			m_allCols.idx_push_back(std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"));
 		}
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileSizeColumn<std::shared_ptr<CShellFile>>); })) {
-			m_allCols.idx_push_back(std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileSizeArgsPtr));
+			m_allCols.idx_push_back(std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this));
 		}
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileLastWriteColumn<std::shared_ptr<CShellFile>>); })) {
-			m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this, GetFilerGridViewPropPtr()->FileTimeArgsPtr));
+			m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this));
 		}
 
 		m_frozenColumnCount = 1;
@@ -892,8 +885,6 @@ bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 {
 	auto pDlg = std::make_shared<CIncrementalCopyDlg>(
 		GetWndPtr(), 
-		static_cast<CFilerWnd*>(GetWndPtr())->GetDialogPropPtr(),
-		std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
 		destIDL, Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
 	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(400, 600))));
@@ -907,8 +898,6 @@ bool CFilerGridView::CopySelectedFilesTo(const CIDL& destIDL)
 	//Create
 	auto pDlg = std::make_shared<CCopyDlg>(
 		GetWndPtr(), 
-		static_cast<CFilerWnd*>(GetWndPtr())->GetDialogPropPtr(),
-		std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
 		destIDL, Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
 	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
@@ -922,8 +911,6 @@ bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 	//Create
 	auto pDlg = std::make_shared<CMoveDlg>(
 		GetWndPtr(),
-		static_cast<CFilerWnd*>(GetWndPtr())->GetDialogPropPtr(),
-		std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
 		destIDL, Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
 	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
@@ -937,8 +924,6 @@ bool CFilerGridView::DeleteSelectedFiles()
 	//Create
 	auto pDlg = std::make_shared<CDeleteDlg>(
 		GetWndPtr(),
-		static_cast<CFilerWnd*>(GetWndPtr())->GetDialogPropPtr(),
-		std::static_pointer_cast<FilerGridViewProperty>(m_spGridViewProp),
 		Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
 	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));

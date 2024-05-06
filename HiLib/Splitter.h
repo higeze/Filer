@@ -3,65 +3,83 @@
 #include "reactive_property.h"
 #include "JsonSerializer.h"
 
-struct SplitterProperty
+class CSplitter : public CD2DWControl
 {
-public:
-	SolidFill BackgroundFill = SolidFill(222.f / 255.f, 222.f / 255.f, 222.f / 255.f, 1.0f);
-	FLOAT Width = 5.f;
-
-	SplitterProperty() {}
-
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		ar("BackgroundFill", BackgroundFill);
-		ar("Width", Width);
-	}
-
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
-		SplitterProperty,
-		BackgroundFill,
-		Width)
-};
-
-class CHorizontalSplitter:public CD2DWControl
-{
-private:
-	std::shared_ptr<SplitterProperty> m_spSplitterProperty;
-
-	CD2DWControl* m_pLeftControl;
-	CD2DWControl* m_pRightControl;
+protected:
 	bool m_inDrag = false;
 	CPointF m_ptBeginDrag;
 public:
-	reactive_property_ptr<FLOAT> SplitterLeft;
-public:
-	CHorizontalSplitter(CD2DWControl* pParentControl = nullptr, CD2DWControl* pLeftControl = nullptr, CD2DWControl* pRightControl = nullptr, const std::shared_ptr<SplitterProperty>& spButtonProperty = nullptr)
-		:CD2DWControl(pParentControl), SplitterLeft(0.f), m_pLeftControl(pLeftControl), m_pRightControl(pRightControl), m_spSplitterProperty(spButtonProperty){}
-	virtual ~CHorizontalSplitter() = default;
 
-	void SetLeftRightControl(CD2DWControl* pLeft, CD2DWControl* pRight)
-	{
-		m_pLeftControl = pLeft;
-		m_pRightControl = pRight;
+	virtual const CRectF& GetMargin() const override
+	{ 
+		static const CRectF value(0.f, 0.f, 0.f, 0.f); return value; 
 	}
-	void SetProperty(const std::shared_ptr<SplitterProperty>& pProp)
+	
+	const SolidFill& GetNormalBackground() const override
 	{
-		m_spSplitterProperty = pProp;
+		static const SolidFill value(222.f / 255.f, 222.f / 255.f, 222.f / 255.f, 1.0f); return value;
 	}
+
+public:
+	reactive_property_ptr<FLOAT> Maximum;
+	reactive_property_ptr<FLOAT> Minimum;
+	reactive_property_ptr<FLOAT> Value;
+
+public:
+	CSplitter(CD2DWControl* pParentControl = nullptr)
+		:CD2DWControl(pParentControl), Minimum(-1.f), Maximum(-1.f), Value(-1.f){}
+	virtual ~CSplitter() = default;
 
 	//Event
 	virtual void OnPaint(const PaintEvent& e) override;
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(CSplitter,
+		Maximum,
+		Minimum,
+		Value)
+	
+};
+
+class CHorizontalSplitter:public CSplitter
+{
+private:
+	FLOAT Width = 5.f;
+public:
+	using CSplitter::CSplitter;
+	virtual ~CHorizontalSplitter() = default;
+
+	//MeasureArrange
+	void Measure(const CSizeF& availableSize)
+	{
+		m_size.width = Width;
+		m_size.height = availableSize.height;
+	}
+	
+	//Event
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
 	virtual void OnSetCursor(const SetCursorEvent& e) override;
+};
 
-    template <class Archive>
-	void serialize(Archive& ar) {}
+class CVerticalSplitter:public CSplitter
+{
+private:
+	FLOAT Height = 5.f;
+public:
+	using CSplitter::CSplitter;
+	virtual ~CVerticalSplitter() = default;
 
-	friend void to_json(json& j, const CHorizontalSplitter& o) {}
-	friend void from_json(const json& j, CHorizontalSplitter& o) {}
+	//MeasureArrange
+	void Measure(const CSizeF& availableSize)
+	{
+		m_size.width = availableSize.width;
+		m_size.height = Height;
+	}
+
+	//Event
+	virtual void OnMouseMove(const MouseMoveEvent& e) override;
+	virtual void OnSetCursor(const SetCursorEvent& e) override;
 };
 
 

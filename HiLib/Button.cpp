@@ -5,13 +5,13 @@
 void CButton::Measure(const CSizeF& availableSize)
 {
 	if (!m_opt_size.has_value()) {
-		CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(m_spButtonProperty->Format, *Content);
-		size.width += m_spButtonProperty->Padding.top
-			+ m_spButtonProperty->Padding.bottom
-			+ m_spButtonProperty->BorderLine.Width * 2;
-		size.height += m_spButtonProperty->Padding.left
-			+ m_spButtonProperty->Padding.right
-			+ m_spButtonProperty->BorderLine.Width * 2;
+		CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), *Content);
+		size.width += GetPadding().top
+			+ GetPadding().bottom
+			+ GetNormalBorder().Width * 2;
+		size.height += GetPadding().left
+			+ GetPadding().right
+			+ GetNormalBorder().Width * 2;
 		m_opt_size.emplace(size);
 	}
 }
@@ -51,17 +51,17 @@ void CButton::OnPaint(const PaintEvent& e)
 {
 	CRectF renderRect = RenderRect();
 	FLOAT radius = renderRect.Height() * 0.1f;
-	SolidFill fill = m_spButtonProperty->NormalFill;
-	SolidLine line = m_spButtonProperty->BorderLine;
-	FormatF format = m_spButtonProperty->Format;
+	SolidFill fill = GetNormalBackground();
+	SolidLine line = GetNormalBorder();
+	FormatF format = GetFormat();
 	std::wstring content = *Content;
 	if (*IsEnabled) {
 		switch (GetState()) {
 			case UIElementState::Hot:
-				fill = m_spButtonProperty->HotFill;
+				fill = GetHotOverlay();
 				break;
 			case UIElementState::Pressed:
-				fill = m_spButtonProperty->PressedFill;
+				fill = GetPressedBackground();
 				break;
 			case UIElementState::Normal:
 			default:
@@ -69,7 +69,7 @@ void CButton::OnPaint(const PaintEvent& e)
 		}
 
 	} else {
-		format = m_spButtonProperty->DisableFormat;
+		format = GetDisableFormat();
 		if (!DisableContent->empty()) {
 			content = *DisableContent;
 		}

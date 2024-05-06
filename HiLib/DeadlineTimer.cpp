@@ -26,8 +26,7 @@ void CDeadlineTimer::run(std::function<void()> action, const std::chrono::millis
 			}
 			return;
 		};
-		m_future = CThreadPool::GetInstance()->enqueue(
-			fun, 0);
+		m_future = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, fun);
 	}
 }
 
@@ -48,8 +47,7 @@ void CDeadlineTimer::run_oneshot(std::function<void()> action, const std::chrono
 			}
 			return;
 		};
-		m_future = CThreadPool::GetInstance()->enqueue(
-			fun, 0);
+		m_future = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, fun);
 	}
 }
 

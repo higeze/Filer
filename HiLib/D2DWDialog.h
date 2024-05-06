@@ -3,7 +3,6 @@
 #include <optional>
 
 class CD2DWWindow;
-struct DialogProperty;
 class CDialogStateMachine;
 
 class CD2DWDialog: public CD2DWControl
@@ -14,15 +13,20 @@ public:
 public:
 	reactive_wstring_ptr Title;
 	reactive_property_ptr<bool> IsModal;
+	virtual const SolidLine& GetNormalBorder() const
+	{
+		static const SolidLine value(30.f / 255.f, 30.f / 255.f, 30.f / 255.f, 1.0f, 1.0f); return value;
+	}
+
+
 protected:
 	std::unique_ptr<CDialogStateMachine> m_pDialogMachine;
-	std::shared_ptr<DialogProperty> m_spProp;
 
 	mutable CSizeF m_titleSize;
 	std::optional<CPointF> m_startPoint;
 
 public:
-	CD2DWDialog(CD2DWControl* pParentControl = nullptr, const std::shared_ptr<DialogProperty>& spProp = nullptr);
+	CD2DWDialog(CD2DWControl* pParentControl = nullptr);
 	virtual ~CD2DWDialog();
 
 	virtual void OnCreate(const CreateEvt& e) override;

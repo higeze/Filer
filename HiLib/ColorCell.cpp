@@ -6,8 +6,8 @@
 #include "GridView.h"
 #include "D2DWWindow.h"
 
-CColorCell::CColorCell(CGridView* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CColorF color)
-	:CTextCell(pSheet,pRow,pColumn,spProperty),
+CColorCell::CColorCell(CGridView* pSheet,CRow* pRow, CColumn* pColumn, CColorF color)
+	:CTextCell(pSheet,pRow,pColumn),
 	m_color(color){}
 
 CColorF CColorCell::GetColor(){return m_color;}

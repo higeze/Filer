@@ -1,4 +1,4 @@
-#include "ParentHeaderCell.h"
+#include "HeaderCell.h"
 #include "CellProperty.h"
 #include "MyRect.h"
 #include "Sheet.h"

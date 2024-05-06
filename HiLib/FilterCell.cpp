@@ -29,12 +29,12 @@ void CFilterCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 
 	std::wstring str = GetString();
 	if (!str.empty()) {
-		pDirect->DrawTextLayout(*(m_spCellProperty->Format), str, rcPaint);
+		pDirect->DrawTextLayout(GetFormat(), str, rcPaint);
 	}
 	else {
 		str = L"Filter items...";
 		FormatF filterFnC(
-			m_spCellProperty->Format->Font.FamilyName, m_spCellProperty->Format->Font.Size,
+			GetFormat().Font.FamilyName, GetFormat().Font.Size,
 			210.0f / 255, 210.0f / 255, 210.0f / 255, 1.0f);
 		pDirect->DrawTextLayout(filterFnC, str, rcPaint);
 	}

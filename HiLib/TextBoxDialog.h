@@ -15,9 +15,7 @@ private:
 	std::shared_ptr<CButton> m_spButtonOK;
 	std::shared_ptr<CButton> m_spButtonCancel;
 public:
-	CTextBoxDialog(
-		CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp);
+	CTextBoxDialog(CD2DWControl* pParentControl);
 	virtual ~CTextBoxDialog();
 	//message, textblock, textbox, ok, cancel
 	std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects();

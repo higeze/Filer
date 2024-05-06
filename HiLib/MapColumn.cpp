@@ -1,7 +1,7 @@
 #include "MapColumn.h"
 #include "GridView.h"
 #include "ColumnIndexCell.h"
-#include "SortCell.h"
+#include "HeaderSortCell.h"
 #include "FilterCell.h"
 #include "Cell.h"
 #include "Row.h"
@@ -67,20 +67,20 @@
 
 std::shared_ptr<CCell> CMapColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CColumnIndexCell>(m_pGrid,pRow,pColumn,m_pGrid->GetHeaderProperty());
+	return std::make_shared<CColumnIndexCell>(m_pGrid,pRow,pColumn);
 }
 
 std::shared_ptr<CCell> CMapColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CSortCell>(m_pGrid,pRow,pColumn,m_pGrid->GetHeaderProperty());
+	return std::make_shared<CHeaderSortCell>(m_pGrid,pRow,pColumn);
 }
 
 std::shared_ptr<CCell> CMapColumn::FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CFilterCell>(m_pGrid,pRow,pColumn,m_pGrid->GetFilterProperty());
+	return std::make_shared<CFilterCell>(m_pGrid,pRow,pColumn);
 }
 
 std::shared_ptr<CCell> CMapColumn::CellTemplate(CRow* pRow, CColumn* pColumn)
 {
-	return std::make_shared<CTextCell>(m_pGrid,pRow,pColumn,m_pGrid->GetCellProperty());
+	return std::make_shared<CTextCell>(m_pGrid,pRow,pColumn);
 }

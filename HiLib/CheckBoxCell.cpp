@@ -3,8 +3,8 @@
 #include "MyDC.h"
 #include "GridView.h"
 
-CCheckBoxCell::CCheckBoxCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-	:CCell(pSheet, pRow, pColumn, spProperty), m_checkBox(CheckBoxType::ThreeState, CheckBoxState::False), Dummy(std::make_shared<int>(0))
+CCheckBoxCell::CCheckBoxCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+	:CCell(pSheet, pRow, pColumn), m_checkBox(CheckBoxType::ThreeState, CheckBoxState::False), Dummy(std::make_shared<int>(0))
 {
 	m_checkBox.State.subscribe([this](const CheckBoxState& state) { OnPropertyChanged(L"value"); }, Dummy);
 }

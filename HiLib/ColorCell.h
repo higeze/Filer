@@ -7,7 +7,7 @@ class CColorCell:public CTextCell
 private:
 	CColorF m_color;
 public:
-	CColorCell(CGridView* pSheet,CRow* pRow, CColumn* pColumn,std::shared_ptr<CellProperty> spProperty,CColorF color);
+	CColorCell(CGridView* pSheet,CRow* pRow, CColumn* pColumn,CColorF color);
 	virtual ~CColorCell(){}
 
 	CColorF GetColor();

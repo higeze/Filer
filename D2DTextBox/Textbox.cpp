@@ -1,5 +1,5 @@
 ﻿#include "Textbox.h"
-#include "TextBoxProperty.h"
+//#include "TextBoxProperty.h"
 #include "D2DWWindow.h"
 #include "TextEditSink.h"
 #include "TextStoreACP.h"
@@ -9,7 +9,7 @@
 #include "UIElement.h"
 #include "GridView.h"
 #include "Scroll.h"
-#include "ScrollProperty.h"//ScrollProperty
+//#include "ScrollProperty.h"//ScrollProperty
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -38,10 +38,8 @@ CTextBox::CTextBox(
 	CD2DWControl* pParentControl,
 	std::unique_ptr<CVScroll>&& pVScroll,
 	std::unique_ptr<CHScroll>&& pHScroll,
-	const std::shared_ptr<TextBoxProperty> pProp,
 	const std::wstring& text)
 	:CD2DWControl(pParentControl),
-	m_pProp(pProp),
 	m_initText(text),
 	Text(text),
 	EnterText(text),
@@ -56,12 +54,10 @@ CTextBox::CTextBox(
 
 CTextBox::CTextBox(
 	CD2DWControl* pParentControl,
-	const std::shared_ptr<TextBoxProperty> pProp,
-	const std::wstring& text) :
-	CTextBox(pParentControl,
-		std::make_unique<CVScroll>(this, pProp->VScrollPropPtr),
-		std::make_unique<CHScroll>(this, pProp->HScrollPropPtr),
-		pProp,
+	const std::wstring& text)
+	: CTextBox(pParentControl,
+		std::make_unique<CVScroll>(this),
+		std::make_unique<CHScroll>(this),
 		text)
 {}
 /**************/
@@ -81,12 +77,32 @@ void CTextBox::UninitTSF()
 	FAILED_THROW(GetTextEditSinkPtr()->_Unadvise());
 }
 
+void CTextBox::Measure(const CSizeF& availableSize)
+{
+	Measure(availableSize, L"A");
+}
+
+
 void CTextBox::Measure(const CSizeF& availableSize, const std::wstring& text)
 {
 	if (!m_opt_size.has_value()) {
 		m_opt_size.emplace(MeasureSize(Text->empty()? text : *Text));
 	}
 }
+
+CSizeF CTextBox::MeasureSize(const std::wstring& text)
+{
+	CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), text);
+	size.width += GetPadding().left
+		+ GetPadding().right
+		+ GetNormalBorder().Width;
+	size.height += GetPadding().top
+		+ GetPadding().bottom
+		+ GetNormalBorder().Width;
+
+	return size;
+}
+
 CSizeF CTextBox::DesiredSize() const
 {
 	return m_opt_size.value();
@@ -134,11 +150,11 @@ void CTextBox::LoadTextLayoutPtr()
 	auto pDirect = GetWndPtr()->GetDirectPtr();
 	auto pRender = pDirect->GetD2DDeviceContext();
 	auto pFactory = pDirect->GetDWriteFactory();
-	auto size = CSizeF(m_pProp->IsWrap ? (std::max)(0.f, pageRect.Width()) : FLT_MAX, FLT_MAX);
+	auto size = CSizeF(GetIsWrap() ? (std::max)(0.f, pageRect.Width()) : FLT_MAX, FLT_MAX);
 
 	CComPtr<IDWriteTextLayout> pTextLayout0(nullptr);
 	const IID* piid = &__uuidof(IDWriteTextLayout1);
-	if (FAILED(pFactory->CreateTextLayout(Text->c_str(), Text->size(), pDirect->GetTextFormat(*m_pProp->Format), size.width, size.height, &pTextLayout0)) ||
+	if (FAILED(pFactory->CreateTextLayout(Text->c_str(), Text->size(), pDirect->GetTextFormat(GetFormat()), size.width, size.height, &pTextLayout0)) ||
 		FAILED(pTextLayout0->QueryInterface(*piid, (void**)&m_pTextLayout))) {
 		throw std::exception(FILE_LINE_FUNC);
 	} else {
@@ -164,11 +180,11 @@ void CTextBox::LoadTextLayoutPtr()
 void CTextBox::LoadOriginCharRects()
 {
 	CRectF pageRect(GetPageRect());
-	CSizeF size(m_pProp->IsWrap ? pageRect.Width() : FLT_MAX, FLT_MAX);
+	CSizeF size(GetIsWrap() ? pageRect.Width() : FLT_MAX, FLT_MAX);
 
 	m_optOriginCharRects = CDirect2DWrite::CalcCharRects(GetTextLayoutPtr(), Text->size());
 	if (Text->empty()) {
-		auto size = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"");
+		auto size = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), L"");
 		m_optOriginCharRects->emplace_back(
 			0.f, 0.f,
 			size.width, size.height);
@@ -284,7 +300,7 @@ void CTextBox::LoadActualCharRects()
 void CTextBox::LoadActualSelectionCharRects()
 {
 	m_optActualSelectionCharRects = GetActualCharRects();
-	auto size = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"a");
+	auto size = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), L"a");
 	for (size_t i = 0; i < m_optActualSelectionCharRects->size(); i++) {
 		if (i == Text->size() || Text->at(i) == L'\n') {
 			m_optActualSelectionCharRects->at(i).right += size.width;
@@ -450,15 +466,20 @@ void CTextBox::OnClose(const CloseEvent& e)
 	CD2DWControl::OnClose(e);
 }
 
+void CTextBox::Arrange(const CRectF& rc)
+{
+	CD2DWControl::Arrange(rc);
+	UpdateAll();
+}
+
 void CTextBox::OnRect(const RectEvent& e)
 {
-	CD2DWControl::OnRect(e);
-	UpdateAll();
+	Arrange(e.Rect);
 }
 
 void CTextBox::OnMouseWheel(const MouseWheelEvent& e)
 {
-	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetScrollDelta() * e.Delta / WHEEL_DELTA);
+	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetDeltaScroll() * e.Delta / WHEEL_DELTA);
 }
 
 /*****************/
@@ -471,14 +492,14 @@ void CTextBox::Normal_Paint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
 	//PaintBackground
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(*(m_pProp->NormalFill), GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
 	//PaintLine
 
 	//Paint Focused Line
 	CRectF rcBorder(GetRectInWnd());
 	rcBorder.DeflateRect(1.0f, 1.0f);
 	if (m_hasBorder) {
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(*(m_pProp->Line), rcBorder);
+		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(GetNormalBorder(), rcBorder);
 	} else {
 		// Do nothing
 	}
@@ -1023,8 +1044,8 @@ CRectF CTextBox::GetRectInWnd() const
 CRectF CTextBox::GetPageRect() const
 {
 	CRectF rcPage(GetRectInWnd());
-	rcPage.DeflateRect(m_pProp->Line->Width * 0.5f);
-	rcPage.DeflateRect(*(m_pProp->Padding));
+	rcPage.DeflateRect(GetNormalBorder().Width * 0.5f);
+	rcPage.DeflateRect(GetPadding());
 	return rcPage;
 }
 
@@ -1185,22 +1206,22 @@ void CTextBox::PaintText(const PaintEvent& e)
 	auto origin = rect.LeftTop();
 
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->DrawTextLayout(
-		origin, GetTextLayoutPtr(), GetWndPtr()->GetDirectPtr()->GetColorBrush(m_pProp->Format->Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
+		origin, GetTextLayoutPtr(), GetWndPtr()->GetDirectPtr()->GetColorBrush(GetFormat().Color), D2D1_DRAW_TEXT_OPTIONS::D2D1_DRAW_TEXT_OPTIONS_CLIP);
 	for (size_t i = 0; i < Text->size(); i++) {
 		switch (Text->at(i)) {
 			case L'\r':
 				break;
 			case L'\n':
-				GetWndPtr()->GetDirectPtr()->DrawLineFeed(*(m_pProp->BlankLine), selCharRects[i]);
+				GetWndPtr()->GetDirectPtr()->DrawLineFeed(GetBlankLine(), selCharRects[i]);
 				break;
 			case L'\t':
-				GetWndPtr()->GetDirectPtr()->DrawTab(*(m_pProp->BlankLine), selCharRects[i]);
+				GetWndPtr()->GetDirectPtr()->DrawTab(GetBlankLine(), selCharRects[i]);
 				break;
 			case L' ':
-				GetWndPtr()->GetDirectPtr()->DrawHalfSpace(*(m_pProp->BlankLine), selCharRects[i]);
+				GetWndPtr()->GetDirectPtr()->DrawHalfSpace(GetBlankLine(), selCharRects[i]);
 				break;
 			case L'　':
-				GetWndPtr()->GetDirectPtr()->DrawFullSpace(*(m_pProp->BlankLine), selCharRects[i]);
+				GetWndPtr()->GetDirectPtr()->DrawFullSpace(GetBlankLine(), selCharRects[i]);
 				break;
 			default:
 				break;
@@ -1254,7 +1275,7 @@ void CTextBox::PaintCaret(const PaintEvent& e)
 	}
 	if (m_bCaret) {
 		GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(m_pProp->Format->Color, caretRect);
+		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetFormat().Color, caretRect);
 		GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	}
 }
@@ -1272,7 +1293,7 @@ void CTextBox::PaintCompositionLine(const PaintEvent& e)
 				}
 				if (n == (compositionInfo.End - 1) || (charRects[n].bottom + charRects[n].Height() / 2.f) < charRects[n + 1].bottom) {
 					ptEnd.SetPoint(charRects[n].right, charRects[n].bottom);
-					GetWndPtr()->GetDirectPtr()->DrawSolidTriangleWave(*(m_pProp->CompositionLine), ptStart, ptEnd, 4.f, 8.f);
+					GetWndPtr()->GetDirectPtr()->DrawSolidTriangleWave(GetCompositionLine(), ptStart, ptEnd, 4.f, 8.f);
 				}
 			}
 		}
@@ -1281,7 +1302,7 @@ void CTextBox::PaintCompositionLine(const PaintEvent& e)
 
 FLOAT CTextBox::GetLineHeight()
 {
-	return GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), L"").height;
+	return GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), L"").height;
 }
 
 void CTextBox::ClearCompositionRenderInfo()
@@ -1423,12 +1444,12 @@ void CTextBox::UpdateScroll()
 	//Position
 	CRectF rcClient(GetRectInWnd());
 	CRectF rcVertical;
-	FLOAT lineHalfWidth = m_pProp->Line->Width * 0.5f;
+	FLOAT lineHalfWidth = GetNormalBorder().Width * 0.5f;
 
 	rcVertical.left = rcClient.right - ::GetSystemMetrics(SM_CXVSCROLL) - lineHalfWidth;
 	rcVertical.top = rcClient.top + lineHalfWidth;
 	rcVertical.right = rcClient.right - lineHalfWidth;
-	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetIsVisible() ? (m_pHScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetIsVisible() ? (m_pHScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 	//rcVertical.bottom = rcClient.bottom - lineHalfWidth;
 
 	m_pVScroll->OnRect(RectEvent(GetWndPtr(), rcVertical));
@@ -1438,7 +1459,7 @@ void CTextBox::UpdateScroll()
 	CRectF rcHorizontal;
 	rcHorizontal.left = rcClient.left + lineHalfWidth;
 	rcHorizontal.top = rcClient.bottom - ::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
-	rcHorizontal.right = rcClient.right - (m_pVScroll->GetIsVisible() ? (m_pVScroll->GetScrollBandWidth() + lineHalfWidth) : lineHalfWidth);
+	rcHorizontal.right = rcClient.right - (m_pVScroll->GetIsVisible() ? (m_pVScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
 	m_pHScroll->OnRect(RectEvent(GetWndPtr(), rcHorizontal));
 }
@@ -1462,24 +1483,3 @@ void CTextBox::TerminateCompositionString()
         }
     }
 }
-
-CSizeF CTextBox::MeasureSize(const std::wstring& text)
-{
-	CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(
-		*(GetTextBoxPropertyPtr()->Format), text);
-	size.width += GetTextBoxPropertyPtr()->Padding->top
-		+ GetTextBoxPropertyPtr()->Padding->bottom
-		+ GetTextBoxPropertyPtr()->Line->Width * 2;
-	size.height += GetTextBoxPropertyPtr()->Padding->left
-		+ GetTextBoxPropertyPtr()->Padding->right
-		+ GetTextBoxPropertyPtr()->Line->Width * 2;
-
-	return size;
-}
-
-void CTextBox::Arrange(const CRectF& rc)
-{
-	CD2DWControl::Arrange(rc);
-	UpdateAll();
-}
-

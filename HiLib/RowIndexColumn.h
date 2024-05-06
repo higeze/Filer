@@ -9,10 +9,10 @@
 class CRowIndexColumn:public CMapColumn
 {
 protected:
-	std::shared_ptr<CellProperty> m_spCellProperty;
+
 public:
-	CRowIndexColumn(CGridView* pSheet = nullptr, std::shared_ptr<CellProperty> spProperty = nullptr)
-		:CMapColumn(pSheet, arg<"isminfit"_s>() = true, arg<"ismaxfit"_s>() = true),m_spCellProperty(spProperty){}
+	CRowIndexColumn(CGridView* pSheet = nullptr)
+		:CMapColumn(pSheet, arg<"isminfit"_s>() = true, arg<"ismaxfit"_s>() = true){}
 
 	virtual ~CRowIndexColumn() = default;
 
@@ -32,6 +32,6 @@ public:
 
 	virtual bool IsTrackable()const override { return true; }
 
-	virtual void RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc);
+	//virtual void RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc);
 
 };

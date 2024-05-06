@@ -112,9 +112,8 @@ public:
 	template<typename... TArgs> 
 	CBindGridView(
 		CD2DWControl* pParentControl,
-		const std::shared_ptr<GridViewProperty>& spGridViewProp,
 		TArgs... args)
-		:CGridView(pParentControl, spGridViewProp),
+		:CGridView(pParentControl),
 		ItemsSource(),
 		m_bindType(BindType::Row)
 	{
@@ -143,11 +142,11 @@ public:
 		//	PushRow(m_pHeaderRow);
 		//}
 
-		//m_pNameHeaderRow = ::get(arg<"namerow"_s>(), args..., default_(nullptr));
-		//if (m_pNameHeaderRow) {
-		//	m_pNameHeaderRow->SetSheetPtr(this);
-		//	PushRow(m_pNameHeaderRow);
-		//}
+		m_pNameHeaderRow = ::get(arg<"namerow"_s>(), args..., default_(nullptr));
+		if (m_pNameHeaderRow) {
+			m_pNameHeaderRow->SetSheetPtr(this);
+			PushRow(m_pNameHeaderRow);
+		}
 
 		m_pFilterRow = ::get(arg<"fltrow"_s>(), args..., default_(nullptr));
 		if (m_pFilterRow) {
@@ -226,10 +225,10 @@ public:
 	{
 		switch (e.action) {
 			case notify_container_changed_action::push_back:
-				PushRow(std::make_shared<TRow>(this, GetCellProperty()));
+				PushRow(std::make_shared<TRow>(this));
 				break;
 			case notify_container_changed_action::insert:
-				InsertRow(e.new_starting_index, std::make_shared<TRow>(this, GetCellProperty()));
+				InsertRow(e.new_starting_index, std::make_shared<TRow>(this));
 				break;
 			case notify_container_changed_action::erase:
 			{
@@ -250,7 +249,7 @@ public:
 				m_spCursorer->Clear();//TOOD Refactor
 				m_spCeller->Clear();
 				for (auto& tup : e.new_items) {
-					PushRow(std::make_shared<TRow>(this, GetCellProperty()));
+					PushRow(std::make_shared<TRow>(this));
 				}
 				//PostUpdate(Updates::All);
 				//SubmitUpdate();
@@ -314,7 +313,7 @@ public:
 
 				//PushRow
 				for (size_t i = 0; i < ItemsSource->size(); i++) {
-					PushRow(std::make_shared<TRow>(this, GetCellProperty()));
+					PushRow(std::make_shared<TRow>(this));
 				}
 			}
 			break;

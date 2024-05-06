@@ -26,13 +26,11 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
 CLauncherGridView::CLauncherGridView(
 	CD2DWControl* pParentControl,
-	const std::shared_ptr<GridViewProperty>& spGridViewProp,
 	const std::shared_ptr<CLauncherProperty>& spLauncherProp)
 	:CBindGridView(pParentControl, 
-	spGridViewProp,
 	arg<"bindtype"_s>() = BindType::Column,
 	arg<"itemssource"_s>() = spLauncherProp->Launchers,
-	arg<"rows"_s>() = std::vector<std::shared_ptr<CRow>>{std::make_shared<CLauncherRow<std::shared_ptr<CLauncher>>>(this, spGridViewProp->CellPropPtr)}),
+	arg<"rows"_s>() = std::vector<std::shared_ptr<CRow>>{std::make_shared<CLauncherRow<std::shared_ptr<CLauncher>>>(this)}),
 	m_spLauncherProp(spLauncherProp)
 {
 	IsFocusable.set(false);

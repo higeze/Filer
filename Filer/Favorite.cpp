@@ -42,9 +42,9 @@ std::shared_ptr<CShellFile>& CFavorite::GetShellFile(const std::function<void()>
 				return ret;
 			};
 			m_futureFile = CThreadPool::GetInstance()->enqueue(
-				fun,
+				FILE_LINE_FUNC,
 				0,
-				//std::make_shared<CShellInvalidFile>(),
+				fun,
 				m_spCancel, 
 				GetPath(),
 				changed);

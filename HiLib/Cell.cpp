@@ -118,27 +118,27 @@ CRectF CCell::GetRectInWnd()const
 
 CRectF CCell::CenterBorder2InnerBorder(CRectF rcCenter)
 {
-	auto halfLineWidth = m_spCellProperty->Line->Width*0.5f;
+	auto halfLineWidth = GetNormalBorder().Width*0.5f;
 	rcCenter-= CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
 	return rcCenter;
 }
 
 CRectF CCell::InnerBorder2Content(CRectF rcInner)
 {
-	rcInner.DeflateRect(*(m_spCellProperty->Padding));
+	rcInner.DeflateRect(GetPadding());
 	return rcInner;
 }
 
 CRectF CCell::Content2InnerBorder(CRectF rcContent)
 {
-	rcContent.InflateRect(*(m_spCellProperty->Padding));
+	rcContent.InflateRect(GetPadding());
 	return rcContent;
 }
 
 CRectF CCell::InnerBorder2CenterBorder(CRectF rcInner)
 {
 	//Calc CenterBorder Rect 
-	auto halfLineWidth = m_spCellProperty->Line->Width*0.5f;
+	auto halfLineWidth = GetNormalBorder().Width*0.5f;
 	rcInner += CRectF(halfLineWidth,halfLineWidth, halfLineWidth, halfLineWidth);
 	return rcInner;
 }
@@ -152,34 +152,40 @@ void CCell::PaintBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 
 void CCell::PaintNormalBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	m_pRow->RenderBackground(pDirect, rcPaint);
-	m_pColumn->RenderBackground(pDirect, rcPaint);
+	pDirect->FillSolidRectangle(GetNormalBackground(), rcPaint);
+	//m_pRow->RenderBackground(pDirect, rcPaint);
+	//m_pColumn->RenderBackground(pDirect, rcPaint);
 }
 
 void CCell::PaintSelectedBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	m_pRow->RenderHighlight(pDirect, rcPaint);
-	m_pColumn->RenderHighlight(pDirect, rcPaint);
+	if (GetIsSelected() && m_pGrid->GetIsFocused()) {
+		pDirect->FillSolidRectangle(GetSelectedOverlay(), rcPaint);
+	} else if (GetIsSelected()) {
+		pDirect->FillSolidRectangle(GetUnfocusSelectedOverlay(), rcPaint);
+	}
+	//m_pRow->RenderHighlight(pDirect, rcPaint);
+	//m_pColumn->RenderHighlight(pDirect, rcPaint);
 }
 
 void CCell::PaintHotBackground(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	if (m_state == UIElementState::Hot || m_state == UIElementState::Pressed) {
-		pDirect->FillSolidRectangle(*(m_spCellProperty->HotFill), rcPaint);
+		pDirect->FillSolidRectangle(GetHotOverlay(), rcPaint);
 	}
 }
 
 void CCell::PaintLine(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	pDirect->DrawSolidRectangleByLine(*(m_spCellProperty->Line), rcPaint);
+	pDirect->DrawSolidRectangleByLine(GetNormalBorder(), rcPaint);
 }
 
 void CCell::PaintFocus(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
 	if(GetIsFocused()){
-		auto halfLineWidth = m_spCellProperty->Line->Width*0.5f;
+		auto halfLineWidth = GetNormalBorder().Width*0.5f;
 		rcPaint.DeflateRect(halfLineWidth, halfLineWidth);
-		pDirect->DrawSolidRectangleByLine(*(m_spCellProperty->FocusedLine), rcPaint);
+		pDirect->DrawSolidRectangleByLine(GetFocusedBorder(), rcPaint);
 	}
 }
 

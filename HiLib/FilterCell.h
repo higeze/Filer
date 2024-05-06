@@ -12,8 +12,8 @@ private :
 	CDeadlineTimer m_deadlinetimer;
 
 public:
-	CFilterCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet, pRow, pColumn, spProperty, arg<"editmode"_s>() = EditMode::LButtonDownEdit){}
+	CFilterCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+		:CTextCell(pSheet, pRow, pColumn, arg<"editmode"_s>() = EditMode::LButtonDownEdit){}
 	virtual ~CFilterCell() = default;
 
 	virtual std::wstring GetString() override;

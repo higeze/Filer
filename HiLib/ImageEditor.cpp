@@ -13,15 +13,12 @@
 /* CImageEditor */
 /***************/
 
-CImageEditor::CImageEditor(
-	CD2DWControl* pParentControl,
-	const std::shared_ptr<ImageEditorProperty>& spProp)
+CImageEditor::CImageEditor(CD2DWControl* pParentControl)
 	:CD2DWControl(pParentControl),
-	m_spProp(spProp),
-	m_spImageView(std::make_shared<CImageView>(this, spProp->ImageViewPropPtr)),
-	m_spStatusBar(std::make_shared<CStatusBar>(this, spProp->StatusBarPropPtr)),
-	m_spScaleBox(std::make_shared<CTextBox>(this, spProp->TextBoxPropPtr, L"0")),
-	m_spPercentBlock(std::make_shared<CTextBlock>(this, spProp->TextBlockPropPtr))
+	m_spImageView(std::make_shared<CImageView>(this)),
+	m_spStatusBar(std::make_shared<CStatusBar>(this)),
+	m_spScaleBox(std::make_shared<CTextBox>(this, L"0")),
+	m_spPercentBlock(std::make_shared<CTextBlock>(this))
 {
 	m_spPercentBlock->Text.set(L"%");
 }

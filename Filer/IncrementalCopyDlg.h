@@ -40,8 +40,6 @@ private:
 public:
 	CIncrementalCopyDlg(
 		CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProp,
 		const CIDL& destIDL, const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs);
 	~CIncrementalCopyDlg();
 	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();

@@ -1,6 +1,5 @@
 #pragma once
 #include "D2DWDialog.h"
-
 #include "D2DWWindow.h"
 
 class CCalendarControl;
@@ -30,12 +29,7 @@ private:
 	bool m_isModal = false;
 
 public:
-	CCalendarDialog(
-		CD2DWControl* pParentControl,
-		const std::shared_ptr<DialogProperty>& spDialogProp,
-		const std::shared_ptr<CalendarControlProperty>& spCalendarProp,
-		const std::shared_ptr<TextBoxProperty>& spTextBoxProp,
-		const std::shared_ptr<ButtonProperty>& spButtonProp);
+	CCalendarDialog(CD2DWControl* pParentControl);
 	~CCalendarDialog();
 	void Measure(const CSizeF& availableSize);
 	CSizeF DesiredSize() const;

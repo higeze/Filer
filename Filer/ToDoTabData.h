@@ -27,6 +27,10 @@ public:
 	};
 
 	virtual ~ToDoTabData() = default;
+	ToDoTabData(const ToDoTabData& other)
+		:ToDoTabData(other.Doc->GetPath()){}
+
+	virtual std::shared_ptr<TabData> ClonePtr() const override { return std::make_shared<ToDoTabData>(*this); }
 
 	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
 

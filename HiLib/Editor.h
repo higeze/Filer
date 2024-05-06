@@ -19,9 +19,7 @@ class CEditor :public CD2DWControl
 	SHAREDPTR_GETTER(CStatusBar, StatusBar)
 	SHAREDPTR_GETTER(EditorProperty, Prop)
 public:
-	CEditor(
-		CD2DWControl* pParentControl,
-		const std::shared_ptr<EditorProperty>& spTextProp);
+	CEditor(CD2DWControl* pParentControl);
 
 	virtual ~CEditor() {}
 

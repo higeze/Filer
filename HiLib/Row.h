@@ -15,11 +15,10 @@ public:
 	typedef RowTag Tag;
 protected:
 	bool m_isVirtualMeasureValid = false;
-	std::shared_ptr<CellProperty> m_spCellProperty;
 public:
 	template<typename... Args>
-	CRow(CGridView* pSheet, std::shared_ptr<CellProperty> spProperty, Args... args)
-		:CBand(pSheet),m_spCellProperty(spProperty)
+	CRow(CGridView* pSheet, Args... args)
+		:CBand(pSheet)
 	{
 		m_isMinLengthFit = ::get(arg<"isminfit"_s>(), args..., default_(true));
 		m_isMaxLengthFit = ::get(arg<"ismaxfit"_s>(), args..., default_(true));
@@ -64,8 +63,8 @@ public:
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; };
 
-	virtual void RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc);
-	virtual void RenderHighlight(CDirect2DWrite* pDirect, const CRectF& rc);
+	//virtual void RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc);
+	//virtual void RenderHighlight(CDirect2DWrite* pDirect, const CRectF& rc);
 	//virtual void OnPaint(const PaintEvent& e);
 };
 

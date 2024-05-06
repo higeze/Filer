@@ -21,10 +21,18 @@ private:
 	{
 		return static_cast<float>(value.HighPart) * static_cast<float>(std::pow(2, 32)) + static_cast<float>(value.LowPart);
 	}
+public:
+	virtual const FormatF& GetFormat() const override
+	{
+		static FormatF value(
+			CFontF(L"Meiryo UI", CDirect2DWrite::Points2Dips(9)),
+			CColorF(0.0f, 0.0f, 0.0f, 1.0f),
+			CAlignmentF(DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_TRAILING)); return value;
+	}
 
 public:
-	CDriveSizeCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty)
-		:CTextCell(pSheet, pRow, pColumn, spProperty){}
+	CDriveSizeCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
+		:CTextCell(pSheet, pRow, pColumn){}
 
 	virtual ~CDriveSizeCell() = default;
 
@@ -71,7 +79,7 @@ public:
 		ULARGE_INTEGER used = { .QuadPart = total.QuadPart - free.QuadPart };
 
 		//Paint Normal
-		pDirect->FillSolidRectangle(*(m_spCellProperty->NormalFill), rcPaint);
+		pDirect->FillSolidRectangle(GetNormalBackground(), rcPaint);
 
 		//Paint Bar
 		if (total.QuadPart != 0) {
@@ -85,13 +93,13 @@ public:
 		//TODO PaintEffect
 		//Selected
 		if (GetIsSelected() && m_pGrid->GetIsFocused()  /*::GetFocus() == m_pGrid->m_hWnd*/) {
-			pDirect->FillSolidRectangle(*(m_spCellProperty->SelectedFill), rcPaint);
+			pDirect->FillSolidRectangle(GetSelectedOverlay(), rcPaint);
 		} else if (GetIsSelected()) {
-			pDirect->FillSolidRectangle(*(m_spCellProperty->UnfocusSelectedFill), rcPaint);
+			pDirect->FillSolidRectangle(GetUnfocusSelectedOverlay(), rcPaint);
 		}
 		//Hot, Pressed
 		if (m_state == UIElementState::Hot || m_state == UIElementState::Pressed) {
-			pDirect->FillSolidRectangle(*(m_spCellProperty->HotFill), rcPaint);
+			pDirect->FillSolidRectangle(GetHotOverlay(), rcPaint);
 		}
 	}
 	

@@ -24,9 +24,7 @@ public:
 	reactive_command_ptr<HWND> OpenAsCommand;
 
 public:
-	CImageEditor(
-		CD2DWControl* pParentControl,
-		const std::shared_ptr<ImageEditorProperty>& spTextProp);
+	CImageEditor(CD2DWControl* pParentControl);
 
 	virtual ~CImageEditor() {}
 

@@ -49,20 +49,9 @@ struct ImageEditorProperty;
 class CFilerTabGridView :public CTabControl
 {
 private:
-	std::shared_ptr<FilerGridViewProperty> m_spFilerGridViewProp;
-	std::shared_ptr<EditorProperty> m_spEditorProp;
-	std::shared_ptr<PDFEditorProperty> m_spPdfEditorProp;
-	std::shared_ptr<ImageEditorProperty> m_spImageEditorProp;
-	std::shared_ptr<PreviewControlProperty> m_spPreviewControlProp;
 
 public:
-	CFilerTabGridView(CD2DWControl* pParentControl = nullptr,
-		const std::shared_ptr<TabControlProperty>& spTabProp = nullptr, 
-		const std::shared_ptr<FilerGridViewProperty>& spFilerGridViewProrperty = nullptr,
-		const std::shared_ptr<EditorProperty>& spTextboxProp = nullptr,
-		const std::shared_ptr<PDFEditorProperty>& spPdfViewProp = nullptr,
-		const std::shared_ptr<ImageEditorProperty>& spImageEditorProp = nullptr,
-		const std::shared_ptr<PreviewControlProperty>& spPreviewControlProp = nullptr);
+	CFilerTabGridView(CD2DWControl* pParentControl = nullptr);
 	virtual ~CFilerTabGridView();
 
 	scoped_connections m_filerConnections;
@@ -118,8 +107,8 @@ public:
 
 		to_json(j, static_cast<const CTabControl&>(o));
 
-		j["FilerView"] = o.m_spFilerView;
-		j["ToDoView"] = o.m_spToDoGridView;
+		//j["FilerView"] = o.m_spFilerView;
+		//j["ToDoView"] = o.m_spToDoGridView;
 	}
 
 	friend void from_json(const json& j, CFilerTabGridView& o)
@@ -133,8 +122,8 @@ public:
 
 		from_json(j, static_cast<CTabControl&>(o));
 
-		get_to(j, "FilerView", o.m_spFilerView);
-		get_to(j, "ToDoView", o.m_spToDoGridView);
+		//get_to(j, "FilerView", o.m_spFilerView);
+		//get_to(j, "ToDoView", o.m_spToDoGridView);
 	}
 };
 

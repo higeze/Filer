@@ -7,7 +7,7 @@ class CBoolCell:public CCheckBoxCell
 private:
 	CheckBoxState m_checkboxState;
 public:
-	CBoolCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, bool b)
-		:CCheckBoxCell(pSheet, pRow, pColumn, spProperty), m_checkboxState(b?CheckBoxState::True:CheckBoxState::False){}
+	CBoolCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, bool b)
+		:CCheckBoxCell(pSheet, pRow, pColumn), m_checkboxState(b?CheckBoxState::True:CheckBoxState::False){}
 	virtual ~CBoolCell() = default;
 };

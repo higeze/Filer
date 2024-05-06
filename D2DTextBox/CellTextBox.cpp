@@ -3,12 +3,11 @@
 
 CCellTextBox::CCellTextBox(
 	CD2DWControl* pParentControl,
-	const std::shared_ptr<TextBoxProperty> pProp,
 	const std::wstring& text,
 	CTextCell* pCell,
 	std::function<void(const std::wstring&)> changed,
 	std::function<void(const std::wstring&)> final)
-	:CTextBox(pParentControl, pProp, text), m_pCell(pCell),m_changed(changed), m_final(final)
+	:CTextBox(pParentControl, text), m_pCell(pCell),m_changed(changed), m_final(final)
 {
 	m_acceptsTab = false;
 	m_isEnterText = true;
@@ -45,10 +44,10 @@ CRectF CCellTextBox::GetRectInWnd() const
 	//rc.DeflateRect(m_pProp->Line->Width * 0.5f);
 	//rc.DeflateRect(*(m_pProp->Padding));
 
-	CSizeF sz = m_pParentControl->GetWndPtr()->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), *Text, rc.Width());
+	CSizeF sz = m_pParentControl->GetWndPtr()->GetDirectPtr()->CalcTextSizeWithFixedWidth(GetFormat(), *Text, rc.Width());
 
 	rc.bottom = (std::max)(rc.bottom, 
-		rc.top + sz.height + m_pProp->Line->Width * 0.5f *2.f + m_pProp->Padding->top + m_pProp->Padding->bottom);
+		rc.top + sz.height + GetNormalBorder().Width * 0.5f *2.f + GetPadding().top + GetPadding().bottom);
 	return rc;
 
 
@@ -56,12 +55,11 @@ CRectF CCellTextBox::GetRectInWnd() const
 
 CEditorCellTextBox::CEditorCellTextBox(
 	CD2DWControl* pParentControl,
-	const std::shared_ptr<EditorTextBoxProperty> pProp,
 	const std::wstring& text,
 	CTextCell* pCell,
 	std::function<void(const std::wstring&)> changed,
 	std::function<void(const std::wstring&)> final)
-	:CEditorTextBox(pParentControl, pProp, text), m_pCell(pCell),m_changed(changed), m_final(final)
+	:CEditorTextBox(pParentControl, text), m_pCell(pCell),m_changed(changed), m_final(final)
 {
 	Text.subscribe([this](auto notify)->void 
 	{
@@ -88,11 +86,11 @@ CRectF CEditorCellTextBox::GetRectInWnd() const
 	//return m_pCell->GetEditRect();
 
 	CRectF rc = m_pCell->GetEditRect();
-	rc.DeflateRect(m_pProp->Line->Width * 0.5f);
-	rc.DeflateRect(*(m_pProp->Padding));
+	rc.DeflateRect(GetNormalBorder().Width * 0.5f);
+	rc.DeflateRect(GetPadding());
 
-	CSizeF sz = m_pParentControl->GetWndPtr()->GetDirectPtr()->CalcTextSizeWithFixedWidth(*(m_pProp->Format), *Text, rc.Width());
+	CSizeF sz = m_pParentControl->GetWndPtr()->GetDirectPtr()->CalcTextSizeWithFixedWidth(GetFormat(), *Text, rc.Width());
 
-	rc.bottom = rc.top + sz.height + m_pProp->Line->Width * 0.5f *2.f + m_pProp->Padding->top + m_pProp->Padding->bottom;
+	rc.bottom = rc.top + sz.height + GetNormalBorder().Width * 0.5f *2.f + GetPadding().top + GetPadding().bottom;
 	return rc;
 }

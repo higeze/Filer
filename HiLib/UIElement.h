@@ -326,6 +326,49 @@ class CUIElement:public std::enable_shared_from_this<CUIElement>
 {
 protected:
 	UIElementState::Type m_state;
+public:
+	virtual const CRectF& GetMargin() const 
+	{ 
+		static const CRectF value(2.f, 2.f, 2.f, 2.f); return value; 
+	}
+	virtual const CRectF& GetPadding() const
+	{
+		static const CRectF value(2.f, 2.f, 2.f, 2.f); return value;
+	}
+	virtual const FormatF& GetFormat() const
+	{
+		static FormatF value(L"Meiryo UI", CDirect2DWrite::Points2Dips(9), 0.0f, 0.0f, 0.0f, 1.0f); return value;
+	}
+	virtual const SolidLine& GetNormalBorder() const
+	{
+		static const SolidLine value(221.f / 255.f, 206.f / 255.f, 188.f / 255.f, 1.0f, 1.0f); return value;
+	}
+	virtual const SolidLine& GetFocusedBorder() const
+	{
+		static const SolidLine value(22.f / 255.f, 160.f / 255.f, 133.f / 255.f, 1.0f, 1.0f); return value;
+	}
+	virtual const SolidFill& GetNormalBackground() const
+	{
+		static const SolidFill value(246.0f / 255, 246.0f / 255, 246.0f / 255, 1.0f); return value; //asbestos
+	}
+	virtual const SolidFill& GetFocusedBackground() const
+	{
+		static const SolidFill value(0.0f / 255.f, 224.f / 255.f, 226.f / 255.f, 1.0f); return value;
+	}
+	virtual const SolidFill& GetSelectedOverlay() const
+	{
+		static const SolidFill value(0.f, 140.f / 255, 255.f / 255, 100.f / 255); return value;
+	}
+	virtual const SolidFill& GetUnfocusSelectedOverlay() const 
+	{
+		static const SolidFill value(224.f / 255.f, 224.f / 255.f, 224.f / 255.f, 0.5f); return value;
+	}
+	virtual const SolidFill& GetHotOverlay() const
+	{
+		static const SolidFill value(1.0f, 1.0f, 1.0f, 0.3f); return value;
+	}
+
+
 
 public:
 	CUIElement()

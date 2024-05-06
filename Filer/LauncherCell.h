@@ -46,7 +46,7 @@ public:
 		base::PaintContent(pDirect, rcPaint);
 
 		//Paint Text
-		pDirect->DrawTextInRect(*(this->m_spCellProperty->Format), GetShortName(), this->Content2InnerBorder(rcPaint));
+		pDirect->DrawTextInRect(GetFormat(), GetShortName(), this->Content2InnerBorder(rcPaint));
 	}
 
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override

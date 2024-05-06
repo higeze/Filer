@@ -16,18 +16,18 @@ void CCalendarControl::Measure(const CSizeF& availableSize)
         FLOAT text_width = 0;
         FLOAT text_height = 0;
         for (const std::wstring& weekday_text : s_weekday_texts) {
-            CSizeF sz = pDirect->CalcTextSize(m_spProp->Format, weekday_text);
+            CSizeF sz = pDirect->CalcTextSize(GetFormat(), weekday_text);
             text_width = (std::max)(text_width, sz.width);
             text_height = (std::max)(text_height, sz.height);
         }
         for (unsigned i = 1; i <= 31; i++) {
-            CSizeF sz = pDirect->CalcTextSize(m_spProp->Format, std::to_wstring(i));
+            CSizeF sz = pDirect->CalcTextSize(GetFormat(), std::to_wstring(i));
             text_width = (std::max)(text_width, sz.width);
             text_height = (std::max)(text_height, sz.height);
         }
         m_opt_cell_size.emplace(
-            text_width + m_spProp->Padding.left + m_spProp->Padding.right,
-            text_height + +m_spProp->Padding.top + m_spProp->Padding.bottom);
+            text_width + GetPadding().left + GetPadding().right,
+            text_height + +GetPadding().top + GetPadding().bottom);
     }
 
     if (!m_opt_size.has_value()) {
@@ -54,12 +54,12 @@ void CCalendarControl::Render(CDirect2DWrite* pDirect)
     CRectF cell_rect(m_rect.LeftTop(), m_opt_cell_size.value());
     //Render weekday
     for (size_t wd = 0; wd < s_weekday_texts.size(); wd++) {
-        FormatF format = (wd == 0) ? m_spProp->SundayFormat : (wd == 6) ? m_spProp->SaturdayFormat : m_spProp->Format;
+        FormatF format = (wd == 0) ? GetSundayFormat() : (wd == 6) ? GetSaturdayFormat() : GetFormat();
         pDirect->DrawTextLayout(format, s_weekday_texts[wd], cell_rect);
         cell_rect.OffsetX(m_opt_cell_size->width);
     }
     //Render border
-    pDirect->DrawSolidLine(m_spProp->Border, CPointF(m_rect.left, cell_rect.bottom), CPointF(cell_rect.left, cell_rect.bottom));
+    pDirect->DrawSolidLine(GetNormalBorder(), CPointF(m_rect.left, cell_rect.bottom), CPointF(cell_rect.left, cell_rect.bottom));
     //Render day
     cell_rect.SetPointSize(
         CPointF(m_rect.LeftTop().x + m_opt_cell_size->width * weekday_offset, m_rect.LeftTop().y + m_opt_cell_size->height),
@@ -67,14 +67,14 @@ void CCalendarControl::Render(CDirect2DWrite* pDirect)
     for (unsigned day = 1, wd = weekday_offset; day <= lastday_in_month; day++, wd++) {
         //Today
         if (CYearMonthDay(Year->operator int(), Month->operator size_t(), day) == today) {
-            pDirect->FillSolidRoundedRectangle(m_spProp->TodayFill, cell_rect, 3.f, 3.f);
+            pDirect->FillSolidRoundedRectangle(GetTodayBackground(), cell_rect, 3.f, 3.f);
         } 
         //Selected
         if (CYearMonthDay(Year->operator int(), Month->operator size_t(), day) == *SelectedYearMonthDay){
-            pDirect->DrawSolidRoundedRectangle(m_spProp->SelectedLine, cell_rect, 3.f, 3.f);
+            pDirect->DrawSolidRoundedRectangle(GetFocusedBorder(), cell_rect, 3.f, 3.f);
         }
         //Text
-        FormatF format = (wd % 7 == 0) ? m_spProp->SundayFormat : (wd % 7 == 6) ? m_spProp->SaturdayFormat : m_spProp->Format;
+        FormatF format = (wd % 7 == 0) ? GetSundayFormat() : (wd % 7 == 6) ? GetSaturdayFormat() : GetFormat();
         pDirect->DrawTextLayout(format, std::to_wstring(day), cell_rect);
         //Rect
         if (wd % 7 == 6) {

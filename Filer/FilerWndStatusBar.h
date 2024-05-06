@@ -54,7 +54,7 @@ protected:
 	int m_max = 100;
 	int m_value = 0;
 public:
-	CFilerWndStatusBar(CD2DWControl* pParentControl, const std::shared_ptr<StatusBarProperty>& spStatusBarProp);
+	CFilerWndStatusBar(CD2DWControl* pParentControl);
 	virtual ~CFilerWndStatusBar();
 
 	virtual void OnPaint(const PaintEvent& e);

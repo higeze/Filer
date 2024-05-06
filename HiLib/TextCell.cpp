@@ -15,7 +15,7 @@
 
 void CTextCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	pDirect->DrawTextLayout(*(m_spCellProperty->Format), GetString(), rcPaint);
+	pDirect->DrawTextLayout(GetFormat(), GetString(), rcPaint);
 }
 
 CSizeF CTextCell::MeasureContentSize(CDirect2DWrite* pDirect)
@@ -23,7 +23,7 @@ CSizeF CTextCell::MeasureContentSize(CDirect2DWrite* pDirect)
 	//Calc Content Rect
 	std::wstring text = GetString();
 	if (text.empty()) { text = L"a"; }
-	return pDirect->CalcTextSize(*(m_spCellProperty->Format), text);
+	return pDirect->CalcTextSize(GetFormat(), text);
 }
 
 CSizeF CTextCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
@@ -35,7 +35,7 @@ CSizeF CTextCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 
 	std::wstring text = GetString();
 	if (text.empty()) { text = L"a"; }
-	return pDirect->CalcTextSizeWithFixedWidth(*(m_spCellProperty->Format), text, rcContent.Width());
+	return pDirect->CalcTextSizeWithFixedWidth(GetFormat(), text, rcContent.Width());
 }
 
 CRectF CTextCell::GetEditRect() const

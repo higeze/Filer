@@ -71,7 +71,7 @@ CSizeF CPathCell::MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect)
 	//Calc Content Rect
 	std::basic_string<TCHAR> str=IsLeftestCell()?GetString():std::basic_string<TCHAR>();
 	if(str.empty()){str=_T("a");}
-	return pDirect->CalcTextSizeWithFixedWidth(*(m_spCellProperty->Format), str, rcContent.Width());
+	return pDirect->CalcTextSizeWithFixedWidth(GetFormat(), str, rcContent.Width());
 }
 
 void CPathCell::OnPaint(const PaintEvent& e)

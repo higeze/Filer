@@ -56,8 +56,8 @@ private:
 
 public:
 	template<typename... Args>
-	CTextCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, std::shared_ptr<CellProperty> spProperty, Args... args)
-		:CCell(pSheet, pRow, pColumn, spProperty, args...)
+	CTextCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn, Args... args)
+		:CCell(pSheet, pRow, pColumn, args...)
 	{
 		m_editMode = ::get(arg<"editmode"_s>(), args..., default_(EditMode::ReadOnly));
 		//m_text = ::get(arg<"text"_s>(), args..., default_(std::wstring()));

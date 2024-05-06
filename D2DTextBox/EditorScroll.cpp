@@ -1,16 +1,13 @@
 #include "EditorScroll.h"
 #include "EditorTextBox.h"
-#include "EditorProperty.h"
 
 /******************/
 /* CEditorVScroll */
 /******************/
 void CEditorVScroll::PaintForeground(const PaintEvent& e)
 {
-	SolidFill FindHighliteFill = SolidFill(244.f / 255, 167.f / 255, 33.f / 255, 1.f); // TODO HIGH
 	for (const auto& rc : GetHighliteRects()) {
-		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(
-			/*std::static_pointer_cast<EditorScrollProperty>(m_spScrollProp)->FindHighliteFill*/FindHighliteFill, rc);
+		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetFindHighlite(), rc);
 	}
 }
 

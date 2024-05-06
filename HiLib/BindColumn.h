@@ -40,7 +40,7 @@ public:
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CTextCell>(m_pGrid,pRow,pColumn,m_pGrid->GetCellProperty());
+		return std::make_shared<CTextCell>(m_pGrid,pRow,pColumn);
 	}
 
 };
@@ -80,7 +80,7 @@ public:
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CTextCell>(m_pGrid,pRow,pColumn,m_pGrid->GetCellProperty());
+		return std::make_shared<CTextCell>(m_pGrid,pRow,pColumn);
 	}
 };
 

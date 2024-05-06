@@ -7,7 +7,7 @@ public:
 	CDriveFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CDriveFolder() {}
 	virtual const std::wstring& GetDispExt() const override;
-	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(const std::shared_ptr<FileSizeArgs>& spArgs, std::function<void()> changed = nullptr)override;
+	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(const FileSizeArgs& args, std::function<void()> changed = nullptr)override;
 	std::tuple<ULARGE_INTEGER, ULARGE_INTEGER, ULARGE_INTEGER> GetSizes();
 };
 

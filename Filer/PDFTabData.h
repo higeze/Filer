@@ -17,7 +17,7 @@ struct PdfTabData :public TabData
 	reactive_property_ptr<FLOAT> HScroll;
 	reactive_property_ptr<FLOAT> Scale;
 	
-	PdfTabData(const std::wstring& path = std::wstring())
+	PdfTabData(const std::wstring& path = std::wstring(), const std::wstring password = std::wstring())
 		:TabData(),
 		Doc(std::make_shared<CPDFDoc>()),
 		VScroll(0.f),
@@ -25,10 +25,16 @@ struct PdfTabData :public TabData
 		Scale(-1.f)
 	{
 		Doc.get_unconst()->Path.set(path);
+		Doc.get_unconst()->Password.set(password);
 		Doc.get_unconst()->Load(path);
 	}
 
 	virtual ~PdfTabData() = default;
+
+	PdfTabData(const PdfTabData& other)
+		:PdfTabData(other.Doc->GetPath(), *other.Doc->Password) {}
+
+	virtual std::shared_ptr<TabData> ClonePtr() const override { return std::make_shared<PdfTabData>(*this); }
 
 	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
 

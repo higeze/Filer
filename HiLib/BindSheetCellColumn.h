@@ -4,7 +4,7 @@
 #include "BindItemsSheetCell.h"
 #include "FilterCell.h"
 #include "MapColumn.h"
-#include "SortCell.h"
+#include "HeaderSortCell.h"
 #include "named_arguments.h"
 
 template<typename TItem, typename TValueItem>
@@ -48,7 +48,7 @@ public:
 
 	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CSortCell>(m_pGrid, pRow, pColumn, m_pGrid->GetHeaderProperty(), arg<"text"_s>() = m_header);
+		return std::make_shared<CHeaderSortCell>(m_pGrid, pRow, pColumn, m_pGrid->GetHeaderProperty(), arg<"text"_s>() = m_header);
 	}
 
 	std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)

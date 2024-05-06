@@ -26,8 +26,8 @@ struct ImageTabData :public TabData
 	//ReactiveCommand<HWND> SaveAsCommand;
 
 
-	ImageTabData(CDirect2DWrite* pDirect = nullptr, const std::wstring& path = std::wstring())
-		:TabData(),Image(CD2DImage(path)),
+	ImageTabData(const std::wstring& path = std::wstring())
+		:TabData(),Image(path),
 		VScroll(0.f),
 		HScroll(0.f),
 		Scale(-1.f)
@@ -39,7 +39,14 @@ struct ImageTabData :public TabData
 		//SaveAsCommand.Subscribe([this](HWND hWnd) { SaveAs(hWnd); });
 	}
 
+
+
 	virtual ~ImageTabData() = default;
+
+	ImageTabData(const ImageTabData& other)
+		:ImageTabData(other.Image->GetPath()){}
+	virtual std::shared_ptr<TabData> ClonePtr() const override { return std::make_shared<ImageTabData>(*this); }
+
 
 	//void Open(HWND hWnd);
 	//void OpenAs(HWND hWnd);

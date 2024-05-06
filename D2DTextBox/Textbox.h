@@ -20,8 +20,6 @@
 
 #include "TextCaret.h"
 
-
-struct TextBoxProperty;
 class IBridgeTSFInterface;
 class CGridView;
 
@@ -50,7 +48,27 @@ class CTextBox : public IBridgeTSFInterface, public CD2DWControl
 {
 private:
 	std::optional<CSizeF> m_opt_size;
+	bool m_isWrap = true;
 public:
+	virtual const SolidLine& GetCompositionLine() const
+	{
+		static const SolidLine value(0.0f / 255.f, 0.0f / 255.f, 255.f / 255.f, 1.0f, 1.0f); return value;
+	}
+	virtual const SolidLine& GetBlankLine() const {
+		static const SolidLine value(100.f / 255.f, 100.f / 255.f, 100.f / 255.f, 0.6f, 1.0f); return value;
+	}
+	const bool& GetIsWrap() const
+	{
+		return m_isWrap;
+	}
+	void SetIsWrap(const bool& isWrap)
+	{
+		m_isWrap = isWrap;
+	}
+
+
+public:
+	void Measure(const CSizeF& availableSize) override;
 	void Measure(const CSizeF& availableSize, const std::wstring& text);
 	CSizeF DesiredSize() const;
 	void Arrange(const CRectF& rc) override;
@@ -106,12 +124,10 @@ public:
 		CD2DWControl* pParentControl,
 		std::unique_ptr<CVScroll>&& pVScroll,
 		std::unique_ptr<CHScroll>&& pHScroll,
-		const std::shared_ptr<TextBoxProperty> pProp,
 		const std::wstring& text);
 
 	CTextBox(
 		CD2DWControl* pParentControl,
-		const std::shared_ptr<TextBoxProperty> pProp,
 		const std::wstring& text);
 	virtual ~CTextBox();
 private:
@@ -290,7 +306,6 @@ public:
 protected:
 	CTimer m_timer;
 	std::wstring m_initText;
-	std::shared_ptr<TextBoxProperty> m_pProp;
 	std::function<std::wstring()> m_getter;
 	std::function<void(const std::wstring&)> m_setter;
 
@@ -300,11 +315,6 @@ protected:
 
 	//COMPOSITIONRENDERINFO *pCompositionRenderInfo_;
 	//UINT nCompositionRenderInfo_;
-
-public:
-	std::shared_ptr<TextBoxProperty> GetTextBoxPropertyPtr() { return m_pProp; }
-
-
 
 
 };

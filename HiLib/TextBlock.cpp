@@ -9,11 +9,11 @@ CSizeF CTextBlock::MeasureSize()
 CSizeF CTextBlock::MeasureSize(const std::wstring& text)
 {
 	CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(
-		m_spProperty->Format, text);
-	size.width += m_spProperty->Padding.top
-		+ m_spProperty->Padding.bottom;
-	size.height += m_spProperty->Padding.left
-		+ m_spProperty->Padding.right;
+		GetFormat(), text);
+	size.width += GetPadding().top
+		+ GetPadding().bottom;
+	size.height += GetPadding().left
+		+ GetPadding().right;
 	return size;
 }
 
@@ -23,8 +23,8 @@ void CTextBlock::OnPaint(const PaintEvent& e)
 
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 	CRectF rect = GetRectInWnd();
-	rect.DeflateRect(m_spProperty->Padding);
-	GetWndPtr()->GetDirectPtr()->DrawTextLayout(m_spProperty->Format, text, rect);
+	rect.DeflateRect(GetPadding());
+	GetWndPtr()->GetDirectPtr()->DrawTextLayout(GetFormat(), text, rect);
 
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
 }
