@@ -133,6 +133,7 @@ private:
 	//CKonamiCommander m_konamiCommander;
 
 public:
+	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<CRect> Rectangle;
 	reactive_wstring_ptr PerformanceLog;
 	reactive_wstring_ptr ThreadPoolLog;
@@ -191,6 +192,8 @@ public:
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
 
 	void SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer);
+	void SetUpFilerGrid(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer);
+
 
 	
 	/***********/

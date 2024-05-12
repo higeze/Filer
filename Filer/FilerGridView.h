@@ -2,6 +2,7 @@
 #include "FilerBindGridView.h"
 #include "FileColumn.h"
 #include "reactive_property.h"
+#include "reactive_string.h"
 #include "JsonSerializer.h"
 
 class CShellFile;
@@ -48,19 +49,17 @@ private:
 public:
 	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<std::shared_ptr<CShellFolder>> Folder;
+	reactive_wstring_ptr StatusLog;
 
 public:
 	//Constructor
 	CFilerGridView(CD2DWControl* pParentControl = nullptr);
 	virtual ~CFilerGridView();
-	//signal
-	//std::function<void(const std::shared_ptr<CShellFolder>&)> FolderChanged;
-	std::function<void(const std::wstring&)> StatusLog;
 
 	/******************/
 	/* Window Message */
 	/******************/
-	virtual LRESULT OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
+	//virtual LRESULT OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 	/**************/
 	/* UI Message */
 	/**************/
@@ -117,8 +116,8 @@ private:
 	bool IsDroppable(const std::vector<FORMATETC>& formats);
 	void Dropped(IDataObject *pDataObj, DWORD dwEffect);
 	void ShowShellContextMenu(HWND hWnd, CPoint ptScreen, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files, bool hasNew = false);
-	bool InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf);
-	bool InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<std::shared_ptr<CShellFile>> vpIdl);
+	//bool InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, const std::shared_ptr<CShellFolder>& folder);
+	//bool InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files);
 
 
 	//DirectoryWatch action

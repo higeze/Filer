@@ -15,15 +15,8 @@ public:
 	std::function<void(const std::shared_ptr<CShellFile>&)> FileChosen;
 
 public:
-	CFavoritesGridView(
-		CD2DWControl* pParentControl = nullptr, 
-		const std::shared_ptr<CFavoritesProperty>& spFavoritesProp = nullptr);
+	CFavoritesGridView( CD2DWControl* pParentControl = nullptr);
 	virtual ~CFavoritesGridView(void) = default;
-
-	//ReactiveVectorProperty<std::tuple<std::shared_ptr<CFavorite>>>& GetItemsSource() override { return m_itemsSource; }
-	//void SetItemsSource(const ReactiveVectorProperty<std::tuple<std::shared_ptr<CFavorite>>>& itemsSource) { m_itemsSource = itemsSource; }
-
-	std::shared_ptr<CFavoritesProperty>& GetFavoritesProp() { return m_spFavoritesProp; }
 
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;

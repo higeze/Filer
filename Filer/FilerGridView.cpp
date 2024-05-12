@@ -58,10 +58,7 @@
 #include <format>
 
 #include "ResourceIDFactory.h"
-
-#define SCRATCH_QCM_FIRST 1
-#define SCRATCH_QCM_NEW 600//200,500 are used by system
-#define SCRATCH_QCM_LAST  0x7FFF
+#include "ShellContextMenu.h"
 
 CLIPFORMAT CFilerGridView::s_cf_shellidlist = ::RegisterClipboardFormat(CFSTR_SHELLIDLIST);
 CLIPFORMAT CFilerGridView::s_cf_filecontents = ::RegisterClipboardFormat(CFSTR_FILECONTENTS);
@@ -934,34 +931,23 @@ bool CFilerGridView::DeleteSelectedFiles()
 
 bool CFilerGridView::NewFolder()
 {
-	return InvokeNewShellContextmenuCommand(GetWndPtr()->m_hWnd, CMDSTR_NEWFOLDERA, Folder->GetShellFolderPtr());
+	return CShellContextMenu::InvokeNewShellContextmenuCommand(GetWndPtr()->m_hWnd, CMDSTR_NEWFOLDERA, Folder.get_shared_unconst());
 }
 
 bool CFilerGridView::CutToClipboard()
 {
-	return InvokeNormalShellContextmenuCommand(GetWndPtr()->m_hWnd, "Cut", Folder->GetShellFolderPtr(), GetSelectedFiles());
+	return CShellContextMenu::InvokeNormalShellContextmenuCommand(GetWndPtr()->m_hWnd, "Cut", GetSelectedFiles());
 }
 
 bool CFilerGridView::CopyToClipboard()
 {
-	return InvokeNormalShellContextmenuCommand(GetWndPtr()->m_hWnd, "Copy", Folder->GetShellFolderPtr(), GetSelectedFiles());
+	return CShellContextMenu::InvokeNormalShellContextmenuCommand(GetWndPtr()->m_hWnd, "Copy", GetSelectedFiles());
 }
 
 bool CFilerGridView::PasteFromClipboard()
 {
-	//std::vector<LPITEMIDLIST> vPidl;
-	CIDL idl = Folder->GetAbsoluteIdl().CloneParentIDL();
-	CComPtr<IShellFolder> pDesktop;
-	::SHGetDesktopFolder(&pDesktop);
-	CComPtr<IShellFolder> pFolder;
-	::SHBindToObject(pDesktop,idl.ptr(),0,IID_IShellFolder,(void**)&pFolder);
-	if(!pFolder){
-		pFolder = pDesktop;
-	}
-	//vPidl.push_back(m_spFolder->GetAbsoluteIdl().FindLastID());
-	return InvokeNormalShellContextmenuCommand(GetWndPtr()->m_hWnd, "Paste", pFolder, {Folder.get_shared_unconst()});
+	return CShellContextMenu::InvokeNormalShellContextmenuCommand(GetWndPtr()->m_hWnd, "Paste", Folder.get_shared_unconst());
 }
-
 
 void CFilerGridView::OnDirectoryWatch(const DirectoryWatchEvent& e)
 {
@@ -1023,77 +1009,6 @@ void CFilerGridView::OnMouseWheel(const MouseWheelEvent& e)
 	}
 }
 
-bool CFilerGridView::InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf, std::vector<std::shared_ptr<CShellFile>> files)
-{
-	std::vector<PITEMID_CHILD> vpIdl;
-	for (auto file : files) {
-		vpIdl.push_back(file->GetAbsoluteIdl().FindLastID());
-	}
-
-	do {
-		CComPtr<IContextMenu> pcm;
-		FAILED_BREAK(psf->GetUIObjectOf(hWnd, vpIdl.size(),(LPCITEMIDLIST*)(vpIdl.data()),IID_IContextMenu,nullptr,(LPVOID *)&pcm));
-		CMenu menu=CMenu(CreatePopupMenu());
-		FALSE_BREAK(!menu.IsNull());
-		FAILED_BREAK(pcm->QueryContextMenu(menu,0,1,0x7FFF, CMF_NORMAL));
-
-		CMINVOKECOMMANDINFO cmi = {0};
-		cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
-		cmi.fMask = CMIC_MASK_NOASYNC;
-		cmi.hwnd = hWnd;
-		cmi.lpVerb = lpVerb;
-		cmi.nShow = SW_SHOWNORMAL;
-
-		if (SUCCEEDED(pcm->InvokeCommand((LPCMINVOKECOMMANDINFO)&cmi))) {
-			if (StatusLog) {
-				StatusLog(fmt::format(L"SUCCEEDED {}:{}", str2wstr(lpVerb), files[0]->GetPathName()));
-			}
-			return true;
-		} else {
-			if (StatusLog) {
-				StatusLog(fmt::format(L"FAILED {}:{}", str2wstr(lpVerb), files[0]->GetPathName()));
-			}
-			return false;
-		}
-	} while (false);
-	return false;
-}
-
-bool CFilerGridView::InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, CComPtr<IShellFolder> psf)
-{
-	CComPtr<IUnknown> puk;
-	//{D969A300-E7FF-11d0-A93B-00A0C90F2719},
-	CLSID clsid = { 0xd969a300, 0xe7ff, 0x11d0,{ 0xa9, 0x3b, 0x00, 0xa0, 0xc9, 0x0f, 0x27, 0x19 } };
-	HRESULT hr = puk.CoCreateInstance(clsid);
-	if (FAILED(hr)) { return SUCCEEDED(hr);}
-	CComPtr<IShellExtInit> psei;
-	hr = puk->QueryInterface(IID_PPV_ARGS(&psei));
-	if (FAILED(hr)) { return SUCCEEDED(hr); }
-	hr = psei->Initialize(Folder->GetAbsoluteIdl().ptr(), NULL, NULL);
-	if (FAILED(hr)) { return SUCCEEDED(hr); }
-	hr = psei->QueryInterface(IID_PPV_ARGS(&m_pcmNew2));
-	if (FAILED(hr)) { return SUCCEEDED(hr); }
-	hr = psei->QueryInterface(IID_PPV_ARGS(&m_pcmNew3));
-	if (FAILED(hr)) { return SUCCEEDED(hr);}
-	CMenu menu = CMenu(CreatePopupMenu());
-	hr = m_pcmNew3->QueryContextMenu(menu, 0, SCRATCH_QCM_NEW, SCRATCH_QCM_LAST, CMF_NORMAL);
-	if (FAILED(hr)) { return SUCCEEDED(hr);
-	}
-
-	CMINVOKECOMMANDINFO cmi = { 0 };
-	cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
-	cmi.hwnd = hWnd;
-	cmi.lpVerb = lpVerb;
-	cmi.nShow = SW_SHOWNORMAL;
-	m_isNewFile = true;
-	hr = m_pcmNew3->InvokeCommand((LPCMINVOKECOMMANDINFO)&cmi);
-
-	m_pcmNew2 = nullptr;
-	m_pcmNew3 = nullptr;
-
-	return SUCCEEDED(hr);
-}
-
 void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
 	auto cell = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
@@ -1101,16 +1016,8 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 
 	if (!cell) {
 		//Folder menu
-		//CIDL idl = m_spFolder->GetAbsoluteIdl().CloneParentIDL();
-		//CComPtr<IShellFolder> pDesktop;
-		//::SHGetDesktopFolder(&pDesktop);
-		//CComPtr<IShellFolder> pFolder;
-		//::SHBindToObject(pDesktop, idl.ptr(), 0, IID_IShellFolder, (void**)&pFolder);
-		//if (!pFolder) {
-		//	pFolder = pDesktop;
-		//}
-		files.push_back(Folder.get_shared_unconst());
-		ShowShellContextMenu(GetWndPtr()->m_hWnd, e.PointInScreen, Folder->GetParentFolderPtr(), files, true);
+		CShellContextMenu menu;
+		menu.PopupFolder(GetWndPtr(), e.PointInScreen, Folder.get_shared_unconst ());
 		*e.HandledPtr = TRUE;
 	}else if(/*cell->GetRowPtr() == m_pHeaderRow.get() || */cell->GetRowPtr() == m_pNameHeaderRow.get()){
 		//Header menu
@@ -1192,191 +1099,32 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 				files.push_back(spFile);
 			}
 		}
-		ShowShellContextMenu(GetWndPtr()->m_hWnd, e.PointInScreen, Folder.get_shared_unconst(), files);
-		*e.HandledPtr = TRUE;
-	}
-
-	//CFilerGridViewBase::Normal_ContextMenu(e);
-}
-
-void CFilerGridView::ShowShellContextMenu(HWND hWnd, CPoint ptScreen, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files, bool hasNew)
-{
-	std::vector<PITEMID_CHILD> vPidl;
-	for (auto file : files) {
-		vPidl.push_back(file->GetAbsoluteIdl().FindLastID());
-	}
-
-	try {
-		GetWndPtr()->AddAllMsgHandler(&CFilerGridView::OnHandleMenuMsg, this);
-
-		//CreateMenu
-		CMenu menu(::CreatePopupMenu());
-		if (menu.IsNull()) { return; }
-
-		//New Context Menu
-		HRESULT hr;
-		if (hasNew) {
-
-			CComPtr<IUnknown> puk;
-			//{D969A300-E7FF-11d0-A93B-00A0C90F2719},
-			CLSID clsid = { 0xd969a300, 0xe7ff, 0x11d0,{ 0xa9, 0x3b, 0x00, 0xa0, 0xc9, 0x0f, 0x27, 0x19 } };
-			hr = puk.CoCreateInstance(clsid);
-			if (FAILED(hr)) { return; }
-			CComPtr<IShellExtInit> psei;
-			hr = puk->QueryInterface(IID_PPV_ARGS(&psei));
-			if (FAILED(hr)) { return; }
-			hr = psei->Initialize(Folder->GetAbsoluteIdl().ptr(), NULL, NULL);
-			if (FAILED(hr)) { return; }
-			hr = psei->QueryInterface(IID_PPV_ARGS(&m_pcmNew2));
-			if (FAILED(hr)) { return; }
-			hr = psei->QueryInterface(IID_PPV_ARGS(&m_pcmNew3));
-			if (FAILED(hr)) { return; }
-
-			hr = m_pcmNew3->QueryContextMenu(menu, 0, SCRATCH_QCM_NEW, SCRATCH_QCM_LAST, CMF_NORMAL);
-			if (FAILED(hr)) { return; }
-		}
-
-		//Normal Context Menu
-		CComPtr<IContextMenu> pcm;
-		hr = folder->GetShellFolderPtr()->GetUIObjectOf(hWnd, vPidl.size(), (LPCITEMIDLIST*)(vPidl.data()), IID_IContextMenu, nullptr, (LPVOID *)&pcm);
-		hr = pcm->QueryInterface(IID_PPV_ARGS(&m_pcm2));
-		if (FAILED(hr)) { return; }
-		hr = pcm->QueryInterface(IID_PPV_ARGS(&m_pcm3));
-		if (FAILED(hr)) { return; }
-		UINT uFlags = (::GetKeyState(VK_SHIFT) & 0x8000) ? CMF_NORMAL | CMF_EXTENDEDVERBS : CMF_NORMAL;
-		hr = m_pcm3->QueryContextMenu(menu, 0, SCRATCH_QCM_FIRST, SCRATCH_QCM_LAST, uFlags);
-		if (FAILED(hr)) { return; }
-
-		//Add Copy Text
-		menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
-		MENUITEMINFO mii = { 0 };
-		mii.cbSize = sizeof(MENUITEMINFO);
-		mii.fMask = MIIM_TYPE | MIIM_ID;
-		mii.fType = MFT_STRING;
-		mii.fState = MFS_ENABLED;
-		mii.wID = IDM_COPYTEXT;
-		mii.dwTypeData = const_cast<LPWSTR>(L"Copy Text");
-		menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
-		//Add Custom menu
-		if (AddCustomContextMenu) {
-			AddCustomContextMenu(menu);
-		}
-
-		//
-		int itemCount = menu.GetMenuItemCount();
-		bool isLine(false);
-
-		//Investigate New menu, Seperator
-		for (auto i = itemCount - 1; i != 0; i--) {
-			std::wstring verb;
-			MENUITEMINFO mii = { 0 };
-			mii.cbSize = sizeof(MENUITEMINFO);
-			mii.fMask = MIIM_SUBMENU | MIIM_TYPE;
-			mii.dwTypeData = ::GetBuffer(verb, 256);
-			mii.cch = 256;
-			menu.GetMenuItemInfo(i, TRUE, &mii);
-
-			//Arrange Separator
-			//Avoid Double Separamter, First Separator
-			if (mii.fType == MFT_SEPARATOR) {
-				if (isLine || i == 0 || i == itemCount - 1) {
-					menu.DeleteMenu(i, MF_BYPOSITION);
-				}
-			}
-			isLine = mii.fType == MFT_SEPARATOR;
-
-			//Get Submenu of New
-			if (m_pcmNew3) {
-				if (verb.find(L"V‹Kì¬") != std::wstring::npos) {
-					m_hNewMenu = mii.hSubMenu;
-				}
-			}
-		}
-		int idCmd = menu.TrackPopupMenu(
-			TPM_LEFTALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON,
-			ptScreen.x,
-			ptScreen.y,
-			GetWndPtr()->m_hWnd);
-
-		if (idCmd) {
-
-			CMINVOKECOMMANDINFOEX info = { 0 };
-			info.cbSize = sizeof(info);
-			info.fMask = /*CMIC_MASK_UNICODE |*/ CMIC_MASK_PTINVOKE;
-			info.hwnd = hWnd;
-			info.nShow = SW_SHOWNORMAL;
-			info.ptInvoke = ptScreen;
-
-			if (ExecCustomContextMenu(idCmd, folder, files)) {
-
-			} else if (idCmd == IDM_COPYTEXT) {
+		CShellContextMenu menu;
+		menu.Add(
+			std::make_unique<CMenuSeparator2>(),
+			std::make_unique<CMenuItem2>(L"Copy Text", [this]()->void {
 				BOOL bHandled = FALSE;
-				CGridView::OnCommandCopy(CommandEvent(GetWndPtr(), (WPARAM)idCmd, (LPARAM)GetWndPtr()->m_hWnd, &bHandled));
-			}else if (idCmd >= SCRATCH_QCM_NEW) {
-				info.lpVerb = MAKEINTRESOURCEA(idCmd - SCRATCH_QCM_NEW);
-				info.lpVerbW = MAKEINTRESOURCEW(idCmd - SCRATCH_QCM_NEW);
-				m_isNewFile = true;
-				hr = m_pcmNew3->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
-			}else {
-				info.lpVerb = MAKEINTRESOURCEA(idCmd - SCRATCH_QCM_FIRST);
-				info.lpVerbW = MAKEINTRESOURCEW(idCmd - SCRATCH_QCM_FIRST);
-				hr = m_pcm3->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
-			}
-		}
-	}
-	catch (...) {
-		m_hNewMenu = NULL;
-		m_pcmNew2 = nullptr;
-		m_pcmNew3 = nullptr;
-		m_pcm2 = nullptr;
-		m_pcm3 = nullptr;
-		GetWndPtr()->RemoveAllMsgHandler();
-		throw;
-	}
+				CGridView::OnCommandCopy(CommandEvent(GetWndPtr(), (WPARAM)0, (LPARAM)GetWndPtr()->m_hWnd, &bHandled));}),
+			std::make_unique<CMenuSeparator2>(),
+			std::make_unique<CMenuItem2>(L"PDF Split", [this, pWnd = GetWndPtr(), folder = Folder.get_shared_unconst(), files]()->void {
+				auto spDlg = std::make_shared<CPDFSplitDlg>(this, folder, files);
+				spDlg->OnCreate(CreateEvt(pWnd, this, CalcCenterRectF(CSizeF(300, 200))));
+			GetWndPtr()->SetFocusToControl(spDlg); })
+		);
+		menu.PopupFiles(GetWndPtr(), e.PointInScreen, files);
+		*e.HandledPtr = TRUE;
 
-	m_hNewMenu = NULL;
-	m_pcmNew2 = nullptr;
-	m_pcmNew3 = nullptr;
-	m_pcm2 = nullptr;
-	m_pcm3 = nullptr;
-	GetWndPtr()->RemoveAllMsgHandler();
-}
+		//menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
+		//MENUITEMINFO mii = { 0 };
+		//mii.cbSize = sizeof(MENUITEMINFO);
+		//mii.fMask = MIIM_TYPE | MIIM_ID;
+		//mii.fType = MFT_STRING;
+		//mii.fState = MFS_ENABLED;
+		//mii.wID = IDM_COPYTEXT;
+		//mii.dwTypeData = const_cast<LPWSTR>(L"Copy Text");
+		//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
-HRESULT CFilerGridView::OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
-{
-	if ((m_pcmNew3 || m_pcmNew2) && wParam == (WPARAM)m_hNewMenu) {
-		if (m_pcmNew3) {
-			LRESULT lres;
-			if (SUCCEEDED(m_pcmNew3->HandleMenuMsg2(uMsg, wParam, lParam, &lres))) {
-				bHandled = TRUE;
-				return lres;
-			}
-		}
-		else if (m_pcmNew2) {
-			if (SUCCEEDED(m_pcmNew2->HandleMenuMsg(uMsg, wParam, lParam))) {
-				bHandled = TRUE;
-				return 0;
-			}
-		}
-	}else{
-		if (m_pcm3) {
-			LRESULT lres;
-			if (SUCCEEDED(m_pcm3->HandleMenuMsg2(uMsg, wParam, lParam, &lres))) {
-				bHandled = TRUE;
-				return lres;
-			}
-		}
-		else if (m_pcm2) {
-			if (SUCCEEDED(m_pcm2->HandleMenuMsg(uMsg, wParam, lParam))) {
-				bHandled = TRUE;
-				return 0;
-			}
-		}
 	}
-
-	bHandled = FALSE;
-	return 0;
 }
 
 std::wstring CFilerGridView::GetPath()const

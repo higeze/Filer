@@ -11,12 +11,34 @@ class CMenuItem2
 protected:
 	MENUITEMINFO mii = { 0 };
 public:
+	std::shared_ptr<int> Dummy;
 	reactive_wstring_ptr Header;
 	reactive_command_ptr<void> Command;
 
-	template<class... Args>
-	CMenuItem2(std::wstring&& header, Args&&... args)
-		:Header(header), Command(std::forward<Args>(args)...)
+	//template<class... Args>
+	//CMenuItem2(std::wstring&& header, Args&&... args)
+	//	:Dummy(std::make_shared<int>(0)), Header(header), Command(std::forward<Args>(args)..., Dummy)
+	//{
+	//	mii.cbSize = sizeof(MENUITEMINFO);
+	//	mii.fMask = MIIM_TYPE | MIIM_ID;
+	//	mii.fType = MFT_STRING;
+	//	mii.fState = MFS_ENABLED;	
+	//}
+	using arg_list = sigslot::trait::typelist<void>;
+
+	template <typename Pmf, typename Ptr>
+	CMenuItem2(std::wstring&& header, Pmf&& pmf, Ptr&& ptr/*, std::enable_if_t<!sigslot::trait::is_callable_v<arg_list, Pmf> && sigslot::trait::is_weak_ptr_compatible_v<Ptr>>* = 0*/)
+		:Header(header), Command(std::forward<Pmf>(pmf), std::forward<Ptr>(ptr))
+	{
+		mii.cbSize = sizeof(MENUITEMINFO);
+		mii.fMask = MIIM_TYPE | MIIM_ID;
+		mii.fType = MFT_STRING;
+		mii.fState = MFS_ENABLED;	
+	}
+
+	template <typename Callable>
+	CMenuItem2(std::wstring&& header, Callable&& c/*, std::enable_if_t<sigslot::trait::is_callable_v<arg_list, Callable>>* = 0 */)
+		:Dummy(std::make_shared<int>(0)), Header(header), Command(std::forward<Callable>(c), Dummy)
 	{
 		mii.cbSize = sizeof(MENUITEMINFO);
 		mii.fMask = MIIM_TYPE | MIIM_ID;
@@ -59,7 +81,7 @@ public:
 
 class CContextMenu2
 {
-private:
+protected:
     struct delete_menu
     {
 	    void operator()(HMENU p)
@@ -72,6 +94,9 @@ private:
 
 	std::vector<std::unique_ptr<CMenuItem2>> m_items;
 public:
+
+	CContextMenu2() {}
+	virtual ~CContextMenu2() {}
 
 	void Add() {}
 	template<class _Head>

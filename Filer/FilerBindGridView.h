@@ -20,8 +20,6 @@
 #include "ShowHideMenuItem.h"
 #include "D2DWWindow.h"
 
-#define WM_UAHMEASUREMENUITEM 0x0094
-
 template<typename T>
 class CFilerBindGridView :public CBindGridView<T>
 {

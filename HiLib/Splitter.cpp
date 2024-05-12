@@ -4,49 +4,50 @@
 /*************/
 /* CSplitter */
 /*************/
+CSplitter::CSplitter(CD2DWControl* pParentControl)
+	:CD2DWControl(pParentControl), Minimum(-1.f), Maximum(-1.f), Value(-1.f){}
+
+void CSplitter::OnCreate(const CreateEvt& e)
+{
+	CD2DWControl::OnCreate(e);
+	Minimum.subscribe([this](auto min) { Value.set((std::max)(min, *Value)); }, shared_from_this());
+	Maximum.subscribe([this](auto max) { Value.set((std::min)(max, *Value)); }, shared_from_this());
+}
 
 void CSplitter::OnPaint(const PaintEvent& e)
 {
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
-
 }
+
 void CSplitter::OnLButtonBeginDrag(const LButtonBeginDragEvent& e)
 {
 	e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
-	m_inDrag = true;
-	m_ptBeginDrag = e.PointInWnd;
+	m_ptBeginDrag.emplace(e.PointInWnd);
 }
+
 void CSplitter::OnLButtonEndDrag(const LButtonEndDragEvent& e)
 {
 	e.WndPtr->ReleaseCapturedControlPtr();
-	m_inDrag = false;
-	m_ptBeginDrag = CPointF();
+	m_ptBeginDrag.reset();
 }
 
 /***********************/
 /* CHorizontalSplitter */
 /***********************/
-
-void CHorizontalSplitter::OnMouseMove(const MouseMoveEvent& e)
+void CVerticalSplitter::OnMouseMove(const MouseMoveEvent& e)
 {
-	if (m_inDrag) {
-		auto rc = GetRectInWnd();
+	if (m_ptBeginDrag.has_value()) {
+		Value.set(std::clamp(*Value + (e.PointInWnd.x - m_ptBeginDrag->x), *Minimum, *Maximum));
+		m_ptBeginDrag.emplace(e.PointInWnd);
 
-		Value.set(std::clamp(*Value + (e.PointInWnd.x - m_ptBeginDrag.x), *Minimum, *Maximum));
-		::OutputDebugStringA(std::format("{},{},{}\r\n", *Value, *Minimum, *Maximum).c_str());
-		m_ptBeginDrag = e.PointInWnd;
-
-		auto spParent = GetParentControlPtr();
-		spParent->OnRect(RectEvent(spParent->GetWndPtr(), spParent->GetRectInWnd()));
+		OnSetCursor(SetCursorEvent(e.WndPtr, 0, e.HandledPtr));
+		(*e.HandledPtr) = TRUE;
 	}
-	::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
-	(*e.HandledPtr) = TRUE;
-
 }
 
-void CHorizontalSplitter::OnSetCursor(const SetCursorEvent& e)
+void CVerticalSplitter::OnSetCursor(const SetCursorEvent& e)
 {
 	::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
 	(*e.HandledPtr) = TRUE;
@@ -55,23 +56,17 @@ void CHorizontalSplitter::OnSetCursor(const SetCursorEvent& e)
 /*********************/
 /* CVerticalSplitter */
 /*********************/
-
-void CVerticalSplitter::OnMouseMove(const MouseMoveEvent& e)
+void CHorizontalSplitter::OnMouseMove(const MouseMoveEvent& e)
 {
-	if (m_inDrag) {
-		auto rc = GetRectInWnd();
+	if (m_ptBeginDrag.has_value()) {
+		Value.set(std::clamp(*Value + (e.PointInWnd.y - m_ptBeginDrag->y), *Minimum, *Maximum));
+		m_ptBeginDrag.emplace(e.PointInWnd);
 
-		Value.set(std::clamp(*Value + (e.PointInWnd.y - m_ptBeginDrag.y), *Minimum, *Maximum));
-		m_ptBeginDrag = e.PointInWnd;
-
-		auto spParent = GetParentControlPtr();
-		spParent->OnRect(RectEvent(spParent->GetWndPtr(), spParent->GetRectInWnd()));
+		OnSetCursor(SetCursorEvent(e.WndPtr, 0, e.HandledPtr));
+		(*e.HandledPtr) = TRUE;
 	}
-	::SetCursor(::LoadCursor(NULL, IDC_SIZENS));
-	(*e.HandledPtr) = TRUE;
-
 }
-void CVerticalSplitter::OnSetCursor(const SetCursorEvent& e)
+void CHorizontalSplitter::OnSetCursor(const SetCursorEvent& e)
 {
 	::SetCursor(::LoadCursor(NULL, IDC_SIZENS));
 	(*e.HandledPtr) = TRUE;

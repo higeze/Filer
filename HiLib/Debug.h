@@ -76,6 +76,8 @@ std::string msg_to_string(UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define FALSE_THROW(expression) if(!(expression)){throw std::exception(FILE_LINE_FUNC);}
 
+#define FALSE_RETURN(expression) if(!expression){return;}
+
 #define TRUE_BREAK(expression) if(expression){break;}
 #define FALSE_BREAK(expression) if(!(expression)){break;}
 

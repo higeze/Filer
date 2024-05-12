@@ -661,6 +661,7 @@
     <ClCompile Include="..\HiLib\Performance.cpp" />
     <ClCompile Include="..\HiLib\PreviewControl.cpp" />
     <ClCompile Include="..\HiLib\PreviewWnd.cpp" />
+    <ClCompile Include="..\HiLib\ShellContextMenu.cpp" />
     <ClCompile Include="..\HiLib\ShellFile.cpp" />
     <ClCompile Include="..\HiLib\ShellFileFactory.cpp" />
     <ClCompile Include="..\HiLib\ShellFolder.cpp" />

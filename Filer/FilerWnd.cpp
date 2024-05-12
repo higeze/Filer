@@ -45,17 +45,15 @@
 
 #include "SplitContainer.h"
 
-#ifdef USE_PYTHON_EXTENSION
-#include "BoostPythonHelper.h"
-#endif
 
 std::vector<std::wstring> CFilerWnd::imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff" };
 std::vector<std::wstring> CFilerWnd::previewExts = {L".docx", L".doc", L".xlsx", L".xls", L".ppt", L".pptx"};
 
-
+//Default
 CFilerWnd::CFilerWnd()
 	:CD2DWWindow(),
 	//m_reloadIosv(), m_reloadWork(m_reloadIosv), m_reloadTimer(m_reloadIosv),
+	Dummy(std::make_shared<int>(1)),
 	Rectangle(0, 0, 1000, 600), 
 	m_pPerformance(std::make_unique<CPerformance>()),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
@@ -65,50 +63,8 @@ CFilerWnd::CFilerWnd()
 	m_spLauncher(std::make_shared<CLauncherGridView>(this, m_spLauncherProp)),
 	m_spToolBar(std::make_shared<CToolBar>(this)),
 	m_spHorizontalSplit(std::make_shared<CHorizontalSplitContainer>(this)),
-	//m_spTopVerticalSplit(std::make_shared<CVerticalSplitContainer>(this)),
-	//m_spBottomVerticalSplit(std::make_shared<CVerticalSplitContainer>(this)),
-	//m_spLeftView(std::make_shared<CFilerTabGridView>(this)),
-	//m_spRightView(std::make_shared<CFilerTabGridView>(this)),
-	//m_spLeftFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFavoritesProp)),
-	//m_spRightFavoritesView(std::make_shared<CFavoritesGridView>(this, m_spFavoritesProp)),
-	//m_spLogText(std::make_shared<CColoredTextBox>(this, L"")),
 	m_spStatusBar(std::make_shared<CStatusBar>(this))
-	//m_spHSplitter(std::make_shared<CHorizontalSplitter>(this)),
-	//m_spVSplitter(std::make_shared<CVerticalSplitter>(this)),
-	//m_spCurView(m_spLeftView)
-#ifdef USE_PYTHON_EXTENSION
-	,m_spPyExProp(std::make_shared<CPythonExtensionProperty>())
-#endif
 {
-	//Top Vertical
-	auto spTopVerticalSplit = std::make_shared<CVerticalSplitContainer>(m_spHorizontalSplit.get());
-	auto spTabLeft = std::make_shared<CFilerTabGridView>(spTopVerticalSplit.get());
-	auto spTabRight = std::make_shared<CFilerTabGridView>(spTopVerticalSplit.get());
-	spTabLeft->SetIsTabStop(true);
-	spTabRight->SetIsTabStop(true);
-	SetUpPreview(spTabLeft, spTabRight);
-	SetUpPreview(spTabRight, spTabLeft);
-	spTopVerticalSplit->SetLeft(spTabLeft);
-	spTopVerticalSplit->SetRight(spTabRight);
-
-	//Bottom Vertical
-	auto spBottomVerticalSplit = std::make_shared<CVerticalSplitContainer>(m_spHorizontalSplit.get());
-	auto spTextBoxLeft = std::make_shared<CColoredTextBox>(spBottomVerticalSplit.get(), L"");
-	auto spTextBoxRight = std::make_shared<CColoredTextBox>(spBottomVerticalSplit.get(), L"");
-	PerformanceLog.binding(spTextBoxLeft->Text);
-	ThreadPoolLog.binding(spTextBoxRight->Text);
-	spBottomVerticalSplit->SetLeft(spTextBoxLeft);
-	spBottomVerticalSplit->SetRight(spTextBoxRight);
-
-	//Horizontal
-	m_spHorizontalSplit->SetTop(spTopVerticalSplit);
-	m_spHorizontalSplit->SetTop(spBottomVerticalSplit);
-
-
-	//std::thread th(boost::bind(&boost::asio::io_service::run, &m_reloadIosv));
-	//th.detach();
-
-
 	m_rca
 	.lpszClassName(L"CFilerWnd")
 	.style(CS_VREDRAW | CS_HREDRAW |CS_DBLCLKS)
@@ -145,6 +101,8 @@ CFilerWnd::CFilerWnd()
 
 CFilerWnd::~CFilerWnd() = default;
 
+
+
 HWND CFilerWnd::Create(HWND hWndParent)
 {
 	HWND hWnd = CWnd::Create(hWndParent, *Rectangle);
@@ -155,6 +113,16 @@ void CFilerWnd::OnPaint(const PaintEvent& e)
 {
 	GetDirectPtr()->FillSolidRectangle(CColorF(1.f, 1.f, 1.f), GetRectInWnd());
 	CD2DWWindow::OnPaint(e);
+}
+
+void CFilerWnd::SetUpFilerGrid(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer)
+{
+	subject->GetFilerViewPtr()->GetFileGridPtr()->StatusLog.subscribe(
+		[this](auto notify) {
+		m_spStatusBar->Text.set(notify.all_items);
+		InvalidateRect(NULL, FALSE);
+	}, shared_from_this());
+
 }
 
 void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer)
@@ -198,88 +166,43 @@ void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, 
 			}
 		}
 
-		//std::shared_ptr<TabData> spNewData;
-		////Text
-		//if (auto spTxtData = std::dynamic_pointer_cast<TextTabData>(spObsData);
-		//	spTxtData && boost::iequals(spFile->GetPathExt(), L".txt")) {
-		//	spNewData = std::make_shared<TextTabData>(spFile->GetPath());
-		////PDF
-		//} else if (auto spPdfData = std::dynamic_pointer_cast<PdfTabData>(spObsData);
-		//	spPdfData && boost::iequals(spFile->GetPathExt(), L".pdf")) {
-		//	spNewData = std::make_shared<PdfTabData>(spFile->GetPath());
-		////Image
-		//} else if (auto spImgData = std::dynamic_pointer_cast<ImageTabData>(spObsData);
-		//	spImgData && std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
-		//	spNewData = std::make_shared<ImageTabData>(GetWndPtr()->GetDirectPtr(), spFile->GetPath());
-		////Preview
-		//} else if (auto spPrvData = std::dynamic_pointer_cast<PreviewTabData>(spObsData);
-		//	spPrvData && std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
-		//	spNewData = std::make_shared<PreviewTabData>(spFile->GetPath());
-		//}
-
-		//if (spNewData) {
-		//	//Replace
-		//	if (spObsData->AcceptClosing(this, false)) {
-		//		observer->ItemsSource.replace(observer->ItemsSource.get_unconst()->begin() + *observer->SelectedIndex, spNewData);
-		//	}
-		//}
-
-
-	}, shared_from_this());
+	}, Dummy);
 }
-
 
 void CFilerWnd::OnCreate(const CreateEvt& e)
 {
+	//Network Messanger
 	m_pNetworkMessanger = std::make_unique<CNetworkMessanger>(m_hWnd);
 
-#ifdef USE_PYTHON_EXTENSION
-	m_commandMap.emplace(IDM_PYTHONEXTENSIONOPTION, std::bind(&CFilerWnd::OnCommandPythonExtensionOption, this, phs::_1));
-#endif
-	//CLauncherGridView
-	//Do nothing
+	//Control Set up
+	//Top Vertical
+	auto spTopVerticalSplit = std::make_shared<CVerticalSplitContainer>(m_spHorizontalSplit.get());
+	auto spTabLeft = std::make_shared<CFilerTabGridView>(spTopVerticalSplit.get());
+	auto spTabRight = std::make_shared<CFilerTabGridView>(spTopVerticalSplit.get());
+	spTabLeft->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource.set(*m_spFavoritesProp->Favorites);
+	spTabRight->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource.set(*m_spFavoritesProp->Favorites);
+	spTabLeft->SetIsTabStop(true);
+	spTabRight->SetIsTabStop(true);
+	SetUpFilerGrid(spTabLeft, spTabRight);
+	SetUpFilerGrid(spTabRight, spTabLeft);
+	SetUpPreview(spTabLeft, spTabRight);
+	SetUpPreview(spTabRight, spTabLeft);
 
-	////CFavoritesGridView
-	//auto setUpFavoritesView = [this](
-	//	const std::shared_ptr<CFavoritesGridView>& spFavoritesGridView,
-	//	const std::weak_ptr<CFilerTabGridView>& wpView)->void {
-	//	spFavoritesGridView->FileChosen = [wpView, this](const std::shared_ptr<CShellFile>& spFile)->void {
-	//		if (auto spView = wpView.lock()) {
-	//			if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {//Open Filer
-	//				auto& itemsSource = spView->ItemsSource;
-	//				if (itemsSource->at(*spView->SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
-	//					itemsSource.replace(itemsSource.get_unconst()->begin() + *spView->SelectedIndex, std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
-	//				} else {
-	//					itemsSource.push_back(std::make_shared<FilerTabData>(std::static_pointer_cast<CShellFolder>(spFile)));
-	//				}
-	//			} else if (boost::iequals(spFile->GetPathExt(), L".txt")) {//Open Text
-	//				auto& itemsSource = spView->ItemsSource;
-	//				if (itemsSource->at(*spView->SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
-	//					itemsSource.replace(itemsSource.get_unconst()->begin() + *spView->SelectedIndex, std::make_shared<TextTabData>(spFile->GetPath()));
-	//				} else {
-	//					itemsSource.push_back(std::make_shared<TextTabData>(spFile->GetPath()));
-	//				}
-	//			} else {//Open File
-	//				spFile->Open();
-	//			}
-	//		}
-	//	};
-	//};
-	//setUpFavoritesView(m_spLeftFavoritesView, std::weak_ptr<CFilerTabGridView>(m_spLeftView));
-	//setUpFavoritesView(m_spRightFavoritesView, std::weak_ptr<CFilerTabGridView>(m_spRightView));
+	spTopVerticalSplit->SetLeft(spTabLeft);
+	spTopVerticalSplit->SetRight(spTabRight);
 
-	//CFilerTabGridView
-	// TODOTODO
-	//auto setUpFilerTabGridView = [this](std::shared_ptr<CFilerTabGridView>& spView, unsigned short id)->void {
-	//	spView->GetFilerViewPtr()->GetFileGridPtr()->StatusLog = [this](const std::wstring& log) {
-	//		m_spStatusBar->Text.set(log);
-	//		InvalidateRect(NULL, FALSE);
-	//	};
+	//Bottom Vertical
+	auto spBottomVerticalSplit = std::make_shared<CVerticalSplitContainer>(m_spHorizontalSplit.get());
+	auto spTextBoxLeft = std::make_shared<CColoredTextBox>(spBottomVerticalSplit.get(), L"");
+	auto spTextBoxRight = std::make_shared<CColoredTextBox>(spBottomVerticalSplit.get(), L"");
+	PerformanceLog.binding(spTextBoxLeft->Text);
+	ThreadPoolLog.binding(spTextBoxRight->Text);
+	spBottomVerticalSplit->SetLeft(spTextBoxLeft);
+	spBottomVerticalSplit->SetRight(spTextBoxRight);
 
-	//};
-
-	//setUpFilerTabGridView(m_spLeftView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"LeftFilerGridView"));
-	//setUpFilerTabGridView(m_spRightView, CResourceIDFactory::GetInstance()->GetID(ResourceType::Control, L"RightFilerGridView"));
+	//Horizontal
+	m_spHorizontalSplit->SetTop(spTopVerticalSplit);
+	m_spHorizontalSplit->SetBottom(spBottomVerticalSplit);
 
 	//Context Menu
 	auto applyCustomContextMenu = [this](std::shared_ptr<CFilerGridView> spFilerView)->void {
@@ -299,21 +222,6 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 			mii.dwTypeData = const_cast<LPWSTR>(L"Add to launcher");
 			menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 
-
-#ifdef USE_PYTHON_EXTENSION
-			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
-
-			for (auto& pyex : m_spPyExProp->PythonExtensions) {
-				MENUITEMINFO mii = { 0 };
-				mii.cbSize = sizeof(MENUITEMINFO);
-				mii.fMask = MIIM_TYPE | MIIM_ID;
-				mii.fType = MFT_STRING;
-				mii.fState = MFS_ENABLED;
-				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, pyex.Name);
-				mii.dwTypeData = (LPWSTR)pyex.Name.c_str();
-				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-			}
-#endif
 			//PDF
 			{
 				menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
@@ -790,7 +698,6 @@ void CFilerWnd::Arrange(const CRectF& rc)
 		rc.right,
 		rc.top + m_spToolBar->DesiredSize().height
 	));
-	FLOAT topBottom = (std::max)(m_spLauncher->ArrangedRect().bottom, m_spToolBar->ArrangedRect().bottom);
 
 	/**********/
 	/* Bottom */
@@ -806,10 +713,11 @@ void CFilerWnd::Arrange(const CRectF& rc)
 	/* Fill */
 	/********/
 	m_spHorizontalSplit->Arrange(CRectF(
-		topBottom,
 		rc.left,
-		m_spStatusBar->ArrangedRect().top,
-		rc.right));
+		(std::max)(m_spLauncher->ArrangedRect().bottom, m_spToolBar->ArrangedRect().bottom),
+		rc.right,
+		m_spStatusBar->ArrangedRect().top
+		));
 
 	///********/
 	///* Fill */

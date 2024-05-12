@@ -6,15 +6,17 @@
 class CSplitter : public CD2DWControl
 {
 protected:
-	bool m_inDrag = false;
-	CPointF m_ptBeginDrag;
+	std::optional<CPointF> m_ptBeginDrag;
 public:
 
 	virtual const CRectF& GetMargin() const override
 	{ 
 		static const CRectF value(0.f, 0.f, 0.f, 0.f); return value; 
 	}
-	
+	virtual const CRectF& GetPadding() const override
+	{ 
+		static const CRectF value(0.f, 0.f, 0.f, 0.f); return value; 
+	}
 	const SolidFill& GetNormalBackground() const override
 	{
 		static const SolidFill value(222.f / 255.f, 222.f / 255.f, 222.f / 255.f, 1.0f); return value;
@@ -24,13 +26,14 @@ public:
 	reactive_property_ptr<FLOAT> Maximum;
 	reactive_property_ptr<FLOAT> Minimum;
 	reactive_property_ptr<FLOAT> Value;
+	FLOAT Width = 5.f;
 
 public:
-	CSplitter(CD2DWControl* pParentControl = nullptr)
-		:CD2DWControl(pParentControl), Minimum(-1.f), Maximum(-1.f), Value(-1.f){}
+	CSplitter(CD2DWControl* pParentControl = nullptr);
 	virtual ~CSplitter() = default;
 
 	//Event
+	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnPaint(const PaintEvent& e) override;
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;
@@ -42,19 +45,22 @@ public:
 	
 };
 
-class CHorizontalSplitter:public CSplitter
+class CVerticalSplitter:public CSplitter
 {
-private:
-	FLOAT Width = 5.f;
 public:
 	using CSplitter::CSplitter;
-	virtual ~CHorizontalSplitter() = default;
+	virtual ~CVerticalSplitter() = default;
 
 	//MeasureArrange
-	void Measure(const CSizeF& availableSize)
+	virtual void Measure(const CSizeF& availableSize) override
 	{
 		m_size.width = Width;
 		m_size.height = availableSize.height;
+	}
+
+	virtual void Arrange(const CRectF& rc) override
+	{
+		CD2DWControl::Arrange(rc);
 	}
 	
 	//Event
@@ -62,19 +68,22 @@ public:
 	virtual void OnSetCursor(const SetCursorEvent& e) override;
 };
 
-class CVerticalSplitter:public CSplitter
+class CHorizontalSplitter:public CSplitter
 {
-private:
-	FLOAT Height = 5.f;
 public:
 	using CSplitter::CSplitter;
-	virtual ~CVerticalSplitter() = default;
+	virtual ~CHorizontalSplitter() = default;
 
 	//MeasureArrange
-	void Measure(const CSizeF& availableSize)
+	virtual void Measure(const CSizeF& availableSize) override
 	{
 		m_size.width = availableSize.width;
-		m_size.height = Height;
+		m_size.height = Width;
+	}
+
+	virtual void Arrange(const CRectF& rc) 
+	{
+		CD2DWControl::Arrange(rc);
 	}
 
 	//Event

@@ -74,6 +74,9 @@
     <Filter Include="Filer\Filer">
       <UniqueIdentifier>{746eb198-836d-4695-88fc-cc09889a8819}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HiLib\SplitContainer">
+      <UniqueIdentifier>{b5d44442-873a-49a6-82b0-9db3a66425bb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -441,9 +444,6 @@
       <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\Unknown.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HiLIb\Splitter.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\IStateMachine.h">
@@ -963,9 +963,6 @@
     <ClInclude Include="..\HiLib\Grid.h">
       <Filter>HiLib</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\SplitContainer.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
     <ClInclude Include="FavoritesGridView.h">
       <Filter>Filer\Filer</Filter>
     </ClInclude>
@@ -1028,6 +1025,12 @@
     </ClInclude>
     <ClInclude Include="FileSizeColumn.h">
       <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\SplitContainer.h">
+      <Filter>HiLib\SplitContainer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLIb\Splitter.h">
+      <Filter>HiLib\SplitContainer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1215,9 +1218,6 @@
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\DropTargetManager.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLIb\Splitter.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="LauncherGridView.cpp">
@@ -1512,9 +1512,6 @@
     <ClCompile Include="..\HiLib\Grid.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
-    <ClCompile Include="..\HiLib\SplitContainer.cpp">
-      <Filter>HiLib</Filter>
-    </ClCompile>
     <ClCompile Include="FavoritesGridView.cpp">
       <Filter>Filer\Filer</Filter>
     </ClCompile>
@@ -1541,6 +1538,15 @@
     </ClCompile>
     <ClCompile Include="FolderHistory.cpp">
       <Filter>Filer\Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\SplitContainer.cpp">
+      <Filter>HiLib\SplitContainer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLIb\Splitter.cpp">
+      <Filter>HiLib\SplitContainer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ShellContextMenu.cpp">
+      <Filter>HiLib\Shell</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
