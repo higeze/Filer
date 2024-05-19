@@ -97,6 +97,11 @@ public:
 
 	CContextMenu2() {}
 	virtual ~CContextMenu2() {}
+	//CContextMenu2(const CContextMenu2&) = default;
+	CContextMenu2(CContextMenu2&&) = default;
+	//CContextMenu2& operator=(const CContextMenu2&) = default;
+	CContextMenu2& operator=(CContextMenu2&&) = default;
+
 
 	void Add() {}
 	template<class _Head>

@@ -4,6 +4,10 @@
 protected: mutable std::optional<type> m_opt##name; \
 public: virtual const type& Get##name() const;
 
+#define DECLARE_LAZY_GETTER_UNCONST(type, name) \
+protected: mutable std::optional<type> m_opt##name; \
+public: virtual type& Get##name();
+
 #define DECLARE_LAZY_GETTER_ARG1(type, name, arg1type) \
 protected: mutable std::optional<type> m_opt##name; \
 public: virtual const type& Get##name(const arg1type&) const

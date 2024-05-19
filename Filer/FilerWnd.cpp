@@ -44,6 +44,7 @@
 #include "Performance.h"
 
 #include "SplitContainer.h"
+#include "ShellContextMenu.h"
 
 
 std::vector<std::wstring> CFilerWnd::imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff" };
@@ -60,10 +61,11 @@ CFilerWnd::CFilerWnd()
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
 	m_spLauncherProp(std::make_shared<CLauncherProperty>()),
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
-	m_spLauncher(std::make_shared<CLauncherGridView>(this, m_spLauncherProp)),
-	m_spToolBar(std::make_shared<CToolBar>(this)),
-	m_spHorizontalSplit(std::make_shared<CHorizontalSplitContainer>(this)),
-	m_spStatusBar(std::make_shared<CStatusBar>(this))
+	m_spDock(std::make_shared<CDockPanel>(this))
+	//m_spLauncher(std::make_shared<CLauncherGridView>(this, m_spLauncherProp)),
+	//m_spToolBar(std::make_shared<CToolBar>(this)),
+	//m_spHorizontalSplit(std::make_shared<CHorizontalSplitContainer>(this)),
+	//m_spStatusBar(std::make_shared<CStatusBar>(this))
 {
 	m_rca
 	.lpszClassName(L"CFilerWnd")
@@ -115,15 +117,15 @@ void CFilerWnd::OnPaint(const PaintEvent& e)
 	CD2DWWindow::OnPaint(e);
 }
 
-void CFilerWnd::SetUpFilerGrid(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer)
-{
-	subject->GetFilerViewPtr()->GetFileGridPtr()->StatusLog.subscribe(
-		[this](auto notify) {
-		m_spStatusBar->Text.set(notify.all_items);
-		InvalidateRect(NULL, FALSE);
-	}, shared_from_this());
-
-}
+//void CFilerWnd::SetUpFilerGrid(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer)
+//{
+//	subject->GetFilerViewPtr()->GetFileGridPtr()->StatusLog.subscribe(
+//		[this](auto notify) {
+//		m_spStatusBar->Text.set(notify.all_items);
+//		InvalidateRect(NULL, FALSE);
+//	}, shared_from_this());
+//
+//}
 
 void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer)
 {
@@ -171,240 +173,122 @@ void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, 
 
 void CFilerWnd::OnCreate(const CreateEvt& e)
 {
-	//Network Messanger
-	m_pNetworkMessanger = std::make_unique<CNetworkMessanger>(m_hWnd);
-
-	//Control Set up
-	//Top Vertical
-	auto spTopVerticalSplit = std::make_shared<CVerticalSplitContainer>(m_spHorizontalSplit.get());
-	auto spTabLeft = std::make_shared<CFilerTabGridView>(spTopVerticalSplit.get());
-	auto spTabRight = std::make_shared<CFilerTabGridView>(spTopVerticalSplit.get());
-	spTabLeft->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource.set(*m_spFavoritesProp->Favorites);
-	spTabRight->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource.set(*m_spFavoritesProp->Favorites);
-	spTabLeft->SetIsTabStop(true);
-	spTabRight->SetIsTabStop(true);
-	SetUpFilerGrid(spTabLeft, spTabRight);
-	SetUpFilerGrid(spTabRight, spTabLeft);
-	SetUpPreview(spTabLeft, spTabRight);
-	SetUpPreview(spTabRight, spTabLeft);
-
-	spTopVerticalSplit->SetLeft(spTabLeft);
-	spTopVerticalSplit->SetRight(spTabRight);
-
-	//Bottom Vertical
-	auto spBottomVerticalSplit = std::make_shared<CVerticalSplitContainer>(m_spHorizontalSplit.get());
-	auto spTextBoxLeft = std::make_shared<CColoredTextBox>(spBottomVerticalSplit.get(), L"");
-	auto spTextBoxRight = std::make_shared<CColoredTextBox>(spBottomVerticalSplit.get(), L"");
-	PerformanceLog.binding(spTextBoxLeft->Text);
-	ThreadPoolLog.binding(spTextBoxRight->Text);
-	spBottomVerticalSplit->SetLeft(spTextBoxLeft);
-	spBottomVerticalSplit->SetRight(spTextBoxRight);
-
-	//Horizontal
-	m_spHorizontalSplit->SetTop(spTopVerticalSplit);
-	m_spHorizontalSplit->SetBottom(spBottomVerticalSplit);
-
-	//Context Menu
-	auto applyCustomContextMenu = [this](std::shared_ptr<CFilerGridView> spFilerView)->void {
-		spFilerView->AddCustomContextMenu = [&](CMenu& menu) {
-			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
-			MENUITEMINFO mii = { 0 };
-			mii.cbSize = sizeof(MENUITEMINFO);
-			mii.fMask = MIIM_TYPE | MIIM_ID;
-			mii.fType = MFT_STRING;
-			mii.fState = MFS_ENABLED;
-			mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToFavoritesFromItem");
-			mii.dwTypeData = const_cast<LPWSTR>(L"Add to favorite");
-			menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
-			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
-			mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToLauncherFromItem");
-			mii.dwTypeData = const_cast<LPWSTR>(L"Add to launcher");
-			menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
-			//PDF
-			{
-				menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
-				MENUITEMINFO mii = { 0 };
-				mii.cbSize = sizeof(MENUITEMINFO);
-				mii.fMask = MIIM_TYPE | MIIM_ID;
-				mii.fType = MFT_STRING;
-				mii.fState = MFS_ENABLED;
-				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFSplit");
-				mii.dwTypeData = (LPWSTR)L"PDF Split";
-				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
-				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFMerge");
-				mii.dwTypeData = (LPWSTR)L"PDF Merge";
-				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
-				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFExtract");
-				mii.dwTypeData = (LPWSTR)L"PDF Extract";
-				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
-				mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFUnlock");
-				mii.dwTypeData = (LPWSTR)L"PDF Unlock";
-				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-			}
-
-
-			menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
-
-			for (auto iter = m_spExeExProp->ExeExtensions->cbegin(); iter != m_spExeExProp->ExeExtensions->cend(); ++iter) {
-
-					MENUITEMINFO mii = { 0 };
-					mii.cbSize = sizeof(MENUITEMINFO);
-					mii.fMask = MIIM_TYPE | MIIM_ID;
-					mii.fType = MFT_STRING;
-					mii.fState = MFS_ENABLED;
-					mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, std::get<ExeExtension>(*iter).Name);
-					mii.dwTypeData = (LPWSTR)std::get<ExeExtension>(*iter).Name.c_str();
-				menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-			}
-
-		};
-		spFilerView->ExecCustomContextMenu = [&](int idCmd, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files)->bool {
-			if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToFavoritesFromItem")) {
-				for (auto& file : files) {
-					GetFavoritesPropPtr()->Favorites.push_back(std::make_shared<CFavorite>(file->GetPath(), L""));
-				}
-				// TODOTODO
-				//m_spLeftView->GetFilerViewPtr()->GetFavoriteGridPtr()->SubmitUpdate();
-				//m_spLeftView->GetFilerViewPtr()->GetFavoriteGridPtr()->SubmitUpdate();
-				//m_spLeftFavoritesView->SubmitUpdate();
-				//m_spRightFavoritesView->SubmitUpdate();
-				return true;
-			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"AddToLauncherFromItem")) {
-				for (auto& file : files) {
-					GetLauncherPropPtr()->Launchers.push_back(std::make_shared<CLauncher>(file->GetPath(), L""));
-				}
-				m_spLauncher->SubmitUpdate();
-				return true;
-			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFSplit")) {
-				auto spDlg = std::make_shared<CPDFSplitDlg>(
-					this, folder, files);
-
-				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 200))));
-				GetWndPtr()->SetFocusToControl(spDlg);
-				return true;
-			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFMerge")) {
-				auto spDlg = std::make_shared<CPDFMergeDlg>(
-					this, folder, files);
-
-				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
-				GetWndPtr()->SetFocusToControl(spDlg);
-				return true;
-			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFExtract")) {
-				auto spDlg = std::make_shared<CPDFExtractDlg>(
-					this, folder, files);
-
-				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
-				GetWndPtr()->SetFocusToControl(spDlg);
-				return true;
-			} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"PDFUnlock")) {
-				auto spDlg = std::make_shared<CPDFUnlockDlg>(
-					this, folder, files);
-
-				spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
-				GetWndPtr()->SetFocusToControl(spDlg);
-				return true;
-			} else {
-				auto iter = std::find_if(m_spExeExProp->ExeExtensions->cbegin(), m_spExeExProp->ExeExtensions->cend(),
-					[idCmd](const auto& exeex)->bool {
-					return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, std::get<ExeExtension>(exeex).Name) == idCmd;
-				});
-				if (iter != m_spExeExProp->ExeExtensions->cend()) {
-					auto spDlg = std::make_shared<CExeExtensionDlg>(
-						this, folder, files, std::get<ExeExtension>(*iter));
-
-					spDlg->OnCreate(CreateEvt(this, this, CalcCenterRectF(CSizeF(300, 400))));
-					GetWndPtr()->SetFocusToControl(spDlg);
-					return true;
-				}
-
-#ifdef USE_PYTHON_EXTENSION
-				auto iter = std::find_if(m_spPyExProp->PythonExtensions.begin(), m_spPyExProp->PythonExtensions.end(),
-					[idCmd](const auto& pyex)->bool {
-					return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, pyex.Name) == idCmd;
-				});
-				if (iter != m_spPyExProp->PythonExtensions.end()) {
-					try {
-
-						if (!m_spPyExProp->PythonHome.empty()) {
-							Py_SetPythonHome(m_spPyExProp->PythonHome.c_str());
-						}
-						Py_Initialize();
-
-						boost::python::list li;
-						for (auto& pIdl : vpIdl) {
-							STRRET strret;
-							psf->GetDisplayNameOf(pIdl, SHGDN_FORPARSING, &strret);
-							std::wstring path = STRRET2WSTR(strret, pIdl);
-
-							li.append(path);
-						}
-
-						boost::python::object global_ns = boost::python::import("__main__").attr("__dict__");
-
-						std::string script = CFile::ReadAllString<char>(iter->ScriptPath);
-						boost::python::exec(script.c_str(), global_ns, global_ns);
-						boost::python::object pythonFun = global_ns[iter->FunctionName];
-
-						pythonFun(li);
-					} catch (boost::python::error_already_set&) {
-						MessageBoxA(m_hWnd, parse_python_exception().c_str(), "Python error", MB_OK);
-					} catch (...) {
-						MessageBoxA(m_hWnd, "Error on running Python", "Python error", MB_OK);
-					}
-					return true;
-				} else {
-					return false;
-				}
-#else
-				return false;
-#endif
-			}
-		};
-	};
-
-	// TODOTODO
-	//applyCustomContextMenu(m_spLeftView->GetFilerViewPtr()->GetFileGridPtr());
-	//applyCustomContextMenu(m_spRightView->GetFilerViewPtr()->GetFileGridPtr());
-
 	//SetWindowPlacement make sure Window in Monitor
 	WINDOWPLACEMENT wp = { 0 };
 	wp.length = sizeof(WINDOWPLACEMENT);
 	wp.rcNormalPosition = e.Rect;
 	::SetWindowPlacement(m_hWnd, &wp);
 
-	//Konami
-	//m_konamiCommander.SetHwnd(m_hWnd);
-	
+	//Network Messanger
+	m_pNetworkMessanger = std::make_unique<CNetworkMessanger>(m_hWnd);
 
-
-	//auto [rcLauncher, rcToolBar, rcLeftFav, rcLeftTab, rcHSplitter, rcRightFav, rcRightTab, rcVSplitter, rcLog, rcStatus] = GetRects();
-
-	m_spLauncher->OnCreate(CreateEvt(this, this, CRectF()));
-	m_spToolBar->OnCreate(CreateEvt(this, this, CRectF()));
-	auto spBtn = std::make_shared<CButton>(m_spToolBar.get());
+	//Control Set up
+	/*******/
+	/* Top */
+	/*******/
+	auto spTopDock = std::make_shared<CDockPanel>(m_spDock.get());
+	spTopDock->Dock.set(DockEnum::TopFix);
+	//Launcher
+	auto spLauncher = std::make_shared<CLauncherGridView>(spTopDock.get(), m_spLauncherProp);
+	spLauncher->Dock.set(DockEnum::Fill);
+	//Tool bar
+	auto spToolBar = std::make_shared<CToolBar>(spTopDock.get());
+	spToolBar->Dock.set(DockEnum::Right);
+	auto spBtn = std::make_shared<CButton>(spToolBar.get());
 	spBtn->Content.set(m_isPreview?L"Prv":L"Nrm");
 	spBtn->Command.subscribe([this, spBtn]() {
 		m_isPreview = !m_isPreview;
 		spBtn->Content.set(m_isPreview ? L"Prv" : L"Nrm");
 	}, shared_from_this());
-	spBtn->OnCreate(CreateEvt(this, m_spToolBar.get(), CRectF()));
+	spBtn->OnCreate(CreateEvt(this, spToolBar.get(), CRectF()));
 
-	//m_spLeftFavoritesView->OnCreate(CreateEvt(this, this, rcLeftFav));
-	//m_spLeftView->OnCreate(CreateEvt(this, this, rcLeftTab));
-	//m_spHSplitter->OnCreate(CreateEvt(this, this, rcHSplitter));
-	//m_spVSplitter->OnCreate(CreateEvt(this, this, rcVSplitter));
-	//m_spRightFavoritesView->OnCreate(CreateEvt(this, this, rcRightFav));
-	//m_spRightView->OnCreate(CreateEvt(this, this, rcRightTab));
-	m_spStatusBar->OnCreate(CreateEvt(this, this, CRectF()));
-	//m_spLogText->OnCreate(CreateEvt(this, this, rcLog));
-	//m_spBottomSplitContainer->OnCreate(CreateEvt(this, this, rcLog));
+	spTopDock->Add(spToolBar, spLauncher);
 
-	m_spHorizontalSplit->OnCreate(CreateEvt(this, this, CRectF()));
+	/**********/
+	/* Bottom */
+	/**********/
+	//Status bar
+	auto spBottomStatus = std::make_shared<CStatusBar>(m_spDock.get());
+	spBottomStatus->Dock.set(DockEnum::BottomFix);
+
+	/********/
+	/* Fill */
+	/********/
+	//Horizontal
+	auto spFillHorizontal = std::make_shared<CDockPanel>(m_spDock.get());
+	spFillHorizontal->Dock.set(DockEnum::Fill);
+
+	//Horizontal Top
+	auto spTopVerticalSplit = std::make_shared<CDockPanel>(spFillHorizontal.get());
+	spTopVerticalSplit->Dock.set(DockEnum::Fill);
+
+	auto spTabLeft = std::make_shared<CFilerTabGridView>(spTopVerticalSplit.get());
+	spTabLeft->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource.set(*m_spFavoritesProp->Favorites);
+	spTabLeft->GetFilerViewPtr()->GetFileGridPtr()->StatusLog.subscribe(
+		[this, spBottomStatus](auto notify) {
+		spBottomStatus->Text.set(notify.all_items);
+		InvalidateRect(NULL, FALSE);
+	}, shared_from_this());	spTabLeft->SetIsTabStop(true);
+	spTabLeft->Dock.set(DockEnum::Fill);
+
+
+	auto spTabRight = std::make_shared<CFilerTabGridView>(spTopVerticalSplit.get());
+	spTabRight->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource.set(*m_spFavoritesProp->Favorites);
+	spTabRight->GetFilerViewPtr()->GetFileGridPtr()->StatusLog.subscribe(
+		[this, spBottomStatus](auto notify) {
+		spBottomStatus->Text.set(notify.all_items);
+		InvalidateRect(NULL, FALSE);
+	}, shared_from_this());
+	spTabRight->SetIsTabStop(true);
+	spTabRight->Dock.set(DockEnum::Right);
+
+	SetUpPreview(spTabLeft, spTabRight);
+	SetUpPreview(spTabRight, spTabLeft);
+
+	spTopVerticalSplit->Add(spTabRight, spTabLeft);
+
+	//Horizontal Bottom
+	auto spBottomVerticalSplit = std::make_shared<CDockPanel>(spFillHorizontal.get());
+	spBottomVerticalSplit->Dock.set(DockEnum::Bottom);
+
+	auto spTextBoxLeft = std::make_shared<CColoredTextBox>(spBottomVerticalSplit.get(), L"");
+	PerformanceLog.binding(spTextBoxLeft->Text);
+	spTextBoxLeft->Dock.set(DockEnum::Fill);
+
+	auto spTextBoxRight = std::make_shared<CColoredTextBox>(spBottomVerticalSplit.get(), L"");
+	ThreadPoolLog.binding(spTextBoxRight->Text);
+	spTextBoxRight->Dock.set(DockEnum::Right);
+
+	spBottomVerticalSplit->Add(spTextBoxRight, spTextBoxLeft);
+
+	spFillHorizontal->Add(spBottomVerticalSplit, spTopVerticalSplit);
+
+	m_spDock->Add(spTopDock, spBottomStatus, spFillHorizontal);
+
+	m_spDock->OnCreate(CreateEvt(this, this, CRectF()));
+
+	//Context Menu for FileView
+	//TODOTODO
+	//CShellContextMenu menu;
+	//menu.Add(
+	//	std::make_unique<CMenuSeparator2>(),
+	//	std::make_unique<CMenuItem2>(L"Add to Favorite", [this, files]()->void {
+	//		for (auto& file : files) {
+	//			GetFavoritesPropPtr()->Favorites.push_back(std::make_shared<CFavorite>(file->GetPath(), L""));
+	//		}
+	//		// TODOTODO
+	//		//m_spLeftView->GetFilerViewPtr()->GetFavoriteGridPtr()->SubmitUpdate();
+	//		//m_spLeftView->GetFilerViewPtr()->GetFavoriteGridPtr()->SubmitUpdate();
+	//		//m_spLeftFavoritesView->SubmitUpdate();
+	//		//m_spRightFavoritesView->SubmitUpdate();
+	//}),
+	//	std::make_unique<CMenuItem2>(L"Add to Launcher", [this, pWnd = GetWndPtr(), files]()->void {
+	//		for (auto& file : files) {
+	//			GetLauncherPropPtr()->Launchers.push_back(std::make_shared<CLauncher>(file->GetPath(), L""));
+	//		}
+	//		m_spLauncher->SubmitUpdate();
+	//	})
+	//);
 
 	//MeasureArrange
 	CRect rcClient = GetClientRect();
@@ -426,7 +310,8 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		GetDispatcherPtr()->PostInvoke(updateLog);
 	}, std::chrono::milliseconds(3000));
 
-	GetWndPtr()->SetFocusToControl(m_spHorizontalSplit->GetTop());
+	//TODOTODO
+	//GetWndPtr()->SetFocusToControl(spHorizontalSplit->GetTop());
 }
 
 void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
@@ -555,254 +440,22 @@ void CFilerWnd::OnMouseMove(const MouseMoveEvent& e)
 	//m_konamiCommander.OnMouseMove(uMsg, wParam, lParam, bHandled);
 }
 
-//std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CFilerWnd::GetRects()
-//{
-//	CRectF rcClient = GetRectInWnd();
-//
-//	LONG launcherHeight = GetDirectPtr()->Dips2PixelsX(
-//		GetNormalBorder().Width * 2 + //def:GridLine=0.5*2, CellLine=0.5*2
-//		GetPadding().left + //default:2
-//		GetPadding().right + //default:2
-//		16.f);//icon
-//
-//	LONG favoriteWidth = GetDirectPtr()->Dips2PixelsX(
-//		GetNormalBorder().Width * 2 + //def:GridLine=0.5*2, CellLine=0.5*2
-//		GetPadding().left + //default:2
-//		GetPadding().right + //default:2
-//		16.f);//icon
-//	LONG statusHeight = GetDirectPtr()->Dips2PixelsY(m_spStatusBar->MeasureSize(L"").height);
-//
-//	CRectF rcLauncher, rcToolBar, rcLeftFavorites, rcRightFavorites, rcHSplitter, rcLeftGrid, rcRightGrid, rcVSplitter, rcLog, rcStatusBar;
-//
-//	rcLauncher.SetRect(rcClient.left, rcClient.top, (rcClient.left + rcClient.right)*0.5f, rcClient.top + launcherHeight);
-//
-//	m_spToolBar->Measure(CSizeF(FLT_MAX, FLT_MAX));
-//	rcToolBar.SetRect((rcClient.left + rcClient.right)*0.5f, rcClient.top, rcClient.right , rcClient.top + launcherHeight);
-//
-//	rcStatusBar.SetRect(rcClient.left, rcClient.bottom - statusHeight, rcClient.right, rcClient.bottom);
-//
-//	m_spHSplitter->Minimum.set(rcClient.left);
-//	m_spHSplitter->Maximum.set(rcClient.right - m_spHSplitter->DesiredSize().width);
-//	if (*m_spHSplitter->Value < 0) {//Initial = No serialize
-//		m_spHSplitter->Value.set((*m_spHSplitter->Maximum - *m_spHSplitter->Minimum)*0.5f);
-//	}
-//
-//	m_spVSplitter->Minimum.set(rcClient.top + rcLauncher.Height());
-//	m_spVSplitter->Maximum.set(rcClient.bottom - rcStatusBar.Height() - m_spVSplitter->DesiredSize().height);
-//	if (*m_spVSplitter->Value == 0) {//Initial = No serialize
-//		m_spVSplitter->Value.set((*m_spVSplitter->Maximum - *m_spVSplitter->Minimum)*0.5f);
-//	}
-//
-//	FLOAT leftRight = *m_spHSplitter->Value;
-//	FLOAT rightLeft = *m_spHSplitter->Value + m_spHSplitter->DesiredSize().width;
-//
-//	FLOAT topBottom = *m_spVSplitter->Value;
-//	FLOAT bottomTop = *m_spVSplitter->Value + m_spVSplitter->DesiredSize().height;
-//
-//	rcLeftFavorites.SetRect(
-//		rcClient.left, 
-//		rcClient.top + launcherHeight,
-//		rcClient.left + favoriteWidth,
-//		topBottom);
-//	rcLeftGrid.SetRect(
-//		rcLeftFavorites.right,
-//		rcClient.top + launcherHeight,
-//		leftRight,
-//		topBottom);
-//	rcHSplitter.SetRect(
-//		leftRight, 
-//		rcClient.top + launcherHeight,
-//		rightLeft,
-//		topBottom);
-//	rcRightFavorites.SetRect(
-//		rightLeft,
-//		rcClient.top  + launcherHeight,
-//		rightLeft + favoriteWidth,
-//		topBottom);
-//	rcRightGrid.SetRect(
-//		rcRightFavorites.right,
-//		rcClient.top + launcherHeight,
-//		rcClient.right,
-//		topBottom
-//	);
-//	rcVSplitter.SetRect(
-//		rcClient.left,
-//		topBottom,
-//		rcClient.right,
-//		bottomTop
-//	);
-//	rcLog.SetRect(
-//		rcClient.left,
-//		bottomTop,
-//		rcClient.right,
-//		rcStatusBar.top
-//	);
-//
-//	rcLeftGrid.DeflateRect(2.f);
-//	rcRightGrid.DeflateRect(2.f);
-//
-//	return {
-//		rcLauncher,
-//		rcToolBar,
-//		rcLeftFavorites,
-//		rcLeftGrid,
-//		rcHSplitter,
-//		rcRightFavorites, 
-//		rcRightGrid,
-//		rcVSplitter,
-//		rcLog,
-//		rcStatusBar
-//	};
-//
-//}
-
 void CFilerWnd::Measure(const CSizeF& availableSize) 
 {
-	//GridView
-	m_spLauncher->Measure(availableSize);
-	//m_spLeftFavoritesView->Measure(availableSize);
-	//m_spRightFavoritesView->Measure(availableSize);
-	//ToolBar
-	m_spToolBar->Measure(availableSize);
-	//StatusBar
-	m_spStatusBar->Measure(availableSize);
-
-	m_spHorizontalSplit->Measure(availableSize);
-	//Splitter
-	//m_spHSplitter->Measure(availableSize);
-	//m_spVSplitter->Measure(availableSize);
-
-	//Auto
-	//m_spLeftView->Measure(availableSize);
-	//m_spRightView->Measure(availableSize);
-	//m_spLogText->Measure(availableSize, L"A");
-	//m_spBottomSplitContainer->Measure(availableSize);
+	m_spDock->Measure(availableSize);
 }
 
 void CFilerWnd::Arrange(const CRectF& rc)
 {
-	/*******/
-	/* Top */
-	/*******/
-	//TopLeft
-	m_spLauncher->Arrange(CRectF(
-		rc.left,
-		rc.top,
-		(rc.left + rc.right) * 0.5f,
-		rc.top + m_spLauncher->DesiredSize().height
-	));
-	//TopRight
-	m_spToolBar->Arrange(CRectF(
-		m_spLauncher->ArrangedRect().right,
-		rc.top,
-		rc.right,
-		rc.top + m_spToolBar->DesiredSize().height
-	));
-
-	/**********/
-	/* Bottom */
-	/**********/
-	m_spStatusBar->Arrange(CRectF(
-		rc.left,
-		rc.bottom - m_spStatusBar->DesiredSize().height,
-		rc.right,
-		rc.bottom
-	));
-
-	/********/
-	/* Fill */
-	/********/
-	m_spHorizontalSplit->Arrange(CRectF(
-		rc.left,
-		(std::max)(m_spLauncher->ArrangedRect().bottom, m_spToolBar->ArrangedRect().bottom),
-		rc.right,
-		m_spStatusBar->ArrangedRect().top
-		));
-
-	///********/
-	///* Fill */
-	///********/
-	////Splitter
-	//m_spHSplitter->Minimum.set(rc.left);
-	//m_spHSplitter->Maximum.set(rc.right - m_spHSplitter->DesiredSize().width);
-	//if (*m_spHSplitter->Value < 0) {//Initial = No serialize
-	//	m_spHSplitter->Value.set((*m_spHSplitter->Maximum + *m_spHSplitter->Minimum)*0.5f);
-	//}
-	//m_spHSplitter->Value.set(std::clamp(*m_spHSplitter->Value, *m_spHSplitter->Minimum, *m_spHSplitter->Maximum));
-
-	//m_spVSplitter->Minimum.set(topBottom);
-	//m_spVSplitter->Maximum.set(m_spStatusBar->ArrangedRect().top - m_spVSplitter->DesiredSize().height);
-	//if (*m_spVSplitter->Value < 0) {//Initial = No serialize
-	//	m_spVSplitter->Value.set((*m_spVSplitter->Maximum + *m_spVSplitter->Minimum)*0.5f);
-	//}
-	//m_spVSplitter->Value.set(std::clamp(*m_spVSplitter->Value, *m_spVSplitter->Minimum, *m_spVSplitter->Maximum));
-
-	//m_spHSplitter->Arrange(CRectF(
-	//	*m_spHSplitter->Value, 
-	//	*m_spVSplitter->Minimum,
-	//	*m_spHSplitter->Value + m_spHSplitter->DesiredSize().width,
-	//	*m_spVSplitter->Value));
-	//m_spVSplitter->Arrange(CRectF(
-	//	rc.left,
-	//	*m_spVSplitter->Value,
-	//	rc.right,
-	//	*m_spVSplitter->Value + m_spVSplitter->DesiredSize().height
-	//));
-	////Fill Top
-	//m_spLeftFavoritesView->Arrange(CRectF(
-	//	rc.left, 
-	//	topBottom,
-	//	rc.left + m_spLeftFavoritesView->DesiredSize().width,
-	//	m_spVSplitter->ArrangedRect().top));
-	//m_spLeftView->Arrange(CRectF(
-	//	m_spLeftFavoritesView->ArrangedRect().right,
-	//	topBottom,
-	//	m_spHSplitter->ArrangedRect().left,
-	//	m_spVSplitter->ArrangedRect().top));
-	//m_spRightFavoritesView->Arrange(CRectF(
-	//	m_spHSplitter->ArrangedRect().right, 
-	//	topBottom,
-	//	m_spHSplitter->ArrangedRect().right + m_spRightFavoritesView->DesiredSize().width,
-	//	m_spVSplitter->ArrangedRect().top));
-	//m_spRightView->Arrange(CRectF(
-	//	m_spRightFavoritesView->ArrangedRect().right,
-	//	topBottom,
-	//	rc.right,
-	//	m_spVSplitter->ArrangedRect().top));
-	////Fill Bottom
-	//m_spBottomSplitContainer->Arrange(CRectF(
-	//	rc.left,
-	//	m_spVSplitter->ArrangedRect().bottom,
-	//	rc.right,
-	//	m_spStatusBar->ArrangedRect().top
-	//)); 
-	////m_spLogText->Arrange(CRectF(
-	////	rc.left,
-	////	m_spVSplitter->ArrangedRect().bottom,
-	////	rc.right,
-	////	m_spStatusBar->ArrangedRect().top
-	////));
+	m_spDock->Arrange(rc);
 }
-//TODOTODO CWnd m_pdirect, create, erasebkgnd, onsize
+
 void CFilerWnd::OnRect(const RectEvent& e)
 {
 	//Measure
 	Measure(e.Rect.Size());
 	//Arrange
 	Arrange(e.Rect);
-
-	//auto [rcLauncher, rcToolBar, rcLeftFav, rcLeftTab, rcHSplitter, rcRightFav, rcRightTab, rcVSplitter, rcLog, rcStatus] = GetRects();
-	
-	//m_spLauncher->OnRect(RectEvent(this, rcLauncher));
-	//m_spToolBar->Arrange(rcToolBar);
-	//m_spLeftFavoritesView->OnRect(RectEvent(this, rcLeftFav));
-	//m_spRightFavoritesView->OnRect(RectEvent(this, rcRightFav));
-	//m_spStatusBar->OnRect(RectEvent(this, rcStatus));
-	//m_spHSplitter->OnRect(RectEvent(this, rcHSplitter));
-	//m_spVSplitter->OnRect(RectEvent(this, rcVSplitter));
-	//m_spLeftView->OnRect(RectEvent(this, rcLeftTab));
-	//m_spRightView->OnRect(RectEvent(this, rcRightTab));
-	//m_spLogText->OnRect(RectEvent(this, rcLog));
 }
 
 //void CFilerWnd::OnSetFocus(const SetFocusEvent& e)
@@ -925,11 +578,12 @@ void CFilerWnd::OnCommandTextOption(const CommandEvent& e)
 
 void CFilerWnd::OnCommandLauncherOption(const CommandEvent& e)
 {
-	m_spLauncherProp = CFilerApplication::GetInstance()->DeserializeLauncher();
-	m_spLauncher->ItemsSource = m_spLauncherProp->Launchers;
+	//TODOTODO
+	//m_spLauncherProp = CFilerApplication::GetInstance()->DeserializeLauncher();
+	//m_spLauncher->ItemsSource = m_spLauncherProp->Launchers;
 
-	m_spLauncher->Reload();
-	InvalidateRect(NULL, FALSE);
+	//m_spLauncher->Reload();
+	//InvalidateRect(NULL, FALSE);
 }
 
 

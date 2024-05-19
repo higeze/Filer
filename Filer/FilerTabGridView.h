@@ -54,6 +54,10 @@ public:
 	CFilerTabGridView(CD2DWControl* pParentControl = nullptr);
 	virtual ~CFilerTabGridView();
 
+	//MeasureArrange
+	virtual void Measure(const CSizeF& availableSize) override;
+
+
 	scoped_connections m_filerConnections;
 	scoped_connections m_textConnections;
 	scoped_connections m_pdfConnections;

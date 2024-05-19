@@ -59,6 +59,7 @@
 
 #include "ResourceIDFactory.h"
 #include "ShellContextMenu.h"
+#include "ExeExtensionProperty.h"
 
 CLIPFORMAT CFilerGridView::s_cf_shellidlist = ::RegisterClipboardFormat(CFSTR_SHELLIDLIST);
 CLIPFORMAT CFilerGridView::s_cf_filecontents = ::RegisterClipboardFormat(CFSTR_FILECONTENTS);
@@ -115,6 +116,78 @@ CFilerGridView::~CFilerGridView()
 {
 	if (m_spWatcher) { m_spWatcher->QuitWatching(); }
 }
+
+CShellContextMenu& CFilerGridView::GetFileContextMenu()
+{
+	if (!m_optFileContextMenu.has_value()) {
+		CShellContextMenu menu;
+
+		auto GetSelectedFiles = [this]()->std::vector<std::shared_ptr<CShellFile>> {
+			std::vector<std::shared_ptr<CShellFile>> files;
+			for(auto rowPtr : m_visRows){
+				if(rowPtr->GetIsSelected()){
+					auto spRow=std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr);
+					auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
+					files.push_back(spFile);
+				}
+			}
+			return files;
+		};
+		menu.Add(
+			std::make_unique<CMenuSeparator2>(),
+			std::make_unique<CMenuItem2>(L"Copy Text", 
+				[this]()->void {
+				BOOL bHandled = FALSE;
+				//TODOTODO
+				/*CGridView::OnCommandCopy(CommandEvent(GetWndPtr(), (WPARAM)0, (LPARAM)GetWndPtr()->m_hWnd, &bHandled));*/}),
+			std::make_unique<CMenuSeparator2>(),
+			std::make_unique<CMenuItem2>(L"PDF Split",
+				[this, GetSelectedFiles]()->void {
+				auto spDlg = std::make_shared<CPDFSplitDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
+				spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 200))));
+				GetWndPtr()->SetFocusToControl(spDlg); }),
+			std::make_unique<CMenuItem2>(L"PDF Merge", 
+				[this, GetSelectedFiles]()->void {
+				auto spDlg = std::make_shared<CPDFMergeDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
+				spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
+				GetWndPtr()->SetFocusToControl(spDlg); }),
+			std::make_unique<CMenuItem2>(L"PDF Extract", 
+				[this, GetSelectedFiles]()->void {
+				auto spDlg = std::make_shared<CPDFExtractDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
+				spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
+				GetWndPtr()->SetFocusToControl(spDlg); }),
+			std::make_unique<CMenuItem2>(L"PDF Unlock",
+				[this, GetSelectedFiles]()->void {
+				auto spDlg = std::make_shared<CPDFUnlockDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
+				spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
+				GetWndPtr()->SetFocusToControl(spDlg); })
+		);
+
+		menu.Add(std::make_unique<CMenuSeparator2>());
+
+		for (auto iter = ExeExtensions->begin(); iter != ExeExtensions->end(); ++iter) {
+			menu.Add(
+			std::make_unique<CMenuItem2>(iter->Name.c_str(),
+				[this, GetSelectedFiles, ee = *iter]()->void {
+				auto spDlg = std::make_shared<CExeExtensionDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles(), ee);
+				spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
+				GetWndPtr()->SetFocusToControl(spDlg); })
+			);
+		}
+		m_optFileContextMenu.emplace(std::move(menu));
+	}
+	return m_optFileContextMenu.value();
+
+}
+
+CShellContextMenu& CFilerGridView::GetFolderContextMenu()
+{
+	if (!m_optFolderContextMenu.has_value()) {
+		m_optFolderContextMenu.emplace(CShellContextMenu());
+	}
+	return m_optFolderContextMenu.value();
+}
+
 
 void CFilerGridView::OnCreate(const CreateEvt& e)
 {
@@ -1016,8 +1089,7 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 
 	if (!cell) {
 		//Folder menu
-		CShellContextMenu menu;
-		menu.PopupFolder(GetWndPtr(), e.PointInScreen, Folder.get_shared_unconst ());
+		GetFolderContextMenu().PopupFolder(GetWndPtr(), e.PointInScreen, Folder.get_shared_unconst());
 		*e.HandledPtr = TRUE;
 	}else if(/*cell->GetRowPtr() == m_pHeaderRow.get() || */cell->GetRowPtr() == m_pNameHeaderRow.get()){
 		//Header menu
@@ -1092,38 +1164,58 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 		*e.HandledPtr = TRUE;
 	}else{
 		//Cell menu
-		for(auto rowPtr : m_visRows){
-			if(rowPtr->GetIsSelected()){
-				auto spRow=std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr);
-				auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
-				files.push_back(spFile);
-			}
-		}
-		CShellContextMenu menu;
-		menu.Add(
-			std::make_unique<CMenuSeparator2>(),
-			std::make_unique<CMenuItem2>(L"Copy Text", [this]()->void {
-				BOOL bHandled = FALSE;
-				CGridView::OnCommandCopy(CommandEvent(GetWndPtr(), (WPARAM)0, (LPARAM)GetWndPtr()->m_hWnd, &bHandled));}),
-			std::make_unique<CMenuSeparator2>(),
-			std::make_unique<CMenuItem2>(L"PDF Split", [this, pWnd = GetWndPtr(), folder = Folder.get_shared_unconst(), files]()->void {
-				auto spDlg = std::make_shared<CPDFSplitDlg>(this, folder, files);
-				spDlg->OnCreate(CreateEvt(pWnd, this, CalcCenterRectF(CSizeF(300, 200))));
-			GetWndPtr()->SetFocusToControl(spDlg); })
-		);
-		menu.PopupFiles(GetWndPtr(), e.PointInScreen, files);
+		//for(auto rowPtr : m_visRows){
+		//	if(rowPtr->GetIsSelected()){
+		//		auto spRow=std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr);
+		//		auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
+		//		files.push_back(spFile);
+		//	}
+		//}
+		//CShellContextMenu menu;
+		//menu.Add(
+		//	std::make_unique<CMenuSeparator2>(),
+		//	std::make_unique<CMenuItem2>(L"Copy Text", 
+		//	    [this]()->void {
+		//		BOOL bHandled = FALSE;
+		//		CGridView::OnCommandCopy(CommandEvent(GetWndPtr(), (WPARAM)0, (LPARAM)GetWndPtr()->m_hWnd, &bHandled));}),
+		//	std::make_unique<CMenuSeparator2>(),
+		//	std::make_unique<CMenuItem2>(L"PDF Split",
+		//		[this, pWnd = GetWndPtr(), folder = Folder.get_shared_unconst(), files]()->void {
+		//		auto spDlg = std::make_shared<CPDFSplitDlg>(this, folder, files);
+		//		spDlg->OnCreate(CreateEvt(pWnd, this, CalcCenterRectF(CSizeF(300, 200))));
+		//		GetWndPtr()->SetFocusToControl(spDlg); }),
+		//	std::make_unique<CMenuItem2>(L"PDF Merge", 
+		//		[this, pWnd = GetWndPtr(), folder = Folder.get_shared_unconst(), files]()->void {
+		//		auto spDlg = std::make_shared<CPDFMergeDlg>(this, folder, files);
+		//		spDlg->OnCreate(CreateEvt(pWnd, this, CalcCenterRectF(CSizeF(300, 400))));
+		//		GetWndPtr()->SetFocusToControl(spDlg); }),
+		//	std::make_unique<CMenuItem2>(L"PDF Extract", 
+		//		[this, pWnd = GetWndPtr(), folder = Folder.get_shared_unconst(), files]()->void {
+		//		auto spDlg = std::make_shared<CPDFExtractDlg>(this, folder, files);
+		//		spDlg->OnCreate(CreateEvt(pWnd, this, CalcCenterRectF(CSizeF(300, 400))));
+		//		GetWndPtr()->SetFocusToControl(spDlg); }),
+		//	std::make_unique<CMenuItem2>(L"PDF Unlock",
+		//		[this, pWnd = GetWndPtr(), folder = Folder.get_shared_unconst(), files]()->void {
+		//		auto spDlg = std::make_shared<CPDFUnlockDlg>(this, folder, files);
+		//		spDlg->OnCreate(CreateEvt(pWnd, this, CalcCenterRectF(CSizeF(300, 400))));
+		//		GetWndPtr()->SetFocusToControl(spDlg); })
+		//);
+
+		//menu.Add(std::make_unique<CMenuSeparator2>());
+
+		//for (auto iter = ExeExtensions->begin(); iter != ExeExtensions->end(); ++iter) {
+		//	menu.Add(
+		//	std::make_unique<CMenuItem2>(iter->Name.c_str(),
+		//		[this, pWnd = GetWndPtr(), folder = Folder.get_shared_unconst(), files, ee = *iter]()->void {
+		//		auto spDlg = std::make_shared<CExeExtensionDlg>(this, folder, files, ee);
+		//		spDlg->OnCreate(CreateEvt(pWnd, this, CalcCenterRectF(CSizeF(300, 400))));
+		//		GetWndPtr()->SetFocusToControl(spDlg); })
+		//	);
+		//}
+
+
+		GetFileContextMenu().PopupFiles(GetWndPtr(), e.PointInScreen, files);
 		*e.HandledPtr = TRUE;
-
-		//menu.InsertSeparator(menu.GetMenuItemCount(), TRUE);
-		//MENUITEMINFO mii = { 0 };
-		//mii.cbSize = sizeof(MENUITEMINFO);
-		//mii.fMask = MIIM_TYPE | MIIM_ID;
-		//mii.fType = MFT_STRING;
-		//mii.fState = MFS_ENABLED;
-		//mii.wID = IDM_COPYTEXT;
-		//mii.dwTypeData = const_cast<LPWSTR>(L"Copy Text");
-		//menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
-
 	}
 }
 

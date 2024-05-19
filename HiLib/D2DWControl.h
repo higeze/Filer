@@ -5,7 +5,21 @@
 
 class CD2DWWindow;
 
-
+enum class DockEnum
+{
+	None,
+	Left,
+	Top,
+	Right,
+	Bottom,
+	Fill,
+	Vertical,
+	Horizontal,
+	LeftFix,
+	TopFix,
+	RightFix,
+	BottomFix,
+};
 
 class CD2DWControl: public virtual CUIElement
 {
@@ -36,6 +50,7 @@ protected:
 public:
 	reactive_property_ptr<bool> IsEnabled;
 	reactive_property_ptr<bool> IsFocusable;
+	reactive_property_ptr<DockEnum> Dock;
 	//reactive_property_ptr<size_t> GridRow;
 	//reactive_property_ptr<size_t> GridColumn;
 
@@ -128,7 +143,7 @@ public:
 	virtual bool IsFocused()const;
 	virtual bool GetIsFocused()const;
 
-	CRectF CalcCenterRectF(const CSizeF& size);
+	CRectF CalcCenterRectF(const CSizeF& size) const;
 
 
 	/*************/

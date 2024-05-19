@@ -4,11 +4,13 @@
 #include "reactive_property.h"
 #include "reactive_string.h"
 #include "JsonSerializer.h"
+#include "ShellContextMenu.h"
 
 class CShellFile;
 class CDirectoryWatcher;
 struct CreateEvt;
 struct DirectoryWatchEvent;
+struct ExeExtension;
 
 class CFilerGridView:public CFilerBindGridView<std::shared_ptr<CShellFile>>
 {
@@ -32,15 +34,6 @@ private:
 	CComPtr<IDropSource> m_pDropSource;
 	CComPtr<IDragSourceHelper> m_pDragSourceHelper;
 
-	//For Context Menu
-	HMENU m_hNewMenu;
-
-	CComPtr<IContextMenu2> m_pcmNew2;
-	CComPtr<IContextMenu3> m_pcmNew3;
-
-	CComPtr<IContextMenu2> m_pcm2;
-	CComPtr<IContextMenu3> m_pcm3;
-
 	//For New
 	bool m_isNewFile = false;
 
@@ -50,6 +43,10 @@ public:
 	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<std::shared_ptr<CShellFolder>> Folder;
 	reactive_wstring_ptr StatusLog;
+	reactive_vector_ptr<ExeExtension> ExeExtensions;
+
+	DECLARE_LAZY_GETTER_UNCONST(CShellContextMenu, FileContextMenu)
+	DECLARE_LAZY_GETTER_UNCONST(CShellContextMenu, FolderContextMenu)
 
 public:
 	//Constructor

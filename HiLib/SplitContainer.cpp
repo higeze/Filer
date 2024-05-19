@@ -2,6 +2,167 @@
 #include "Splitter.h"
 #include "D2DWWindow.h"
 
+/**************/
+/* CDockPanel */
+/**************/
+void CDockPanel::OnCreate(const CreateEvt& e)
+{
+	CD2DWControl::OnCreate(e);
+
+	CreateEvt evt = CreateEvt(GetWndPtr(), this, CRectF());
+	for (const auto& p : m_ctrl_split_map) {
+		p.first->OnCreate(evt);
+	}
+	for (const auto& p : m_ctrl_split_map) {
+		if (p.second) {
+			p.second->OnCreate(evt);
+		}
+	}
+}
+
+void CDockPanel::Measure(const CSizeF& availableSize)
+{
+	m_size = CSizeF();
+	for (const auto& child : m_childControls) {
+		child->Measure(availableSize);
+		switch (*child->Dock) {
+			case DockEnum::Left:
+			case DockEnum::Right:
+			case DockEnum::LeftFix:
+			case DockEnum::RightFix:
+			case DockEnum::Vertical:
+			{
+				m_size.width += child->DesiredSize().width;
+				break;
+			}
+			case DockEnum::Top:
+			case DockEnum::Bottom:
+			case DockEnum::TopFix:
+			case DockEnum::BottomFix:
+			case DockEnum::Horizontal:
+			{
+				m_size.height += child->DesiredSize().height;
+				break;
+			}
+			case DockEnum::Fill:
+			{
+				m_size.width += child->DesiredSize().width;
+				m_size.height += child->DesiredSize().height;
+				break;
+			}
+			default:
+				THROW_FILE_LINE_FUNC;
+				break;
+		}
+	}
+}
+
+void CDockPanel::Arrange(const CRectF& rc)
+{
+	//CD2DWControl::Arrange(rc);
+	//
+	//if (*m_splitter->Value < 0) {//Initial
+	//	m_splitter->Value.set((rc.left, rc.right) * 0.5f);
+	//} 
+	//m_splitter->Minimum.set(rc.left);sp
+	//m_splitter->Maximum.set(rc.right);
+	//m_splitter->Arrange(CRectF(*m_splitter->Value, rc.top, *m_splitter->Value + m_splitter->DesiredSize().width, rc.bottom));
+	//m_one->Arrange(CRectF(rc.left, rc.top, m_splitter->ArrangedRect().left, rc.bottom));
+	//m_two->Arrange(CRectF(m_splitter->ArrangedRect().right, rc.top, rc.right, rc.bottom));
+
+	CD2DWControl::Arrange(rc);
+
+	CRectF remain = rc;
+	FLOAT width = 5;
+	for (const auto& child : m_childControls) {
+		switch (*child->Dock) {
+			case DockEnum::TopFix:
+			{
+				child->Arrange(CRectF(remain.left, remain.top, remain.right, remain.top + child->DesiredSize().height));
+				remain.top = child->ArrangedRect().bottom;
+				break;
+			}
+			case DockEnum::BottomFix:
+			{
+				child->Arrange(CRectF(remain.left, remain.bottom - child->DesiredSize().height, remain.right, remain.bottom));
+				remain.bottom = child->ArrangedRect().top;
+				break;
+			}
+			case DockEnum::Left:
+			{
+				//TODOTODO
+				break;
+			}
+			case DockEnum::Top:
+			{
+				//TODOTODO
+				break;
+			}
+			case DockEnum::Right:
+			{
+				auto split = m_ctrl_split_map[child];
+				split->Value.block();
+				auto minimum = remain.left;
+				auto maximum = remain.right - split->DesiredSize().width;
+				if (*split->Value < 0) {//Initial
+					split->Value.set(std::clamp(maximum - child->DesiredSize().width, minimum, maximum));
+				} else {
+					if (maximum - minimum != *split->Maximum - *split->Minimum) {
+						split->Value.set(std::clamp((*split->Value + (maximum - *split->Maximum)), minimum, maximum));
+					} 
+				}
+				split->Minimum.set(minimum);
+				split->Maximum.set(maximum);
+				split->Arrange(CRectF(*split->Value, remain.top, *split->Value + split->DesiredSize().width, remain.bottom));
+				child->Arrange(CRectF(split->ArrangedRect().right, remain.top, remain.right, remain.bottom));
+				remain.right = split->ArrangedRect().left;
+				split->Value.unblock();
+				break;
+			}
+			case DockEnum::Bottom:
+			{
+				auto split = m_ctrl_split_map[child];
+				split->Value.block();
+				auto minimum = remain.top;
+				auto maximum = remain.bottom - split->DesiredSize().height;
+				if (*split->Value < 0) {//Initial
+					split->Value.set(std::clamp(maximum - child->DesiredSize().height, minimum, maximum));
+				} else {
+					if (maximum - minimum != *split->Maximum - *split->Minimum) {
+						split->Value.set(std::clamp((*split->Value + (maximum - *split->Maximum)), minimum, maximum));
+					} 
+				}
+				split->Minimum.set(minimum);
+				split->Maximum.set(maximum);
+				split->Arrange(CRectF(remain.left, *split->Value, remain.right, *split->Value + split->DesiredSize().height));
+				child->Arrange(CRectF(remain.left, split->ArrangedRect().bottom, remain.right, remain.bottom));
+				remain.bottom = split->ArrangedRect().top;
+				split->Value.unblock();
+				break;
+			}
+			case DockEnum::Fill:
+				child->Arrange(remain);
+				break;
+			case DockEnum::Vertical:
+			case DockEnum::Horizontal:
+				break;
+			default:
+				THROW_FILE_LINE_FUNC;
+				break;
+		}
+	}
+	
+	//if (*m_splitter->Value < 0) {//Initial
+	//	m_splitter->Value.set((rc.left, rc.right) * 0.5f);
+	//} 
+	//m_splitter->Minimum.set(rc.left);
+	//m_splitter->Maximum.set(rc.right);
+	//m_splitter->Arrange(CRectF(*m_splitter->Value, rc.top, *m_splitter->Value + m_splitter->DesiredSize().width, rc.bottom));
+	//m_one->Arrange(CRectF(rc.left, rc.top, m_splitter->ArrangedRect().left, rc.bottom));
+	//m_two->Arrange(CRectF(m_splitter->ArrangedRect().right, rc.top, rc.right, rc.bottom));
+}
+
+
 /******************/
 /* SplitContainer */
 /******************/

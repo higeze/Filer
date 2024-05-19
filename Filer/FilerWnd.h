@@ -42,6 +42,7 @@ class CShellFolder;
 class CPerformance;
 class CVerticalSplitContainer;
 class CHorizontalSplitContainer;
+class CDockPanel;
 //struct PdfViewProperty;
 
 
@@ -108,10 +109,11 @@ private:
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
 
 	//Controls
-	std::shared_ptr<CLauncherGridView> m_spLauncher;
-	std::shared_ptr<CToolBar> m_spToolBar;
-	std::shared_ptr<CStatusBar> m_spStatusBar;
-	std::shared_ptr<CHorizontalSplitContainer> m_spHorizontalSplit;
+	std::shared_ptr<CDockPanel> m_spDock;
+	//std::shared_ptr<CLauncherGridView> m_spLauncher;
+	//std::shared_ptr<CToolBar> m_spToolBar;
+	//std::shared_ptr<CStatusBar> m_spStatusBar;
+	//std::shared_ptr<CHorizontalSplitContainer> m_spHorizontalSplit;
 	//std::shared_ptr<CVerticalSplitContainer> m_spTopVerticalSplit;
 	//std::shared_ptr<CVerticalSplitContainer> m_spBottomVerticalSplit;
 

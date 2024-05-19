@@ -32,6 +32,10 @@ private:
 public:
 	using CContextMenu2::CContextMenu2;
 	virtual ~CShellContextMenu() {}
+	//CShellContextMenu(const CShellContextMenu&) = default;
+	CShellContextMenu(CShellContextMenu&&) = default;
+	//CShellContextMenu& operator=(const CShellContextMenu&) = default;
+	CShellContextMenu& operator=(CShellContextMenu&&) = default;
 
 private:
 	static CComPtr<IContextMenu3> SetUpNewContextMenues(const CMenu& menu, const CIDL& idl);

@@ -53,6 +53,14 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl)
 
 CFilerTabGridView::~CFilerTabGridView() = default;
 
+void CFilerTabGridView::Measure(const CSizeF& availableSize)
+{
+	//TODOTODO
+	m_spFilerView->Measure(availableSize);
+	m_size = m_spFilerView->DesiredSize();
+}
+
+
 void CFilerTabGridView::OnCreate(const CreateEvt& e)
 {
 	/*****************/

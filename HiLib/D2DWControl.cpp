@@ -121,7 +121,7 @@ void CD2DWControl::OnCommand(const CommandEvent& e)
 	}
 }
 
-CRectF CD2DWControl::CalcCenterRectF(const CSizeF& size)
+CRectF CD2DWControl::CalcCenterRectF(const CSizeF& size) const
 {
 	auto rc = GetRectInWnd();
 	return CRectF(

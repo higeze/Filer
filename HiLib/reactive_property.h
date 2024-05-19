@@ -47,6 +47,16 @@ public:
 	{
 		this->observe_property(boost::lexical_cast<T>(notify.all_items));
 	}
+
+	void block()
+	{
+		m_subject.block();
+	}
+
+	void unblock()
+	{
+		m_subject.unblock();
+	}
 };
 
 template <class T>
@@ -73,6 +83,16 @@ public:
 	reactive_property_ptr& operator=(const reactive_property_ptr&) = default;
 	reactive_property_ptr(reactive_property_ptr&&) noexcept = default;
 	reactive_property_ptr& operator=(reactive_property_ptr&&) noexcept = default;
+
+	void block()
+	{
+		m_preactive->block();
+	}
+
+	void unblock()
+	{
+		m_preactive->unblock();
+	}
 
 	const std::shared_ptr<reactive_property<T>> life() const
 	{

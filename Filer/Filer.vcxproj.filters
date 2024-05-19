@@ -1032,6 +1032,9 @@
     <ClInclude Include="..\HiLIb\Splitter.h">
       <Filter>HiLib\SplitContainer</Filter>
     </ClInclude>
+    <ClInclude Include="FileVerticalSplitContainer.h">
+      <Filter>Filer\Filer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">

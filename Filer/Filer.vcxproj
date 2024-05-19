@@ -577,6 +577,7 @@
     <ClInclude Include="ToDoGridView.h" />
     <ClInclude Include="ToDoTabData.h" />
     <ClInclude Include="ViewProperty.h" />
+    <ClInclude Include="FileVerticalSplitContainer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\D2DTextBox\CellTextBox.cpp" />

@@ -44,6 +44,7 @@ void CToolBar::Measure(const CSizeF& availableSize)
 
 void CToolBar::Arrange(const CRectF& rc)
 {
+	CD2DWControl::Arrange(rc);
 	FLOAT prev_right = rc.left;
 	FLOAT top = rc.top;
 	for (auto iter = m_childControls.cbegin(); iter != m_childControls.cend(); ++iter) {
