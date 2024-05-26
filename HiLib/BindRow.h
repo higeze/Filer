@@ -13,7 +13,7 @@ public:
 		:CRow(pSheet){ }
 
 	template<typename U>
-	typename std::enable_if<std::is_same_v<T, U>, U&>::type
+	typename std::enable_if_t<std::is_same_v<T, U>, U&>
 	GetItem()
 	{
 		if (auto p = dynamic_cast<IBindSheet<T>*>(this->m_pGrid)) {
@@ -25,7 +25,7 @@ public:
 	}
 
 	template<typename U>
-	typename std::enable_if<!std::is_same_v<T, U> && is_tuple_v<T>, U&>::type
+	typename std::enable_if_t<!std::is_same_v<T, U> && is_tuple_v<T>, U&>
 	GetItem()
 	{
 		if (auto p = dynamic_cast<IBindSheet<T>*>(this->m_pGrid)) {

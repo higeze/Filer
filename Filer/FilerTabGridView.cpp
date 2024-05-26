@@ -42,6 +42,10 @@
 /* FilerTabGridView */
 /********************/
 
+std::vector<std::wstring> CFilerTabGridView::imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff" };
+std::vector<std::wstring> CFilerTabGridView::previewExts = {L".docx", L".doc", L".xlsx", L".xls", L".ppt", L".pptx"};
+
+
 CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl)
 	:CTabControl(pParentControl), 
 	m_spFilerView(std::make_shared<CFilerView>(this)),
@@ -55,9 +59,8 @@ CFilerTabGridView::~CFilerTabGridView() = default;
 
 void CFilerTabGridView::Measure(const CSizeF& availableSize)
 {
-	//TODOTODO
-	m_spFilerView->Measure(availableSize);
-	m_size = m_spFilerView->DesiredSize();
+	m_spCurControl->Measure(availableSize);
+	m_size = m_spCurControl->DesiredSize();
 }
 
 
@@ -355,6 +358,118 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			SelectedIndex.force_notify_set(*SelectedIndex);
 		}
 	}
+
+	GetFilerViewPtr()->GetFileGridPtr()->SelectedItem.subscribe([this](const std::shared_ptr<CShellFile>& spFile) {
+
+		if (auto spOther = m_wpOther.lock()) {
+			if (!spOther->m_isPreview) return;
+
+			std::shared_ptr<TabData> spObsData = spOther->ItemsSource.get_unconst()->at(*spOther->SelectedIndex);
+
+			//Text
+			if (auto spTxtData = std::dynamic_pointer_cast<TextTabData>(spObsData);
+				spTxtData && boost::iequals(spFile->GetPathExt(), L".txt")) {
+				//TODO
+			//PDF
+			} else if (auto spPdfData = std::dynamic_pointer_cast<PdfTabData>(spObsData);
+				spPdfData && boost::iequals(spFile->GetPathExt(), L".pdf")) {
+				std::shared_ptr<CPDFDoc> newDoc;
+				newDoc->Open(spFile->GetPath());
+				spPdfData->Scale.set(-1);
+				spPdfData->VScroll.set(0.f);
+				spPdfData->HScroll.set(0.f);
+				spPdfData->Doc.set(newDoc);
+				//Image
+			} else if (auto spImgData = std::dynamic_pointer_cast<ImageTabData>(spObsData);
+				spImgData && std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+				CD2DImage newDoc(spFile->GetPath());
+				spImgData->Scale.set(-1);
+				spImgData->VScroll.set(0.f);
+				spImgData->HScroll.set(0.f);
+				spImgData->Image.set(newDoc);
+				//Preview
+			} else if (auto spPrvData = std::dynamic_pointer_cast<PreviewTabData>(spObsData);
+				spPrvData && std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spFile->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+				CShellFile newDoc(spFile->GetPath());
+				//spPrvData->Scale.set(-1);
+				//spPrvData->VScroll.set(0.f);
+				//spPrvData->HScroll.set(0.f);
+				spPrvData->Doc.set(newDoc);
+			}
+		}
+
+	}, shared_from_this());
+
+}
+
+void CFilerTabGridView::OnKeyDown(const KeyDownEvent& e)
+{
+	switch (e.Char)
+	{
+	case 'Q':
+		//Replace or PushBack
+		if(::IsKeyDown(VK_CONTROL))
+		if(auto spOther = m_wpOther.lock()){
+			if (auto spCurView = std::dynamic_pointer_cast<CFilerView>(GetCurrentControlPtr())) {
+				std::shared_ptr<TabData> spNewData;
+				if (boost::iequals(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt(), L".txt")) {
+					spNewData = std::make_shared<TextTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
+				} else if (boost::iequals(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt(), L".pdf")) {
+					spNewData = std::make_shared<PdfTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
+				} else if (std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+					spNewData = std::make_shared<ImageTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
+				} else if (std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+					spNewData = std::make_shared<PreviewTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
+				}
+
+				if (spNewData) {
+					//Replace
+					if (::IsKeyDown(VK_SHIFT) && spOther->ItemsSource.get_unconst()->at(*spOther->SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
+						spOther->ItemsSource.replace(spOther->ItemsSource.get_unconst()->begin() + *spOther->SelectedIndex, spNewData);
+					//Push back	
+					} else {
+						spOther->ItemsSource.push_back(spNewData);
+					}
+					*(e.HandledPtr) = TRUE;
+				}
+			}
+		}
+		break;
+
+	case VK_F5:
+		if(auto spOther = m_wpOther.lock()){
+			if (auto spFilerView = std::dynamic_pointer_cast<CFilerView>(GetCurrentControlPtr())) {
+				if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerView>(spOther->GetCurrentControlPtr())) {
+					spFilerView->GetFileGridPtr()->CopySelectedFilesTo(spOtherFilerGrid->GetFileGridPtr()->Folder->GetAbsoluteIdl());
+					*(e.HandledPtr) = TRUE;
+				}
+			}
+		}
+		break;
+	case VK_F6:
+		if (auto spOther = m_wpOther.lock()) {
+			if (auto spFilerView = std::dynamic_pointer_cast<CFilerView>(GetCurrentControlPtr())) {
+				if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerView>(spOther->GetCurrentControlPtr())) {
+					spFilerView->GetFileGridPtr()->MoveSelectedFilesTo(spOtherFilerGrid->GetFileGridPtr()->Folder->GetAbsoluteIdl());
+					*(e.HandledPtr) = TRUE;
+				}
+			}
+		}
+		break;
+	case VK_F9:
+		if (auto spOther = m_wpOther.lock()) {
+			if (auto spFilerView = std::dynamic_pointer_cast<CFilerView>(GetCurrentControlPtr())) {
+				if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerView>(spOther->GetCurrentControlPtr())) {
+					spFilerView->GetFileGridPtr()->CopyIncrementalSelectedFilesTo(spOtherFilerGrid->GetFileGridPtr()->Folder->GetAbsoluteIdl());
+					*(e.HandledPtr) = TRUE;
+				}
+			}
+		}
+		break;
+	default:
+		CD2DWControl::OnKeyDown(e);
+		break;
+	}
 }
 
 void CFilerTabGridView::OnContextMenu(const ContextMenuEvent& e)
@@ -434,29 +549,22 @@ void CFilerTabGridView::OnCommandNewPreviewTab()
 void CFilerTabGridView::OnCommandAddToFavorite()
 {
 	//TODOLOW Bad connection between FilerTabGridView and FavoritesView
-
-	// TODOTODO
-	//if(auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())){
-	//	p->GetFavoritesPropPtr()->Favorites.push_back(std::make_shared<CFavorite>(std::static_pointer_cast<FilerTabData>(ItemsSource->at(*SelectedIndex))->Folder->GetPath(), L""));
-	//	p->GetLeftFavoritesView()->SubmitUpdate();
-	//	p->GetRightFavoritesView()->SubmitUpdate();
-	//}
+	if(auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())){
+		p->Favorites.push_back(CFavorite(std::static_pointer_cast<FilerTabData>(ItemsSource->at(*SelectedIndex))->Folder->GetPath(), L""));//TODOTODO
+	}
 }
 
 void CFilerTabGridView::OnCommandOpenSameAsOther()
 {
-	//TODO Bad connection between FilerTabGridView and FavoritesView
-	// TODOTODO
-	//if (auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())) {
-	//		
-	//	std::shared_ptr<CFilerTabGridView> otherView = (this == p->GetLeftWnd().get())? p->GetRightWnd(): p->GetLeftWnd();
-	//	
-	//	if (ItemsSource->at(*SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
-	//		ItemsSource.replace(ItemsSource.get_unconst()->begin() + *SelectedIndex, otherView->ItemsSource->at(*otherView->SelectedIndex)->ClonePtr());
-	//	} else {
-	//		ItemsSource.push_back(otherView->ItemsSource->at(*otherView->SelectedIndex));
-	//	}
-	//}
+	
+	if (auto spOther = m_wpOther.lock()) {
+
+		if (ItemsSource->at(*SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
+			ItemsSource.replace(ItemsSource.get_unconst()->begin() + *SelectedIndex, spOther->ItemsSource->at(*spOther->SelectedIndex)->ClonePtr());
+		} else {
+			ItemsSource.push_back(spOther->ItemsSource->at(*spOther->SelectedIndex));
+		}
+	}
 }
 
 

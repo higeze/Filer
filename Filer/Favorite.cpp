@@ -7,10 +7,10 @@
 #include "ThreadPool.h"
 
 CFavorite::CFavorite()
-	:m_path(), m_shortName(), m_spFile(nullptr), m_spCancel(std::make_shared<bool>(false)){}
+	:m_Path(), m_ShortName(), m_spFile(nullptr), m_spCancel(std::make_shared<bool>(false)){}
 
 CFavorite::CFavorite(std::wstring path, std::wstring shortName)
-	:m_path(path), m_shortName(shortName), m_spFile(nullptr),m_spCancel(std::make_shared<bool>(false)){}
+	:m_Path(path), m_ShortName(shortName), m_spFile(nullptr),m_spCancel(std::make_shared<bool>(false)){}
 
 CFavorite::~CFavorite()
 {

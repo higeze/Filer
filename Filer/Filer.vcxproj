@@ -332,6 +332,7 @@
     <ClInclude Include="..\HiLib\NetworkMessanger.h" />
     <ClInclude Include="..\HiLib\notify_container_changed.h" />
     <ClInclude Include="..\HiLib\HeaderCell.h" />
+    <ClInclude Include="..\HiLib\notify_property_changed.h" />
     <ClInclude Include="..\HiLib\OutputTabControl.h" />
     <ClInclude Include="..\HiLib\PDFBitmapDrawer.h" />
     <ClInclude Include="..\HiLib\D2DThumbnailDrawer.h" />
@@ -577,7 +578,7 @@
     <ClInclude Include="ToDoGridView.h" />
     <ClInclude Include="ToDoTabData.h" />
     <ClInclude Include="ViewProperty.h" />
-    <ClInclude Include="FileVerticalSplitContainer.h" />
+    <ClInclude Include="FileDock.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\D2DTextBox\CellTextBox.cpp" />
@@ -714,6 +715,7 @@
     <ClCompile Include="..\HiLib\PDFCaret.cpp" />
     <ClCompile Include="..\HiLIb\YearMonthDay.cpp" />
     <ClCompile Include="BindTest.cpp" />
+    <ClCompile Include="FileDock.cpp" />
     <ClCompile Include="FilerTabData.cpp" />
     <ClCompile Include="FilerView.cpp" />
     <ClCompile Include="FolderHistory.cpp" />

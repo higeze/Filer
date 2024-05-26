@@ -24,7 +24,7 @@ private:
 	virtual std::wstring GetShortName()
 	{
 		if (auto pBindRow = dynamic_cast<CBindRow<T>*>(this->m_pRow)) {
-			return pBindRow->GetItem<std::shared_ptr<CFavorite>>()->GetShortName();
+			return pBindRow->GetItem<T>().GetShortName();
 		} else {
 			return nullptr;
 		}
@@ -36,7 +36,7 @@ public:
 	virtual std::shared_ptr<CShellFile> GetShellFile() override
 	{
 		if (auto pBindRow = dynamic_cast<CBindRow<T>*>(this->m_pRow)) {
-			return pBindRow->GetItem<std::shared_ptr<CFavorite>>()->GetShellFile(
+			return pBindRow->GetItem<T>().GetShellFile(
 				[wp = std::weak_ptr(std::dynamic_pointer_cast<CFavoriteCell<T>>(this->shared_from_this()))]() {
 					if (auto sp = wp.lock()) {
 						sp->GetGridPtr()->DelayUpdate();

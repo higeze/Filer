@@ -7,10 +7,8 @@ class CFavoritesProperty;
 class CShellFile;
 class CFilerWnd;
 
-class CFavoritesGridView : public CBindGridView<std::shared_ptr<CFavorite>>
+class CFavoritesGridView : public CBindGridView<CFavorite>
 {
-private:
-	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
 public:
 	std::function<void(const std::shared_ptr<CShellFile>&)> FileChosen;
 
@@ -27,19 +25,5 @@ public:
 	void Reload();
 
 	virtual void MoveRow(int indexTo, typename RowTag::SharedPtr spFrom) override;
-
-public:
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		//ar("FavoritesProperty",m_spFavoritesProp);
-	}
-
-	friend void to_json(json& j, const CFavoritesGridView& o)
-	{
-	}
-	friend void from_json(const json& j, CFavoritesGridView& o)
-	{
-	}
 };
 

@@ -25,7 +25,7 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 CFavoritesGridView::CFavoritesGridView(CD2DWControl* pParentControl)
 	:CBindGridView(pParentControl,
 		arg<"bindtype"_s>() = BindType::Row,
-		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{std::make_shared<CFavoritesColumn<std::shared_ptr<CFavorite>>>(this)})
+		arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{std::make_shared<CFavoritesColumn<CFavorite>>(this)})
 {
 	IsFocusable.set(false);
 	m_pVScroll->SetVisibility(Visibility::Hidden);
@@ -89,7 +89,7 @@ void CFavoritesGridView::OpenFavorites()
 
 void CFavoritesGridView::OnCellLButtonDblClk(const CellEventArgs& e)
 {
-	if(auto p = dynamic_cast<CFavoriteCell<std::shared_ptr<CFavorite>>*>(e.CellPtr)){
+	if(auto p = dynamic_cast<CFavoriteCell<CFavorite>*>(e.CellPtr)){
 		auto pFile = p->GetShellFile();
 		if (pFile != nullptr && typeid(*pFile) != typeid(CShellInvalidFile)) {
 			FileChosen(p->GetShellFile());
@@ -114,8 +114,8 @@ void CFavoritesGridView::MoveRow(int indexTo, typename RowTag::SharedPtr spFrom)
 
 void CFavoritesGridView::Reload()
 {
-	for (auto iter = m_spFavoritesProp->Favorites->cbegin(); iter != m_spFavoritesProp->Favorites->cend(); ++iter) {
-		(*iter)->SetLockShellFile(nullptr);
+	for (auto iter = ItemsSource.get_unconst()->begin(); iter != ItemsSource.get_unconst()->end(); ++iter) {
+		iter->SetLockShellFile(nullptr);
 	}
 	OpenFavorites();
 	SubmitUpdate();

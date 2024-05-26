@@ -139,6 +139,8 @@ public:
 	reactive_property_ptr<CRect> Rectangle;
 	reactive_wstring_ptr PerformanceLog;
 	reactive_wstring_ptr ThreadPoolLog;
+	reactive_vector_ptr<CFavorite> Favorites;
+	reactive_vector_ptr<CLauncher> Launchers;
 
 
 	virtual void Measure(const CSizeF& availableSize) override;
@@ -244,11 +246,8 @@ public:
 	//	return 0;
 	//}
 
-#ifdef USE_PYTHON_EXTENSION
 private:
-	std::shared_ptr<CPythonExtensionProperty> m_spPyExProp;
-	LRESULT OnCommandPythonExtensionOption(WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled);
-#endif
+	std::shared_ptr<CFilerTabGridView> CreateFilerTab(const std::shared_ptr<CD2DWControl>& parent, const std::shared_ptr<CStatusBar>& status);
 
 	friend void to_json(json& j, const CFilerWnd& o) 
 	{

@@ -1032,8 +1032,11 @@
     <ClInclude Include="..\HiLIb\Splitter.h">
       <Filter>HiLib\SplitContainer</Filter>
     </ClInclude>
-    <ClInclude Include="FileVerticalSplitContainer.h">
+    <ClInclude Include="FileDock.h">
       <Filter>Filer\Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\notify_property_changed.h">
+      <Filter>HiLib\Reactive</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1550,6 +1553,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\ShellContextMenu.cpp">
       <Filter>HiLib\Shell</Filter>
+    </ClCompile>
+    <ClCompile Include="FileDock.cpp">
+      <Filter>Filer\Filer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

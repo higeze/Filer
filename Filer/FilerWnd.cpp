@@ -171,8 +171,41 @@ void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, 
 	}, Dummy);
 }
 
+std::shared_ptr<CFilerTabGridView> CFilerWnd::CreateFilerTab(const std::shared_ptr<CD2DWControl>& parent, const std::shared_ptr<CStatusBar>& status)
+{
+	auto spTab = std::make_shared<CFilerTabGridView>(parent.get());
+	Favorites.binding(spTab->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource);
+	spTab->GetFilerViewPtr()->GetFileGridPtr()->StatusLog.subscribe(
+		[this, status](auto notify) {
+		status->Text.set(notify.all_items);
+		InvalidateRect(NULL, FALSE);
+	}, shared_from_this());
+
+	spTab->SetIsTabStop(true);
+
+	spTab->GetFilerViewPtr()->GetFileGridPtr()->GetFolderContextMenu().Add(
+		std::make_unique<CMenuSeparator2>(),
+		std::make_unique<CMenuItem2>(L"Add to Favorite", [this, spTab]()->void {
+		auto files = spTab->GetFilerViewPtr()->GetFileGridPtr()->GetSelectedFiles();
+		for (auto& file : files) {
+			Favorites.push_back(CFavorite(file->GetPath(), L""));//TODOTODO
+		}}),
+		std::make_unique<CMenuItem2>(L"Add to Launcher", [this, spTab]()->void {
+			auto files = spTab->GetFilerViewPtr()->GetFileGridPtr()->GetSelectedFiles();
+			for (auto& file : files) {
+				Launchers.push_back(CLauncher(file->GetPath(), L""));//TODOTODO
+			}
+		})
+	);
+	return spTab;
+
+}
+
 void CFilerWnd::OnCreate(const CreateEvt& e)
 {
+	Favorites = m_spFavoritesProp->Favorites;
+	Launchers = m_spLauncherProp->Launchers;
+
 	//SetWindowPlacement make sure Window in Monitor
 	WINDOWPLACEMENT wp = { 0 };
 	wp.length = sizeof(WINDOWPLACEMENT);
@@ -189,7 +222,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	auto spTopDock = std::make_shared<CDockPanel>(m_spDock.get());
 	spTopDock->Dock.set(DockEnum::TopFix);
 	//Launcher
-	auto spLauncher = std::make_shared<CLauncherGridView>(spTopDock.get(), m_spLauncherProp);
+	auto spLauncher = std::make_shared<CLauncherGridView>(spTopDock.get());
 	spLauncher->Dock.set(DockEnum::Fill);
 	//Tool bar
 	auto spToolBar = std::make_shared<CToolBar>(spTopDock.get());
@@ -215,80 +248,42 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	/* Fill */
 	/********/
 	//Horizontal
-	auto spFillHorizontal = std::make_shared<CDockPanel>(m_spDock.get());
-	spFillHorizontal->Dock.set(DockEnum::Fill);
+	auto spFillDock = std::make_shared<CDockPanel>(m_spDock.get());
+	spFillDock->Dock.set(DockEnum::Fill);
 
 	//Horizontal Top
-	auto spTopVerticalSplit = std::make_shared<CDockPanel>(spFillHorizontal.get());
-	spTopVerticalSplit->Dock.set(DockEnum::Fill);
+	auto spFillTopDock = std::make_shared<CDockPanel>(spFillDock.get());
+	spFillTopDock->Dock.set(DockEnum::Fill);
 
-	auto spTabLeft = std::make_shared<CFilerTabGridView>(spTopVerticalSplit.get());
-	spTabLeft->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource.set(*m_spFavoritesProp->Favorites);
-	spTabLeft->GetFilerViewPtr()->GetFileGridPtr()->StatusLog.subscribe(
-		[this, spBottomStatus](auto notify) {
-		spBottomStatus->Text.set(notify.all_items);
-		InvalidateRect(NULL, FALSE);
-	}, shared_from_this());	spTabLeft->SetIsTabStop(true);
-	spTabLeft->Dock.set(DockEnum::Fill);
+	auto spLeftTop = CreateFilerTab(spFillTopDock, spBottomStatus);
+	spLeftTop->Dock.set(DockEnum::Fill);
 
+	auto spRightTop = CreateFilerTab(spFillTopDock, spBottomStatus);
+	spRightTop->Dock.set(DockEnum::Right);
 
-	auto spTabRight = std::make_shared<CFilerTabGridView>(spTopVerticalSplit.get());
-	spTabRight->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource.set(*m_spFavoritesProp->Favorites);
-	spTabRight->GetFilerViewPtr()->GetFileGridPtr()->StatusLog.subscribe(
-		[this, spBottomStatus](auto notify) {
-		spBottomStatus->Text.set(notify.all_items);
-		InvalidateRect(NULL, FALSE);
-	}, shared_from_this());
-	spTabRight->SetIsTabStop(true);
-	spTabRight->Dock.set(DockEnum::Right);
-
-	SetUpPreview(spTabLeft, spTabRight);
-	SetUpPreview(spTabRight, spTabLeft);
-
-	spTopVerticalSplit->Add(spTabRight, spTabLeft);
+	spLeftTop->SetOther(spRightTop);
+	spRightTop->SetOther(spLeftTop);
+	spFillTopDock->Add(spRightTop, spLeftTop);
 
 	//Horizontal Bottom
-	auto spBottomVerticalSplit = std::make_shared<CDockPanel>(spFillHorizontal.get());
-	spBottomVerticalSplit->Dock.set(DockEnum::Bottom);
+	auto spFillBottomDock = std::make_shared<CDockPanel>(spFillDock.get());
+	spFillBottomDock->Dock.set(DockEnum::Bottom);
 
-	auto spTextBoxLeft = std::make_shared<CColoredTextBox>(spBottomVerticalSplit.get(), L"");
+	auto spTextBoxLeft = std::make_shared<CColoredTextBox>(spFillBottomDock.get(), L"");
 	PerformanceLog.binding(spTextBoxLeft->Text);
 	spTextBoxLeft->Dock.set(DockEnum::Fill);
 
-	auto spTextBoxRight = std::make_shared<CColoredTextBox>(spBottomVerticalSplit.get(), L"");
+	auto spTextBoxRight = std::make_shared<CColoredTextBox>(spFillBottomDock.get(), L"");
 	ThreadPoolLog.binding(spTextBoxRight->Text);
 	spTextBoxRight->Dock.set(DockEnum::Right);
 
-	spBottomVerticalSplit->Add(spTextBoxRight, spTextBoxLeft);
+	spFillBottomDock->Add(spTextBoxRight, spTextBoxLeft);
 
-	spFillHorizontal->Add(spBottomVerticalSplit, spTopVerticalSplit);
+	spFillDock->Add(spFillBottomDock, spFillTopDock);
 
-	m_spDock->Add(spTopDock, spBottomStatus, spFillHorizontal);
+	m_spDock->Add(spTopDock, spBottomStatus, spFillDock);
 
 	m_spDock->OnCreate(CreateEvt(this, this, CRectF()));
-
-	//Context Menu for FileView
-	//TODOTODO
-	//CShellContextMenu menu;
-	//menu.Add(
-	//	std::make_unique<CMenuSeparator2>(),
-	//	std::make_unique<CMenuItem2>(L"Add to Favorite", [this, files]()->void {
-	//		for (auto& file : files) {
-	//			GetFavoritesPropPtr()->Favorites.push_back(std::make_shared<CFavorite>(file->GetPath(), L""));
-	//		}
-	//		// TODOTODO
-	//		//m_spLeftView->GetFilerViewPtr()->GetFavoriteGridPtr()->SubmitUpdate();
-	//		//m_spLeftView->GetFilerViewPtr()->GetFavoriteGridPtr()->SubmitUpdate();
-	//		//m_spLeftFavoritesView->SubmitUpdate();
-	//		//m_spRightFavoritesView->SubmitUpdate();
-	//}),
-	//	std::make_unique<CMenuItem2>(L"Add to Launcher", [this, pWnd = GetWndPtr(), files]()->void {
-	//		for (auto& file : files) {
-	//			GetLauncherPropPtr()->Launchers.push_back(std::make_shared<CLauncher>(file->GetPath(), L""));
-	//		}
-	//		m_spLauncher->SubmitUpdate();
-	//	})
-	//);
 
 	//MeasureArrange
 	CRect rcClient = GetClientRect();
@@ -310,102 +305,24 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		GetDispatcherPtr()->PostInvoke(updateLog);
 	}, std::chrono::milliseconds(3000));
 
-	//TODOTODO
-	//GetWndPtr()->SetFocusToControl(spHorizontalSplit->GetTop());
+	SetFocusToControl(spTopDock);
 }
 
 void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
 {
-	// TODOTODO
-	//*(e.HandledPtr) = FALSE;
-	//switch (e.Char)
-	//{
-	//case 'Q':
-	//	//Replace or PushBack
-	//	if (::GetAsyncKeyState(VK_CONTROL)) {
-	//		if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
-	//			if (auto spCurView = std::dynamic_pointer_cast<CFilerView>(spCurTab->GetCurrentControlPtr())) {
-	//				std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
-	//				std::shared_ptr<TabData> spNewData;
-	//				if (boost::iequals(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt(), L".txt")) {
-	//					spNewData = std::make_shared<TextTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
-	//				} else if (boost::iequals(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt(), L".pdf")) {
-	//					spNewData = std::make_shared<PdfTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
-	//				} else if (std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
-	//					spNewData = std::make_shared<ImageTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
-	//				} else if (std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
-	//					spNewData = std::make_shared<PreviewTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
-	//				}
-
-	//				if (spNewData) {
-	//					//Replace
-	//					if (::IsKeyDown(VK_SHIFT) && spOtherTab->ItemsSource.get_unconst()->at(*spOtherTab->SelectedIndex)->AcceptClosing(this, false)) {
-	//						spOtherTab->ItemsSource.replace(spOtherTab->ItemsSource.get_unconst()->begin() + *spOtherTab->SelectedIndex, spNewData);
-	//					//Push back	
-	//					} else {
-	//						spOtherTab->ItemsSource.push_back(spNewData);
-	//					}
-	//					*(e.HandledPtr) = TRUE;
-	//				}
-	//			}
-	//		}
-	//	}
-	//	break;
-
-	//case VK_F4:
-	//	{
-	//		if (::GetAsyncKeyState(VK_MENU)) {
-	//			OnCommandExit(CommandEvent(this, 0, 0, e.HandledPtr));
-	//			*(e.HandledPtr) = TRUE;
-	//		}
-	//	}
-	//	break;
-	//case VK_F5:
-	//	{
-	//		if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
-	//			if (auto spFilerView = std::dynamic_pointer_cast<CFilerView>(spCurTab->GetCurrentControlPtr())) {
-	//				std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
-	//				if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerView>(spOtherTab->GetCurrentControlPtr())) {
-	//					spFilerView->GetFileGridPtr()->CopySelectedFilesTo(spOtherFilerGrid->GetFileGridPtr()->Folder->GetAbsoluteIdl());
-	//					*(e.HandledPtr) = TRUE;
-	//				}
-	//			}
-	//		}
-	//	}
-	//	break;
-	//case VK_F6:
-	//	{
-	//		if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
-	//			if (auto spFilerView = std::dynamic_pointer_cast<CFilerView>(spCurTab->GetCurrentControlPtr())) {
-	//				std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
-	//				if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerView>(spOtherTab->GetCurrentControlPtr())) {
-	//					spFilerView->GetFileGridPtr()->MoveSelectedFilesTo(spOtherFilerGrid->GetFileGridPtr()->Folder->GetAbsoluteIdl());
-	//					*(e.HandledPtr) = TRUE;
-	//				}
-	//			}
-	//		}
-	//	}
-	//	break;
-	//case VK_F9:
-	//	{
-	//		if (auto spCurTab = std::dynamic_pointer_cast<CFilerTabGridView>(GetFocusedControlPtr())) {
-	//			if (auto spFilerView = std::dynamic_pointer_cast<CFilerView>(spCurTab->GetCurrentControlPtr())) {
-	//				std::shared_ptr<CFilerTabGridView> spOtherTab = spCurTab == m_spLeftView ? m_spRightView : m_spLeftView;
-	//				if (auto spOtherFilerGrid = std::dynamic_pointer_cast<CFilerView>(spOtherTab->GetCurrentControlPtr())) {
-	//					spFilerView->GetFileGridPtr()->CopyIncrementalSelectedFilesTo(spOtherFilerGrid->GetFileGridPtr()->Folder->GetAbsoluteIdl());
-	//					*(e.HandledPtr) = TRUE;
-	//				}
-	//			}
-	//		}
-	//	}
-	//	break;
-	//default:
-	//	break;
-	//}
-	if (!(*e.HandledPtr)) {
+	switch (e.Char)
+	{
+	case VK_F4:
+		{
+			if (::GetAsyncKeyState(VK_MENU)) {
+				OnCommandExit(CommandEvent(this, 0, 0, e.HandledPtr));
+				*(e.HandledPtr) = TRUE;
+			}
+		}
+		break;
+	default:
 		CD2DWWindow::OnKeyDown(e);
 	}
-	//m_konamiCommander.OnKeyDown(uMsg, wParam, lParam, bHandled);
 }
 
 void CFilerWnd::OnClose(const CloseEvent& e)
@@ -578,25 +495,15 @@ void CFilerWnd::OnCommandTextOption(const CommandEvent& e)
 
 void CFilerWnd::OnCommandLauncherOption(const CommandEvent& e)
 {
-	//TODOTODO
-	//m_spLauncherProp = CFilerApplication::GetInstance()->DeserializeLauncher();
-	//m_spLauncher->ItemsSource = m_spLauncherProp->Launchers;
-
-	//m_spLauncher->Reload();
-	//InvalidateRect(NULL, FALSE);
+	//Launchers = CFilerApplication::GetInstance()->DeserializeLauncher();
+	//Reload();
 }
 
 
 void CFilerWnd::OnCommandFavoritesOption(const CommandEvent& e)
 {
-	//TODOTODO
-	//m_spFavoritesProp = CFilerApplication::GetInstance()->DeserializeFavoirtes();
-	//m_spLeftView->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource = m_spFavoritesProp->Favorites;
-	//m_spRightView->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource = m_spFavoritesProp->Favorites;
-
-	//m_spLeftView->GetFilerViewPtr()->GetFavoriteGridPtr()->Reload();
-	//m_spRightView->GetFilerViewPtr()->GetFavoriteGridPtr()->Reload();
-	//InvalidateRect(NULL, FALSE);
+	//Favrotites = CFilerApplication::GetInstance()->DeserializeFavoirtes();
+	//Reload();
 }
 
 void CFilerWnd::OnCommandExeExtensionOption(const CommandEvent& e)

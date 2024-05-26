@@ -5,19 +5,12 @@
 struct GridViewProperty;
 class CLauncherProperty;
 
-class CLauncherGridView : public CBindGridView<std::shared_ptr<CLauncher>>
+class CLauncherGridView : public CBindGridView<CLauncher>
 {
-private:
-	std::shared_ptr<CLauncherProperty> m_spLauncherProp;
-
 public:
-	CLauncherGridView(
-		CD2DWControl* pParentControl = nullptr, 
-		const std::shared_ptr<CLauncherProperty>& spLauncherProp = nullptr);
+	CLauncherGridView(CD2DWControl* pParentControl = nullptr);
 	
 	virtual ~CLauncherGridView(void) = default;
-
-	std::shared_ptr<CLauncherProperty>& GetLauncherProp() { return m_spLauncherProp; }
 	
 	virtual void OnCreate(const CreateEvt& e) override;
 	

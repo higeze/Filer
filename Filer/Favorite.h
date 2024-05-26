@@ -1,4 +1,5 @@
 #pragma once
+#include "notify_property_changed.h"
 #include "MyFriendSerializer.h"
 #include <future>
 #include <mutex>
@@ -6,11 +7,12 @@
 
 class CShellFile;
 
-class CFavorite
+class CFavorite: public notify_property_changed
 {
+	NOTIFIABLE_PROPERTY(std::wstring, Path)
+	NOTIFIABLE_PROPERTY(std::wstring, ShortName)
+
 private:
-	std::wstring m_path;
-	std::wstring m_shortName;
 	std::shared_ptr<CShellFile> m_spFile;
 
 	std::shared_ptr<bool> m_spCancel;
@@ -21,9 +23,23 @@ public:
 	CFavorite(void);
 	CFavorite(std::wstring path, std::wstring shortName);
 	virtual ~CFavorite(void);
+	CFavorite(const CFavorite& other)
+		:CFavorite(other.GetPath(), other.GetShortName()){}
+	CFavorite& operator=(const CFavorite& other)
+	{
+		m_Path = other.m_Path;
+		m_ShortName = other.m_ShortName;
+		return *this;
+	}
+	bool operator==(const CFavorite& other) const
+	{
+		return GetPath() == other.GetPath() && GetShortName() == other.GetShortName();
+	}
+	bool operator!=(const CFavorite& other) const
+	{
+		return !(operator==(other));
+	}
 
-	std::wstring GetPath()const{return m_path;}
-	std::wstring GetShortName()const{return m_shortName;}
 	std::shared_ptr<CShellFile>& GetShellFile(const std::function<void()>& changed);
 
 	std::shared_ptr<CShellFile>& GeLockShellFile()
@@ -41,21 +57,21 @@ public:
     template <class Archive>
     void serialize(Archive& ar)
     {
-		ar("Path", m_path);
-		ar("ShortName",m_shortName);
+		ar("Path", m_Path);
+		ar("ShortName",m_ShortName);
     }
 	friend void to_json(json& j, const CFavorite& o)
 	{
 	
 		j = json{
-			{"Path", o.m_path},
-			{"ShortName", o.m_shortName}
+			{"Path", o.m_Path},
+			{"ShortName", o.m_ShortName}
 		};
 	}
 	friend void from_json(const json& j, CFavorite& o)
 	{
-		j.at("Path").get_to(o.m_path);
-		j.at("ShortName").get_to(o.m_shortName);
+		j.at("Path").get_to(o.m_Path);
+		j.at("ShortName").get_to(o.m_ShortName);
 	}
 
 };

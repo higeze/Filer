@@ -49,7 +49,10 @@ struct ImageEditorProperty;
 class CFilerTabGridView :public CTabControl
 {
 private:
-
+	static std::vector<std::wstring> imageExts;
+	static std::vector<std::wstring> previewExts;
+	bool m_isPreview = false;
+	std::weak_ptr<CFilerTabGridView> m_wpOther;
 public:
 	CFilerTabGridView(CD2DWControl* pParentControl = nullptr);
 	virtual ~CFilerTabGridView();
@@ -79,10 +82,16 @@ public:
 	SHAREDPTR_GETTER(CToDoGridView, ToDoGridView)
 	SHAREDPTR_GETTER(CPreviewControl, PreviewControl)
 
+	/**********/
+	/* Setter */
+	/**********/
+	void SetOther(const std::shared_ptr<CFilerTabGridView>& spOther) { m_wpOther = spOther; }
+
 	/**************/
 	/* UI Message */
 	/**************/
 	void OnCreate(const CreateEvt& e) override;
+	void OnKeyDown(const KeyDownEvent& e) override;
 	void OnContextMenu(const ContextMenuEvent& e) override;
 
 	/***********/

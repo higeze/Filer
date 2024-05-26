@@ -1,5 +1,6 @@
 #pragma once
 #include "reactive_container.h"
+#include "notify_property_changed.h"
 #include <vector>
 
 template<typename T>
@@ -8,6 +9,20 @@ struct adl_vector_item
 	static T clone(const T& item) { return T(item); }
 	static void bind(T& src, T& dst) { return src.binding(dst); }
 };
+
+template<typename V>
+typename std::enable_if_t<std::is_base_of_v<notify_property_changed, V>>
+bind_value(V& left, V& right)
+{
+	left.bind<V>(right);
+}
+
+template<typename V>
+typename std::enable_if_t<!std::is_base_of_v<notify_property_changed, V>>
+bind_value(V& left, V& right)
+{
+	adl_vector_item<V>::bind(left, right);
+}
 
 template<class _Ty, class _Alloc = std::allocator<_Ty>>
 class reactive_vector
@@ -208,8 +223,7 @@ public:
 
 	void observe_vector(notify_type& notify)
 	{
-		if (this->m_value.size() == notify.all_items.size())
-		{ 
+		if (this->m_value.size() == notify.all_items.size()){ 
 			return;
 		}
 		if (this->m_value == notify.all_items) { return; }
@@ -217,15 +231,11 @@ public:
 		switch (notify.action) {
 			case notify_container_changed_action::push_back:
 				this->push_back(adl_vector_item<value_type>::clone(notify.new_items.front()));
-				adl_vector_item<value_type>::bind(
-					notify.new_items.front(),
-					this->m_value.at(notify.new_starting_index));
+					bind_value(notify.new_items.front(), this->m_value.at(notify.new_starting_index));
 				break;
 			case notify_container_changed_action::insert:
 				this->insert(this->m_value.cbegin() + notify.new_starting_index, adl_vector_item<value_type>::clone(notify.new_items.front()));
-				adl_vector_item<value_type>::bind(
-					notify.new_items.front(),
-					this->m_value.at(notify.new_starting_index));
+				bind_value(notify.new_items.front(), this->m_value.at(notify.new_starting_index));
 				break;
 			case notify_container_changed_action::Move:
 				THROW_FILE_LINE_FUNC;
@@ -239,9 +249,7 @@ public:
 			case notify_container_changed_action::reset:
 				for (size_t i = 0; i < notify.new_items.size(); i++) {
 					this->push_back(adl_vector_item<value_type>::clone(notify.new_items[i]));
-					adl_vector_item<value_type>::bind(
-						notify.new_items[i],
-						this->m_value.at(i));
+					bind_value(notify.new_items[i], this->m_value.at(i));
 				}
 				break;
 		}
@@ -390,9 +398,7 @@ public:
 		dst.clear();
 		for (size_t i = 0; i < this->m_preactive->m_value.size(); i++) {
 			dst.push_back(adl_vector_item<_Ty>::clone(this->m_preactive->m_value.at(i)));
-			adl_vector_item<_Ty>::bind(
-					this->get_unconst()->at(i),
-					dst.get_unconst()->at(i));
+			bind_value(this->get_unconst()->at(i), dst.get_unconst()->at(i));
 		}
 
 		return std::make_pair(

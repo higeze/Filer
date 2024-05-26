@@ -19,7 +19,7 @@ private:
 	virtual std::wstring GetShortName()
 	{
 		if (auto pBindColumn = dynamic_cast<CBindColumn<T>*>(this->m_pColumn)) {
-			return pBindColumn->GetItem<std::shared_ptr<CLauncher>>()->GetShortName();
+			return pBindColumn->GetItem<T>().GetShortName();
 		} else {
 			return nullptr;
 		}
@@ -31,7 +31,7 @@ public:
 	virtual std::shared_ptr<CShellFile> GetShellFile() override
 	{
 		if (auto pBindColumn = dynamic_cast<CBindColumn<T>*>(this->m_pColumn)) {
-			return pBindColumn->GetItem<std::shared_ptr<CLauncher>>()->GetShellFile(
+			return pBindColumn->GetItem<T>().GetShellFile(
 				[pSheet = this->m_pGrid]() {
 					pSheet->DelayUpdate();
 				});
@@ -52,8 +52,8 @@ public:
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override
 	{
 		if (auto pBindColumn = dynamic_cast<CBindColumn<T>*>(this->m_pColumn)) {
-			auto pItem = pBindColumn->GetItem<std::shared_ptr<CLauncher>>();
-			if (pItem->RunAs) {
+			auto item = pBindColumn->GetItem<T>();
+			if (item.GetRunAs()) {
 				this->GetShellFile()->RunAs();
 			} else {
 				this->GetShellFile()->Open();

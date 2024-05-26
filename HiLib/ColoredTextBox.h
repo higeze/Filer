@@ -62,7 +62,12 @@ public:
 				ExecutableAppearance{
 				LR"(https?://[\w!?/+\-_~;.,*&@#$%()'[\]=]+)",
 				SyntaxFormatF(CColorF(0.0f, 0.0f, 1.0f, 1.0f), false, true)
-				}}; return value;
+				},
+				ExecutableAppearance{
+				LR"(Notes://[\w!?/+\-_~;.,*&@#$%()'[\]=]+)",
+				SyntaxFormatF(CColorF(0.0f, 0.0f, 1.0f, 1.0f), false, true)
+				}		
+		}; return value;
 	}
 
 protected:
