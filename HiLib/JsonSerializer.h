@@ -52,6 +52,9 @@ json_polymorphic_map.insert_or_assign(\
 	typeid(Derived).name(),\
     std::make_pair(\
     [](const json& j, std::shared_ptr<void>& ptr) {\
+        auto base = static_pointer_cast<Base>(ptr);\
+        auto derived = dynamic_pointer_cast<Derived>(base);\
+        if(!derived){THROW_FILE_LINE_FUNC;}\
 	    json::json_serializer<Derived, void>::from_json(j, *(dynamic_pointer_cast<Derived>(static_pointer_cast<Base>(ptr))));},\
     [](json& j, const std::shared_ptr<const void>& ptr) {\
 	    j = *(dynamic_pointer_cast<const Derived>(static_pointer_cast<const Base>(ptr)));}\
@@ -132,6 +135,7 @@ namespace nlohmann {
     struct adl_serializer<std::shared_ptr<TRect>> {
 
         static void from_json(const json& j, std::shared_ptr<TRect>& ptr) {
+
             //typeinfoname
             std::string name;
             if (j.find("typeinfoname") != j.end()) {

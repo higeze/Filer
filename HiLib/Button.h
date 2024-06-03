@@ -28,7 +28,7 @@ public:
 	reactive_property_ptr<std::wstring> Content;
 	reactive_property_ptr<std::wstring> DisableContent;
 public:
-	CButton(CD2DWControl* pControl)
+	CButton(CD2DWControl* pControl = nullptr)
 		:CD2DWControl(pControl){}
 	virtual ~CButton() = default;
 

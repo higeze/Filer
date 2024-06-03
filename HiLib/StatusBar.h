@@ -20,7 +20,7 @@ public:
 		static FormatF value(L"Meiryo UI", CDirect2DWrite::Points2Dips(9), 1.0f, 1.0f, 1.0f, 1.0f); return value;
 	}
 public:
-	CStatusBar(CD2DWControl* pParentControl);
+	CStatusBar(CD2DWControl* pParentControl = nullptr);
 	virtual ~CStatusBar();
 
 	//MeasureArrange

@@ -1085,7 +1085,7 @@ void CFilerGridView::OnMouseWheel(const MouseWheelEvent& e)
 void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 {
 	auto cell = Cell(GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
-	std::vector<std::shared_ptr<CShellFile>> files;
+	std::vector<std::shared_ptr<CShellFile>> files = GetSelectedFiles();
 
 	if (!cell) {
 		//Folder menu

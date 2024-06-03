@@ -32,33 +32,38 @@ public:
 	virtual void Arrange(const CRectF& rc) override;
 	//Add
 	void Add() {}
-	template<class _Head>
-	void Add(_Head&& child)
+	void Add(std::pair<std::shared_ptr<CD2DWControl>, DockEnum>&& p)
 	{
-		switch (*child->Dock) {
-			case DockEnum::Left:
-			case DockEnum::Right:
-			{
-				auto splitter = std::make_shared<CVerticalSplitter>(this);
-				splitter->Value.subscribe([this](auto value) { Arrange(ArrangedRect()); }, shared_from_this());
-				splitter->Dock.set(DockEnum::Vertical);
-				m_ctrl_split_map.emplace(child, splitter);
-				break;
-			}
-			case DockEnum::Top:
-			case DockEnum::Bottom:
-			{
-				auto splitter = std::make_shared<CHorizontalSplitter>(this);
-				splitter->Value.subscribe([this](auto value) { Arrange(ArrangedRect()); }, shared_from_this());
-				splitter->Dock.set(DockEnum::Horizontal);
-				m_ctrl_split_map.emplace(child, splitter);
-				break;
-			}
-			default:
-				m_ctrl_split_map.emplace(child, nullptr);
-				break;
-		}
+		p.first->Dock.set(p.second);
+		AddChildControlPtr(p.first);
 	}
+	//template<class _Head>
+	//void Add(_Head&& child)
+	//{
+	//	switch (*child->Dock) {
+	//		case DockEnum::Left:
+	//		case DockEnum::Right:
+	//		{
+	//			auto splitter = std::make_shared<CVerticalSplitter>(this);
+	//			splitter->Value.subscribe([this](auto value) { Arrange(ArrangedRect()); }, shared_from_this());
+	//			splitter->Dock.set(DockEnum::Vertical);
+	//			m_ctrl_split_map.emplace(child, splitter);
+	//			break;
+	//		}
+	//		case DockEnum::Top:
+	//		case DockEnum::Bottom:
+	//		{
+	//			auto splitter = std::make_shared<CHorizontalSplitter>(this);
+	//			splitter->Value.subscribe([this](auto value) { Arrange(ArrangedRect()); }, shared_from_this());
+	//			splitter->Dock.set(DockEnum::Horizontal);
+	//			m_ctrl_split_map.emplace(child, splitter);
+	//			break;
+	//		}
+	//		default:
+	//			m_ctrl_split_map.emplace(child, nullptr);
+	//			break;
+	//	}
+	//}
 
 	template<class _Head, class... _Tail>
 	void Add(_Head&& head, _Tail&&... tail)
@@ -77,6 +82,20 @@ public:
 	//	Maximum,
 	//	Minimum,
 	//	Value)
+
+	friend void to_json(json& j, const CDockPanel& o)
+	{
+		to_json(j, static_cast<const CD2DWControl&>(o));
+
+		j["Children"] = o.m_childControls;
+	}
+
+	friend void from_json(const json& j, CDockPanel& o)
+	{
+		from_json(j, static_cast<CD2DWControl&>(o));
+
+		get_to(j, "Children", o.m_childControls);
+	}
 
 };
 

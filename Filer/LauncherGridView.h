@@ -29,9 +29,12 @@ public:
 	}
 	friend void to_json(json& j, const CLauncherGridView& o)
 	{
+		to_json(j, static_cast<const CD2DWControl&>(o));
 	}
+
 	friend void from_json(const json& j, CLauncherGridView& o)
 	{
+		from_json(j, static_cast<CD2DWControl&>(o));
 	}
 
 };

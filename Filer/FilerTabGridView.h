@@ -120,8 +120,8 @@ public:
 
 		to_json(j, static_cast<const CTabControl&>(o));
 
-		//j["FilerView"] = o.m_spFilerView;
-		//j["ToDoView"] = o.m_spToDoGridView;
+		j["FilerView"] = o.m_spFilerView;
+		j["ToDoView"] = o.m_spToDoGridView;
 	}
 
 	friend void from_json(const json& j, CFilerTabGridView& o)
@@ -135,8 +135,8 @@ public:
 
 		from_json(j, static_cast<CTabControl&>(o));
 
-		//get_to(j, "FilerView", o.m_spFilerView);
-		//get_to(j, "ToDoView", o.m_spToDoGridView);
+		get_to(j, "FilerView", o.m_spFilerView);
+		get_to(j, "ToDoView", o.m_spToDoGridView);
 	}
 };
 

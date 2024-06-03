@@ -127,8 +127,8 @@ public:
 		const std::wstring& text);
 
 	CTextBox(
-		CD2DWControl* pParentControl,
-		const std::wstring& text);
+		CD2DWControl* pParentControl = nullptr,
+		const std::wstring& text = std::wstring());
 	virtual ~CTextBox();
 private:
 	void InitTSF();

@@ -277,9 +277,25 @@ private:
 
 public:
 
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
-		CTabControl,
-		ItemsSource,
-		SelectedIndex);
+	//NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
+	//	CTabControl,
+	//	ItemsSource,
+	//	SelectedIndex);
+	friend void to_json(json& j, const CTabControl& o)
+	{
+		to_json(j, static_cast<const CD2DWControl&>(o));
+
+		j["ItemsSource"] = o.ItemsSource;
+		j["SelectedIndex"] = o.SelectedIndex;
+	}
+
+	friend void from_json(const json& j, CTabControl& o)
+	{
+		from_json(j, static_cast<CD2DWControl&>(o));
+
+		get_to(j, "ItemsSource", o.ItemsSource);
+		get_to(j, "SelectedIndex", o.SelectedIndex);
+	}
+
 };
 

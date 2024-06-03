@@ -36,13 +36,14 @@
 #include "Timer.h"
 
 class CFilerGridView;
-class CLauncherGridView;
-struct FilerGridViewProperty;
+#include "LauncherGridView.h"
 class CShellFolder;
 class CPerformance;
-class CVerticalSplitContainer;
-class CHorizontalSplitContainer;
-class CDockPanel;
+
+#include "SplitContainer.h"
+#include "ColoredTextBox.h"
+#include "StatusBar.h"
+#include "PreviewButton.h"
 //struct PdfViewProperty;
 
 
@@ -100,7 +101,7 @@ private:
 
 	bool m_isSizing = false;
 	CPoint m_ptBeginClient;
-	bool m_isPreview = false;
+	//bool m_isPreview = false;
 
 	//Common properties
 	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
@@ -109,7 +110,7 @@ private:
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
 
 	//Controls
-	std::shared_ptr<CDockPanel> m_spDock;
+	//std::shared_ptr<CDockPanel> spDock;
 	//std::shared_ptr<CLauncherGridView> m_spLauncher;
 	//std::shared_ptr<CToolBar> m_spToolBar;
 	//std::shared_ptr<CStatusBar> m_spStatusBar;
@@ -141,6 +142,7 @@ public:
 	reactive_wstring_ptr ThreadPoolLog;
 	reactive_vector_ptr<CFavorite> Favorites;
 	reactive_vector_ptr<CLauncher> Launchers;
+	reactive_property_ptr<bool> IsPreview;
 
 
 	virtual void Measure(const CSizeF& availableSize) override;
@@ -247,40 +249,48 @@ public:
 	//}
 
 private:
-	std::shared_ptr<CFilerTabGridView> CreateFilerTab(const std::shared_ptr<CD2DWControl>& parent, const std::shared_ptr<CStatusBar>& status);
+	void SetUpFilerView(const std::shared_ptr<CFilerView>& view, const std::shared_ptr<CStatusBar>& status);
 
 	friend void to_json(json& j, const CFilerWnd& o) 
 	{
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CToolBar);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CLauncherGridView);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CStatusBar);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CDockPanel);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CVerticalSplitter);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CHorizontalSplitter);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CFilerTabGridView);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CColoredTextBox);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CPreviewButton);
+
 		j = json{
 			{"Rectangle", o.Rectangle},
 			{"ApplicationProperty", o.m_spApplicationProp },
 			{"LauncherProperty", o.m_spLauncherProp },
 			{"FavoritesProperty", o.m_spFavoritesProp },
 			{"ExeExtensionProperty", o.m_spExeExProp },
-			//{"LeftView", o.m_spLeftView },
-			//{"RightView", o.m_spRightView },
-			//{"HorizontalSplitter", o.m_spHSplitter},
-			//{"VerticalSplitter", o.m_spVSplitter}
-	#ifdef USE_PYTHON_EXTENSION
-			{ "PythonExtensionProperty", m_spPyExProp }
-	#endif
+			{"Children", o.m_childControls}
 		};
 	}
 
 	friend void from_json(const json& j, CFilerWnd& o)
 	{
-			get_to(j, "Rectangle", o.Rectangle);
-			get_to(j, "ApplicationProperty", o.m_spApplicationProp);
-			get_to(j, "LauncherProperty", o.m_spLauncherProp);
-			get_to(j, "FavoritesProperty", o.m_spFavoritesProp);
-			get_to(j, "ExeExtensionProperty", o.m_spExeExProp);
-			//get_to(j, "LeftView", o.m_spLeftView);
-			//get_to(j, "RightView", o.m_spRightView);
-			//get_to(j, "HorizontalSplitter", o.m_spHSplitter);
-			//get_to(j, "VerticalSplitter", o.m_spVSplitter);
-	#ifdef USE_PYTHON_EXTENSION
-			get_to(j, "PythonExtensionProperty", m_spPyExProp);
-	#endif
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CToolBar);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CLauncherGridView);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CStatusBar);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CDockPanel);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CVerticalSplitter);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CHorizontalSplitter);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CFilerTabGridView);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CColoredTextBox);
+		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CPreviewButton);
+
+		get_to(j, "Rectangle", o.Rectangle);
+		get_to(j, "ApplicationProperty", o.m_spApplicationProp);
+		get_to(j, "LauncherProperty", o.m_spLauncherProp);
+		get_to(j, "FavoritesProperty", o.m_spFavoritesProp);
+		get_to(j, "ExeExtensionProperty", o.m_spExeExProp);
+		get_to(j, "Children", o.m_childControls);
 	}
 };
 

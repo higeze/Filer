@@ -5,7 +5,7 @@
 /* CSplitter */
 /*************/
 CSplitter::CSplitter(CD2DWControl* pParentControl)
-	:CD2DWControl(pParentControl), Minimum(-1.f), Maximum(-1.f), Value(-1.f){}
+	:CD2DWControl(pParentControl), Minimum(-1.f), Maximum(-1.f), Value(FLT_MAX){}
 
 void CSplitter::OnCreate(const CreateEvt& e)
 {

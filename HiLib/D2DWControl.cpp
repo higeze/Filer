@@ -19,7 +19,7 @@ void CD2DWControl::AddChildControlPtr(const std::shared_ptr<CD2DWControl>& pCont
 		m_childControls.push_back(pControl);
 		//m_pFocusedControl = pControl;
 	} else {
-		throw std::exception(FILE_LINE_FUNC);
+		//throw std::exception(FILE_LINE_FUNC);
 	}
 }
 
@@ -73,7 +73,7 @@ void CD2DWControl::OnClose(const CloseEvent& e)
 
 void CD2DWControl::OnDestroy(const DestroyEvent& e)
 {
-	GetParentControlPtr()->EraseChildControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+	//GetParentControlPtr()->EraseChildControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
 }
 
 void CD2DWControl::OnEnable(const EnableEvent& e) 

@@ -515,6 +515,7 @@
     <ClInclude Include="FolderHistory.h" />
     <ClInclude Include="ImageTabData.h" />
     <ClInclude Include="PDFTabData.h" />
+    <ClInclude Include="PreviewButton.h" />
     <ClInclude Include="PreviewTabData.h" />
     <ClInclude Include="TabTemplate.h" />
     <ClInclude Include="TaskCheckBoxCell.h" />

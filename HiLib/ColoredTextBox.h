@@ -74,10 +74,34 @@ protected:
 	std::vector<ExecutableInfo> m_executableInfos;
 
 public:
-	using CTextBox::CTextBox;
+	CColoredTextBox()
+		: CTextBox(){}
+
+	CColoredTextBox(
+		CD2DWControl* pParentControl,
+		const std::wstring& text):
+		CTextBox(pParentControl, text){}
+	CColoredTextBox(
+		CD2DWControl* pParentControl,
+		std::unique_ptr<CVScroll>&& pVScroll,
+		std::unique_ptr<CHScroll>&& pHScroll,
+		const std::wstring& text)
+		:CTextBox(m_pParentControl, 
+		std::forward<std::unique_ptr<CVScroll>>(pVScroll),
+		std::forward<std::unique_ptr<CHScroll>>(pHScroll), text){}
 	virtual ~CColoredTextBox() = default;
 
 	void LoadTextLayoutPtr() override;
 	void Normal_LButtonDown(const LButtonDownEvent& e) override;
 	void Normal_SetCursor(const SetCursorEvent& e) override;
+
+	friend void to_json(json& j, const CColoredTextBox& o)
+	{
+		to_json(j, static_cast<const CD2DWControl&>(o));
+	}
+
+	friend void from_json(const json& j, CColoredTextBox& o)
+	{
+		from_json(j, static_cast<CD2DWControl&>(o));
+	}
 };

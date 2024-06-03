@@ -13,13 +13,15 @@ enum class DockEnum
 	Right,
 	Bottom,
 	Fill,
-	Vertical,
-	Horizontal,
-	LeftFix,
-	TopFix,
-	RightFix,
-	BottomFix,
+	//Vertical,
+	//Horizontal,
+	//LeftFix,
+	//TopFix,
+	//RightFix,
+	//BottomFix,
 };
+
+
 
 class CD2DWControl: public virtual CUIElement
 {
@@ -145,7 +147,6 @@ public:
 
 	CRectF CalcCenterRectF(const CSizeF& size) const;
 
-
 	/*************/
 	/* templates */
 	/*************/
@@ -167,6 +168,33 @@ public:
 		}
 	}
 
+	friend void to_json(json& j, const CD2DWControl& o) 
+	{
+		j = json{
+			{"Dock", o.Dock}
+		};
+	}
+
+	friend void from_json(const json& j, CD2DWControl& o)
+	{
+		get_to(j, "Dock", o.Dock);
+	}
+
+	template<typename T>
+	std::vector<std::shared_ptr<T>> FindChildren(const std::shared_ptr<CD2DWControl>& that)
+	{
+		std::vector<std::shared_ptr<T>> ret;
+
+		for (auto& child : that->m_childControls) {
+			if (auto p = std::dynamic_pointer_cast<T>(child)) {
+				ret.push_back(p);
+			}
+			std::vector<std::shared_ptr<T>> child_ret = FindChildren<T>(child);
+			std::copy(child_ret.cbegin(), child_ret.cend(), std::back_inserter(ret));
+		}
+
+		return ret;
+	}
 
 
 	//template<typename TFunc, typename TEvent>

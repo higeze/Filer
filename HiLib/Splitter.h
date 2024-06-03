@@ -38,10 +38,19 @@ public:
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;
 
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(CSplitter,
-		Maximum,
-		Minimum,
-		Value)
+	friend void to_json(json& j, const CSplitter& o)
+	{
+		to_json(j, static_cast<const CD2DWControl&>(o));
+
+		j["Value"] = o.Value;
+	}
+
+	friend void from_json(const json& j, CSplitter& o)
+	{
+		from_json(j, static_cast<CD2DWControl&>(o));
+
+		get_to(j, "Value", o.Value);
+	}
 	
 };
 
@@ -55,7 +64,7 @@ public:
 	virtual void Measure(const CSizeF& availableSize) override
 	{
 		m_size.width = Width;
-		m_size.height = availableSize.height;
+		//m_size.height = availableSize.height;
 	}
 
 	virtual void Arrange(const CRectF& rc) override
@@ -77,7 +86,7 @@ public:
 	//MeasureArrange
 	virtual void Measure(const CSizeF& availableSize) override
 	{
-		m_size.width = availableSize.width;
+		//m_size.width = availableSize.width;
 		m_size.height = Width;
 	}
 

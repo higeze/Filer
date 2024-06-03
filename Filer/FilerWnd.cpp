@@ -46,6 +46,8 @@
 #include "SplitContainer.h"
 #include "ShellContextMenu.h"
 
+#include "PreviewButton.h"
+
 
 std::vector<std::wstring> CFilerWnd::imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff" };
 std::vector<std::wstring> CFilerWnd::previewExts = {L".docx", L".doc", L".xlsx", L".xls", L".ppt", L".pptx"};
@@ -56,12 +58,13 @@ CFilerWnd::CFilerWnd()
 	//m_reloadIosv(), m_reloadWork(m_reloadIosv), m_reloadTimer(m_reloadIosv),
 	Dummy(std::make_shared<int>(1)),
 	Rectangle(0, 0, 1000, 600), 
+	IsPreview(false),
 	m_pPerformance(std::make_unique<CPerformance>()),
 	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
 	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
 	m_spLauncherProp(std::make_shared<CLauncherProperty>()),
-	m_spExeExProp(std::make_shared<ExeExtensionProperty>()),
-	m_spDock(std::make_shared<CDockPanel>(this))
+	m_spExeExProp(std::make_shared<ExeExtensionProperty>())
+	//spDock(std::make_shared<CDockPanel>(this))
 	//m_spLauncher(std::make_shared<CLauncherGridView>(this, m_spLauncherProp)),
 	//m_spToolBar(std::make_shared<CToolBar>(this)),
 	//m_spHorizontalSplit(std::make_shared<CHorizontalSplitContainer>(this)),
@@ -132,7 +135,7 @@ void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, 
 	subject->GetFilerViewPtr()->GetFileGridPtr()->SelectedItem.subscribe([this, wp = std::weak_ptr(observer)](const std::shared_ptr<CShellFile>& spFile) {
 
 		if (auto observer = wp.lock()) {
-			if (!m_isPreview) return;
+			if (!*IsPreview) return;
 
 			std::shared_ptr<TabData> spObsData = observer->ItemsSource.get_unconst()->at(*observer->SelectedIndex);
 
@@ -171,34 +174,41 @@ void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, 
 	}, Dummy);
 }
 
-std::shared_ptr<CFilerTabGridView> CFilerWnd::CreateFilerTab(const std::shared_ptr<CD2DWControl>& parent, const std::shared_ptr<CStatusBar>& status)
+void CFilerWnd::SetUpFilerView(const std::shared_ptr<CFilerView>& view, const std::shared_ptr<CStatusBar>& status)
 {
-	auto spTab = std::make_shared<CFilerTabGridView>(parent.get());
-	Favorites.binding(spTab->GetFilerViewPtr()->GetFavoriteGridPtr()->ItemsSource);
-	spTab->GetFilerViewPtr()->GetFileGridPtr()->StatusLog.subscribe(
+	Favorites.binding(view->GetFavoriteGridPtr()->ItemsSource);
+	view->GetFileGridPtr()->StatusLog.subscribe(
 		[this, status](auto notify) {
 		status->Text.set(notify.all_items);
 		InvalidateRect(NULL, FALSE);
 	}, shared_from_this());
 
-	spTab->SetIsTabStop(true);
+	view->SetIsTabStop(true);
 
-	spTab->GetFilerViewPtr()->GetFileGridPtr()->GetFolderContextMenu().Add(
+	view->GetFileGridPtr()->GetFileContextMenu().Add(
 		std::make_unique<CMenuSeparator2>(),
-		std::make_unique<CMenuItem2>(L"Add to Favorite", [this, spTab]()->void {
-		auto files = spTab->GetFilerViewPtr()->GetFileGridPtr()->GetSelectedFiles();
-		for (auto& file : files) {
-			Favorites.push_back(CFavorite(file->GetPath(), L""));//TODOTODO
-		}}),
-		std::make_unique<CMenuItem2>(L"Add to Launcher", [this, spTab]()->void {
-			auto files = spTab->GetFilerViewPtr()->GetFileGridPtr()->GetSelectedFiles();
+		std::make_unique<CMenuItem2>(L"Add to Favorite", [this, view]()->void {
+			auto files = view->GetFileGridPtr()->GetSelectedFiles();
+			for (auto& file : files) {
+					Favorites.push_back(CFavorite(file->GetPath(), L""));//TODOTODO
+				}
+			}),
+		std::make_unique<CMenuItem2>(L"Add to Launcher", [this, view]()->void {
+			auto files = view->GetFileGridPtr()->GetSelectedFiles();
 			for (auto& file : files) {
 				Launchers.push_back(CLauncher(file->GetPath(), L""));//TODOTODO
 			}
 		})
 	);
-	return spTab;
 
+	view->GetFileGridPtr()->GetFolderContextMenu().Add(
+		std::make_unique<CMenuSeparator2>(),
+		std::make_unique<CMenuItem2>(L"Add to Favorite", [this, view]()->void {
+			auto files = view->GetFileGridPtr()->GetSelectedFiles();
+			for (auto& file : files) {
+				Favorites.push_back(CFavorite(file->GetPath(), L""));//TODOTODO
+			}
+		}));
 }
 
 void CFilerWnd::OnCreate(const CreateEvt& e)
@@ -215,75 +225,119 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	//Network Messanger
 	m_pNetworkMessanger = std::make_unique<CNetworkMessanger>(m_hWnd);
 
-	//Control Set up
-	/*******/
-	/* Top */
-	/*******/
-	auto spTopDock = std::make_shared<CDockPanel>(m_spDock.get());
-	spTopDock->Dock.set(DockEnum::TopFix);
-	//Launcher
-	auto spLauncher = std::make_shared<CLauncherGridView>(spTopDock.get());
-	spLauncher->Dock.set(DockEnum::Fill);
-	//Tool bar
-	auto spToolBar = std::make_shared<CToolBar>(spTopDock.get());
-	spToolBar->Dock.set(DockEnum::Right);
-	auto spBtn = std::make_shared<CButton>(spToolBar.get());
-	spBtn->Content.set(m_isPreview?L"Prv":L"Nrm");
-	spBtn->Command.subscribe([this, spBtn]() {
-		m_isPreview = !m_isPreview;
-		spBtn->Content.set(m_isPreview ? L"Prv" : L"Nrm");
-	}, shared_from_this());
-	spBtn->OnCreate(CreateEvt(this, spToolBar.get(), CRectF()));
+	/************/
+	/* Children */
+	/************/
+	if (m_childControls.empty()) {
+		/*******/
+		/* All */
+		/*******/
+		auto spDock = std::make_shared<CDockPanel>(this);
+		using pr = std::pair<std::shared_ptr<CD2DWControl>, DockEnum>;
 
-	spTopDock->Add(spToolBar, spLauncher);
+		/*******/
+		/* Top */
+		/*******/
+		auto spTopDock = std::make_shared<CDockPanel>(spDock.get());
+		//Launcher
+		auto spLauncher = std::make_shared<CLauncherGridView>(spTopDock.get());
+		//Tool bar
+		auto spToolBar = std::make_shared<CToolBar>(spTopDock.get());
+		auto spBtn = std::make_shared<CPreviewButton>(spToolBar.get());
+		spToolBar->Add(spBtn);
 
-	/**********/
-	/* Bottom */
-	/**********/
-	//Status bar
-	auto spBottomStatus = std::make_shared<CStatusBar>(m_spDock.get());
-	spBottomStatus->Dock.set(DockEnum::BottomFix);
+		spTopDock->Add(
+			pr(spToolBar, DockEnum::Right),
+			pr(std::make_shared<CVerticalSplitter>(), DockEnum::Right),
+			pr(spLauncher, DockEnum::Fill));
 
-	/********/
-	/* Fill */
-	/********/
-	//Horizontal
-	auto spFillDock = std::make_shared<CDockPanel>(m_spDock.get());
-	spFillDock->Dock.set(DockEnum::Fill);
+		/**********/
+		/* Bottom */
+		/**********/
+		//Status bar
+		auto spBottomStatus = std::make_shared<CStatusBar>(spDock.get());
 
-	//Horizontal Top
-	auto spFillTopDock = std::make_shared<CDockPanel>(spFillDock.get());
-	spFillTopDock->Dock.set(DockEnum::Fill);
+		/********/
+		/* Fill */
+		/********/
+		//Horizontal
+		auto spFillDock = std::make_shared<CDockPanel>(spDock.get());
 
-	auto spLeftTop = CreateFilerTab(spFillTopDock, spBottomStatus);
-	spLeftTop->Dock.set(DockEnum::Fill);
+		//Horizontal Top
+		auto spFillTopDock = std::make_shared<CDockPanel>(spFillDock.get());
 
-	auto spRightTop = CreateFilerTab(spFillTopDock, spBottomStatus);
-	spRightTop->Dock.set(DockEnum::Right);
+		auto spLeftTop = std::make_shared<CFilerTabGridView>(spFillTopDock.get());
+		auto spRightTop = std::make_shared<CFilerTabGridView>(spFillTopDock.get());
 
-	spLeftTop->SetOther(spRightTop);
-	spRightTop->SetOther(spLeftTop);
-	spFillTopDock->Add(spRightTop, spLeftTop);
+		spLeftTop->SetOther(spRightTop);//TODOTODO
+		spRightTop->SetOther(spLeftTop);//TODOTODO
+		spFillTopDock->Add(
+			pr(spRightTop, DockEnum::Right),
+			pr(std::make_shared<CVerticalSplitter>(), DockEnum::Right),
+			pr(spLeftTop, DockEnum::Fill));
 
-	//Horizontal Bottom
-	auto spFillBottomDock = std::make_shared<CDockPanel>(spFillDock.get());
-	spFillBottomDock->Dock.set(DockEnum::Bottom);
+		//Horizontal Bottom
+		auto spFillBottomDock = std::make_shared<CDockPanel>(spFillDock.get());
 
-	auto spTextBoxLeft = std::make_shared<CColoredTextBox>(spFillBottomDock.get(), L"");
-	PerformanceLog.binding(spTextBoxLeft->Text);
-	spTextBoxLeft->Dock.set(DockEnum::Fill);
+		//TODOTODO Move to Tab
+		//auto spTextBoxLeft = std::make_shared<CColoredTextBox>(spFillBottomDock.get(), L"");
+		//PerformanceLog.binding(spTextBoxLeft->Text);
+		//auto spTextBoxRight = std::make_shared<CColoredTextBox>(spFillBottomDock.get(), L"");
+		//ThreadPoolLog.binding(spTextBoxRight->Text);
+		//spFillBottomDock->Add(
+		//	pr(spTextBoxRight, DockEnum::Right),
+		//	pr(std::make_shared<CVerticalSplitter>(), DockEnum::Right),
+		//	pr(spTextBoxLeft, DockEnum::Fill));
 
-	auto spTextBoxRight = std::make_shared<CColoredTextBox>(spFillBottomDock.get(), L"");
-	ThreadPoolLog.binding(spTextBoxRight->Text);
-	spTextBoxRight->Dock.set(DockEnum::Right);
+		auto spLeftBottom = std::make_shared<CFilerTabGridView>(spFillBottomDock.get());
+		auto spRightBottom = std::make_shared<CFilerTabGridView>(spFillBottomDock.get());
 
-	spFillBottomDock->Add(spTextBoxRight, spTextBoxLeft);
+		spLeftBottom->SetOther(spRightBottom);//TODOTODO
+		spRightBottom->SetOther(spLeftBottom);//TODOTODO
 
-	spFillDock->Add(spFillBottomDock, spFillTopDock);
+		spFillBottomDock->Add(
+			pr(spRightBottom, DockEnum::Right),
+			pr(std::make_shared<CVerticalSplitter>(), DockEnum::Right),
+			pr(spLeftBottom, DockEnum::Fill));
 
-	m_spDock->Add(spTopDock, spBottomStatus, spFillDock);
 
-	m_spDock->OnCreate(CreateEvt(this, this, CRectF()));
+		spFillDock->Add(
+			pr(spFillBottomDock, DockEnum::Bottom),
+			pr(std::make_shared<CHorizontalSplitter>(), DockEnum::Bottom),
+			pr(spFillTopDock, DockEnum::Fill));
+
+		spDock->Add(
+			pr(spTopDock, DockEnum::Top),
+			pr(spBottomStatus, DockEnum::Bottom),
+			pr(spFillDock, DockEnum::Fill));
+
+		spDock->OnCreate(CreateEvt(this, this, CRectF()));
+	} else {
+		for (auto& child : m_childControls) {
+			child->OnCreate(CreateEvt(this, this, CRectF()));
+		}
+	}
+
+	//Launcher Binding
+	std::vector<std::shared_ptr<CLauncherGridView>> launchers = FindChildren<CLauncherGridView>(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+	for (auto& child : launchers) {
+		Launchers.binding(child->ItemsSource);
+	}
+
+	//Preview Binding
+	std::vector<std::shared_ptr<CPreviewButton>> prvBtns = FindChildren<CPreviewButton>(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+	for (auto& child : prvBtns) {
+		IsPreview.binding(child->IsPreview);
+	}
+	
+	//StatusBar
+	std::vector<std::shared_ptr<CStatusBar>> statuses = FindChildren<CStatusBar>(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+	
+	//FilerView SetUp (Binding, etc)
+	std::vector<std::shared_ptr<CFilerView>> views = FindChildren<CFilerView>(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+	for (auto& child : views) {
+		SetUpFilerView(child, statuses[0]);
+	}
 
 	//MeasureArrange
 	CRect rcClient = GetClientRect();
@@ -305,7 +359,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		GetDispatcherPtr()->PostInvoke(updateLog);
 	}, std::chrono::milliseconds(3000));
 
-	SetFocusToControl(spTopDock);
+	SetFocusToControl(m_childControls[0]);
 }
 
 void CFilerWnd::OnKeyDown(const KeyDownEvent& e)
@@ -359,12 +413,16 @@ void CFilerWnd::OnMouseMove(const MouseMoveEvent& e)
 
 void CFilerWnd::Measure(const CSizeF& availableSize) 
 {
-	m_spDock->Measure(availableSize);
+	for (auto child : m_childControls) {
+		child->Measure(availableSize);
+	}
 }
 
 void CFilerWnd::Arrange(const CRectF& rc)
 {
-	m_spDock->Arrange(rc);
+	for (auto child : m_childControls) {
+		child->Arrange(rc);
+	}
 }
 
 void CFilerWnd::OnRect(const RectEvent& e)
