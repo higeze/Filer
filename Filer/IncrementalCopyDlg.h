@@ -45,7 +45,7 @@ public:
 	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> GetRects();
 	std::shared_ptr<CProgressBar>& GetProgressBarPtr() { return m_spProgressbar; }
 
-	//virtual void OnCreate(const CreateEvt& e);
+	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnRect(const RectEvent& e);
 	virtual void OnIncrementMax();
 	virtual void OnIncrementValue();

@@ -59,7 +59,7 @@ public:
 
 	virtual void OnPaint(const PaintEvent& e);
 
-	//virtual void OnCreate(const CreateEvt& e)override;
+	virtual void OnCreate(const CreateEvt& e)override;
 	virtual void OnSetFocus(const SetFocusEvent& e) override;
 	virtual void OnKillFocus(const KillFocusEvent& e) override;
 };

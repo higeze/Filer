@@ -36,16 +36,16 @@ CFavoritesGridView::CFavoritesGridView(CD2DWControl* pParentControl)
 	CellLButtonDblClk.connect(std::bind(&CFavoritesGridView::OnCellLButtonDblClk,this,std::placeholders::_1));
 }
 
-//void CFavoritesGridView::OnCreate(const CreateEvt& e)
-//{
-//	//Base Create
-//	CBindGridView::OnCreate(e);
-//
-//	//List
-//	OpenFavorites();
-//
-//	SubmitUpdate();
-//}
+void CFavoritesGridView::OnCreate(const CreateEvt& e)
+{
+	//Base Create
+	CBindGridView::OnCreate(e);
+
+	//List
+	OpenFavorites();
+
+	SubmitUpdate();
+}
 
 void CFavoritesGridView::OnKeyDown(const KeyDownEvent& e)
 {

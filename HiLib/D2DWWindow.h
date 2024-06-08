@@ -180,11 +180,7 @@ public :
 	void ReleaseCapturedControlPtr() { m_pCapturedControl = nullptr; }
 
 	std::shared_ptr<CD2DWControl>& GetToolTipControlPtr() { return m_pToolTip; }
-	void SetToolTipControlPtr(const std::shared_ptr<CD2DWControl>& spControl)
-	{
-		spControl->m_pParentControl = this;
-		m_pToolTip = spControl;
-	}
+	void SetToolTipControlPtr(const std::shared_ptr<CD2DWControl>& spControl) {m_pToolTip = spControl; }
 	CDeadlineTimer& GetToolTipDeadlineTimer() { return m_toolTipDeadlineTimer; }
 
 	//template<class _Control>
@@ -393,7 +389,7 @@ public:
 	/* Control Msg */
 	/***************/
 	//Create & Destroy
-	virtual void OnCreate(const CreateEvt& e) {}// override { ProcessMessageToAllReverse(&CD2DWControl::OnCreate, e); }
+	virtual void OnCreate(const CreateEvt& e) override { ProcessMessageToAllReverse(&CD2DWControl::OnCreate, e); }
 	virtual void OnDestroy(const DestroyEvent& e) override { ProcessMessageToAllReverse(&CD2DWControl::OnDestroy, e); }
 	//virtual void OnRect(const RectEvent& e)
 	virtual void OnPaint(const PaintEvent& e) override;/* { ProcessMessageToAll(&CD2DWControl::OnPaint, e); }*/
@@ -465,17 +461,15 @@ public:
 			.lpszWindowName(_T("D2DWSingleConrrolWindow"))
 			.dwStyle(WS_OVERLAPPEDWINDOW | WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE)
 			.dwExStyle(WS_EX_ACCEPTFILES)
-			.hMenu(nullptr);
-		AddChildControlPtr(m_spChildControl);
-		Arrange(GetRectInWnd());
+			.hMenu(nullptr);	
 	}
 
 	std::shared_ptr<TControl> GetChildControlPtr()const { return m_spChildControl; }
 
-	//virtual void OnCreate(const CreateEvt& e) override
-	//{
-	//	m_spChildControl->OnCreate(CreateEvt(this, this, GetRectInWnd()));
-	//}
+	virtual void OnCreate(const CreateEvt& e) override
+	{
+		m_spChildControl->OnCreate(CreateEvt(this, this, GetRectInWnd()));
+	}
 
 	virtual void OnClose(const CloseEvent& e) override
 	{

@@ -29,7 +29,7 @@ public:
 	CD2DWDialog(CD2DWControl* pParentControl = nullptr);
 	virtual ~CD2DWDialog();
 
-	//virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnClose(const CloseEvent& e) override;
 	virtual void OnRect(const RectEvent& e) override;

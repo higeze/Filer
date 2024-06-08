@@ -102,16 +102,6 @@ CCalendarDialog::CCalendarDialog(CD2DWControl* pParentControl)
 		OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
 	}, m_spCalendar);
 
-	AddChildControlPtr(m_spYearTextBox);
-	AddChildControlPtr(m_spMonthTextBox);
-	AddChildControlPtr(m_spButtonPrev);
-	AddChildControlPtr(m_spButtonNext);
-	AddChildControlPtr(m_spButtonToday);
-	AddChildControlPtr(m_spButtonTomorrow);
-	AddChildControlPtr(m_spButtonBlank);
-	AddChildControlPtr(m_spButtonClose);
-	AddChildControlPtr(m_spCalendar);
-	m_spButtonClose->IsEnabled.set(true);
 }
 
 CCalendarDialog::~CCalendarDialog() = default;
@@ -186,31 +176,33 @@ void CCalendarDialog::Arrange(const CRectF& rc)
 //	return { rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose };
 //}
 
-//
-//void CCalendarDialog::OnCreate(const CreateEvt& e)
-//{
-//	//Dlg
-//	CD2DWDialog::OnCreate(e);
-//	//Size
-//	//auto [rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose] = GetRects();
-//	m_spYearTextBox->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-//	m_spMonthTextBox->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-//	m_spButtonPrev->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-//	m_spButtonNext->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-//	m_spButtonToday->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-//	m_spButtonTomorrow->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-//	m_spButtonBlank->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-//	m_spButtonClose->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-//	m_spCalendar->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-//
-//
-//	Arrange(GetRectInWnd());
-//
-//	m_spButtonClose->IsEnabled.set(true);
-//}
+
+void CCalendarDialog::OnCreate(const CreateEvt& e)
+{
+	//Dlg
+	CD2DWDialog::OnCreate(e);
+	//Size
+	//auto [rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose] = GetRects();
+	m_spYearTextBox->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spMonthTextBox->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spButtonPrev->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spButtonNext->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spButtonToday->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spButtonTomorrow->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spButtonBlank->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spButtonClose->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_spCalendar->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+
+
+	Arrange(GetRectInWnd());
+
+	m_spButtonClose->IsEnabled.set(true);
+}
 
 void CCalendarDialog::OnRect(const RectEvent& e)
 {
+	CD2DWDialog::OnRect(e);
+
 	Arrange(e.Rect);
 }
 

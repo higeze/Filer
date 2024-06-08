@@ -12,7 +12,7 @@ public:
 	
 	virtual ~CLauncherGridView(void) = default;
 	
-	//virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnCreate(const CreateEvt& e) override;
 	
 	//void OnCellLButtonDblClk(const CellEventArgs& e);
 	void OpenFavorites();

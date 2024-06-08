@@ -1038,10 +1038,6 @@
     <ClInclude Include="..\HiLib\notify_property_changed.h">
       <Filter>HiLib\Reactive</Filter>
     </ClInclude>
-    <ClInclude Include="PreviewButton.h" />
-    <ClInclude Include="..\HiLib\DockPanel.h">
-      <Filter>HiLib</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1560,9 +1556,6 @@
     </ClCompile>
     <ClCompile Include="FileDock.cpp">
       <Filter>Filer\Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\DockPanel.cpp">
-      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

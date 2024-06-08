@@ -49,7 +49,7 @@ public:
 	/******************/
 	/* Windows Message*/
 	/******************/
-	//virtual void OnCreate(const CreateEvt& e);
+	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnRect(const RectEvent& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
 

@@ -38,7 +38,7 @@ public:
 
 	const std::shared_ptr<CCalendarControl>& GetCalendarPtr() { return m_spCalendar; }
 
-	//virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnPaint(const PaintEvent& e) override;
 	virtual void OnRect(const RectEvent& e) override;
 	virtual void OnKillFocus(const KillFocusEvent& e) override;

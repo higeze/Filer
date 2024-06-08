@@ -106,37 +106,28 @@ private:
 	}
 
 public:
-	CSimpleFileOperationDlgBase(
-		CD2DWControl* pParentControl,
-		const CIDL& srcIDL, const std::vector<CIDL>& srcChildIDLs)
-		:CFileOperationDlgBase<T>(pParentControl, srcIDL, srcChildIDLs)
-	{
-		//Create FilerControl
-		this->AddChildControlPtr(this->m_spFilerControl);
-		this->AddChildControlPtr(this->m_spButtonDo);
-		this->AddChildControlPtr(this->m_spButtonCancel);
-	}
+	using CFileOperationDlgBase<T>::CFileOperationDlgBase;
 	virtual ~CSimpleFileOperationDlgBase() = default;
 
-	//virtual void OnCreate(const CreateEvt& e) override
-	//{
-	//	//Create
-	//	CFileOperationDlgBase<T>::OnCreate(e);
-	//	//Size
-	//	auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();
-	//	
-	//	//Create FilerControl
-	//	this->m_spFilerControl->OnCreate(CreateEvt(this->GetWndPtr(), this, rcGrid));
+	virtual void OnCreate(const CreateEvt& e) override
+	{
+		//Create
+		CFileOperationDlgBase<T>::OnCreate(e);
+		//Size
+		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();
+		
+		//Create FilerControl
+		this->m_spFilerControl->OnCreate(CreateEvt(this->GetWndPtr(), this, rcGrid));
 
-	//	//OK button
-	//	this->m_spButtonDo->OnCreate(CreateEvt(this->GetWndPtr(), this, rcBtnDo));
+		//OK button
+		this->m_spButtonDo->OnCreate(CreateEvt(this->GetWndPtr(), this, rcBtnDo));
 
-	//	//Cancel button
-	//	this->m_spButtonCancel->OnCreate(CreateEvt(this->GetWndPtr(), this, rcBtnCancel));
+		//Cancel button
+		this->m_spButtonCancel->OnCreate(CreateEvt(this->GetWndPtr(), this, rcBtnCancel));
 
-	//	//Focus
-	//	this->GetWndPtr()->SetFocusToControl(this->m_spButtonDo);
-	//}
+		//Focus
+		this->GetWndPtr()->SetFocusToControl(this->m_spButtonDo);
+	}
 
 	virtual void OnRect(const RectEvent& e) override
 	{
@@ -228,7 +219,7 @@ public:
 
 	void Execute();
 
-	//virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnRect(const RectEvent& e) override;
 };
 
@@ -245,7 +236,7 @@ public:
 		const std::vector<std::shared_ptr<CShellFile>>& files);
 	virtual ~CPDFOperationDlgBase() = default;
 
-	//virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnRect(const RectEvent& e) override;
 };
 

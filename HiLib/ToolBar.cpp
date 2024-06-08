@@ -59,15 +59,15 @@ void CToolBar::Arrange(const CRectF& rc)
 	}
 }
 
-//void CToolBar::OnCreate(const CreateEvt& e)
-//{
-//	CD2DWControl::OnCreate(e);
-//
-//	CreateEvt evt = CreateEvt(GetWndPtr(), this, CRectF());
-//	for (std::shared_ptr<CD2DWControl>& pChild : m_childControls) {
-//		pChild->OnCreate(evt);
-//	}
-//}
+void CToolBar::OnCreate(const CreateEvt& e)
+{
+	CD2DWControl::OnCreate(e);
+
+	CreateEvt evt = CreateEvt(GetWndPtr(), this, CRectF());
+	for (std::shared_ptr<CD2DWControl>& pChild : m_childControls) {
+		pChild->OnCreate(evt);
+	}
+}
 
 void CToolBar::OnPaint(const PaintEvent& e)
 {

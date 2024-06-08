@@ -16,7 +16,7 @@ public:
 	CFavoritesGridView( CD2DWControl* pParentControl = nullptr);
 	virtual ~CFavoritesGridView(void) = default;
 
-	//virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
 	
 	void OnCellLButtonDblClk(const CellEventArgs& e);

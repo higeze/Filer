@@ -12,24 +12,9 @@ CTextBoxDialog::CTextBoxDialog(CD2DWControl* pParentControl)
 	m_spButtonCancel(std::make_shared<CButton>(this))
 {
 	m_spTextBox->SetHasBorder(true);
-
-	AddChildControlPtr(m_spTextBlock); 
-	AddChildControlPtr(m_spTextBox);
-	AddChildControlPtr(m_spButtonOK);
-	AddChildControlPtr(m_spButtonCancel);
 }
 CTextBoxDialog::~CTextBoxDialog() = default;
 //message, textbox, ok, cancel
-
-void CTextBoxDialog::Arrange(const CRectF& rc)
-{
-	CD2DWControl::Arrange(rc);
-	auto [rcTextBlock, rcTextBox, rcBtnOK, rcBtnCancel] = GetRects();
-	m_spTextBlock->Arrange(rcTextBlock);
-	m_spTextBox->Arrange(rcTextBox);
-	m_spButtonOK->Arrange(rcBtnOK);
-	m_spButtonCancel->Arrange(rcBtnCancel);
-}
 std::tuple<CRectF, CRectF, CRectF, CRectF> CTextBoxDialog::GetRects()
 {
 	CRectF rc = GetRectInWnd();
@@ -47,38 +32,37 @@ std::tuple<CRectF, CRectF, CRectF, CRectF> CTextBoxDialog::GetRects()
 	return { rcTextBlock, rcTextBox, rcBtnOK, rcBtnCancel };
 }
 
-//void CTextBoxDialog::OnCreate(const CreateEvt& e)
-//{
-//	//Base
-//	CD2DWDialog::OnCreate(e);
-//	
-//	//Size
-//	auto [rcTextBlock, rcTextBox, rcBtnOK, rcBtnCancel] = GetRects();
-//
-//	//Textbox
-//	m_spTextBlock->OnCreate(CreateEvt(GetWndPtr(), this, rcTextBlock));
-//
-//	//Textbox
-//	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, rcTextBox));
-//
-//	//OK button
-//	m_spButtonOK->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnOK));
-//
-//	//Cancel button
-//	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
-//
-//	//Focus
-//	GetWndPtr()->SetFocusToControl(m_spButtonOK);
-//}
+void CTextBoxDialog::OnCreate(const CreateEvt& e)
+{
+	//Base
+	CD2DWDialog::OnCreate(e);
+	
+	//Size
+	auto [rcTextBlock, rcTextBox, rcBtnOK, rcBtnCancel] = GetRects();
+
+	//Textbox
+	m_spTextBlock->OnCreate(CreateEvt(GetWndPtr(), this, rcTextBlock));
+
+	//Textbox
+	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, rcTextBox));
+
+	//OK button
+	m_spButtonOK->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnOK));
+
+	//Cancel button
+	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
+
+	//Focus
+	GetWndPtr()->SetFocusToControl(m_spButtonOK);
+}
 
 void CTextBoxDialog::OnRect(const RectEvent& e)
 {
-	Arrange(e.Rect);
-	//CD2DWControl::OnRect(e);
+	CD2DWControl::OnRect(e);
 
-	//auto [rcMessage, rcText, rcBtnOK, rcBtnCancel] = GetRects();
-	//m_spTextBlock->OnRect(RectEvent(GetWndPtr(), rcMessage));
-	//m_spTextBox->OnRect(RectEvent(GetWndPtr(), rcText));
-	//m_spButtonOK->OnRect(RectEvent(GetWndPtr(), rcBtnOK));
-	//m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
+	auto [rcMessage, rcText, rcBtnOK, rcBtnCancel] = GetRects();
+	m_spTextBlock->OnRect(RectEvent(GetWndPtr(), rcMessage));
+	m_spTextBox->OnRect(RectEvent(GetWndPtr(), rcText));
+	m_spButtonOK->OnRect(RectEvent(GetWndPtr(), rcBtnOK));
+	m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
 }

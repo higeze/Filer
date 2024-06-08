@@ -104,14 +104,13 @@ public:
 	int GetIndex() const { return m_index; }
 	void SetIndex(const int index) { m_index = index; }
 	bool GetIsSelected()const;
-	std::shared_ptr<CButton>& GetCloseButtonPtr() { return m_spButton; }
 
 	std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> MeasureSizes();
 	std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> GetSizes();
 	virtual CSizeF GetSize();
 	std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects();
 
-	//virtual void OnCreate(const CreateEvt& e);
+	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnRect(const RectEvent& e);
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
@@ -149,7 +148,7 @@ public:
 	virtual CSizeF GetSize();
 	std::tuple<CRectF, CRectF> GetRects();
 
-	//virtual void OnCreate(const CreateEvt& e);
+	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnRect(const RectEvent& e);
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
@@ -205,7 +204,7 @@ public:
 	/* UI MessageÅ@*/
 	/***************/
 
-	//virtual void OnCreate(const CreateEvt& e);
+	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnClosing(const ClosingEvent& e);
 	virtual void OnRect(const RectEvent& e);

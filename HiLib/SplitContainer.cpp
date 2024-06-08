@@ -2,14 +2,313 @@
 #include "Splitter.h"
 #include "D2DWWindow.h"
 
+/**************/
+/* CDockPanel */
+/**************/
+void CDockPanel::OnCreate(const CreateEvt& e)
+{
+	CD2DWControl::OnCreate(e);
+
+	CreateEvt evt = CreateEvt(GetWndPtr(), this, CRectF());
+	for (std::shared_ptr<CD2DWControl>& pChild : m_childControls) {
+		if (auto split = std::dynamic_pointer_cast<CSplitter>(pChild)) {
+			split->Value.subscribe([this](auto value) { Arrange(ArrangedRect()); }, shared_from_this());
+		}
+		pChild->OnCreate(evt);
+	}
+	//for (const auto& p : m_ctrl_split_map) {
+	//	p.first->OnCreate(evt);
+	//}
+	//for (const auto& p : m_ctrl_split_map) {
+	//	if (p.second) {
+	//		p.second->OnCreate(evt);
+	//	}
+	//}
+}
+
+void CDockPanel::Measure(const CSizeF& availableSize)
+{
+	m_size = CSizeF();
+	for (const auto& child : m_childControls) {
+		child->Measure(availableSize);
+		switch (*child->Dock) {
+			case DockEnum::Left:
+			case DockEnum::Right:
+			{
+				m_size.width += child->DesiredSize().width;
+				m_size.height = (std::max)(m_size.height, child->DesiredSize().height);
+				break;
+			}
+			case DockEnum::Top:
+			case DockEnum::Bottom:
+			{
+				m_size.height += child->DesiredSize().height;
+				m_size.width = (std::max)(m_size.width, child->DesiredSize().width);
+				break;
+			}
+			case DockEnum::Fill:
+			{
+				m_size.width = (std::max)(m_size.width, child->DesiredSize().width);
+				m_size.height = (std::max)(m_size.height, child->DesiredSize().height);
+				break;
+			}
+			default:
+				THROW_FILE_LINE_FUNC;
+				break;
+		}
+	}
+}
+
+void CDockPanel::Arrange(const CRectF& rc)
+{
+	CD2DWControl::Arrange(rc);
+
+	CRectF remain = rc;
+	FLOAT width = 5;
+	std::shared_ptr<CD2DWControl> prev_child;
+	for (const auto& child : m_childControls) {
+		switch (*child->Dock) {
+			case DockEnum::Top:
+			{
+				child->Arrange(CRectF(remain.left, remain.top, remain.right, remain.top + child->DesiredSize().height));
+				remain.top = child->ArrangedRect().bottom;
+				//if (auto split = std::dynamic_pointer_cast<CHorizontalSplitter>(child); split && prev_child) {
+				//	split->Value.block();
+				//	auto minimum = remain.top;
+				//	auto maximum = remain.bottom - split->DesiredSize().height;
+				//	if (*split->Value < 0) {//Initial
+				//		split->Value.set(std::clamp(maximum - child->DesiredSize().height, minimum, maximum));
+				//	} else {
+				//		if (maximum - minimum != *split->Maximum - *split->Minimum) {
+				//			split->Value.set(std::clamp((*split->Value + (maximum - *split->Maximum)), minimum, maximum));
+				//		} 
+				//	}
+				//	split->Minimum.set(minimum);
+				//	split->Maximum.set(maximum);
+				//	split->Arrange(CRectF(remain.left, *split->Value, remain.right, *split->Value + split->DesiredSize().height));
+				//	remain.bottom = split->ArrangedRect().top;
+				//	split->Value.unblock();
+
+				//	auto prevRect = prev_child->ArrangedRect();
+				//	prevRect.top = split->ArrangedRect().bottom;
+				//	prev_child->Arrange(prevRect);
+				//}
+				break;
+			}
+			case DockEnum::Bottom:
+			{
+				if (auto split = std::dynamic_pointer_cast<CHorizontalSplitter>(child); split && prev_child) {
+					split->Value.block();
+					auto minimum = remain.top;
+					auto maximum = prev_child->ArrangedRect().bottom - split->DesiredSize().height;
+
+					if(*split->Maximum < 0 || *split->Minimum < 0){ //Initial
+						split->Minimum.set(minimum);
+						split->Maximum.set(maximum);
+					}
+
+					if (maximum - minimum == *split->Maximum - *split->Minimum){//Size Change
+						split->Value.set(std::clamp(*split->Value, minimum, maximum));
+					} else {//Normal
+						split->Value.set(std::clamp((*split->Value + (maximum - *split->Maximum)), minimum, maximum));
+					}
+					//if (*split->Value < 0) {//Initial
+					//	split->Value.set(std::clamp(maximum, minimum, maximum));
+					//} else {
+					//	if (maximum - minimum != *split->Maximum - *split->Minimum) {
+					//		split->Value.set(std::clamp((*split->Value + (maximum - *split->Maximum)), minimum, maximum));
+					//	} 
+					//}
+					split->Minimum.set(minimum);
+					split->Maximum.set(maximum);
+					split->Arrange(CRectF(remain.left, *split->Value, remain.right, *split->Value + split->DesiredSize().height));
+					remain.bottom = split->ArrangedRect().top;
+					split->Value.unblock();
+
+					auto prevRect = prev_child->ArrangedRect();
+					prevRect.top = split->ArrangedRect().bottom;
+					prev_child->Arrange(prevRect);
+				} else {
+					child->Arrange(CRectF(remain.left, remain.bottom - child->DesiredSize().height, remain.right, remain.bottom));
+					remain.bottom = child->ArrangedRect().top;
+				}
+				break;
+			}
+			case DockEnum::Left:
+			{
+				//TODOTODO
+				break;
+			}
+			case DockEnum::Right:
+			{
+				if (auto split = std::dynamic_pointer_cast<CVerticalSplitter>(child); split && prev_child) {
+
+					split->Value.block();
+					auto minimum = remain.left;
+					auto maximum = prev_child->ArrangedRect().right - split->DesiredSize().width;
+
+					if(*split->Maximum < 0 || *split->Minimum < 0){ //Initial
+						split->Minimum.set(minimum);
+						split->Maximum.set(maximum);
+					}
+
+					if (maximum - minimum == *split->Maximum - *split->Minimum){//Size Change
+						split->Value.set(std::clamp(*split->Value, minimum, maximum));
+					} else {//Normal
+						split->Value.set(std::clamp((*split->Value + (maximum - *split->Maximum)), minimum, maximum));
+					}
+
+					split->Minimum.set(minimum);
+					split->Maximum.set(maximum);
+					split->Arrange(CRectF(*split->Value, remain.top, *split->Value + split->DesiredSize().width, remain.bottom));
+					remain.right = split->ArrangedRect().left;
+					split->Value.unblock();
+
+					auto prevRect = prev_child->ArrangedRect();
+					prevRect.left = split->ArrangedRect().right;
+					prev_child->Arrange(prevRect);
+				} else {
+					child->Arrange(CRectF(remain.right - child->DesiredSize().width, remain.top, remain.right, remain.bottom));
+					remain.right = child->ArrangedRect().left;
+				}
+				break;
+			}
+			case DockEnum::Fill:
+				child->Arrange(remain);
+				break;
+			default:
+				THROW_FILE_LINE_FUNC;
+				break;
+		}
+		prev_child = child;
+	}
+}
+//{
+//	CD2DWControl::Arrange(rc);
+//
+//	CRectF remain = rc;
+//	FLOAT width = 5;
+//	for (const auto& child : m_childControls) {
+//		switch (*child->Dock) {
+//			case DockEnum::TopFix:
+//			{
+//				child->Arrange(CRectF(remain.left, remain.top, remain.right, remain.top + child->DesiredSize().height));
+//				remain.top = child->ArrangedRect().bottom;
+//				break;
+//			}
+//			case DockEnum::BottomFix:
+//			{
+//				child->Arrange(CRectF(remain.left, remain.bottom - child->DesiredSize().height, remain.right, remain.bottom));
+//				remain.bottom = child->ArrangedRect().top;
+//				break;
+//			}
+//			case DockEnum::Left:
+//			{
+//				//TODOTODO
+//				break;
+//			}
+//			case DockEnum::Top:
+//			{
+//				//TODOTODO
+//				break;
+//			}
+//			case DockEnum::Right:
+//			{
+//				auto split = m_ctrl_split_map[child];
+//				split->Value.block();
+//				auto minimum = remain.left;
+//				auto maximum = remain.right - split->DesiredSize().width;
+//				if (*split->Value < 0) {//Initial
+//					split->Value.set(std::clamp(maximum - child->DesiredSize().width, minimum, maximum));
+//				} else {
+//					if (maximum - minimum != *split->Maximum - *split->Minimum) {
+//						split->Value.set(std::clamp((*split->Value + (maximum - *split->Maximum)), minimum, maximum));
+//					} 
+//				}
+//				split->Minimum.set(minimum);
+//				split->Maximum.set(maximum);
+//				split->Arrange(CRectF(*split->Value, remain.top, *split->Value + split->DesiredSize().width, remain.bottom));
+//				child->Arrange(CRectF(split->ArrangedRect().right, remain.top, remain.right, remain.bottom));
+//				remain.right = split->ArrangedRect().left;
+//				split->Value.unblock();
+//				break;
+//			}
+//			case DockEnum::Bottom:
+//			{
+//				auto split = m_ctrl_split_map[child];
+//				split->Value.block();
+//				auto minimum = remain.top;
+//				auto maximum = remain.bottom - split->DesiredSize().height;
+//				if (*split->Value < 0) {//Initial
+//					split->Value.set(std::clamp(maximum - child->DesiredSize().height, minimum, maximum));
+//				} else {
+//					if (maximum - minimum != *split->Maximum - *split->Minimum) {
+//						split->Value.set(std::clamp((*split->Value + (maximum - *split->Maximum)), minimum, maximum));
+//					} 
+//				}
+//				split->Minimum.set(minimum);
+//				split->Maximum.set(maximum);
+//				split->Arrange(CRectF(remain.left, *split->Value, remain.right, *split->Value + split->DesiredSize().height));
+//				child->Arrange(CRectF(remain.left, split->ArrangedRect().bottom, remain.right, remain.bottom));
+//				remain.bottom = split->ArrangedRect().top;
+//				split->Value.unblock();
+//				break;
+//			}
+//			case DockEnum::Fill:
+//				child->Arrange(remain);
+//				break;
+//			case DockEnum::Vertical:
+//			case DockEnum::Horizontal:
+//				break;
+//			default:
+//				THROW_FILE_LINE_FUNC;
+//				break;
+//		}
+//	}
+//}
+
+
 /******************/
 /* SplitContainer */
 /******************/
-CSplitContainer::CSplitContainer(CD2DWControl* pParentControl)
-	:CD2DWControl(pParentControl)
+void CSplitContainer::OnCreate(const CreateEvt& e)
 {
-	m_splitter->Value.subscribe([this](auto value) { Arrange(ArrangedRect()); }, Dummy);
+	CD2DWControl::OnCreate(e);
+	m_one->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_two->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_splitter->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	m_splitter->Value.subscribe([this](auto value) { Arrange(ArrangedRect()); }, shared_from_this());
 }
+
+//void CSplitContainer::OnPaint(const PaintEvent& e)
+//{
+//	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+//
+//	m_one->OnPaint(e);
+//	m_two->OnPaint(e);
+//	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetSplitterRect());
+//
+//	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
+//}
+
+//void CSplitContainer::OnLButtonBeginDrag(const LButtonBeginDragEvent& e)
+//{
+//	if (GetSplitterRect().PtInRect(e.PointInWnd)) {
+//		e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+//		m_inDrag = true;
+//		m_ptBeginDrag = e.PointInWnd;
+//		*e.HandledPtr = true;
+//	}
+//}
+//
+//void CSplitContainer::OnLButtonEndDrag(const LButtonEndDragEvent& e)
+//{
+//	if (m_inDrag) {
+//		e.WndPtr->ReleaseCapturedControlPtr();
+//		m_inDrag = false;
+//		m_ptBeginDrag = CPointF();
+//	}
+//}
 
 /***************************/
 /* CVerticalSplitContainer */
@@ -19,6 +318,42 @@ CVerticalSplitContainer::CVerticalSplitContainer(CD2DWControl* pParentControl)
 {
 	m_splitter = std::make_shared<CVerticalSplitter>(this);
 }
+
+//void CVerticalSplitContainer::OnMouseMove(const MouseMoveEvent& e)
+//{
+//	if (m_inDrag) {
+//		auto rc = GetRectInWnd();
+//
+//		Value.set(std::clamp(*Value + (e.PointInWnd.x - m_ptBeginDrag.x), *Minimum, *Maximum));
+//		m_ptBeginDrag = e.PointInWnd;
+//
+//		Arrange(rc);
+//
+//		//auto spParent = GetParentControlPtr();
+//		//spParent->OnRect(RectEvent(spParent->GetWndPtr(), spParent->GetRectInWnd()));
+//
+//		//During drag, SetCursor is not Fired.
+//		if (GetSplitterRect().PtInRect(e.PointInWnd)) {
+//			::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
+//			(*e.HandledPtr) = TRUE;
+//		}
+//	}
+//}
+
+//void CVerticalSplitContainer::OnSetCursor(const SetCursorEvent& e)
+//{
+//	if (GetSplitterRect().PtInRect(e.PointInWnd)) {
+//		::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
+//		(*e.HandledPtr) = TRUE;
+//	}
+//}
+
+//CRectF CVerticalSplitContainer::GetSplitterRect() const
+//{
+//	CRectF rc = ArrangedRect();
+//	CRectF rcSplitter(*Value, rc.top, *Value + Width, rc.bottom);
+//	return rcSplitter;
+//}
 
 void CVerticalSplitContainer::Measure(const CSizeF& availableSize)
 {
@@ -51,6 +386,42 @@ CHorizontalSplitContainer::CHorizontalSplitContainer(CD2DWControl* pParentContro
 {
 	m_splitter = std::make_shared<CHorizontalSplitter>(this);
 }
+//
+//void CHorizontalSplitContainer::OnMouseMove(const MouseMoveEvent& e)
+//{
+//	if (m_inDrag) {
+//		auto rc = GetRectInWnd();
+//
+//		Value.set(std::clamp(*Value + (e.PointInWnd.y - m_ptBeginDrag.y), *Minimum, *Maximum));
+//		m_ptBeginDrag = e.PointInWnd;
+//
+//		Arrange(rc);
+//
+//		//auto spParent = GetParentControlPtr();
+//		//spParent->OnRect(RectEvent(spParent->GetWndPtr(), spParent->GetRectInWnd()));
+//
+//		//During drag, SetCursor is not Fired.
+//		if (GetSplitterRect().PtInRect(e.PointInWnd)) {
+//			::SetCursor(::LoadCursor(NULL, IDC_SIZENS));
+//			(*e.HandledPtr) = TRUE;
+//		}
+//	}
+//}
+//
+//void CHorizontalSplitContainer::OnSetCursor(const SetCursorEvent& e)
+//{
+//	if (GetSplitterRect().PtInRect(e.PointInWnd)) {
+//		::SetCursor(::LoadCursor(NULL, IDC_SIZENS));
+//		(*e.HandledPtr) = TRUE;
+//	}
+//}
+
+//CRectF CHorizontalSplitContainer::GetSplitterRect() const
+//{
+//	CRectF rc = ArrangedRect();
+//	CRectF rcSplitter(rc.left, *Value, rc.right, *Value + Width);
+//	return rcSplitter;
+//}
 
 void CHorizontalSplitContainer::Measure(const CSizeF& availableSize)
 {

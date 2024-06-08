@@ -43,71 +43,6 @@ CPDFEditor::CPDFEditor(CD2DWControl* pParentControl)
 	m_spFilterBox->SetIsScrollable(false); 
 	m_spPercentBlock->Text.set(L"%");
 	m_spStatusBar->IsFocusable.set(false);
-
-	AddChildControlPtr(m_spFilterBox);
-	AddChildControlPtr(m_spPageBox);
-	AddChildControlPtr(m_spTotalPageBlock);
-	AddChildControlPtr(m_spScaleBox);
-	AddChildControlPtr(m_spPercentBlock);
-	AddChildControlPtr(m_spPDFView);
-	AddChildControlPtr(m_spStatusBar);
-
-	m_spFilterBox->SetIsEnterText(true);
-	m_spScaleBox->SetIsEnterText(true);
-	m_spPageBox->SetIsEnterText(true);
-
-	m_spFilterBox->SetIsTabStop(true);
-	m_spPageBox->SetIsTabStop(true);
-	m_spScaleBox->SetIsTabStop(true);
-	m_spPDFView->SetIsTabStop(true);
-
-	//Bindings
-	m_spScaleBox->Text.set(ratio_to_percent(*m_spPDFView->Scale));
-
-	m_spPDFView->Scale.subscribe([this](const FLOAT& ratio)
-	{
-		std::wstring percent = ratio_to_percent(ratio);
-		if (percent != *m_spScaleBox->Text) {
-			m_spScaleBox->Text.set(percent);
-		}
-	}, Dummy);
-	m_spScaleBox->EnterText.subscribe([this](auto notify)
-	{
-		FLOAT ratio = percent_to_ratio(*m_spScaleBox->EnterText);
-		if (ratio != *m_spPDFView->Scale) {
-			//Validate
-			if (ratio == 0.f || m_spPDFView->GetMinScale() > ratio || m_spPDFView->GetMaxScale() < ratio) {
-				m_spScaleBox->Text.set(ratio_to_percent(*m_spPDFView->Scale));
-			} else {
-				m_spPDFView->Scale.set(ratio);
-			}
-		}
-	}, Dummy);
-
-	m_spPDFView->CurrentPage.subscribe([this](const int& value)
-	{
-		wchar_t* endptr = nullptr;
-		int page = std::wcstol(m_spPageBox->EnterText->c_str(), &endptr, 10);
-		if (page != value) {
-			m_spPageBox->Text.set(std::to_wstring(value));
-			m_spPageBox->EnterText.set(std::to_wstring(value));
-		}
-	}, Dummy);
-	m_spPageBox->EnterText.subscribe([this](auto notify)
-	{
-		wchar_t* endptr = nullptr;
-		int pageAtBox = std::wcstol(m_spPageBox->EnterText->c_str(), &endptr, 10);
-		int pageAtView = *m_spPDFView->CurrentPage;
-		if (pageAtBox != pageAtView) {
-			if (!m_spPDFView->Jump(pageAtBox)) {
-				m_spPageBox->Text.set(std::to_wstring(*m_spPDFView->CurrentPage));
-				m_spPageBox->EnterText.set(std::to_wstring(*m_spPDFView->CurrentPage));
-			}
-		}
-	}, Dummy);
-
-	m_spPDFView->TotalPage.binding(m_spTotalPageBlock->Text);
-	m_spFilterBox->Text.binding(m_spPDFView->Find);
 }
 
 std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CPDFEditor::GetRects() const
@@ -152,76 +87,76 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> CPDFEditor::G
 	return { rcFilter, rcPage, rcTotalPage, rcScale, rcPercent, rcPDF, rcStatus };
 }
 
-//
-//void CPDFEditor::OnCreate(const CreateEvt& e)
-//{
-//	CD2DWControl::OnCreate(e);
-//	auto [rcFilter, rcPage, rcTotalPage, rcScale, rcPercent, rcPDF, rcStatus] = GetRects();
-//	m_spFilterBox->OnCreate(CreateEvt(GetWndPtr(), this, rcFilter));
-//	m_spPageBox->OnCreate(CreateEvt(GetWndPtr(), this, rcPage));
-//	m_spTotalPageBlock->OnCreate(CreateEvt(GetWndPtr(), this, rcTotalPage));
-//	m_spScaleBox->OnCreate(CreateEvt(GetWndPtr(), this, rcScale));
-//	m_spPercentBlock->OnCreate(CreateEvt(GetWndPtr(), this, rcPercent));
-//	m_spPDFView->OnCreate(CreateEvt(GetWndPtr(), this, rcPDF));
-//	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
-//
-//	m_spFilterBox->SetIsEnterText(true);
-//	m_spScaleBox->SetIsEnterText(true);
-//	m_spPageBox->SetIsEnterText(true);
-//
-//	m_spFilterBox->SetIsTabStop(true);
-//	m_spPageBox->SetIsTabStop(true);
-//	m_spScaleBox->SetIsTabStop(true);
-//	m_spPDFView->SetIsTabStop(true);
-//
-//	//Bindings
-//	m_spScaleBox->Text.set(ratio_to_percent(*m_spPDFView->Scale));
-//
-//	m_spPDFView->Scale.subscribe([this](const FLOAT& ratio)
-//	{
-//		std::wstring percent = ratio_to_percent(ratio);
-//		if (percent != *m_spScaleBox->Text) {
-//			m_spScaleBox->Text.set(percent);
-//		}
-//	}, shared_from_this());
-//	m_spScaleBox->EnterText.subscribe([this](auto notify)
-//	{
-//		FLOAT ratio = percent_to_ratio(*m_spScaleBox->EnterText);
-//		if (ratio != *m_spPDFView->Scale) {
-//			//Validate
-//			if (ratio == 0.f || m_spPDFView->GetMinScale() > ratio || m_spPDFView->GetMaxScale() < ratio) {
-//				m_spScaleBox->Text.set(ratio_to_percent(*m_spPDFView->Scale));
-//			} else {
-//				m_spPDFView->Scale.set(ratio);
-//			}
-//		}
-//	}, shared_from_this());
-//
-//	m_spPDFView->CurrentPage.subscribe([this](const int& value)
-//	{
-//		wchar_t* endptr = nullptr;
-//		int page = std::wcstol(m_spPageBox->EnterText->c_str(), &endptr, 10);
-//		if (page != value) {
-//			m_spPageBox->Text.set(std::to_wstring(value));
-//			m_spPageBox->EnterText.set(std::to_wstring(value));
-//		}
-//	}, shared_from_this());
-//	m_spPageBox->EnterText.subscribe([this](auto notify)
-//	{
-//		wchar_t* endptr = nullptr;
-//		int pageAtBox = std::wcstol(m_spPageBox->EnterText->c_str(), &endptr, 10);
-//		int pageAtView = *m_spPDFView->CurrentPage;
-//		if (pageAtBox != pageAtView) {
-//			if (!m_spPDFView->Jump(pageAtBox)) {
-//				m_spPageBox->Text.set(std::to_wstring(*m_spPDFView->CurrentPage));
-//				m_spPageBox->EnterText.set(std::to_wstring(*m_spPDFView->CurrentPage));
-//			}
-//		}
-//	}, shared_from_this());
-//
-//	m_spPDFView->TotalPage.binding(m_spTotalPageBlock->Text);
-//	m_spFilterBox->Text.binding(m_spPDFView->Find);
-//}
+
+void CPDFEditor::OnCreate(const CreateEvt& e)
+{
+	CD2DWControl::OnCreate(e);
+	auto [rcFilter, rcPage, rcTotalPage, rcScale, rcPercent, rcPDF, rcStatus] = GetRects();
+	m_spFilterBox->OnCreate(CreateEvt(GetWndPtr(), this, rcFilter));
+	m_spPageBox->OnCreate(CreateEvt(GetWndPtr(), this, rcPage));
+	m_spTotalPageBlock->OnCreate(CreateEvt(GetWndPtr(), this, rcTotalPage));
+	m_spScaleBox->OnCreate(CreateEvt(GetWndPtr(), this, rcScale));
+	m_spPercentBlock->OnCreate(CreateEvt(GetWndPtr(), this, rcPercent));
+	m_spPDFView->OnCreate(CreateEvt(GetWndPtr(), this, rcPDF));
+	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
+
+	m_spFilterBox->SetIsEnterText(true);
+	m_spScaleBox->SetIsEnterText(true);
+	m_spPageBox->SetIsEnterText(true);
+
+	m_spFilterBox->SetIsTabStop(true);
+	m_spPageBox->SetIsTabStop(true);
+	m_spScaleBox->SetIsTabStop(true);
+	m_spPDFView->SetIsTabStop(true);
+
+	//Bindings
+	m_spScaleBox->Text.set(ratio_to_percent(*m_spPDFView->Scale));
+
+	m_spPDFView->Scale.subscribe([this](const FLOAT& ratio)
+	{
+		std::wstring percent = ratio_to_percent(ratio);
+		if (percent != *m_spScaleBox->Text) {
+			m_spScaleBox->Text.set(percent);
+		}
+	}, shared_from_this());
+	m_spScaleBox->EnterText.subscribe([this](auto notify)
+	{
+		FLOAT ratio = percent_to_ratio(*m_spScaleBox->EnterText);
+		if (ratio != *m_spPDFView->Scale) {
+			//Validate
+			if (ratio == 0.f || m_spPDFView->GetMinScale() > ratio || m_spPDFView->GetMaxScale() < ratio) {
+				m_spScaleBox->Text.set(ratio_to_percent(*m_spPDFView->Scale));
+			} else {
+				m_spPDFView->Scale.set(ratio);
+			}
+		}
+	}, shared_from_this());
+
+	m_spPDFView->CurrentPage.subscribe([this](const int& value)
+	{
+		wchar_t* endptr = nullptr;
+		int page = std::wcstol(m_spPageBox->EnterText->c_str(), &endptr, 10);
+		if (page != value) {
+			m_spPageBox->Text.set(std::to_wstring(value));
+			m_spPageBox->EnterText.set(std::to_wstring(value));
+		}
+	}, shared_from_this());
+	m_spPageBox->EnterText.subscribe([this](auto notify)
+	{
+		wchar_t* endptr = nullptr;
+		int pageAtBox = std::wcstol(m_spPageBox->EnterText->c_str(), &endptr, 10);
+		int pageAtView = *m_spPDFView->CurrentPage;
+		if (pageAtBox != pageAtView) {
+			if (!m_spPDFView->Jump(pageAtBox)) {
+				m_spPageBox->Text.set(std::to_wstring(*m_spPDFView->CurrentPage));
+				m_spPageBox->EnterText.set(std::to_wstring(*m_spPDFView->CurrentPage));
+			}
+		}
+	}, shared_from_this());
+
+	m_spPDFView->TotalPage.binding(m_spTotalPageBlock->Text);
+	m_spFilterBox->Text.binding(m_spPDFView->Find);
+}
 
 void CPDFEditor::OnPaint(const PaintEvent& e)
 {

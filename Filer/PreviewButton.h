@@ -7,14 +7,17 @@ class CPreviewButton : public CButton
 public:
 	reactive_property_ptr<bool> IsPreview;
 public:
-	CPreviewButton(CD2DWControl* pParentControl = nullptr)
-		:CButton(pParentControl)
+	using CButton::CButton;
+
+	void OnCreate(const CreateEvt& e)
 	{
+		CD2DWControl::OnCreate(e);
+
 		Content.set(*IsPreview ? L"Preview" : L"Normal");
 		Command.subscribe([this]() {
 			IsPreview.set(!*IsPreview);
 			Content.set(*IsPreview ? L"Preview" : L"Normal");
-		}, Dummy);
+		}, shared_from_this());
 	}
 
 	friend void to_json(json& j, const CPreviewButton& o)

@@ -66,6 +66,38 @@ CIncrementalCopyDlg::CIncrementalCopyDlg(
 	m_spButtonClose->Content.set(L"Close");
 	m_spButtonCancel->Content.set(L"Cancel");
 
+}
+
+CIncrementalCopyDlg::~CIncrementalCopyDlg() = default;
+
+
+std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> CIncrementalCopyDlg::GetRects()
+{
+	CRectF rc = GetRectInWnd();
+	CRectF rcTitle = GetTitleRect();
+	rc.top = rcTitle.bottom;
+	CRectF rcProgress(rc.left + 5.f, rc.top + 5.f, rc.right - 5.f, rc.top + 30.f);
+	CRectF rcGrid(rc.left + 5.f, rcProgress.bottom + 5.f, rc.right - 5.f, rc.bottom - 30.f);
+	CRectF rcBtnClose(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
+	CRectF rcBtnCancel(rcBtnClose.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnClose.left - 5.f, rc.bottom - 5.f);
+	CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
+	return { rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose };
+}
+
+
+void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
+{
+	//Dlg
+	CD2DWDialog::OnCreate(e);
+	//Size
+	auto [rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose] = GetRects();
+	m_spProgressbar->OnCreate(CreateEvt(GetWndPtr(), this, rcProgress));
+	m_spFileGrid->OnCreate(CreateEvt(GetWndPtr(), this, rcGrid));
+	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnDo));
+	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
+	m_spButtonClose->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnClose));
+
+
 	m_spButtonDo->IsEnabled.set(false);
 
 	m_spButtonCancel->IsEnabled.set(false);
@@ -124,106 +156,7 @@ CIncrementalCopyDlg::CIncrementalCopyDlg(
 	
 	//Start comparison
 	m_compFuture = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, fun);
-
-	//Size
-	auto [rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose] = GetRects();
-	AddChildControlPtr(m_spProgressbar); m_spProgressbar->Arrange(rcProgress);
-	AddChildControlPtr(m_spFileGrid); m_spFileGrid->Arrange(rcGrid);
-	AddChildControlPtr(m_spButtonDo); m_spButtonDo->Arrange(rcBtnDo);
-	AddChildControlPtr(m_spButtonCancel); m_spButtonCancel->Arrange(rcBtnCancel);
-	AddChildControlPtr(m_spButtonClose); m_spButtonClose->Arrange(rcBtnClose);
-
 }
-
-CIncrementalCopyDlg::~CIncrementalCopyDlg() = default;
-
-
-std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> CIncrementalCopyDlg::GetRects()
-{
-	CRectF rc = GetRectInWnd();
-	CRectF rcTitle = GetTitleRect();
-	rc.top = rcTitle.bottom;
-	CRectF rcProgress(rc.left + 5.f, rc.top + 5.f, rc.right - 5.f, rc.top + 30.f);
-	CRectF rcGrid(rc.left + 5.f, rcProgress.bottom + 5.f, rc.right - 5.f, rc.bottom - 30.f);
-	CRectF rcBtnClose(rc.right - 5.f - 50.f, rc.bottom - 25.f, rc.right - 5.f, rc.bottom - 5.f);
-	CRectF rcBtnCancel(rcBtnClose.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnClose.left - 5.f, rc.bottom - 5.f);
-	CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 25.f, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
-	return { rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose };
-}
-
-
-//void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
-//{
-//	//Dlg
-//	CD2DWDialog::OnCreate(e);
-//	//Size
-//	auto [rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose] = GetRects();
-//	m_spProgressbar->OnCreate(CreateEvt(GetWndPtr(), this, rcProgress));
-//	m_spFileGrid->OnCreate(CreateEvt(GetWndPtr(), this, rcGrid));
-//	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnDo));
-//	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
-//	m_spButtonClose->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnClose));
-//
-//
-//	m_spButtonDo->IsEnabled.set(false);
-//
-//	m_spButtonCancel->IsEnabled.set(false);
-//	m_spButtonClose->IsEnabled.set(true);
-//
-//	auto fun = [this]()->void
-//	{
-//		std::function<void()> readMax = [this]()->void
-//		{
-//			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this] { OnIncrementMax(); });
-//		};
-//		std::function<void()> readValue = [this]()->void
-//		{
-//			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this] { OnIncrementValue(); });
-//		};
-//		std::function<void(const CIDL&, const CIDL&)> find = [this](const CIDL& destIDL, const CIDL& srcIDL)->void
-//		{
-//			auto iter = m_idlMap.find(destIDL);
-//			if (iter != m_idlMap.end()) {
-//				iter->second.push_back(srcIDL);
-//			} else {
-//				m_idlMap.insert(std::make_pair(destIDL, std::vector<CIDL>{srcIDL}));
-//			}
-//			//This should be Send Message to syncro
-//			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this, srcIDL] { OnAddItem(srcIDL); });
-//		};
-//
-//		GetProgressBarPtr()->SetMin(0);
-//		GetProgressBarPtr()->SetMax(0);
-//		GetProgressBarPtr()->SetValue(0);
-//
-//		auto funCount = [srcIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, readMax]()->void
-//		{
-//			for (const auto& childIDL : srcChildIDLs) {
-//				shell::CountFileOne(srcIDL, childIDL, readMax);
-//			}
-//		};
-//		auto countFuture = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, funCount);
-//
-//		auto funIncr = [srcParentIDL = m_srcIDL, srcChildIDLs = m_srcChildIDLs, destParentIDL = m_destIDL, readValue, find]()->void
-//		{
-//			for (const auto& srcChildIDL : srcChildIDLs) {
-//				shell::FindIncrementalOne(srcParentIDL, srcChildIDL, destParentIDL, readValue, find);
-//			}
-//		};
-//		auto incrFuture = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, funIncr);
-//
-//		countFuture.get();
-//		incrFuture.get();
-//
-//		if (!m_idlMap.empty()) {
-//			m_spButtonDo->IsEnabled.set(true);
-//			GetWndPtr()->SetFocusToControl(m_spButtonDo);
-//		}
-//	};
-//	
-//	//Start comparison
-//	m_compFuture = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, fun);
-//}
 
 void CIncrementalCopyDlg::OnRect(const RectEvent& e)
 {

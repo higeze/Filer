@@ -40,6 +40,7 @@ private:
 	//Remember past filter
 	std::unordered_map<std::wstring, std::unordered_map<std::shared_ptr<CColumn>, std::wstring>> m_filterMap;
 public:
+	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<std::shared_ptr<CShellFolder>> Folder;
 	reactive_wstring_ptr StatusLog;
 	reactive_vector_ptr<ExeExtension> ExeExtensions;
@@ -59,7 +60,7 @@ public:
 	/**************/
 	/* UI Message */
 	/**************/
-	//virtual void OnCreate(const CreateEvt& e)override;
+	virtual void OnCreate(const CreateEvt& e)override;
 	virtual void OnDirectoryWatch(const DirectoryWatchEvent& e);
 	virtual void OnMouseWheel(const MouseWheelEvent& e)override;
 	/************************/

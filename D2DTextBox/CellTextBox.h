@@ -22,7 +22,7 @@ public:
 
 	CTextCell* GetCellPtr() { return m_pCell; }
 
-	//void OnCreate(const CreateEvt& e) override;
+	void OnCreate(const CreateEvt& e) override;
 	void OnClose(const CloseEvent& e) override;
 	bool GetIsVisible()const;
 	CRectF GetRectInWnd() const;
