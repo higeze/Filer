@@ -1482,7 +1482,9 @@ void CGridView::Edit_OnEntry(const BeginEditEvent& e)
 				pCell->SetString(str);
 				//pCell->SetState(UIElementState::Normal);//After Editing, Change Normal
 			}));
-		GetEditPtr()->OnCreate(CreateEvt(GetWndPtr(), this, pCell->GetRectInWnd()));
+		//GetEditPtr()->OnCreate(CreateEvt(GetWndPtr(), this, pCell->GetRectInWnd()));
+		AddChildControlPtr(GetEditPtr());
+		GetEditPtr()->Arrange(pCell->GetRectInWnd());
 		GetWndPtr()->SetFocusToControl(GetEditPtr());
 		PostUpdate(Updates::Invalidate);
 		//SetCapture();
@@ -1662,12 +1664,12 @@ void CGridView::OnDelayUpdate()
 /* Window Message */
 /******************/
 
-void CGridView::OnCreate(const CreateEvt& e)
-{
-	CD2DWControl::OnCreate(e);
-	UpdateAll();
-	SubmitUpdate();
-}
+//void CGridView::OnCreate(const CreateEvt& e)
+//{
+//	CD2DWControl::OnCreate(e);
+//	UpdateAll();
+//	SubmitUpdate();
+//}
 
 void CGridView::Measure(const CSizeF& sz)
 {

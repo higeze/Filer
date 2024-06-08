@@ -24,7 +24,9 @@ public:
 	std::shared_ptr<CButton>& GetOKButtonPtr() { return m_spButtonOK; }
 	std::shared_ptr<CButton>& GetCancelButtonPtr() { return m_spButtonCancel; }
 
+	//MeasureArrange
+	void Arrange(const CRectF& rc) override;
 
-	virtual void OnCreate(const CreateEvt& e);
+	//virtual void OnCreate(const CreateEvt& e);
 	virtual void OnRect(const RectEvent& e);
 };

@@ -32,6 +32,24 @@ CTabHeaderControl::CTabHeaderControl(CTabControl* pTabControl)
 	:CD2DWControl(pTabControl), m_spButton(std::make_shared<CButton>(this))
 {
 	IsFocusable.set(false);
+	//Set up Button
+	m_spButton->Command.subscribe([this]()->void
+	{
+		GetWndPtr()->GetDispatcherPtr()->PostInvoke(
+			[pTabControl = static_cast<CTabControl*>(m_pParentControl), index = GetIndex()]()->void
+			{
+				if (pTabControl->ItemsSource.get_unconst()->at(index)->AcceptClosing(pTabControl->GetWndPtr(), false)) {
+					pTabControl->ItemsSource.erase(pTabControl->ItemsSource->cbegin() + index);
+				}
+			}
+		);
+	}, Dummy);
+
+	m_spButton->Content.set(L"x");
+	m_spButton->DisableContent.set(L"l");
+	m_spButton->IsFocusable.set(false);
+	//static_cast<CTabControl*>(m_pParentControl)->ItemsSource.get_unconst()->at(GetIndex())->Unlock.binding(m_spButton->IsEnabled);
+
 }
 
 bool CTabHeaderControl::GetIsSelected()const
@@ -95,30 +113,30 @@ std::tuple<CRectF, CRectF, CRectF, CRectF> CTabHeaderControl::GetRects()
 	return { iconRect, textRect, buttonRect, rc };
 }
 
-void CTabHeaderControl::OnCreate(const CreateEvt& e)
-{
-	CD2DWControl::OnCreate(e);
-	
-	//Set up Button
-	m_spButton->Command.subscribe([this]()->void
-	{
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke(
-			[pTabControl = static_cast<CTabControl*>(m_pParentControl), index = GetIndex()]()->void
-			{
-				if (pTabControl->ItemsSource.get_unconst()->at(index)->AcceptClosing(pTabControl->GetWndPtr(), false)) {
-					pTabControl->ItemsSource.erase(pTabControl->ItemsSource->cbegin() + index);
-				}
-			}
-		);
-	}, shared_from_this());
-
-	m_spButton->Content.set(L"x");
-	m_spButton->DisableContent.set(L"l");
-	m_spButton->IsFocusable.set(false);
-	static_cast<CTabControl*>(m_pParentControl)->ItemsSource.get_unconst()->at(GetIndex())->Unlock.binding(m_spButton->IsEnabled);
-
-	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-}
+//void CTabHeaderControl::OnCreate(const CreateEvt& e)
+//{
+//	CD2DWControl::OnCreate(e);
+//	
+//	//Set up Button
+//	m_spButton->Command.subscribe([this]()->void
+//	{
+//		GetWndPtr()->GetDispatcherPtr()->PostInvoke(
+//			[pTabControl = static_cast<CTabControl*>(m_pParentControl), index = GetIndex()]()->void
+//			{
+//				if (pTabControl->ItemsSource.get_unconst()->at(index)->AcceptClosing(pTabControl->GetWndPtr(), false)) {
+//					pTabControl->ItemsSource.erase(pTabControl->ItemsSource->cbegin() + index);
+//				}
+//			}
+//		);
+//	}, shared_from_this());
+//
+//	m_spButton->Content.set(L"x");
+//	m_spButton->DisableContent.set(L"l");
+//	m_spButton->IsFocusable.set(false);
+//	static_cast<CTabControl*>(m_pParentControl)->ItemsSource.get_unconst()->at(GetIndex())->Unlock.binding(m_spButton->IsEnabled);
+//
+//	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//}
 
 void CTabHeaderControl::OnRect(const RectEvent& e)
 {
@@ -184,6 +202,21 @@ CAddTabHeaderControl::CAddTabHeaderControl(CTabControl* pTabControl)
 	:CD2DWControl(pTabControl), m_spButton(std::make_shared<CButton>(this))
 {
 	IsFocusable.set(false);
+
+	//Set up Button
+	m_spButton->Command.subscribe([this]()->void
+	{
+		GetWndPtr()->GetDispatcherPtr()->PostInvoke(
+			[pTabControl = static_cast<CTabControl*>(m_pParentControl)]()->void
+			{
+				pTabControl->OnCommandNewTab();
+			});
+	}, Dummy);
+
+	m_spButton->Content.set(L"+");
+	m_spButton->IsFocusable.set(false);
+
+	AddChildControlPtr(m_spButton);
 }
 
 bool CAddTabHeaderControl::GetIsSelected()const
@@ -225,25 +258,25 @@ std::tuple<CRectF, CRectF> CAddTabHeaderControl::GetRects()
 	return { buttonRect, rc };
 }
 
-void CAddTabHeaderControl::OnCreate(const CreateEvt& e)
-{
-	CD2DWControl::OnCreate(e);
-
-	//Set up Button
-	m_spButton->Command.subscribe([this]()->void
-	{
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke(
-			[pTabControl = static_cast<CTabControl*>(m_pParentControl)]()->void
-			{
-				pTabControl->OnCommandNewTab();
-			});
-	}, shared_from_this());
-
-	m_spButton->Content.set(L"+");
-	m_spButton->IsFocusable.set(false);
-
-	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-}
+//void CAddTabHeaderControl::OnCreate(const CreateEvt& e)
+//{
+//	CD2DWControl::OnCreate(e);
+//
+//	//Set up Button
+//	m_spButton->Command.subscribe([this]()->void
+//	{
+//		GetWndPtr()->GetDispatcherPtr()->PostInvoke(
+//			[pTabControl = static_cast<CTabControl*>(m_pParentControl)]()->void
+//			{
+//				pTabControl->OnCommandNewTab();
+//			});
+//	}, shared_from_this());
+//
+//	m_spButton->Content.set(L"+");
+//	m_spButton->IsFocusable.set(false);
+//
+//	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//}
 
 void CAddTabHeaderControl::OnRect(const RectEvent& e)
 {
@@ -333,7 +366,143 @@ CTabControl::CTabControl(CD2DWControl* pParentControl)
 	m_addHeader(std::make_shared<CAddTabHeaderControl>(this)),
 	m_pMachine(new boost::sml::sm<Machine>{ this }),
 	m_dragFrom(-1), m_dragTo(-1)
-{}
+{
+	//ItemsSource
+	ItemsSource.subscribe(
+		[this](auto notify)->void
+		{
+			switch (notify.action) {
+				case notify_container_changed_action::push_back:
+				{
+					auto header = std::make_shared<CTabHeaderControl>(this);
+					notify.new_items[0]->Unlock.binding(header->GetCloseButtonPtr()->IsEnabled);
+					m_headers.idx_push_back(header);
+					AddChildControlPtr(header);
+					UpdateHeaderRects();
+
+					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
+					break;
+				}
+				case notify_container_changed_action::insert:
+				{
+					auto header = std::make_shared<CTabHeaderControl>(this);
+					//TODOTODO
+					m_headers.idx_insert(m_headers.cbegin() + notify.new_starting_index, header);
+					AddChildControlPtr(header);
+					UpdateHeaderRects();
+
+					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
+					break;
+				}
+				case notify_container_changed_action::erase:
+				{
+					for (size_t i = notify.old_starting_index; i < notify.old_starting_index + notify.old_items.size(); i++) {
+						m_headers[i]->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
+					}
+					m_headers.idx_erase(
+						m_headers.cbegin() + notify.old_starting_index,
+						m_headers.cbegin() + notify.old_starting_index + notify.old_items.size());
+
+					UpdateHeaderRects();
+
+					if (!ItemsSource->empty()) {
+						SelectedIndex.force_notify_set((std::min)((size_t)notify.old_starting_index, ItemsSource->size() - 1));
+					}
+					break;
+				}
+				case notify_container_changed_action::replace:
+				{
+					m_headers[notify.new_starting_index]->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
+					m_headers.idx_erase(m_headers.cbegin() + notify.new_starting_index);
+					auto header = std::make_shared<CTabHeaderControl>(this);
+					notify.new_items[0]->Unlock.binding(header->GetCloseButtonPtr()->IsEnabled);
+					m_headers.idx_insert(m_headers.cbegin() + notify.new_starting_index, header);
+					AddChildControlPtr(header);
+					UpdateHeaderRects();
+
+					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
+					break;
+				}
+				case notify_container_changed_action::reset:
+				{
+					if (!ItemsSource->empty()) {
+						for (auto header : m_headers) {
+							header->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
+						}
+						m_headers.clear();
+						for (auto& item : notify.new_items) {
+							auto header = std::make_shared<CTabHeaderControl>(this);
+							item->Unlock.binding(header->GetCloseButtonPtr()->IsEnabled);
+							m_headers.idx_push_back(header);
+							AddChildControlPtr(header);
+						}
+						UpdateHeaderRects();
+						SelectedIndex.force_notify_set((std::min)((size_t)(*SelectedIndex), ItemsSource->size() - 1));
+					}
+					break;
+				}
+				default:
+					break;
+			}
+		}, Dummy);
+
+	/***********/
+	/* Headers */
+	/***********/
+	for (auto& item : *ItemsSource) {
+		auto header = std::make_shared<CTabHeaderControl>(this);
+		m_headers.idx_push_back(header);
+		AddChildControlPtr(header);
+	}
+	AddChildControlPtr(m_addHeader);
+	//UpdateHeaderRects();
+
+	//SelectedIndex
+	SelectedIndex.subscribe( 
+		[this](const int& value)->void {
+			if (GetWndPtr()->m_hWnd) {
+				auto spData = ItemsSource->at(value);
+				auto spControl = m_itemsControlTemplate[typeid(*spData).name()](spData);
+				if (m_spCurControl != spControl) {
+					if (m_spCurControl) {
+						m_spCurControl->OnEnable(EnableEvent(GetWndPtr(), false));
+						m_spCurControl->IsEnabled.set(false);
+					}
+					m_spCurControl = spControl;
+					m_spCurControl->OnEnable(EnableEvent(GetWndPtr(), true));
+					m_spCurControl->IsEnabled.set(true);
+				}
+				GetWndPtr()->SetFocusToControl(spControl);
+			}
+			//for (auto p : m_childControls) {
+			//	if (std::string(typeid(*p).name()).find("CFilerGridView") != std::string::npos) {
+			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
+			//	} else if (std::string(typeid(*p).name()).find("CToDoGridView") != std::string::npos) {
+			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
+			//	} else if (std::string(typeid(*p).name()).find("CTextEditor") != std::string::npos){
+			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
+			//	}
+			//}
+		},Dummy);
+
+
+	GetContentRect = [rect = CRectF(), this]()mutable->CRectF&
+	{
+		rect = GetRectInWnd() - MARGIN;
+		if (!m_headers.empty()) {
+			rect.top = m_headers.back()->GetRectInWnd().bottom;
+		}
+		return rect;
+	};
+
+	GetControlRect = [rect = CRectF(), this]()mutable->CRectF&
+	{
+		rect = GetContentRect(); rect.DeflateRect(GetPadding());
+		return rect;
+	};
+
+
+}
 
 CTabControl::~CTabControl() = default;
 
@@ -427,141 +596,141 @@ void CTabControl::OnCommandCloseAllButThisTab()
 /**************/
 /* UI Message */
 /**************/
-
-void CTabControl::OnCreate(const CreateEvt& e) 
-{
-	CD2DWControl::OnCreate(e);
-
-	//ItemsSource
-	ItemsSource.subscribe(
-		[this](auto notify)->void
-		{
-			switch (notify.action) {
-				case notify_container_changed_action::push_back:
-				{
-					auto header = std::make_shared<CTabHeaderControl>(this);
-					m_headers.idx_push_back(header);
-					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-					UpdateHeaderRects();
-
-					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
-					break;
-				}
-				case notify_container_changed_action::insert:
-				{
-					auto header = std::make_shared<CTabHeaderControl>(this);
-					m_headers.idx_insert(m_headers.cbegin() + notify.new_starting_index, header);
-					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-					UpdateHeaderRects();
-
-					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
-					break;
-				}
-				case notify_container_changed_action::erase:
-				{
-					for (size_t i = notify.old_starting_index; i < notify.old_starting_index + notify.old_items.size(); i++) {
-						m_headers[i]->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
-					}
-					m_headers.idx_erase(
-						m_headers.cbegin() + notify.old_starting_index,
-						m_headers.cbegin() + notify.old_starting_index + notify.old_items.size());
-
-					UpdateHeaderRects();
-
-					if (!ItemsSource->empty()) {
-						SelectedIndex.force_notify_set((std::min)((size_t)notify.old_starting_index, ItemsSource->size() - 1));
-					}
-					break;
-				}
-				case notify_container_changed_action::replace:
-				{
-					m_headers[notify.new_starting_index]->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
-					m_headers.idx_erase(m_headers.cbegin() + notify.new_starting_index);
-					auto header = std::make_shared<CTabHeaderControl>(this);
-					m_headers.idx_insert(m_headers.cbegin() + notify.new_starting_index, header);
-					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-					UpdateHeaderRects();
-
-					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
-					break;
-				}
-				case notify_container_changed_action::reset:
-				{
-					if (!ItemsSource->empty()) {
-						for (auto header : m_headers) {
-							header->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
-						}
-						m_headers.clear();
-						for (auto& item : notify.new_items) {
-							auto header = std::make_shared<CTabHeaderControl>(this);
-							m_headers.idx_push_back(header);
-							header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-						}
-						UpdateHeaderRects();
-						SelectedIndex.force_notify_set((std::min)((size_t)(*SelectedIndex), ItemsSource->size() - 1));
-					}
-					break;
-				}
-				default:
-					break;
-			}
-		}, shared_from_this());
-
-	/***********/
-	/* Headers */
-	/***********/
-	for (auto& item : *ItemsSource) {
-		auto header = std::make_shared<CTabHeaderControl>(this);
-		m_headers.idx_push_back(header);
-		header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-	}
-	m_addHeader->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-	UpdateHeaderRects();
-
-	//SelectedIndex
-	SelectedIndex.subscribe( 
-		[this](const int& value)->void {
-			if (GetWndPtr()->m_hWnd) {
-				auto spData = ItemsSource->at(value);
-				auto spControl = m_itemsControlTemplate[typeid(*spData).name()](spData);
-				if (m_spCurControl != spControl) {
-					if (m_spCurControl) {
-						m_spCurControl->OnEnable(EnableEvent(GetWndPtr(), false));
-						m_spCurControl->IsEnabled.set(false);
-					}
-					m_spCurControl = spControl;
-					m_spCurControl->OnEnable(EnableEvent(GetWndPtr(), true));
-					m_spCurControl->IsEnabled.set(true);
-				}
-				GetWndPtr()->SetFocusToControl(spControl);
-			}
-			//for (auto p : m_childControls) {
-			//	if (std::string(typeid(*p).name()).find("CFilerGridView") != std::string::npos) {
-			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
-			//	} else if (std::string(typeid(*p).name()).find("CToDoGridView") != std::string::npos) {
-			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
-			//	} else if (std::string(typeid(*p).name()).find("CTextEditor") != std::string::npos){
-			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
-			//	}
-			//}
-		},shared_from_this());
-
-
-	GetContentRect = [rect = CRectF(), this]()mutable->CRectF&
-	{
-		rect = GetRectInWnd() - MARGIN;
-		if (!m_headers.empty()) {
-			rect.top = m_headers.back()->GetRectInWnd().bottom;
-		}
-		return rect;
-	};
-
-	GetControlRect = [rect = CRectF(), this]()mutable->CRectF&
-	{
-		rect = GetContentRect(); rect.DeflateRect(GetPadding());
-		return rect;
-	};
-}
+//
+//void CTabControl::OnCreate(const CreateEvt& e) 
+//{
+//	CD2DWControl::OnCreate(e);
+//
+//	//ItemsSource
+//	ItemsSource.subscribe(
+//		[this](auto notify)->void
+//		{
+//			switch (notify.action) {
+//				case notify_container_changed_action::push_back:
+//				{
+//					auto header = std::make_shared<CTabHeaderControl>(this);
+//					m_headers.idx_push_back(header);
+//					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//					UpdateHeaderRects();
+//
+//					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
+//					break;
+//				}
+//				case notify_container_changed_action::insert:
+//				{
+//					auto header = std::make_shared<CTabHeaderControl>(this);
+//					m_headers.idx_insert(m_headers.cbegin() + notify.new_starting_index, header);
+//					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//					UpdateHeaderRects();
+//
+//					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
+//					break;
+//				}
+//				case notify_container_changed_action::erase:
+//				{
+//					for (size_t i = notify.old_starting_index; i < notify.old_starting_index + notify.old_items.size(); i++) {
+//						m_headers[i]->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
+//					}
+//					m_headers.idx_erase(
+//						m_headers.cbegin() + notify.old_starting_index,
+//						m_headers.cbegin() + notify.old_starting_index + notify.old_items.size());
+//
+//					UpdateHeaderRects();
+//
+//					if (!ItemsSource->empty()) {
+//						SelectedIndex.force_notify_set((std::min)((size_t)notify.old_starting_index, ItemsSource->size() - 1));
+//					}
+//					break;
+//				}
+//				case notify_container_changed_action::replace:
+//				{
+//					m_headers[notify.new_starting_index]->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
+//					m_headers.idx_erase(m_headers.cbegin() + notify.new_starting_index);
+//					auto header = std::make_shared<CTabHeaderControl>(this);
+//					m_headers.idx_insert(m_headers.cbegin() + notify.new_starting_index, header);
+//					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//					UpdateHeaderRects();
+//
+//					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
+//					break;
+//				}
+//				case notify_container_changed_action::reset:
+//				{
+//					if (!ItemsSource->empty()) {
+//						for (auto header : m_headers) {
+//							header->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
+//						}
+//						m_headers.clear();
+//						for (auto& item : notify.new_items) {
+//							auto header = std::make_shared<CTabHeaderControl>(this);
+//							m_headers.idx_push_back(header);
+//							header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//						}
+//						UpdateHeaderRects();
+//						SelectedIndex.force_notify_set((std::min)((size_t)(*SelectedIndex), ItemsSource->size() - 1));
+//					}
+//					break;
+//				}
+//				default:
+//					break;
+//			}
+//		}, shared_from_this());
+//
+//	/***********/
+//	/* Headers */
+//	/***********/
+//	for (auto& item : *ItemsSource) {
+//		auto header = std::make_shared<CTabHeaderControl>(this);
+//		m_headers.idx_push_back(header);
+//		header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//	}
+//	m_addHeader->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//	UpdateHeaderRects();
+//
+//	//SelectedIndex
+//	SelectedIndex.subscribe( 
+//		[this](const int& value)->void {
+//			if (GetWndPtr()->m_hWnd) {
+//				auto spData = ItemsSource->at(value);
+//				auto spControl = m_itemsControlTemplate[typeid(*spData).name()](spData);
+//				if (m_spCurControl != spControl) {
+//					if (m_spCurControl) {
+//						m_spCurControl->OnEnable(EnableEvent(GetWndPtr(), false));
+//						m_spCurControl->IsEnabled.set(false);
+//					}
+//					m_spCurControl = spControl;
+//					m_spCurControl->OnEnable(EnableEvent(GetWndPtr(), true));
+//					m_spCurControl->IsEnabled.set(true);
+//				}
+//				GetWndPtr()->SetFocusToControl(spControl);
+//			}
+//			//for (auto p : m_childControls) {
+//			//	if (std::string(typeid(*p).name()).find("CFilerGridView") != std::string::npos) {
+//			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
+//			//	} else if (std::string(typeid(*p).name()).find("CToDoGridView") != std::string::npos) {
+//			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
+//			//	} else if (std::string(typeid(*p).name()).find("CTextEditor") != std::string::npos){
+//			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
+//			//	}
+//			//}
+//		},shared_from_this());
+//
+//
+//	GetContentRect = [rect = CRectF(), this]()mutable->CRectF&
+//	{
+//		rect = GetRectInWnd() - MARGIN;
+//		if (!m_headers.empty()) {
+//			rect.top = m_headers.back()->GetRectInWnd().bottom;
+//		}
+//		return rect;
+//	};
+//
+//	GetControlRect = [rect = CRectF(), this]()mutable->CRectF&
+//	{
+//		rect = GetContentRect(); rect.DeflateRect(GetPadding());
+//		return rect;
+//	};
+//}
 
 void CTabControl::OnPaint(const PaintEvent& e)
 {

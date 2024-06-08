@@ -113,7 +113,7 @@ public:
 					std::make_shared<ToolTipProperty>());
 				CPointF pt = pSheet->GetWndPtr()->GetCursorPosInWnd();
 				pt.x += sz.cx / 2;
-				spTT->OnCreate(CreateEvt(pSheet->GetWndPtr(), pSheet->GetWndPtr(), CRectF()));
+				pSheet->GetWndPtr()->SetToolTipControlPtr(spTT);	
 				spTT->Content.set(content);
 				spTT->Measure(CSizeF(FLT_MAX, FLT_MAX));
 				spTT->Arrange(CRectF(pt, spTT->DesiredSize()));

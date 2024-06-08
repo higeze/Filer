@@ -35,17 +35,17 @@ CLauncherGridView::CLauncherGridView(CD2DWControl* pParentControl)
 
 	m_spItemDragger = std::make_shared<CLauncherItemDragger>();
 }
-
-void CLauncherGridView::OnCreate(const CreateEvt& e)
-{
-	//Base Create
-	CBindGridView::OnCreate(e);
-
-	//List
-	OpenFavorites();
-
-	SubmitUpdate();
-}
+//
+//void CLauncherGridView::OnCreate(const CreateEvt& e)
+//{
+//	//Base Create
+//	CBindGridView::OnCreate(e);
+//
+//	//List
+//	OpenFavorites();
+//
+//	SubmitUpdate();
+//}
 
 void CLauncherGridView::OpenFavorites()
 {

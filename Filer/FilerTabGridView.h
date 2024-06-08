@@ -90,7 +90,7 @@ public:
 	/**************/
 	/* UI Message */
 	/**************/
-	void OnCreate(const CreateEvt& e) override;
+	//void OnCreate(const CreateEvt& e) override;
 	void OnKeyDown(const KeyDownEvent& e) override;
 	void OnContextMenu(const ContextMenuEvent& e) override;
 

@@ -338,6 +338,14 @@ CExeExtensionDlg::CExeExtensionDlg(
 
 	m_spButtonDo->Content.set(L"Exe");
 
+	AddChildControlPtr(m_spFilerControl);
+	AddChildControlPtr(m_spTextPath);
+	AddChildControlPtr(m_spTextParam);
+	AddChildControlPtr(m_spButtonDo);
+	AddChildControlPtr(m_spButtonCancel);
+	GetWndPtr()->SetFocusToControl(m_spButtonDo);
+
+
 }
 
 void CExeExtensionDlg::Execute()
@@ -433,30 +441,30 @@ std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF> CExeExtensionDlg::GetRects()
 }
 
 
-void CExeExtensionDlg::OnCreate(const CreateEvt& e)
-{
-	//Base
-	CD2DWDialog::OnCreate(e);
-	
-	//Size
-	auto [rcGrid, rcTextPath, rcTextParam, rcBtnDo, rcBtnCancel] = GetRects();
-		
-	//Create FilerControl
-	m_spFilerControl->OnCreate(CreateEvt(GetWndPtr(), this, rcGrid));
-
-	//Textbox
-	m_spTextPath->OnCreate(CreateEvt(GetWndPtr(), this, rcTextPath));
-	m_spTextParam->OnCreate(CreateEvt(GetWndPtr(), this, rcTextParam));
-
-	//OK button
-	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnDo));
-
-	//Cancel button
-	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
-
-	//Focus
-	GetWndPtr()->SetFocusToControl(m_spButtonDo);
-}
+//void CExeExtensionDlg::OnCreate(const CreateEvt& e)
+//{
+//	//Base
+//	CD2DWDialog::OnCreate(e);
+//	
+//	//Size
+//	auto [rcGrid, rcTextPath, rcTextParam, rcBtnDo, rcBtnCancel] = GetRects();
+//		
+//	//Create FilerControl
+//	m_spFilerControl->OnCreate(CreateEvt(GetWndPtr(), this, rcGrid));
+//
+//	//Textbox
+//	m_spTextPath->OnCreate(CreateEvt(GetWndPtr(), this, rcTextPath));
+//	m_spTextParam->OnCreate(CreateEvt(GetWndPtr(), this, rcTextParam));
+//
+//	//OK button
+//	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnDo));
+//
+//	//Cancel button
+//	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
+//
+//	//Focus
+//	GetWndPtr()->SetFocusToControl(m_spButtonDo);
+//}
 
 void CExeExtensionDlg::OnRect(const RectEvent& e)
 {
@@ -502,6 +510,13 @@ CPDFOperationDlgBase::CPDFOperationDlgBase(
 		arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
 		arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
 		arg<"frzrowcnt"_s>() = 2);
+
+		
+	AddChildControlPtr(m_spFilerControl);
+	AddChildControlPtr(m_spParameter);
+	AddChildControlPtr(m_spButtonDo);
+	AddChildControlPtr(m_spButtonCancel);
+	GetWndPtr()->SetFocusToControl(m_spButtonDo);
 }
 
 std::tuple<CRectF, CRectF, CRectF, CRectF> CPDFOperationDlgBase::GetRects()
@@ -518,20 +533,20 @@ std::tuple<CRectF, CRectF, CRectF, CRectF> CPDFOperationDlgBase::GetRects()
 }
 
 
-void CPDFOperationDlgBase::OnCreate(const CreateEvt& e)
-{
-	//Base
-	CD2DWDialog::OnCreate(e);
-	
-	//Size
-	auto [rcGrid, rcParam, rcBtnDo, rcBtnCancel] = GetRects();
-		
-	m_spFilerControl->OnCreate(CreateEvt(GetWndPtr(), this, rcGrid));
-	m_spParameter->OnCreate(CreateEvt(GetWndPtr(), this, rcParam));
-	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnDo));
-	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
-	GetWndPtr()->SetFocusToControl(m_spButtonDo);
-}
+//void CPDFOperationDlgBase::OnCreate(const CreateEvt& e)
+//{
+//	//Base
+//	CD2DWDialog::OnCreate(e);
+//	
+//	//Size
+//	auto [rcGrid, rcParam, rcBtnDo, rcBtnCancel] = GetRects();
+//		
+//	m_spFilerControl->OnCreate(CreateEvt(GetWndPtr(), this, rcGrid));
+//	m_spParameter->OnCreate(CreateEvt(GetWndPtr(), this, rcParam));
+//	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnDo));
+//	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, rcBtnCancel));
+//	GetWndPtr()->SetFocusToControl(m_spButtonDo);
+//}
 
 void CPDFOperationDlgBase::OnRect(const RectEvent& e)
 {

@@ -33,7 +33,7 @@ public:
 	virtual ~CSplitter() = default;
 
 	//Event
-	virtual void OnCreate(const CreateEvt& e) override;
+	//virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnPaint(const PaintEvent& e) override;
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;

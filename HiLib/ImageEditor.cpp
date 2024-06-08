@@ -21,6 +21,55 @@ CImageEditor::CImageEditor(CD2DWControl* pParentControl)
 	m_spPercentBlock(std::make_shared<CTextBlock>(this))
 {
 	m_spPercentBlock->Text.set(L"%");
+
+	AddChildControlPtr(m_spScaleBox); 
+	AddChildControlPtr(m_spPercentBlock);
+	AddChildControlPtr(m_spImageView);
+	AddChildControlPtr(m_spStatusBar);
+	m_spImageView->SetIsTabStop(true);
+
+	m_spScaleBox->SetIsEnterText(true);
+
+	auto ratio_to_percent = [](const FLOAT& value)->std::wstring {
+		return std::format(L"{:.1f}", std::round(value * 1000.f) / 1000.f * 100.f).c_str();
+	};
+
+	auto percent_to_ratio = [](const std::wstring& percent)->FLOAT {
+		wchar_t* stopstring;
+		return std::round(std::wcstof(percent.c_str(), &stopstring) * 1000.f) / 1000.f / 100.f;
+	};
+
+	m_spScaleBox->Text.set(ratio_to_percent(*m_spImageView->Scale));
+	m_spImageView->Scale.subscribe(
+	[&](const FLOAT& ratio)->void{
+		std::wstring percent = ratio_to_percent(ratio);
+		if (percent != *m_spScaleBox->Text) {
+			m_spScaleBox->Text.set(percent);
+		}
+	}, Dummy);
+
+	m_spScaleBox->EnterText.subscribe(
+	[&](auto notify)->void {
+		FLOAT ratio = percent_to_ratio(*m_spScaleBox->Text);
+		if (ratio != *m_spImageView->Scale) {
+			//Validate
+			if(ratio == 0.f || m_spImageView->GetMinScale() > ratio || m_spImageView->GetMaxScale() < ratio){ 
+				m_spScaleBox->Text.set(ratio_to_percent(*m_spImageView->Scale));
+			} else {
+				m_spImageView->Scale.set(ratio);
+			}
+		}
+	}, Dummy);
+}
+
+void CImageEditor::Arrange(const CRectF& rc)
+{
+	CD2DWControl::Arrange(rc);
+	auto [rcScale, rcPercent, rcImage, rcStatus] = GetRects();
+	m_spScaleBox->Arrange(rcScale);
+	m_spPercentBlock->Arrange(rcPercent);
+	m_spImageView->Arrange(rcImage);
+	m_spStatusBar->Arrange(rcStatus);
 }
 
 std::tuple<CRectF, CRectF, CRectF, CRectF> CImageEditor::GetRects() const
@@ -48,49 +97,49 @@ std::tuple<CRectF, CRectF, CRectF, CRectF> CImageEditor::GetRects() const
 }
 
 
-void CImageEditor::OnCreate(const CreateEvt& e)
-{
-	CD2DWControl::OnCreate(e);
-	auto [rcScale, rcPercent, rcImage, rcStatus] = GetRects();
-	m_spScaleBox->OnCreate(CreateEvt(GetWndPtr(), this, rcScale));
-	m_spPercentBlock->OnCreate(CreateEvt(GetWndPtr(), this, rcPercent));
-	m_spImageView->OnCreate(CreateEvt(GetWndPtr(), this, rcImage));
-	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
-	m_spImageView->SetIsTabStop(true);
-
-	m_spScaleBox->SetIsEnterText(true);
-
-	auto ratio_to_percent = [](const FLOAT& value)->std::wstring {
-		return std::format(L"{:.1f}", std::round(value * 1000.f) / 1000.f * 100.f).c_str();
-	};
-
-	auto percent_to_ratio = [](const std::wstring& percent)->FLOAT {
-		wchar_t* stopstring;
-		return std::round(std::wcstof(percent.c_str(), &stopstring) * 1000.f) / 1000.f / 100.f;
-	};
-
-	m_spScaleBox->Text.set(ratio_to_percent(*m_spImageView->Scale));
-	m_spImageView->Scale.subscribe(
-	[&](const FLOAT& ratio)->void{
-		std::wstring percent = ratio_to_percent(ratio);
-		if (percent != *m_spScaleBox->Text) {
-			m_spScaleBox->Text.set(percent);
-		}
-	}, shared_from_this());
-
-	m_spScaleBox->EnterText.subscribe(
-	[&](auto notify)->void {
-		FLOAT ratio = percent_to_ratio(*m_spScaleBox->Text);
-		if (ratio != *m_spImageView->Scale) {
-			//Validate
-			if(ratio == 0.f || m_spImageView->GetMinScale() > ratio || m_spImageView->GetMaxScale() < ratio){ 
-				m_spScaleBox->Text.set(ratio_to_percent(*m_spImageView->Scale));
-			} else {
-				m_spImageView->Scale.set(ratio);
-			}
-		}
-	}, shared_from_this());
-}
+//void CImageEditor::OnCreate(const CreateEvt& e)
+//{
+//	CD2DWControl::OnCreate(e);
+//	auto [rcScale, rcPercent, rcImage, rcStatus] = GetRects();
+//	m_spScaleBox->OnCreate(CreateEvt(GetWndPtr(), this, rcScale));
+//	m_spPercentBlock->OnCreate(CreateEvt(GetWndPtr(), this, rcPercent));
+//	m_spImageView->OnCreate(CreateEvt(GetWndPtr(), this, rcImage));
+//	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
+//	m_spImageView->SetIsTabStop(true);
+//
+//	m_spScaleBox->SetIsEnterText(true);
+//
+//	auto ratio_to_percent = [](const FLOAT& value)->std::wstring {
+//		return std::format(L"{:.1f}", std::round(value * 1000.f) / 1000.f * 100.f).c_str();
+//	};
+//
+//	auto percent_to_ratio = [](const std::wstring& percent)->FLOAT {
+//		wchar_t* stopstring;
+//		return std::round(std::wcstof(percent.c_str(), &stopstring) * 1000.f) / 1000.f / 100.f;
+//	};
+//
+//	m_spScaleBox->Text.set(ratio_to_percent(*m_spImageView->Scale));
+//	m_spImageView->Scale.subscribe(
+//	[&](const FLOAT& ratio)->void{
+//		std::wstring percent = ratio_to_percent(ratio);
+//		if (percent != *m_spScaleBox->Text) {
+//			m_spScaleBox->Text.set(percent);
+//		}
+//	}, shared_from_this());
+//
+//	m_spScaleBox->EnterText.subscribe(
+//	[&](auto notify)->void {
+//		FLOAT ratio = percent_to_ratio(*m_spScaleBox->Text);
+//		if (ratio != *m_spImageView->Scale) {
+//			//Validate
+//			if(ratio == 0.f || m_spImageView->GetMinScale() > ratio || m_spImageView->GetMaxScale() < ratio){ 
+//				m_spScaleBox->Text.set(ratio_to_percent(*m_spImageView->Scale));
+//			} else {
+//				m_spImageView->Scale.set(ratio);
+//			}
+//		}
+//	}, shared_from_this());
+//}
 
 void CImageEditor::OnPaint(const PaintEvent& e)
 {
@@ -104,12 +153,7 @@ void CImageEditor::OnPaint(const PaintEvent& e)
 
 void CImageEditor::OnRect(const RectEvent& e)
 {
-	CD2DWControl::OnRect(e);
-	auto [rcScale, rcPercent, rcImage, rcStatus] = GetRects();
-	m_spScaleBox->OnRect(RectEvent(GetWndPtr(), rcScale));
-	m_spPercentBlock->OnRect(RectEvent(GetWndPtr(), rcPercent));
-	m_spImageView->OnRect(RectEvent(GetWndPtr(), rcImage));
-	m_spStatusBar->OnRect(RectEvent(GetWndPtr(), rcStatus));
+	Arrange(e.Rect);
 }
 
 void CImageEditor::OnKeyDown(const KeyDownEvent& e)

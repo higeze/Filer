@@ -15,6 +15,7 @@
 
 void CD2DWControl::AddChildControlPtr(const std::shared_ptr<CD2DWControl>& pControl)
 {
+	pControl->m_pParentControl = this;
 	if (std::find(m_childControls.cbegin(), m_childControls.cend(), pControl) == m_childControls.cend()){
 		m_childControls.push_back(pControl);
 		//m_pFocusedControl = pControl;
@@ -57,13 +58,13 @@ bool CD2DWControl::GetIsFocused()const
 /***************/
 /* Control Msg */
 /***************/
-void CD2DWControl::OnCreate(const CreateEvt& e)
-{
-	m_pParentControl = e.ParentPtr;
-	m_rect =  e.RectF;
-	auto p = shared_from_this();
-	GetParentControlPtr()->AddChildControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
-}
+//void CD2DWControl::OnCreate(const CreateEvt& e)
+//{
+//	m_pParentControl = e.ParentPtr;
+//	m_rect =  e.RectF;
+//	auto p = shared_from_this();
+//	GetParentControlPtr()->AddChildControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+//}
 
 void CD2DWControl::OnClose(const CloseEvent& e)
 {

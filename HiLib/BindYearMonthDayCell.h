@@ -79,7 +79,8 @@ public:
 			std::clamp(e.PointInWnd.x, m_pGrid->GetRectInWnd().left, m_pGrid->GetRectInWnd().right - spDlg->DesiredSize().width),
 			std::clamp(e.PointInWnd.y, m_pGrid->GetRectInWnd().top, m_pGrid->GetRectInWnd().bottom - spDlg->DesiredSize().height)
 		);
-		spDlg->OnCreate(CreateEvt(m_pGrid->GetWndPtr(), m_pGrid, CRectF(pt, spDlg->DesiredSize())));
+		m_pGrid->AddChildControlPtr(spDlg);
+		//spDlg->OnCreate(CreateEvt(m_pGrid->GetWndPtr(), m_pGrid, CRectF(pt, spDlg->DesiredSize())));
 		spDlg->Arrange(CRectF(pt, spDlg->DesiredSize()));
 		m_pGrid->GetWndPtr()->SetFocusToControl(spDlg);
 	}

@@ -93,7 +93,7 @@ CLIPFORMAT CFilerGridView::s_cf_renprivatemessages = ::RegisterClipboardFormat(L
 
 
 CFilerGridView::CFilerGridView(CD2DWControl* pParentControl)
-	:CFilerBindGridView(pParentControl), Dummy(std::make_shared<int>(0))
+	:CFilerBindGridView(pParentControl)
 {
 	m_commandMap.emplace(IDM_SELECTALL, std::bind(&CFilerGridView::OnCommandSelectAll, this, phs::_1));
 	m_commandMap.emplace(IDM_CUT, std::bind(&CFilerGridView::OnCommandCut, this, phs::_1));
@@ -110,103 +110,21 @@ CFilerGridView::CFilerGridView(CD2DWControl* pParentControl)
 		SubmitUpdate();
 		m_spPreviousFolder = value;
 	}, Dummy);
-}
-
-CFilerGridView::~CFilerGridView()
-{
-	if (m_spWatcher) { m_spWatcher->QuitWatching(); }
-}
-
-CShellContextMenu& CFilerGridView::GetFileContextMenu()
-{
-	if (!m_optFileContextMenu.has_value()) {
-		CShellContextMenu menu;
-
-		auto GetSelectedFiles = [this]()->std::vector<std::shared_ptr<CShellFile>> {
-			std::vector<std::shared_ptr<CShellFile>> files;
-			for(auto rowPtr : m_visRows){
-				if(rowPtr->GetIsSelected()){
-					auto spRow=std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr);
-					auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
-					files.push_back(spFile);
-				}
-			}
-			return files;
-		};
-		menu.Add(
-			std::make_unique<CMenuSeparator2>(),
-			std::make_unique<CMenuItem2>(L"Copy Text", 
-				[this]()->void {
-				BOOL bHandled = FALSE;
-				//TODOTODO
-				/*CGridView::OnCommandCopy(CommandEvent(GetWndPtr(), (WPARAM)0, (LPARAM)GetWndPtr()->m_hWnd, &bHandled));*/}),
-			std::make_unique<CMenuSeparator2>(),
-			std::make_unique<CMenuItem2>(L"PDF Split",
-				[this, GetSelectedFiles]()->void {
-				auto spDlg = std::make_shared<CPDFSplitDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
-				spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 200))));
-				GetWndPtr()->SetFocusToControl(spDlg); }),
-			std::make_unique<CMenuItem2>(L"PDF Merge", 
-				[this, GetSelectedFiles]()->void {
-				auto spDlg = std::make_shared<CPDFMergeDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
-				spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
-				GetWndPtr()->SetFocusToControl(spDlg); }),
-			std::make_unique<CMenuItem2>(L"PDF Extract", 
-				[this, GetSelectedFiles]()->void {
-				auto spDlg = std::make_shared<CPDFExtractDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
-				spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
-				GetWndPtr()->SetFocusToControl(spDlg); }),
-			std::make_unique<CMenuItem2>(L"PDF Unlock",
-				[this, GetSelectedFiles]()->void {
-				auto spDlg = std::make_shared<CPDFUnlockDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
-				spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
-				GetWndPtr()->SetFocusToControl(spDlg); })
-		);
-
-		menu.Add(std::make_unique<CMenuSeparator2>());
-
-		for (auto iter = ExeExtensions->begin(); iter != ExeExtensions->end(); ++iter) {
-			menu.Add(
-			std::make_unique<CMenuItem2>(iter->Name.c_str(),
-				[this, GetSelectedFiles, ee = *iter]()->void {
-				auto spDlg = std::make_shared<CExeExtensionDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles(), ee);
-				spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
-				GetWndPtr()->SetFocusToControl(spDlg); })
-			);
-		}
-		m_optFileContextMenu.emplace(std::move(menu));
-	}
-	return m_optFileContextMenu.value();
-
-}
-
-CShellContextMenu& CFilerGridView::GetFolderContextMenu()
-{
-	if (!m_optFolderContextMenu.has_value()) {
-		m_optFolderContextMenu.emplace(CShellContextMenu());
-	}
-	return m_optFolderContextMenu.value();
-}
-
-
-void CFilerGridView::OnCreate(const CreateEvt& e)
-{
-	//Base Create
-	CFilerBindGridView::OnCreate(e);
 
 	//Directory watcher
 	m_spWatcher = std::make_shared<CDirectoryWatcher>(this, std::bind(&CFilerGridView::OnDirectoryWatch, this, phs::_1));
 
-	//Drag & Drop
-	//DropTarget
-	auto pDropTarget = new CDropTarget(this);
-	pDropTarget->IsDroppable = ([this](const std::vector<FORMATETC>& formats)->bool { return IsDroppable(formats); });
-	pDropTarget->Dropped = ([this](IDataObject *pDataObj, DWORD dwEffect)->void { Dropped(pDataObj, dwEffect); });
-	m_pDropTarget = CComPtr<IDropTarget>(pDropTarget);
-	GetWndPtr()->GetDropTargetManagerPtr()->RegisterDragDrop(this, m_pDropTarget);
-	//DropSource
-	m_pDropSource = CComPtr<IDropSource>(new CDropSource);
-	m_pDragSourceHelper.CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER);
+	//TODOTODO
+	////Drag & Drop
+	////DropTarget
+	//auto pDropTarget = new CDropTarget(this);
+	//pDropTarget->IsDroppable = ([this](const std::vector<FORMATETC>& formats)->bool { return IsDroppable(formats); });
+	//pDropTarget->Dropped = ([this](IDataObject *pDataObj, DWORD dwEffect)->void { Dropped(pDataObj, dwEffect); });
+	//m_pDropTarget = CComPtr<IDropTarget>(pDropTarget);
+	//GetWndPtr()->GetDropTargetManagerPtr()->RegisterDragDrop(this, m_pDropTarget);
+	////DropSource
+	//m_pDropSource = CComPtr<IDropSource>(new CDropSource);
+	//m_pDragSourceHelper.CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER);
 
 	//Insert rows
 	//m_pHeaderRow = std::make_shared<CPathRow>(this, GetHeaderProperty());
@@ -257,7 +175,165 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 	//for (auto& item : m_headerMenuItems) {
 	//	AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
 	//}
+
 }
+
+CFilerGridView::~CFilerGridView()
+{
+	if (m_spWatcher) { m_spWatcher->QuitWatching(); }
+}
+
+CShellContextMenu& CFilerGridView::GetFileContextMenu()
+{
+	if (!m_optFileContextMenu.has_value()) {
+		CShellContextMenu menu;
+
+		auto GetSelectedFiles = [this]()->std::vector<std::shared_ptr<CShellFile>> {
+			std::vector<std::shared_ptr<CShellFile>> files;
+			for(auto rowPtr : m_visRows){
+				if(rowPtr->GetIsSelected()){
+					auto spRow=std::dynamic_pointer_cast<CBindRow<std::shared_ptr<CShellFile>>>(rowPtr);
+					auto spFile = spRow->GetItem<std::shared_ptr<CShellFile>>();
+					files.push_back(spFile);
+				}
+			}
+			return files;
+		};
+		menu.Add(
+			std::make_unique<CMenuSeparator2>(),
+			std::make_unique<CMenuItem2>(L"Copy Text", 
+				[this]()->void {
+				BOOL bHandled = FALSE;
+				//TODOTODO
+				/*CGridView::OnCommandCopy(CommandEvent(GetWndPtr(), (WPARAM)0, (LPARAM)GetWndPtr()->m_hWnd, &bHandled));*/}),
+			std::make_unique<CMenuSeparator2>(),
+			std::make_unique<CMenuItem2>(L"PDF Split",
+				[this, GetSelectedFiles]()->void {
+				auto spDlg = std::make_shared<CPDFSplitDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
+				AddChildControlPtr(spDlg);
+				spDlg->Arrange(CalcCenterRectF(CSizeF(300, 200)));
+				//spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 200))));
+				GetWndPtr()->SetFocusToControl(spDlg); }),
+			std::make_unique<CMenuItem2>(L"PDF Merge", 
+				[this, GetSelectedFiles]()->void {
+				auto spDlg = std::make_shared<CPDFMergeDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
+				AddChildControlPtr(spDlg);
+				spDlg->Arrange(CalcCenterRectF(CSizeF(300, 400)));
+				//spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
+				GetWndPtr()->SetFocusToControl(spDlg); }),
+			std::make_unique<CMenuItem2>(L"PDF Extract", 
+				[this, GetSelectedFiles]()->void {
+				auto spDlg = std::make_shared<CPDFExtractDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
+				AddChildControlPtr(spDlg);
+				spDlg->Arrange(CalcCenterRectF(CSizeF(300, 400)));
+				//spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
+				GetWndPtr()->SetFocusToControl(spDlg); }),
+			std::make_unique<CMenuItem2>(L"PDF Unlock",
+				[this, GetSelectedFiles]()->void {
+				auto spDlg = std::make_shared<CPDFUnlockDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles());
+				AddChildControlPtr(spDlg);
+				spDlg->Arrange(CalcCenterRectF(CSizeF(300, 400)));
+				//spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
+				GetWndPtr()->SetFocusToControl(spDlg); })
+		);
+
+		menu.Add(std::make_unique<CMenuSeparator2>());
+
+		for (auto iter = ExeExtensions->begin(); iter != ExeExtensions->end(); ++iter) {
+			menu.Add(
+			std::make_unique<CMenuItem2>(iter->Name.c_str(),
+				[this, GetSelectedFiles, ee = *iter]()->void {
+				auto spDlg = std::make_shared<CExeExtensionDlg>(this, Folder.get_shared_unconst(), GetSelectedFiles(), ee);
+				AddChildControlPtr(spDlg);
+				spDlg->Arrange(CalcCenterRectF(CSizeF(300, 200)));
+				//spDlg->OnCreate(CreateEvt(GetWndPtr(), const_cast<CFilerGridView*>(this), CalcCenterRectF(CSizeF(300, 400))));
+				GetWndPtr()->SetFocusToControl(spDlg); })
+			);
+		}
+		m_optFileContextMenu.emplace(std::move(menu));
+	}
+	return m_optFileContextMenu.value();
+
+}
+
+CShellContextMenu& CFilerGridView::GetFolderContextMenu()
+{
+	if (!m_optFolderContextMenu.has_value()) {
+		m_optFolderContextMenu.emplace(CShellContextMenu());
+	}
+	return m_optFolderContextMenu.value();
+}
+
+//
+//void CFilerGridView::OnCreate(const CreateEvt& e)
+//{
+//	//Base Create
+//	CFilerBindGridView::OnCreate(e);
+//
+//	//Directory watcher
+//	m_spWatcher = std::make_shared<CDirectoryWatcher>(this, std::bind(&CFilerGridView::OnDirectoryWatch, this, phs::_1));
+//
+//	//Drag & Drop
+//	//DropTarget
+//	auto pDropTarget = new CDropTarget(this);
+//	pDropTarget->IsDroppable = ([this](const std::vector<FORMATETC>& formats)->bool { return IsDroppable(formats); });
+//	pDropTarget->Dropped = ([this](IDataObject *pDataObj, DWORD dwEffect)->void { Dropped(pDataObj, dwEffect); });
+//	m_pDropTarget = CComPtr<IDropTarget>(pDropTarget);
+//	GetWndPtr()->GetDropTargetManagerPtr()->RegisterDragDrop(this, m_pDropTarget);
+//	//DropSource
+//	m_pDropSource = CComPtr<IDropSource>(new CDropSource);
+//	m_pDragSourceHelper.CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER);
+//
+//	//Insert rows
+//	//m_pHeaderRow = std::make_shared<CPathRow>(this, GetHeaderProperty());
+//	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this);
+//	m_pFilterRow = std::make_shared<CRow>(this);
+//
+//	//m_allRows.idx_push_back(m_pHeaderRow);
+//	m_allRows.idx_push_back(m_pNameHeaderRow);
+//	m_allRows.idx_push_back(m_pFilterRow);
+//
+//	m_frozenRowCount = 2;
+//
+//	//Insert columns if not initialized
+//
+//	
+//	//if (m_allCols.empty()) {
+//
+//		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CRowIndexColumn); })) 
+//		{ 
+//			m_allCols.idx_push_back(std::make_shared<CRowIndexColumn>(this));
+//		}
+//		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); })) 
+//		{ 
+//			m_allCols.idx_push_back(std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name"));
+//		}
+//		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileDispExtColumn<std::shared_ptr<CShellFile>>); })) {
+//			m_allCols.idx_push_back(std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"));
+//		}
+//		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileSizeColumn<std::shared_ptr<CShellFile>>); })) {
+//			m_allCols.idx_push_back(std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this));
+//		}
+//		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileLastWriteColumn<std::shared_ptr<CShellFile>>); })) {
+//			m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this));
+//		}
+//
+//		m_frozenColumnCount = 1;
+//	//}
+//
+//	//Header menu items
+//	//for (auto iter = m_columnAllDictionary.begin(); iter != m_columnAllDictionary.end(); ++iter) {
+//	//	auto cell = Cell(m_rowNameHeader, iter->DataPtr);
+//	//	auto str = cell->GetString();
+//	//	m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
+//	//		IDM_VISIBLEROWHEADERCOLUMN + std::distance(m_columnAllDictionary.begin(), iter),
+//	//		Cell(m_rowNameHeader, iter->DataPtr)->GetString(), this, iter->DataPtr.get()));
+//	//}
+//
+//	//for (auto& item : m_headerMenuItems) {
+//	//	AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
+//	//}
+//}
 
 bool CFilerGridView::IsDroppable(const std::vector<FORMATETC>& formats)
 {
@@ -953,12 +1029,13 @@ std::vector<CIDL> CFilerGridView::GetSelectedChildIDLVector()
 
 bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 {
-	auto pDlg = std::make_shared<CIncrementalCopyDlg>(
+	auto spDlg = std::make_shared<CIncrementalCopyDlg>(
 		GetWndPtr(), 
 		destIDL, Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
-
-	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(400, 600))));
-	GetWndPtr()->SetFocusToControl(pDlg);
+	AddChildControlPtr(spDlg);
+	spDlg->Arrange(CalcCenterRectF(CSizeF(400, 600)));
+	//pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(400, 600))));
+	GetWndPtr()->SetFocusToControl(spDlg);
 
 	return true;
 }
@@ -966,12 +1043,13 @@ bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 bool CFilerGridView::CopySelectedFilesTo(const CIDL& destIDL)
 {
 	//Create
-	auto pDlg = std::make_shared<CCopyDlg>(
+	auto spDlg = std::make_shared<CCopyDlg>(
 		GetWndPtr(), 
 		destIDL, Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
-
-	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
-	GetWndPtr()->SetFocusToControl(pDlg);
+	AddChildControlPtr(spDlg);
+	spDlg->Arrange(CalcCenterRectF(CSizeF(300, 400)));
+	//pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
+	GetWndPtr()->SetFocusToControl(spDlg);
 
 	return true;
 }
@@ -979,12 +1057,13 @@ bool CFilerGridView::CopySelectedFilesTo(const CIDL& destIDL)
 bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 {
 	//Create
-	auto pDlg = std::make_shared<CMoveDlg>(
+	auto spDlg = std::make_shared<CMoveDlg>(
 		GetWndPtr(),
 		destIDL, Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
-
-	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
-	GetWndPtr()->SetFocusToControl(pDlg);
+	AddChildControlPtr(spDlg);
+	spDlg->Arrange(CalcCenterRectF(CSizeF(300, 400)));
+	//pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
+	GetWndPtr()->SetFocusToControl(spDlg);
 
 	return true;
 }
@@ -992,12 +1071,14 @@ bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 bool CFilerGridView::DeleteSelectedFiles()
 {
 	//Create
-	auto pDlg = std::make_shared<CDeleteDlg>(
+	auto spDlg = std::make_shared<CDeleteDlg>(
 		GetWndPtr(),
 		Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
-	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
-	GetWndPtr()->SetFocusToControl(pDlg);
+	AddChildControlPtr(spDlg);
+	spDlg->Arrange(CalcCenterRectF(CSizeF(300, 400)));
+	//pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
+	GetWndPtr()->SetFocusToControl(spDlg);
 
 	return true;
 }

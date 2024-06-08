@@ -50,6 +50,7 @@ protected:
 
 	bool m_isTabStop = false;
 public:
+	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<bool> IsEnabled;
 	reactive_property_ptr<bool> IsFocusable;
 	reactive_property_ptr<DockEnum> Dock;
@@ -61,7 +62,7 @@ public:
 public:
 
 	CD2DWControl(CD2DWControl* pParentControl = nullptr):
-		m_pParentControl(pParentControl), IsEnabled(true), IsFocusable(true){}
+		m_pParentControl(pParentControl),Dummy(std::make_shared<int>(0)), IsEnabled(true), IsFocusable(true){}
 	virtual ~CD2DWControl() = default;
 
 	virtual CD2DWWindow* GetWndPtr()const { return m_pParentControl->GetWndPtr(); }
@@ -82,7 +83,7 @@ public:
 	/***************/
 	/* Control Msg */
 	/***************/
-	virtual void OnCreate(const CreateEvt& e) override;
+	//virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnClose(const CloseEvent& e) override;
 	virtual void OnPaint(const PaintEvent& e) override { ProcessMessageToAll(&CD2DWControl::OnPaint, e); }

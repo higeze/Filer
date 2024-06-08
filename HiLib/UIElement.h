@@ -387,7 +387,7 @@ public:
 	/*********/
 	/* event */
 	/*********/
-	virtual void OnCreate(const CreateEvt& e) {}
+	//virtual void OnCreate(const CreateEvt& e) {}
 	virtual void OnDestroy(const DestroyEvent& e) {}
 	virtual void OnPaint(const PaintEvent& e) {}
 	virtual void OnClosing(const ClosingEvent& e) {}

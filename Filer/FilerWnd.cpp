@@ -43,7 +43,6 @@
 #include "Dispatcher.h"
 #include "Performance.h"
 
-#include "SplitContainer.h"
 #include "ShellContextMenu.h"
 
 #include "PreviewButton.h"
@@ -311,11 +310,11 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 			pr(spBottomStatus, DockEnum::Bottom),
 			pr(spFillDock, DockEnum::Fill));
 
-		spDock->OnCreate(CreateEvt(this, this, CRectF()));
+		//spDock->OnCreate(CreateEvt(this, this, CRectF()));
 	} else {
-		for (auto& child : m_childControls) {
-			child->OnCreate(CreateEvt(this, this, CRectF()));
-		}
+		//for (auto& child : m_childControls) {
+		//	child->OnCreate(CreateEvt(this, this, CRectF()));
+		//}
 	}
 
 	//Launcher Binding

@@ -28,9 +28,6 @@
 //HRESULT InitDisplayAttrbute();
 //HRESULT UninitDisplayAttrbute();
 
-
-
-
 /***************/
 /* constructor */
 /***************/
@@ -50,6 +47,50 @@ CTextBox::CTextBox(
 {
 	m_pVScroll->ScrollChanged.connect([this]() { ClearActualRects(); });
 	m_pHScroll->ScrollChanged.connect([this]() { ClearActualRects(); });
+
+//TODOTTODO	Caret.get_unconst()->Point.set(CPointF(0, GetLineHeight() * 0.5f));
+	Caret.get_unconst()->Point.set(CPointF(0.f, 0.f));
+	 
+	Text.subscribe([this](auto e)
+	{
+		UpdateAll();
+		switch (e.action) {
+			case notify_container_changed_action::insert://new,null,idx,-1
+				GetTextStorePtr()->OnTextChange(e.new_starting_index, e.new_starting_index, e.new_starting_index + e.new_items.size());
+				MoveCaret(e.new_starting_index + e.new_items.size(), GetOriginCharRects()[e.new_starting_index + e.new_items.size()].CenterPoint());
+				break;
+			case notify_container_changed_action::erase://null,old,-1, idx
+				GetTextStorePtr()->OnTextChange(e.old_starting_index, e.old_starting_index + e.old_items.size(), e.old_starting_index);
+				MoveCaret(e.old_starting_index, GetOriginCharRects()[e.old_starting_index].CenterPoint());
+				break;
+			case notify_container_changed_action::replace://new,old,idx,idx
+				GetTextStorePtr()->OnTextChange(e.new_starting_index, e.old_starting_index + e.old_items.size(), e.new_starting_index + e.new_items.size());
+				MoveCaret(e.new_starting_index + e.new_items.size(), GetOriginCharRects()[e.new_starting_index + e.new_items.size()].CenterPoint());
+				break;
+			case notify_container_changed_action::reset://new,old,0,0
+				GetTextStorePtr()->OnTextChange(0, 0, 0);
+				MoveCaret(0, CPointF(0, GetLineHeight() * 0.5f));
+				break;
+			default:
+				break;
+		}
+	}
+	, Dummy);
+
+	Caret.get_unconst()->Current.subscribe([this](auto) { EnsureVisibleCaret(); }, Dummy);
+	//m_carets.Subscribe(
+	//	[this](const std::tuple<int, int, int, int, int>& value)->void {
+	//		EnsureVisibleCaret();
+	//	}
+	//);
+
+	//TODOTODO
+	//if (GetIsFocused()) {
+	//	m_isFirstDrawCaret = true;
+	//}
+
+	InitTSF();
+
 }
 
 CTextBox::CTextBox(
@@ -406,52 +447,52 @@ void CTextBox::EnsureVisibleCaret()
 /* Windows Message */
 /*******************/
 
-void CTextBox::OnCreate(const CreateEvt& e)
-{
-
-	CD2DWControl::OnCreate(e);
-
-	Caret.get_unconst()->Point.set(CPointF(0, GetLineHeight() * 0.5f));
-	 
-	Text.subscribe([this](auto e)
-	{
-		UpdateAll();
-		switch (e.action) {
-			case notify_container_changed_action::insert://new,null,idx,-1
-				GetTextStorePtr()->OnTextChange(e.new_starting_index, e.new_starting_index, e.new_starting_index + e.new_items.size());
-				MoveCaret(e.new_starting_index + e.new_items.size(), GetOriginCharRects()[e.new_starting_index + e.new_items.size()].CenterPoint());
-				break;
-			case notify_container_changed_action::erase://null,old,-1, idx
-				GetTextStorePtr()->OnTextChange(e.old_starting_index, e.old_starting_index + e.old_items.size(), e.old_starting_index);
-				MoveCaret(e.old_starting_index, GetOriginCharRects()[e.old_starting_index].CenterPoint());
-				break;
-			case notify_container_changed_action::replace://new,old,idx,idx
-				GetTextStorePtr()->OnTextChange(e.new_starting_index, e.old_starting_index + e.old_items.size(), e.new_starting_index + e.new_items.size());
-				MoveCaret(e.new_starting_index + e.new_items.size(), GetOriginCharRects()[e.new_starting_index + e.new_items.size()].CenterPoint());
-				break;
-			case notify_container_changed_action::reset://new,old,0,0
-				GetTextStorePtr()->OnTextChange(0, 0, 0);
-				MoveCaret(0, CPointF(0, GetLineHeight() * 0.5f));
-				break;
-			default:
-				break;
-		}
-	}
-	, shared_from_this());
-
-	Caret.get_unconst()->Current.subscribe([this](auto) { EnsureVisibleCaret(); }, shared_from_this());
-	//m_carets.Subscribe(
-	//	[this](const std::tuple<int, int, int, int, int>& value)->void {
-	//		EnsureVisibleCaret();
-	//	}
-	//);
-
-	if (GetIsFocused()) {
-		m_isFirstDrawCaret = true;
-	}
-
-	InitTSF();
-}
+//void CTextBox::OnCreate(const CreateEvt& e)
+//{
+//
+//	CD2DWControl::OnCreate(e);
+//
+//	Caret.get_unconst()->Point.set(CPointF(0, GetLineHeight() * 0.5f));
+//	 
+//	Text.subscribe([this](auto e)
+//	{
+//		UpdateAll();
+//		switch (e.action) {
+//			case notify_container_changed_action::insert://new,null,idx,-1
+//				GetTextStorePtr()->OnTextChange(e.new_starting_index, e.new_starting_index, e.new_starting_index + e.new_items.size());
+//				MoveCaret(e.new_starting_index + e.new_items.size(), GetOriginCharRects()[e.new_starting_index + e.new_items.size()].CenterPoint());
+//				break;
+//			case notify_container_changed_action::erase://null,old,-1, idx
+//				GetTextStorePtr()->OnTextChange(e.old_starting_index, e.old_starting_index + e.old_items.size(), e.old_starting_index);
+//				MoveCaret(e.old_starting_index, GetOriginCharRects()[e.old_starting_index].CenterPoint());
+//				break;
+//			case notify_container_changed_action::replace://new,old,idx,idx
+//				GetTextStorePtr()->OnTextChange(e.new_starting_index, e.old_starting_index + e.old_items.size(), e.new_starting_index + e.new_items.size());
+//				MoveCaret(e.new_starting_index + e.new_items.size(), GetOriginCharRects()[e.new_starting_index + e.new_items.size()].CenterPoint());
+//				break;
+//			case notify_container_changed_action::reset://new,old,0,0
+//				GetTextStorePtr()->OnTextChange(0, 0, 0);
+//				MoveCaret(0, CPointF(0, GetLineHeight() * 0.5f));
+//				break;
+//			default:
+//				break;
+//		}
+//	}
+//	, shared_from_this());
+//
+//	Caret.get_unconst()->Current.subscribe([this](auto) { EnsureVisibleCaret(); }, shared_from_this());
+//	//m_carets.Subscribe(
+//	//	[this](const std::tuple<int, int, int, int, int>& value)->void {
+//	//		EnsureVisibleCaret();
+//	//	}
+//	//);
+//
+//	if (GetIsFocused()) {
+//		m_isFirstDrawCaret = true;
+//	}
+//
+//	InitTSF();
+//}
 
 void CTextBox::OnDestroy(const DestroyEvent& e)
 {

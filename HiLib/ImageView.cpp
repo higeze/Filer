@@ -38,7 +38,8 @@ CImageView::CImageView(CD2DWControl* pParentControl)
 		Open(doc.GetPath());
 	}, Dummy);
 
-
+	AddChildControlPtr(m_spVScroll);
+	AddChildControlPtr(m_spHScroll);
 }
 
 CImageView::~CImageView() = default;
@@ -94,14 +95,14 @@ void CImageView::Close()
 /****************/
 /* EventHandler */
 /****************/
-
-void CImageView::OnCreate(const CreateEvt& e)
-{
-	CD2DWControl::OnCreate(e);
-	auto [rcVertical, rcHorizontal] = GetRects();
-	m_spVScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcVertical));
-	m_spHScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcHorizontal));
-}
+//
+//void CImageView::OnCreate(const CreateEvt& e)
+//{
+//	CD2DWControl::OnCreate(e);
+//	auto [rcVertical, rcHorizontal] = GetRects();
+//	m_spVScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcVertical));
+//	m_spHScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcHorizontal));
+//}
 
 CRectF CImageView::GetRenderRectInWnd()
 {

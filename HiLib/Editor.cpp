@@ -24,6 +24,35 @@ CEditor::CEditor(CD2DWControl* pParentControl)
 	m_spTextBox->SetIsScrollable(true);
 
 	m_spStatusBar->IsFocusable.set(false);
+
+	OpenCommand.subscribe([this](HWND hWnd)
+	{
+		m_spTextBox->Caret.set(CTextCaret());
+		m_spTextBox->UpdateAll();
+	}, Dummy);
+
+	Encoding.subscribe([this](const encoding_type& e)
+	{
+		m_spStatusBar->Text.set(str2wstr(std::string(nameof::nameof_enum(e))));
+	}, Dummy);
+
+	auto [rcFilter, rcText, rcStatus] = GetRects();
+	AddChildControlPtr(m_spFilterBox);
+	AddChildControlPtr(m_spTextBox);
+	AddChildControlPtr(m_spStatusBar);
+
+	m_spFilterBox->Arrange(rcFilter);
+	m_spTextBox->Arrange(rcText);
+	m_spStatusBar->Arrange(rcStatus);
+
+	m_spFilterBox->SetIsEnterText(true);
+	//m_spFilterBox->SetIsTabStop(true);
+	//m_spTextBox->SetIsTabStop(true);
+
+	m_spFilterBox->Text.subscribe([this](auto)
+	{
+		m_spTextBox->ClearHighliteRects();
+	}, Dummy);
 }
 
 
@@ -41,36 +70,36 @@ std::tuple<CRectF, CRectF, CRectF> CEditor::GetRects() const
 	return { rcFilter, rcText, rcStatus };
 }
 
-
-void CEditor::OnCreate(const CreateEvt& e)
-{
-	CD2DWControl::OnCreate(e);
-
-	OpenCommand.subscribe([this](HWND hWnd)
-	{
-		m_spTextBox->Caret.set(CTextCaret());
-		m_spTextBox->UpdateAll();
-	}, shared_from_this());
-
-	Encoding.subscribe([this](const encoding_type& e)
-	{
-		m_spStatusBar->Text.set(str2wstr(std::string(nameof::nameof_enum(e))));
-	}, shared_from_this());
-
-	auto [rcFilter, rcText, rcStatus] = GetRects();
-	m_spFilterBox->OnCreate(CreateEvt(GetWndPtr(), this, rcFilter));
-	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, rcText));
-	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
-
-	m_spFilterBox->SetIsEnterText(true);
-	//m_spFilterBox->SetIsTabStop(true);
-	//m_spTextBox->SetIsTabStop(true);
-
-	m_spFilterBox->Text.subscribe([this](auto)
-	{
-		m_spTextBox->ClearHighliteRects();
-	}, shared_from_this());
-}
+//
+//void CEditor::OnCreate(const CreateEvt& e)
+//{
+//	CD2DWControl::OnCreate(e);
+//
+//	OpenCommand.subscribe([this](HWND hWnd)
+//	{
+//		m_spTextBox->Caret.set(CTextCaret());
+//		m_spTextBox->UpdateAll();
+//	}, shared_from_this());
+//
+//	Encoding.subscribe([this](const encoding_type& e)
+//	{
+//		m_spStatusBar->Text.set(str2wstr(std::string(nameof::nameof_enum(e))));
+//	}, shared_from_this());
+//
+//	auto [rcFilter, rcText, rcStatus] = GetRects();
+//	m_spFilterBox->OnCreate(CreateEvt(GetWndPtr(), this, rcFilter));
+//	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, rcText));
+//	m_spStatusBar->OnCreate(CreateEvt(GetWndPtr(), this, rcStatus));
+//
+//	m_spFilterBox->SetIsEnterText(true);
+//	//m_spFilterBox->SetIsTabStop(true);
+//	//m_spTextBox->SetIsTabStop(true);
+//
+//	m_spFilterBox->Text.subscribe([this](auto)
+//	{
+//		m_spTextBox->ClearHighliteRects();
+//	}, shared_from_this());
+//}
 
 void CEditor::OnPaint(const PaintEvent& e)
 {

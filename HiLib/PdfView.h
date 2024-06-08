@@ -121,7 +121,7 @@ public:
 	CPdfViewExtractDlg(CD2DWControl* pParentControl,
 		CPDFDoc& doc);
 	virtual ~CPdfViewExtractDlg() = default;
-	void OnCreate(const CreateEvt& e) override;
+	//void OnCreate(const CreateEvt& e) override;
 	virtual void Measure(const CSizeF& availableSize) override;
 	virtual void Arrange(const CRectF& rc) override;
 };
@@ -238,7 +238,7 @@ public:
 	/******************/
 	/* Windows Message*/
 	/******************/
-	virtual void OnCreate(const CreateEvt& e);
+	//virtual void OnCreate(const CreateEvt& e);
 public:
 
 	virtual void OnPaint(const PaintEvent& e) { m_pMachine->process_event(e); }

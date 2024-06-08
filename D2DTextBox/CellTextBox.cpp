@@ -11,17 +11,23 @@ CCellTextBox::CCellTextBox(
 {
 	m_acceptsTab = false;
 	m_isEnterText = true;
-}
-
-void CCellTextBox::OnCreate(const CreateEvt& e)
-{
-	CTextBox::OnCreate(e);
 
 	Text.subscribe([this](auto notify)->void
 	{
 		if (m_changed) { m_changed(*Text); }
-	}, shared_from_this());
+	}, Dummy);
+
 }
+//
+//void CCellTextBox::OnCreate(const CreateEvt& e)
+//{
+//	CTextBox::OnCreate(e);
+//
+//	Text.subscribe([this](auto notify)->void
+//	{
+//		if (m_changed) { m_changed(*Text); }
+//	}, shared_from_this());
+//}
 
 void CCellTextBox::OnClose(const CloseEvent& e)
 {

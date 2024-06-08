@@ -10,10 +10,10 @@ CD2DWDialog::CD2DWDialog(CD2DWControl* pParentControl)
 
 CD2DWDialog::~CD2DWDialog() = default;
 
-void CD2DWDialog::OnCreate(const CreateEvt& e)
-{ 
-	CD2DWControl::OnCreate(e);
-}
+//void CD2DWDialog::OnCreate(const CreateEvt& e)
+//{ 
+//	CD2DWControl::OnCreate(e);
+//}
 void CD2DWDialog::OnDestroy(const DestroyEvent& e)
 {
 	CD2DWControl::OnDestroy(e);

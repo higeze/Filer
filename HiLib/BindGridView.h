@@ -162,6 +162,52 @@ public:
 
 		//std::vector<std::shared_ptr<CRow>> rows;
 		m_initRows = ::get(arg<"rows"_s>(), args..., default_(m_initRows));
+
+		switch (m_bindType) {
+			case BindType::Row:
+			{
+				//VectorChanged
+				ItemsSource.subscribe([&](const auto& e) 
+				{
+					//ItemsSource->block_subject();
+					this->subscribe_detail_row(e); 
+					//ItemsSource->unblock_subject();
+				}, Dummy);
+
+				//PushColumn
+				for (auto& spCol : m_initColumns) {
+					spCol->SetSheetPtr(this);
+					PushColumn(spCol);
+				}
+
+				//PushRow
+				for (size_t i = 0; i < ItemsSource->size(); i++) {
+					PushRow(std::make_shared<TRow>(this));
+				}
+			}
+			break;
+			case BindType::Column:
+			{
+				//VectorChanged
+				ItemsSource.subscribe([this](const auto& e) { this->subscribe_detail_column(e); }, Dummy);
+
+				//PushRow
+				for (auto& spRow : m_initRows) {
+					spRow->SetSheetPtr(this);
+					PushRow(spRow);
+				}
+
+				//PushColumn
+				for (size_t i = 0; i < ItemsSource->size(); i++) {
+					PushColumn(std::make_shared<TCol>(this));
+				}
+
+			}
+			break;
+			default:
+			break;
+		}
+
 	}
 
 	virtual std::shared_ptr<CCell> Cell(const std::shared_ptr<CRow>& spRow, const std::shared_ptr<CColumn>& spColumn)override
@@ -290,58 +336,58 @@ public:
 	}
 
 
-	void OnCreate(const CreateEvt& e) override
-	{
-		CD2DWControl::OnCreate(e);
+	//void OnCreate(const CreateEvt& e) override
+	//{
+	//	CD2DWControl::OnCreate(e);
 
-		switch (m_bindType) {
-			case BindType::Row:
-			{
-				//VectorChanged
-				ItemsSource.subscribe([&](const auto& e) 
-				{
-					//ItemsSource->block_subject();
-					this->subscribe_detail_row(e); 
-					//ItemsSource->unblock_subject();
-				}, shared_from_this());
+	//	switch (m_bindType) {
+	//		case BindType::Row:
+	//		{
+	//			//VectorChanged
+	//			ItemsSource.subscribe([&](const auto& e) 
+	//			{
+	//				//ItemsSource->block_subject();
+	//				this->subscribe_detail_row(e); 
+	//				//ItemsSource->unblock_subject();
+	//			}, shared_from_this());
 
-				//PushColumn
-				for (auto& spCol : m_initColumns) {
-					spCol->SetSheetPtr(this);
-					PushColumn(spCol);
-				}
+	//			//PushColumn
+	//			for (auto& spCol : m_initColumns) {
+	//				spCol->SetSheetPtr(this);
+	//				PushColumn(spCol);
+	//			}
 
-				//PushRow
-				for (size_t i = 0; i < ItemsSource->size(); i++) {
-					PushRow(std::make_shared<TRow>(this));
-				}
-			}
-			break;
-			case BindType::Column:
-			{
-				//VectorChanged
-				ItemsSource.subscribe([this](const auto& e) { this->subscribe_detail_column(e); }, shared_from_this());
+	//			//PushRow
+	//			for (size_t i = 0; i < ItemsSource->size(); i++) {
+	//				PushRow(std::make_shared<TRow>(this));
+	//			}
+	//		}
+	//		break;
+	//		case BindType::Column:
+	//		{
+	//			//VectorChanged
+	//			ItemsSource.subscribe([this](const auto& e) { this->subscribe_detail_column(e); }, shared_from_this());
 
-				//PushRow
-				for (auto& spRow : m_initRows) {
-					spRow->SetSheetPtr(this);
-					PushRow(spRow);
-				}
+	//			//PushRow
+	//			for (auto& spRow : m_initRows) {
+	//				spRow->SetSheetPtr(this);
+	//				PushRow(spRow);
+	//			}
 
-				//PushColumn
-				for (size_t i = 0; i < ItemsSource->size(); i++) {
-					PushColumn(std::make_shared<TCol>(this));
-				}
+	//			//PushColumn
+	//			for (size_t i = 0; i < ItemsSource->size(); i++) {
+	//				PushColumn(std::make_shared<TCol>(this));
+	//			}
 
-			}
-			break;
-			default:
-			break;
-		}
+	//		}
+	//		break;
+	//		default:
+	//		break;
+	//	}
 
-		UpdateAll();
-		SubmitUpdate();
-	}
+	//	UpdateAll();
+	//	SubmitUpdate();
+	//}
 
 	/****************/
 	/* StateMachine */

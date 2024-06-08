@@ -40,7 +40,7 @@ class CFilerGridView;
 class CShellFolder;
 class CPerformance;
 
-#include "SplitContainer.h"
+#include "DockPanel.h"
 #include "ColoredTextBox.h"
 #include "StatusBar.h"
 #include "PreviewButton.h"
@@ -290,7 +290,12 @@ private:
 		get_to(j, "LauncherProperty", o.m_spLauncherProp);
 		get_to(j, "FavoritesProperty", o.m_spFavoritesProp);
 		get_to(j, "ExeExtensionProperty", o.m_spExeExProp);
-		get_to(j, "Children", o.m_childControls);
+
+		//decltype(o.m_childControls) temp;
+		//get_to(j, "Children", temp);
+		//for (auto child : temp) {
+		//	o.AddChildControlPtr(child);
+		//}
 	}
 };
 

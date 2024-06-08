@@ -5,14 +5,18 @@
 /* CSplitter */
 /*************/
 CSplitter::CSplitter(CD2DWControl* pParentControl)
-	:CD2DWControl(pParentControl), Minimum(-1.f), Maximum(-1.f), Value(FLT_MAX){}
-
-void CSplitter::OnCreate(const CreateEvt& e)
+	:CD2DWControl(pParentControl), Minimum(-1.f), Maximum(-1.f), Value(FLT_MAX)
 {
-	CD2DWControl::OnCreate(e);
-	Minimum.subscribe([this](auto min) { Value.set((std::max)(min, *Value)); }, shared_from_this());
-	Maximum.subscribe([this](auto max) { Value.set((std::min)(max, *Value)); }, shared_from_this());
+	Minimum.subscribe([this](auto min) { Value.set((std::max)(min, *Value)); }, Dummy);
+	Maximum.subscribe([this](auto max) { Value.set((std::min)(max, *Value)); }, Dummy);
 }
+//
+//void CSplitter::OnCreate(const CreateEvt& e)
+//{
+//	CD2DWControl::OnCreate(e);
+//	Minimum.subscribe([this](auto min) { Value.set((std::max)(min, *Value)); }, shared_from_this());
+//	Maximum.subscribe([this](auto max) { Value.set((std::min)(max, *Value)); }, shared_from_this());
+//}
 
 void CSplitter::OnPaint(const PaintEvent& e)
 {

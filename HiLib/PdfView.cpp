@@ -69,20 +69,20 @@ CPdfViewExtractDlg::CPdfViewExtractDlg(CD2DWControl* pParentControl, CPDFDoc& do
 	}, Dummy);
 }
 
-void CPdfViewExtractDlg::OnCreate(const CreateEvt& e)
-{
-	//Base
-	CD2DWDialog::OnCreate(e);
-	
-	//Textbox
-	m_spParameter->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-
-	//OK button
-	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-
-	//Cancel button
-	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-}
+//void CPdfViewExtractDlg::OnCreate(const CreateEvt& e)
+//{
+//	//Base
+//	CD2DWDialog::OnCreate(e);
+//	
+//	//Textbox
+//	m_spParameter->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//
+//	//OK button
+//	m_spButtonDo->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//
+//	//Cancel button
+//	m_spButtonCancel->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//}
 
 
 void CPdfViewExtractDlg::Measure(const CSizeF& availableSize)
@@ -150,6 +150,13 @@ CPdfView::CPdfView(CD2DWControl* pParentControl)
 			//Do nothing
 		}
 	}, Dummy);
+
+	Find.subscribe([this](const decltype(Find)::notify_type& notify)
+	{
+		GetWndPtr()->InvalidateRect(NULL, FALSE);
+	}
+	, Dummy);
+
 }
 
 CPdfView::~CPdfView() = default;
@@ -158,18 +165,18 @@ CPdfView::~CPdfView() = default;
 /* EventHandler */
 /****************/
 
-void CPdfView::OnCreate(const CreateEvt& e)
-{
-	CD2DWControl::OnCreate(e);
-	auto [rcVertical, rcHorizontal] = GetRects();
-	m_spVScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcVertical));
-	m_spHScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcHorizontal));
-	Find.subscribe([this](const decltype(Find)::notify_type& notify)
-	{
-		GetWndPtr()->InvalidateRect(NULL, FALSE);
-	}
-	, shared_from_this());
-}
+//void CPdfView::OnCreate(const CreateEvt& e)
+//{
+//	CD2DWControl::OnCreate(e);
+//	auto [rcVertical, rcHorizontal] = GetRects();
+//	m_spVScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcVertical));
+//	m_spHScroll->OnCreate(CreateEvt(GetWndPtr(), this, rcHorizontal));
+//	Find.subscribe([this](const decltype(Find)::notify_type& notify)
+//	{
+//		GetWndPtr()->InvalidateRect(NULL, FALSE);
+//	}
+//	, Dummy);
+//}
 
 CRectF CPdfView::GetRenderRectInWnd()
 {
@@ -812,7 +819,7 @@ void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 			this,
 			*PDF.get_unconst());
 
-		spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CRectF()));
+		AddChildControlPtr(spDlg);
 		spDlg->Measure(CSizeF(FLT_MAX, FLT_MAX));
 		spDlg->Arrange(CalcCenterRectF(spDlg->DesiredSize()));
 		GetWndPtr()->SetFocusToControl(spDlg);
@@ -1217,7 +1224,8 @@ void CPdfView::OpenWithPasswordHandling(const std::wstring& path)
 					//Need to call with dispatcher, otherwise remaing message in message que is not properly handled
 					GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
 				}, shared_from_this());
-			spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CalcCenterRectF(CSizeF(300, 200))));
+			AddChildControlPtr(spDlg);
+			spDlg->Arrange(CalcCenterRectF(CSizeF(300, 200)));
 			GetWndPtr()->SetFocusToControl(spDlg);
 		} else {
 			PDF.get_unconst()->Close();

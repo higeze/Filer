@@ -9,7 +9,7 @@ public:
 	void Measure(const CSizeF& availableSize) override;
 	void Arrange(const CRectF& rc) override;
 
-	void OnCreate(const CreateEvt& e) override;
+	//void OnCreate(const CreateEvt& e) override;
 	void OnPaint(const PaintEvent& e) override;
 
 	//Add
@@ -39,6 +39,10 @@ public:
 	{
 		from_json(j, static_cast<CD2DWControl&>(o));
 
-		get_to(j, "Children", o.m_childControls);
+		decltype(o.m_childControls) temp;
+		get_to(j, "Children", temp);
+		for (auto child : temp) {
+			o.AddChildControlPtr(child);
+		}
 	}
 };

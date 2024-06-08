@@ -53,14 +53,8 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 extern HWND g_main;
 
 CCheckableFileGrid::CCheckableFileGrid(CD2DWControl* pParentControl)
-	:CFilerBindGridView(pParentControl){}
-
-
-void CCheckableFileGrid::OnCreate(const CreateEvt& e)
+	:CFilerBindGridView(pParentControl)
 {
-	//Base Create
-	CFilerBindGridView::OnCreate(e);
-
 	//Insert rows
 	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this);
 	m_pFilterRow = std::make_shared<CRow>(this);
@@ -84,9 +78,40 @@ void CCheckableFileGrid::OnCreate(const CreateEvt& e)
 		m_frozenColumnCount = 1;
 	}
 
-	PostUpdate(Updates::All);
-	SubmitUpdate();
 }
+
+
+//void CCheckableFileGrid::OnCreate(const CreateEvt& e)
+//{
+//	//Base Create
+//	CFilerBindGridView::OnCreate(e);
+//
+//	//Insert rows
+//	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this);
+//	m_pFilterRow = std::make_shared<CRow>(this);
+//
+//	m_allRows.idx_push_back(m_pNameHeaderRow);
+//	m_allRows.idx_push_back(m_pFilterRow);
+//
+//	m_frozenRowCount = 2;
+//
+//
+//	//Insert columns if not initialized
+//	if (m_allCols.empty()) {
+//		//m_pNameColumn = std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
+//		PushColumns(
+//			std::make_shared<CRowIndexColumn>(this),
+//			std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this, L"Name"),
+//			std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"),
+//			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this),
+//			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this));
+//
+//		m_frozenColumnCount = 1;
+//	}
+//
+//	PostUpdate(Updates::All);
+//	SubmitUpdate();
+//}
 
 void CCheckableFileGrid::AddItem(const std::shared_ptr<CShellFile>& spFile)
 {

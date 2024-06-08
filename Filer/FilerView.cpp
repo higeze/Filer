@@ -109,7 +109,8 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 				}
 			}, shared_from_this());
 
-			recentGridView->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+			//recentGridView->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+			AddChildControlPtr(recentGridView);
 			recentGridView->PostUpdate(Updates::All);
 			recentGridView->SubmitUpdate();
 			recentGridView->Measure(CSizeF(FLT_MAX, FLT_MAX));
@@ -119,19 +120,25 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 		}
 
 	}, m_spRecentButton);
+
+	AddChildControlPtr(m_spTextBox);
+	AddChildControlPtr(m_spRecentButton);
+	AddChildControlPtr(m_spFavoriteGrid);
+	AddChildControlPtr(m_spFileGrid);
+
 }
 
 CFilerView::~CFilerView() = default;
 
-void CFilerView::OnCreate(const CreateEvt& e)
-{
-	CD2DWControl::OnCreate(e);
-
-	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-	m_spRecentButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-	m_spFavoriteGrid->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-	m_spFileGrid->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-}
+//void CFilerView::OnCreate(const CreateEvt& e)
+//{
+//	CD2DWControl::OnCreate(e);
+//
+//	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//	m_spRecentButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//	m_spFavoriteGrid->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//	m_spFileGrid->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+//}
 
 void CFilerView::OnRect(const RectEvent& e)
 {

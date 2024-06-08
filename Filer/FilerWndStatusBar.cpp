@@ -12,13 +12,16 @@ CFilerWndStatusBar::CFilerWndStatusBar(CD2DWControl* pParentControl)
 	m_hCounterCPU(nullptr),
 	m_hCounterMemory(nullptr),
 	m_hCounterThread(nullptr),
-	m_hCounterHandle(nullptr){}
-
-void CFilerWndStatusBar::OnCreate(const CreateEvt& e)
+	m_hCounterHandle(nullptr)
 {
-	CStatusBar::OnCreate(e);
 	m_timer.run([this]()->void { Update(); }, std::chrono::milliseconds(3000));
 }
+
+//void CFilerWndStatusBar::OnCreate(const CreateEvt& e)
+//{
+//	CStatusBar::OnCreate(e);
+//	m_timer.run([this]()->void { Update(); }, std::chrono::milliseconds(3000));
+//}
 
 
 CFilerWndStatusBar::~CFilerWndStatusBar()

@@ -20,6 +20,19 @@ CPreviewControl::CPreviewControl(CD2DWControl* pParentControl)
 	Doc.subscribe([this](auto doc) {
 		Open(doc.GetPath());
 	}, Dummy);
+
+	auto [rc] = GetRects();
+	m_pWnd->CreateWindowExArgument().dwStyle(m_pWnd->CreateWindowExArgument().dwStyle() | WS_CHILD);
+	m_pWnd->Create(GetWndPtr()->m_hWnd, rc);
+	HWND hWnd = m_pWnd->m_hWnd;
+	while (HWND hWndParent = ::GetParent(hWnd)){
+		hWnd = hWndParent;
+	}
+	m_pWnd->AddMsgHandler(WM_PARENTNOTIFY, [this, hWnd](UINT, WPARAM, LPARAM, BOOL& bHandled)->LRESULT {
+		::PostMessage(hWnd, ::RegisterWindowMessage(L"PreviewWindowSetFocus"), (WPARAM)this, (LPARAM)NULL);
+		return 0;
+	});
+	m_pWnd->ShowWindow(SW_HIDE);
 }
 
 CPreviewControl::~CPreviewControl() = default;
@@ -64,22 +77,22 @@ std::tuple<CRect> CPreviewControl::GetRects() const
 /* EventHandler */
 /****************/
 
-void CPreviewControl::OnCreate(const CreateEvt& e)
-{
-	CD2DWControl::OnCreate(e);
-	auto [rc] = GetRects();
-	m_pWnd->CreateWindowExArgument().dwStyle(m_pWnd->CreateWindowExArgument().dwStyle() | WS_CHILD);
-	m_pWnd->Create(GetWndPtr()->m_hWnd, rc);
-	HWND hWnd = m_pWnd->m_hWnd;
-	while (HWND hWndParent = ::GetParent(hWnd)){
-		hWnd = hWndParent;
-	}
-	m_pWnd->AddMsgHandler(WM_PARENTNOTIFY, [this, hWnd](UINT, WPARAM, LPARAM, BOOL& bHandled)->LRESULT {
-		::PostMessage(hWnd, ::RegisterWindowMessage(L"PreviewWindowSetFocus"), (WPARAM)this, (LPARAM)NULL);
-		return 0;
-	});
-	m_pWnd->ShowWindow(SW_HIDE);
-}
+//void CPreviewControl::OnCreate(const CreateEvt& e)
+//{
+//	CD2DWControl::OnCreate(e);
+//	auto [rc] = GetRects();
+//	m_pWnd->CreateWindowExArgument().dwStyle(m_pWnd->CreateWindowExArgument().dwStyle() | WS_CHILD);
+//	m_pWnd->Create(GetWndPtr()->m_hWnd, rc);
+//	HWND hWnd = m_pWnd->m_hWnd;
+//	while (HWND hWndParent = ::GetParent(hWnd)){
+//		hWnd = hWndParent;
+//	}
+//	m_pWnd->AddMsgHandler(WM_PARENTNOTIFY, [this, hWnd](UINT, WPARAM, LPARAM, BOOL& bHandled)->LRESULT {
+//		::PostMessage(hWnd, ::RegisterWindowMessage(L"PreviewWindowSetFocus"), (WPARAM)this, (LPARAM)NULL);
+//		return 0;
+//	});
+//	m_pWnd->ShowWindow(SW_HIDE);
+//}
 
 void CPreviewControl::OnRect(const RectEvent& e)
 {

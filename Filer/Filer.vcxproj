@@ -319,6 +319,7 @@
     <ClInclude Include="..\HiLib\D2DImage.h" />
     <ClInclude Include="..\HiLib\Date.h" />
     <ClInclude Include="..\HiLib\dependency_property.h" />
+    <ClInclude Include="..\HiLib\DockPanel.h" />
     <ClInclude Include="..\HiLib\DriveFolder.h" />
     <ClInclude Include="..\HiLib\FileSizeArgs.h" />
     <ClInclude Include="..\HiLib\FileStatus.h" />
@@ -610,6 +611,7 @@
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
     <ClCompile Include="..\HiLib\D2DFileIconDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DImage.cpp" />
+    <ClCompile Include="..\HiLib\DockPanel.cpp" />
     <ClCompile Include="..\HiLib\DriveFolder.cpp" />
     <ClCompile Include="..\HiLib\FPDFFormHandle.cpp" />
     <ClCompile Include="..\HiLib\Grid.cpp" />
