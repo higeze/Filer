@@ -789,8 +789,6 @@ void CFilerGridView::Open(const std::shared_ptr<CShellFile>& spFile)
 
 void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, bool isReload)
 {
-	if (ArrangedRect().IsRectNull()) return;
-
 	//OpenFolder is called when DeviceChange, even inactive.
 	if (!spFolder) {
 		return;
