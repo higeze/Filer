@@ -53,7 +53,7 @@ CTextBox::CTextBox(
 	 
 	Text.subscribe([this](auto e)
 	{
-		UpdateAll();
+		//UpdateAll();
 		switch (e.action) {
 			case notify_container_changed_action::insert://new,null,idx,-1
 				GetTextStorePtr()->OnTextChange(e.new_starting_index, e.new_starting_index, e.new_starting_index + e.new_items.size());
@@ -69,7 +69,8 @@ CTextBox::CTextBox(
 				break;
 			case notify_container_changed_action::reset://new,old,0,0
 				GetTextStorePtr()->OnTextChange(0, 0, 0);
-				MoveCaret(0, CPointF(0, GetLineHeight() * 0.5f));
+				//TODOTODO
+				MoveCaret(0, CPointF(0.f, 0.f));
 				break;
 			default:
 				break;
