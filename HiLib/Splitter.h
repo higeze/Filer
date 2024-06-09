@@ -1,4 +1,5 @@
 #pragma once
+#include <cereal/cereal.hpp>
 #include "D2DWControl.h"
 #include "reactive_property.h"
 #include "JsonSerializer.h"
@@ -38,6 +39,20 @@ public:
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;
 
+    template<class Archive>
+    void save(Archive & archive) const
+    {
+		archive(cereal::base_class<CD2DWControl>(this));
+		archive(CEREAL_NVP(Value));
+    }
+
+    template<class Archive>
+    void load(Archive & archive)
+    {
+		archive(cereal::base_class<CD2DWControl>(this));
+		archive(CEREAL_NVP(Value));
+    }
+
 	friend void to_json(json& j, const CSplitter& o)
 	{
 		to_json(j, static_cast<const CD2DWControl&>(o));
@@ -75,6 +90,18 @@ public:
 	//Event
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
 	virtual void OnSetCursor(const SetCursorEvent& e) override;
+
+    template<class Archive>
+    void save(Archive & archive) const
+    {
+		archive(cereal::base_class<CSplitter>(this));
+    }
+
+    template<class Archive>
+    void load(Archive & archive)
+    {
+		archive(cereal::base_class<CSplitter>(this));
+    }
 };
 
 class CHorizontalSplitter:public CSplitter
@@ -98,6 +125,18 @@ public:
 	//Event
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
 	virtual void OnSetCursor(const SetCursorEvent& e) override;
+
+	template<class Archive>
+    void save(Archive & archive) const
+    {
+		archive(cereal::base_class<CSplitter>(this));
+    }
+
+    template<class Archive>
+    void load(Archive & archive)
+    {
+		archive(cereal::base_class<CSplitter>(this));
+    }
 };
 
 

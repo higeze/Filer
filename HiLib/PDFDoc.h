@@ -88,6 +88,23 @@ public:
 	//	Path,
 	//	Password)
 public:
+
+	template<class Archive>
+	void save(Archive& archive) const
+	{
+		archive(CEREAL_NVP(Path));
+		archive(CEREAL_NVP(Password));
+	}
+
+	template<class Archive>
+	void load(Archive& archive)
+	{
+		archive(CEREAL_NVP(Path));
+		archive(CEREAL_NVP(Password));
+		Load(*Path);
+	}
+
+
 	friend void to_json(json& j, const CPDFDoc& o)
 	{
 		j["Path"] = o.Path;

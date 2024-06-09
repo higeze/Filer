@@ -11,7 +11,7 @@
 #include "PDFDoc.h"
 #include "PDFViewProperty.h"
 #include "ButtonProperty.h"
-//TODOTODO
+//TODOLOW
 //RenameWnd
 
 /********************/

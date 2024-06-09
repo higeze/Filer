@@ -34,6 +34,28 @@ struct FilerTabData:public TabData
 	//	//Path = data.Path;
 	//	Folder.set(data.Folder->Clone());
 	//}
+	template<class Archive>
+	void save(Archive& archive) const
+	{
+		archive(cereal::base_class<TabData>(this));
+		archive(cereal::make_nvp("Path", Folder->GetPath()));
+	}
+
+	template<class Archive>
+	void load(Archive& archive)
+	{
+		archive(cereal::base_class<TabData>(this));
+		std::wstring path;
+		archive(cereal::make_nvp("Path", path));
+		if (!path.empty()) {
+			auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
+			if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+				Folder.set(sp);
+			} else {
+				Folder.set(CKnownFolderManager::GetInstance()->GetDesktopFolder());
+			}
+		}
+	}
 
 	friend void to_json(json& j, const FilerTabData& o)
 	{

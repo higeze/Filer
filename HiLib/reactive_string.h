@@ -453,6 +453,20 @@ public:
 	//		this->subscribe(&reactive_basic_string<U, Traits, Allocator>::template observe_property<T>, dst.m_preactive));
 	//}
 
+public:
+	template<class Archive>
+	void save(Archive& archive) const
+	{
+		archive(cereal::make_nvp("Value", operator*()));
+	}
+	template<class Archive>
+	void load(Archive& archive)
+	{
+		container_type value;
+		archive(cereal::make_nvp("Value", value));
+		set(value);
+	}
+
 	friend void to_json(json& j, const reactive_basic_string_ptr& ptr)
 	{
 		j = { {"Value", *ptr} };

@@ -1,4 +1,6 @@
 #pragma once
+#include <cereal/cereal.hpp>
+#include <cereal/types/memory.hpp>
 #include "FilerBindGridView.h"
 #include "FileColumn.h"
 #include "reactive_property.h"
@@ -123,20 +125,20 @@ private:
 	void Removed(const std::wstring& fileName);
 	void Renamed(const std::wstring& oldName, const std::wstring& newName);
 public:
-	FRIEND_SERIALIZER
-	template <class Archive>
-	void save(Archive& ar)
-	{
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>);
-		REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>);
-	
-		ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
-		ar("RowFrozenCount", m_frozenRowCount);
-		ar("ColFrozenCount", m_frozenColumnCount);
-	}
+	//FRIEND_SERIALIZER
+	//template <class Archive>
+	//void save(Archive& ar)
+	//{
+	//	REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
+	//	REGISTER_POLYMORPHIC_RELATION(CColumn, CFileNameColumn<std::shared_ptr<CShellFile>>);
+	//	REGISTER_POLYMORPHIC_RELATION(CColumn, CFileDispExtColumn<std::shared_ptr<CShellFile>>);
+	//	REGISTER_POLYMORPHIC_RELATION(CColumn, CFileSizeColumn<std::shared_ptr<CShellFile>>);
+	//	REGISTER_POLYMORPHIC_RELATION(CColumn, CFileLastWriteColumn<std::shared_ptr<CShellFile>>);
+	//
+	//	ar("Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(m_allCols));
+	//	ar("RowFrozenCount", m_frozenRowCount);
+	//	ar("ColFrozenCount", m_frozenColumnCount);
+	//}
 
 	//template <class Archive>
 	//void load(Archive& ar)
@@ -158,6 +160,22 @@ public:
 	//	ar("RowFrozenCount", m_frozenRowCount);
 	//	ar("ColFrozenCount", m_frozenColumnCount);
 	//}
+
+    template<class Archive>
+    void save(Archive & archive) const
+    {
+		archive(
+			cereal::base_class<CD2DWControl>(this),
+			cereal::make_nvp("Columns", m_allCols));
+    }
+
+    template<class Archive>
+    void load(Archive & archive)
+    {
+		archive(
+			cereal::base_class<CD2DWControl>(this),
+			cereal::make_nvp("Columns", m_allCols));
+    }
 
 	friend void to_json(json& j, const CFilerGridView& o)
 	{
@@ -200,4 +218,13 @@ public:
 
 	}
 };
+
+CEREAL_REGISTER_TYPE(CFilerGridView);
+
+
+CEREAL_REGISTER_TYPE(CRowIndexColumn);
+CEREAL_REGISTER_TYPE(CFileNameColumn<std::shared_ptr<CShellFile>>);
+CEREAL_REGISTER_TYPE(CFileDispExtColumn<std::shared_ptr<CShellFile>>);
+CEREAL_REGISTER_TYPE(CFileSizeColumn<std::shared_ptr<CShellFile>>);
+CEREAL_REGISTER_TYPE(CFileLastWriteColumn<std::shared_ptr<CShellFile>>);
 

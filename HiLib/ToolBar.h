@@ -28,6 +28,20 @@ public:
 		Add(std::forward<_Tail>(tail)...);
 	}
 
+    template<class Archive>
+    void save(Archive & archive) const
+    {
+		archive(cereal::base_class<CD2DWControl>(this));
+        //archive(cereal::make_nvp("Children", m_childControls));
+    }
+
+    template<class Archive>
+    void load(Archive & archive)
+    {
+		archive(cereal::base_class<CD2DWControl>(this));
+        //archive(cereal::make_nvp("Children", m_childControls));
+    }
+
 	friend void to_json(json& j, const CToolBar& o)
 	{
 		to_json(j, static_cast<const CD2DWControl&>(o));

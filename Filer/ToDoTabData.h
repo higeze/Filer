@@ -1,4 +1,5 @@
 #pragma once
+#include <cereal/cereal.hpp>
 #include "TabControl.h"
 #include "ToDoDoc.h"
 
@@ -33,6 +34,21 @@ public:
 	virtual std::shared_ptr<TabData> ClonePtr() const override { return std::make_shared<ToDoTabData>(*this); }
 
 	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
+public:
+	template<class Archive>
+	void save(Archive& archive) const
+	{
+		archive(
+			cereal::base_class<TabData>(this),
+			CEREAL_NVP(Doc));
+	}
+	template<class Archive>
+	void load(Archive& archive)
+	{
+		archive(
+			cereal::base_class<TabData>(this),
+			CEREAL_NVP(Doc));
+	}
 
 	friend void to_json(json& j, const ToDoTabData& o)
 	{

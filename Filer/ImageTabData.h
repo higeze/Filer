@@ -58,6 +58,19 @@ struct ImageTabData :public TabData
 
 	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override { return true; }
 
+	template<class Archive>
+	void save(Archive& archive) const
+	{
+		archive(cereal::base_class<TabData>(this));
+		archive(CEREAL_NVP(Image));
+	}
+	template<class Archive>
+	void load(Archive& archive)
+	{
+		archive(cereal::base_class<TabData>(this));
+		archive(CEREAL_NVP(Image));
+	}
+
 	friend void to_json(json& j, const ImageTabData& o)
 	{
 		to_json(j, static_cast<const TabData&>(o));

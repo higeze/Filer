@@ -102,31 +102,31 @@ public:
 
 public:
 	template <class Archive>
-	void save(Archive& ar)
+	void save(Archive& archive) const
 	{
-		CBand::save(ar);
+		archive(cereal::base_class<CBand>(this));
 
-		ar("sort", m_sort);
-		ar("left", m_start);
-		ar("width", m_length);
-		//ar("minwidth", m_minWidth);
-		//ar("maxwidth", m_maxWidth);
-		m_isInit = false;
-		ar("filter", m_filter);
+		
+
+		archive(
+			cereal::make_nvp("sort", m_sort),
+			cereal::make_nvp("left", m_start),
+			cereal::make_nvp("width", m_length),
+			cereal::make_nvp("filter", wstr2str(m_filter)));
 	}
 	template <class Archive>
-	void load(Archive& ar)
+	void load(Archive& archive)
 	{
-		CBand::load(ar);
-
-		ar("sort", m_sort);
-		ar("left", m_start);
-		ar("width", m_length);
-		//ar("minwidth", m_minWidth);
-		//ar("maxwidth", m_maxWidth);
+		archive(cereal::base_class<CBand>(this));
+		std::string filter;
+		archive(
+			cereal::make_nvp("sort", m_sort),
+			cereal::make_nvp("left", m_start),
+			cereal::make_nvp("width", m_length),
+			cereal::make_nvp("filter", filter));
+		m_filter = str2wstr(filter);
 		m_isInit = false;
 		m_isMeasureValid = true;//Width or Height are serialized
-		ar("filter", m_filter);
 	}
 
 	friend void to_json(json& j, const CColumn& o)

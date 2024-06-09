@@ -1,4 +1,5 @@
 #pragma once
+#include <cereal/cereal.hpp>
 #include "SheetEnums.h"
 #include <WTypesbase.h>
 #include <float.h>
@@ -92,19 +93,28 @@ public:
 
 public:
 	template <class Archive>
-	void save(Archive& ar)
+	void save(Archive& archive) const
 	{
-		ar("visible", *m_spVisible);
-		ar("allindex", m_allIndex);
-		ar("visindex", m_visIndex);
+		archive(
+			cereal::make_nvp("visible", *m_spVisible),
+			cereal::make_nvp("allindex", m_allIndex),
+			cereal::make_nvp("visindex", m_visIndex));
 	}
 	template <class Archive>
-	void load(Archive& ar)
+	void load(Archive& archive)
 	{
-		ar("visible", *m_spVisible);
-		ar("allindex", m_allIndex);
-		ar("visindex", m_visIndex);
+		archive(
+			cereal::make_nvp("visible", *m_spVisible),
+			cereal::make_nvp("allindex", m_allIndex),
+			cereal::make_nvp("visindex", m_visIndex));
 	}
+	//template <class Archive>
+	//void load(Archive& ar)
+	//{
+	//	ar("visible", *m_spVisible);
+	//	ar("allindex", m_allIndex);
+	//	ar("visindex", m_visIndex);
+	//}
 
 
 	friend void to_json(json& j, const CBand& o)

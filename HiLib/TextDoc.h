@@ -33,7 +33,18 @@ public:
 	void Open(const std::wstring& path, const encoding_type& encoding_type = encoding_type::UNKNOWN);
 	void Close();
 	void Save(const std::wstring& path, const encoding_type& encoding_type);
-
+public:
+	template<class Archive>
+	void save(Archive& archive) const
+	{
+		archive(CEREAL_NVP(Path));
+	}
+	template<class Archive>
+	void load(Archive& archive)
+	{
+		archive(CEREAL_NVP(Path));
+		Open(*Path);
+	}
 	friend void to_json(json& j, const CTextDoc& o)
 	{
 		j["Path"] = o.Path;

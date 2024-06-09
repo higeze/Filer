@@ -58,7 +58,7 @@ public:
 
 	virtual void OnContextMenu(const ContextMenuEvent& e) override
 	{
-		// TODOTODO
+		// TODONORMAL
 		//CMenu menu(::CreatePopupMenu());
 		//MENUITEMINFO mii = { 0 };
 		//mii.cbSize = sizeof(MENUITEMINFO);

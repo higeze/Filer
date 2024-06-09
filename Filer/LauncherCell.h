@@ -112,7 +112,7 @@ public:
 
 			itemsSource.erase(std::next(itemsSource->cbegin(), index));
 			pGrid->Reload();
-			CFilerApplication::GetInstance()->SerializeLauncher(pFilerWnd->GetLauncherPropPtr());
+			CFilerApplication::GetInstance()->Serialize();
 		}
 
 	}

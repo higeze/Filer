@@ -23,9 +23,16 @@ public:
 
 public:
 	template <class Archive>
-	void serialize(Archive& ar)
+	void save(Archive& archive) const
 	{
-		//ar("FavoritesProperty",m_spFavoritesProp);
+		archive(cereal::base_class<CD2DWControl>(this));
+
+	}
+	template <class Archive>
+	void load(Archive& archive)
+	{
+		archive(cereal::base_class<CD2DWControl>(this));
+
 	}
 	friend void to_json(json& j, const CLauncherGridView& o)
 	{

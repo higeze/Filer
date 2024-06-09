@@ -1,5 +1,5 @@
 #pragma once
-
+#include <cereal/cereal.hpp>
 #include "MyRect.h"
 #include "MyFriendSerializer.h"
 #include "Console.h"
@@ -19,41 +19,16 @@ public:
 		m_bDebug(false){}
 	virtual ~CApplicationProperty(){}
 
-	FRIEND_SERIALIZER
-
 	template <class Archive>
-	void save(Archive& ar)
+	void save(Archive& archive) const
 	{
-		ar("Debug", m_bDebug);
-		//const type_info& info = typeid(ar);
-		//if (info == typeid(CCellDeserializer&)) {
-		//	if (m_bDebug) {
-		//		if (!g_console.IsOpen()) {
-		//			g_console.Alloc();
-		//		}
-		//	} else {
-		//		if (g_console.IsOpen()) {
-		//			g_console.Free();
-		//		}
-		//	}
-		//}
+		archive(cereal::make_nvp("Debug", m_bDebug));
 	}
-
 	template <class Archive>
-	void load(Archive& ar)
+	void load(Archive& archive)
 	{
-		ar("Debug", m_bDebug);
-		//if (m_bDebug) {
-		//	if (!g_console.IsOpen()) {
-		//		g_console.Alloc();
-		//	}
-		//}else{
-		//	//if (g_console.IsOpen()) {
-		//	//	g_console.Free();
-		//	//}
-		//}
+		archive(cereal::make_nvp("Debug", m_bDebug));
 	}
-
 	friend void to_json(json& j, const CApplicationProperty& o)
 	{
 		j = json{

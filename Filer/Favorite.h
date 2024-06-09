@@ -1,4 +1,5 @@
 #pragma once
+#include <cereal/cereal.hpp>
 #include "notify_property_changed.h"
 #include "MyFriendSerializer.h"
 #include <future>
@@ -53,12 +54,19 @@ public:
 		m_spFile = spFile;
 	}
 
-	FRIEND_SERIALIZER
     template <class Archive>
-    void serialize(Archive& ar)
+    void save(Archive& archive) const
     {
-		ar("Path", m_Path);
-		ar("ShortName",m_ShortName);
+		archive(
+			cereal::make_nvp("Path", m_Path),
+			cereal::make_nvp("ShortName", m_ShortName));
+    }
+    template <class Archive>
+    void load(Archive& archive)
+    {
+		archive(
+			cereal::make_nvp("Path", m_Path),
+			cereal::make_nvp("ShortName", m_ShortName));
     }
 	friend void to_json(json& j, const CFavorite& o)
 	{

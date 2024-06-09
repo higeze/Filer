@@ -741,7 +741,7 @@ void CTextBox::Normal_KeyDown(const KeyDownEvent& e)
 	}
 	case VK_RETURN:
 		if (m_isEnterText && !alt) {
-			EnterText.set(*Text);//TODOTODO Cannot call *e.HandledPtr = TRUE, since this Enter message is used at GridView Edit_Guard_KeyDown
+			EnterText.set(*Text);//TODOHIGH Cannot call *e.HandledPtr = TRUE, since this Enter message is used at GridView Edit_Guard_KeyDown
 		} else {
 			ReplaceSelection(L"\n");
 			*e.HandledPtr = TRUE;

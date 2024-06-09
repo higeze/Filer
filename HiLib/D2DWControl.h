@@ -2,10 +2,11 @@
 #include "Direct2DWrite.h"
 #include "UIElement.h"
 #include "reactive_property.h"
+#include <cereal/cereal.hpp>
 
 class CD2DWWindow;
 
-enum class DockEnum
+enum class DockEnum: std::uint8_t
 {
 	None,
 	Left,
@@ -168,18 +169,6 @@ public:
 		}
 	}
 
-	friend void to_json(json& j, const CD2DWControl& o) 
-	{
-		j = json{
-			{"Dock", o.Dock}
-		};
-	}
-
-	friend void from_json(const json& j, CD2DWControl& o)
-	{
-		get_to(j, "Dock", o.Dock);
-	}
-
 	template<typename T>
 	std::vector<std::shared_ptr<T>> FindChildren(const std::shared_ptr<CD2DWControl>& that)
 	{
@@ -294,6 +283,29 @@ public:
 	//	if (m_pFocusedControl) { (m_pFocusedControl.get()->*f)(e); }
 	//	GetWndPtr()->InvalidateRect(NULL, FALSE);
 	//}
+public:
+    template<class Archive>
+    void save(Archive & archive) const
+    {
+        archive(Dock);
+    }
+    template<class Archive>
+    void load(Archive & archive)
+    {
+        archive(Dock);
+    }
+
+	friend void to_json(json& j, const CD2DWControl& o) 
+	{
+		j = json{
+			{"Dock", o.Dock}
+		};
+	}
+
+	friend void from_json(const json& j, CD2DWControl& o)
+	{
+		get_to(j, "Dock", o.Dock);
+	}
 };
 
 class CD2DWHostWndControl : public CD2DWControl

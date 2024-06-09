@@ -1,4 +1,5 @@
 #pragma once
+#include <cereal/cereal.hpp>
 #include "MyFriendSerializer.h"
 #include "JsonSerializer.h"
 
@@ -9,14 +10,23 @@ struct FileSizeArgs
 	bool TimeLimitFolderSize = true;
 	int TimeLimitMs = 300;
 
-	FRIEND_SERIALIZER
 	template <class Archive>
-	void serialize(Archive& ar)
+	void save(Archive& archive) const
 	{
-		ar("NoFolderSize", NoFolderSize);
-		ar("NoFolderSizeOnNetwork", NoFolderSizeOnNetwork);
-		ar("TimeLimitFolderSize", TimeLimitFolderSize);
-		ar("TimeLimitMs", TimeLimitMs);
+		archive(
+			CEREAL_NVP(NoFolderSize),
+			CEREAL_NVP(NoFolderSizeOnNetwork),
+			CEREAL_NVP(TimeLimitFolderSize),
+			CEREAL_NVP(TimeLimitMs));
+	}
+	template <class Archive>
+	void load(Archive& archive)
+	{
+		archive(
+			CEREAL_NVP(NoFolderSize),
+			CEREAL_NVP(NoFolderSizeOnNetwork),
+			CEREAL_NVP(TimeLimitFolderSize),
+			CEREAL_NVP(TimeLimitMs));
 	}
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(FileSizeArgs,

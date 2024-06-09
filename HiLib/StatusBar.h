@@ -1,4 +1,5 @@
 #pragma once
+#include <cereal/cereal.hpp>
 #include "Direct2DWrite.h"
 #include "D2DWControl.h"
 #include "reactive_property.h"
@@ -28,5 +29,16 @@ public:
 	virtual void Measure(const CSizeF& availableSize) override;
 
 	virtual void OnPaint(const PaintEvent& e);
+
+	template<class Archive>
+	void save(Archive& archive) const
+	{
+		archive(cereal::base_class<CD2DWControl>(this));
+	}
+	template<class Archive>
+	void load(Archive& archive)
+	{
+		archive(cereal::base_class<CD2DWControl>(this));
+	}
 
 };

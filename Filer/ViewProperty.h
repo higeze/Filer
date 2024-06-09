@@ -6,12 +6,15 @@ struct ViewProperty
 {
 	std::shared_ptr<FileSizeArgs> FileSizeArgsPtr = std::make_shared<FileSizeArgs>();
 
-	FRIEND_SERIALIZER
 	template <class Archive>
-	void serialize(Archive& ar)
+	void save(Archive& archive) const
 	{
-		ar("FileSizeArgsProperty", FileSizeArgsPtr);
+		archive(cereal::make_nvp("FileSizeArgsProperty", FileSizeArgsPtr));
 	}
-
+	template <class Archive>
+	void load(Archive& archive)
+	{
+		archive(cereal::make_nvp("FileSizeArgsProperty", FileSizeArgsPtr));
+	}
 };
 

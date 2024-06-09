@@ -43,7 +43,7 @@
 #include "Dispatcher.h"
 #include "Performance.h"
 
-#include "SplitContainer.h"
+#include "DockPanel.h"
 #include "ShellContextMenu.h"
 
 #include "PreviewButton.h"
@@ -60,9 +60,9 @@ CFilerWnd::CFilerWnd()
 	Rectangle(0, 0, 1000, 600), 
 	IsPreview(false),
 	m_pPerformance(std::make_unique<CPerformance>()),
-	m_spApplicationProp(std::make_shared<CApplicationProperty>()),
-	m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
-	m_spLauncherProp(std::make_shared<CLauncherProperty>()),
+	//m_spApplicationProp(std::make_shared<CApplicationProperty>()),
+	//m_spFavoritesProp(std::make_shared<CFavoritesProperty>()),
+	//m_spLauncherProp(std::make_shared<CLauncherProperty>()),
 	m_spExeExProp(std::make_shared<ExeExtensionProperty>())
 	//spDock(std::make_shared<CDockPanel>(this))
 	//m_spLauncher(std::make_shared<CLauncherGridView>(this, m_spLauncherProp)),
@@ -190,13 +190,13 @@ void CFilerWnd::SetUpFilerView(const std::shared_ptr<CFilerView>& view, const st
 		std::make_unique<CMenuItem2>(L"Add to Favorite", [this, view]()->void {
 			auto files = view->GetFileGridPtr()->GetSelectedFiles();
 			for (auto& file : files) {
-					Favorites.push_back(CFavorite(file->GetPath(), L""));//TODOTODO
+					Favorites.push_back(CFavorite(file->GetPath(), L""));//TODOMONITOR
 				}
 			}),
 		std::make_unique<CMenuItem2>(L"Add to Launcher", [this, view]()->void {
 			auto files = view->GetFileGridPtr()->GetSelectedFiles();
 			for (auto& file : files) {
-				Launchers.push_back(CLauncher(file->GetPath(), L""));//TODOTODO
+				Launchers.push_back(CLauncher(file->GetPath(), L""));//TODOMONITOR
 			}
 		})
 	);
@@ -206,15 +206,15 @@ void CFilerWnd::SetUpFilerView(const std::shared_ptr<CFilerView>& view, const st
 		std::make_unique<CMenuItem2>(L"Add to Favorite", [this, view]()->void {
 			auto files = view->GetFileGridPtr()->GetSelectedFiles();
 			for (auto& file : files) {
-				Favorites.push_back(CFavorite(file->GetPath(), L""));//TODOTODO
+				Favorites.push_back(CFavorite(file->GetPath(), L""));//TODOMONITO
 			}
 		}));
 }
 
 void CFilerWnd::OnCreate(const CreateEvt& e)
 {
-	Favorites = m_spFavoritesProp->Favorites;
-	Launchers = m_spLauncherProp->Launchers;
+	//Favorites = m_spFavoritesProp->Favorites;
+	//Launchers = m_spLauncherProp->Launchers;
 
 	//SetWindowPlacement make sure Window in Monitor
 	WINDOWPLACEMENT wp = { 0 };
@@ -269,8 +269,8 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		auto spLeftTop = std::make_shared<CFilerTabGridView>(spFillTopDock.get());
 		auto spRightTop = std::make_shared<CFilerTabGridView>(spFillTopDock.get());
 
-		spLeftTop->SetOther(spRightTop);//TODOTODO
-		spRightTop->SetOther(spLeftTop);//TODOTODO
+		spLeftTop->SetOther(spRightTop);
+		spRightTop->SetOther(spLeftTop);
 		spFillTopDock->Add(
 			pr(spRightTop, DockEnum::Right),
 			pr(std::make_shared<CVerticalSplitter>(), DockEnum::Right),
@@ -279,7 +279,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		//Horizontal Bottom
 		auto spFillBottomDock = std::make_shared<CDockPanel>(spFillDock.get());
 
-		//TODOTODO Move to Tab
+		//TODOHIGH Move to Tab
 		//auto spTextBoxLeft = std::make_shared<CColoredTextBox>(spFillBottomDock.get(), L"");
 		//PerformanceLog.binding(spTextBoxLeft->Text);
 		//auto spTextBoxRight = std::make_shared<CColoredTextBox>(spFillBottomDock.get(), L"");
@@ -292,8 +292,8 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		auto spLeftBottom = std::make_shared<CFilerTabGridView>(spFillBottomDock.get());
 		auto spRightBottom = std::make_shared<CFilerTabGridView>(spFillBottomDock.get());
 
-		spLeftBottom->SetOther(spRightBottom);//TODOTODO
-		spRightBottom->SetOther(spLeftBottom);//TODOTODO
+		spLeftBottom->SetOther(spRightBottom);
+		spRightBottom->SetOther(spLeftBottom);
 
 		spFillBottomDock->Add(
 			pr(spRightBottom, DockEnum::Right),
@@ -316,6 +316,16 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		for (auto& child : m_childControls) {
 			child->OnCreate(CreateEvt(this, this, CRectF()));
 		}
+	}
+
+	//Launchers
+	if (Launchers->empty()) {
+		Launchers.push_back(CLauncher(CKnownFolderManager::GetInstance()->GetDesktopFolder()->GetPath(),L"DT"));
+	}
+
+	//Favorites
+	if (Favorites->empty()) {
+		Favorites.push_back(CFavorite(CKnownFolderManager::GetInstance()->GetDesktopFolder()->GetPath(),L"DT"));
 	}
 
 	//Launcher Binding
@@ -443,7 +453,7 @@ void CFilerWnd::OnRect(const RectEvent& e)
 
 void CFilerWnd::Reload()
 {
-	// TODOTODO
+	// TODOMONITOR
 	//CDriveFolderManager::GetInstance()->Update();
 	//m_spLauncher->Reload();
 	////m_spLeftFavoritesView->Reload();
@@ -553,6 +563,7 @@ void CFilerWnd::OnCommandTextOption(const CommandEvent& e)
 
 void CFilerWnd::OnCommandLauncherOption(const CommandEvent& e)
 {
+	//TODOLOW
 	//Launchers = CFilerApplication::GetInstance()->DeserializeLauncher();
 	//Reload();
 }
@@ -560,14 +571,16 @@ void CFilerWnd::OnCommandLauncherOption(const CommandEvent& e)
 
 void CFilerWnd::OnCommandFavoritesOption(const CommandEvent& e)
 {
+	//TODOLOW
 	//Favrotites = CFilerApplication::GetInstance()->DeserializeFavoirtes();
 	//Reload();
 }
 
 void CFilerWnd::OnCommandExeExtensionOption(const CommandEvent& e)
 {
-	m_spExeExProp = CFilerApplication::GetInstance()->DeserializeExeExtension();
-	InvalidateRect(NULL, FALSE);
+	//TOODLOW
+	//m_spExeExProp = CFilerApplication::GetInstance()->DeserializeExeExtension();
+	//InvalidateRect(NULL, FALSE);
 }
 
 #ifdef USE_PYTHON_EXTENSION

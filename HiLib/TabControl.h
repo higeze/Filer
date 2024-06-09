@@ -35,11 +35,18 @@ struct TabData:public std::enable_shared_from_this<TabData>
 	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing);
 
 	//In case of REGISTER_POLYMORPHIC_RELATION, Base and Derived class have to be same function structure
-	template<class Archive>
-	void save(Archive& ar){}
-	template<class Archive>
-	void load(Archive& ar){}
 
+	template<class Archive>
+	void save(Archive& archive) const
+	{
+		archive(CEREAL_NVP(Unlock));
+	}
+
+	template<class Archive>
+	void load(Archive& archive)
+	{
+		archive(CEREAL_NVP(Unlock));
+	}
 
 	friend void to_json(json& j, const TabData& o)
 	{
@@ -281,6 +288,25 @@ public:
 	//	CTabControl,
 	//	ItemsSource,
 	//	SelectedIndex);
+
+    template<class Archive>
+    void save(Archive & archive) const
+    {
+		archive(cereal::base_class<CD2DWControl>(this));
+		archive(
+			CEREAL_NVP(ItemsSource),
+			CEREAL_NVP(SelectedIndex));
+    }
+    template<class Archive>
+    void load(Archive & archive)
+    {
+		archive(cereal::base_class<CD2DWControl>(this));
+		archive(
+			CEREAL_NVP(ItemsSource),
+			CEREAL_NVP(SelectedIndex));
+    }
+
+
 	friend void to_json(json& j, const CTabControl& o)
 	{
 		to_json(j, static_cast<const CD2DWControl&>(o));

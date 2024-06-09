@@ -48,23 +48,6 @@ public:
 		auto cell = std::make_shared<TCell>(m_pGrid, pRow, pColumn);
 		return cell;
 	}
-
-public:
-	template <class Archive>
-	void save(Archive& ar)
-	{
-		CColumn::save(ar);
-
-		ar("header", m_header);
-	}
-	template <class Archive>
-	void load(Archive& ar)
-	{
-		CColumn::load(ar);
-
-		ar("header", m_header);
-	}
-
 };
 
 /***********************/

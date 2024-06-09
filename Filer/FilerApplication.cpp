@@ -4,6 +4,7 @@
 #include "JsonSerializer.h"
 #include "PDFDoc.h"
 #include "TSFManager.h"
+#include "FilerWnd.h"
 
 std::string CFilerApplication::GetJsonPath()
 {
@@ -41,53 +42,72 @@ std::tuple<std::string, std::string, std::string, std::string> CFilerApplication
 void CFilerApplication::Deserialize()
 {
 	if (auto path = GetJsonPath(); ::PathFileExistsA(path.c_str())) {
-		std::ifstream i(path);
-		json j;
-		i >> j;
-		j.get_to(m_pWnd);
-	} else {
+		std::stringstream stream;
+		std::ifstream inputFile(GetJsonPath(), std::ios::in);
+		stream << inputFile.rdbuf();
+		cereal::JSONInputArchive jsonInputArchive(stream);
+		jsonInputArchive(cereal::make_nvp("FilerWnd", m_pWnd));
+	}
+	if(!m_pWnd){
 		m_pWnd = std::make_shared<CFilerWnd>();
 	}
+	//if (auto path = GetJsonPath(); ::PathFileExistsA(path.c_str())) {
+	//	std::ifstream i(path);
+	//	json j;
+	//	i >> j;
+	//	j.get_to(m_pWnd);
+	//} else {
+	//	m_pWnd = std::make_shared<CFilerWnd>();
+	//}
 }
 
 void CFilerApplication::Serialize()
 {
-	json j = m_pWnd;
-	auto path = GetJsonPath();
-	std::ofstream o(path);
-	o << std::setw(4) << j << std::endl;
+	std::stringstream stream;
+	cereal::JSONOutputArchive jsonOutArchive(stream);
+	jsonOutArchive(cereal::make_nvp("FilerWnd", m_pWnd));
+	std::ofstream outputFile(GetJsonPath(), std::ios::out);
+	outputFile << stream.str();
+	outputFile.close();
+	stream.clear();
+
+
+	//json j = m_pWnd;
+	//auto path = GetJsonPath();
+	//std::ofstream o(path);
+	//o << std::setw(4) << j << std::endl;
 }
 
 
-std::shared_ptr<CLauncherProperty> CFilerApplication::DeserializeLauncher()
-{
-	return DeserializeValue<std::shared_ptr<CLauncherProperty>>("LauncherProperty");
-}
+//std::shared_ptr<CLauncherProperty> CFilerApplication::DeserializeLauncher()
+//{
+//	return DeserializeValue<std::shared_ptr<CLauncherProperty>>("LauncherProperty");
+//}
+//
+//std::shared_ptr<CFavoritesProperty> CFilerApplication::DeserializeFavoirtes()
+//{
+//	return DeserializeValue<std::shared_ptr<CFavoritesProperty>>("FavoritesProperty");
+//}
+//
+//std::shared_ptr<ExeExtensionProperty> CFilerApplication::DeserializeExeExtension()
+//{
+//	return DeserializeValue<std::shared_ptr<ExeExtensionProperty>>("ExeExtensionProperty");
+//}
 
-std::shared_ptr<CFavoritesProperty> CFilerApplication::DeserializeFavoirtes()
-{
-	return DeserializeValue<std::shared_ptr<CFavoritesProperty>>("FavoritesProperty");
-}
+//void CFilerApplication::SerializeLauncher(const std::shared_ptr<CLauncherProperty>& spProp)
+//{
+//	SerializeValue("LauncherProperty", spProp);
+//}
+//
+//void CFilerApplication::SerializeFavorites(const std::shared_ptr<CFavoritesProperty>& spProp)
+//{
+//	SerializeValue("FavoritesProperty", spProp);
+//}
 
-std::shared_ptr<ExeExtensionProperty> CFilerApplication::DeserializeExeExtension()
-{
-	return DeserializeValue<std::shared_ptr<ExeExtensionProperty>>("ExeExtensionProperty");
-}
-
-void CFilerApplication::SerializeLauncher(const std::shared_ptr<CLauncherProperty>& spProp)
-{
-	SerializeValue("LauncherProperty", spProp);
-}
-
-void CFilerApplication::SerializeFavorites(const std::shared_ptr<CFavoritesProperty>& spProp)
-{
-	SerializeValue("FavoritesProperty", spProp);
-}
-
-void CFilerApplication::SerializeExeExtension(const std::shared_ptr<ExeExtensionProperty>& spProp)
-{
-	SerializeValue("ExeExtensionProperty", spProp);
-}
+//void CFilerApplication::SerializeExeExtension(const std::shared_ptr<ExeExtensionProperty>& spProp)
+//{
+//	SerializeValue("ExeExtensionProperty", spProp);
+//}
 //#include "PreviewHandlerFrame.h"
 //#include <propkey.h>
 //

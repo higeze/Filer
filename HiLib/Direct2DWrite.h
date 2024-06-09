@@ -40,12 +40,13 @@ class CD2DThumbnailDrawer;
 		std::size_t GetHashCode() const;
 
 		template <class Archive>
-		void serialize(Archive& ar)
+		void save(Archive& archive)
 		{
-			ar("r", r);
-			ar("g", g);
-			ar("b", b);
-			ar("a", a);
+			archive(
+				CEREAL_NVP(r),
+				CEREAL_NVP(g),
+				CEREAL_NVP(b),
+				CEREAL_NVP(a));
 		}
 
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CColorF,
@@ -94,12 +95,19 @@ namespace std
 		CFont GetGDIFont() const;
 
 		template <class Archive>
-		void serialize(Archive& ar)
+		void save(Archive& archive) const
 		{
-			ar("FamilyName", FamilyName);
-			ar("Size", Size);
+			archive(
+				CEREAL_NVP(FamilyName),
+				CEREAL_NVP(Size));
 		}
-
+		template <class Archive>
+		void load(Archive& archive)
+		{
+			archive(
+				CEREAL_NVP(FamilyName),
+				CEREAL_NVP(Size));
+		}
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CFontF,
 			FamilyName,
 			Size)
@@ -131,10 +139,18 @@ namespace std
 		std::size_t GetHashCode() const;
 
 		template <class Archive>
-		void serialize(Archive& ar)
+		void save(Archive& archive) const
 		{
-			ar("TextAlignment", TextAlignment);
-			ar("ParagraphAlignment", ParagraphAlignment);
+			archive(
+			CEREAL_NVP(TextAlignment),
+			CEREAL_NVP(ParagraphAlignment));
+		}
+		template <class Archive>
+		void load(Archive& archive)
+		{
+			archive(
+			CEREAL_NVP(TextAlignment),
+			CEREAL_NVP(ParagraphAlignment));
 		}
 
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(CAlignmentF,
@@ -163,10 +179,18 @@ namespace std
 		FLOAT Width;
 
 		template <class Archive>
-		void serialize(Archive& ar)
+		void save(Archive& archive) const
 		{
-			ar("Color", Color);
-			ar("Width", Width);
+			archive(
+				CEREAL_NVP(Color),
+				CEREAL_NVP(Width));
+		}
+		template <class Archive>
+		void load(Archive& archive)
+		{
+			archive(
+				CEREAL_NVP(Color),
+				CEREAL_NVP(Width));
 		}
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(SolidLine,
 			Color,
@@ -189,9 +213,14 @@ namespace std
 		CColorF Color;
 
 		template <class Archive>
-		void serialize(Archive& ar)
+		void save(Archive& archive) const
 		{
-			ar("Color", Color);
+			archive(CEREAL_NVP(Color));
+		}
+		template <class Archive>
+		void load(Archive& archive)
+		{
+			archive(CEREAL_NVP(Color));
 		}
 
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(SolidFill,
@@ -214,11 +243,12 @@ namespace std
 		std::size_t GetHashCode() const;
 
 		template <class Archive>
-		void serialize(Archive& ar)
+		void save(Archive& archive) const
 		{
-			ar("Font", Font);
-			ar("Color", Color);
-			ar("Alignment", Alignment);
+			archive(
+			CEREAL_NVP(Font),
+			CEREAL_NVP(Color),
+			CEREAL_NVP(Alignment));
 		}
 
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(FormatF,
@@ -242,11 +272,20 @@ namespace std
 		std::size_t GetHashCode() const;
 
 		template <class Archive>
-		void serialize(Archive& ar)
+		void save(Archive& archive) const
 		{
-			ar("Color", Color);
-			ar("IsBold", IsBold);
-			ar("IsUnderline", IsUnderline);
+			archive(
+			CEREAL_NVP(Color),
+			CEREAL_NVP(IsBold),
+			CEREAL_NVP(IsUnderline));
+		}
+		template <class Archive>
+		void load(Archive& archive)
+		{
+			archive(
+			CEREAL_NVP(Color),
+			CEREAL_NVP(IsBold),
+			CEREAL_NVP(IsUnderline));
 		}
 
 		NLOHMANN_DEFINE_TYPE_INTRUSIVE(SyntaxFormatF,

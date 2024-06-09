@@ -65,7 +65,7 @@
 //	Both,
 //};
 
-enum class SizeType
+enum class SizeType : std::uint8_t
 {
 	Trackable,
 	Untrackable,
@@ -76,7 +76,8 @@ enum class SizeType
  *  Sort
  *  Sort state
  */
-enum class Sorts
+enum class Sorts : std::uint8_t
+
 {
 	None,
 	Up,
@@ -88,13 +89,15 @@ enum class Sorts
  *  Compare
  *  Compare state
  */
-enum class Compares{
+enum class Compares : std::uint8_t
+{
 	Same,
 	Diff,
 	DiffNE
 };
 
-enum class Updates{
+enum class Updates : std::uint8_t
+{
 	None,
 	Filter,//Update Row IsVisible
 	//Rect,//Move Window

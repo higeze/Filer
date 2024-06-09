@@ -3,6 +3,8 @@
 //#include <boost/date_time/posix_time/posix_time.hpp>
 //#include <boost/asio/deadline_timer.hpp>
 //#include <boost/asio/io_service.hpp>
+#include <cereal/types/polymorphic.hpp>
+#include <cereal/types/vector.hpp>
 
 #include "MyWnd.h"
 #include "D2DWTypes.h"
@@ -40,47 +42,11 @@ class CFilerGridView;
 class CShellFolder;
 class CPerformance;
 
-#include "SplitContainer.h"
+#include "DockPanel.h"
 #include "ColoredTextBox.h"
 #include "StatusBar.h"
 #include "PreviewButton.h"
 //struct PdfViewProperty;
-
-
-#ifdef USE_PYTHON_EXTENSION
-struct PythonExtension
-{
-	//UINT ID;
-	std::wstring Name;
-	std::wstring ScriptPath;
-	std::string FunctionName;
-
-	FRIEND_SERIALIZER
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		//ar("ID", ID);
-		ar("Name", Name);
-		ar("ScriptPath", ScriptPath);
-		ar("FunctionName", FunctionName);
-	}
-};
-
-struct CPythonExtensionProperty
-{
-public:
-	std::wstring PythonHome;
-	std::vector<PythonExtension> PythonExtensions;
-
-	FRIEND_SERIALIZER
-	template <class Archive>
-	void serialize(Archive& ar)
-	{
-		ar("PythonHome", PythonHome);
-		ar("PythonExtensions", PythonExtensions);
-	}
-};
-#endif
 
 class CD2DFileIconDrawer;
 class CNetworkMessanger;
@@ -104,9 +70,9 @@ private:
 	//bool m_isPreview = false;
 
 	//Common properties
-	std::shared_ptr<CApplicationProperty> m_spApplicationProp;
-	std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
-	std::shared_ptr<CLauncherProperty> m_spLauncherProp;
+	//std::shared_ptr<CApplicationProperty> m_spApplicationProp;
+	//std::shared_ptr<CFavoritesProperty> m_spFavoritesProp;
+	//std::shared_ptr<CLauncherProperty> m_spLauncherProp;
 	std::shared_ptr<ExeExtensionProperty> m_spExeExProp;
 
 	//Controls
@@ -158,12 +124,12 @@ public:
 
 
 	//Getter/Setter
-	std::shared_ptr<CApplicationProperty>& GetApplicationProperty() { return m_spApplicationProp; }
-	std::shared_ptr<CFavoritesProperty>& GetFavoritesPropPtr() { return m_spFavoritesProp; }
-	void SetFavoritesPropPtr(const std::shared_ptr<CFavoritesProperty>& value) { m_spFavoritesProp = value; }
+	//std::shared_ptr<CApplicationProperty>& GetApplicationProperty() { return m_spApplicationProp; }
+	//std::shared_ptr<CFavoritesProperty>& GetFavoritesPropPtr() { return m_spFavoritesProp; }
+	//void SetFavoritesPropPtr(const std::shared_ptr<CFavoritesProperty>& value) { m_spFavoritesProp = value; }
 
-	std::shared_ptr<CLauncherProperty>& GetLauncherPropPtr() { return m_spLauncherProp; }
-	void SetLauncherPropPtr(const std::shared_ptr<CLauncherProperty>& value) { m_spLauncherProp = value; }
+	//std::shared_ptr<CLauncherProperty>& GetLauncherPropPtr() { return m_spLauncherProp; }
+	//void SetLauncherPropPtr(const std::shared_ptr<CLauncherProperty>& value) { m_spLauncherProp = value; }
 
 	std::shared_ptr<ExeExtensionProperty>& GetExeExtensionPropPtr() { return m_spExeExProp; }
 	void SetExeExtensionPropPtr(const std::shared_ptr<ExeExtensionProperty>& value) { m_spExeExProp = value; }
@@ -250,6 +216,35 @@ public:
 
 private:
 	void SetUpFilerView(const std::shared_ptr<CFilerView>& view, const std::shared_ptr<CStatusBar>& status);
+public:
+	template<class Archive>
+    void save(Archive & archive) const
+    {
+		archive(cereal::base_class<CD2DWControl>(this));
+		archive(CEREAL_NVP(Rectangle));
+		archive(CEREAL_NVP(Launchers));
+		archive(CEREAL_NVP(Favorites));
+			archive(cereal::make_nvp("Children", m_childControls));
+   //     archive(
+			//CEREAL_NVP(Rectangle),
+			//CEREAL_NVP(Launchers),
+			//CEREAL_NVP(Favorites),
+			//cereal::make_nvp("Children", m_childControls));
+    }
+	template<class Archive>
+    void load(Archive & archive)
+    {
+		archive(cereal::base_class<CD2DWControl>(this),
+			CEREAL_NVP(Rectangle),
+			CEREAL_NVP(Launchers),
+			CEREAL_NVP(Favorites),
+			cereal::make_nvp("Children", m_childControls));
+   //     archive(
+			//CEREAL_NVP(Rectangle),
+			//CEREAL_NVP(Launchers),
+			//CEREAL_NVP(Favorites),
+			//cereal::make_nvp("Children", m_childControls));
+    }
 
 	friend void to_json(json& j, const CFilerWnd& o) 
 	{
@@ -265,9 +260,9 @@ private:
 
 		j = json{
 			{"Rectangle", o.Rectangle},
-			{"ApplicationProperty", o.m_spApplicationProp },
-			{"LauncherProperty", o.m_spLauncherProp },
-			{"FavoritesProperty", o.m_spFavoritesProp },
+			//{"ApplicationProperty", o.m_spApplicationProp },
+			//{"LauncherProperty", o.m_spLauncherProp },
+			//{"FavoritesProperty", o.m_spFavoritesProp },
 			{"ExeExtensionProperty", o.m_spExeExProp },
 			{"Children", o.m_childControls}
 		};
@@ -286,11 +281,21 @@ private:
 		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CPreviewButton);
 
 		get_to(j, "Rectangle", o.Rectangle);
-		get_to(j, "ApplicationProperty", o.m_spApplicationProp);
-		get_to(j, "LauncherProperty", o.m_spLauncherProp);
-		get_to(j, "FavoritesProperty", o.m_spFavoritesProp);
+		//get_to(j, "ApplicationProperty", o.m_spApplicationProp);
+		//get_to(j, "LauncherProperty", o.m_spLauncherProp);
+		//get_to(j, "FavoritesProperty", o.m_spFavoritesProp);
 		get_to(j, "ExeExtensionProperty", o.m_spExeExProp);
 		get_to(j, "Children", o.m_childControls);
 	}
 };
+
+CEREAL_REGISTER_TYPE(CToolBar);
+CEREAL_REGISTER_TYPE(CLauncherGridView);
+CEREAL_REGISTER_TYPE(CStatusBar);
+CEREAL_REGISTER_TYPE(CDockPanel);
+CEREAL_REGISTER_TYPE(CVerticalSplitter);
+CEREAL_REGISTER_TYPE(CHorizontalSplitter);
+CEREAL_REGISTER_TYPE(CColoredTextBox);
+CEREAL_REGISTER_TYPE(CPreviewButton);
+
 

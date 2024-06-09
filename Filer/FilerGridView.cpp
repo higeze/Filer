@@ -138,8 +138,7 @@ CShellContextMenu& CFilerGridView::GetFileContextMenu()
 			std::make_unique<CMenuItem2>(L"Copy Text", 
 				[this]()->void {
 				BOOL bHandled = FALSE;
-				//TODOTODO
-				/*CGridView::OnCommandCopy(CommandEvent(GetWndPtr(), (WPARAM)0, (LPARAM)GetWndPtr()->m_hWnd, &bHandled));*/}),
+				CGridView::OnCommandCopy(CommandEvent(GetWndPtr(), (WPARAM)0, (LPARAM)GetWndPtr()->m_hWnd, &bHandled));}),
 			std::make_unique<CMenuSeparator2>(),
 			std::make_unique<CMenuItem2>(L"PDF Split",
 				[this, GetSelectedFiles]()->void {

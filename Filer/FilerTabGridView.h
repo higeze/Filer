@@ -109,6 +109,25 @@ public:
 	void OnCommandOpenSameAsOther();
 
 public:
+
+    template<class Archive>
+    void save(Archive & archive) const
+    {
+		archive(
+			cereal::base_class<CTabControl>(this),
+			cereal::make_nvp("FilerView", m_spFilerView),
+			cereal::make_nvp("ToDoView", m_spToDoGridView),
+			cereal::make_nvp("Other", m_wpOther));
+    }
+    template<class Archive>
+    void load(Archive & archive)
+    {
+		archive(
+			cereal::base_class<CTabControl>(this),
+			cereal::make_nvp("FilerView", m_spFilerView),
+			cereal::make_nvp("ToDoView", m_spToDoGridView),
+			cereal::make_nvp("Other", m_wpOther));
+    }
 	friend void to_json(json& j, const CFilerTabGridView& o)
 	{
 		JSON_REGISTER_POLYMORPHIC_RELATION(TabData, FilerTabData);
@@ -139,4 +158,14 @@ public:
 		get_to(j, "ToDoView", o.m_spToDoGridView);
 	}
 };
+
+CEREAL_REGISTER_TYPE(CFilerTabGridView);
+
+
+CEREAL_REGISTER_TYPE(FilerTabData);
+CEREAL_REGISTER_TYPE(ToDoTabData);
+CEREAL_REGISTER_TYPE(TextTabData);
+CEREAL_REGISTER_TYPE(PdfTabData);
+CEREAL_REGISTER_TYPE(ImageTabData);
+CEREAL_REGISTER_TYPE(PreviewTabData);
 

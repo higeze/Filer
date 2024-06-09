@@ -1,4 +1,5 @@
 #pragma once
+#include <cereal/cereal.hpp>
 #include "D2DWControl.h"
 #include "reactive_property.h"
 #include "JsonSerializer.h"
@@ -9,7 +10,7 @@ class CSplitter;
 class CDockPanel : public CD2DWControl
 {
 protected:
-	std::unordered_map<std::shared_ptr<CD2DWControl>, std::shared_ptr<CSplitter>> m_ctrl_split_map;
+	//std::unordered_map<std::shared_ptr<CD2DWControl>, std::shared_ptr<CSplitter>> m_ctrl_split_map;
 public:
 	virtual const CRectF& GetMargin() const override
 	{ 
@@ -82,6 +83,20 @@ public:
 	//	Maximum,
 	//	Minimum,
 	//	Value)
+public:
+    template<class Archive>
+    void save(Archive & archive) const
+    {
+		archive(cereal::base_class<CD2DWControl>(this));
+		//archive(cereal::make_nvp("Children", m_childControls));
+    }
+    template<class Archive>
+    void load(Archive & archive)
+    {
+		archive(cereal::base_class<CD2DWControl>(this));
+		//archive(cereal::make_nvp("Children", m_childControls));
+    }
+
 
 	friend void to_json(json& j, const CDockPanel& o)
 	{

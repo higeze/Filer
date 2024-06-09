@@ -550,7 +550,7 @@ void CFilerTabGridView::OnCommandAddToFavorite()
 {
 	//TODOLOW Bad connection between FilerTabGridView and FavoritesView
 	if(auto p = dynamic_cast<CFilerWnd*>(GetWndPtr())){
-		p->Favorites.push_back(CFavorite(std::static_pointer_cast<FilerTabData>(ItemsSource->at(*SelectedIndex))->Folder->GetPath(), L""));//TODOTODO
+		p->Favorites.push_back(CFavorite(std::static_pointer_cast<FilerTabData>(ItemsSource->at(*SelectedIndex))->Folder->GetPath(), L""));//TODOMONITOR
 	}
 }
 
