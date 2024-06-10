@@ -114,18 +114,18 @@ public:
     void save(Archive & archive) const
     {
 		archive(
-			cereal::base_class<CTabControl>(this),
-			cereal::make_nvp("FilerView", m_spFilerView),
-			cereal::make_nvp("ToDoView", m_spToDoGridView),
+			cereal::base_class<CD2DWControl>(this),
+			//cereal::make_nvp("FilerView", m_spFilerView),
+			//cereal::make_nvp("ToDoView", m_spToDoGridView),
 			cereal::make_nvp("Other", m_wpOther));
     }
     template<class Archive>
     void load(Archive & archive)
     {
 		archive(
-			cereal::base_class<CTabControl>(this),
-			cereal::make_nvp("FilerView", m_spFilerView),
-			cereal::make_nvp("ToDoView", m_spToDoGridView),
+			cereal::base_class<CD2DWControl>(this),
+			//cereal::make_nvp("FilerView", m_spFilerView),
+			//cereal::make_nvp("ToDoView", m_spToDoGridView),
 			cereal::make_nvp("Other", m_wpOther));
     }
 	friend void to_json(json& j, const CFilerTabGridView& o)

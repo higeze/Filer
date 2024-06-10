@@ -42,12 +42,18 @@ std::tuple<std::string, std::string, std::string, std::string> CFilerApplication
 void CFilerApplication::Deserialize()
 {
 	if (auto path = GetJsonPath(); ::PathFileExistsA(path.c_str())) {
-		std::stringstream stream;
-		std::ifstream inputFile(GetJsonPath(), std::ios::in);
-		stream << inputFile.rdbuf();
-		cereal::JSONInputArchive jsonInputArchive(stream);
-		jsonInputArchive(cereal::make_nvp("FilerWnd", m_pWnd));
+		//std::stringstream stream;
+		//std::ifstream inputFile(GetJsonPath(), std::ios::in);
+		//stream << inputFile.rdbuf();
+		//cereal::JSONInputArchive jsonInputArchive(stream);
+		//jsonInputArchive(cereal::make_nvp("FilerWnd", m_pWnd));
+		std::ifstream file(GetJsonPath(), std::ios::in);
+		cereal::JSONInputArchive archive(file);
+		archive(cereal::make_nvp("FilerWnd", m_pWnd));
 	}
+
+
+
 	if(!m_pWnd){
 		m_pWnd = std::make_shared<CFilerWnd>();
 	}
@@ -63,13 +69,17 @@ void CFilerApplication::Deserialize()
 
 void CFilerApplication::Serialize()
 {
-	std::stringstream stream;
-	cereal::JSONOutputArchive jsonOutArchive(stream);
-	jsonOutArchive(cereal::make_nvp("FilerWnd", m_pWnd));
-	std::ofstream outputFile(GetJsonPath(), std::ios::out);
-	outputFile << stream.str();
-	outputFile.close();
-	stream.clear();
+	//std::stringstream stream;
+	//cereal::JSONOutputArchive jsonOutArchive(stream);
+	//jsonOutArchive(cereal::make_nvp("FilerWnd", m_pWnd));
+	//std::ofstream outputFile(GetJsonPath(), std::ios::out);
+	//outputFile << stream.str();
+	//outputFile.close();
+	//stream.clear();
+
+	std::ofstream file(GetJsonPath(), std::ios::out);
+	cereal::JSONOutputArchive archive(file);
+	archive(cereal::make_nvp("FilerWnd", m_pWnd));
 
 
 	//json j = m_pWnd;
