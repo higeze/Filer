@@ -1679,12 +1679,12 @@ void CGridView::Arrange(const CRectF& rc)
 	CRectF prevRect = m_rect;
 	CD2DWControl::Arrange(rc);
 
-	if (prevRect.left != m_rect.left) {
+	//if (prevRect.left != rc.left) {
 		PostUpdate(Updates::Column);
-	}
-	if (prevRect.top != m_rect.top) {
+	//}
+	//if (prevRect.top != rc.top) {
 		PostUpdate(Updates::Row);
-	}
+	//}
 
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
@@ -1702,12 +1702,12 @@ void CGridView::OnRectWoSubmit(const RectEvent& e)
 	CRectF prevRect = m_rect;
 	CD2DWControl::OnRect(e);
 
-	if (prevRect.left != m_rect.left) {
+	//if (prevRect.left != e.Rect.left) {
 		PostUpdate(Updates::Column);
-	}
-	if (prevRect.top != m_rect.top) {
+	//}
+	//if (prevRect.top != e.Rect.top) {
 		PostUpdate(Updates::Row);
-	}
+	//}
 
 	SizeChanged();
 }

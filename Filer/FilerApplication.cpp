@@ -47,12 +47,14 @@ void CFilerApplication::Deserialize()
 		//stream << inputFile.rdbuf();
 		//cereal::JSONInputArchive jsonInputArchive(stream);
 		//jsonInputArchive(cereal::make_nvp("FilerWnd", m_pWnd));
-		std::ifstream file(GetJsonPath(), std::ios::in);
-		cereal::JSONInputArchive archive(file);
-		archive(cereal::make_nvp("FilerWnd", m_pWnd));
+		//std::ifstream file(GetJsonPath(), std::ios::in);
+		//cereal::JSONInputArchive archive(file);
+		//archive(cereal::make_nvp("FilerWnd", m_pWnd));
+		std::ifstream i(path);
+		json j;
+		i >> j;
+		j.get_to(m_pWnd);
 	}
-
-
 
 	if(!m_pWnd){
 		m_pWnd = std::make_shared<CFilerWnd>();
@@ -77,15 +79,15 @@ void CFilerApplication::Serialize()
 	//outputFile.close();
 	//stream.clear();
 
-	std::ofstream file(GetJsonPath(), std::ios::out);
-	cereal::JSONOutputArchive archive(file);
-	archive(cereal::make_nvp("FilerWnd", m_pWnd));
+	//std::ofstream file(GetJsonPath(), std::ios::out);
+	//cereal::JSONOutputArchive archive(file);
+	//archive(cereal::make_nvp("FilerWnd", m_pWnd));
 
 
-	//json j = m_pWnd;
-	//auto path = GetJsonPath();
-	//std::ofstream o(path);
-	//o << std::setw(4) << j << std::endl;
+	json j = m_pWnd;
+	auto path = GetJsonPath();
+	std::ofstream o(path);
+	o << std::setw(4) << j << std::endl;
 }
 
 
@@ -200,6 +202,8 @@ void CFilerApplication::Init()
 	spdlog::set_pattern("%Y-%m-%d %H:%M:%S.%e\t%P\t%t\t%l\t%v");
 	LOG_1("***Application Start***");
 
+	Test();
+
 	//COM, OLE
 	m_pCoinit = std::make_unique<CCoInitializer>();
 	m_pOleinit = std::make_unique<COleInitializer>();
@@ -288,6 +292,17 @@ void CFilerApplication::Term()
 	//ResetHook();
 }
 
+
+
+void CFilerApplication::Test()
+{
+	std::shared_ptr<Base> a = std::make_shared<Derived>();
+	json j = a;
+	auto path = GetJsonPath();
+	std::ofstream o(path);
+	o << std::setw(4) << j << std::endl;
+
+}
 
 
 
