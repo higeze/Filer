@@ -33,5 +33,6 @@ public:
 	virtual bool IsTrackable()const override { return true; }
 
 	//virtual void RenderBackground(CDirect2DWrite* pDirect, const CRectF& rc);
-
 };
+
+JSON_ENTRY_TYPE(CColumn, CRowIndexColumn)

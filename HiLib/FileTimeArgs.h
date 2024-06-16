@@ -10,24 +10,7 @@ struct FileTimeArgs
 	int TimeLimitMs = 100;
 	bool IgnoreFolderTime = false;
 
-	template <class Archive>
-	void save(Archive& archive) const
-	{
-		archive(
-			CEREAL_NVP(TimeLimitFolderLastWrite),
-			CEREAL_NVP(TimeLimitMs),
-			CEREAL_NVP(IgnoreFolderTime));
-	}
-	template <class Archive>
-	void load(Archive& archive)
-	{
-		archive(
-			CEREAL_NVP(TimeLimitFolderLastWrite),
-			CEREAL_NVP(TimeLimitMs),
-			CEREAL_NVP(IgnoreFolderTime));
-	}
-
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(FileTimeArgs,
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(FileTimeArgs,
 		TimeLimitFolderLastWrite,
 		TimeLimitMs,
 		IgnoreFolderTime)

@@ -1184,20 +1184,24 @@ void CPdfView::OpenWithPasswordHandling(const std::wstring& path)
 	if (::PathFileExists(path.c_str())) {
 		if (auto err = PDF.get_unconst()->Open(path, L""); err == FPDF_ERR_SUCCESS) {
 			if (*Scale < 0) {// < 0 means auto-scale
-				FLOAT scaleX = GetRenderSize().width / PDF->GetPage(0)->GetSize().width;
-				FLOAT scaleY = GetRenderSize().height / PDF->GetPage(0)->GetSize().height;
-				switch (m_initialScaleMode) {
-					case InitialScaleMode::MinWidthHeight:
-						Scale.set((std::min)(scaleX, scaleY));
-						break;
-					case InitialScaleMode::Width:
-						Scale.set(scaleX);
-						break;
-					case InitialScaleMode::Height:
-						Scale.set(scaleY);
-						break;
-					default:
-						Scale.set(1.f);
+				if (GetRenderSize().height <= 0 || GetRenderSize().width <= 0) {
+					Scale.set(1.f);
+				} else {
+					FLOAT scaleX = GetRenderSize().width / PDF->GetPage(0)->GetSize().width;
+					FLOAT scaleY = GetRenderSize().height / PDF->GetPage(0)->GetSize().height;
+					switch (m_initialScaleMode) {
+						case InitialScaleMode::MinWidthHeight:
+							Scale.set((std::min)(scaleX, scaleY));
+							break;
+						case InitialScaleMode::Width:
+							Scale.set(scaleX);
+							break;
+						case InitialScaleMode::Height:
+							Scale.set(scaleY);
+							break;
+						default:
+							Scale.set(1.f);
+					}
 				}
 			}
 		} else if (err == FPDF_ERR_PASSWORD){

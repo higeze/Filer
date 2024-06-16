@@ -42,14 +42,6 @@ std::tuple<std::string, std::string, std::string, std::string> CFilerApplication
 void CFilerApplication::Deserialize()
 {
 	if (auto path = GetJsonPath(); ::PathFileExistsA(path.c_str())) {
-		//std::stringstream stream;
-		//std::ifstream inputFile(GetJsonPath(), std::ios::in);
-		//stream << inputFile.rdbuf();
-		//cereal::JSONInputArchive jsonInputArchive(stream);
-		//jsonInputArchive(cereal::make_nvp("FilerWnd", m_pWnd));
-		//std::ifstream file(GetJsonPath(), std::ios::in);
-		//cereal::JSONInputArchive archive(file);
-		//archive(cereal::make_nvp("FilerWnd", m_pWnd));
 		std::ifstream i(path);
 		json j;
 		i >> j;
@@ -59,136 +51,15 @@ void CFilerApplication::Deserialize()
 	if(!m_pWnd){
 		m_pWnd = std::make_shared<CFilerWnd>();
 	}
-	//if (auto path = GetJsonPath(); ::PathFileExistsA(path.c_str())) {
-	//	std::ifstream i(path);
-	//	json j;
-	//	i >> j;
-	//	j.get_to(m_pWnd);
-	//} else {
-	//	m_pWnd = std::make_shared<CFilerWnd>();
-	//}
 }
 
 void CFilerApplication::Serialize()
 {
-	//std::stringstream stream;
-	//cereal::JSONOutputArchive jsonOutArchive(stream);
-	//jsonOutArchive(cereal::make_nvp("FilerWnd", m_pWnd));
-	//std::ofstream outputFile(GetJsonPath(), std::ios::out);
-	//outputFile << stream.str();
-	//outputFile.close();
-	//stream.clear();
-
-	//std::ofstream file(GetJsonPath(), std::ios::out);
-	//cereal::JSONOutputArchive archive(file);
-	//archive(cereal::make_nvp("FilerWnd", m_pWnd));
-
-
 	json j = m_pWnd;
 	auto path = GetJsonPath();
 	std::ofstream o(path);
 	o << std::setw(4) << j << std::endl;
 }
-
-
-//std::shared_ptr<CLauncherProperty> CFilerApplication::DeserializeLauncher()
-//{
-//	return DeserializeValue<std::shared_ptr<CLauncherProperty>>("LauncherProperty");
-//}
-//
-//std::shared_ptr<CFavoritesProperty> CFilerApplication::DeserializeFavoirtes()
-//{
-//	return DeserializeValue<std::shared_ptr<CFavoritesProperty>>("FavoritesProperty");
-//}
-//
-//std::shared_ptr<ExeExtensionProperty> CFilerApplication::DeserializeExeExtension()
-//{
-//	return DeserializeValue<std::shared_ptr<ExeExtensionProperty>>("ExeExtensionProperty");
-//}
-
-//void CFilerApplication::SerializeLauncher(const std::shared_ptr<CLauncherProperty>& spProp)
-//{
-//	SerializeValue("LauncherProperty", spProp);
-//}
-//
-//void CFilerApplication::SerializeFavorites(const std::shared_ptr<CFavoritesProperty>& spProp)
-//{
-//	SerializeValue("FavoritesProperty", spProp);
-//}
-
-//void CFilerApplication::SerializeExeExtension(const std::shared_ptr<ExeExtensionProperty>& spProp)
-//{
-//	SerializeValue("ExeExtensionProperty", spProp);
-//}
-//#include "PreviewHandlerFrame.h"
-//#include <propkey.h>
-//
-//CPreviewHandlerFrame test;
-//CComPtr<IPreviewHandler> handler;
-//
-//HRESULT Open(HWND hWnd, const std::wstring& path)
-//{
-//	CComPtr<IShellItem> item1;
-//	::SHCreateItemFromParsingName(path.c_str(), nullptr, IID_PPV_ARGS(&item1));
-//	CComQIPtr<IShellItem2> item2(item1);
-//
-//	CComHeapPtr<wchar_t> ext;
-//	FAILED_THROW(item2->GetString(PKEY_ItemType, &ext));
-//
-//	CComHeapPtr<wchar_t> parsingName;
-//	FAILED_THROW(item2->GetDisplayName(SIGDN::SIGDN_DESKTOPABSOLUTEPARSING, &parsingName));
-//
-//	CComPtr<IQueryAssociations> assoc;
-//	FAILED_THROW(item2->BindToHandler(NULL, BHID_AssociationArray, IID_PPV_ARGS(&assoc)));
-//
-//	WCHAR sclsid[48] = { 0 };
-//	DWORD size = 48;
-//	FAILED_THROW(assoc->GetString(ASSOCF_INIT_DEFAULTTOSTAR, ASSOCSTR_SHELLEXTENSION, L"{8895b1c6-b41f-4c1c-a562-0d564250836f}", sclsid, &size));
-//
-//	CLSID clsid;
-//	SHCLSIDFromString(sclsid, &clsid);
-//	FAILED_THROW(handler.CoCreateInstance(clsid, NULL, CLSCTX_LOCAL_SERVER));
-//
-//	CComPtr<IInitializeWithItem> iitem;
-//	if (SUCCEEDED(handler->QueryInterface(&iitem)))
-//	{
-//		FAILED_THROW(iitem->Initialize(item2, STGM_READ));
-//	}
-//	else
-//	{
-//		CComPtr<IInitializeWithFile> ifile;
-//		if (SUCCEEDED(handler->QueryInterface(&ifile)))
-//		{
-//			FAILED_THROW(ifile->Initialize(parsingName, STGM_READ));
-//		}
-//		else
-//		{
-//			CComPtr<IInitializeWithStream> istream;
-//			FAILED_THROW(handler->QueryInterface(&istream));
-//
-//			CComPtr<IStream> stream;
-//			FAILED_THROW(SHCreateStreamOnFile(parsingName, STGM_READ, &stream));
-//			FAILED_THROW(istream->Initialize(stream, STGM_READ));
-//		}
-//	}
-//
-//	CComPtr<IObjectWithSite> site;
-//	if (SUCCEEDED(handler->QueryInterface(&site)))
-//	{
-//		site->SetSite(&test);
-//	}
-//
-//	RECT rc;
-//	GetClientRect(hWnd, &rc);
-//	rc.right = (rc.left + rc.right) / 2;
-//
-//	FAILED_THROW(handler->SetWindow(hWnd, &rc));
-//	FAILED_THROW(handler->DoPreview());
-//
-//	return 0;
-//}
-
-
 
 void CFilerApplication::Init()
 {
@@ -202,8 +73,6 @@ void CFilerApplication::Init()
 	spdlog::set_pattern("%Y-%m-%d %H:%M:%S.%e\t%P\t%t\t%l\t%v");
 	LOG_1("***Application Start***");
 
-	Test();
-
 	//COM, OLE
 	m_pCoinit = std::make_unique<CCoInitializer>();
 	m_pOleinit = std::make_unique<COleInitializer>();
@@ -216,6 +85,7 @@ void CFilerApplication::Init()
 
 	//Deserialize
 	Deserialize();
+	m_pWnd->Close.subscribe([this]() {Serialize(); }, m_pWnd);
 
 	//Create
 	m_pWnd->Create(NULL);
@@ -227,42 +97,7 @@ void CFilerApplication::Init()
 
 	//Hook
 	//SetHook(m_pWnd->m_hWnd);
-
-	//Open(m_pWnd->m_hWnd, LR"(C:\Users\kuuna\Downloads\VersyPDF (1).pdf)");
 }
-
-//int CFilerApplication::Run()
-//{
-//	BOOL fResult;
-//	//BOOL fEaten;
-//	MSG msg;
-//        BOOL focus;
-//
-//	while (SUCCEEDED(CTSFManager::GetInstance()->GetMessagePumpPtr()->GetMessageW(&msg, NULL, 0, 0, &fResult))) {
-//        //CTSFManager::GetInstance()->GetThreadMgrPtr()->IsThreadFocus(&focus);
-//        //OutputDebugStringA(focus ? "" : "~");
-//		if (fResult == 0 || fResult == -1) {
-//			break;
-//		} else /*if (msg.message == WM_KEYDOWN) {
-//			if (CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->TestKeyDown(msg.wParam, msg.lParam, &fEaten) == S_OK && fEaten &&
-//				CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->KeyDown(msg.wParam, msg.lParam, &fEaten) == S_OK && fEaten) {
-//				continue;
-//			}
-//
-//        } else if (msg.message == WM_KEYUP){
-//			if (CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->TestKeyUp(msg.wParam, msg.lParam, &fEaten) == S_OK && fEaten &&
-//				CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->KeyUp(msg.wParam, msg.lParam, &fEaten) == S_OK && fEaten) {
-//				continue;
-//			}
-//		}*/
-//			
-//		if ((m_hDlgModeless == (HWND)NULL || !IsDialogMessage(m_hDlgModeless, &msg))) {
-//			TranslateMessage(&msg);
-//			DispatchMessage(&msg);
-//		}
-//	}
-//	return msg.wParam;
-//}
 
 void CFilerApplication::Term()
 {
@@ -271,7 +106,7 @@ void CFilerApplication::Term()
 	m_pOleinit.release();
 
 	//Serialize
-	Serialize();
+	//Serialize();
 
 	//Window
 	m_pWnd.reset();
@@ -290,18 +125,6 @@ void CFilerApplication::Term()
 
 	//Hook
 	//ResetHook();
-}
-
-
-
-void CFilerApplication::Test()
-{
-	std::shared_ptr<Base> a = std::make_shared<Derived>();
-	json j = a;
-	auto path = GetJsonPath();
-	std::ofstream o(path);
-	o << std::setw(4) << j << std::endl;
-
 }
 
 

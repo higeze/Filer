@@ -28,31 +28,18 @@ public:
 		Add(std::forward<_Tail>(tail)...);
 	}
 
-    template<class Archive>
-    void save(Archive & archive) const
-    {
-		archive(cereal::base_class<CD2DWControl>(this));
-        //archive(cereal::make_nvp("Children", m_childControls));
-    }
-
-    template<class Archive>
-    void load(Archive & archive)
-    {
-		archive(cereal::base_class<CD2DWControl>(this));
-        //archive(cereal::make_nvp("Children", m_childControls));
-    }
-
+public:
 	friend void to_json(json& j, const CToolBar& o)
 	{
 		to_json(j, static_cast<const CD2DWControl&>(o));
-
-		j["Children"] = o.m_childControls;
+		json_safe_to(j, "Children", o.m_childControls);
 	}
 
 	friend void from_json(const json& j, CToolBar& o)
 	{
 		from_json(j, static_cast<CD2DWControl&>(o));
-
-		get_to(j, "Children", o.m_childControls);
+		json_safe_from(j, "Children", o.m_childControls);
 	}
 };
+
+JSON_ENTRY_TYPE(CD2DWControl, CToolBar)

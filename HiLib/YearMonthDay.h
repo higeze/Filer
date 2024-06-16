@@ -140,9 +140,9 @@ public:
         int year = CYearMonthDay::INVALID;
         size_t month = CYearMonthDay::INVALID;
         size_t day = CYearMonthDay::INVALID;
-        get_to(j, "Year", year);
-        get_to(j, "Month", month);
-        get_to(j, "Day", day);
+        json_safe_from(j, "Year", year);
+        json_safe_from(j, "Month", month);
+        json_safe_from(j, "Day", day);
         o = CYearMonthDay(year, month, day);
 	}
 };

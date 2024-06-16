@@ -1,5 +1,4 @@
 #pragma once
-#include <cereal/cereal.hpp>
 #include "Direct2DWrite.h"
 #include "D2DWControl.h"
 #include "reactive_property.h"
@@ -30,15 +29,17 @@ public:
 
 	virtual void OnPaint(const PaintEvent& e);
 
-	template<class Archive>
-	void save(Archive& archive) const
+public:
+	friend void to_json(json& j, const CStatusBar& o)
 	{
-		archive(cereal::base_class<CD2DWControl>(this));
+		to_json(j, static_cast<const CD2DWControl&>(o));
 	}
-	template<class Archive>
-	void load(Archive& archive)
+
+	friend void from_json(const json& j, CStatusBar& o)
 	{
-		archive(cereal::base_class<CD2DWControl>(this));
+		from_json(j, static_cast<CD2DWControl&>(o));
 	}
 
 };
+
+JSON_ENTRY_TYPE(CD2DWControl, CStatusBar)

@@ -30,30 +30,16 @@ public:
 
 	virtual ~CLauncher(void) = default;
 
-    template<class Archive>
-    void save(Archive & archive) const
-    {
-		archive(
-			cereal::base_class<CFavorite>(this),
-			cereal::make_nvp("RunAs", m_RunAs));
-    }
-    template<class Archive>
-    void load(Archive & archive)
-    {
-		archive(
-			cereal::base_class<CFavorite>(this),
-			cereal::make_nvp("RunAs", m_RunAs));
-    }
-
+public:
 	friend void to_json(json& j, const CLauncher& o)
 	{
 		to_json(j, static_cast<const CFavorite&>(o));
-		j["RunAs"] = o.m_RunAs;
+		json_safe_to(j, "RunAs", o.m_RunAs);
 	}
 	friend void from_json(const json& j, CLauncher& o)
 	{
 		from_json(j, static_cast<CFavorite&>(o));
-		get_to(j, "RunAs", o.m_RunAs);
+		json_safe_from(j, "RunAs", o.m_RunAs);
 	}
 };
 

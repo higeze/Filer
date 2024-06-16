@@ -1,5 +1,4 @@
 #pragma once
-#include <cereal/cereal.hpp>
 #include "notify_property_changed.h"
 #include "MyFriendSerializer.h"
 #include <future>
@@ -53,33 +52,16 @@ public:
 		std::lock_guard<std::mutex> lock(m_mtxFile);
 		m_spFile = spFile;
 	}
-
-    template <class Archive>
-    void save(Archive& archive) const
-    {
-		archive(
-			cereal::make_nvp("Path", m_Path),
-			cereal::make_nvp("ShortName", m_ShortName));
-    }
-    template <class Archive>
-    void load(Archive& archive)
-    {
-		archive(
-			cereal::make_nvp("Path", m_Path),
-			cereal::make_nvp("ShortName", m_ShortName));
-    }
+public:
 	friend void to_json(json& j, const CFavorite& o)
 	{
-	
-		j = json{
-			{"Path", o.m_Path},
-			{"ShortName", o.m_ShortName}
-		};
+		json_safe_to(j, "Path", o.m_Path);
+		json_safe_to(j, "ShortName", o.m_ShortName);
 	}
 	friend void from_json(const json& j, CFavorite& o)
 	{
-		j.at("Path").get_to(o.m_Path);
-		j.at("ShortName").get_to(o.m_ShortName);
+		json_safe_from(j, "Path", o.m_Path);
+		json_safe_from(j, "ShortName", o.m_ShortName);
 	}
 
 };

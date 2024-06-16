@@ -37,22 +37,13 @@ struct PdfTabData :public TabData
 	virtual std::shared_ptr<TabData> ClonePtr() const override { return std::make_shared<PdfTabData>(*this); }
 
 	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
-	
-	template<class Archive>
-	void save(Archive& archive) const
-	{
-		archive(cereal::base_class<TabData>(this));
-		archive(cereal::make_nvp("Doc", Doc));
-	}
-	template<class Archive>
-	void load(Archive& archive)
-	{
-		archive(cereal::base_class<TabData>(this));
-		archive(cereal::make_nvp("Doc", Doc));
-	}
+public:
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
 		PdfTabData,
 		Doc)
 };
+
+JSON_ENTRY_TYPE(TabData, PdfTabData)
+
 

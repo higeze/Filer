@@ -24,6 +24,6 @@ public:
 	}
 	friend void from_json(const json& j, CLauncherProperty& o)
 	{
-		get_to(j, "Launchers", o.Launchers);
+		json_safe_from(j, "Launchers", o.Launchers);
 	}
 };

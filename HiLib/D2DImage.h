@@ -62,31 +62,14 @@ public:
 	void Close();
 	void Save(const std::wstring& path);
 
-	template<class Archive>
-	void save(Archive& archive) const
-	{
-		archive(cereal::make_nvp("Path", GetPath()));
-	}
-
-	template<class Archive>
-	void load(Archive& archive)
-	{
-		std::wstring path;
-		archive(cereal::make_nvp("Path", path));
-		CShellFile::Load(path);
-	}
-
-
-
 	friend void to_json(json& j, const CD2DImage& o)
 	{
-		j["Path"] = o.GetPath();
+		json_safe_to(j, "Path", o.GetPath());
 	}
 	friend void from_json(const json& j, CD2DImage& o)
 	{
 		std::wstring path;
-		j.at("Path").get_to(path);
+		json_safe_from(j, "Path", path);
 		o.CShellFile::Load(path);
 	}
-
 };

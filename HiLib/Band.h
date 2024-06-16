@@ -1,5 +1,4 @@
 #pragma once
-#include <cereal/cereal.hpp>
 #include "SheetEnums.h"
 #include <WTypesbase.h>
 #include <float.h>
@@ -92,45 +91,18 @@ public:
 	template<> inline void SetIndex<VisTag>(const int index){ m_visIndex = index; }
 
 public:
-	template <class Archive>
-	void save(Archive& archive) const
-	{
-		archive(
-			cereal::make_nvp("visible", *m_spVisible),
-			cereal::make_nvp("allindex", m_allIndex),
-			cereal::make_nvp("visindex", m_visIndex));
-	}
-	template <class Archive>
-	void load(Archive& archive)
-	{
-		archive(
-			cereal::make_nvp("visible", *m_spVisible),
-			cereal::make_nvp("allindex", m_allIndex),
-			cereal::make_nvp("visindex", m_visIndex));
-	}
-	//template <class Archive>
-	//void load(Archive& ar)
-	//{
-	//	ar("visible", *m_spVisible);
-	//	ar("allindex", m_allIndex);
-	//	ar("visindex", m_visIndex);
-	//}
-
 
 	friend void to_json(json& j, const CBand& o)
 	{
-		j = json{
-			{"visible", o.m_spVisible},
-			{"allindex", o.m_allIndex},
-			{"visindex", o.m_visIndex }
-		};
-
+		json_safe_to(j, "visible", o.m_spVisible);
+		json_safe_to(j, "allindex", o.m_allIndex);
+		json_safe_to(j, "visindex", o.m_visIndex);
 	}
 	friend void from_json(const json& j, CBand& o)
 	{	
-		j.at("visible").get_to(o.m_spVisible);
-		j.at("allindex").get_to(o.m_allIndex);
-		j.at("visindex").get_to(o.m_visIndex);
+		json_safe_from(j, "visible", o.m_spVisible);
+		json_safe_from(j, "allindex", o.m_allIndex);
+		json_safe_from(j, "visindex", o.m_visIndex);
 	}
 };
 

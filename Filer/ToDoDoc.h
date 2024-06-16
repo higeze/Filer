@@ -26,25 +26,13 @@ public:
 	void Open(const std::wstring& path);
 	void Save(const std::wstring& path);
 public:
-	template<class Archive>
-	void save(Archive& archive) const
-	{
-		archive(CEREAL_NVP(Path));
-	}
-	template<class Archive>
-	void load(Archive& archive)
-	{
-		archive(CEREAL_NVP(Path));
-		Open(*Path);
-	}
-
 	friend void to_json(json& j, const CToDoDoc& o)
 	{
-		j["Path"] = o.Path;
+		json_safe_to(j, "Path", o.Path);
 	}
 	friend void from_json(const json& j, CToDoDoc& o)
 	{
-		get_to(j, "Path", o.Path);
+		json_safe_from(j, "Path", o.Path);
 		o.Open(*o.Path);
 	}
 };

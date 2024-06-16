@@ -101,54 +101,27 @@ public:
 	//virtual void RenderHighlight(CDirect2DWrite* pDirect, const CRectF& rc) {}
 
 public:
-	template <class Archive>
-	void save(Archive& archive) const
-	{
-		archive(cereal::base_class<CBand>(this));
-
-		
-
-		archive(
-			cereal::make_nvp("sort", m_sort),
-			cereal::make_nvp("left", m_start),
-			cereal::make_nvp("width", m_length),
-			cereal::make_nvp("filter", wstr2str(m_filter)));
-	}
-	template <class Archive>
-	void load(Archive& archive)
-	{
-		archive(cereal::base_class<CBand>(this));
-		std::string filter;
-		archive(
-			cereal::make_nvp("sort", m_sort),
-			cereal::make_nvp("left", m_start),
-			cereal::make_nvp("width", m_length),
-			cereal::make_nvp("filter", filter));
-		m_filter = str2wstr(filter);
-		m_isInit = false;
-		m_isMeasureValid = true;//Width or Height are serialized
-	}
-
 	friend void to_json(json& j, const CColumn& o)
 	{
 		to_json(j, static_cast<const CBand&>(o));
 
-		j["sort"] = o.m_sort;
-		j["left"] = o.m_start;
-		j["width"] = o.m_length;
-		j["filter"] = o.m_filter;
+		json_safe_to(j, "sort", o.m_sort);
+		json_safe_to(j, "left", o.m_start);
+		json_safe_to(j, "width", o.m_length);
+		json_safe_to(j, "filter", o.m_filter);
 
 	}
 	friend void from_json(const json& j, CColumn& o)
 	{
 		from_json(j, static_cast<CBand&>(o));
 
-		j.at("sort").get_to(o.m_sort);
-		j.at("left").get_to(o.m_start);
-		j.at("width").get_to(o.m_length);
+		json_safe_from(j, "sort", o.m_sort);
+		json_safe_from(j, "left", o.m_start);
+		json_safe_from(j, "width", o.m_length);
+		json_safe_from(j, "filter", o.m_filter);
+
 		o.m_isInit = false;
 		o.m_isMeasureValid = true;//Width or Height are serialized
-		j.at("filter").get_to(o.m_filter);
 	}
 };
 

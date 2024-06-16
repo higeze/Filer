@@ -2,7 +2,6 @@
 #include "Direct2DWrite.h"
 #include "UIElement.h"
 #include "reactive_property.h"
-#include <cereal/cereal.hpp>
 
 class CD2DWWindow;
 
@@ -304,7 +303,7 @@ public:
 
 	friend void from_json(const json& j, CD2DWControl& o)
 	{
-		get_to(j, "Dock", o.Dock);
+		json_safe_from(j, "Dock", o.Dock);
 	}
 };
 

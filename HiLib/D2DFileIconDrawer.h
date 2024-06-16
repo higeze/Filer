@@ -24,6 +24,9 @@ private:
 public:
 	CD2DFileIconDrawer();
 	~CD2DFileIconDrawer() = default;
+	bool DrawDefaultIconBitmap(
+		const CDirect2DWrite* pDirect,
+		const CPointF& dstPoint);
 
 	bool DrawFileIconBitmap(
 		const CDirect2DWrite* pDirect,

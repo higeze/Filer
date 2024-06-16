@@ -22,18 +22,6 @@ public:
 	virtual void MoveColumn(int indexTo, typename ColTag::SharedPtr spFrom) override;
 
 public:
-	template <class Archive>
-	void save(Archive& archive) const
-	{
-		archive(cereal::base_class<CD2DWControl>(this));
-
-	}
-	template <class Archive>
-	void load(Archive& archive)
-	{
-		archive(cereal::base_class<CD2DWControl>(this));
-
-	}
 	friend void to_json(json& j, const CLauncherGridView& o)
 	{
 		to_json(j, static_cast<const CD2DWControl&>(o));
@@ -45,4 +33,7 @@ public:
 	}
 
 };
+
+JSON_ENTRY_TYPE(CD2DWControl, CLauncherGridView)
+
 

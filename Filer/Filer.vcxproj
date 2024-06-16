@@ -483,6 +483,7 @@
     <ClInclude Include="..\HiLib\TextEnDecoder.h" />
     <ClInclude Include="..\HiLib\TextFileDialog.h" />
     <ClInclude Include="..\HiLib\ThreadHelper.h" />
+    <ClInclude Include="..\HiLib\ThreadMonitorView.h" />
     <ClInclude Include="..\HiLib\ThreadPool.h" />
     <ClInclude Include="..\HiLib\ThreadSafeDriveFolderManager.h" />
     <ClInclude Include="..\HiLib\ThreadSafeKnownFolderManager.h" />
@@ -576,6 +577,7 @@
     <ClInclude Include="TaskNameColumn.h" />
     <ClInclude Include="TaskRow.h" />
     <ClInclude Include="TextTabData.h" />
+    <ClInclude Include="ThreadMonitorTabData.h" />
     <ClInclude Include="ToDoDoc.h" />
     <ClInclude Include="ToDoGridView.h" />
     <ClInclude Include="ToDoTabData.h" />
@@ -699,6 +701,7 @@
     <ClCompile Include="..\HiLib\Editor.cpp" />
     <ClCompile Include="..\HiLib\TextDoc.cpp" />
     <ClCompile Include="..\HiLib\TextEnDecoder.cpp" />
+    <ClCompile Include="..\HiLib\ThreadMonitorView.cpp" />
     <ClCompile Include="..\HiLib\ThreadPool.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeKnownFolderManagaer.cpp" />

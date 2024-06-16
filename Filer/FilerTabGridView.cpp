@@ -31,11 +31,22 @@
 #include "PreviewControl.h"
 #include "PreviewControlProperty.h"
 
+#include "ThreadMonitorView.h"
+
 #include "StatusBar.h"
 
 #include "ResourceIDFactory.h"
 
 #include "TextBox.h"
+
+#include "ToDoTabData.h"
+#include "FilerTabData.h"
+#include "TextTabData.h"
+#include "PDFTabData.h"
+#include "ImageTabData.h"
+#include "PreviewTabData.h"
+#include "ThreadMonitorTabData.h"
+
 
 
 /********************/
@@ -53,7 +64,8 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl)
 	m_spPdfView(std::make_shared<CPDFEditor>(this)),
 	m_spImageView(std::make_shared<CImageEditor>(this)),
 	m_spToDoGridView(std::make_shared<CToDoGridView>(this)),
-	m_spPreviewControl(std::make_shared<CPreviewControl>(this)){}
+	m_spPreviewControl(std::make_shared<CPreviewControl>(this)),
+	m_spThreadMonitorView(std::make_shared<CThreadMonitorView>(this)) {}
 
 CFilerTabGridView::~CFilerTabGridView() = default;
 
@@ -137,6 +149,15 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			}
 		});
 
+	m_itemsHeaderTemplate.emplace(typeid(ThreadMonitorTabData).name(), [this](const std::shared_ptr<TabData>& pTabData)->std::wstring
+		{
+			if (auto p = std::dynamic_pointer_cast<ThreadMonitorTabData>(pTabData)) {
+				return L"Thread Pool Monitor";
+			} else {
+				return L"nullptr";
+			}
+		});
+
 	//ItemsHeaderIcon
 	auto updated = [this]()->void
 	{
@@ -191,6 +212,12 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			}
 		});
 
+	m_itemsHeaderIconTemplate.emplace(typeid(ThreadMonitorTabData).name(), [this, updated](const std::shared_ptr<TabData>& pTabData, const CRectF& dstRect)->void
+		{
+			if (auto p = std::dynamic_pointer_cast<ThreadMonitorTabData>(pTabData)) {
+				GetWndPtr()->GetDirectPtr()->GetFileIconDrawerPtr()->DrawDefaultIconBitmap(GetWndPtr()->GetDirectPtr(), dstRect.LeftTop());
+			}
+		});
 	//ItemsTemplate
 	auto disconnect = [](sigslot::connection& con) { return con.disconnect(); };
 	auto disconnect2 = [](std::pair<sigslot::connection, sigslot::connection>& paircon) { return paircon.first.disconnect() && paircon.second.disconnect(); };
@@ -327,6 +354,15 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		return spView;
 	});
 
+	m_itemsControlTemplate.emplace(typeid(ThreadMonitorTabData).name(), [this, disconnect, disconnect2](const std::shared_ptr<TabData>& pTabData)->std::shared_ptr<CD2DWControl> {
+		auto spViewModel = std::static_pointer_cast<ThreadMonitorTabData>(pTabData);
+		auto spView = GetThreadMonitorViewPtr();
+
+		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
+
+		return spView;
+	});
+
 	/**********/
 	/* Create */
 	/**********/
@@ -337,6 +373,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	GetPdfViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetImageViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 	GetPreviewControlPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
+	GetThreadMonitorViewPtr()->OnCreate(CreateEvt(GetWndPtr(), this, GetControlRect()));
 
 	GetFilerViewPtr()->IsEnabled.set(false);
 	GetToDoGridViewPtr()->IsEnabled.set(false);
@@ -344,6 +381,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	GetPdfViewPtr()->IsEnabled.set(false);
 	GetImageViewPtr()->IsEnabled.set(false);
 	GetPreviewControlPtr()->IsEnabled.set(false);
+	GetThreadMonitorViewPtr()->IsEnabled.set(false);
 
 	//ItemsSource
 	if (ItemsSource->empty()) {
@@ -484,6 +522,8 @@ void CFilerTabGridView::OnContextMenu(const ContextMenuEvent& e)
 		std::make_unique<CMenuItem2>(L"New Text tab", &CFilerTabGridView::OnCommandNewTextTab, me),
 		std::make_unique<CMenuItem2>(L"New Pdf tab", &CFilerTabGridView::OnCommandNewPdfTab, me),
 		std::make_unique<CMenuItem2>(L"New Image tab", &CFilerTabGridView::OnCommandNewImageTab, me),
+		std::make_unique<CMenuItem2>(L"New Preview tab", &CFilerTabGridView::OnCommandNewPreviewTab, me),
+		std::make_unique<CMenuItem2>(L"New Thread Monitor tab", &CFilerTabGridView::OnCommandNewThreadMonitorTab, me),
 		std::make_unique<CMenuSeparator2>(),
 		std::make_unique<CMenuItem2>(L"Clone", &CFilerTabGridView::OnCommandCloneTab, me),
 		std::make_unique<CMenuSeparator2>(),
@@ -542,6 +582,12 @@ void CFilerTabGridView::OnCommandNewImageTab()
 void CFilerTabGridView::OnCommandNewPreviewTab()
 {
 	ItemsSource.push_back(std::make_shared<PreviewTabData>(L""));
+	SelectedIndex.set(ItemsSource->size() - 1);
+}
+
+void CFilerTabGridView::OnCommandNewThreadMonitorTab()
+{
+	ItemsSource.push_back(std::make_shared<ThreadMonitorTabData>());
 	SelectedIndex.set(ItemsSource->size() - 1);
 }
 

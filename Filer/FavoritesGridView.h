@@ -2,10 +2,7 @@
 #include "BindGridview.h"
 #include "Favorite.h"
 
-struct GridViewProperty;
-class CFavoritesProperty;
 class CShellFile;
-class CFilerWnd;
 
 class CFavoritesGridView : public CBindGridView<CFavorite>
 {

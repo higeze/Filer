@@ -48,6 +48,14 @@
 
 #include "PreviewButton.h"
 
+#include "ToDoTabData.h"
+#include "FilerTabData.h"
+#include "TextTabData.h"
+#include "PDFTabData.h"
+#include "ImageTabData.h"
+#include "PreviewTabData.h"
+#include "ThreadMonitorTabData.h"
+
 
 std::vector<std::wstring> CFilerWnd::imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff" };
 std::vector<std::wstring> CFilerWnd::previewExts = {L".docx", L".doc", L".xlsx", L".xls", L".ppt", L".pptx"};
@@ -327,6 +335,16 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	if (Favorites->empty()) {
 		Favorites.push_back(CFavorite(CKnownFolderManager::GetInstance()->GetDesktopFolder()->GetPath(),L"DT"));
 	}
+	//FilerTabControl Connection
+	std::vector<std::shared_ptr<CDockPanel>> docks = FindChildren<CDockPanel>(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+	for (auto& dock : docks) {
+		std::vector<std::shared_ptr<CFilerTabGridView>> tabs = FindChildren<CFilerTabGridView>(dock);
+		if (tabs.size() == 2) {
+			tabs[0]->SetOther(tabs[1]);
+			tabs[1]->SetOther(tabs[0]);
+		}
+	}
+
 
 	//Launcher Binding
 	std::vector<std::shared_ptr<CLauncherGridView>> launchers = FindChildren<CLauncherGridView>(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
@@ -356,19 +374,6 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	//Arrange
 	Arrange(rcClient.Cast<CRectF>());
 
-	//Update Log
-	
-	auto updateLog = [this] {
-		std::wstring log;
-		m_pPerformance->Update();
-		PerformanceLog.set(m_pPerformance->OutputString());
-		ThreadPoolLog.set(CThreadPool::GetInstance()->OutputString());
-	};
-	updateLog();
-	m_timer.run([this, updateLog]()->void {
-		GetDispatcherPtr()->PostInvoke(updateLog);
-	}, std::chrono::milliseconds(3000));
-
 	SetFocusToControl(m_childControls[0]);
 }
 
@@ -395,6 +400,8 @@ void CFilerWnd::OnClose(const CloseEvent& e)
 	wp.length=sizeof(WINDOWPLACEMENT);
 	GetWindowPlacement(&wp);
 	Rectangle.set(CRect(wp.rcNormalPosition));
+
+	Close.execute();
 
 	CD2DWWindow::OnClose(e);
 }

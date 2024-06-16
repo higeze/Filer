@@ -1,11 +1,8 @@
 #include "FavoritesGridView.h"
-#include "FavoritesProperty.h"
 #include "BindColumn.h"
 #include "BindRow.h"
 #include "FavoritesColumn.h"
 #include "FavoriteCell.h"
-
-#include "GridViewProperty.h"
 
 #include "ShellFile.h"
 #include "ShellFolder.h"
@@ -18,7 +15,6 @@
 #include "FilerWnd.h"
 #include "Celler.h"
 #include "Debug.h"
-#include "EditorProperty.h"
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 

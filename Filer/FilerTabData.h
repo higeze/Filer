@@ -7,6 +7,7 @@
 #include "reactive_property.h"
 #include "reactive_string.h"
 #include "reactive_command.h"
+#include "JsonSerializer.h"
 
 /***************/
 /* FilerTabData */
@@ -17,7 +18,7 @@ struct FilerTabData:public TabData
 	reactive_property_ptr<std::shared_ptr<CShellFolder>> Folder;
 
 	FilerTabData()
-		:TabData(){ }
+		:TabData(){}
 
 	FilerTabData(const std::wstring& path);
 	FilerTabData(const std::shared_ptr<CShellFolder>& spFolder)
@@ -29,34 +30,7 @@ struct FilerTabData:public TabData
 
 	virtual std::shared_ptr<TabData> ClonePtr() const override { return std::make_shared<FilerTabData>(*this); }
 
-	//FilerTabData(const FilerTabData& data)
-	//{
-	//	//Path = data.Path;
-	//	Folder.set(data.Folder->Clone());
-	//}
-	template<class Archive>
-	void save(Archive& archive) const
-	{
-		archive(cereal::base_class<TabData>(this));
-		archive(cereal::make_nvp("Path", Folder->GetPath()));
-	}
-
-	template<class Archive>
-	void load(Archive& archive)
-	{
-		archive(cereal::base_class<TabData>(this));
-		std::wstring path;
-		archive(cereal::make_nvp("Path", path));
-		if (!path.empty()) {
-			auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
-			if (auto sp = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
-				Folder.set(sp);
-			} else {
-				Folder.set(CKnownFolderManager::GetInstance()->GetDesktopFolder());
-			}
-		}
-	}
-
+public:
 	friend void to_json(json& j, const FilerTabData& o)
 	{
 		to_json(j, static_cast<const TabData&>(o));
@@ -79,5 +53,7 @@ struct FilerTabData:public TabData
 		}
 	}
 };
+
+JSON_ENTRY_TYPE(TabData, FilerTabData)
 
 

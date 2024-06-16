@@ -44,29 +44,17 @@ struct TextTabData :public TabData
 
 	virtual bool AcceptClosing(CD2DWWindow* pWnd, bool isWndClosing) override;
 public:
-	template<class Archive>
-	void save(Archive& archive) const
-	{
-		archive(
-			cereal::base_class<TabData>(this),
-			CEREAL_NVP(Doc));
-	}
-	template<class Archive>
-	void load(Archive& archive)
-	{
-		archive(
-			cereal::base_class<TabData>(this),
-			CEREAL_NVP(Doc));
-	}
-
 	friend void to_json(json& j, const TextTabData& o)
 	{
 		to_json(j, static_cast<const TabData&>(o));
-		j["Doc"] = o.Doc;
+		json_safe_to(j, "Doc", o.Doc);
 	}
 	friend void from_json(const json& j, TextTabData& o)
 	{
 		from_json(j, static_cast<TabData&>(o));
-		get_to(j, "Doc", o.Doc);
+		json_safe_from(j, "Doc", o.Doc);
 	}
 };
+
+JSON_ENTRY_TYPE(TabData, TextTabData)
+

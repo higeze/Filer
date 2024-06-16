@@ -1,6 +1,5 @@
 #pragma once
 #include <d2d1_1.h>
-#include <cereal/cereal.hpp>
 #include "JsonSerializer.h"
 // 
 template<typename TRect, typename TSize, typename TPoint, typename T> struct CPointT;
@@ -440,25 +439,6 @@ struct CRectT :public TRect
 			static_cast<URect::value_type>(this->right), static_cast<URect::value_type>(this->bottom));
 	}
 public:
-  //  template<class Archive>
-  //  void save(Archive & archive) const
-  //  {
-		//archive(
-		//	cereal::make_nvp("left", (int&)this->left),
-		//	cereal::make_nvp("top", (int&)this->top),
-		//	cereal::make_nvp("right", (int&)this->right),
-		//	cereal::make_nvp("bottom", (int&)this->bottom));
-  //  }
-  //  template<class Archive>
-  //  void load(Archive & archive)
-  //  {
-		//archive(
-		//	cereal::make_nvp("left", (int&)this->left),
-		//	cereal::make_nvp("top", (int&)this->top),
-		//	cereal::make_nvp("right", (int&)this->right),
-		//	cereal::make_nvp("bottom", (int&)this->bottom));
-  //  }
-
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(rect_type,
 		left,
 		top,
@@ -486,30 +466,3 @@ CSizeF CSizeU2CSizeF(const CSizeU& sz);
 
 CPointU CPointF2CPointU(const CPointF& pt);
 CPointF CPointU2CPointF(const CPointU& pt);
-
-template<class Archive>
-void save(Archive & archive, 
-          CRect const & m)
-{ 
-	archive(
-		cereal::make_nvp("left", (const int&)m.left),
-		cereal::make_nvp("top", (const int&)m.top),
-		cereal::make_nvp("right", (const int&)m.right),
-		cereal::make_nvp("bottom", (const int&)m.bottom));
-}
-
-template<class Archive>
-void load(Archive & archive,
-          CRect & m)
-{
-	int left, top, right, bottom;
-	archive(
-		cereal::make_nvp("left", left),
-		cereal::make_nvp("top", top),
-		cereal::make_nvp("right", right),
-		cereal::make_nvp("bottom", bottom));
-	m.left = static_cast<LONG>(left);
-	m.top = static_cast<LONG>(top);
-	m.right = static_cast<LONG>(right);
-	m.bottom = static_cast<LONG>(bottom);
-} 

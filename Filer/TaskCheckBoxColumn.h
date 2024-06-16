@@ -18,3 +18,5 @@ public:
 	}
 };
 
+JSON_ENTRY_TYPE(CColumn, CTaskCheckBoxColumn)
+

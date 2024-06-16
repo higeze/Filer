@@ -406,29 +406,15 @@ public:
 			this->subscribe(&reactive_vector<_Ty, _Alloc>::observe_vector, dst.m_preactive));
 	}
 public:
-    template<class Archive>
-    void save(Archive & archive) const
-    {
-        archive(cereal::make_nvp("Value", operator*()));
-    }
-
-    template<class Archive>
-    void load(Archive & archive)
-    {
-		container_type value;
-		archive(cereal::make_nvp("Value", value));
-        set(value);
-    }
-
 	friend void to_json(json& j, const reactive_vector_ptr& ptr)
 	{
-		j = { {"Value", *ptr} };
+		json_safe_to(j, "Value", *ptr);
 	}
 
 	friend void from_json(const json& j, reactive_vector_ptr& ptr)
 	{
 		container_type value;
-		ptr.set(j.at("Value").get_to(value));
+		ptr.set(json_safe_from(j, "Value", value));
 	}
 
 };

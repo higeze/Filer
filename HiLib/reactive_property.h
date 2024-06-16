@@ -1,5 +1,4 @@
 #pragma once
-#include <cereal/cereal.hpp>
 #include "subject.h"
 #include "notify_container_changed.h"
 #include "reactive_string.h"
@@ -188,29 +187,15 @@ public:
 			this->subscribe(&reactive_basic_string<U, Traits, Allocator>::template observe_property<T>, dst.m_preactive));
 	}
 
-    template<class Archive>
-    void save(Archive & archive) const
-    {
-        archive(cereal::make_nvp("Value", operator*()));
-    }
-
-    template<class Archive>
-    void load(Archive & archive)
-    {
-		T value;
-		archive(cereal::make_nvp("Value", value));
-        set(value);
-    }
-
 	friend void to_json(json& j, const reactive_property_ptr<T>& o)
 	{
-		j = {{"Value", *o}};
+		json_safe_to(j, "Value", *o);
 	}
 
 	friend void from_json(const json& j, reactive_property_ptr<T>& o)
 	{
 		T value;
-		o.set(j.at("Value").get_to(value));
+		o.set(json_safe_from(j, "Value", value));
 	}
 
 };
@@ -338,30 +323,17 @@ public:
 			dst.subscribe(&reactive_property<std::shared_ptr<T>>::template observe_string<U, Traits, Allocator>, this->m_preactive),
 			this->subscribe(&reactive_basic_string<U, Traits, Allocator>::template observe_property<std::shared_ptr<T>>, dst.m_preactive));
 	}
+
 public:
-    template<class Archive>
-    void save(Archive & archive) const
-    {
-        archive(cereal::make_nvp("Value", operator*()));
-    }
-
-    template<class Archive>
-    void load(Archive & archive)
-    {
-		std::shared_ptr<T> value;
-		archive(cereal::make_nvp("Value", value));
-        set(value);
-    }
-
 	friend void to_json(json& j, const reactive_property_ptr<std::shared_ptr<T>>& o)
 	{
-		j = {{"Value", *o}};
+		json_safe_to(j, "Value", *o);
 	}
 
 	friend void from_json(const json& j, reactive_property_ptr<std::shared_ptr<T>>& o)
 	{
 		std::shared_ptr<T> value;
-		o.set(j.at("Value").get_to(value));
+		o.set(json_safe_from(j, "Value", value));
 	}
 
 };

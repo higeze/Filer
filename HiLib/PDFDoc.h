@@ -83,38 +83,17 @@ public:
 	CPDFDoc Extract(const std::wstring& page_indices) const;
 	CPDFDoc Clone() const;
 
-	//NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
-	//	CPDFDoc,
-	//	Path,
-	//	Password)
 public:
-
-	template<class Archive>
-	void save(Archive& archive) const
-	{
-		archive(CEREAL_NVP(Path));
-		archive(CEREAL_NVP(Password));
-	}
-
-	template<class Archive>
-	void load(Archive& archive)
-	{
-		archive(CEREAL_NVP(Path));
-		archive(CEREAL_NVP(Password));
-		Load(*Path);
-	}
-
-
 	friend void to_json(json& j, const CPDFDoc& o)
 	{
-		j["Path"] = o.Path;
-		j["Password"] = o.Password;
+		json_safe_to(j, "Path", o.Path);
+		json_safe_to(j, "Password", o.Password);
 	}
 
 	friend void from_json(const json& j, CPDFDoc& o)
 	{
-		get_to(j, "Path", o.Path);
-		get_to(j, "Password", o.Password);
+		json_safe_from(j, "Path", o.Path);
+		json_safe_from(j, "Password", o.Password);
 		o.Load(*o.Path);
 	}
 };

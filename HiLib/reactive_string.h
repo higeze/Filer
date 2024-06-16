@@ -454,31 +454,16 @@ public:
 	//}
 
 public:
-	template<class Archive>
-	void save(Archive& archive) const
-	{
-		archive(cereal::make_nvp("Value", operator*()));
-	}
-	template<class Archive>
-	void load(Archive& archive)
-	{
-		container_type value;
-		archive(cereal::make_nvp("Value", value));
-		set(value);
-	}
-
 	friend void to_json(json& j, const reactive_basic_string_ptr& ptr)
 	{
-		j = { {"Value", *ptr} };
+		json_safe_to(j, "Value", *ptr);
 	}
 
 	friend void from_json(const json& j, reactive_basic_string_ptr& ptr)
 	{
 		container_type value;
-		ptr.set(j.at("Value").get_to(value));
+		ptr.set(json_safe_from(j, "Value", value));
 	}
 };
-
-
 
 using reactive_wstring_ptr = reactive_basic_string_ptr<wchar_t>;

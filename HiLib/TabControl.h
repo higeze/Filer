@@ -36,27 +36,13 @@ struct TabData:public std::enable_shared_from_this<TabData>
 
 	//In case of REGISTER_POLYMORPHIC_RELATION, Base and Derived class have to be same function structure
 
-	template<class Archive>
-	void save(Archive& archive) const
-	{
-		archive(CEREAL_NVP(Unlock));
-	}
-
-	template<class Archive>
-	void load(Archive& archive)
-	{
-		archive(CEREAL_NVP(Unlock));
-	}
-
 	friend void to_json(json& j, const TabData& o)
 	{
-		j = json{
-			{"Unlock", o.Unlock},
-		};
+		json_safe_to(j, "Unlock", o.Unlock);
 	}
 	friend void from_json(const json& j, TabData& o) 
 	{
-		get_to(j, "Unlock", o.Unlock);
+		json_safe_from(j, "Unlock", o.Unlock);
 	}
 };
 
@@ -283,44 +269,20 @@ private:
 
 
 public:
-
-	//NLOHMANN_DEFINE_TYPE_INTRUSIVE_NOTHROW(
-	//	CTabControl,
-	//	ItemsSource,
-	//	SelectedIndex);
-
-    template<class Archive>
-    void save(Archive & archive) const
-    {
-		archive(cereal::base_class<CD2DWControl>(this));
-		archive(
-			CEREAL_NVP(ItemsSource),
-			CEREAL_NVP(SelectedIndex));
-    }
-    template<class Archive>
-    void load(Archive & archive)
-    {
-		archive(cereal::base_class<CD2DWControl>(this));
-		archive(
-			CEREAL_NVP(ItemsSource),
-			CEREAL_NVP(SelectedIndex));
-    }
-
-
 	friend void to_json(json& j, const CTabControl& o)
 	{
 		to_json(j, static_cast<const CD2DWControl&>(o));
 
-		j["ItemsSource"] = o.ItemsSource;
-		j["SelectedIndex"] = o.SelectedIndex;
+		json_safe_to(j, "ItemsSource", o.ItemsSource);
+		json_safe_to(j, "SelectedIndex", o.SelectedIndex);
 	}
 
 	friend void from_json(const json& j, CTabControl& o)
 	{
 		from_json(j, static_cast<CD2DWControl&>(o));
 
-		get_to(j, "ItemsSource", o.ItemsSource);
-		get_to(j, "SelectedIndex", o.SelectedIndex);
+		json_safe_from(j, "ItemsSource", o.ItemsSource);
+		json_safe_from(j, "SelectedIndex", o.SelectedIndex);
 	}
 
 };

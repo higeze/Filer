@@ -55,34 +55,19 @@ public:
 	/********/
 	friend void to_json(json& j, const CToDoGridView& o)
 	{
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskCheckBoxColumn);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskNameColumn);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskMemoColumn);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskDueDateColumn);
-	
-		j = json{
-			{"Columns", o.m_allCols},
-			{"RowFrozenCount", o.m_frozenRowCount},
-			{"ColFrozenCount", o.m_frozenColumnCount}
-		};
+		json_safe_to(j, "Columns", o.m_allCols);
+		json_safe_to(j, "RowFrozenCount", o.m_frozenRowCount);
+		json_safe_to(j, "ColFrozenCount", o.m_frozenColumnCount);
 	}
 	friend void from_json(const json& j, CToDoGridView& o)
 	{
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CRowIndexColumn);
-		json_make_shared_map.insert_or_assign(typeid(CRowIndexColumn).name(), [&]() { return std::make_shared<CRowIndexColumn>(&o); });
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskCheckBoxColumn);
-		json_make_shared_map.insert_or_assign(typeid(CTaskCheckBoxColumn).name(), [&]() { return std::make_shared<CTaskCheckBoxColumn>(&o); });
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskNameColumn);
-		json_make_shared_map.insert_or_assign(typeid(CTaskNameColumn).name(), [&]() { return std::make_shared<CTaskNameColumn>(&o); });
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskMemoColumn);
-		json_make_shared_map.insert_or_assign(typeid(CTaskMemoColumn).name(), [&]() { return std::make_shared<CTaskMemoColumn>(&o); });
-		JSON_REGISTER_POLYMORPHIC_RELATION(CColumn, CTaskDueDateColumn);
-		json_make_shared_map.insert_or_assign(typeid(CTaskDueDateColumn).name(), [&]() { return std::make_shared<CTaskDueDateColumn>(&o); });
+		json_safe_from(j, "Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(o.m_allCols));
+		json_safe_from(j, "RowFrozenCount", o.m_frozenRowCount);
+		json_safe_from(j, "ColFrozenCount", o.m_frozenColumnCount);
 
-		j.at("Columns").get_to(static_cast<std::vector<std::shared_ptr<CColumn>>&>(o.m_allCols));
-		j.at("RowFrozenCount").get_to(o.m_frozenRowCount);
-		j.at("ColFrozenCount").get_to(o.m_frozenColumnCount);
+		for (auto& col : o.m_allCols) {
+			col->SetSheetPtr(&o);
+		}
 	}
 
 };

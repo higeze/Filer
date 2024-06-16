@@ -95,17 +95,7 @@ public:
 	void Normal_LButtonDown(const LButtonDownEvent& e) override;
 	void Normal_SetCursor(const SetCursorEvent& e) override;
 
-    template<class Archive>
-    void save(Archive & archive) const
-    {
-		archive(cereal::base_class<CD2DWControl>(this));
-    }
-    template<class Archive>
-    void load(Archive & archive)
-    {
-		archive(cereal::base_class<CD2DWControl>(this));
-    }
-
+public:
 	friend void to_json(json& j, const CColoredTextBox& o)
 	{
 		to_json(j, static_cast<const CD2DWControl&>(o));
@@ -116,3 +106,6 @@ public:
 		from_json(j, static_cast<CD2DWControl&>(o));
 	}
 };
+
+JSON_ENTRY_TYPE(CD2DWControl, CColoredTextBox)
+

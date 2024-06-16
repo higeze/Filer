@@ -1,5 +1,4 @@
 #pragma once
-#include <cereal/cereal.hpp>
 #include "getter_macro.h"
 #include "MyString.h"
 #include "MyIcon.h"
@@ -154,26 +153,14 @@ private:
 	//std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetLockIcon();
 	//void SetLockIcon(std::pair<std::shared_ptr<CIcon>, FileIconStatus>& icon);
 public:
-	template<class Archive>
-	void save(Archive& archive) const
-	{
-		archive(cereal::make_nvp("Path", GetPath()));
-	}
-	template<class Archive>
-	void load(Archive& archive)
-	{
-		std::wstring path;
-		archive(cereal::make_nvp("Path", path));
-		Load(path);
-	}
 	friend void to_json(json& j, const CShellFile& o)
 	{
-		j["Path"] = o.GetPath();
+		json_safe_to(j, "Path", o.GetPath());
 	}
 	friend void from_json(const json& j, CShellFile& o)
 	{
 		std::wstring path;
-		j.at("Path").get_to(path);
+		json_safe_from(j, "Path", path);
 		o.CShellFile::Load(path);
 	}
 };

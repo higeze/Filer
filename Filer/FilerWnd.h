@@ -1,11 +1,4 @@
 #pragma once
-//#include <boost/asio.hpp>
-//#include <boost/date_time/posix_time/posix_time.hpp>
-//#include <boost/asio/deadline_timer.hpp>
-//#include <boost/asio/io_service.hpp>
-#include <cereal/types/polymorphic.hpp>
-#include <cereal/types/vector.hpp>
-
 #include "MyWnd.h"
 #include "D2DWTypes.h"
 #include "MyFriendSerializer.h"
@@ -60,7 +53,6 @@ private:
 	//boost::asio::io_service m_reloadIosv;
 	//boost::asio::io_service::work m_reloadWork;
 	//boost::asio::deadline_timer m_reloadTimer;
-	CTimer m_timer;
 	CDeadlineTimer m_reloadTimer;
 
 	std::unique_ptr<CNetworkMessanger> m_pNetworkMessanger;
@@ -104,11 +96,12 @@ private:
 public:
 	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<CRect> Rectangle;
-	reactive_wstring_ptr PerformanceLog;
-	reactive_wstring_ptr ThreadPoolLog;
+	//reactive_wstring_ptr PerformanceLog;
+	//reactive_wstring_ptr ThreadPoolLog;
 	reactive_vector_ptr<CFavorite> Favorites;
 	reactive_vector_ptr<CLauncher> Launchers;
 	reactive_property_ptr<bool> IsPreview;
+	reactive_command_ptr<void> Close;
 
 
 	virtual void Measure(const CSizeF& availableSize) override;
@@ -217,85 +210,20 @@ public:
 private:
 	void SetUpFilerView(const std::shared_ptr<CFilerView>& view, const std::shared_ptr<CStatusBar>& status);
 public:
-	template<class Archive>
-    void save(Archive & archive) const
-    {
-		archive(cereal::base_class<CD2DWControl>(this));
-		archive(CEREAL_NVP(Rectangle));
-		archive(CEREAL_NVP(Launchers));
-		archive(CEREAL_NVP(Favorites));
-			archive(cereal::make_nvp("Children", m_childControls));
-   //     archive(
-			//CEREAL_NVP(Rectangle),
-			//CEREAL_NVP(Launchers),
-			//CEREAL_NVP(Favorites),
-			//cereal::make_nvp("Children", m_childControls));
-    }
-	template<class Archive>
-    void load(Archive & archive)
-    {
-		archive(cereal::base_class<CD2DWControl>(this),
-			CEREAL_NVP(Rectangle),
-			CEREAL_NVP(Launchers),
-			CEREAL_NVP(Favorites),
-			cereal::make_nvp("Children", m_childControls));
-   //     archive(
-			//CEREAL_NVP(Rectangle),
-			//CEREAL_NVP(Launchers),
-			//CEREAL_NVP(Favorites),
-			//cereal::make_nvp("Children", m_childControls));
-    }
-
 	friend void to_json(json& j, const CFilerWnd& o) 
 	{
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CToolBar);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CLauncherGridView);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CStatusBar);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CDockPanel);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CVerticalSplitter);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CHorizontalSplitter);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CFilerTabGridView);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CColoredTextBox);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CPreviewButton);
-
-		j = json{
-			{"Rectangle", o.Rectangle},
-			//{"ApplicationProperty", o.m_spApplicationProp },
-			//{"LauncherProperty", o.m_spLauncherProp },
-			//{"FavoritesProperty", o.m_spFavoritesProp },
-			{"ExeExtensionProperty", o.m_spExeExProp },
-			{"Children", o.m_childControls}
-		};
+		json_safe_to(j, "Rectangle", o.Rectangle);
+		json_safe_to(j, "Launchers", o.Launchers);
+		json_safe_to(j, "Favorites", o.Favorites);
+		json_safe_to(j, "Children", o.m_childControls);
 	}
 
 	friend void from_json(const json& j, CFilerWnd& o)
 	{
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CToolBar);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CLauncherGridView);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CStatusBar);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CDockPanel);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CVerticalSplitter);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CHorizontalSplitter);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CFilerTabGridView);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CColoredTextBox);
-		JSON_REGISTER_POLYMORPHIC_RELATION(CD2DWControl, CPreviewButton);
-
-		get_to(j, "Rectangle", o.Rectangle);
-		//get_to(j, "ApplicationProperty", o.m_spApplicationProp);
-		//get_to(j, "LauncherProperty", o.m_spLauncherProp);
-		//get_to(j, "FavoritesProperty", o.m_spFavoritesProp);
-		get_to(j, "ExeExtensionProperty", o.m_spExeExProp);
-		get_to(j, "Children", o.m_childControls);
+		json_safe_from(j, "Rectangle", o.Rectangle);
+		json_safe_from(j, "Launchers", o.Launchers);
+		json_safe_from(j, "Favorites", o.Favorites);
+		json_safe_from(j, "Children", o.m_childControls);
 	}
 };
-
-CEREAL_REGISTER_TYPE(CToolBar);
-CEREAL_REGISTER_TYPE(CLauncherGridView);
-CEREAL_REGISTER_TYPE(CStatusBar);
-CEREAL_REGISTER_TYPE(CDockPanel);
-CEREAL_REGISTER_TYPE(CVerticalSplitter);
-CEREAL_REGISTER_TYPE(CHorizontalSplitter);
-CEREAL_REGISTER_TYPE(CColoredTextBox);
-CEREAL_REGISTER_TYPE(CPreviewButton);
-
 

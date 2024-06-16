@@ -113,6 +113,16 @@ bool CD2DFileIconDrawer::DrawFileIconBitmap(
 	//m_pAtlasBitmap->DrawBitmapByKey(key, dstRect);
 }
 
+bool CD2DFileIconDrawer::DrawDefaultIconBitmap(
+	const CDirect2DWrite* pDirect,
+	const CPointF& dstPoint)
+{
+	if (!m_pAtlasBitmap->Exist(L"DEFAULT")) {
+		m_pAtlasBitmap->AddOrAssign(pDirect, L"DEFAULT", GetBitmapFromIcon(pDirect, GetDefaultIcon()));
+	}
+	return m_pAtlasBitmap->DrawBitmap(pDirect, L"DEFAULT", dstPoint);
+}
+
 bool CD2DFileIconDrawer::DrawFileIconBitmap(
 	const CDirect2DWrite* pDirect,
 	const CPointF& dstPoint,

@@ -1,5 +1,4 @@
 #pragma once
-#include <cereal/cereal.hpp>
 #include "MyRect.h"
 #include "MyFriendSerializer.h"
 #include "Console.h"
@@ -19,24 +18,12 @@ public:
 		m_bDebug(false){}
 	virtual ~CApplicationProperty(){}
 
-	template <class Archive>
-	void save(Archive& archive) const
-	{
-		archive(cereal::make_nvp("Debug", m_bDebug));
-	}
-	template <class Archive>
-	void load(Archive& archive)
-	{
-		archive(cereal::make_nvp("Debug", m_bDebug));
-	}
 	friend void to_json(json& j, const CApplicationProperty& o)
 	{
-		j = json{
-			{"Debug", o.m_bDebug}
-		};
+		json_safe_to(j, "Debug", o.m_bDebug);
 	}
 	friend void from_json(const json& j, CApplicationProperty& o)
 	{
-		j.at("Debug").get_to(o.m_bDebug);
+		json_safe_from(j, "Debug", o.m_bDebug);
 	}
 };

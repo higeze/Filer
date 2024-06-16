@@ -24,3 +24,6 @@ public:
 	}
 };
 
+JSON_ENTRY_TYPE(CColumn, CTaskNameColumn)
+
+

@@ -39,29 +39,15 @@ public:
 	virtual void Arrange(const CRectF& rc) override;
 
 public:
-    template<class Archive>
-    void save(Archive & archive) const
-    {
-		archive(
-			cereal::base_class<CD2DWControl>(this),
-			cereal::make_nvp("FileGrid", m_spFileGrid));
-    }
-    template<class Archive>
-    void load(Archive & archive)
-    {
-		archive(
-			cereal::base_class<CD2DWControl>(this),
-			cereal::make_nvp("FileGrid", m_spFileGrid));
-    }
-	//friend void to_json(json& j, const CFilerView& o)
-	//{
-	//	j["GridView"] = o.m_spFileGrid;
-	//}
+	friend void to_json(json& j, const CFilerView& o)
+	{
+		json_safe_to(j, "GridView", o.m_spFileGrid);
+	}
 
-	//friend void from_json(const json& j, CFilerView& o)
-	//{
-	//	get_to(j, "GridView", o.m_spFileGrid);
-	//}
+	friend void from_json(const json& j, CFilerView& o)
+	{
+		json_safe_from(j, "GridView", o.m_spFileGrid);
+	}
 };
 
-CEREAL_REGISTER_TYPE(CFilerView);
+JSON_ENTRY_TYPE(CD2DWControl, CFilerView);

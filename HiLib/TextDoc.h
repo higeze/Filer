@@ -34,24 +34,13 @@ public:
 	void Close();
 	void Save(const std::wstring& path, const encoding_type& encoding_type);
 public:
-	template<class Archive>
-	void save(Archive& archive) const
-	{
-		archive(CEREAL_NVP(Path));
-	}
-	template<class Archive>
-	void load(Archive& archive)
-	{
-		archive(CEREAL_NVP(Path));
-		Open(*Path);
-	}
 	friend void to_json(json& j, const CTextDoc& o)
 	{
-		j["Path"] = o.Path;
+		json_safe_to(j ,"Path", o.Path);
 	}
 	friend void from_json(const json& j, CTextDoc& o)
 	{
-		get_to(j, "Path", o.Path);
+		json_safe_from(j, "Path", o.Path);
 		o.Open(*o.Path);
 	}
 };
