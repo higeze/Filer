@@ -62,7 +62,7 @@ public:
 
 	CD2DWControl(CD2DWControl* pParentControl = nullptr):
 		m_pParentControl(pParentControl), IsEnabled(true), IsFocusable(true){}
-	virtual ~CD2DWControl() = default;
+	virtual ~CD2DWControl();
 
 	virtual CD2DWWindow* GetWndPtr()const { return m_pParentControl->GetWndPtr(); }
 	virtual CD2DWControl* GetParentControlPtr()const { return m_pParentControl; }

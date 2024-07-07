@@ -24,5 +24,4 @@ void CThreadMonitorView::OnCreate(const CreateEvt& e)
 	}, shared_from_this());
 
 	IsEnabled.force_notify_set(*IsEnabled);
-
 }

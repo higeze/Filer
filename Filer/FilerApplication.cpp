@@ -98,7 +98,7 @@ void CFilerApplication::Init()
 	//Hook
 	//SetHook(m_pWnd->m_hWnd);
 }
-
+#include "ThreadPool.h"
 void CFilerApplication::Term()
 {
 	//COM, OLE
@@ -110,6 +110,8 @@ void CFilerApplication::Term()
 
 	//Window
 	m_pWnd.reset();
+
+	::OutputDebugStringW(CThreadPool::GetInstance()->OutputString().c_str());
 
 	//TSF
 	CTSFManager::GetInstance()->Term();

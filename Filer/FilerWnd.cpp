@@ -186,35 +186,46 @@ void CFilerWnd::SetUpFilerView(const std::shared_ptr<CFilerView>& view, const st
 {
 	Favorites.binding(view->GetFavoriteGridPtr()->ItemsSource);
 	view->GetFileGridPtr()->StatusLog.subscribe(
-		[this, status](auto notify) {
-		status->Text.set(notify.all_items);
-		InvalidateRect(NULL, FALSE);
+		[this, wp = std::weak_ptr(status)](auto notify) {
+		if (auto sp = wp.lock()) {
+			sp->Text.set(notify.all_items);
+			InvalidateRect(NULL, FALSE);
+		}
 	}, shared_from_this());
 
 	view->SetIsTabStop(true);
 
 	view->GetFileGridPtr()->GetFileContextMenu().Add(
 		std::make_unique<CMenuSeparator2>(),
-		std::make_unique<CMenuItem2>(L"Add to Favorite", [this, view]()->void {
-			auto files = view->GetFileGridPtr()->GetSelectedFiles();
-			for (auto& file : files) {
+		std::make_unique<CMenuItem2>(L"Add to Favorite",
+		[this, wp = std::weak_ptr(view)]()->void {
+			if (auto sp = wp.lock()) {
+				auto files = sp->GetFileGridPtr()->GetSelectedFiles();
+				for (auto& file : files) {
 					Favorites.push_back(CFavorite(file->GetPath(), L""));//TODOMONITOR
 				}
-			}),
-		std::make_unique<CMenuItem2>(L"Add to Launcher", [this, view]()->void {
-			auto files = view->GetFileGridPtr()->GetSelectedFiles();
-			for (auto& file : files) {
-				Launchers.push_back(CLauncher(file->GetPath(), L""));//TODOMONITOR
+			}
+		}),
+		std::make_unique<CMenuItem2>(L"Add to Launcher",
+		[this, wp = std::weak_ptr(view)]()->void {
+			if (auto sp = wp.lock()) {
+				auto files = sp->GetFileGridPtr()->GetSelectedFiles();
+				for (auto& file : files) {
+					Launchers.push_back(CLauncher(file->GetPath(), L""));//TODOMONITOR
+				}
 			}
 		})
 	);
 
 	view->GetFileGridPtr()->GetFolderContextMenu().Add(
 		std::make_unique<CMenuSeparator2>(),
-		std::make_unique<CMenuItem2>(L"Add to Favorite", [this, view]()->void {
-			auto files = view->GetFileGridPtr()->GetSelectedFiles();
-			for (auto& file : files) {
-				Favorites.push_back(CFavorite(file->GetPath(), L""));//TODOMONITO
+		std::make_unique<CMenuItem2>(L"Add to Favorite",
+		[this, wp = std::weak_ptr(view)]()->void {
+			if (auto sp = wp.lock()) {
+				auto files = sp->GetFileGridPtr()->GetSelectedFiles();
+				for (auto& file : files) {
+					Favorites.push_back(CFavorite(file->GetPath(), L""));//TODOMONITO
+				}
 			}
 		}));
 }
@@ -303,6 +314,9 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 		spLeftBottom->SetOther(spRightBottom);
 		spRightBottom->SetOther(spLeftBottom);
 
+		/********/
+		/* Dock */
+		/********/
 		spFillBottomDock->Add(
 			pr(spRightBottom, DockEnum::Right),
 			pr(std::make_shared<CVerticalSplitter>(), DockEnum::Right),
@@ -318,12 +332,11 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 			pr(spTopDock, DockEnum::Top),
 			pr(spBottomStatus, DockEnum::Bottom),
 			pr(spFillDock, DockEnum::Fill));
+	}
 
-		spDock->OnCreate(CreateEvt(this, this, CRectF()));
-	} else {
-		for (auto& child : m_childControls) {
-			child->OnCreate(CreateEvt(this, this, CRectF()));
-		}
+	//Create
+	for (auto& child : m_childControls) {
+		child->OnCreate(CreateEvt(this, this, CRectF()));
 	}
 
 	//Launchers
@@ -335,6 +348,7 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 	if (Favorites->empty()) {
 		Favorites.push_back(CFavorite(CKnownFolderManager::GetInstance()->GetDesktopFolder()->GetPath(),L"DT"));
 	}
+
 	//FilerTabControl Connection
 	std::vector<std::shared_ptr<CDockPanel>> docks = FindChildren<CDockPanel>(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
 	for (auto& dock : docks) {
@@ -343,6 +357,12 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 			tabs[0]->SetOther(tabs[1]);
 			tabs[1]->SetOther(tabs[0]);
 		}
+	}
+
+	//Favorite Binding
+	std::vector<std::shared_ptr<CFavoritesGridView>> favoriteviews = FindChildren<CFavoritesGridView>(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+	for (auto& child : favoriteviews) {
+		Favorites.binding(child->ItemsSource);
 	}
 
 
@@ -437,8 +457,10 @@ void CFilerWnd::Measure(const CSizeF& availableSize)
 
 void CFilerWnd::Arrange(const CRectF& rc)
 {
-	for (auto child : m_childControls) {
-		child->Arrange(rc);
+	if (!rc.IsRectNull()) {
+		for (auto child : m_childControls) {
+			child->Arrange(rc);
+		}
 	}
 }
 

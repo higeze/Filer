@@ -130,120 +130,129 @@ bool CShellContextMenu::InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVer
 /* CShellContextMenu */
 /*********************/
 
-void CShellContextMenu::PopupFolder(CWnd* pWnd, const CPoint& pt, const std::shared_ptr<CShellFolder>& folder)
+int CShellContextMenu::PopupFolder(CWnd* pWnd, const CPoint& pt, const std::shared_ptr<CShellFolder>& folder)
 {
-	std::vector<PITEMID_CHILD> vPidl = { folder->GetAbsoluteIdl().FindLastID() };
+	int id = 0;
+	do {
+		std::vector<PITEMID_CHILD> vPidl = {folder->GetAbsoluteIdl().FindLastID()};
 
-	//OnHandleMenuMsg
-	pWnd->AddMsgHandler(WM_INITMENUPOPUP, &CShellContextMenu::OnHandleMenuMsg, this);
+		//OnHandleMenuMsg
+		pWnd->AddMsgHandler(WM_INITMENUPOPUP, &CShellContextMenu::OnHandleMenuMsg, this);
 
-	//Create Menu
-	CMenu menu(::CreatePopupMenu());
-	FALSE_RETURN(menu);
+		//Create Menu
+		CMenu menu(::CreatePopupMenu());
+		FALSE_BREAK(menu);
 
-	//New Context Menu {D969A300-E7FF-11d0-A93B-00A0C90F2719},
-	FALSE_RETURN((m_pcmNew3 = SetUpNewContextMenues(menu, folder->GetAbsoluteIdl())));
+		//New Context Menu {D969A300-E7FF-11d0-A93B-00A0C90F2719},
+		FALSE_BREAK((m_pcmNew3 = SetUpNewContextMenues(menu, folder->GetAbsoluteIdl())));
 
-	//Normal Context Menu
-	FALSE_RETURN((m_pcm3 = SetUpNormalContextMenues(menu, folder->GetParentFolderPtr()->GetShellFolderPtr(), pWnd->m_hWnd, vPidl.size(), (LPCITEMIDLIST*)vPidl.data())));
+		//Normal Context Menu
+		FALSE_BREAK((m_pcm3 = SetUpNormalContextMenues(menu, folder->GetParentFolderPtr()->GetShellFolderPtr(), pWnd->m_hWnd, vPidl.size(), (LPCITEMIDLIST*)vPidl.data())));
 
-	//Investigate New menu
-	int itemCount = menu.GetMenuItemCount();
-	for (auto i = itemCount - 1; i != 0; i--) {
-		std::wstring verb;
-		MENUITEMINFO mii = { 0 };
-		mii.cbSize = sizeof(MENUITEMINFO);
-		mii.fMask = MIIM_SUBMENU | MIIM_TYPE;
-		mii.dwTypeData = ::GetBuffer(verb, 256);
-		mii.cch = 256;
-		menu.GetMenuItemInfo(i, TRUE, &mii);
+		//Investigate New menu
+		int itemCount = menu.GetMenuItemCount();
+		for (auto i = itemCount - 1; i != 0; i--) {
+			std::wstring verb;
+			MENUITEMINFO mii = {0};
+			mii.cbSize = sizeof(MENUITEMINFO);
+			mii.fMask = MIIM_SUBMENU | MIIM_TYPE;
+			mii.dwTypeData = ::GetBuffer(verb, 256);
+			mii.cch = 256;
+			menu.GetMenuItemInfo(i, TRUE, &mii);
 
-		//Get Submenu of New
-		if (verb.find(L"V‹Kì¬") != std::wstring::npos) {
-			m_hNewMenu = mii.hSubMenu;
-		}
-	}
-
-	//Add Menu
-	for (const auto& item : m_items) {
-		menu.InsertMenuItemW(menu.GetMenuItemCount(), TRUE, &item->GetMII());
-	}
-
-	//Popup
-	pWnd->SetForegroundWindow();
-	int id = menu.TrackPopupMenu( 
-		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-		pt.x, pt.y, pWnd->m_hWnd);
-
-	//Invoke
-	if (id) {
-		//Execute Shell Command
-		if (InvokeShellCommand(pWnd->m_hWnd, static_cast<tagPOINT>(pt), id, m_pcm3, m_pcmNew3)) {
-		//Execute additional menu
-		} else {
-			auto iter = std::find_if(m_items.cbegin(), m_items.cend(),
-				[id](const std::unique_ptr<CMenuItem2>& item) {
-				return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, item->Header->c_str()) == id;
-			});
-
-			if (iter != m_items.cend()) {
-				(*iter)->Command.execute();
+			//Get Submenu of New
+			if (verb.find(L"V‹Kì¬") != std::wstring::npos) {
+				m_hNewMenu = mii.hSubMenu;
 			}
 		}
-	}
+
+		//Add Menu
+		for (const auto& item : m_items) {
+			menu.InsertMenuItemW(menu.GetMenuItemCount(), TRUE, &item->GetMII());
+		}
+
+		//Popup
+		pWnd->SetForegroundWindow();
+		id = menu.TrackPopupMenu(
+			TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+			pt.x, pt.y, pWnd->m_hWnd);
+
+		//Invoke
+		if (id) {
+			//Execute Shell Command
+			if (InvokeShellCommand(pWnd->m_hWnd, static_cast<tagPOINT>(pt), id, m_pcm3, m_pcmNew3)) {
+				//Execute additional menu
+			} else {
+				auto iter = std::find_if(m_items.cbegin(), m_items.cend(),
+					[id](const std::unique_ptr<CMenuItem2>& item) {
+					return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, item->Header->c_str()) == id;
+				});
+
+				if (iter != m_items.cend()) {
+					(*iter)->Command.execute();
+				}
+			}
+		}
+		//OnHandleMenuMsg
+		pWnd->RemoveMsgHandler(WM_INITMENUPOPUP);
+	
+	} while (false);
 
 	//Release
 	m_hNewMenu = NULL;
-	m_pcmNew3.Release();
-	m_pcm3.Release();
-	//OnHandleMenuMsg
-	pWnd->RemoveMsgHandler(WM_INITMENUPOPUP);
+	if (m_pcmNew3) { m_pcmNew3.Release(); }
+	if (m_pcm3) { m_pcm3.Release(); }
+	return id;
 }
 
-void CShellContextMenu::PopupFiles(CWnd* pWnd, const CPoint& pt, const std::vector<std::shared_ptr<CShellFile>>& files)
+int CShellContextMenu::PopupFiles(CWnd* pWnd, const CPoint& pt, const std::vector<std::shared_ptr<CShellFile>>& files)
 {
-	std::vector<PITEMID_CHILD> vPidl;
-	for (const auto& file : files) {
-		vPidl.push_back(file->GetAbsoluteIdl().FindLastID());
-	}
+	int id = 0;
+	do {
+		std::vector<PITEMID_CHILD> vPidl;
+		for (const auto& file : files) {
+			vPidl.push_back(file->GetAbsoluteIdl().FindLastID());
+		}
 
-	//Create Menu
-	CMenu menu(::CreatePopupMenu());
-	FALSE_RETURN(menu);
+		//Create Menu
+		CMenu menu(::CreatePopupMenu());
+		FALSE_BREAK(menu);
 
-	//Normal Context Menu
-	FALSE_RETURN((m_pcm3 = SetUpNormalContextMenues(menu, files[0]->GetParentShellFolderPtr(), pWnd->m_hWnd, vPidl.size(), (LPCITEMIDLIST*)vPidl.data())));
+		//Normal Context Menu
+		FALSE_BREAK((m_pcm3 = SetUpNormalContextMenues(menu, files[0]->GetParentShellFolderPtr(), pWnd->m_hWnd, vPidl.size(), (LPCITEMIDLIST*)vPidl.data())));
 
-	//Add Menu
-	for (const auto& item : m_items) {
-		menu.InsertMenuItemW(menu.GetMenuItemCount(), TRUE, &item->GetMII());
-	}
+		//Add Menu
+		for (const auto& item : m_items) {
+			menu.InsertMenuItemW(menu.GetMenuItemCount(), TRUE, &item->GetMII());
+		}
 
-	//Popup
-	pWnd->SetForegroundWindow();
-	int id = menu.TrackPopupMenu( 
-		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-		pt.x, pt.y, pWnd->m_hWnd);
+		//Popup
+		pWnd->SetForegroundWindow();
+		id = menu.TrackPopupMenu(
+			TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+			pt.x, pt.y, pWnd->m_hWnd);
 
-	//Invoke
-	if (id) {
-		//Execute Shell Command
-		if (InvokeShellCommand(pWnd->m_hWnd, static_cast<tagPOINT>(pt), id, m_pcm3, m_pcmNew3)) {
-		//Execute additional menu
-		} else {
-			auto iter = std::find_if(m_items.cbegin(), m_items.cend(),
-				[id](const std::unique_ptr<CMenuItem2>& item) {
-				return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, item->Header->c_str()) == id;
-			});
+		//Invoke
+		if (id) {
+			//Execute Shell Command
+			if (InvokeShellCommand(pWnd->m_hWnd, static_cast<tagPOINT>(pt), id, m_pcm3, m_pcmNew3)) {
+				//Execute additional menu
+			} else {
+				auto iter = std::find_if(m_items.cbegin(), m_items.cend(),
+					[id](const std::unique_ptr<CMenuItem2>& item) {
+					return CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, item->Header->c_str()) == id;
+				});
 
-			if (iter != m_items.cend()) {
-				(*iter)->Command.execute();
+				if (iter != m_items.cend()) {
+					(*iter)->Command.execute();
+				}
 			}
 		}
-	}
+	} while (false);
 
 	//Release
-	m_pcm3.Release();
+	if (m_pcm3) { m_pcm3.Release(); }
+	return id;
 }
 
 HRESULT CShellContextMenu::OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)

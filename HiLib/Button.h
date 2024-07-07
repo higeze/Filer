@@ -7,7 +7,7 @@
 class CButton:public CD2DWControl
 {
 private:
-	std::optional<CSizeF> m_opt_size;
+	//std::optional<CSizeF> m_opt_size;
 public:
 	const SolidFill& GetNormalBackground() const override
 	{
@@ -32,9 +32,8 @@ public:
 		:CD2DWControl(pControl){}
 	virtual ~CButton() = default;
 
+	//MeasureArrrange
 	void Measure(const CSizeF& availableSize);
-	CSizeF DesiredSize() const;
-	void Arrange(const CRectF& rc) { m_rect = rc; }
 
 	//Event
 	virtual void OnPaint(const PaintEvent& e) override;

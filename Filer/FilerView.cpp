@@ -70,16 +70,94 @@ void CRecentFolderGridView::OnPaint(const PaintEvent& e)
 /**************/
 
 CFilerView::CFilerView(CD2DWControl* pParentControl)
-	:m_spFileGrid(std::make_shared<CFilerGridView>(this)),
-	m_spFavoriteGrid(std::make_shared<CFavoritesGridView>(this)),
-	m_spTextBox(std::make_shared<CTextBox>(this, L"")),
-	m_spRecentButton(std::make_shared<CButton>(this))
+	//:m_spFileGrid(std::make_shared<CFilerGridView>(this)),
+	//m_spFavoriteGrid(std::make_shared<CFavoritesGridView>(this)),
+	//m_spTextBox(std::make_shared<CTextBox>(this, L"")),
+	//m_spRecentButton(std::make_shared<CButton>(this))
 {
 	
+	//m_spTextBox->SetIsEnterText(true);
+	//m_spRecentButton->Content.set(L"R");
+	//Favorite-File
+	//m_spFavoriteGrid->FileChosen = [this](const std::shared_ptr<CShellFile>& spFile)->void {
+	//	if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {//Open Filer
+	//		m_spFileGrid->Folder.set(spFolder);
+	//	}
+	//};
+
+	////File-Text Binding
+	//m_spTextBox->EnterText.subscribe([this](auto notify) {
+	//	m_spFileGrid->SetPath(*m_spTextBox->EnterText);
+	//	m_spFileGrid->SubmitUpdate();
+	//}, m_spFileGrid->Folder.life());
+	//m_spFileGrid->Folder.subscribe([this](auto value) {
+	//	m_spTextBox->Text.set(value->GetPath());
+	//}, m_spTextBox);
+
+	////RecentButton-RecentGrid
+	//m_spRecentButton->Command.subscribe([this]()->void {
+
+	//	if (auto iter = std::ranges::find_if(m_childControls, [](const std::shared_ptr<CD2DWControl>& spControl)->bool {return typeid(*spControl) == typeid(CRecentFolderGridView); });
+	//		iter != m_childControls.cend()) {
+	//		(*iter)->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
+	//	} else {
+	//		auto recentGridView = std::make_shared<CRecentFolderGridView>(this);
+	//		recentGridView->SelectedItem.subscribe([this, recentGridView](const std::shared_ptr<CShellFile>& spFile) {
+	//			if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
+	//				m_spFileGrid->Folder.set(spFolder);
+	//				recentGridView->OnClose(CloseEvent(recentGridView->GetWndPtr(), NULL, NULL));
+	//			}
+	//		}, shared_from_this());
+
+	//		recentGridView->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	//		recentGridView->PostUpdate(Updates::All);
+	//		recentGridView->SubmitUpdate();
+	//		recentGridView->Measure(CSizeF(FLT_MAX, FLT_MAX));
+	//		recentGridView->Arrange(CRectF(m_spTextBox->GetRectInWnd().left, m_spTextBox->GetRectInWnd().bottom,
+	//			m_spTextBox->GetRectInWnd().right, m_spTextBox->GetRectInWnd().bottom + (std::min)(300.f, recentGridView->DesiredSize().height)));
+	//		recentGridView->SubmitUpdate();
+	//	}
+
+	//}, m_spRecentButton);
+}
+
+CFilerView::~CFilerView()
+{
+	auto a = 2.f;
+}
+
+void CFilerView::OnCreate(const CreateEvt& e)
+{
+	using pr = std::pair<std::shared_ptr<CD2DWControl>, DockEnum>;
+	/*******/
+	/* Top */
+	/*******/
+	auto spTopDock = std::make_shared<CDockPanel>(this);
+	m_spTextBox = std::make_shared<CTextBox>(spTopDock.get(), L"");
+	m_spRecentButton = std::make_shared<CButton>(spTopDock.get());
 	m_spTextBox->SetIsEnterText(true);
 	m_spRecentButton->Content.set(L"R");
+	spTopDock->Add(
+		pr(m_spRecentButton, DockEnum::Right),
+		pr(m_spTextBox, DockEnum::Fill)
+	);
+
+	/********/
+	/* Dock */
+	/********/
+	m_spFileGrid = std::make_shared<CFilerGridView>(this);
+	m_spFavoriteGrid = std::make_shared<CFavoritesGridView>(this);
+	this->Add(
+		pr(spTopDock, DockEnum::Top),
+		pr(m_spFavoriteGrid, DockEnum::Left),
+		pr(m_spFileGrid, DockEnum::Fill)
+	);
+
+	/***********/
+	/* Binding */
+	/***********/
 	//Favorite-File
-	m_spFavoriteGrid->FileChosen = [this](const std::shared_ptr<CShellFile>& spFile)->void {
+	m_spFavoriteGrid->FileChosen = [&](const std::shared_ptr<CShellFile>& spFile)->void {
 		if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {//Open Filer
 			m_spFileGrid->Folder.set(spFolder);
 		}
@@ -95,14 +173,14 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 	}, m_spTextBox);
 
 	//RecentButton-RecentGrid
-	m_spRecentButton->Command.subscribe([this]()->void {
+	m_spRecentButton->Command.subscribe([&]()->void {
 
 		if (auto iter = std::ranges::find_if(m_childControls, [](const std::shared_ptr<CD2DWControl>& spControl)->bool {return typeid(*spControl) == typeid(CRecentFolderGridView); });
 			iter != m_childControls.cend()) {
 			(*iter)->OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
 		} else {
 			auto recentGridView = std::make_shared<CRecentFolderGridView>(this);
-			recentGridView->SelectedItem.subscribe([this, recentGridView](const std::shared_ptr<CShellFile>& spFile) {
+			recentGridView->SelectedItem.subscribe([&, recentGridView](const std::shared_ptr<CShellFile>& spFile) {
 				if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(spFile)) {
 					m_spFileGrid->Folder.set(spFolder);
 					recentGridView->OnClose(CloseEvent(recentGridView->GetWndPtr(), NULL, NULL));
@@ -119,43 +197,38 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 		}
 
 	}, m_spRecentButton);
+
+	CDockPanel::OnCreate(e);
+
+	//m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	//m_spRecentButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	//m_spFavoriteGrid->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
+	//m_spFileGrid->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 }
-
-CFilerView::~CFilerView() = default;
-
-void CFilerView::OnCreate(const CreateEvt& e)
-{
-	CD2DWControl::OnCreate(e);
-
-	m_spTextBox->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-	m_spRecentButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-	m_spFavoriteGrid->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-	m_spFileGrid->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-}
-
-void CFilerView::OnRect(const RectEvent& e)
-{
-	Measure(e.Rect.Size());
-	Arrange(e.Rect);
-}
-
-void CFilerView::Measure(const CSizeF& availableSize)
-{
-	m_spTextBox->Measure(availableSize, L"A");
-	m_spRecentButton->Measure(availableSize);
-	m_spFavoriteGrid->Measure(availableSize);
-	m_spFileGrid->Measure(availableSize);
-
-	m_size.width = m_spFavoriteGrid->DesiredSize().width + m_spFileGrid->DesiredSize().width;
-	m_size.height = m_spTextBox->DesiredSize().height + (std::max)(m_spFavoriteGrid->DesiredSize().height, m_spFileGrid->DesiredSize().height);
-}
-
-void CFilerView::Arrange(const CRectF& rc)
-{
-	CD2DWControl::Arrange(rc);
-
-	m_spTextBox->Arrange(CRectF(rc.left, rc.top, rc.right-m_spRecentButton->DesiredSize().width, rc.top + m_spTextBox->DesiredSize().height));
-	m_spRecentButton->Arrange(CRectF(rc.right - m_spRecentButton->DesiredSize().width, rc.top, rc.right, rc.top + m_spTextBox->DesiredSize().height));
-	m_spFavoriteGrid->Arrange(CRectF(rc.left, m_spTextBox->ArrangedRect().bottom, rc.left + m_spFavoriteGrid->DesiredSize().width, rc.bottom));
-	m_spFileGrid->Arrange(CRectF(m_spFavoriteGrid->ArrangedRect().right, m_spTextBox->ArrangedRect().bottom, rc.right, rc.bottom));
-}
+//
+//void CFilerView::OnRect(const RectEvent& e)
+//{
+//	Measure(e.Rect.Size());
+//	Arrange(e.Rect);
+//}
+//
+//void CFilerView::Measure(const CSizeF& availableSize)
+//{
+//	m_spTextBox->Measure(availableSize, L"A");
+//	m_spRecentButton->Measure(availableSize);
+//	m_spFavoriteGrid->Measure(availableSize);
+//	m_spFileGrid->Measure(availableSize);
+//
+//	m_size.width = m_spFavoriteGrid->DesiredSize().width + m_spFileGrid->DesiredSize().width;
+//	m_size.height = m_spTextBox->DesiredSize().height + (std::max)(m_spFavoriteGrid->DesiredSize().height, m_spFileGrid->DesiredSize().height);
+//}
+//
+//void CFilerView::Arrange(const CRectF& rc)
+//{
+//	CD2DWControl::Arrange(rc);
+//
+//	m_spTextBox->Arrange(CRectF(rc.left, rc.top, rc.right-m_spRecentButton->DesiredSize().width, rc.top + m_spTextBox->DesiredSize().height));
+//	m_spRecentButton->Arrange(CRectF(rc.right - m_spRecentButton->DesiredSize().width, rc.top, rc.right, rc.top + m_spTextBox->DesiredSize().height));
+//	m_spFavoriteGrid->Arrange(CRectF(rc.left, m_spTextBox->ArrangedRect().bottom, rc.left + m_spFavoriteGrid->DesiredSize().width, rc.bottom));
+//	m_spFileGrid->Arrange(CRectF(m_spFavoriteGrid->ArrangedRect().right, m_spTextBox->ArrangedRect().bottom, rc.right, rc.bottom));
+//}

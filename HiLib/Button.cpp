@@ -4,21 +4,15 @@
 
 void CButton::Measure(const CSizeF& availableSize)
 {
-	if (!m_opt_size.has_value()) {
-		CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), *Content);
-		size.width += GetPadding().top
-			+ GetPadding().bottom
-			+ GetNormalBorder().Width * 2;
-		size.height += GetPadding().left
-			+ GetPadding().right
-			+ GetNormalBorder().Width * 2;
-		m_opt_size.emplace(size);
-	}
+	m_size = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), *Content);
+	m_size.width += GetMargin().top
+		+ GetMargin().bottom
+		+ GetNormalBorder().Width * 2;
+	m_size.height += GetMargin().left
+		+ GetMargin().right
+		+ GetNormalBorder().Width * 2;
 }
-CSizeF CButton::DesiredSize() const
-{
-	return m_opt_size.value();
-}
+
 void CButton::OnLButtonDown(const LButtonDownEvent& e)
 {
 	CUIElement::OnLButtonDown(e);

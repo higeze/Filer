@@ -1,5 +1,5 @@
 #pragma once
-#include "D2DWControl.h"
+#include "DockPanel.h"
 #include "FilerGridView.h"
 #include "JsonSerializer.h"
 #include "getter_macro.h"
@@ -17,7 +17,7 @@ public:
 	virtual void OnPaint(const PaintEvent& e) override;
 };
 
-class CFilerView:public CD2DWControl
+class CFilerView:public CDockPanel
 {
 public:
 	SHAREDPTR_GETTER(CTextBox, TextBox)
@@ -31,12 +31,12 @@ public:
 	//Event
 	virtual void OnCreate(const CreateEvt& e) override;
 	//virtual void OnPaint(const PaintEvent& e) override;
-	virtual void OnRect(const RectEvent& e) override;
+	virtual void OnRect(const RectEvent& e) override { Arrange(e.Rect); }
 
-	virtual void Measure(const CSizeF& availableSize) override;
-	//virtual CSizeF DesiredSize() const { return m_size; }
-	//virtual CSizeF RenderSize() const { return CSizeF(m_size.width - Margin->Width(), m_size.height - Margin->Height()); }
-	virtual void Arrange(const CRectF& rc) override;
+	virtual void Measure(const CSizeF& availableSize) override { CDockPanel::Measure(availableSize); }
+	////virtual CSizeF DesiredSize() const { return m_size; }
+	////virtual CSizeF RenderSize() const { return CSizeF(m_size.width - Margin->Width(), m_size.height - Margin->Height()); }
+	virtual void Arrange(const CRectF& rc) override { CDockPanel::Arrange(rc); }
 
 public:
 	friend void to_json(json& j, const CFilerView& o)

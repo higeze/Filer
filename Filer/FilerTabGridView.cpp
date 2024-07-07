@@ -67,7 +67,10 @@ CFilerTabGridView::CFilerTabGridView(CD2DWControl* pParentControl)
 	m_spPreviewControl(std::make_shared<CPreviewControl>(this)),
 	m_spThreadMonitorView(std::make_shared<CThreadMonitorView>(this)) {}
 
-CFilerTabGridView::~CFilerTabGridView() = default;
+CFilerTabGridView::~CFilerTabGridView()
+{
+	auto a = 1.f;
+}
 
 void CFilerTabGridView::Measure(const CSizeF& availableSize)
 {
@@ -233,7 +236,8 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		);
 		//spView->GetFileGridPtr()->OpenFolder(pData->FolderPtr);
 
-		GetFilerViewPtr()->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
+		GetFilerViewPtr()->Measure(GetControlRect().Size());
+		GetFilerViewPtr()->Arrange(GetControlRect());
 		GetFilerViewPtr()->GetFileGridPtr()->PostUpdate(Updates::All);
 		GetFilerViewPtr()->GetFileGridPtr()->SubmitUpdate();
 

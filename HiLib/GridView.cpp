@@ -1671,6 +1671,7 @@ void CGridView::OnCreate(const CreateEvt& e)
 
 void CGridView::Measure(const CSizeF& sz)
 {
+	SubmitUpdate();
 	m_size = MeasureSize();
 }
 

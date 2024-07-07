@@ -63,8 +63,7 @@ CTextBox::CTextBox(
 /**************/
 /* destructor */
 /**************/
-CTextBox::~CTextBox()
-{}
+CTextBox::~CTextBox() = default;
 
 void CTextBox::InitTSF()
 {

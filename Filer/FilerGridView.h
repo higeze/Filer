@@ -53,6 +53,9 @@ public:
 	CFilerGridView(CD2DWControl* pParentControl = nullptr);
 	virtual ~CFilerGridView();
 
+	virtual void Measure(const CSizeF& availableSize) override { CFilerBindGridView::Measure(availableSize); }
+
+
 	/******************/
 	/* Window Message */
 	/******************/

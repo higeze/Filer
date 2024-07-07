@@ -102,7 +102,12 @@ void CDockPanel::Arrange(const CRectF& rc)
 			}
 			case DockEnum::Left:
 			{
-				//TODONORMAL
+				if (auto split = std::dynamic_pointer_cast<CVerticalSplitter>(child); split && prev_child) {
+					//TODONORMAL
+				} else {
+					child->Arrange(CRectF(remain.left, remain.top, remain.left + child->DesiredSize().width, remain.bottom));
+					remain.left = child->ArrangedRect().right;
+				}
 				break;
 			}
 			case DockEnum::Right:

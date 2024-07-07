@@ -21,7 +21,7 @@ class CShellFolder;
 
 class CShellContextMenu : public CContextMenu2
 {
-private:
+public:
 	static const UINT SCRATCH_QCM_FIRST = 1;
 	static const UINT SCRATCH_QCM_NEW = 600;//200,500 are used by system
 	static const UINT SCRATCH_QCM_LAST = 0x7FFF;
@@ -49,8 +49,8 @@ public:
 
 public:
 
-	void PopupFolder(CWnd* pWnd, const CPoint& pt, const std::shared_ptr<CShellFolder>& folder);
-	void PopupFiles(CWnd* pWnd, const CPoint& pt, const std::vector<std::shared_ptr<CShellFile>>& files);
+	int PopupFolder(CWnd* pWnd, const CPoint& pt, const std::shared_ptr<CShellFolder>& folder);
+	int PopupFiles(CWnd* pWnd, const CPoint& pt, const std::vector<std::shared_ptr<CShellFile>>& files);
 	HRESULT OnHandleMenuMsg(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
 
 };
