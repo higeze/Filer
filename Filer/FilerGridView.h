@@ -130,15 +130,15 @@ public:
 	friend void to_json(json& j, const CFilerGridView& o)
 	{
 		json_safe_to(j, "Columns", o.m_allCols);
-		json_safe_to(j, "RowFrozenCount", o.m_frozenRowCount);
-		json_safe_to(j, "ColFrozenCount", o.m_frozenColumnCount);
+		//json_safe_to(j, "RowFrozenCount", o.m_frozenRowCount);
+		//json_safe_to(j, "ColFrozenCount", o.m_frozenColumnCount);
 
 	}
 	friend void from_json(const json& j, CFilerGridView& o)
 	{
 		json_safe_from(j, "Columns", static_cast<std::vector<std::shared_ptr<CColumn>>&>(o.m_allCols));
-		json_safe_from(j, "RowFrozenCount", o.m_frozenRowCount);
-		json_safe_from(j, "ColFrozenCount", o.m_frozenColumnCount);
+		//json_safe_from(j, "RowFrozenCount", o.m_frozenRowCount);
+		//json_safe_from(j, "ColFrozenCount", o.m_frozenColumnCount);
 
 		for (auto& col : o.m_allCols) {
 			col->SetSheetPtr(&o);

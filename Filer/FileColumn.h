@@ -16,7 +16,7 @@
 template<typename TCell, typename T>
 class CFileColumnBase : public CMapColumn
 {
-private:
+protected:
 	std::wstring m_header;
 public:
 	template<typename... Args>
@@ -59,7 +59,11 @@ class CFileNameColumnBase : public CFileColumnBase<TCell, T>, public IImageColum
 private:
 	UINT32 m_size = 16;
 public:
-	using CFileColumnBase<TCell, T>::CFileColumnBase;
+	CFileNameColumnBase(CGridView* pSheet = nullptr)
+		:CFileColumnBase<TCell, T>(pSheet), IImageColumn()
+	{
+		this->m_header = L"Name";
+	}
 	UINT32 GetImageSize() const override { return m_size; }
 	void SetImageSize(const UINT32& size) override { m_size = size; }
 };
@@ -92,7 +96,15 @@ using CFileIconPathColumn = CFileNameColumnBase<CFileIconPathCell<T>, T>;
 /* CFileDispExtColumn */
 /**********************/
 template<typename T>
-using CFileDispExtColumn = CFileColumnBase<CFileDispExtCell<T>, T>;
+class CFileDispExtColumn : public CFileColumnBase<CFileDispExtCell<T>, T>
+{
+public:
+	CFileDispExtColumn(CGridView* pSheet = nullptr)
+		:CFileColumnBase<CFileDispExtCell<T>, T>(pSheet)
+	{
+		this->m_header = L"Ext";
+	}
+};
 
 /**********************/
 /* CFilePathExtColumn */

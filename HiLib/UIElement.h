@@ -394,7 +394,7 @@ public:
 	virtual void OnEnable(const EnableEvent& e) {}
 	virtual void OnClose(const CloseEvent& e) {}
 	virtual void OnCommand(const CommandEvent& e) {}
-	virtual void OnRect(const RectEvent& e) {}
+
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnLButtonUp(const LButtonUpEvent& e);

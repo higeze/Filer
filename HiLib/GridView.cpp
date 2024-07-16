@@ -252,7 +252,7 @@ void CGridView::UpdateFilter()
 			(*iter)->SetIsVisible(true);
 		};
 		//Set Filter
-		for (auto colIter = std::next(m_allCols.begin(), m_frozenColumnCount), colEnd = m_allCols.end(); colIter != colEnd; ++colIter) {
+		for (auto colIter = m_allCols.begin(), colEnd = m_allCols.end(); colIter != colEnd; ++colIter) {
 			auto strFilter = Cell((*colIter), GetFilterRowPtr())->GetString();
 			if (strFilter.empty() || strFilter == std::wstring(L""))continue;
 			std::vector<std::wstring> vstrFilter;

@@ -73,11 +73,10 @@ void CCheckableFileGrid::OnCreate(const CreateEvt& e)
 
 	//Insert columns if not initialized
 	if (m_allCols.empty()) {
-		//m_pNameColumn = std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this, L"Name");
 		PushColumns(
 			std::make_shared<CRowIndexColumn>(this),
-			std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this, L"Name"),
-			std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"),
+			std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this),
+			std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this),
 			std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this),
 			std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this));
 

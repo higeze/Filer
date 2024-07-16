@@ -549,7 +549,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 
 	GetContentRect = [rect = CRectF(), this]()mutable->CRectF&
 	{
-		rect = GetRectInWnd() - MARGIN;
+		rect = RenderRect();
 		if (!m_headers.empty()) {
 			rect.top = m_headers.back()->GetRectInWnd().bottom;
 		}
@@ -565,24 +565,14 @@ void CTabControl::OnCreate(const CreateEvt& e)
 
 void CTabControl::OnPaint(const PaintEvent& e)
 {
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+
 	if (*SelectedIndex >= 0) {
-		//auto rc = GetRectInWnd();
 		//Content
 		const auto& contentRc = GetContentRect();
-		//GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetIsFocused()?m_spProp->SelectedFill:m_spProp->UnfocusSelectedFill, contentRc);
 		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(GetNormalBorder(), contentRc);
-		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), contentRc.LeftTop(), CPointF(contentRc.left, contentRc.bottom));
-		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.left, contentRc.bottom), CPointF(contentRc.right, contentRc.bottom));
-		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), CPointF(contentRc.right, contentRc.bottom), CPointF(contentRc.right, contentRc.top));
 
-		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), 
-		//	CPointF(m_headers.front()->GetRectInWnd().left, m_headers.front()->GetRectInWnd().bottom),
-		//	CPointF(m_headers[SelectedIndex.get()]->GetRectInWnd().left, m_headers[SelectedIndex]->GetRectInWnd().bottom));
-		//GetWndPtr()->GetDirectPtr()->DrawSolidLine(*(m_spProp->Line), 
-		//	CPointF(m_headers[SelectedIndex.get()]->GetRectInWnd().right, m_headers[SelectedIndex]->GetRectInWnd().bottom),
-		//	CPointF(rc.right, m_headers.back()->GetRectInWnd().bottom) );
-
-		//Header, Paint selected cell at last
+		//Header, Paint selected header on last
 		for (const auto& pHeader : m_headers) {
 			if (pHeader->GetIndex() != *SelectedIndex) {
 				pHeader->OnPaint(e);
@@ -605,7 +595,7 @@ void CTabControl::OnPaint(const PaintEvent& e)
 		//Control
 		m_spCurControl->OnPaint(e);
 	}
-
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
 }
 
 void CTabControl::OnClosing(const ClosingEvent& e)

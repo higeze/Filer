@@ -8,6 +8,7 @@
 #include <unordered_map>
 // https://qiita.com/javacommons/items/9ea0c8fd43b61b01a8da#stdstring-wide_to_utf8const-stdwstring-s
 #include <strconv.h>
+#include "Debug.h"
 
 using json = nlohmann::json;
 
@@ -184,50 +185,44 @@ namespace nlohmann {
 
         static void from_json(const json& j, std::shared_ptr<T>& sp)
         {
+            //typeinfoname
+            std::string name;
+            if (j.find("typeinfoname") != j.end()) {
+                j["typeinfoname"].get_to(name);
+            } else {
+                name = typeid(T).name();
+            }
 
-            //if constexpr (std::is_abstract<T>::value){
-            //    sp = nullptr;
-            //    return;
-            //} else {
-
-                //typeinfoname
-                std::string name;
-                if (j.find("typeinfoname") != j.end()) {
-                    j["typeinfoname"].get_to(name);
-                } else {
-                    name = typeid(T).name();
+            //polymophism
+            if (auto iter = static_object<json_polymophism>::get_instance().map.find(name);
+                iter != static_object<json_polymophism>::get_instance().map.end()) {
+                //make_shared
+                if (!sp) {
+                    sp = std::static_pointer_cast<T>(iter->second.make_shared());
+                }
+                //from_json
+                if (!j.is_null()) {
+                    std::shared_ptr<void> spv = std::static_pointer_cast<void>(sp);
+                    iter->second.from_json(j, spv);
+                    sp = std::static_pointer_cast<T>(spv);
                 }
 
-                //polymophism
-                if (auto iter = static_object<json_polymophism>::get_instance().map.find(name);
-                    iter != static_object<json_polymophism>::get_instance().map.end()) {
+            } else {
+                if constexpr (std::is_abstract<T>::value) {
+                    /*sp = nullptr;*/
+                    THROW_FILE_LINE_FUNC;
+                } else {
                     //make_shared
                     if (!sp) {
-                        sp = std::static_pointer_cast<T>(iter->second.make_shared());
+                        sp = std::make_shared<T>();
                     }
                     //from_json
                     if (!j.is_null()) {
-                        std::shared_ptr<void> spv = std::static_pointer_cast<void>(sp);
-                        iter->second.from_json(j, spv);
-                        sp = std::static_pointer_cast<T>(spv);
+                        json::json_serializer<T, void>::from_json(j, *sp);
                     }
-
-                } else {
-                    if constexpr (std::is_abstract<T>::value) {
-                        sp = nullptr;
-                    } else {
-                        //make_shared
-                        if (!sp) {
-                            sp = std::make_shared<T>();
-                        }
-                        //from_json
-                        if (!j.is_null()) {
-                            json::json_serializer<T, void>::from_json(j, *sp);
-                        }
-                    }
-
                 }
-            //}
+
+            }
         }
 
         static void to_json(json& j, const std::shared_ptr<T>& sp)

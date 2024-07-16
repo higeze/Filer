@@ -11,9 +11,10 @@
 
 bool CCursorer::IsCursorTargetCell(const std::shared_ptr<CCell>& cell)
 {
-	return cell &&
-		cell->GetRowPtr()->GetIndex<AllTag>() >= cell->GetGridPtr()->GetFrozenCount<RowTag>() &&
-		cell->GetColumnPtr()->GetIndex<AllTag>() >= cell->GetGridPtr()->GetFrozenCount<ColTag>();
+	return cell.operator bool();
+	//return cell &&
+	//	cell->GetRowPtr()->GetIndex<AllTag>() >= cell->GetGridPtr()->GetFrozenCount<RowTag>() &&
+	//	cell->GetColumnPtr()->GetIndex<AllTag>() >= cell->GetGridPtr()->GetFrozenCount<ColTag>();
 
 }
 

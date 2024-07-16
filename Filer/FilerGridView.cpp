@@ -229,10 +229,10 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 		}
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); })) 
 		{ 
-			m_allCols.idx_push_back(std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this, L"Name"));
+			m_allCols.idx_push_back(std::make_shared<CFileNameColumn<std::shared_ptr<CShellFile>>>(this));
 		}
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileDispExtColumn<std::shared_ptr<CShellFile>>); })) {
-			m_allCols.idx_push_back(std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this, L"Ext"));
+			m_allCols.idx_push_back(std::make_shared<CFileDispExtColumn<std::shared_ptr<CShellFile>>>(this));
 		}
 		if (!std::any_of(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileSizeColumn<std::shared_ptr<CShellFile>>); })) {
 			m_allCols.idx_push_back(std::make_shared<CFileSizeColumn<std::shared_ptr<CShellFile>>>(this));
@@ -241,7 +241,7 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 			m_allCols.idx_push_back(std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this));
 		}
 
-		m_frozenColumnCount = 1;
+		m_frozenColumnCount = 2;
 	//}
 
 	//Header menu items
@@ -998,12 +998,8 @@ bool CFilerGridView::DeleteSelectedFiles()
 
 bool CFilerGridView::NewFolder()
 {
-	if (CShellContextMenu::InvokeNewShellContextmenuCommand(GetWndPtr()->m_hWnd, CMDSTR_NEWFOLDERA, Folder.get_shared_unconst())) {
-		m_isNewFile = true;
-		return true;
-	} else {
-		return false;
-	}
+	m_isNewFile = true;
+	return CShellContextMenu::InvokeNewShellContextmenuCommand(GetWndPtr()->m_hWnd, CMDSTR_NEWFOLDERA, Folder.get_shared_unconst());
 }
 
 bool CFilerGridView::CutToClipboard()
