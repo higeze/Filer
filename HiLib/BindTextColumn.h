@@ -3,6 +3,7 @@
 #include "MapColumn.h"
 #include "HeaderSortCell.h"
 #include "named_arguments.h"
+#include "BindTextCell.h"
 
 template<typename T>
 class CBindTextColumn: public CMapColumn
