@@ -250,9 +250,8 @@ LRESULT CD2DWWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bH
 
 LRESULT CD2DWWindow::OnSize(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	//m_pDirect->GetD2DDeviceContext()->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
 	m_pDirect->Resize();
-	OnRect(RectEvent(this, GetDirectPtr()->Pixels2Dips(GetClientRect())));
+	OnSize(SizeEvent(this, GetDirectPtr()->Pixels2Dips(GetClientRect().Size())));
 	return 0;
 }
 
@@ -267,6 +266,12 @@ LRESULT CD2DWWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 
 	m_pDirect->EndDraw();
 	return 0;
+}
+
+void CD2DWWindow::OnSize(const SizeEvent& e)
+{
+	Measure(e.Size);
+	Arrange(CRectF(e.Size));
 }
 
 void CD2DWWindow::OnKeyDown(const KeyDownEvent& e)

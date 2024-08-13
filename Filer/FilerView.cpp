@@ -142,39 +142,9 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 	}, m_spRecentButton);
 }
 
-CFilerView::~CFilerView()
-{
-	auto a = 2.f;
-}
+CFilerView::~CFilerView() = default;
 
 void CFilerView::OnCreate(const CreateEvt& e)
 {
 	CDockPanel::OnCreate(e);
 }
-//
-//void CFilerView::OnRect(const RectEvent& e)
-//{
-//	Measure(e.Rect.Size());
-//	Arrange(e.Rect);
-//}
-//
-//void CFilerView::Measure(const CSizeF& availableSize)
-//{
-//	m_spTextBox->Measure(availableSize, L"A");
-//	m_spRecentButton->Measure(availableSize);
-//	m_spFavoriteGrid->Measure(availableSize);
-//	m_spFileGrid->Measure(availableSize);
-//
-//	m_size.width = m_spFavoriteGrid->DesiredSize().width + m_spFileGrid->DesiredSize().width;
-//	m_size.height = m_spTextBox->DesiredSize().height + (std::max)(m_spFavoriteGrid->DesiredSize().height, m_spFileGrid->DesiredSize().height);
-//}
-//
-//void CFilerView::Arrange(const CRectF& rc)
-//{
-//	CD2DWControl::Arrange(rc);
-//
-//	m_spTextBox->Arrange(CRectF(rc.left, rc.top, rc.right-m_spRecentButton->DesiredSize().width, rc.top + m_spTextBox->DesiredSize().height));
-//	m_spRecentButton->Arrange(CRectF(rc.right - m_spRecentButton->DesiredSize().width, rc.top, rc.right, rc.top + m_spTextBox->DesiredSize().height));
-//	m_spFavoriteGrid->Arrange(CRectF(rc.left, m_spTextBox->ArrangedRect().bottom, rc.left + m_spFavoriteGrid->DesiredSize().width, rc.bottom));
-//	m_spFileGrid->Arrange(CRectF(m_spFavoriteGrid->ArrangedRect().right, m_spTextBox->ArrangedRect().bottom, rc.right, rc.bottom));
-//}

@@ -20,6 +20,7 @@
 #include "D2DImage.h"
 #include "ImageDrawer.h"
 #include "D2DWTypes.h"
+#include "ThreadPool.h"
 
 
 /**************************/
@@ -31,7 +32,7 @@ CImageView::CImageView(CD2DWControl* pParentControl)
 	m_pMachine(std::make_unique<CImageViewStateMachine>(this)),
 	m_spVScroll(std::make_shared<CVScroll>(this)),
 	m_spHScroll(std::make_shared<CHScroll>(this)),
-	Rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT), m_prevScale(0.f), m_initialScaleMode(ImageScaleMode::Width),
+	/*Rotate(D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT),*/ m_prevScale(0.f), m_initialScaleMode(ImageScaleMode::Width),
 	Dummy(std::make_shared<int>(0)), Image(CD2DImage()), m_imgDrawer(std::make_unique<CImageDrawer>()), Scale(1.f)
 {
 	Image.subscribe([this](auto doc) {
@@ -60,21 +61,24 @@ void CImageView::Open(const std::wstring& path)
 
 		if (*Scale < 0 && Image->IsValid()) {// < 0 means auto-scale
 			CSizeF sz = Image->GetSizeF();
-
-			FLOAT scaleX = GetRenderSize().width / sz.width;
-			FLOAT scaleY = GetRenderSize().height / sz.height;
-			switch (m_initialScaleMode) {
-				case ImageScaleMode::MinWidthHeight:
-					Scale.set((std::min)(scaleX, scaleY));
-					break;
-				case ImageScaleMode::Width:
-					Scale.set(scaleX);
-					break;
-				case ImageScaleMode::Height:
-					Scale.set(scaleY);
-					break;
-				default:
+			if (GetRenderSize().height <= 0 || GetRenderSize().width <= 0) {
 					Scale.set(1.f);
+			} else {
+				FLOAT scaleX = GetRenderSize().width / sz.width;
+				FLOAT scaleY = GetRenderSize().height / sz.height;
+				switch (m_initialScaleMode) {
+					case ImageScaleMode::MinWidthHeight:
+						Scale.set((std::min)(scaleX, scaleY));
+						break;
+					case ImageScaleMode::Width:
+						Scale.set(scaleX);
+						break;
+					case ImageScaleMode::Height:
+						Scale.set(scaleY);
+						break;
+					default:
+						Scale.set(1.f);
+				}
 			}
 		} else if (*Scale < 0) {
 			auto b = 1.f;
@@ -147,9 +151,9 @@ void CImageView::OnEnable(const EnableEvent& e)
 	}
 }
 
-void CImageView::OnRect(const RectEvent& e)
+void CImageView::Arrange(const CRectF& rc)
 {
-	CD2DWControl::OnRect(e);
+	CD2DWControl::Arrange(rc);
 	UpdateScroll();
 }
 
@@ -183,6 +187,18 @@ void CImageView::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 void CImageView::Normal_Paint(const PaintEvent& e)
 {
 	if (!Image->IsValid()) { return; }
+
+	bool debug = m_pMachine->IsStateNormalDebug();
+
+	std::vector<std::wstring> logs;
+	logs.push_back(std::format(
+		L"Drawer Thread:{}/{}, Task:{}",
+		m_imgDrawer->GetThreadPoolPtr()->GetRunnningTaskCount(),
+		m_imgDrawer->GetThreadPoolPtr()->GetTotalThreadCount(),
+		m_imgDrawer->GetThreadPoolPtr()->GetQueuedTaskCount()));
+
+	logs.push_back(std::format(L"Scroll(x, y):\t({}, {})", m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()));
+
 	//Clip
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
@@ -196,12 +212,15 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 	CRectF rcInWnd(GetRenderRectInWnd());
 	CRectF rcFullInPage(Image->GetSizeF());
 	CRectF rcScaledFullInPage(rcFullInPage * *Scale);
+	logs.push_back(std::format(L"Image Size(x, y):\t({}, {})", szImage.width, szImage.height));
+	logs.push_back(std::format(L"Scale:\t{}", *Scale));
+	//logs.push_back(std::format(L"Paint Rect in Doc:\t({}, {}, {}, {})", rcInDoc.left, rcInDoc.top, rcInDoc.right, rcInDoc.bottom));
 
 	CRectF rcScaledClipInPage(rcScaledFullInPage.IntersectRect(
 		CRectF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos(), m_spHScroll->GetScrollPos() + rcInWnd.Width(), m_spVScroll->GetScrollPos() + rcInWnd.Height())));
 	CRectF rcClipInPage(rcScaledClipInPage / *Scale);
 
-	CSizeU szBitmap(m_imgDrawer->GetPrimaryBitmapSize());
+	CSizeU szBitmap(m_imgDrawer->GetAtlasPrimaryBitmap()->GetSize());
 
 	CPointF ptDstClipInWnd(rcInWnd.LeftTop());
 	CPointF ptDstLeftTopInWnd(rcInWnd.LeftTop() - CPointF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()));
@@ -217,51 +236,52 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 
 	bool drawFullPage = (rcScaledFullInPage.Width() * rcScaledFullInPage.Height()) < (szBitmap.width * szBitmap.height / 8);
 	
-	bool drawOnePageOneScale = *Scale >= 1.f && szImage.width <= szBitmap.width/2 && szImage.height <= szBitmap.height/2;
-	bool drawOnePageLessScale = *Scale < 1.f && szImage.width * *Scale <= szBitmap.width/2 && szImage.height * *Scale <= szBitmap.height/2;
-	bool drawClipPageOneScale = *Scale >= 1.f && !drawOnePageLessScale && !drawOnePageLessScale;
-	bool drawClipPageLessScale = *Scale < 1.f && !drawOnePageLessScale && !drawOnePageLessScale;
+	bool drawOneMoreScale = *Scale >= 1.f && szImage.width <= szBitmap.width/2 && szImage.height <= szBitmap.height/2;
+	bool drawOneLessScale = *Scale < 1.f && szImage.width * *Scale <= szBitmap.width/2 && szImage.height * *Scale <= szBitmap.height/2;
+	bool drawClipOneMoreScale = *Scale >= 1.f && !drawOneMoreScale && !drawOneLessScale;
+	bool drawClipOneLessScale = *Scale < 1.f && !drawOneMoreScale && !drawOneLessScale;
 
-	ImgBmpKey blurKey{ .ImagePtr = &(*Image), .Scale = blurScale, .Rotate = 0, .Rect = CRectF2CRectU(CRectF(szImage * blurScale)) };
-	ImgBmpKey oneKey{ .ImagePtr = &(*Image), .Scale = 1.f, .Rotate = 0, .Rect = CRectF2CRectU(CRectF(szImage)) };
-	ImgBmpKey scaleKey{ .ImagePtr = &(*Image), .Scale = *Scale, .Rotate = 0, .Rect = CRectF2CRectU(rcFullInPage) };
-	ImgBmpKey cliponeKey{ .ImagePtr = &(*Image), .Scale = 1.f, .Rotate = 0, .Rect = CRectF2CRectU(rcClipInPage) };
-	ImgBmpKey clipscaleKey{ .ImagePtr = &(*Image), .Scale = *Scale, .Rotate = 0, .Rect = CRectF2CRectU(rcScaledClipInPage) };
+	ImgBmpKey blurKey{ .ImagePtr = &(*Image), .Scale = blurScale, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(CRectF(szImage * blurScale)) };
+	ImgBmpKey oneKey{ .ImagePtr = &(*Image), .Scale = 1.f, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(CRectF(szImage)) };
+	ImgBmpKey scaleKey{ .ImagePtr = &(*Image), .Scale = *Scale, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(rcFullInPage) };
+	ImgBmpKey cliponeKey{ .ImagePtr = &(*Image), .Scale = 1.f, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(rcClipInPage) };
+	ImgBmpKey clipscaleKey{ .ImagePtr = &(*Image), .Scale = *Scale, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(rcScaledClipInPage) };
 
-	if (cliponeKey.Rect.IsRectNull() || clipscaleKey.Rect.IsRectNull()) {
-		auto a = 1;
-	}
+	logs.push_back(std::format(L"OneKeyExist:\t{}", m_imgDrawer->GetAtlasPrimaryBitmap()->Exist(oneKey)));
+	logs.push_back(std::format(L"BlurKeyExist:\t{}", m_imgDrawer->GetAtlasPrimaryBitmap()->Exist(blurKey)));
 
-	if (drawOnePageOneScale) {
-		if (!m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), oneKey, rcDstInWnd, callback)) {
-			m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
+	if (drawOneMoreScale) {
+		if (m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), oneKey, rcDstInWnd, callback)) {
+			logs.push_back(std::format(L"DrawMode:\t{}", L"OneMoreScale"));
+		} else if (m_imgDrawer->DrawBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)) {
+			logs.push_back(std::format(L"DrawMode:\t{}", L"OneMoreScale-Blur"));
+		} else{
+			logs.push_back(std::format(L"DrawMode:\t{}", L"OneMoreScale-NA"));
 		}
-	} else if (drawOnePageLessScale) {
-		if (!m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), scaleKey, ptDstLeftTopInWnd, callback)) {
-			m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
+	} else if (drawOneLessScale) {
+		
+		if (m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), scaleKey, ptDstLeftTopInWnd, callback)) {
+			logs.push_back(std::format(L"DrawMode:\t{}", L"OneLessScale"));
+		} else if (m_imgDrawer->DrawBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)){
+			logs.push_back(std::format(L"DrawMode:\t{}", L"OneLessScale-Blur"));		
+		} else{
+			logs.push_back(std::format(L"DrawMode:\t{}", L"OneLessScale-NA"));			
 		}
-	} else if (drawClipPageOneScale) {
-		if (!m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), cliponeKey, rcDstClipInWnd, callback)) {
-			m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
-
-			//std::vector<ImgBmpKey> keys = m_imgDrawer->FindClipKeys([cliponeKey, pPage = &(m_image.get()), scale = m_scale](const ImgBmpKey& key)->bool{
-			//	return 
-			//		key != cliponeKey &&
-			//		key.ImagePtr->GetPath() == cliponeKey.ImagePtr->GetPath() && 
-			//		key.Scale == cliponeKey.Scale &&
-			//		key.Rotate == cliponeKey.Rotate &&
-			//		!key.Rect.IsRectNull();
-			//});
-			//for (const ImgBmpKey& key : keys) {
-			//	CPointF ptClipInWnd = Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, key.Rect.LeftTop())));
-			//	m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback);
-			//}
+	} else if (drawClipOneMoreScale) {
+		if (m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), cliponeKey, rcDstClipInWnd, callback)) {
+			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipClipOneMoreScale"));
+		} else if (m_imgDrawer->DrawBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)) {
+			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipClipOneMoreScale-Blur"));
+		} else{
+			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipClipOneMoreScale-NA"));
 		}
-	} else if (drawClipPageLessScale) {
-		if (!m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), clipscaleKey, ptDstClipInWnd, callback)) {
+	} else if (drawClipOneLessScale) {
+		if (m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), clipscaleKey, ptDstClipInWnd, callback)) {
+			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipPageLessScale"));
+		} else {
+			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipPageLessScale-Blur"));
 			m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
-
-			std::vector<ImgBmpKey> keys = m_imgDrawer->FindClipKeys([clipscaleKey, pPage = &(*Image), scale = *Scale](const ImgBmpKey& key)->bool{
+			std::vector<ImgBmpKey> keys = m_imgDrawer->FindPrimaryKeys([clipscaleKey, pPage = &(*Image), scale = *Scale](const ImgBmpKey& key)->bool{
 				return 
 					key != clipscaleKey &&
 					key.ImagePtr->GetPath() == clipscaleKey.ImagePtr->GetPath() && 
@@ -272,7 +292,7 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 			for (const ImgBmpKey& key : keys) {
 				CPointF ptClipInWnd = ptDstClipInWnd + CPointF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()) + CPointU2CPointF(key.Rect.LeftTop());
 				m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback);
-			}
+			}		
 		}
 	}
 
@@ -335,6 +355,11 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 	//	rc,
 	//	1.0f,
 	//	D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+
+	if(debug){
+		std::wstring text = boost::algorithm::join(logs, L"\n");
+		GetWndPtr()->GetDirectPtr()->DrawTextFromPoint(GetFormat(), text, GetRenderRectInWnd().LeftTop());
+	}
 
 	//PaintScroll
 	UpdateScroll();
@@ -401,39 +426,42 @@ void CImageView::Normal_ContextMenu(const ContextMenuEvent& e)
 		GetWndPtr()->m_hWnd);
 
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateClockwise")) {
-		switch (*Rotate) {
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
-				Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90);
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90:
-				Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180);
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180:
-				Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270);
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270:
-				Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT);
-				break;
-			default:
-				break;
-		}
+		Image.get_unconst()->Rotate.set(static_cast<WICBitmapTransformOptions>(static_cast<const int>((*(Image->Rotate)) + 1) % 4));
+		//switch (*Rotate) {
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
+		//		Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90);
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90:
+		//		Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180);
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180:
+		//		Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270);
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270:
+		//		Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT);
+		//		break;
+		//	default:
+		//		break;
+		//}
 	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateCounterClockwise")) {
-		switch (*Rotate) {
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
-				Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270);
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90:
-				Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT);
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180:
-				Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90);
-				break;
-			case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270:
-				Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180);
-				break;
-			default:
-				break;
-		}
+		Image.get_unconst()->Rotate.set(static_cast<WICBitmapTransformOptions>(static_cast<const int>((*(Image->Rotate)) + 4 - 1) % 4));
+		//switch (*Rotate) {
+		//switch (*Rotate) {
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
+		//		Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270);
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90:
+		//		Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT);
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180:
+		//		Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90);
+		//		break;
+		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE270:
+		//		Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE180);
+		//		break;
+		//	default:
+		//		break;
+		//}
 	}
 	*e.HandledPtr = TRUE;
 }
@@ -642,8 +670,8 @@ void CImageView::UpdateScroll()
 
 	//VScroll/HScroll Rect
 	auto [rcVertical, rcHorizontal] = GetRects();
-	m_spVScroll->OnRect(RectEvent(GetWndPtr(), rcVertical));
-	m_spHScroll->OnRect(RectEvent(GetWndPtr(), rcHorizontal));
+	m_spVScroll->Arrange(rcVertical);
+	m_spHScroll->Arrange(rcHorizontal);
 }
 
 

@@ -867,9 +867,6 @@
     <ClInclude Include="..\HiLib\Sheet.h">
       <Filter>HiLib\GridView</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\SheetCell.h">
-      <Filter>HiLib\GridView</Filter>
-    </ClInclude>
     <ClInclude Include="..\HiLib\SheetCellResource.h">
       <Filter>HiLib\GridView</Filter>
     </ClInclude>
@@ -1046,6 +1043,12 @@
       <Filter>Filer\FilerTab</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\ThreadMonitorView.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\D2DBitmapDrawer.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\WICImagingFactory.h">
       <Filter>HiLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1457,9 +1460,6 @@
       <Filter>HiLib\GridView</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\Sheet.cpp">
-      <Filter>HiLib\GridView</Filter>
-    </ClCompile>
-    <ClCompile Include="..\HiLib\SheetCell.cpp">
       <Filter>HiLib\GridView</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\SheetStateMachine.cpp">

@@ -1,4 +1,5 @@
 #include "D2DFileIconDrawer.h"
+#include "WICImagingFactory.h"
 #include "ThreadPool.h"
 #include "ShellFile.h"
 
@@ -27,16 +28,14 @@ CIcon CD2DFileIconDrawer::GetIcon(const CIDL& absoluteIDL) const
 	return CIcon(sfi.hIcon);
 }
 
-CComPtr<ID2D1Bitmap1> CD2DFileIconDrawer::GetBitmapFromIcon(const CDirect2DWrite* pDirect, const CIcon& icon) const
+CComPtr<IWICBitmapSource> CD2DFileIconDrawer::GetBitmapFromIcon(const CIcon& icon) const
 {
 	CComPtr<IWICBitmap> pWICBitmap;
-	FAILED_THROW(pDirect->GetWICImagingFactory()->CreateBitmapFromHICON(icon, &pWICBitmap));
+	FAILED_THROW(CWICImagingFactory::GetInstance()->CreateBitmapFromHICON(icon, &pWICBitmap));
 	CComPtr<IWICFormatConverter> pWICFormatConverter;
-	FAILED_THROW(pDirect->GetWICImagingFactory()->CreateFormatConverter(&pWICFormatConverter));
+	FAILED_THROW(CWICImagingFactory::GetInstance()->CreateFormatConverter(&pWICFormatConverter));
 	FAILED_THROW(pWICFormatConverter->Initialize(pWICBitmap, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeMedianCut));
-	CComPtr<ID2D1Bitmap1> pBitmap;
-	FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(pWICFormatConverter, nullptr, &pBitmap));
-	return pBitmap;
+	return CComPtr<IWICBitmapSource>(pWICFormatConverter);
 }
 
 bool CD2DFileIconDrawer::DrawFileIconBitmap(
@@ -50,7 +49,7 @@ bool CD2DFileIconDrawer::DrawFileIconBitmap(
 {
 	std::wstring key = L"DEFAULT";
 	if (!m_pAtlasBitmap->Exist(key)) {
-		m_pAtlasBitmap->AddOrAssign(pDirect, key, GetBitmapFromIcon(pDirect, GetDefaultIcon()));
+		m_pAtlasBitmap->AddOrAssign(pDirect, key, GetBitmapFromIcon(GetDefaultIcon()));
 	}
 
 	if (!absoluteIDL || path.empty()) {
@@ -63,14 +62,14 @@ bool CD2DFileIconDrawer::DrawFileIconBitmap(
 	}
 	auto funadd = [pDirect, key, absoluteIDL, callback, this]()->void
 	{
-		CComPtr<ID2D1Bitmap1> pBitmap = GetBitmapFromIcon(pDirect, GetIcon(absoluteIDL));
+		CComPtr<IWICBitmapSource> pBitmap = GetBitmapFromIcon(GetIcon(absoluteIDL));
 		m_pAtlasBitmap->AddOrAssign(pDirect, key, pBitmap);
 		callback();
 	};
 	
 	bool ret = false;
 	if (!m_pAtlasBitmap->Exist(key)) {
-		m_pAtlasBitmap->AddOrAssign(pDirect, key, CComPtr<ID2D1Bitmap1>(nullptr));
+		m_pAtlasBitmap->AddOrAssign(pDirect, key, CComPtr<IWICBitmapSource>(nullptr));
 		m_futureGroup.emplace_back(CThreadPool::GetInstance()->enqueue(
 			FILE_LINE_FUNC,
 			0,
@@ -118,7 +117,7 @@ bool CD2DFileIconDrawer::DrawDefaultIconBitmap(
 	const CPointF& dstPoint)
 {
 	if (!m_pAtlasBitmap->Exist(L"DEFAULT")) {
-		m_pAtlasBitmap->AddOrAssign(pDirect, L"DEFAULT", GetBitmapFromIcon(pDirect, GetDefaultIcon()));
+		m_pAtlasBitmap->AddOrAssign(pDirect, L"DEFAULT", GetBitmapFromIcon(GetDefaultIcon()));
 	}
 	return m_pAtlasBitmap->DrawBitmap(pDirect, L"DEFAULT", dstPoint);
 }
@@ -130,19 +129,19 @@ bool CD2DFileIconDrawer::DrawFileIconBitmap(
 	std::function<void()>&& callback)
 {
 	if (!m_pAtlasBitmap->Exist(L"DEFAULT")) {
-		m_pAtlasBitmap->AddOrAssign(pDirect, L"DEFAULT", GetBitmapFromIcon(pDirect, GetDefaultIcon()));
+		m_pAtlasBitmap->AddOrAssign(pDirect, L"DEFAULT", GetBitmapFromIcon(GetDefaultIcon()));
 	}
 
 	auto funadd = [pDirect, pFile, callback, this]()->void
 	{
-		CComPtr<ID2D1Bitmap1> pBitmap = GetBitmapFromIcon(pDirect, pFile->GetIcon());
+		CComPtr<IWICBitmapSource> pBitmap = GetBitmapFromIcon(pFile->GetIcon());
 		m_pAtlasBitmap->AddOrAssign(pDirect, pFile->GetIconKey(), pBitmap);
 		callback();
 	};
 	
 	bool ret = false;
 	if (!m_pAtlasBitmap->Exist(pFile->GetIconKey())) {
-		m_pAtlasBitmap->AddOrAssign(pDirect, pFile->GetIconKey(), CComPtr<ID2D1Bitmap1>(nullptr));
+		m_pAtlasBitmap->AddOrAssign(pDirect, pFile->GetIconKey(), CComPtr<IWICBitmapSource>(nullptr));
 		m_futureGroup.emplace_back(CThreadPool::GetInstance()->enqueue(
 			FILE_LINE_FUNC,
 			0,

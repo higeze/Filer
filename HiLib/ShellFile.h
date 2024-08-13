@@ -21,6 +21,9 @@
 #define OPT_RESET(r, data, elem) BOOST_PP_CAT(BOOST_PP_CAT(m_opt, elem), .reset());
 #define DECLARE_RESET_OPTS(...) void ResetOpts(){BOOST_PP_SEQ_FOR_EACH(OPT_RESET, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))}
 
+#define OPT_RELEASE(r, data, elem) BOOST_PP_CAT(BOOST_PP_CAT(m_p, elem), .Release());
+#define DECLARE_RELEASE_COMPTRS(...) void ReleaseComPtrs(){BOOST_PP_SEQ_FOR_EACH(OPT_RELEASE, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))}
+
 
 class CShellFolder;
 struct FileSizeArgs;

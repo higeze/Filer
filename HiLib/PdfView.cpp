@@ -228,9 +228,9 @@ void CPdfView::OnEnable(const EnableEvent& e)
 	//}
 }
 
-void CPdfView::OnRect(const RectEvent& e)
+void CPdfView::Arrange(const CRectF& rc)
 {
-	CD2DWControl::OnRect(e);
+	CD2DWControl::Arrange(rc);
 	UpdateScroll();
 }
 
@@ -455,7 +455,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		CRectU rcScaledClipInWnd(CRectF2CRectU(rcClipInPage * *Scale));
 		CRectF rcFullInPage(PDF->GetPage(i)->GetSize());
 		CRectF rcScaledFullInPage(rcFullInPage * *Scale);
-		CSizeU szBitmap(m_pdfDrawer->GetPrimaryBitmapSize());
+		CSizeU szBitmap(m_pdfDrawer->GetAtlasPrimaryBitmap()->GetSize());
 
 		CSizeF szPixcelBmp(PDF->GetPage(i)->GetSize());
 		CSizeF szPixcelPntBmp(PDF->GetPage(i)->GetSize() * *Scale);
@@ -484,27 +484,27 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 
 
 		if (drawFullPage) {
-			if (m_pdfDrawer->DrawPDFPageBitmap(GetWndPtr()->GetDirectPtr(), fullKey, ptDstLeftTopInWnd, callback)) {
+			if (m_pdfDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), fullKey, ptDstLeftTopInWnd, callback)) {
 				logs.push_back(std::format(L"DrawMode:\t{}", L"Full"));
 			} else {
-				if (m_pdfDrawer->DrawPDFPageBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)) {
+				if (m_pdfDrawer->DrawBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)) {
 					logs.push_back(std::format(L"DrawMode:\t{}", L"FullBlur"));
 				} else {
 					logs.push_back(std::format(L"DrawMode:\t{}", L"FullNA"));
 				}
 			}
 		} else {
-			if (m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback)) {
+			if (m_pdfDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback)) {
 				logs.push_back(std::format(L"DrawMode:\t{}", L"Clip"));
 			} else {
-				if (m_pdfDrawer->DrawPDFPageBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)) {
+				if (m_pdfDrawer->DrawBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)) {
 					logs.push_back(std::format(L"DrawMode:\t{}", L"ClipBlur"));
 				} else {
 					logs.push_back(std::format(L"DrawMode:\t{}", L"ClipNA"));
 				}
 				//m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback);//Just order
 
-				std::vector<PdfBmpKey> keys = m_pdfDrawer->FindFulKeys([clipKey, pPage = PDF->GetPage(i).get(), scale = *Scale](const PdfBmpKey& key)->bool{
+				std::vector<PdfBmpKey> keys = m_pdfDrawer->FindPrimaryKeys([clipKey, pPage = PDF->GetPage(i).get(), scale = *Scale](const PdfBmpKey& key)->bool{
 					return 
 						key != clipKey &&
 						key.PagePtr == clipKey.PagePtr && 
@@ -514,7 +514,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 				});
 				for (const PdfBmpKey& key : keys) {
 					CPointF ptClipInWnd = Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, key.Rect.LeftTop())));
-					if (m_pdfDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback)) {
+					if (m_pdfDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback)) {
 						logs.push_back(std::format(L"DrawMode:\t{}", L"ClipPartial"));
 					} else {
 
@@ -532,11 +532,11 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		std::for_each(pages.cbegin(), pages.cend(), [&pagesString](const int page) { pagesString += std::to_wstring(page) + L" "; });
 		return pagesString;
 	};
-	logs.push_back(std::format(L"FullOrClipBitmapCount:\t{}", m_pdfDrawer->GetAtlasFullOrClipBitmap()->Count()).c_str());
-	logs.push_back(std::format(L"FullOrClipBitmapKeys:\t{}", bitmapKeyPages(m_pdfDrawer->GetAtlasFullOrClipBitmap())).c_str());
+	logs.push_back(std::format(L"FullOrClipBitmapCount:\t{}", m_pdfDrawer->GetAtlasPrimaryBitmap()->Count()).c_str());
+	logs.push_back(std::format(L"FullOrClipBitmapKeys:\t{}", bitmapKeyPages(m_pdfDrawer->GetAtlasPrimaryBitmap())).c_str());
 
-	logs.push_back(std::format(L"BlurBitmapCount:\t{}", m_pdfDrawer->GetAtlasBlurBitmap()->Count()).c_str());
-	logs.push_back(std::format(L"BlurBitmapKeys:\t{}", bitmapKeyPages(m_pdfDrawer->GetAtlasBlurBitmap())).c_str());
+	logs.push_back(std::format(L"BlurBitmapCount:\t{}", m_pdfDrawer->GetAtlasSecondaryBitmap()->Count()).c_str());
+	logs.push_back(std::format(L"BlurBitmapKeys:\t{}", bitmapKeyPages(m_pdfDrawer->GetAtlasSecondaryBitmap())).c_str());
 
 	if(debug){
 		std::wstring text = boost::algorithm::join(logs, L"\n");
@@ -1311,8 +1311,8 @@ void CPdfView::UpdateScroll()
 
 	//VScroll/HScroll Rect
 	auto [rcVertical, rcHorizontal] = GetRects();
-	m_spVScroll->OnRect(RectEvent(GetWndPtr(), rcVertical));
-	m_spHScroll->OnRect(RectEvent(GetWndPtr(), rcHorizontal));
+	m_spVScroll->Arrange(rcVertical);
+	m_spHScroll->Arrange(rcHorizontal);
 }
 
 

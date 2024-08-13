@@ -1,12 +1,8 @@
 #pragma once
-#include "D2DAtlasBitmap.h"
+#include "D2DBitmapDrawer.h"
 #include "D2DImage.h"
-#include "D2DWTypes.h"
-#include "shared_lock_property.h"
-#include "getter_macro.h"
 
 class CThreadPool;
-class CD2DImage;
 
 struct ImgBmpKey
 {
@@ -39,6 +35,24 @@ struct ImgBmpKey
 			Rotate == key.Rotate &&
 			Rect == key.Rect;
 	}
+
+	CComPtr<IWICBitmapSource> GetDefaultBitmap()const
+	{
+		return CComPtr<IWICBitmapSource>(nullptr);
+	}
+
+	template<typename _Cancel>
+	CComPtr<IWICBitmapSource> GetClipBitmap(_Cancel&& cancel)const
+	{
+		return ImagePtr->GetClipBitmap(Scale, Rect, cancel);
+	}
+
+	template<typename _Cancel>
+	CComPtr<IWICBitmapSource> GetBitmap(_Cancel&& cancel)const
+	{
+		return ImagePtr->GetBitmap(Scale, cancel);
+	}
+
 };
 
 namespace std
@@ -53,47 +67,76 @@ namespace std
 	};
 }
 
-class CImageDrawer
+class CImageDrawer : public CD2DBitmapDrawer<ImgBmpKey>
 {
-	DECLARE_LAZY_GETTER(CSizeU, PrimaryBitmapSize);
-	DECLARE_LAZY_GETTER(std::unique_ptr<CThreadPool>, ThreadPoolPtr);
+	using CD2DBitmapDrawer::CD2DBitmapDrawer;
 
-private:
-	std::unique_ptr<CD2DAtlasBitmap<ImgBmpKey>> m_pAtlasClipBitmap;
-	std::unique_ptr<CD2DAtlasBitmap<ImgBmpKey>> m_pAtlasSmallBitmap;
-	shared_lock_property<ImgBmpKey> m_curClipKey;
-	future_group<void> m_futureGroup;
-public:
-	CImageDrawer();
-	~CImageDrawer();
+	//void AddClipBitmap(
+	//	const CDirect2DWrite* pDirect,
+	//	const ImgBmpKey& key,
+	//	std::function<void()> callback) override;
 
-	const ImgBmpKey& GetCurClipKey() { return m_curClipKey.get(); }
+	//void AddBitmap(
+	//	const CDirect2DWrite* pDirect,
+	//	const ImgBmpKey& key,
+	//	std::function<void()> callback) override;
 
-	bool DrawClipBitmap(
-		const CDirect2DWrite* pDirect,
-		const ImgBmpKey& key,
-		const CPointF& dstPoint,
-		std::function<void()>&& callback);
-	bool DrawClipBitmap(
-		const CDirect2DWrite* pDirect,
-		const ImgBmpKey& key,
-		const CRectF& dstRect,
-		std::function<void()>&& callback);
-	bool DrawBitmap(
-		const CDirect2DWrite* pDirect,
-		const ImgBmpKey& key,
-		const CPointF& dstRect,
-		std::function<void()>&& callback);
-	bool DrawBitmap(
-		const CDirect2DWrite* pDirect,
-		const ImgBmpKey& key,
-		const CRectF& dstRect,
-		std::function<void()>&& callback);
-
-	bool ExistInPrimary(const ImgBmpKey&) const;
-	std::vector<ImgBmpKey> FindClipKeys(std::function<bool(const ImgBmpKey&)>&& pred);
-
-	void Clear();
-	//void CleanFutures();
-	void WaitAll();
+	//virtual void AddBlurBitmap(
+	//	const CDirect2DWrite* pDirect,
+	//	const ImgBmpKey& key,
+	//	std::function<void()> callback) override;
 };
+
+
+
+
+
+
+
+
+
+
+//class CImageDrawer
+//{
+//	DECLARE_LAZY_GETTER(CSizeU, PrimaryBitmapSize);
+//	DECLARE_LAZY_GETTER(std::unique_ptr<CThreadPool>, ThreadPoolPtr);
+//
+//private:
+//	std::unique_ptr<CD2DAtlasBitmap<ImgBmpKey>> m_pAtlasClipBitmap;
+//	std::unique_ptr<CD2DAtlasBitmap<ImgBmpKey>> m_pAtlasSmallBitmap;
+//	shared_lock_property<ImgBmpKey> m_curClipKey;
+//	future_group<void> m_futureGroup;
+//public:
+//	CImageDrawer();
+//	~CImageDrawer();
+//
+//	const ImgBmpKey& GetCurClipKey() { return m_curClipKey.get(); }
+//
+//	bool DrawClipBitmap(
+//		const CDirect2DWrite* pDirect,
+//		const ImgBmpKey& key,
+//		const CPointF& dstPoint,
+//		std::function<void()>&& callback);
+//	bool DrawClipBitmap(
+//		const CDirect2DWrite* pDirect,
+//		const ImgBmpKey& key,
+//		const CRectF& dstRect,
+//		std::function<void()>&& callback);
+//	bool DrawBitmap(
+//		const CDirect2DWrite* pDirect,
+//		const ImgBmpKey& key,
+//		const CPointF& dstRect,
+//		std::function<void()>&& callback);
+//	bool DrawBitmap(
+//		const CDirect2DWrite* pDirect,
+//		const ImgBmpKey& key,
+//		const CRectF& dstRect,
+//		std::function<void()>&& callback);
+//
+//	bool ExistInPrimary(const ImgBmpKey&) const;
+//	std::vector<ImgBmpKey> FindClipKeys(std::function<bool(const ImgBmpKey&)>&& pred);
+//
+//	void Clear();
+//	//void CleanFutures();
+//	void WaitAll();
+//};

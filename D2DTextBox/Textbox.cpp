@@ -471,11 +471,6 @@ void CTextBox::Arrange(const CRectF& rc)
 	UpdateAll();
 }
 
-void CTextBox::OnRect(const RectEvent& e)
-{
-	Arrange(e.Rect);
-}
-
 void CTextBox::OnMouseWheel(const MouseWheelEvent& e)
 {
 	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetDeltaScroll() * e.Delta / WHEEL_DELTA);
@@ -1451,7 +1446,7 @@ void CTextBox::UpdateScroll()
 	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetIsVisible() ? (m_pHScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 	//rcVertical.bottom = rcClient.bottom - lineHalfWidth;
 
-	m_pVScroll->OnRect(RectEvent(GetWndPtr(), rcVertical));
+	m_pVScroll->Arrange(rcVertical);
 
 	//HScroll
 	//Position
@@ -1460,7 +1455,7 @@ void CTextBox::UpdateScroll()
 	rcHorizontal.top = rcClient.bottom - ::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
 	rcHorizontal.right = rcClient.right - (m_pVScroll->GetIsVisible() ? (m_pVScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
-	m_pHScroll->OnRect(RectEvent(GetWndPtr(), rcHorizontal));
+	m_pHScroll->Arrange(rcHorizontal);
 }
 
 void CTextBox::UpdateAll()

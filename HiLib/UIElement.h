@@ -141,11 +141,11 @@ struct SysKeyDownEvent :public KeyDownEvent
 };
 
 
-struct RectEvent :public Event
+struct SizeEvent :public Event
 {
-	CRectF Rect;
-	RectEvent(CD2DWWindow* pWnd, CRectF rect, BOOL* pHandled = nullptr) :
-		Event(pWnd, pHandled), Rect(rect){}
+	CSizeF Size;
+	SizeEvent(CD2DWWindow* pWnd, CSizeF size, BOOL* pHandled = nullptr) :
+		Event(pWnd, pHandled), Size(size){}
 };
 
 struct PaintEvent:public Event
@@ -394,7 +394,6 @@ public:
 	virtual void OnEnable(const EnableEvent& e) {}
 	virtual void OnClose(const CloseEvent& e) {}
 	virtual void OnCommand(const CommandEvent& e) {}
-
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	virtual void OnLButtonUp(const LButtonUpEvent& e);

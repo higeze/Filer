@@ -138,7 +138,6 @@ public:
 	void SetHasBorder(bool value) { m_hasBorder = value; }
 	void SetIsScrollable(bool value){ m_isScrollable = value; }
 	void SetIsEnterText(bool value){ m_isEnterText = value; }
-
 public:
 	/******************/
 	/* Windows Message*/
@@ -170,7 +169,6 @@ public:
 
 	virtual void OnMouseWheel(const MouseWheelEvent& e);
 	virtual void OnClose(const CloseEvent& e);
-	virtual void OnRect(const RectEvent& e);
 
 	/**************/
 	/* SM Message */

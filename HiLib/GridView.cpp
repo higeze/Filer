@@ -234,13 +234,13 @@ void CGridView::UpdateScrolls()
 	rcVertical.top = rcClient.top + lineHalfWidth;
 	rcVertical.right = rcClient.right - lineHalfWidth;
 	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetIsVisible()?(m_pHScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
-	m_pVScroll->OnRect(RectEvent(GetWndPtr(), rcVertical));
+	m_pVScroll->Arrange(rcVertical);
 
 	rcHorizontal.left= rcClient.left + lineHalfWidth;
 	rcHorizontal.top = rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
 	rcHorizontal.right = rcClient.right - (m_pVScroll->GetIsVisible()?(m_pVScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
-	m_pHScroll->OnRect(RectEvent(GetWndPtr(), rcHorizontal));
+	m_pHScroll->Arrange(rcHorizontal);
 
 }
 
@@ -1690,27 +1690,6 @@ void CGridView::Arrange(const CRectF& rc)
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);
 	SubmitUpdate();
-}
-
-void CGridView::OnRect(const RectEvent& e)
-{
-	OnRectWoSubmit(e);
-	SubmitUpdate();
-}
-
-void CGridView::OnRectWoSubmit(const RectEvent& e)
-{
-	CRectF prevRect = m_rect;
-	CD2DWControl::OnRect(e);
-
-	//if (prevRect.left != e.Rect.left) {
-		PostUpdate(Updates::Column);
-	//}
-	//if (prevRect.top != e.Rect.top) {
-		PostUpdate(Updates::Row);
-	//}
-
-	SizeChanged();
 }
 
 void CGridView::OnPaint(const PaintEvent& e)

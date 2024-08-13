@@ -101,7 +101,7 @@
 //	m_edit.EnableWindow(TRUE);
 //
 //	//Progress
-//	m_pProgressbar->OnRect(RectEvent(this, m_pDirect->Pixels2Dips(GetProgressBarRect(rcClient))));
+//	m_pProgressbar->Arrange(m_pDirect->Pixels2Dips(GetProgressBarRect(rcClient)));
 //
 //	//Search button
 //	m_buttonSearch.CreateWindowExArgument()
@@ -238,8 +238,8 @@
 //	m_pDirect->GetD2DDeviceContext()->Resize(D2D1_SIZE_U{ (UINT)rcClient.Width(), (UINT)rcClient.Height() });
 //
 //	m_edit.MoveWindow(GetEditRect(rcClient), TRUE);
-//	m_pProgressbar->OnRect(RectEvent(this, m_pDirect->Pixels2Dips(GetProgressBarRect(rcClient))));
-//	m_pFileGrid->OnRect(RectEvent(this, GetDirectPtr()->Pixels2Dips(GetFileGridRect(rcClient))));
+//	m_pProgressbar->Arrange(GetDirectPtr()->Pixels2Dips(GetProgressBarRect(rcClient)));
+//	m_pFileGrid->Arrange(GetDirectPtr()->Pixels2Dips(GetFileGridRect(rcClient)));
 //	m_buttonSearch.MoveWindow(GetSearchBtnRect(rcClient), TRUE);
 //	m_buttonCancel.MoveWindow(GetCancelBtnRect(rcClient), TRUE);
 //	m_buttonClose.MoveWindow(GetCloseBtnRect(rcClient), TRUE);

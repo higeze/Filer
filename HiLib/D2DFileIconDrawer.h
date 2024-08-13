@@ -19,7 +19,7 @@ private:
 
 	CIcon GetDefaultIcon() const;
 	CIcon GetIcon(const CIDL& absoluteIDL) const;
-	CComPtr<ID2D1Bitmap1> GetBitmapFromIcon(const CDirect2DWrite* pDirect, const CIcon& icon) const;
+	CComPtr<IWICBitmapSource> GetBitmapFromIcon(const CIcon& icon) const;
 
 public:
 	CD2DFileIconDrawer();

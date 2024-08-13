@@ -4,54 +4,48 @@
 #include "D2DWTypes.h"
 #include "ShellFile.h"
 #include "getter_macro.h"
+#include "WICImagingFactory.h"
 
 class CD2DImage: public CShellFile
 {
 private:
-	DECLARE_LAZY_GETTER(CComPtr<IWICImagingFactory2>, Factory);
+	DECLARE_LAZY_COMPTR_GETTER(IWICBitmapSource, BitmapSource);
+	DECLARE_RELEASE_COMPTRS(BitmapSource);
 
-	DECLARE_LAZY_GETTER(CComPtr<IWICBitmapDecoder>, Decoder);
-	DECLARE_LAZY_GETTER(CComPtr<IWICBitmapFrameDecode>, FrameDecode);
 	DECLARE_LAZY_GETTER(CSizeU, SizeU);
 	const CSizeF GetSizeF() const;
-	//DECLARE_LAZY_GETTER(CComPtr<IWICBitmapScaler>, Scaler);
-	//DECLARE_LAZY_GETTER(CComPtr<IWICBitmapClipper>, Clipper);
-	//DECLARE_LAZY_GETTER(CComPtr<IWICFormatConverter>, FormatConverter);
+
+public:
+	std::shared_ptr<int> Dummy;
+	mutable reactive_property_ptr<WICBitmapTransformOptions> Rotate;
 
 public:
 	bool IsValid() const { return ::PathFileExists(GetPath().c_str()); }
-	CComPtr<ID2D1Bitmap1> GetBitmap(const CComPtr<ID2D1DeviceContext>& pContext, const FLOAT& scale) const;
-	CComPtr<ID2D1Bitmap1> GetClipBitmap(const CComPtr<ID2D1DeviceContext>& pContext, const FLOAT& scale, const CRectU& rcClip, std::function<bool()> cancelz = nullptr) const;
+	CComPtr<IWICBitmapSource> GetBitmap(const FLOAT& scale, std::function<bool()> cancel = nullptr) const;
+	CComPtr<IWICBitmapSource> GetClipBitmap(const FLOAT& scale, const CRectU& rcClip, std::function<bool()> cancel = nullptr) const;
 
-	//const CComPtr<ID2D1Bitmap1>& GetBitmapPtr() const { return m_pBitmap; }
-
-	CD2DImage(const std::wstring& path = std::wstring())
-		:CShellFile(path)/*, m_pBitmap()*/{}
+	CD2DImage(const std::wstring& path = std::wstring());
 	virtual ~CD2DImage() = default;
+
 	CD2DImage(const CD2DImage& rhs)
 	{
-		CShellFile::Load(rhs.GetPath());
-		m_optDecoder.reset();
-		m_optFrameDecode.reset();
-		m_optSizeU.reset();
-		//m_pBitmap = rhs.m_pBitmap;
+		*this = rhs;
 	}
 	
 	CD2DImage& operator=(const CD2DImage& rhs)
 	{
-		CShellFile::Load(rhs.GetPath());
-		m_optDecoder.reset();
-		m_optFrameDecode.reset();
+		Rotate = rhs.Rotate;
+		Dummy = rhs.Dummy;
+		ReleaseComPtrs();
 		m_optSizeU.reset();
-		//m_pBitmap = rhs.m_pBitmap;
+
+		CShellFile::Load(rhs.GetPath());
 		return *this;
 	}
 
 	bool operator==(const CD2DImage& rhs) const
 	{
 		return GetPath() == rhs.GetPath();
-		//&&
-		//m_pBitmap == rhs.m_pBitmap;
 	}
 	bool operator!=(const CD2DImage& rhs) const
 	{

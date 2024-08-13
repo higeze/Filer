@@ -31,7 +31,6 @@ public:
 	//Event
 	virtual void OnCreate(const CreateEvt& e) override;
 	//virtual void OnPaint(const PaintEvent& e) override;
-	virtual void OnRect(const RectEvent& e) override { Arrange(e.Rect); }
 
 	virtual void Measure(const CSizeF& availableSize) override { CDockPanel::Measure(availableSize); }
 	////virtual CSizeF DesiredSize() const { return m_size; }

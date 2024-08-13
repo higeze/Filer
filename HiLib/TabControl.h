@@ -102,10 +102,10 @@ public:
 	std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> GetSizes();
 	virtual CSizeF GetSize();
 	std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects();
+	virtual void Arrange(const CRectF& e);
 
 	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
-	virtual void OnRect(const RectEvent& e);
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	//virtual void OnContextMenu(const ContextMenuEvent& e);
 
@@ -140,10 +140,10 @@ public:
 	std::tuple<CSizeF, CSizeF> GetSizes();
 	virtual CSizeF GetSize();
 	std::tuple<CRectF, CRectF> GetRects();
+	virtual void Arrange(const CRectF& e);
 
 	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
-	virtual void OnRect(const RectEvent& e);
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
 	//virtual void OnContextMenu(const ContextMenuEvent& e) {//Do Nothing}
 
@@ -200,7 +200,6 @@ public:
 	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnClosing(const ClosingEvent& e);
-	virtual void OnRect(const RectEvent& e);
 	virtual void OnContextMenu(const ContextMenuEvent& e);
 
 	virtual void OnSetCursor(const SetCursorEvent& e);

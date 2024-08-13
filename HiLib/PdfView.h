@@ -102,11 +102,6 @@ public:
 	virtual CSizeF DesiredSize() const { return m_size; }
 	virtual void Arrange(const CRectF& rc) = 0;
 
-	virtual void OnRect(const RectEvent& e) override
-	{
-		Arrange(e.Rect);
-	}
-
 	virtual void OnClose(const CloseEvent& e) override
 	{
 		CD2DWDialog::OnClose(e);
@@ -268,7 +263,7 @@ public:
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnEnable(const EnableEvent& e) override;
 
-	virtual void OnRect(const RectEvent& e) override;
+	virtual void Arrange(const CRectF& e) override;
 
 	/**************/
 	/* SM Message */

@@ -72,9 +72,6 @@ class CFilerTabTemplate: public CTabTemplate
 	{
 		if (auto p = std::dynamic_pointer_cast<FilerTabData>(m_pTabData)) {
 			m_spFilerGridView->OpenFolder(p->Folder);
-			//m_spFilerGridView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
-			//m_spFilerGridView->PostUpdate(Updates::All);
-			//m_spFilerGridView->SubmitUpdate();
 		}
 	}
 };

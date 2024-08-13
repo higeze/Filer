@@ -158,16 +158,16 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 	m_compFuture = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, fun);
 }
 
-void CIncrementalCopyDlg::OnRect(const RectEvent& e)
+void CIncrementalCopyDlg::Arrange(const CRectF& e)
 {
-	CD2DWDialog::OnRect(e);
+	CD2DWDialog::Arrange(e);
 
 	auto [rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose] = GetRects();
-	m_spProgressbar->OnRect(RectEvent(GetWndPtr(), rcProgress));
-	m_spFileGrid->OnRect(RectEvent(GetWndPtr(), rcGrid));
-	m_spButtonDo->OnRect(RectEvent(GetWndPtr(), rcBtnDo));
-	m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
-	m_spButtonClose->OnRect(RectEvent(GetWndPtr(), rcBtnClose));
+	m_spProgressbar->Arrange(rcProgress);
+	m_spFileGrid->Arrange(rcGrid);
+	m_spButtonDo->Arrange(rcBtnDo);
+	m_spButtonCancel->Arrange(rcBtnCancel);
+	m_spButtonClose->Arrange(rcBtnClose);
 }
 
 void CIncrementalCopyDlg::OnAddItem(const CIDL& newIdl )

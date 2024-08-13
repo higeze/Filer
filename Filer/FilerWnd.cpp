@@ -464,14 +464,6 @@ void CFilerWnd::Arrange(const CRectF& rc)
 	}
 }
 
-void CFilerWnd::OnRect(const RectEvent& e)
-{
-	//Measure
-	Measure(e.Rect.Size());
-	//Arrange
-	Arrange(e.Rect);
-}
-
 //void CFilerWnd::OnSetFocus(const SetFocusEvent& e)
 //{
 //	if (!m_spCurView) { m_spCurView = m_spLeftView; }

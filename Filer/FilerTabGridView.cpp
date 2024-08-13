@@ -256,7 +256,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			spViewModel->Doc.get_unconst()->Path.binding(spView->Path),
 			spViewModel->Doc.get_unconst()->Tasks.binding(spView->ItemsSource));
 
-		spView->OnRectWoSubmit(RectEvent(GetWndPtr(), GetControlRect()));
+		spView->Arrange(GetControlRect());
 		spView->PostUpdate(Updates::All);
 		spView->SubmitUpdate();
 
@@ -293,7 +293,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			spViewModel->Caret.get_unconst()->SelectedEnd.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->SelectedEnd),
 			spViewModel->Caret.get_unconst()->Point.binding(spView->GetTextBoxPtr()->Caret.get_unconst()->Point));
 
-		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
+		spView->Arrange(GetControlRect());
 		if (*spViewModel->Doc->Status == FileStatus::None) {
 			spViewModel->Doc.get_unconst()->Open(*spViewModel->Doc->Path, *spViewModel->Doc->Encoding);
 		}
@@ -313,7 +313,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			spViewModel->VScroll.binding(spView->GetPDFViewPtr()->GetVScrollPtr()->Position),
 			spViewModel->HScroll.binding(spView->GetPDFViewPtr()->GetHScrollPtr()->Position));
 
-		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
+		spView->Arrange(GetControlRect());
 		//spView->GetPDFViewPtr()->Reset(spViewModel->Doc);
 		m_pdfConnections.push_back(
 			spViewModel->Doc.binding(spView->GetPDFViewPtr()->PDF));
@@ -334,7 +334,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			spViewModel->VScroll.binding(spView->GetImageViewPtr()->GetVScrollPtr()->Position),
 			spViewModel->HScroll.binding(spView->GetImageViewPtr()->GetHScrollPtr()->Position));
 
-		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
+		spView->Arrange(GetControlRect());
 
 		m_imageConnections.push_back(spViewModel->Image.binding(spView->GetImageViewPtr()->Image));
 
@@ -353,7 +353,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		m_prevConnections.push_back(spViewModel->Doc.binding(spView->Doc),
 			spView->Doc.subscribe([this](auto) { UpdateHeaderRects(); }, shared_from_this()));
 
-		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
+		spView->Arrange(GetControlRect());
 
 		return spView;
 	});
@@ -362,7 +362,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		auto spViewModel = std::static_pointer_cast<ThreadMonitorTabData>(pTabData);
 		auto spView = GetThreadMonitorViewPtr();
 
-		spView->OnRect(RectEvent(GetWndPtr(), GetControlRect()));
+		spView->Arrange(GetControlRect());
 
 		return spView;
 	});

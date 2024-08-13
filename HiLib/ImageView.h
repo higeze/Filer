@@ -57,7 +57,7 @@ public:
 	reactive_property_ptr<CD2DImage> Image;
 	reactive_command_ptr<void> OpenCommand;
 	reactive_wstring_ptr Find;
-	reactive_property_ptr<D2D1_BITMAPSOURCE_ORIENTATION> Rotate;
+	//reactive_property_ptr<D2D1_BITMAPSOURCE_ORIENTATION> Rotate;
 
 	/*********/
 	/* Field */
@@ -129,7 +129,7 @@ public:
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnEnable(const EnableEvent& e) override;
 
-	virtual void OnRect(const RectEvent& e) override;
+	virtual void Arrange(const CRectF& e) override;
 
 	/**************/
 	/* SM Message */

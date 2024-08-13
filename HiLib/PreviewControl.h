@@ -50,7 +50,7 @@ public:
 	/* Windows Message*/
 	/******************/
 	virtual void OnCreate(const CreateEvt& e);
-	virtual void OnRect(const RectEvent& e) override;
+	virtual void Arrange(const CRectF& rc) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
 
 	virtual void OnPaint(const PaintEvent& e);

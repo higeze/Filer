@@ -458,16 +458,16 @@ void CExeExtensionDlg::OnCreate(const CreateEvt& e)
 	GetWndPtr()->SetFocusToControl(m_spButtonDo);
 }
 
-void CExeExtensionDlg::OnRect(const RectEvent& e)
+void CExeExtensionDlg::Arrange(const CRectF& rc)
 {
-	CD2DWControl::OnRect(e);
+	CD2DWControl::Arrange(rc);
 
 	auto [rcGrid, rcTextPath, rcTextParam, rcBtnDo, rcBtnCancel] = GetRects();		
-	m_spFilerControl->OnRect(RectEvent(GetWndPtr(), rcGrid));
-	m_spTextPath->OnRect(RectEvent(GetWndPtr(), rcTextPath));
-	m_spTextParam->OnRect(RectEvent(GetWndPtr(), rcTextParam));
-	m_spButtonDo->OnRect(RectEvent(GetWndPtr(), rcBtnDo));
-	m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
+	m_spFilerControl->Arrange(rcGrid);
+	m_spTextPath->Arrange(rcTextPath);
+	m_spTextParam->Arrange(rcTextParam);
+	m_spButtonDo->Arrange(rcBtnDo);
+	m_spButtonCancel->Arrange(rcBtnCancel);
 }
 
 /************************/
@@ -533,16 +533,16 @@ void CPDFOperationDlgBase::OnCreate(const CreateEvt& e)
 	GetWndPtr()->SetFocusToControl(m_spButtonDo);
 }
 
-void CPDFOperationDlgBase::OnRect(const RectEvent& e)
+void CPDFOperationDlgBase::Arrange(const CRectF& rc)
 {
-	CD2DWControl::OnRect(e);
+	CD2DWControl::Arrange(rc);
 
 	auto [rcGrid, rcParam, rcBtnDo, rcBtnCancel] = GetRects();		
 
-	m_spFilerControl->OnRect(RectEvent(GetWndPtr(), rcGrid));
-	m_spParameter->OnRect(RectEvent(GetWndPtr(), rcParam));
-	m_spButtonDo->OnRect(RectEvent(GetWndPtr(), rcBtnDo));
-	m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
+	m_spFilerControl->Arrange(rcGrid);
+	m_spParameter->Arrange(rcParam);
+	m_spButtonDo->Arrange(rcBtnDo);
+	m_spButtonCancel->Arrange(rcBtnCancel);
 }
 
 /****************/

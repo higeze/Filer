@@ -291,6 +291,7 @@
     <ClInclude Include="..\HiLib\BindTextColumn.h" />
     <ClInclude Include="..\HiLib\BindYearMonthDayCell.h" />
     <ClInclude Include="..\HiLib\BindYearMonthDayColumn.h" />
+    <ClInclude Include="..\HiLib\D2DBitmapDrawer.h" />
     <ClInclude Include="..\HiLib\BoolCell.h" />
     <ClInclude Include="..\HiLib\BoostPythonHelper.h" />
     <ClInclude Include="..\HiLib\Button.h" />
@@ -454,7 +455,6 @@
     <ClInclude Include="..\HiLib\se_exception.h" />
     <ClInclude Include="..\HiLib\SerializerEnableIf.h" />
     <ClInclude Include="..\HiLib\Sheet.h" />
-    <ClInclude Include="..\HiLib\SheetCell.h" />
     <ClInclude Include="..\HiLib\SheetCellResource.h" />
     <ClInclude Include="..\HiLib\SheetEnums.h" />
     <ClInclude Include="..\HiLib\SheetEventArgs.h" />
@@ -509,6 +509,7 @@
     <ClInclude Include="..\HiLib\scope_exit.h" />
     <ClInclude Include="..\HiLib\DialogProperty.h" />
     <ClInclude Include="..\HiLib\PDFEditor.h" />
+    <ClInclude Include="..\HiLib\WICImagingFactory.h" />
     <ClInclude Include="..\HiLib\YearMonthDay.h" />
     <ClInclude Include="..\HiLib\TextDoc.h" />
     <ClInclude Include="CheckableFileGrid.h" />
@@ -684,7 +685,6 @@
     <ClCompile Include="..\HiLib\Scroll.cpp" />
     <ClCompile Include="..\HiLib\se_exception.cpp" />
     <ClCompile Include="..\HiLib\Sheet.cpp" />
-    <ClCompile Include="..\HiLib\SheetCell.cpp" />
     <ClCompile Include="..\HiLib\SheetStateMachine.cpp" />
     <ClCompile Include="..\HiLib\ShellFunction.cpp" />
     <ClCompile Include="..\HiLib\ShowHideMenuItem.cpp" />

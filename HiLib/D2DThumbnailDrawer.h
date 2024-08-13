@@ -60,23 +60,19 @@ private:
 public:
 	CD2DThumbnailDrawer();
 	~CD2DThumbnailDrawer() = default;
-	CComPtr<ID2D1Bitmap> GetThumbnailBitmapByThumbnailProvider(
-		const CDirect2DWrite* pDirect,
+	CComPtr<IWICBitmapSource> GetThumbnailBitmapByThumbnailProvider(
 		const std::wstring& dispName, 
 		const UINT32& thumbSize);
 
-	CComPtr<ID2D1Bitmap1> GetThumbnailBitmapByShellImageFactory(
-		const CDirect2DWrite* pDirect,
+	CComPtr<IWICBitmapSource> GetThumbnailBitmapByShellImageFactory(
 		const std::wstring& dispName, 
 		const CSize& thumbSize);
 
-	CComPtr<ID2D1Bitmap1> GetThumbnailBitmapByThumbnailCache(
-		const CDirect2DWrite* pDirect,
+	CComPtr<IWICBitmapSource> GetThumbnailBitmapByThumbnailCache(
 		const std::wstring& dispName, 
 		const UINT32& thumbSize);
 
-	CComPtr<ID2D1Bitmap> GetIconBitmap(
-		const CDirect2DWrite* pDirect,
+	CComPtr<IWICBitmapSource> GetIconBitmap(
 		const std::wstring& dispName);
 
 	bool DrawThumbnailBitmap(

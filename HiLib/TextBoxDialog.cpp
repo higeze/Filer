@@ -56,13 +56,13 @@ void CTextBoxDialog::OnCreate(const CreateEvt& e)
 	GetWndPtr()->SetFocusToControl(m_spButtonOK);
 }
 
-void CTextBoxDialog::OnRect(const RectEvent& e)
+void CTextBoxDialog::Arrange(const CRectF& rc)
 {
-	CD2DWControl::OnRect(e);
+	CD2DWControl::Arrange(rc);
 
 	auto [rcMessage, rcText, rcBtnOK, rcBtnCancel] = GetRects();
-	m_spTextBlock->OnRect(RectEvent(GetWndPtr(), rcMessage));
-	m_spTextBox->OnRect(RectEvent(GetWndPtr(), rcText));
-	m_spButtonOK->OnRect(RectEvent(GetWndPtr(), rcBtnOK));
-	m_spButtonCancel->OnRect(RectEvent(GetWndPtr(), rcBtnCancel));
+	m_spTextBlock->Arrange(rcMessage);
+	m_spTextBox->Arrange(rcText);
+	m_spButtonOK->Arrange(rcBtnOK);
+	m_spButtonCancel->Arrange(rcBtnCancel);
 }

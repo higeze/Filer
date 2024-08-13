@@ -126,6 +126,19 @@ private:
 	void Removed(const std::wstring& fileName);
 	void Renamed(const std::wstring& oldName, const std::wstring& newName);
 
+	template<typename T>
+	std::vector<std::shared_ptr<T>> FindColumns()
+	{
+		std::vector<std::shared_ptr<T>> ret;
+
+		for (auto& col : m_allCols) {
+			if (auto p = std::dynamic_pointer_cast<T>(col)) {
+				ret.push_back(p);
+			}
+		}
+		return ret;
+	}
+
 public:
 	friend void to_json(json& j, const CFilerGridView& o)
 	{

@@ -81,9 +81,9 @@ void CPreviewControl::OnCreate(const CreateEvt& e)
 	m_pWnd->ShowWindow(SW_HIDE);
 }
 
-void CPreviewControl::OnRect(const RectEvent& e)
+void CPreviewControl::Arrange(const CRectF& e)
 {
-	CD2DWControl::OnRect(e);
+	CD2DWControl::Arrange(e);
 	auto [rc] = GetRects();
 	m_pWnd->MoveWindow(rc, TRUE);
 }

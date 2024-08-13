@@ -23,11 +23,6 @@ void CD2DWDialog::OnClose(const CloseEvent& e)
 	CD2DWControl::OnClose(e);
 }
 
-void CD2DWDialog::OnRect(const RectEvent& e)
-{
-	m_rect = e.Rect;
-}
-
 void CD2DWDialog::OnPaint(const PaintEvent& e)
 {
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
@@ -129,7 +124,7 @@ void CD2DWDialog::Moving_MouseMove(const MouseMoveEvent& e)
 	auto rc = GetRectInWnd();
 	rc.OffsetRect(CPointF(e.PointInWnd.x - m_startPoint.value().x, e.PointInWnd.y - m_startPoint.value().y));
 	m_startPoint = e.PointInWnd;
-	OnRect(RectEvent(GetWndPtr(), rc));
+	Arrange(rc);
 	*e.HandledPtr = TRUE;
 }
 
@@ -150,28 +145,28 @@ void CD2DWDialog::LeftSizing_MouseMove(const MouseMoveEvent& e)
 {
 	auto rc = GetRectInWnd();
 	rc.left = e.PointInWnd.x;
-	OnRect(RectEvent(GetWndPtr(), rc));
+	Arrange(rc);
 	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::RightSizing_MouseMove(const MouseMoveEvent& e)
 {
 	auto rc = GetRectInWnd();
 	rc.right = e.PointInWnd.x;
-	OnRect(RectEvent(GetWndPtr(), rc));
+	Arrange(rc);
 	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::TopSizing_MouseMove(const MouseMoveEvent& e)
 {
 	auto rc = GetRectInWnd();
 	rc.top = e.PointInWnd.y;
-	OnRect(RectEvent(GetWndPtr(), rc));
+	Arrange(rc);
 	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::BottomSizing_MouseMove(const MouseMoveEvent& e)
 {
 	auto rc = GetRectInWnd();
 	rc.bottom = e.PointInWnd.y;
-	OnRect(RectEvent(GetWndPtr(), rc));
+	Arrange(rc);
 	*e.HandledPtr = TRUE;
 }
 

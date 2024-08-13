@@ -169,17 +169,17 @@ void CPDFEditor::OnPaint(const PaintEvent& e)
 	m_spStatusBar->OnPaint(e);
 }
 
-void CPDFEditor::OnRect(const RectEvent& e)
+void CPDFEditor::Arrange(const CRectF& e)
 {
-	CD2DWControl::OnRect(e);
+	CD2DWControl::Arrange(e);
 	auto [rcFilter, rcPage, rcTotalPage, rcScale, rcPercent, rcPDF, rcStatus] = GetRects();
-	m_spFilterBox->OnRect(RectEvent(GetWndPtr(), rcFilter));
-	m_spPageBox->OnRect(RectEvent(GetWndPtr(), rcPage));
-	m_spTotalPageBlock->OnRect(RectEvent(GetWndPtr(), rcTotalPage));
-	m_spScaleBox->OnRect(RectEvent(GetWndPtr(), rcScale));
-	m_spPercentBlock->OnRect(RectEvent(GetWndPtr(), rcPercent));
-	m_spPDFView->OnRect(RectEvent(GetWndPtr(), rcPDF));
-	m_spStatusBar->OnRect(RectEvent(GetWndPtr(), rcStatus));
+	m_spFilterBox->Arrange(rcFilter);
+	m_spPageBox->Arrange(rcPage);
+	m_spTotalPageBlock->Arrange(rcTotalPage);
+	m_spScaleBox->Arrange(rcScale);
+	m_spPercentBlock->Arrange(rcPercent);
+	m_spPDFView->Arrange(rcPDF);
+	m_spStatusBar->Arrange(rcStatus);
 	//m_spTextBox->UpdateAll();
 }
 

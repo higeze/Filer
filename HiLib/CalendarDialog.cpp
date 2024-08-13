@@ -199,13 +199,6 @@ void CCalendarDialog::OnCreate(const CreateEvt& e)
 	m_spButtonClose->IsEnabled.set(true);
 }
 
-void CCalendarDialog::OnRect(const RectEvent& e)
-{
-	CD2DWDialog::OnRect(e);
-
-	Arrange(e.Rect);
-}
-
 void CCalendarDialog::OnPaint(const PaintEvent& e)
 {
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);

@@ -125,8 +125,6 @@ public:
 	virtual void OnSetFocus(const SetFocusEvent& e) override {}
 	virtual void OnKillFocus(const KillFocusEvent& e) override {}
 
-	virtual void OnRect(const RectEvent& e) override { m_rect = e.Rect; }
-
 	//DesiredSize includes Margin
 	//RenderSize doesnt include Margin
 	//RenderRect doesnt include Margin

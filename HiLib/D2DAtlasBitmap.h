@@ -283,12 +283,27 @@ public:
 				static_cast<FLOAT>(iter->second.top),
 				static_cast<FLOAT>(iter->second.right + 1),
 				static_cast<FLOAT>(iter->second.bottom + 1));
+
+			//D2D1_POINT_2F imageCenter = CPointF(
+			//	(srcRc.left + srcRc.right) / 2.f,
+			//	(srcRc.top + srcRc.bottom) / 2.f
+			//	);
+
+			//// Rotate the next bitmap by -20 degrees.
+			//pDirect->GetD2DDeviceContext()->SetTransform(
+			//	D2D1::Matrix3x2F::Rotation(-180, imageCenter)
+			//	);
+
 			pDirect->GetD2DDeviceContext()->DrawBitmap(
 				GetAtlasBitmapPtr(pDirect),
 				dstRc,
 				1.f,
 				D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
 				srcRc);
+
+			//pDirect->GetD2DDeviceContext()->SetTransform(
+			//	D2D1::Matrix3x2F::Identity()
+   //         );
 			return true;
 		} else {
 			return false;
@@ -332,11 +347,19 @@ public:
 	//	m_que.erase(std::remove(std::begin(m_que), std::end(m_que), m_que.front()), std::cend(m_que));
 	//}
 
-	void AddOrAssign(const CDirect2DWrite* pDirect, const _Kty& key, const CComPtr<ID2D1Bitmap1>& pBitmap)
+	void AddOrAssign(const CDirect2DWrite* pDirect, const _Kty& key, const CComPtr<IWICBitmapSource>& pWICBitmap)
 	{
 		std::lock_guard<std::shared_mutex> lock(m_mtx);
-		auto iter = m_map.find(key);
-		if(pBitmap){
+
+		if(pWICBitmap){
+			CComPtr<ID2D1Bitmap1> pBitmap;
+			FAILED_THROW(pDirect->GetD2DDeviceContext()->CreateBitmapFromWicBitmap(
+				pWICBitmap, 
+				nullptr, //D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_NONE, D2D1::PixelFormat(DXGI_FORMAT_BC1_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+				&pBitmap ));
+
+			auto iter = m_map.find(key);
+
 			CIndexRect newRect;
 			CSizeU size(pBitmap->GetPixelSize());
 			//Check size
@@ -374,8 +397,9 @@ public:
 	void AddOrAssign(const CDirect2DWrite* pDirect, const _Kty& key, const CFPDFBitmap& fpdfBmp)
 	{
 		std::lock_guard<std::shared_mutex> lock(m_mtx);
-		auto iter = m_map.find(key);
+
 		if(fpdfBmp){
+			auto iter = m_map.find(key);
 			CIndexRect newRect;
 			CSizeU size(fpdfBmp.GetWidth(), fpdfBmp.GetHeight());
 			//Check size

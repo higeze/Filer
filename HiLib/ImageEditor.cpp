@@ -102,14 +102,14 @@ void CImageEditor::OnPaint(const PaintEvent& e)
 
 }
 
-void CImageEditor::OnRect(const RectEvent& e)
+void CImageEditor::Arrange(const CRectF& rc)
 {
-	CD2DWControl::OnRect(e);
+	CD2DWControl::Arrange(rc);
 	auto [rcScale, rcPercent, rcImage, rcStatus] = GetRects();
-	m_spScaleBox->OnRect(RectEvent(GetWndPtr(), rcScale));
-	m_spPercentBlock->OnRect(RectEvent(GetWndPtr(), rcPercent));
-	m_spImageView->OnRect(RectEvent(GetWndPtr(), rcImage));
-	m_spStatusBar->OnRect(RectEvent(GetWndPtr(), rcStatus));
+	m_spScaleBox->Arrange(rcScale);
+	m_spPercentBlock->Arrange(rcPercent);
+	m_spImageView->Arrange(rcImage);
+	m_spStatusBar->Arrange(rcStatus);
 }
 
 void CImageEditor::OnKeyDown(const KeyDownEvent& e)

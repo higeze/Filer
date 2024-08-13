@@ -495,7 +495,9 @@ void CFilerGridView::Added(const std::wstring& fileName)
 		PostUpdate(Updates::Sort);
 		UpdateFilter();
 		if (m_isNewFile) {
-			std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, m_allCols.at(m_frozenColumnCount)))->OnEdit(Event(GetWndPtr()));
+			if (auto cols = FindColumns<CFileNameColumn<std::shared_ptr<CShellFile>>>(); !cols.empty()) {
+				std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, cols.front()))->OnEdit(Event(GetWndPtr()));
+			}
 		}
 		m_isNewFile = false;
 	}
@@ -657,9 +659,8 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 	case VK_F2:
 		{
 			if (m_spCursorer->GetFocusedCell()) {
-				if (auto iter = std::find_if(m_allCols.cbegin(), m_allCols.cend(), [](const std::shared_ptr<CColumn>& pCol) { return typeid(*pCol) == typeid(CFileNameColumn<std::shared_ptr<CShellFile>>); });
-					iter != m_allCols.cend()) {
-					std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), iter->get()))->OnEdit(Event(GetWndPtr()));
+				if (auto cols = FindColumns<CFileNameColumn<std::shared_ptr<CShellFile>>>(); !cols.empty()) {
+					std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(m_spCursorer->GetFocusedCell()->GetRowPtr(), cols.front().get()))->OnEdit(Event(GetWndPtr()));
 					(*e.HandledPtr) = true;
 				}
 			}
@@ -1084,7 +1085,8 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 
 	if (!cell) {
 		//Folder menu
-		m_isNewFile = GetFolderContextMenu().PopupFolder(GetWndPtr(), e.PointInScreen, Folder.get_shared_unconst()) >= CShellContextMenu::SCRATCH_QCM_NEW;
+		auto id = GetFolderContextMenu().PopupFolder(GetWndPtr(), e.PointInScreen, Folder.get_shared_unconst());
+		m_isNewFile = id >= CShellContextMenu::SCRATCH_QCM_NEW && id <= CShellContextMenu::SCRATCH_QCM_LAST;
 		*e.HandledPtr = TRUE;
 	}else if(/*cell->GetRowPtr() == m_pHeaderRow.get() || */cell->GetRowPtr() == m_pNameHeaderRow.get()){
 		//Header menu
@@ -1099,9 +1101,6 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 			mii.fState = colPtr->GetIsVisible() ? MFS_CHECKED : MFS_UNCHECKED;
 			mii.wID = CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, Cell(m_pNameHeaderRow, colPtr)->GetString());
 			std::wstring dwTypeData = Cell(m_pNameHeaderRow, colPtr)->GetString();
-			//std::array<wchar_t, 256> dwTypeData; 
-			//std::copy(Cell(m_pNameHeaderRow, colPtr)->GetString().cbegin(), Cell(m_pNameHeaderRow, colPtr)->GetString().cend(), dwTypeData.begin());
-			//dwTypeData[Cell(m_pNameHeaderRow, colPtr)->GetString().size()] = L'\0';
 			mii.dwTypeData = const_cast<LPWSTR>(dwTypeData.c_str());
 			menu.InsertMenuItem(menu.GetMenuItemCount(), TRUE, &mii);
 		}
@@ -1117,48 +1116,14 @@ void CFilerGridView::Normal_ContextMenu(const ContextMenuEvent& e)
 				if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, Cell(m_pNameHeaderRow, colPtr)->GetString())){
 					colPtr->SetIsVisible(!colPtr->GetIsVisible());
 					Reload();
-					/*std::ranges::for_each(m_allCells, [](const std::shared_ptr<CCell>& pCell) { pCell->SetActMeasureValid(false); });
-					SetAllRowMeasureValid(false);
-					PostUpdate(Updates::Column);
-					PostUpdate(Updates::ColumnVisible);
-					PostUpdate(Updates::Row);
-					PostUpdate(Updates::RowVisible);
-					PostUpdate(Updates::Scrolls);
-					PostUpdate(Updates::Invalidate);
-					SubmitUpdate();*/
 				}
 			}
 		}
-		
-
-
-
-		//if (m_headerMenuItems.empty()) {
-		//	for (const auto& colPtr : m_allCols ) {
-		//		auto cell = Cell(m_pNameHeaderRow, colPtr);
-		//		auto str = cell->GetString();
-		//		m_headerMenuItems.push_back(std::make_shared<CShowHideColumnMenuItem>(
-		//			IDM_VISIBLEROWHEADERCOLUMN + colPtr->GetIndex<AllTag>(),
-		//			Cell(m_pNameHeaderRow, colPtr)->GetString(), this, colPtr.get()));
-		//	}
-
-		//	for (auto& item : m_headerMenuItems) {
-		//		GetWndPtr()->AddCmdIDHandler(item->GetID(), std::bind(&CMenuItem::OnCommand, item.get(), phs::_1, phs::_2, phs::_3, phs::_4));
-		//	}
-		//}
-
-		//for (auto& item : m_headerMenuItems) {
-		//	menu.InsertMenuItemW(menu.GetMenuItemCount(), TRUE, item.get());
-		//}
-
-		//menu.TrackPopupMenu(
-		//	TPM_LEFTALIGN | TPM_RIGHTBUTTON,
-		//	e.PointInScreen.x,
-		//	e.PointInScreen.y,
-		//	GetWndPtr()->m_hWnd);
 		*e.HandledPtr = TRUE;
 	}else{
-		m_isNewFile = GetFileContextMenu().PopupFiles(GetWndPtr(), e.PointInScreen, files) > CShellContextMenu::SCRATCH_QCM_NEW;
+		auto id = GetFileContextMenu().PopupFiles(GetWndPtr(), e.PointInScreen, files);
+		m_isNewFile = id >= CShellContextMenu::SCRATCH_QCM_NEW && id <= CShellContextMenu::SCRATCH_QCM_LAST;
+
 		*e.HandledPtr = TRUE;
 	}
 }

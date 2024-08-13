@@ -79,13 +79,13 @@ void CEditor::OnPaint(const PaintEvent& e)
 	m_spStatusBar->OnPaint(e);
 }
 
-void CEditor::OnRect(const RectEvent& e)
+void CEditor::Arrange(const CRectF& rc)
 {
-	CD2DWControl::OnRect(e);
+	CD2DWControl::Arrange(rc);
 	auto [rcFilter, rcText, rcStatus] = GetRects();
-	m_spFilterBox->OnRect(RectEvent(GetWndPtr(), rcFilter));
-	m_spTextBox->OnRect(RectEvent(GetWndPtr(), rcText));
-	m_spStatusBar->OnRect(RectEvent(GetWndPtr(), rcStatus));
+	m_spFilterBox->Arrange(rcFilter);
+	m_spTextBox->Arrange(rcText);
+	m_spStatusBar->Arrange(rcStatus);
 	m_spTextBox->UpdateAll();
 }
 

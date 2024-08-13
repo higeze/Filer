@@ -129,17 +129,17 @@ public:
 		this->GetWndPtr()->SetFocusToControl(this->m_spButtonDo);
 	}
 
-	virtual void OnRect(const RectEvent& e) override
+	virtual void Arrange(const CRectF& rc) override
 	{
-		CD2DWControl::OnRect(e);
+		CD2DWControl::Arrange(rc);
 
 		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();		
 		//Create FilerControl
-		this->m_spFilerControl->OnRect(RectEvent(this->GetWndPtr(), rcGrid));
+		this->m_spFilerControl->Arrange(rcGrid);
 		//OK button
-		this->m_spButtonDo->OnRect(RectEvent(this->GetWndPtr(), rcBtnDo));
+		this->m_spButtonDo->Arrange(rcBtnDo);
 		//Cancel button
-		this->m_spButtonCancel->OnRect(RectEvent(this->GetWndPtr(), rcBtnCancel));
+		this->m_spButtonCancel->Arrange(rcBtnCancel);
 	}
 };
 
@@ -220,7 +220,7 @@ public:
 	void Execute();
 
 	virtual void OnCreate(const CreateEvt& e) override;
-	virtual void OnRect(const RectEvent& e) override;
+	virtual void Arrange(const CRectF& rc) override;
 };
 
 class CPDFOperationDlgBase: public CFileOperationDlgBase<std::shared_ptr<CShellFile>>
@@ -237,7 +237,7 @@ public:
 	virtual ~CPDFOperationDlgBase() = default;
 
 	virtual void OnCreate(const CreateEvt& e) override;
-	virtual void OnRect(const RectEvent& e) override;
+	virtual void Arrange(const CRectF& rc) override;
 };
 
 class CPDFSplitDlg : public CPDFOperationDlgBase

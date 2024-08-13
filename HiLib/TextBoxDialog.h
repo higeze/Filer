@@ -25,6 +25,7 @@ public:
 	std::shared_ptr<CButton>& GetCancelButtonPtr() { return m_spButtonCancel; }
 
 
+	virtual void Arrange(const CRectF& rc);
+
 	virtual void OnCreate(const CreateEvt& e);
-	virtual void OnRect(const RectEvent& e);
 };

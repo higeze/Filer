@@ -120,10 +120,10 @@ void CTabHeaderControl::OnCreate(const CreateEvt& e)
 	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 }
 
-void CTabHeaderControl::OnRect(const RectEvent& e)
+void CTabHeaderControl::Arrange(const CRectF& rc)
 {
-	CD2DWControl::OnRect(e);
-	m_spButton->OnRect(RectEvent(GetWndPtr(), std::get<2>(GetRects())));
+	CD2DWControl::Arrange(rc);
+	m_spButton->Arrange(std::get<2>(GetRects()));
 }
 
 void CTabHeaderControl::OnPaint(const PaintEvent& e)
@@ -245,10 +245,10 @@ void CAddTabHeaderControl::OnCreate(const CreateEvt& e)
 	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 }
 
-void CAddTabHeaderControl::OnRect(const RectEvent& e)
+void CAddTabHeaderControl::Arrange(const CRectF& rc)
 {
-	CD2DWControl::OnRect(e);
-	m_spButton->OnRect(RectEvent(GetWndPtr(), std::get<0>(GetRects())));
+	CD2DWControl::Arrange(rc);
+	m_spButton->Arrange(std::get<0>(GetRects()));
 }
 
 void CAddTabHeaderControl::OnPaint(const PaintEvent& e)
@@ -364,8 +364,7 @@ void CTabControl::UpdateHeaderRects()
 			top += hdrSize.height;
 		}
 
-		pHeader->OnRect(RectEvent(GetWndPtr(),
-			CRectF(left, top, left + hdrSize.width, top + hdrSize.height)));
+		pHeader->Arrange(CRectF(left, top, left + hdrSize.width, top + hdrSize.height));
 		left = pHeader->GetRectInWnd().right;
 	}
 
@@ -375,8 +374,7 @@ void CTabControl::UpdateHeaderRects()
 		top += hdrSize.height;
 	}
 
-	m_addHeader->OnRect(RectEvent(GetWndPtr(),
-		CRectF(left, top, left + hdrSize.width, top + hdrSize.height)));
+	m_addHeader->Arrange(CRectF(left, top, left + hdrSize.width, top + hdrSize.height));
 }
 
 /***********/
@@ -614,12 +612,7 @@ void CTabControl::Arrange(const CRectF& rc)
 {
 	CD2DWControl::Arrange(rc);
 	UpdateHeaderRects();
-	if (m_spCurControl) { m_spCurControl->OnRect(RectEvent(GetWndPtr(), GetControlRect())); }
-}
-
-void CTabControl::OnRect(const RectEvent& e)
-{ 
-	Arrange(e.Rect);
+	if (m_spCurControl) { m_spCurControl->Arrange(GetControlRect()); }
 }
 
 void CTabControl::OnContextMenu(const ContextMenuEvent& e)
