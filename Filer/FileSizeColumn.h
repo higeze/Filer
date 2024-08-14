@@ -4,11 +4,13 @@
 #include "MapColumn.h"
 #include "HeaderSortCell.h"
 #include "FilterCell.h"
-#include "FileSizeCell.h"
 #include "DriveSizeCell.h"
 #include "PathCell.h"
 #include "CellProperty.h"
 #include "FilerGridViewProperty.h"
+#include "FileSizeCell.h"
+
+template<typename T> class CFileSizeCell;
 
 template<typename T>
 class CFileSizeColumn:public CMapColumn
@@ -46,7 +48,7 @@ public:
 			}
 		}
 
-		return std::make_shared<CFileSizeCell<T>>(m_pGrid, pRow, pColumn);
+		return static_pointer_cast<CCell>(std::make_shared<CFileSizeCell<T>>(m_pGrid, pRow, pColumn));
 	}
 
 	std::shared_ptr<FileSizeArgs> GetSizeArgsPtr() const { return m_spSizeArgs; }

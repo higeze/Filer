@@ -1,9 +1,11 @@
 #pragma once
 #include "HeaderSortCell.h"
-#include "CheckBoxFilterCell.h"
 #include "BindCheckBoxCell.h"
 #include "MapColumn.h"
 #include "named_arguments.h"
+#include "CheckBoxFilterCell.h"
+
+template<typename T> class CBindCheckBoxCell;
 
 template<typename T>
 class CBindCheckBoxColumn : public CMapColumn

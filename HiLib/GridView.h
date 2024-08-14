@@ -620,7 +620,7 @@ public:
 	}
 	template<typename TRC> int Point2Index(const CPointF& pt)
 	{
-		return Coordinate2Index<TRC>(pt.Get<TRC::PointTag>());
+		return Coordinate2Index<TRC>(pt.Get<typename TRC::PointTag>());
 	}
 
 	Indexes Point2Indexes(CPointF pt)
@@ -653,7 +653,7 @@ public:
 
 	template<typename TRC> void FitBandWidth(TRC::template SharedPtr& ptr)
 	{
-		auto& otherContainer = GetContainer<TRC::Other, AllTag>();
+		auto& otherContainer = GetContainer<typename TRC::Other, AllTag>();
 		for(const auto& otherPtr : otherContainer) {
 			otherPtr->SetIsMeasureValid(false);
 			otherPtr->SetIsFitMeasureValid(false);
@@ -676,7 +676,7 @@ public:
 	}
 	template<typename TRC> void EndTrack(TRC::template SharedPtr& ptr)
 	{
-		auto& otherContainer = GetContainer<TRC::Other, AllTag>();
+		auto& otherContainer = GetContainer<typename TRC::Other, AllTag>();
 		for (const auto& otherPtr : otherContainer) {
 			otherPtr->SetIsMeasureValid(false);
 			Cell(ptr, otherPtr)->OnPropertyChanged(L"size");
@@ -739,7 +739,7 @@ public:
 	void SelectBandRange(TRect* pBand1, TRect* pBand2, bool doSelect)
 	{
 		if (!pBand1 || !pBand2)return;
-		auto& container = GetContainer<TRect::Tag, VisTag>();
+		auto& container = GetContainer<typename TRect::Tag, VisTag>();
 		auto idx1 = pBand1->GetIndex<VisTag>();
 		auto idx2 = pBand2->GetIndex<VisTag>();
 		auto beg = (std::min)(idx1, idx2);

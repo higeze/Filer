@@ -26,7 +26,7 @@ private:
 		if (auto pBindRow = dynamic_cast<CBindRow<T>*>(this->m_pRow)) {
 			return pBindRow->GetItem<T>().GetShortName();
 		} else {
-			return nullptr;
+			return L"";
 		}
 	}
 public:

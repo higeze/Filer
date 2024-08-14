@@ -2,6 +2,10 @@
 #include "TextCell.h"
 #include "BindGridView.h"
 #include "BindRow.h"
+#include "BindTextColumn.h"
+
+template<typename T> class CBindRow;
+template<typename T> class CBindTextColumn;
 
 template<typename T>
 class CBindTextCell :public CTextCell
@@ -15,15 +19,15 @@ public:
 
 	virtual std::wstring GetString() override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindTextColumn<T>*>(m_pColumn);
+		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
+		auto pBindColumn = static_cast<CBindTextColumn<T>*>(this->m_pColumn);
 		return pBindColumn->GetGetter()(pBindRow->GetItem<T>());
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
-		auto pBindColumn = static_cast<CBindTextColumn<T>*>(m_pColumn);
+		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
+		auto pBindColumn = static_cast<CBindTextColumn<T>*>(this->m_pColumn);
 		pBindColumn->GetSetter()(pBindRow->GetItem<T>(), str);
 	}
 };

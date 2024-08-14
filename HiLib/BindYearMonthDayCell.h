@@ -27,61 +27,61 @@ public:
 		YearMonthDay(), 
 		Dummy(std::make_shared<int>(0))
 	{
-		YearMonthDay.subscribe([this](const CYearMonthDay& ymd) {
+		this->YearMonthDay.subscribe([this](const CYearMonthDay& ymd) {
 			OnPropertyChanged(L"value");
-		}, Dummy);
+		}, this->Dummy);
 
 		auto pBindColumn = static_cast<const CBindYearMonthDayColumn<T>*>(this->m_pColumn);
 		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
-		pBindColumn->GetProperty(pBindRow->GetItem<T>()).binding(YearMonthDay);
+		pBindColumn->GetProperty(pBindRow->GetItem<T>()).binding(this->YearMonthDay);
 	}
 
 	virtual ~CBindYearMonthDayCell() = default;
 
 	virtual std::wstring GetString() override
 	{
-		return YearMonthDay->IsInvalid() ? L"" : 
+		return this->YearMonthDay->IsInvalid() ? L"" : 
 			std::format(L"{:%m/%d}({})", 
-			std::chrono::year_month_day(*YearMonthDay),
-			YearMonthDay->GetJpnWeekDay());
+			std::chrono::year_month_day(*this->YearMonthDay),
+			this->YearMonthDay->GetJpnWeekDay());
 	}
 
 	virtual std::wstring GetSortString() override
 	{
-		return YearMonthDay->IsInvalid() ? L"9999-99-99" :
+		return this->YearMonthDay->IsInvalid() ? L"9999-99-99" :
 			std::format(L"{:%F}",
-			std::chrono::year_month_day(*YearMonthDay));
+			std::chrono::year_month_day(*this->YearMonthDay));
 	}
 
 	virtual void SetString(const std::wstring& str, bool notify = true) override
 	{
-		YearMonthDay.set(CYearMonthDay::Parse(str));
+		this->YearMonthDay.set(CYearMonthDay::Parse(str));
 	}
 
 	virtual bool CanSetStringOnEditing()const override{return false;}
 
 	virtual void OnLButtonClk(const LButtonClkEvent& e) override
 	{
-		auto spDlg = std::make_shared<CCalendarDialog>(m_pGrid);
+		auto spDlg = std::make_shared<CCalendarDialog>(this->m_pGrid);
 
-		if (YearMonthDay->IsValid()) {
-			spDlg->GetCalendarPtr()->Year.set(YearMonthDay->year());
-			spDlg->GetCalendarPtr()->Month.set(YearMonthDay->month());
+		if (this->YearMonthDay->IsValid()) {
+			spDlg->GetCalendarPtr()->Year.set(this->YearMonthDay->year());
+			spDlg->GetCalendarPtr()->Month.set(this->YearMonthDay->month());
 		} else {
 			auto today = CYearMonthDay::Today();
 			spDlg->GetCalendarPtr()->Year.set(today.year());
 			spDlg->GetCalendarPtr()->Month.set(today.month());
 		}
-		YearMonthDay.binding(spDlg->GetCalendarPtr()->SelectedYearMonthDay);
+		this->YearMonthDay.binding(spDlg->GetCalendarPtr()->SelectedYearMonthDay);
 
 		spDlg->Measure(CSizeF(300, 200));
 		CPointF pt(
-			std::clamp(e.PointInWnd.x, m_pGrid->GetRectInWnd().left, m_pGrid->GetRectInWnd().right - spDlg->DesiredSize().width),
-			std::clamp(e.PointInWnd.y, m_pGrid->GetRectInWnd().top, m_pGrid->GetRectInWnd().bottom - spDlg->DesiredSize().height)
+			std::clamp(e.PointInWnd.x, this->m_pGrid->GetRectInWnd().left, this->m_pGrid->GetRectInWnd().right - spDlg->DesiredSize().width),
+			std::clamp(e.PointInWnd.y, this->m_pGrid->GetRectInWnd().top, this->m_pGrid->GetRectInWnd().bottom - spDlg->DesiredSize().height)
 		);
-		spDlg->OnCreate(CreateEvt(m_pGrid->GetWndPtr(), m_pGrid, CRectF(pt, spDlg->DesiredSize())));
+		spDlg->OnCreate(CreateEvt(this->m_pGrid->GetWndPtr(), this->m_pGrid, CRectF(pt, spDlg->DesiredSize())));
 		spDlg->Arrange(CRectF(pt, spDlg->DesiredSize()));
-		m_pGrid->GetWndPtr()->SetFocusToControl(spDlg);
+		this->m_pGrid->GetWndPtr()->SetFocusToControl(spDlg);
 	}
 
 

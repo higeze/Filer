@@ -1,9 +1,10 @@
 #pragma once
-#include "FilterCell.h"
 #include "MapColumn.h"
+#include "FilterCell.h"
 #include "HeaderSortCell.h"
 #include "named_arguments.h"
-#include "BindTextCell.h"
+
+template<typename T> class CBindTextCell;
 
 template<typename T>
 class CBindTextColumn: public CMapColumn
@@ -15,7 +16,6 @@ protected:
 	std::function<void(T&, const std::wstring&)> m_setFunction;
 	EditMode m_cellEditMode = EditMode::LButtonDownEdit;
 
-
 public:
 	template<typename... Args>
 	CBindTextColumn(CGridView* pSheet,
@@ -25,34 +25,34 @@ public:
 		Args... args)
 		:CMapColumn(pSheet, args...), m_header(header), m_getFunction(getter), m_setFunction(setter)
 	{
-		m_cellEditMode = ::get(arg<"celleditmode"_s>(), args..., default_(EditMode::ReadOnly));
+		this->m_cellEditMode = ::get(arg<"celleditmode"_s>(), args..., default_(EditMode::ReadOnly));
 	}
 
 	virtual ~CBindTextColumn(void) = default;
 
-	std::function<std::wstring(const T&)> GetGetter() const { return m_getFunction; }
-	std::function<void(T&, const std::wstring&)> GetSetter() const { return m_setFunction; }
+	std::function<std::wstring(const T&)> GetGetter() const { return this->m_getFunction; }
+	std::function<void(T&, const std::wstring&)> GetSetter() const { return this->m_setFunction; }
 
 	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CCell>(m_pGrid, pRow, pColumn);
+		return std::make_shared<CCell>(this->m_pGrid, pRow, pColumn);
 	}
 
 	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CHeaderSortCell>(m_pGrid, pRow, pColumn, arg<"text"_s>() = m_header);
+		return std::make_shared<CHeaderSortCell>(this->m_pGrid, pRow, pColumn, arg<"text"_s>() = this->m_header);
 	}
 
 	std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
-		return std::make_shared<CFilterCell>(m_pGrid, pRow, pColumn);
+		return std::make_shared<CFilterCell>(this->m_pGrid, pRow, pColumn);
 	}
 
 	std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		return std::make_shared<CBindTextCell<T>>(
-			m_pGrid, pRow, pColumn, 
-			arg<"editmode"_s>() = m_cellEditMode);
+			this->m_pGrid, pRow, pColumn, 
+			arg<"editmode"_s>() = this->m_cellEditMode);
 	}
 };
 

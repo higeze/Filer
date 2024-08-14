@@ -118,7 +118,7 @@ struct has_##memfunc :\
 /******************/
 
 template<typename U, std::enable_if_t<is_shared_ptr<U>::value && !std::is_pointer<U>::value, std::nullptr_t> = nullptr>
-std::shared_ptr<U::template element_type> CreateInstance() { return std::make_shared<U::template element_type>(); }
+std::shared_ptr<typename U::template element_type> CreateInstance() { return std::make_shared<U::template element_type>(); }
 
 template<typename U, std::enable_if_t<!is_shared_ptr<U>::value && std::is_pointer<U>::value, std::nullptr_t> = nullptr>
 U* CreateInstance() { return new U(); }

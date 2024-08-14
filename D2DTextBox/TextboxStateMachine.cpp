@@ -77,7 +77,7 @@ struct CTextBoxStateMachine::Machine
 
 
 CTextBoxStateMachine::CTextBoxStateMachine(CTextBox* pTextbox)
-	:m_pMachine(new boost::sml::sm<Machine>{ pTextbox })
+	:m_pMachine(new boost::sml::sm<Machine>{ pTextbox})
 {}
 
 CTextBoxStateMachine::~CTextBoxStateMachine() = default;

@@ -21,7 +21,7 @@ private:
 		if (auto pBindColumn = dynamic_cast<CBindColumn<T>*>(this->m_pColumn)) {
 			return pBindColumn->GetItem<T>().GetShortName();
 		} else {
-			return nullptr;
+			return L"";
 		}
 	}
 public:

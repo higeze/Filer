@@ -65,7 +65,7 @@ public:
 		std::shared_ptr<CShellFile> spFile = this->GetShellFile();
 		UINT32 size = this->GetImageSize();
 
-		auto updated = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileNameCell<T>>(shared_from_this())) ]()->void {
+		auto updated = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileNameCellBase<T>>(shared_from_this())) ]()->void {
 			if (auto sp = wp.lock()) {
 				sp->m_conDelayUpdateAction = sp->GetGridPtr()->SignalPreDelayUpdate.connect(
 					[wp]()->void {
@@ -143,17 +143,18 @@ public:
 template<typename T>
 class CFileNameCell:public CFileNameCellBase<T>
 {
+	using bind_row = CBindRow<T>;
 public:
 	using CFileNameCellBase<T>::CFileNameCellBase;
 	virtual std::wstring GetString() override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
+		auto pBindRow = static_cast<bind_row*>(this->m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetDispNameWithoutExt();
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
+		auto pBindRow = static_cast<bind_row*>(this->m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, this->m_pGrid->GetWndPtr()->m_hWnd);
 
 	}
@@ -165,18 +166,19 @@ public:
 template<typename T>
 class CFileIconPathNameCell :public CFileNameCellBase<T>
 {
+	using bind_row = CBindRow<T>;
 public:
 	using CFileNameCellBase<T>::CFileNameCellBase;
 
 	virtual std::wstring GetString() override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
+		auto pBindRow = static_cast<bind_row*>(this->m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetPathNameWithoutExt();
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
+		auto pBindRow = static_cast<bind_row*>(this->m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->SetFileNameWithoutExt(str, this->m_pGrid->GetWndPtr()->m_hWnd);
 	}
 };
@@ -187,12 +189,13 @@ public:
 template<typename T>
 class CFileIconPathCell :public CFileNameCellBase<T>
 {
+	using bind_row = CBindRow<T>;
 public:
 	using CFileNameCellBase<T>::CFileNameCellBase;
 
 	virtual std::wstring GetString() override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
+		auto pBindRow = static_cast<bind_row*>(this->m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetPath();
 	}
 
@@ -210,23 +213,22 @@ struct RenameInfo;
 template<typename T>
 class CFileRenameCell :public CTextCell
 {
+	using bind_row = CBindRow<T>;
 public:
 	CFileRenameCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
-		:CTextCell(pSheet, pRow, pColumn, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit)
-	{
-	}
+		:CTextCell(pSheet, pRow, pColumn, arg<"editmode"_s>() = EditMode::FocusedSingleClickEdit){}
 
 	virtual ~CFileRenameCell(void) {}
 
 	virtual std::wstring GetString() override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
+		auto pBindRow = static_cast<bind_row*>(this->m_pRow);
 		return pBindRow->GetItem<RenameInfo>().Name;
 	}
 
 	virtual void SetStringCore(const std::wstring& str) override
 	{
-		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
+		auto pBindRow = static_cast<bind_row*>(this->m_pRow);
 		pBindRow->GetItem<RenameInfo>().Name = str;
 	}
 	virtual bool CanSetStringOnEditing()const override { return false; }
