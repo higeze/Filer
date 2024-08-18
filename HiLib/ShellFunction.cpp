@@ -48,7 +48,8 @@ std::wstring shell::FileTime2String(FILETIME* pFileTime)
 
 std::wstring shell::Size2String(ULONGLONG size)
 {
-	return ConvertCommaSeparatedNumber(size);
+	//Same as Windows Explore, Ceil
+	return ConvertCommaSeparatedNumber((size + 1023) >> 10) + L" KB";
 }
 
 std::wstring shell::GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL, SHGDNF uFlags)
