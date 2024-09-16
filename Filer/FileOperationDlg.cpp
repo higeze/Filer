@@ -9,6 +9,7 @@
 #include "Dispatcher.h"
 #include "ThreadPool.h"
 #include "PDFDoc.h"
+#include "PDFPage.h"
 #include "PDFViewProperty.h"
 #include "ButtonProperty.h"
 //TODOLOW

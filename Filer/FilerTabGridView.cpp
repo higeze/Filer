@@ -313,10 +313,13 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			spViewModel->VScroll.binding(spView->GetPDFViewPtr()->GetVScrollPtr()->Position),
 			spViewModel->HScroll.binding(spView->GetPDFViewPtr()->GetHScrollPtr()->Position));
 
-		spView->Arrange(GetControlRect());
-		//spView->GetPDFViewPtr()->Reset(spViewModel->Doc);
 		m_pdfConnections.push_back(
 			spViewModel->Doc.binding(spView->GetPDFViewPtr()->PDF));
+
+		spView->Measure(GetControlRect().Size());
+		spView->Arrange(GetControlRect());
+		//spView->GetPDFViewPtr()->Reset(spViewModel->Doc);
+
 
 		return spView;
 	});

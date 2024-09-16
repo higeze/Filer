@@ -27,7 +27,7 @@ std::tuple<CRectF, CRectF, CRectF, CRectF> CImageEditor::GetRects() const
 {
 	CRectF rcClient = GetRectInWnd();
 
-	CSizeF percentSize = m_spPercentBlock->MeasureSize();
+	CSizeF percentSize = m_spPercentBlock->MeasureSize(L"%");
 	CSizeF scaleSize = m_spScaleBox->MeasureSize(L"000.0");
 	FLOAT statusHeight = m_spStatusBar->MeasureSize(L"").height;
 	FLOAT maxHeight = (std::max)(percentSize.height, scaleSize.height);

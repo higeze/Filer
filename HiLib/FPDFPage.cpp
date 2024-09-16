@@ -27,3 +27,9 @@ void CFPDFPage::DoPageAAction(const CFPDFFormHandle& form, int aaType)
 	FPDF_LOCK;
 	FORM_DoPageAAction(m_p.get(), form.m_p, aaType);
 }
+
+FPDF_BITMAP CFPDFPage::GetThumbnailAsBitmap() 
+{
+	FPDF_LOCK;
+	return FPDFPage_GetThumbnailAsBitmap(m_p.get());
+}

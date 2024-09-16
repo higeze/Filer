@@ -11,21 +11,19 @@ class reactive_property
 	template <class U> friend class reactive_property_ptr;
 private:
 	subject<T> m_subject;
+	subject<T, T> m_subject_old_new;
 	T m_value;
 public:
 	explicit reactive_property()
-		: m_subject(),
-		m_value() {}
+		:m_subject(), m_subject_old_new(), m_value() {}
 
 	template<class... Args>
 	explicit reactive_property(const Args&... args)
-		: m_subject(),
-		m_value(args...) {}
+		:m_subject(), m_subject_old_new(), m_value(args...) {}
 
 	template<class... Args>
 	explicit reactive_property(Args&&... args)
-		: m_subject(),
-		m_value(std::forward<Args>(args)...) {}
+		:m_subject(), m_subject_old_new(), m_value(std::forward<Args>(args)...) {}
 
 	virtual ~reactive_property() = default;
 
@@ -37,7 +35,9 @@ public:
 	void observe_property(const T& value)
 	{
 		if (m_value != value) {
+			auto old_value = m_value;
 			m_value = value;
+			m_subject_old_new.on_next(old_value, value);
 			m_subject.on_next(value);
 		}
 	}
@@ -51,11 +51,13 @@ public:
 	void block()
 	{
 		m_subject.block();
+		m_subject_old_new.block();
 	}
 
 	void unblock()
 	{
 		m_subject.unblock();
+		m_subject_old_new.unblock();
 	}
 };
 
@@ -140,6 +142,18 @@ public:
 		return m_preactive->m_subject.disconnect(std::forward<Args>(args)...);
 	}
 
+	template<class... Args>
+	auto subscribe_old_new(Args&&... args) -> sigslot::connection
+	{
+		return m_preactive->m_subject_old_new.subscribe(std::forward<Args>(args)...);
+	}
+
+	template<class... Args>
+	auto disconnect_old_new(Args&&... args) -> size_t
+	{
+		return m_preactive->m_subject_old_new.disconnect(std::forward<Args>(args)...);
+	}
+
 	virtual void set(const T& value)
 	{
 		this->m_preactive->observe_property(value);
@@ -147,7 +161,9 @@ public:
 
 	virtual void force_notify_set(const T& value)
 	{
+		auto old_value = this->m_preactive->m_value;
 		this->m_preactive->m_value = value;
+		this->m_preactive->m_subject_old_new.on_next(old_value, value);
 		this->m_preactive->m_subject.on_next(value);
 	}
 
@@ -277,6 +293,18 @@ public:
 		return m_preactive->m_subject.disconnect(std::forward<Args>(args)...);
 	}
 
+	template<class... Args>
+	auto subscribe_old_new(Args&&... args) -> sigslot::connection
+	{
+		return m_preactive->m_subject_old_new.subscribe(std::forward<Args>(args)...);
+	}
+
+	template<class... Args>
+	auto disconnect_old_new(Args&&... args) -> size_t
+	{
+		return m_preactive->m_subject_old_new.disconnect(std::forward<Args>(args)...);
+	}
+
 	virtual void set(const std::shared_ptr<T>& value)
 	{
 		this->m_preactive->observe_property(value);
@@ -284,7 +312,9 @@ public:
 
 	virtual void force_notify_set(const std::shared_ptr<T>& value)
 	{
+		auto old_value = this->m_preactive->m_value;
 		this->m_preactive->m_value = value;
+		this->m_preactive->m_subject_old_new.on_next(old_value, value);
 		this->m_preactive->m_subject.on_next(value);
 	}
 

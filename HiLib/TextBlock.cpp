@@ -1,19 +1,26 @@
 #include "TextBlock.h"
 #include "D2DWWindow.h"
 
-CSizeF CTextBlock::MeasureSize()
+void CTextBlock::Measure(const CSizeF& availableSize)
 {
-	return MeasureSize(*Text);
+	Measure(availableSize, L"A");
+}
+
+void CTextBlock::Measure(const CSizeF& availableSize, const std::wstring& text)
+{
+	m_size = MeasureSize(Text->empty() ? text : *Text);
 }
 
 CSizeF CTextBlock::MeasureSize(const std::wstring& text)
 {
-	CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(
-		GetFormat(), text);
-	size.width += GetPadding().top
-		+ GetPadding().bottom;
-	size.height += GetPadding().left
-		+ GetPadding().right;
+	CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), text);
+	size.width += GetPadding().left
+		+ GetPadding().right
+		+ GetNormalBorder().Width;
+	size.height += GetPadding().top
+		+ GetPadding().bottom
+		+ GetNormalBorder().Width;
+
 	return size;
 }
 

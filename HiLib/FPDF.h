@@ -1,5 +1,6 @@
 #pragma once
 #include <fpdfview.h>
+#include <fpdf_progressive.h>
 #include <fpdf_edit.h>
 #include <fpdf_text.h>
 #include <fpdf_ppo.h>

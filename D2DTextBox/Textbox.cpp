@@ -81,12 +81,9 @@ void CTextBox::Measure(const CSizeF& availableSize)
 	Measure(availableSize, L"A");
 }
 
-
 void CTextBox::Measure(const CSizeF& availableSize, const std::wstring& text)
 {
-	if (!m_opt_size.has_value()) {
-		m_opt_size.emplace(MeasureSize(Text->empty()? text : *Text));
-	}
+	m_size = MeasureSize(Text->empty()? text : *Text);
 }
 
 CSizeF CTextBox::MeasureSize(const std::wstring& text)
@@ -100,11 +97,6 @@ CSizeF CTextBox::MeasureSize(const std::wstring& text)
 		+ GetNormalBorder().Width;
 
 	return size;
-}
-
-CSizeF CTextBox::DesiredSize() const
-{
-	return m_opt_size.value();
 }
 
 /***************/

@@ -347,6 +347,7 @@ void CShellFile::Execute(const wchar_t* lpVerb)
 
 void CShellFile::Load(const std::wstring& path)
 {
+	ResetOpts();
 	m_optPath.emplace(path);
 	if (path.empty() || path[0] != L':' && !::PathFileExistsW(path.c_str())) {
 		//Invalid

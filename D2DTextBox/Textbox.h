@@ -47,7 +47,6 @@ class CD2DWWindow;
 class CTextBox : public IBridgeTSFInterface, public CD2DWControl
 {
 private:
-	std::optional<CSizeF> m_opt_size;
 	bool m_isWrap = true;
 public:
 	virtual const SolidLine& GetCompositionLine() const
@@ -70,7 +69,7 @@ public:
 public:
 	void Measure(const CSizeF& availableSize) override;
 	void Measure(const CSizeF& availableSize, const std::wstring& text);
-	CSizeF DesiredSize() const;
+	CSizeF MeasureSize(const std::wstring& text);
 	void Arrange(const CRectF& rc) override;
 	/************/
 	/* Reactive */
@@ -227,8 +226,6 @@ protected:
 	bool PasteFromClipboard();
 
 public:
-	// Size
-	CSizeF MeasureSize(const std::wstring& text);
 	// Caret
 	void MoveCaret(const int& position, const CPointF& point);
 	void MoveCaretWithShift(const int& position, const CPointF& point);

@@ -53,7 +53,7 @@ struct PdfBmpKey
 	template<typename _Cancel>
 	CFPDFBitmap GetBitmap(_Cancel&& cancel)const
 	{
-		return PagePtr->GetClipFPDFBitmap(Scale, Rotate, Rect, cancel);
+		return PagePtr->GetFPDFBitmap(Scale, Rotate, cancel);
 	}
 };
 

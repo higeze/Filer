@@ -9,8 +9,6 @@
 #include "MyClipboard.h"
 #include "strconv.h"
 #include "FPDFDocument.h"
-#include "FPDFPage.h"
-#include "FPDFTextPage.h"
 #include "FPDFFormHandle.h"
 #include "FPDFFileWrite.h"
 
@@ -55,13 +53,10 @@ void CPDFDoc::InitializeFormFillInfo()
 
 CPDFDoc::~CPDFDoc()
 {
-	//Release FormHandlePtr strong reference
-	m_optPages.reset();
-
 	//Exit before m_formFillInfo destructed
-	if (m_optFormHandlePtr.has_value()) {
+	if (m_optFormHandle.has_value()) {
 		//m_optFormHandlePtr.value()->DoDocumentAAction(FPDFDOC_AACTION_WC);
-		m_optFormHandlePtr.value()->ExitFormFillEnvironment();
+		m_optFormHandle.value()->ExitFormFillEnvironment();
 	}
 }
 
@@ -86,6 +81,16 @@ CPDFDoc& CPDFDoc::operator=(const CPDFDoc& doc)
 bool CPDFDoc::operator==(const CPDFDoc& doc) const
 {
 	return *Path == *doc.Path;
+}
+
+CPDFDoc::operator bool() const noexcept
+{
+	return m_pDoc.operator bool() && m_pDoc->operator bool();
+}
+
+bool CPDFDoc::IsOpen() const
+{
+	return m_pDoc && m_pDoc->operator bool();
 }
 
 
@@ -138,18 +143,18 @@ const int& CPDFDoc::GetPageCount() const
 	return m_optPageCount.value();
 }
 
-const std::shared_ptr<CFPDFFormHandle>& CPDFDoc::GetFormHandlePtr() const
+const std::unique_ptr<CFPDFFormHandle>& CPDFDoc::GetFormHandle() const
 {
-	if (!m_optFormHandlePtr.has_value()) {
-		std::shared_ptr<CFPDFFormHandle> pForm(std::make_shared<CFPDFFormHandle>());
+	if (!m_optFormHandle.has_value()) {
+		std::unique_ptr<CFPDFFormHandle> pForm(std::make_unique<CFPDFFormHandle>());
 		pForm->InitFormFillEnvironment(*m_pDoc, &m_formFillInfo);
 		pForm->SetFormFieldHighlightColor(FPDF_FORMFIELD_UNKNOWN, 0xFFE4DD);
 		pForm->SetFormFieldHighlightAlpha(100);
 		//pForm->DoDocumentJSAction();
 		//pForm->DoDocumentOpenAction();
-		m_optFormHandlePtr.emplace(pForm);
+		m_optFormHandle.emplace(std::move(pForm));
 	}
-	return m_optFormHandlePtr.value();
+	return m_optFormHandle.value();
 }
 
 const std::vector<std::unique_ptr<CPDFPage>>& CPDFDoc::GetPages() const
@@ -157,14 +162,14 @@ const std::vector<std::unique_ptr<CPDFPage>>& CPDFDoc::GetPages() const
 	if (!m_optPages.has_value()) {
 		std::vector<std::unique_ptr<CPDFPage>> pages;
 		for (auto i = 0; i < GetPageCount(); i++) {
-			std::unique_ptr<CFPDFPage> pPage(std::make_unique<CFPDFPage>(m_pDoc->LoadPage(i)));
-			std::unique_ptr<CFPDFTextPage> pTextPage(std::make_unique<CFPDFTextPage>(pPage->LoadTextPage()));
-			pages.emplace_back(std::make_unique<CPDFPage>(std::move(pPage), std::move(pTextPage), GetFormHandlePtr()))->Rotate.subscribe([this](const auto& i) 
-			{ 
-				m_optSize.reset();
-				m_optPageRects.reset();
-				IsDirty.set(true);
-			}, Dummy);
+			std::unique_ptr<CPDFPage> pPage(std::make_unique<CPDFPage>(this, i));
+			pPage->Rotate.subscribe(
+				[this](const auto& i) {
+					m_optSize.reset();
+					m_optPageRects.reset();
+					IsDirty.set(true);
+				}, Dummy);
+			pages.emplace_back(std::move(pPage));
 		}
 		m_optPages.emplace(std::move(pages));
 	}
@@ -173,41 +178,61 @@ const std::vector<std::unique_ptr<CPDFPage>>& CPDFDoc::GetPages() const
 
 const std::unique_ptr<CPDFPage>& CPDFDoc::GetPage(const int& index) const
 {
-	return GetPages()[index];
+	if (!GetPages().at(index)->IsLoaded()) {
+		auto loaded_count = std::ranges::count_if(GetPages(), [](const std::unique_ptr<CPDFPage>& value) { return value->IsLoaded(); });
+		if (loaded_count > 40) {
+			for (size_t i = 0; i < GetPages().size(); i++) {
+				GetPages().at(i)->Unload();
+			}
+		}
+	}
+	return GetPages().at(index);
 }
 
 int CPDFDoc::GetPageIndex(const std::unique_ptr<CPDFPage>& pPage) const
 {
-	auto iter = std::find(GetPages().cbegin(), GetPages().cend(), pPage);
-	if (iter != GetPages().cend()) {
-		return std::distance(GetPages().cbegin(), iter);
-	} else {
-		return -1;
+	for (auto i = 0; i < GetPageCount(); i++) {
+		if (GetPages().at(i) == pPage) {
+			return i;
+		}
 	}
+	return -1;
+
+
+	//auto iter = std::find(GetPages().cbegin(), GetPages().cend(), pPage);
+	//if (iter != GetPages().cend()) {
+	//	return std::distance(GetPages().cbegin(), iter);
+	//} else {
+	//	return -1;
+	//}
 }
 
 int CPDFDoc::GetPageIndex(const CPDFPage* pPage) const
 {
-	auto iter = std::find_if(GetPages().cbegin(), GetPages().cend(), [pPage](const std::unique_ptr<CPDFPage>& p)->bool { return p.get() == pPage; });
-	if (iter != GetPages().cend()) {
-		return std::distance(GetPages().cbegin(), iter);
-	} else {
-		return -1;
+	for (auto i = 0; i < GetPageCount(); i++) {
+		if (GetPages().at(i).get() == pPage) {
+			return i;
+		}
 	}
+	return -1;
+	//auto iter = std::find_if(GetPages().cbegin(), GetPages().cend(), [pPage](const std::unique_ptr<CPDFPage>& p)->bool { return p.get() == pPage; });
+	//if (iter != GetPages().cend()) {
+	//	return std::distance(GetPages().cbegin(), iter);
+	//} else {
+	//	return -1;
+	//}
 }
 
 unsigned long CPDFDoc::Open(const std::wstring& path, const std::wstring& password)
 {
-	CShellFile::Load(path);
+	CPDFDoc::ResetOpts();
 
-	m_pDoc = std::make_unique<CFPDFDocument>();
+	CShellFile::Load(path);
 	Path.set(path);
 	Password.set(password);
 	IsDirty.set(false);
 
-	m_optFormHandlePtr.reset();
-	m_optPages.reset();
-
+	m_pDoc = std::make_unique<CFPDFDocument>();
     m_pDoc->LoadDocument(wide_to_utf8(path).c_str(), wide_to_utf8(password).c_str());
 
     unsigned long err = FPDF_GetLastError();
@@ -223,13 +248,7 @@ unsigned long CPDFDoc::Open(const std::wstring& path, const std::wstring& passwo
 void CPDFDoc::Close()
 {
 	CShellFile::ResetOpts();
-
-	m_optFileVersion.reset();
-	m_optPageCount.reset();
-	m_optSize.reset();
-	m_optPageRects.reset();
-	m_optFormHandlePtr.reset();
-	m_optPages.reset();
+	CPDFDoc::ResetOpts();
 	m_pDoc.reset();
 
 	Dummy.reset();
@@ -238,14 +257,13 @@ void CPDFDoc::Close()
 
 unsigned long  CPDFDoc::Create()
 {
-	m_pDoc = std::make_unique<CFPDFDocument>();
+	CShellFile::ResetOpts();
+	CPDFDoc::ResetOpts();
 
+	m_pDoc = std::make_unique<CFPDFDocument>();
 	Path.set(L"");
 	Password.set(L"");
 	IsDirty.set(true);
-
-	m_optFormHandlePtr.reset();
-	m_optPages.reset();
 	
 	m_pDoc->CreateNewDocument();
 	unsigned long err = FPDF_GetLastError();
@@ -296,12 +314,7 @@ void CPDFDoc::DeletePage(int page_index)
 {
 	m_pDoc->Page_Delete(page_index);
 
-	m_optFileVersion.reset();
-	m_optPageCount.reset();
-	m_optSize.reset();
-	m_optPageRects.reset();
-	m_optFormHandlePtr.reset();
-	m_optPages.reset();
+	CPDFDoc::ResetOpts();
 	IsDirty.set(true);
 }
 
@@ -312,13 +325,7 @@ void CPDFDoc::Save()
 
 	//To release binding between FPDF_DOCUMENT and File, Clone and Swap
 	//Before those reset, it is necessary to make sure the other thread not to touch those element (Call CD2DPDFBitmapDrawer::WaitAll) 
-	m_optFileVersion.reset();
-	m_optPageCount.reset();
-	m_optSize.reset();
-	m_optPageRects.reset();
-	m_optFormHandlePtr.reset();
-	m_optPages.reset();
-
+	CPDFDoc::ResetOpts();
 	m_pDoc.reset(m_pDoc->Clone());
 
 	//Save
@@ -340,12 +347,7 @@ void CPDFDoc::ImportPages(const CPDFDoc& src_doc,
 				int index)
 {
 	m_pDoc->ImportPages(*src_doc.m_pDoc, pagerange, index);
-	m_optFileVersion.reset();
-	m_optPageCount.reset();
-	m_optSize.reset();
-	m_optPageRects.reset();
-	m_optFormHandlePtr.reset();
-	m_optPages.reset();
+	CPDFDoc::ResetOpts();
 	IsDirty.set(true);
 }
 

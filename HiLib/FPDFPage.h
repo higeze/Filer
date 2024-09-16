@@ -62,6 +62,8 @@ public:
         return FPDFPage_SetRotation(m_p.get(), rotate);
     }
 
+    FPDF_BITMAP GetThumbnailAsBitmap();
+
     CFPDFTextPage LoadTextPage() const;
 
 	void OnAfterLoadPage(const CFPDFFormHandle& form);

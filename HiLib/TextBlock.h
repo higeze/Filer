@@ -12,7 +12,8 @@ public:
 		:CD2DWControl(pControl), Text(){}
 	virtual ~CTextBlock() = default;
 
-	CSizeF MeasureSize();
+	void Measure(const CSizeF& availableSize);
+	void Measure(const CSizeF& availableSize, const std::wstring& text);
 	CSizeF MeasureSize(const std::wstring& text);
 	//Event
 	virtual void OnPaint(const PaintEvent& e) override;

@@ -4,6 +4,10 @@
 protected: mutable std::optional<type> m_opt##name; \
 public: virtual const type& Get##name() const;
 
+#define DECLARE_LAZY_GETTER_PRIVATE(type, name) \
+private: mutable std::optional<type> m_opt##name; \
+private: virtual const type& Get##name() const;
+
 #define DECLARE_LAZY_GETTER_UNCONST(type, name) \
 protected: mutable std::optional<type> m_opt##name; \
 public: virtual type& Get##name();
@@ -15,6 +19,10 @@ public: virtual const type& Get##name(const arg1type&) const
 #define DECLARE_LAZY_COMPTR_GETTER(type, name) \
 protected: mutable CComPtr<type> m_p##name; \
 public: virtual const CComPtr<type>& Get##name##Ptr() const;
+
+#define DECLARE_LAZY_UNIQUEPTR_GETTER(type, name) \
+protected: mutable std::unique_ptr<type> m_p##name; \
+public: virtual const std::unique_ptr<type>& Get##name##Ptr() const;
 
 #define DECLARE_LAZY_SHAREDPTR_GETTER(type, name) \
 protected: mutable std::shared_ptr<type> m_p##name; \

@@ -153,6 +153,7 @@ public:
 	reactive_property_ptr<int> CurrentPage;
 	reactive_property_ptr<int> TotalPage;
 	reactive_wstring_ptr Find;
+	reactive_property_ptr<int> FindCount;
 	/*********/
 	/* Field */
 	/*********/

@@ -95,7 +95,7 @@ void CPdfViewExtractDlg::Measure(const CSizeF& availableSize)
 	m_size.height =
 		5.f + m_spParameter->DesiredSize().height
 		+ 5.f + m_spButtonCancel->DesiredSize().height
-		+ 5.f + std::max(m_spButtonCancel->DesiredSize().height, m_spButtonDo->DesiredSize().height) + 5.f;
+		+ 5.f + (std::max)(m_spButtonCancel->DesiredSize().height, m_spButtonDo->DesiredSize().height) + 5.f;
 }
 
 void CPdfViewExtractDlg::Arrange(const CRectF& rc)
@@ -132,22 +132,28 @@ CPdfView::CPdfView(CD2DWControl* pParentControl)
 	TotalPage(0),
 	Find()
 {
-	PDF.subscribe([this](auto doc) {
-		//Clear Current
+	PDF.subscribe_old_new([this](auto old_value, auto new_value) {
+		//Clear
 		Clear();
-		//Close Current
-		PDF.get_unconst()->Close();
-		//New FileIsInUse
-		m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(GetWndPtr()->m_hWnd, PDF->Path->c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
-		GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [pdf = PDF](UINT, LPARAM, WPARAM, BOOL&)->LRESULT {
-			pdf.get_unconst()->Close();
-			return 0;
-		});
-		//Open
-		if (!doc->IsOpen()) {
-			OpenWithPasswordHandling(*doc->Path);
-		} else {
-			//Do nothing
+
+		if (old_value) {
+			old_value->Close();
+		}
+
+		if (new_value) {
+			//New FileIsInUse
+			m_pFileIsInUse = CFileIsInUseImpl::CreateInstance(GetWndPtr()->m_hWnd, new_value->Path->c_str(), FUT_DEFAULT, OF_CAP_DEFAULT);
+			GetWndPtr()->AddMsgHandler(CFileIsInUseImpl::WM_FILEINUSE_CLOSEFILE, [pdf = new_value](UINT, LPARAM, WPARAM, BOOL&)->LRESULT {
+				pdf->Close();
+				return 0;
+				});
+			//Open
+			if (!new_value->IsOpen()) {
+				OpenWithPasswordHandling(*new_value->Path);
+			}
+			else {
+				//Do nothing
+			}
 		}
 	}, Dummy);
 }
@@ -217,15 +223,15 @@ void CPdfView::OnDestroy(const DestroyEvent& e)
 
 void CPdfView::OnEnable(const EnableEvent& e)
 {
-	//if (e.Enable) {
-	//	if (!PDF) {
-	//		Open(m_path.get());
-	//	}
-	//} else {
-	//	if (PDF) {
-	//		Close();
-	//	}
-	//}
+	if (e.Enable) {
+		//if (!PDF) {
+		//	Open(m_path.get());
+		//}
+	} else {
+		if (PDF) {
+			Close();
+		}
+	}
 }
 
 void CPdfView::Arrange(const CRectF& rc)
@@ -599,11 +605,18 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 		}
 	}	 
 
+	//Count Find
+	int find_count = 0;
+	for (auto i = 0; i < PDF->GetPageCount(); i++) {
+		find_count += PDF->GetPage(i)->GetFindRects(*Find).size();
+	}
+	FindCount.set(find_count);
 
 	//Paint Find
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND::D2D1_PRIMITIVE_BLEND_MIN);
 	for (auto i = begin; i < end; i++) {
 		const std::vector<CRectF>& rcFndsInPdfium = PDF->GetPage(i)->GetFindRects(*Find);
+		find_count += rcFndsInPdfium.size();
 		std::vector<CRectF> rcFndsInWnd;
 		std::transform(rcFndsInPdfium.cbegin(), rcFndsInPdfium.cend(), std::back_inserter(rcFndsInWnd),
 			[i = i, this](const CRectF& rcInPdfium) { return PdfiumPage2Wnd(i, rcInPdfium); });

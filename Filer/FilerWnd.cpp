@@ -56,6 +56,8 @@
 #include "PreviewTabData.h"
 #include "ThreadMonitorTabData.h"
 
+#include "PDFPage.h"
+
 
 std::vector<std::wstring> CFilerWnd::imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff" };
 std::vector<std::wstring> CFilerWnd::previewExts = {L".docx", L".doc", L".xlsx", L".xls", L".ppt", L".pptx"};

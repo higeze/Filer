@@ -49,6 +49,7 @@ protected:
 	CRectF m_rect;
 
 	bool m_isTabStop = false;
+	std::shared_ptr<int> Life;
 public:
 	reactive_property_ptr<bool> IsEnabled;
 	reactive_property_ptr<bool> IsFocusable;
@@ -61,7 +62,7 @@ public:
 public:
 
 	CD2DWControl(CD2DWControl* pParentControl = nullptr):
-		m_pParentControl(pParentControl), IsEnabled(true), IsFocusable(true){}
+		m_pParentControl(pParentControl), IsEnabled(true), IsFocusable(true), Life(std::make_shared<int>(1)){}
 	virtual ~CD2DWControl();
 
 	virtual CD2DWWindow* GetWndPtr()const { return m_pParentControl->GetWndPtr(); }

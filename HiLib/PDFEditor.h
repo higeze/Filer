@@ -1,5 +1,5 @@
 #pragma once
-#include "D2DWControl.h"
+#include "DockPanel.h"
 #include "getter_macro.h"
 #include "encoding_type.h"
 #include "reactive_string.h"
@@ -12,9 +12,10 @@ class CEditorTextBox;
 class CStatusBar;
 struct PDFEditorProperty;
 
-class CPDFEditor :public CD2DWControl
+class CPDFEditor :public CDockPanel
 {
 	SHAREDPTR_GETTER(CTextBox, FilterBox)
+	SHAREDPTR_GETTER(CTextBlock, FilterCountBlock)
 	SHAREDPTR_GETTER(CTextBox, PageBox)
 	SHAREDPTR_GETTER(CTextBlock, TotalPageBlock)
 	SHAREDPTR_GETTER(CTextBox, ScaleBox)
@@ -30,15 +31,16 @@ public:
 
 public:
 	CPDFEditor(CD2DWControl* pParentControl);
+	virtual ~CPDFEditor() = default;
 
-	virtual ~CPDFEditor() {}
-
-	std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> GetRects() const;
+	//std::tuple<CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF, CRectF> GetRects() const;
 
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnPaint(const PaintEvent& e) override;
-	virtual void Arrange(const CRectF& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
+
+	virtual void Measure(const CSizeF& availableSize) override;
+	virtual void Arrange(const CRectF& rc) override;
 
 	void Open();
 	void OpenAs();
