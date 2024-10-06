@@ -459,9 +459,9 @@ void CExeExtensionDlg::OnCreate(const CreateEvt& e)
 	GetWndPtr()->SetFocusToControl(m_spButtonDo);
 }
 
-void CExeExtensionDlg::Arrange(const CRectF& rc)
+void CExeExtensionDlg::ArrangeOverride(const CRectF& rc)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::ArrangeOverride(rc);
 
 	auto [rcGrid, rcTextPath, rcTextParam, rcBtnDo, rcBtnCancel] = GetRects();		
 	m_spFilerControl->Arrange(rcGrid);
@@ -534,9 +534,9 @@ void CPDFOperationDlgBase::OnCreate(const CreateEvt& e)
 	GetWndPtr()->SetFocusToControl(m_spButtonDo);
 }
 
-void CPDFOperationDlgBase::Arrange(const CRectF& rc)
+void CPDFOperationDlgBase::ArrangeOverride(const CRectF& finalRect)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::ArrangeOverride(finalRect);
 
 	auto [rcGrid, rcParam, rcBtnDo, rcBtnCancel] = GetRects();		
 

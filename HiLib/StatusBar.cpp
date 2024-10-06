@@ -7,9 +7,9 @@ CStatusBar::CStatusBar(CD2DWControl* pParentControl)
 
 CStatusBar::~CStatusBar() = default;
 
-void CStatusBar::Measure(const CSizeF& availableSize)
+CSizeF CStatusBar::MeasureOverride(const CSizeF& availableSize)
 {
-	m_size = MeasureSize(L"A");
+	return MeasureSize(L"A");
 }
 
 void CStatusBar::OnPaint(const PaintEvent& e)

@@ -391,6 +391,8 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 
 	//MeasureArrange
 	CRect rcClient = GetClientRect();
+	ProcessFunctionToAll([](auto child) { child->MeasureDirty.set(true); child->ArrangeDirty.set(true); });
+
 	//Measure
 	Measure(rcClient.Size().Cast<CSizeF>());
 	//Arrange
@@ -450,18 +452,21 @@ void CFilerWnd::OnMouseMove(const MouseMoveEvent& e)
 	//m_konamiCommander.OnMouseMove(uMsg, wParam, lParam, bHandled);
 }
 
-void CFilerWnd::Measure(const CSizeF& availableSize) 
+CSizeF CFilerWnd::MeasureOverride(const CSizeF& availableSize) 
 {
 	for (auto child : m_childControls) {
 		child->Measure(availableSize);
 	}
+	return availableSize;
 }
 
-void CFilerWnd::Arrange(const CRectF& rc)
+void CFilerWnd::ArrangeOverride(const CRectF& finalRect)
 {
-	if (!rc.IsRectNull()) {
+	CD2DWWindow::ArrangeOverride(finalRect);
+
+	if (!finalRect.IsRectNull()) {
 		for (auto child : m_childControls) {
-			child->Arrange(rc);
+			child->Arrange(finalRect);
 		}
 	}
 }

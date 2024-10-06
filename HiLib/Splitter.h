@@ -61,15 +61,9 @@ public:
 	virtual ~CVerticalSplitter() = default;
 
 	//MeasureArrange
-	virtual void Measure(const CSizeF& availableSize) override
+	virtual CSizeF MeasureOverride(const CSizeF& availableSize) override
 	{
-		m_size.width = Width;
-		//m_size.height = availableSize.height;
-	}
-
-	virtual void Arrange(const CRectF& rc) override
-	{
-		CD2DWControl::Arrange(rc);
+		return CSizeF(Width, 0.f);
 	}
 	
 	//Event
@@ -87,15 +81,9 @@ public:
 	virtual ~CHorizontalSplitter() = default;
 
 	//MeasureArrange
-	virtual void Measure(const CSizeF& availableSize) override
+	virtual CSizeF MeasureOverride(const CSizeF& availableSize) override
 	{
-		//m_size.width = availableSize.width;
-		m_size.height = Width;
-	}
-
-	virtual void Arrange(const CRectF& rc) 
-	{
-		CD2DWControl::Arrange(rc);
+		return CSizeF(0.f, Width);
 	}
 
 	//Event

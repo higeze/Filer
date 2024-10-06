@@ -106,10 +106,10 @@ CCalendarDialog::CCalendarDialog(CD2DWControl* pParentControl)
 
 CCalendarDialog::~CCalendarDialog() = default;
 
-void CCalendarDialog::Measure(const CSizeF& availableSize)
+CSizeF CCalendarDialog::MeasureOverride(const CSizeF& availableSize)
 {
-	m_spYearTextBox->Measure(availableSize, L"2023");
-	m_spMonthTextBox->Measure(availableSize, L"12");
+	m_spYearTextBox->Measure(availableSize);
+	m_spMonthTextBox->Measure(availableSize);
 	m_spButtonPrev->Measure(availableSize);
 	m_spButtonNext->Measure(availableSize);
 	m_spButtonToday->Measure(availableSize);
@@ -118,29 +118,27 @@ void CCalendarDialog::Measure(const CSizeF& availableSize)
 	m_spButtonClose->Measure(availableSize);
 	m_spCalendar->Measure(availableSize);
 
-}
-
-CSizeF CCalendarDialog::DesiredSize() const
-{
 	const FLOAT padding = 2.f;
 
 	return CSizeF(
 		(std::max)(
-		padding + m_spYearTextBox->DesiredSize().width +
-		padding + m_spMonthTextBox->DesiredSize().width + 
-		padding + m_spButtonPrev->DesiredSize().width + m_spButtonNext->DesiredSize().width +
-		padding + m_spButtonToday->DesiredSize().width + m_spButtonTomorrow->DesiredSize().width + m_spButtonBlank->DesiredSize().width +
-		padding + m_spButtonClose->DesiredSize().width,
-		padding + m_spCalendar->DesiredSize().width + padding),
+			padding + m_spYearTextBox->DesiredSize().width +
+			padding + m_spMonthTextBox->DesiredSize().width +
+			padding + m_spButtonPrev->DesiredSize().width + m_spButtonNext->DesiredSize().width +
+			padding + m_spButtonToday->DesiredSize().width + m_spButtonTomorrow->DesiredSize().width + m_spButtonBlank->DesiredSize().width +
+			padding + m_spButtonClose->DesiredSize().width,
+			padding + m_spCalendar->DesiredSize().width + padding),
 
 		padding + m_spYearTextBox->DesiredSize().height + padding + m_spCalendar->DesiredSize().height + padding
 	);
 }
 
-void CCalendarDialog::Arrange(const CRectF& rc)
+void CCalendarDialog::ArrangeOverride(const CRectF& finalRect)
 {
+	CD2DWControl::ArrangeOverride(finalRect);
+
 	const FLOAT padding = 2.f;
-	CPointF pt(rc.LeftTop().OffsetCopy(CPointF(padding, padding)));
+	CPointF pt(finalRect.LeftTop().OffsetCopy(CPointF(padding, padding)));
 	
 	m_spYearTextBox->Arrange(CRectF(pt, m_spYearTextBox->DesiredSize()));
 	m_spMonthTextBox->Arrange(CRectF(CPointF(m_spYearTextBox->GetRectInWnd().right + padding, pt.y), m_spMonthTextBox->DesiredSize()));
@@ -149,7 +147,7 @@ void CCalendarDialog::Arrange(const CRectF& rc)
 	m_spButtonToday->Arrange(CRectF(CPointF(m_spButtonNext->GetRectInWnd().right + padding, pt.y), m_spButtonToday->DesiredSize()));
 	m_spButtonTomorrow->Arrange(CRectF(CPointF(m_spButtonToday->GetRectInWnd().right, pt.y), m_spButtonTomorrow->DesiredSize()));
 	m_spButtonBlank->Arrange(CRectF(CPointF(m_spButtonTomorrow->GetRectInWnd().right, pt.y), m_spButtonBlank->DesiredSize()));
-	m_spButtonClose->Arrange(CRectF(CPointF(rc.right - m_spButtonClose->DesiredSize().width - padding, pt.y), m_spButtonClose->DesiredSize()));
+	m_spButtonClose->Arrange(CRectF(CPointF(finalRect.right - m_spButtonClose->DesiredSize().width - padding, pt.y), m_spButtonClose->DesiredSize()));
 	pt.y += m_spYearTextBox->DesiredSize().height + padding;
 	m_spCalendar->Arrange(CRectF(pt, m_spCalendar->DesiredSize()));
 }

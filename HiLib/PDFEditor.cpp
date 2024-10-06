@@ -82,7 +82,14 @@ CPDFEditor::CPDFEditor(CD2DWControl* pParentControl)
 	/***********/
 	m_spScaleBox->Text.set(ratio_to_percent(*m_spPDFView->Scale));
 	m_spPercentBlock->Text.set(L"%");
-	m_spPDFView->Scale.subscribe([this](const FLOAT& ratio)
+	m_spFilterCountBlock->Text.subscribe(
+		[this](auto text) {
+			m_spFilterCountBlock->MeasureDirty.set(true);
+			m_spFilterCountBlock->ArrangeDirty.set(true);
+		}, Life);
+
+	m_spPDFView->Scale.subscribe(
+		[this](const FLOAT& ratio)
 		{
 			std::wstring percent = ratio_to_percent(ratio);
 			if (percent != *m_spScaleBox->Text) {
@@ -124,8 +131,19 @@ CPDFEditor::CPDFEditor(CD2DWControl* pParentControl)
 				}
 			}
 		}, Life);
+	m_spPageBox->Text.subscribe([this](auto value)
+		{
+			m_spPageBox->MeasureDirty.set(true);
+			m_spPageBox->MeasureDirty.set(true);
+		}, Life);
+
 
 	m_spPDFView->TotalPage.binding(m_spTotalPageBlock->Text);
+	m_spTotalPageBlock->Text.subscribe([this](auto value) 
+		{
+			m_spTotalPageBlock->MeasureDirty.set(true);
+			m_spTotalPageBlock->MeasureDirty.set(true);
+		}, Life);
 	m_spFilterBox->Text.binding(m_spPDFView->Find);
 	m_spPDFView->FindCount.subscribe([this](auto value) { m_spFilterCountBlock->Text.set(std::to_wstring(value)); }, Life);
 
@@ -258,63 +276,6 @@ void CPDFEditor::OnPaint(const PaintEvent& e)
 	m_spPercentBlock->OnPaint(e);
 	m_spPDFView->OnPaint(e);
 	m_spStatusBar->OnPaint(e);*/
-}
-
-void CPDFEditor::Measure(const CSizeF& availableSize)
-{
-	CDockPanel::Measure(availableSize);
-}
-void CPDFEditor::Arrange(const CRectF& rc)
-{
-	CDockPanel::Arrange(rc);
-
-	//CD2DWControl::Arrange(e);
-
-	//CRectF rcClient = GetRectInWnd();
-
-	//FLOAT filterHeight = m_spFilterBox->MeasureSize(L"").height;
-	//CSizeF pageSize = m_spPageBox->MeasureSize(L"000");
-	//CSizeF totalPageSize = m_spTotalPageBlock->MeasureSize(L"000");
-	//CSizeF scaleSize = m_spScaleBox->MeasureSize(L"000.0");
-	//CSizeF percentSize = m_spPercentBlock->MeasureSize();
-	//FLOAT statusHeight = m_spStatusBar->MeasureSize(L"").height;
-
-	//FLOAT maxHeight = (std::max)({ filterHeight, pageSize.height, totalPageSize.height, scaleSize.height, percentSize.height });
-
-	//CRectF rcPercent(rcClient.right - percentSize.width,
-	//	rcClient.top + (maxHeight - percentSize.height) * 0.5f,
-	//	rcClient.right,
-	//	rcClient.top + (maxHeight - percentSize.height) * 0.5f + percentSize.height);
-	//CRectF rcScale(rcPercent.left - scaleSize.width - 2.f,
-	//	rcClient.top + (maxHeight - scaleSize.height) * 0.5f,
-	//	rcPercent.left - 2.f,
-	//	rcClient.top + (maxHeight - scaleSize.height) * 0.5f + scaleSize.height);
-
-	//CRectF rcTotalPage(rcScale.left - totalPageSize.width - 2.f,
-	//	rcClient.top + (maxHeight - totalPageSize.height) * 0.5f,
-	//	rcScale.left - 2.f,
-	//	rcClient.top + (maxHeight - totalPageSize.height) * 0.5f + totalPageSize.height);
-	//CRectF rcPage(rcTotalPage.left - pageSize.width - 2.f,
-	//	rcClient.top + (maxHeight - pageSize.height) * 0.5f,
-	//	rcTotalPage.left - 2.f,
-	//	rcClient.top + (maxHeight - pageSize.height) * 0.5f + pageSize.height);
-
-	//CRectF rcFilter(rcClient.left,
-	//	rcClient.top + (maxHeight - filterHeight) * 0.5f,
-	//	rcPage.left - 2.f,
-	//	rcClient.top + (maxHeight - filterHeight) * 0.5f + filterHeight);
-
-	//CRectF rcPDF(rcClient.left, rcClient.top + filterHeight + 2.f, rcClient.right, rcClient.bottom - statusHeight);
-	//CRectF rcStatus(rcClient.left, rcPDF.bottom, rcClient.right, rcClient.bottom);
-
-	//m_spFilterBox->Arrange(rcFilter);
-	//m_spPageBox->Arrange(rcPage);
-	//m_spTotalPageBlock->Arrange(rcTotalPage);
-	//m_spScaleBox->Arrange(rcScale);
-	//m_spPercentBlock->Arrange(rcPercent);
-	//m_spPDFView->Arrange(rcPDF);
-	//m_spStatusBar->Arrange(rcStatus);
-	////m_spTextBox->UpdateAll();
 }
 
 void CPDFEditor::OnKeyDown(const KeyDownEvent& e)

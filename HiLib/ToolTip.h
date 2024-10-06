@@ -29,7 +29,7 @@ public:
 		CD2DWControl(pParentControl), m_spProp(spProp){}
 	virtual ~CToolTip(){}
 
-	void Measure(const CSizeF& availableSize) override;	
+	CSizeF MeasureOverride(const CSizeF& availableSize) override;	
 	void OnCreate(const CreateEvt& e) override;
 	void OnDestroy(const DestroyEvent& e) override;
 	void OnPaint(const PaintEvent& e) override;

@@ -33,7 +33,7 @@ public:
 	virtual ~CButton() = default;
 
 	//MeasureArrrange
-	void Measure(const CSizeF& availableSize);
+	CSizeF MeasureOverride(const CSizeF& availableSize) override;
 
 	//Event
 	virtual void OnPaint(const PaintEvent& e) override;

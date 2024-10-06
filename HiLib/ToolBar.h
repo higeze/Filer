@@ -6,8 +6,9 @@ class CToolBar: public CD2DWControl
 {
 public:
 	CToolBar(CD2DWControl* pParentControl = nullptr);
-	void Measure(const CSizeF& availableSize) override;
-	void Arrange(const CRectF& rc) override;
+
+	CSizeF MeasureOverride(const CSizeF& availableSize) override;
+	void ArrangeOverride(const CRectF& finalRect) override;
 
 	void OnCreate(const CreateEvt& e) override;
 	void OnPaint(const PaintEvent& e) override;

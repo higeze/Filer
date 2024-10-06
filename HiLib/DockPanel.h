@@ -28,8 +28,8 @@ public:
 	//Event
 	virtual void OnCreate(const CreateEvt& e) override;
 	//MeasureArrange
-	virtual void Measure(const CSizeF& availableSize) override;
-	virtual void Arrange(const CRectF& rc) override;
+	virtual CSizeF MeasureOverride(const CSizeF& availableSize) override;
+	virtual void ArrangeOverride(const CRectF& finalRect) override;
 	//Add
 	void Add() {}
 	void Add(std::pair<std::shared_ptr<CD2DWControl>, DockEnum>&& p)

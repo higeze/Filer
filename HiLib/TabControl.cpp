@@ -521,7 +521,8 @@ void CTabControl::OnCreate(const CreateEvt& e)
 		[this](const int& value)->void {
 			if (GetWndPtr()->m_hWnd) {
 				auto spData = ItemsSource->at(value);
-				auto spControl = m_itemsControlTemplate[typeid(*spData).name()](spData);
+				auto type_name = typeid(*spData).name();
+				auto spControl = m_itemsControlTemplate[type_name](spData);
 				if (m_spCurControl != spControl) {
 					if (m_spCurControl) {
 						m_spCurControl->OnEnable(EnableEvent(GetWndPtr(), false));
@@ -608,9 +609,9 @@ void CTabControl::OnClosing(const ClosingEvent& e)
 	CD2DWControl::OnClosing(e);
 }
 
-void CTabControl::Arrange(const CRectF& rc)
+void CTabControl::ArrangeOverride(const CRectF& rc)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::ArrangeOverride(rc);
 	UpdateHeaderRects();
 	if (m_spCurControl) { m_spCurControl->Arrange(GetControlRect()); }
 }

@@ -23,18 +23,18 @@ CVerticalSplitContainer::CVerticalSplitContainer(CD2DWControl* pParentControl)
 	m_splitter = std::make_shared<CVerticalSplitter>(this);
 }
 
-void CVerticalSplitContainer::Measure(const CSizeF& availableSize)
+CSizeF CVerticalSplitContainer::MeasureOverride(const CSizeF& availableSize)
 {
 	m_one->Measure(availableSize);
 	m_two->Measure(availableSize);
 	m_splitter->Measure(availableSize);
-	m_size.width = m_one->DesiredSize().width +  m_two->DesiredSize().width +m_splitter->DesiredSize().width;
-	m_size.height = (std::max)({m_one->DesiredSize().height, m_two->DesiredSize().height, m_splitter->DesiredSize().height});
+	return CSizeF(m_one->DesiredSize().width +  m_two->DesiredSize().width +m_splitter->DesiredSize().width,
+		(std::max)({m_one->DesiredSize().height, m_two->DesiredSize().height, m_splitter->DesiredSize().height}));
 }
 
-void CVerticalSplitContainer::Arrange(const CRectF& rc)
+void CVerticalSplitContainer::ArrangeOverride(const CRectF& rc)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::ArrangeOverride(rc);
 	
 	if (*m_splitter->Value < 0) {//Initial
 		m_splitter->Value.set((rc.left, rc.right) * 0.5f);
@@ -55,26 +55,27 @@ CHorizontalSplitContainer::CHorizontalSplitContainer(CD2DWControl* pParentContro
 	m_splitter = std::make_shared<CHorizontalSplitter>(this);
 }
 
-void CHorizontalSplitContainer::Measure(const CSizeF& availableSize)
+CSizeF CHorizontalSplitContainer::MeasureOverride(const CSizeF& availableSize)
 {
 	m_one->Measure(availableSize);
 	m_two->Measure(availableSize);
 	m_splitter->Measure(availableSize);
-	m_size.width = (std::max)({m_one->DesiredSize().width, m_two->DesiredSize().width, m_splitter->DesiredSize().width});
-	m_size.height = m_one->DesiredSize().height + m_two->DesiredSize().height + m_splitter->DesiredSize().height;
+
+	return CSizeF((std::max)({ m_one->DesiredSize().width, m_two->DesiredSize().width, m_splitter->DesiredSize().width }),
+		m_one->DesiredSize().height + m_two->DesiredSize().height + m_splitter->DesiredSize().height);
 }
 
-void CHorizontalSplitContainer::Arrange(const CRectF& rc)
+void CHorizontalSplitContainer::ArrangeOverride(const CRectF& finalRect)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::Arrange(finalRect);
 	
 	if (*m_splitter->Value < 0) {//Initial
-		m_splitter->Value.set((rc.top + rc.bottom) * 0.5f);
+		m_splitter->Value.set((finalRect.top + finalRect.bottom) * 0.5f);
 	}
 
-	m_splitter->Minimum.set(rc.top);
-	m_splitter->Maximum.set(rc.bottom);
-	m_splitter->Arrange(CRectF(rc.left, *m_splitter->Value, rc.right, *m_splitter->Value + m_splitter->DesiredSize().height));
-	m_one->Arrange(CRectF(rc.left, rc.top, rc.right, m_splitter->ArrangedRect().top));
-	m_two->Arrange(CRectF(rc.left, m_splitter->ArrangedRect().bottom, rc.right, rc.bottom));
+	m_splitter->Minimum.set(finalRect.top);
+	m_splitter->Maximum.set(finalRect.bottom);
+	m_splitter->Arrange(CRectF(finalRect.left, *m_splitter->Value, finalRect.right, *m_splitter->Value + m_splitter->DesiredSize().height));
+	m_one->Arrange(CRectF(finalRect.left, finalRect.top, finalRect.right, m_splitter->ArrangedRect().top));
+	m_two->Arrange(CRectF(finalRect.left, m_splitter->ArrangedRect().bottom, finalRect.right, finalRect.bottom));
 }

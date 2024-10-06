@@ -72,10 +72,10 @@ CFilerTabGridView::~CFilerTabGridView()
 	auto a = 1.f;
 }
 
-void CFilerTabGridView::Measure(const CSizeF& availableSize)
+CSizeF CFilerTabGridView::MeasureOverride(const CSizeF& availableSize)
 {
 	m_spCurControl->Measure(availableSize);
-	m_size = m_spCurControl->DesiredSize();
+	return m_spCurControl->DesiredSize();
 }
 
 

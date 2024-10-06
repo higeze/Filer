@@ -204,7 +204,19 @@ struct CSizeT :public TSize
 	{
 		return size_type(this->W() + rhs.W(), this->H() + rhs.H());
 	}
+	size_type operator+=(size_type rhs)const
+	{
+		return *this + rhs;
+	}
 
+	size_type operator-(size_type rhs)const
+	{
+		return size_type(this->W() - rhs.W(), this->H() - rhs.H());
+	}
+	size_type operator-=(size_type rhs)const
+	{
+		return *this - rhs;
+	}
 
 	std::size_t GetHashCode() const
 	{
@@ -305,6 +317,7 @@ struct CRectT :public TRect
 	void OffsetY(T y) { this->top += y;this-> bottom += y; }
 	T Width() const { return this->right - this->left; }
 	T Height() const { return this->bottom - this->top; }
+	size_type Size() const{ return size_type(this->Width(), this->Height()); }
 
 	void InflateRect(T x, T y) { this->left -= x; this->right += x; this->top -= y; this->bottom += y; }
 	void DeflateRect(T x, T y) { this->left += x; this->right -= x; this->top += y; this->bottom -= y; }
@@ -342,10 +355,6 @@ struct CRectT :public TRect
 		return (this->top + this->bottom) / 2.f;
 	}
 
-	size_type Size() const
-	{
-		return size_type(Width(), Height());
-	}
 	void InflateRect(const rect_type& rc)
 	{
 		this->left -= rc.left;

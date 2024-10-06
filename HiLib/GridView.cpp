@@ -234,12 +234,14 @@ void CGridView::UpdateScrolls()
 	rcVertical.top = rcClient.top + lineHalfWidth;
 	rcVertical.right = rcClient.right - lineHalfWidth;
 	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetIsVisible()?(m_pHScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
+	m_pVScroll->ArrangeDirty.set(true);
 	m_pVScroll->Arrange(rcVertical);
 
 	rcHorizontal.left= rcClient.left + lineHalfWidth;
 	rcHorizontal.top = rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
 	rcHorizontal.right = rcClient.right - (m_pVScroll->GetIsVisible()?(m_pVScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
+	m_pHScroll->ArrangeDirty.set(true);
 	m_pHScroll->Arrange(rcHorizontal);
 
 }
@@ -1669,16 +1671,16 @@ void CGridView::OnCreate(const CreateEvt& e)
 	SubmitUpdate();
 }
 
-void CGridView::Measure(const CSizeF& sz)
+CSizeF CGridView::MeasureOverride(const CSizeF& availableSize)
 {
 	SubmitUpdate();
-	m_size = MeasureSize();
+	return MeasureSize();
 }
 
-void CGridView::Arrange(const CRectF& rc)
+void CGridView::ArrangeOverride(const CRectF& finalRect)
 {
-	CRectF prevRect = m_rect;
-	CD2DWControl::Arrange(rc);
+	CRectF prevRect = ArrangedRect();
+	CD2DWControl::ArrangeOverride(finalRect);
 
 	//if (prevRect.left != rc.left) {
 		PostUpdate(Updates::Column);

@@ -11,37 +11,37 @@ void CDockPanel::OnCreate(const CreateEvt& e)
 
 	CreateEvt evt = CreateEvt(GetWndPtr(), this, CRectF());
 	for (std::shared_ptr<CD2DWControl>& pChild : m_childControls) {
-		if (auto split = std::dynamic_pointer_cast<CSplitter>(pChild)) {
-			split->Value.subscribe([this](auto value) { Arrange(ArrangedRect()); }, shared_from_this());
-		}
+		//if (auto split = std::dynamic_pointer_cast<CSplitter>(pChild)) {
+		//	split->Value.subscribe([this](auto value) { Arrange(ArrangedRect()); }, shared_from_this());
+		//}
 		pChild->OnCreate(evt);
 	}
 }
 
-void CDockPanel::Measure(const CSizeF& availableSize)
+CSizeF CDockPanel::MeasureOverride(const CSizeF& availableSize)
 {
-	m_size = CSizeF();
+	CSizeF desiredSize;
 	for (const auto& child : m_childControls) {
 		child->Measure(availableSize);
 		switch (*child->Dock) {
 			case DockEnum::Left:
 			case DockEnum::Right:
 			{
-				m_size.width += child->DesiredSize().width;
-				m_size.height = (std::max)(m_size.height, child->DesiredSize().height);
+				desiredSize.width += child->DesiredSize().width;
+				desiredSize.height = (std::max)(desiredSize.height, child->DesiredSize().height);
 				break;
 			}
 			case DockEnum::Top:
 			case DockEnum::Bottom:
 			{
-				m_size.height += child->DesiredSize().height;
-				m_size.width = (std::max)(m_size.width, child->DesiredSize().width);
+				desiredSize.height += child->DesiredSize().height;
+				desiredSize.width = (std::max)(desiredSize.width, child->DesiredSize().width);
 				break;
 			}
 			case DockEnum::Fill:
 			{
-				m_size.width = (std::max)(m_size.width, child->DesiredSize().width);
-				m_size.height = (std::max)(m_size.height, child->DesiredSize().height);
+				desiredSize.width = (std::max)(desiredSize.width, child->DesiredSize().width);
+				desiredSize.height = (std::max)(desiredSize.height, child->DesiredSize().height);
 				break;
 			}
 			default:
@@ -49,13 +49,14 @@ void CDockPanel::Measure(const CSizeF& availableSize)
 				break;
 		}
 	}
+	return desiredSize;
 }
 
-void CDockPanel::Arrange(const CRectF& rc)
+void CDockPanel::ArrangeOverride(const CRectF& finalRect)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::ArrangeOverride(finalRect);
 
-	CRectF remain = rc;
+	CRectF remain = finalRect;
 	FLOAT width = 5;
 	std::shared_ptr<CD2DWControl> prev_child;
 	for (const auto& child : m_childControls) {
@@ -93,6 +94,7 @@ void CDockPanel::Arrange(const CRectF& rc)
 
 					auto prevRect = prev_child->ArrangedRect();
 					prevRect.top = split->ArrangedRect().bottom;
+					prev_child->ArrangeDirty.set(true);
 					prev_child->Arrange(prevRect);
 				} else {
 					child->Arrange(CRectF(remain.left, remain.bottom - child->DesiredSize().height, remain.right, remain.bottom));
@@ -137,6 +139,7 @@ void CDockPanel::Arrange(const CRectF& rc)
 
 					auto prevRect = prev_child->ArrangedRect();
 					prevRect.left = split->ArrangedRect().right;
+					prev_child->ArrangeDirty.set(true);
 					prev_child->Arrange(prevRect);
 				} else {
 					child->Arrange(CRectF(remain.right - child->DesiredSize().width, remain.top, remain.right, remain.bottom));

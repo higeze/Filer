@@ -159,6 +159,8 @@ std::basic_string<TRect> roundtostring(const U& arg, int precision)
 	return result;
 }
 
+
+
 namespace my
 {
 	template<typename TRect>
@@ -177,3 +179,35 @@ namespace my
 		return find;
 	}
 }
+
+template<typename _Char>
+struct find_insensitive
+{
+	using string_type = std::basic_string<_Char, std::char_traits<_Char>, std::allocator<_Char>>;
+private:
+	string_type m_needle;
+	size_t m_position;
+public:
+	find_insensitive(const string_type& needle, const size_t& position)
+		:m_needle(needle), m_position(position) {}
+
+	template<typename _Char>
+	friend auto operator | (const string_type& haystack, const find_insensitive<_Char>& arguments)->size_t
+	{
+		if (haystack.empty() || arguments.m_needle.empty()) {
+			return string_type::npos;
+		}
+		auto iter = std::search(
+			haystack.cbegin() + arguments.m_position, haystack.cend(),
+			arguments.m_needle.cbegin(), arguments.m_needle.cend(),
+			[](const _Char& ch1, const _Char& ch2) { return std::toupper(ch1) == std::toupper(ch2); }
+		);
+
+		if (iter == haystack.cend()) {
+			return string_type::npos;
+		}else {
+			return std::distance(haystack.cbegin(), iter);
+		}
+	}
+
+};

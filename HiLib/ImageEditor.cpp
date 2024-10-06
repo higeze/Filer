@@ -102,9 +102,10 @@ void CImageEditor::OnPaint(const PaintEvent& e)
 
 }
 
-void CImageEditor::Arrange(const CRectF& rc)
+void CImageEditor::ArrangeOverride(const CRectF& rc)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::ArrangeOverride(rc);
+
 	auto [rcScale, rcPercent, rcImage, rcStatus] = GetRects();
 	m_spScaleBox->Arrange(rcScale);
 	m_spPercentBlock->Arrange(rcPercent);

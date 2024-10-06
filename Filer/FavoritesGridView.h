@@ -13,8 +13,6 @@ public:
 	CFavoritesGridView( CD2DWControl* pParentControl = nullptr);
 	virtual ~CFavoritesGridView(void) = default;
 
-	virtual void Measure(const CSizeF& availableSize) override { CBindGridView::Measure(availableSize); }
-
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
 	

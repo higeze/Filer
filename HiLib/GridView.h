@@ -341,8 +341,8 @@ public:
 	virtual CRectF GetPaintRect();
 
 	//MeasureArrange
-	virtual void Measure(const CSizeF& sz) override;
-	virtual void Arrange(const CRectF& rc) override;
+	virtual CSizeF MeasureOverride(const CSizeF& sz) override;
+	virtual void ArrangeOverride(const CRectF& rc) override;
 
 
 	/******************/

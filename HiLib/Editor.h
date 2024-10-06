@@ -33,7 +33,7 @@ public:
 	reactive_command_ptr<HWND> OpenAsCommand;
 
 	std::tuple<CRectF, CRectF, CRectF> GetRects() const;
-	virtual void Arrange(const CRectF& rc) override;
+	virtual void ArrangeOverride(const CRectF& rc) override;
 
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnPaint(const PaintEvent& e) override;

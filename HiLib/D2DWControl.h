@@ -61,8 +61,7 @@ public:
 
 public:
 
-	CD2DWControl(CD2DWControl* pParentControl = nullptr):
-		m_pParentControl(pParentControl), IsEnabled(true), IsFocusable(true), Life(std::make_shared<int>(1)){}
+	CD2DWControl(CD2DWControl* pParentControl = nullptr);
 	virtual ~CD2DWControl();
 
 	virtual CD2DWWindow* GetWndPtr()const { return m_pParentControl->GetWndPtr(); }
@@ -132,14 +131,26 @@ public:
 	//Arrange includes Margin
 	//GetRectInWnd includes Margin
 
+private:
 	CSizeF m_size;
-	virtual void Measure(const CSizeF& availableSize) { m_size = availableSize; }
-	virtual CSizeF DesiredSize() const { return m_size; }
-	virtual CSizeF RenderSize() const { return CSizeF(m_size.width - GetMargin().Width(), m_size.height - GetMargin().Height()); }
+public:
+	reactive_property_ptr<bool> MeasureDirty;
+	reactive_property_ptr<bool> ArrangeDirty;
 
-	virtual CRectF RenderRect() const { return GetRectInWnd().DeflateRectCopy(GetMargin()); }
-	virtual void Arrange(const CRectF& rc) { m_rect = rc; }
+	void Measure(const CSizeF& availableSize);
+	virtual CSizeF MeasureCore(const CSizeF& availableSize);
+	virtual CSizeF MeasureOverride(const CSizeF& availableSize);
+
+	virtual CSizeF DesiredSize() const { return m_size; }
 	virtual CRectF ArrangedRect() const { return m_rect; }
+
+	virtual CSizeF RenderSize() const { return CSizeF(m_size.width - GetMargin().Width(), m_size.height - GetMargin().Height()); }
+	virtual CRectF RenderRect() const { return GetRectInWnd().DeflateRectCopy(GetMargin()); }
+
+	void Arrange(const CRectF& finalRect);
+	virtual void ArrangeCore(const CRectF& finalRect);
+	virtual void ArrangeOverride(const CRectF& finalRect);
+
 
 	virtual bool IsFocused()const;
 	virtual bool GetIsFocused()const;
@@ -149,6 +160,15 @@ public:
 	/*************/
 	/* templates */
 	/*************/
+	template<typename _F>
+	void ProcessFunctionToAll(_F func)
+	{
+		for (auto& child : m_childControls) {
+			func(child);
+			child->ProcessFunctionToAll(func);
+		}
+	}
+
 	template<typename _Bubble, typename _Event>
 	void ProcessMessageToAll(_Bubble bubble, const _Event& e)
 	{

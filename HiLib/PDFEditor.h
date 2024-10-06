@@ -39,9 +39,6 @@ public:
 	virtual void OnPaint(const PaintEvent& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
 
-	virtual void Measure(const CSizeF& availableSize) override;
-	virtual void Arrange(const CRectF& rc) override;
-
 	void Open();
 	void OpenAs();
 	void Save();

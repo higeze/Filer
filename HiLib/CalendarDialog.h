@@ -31,9 +31,8 @@ private:
 public:
 	CCalendarDialog(CD2DWControl* pParentControl);
 	~CCalendarDialog();
-	void Measure(const CSizeF& availableSize);
-	CSizeF DesiredSize() const;
-	void Arrange(const CRectF& rc);
+	CSizeF MeasureOverride(const CSizeF& availableSize) override;
+	void ArrangeOverride(const CRectF& finalRect) override;
 
 	const std::shared_ptr<CCalendarControl>& GetCalendarPtr() { return m_spCalendar; }
 

@@ -14,6 +14,7 @@
 #include "FPDFFormHandle.h"
 #include "FPDFBitmap.h"
 #include "MyClipboard.h"
+#include "MyString.h"
 
 std::vector<const_paragraph_iterator> text_to_paragraph_iterators(const std::wstring& text)
 {
@@ -129,34 +130,6 @@ const std::vector<CRectF>& CPDFPage::GetTextOrgRects() const
 		m_optTextOrgRects.emplace(GetFPDFTextPagePtr()->GetRects());
 	}
 	return m_optTextOrgRects.value();
-
-	//if (!m_optTextOrgRects.has_value()) {
-	//	std::vector<CRectF> rects = m_pTextPage->GetRects();
-	//	const std::wstring& text = GetText();
-	//	if (!rects.empty() && !text.empty()) {
-	//		std::wstring::const_iterator firstText = text.cbegin();
-	//		std::wstring::const_iterator lastText = text.cend();
-	//		while (true) {
-	//			lastText = std::find_if(firstText, text.cend(), [](const auto ch) {return isCRorLF(ch); });
-	//			//std::wstring temp(firstText, lastText+1);
-	//			//if (lastText == text.cend()) { break; }
-	//			std::vector<CRectF>::iterator firstRect = rects.begin() + std::distance(text.cbegin(), firstText);
-	//			std::vector<CRectF>::iterator lastRect = rects.begin() + std::distance(text.cbegin(), lastText);
-
-	//			FLOAT maxTop = std::max_element(firstRect, lastRect, [](CRectF& left, CRectF& right) { return left.top < right.top; })->top;
-	//			FLOAT minBottom = std::min_element(firstRect, lastRect, [](CRectF& left, CRectF& right) { return left.bottom < right.bottom; })->bottom;
-	//			std::for_each(firstRect, lastRect, [&](CRectF& rc) {rc.top = maxTop; rc.bottom = minBottom; });
-
-	//			if (lastText == text.cend()) {
-	//				break;
-	//			} else {
-	//				firstText = lastText + 1;
-	//			}
-	//		}
-	//	}
-	//	m_optTextOrgRects.emplace(rects);
-	//}
-	//return m_optTextOrgRects.value();
 }
 auto isCRorLF = [](const wchar_t ch)->bool { return ch == L'\r' || ch == L'\n'; };
 auto is_space = [](const wchar_t ch)->bool { return ch == L' ' || ch == L'Å@'; };
@@ -213,50 +186,7 @@ const std::vector<CRectF>& CPDFPage::GetTextOrgCursorRects() const
 		m_optTextOrgCursorRects.emplace(rects);
 	}
 	return m_optTextOrgCursorRects.value();
-
-
-
-	//if (!m_optTextOrgCursorRects.has_value()){
-	//	auto cursorRects = GetTextOrgRects();
-	//	if (!cursorRects.empty()) {
-	//		for (std::size_t i = 1; i < cursorRects.size(); i++) {//If i = 0  is Space or CRLF, ignore
-	//			bool isFirst = i == 0;
-	//			bool isAfterLF = !isFirst && is_lf(GetText()[i - 1]);
-	//			if (is_space(GetText()[i])) {
-	//				if (isFirst || isAfterLF) {
-	//					cursorRects[i].SetRect(
-	//						cursorRects[i + 1].right,
-	//						cursorRects[i + 1].top,
-	//						cursorRects[i + 1].right,
-	//						cursorRects[i + 1].bottom
-	//					);
-	//				} else {
-	//					cursorRects[i].SetRect(
-	//						cursorRects[i - 1].right,
-	//						cursorRects[i - 1].top,
-	//						cursorRects[i - 1].right,
-	//						cursorRects[i - 1].bottom
-	//					);
-	//				}
-	//			}
-	//			if (isCRorLF(GetText()[i])) {
-	//				cursorRects[i].SetRect(
-	//					cursorRects[i - 1].right,
-	//					cursorRects[i - 1].top,
-	//					cursorRects[i - 1].right,
-	//					cursorRects[i - 1].bottom
-	//				);
-	//			}
-	//		}
-	//		cursorRects.emplace_back(
-	//			cursorRects.back().right, cursorRects.back().top,
-	//			cursorRects.back().right, cursorRects.back().bottom);
-	//	}
-	//	m_optTextOrgCursorRects.emplace(cursorRects);
-	//}
-	//return m_optTextOrgCursorRects.value();
 }
-
 
 const std::vector<CRectF>& CPDFPage::GetTextOrgMouseRects() const
 {
@@ -332,35 +262,41 @@ const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_strin
 		std::vector<CRectF> rects;
 		if (find.empty()) {
 		} else {
-			auto results  = GetFPDFTextPagePtr()->SearchResults(reinterpret_cast<FPDF_WIDESTRING>(find.c_str()));
-			for (const auto res : results) {
-				std::copy(std::get<2>(res).cbegin(), std::get<2>(res).cend(), std::back_inserter(rects));
+//			for (auto i = 0; (i = GetText().find(find, i)) != std::wstring::npos; i++) {
+			for (size_t i = 0; (i = GetText()|find_insensitive(find, i)) != std::wstring::npos; i++) {
+			auto left = GetTextRects().at(i).left;
+				auto right = GetTextRects().at(i + find.size() - 1).right;
+				auto top = std::max_element(std::next(GetTextRects().cbegin() + i), std::next(GetTextRects().cbegin() + i + find.size() - 1),
+					[](const auto& a, const auto& b) { return a.top < b.top; })->top;
+				auto bottom = std::min_element(std::next(GetTextRects().cbegin() + i), std::next(GetTextRects().cbegin() + i + find.size() - 1),
+					[](const auto& a, const auto& b) { return a.bottom < b.bottom; })->bottom;
+
+				rects.emplace_back(left, top, right, bottom);
 			}
 			RotateRects(rects, *Rotate);
 		}
 		m_optFind.emplace(find, rects);
 	}
 	return m_optFind->FindRects;
+
+	//auto find = boost::trim_copy(find_string);
+	//if (!m_optFind.has_value() || m_optFind->Find != find) {
+	//	std::vector<CRectF> rects;
+	//	if (find.empty()) {
+	//	} else {
+	//		auto results  = GetFPDFTextPagePtr()->SearchResults(reinterpret_cast<FPDF_WIDESTRING>(find.c_str()));
+	//		for (const auto res : results) {
+	//			std::copy(std::get<2>(res).cbegin(), std::get<2>(res).cend(), std::back_inserter(rects));
+	//		}
+	//		RotateRects(rects, *Rotate);
+	//	}
+	//	m_optFind.emplace(find, rects);
+	//}
+	//return m_optFind->FindRects;
 }
 
 CFPDFBitmap CPDFPage::GetFPDFBitmap(const FLOAT& scale, const int& rotate, std::function<bool()> cancel)
 {
-	//do {
-	//	CSizeU sz(static_cast<UINT32>(std::round(GetFPDFPagePtr()->GetPageWidthF() * scale)),
-	//		static_cast<UINT32>(std::round(GetFPDFPagePtr()->GetPageHeightF() * scale)));
-
-	//	CFPDFBitmap fpdfBmp;
-	//	FALSE_BREAK(fpdfBmp.CreateEx(sz.width, sz.height, FPDFBitmap_BGRA, NULL, 0, cancel));
-	//	FALSE_BREAK(fpdfBmp);
-
-	//	FALSE_BREAK(fpdfBmp.FillRect(0, 0, sz.width, sz.height, 0xFFFFFFFF, cancel)); // Fill white
-	//	int flags = FPDF_ANNOT | FPDF_LCD_TEXT | FPDF_NO_CATCH | FPDF_RENDER_LIMITEDIMAGECACHE;
-	//	FALSE_BREAK(fpdfBmp.RenderPageBitmap(*GetFPDFPagePtr(), 0, 0, sz.width, sz.height, 0, flags, cancel));
-	//	m_pDoc->GetFormHandle()->FFLDraw(fpdfBmp, *GetFPDFPagePtr(), 0, 0, sz.width, sz.height, 0, flags);
-
-	//	return fpdfBmp;
-	//} while (1);
-
 	do {
 		CSizeU sz(static_cast<UINT32>(std::round(GetFPDFPagePtr()->GetPageWidthF() * scale)),
 			static_cast<UINT32>(std::round(GetFPDFPagePtr()->GetPageHeightF() * scale)));
@@ -526,133 +462,6 @@ UHBITMAP CPDFPage::GetDDBitmap(HDC hDC, const FLOAT& scale, const int&, std::fun
 
 	return nullptr;
 }
-//#include "MyDC.h"
-//#include "MyGdiplusHelper.h"
-//
-//void CPDFPage::CopyImageToClipboard(HWND hWnd, HDC hDC, const FLOAT& scale, const int& rotate)
-//{
-//	UHBITMAP ddb = GetDDBitmap(hDC, scale, rotate);
-//	//BMP
-//	CClipboard clipboard;
-//	if(clipboard.Open(hWnd)!=0){
-//		auto a = clipboard.Empty();
-//		auto b = clipboard.SetData(CF_BITMAP, ddb.get());
-//		auto c = clipboard.Close();
-//	}
-//
-//	//UHBITMAP dib = GetBitmap(hDC, scale, rotate);
-//	//BITMAP bm;
-//	//::GetObject(dib.get(), sizeof(BITMAP), &bm);
-//	//CBufferDC dcDibBuff(hDC, bm.bmWidth, bm.bmHeight);
-//	//dcDibBuff.SelectBitmap(dib.get());
-//
-//	//CBufferDC dcDdbBuff(hDC, bm.bmWidth, bm.bmHeight);
-//
-//	//auto bo = ::BitBlt(dcDdbBuff, 0, 0, bm.bmWidth, bm.bmHeight, dcDibBuff, 0, 0, SRCCOPY);
-//
-//	//CClipboard clipboard;
-//	//if (clipboard.Open(hWnd) != 0) {
-//	//	auto a = clipboard.Empty();
-//	//	auto b = clipboard.SetData(CF_BITMAP, dcDdbBuff.GetBitMap());
-//	//	auto c = clipboard.Close();
-//	//}
-//
-//	//JPEG,PNG,GIF
-//	{
-//		//Initialize GDI+
-//		GdiplusStartupInput gdiplusStartupInput;
-//		ULONG_PTR gdiplusToken;
-//		GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-//		{
-//			std::function<void(HBITMAP,LPCTSTR,LPCTSTR)> setNonRegisteredTypeToClipboard =  [hWnd,this](HBITMAP hBitmap, LPCTSTR mimetype, LPCTSTR format)->void 
-//			{
-//				IStream* pIStream = NULL;
-//				if(::CreateStreamOnHGlobal(NULL, TRUE, (LPSTREAM*)&pIStream)!=S_OK){
-//					throw std::exception("Error on OnCommandPrintScreen");
-//				}
-//
-//				CLSID clsid;	
-//
-//				Bitmap bitmap(hBitmap, (HPALETTE)GetStockObject(DEFAULT_PALETTE));
-//
-//				if (GdiplusHelper::GetEncoderClsid(mimetype, &clsid) < 0){
-//					throw std::exception("Error on OnCommandPrintScreen");
-//				}
-//
-//				//Status status = SaveGIFWithNewColorTable(&bitmap,
-//				//						  pIStream,
-//				//						  &clsid,
-//				//						  256,
-//				//						  FALSE);
-//				Status status;
-//
-//
-//				if(_tcsicmp(mimetype, L"image/jpeg")==0){
-//					EncoderParameters encs[1];
-//					ULONG quality = 80;
-//					encs->Count = 1;
-//
-//					encs->Parameter[0].Guid = EncoderQuality;
-//					encs->Parameter[0].NumberOfValues = 1;
-//					encs->Parameter[0].Type = EncoderParameterValueTypeLong;
-//					encs->Parameter[0].Value = &quality;
-//					status = bitmap.Save(pIStream, &clsid, encs);
-//				}else if(_tcsicmp(mimetype, L"image/tiff")==0){
-//					EncoderParameters encs[2];
-//					ULONG depth = 24;
-//					ULONG compression = EncoderValueCompressionLZW;
-//					encs->Count = 2;
-//
-//					encs->Parameter[0].Guid = EncoderColorDepth;
-//					encs->Parameter[0].NumberOfValues = 1;
-//					encs->Parameter[0].Type = EncoderParameterValueTypeLong;
-//					encs->Parameter[0].Value = &depth;
-//
-//					encs->Parameter[1].Guid = EncoderCompression;
-//					encs->Parameter[1].NumberOfValues = 1;
-//					encs->Parameter[1].Type = EncoderParameterValueTypeLong;
-//					encs->Parameter[1].Value = &compression;
-//
-//
-//					status = bitmap.Save(pIStream, &clsid, encs);
-//				}else{
-//					status = bitmap.Save(pIStream, &clsid, NULL);
-//				}
-//
-//				if(status != Status::Ok){
-//					pIStream->Release();
-//					throw std::exception("Error on OnCommandPrintScreen");
-//				}
-//
-//				HGLOBAL hGlobal = NULL;
-//				if(::GetHGlobalFromStream(pIStream, &hGlobal)!=S_OK){
-//					pIStream->Release();
-//					throw std::exception("Error on OnCommandPrintScreen");
-//				}
-//
-//				//Copy to Clipboard
-//				CClipboard clipboard;
-//				if(clipboard.Open(hWnd)!=0){
-//					//::EmptyClipboard();
-//					if(_tcsicmp(mimetype, L"image/tiff")==0){
-//						clipboard.SetData(CF_TIFF, hGlobal);
-//					}else{
-//						clipboard.SetData(::RegisterClipboardFormat(format), hGlobal);
-//					}
-//					clipboard.Close();
-//				}
-//				pIStream->Release();
-//			};
-//
-//			setNonRegisteredTypeToClipboard(ddb.get(), L"image/jpeg", L"JFIF");
-//			setNonRegisteredTypeToClipboard(ddb.get(), L"image/png", L"PNG");
-//			setNonRegisteredTypeToClipboard(ddb.get(), L"image/gif", L"GIF");
-//			setNonRegisteredTypeToClipboard(ddb.get(), L"image/tiff", L"TIFF");
-//		}
-//		//Terminate GDI+
-//		GdiplusShutdown(gdiplusToken);
-//	}
-//}
 
 UHBITMAP CPDFPage::GetClipBitmap(HDC hDC, const FLOAT& scale, const int&, const CRectF& rectInPage, std::function<bool()> cancel)
 {

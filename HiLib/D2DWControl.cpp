@@ -1,6 +1,66 @@
 #include "D2DWControl.h"
 #include "D2DWWindow.h"
 
+CD2DWControl::CD2DWControl(CD2DWControl* pParentControl)
+	:m_pParentControl(pParentControl), IsEnabled(true), IsFocusable(true), Life(std::make_shared<int>(1)),MeasureDirty(true), ArrangeDirty(true)
+{
+	MeasureDirty.subscribe(
+		[this](auto dirty) {
+			if (dirty && m_pParentControl) {
+				m_pParentControl->MeasureDirty.set(dirty);
+			}
+		}, Life);
+	ArrangeDirty.subscribe(
+		[this](auto dirty) {
+			if (dirty && m_pParentControl) {
+				m_pParentControl->ArrangeDirty.set(dirty);
+				for (auto child : m_childControls) {
+					child->ArrangeDirty.set(dirty);
+				}
+			}
+		}, Life);
+}
+
+
+void CD2DWControl::Measure(const CSizeF& availableSize)
+{
+	//No Measure Necessary
+	if (!*MeasureDirty) {
+		return;
+	}
+	
+	//Measure
+	ArrangeDirty.set(true);
+	m_size = MeasureCore(availableSize);
+	MeasureDirty.set(false);
+}
+
+CSizeF CD2DWControl::MeasureCore(const CSizeF& availableSize) 
+{
+	//Add Margin
+	CSizeF frameworkAvailableSize = availableSize - GetMargin().Size();
+	CSizeF desiredSize = MeasureOverride(frameworkAvailableSize);
+	desiredSize += GetMargin().Size();
+	return desiredSize;
+}
+
+CSizeF CD2DWControl::MeasureOverride(const CSizeF& availableSize) { return availableSize; }
+
+void CD2DWControl::Arrange(const CRectF& finalRect) 
+{
+	//No Arrange Necessary
+	if (!*ArrangeDirty) {
+		return;
+	}
+
+	//Arrange
+	ArrangeCore(finalRect);
+	ArrangeDirty.set(false);
+
+}
+void CD2DWControl::ArrangeCore(const CRectF& finalRect) { ArrangeOverride(finalRect); }
+void CD2DWControl::ArrangeOverride(const CRectF& finalRect) { m_rect = finalRect; }
+
 //void CD2DWControl::SetFocusedControlPtr(const std::shared_ptr<CD2DWControl>& spControl)
 //{
 //	//if (m_pFocusedControl != spControl && *spControl->IsFocusable) {

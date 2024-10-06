@@ -191,7 +191,7 @@ public:
 	std::function<CRectF&()> GetControlRect;
 
 
-	virtual void Arrange(const CRectF& rc) override;
+	virtual void ArrangeOverride(const CRectF& rc) override;
 
 	/***************/
 	/* UI MessageÅ@*/

@@ -1,14 +1,9 @@
 #include "TextBlock.h"
 #include "D2DWWindow.h"
 
-void CTextBlock::Measure(const CSizeF& availableSize)
+CSizeF CTextBlock::MeasureOverride(const CSizeF& availableSize)
 {
-	Measure(availableSize, L"A");
-}
-
-void CTextBlock::Measure(const CSizeF& availableSize, const std::wstring& text)
-{
-	m_size = MeasureSize(Text->empty() ? text : *Text);
+	return MeasureSize(Text->empty() ? L"A" : *Text);
 }
 
 CSizeF CTextBlock::MeasureSize(const std::wstring& text)

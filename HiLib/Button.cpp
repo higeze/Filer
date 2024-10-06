@@ -2,15 +2,12 @@
 #include "ButtonProperty.h"
 #include "D2DWWindow.h"
 
-void CButton::Measure(const CSizeF& availableSize)
+CSizeF CButton::MeasureOverride(const CSizeF& availableSize)
 {
-	m_size = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), *Content);
-	m_size.width += GetMargin().top
-		+ GetMargin().bottom
-		+ GetNormalBorder().Width * 2;
-	m_size.height += GetMargin().left
-		+ GetMargin().right
-		+ GetNormalBorder().Width * 2;
+	CSizeF desiredSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), *Content);
+	desiredSize.width += GetNormalBorder().Width * 2;
+	desiredSize.height += GetNormalBorder().Width * 2;
+	return desiredSize;
 }
 
 void CButton::OnLButtonDown(const LButtonDownEvent& e)

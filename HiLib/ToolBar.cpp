@@ -12,41 +12,44 @@
 CToolBar::CToolBar(CD2DWControl* pParentControl)
 	:CD2DWControl(pParentControl){}
 
-void CToolBar::Measure(const CSizeF& availableSize)
+CSizeF CToolBar::MeasureOverride(const CSizeF& availableSize)
 {
-	if (m_childControls.empty()) return;
+	CSizeF desiredSize;
+	if (m_childControls.empty()) return desiredSize;
 	//Measure Children
 	for (auto& spChildControl : m_childControls) {
 		spChildControl->Measure(availableSize);
 	}
 	//Measure Width
-	m_size.width = 0.f;
+	desiredSize.width = 0.f;
 	for (auto iter = m_childControls.cbegin(); iter != m_childControls.cend(); ++iter) {
 		if (iter == m_childControls.cbegin()) {
-			m_size.width += (*iter)->GetMargin().left;
+			desiredSize.width += (*iter)->GetMargin().left;
 		} else {
-			m_size.width += (std::max)((*std::prev(iter))->GetMargin().right, (*iter)->GetMargin().left);
+			desiredSize.width += (std::max)((*std::prev(iter))->GetMargin().right, (*iter)->GetMargin().left);
 		}
-		m_size.width += (*iter)->RenderSize().width;
+		desiredSize.width += (*iter)->RenderSize().width;
 		if (iter == std::prev(m_childControls.cend())) {
-			m_size.width += (*iter)->GetMargin().right;
+			desiredSize.width += (*iter)->GetMargin().right;
 		}
 	}
-	m_size.width += GetMargin().Width();
+	desiredSize.width += GetMargin().Width();
 
 	//Measure Height
-	m_size.height = (*std::max_element(m_childControls.cbegin(), m_childControls.cend(),
+	desiredSize.height = (*std::max_element(m_childControls.cbegin(), m_childControls.cend(),
 		[](const std::shared_ptr<CD2DWControl>& left, const std::shared_ptr<CD2DWControl>& right) {
 		return left->DesiredSize().height < right->DesiredSize().height; }
 	))->DesiredSize().height;
-	m_size.height += GetMargin().Height();
+	desiredSize.height += GetMargin().Height();
+	return desiredSize;
 }
 
-void CToolBar::Arrange(const CRectF& rc)
+void CToolBar::ArrangeOverride(const CRectF& finalRect)
 {
-	CD2DWControl::Arrange(rc);
-	FLOAT prev_right = rc.left;
-	FLOAT top = rc.top;
+	CD2DWControl::ArrangeOverride(finalRect);
+
+	FLOAT prev_right = finalRect.left;
+	FLOAT top = finalRect.top;
 	for (auto iter = m_childControls.cbegin(); iter != m_childControls.cend(); ++iter) {
 		FLOAT left_offset = 0;
 		if (iter == m_childControls.cbegin()) {

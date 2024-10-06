@@ -151,9 +151,9 @@ void CImageView::OnEnable(const EnableEvent& e)
 	}
 }
 
-void CImageView::Arrange(const CRectF& rc)
+void CImageView::ArrangeOverride(const CRectF& rc)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::ArrangeOverride(rc);
 	UpdateScroll();
 }
 

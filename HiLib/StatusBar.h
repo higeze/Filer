@@ -25,7 +25,7 @@ public:
 
 	//MeasureArrange
 	virtual CSizeF MeasureSize(const std::wstring& text);
-	virtual void Measure(const CSizeF& availableSize) override;
+	virtual CSizeF MeasureOverride(const CSizeF& availableSize) override;
 
 	virtual void OnPaint(const PaintEvent& e);
 

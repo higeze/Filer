@@ -129,7 +129,7 @@ public:
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnEnable(const EnableEvent& e) override;
 
-	virtual void Arrange(const CRectF& e) override;
+	virtual void ArrangeOverride(const CRectF& finalRect) override;
 
 	/**************/
 	/* SM Message */

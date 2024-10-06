@@ -129,9 +129,9 @@ public:
 		this->GetWndPtr()->SetFocusToControl(this->m_spButtonDo);
 	}
 
-	virtual void Arrange(const CRectF& rc) override
+	virtual void ArrangeOverride(const CRectF& rc) override
 	{
-		CD2DWControl::Arrange(rc);
+		CD2DWControl::ArrangeOverride(rc);
 
 		auto [rcGrid, rcBtnDo, rcBtnCancel] = GetRects();		
 		//Create FilerControl
@@ -220,7 +220,7 @@ public:
 	void Execute();
 
 	virtual void OnCreate(const CreateEvt& e) override;
-	virtual void Arrange(const CRectF& rc) override;
+	virtual void ArrangeOverride(const CRectF& rc) override;
 };
 
 class CPDFOperationDlgBase: public CFileOperationDlgBase<std::shared_ptr<CShellFile>>
@@ -237,7 +237,7 @@ public:
 	virtual ~CPDFOperationDlgBase() = default;
 
 	virtual void OnCreate(const CreateEvt& e) override;
-	virtual void Arrange(const CRectF& rc) override;
+	virtual void ArrangeOverride(const CRectF& finalRect) override;
 };
 
 class CPDFSplitDlg : public CPDFOperationDlgBase

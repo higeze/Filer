@@ -90,22 +90,12 @@ protected:
 	CPDFDoc&  m_doc;
 
 	std::future<void> m_future;
-	CSizeF m_size;
 
 public:
 	CPdfViewDlgBase(
 		CD2DWControl* pParentControl,
 		CPDFDoc& doc);
 	virtual ~CPdfViewDlgBase() = default;
-
-	virtual void Measure(const CSizeF& availableSize) = 0;
-	virtual CSizeF DesiredSize() const { return m_size; }
-	virtual void Arrange(const CRectF& rc) = 0;
-
-	virtual void OnClose(const CloseEvent& e) override
-	{
-		CD2DWDialog::OnClose(e);
-	}
 };
 
 class CPdfViewExtractDlg : public CPdfViewDlgBase
@@ -117,8 +107,8 @@ public:
 		CPDFDoc& doc);
 	virtual ~CPdfViewExtractDlg() = default;
 	void OnCreate(const CreateEvt& e) override;
-	virtual void Measure(const CSizeF& availableSize) override;
-	virtual void Arrange(const CRectF& rc) override;
+	virtual CSizeF MeasureOverride(const CSizeF& availableSize) override;
+	virtual void ArrangeOverride(const CRectF& rc) override;
 };
 
 
@@ -264,7 +254,7 @@ public:
 	virtual void OnDestroy(const DestroyEvent& e) override;
 	virtual void OnEnable(const EnableEvent& e) override;
 
-	virtual void Arrange(const CRectF& e) override;
+	virtual void ArrangeOverride(const CRectF& e) override;
 
 	/**************/
 	/* SM Message */

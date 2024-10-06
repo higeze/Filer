@@ -270,6 +270,7 @@ LRESULT CD2DWWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 
 void CD2DWWindow::OnSize(const SizeEvent& e)
 {
+	ProcessFunctionToAll([](auto child) { child->MeasureDirty.set(true); child->ArrangeDirty.set(true); });
 	Measure(e.Size);
 	Arrange(CRectF(e.Size));
 }
@@ -376,6 +377,9 @@ void CD2DWWindow::ProcessMouseEntryLeave(const MouseMoveEvent& e)
 
 void CD2DWWindow::OnPaint(const PaintEvent& e)
 { 
+	Measure(ArrangedRect().Size());
+	Arrange(ArrangedRect());
+
 	ProcessMessageToAll(&CD2DWControl::OnPaint, e); 
 	//Cur Focused
 	std::vector<std::shared_ptr<CD2DWControl>> tunnelCurControls;

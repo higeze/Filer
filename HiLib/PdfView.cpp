@@ -85,31 +85,30 @@ void CPdfViewExtractDlg::OnCreate(const CreateEvt& e)
 }
 
 
-void CPdfViewExtractDlg::Measure(const CSizeF& availableSize)
+CSizeF CPdfViewExtractDlg::MeasureOverride(const CSizeF& availableSize)
 {
-	m_spParameter->Measure(availableSize, L"AAAAAAAAAAAAAAAAAAAA");
+	m_spParameter->MeasureSize(L"AAAAAAAAAAAAAAAAAAAA");
 	m_spButtonCancel->Measure(availableSize);
 	m_spButtonDo->Measure(availableSize);
 
-	m_size.width = 5.f + m_spParameter->DesiredSize().width + 5.f;
-	m_size.height =
+	return CSizeF(5.f + m_spParameter->DesiredSize().width + 5.f,
 		5.f + m_spParameter->DesiredSize().height
 		+ 5.f + m_spButtonCancel->DesiredSize().height
-		+ 5.f + (std::max)(m_spButtonCancel->DesiredSize().height, m_spButtonDo->DesiredSize().height) + 5.f;
+		+ 5.f + (std::max)(m_spButtonCancel->DesiredSize().height, m_spButtonDo->DesiredSize().height) + 5.f);
 }
 
-void CPdfViewExtractDlg::Arrange(const CRectF& rc)
+void CPdfViewExtractDlg::ArrangeOverride(const CRectF& finalRect)
 {
+	CPdfViewDlgBase::ArrangeOverride(finalRect);
+
 	CRectF rcTitle = GetTitleRect();
 	m_spParameter->Arrange(CRectF(
-		rc.left + 5.f, rc.top + rcTitle.Height() + 5.f,
-		rc.right - 5.f, rc.top + rcTitle.Height() + 5.f + m_spParameter->DesiredSize().height));
-	CRectF rcBtnCancel(rc.right - 5.f - 50.f, rc.bottom - 5.f - m_spButtonCancel->DesiredSize().height, rc.right - 5.f, rc.bottom - 5.f);
-	CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, rc.bottom - 5.f  - m_spButtonDo->DesiredSize().height, rcBtnCancel.left - 5.f, rc.bottom - 5.f);
+		finalRect.left + 5.f, finalRect.top + rcTitle.Height() + 5.f,
+		finalRect.right - 5.f, finalRect.top + rcTitle.Height() + 5.f + m_spParameter->DesiredSize().height));
+	CRectF rcBtnCancel(finalRect.right - 5.f - 50.f, finalRect.bottom - 5.f - m_spButtonCancel->DesiredSize().height, finalRect.right - 5.f, finalRect.bottom - 5.f);
+	CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, finalRect.bottom - 5.f  - m_spButtonDo->DesiredSize().height, rcBtnCancel.left - 5.f, finalRect.bottom - 5.f);
 	m_spButtonCancel->Arrange(rcBtnCancel);
 	m_spButtonDo->Arrange(rcBtnDo);
-
-	m_rect = rc;
 }
 
 /**************************/
@@ -234,9 +233,9 @@ void CPdfView::OnEnable(const EnableEvent& e)
 	}
 }
 
-void CPdfView::Arrange(const CRectF& rc)
+void CPdfView::ArrangeOverride(const CRectF& rc)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::ArrangeOverride(rc);
 	UpdateScroll();
 }
 
@@ -1324,7 +1323,9 @@ void CPdfView::UpdateScroll()
 
 	//VScroll/HScroll Rect
 	auto [rcVertical, rcHorizontal] = GetRects();
+	m_spVScroll->ArrangeDirty.set(true);
 	m_spVScroll->Arrange(rcVertical);
+	m_spHScroll->ArrangeDirty.set(true);
 	m_spHScroll->Arrange(rcHorizontal);
 }
 

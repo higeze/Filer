@@ -70,6 +70,7 @@ public:
 	DECLARE_LAZY_GETTER(std::unique_ptr<CFPDFTextPage>, FPDFTextPagePtr);
 	DECLARE_LAZY_GETTER(CSizeF, Size);
 	DECLARE_LAZY_GETTER(std::wstring, Text);
+
 	DECLARE_LAZY_GETTER(std::vector<const_paragraph_iterator>, ParagraphIterators);
 	int GetTextSize() const;
 	DECLARE_LAZY_GETTER(std::vector<CRectF>, TextOrgRects);

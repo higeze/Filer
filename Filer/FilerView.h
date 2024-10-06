@@ -32,11 +32,6 @@ public:
 	virtual void OnCreate(const CreateEvt& e) override;
 	//virtual void OnPaint(const PaintEvent& e) override;
 
-	virtual void Measure(const CSizeF& availableSize) override { CDockPanel::Measure(availableSize); }
-	////virtual CSizeF DesiredSize() const { return m_size; }
-	////virtual CSizeF RenderSize() const { return CSizeF(m_size.width - Margin->Width(), m_size.height - Margin->Height()); }
-	virtual void Arrange(const CRectF& rc) override { CDockPanel::Arrange(rc); }
-
 public:
 	friend void to_json(json& j, const CFilerView& o)
 	{

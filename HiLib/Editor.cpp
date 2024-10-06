@@ -79,9 +79,10 @@ void CEditor::OnPaint(const PaintEvent& e)
 	m_spStatusBar->OnPaint(e);
 }
 
-void CEditor::Arrange(const CRectF& rc)
+void CEditor::ArrangeOverride(const CRectF& finalRect)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::Arrange(finalRect);
+
 	auto [rcFilter, rcText, rcStatus] = GetRects();
 	m_spFilterBox->Arrange(rcFilter);
 	m_spTextBox->Arrange(rcText);

@@ -104,8 +104,8 @@ public:
 	reactive_command_ptr<void> Close;
 
 
-	virtual void Measure(const CSizeF& availableSize) override;
-	virtual void Arrange(const CRectF& rc) override;
+	virtual CSizeF MeasureOverride(const CSizeF& availableSize) override;
+	virtual void ArrangeOverride(const CRectF& finalRect) override;
 	
 
 public:

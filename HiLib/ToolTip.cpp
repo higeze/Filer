@@ -1,9 +1,9 @@
 #include "ToolTip.h"
 #include "D2DWWindow.h"
 
-void CToolTip::Measure(const CSizeF& availableSize)
+CSizeF CToolTip::MeasureOverride(const CSizeF& availableSize)
 {
-	m_size = GetWndPtr()->GetDirectPtr()->CalcTextSize(m_spProp->Format, *Content) 
+	return GetWndPtr()->GetDirectPtr()->CalcTextSize(m_spProp->Format, *Content) 
 		+ CSizeF(m_spProp->Line.Width * 2.f, m_spProp->Line.Width * 2.f)
 		+ CSizeF(m_spProp->Padding.left + m_spProp->Padding.right, m_spProp->Padding.top + m_spProp->Padding.bottom);
 }
