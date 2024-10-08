@@ -102,7 +102,7 @@ public:
 	std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> GetSizes();
 	virtual CSizeF GetSize();
 	std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects();
-	virtual void Arrange(const CRectF& e);
+	virtual void ArrangeOverride(const CRectF& e) override;
 
 	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
@@ -140,7 +140,7 @@ public:
 	std::tuple<CSizeF, CSizeF> GetSizes();
 	virtual CSizeF GetSize();
 	std::tuple<CRectF, CRectF> GetRects();
-	virtual void Arrange(const CRectF& e);
+	virtual void ArrangeOverride(const CRectF& e) override;
 
 	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);

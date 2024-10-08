@@ -120,9 +120,10 @@ void CTabHeaderControl::OnCreate(const CreateEvt& e)
 	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 }
 
-void CTabHeaderControl::Arrange(const CRectF& rc)
+void CTabHeaderControl::ArrangeOverride(const CRectF& rc)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::ArrangeOverride(rc);
+
 	m_spButton->Arrange(std::get<2>(GetRects()));
 }
 
@@ -245,9 +246,10 @@ void CAddTabHeaderControl::OnCreate(const CreateEvt& e)
 	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 }
 
-void CAddTabHeaderControl::Arrange(const CRectF& rc)
+void CAddTabHeaderControl::ArrangeOverride(const CRectF& rc)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::ArrangeOverride(rc);
+
 	m_spButton->Arrange(std::get<0>(GetRects()));
 }
 
@@ -363,7 +365,7 @@ void CTabControl::UpdateHeaderRects()
 			left = rcInWnd.left;
 			top += hdrSize.height;
 		}
-
+		pHeader->ArrangeDirty.set(true);
 		pHeader->Arrange(CRectF(left, top, left + hdrSize.width, top + hdrSize.height));
 		left = pHeader->GetRectInWnd().right;
 	}
@@ -374,6 +376,7 @@ void CTabControl::UpdateHeaderRects()
 		top += hdrSize.height;
 	}
 
+	m_addHeader->ArrangeDirty.set(true);
 	m_addHeader->Arrange(CRectF(left, top, left + hdrSize.width, top + hdrSize.height));
 }
 

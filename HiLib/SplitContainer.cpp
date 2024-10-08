@@ -11,7 +11,7 @@ void CSplitContainer::OnCreate(const CreateEvt& e)
 	m_one->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_two->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	m_splitter->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-	m_splitter->Value.subscribe([this](auto value) { Arrange(ArrangedRect()); }, shared_from_this());
+	m_splitter->Value.subscribe([this](auto value) { ArrangeDirty.set(true); }, shared_from_this());
 }
 
 /***************************/
@@ -67,7 +67,7 @@ CSizeF CHorizontalSplitContainer::MeasureOverride(const CSizeF& availableSize)
 
 void CHorizontalSplitContainer::ArrangeOverride(const CRectF& finalRect)
 {
-	CD2DWControl::Arrange(finalRect);
+	CD2DWControl::ArrangeOverride(finalRect);
 	
 	if (*m_splitter->Value < 0) {//Initial
 		m_splitter->Value.set((finalRect.top + finalRect.bottom) * 0.5f);

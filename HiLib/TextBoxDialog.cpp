@@ -56,9 +56,9 @@ void CTextBoxDialog::OnCreate(const CreateEvt& e)
 	GetWndPtr()->SetFocusToControl(m_spButtonOK);
 }
 
-void CTextBoxDialog::Arrange(const CRectF& rc)
+void CTextBoxDialog::ArrangeOverride(const CRectF& rc)
 {
-	CD2DWControl::Arrange(rc);
+	CD2DWControl::ArrangeOverride(rc);
 
 	auto [rcMessage, rcText, rcBtnOK, rcBtnCancel] = GetRects();
 	m_spTextBlock->Arrange(rcMessage);

@@ -158,9 +158,9 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 	m_compFuture = CThreadPool::GetInstance()->enqueue(FILE_LINE_FUNC, 0, fun);
 }
 
-void CIncrementalCopyDlg::Arrange(const CRectF& e)
+void CIncrementalCopyDlg::ArrangeOverride(const CRectF& e)
 {
-	CD2DWDialog::Arrange(e);
+	CD2DWDialog::ArrangeOverride(e);
 
 	auto [rcProgress, rcGrid, rcBtnDo, rcBtnCancel, rcBtnClose] = GetRects();
 	m_spProgressbar->Arrange(rcProgress);

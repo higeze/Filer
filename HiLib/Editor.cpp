@@ -81,7 +81,7 @@ void CEditor::OnPaint(const PaintEvent& e)
 
 void CEditor::ArrangeOverride(const CRectF& finalRect)
 {
-	CD2DWControl::Arrange(finalRect);
+	CD2DWControl::ArrangeOverride(finalRect);
 
 	auto [rcFilter, rcText, rcStatus] = GetRects();
 	m_spFilterBox->Arrange(rcFilter);
