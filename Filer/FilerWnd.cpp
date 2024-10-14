@@ -334,6 +334,8 @@ void CFilerWnd::OnCreate(const CreateEvt& e)
 			pr(spTopDock, DockEnum::Top),
 			pr(spBottomStatus, DockEnum::Bottom),
 			pr(spFillDock, DockEnum::Fill));
+
+		m_childControls.push_back(spDock);
 	}
 
 	//Create
