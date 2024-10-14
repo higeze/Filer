@@ -31,6 +31,45 @@ public:
 	}
 };
 
+/****************/
+/* scoped_timer */
+/****************/
+
+template<class _Elem>
+class scoped_time_debug
+{
+private:
+	std::chrono::system_clock::time_point m_tp;
+	std::basic_string<_Elem> m_message;
+public:
+	scoped_time_debug(const _Elem* message)
+		:m_tp(std::chrono::system_clock::now()), m_message(message) {}
+
+	scoped_time_debug(const std::basic_string<_Elem>& message)
+		:m_tp(std::chrono::system_clock::now()), m_message(message) {}
+
+	void stop() {}
+
+	virtual ~scoped_time_debug()
+	{
+		stop();
+	}
+};
+
+template<>
+inline void scoped_time_debug<char>::stop()
+{
+	::OutputDebugStringA((m_message + " : " + std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - m_tp).count())).c_str());
+}
+
+template<>
+inline void scoped_time_debug<wchar_t>::stop()
+{
+	::OutputDebugStringW((m_message + L" : " + std::to_wstring(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - m_tp).count())).c_str());
+}
+
+
+
 /*************/
 /* exception */
 /*************/
@@ -65,6 +104,10 @@ std::string msg_to_string(UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define LOG_SCOPED_TIMER_THIS_1(message) \
 	scoped_time_logger stl(fmt::format("{}\t{}\t{}\t{}\t{}", ::PathFindFileNameA(__FILE__), __LINE__, __FUNCTION__, typeid(*this).name(), message).c_str())
+
+#define DEBUG_SCOPED_TIMER_THIS_1(message) \
+	scoped_time_debug st(fmt::format("{}\t{}\t{}\t{}\t{}", ::PathFindFileNameA(__FILE__), __LINE__, __FUNCTION__, typeid(*this).name(), message).c_str())
+
 
 #define CONSOLETIMER_IF(cond, message) \
 	std::unique_ptr<scoped_time_logger> pStl;\

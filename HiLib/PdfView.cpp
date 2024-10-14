@@ -1323,10 +1323,8 @@ void CPdfView::UpdateScroll()
 
 	//VScroll/HScroll Rect
 	auto [rcVertical, rcHorizontal] = GetRects();
-	m_spVScroll->ArrangeDirty.set(true);
-	m_spVScroll->Arrange(rcVertical);
-	m_spHScroll->ArrangeDirty.set(true);
-	m_spHScroll->Arrange(rcHorizontal);
+	m_spVScroll->ArrangeCore(rcVertical);
+	m_spHScroll->ArrangeCore(rcHorizontal);
 }
 
 

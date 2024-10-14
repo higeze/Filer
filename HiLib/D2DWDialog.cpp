@@ -124,8 +124,7 @@ void CD2DWDialog::Moving_MouseMove(const MouseMoveEvent& e)
 	auto rc = GetRectInWnd();
 	rc.OffsetRect(CPointF(e.PointInWnd.x - m_startPoint.value().x, e.PointInWnd.y - m_startPoint.value().y));
 	m_startPoint = e.PointInWnd;
-	ArrangeDirty.set(true);
-	Arrange(rc);
+	ArrangeCore(rc);
 	*e.HandledPtr = TRUE;
 }
 
@@ -146,32 +145,28 @@ void CD2DWDialog::LeftSizing_MouseMove(const MouseMoveEvent& e)
 {
 	auto rc = GetRectInWnd();
 	rc.left = e.PointInWnd.x;
-	ArrangeDirty.set(true);
-	Arrange(rc);
+	ArrangeCore(rc);
 	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::RightSizing_MouseMove(const MouseMoveEvent& e)
 {
 	auto rc = GetRectInWnd();
 	rc.right = e.PointInWnd.x;
-	ArrangeDirty.set(true);
-	Arrange(rc);
+	ArrangeCore(rc);
 	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::TopSizing_MouseMove(const MouseMoveEvent& e)
 {
 	auto rc = GetRectInWnd();
 	rc.top = e.PointInWnd.y;
-	Arrange(rc);
-	ArrangeDirty.set(true);
+	ArrangeCore(rc);
 	*e.HandledPtr = TRUE;
 }
 void CD2DWDialog::BottomSizing_MouseMove(const MouseMoveEvent& e)
 {
 	auto rc = GetRectInWnd();
 	rc.bottom = e.PointInWnd.y;
-	ArrangeDirty.set(true);
-	Arrange(rc);
+	ArrangeCore(rc);
 	*e.HandledPtr = TRUE;
 }
 

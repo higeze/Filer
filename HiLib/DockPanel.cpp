@@ -94,6 +94,7 @@ void CDockPanel::ArrangeOverride(const CRectF& finalRect)
 
 					auto prevRect = prev_child->ArrangedRect();
 					prevRect.top = split->ArrangedRect().bottom;
+					//It is necessary to ArrangeDirty to all children of prev_child
 					prev_child->ArrangeDirty.set(true);
 					prev_child->Arrange(prevRect);
 				} else {
@@ -139,6 +140,7 @@ void CDockPanel::ArrangeOverride(const CRectF& finalRect)
 
 					auto prevRect = prev_child->ArrangedRect();
 					prevRect.left = split->ArrangedRect().right;
+					//It is necessary to ArrangeDirty to all children of prev_child
 					prev_child->ArrangeDirty.set(true);
 					prev_child->Arrange(prevRect);
 				} else {

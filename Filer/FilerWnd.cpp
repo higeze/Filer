@@ -466,7 +466,11 @@ void CFilerWnd::ArrangeOverride(const CRectF& finalRect)
 
 	if (!finalRect.IsRectNull()) {
 		for (auto child : m_childControls) {
-			child->Arrange(finalRect);
+			if (auto p = std::dynamic_pointer_cast<CD2DWDialog>(child)) {
+				//Do not Arrange
+			} else {
+				child->Arrange(finalRect);
+			}
 		}
 	}
 }

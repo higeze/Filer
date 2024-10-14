@@ -23,6 +23,12 @@ class CToolTip :public CD2DWControl
 private:
 	std::shared_ptr<ToolTipProperty> m_spProp;
 public:
+	virtual const CRectF& GetMargin() const override
+	{
+		static const CRectF value(0.f, 0.f, 0.f, 0.f); return value;
+	}
+
+public:
 	reactive_wstring_ptr Content;
 
 	CToolTip(CD2DWControl* pParentControl, const std::shared_ptr<ToolTipProperty>& spProp):

@@ -59,10 +59,11 @@ public:
 private:
 	std::shared_ptr<CButton> m_spButton;
 
-	CSizeF m_size = CSizeF();
 	CSizeF m_iconSize = CSizeF();
 	CSizeF m_textSize = CSizeF();
 	CSizeF m_buttonSize = CSizeF();
+	CRectF m_iconRect = CRectF();
+	CRectF m_textRect = CRectF();
 
 	FLOAT m_minWidth = 30.f;
 	FLOAT m_maxWidth = 300.f;
@@ -72,6 +73,11 @@ private:
 	bool m_isMeasureValid = false;
 
 public:
+	const CRectF& GetMargin() const override
+	{
+		const static CRectF value(0.0f, 0.0f, 0.0f, 0.0f); return value;
+	}
+
 	const SolidFill& GetNormalBackground() const override
 	{
 		const static SolidFill value(239.f / 255.f, 239.f / 255.f, 239.f / 255.f, 1.0f); return value;
@@ -92,17 +98,17 @@ public:
 public:
 	CTabHeaderControl(CTabControl* pTabControl);
 	virtual ~CTabHeaderControl() = default;
-	bool GetMeasureValid()const { return m_isMeasureValid; }
-	void SetMeasureValid(const bool& b) { m_isMeasureValid = b; }
 	int GetIndex() const { return m_index; }
 	void SetIndex(const int index) { m_index = index; }
 	bool GetIsSelected()const;
 
-	std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> MeasureSizes();
-	std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> GetSizes();
-	virtual CSizeF GetSize();
-	std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects();
-	virtual void ArrangeOverride(const CRectF& e) override;
+	CSizeF MeasureOverride(const CSizeF& availableSize) override;
+	void ArrangeOverride(const CRectF& finalRect) override;
+
+	//std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> GetSizes();
+	//virtual CSizeF GetSize();
+	//std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects();
+	//virtual void ArrangeOverride(const CRectF& e) override;
 
 	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);

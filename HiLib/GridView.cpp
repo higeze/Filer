@@ -234,15 +234,13 @@ void CGridView::UpdateScrolls()
 	rcVertical.top = rcClient.top + lineHalfWidth;
 	rcVertical.right = rcClient.right - lineHalfWidth;
 	rcVertical.bottom = rcClient.bottom - (m_pHScroll->GetIsVisible()?(m_pHScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
-	m_pVScroll->ArrangeDirty.set(true);
-	m_pVScroll->Arrange(rcVertical);
+	m_pVScroll->ArrangeCore(rcVertical);
 
 	rcHorizontal.left= rcClient.left + lineHalfWidth;
 	rcHorizontal.top = rcClient.bottom-::GetSystemMetrics(SM_CYHSCROLL) - lineHalfWidth;
 	rcHorizontal.right = rcClient.right - (m_pVScroll->GetIsVisible()?(m_pVScroll->GetBandWidth() + lineHalfWidth) : lineHalfWidth);
 	rcHorizontal.bottom = rcClient.bottom - lineHalfWidth;
-	m_pHScroll->ArrangeDirty.set(true);
-	m_pHScroll->Arrange(rcHorizontal);
+	m_pHScroll->ArrangeCore(rcHorizontal);
 
 }
 

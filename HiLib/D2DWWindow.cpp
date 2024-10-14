@@ -412,7 +412,7 @@ void CD2DWWindow::OnMouseMove(const MouseMoveEvent& e)
 void CD2DWWindow::OnMouseLeave(const MouseLeaveEvent& e)
 {
 	if (m_pMouseControl) {
-		ProcessMouseLeaveRecursive(m_pMouseControl, MouseMoveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y)));
+		ProcessMouseLeaveRecursive(m_pMouseControl, MouseMoveEvent(e.WndPtr, e.Flags, MAKELPARAM(e.PointInClient.x, e.PointInClient.y), e.HandledPtr));
 		m_pMouseControl = nullptr;
 	}
 }

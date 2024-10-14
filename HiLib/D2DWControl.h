@@ -145,7 +145,7 @@ public:
 	virtual CRectF ArrangedRect() const { return m_rect; }
 
 	virtual CSizeF RenderSize() const { return CSizeF(m_size.width - GetMargin().Width(), m_size.height - GetMargin().Height()); }
-	virtual CRectF RenderRect() const { return GetRectInWnd().DeflateRectCopy(GetMargin()); }
+	virtual CRectF RenderRect() const { return m_rect.DeflateRectCopy(GetMargin()); }
 
 	void Arrange(const CRectF& finalRect);
 	virtual void ArrangeCore(const CRectF& finalRect);

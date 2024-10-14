@@ -39,60 +39,82 @@ bool CTabHeaderControl::GetIsSelected()const
 	return GetIndex() == *static_cast<CTabControl*>(m_pParentControl)->SelectedIndex;
 }
 
-std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> CTabHeaderControl::MeasureSizes()
+CSizeF CTabHeaderControl::MeasureOverride(const CSizeF& availableSize) 
 {
-	auto iconSize = CSizeF(16.f, 16.f);
-	auto textSize = CSizeF();
-	auto buttonSize = CSizeF(16.f, 16.f);
-
+	CSizeF paddingSize = CSizeF(GetPadding().left + GetPadding().right, GetPadding().top + GetPadding().bottom);
+	m_iconSize = CSizeF(16.f, 16.f) + paddingSize;
+	m_textSize = CSizeF();
+	m_buttonSize = CSizeF(16.f, 16.f) + CSizeF(m_spButton->GetPadding().left + m_spButton->GetPadding().right, m_spButton->GetPadding().top + m_spButton->GetPadding().bottom);
+	m_spButton->Measure(m_buttonSize);
 	auto pTabControl = static_cast<CTabControl*>(m_pParentControl);
 	auto pItem = pTabControl->ItemsSource->at(GetIndex());
 	auto iterHeader = pTabControl->m_itemsHeaderTemplate.find(typeid(*pItem).name());
 	if (iterHeader != pTabControl->m_itemsHeaderTemplate.end() && GetWndPtr()->GetDirectPtr()) {
 		auto text = iterHeader->second.operator()(pItem);
-		textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), text);
+		m_textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), text) + paddingSize;
 	}
 
-	auto size = CSizeF(
-			GetPadding().left + iconSize.width + GetPadding().right
-			+ (std::max)(textSize.width, m_minWidth) + GetPadding().right
-			+ buttonSize.width + GetPadding().right,
-			GetPadding().top + textSize.height + GetPadding().bottom);
-
-	return { iconSize, textSize, buttonSize, size};
+	return CSizeF(
+		m_iconSize.width + 
+		(std::max)(m_textSize.width, m_minWidth) +
+		m_buttonSize.width,
+		(std::max)({ m_iconSize.height, m_textSize.height, m_buttonSize.height }));
 }
 
-std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> CTabHeaderControl::GetSizes()
-{
-	if (!m_isMeasureValid) {
-		auto [iconSize, textSize, buttonSize, size] = MeasureSizes();
-		m_iconSize = iconSize; m_textSize = textSize; 
-		m_buttonSize = buttonSize + CSizeF(m_spButton->GetMargin().left + m_spButton->GetMargin().right, m_spButton->GetMargin().top + m_spButton->GetMargin().bottom);
-		m_size = size;
-		if (m_textSize.width && m_textSize.height ) {
-			m_isMeasureValid = true;
-		}
-	}
-	return { m_iconSize, m_textSize, m_buttonSize, m_size };
-}
+//std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> CTabHeaderControl::MeasureSizes()
+//{
+//	auto iconSize = CSizeF(16.f, 16.f);
+//	auto textSize = CSizeF();
+//	auto buttonSize = CSizeF(16.f, 16.f);
+//
+//	auto pTabControl = static_cast<CTabControl*>(m_pParentControl);
+//	auto pItem = pTabControl->ItemsSource->at(GetIndex());
+//	auto iterHeader = pTabControl->m_itemsHeaderTemplate.find(typeid(*pItem).name());
+//	if (iterHeader != pTabControl->m_itemsHeaderTemplate.end() && GetWndPtr()->GetDirectPtr()) {
+//		auto text = iterHeader->second.operator()(pItem);
+//		textSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), text);
+//	}
+//
+//	auto size = CSizeF(
+//			GetPadding().left + iconSize.width + GetPadding().right
+//			+ (std::max)(textSize.width, m_minWidth) + GetPadding().right
+//			+ buttonSize.width + GetPadding().right,
+//			GetPadding().top + textSize.height + GetPadding().bottom);
+//
+//	return { iconSize, textSize, buttonSize, size};
+//}
 
-CSizeF CTabHeaderControl::GetSize()
-{
-	return std::get<3>(GetSizes());
-}
+//std::tuple<CSizeF, CSizeF, CSizeF, CSizeF> CTabHeaderControl::GetSizes()
+//{
+//	if (!m_isMeasureValid) {
+//		auto [iconSize, textSize, buttonSize, size] = MeasureSizes();
+//		m_iconSize = iconSize; m_textSize = textSize; 
+//		m_buttonSize = buttonSize + CSizeF(m_spButton->GetMargin().left + m_spButton->GetMargin().right, m_spButton->GetMargin().top + m_spButton->GetMargin().bottom);
+//		m_size = size;
+//		if (m_textSize.width && m_textSize.height ) {
+//			m_isMeasureValid = true;
+//		}
+//	}
+//	return { m_iconSize, m_textSize, m_buttonSize, m_size };
+//}
 
-std::tuple<CRectF, CRectF, CRectF, CRectF> CTabHeaderControl::GetRects()
-{
-	auto rc = GetRectInWnd();
-	auto [iconSize, textSize, buttonSize, size] = GetSizes();
-	auto iconRect = CRectF(iconSize);
-	auto textRect = CRectF(textSize);
-	auto buttonRect = CRectF(buttonSize);
-	iconRect.MoveToXY(rc.left + GetPadding().left, rc.top + GetPadding().top );
-	textRect.MoveToXY(iconRect.right + GetPadding().left, rc.top + GetPadding().top );
-	buttonRect.MoveToXY(rc.right - buttonSize.width, rc.top);
+//CSizeF CTabHeaderControl::GetSize()
+//{
+//	return std::get<3>(GetSizes());
+//}
 
-	return { iconRect, textRect, buttonRect, rc };
+void CTabHeaderControl::ArrangeOverride(const CRectF& finalRect)
+{
+	CD2DWControl::ArrangeOverride(finalRect);
+
+	auto rc = RenderRect();
+
+	m_iconRect = CRectF(m_iconSize);
+	m_textRect = CRectF(m_textSize);
+
+	m_iconRect.MoveToXY(rc.left, rc.top);
+	m_textRect.MoveToXY(m_iconRect.right, rc.top);
+	m_spButton->Arrange(CRectF(CPointF(rc.right - m_buttonSize.width, rc.top), m_buttonSize));
 }
 
 void CTabHeaderControl::OnCreate(const CreateEvt& e)
@@ -120,17 +142,10 @@ void CTabHeaderControl::OnCreate(const CreateEvt& e)
 	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 }
 
-void CTabHeaderControl::ArrangeOverride(const CRectF& rc)
-{
-	CD2DWControl::ArrangeOverride(rc);
-
-	m_spButton->Arrange(std::get<2>(GetRects()));
-}
-
 void CTabHeaderControl::OnPaint(const PaintEvent& e)
 {
 	auto pTabControl = static_cast<CTabControl*>(m_pParentControl);
-	auto [iconRect, textRect, buttonRect, rect] = GetRects();
+	auto rect = RenderRect();
 	if (GetIsSelected()) {
 		rect += FOCUS_PADDING;
 	}
@@ -156,12 +171,12 @@ void CTabHeaderControl::OnPaint(const PaintEvent& e)
 	}
 
 	auto iterIcon = pTabControl->m_itemsHeaderIconTemplate.find(typeid(*pTabControl->ItemsSource->at(GetIndex())).name());
-	iterIcon->second.operator()(pTabControl->ItemsSource->at(GetIndex()),iconRect);
+	iterIcon->second.operator()(pTabControl->ItemsSource->at(GetIndex()), m_iconRect - GetPadding());
 
 	auto iterText = pTabControl->m_itemsHeaderTemplate.find(typeid(*pTabControl->ItemsSource->at(GetIndex())).name());
 	auto text = iterText->second.operator()(pTabControl->ItemsSource->at(GetIndex()));
 	if (!text.empty()) {
-		GetWndPtr()->GetDirectPtr()->DrawTextLayout(GetFormat(), text, textRect);
+		GetWndPtr()->GetDirectPtr()->DrawTextLayout(GetFormat(), text, m_textRect - GetPadding());
 	}
 
 	m_spButton->OnPaint(e);
@@ -358,9 +373,10 @@ void CTabControl::UpdateHeaderRects()
 	auto top = rcInWnd.top;
 
 	for (auto& pHeader : m_headers) {
-		pHeader->SetMeasureValid(false);//TODO HIGH
+		pHeader->MeasureDirty.set(true);
+		pHeader->Measure(rcInWnd.Size());
 
-		auto hdrSize = pHeader->GetSize();
+		auto hdrSize = pHeader->DesiredSize();
 		if (left + hdrSize.width > rcInWnd.right && left != rcInWnd.left) {
 			left = rcInWnd.left;
 			top += hdrSize.height;

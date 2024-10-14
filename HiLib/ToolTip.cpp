@@ -3,8 +3,9 @@
 
 CSizeF CToolTip::MeasureOverride(const CSizeF& availableSize)
 {
-	return GetWndPtr()->GetDirectPtr()->CalcTextSize(m_spProp->Format, *Content) 
+	return GetWndPtr()->GetDirectPtr()->CalcTextSize(m_spProp->Format, *Content)
 		+ CSizeF(m_spProp->Line.Width * 2.f, m_spProp->Line.Width * 2.f)
+		+ CSizeF(m_spProp->Radius * 2.f, m_spProp->Radius * 2.f)
 		+ CSizeF(m_spProp->Padding.left + m_spProp->Padding.right, m_spProp->Padding.top + m_spProp->Padding.bottom);
 }
 
@@ -26,9 +27,15 @@ void CToolTip::OnPaint(const PaintEvent& e)
 	if (Content->empty()) { return; }
 	//GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
-	GetWndPtr()->GetDirectPtr()->FillSolidRoundedRectangle(m_spProp->BackgroundFill, GetRectInWnd(), m_spProp->Radius, m_spProp->Radius);
-	GetWndPtr()->GetDirectPtr()->DrawSolidRoundedRectangle(m_spProp->Line, GetRectInWnd(), m_spProp->Radius, m_spProp->Radius);
-	GetWndPtr()->GetDirectPtr()->DrawTextInRect(m_spProp->Format, *Content, GetRectInWnd().DeflateRectCopy(m_spProp->Line.Width).DeflateRectCopy(m_spProp->Padding));
+	CRectF renderRect = RenderRect();
+	GetWndPtr()->GetDirectPtr()->FillSolidRoundedRectangle(m_spProp->BackgroundFill, renderRect, m_spProp->Radius, m_spProp->Radius);
+	GetWndPtr()->GetDirectPtr()->DrawSolidRoundedRectangle(m_spProp->Line, renderRect, m_spProp->Radius, m_spProp->Radius);
+
+	CRectF contentRect = renderRect
+		- CRectF(m_spProp->Line.Width, m_spProp->Line.Width, m_spProp->Line.Width, m_spProp->Line.Width)
+		- CRectF(m_spProp->Radius, m_spProp->Radius, m_spProp->Radius, m_spProp->Radius)
+		- m_spProp->Padding;
+	GetWndPtr()->GetDirectPtr()->DrawTextInRect(m_spProp->Format, *Content, contentRect);
 
 	//GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
 }

@@ -73,6 +73,8 @@ CLIPFORMAT CFilerGridView::s_cf_renprivatemessages = ::RegisterClipboardFormat(L
 #include <mapiutil.h>
 #include <imessage.h>
 
+#include "ThreadPool.h"
+
 #define SETFormatEtc(fe, cf, asp, td, med, li)   \
     {\
     (fe).cfFormat=cf;\
@@ -789,12 +791,74 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 		LOG_SCOPED_TIMER_THIS_1("OpenFolder Enumeration");
 		try {
 		//Enumerate child IDL
-			shell::for_each_idl_in_shellfolder(GetWndPtr()->m_hWnd, Folder->GetShellFolderPtr(),
-				[this](const CIDL& idl) {
-					if (auto spFile = Folder->CreateShExFileFolder(idl)) {
-						GetItemsSource().push_back(spFile);
+			//{
+			//{
+			//	LOG_SCOPED_TIMER_THIS_1("Current Way");
+
+			//	std::vector<CIDL> idls;
+			//	{
+			//		{
+			//			LOG_SCOPED_TIMER_THIS_1("Current Enumeration");
+			//			CComPtr<IEnumIDList> enumIdl;
+			//			if (SUCCEEDED(Folder->GetShellFolderPtr()->EnumObjects(GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
+			//				CIDL nextIdl;
+			//				ULONG ulRet(0);
+			//				while (true) {
+			//					SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
+			//					if (!nextIdl) { break; }
+			//					idls.push_back(nextIdl);
+			//					//func(nextIdl);
+			//					nextIdl.Clear();
+			//				}
+			//			}
+			//		}
+			//	}
+
+			//	{
+			//		LOG_SCOPED_TIMER_THIS_1("Current Creation");
+			//		for (auto& idl : idls) {
+			//			if (auto spFile = Folder->CreateShExFileFolder(idl)) {
+			//				GetItemsSource().push_back(spFile);
+			//			}
+			//		}
+			//	}
+
+			//}
+
+			{
+				LOG_SCOPED_TIMER_THIS_1("Thread Way");
+				std::vector<std::future<std::shared_ptr<CShellFile>>> futures;
+				{
+					{
+						LOG_SCOPED_TIMER_THIS_1("Thread Enumeration");
+						CComPtr<IEnumIDList> enumIdl;
+						if (SUCCEEDED(Folder->GetShellFolderPtr()->EnumObjects(GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
+							CIDL nextIdl;
+							ULONG ulRet(0);
+							while (true) {
+								SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
+								if (!nextIdl) { break; }
+								futures.emplace_back(CThreadPool::GetInstance()->enqueue("CreateShExFileFolder", 1, [&](const CIDL& idl)->std::shared_ptr<CShellFile> { return Folder->CreateShExFileFolder(idl); }, nextIdl));
+								nextIdl.Clear();
+							}
+						}
 					}
-				});
+
+					{
+						LOG_SCOPED_TIMER_THIS_1("Thread Creation");
+						for (auto& ftr : futures) {
+							GetItemsSource().emplace_back(ftr.get());
+						}
+					}
+				}
+			}
+
+			//shell::for_each_idl_in_shellfolder(GetWndPtr()->m_hWnd, Folder->GetShellFolderPtr(),
+			//	[this](const CIDL& idl) {
+			//		if (auto spFile = Folder->CreateShExFileFolder(idl)) {
+			//			GetItemsSource().push_back(spFile);
+			//		}
+			//	});
 		} catch (std::exception&) {
 			throw std::exception(FILE_LINE_FUNC);
 		}
@@ -952,7 +1016,10 @@ bool CFilerGridView::CopyIncrementalSelectedFilesTo(const CIDL& destIDL)
 		GetWndPtr(), 
 		destIDL, Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
-	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(400, 600))));
+	auto rect = GetWndPtr()->CalcCenterRectF(CSizeF(400, 600));
+	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CRectF()));
+	pDlg->Measure(rect.Size());
+	pDlg->Arrange(rect);
 	GetWndPtr()->SetFocusToControl(pDlg);
 
 	return true;
@@ -965,7 +1032,10 @@ bool CFilerGridView::CopySelectedFilesTo(const CIDL& destIDL)
 		GetWndPtr(), 
 		destIDL, Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
-	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
+	auto rect = GetWndPtr()->CalcCenterRectF(CSizeF(300, 400));
+	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CRectF()));
+	pDlg->Measure(rect.Size());
+	pDlg->Arrange(rect);
 	GetWndPtr()->SetFocusToControl(pDlg);
 
 	return true;
@@ -978,7 +1048,10 @@ bool CFilerGridView::MoveSelectedFilesTo(const CIDL& destIDL)
 		GetWndPtr(),
 		destIDL, Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
 
-	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
+	auto rect = GetWndPtr()->CalcCenterRectF(CSizeF(300, 400));
+	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CRectF()));
+	pDlg->Measure(rect.Size());
+	pDlg->Arrange(rect);
 	GetWndPtr()->SetFocusToControl(pDlg);
 
 	return true;
@@ -990,8 +1063,10 @@ bool CFilerGridView::DeleteSelectedFiles()
 	auto pDlg = std::make_shared<CDeleteDlg>(
 		GetWndPtr(),
 		Folder->GetAbsoluteIdl(), GetSelectedChildIDLVector());
-
-	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), GetWndPtr()->CalcCenterRectF(CSizeF(300, 400))));
+	auto rect = GetWndPtr()->CalcCenterRectF(CSizeF(300, 400));
+	pDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CRectF()));
+	pDlg->Measure(rect.Size());
+	pDlg->Arrange(rect);
 	GetWndPtr()->SetFocusToControl(pDlg);
 
 	return true;

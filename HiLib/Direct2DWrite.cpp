@@ -716,6 +716,9 @@
 
 	void CDirect2DWrite::DrawTextInRect(const FormatF& format, const std::wstring& text, const CRectF& rect)
 	{
+		//Check Arguments
+		if (rect.Width() < 0 || rect.Height() < 0) { THROW_FILE_LINE_FUNC; }
+
 		FormatF tmpFormat(format);
 		tmpFormat.Alignment.TextAlignment = DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER;
 		tmpFormat.Alignment.ParagraphAlignment = DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER;
@@ -727,7 +730,9 @@
 			size = CalcTextSize(tmpFormat, text);
 		}
 		
-		DrawTextLayout(tmpFormat, text, rect);
+		if (tmpFormat.Font.Size >= 1.f) {
+			DrawTextLayout(tmpFormat, text, rect);
+		}
 	}
 
 	void CDirect2DWrite::DrawTab(const SolidLine& line, const CRectF& rc)

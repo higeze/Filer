@@ -21,7 +21,10 @@ public:
 	{
 		static const FormatF value(L"Meiryo UI", CDirect2DWrite::Points2Dips(9), 200.f / 255.f, 200.f / 255.f, 200.f / 255.f, 1.0f); return value;
 	}
-
+	virtual const FormatF& GetFormat() const
+	{
+		static FormatF value(CFontF(L"Meiryo UI", CDirect2DWrite::Points2Dips(9)), CColorF(0.0f, 0.0f, 0.0f, 1.0f), CAlignmentF(DWRITE_TEXT_ALIGNMENT_CENTER, DWRITE_PARAGRAPH_ALIGNMENT_CENTER)); return value;
+	}
 
 public:
 	reactive_command_ptr<void> Command;

@@ -40,7 +40,7 @@ void CButton::OnMouseLeave(const MouseLeaveEvent& e)
 
 void CButton::OnPaint(const PaintEvent& e)
 {
-	CRectF renderRect = RenderRect();
+	CRectF renderRect = RenderRect() - GetPadding();
 	FLOAT radius = renderRect.Height() * 0.1f;
 	SolidFill fill = GetNormalBackground();
 	SolidLine line = GetNormalBorder();
