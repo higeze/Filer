@@ -365,36 +365,39 @@ std::optional<size_t> CTabControl::GetPtInHeaderRectIndex(const CPointF& pt)cons
 		return std::nullopt;
 	}
 }
-
-void CTabControl::UpdateHeaderRects()
-{
-	auto rcInWnd = GetRectInWnd() - MARGIN - CTabHeaderControl::FOCUS_PADDING;
-	auto left = rcInWnd.left;
-	auto top = rcInWnd.top;
-
-	for (auto& pHeader : m_headers) {
-		pHeader->MeasureDirty.set(true);
-		pHeader->Measure(rcInWnd.Size());
-
-		auto hdrSize = pHeader->DesiredSize();
-		if (left + hdrSize.width > rcInWnd.right && left != rcInWnd.left) {
-			left = rcInWnd.left;
-			top += hdrSize.height;
-		}
-		pHeader->ArrangeDirty.set(true);
-		pHeader->Arrange(CRectF(left, top, left + hdrSize.width, top + hdrSize.height));
-		left = pHeader->GetRectInWnd().right;
-	}
-
-	auto hdrSize = m_addHeader->GetSize();
-	if (left + hdrSize.width > rcInWnd.right && left != rcInWnd.left) {
-		left = rcInWnd.left;
-		top += hdrSize.height;
-	}
-
-	m_addHeader->ArrangeDirty.set(true);
-	m_addHeader->Arrange(CRectF(left, top, left + hdrSize.width, top + hdrSize.height));
-}
+//
+//void CTabControl::UpdateHeaderRects()
+//{
+//	//auto rcInWnd = GetRectInWnd() - MARGIN - CTabHeaderControl::FOCUS_PADDING;
+//	//auto left = rcInWnd.left;
+//	//auto top = rcInWnd.top;
+//
+//	////Measure
+//	//for (auto& pHeader : m_headers) {
+//	//	pHeader->MeasureDirty.set(true);
+//	//	pHeader->Measure(rcInWnd.Size());
+//	//}
+//	//m_addHeader->MeasureDirty.set(true);
+//	//m_addHeader->Measure(rcInWnd.Size());
+//
+//	//Arrange
+//	//for (auto& pHeader : m_headers) {
+//	//	auto hdrSize = pHeader->DesiredSize();
+//	//	if (left + hdrSize.width > rcInWnd.right && left != rcInWnd.left) {
+//	//		left = rcInWnd.left;
+//	//		top += hdrSize.height;
+//	//	}
+//	//	pHeader->Arrange(CRectF(left, top, left + hdrSize.width, top + hdrSize.height));
+//	//	left = pHeader->GetRectInWnd().right;
+//	//}
+//
+//	//auto hdrSize = m_addHeader->GetSize();
+//	//if (left + hdrSize.width > rcInWnd.right && left != rcInWnd.left) {
+//	//	left = rcInWnd.left;
+//	//	top += hdrSize.height;
+//	//}
+//	//m_addHeader->Arrange(CRectF(left, top, left + hdrSize.width, top + hdrSize.height));
+//}
 
 /***********/
 /* Command */
@@ -459,7 +462,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 					auto header = std::make_shared<CTabHeaderControl>(this);
 					m_headers.idx_push_back(header);
 					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-					UpdateHeaderRects();
+					ArrangeDirty.set(true);
 
 					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
 					break;
@@ -469,7 +472,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 					auto header = std::make_shared<CTabHeaderControl>(this);
 					m_headers.idx_insert(m_headers.cbegin() + notify.new_starting_index, header);
 					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-					UpdateHeaderRects();
+					ArrangeDirty.set(true);
 
 					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
 					break;
@@ -483,7 +486,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 						m_headers.cbegin() + notify.old_starting_index,
 						m_headers.cbegin() + notify.old_starting_index + notify.old_items.size());
 
-					UpdateHeaderRects();
+					ArrangeDirty.set(true);
 
 					if (!ItemsSource->empty()) {
 						SelectedIndex.force_notify_set((std::min)((size_t)notify.old_starting_index, ItemsSource->size() - 1));
@@ -497,7 +500,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 					auto header = std::make_shared<CTabHeaderControl>(this);
 					m_headers.idx_insert(m_headers.cbegin() + notify.new_starting_index, header);
 					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-					UpdateHeaderRects();
+					ArrangeDirty.set(true);
 
 					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
 					break;
@@ -514,7 +517,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 							m_headers.idx_push_back(header);
 							header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 						}
-						UpdateHeaderRects();
+						ArrangeDirty.set(true);
 						SelectedIndex.force_notify_set((std::min)((size_t)(*SelectedIndex), ItemsSource->size() - 1));
 					}
 					break;
@@ -533,7 +536,6 @@ void CTabControl::OnCreate(const CreateEvt& e)
 		header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 	}
 	m_addHeader->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-	UpdateHeaderRects();
 
 	//SelectedIndex
 	SelectedIndex.subscribe( 
@@ -628,10 +630,45 @@ void CTabControl::OnClosing(const ClosingEvent& e)
 	CD2DWControl::OnClosing(e);
 }
 
+CSizeF CTabControl::MeasureOverride(const CSizeF& availableSize)
+{
+	for (auto& pHeader : m_headers) {
+		//pHeader->MeasureDirty.set(true);
+		pHeader->Measure(availableSize);
+	}
+	//m_addHeader->MeasureDirty.set(true);
+	m_addHeader->Measure(availableSize);
+
+	m_spCurControl->Measure(availableSize);
+
+	return m_spCurControl->DesiredSize();
+}
+
 void CTabControl::ArrangeOverride(const CRectF& rc)
 {
 	CD2DWControl::ArrangeOverride(rc);
-	UpdateHeaderRects();
+
+	auto rcInWnd = GetRectInWnd() - MARGIN - CTabHeaderControl::FOCUS_PADDING;
+	auto left = rcInWnd.left;
+	auto top = rcInWnd.top;
+
+	for (auto& pHeader : m_headers) {
+		auto hdrSize = pHeader->DesiredSize();
+		if (left + hdrSize.width > rcInWnd.right && left != rcInWnd.left) {
+			left = rcInWnd.left;
+			top += hdrSize.height;
+		}
+		pHeader->Arrange(CRectF(left, top, left + hdrSize.width, top + hdrSize.height));
+		left = pHeader->GetRectInWnd().right;
+	}
+
+	auto hdrSize = m_addHeader->GetSize();
+	if (left + hdrSize.width > rcInWnd.right && left != rcInWnd.left) {
+		left = rcInWnd.left;
+		top += hdrSize.height;
+	}
+	m_addHeader->Arrange(CRectF(left, top, left + hdrSize.width, top + hdrSize.height));
+
 	if (m_spCurControl) { m_spCurControl->Arrange(GetControlRect()); }
 }
 
@@ -718,7 +755,8 @@ void CTabControl::Dragging_OnExit(const LButtonEndDragEvent& e)
 		ItemsSource.erase(ItemsSource->cbegin() + m_dragFrom);
 		m_dragTo = m_dragTo > m_dragFrom ? m_dragTo - 1 : m_dragTo;
 		ItemsSource.insert(ItemsSource->cbegin() + m_dragTo, temp);
-		UpdateHeaderRects();
+		
+		ArrangeDirty.set(true);
 	}
 	m_dragFrom = -1;
 	m_dragTo = -1;

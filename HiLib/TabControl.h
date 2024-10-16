@@ -190,14 +190,14 @@ public:
 	std::shared_ptr<CD2DWControl>& GetCurrentControlPtr() { return m_spCurControl; }
 	std::optional<size_t> GetPtInHeaderRectIndex(const CPointF& pt)const;
 
-	void UpdateHeaderRects();
+	//void UpdateHeaderRects();
 
 	virtual CRectF GetRectInWnd()const override { return m_rect; }
 	std::function<CRectF&()> GetContentRect;
 	std::function<CRectF&()> GetControlRect;
 
-
-	virtual void ArrangeOverride(const CRectF& rc) override;
+	virtual CSizeF MeasureOverride(const CSizeF& availableSize) override;
+	virtual void ArrangeOverride(const CRectF& finalRect) override;
 
 	/***************/
 	/* UI MessageÅ@*/

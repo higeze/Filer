@@ -39,7 +39,7 @@ public:
 	virtual ~CFilerTabGridView();
 
 	//MeasureArrange
-	virtual CSizeF MeasureOverride(const CSizeF& availableSize) override;
+	//virtual CSizeF MeasureOverride(const CSizeF& availableSize) override;
 
 
 	scoped_connections m_filerConnections;

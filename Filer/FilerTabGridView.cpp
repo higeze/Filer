@@ -72,11 +72,11 @@ CFilerTabGridView::~CFilerTabGridView()
 	auto a = 1.f;
 }
 
-CSizeF CFilerTabGridView::MeasureOverride(const CSizeF& availableSize)
-{
-	m_spCurControl->Measure(availableSize);
-	return m_spCurControl->DesiredSize();
-}
+//CSizeF CFilerTabGridView::MeasureOverride(const CSizeF& availableSize)
+//{
+//	m_spCurControl->Measure(availableSize);
+//	return m_spCurControl->DesiredSize();
+//}
 
 
 void CFilerTabGridView::OnCreate(const CreateEvt& e)
@@ -231,7 +231,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		m_filerConnections.clear();
 		
 		m_filerConnections.push_back(
-			GetFilerViewPtr()->GetFileGridPtr()->Folder.subscribe([&](auto value) { UpdateHeaderRects(); }, shared_from_this()),
+			GetFilerViewPtr()->GetFileGridPtr()->Folder.subscribe([&](auto value) { MeasureDirty.set(true); }, shared_from_this()),
 			spViewModel->Folder.binding(GetFilerViewPtr()->GetFileGridPtr()->Folder)
 		);
 		//spView->GetFileGridPtr()->OpenFolder(pData->FolderPtr);
@@ -277,8 +277,8 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 			spViewModel->Doc.get_unconst()->Status.binding(spView->Status),
 			spViewModel->Doc.get_unconst()->Text.binding(spView->GetTextBoxPtr()->Text),
 			//Subscribe
-			spViewModel->Doc.get_unconst()->Path.subscribe([this](const auto&) { UpdateHeaderRects(); }, shared_from_this()),
-			spViewModel->Doc.get_unconst()->Status.subscribe([this](const auto&) { UpdateHeaderRects(); }, shared_from_this()),
+			spViewModel->Doc.get_unconst()->Path.subscribe([this](const auto&) { MeasureDirty.set(true); }, shared_from_this()),
+			spViewModel->Doc.get_unconst()->Status.subscribe([this](const auto&) { MeasureDirty.set(true); }, shared_from_this()),
 			//Command
 			spViewModel->OpenCommand.binding(spView->OpenCommand),
 			spViewModel->OpenAsCommand.binding(spView->OpenAsCommand),
@@ -334,7 +334,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 
 		//Path
 		m_imageConnections.push_back(
-			spView->GetImageViewPtr()->Image.subscribe([this](auto) { UpdateHeaderRects(); }, shared_from_this()),
+			spView->GetImageViewPtr()->Image.subscribe([this](auto) { MeasureDirty.set(true); }, shared_from_this()),
 			spViewModel->Scale.binding(spView->GetImageViewPtr()->Scale),
 			spViewModel->VScroll.binding(spView->GetImageViewPtr()->GetVScrollPtr()->Position),
 			spViewModel->HScroll.binding(spView->GetImageViewPtr()->GetHScrollPtr()->Position));
@@ -357,7 +357,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 
 		//Path
 		m_prevConnections.push_back(spViewModel->Doc.binding(spView->Doc),
-			spView->Doc.subscribe([this](auto) { UpdateHeaderRects(); }, shared_from_this()));
+			spView->Doc.subscribe([this](auto) { MeasureDirty.set(true); }, shared_from_this()));
 
 		spView->Measure(GetControlRect().Size());
 		spView->Arrange(GetControlRect());

@@ -49,7 +49,7 @@ CSizeF CD2DWControl::MeasureOverride(const CSizeF& availableSize) { return avail
 void CD2DWControl::Arrange(const CRectF& finalRect) 
 {
 	//No Arrange Necessary
-	if (!*ArrangeDirty) {
+	if (!*ArrangeDirty && ArrangedRect() == finalRect) {
 		return;
 	}
 

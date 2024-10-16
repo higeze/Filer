@@ -203,31 +203,17 @@ namespace shell
 	template<class Fn>
 	void for_each_idl_in_shellfolder(HWND hWnd, const CComPtr<IShellFolder>& pFolder, Fn func)
 	{
-		//LOG_SCOPED_TIMER_THIS_1("for_each_idl_in_shellfolder");
-
-		std::vector<CIDL> idls;
-		{
-			//LOG_SCOPED_TIMER_THIS_1("enumeration");
-			CComPtr<IEnumIDList> enumIdl;
-			if (SUCCEEDED(pFolder->EnumObjects(hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
-				CIDL nextIdl;
-				ULONG ulRet(0);
-				while (true) {
-					SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
-					if (!nextIdl) { break; }
-					//func(nextIdl);
-					nextIdl.Clear();
-				}
+		CComPtr<IEnumIDList> enumIdl;
+		if (SUCCEEDED(pFolder->EnumObjects(hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
+			CIDL nextIdl;
+			ULONG ulRet(0);
+			while (true) {
+				SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
+				if (!nextIdl) { break; }
+				func(nextIdl);
+				nextIdl.Clear();
 			}
 		}
-
-		{
-			//LOG_SCOPED_TIMER_THIS_1("creation");
-			for (auto& idl : idls) {
-				func(idl);
-			}
-		}
-
 	}
 
 

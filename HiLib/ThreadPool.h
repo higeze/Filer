@@ -62,7 +62,7 @@ private:
 	bool m_stop;
 
 public:
-	CThreadPool(size_t = std::thread::hardware_concurrency() * 4);
+	CThreadPool(size_t = std::thread::hardware_concurrency() * 2);
 	~CThreadPool();
 
 	int GetTotalThreadCount() const { return m_workers.size(); }
