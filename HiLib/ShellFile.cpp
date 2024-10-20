@@ -55,13 +55,13 @@ CShellFile::CShellFile(const std::wstring& path)
 	Load(path);
 }
 
-CShellFile::CShellFile(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl)
-	:m_pParentShellFolder(pParentShellFolder),m_absoluteIdl(parentIdl + childIdl), m_parentIdl(parentIdl), m_childIdl(childIdl)
-{
-	if (!m_absoluteIdl) {
-		::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, m_absoluteIdl.ptrptr());
-	}
-}
+//CShellFile::CShellFile(const CComPtr<IShellFolder>& pParentShellFolder, const CIDL parentIdl, const CIDL childIdl, const std::wstring& path)
+//	:m_pParentShellFolder(pParentShellFolder),m_absoluteIdl(parentIdl + childIdl), m_parentIdl(parentIdl), m_childIdl(childIdl), m_optPath(path)
+//{
+//	if (!m_absoluteIdl) {
+//		::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, m_absoluteIdl.ptrptr());
+//	}
+//}
 
 CShellFile::~CShellFile() = default;
 

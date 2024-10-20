@@ -63,12 +63,15 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<
 	case shell::FileType::Known:
 		return CKnownFolderManager::GetInstance()->GetKnownFolderByPath(parsed.FilePath);
 	case shell::FileType::Folder:
-		return std::make_shared<CShellFolder>(pParentFolder, parentIdl, childIdl);
+		return std::make_shared<CShellFolder>(pParentFolder, parentIdl, childIdl,
+			arg<"path"_s>() = parsed.FilePath, arg<"path_name"_s>() = parsed.FileName, arg<"path_ext"_s>() = parsed.FileExt);
 	case shell::FileType::Zip:
-		return std::make_shared<CShellZipFolder>(pParentFolder, parentIdl, childIdl);
+		return std::make_shared<CShellZipFolder>(pParentFolder, parentIdl, childIdl,
+			arg<"path"_s>() = parsed.FilePath, arg<"path_name"_s>() = parsed.FileName, arg<"path_ext"_s>() = parsed.FileExt);
 	case shell::FileType::Virtual:
 	case shell::FileType::File:
-		return std::make_shared<CShellFile>(pParentFolder, parentIdl, childIdl);
+		return std::make_shared<CShellFile>(pParentFolder, parentIdl, childIdl,
+			arg<"path"_s>() = parsed.FilePath, arg<"path_name"_s>() = parsed.FileName, arg<"path_ext"_s>() = parsed.FileExt);
 	case shell::FileType::None:
 	default:
 		return std::make_shared<CShellInvalidFile>();

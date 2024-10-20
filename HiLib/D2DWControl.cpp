@@ -53,6 +53,10 @@ void CD2DWControl::Arrange(const CRectF& finalRect)
 		return;
 	}
 
+	if (*MeasureDirty) {
+		Measure(finalRect.Size());
+	}
+
 	//Arrange
 	ArrangeCore(finalRect);
 	ArrangeDirty.set(false);
@@ -78,6 +82,7 @@ CD2DWControl::~CD2DWControl() = default;
 void CD2DWControl::AddChildControlPtr(const std::shared_ptr<CD2DWControl>& pControl)
 {
 	if (std::find(m_childControls.cbegin(), m_childControls.cend(), pControl) == m_childControls.cend()){
+		MeasureDirty.set(true);
 		m_childControls.push_back(pControl);
 		//m_pFocusedControl = pControl;
 	} else {

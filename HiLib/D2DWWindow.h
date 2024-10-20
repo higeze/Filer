@@ -1,4 +1,6 @@
 ﻿#pragma once
+#include <mutex>
+#include <shared_mutex>
 #include "MyWnd.h"
 #include "UIElement.h"
 #include "D2DWControl.h"
@@ -49,8 +51,21 @@ public :
 	void SetCapturedControlPtr(const std::shared_ptr<CD2DWControl>& spControl){ m_pCapturedControl = spControl; }
 	void ReleaseCapturedControlPtr() { m_pCapturedControl = nullptr; }
 
-	std::shared_ptr<CD2DWControl>& GetToolTipControlPtr() { return m_pToolTip; }
-	void SetToolTipControlPtr(const std::shared_ptr<CD2DWControl>& spControl) {m_pToolTip = spControl; }
+private:
+	std::shared_mutex m_toolTipMtx;
+public:
+
+	std::shared_ptr<CD2DWControl>& GetToolTipControlPtr() 
+	{
+		std::shared_lock<std::shared_mutex>(m_toolTipMtx);
+		return m_pToolTip;
+	}
+	void SetToolTipControlPtr(const std::shared_ptr<CD2DWControl>& spControl) 
+	{
+		std::unique_lock<std::shared_mutex> lock(m_toolTipMtx);
+		m_pToolTip = spControl;
+	}
+
 	CDeadlineTimer& GetToolTipDeadlineTimer() { return m_toolTipDeadlineTimer; }
 
 	//template<class _Control>

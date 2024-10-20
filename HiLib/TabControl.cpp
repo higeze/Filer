@@ -500,7 +500,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 					auto header = std::make_shared<CTabHeaderControl>(this);
 					m_headers.idx_insert(m_headers.cbegin() + notify.new_starting_index, header);
 					header->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
-					ArrangeDirty.set(true);
+					header->ArrangeDirty.set(true);
 
 					SelectedIndex.force_notify_set((std::min)((size_t)notify.new_starting_index, ItemsSource->size() - 1));
 					break;

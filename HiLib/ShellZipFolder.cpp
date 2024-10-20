@@ -1,9 +1,5 @@
 #include "ShellZipFolder.h"
 
-CShellZipFolder::CShellZipFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl)
-	:CShellFolder(pParentShellFolder, parentIdl, childIdl){}
-
-
 const std::wstring& CShellZipFolder::GetDispName() const
 {
 	return CShellFile::GetDispName();

@@ -5,6 +5,7 @@
 #include "IDL.h"
 #include "ShellFunction.h"
 #include "JsonSerializer.h"
+#include "named_arguments.h"
 #include <future>
 #include <chrono>
 #include <optional>
@@ -83,7 +84,22 @@ public:
 	//Constructor
 	CShellFile() {}
 	CShellFile(const std::wstring& path);
-	CShellFile(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl);
+	template<typename... _Args>
+	CShellFile(const CComPtr<IShellFolder>& pParentShellFolder, const CIDL parentIdl, const CIDL childIdl, _Args... args)
+		:m_pParentShellFolder(pParentShellFolder), m_absoluteIdl(parentIdl + childIdl), m_parentIdl(parentIdl), m_childIdl(childIdl),
+		m_optPath(::get(arg<"path"_s>(), args..., default_(std::nullopt))),
+		m_optPathName(::get(arg<"path_name"_s>(), args..., default_(std::nullopt))),
+		m_optPathExt(::get(arg<"path_ext"_s>(), args..., default_(std::nullopt)))
+	{
+		if (!m_absoluteIdl) {
+			::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, m_absoluteIdl.ptrptr());
+		}
+		//if (m_pHeaderColumn) {
+		//	m_pHeaderColumn->SetSheetPtr(this);
+		//	PushColumn(m_pHeaderColumn);
+		//}
+
+	}
 	
 	//Operator
 	bool operator != (const CShellFile& rhs) const

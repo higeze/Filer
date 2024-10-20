@@ -19,7 +19,10 @@ public:
 	DECLARE_LAZY_SHAREDPTR_GETTER(CShellFolder, ParentFolder);
 
 public:
-	CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
+	template<typename... _Args>
+	CShellFolder(const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& parentIdl, const CIDL& childIdl, _Args... args)
+		:CShellFile(pParentShellFolder, parentIdl, childIdl, args...), m_pShellFolder(::get(arg<"ishellfolder"_s>(), args..., default_(nullptr))){}
+
 	virtual ~CShellFolder();
 
 	virtual const std::wstring& GetDispName() const override;

@@ -4,8 +4,11 @@
 class CShellZipFolder :public CShellFolder
 {
 public:
-	CShellZipFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl);
-	virtual ~CShellZipFolder(){}
+	template<typename... _Args>
+	CShellZipFolder(const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& parentIdl, const CIDL& childIdl, _Args... args)
+		:CShellFolder(pParentShellFolder, parentIdl, childIdl, args...) {}
+
+	virtual ~CShellZipFolder() = default;
 
 	virtual const std::wstring& GetDispName() const override;
 	virtual const std::wstring& GetDispExt() const override;

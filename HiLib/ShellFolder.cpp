@@ -14,10 +14,6 @@
 
 extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 
-CShellFolder::CShellFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder)
-	:CShellFile(pParentShellFolder, parentIdl, childIdl), m_pShellFolder(pShellFolder) {}
-
-
 CShellFolder::~CShellFolder()
 {
 	*m_spCancelThread = true;

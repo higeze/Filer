@@ -113,10 +113,15 @@ public:
 					std::make_shared<ToolTipProperty>());
 				CPointF pt = pSheet->GetWndPtr()->GetCursorPosInWnd();
 				pt.x += sz.cx / 2;
-				spTT->OnCreate(CreateEvt(pSheet->GetWndPtr(), pSheet->GetWndPtr(), CRectF()));
 				spTT->Content.set(content);
 				spTT->Measure(CSizeF(FLT_MAX, FLT_MAX));
 				spTT->Arrange(CRectF(pt, spTT->DesiredSize()));
+
+				if (spTT->DesiredSize().width <= 0) {
+					auto a = 1.f;
+				}
+
+				spTT->OnCreate(CreateEvt(pSheet->GetWndPtr(), pSheet->GetWndPtr(), CRectF()));
 
 			}, std::chrono::milliseconds(delay));
 		}

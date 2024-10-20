@@ -12,7 +12,7 @@ CSizeF CToolTip::MeasureOverride(const CSizeF& availableSize)
 void CToolTip::OnCreate(const CreateEvt& e)
 {
 	m_pParentControl = e.ParentPtr;
-	m_rect =  e.RectF;
+	//m_rect =  e.RectF;
 	auto p = shared_from_this();
 	GetWndPtr()->SetToolTipControlPtr(std::dynamic_pointer_cast<CToolTip>(shared_from_this()));
 }

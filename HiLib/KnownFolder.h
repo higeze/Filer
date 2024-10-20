@@ -4,7 +4,8 @@
 class CKnownDriveBaseFolder:public CShellFolder
 {
 public:
-	CKnownDriveBaseFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
+	CKnownDriveBaseFolder(const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& parentIdl, const CIDL& childIdl, const CComPtr<IShellFolder>& pShellFolder)
+		:CShellFolder(pParentShellFolder, parentIdl, childIdl, arg<"ishellfolder"_s>() = pShellFolder) {}
 	virtual ~CKnownDriveBaseFolder() {}
 //	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction) override;
 	//virtual const std::wstring& GetDispNameWithoutExt() const override;
@@ -16,7 +17,8 @@ class CKnownFolder:public CKnownDriveBaseFolder
 private:
 	CComPtr<IKnownFolder> m_pKnownFolder;
 public:
-	CKnownFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IKnownFolder>& pKnownFolder, CComPtr<IShellFolder> pShellFolder = nullptr);
+	CKnownFolder(const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& parentIdl, const CIDL& childIdl, const CComPtr<IKnownFolder>& pKnownFolder, const CComPtr<IShellFolder>& pShellFolder)
+		:CKnownDriveBaseFolder(pParentShellFolder, parentIdl, childIdl, pShellFolder), m_pKnownFolder(pKnownFolder) {}
 	virtual ~CKnownFolder(){}
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(const FileSizeArgs& args, std::function<void()> changed = nullptr) override;
 	virtual const std::wstring& GetDispExt() const override;

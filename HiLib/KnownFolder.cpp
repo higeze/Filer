@@ -4,14 +4,6 @@
 #include "Debug.h"
 #include <fmt/format.h>
 
-CKnownDriveBaseFolder::CKnownDriveBaseFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder)
-	:CShellFolder(pParentShellFolder, parentIdl, childIdl, pShellFolder){}
-
-
-
-CKnownFolder::CKnownFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IKnownFolder>& pKnownFolder, CComPtr<IShellFolder> pShellFolder)
-	:CKnownDriveBaseFolder(pParentShellFolder, parentIdl, childIdl, pShellFolder), m_pKnownFolder(pKnownFolder){}
-
 KF_CATEGORY CKnownFolder::GetCategory()
 {
 	KF_CATEGORY category;
