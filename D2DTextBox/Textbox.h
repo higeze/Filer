@@ -77,6 +77,7 @@ public:
 	reactive_wstring_ptr Text;
 	reactive_wstring_ptr EnterText;
 	reactive_property_ptr<CTextCaret> Caret;
+	reactive_property_ptr<bool> SelectAllOnFocus;
 protected:
 	// Caret
 	enum caret
@@ -148,6 +149,8 @@ public:
 	virtual void OnKeyDown(const KeyDownEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnKeyUp(const KeyUpEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override { m_pTextMachine->process_event(e); }
+	virtual void OnPreviewLButtonDown(const LButtonDownEvent& e) override;
+
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override { m_pTextMachine->process_event(e); }
 	virtual void OnMouseMove(const MouseMoveEvent& e) override { m_pTextMachine->process_event(e); }
@@ -237,6 +240,7 @@ public:
 	void BackspaceOne();
 	void DeleteSelection();
 	void SelectAll();
+	void Deselect();
 
 	//void SetText(LPCWSTR str);
 	void CancelEdit();

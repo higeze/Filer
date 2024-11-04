@@ -107,6 +107,7 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 	};
 
 	//File-Text Binding
+	m_spTextBox->SelectAllOnFocus.set(true);
 	m_spTextBox->EnterText.subscribe([this](auto notify) {
 		m_spFileGrid->SetPath(*m_spTextBox->EnterText);
 		m_spFileGrid->SubmitUpdate();

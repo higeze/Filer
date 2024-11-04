@@ -212,7 +212,7 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 	//Insert rows
 	//m_pHeaderRow = std::make_shared<CPathRow>(this, GetHeaderProperty());
 	m_pNameHeaderRow = std::make_shared<CHeaderRow>(this);
-	m_pFilterRow = std::make_shared<CRow>(this);
+	m_pFilterRow = std::make_shared<CHeaderRow>(this);
 
 	//m_allRows.idx_push_back(m_pHeaderRow);
 	m_allRows.idx_push_back(m_pNameHeaderRow);

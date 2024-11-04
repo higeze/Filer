@@ -5,6 +5,9 @@
 #include "CellProperty.h"
 #include "MyPen.h"
 
+#include "HeaderCell.h"
+#include "RowIndexColumn.h"
+
 //Pre-Declaration
 struct MouseEvent;
 struct SetCursorEvent;
@@ -26,27 +29,33 @@ public:
 
 	virtual bool IsTarget(CGridView* pSheet, const MouseEvent& e) override
 	{
-		if (auto cell = pSheet->Cell(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
-			if (auto header = std::dynamic_pointer_cast<CHeaderCell>(cell)) {
-				return true;
-			} else {
-				return false;
-			}
+		if constexpr (std::same_as<TRC, RowTag>) {
+			return IsRowTarget(pSheet, e);
+		} else {
+			return IsColumnTarget(pSheet, e);
+		}
+	}
 
+	bool IsRowTarget(CGridView* pSheet, const MouseEvent& e)
+	{
+		if (auto cell = pSheet->Cell(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
+			auto headercell = std::dynamic_pointer_cast<CHeaderCell>(cell);
+			auto headerrow = dynamic_cast<CHeaderRow*>(cell->GetRowPtr());
+			return headercell && !headerrow;
 		} else {
 			return false;
 		}
-		//auto visIndexes = pSheet->Point2Indexes(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient));
-		//auto v = visIndexes.Get<TRCYou::IndexesTag>();
-		//if (visIndexes.Row < (int)pSheet->GetContainer<RowTag, VisTag>().size() &&
-		//	visIndexes.Row >= 0 &&
-		//	visIndexes.Col < (int)pSheet->GetContainer<ColTag, VisTag>().size() &&
-		//	visIndexes.Col >= 0 &&
-		//	visIndexes.Get<TRCYou::IndexesTag>() < pSheet->GetFrozenCount<TRCYou>()) {
-		//	return true;
-		//}else{
-		//	return false;
-		//}
+	}
+
+	bool IsColumnTarget(CGridView* pSheet, const MouseEvent& e)
+	{
+		if (auto cell = pSheet->Cell(pSheet->GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient))) {
+			auto headercell = std::dynamic_pointer_cast<CHeaderCell>(cell);
+			auto headercolumn = dynamic_cast<CHeaderColumn*>(cell->GetColumnPtr());
+			return headercell && !headercolumn;
+		} else {
+			return false;
+		}
 	}
 
 	void OnBeginDrag(CGridView* pSheet, const MouseEvent& e) override

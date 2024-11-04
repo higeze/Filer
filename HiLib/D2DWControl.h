@@ -90,6 +90,8 @@ public:
 
 	//Mouse Message
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override {}
+	virtual void OnPreviewLButtonDown(const LButtonDownEvent& e) override {}
+
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override {}
 	virtual void OnLButtonClk(const LButtonClkEvent& e) override {}
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) override {}
@@ -156,6 +158,9 @@ public:
 	virtual bool GetIsFocused()const;
 
 	CRectF CalcCenterRectF(const CSizeF& size) const;
+
+	//void Focus();
+
 
 	/*************/
 	/* templates */

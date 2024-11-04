@@ -198,3 +198,51 @@ CRectF CD2DWControl::CalcCenterRectF(const CSizeF& size) const
 		rc.top + (rc.Height() + size.height) / 2);
 }
 
+//void CD2DWControl::Focus()
+//{
+//	//Cur Focused
+//	std::vector<std::shared_ptr<CD2DWControl>> tunnelCurControls;
+//	std::shared_ptr<CD2DWControl> pParentControl = std::dynamic_pointer_cast<CD2DWControl>(shared_from_this());
+//	while (1) {
+//		if (pParentControl->m_pFocusedControl) {
+//			tunnelCurControls.push_back(pParentControl->m_pFocusedControl);
+//			pParentControl = pParentControl->m_pFocusedControl;
+//		}
+//		else {
+//			break;
+//		}
+//	}
+//	//New Focused
+//	std::vector<std::shared_ptr<CD2DWControl>> tunnelNewControls;
+//	pParentControl = std::dynamic_pointer_cast<CD2DWControl>(shared_from_this());
+//	while (1) {
+//		std::vector<std::shared_ptr<CD2DWControl>> childControls = pParentControl->m_childControls;
+//		auto iter = std::find_if(childControls.crbegin(), childControls.crend(),
+//			[&](const std::shared_ptr<CD2DWControl>& pChildControl) {
+//				return *pChildControl->IsEnabled && pChildControl->GetRectInWnd().PtInRect(GetWndPtr()->GetDirectPtr()->Pixels2Dips(GetWndPtr()->GetCursorPosInClient()));
+//			});
+//		if (iter != childControls.crend()) {
+//			tunnelNewControls.push_back(*iter);
+//			pParentControl = *iter;
+//		}
+//		else {
+//			break;
+//		}
+//	}
+//
+//	//Kill Focus Bubble
+//	for (auto iter = tunnelCurControls.rbegin(); iter != tunnelCurControls.rend(); iter++) {
+//		if (std::find(tunnelNewControls.rbegin(), tunnelNewControls.rend(), *iter) == tunnelNewControls.rend()) {
+//			(*iter)->m_pParentControl->m_pFocusedControl = nullptr;
+//			(*iter)->OnKillFocus(KillFocusEvent(GetWndPtr(), 0, 0, nullptr));
+//		}
+//	}
+//	//Focus Bubble
+//	for (auto iter = tunnelNewControls.rbegin(); iter != tunnelNewControls.rend(); iter++) {
+//		if (std::find(tunnelCurControls.rbegin(), tunnelCurControls.rend(), *iter) == tunnelCurControls.rend()) {
+//			(*iter)->m_pParentControl->m_pFocusedControl = *iter;
+//			(*iter)->OnSetFocus(SetFocusEvent(GetWndPtr(), 0, 0, nullptr));
+//		}
+//	}
+//}
+

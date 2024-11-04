@@ -6,13 +6,18 @@
  *  CParentRowHeaderColumn
  *  Most Left side column which show Row number and act as Row header
  */
-class CRowIndexColumn:public CMapColumn
+class CHeaderColumn:public CMapColumn
+{
+	using CMapColumn::CMapColumn;
+};
+
+class CRowIndexColumn:public CHeaderColumn
 {
 protected:
 
 public:
 	CRowIndexColumn(CGridView* pSheet = nullptr)
-		:CMapColumn(pSheet, arg<"isminfit"_s>() = true, arg<"ismaxfit"_s>() = true){}
+		:CHeaderColumn(pSheet, arg<"isminfit"_s>() = true, arg<"ismaxfit"_s>() = true){}
 
 	virtual ~CRowIndexColumn() = default;
 

@@ -44,6 +44,7 @@ CTextBox::CTextBox(
 	Text(text),
 	EnterText(text),
 	Caret(0, text.size(), 0, 0, text.size()),
+	SelectAllOnFocus(false),
 	m_pTextMachine(std::make_unique<CTextBoxStateMachine>(this)),
 	m_pVScroll(std::forward<std::unique_ptr<CVScroll>>(pVScroll)),
 	m_pHScroll(std::forward<std::unique_ptr<CHScroll>>(pHScroll))
@@ -397,6 +398,7 @@ void CTextBox::OnCreate(const CreateEvt& e)
 
 	CD2DWControl::OnCreate(e);
 
+	//Caret.get_unconst()->Set(0, Text->size(), 0, 0, Text->size(), CPointF(0, GetLineHeight() * 0.5f));
 	Caret.get_unconst()->Point.set(CPointF(0, GetLineHeight() * 0.5f));
 	 
 	Text.subscribe([this](auto e)
@@ -463,6 +465,16 @@ void CTextBox::OnMouseWheel(const MouseWheelEvent& e)
 	m_pVScroll->SetScrollPos(m_pVScroll->GetScrollPos() - m_pVScroll->GetDeltaScroll() * e.Delta / WHEEL_DELTA);
 }
 
+void CTextBox::OnPreviewLButtonDown(const LButtonDownEvent& e)
+{
+	if (!*SelectAllOnFocus || GetIsFocused()) {
+		return;
+	} else {
+		*e.HandledPtr = TRUE;
+	}
+}
+
+
 /*****************/
 /* State Machine */
 /*****************/
@@ -505,6 +517,9 @@ void CTextBox::Normal_Paint(const PaintEvent& e)
 void CTextBox::Normal_SetFocus(const SetFocusEvent& e)
 {
 	FAILED_THROW(CTSFManager::GetInstance()->GetThreadMgrPtr()->SetFocus(GetDocumentMgrPtr()));
+	if (*SelectAllOnFocus) {
+		SelectAll();
+	}
 	m_isFirstDrawCaret = true;
 }
 
@@ -514,7 +529,10 @@ void CTextBox::Normal_KillFocus(const KillFocusEvent& e)
 	if (m_isEnterText) {
 		EnterText.set(*Text);
 	}
-
+	
+	if (*SelectAllOnFocus) {
+		Deselect();
+	}
 	StopCaretBlink();
 	TerminateCompositionString();
 }
@@ -1158,7 +1176,12 @@ void CTextBox::DeleteSelection()
 
 void CTextBox::SelectAll()
 {
-	Caret.get_unconst()->Select(0, Text->size(), GetOriginCharRects()[Text->size()].CenterPoint());
+	Caret.get_unconst()->Select(0, Text->size(), Text->empty()?CPointF():GetOriginCharRects()[Text->size()].CenterPoint());
+}
+
+void CTextBox::Deselect()
+{
+	Caret.get_unconst()->Select(0, 0, GetOriginCharRects().empty()?CPointF():GetOriginCharRects()[0].CenterPoint());
 }
 
 void CTextBox::ClearText()
@@ -1236,9 +1259,18 @@ void CTextBox::PaintSelection(const PaintEvent& e)
 {
 	const std::vector<CRectF>& selCharRects = GetActualSelectionCharRects();
 	for (auto n = *Caret->SelectedBegin; n < *Caret->SelectedEnd; n++) {
-		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(
-			SolidFill(CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)),
-			selCharRects[n]);
+		if (GetIsFocused()) {
+			GetWndPtr()->GetDirectPtr()->FillSolidRectangle(
+				GetSelectedOverlay(),
+				//SolidFill(CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)),
+				selCharRects[n]);
+		}
+		else {
+			GetWndPtr()->GetDirectPtr()->FillSolidRectangle(
+				GetUnfocusSelectedOverlay(),
+				//SolidFill(CColorF(0, 140.f / 255, 255.f / 255, 100.f / 255)),
+				selCharRects[n]);
+		}
 	}
 }
 

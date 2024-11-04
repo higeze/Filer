@@ -418,5 +418,43 @@ void CD2DWWindow::OnMouseLeave(const MouseLeaveEvent& e)
 }
 
 
+std::vector<std::shared_ptr<CD2DWControl>> CD2DWWindow::GetCurrentFocusedTunnelControls() const
+{
+	std::vector<std::shared_ptr<CD2DWControl>> tunnelControls;
+	std::shared_ptr<const CD2DWControl> pParentControl = std::dynamic_pointer_cast<const CD2DWControl>(shared_from_this());
+	while (1) {
+		if (pParentControl->m_pFocusedControl) {
+			tunnelControls.push_back(pParentControl->m_pFocusedControl);
+			pParentControl = pParentControl->m_pFocusedControl;
+		}
+		else {
+			break;
+		}
+	}
+	return tunnelControls;
+}
+
+std::vector<std::shared_ptr<CD2DWControl>> CD2DWWindow::GetMouseFocusedTunnelControls() const
+{
+	std::vector<std::shared_ptr<CD2DWControl>> tunnelControls;
+	std::shared_ptr<const CD2DWControl> pParentControl = std::dynamic_pointer_cast<const CD2DWControl>(shared_from_this());
+	while (1) {
+		std::vector<std::shared_ptr<CD2DWControl>> childControls = pParentControl->m_childControls;
+		auto iter = std::find_if(childControls.crbegin(), childControls.crend(),
+			[pt = GetCursorPosInWnd()](const std::shared_ptr<CD2DWControl>& pChildControl) {
+				return *pChildControl->IsEnabled && pChildControl->GetRectInWnd().PtInRect(pt);
+			});
+		if (iter != childControls.crend()) {
+			tunnelControls.push_back(*iter);
+			pParentControl = *iter;
+		}
+		else {
+			break;
+		}
+	}
+	return tunnelControls;
+}
+
+
 
 
