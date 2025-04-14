@@ -518,18 +518,18 @@
 		}
 	}
 
-	CComPtr<IDWriteTextLayout>& CDirect2DWrite::GetTextLayout(const FormatF& format, const std::wstring& text, const CSizeF& size)
+	CComPtr<IDWriteTextLayout> CDirect2DWrite::GetTextLayout(const FormatF& format, const std::wstring& text, const CSizeF& size)
 	{
-		auto mapIter = m_textLayoutMap.find(format);
-		if (mapIter == m_textLayoutMap.end()) {
-			m_textLayoutMap.insert(std::make_pair(format, concurrency::concurrent_unordered_map<std::pair<std::wstring, CSizeF>, CComPtr<IDWriteTextLayout>, StrSizeHash, StrSizeEqual>()));
-			mapIter = m_textLayoutMap.find(format);
-		}
+		//auto mapIter = m_textLayoutMap.find(format);
+		//if (mapIter == m_textLayoutMap.end()) {
+		//	m_textLayoutMap.insert(std::make_pair(format, concurrency::concurrent_unordered_map<std::pair<std::wstring, CSizeF>, CComPtr<IDWriteTextLayout>, StrSizeHash, StrSizeEqual>()));
+		//	mapIter = m_textLayoutMap.find(format);
+		//}
 
-		auto layoutIter = mapIter->second.find(std::make_pair(text, size));
-		if (layoutIter != mapIter->second.end()) {
-			return layoutIter->second;
-		} else {
+		//auto layoutIter = mapIter->second.find(std::make_pair(text, size));
+		//if (layoutIter != mapIter->second.end()) {
+		//	return layoutIter->second;
+		//} else {
 			CComPtr<IDWriteTextLayout> pTextLayout = NULL;
 			if (FAILED(GetDWriteFactory()->CreateTextLayout(text.c_str(), text.size(), GetTextFormat(format), size.width, size.height, &pTextLayout))) {
 				throw std::exception(FILE_LINE_FUNC);
@@ -546,10 +546,11 @@
 				range.length = text.size();
 				pTextLayout->SetTypography(typo, range);
 
-				auto ret = mapIter->second.insert(std::make_pair(std::make_pair(text, size), pTextLayout));
-				return ret.first->second;
+				return pTextLayout;
+				//auto ret = mapIter->second.insert(std::make_pair(std::make_pair(text, size), pTextLayout));
+				//return ret.first->second;
 			}
-		}
+		//}
 	}
 
 	FLOAT CDirect2DWrite::GetVirtualHeight(const FormatF& format)

@@ -776,18 +776,20 @@ public:
 			pntContainer.idx_push_back(*iter);
 		}
 		//Find Displayed Plus Elements
-		auto beginIter=std::upper_bound(cellBegin, visContainer.end(), pageFirst,
-			[this](const FLOAT& x, const auto& ptr)->bool { return x < ptr->GetStart(); });
-		if(beginIter != cellBegin){
-			--beginIter;
-		}
-		auto endIter = std::lower_bound(cellBegin, visContainer.end(), pageLast,
-			[this](const auto& ptr, const FLOAT& x)->bool { return x > ptr->GetEnd(); });
-		if(endIter != visContainer.end()){
-			++endIter;
-		}
-		for (auto iter = beginIter; iter != endIter; ++iter) {
-			pntContainer.idx_push_back(*iter);
+		if (pageFirst < pageLast) {
+			auto beginIter=std::upper_bound(cellBegin, visContainer.end(), pageFirst,
+				[this](const FLOAT& x, const auto& ptr)->bool { return x < ptr->GetStart(); });
+			if(beginIter != cellBegin){
+				--beginIter;
+			}
+			auto endIter = std::lower_bound(cellBegin, visContainer.end(), pageLast,
+				[this](const auto& ptr, const FLOAT& x)->bool { return x > ptr->GetEnd(); });
+			if(endIter != visContainer.end()){
+				++endIter;
+			}
+			for (auto iter = beginIter; iter != endIter; ++iter) {
+				pntContainer.idx_push_back(*iter);
+			}
 		}
 	}
 

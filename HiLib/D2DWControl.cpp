@@ -38,13 +38,23 @@ void CD2DWControl::Measure(const CSizeF& availableSize)
 CSizeF CD2DWControl::MeasureCore(const CSizeF& availableSize) 
 {
 	//Add Margin
-	CSizeF frameworkAvailableSize = availableSize - GetMargin().Size();
-	CSizeF desiredSize = MeasureOverride(frameworkAvailableSize);
-	desiredSize += GetMargin().Size();
-	return desiredSize;
+	CSizeF marginSize(GetMargin().left+GetMargin().right, GetMargin().top+GetMargin().bottom);
+	CSizeF frameworkAvailableSize = availableSize - marginSize;
+	return MeasureOverride(frameworkAvailableSize) + marginSize;
 }
 
-CSizeF CD2DWControl::MeasureOverride(const CSizeF& availableSize) { return availableSize; }
+CSizeF CD2DWControl::MeasureOverride(const CSizeF& availableSize) 
+{ 
+	CSizeF paddingSize(GetPadding().left + GetPadding().right, GetPadding().top + GetPadding().bottom);
+	CSizeF borderSize(GetNormalBorder().Width, GetNormalBorder().Width);
+	CSizeF contentAvailableSize = availableSize - paddingSize - borderSize;
+	return MeasureContent(contentAvailableSize) + paddingSize + borderSize;
+}
+
+CSizeF CD2DWControl::MeasureContent(const CSizeF& availableSize)
+{
+	return availableSize;
+}
 
 void CD2DWControl::Arrange(const CRectF& finalRect) 
 {

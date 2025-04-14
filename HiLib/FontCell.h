@@ -15,5 +15,5 @@ public:
 
 	virtual void OnLButtonClk(MouseEvent& e);
 
-	virtual std::wstring GetString();
+	virtual std::wstring GetString() const override;
 };

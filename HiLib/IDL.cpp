@@ -190,11 +190,15 @@ CIDL CIDL::operator + ( const CIDL& idl ) const
 //Constructor
 CIDL::CIDL(LPITEMIDLIST pidl):m_pIDL(pidl){}
 CIDL::CIDL(LPCWSTR lpszPath):m_pIDL(::ILCreateFromPath(lpszPath)){}
-CIDL::CIDL(const CIDL& idlPtr):m_pIDL(nullptr)
+CIDL::CIDL(const CIDL& idl):m_pIDL(nullptr)
 {
-	if(idlPtr){
-		m_pIDL = ::ILCloneFull(idlPtr.m_pIDL);	
+	if(idl){
+		m_pIDL = ::ILCloneFull(idl.m_pIDL);	
 	}
+}
+CIDL::CIDL(CIDL&& idl) :m_pIDL(idl.m_pIDL)
+{
+	idl.m_pIDL = nullptr;
 }
 
 //Destructor
@@ -207,24 +211,31 @@ CIDL::~CIDL()
 }
 
 //Operator=
-CIDL& CIDL::operator=(const CIDL& idlPtr)
+CIDL& CIDL::operator=(const CIDL& idl)
 {
-	if(*this!=idlPtr){
-		m_pIDL = ::ILCloneFull(idlPtr.m_pIDL);
+	if(*this!=idl){
+		Attach(::ILCloneFull(idl.m_pIDL));
+	}
+	return *this;
+}
+CIDL& CIDL::operator=(CIDL&& idl)
+{
+	if (*this != idl) {
+		Attach(idl.m_pIDL);
+		idl.m_pIDL = nullptr;
 	}
 	return *this;
 }
 
-bool CIDL::operator==(const CIDL& idlPtr) const
+bool CIDL::operator==(const CIDL& idl) const
 {
-	return ::ILIsEqual(m_pIDL, idlPtr.m_pIDL);
+	return ::ILIsEqual(m_pIDL, idl.m_pIDL);
 }
 
-bool CIDL::operator!=(const CIDL& idlPtr) const
+bool CIDL::operator!=(const CIDL& idl) const
 {
-	return !operator==(idlPtr);
+	return !operator==(idl);
 }
-
 
 //Attach
 void CIDL::Attach(LPITEMIDLIST pIDL)

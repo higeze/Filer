@@ -41,11 +41,6 @@ public:
 	//std::shared_ptr<CToDoNameColumn> Clone()const { return std::shared_ptr<CToDoNameColumn>(CloneRaw()); }
 	std::function<ReactiveVectorProperty<std::tuple<TValueItem>>&(std::tuple<TItem>&)> GetItemser() const { return m_itemser; }
 
-	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-	{
-		return std::make_shared<CCell>(m_pGrid, pRow, pColumn, m_pGrid->GetCellProperty());
-	}
-
 	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		return std::make_shared<CHeaderSortCell>(m_pGrid, pRow, pColumn, m_pGrid->GetHeaderProperty(), arg<"text"_s>() = m_header);

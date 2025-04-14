@@ -28,7 +28,7 @@ CCopyMoveDlgBase::CCopyMoveDlgBase(
 		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(
 			shell::DesktopBindToShellFolder(m_srcIDL),
 			m_srcIDL,
-			childIDL);
+			std::move(childIDL));
 		ItemsSource.push_back(
 			std::make_tuple(
 				spFile,
@@ -214,7 +214,7 @@ CDeleteDlg::CDeleteDlg(
 		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(
 			shell::DesktopBindToShellFolder(m_srcIDL),
 			m_srcIDL,
-			childIDL);
+			std::move(childIDL));
 		ItemsSource.push_back(spFile);
 	}
 

@@ -30,11 +30,6 @@ public:
 
 	reactive_property_ptr<CYearMonthDay>& GetProperty(T& data) const { return this->m_path(data); }
 
-	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-	{
-		return std::make_shared<CCell>(this->m_pGrid, pRow, pColumn);
-	}
-
 	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		return std::make_shared<CHeaderSortCell>(this->m_pGrid, pRow, pColumn, arg<"text"_s>() = this->m_header);

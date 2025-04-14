@@ -37,7 +37,7 @@ bool CCellTextBox::GetIsVisible()const
 	return m_pCell->GetIsVisible();
 }
 
-CRectF CCellTextBox::GetRectInWnd() const
+CRectF CCellTextBox::RenderRect() const
 {
 	//return m_pCell->GetEditRect();
 	CRectF rc = m_pCell->GetEditRect();

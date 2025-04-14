@@ -13,10 +13,10 @@ bool CPathCell::IsLeftestCell()const
 	return m_pColumn->GetIndex<VisTag>() == m_pGrid->GetFrozenCount<ColTag>();
 }
 
-std::wstring CPathCell::GetString()
+std::wstring CPathCell::GetString() const
 {
 	//if (IsLeftestCell()) {
-		return static_cast<CFilerGridView*>(m_pGrid)->GetPath();
+		return static_cast<const CFilerGridView*>(m_pGrid)->GetPath();
 	//} else {
 	//	return std::wstring();
 	//}

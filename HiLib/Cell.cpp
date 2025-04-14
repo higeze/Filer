@@ -276,7 +276,7 @@ void CCell::SetIsChecked(const bool& bChecked)
 	}
 }
 
-std::wstring CCell::GetString()
+std::wstring CCell::GetString() const
 {
 	return std::wstring();
 }

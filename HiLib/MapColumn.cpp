@@ -65,11 +65,6 @@
 //	container.erase(pair.first, pair.second);
 //}
 
-std::shared_ptr<CCell> CMapColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-{
-	return std::make_shared<CColumnIndexCell>(m_pGrid,pRow,pColumn);
-}
-
 std::shared_ptr<CCell> CMapColumn::NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CHeaderSortCell>(m_pGrid,pRow,pColumn);

@@ -142,12 +142,15 @@ public:
 	void Measure(const CSizeF& availableSize);
 	virtual CSizeF MeasureCore(const CSizeF& availableSize);
 	virtual CSizeF MeasureOverride(const CSizeF& availableSize);
+	virtual CSizeF MeasureContent(const CSizeF& availableSize);
 
 	virtual CSizeF DesiredSize() const { return m_size; }
 	virtual CRectF ArrangedRect() const { return m_rect; }
 
 	virtual CSizeF RenderSize() const { return CSizeF(m_size.width - GetMargin().Width(), m_size.height - GetMargin().Height()); }
 	virtual CRectF RenderRect() const { return m_rect.DeflateRectCopy(GetMargin()); }
+	virtual CRectF BorderRect() const { return RenderRect().DeflateRectCopy(GetNormalBorder().Width * 0.5f); }
+	virtual CRectF ContentRect() const { return BorderRect().DeflateRectCopy(GetPadding()); }
 
 	void Arrange(const CRectF& finalRect);
 	virtual void ArrangeCore(const CRectF& finalRect);

@@ -26,10 +26,7 @@ public:
 
 	reactive_property_ptr<CheckBoxState>& GetProperty(T& data) const { return m_path(data); }
 
-	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-	{
-		return std::make_shared<CCell>(m_pGrid, pRow, pColumn);
-	}
+	
 
 	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{

@@ -283,7 +283,7 @@ namespace std
 		void BeginDraw(HDC hDC);
 		CComPtr<ID2D1SolidColorBrush>& GetColorBrush(const CColorF& color);
 		CComPtr<IDWriteTextFormat>& GetTextFormat(const FormatF& fca);
-		CComPtr<IDWriteTextLayout>& GetTextLayout(const FormatF& format, const std::wstring& text, const CSizeF& size);
+		CComPtr<IDWriteTextLayout> GetTextLayout(const FormatF& format, const std::wstring& text, const CSizeF& size);
 		FLOAT GetVirtualHeight(const FormatF& format);
 		void ClearTextLayoutMap() { m_textLayoutMap.clear(); }
 		void ClearSolid(const SolidFill& fill);

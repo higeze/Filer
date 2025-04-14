@@ -13,8 +13,10 @@ public:
 	explicit CIDL(LPITEMIDLIST pIdl=nullptr);
 	CIDL(LPCWSTR lpszPath);
 	CIDL(const CIDL& idlPtr);
+	CIDL(CIDL&&);
 	//Operator
 	CIDL& operator=(const CIDL& idl);
+	CIDL& operator=(CIDL&&);
 	bool operator==(const CIDL& idl) const;
 	bool operator!=(const CIDL& idl) const;
 	CIDL operator + (const CIDL& idl) const;

@@ -54,7 +54,7 @@ shell::ParsedFileType CShellFileFactory::ParseFileType(
 }
 
 
-std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<IShellFolder>& pParentFolder, const CIDL& parentIdl, const CIDL& childIdl)
+std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<IShellFolder>& pParentFolder, const CIDL& parentIdl, CIDL&& childIdl)
 {
 	auto parsed = ParseFileType(pParentFolder, childIdl);
 	switch (parsed.FileType) {
@@ -63,15 +63,15 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<
 	case shell::FileType::Known:
 		return CKnownFolderManager::GetInstance()->GetKnownFolderByPath(parsed.FilePath);
 	case shell::FileType::Folder:
-		return std::make_shared<CShellFolder>(pParentFolder, parentIdl, childIdl,
-			arg<"path"_s>() = parsed.FilePath, arg<"path_name"_s>() = parsed.FileName, arg<"path_ext"_s>() = parsed.FileExt);
+		return std::make_shared<CShellFolder>(pParentFolder, parentIdl, std::forward<CIDL>(childIdl),
+			std::move(parsed.FilePath), std::move(parsed.FileName), std::move(parsed.FileExt));
 	case shell::FileType::Zip:
-		return std::make_shared<CShellZipFolder>(pParentFolder, parentIdl, childIdl,
-			arg<"path"_s>() = parsed.FilePath, arg<"path_name"_s>() = parsed.FileName, arg<"path_ext"_s>() = parsed.FileExt);
+		return std::make_shared<CShellZipFolder>(pParentFolder, parentIdl, std::forward<CIDL>(childIdl),
+			std::move(parsed.FilePath), std::move(parsed.FileName), std::move(parsed.FileExt));
 	case shell::FileType::Virtual:
 	case shell::FileType::File:
-		return std::make_shared<CShellFile>(pParentFolder, parentIdl, childIdl,
-			arg<"path"_s>() = parsed.FilePath, arg<"path_name"_s>() = parsed.FileName, arg<"path_ext"_s>() = parsed.FileExt);
+		return std::make_shared<CShellFile>(pParentFolder, parentIdl, std::forward<CIDL>(childIdl),
+			std::move(parsed.FilePath), std::move(parsed.FileName), std::move(parsed.FileExt));
 	case shell::FileType::None:
 	default:
 		return std::make_shared<CShellInvalidFile>();
@@ -120,7 +120,7 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const std::wst
 				CIDL parentIDL = absIdl.CloneParentIDL();
 				CComPtr<IShellFolder>  pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
 
-				return CreateShellFilePtr(pParentFolder, parentIDL, absIdl.CloneLastID());
+				return CreateShellFilePtr(pParentFolder, parentIDL, std::move(absIdl.CloneLastID()));
 			}
 		}
 	}

@@ -21,14 +21,15 @@ CImageEditor::CImageEditor(CD2DWControl* pParentControl)
 	m_spPercentBlock(std::make_shared<CTextBlock>(this))
 {
 	m_spPercentBlock->Text.set(L"%");
+	m_spScaleBox->Text.set(L"000.0");
 }
 
 std::tuple<CRectF, CRectF, CRectF, CRectF> CImageEditor::GetRects() const
 {
 	CRectF rcClient = GetRectInWnd();
 
-	CSizeF percentSize = m_spPercentBlock->MeasureSize(L"%");
-	CSizeF scaleSize = m_spScaleBox->MeasureSize(L"000.0");
+	CSizeF percentSize = m_spPercentBlock->DesiredSize();
+	CSizeF scaleSize = m_spScaleBox->DesiredSize();
 	FLOAT statusHeight = m_spStatusBar->MeasureSize(L"").height;
 	FLOAT maxHeight = (std::max)(percentSize.height, scaleSize.height);
 
@@ -100,6 +101,17 @@ void CImageEditor::OnPaint(const PaintEvent& e)
 	m_spStatusBar->OnPaint(e);
 
 
+}
+
+CSizeF CImageEditor::MeasureContent(const CSizeF& avilableSize)
+{
+	m_spScaleBox->Measure(avilableSize);
+	m_spPercentBlock->Measure(avilableSize);
+	m_spImageView->Measure(avilableSize);
+	m_spStatusBar->Measure(avilableSize);
+	return CSizeF(
+		(std::max)({ m_spScaleBox->DesiredSize().width + m_spScaleBox->DesiredSize().width, m_spImageView->DesiredSize().width, m_spStatusBar->DesiredSize().width }),
+		(std::max)({ m_spScaleBox->DesiredSize().height + m_spScaleBox->DesiredSize().height }) + m_spImageView->DesiredSize().height + m_spStatusBar->DesiredSize().height);
 }
 
 void CImageEditor::ArrangeOverride(const CRectF& rc)

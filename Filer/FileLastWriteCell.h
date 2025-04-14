@@ -33,17 +33,18 @@ public:
 		m_conLastWriteChanged.disconnect();
 	}
 
-	virtual std::wstring GetString() override
+	virtual std::wstring GetString() const override
 	{
 		try {
 			auto spFile = GetShellFile();
-			std::weak_ptr<CFileLastWriteCell<T>> wp(std::dynamic_pointer_cast<CFileLastWriteCell<T>>(shared_from_this()));
-			auto changed = [wp]()->void {
+			auto changed = [wp = std::weak_ptr<const CFileLastWriteCell>(std::dynamic_pointer_cast<const CFileLastWriteCell<T>>(shared_from_this()))]()->void {
 				if (auto sp = wp.lock()) {
 					sp->m_conDelayUpdateAction = sp->GetGridPtr()->SignalPreDelayUpdate.connect(
 						[wp]()->void {
 							if (auto sp = wp.lock()) {
-								sp->OnPropertyChanged(L"value");
+								if (auto nonconst_sp = std::const_pointer_cast<CFileLastWriteCell<T>>(sp)) {
+									nonconst_sp->OnPropertyChanged(L"value");
+								}
 							}
 						});
 					sp->GetGridPtr()->DelayUpdate();
@@ -76,7 +77,7 @@ public:
 
 
 private:
-	virtual std::shared_ptr<CShellFile> GetShellFile()
+	virtual std::shared_ptr<CShellFile> GetShellFile() const
 	{
 		if (auto p = dynamic_cast<CBindRow<T>*>(m_pRow)) {
 			return p->GetItem<std::shared_ptr<CShellFile>>();

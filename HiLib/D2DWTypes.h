@@ -320,10 +320,25 @@ struct CRectT :public TRect
 	size_type Size() const{ return size_type(this->Width(), this->Height()); }
 
 	void InflateRect(T x, T y) { this->left -= x; this->right += x; this->top -= y; this->bottom += y; }
-	void DeflateRect(T x, T y) { this->left += x; this->right -= x; this->top += y; this->bottom -= y; }
 	void InflateRect(T x) { this->left -= x; this->right += x; this->top -= x; this->bottom += x; }
+	void DeflateRect(T x, T y) { this->left += x; this->right -= x; this->top += y; this->bottom -= y; }
 	void DeflateRect(T x) { this->left += x; this->right -= x; this->top += x; this->bottom -= x; }
-	rect_type DeflateRectCopy(T x) { return rect_type(this->left + x, this->top + x, this->right - x, this->bottom - x); }
+	void DeflateRect(const rect_type& rc)
+	{
+		this->left += rc.left;
+		this->top += rc.top;
+		this->right -= rc.right;
+		this->bottom -= rc.bottom;
+	}
+	rect_type DeflateRectCopy(T x) const { return rect_type(this->left + x, this->top + x, this->right - x, this->bottom - x); }
+	rect_type DeflateRectCopy(const rect_type& rc) const
+	{
+		return rect_type(
+			this->left + rc.left,
+			this->top + rc.top,
+			this->right - rc.right,
+			this->bottom - rc.bottom);
+	}
 	bool PtInRect(const point_type& pt) const { return pt.x >= this->left && pt.x <= this->right && pt.y >= this->top && pt.y <= this->bottom; }
 	bool RectInRect(const rect_type& rc) const { return rc.left >= this->left && rc.top >= this->top && rc.right <= this->right && rc.bottom <= this->bottom; }
 	bool SizeInRect(const size_type& sz) const { return sz.W() <= this->Width() && sz.H() <= this->Height(); }
@@ -361,22 +376,6 @@ struct CRectT :public TRect
 		this->top -= rc.top;
 		this->right += rc.right;
 		this->bottom += rc.bottom;
-	}
-	void DeflateRect(const rect_type& rc)
-	{
-		this->left += rc.left;
-		this->top += rc.top;
-		this->right -= rc.right;
-		this->bottom -= rc.bottom;
-	}
-
-	rect_type DeflateRectCopy(const rect_type& rc) const
-	{
-		return rect_type(
-			this->left + rc.left,
-			this->top + rc.top,
-			this->right - rc.right,
-			this->bottom - rc.bottom);
 	}
 
 	//const TRect* operator&() const

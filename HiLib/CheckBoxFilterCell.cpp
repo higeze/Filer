@@ -113,7 +113,7 @@ void CCheckBoxFilterCell::SetStringCore(const std::wstring& str)
 	}, std::chrono::milliseconds(200));
 }
 
-std::wstring CCheckBoxFilterCell::GetString()
+std::wstring CCheckBoxFilterCell::GetString() const
 { 
 	return m_pColumn->GetFilter();
 }

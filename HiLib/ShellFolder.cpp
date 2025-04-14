@@ -90,7 +90,7 @@ const std::shared_ptr<CShellFolder>& CShellFolder::GetParentFolderPtr() const
 		CIDL grandParentIDL = parentIDL.CloneParentIDL();
 		CComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
 		CComPtr<IShellFolder> pGrandParentFolder = shell::DesktopBindToShellFolder(grandParentIDL);
-		m_pParentFolder =  std::static_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pGrandParentFolder, grandParentIDL, parentIDL.CloneLastID()));
+		m_pParentFolder =  std::static_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pGrandParentFolder, grandParentIDL, std::move(parentIDL.CloneLastID())));
 	}
 	return m_pParentFolder;
 	//return std::make_shared<CShellFolder>(pGrandParentFolder, grandParentIDL, parentIDL.CloneLastID(), pParentFolder);
@@ -370,7 +370,7 @@ void CShellFolder::SetExt(const std::wstring& wstrExt, HWND hWnd)
 	//Do nothing
 }
 
-std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const CIDL& childIdl) const
+std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL&& childIdl) const
 {
-	return CShellFileFactory::GetInstance()->CreateShellFilePtr(GetShellFolderPtr(), GetAbsoluteIdl(), childIdl);
+	return CShellFileFactory::GetInstance()->CreateShellFilePtr(GetShellFolderPtr(), GetAbsoluteIdl(), std::forward<CIDL>(childIdl));
 }

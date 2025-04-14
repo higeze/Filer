@@ -71,9 +71,9 @@ class CShellFile: public std::enable_shared_from_this<CShellFile>
 {
 protected:
 	CComPtr<IShellFolder> m_pParentShellFolder;
-	CIDL m_absoluteIdl;
 	CIDL m_parentIdl;
 	CIDL m_childIdl;
+	CIDL m_absoluteIdl;
 
 	std::pair<FileTimes, FileTimeStatus> m_fileTimes = std::make_pair(FileTimes(), FileTimeStatus::None);
 
@@ -84,6 +84,20 @@ public:
 	//Constructor
 	CShellFile() {}
 	CShellFile(const std::wstring& path);
+
+	CShellFile(CComPtr<IShellFolder>&& pParentShellFolder, CIDL&& parentIDL, CIDL&& childIDL, std::wstring&& path, std::wstring&& path_name, std::wstring&& path_ext)
+		:m_pParentShellFolder(std::forward<CComPtr<IShellFolder>>(pParentShellFolder)),
+		m_parentIdl(std::forward<CIDL>(parentIDL)), 
+		m_childIdl(std::forward<CIDL>(childIDL)),
+		m_optPath(std::forward<std::wstring>(path)),
+		m_optPathName(std::forward<std::wstring>(path_name)),
+		m_optPathExt(std::forward<std::wstring>(path_ext)),
+		m_absoluteIdl(m_parentIdl + m_childIdl)
+	{
+		if (!m_absoluteIdl) {
+			::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, m_absoluteIdl.ptrptr());
+		}
+	}
 	template<typename... _Args>
 	CShellFile(const CComPtr<IShellFolder>& pParentShellFolder, const CIDL parentIdl, const CIDL childIdl, _Args... args)
 		:m_pParentShellFolder(pParentShellFolder), m_absoluteIdl(parentIdl + childIdl), m_parentIdl(parentIdl), m_childIdl(childIdl),

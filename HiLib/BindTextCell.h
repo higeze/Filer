@@ -17,7 +17,7 @@ public:
 
 	virtual ~CBindTextCell() = default;
 
-	virtual std::wstring GetString() override
+	virtual std::wstring GetString() const override
 	{
 		auto pBindRow = static_cast<CBindRow<T>*>(this->m_pRow);
 		auto pBindColumn = static_cast<CBindTextColumn<T>*>(this->m_pColumn);
@@ -50,7 +50,7 @@ public:
 
 	virtual ~CBindTextCell2() = default;
 
-	virtual std::wstring GetString() override
+	virtual std::wstring GetString() const override
 	{
 		return m_getter();
 	}

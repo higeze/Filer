@@ -36,7 +36,6 @@
 #include "MenuItem.h"
 #include "ShowHideMenuItem.h"
 
-#include "PathRow.h"
 #include "KnownFolder.h"
 #include "DriveFolder.h"
 #include "Scroll.h"

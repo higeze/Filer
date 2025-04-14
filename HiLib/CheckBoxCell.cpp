@@ -9,7 +9,7 @@ CCheckBoxCell::CCheckBoxCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
 	m_checkBox.State.subscribe([this](const CheckBoxState& state) { OnPropertyChanged(L"value"); }, Dummy);
 }
 
-std::wstring CCheckBoxCell::GetString()
+std::wstring CCheckBoxCell::GetString() const
 { 
 	return State2Str(*m_checkBox.State);
 }

@@ -23,6 +23,6 @@ public:
 		return &factory;
 	}
 	shell::ParsedFileType ParseFileType(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL);
-	std::shared_ptr<CShellFile> CreateShellFilePtr(const CComPtr<IShellFolder>& pShellFolder, const CIDL& parentIdl, const CIDL& childIdl);
+	std::shared_ptr<CShellFile> CreateShellFilePtr(const CComPtr<IShellFolder>& pShellFolder, const CIDL& parentIdl, CIDL&& childIdl);
 	std::shared_ptr<CShellFile> CreateShellFilePtr(const std::wstring& path);
 };

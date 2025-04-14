@@ -17,33 +17,46 @@ public:
         return { std::move(f) };
     }
 
-    template<class TRect,class Func>
-    friend auto operator | (std::future<TRect> fut, Param<Func> param)->std::future<decltype(param.func(fut.get()))>
-    {
-        auto fun = [](std::future<TRect> fut, Func func)
-        {
-            return func(fut.get());
-        };
-        return CThreadPool::GetInstance()->enqueue(
-            std::move(fun),
-            0,
-            std::move(fut),
-            std::move(param.func));
-    }
+    //template<class T,class Func>
+    //friend auto operator | (std::future<T> fut, Param<Func> param)->std::future<decltype(param.func(fut.get()))>
+    //{
+    //    auto fun = [](std::future<T> fut, Func func)
+    //    {
+    //        return func(fut.get());
+    //    };
+    //    return CThreadPool::GetInstance()->enqueue(
+    //        "then",
+    //        0,
+    //        std::move(fun),
+    //        std::move(fut),
+    //        std::move(param.func));
+    //}
 
     template <class Func>
     friend auto operator | (std::future<void> fut, Param<Func> param)->std::future<decltype(param.func())>
     {
-        auto fun = [](std::future<void> fut, Func func)
-        {
-            fut.wait();
-            return func();
-        };
+        auto fun = [fut = std::move(fut), func = std::move(param.func)]()mutable ->decltype(param.func())
+            {
+                fut.wait();
+                return func();
+            };
         return CThreadPool::GetInstance()->enqueue(
-            std::move(fun),
+            "then",
             0,
-            std::move(fut),
-            std::move(param.func));
+            std::move(fun));
+
+        //auto fun = [](std::future<void> fut, Func func)->decltype(func())
+        //{
+        //    fut.wait();
+        //    return func();
+        //};
+        //return CThreadPool::GetInstance()->enqueue(
+        //    "then",
+        //    0,
+        //    std::move(fun),
+        //    std::move(fut),
+        //    std::move(param.func));
+        //return std::future<void>();
     }
 
 }then;

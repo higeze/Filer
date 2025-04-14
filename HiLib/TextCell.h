@@ -1,6 +1,7 @@
 #pragma once
 #include "Cell.h"
 #include <unordered_map>
+#include "getter_macro.h"
 
 class CTextBox;
 
@@ -53,6 +54,8 @@ private:
 //protected:
 //	std::wstring m_text;
 
+public:
+	DECLARE_LAZY_COMPTR_GETTER(IDWriteTextLayout1, TextLayout)
 
 public:
 	template<typename... Args>
@@ -69,6 +72,8 @@ public:
 
 	//virtual std::wstring GetString() override;
 	//virtual void SetStringCore(const std::wstring& str) override;
+
+	virtual CRectF TextRect() const { return ContentRect(); }
 
 
 	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override;
@@ -89,5 +94,7 @@ public:
 	virtual void OnImeStartComposition(const ImeStartCompositionEvent& e);
 
 	virtual bool CanSetStringOnEditing()const{return false;}
+
+	virtual void OnPropertyChanged(const wchar_t* name) override;
 };
 

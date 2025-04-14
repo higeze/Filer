@@ -436,7 +436,7 @@ public:
 
 
 
-	virtual void OnPropertyChanged(const wchar_t* name){}
+	virtual void OnPropertyChanged(const wchar_t* name) {}
 	
 	virtual CRectF GetRectInWnd() const = 0;
 

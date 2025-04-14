@@ -87,14 +87,15 @@ void CPdfViewExtractDlg::OnCreate(const CreateEvt& e)
 
 CSizeF CPdfViewExtractDlg::MeasureOverride(const CSizeF& availableSize)
 {
-	m_spParameter->MeasureSize(L"AAAAAAAAAAAAAAAAAAAA");
+	m_spParameter->Measure(availableSize);
 	m_spButtonCancel->Measure(availableSize);
 	m_spButtonDo->Measure(availableSize);
 
-	return CSizeF(5.f + m_spParameter->DesiredSize().width + 5.f,
-		5.f + m_spParameter->DesiredSize().height
-		+ 5.f + m_spButtonCancel->DesiredSize().height
-		+ 5.f + (std::max)(m_spButtonCancel->DesiredSize().height, m_spButtonDo->DesiredSize().height) + 5.f);
+	return CSizeF(
+		(std::max)(m_spParameter->DesiredSize().width, m_spButtonCancel->DesiredSize().width + m_spButtonDo->DesiredSize().width),
+		GetTitleRect().Height()
+		+ m_spParameter->DesiredSize().height
+		+ (std::max)(m_spButtonCancel->DesiredSize().height, m_spButtonDo->DesiredSize().height));
 }
 
 void CPdfViewExtractDlg::ArrangeOverride(const CRectF& finalRect)
@@ -103,10 +104,10 @@ void CPdfViewExtractDlg::ArrangeOverride(const CRectF& finalRect)
 
 	CRectF rcTitle = GetTitleRect();
 	m_spParameter->Arrange(CRectF(
-		finalRect.left + 5.f, finalRect.top + rcTitle.Height() + 5.f,
-		finalRect.right - 5.f, finalRect.top + rcTitle.Height() + 5.f + m_spParameter->DesiredSize().height));
-	CRectF rcBtnCancel(finalRect.right - 5.f - 50.f, finalRect.bottom - 5.f - m_spButtonCancel->DesiredSize().height, finalRect.right - 5.f, finalRect.bottom - 5.f);
-	CRectF rcBtnDo(rcBtnCancel.left - 5.f - 50.f, finalRect.bottom - 5.f  - m_spButtonDo->DesiredSize().height, rcBtnCancel.left - 5.f, finalRect.bottom - 5.f);
+		finalRect.left, finalRect.top + rcTitle.Height(),
+		finalRect.right, finalRect.top + rcTitle.Height() + m_spParameter->DesiredSize().height));
+	CRectF rcBtnCancel(finalRect.right - m_spButtonCancel->DesiredSize().width, finalRect.bottom - m_spButtonCancel->DesiredSize().height, finalRect.right, finalRect.bottom);
+	CRectF rcBtnDo(rcBtnCancel.left - m_spButtonDo->DesiredSize().width, finalRect.bottom - m_spButtonDo->DesiredSize().height, rcBtnCancel.left, finalRect.bottom);
 	m_spButtonCancel->Arrange(rcBtnCancel);
 	m_spButtonDo->Arrange(rcBtnDo);
 }

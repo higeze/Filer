@@ -18,7 +18,7 @@ public:
 	}
 	virtual ~CFileDispExtCell(void){}
 
-	std::wstring GetString()
+	std::wstring GetString() const override
 	{
 		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetDispExt();
@@ -46,7 +46,7 @@ public:
 	}
 	virtual ~CFilePathExtCell() = default;
 
-	std::wstring GetString()
+	std::wstring GetString() const override
 	{
 		auto pBindRow = static_cast<CBindRow<T>*>(m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetPathExt();
@@ -75,7 +75,7 @@ public:
 	}
 	virtual ~CFileReextCell() = default;
 
-	std::wstring GetString()
+	std::wstring GetString() const override
 	{
 		auto pFileRow = static_cast<CBindRow<T>*>(m_pRow);
 		return pFileRow->GetItem<RenameInfo>().Ext;

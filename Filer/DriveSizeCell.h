@@ -12,14 +12,26 @@ template<typename T>
 class CDriveSizeCell:public CTextCell
 {
 private:
-	double uli_to_double(const ULARGE_INTEGER& value)
+	double uli_to_double(const ULARGE_INTEGER& value) const
 	{
 		return static_cast<double>(value.HighPart) * std::pow(2, 32) + static_cast<double>(value.LowPart);
 	}
 
-	float uli_to_float(const ULARGE_INTEGER& value)
+	float uli_to_float(const ULARGE_INTEGER& value) const
 	{
 		return static_cast<float>(value.HighPart) * static_cast<float>(std::pow(2, 32)) + static_cast<float>(value.LowPart);
+	}
+
+	std::wstring double_to_wstring(const double& value, const int& precision) const
+	{
+		std::wstringstream ss;
+		ss << std::setprecision(precision) << value;
+		return ss.str();
+	}
+
+	std::wstring get_string(const ULARGE_INTEGER& used, const ULARGE_INTEGER& total, const int& pow, const int& precision, const std::wstring& unit) const
+	{
+		return double_to_wstring(uli_to_double(used) / std::pow(1024, pow), precision) + unit + L" / " + double_to_wstring(uli_to_double(total) / std::pow(1024, pow), precision) + unit;
 	}
 public:
 	virtual const FormatF& GetFormat() const override
@@ -36,24 +48,11 @@ public:
 
 	virtual ~CDriveSizeCell() = default;
 
-	virtual std::wstring GetString() override
+	virtual std::wstring GetString() const override
 	{
 		auto spDrive = GetDrivePtr();
 		auto [avail, total, free] = spDrive->GetSizes();
 		ULARGE_INTEGER used = { .QuadPart = total.QuadPart - free.QuadPart };
-
-		auto double_to_wstring = [](const double& value, const int& precision)->std::wstring
-		{
-			std::wstringstream ss;
-			ss << std::setprecision(precision) << value;
-			return ss.str();
-		};
-
-		auto get_string = [&](const ULARGE_INTEGER& used, const ULARGE_INTEGER& total, const int& pow, const int& precision, const std::wstring& unit)->std::wstring
-		{
-			return double_to_wstring(uli_to_double(used) / std::pow(1024, pow) , precision) + unit + L" / " + double_to_wstring(uli_to_double(total) / std::pow(1024, pow), precision) + unit;
-		};
-
 
 		if (total.QuadPart == 0) {
 			return L"-";
@@ -104,7 +103,7 @@ public:
 	}
 	
 private:
-	virtual std::shared_ptr<CDriveFolder> GetDrivePtr()
+	virtual std::shared_ptr<CDriveFolder> GetDrivePtr() const
 	{
 		if (auto pBindRow = dynamic_cast<CBindRow<T>*>(m_pRow)) {
 			auto spFile = pBindRow->GetItem<std::shared_ptr<CShellFile>>();

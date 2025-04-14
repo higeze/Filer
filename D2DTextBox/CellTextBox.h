@@ -20,12 +20,17 @@ public:
 		std::function<void(const std::wstring&)> changed,
 		std::function<void(const std::wstring&)> final);
 
+	virtual const CRectF& GetMargin() const
+	{
+		static const CRectF value(0.f, 0.f, 0.f, 0.f); return value;
+	}
+
 	CTextCell* GetCellPtr() { return m_pCell; }
 
 	void OnCreate(const CreateEvt& e) override;
 	void OnClose(const CloseEvent& e) override;
 	bool GetIsVisible()const;
-	CRectF GetRectInWnd() const;
+	CRectF RenderRect() const;
 };
 
 

@@ -7,7 +7,7 @@
 #include "D2DWWindow.h"
 #include "Dispatcher.h"
 
-std::wstring CFilterCell::GetString()
+std::wstring CFilterCell::GetString() const
 {
 	return m_pColumn->GetFilter();
 }

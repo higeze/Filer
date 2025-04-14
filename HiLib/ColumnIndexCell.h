@@ -10,5 +10,5 @@ public:
 	CColumnIndexCell(CGridView* pSheet,CRow* pRow,CColumn* pColumn)
 		:CTextCell(pSheet,pRow,pColumn, arg<"editmode"_s>() = EditMode::ReadOnly){}
 	virtual ~CColumnIndexCell() = default;
-	virtual std::wstring GetString();
+	virtual std::wstring GetString() const override;
 };

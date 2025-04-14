@@ -40,6 +40,7 @@ private:
 	//Remember past filter
 	std::unordered_map<std::wstring, std::unordered_map<std::shared_ptr<CColumn>, std::wstring>> m_filterMap;
 public:
+	std::atomic_bool Updating;
 	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<std::shared_ptr<CShellFolder>> Folder;
 	reactive_wstring_ptr StatusLog;
@@ -66,6 +67,7 @@ public:
 	/************************/
 	/* StateMachine Message */
 	/************************/
+	virtual void Normal_Paint(const PaintEvent& e) override;
 	virtual void Normal_KeyDown(const KeyDownEvent& e)override;
 	virtual void Normal_ContextMenu(const ContextMenuEvent& e) override;
 

@@ -40,7 +40,7 @@ void CFontCell::OnLButtonClk(MouseEvent& e)
 	}
 }
 
-std::wstring CFontCell::GetString()
+std::wstring CFontCell::GetString() const
 {
 	std::wstring wstr;
 	wstr.append(m_font.FamilyName);

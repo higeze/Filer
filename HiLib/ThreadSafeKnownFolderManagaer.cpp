@@ -33,9 +33,9 @@ namespace shell
 
 				if (pknownid[i] == FOLDERID_Desktop) {
 					::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, idl.ptrptr());
-					m_knownFolderIdIdlMap.insert_or_assign(path, std::make_tuple(pknownid[i], idl));
+					m_knownFolderIdIdlMap.insert_or_assign(path, std::make_tuple(pknownid[i], std::move(idl)));
 				} else {
-					m_knownFolderIdIdlMap.emplace(path, std::make_tuple(pknownid[i], idl));
+					m_knownFolderIdIdlMap.emplace(path, std::make_tuple(pknownid[i], std::move(idl)));
 				}
 			}
 		}

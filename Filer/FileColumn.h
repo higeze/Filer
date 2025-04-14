@@ -4,7 +4,6 @@
 #include "FilterCell.h"
 #include "GridView.h"
 #include "FileIconNameCell.h"
-#include "PathCell.h"
 #include "CellProperty.h"
 
 #include "FileExtCell.h"
@@ -26,11 +25,6 @@ public:
 		m_minLength = ::get(arg<"minwidth"_s>(), args..., default_(30.f));
 	}
 	virtual ~CFileColumnBase() = default;
-
-	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn) override
-	{
-		return std::make_shared<CPathCell>(m_pGrid, pRow, pColumn);
-	}
 
 	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn) override
 	{

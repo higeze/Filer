@@ -4,7 +4,6 @@
 #include "FilterCell.h"
 #include "GridView.h"
 #include "FavoriteCell.h"
-#include "PathCell.h"
 #include "CellProperty.h"
 
 template<typename T>
@@ -16,11 +15,6 @@ public:
 	{}
 	
 	virtual ~CFavoritesColumn(void){}
-
-	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-	{
-		return std::make_shared<CCell>(m_pGrid, pRow, pColumn);
-	}
 
 	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{

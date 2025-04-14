@@ -88,7 +88,6 @@ public:
 	virtual bool HasCell()const { return true; }
 	//virtual std::shared_ptr<CCell>& Cell(CRow* pRow) = 0;
 	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
-	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
 	virtual std::shared_ptr<CCell> FilterCellTemplate(CRow* pRow, CColumn* pColumn) { return nullptr; }
 	virtual std::shared_ptr<CCell> CellTemplate(CRow* pRow, CColumn* pColumn) = 0;
 	virtual void InsertNecessaryRows(){};

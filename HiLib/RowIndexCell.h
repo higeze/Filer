@@ -8,5 +8,5 @@ public:
 	CRowIndexCell(CGridView* pSheet,CRow* pRow,CColumn* pColumn)
 		:CHeaderCell(pSheet,pRow,pColumn,arg<"editmode"_s>() = EditMode::ReadOnly){}
 	virtual ~CRowIndexCell() = default;
-	virtual std::wstring GetString();
+	virtual std::wstring GetString() const override;
 };

@@ -10,11 +10,6 @@ std::shared_ptr<CCell> CRowIndexColumn::NameHeaderCellTemplate(CRow* pRow, CColu
 	return std::make_shared<CHeaderCell>(m_pGrid,pRow,pColumn);
 }
 
-std::shared_ptr<CCell> CRowIndexColumn::HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-{
-	return std::make_shared<CHeaderCell>(m_pGrid,pRow,pColumn);
-}
-
 std::shared_ptr<CCell> CRowIndexColumn::HeaderHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 {
 	return std::make_shared<CHeaderCell>(m_pGrid,pRow,pColumn);

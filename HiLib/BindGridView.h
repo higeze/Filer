@@ -182,9 +182,7 @@ public:
 		auto iter = container.find(MAKELONGLONG(pRow, pColumn));
 		if (iter == container.end()) {
 			if (m_bindType == BindType::Row) {
-				/*if (pRow == GetHeaderRowPtr().get()) {
-					iter = container.insert(pColumn->HeaderCellTemplate(pRow, pColumn)).first;
-				} else */if (pRow == GetNameHeaderRowPtr().get()) {
+				if (pRow == GetNameHeaderRowPtr().get()) {
 					iter = container.insert(pColumn->NameHeaderCellTemplate(pRow, pColumn)).first;
 				} else if (pRow == GetFilterRowPtr().get()) {
 					iter = container.insert(pColumn->FilterCellTemplate(pRow, pColumn)).first;
@@ -192,9 +190,7 @@ public:
 					iter = container.insert(pColumn->CellTemplate(pRow, pColumn)).first;
 				}
 			} else if (m_bindType == BindType::Column) {
-				/*if (pRow == GetHeaderRowPtr().get()) {
-					iter = container.insert(pRow->HeaderCellTemplate(pRow, pColumn)).first;
-				} else*/ if (pRow == GetNameHeaderRowPtr().get()) {
+				if (pRow == GetNameHeaderRowPtr().get()) {
 					iter = container.insert(pRow->NameHeaderCellTemplate(pRow, pColumn)).first;
 				} else if (pRow == GetFilterRowPtr().get()) {
 					iter = container.insert(pRow->FilterCellTemplate(pRow, pColumn)).first;

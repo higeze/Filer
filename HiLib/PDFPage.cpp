@@ -297,6 +297,11 @@ const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_strin
 
 CFPDFBitmap CPDFPage::GetFPDFBitmap(const FLOAT& scale, const int& rotate, std::function<bool()> cancel)
 {
+	//auto bitmap = GetThumbnailFPDFBitmap();
+	//auto height = bitmap.GetHeight();
+	//auto width = bitmap.GetWidth();
+	//return bitmap;
+
 	do {
 		CSizeU sz(static_cast<UINT32>(std::round(GetFPDFPagePtr()->GetPageWidthF() * scale)),
 			static_cast<UINT32>(std::round(GetFPDFPagePtr()->GetPageHeightF() * scale)));

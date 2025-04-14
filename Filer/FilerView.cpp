@@ -29,7 +29,7 @@ CRecentFolderGridView::CRecentFolderGridView(CD2DWControl* pParentControl)
 		std::vector<std::shared_ptr<CShellFile>> links;
 		CIDL nextIdl;
 		while (SUCCEEDED(pEnumIdl->Next(1, nextIdl.ptrptr(), NULL)) && nextIdl) {
-			links.push_back(spKnownFolder->CreateShExFileFolder(nextIdl));
+			links.push_back(spKnownFolder->CreateShExFileFolder(std::move(nextIdl)));
 			nextIdl.Clear();
 		}
 		//Sort
@@ -51,7 +51,7 @@ CRecentFolderGridView::CRecentFolderGridView(CD2DWControl* pParentControl)
 			CIDL parentIdl = absoluteIdl.CloneParentIDL();
 			CComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
 
-			if (auto p = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pParentFolder, parentIdl, absoluteIdl.CloneLastID()));
+			if (auto p = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pParentFolder, parentIdl, std::move(absoluteIdl.CloneLastID())));
 				p && p->GetIsExist()) {
 				GetItemsSource().push_back(p);
 			}

@@ -16,7 +16,7 @@ public:
 		:CTextCell(pSheet, pRow, pColumn, arg<"editmode"_s>() = EditMode::LButtonDownEdit){}
 	virtual ~CFilterCell() = default;
 
-	virtual std::wstring GetString() override;
+	virtual std::wstring GetString() const override;
 	virtual void SetStringCore(const std::wstring& str)override;
 	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)override;
 

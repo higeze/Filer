@@ -94,6 +94,10 @@ public:
 	virtual bool GetIsChecked()const;
 	virtual void SetIsChecked(const bool& bChecked);
 
+	virtual CRectF RenderRect() const { return GetRectInWnd(); }
+	virtual CRectF BorderRect() const { return RenderRect().DeflateRectCopy(GetNormalBorder().Width * 0.5f); }
+	virtual CRectF ContentRect() const { return BorderRect().DeflateRectCopy(GetPadding()); }
+
 	//Paint
 	virtual void PaintBackground(CDirect2DWrite* pDirect, CRectF rc);
 	virtual void PaintNormalBackground(CDirect2DWrite* pDirect, CRectF rc);
@@ -120,7 +124,7 @@ public:
 	virtual void OnChar(const CharEvent& e) override {/*Do Nothing*/ };
 
 	//String
-	virtual std::wstring GetString();
+	virtual std::wstring GetString() const;
 	virtual std::wstring GetSortString() { return GetString(); }
 
 	virtual void SetString(const std::wstring& str, bool notify = true);

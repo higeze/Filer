@@ -52,7 +52,8 @@ public:
 	{
 		if (m_value != value) {
 			container_type old(m_value);
-			m_value.assign(value.cbegin(), value.cend());
+			//m_value.assign(value.cbegin(), value.cend());
+			m_value = value;
 			m_subject.on_next(notify_type
 			{
 				notify_container_changed_action::reset,

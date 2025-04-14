@@ -33,11 +33,6 @@ public:
 	std::function<std::wstring(const T&)> GetGetter() const { return this->m_getFunction; }
 	std::function<void(T&, const std::wstring&)> GetSetter() const { return this->m_setFunction; }
 
-	std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn)
-	{
-		return std::make_shared<CCell>(this->m_pGrid, pRow, pColumn);
-	}
-
 	std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn)
 	{
 		return std::make_shared<CHeaderSortCell>(this->m_pGrid, pRow, pColumn, arg<"text"_s>() = this->m_header);

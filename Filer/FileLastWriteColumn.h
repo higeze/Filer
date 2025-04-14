@@ -2,7 +2,6 @@
 #include "MapColumn.h"
 #include "HeaderSortCell.h"
 #include "FilterCell.h"
-#include "PathCell.h"
 #include "FileLastWriteCell.h"
 #include "GridView.h"
 #include "CellProperty.h"
@@ -23,11 +22,6 @@ public:
 	}
 
 	~CFileLastWriteColumn(void) = default;
-
-	virtual std::shared_ptr<CCell> HeaderCellTemplate(CRow* pRow, CColumn* pColumn) override
-	{
-		return std::make_shared<CPathCell>(m_pGrid, pRow, pColumn);
-	}
 
 	virtual std::shared_ptr<CCell> NameHeaderCellTemplate(CRow* pRow, CColumn* pColumn) override
 	{

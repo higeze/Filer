@@ -173,9 +173,10 @@ void CIncrementalCopyDlg::ArrangeOverride(const CRectF& e)
 void CIncrementalCopyDlg::OnAddItem(const CIDL& newIdl )
 {
 	m_spFileGrid->AddItem(CShellFileFactory::GetInstance()->CreateShellFilePtr(
-		shell::DesktopBindToShellFolder(newIdl.CloneParentIDL()),
-		newIdl.CloneParentIDL(),
-		newIdl.CloneLastID()));
+		shell::DesktopBindToShellFolder(
+			std::move(newIdl.CloneParentIDL())),
+			std::move(newIdl.CloneParentIDL()),
+			std::move(newIdl.CloneLastID())));
 	GetWndPtr()->InvalidateRect(NULL, FALSE);
 	//m_periodicTimer.runperiodic([this](){InvalidateRect(NULL, FALSE); }, std::chrono::milliseconds(50));
 }

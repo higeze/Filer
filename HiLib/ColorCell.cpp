@@ -39,7 +39,7 @@ void CColorCell::OnLButtonClk(const LButtonClkEvent& e)
 	}
 }
 
-std::wstring CColorCell::GetString()
+std::wstring CColorCell::GetString() const
 {
 	std::wstring wstr(L"RGB:");
 	wstr.append(boost::lexical_cast<std::wstring>((int)(m_color.r * 255)));

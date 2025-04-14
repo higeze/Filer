@@ -19,9 +19,9 @@ public:
 	using CCell::CCell;
 	virtual ~CFileIconCell() = default;
 
-	virtual std::shared_ptr<CShellFile> GetShellFile() = 0;
+	virtual std::shared_ptr<CShellFile> GetShellFile() const = 0;
 
-	virtual std::wstring GetString() override
+	virtual std::wstring GetString() const override
 	{
 		if (GetShellFile()) {
 			return GetShellFile()->GetDispName();

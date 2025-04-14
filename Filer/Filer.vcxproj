@@ -540,7 +540,6 @@
     <ClInclude Include="LauncherGridView.h" />
     <ClInclude Include="LauncherRow.h" />
     <ClInclude Include="LauncherCell.h" />
-    <ClInclude Include="PathRow.h" />
     <ClInclude Include="IncrementalCopyDlg.h" />
     <ClInclude Include="RenameInfo.h" />
     <ClInclude Include="SearchWnd.h" />
@@ -565,7 +564,6 @@
     <ClInclude Include="FilerWnd.h" />
     <ClInclude Include="FileSizeCell.h" />
     <ClInclude Include="FileSizeColumn.h" />
-    <ClInclude Include="PathCell.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -741,7 +739,6 @@
     <ClCompile Include="FilerGridViewWnd.cpp" />
     <ClCompile Include="FilerWndStatusBar.cpp" />
     <ClCompile Include="LauncherGridView.cpp" />
-    <ClCompile Include="PathRow.cpp" />
     <ClCompile Include="IncrementalCopyDlg.cpp" />
     <ClCompile Include="SearchWnd.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
@@ -756,7 +753,6 @@
     <ClCompile Include="FilerTabGridView.cpp" />
     <ClCompile Include="FilerWnd.cpp" />
     <ClCompile Include="FileSizeCell.cpp" />
-    <ClCompile Include="PathCell.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

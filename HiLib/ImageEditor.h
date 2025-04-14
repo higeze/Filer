@@ -29,6 +29,7 @@ public:
 	virtual ~CImageEditor() {}
 
 	std::tuple<CRectF, CRectF, CRectF, CRectF> GetRects() const;
+	virtual CSizeF MeasureContent(const CSizeF& avilableSize) override;
 	virtual void ArrangeOverride(const CRectF& rc) override;
 
 	virtual void OnCreate(const CreateEvt& e) override;

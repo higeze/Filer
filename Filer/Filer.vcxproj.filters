@@ -116,9 +116,6 @@
     <ClInclude Include="FilerWnd.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="PathCell.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -331,9 +328,6 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\BoostPythonHelper.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="PathRow.h">
-      <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="ViewProperty.h">
       <Filter>Filer</Filter>
@@ -1065,9 +1059,6 @@
     <ClCompile Include="FilerWnd.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
-    <ClCompile Include="PathCell.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
@@ -1145,9 +1136,6 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\BoostPythonHelper.cpp">
       <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="PathRow.cpp">
-      <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\ResourceIDFactory.cpp">
       <Filter>HiLib</Filter>

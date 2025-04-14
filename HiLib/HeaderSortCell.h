@@ -23,8 +23,11 @@ public:
 	}
 	virtual ~CHeaderSortCell() = default;
 
-	virtual std::wstring GetString() override { return m_text; }
+	virtual std::wstring GetString() const override { return m_text; }
 	virtual void SetStringCore(const std::wstring& str) override { m_text = str; }
+
+
+	virtual CRectF TextRect() const override;
 
 
 	CSizeF GetSortSize()const;

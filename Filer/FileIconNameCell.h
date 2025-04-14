@@ -59,6 +59,15 @@ protected:
 		return text;
 	}
 public:
+	virtual CRectF TextRect() const
+	{
+		CRectF contentRect = ContentRect();
+		UINT32 size = this->GetImageSize();
+		FLOAT space = GetPadding().left + GetPadding().right;
+
+		return CRectF(contentRect.left + size + space, contentRect.top, contentRect.right, contentRect.bottom);
+	}
+
 	virtual void PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint) override
 	{
 		//Paint Image
@@ -146,7 +155,7 @@ class CFileNameCell:public CFileNameCellBase<T>
 	using bind_row = CBindRow<T>;
 public:
 	using CFileNameCellBase<T>::CFileNameCellBase;
-	virtual std::wstring GetString() override
+	virtual std::wstring GetString() const override
 	{
 		auto pBindRow = static_cast<bind_row*>(this->m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetDispNameWithoutExt();
@@ -170,7 +179,7 @@ class CFileIconPathNameCell :public CFileNameCellBase<T>
 public:
 	using CFileNameCellBase<T>::CFileNameCellBase;
 
-	virtual std::wstring GetString() override
+	virtual std::wstring GetString() const override
 	{
 		auto pBindRow = static_cast<bind_row*>(this->m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetPathNameWithoutExt();
@@ -193,7 +202,7 @@ class CFileIconPathCell :public CFileNameCellBase<T>
 public:
 	using CFileNameCellBase<T>::CFileNameCellBase;
 
-	virtual std::wstring GetString() override
+	virtual std::wstring GetString() const override
 	{
 		auto pBindRow = static_cast<bind_row*>(this->m_pRow);
 		return pBindRow->GetItem<std::shared_ptr<CShellFile>>()->GetPath();
@@ -220,7 +229,7 @@ public:
 
 	virtual ~CFileRenameCell(void) {}
 
-	virtual std::wstring GetString() override
+	virtual std::wstring GetString() const override
 	{
 		auto pBindRow = static_cast<bind_row*>(this->m_pRow);
 		return pBindRow->GetItem<RenameInfo>().Name;

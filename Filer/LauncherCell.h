@@ -28,7 +28,7 @@ public:
 	using CFileIconCell::CFileIconCell;
 	virtual ~CLauncherCell() = default;
 
-	virtual std::shared_ptr<CShellFile> GetShellFile() override
+	virtual std::shared_ptr<CShellFile> GetShellFile() const override
 	{
 		if (auto pBindColumn = dynamic_cast<CBindColumn<T>*>(this->m_pColumn)) {
 			return pBindColumn->GetItem<T>().GetShellFile(

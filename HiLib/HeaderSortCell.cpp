@@ -11,25 +11,40 @@ const FLOAT CHeaderSortCell::TRIANGLE_HEIGHT = 6.f;
 const CRectF CHeaderSortCell::TRIANGLE_MARGIN=CRectF(2.f,0.f,2.f,0.f);
 const FLOAT CHeaderSortCell::MIN_COLUMN_WIDTH = 16.f;
 
+CRectF CHeaderSortCell::TextRect() const
+{
+	CRectF textRect = ContentRect();
+	textRect.right = (std::max)(textRect.left, textRect.right - (TRIANGLE_WIDTH + TRIANGLE_MARGIN.left + TRIANGLE_MARGIN.right));
+	return textRect;
+}
+
 
 void CHeaderSortCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)
 {
-	switch(m_pColumn->GetSort()){
-	case Sorts::Up:
-	case Sorts::Down:
-		{
-			CRectF rcText(rcPaint);
-			rcText.right = (std::max)(rcText.left,  rcText.right - (TRIANGLE_WIDTH+TRIANGLE_MARGIN.left+TRIANGLE_MARGIN.right));
-			CTextCell::PaintContent(pDirect,rcText);
-			CRectF rcSort(rcPaint);
-			rcSort.left=rcText.right;
-			PaintSortMark(pDirect,rcSort);
-			break;
-		}
-	default:
-		CTextCell::PaintContent(pDirect,rcPaint);
-		break;
+	CRectF rcText = TextRect();
+	CTextCell::PaintContent(pDirect,rcText);
+	CRectF rcSort(rcPaint);
+	rcSort.left=rcText.right;
+	if (m_pColumn->GetSort() != Sorts::None) {
+		PaintSortMark(pDirect, rcSort);
 	}
+
+	//switch(m_pColumn->GetSort()){
+	//case Sorts::Up:
+	//case Sorts::Down:
+	//	{
+	//		CRectF rcText(rcPaint);
+	//		rcText.right = (std::max)(rcText.left,  rcText.right - (TRIANGLE_WIDTH+TRIANGLE_MARGIN.left+TRIANGLE_MARGIN.right));
+	//		CTextCell::PaintContent(pDirect,rcText);
+	//		CRectF rcSort(rcPaint);
+	//		rcSort.left=rcText.right;
+	//		PaintSortMark(pDirect,rcSort);
+	//		break;
+	//	}
+	//default:
+	//	CTextCell::PaintContent(pDirect,rcPaint);
+	//	break;
+	//}
 }
 
 void CHeaderSortCell::PaintSortMark(CDirect2DWrite* pDirect, CRectF rcPaint)

@@ -34,15 +34,12 @@ public:
 
 public:
 	CFileSizeCell(CGridView* pSheet, CRow* pRow, CColumn* pColumn)
-		:CTextCell(pSheet, pRow, pColumn)
-	{
-	}
+		:CTextCell(pSheet, pRow, pColumn){}
 
 	virtual ~CFileSizeCell()
 	{
 		m_conDelayUpdateAction.disconnect();
 	}
-
 
 	virtual CSizeF MeasureContentSize(CDirect2DWrite* pDirect) override
 	{
@@ -65,17 +62,19 @@ public:
 	}
 
 
-	virtual std::wstring GetString() override
+	virtual std::wstring GetString() const override
 	{
 		try {
 			auto spFile = GetShellFile();
-			std::weak_ptr<CFileSizeCell> wp(std::dynamic_pointer_cast<CFileSizeCell>(shared_from_this()));
-			auto changed = [wp]()->void {
+
+			auto changed = [wp = std::weak_ptr<const CFileSizeCell>(std::dynamic_pointer_cast<const CFileSizeCell>(shared_from_this()))]() mutable->void {
 				if (auto sp = wp.lock()) {
 					auto con = sp->GetGridPtr()->SignalPreDelayUpdate.connect(
-						[wp]()->void {
+						[wp]()mutable->void {
 							if (auto sp = wp.lock()) {
-								sp->OnPropertyChanged(L"value");
+								if (auto nonconst_sp = std::const_pointer_cast<CFileSizeCell>(sp)) {
+									nonconst_sp->OnPropertyChanged(L"value");
+								}
 							}
 						});
 					sp->m_conDelayUpdateAction = con;
@@ -83,6 +82,7 @@ public:
 				}
 			};
 			auto size = spFile->GetSize(GetFileSizeArgs(), changed);
+
 			switch (size.second) {
 				case FileSizeStatus::None:
 					return L"none";
@@ -105,7 +105,7 @@ public:
 	{
 		try {
 			auto spFile = GetShellFile();
-			auto changed = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileSizeCell<T>>(shared_from_this()))]()->void {
+			auto changed = [wp = std::weak_ptr(std::dynamic_pointer_cast<CFileSizeCell<T>>(shared_from_this()))]() mutable->void {
 				if (auto sp = wp.lock()) {
 					sp->m_conDelayUpdateAction = sp->GetGridPtr()->SignalPreDelayUpdate.connect(
 						[wp]()->void {
@@ -137,7 +137,7 @@ public:
 
 	
 private:
-	virtual std::shared_ptr<CShellFile> GetShellFile()
+	virtual std::shared_ptr<CShellFile> GetShellFile() const
 	{
 		if (auto p = dynamic_cast<CBindRow<T>*>(m_pRow)) {
 			return p->GetItem<std::shared_ptr<CShellFile>>();

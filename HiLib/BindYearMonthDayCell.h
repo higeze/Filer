@@ -38,7 +38,7 @@ public:
 
 	virtual ~CBindYearMonthDayCell() = default;
 
-	virtual std::wstring GetString() override
+	virtual std::wstring GetString() const override
 	{
 		return this->YearMonthDay->IsInvalid() ? L"" : 
 			std::format(L"{:%m/%d}({})", 

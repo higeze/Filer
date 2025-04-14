@@ -16,7 +16,7 @@ public:
 	virtual CSizeF MeasureContentSize(CDirect2DWrite* pDirect) override;
 	virtual CSizeF MeasureContentSizeWithFixedWidth(CDirect2DWrite* pDirect) override;
 
-	virtual std::wstring GetString() override;
+	virtual std::wstring GetString() const override;
 
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 	virtual void OnChar(const CharEvent& e) override;

@@ -33,13 +33,15 @@ public:
 	using CFileIconCell::CFileIconCell;
 	virtual ~CFavoriteCell(){}
 
-	virtual std::shared_ptr<CShellFile> GetShellFile() override
+	virtual std::shared_ptr<CShellFile> GetShellFile() const override
 	{
 		if (auto pBindRow = dynamic_cast<CBindRow<T>*>(this->m_pRow)) {
 			return pBindRow->GetItem<T>().GetShellFile(
-				[wp = std::weak_ptr(std::dynamic_pointer_cast<CFavoriteCell<T>>(this->shared_from_this()))]() {
+				[wp = std::weak_ptr(std::dynamic_pointer_cast<const CFavoriteCell<T>>(this->shared_from_this()))]() {
 					if (auto sp = wp.lock()) {
-						sp->GetGridPtr()->DelayUpdate();
+						if (auto nonconst_sp = std::const_pointer_cast<CFavoriteCell>(sp)) {
+							nonconst_sp->GetGridPtr()->DelayUpdate();
+						}
 					}
 				});
 		} else {

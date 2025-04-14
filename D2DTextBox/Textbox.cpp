@@ -77,23 +77,23 @@ void CTextBox::UninitTSF()
 	FAILED_THROW(GetTextEditSinkPtr()->_Unadvise());
 }
 
-CSizeF CTextBox::MeasureOverride(const CSizeF& availableSize)
+CSizeF CTextBox::MeasureContent(const CSizeF& availableSize)
 {
-	return MeasureSize(Text->empty() ? L"A" : *Text);
+	return GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), Text->empty() ? L"A" : *Text);
 }
 
-CSizeF CTextBox::MeasureSize(const std::wstring& text)
-{
-	CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), text);
-	size.width += GetPadding().left
-		+ GetPadding().right
-		+ GetNormalBorder().Width;
-	size.height += GetPadding().top
-		+ GetPadding().bottom
-		+ GetNormalBorder().Width;
-
-	return size;
-}
+//CSizeF CTextBox::MeasureSize(const std::wstring& text)
+//{
+//	CSizeF size = GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), text);
+//	size.width += GetPadding().left
+//		+ GetPadding().right
+//		+ GetNormalBorder().Width;
+//	size.height += GetPadding().top
+//		+ GetPadding().bottom
+//		+ GetNormalBorder().Width;
+//
+//	return size;
+//}
 
 /***************/
 /* Lazy Getter */
@@ -482,15 +482,15 @@ void CTextBox::OnPreviewLButtonDown(const LButtonDownEvent& e)
 
 void CTextBox::Normal_Paint(const PaintEvent& e)
 {
-	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(RenderRect(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
 	//PaintBackground
-	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), RenderRect());
 	//PaintLine
 
 	//Paint Focused Line
-	CRectF rcBorder(GetRectInWnd());
-	rcBorder.DeflateRect(1.0f, 1.0f);
+	CRectF rcBorder(BorderRect());
+
 	if (m_hasBorder) {
 		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(GetNormalBorder(), rcBorder);
 	} else {
@@ -837,9 +837,9 @@ void CTextBox::Normal_Char(const CharEvent& e)
 void CTextBox::Normal_SetCursor(const SetCursorEvent& e)
 {
 	CPointF pt = GetWndPtr()->GetCursorPosInWnd();
-	if (GetRectInWnd().PtInRect(pt)) {
-		if (m_pVScroll->GetIsVisible() && m_pVScroll->GetRectInWnd().PtInRect(pt) ||
-			m_pHScroll->GetIsVisible() && m_pHScroll->GetRectInWnd().PtInRect(pt)) {
+	if (RenderRect().PtInRect(pt)) {
+		if (m_pVScroll->GetIsVisible() && m_pVScroll->RenderRect().PtInRect(pt) ||
+			m_pHScroll->GetIsVisible() && m_pHScroll->RenderRect().PtInRect(pt)) {
 			::SetCursor(::LoadCursor(NULL, IDC_ARROW));
 			*(e.HandledPtr) = TRUE;
 			return;
@@ -934,7 +934,7 @@ void CTextBox::VScrlDrag_MouseMove(const MouseMoveEvent& e)
 		m_pVScroll->GetScrollPos() +
 		(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y) - m_pVScroll->GetStartDrag()) *
 		m_pVScroll->GetScrollDistance() /
-		m_pVScroll->GetRectInWnd().Height());
+		m_pVScroll->RenderRect().Height());
 	m_pVScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsY(e.PointInClient.y));
 }
 
@@ -965,7 +965,7 @@ void CTextBox::HScrlDrag_MouseMove(const MouseMoveEvent& e)
 		m_pHScroll->GetScrollPos() +
 		(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x) - m_pHScroll->GetStartDrag()) *
 		m_pHScroll->GetScrollDistance() /
-		m_pHScroll->GetRectInWnd().Width());
+		m_pHScroll->RenderRect().Width());
 	m_pHScroll->SetStartDrag(GetWndPtr()->GetDirectPtr()->Pixels2DipsX(e.PointInClient.x));
 }
 
@@ -1035,17 +1035,14 @@ bool CTextBox::PasteFromClipboard()
 	return true;
 }
 
-CRectF CTextBox::GetRectInWnd() const
+CRectF CTextBox::GetRectInWnd() const 
 {
 	return CD2DWControl::GetRectInWnd();
 }
 
 CRectF CTextBox::GetPageRect() const
 {
-	CRectF rcPage(GetRectInWnd());
-	rcPage.DeflateRect(GetNormalBorder().Width * 0.5f);
-	rcPage.DeflateRect(GetPadding());
-	return rcPage;
+	return ContentRect();
 }
 
 void CTextBox::StartCaretBlink()
@@ -1199,8 +1196,6 @@ bool CTextBox::GetIsVisible()const
 
 void CTextBox::PaintText(const PaintEvent& e)
 {
-	CRectF pageRect(GetPageRect());
-
 	//const std::vector<CRectF>& charRects = GetActualCharRects();
 	const std::vector<CRectF>& selCharRects = GetActualSelectionCharRects();
 
@@ -1455,7 +1450,7 @@ void CTextBox::UpdateScroll()
 
 	//VScroll
 	//Position
-	CRectF rcClient(GetRectInWnd());
+	CRectF rcClient(RenderRect());
 	CRectF rcVertical;
 	FLOAT lineHalfWidth = GetNormalBorder().Width * 0.5f;
 

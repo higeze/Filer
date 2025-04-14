@@ -32,8 +32,8 @@ std::tuple<CRectF, CRectF, CRectF> CEditor::GetRects() const
 {
 	CRectF rcClient = GetRectInWnd();
 
-	FLOAT filterHeight = m_spFilterBox->MeasureSize(L"").height;
-	FLOAT statusHeight = m_spStatusBar->MeasureSize(L"").height;
+	FLOAT filterHeight = m_spFilterBox->DesiredSize().height;
+	FLOAT statusHeight = m_spStatusBar->DesiredSize().height;
 	CRectF rcFilter(rcClient.left, rcClient.top, rcClient.right, rcClient.top + filterHeight);
 	CRectF rcText(rcClient.left, rcClient.top + filterHeight + 2.f, rcClient.right, rcClient.bottom - statusHeight);
 	CRectF rcStatus(rcClient.left, rcText.bottom, rcClient.right, rcClient.bottom);
@@ -77,6 +77,16 @@ void CEditor::OnPaint(const PaintEvent& e)
 	m_spFilterBox->OnPaint(e);
 	m_spTextBox->OnPaint(e);
 	m_spStatusBar->OnPaint(e);
+}
+
+CSizeF CEditor::MeasureContent(const CSizeF& availableSize)
+{
+	m_spFilterBox->Measure(availableSize);
+	m_spTextBox->Measure(availableSize);
+	m_spStatusBar->Measure(availableSize);
+	return CSizeF(
+		(std::max)({ m_spFilterBox->DesiredSize().width, m_spTextBox->DesiredSize().width, m_spStatusBar->DesiredSize().width }),
+		m_spFilterBox->DesiredSize().height + m_spTextBox->DesiredSize().height + m_spStatusBar->DesiredSize().height);
 }
 
 void CEditor::ArrangeOverride(const CRectF& finalRect)

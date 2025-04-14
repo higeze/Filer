@@ -382,19 +382,28 @@ void CD2DWWindow::OnPaint(const PaintEvent& e)
 
 	ProcessMessageToAll(&CD2DWControl::OnPaint, e); 
 	//Cur Focused
-	std::vector<std::shared_ptr<CD2DWControl>> tunnelCurControls;
+	SolidLine FocusedLine = GetFocusedBorder();// SolidLine(22.f / 255.f, 160.f / 255.f, 133.f / 255.f, 1.0f, 1.0f);
+	//std::vector<std::shared_ptr<CD2DWControl>> tunnelCurControls;
 	std::shared_ptr<CD2DWControl> pParentControl = std::dynamic_pointer_cast<CD2DWControl>(shared_from_this());
 	while (pParentControl->m_pFocusedControl) {
-		tunnelCurControls.push_back(pParentControl->m_pFocusedControl);
-		pParentControl = pParentControl->m_pFocusedControl;
-	}
 
-	SolidLine FocusedLine = SolidLine(22.f / 255.f, 160.f / 255.f, 133.f / 255.f, 1.0f, 1.0f);
-	for (auto iter = tunnelCurControls.rbegin(); iter != tunnelCurControls.rend(); iter++) {
-		CRectF rcFocus((*iter)->GetRectInWnd());
+		GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(pParentControl->GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+
+		CRectF rcFocus(pParentControl->m_pFocusedControl->GetRectInWnd());
 		rcFocus.DeflateRect(1.0f, 1.0f);
 		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(FocusedLine, rcFocus);
+
+
+		//tunnelCurControls.push_back(pParentControl->m_pFocusedControl);
+		pParentControl = pParentControl->m_pFocusedControl;
+		GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
 	}
+
+	//for (auto iter = tunnelCurControls.rbegin(); iter != tunnelCurControls.rend(); iter++) {
+	//	CRectF rcFocus((*iter)->GetRectInWnd());
+	//	rcFocus.DeflateRect(1.0f, 1.0f);
+	//	GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(FocusedLine, rcFocus);
+	//}
 
 	if (m_pToolTip) {
 		m_pToolTip->OnPaint(e);

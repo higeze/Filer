@@ -33,6 +33,7 @@ public:
 	reactive_command_ptr<HWND> OpenAsCommand;
 
 	std::tuple<CRectF, CRectF, CRectF> GetRects() const;
+	virtual CSizeF MeasureContent(const CSizeF& availableSize) override;
 	virtual void ArrangeOverride(const CRectF& rc) override;
 
 	virtual void OnCreate(const CreateEvt& e) override;

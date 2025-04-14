@@ -13,5 +13,5 @@ public:
 	CColorF GetColor();
 	virtual void PaintBackground(CDirect2DWrite* pDirect, CRectF rcPaint) override;
 	virtual void OnLButtonClk(const LButtonClkEvent& e) override;
-	virtual std::basic_string<TCHAR> GetString() override;
+	virtual std::basic_string<TCHAR> GetString() const override;
 };

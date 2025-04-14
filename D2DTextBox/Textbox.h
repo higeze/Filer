@@ -67,8 +67,8 @@ public:
 
 
 public:
-	CSizeF MeasureOverride(const CSizeF& availableSize) override;
-	CSizeF MeasureSize(const std::wstring& text);
+	CSizeF MeasureContent(const CSizeF& availableSize) override;
+	//CSizeF MeasureSize(const std::wstring& text);
 	void ArrangeOverride(const CRectF& finalRect) override;
 	/************/
 	/* Reactive */

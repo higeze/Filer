@@ -195,12 +195,12 @@ void CGridView::UpdateColumn()
 			left -= GetHorizontalScrollPos();
 		}
 		colPtr->SetLeft(left, false);
-		for (auto rowPtr : m_visRows) {
-			std::shared_ptr<CCell> pCell = Cell(rowPtr, colPtr);
-			//if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
-			//	pSheetCell->UpdateAll();
-			//}
-		}
+		//for (auto rowPtr : m_visRows) {
+		//	std::shared_ptr<CCell> pCell = Cell(rowPtr, colPtr);
+		//	//if (auto pSheetCell = std::dynamic_pointer_cast<CSheetCell>(pCell)) {
+		//	//	pSheetCell->UpdateAll();
+		//	//}
+		//}
 		left += colPtr->GetWidth();
 	}
 }
