@@ -407,6 +407,8 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 		};
 		std::unique_ptr<MAPIINIT_0, decltype(mapi_deleter)> pMapi(new MAPIINIT_0{ MAPI_INIT_VERSION, MAPI_MULTITHREAD_NOTIFICATIONS }, mapi_deleter);
 		FAILED_RETURN(::MAPIInitialize(pMapi.get()));
+		//FAILED_RETURN(::MAPIInitialize(NULL));
+
 
 		FORMATETC descriptor_format = { s_cf_filegroupdescriptor, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 		std::unique_ptr<STGMEDIUM, decltype(medium_global_deleter)> pMedium(new STGMEDIUM(), medium_global_deleter);

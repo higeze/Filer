@@ -45,7 +45,7 @@ void CFavoritesGridView::OnCreate(const CreateEvt& e)
 
 void CFavoritesGridView::OnKeyDown(const KeyDownEvent& e)
 {
-	m_keepEnsureVisibleFocusedCell = false;
+	//m_keepEnsureVisibleFocusedCell = false;
 	switch (e.Char) {
 		case 'R':
 			if (::IsKeyDown(VK_CONTROL)) {

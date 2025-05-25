@@ -9,5 +9,10 @@ std::wstring CRowIndexCell::GetString() const
 	return std::to_wstring(m_pRow->GetIndex<VisTag>() + 1 - m_pGrid->GetFrozenCount<RowTag>());
 }
 
+const CComPtr<IDWriteTextLayout1>& CRowIndexCell::GetTextLayoutPtr() const
+{
+	return  m_pTextLayout = CHeaderCell::GetTextLayoutPtrCore();
+}
+
 
 

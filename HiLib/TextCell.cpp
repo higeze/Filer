@@ -34,36 +34,45 @@ void CTextCell::OnPropertyChanged(const wchar_t* name)
 const CComPtr<IDWriteTextLayout1>& CTextCell::GetTextLayoutPtr() const
 {
 	if (!m_pTextLayout && !GetString().empty()) {
-		auto pDirect = GetGridPtr()->GetWndPtr()->GetDirectPtr();
-		auto pFactory = pDirect->GetDWriteFactory();
-		auto size = TextRect().Size();
-
-		CComPtr<IDWriteTextLayout> pTextLayout0(nullptr);
-		const IID* piid = &__uuidof(IDWriteTextLayout1);
-		if (FAILED(pFactory->CreateTextLayout(GetString().c_str(), GetString().size(), pDirect->GetTextFormat(GetFormat()), size.width, size.height, &pTextLayout0)) ||
-			FAILED(pTextLayout0->QueryInterface(&m_pTextLayout))) {
-			throw std::exception(FILE_LINE_FUNC);
-		}
-		else {
-			//Default set up
-			CComPtr<IDWriteTypography> typo;
-			pFactory->CreateTypography(&typo);
-
-			DWRITE_FONT_FEATURE feature;
-			feature.nameTag = DWRITE_FONT_FEATURE_TAG_STANDARD_LIGATURES;
-			feature.parameter = 0;
-			typo->AddFontFeature(feature);
-			DWRITE_TEXT_RANGE range;
-			range.startPosition = 0;
-			range.length = GetString().size();
-			m_pTextLayout->SetTypography(typo, range);
-
-			m_pTextLayout->SetCharacterSpacing(0.0f, 0.0f, 0.0f, DWRITE_TEXT_RANGE{ 0, GetString().size()});
-			m_pTextLayout->SetPairKerning(FALSE, DWRITE_TEXT_RANGE{ 0, GetString().size()});
-		}
+		m_pTextLayout = GetTextLayoutPtrCore();
 	}
 	return m_pTextLayout;
 }
+
+const CComPtr<IDWriteTextLayout1> CTextCell::GetTextLayoutPtrCore() const
+{
+	auto pDirect = GetGridPtr()->GetWndPtr()->GetDirectPtr();
+	auto pFactory = pDirect->GetDWriteFactory();
+	auto size = TextRect().Size();
+
+	CComPtr<IDWriteTextLayout> pTextLayout0(nullptr);
+	CComPtr<IDWriteTextLayout1> pTextLayout1(nullptr);
+
+	const IID* piid = &__uuidof(IDWriteTextLayout1);
+	if (FAILED(pFactory->CreateTextLayout(GetString().c_str(), GetString().size(), pDirect->GetTextFormat(GetFormat()), size.width, size.height, &pTextLayout0)) ||
+		FAILED(pTextLayout0->QueryInterface(&pTextLayout1))) {
+		throw std::exception(FILE_LINE_FUNC);
+	}
+	else {
+		//Default set up
+		CComPtr<IDWriteTypography> typo;
+		pFactory->CreateTypography(&typo);
+
+		DWRITE_FONT_FEATURE feature;
+		feature.nameTag = DWRITE_FONT_FEATURE_TAG_STANDARD_LIGATURES;
+		feature.parameter = 0;
+		typo->AddFontFeature(feature);
+		DWRITE_TEXT_RANGE range;
+		range.startPosition = 0;
+		range.length = GetString().size();
+		pTextLayout1->SetTypography(typo, range);
+
+		pTextLayout1->SetCharacterSpacing(0.0f, 0.0f, 0.0f, DWRITE_TEXT_RANGE{ 0, GetString().size() });
+		pTextLayout1->SetPairKerning(FALSE, DWRITE_TEXT_RANGE{ 0, GetString().size() });
+	}
+	return pTextLayout1;
+}
+
 
 
 void CTextCell::PaintContent(CDirect2DWrite* pDirect, CRectF rcPaint)

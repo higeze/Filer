@@ -9,4 +9,5 @@ public:
 		:CHeaderCell(pSheet,pRow,pColumn,arg<"editmode"_s>() = EditMode::ReadOnly){}
 	virtual ~CRowIndexCell() = default;
 	virtual std::wstring GetString() const override;
+	virtual const CComPtr<IDWriteTextLayout1>& GetTextLayoutPtr() const override;
 };

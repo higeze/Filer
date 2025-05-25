@@ -56,6 +56,8 @@ private:
 
 public:
 	DECLARE_LAZY_COMPTR_GETTER(IDWriteTextLayout1, TextLayout)
+protected:
+	virtual const CComPtr<IDWriteTextLayout1> GetTextLayoutPtrCore() const;
 
 public:
 	template<typename... Args>
