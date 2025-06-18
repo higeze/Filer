@@ -633,7 +633,8 @@ void CTabControl::OnClosing(const ClosingEvent& e)
 CSizeF CTabControl::MeasureOverride(const CSizeF& availableSize)
 {
 	for (auto& pHeader : m_headers) {
-		//pHeader->MeasureDirty.set(true);
+		//TODO Bindig Header Text is better solution
+		pHeader->MeasureDirty.set(true);
 		pHeader->Measure(availableSize);
 	}
 	//m_addHeader->MeasureDirty.set(true);

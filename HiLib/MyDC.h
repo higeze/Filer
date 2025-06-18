@@ -241,11 +241,11 @@ public:
 		:m_bmp(NULL),m_hBmpOld(NULL)
 	{
 		if(CreateCompatibleDC(hDC)==NULL){
-			std::exception(("Error on CBufferDC Constructor:" + GetLastErrorString()).c_str());		
+			THROW_FILE_LINE_FUNC;
 		}
 		
 		if(m_bmp.CreateCompatibleBitmap(hDC, width, height)==NULL){
-			std::exception(("Error on CBufferDC Constructor:" + GetLastErrorString()).c_str());
+			THROW_FILE_LINE_FUNC;
 		}
 
 		m_hBmpOld=(HBITMAP)::SelectObject(m_hDC,(HBITMAP)m_bmp);

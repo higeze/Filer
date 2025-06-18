@@ -651,7 +651,7 @@ public:
 		return Pointer2Index<TRC, VisTag>();
 	}
 
-	template<typename TRC> void FitBandWidth(TRC::template SharedPtr& ptr)
+	template<typename TRC> void FitBandWidth(TRC::SharedPtr& ptr)
 	{
 		auto& otherContainer = GetContainer<typename TRC::Other, AllTag>();
 		for(const auto& otherPtr : otherContainer) {
@@ -667,14 +667,14 @@ public:
 		PostUpdate(Updates::Invalidate);
 	}
 
-	template<typename TRC> void Track(TRC::template SharedPtr& ptr)
+	template<typename TRC> void Track(TRC::SharedPtr& ptr)
 	{
 		PostUpdate(Updates::Column);//TODO
 		PostUpdate(Updates::Row);//TODO
 		PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
 	}
-	template<typename TRC> void EndTrack(TRC::template SharedPtr& ptr)
+	template<typename TRC> void EndTrack(TRC::SharedPtr& ptr)
 	{
 		auto& otherContainer = GetContainer<typename TRC::Other, AllTag>();
 		for (const auto& otherPtr : otherContainer) {

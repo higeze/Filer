@@ -15,7 +15,13 @@ public:
 
 	virtual void OnCreate(const CreateEvt& e) override;
 	virtual void OnKeyDown(const KeyDownEvent& e) override;
+	virtual void OnContextMenu(const ContextMenuEvent& e) override;
+
 	
+	void OnCommandDelete();
+	void OnCommandProperty();
+
+
 	void OnCellLButtonDblClk(const CellEventArgs& e);
 	void OpenFavorites();
 	void UpdateFilter() override {/*Do nothing*/}
