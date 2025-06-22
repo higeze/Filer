@@ -3,14 +3,17 @@
 #include "MyFriendSerializer.h"
 #include <future>
 #include <mutex>
+#include "reactive_property.h"
+#include "reactive_string.h"
 #include "JsonSerializer.h"
 
 class CShellFile;
 
 class CFavorite: public notify_property_changed
 {
-	NOTIFIABLE_PROPERTY(std::wstring, Path)
-	NOTIFIABLE_PROPERTY(std::wstring, ShortName)
+public:
+	reactive_wstring_ptr Path;
+	reactive_wstring_ptr ShortName;
 
 private:
 	std::shared_ptr<CShellFile> m_spFile;
@@ -24,16 +27,16 @@ public:
 	CFavorite(std::wstring path, std::wstring shortName);
 	virtual ~CFavorite(void);
 	CFavorite(const CFavorite& other)
-		:CFavorite(other.GetPath(), other.GetShortName()){}
+		:CFavorite(*other.Path, *other.ShortName){}
 	CFavorite& operator=(const CFavorite& other)
 	{
-		m_Path = other.m_Path;
-		m_ShortName = other.m_ShortName;
+		Path.set(*other.Path);
+		ShortName.set(*other.ShortName);
 		return *this;
 	}
 	bool operator==(const CFavorite& other) const
 	{
-		return GetPath() == other.GetPath() && GetShortName() == other.GetShortName();
+		return *Path == *other.Path && *ShortName == *ShortName;
 	}
 	bool operator!=(const CFavorite& other) const
 	{
@@ -55,13 +58,13 @@ public:
 public:
 	friend void to_json(json& j, const CFavorite& o)
 	{
-		json_safe_to(j, "Path", o.m_Path);
-		json_safe_to(j, "ShortName", o.m_ShortName);
+		json_safe_to(j, "Path", o.Path);
+		json_safe_to(j, "ShortName", o.ShortName);
 	}
 	friend void from_json(const json& j, CFavorite& o)
 	{
-		json_safe_from(j, "Path", o.m_Path);
-		json_safe_from(j, "ShortName", o.m_ShortName);
+		json_safe_from(j, "Path", o.Path);
+		json_safe_from(j, "ShortName", o.ShortName);
 	}
 
 };

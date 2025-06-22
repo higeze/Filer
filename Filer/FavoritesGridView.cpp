@@ -68,11 +68,10 @@ void CFavoritesGridView::OnCommandDelete()
 	SubmitUpdate();
 }
 
-class CFavoritePropertyDlg : public CD2DWDialog
+class CFavoritePropertyDlg : public CD2DWDialog2
 {
 protected:
-	std::shared_ptr<int> Dummy;
-	std::shared_ptr<CDockPanel> m_spDock;
+	std::shared_ptr<CDockPanel> m_spFillDock;
 	std::shared_ptr<CButton> m_spButtonOkay;
 	std::shared_ptr<CButton> m_spButtonCancel;
 	std::shared_ptr<CTextBlock> m_spTextBlockName;
@@ -80,35 +79,44 @@ protected:
 	std::shared_ptr<CTextBlock> m_spTextBlockPath;
 	std::shared_ptr<CTextBox> m_spTextBoxPath;
 
-	CFavorite m_favorite;
+	CFavorite& m_favorite;
 
 public:
-	CFavoritePropertyDlg(CD2DWControl* pParentControl, const CFavorite& favorite)
-		:m_favorite(favorite)
+	CFavoritePropertyDlg(CD2DWControl* pParentControl, CFavorite& favorite)
+		:CD2DWDialog2(),
+		m_favorite(favorite), 
+		m_spFillDock(std::make_shared<CDockPanel>(this)), 
+		m_spButtonOkay(std::make_shared<CButton>(this)),
+		m_spButtonCancel(std::make_shared<CButton>(this)),
+		m_spTextBlockName(std::make_shared<CTextBlock>(this)),
+		m_spTextBlockPath(std::make_shared<CTextBlock>(this)),
+		m_spTextBoxName(std::make_shared<CTextBox>(this)),
+		m_spTextBoxPath(std::make_shared<CTextBox>(this))
+
 	{
-		Title.set(L"Favorite Property");
+		m_spTitleTextBlock->Text.set(L"Favorite Property");
 
 		m_spTextBlockName->Text.set(L"Name");
-		m_spTextBoxName->Text.set(m_favorite.GetShortName());
+		m_spTextBoxName->Text.set(*favorite.ShortName);
 
-		m_spTextBlockName->Text.set(L"Path");
-		m_spTextBoxPath->Text.set(m_favorite.GetPath());
+		m_spTextBlockPath->Text.set(L"Path");
+		m_spTextBoxPath->Text.set(*favorite.Path);
 
 		m_spButtonOkay->Content.set(L"OK");
 		m_spButtonCancel->Content.set(L"Cancel");
 
 		m_spButtonOkay->Command.subscribe([this]()->void
 			{
-				m_favorite.SetShortName(*m_spTextBoxName->Text);
-				m_favorite.SetPath(*m_spTextBoxPath->Text);
+				m_favorite.ShortName.set(*m_spTextBoxName->Text);
+				m_favorite.Path.set(*m_spTextBoxPath->Text);
 
 				GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-			}, Dummy);
+			}, Life);
 
 		m_spButtonCancel->Command.subscribe([this]()->void
 			{
 				GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
-			}, Dummy);
+			}, Life);
 
 	}
 	virtual ~CFavoritePropertyDlg() = default;
@@ -123,7 +131,7 @@ public:
 			pr(m_spButtonCancel, DockEnum::Right)
 		);
 
-		m_spDock->Add(
+		m_spFillDock->Add(
 			pr(m_spTextBlockName, DockEnum::Top),
 			pr(m_spTextBoxName, DockEnum::Top),
 			pr(m_spTextBlockPath, DockEnum::Top),
@@ -131,33 +139,11 @@ public:
 			pr(spBottomDock, DockEnum::Bottom)
 		);
 
+		m_spDockPanel->Add(pr(m_spFillDock, DockEnum::Top));
+
 		//Base
-		CD2DWDialog::OnCreate(e);
+		CD2DWDialog2::OnCreate(e);
 	}
-
-	//CSizeF MeasureOverride(const CSizeF& availableSize)
-	//{
-	//	m_spDock->Measure(availableSize);
-
-	//	return m_spDock->DesiredSize();
-	//}
-
-
-	//void ArrangeOverride(const CRectF& finalRect)
-	//{
-	//	CPdfViewDlgBase::ArrangeOverride(finalRect);
-
-	//	CRectF rcTitle = GetTitleRect();
-	//	m_spParameter->Arrange(CRectF(
-	//		finalRect.left, finalRect.top + rcTitle.Height(),
-	//		finalRect.right, finalRect.top + rcTitle.Height() + m_spParameter->DesiredSize().height));
-	//	CRectF rcBtnCancel(finalRect.right - m_spButtonCancel->DesiredSize().width, finalRect.bottom - m_spButtonCancel->DesiredSize().height, finalRect.right, finalRect.bottom);
-	//	CRectF rcBtnDo(rcBtnCancel.left - m_spButtonDo->DesiredSize().width, finalRect.bottom - m_spButtonDo->DesiredSize().height, rcBtnCancel.left, finalRect.bottom);
-	//	m_spButtonCancel->Arrange(rcBtnCancel);
-	//	m_spButtonDo->Arrange(rcBtnDo);
-	//}
-
-
 };
 
 
@@ -167,11 +153,11 @@ public:
 
 void CFavoritesGridView::OnCommandProperty()
 {
-	auto spDlg = std::make_shared<CFavoritePropertyDlg>(this, ItemsSource->at(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()));
+	auto spDlg = std::make_shared<CFavoritePropertyDlg>(this, ItemsSource.get_unconst()->at(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()));
 
 	spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CRectF()));
 	spDlg->Measure(CSizeF(FLT_MAX, FLT_MAX));
-	spDlg->Arrange(CalcCenterRectF(spDlg->DesiredSize()));
+	spDlg->Arrange(CRectF(GetWndPtr()->GetCursorPosInWnd(), spDlg->DesiredSize()));
 	GetWndPtr()->SetFocusToControl(spDlg);
 }
 

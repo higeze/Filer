@@ -19,7 +19,7 @@ private:
 	virtual std::wstring GetShortName()
 	{
 		if (auto pBindColumn = dynamic_cast<CBindColumn<T>*>(this->m_pColumn)) {
-			return pBindColumn->GetItem<T>().GetShortName();
+			return *pBindColumn->GetItem<T>().ShortName;
 		} else {
 			return L"";
 		}

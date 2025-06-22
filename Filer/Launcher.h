@@ -12,7 +12,7 @@ public:
 		:CFavorite(path, shortName), m_RunAs(runas){}
 
 	CLauncher(const CLauncher& other)
-		:CLauncher(other.GetPath(), other.GetShortName(), other.GetRunAs()){}
+		:CLauncher(*other.Path, *other.ShortName, other.GetRunAs()){}
 	CLauncher& operator=(const CLauncher& other)
 	{
 		CFavorite::operator=(other);

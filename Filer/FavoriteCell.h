@@ -24,7 +24,7 @@ private:
 	virtual std::wstring GetShortName()
 	{
 		if (auto pBindRow = dynamic_cast<CBindRow<T>*>(this->m_pRow)) {
-			return pBindRow->GetItem<T>().GetShortName();
+			return *pBindRow->GetItem<T>().ShortName;
 		} else {
 			return L"";
 		}

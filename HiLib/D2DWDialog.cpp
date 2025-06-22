@@ -257,4 +257,261 @@ bool CD2DWDialog::IsPtInBottomSizingRect(const CPointF& pt)
 	return CRectF(rc.left, rc.bottom - kSizeWidth, rc.right, rc.bottom).PtInRect(pt);
 }
 
+///////////////////////////////////////////////
+
+
+CD2DWDialog2::CD2DWDialog2(CD2DWControl* pParentControl)
+	:CD2DWDialog(pParentControl),
+	m_pDialogMachine(std::make_unique<CDialogStateMachine>(this)),
+	m_spTitleTextBlock(std::make_shared<CTextBlock>(this)),
+	m_spDockPanel(std::make_shared<CDockPanel>(this))
+{
+	using pr = std::pair<std::shared_ptr<CD2DWControl>, DockEnum>;
+
+	m_spDockPanel->Add(pr(m_spTitleTextBlock, DockEnum::Top));
+}
+
+CD2DWDialog2::~CD2DWDialog2() = default;
+
+void CD2DWDialog2::OnCreate(const CreateEvt& e)
+{
+	CD2DWControl::OnCreate(e);
+	CreateEvt evt = CreateEvt(GetWndPtr(), this, CRectF());
+	m_spDockPanel->OnCreate(evt);
+}
+void CD2DWDialog2::OnDestroy(const DestroyEvent& e)
+{
+	CD2DWControl::OnDestroy(e);
+}
+void CD2DWDialog2::OnClose(const CloseEvent& e)
+{
+	CD2DWControl::OnClose(e);
+}
+
+void CD2DWDialog2::OnPaint(const PaintEvent& e)
+{
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
+
+	m_spDockPanel->OnPaint(e);
+
+	PaintBorder();
+
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
+}
+
+void CD2DWDialog2::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pDialogMachine->process_event(e); }
+void CD2DWDialog2::OnLButtonEndDrag(const LButtonEndDragEvent& e) { m_pDialogMachine->process_event(e); }
+void CD2DWDialog2::OnMouseMove(const MouseMoveEvent& e) { m_pDialogMachine->process_event(e); }
+void CD2DWDialog2::OnMouseLeave(const MouseLeaveEvent& e) { m_pDialogMachine->process_event(e); }
+void CD2DWDialog2::OnSetCursor(const SetCursorEvent& e) { m_pDialogMachine->process_event(e); }
+
+
+CSizeF CD2DWDialog2::MeasureOverride(const CSizeF& availableSize)
+{
+	m_spDockPanel->Measure(availableSize);
+
+	return m_spDockPanel->DesiredSize();
+}
+
+void CD2DWDialog2::ArrangeOverride(const CRectF& finalRect)
+{
+	CD2DWControl::ArrangeOverride(finalRect);
+
+	m_spDockPanel->Arrange(finalRect);
+}
+
+
+
+/****************/
+/* StateMachine */
+/****************/
+bool CD2DWDialog2::Guard_LButtonBeginDrag_Normal_To_Moving(const LButtonBeginDragEvent& e)
+{
+	auto iter = std::find_if(m_childControls.crbegin(), m_childControls.crend(),
+		[&](const std::shared_ptr<CD2DWControl>& x) {
+			return *x->IsEnabled && x->GetRectInWnd().PtInRect(e.PointInWnd);
+		});
+
+	return iter == m_childControls.crend();
+}
+bool CD2DWDialog2::Guard_LButtonBeginDrag_Normal_To_LeftSizing(const LButtonBeginDragEvent& e)
+{
+	return IsPtInLeftSizingRect(e.PointInWnd);
+}
+bool CD2DWDialog2::Guard_LButtonBeginDrag_Normal_To_RightSizing(const LButtonBeginDragEvent& e)
+{
+	return IsPtInRightSizingRect(e.PointInWnd);
+}
+bool CD2DWDialog2::Guard_LButtonBeginDrag_Normal_To_TopSizing(const LButtonBeginDragEvent& e)
+{
+	return IsPtInTopSizingRect(e.PointInWnd);
+}
+bool CD2DWDialog2::Guard_LButtonBeginDrag_Normal_To_BottomSizing(const LButtonBeginDragEvent& e)
+{
+	return IsPtInBottomSizingRect(e.PointInWnd);
+}
+
+void CD2DWDialog2::Normal_LButtonBeginDrag(const LButtonBeginDragEvent& e)
+{
+	CD2DWControl::OnLButtonBeginDrag(e);
+	*e.HandledPtr = TRUE;
+}
+void CD2DWDialog2::Normal_LButtonEndDrag(const LButtonEndDragEvent& e)
+{
+	CD2DWControl::OnLButtonEndDrag(e);
+	*e.HandledPtr = TRUE;
+}
+void CD2DWDialog2::Normal_MouseMove(const MouseMoveEvent& e)
+{
+	CD2DWControl::OnMouseMove(e);
+	*e.HandledPtr = TRUE;
+}
+void CD2DWDialog2::Normal_MouseLeave(const MouseLeaveEvent& e)
+{
+	CD2DWControl::OnMouseLeave(e);
+	*e.HandledPtr = TRUE;
+}
+void CD2DWDialog2::Normal_SetCursor(const SetCursorEvent& e)
+{
+	if (IsPtInLeftSizingRect(e.PointInWnd)) {
+		LeftSizing_SetCursor(e);
+	}
+	else if (IsPtInRightSizingRect(e.PointInWnd)) {
+		RightSizing_SetCursor(e);
+	}
+	else if (IsPtInTopSizingRect(e.PointInWnd)) {
+		TopSizing_SetCursor(e);
+	}
+	else if (IsPtInBottomSizingRect(e.PointInWnd)) {
+		BottomSizing_SetCursor(e);
+	}
+}
+
+void CD2DWDialog2::Moving_OnEntry(const LButtonBeginDragEvent& e)
+{
+	e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+	m_startPoint = e.PointInWnd;
+	*e.HandledPtr = TRUE;
+}
+void CD2DWDialog2::Moving_OnExit()
+{
+	GetWndPtr()->ReleaseCapturedControlPtr();
+	m_startPoint.reset();
+}
+void CD2DWDialog2::Moving_MouseMove(const MouseMoveEvent& e)
+{
+	auto rc = GetRectInWnd();
+	rc.OffsetRect(CPointF(e.PointInWnd.x - m_startPoint.value().x, e.PointInWnd.y - m_startPoint.value().y));
+	m_startPoint = e.PointInWnd;
+	ArrangeCore(rc);
+	*e.HandledPtr = TRUE;
+}
+
+void CD2DWDialog2::Sizing_OnEntry(const LButtonBeginDragEvent& e)
+{
+	e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+	m_startPoint = e.PointInWnd;
+	*e.HandledPtr = TRUE;
+}
+
+void CD2DWDialog2::Sizing_OnExit()
+{
+	GetWndPtr()->ReleaseCapturedControlPtr();
+	m_startPoint.reset();
+}
+
+void CD2DWDialog2::LeftSizing_MouseMove(const MouseMoveEvent& e)
+{
+	auto rc = GetRectInWnd();
+	rc.left = e.PointInWnd.x;
+	ArrangeCore(rc);
+	*e.HandledPtr = TRUE;
+}
+void CD2DWDialog2::RightSizing_MouseMove(const MouseMoveEvent& e)
+{
+	auto rc = GetRectInWnd();
+	rc.right = e.PointInWnd.x;
+	ArrangeCore(rc);
+	*e.HandledPtr = TRUE;
+}
+void CD2DWDialog2::TopSizing_MouseMove(const MouseMoveEvent& e)
+{
+	auto rc = GetRectInWnd();
+	rc.top = e.PointInWnd.y;
+	ArrangeCore(rc);
+	*e.HandledPtr = TRUE;
+}
+void CD2DWDialog2::BottomSizing_MouseMove(const MouseMoveEvent& e)
+{
+	auto rc = GetRectInWnd();
+	rc.bottom = e.PointInWnd.y;
+	ArrangeCore(rc);
+	*e.HandledPtr = TRUE;
+}
+
+void CD2DWDialog2::LeftSizing_SetCursor(const SetCursorEvent& e)
+{
+	::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
+	*(e.HandledPtr) = TRUE;
+}
+
+void CD2DWDialog2::RightSizing_SetCursor(const SetCursorEvent& e)
+{
+	::SetCursor(::LoadCursor(NULL, IDC_SIZEWE));
+	*(e.HandledPtr) = TRUE;
+}
+
+void CD2DWDialog2::TopSizing_SetCursor(const SetCursorEvent& e)
+{
+	::SetCursor(::LoadCursor(NULL, IDC_SIZENS));
+	*(e.HandledPtr) = TRUE;
+}
+
+void CD2DWDialog2::BottomSizing_SetCursor(const SetCursorEvent& e)
+{
+	::SetCursor(::LoadCursor(NULL, IDC_SIZENS));
+	*(e.HandledPtr) = TRUE;
+}
+
+
+void CD2DWDialog2::Error_StdException(const std::exception& e)
+{
+
+}
+
+void CD2DWDialog2::PaintBorder()
+{
+	auto rc = GetRectInWnd();
+	rc.DeflateRect(GetNormalBorder().Width * 0.5f);
+	GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(GetNormalBorder(), rc);
+}
+
+
+/***********/
+/* private */
+/***********/
+bool CD2DWDialog2::IsPtInLeftSizingRect(const CPointF& pt)
+{
+	auto rc = GetRectInWnd();
+	return CRectF(rc.left, rc.top, rc.left + kSizeWidth, rc.bottom).PtInRect(pt);
+}
+bool CD2DWDialog2::IsPtInRightSizingRect(const CPointF& pt)
+{
+	auto rc = GetRectInWnd();
+	return CRectF(rc.right - kSizeWidth, rc.top, rc.right, rc.bottom).PtInRect(pt);
+}
+bool CD2DWDialog2::IsPtInTopSizingRect(const CPointF& pt)
+{
+	auto rc = GetRectInWnd();
+	return CRectF(rc.left, rc.top, rc.right, rc.top + kSizeWidth).PtInRect(pt);
+}
+
+bool CD2DWDialog2::IsPtInBottomSizingRect(const CPointF& pt)
+{
+	auto rc = GetRectInWnd();
+	return CRectF(rc.left, rc.bottom - kSizeWidth, rc.right, rc.bottom).PtInRect(pt);
+}
+
 
