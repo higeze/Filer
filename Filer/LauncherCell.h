@@ -53,7 +53,7 @@ public:
 	{
 		if (auto pBindColumn = dynamic_cast<CBindColumn<T>*>(this->m_pColumn)) {
 			auto item = pBindColumn->GetItem<T>();
-			if (item.GetRunAs()) {
+			if (*item.RunAs) {
 				this->GetShellFile()->RunAs();
 			} else {
 				this->GetShellFile()->Open();

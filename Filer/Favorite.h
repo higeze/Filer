@@ -4,12 +4,13 @@
 #include <future>
 #include <mutex>
 #include "reactive_property.h"
+#include "reactive_vector.h"
 #include "reactive_string.h"
 #include "JsonSerializer.h"
 
 class CShellFile;
 
-class CFavorite: public notify_property_changed
+class CFavorite/*: public notify_property_changed*/
 {
 public:
 	reactive_wstring_ptr Path;
@@ -43,6 +44,14 @@ public:
 		return !(operator==(other));
 	}
 
+	CFavorite Clone() const
+	{
+		CFavorite clone;
+		clone.Path.set(*Path);
+		clone.ShortName.set(*ShortName);
+		return clone;
+	}
+
 	std::shared_ptr<CShellFile>& GetShellFile(const std::function<void()>& changed);
 
 	std::shared_ptr<CShellFile>& GeLockShellFile()
@@ -67,5 +76,20 @@ public:
 		json_safe_from(j, "ShortName", o.ShortName);
 	}
 
+};
+
+template<>
+struct adl_vector_item<CFavorite>
+{
+	static CFavorite clone(const CFavorite& item)
+	{
+		return item.Clone();
+	}
+
+	static void bind(CFavorite& src, CFavorite& dst)
+	{
+		src.Path.binding(dst.Path);
+		src.ShortName.binding(dst.ShortName);
+	}
 };
 
