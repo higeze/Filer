@@ -169,6 +169,7 @@ void CFavoritesGridView::OnContextMenu(const ContextMenuEvent& e)
 	CContextMenu2 menu;
 	menu.Add(
 		std::make_unique<CMenuItem2>(L"Delete", &CFavoritesGridView::OnCommandDelete, me),
+		std::make_unique<CMenuSeparator2>(),
 		std::make_unique<CMenuItem2>(L"Property", &CFavoritesGridView::OnCommandProperty, me)
 	);
 	menu.Popup(GetWndPtr()->m_hWnd, CPointU(e.PointInScreen.x, e.PointInScreen.y));
