@@ -98,6 +98,9 @@ enum class BindType
 template<typename T, typename TRow = CBindRow<T>, typename TCol = CBindColumn<T>>
 class CBindGridView :public CGridView, public IBindSheet<T>
 {
+public:
+	using notify_type = reactive_vector_ptr<T>::notify_type;
+
 protected:
 	BindType m_bindType;
 	std::vector<std::shared_ptr<CColumn>> m_initColumns;
@@ -217,7 +220,7 @@ public:
 	/******************/
 	/* Window Message */
 	/******************/
-	void subscribe_detail_row(const notify_container_changed_event_args<std::vector<T>>& e)
+	void subscribe_detail_row(const notify_type& e)
 	{
 		switch (e.action) {
 			case notify_container_changed_action::push_back:
@@ -256,7 +259,7 @@ public:
 		}
 	}
 
-	void subscribe_detail_column(const notify_container_changed_event_args<std::vector<T>>& e)
+	void subscribe_detail_column(const notify_type& e)
 	{
 		switch (e.action) {
 			case notify_container_changed_action::push_back:

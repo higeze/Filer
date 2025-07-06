@@ -11,7 +11,8 @@ std::wstring CRowIndexCell::GetString() const
 
 const CComPtr<IDWriteTextLayout1>& CRowIndexCell::GetTextLayoutPtr() const
 {
-	return  m_pTextLayout = CHeaderCell::GetTextLayoutPtrCore();
+	m_pTextLayout = CHeaderCell::GetTextLayoutPtrCore();
+	return m_pTextLayout;
 }
 
 

@@ -1,6 +1,9 @@
 #pragma once
-#include "reactive_container.h"
+#include "notify_container_changed.h"
 #include "notify_property_changed.h"
+#include "subject.h"
+#include "JsonSerializer.h"
+#include "Debug.h"
 #include <vector>
 
 template<typename T>
@@ -29,7 +32,7 @@ class reactive_vector
 {
 public:
 	using container_type = typename std::vector<_Ty, _Alloc>;
-	using notify_type = typename notify_container_changed_event_args<container_type>;
+	using notify_type = typename notify_container_changed_event_args<std::vector, _Ty, _Alloc>;
 	using subject_type = typename subject<notify_type>;
 
 	using value_type = container_type::value_type;
@@ -230,12 +233,12 @@ public:
 
 		switch (notify.action) {
 			case notify_container_changed_action::push_back:
-				this->push_back(adl_vector_item<value_type>::clone(notify.new_items.front()));
-					bind_value(notify.new_items.front(), this->m_value.at(notify.new_starting_index));
+				this->push_back(adl_vector_item<value_type>::clone(notify.all_items.back()));
+					bind_value(notify.all_items.back(), this->m_value.back());
 				break;
 			case notify_container_changed_action::insert:
-				this->insert(this->m_value.cbegin() + notify.new_starting_index, adl_vector_item<value_type>::clone(notify.new_items.front()));
-				bind_value(notify.new_items.front(), this->m_value.at(notify.new_starting_index));
+				this->insert(this->m_value.cbegin() + notify.new_starting_index, adl_vector_item<value_type>::clone(notify.all_items.at(notify.new_starting_index)));
+				bind_value(notify.all_items.at(notify.new_starting_index), this->m_value.at(notify.new_starting_index));
 				break;
 			case notify_container_changed_action::Move:
 				THROW_FILE_LINE_FUNC;
@@ -247,9 +250,9 @@ public:
 				THROW_FILE_LINE_FUNC;
 				break;
 			case notify_container_changed_action::reset:
-				for (size_t i = 0; i < notify.new_items.size(); i++) {
-					this->push_back(adl_vector_item<value_type>::clone(notify.new_items[i]));
-					bind_value(notify.new_items[i], this->m_value.at(i));
+				for (size_t i = 0; i < notify.all_items.size(); i++) {
+					this->push_back(adl_vector_item<value_type>::clone(notify.all_items[i]));
+					bind_value(notify.all_items[i], this->m_value.at(i));
 				}
 				break;
 		}

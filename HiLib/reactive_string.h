@@ -1,5 +1,8 @@
 #pragma once
-#include "reactive_container.h"
+#include "notify_container_changed.h"
+#include "subject.h"
+#include "JsonSerializer.h"
+#include "Debug.h"
 #include <string>
 
 
@@ -10,7 +13,7 @@ class reactive_basic_string
 {
 public:
 	using container_type = typename std::basic_string<_Elem, _Traits, _Alloc>;
-	using notify_type = typename notify_container_changed_event_args<container_type>;
+	using notify_type = typename notify_container_changed_event_args<std::basic_string, _Elem, _Traits, _Alloc>;
 	using subject_type = typename subject<notify_type>;
 
 	using value_type = container_type::value_type;
