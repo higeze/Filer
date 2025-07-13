@@ -318,10 +318,13 @@
     <ClInclude Include="..\HiLib\Cursorer.h" />
     <ClInclude Include="..\HiLib\D2DFileIconDrawer.h" />
     <ClInclude Include="..\HiLib\D2DImage.h" />
+    <ClInclude Include="..\HiLib\DataObject.h" />
     <ClInclude Include="..\HiLib\Date.h" />
     <ClInclude Include="..\HiLib\dependency_property.h" />
     <ClInclude Include="..\HiLib\DockPanel.h" />
     <ClInclude Include="..\HiLib\DriveFolder.h" />
+    <ClInclude Include="..\HiLib\DropSource.h" />
+    <ClInclude Include="..\HiLib\DropTarget.h" />
     <ClInclude Include="..\HiLib\FileSizeArgs.h" />
     <ClInclude Include="..\HiLib\FileStatus.h" />
     <ClInclude Include="..\HiLib\FileTimeArgs.h" />
@@ -531,7 +534,6 @@
     <ClInclude Include="Launcher.h" />
     <ClInclude Include="LauncherItemDragger.h" />
     <ClInclude Include="LauncherProperty.h" />
-    <ClInclude Include="DropTarget.h" />
     <ClInclude Include="FileOperationDlg.h" />
     <ClInclude Include="FilerBindGridView.h" />
     <ClInclude Include="FilerGridViewProperty.h" />
@@ -545,7 +547,6 @@
     <ClInclude Include="SearchWnd.h" />
     <ClInclude Include="FilerTabGridView.h" />
     <ClInclude Include="DirectoryWatcher.h" />
-    <ClInclude Include="DropSource.h" />
     <ClInclude Include="Favorite.h" />
     <ClInclude Include="FavoritesColumn.h" />
     <ClInclude Include="FavoritesGridView.h" />
@@ -612,8 +613,11 @@
     <ClCompile Include="..\HiLib\Cursorer.cpp" />
     <ClCompile Include="..\HiLib\D2DFileIconDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DImage.cpp" />
+    <ClCompile Include="..\HiLib\DataObject.cpp" />
     <ClCompile Include="..\HiLib\DockPanel.cpp" />
     <ClCompile Include="..\HiLib\DriveFolder.cpp" />
+    <ClCompile Include="..\HiLib\DropSource.cpp" />
+    <ClCompile Include="..\HiLib\DropTarget.cpp" />
     <ClCompile Include="..\HiLib\FPDFFormHandle.cpp" />
     <ClCompile Include="..\HiLib\Grid.cpp" />
     <ClCompile Include="..\HiLib\KeyTraceEventSink.cpp" />
@@ -732,7 +736,6 @@
     <ClCompile Include="TextTabData.cpp" />
     <ClCompile Include="ToDoDoc.cpp" />
     <ClCompile Include="DriveSizeCell.cpp" />
-    <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="FileOperationDlg.cpp" />
     <ClCompile Include="CheckableFileGrid.cpp" />
     <ClCompile Include="FilerApplication.cpp" />
@@ -742,7 +745,6 @@
     <ClCompile Include="IncrementalCopyDlg.cpp" />
     <ClCompile Include="SearchWnd.cpp" />
     <ClCompile Include="DirectoryWatcher.cpp" />
-    <ClCompile Include="DropSource.cpp" />
     <ClCompile Include="Favorite.cpp" />
     <ClCompile Include="FavoritesGridView.cpp" />
     <ClCompile Include="FileDragger.cpp" />

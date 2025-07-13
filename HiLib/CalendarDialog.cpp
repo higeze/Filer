@@ -66,7 +66,7 @@ CCalendarDialog::CCalendarDialog(CD2DWControl* pParentControl)
 		m_spCalendar->SelectedYearMonthDay.set(CYearMonthDay());
 		OnClose(CloseEvent(GetWndPtr(), NULL, NULL));
 	}, m_spButtonBlank);
-	m_spButtonBlank->Content.set(L"  ");
+	m_spButtonBlank->Content.set(L"B");
 
 	m_spButtonClose->Command.subscribe([this]()->void
 	{

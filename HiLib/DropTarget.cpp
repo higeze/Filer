@@ -5,42 +5,7 @@
 #include "D2DWWindow.h"
 #include "D2DWControl.h"
 
-#define INITGUID
-#include <objbase.h>
-
-#define USES_IID_IMessage
-#include <initguid.h> //this is needed,
-#include <mapiguid.h> //then this
-#include <mapix.h>
-#include <mapitags.h>
-#include <mapidefs.h>
-#include <mapiutil.h>
-#include <imessage.h>
-#include <fcntl.h>
-
-#define SETFormatEtc(fe, cf, asp, td, med, li)   \
-    {\
-    (fe).cfFormat=cf;\
-    (fe).dwAspect=asp;\
-    (fe).ptd=td;\
-    (fe).tymed=med;\
-    (fe).lindex=li;\
-    }
-
-#define SETDefFormatEtc(fe, cf, med)   \
-    {\
-    (fe).cfFormat=cf;\
-    (fe).dwAspect=DVASPECT_CONTENT;\
-    (fe).ptd=NULL;\
-    (fe).tymed=med;\
-    (fe).lindex=-1;\
-    }
-
-// {00020D0B-0000-0000-C000-000000000046}
-DEFINE_GUID(CLSID_MailMessage,
-	0x00020D0B,
-	0x0000, 0x0000, 0xC0, 0x00, 0x0, 0x00, 0x0, 0x00, 0x00, 0x46);
-
+#include "DataObject.h"
 
 CDropTarget::CDropTarget(CD2DWControl* pControl):CUnknown<IDropTarget>(), m_pControl(pControl)
 {
@@ -56,19 +21,10 @@ CDropTarget::~CDropTarget()
 
 STDMETHODIMP CDropTarget::DragEnter(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
 {
-	std::vector<FORMATETC> formats;
-	CComPtr<IEnumFORMATETC> pEnumFormatEtc;
-	if (SUCCEEDED(pDataObj->EnumFormatEtc(DATADIR::DATADIR_GET, &pEnumFormatEtc))) {
-		FORMATETC rgelt[100];
-		ULONG celtFetched = 0UL;
-		if (SUCCEEDED(pEnumFormatEtc->Next(100, rgelt, &celtFetched))) {
-			for (size_t i = 0; i < celtFetched; ++i) {
-				formats.push_back(rgelt[i]);
-			}
-		}
-	}
+	CDataObject data(pDataObj);
 
-	m_bSupportFormat = IsDroppable(formats);
+	m_bSupportFormat = IsDroppable(data);
+
 	if (m_bSupportFormat && m_pDropTargetHelper != NULL) {
 		HRESULT hr = m_pDropTargetHelper->DragEnter(m_pControl->GetWndPtr()->m_hWnd, pDataObj, (LPPOINT)&pt, *pdwEffect);
 	}

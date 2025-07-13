@@ -192,7 +192,6 @@ public:
 		return ret;
 	}
 
-
 	void clear()
 	{
 		auto old = this->m_value;
@@ -207,6 +206,29 @@ public:
 			this->m_value
 		});
 		return;
+	}
+
+	const_iterator find(const value_type& value) const
+	{
+		auto iter = std::ranges::find(this->m_value, value);
+		return iter;
+	}
+
+	template<class Predicate>
+	const_iterator find_if(Predicate pred) const
+	{
+		auto iter = std::ranges::find_if(this->m_value, pred, {});
+		return iter;
+	}
+
+	const_iterator cbegin() const
+	{
+		return this->m_value.cbegin();
+	}
+
+	const_iterator cend() const
+	{
+		return this->m_value.cend();
 	}
 
     template <class... Args>
@@ -391,6 +413,28 @@ public:
 	void emplace_back(Args&&... args)
 	{
 		return this->m_preactive->emplace_back(std::forward<Args>(args)...);
+	}
+
+	const_iterator find(const value_type& value) const
+	{
+		return m_preactive->find(value);
+	}
+
+	template<class Predicate>
+	const_iterator find_if(Predicate pred) const
+	{
+		return m_preactive->find_if(pred);
+	}
+
+
+	const_iterator cbegin() const
+	{
+		return m_preactive->cbegin();
+	}
+
+	const_iterator cend() const
+	{
+		return m_preactive->cend();
 	}
 
 	std::pair<sigslot::connection, sigslot::connection> binding(reactive_vector_ptr& dst)

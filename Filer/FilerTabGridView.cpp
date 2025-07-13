@@ -473,12 +473,25 @@ void CFilerTabGridView::OnKeyDown(const KeyDownEvent& e)
 				}
 
 				if (spNewData) {
-					//Replace
-					if (::IsKeyDown(VK_SHIFT) && spOther->ItemsSource.get_unconst()->at(*spOther->SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
-						spOther->ItemsSource.replace(spOther->ItemsSource.get_unconst()->begin() + *spOther->SelectedIndex, spNewData);
-					//Push back	
+					//In case of same data exist, Focus that tab
+					auto pred = [spNewData](const std::shared_ptr<TabData>& value)->bool
+						{
+							auto l = std::dynamic_pointer_cast<PdfTabData>(spNewData);
+							auto r = std::dynamic_pointer_cast<PdfTabData>(value);
+							return l && r && *l->Doc->Path == *r->Doc->Path;
+						};
+					auto iter = spOther->ItemsSource.find_if(pred);
+					if (iter != spOther->ItemsSource.cend()) {
+						spOther->SelectedIndex.set(std::distance(spOther->ItemsSource.cbegin(), iter));
 					} else {
-						spOther->ItemsSource.push_back(spNewData);
+
+						//Replace
+						if (::IsKeyDown(VK_SHIFT) && spOther->ItemsSource.get_unconst()->at(*spOther->SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
+							spOther->ItemsSource.replace(spOther->ItemsSource.get_unconst()->begin() + *spOther->SelectedIndex, spNewData);
+							//Push back	
+						} else {
+							spOther->ItemsSource.push_back(spNewData);
+						}
 					}
 					*(e.HandledPtr) = TRUE;
 				}

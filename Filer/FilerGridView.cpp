@@ -59,12 +59,6 @@
 #include "ShellContextMenu.h"
 #include "ExeExtensionProperty.h"
 
-CLIPFORMAT CFilerGridView::s_cf_shellidlist = ::RegisterClipboardFormat(CFSTR_SHELLIDLIST);
-CLIPFORMAT CFilerGridView::s_cf_filecontents = ::RegisterClipboardFormat(CFSTR_FILECONTENTS);
-CLIPFORMAT CFilerGridView::s_cf_filegroupdescriptor = ::RegisterClipboardFormat(CFSTR_FILEDESCRIPTOR);
-
-CLIPFORMAT CFilerGridView::s_cf_renprivatemessages = ::RegisterClipboardFormat(L"RenPrivateMessages");
-
 #include <mapix.h>
 #include <mapitags.h>
 #include <mapidefs.h>
@@ -200,8 +194,8 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 	//Drag & Drop
 	//DropTarget
 	auto pDropTarget = new CDropTarget(this);
-	pDropTarget->IsDroppable = ([this](const std::vector<FORMATETC>& formats)->bool { return IsDroppable(formats); });
-	pDropTarget->Dropped = ([this](IDataObject *pDataObj, DWORD dwEffect)->void { Dropped(pDataObj, dwEffect); });
+	pDropTarget->IsDroppable = ([this](const CDataObject& data)->bool { return IsDroppable(data); });
+	pDropTarget->Dropped = ([this](const CDataObject data, DWORD dwEffect)->void { Dropped(data, dwEffect); });
 	m_pDropTarget = CComPtr<IDropTarget>(pDropTarget);
 	GetWndPtr()->GetDropTargetManagerPtr()->RegisterDragDrop(this, m_pDropTarget);
 	//DropSource
@@ -259,71 +253,39 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 	//}
 }
 
-bool CFilerGridView::IsDroppable(const std::vector<FORMATETC>& formats)
+bool CFilerGridView::IsDroppable(const CDataObject& data)
 {
-	for (auto f : formats) {
-		std::wstring str;
-		::GetClipboardFormatNameW(f.cfFormat, ::GetBuffer(str, MAX_PATH), MAX_PATH);
-		::ReleaseBuffer(str);
-		::OutputDebugStringW(std::format(L"{} : {}", f.cfFormat, str).c_str());
-	}
+	auto formats = data.EnumFormats();
 
-	bool isShellIdList = false;
-	bool isFileDescriptor = false;
-
-	for (const auto& format : formats) {
-		isShellIdList |= format.cfFormat == s_cf_shellidlist;
-		isFileDescriptor |= format.cfFormat == s_cf_filegroupdescriptor;
-	}
-	return  isShellIdList || isFileDescriptor;
-}
-
-void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
-{
-	//When DropTarget Dropped, LButtonUp is not Fired. Therefore need to cal here to change state.
-	//TODOLOW
-	auto pt = GetWndPtr()->GetCursorPosInClient();
-	GetWndPtr()->SendMessage(WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(pt.x, pt.y));
-	//m_pMouseMachine->process_event(LButtonUpEvent(this, NULL, NULL));
-
-	std::vector<FORMATETC> formats;
-	CComPtr<IEnumFORMATETC> pEnumFormatEtc;
-	if (SUCCEEDED(pDataObj->EnumFormatEtc(DATADIR::DATADIR_GET, &pEnumFormatEtc))) {
-		FORMATETC rgelt[100];
-		ULONG celtFetched = 0UL;
-		if (SUCCEEDED(pEnumFormatEtc->Next(100, rgelt, &celtFetched))) {
-			for (size_t i = 0; i < celtFetched; ++i) {
-				formats.push_back(rgelt[i]);
-			}
-		}
-	}
 	bool isShellIdList = false;
 	bool isFileDescriptor = false;
 	bool isRenPrivateMessages = false;
 
 	for (const auto& format : formats) {
-		isShellIdList |= format.cfFormat == s_cf_shellidlist;
-		isFileDescriptor |= format.cfFormat == s_cf_filegroupdescriptor;
-		isRenPrivateMessages |= format.cfFormat == s_cf_renprivatemessages;
+		isShellIdList |= format.cfFormat == CDataObject::s_cf_shellidlist;
+		isFileDescriptor |= format.cfFormat == CDataObject::s_cf_filegroupdescriptor;
+		isRenPrivateMessages |= format.cfFormat == CDataObject::s_cf_renprivatemessages;
 	}
+	return  isShellIdList || isFileDescriptor || isRenPrivateMessages;
+}
 
-	auto medium_global_deleter = [](LPSTGMEDIUM pMedium)
-	{
-		::GlobalUnlock(pMedium->hGlobal);
-		::ReleaseStgMedium(pMedium);
-		delete pMedium;
-	};
+void CFilerGridView::Dropped(const CDataObject& data, DWORD dwEffect)
+{
+	//When DropTarget Dropped, LButtonUp is not Fired. Therefore need to cal here to change state.
+	auto pt = GetWndPtr()->GetCursorPosInClient();
+	GetWndPtr()->SendMessage(WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(pt.x, pt.y));
 
-	auto medium_deleter = [](LPSTGMEDIUM pMedium)
-	{
-		::ReleaseStgMedium(pMedium);
-		delete pMedium;
-	};
+	std::vector<FORMATETC> formats = data.EnumFormats();
 
-	auto message_deleter = [](LPMESSAGE pMessage)
-	{
-		pMessage->Release();
-	};
+	bool isShellIdList = false;
+	bool isFileDescriptor = false;
+	bool isRenPrivateMessages = false;
+
+	for (const auto& format : formats) {
+		isShellIdList |= format.cfFormat == CDataObject::s_cf_shellidlist;
+		isFileDescriptor |= format.cfFormat == CDataObject::s_cf_filegroupdescriptor;
+		isRenPrivateMessages |= format.cfFormat == CDataObject::s_cf_renprivatemessages;
+	}
 
 	if (isShellIdList) {
 		// General
@@ -341,10 +303,8 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 		formatetc.lindex = -1;
 		formatetc.tymed = TYMED_HGLOBAL;
 
-		std::unique_ptr<STGMEDIUM, decltype(medium_global_deleter)> pMedium(new STGMEDIUM(), medium_global_deleter);
-		FAILED_RETURN(pDataObj->GetData(&formatetc, pMedium.get()));
-
-		LPIDA pida = (LPIDA)GlobalLock(pMedium->hGlobal);
+		auto pMedium = data.GetGlobalMediumData(formatetc);
+		LPIDA pida = (LPIDA)pMedium->hGlobal;
 		CIDL folderIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
 
 		switch (dwEffect) {
@@ -354,7 +314,7 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 			if (folderIdl == Folder->GetAbsoluteIdl()) {
 				//Do nothing
 			} else {
-				FAILED_RETURN(pFileOperation->MoveItems(pDataObj, pDestShellItem));
+				FAILED_RETURN(pFileOperation->MoveItems(data.ptr(), pDestShellItem));
 				FAILED_RETURN(pFileOperation->PerformOperations());
 			}
 		}
@@ -365,7 +325,7 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 			if (folderIdl == Folder->GetAbsoluteIdl()) {
 				//Do nothing
 			} else {				
-				FAILED_RETURN(pFileOperation->CopyItems(pDataObj, pDestShellItem));
+				FAILED_RETURN(pFileOperation->CopyItems(data.ptr(), pDestShellItem));
 				FAILED_RETURN(pFileOperation->PerformOperations());
 			}
 		}
@@ -410,10 +370,9 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 		//FAILED_RETURN(::MAPIInitialize(NULL));
 
 
-		FORMATETC descriptor_format = { s_cf_filegroupdescriptor, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-		std::unique_ptr<STGMEDIUM, decltype(medium_global_deleter)> pMedium(new STGMEDIUM(), medium_global_deleter);
-		FAILED_RETURN(pDataObj->GetData(&descriptor_format, pMedium.get()));
-		LPFILEGROUPDESCRIPTOR lpfgd = (LPFILEGROUPDESCRIPTOR)GlobalLock(pMedium->hGlobal);
+		FORMATETC descriptor_format = { CDataObject::s_cf_filegroupdescriptor, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+		auto pMedium = data.GetGlobalMediumData(descriptor_format);
+		LPFILEGROUPDESCRIPTOR lpfgd = (LPFILEGROUPDESCRIPTOR)pMedium->hGlobal;
 
 		if (lpfgd != NULL) {
 			LPMALLOC	lpMalloc = MAPIGetDefaultMalloc();
@@ -431,14 +390,13 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 				for (UINT i = 0; i < lpfgd->cItems; i++) {
 					LPFILEDESCRIPTOR lpfd = (LPFILEDESCRIPTOR)&lpfgd->fgd[i];
 
-					FORMATETC contents_format = { s_cf_filecontents, NULL, DVASPECT_CONTENT, (LONG)i, TYMED_ISTORAGE };
-					std::unique_ptr<STGMEDIUM, decltype(medium_deleter)> pMedium(new STGMEDIUM(), medium_deleter);
-					FAILED_RETURN(pDataObj->GetData(&contents_format, pMedium.get()));
+					FORMATETC contents_format = { CDataObject::s_cf_filecontents, NULL, DVASPECT_CONTENT, (LONG)i, TYMED_ISTORAGE };
+					auto pMedium = data.GetMediumData(contents_format);
 
 					if ( pMedium->pstg != NULL) {
 						LPMESSAGE	pTmp = NULL;
 						FAILED_RETURN(OpenIMsgOnIStg(pSess.get(), MAPIAllocateBuffer, MAPIAllocateMore, MAPIFreeBuffer, lpMalloc, NULL, pMedium->pstg, NULL, 0, 0, &pTmp));
-						std::unique_ptr<std::remove_pointer<LPMESSAGE>::type, decltype(message_deleter)> pMsg(pTmp, message_deleter);
+						std::unique_ptr<std::remove_pointer<LPMESSAGE>::type, CDropTarget::message_deleter> pMsg(pTmp);
 						if (pMsg) {
 							CDropTarget::CopyMessage(pFileOperation, Folder.get_shared_unconst(), pMsg.get());
 						}
@@ -450,13 +408,12 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 	}else if(isFileDescriptor){
 		//From outlook or notes
 		//Set up format structure for the descriptor and contents
-		FORMATETC descriptor_format = { s_cf_filegroupdescriptor, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-		FORMATETC contents_format = { s_cf_filecontents,   NULL, DVASPECT_CONTENT, -1, TYMED_ISTREAM }; //TYMED_ISTREAM means use stream as a tempoary meory instead of RAM's global memory
+		FORMATETC descriptor_format = { CDataObject::s_cf_filegroupdescriptor, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+		FORMATETC contents_format = { CDataObject::s_cf_filecontents,   NULL, DVASPECT_CONTENT, -1, TYMED_ISTREAM }; //TYMED_ISTREAM means use stream as a tempoary meory instead of RAM's global memory
 
 		// Get the descriptor information
-		std::unique_ptr<STGMEDIUM, decltype(medium_global_deleter)> pMedium(new STGMEDIUM(), medium_global_deleter);
-		FAILED_RETURN(pDataObj->GetData(&descriptor_format, pMedium.get()));
-		FILEGROUPDESCRIPTOR* file_group_descriptor = (FILEGROUPDESCRIPTOR*)GlobalLock(pMedium->hGlobal);
+		auto pMedium = data.GetGlobalMediumData(descriptor_format);
+		FILEGROUPDESCRIPTOR* file_group_descriptor = (FILEGROUPDESCRIPTOR*)pMedium->hGlobal;
 
 		// For each file, get the name and copy the stream to a file
 		CComPtr<IFileOperation> pFileOperation;
@@ -464,8 +421,7 @@ void CFilerGridView::Dropped(IDataObject *pDataObj, DWORD dwEffect)
 		for (unsigned int file_index = 0; file_index < file_group_descriptor->cItems; file_index++) {
 			FILEDESCRIPTOR file_descriptor = file_group_descriptor->fgd[file_index];
 			contents_format.lindex = file_index;
-			std::unique_ptr<STGMEDIUM, decltype(medium_deleter)> pContentMedium(new STGMEDIUM(), medium_deleter);
-			FAILED_RETURN(pDataObj->GetData(&contents_format, pContentMedium.get()));
+			auto pContentMedium = data.GetMediumData(contents_format);
 			// Dump stream to a file
 			HRESULT hr = CDropTarget::CopyStream(pFileOperation, Folder.get_shared_unconst(), pContentMedium->pstm, file_descriptor.cFileName);
 		}

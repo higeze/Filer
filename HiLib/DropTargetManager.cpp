@@ -67,9 +67,9 @@ STDMETHODIMP CDropTargetManager::Drop(IDataObject* pDataObj, DWORD grfKeyState, 
 CDropTargetManager::map_type::const_iterator CDropTargetManager::FindPtInRectControl(const CPointF& point)
 {
 	return std::find_if(m_map.begin(), m_map.end(),
-		[point](const std::pair<CD2DWControl*, IDropTarget*>& pair)->bool
+		[point](const std::pair<CD2DWControl*, IDropTarget*>& pr)->bool
 		{
-			return pair.first->GetRectInWnd().PtInRect(point);
+			return *(pr.first->IsEnabled) && pr.first->GetRectInWnd().PtInRect(point);
 		});
 }
 

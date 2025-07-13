@@ -31,6 +31,7 @@
 //#include "PDFBitmapDrawer.h"
 
 #include "D2DWDialog.h"
+#include "DataObject.h"
 
 class CD2DPDFBitmapDrawer;
 class CVScroll;
@@ -321,6 +322,10 @@ public:
 	void Update();
 private:
 	void OpenWithPasswordHandling(const std::wstring& path);
+
+	CComPtr<IDropTarget> m_pDropTarget;
+	bool IsDroppable(const CDataObject& data);
+	void Dropped(const CDataObject& data, DWORD dwEffect);
 
 
 };

@@ -25,6 +25,8 @@
 #include "strconv.h"
 #include "Dispatcher.h"
 #include "ThreadPool.h"
+#include "DropTargetManager.h"
+#include "DropTarget.h"
 
 CPdfViewDlgBase::CPdfViewDlgBase(
 	CD2DWControl* pParentControl,
@@ -175,6 +177,14 @@ void CPdfView::OnCreate(const CreateEvt& e)
 		GetWndPtr()->InvalidateRect(NULL, FALSE);
 	}
 	, shared_from_this());
+
+	//Drag & Drop
+	//DropTarget
+	auto pDropTarget = new CDropTarget(this);
+	pDropTarget->IsDroppable = ([this](const CDataObject& data)->bool { return IsDroppable(data); });
+	pDropTarget->Dropped = ([this](const CDataObject data, DWORD dwEffect)->void { Dropped(data, dwEffect); });
+	m_pDropTarget = CComPtr<IDropTarget>(pDropTarget);
+	GetWndPtr()->GetDropTargetManagerPtr()->RegisterDragDrop(this, m_pDropTarget);
 }
 
 CRectF CPdfView::GetRenderRectInWnd()
@@ -1330,3 +1340,54 @@ void CPdfView::UpdateScroll()
 
 
 void CPdfView::Update() {}
+
+bool CPdfView::IsDroppable(const CDataObject& data)
+{
+	auto files = data.EnumShellFiles();
+	if (!files.empty()) {
+		return boost::algorithm::iequals(files.at(0)->GetPathExt(), ".pdf");
+	}
+
+	return false;
+
+	//if (isShellIdList) {
+	//	FORMATETC formatetc = { 0 };
+	//	formatetc.cfFormat = (CLIPFORMAT)RegisterClipboardFormat(CFSTR_SHELLIDLIST);
+	//	formatetc.ptd = NULL;
+	//	formatetc.dwAspect = DVASPECT_CONTENT;
+	//	formatetc.lindex = -1;
+	//	formatetc.tymed = TYMED_HGLOBAL;
+
+	//	std::unique_ptr<STGMEDIUM, CDropTarget::medium_global_deleter> pMedium(new STGMEDIUM());
+	//	FAILED_RETURN(pDataObj->GetData(&formatetc, pMedium.get()));
+
+	//	LPIDA pida = (LPIDA)GlobalLock(pMedium->hGlobal);
+	//	CIDL folderIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
+
+	//	for (UINT i = 0; i < pida->cidl; i++) {
+	//		CIDL childIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + pida->aoffset[1 + i])));
+	//		CIDL absoluteIdl(folderIdl + childIdl);
+
+	//		WCHAR szSrcPath[MAX_PATH];
+	//		::SHGetPathFromIDList(absoluteIdl.ptr(), szSrcPath);
+	//		return boost::algorithm::iequals(::PathFindExtensionW, L"pdf");
+	//	}
+	//	return false;
+	//}
+
+}
+
+void CPdfView::Dropped(const CDataObject& data, DWORD dwEffect)
+{
+	//When DropTarget Dropped, LButtonUp is not Fired. Therefore need to cal here to change state.
+	auto pt = GetWndPtr()->GetCursorPosInClient();
+	GetWndPtr()->SendMessage(WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(pt.x, pt.y));
+
+	auto files = data.EnumShellFiles();
+	if (!files.empty()) {
+		std::shared_ptr<CPDFDoc> spDoc(std::make_shared<CPDFDoc>());
+		spDoc->Open(files.at(0)->GetPath());
+		PDF.set(spDoc);
+	}
+}
+

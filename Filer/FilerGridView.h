@@ -5,6 +5,7 @@
 #include "reactive_string.h"
 #include "JsonSerializer.h"
 #include "ShellContextMenu.h"
+#include "DataObject.h"
 
 class CShellFile;
 class CDirectoryWatcher;
@@ -14,15 +15,6 @@ struct ExeExtension;
 
 class CFilerGridView:public CFilerBindGridView<std::shared_ptr<CShellFile>>
 {
-	/*******************/
-	/* Static variable */
-	/*******************/
-private:
-	static CLIPFORMAT s_cf_shellidlist;
-	static CLIPFORMAT s_cf_filecontents;
-	static CLIPFORMAT s_cf_filegroupdescriptor;
-	static CLIPFORMAT s_cf_renprivatemessages;
-
 private:	
 	//For DirectoryWatch
 	std::shared_ptr<CDirectoryWatcher> m_spWatcher;
@@ -112,8 +104,8 @@ public:
 private:
 	//Drag & Drop
 	BOOL SetDragImage(CIDL firstIdl, CComPtr<IDragSourceHelper> pDragSourceHelper, IDataObject *pDataObject);
-	bool IsDroppable(const std::vector<FORMATETC>& formats);
-	void Dropped(IDataObject *pDataObj, DWORD dwEffect);
+	bool IsDroppable(const CDataObject& data);
+	void Dropped(const CDataObject& data, DWORD dwEffect);
 	void ShowShellContextMenu(HWND hWnd, CPoint ptScreen, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files, bool hasNew = false);
 	//bool InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, const std::shared_ptr<CShellFolder>& folder);
 	//bool InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files);

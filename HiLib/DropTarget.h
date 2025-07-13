@@ -1,6 +1,7 @@
 #pragma once
 #include "Unknown.h"
 #include "MyString.h"
+#include "DataObject.h"
 #include <mapix.h>
 class CIDL;
 class CShellFolder;
@@ -74,6 +75,23 @@ class CD2DWControl;
 
 class CDropTarget : public CUnknown<IDropTarget>
 {
+public:
+	//static CLIPFORMAT s_cf_shellidlist;
+	//static CLIPFORMAT s_cf_filecontents;
+	//static CLIPFORMAT s_cf_filegroupdescriptor;
+	//static CLIPFORMAT s_cf_renprivatemessages;
+
+	struct message_deleter
+	{
+		void operator()(LPMESSAGE p)
+		{
+			if (p) {
+				p->Release();
+			}
+		}
+	};
+
+
 private:
 	CD2DWControl*     m_pControl;
 	BOOL              m_bSupportFormat;
@@ -93,8 +111,11 @@ public:
 
 	//signal
 	//boost::signals2::signal<void(std::string, std::vector<CIDLPtr>)> Dropped;
-	std::function<bool(const std::vector<FORMATETC>&)> IsDroppable;
-	std::function<void(IDataObject*, DWORD)> Dropped;
+	std::function<bool(const CDataObject&)> IsDroppable;
+	std::function<void(const CDataObject&, DWORD)> Dropped;
+
+private:
+
 
 public:
 	/******************/

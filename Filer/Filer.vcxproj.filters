@@ -107,9 +107,6 @@
     <ClInclude Include="DirectoryWatcher.h">
       <Filter>Filer</Filter>
     </ClInclude>
-    <ClInclude Include="DropSource.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="FilerProperty.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -433,9 +430,6 @@
     </ClInclude>
     <ClInclude Include="..\HiLib\DropTargetManager.h">
       <Filter>HiLib</Filter>
-    </ClInclude>
-    <ClInclude Include="DropTarget.h">
-      <Filter>Filer</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\Unknown.h">
       <Filter>HiLib</Filter>
@@ -1045,12 +1039,18 @@
     <ClInclude Include="..\HiLib\WICImagingFactory.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\DropSource.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\DropTarget.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\DataObject.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
-    <ClCompile Include="DropSource.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="Filer.cpp">
@@ -1220,9 +1220,6 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\UniqueIDFactory.cpp">
       <Filter>HiLib</Filter>
-    </ClCompile>
-    <ClCompile Include="DropTarget.cpp">
-      <Filter>Filer</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\DropTargetManager.cpp">
       <Filter>HiLib</Filter>
@@ -1559,6 +1556,15 @@
       <Filter>HiLib</Filter>
     </ClCompile>
     <ClCompile Include="..\HiLib\ThreadMonitorView.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\DropSource.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\DropTarget.cpp">
+      <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\DataObject.cpp">
       <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
