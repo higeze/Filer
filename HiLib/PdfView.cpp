@@ -27,6 +27,7 @@
 #include "ThreadPool.h"
 #include "DropTargetManager.h"
 #include "DropTarget.h"
+#include "MyClipboard.h"
 
 CPdfViewDlgBase::CPdfViewDlgBase(
 	CD2DWControl* pParentControl,
@@ -47,9 +48,9 @@ CPdfViewDlgBase::CPdfViewDlgBase(
 /**********************/
 /* CPdfViewExtractDlg */
 /**********************/
-CPdfViewExtractDlg::CPdfViewExtractDlg(CD2DWControl* pParentControl, CPDFDoc& doc)
+CPdfViewExtractDlg::CPdfViewExtractDlg(CD2DWControl* pParentControl, CPDFDoc& doc, const int initPage)
 	:CPdfViewDlgBase(pParentControl, doc),
-	m_spParameter(std::make_shared<CTextBox>(this, L""))
+	m_spParameter(std::make_shared<CTextBox>(this, std::to_wstring(initPage)))
 {
 	Title.set(L"PDF Extract");
 
@@ -833,7 +834,8 @@ void CPdfView::Normal_ContextMenu(const ContextMenuEvent& e)
 		std::make_unique<CMenuItem2>(L"Extract Page", [this]() {
 		auto spDlg = std::make_shared<CPdfViewExtractDlg>(
 			this,
-			*PDF.get_unconst());
+			*PDF.get_unconst(),
+			*CurrentPage);
 
 		spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CRectF()));
 		spDlg->Measure(CSizeF(FLT_MAX, FLT_MAX));
@@ -957,6 +959,12 @@ void CPdfView::NormalText_LButtonDown(const LButtonDownEvent& e)
 	if (page >= 0) {
 		if (index >= 0) {
 			auto rcInWnd = PdfiumPage2Wnd(page, PDF->GetPage(page)->GetTextCursorRects()[index]);
+			auto prev = PDF->GetPage(page)->GetText().at(index-1);
+			auto cur = PDF->GetPage(page)->GetText().at(index);
+			auto next = PDF->GetPage(page)->GetText().at(index+1);
+			auto rcText = PDF->GetPage(page)->GetTextRects().at(index);
+			auto rcMouse = PDF->GetPage(page)->GetTextMouseRects().at(index);
+
 			auto point = rcInWnd.CenterPoint();
 			if (GetKeyState(VK_SHIFT) & 0x8000) {
 				m_caret.MoveWithShift(page, index, point);
@@ -1116,6 +1124,7 @@ void CPdfView::TextDrag_OnExit(const LButtonEndDragEvent& e) {}
 void CPdfView::TextDrag_MouseMove(const MouseMoveEvent& e) 
 {
 	auto [page, index] = GetPageAndIndexFromWndPoint(e.PointInWnd);
+
 	if (page >= 0) {
 		if (index >= 0) {
 			auto rcInWnd = PdfiumPage2Wnd(page, PDF->GetPage(page)->GetTextCursorRects()[index]);

@@ -104,8 +104,10 @@ class CPdfViewExtractDlg : public CPdfViewDlgBase
 protected:
 	std::shared_ptr<CTextBox> m_spParameter;
 public:
-	CPdfViewExtractDlg(CD2DWControl* pParentControl,
-		CPDFDoc& doc);
+	CPdfViewExtractDlg(
+		CD2DWControl* pParentControl,
+		CPDFDoc& doc,
+		const int initPage = 0);
 	virtual ~CPdfViewExtractDlg() = default;
 	void OnCreate(const CreateEvt& e) override;
 	virtual CSizeF MeasureOverride(const CSizeF& availableSize) override;

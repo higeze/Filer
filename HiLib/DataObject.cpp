@@ -46,7 +46,7 @@ std::vector<std::shared_ptr<CShellFile>> CDataObject::EnumShellFiles() const
 		formatetc.lindex = -1;
 		formatetc.tymed = TYMED_HGLOBAL;
 
-		std::unique_ptr<STGMEDIUM, medium_global_deleter> pMedium = GetGlobalMediumData(formatetc);
+		UNQ_STDMEDIUM pMedium = GetMediumData(formatetc);
 
 		LPIDA pida = (LPIDA)GlobalLock(pMedium->hGlobal);
 		CIDL folderIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
@@ -60,18 +60,12 @@ std::vector<std::shared_ptr<CShellFile>> CDataObject::EnumShellFiles() const
 	return files;
 }
 
-std::unique_ptr<STGMEDIUM, CDataObject::medium_deleter> CDataObject::GetMediumData(FORMATETC& format) const
+UNQ_STDMEDIUM CDataObject::GetMediumData(FORMATETC& format) const
 {
-	auto pMedium = std::unique_ptr<STGMEDIUM, CDataObject::medium_deleter>(new STGMEDIUM());
-	FAILED_THROW(m_pDataObject->GetData(&format, pMedium.get()));
-	return pMedium;
+	UNQ_STDMEDIUM pMedium(new STGMEDIUM());
+	if (SUCCEEDED(m_pDataObject->GetData(&format, pMedium.get()))) {
+		return pMedium;
+	} else {
+		return nullptr;
+	}
 }
-std::unique_ptr<STGMEDIUM, CDataObject::medium_global_deleter> CDataObject::GetGlobalMediumData(FORMATETC& format) const
-{
-	auto pMedium = std::unique_ptr<STGMEDIUM, CDataObject::medium_global_deleter>(new STGMEDIUM());
-	FAILED_THROW(m_pDataObject->GetData(&format, pMedium.get()));
-	FALSE_THROW(::GlobalLock(pMedium->hGlobal));
-	return pMedium;
-}
-
-

@@ -43,6 +43,32 @@ DEFINE_GUID(CLSID_MailMessage,
 	0x00020D0B,
 	0x0000, 0x0000, 0xC0, 0x00, 0x0, 0x00, 0x0, 0x00, 0x00, 0x46);
 
+struct medium_deleter
+{
+	void operator()(LPSTGMEDIUM p)
+	{
+		if (p) {
+			::ReleaseStgMedium(p);
+			delete p;
+		}
+	}
+};
+
+using UNQ_STDMEDIUM = std::unique_ptr<STGMEDIUM, medium_deleter>;
+
+template<class T>
+struct void_global_deleter
+{
+	HGLOBAL m_hGlobal;
+	void_global_deleter(HGLOBAL hGlobal) :m_hGlobal(hGlobal) {}
+	void operator()(T* p)
+	{
+		::GlobalUnlock(m_hGlobal);
+	}
+};
+
+template<class T>
+using UNQ_GLOBAL = std::unique_ptr<T, void_global_deleter<T>>;
 
 class CDataObject
 {
@@ -51,29 +77,6 @@ public:
 	static CLIPFORMAT s_cf_filecontents;
 	static CLIPFORMAT s_cf_filegroupdescriptor;
 	static CLIPFORMAT s_cf_renprivatemessages;
-
-	struct medium_global_deleter
-	{
-		void operator()(LPSTGMEDIUM p)
-		{
-			if (p) {
-				::GlobalUnlock(p->hGlobal);
-				::ReleaseStgMedium(p);
-				delete p;
-			}
-		}
-	};
-
-	struct medium_deleter
-	{
-		void operator()(LPSTGMEDIUM p)
-		{
-			if (p) {
-				::ReleaseStgMedium(p);
-				delete p;
-			}
-		}
-	};
 
 	//struct message_deleter
 	//{
@@ -97,8 +100,15 @@ public:
 
 	std::vector<std::shared_ptr<CShellFile>> EnumShellFiles() const;
 
-	std::unique_ptr<STGMEDIUM, medium_deleter> GetMediumData(FORMATETC& format) const;
-	std::unique_ptr<STGMEDIUM, medium_global_deleter> GetGlobalMediumData(FORMATETC& format) const;
-
-
+	UNQ_STDMEDIUM GetMediumData(FORMATETC& format) const;
 };
+
+template<class T>
+UNQ_GLOBAL<T> GetGlobalData(HGLOBAL hGlobal)
+{
+	return UNQ_GLOBAL<T>(
+			reinterpret_cast<T*>(::GlobalLock(hGlobal)),
+			void_global_deleter<T>(hGlobal));
+}
+
+

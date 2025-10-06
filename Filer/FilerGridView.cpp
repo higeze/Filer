@@ -303,9 +303,10 @@ void CFilerGridView::Dropped(const CDataObject& data, DWORD dwEffect)
 		formatetc.lindex = -1;
 		formatetc.tymed = TYMED_HGLOBAL;
 
-		auto pMedium = data.GetGlobalMediumData(formatetc);
-		LPIDA pida = (LPIDA)pMedium->hGlobal;
-		CIDL folderIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
+		auto pMedium = data.GetMediumData(formatetc);
+		auto pIDA = GetGlobalData<CIDA>(pMedium->hGlobal);
+
+		CIDL folderIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pIDA.get()) + (pIDA)->aoffset[0])));
 
 		switch (dwEffect) {
 		case DROPEFFECT_MOVE:
@@ -332,8 +333,8 @@ void CFilerGridView::Dropped(const CDataObject& data, DWORD dwEffect)
 		break;
 		case DROPEFFECT_LINK:
 		{
-			for (UINT i = 0; i < pida->cidl; i++) {
-				CIDL childIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + pida->aoffset[1 + i])));
+			for (UINT i = 0; i < pIDA->cidl; i++) {
+				CIDL childIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pIDA.get()) + pIDA->aoffset[1 + i])));
 				CIDL absoluteIdl(folderIdl + childIdl);
 				CComPtr<IShellLink> pShellLink;
 
@@ -371,10 +372,10 @@ void CFilerGridView::Dropped(const CDataObject& data, DWORD dwEffect)
 
 
 		FORMATETC descriptor_format = { CDataObject::s_cf_filegroupdescriptor, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-		auto pMedium = data.GetGlobalMediumData(descriptor_format);
-		LPFILEGROUPDESCRIPTOR lpfgd = (LPFILEGROUPDESCRIPTOR)pMedium->hGlobal;
+		auto pMedium = data.GetMediumData(descriptor_format);
+		auto pFDG = GetGlobalData<FILEGROUPDESCRIPTOR>(pMedium->hGlobal);
 
-		if (lpfgd != NULL) {
+		if (pFDG != NULL) {
 			LPMALLOC	lpMalloc = MAPIGetDefaultMalloc();
 			auto msgsess_deleter = [](LPMSGSESS ptr)
 			{
@@ -387,8 +388,8 @@ void CFilerGridView::Dropped(const CDataObject& data, DWORD dwEffect)
 			if (pSess) {
 				CComPtr<IFileOperation> pFileOperation;
 				FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
-				for (UINT i = 0; i < lpfgd->cItems; i++) {
-					LPFILEDESCRIPTOR lpfd = (LPFILEDESCRIPTOR)&lpfgd->fgd[i];
+				for (UINT i = 0; i < pFDG->cItems; i++) {
+					LPFILEDESCRIPTOR lpfd = (LPFILEDESCRIPTOR)&pFDG->fgd[i];
 
 					FORMATETC contents_format = { CDataObject::s_cf_filecontents, NULL, DVASPECT_CONTENT, (LONG)i, TYMED_ISTORAGE };
 					auto pMedium = data.GetMediumData(contents_format);
@@ -408,22 +409,25 @@ void CFilerGridView::Dropped(const CDataObject& data, DWORD dwEffect)
 	}else if(isFileDescriptor){
 		//From outlook or notes
 		//Set up format structure for the descriptor and contents
-		FORMATETC descriptor_format = { CDataObject::s_cf_filegroupdescriptor, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-		FORMATETC contents_format = { CDataObject::s_cf_filecontents,   NULL, DVASPECT_CONTENT, -1, TYMED_ISTREAM }; //TYMED_ISTREAM means use stream as a tempoary meory instead of RAM's global memory
+		FORMATETC descriptor_format = { CDataObject::s_cf_filegroupdescriptor, NULL, DVASPECT_CONTENT, 0, TYMED_HGLOBAL };
+		FORMATETC contents_format = { CDataObject::s_cf_filecontents,   NULL, DVASPECT_CONTENT, 0,  TYMED_ISTREAM }; //TYMED_ISTREAM means use stream as a tempoary meory instead of RAM's global memory
 
 		// Get the descriptor information
-		auto pMedium = data.GetGlobalMediumData(descriptor_format);
-		FILEGROUPDESCRIPTOR* file_group_descriptor = (FILEGROUPDESCRIPTOR*)pMedium->hGlobal;
+		auto pMedium = data.GetMediumData(descriptor_format);
+		auto pFGD = GetGlobalData<FILEGROUPDESCRIPTOR>(pMedium->hGlobal);
 
 		// For each file, get the name and copy the stream to a file
 		CComPtr<IFileOperation> pFileOperation;
 		FAILED_RETURN(pFileOperation.CoCreateInstance(CLSID_FileOperation));
-		for (unsigned int file_index = 0; file_index < file_group_descriptor->cItems; file_index++) {
-			FILEDESCRIPTOR file_descriptor = file_group_descriptor->fgd[file_index];
-			contents_format.lindex = file_index;
-			auto pContentMedium = data.GetMediumData(contents_format);
-			// Dump stream to a file
-			HRESULT hr = CDropTarget::CopyStream(pFileOperation, Folder.get_shared_unconst(), pContentMedium->pstm, file_descriptor.cFileName);
+
+		for (unsigned int i = 0; i < pFGD->cItems; i++) {
+			FILEDESCRIPTOR file_descriptor = pFGD->fgd[i];
+			contents_format.lindex = i;
+
+			if (auto pContentMedium = data.GetMediumData(contents_format)) {
+				// Dump stream to a file
+				HRESULT hr = CDropTarget::CopyStream(pFileOperation, Folder.get_shared_unconst(), pContentMedium->pstm, file_descriptor.cFileName);
+			}
 		}
 		pFileOperation->PerformOperations();
 	}
@@ -1113,6 +1117,7 @@ void CFilerGridView::OnMouseWheel(const MouseWheelEvent& e)
 			}
 		});
 		if (changed) {
+
 			Reload();
 		}
 	} else {

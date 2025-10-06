@@ -776,7 +776,7 @@ void CTextBox::Normal_LButtonDown(const LButtonDownEvent& e)
 void CTextBox::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 {
 	auto newPoint = GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
-	std::vector<wchar_t> delimiters{ L' ', L'\t', L'\n' };
+	std::vector<wchar_t> delimiters{ L' ', L'　', L'\t', L'\n'};
 
 	if (auto index = GetActualCharPosFromPoint(newPoint); index && index.value() > 0 && index.value() < static_cast<int>(Text->size())) {
 		if (std::find(delimiters.begin(), delimiters.end(), Text->at(index.value())) == delimiters.end()) {

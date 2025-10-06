@@ -161,26 +161,38 @@ const std::vector<CRectF>& CPDFPage::GetTextOrgCursorRects() const
 				std::vector<CRectF>::iterator end_rect = rects.begin() + std::distance(text.cbegin(), std::get<2>(*iter));
 
 				//Left Right
-				for (auto iter_rect = beg_rect; iter_rect != end_rect; ++iter_rect) {
-					if (iter_rect != beg_rect && iter_rect->IsRectNull()) {
-						iter_rect->left = std::prev(iter_rect)->left;
-						iter_rect->right = std::prev(iter_rect)->right;
-					} else if (iter_rect->IsRectNull()) {
-						auto a = 1;
-					}
-				}
+				//for (auto iter_rect = beg_rect; iter_rect != end_rect; ++iter_rect) {
+				//	if (iter_rect != beg_rect && iter_rect->IsRectNull()) {
+				//		iter_rect->left = std::prev(iter_rect)->left;
+				//		iter_rect->right = std::prev(iter_rect)->right;
+				//	} else if (iter_rect->IsRectNull()) {
+				//		auto a = 1;
+				//	}
+				//}
+				
 				//Top Bottom
 				std::vector<CRectF> range_rects = GetFPDFTextPagePtr()->GetRangeRects(beg_pos, end_pos);
 				FLOAT max_top = std::max_element(range_rects.cbegin(), range_rects.cend(), [](const CRectF& left, const CRectF& right) { return left.top < right.top; })->top;
 				FLOAT min_btm = std::min_element(range_rects.cbegin(), range_rects.cend(), [](const CRectF& left, const CRectF& right) { return left.bottom < right.bottom; })->bottom;
+
 				std::for_each(beg_rect, end_rect, [&](CRectF& rc) {rc.top = max_top; rc.bottom = min_btm; });
-				if (beg_rect != crlf_rect) {
-					std::for_each(crlf_rect, end_rect, [&](CRectF& rc) {
-						rc.left = rc.right = std::prev(crlf_rect)->right;
-					});
-				} else {
-					auto a = 1;
+
+				//Left Right
+				for (auto iter = std::next(beg_rect); iter != end_rect; iter++) {
+					if (iter->left == 0 && iter->right == 0){
+						iter->left = iter->right = std::prev(iter)->right;
+					}
 				}
+				//	[&](CRectF& rc) 
+				//	{
+				//		if(iter != beg_rect && )
+				//		rc.left = rc.right = std::prev(crlf_rect)->right
+				//	});
+				//if (beg_rect != crlf_rect) {
+				//	std::for_each(crlf_rect, end_rect, [&](CRectF& rc) {
+				//		rc.left = rc.right = std::prev(crlf_rect)->right;
+				//	});
+				//}
 			}
 		}
 		m_optTextOrgCursorRects.emplace(rects);
@@ -195,7 +207,8 @@ const std::vector<CRectF>& CPDFPage::GetTextOrgMouseRects() const
 	const float tb_factor = 0.3f;
 	if (!m_optTextOrgMouseRects.has_value()) {
 		auto& text = GetText();
-		auto mouseRects = GetTextOrgCursorRects();
+		auto cursorRects = GetTextOrgCursorRects();
+		auto mouseRects = cursorRects;
 		if (!mouseRects.empty()) {
 			std::ranges::for_each(mouseRects, [&](CRectF& rc) {
 				auto tb_offset = - rc.Height() * tb_factor;
@@ -209,16 +222,19 @@ const std::vector<CRectF>& CPDFPage::GetTextOrgMouseRects() const
 					size_t index = std::distance(text.cbegin(), iter);
 					//left
 					if (iter == std::get<0>(*para_iter)) {
-						mouseRects[index].left = (std::max)(mouseRects[index].left - mouseRects[index].Width() * lr_factor, 0.f);
+						mouseRects[index].left = (std::max)(cursorRects[index].left - cursorRects[index].Width() * lr_factor, 0.f);
 					} else {
-						mouseRects[index].left = (std::max)((mouseRects[index - 1].right + mouseRects[index].left) * 0.5f, mouseRects[index - 1].right);
+						//mouseRects[index].left = (std::max)((mouseRects[index - 1].right + mouseRects[index].left) * 0.5f, mouseRects[index - 1].right);
+						mouseRects[index].left = mouseRects[index - 1].right;
+
 					}
 					//right
 					if (iter == std::prev(std::get<2>(*para_iter))) {
 						size_t last_str_index = std::distance(text.cbegin(), std::prev(std::get<1>(*para_iter)));
-						mouseRects[index].right = (std::max)(mouseRects[index].right + mouseRects[last_str_index].Width() * lr_factor, 0.f);
+						mouseRects[index].right = (std::max)(cursorRects[index].right + cursorRects[last_str_index].Width() * lr_factor, 0.f);
 					} else {
-						mouseRects[index].right = (std::max)((mouseRects[index].right + mouseRects[index + 1].left) * 0.5f, mouseRects[index + 1].left);
+						//mouseRects[index].right = (std::max)((mouseRects[index].right + mouseRects[index + 1].left) * 0.5f, mouseRects[index + 1].left);
+						mouseRects[index].right = (cursorRects[index].left + cursorRects[index].right) * 0.5f;
 					}
 				}
 			}
@@ -257,42 +273,42 @@ const std::vector<CRectF>& CPDFPage::GetTextMouseRects() const
 
 const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_string)
 {
+//	auto find = boost::trim_copy(find_string);
+//	if (!m_optFind.has_value() || m_optFind->Find != find) {
+//		std::vector<CRectF> rects;
+//		if (find.empty()) {
+//		} else {
+////			for (auto i = 0; (i = GetText().find(find, i)) != std::wstring::npos; i++) {
+//			for (size_t i = 0; (i = GetText()|find_insensitive(find, i)) != std::wstring::npos; i++) {
+//			auto left = GetTextRects().at(i).left;
+//				auto right = GetTextRects().at(i + find.size() - 1).right;
+//				auto top = std::max_element(std::next(GetTextRects().cbegin() + i), std::next(GetTextRects().cbegin() + i + find.size() - 1),
+//					[](const auto& a, const auto& b) { return a.top < b.top; })->top;
+//				auto bottom = std::min_element(std::next(GetTextRects().cbegin() + i), std::next(GetTextRects().cbegin() + i + find.size() - 1),
+//					[](const auto& a, const auto& b) { return a.bottom < b.bottom; })->bottom;
+//
+//				rects.emplace_back(left, top, right, bottom);
+//			}
+//			RotateRects(rects, *Rotate);
+//		}
+//		m_optFind.emplace(find, rects);
+//	}
+//	return m_optFind->FindRects;
+
 	auto find = boost::trim_copy(find_string);
 	if (!m_optFind.has_value() || m_optFind->Find != find) {
 		std::vector<CRectF> rects;
 		if (find.empty()) {
 		} else {
-//			for (auto i = 0; (i = GetText().find(find, i)) != std::wstring::npos; i++) {
-			for (size_t i = 0; (i = GetText()|find_insensitive(find, i)) != std::wstring::npos; i++) {
-			auto left = GetTextRects().at(i).left;
-				auto right = GetTextRects().at(i + find.size() - 1).right;
-				auto top = std::max_element(std::next(GetTextRects().cbegin() + i), std::next(GetTextRects().cbegin() + i + find.size() - 1),
-					[](const auto& a, const auto& b) { return a.top < b.top; })->top;
-				auto bottom = std::min_element(std::next(GetTextRects().cbegin() + i), std::next(GetTextRects().cbegin() + i + find.size() - 1),
-					[](const auto& a, const auto& b) { return a.bottom < b.bottom; })->bottom;
-
-				rects.emplace_back(left, top, right, bottom);
+			auto results  = GetFPDFTextPagePtr()->SearchResults(reinterpret_cast<FPDF_WIDESTRING>(find.c_str()));
+			for (const auto res : results) {
+				std::copy(std::get<2>(res).cbegin(), std::get<2>(res).cend(), std::back_inserter(rects));
 			}
 			RotateRects(rects, *Rotate);
 		}
 		m_optFind.emplace(find, rects);
 	}
 	return m_optFind->FindRects;
-
-	//auto find = boost::trim_copy(find_string);
-	//if (!m_optFind.has_value() || m_optFind->Find != find) {
-	//	std::vector<CRectF> rects;
-	//	if (find.empty()) {
-	//	} else {
-	//		auto results  = GetFPDFTextPagePtr()->SearchResults(reinterpret_cast<FPDF_WIDESTRING>(find.c_str()));
-	//		for (const auto res : results) {
-	//			std::copy(std::get<2>(res).cbegin(), std::get<2>(res).cend(), std::back_inserter(rects));
-	//		}
-	//		RotateRects(rects, *Rotate);
-	//	}
-	//	m_optFind.emplace(find, rects);
-	//}
-	//return m_optFind->FindRects;
 }
 
 CFPDFBitmap CPDFPage::GetFPDFBitmap(const FLOAT& scale, const int& rotate, std::function<bool()> cancel)
