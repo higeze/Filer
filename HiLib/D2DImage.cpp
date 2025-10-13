@@ -20,16 +20,37 @@ const CComPtr<IWICBitmapSource>& CD2DImage::GetBitmapSourcePtr() const
         CComPtr<IWICBitmapFrameDecode> pFrameDecode;
         FAILED_THROW(pDecoder->GetFrame(0, &pFrameDecode));
 
-        CComPtr<IWICBitmapFlipRotator> pFlipRotator;
-        FAILED_THROW(CWICImagingFactory::GetInstance()->CreateBitmapFlipRotator(&pFlipRotator));
-        FAILED_THROW(pFlipRotator->Initialize(
-            pFrameDecode,
-            *Rotate
-        ));
+        //CComPtr<IWICBitmapFlipRotator> pFlipRotator;
+        //FAILED_THROW(CWICImagingFactory::GetInstance()->CreateBitmapFlipRotator(&pFlipRotator));
+        //FAILED_THROW(pFlipRotator->Initialize(
+        //    pFrameDecode,
+        //    *Rotate
+        //));
 
-        m_pBitmapSource = pFlipRotator; 
+        //Convert
+        CComPtr<IWICFormatConverter> pFormatConverter;
+        FAILED_THROW(CWICImagingFactory::GetInstance()->CreateFormatConverter(&pFormatConverter));
+        FAILED_THROW(pFormatConverter->Initialize(
+            pFrameDecode, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 1.0f, WICBitmapPaletteTypeCustom));
+
+        m_pBitmapSource = pFormatConverter;
     }
     return m_pBitmapSource;
+}
+
+const CComPtr<ID2D1Bitmap1>& CD2DImage::GetD2D1BitmapPtr(const CComPtr < ID2D1DeviceContext>& pContext) const
+{
+    if (!m_pD2D1Bitmap) {
+        CComPtr<IWICBitmapSource> pWICBmp = GetBitmapSourcePtr();
+        CComPtr<ID2D1Bitmap1> pD2D1Bmp;
+        FAILED_THROW(pContext->CreateBitmapFromWicBitmap(
+            pWICBmp,
+            nullptr,
+            &pD2D1Bmp));
+
+        m_pD2D1Bitmap = pD2D1Bmp;
+    }
+    return m_pD2D1Bitmap;
 }
 
 const CSizeU& CD2DImage::GetSizeU() const
@@ -72,6 +93,7 @@ CComPtr<IWICBitmapSource> CD2DImage::GetBitmap(const FLOAT& scale, std::function
 
     return CComPtr<IWICBitmapSource>(pFormatConverter);
 }
+
 
 CComPtr<IWICBitmapSource> CD2DImage::GetClipBitmap(const FLOAT& scale, const CRectU& rcClip, std::function<bool()> cancel) const
 {

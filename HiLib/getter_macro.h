@@ -20,6 +20,10 @@ public: virtual const type& Get##name(const arg1type&) const
 protected: mutable CComPtr<type> m_p##name; \
 public: virtual const CComPtr<type>& Get##name##Ptr() const;
 
+#define DECLARE_LAZY_COMPTR_GETTER_ARG1(type, name, arg1type) \
+protected: mutable CComPtr<type> m_p##name; \
+public: virtual const CComPtr<type>& Get##name##Ptr(const arg1type&) const;
+
 #define DECLARE_LAZY_UNIQUEPTR_GETTER(type, name) \
 protected: mutable std::unique_ptr<type> m_p##name; \
 public: virtual const std::unique_ptr<type>& Get##name##Ptr() const;

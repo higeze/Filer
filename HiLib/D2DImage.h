@@ -10,7 +10,8 @@ class CD2DImage: public CShellFile
 {
 private:
 	DECLARE_LAZY_COMPTR_GETTER(IWICBitmapSource, BitmapSource);
-	DECLARE_RELEASE_COMPTRS(BitmapSource);
+	DECLARE_LAZY_COMPTR_GETTER_ARG1(ID2D1Bitmap1, D2D1Bitmap, CComPtr<ID2D1DeviceContext>);
+	DECLARE_RELEASE_COMPTRS(BitmapSource, D2D1Bitmap);
 
 	DECLARE_LAZY_GETTER(CSizeU, SizeU);
 	const CSizeF GetSizeF() const;

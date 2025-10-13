@@ -54,6 +54,8 @@ public:
 public:
 	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<FLOAT> Scale;
+	reactive_property_ptr<LONG> Rotate;
+
 	reactive_property_ptr<CD2DImage> Image;
 	reactive_command_ptr<void> OpenCommand;
 	reactive_wstring_ptr Find;

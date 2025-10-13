@@ -273,42 +273,36 @@ const std::vector<CRectF>& CPDFPage::GetTextMouseRects() const
 
 const std::vector<CRectF>& CPDFPage::GetFindRects(const std::wstring& find_string)
 {
-//	auto find = boost::trim_copy(find_string);
-//	if (!m_optFind.has_value() || m_optFind->Find != find) {
-//		std::vector<CRectF> rects;
-//		if (find.empty()) {
-//		} else {
-////			for (auto i = 0; (i = GetText().find(find, i)) != std::wstring::npos; i++) {
-//			for (size_t i = 0; (i = GetText()|find_insensitive(find, i)) != std::wstring::npos; i++) {
-//			auto left = GetTextRects().at(i).left;
-//				auto right = GetTextRects().at(i + find.size() - 1).right;
-//				auto top = std::max_element(std::next(GetTextRects().cbegin() + i), std::next(GetTextRects().cbegin() + i + find.size() - 1),
-//					[](const auto& a, const auto& b) { return a.top < b.top; })->top;
-//				auto bottom = std::min_element(std::next(GetTextRects().cbegin() + i), std::next(GetTextRects().cbegin() + i + find.size() - 1),
-//					[](const auto& a, const auto& b) { return a.bottom < b.bottom; })->bottom;
-//
-//				rects.emplace_back(left, top, right, bottom);
-//			}
-//			RotateRects(rects, *Rotate);
-//		}
-//		m_optFind.emplace(find, rects);
-//	}
-//	return m_optFind->FindRects;
-
+	//Method1: Use find text and RangeRects
 	auto find = boost::trim_copy(find_string);
 	if (!m_optFind.has_value() || m_optFind->Find != find) {
 		std::vector<CRectF> rects;
-		if (find.empty()) {
-		} else {
-			auto results  = GetFPDFTextPagePtr()->SearchResults(reinterpret_cast<FPDF_WIDESTRING>(find.c_str()));
-			for (const auto res : results) {
-				std::copy(std::get<2>(res).cbegin(), std::get<2>(res).cend(), std::back_inserter(rects));
+		if (!find.empty()) {
+			for (size_t i = 0; (i = GetText()|find_insensitive(find, i)) != std::wstring::npos; i++) {
+				std::vector<CRectF> findRects = GetFPDFTextPagePtr()->GetRangeRects(i, i + find.size());
+				std::copy(findRects.cbegin(), findRects.cend(), std::back_inserter(rects));
 			}
 			RotateRects(rects, *Rotate);
 		}
 		m_optFind.emplace(find, rects);
 	}
 	return m_optFind->FindRects;
+
+	//Method2: Use SearchResult
+	//auto find = boost::trim_copy(find_string);
+	//if (!m_optFind.has_value() || m_optFind->Find != find) {
+	//	std::vector<CRectF> rects;
+	//	if (find.empty()) {
+	//	} else {
+	//		auto results  = GetFPDFTextPagePtr()->SearchResults(reinterpret_cast<FPDF_WIDESTRING>(find.c_str()));
+	//		for (const auto res : results) {
+	//			std::copy(std::get<2>(res).cbegin(), std::get<2>(res).cend(), std::back_inserter(rects));
+	//		}
+	//		RotateRects(rects, *Rotate);
+	//	}
+	//	m_optFind.emplace(find, rects);
+	//}
+	//return m_optFind->FindRects;
 }
 
 CFPDFBitmap CPDFPage::GetFPDFBitmap(const FLOAT& scale, const int& rotate, std::function<bool()> cancel)

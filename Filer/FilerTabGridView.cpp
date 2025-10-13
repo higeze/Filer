@@ -53,7 +53,7 @@
 /* FilerTabGridView */
 /********************/
 
-std::vector<std::wstring> CFilerTabGridView::imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff",L"heic"};
+std::vector<std::wstring> CFilerTabGridView::imageExts = { L".bmp", L".gif", L".ico", L".jpg", L".jpeg", L".png",L".tiff",L".heic"};
 std::vector<std::wstring> CFilerTabGridView::previewExts = {L".docx", L".doc", L".xlsx", L".xls", L".ppt", L".pptx"};
 
 

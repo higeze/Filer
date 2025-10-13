@@ -59,6 +59,8 @@ void CImageView::Open(const std::wstring& path)
 
 		Image.get_unconst()->Open(path);
 
+		Rotate.set(0);
+
 		if (*Scale < 0 && Image->IsValid()) {// < 0 means auto-scale
 			CSizeF sz = Image->GetSizeF();
 			if (GetRenderSize().height <= 0 || GetRenderSize().width <= 0) {
@@ -123,9 +125,20 @@ CSizeF CImageView::GetRenderSize()
 CSizeF CImageView::GetRenderContentSize()
 {
 	if (Image->IsValid()) {
-		CSizeF sz = Image->GetSizeF();
-		sz.width *= *Scale;
-		sz.height *= *Scale;
+		CSizeF szImage = Image->GetSizeF();
+		CSizeF sz;
+		switch (*Rotate)
+		{
+		case 90:
+		case 270:
+			sz.width = szImage.height * *Scale;
+			sz.height = szImage.width * *Scale;
+			break;
+		default:
+			sz.width = szImage.width * *Scale;
+			sz.height = szImage.height * *Scale;
+			break;
+		}
 		return sz;
 	} else {
 		return CSizeF(0.f, 0.f);
@@ -184,20 +197,194 @@ void CImageView::Normal_LButtonDblClk(const LButtonDblClkEvent& e)
 {
 }
 
+//void CImageView::Normal_Paint(const PaintEvent& e)
+//{
+//	if (!Image->IsValid()) { return; }
+//
+//	bool debug = m_pMachine->IsStateNormalDebug();
+//
+//	std::vector<std::wstring> logs;
+//	logs.push_back(std::format(
+//		L"Drawer Thread:{}/{}, Task:{}",
+//		m_imgDrawer->GetThreadPoolPtr()->GetRunnningTaskCount(),
+//		m_imgDrawer->GetThreadPoolPtr()->GetTotalThreadCount(),
+//		m_imgDrawer->GetThreadPoolPtr()->GetQueuedTaskCount()));
+//
+//	logs.push_back(std::format(L"Scroll(x, y):\t({}, {})", m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()));
+//
+//	//Clip
+//	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+//
+//	//PaintBackground
+//	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
+//
+//	//PaintContent
+//	auto callback = [this]()->void { GetWndPtr()->GetDispatcherPtr()->PostInvoke([pWnd = GetWndPtr()]() { pWnd->InvalidateRect(NULL, FALSE); }); };
+//
+//	CSizeF szImage(Image->GetSizeF());
+//	CRectF rcInWnd(GetRenderRectInWnd());
+//	CRectF rcFullInPage(Image->GetSizeF());
+//	CRectF rcScaledFullInPage(rcFullInPage * *Scale);
+//	logs.push_back(std::format(L"Image Size(x, y):\t({}, {})", szImage.width, szImage.height));
+//	logs.push_back(std::format(L"Scale:\t{}", *Scale));
+//	//logs.push_back(std::format(L"Paint Rect in Doc:\t({}, {}, {}, {})", rcInDoc.left, rcInDoc.top, rcInDoc.right, rcInDoc.bottom));
+//
+//	CRectF rcScaledClipInPage(rcScaledFullInPage.IntersectRect(
+//		CRectF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos(), m_spHScroll->GetScrollPos() + rcInWnd.Width(), m_spVScroll->GetScrollPos() + rcInWnd.Height())));
+//	CRectF rcClipInPage(rcScaledClipInPage / *Scale);
+//
+//	CSizeU szBitmap(m_imgDrawer->GetAtlasPrimaryBitmap()->GetSize());
+//
+//	CPointF ptDstClipInWnd(rcInWnd.LeftTop());
+//	CPointF ptDstLeftTopInWnd(rcInWnd.LeftTop() - CPointF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()));
+//
+//	CRectF rcDstInWnd(
+//		std::round(ptDstLeftTopInWnd.x),
+//		std::round(ptDstLeftTopInWnd.y),
+//		std::round(ptDstLeftTopInWnd.x) + std::round(rcScaledFullInPage.Width()),
+//		std::round(ptDstLeftTopInWnd.y) + std::round(rcScaledFullInPage.Height()));
+//	CRectF rcDstClipInWnd(rcDstInWnd.IntersectRect(rcInWnd));
+//
+//	FLOAT blurScale = ((std::min)(512.f / szImage.width, 512.f / szImage.height));
+//
+//	bool drawFullPage = (rcScaledFullInPage.Width() * rcScaledFullInPage.Height()) < (szBitmap.width * szBitmap.height / 8);
+//	
+//	bool drawOneMoreScale = *Scale >= 1.f && szImage.width <= szBitmap.width/2 && szImage.height <= szBitmap.height/2;
+//	bool drawOneLessScale = *Scale < 1.f && szImage.width * *Scale <= szBitmap.width/2 && szImage.height * *Scale <= szBitmap.height/2;
+//	bool drawClipOneMoreScale = *Scale >= 1.f && !drawOneMoreScale && !drawOneLessScale;
+//	bool drawClipOneLessScale = *Scale < 1.f && !drawOneMoreScale && !drawOneLessScale;
+//
+//	ImgBmpKey blurKey{ .ImagePtr = &(*Image), .Scale = blurScale, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(CRectF(szImage * blurScale)) };
+//	ImgBmpKey oneKey{ .ImagePtr = &(*Image), .Scale = 1.f, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(CRectF(szImage)) };
+//	ImgBmpKey scaleKey{ .ImagePtr = &(*Image), .Scale = *Scale, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(rcFullInPage) };
+//	ImgBmpKey cliponeKey{ .ImagePtr = &(*Image), .Scale = 1.f, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(rcClipInPage) };
+//	ImgBmpKey clipscaleKey{ .ImagePtr = &(*Image), .Scale = *Scale, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(rcScaledClipInPage) };
+//
+//	logs.push_back(std::format(L"OneKeyExist:\t{}", m_imgDrawer->GetAtlasPrimaryBitmap()->Exist(oneKey)));
+//	logs.push_back(std::format(L"BlurKeyExist:\t{}", m_imgDrawer->GetAtlasPrimaryBitmap()->Exist(blurKey)));
+//
+//	if (drawOneMoreScale) {
+//		if (m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), oneKey, rcDstInWnd, callback)) {
+//			logs.push_back(std::format(L"DrawMode:\t{}", L"OneMoreScale"));
+//		} else if (m_imgDrawer->DrawBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)) {
+//			logs.push_back(std::format(L"DrawMode:\t{}", L"OneMoreScale-Blur"));
+//		} else{
+//			logs.push_back(std::format(L"DrawMode:\t{}", L"OneMoreScale-NA"));
+//		}
+//	} else if (drawOneLessScale) {
+//		
+//		if (m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), scaleKey, ptDstLeftTopInWnd, callback)) {
+//			logs.push_back(std::format(L"DrawMode:\t{}", L"OneLessScale"));
+//		} else if (m_imgDrawer->DrawBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)){
+//			logs.push_back(std::format(L"DrawMode:\t{}", L"OneLessScale-Blur"));		
+//		} else{
+//			logs.push_back(std::format(L"DrawMode:\t{}", L"OneLessScale-NA"));			
+//		}
+//	} else if (drawClipOneMoreScale) {
+//		if (m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), cliponeKey, rcDstClipInWnd, callback)) {
+//			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipClipOneMoreScale"));
+//		} else if (m_imgDrawer->DrawBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)) {
+//			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipClipOneMoreScale-Blur"));
+//		} else{
+//			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipClipOneMoreScale-NA"));
+//		}
+//	} else if (drawClipOneLessScale) {
+//		if (m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), clipscaleKey, ptDstClipInWnd, callback)) {
+//			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipPageLessScale"));
+//		} else {
+//			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipPageLessScale-Blur"));
+//			m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
+//			std::vector<ImgBmpKey> keys = m_imgDrawer->FindPrimaryKeys([clipscaleKey, pPage = &(*Image), scale = *Scale](const ImgBmpKey& key)->bool{
+//				return 
+//					key != clipscaleKey &&
+//					key.ImagePtr->GetPath() == clipscaleKey.ImagePtr->GetPath() && 
+//					key.Scale == clipscaleKey.Scale &&
+//					key.Rotate == clipscaleKey.Rotate &&
+//					!key.Rect.IsRectNull();
+//			});
+//			for (const ImgBmpKey& key : keys) {
+//				CPointF ptClipInWnd = ptDstClipInWnd + CPointF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()) + CPointU2CPointF(key.Rect.LeftTop());
+//				m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback);
+//			}		
+//		}
+//	}
+//
+//	//if(true){
+//	//	std::vector<int> spetskvec = m_pdf->GetPDFiumPtr()->GetQueuedSpecificTaskCounts();
+//	//	std::wstring spetskcnts = std::to_wstring(spetskvec[0]);
+//	//	for (size_t i = 1; i < spetskvec.size(); i++) {
+//	//		spetskcnts += L", " + std::to_wstring(spetskvec[i]);
+//	//	}
+//	//	std::wstring debugText = std::format(
+//	//		L"PDF Threads\r\n\tThread:{}/{}\r\n\tTask:{}\r\n\tSpecificTask:{}\r\nThread Pool\r\n\tThread:{}/{}\r\n\tTask:{}\r\n",
+//	//		m_pdf->GetPDFiumPtr()->GetActiveThreadCount(),m_pdf->GetPDFiumPtr()->GetTotalThreadCount(),
+//	//		m_pdf->GetPDFiumPtr()->GetQueuedTaskCount(),
+//	//		spetskcnts,
+//	//		m_pdfDrawer->GetThreadPoolPtr()->GetActiveThreadCount(),m_pdfDrawer->GetThreadPoolPtr()->GetTotalThreadCount(),
+//	//		m_pdfDrawer->GetThreadPoolPtr()->GetQueuedTaskCount());
+//	//	CSizeF debugTextSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), debugText);
+//	//	GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), debugText,
+//	//		CRectF(GetRenderRectInWnd().left,
+//	//		GetRenderRectInWnd().top,
+//	//		GetRenderRectInWnd().left + debugTextSize.width,
+//	//		GetRenderRectInWnd().top + debugTextSize.height));
+//	//}
+//
+//
+//
+//	//if (drawFullPage) {
+//	//	if (!m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), fullKey, ptDstLeftTopInWnd, callback)) {
+//	//		m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
+//	//	}
+//	//} else {
+//	//	if (m_imgDrawer->ExistInPrimary(clipKey) &&
+//	//		m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback)) {
+//
+//	//	} else {
+//	//		m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
+//	//		m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback);//Just order
+//
+//	//		//std::vector<ImgBmpKey> keys = m_imgDrawer->FindClipKeys([clipKey, pPage = &(m_image.get()), scale = m_scale](const ImgBmpKey& key)->bool{
+//	//		//	return 
+//	//		//		key != clipKey &&
+//	//		//		key.ImagePtr->GetPath() == clipKey.ImagePtr->GetPath() && 
+//	//		//		key.Scale == clipKey.Scale &&
+//	//		//		key.Rotate == clipKey.Rotate &&
+//	//		//		!key.Rect.IsRectNull();
+//	//		//});
+//	//		//for (const ImgBmpKey& key : keys) {
+//	//		//	CPointF ptClipInWnd = Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, key.Rect.LeftTop())));
+//	//		//	m_imgDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback);
+//	//		//}
+//	//	}
+//	//}
+//
+//
+//	//CRectF rc(GetRenderContentSize());
+//	//rc.OffsetRect(GetRenderRectInWnd().LeftTop());
+//	//rc.OffsetRect(-m_spHScroll->GetScrollPos(), -m_spVScroll->GetScrollPos());
+//	//GetWndPtr()->GetDirectPtr()->DrawBitmap(
+//	//	m_image.get().GetBitmapPtr(),
+//	//	rc,
+//	//	1.0f,
+//	//	D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+//
+//	if(debug){
+//		std::wstring text = boost::algorithm::join(logs, L"\n");
+//		GetWndPtr()->GetDirectPtr()->DrawTextFromPoint(GetFormat(), text, GetRenderRectInWnd().LeftTop());
+//	}
+//
+//	//PaintScroll
+//	UpdateScroll();
+//	m_spVScroll->OnPaint(e);
+//	m_spHScroll->OnPaint(e);
+//
+//	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
+//}
+
 void CImageView::Normal_Paint(const PaintEvent& e)
 {
 	if (!Image->IsValid()) { return; }
-
-	bool debug = m_pMachine->IsStateNormalDebug();
-
-	std::vector<std::wstring> logs;
-	logs.push_back(std::format(
-		L"Drawer Thread:{}/{}, Task:{}",
-		m_imgDrawer->GetThreadPoolPtr()->GetRunnningTaskCount(),
-		m_imgDrawer->GetThreadPoolPtr()->GetTotalThreadCount(),
-		m_imgDrawer->GetThreadPoolPtr()->GetQueuedTaskCount()));
-
-	logs.push_back(std::format(L"Scroll(x, y):\t({}, {})", m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()));
 
 	//Clip
 	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
@@ -206,160 +393,46 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
 
 	//PaintContent
-	auto callback = [this]()->void { GetWndPtr()->GetDispatcherPtr()->PostInvoke([pWnd = GetWndPtr()]() { pWnd->InvalidateRect(NULL, FALSE); }); };
+	CComPtr<ID2D1Bitmap1> pD2D1Bmp = Image->GetD2D1BitmapPtr(GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext());
 
 	CSizeF szImage(Image->GetSizeF());
-	CRectF rcInWnd(GetRenderRectInWnd());
-	CRectF rcFullInPage(Image->GetSizeF());
-	CRectF rcScaledFullInPage(rcFullInPage * *Scale);
-	logs.push_back(std::format(L"Image Size(x, y):\t({}, {})", szImage.width, szImage.height));
-	logs.push_back(std::format(L"Scale:\t{}", *Scale));
-	//logs.push_back(std::format(L"Paint Rect in Doc:\t({}, {}, {}, {})", rcInDoc.left, rcInDoc.top, rcInDoc.right, rcInDoc.bottom));
-
-	CRectF rcScaledClipInPage(rcScaledFullInPage.IntersectRect(
-		CRectF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos(), m_spHScroll->GetScrollPos() + rcInWnd.Width(), m_spVScroll->GetScrollPos() + rcInWnd.Height())));
-	CRectF rcClipInPage(rcScaledClipInPage / *Scale);
-
-	CSizeU szBitmap(m_imgDrawer->GetAtlasPrimaryBitmap()->GetSize());
-
-	CPointF ptDstClipInWnd(rcInWnd.LeftTop());
-	CPointF ptDstLeftTopInWnd(rcInWnd.LeftTop() - CPointF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()));
-
 	CRectF rcDstInWnd(
-		std::round(ptDstLeftTopInWnd.x),
-		std::round(ptDstLeftTopInWnd.y),
-		std::round(ptDstLeftTopInWnd.x) + std::round(rcScaledFullInPage.Width()),
-		std::round(ptDstLeftTopInWnd.y) + std::round(rcScaledFullInPage.Height()));
-	CRectF rcDstClipInWnd(rcDstInWnd.IntersectRect(rcInWnd));
+		std::round(RenderRect().left),
+		std::round(RenderRect().top),
+		std::round(RenderRect().left + std::round(szImage.width)),
+		std::round(RenderRect().top + std::round(szImage.height)));
 
-	FLOAT blurScale = ((std::min)(512.f / szImage.width, 512.f / szImage.height));
-
-	bool drawFullPage = (rcScaledFullInPage.Width() * rcScaledFullInPage.Height()) < (szBitmap.width * szBitmap.height / 8);
-	
-	bool drawOneMoreScale = *Scale >= 1.f && szImage.width <= szBitmap.width/2 && szImage.height <= szBitmap.height/2;
-	bool drawOneLessScale = *Scale < 1.f && szImage.width * *Scale <= szBitmap.width/2 && szImage.height * *Scale <= szBitmap.height/2;
-	bool drawClipOneMoreScale = *Scale >= 1.f && !drawOneMoreScale && !drawOneLessScale;
-	bool drawClipOneLessScale = *Scale < 1.f && !drawOneMoreScale && !drawOneLessScale;
-
-	ImgBmpKey blurKey{ .ImagePtr = &(*Image), .Scale = blurScale, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(CRectF(szImage * blurScale)) };
-	ImgBmpKey oneKey{ .ImagePtr = &(*Image), .Scale = 1.f, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(CRectF(szImage)) };
-	ImgBmpKey scaleKey{ .ImagePtr = &(*Image), .Scale = *Scale, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(rcFullInPage) };
-	ImgBmpKey cliponeKey{ .ImagePtr = &(*Image), .Scale = 1.f, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(rcClipInPage) };
-	ImgBmpKey clipscaleKey{ .ImagePtr = &(*Image), .Scale = *Scale, .Rotate = *(Image->Rotate), .Rect = CRectF2CRectU(rcScaledClipInPage) };
-
-	logs.push_back(std::format(L"OneKeyExist:\t{}", m_imgDrawer->GetAtlasPrimaryBitmap()->Exist(oneKey)));
-	logs.push_back(std::format(L"BlurKeyExist:\t{}", m_imgDrawer->GetAtlasPrimaryBitmap()->Exist(blurKey)));
-
-	if (drawOneMoreScale) {
-		if (m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), oneKey, rcDstInWnd, callback)) {
-			logs.push_back(std::format(L"DrawMode:\t{}", L"OneMoreScale"));
-		} else if (m_imgDrawer->DrawBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)) {
-			logs.push_back(std::format(L"DrawMode:\t{}", L"OneMoreScale-Blur"));
-		} else{
-			logs.push_back(std::format(L"DrawMode:\t{}", L"OneMoreScale-NA"));
-		}
-	} else if (drawOneLessScale) {
-		
-		if (m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), scaleKey, ptDstLeftTopInWnd, callback)) {
-			logs.push_back(std::format(L"DrawMode:\t{}", L"OneLessScale"));
-		} else if (m_imgDrawer->DrawBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)){
-			logs.push_back(std::format(L"DrawMode:\t{}", L"OneLessScale-Blur"));		
-		} else{
-			logs.push_back(std::format(L"DrawMode:\t{}", L"OneLessScale-NA"));			
-		}
-	} else if (drawClipOneMoreScale) {
-		if (m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), cliponeKey, rcDstClipInWnd, callback)) {
-			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipClipOneMoreScale"));
-		} else if (m_imgDrawer->DrawBlurBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback)) {
-			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipClipOneMoreScale-Blur"));
-		} else{
-			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipClipOneMoreScale-NA"));
-		}
-	} else if (drawClipOneLessScale) {
-		if (m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), clipscaleKey, ptDstClipInWnd, callback)) {
-			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipPageLessScale"));
-		} else {
-			logs.push_back(std::format(L"DrawMode:\t{}", L"ClipPageLessScale-Blur"));
-			m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
-			std::vector<ImgBmpKey> keys = m_imgDrawer->FindPrimaryKeys([clipscaleKey, pPage = &(*Image), scale = *Scale](const ImgBmpKey& key)->bool{
-				return 
-					key != clipscaleKey &&
-					key.ImagePtr->GetPath() == clipscaleKey.ImagePtr->GetPath() && 
-					key.Scale == clipscaleKey.Scale &&
-					key.Rotate == clipscaleKey.Rotate &&
-					!key.Rect.IsRectNull();
-			});
-			for (const ImgBmpKey& key : keys) {
-				CPointF ptClipInWnd = ptDstClipInWnd + CPointF(m_spHScroll->GetScrollPos(), m_spVScroll->GetScrollPos()) + CPointU2CPointF(key.Rect.LeftTop());
-				m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback);
-			}		
-		}
+	D2D1::Matrix3x2F rot = D2D1::Matrix3x2F::Rotation(static_cast<FLOAT>(*Rotate), RenderRect().LeftTop());
+	D2D1::Matrix3x2F trans;
+	switch (*Rotate)
+	{
+	case 90:
+		trans = D2D1::Matrix3x2F::Translation(szImage.height, 0);
+		break;
+	case 180:
+		trans = D2D1::Matrix3x2F::Translation(szImage.width, szImage.height);
+		break;
+	case 270:
+		trans = D2D1::Matrix3x2F::Translation(0, szImage.width);
+		break;
+	default:
+		trans = D2D1::Matrix3x2F::Translation(0, 0);
+		break;
 	}
+	D2D1::Matrix3x2F scale = D2D1::Matrix3x2F::Scale(CSizeF(*Scale, *Scale), RenderRect().LeftTop());
+	D2D1::Matrix3x2F scroll = D2D1::Matrix3x2F::Translation(-m_spHScroll->GetScrollPos(), -m_spVScroll->GetScrollPos());
 
-	//if(true){
-	//	std::vector<int> spetskvec = m_pdf->GetPDFiumPtr()->GetQueuedSpecificTaskCounts();
-	//	std::wstring spetskcnts = std::to_wstring(spetskvec[0]);
-	//	for (size_t i = 1; i < spetskvec.size(); i++) {
-	//		spetskcnts += L", " + std::to_wstring(spetskvec[i]);
-	//	}
-	//	std::wstring debugText = std::format(
-	//		L"PDF Threads\r\n\tThread:{}/{}\r\n\tTask:{}\r\n\tSpecificTask:{}\r\nThread Pool\r\n\tThread:{}/{}\r\n\tTask:{}\r\n",
-	//		m_pdf->GetPDFiumPtr()->GetActiveThreadCount(),m_pdf->GetPDFiumPtr()->GetTotalThreadCount(),
-	//		m_pdf->GetPDFiumPtr()->GetQueuedTaskCount(),
-	//		spetskcnts,
-	//		m_pdfDrawer->GetThreadPoolPtr()->GetActiveThreadCount(),m_pdfDrawer->GetThreadPoolPtr()->GetTotalThreadCount(),
-	//		m_pdfDrawer->GetThreadPoolPtr()->GetQueuedTaskCount());
-	//	CSizeF debugTextSize = GetWndPtr()->GetDirectPtr()->CalcTextSize(*(m_pProp->Format), debugText);
-	//	GetWndPtr()->GetDirectPtr()->DrawTextLayout(*(m_pProp->Format), debugText,
-	//		CRectF(GetRenderRectInWnd().left,
-	//		GetRenderRectInWnd().top,
-	//		GetRenderRectInWnd().left + debugTextSize.width,
-	//		GetRenderRectInWnd().top + debugTextSize.height));
-	//}
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetTransform(rot * trans * scale * scroll);
 
 
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->DrawBitmap(
+		pD2D1Bmp,
+		rcDstInWnd,
+		1.f,
+		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
 
-	//if (drawFullPage) {
-	//	if (!m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), fullKey, ptDstLeftTopInWnd, callback)) {
-	//		m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
-	//	}
-	//} else {
-	//	if (m_imgDrawer->ExistInPrimary(clipKey) &&
-	//		m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback)) {
-
-	//	} else {
-	//		m_imgDrawer->DrawBitmap(GetWndPtr()->GetDirectPtr(), blurKey, rcDstInWnd, callback);
-	//		m_imgDrawer->DrawClipBitmap(GetWndPtr()->GetDirectPtr(), clipKey, ptDstClipInWnd, callback);//Just order
-
-	//		//std::vector<ImgBmpKey> keys = m_imgDrawer->FindClipKeys([clipKey, pPage = &(m_image.get()), scale = m_scale](const ImgBmpKey& key)->bool{
-	//		//	return 
-	//		//		key != clipKey &&
-	//		//		key.ImagePtr->GetPath() == clipKey.ImagePtr->GetPath() && 
-	//		//		key.Scale == clipKey.Scale &&
-	//		//		key.Rotate == clipKey.Rotate &&
-	//		//		!key.Rect.IsRectNull();
-	//		//});
-	//		//for (const ImgBmpKey& key : keys) {
-	//		//	CPointF ptClipInWnd = Ctrl2Wnd(Doc2Ctrl(Page2Doc(i, key.Rect.LeftTop())));
-	//		//	m_imgDrawer->DrawPDFPageClipBitmap(GetWndPtr()->GetDirectPtr(), key, ptClipInWnd, callback);
-	//		//}
-	//	}
-	//}
-
-
-	//CRectF rc(GetRenderContentSize());
-	//rc.OffsetRect(GetRenderRectInWnd().LeftTop());
-	//rc.OffsetRect(-m_spHScroll->GetScrollPos(), -m_spVScroll->GetScrollPos());
-	//GetWndPtr()->GetDirectPtr()->DrawBitmap(
-	//	m_image.get().GetBitmapPtr(),
-	//	rc,
-	//	1.0f,
-	//	D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
-
-	if(debug){
-		std::wstring text = boost::algorithm::join(logs, L"\n");
-		GetWndPtr()->GetDirectPtr()->DrawTextFromPoint(GetFormat(), text, GetRenderRectInWnd().LeftTop());
-	}
+	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->SetTransform(
+		D2D1::Matrix3x2F::Identity());
 
 	//PaintScroll
 	UpdateScroll();
@@ -368,6 +441,7 @@ void CImageView::Normal_Paint(const PaintEvent& e)
 
 	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
 }
+
 
 void CImageView::Normal_KeyDown(const KeyDownEvent& e)
 {
@@ -426,7 +500,8 @@ void CImageView::Normal_ContextMenu(const ContextMenuEvent& e)
 		GetWndPtr()->m_hWnd);
 
 	if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateClockwise")) {
-		Image.get_unconst()->Rotate.set(static_cast<WICBitmapTransformOptions>(static_cast<const int>((*(Image->Rotate)) + 1) % 4));
+		Rotate.set((*Rotate + 90) % 360);
+		//Image.get_unconst()->Rotate.set(static_cast<WICBitmapTransformOptions>(static_cast<const int>((*(Image->Rotate)) + 1) % 4));
 		//switch (*Rotate) {
 		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
 		//		Rotate.set(D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_ROTATE_CLOCKWISE90);
@@ -444,7 +519,8 @@ void CImageView::Normal_ContextMenu(const ContextMenuEvent& e)
 		//		break;
 		//}
 	} else if (idCmd == CResourceIDFactory::GetInstance()->GetID(ResourceType::Command, L"RotateCounterClockwise")) {
-		Image.get_unconst()->Rotate.set(static_cast<WICBitmapTransformOptions>(static_cast<const int>((*(Image->Rotate)) + 4 - 1) % 4));
+		Rotate.set((*Rotate + 360 - 90) % 360);
+		//Image.get_unconst()->Rotate.set(static_cast<WICBitmapTransformOptions>(static_cast<const int>((*(Image->Rotate)) + 4 - 1) % 4));
 		//switch (*Rotate) {
 		//switch (*Rotate) {
 		//	case D2D1_BITMAPSOURCE_ORIENTATION::D2D1_BITMAPSOURCE_ORIENTATION_DEFAULT:
