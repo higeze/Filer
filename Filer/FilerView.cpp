@@ -109,11 +109,19 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 	//File-Text Binding
 	m_spTextBox->SelectAllOnFocus.set(true);
 	m_spTextBox->EnterText.subscribe([this](auto notify) {
-		m_spFileGrid->SetPath(*m_spTextBox->EnterText);
-		m_spFileGrid->SubmitUpdate();
+		if (notify.action == notify_container_changed_action::reset && m_spFileGrid->Folder->GetPath() != notify.new_items) {
+			if (auto spFolder = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(notify.new_items))) {
+				m_spFileGrid->Folder.set(spFolder);
+			} else {
+				m_spTextBox->Text.set(m_spFileGrid->Folder->GetPath());
+			}
+		}
+
 	}, m_spFileGrid->Folder.life());
 	m_spFileGrid->Folder.subscribe([this](auto value) {
-		m_spTextBox->Text.set(value->GetPath());
+		if (*m_spTextBox->Text != value->GetPath()) {
+			m_spTextBox->Text.set(value->GetPath());
+		}
 	}, m_spTextBox);
 
 	//RecentButton-RecentGrid
