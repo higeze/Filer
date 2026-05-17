@@ -17,9 +17,12 @@
 
 #include "reactive_property.h"
 #include "reactive_string.h"
+#include "reactive_vector.h"
 
 #include "TextCaret.h"
 
+
+class CTextLayout;
 class IBridgeTSFInterface;
 class CGridView;
 
@@ -41,11 +44,9 @@ bool in_range(const TRect& value, const TRect& min, const TRect& max)
 	return min <= value && value <= max;
 }
 
-class CD2DWWindow;
-
-
 class CTextBox : public IBridgeTSFInterface, public CD2DWControl
 {
+	friend class CTextStore;
 private:
 	bool m_isWrap = true;
 public:
@@ -132,8 +133,13 @@ public:
 private:
 	void InitTSF();
 	void UninitTSF();
+
+protected:
+	std::unique_ptr<CTextLayout> m_pTextLayout;
 public:
 	// Getter
+	std::unique_ptr<CTextLayout>& GetTextPtr() { return m_pTextLayout; }
+
 	void SetHasBorder(bool value) { m_hasBorder = value; }
 	void SetIsScrollable(bool value){ m_isScrollable = value; }
 	void SetIsEnterText(bool value){ m_isEnterText = value; }
@@ -203,7 +209,6 @@ public:
 	//virtual bool VScrl_Guard_SetCursor(const SetCursorEvent& e);
 	//virtual void VScrl_SetCursor(const SetCursorEvent& e);
 
-
 	virtual void HScrlDrag_OnEntry(const LButtonBeginDragEvent& e);
 	virtual void HScrlDrag_OnExit(const LButtonEndDragEvent& e);
 	virtual void HScrlDrag_MouseMove(const MouseMoveEvent& e);
@@ -247,8 +252,8 @@ public:
 	void ClearText();
 	void EnsureVisibleCaret();
 	virtual void UpdateAll();
-	virtual void ClearOriginRects();
-	virtual void ClearActualRects();
+	//virtual void ClearOriginRects();
+	//virtual void ClearActualRects();
 	virtual void UpdateScroll();
 
 
@@ -273,27 +278,27 @@ public:
 	BOOL AddCompositionRenderInfo(int Start, int End, TF_DISPLAYATTRIBUTE* pda);
 
 	//Getter
-	LAZY_CCOMPTR_GETTER(IDWriteTextLayout1, TextLayout)
+	//LAZY_CCOMPTR_GETTER(IDWriteTextLayout1, TextLayout)
 
-	LAZY_GETTER(std::vector<CRectF>, OriginCharRects)
-	LAZY_GETTER(std::vector<CRectF>, OriginCursorCharRects)
-	LAZY_GETTER(std::vector<CRectF>, OriginCaptureCharRects)
-	LAZY_GETTER(std::vector<CRectF>, ActualCharRects)
-	LAZY_GETTER(std::vector<CRectF>, ActualSelectionCharRects)
-	LAZY_GETTER(std::vector<CRectF>, ActualCursorCharRects)
-	LAZY_GETTER(std::vector<CRectF>, ActualCaptureCharRects)
-	LAZY_GETTER(CRectF, OriginContentRect)
-	LAZY_GETTER(CRectF, ActualContentRect)
+	//LAZY_GETTER(std::vector<CRectF>, OriginCharRects)
+	//LAZY_GETTER(std::vector<CRectF>, OriginCursorCharRects)
+	//LAZY_GETTER(std::vector<CRectF>, OriginCaptureCharRects)
+	//LAZY_GETTER(std::vector<CRectF>, ActualCharRects)
+	//LAZY_GETTER(std::vector<CRectF>, ActualSelectionCharRects)
+	//LAZY_GETTER(std::vector<CRectF>, ActualCursorCharRects)
+	//LAZY_GETTER(std::vector<CRectF>, ActualCaptureCharRects)
+	//LAZY_GETTER(CRectF, OriginContentRect)
+	//LAZY_GETTER(CRectF, ActualContentRect)
 
 	//std::optional<CRectF> GetOriginCharRect(const int& pos);
 	//std::optional<CRectF> GetActualCharRect(const int& pos);
-	std::optional<int> GetOriginCharPosFromPoint(const CPointF& pt);
-	std::optional<int> GetActualCharPosFromPoint(const CPointF& pt);
-	std::optional<int> GetActualCaptureCharPosFromPoint(const CPointF& pt);
+	//std::optional<int> GetOriginCharPosFromPoint(const CPointF& pt);
+	//std::optional<int> GetActualCharPosFromPoint(const CPointF& pt);
+	//std::optional<int> GetActualCaptureCharPosFromPoint(const CPointF& pt);
 
 
-	std::optional<int> GetFirstCharPosInLine(const int& pos);
-	std::optional<int> GetLastCharPosInLine(const int& pos);
+	//std::optional<int> GetFirstCharPosInLine(const int& pos);
+	//std::optional<int> GetLastCharPosInLine(const int& pos);
 
 
 	//int CharPosFromNearPoint(const CPointF& pt);
@@ -313,6 +318,11 @@ protected:
 
 	//COMPOSITIONRENDERINFO *pCompositionRenderInfo_;
 	//UINT nCompositionRenderInfo_;
+
+	CPointF WndToTextLayout(const CPointF& point) const;
+	CPointF TextLayoutToWnd(const CPointF& point) const;
+	CRectF HitTestTextPosition(UINT32 position) const;
+	size_t HitTestCaretPoint(CPointF point) const;
 
 
 };

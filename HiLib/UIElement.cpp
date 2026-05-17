@@ -24,7 +24,8 @@ MouseEvent::MouseEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pH
 SetCursorEvent::SetCursorEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled)
 	:Event(pWnd, pHandled),
 	HitTest(LOWORD(lParam)),
-	PointInWnd(pWnd->GetDirectPtr()->Pixels2Dips(pWnd->GetCursorPosInClient())){}
+	PointInClient(pWnd->GetCursorPosInClient()),
+	PointInWnd(pWnd->GetDirectPtr()->Pixels2Dips(PointInClient)){}
 
 SetCursorEvent::SetCursorEvent(CD2DWWindow* pWnd, UINT hittest, BOOL* pHandled)
 	:SetCursorEvent(pWnd, 0, MAKELPARAM(hittest, 0), pHandled){}

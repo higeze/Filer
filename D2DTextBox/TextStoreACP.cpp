@@ -2,6 +2,7 @@
 #include <InputScope.h>
 #include <tsattrs.h>
 #include "Textbox.h"
+#include "TextLayout.h"
 #include "D2DWWindow.h"
 #include "TSFManager.h"
 #include "TextStoreACP.h"
@@ -414,12 +415,12 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
     }
 	//Get candidate dialogbox rect
     CRectF rcf;
-    if(in_range<int>(acpStart, 0, _pEditor->GetActualCharRects().size() - 1) && 
-        in_range<int>(acpEnd, 0, _pEditor->GetActualCharRects().size() - 1)){
+    if(in_range<int>(acpStart, 0, _pEditor->Text->size() - 1) && 
+        in_range<int>(acpEnd, 0, _pEditor->Text->size() - 1)){
         
-	    CRectF rcStart(_pEditor->GetActualCharRects()[acpStart]);
-        CRectF rcEnd(_pEditor->GetActualCharRects()[acpEnd]);
-
+	    CRectF rcStart(_pEditor->HitTestTextPosition(acpStart));
+        CRectF rcEnd(_pEditor->HitTestTextPosition(acpEnd));
+        
         rcf.left = rcStart.left;
         rcf.right = rcEnd.right;
         rcf.top = rcStart.top;

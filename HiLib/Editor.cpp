@@ -66,10 +66,10 @@ void CEditor::OnCreate(const CreateEvt& e)
 	//m_spFilterBox->SetIsTabStop(true);
 	//m_spTextBox->SetIsTabStop(true);
 
-	m_spFilterBox->Text.subscribe([this](auto)
-	{
-		m_spTextBox->ClearHighliteRects();
-	}, shared_from_this());
+	//m_spFilterBox->Text.subscribe([this](auto)
+	//{
+	//	m_spTextBox->ClearHighliteRects();
+	//}, shared_from_this());
 }
 
 void CEditor::OnPaint(const PaintEvent& e)

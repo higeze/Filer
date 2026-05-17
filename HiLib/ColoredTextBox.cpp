@@ -1,4 +1,5 @@
 #include "ColoredTextBox.h"
+#include "ColoredTextLayout.h"
 #include "Scroll.h"
 
 #include "string_extension.h"
@@ -7,95 +8,69 @@
 /* CColoredTextBox */
 /******************/
 
-void CColoredTextBox::LoadTextLayoutPtr()
+CColoredTextBox::CColoredTextBox()
+	: CTextBox()
 {
-	CTextBox::LoadTextLayoutPtr();
+	m_pTextLayout = std::make_unique<CColoredTextLayout>(this);
+}
 
-	auto pDirect = GetWndPtr()->GetDirectPtr();
+CColoredTextBox::CColoredTextBox(
+	CD2DWControl* pParentControl,
+	const std::wstring& text) 
+	: CTextBox(pParentControl, text)
+{
+	m_pTextLayout = std::make_unique<CColoredTextLayout>(this);
+}
 
-	//Syntax
-	for (const auto& appearance : GetSyntaxAppearances()) {
-		if (!appearance.Regex.empty()) {
-			auto brush = pDirect->GetColorBrush(appearance.SyntaxFormat.Color);
-
-			std::wsmatch match;
-			auto begin = Text->cbegin();
-			auto re = std::wregex(appearance.Regex);//L"/\\*.*?\\*/"
-			UINT32 beginPos = 0;
-			while (std::regex_search(begin, Text->cend(), match, re)) {
-				DWRITE_TEXT_RANGE range{ beginPos + (UINT32)match.position(), (UINT32)match.length() };
-				m_pTextLayout->SetDrawingEffect(brush, range);
-				if (appearance.SyntaxFormat.IsBold) {
-					m_pTextLayout->SetFontWeight(DWRITE_FONT_WEIGHT_BOLD, range);
-				}
-
-				begin = match[0].second;
-				beginPos = std::distance(Text->cbegin(), begin);
-			}
-		}
-	}			
-
-	//Executable
-	m_executableInfos.clear();
-	for (const auto& apr : GetExecutableAppearances()) {
-		auto brush = pDirect->GetColorBrush(apr.SyntaxFormat.Color);
-		std::wsmatch match;
-		auto begin = Text->cbegin();
-		auto re = std::wregex(apr.Regex);
-		UINT32 beginPos = 0;
-		while (std::regex_search(begin, Text->cend(), match, re)) {
-			DWRITE_TEXT_RANGE range{ beginPos + (UINT32)match.position(), (UINT32)match.length() };
-			m_pTextLayout->SetDrawingEffect(brush, range);
-		if (apr.SyntaxFormat.IsBold) {
-			m_pTextLayout->SetFontWeight(DWRITE_FONT_WEIGHT_BOLD, range);
-		}
-			m_pTextLayout->SetUnderline(apr.SyntaxFormat.IsUnderline, range);
-
-
-			m_executableInfos.push_back(ExecutableInfo{ match.str(), range.startPosition, range.length });
-			begin = match[0].second;
-			beginPos = std::distance(Text->cbegin(), begin);
-		}
-	}
+CColoredTextBox::CColoredTextBox(
+	CD2DWControl* pParentControl,
+	std::unique_ptr<CVScroll>&& pVScroll,
+	std::unique_ptr<CHScroll>&& pHScroll,
+	const std::wstring& text)
+	:CTextBox(m_pParentControl,
+		std::forward<std::unique_ptr<CVScroll>>(pVScroll),
+		std::forward<std::unique_ptr<CHScroll>>(pHScroll), text)
+{
+	m_pTextLayout = std::make_unique<CColoredTextLayout>(this);
 }
 
 void CColoredTextBox::Normal_LButtonDown(const LButtonDownEvent& e)
 {
-	auto newPoint = GetWndPtr()->GetDirectPtr()->Pixels2Dips(e.PointInClient);
+	auto index = HitTestCaretPoint(e.PointInWnd);
+	auto caret_point = m_pTextLayout->HitTestTextPosition(index).CenterPoint();
 
-	if (auto index = GetActualCharPosFromPoint(newPoint)) {
-		auto point = GetOriginCharRects()[index.value()].CenterPoint();
-		if (GetKeyState(VK_SHIFT) & 0x8000) {
-			MoveCaretWithShift(index.value(), point);
-			return;
-		} else {
-			if (::GetAsyncKeyState(VK_CONTROL)) {
-				if (auto pos = GetActualCharPosFromPoint(e.PointInWnd)) {
-					auto iter = std::find_if(m_executableInfos.begin(), m_executableInfos.end(), [p = static_cast<UINT32>(pos.value())](const auto& info)->bool
-					{
-						return p >= info.StartPosition && p < info.StartPosition + info.Length;
-					});
-					if (iter != m_executableInfos.end()) {
-						auto exe = iter->Link;
-						exe = ((exe.front() == L'\"') ? L"" : L"\"") + boost::algorithm::trim_copy(exe) + ((exe.back() == L'\"') ? L"" : L"\"");
-						SHELLEXECUTEINFO sei = { 0 };
-						sei.cbSize = sizeof(sei);
-						sei.hwnd = GetWndPtr()->m_hWnd;
-						sei.lpVerb = nullptr;
-						sei.lpFile = exe.c_str();
-						sei.nShow = SW_SHOWDEFAULT;
-						::ShellExecuteEx(&sei);			
-						return;
-					}
-				}
+	if (GetKeyState(VK_SHIFT) & 0x8000) {
+		MoveCaretWithShift(index, caret_point);
+		return;
+	} else if (::GetAsyncKeyState(VK_CONTROL)) {
+
+		if (auto p = dynamic_cast<CColoredTextLayout*>(m_pTextLayout.get())) {
+			auto exeInfo = p->HitTestExecutableInfo(index);
+
+			if (exeInfo.has_value()) {
+				auto exe = exeInfo->Link;
+				exe = ((exe.front() == L'\"') ? L"" : L"\"") + boost::algorithm::trim_copy(exe) + ((exe.back() == L'\"') ? L"" : L"\"");
+				SHELLEXECUTEINFO sei = { 0 };
+				sei.cbSize = sizeof(sei);
+				sei.hwnd = GetWndPtr()->m_hWnd;
+				sei.lpVerb = nullptr;
+				sei.lpFile = exe.c_str();
+				sei.nShow = SW_SHOWDEFAULT;
+				::ShellExecuteEx(&sei);
+				return;
 			}
-			MoveCaret(index.value(), point);
 		}
+
+		MoveCaret(index, caret_point);
+	} else {
+		MoveCaret(index, caret_point);
 	}
 }
 
 void CColoredTextBox::Normal_SetCursor(const SetCursorEvent& e)
 {
+	auto index = HitTestCaretPoint(e.PointInWnd);
+
 	CPointF pt = GetWndPtr()->GetCursorPosInWnd();
 	if (GetRectInWnd().PtInRect(pt)) {
 		if (m_pVScroll->GetIsVisible() && m_pVScroll->GetRectInWnd().PtInRect(pt) ||
@@ -105,17 +80,15 @@ void CColoredTextBox::Normal_SetCursor(const SetCursorEvent& e)
 			return;
 		} else {
 			if (::GetAsyncKeyState(VK_CONTROL)) {
-				if (auto pos = GetActualCharPosFromPoint(e.PointInWnd)) {
-					auto iter = std::find_if(m_executableInfos.begin(), m_executableInfos.end(), [p = static_cast<UINT32>(pos.value())](const auto& info)->bool
-					{
-						return p >= info.StartPosition && p < info.StartPosition + info.Length;
+				if (auto p = dynamic_cast<CColoredTextLayout*>(m_pTextLayout.get())) {
+					auto exeInfo = p->HitTestExecutableInfo(index);
 
-					});
-					if (iter != m_executableInfos.end()) {
+					if (exeInfo.has_value()) {
 						::SetCursor(::LoadCursor(NULL, IDC_HAND));
 						*(e.HandledPtr) = TRUE;
 						return;
 					}
+
 				}
 			}
 		}

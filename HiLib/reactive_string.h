@@ -54,10 +54,16 @@ public:
 	void set(const container_type& value)
 	{
 		if (m_value != value) {
-			container_type old(m_value);
-			//m_value.assign(value.cbegin(), value.cend());
-			m_value = value;
-			m_subject.on_next(notify_type
+			forth_notify_set(value);
+		}
+	}
+
+	void forth_notify_set(const container_type& value)
+	{
+		container_type old(m_value);
+		//m_value.assign(value.cbegin(), value.cend());
+		m_value = value;
+		m_subject.on_next(notify_type
 			{
 				notify_container_changed_action::reset,
 				m_value,
@@ -66,7 +72,6 @@ public:
 				0,
 				m_value
 			});
-		}
 	}
 
 	/***********/
@@ -370,6 +375,11 @@ public:
 	void set(const container_type& value)
 	{
 		this->m_preactive->set(value);
+	}
+
+	void forth_notify_set(const container_type& value)
+	{
+		this->m_preactive->forth_notify_set(value);
 	}
 
 	void assign(const container_type& value)

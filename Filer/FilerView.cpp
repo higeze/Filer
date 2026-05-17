@@ -117,7 +117,7 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 			}
 		}
 
-	}, m_spFileGrid->Folder.life());
+	}, m_spFileGrid);
 	m_spFileGrid->Folder.subscribe([this](auto value) {
 		if (*m_spTextBox->Text != value->GetPath()) {
 			m_spTextBox->Text.set(value->GetPath());

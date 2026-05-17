@@ -70,6 +70,25 @@ public:
 	reactive_vector(reactive_vector&&) noexcept = default;
 	reactive_vector& operator=(reactive_vector&&) noexcept = default;
 
+	/***********/
+	/* Unconst */
+	/***********/
+
+	value_type& at(size_type index)
+	{
+		return this->m_value.at(index);
+	}
+
+	value_type& front()
+	{
+		return this->m_value.front();
+	}
+
+	value_type& back()
+	{
+		return this->m_value.back();
+	}
+
 	void set(const container_type& value)
 	{
 		if (m_value != value) {
@@ -86,10 +105,6 @@ public:
 			});
 		}
 	}
-
-	/***********/
-	/* Unconst */
-	/***********/
 
 	void assign(const container_type& value)
 	{
@@ -110,15 +125,16 @@ public:
 		});
 	}
 
-	auto insert(size_type index, const container_type& value)
+	iterator insert(const_iterator position, const_iterator first, const_iterator last)
 	{
-		auto ret = this->m_value.insert(index, value);
+		auto ret = this->m_value.insert(position, first, last);
+		auto index = std::distance(this->m_value.begin(), ret);
 		this->m_subject.on_next(notify_type
 		{
 			notify_container_changed_action::insert,
-			value,
-			(int)index, 
-			container_type(),
+			container_type(first, last),
+			index, 
+			{},
 			-1,
 			this->m_value
 		});
@@ -259,8 +275,10 @@ public:
 					bind_value(notify.all_items.back(), this->m_value.back());
 				break;
 			case notify_container_changed_action::insert:
-				this->insert(this->m_value.cbegin() + notify.new_starting_index, adl_vector_item<value_type>::clone(notify.all_items.at(notify.new_starting_index)));
-				bind_value(notify.all_items.at(notify.new_starting_index), this->m_value.at(notify.new_starting_index));
+				for (auto i = 0; i != notify.new_items.size(); i++) {
+					this->insert(this->m_value.cbegin() + notify.new_starting_index + i, adl_vector_item<value_type>::clone(notify.all_items.at(i)));
+					bind_value(notify.all_items.at(notify.new_starting_index + i), this->m_value.at(notify.new_starting_index + i));
+				}
 				break;
 			case notify_container_changed_action::Move:
 				THROW_FILE_LINE_FUNC;
@@ -363,6 +381,24 @@ public:
 		return m_preactive->m_subject.disconnect(std::forward<Args>(args)...);
 	}
 
+	/***********/
+	/* Unconst */
+	/***********/
+	value_type& at(size_type index)
+	{
+		return this->m_preactive->at(index);
+	}
+
+	value_type& front()
+	{
+		return this->m_preactive->front();
+	}
+
+	value_type& back()
+	{
+		return this->m_preactive->back();
+	}
+
 	void set(const container_type& value)
 	{
 		this->m_preactive->set(value);
@@ -378,9 +414,9 @@ public:
 		return m_preactive->push_back(value);
 	}
 
-	auto insert(size_type index, const container_type& value)
+	iterator insert(const_iterator position, const_iterator first, const_iterator last)
 	{
-		return m_preactive->insert(index, value);
+		return m_preactive->insert(position, first, last);
 	}
 
 	iterator insert(const_iterator position, const value_type& value)

@@ -1048,6 +1048,18 @@
     <ClInclude Include="..\HiLib\DataObject.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\TextLayout.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ParagraphLayout.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ColoredParagraphLayout.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\ColoredTextLayout.h">
+      <Filter>HiLib\TextBox</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1566,6 +1578,18 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\DataObject.cpp">
       <Filter>HiLib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\TextLayout.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ParagraphLayout.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ColoredParagraphLayout.cpp">
+      <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ColoredTextLayout.cpp">
+      <Filter>HiLib\TextBox</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

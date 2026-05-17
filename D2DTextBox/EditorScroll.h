@@ -4,7 +4,6 @@
 
 class CEditorVScroll :public CVScroll
 {
-	LAZY_GETTER(std::vector<CRectF>, HighliteRects)
 	const FLOAT kHighliteOffset = 2.f;
 public:
 	const SolidFill& GetFindHighlite() const

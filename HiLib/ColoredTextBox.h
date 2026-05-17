@@ -42,7 +42,6 @@ struct ExecutableAppearance
 		SyntaxFormat)
 };
 
-
 class CColoredTextBox:public CTextBox
 {
 public:
@@ -70,28 +69,22 @@ public:
 		}; return value;
 	}
 
-protected:
-	std::vector<ExecutableInfo> m_executableInfos;
-
 public:
-	CColoredTextBox()
-		: CTextBox(){}
+	CColoredTextBox();
 
 	CColoredTextBox(
 		CD2DWControl* pParentControl,
-		const std::wstring& text):
-		CTextBox(pParentControl, text){}
+		const std::wstring& text);
+
 	CColoredTextBox(
 		CD2DWControl* pParentControl,
 		std::unique_ptr<CVScroll>&& pVScroll,
 		std::unique_ptr<CHScroll>&& pHScroll,
-		const std::wstring& text)
-		:CTextBox(m_pParentControl, 
-		std::forward<std::unique_ptr<CVScroll>>(pVScroll),
-		std::forward<std::unique_ptr<CHScroll>>(pHScroll), text){}
+		const std::wstring& text);
+
 	virtual ~CColoredTextBox() = default;
 
-	void LoadTextLayoutPtr() override;
+	//void LoadTextLayoutPtr() override;
 	void Normal_LButtonDown(const LButtonDownEvent& e) override;
 	void Normal_SetCursor(const SetCursorEvent& e) override;
 

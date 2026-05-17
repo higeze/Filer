@@ -99,6 +99,9 @@ void CScrollBase::PaintThumb(const PaintEvent& e)
 	} else {
 		thumbFill = GetThumbNormalFill();
 	}
+	if (GetThumbRect().IsRectNull()) {
+		auto a = 1.f;
+	}
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(thumbFill, GetThumbRect());
 }
 

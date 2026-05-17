@@ -267,7 +267,8 @@ struct MouseWheelEvent:public Event
 struct SetCursorEvent:public Event
 {
 	UINT HitTest;
-	CPointF PointInWnd;
+	CPoint PointInClient;
+	CPointF PointInWnd;//Since member variable initialized in order of declarelation, order should be PointInCliend->PointInWnd
 	SetCursorEvent(CD2DWWindow* pWnd, WPARAM wParam, LPARAM lParam, BOOL* pHandled = nullptr);
 	SetCursorEvent(CD2DWWindow* pWnd, UINT hittest, BOOL* pHandled = nullptr);
 };

@@ -4,7 +4,7 @@
 
 class CEditorTextBox:public CColoredTextBox
 {
-	LAZY_GETTER_NO_CLEAR_IMPL(std::vector<CRectF>, HighliteRects)
+	//LAZY_GETTER_NO_CLEAR_IMPL(std::vector<CRectF>, HighliteRects)
 
 public:
 
@@ -19,7 +19,7 @@ public:
 		const std::wstring& text);
 	virtual ~CEditorTextBox() = default;
 	void PaintHighlite(const PaintEvent& e) override;
-	void UpdateAll() override;
+	//void UpdateAll() override;
 
 
 };

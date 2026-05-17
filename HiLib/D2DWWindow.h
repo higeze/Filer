@@ -92,10 +92,10 @@ public:
 			return 0;
 		};
 	}
-	template<typename TRect>
+	template<typename TEvent>
 	LRESULT UserInputMachine_Message(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 	{
-		m_pMouseMachine->process_event(TRect(this, wParam, lParam, &bHandled));
+		m_pMouseMachine->process_event(TEvent(this, wParam, lParam, &bHandled));
 		InvalidateRect(NULL, FALSE);
 		return 0;
 	}

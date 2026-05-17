@@ -1,14 +1,41 @@
 #include "EditorScroll.h"
-#include "EditorTextBox.h"
+#include "Editor.h"
+#include "EditorTextbox.h"
+#include "TextLayout.h"
+#include "string_extension.h"
+
 
 /******************/
 /* CEditorVScroll */
 /******************/
 void CEditorVScroll::PaintForeground(const PaintEvent& e)
 {
-	for (const auto& rc : GetHighliteRects()) {
-		GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetFindHighlite(), rc);
+	if (auto pTextBox = dynamic_cast<CEditorTextBox*>(GetParentControlPtr())) {
+		if (auto pEditor = dynamic_cast<CEditor*>(pTextBox->GetParentControlPtr())) {
+			const auto spFilter = pEditor->GetFilterBoxPtr();
+			const auto textboxRect = CRectF(0.f,0.f,pTextBox->GetTextPtr()->GetWidth(), pTextBox->GetTextPtr()->GetHeight());
+			const auto find = *spFilter->Text;
+			const auto highliteRangeRect = GetHighliteRangeRect();
+
+			auto position = (*pTextBox->Text) | find_ignorecase(find);
+			auto length = find.size();
+			while (length != 0 && position != std::wstring::npos) {
+				auto rects = pTextBox->GetTextPtr()->HitTestTextRange(position, length);
+				for (auto rect : rects) {
+					auto rc = CRectF(
+						highliteRangeRect.left,
+						highliteRangeRect.top + highliteRangeRect.Height() * (rect.top - textboxRect.top) / textboxRect.Height(),
+						highliteRangeRect.right,
+						highliteRangeRect.top + highliteRangeRect.Height() * (rect.bottom - textboxRect.top) / textboxRect.Height()
+					);
+					GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetFindHighlite(), rc);
+				}
+				position = (*pTextBox->Text) | find_ignorecase(find, position + length);
+			}
+		}
+
 	}
+	
 }
 
 CRectF CEditorVScroll::GetHighliteRangeRect()const
@@ -17,26 +44,4 @@ CRectF CEditorVScroll::GetHighliteRangeRect()const
 	highliteRangeRect.left += kHighliteOffset;
 	highliteRangeRect.right -= kHighliteOffset;
 	return highliteRangeRect;
-}
-
-void CEditorVScroll::LoadHighliteRects()
-{
-	//Find Highlight
-	m_optHighliteRects = std::vector<CRectF>();
-
-	const auto pEditTextBox = static_cast<CEditorTextBox*>(m_pParentControl);
-	const auto& highliteRangeRect = GetHighliteRangeRect();
-	const auto& textboxRect = pEditTextBox->GetActualContentRect();
-	const auto& textHighliteRects = pEditTextBox->GetHighliteRects();
-
-	for (auto iter = textHighliteRects.cbegin(); iter != textHighliteRects.cend(); ++iter) {
-		if (iter ==  textHighliteRects.cbegin() || std::prev(iter)->top != iter->top) {
-			m_optHighliteRects->emplace_back(
-				highliteRangeRect.left,
-				highliteRangeRect.top + highliteRangeRect.Height() * (iter->top - textboxRect.top) / textboxRect.Height(),
-				highliteRangeRect.right,
-				highliteRangeRect.top + highliteRangeRect.Height() * (iter->bottom - textboxRect.top) / textboxRect.Height()
-			);
-		}
-	}
 }

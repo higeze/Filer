@@ -291,6 +291,10 @@
     <ClInclude Include="..\HiLib\BindTextColumn.h" />
     <ClInclude Include="..\HiLib\BindYearMonthDayCell.h" />
     <ClInclude Include="..\HiLib\BindYearMonthDayColumn.h" />
+    <ClInclude Include="..\HiLib\ColoredParagraphLayout.h" />
+    <ClInclude Include="..\HiLib\ColoredTextLayout.h" />
+    <ClInclude Include="..\HiLib\ParagraphLayout.h" />
+    <ClInclude Include="..\HiLib\TextLayout.h" />
     <ClInclude Include="..\HiLib\D2DBitmapDrawer.h" />
     <ClInclude Include="..\HiLib\BoolCell.h" />
     <ClInclude Include="..\HiLib\BoostPythonHelper.h" />
@@ -606,7 +610,9 @@
     <ClCompile Include="..\HiLib\CheckBoxFilterCell.cpp" />
     <ClCompile Include="..\HiLib\CheckBoxState.cpp" />
     <ClCompile Include="..\HiLib\ColorCell.cpp" />
+    <ClCompile Include="..\HiLib\ColoredParagraphLayout.cpp" />
     <ClCompile Include="..\HiLib\ColoredTextBox.cpp" />
+    <ClCompile Include="..\HiLib\ColoredTextLayout.cpp" />
     <ClCompile Include="..\HiLib\Column.cpp" />
     <ClCompile Include="..\HiLib\Console.cpp" />
     <ClCompile Include="..\HiLib\CShellExtension.cpp" />
@@ -626,6 +632,7 @@
     <ClCompile Include="..\HiLib\MyGdiplusHelper.cpp" />
     <ClCompile Include="..\HiLib\NetworkMessanger.cpp" />
     <ClCompile Include="..\HiLib\HeaderCell.cpp" />
+    <ClCompile Include="..\HiLib\ParagraphLayout.cpp" />
     <ClCompile Include="..\HiLib\PDFBitmapDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DThumbnailDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DWDialog.cpp" />
@@ -703,6 +710,7 @@
     <ClCompile Include="..\HiLib\Editor.cpp" />
     <ClCompile Include="..\HiLib\TextDoc.cpp" />
     <ClCompile Include="..\HiLib\TextEnDecoder.cpp" />
+    <ClCompile Include="..\HiLib\TextLayout.cpp" />
     <ClCompile Include="..\HiLib\ThreadMonitorView.cpp" />
     <ClCompile Include="..\HiLib\ThreadPool.cpp" />
     <ClCompile Include="..\HiLib\ThreadSafeDriveFolderManager.cpp" />
