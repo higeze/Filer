@@ -174,7 +174,7 @@ const SFGAOF& CShellFile::GetSFGAO() const
 {
 	if (!m_optSFGAO.has_value()) {
 		SFGAOF sfgao{SFGAO_CAPABILITYMASK | SFGAO_GHOSTED | SFGAO_LINK | SFGAO_SHARE | SFGAO_FOLDER | SFGAO_FILESYSTEM};
-		m_pParentShellFolder->GetAttributesOf(1, (LPCITEMIDLIST*)(m_childIdl.ptrptr()), &sfgao);
+		m_pParentShellFolder->GetAttributesOf(1, m_childIdl.constptrptr(), &sfgao);
 		m_optSFGAO.emplace(sfgao);
 	}
 	return m_optSFGAO.value();

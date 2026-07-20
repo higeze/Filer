@@ -13,6 +13,7 @@ private:
 	subject<T> m_subject;
 	subject<T, T> m_subject_old_new;
 	T m_value;
+	//std::mutex m_mtx;
 public:
 	explicit reactive_property()
 		:m_subject(), m_subject_old_new(), m_value() {}

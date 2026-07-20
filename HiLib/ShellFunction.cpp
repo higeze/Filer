@@ -254,17 +254,14 @@ void shell::FindIncrementalOne(
 CComPtr<IShellFolder> shell::DesktopBindToShellFolder(const CIDL& idl)
 {
 	CComPtr<IShellFolder> pDesktopFolder;
-	if (FAILED(::SHGetDesktopFolder(&pDesktopFolder))) {
-		throw std::exception(FILE_LINE_FUNC);
-	}
+	FAILED_THROW(::SHGetDesktopFolder(&pDesktopFolder));
 
 	CComPtr<IShellFolder> pFolder;
-
 	if (FAILED(pDesktopFolder->BindToObject(idl.ptr(), 0, IID_IShellFolder, (void**)&pFolder))) {
 		if (CIDL desktopIDL; SUCCEEDED(::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, desktopIDL.ptrptr())) && ::ILIsEqual(idl.ptr(), desktopIDL.ptr())) {
 			pFolder = pDesktopFolder;
 		} else {
-			throw std::exception(FILE_LINE_FUNC);
+			THROW_FILE_LINE_FUNC;
 		}
 	}
 	return pFolder;
@@ -623,7 +620,7 @@ shell::ParsedFileType shell::ParseFileType(
 			ret.FileType = shell::FileType::Drive;
 		} else if (boost::iequals(ret.FileExt, ".zip")) {
 			ret.FileType = shell::FileType::Zip;
-		} else if (pParentFolder->GetAttributesOf(1, (LPCITEMIDLIST*)(childIDL.ptrptr()), &sfgao), (sfgao & SFGAO_FOLDER) == SFGAO_FOLDER) {
+		} else if (pParentFolder->GetAttributesOf(1, childIDL.constptrptr(), &sfgao), (sfgao & SFGAO_FOLDER) == SFGAO_FOLDER) {
 			ret.FileType = shell::FileType::Folder;
 		} else {
 			ret.FileType = shell::FileType::File;

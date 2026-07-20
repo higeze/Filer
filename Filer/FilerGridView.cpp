@@ -758,46 +758,13 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 			LOG_SCOPED_TIMER_THIS_1("OpenFolder Enumeration");
 			try {
 				//Enumerate child IDL
-					//{
-					//{
-					//	LOG_SCOPED_TIMER_THIS_1("Current Way");
-
-					//	std::vector<CIDL> idls;
-					//	{
-					//		{
-					//			LOG_SCOPED_TIMER_THIS_1("Current Enumeration");
-					//			CComPtr<IEnumIDList> enumIdl;
-					//			if (SUCCEEDED(Folder->GetShellFolderPtr()->EnumObjects(GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
-					//				CIDL nextIdl;
-					//				ULONG ulRet(0);
-					//				while (true) {
-					//					SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
-					//					if (!nextIdl) { break; }
-					//					idls.push_back(nextIdl);
-					//					//func(nextIdl);
-					//					nextIdl.Clear();
-					//				}
-					//			}
-					//		}
-					//	}
-
-					//	{
-					//		LOG_SCOPED_TIMER_THIS_1("Current Creation");
-					//		for (auto& idl : idls) {
-					//			if (auto spFile = Folder->CreateShExFileFolder(idl)) {
-					//				GetItemsSource().push_back(spFile);
-					//			}
-					//		}
-					//	}
-
-					//}
-
 				{
-					LOG_SCOPED_TIMER_THIS_1("Thread Way");
-					std::vector<std::future<std::shared_ptr<CShellFile>>> futures;
+					LOG_SCOPED_TIMER_THIS_1("Current Way");
+
+					std::vector<CIDL> idls;
 					{
 						{
-							LOG_SCOPED_TIMER_THIS_1("Thread Enumeration");
+							LOG_SCOPED_TIMER_THIS_1("Current Enumeration");
 							CComPtr<IEnumIDList> enumIdl;
 							if (SUCCEEDED(Folder->GetShellFolderPtr()->EnumObjects(GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
 								CIDL nextIdl;
@@ -805,28 +772,60 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 								while (true) {
 									SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
 									if (!nextIdl) { break; }
-									futures.emplace_back(CThreadPool::GetInstance()->enqueue("CreateShExFileFolder", 1,
-										[folder = Folder, idl = std::move(nextIdl)]() mutable ->std::shared_ptr<CShellFile> { return folder->CreateShExFileFolder(std::forward<CIDL>(idl)); }));
+									idls.push_back(nextIdl);
+									//func(nextIdl);
 									nextIdl.Clear();
 								}
 							}
 						}
-
-						{
-							LOG_SCOPED_TIMER_THIS_1("Thread Creation");
-							for (auto& ftr : futures) {
-								GetItemsSource().emplace_back(ftr.get());
-							}
-						}
 					}
+
+					{
+						//LOG_SCOPED_TIMER_THIS_1("Current Creation");
+						//for (auto idl : idls) {
+						//	if (auto spFile = Folder->CreateShExFileFolder(idl)) {
+						//		GetItemsSource().push_back(spFile);
+						//	}
+						//}
+					}
+
 				}
 
-				//shell::for_each_idl_in_shellfolder(GetWndPtr()->m_hWnd, Folder->GetShellFolderPtr(),
-				//	[this](const CIDL& idl) {
-				//		if (auto spFile = Folder->CreateShExFileFolder(idl)) {
-				//			GetItemsSource().push_back(spFile);
-				//		}
-				//	});
+				{
+					//LOG_SCOPED_TIMER_THIS_1("Thread Way");
+					//std::vector<std::future<std::shared_ptr<CShellFile>>> futures;
+					//{
+					//	{
+					//		LOG_SCOPED_TIMER_THIS_1("Thread Enumeration");
+					//		CComPtr<IEnumIDList> enumIdl;
+					//		if (SUCCEEDED(Folder->GetShellFolderPtr()->EnumObjects(GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
+					//			CIDL nextIdl;
+					//			ULONG ulRet(0);
+					//			while (true) {
+					//				SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
+					//				if (!nextIdl) { break; }
+					//				futures.emplace_back(CThreadPool::GetInstance()->enqueue("CreateShExFileFolder", 1,
+					//					[folder = Folder, idl = std::move(nextIdl)]() mutable ->std::shared_ptr<CShellFile> { return folder->CreateShExFileFolder(std::forward<CIDL>(idl)); }));
+					//				nextIdl.Clear();
+					//			}
+					//		}
+					//	}
+
+					//	{
+					//		LOG_SCOPED_TIMER_THIS_1("Thread Creation");
+					//		for (auto& ftr : futures) {
+					//			GetItemsSource().emplace_back(ftr.get());
+					//		}
+					//	}
+					//}
+				}
+
+				shell::for_each_idl_in_shellfolder(GetWndPtr()->m_hWnd, Folder->GetShellFolderPtr(),
+					[this](auto idl) {
+						if (auto spFile = Folder->CreateShExFileFolder(std::move(idl))) {
+							GetItemsSource().push_back(spFile);
+						}
+					});
 			}
 			catch (std::exception&) {
 				throw std::exception(FILE_LINE_FUNC);

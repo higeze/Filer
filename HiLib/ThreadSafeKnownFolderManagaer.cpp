@@ -32,6 +32,7 @@ namespace shell
 				std::wstring path = shell::GetDisplayNameOf(pDesktopFolder, idl, SHGDN_FORPARSING);
 
 				if (pknownid[i] == FOLDERID_Desktop) {
+					idl.Clear();
 					::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, idl.ptrptr());
 					m_knownFolderIdIdlMap.insert_or_assign(path, std::make_tuple(pknownid[i], std::move(idl)));
 				} else {

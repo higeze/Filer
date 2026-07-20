@@ -415,8 +415,8 @@ STDAPI CTextStore::GetTextExt(TsViewCookie vcView, LONG acpStart, LONG acpEnd, R
     }
 	//Get candidate dialogbox rect
     CRectF rcf;
-    if(in_range<int>(acpStart, 0, _pEditor->Text->size() - 1) && 
-        in_range<int>(acpEnd, 0, _pEditor->Text->size() - 1)){
+    if(in_range<int>(acpStart, 0, _pEditor->Text->size()) && 
+        in_range<int>(acpEnd, 0, _pEditor->Text->size())){
         
 	    CRectF rcStart(_pEditor->HitTestTextPosition(acpStart));
         CRectF rcEnd(_pEditor->HitTestTextPosition(acpEnd));

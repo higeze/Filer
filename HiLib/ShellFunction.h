@@ -168,7 +168,8 @@ namespace shell
 		Folder,
 		Virtual,
 		Known,
-		Drive
+		Drive,
+		Desktop
 	};
 
 

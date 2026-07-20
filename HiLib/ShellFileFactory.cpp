@@ -13,6 +13,7 @@
 
 shell::ParsedFileType CShellFileFactory::ParseFileType(
 	const CComPtr<IShellFolder>& pParentFolder,
+	const CIDL& parentIDL,
 	const CIDL& childIDL)
 {
 	shell::ParsedFileType ret;
@@ -44,7 +45,7 @@ shell::ParsedFileType CShellFileFactory::ParseFileType(
 			ret.FileType = shell::FileType::Drive;
 		} else if (boost::iequals(ret.FileExt, ".zip")) {
 			ret.FileType = shell::FileType::Zip;
-		} else if (pParentFolder->GetAttributesOf(1, (LPCITEMIDLIST*)(childIDL.ptrptr()), &sfgao), (sfgao & SFGAO_FOLDER) == SFGAO_FOLDER) {
+		} else if (pParentFolder->GetAttributesOf(1, childIDL.constptrptr(), &sfgao), (sfgao & SFGAO_FOLDER) == SFGAO_FOLDER) {
 			ret.FileType = shell::FileType::Folder;
 		} else {
 			ret.FileType = shell::FileType::File;
@@ -56,7 +57,7 @@ shell::ParsedFileType CShellFileFactory::ParseFileType(
 
 std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<IShellFolder>& pParentFolder, const CIDL& parentIdl, CIDL&& childIdl)
 {
-	auto parsed = ParseFileType(pParentFolder, childIdl);
+	auto parsed = ParseFileType(pParentFolder, parentIdl, childIdl);
 	switch (parsed.FileType) {
 	case shell::FileType::Drive:
 		return CDriveFolderManager::GetInstance()->GetDriveFolderByPath(parsed.FilePath);
@@ -104,8 +105,8 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const std::wst
 			auto desktop(CKnownFolderManager::GetInstance()->GetDesktopFolder());
 			CIDL absIdl;
 
-			ULONG         chEaten;
-			ULONG         dwAttributes;
+			ULONG chEaten;
+			ULONG dwAttributes;
 			HRESULT hr = desktop->GetShellFolderPtr()->ParseDisplayName(
 				NULL,
 				NULL,
@@ -116,10 +117,11 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const std::wst
 
 			if (FAILED(hr)) {//Not Exist
 				return std::make_shared<CShellInvalidFile>();
+			//} else if(CIDL::GetItemIdListCount(absIdl.ptr())){
+			//	return desktop;
 			} else {
 				CIDL parentIDL = absIdl.CloneParentIDL();
 				CComPtr<IShellFolder>  pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
-
 				return CreateShellFilePtr(pParentFolder, parentIDL, std::move(absIdl.CloneLastID()));
 			}
 		}

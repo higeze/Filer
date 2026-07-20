@@ -69,10 +69,15 @@ const CComPtr<IDWriteTextLayout1>& CParagraphLayout::GetTextLayoutPtr() const
 
 CRectF CParagraphLayout::HitTestTextPosition(UINT32 position) const
 {
-	float x, y;
-	DWRITE_HIT_TEST_METRICS tm;
-	GetTextLayoutPtr()->HitTestTextPosition(position, false, &x, &y, &tm);
-	return CRectF(tm.left, tm.top, tm.left + tm.width, tm.top + tm.height);
+	if (GetTextLayoutPtr()) {
+		float x, y;
+		DWRITE_HIT_TEST_METRICS tm;
+		GetTextLayoutPtr()->HitTestTextPosition(position, false, &x, &y, &tm);
+		return CRectF(tm.left, tm.top, tm.left + tm.width, tm.top + tm.height);
+	} else {
+		auto size = m_pText->m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pText->m_pControl->GetFormat(), L"a");
+		return CRectF(0.f, 0.f, size.width, size.height);
+	}
 }
 
 CRectF CParagraphLayout::HitTestCaretTextPosition(UINT32 position) const

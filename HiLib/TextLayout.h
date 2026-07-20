@@ -135,10 +135,10 @@ protected:
 	template<typename T>
 	void erase(const reactive_wstring_ptr::notify_type& notify)
 	{
-		size_t first_index = notify.old_starting_index;
-		size_t last_index = notify.old_starting_index + notify.old_items.size() - 1;
+		int first_index = notify.old_starting_index;
+		int last_index = notify.old_starting_index + notify.old_items.size() - 1;
 
-		size_t size = 0;
+		int size = 0;
 		for (auto iter = Paragraphs.cbegin(); iter != Paragraphs.cend();) {
 
 			if (first_index <= size + (*iter)->Text->size() && size <= last_index) {

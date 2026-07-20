@@ -87,6 +87,18 @@ UINT CIDL::GetItemIdListSize(LPITEMIDLIST pidl)
 	return size;
 }
 
+UINT CIDL::GetItemIdListCount(LPITEMIDLIST pidl)
+{
+	if (pidl == nullptr) { return 0; }
+
+	UINT count = 0;
+	while(pidl != nullptr) {
+		count++;
+		pidl = GetNextItemId(pidl);
+	};
+	return count;
+}
+
 LPITEMIDLIST CIDL::ConcatItemIdList(LPITEMIDLIST pIdl1, LPITEMIDLIST pIdl2)
 {
 	//UINT uSize1(0),uSize2(0);
@@ -193,7 +205,7 @@ CIDL::CIDL(LPCWSTR lpszPath):m_pIDL(::ILCreateFromPath(lpszPath)){}
 CIDL::CIDL(const CIDL& idl):m_pIDL(nullptr)
 {
 	if(idl){
-		m_pIDL = ::ILCloneFull(idl.m_pIDL);	
+		Attach(::ILCloneFull(idl.m_pIDL));
 	}
 }
 CIDL::CIDL(CIDL&& idl) :m_pIDL(idl.m_pIDL)
@@ -280,12 +292,30 @@ CIDL CIDL::CloneLastID()const
 	//return GetLastItemId(m_pIDL);
 }
 
+BOOL CIDL::RemoveLastID()
+{
+	return ::ILRemoveLastID(m_pIDL);
+}
+
 CIDL CIDL::CloneParentIDL()const
 {
-	auto pidl = ::ILCloneFull(m_pIDL);
-	auto b = ::ILRemoveLastID(pidl);
-	return CIDL(pidl);
-	//return CIDL(GetPreviousItemIdList(m_pIDL));
+	//PIDLIST_ABSOLUTE pidlParent = ILClone(pidlFull);
+	//ILRemoveLastID(pidlParent);
+
+	auto idlParent = CloneFull();
+	auto hasParent = idlParent.RemoveLastID();
+	if (hasParent) {
+		return idlParent;
+	} else {
+		CIDL idlDesktop;
+		FAILED_THROW(::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, idlDesktop.ptrptr()));
+		return idlDesktop;
+	}
+}
+
+UINT CIDL::GetListCount()const
+{
+	return CIDL::GetItemIdListCount(m_pIDL);
 }
 
 //

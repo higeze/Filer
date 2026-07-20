@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include "Debug.h"
 
 class CIDL
 {
@@ -28,8 +29,14 @@ public:
 //	LPITEMIDLIST ptr() const { return m_pIDL; }
 	const LPITEMIDLIST ptr() const { return m_pIDL; }
 
-	LPITEMIDLIST* ptrptr() {return &m_pIDL; }
-	LPCITEMIDLIST* ptrptr() const { return (LPCITEMIDLIST*)(&m_pIDL); }
+	LPITEMIDLIST* ptrptr() 
+	{
+		FALSE_THROW(m_pIDL == nullptr);
+		return &m_pIDL; }
+	LPCITEMIDLIST* constptrptr() const 
+	{ 
+		return (LPCITEMIDLIST*)(&m_pIDL);
+	}
 	//Attach
 	void Attach(LPITEMIDLIST pIdl);
 	LPITEMIDLIST Detach();
@@ -44,12 +51,14 @@ public:
 	//std::pair<CIDL, CIDL> Split()const;
 	CIDL CloneFull()const;
 	LPITEMIDLIST FindLastID()const;
+	BOOL RemoveLastID();
 	CIDL CloneLastID()const;
 	CIDL CloneParentIDL()const;
+	UINT GetListCount()const;
 	//void SetSpecialFolderLocation(HWND hWnd, int nFolder);
 
 	std::wstring strret2wstring(STRRET& strret)const;
-private:
+public:
 	//void Create(UINT uSize);	
 	//UINT GetSize();
 
@@ -63,6 +72,7 @@ private:
 	static LPITEMIDLIST ConcatItemIdList(LPITEMIDLIST pidl1,LPITEMIDLIST pidl2);
 	static LPITEMIDLIST GetItemIdList(LPCWSTR lpwstrPath);
 	static UINT GetItemIdListSize(LPITEMIDLIST pIdl);
+	static UINT GetItemIdListCount(LPITEMIDLIST pIdl);
 	static CIDL ConcatItemIdPtr(CIDL pIdl1,CIDL pIdl2);
 	static PITEMID_CHILD GetLastItemId(LPITEMIDLIST pIdl);
 public:	

@@ -71,6 +71,9 @@ CRectF CTextLayout::HitTestTextPosition(UINT32 position) const
 			size += (*iter)->Text->size();
 		}
 	}
+	//TODO HIGH Other CRectF() should be same as this lines
+	auto char_size = m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pControl->GetFormat(), L"a");
+	return CRectF(0.f, 0.f, char_size.width, char_size.height);
 	return CRectF();
 }
 
