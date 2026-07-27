@@ -6,6 +6,8 @@
 #include "Debug.h"
 #include <vector>
 
+class CFavorite;
+
 template<typename T>
 struct adl_vector_item
 {
@@ -264,9 +266,24 @@ public:
 
 	void observe_vector(notify_type& notify)
 	{
-		if (this->m_value.size() == notify.all_items.size()){ 
-			return;
-		}
+		//if (this->m_value.size() == notify.all_items.size()){ 
+		//	return;
+		//}
+
+		//::OutputDebugStringW(std::format(L"notify Address: {}, Size: {}\n", reinterpret_cast<void*>(&(notify.all_items)), notify.all_items.size()).c_str());
+		//
+		//if constexpr (std::is_same_v < value_type, CFavorite>) {
+		//	for (auto iter = notify.all_items.cbegin(); iter != notify.all_items.cend(); ++iter) {
+		//		::OutputDebugStringW(std::format(L"{}\n", (*iter->Path)).c_str());
+		//	}
+		//}
+		//::OutputDebugStringW(std::format(L"this Address: {}, Size: {}\n", reinterpret_cast<void*>(&m_value), m_value.size()).c_str());
+		//if constexpr (std::is_same_v < value_type, CFavorite>) {
+		//	for (auto iter = m_value.cbegin(); iter != m_value.cend(); ++iter) {
+		//		::OutputDebugStringW(std::format(L"{}\n", (*iter->Path)).c_str());
+		//	}
+		//}
+
 		if (this->m_value == notify.all_items) { return; }
 
 		switch (notify.action) {
@@ -276,7 +293,7 @@ public:
 				break;
 			case notify_container_changed_action::insert:
 				for (auto i = 0; i != notify.new_items.size(); i++) {
-					this->insert(this->m_value.cbegin() + notify.new_starting_index + i, adl_vector_item<value_type>::clone(notify.all_items.at(i)));
+					this->insert(this->m_value.cbegin() + notify.new_starting_index + i, adl_vector_item<value_type>::clone(notify.all_items.at(notify.new_starting_index + i)));
 					bind_value(notify.all_items.at(notify.new_starting_index + i), this->m_value.at(notify.new_starting_index + i));
 				}
 				break;

@@ -18,7 +18,6 @@ public:
 
 private:
 	std::shared_ptr<CShellFile> m_spFile;
-
 	std::shared_ptr<bool> m_spCancel;
 	std::future<std::shared_ptr<CShellFile>> m_futureFile;
 	std::mutex m_mtxFile;
@@ -35,10 +34,35 @@ public:
 		ShortName.set(*other.ShortName);
 		return *this;
 	}
+	CFavorite(CFavorite&& other) noexcept
+	{
+		if (this != &other) {
+			Path = std::move(other.Path);
+			ShortName = std::move(other.ShortName);
+			m_spFile = std::move(other.m_spFile);
+			m_spCancel = std::move(other.m_spCancel);
+			m_futureFile = std::move(other.m_futureFile);
+			//m_mtxFile = std::move(other.m_mtxFile);
+		}
+	}
+	CFavorite& operator=(CFavorite&& other) noexcept
+	{
+		if (this != &other) {
+			Path = std::move(other.Path);
+			ShortName = std::move(other.ShortName);
+			m_spFile = std::move(other.m_spFile);
+			m_spCancel = std::move(other.m_spCancel);
+			m_futureFile = std::move(other.m_futureFile);
+			//m_mtxFile = std::move(other.m_mtxFile);
+		}
+		return *this;
+	}
+
 	bool operator==(const CFavorite& other) const
 	{
 		return *Path == *other.Path && *ShortName == *ShortName;
 	}
+
 	bool operator!=(const CFavorite& other) const
 	{
 		return !(operator==(other));

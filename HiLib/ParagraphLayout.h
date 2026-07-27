@@ -13,15 +13,16 @@ protected:
 	std::shared_ptr<int> Life;
 public:
 	reactive_wstring_ptr Text;
-	reactive_property_ptr<FLOAT> Width;
 public:
 	CParagraphLayout(CTextLayout* pText, const std::wstring& text);
-	virtual ~CParagraphLayout() {}
+	virtual ~CParagraphLayout() = default;
 	bool operator==(const CParagraphLayout& rhs) const
 	{
 		return Text == rhs.Text;
 	}
 
+	FLOAT GetWidth() const;
+	void SetWidth(const FLOAT& width);
 	FLOAT GetHeight() const;
 	virtual const CComPtr<IDWriteTextLayout1>& GetTextLayoutPtr() const;
 	//CRectF HitTestParagraphPosition(UINT32 position) const;

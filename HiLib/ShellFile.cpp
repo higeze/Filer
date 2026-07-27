@@ -180,6 +180,34 @@ const SFGAOF& CShellFile::GetSFGAO() const
 	return m_optSFGAO.value();
 }
 
+const FileStorageType& CShellFile::GetFileStorageType() const
+{
+	if (!m_optFileStorageType.has_value()) {
+		if (GetAttributes() == INVALID_FILE_ATTRIBUTES) {
+			m_optFileStorageType.emplace(FileStorageType::NotFount);
+		} else if(GetAttributes() & FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS || GetAttributes() & FILE_ATTRIBUTE_RECALL_ON_OPEN || GetAttributes() & FILE_ATTRIBUTE_REPARSE_POINT){
+			m_optFileStorageType.emplace(FileStorageType::VirtualCloud);
+		} else {
+			std::wstring volumePath;
+			if (::GetVolumePathName(GetPath().c_str(), ::GetBuffer(volumePath, MAX_PATH), MAX_PATH)) {
+				::ReleaseBuffer(volumePath);
+				std::wstring fileSystemName;
+				if (::GetVolumeInformationW(volumePath.c_str(), nullptr, 0, nullptr, nullptr, nullptr, ::GetBuffer(fileSystemName, MAX_PATH), MAX_PATH)) {
+					static std::set<std::wstring> localPhysicalNameSet({L"NTFS", L"FAT32", L"exFAT", L"ReFS"});
+					if (localPhysicalNameSet.find(fileSystemName) == localPhysicalNameSet.end()) {
+						m_optFileStorageType.emplace(FileStorageType::VirtualCloud);
+					}
+				}
+			}
+		}
+		if (!m_optFileStorageType.has_value()) {
+			m_optFileStorageType.emplace(FileStorageType::LocalPhysical);
+		}
+
+	}
+	return m_optFileStorageType.value();
+}
+
 const std::wstring& CShellFile::GetIconKey() const
 {
 	//if (IsInvalid()) {
@@ -192,7 +220,7 @@ const std::wstring& CShellFile::GetIconKey() const
 		std::wstring key = L"DEFAULT";
 		if (!m_absoluteIdl || GetPath().empty()) {
 			key = L"DEFAULT";
-		} else if (!GetDispExt().empty() && excludeExtSet.find(GetDispExt()) == excludeExtSet.end() && GetAttributes() != 0) {
+		} else if (!GetDispExt().empty() && excludeExtSet.find(GetDispExt()) == excludeExtSet.end() && GetAttributes() != 0 && GetFileStorageType() == FileStorageType::LocalPhysical) {
 			key = GetDispExt();
 		} else {
 			key = GetPath();

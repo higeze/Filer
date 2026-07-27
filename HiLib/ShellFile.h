@@ -67,6 +67,14 @@ enum class FileTimeStatus
 	Unavailable,
 };
 
+enum class FileStorageType
+{
+	LocalPhysical,
+	VirtualCloud,
+	NotFount,
+
+};
+
 class CShellFile: public std::enable_shared_from_this<CShellFile>
 {
 protected:
@@ -143,10 +151,11 @@ public:
 
 	DECLARE_LAZY_GETTER(DWORD, Attributes);
 	DECLARE_LAZY_GETTER(SFGAOF, SFGAO);
+	DECLARE_LAZY_GETTER(FileStorageType, FileStorageType)
 
 	DECLARE_LAZY_GETTER(std::wstring, IconKey);
 
-	DECLARE_RESET_OPTS(Path, PathName, PathNameWithoutExt, PathExt, PathWithoutExt, DispName, DispExt, DispNameWithoutExt, TypeName, Attributes, SFGAO, IconKey)
+	DECLARE_RESET_OPTS(Path, PathName, PathNameWithoutExt, PathExt, PathWithoutExt, DispName, DispExt, DispNameWithoutExt, TypeName, Attributes, SFGAO, FileStorageType, IconKey)
 	
 	
 	//Non-lazy

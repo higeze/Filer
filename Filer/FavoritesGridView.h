@@ -19,7 +19,7 @@ public:
 
 	
 	void OnCommandDelete();
-	void OnCommandProperty();
+	void OnCommandEdit();
 
 
 	void OnCellLButtonDblClk(const CellEventArgs& e);

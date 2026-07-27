@@ -12,16 +12,12 @@ private:
 	CTextBox* m_pControl;
 	std::shared_ptr<int> Life;
 
-	FLOAT m_width;
-	FLOAT m_height;
-
 	std::wstring GetParagraphText() const;
 	LONG GetParagraphTextSize() const;
 
 public:
 	CTextLayout(CTextBox* pControl);
 	virtual ~CTextLayout() = default;
-
 
 	CTextBox* GetTextBoxPtr() { return m_pControl; }
 	reactive_vector_ptr<std::shared_ptr<CParagraphLayout>> Paragraphs;
@@ -80,9 +76,11 @@ protected:
 			Paragraphs.push_back(std::make_shared<T>(this, L""));
 		}
 
-		for (auto iter = Paragraphs.get_unconst()->begin(); iter != Paragraphs.get_unconst()->end(); ++iter) {
-			(*iter)->Width.set(m_width);
-		}
+		//if (!m_pControl->GetIsWrap()) {
+		//	for (auto iter = Paragraphs.get_unconst()->begin(); iter != Paragraphs.get_unconst()->end(); ++iter) {
+		//		(*iter)->Width.set(m_width);
+		//	}
+		//}
 	}
 
 	template<typename T>
@@ -141,7 +139,7 @@ protected:
 		int size = 0;
 		for (auto iter = Paragraphs.cbegin(); iter != Paragraphs.cend();) {
 
-			if (first_index <= size + (*iter)->Text->size() && size <= last_index) {
+			if (first_index <= size + static_cast<int>((*iter)->Text->size()) && size <= last_index) {
 				auto begin = (std::max)((LONG)(first_index - size), 0L);
 				auto end = (std::min)((LONG)(last_index - size), (LONG)(*iter)->Text->size()) + 1;
 				auto length = end - begin;

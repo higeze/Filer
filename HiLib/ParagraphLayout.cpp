@@ -8,7 +8,7 @@
 /*************/
 
 CParagraphLayout::CParagraphLayout(CTextLayout* pText, const std::wstring& text)
-	:m_pText(pText), Life(std::make_shared<int>(1)), Width(FLT_MAX)
+	:m_pText(pText), Life(std::make_shared<int>(1))
 {
 	Text.subscribe([this](const reactive_wstring_ptr::notify_type& notify)
 		{
@@ -22,21 +22,13 @@ CParagraphLayout::CParagraphLayout(CTextLayout* pText, const std::wstring& text)
 				break;
 			}
 		}, Life);
-	Width.subscribe([this](const FLOAT& value)
-		{
-			if (GetTextLayoutPtr()) {
-				GetTextLayoutPtr()->SetMaxWidth(value);
-			}
-		}, Life);
 
 	Text.set(text);
 }
 
 const CComPtr<IDWriteTextLayout1>& CParagraphLayout::GetTextLayoutPtr() const
 {
-	if (Text->empty() || *Width <= 0) {
-
-	} else if (!Text->empty() && *Width >= 0 && !m_pTextLayout) {
+	if (!Text->empty() && !m_pTextLayout) {
 		auto pDirect = m_pText->m_pControl->GetWndPtr()->GetDirectPtr();
 		auto pContext = pDirect->GetD2DDeviceContext();
 		auto pFactory = pDirect->GetDWriteFactory();
@@ -45,7 +37,7 @@ const CComPtr<IDWriteTextLayout1>& CParagraphLayout::GetTextLayoutPtr() const
 		std::wstring textWoCRLF = std::regex_replace(*Text, re, L"");
 
 		CComPtr<IDWriteTextLayout> pTextLayout0;
-		FAILED_THROW(pFactory->CreateTextLayout(textWoCRLF.c_str(), textWoCRLF.size(), pDirect->GetTextFormat(m_pText->m_pControl->GetFormat()), *Width, FLT_MAX, &pTextLayout0));
+		FAILED_THROW(pFactory->CreateTextLayout(textWoCRLF.c_str(), textWoCRLF.size(), pDirect->GetTextFormat(m_pText->m_pControl->GetFormat()), FLT_MAX, FLT_MAX, &pTextLayout0));
 		FAILED_THROW(pTextLayout0->QueryInterface(__uuidof(IDWriteTextLayout1), (void**)&m_pTextLayout));
 
 		//Default set up
@@ -197,6 +189,25 @@ size_t CParagraphLayout::HitTestCaretPoint(CPointF point) const
 	}
 }
 
+FLOAT CParagraphLayout::GetWidth() const
+{
+	if (GetTextLayoutPtr()) {
+		DWRITE_TEXT_METRICS charMetrics;
+		GetTextLayoutPtr()->GetMetrics(&charMetrics);
+		return charMetrics.width;
+	} else {
+		auto size = m_pText->m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pText->m_pControl->GetFormat(), L"A");
+		return size.width;
+	}
+}
+
+void CParagraphLayout::SetWidth(const FLOAT& width)
+{
+	if (GetTextLayoutPtr()) {
+		GetTextLayoutPtr()->SetMaxWidth(width);
+	}
+}
+
 FLOAT CParagraphLayout::GetHeight() const
 {
 	if (GetTextLayoutPtr()) {
@@ -204,7 +215,7 @@ FLOAT CParagraphLayout::GetHeight() const
 		GetTextLayoutPtr()->GetMetrics(&charMetrics);
 		return charMetrics.height;
 	} else {
-		auto size = m_pText->m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pText->m_pControl->GetFormat(), L"a");
+		auto size = m_pText->m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pText->m_pControl->GetFormat(), L"A");
 		return size.height;
 	}
 }

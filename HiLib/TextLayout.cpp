@@ -24,21 +24,25 @@ LONG CTextLayout::GetParagraphTextSize() const
 
 FLOAT CTextLayout::GetWidth() const
 {
-	return m_width;
+	CSizeF szMin = m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pControl->GetFormat(), L"A");
+	FLOAT width = (*std::max_element(Paragraphs->cbegin(), Paragraphs->cend(), [](const std::shared_ptr<CParagraphLayout>& pLhs, const std::shared_ptr<CParagraphLayout>& pRhs)->bool {return pLhs->GetWidth() < pRhs->GetWidth(); }))->GetWidth();
+	return (std::max)(szMin.width, width);
 }
+
 void CTextLayout::SetWidth(FLOAT width)
 {
-	if (/*m_width != width && */width > 0) {
-		m_width = width;
+	if (width > 0) {
 		for (auto iter = Paragraphs.get_unconst()->begin(); iter != Paragraphs.get_unconst()->end(); ++iter) {
-			(*iter)->Width.set(width);
+			(*iter)->SetWidth(width);
 		}
 	}
 }
 
 FLOAT CTextLayout::GetHeight() const
 {
-	return std::accumulate(Paragraphs.cbegin(), Paragraphs.cend(), 0.f, [](FLOAT acc, const std::shared_ptr<CParagraphLayout>& ptr) {return acc + ptr->GetHeight(); });
+	CSizeF szMin = m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pControl->GetFormat(), L"A");
+	FLOAT height =  std::accumulate(Paragraphs.cbegin(), Paragraphs.cend(), 0.f, [](FLOAT acc, const std::shared_ptr<CParagraphLayout>& ptr)->FLOAT {return acc + ptr->GetHeight(); });
+	return (std::max)(szMin.height, height);
 }
 
 //CRectF CText::HitTestParagraphPosition(UINT32 position) const
@@ -261,8 +265,6 @@ size_t CTextLayout::HitTestCaretPoint(CPointF point) const
 void CTextLayout::Clear()
 {
 	Paragraphs.clear();
-	m_width = 0;
-	m_height = 0;
 }
 
 std::optional<size_t> CTextLayout::FindParagraphPosition(size_t position) const

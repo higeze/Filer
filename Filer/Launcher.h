@@ -20,6 +20,21 @@ public:
 		RunAs.set(*other.RunAs);
 		return *this;
 	}
+	CLauncher(CLauncher&& other) noexcept
+		:CFavorite(std::forward<CFavorite>(other))
+	{
+		if (this != &other) {
+			RunAs = std::move(other.RunAs);
+		}
+	}
+	CLauncher& operator=(CLauncher&& other) noexcept
+	{
+		if (this != &other) {
+			CFavorite::operator=(std::forward<CFavorite>(other));
+			RunAs = std::move(other.RunAs);
+		}
+		return *this;
+	}
 	bool operator==(const CLauncher& other) const
 	{
 		return CFavorite::operator==(other) && *RunAs == *other.RunAs;

@@ -5,9 +5,7 @@
 
 const CComPtr<IDWriteTextLayout1>& CColoredParagraphLayout::GetTextLayoutPtr() const
 {
-	if (Text->empty() || *Width <= 0) {
-
-	} else if (!Text->empty() && *Width >= 0 && !m_pTextLayout) {
+	if (!Text->empty() && !m_pTextLayout) {
 		m_pTextLayout = CParagraphLayout::GetTextLayoutPtr();
 		if (auto pColoredTextBox = dynamic_cast<CColoredTextBox*>(m_pText->GetTextBoxPtr())) {
 			auto pDirect = m_pText->GetTextBoxPtr()->GetWndPtr()->GetDirectPtr();

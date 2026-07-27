@@ -87,6 +87,7 @@ CSizeF CTextBox::MeasureContent(const CSizeF& availableSize)
 	if (Text->empty()) {
 		return GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), L"A");
 	} else {
+		//return GetWndPtr()->GetDirectPtr()->CalcTextSize(GetFormat(), L"A");
 		return CSizeF(m_pTextLayout->GetWidth(), m_pTextLayout->GetHeight());
 	}
 }
@@ -235,18 +236,22 @@ void CTextBox::OnCreate(const CreateEvt& e)
 			case notify_container_changed_action::insert://new,null,idx,-1
 				GetTextStorePtr()->OnTextChange(e.new_starting_index, e.new_starting_index, e.new_starting_index + e.new_items.size());
 				MoveCaret(e.new_starting_index + e.new_items.size(), m_pTextLayout->HitTestTextPosition(e.new_starting_index + e.new_items.size()).CenterPoint());
+				MeasureDirty.set(true);
 				break;
 			case notify_container_changed_action::erase://null,old,-1, idx
 				GetTextStorePtr()->OnTextChange(e.old_starting_index, e.old_starting_index + e.old_items.size(), e.old_starting_index);
 				MoveCaret(e.old_starting_index, m_pTextLayout->HitTestTextPosition(e.old_starting_index).CenterPoint());
+				MeasureDirty.set(true);
 				break;
 			case notify_container_changed_action::replace://new,old,idx,idx
 				GetTextStorePtr()->OnTextChange(e.new_starting_index, e.old_starting_index + e.old_items.size(), e.new_starting_index + e.new_items.size());
 				MoveCaret(e.new_starting_index + e.new_items.size(), m_pTextLayout->HitTestTextPosition(e.new_starting_index + e.new_items.size()).CenterPoint());
+				MeasureDirty.set(true);
 				break;
 			case notify_container_changed_action::reset://new,old,0,0
 				GetTextStorePtr()->OnTextChange(0, 0, 0);
 				MoveCaret(0, CPointF(0, GetLineHeight() * 0.5f));
+				MeasureDirty.set(true);
 				break;
 			default:
 				break;
@@ -1053,7 +1058,8 @@ bool CTextBox::GetIsVisible()const
 void CTextBox::PaintText(const PaintEvent& e)
 {
 	//Draw Text
-	m_pTextLayout->SetWidth(ContentRect().Width());
+	//if (GetIsWrap()) {
+	//}m_pTextLayout->SetWidth(ContentRect().Width());
 	FLOAT height = 0;
 	for (auto iter = m_pTextLayout->Paragraphs->begin(); iter != m_pTextLayout->Paragraphs.get_unconst()->end(); ++iter) {
 		auto top = height;

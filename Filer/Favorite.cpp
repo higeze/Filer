@@ -7,10 +7,28 @@
 #include "ThreadPool.h"
 
 CFavorite::CFavorite()
-	:Path(), ShortName(), m_spFile(nullptr), m_spCancel(std::make_shared<bool>(false)){}
+	:Path(), ShortName(), m_spFile(nullptr), m_spCancel(std::make_shared<bool>(false))
+{
+	Path.subscribe([](auto) {
+		::OutputDebugStringW(L"Path changed\n");
+		}, m_spCancel);
+	ShortName.subscribe([](auto) {
+		::OutputDebugStringW(L"ShortName changed\n");
+		}, m_spCancel);
+
+}
 
 CFavorite::CFavorite(std::wstring path, std::wstring shortName)
-	:Path(path), ShortName(shortName), m_spFile(nullptr),m_spCancel(std::make_shared<bool>(false)){}
+	:Path(path), ShortName(shortName), m_spFile(nullptr),m_spCancel(std::make_shared<bool>(false))
+{
+	Path.subscribe([](auto) {
+		::OutputDebugStringW(L"Path changed\n");
+		}, m_spCancel);
+	ShortName.subscribe([](auto) {
+		::OutputDebugStringW(L"ShortName changed\n");
+		}, m_spCancel);
+
+}
 
 CFavorite::~CFavorite()
 {

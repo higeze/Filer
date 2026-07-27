@@ -68,7 +68,7 @@ void CFavoritesGridView::OnCommandDelete()
 	SubmitUpdate();
 }
 
-class CFavoritePropertyDlg : public CD2DWDialog2
+class CFavoriteEditDlg : public CD2DWDialog2
 {
 protected:
 	std::shared_ptr<CDockPanel> m_spFillDock;
@@ -82,7 +82,7 @@ protected:
 	CFavorite& m_favorite;
 
 public:
-	CFavoritePropertyDlg(CD2DWControl* pParentControl, CFavorite& favorite)
+	CFavoriteEditDlg(CD2DWControl* pParentControl, CFavorite& favorite)
 		:CD2DWDialog2(),
 		m_favorite(favorite), 
 		m_spFillDock(std::make_shared<CDockPanel>(this)), 
@@ -119,7 +119,7 @@ public:
 			}, Life);
 
 	}
-	virtual ~CFavoritePropertyDlg() = default;
+	virtual ~CFavoriteEditDlg() = default;
 
 	void OnCreate(const CreateEvt& e)
 	{
@@ -151,9 +151,9 @@ public:
 
 
 
-void CFavoritesGridView::OnCommandProperty()
+void CFavoritesGridView::OnCommandEdit()
 {
-	auto spDlg = std::make_shared<CFavoritePropertyDlg>(this, ItemsSource.get_unconst()->at(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()));
+	auto spDlg = std::make_shared<CFavoriteEditDlg>(this, ItemsSource.get_unconst()->at(m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>()));
 
 	spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CRectF()));
 	spDlg->Measure(CSizeF(FLT_MAX, FLT_MAX));
@@ -168,9 +168,8 @@ void CFavoritesGridView::OnContextMenu(const ContextMenuEvent& e)
 	auto me = std::dynamic_pointer_cast<CFavoritesGridView>(shared_from_this());
 	CContextMenu2 menu;
 	menu.Add(
-		std::make_unique<CMenuItem2>(L"Delete", &CFavoritesGridView::OnCommandDelete, me),
-		std::make_unique<CMenuSeparator2>(),
-		std::make_unique<CMenuItem2>(L"Property", &CFavoritesGridView::OnCommandProperty, me)
+		std::make_unique<CMenuItem2>(L"Edit", &CFavoritesGridView::OnCommandEdit, me),
+		std::make_unique<CMenuItem2>(L"Delete", &CFavoritesGridView::OnCommandDelete, me)
 	);
 	menu.Popup(GetWndPtr()->m_hWnd, CPointU(e.PointInScreen.x, e.PointInScreen.y));
 	*e.HandledPtr = TRUE;
@@ -215,14 +214,35 @@ void CFavoritesGridView::OnCellLButtonDblClk(const CellEventArgs& e)
 
 void CFavoritesGridView::MoveRow(int indexTo, typename RowTag::SharedPtr spFrom)
 {
+	::OutputDebugStringW(L"BeforeMove\n");
+	for (auto iter = ItemsSource.get_unconst()->begin(); iter != ItemsSource.get_unconst()->end(); ++iter) {
+		::OutputDebugStringW(std::format(L"{}, {}\n", *iter->Path, *iter->ShortName).c_str());
+	}
+
 	int from = spFrom->GetIndex<VisTag>();
 	int to = indexTo > from ? indexTo - 1 : indexTo;
 
 	auto fromIter = ItemsSource->cbegin() + (from - GetFrozenCount<RowTag>());
 	auto temp = *fromIter;
 	ItemsSource.erase(fromIter);
+	
+	::OutputDebugStringW(L"AfterEraseFrom\n");
+	for (auto iter = ItemsSource.get_unconst()->begin(); iter != ItemsSource.get_unconst()->end(); ++iter) {
+		::OutputDebugStringW(std::format(L"{}, {}\n", *iter->Path, *iter->ShortName).c_str());
+	}
+	::OutputDebugStringW(L"ErasedFrom\n");
+	::OutputDebugStringW(std::format(L"{}, {}\n", *temp.Path, *temp.ShortName).c_str());
+
 	auto toIter = ItemsSource->cbegin() + (to - GetFrozenCount<RowTag>());
 	ItemsSource.insert(toIter, temp);
+
+	::OutputDebugStringW(L"ErasedFrom\n");
+	::OutputDebugStringW(std::format(L"{}, {}\n", *temp.Path, *temp.ShortName).c_str());
+
+	::OutputDebugStringW(L"AfterMove\n");
+	for (auto iter = ItemsSource.get_unconst()->begin(); iter != ItemsSource.get_unconst()->end(); ++iter) {
+		::OutputDebugStringW(std::format(L"{}, {}\n", *iter->Path, *iter->ShortName).c_str());
+	}
 
 	Reload();
 }

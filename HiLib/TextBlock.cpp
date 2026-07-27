@@ -21,12 +21,12 @@ CSizeF CTextBlock::MeasureSize(const std::wstring& text)
 
 void CTextBlock::OnPaint(const PaintEvent& e)
 {
-	std::wstring text = *Text;
+	if (!Text->empty()) {
+		GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
+		CRectF rect = GetRectInWnd();
+		rect.DeflateRect(GetPadding());
+		GetWndPtr()->GetDirectPtr()->DrawTextLayout(GetFormat(), *Text, rect);
 
-	GetWndPtr()->GetDirectPtr()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
-	CRectF rect = GetRectInWnd();
-	rect.DeflateRect(GetPadding());
-	GetWndPtr()->GetDirectPtr()->DrawTextLayout(GetFormat(), text, rect);
-
-	GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
+		GetWndPtr()->GetDirectPtr()->PopAxisAlignedClip();
+	}
 }
