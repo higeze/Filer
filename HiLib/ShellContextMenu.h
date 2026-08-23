@@ -3,6 +3,7 @@
 #include <ShlObj.h>
 #include "MyMenu.h"
 #include "IDL.h"
+#include "ThreadSafeComPtr.h"
 
 class CShellFile;
 class CShellFolder;
@@ -28,7 +29,7 @@ public:
 private:
 	static CComPtr<IContextMenu3> SetUpNewContextMenues(const CMenu& menu, const CIDL& idl);
 	static CComPtr<IContextMenu3> SetUpNormalContextMenues(
-		const CMenu& menu, const CComPtr<IShellFolder>& folder, HWND hwndOwner, UINT cidl, LPCITEMIDLIST* apidl);
+		const CMenu& menu, CThreadSafeComPtr<IShellFolder> folder, HWND hwndOwner, UINT cidl, LPCITEMIDLIST* apidl);
 	static bool InvokeShellCommand(HWND hWnd, POINT pt, UINT id, const CComPtr<IContextMenu3>& pcm, const CComPtr<IContextMenu3>& pcmNew);
 public:
 	static bool InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, const std::shared_ptr<CShellFolder>& folder);

@@ -3,6 +3,10 @@
 #include "notify_container_changed.h"
 #include "reactive_string.h"
 #include "JsonSerializer.h"
+#include <mutex>
+#include <deque>
+#include <utility>
+#include <functional>
 
 template<class T>
 class reactive_property
@@ -13,18 +17,20 @@ private:
 	subject<T> m_subject;
 	subject<T, T> m_subject_old_new;
 	T m_value;
-	//std::mutex m_mtx;
+	mutable std::mutex m_mtx;
+	bool m_notifying = false;
+	std::deque<T> m_pending;
 public:
 	explicit reactive_property()
-		:m_subject(), m_subject_old_new(), m_value() {}
+		: m_subject(), m_subject_old_new(), m_value() {}
 
 	template<class... Args>
 	explicit reactive_property(const Args&... args)
-		:m_subject(), m_subject_old_new(), m_value(args...) {}
+		: m_subject(), m_subject_old_new(), m_value(args...) {}
 
 	template<class... Args>
 	explicit reactive_property(Args&&... args)
-		:m_subject(), m_subject_old_new(), m_value(std::forward<Args>(args)...) {}
+		: m_subject(), m_subject_old_new(), m_value(std::forward<Args>(args)...) {}
 
 	virtual ~reactive_property() = default;
 
@@ -33,13 +39,63 @@ public:
 	reactive_property(reactive_property&&) noexcept = default;
 	reactive_property& operator=(reactive_property&&) noexcept = default;
 
-	void observe_property(const T& value)
+	// 再入安全な実装:
+	// - 通知中に set が呼ばれたら m_pending に積む
+	// - 現在の通知が終わった後にキューを順次処理する
+	void observe_property(T value )
 	{
-		if (m_value != value) {
-			auto old_value = m_value;
+		// 最初にロックして状態確認／初回更新
+		T old_value;
+		T current_value;
+		{
+			std::lock_guard<std::mutex> lock(m_mtx);
+
+			// 値が変わらなければ何もしない
+			if (m_value == value) {
+				return;
+			}
+
+			// 既に通知中ならキューへ追加して終了
+			if (m_notifying) {
+				m_pending.push_back(value);
+				return;
+			}
+
+			// 通知開始：old を保存し m_value を新値に更新
+			m_notifying = true;
+			old_value = m_value;
 			m_value = value;
-			m_subject_old_new.on_next(old_value, value);
-			m_subject.on_next(value);
+			current_value = m_value;
+		}
+
+		// 最初の通知（ロック外）
+		m_subject_old_new.on_next(old_value, current_value);
+		m_subject.on_next(current_value);
+
+		// キューがあれば順次処理
+		while (true) {
+			T next;
+			bool has_next = false;
+			T old_for_next;
+			{
+				std::lock_guard<std::mutex> lock(m_mtx);
+				if (!m_pending.empty()) {
+					next = std::move(m_pending.front());
+					m_pending.pop_front();
+					old_for_next = m_value;
+					m_value = next;
+					has_next = true;
+				} else {
+					m_notifying = false;
+					has_next = false;
+				}
+			}
+
+			if (!has_next) break;
+
+			// 通知（ロック外）
+			m_subject_old_new.on_next(old_for_next, next);
+			m_subject.on_next(next);
 		}
 	}
 
@@ -170,19 +226,34 @@ public:
 
 	void unbinding(reactive_property_ptr<T>& dst)
 	{
+		// 既存の disconnect API に依存した互換呼び出しを残す（古いパターン）
 		dst.disconnect(&reactive_property<T>::observe_property, this->m_preactive);
 		this->disconnect(&reactive_property<T>::observe_property, dst.m_preactive);
 	}
 
+	// binding は shared_ptr をラムダでキャプチャすることで購読先の寿命を確保して返却される connection を管理できるようにする
 	std::pair<sigslot::connection, sigslot::connection> binding(reactive_property_ptr<T>& dst)
 	{
+		// 既存の接続を切断（互換性のため)
 		unbinding(dst);
 
+		// 初回同期通知（相手に現在値を通知）
 		dst.force_notify_set(this->operator*());
 
 		return std::make_pair(
 			dst.subscribe(&reactive_property<T>::observe_property, this->m_preactive),
 			this->subscribe(&reactive_property<T>::observe_property, dst.m_preactive));
+
+
+	//// ラムダで shared_ptr をキャプチャして購読（購読が存在する限り target が生存する）
+	//	auto c1 = dst.subscribe([sp = this->m_preactive](const T& v) {
+	//		sp->observe_property(v);
+	//	});
+	//	auto c2 = this->subscribe([sp = dst.m_preactive](const T& v) {
+	//		sp->observe_property(v);
+	//	});
+	//	return std::make_pair(c1, c2);
+	//
 	}
 
 	template <class U, class Traits, class Allocator>
@@ -199,9 +270,20 @@ public:
 
 		dst.set(boost::lexical_cast<std::basic_string<U, Traits, Allocator>>(this->m_preactive->m_value));
 
+
 		return std::make_pair(
 			dst.subscribe(&reactive_property<T>::template observe_string<U, Traits, Allocator>, this->m_preactive),
 			this->subscribe(&reactive_basic_string<U, Traits, Allocator>::template observe_property<T>, dst.m_preactive));
+
+		//auto c1 = dst.subscribe([sp = this->m_preactive](const std::basic_string<U, Traits, Allocator>& v) {
+		//	// 適切な変換を行って observe_property を呼ぶ
+		//	sp->observe_string(v);
+		//});
+		//auto c2 = this->subscribe([sp = dst.m_preactive](const T& v) {
+		//	// 逆変換は呼び出し側が既存実装に合わせる必要あり。ここでは簡易に string 化して通知
+		//	sp->observe_property(boost::lexical_cast<std::basic_string<U, Traits, Allocator>>(v));
+		//});
+		//return std::make_pair(c1, c2);
 	}
 
 	friend void to_json(json& j, const reactive_property_ptr<T>& o)
@@ -334,6 +416,14 @@ public:
 		return std::make_pair(
 			dst.subscribe(&reactive_property<std::shared_ptr<T>>::observe_property, this->m_preactive),
 			this->subscribe(&reactive_property<std::shared_ptr<T>>::observe_property, dst.m_preactive));
+
+		//auto c1 = dst.subscribe([sp = this->m_preactive](const std::shared_ptr<T>& v) {
+		//	sp->observe_property(v);
+		//});
+		//auto c2 = this->subscribe([sp = dst.m_preactive](const std::shared_ptr<T>& v) {
+		//	sp->observe_property(v);
+		//});
+		//return std::make_pair(c1, c2);
 	}
 
 	template <class U, class Traits, class Allocator>
@@ -368,4 +458,5 @@ public:
 	}
 
 };
+
 

@@ -63,7 +63,7 @@ private:
 	CCoInitializer(const CCoInitializer&){};
 	CCoInitializer operator=(const CCoInitializer&);
 public:
-	explicit CCoInitializer(DWORD dwCoInit=COINIT_APARTMENTTHREADED):coinitialized_(false)
+	explicit CCoInitializer(DWORD dwCoInit):coinitialized_(false)
 	{
 		throw_if_failed(::CoInitializeEx(NULL,dwCoInit));
 		coinitialized_=true;

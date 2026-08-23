@@ -55,14 +55,6 @@ CShellFile::CShellFile(const std::wstring& path)
 	Load(path);
 }
 
-//CShellFile::CShellFile(const CComPtr<IShellFolder>& pParentShellFolder, const CIDL parentIdl, const CIDL childIdl, const std::wstring& path)
-//	:m_pParentShellFolder(pParentShellFolder),m_absoluteIdl(parentIdl + childIdl), m_parentIdl(parentIdl), m_childIdl(childIdl), m_optPath(path)
-//{
-//	if (!m_absoluteIdl) {
-//		::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, m_absoluteIdl.ptrptr());
-//	}
-//}
-
 CShellFile::~CShellFile() = default;
 
 const std::wstring& CShellFile::GetPath() const
@@ -129,7 +121,8 @@ const std::wstring& CShellFile::GetDispExt() const
 
 void CShellFile::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd)
 {
-	HRESULT hr = m_pParentShellFolder->SetNameOf(
+	HRESULT hr = m_pParentShellFolder.Call(
+		&IShellFolder::SetNameOf,
 		hWnd,
 		m_childIdl.ptr(),
 		(wstrNameWoExt + GetDispExt()).c_str(),
@@ -139,7 +132,8 @@ void CShellFile::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND h
 
 void CShellFile::SetExt(const std::wstring& wstrExt, HWND hWnd)
 {
-	HRESULT hr = m_pParentShellFolder->SetNameOf(
+	HRESULT hr = m_pParentShellFolder.Call(
+		&IShellFolder::SetNameOf,
 		hWnd,
 		m_childIdl.ptr(),
 		(GetDispNameWithoutExt() + wstrExt).c_str(),
@@ -174,7 +168,7 @@ const SFGAOF& CShellFile::GetSFGAO() const
 {
 	if (!m_optSFGAO.has_value()) {
 		SFGAOF sfgao{SFGAO_CAPABILITYMASK | SFGAO_GHOSTED | SFGAO_LINK | SFGAO_SHARE | SFGAO_FOLDER | SFGAO_FILESYSTEM};
-		m_pParentShellFolder->GetAttributesOf(1, m_childIdl.constptrptr(), &sfgao);
+		m_pParentShellFolder.Call(&IShellFolder::GetAttributesOf, static_cast<UINT>(1), m_childIdl.constptrptr(), &sfgao);
 		m_optSFGAO.emplace(sfgao);
 	}
 	return m_optSFGAO.value();
@@ -315,9 +309,10 @@ bool CShellFile::GetIsExist()
 	ULONG dwAttributes = 0;
 	auto desktop(CKnownFolderManager::GetInstance()->GetDesktopFolder());
 	CIDL absIdl;
-	auto c = SUCCEEDED(desktop->GetShellFolderPtr()->ParseDisplayName(
-		NULL,
-		NULL,
+	auto c = SUCCEEDED(desktop->GetShellFolderPtr().Call(
+		&IShellFolder::ParseDisplayName,
+		nullptr,
+		nullptr,
 		const_cast<LPWSTR>(GetPath().c_str()),
 		&chEaten,
 		absIdl.ptrptr(),

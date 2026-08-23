@@ -11,7 +11,7 @@ namespace shell
 		std::lock_guard<std::mutex> lock(m_mtx);
 		m_driveFolderMap.clear();
 
-		CComPtr<IShellFolder> pDesktopFolder;
+		CThreadSafeComPtr<IShellFolder> pDesktopFolder;
 		::SHGetDesktopFolder(&pDesktopFolder);
 
 		std::array<wchar_t, 64> logicalDrives;
@@ -23,9 +23,10 @@ namespace shell
 
 				ULONG         chEaten;
 				ULONG         dwAttributes;
-				HRESULT hr = pDesktopFolder->ParseDisplayName(
-					NULL,
-					NULL,
+				HRESULT hr = pDesktopFolder.Call(
+					&IShellFolder::ParseDisplayName,
+					nullptr,
+					nullptr,
 					const_cast<LPWSTR>(pPath),
 					&chEaten,
 					relativeIdl.ptrptr(),

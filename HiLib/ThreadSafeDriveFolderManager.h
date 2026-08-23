@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <mutex>
 #include "IDL.h"
+#include "ThreadSafeComPtr.h"
 
 namespace shell
 {

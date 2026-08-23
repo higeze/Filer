@@ -10,6 +10,7 @@
 #include <chrono>
 #include <optional>
 #include <atlcom.h>
+#include "ThreadSafeComPtr.h"
 
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/seq/fold_left.hpp>
@@ -78,7 +79,7 @@ enum class FileStorageType
 class CShellFile: public std::enable_shared_from_this<CShellFile>
 {
 protected:
-	CComPtr<IShellFolder> m_pParentShellFolder;
+	CThreadSafeComPtr<IShellFolder> m_pParentShellFolder;
 	CIDL m_parentIdl;
 	CIDL m_childIdl;
 	CIDL m_absoluteIdl;
@@ -93,8 +94,8 @@ public:
 	CShellFile() {}
 	CShellFile(const std::wstring& path);
 
-	CShellFile(CComPtr<IShellFolder>&& pParentShellFolder, CIDL&& parentIDL, CIDL&& childIDL, std::wstring&& path, std::wstring&& path_name, std::wstring&& path_ext)
-		:m_pParentShellFolder(std::forward<CComPtr<IShellFolder>>(pParentShellFolder)),
+	CShellFile(CThreadSafeComPtr<IShellFolder> pParentShellFolder, CIDL&& parentIDL, CIDL&& childIDL, std::wstring&& path, std::wstring&& path_name, std::wstring&& path_ext)
+		:m_pParentShellFolder(pParentShellFolder),
 		m_parentIdl(std::forward<CIDL>(parentIDL)), 
 		m_childIdl(std::forward<CIDL>(childIDL)),
 		m_optPath(std::forward<std::wstring>(path)),
@@ -107,7 +108,7 @@ public:
 		}
 	}
 	template<typename... _Args>
-	CShellFile(const CComPtr<IShellFolder>& pParentShellFolder, const CIDL parentIdl, const CIDL childIdl, _Args... args)
+	CShellFile(CThreadSafeComPtr<IShellFolder> pParentShellFolder, const CIDL parentIdl, const CIDL childIdl, _Args... args)
 		:m_pParentShellFolder(pParentShellFolder), m_absoluteIdl(parentIdl + childIdl), m_parentIdl(parentIdl), m_childIdl(childIdl),
 		m_optPath(::get(arg<"path"_s>(), args..., default_(std::nullopt))),
 		m_optPathName(::get(arg<"path_name"_s>(), args..., default_(std::nullopt))),
@@ -124,6 +125,10 @@ public:
 	}
 	
 	//Operator
+	bool operator == (const CShellFile& rhs) const
+	{
+		return GetPath() == rhs.GetPath();
+	}
 	bool operator != (const CShellFile& rhs) const
 	{
 		return GetPath() != rhs.GetPath();
@@ -133,8 +138,9 @@ public:
 	virtual ~CShellFile();
 	
 	//Getter 
-	CComPtr<IShellFolder>& GetParentShellFolderPtr(){return m_pParentShellFolder;}
+	CThreadSafeComPtr<IShellFolder> GetParentShellFolderPtr(){return m_pParentShellFolder;}
 	const CIDL& GetAbsoluteIdl() const { return m_absoluteIdl; }
+	const CIDL& GetParentIdl() const { return m_parentIdl; }
 	const CIDL& GetChildIdl() const { return m_childIdl; }
 
 	//Lazy Evaluation Getter

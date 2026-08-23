@@ -47,49 +47,52 @@ const std::wstring& CKnownFolder::GetDispExt() const
 
 
 #include "ThreadSafeKnownFolderManager.h"
+#include "ThreadPool.h"
 
 CKnownFolderManager::CKnownFolderManager()
 {
-	CComPtr<IKnownFolderManager> pMgr;
-	if (FAILED(pMgr.CoCreateInstance(CLSID_KnownFolderManager, NULL, CLSCTX_INPROC_SERVER))) { return; }
-	CComPtr<IShellFolder> pDesktopFolder;
-	::SHGetDesktopFolder(&pDesktopFolder);
+	CShellThread::Run(FILE_LINE_FUNC, 0, [this]() {
+		CComPtr<IKnownFolderManager> pMgr;
+		if (FAILED(pMgr.CoCreateInstance(CLSID_KnownFolderManager, NULL, CLSCTX_INPROC_SERVER))) { return; }
+		CThreadSafeComPtr<IShellFolder> pDesktopFolder;
+		::SHGetDesktopFolder(&pDesktopFolder);
 
-	auto& idIdlMap = shell::CThreadSafeKnownFolderManager::GetInstance()->GetIdIdlMap();
-	for (auto& pair : idIdlMap) {
-		CComPtr<IKnownFolder> pFolder;
-		if (SUCCEEDED(pMgr->GetFolder(std::get<0>(pair.second), &pFolder))) {
-			if (std::get<0>(pair.second) == FOLDERID_Desktop) {
-				auto knownFolder = std::make_shared<CKnownFolder>(pDesktopFolder, CIDL(), std::get<1>(pair.second), pFolder, pDesktopFolder);
-				m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
-			} else if (std::get<1>(pair.second)) {
-				auto parentIdl = std::get<1>(pair.second).CloneParentIDL();
-				auto childIdl = std::get<1>(pair.second).CloneLastID();
-
-				CComPtr<IShellFolder> pDesktopFolder;
-				CComPtr<IShellFolder> pShellFolder;
-				CComPtr<IShellFolder> pParentShellFolder;
-
-				if (SUCCEEDED(::SHGetDesktopFolder(&pDesktopFolder)) &&
-					SUCCEEDED(pDesktopFolder->BindToObject(std::get<1>(pair.second).ptr(), 0, IID_IShellFolder, (void**)&pShellFolder)) &&
-					pShellFolder &&
-					((parentIdl && parentIdl.m_pIDL->mkid.cb && SUCCEEDED(pDesktopFolder->BindToObject(parentIdl.ptr(), 0, IID_IShellFolder, (void**)&pParentShellFolder))) ||
-					((!parentIdl || !parentIdl.m_pIDL->mkid.cb) && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder)))) &&
-					pParentShellFolder) {
-					auto knownFolder = std::make_shared<CKnownFolder>(pParentShellFolder, parentIdl, childIdl, pFolder, pShellFolder);
+		auto& idIdlMap = shell::CThreadSafeKnownFolderManager::GetInstance()->GetIdIdlMap();
+		for (auto& pair : idIdlMap) {
+			CComPtr<IKnownFolder> pFolder;
+			if (SUCCEEDED(pMgr->GetFolder(std::get<0>(pair.second), &pFolder))) {
+				if (std::get<0>(pair.second) == FOLDERID_Desktop) {
+					auto knownFolder = std::make_shared<CKnownFolder>(pDesktopFolder, CIDL(), std::get<1>(pair.second), pFolder, pDesktopFolder);
 					m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
-				} else {
-					LOG_THIS_1(fmt::format("CKnownFolder::CKnownFolder Non enumerable {:08X}-{:04X}",
-											std::get<0>(pair.second).Data1, std::get<0>(pair.second).Data2));
-				}
-			} else {
-				LOG_THIS_1(fmt::format("CKnownFolder::CKnownFolder IDL is null {:08X}-{:04X}",
+				} else if (std::get<1>(pair.second)) {
+					auto parentIdl = std::get<1>(pair.second).CloneParentIDL();
+					auto childIdl = std::get<1>(pair.second).CloneLastID();
+
+					CThreadSafeComPtr<IShellFolder> pDesktopFolder;
+					CThreadSafeComPtr<IShellFolder> pShellFolder;
+					CThreadSafeComPtr<IShellFolder> pParentShellFolder;
+
+					if (SUCCEEDED(::SHGetDesktopFolder(&pDesktopFolder)) &&
+						SUCCEEDED(pDesktopFolder.Call(&IShellFolder::BindToObject, std::get<1>(pair.second).ptr(), nullptr, IID_IShellFolder, (void**)&pShellFolder)) &&
+						pShellFolder &&
+						((parentIdl && parentIdl.m_pIDL->mkid.cb && SUCCEEDED(pDesktopFolder.Call(&IShellFolder::BindToObject, parentIdl.ptr(), nullptr, IID_IShellFolder, (void**)&pParentShellFolder))) ||
+							((!parentIdl || !parentIdl.m_pIDL->mkid.cb) && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder)))) &&
+						pParentShellFolder) {
+						auto knownFolder = std::make_shared<CKnownFolder>(pParentShellFolder, parentIdl, childIdl, pFolder, pShellFolder);
+						m_knownFolderMap.insert(std::make_pair(knownFolder->GetPath(), knownFolder));
+					} else {
+						LOG_THIS_1(fmt::format("CKnownFolder::CKnownFolder Non enumerable {:08X}-{:04X}",
 							std::get<0>(pair.second).Data1, std::get<0>(pair.second).Data2));
+					}
+				} else {
+					LOG_THIS_1(fmt::format("CKnownFolder::CKnownFolder IDL is null {:08X}-{:04X}",
+						std::get<0>(pair.second).Data1, std::get<0>(pair.second).Data2));
+				}
 			}
+
+
 		}
-
-
-	}
+	}).get();
 
 	//CComPtr<IKnownFolderManager> pMgr;
 	//if (FAILED(pMgr.CoCreateInstance(CLSID_KnownFolderManager, NULL, CLSCTX_INPROC_SERVER))) { return; }

@@ -50,7 +50,7 @@ std::vector<std::shared_ptr<CShellFile>> CDataObject::EnumShellFiles() const
 
 		LPIDA pida = (LPIDA)GlobalLock(pMedium->hGlobal);
 		CIDL folderIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + (pida)->aoffset[0])));
-		CComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(folderIdl);
+		CThreadSafeComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(folderIdl);
 
 		for (UINT i = 0; i < pida->cidl; i++) {
 			CIDL childIdl(::ILCloneFull((LPCITEMIDLIST)(((LPBYTE)pida) + pida->aoffset[1 + i])));

@@ -23,12 +23,12 @@ CRecentFolderGridView::CRecentFolderGridView(CD2DWControl* pParentControl)
 {
 	auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Recent);
 	CComPtr<IEnumIDList> pEnumIdl;
-	if (SUCCEEDED(spKnownFolder->GetShellFolderPtr()->EnumObjects(NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, &pEnumIdl)) && pEnumIdl) {
+	if (SUCCEEDED(spKnownFolder->GetShellFolderPtr().Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, &pEnumIdl)) && pEnumIdl) {
 
 		//Enumerate Links
 		std::vector<std::shared_ptr<CShellFile>> links;
 		CIDL nextIdl;
-		while (SUCCEEDED(pEnumIdl->Next(1, nextIdl.ptrptr(), NULL)) && nextIdl) {
+		while (SUCCEEDED(pEnumIdl->Next(1, nextIdl.ptrptr(), nullptr)) && nextIdl) {
 			links.push_back(spKnownFolder->CreateShExFileFolder(std::move(nextIdl)));
 			nextIdl.Clear();
 		}
@@ -49,7 +49,7 @@ CRecentFolderGridView::CRecentFolderGridView(CD2DWControl* pParentControl)
 			CIDL absoluteIdl;
 			FAILED_CONTINUE(pShellLink->GetIDList(absoluteIdl.ptrptr()));
 			CIDL parentIdl = absoluteIdl.CloneParentIDL();
-			CComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
+			CThreadSafeComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
 
 			if (auto p = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pParentFolder, parentIdl, std::move(absoluteIdl.CloneLastID())));
 				p && p->GetIsExist()) {

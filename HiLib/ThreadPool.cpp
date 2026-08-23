@@ -4,14 +4,14 @@
 #include "MyString.h"
 
 // the constructor just launches some amount of workers
-CThreadPool::CThreadPool(size_t threads)
+CThreadPool::CThreadPool(DWORD dwCoInit, size_t threads)
 	: m_stop(false)
 {
 	for (size_t i = 0; i < threads; ++i)
 		m_workers.emplace_back(
-			[this] {
+			[this, dwCoInit] {
 		//CoInitialize
-		CCoInitializer coinit;
+		CCoInitializer coinit(dwCoInit);
 		//Catch SEH exception as CEH
 		scoped_se_translator se_trans;
 		for (;;) {
@@ -93,10 +93,7 @@ const std::wstring CThreadPool::OutputString()
 
 CThreadPool* CThreadPool::GetInstance()
 {
-	static CThreadPool pool(16);
+	static CThreadPool pool(COINIT_APARTMENTTHREADED, 16);
 	return &pool;
 }
-
-
-
 

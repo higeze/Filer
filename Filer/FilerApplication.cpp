@@ -63,6 +63,9 @@ void CFilerApplication::Serialize()
 
 void CFilerApplication::Init()
 {
+	//COM, OLE
+	m_pCoinit = std::make_unique<CCoInitializer>(COINIT_APARTMENTTHREADED);
+	m_pOleinit = std::make_unique<COleInitializer>();
 	//SEH
 	m_pSETrans = std::make_unique<scoped_se_translator>();
 	//Logger
@@ -73,9 +76,7 @@ void CFilerApplication::Init()
 	spdlog::set_pattern("%Y-%m-%d %H:%M:%S.%e\t%P\t%t\t%l\t%v");
 	LOG_1("***Application Start***");
 
-	//COM, OLE
-	m_pCoinit = std::make_unique<CCoInitializer>();
-	m_pOleinit = std::make_unique<COleInitializer>();
+
 
 	//TSF
 	CTSFManager::GetInstance()->Init();

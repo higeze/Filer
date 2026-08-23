@@ -492,6 +492,7 @@
     <ClInclude Include="..\HiLib\ThreadHelper.h" />
     <ClInclude Include="..\HiLib\ThreadMonitorView.h" />
     <ClInclude Include="..\HiLib\ThreadPool.h" />
+    <ClInclude Include="..\HiLib\ThreadSafeComPtr.h" />
     <ClInclude Include="..\HiLib\ThreadSafeDriveFolderManager.h" />
     <ClInclude Include="..\HiLib\ThreadSafeKnownFolderManager.h" />
     <ClInclude Include="..\HiLib\Timer.h" />

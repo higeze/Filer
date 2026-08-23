@@ -2,7 +2,7 @@
 #include "Debug.h"
 #include "ThreadSafeDriveFolderManager.h"
 
-CDriveFolder::CDriveFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder)
+CDriveFolder::CDriveFolder(CThreadSafeComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CThreadSafeComPtr<IShellFolder> pShellFolder)
 	:CKnownDriveBaseFolder(pParentShellFolder, parentIdl, childIdl, pShellFolder)
 {
 }
@@ -52,7 +52,7 @@ void CDriveFolderManager::Update()
 
 	m_driveFolders.clear();
 	
-	CComPtr<IShellFolder> pDesktopFolder;
+	CThreadSafeComPtr<IShellFolder> pDesktopFolder;
 	::SHGetDesktopFolder(&pDesktopFolder);
 
 	auto& map = shell::CThreadSafeDriveFolderManager::GetInstance()->GetPathIdlMap();
@@ -60,11 +60,11 @@ void CDriveFolderManager::Update()
 		auto parentIdl = pair.second.CloneParentIDL();
 		auto childIdl = pair.second.CloneLastID();
 
-		CComPtr<IShellFolder> pShellFolder;
-		CComPtr<IShellFolder> pParentShellFolder;
+		CThreadSafeComPtr<IShellFolder> pShellFolder;
+		CThreadSafeComPtr<IShellFolder> pParentShellFolder;
 
-		if (SUCCEEDED(pDesktopFolder->BindToObject(pair.second.ptr(), 0, IID_IShellFolder, (void**)&pShellFolder)) &&
-			((parentIdl && SUCCEEDED(pDesktopFolder->BindToObject(parentIdl.ptr(), 0, IID_IShellFolder, (void**)&pParentShellFolder))) ||
+		if (SUCCEEDED(pDesktopFolder.Call(&IShellFolder::BindToObject, pair.second.ptr(), nullptr, IID_IShellFolder, (void**)&pShellFolder)) &&
+			((parentIdl && SUCCEEDED(pDesktopFolder.Call(&IShellFolder::BindToObject, parentIdl.ptr(), nullptr, IID_IShellFolder, (void**)&pParentShellFolder))) ||
 			(!parentIdl && SUCCEEDED(::SHGetDesktopFolder(&pParentShellFolder))))) {
 			m_driveFolders.push_back(std::make_shared<CDriveFolder>(pParentShellFolder, parentIdl, childIdl, pShellFolder));
 		} else {

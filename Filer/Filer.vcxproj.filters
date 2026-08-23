@@ -1060,6 +1060,9 @@
     <ClInclude Include="..\HiLib\ColoredTextLayout.h">
       <Filter>HiLib\TextBox</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\ThreadSafeComPtr.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">

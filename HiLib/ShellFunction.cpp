@@ -1,5 +1,6 @@
 #include "ShellFunction.h"
 #include "Debug.h"
+#include "ThreadSafeComPtr.h"
 #include "ThreadSafeKnownFolderManager.h"
 #include "ThreadSafeDriveFolderManager.h"
 
@@ -52,16 +53,16 @@ std::wstring shell::Size2String(ULONGLONG size)
 	return ConvertCommaSeparatedNumber((size + 1023) >> 10) + L" KB";
 }
 
-std::wstring shell::GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const CIDL& childIDL, SHGDNF uFlags)
+std::wstring shell::GetDisplayNameOf(CThreadSafeComPtr<IShellFolder> pParentFolder, const CIDL& childIDL, SHGDNF uFlags)
 {
 	return GetDisplayNameOf(pParentFolder, childIDL.ptr(), uFlags);
 }
 
-std::wstring shell::GetDisplayNameOf(const CComPtr<IShellFolder>& pParentFolder, const LPITEMIDLIST& childIDL, SHGDNF uFlags)
+std::wstring shell::GetDisplayNameOf(CThreadSafeComPtr<IShellFolder> pParentFolder, const LPITEMIDLIST& childIDL, SHGDNF uFlags)
 {
 	STRRET strret{ 0 };
 	std::wstring ret;
-	if (pParentFolder && SUCCEEDED(pParentFolder->GetDisplayNameOf(childIDL, uFlags, &strret))) {
+	if (pParentFolder && SUCCEEDED(pParentFolder.Call(&IShellFolder::GetDisplayNameOf, childIDL, uFlags, &strret))) {
 		return strret2wstring(strret, childIDL);
 	}
 	return ret;
@@ -76,13 +77,13 @@ std::wstring shell::strret2wstring(STRRET& strret, PCUITEMID_CHILD pidl)
 	return ret;
 }
 
-std::tuple<std::wstring, std::wstring, std::wstring> shell::GetPathNameExt(const CComPtr<IShellFolder>& pParentFolder, const LPITEMIDLIST& relativeIDL)
+std::tuple<std::wstring, std::wstring, std::wstring> shell::GetPathNameExt(CThreadSafeComPtr<IShellFolder> pParentFolder, const LPITEMIDLIST& relativeIDL)
 {
 	STRRET strret;
 	std::wstring path;
 	std::wstring name;
 	std::wstring ext;
-	if (SUCCEEDED(pParentFolder->GetDisplayNameOf(relativeIDL, SHGDN_FORPARSING, &strret))) {
+	if (SUCCEEDED(pParentFolder.Call(&IShellFolder::GetDisplayNameOf, relativeIDL, SHGDN_FORPARSING, &strret))) {
 		path = shell::strret2wstring(strret, relativeIDL);
 		name = ::PathFindFileName(path.c_str());
 		ext = ::PathFindExtension(path.c_str());
@@ -90,7 +91,7 @@ std::tuple<std::wstring, std::wstring, std::wstring> shell::GetPathNameExt(const
 	return std::make_tuple(path, name, ext);
 }
 
-std::optional<FileTimes> shell::GetFileTimes(const CComPtr<IShellFolder>& pParentFolder, const CIDL& relativeIDL)
+std::optional<FileTimes> shell::GetFileTimes(CThreadSafeComPtr<IShellFolder> pParentFolder, const CIDL& relativeIDL)
 {
 	WIN32_FIND_DATA wfd = { 0 };
 	if (SUCCEEDED(::SHGetDataFromIDList(pParentFolder, relativeIDL.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
@@ -100,7 +101,7 @@ std::optional<FileTimes> shell::GetFileTimes(const CComPtr<IShellFolder>& pParen
 	}
 }
 
-bool shell::GetFileSize(ULARGE_INTEGER& size, const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& childIdl)
+bool shell::GetFileSize(ULARGE_INTEGER& size, CThreadSafeComPtr<IShellFolder> pParentShellFolder, const CIDL& childIdl)
 {
 	WIN32_FIND_DATA wfd = { 0 };
 	if (!FAILED(::SHGetDataFromIDList(pParentShellFolder, childIdl.ptr(), SHGDFIL_FINDDATA, &wfd, sizeof(WIN32_FIND_DATA)))) {
@@ -119,17 +120,17 @@ void shell::FindIncrementalOne(
 	const std::function<void()> countup,
 	const std::function<void(const CIDL&, const CIDL&)>& find)
 {
-	CComPtr<IShellFolder> pSrcParentFolder = shell::DesktopBindToShellFolder(srcParentIDL);
-	CComPtr<IShellFolder> pDestParentFolder = shell::DesktopBindToShellFolder(destParentIDL);
+	CThreadSafeComPtr<IShellFolder> pSrcParentFolder = shell::DesktopBindToShellFolder(srcParentIDL);
+	CThreadSafeComPtr<IShellFolder> pDestParentFolder = shell::DesktopBindToShellFolder(destParentIDL);
 	return FindIncrementalOne(pSrcParentFolder, srcParentIDL, srcChildIDL,
 		pDestParentFolder, destParentIDL, countup, find);
 }
 
 void shell::FindIncrementalOne(
-	const CComPtr<IShellFolder>& pSrcParentFolder,
+	const CThreadSafeComPtr<IShellFolder>& pSrcParentFolder,
 	const CIDL& srcParentIDL,
 	const CIDL& srcChildIDL,
-	const CComPtr<IShellFolder>& pDestParentFolder,
+	const CThreadSafeComPtr<IShellFolder>& pDestParentFolder,
 	const CIDL& destParentIDL,
 	const std::function<void()> countup,
 	const std::function<void(const CIDL&, const CIDL&)>& find)
@@ -140,9 +141,10 @@ void shell::FindIncrementalOne(
 	ULONG dwAttributes = 0;
 	CIDL destChildIDL;
 
-	if (SUCCEEDED(pDestParentFolder->ParseDisplayName(
-		NULL,
-		NULL,
+	if (SUCCEEDED(pDestParentFolder.Call(
+		&IShellFolder::ParseDisplayName,
+		nullptr,
+		nullptr,
 		const_cast<LPWSTR>(pft.FileName.c_str()),
 		&chEaten,
 		destChildIDL.ptrptr(),
@@ -161,13 +163,13 @@ void shell::FindIncrementalOne(
 		break;
 		case FileType::Folder:
 		{
-			CComPtr<IShellFolder> pSrcChildShellFolder;
+			CThreadSafeComPtr<IShellFolder> pSrcChildShellFolder;
 			CComPtr<IEnumIDList> pSrcChildEnumIDL;
-			if (SUCCEEDED(pSrcParentFolder->BindToObject(srcChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pSrcChildShellFolder)) &&
-				SUCCEEDED(pSrcChildShellFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pSrcChildEnumIDL))) {
+			if (SUCCEEDED(pSrcParentFolder.Call(&IShellFolder::BindToObject, srcChildIDL.ptr(), nullptr, IID_IShellFolder, (void**)&pSrcChildShellFolder)) &&
+				SUCCEEDED(pSrcChildShellFolder.Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pSrcChildEnumIDL))) {
 
-				CComPtr<IShellFolder> pDestChildFolder;
-				if (SUCCEEDED(pDestParentFolder->BindToObject(destChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pDestChildFolder))) {
+				CThreadSafeComPtr<IShellFolder> pDestChildFolder;
+				if (SUCCEEDED(pDestParentFolder.Call(&IShellFolder::BindToObject, destChildIDL.ptr(), nullptr, IID_IShellFolder, (void**)&pDestChildFolder))) {
 					CIDL srcGrandchildIDL;
 					ULONG ulRet(0);
 					while (SUCCEEDED(pSrcChildEnumIDL->Next(1, srcGrandchildIDL.ptrptr(), &ulRet))) {
@@ -200,10 +202,10 @@ void shell::FindIncrementalOne(
 		break;
 		case FileType::Folder:
 		{
-			CComPtr<IShellFolder> pSrcChildShellFolder;
+			CThreadSafeComPtr<IShellFolder> pSrcChildShellFolder;
 			CComPtr<IEnumIDList> pSrcChildEnumIDL;
-			if (SUCCEEDED(pSrcParentFolder->BindToObject(srcChildIDL.ptr(), 0, IID_IShellFolder, (void**)&pSrcChildShellFolder)) &&
-				SUCCEEDED(pSrcChildShellFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pSrcChildEnumIDL))) {
+			if (SUCCEEDED(pSrcParentFolder.Call(&IShellFolder::BindToObject, srcChildIDL.ptr(), nullptr, IID_IShellFolder, (void**)&pSrcChildShellFolder)) &&
+				SUCCEEDED(pSrcChildShellFolder.Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pSrcChildEnumIDL))) {
 
 				shell::CountFileInFolder(pSrcChildShellFolder, pSrcChildEnumIDL, srcChildIDL, countup);
 				find(destParentIDL, (srcParentIDL + srcChildIDL));
@@ -251,13 +253,13 @@ void shell::FindIncrementalOne(
 //	}
 //}
 
-CComPtr<IShellFolder> shell::DesktopBindToShellFolder(const CIDL& idl)
+CThreadSafeComPtr<IShellFolder> shell::DesktopBindToShellFolder(const CIDL& idl)
 {
-	CComPtr<IShellFolder> pDesktopFolder;
+	CThreadSafeComPtr<IShellFolder> pDesktopFolder;
 	FAILED_THROW(::SHGetDesktopFolder(&pDesktopFolder));
 
-	CComPtr<IShellFolder> pFolder;
-	if (FAILED(pDesktopFolder->BindToObject(idl.ptr(), 0, IID_IShellFolder, (void**)&pFolder))) {
+	CThreadSafeComPtr<IShellFolder> pFolder;
+	if (FAILED(pDesktopFolder.Call(&IShellFolder::BindToObject, idl.ptr(), nullptr, IID_IShellFolder, (void**)&pFolder))) {
 		if (CIDL desktopIDL; SUCCEEDED(::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, desktopIDL.ptrptr())) && ::ILIsEqual(idl.ptr(), desktopIDL.ptr())) {
 			pFolder = pDesktopFolder;
 		} else {
@@ -357,7 +359,7 @@ CComPtr<IShellFolder> shell::DesktopBindToShellFolder(const CIDL& idl)
 
 
 void shell::CountFileOne(
-	const CComPtr<IShellFolder>& pParentFolder,
+	const CThreadSafeComPtr<IShellFolder>& pParentFolder,
 	const CIDL& parentIDL,
 	const CIDL& childIDL,
 	const std::function<void()>& countup)
@@ -370,10 +372,10 @@ void shell::CountFileOne(
 		break;
 	case FileType::Folder:
 	{
-		CComPtr<IShellFolder> pChildShellFolder;
+		CThreadSafeComPtr<IShellFolder> pChildShellFolder;
 		CComPtr<IEnumIDList> pChildEnumIDL;
-		if (SUCCEEDED(pParentFolder->BindToObject(childIDL.ptr(), 0, IID_IShellFolder, (void**)&pChildShellFolder)) &&
-			SUCCEEDED(pChildShellFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pChildEnumIDL))) {
+		if (SUCCEEDED(pParentFolder.Call(&IShellFolder::BindToObject, childIDL.ptr(), nullptr, IID_IShellFolder, (void**)&pChildShellFolder)) &&
+			SUCCEEDED(pChildShellFolder.Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pChildEnumIDL))) {
 			shell::CountFileInFolder(pChildShellFolder, pChildEnumIDL, parentIDL + childIDL, countup);
 		}
 	}
@@ -394,12 +396,12 @@ void shell::CountFileOne(
 	const CIDL& childIDL,
 	const std::function<void()>& countup)
 {
-	CComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
+	CThreadSafeComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
 	return shell::CountFileOne(pParentFolder, parentIDL, childIDL, countup);
 }
 
 void shell::CountFileInFolder(
-	const CComPtr<IShellFolder>& pFolder,
+	const CThreadSafeComPtr<IShellFolder>& pFolder,
 	const CComPtr<IEnumIDList>& pEnumIDL,
 	const CIDL& idl,
 	const std::function<void()>& countup)
@@ -419,9 +421,9 @@ void shell::CountFileInFolder(
 	const CIDL& srcIDL,
 	const std::function<void()>& countup)
 {
-	CComPtr<IShellFolder> pSrcFolder = shell::DesktopBindToShellFolder(srcIDL);
+	CThreadSafeComPtr<IShellFolder> pSrcFolder = shell::DesktopBindToShellFolder(srcIDL);
 	CComPtr<IEnumIDList> pEnumIDL;
-	if (SUCCEEDED(pSrcFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pEnumIDL))) {
+	if (SUCCEEDED(pSrcFolder.Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pEnumIDL))) {
 		shell::CountFileInFolder(pSrcFolder, pEnumIDL, srcIDL, countup);
 	}
 
@@ -501,9 +503,9 @@ void shell::SearchFileInFolder(
 	const std::function<void(const CIDL&)> find
 )
 {
-	CComPtr<IShellFolder> pSrcFolder = shell::DesktopBindToShellFolder(srcIDL);
+	CThreadSafeComPtr<IShellFolder> pSrcFolder = shell::DesktopBindToShellFolder(srcIDL);
 	CComPtr<IEnumIDList> pEnumIDL;
-	if(SUCCEEDED(pSrcFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pEnumIDL))){
+	if(SUCCEEDED(pSrcFolder.Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pEnumIDL))){
 		CIDL childIDL;
 		ULONG ulRet(0);
 		while (SUCCEEDED(pEnumIDL->Next(1, childIDL.ptrptr(), &ulRet))) {
@@ -519,7 +521,7 @@ void shell::SearchFileInFolder(
 
 void shell::SearchOne(
 	const std::wstring& search,
-	const CComPtr<IShellFolder>& pParentFolder,
+	const CThreadSafeComPtr<IShellFolder>& pParentFolder,
 	const CIDL& parentIDL,
 	const CIDL& childIDL,
 	const std::function<void()>& countup,
@@ -537,10 +539,10 @@ void shell::SearchOne(
 		break;
 	case FileType::Folder:
 	{
-		CComPtr<IShellFolder> pChildShellFolder;
+		CThreadSafeComPtr<IShellFolder> pChildShellFolder;
 		CComPtr<IEnumIDList> pChildEnumIDL;
-		if (SUCCEEDED(pParentFolder->BindToObject(childIDL.ptr(), 0, IID_IShellFolder, (void**)&pChildShellFolder)) &&
-			SUCCEEDED(pChildShellFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pChildEnumIDL))) {
+		if (SUCCEEDED(pParentFolder.Call(&IShellFolder::BindToObject, childIDL.ptr(), nullptr, IID_IShellFolder, (void**)&pChildShellFolder)) &&
+			SUCCEEDED(pChildShellFolder.Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &pChildEnumIDL))) {
 
 			CIDL nextIDL;
 			ULONG ulRet(0);
@@ -601,7 +603,7 @@ void shell::SearchOne(
 //}
 
 shell::ParsedFileType shell::ParseFileType(
-	const CComPtr<IShellFolder>& pParentFolder,
+	CThreadSafeComPtr<IShellFolder> pParentFolder,
 	const CIDL& childIDL)
 {
 	shell::ParsedFileType ret;
@@ -620,7 +622,7 @@ shell::ParsedFileType shell::ParseFileType(
 			ret.FileType = shell::FileType::Drive;
 		} else if (boost::iequals(ret.FileExt, ".zip")) {
 			ret.FileType = shell::FileType::Zip;
-		} else if (pParentFolder->GetAttributesOf(1, childIDL.constptrptr(), &sfgao), (sfgao & SFGAO_FOLDER) == SFGAO_FOLDER) {
+		} else if (pParentFolder.Call(&IShellFolder::GetAttributesOf, 1, childIDL.constptrptr(), &sfgao), (sfgao & SFGAO_FOLDER) == SFGAO_FOLDER) {
 			ret.FileType = shell::FileType::Folder;
 		} else {
 			ret.FileType = shell::FileType::File;

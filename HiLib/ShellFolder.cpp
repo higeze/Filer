@@ -19,9 +19,29 @@ extern std::shared_ptr<CApplicationProperty> g_spApplicationProperty;
 CShellFolder::~CShellFolder()
 {
 	*m_spCancelThread = true;
+
+	try {
+		if (m_futureSize.valid()) {
+			m_futureSize.wait();
+		}
+	} catch (...) {}
+
+	try {
+		if (m_futureTime.valid()) {
+			m_futureTime.wait();
+		}
+	} catch (...) {}
 }
 
-const CComPtr<IShellFolder>& CShellFolder::GetShellFolderPtr() const
+//CShellFolder CShellFolder::Clone() const
+//{
+//	CThreadSafeComPtr<IShellFolder> pParentShellFolder = shell::DesktopBindToShellFolder(m_parentIdl);
+//	CThreadSafeComPtr<IShellFolder> pShellFolder = shell::DesktopBindToShellFolder(m_absoluteIdl);
+//
+//	return CShellFolder(pParentShellFolder, m_parentIdl, m_childIdl);
+//}
+
+CThreadSafeComPtr<IShellFolder> CShellFolder::GetShellFolderPtr() const
 {
 	if (!m_pShellFolder) {
 		m_pShellFolder = shell::DesktopBindToShellFolder(m_absoluteIdl);
@@ -88,10 +108,9 @@ const std::wstring& CShellFolder::GetDispExt() const
 const std::shared_ptr<CShellFolder>& CShellFolder::GetParentFolderPtr() const
 {
 	if (!m_pParentFolder) {
-
 		CIDL parentIDL = m_absoluteIdl.CloneParentIDL();
 		CIDL grandParentIDL = parentIDL.CloneParentIDL();
-		CComPtr<IShellFolder> pGrandParentFolder = nullptr;
+		CThreadSafeComPtr<IShellFolder> pGrandParentFolder = nullptr;
 		LPCITEMIDLIST pidl;
 		HRESULT hr = SHBindToParent(
 			parentIDL.ptr(),
@@ -100,18 +119,8 @@ const std::shared_ptr<CShellFolder>& CShellFolder::GetParentFolderPtr() const
 		);
 		CIDL parentLastID(::ILCloneFull(pidl));
 
-		m_pParentFolder = std::static_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pGrandParentFolder, grandParentIDL, std::move(parentLastID)));
-
-		//CIDL parentIDL = m_absoluteIdl.CloneParentIDL();
-		//::OutputDebugStringW(std::format(L"ParentIDL:{}", CIDL::GetItemIdListCount(parentIDL.ptr())).c_str());
-		//CIDL parentLastID = parentIDL.CloneLastID();
-		//CIDL grandParentIDL = parentIDL.CloneParentIDL();
-		//::OutputDebugStringW(std::format(L"GrandParentIDL:{}", CIDL::GetItemIdListCount(grandParentIDL.ptr())).c_str());
-		//CComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
-		//FALSE_THROW(pParentFolder);
-		//CComPtr<IShellFolder> pGrandParentFolder = shell::DesktopBindToShellFolder(grandParentIDL);
-		//FALSE_THROW(pGrandParentFolder);
-		//m_pParentFolder =  std::static_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pGrandParentFolder, grandParentIDL, std::move(parentLastID)));
+		m_pParentFolder = std::static_pointer_cast<CShellFolder>(
+			CShellFileFactory::GetInstance()->CreateShellFilePtr(pGrandParentFolder, grandParentIDL, std::move(parentLastID)));
 	}
 	return m_pParentFolder;
 	//return std::make_shared<CShellFolder>(pGrandParentFolder, grandParentIDL, parentIDL.CloneLastID(), pParentFolder);
@@ -134,8 +143,9 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(const FileSizeAr
 				{
 					SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
 					auto limit = args.TimeLimitFolderSize ? args.TimeLimitMs : -1;
-					auto fun = [](const std::shared_ptr<bool>& spCancelThread, const CComPtr<IShellFolder>& pShellFolder, const CIDL& folderIdl, const std::wstring& path, const int& limit, const std::function<void()>& sizeChanged)
+					auto fun = [](const std::shared_ptr<bool>& spCancelThread, CThreadSafeComPtr<IShellFolder> pShellFolder, CIDL folderIdl, std::wstring path, int limit, std::function<void()> sizeChanged)
 					{
+						// pShellFolder はコピーなのでタスク実行中に有効
 						std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
 						ULARGE_INTEGER size = { 0 };
 						if (CShellFolder::GetFolderSize(size, spCancelThread, pShellFolder, path, tp, limit)) {
@@ -185,8 +195,8 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(const FileTimeAr
 			}
 			auto limit = args.TimeLimitFolderLastWrite ? args.TimeLimitMs : -1;
 			auto fun = [](const std::shared_ptr<bool>& spCancelThread,
-					const CComPtr<IShellFolder>& pParentFolder,
-					const CComPtr<IShellFolder>& pFolder,
+					CThreadSafeComPtr<IShellFolder> pParentFolder,
+					CThreadSafeComPtr<IShellFolder> pFolder,
 					const CIDL& relativeIdl,
 					const std::wstring& path,
 					const int& limit,
@@ -235,7 +245,7 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(const FileTimeAr
 
 //static
 bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<bool>& cancel, 
-	const CComPtr<IShellFolder>& pFolder, const std::wstring& path, 
+	CThreadSafeComPtr<IShellFolder> pFolder, const std::wstring& path,
 	const std::chrono::system_clock::time_point& tp, const int limit)
 {	
 	if (*cancel) {
@@ -251,7 +261,7 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<boo
 		size.QuadPart = 0;
 		ULARGE_INTEGER childSize = { 0 };
 		CComPtr<IEnumIDList> enumIdl;
-		if (SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
+		if (SUCCEEDED(pFolder.Call(&IShellFolder::EnumObjects, reinterpret_cast<HWND>(NULL), SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
 			CIDL childIdl;
 			ULONG ulRet(0);
 			while (SUCCEEDED(enumIdl->Next(1, childIdl.ptrptr(), &ulRet))) {
@@ -267,15 +277,15 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<boo
 					break; 
 				} else {
 					STRRET childStrret;
-					pFolder->GetDisplayNameOf(childIdl.ptr(), SHGDN_FORPARSING, &childStrret);
+					pFolder.Call(&IShellFolder::GetDisplayNameOf, childIdl.ptr(), SHGDN_FORPARSING, &childStrret);
 					std::wstring childPath = childIdl.strret2wstring(childStrret);
 					std::wstring childExt = ::PathFindExtension(childPath.c_str());
 
-					CComPtr<IShellFolder> pChidFolder;
+					CThreadSafeComPtr<IShellFolder> pChidFolder;
 					CComPtr<IEnumIDList> childEnumIdl;
 					if (!boost::iequals(childExt, ".zip") &&
-						SUCCEEDED(pFolder->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pChidFolder)) &&
-						SUCCEEDED(pChidFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &childEnumIdl))) {
+						SUCCEEDED(pFolder.Call(&IShellFolder::BindToObject, childIdl.ptr(), reinterpret_cast<IBindCtx*>(nullptr), IID_IShellFolder, reinterpret_cast<void**>(& pChidFolder))) &&
+						SUCCEEDED(pChidFolder.Call(&IShellFolder::EnumObjects, reinterpret_cast<HWND>(NULL), SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &childEnumIdl))) {
 						if (CShellFolder::GetFolderSize(childSize, cancel,
 							pChidFolder, childPath,
 							tp, limit)) {
@@ -302,8 +312,23 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<boo
 	return true;
 }
 
+std::optional<FileTimes> CShellFolder::GetFolderFileTimes(
+	const std::shared_ptr<bool>& cancel,
+	const CIDL& parentIdl,
+	const CIDL& relativeIdl,
+	const std::wstring& path,
+	std::chrono::system_clock::time_point& tp,
+	int limit,
+	bool ignoreFolderTime)
+{
+	CThreadSafeComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
+	CThreadSafeComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(parentIdl + relativeIdl);
+
+	return CShellFolder::GetFolderFileTimes(cancel, pParentFolder, pFolder, relativeIdl, path, tp, limit, ignoreFolderTime);
+}
+
 std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<bool>& cancel,
-	const CComPtr<IShellFolder>& pParentFolder, const CComPtr<IShellFolder>& pFolder, const CIDL& relativeIdl, const std::wstring& path,
+	CThreadSafeComPtr<IShellFolder> pParentFolder, CThreadSafeComPtr<IShellFolder> pFolder, const CIDL& relativeIdl, const std::wstring& path,
 	std::chrono::system_clock::time_point& tp, int limit, bool ignoreFolderTime)
 {
 	FileTimes times = shell::GetFileTimes(pParentFolder, relativeIdl).value_or(FileTimes());
@@ -321,10 +346,10 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 	try {
 		//Enumerate child IDL
 		CComPtr<IEnumIDList> enumIdl;
-		if (SUCCEEDED(pFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
+		if (SUCCEEDED(pFolder.Call(&IShellFolder::EnumObjects, reinterpret_cast<HWND>(NULL), SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
 			CIDL childIdl;
 			ULONG ulRet(0);
-			std::vector<std::tuple<CComPtr<IShellFolder>, CIDL, std::wstring>> folders;
+			std::vector<std::tuple<CThreadSafeComPtr<IShellFolder>, CIDL, std::wstring>> folders;
 			while (SUCCEEDED(enumIdl->Next(1, childIdl.ptrptr(), &ulRet))) {
 				if (*cancel) {
 					LOG_2("CShellFolder::GetFolderFileTimes Canceled in while :", wstr2str(path));
@@ -339,15 +364,15 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 				} else {
 					FileTimes childTimes;
 					STRRET childStrret;
-					pFolder->GetDisplayNameOf(childIdl.ptr(), SHGDN_FORPARSING, &childStrret);
+					pFolder.Call(&IShellFolder::GetDisplayNameOf, childIdl.ptr(), SHGDN_FORPARSING, &childStrret);
 					std::wstring childPath = childIdl.strret2wstring(childStrret);
 					std::wstring childExt = ::PathFindExtension(childPath.c_str());
 
-					CComPtr<IShellFolder> pChidFolder;
+					CThreadSafeComPtr<IShellFolder> pChidFolder;
 					CComPtr<IEnumIDList> childEnumIdl;
 					if (!boost::iequals(childExt, ".zip") &&
-						SUCCEEDED(pFolder->BindToObject(childIdl.ptr(), 0, IID_IShellFolder, (void**)&pChidFolder)) &&
-						SUCCEEDED(pChidFolder->EnumObjects(NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &childEnumIdl))) {
+						SUCCEEDED(pFolder.Call(&IShellFolder::BindToObject, childIdl.ptr(), reinterpret_cast<IBindCtx*>(nullptr), IID_IShellFolder, reinterpret_cast<void**>(&pChidFolder))) &&
+						SUCCEEDED(pChidFolder.Call(&IShellFolder::EnumObjects, reinterpret_cast<HWND>(NULL), SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &childEnumIdl))) {
 						folders.emplace_back(std::make_tuple(pChidFolder, childIdl, childPath));
 					} else {
 						childTimes = shell::GetFileTimes(pFolder, childIdl).value_or(FileTimes());
@@ -378,7 +403,8 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 
 void CShellFolder::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND  hWnd) 
 {
-	HRESULT hr = GetParentFolderPtr()->GetShellFolderPtr()->SetNameOf(
+	HRESULT hr = GetParentFolderPtr()->GetShellFolderPtr().Call(
+		&IShellFolder::SetNameOf,
 		hWnd,
 		m_childIdl.ptr(),
 		wstrNameWoExt.c_str(),

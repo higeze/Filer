@@ -1,6 +1,7 @@
 #pragma once
 #include "ShellFile.h"
 #include <chrono>
+#include <mutex> // ’Ç‰Á: #include <mutex> ‚ÍŠù‚É‚ ‚é‚ª”O‚Ì‚½‚ßŠm”F
 
 //template<typename T>
 //class comptr_deleter
@@ -109,8 +110,6 @@
 class CShellFolder :public CShellFile
 {
 private:
-
-
 	std::shared_ptr<bool> m_spCancelThread = std::make_shared<bool>(false);
 	
 	std::future<std::pair<ULARGE_INTEGER, FileSizeStatus>> m_futureSize;
@@ -120,15 +119,17 @@ private:
 	mutable std::mutex m_mtxTime;
 public:
 
-	DECLARE_LAZY_COMPTR_GETTER(IShellFolder, ShellFolder)
+protected: mutable CThreadSafeComPtr<IShellFolder> m_pShellFolder; public: virtual CThreadSafeComPtr<IShellFolder> GetShellFolderPtr() const;
 	DECLARE_LAZY_SHAREDPTR_GETTER(CShellFolder, ParentFolder);
 
 public:
 	template<typename... _Args>
-	CShellFolder(const CComPtr<IShellFolder>& pParentShellFolder, const CIDL& parentIdl, const CIDL& childIdl, _Args... args)
-		:CShellFile(pParentShellFolder, parentIdl, childIdl, args...), m_pShellFolder(::get(arg<"ishellfolder"_s>(), args..., default_(nullptr))){}
+	CShellFolder(CThreadSafeComPtr<IShellFolder> pParentShellFolder, const CIDL& parentIdl, const CIDL& childIdl, _Args... args)
+		:CShellFile(pParentShellFolder, parentIdl, childIdl, args...)/*, m_pShellFolder(::get(arg<"ishellfolder"_s>(), args..., default_(nullptr)))*/{}
 
 	virtual ~CShellFolder();
+
+	//CShellFolder Clone() const;
 
 	virtual const std::wstring& GetDispName() const override;
 	virtual const std::wstring& GetDispNameWithoutExt() const override;
@@ -143,10 +144,18 @@ public:
 	std::shared_ptr<CShellFile> CreateShExFileFolder(CIDL&& relativeIdl) const;
 	//std::shared_ptr<CShellFile> CreateShExFileFolder(const CIDL& relativeIdl) const;
 	static std::optional<FileTimes> GetFolderFileTimes(const std::shared_ptr<bool>& cancel,
-		const CComPtr<IShellFolder>& pParentFolder, const CComPtr<IShellFolder>& pFolder, const CIDL& relativeIdl, const std::wstring& path,
+		CThreadSafeComPtr<IShellFolder> pParentFolder, CThreadSafeComPtr<IShellFolder> pFolder, const CIDL& relativeIdl, const std::wstring& path,
 		std::chrono::system_clock::time_point& tp, int limit, bool ignoreFolderTime);
+	static std::optional<FileTimes> GetFolderFileTimes(
+		const std::shared_ptr<bool>& cancel,
+		const CIDL& parentIdl,
+		const CIDL& relativeIdl,
+		const std::wstring& path,
+		std::chrono::system_clock::time_point& tp,
+		int limit,
+		bool ignoreFolderTime);
 	static bool GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<bool>& cancel,
-		const CComPtr<IShellFolder>& pFolder, const std::wstring& path,
+		CThreadSafeComPtr<IShellFolder> pFolder, const std::wstring& path,
 		const std::chrono::system_clock::time_point& tp, const int limit);
 private:
 	std::pair<FileTimes, FileTimeStatus> GetLockFileTimes() const;

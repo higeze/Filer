@@ -12,7 +12,7 @@
 #include "Debug.h"
 
 shell::ParsedFileType CShellFileFactory::ParseFileType(
-	const CComPtr<IShellFolder>& pParentFolder,
+	CThreadSafeComPtr<IShellFolder> pParentFolder,
 	const CIDL& parentIDL,
 	const CIDL& childIDL)
 {
@@ -45,7 +45,7 @@ shell::ParsedFileType CShellFileFactory::ParseFileType(
 			ret.FileType = shell::FileType::Drive;
 		} else if (boost::iequals(ret.FileExt, ".zip")) {
 			ret.FileType = shell::FileType::Zip;
-		} else if (pParentFolder->GetAttributesOf(1, childIDL.constptrptr(), &sfgao), (sfgao & SFGAO_FOLDER) == SFGAO_FOLDER) {
+		} else if (pParentFolder.Call(&IShellFolder::GetAttributesOf, 1, childIDL.constptrptr(), &sfgao), (sfgao & SFGAO_FOLDER) == SFGAO_FOLDER) {
 			ret.FileType = shell::FileType::Folder;
 		} else {
 			ret.FileType = shell::FileType::File;
@@ -55,7 +55,7 @@ shell::ParsedFileType CShellFileFactory::ParseFileType(
 }
 
 
-std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<IShellFolder>& pParentFolder, const CIDL& parentIdl, CIDL&& childIdl)
+std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(CThreadSafeComPtr<IShellFolder> pParentFolder, const CIDL& parentIdl, CIDL&& childIdl)
 {
 	auto parsed = ParseFileType(pParentFolder, parentIdl, childIdl);
 	switch (parsed.FileType) {
@@ -77,6 +77,12 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CComPtr<
 	default:
 		return std::make_shared<CShellInvalidFile>();
 	}
+}
+
+std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CIDL& parentIdl, CIDL&& childIdl)
+{
+	CThreadSafeComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
+	return CreateShellFilePtr(pParentFolder, parentIdl, std::forward<CIDL>(childIdl));
 }
 
 //static
@@ -107,9 +113,10 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const std::wst
 
 			ULONG chEaten;
 			ULONG dwAttributes;
-			HRESULT hr = desktop->GetShellFolderPtr()->ParseDisplayName(
-				NULL,
-				NULL,
+			HRESULT hr = desktop->GetShellFolderPtr().Call(
+				&IShellFolder::ParseDisplayName,
+				nullptr,
+				nullptr,
 				const_cast<LPWSTR>(path.c_str()),
 				&chEaten,
 				absIdl.ptrptr(),
@@ -121,7 +128,7 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const std::wst
 			//	return desktop;
 			} else {
 				CIDL parentIDL = absIdl.CloneParentIDL();
-				CComPtr<IShellFolder>  pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
+				CThreadSafeComPtr<IShellFolder>  pParentFolder = shell::DesktopBindToShellFolder(parentIDL);
 				return CreateShellFilePtr(pParentFolder, parentIDL, std::move(absIdl.CloneLastID()));
 			}
 		}

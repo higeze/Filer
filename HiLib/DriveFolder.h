@@ -4,7 +4,7 @@
 class CDriveFolder :public CKnownDriveBaseFolder
 {
 public:
-	CDriveFolder(CComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CComPtr<IShellFolder> pShellFolder = nullptr);
+	CDriveFolder(CThreadSafeComPtr<IShellFolder> pParentShellFolder, CIDL parentIdl, CIDL childIdl, CThreadSafeComPtr<IShellFolder> pShellFolder = nullptr);
 	virtual ~CDriveFolder() {}
 	virtual const std::wstring& GetDispExt() const override;
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(const FileSizeArgs& args, std::function<void()> changed = nullptr)override;

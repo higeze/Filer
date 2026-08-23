@@ -30,12 +30,12 @@ CComPtr<IContextMenu3> CShellContextMenu::SetUpNewContextMenues(const CMenu& men
 }
 
 CComPtr<IContextMenu3> CShellContextMenu::SetUpNormalContextMenues(
-	const CMenu& menu, const CComPtr<IShellFolder>& folder, HWND hwndOwner, UINT cidl, LPCITEMIDLIST *apidl)
+	const CMenu& menu, CThreadSafeComPtr<IShellFolder> folder, HWND hwndOwner, UINT cidl, LPCITEMIDLIST *apidl)
 {
 	while (1) {
 		CComPtr<IContextMenu> pcm;
 		CComPtr<IContextMenu3> pcm3;
-		FAILED_BREAK(folder->GetUIObjectOf(hwndOwner, cidl, apidl, IID_IContextMenu, nullptr, (LPVOID*)&pcm));
+		FAILED_BREAK(folder.Call(&IShellFolder::GetUIObjectOf, hwndOwner, cidl, apidl, IID_IContextMenu, nullptr, (LPVOID*)&pcm));
 		FAILED_BREAK(pcm->QueryInterface(IID_PPV_ARGS(&pcm3)));
 		FAILED_BREAK(pcm3->QueryContextMenu(menu, 0, SCRATCH_QCM_FIRST, SCRATCH_QCM_LAST, ::IsKeyDown(VK_SHIFT) ? CMF_NORMAL | CMF_EXTENDEDVERBS : CMF_NORMAL));
 		return pcm3;
@@ -95,7 +95,7 @@ bool CShellContextMenu::InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lp
 
 	do {
 		CComPtr<IContextMenu> pcm;
-		FAILED_BREAK(files[0]->GetParentShellFolderPtr()->GetUIObjectOf(hWnd, vpIdl.size(),(LPCITEMIDLIST*)(vpIdl.data()),IID_IContextMenu,nullptr,(LPVOID *)&pcm));
+		FAILED_BREAK(files[0]->GetParentShellFolderPtr().Call(&IShellFolder::GetUIObjectOf, hWnd, vpIdl.size(),(LPCITEMIDLIST*)(vpIdl.data()),IID_IContextMenu,nullptr,(LPVOID *)&pcm));
 		CMenu menu(::CreatePopupMenu());
 		FALSE_BREAK(menu);
 		FAILED_BREAK(pcm->QueryContextMenu(menu, 0, 1, 0x7FFF, CMF_NORMAL));

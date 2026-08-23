@@ -126,7 +126,7 @@ std::vector<std::wstring> CDirectoryWatcher::GetFileNamesInDirectory(CIDL absIdl
 {
 	std::vector<std::wstring> names;
 
-	CComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(absIdl);
+	CThreadSafeComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(absIdl);
 	shell::for_each_idl_in_shellfolder(m_pControl->GetWndPtr()->m_hWnd, pFolder, [&names, &pFolder](const CIDL& idl) {
 		std::wstring path = shell::GetDisplayNameOf(pFolder, idl, SHGDN_FORPARSING);
 		if (!path.empty() && path[0] != L':') {
