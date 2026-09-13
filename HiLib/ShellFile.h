@@ -1,6 +1,7 @@
 #pragma once
 #include "getter_macro.h"
 #include "MyString.h"
+#include "MyDC.h"
 #include "MyIcon.h"
 #include "IDL.h"
 #include "ShellFunction.h"
@@ -16,6 +17,14 @@
 #include <boost/preprocessor/seq/fold_left.hpp>
 #include <boost/preprocessor/variadic/to_seq.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
+
+#include <commoncontrols.h>
+#include <commctrl.h>
+#include <shobjidl.h>
+#include <shellapi.h>
+#include <wincodec.h>
+#pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "windowscodecs.lib")
 
 
 
@@ -73,6 +82,37 @@ enum class FileStorageType
 	LocalPhysical,
 	VirtualCloud,
 	NotFount,
+
+};
+
+class CImageList
+{
+private:
+	CComPtr<IImageList> m_pImageList;
+	CImageList()
+	{
+		::SHGetImageList(SHIL_SMALL, IID_PPV_ARGS(&m_pImageList));
+	}
+public:
+
+	CIcon GetIcon(int iconIndex)
+	{
+		HICON hIcon = NULL;
+		FAILED_THROW(m_pImageList->GetIcon(iconIndex, ILD_NORMAL, &hIcon));
+		return hIcon;
+	}
+	int GetOverlayImage(int overlayIndex)
+	{
+		int iIndex;
+		FAILED_THROW(m_pImageList->GetOverlayImage(overlayIndex, &iIndex));
+		return iIndex;
+	}
+	static CImageList* GetInstance()
+	{
+		static CImageList list;
+		return &list;
+	}
+
 
 };
 
@@ -159,13 +199,20 @@ public:
 	DECLARE_LAZY_GETTER(SFGAOF, SFGAO);
 	DECLARE_LAZY_GETTER(FileStorageType, FileStorageType)
 
-	DECLARE_LAZY_GETTER(std::wstring, IconKey);
+	DECLARE_LAZY_GETTER(int, IconFullIndex);
+	const int GetIconIndex() const;
+	const int GetIconOverlayIndex() const;
 
-	DECLARE_RESET_OPTS(Path, PathName, PathNameWithoutExt, PathExt, PathWithoutExt, DispName, DispExt, DispNameWithoutExt, TypeName, Attributes, SFGAO, FileStorageType, IconKey)
+
+	//DECLARE_LAZY_GETTER(std::wstring, IconKey);
+
+	DECLARE_RESET_OPTS(Path, PathName, PathNameWithoutExt, PathExt, PathWithoutExt, DispName, DispExt, DispNameWithoutExt, TypeName, Attributes, SFGAO, FileStorageType, IconFullIndex)
 	
 	
 	//Non-lazy
-	CIcon GetIcon() const;
+	CBitmap GetIconBitmap() const;
+
+	//CIcon GetIcon() const;
 	bool GetIsExist();
 
 	virtual void SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd = NULL);

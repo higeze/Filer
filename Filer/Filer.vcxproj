@@ -294,6 +294,7 @@
     <ClInclude Include="..\HiLib\ColoredParagraphLayout.h" />
     <ClInclude Include="..\HiLib\ColoredTextLayout.h" />
     <ClInclude Include="..\HiLib\ParagraphLayout.h" />
+    <ClInclude Include="..\HiLib\ShellThread.h" />
     <ClInclude Include="..\HiLib\TextLayout.h" />
     <ClInclude Include="..\HiLib\D2DBitmapDrawer.h" />
     <ClInclude Include="..\HiLib\BoolCell.h" />
@@ -683,6 +684,7 @@
     <ClCompile Include="..\HiLib\ShellFile.cpp" />
     <ClCompile Include="..\HiLib\ShellFileFactory.cpp" />
     <ClCompile Include="..\HiLib\ShellFolder.cpp" />
+    <ClCompile Include="..\HiLib\ShellThread.cpp" />
     <ClCompile Include="..\HiLib\ShellZipFolder.cpp" />
     <ClCompile Include="..\HiLib\HeaderSortCell.cpp" />
     <ClCompile Include="..\HiLib\MapColumn.cpp" />

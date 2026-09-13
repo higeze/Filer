@@ -183,9 +183,18 @@ void CTextBox::EnsureVisibleCaret()
 {
 	if (m_isScrollable) {
 		if (!Text->empty()) {
+			//VScroll
+			//Page
+			m_pVScroll->SetScrollPage(GetPageRect().Height());
 			//Range
 			m_pVScroll->SetScrollRange(0, m_pTextLayout->GetHeight());
+
+			//HScroll
+			//Page
+			m_pHScroll->SetScrollPage(GetPageRect().Width());
+			//Range
 			m_pHScroll->SetScrollRange(0, m_pTextLayout->GetWidth());
+
 			//Pos
 			auto curRect = m_pTextLayout->HitTestCaretTextPosition(*Caret->Current);
 			auto orgRect = m_pTextLayout->HitTestCaretTextPosition(0);

@@ -2,42 +2,14 @@
 #include <atlbase.h>
 #include <mutex>
 #include <map>
-#include <thread>
-#include "ThreadPool.h"
-
-class CShellThread
-{
-private:
-    template<typename T>
-	friend class CThreadSafeComPtr;
-    inline static CThreadPool Thread = CThreadPool(COINIT_APARTMENTTHREADED, 1);
-
-public:
-    template<class F, class... Args>
-    inline static auto Run(const char* name, int&& priority, F&& f, Args&&... args)
-        -> std::future<typename std::invoke_result_t<F, Args...>>
-    {
-        if(std::this_thread::get_id() == Thread.GetThreadId(0)) {
-            using return_type = typename std::invoke_result_t<F, Args...>;
-
-            // 同一スレッドなら同期実行して future を返す
-            auto bound = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
-            std::packaged_task<return_type()> task(std::move(bound));
-            std::future<return_type> fut = task.get_future();
-            task(); // 同期実行
-            return fut;
-        } else {
-			return Thread.enqueue(name, std::forward<int>(priority), std::forward<F>(f), std::forward<Args>(args)...);
-        }
-    }
-
-};
+#include "ShellThread.h"
 
 template <class T>
 class CThreadSafeComPtr
 {
 private:
     mutable std::recursive_mutex m_mutex;
+public:
     T* p;
 
     //bool IsMarshalled()const
@@ -122,74 +94,66 @@ public:
     //    }
     //    return p;
     //}
-  //  template<typename _MemFun, typename... _Args>
-  //  auto Call(_MemFun&& memfun, _Args&&... args) const
-  //  {
-  //      if(std::this_thread::get_id() == Thread.GetThreadId(0)) {
-  //          return (p->*memfun)(std::forward<_Args>(args)...);
-  //      } else {
-  //          return Thread.enqueue(FILE_LINE_FUNC, 0, std::forward<_MemFun>(memfun), p, std::forward<_Args>(args)...).get();
-		//}
-  //  }
+public:
+    template<typename T>
+    T WaitForFutureWithMessagePump(std::future<T>&& fut) const
+    {
+        using namespace std::chrono_literals;
+        while (fut.wait_for(0ms) != std::future_status::ready) {
+            MSG msg;
+            while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+                if (msg.message == WM_QUIT) PostQuitMessage((int)msg.wParam);
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+            std::this_thread::sleep_for(5ms);
+        }
+        return fut.get();
+    }
+ //   template<typename T>
+	//T WaitForFutureWithMessagePump(std::future<T>& fut) const
+ //   {
+ //       using namespace std::chrono_literals;
+ //       while (fut.wait_for(0ms) != std::future_status::ready) {
+ //           MSG msg;
+ //           while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+ //               if (msg.message == WM_QUIT) PostQuitMessage((int)msg.wParam);
+ //               TranslateMessage(&msg);
+ //               DispatchMessage(&msg);
+ //           }
+ //           std::this_thread::sleep_for(5ms);
+ //       }
+ //       return fut.get();
+ //   }
 
-    //template <typename Func, typename... Args>
-    //auto Call(Func func, Args&&... args)
-    //    -> decltype((std::forward<T>(p).*func)(std::forward<Args>(args)...))
-    //{
-    //    if (std::this_thread::get_id() == Thread.GetThreadId(0)) {
-    //        return (std::forward<T>(p).*func)(std::forward<Args>(args)...);
-    //    } else {
-    //        return Thread.enqueue(FILE_LINE_FUNC, 0, std::forward<Func>(func), p, std::forward<Args>(args)...).get();
-    //    }
-    //}
-
-    //template <typename Func, typename... Args>
-    //auto Call(Func func, Args&&... args)
-    //    -> decltype((p->*func)(std::forward<Args>(args)...))
-    //{
-    //    if (std::this_thread::get_id() == Thread.GetThreadId(0)) {
-    //        return (p->*func)(std::forward<Args>(args)...);
-    //    } else {
-    //        return Thread.enqueue(FILE_LINE_FUNC, 0, [this, func](Args&&... args) -> decltype((p->*func)(std::forward<Args>(args)...)) {
-    //            return (p->*func)(std::forward<Args>(args)...);
-    //        });
-    //    }
-    //}
     // 安定化のため std::bind で束ねて enqueue に渡す (C++14 互換)
     template <typename Func, typename... Args>
-    auto Call(Func func, Args&&... args)
+    auto Call(Func&& func, Args&&... args) const
         -> decltype((p->*func)(std::forward<Args>(args)...))
     {
-        //if (std::this_thread::get_id() == Thread.GetThreadId(0)) {
-        //    return (p->*func)(std::forward<Args>(args)...);
-        //} else {
-            auto bound = std::bind(func, p, std::forward<Args>(args)...);
-            return CShellThread::Run(FILE_LINE_FUNC, 0, std::move(bound)).get();
-        //}
+		return std::move(CallAsync(std::forward<Func>(func), std::forward<Args>(args)...)).get();
     }
 
     template <typename Func, typename... Args>
-    auto Call(Func func, Args&&... args) const
-        -> decltype((p->*func)(std::forward<Args>(args)...))
+    auto CallAsync(Func func, Args&&... args) const
+        -> std::future<decltype((p->*func)(std::forward<Args>(args)...))>
     {
-        //if (std::this_thread::get_id() == Thread.GetThreadId(0)) {
-        //    return (p->*func)(std::forward<Args>(args)...);
-        //} else {
-            auto bound = std::bind(func, p, std::forward<Args>(args)...);
-            return CShellThread::Run(FILE_LINE_FUNC, 0, std::move(bound)).get();
-        //}
+        return CShellThread::GetInstance()->RunInterface(std::forward<Func>(func), p, std::forward<Args>(args)...);
     }
 
-    //template <typename Func, typename... Args>
-    //HRESULT Call(Func func, Args&&... args) const
-    //    //-> decltype((p->*func)(std::forward<Args>(args)...))
-    //{
-    //    if (std::this_thread::get_id() == Thread.GetThreadId(0)) {
-    //        return (p->*func)(std::forward<Args>(args)...);
-    //    } else {
-    //        return Thread.enqueue(FILE_LINE_FUNC, 0, std::forward<Func>(func), p, std::forward<Args>(args)...).get();
-    //    }
-    //}
+  //  template <typename Func, typename... Args>
+  //  auto Call(Func&& func, Args&&... args) const
+  //      -> decltype((p->*func)(std::forward<Args>(args)...))
+  //  {
+  //      return WaitForFutureWithMessagePump(CallAsync(std::forward<Func>(func), std::forward<Args>(args)...));
+  //  }
+
+  //  template <typename Func, typename... Args>
+  //  auto CallAsync(Func func, Args&&... args) const
+  //      -> std::future<decltype((p->*func)(std::forward<Args>(args)...))>
+  //  {
+		//return CShellThread::GetInstance()->RunInterface(std::forward<Func>(func), p, std::forward<Args>(args)...);
+  //  }
 
     bool operator!() const throw()
     {

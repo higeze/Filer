@@ -51,7 +51,7 @@ const std::wstring& CKnownFolder::GetDispExt() const
 
 CKnownFolderManager::CKnownFolderManager()
 {
-	CShellThread::Run(FILE_LINE_FUNC, 0, [this]() {
+	CShellThread::GetInstance()->Run([this]() {
 		CComPtr<IKnownFolderManager> pMgr;
 		if (FAILED(pMgr.CoCreateInstance(CLSID_KnownFolderManager, NULL, CLSCTX_INPROC_SERVER))) { return; }
 		CThreadSafeComPtr<IShellFolder> pDesktopFolder;

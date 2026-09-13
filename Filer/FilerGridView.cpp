@@ -927,7 +927,7 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 	}
 
 	Updating = true;
-	(CShellThread::Run("OpenFolder", 0, [this, spFolder,/*parentIdl = Folder->GetParentIdl(), childIdl = Folder->GetChildIdl(), */isReload]()->void {
+	(CShellThread::GetInstance()->Run([this, spFolder,/*parentIdl = Folder->GetParentIdl(), childIdl = Folder->GetChildIdl(), */isReload]()->void {
 
 		//CThreadSafeComPtr<IShellFolder> pParentShellFolder = shell::DesktopBindToShellFolder(parentIdl + childIdl);
 

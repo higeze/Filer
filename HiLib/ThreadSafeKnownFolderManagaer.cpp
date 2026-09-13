@@ -16,7 +16,7 @@ namespace shell
 		CThreadSafeComPtr<IShellFolder> pDesktopFolder;
 		::SHGetDesktopFolder(&pDesktopFolder);
 
-		CShellThread::Run(FILE_LINE_FUNC, 1, [&]->void {
+		CShellThread::GetInstance()->Run([&]->void {
 			std::lock_guard<std::mutex> lock(m_mtx);
 			m_knownFolderIdIdlMap.clear();
 

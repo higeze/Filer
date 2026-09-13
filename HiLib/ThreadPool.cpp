@@ -29,6 +29,9 @@ CThreadPool::CThreadPool(DWORD dwCoInit, size_t threads)
 			//Add to runnning task
 			{
 				std::lock_guard<std::shared_mutex> lock(m_running_mutex);
+				if (!task) {
+					auto a = 1;
+				}
 				m_running_tasks.push_back(task);
 			}
 			//Run
@@ -75,16 +78,16 @@ CThreadPool::~CThreadPool()
 const std::wstring CThreadPool::OutputString()
 {
 	std::wstring log(L"/* ThreadPool Information */\n");
-	log += std::format(L"Thread Pool Count:\t{}\n", CThreadPool::GetInstance()->GetTotalThreadCount());
+	log += std::format(L"Thread Pool Count:\t{}\n", GetTotalThreadCount());
 
-	log += std::format(L"Queued Task:\t{}\n", CThreadPool::GetInstance()->GetQueuedTaskCount());
-	auto queuedTasks = CThreadPool::GetInstance()->GetQueuedTasks();
+	log += std::format(L"Queued Task:\t{}\n", GetQueuedTaskCount());
+	auto queuedTasks = GetQueuedTasks();
 	for (size_t i = 0; i < queuedTasks.size(); i++) {
 		log += std::format(L"[{:2}]:{}\n", i, str2wstr(queuedTasks[i]->Name));
 	}
 
-	log += std::format(L"Running Task:\t{}\n", CThreadPool::GetInstance()->GetRunnningTaskCount());
-	auto runningTasks = CThreadPool::GetInstance()->GetRunningTasks();
+	log += std::format(L"Running Task:\t{}\n", GetRunnningTaskCount());
+	auto runningTasks = GetRunningTasks();
 	for (size_t i = 0; i < runningTasks.size(); i++) {
 		log += std::format(L"[{:2}]:{}\n", i, str2wstr(runningTasks[i]->Name));
 	}

@@ -1063,6 +1063,9 @@
     <ClInclude Include="..\HiLib\ThreadSafeComPtr.h">
       <Filter>HiLib</Filter>
     </ClInclude>
+    <ClInclude Include="..\HiLib\ShellThread.h">
+      <Filter>HiLib\Shell</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirectoryWatcher.cpp">
@@ -1593,6 +1596,9 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\ColoredTextLayout.cpp">
       <Filter>HiLib\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\ShellThread.cpp">
+      <Filter>HiLib\Shell</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

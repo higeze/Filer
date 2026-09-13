@@ -6,6 +6,7 @@
 #include "ShellFunction.h"
 #include "KnownFolderManager.h"
 #include "KnownFolder.h"
+#include "WICImagingFactory.h"
 
 bool GetDirSize(std::wstring path, ULARGE_INTEGER& size, std::function<void()> checkExit)
 {
@@ -121,8 +122,15 @@ const std::wstring& CShellFile::GetDispExt() const
 
 void CShellFile::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND hWnd)
 {
-	HRESULT hr = m_pParentShellFolder.Call(
-		&IShellFolder::SetNameOf,
+	//m_pParentShellFolder.CallAsync(
+	//	&IShellFolder::SetNameOf,
+	//	nullptr,
+	//	m_childIdl.ptr(),
+	//	(wstrNameWoExt + GetDispExt()).c_str(),
+	//	SHGDN_FORPARSING | SHGDN_INFOLDER,
+	//	nullptr);
+
+	m_pParentShellFolder.p->SetNameOf(
 		hWnd,
 		m_childIdl.ptr(),
 		(wstrNameWoExt + GetDispExt()).c_str(),
@@ -132,8 +140,14 @@ void CShellFile::SetFileNameWithoutExt(const std::wstring& wstrNameWoExt, HWND h
 
 void CShellFile::SetExt(const std::wstring& wstrExt, HWND hWnd)
 {
-	HRESULT hr = m_pParentShellFolder.Call(
-		&IShellFolder::SetNameOf,
+	//m_pParentShellFolder.CallAsync(
+	//	&IShellFolder::SetNameOf,
+	//	nullptr,
+	//	m_childIdl.ptr(),
+	//	(GetDispNameWithoutExt() + wstrExt).c_str(),
+	//	SHGDN_FORPARSING | SHGDN_INFOLDER,
+	//	nullptr);
+	m_pParentShellFolder.p->SetNameOf(
 		hWnd,
 		m_childIdl.ptr(),
 		(GetDispNameWithoutExt() + wstrExt).c_str(),
@@ -202,34 +216,96 @@ const FileStorageType& CShellFile::GetFileStorageType() const
 	return m_optFileStorageType.value();
 }
 
-const std::wstring& CShellFile::GetIconKey() const
+const int& CShellFile::GetIconFullIndex() const
 {
-	//if (IsInvalid()) {
-	//	static std::wstring def{L"DEFAULT"};
-	//	return def;
-	//}
-
-	if (!m_optIconKey.has_value()) {
-		static std::set<std::wstring> excludeExtSet({L".exe", L".ico", L".lnk", L"known", L"drive"});
-		std::wstring key = L"DEFAULT";
-		if (!m_absoluteIdl || GetPath().empty()) {
-			key = L"DEFAULT";
-		} else if (!GetDispExt().empty() && excludeExtSet.find(GetDispExt()) == excludeExtSet.end() && GetAttributes() != 0 && GetFileStorageType() == FileStorageType::LocalPhysical) {
-			key = GetDispExt();
-		} else {
-			key = GetPath();
-		}
-		m_optIconKey.emplace(key);
+	if (!m_optIconFullIndex.has_value()) {
+		SHFILEINFO sfi = {};
+		SHGetFileInfo((LPCTSTR)m_absoluteIdl.ptr(),
+			0,
+			&sfi,
+			sizeof(sfi),
+			SHGFI_PIDL | SHGFI_ICON | SHGFI_SYSICONINDEX | SHGFI_OVERLAYINDEX);
+		m_optIconFullIndex.emplace(sfi.iIcon);
 	}
-	return m_optIconKey.value();
+	return m_optIconFullIndex.value();
 }
 
-CIcon CShellFile::GetIcon() const
+const int CShellFile::GetIconIndex() const
 {
-	SHFILEINFO sfi = { 0 };
-	::SHGetFileInfo((LPCTSTR)m_absoluteIdl.ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
-	return CIcon(sfi.hIcon);
+	return GetIconFullIndex() & 0x00FFFFFF;
 }
+
+const int CShellFile::GetIconOverlayIndex() const
+{
+	return GetIconFullIndex() >> 24;
+}
+
+CBitmap CShellFile::GetIconBitmap() const
+{
+	CIcon iconBase = CImageList::GetInstance()->GetIcon(GetIconIndex());
+	FALSE_THROW(iconBase);
+
+	CIcon iconOverlay;
+	if (GetIconOverlayIndex()) {
+		int overlayImageIndex = CImageList::GetInstance()->GetOverlayImage(GetIconOverlayIndex());
+		iconOverlay = CImageList::GetInstance()->GetIcon(overlayImageIndex);
+		FALSE_THROW(iconOverlay);
+	} 
+
+	CDC dc;
+	dc.CreateCompatibleDC(NULL);
+	FALSE_THROW(dc)
+
+	//Create Bitmap
+	BITMAPINFO bmi = {};
+	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmi.bmiHeader.biWidth = 16;
+	bmi.bmiHeader.biHeight = -16; // top-down
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biBitCount = 32;
+	bmi.bmiHeader.biCompression = BI_RGB;
+
+	void* pvBits = nullptr;
+	CBitmap bmp;
+	bmp.CreateDIBSection(nullptr, &bmi, DIB_RGB_COLORS, &pvBits, nullptr, 0);
+	HGDIOBJ old = dc.SelectObject(bmp);
+
+	//Small Icon
+	dc.DrawIconEx(iconBase, CRect(0, 0, 16, 16), 0, nullptr, DI_NORMAL);
+	//Overlay Icon
+	if (iconOverlay) {
+		dc.DrawIconEx(iconOverlay, CRect(0, 0, 16, 16), 0, nullptr, DI_NORMAL);
+	}
+	//Reset DC
+	dc.SelectObject(old);
+
+	return bmp;
+}
+
+//const std::wstring& CShellFile::GetIconKey() const
+//{
+//	if (!m_optIconKey.has_value()) {
+//		static std::set<std::wstring> excludeExtSet({L".exe", L".ico", L".lnk", L"known", L"drive"});
+//		std::wstring key = L"DEFAULT";
+//		if (!m_absoluteIdl || GetPath().empty()) {
+//			key = L"DEFAULT";
+//		} else if (!GetDispExt().empty() && excludeExtSet.find(GetDispExt()) == excludeExtSet.end() && GetAttributes() != 0/* && GetFileStorageType() == FileStorageType::LocalPhysical*/) {
+//			key = GetDispExt();
+//		} else {
+//			key = GetPath();
+//		}
+//		m_optIconKey.emplace(key);
+//	}
+//	return m_optIconKey.value();
+//}
+//
+//CIcon CShellFile::GetIcon() const
+//{
+//	return CImageList::GetInstance()->GetIcon(GetIconIndex());
+//	//SHFILEINFO sfi = { 0 };
+//	//::SHGetFileInfo((LPCTSTR)m_absoluteIdl.ptr(), 0, &sfi, sizeof(SHFILEINFO), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS);
+//	//return CIcon(sfi.hIcon);
+//}
 
 
 //std::pair<std::shared_ptr<CIcon>, FileIconStatus> CShellFile::GetLockIcon()

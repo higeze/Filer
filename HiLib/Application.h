@@ -9,7 +9,7 @@ protected:
 public:
 	void SetDialog(HWND hDlg) { m_hDlgModeless = hDlg; }
 	virtual void Init() = 0;
-	virtual int Run()
+	virtual int RunInterface()
 	{
 		BOOL ret;
 		MSG msg;

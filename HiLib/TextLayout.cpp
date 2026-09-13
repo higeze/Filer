@@ -24,9 +24,13 @@ LONG CTextLayout::GetParagraphTextSize() const
 
 FLOAT CTextLayout::GetWidth() const
 {
-	CSizeF szMin = m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pControl->GetFormat(), L"A");
-	FLOAT width = (*std::max_element(Paragraphs->cbegin(), Paragraphs->cend(), [](const std::shared_ptr<CParagraphLayout>& pLhs, const std::shared_ptr<CParagraphLayout>& pRhs)->bool {return pLhs->GetWidth() < pRhs->GetWidth(); }))->GetWidth();
-	return (std::max)(szMin.width, width);
+	if (!Paragraphs->empty()) {
+		CSizeF szMin = m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pControl->GetFormat(), L"A");
+		FLOAT width = (*std::max_element(Paragraphs->cbegin(), Paragraphs->cend(), [](const std::shared_ptr<CParagraphLayout>& pLhs, const std::shared_ptr<CParagraphLayout>& pRhs)->bool {return pLhs->GetWidth() < pRhs->GetWidth(); }))->GetWidth();
+		return (std::max)(szMin.width, width);
+	} else {
+		return 0.f;
+	}
 }
 
 void CTextLayout::SetWidth(FLOAT width)
@@ -253,7 +257,7 @@ size_t CTextLayout::HitTestCaretPoint(CPointF point) const
 	}
 
 	if (iter == Paragraphs.cend()) {
-		if (point.y < 0) {
+		if (point.y < 0 || m_pControl->Text->empty()) {
 			return 0;
 		} else {// point.y >= bottom
 			return m_pControl->Text->size() + 1;
