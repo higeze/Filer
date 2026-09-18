@@ -49,21 +49,11 @@ FLOAT CTextLayout::GetHeight() const
 	return (std::max)(szMin.height, height);
 }
 
-//CRectF CText::HitTestParagraphPosition(UINT32 position) const
-//{
-//	size_t accumulate = 0;
-//	for (auto iter = Paragraphs.cbegin(); iter != Paragraphs.cend(); ++iter) {
-//		if (position < accumulate + iter->GetText().size()) {
-//			auto rect = iter->HitTestTextPosition(position - accumulate);
-//			rect.top += accumulate;
-//			return rect;
-//		}
-//		else {
-//			accumulate += iter->GetText().size();
-//		}
-//	}
-//	return CRectF();
-//}
+CRectF CTextLayout::HitTestNullRect() const
+{
+	auto char_size = m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pControl->GetFormat(), L"a");
+	return CRectF(0.f, 0.f, char_size.width, char_size.height);
+}
 
 CRectF CTextLayout::HitTestTextPosition(UINT32 position) const
 {
@@ -79,10 +69,7 @@ CRectF CTextLayout::HitTestTextPosition(UINT32 position) const
 			size += (*iter)->Text->size();
 		}
 	}
-	//TODO HIGH Other CRectF() should be same as this lines
-	auto char_size = m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pControl->GetFormat(), L"a");
-	return CRectF(0.f, 0.f, char_size.width, char_size.height);
-	return CRectF();
+	return HitTestNullRect();
 }
 
 std::tuple<size_t, CRectF> CTextLayout::HitTestParagraphFirstPosition(UINT32 position) const
@@ -98,7 +85,7 @@ std::tuple<size_t, CRectF> CTextLayout::HitTestParagraphFirstPosition(UINT32 pos
 			size += (*iter)->Text->size();
 		}
 	}
-	return { 0, CRectF() };
+	return { 0, HitTestNullRect()};
 }
 
 std::tuple<size_t, CRectF> CTextLayout::HitTestParagraphLastPosition(UINT32 position) const
@@ -114,22 +101,11 @@ std::tuple<size_t, CRectF> CTextLayout::HitTestParagraphLastPosition(UINT32 posi
 			size += (*iter)->Text->size();
 		}
 	}
-	return { 0, CRectF() };
+	return { 0, HitTestNullRect() };
 }
 
 CRectF CTextLayout::HitTestCaretTextPosition(UINT32 position) const
 {
-	//if (m_pControl->Text->size() == 0) {
-	//	auto size = m_pControl->GetWndPtr()->GetDirectPtr()->CalcTextSize(m_pControl->GetFormat(), L"a");
-	//	return CRectF(0.f, 0.f, size.width, size.height);
-	//} else if (m_pControl->Text->size() == (size_t)position) {
-	//	auto rect = HitTestTextPosition(position - 1);
-	//	rect.left = rect.right;
-	//	return rect;
-	//} else {
-	//	return HitTestTextPosition(position);
-	//}
-
 	FLOAT height = 0;
 	size_t size = 0;
 	for (auto iter = Paragraphs.cbegin(); iter != Paragraphs.cend(); ++iter) {
@@ -163,7 +139,7 @@ CRectF CTextLayout::HitTestSelectTextPosition(UINT32 position) const
 			size += (*iter)->Text->size();
 		}
 	}
-	return CRectF();
+	return HitTestNullRect();
 }
 
 std::vector<CRectF> CTextLayout::HitTestTextRange(UINT32 position, UINT32 length) const
@@ -264,6 +240,7 @@ size_t CTextLayout::HitTestCaretPoint(CPointF point) const
 		}
 	}
 
+	return 0;
 }
 
 void CTextLayout::Clear()

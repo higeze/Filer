@@ -27,6 +27,7 @@ public:
 
 	FLOAT GetHeight() const;
 
+	CRectF HitTestNullRect() const;
 	CRectF HitTestTextPosition(UINT32 position) const;
 	std::tuple<size_t, CRectF> HitTestParagraphFirstPosition(UINT32 position) const;
 	std::tuple<size_t, CRectF> HitTestParagraphLastPosition(UINT32 position) const;
