@@ -404,6 +404,7 @@ public:
 	virtual void OnLButtonSnglClk(const LButtonSnglClkEvent& e) {}
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) {}
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) {}
+	virtual void OnLButtonMoveDrag(const MouseMoveEvent& e) {}
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) {}
 
 	virtual void OnRButtonDown(const RButtonDownEvent& e) {}

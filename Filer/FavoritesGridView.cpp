@@ -64,8 +64,10 @@ void CFavoritesGridView::OnKeyDown(const KeyDownEvent& e)
 
 void CFavoritesGridView::OnCommandDelete()
 {
-	ItemsSource.erase(ItemsSource.get_unconst()->cbegin() + m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>());
-	SubmitUpdate();
+	if (m_spCursorer->GetFocusedCell()) {
+		ItemsSource.erase(ItemsSource.get_unconst()->cbegin() + m_spCursorer->GetFocusedCell()->GetRowPtr()->GetIndex<VisTag>());
+		SubmitUpdate();
+	}
 }
 
 class CFavoriteEditDlg : public CD2DWDialog2

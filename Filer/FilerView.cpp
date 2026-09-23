@@ -4,6 +4,7 @@
 #include "TextBox.h"
 #include "Button.h"
 #include "ShellFileFactory.h"
+#include "ThreadSafeComPtr.h"
 
 /*************************/
 /* CRecentFolderGridView */
@@ -16,47 +17,49 @@ CRecentFolderGridView::CRecentFolderGridView(CD2DWControl* pParentControl)
 	arg<"frzcolcnt"_s>() = 0,
 	arg<"columns"_s>() = std::vector<std::shared_ptr<CColumn>>{
 		std::make_shared<CFileIconPathColumn<std::shared_ptr<CShellFile>>>(this),
-		std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(nullptr)},
-	arg<"namerow"_s>() = std::make_shared<CHeaderRow>(nullptr),
-	arg<"fltrow"_s>() = std::make_shared<CRow>(nullptr),
+		std::make_shared<CFileLastWriteColumn<std::shared_ptr<CShellFile>>>(this)},
+	arg<"namerow"_s>() = std::make_shared<CHeaderRow>(this),
+	arg<"fltrow"_s>() = std::make_shared<CRow>(this),
 	arg<"frzrowcnt"_s>() = 2)
 {
-	auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Recent);
-	CComPtr<IEnumIDList> pEnumIdl;
-	if (SUCCEEDED(spKnownFolder->GetShellFolderPtr().Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, &pEnumIdl)) && pEnumIdl) {
+	CShellThread::GetInstance()->Run([this]()->void {
+		auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Recent);
+		CThreadSafeComPtr<IEnumIDList> pEnumIdl;
+		if (SUCCEEDED(spKnownFolder->GetShellFolderPtr().Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, &pEnumIdl)) && pEnumIdl) {
 
-		//Enumerate Links
-		std::vector<std::shared_ptr<CShellFile>> links;
-		CIDL nextIdl;
-		while (SUCCEEDED(pEnumIdl->Next(1, nextIdl.ptrptr(), nullptr)) && nextIdl) {
-			links.push_back(spKnownFolder->CreateShExFileFolder(std::move(nextIdl)));
-			nextIdl.Clear();
-		}
-		//Sort
-		std::ranges::sort(links, [](const std::shared_ptr<CShellFile>& left, const std::shared_ptr<CShellFile>& right) {
-			auto leftTime = left->GetFileTimes().value().LastWriteTime;
-			auto rightTime = right->GetFileTimes().value().LastWriteTime;
-			return ::CompareFileTime(&leftTime, &rightTime) > 0;
-		});
-		//ItemsSource
-		for (const std::shared_ptr<CShellFile>& spFile : links) {
-			CComPtr<IShellLink> pShellLink;
-			FAILED_CONTINUE(pShellLink.CoCreateInstance(CLSID_ShellLink));
-			CComPtr<IPersistFile> pPersistFile;
-			FAILED_CONTINUE(pShellLink->QueryInterface(IID_IPersistFile, (LPVOID*)&pPersistFile));
-			FAILED_CONTINUE(pPersistFile->Load(spFile->GetPath().c_str(), STGM_READ));
-			FAILED_CONTINUE(pShellLink->Resolve(NULL, SLR_UPDATE | SLR_NO_UI));
-			CIDL absoluteIdl;
-			FAILED_CONTINUE(pShellLink->GetIDList(absoluteIdl.ptrptr()));
-			CIDL parentIdl = absoluteIdl.CloneParentIDL();
-			CThreadSafeComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
+			//Enumerate Links
+			std::vector<std::shared_ptr<CShellFile>> links;
+			CIDL nextIdl;
+			while (SUCCEEDED(pEnumIdl.Call(&IEnumIDList::Next, 1, nextIdl.ptrptr(), nullptr)) && nextIdl) {
+				links.push_back(spKnownFolder->CreateShExFileFolder(std::move(nextIdl)));
+				nextIdl.Clear();
+			}
+			//Sort
+			//std::ranges::sort(links, [](const std::shared_ptr<CShellFile>& left, const std::shared_ptr<CShellFile>& right) {
+			//	auto leftTime = left->GetFileTimes().value().LastWriteTime;
+			//	auto rightTime = right->GetFileTimes().value().LastWriteTime;
+			//	return ::CompareFileTime(&leftTime, &rightTime) > 0;
+			//});
+			//ItemsSource
+			for (const std::shared_ptr<CShellFile>& spFile : links) {
+				CThreadSafeComPtr<IShellLink> pShellLink;
+				FAILED_CONTINUE(pShellLink.CoCreateInstance(CLSID_ShellLink));
+				CThreadSafeComPtr<IPersistFile> pPersistFile;
+				FAILED_CONTINUE(pShellLink.QueryInterface(&pPersistFile));
+				FAILED_CONTINUE(pPersistFile.Call(&IPersistFile::Load, spFile->GetPath().c_str(), STGM_READ));
+				FAILED_CONTINUE(pShellLink.Call(&IShellLink::Resolve, nullptr, SLR_UPDATE | SLR_NO_UI));
+				CIDL absoluteIdl;
+				FAILED_CONTINUE(pShellLink.Call(&IShellLink::GetIDList, absoluteIdl.ptrptr()));
+				CIDL parentIdl = absoluteIdl.CloneParentIDL();
+				CThreadSafeComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
 
-			if (auto p = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pParentFolder, parentIdl, std::move(absoluteIdl.CloneLastID())));
-				p && p->GetIsExist()) {
-				GetItemsSource().push_back(p);
+				if (auto p = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pParentFolder, parentIdl, std::move(absoluteIdl.CloneLastID())));
+					p && p->GetIsExist()) {
+					GetItemsSource().push_back(p);
+				}
 			}
 		}
-	}
+	}).get();
 }
 
 void CRecentFolderGridView::OnPaint(const PaintEvent& e)

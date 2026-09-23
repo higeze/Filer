@@ -39,6 +39,15 @@ public:
 	reactive_property(reactive_property&&) noexcept = default;
 	reactive_property& operator=(reactive_property&&) noexcept = default;
 
+	auto operator<=>(const reactive_property& rhs) const
+	{
+		return m_value <=> rhs.m_value;
+	}
+	bool operator==(const reactive_property& rhs) const
+	{
+		return m_value == rhs.m_value;
+	}
+
 	// 再入安全な実装:
 	// - 通知中に set が呼ばれたら m_pending に積む
 	// - 現在の通知が終わった後にキューを順次処理する
@@ -175,11 +184,12 @@ public:
 
 	auto operator<=>(const reactive_property_ptr& rhs) const
 	{
-		return m_preactive <=> rhs.m_preactive;
+		return *m_preactive <=> *rhs.m_preactive;
 	}
 	bool operator==(const reactive_property_ptr& rhs) const
 	{
-		return m_preactive == rhs.m_preactive;
+		//shared_ptr compared raw ptr adress
+		return *m_preactive == *rhs.m_preactive;
 	}
 
 	explicit operator bool() const noexcept

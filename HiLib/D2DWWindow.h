@@ -12,6 +12,7 @@
 
 class CDispatcher;
 class CDropTargetManager;
+class CTabHeaderControl;
 
 class CD2DWWindow:public CWnd, public CD2DWControl
 {
@@ -27,6 +28,7 @@ protected:
 	std::unique_ptr<CDropTargetManager> m_pDropTargetManager;
 
 	std::shared_ptr<CD2DWControl> m_pCapturedControl;
+
 	std::shared_ptr<CD2DWControl> m_pToolTip;
 	CDeadlineTimer m_toolTipDeadlineTimer;
 
@@ -68,20 +70,7 @@ public:
 
 	CDeadlineTimer& GetToolTipDeadlineTimer() { return m_toolTipDeadlineTimer; }
 
-	//template<class _Control>
-	//void CloseChildControl()
-	//{
-	//	for(std::shared_ptr<CD2DWControl>& spControl : m_childControls) {
-	//		if (auto p = std::dynamic_pointer_cast<_Control>(spControl)) {
-	//			spControl->OnClose(CloseEvent(this, NULL, NULL));
-	//		}
-	//	}
-	//}
-
-
 public:
-
-
 	template<typename TEvent>
 	std::function<LRESULT(UINT, WPARAM, LPARAM, BOOL&)> Normal_Message(void(CD2DWWindow::*memberfunc)(const TEvent&))
 	{
@@ -110,27 +99,14 @@ public:
 	/********************/
 	/* Message Tempalte */
 	/********************/
+	std::vector<std::shared_ptr<CD2DWControl>> GetTunnelControlsFromPoint(const CPointF& pointInWnd) const;
 	template<typename _Bubble, typename _Event>
 	void BubbleMouseMessage(_Bubble&& bubble, _Event&& e)
 	{
 		if (m_pCapturedControl) {
 			(m_pCapturedControl.get()->*bubble)(e);
 		} else {
-			std::vector<std::shared_ptr<CD2DWControl>> tunnelControls;
-			std::shared_ptr<CD2DWControl> pParentControl = std::dynamic_pointer_cast<CD2DWControl>(shared_from_this());
-			while (1) {
-				std::vector<std::shared_ptr<CD2DWControl>> childControls = pParentControl->m_childControls;
-				auto iter = std::find_if(childControls.crbegin(), childControls.crend(),
-					[&](const std::shared_ptr<CD2DWControl>& pChildControl) {
-						return *pChildControl->IsEnabled && pChildControl->GetRectInWnd().PtInRect(e.PointInWnd);
-					});
-				if (iter != childControls.crend()) {
-					tunnelControls.push_back(*iter);
-					pParentControl = *iter;
-				} else {
-					break;
-				}
-			}
+			std::vector<std::shared_ptr<CD2DWControl>> tunnelControls = GetTunnelControlsFromPoint(e.PointInWnd);
 
 			for (auto iter = tunnelControls.rbegin(); iter != tunnelControls.rend(); iter++) {
 				(iter->get()->*bubble)(e);
@@ -153,45 +129,6 @@ public:
 			}
 			pFocusedControl = std::dynamic_pointer_cast<CD2DWControl>(pFocusedControl->m_pParentControl->shared_from_this());
 		};
-
-
-		////Cur Focused
-		//std::vector<std::shared_ptr<CD2DWControl>> tunnelCurControls;
-		//std::shared_ptr<CD2DWControl> pParentControl = std::dynamic_pointer_cast<CD2DWControl>(shared_from_this());
-		//while (1) {
-		//	if (pParentControl->m_pFocusedControl) {
-		//		tunnelCurControls.push_back(pParentControl->m_pFocusedControl);
-		//		pParentControl = pParentControl->m_pFocusedControl;
-		//	} else {
-		//		break;
-		//	}
-		//}
-		////New Focused
-		//std::vector<std::shared_ptr<CD2DWControl>> bubbleNewControls;
-		//std::shared_ptr<CD2DWControl> pChildControl = pControl;
-		//do {
-		//	if (pChildControl->m_pParentControl) {
-		//		bubbleNewControls.push_back(pChildControl);
-		//		pChildControl = std::dynamic_pointer_cast<CD2DWControl>(pChildControl->m_pParentControl->shared_from_this());
-		//	} else {
-		//		break;
-		//	}
-		//} while (true);
-
-		////Kill Focus
-		//for (auto iter = tunnelCurControls.rbegin(); iter != tunnelCurControls.rend(); iter++) {
-		//	if (std::find(bubbleNewControls.begin(), bubbleNewControls.end(), *iter) == bubbleNewControls.end()) {
-		//		(*iter)->m_pParentControl->m_pFocusedControl = nullptr;
-		//		(*iter)->OnKillFocus(KillFocusEvent(GetWndPtr(), 0, 0, nullptr));
-		//	}
-		//}
-		////Focus
-		//for (auto iter = bubbleNewControls.begin(); iter != bubbleNewControls.end(); iter++) {
-		//	if (std::find(tunnelCurControls.rbegin(), tunnelCurControls.rend(), *iter) == tunnelCurControls.rend()) {
-		//		(*iter)->m_pParentControl->m_pFocusedControl = *iter;
-		//		(*iter)->OnSetFocus(SetFocusEvent(GetWndPtr(), 0, 0, nullptr));
-		//	}
-		//}
 	}
 
 	std::vector<std::shared_ptr<CD2DWControl>> GetCurrentFocusedTunnelControls() const;
@@ -323,6 +260,7 @@ public:
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override { BubbleMouseMessage(&CD2DWControl::OnLButtonDblClk, e); }
 
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override { BubbleMouseMessage(&CD2DWControl::OnLButtonBeginDrag, e); }
+	virtual void OnLButtonMoveDrag(const MouseMoveEvent& e) override { BubbleMouseMessage(&CD2DWControl::OnMouseMove, e); }
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override { BubbleMouseMessage(&CD2DWControl::OnLButtonEndDrag, e); }
 	
 	virtual void OnRButtonDown(const RButtonDownEvent& e) override { BubbleMouseMessageAndFocus(&CD2DWControl::OnRButtonDown, e); }

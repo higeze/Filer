@@ -142,6 +142,32 @@ void CTabHeaderControl::OnCreate(const CreateEvt& e)
 	m_spButton->OnCreate(CreateEvt(GetWndPtr(), this, CRectF()));
 }
 
+void CTabHeaderControl::PaintOverlay(const CPointF& pt)
+{
+	auto pTabControl = static_cast<CTabControl*>(m_pParentControl);
+	auto offset = pt - RenderRect().LeftTop();
+	auto rect = RenderRect().OffsetRectCopy(offset);
+	auto iconRect = m_iconRect.OffsetRectCopy(offset);
+	auto textRect = m_textRect.OffsetRectCopy(offset);
+	auto bkgndFill = GetNormalBackground();
+
+	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(bkgndFill, rect);
+	GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), CPointF(rect.left, rect.bottom), rect.LeftTop());
+	GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), rect.LeftTop(), CPointF(rect.right, rect.top));
+	GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), CPointF(rect.right, rect.top), CPointF(rect.right, rect.bottom));
+
+	GetWndPtr()->GetDirectPtr()->DrawSolidLine(GetNormalBorder(), CPointF(rect.left, rect.bottom), CPointF(rect.right, rect.bottom));
+
+	auto iterIcon = pTabControl->m_itemsHeaderIconTemplate.find(typeid(*pTabControl->ItemsSource->at(GetIndex())).name());
+	iterIcon->second.operator()(pTabControl->ItemsSource->at(GetIndex()), iconRect - GetPadding());
+
+	auto iterText = pTabControl->m_itemsHeaderTemplate.find(typeid(*pTabControl->ItemsSource->at(GetIndex())).name());
+	auto text = iterText->second.operator()(pTabControl->ItemsSource->at(GetIndex()));
+	if (!text.empty()) {
+		GetWndPtr()->GetDirectPtr()->DrawTextLayout(GetFormat(), text, textRect - GetPadding());
+	}
+}
+
 void CTabHeaderControl::OnPaint(const PaintEvent& e)
 {
 	auto pTabControl = static_cast<CTabControl*>(m_pParentControl);
@@ -307,37 +333,37 @@ CRectF CTabControl::MARGIN = CRectF(1.f, 1.f, 1.f, 1.f);
 /* Machine */
 /***********/
 
-struct CTabControl::Machine
-{
-	class Normal {};
-	class Dragging {};
-	class Error {};
-
-	template<class TRect, class R, class... Ts>
-	auto call(R(TRect::* f)(Ts...))const
-	{
-		return [f](TRect* self, Ts... args) { return (self->*f)(args...); };
-	}
-
-	auto operator()() const noexcept
-	{
-		using namespace sml;
-		return make_transition_table(
-			*state<Normal> +event<LButtonBeginDragEvent>[call(&CTabControl::Guard_LButtonBeginDrag_Normal_To_Dragging)] = state<Dragging>,
-			state<Normal> +event<LButtonBeginDragEvent> / call(&CTabControl::Normal_LButtonBeginDrag),
-
-			state<Normal> +event<MouseMoveEvent> / call(&CTabControl::Normal_MouseMove),
-			
-			//Dragging
-			state<Dragging> +on_entry<LButtonBeginDragEvent> / call(&CTabControl::Dragging_OnEntry),
-			state<Dragging> +on_exit<LButtonEndDragEvent> / call(&CTabControl::Dragging_OnExit),
-			state<Dragging> +event<LButtonEndDragEvent> = state<Normal>,
-			state<Dragging> +event<MouseMoveEvent> / call(&CTabControl::Dragging_MouseMove),
-			//Error handler
-			*state<Error> +exception<std::exception> / call(&CTabControl::Error_StdException) = state<Normal>
-		);
-	}
-};
+//struct CTabControl::Machine
+//{
+//	class Normal {};
+//	class Dragging {};
+//	class Error {};
+//
+//	template<class TRect, class R, class... Ts>
+//	auto call(R(TRect::* f)(Ts...))const
+//	{
+//		return [f](TRect* self, Ts... args) { return (self->*f)(args...); };
+//	}
+//
+//	auto operator()() const noexcept
+//	{
+//		using namespace sml;
+//		return make_transition_table(
+//			*state<Normal> +event<LButtonBeginDragEvent>[call(&CTabControl::Guard_LButtonBeginDrag_Normal_To_Dragging)] = state<Dragging>,
+//			state<Normal> +event<LButtonBeginDragEvent> / call(&CTabControl::Normal_LButtonBeginDrag),
+//
+//			state<Normal> +event<MouseMoveEvent> / call(&CTabControl::Normal_MouseMove),
+//			
+//			//Dragging
+//			state<Dragging> +on_entry<LButtonBeginDragEvent> / call(&CTabControl::Dragging_OnEntry),
+//			state<Dragging> +on_exit<LButtonEndDragEvent> / call(&CTabControl::Dragging_OnExit),
+//			state<Dragging> +event<LButtonEndDragEvent> = state<Normal>,
+//			state<Dragging> +event<MouseMoveEvent> / call(&CTabControl::Dragging_MouseMove),
+//			//Error handler
+//			*state<Error> +exception<std::exception> / call(&CTabControl::Error_StdException) = state<Normal>
+//		);
+//	}
+//};
 
 /***************/
 /* Constructor */
@@ -347,9 +373,9 @@ struct CTabControl::Machine
 CTabControl::CTabControl(CD2DWControl* pParentControl)
 	:CD2DWControl(pParentControl), SelectedIndex(-1), 
 	m_headers([](std::shared_ptr<CTabHeaderControl>& sp, size_t idx) { sp->SetIndex(idx); }),
-	m_addHeader(std::make_shared<CAddTabHeaderControl>(this)),
-	m_pMachine(new boost::sml::sm<Machine>{ this }),
-	m_dragFrom(-1), m_dragTo(-1)
+	m_addHeader(std::make_shared<CAddTabHeaderControl>(this))//,
+	//m_pMachine(new boost::sml::sm<Machine>{ this }),
+	//m_dragFrom(-1), m_dragTo(-1)
 {}
 
 CTabControl::~CTabControl() = default;
@@ -490,6 +516,8 @@ void CTabControl::OnCreate(const CreateEvt& e)
 
 					if (!ItemsSource->empty()) {
 						SelectedIndex.force_notify_set((std::min)((size_t)notify.old_starting_index, ItemsSource->size() - 1));
+					} else {
+						SelectedIndex.force_notify_set(-1);
 					}
 					break;
 				}
@@ -540,7 +568,7 @@ void CTabControl::OnCreate(const CreateEvt& e)
 	//SelectedIndex
 	SelectedIndex.subscribe( 
 		[this](const int& value)->void {
-			if (GetWndPtr()->m_hWnd) {
+			if (GetWndPtr()->m_hWnd && 0 <= value && value < ItemsSource->size()) {
 				auto spData = ItemsSource->at(value);
 				auto type_name = typeid(*spData).name();
 				auto spControl = m_itemsControlTemplate[type_name](spData);
@@ -554,25 +582,16 @@ void CTabControl::OnCreate(const CreateEvt& e)
 					m_spCurControl->IsEnabled.set(true);
 				}
 				GetWndPtr()->SetFocusToControl(spControl);
+			} else {
+				m_spCurControl.reset();
 			}
-			//for (auto p : m_childControls) {
-			//	if (std::string(typeid(*p).name()).find("CFilerGridView") != std::string::npos) {
-			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
-			//	} else if (std::string(typeid(*p).name()).find("CToDoGridView") != std::string::npos) {
-			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
-			//	} else if (std::string(typeid(*p).name()).find("CTextEditor") != std::string::npos){
-			//		::OutputDebugStringA(fmt::format("{}:{}", typeid(*p).name(), p->GetIsEnabled().get()).c_str());
-			//	}
-			//}
 		},shared_from_this());
 
 
 	GetContentRect = [rect = CRectF(), this]()mutable->CRectF&
 	{
 		rect = RenderRect();
-		if (!m_headers.empty()) {
-			rect.top = m_headers.back()->GetRectInWnd().bottom;
-		}
+		rect.top = m_addHeader->GetRectInWnd().bottom;
 		return rect;
 	};
 
@@ -587,34 +606,26 @@ void CTabControl::OnPaint(const PaintEvent& e)
 {
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
-	if (*SelectedIndex >= 0) {
-		//Content
-		const auto& contentRc = GetContentRect();
-		GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(GetNormalBorder(), contentRc);
+	//Content
+	const auto& contentRc = GetContentRect();
+	GetWndPtr()->GetDirectPtr()->DrawSolidRectangleByLine(GetNormalBorder(), contentRc);
 
-		//Header, Paint selected header on last
-		for (const auto& pHeader : m_headers) {
-			if (pHeader->GetIndex() != *SelectedIndex) {
-				pHeader->OnPaint(e);
-			}
+	//Header, Paint selected header on last
+	for (const auto& pHeader : m_headers) {
+		if (pHeader->GetIndex() != *SelectedIndex) {
+			pHeader->OnPaint(e);
 		}
-		m_addHeader->OnPaint(e);
+	}
+	m_addHeader->OnPaint(e);
+
+	if (!m_headers.empty()) {
 		m_headers[*SelectedIndex]->OnPaint(e);
-
-		//Move line
-		if (m_dragTo >= 0 && (size_t)m_dragTo < m_headers.size()) {
-			GetWndPtr()->GetDirectPtr()->DrawSolidLine(SolidLine(1.f, 0.f, 0.f, 1.f, 2.f), 
-				m_headers[m_dragTo]->GetRectInWnd().LeftTop(), 
-				CPointF(m_headers[m_dragTo]->GetRectInWnd().left, m_headers[m_dragTo]->GetRectInWnd().bottom));
-		} else if (m_dragTo == m_headers.size()) {
-			GetWndPtr()->GetDirectPtr()->DrawSolidLine(SolidLine(1.f, 0.f, 0.f, 1.f, 2.f), 
-				CPointF(m_headers.back()->GetRectInWnd().right, m_headers.back()->GetRectInWnd().top),
-				CPointF(m_headers.back()->GetRectInWnd().right, m_headers.back()->GetRectInWnd().bottom));
-		}
-
-		//Control
+	}
+	//Control
+	if (m_spCurControl) {
 		m_spCurControl->OnPaint(e);
 	}
+
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PopAxisAlignedClip();
 }
 
@@ -640,9 +651,11 @@ CSizeF CTabControl::MeasureOverride(const CSizeF& availableSize)
 	//m_addHeader->MeasureDirty.set(true);
 	m_addHeader->Measure(availableSize);
 
-	m_spCurControl->Measure(availableSize);
+	if (m_spCurControl) {
+		m_spCurControl->Measure(availableSize);
+	}
 
-	return m_spCurControl->DesiredSize();
+	return availableSize;
 }
 
 void CTabControl::ArrangeOverride(const CRectF& rc)
@@ -713,62 +726,62 @@ void CTabControl::OnKeyDown(const KeyDownEvent& e)
 //
 
 
-void CTabControl::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pMachine->process_event(e); }
-void CTabControl::OnLButtonEndDrag(const LButtonEndDragEvent& e) { m_pMachine->process_event(e); }
-void CTabControl::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); }
+//void CTabControl::OnLButtonBeginDrag(const LButtonBeginDragEvent& e) { m_pMachine->process_event(e); }
+//void CTabControl::OnLButtonEndDrag(const LButtonEndDragEvent& e) { m_pMachine->process_event(e); }
+//void CTabControl::OnMouseMove(const MouseMoveEvent& e) { m_pMachine->process_event(e); }
 
-bool CTabControl::Guard_LButtonBeginDrag_Normal_To_Dragging(const LButtonBeginDragEvent& e)
-{
-	auto iter = std::find_if(m_headers.cbegin(), m_headers.cend(),
-		[&](const std::shared_ptr<CTabHeaderControl>& x) {
-			return *x->IsEnabled && x->GetRectInWnd().PtInRect(e.PointInWnd);
-		});
-
-	return iter != m_headers.cend();
-}
+//bool CTabControl::Guard_LButtonBeginDrag_Normal_To_Dragging(const LButtonBeginDragEvent& e)
+//{
+//	auto iter = std::find_if(m_headers.cbegin(), m_headers.cend(),
+//		[&](const std::shared_ptr<CTabHeaderControl>& x) {
+//			return *x->IsEnabled && x->GetRectInWnd().PtInRect(e.PointInWnd);
+//		});
+//
+//	return iter != m_headers.cend();
+//}
 
 void CTabControl::Normal_LButtonBeginDrag(const LButtonBeginDragEvent& e){ CD2DWControl::OnLButtonBeginDrag(e); }
 void CTabControl::Normal_LButtonEndDrag(const LButtonEndDragEvent& e){ CD2DWControl::OnLButtonEndDrag(e); }
 void CTabControl::Normal_MouseMove(const MouseMoveEvent& e) { CD2DWControl::OnMouseMove(e); }
 	
-void CTabControl::Dragging_OnEntry(const LButtonBeginDragEvent& e)
-{
-	auto iter = std::find_if(m_headers.cbegin(), m_headers.cend(),
-		[&](const std::shared_ptr<CTabHeaderControl>& x) {
-			return *x->IsEnabled && x->GetRectInWnd().PtInRect(e.PointInWnd);
-		});
-
-	if (iter != m_headers.cend()) {
-		m_dragFrom = std::distance(m_headers.cbegin(), iter);
-	} else {
-		m_dragFrom = -1;
-	}
-	e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
-}
-
-void CTabControl::Dragging_OnExit(const LButtonEndDragEvent& e)
-{
-	auto iter = FindPtInDraggingHeaderRect(e.PointInWnd);
-	m_dragTo = std::distance(m_headers.cbegin(), iter);
-
-	if (m_dragFrom != m_dragTo) {
-		auto temp = ItemsSource->at(m_dragFrom);
-		ItemsSource.erase(ItemsSource->cbegin() + m_dragFrom);
-		m_dragTo = m_dragTo > m_dragFrom ? m_dragTo - 1 : m_dragTo;
-		ItemsSource.insert(ItemsSource->cbegin() + m_dragTo, temp);
-		
-		ArrangeDirty.set(true);
-	}
-	m_dragFrom = -1;
-	m_dragTo = -1;
-	GetWndPtr()->ReleaseCapturedControlPtr();
-}
-
-void CTabControl::Dragging_MouseMove(const MouseMoveEvent& e)
-{
-	auto iter = FindPtInDraggingHeaderRect(e.PointInWnd);
-	m_dragTo = std::distance(m_headers.cbegin(), iter);
-}
+//void CTabControl::Dragging_OnEntry(const LButtonBeginDragEvent& e)
+//{
+//	auto iter = std::find_if(m_headers.cbegin(), m_headers.cend(),
+//		[&](const std::shared_ptr<CTabHeaderControl>& x) {
+//			return *x->IsEnabled && x->GetRectInWnd().PtInRect(e.PointInWnd);
+//		});
+//
+//	if (iter != m_headers.cend()) {
+//		m_dragFrom = std::distance(m_headers.cbegin(), iter);
+//	} else {
+//		m_dragFrom = -1;
+//	}
+//	e.WndPtr->SetCapturedControlPtr(std::dynamic_pointer_cast<CD2DWControl>(shared_from_this()));
+//}
+//
+//void CTabControl::Dragging_OnExit(const LButtonEndDragEvent& e)
+//{
+//	auto iter = FindPtInDraggingHeaderRect(e.PointInWnd);
+//	m_dragTo = std::distance(m_headers.cbegin(), iter);
+//
+//	if (m_dragFrom != m_dragTo) {
+//		auto temp = ItemsSource->at(m_dragFrom);
+//		ItemsSource.erase(ItemsSource->cbegin() + m_dragFrom);
+//		m_dragTo = m_dragTo > m_dragFrom ? m_dragTo - 1 : m_dragTo;
+//		ItemsSource.insert(ItemsSource->cbegin() + m_dragTo, temp);
+//		
+//		ArrangeDirty.set(true);
+//	}
+//	m_dragFrom = -1;
+//	m_dragTo = -1;
+//	GetWndPtr()->ReleaseCapturedControlPtr();
+//}
+//
+//void CTabControl::Dragging_MouseMove(const MouseMoveEvent& e)
+//{
+//	auto iter = FindPtInDraggingHeaderRect(e.PointInWnd);
+//	m_dragTo = std::distance(m_headers.cbegin(), iter);
+//}
 
 void CTabControl::Error_StdException(const std::exception& e){}
 

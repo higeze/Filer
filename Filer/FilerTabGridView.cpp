@@ -462,13 +462,17 @@ void CFilerTabGridView::OnKeyDown(const KeyDownEvent& e)
 		if(auto spOther = m_wpOther.lock()){
 			if (auto spCurView = std::dynamic_pointer_cast<CFilerView>(GetCurrentControlPtr())) {
 				std::shared_ptr<TabData> spNewData;
-				if (boost::iequals(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt(), L".txt")) {
+				if (boost::iequals(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt(), L".txt")){
+					spCurView->GetFileGridPtr()->GetFocusedFile()->AddToRecentDocs();
 					spNewData = std::make_shared<TextTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
 				} else if (boost::iequals(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt(), L".pdf")) {
+					spCurView->GetFileGridPtr()->GetFocusedFile()->AddToRecentDocs();
 					spNewData = std::make_shared<PdfTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
 				} else if (std::any_of(imageExts.cbegin(), imageExts.cend(), [ext = spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+					spCurView->GetFileGridPtr()->GetFocusedFile()->AddToRecentDocs();
 					spNewData = std::make_shared<ImageTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
 				} else if (std::any_of(previewExts.cbegin(), previewExts.cend(), [ext = spCurView->GetFileGridPtr()->GetFocusedFile()->GetPathExt()](const auto& imageExt)->bool { return boost::iequals(ext, imageExt); })) {
+					spCurView->GetFileGridPtr()->GetFocusedFile()->AddToRecentDocs();
 					spNewData = std::make_shared<PreviewTabData>(spCurView->GetFileGridPtr()->GetFocusedFile()->GetPath());
 				}
 
@@ -484,7 +488,6 @@ void CFilerTabGridView::OnKeyDown(const KeyDownEvent& e)
 					if (iter != spOther->ItemsSource.cend()) {
 						spOther->SelectedIndex.set(std::distance(spOther->ItemsSource.cbegin(), iter));
 					} else {
-
 						//Replace
 						if (::IsKeyDown(VK_SHIFT) && spOther->ItemsSource.get_unconst()->at(*spOther->SelectedIndex)->AcceptClosing(GetWndPtr(), false)) {
 							spOther->ItemsSource.replace(spOther->ItemsSource.get_unconst()->begin() + *spOther->SelectedIndex, spNewData);

@@ -13,15 +13,7 @@ enum class DockEnum: std::uint8_t
 	Right,
 	Bottom,
 	Fill,
-	//Vertical,
-	//Horizontal,
-	//LeftFix,
-	//TopFix,
-	//RightFix,
-	//BottomFix,
 };
-
-
 
 class CD2DWControl: public virtual CUIElement
 {
@@ -54,10 +46,6 @@ public:
 	reactive_property_ptr<bool> IsEnabled;
 	reactive_property_ptr<bool> IsFocusable;
 	reactive_property_ptr<DockEnum> Dock;
-	//reactive_property_ptr<size_t> GridRow;
-	//reactive_property_ptr<size_t> GridColumn;
-
-
 
 public:
 
@@ -98,6 +86,7 @@ public:
 	virtual void OnLButtonDblClk(const LButtonDblClkEvent& e) override {}
 
 	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override {}
+	virtual void OnLButtonMoveDrag(const MouseMoveEvent& e) override {}
 	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override {}
 
 	virtual void OnRButtonDown(const RButtonDownEvent& e) override {}
@@ -211,104 +200,6 @@ public:
 		return ret;
 	}
 
-
-	//template<typename TFunc, typename TEvent>
-	//void SendAll(TFunc f, const TEvent& e, bool invalidate = true)
-	//{
-	//	for (auto iter = m_childControls.cbegin(); iter != m_childControls.cend(); ++iter) {
-	//		(iter->get()->*f)(e);
-	//	}
-	//	if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
-	//}
-
-	//template<typename TFunc, typename TEvent>
-	//void SendAllReverse(TFunc f, const TEvent& e, bool invalidate = true)
-	//{
-	//	for (auto iter = m_childControls.crbegin(); iter != m_childControls.crend(); ++iter) {
-	//		(iter->get()->*f)(e);
-	//	}
-	//	if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
-	//}
-
-	//template<typename TFunc, typename TEvent>
-	//void SendCopyAll(TFunc f, const TEvent& e, bool invalidate = true)
-	//{
-	//	auto controls = m_childControls;
-	//	for (auto iter = controls.cbegin(); iter != controls.cend(); ++iter) {
-	//		(iter->get()->*f)(e);
-	//	}
-	//	if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
-	//}
-
-	//template<typename TFunc, typename TEvent>
-	//void SendCopyAllReverse(TFunc f, const TEvent& e, bool invalidate = true)
-	//{
-	//	auto controls = m_childControls;
-	//	for (auto iter = controls.crbegin(); iter != controls.crend(); ++iter) {
-	//		(iter->get()->*f)(e);
-	//	}
-	//	if (invalidate) { GetWndPtr()->InvalidateRect(NULL, FALSE); }
-	//}
-
-	//template<typename TFunc, typename TEvent>
-	//void SendMouseReverse(TFunc f, const TEvent& e)
-	//{
-	//	if (GetWndPtr()->GetCapturedControlPtr()) {
-	//		(GetWndPtr()->GetCapturedControlPtr().get()->*f)(e);
-	//		GetWndPtr()->InvalidateRect(NULL, FALSE);
-	//	} else {
-	//		SendPtInRectReverse(f, e);
-	//	}
-	//}
-
-	//template<typename _Tunnel, typename _Bubble, typename _Self, typename _Event>
-	//void ProcessMessage(_Tunnel&& tunnel, _Bubble&& bubble, _Self&& self, _Event&& e)
-	//{
-	//	if (!*e.HandledPtr){ return; }
-	//	if (!*IsEnabled) { return; }
-	//	for (auto iter = m_childControls.begin(); iter != m_childControls.end(); iter++) {
-	//		if (!*e.HandledPtr) { break; }
-	//		if (!*(*iter->IsEnabled)) { continue; }
-	//		
-	//	}
-
-	//}
-
-	//template<typename TFunc, typename TEvent>
-	//void SendPtInRectReverse(TFunc f, const TEvent& e, bool setFocus = false)
-	//{
-	//	auto iter = std::find_if(m_childControls.crbegin(), m_childControls.crend(),
-	//		[&](const std::shared_ptr<CD2DWControl>& x) {
-	//			return *x->IsEnabled && x->GetRectInWnd().PtInRect(e.PointInWnd);
-	//		});
-
-	//	if (iter != m_childControls.crend()) {
-	//		(iter->get()->*f)(e);
-	//		if (setFocus) {
-	//			SetFocusedControlPtr(*iter);
-	//		}
-	//	}
-	//	GetWndPtr()->InvalidateRect(NULL, FALSE);
-	//}
-
-	//template<typename TFunc, typename TEvent>
-	//void SendCapturePtInRectReverse(TFunc f, const TEvent& e)
-	//{
-	//	if (GetWndPtr()->GetCapturedControlPtr()) {
-	//		(GetWndPtr()->GetCapturedControlPtr().get()->*f)(e);
-	//		GetWndPtr()->InvalidateRect(NULL, FALSE);
-	//		*e.HandledPtr = TRUE;
-	//	} else {
-	//		SendPtInRectReverse(f, e);
-	//	}
-	//}
-
-	//template<typename TFunc, typename TEvent>
-	//void SendFocused(TFunc f, const TEvent& e)
-	//{
-	//	if (m_pFocusedControl) { (m_pFocusedControl.get()->*f)(e); }
-	//	GetWndPtr()->InvalidateRect(NULL, FALSE);
-	//}
 public:
     template<class Archive>
     void save(Archive & archive) const

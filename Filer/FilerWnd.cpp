@@ -128,17 +128,21 @@ void CFilerWnd::OnPaint(const PaintEvent& e)
 {
 	GetDirectPtr()->FillSolidRectangle(CColorF(1.f, 1.f, 1.f), GetRectInWnd());
 	CD2DWWindow::OnPaint(e);
-}
 
-//void CFilerWnd::SetUpFilerGrid(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer)
-//{
-//	subject->GetFilerViewPtr()->GetFileGridPtr()->StatusLog.subscribe(
-//		[this](auto notify) {
-//		m_spStatusBar->Text.set(notify.all_items);
-//		InvalidateRect(NULL, FALSE);
-//	}, shared_from_this());
-//
-//}
+	if (m_spTabHeaderFrom) {
+		if (m_spTabHeaderTo) {
+			GetWndPtr()->GetDirectPtr()->DrawSolidLine(SolidLine(1.f, 0.f, 0.f, 1.f, 2.f),
+				m_spTabHeaderTo->GetRectInWnd().LeftTop(),
+				CPointF(m_spTabHeaderTo->GetRectInWnd().left, m_spTabHeaderTo->GetRectInWnd().bottom));
+		} else if(m_spTabTo) {
+			GetWndPtr()->GetDirectPtr()->DrawSolidLine(SolidLine(1.f, 0.f, 0.f, 1.f, 2.f), 
+				CPointF(m_spTabTo->GetAddHeader()->GetRectInWnd().left, m_spTabTo->GetAddHeader()->GetRectInWnd().top),
+				CPointF(m_spTabTo->GetAddHeader()->GetRectInWnd().left, m_spTabTo->GetAddHeader()->GetRectInWnd().bottom));
+		}
+
+		m_spTabHeaderFrom->PaintOverlay(GetWndPtr()->GetCursorPosInWnd());
+	}
+}
 
 void CFilerWnd::SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer)
 {
@@ -452,6 +456,93 @@ void CFilerWnd::OnMouseMove(const MouseMoveEvent& e)
 {
 	CD2DWWindow::OnMouseMove(e);
 	//m_konamiCommander.OnMouseMove(uMsg, wParam, lParam, bHandled);
+}
+
+void CFilerWnd::OnLButtonBeginDrag(const LButtonBeginDragEvent& e)
+{
+	if (m_pCapturedControl) {
+		m_pCapturedControl->OnLButtonBeginDrag(e);
+	} else {
+		std::vector<std::shared_ptr<CD2DWControl>> tunnelControls = GetTunnelControlsFromPoint(e.PointInWnd);
+
+		for (auto iter = tunnelControls.rbegin(); iter != tunnelControls.rend(); iter++) {
+			if (m_spTabHeaderFrom = std::dynamic_pointer_cast<CTabHeaderControl>(*iter)) {
+				*e.HandledPtr = TRUE;
+			}else{
+				(*iter)->OnLButtonBeginDrag(e);
+			}
+			if (*e.HandledPtr) { break; }
+		}
+	}
+	InvalidateRect(NULL, FALSE);
+}
+
+void CFilerWnd::OnLButtonMoveDrag(const MouseMoveEvent& e)
+{
+	ProcessMouseEntryLeave(e);
+
+	if (m_pCapturedControl) {
+		m_pCapturedControl->OnMouseMove(e);
+	} else {
+		std::vector<std::shared_ptr<CD2DWControl>> tunnelControls = GetTunnelControlsFromPoint(e.PointInWnd);
+
+		for (auto iter = tunnelControls.rbegin(); iter != tunnelControls.rend(); iter++) {
+			if (m_spTabHeaderFrom) {
+				if (m_spTabHeaderTo = std::dynamic_pointer_cast<CTabHeaderControl>(*iter)) {
+					*e.HandledPtr = TRUE;
+				} else if (m_spTabTo = std::dynamic_pointer_cast<CTabControl>(*iter)) {
+					*e.HandledPtr = TRUE;
+				} else {
+					(*iter)->OnMouseMove(e);
+				}
+			} else {
+				(*iter)->OnMouseMove(e);
+			}
+			if (*e.HandledPtr) { break; }
+		}
+	}
+	InvalidateRect(NULL, FALSE);
+}
+
+void CFilerWnd::OnLButtonEndDrag(const LButtonEndDragEvent& e)
+{
+	if (m_pCapturedControl) {
+		m_pCapturedControl->OnLButtonEndDrag(e);
+	} else {
+		std::vector<std::shared_ptr<CD2DWControl>> tunnelControls = GetTunnelControlsFromPoint(e.PointInWnd);
+
+		for (auto iter = tunnelControls.rbegin(); iter != tunnelControls.rend(); iter++) {
+			if (m_spTabHeaderFrom) {
+				if (m_spTabHeaderTo = std::dynamic_pointer_cast<CTabHeaderControl>(*iter)) {
+					auto pTabFrom = dynamic_cast<CTabControl*>(m_spTabHeaderFrom->GetParentControlPtr());
+					auto pTabTo = dynamic_cast<CTabControl*>(m_spTabHeaderTo->GetParentControlPtr());
+					if (pTabFrom && pTabTo) {
+						auto temp = pTabFrom->ItemsSource.at(m_spTabHeaderFrom->GetIndex());
+						pTabFrom->ItemsSource.erase(pTabFrom->ItemsSource->cbegin() + m_spTabHeaderFrom->GetIndex());
+						pTabTo->ItemsSource.insert(pTabTo->ItemsSource->cbegin() + m_spTabHeaderTo->GetIndex(), temp);
+					}
+					*e.HandledPtr = TRUE;
+				} else if (m_spTabTo = std::dynamic_pointer_cast<CTabControl>(*iter)) {
+					auto pTabFrom = dynamic_cast<CTabControl*>(m_spTabHeaderFrom->GetParentControlPtr());
+					if(pTabFrom){
+						auto temp = pTabFrom->ItemsSource.at(m_spTabHeaderFrom->GetIndex());
+						pTabFrom->ItemsSource.erase(pTabFrom->ItemsSource->cbegin() + m_spTabHeaderFrom->GetIndex());
+						m_spTabTo->ItemsSource.push_back(temp);
+					}
+					*e.HandledPtr = TRUE;
+				} else {
+					(*iter)->OnLButtonEndDrag(e);
+				}
+			} else {
+				(*iter)->OnLButtonEndDrag(e);
+			}
+			if (*e.HandledPtr) { break; }
+		}
+	}
+	m_spTabHeaderFrom.reset();
+	m_spTabHeaderTo.reset();
+	m_spTabTo.reset();
+	InvalidateRect(NULL, FALSE);
 }
 
 CSizeF CFilerWnd::MeasureOverride(const CSizeF& availableSize) 

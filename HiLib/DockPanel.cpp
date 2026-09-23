@@ -45,7 +45,7 @@ CSizeF CDockPanel::MeasureOverride(const CSizeF& availableSize)
 				break;
 			}
 			default:
-				THROW_FILE_LINE_FUNC;
+				//THROW_FILE_LINE_FUNC;
 				break;
 		}
 	}
@@ -153,7 +153,7 @@ void CDockPanel::ArrangeOverride(const CRectF& finalRect)
 				child->Arrange(remain);
 				break;
 			default:
-				THROW_FILE_LINE_FUNC;
+				//THROW_FILE_LINE_FUNC;
 				break;
 		}
 		prev_child = child;

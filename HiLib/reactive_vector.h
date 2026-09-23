@@ -289,7 +289,7 @@ public:
 		switch (notify.action) {
 			case notify_container_changed_action::push_back:
 				this->push_back(adl_vector_item<value_type>::clone(notify.all_items.back()));
-					bind_value(notify.all_items.back(), this->m_value.back());
+				bind_value(notify.all_items.back(), this->m_value.back());
 				break;
 			case notify_container_changed_action::insert:
 				for (auto i = 0; i != notify.new_items.size(); i++) {

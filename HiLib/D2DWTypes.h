@@ -318,6 +318,7 @@ struct CRectT :public TRect
 	void OffsetX(T x) { this->left += x; this->right += x; }
 	void OffsetY(T y) { this->top += y;this-> bottom += y; }
 	rect_type OffsetRectCopy(T x, T y) const { return rect_type(this->left + x,  this->top + y, this->right + x, this->bottom + y); }
+	rect_type OffsetRectCopy(const TPoint& pt) const { return rect_type(this->left + pt.x, this->top + pt.y, this->right + pt.x, this->bottom + pt.y); }
 	rect_type OffsetXCopy(T x) const { return rect_type(this->left + x, this->top, this->right + x, this->bottom); }
 	rect_type OffsetYCopy(T y) const { return rect_type(this->left, this->top + y, this->right, this->bottom + y); }
 	T Width() const { return this->right - this->left; }

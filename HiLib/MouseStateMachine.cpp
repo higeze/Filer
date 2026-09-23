@@ -169,6 +169,10 @@ struct CMouseStateMachine::Machine
 	//{
 	//	pGrid->OnCaptureChanged(e);
 	//}
+	void LButtonDrag_MouseMove(CD2DWWindow* pGrid, const MouseMoveEvent& e)
+	{
+		pGrid->OnLButtonMoveDrag(e);
+	}
 
 	void LButtonDrag_MouseLeave(CD2DWWindow* pGrid, const MouseLeaveEvent& e)
 	{
@@ -245,7 +249,7 @@ struct CMouseStateMachine::Machine
 			state<LButtonDrag> +on_exit<CharEvent> / call(&Machine::LButtonDrag_OnExitByChar),
 
 			state<LButtonDrag> +event<LButtonUpEvent> / call(&Machine::Normal_LButtonUp) = state<Normal>,
-			state<LButtonDrag> +event<MouseMoveEvent> / call(&Machine::Normal_MouseMove),
+			state<LButtonDrag> +event<MouseMoveEvent> / call(&Machine::LButtonDrag_MouseMove),
 			//state<LButtonDrag> +event<MouseLeaveEvent> / call(&Machine::LButtonDrag_MouseLeave) = state<Normal>,
 			state<LButtonDrag> +event<CharEvent> [call(&Machine::LButtonDrag_Guard_Char)] = state<Normal>,
 			state<LButtonDrag> +event<CharEvent> / call(&Machine::Normal_Char),

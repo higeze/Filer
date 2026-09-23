@@ -58,6 +58,10 @@ private:
 	std::unique_ptr<CNetworkMessanger> m_pNetworkMessanger;
 
 	bool m_isSizing = false;
+	std::shared_ptr<CTabHeaderControl> m_spTabHeaderFrom;
+	std::shared_ptr<CTabHeaderControl> m_spTabHeaderTo;
+	std::shared_ptr<CTabControl> m_spTabTo;
+
 	CPoint m_ptBeginClient;
 	//bool m_isPreview = false;
 
@@ -154,6 +158,11 @@ public:
 	virtual void OnLButtonDown(const LButtonDownEvent& e) override;
 	virtual void OnLButtonUp(const LButtonUpEvent& e) override;
 	virtual void OnMouseMove(const MouseMoveEvent& e) override;
+
+	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
+	virtual void OnLButtonMoveDrag(const MouseMoveEvent& e) override;
+	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;
+
 
 	void SetUpPreview(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer);
 	void SetUpFilerGrid(const std::shared_ptr<CFilerTabGridView>& subject, const std::shared_ptr<CFilerTabGridView>& observer);

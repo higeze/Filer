@@ -113,6 +113,7 @@ public:
 	virtual void OnCreate(const CreateEvt& e);
 	virtual void OnPaint(const PaintEvent& e);
 	virtual void OnLButtonDown(const LButtonDownEvent& e);
+	void PaintOverlay(const CPointF& pt);
 	//virtual void OnContextMenu(const ContextMenuEvent& e);
 
 };
@@ -181,6 +182,14 @@ public:
 	reactive_property_ptr<int> SelectedIndex;
 	int m_prevSelectedIndex = -1;
 	reactive_vector_ptr<std::shared_ptr<TabData>> ItemsSource;
+	const index_vector<std::shared_ptr<CTabHeaderControl>>& GetHeaders()const
+	{
+		return m_headers;
+	};
+	const std::shared_ptr<CAddTabHeaderControl>& GetAddHeader()const
+	{
+		return m_addHeader;
+	};
 
 public:
 	CTabControl(CD2DWControl* pParentControl = nullptr);
@@ -222,25 +231,25 @@ public:
 	virtual void OnCommandCloseAllButThisTab();
 
 private:
-	struct Machine;
-	std::unique_ptr<boost::sml::sm<Machine>> m_pMachine;
-	int m_dragFrom;
-	int m_dragTo;
+	//struct Machine;
+	//std::unique_ptr<boost::sml::sm<Machine>> m_pMachine;
+	//int m_dragFrom;
+	//int m_dragTo;
 
 public:
-	virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
-	virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;
-	virtual void OnMouseMove(const MouseMoveEvent& e) override;
+	//virtual void OnLButtonBeginDrag(const LButtonBeginDragEvent& e) override;
+	//virtual void OnLButtonEndDrag(const LButtonEndDragEvent& e) override;
+	//virtual void OnMouseMove(const MouseMoveEvent& e) override;
 
-	bool Guard_LButtonBeginDrag_Normal_To_Dragging(const LButtonBeginDragEvent& e);
+	//bool Guard_LButtonBeginDrag_Normal_To_Dragging(const LButtonBeginDragEvent& e);
 
 	void Normal_LButtonBeginDrag(const LButtonBeginDragEvent& e);
 	void Normal_LButtonEndDrag(const LButtonEndDragEvent& e);
 	void Normal_MouseMove(const MouseMoveEvent& e);
 	
-	void Dragging_OnEntry(const LButtonBeginDragEvent& e);
-	void Dragging_OnExit(const LButtonEndDragEvent& e);
-	void Dragging_MouseMove(const MouseMoveEvent& e);
+	//void Dragging_OnEntry(const LButtonBeginDragEvent& e);
+	//void Dragging_OnExit(const LButtonEndDragEvent& e);
+	//void Dragging_MouseMove(const MouseMoveEvent& e);
 
 	void Error_StdException(const std::exception& e);
 
@@ -292,3 +301,20 @@ public:
 
 };
 
+/**********************/
+/* CTabControlManager */
+/**********************/
+
+//class CTabControlManager
+//{
+//protected:
+//	std::pair<std::shared_ptr<CTabControl>, size_t> m_dragFrom;
+//public:
+//
+//
+//	static CTabControl* GetInstance()
+//	{
+//		static CTabControlManager instance;
+//		return &instance;
+//	}
+//};
