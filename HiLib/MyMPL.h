@@ -29,11 +29,11 @@ struct is_vector<std::vector<T, A>> :std::true_type {};
 /*****************/
 /* is_shared_ptr */
 /*****************/
-template<class TRect>
+template<class T>
 struct is_shared_ptr :std::false_type {};
 
-template<class TRect>
-struct is_shared_ptr<std::shared_ptr<TRect>> :std::true_type {};
+template<class T>
+struct is_shared_ptr<std::shared_ptr<T>> :std::true_type {};
 
 /*******/
 /* if_ */
@@ -81,19 +81,19 @@ struct eval_if {
 /* and_ */
 /*************/
 
-template<class TRect, class U, class V = std::true_type>
+template<class T, class U, class V = std::true_type>
 struct and_
 {
-	static const bool value = TRect::value && U::value && V::value;
+	static const bool value = T::value && U::value && V::value;
 };
 
 /*************/
 /* not_ */
 /*************/
-template<class TRect>
+template<class T>
 struct not_
 {
-	static const bool value = !TRect::value;
+	static const bool value = !T::value;
 };
 
 /*********************************/

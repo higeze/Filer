@@ -114,7 +114,7 @@ void CCopyDlg::Copy()
 			}
 		}
 		if (SUCCEEDED(pFileOperation->PerformOperations())) {
-			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+			CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 		}
 
 	};
@@ -186,7 +186,7 @@ void CMoveDlg::Move()
 			}
 		}
 		if (SUCCEEDED(pFileOperation->PerformOperations())) {
-			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+			CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 		}
 
 	};
@@ -267,7 +267,7 @@ void CDeleteDlg::Delete()
 			FAILED_RETURN(pFileOperation->DeleteItems(pItemAry));
 		}
 		if (SUCCEEDED(pFileOperation->PerformOperations())) {
-			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+			CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 		}
 	};
 
@@ -412,7 +412,7 @@ try {
 
 	::CloseHandle(hRead);
 	::CloseHandle(hWrite);
-	GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+	CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 
 } catch (...) {
 	throw;
@@ -565,7 +565,7 @@ CPDFSplitDlg::CPDFSplitDlg(
 			doc.Open(file->GetPath(), L"");
 			doc.SplitSave();
 		}
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+		CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	}, Dummy);
 }
 
@@ -597,7 +597,7 @@ CPDFMergeDlg::CPDFMergeDlg(
 		}
 		doc.SaveAs(*m_spParameter->Text, minVersion, false);
 		
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+		CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	}, Dummy);
 }
 
@@ -628,7 +628,7 @@ CPDFExtractDlg::CPDFExtractDlg(
 			dst_doc.SaveAs(std::format(L"{}_{}.pdf", file->GetPathWithoutExt(), *m_spParameter->Text), doc.GetFileVersion(), false);
 		}
 
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+		CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	}, Dummy);
 }
 
@@ -655,6 +655,6 @@ CPDFUnlockDlg::CPDFUnlockDlg(
 			doc.SaveAs(std::format(L"{}{}.pdf", file->GetPathWithoutExt(), L"_unlock"),  doc.GetFileVersion(), true);
 		}
 
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+		CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	}, Dummy);
 }

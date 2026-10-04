@@ -38,7 +38,7 @@ CPdfViewDlgBase::CPdfViewDlgBase(
 	m_doc(doc), Dummy(std::make_shared<int>(0))
 {
 	m_spButtonCancel->Command.subscribe([this]()->void{
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+		CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	}, Dummy);
 
 	m_spButtonCancel->Content.set(L"Cancel");
@@ -68,7 +68,7 @@ CPdfViewExtractDlg::CPdfViewExtractDlg(CD2DWControl* pParentControl, CPDFDoc& do
 		::ReleaseBuffer(nameWoExt);
 		dst_doc.SaveAs(std::format(L"{}_{}.pdf", nameWoExt, *m_spParameter->Text), m_doc.GetFileVersion(), false);
 
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+		CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	}, Dummy);
 }
 
@@ -465,7 +465,7 @@ void CPdfView::Normal_Paint(const PaintEvent& e)
 	auto begin = std::distance(intersectRectsInDoc.cbegin(), first);
 	auto end = (std::min)(std::distance(intersectRectsInDoc.cbegin(), last.base()), PDF->GetPageCount());
 
-	auto callback = [this]()->void { GetWndPtr()->GetDispatcherPtr()->PostInvoke([pWnd = GetWndPtr()]() { pWnd->InvalidateRect(NULL, FALSE); }); };
+	auto callback = [this]()->void { CDispatcher::GetInstance()->PostInvoke([pWnd = GetWndPtr()]() { pWnd->InvalidateRect(NULL, FALSE); }); };
 
 	for (auto i = begin; i < end; i++){
 		CRectF rcClipInPage(Doc2Page(i, intersectRectsInDoc[i]));
@@ -1245,13 +1245,13 @@ void CPdfView::OpenWithPasswordHandling(const std::wstring& path)
 				{ 
 					PDF.get_unconst()->Open(path, *spDlg->GetTextBoxPtr()->Text); 
 					//Need to call with dispatcher, otherwise remaing message in message que is not properly handled
-					GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
+					CDispatcher::GetInstance()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
 				}, shared_from_this());
 			spDlg->GetCancelButtonPtr()->Content.set(L"Cancel");
 			spDlg->GetCancelButtonPtr()->Command.subscribe([this, spDlg]() 
 				{ 
 					//Need to call with dispatcher, otherwise remaing message in message que is not properly handled
-					GetWndPtr()->GetDispatcherPtr()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
+					CDispatcher::GetInstance()->PostInvoke([spDlg]() { spDlg->OnClose(CloseEvent(spDlg->GetWndPtr(), NULL, NULL)); });
 				}, shared_from_this());
 			spDlg->OnCreate(CreateEvt(GetWndPtr(), GetWndPtr(), CalcCenterRectF(CSizeF(300, 200))));
 			GetWndPtr()->SetFocusToControl(spDlg);

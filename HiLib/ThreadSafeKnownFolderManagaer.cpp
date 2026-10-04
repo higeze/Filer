@@ -13,24 +13,24 @@ namespace shell
 		APTTYPE apt;
 		APTTYPEQUALIFIER qual;
 		CoGetApartmentType(&apt, &qual);
-		CThreadSafeComPtr<IShellFolder> pDesktopFolder;
+		CShellComPtr<IShellFolder> pDesktopFolder;
 		::SHGetDesktopFolder(&pDesktopFolder);
 
 		CShellThread::GetInstance()->Run([&]->void {
 			std::lock_guard<std::mutex> lock(m_mtx);
 			m_knownFolderIdIdlMap.clear();
 
-			CThreadSafeComPtr<IKnownFolderManager> pMgr;
+			CShellComPtr<IKnownFolderManager> pMgr;
 			if (FAILED(pMgr.CoCreateInstance(CLSID_KnownFolderManager, NULL, CLSCTX_INPROC_SERVER))) { return; }
 
-			CThreadSafeComPtr<IShellFolder> pDesktopFolder;
+			CShellComPtr<IShellFolder> pDesktopFolder;
 			::SHGetDesktopFolder(&pDesktopFolder);
 
 			KNOWNFOLDERID* pknownid;
 			UINT count(0);
 			if (FAILED(pMgr.Call(&IKnownFolderManager::GetFolderIds, &pknownid, &count))) { return; }
 			for (UINT i = 0; i < count; i++) {
-				CThreadSafeComPtr<IKnownFolder> pFolder;
+				CShellComPtr<IKnownFolder> pFolder;
 				if (SUCCEEDED(pMgr.Call(&IKnownFolderManager::GetFolder, pknownid[i], &pFolder))) {
 					//IDL
 					APTTYPE aptType;

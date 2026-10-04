@@ -7,10 +7,10 @@
 //template<char... Chars>
 //struct literal_string : basic_literal_string<char, Chars...> {};
 
-template<typename Name, typename TRect>
+template<typename Name, typename T>
 struct parameter
 {
-    TRect value;
+    T value;
 };
 
 //template<typename CharT, std::size_t N>
@@ -35,11 +35,11 @@ struct parameter
 template<std::uint64_t Bits>
 struct name
 {
-    template<typename TRect>
+    template<typename T>
     auto
-        operator =(TRect t)
+        operator =(T t)
     {
-        return parameter<name, TRect>{t};
+        return parameter<name, T>{t};
     }
 };
 
@@ -69,16 +69,16 @@ constexpr auto operator "" _s(char const* str, std::size_t size)
 //template<char Char>
 //using arg = name<literal_string<Char>>;
 
-template<typename TRect>
+template<typename T>
 struct default_t
 {
-    TRect value;
+    T value;
 };
 
-template<typename TRect>
-auto default_(TRect t)
+template<typename T>
+auto default_(T t)
 {
-    return default_t<TRect>{t};
+    return default_t<T>{t};
 }
 
 template<typename Name, typename... Args>
@@ -87,20 +87,20 @@ struct find_name_type;
 template<typename Name>
 struct find_name_type<Name> {};
 
-template<typename Name, typename TRect, typename... Args>
-struct find_name_type<Name, parameter<Name, TRect>, Args...>
+template<typename Name, typename T, typename... Args>
+struct find_name_type<Name, parameter<Name, T>, Args...>
 {
-    using type = parameter<Name, TRect>;
+    using type = parameter<Name, T>;
 };
 
-template<typename Name, typename TRect, typename... Args>
-struct find_name_type<Name, default_t<TRect>, Args...>
+template<typename Name, typename T, typename... Args>
+struct find_name_type<Name, default_t<T>, Args...>
 {
-    using type = default_t<TRect>;
+    using type = default_t<T>;
 };
 
-template<typename Name, typename TRect, typename... Args>
-struct find_name_type<Name, TRect, Args...> : find_name_type<Name, Args...> {};
+template<typename Name, typename T, typename... Args>
+struct find_name_type<Name, T, Args...> : find_name_type<Name, Args...> {};
 
 template<
     typename Name,

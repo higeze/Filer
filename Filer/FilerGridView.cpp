@@ -30,7 +30,6 @@
 
 #include "MyWin32.h"
 #include "Debug.h"
-#include "DirectoryWatcher.h"
 
 #include "FileIconNameCell.h"
 
@@ -109,7 +108,7 @@ CFilerGridView::CFilerGridView(CD2DWControl* pParentControl)
 
 CFilerGridView::~CFilerGridView()
 {
-	if (m_spWatcher) { m_spWatcher->QuitWatching(); }
+	//if (m_spWatcher) { m_spWatcher->QuitWatching(); }
 }
 
 CShellContextMenu& CFilerGridView::GetFileContextMenu()
@@ -187,9 +186,6 @@ void CFilerGridView::OnCreate(const CreateEvt& e)
 {
 	//Base Create
 	CFilerBindGridView::OnCreate(e);
-
-	//Directory watcher
-	m_spWatcher = std::make_shared<CDirectoryWatcher>(this, std::bind(&CFilerGridView::OnDirectoryWatch, this, phs::_1));
 
 	//Drag & Drop
 	//DropTarget
@@ -433,145 +429,6 @@ void CFilerGridView::Dropped(const CDataObject& data, DWORD dwEffect)
 	}
 }
 
-
-void CFilerGridView::Added(const std::wstring& fileName)
-{
-	LOG_THIS_1("Added " + wstr2str(fileName));
-	CIDL idl;
-	ULONG chEaten;
-	ULONG dwAttributes;
-	HRESULT hr = Folder->GetShellFolderPtr().Call(&IShellFolder::ParseDisplayName, GetWndPtr()->m_hWnd, nullptr, const_cast<LPWSTR>(fileName.c_str()), &chEaten, idl.ptrptr(), &dwAttributes);
-	if (SUCCEEDED(hr) && idl) {
-		GetItemsSource().push_back(Folder->CreateShExFileFolder(std::move(idl)));
-		auto spRow = m_allRows.back();
-
-		PostUpdate(Updates::ColumnVisible);
-		PostUpdate(Updates::RowVisible);
-		PostUpdate(Updates::Row);
-		PostUpdate(Updates::Scrolls);
-		PostUpdate(Updates::Invalidate);
-
-		if (m_isNewFile) {
-			m_spCursorer->OnCursor(Cell(spRow, m_allCols.at(m_frozenColumnCount)));
-			PostUpdate(Updates::EnsureVisibleFocusedCell);
-		}
-		PostUpdate(Updates::Sort);
-		UpdateFilter();
-		if (m_isNewFile) {
-			if (auto cols = FindColumns<CFileNameColumn<std::shared_ptr<CShellFile>>>(); !cols.empty()) {
-				std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, cols.front()))->OnEdit(Event(GetWndPtr()));
-			}
-		}
-		m_isNewFile = false;
-	}
-	else {
-		LOG_THIS_1("Added FAILED " + wstr2str(fileName));
-	}
-}
-
-void CFilerGridView::Modified(const std::wstring& fileName)
-{
-	LOG_THIS_1("Modified " + wstr2str(fileName));
-	auto iter = std::find_if(ItemsSource.get_unconst()->begin(), ItemsSource.get_unconst()->end(),
-							[fileName](const std::shared_ptr<CShellFile>& value)->bool {
-								return value->GetPathName() == fileName;
-							});
-//	auto iter = FindIfRowIterByFileNameExt(fileName);
-
-	if (iter == ItemsSource.get_unconst()->end()) {
-		LOG_THIS_1("Modified NoMatch " + wstr2str(fileName));
-		return;
-	} else {
-		//Because ItemIdList includes, size, last write time, etc., it is necessary to get new one.
-		ULONG chEaten;
-		ULONG dwAttributes;
-		CIDL newIdl;
-		HRESULT hRes = (*iter)->GetParentShellFolderPtr().Call(
-			&IShellFolder::ParseDisplayName, GetWndPtr()->m_hWnd, nullptr, (LPWSTR)fileName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
-
-		if (SUCCEEDED(hRes) && newIdl) {
-			//std::get<std::shared_ptr<CShellFile>>(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
-			ItemsSource.replace(iter, Folder->CreateShExFileFolder(std::move(newIdl)));
-			m_allRows[iter-ItemsSource->cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
-			PostUpdate(Updates::ColumnVisible);
-			PostUpdate(Updates::RowVisible);
-			PostUpdate(Updates::Row);
-			PostUpdate(Updates::Scrolls);
-			PostUpdate(Updates::Invalidate);
-			PostUpdate(Updates::Sort);
-			UpdateFilter();
-		} else {
-			LOG_THIS_1("Modified FAILED " + wstr2str(fileName));
-		}
-	}
-}
-void CFilerGridView::Removed(const std::wstring& fileName)
-{
-	LOG_THIS_1("Removed " + wstr2str(fileName));
-
-	auto iter = std::find_if(ItemsSource->cbegin(), ItemsSource->cend(),
-							 [fileName](const std::shared_ptr<CShellFile>& value)->bool {
-								 return value->GetPathName() == fileName;
-							 });
-
-	if (iter == ItemsSource->cend()) {
-		LOG_THIS_1("Removed NoMatch " + wstr2str(fileName));
-		return;
-	} else {
-
-		ItemsSource.erase(iter);
-
-		m_spCursorer->OnCursorClear(this);
-		m_spCeller->OnClear();
-
-		PostUpdate(Updates::ColumnVisible);
-		PostUpdate(Updates::RowVisible);
-		PostUpdate(Updates::Row);
-		PostUpdate(Updates::Scrolls);
-		PostUpdate(Updates::Invalidate);
-		PostUpdate(Updates::Sort);
-
-		UpdateFilter();
-	}
-
-}
-void CFilerGridView::Renamed(const std::wstring& oldName, const std::wstring& newName)
-{
-	LOG_THIS_1("Renamed " + wstr2str(oldName) + "=>"+ wstr2str(newName));
-	auto iter = std::find_if(ItemsSource.get_unconst()->begin(), ItemsSource.get_unconst()->end(),
-							 [oldName](const std::shared_ptr<CShellFile>& value)->bool {
-								 return value->GetPathName() == oldName;
-							 });
-
-	if (iter == ItemsSource.get_unconst()->end()) 
-	{
-		LOG_THIS_1("Renamed NoMatch " + wstr2str(oldName) + "=>" + wstr2str(newName));
-	} else {
-		ULONG chEaten;
-		ULONG dwAttributes;
-		CIDL newIdl;
-
-		HRESULT hRes = (*iter)->GetParentShellFolderPtr().Call(&IShellFolder::ParseDisplayName, GetWndPtr()->m_hWnd, nullptr, (LPWSTR)newName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
-
-
-		if (SUCCEEDED(hRes) && newIdl) {
-			(*iter) = Folder->CreateShExFileFolder(std::move(newIdl));
-			m_allRows[iter - ItemsSource->cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
-			PostUpdate(Updates::ColumnVisible);
-			PostUpdate(Updates::RowVisible);
-			PostUpdate(Updates::Row);
-			PostUpdate(Updates::Scrolls);
-			PostUpdate(Updates::Invalidate);
-			PostUpdate(Updates::Sort);
-			UpdateFilter();
-		}
-		else {
-			LOG_THIS_1("Renamed FAILED " + wstr2str(oldName) + "=>" + wstr2str(newName));
-			return Removed(oldName);
-		}
-	}
-}
-
 void CFilerGridView::Reload()
 {
 	if (Folder) {
@@ -661,6 +518,7 @@ void CFilerGridView::Normal_KeyDown(const KeyDownEvent& e)
 	if (!(*e.HandledPtr)) {
 		CFilerBindGridView::Normal_KeyDown(e);
 	}
+	SubmitUpdate();
 
 };
 
@@ -674,248 +532,6 @@ void CFilerGridView::Open(const std::shared_ptr<CShellFile>& spFile)
 	}
 }
 
-//void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, bool isReload)
-//{
-//	OpenFolder is called when DeviceChange, even inactive.
-//	if (!spFolder) {
-//		return;
-//	} else if (!spFolder->GetIsExist()) {
-//		Folder.set(Folder->GetParentFolderPtr());
-//		return;
-//	}
-//
-//	if (m_pEdit) {
-//		EndEdit();
-//	}
-//
-//	LOG_THIS_1("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetDispName()));
-//	LOG_SCOPED_TIMER_THIS_1("OpenFolder Total");
-//	{
-//		LOG_SCOPED_TIMER_THIS_1("OpenFolder Pre-Process");
-//
-//		StateMachine // Do not reset
-//		m_pMachine.reset(new CGridStateMachine(this));
-//		Direct2DWrite
-//		if (!isReload) {
-//			GetWndPtr()->GetDirectPtr()->ClearTextLayoutMap();
-//			GetWndPtr()->GetDirectPtr()->GetFileThumbnailDrawerPtr()->Clear();
-//		}
-//		Celler
-//		m_spCeller->Clear();
-//
-//		Cursor
-//		m_spCursorer->Clear();
-//		if (!isReload) {
-//			DeselectAll();
-//		}
-//
-//
-//		Save and Restore Filter value
-//		if (!isReload) {
-//			Update Map
-//			std::unordered_map<std::shared_ptr<CColumn>, std::wstring> map;
-//			bool isAllEmpty = std::all_of(m_allCols.begin(), m_allCols.end(), [](const auto& ptr) { return ptr->GetFilter().empty(); });
-//			if (isAllEmpty) {
-//				if (m_spPreviousFolder) {
-//					m_filterMap.erase(m_spPreviousFolder->GetPath());
-//				}
-//			} else {
-//				for (const auto& colPtr : m_allCols) {
-//					map.emplace(colPtr, colPtr->GetFilter());
-//				}
-//				if (m_spPreviousFolder) {
-//					m_filterMap.insert_or_assign(m_spPreviousFolder->GetPath(), map);
-//				}
-//			}
-//			Load Map
-//			auto iter = m_filterMap.find(spFolder->GetPath());
-//			if (iter != m_filterMap.end()) {
-//				Load filter from map
-//				for (auto pr : iter->second) {
-//					pr.first->SetFilter(pr.second);
-//				}
-//			} else {
-//				Clear filter
-//				for (const auto& colPtr : m_allCols) {
-//					colPtr->SetFilter(L"");
-//				}
-//			}
-//
-//		}
-//
-//		Clear RowDictionary From 0 to last
-//		GetItemsSource().clear();
-//		m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
-//	}
-//
-//	{
-//		LOG_SCOPED_TIMER_THIS_1("OpenFolder Enumeration");
-//		try {
-//			Enumerate child IDL
-//			{
-//				LOG_SCOPED_TIMER_THIS_1("Current Way");
-//
-//				std::vector<CIDL> idls;
-//				{
-//					{
-//						LOG_SCOPED_TIMER_THIS_1("Current Enumeration");
-//						CComPtr<IEnumIDList> enumIdl;
-//						if (SUCCEEDED(Folder->GetShellFolderPtr()->EnumObjects(GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
-//							CIDL nextIdl;
-//							ULONG ulRet(0);
-//							while (true) {
-//								SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
-//								if (!nextIdl) { break; }
-//								idls.push_back(nextIdl);
-//								//func(nextIdl);
-//								nextIdl.Clear();
-//							}
-//						}
-//					}
-//				}
-//
-//				{
-//					//LOG_SCOPED_TIMER_THIS_1("Current Creation");
-//					//for (auto idl : idls) {
-//					//	if (auto spFile = Folder->CreateShExFileFolder(idl)) {
-//					//		GetItemsSource().push_back(spFile);
-//					//	}
-//					//}
-//				}
-//
-//			}
-//
-//			{
-//				LOG_SCOPED_TIMER_THIS_1("Thread Way");
-//				std::vector<std::future<std::shared_ptr<CShellFile>>> futures;
-//				{
-//					{
-//						LOG_SCOPED_TIMER_THIS_1("Thread Enumeration");
-//						CComPtr<IEnumIDList> enumIdl;
-//						if (SUCCEEDED(Folder->GetShellFolderPtr()->EnumObjects(GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
-//							CIDL nextIdl;
-//							ULONG ulRet(0);
-//							while (true) {
-//								SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
-//								if (!nextIdl) { break; }
-//								futures.emplace_back(CThreadPool::GetInstance()->enqueue("CreateShExFileFolder", 1,
-//									[folder = Folder, idl = std::move(nextIdl)]() mutable ->std::shared_ptr<CShellFile> { return folder->CreateShExFileFolder(std::forward<CIDL>(idl)); }));
-//								nextIdl.Clear();
-//							}
-//						}
-//					}
-//
-//					{
-//						LOG_SCOPED_TIMER_THIS_1("Thread Creation");
-//						for (auto& ftr : futures) {
-//							GetItemsSource().emplace_back(ftr.get());
-//						}
-//					}
-//
-//					{
-//						LOG_SCOPED_TIMER_THIS_1("Thread Enum/Back");
-//						std::vector<std::future<void>> futures;
-//						std::mutex mtx;
-//						CComPtr<IEnumIDList> enumIdl;
-//						if (SUCCEEDED(Folder->GetShellFolderPtr()->EnumObjects(GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN | SHCONTF_FASTITEMS, &enumIdl)) && enumIdl) {
-//							CIDL nextIdl;
-//							ULONG ulRet(0);
-//							while (true) {
-//								SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
-//								if (!nextIdl) { break; }
-//								futures.emplace_back(CThreadPool::GetMTAInstance()->enqueue("CreateShExFileFolder", 1,
-//									[parentIdl = Folder->GetAbsoluteIdl(), childIdl = std::move(nextIdl), this, &mtx]() mutable ->void {
-//										auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(parentIdl, std::forward<CIDL>(childIdl));
-//										std::lock_guard<std::mutex> lock(mtx);
-//										ItemsSource.emplace_back(spFile);
-//									}));
-//								nextIdl.Clear();
-//							}
-//						}
-//						{
-//							LOG_SCOPED_TIMER_THIS_1("Thread Wait");
-//							for (auto& ftr : futures) {
-//								ftr.get();
-//							}
-//						}
-//					}
-//				}
-//			}
-//
-//			shell::for_each_idl_in_shellfolder(GetWndPtr()->m_hWnd, Folder->GetShellFolderPtr(),
-//				[this](auto idl) {
-//					if (auto spFile = Folder->CreateShExFileFolder(std::move(idl))) {
-//						GetItemsSource().push_back(spFile);
-//					}
-//				});
-//		} catch (std::exception&) {
-//			throw std::exception(FILE_LINE_FUNC);
-//		}
-//
-//		Set up Watcher
-//		try {
-//			if (::PathFileExists(Folder->GetPath().c_str()) &&
-//				!boost::iequals(Folder->GetDispExt(), L".zip")) {
-//				m_spWatcher->QuitWatching();
-//				m_spWatcher->StartWatching(Folder->GetPath(), Folder->GetAbsoluteIdl());
-//			} else {
-//				m_spWatcher->QuitWatching();
-//			}
-//		} catch (std::exception& e) {
-//			GetWndPtr()->MessageBox(L"Watcher", L"Error", 0);
-//			throw e;
-//		}
-//
-//	}
-//
-//	{
-//		LOG_SCOPED_TIMER_THIS_1("OpenFolder Updating");
-//		auto& cells = m_allCells.get<rowcol_tag>();
-//		auto iter = std::remove_if(m_allCells.begin(), m_allCells.end(), [this](const auto& cell)->bool { return (size_t)(cell->GetRowPtr()->GetIndex<AllTag>()) >= m_frozenRowCount; });
-//		m_allCells.erase(iter, m_allCells.end());
-//		m_allCells.clear();
-//		for (const auto& colPtr : m_allCols) {
-//			std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
-//		}
-//
-//		GetHeaderColumnPtr()->SetIsFitMeasureValid(false);
-//
-//		PostUpdate(Updates::Sort);
-//		PostUpdate(Updates::Filter);
-//		PostUpdate(Updates::ColumnVisible);
-//		PostUpdate(Updates::RowVisible);
-//		PostUpdate(Updates::Column);
-//		PostUpdate(Updates::Row);
-//		PostUpdate(Updates::Scrolls);
-//		PostUpdate(Updates::Invalidate);
-//
-//		if (!isUpdate) {
-//			FolderChanged(Folder.get_shared_unconst());
-//		}
-//
-//		if (!isReload) {
-//			m_pVScroll->SetScrollPos(0);
-//
-//			If previous folder is found, set cursor for that.
-//			if (m_spPreviousFolder) {
-//				auto iter = std::find_if(ItemsSource->cbegin(), ItemsSource->cend(), [this](const auto& value)->bool {
-//					return value->GetAbsoluteIdl() == m_spPreviousFolder->GetAbsoluteIdl();
-//					});
-//
-//				if (iter != ItemsSource->cend()) {
-//
-//					if (auto cell = Cell(m_allRows[iter - ItemsSource->cbegin() + m_frozenRowCount], m_visCols[m_frozenColumnCount])) {
-//						m_spCursorer->OnCursor(cell);
-//						m_keepEnsureVisibleFocusedCell = true;
-//						PostUpdate(Updates::EnsureVisibleFocusedCell);
-//					}
-//				}
-//			}
-//
-//		}
-//	}
-//}
-
 void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, bool isReload)
 {
 	//OpenFolder is called when DeviceChange, even inactive.
@@ -926,249 +542,184 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 		return;
 	}
 
-	Updating = true;
-	(CShellThread::GetInstance()->Run([this, spFolder,/*parentIdl = Folder->GetParentIdl(), childIdl = Folder->GetChildIdl(), */isReload]()->void {
+	if (m_pEdit) {
+		EndEdit();
+	}
 
-		//CThreadSafeComPtr<IShellFolder> pParentShellFolder = shell::DesktopBindToShellFolder(parentIdl + childIdl);
+	LOG_THIS_1("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetDispName()));
+	LOG_SCOPED_TIMER_THIS_1("OpenFolder Total");
+	{
+		LOG_SCOPED_TIMER_THIS_1("OpenFolder Pre-Process");
 
-		//auto spFolder = std::make_shared<CShellFolder>(pParentShellFolder, parentIdl, childIdl);
+		//Direct2DWrite
+		if (!isReload) {
+			GetWndPtr()->GetDirectPtr()->ClearTextLayoutMap();
+		}
+		//Celler
+		m_spCeller->Clear();
 
-		if (m_pEdit) {
-			EndEdit();
+		//Cursor
+		m_spCursorer->Clear();
+		if (!isReload) {
+			DeselectAll();
 		}
 
-		LOG_THIS_1("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetDispName()));
-		LOG_SCOPED_TIMER_THIS_1("OpenFolder Total");
-		{
-			LOG_SCOPED_TIMER_THIS_1("OpenFolder Pre-Process");
-
-			//StateMachine // Do not reset
-			//m_pMachine.reset(new CGridStateMachine(this));
-			//Direct2DWrite
-			if (!isReload) {
-				GetWndPtr()->GetDirectPtr()->ClearTextLayoutMap();
-				//GetWndPtr()->GetDirectPtr()->GetFileThumbnailDrawerPtr()->Clear();
-			}
-			//Celler
-			m_spCeller->Clear();
-
-			//Cursor
-			m_spCursorer->Clear();
-			if (!isReload) {
-				DeselectAll();
-			}
-
-
-			//Save and Restore Filter value
-			if (!isReload) {
-				//Update Map
-				std::unordered_map<std::shared_ptr<CColumn>, std::wstring> map;
-				bool isAllEmpty = std::all_of(m_allCols.begin(), m_allCols.end(), [](const auto& ptr) { return ptr->GetFilter().empty(); });
-				if (isAllEmpty) {
-					if (m_spPreviousFolder) {
-						m_filterMap.erase(m_spPreviousFolder->GetPath());
-					}
-				}
-				else {
-					for (const auto& colPtr : m_allCols) {
-						map.emplace(colPtr, colPtr->GetFilter());
-					}
-					if (m_spPreviousFolder) {
-						m_filterMap.insert_or_assign(m_spPreviousFolder->GetPath(), map);
-					}
-				}
-				//Load Map
-				auto iter = m_filterMap.find(spFolder->GetPath());
-				if (iter != m_filterMap.end()) {
-					//Load filter from map
-					for (auto pr : iter->second) {
-						pr.first->SetFilter(pr.second);
-					}
-				}
-				else {
-					//Clear filter
-					for (const auto& colPtr : m_allCols) {
-						colPtr->SetFilter(L"");
-					}
-				}
-
-			}
-
-			//Clear RowDictionary From 0 to last
-			GetItemsSource().clear();
-			//m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
-		}
-
-		{
-			LOG_SCOPED_TIMER_THIS_1("OpenFolder Enumeration");
-			try {
-				//Enumerate child IDL
-				{
-					LOG_SCOPED_TIMER_THIS_1("Current Way");
-
-					std::vector<CIDL> idls;
-					{
-						{
-							LOG_SCOPED_TIMER_THIS_1("Current Enumeration");
-							CComPtr<IEnumIDList> enumIdl;
-							if (SUCCEEDED(Folder->GetShellFolderPtr().Call(&IShellFolder::EnumObjects, GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN | SHCONTF_FASTITEMS, &enumIdl)) && enumIdl) {
-								CIDL nextIdl;
-								ULONG ulRet(0);
-								while (true) {
-									SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
-									if (!nextIdl) { break; }
-									auto spFile = spFolder->CreateShExFileFolder(std::forward<CIDL>(nextIdl));
-									ItemsSource.emplace_back(spFile); 
-									nextIdl.Clear();
-								}
-							}
-						}
-					}
-
-					//{
-					//	LOG_SCOPED_TIMER_THIS_1("Current Creation");
-					//	for (auto idl : idls) {
-					//		if (auto spFile = Folder->CreateShExFileFolder(idl)) {
-					//			GetItemsSource().push_back(spFile);
-					//		}
-					//	}
-					//}
-
-				}
-
-				{
-					LOG_SCOPED_TIMER_THIS_1("Thread Way");
-					//std::vector<std::future<std::shared_ptr<CShellFile>>> futures;
-					{
-						//{
-						//	LOG_SCOPED_TIMER_THIS_1("Thread Enumeration");
-						//	CComPtr<IEnumIDList> enumIdl;
-						//	if (SUCCEEDED(Folder->GetShellFolderPtr()->EnumObjects(GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
-						//		CIDL nextIdl;
-						//		ULONG ulRet(0);
-						//		while (true) {
-						//			SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
-						//			if (!nextIdl) { break; }
-						//			futures.emplace_back(CThreadPool::GetInstance()->enqueue("CreateShExFileFolder", 1,
-						//				[folder = Folder, idl = std::move(nextIdl)]() mutable ->std::shared_ptr<CShellFile> { return folder->CreateShExFileFolder(std::forward<CIDL>(idl)); }));
-						//			nextIdl.Clear();
-						//		}
-						//	}
-						//}
-
-						//{
-						//	LOG_SCOPED_TIMER_THIS_1("Thread Creation");
-						//	for (auto& ftr : futures) {
-						//		GetItemsSource().emplace_back(ftr.get());
-						//	}
-						//}
-
-						//{
-						//	LOG_SCOPED_TIMER_THIS_1("Thread Enum/Back");
-						//	std::vector<std::future<void>> futures;
-						//	std::mutex mtx;
-						//	CComPtr<IEnumIDList> enumIdl;
-						//	if (SUCCEEDED(Folder->GetShellFolderPtr()->EnumObjects(GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
-						//		CIDL nextIdl;
-						//		ULONG ulRet(0);
-						//		while (true) {
-						//			SUCCEEDED(enumIdl->Next(1, nextIdl.ptrptr(), &ulRet));
-						//			if (!nextIdl) { break; }
-						//			futures.emplace_back(CThreadPool::GetMTAInstance()->enqueue("CreateShExFileFolder", 1,
-						//				[spFolder, idl = std::move(nextIdl), this, &mtx]() mutable ->void {
-						//					auto spFile = spFolder->CreateShExFileFolder(std::forward<CIDL>(idl));
-						//					std::lock_guard<std::mutex> lock(mtx);
-						//					ItemsSource.emplace_back(spFile); 
-						//				}));
-						//			nextIdl.Clear();
-						//		}
-						//	}
-						//	{
-						//		LOG_SCOPED_TIMER_THIS_1("Thread Wait");
-						//		for (auto& ftr : futures) {
-						//			ftr.get();
-						//		}
-						//	}
-						//}
-					}
-				}
-
-				//shell::for_each_idl_in_shellfolder(GetWndPtr()->m_hWnd, Folder->GetShellFolderPtr(),
-				//	[this](auto idl) {
-				//		if (auto spFile = Folder->CreateShExFileFolder(std::move(idl))) {
-				//			GetItemsSource().push_back(spFile);
-				//		}
-				//	});
-			}
-			catch (std::exception&) {
-				throw std::exception(FILE_LINE_FUNC);
-			}
-
-			//Set up Watcher
-			try {
-				if (::PathFileExists(spFolder->GetPath().c_str()) &&
-					!boost::iequals(Folder->GetDispExt(), L".zip")) {
-					m_spWatcher->QuitWatching();
-					m_spWatcher->StartWatching(spFolder->GetPath(), spFolder->GetAbsoluteIdl());
-				}
-				else {
-					m_spWatcher->QuitWatching();
-				}
-			}
-			catch (std::exception& e) {
-				GetWndPtr()->MessageBox(L"Watcher", L"Error", 0);
-				throw e;
-			}
-
-		}
-
-		{
-			LOG_SCOPED_TIMER_THIS_1("OpenFolder Updating");
-			//auto& cells = m_allCells.get<rowcol_tag>();
-			//auto iter = std::remove_if(m_allCells.begin(), m_allCells.end(), [this](const auto& cell)->bool { return (size_t)(cell->GetRowPtr()->GetIndex<AllTag>()) >= m_frozenRowCount; });
-			//m_allCells.erase(iter, m_allCells.end());
-			m_allCells.clear();
-			//for (const auto& colPtr : m_allCols) {
-			//	std::dynamic_pointer_cast<CMapColumn>(colPtr)->Clear();
-			//}
-
-			//GetHeaderColumnPtr()->SetIsFitMeasureValid(false);
-
-			PostUpdate(Updates::Sort);
-			PostUpdate(Updates::Filter);
-			PostUpdate(Updates::ColumnVisible);
-			PostUpdate(Updates::RowVisible);
-			//PostUpdate(Updates::Column);
-			PostUpdate(Updates::Row);
-			PostUpdate(Updates::Scrolls);
-			PostUpdate(Updates::Invalidate);
-
-			//if (!isUpdate) {
-			//	FolderChanged(Folder.get_shared_unconst());
-			//}
-
-			if (!isReload) {
-				m_pVScroll->SetScrollPos(0);
-
-				//If previous folder is found, set cursor for that.
+		//Save and Restore Filter value
+		if (!isReload) {
+			//Update Map
+			std::unordered_map<std::shared_ptr<CColumn>, std::wstring> map;
+			bool isAllEmpty = std::all_of(m_allCols.begin(), m_allCols.end(), [](const auto& ptr) { return ptr->GetFilter().empty(); });
+			if (isAllEmpty) {
 				if (m_spPreviousFolder) {
-					auto iter = std::find_if(ItemsSource->cbegin(), ItemsSource->cend(), [this](const auto& value)->bool {
-						return value->GetAbsoluteIdl() == m_spPreviousFolder->GetAbsoluteIdl();
-						});
-
-					if (iter != ItemsSource->cend()) {
-
-						if (auto cell = Cell(m_allRows[iter - ItemsSource->cbegin() + m_frozenRowCount], m_visCols[m_frozenColumnCount])) {
-							m_spCursorer->OnCursor(cell);
-							m_keepEnsureVisibleFocusedCell = true;
-							PostUpdate(Updates::EnsureVisibleFocusedCell);
-						}
-					}
+					m_filterMap.erase(m_spPreviousFolder->GetPath());
 				}
-
+			} else {
+				for (const auto& colPtr : m_allCols) {
+					map.emplace(colPtr, colPtr->GetFilter());
+				}
+				if (m_spPreviousFolder) {
+					m_filterMap.insert_or_assign(m_spPreviousFolder->GetPath(), map);
+				}
+			}
+			//Load Map
+			auto iter = m_filterMap.find(spFolder->GetPath());
+			if (iter != m_filterMap.end()) {
+				//Load filter from map
+				for (auto pr : iter->second) {
+					pr.first->SetFilter(pr.second);
+				}
+			} else {
+				//Clear filter
+				for (const auto& colPtr : m_allCols) {
+					colPtr->SetFilter(L"");
+				}
 			}
 		}
-	}) | then([this]()->void { Updating = false; })).get();
+
+		GetItemsSource().clear();
+	}
+
+
+	Updating = true;
+	//auto files = spFolder->GetFiles();
+	//for(auto iter = files->cbegin(); iter != files->cend(); ++iter){
+	//	ItemsSource.emplace_back(*iter);
+	//}
+ 	spFolder->GetFiles().binding(ItemsSource);
+
+
+	//(CShellThread::GetInstance()->Run([this, spFolder]()->void {
+	//	{
+	//		LOG_SCOPED_TIMER_THIS_1("OpenFolder Enumeration");
+	//		try {
+
+	//			//{
+	//			//	LOG_SCOPED_TIMER_THIS_1("Single Enumeration");
+	//			//	CShellComPtr<IEnumIDList> enumIdl;
+	//			//	if (SUCCEEDED(Folder->GetShellFolderPtr().Call(&IShellFolder::EnumObjects, GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN | SHCONTF_FASTITEMS, &enumIdl)) && enumIdl) {
+	//			//		CIDL nextIdl;
+	//			//		ULONG ulRet(0);
+	//			//		while (true) {
+	//			//			SUCCEEDED(enumIdl.Call(&IEnumIDList::Next, 1, nextIdl.ptrptr(), &ulRet));
+	//			//			if (!nextIdl) { break; }
+	//			//			auto spFile = spFolder->CreateShExFileFolder(std::forward<CIDL>(nextIdl));
+	//			//			ItemsSource.emplace_back(spFile); 
+	//			//			nextIdl.Clear();
+	//			//		}
+	//			//	}
+	//			//}
+	//			//ItemsSource.clear();
+
+	//			{
+	//				LOG_SCOPED_TIMER_THIS_1("Multiple Enumeration");
+	//				CShellComPtr<IEnumIDList> enumIdl;
+	//				constexpr ULONG kBatchSize = 64;
+	//				if (SUCCEEDED(Folder->GetShellFolderPtr().Call(&IShellFolder::EnumObjects, GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN | SHCONTF_FASTITEMS | SHCONTF_ENABLE_ASYNC, &enumIdl)) && enumIdl) {
+	//					while (true) {
+	//						PIDLIST_RELATIVE pidls[kBatchSize] = {};
+	//						ULONG fetched = 0;
+	//						HRESULT hr = enumIdl.Call(&IEnumIDList::Next, kBatchSize, pidls, &fetched);
+	//						for (ULONG i = 0; i < fetched; ++i)
+	//						{
+	//							CIDL nextIdl(pidls[i]);
+	//							auto spFile = spFolder->CreateShExFileFolder(std::move(nextIdl));
+	//							ItemsSource.emplace_back(spFile);
+	//						}
+	//						if (hr == S_FALSE)
+	//							break;
+
+	//						if (FAILED(hr))
+	//							break;
+	//					}
+	//				}
+	//			}
+
+	//		} catch (std::exception&) {
+	//			THROW_FILE_LINE_FUNC;
+	//		}
+
+	//		//Set up Watcher
+	//		try {
+	//			if (::PathFileExists(spFolder->GetPath().c_str()) &&
+	//				!boost::iequals(Folder->GetDispExt(), L".zip")) {
+	//				m_spWatcher->QuitWatching();
+	//				m_spWatcher->StartWatching(spFolder->GetPath(), spFolder->GetAbsoluteIdl());
+	//			}
+	//			else {
+	//				m_spWatcher->QuitWatching();
+	//			}
+	//		}
+	//		catch (std::exception& e) {
+	//			GetWndPtr()->MessageBox(L"Watcher", L"Error", 0);
+	//			THROW_FILE_LINE_FUNC;
+	//		}
+
+	//	}
+	//}) | then([this]()->void { Updating = false; })).get();
+
+	Updating = false;
+
+	{
+		LOG_SCOPED_TIMER_THIS_1("OpenFolder Updating");
+
+		m_allCells.clear();
+
+		//GetHeaderColumnPtr()->SetIsFitMeasureValid(false);
+
+		PostUpdate(Updates::Sort);
+		PostUpdate(Updates::Filter);
+		PostUpdate(Updates::ColumnVisible);
+		PostUpdate(Updates::RowVisible);
+		//PostUpdate(Updates::Column);
+		PostUpdate(Updates::Row);
+		PostUpdate(Updates::Scrolls);
+		PostUpdate(Updates::Invalidate);
+
+		//if (!isUpdate) {
+		//	FolderChanged(Folder.get_shared_unconst());
+		//}
+
+		if (!isReload) {
+			m_pVScroll->SetScrollPos(0);
+
+			//If previous folder is found, set cursor for that.
+			if (m_spPreviousFolder) {
+				auto iter = std::find_if(ItemsSource->cbegin(), ItemsSource->cend(), [this](const auto& value)->bool {
+					return value->GetAbsoluteIdl() == m_spPreviousFolder->GetAbsoluteIdl();
+					});
+
+				if (iter != ItemsSource->cend()) {
+
+					if (auto cell = Cell(m_allRows[iter - ItemsSource->cbegin() + m_frozenRowCount], m_visCols[m_frozenColumnCount])) {
+						m_spCursorer->OnCursor(cell);
+						m_keepEnsureVisibleFocusedCell = true;
+						PostUpdate(Updates::EnsureVisibleFocusedCell);
+					}
+				}
+			}
+
+		}
+	}
 }
 
 void CFilerGridView::OnBkGndLButtondDblClk(const LButtonDblClkEvent& e)
@@ -1334,44 +885,6 @@ bool CFilerGridView::CopyToClipboard()
 bool CFilerGridView::PasteFromClipboard()
 {
 	return CShellContextMenu::InvokeNormalShellContextmenuCommand(GetWndPtr()->m_hWnd, "Paste", Folder.get_shared_unconst());
-}
-
-void CFilerGridView::OnDirectoryWatch(const DirectoryWatchEvent& e)
-{
-	if (e.Infos.size() > 1) {
-		auto a = 1.f;
-	}
-	for(auto info : e.Infos){
-		switch (info.first) {
-		case FILE_ACTION_ADDED:
-			LOG_THIS_1("FILE_ACTION_ADDED");
-			Added(info.second);
-			break;
-		case FILE_ACTION_MODIFIED:
-			LOG_THIS_1("FILE_ACTION_MODIFIED");
-			Modified(info.second);
-			break;
-		case FILE_ACTION_REMOVED:
-			LOG_THIS_1("FILE_ACTION_REMOVED");
-			Removed(info.second);
-			break;
-		case FILE_ACTION_RENAMED_NEW_NAME:
-			LOG_THIS_1("FILE_ACTION_RENAMED_NEW_NAME");
-			{
-				std::list<std::wstring> oldnew;
-				boost::split(oldnew, info.second, boost::is_any_of(L"/"));
-				Renamed(oldnew.front(), oldnew.back());
-			}
-			break;
-		case FILE_ACTION_RENAMED_OLD_NAME:
-			LOG_THIS_1("FILE_ACTION_RENAMED_OLD_NAME");
-			break;
-		default:
-			break;
-		}
-	}
-	
-	SubmitUpdate();
 }
 
 void CFilerGridView::OnMouseWheel(const MouseWheelEvent& e)

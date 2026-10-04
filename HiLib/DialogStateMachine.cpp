@@ -14,10 +14,10 @@ struct CDialogStateMachine::Machine
 	class BottomSizing {};
 	class Error {};
 
-	template<class TRect, class R, class... Ts>
-	auto call(R(TRect::* f)(Ts...))const
+	template<class T, class R, class... Ts>
+	auto call(R(T::* f)(Ts...))const
 	{
-		return [f](TRect* self, Ts... args) { return (self->*f)(args...); };
+		return [f](T* self, Ts... args) { return (self->*f)(args...); };
 	}
 
 	auto operator()() const noexcept

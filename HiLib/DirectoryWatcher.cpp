@@ -1,4 +1,5 @@
 #include "DirectoryWatcher.h"
+#include "Application.h"
 #include "MyWin32.h"
 #include "MyString.h"
 #include "D2DWWindow.h"
@@ -9,8 +10,8 @@
 
 #include <algorithm>
 
-CDirectoryWatcher::CDirectoryWatcher(CD2DWControl* pControl, std::function<void(const DirectoryWatchEvent&)> callback)
-	:m_pControl(pControl), m_pQuitEvent(), m_vData(kBufferSize, 0), m_callback(callback)
+CDirectoryWatcher::CDirectoryWatcher(std::function<void(const DirectoryWatchEvent&)> callback)
+	:m_pQuitEvent(), m_vData(kBufferSize, 0), m_callback(callback)
 {}
 
 CDirectoryWatcher::~CDirectoryWatcher(void)
@@ -126,8 +127,8 @@ std::vector<std::wstring> CDirectoryWatcher::GetFileNamesInDirectory(CIDL absIdl
 {
 	std::vector<std::wstring> names;
 
-	CThreadSafeComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(absIdl);
-	shell::for_each_idl_in_shellfolder(m_pControl->GetWndPtr()->m_hWnd, pFolder, [&names, &pFolder](const CIDL& idl) {
+	CShellComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(absIdl);
+	shell::for_each_idl_in_shellfolder(nullptr, pFolder, [&names, &pFolder](const CIDL& idl) {
 		std::wstring path = shell::GetDisplayNameOf(pFolder, idl, SHGDN_FORPARSING);
 		if (!path.empty() && path[0] != L':') {
 			names.emplace_back(::PathFindFileName(path.c_str()));
@@ -201,7 +202,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 				memcpy(::GetBuffer(fileName, pInfo->FileNameLength / sizeof(wchar_t)), pInfo->FileName, pInfo->FileNameLength);
 				::ReleaseBuffer(fileName);
 
-				switch (pInfo->Action) {
+				switch (pFileNotifyInfo->Action) {
 				case FILE_ACTION_ADDED:
 					LOG_THIS_1("FILE_ACTION_ADDED");
 					{
@@ -279,7 +280,7 @@ void CDirectoryWatcher::IoCompletionCallback(HANDLE hIocp, HANDLE hDir)
 			//infos.erase(std::unique(infos.begin(), infos.end()), infos.end());
 			if (!infos.empty()) {
 				//::SendMessage(m_hWnd, WM_DIRECTORYWATCH, (WPARAM)&infos, NULL);
-				m_pControl->GetWndPtr()->GetDispatcherPtr()->SendInvoke([&]()->void
+				CDispatcher::GetInstance()->SendInvoke([this, infos=std::move(infos)]()->void
 				{
 					m_callback(DirectoryWatchEvent(infos));
 

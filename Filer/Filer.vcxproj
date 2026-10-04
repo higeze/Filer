@@ -293,6 +293,7 @@
     <ClInclude Include="..\HiLib\BindYearMonthDayColumn.h" />
     <ClInclude Include="..\HiLib\ColoredParagraphLayout.h" />
     <ClInclude Include="..\HiLib\ColoredTextLayout.h" />
+    <ClInclude Include="..\HiLib\DirectoryWatcher.h" />
     <ClInclude Include="..\HiLib\ParagraphLayout.h" />
     <ClInclude Include="..\HiLib\ShellThread.h" />
     <ClInclude Include="..\HiLib\TextLayout.h" />
@@ -493,7 +494,7 @@
     <ClInclude Include="..\HiLib\ThreadHelper.h" />
     <ClInclude Include="..\HiLib\ThreadMonitorView.h" />
     <ClInclude Include="..\HiLib\ThreadPool.h" />
-    <ClInclude Include="..\HiLib\ThreadSafeComPtr.h" />
+    <ClInclude Include="..\HiLib\ShellComPtr.h" />
     <ClInclude Include="..\HiLib\ThreadSafeDriveFolderManager.h" />
     <ClInclude Include="..\HiLib\ThreadSafeKnownFolderManager.h" />
     <ClInclude Include="..\HiLib\Timer.h" />
@@ -522,6 +523,7 @@
     <ClInclude Include="..\HiLib\YearMonthDay.h" />
     <ClInclude Include="..\HiLib\TextDoc.h" />
     <ClInclude Include="CheckableFileGrid.h" />
+    <ClInclude Include="FilerForwardBackManager.h" />
     <ClInclude Include="FilerTabData.h" />
     <ClInclude Include="FilerView.h" />
     <ClInclude Include="FolderHistory.h" />
@@ -552,7 +554,6 @@
     <ClInclude Include="RenameInfo.h" />
     <ClInclude Include="SearchWnd.h" />
     <ClInclude Include="FilerTabGridView.h" />
-    <ClInclude Include="DirectoryWatcher.h" />
     <ClInclude Include="Favorite.h" />
     <ClInclude Include="FavoritesColumn.h" />
     <ClInclude Include="FavoritesGridView.h" />
@@ -622,6 +623,7 @@
     <ClCompile Include="..\HiLib\D2DFileIconDrawer.cpp" />
     <ClCompile Include="..\HiLib\D2DImage.cpp" />
     <ClCompile Include="..\HiLib\DataObject.cpp" />
+    <ClCompile Include="..\HiLib\DirectoryWatcher.cpp" />
     <ClCompile Include="..\HiLib\DockPanel.cpp" />
     <ClCompile Include="..\HiLib\DriveFolder.cpp" />
     <ClCompile Include="..\HiLib\DropSource.cpp" />
@@ -735,6 +737,7 @@
     <ClCompile Include="..\HiLIb\YearMonthDay.cpp" />
     <ClCompile Include="BindTest.cpp" />
     <ClCompile Include="FileDock.cpp" />
+    <ClCompile Include="FilerForwardBackManager.cpp" />
     <ClCompile Include="FilerTabData.cpp" />
     <ClCompile Include="FilerView.cpp" />
     <ClCompile Include="FolderHistory.cpp" />
@@ -755,7 +758,6 @@
     <ClCompile Include="LauncherGridView.cpp" />
     <ClCompile Include="IncrementalCopyDlg.cpp" />
     <ClCompile Include="SearchWnd.cpp" />
-    <ClCompile Include="DirectoryWatcher.cpp" />
     <ClCompile Include="Favorite.cpp" />
     <ClCompile Include="FavoritesGridView.cpp" />
     <ClCompile Include="FileDragger.cpp" />

@@ -5,7 +5,7 @@ class CShellZipFolder :public CShellFolder
 {
 public:
 	template<typename... _Args>
-	CShellZipFolder(CThreadSafeComPtr<IShellFolder> pParentShellFolder, const CIDL& parentIdl, const CIDL& childIdl, _Args... args)
+	CShellZipFolder(CShellComPtr<IShellFolder> pParentShellFolder, const CIDL& parentIdl, const CIDL& childIdl, _Args... args)
 		:CShellFolder(pParentShellFolder, parentIdl, childIdl, args...) {}
 
 	virtual ~CShellZipFolder() = default;

@@ -18,7 +18,7 @@ struct adl_vector_item
 template<typename V>
 typename std::enable_if_t<std::is_base_of_v<notify_property_changed, V>>
 bind_value(V& left, V& right)
-{
+{ 
 	left.bind<V>(right);
 }
 
@@ -50,6 +50,9 @@ public:
 
 	subject_type m_subject;
 	container_type m_value;
+	mutable std::mutex m_mtx;
+	bool m_notifying = false;
+	std::deque<notify_type> m_pending;
 public:
 	explicit reactive_vector()
 		: m_subject(), 
@@ -170,7 +173,7 @@ public:
 			{ *position },
 			index,
 			{ oldItem},
-			-1,
+			index,
 			this->m_value
 		});
 		return position;
@@ -264,8 +267,83 @@ public:
 		});
 	}
 
+	void observe_vector_impl(notify_type notify)
+	{
+		switch (notify.action) {
+		case notify_container_changed_action::push_back:
+			this->push_back(adl_vector_item<value_type>::clone(notify.all_items.back()));
+			bind_value(notify.all_items.back(), this->m_value.back());
+			break;
+		case notify_container_changed_action::insert:
+			for (auto i = 0; i != notify.new_items.size(); i++) {
+				this->insert(this->m_value.cbegin() + notify.new_starting_index + i, adl_vector_item<value_type>::clone(notify.all_items.at(notify.new_starting_index + i)));
+				bind_value(notify.all_items.at(notify.new_starting_index + i), this->m_value.at(notify.new_starting_index + i));
+			}
+			break;
+		case notify_container_changed_action::Move:
+			THROW_FILE_LINE_FUNC;
+			break;
+		case notify_container_changed_action::erase:
+			this->erase(this->m_value.cbegin() + notify.old_starting_index);
+			break;
+		case notify_container_changed_action::replace:
+			this->erase(this->m_value.cbegin() + notify.old_starting_index);
+			this->insert(this->m_value.cbegin() + notify.new_starting_index, adl_vector_item<value_type>::clone(notify.new_items.at(0)));
+			break;
+		case notify_container_changed_action::reset:
+			this->clear();
+			for (size_t i = 0; i < notify.all_items.size(); i++) {
+				this->push_back(adl_vector_item<value_type>::clone(notify.all_items[i]));
+				bind_value(notify.all_items[i], this->m_value.at(i));
+			}
+			break;
+		}
+	}
+
 	void observe_vector(notify_type& notify)
 	{
+		// 最初にロックして状態確認／初回更新
+		{
+			std::lock_guard<std::mutex> lock(m_mtx);
+
+			// 値が変わらなければ何もしない
+			if (m_value == notify.all_items) {
+				return;
+			}
+
+			// 既に通知中ならキューへ追加して終了
+			if (m_notifying) {
+				m_pending.push_back(notify);
+				return;
+			}
+
+			// 通知開始：old を保存し m_value を新値に更新
+			m_notifying = true;
+		}
+
+		// 最初の通知（ロック外）
+		observe_vector_impl(notify);
+
+		// キューがあれば順次処理
+		while (true) {
+			bool has_next = false;
+			{
+				std::lock_guard<std::mutex> lock(m_mtx);
+				if (!m_pending.empty()) {
+					notify_type next = std::move(m_pending.front());
+					m_pending.pop_front();
+					observe_vector_impl(next);
+					has_next = true;
+				} else {
+					m_notifying = false;
+					has_next = false;
+				}
+			}
+
+			if (!has_next) break;
+		}
+
+
 		//if (this->m_value.size() == notify.all_items.size()){ 
 		//	return;
 		//}
@@ -284,35 +362,35 @@ public:
 		//	}
 		//}
 
-		if (this->m_value == notify.all_items) { return; }
+		//if (this->m_value == notify.all_items) { return; }
 
-		switch (notify.action) {
-			case notify_container_changed_action::push_back:
-				this->push_back(adl_vector_item<value_type>::clone(notify.all_items.back()));
-				bind_value(notify.all_items.back(), this->m_value.back());
-				break;
-			case notify_container_changed_action::insert:
-				for (auto i = 0; i != notify.new_items.size(); i++) {
-					this->insert(this->m_value.cbegin() + notify.new_starting_index + i, adl_vector_item<value_type>::clone(notify.all_items.at(notify.new_starting_index + i)));
-					bind_value(notify.all_items.at(notify.new_starting_index + i), this->m_value.at(notify.new_starting_index + i));
-				}
-				break;
-			case notify_container_changed_action::Move:
-				THROW_FILE_LINE_FUNC;
-				break;
-			case notify_container_changed_action::erase:
-				this->erase(this->m_value.cbegin() + notify.old_starting_index);
-				break;
-			case notify_container_changed_action::replace:
-				THROW_FILE_LINE_FUNC;
-				break;
-			case notify_container_changed_action::reset:
-				for (size_t i = 0; i < notify.all_items.size(); i++) {
-					this->push_back(adl_vector_item<value_type>::clone(notify.all_items[i]));
-					bind_value(notify.all_items[i], this->m_value.at(i));
-				}
-				break;
-		}
+		//switch (notify.action) {
+		//	case notify_container_changed_action::push_back:
+		//		this->push_back(adl_vector_item<value_type>::clone(notify.all_items.back()));
+		//		bind_value(notify.all_items.back(), this->m_value.back());
+		//		break;
+		//	case notify_container_changed_action::insert:
+		//		for (auto i = 0; i != notify.new_items.size(); i++) {
+		//			this->insert(this->m_value.cbegin() + notify.new_starting_index + i, adl_vector_item<value_type>::clone(notify.all_items.at(notify.new_starting_index + i)));
+		//			bind_value(notify.all_items.at(notify.new_starting_index + i), this->m_value.at(notify.new_starting_index + i));
+		//		}
+		//		break;
+		//	case notify_container_changed_action::Move:
+		//		THROW_FILE_LINE_FUNC;
+		//		break;
+		//	case notify_container_changed_action::erase:
+		//		this->erase(this->m_value.cbegin() + notify.old_starting_index);
+		//		break;
+		//	case notify_container_changed_action::replace:
+		//		THROW_FILE_LINE_FUNC;
+		//		break;
+		//	case notify_container_changed_action::reset:
+		//		for (size_t i = 0; i < notify.all_items.size(); i++) {
+		//			this->push_back(adl_vector_item<value_type>::clone(notify.all_items[i]));
+		//			bind_value(notify.all_items[i], this->m_value.at(i));
+		//		}
+		//		break;
+		//}
 	}
 };
 

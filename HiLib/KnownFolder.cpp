@@ -54,7 +54,7 @@ CKnownFolderManager::CKnownFolderManager()
 	CShellThread::GetInstance()->Run([this]() {
 		CComPtr<IKnownFolderManager> pMgr;
 		if (FAILED(pMgr.CoCreateInstance(CLSID_KnownFolderManager, NULL, CLSCTX_INPROC_SERVER))) { return; }
-		CThreadSafeComPtr<IShellFolder> pDesktopFolder;
+		CShellComPtr<IShellFolder> pDesktopFolder;
 		::SHGetDesktopFolder(&pDesktopFolder);
 
 		auto& idIdlMap = shell::CThreadSafeKnownFolderManager::GetInstance()->GetIdIdlMap();
@@ -68,9 +68,9 @@ CKnownFolderManager::CKnownFolderManager()
 					auto parentIdl = std::get<1>(pair.second).CloneParentIDL();
 					auto childIdl = std::get<1>(pair.second).CloneLastID();
 
-					CThreadSafeComPtr<IShellFolder> pDesktopFolder;
-					CThreadSafeComPtr<IShellFolder> pShellFolder;
-					CThreadSafeComPtr<IShellFolder> pParentShellFolder;
+					CShellComPtr<IShellFolder> pDesktopFolder;
+					CShellComPtr<IShellFolder> pShellFolder;
+					CShellComPtr<IShellFolder> pParentShellFolder;
 
 					if (SUCCEEDED(::SHGetDesktopFolder(&pDesktopFolder)) &&
 						SUCCEEDED(pDesktopFolder.Call(&IShellFolder::BindToObject, std::get<1>(pair.second).ptr(), nullptr, IID_IShellFolder, (void**)&pShellFolder)) &&

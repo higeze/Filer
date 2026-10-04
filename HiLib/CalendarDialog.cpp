@@ -212,7 +212,7 @@ void CCalendarDialog::OnPaint(const PaintEvent& e)
 
 void CCalendarDialog::OnKillFocus(const KillFocusEvent& e)
 {
-	GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+	CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 }
 
 

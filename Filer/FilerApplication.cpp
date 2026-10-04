@@ -76,7 +76,8 @@ void CFilerApplication::Init()
 	spdlog::set_pattern("%Y-%m-%d %H:%M:%S.%e\t%P\t%t\t%l\t%v");
 	LOG_1("***Application Start***");
 
-
+	//Dispatcher
+	CDispatcher::GetInstance()->Init();	
 
 	//TSF
 	CTSFManager::GetInstance()->Init();

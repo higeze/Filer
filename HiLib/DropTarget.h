@@ -6,11 +6,11 @@
 class CIDL;
 class CShellFolder;
 
-template<typename TRect>
-inline std::basic_string<TRect> GetMakeSureTempDirectory()
+template<typename T>
+inline std::basic_string<T> GetMakeSureTempDirectory()
 {
 	//create temp directory if not exist
-	TRect tempDir[MAX_PATH];
+	T tempDir[MAX_PATH];
 	::GetModuleFileNameA(NULL, tempDir, MAX_PATH);
 	::PathRemoveFileSpecA(tempDir);
 	::PathCombineA(tempDir, tempDir, "Temp");

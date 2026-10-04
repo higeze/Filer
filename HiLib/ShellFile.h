@@ -11,7 +11,7 @@
 #include <chrono>
 #include <optional>
 #include <atlcom.h>
-#include "ThreadSafeComPtr.h"
+#include "ShellComPtr.h"
 
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/seq/fold_left.hpp>
@@ -25,6 +25,8 @@
 #include <wincodec.h>
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "windowscodecs.lib")
+
+#include "reactive_vector.h"
 
 
 
@@ -119,7 +121,7 @@ public:
 class CShellFile: public std::enable_shared_from_this<CShellFile>
 {
 protected:
-	CThreadSafeComPtr<IShellFolder> m_pParentShellFolder;
+	CShellComPtr<IShellFolder> m_pParentShellFolder;
 	CIDL m_parentIdl;
 	CIDL m_childIdl;
 	CIDL m_absoluteIdl;
@@ -134,7 +136,7 @@ public:
 	CShellFile() {}
 	CShellFile(const std::wstring& path);
 
-	CShellFile(CThreadSafeComPtr<IShellFolder> pParentShellFolder, CIDL&& parentIDL, CIDL&& childIDL, std::wstring&& path, std::wstring&& path_name, std::wstring&& path_ext)
+	CShellFile(CShellComPtr<IShellFolder> pParentShellFolder, CIDL&& parentIDL, CIDL&& childIDL, std::wstring&& path, std::wstring&& path_name, std::wstring&& path_ext)
 		:m_pParentShellFolder(pParentShellFolder),
 		m_parentIdl(std::forward<CIDL>(parentIDL)), 
 		m_childIdl(std::forward<CIDL>(childIDL)),
@@ -148,7 +150,7 @@ public:
 		}
 	}
 	template<typename... _Args>
-	CShellFile(CThreadSafeComPtr<IShellFolder> pParentShellFolder, const CIDL parentIdl, const CIDL childIdl, _Args... args)
+	CShellFile(CShellComPtr<IShellFolder> pParentShellFolder, const CIDL parentIdl, const CIDL childIdl, _Args... args)
 		:m_pParentShellFolder(pParentShellFolder), m_absoluteIdl(parentIdl + childIdl), m_parentIdl(parentIdl), m_childIdl(childIdl),
 		m_optPath(::get(arg<"path"_s>(), args..., default_(std::nullopt))),
 		m_optPathName(::get(arg<"path_name"_s>(), args..., default_(std::nullopt))),
@@ -178,7 +180,7 @@ public:
 	virtual ~CShellFile();
 	
 	//Getter 
-	CThreadSafeComPtr<IShellFolder> GetParentShellFolderPtr(){return m_pParentShellFolder;}
+	CShellComPtr<IShellFolder> GetParentShellFolderPtr(){return m_pParentShellFolder;}
 	const CIDL& GetAbsoluteIdl() const { return m_absoluteIdl; }
 	const CIDL& GetParentIdl() const { return m_parentIdl; }
 	const CIDL& GetChildIdl() const { return m_childIdl; }
@@ -280,5 +282,19 @@ public:
 
 	//Icon
 //	virtual std::pair<std::shared_ptr<CIcon>, FileIconStatus> GetIcon(std::function<void(CShellFile*)>& changedAction)override;
+};
+
+template<>
+struct adl_vector_item<std::shared_ptr<CShellFile>>
+{
+	static std::shared_ptr<CShellFile> clone(const std::shared_ptr<CShellFile>& item)
+	{
+		return item;
+	}
+
+	static void bind(std::shared_ptr<CShellFile>& src, std::shared_ptr<CShellFile>& dst)
+	{
+		// Do Nothing, Shared pointer binding is not necessary in this context
+	}
 };
 

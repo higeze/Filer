@@ -295,7 +295,7 @@ void CGridView::DelayUpdate()
 {
 	m_invalidateTimer.run([this]()->void
 	{
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]()->void
+		CDispatcher::GetInstance()->PostInvoke([this]()->void
 		{
 			OnDelayUpdate();
 		});
@@ -2070,21 +2070,24 @@ void CGridView::RowInserted(const CRowEventArgs& e)
 	for(auto& spCol : m_allCols){
 		spCol->SetIsFitMeasureValid(false);
 	};
+	//PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::RowVisible);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
-	PostUpdate(Updates::Invalidate);//
+	PostUpdate(Updates::Invalidate);
 }
 
 void CGridView::RowErased(const CRowEventArgs& e)
 {
 	this->SetAllColumnFitMeasureValid(false);
 
+	//PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::RowVisible);
 	PostUpdate(Updates::Column);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
 	PostUpdate(Updates::Invalidate);//
+	//PostUpdate(Updates::Sort);
 }
 
 void CGridView::RowsErased(const CRowsEventArgs& e)

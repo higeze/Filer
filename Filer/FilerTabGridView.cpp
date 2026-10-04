@@ -164,7 +164,7 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 	//ItemsHeaderIcon
 	auto updated = [this]()->void
 	{
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]()->void
+		CDispatcher::GetInstance()->PostInvoke([this]()->void
 		{
 			GetWndPtr()->InvalidateRect(NULL, FALSE);
 		});

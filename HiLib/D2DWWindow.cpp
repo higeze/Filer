@@ -68,7 +68,6 @@ std::shared_ptr<CD2DWHostWndControl> CD2DWWindow::FindHostWndControlPtr(HWND hWn
 
 CD2DWWindow::CD2DWWindow()
 	:CWnd(),CD2DWControl(nullptr),
-	m_pDispatcher(std::make_unique<CDispatcher>(this)),
 	m_pDropTargetManager(std::make_unique<CDropTargetManager>(this)),
 	m_pCapturedControl(nullptr)
 {
@@ -151,7 +150,6 @@ CD2DWWindow::CD2DWWindow()
 	AddMsgHandler(WM_SYSKEYDOWN, &CD2DWWindow::UserInputMachine_Message<SysKeyDownEvent>, this);
 	AddMsgHandler(WM_CHAR, &CD2DWWindow::UserInputMachine_Message<CharEvent>, this);
 	AddMsgHandler(CTSFManager::WM_TSF_STARTCOMPOSITION, &CD2DWWindow::UserInputMachine_Message<ImeStartCompositionEvent>, this);
-	AddMsgHandler(CDispatcher::WM_DISPATCHER, &CDispatcher::OnDispatcher, m_pDispatcher.get());
 	AddMsgHandler(WM_KEYDOWN, [this](UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)->LRESULT {
 		//BOOL fEaten;
 		//if (!(CTSFManager::GetInstance()->GetKeystrokeMgrPtr()->TestKeyDown(wParam, lParam, &fEaten) == S_OK && fEaten &&

@@ -11,6 +11,8 @@
 #include "ShellFunction.h"
 #include <format>
 #include "ThreadPool.h"
+#include "DirectoryWatcher.h"
+
 
 #include "KnownFolderManager.h"
 
@@ -31,6 +33,12 @@ CShellFolder::~CShellFolder()
 			m_futureTime.wait();
 		}
 	} catch (...) {}
+
+	try {
+		if (m_spWatcher) { 
+			m_spWatcher->QuitWatching();
+		}
+	} catch (...){}
 }
 
 //CShellFolder CShellFolder::Clone() const
@@ -41,7 +49,7 @@ CShellFolder::~CShellFolder()
 //	return CShellFolder(pParentShellFolder, m_parentIdl, m_childIdl);
 //}
 
-CThreadSafeComPtr<IShellFolder> CShellFolder::GetShellFolderPtr() const
+CShellComPtr<IShellFolder> CShellFolder::GetShellFolderPtr() const
 {
 	if (!m_pShellFolder) {
 		m_pShellFolder = shell::DesktopBindToShellFolder(m_absoluteIdl);
@@ -110,7 +118,7 @@ const std::shared_ptr<CShellFolder>& CShellFolder::GetParentFolderPtr() const
 	if (!m_pParentFolder) {
 		CIDL parentIDL = m_absoluteIdl.CloneParentIDL();
 		CIDL grandParentIDL = parentIDL.CloneParentIDL();
-		CThreadSafeComPtr<IShellFolder> pGrandParentFolder = nullptr;
+		CShellComPtr<IShellFolder> pGrandParentFolder = nullptr;
 		LPCITEMIDLIST pidl;
 		HRESULT hr = SHBindToParent(
 			parentIDL.ptr(),
@@ -143,7 +151,7 @@ std::pair<ULARGE_INTEGER, FileSizeStatus> CShellFolder::GetSize(const FileSizeAr
 				{
 					SetLockSize(std::make_pair(ULARGE_INTEGER{ 0 }, FileSizeStatus::Calculating));
 					auto limit = args.TimeLimitFolderSize ? args.TimeLimitMs : -1;
-					auto fun = [](const std::shared_ptr<bool>& spCancelThread, CThreadSafeComPtr<IShellFolder> pShellFolder, CIDL folderIdl, std::wstring path, int limit, std::function<void()> sizeChanged)
+					auto fun = [](const std::shared_ptr<bool>& spCancelThread, CShellComPtr<IShellFolder> pShellFolder, CIDL folderIdl, std::wstring path, int limit, std::function<void()> sizeChanged)
 					{
 						// pShellFolder はコピーなのでタスク実行中に有効
 						std::chrono::system_clock::time_point tp = std::chrono::system_clock::now();
@@ -195,8 +203,8 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(const FileTimeAr
 			}
 			auto limit = args.TimeLimitFolderLastWrite ? args.TimeLimitMs : -1;
 			auto fun = [](const std::shared_ptr<bool>& spCancelThread,
-					CThreadSafeComPtr<IShellFolder> pParentFolder,
-					CThreadSafeComPtr<IShellFolder> pFolder,
+					CShellComPtr<IShellFolder> pParentFolder,
+					CShellComPtr<IShellFolder> pFolder,
 					const CIDL& relativeIdl,
 					const std::wstring& path,
 					const int& limit,
@@ -245,7 +253,7 @@ std::pair<FileTimes, FileTimeStatus> CShellFolder::GetFileTimes(const FileTimeAr
 
 //static
 bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<bool>& cancel, 
-	CThreadSafeComPtr<IShellFolder> pFolder, const std::wstring& path,
+	CShellComPtr<IShellFolder> pFolder, const std::wstring& path,
 	const std::chrono::system_clock::time_point& tp, const int limit)
 {	
 	if (*cancel) {
@@ -281,10 +289,10 @@ bool CShellFolder::GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<boo
 					std::wstring childPath = childIdl.strret2wstring(childStrret);
 					std::wstring childExt = ::PathFindExtension(childPath.c_str());
 
-					CThreadSafeComPtr<IShellFolder> pChidFolder;
+					CShellComPtr<IShellFolder> pChidFolder;
 					CComPtr<IEnumIDList> childEnumIdl;
 					if (!boost::iequals(childExt, ".zip") &&
-						SUCCEEDED(pFolder.Call(&IShellFolder::BindToObject, childIdl.ptr(), reinterpret_cast<IBindCtx*>(nullptr), IID_IShellFolder, reinterpret_cast<void**>(& pChidFolder))) &&
+						SUCCEEDED(pFolder.Call(&IShellFolder::BindToObject, reinterpret_cast<LPCITEMIDLIST>(childIdl.ptr()), reinterpret_cast<IBindCtx*>(nullptr), IID_PPV_ARGS(& pChidFolder))) &&
 						SUCCEEDED(pChidFolder.Call(&IShellFolder::EnumObjects, reinterpret_cast<HWND>(NULL), SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &childEnumIdl))) {
 						if (CShellFolder::GetFolderSize(childSize, cancel,
 							pChidFolder, childPath,
@@ -321,14 +329,14 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(
 	int limit,
 	bool ignoreFolderTime)
 {
-	CThreadSafeComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
-	CThreadSafeComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(parentIdl + relativeIdl);
+	CShellComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
+	CShellComPtr<IShellFolder> pFolder = shell::DesktopBindToShellFolder(parentIdl + relativeIdl);
 
 	return CShellFolder::GetFolderFileTimes(cancel, pParentFolder, pFolder, relativeIdl, path, tp, limit, ignoreFolderTime);
 }
 
 std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<bool>& cancel,
-	CThreadSafeComPtr<IShellFolder> pParentFolder, CThreadSafeComPtr<IShellFolder> pFolder, const CIDL& relativeIdl, const std::wstring& path,
+	CShellComPtr<IShellFolder> pParentFolder, CShellComPtr<IShellFolder> pFolder, const CIDL& relativeIdl, const std::wstring& path,
 	std::chrono::system_clock::time_point& tp, int limit, bool ignoreFolderTime)
 {
 	FileTimes times = shell::GetFileTimes(pParentFolder, relativeIdl).value_or(FileTimes());
@@ -349,7 +357,7 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 		if (SUCCEEDED(pFolder.Call(&IShellFolder::EnumObjects, reinterpret_cast<HWND>(NULL), SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &enumIdl)) && enumIdl) {
 			CIDL childIdl;
 			ULONG ulRet(0);
-			std::vector<std::tuple<CThreadSafeComPtr<IShellFolder>, CIDL, std::wstring>> folders;
+			std::vector<std::tuple<CShellComPtr<IShellFolder>, CIDL, std::wstring>> folders;
 			while (SUCCEEDED(enumIdl->Next(1, childIdl.ptrptr(), &ulRet))) {
 				if (*cancel) {
 					LOG_2("CShellFolder::GetFolderFileTimes Canceled in while :", wstr2str(path));
@@ -368,10 +376,10 @@ std::optional<FileTimes> CShellFolder::GetFolderFileTimes(const std::shared_ptr<
 					std::wstring childPath = childIdl.strret2wstring(childStrret);
 					std::wstring childExt = ::PathFindExtension(childPath.c_str());
 
-					CThreadSafeComPtr<IShellFolder> pChidFolder;
+					CShellComPtr<IShellFolder> pChidFolder;
 					CComPtr<IEnumIDList> childEnumIdl;
 					if (!boost::iequals(childExt, ".zip") &&
-						SUCCEEDED(pFolder.Call(&IShellFolder::BindToObject, childIdl.ptr(), reinterpret_cast<IBindCtx*>(nullptr), IID_IShellFolder, reinterpret_cast<void**>(&pChidFolder))) &&
+						SUCCEEDED(pFolder.Call(&IShellFolder::BindToObject, reinterpret_cast<LPCITEMIDLIST>(childIdl.ptr()), reinterpret_cast<IBindCtx*>(nullptr), IID_PPV_ARGS(& pChidFolder))) &&
 						SUCCEEDED(pChidFolder.Call(&IShellFolder::EnumObjects, reinterpret_cast<HWND>(NULL), SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_FOLDERS, &childEnumIdl))) {
 						folders.emplace_back(std::make_tuple(pChidFolder, childIdl, childPath));
 					} else {
@@ -426,3 +434,256 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL&& childIdl) 
 //{
 //	return CShellFileFactory::GetInstance()->CreateShellFilePtr(GetShellFolderPtr(), GetAbsoluteIdl(), childIdl);
 //}
+
+reactive_vector_ptr<std::shared_ptr<CShellFile>>& CShellFolder::GetFiles() const
+{
+	if (Files->empty()) {
+		//Directory watcher
+		m_spWatcher = std::make_shared<CDirectoryWatcher>(std::bind(&CShellFolder::OnDirectoryWatch, this, std::placeholders::_1));
+
+		CShellThread::GetInstance()->Run([this]()->void {
+			{
+				LOG_SCOPED_TIMER_THIS_1("OpenFolder Enumeration");
+				try {
+
+					//{
+					//	LOG_SCOPED_TIMER_THIS_1("Single Enumeration");
+					//	CShellComPtr<IEnumIDList> enumIdl;
+					//	if (SUCCEEDED(Folder->GetShellFolderPtr().Call(&IShellFolder::EnumObjects, GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN | SHCONTF_FASTITEMS, &enumIdl)) && enumIdl) {
+					//		CIDL nextIdl;
+					//		ULONG ulRet(0);
+					//		while (true) {
+					//			SUCCEEDED(enumIdl.Call(&IEnumIDList::Next, 1, nextIdl.ptrptr(), &ulRet));
+					//			if (!nextIdl) { break; }
+					//			auto spFile = spFolder->CreateShExFileFolder(std::forward<CIDL>(nextIdl));
+					//			ItemsSource.emplace_back(spFile); 
+					//			nextIdl.Clear();
+					//		}
+					//	}
+					//}
+					//ItemsSource.clear();
+
+					{
+						LOG_SCOPED_TIMER_THIS_1("Multiple Enumeration");
+						CShellComPtr<IEnumIDList> enumIdl;
+						constexpr ULONG kBatchSize = 64;
+						if (SUCCEEDED(GetShellFolderPtr().Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN | SHCONTF_FASTITEMS, &enumIdl)) && enumIdl) {
+							while (true) {
+								PIDLIST_RELATIVE pidls[kBatchSize] = {};
+								ULONG fetched = 0;
+								HRESULT hr = enumIdl.Call(&IEnumIDList::Next, kBatchSize, pidls, &fetched);
+								for (ULONG i = 0; i < fetched; ++i)
+								{
+									CIDL nextIdl(pidls[i]);
+									auto spFile = CreateShExFileFolder(std::move(nextIdl));
+									Files.emplace_back(spFile);
+								}
+								if (hr == S_FALSE)
+									break;
+
+								if (FAILED(hr))
+									break;
+							}
+						}
+					}
+
+				} catch (std::exception&) {
+					THROW_FILE_LINE_FUNC;
+				}
+
+				//Set up Watcher
+				try {
+					if (::PathFileExists(GetPath().c_str()) &&
+						!boost::iequals(GetDispExt(), L".zip")) {
+						m_spWatcher->QuitWatching();
+						m_spWatcher->StartWatching(GetPath(), GetAbsoluteIdl());
+					} else {
+						m_spWatcher->QuitWatching();
+					}
+				} catch (std::exception& e) {
+					THROW_FILE_LINE_FUNC;
+				}
+
+			}
+		}).get();
+
+	}
+	return Files;
+}
+
+
+void CShellFolder::OnDirectoryWatch(const DirectoryWatchEvent& e) const
+{
+	if (e.Infos.size() > 1) {
+		auto a = 1.f;
+	}
+	for (auto info : e.Infos) {
+		switch (info.first) {
+		case FILE_ACTION_ADDED:
+			LOG_THIS_1("FILE_ACTION_ADDED");
+			Added(info.second);
+			break;
+		case FILE_ACTION_MODIFIED:
+			LOG_THIS_1("FILE_ACTION_MODIFIED");
+			Modified(info.second);
+			break;
+		case FILE_ACTION_REMOVED:
+			LOG_THIS_1("FILE_ACTION_REMOVED");
+			Removed(info.second);
+			break;
+		case FILE_ACTION_RENAMED_NEW_NAME:
+			LOG_THIS_1("FILE_ACTION_RENAMED_NEW_NAME");
+			{
+				std::list<std::wstring> oldnew;
+				boost::split(oldnew, info.second, boost::is_any_of(L"/"));
+				Renamed(oldnew.front(), oldnew.back());
+			}
+			break;
+		case FILE_ACTION_RENAMED_OLD_NAME:
+			LOG_THIS_1("FILE_ACTION_RENAMED_OLD_NAME");
+			break;
+		default:
+			break;
+		}
+	}
+
+	//SubmitUpdate();
+}
+
+
+void CShellFolder::Added(const std::wstring& fileName) const
+{
+	LOG_THIS_1("Added " + wstr2str(fileName));
+	CIDL idl;
+	ULONG chEaten;
+	ULONG dwAttributes;
+	HRESULT hr = GetShellFolderPtr().Call(&IShellFolder::ParseDisplayName, nullptr, nullptr, const_cast<LPWSTR>(fileName.c_str()), &chEaten, idl.ptrptr(), &dwAttributes);
+	if (SUCCEEDED(hr) && idl) {
+		Files.push_back(CreateShExFileFolder(std::move(idl)));
+		//auto spRow = m_allRows.back();
+
+		//PostUpdate(Updates::ColumnVisible);
+		//PostUpdate(Updates::RowVisible);
+		//PostUpdate(Updates::Row);
+		//PostUpdate(Updates::Scrolls);
+		//PostUpdate(Updates::Invalidate);
+
+		//if (m_isNewFile) {
+		//	m_spCursorer->OnCursor(Cell(spRow, m_allCols.at(m_frozenColumnCount)));
+		//	PostUpdate(Updates::EnsureVisibleFocusedCell);
+		//}
+		//PostUpdate(Updates::Sort);
+		//UpdateFilter();
+		//if (m_isNewFile) {
+		//	if (auto cols = FindColumns<CFileNameColumn<std::shared_ptr<CShellFile>>>(); !cols.empty()) {
+		//		std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, cols.front()))->OnEdit(Event(GetWndPtr()));
+		//	}
+		//}
+		//m_isNewFile = false;
+	} else {
+		LOG_THIS_1("Added FAILED " + wstr2str(fileName));
+	}
+}
+
+void CShellFolder::Modified(const std::wstring& fileName) const
+{
+	LOG_THIS_1("Modified " + wstr2str(fileName));
+	auto iter = std::find_if(Files.get_unconst()->begin(), Files.get_unconst()->end(),
+		[fileName](const std::shared_ptr<CShellFile>& value)->bool {
+			return value->GetPathName() == fileName;
+		});
+	//	auto iter = FindIfRowIterByFileNameExt(fileName);
+
+	if (iter == Files.get_unconst()->end()) {
+		LOG_THIS_1("Modified NoMatch " + wstr2str(fileName));
+		return;
+	} else {
+		//Because ItemIdList includes, size, last write time, etc., it is necessary to get new one.
+		ULONG chEaten;
+		ULONG dwAttributes;
+		CIDL newIdl;
+		HRESULT hRes = (*iter)->GetParentShellFolderPtr().Call(
+			&IShellFolder::ParseDisplayName, nullptr, nullptr, (LPWSTR)fileName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
+
+		if (SUCCEEDED(hRes) && newIdl) {
+			//std::get<std::shared_ptr<CShellFile>>(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
+			Files.replace(iter, CreateShExFileFolder(std::move(newIdl)));
+			//m_allRows[iter - ItemsSource->cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
+			//PostUpdate(Updates::ColumnVisible);
+			//PostUpdate(Updates::RowVisible);
+			//PostUpdate(Updates::Row);
+			//PostUpdate(Updates::Scrolls);
+			//PostUpdate(Updates::Invalidate);
+			//PostUpdate(Updates::Sort);
+			//UpdateFilter();
+		} else {
+			LOG_THIS_1("Modified FAILED " + wstr2str(fileName));
+		}
+	}
+}
+void CShellFolder::Removed(const std::wstring& fileName) const
+{
+	LOG_THIS_1("Removed " + wstr2str(fileName));
+
+	auto iter = std::find_if(Files->cbegin(), Files->cend(),
+		[fileName](const std::shared_ptr<CShellFile>& value)->bool {
+			return value->GetPathName() == fileName;
+		});
+
+	if (iter == Files->cend()) {
+		LOG_THIS_1("Removed NoMatch " + wstr2str(fileName));
+		return;
+	} else {
+
+		Files.erase(iter);
+
+		//m_spCursorer->OnCursorClear(this);
+		//m_spCeller->OnClear();
+
+		//PostUpdate(Updates::ColumnVisible);
+		//PostUpdate(Updates::RowVisible);
+		//PostUpdate(Updates::Row);
+		//PostUpdate(Updates::Scrolls);
+		//PostUpdate(Updates::Invalidate);
+		//PostUpdate(Updates::Sort);
+
+		//UpdateFilter();
+	}
+
+}
+void CShellFolder::Renamed(const std::wstring& oldName, const std::wstring& newName) const
+{
+	LOG_THIS_1("Renamed " + wstr2str(oldName) + "=>" + wstr2str(newName));
+	auto iter = std::find_if(Files.get_unconst()->begin(), Files.get_unconst()->end(),
+		[oldName](const std::shared_ptr<CShellFile>& value)->bool {
+			return value->GetPathName() == oldName;
+		});
+
+	if (iter == Files.get_unconst()->end())
+	{
+		LOG_THIS_1("Renamed NoMatch " + wstr2str(oldName) + "=>" + wstr2str(newName));
+	} else {
+		ULONG chEaten;
+		ULONG dwAttributes;
+		CIDL newIdl;
+
+		HRESULT hRes = (*iter)->GetParentShellFolderPtr().Call(&IShellFolder::ParseDisplayName, nullptr, nullptr, (LPWSTR)newName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
+
+		if (SUCCEEDED(hRes) && newIdl) {
+			(*iter) = CreateShExFileFolder(std::move(newIdl));
+			//m_allRows[iter - Files->cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
+			//PostUpdate(Updates::ColumnVisible);
+			//PostUpdate(Updates::RowVisible);
+			//PostUpdate(Updates::Row);
+			//PostUpdate(Updates::Scrolls);
+			//PostUpdate(Updates::Invalidate);
+			//PostUpdate(Updates::Sort);
+			//UpdateFilter();
+		} else {
+			LOG_THIS_1("Renamed FAILED " + wstr2str(oldName) + "=>" + wstr2str(newName));
+			return Removed(oldName);
+		}
+	}
+}
+
+

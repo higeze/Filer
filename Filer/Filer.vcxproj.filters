@@ -104,9 +104,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DirectoryWatcher.h">
-      <Filter>Filer</Filter>
-    </ClInclude>
     <ClInclude Include="FilerProperty.h">
       <Filter>Filer</Filter>
     </ClInclude>
@@ -1060,17 +1057,20 @@
     <ClInclude Include="..\HiLib\ColoredTextLayout.h">
       <Filter>HiLib\TextBox</Filter>
     </ClInclude>
-    <ClInclude Include="..\HiLib\ThreadSafeComPtr.h">
+    <ClInclude Include="..\HiLib\ShellComPtr.h">
       <Filter>HiLib</Filter>
     </ClInclude>
     <ClInclude Include="..\HiLib\ShellThread.h">
       <Filter>HiLib\Shell</Filter>
     </ClInclude>
+    <ClInclude Include="FilerForwardBackManager.h">
+      <Filter>Filer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\HiLib\DirectoryWatcher.h">
+      <Filter>HiLib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DirectoryWatcher.cpp">
-      <Filter>Filer</Filter>
-    </ClCompile>
     <ClCompile Include="Filer.cpp">
       <Filter>Filer</Filter>
     </ClCompile>
@@ -1599,6 +1599,12 @@
     </ClCompile>
     <ClCompile Include="..\HiLib\ShellThread.cpp">
       <Filter>HiLib\Shell</Filter>
+    </ClCompile>
+    <ClCompile Include="FilerForwardBackManager.cpp">
+      <Filter>Filer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\HiLib\DirectoryWatcher.cpp">
+      <Filter>HiLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

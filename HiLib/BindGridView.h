@@ -250,13 +250,13 @@ public:
 				for (auto& tup : e.new_items) {
 					PushRow(std::make_shared<TRow>(this));
 				}
-				//PostUpdate(Updates::All);
-				//SubmitUpdate();
+				PostUpdate(Updates::All);
 				break;
 			}
 			default:
 				break;
 		}
+		SubmitUpdate();
 	}
 
 	void subscribe_detail_column(const notify_type& e)

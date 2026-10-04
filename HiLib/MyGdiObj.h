@@ -1,14 +1,14 @@
 #pragma once
 
-template<class TRect>
+template<class T>
 class CGdiObj
 {
 protected:
-	TRect m_hGdiObj;
+	T m_hGdiObj;
 	bool m_isManaged;
 
 public:
-	CGdiObj(TRect hGdiObj=NULL, bool isManaged = true):m_hGdiObj(hGdiObj),m_isManaged(isManaged){}
+	CGdiObj(T hGdiObj=NULL, bool isManaged = true):m_hGdiObj(hGdiObj),m_isManaged(isManaged){}
 	virtual ~CGdiObj()
 	{
 		if(m_isManaged && m_hGdiObj!=NULL){
@@ -16,20 +16,20 @@ public:
 			m_hGdiObj = NULL;
 		}
 	}
-	void Attach(TRect hGdiObj)
+	void Attach(T hGdiObj)
 	{
 		if(m_hGdiObj != NULL && m_hGdiObj != hGdiObj)
 			::DeleteObject(m_hGdiObj);
 		m_hGdiObj = hGdiObj;
 	}
 
-	TRect Detach()
+	T Detach()
 	{
-		TRect hGdiObj = m_hGdiObj;
+		T hGdiObj = m_hGdiObj;
 		m_hGdiObj = NULL;
 		return hGdiObj;
 	}
-	operator TRect()const{return m_hGdiObj;}
+	operator T()const{return m_hGdiObj;}
 	bool IsNull() const { return (m_hGdiObj == NULL); }
 	void SetIsManaged(bool isManaged){m_isManaged = isManaged;}
 

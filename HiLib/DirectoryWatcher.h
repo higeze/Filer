@@ -34,7 +34,6 @@ private:
 	const ULONG_PTR COMPKEY_DIR = 1;
 
 private:
-	CD2DWControl* m_pControl;
 	std::function<void(const DirectoryWatchEvent&)> m_callback;
 
 	UniqueHandlePtr m_pQuitEvent;
@@ -47,7 +46,7 @@ private:
 	std::vector<std::wstring> m_names;
 
 public:
-	CDirectoryWatcher(CD2DWControl* pControl, std::function<void(const DirectoryWatchEvent&)> callback);
+	CDirectoryWatcher(std::function<void(const DirectoryWatchEvent&)> callback);
 	~CDirectoryWatcher(void);
 
 	std::wstring GetPath()const { return m_path; }

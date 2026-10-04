@@ -73,7 +73,7 @@ public:
 		m_srcIDL(srcIDL), m_srcChildIDLs(srcChildIDLs), Dummy(std::make_shared<int>(0))
 	{
 		m_spButtonCancel->Command.subscribe([this]()->void{
-			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+			CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 		}, Dummy);
 
 		m_spButtonCancel->Content.set(L"Cancel");

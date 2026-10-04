@@ -112,12 +112,12 @@ public:
 				m_favorite.ShortName.set(*m_spTextBoxName->Text);
 				m_favorite.Path.set(*m_spTextBoxPath->Text);
 
-				GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+				CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 			}, Life);
 
 		m_spButtonCancel->Command.subscribe([this]()->void
 			{
-				GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+				CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 			}, Life);
 
 	}

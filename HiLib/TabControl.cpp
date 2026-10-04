@@ -124,7 +124,7 @@ void CTabHeaderControl::OnCreate(const CreateEvt& e)
 	//Set up Button
 	m_spButton->Command.subscribe([this]()->void
 	{
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke(
+		CDispatcher::GetInstance()->PostInvoke(
 			[pTabControl = static_cast<CTabControl*>(m_pParentControl), index = GetIndex()]()->void
 			{
 				if (pTabControl->ItemsSource.get_unconst()->at(index)->AcceptClosing(pTabControl->GetWndPtr(), false)) {
@@ -274,7 +274,7 @@ void CAddTabHeaderControl::OnCreate(const CreateEvt& e)
 	//Set up Button
 	m_spButton->Command.subscribe([this]()->void
 	{
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke(
+		CDispatcher::GetInstance()->PostInvoke(
 			[pTabControl = static_cast<CTabControl*>(m_pParentControl)]()->void
 			{
 				pTabControl->OnCommandNewTab();

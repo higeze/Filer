@@ -15,7 +15,7 @@ void CThreadMonitorView::OnCreate(const CreateEvt& e)
 		if (value) {
 			update();
 			m_update_timer.run([this, update]()->void {
-				GetWndPtr()->GetDispatcherPtr()->PostInvoke(update);
+				CDispatcher::GetInstance()->PostInvoke(update);
 			}, std::chrono::milliseconds(3000));
 
 		} else {

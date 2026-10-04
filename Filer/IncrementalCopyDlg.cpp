@@ -61,7 +61,7 @@ CIncrementalCopyDlg::CIncrementalCopyDlg(
 
 	m_spButtonClose->Command.subscribe([this]()->void
 	{
-		GetWndPtr()->GetDispatcherPtr()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
+		CDispatcher::GetInstance()->PostInvoke([this]() { OnClose(CloseEvent(GetWndPtr(), NULL, NULL)); });
 	}, m_spButtonClose);
 	m_spButtonClose->Content.set(L"Close");
 	m_spButtonCancel->Content.set(L"Cancel");
@@ -107,11 +107,11 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 	{
 		std::function<void()> readMax = [this]()->void
 		{
-			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this] { OnIncrementMax(); });
+			CDispatcher::GetInstance()->PostInvoke([this] { OnIncrementMax(); });
 		};
 		std::function<void()> readValue = [this]()->void
 		{
-			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this] { OnIncrementValue(); });
+			CDispatcher::GetInstance()->PostInvoke([this] { OnIncrementValue(); });
 		};
 		std::function<void(const CIDL&, const CIDL&)> find = [this](const CIDL& destIDL, const CIDL& srcIDL)->void
 		{
@@ -122,7 +122,7 @@ void CIncrementalCopyDlg::OnCreate(const CreateEvt& e)
 				m_idlMap.insert(std::make_pair(destIDL, std::vector<CIDL>{srcIDL}));
 			}
 			//This should be Send Message to syncro
-			GetWndPtr()->GetDispatcherPtr()->PostInvoke([this, srcIDL] { OnAddItem(srcIDL); });
+			CDispatcher::GetInstance()->PostInvoke([this, srcIDL] { OnAddItem(srcIDL); });
 		};
 
 		GetProgressBarPtr()->SetMin(0);

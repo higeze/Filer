@@ -16,9 +16,6 @@ struct ExeExtension;
 class CFilerGridView:public CFilerBindGridView<std::shared_ptr<CShellFile>>
 {
 private:	
-	//For DirectoryWatch
-	std::shared_ptr<CDirectoryWatcher> m_spWatcher;
-
 	std::shared_ptr<CShellFolder> m_spPreviousFolder;
 
 	//For Drag & Drop 
@@ -54,7 +51,6 @@ public:
 	/* UI Message */
 	/**************/
 	virtual void OnCreate(const CreateEvt& e)override;
-	virtual void OnDirectoryWatch(const DirectoryWatchEvent& e);
 	virtual void OnMouseWheel(const MouseWheelEvent& e)override;
 	/************************/
 	/* StateMachine Message */
@@ -109,13 +105,6 @@ private:
 	void ShowShellContextMenu(HWND hWnd, CPoint ptScreen, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files, bool hasNew = false);
 	//bool InvokeNewShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, const std::shared_ptr<CShellFolder>& folder);
 	//bool InvokeNormalShellContextmenuCommand(HWND hWnd, LPCSTR lpVerb, const std::shared_ptr<CShellFolder>& folder, const std::vector<std::shared_ptr<CShellFile>>& files);
-
-
-	//DirectoryWatch action
-	void Added(const std::wstring& fileName);
-	void Modified(const std::wstring& fileName);
-	void Removed(const std::wstring& fileName);
-	void Renamed(const std::wstring& oldName, const std::wstring& newName);
 
 	template<typename T>
 	std::vector<std::shared_ptr<T>> FindColumns()

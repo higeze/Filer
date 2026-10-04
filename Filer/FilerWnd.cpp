@@ -593,7 +593,7 @@ void CFilerWnd::Reload()
 LRESULT CFilerWnd::OnConnectivityChanged(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	m_reloadTimer.run([this]()->void {
-		GetDispatcherPtr()->PostInvoke([this] {
+		CDispatcher::GetInstance()->PostInvoke([this] {
 			::OutputDebugStringW(L"Reload\r\n");
 			Reload();
 		});
@@ -620,7 +620,7 @@ LRESULT CFilerWnd::OnDeviceChange(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 		case DBT_DEVICEARRIVAL:
 		case DBT_DEVICEREMOVECOMPLETE:
 			m_reloadTimer.run([this]()->void {
-				GetDispatcherPtr()->PostInvoke([this] {
+				CDispatcher::GetInstance()->PostInvoke([this] {
 					Reload();
 				});
 			}, std::chrono::milliseconds(2000));

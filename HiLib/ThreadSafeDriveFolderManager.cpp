@@ -11,7 +11,7 @@ namespace shell
 		std::lock_guard<std::mutex> lock(m_mtx);
 		m_driveFolderMap.clear();
 
-		CThreadSafeComPtr<IShellFolder> pDesktopFolder;
+		CShellComPtr<IShellFolder> pDesktopFolder;
 		::SHGetDesktopFolder(&pDesktopFolder);
 
 		std::array<wchar_t, 64> logicalDrives;

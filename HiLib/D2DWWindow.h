@@ -10,7 +10,6 @@
 #include "Debug.h"
 #include "DeadlineTimer.h"
 
-class CDispatcher;
 class CDropTargetManager;
 class CTabHeaderControl;
 
@@ -22,7 +21,6 @@ public:
 
 protected:
 	std::unordered_map<HWND, std::tuple<std::shared_ptr<CD2DWControl>, WNDPROC>> m_host_map;
-	std::unique_ptr<CDispatcher> m_pDispatcher;
 	std::shared_ptr<CDirect2DWrite> m_pDirect;
 	std::unique_ptr<CMouseStateMachine> m_pMouseMachine;
 	std::unique_ptr<CDropTargetManager> m_pDropTargetManager;
@@ -42,7 +40,6 @@ public :
 	CD2DWWindow* GetWndPtr()const override{ return const_cast<CD2DWWindow*>(this); }
 	CDirect2DWrite* GetDirectPtr() const { return  m_pDirect.get(); }
 	std::unique_ptr<CDropTargetManager>& GetDropTargetManagerPtr() { return m_pDropTargetManager; }
-	std::unique_ptr<CDispatcher>& GetDispatcherPtr() { return m_pDispatcher; }
 	CRectF GetRectInWnd() const { return GetDirectPtr()->Pixels2Dips(GetClientRect()); }
 	CPointF GetCursorPosInWnd() const;
 	bool IsFocused()const;

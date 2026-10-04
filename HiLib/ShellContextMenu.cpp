@@ -30,7 +30,7 @@ CComPtr<IContextMenu3> CShellContextMenu::SetUpNewContextMenues(const CMenu& men
 }
 
 CComPtr<IContextMenu3> CShellContextMenu::SetUpNormalContextMenues(
-	const CMenu& menu, CThreadSafeComPtr<IShellFolder> folder, HWND hwndOwner, UINT cidl, LPCITEMIDLIST *apidl)
+	const CMenu& menu, CShellComPtr<IShellFolder> folder, HWND hwndOwner, UINT cidl, LPCITEMIDLIST *apidl)
 {
 	while (1) {
 		CComPtr<IContextMenu> pcm;

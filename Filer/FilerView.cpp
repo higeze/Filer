@@ -4,7 +4,7 @@
 #include "TextBox.h"
 #include "Button.h"
 #include "ShellFileFactory.h"
-#include "ThreadSafeComPtr.h"
+#include "ShellComPtr.h"
 
 /*************************/
 /* CRecentFolderGridView */
@@ -24,7 +24,7 @@ CRecentFolderGridView::CRecentFolderGridView(CD2DWControl* pParentControl)
 {
 	CShellThread::GetInstance()->Run([this]()->void {
 		auto spKnownFolder = CKnownFolderManager::GetInstance()->GetKnownFolderById(FOLDERID_Recent);
-		CThreadSafeComPtr<IEnumIDList> pEnumIdl;
+		CShellComPtr<IEnumIDList> pEnumIdl;
 		if (SUCCEEDED(spKnownFolder->GetShellFolderPtr().Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, &pEnumIdl)) && pEnumIdl) {
 
 			//Enumerate Links
@@ -42,16 +42,16 @@ CRecentFolderGridView::CRecentFolderGridView(CD2DWControl* pParentControl)
 			//});
 			//ItemsSource
 			for (const std::shared_ptr<CShellFile>& spFile : links) {
-				CThreadSafeComPtr<IShellLink> pShellLink;
+				CShellComPtr<IShellLink> pShellLink;
 				FAILED_CONTINUE(pShellLink.CoCreateInstance(CLSID_ShellLink));
-				CThreadSafeComPtr<IPersistFile> pPersistFile;
+				CShellComPtr<IPersistFile> pPersistFile;
 				FAILED_CONTINUE(pShellLink.QueryInterface(&pPersistFile));
 				FAILED_CONTINUE(pPersistFile.Call(&IPersistFile::Load, spFile->GetPath().c_str(), STGM_READ));
 				FAILED_CONTINUE(pShellLink.Call(&IShellLink::Resolve, nullptr, SLR_UPDATE | SLR_NO_UI));
 				CIDL absoluteIdl;
 				FAILED_CONTINUE(pShellLink.Call(&IShellLink::GetIDList, absoluteIdl.ptrptr()));
 				CIDL parentIdl = absoluteIdl.CloneParentIDL();
-				CThreadSafeComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
+				CShellComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
 
 				if (auto p = std::dynamic_pointer_cast<CShellFolder>(CShellFileFactory::GetInstance()->CreateShellFilePtr(pParentFolder, parentIdl, std::move(absoluteIdl.CloneLastID())));
 					p && p->GetIsExist()) {

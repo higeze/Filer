@@ -1,115 +1,17 @@
 #pragma once
 #include "ShellFile.h"
 #include <chrono>
-#include <mutex> // ’Ç‰Á: #include <mutex> ‚ÍŠù‚É‚ ‚é‚ª”O‚Ì‚½‚ßŠm”F
+#include <mutex> 
+#include "reactive_vector.h"
 
-//template<typename T>
-//class comptr_deleter
-//{
-//public:
-//	void operator() (T* ptr)
-//	{
-//		if (ptr) {
-//            ptr->Release();
-//		}
-//	}
-//};
-//
-//#include <atlbase.h>   // For CComPtr
-//#include <mutex>       // For std::mutex
-//#include <utility>     // For std::move
-//
-//// Thread-safe wrapper around CComPtr
-//template <typename T>
-//class ThreadSafeComPtr
-//{
-//public:
-//    ThreadSafeComPtr() = default;
-//
-//    // Construct from raw pointer
-//    explicit ThreadSafeComPtr(T* ptr) : ptr_(ptr) {}
-//
-//    // Copy constructor
-//    ThreadSafeComPtr(const ThreadSafeComPtr& other)
-//    {
-//        std::lock_guard<std::mutex> lock(other.mtx_);
-//        ptr_ = other.ptr_;
-//    }
-//
-//    // Move constructor
-//    ThreadSafeComPtr(ThreadSafeComPtr&& other) noexcept
-//    {
-//        std::lock_guard<std::mutex> lock(other.mtx_);
-//        ptr_ = std::move(other.ptr_);
-//    }
-//
-//    // Copy assignment
-//    ThreadSafeComPtr& operator=(const ThreadSafeComPtr& other)
-//    {
-//        if (this != &other) {
-//            // Lock both mutexes without deadlock
-//            std::scoped_lock lock(mtx_, other.mtx_);
-//            ptr_ = other.ptr_;
-//        }
-//        return *this;
-//    }
-//
-//    // Move assignment
-//    ThreadSafeComPtr& operator=(ThreadSafeComPtr&& other) noexcept
-//    {
-//        if (this != &other) {
-//            std::scoped_lock lock(mtx_, other.mtx_);
-//            ptr_ = std::move(other.ptr_);
-//        }
-//        return *this;
-//    }
-//
-//    // Assign from raw pointer
-//    ThreadSafeComPtr& operator=(T* rawPtr)
-//    {
-//        std::lock_guard<std::mutex> lock(mtx_);
-//        ptr_ = rawPtr;
-//        return *this;
-//    }
-//
-//    // Get a thread-safe copy of the pointer
-//    CComPtr<T> Get() const
-//    {
-//        std::lock_guard<std::mutex> lock(mtx_);
-//        return ptr_;
-//    }
-//
-//    // Reset pointer
-//    void Reset()
-//    {
-//        std::lock_guard<std::mutex> lock(mtx_);
-//        ptr_.Release();
-//    }
-//
-//    // Access underlying pointer (read-only)
-//    T* operator->() const
-//    {
-//        std::lock_guard<std::mutex> lock(mtx_);
-//        return ptr_;
-//    }
-//
-//    // Check if pointer is not null
-//    bool IsValid() const
-//    {
-//        std::lock_guard<std::mutex> lock(mtx_);
-//        return ptr_ != nullptr;
-//    }
-//
-//private:
-//    mutable std::mutex mtx_;
-//    CComPtr<T> ptr_;
-//};
-//
-//
+class CDirectoryWatcher;
+struct DirectoryWatchEvent;
 
 class CShellFolder :public CShellFile
 {
 private:
+	mutable std::shared_ptr<CDirectoryWatcher> m_spWatcher;
+
 	std::shared_ptr<bool> m_spCancelThread = std::make_shared<bool>(false);
 	
 	std::future<std::pair<ULARGE_INTEGER, FileSizeStatus>> m_futureSize;
@@ -117,14 +19,28 @@ private:
 
 	mutable std::mutex m_mtxSize;
 	mutable std::mutex m_mtxTime;
+
+	mutable reactive_vector_ptr<std::shared_ptr<CShellFile>> Files;
+
+public:
+	reactive_vector_ptr<std::shared_ptr<CShellFile>>& GetFiles() const;
+private:
+	virtual void OnDirectoryWatch(const DirectoryWatchEvent& e) const;
+	void Added(const std::wstring& fileName) const;
+	void Modified(const std::wstring& fileName) const;
+	void Removed(const std::wstring& fileName) const;
+	void Renamed(const std::wstring& oldName, const std::wstring& newName) const;
+
+
+
 public:
 
-protected: mutable CThreadSafeComPtr<IShellFolder> m_pShellFolder; public: virtual CThreadSafeComPtr<IShellFolder> GetShellFolderPtr() const;
+protected: mutable CShellComPtr<IShellFolder> m_pShellFolder; public: virtual CShellComPtr<IShellFolder> GetShellFolderPtr() const;
 	DECLARE_LAZY_SHAREDPTR_GETTER(CShellFolder, ParentFolder);
 
 public:
 	template<typename... _Args>
-	CShellFolder(CThreadSafeComPtr<IShellFolder> pParentShellFolder, const CIDL& parentIdl, const CIDL& childIdl, _Args... args)
+	CShellFolder(CShellComPtr<IShellFolder> pParentShellFolder, const CIDL& parentIdl, const CIDL& childIdl, _Args... args)
 		:CShellFile(pParentShellFolder, parentIdl, childIdl, args...)/*, m_pShellFolder(::get(arg<"ishellfolder"_s>(), args..., default_(nullptr)))*/{}
 
 	virtual ~CShellFolder();
@@ -144,7 +60,7 @@ public:
 	std::shared_ptr<CShellFile> CreateShExFileFolder(CIDL&& relativeIdl) const;
 	//std::shared_ptr<CShellFile> CreateShExFileFolder(const CIDL& relativeIdl) const;
 	static std::optional<FileTimes> GetFolderFileTimes(const std::shared_ptr<bool>& cancel,
-		CThreadSafeComPtr<IShellFolder> pParentFolder, CThreadSafeComPtr<IShellFolder> pFolder, const CIDL& relativeIdl, const std::wstring& path,
+		CShellComPtr<IShellFolder> pParentFolder, CShellComPtr<IShellFolder> pFolder, const CIDL& relativeIdl, const std::wstring& path,
 		std::chrono::system_clock::time_point& tp, int limit, bool ignoreFolderTime);
 	static std::optional<FileTimes> GetFolderFileTimes(
 		const std::shared_ptr<bool>& cancel,
@@ -155,7 +71,7 @@ public:
 		int limit,
 		bool ignoreFolderTime);
 	static bool GetFolderSize(ULARGE_INTEGER& size, const std::shared_ptr<bool>& cancel,
-		CThreadSafeComPtr<IShellFolder> pFolder, const std::wstring& path,
+		CShellComPtr<IShellFolder> pFolder, const std::wstring& path,
 		const std::chrono::system_clock::time_point& tp, const int limit);
 private:
 	std::pair<FileTimes, FileTimeStatus> GetLockFileTimes() const;
@@ -164,4 +80,8 @@ private:
 protected:
 	void SetLockSize(const std::pair<ULARGE_INTEGER, FileSizeStatus>& size);
 	void SetLockFileTimes(const std::pair<FileTimes, FileTimeStatus>& times);
+
+
+
+
 };

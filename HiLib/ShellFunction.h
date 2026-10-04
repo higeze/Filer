@@ -6,7 +6,7 @@
 #include "MyString.h"
 #include <optional>
 
-#include "ThreadSafeComPtr.h"
+#include "ShellComPtr.h"
 #include "Debug.h"
 
 
@@ -44,7 +44,7 @@ namespace shell
 
 	struct ShellFileHash
 	{
-		inline std::size_t operator()(const std::tuple<std::wstring, CThreadSafeComPtr<IShellFolder>, CIDL>& key)const
+		inline std::size_t operator()(const std::tuple<std::wstring, CShellComPtr<IShellFolder>, CIDL>& key)const
 		{
 			return std::hash<std::wstring>()(std::get<0>(key));
 		}
@@ -52,9 +52,9 @@ namespace shell
 
 	struct ShellFileEqual
 	{
-		inline std::size_t operator()(const std::tuple<std::wstring, CThreadSafeComPtr<IShellFolder>, CIDL>& left, const std::tuple<std::wstring, CThreadSafeComPtr<IShellFolder>, CIDL>& right)const
+		inline std::size_t operator()(const std::tuple<std::wstring, CShellComPtr<IShellFolder>, CIDL>& left, const std::tuple<std::wstring, CShellComPtr<IShellFolder>, CIDL>& right)const
 		{
-			CThreadSafeComPtr<IShellFolder> pFolder = std::get<1>(left);
+			CShellComPtr<IShellFolder> pFolder = std::get<1>(left);
 			CIDL childIDL1 = std::get<2>(left);
 			CIDL childIDL2 = std::get<2>(right);
 			return pFolder.Call(&IShellFolder::CompareIDs, SHCIDS_ALLFIELDS, childIDL1.ptr(), childIDL2.ptr()) == 0;
@@ -65,24 +65,24 @@ namespace shell
 	std::wstring Size2String(ULONGLONG size);
 	std::wstring ConvertCommaSeparatedNumber(ULONGLONG n, int separate_digit = 3);
 
-	bool GetFileSize(ULARGE_INTEGER& size, CThreadSafeComPtr<IShellFolder> pParentShellFolder, const CIDL& childIdl);
-	std::wstring GetDisplayNameOf(CThreadSafeComPtr<IShellFolder> pParentFolder, const CIDL& childIDL, SHGDNF uFlags);
-	std::wstring GetDisplayNameOf(CThreadSafeComPtr<IShellFolder> pParentFolder, const LPITEMIDLIST& childIDL, SHGDNF uFlags);
+	bool GetFileSize(ULARGE_INTEGER& size, CShellComPtr<IShellFolder> pParentShellFolder, const CIDL& childIdl);
+	std::wstring GetDisplayNameOf(CShellComPtr<IShellFolder> pParentFolder, const CIDL& childIDL, SHGDNF uFlags);
+	std::wstring GetDisplayNameOf(CShellComPtr<IShellFolder> pParentFolder, const LPITEMIDLIST& childIDL, SHGDNF uFlags);
 
 
 	std::wstring strret2wstring(STRRET& strret, PCUITEMID_CHILD pidl);
-	std::tuple<std::wstring, std::wstring, std::wstring> GetPathNameExt(CThreadSafeComPtr<IShellFolder> pParentFolder, const LPITEMIDLIST& relativeIDL);
-	std::optional<FileTimes> GetFileTimes(CThreadSafeComPtr<IShellFolder> pParentFolder, const CIDL& relativeIDL);
+	std::tuple<std::wstring, std::wstring, std::wstring> GetPathNameExt(CShellComPtr<IShellFolder> pParentFolder, const LPITEMIDLIST& relativeIDL);
+	std::optional<FileTimes> GetFileTimes(CShellComPtr<IShellFolder> pParentFolder, const CIDL& relativeIDL);
 
-	template<typename TRect>
+	template<typename T>
 	auto RunFunctionEachFileFolderVirtual(
-		CThreadSafeComPtr<IShellFolder> pFolder,
+		CShellComPtr<IShellFolder> pFolder,
 		const CIDL& childIDL,
-		const std::function<TRect()>& f,
-		const std::function<TRect(CThreadSafeComPtr<IShellFolder>, const CComPtr<IEnumIDList>&)>& d,
-		const std::function<TRect()>& v)->TRect
+		const std::function<T()>& f,
+		const std::function<T(CShellComPtr<IShellFolder>, const CComPtr<IEnumIDList>&)>& d,
+		const std::function<T()>& v)->T
 	{
-		CThreadSafeComPtr<IShellFolder> pItemFolder;
+		CShellComPtr<IShellFolder> pItemFolder;
 		CComPtr<IEnumIDList> pItemEnumIDL;
 
 		auto pne = GetPathNameExt(pFolder, childIDL.ptr());
@@ -103,7 +103,7 @@ namespace shell
 		}
 	}
 
-	CThreadSafeComPtr<IShellFolder> DesktopBindToShellFolder(const CIDL& idl);
+	CShellComPtr<IShellFolder> DesktopBindToShellFolder(const CIDL& idl);
 
 	void FindIncrementalOne(
 		const CIDL& srcParentIDL,
@@ -113,10 +113,10 @@ namespace shell
 		const std::function<void(const CIDL&, const CIDL&)>& find);
 
 	void FindIncrementalOne(
-		const CThreadSafeComPtr<IShellFolder>& pSrcFolder,
+		const CShellComPtr<IShellFolder>& pSrcFolder,
 		const CIDL& srcIDL,
 		const CIDL& srcChildIDL,
-		const CThreadSafeComPtr<IShellFolder>& pDestFolder,
+		const CShellComPtr<IShellFolder>& pDestFolder,
 		const CIDL& destIDL,
 		const std::function<void()> countup,
 		const std::function<void(const CIDL&, const CIDL&)>& find);
@@ -128,13 +128,13 @@ namespace shell
 		const std::function<void()>& countup);
 	
 	void CountFileOne(
-		const CThreadSafeComPtr<IShellFolder>& pParentFolder,
+		const CShellComPtr<IShellFolder>& pParentFolder,
 		const CIDL& parentIDL,
 		const CIDL& childIDL,
 		const std::function<void()>& countup);
 
 	void CountFileInFolder(
-		const CThreadSafeComPtr<IShellFolder>& pFolder,
+		const CShellComPtr<IShellFolder>& pFolder,
 		const CComPtr<IEnumIDList>& pEnumIDL,
 		const CIDL& idl,
 		const std::function<void()>& countup);
@@ -151,7 +151,7 @@ namespace shell
 
 	void SearchOne(
 		const std::wstring& search,
-		const CThreadSafeComPtr<IShellFolder>& pParentFolder,
+		const CShellComPtr<IShellFolder>& pParentFolder,
 		const CIDL& parentIDL,
 		const CIDL& childIDL,
 		const std::function<void()>& countup,
@@ -198,15 +198,15 @@ namespace shell
 	};
 
 	ParsedFileType ParseFileTypeSimple(
-		CThreadSafeComPtr<IShellFolder> pParentFolder,
+		CShellComPtr<IShellFolder> pParentFolder,
 		const CIDL& childIDL);
 
 	ParsedFileType ParseFileType(
-		CThreadSafeComPtr<IShellFolder> pParentFolder,
+		CShellComPtr<IShellFolder> pParentFolder,
 		const CIDL& childIDL);
 	
 	template<class Fn>
-	void for_each_idl_in_shellfolder(HWND hWnd, CThreadSafeComPtr<IShellFolder> pFolder, Fn func)
+	void for_each_idl_in_shellfolder(HWND hWnd, CShellComPtr<IShellFolder> pFolder, Fn func)
 	{
 		CComPtr<IEnumIDList> enumIdl;
 		if (SUCCEEDED(pFolder.Call(&IShellFolder::EnumObjects, hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN, &enumIdl)) && enumIdl) {
