@@ -32,6 +32,7 @@ public:
 	std::atomic_bool Updating;
 	std::shared_ptr<int> Dummy;
 	reactive_property_ptr<std::shared_ptr<CShellFolder>> Folder;
+
 	reactive_wstring_ptr StatusLog;
 	reactive_vector_ptr<ExeExtension> ExeExtensions;
 
@@ -76,6 +77,23 @@ public:
 	std::wstring GetPath()const;
 	void SetPath(const std::wstring& path);
 
+	/****************/
+	/* Forward Back */
+	/****************/
+private:
+	static const int kMaxForwardBackSize = 10;
+	bool m_isForward = false;
+	bool m_isBack = false;
+public:
+	reactive_property_ptr<bool> CanForward;
+	reactive_property_ptr<bool> CanBack;
+	reactive_vector_ptr<std::shared_ptr<CShellFolder>> Forwards;
+	reactive_vector_ptr<std::shared_ptr<CShellFolder>> Backs;
+
+	void Forward();
+	void Back();
+
+
 	bool NewFolder();
 
 	bool CopySelectedFilesTo(const CIDL& destIDL);
@@ -96,6 +114,9 @@ public:
 
 	//Drag & Drop
 	void Drag();
+
+	void RowInserted(const CRowEventArgs& e) override;
+
 
 private:
 	//Drag & Drop

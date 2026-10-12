@@ -229,10 +229,17 @@ void CFilerTabGridView::OnCreate(const CreateEvt& e)
 		auto spViewModel = std::static_pointer_cast<FilerTabData>(pTabData);
 
 		m_filerConnections.clear();
-		
+		GetFilerViewPtr()->GetFileGridPtr()->Folder.set(nullptr);
+
 		m_filerConnections.push_back(
 			GetFilerViewPtr()->GetFileGridPtr()->Folder.subscribe([&](auto value) { MeasureDirty.set(true); }, shared_from_this()),
-			spViewModel->Folder.binding(GetFilerViewPtr()->GetFileGridPtr()->Folder)
+			spViewModel->Folder.binding(GetFilerViewPtr()->GetFileGridPtr()->Folder),
+			spViewModel->Forwards.binding(GetFilerViewPtr()->GetFileGridPtr()->Forwards),
+			spViewModel->Backs.binding(GetFilerViewPtr()->GetFileGridPtr()->Backs),
+			spViewModel->CanForward.binding(GetFilerViewPtr()->GetFileGridPtr()->CanForward),
+			spViewModel->CanBack.binding(GetFilerViewPtr()->GetFileGridPtr()->CanBack),
+			spViewModel->CanForward.binding(GetFilerViewPtr()->GetForwardButtonPtr()->IsEnabled),
+			spViewModel->CanBack.binding(GetFilerViewPtr()->GetBackButtonPtr()->IsEnabled)
 		);
 		//spView->GetFileGridPtr()->OpenFolder(pData->FolderPtr);
 

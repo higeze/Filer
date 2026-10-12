@@ -98,17 +98,50 @@ CFilerGridView::CFilerGridView(CD2DWControl* pParentControl)
 
 	m_spItemDragger = std::make_shared<CFileDragger>();
 
-	Folder.subscribe([this](auto value) {
-		bool isReload = m_spPreviousFolder ? m_spPreviousFolder->GetPath() == value->GetPath() : false;
-		OpenFolder(value, isReload);
-		SubmitUpdate();
-		m_spPreviousFolder = value;
+	Folder.subscribe_old_new([this](auto old_value, auto new_value) {
+		if (new_value) {
+			bool isReload = old_value ? old_value->GetPath() == new_value->GetPath() : false;
+			if (!m_isForward && !m_isBack) {
+				if (!isReload && old_value) {
+					Backs.push_back(old_value);
+					if (Backs->size() > kMaxForwardBackSize) {
+						Backs.erase(Backs->cbegin());
+					}
+					Forwards.clear();
+				}
+				m_spPreviousFolder = new_value;
+			} else if (m_isForward) {
+				Forwards.erase(std::prev(Forwards.cend()));
+
+				Backs.push_back(old_value);
+				if (Backs->size() > kMaxForwardBackSize) {
+					Backs.erase(Backs->cbegin());
+				}
+				m_isForward = false;
+			} else if (m_isBack) {
+				Backs.erase(std::prev(Backs->cend()));
+
+				Forwards.push_back(old_value);
+				if (Forwards->size() > kMaxForwardBackSize) {
+					Forwards.erase(Backs->cbegin());
+				}
+				m_isBack = false;
+			}
+			OpenFolder(new_value, isReload);
+			SubmitUpdate();
+
+			CanBack.set(!Backs->empty() && Backs->size() > 0);
+			CanForward.set(!Forwards->empty() && Forwards->size() > 0);
+		}
 	}, Dummy);
 }
 
 CFilerGridView::~CFilerGridView()
 {
-	//if (m_spWatcher) { m_spWatcher->QuitWatching(); }
+	if (Folder) {
+		Folder->QuitDirectoryWatch();
+		Folder->GetFiles().unbinding(ItemsSource);
+	}
 }
 
 CShellContextMenu& CFilerGridView::GetFileContextMenu()
@@ -605,7 +638,19 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 	//for(auto iter = files->cbegin(); iter != files->cend(); ++iter){
 	//	ItemsSource.emplace_back(*iter);
 	//}
- 	spFolder->GetFiles().binding(ItemsSource);
+	::OutputDebugStringA(std::format("OpenFolder FolderCount:{}\r\n", Folder.get_shared_unconst().use_count()).c_str());
+	spFolder->GetFiles().binding(ItemsSource);
+	spFolder->StartDirectoryWatch();
+	//auto& Files = spFolder->GetFiles();
+	//ItemsSource.clear();
+	//for (size_t i = 0; i < Files->size(); i++) {
+	//	ItemsSource.push_back(adl_vector_item<std::shared_ptr<CShellFile>>::clone(Files.at(i)));
+	//	//bind_value(Files.at(i), ItemsSource.at(i));
+	//	::OutputDebugStringA(std::format("PushBack FolderCount:{} : {}\r\n", wstr2str(Files.at(i)->GetDispName()), Folder.get_shared_unconst().use_count()).c_str());
+	//}
+
+
+	::OutputDebugStringA(std::format("OpenFolder FolderCount:{}\r\n", Folder.get_shared_unconst().use_count()).c_str());
 
 
 	//(CShellThread::GetInstance()->Run([this, spFolder]()->void {
@@ -1067,4 +1112,64 @@ void CFilerGridView::OnCommandFind(const CommandEvent& e)
 	//pWnd->CreateOnCenterOfParent(hWnd, CSize(400, 600));
 	//pWnd->ShowWindow(SW_SHOW);
 	//pWnd->UpdateWindow();
+}
+
+void CFilerGridView::RowInserted(const CRowEventArgs& e)
+{
+	for (auto& spCol : m_allCols) {
+		spCol->SetIsFitMeasureValid(false);
+	};
+	PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::RowVisible);
+	PostUpdate(Updates::Row);
+	PostUpdate(Updates::Scrolls);
+	if (m_isNewFile) {
+		m_spCursorer->OnCursor(Cell(e.m_pRow, m_allCols.at(m_frozenColumnCount)));
+		PostUpdate(Updates::EnsureVisibleFocusedCell);
+	}
+	PostUpdate(Updates::Sort);
+	UpdateFilter();
+	if (m_isNewFile) {
+		if (auto cols = FindColumns<CFileNameColumn<std::shared_ptr<CShellFile>>>(); !cols.empty()) {
+			std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(e.m_pRow, cols.front()))->OnEdit(Event(GetWndPtr()));
+		}
+	}
+	m_isNewFile = false;
+	PostUpdate(Updates::Invalidate);
+}
+
+void CFilerGridView::Forward()
+{
+	if (*CanForward) {
+		auto folder = Forwards.back();
+		//Forwards.erase(std::prev(Forwards.cend()));
+		m_isForward = true;
+		Folder.set(folder);
+
+		//Backs.push_back(folder);
+		//if (Backs->size() > kMaxForwardBackSize) {
+		//	Backs.erase(Backs->cbegin());
+		//}
+	}
+
+	//CanBack.set(!Backs->empty() && Backs->size() > 0);
+	//CanForward.set(!Forwards->empty() && Forwards->size() > 0);
+}
+
+void CFilerGridView::Back()
+{
+	if (*CanBack) {
+		auto folder = Backs.back();
+		//Backs.erase(std::prev(Backs->cend()));
+		m_isBack = true;
+		Folder.set(folder);
+
+		//Forwards.push_back(folder);
+		//if (Forwards->size() > kMaxForwardBackSize) {
+		//	Forwards.erase(Backs->cbegin());
+		//}
+	}
+
+	//CanBack.set(!Backs->empty() && Backs->size() > 0);
+	//CanForward.set(!Forwards->empty() && Forwards->size() > 0);
 }

@@ -338,6 +338,11 @@ public:
 	{
 		return m_preactive;
 	}
+
+	const long use_count() const
+	{
+		return m_preactive.use_count();
+	}
 	//Special begin
 	const std::shared_ptr<T>& get_shared_unconst() const noexcept
 	{
@@ -426,14 +431,6 @@ public:
 		return std::make_pair(
 			dst.subscribe(&reactive_property<std::shared_ptr<T>>::observe_property, this->m_preactive),
 			this->subscribe(&reactive_property<std::shared_ptr<T>>::observe_property, dst.m_preactive));
-
-		//auto c1 = dst.subscribe([sp = this->m_preactive](const std::shared_ptr<T>& v) {
-		//	sp->observe_property(v);
-		//});
-		//auto c2 = this->subscribe([sp = dst.m_preactive](const std::shared_ptr<T>& v) {
-		//	sp->observe_property(v);
-		//});
-		//return std::make_pair(c1, c2);
 	}
 
 	template <class U, class Traits, class Allocator>

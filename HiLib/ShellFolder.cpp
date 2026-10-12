@@ -34,11 +34,7 @@ CShellFolder::~CShellFolder()
 		}
 	} catch (...) {}
 
-	try {
-		if (m_spWatcher) { 
-			m_spWatcher->QuitWatching();
-		}
-	} catch (...){}
+	QuitDirectoryWatch();
 }
 
 //CShellFolder CShellFolder::Clone() const
@@ -439,7 +435,7 @@ reactive_vector_ptr<std::shared_ptr<CShellFile>>& CShellFolder::GetFiles() const
 {
 	if (Files->empty()) {
 		//Directory watcher
-		m_spWatcher = std::make_shared<CDirectoryWatcher>(std::bind(&CShellFolder::OnDirectoryWatch, this, std::placeholders::_1));
+		//m_spWatcher = std::make_shared<CDirectoryWatcher>(nullptr);
 
 		CShellThread::GetInstance()->Run([this]()->void {
 			{
@@ -490,33 +486,41 @@ reactive_vector_ptr<std::shared_ptr<CShellFile>>& CShellFolder::GetFiles() const
 				} catch (std::exception&) {
 					THROW_FILE_LINE_FUNC;
 				}
-
-				//Set up Watcher
-				try {
-					if (::PathFileExists(GetPath().c_str()) &&
-						!boost::iequals(GetDispExt(), L".zip")) {
-						m_spWatcher->QuitWatching();
-						m_spWatcher->StartWatching(GetPath(), GetAbsoluteIdl());
-					} else {
-						m_spWatcher->QuitWatching();
-					}
-				} catch (std::exception& e) {
-					THROW_FILE_LINE_FUNC;
-				}
-
 			}
 		}).get();
+		::OutputDebugStringA(std::format("FolderCount:{}\r\n", shared_from_this().use_count()).c_str());
 
 	}
 	return Files;
 }
 
+void CShellFolder::StartDirectoryWatch() const
+{
+	//Set up Watcher
+	if (!m_pWatcher && ::PathFileExists(GetPath().c_str()) && !boost::iequals(GetDispExt(), L".zip")) {
+		try {
+			m_pWatcher = std::make_unique<CDirectoryWatcher>(std::bind(&CShellFolder::OnDirectoryWatch, this, std::placeholders::_1));
+			m_pWatcher->StartWatching(GetPath(), GetAbsoluteIdl());
+		} catch (...) {
+			THROW_FILE_LINE_FUNC;
+		}
+	}
+}
+
+void CShellFolder::QuitDirectoryWatch() const
+{
+	if (m_pWatcher) {
+		try {
+			m_pWatcher->QuitWatching();
+			m_pWatcher.reset(nullptr);
+		} catch (...) {
+			THROW_FILE_LINE_FUNC;
+		}
+	}
+}
 
 void CShellFolder::OnDirectoryWatch(const DirectoryWatchEvent& e) const
 {
-	if (e.Infos.size() > 1) {
-		auto a = 1.f;
-	}
 	for (auto info : e.Infos) {
 		switch (info.first) {
 		case FILE_ACTION_ADDED:
@@ -546,8 +550,6 @@ void CShellFolder::OnDirectoryWatch(const DirectoryWatchEvent& e) const
 			break;
 		}
 	}
-
-	//SubmitUpdate();
 }
 
 

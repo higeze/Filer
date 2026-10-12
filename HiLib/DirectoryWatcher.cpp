@@ -14,7 +14,7 @@ CDirectoryWatcher::CDirectoryWatcher(std::function<void(const DirectoryWatchEven
 	:m_pQuitEvent(), m_vData(kBufferSize, 0), m_callback(callback)
 {}
 
-CDirectoryWatcher::~CDirectoryWatcher(void)
+CDirectoryWatcher::~CDirectoryWatcher()
 {
 	QuitWatching();
 }
@@ -34,7 +34,7 @@ void CDirectoryWatcher::StartWatching(const std::wstring& path, const CIDL& absI
 
 		//Create watch thread
 		m_futureWatch = CThreadPool::GetInstance()->enqueue(
-			FILE_LINE_FUNC,
+			(FILE_LINE_FUNC + wstr2str(path)).c_str(),
 			0,
 			&CDirectoryWatcher::WatchDirectory, this);
 	}
@@ -98,12 +98,16 @@ void CDirectoryWatcher::WatchDirectory()
 			throw std::exception(FILE_LINE_FUNC);//TODOLOW
 		}
 
-		//Start thread;
-		std::future<void> futureCallback = CThreadPool::GetInstance()->enqueue(
+		//Start thread
+		std::future<void> futureCallback =
+		CThreadPool::GetInstance()->enqueue(
 			FILE_LINE_FUNC,
 			0,
 			&CDirectoryWatcher::IoCompletionCallback, 
 			this, pIocp.get(), pDir.get());
+
+		//std::future<void> futureCallback =
+		//std::async(&CDirectoryWatcher::IoCompletionCallback, this, pIocp.get(), pDir.get());
 
 		//Start observer
 		OVERLAPPED overlapped = { 0 };

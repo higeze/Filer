@@ -2070,10 +2070,22 @@ void CGridView::RowInserted(const CRowEventArgs& e)
 	for(auto& spCol : m_allCols){
 		spCol->SetIsFitMeasureValid(false);
 	};
-	//PostUpdate(Updates::ColumnVisible);
+	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::RowVisible);
 	PostUpdate(Updates::Row);
 	PostUpdate(Updates::Scrolls);
+	//if (m_isNewFile) {
+	//	m_spCursorer->OnCursor(Cell(spRow, m_allCols.at(m_frozenColumnCount)));
+	//	PostUpdate(Updates::EnsureVisibleFocusedCell);
+	//}
+	PostUpdate(Updates::Sort);
+	UpdateFilter();
+	//if (m_isNewFile) {
+	//	if (auto cols = FindColumns<CFileNameColumn<std::shared_ptr<CShellFile>>>(); !cols.empty()) {
+	//		std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, cols.front()))->OnEdit(Event(GetWndPtr()));
+	//	}
+	//}
+	//m_isNewFile = false;
 	PostUpdate(Updates::Invalidate);
 }
 

@@ -8,7 +8,10 @@ private:
 	mutable sigslot::signal<T...> m_on_next;
 public:
 	subject() {}
-	virtual ~subject() = default;
+	virtual ~subject()
+	{
+		disconnect_all();
+	}
 
 	template <typename... T>
 	void on_next(T... value) const

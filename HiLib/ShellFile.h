@@ -148,6 +148,8 @@ public:
 		if (!m_absoluteIdl) {
 			::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, m_absoluteIdl.ptrptr());
 		}
+		//GetDispName();
+		//GetPathName();
 	}
 	template<typename... _Args>
 	CShellFile(CShellComPtr<IShellFolder> pParentShellFolder, const CIDL parentIdl, const CIDL childIdl, _Args... args)
@@ -159,6 +161,8 @@ public:
 		if (!m_absoluteIdl) {
 			::SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, m_absoluteIdl.ptrptr());
 		}
+		//GetDispName();
+		//GetPathName();
 		//if (m_pHeaderColumn) {
 		//	m_pHeaderColumn->SetSheetPtr(this);
 		//	PushColumn(m_pHeaderColumn);

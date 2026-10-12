@@ -76,6 +76,8 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 	:m_spFileGrid(std::make_shared<CFilerGridView>(this)),
 	m_spFavoriteGrid(std::make_shared<CFavoritesGridView>(this)),
 	m_spTextBox(std::make_shared<CTextBox>(this, L"")),
+	m_spBackButton(std::make_shared<CButton>(this)),
+	m_spForwardButton(std::make_shared<CButton>(this)),
 	m_spRecentButton(std::make_shared<CButton>(this))
 {
 	using pr = std::pair<std::shared_ptr<CD2DWControl>, DockEnum>;
@@ -84,9 +86,14 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 	/*******/
 	auto spTopDock = std::make_shared<CDockPanel>(this);
 	m_spTextBox->SetIsEnterText(true);
+	m_spBackButton->Content.set(L"<-");
+	m_spForwardButton->Content.set(L"->");
 	m_spRecentButton->Content.set(L"R");
+
 	spTopDock->Add(
 		pr(m_spRecentButton, DockEnum::Right),
+		pr(m_spForwardButton, DockEnum::Right),
+		pr(m_spBackButton, DockEnum::Right),
 		pr(m_spTextBox, DockEnum::Fill)
 	);
 
@@ -122,8 +129,10 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 
 	}, m_spFileGrid);
 	m_spFileGrid->Folder.subscribe([this](auto value) {
-		if (*m_spTextBox->Text != value->GetPath()) {
-			m_spTextBox->Text.set(value->GetPath());
+		if (value) {
+			if (*m_spTextBox->Text != value->GetPath()) {
+				m_spTextBox->Text.set(value->GetPath());
+			}
 		}
 	}, m_spTextBox);
 
@@ -152,6 +161,13 @@ CFilerView::CFilerView(CD2DWControl* pParentControl)
 		}
 
 	}, m_spRecentButton);
+
+	m_spBackButton->Command.subscribe([&]()->void {
+		m_spFileGrid->Back();
+	}, m_spBackButton);
+	m_spForwardButton->Command.subscribe([&]()->void {
+		m_spFileGrid->Forward();
+	}, m_spForwardButton);
 }
 
 CFilerView::~CFilerView() = default;
@@ -159,4 +175,13 @@ CFilerView::~CFilerView() = default;
 void CFilerView::OnCreate(const CreateEvt& e)
 {
 	CDockPanel::OnCreate(e);
+}
+
+void CFilerView::OnEnable(const EnableEvent& e)
+{
+	IsEnabled.set(e.Enable);
+	GetTextBoxPtr()->IsEnabled.set(e.Enable);
+	GetRecentButtonPtr()->IsEnabled.set(e.Enable);
+	GetFavoriteGridPtr()->IsEnabled.set(e.Enable);
+	GetFileGridPtr()->IsEnabled.set(e.Enable);
 }

@@ -2,53 +2,53 @@
 
 void CFilerForwardBackManager::Open(std::shared_ptr<CShellFolder> folder)
 {
-	m_backs.push_back(folder);
-	if (m_backs.size() > kMaxsize) {
-		m_backs.pop_front();
+	Backs.push_back(folder);
+	if (Backs->size() > kMaxsize) {
+		Backs.erase(Backs->cbegin());
 	}
 
 	folder->Open();
 
-	m_backs.clear();
+	Forwrds.clear();
 
-	SetCanBack(!m_backs.empty() && m_backs.size() > 0);
-	SetCanForward(!m_forwards.empty() && m_forwards.size() > 0);
+	SetCanBack(!Backs->empty() && Backs->size() > 0);
+	SetCanForward(!Forwrds->empty() && Forwrds->size() > 0);
 }
 
 void CFilerForwardBackManager::Forward()
 {
 	if (GetCanForward()) {
-		auto folder = m_forwards.back();
-		m_forwards.pop_back();
+		auto folder = Forwrds.back();
+		Forwrds.erase(std::prev(Backs.cend()));
 
 		folder->Open();
 
-		m_backs.push_back(folder);
-		if (m_backs.size() > kMaxsize) {
-			m_backs.pop_front();
+		Backs.push_back(folder);
+		if (Backs->size() > kMaxsize) {
+			Backs.erase(Backs->cbegin());
 		}
 	}
 
-	SetCanBack(!m_backs.empty() && m_backs.size() > 0);
-	SetCanForward(!m_forwards.empty() && m_forwards.size() > 0);
+	SetCanBack(!Backs->empty() && Backs->size() > 0);
+	SetCanForward(!Forwrds->empty() && Forwrds->size() > 0);
 }
 
 void CFilerForwardBackManager::Back()
 {
 	if (GetCanBack()) {
-		auto folder = m_backs.back();
-		m_backs.pop_back();
+		auto folder = Backs.back();
+		Backs.erase(std::prev(Backs->cend()));
 
 		folder->Open();
 
-		m_forwards.push_back(folder);
-		if (m_forwards.size() > kMaxsize) {
-			m_forwards.pop_front();
+		Forwrds.push_back(folder);
+		if (Forwrds->size() > kMaxsize) {
+			Forwrds.erase(Backs->cbegin());
 		}
 	}
 
-	SetCanBack(!m_backs.empty() && m_backs.size() > 0);
-	SetCanForward(!m_forwards.empty() && m_forwards.size() > 0);
+	SetCanBack(!Backs->empty() && Backs->size() > 0);
+	SetCanForward(!Forwrds->empty() && Forwrds->size() > 0);
 }
 
 bool CFilerForwardBackManager::GetCanBack()const
@@ -78,8 +78,8 @@ void CFilerForwardBackManager::SetCanForward(bool canForward)
 
 void CFilerForwardBackManager::Clear()
 {
-	m_backs.clear();
-	m_forwards.clear();
-	SetCanBack(!m_backs.empty() && m_backs.size() > 0);
-	SetCanForward(!m_forwards.empty() && m_forwards.size() > 0);
+	Backs.clear();
+	Forwrds.clear();
+	SetCanBack(!Backs->empty() && Backs->size() > 0);
+	SetCanForward(!Forwrds->empty() && Forwrds->size() > 0);
 }

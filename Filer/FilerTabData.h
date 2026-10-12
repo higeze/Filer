@@ -5,6 +5,7 @@
 #include "KnownFolder.h"
 
 #include "reactive_property.h"
+#include "reactive_vector.h"
 #include "reactive_string.h"
 #include "reactive_command.h"
 #include "JsonSerializer.h"
@@ -16,6 +17,10 @@ struct FilerTabData:public TabData
 {
 	//std::wstring Path;
 	reactive_property_ptr<std::shared_ptr<CShellFolder>> Folder;
+	reactive_vector_ptr<std::shared_ptr<CShellFolder>> Forwards;
+	reactive_vector_ptr<std::shared_ptr<CShellFolder>> Backs;
+	reactive_property_ptr<bool> CanForward;
+	reactive_property_ptr<bool> CanBack;
 
 	FilerTabData()
 		:TabData(){}

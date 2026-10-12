@@ -1,5 +1,6 @@
 #pragma once
 #include "ShellFile.h"
+#include "DirectoryWatcher.h"
 #include <chrono>
 #include <mutex> 
 #include "reactive_vector.h"
@@ -10,7 +11,7 @@ struct DirectoryWatchEvent;
 class CShellFolder :public CShellFile
 {
 private:
-	mutable std::shared_ptr<CDirectoryWatcher> m_spWatcher;
+	mutable std::unique_ptr<CDirectoryWatcher> m_pWatcher;
 
 	std::shared_ptr<bool> m_spCancelThread = std::make_shared<bool>(false);
 	
@@ -24,6 +25,9 @@ private:
 
 public:
 	reactive_vector_ptr<std::shared_ptr<CShellFile>>& GetFiles() const;
+	void StartDirectoryWatch() const;
+	void QuitDirectoryWatch() const;
+
 private:
 	virtual void OnDirectoryWatch(const DirectoryWatchEvent& e) const;
 	void Added(const std::wstring& fileName) const;
@@ -85,3 +89,19 @@ protected:
 
 
 };
+
+
+template<>
+struct adl_vector_item<std::shared_ptr<CShellFolder>>
+{
+	static std::shared_ptr<CShellFolder> clone(const std::shared_ptr<CShellFolder>& item)
+	{
+		return item;
+	}
+
+	static void bind(std::shared_ptr<CShellFolder>& src, std::shared_ptr<CShellFolder>& dst)
+	{
+		// Do Nothing, Shared pointer binding is not necessary in this context
+	}
+};
+

@@ -21,6 +21,8 @@ class CFilerView:public CDockPanel
 {
 public:
 	SHAREDPTR_GETTER(CTextBox, TextBox)
+	SHAREDPTR_GETTER(CButton, ForwardButton)
+	SHAREDPTR_GETTER(CButton, BackButton)
 	SHAREDPTR_GETTER(CButton, RecentButton)
 	SHAREDPTR_GETTER(CFavoritesGridView, FavoriteGrid)
 	SHAREDPTR_GETTER(CFilerGridView, FileGrid)
@@ -30,6 +32,7 @@ public:
 	virtual ~CFilerView();
 	//Event
 	virtual void OnCreate(const CreateEvt& e) override;
+	virtual void OnEnable(const EnableEvent& e) override;
 	//virtual void OnPaint(const PaintEvent& e) override;
 
 public:

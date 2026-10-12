@@ -2,16 +2,17 @@
 #include <deque>
 #include <sigslot/signal.hpp>
 #include "ShellFolder.h"
+#include "reactive_vector.h"
 
 class CFilerForwardBackManager
 {
 private:
-	static const int kMaxsize = 50;
+	static const int kMaxsize = 10;
 	bool m_canForward;
 	bool m_canBack;
-
-	std::deque<std::shared_ptr<CShellFolder>> m_forwards;
-	std::deque<std::shared_ptr<CShellFolder>> m_backs;
+public:
+	reactive_vector_ptr<std::shared_ptr<CShellFolder>> Forwrds;
+	reactive_vector_ptr<std::shared_ptr<CShellFolder>> Backs;
 public:
 	sigslot::signal<const wchar_t*> PropertyChanged;
 public:

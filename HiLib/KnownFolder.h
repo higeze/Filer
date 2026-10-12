@@ -19,7 +19,7 @@ private:
 public:
 	CKnownFolder(CShellComPtr<IShellFolder> pParentShellFolder, const CIDL& parentIdl, const CIDL& childIdl, CComPtr<IKnownFolder> pKnownFolder, CShellComPtr<IShellFolder> pShellFolder)
 		:CKnownDriveBaseFolder(pParentShellFolder, parentIdl, childIdl, pShellFolder), m_pKnownFolder(pKnownFolder) {}
-	virtual ~CKnownFolder(){}
+	virtual ~CKnownFolder() = default;
 	virtual std::pair<ULARGE_INTEGER, FileSizeStatus> GetSize(const FileSizeArgs& args, std::function<void()> changed = nullptr) override;
 	virtual const std::wstring& GetDispExt() const override;
 

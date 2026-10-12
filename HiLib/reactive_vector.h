@@ -570,6 +570,8 @@ public:
 
 	std::pair<sigslot::connection, sigslot::connection> binding(reactive_vector_ptr& dst)
 	{
+		// 旧実装（コメントアウトして残す）
+		
 		dst.disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, this->m_preactive);
 		this->disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, dst.m_preactive);
 
@@ -582,7 +584,44 @@ public:
 		return std::make_pair(
 			dst.subscribe(&reactive_vector<_Ty, _Alloc>::observe_vector, this->m_preactive),
 			this->subscribe(&reactive_vector<_Ty, _Alloc>::observe_vector, dst.m_preactive));
+		
+
+		// 新実装: disconnect/subscribe に shared_ptr ではなく weak_ptr を使う
+		// --- 切断（既存購読のクリーンアップ） ---
+		//std::weak_ptr<reactive_container_type> wp_this = this->m_preactive;
+		//std::weak_ptr<reactive_container_type> wp_dst = dst.m_preactive;
+		//dst.disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, wp_this);
+		//this->disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, wp_dst);
+
+		// --- 初期同期（要素コピーはそのまま行う） ---
+		//dst.clear();
+		//for (size_t i = 0; i < this->m_preactive->m_value.size(); i++) {
+		//	dst.push_back(adl_vector_item<_Ty>::clone(this->m_preactive->m_value.at(i)));
+		//	bind_value(this->get_unconst()->at(i), dst.get_unconst()->at(i));
+		//}
+
+		// --- 購読登録（弱参照を渡す） ---
+		// sigslot の connect は weak_ptr 互換型をトラッキングに使えるため、
+		// shared_ptr をそのまま渡すと内部で strong に保たれることがある。
+		// ここでは weak_ptr を渡して参照カウント増加を避ける。
+		//auto c1 = dst.subscribe(&reactive_vector<_Ty, _Alloc>::observe_vector, std::weak_ptr<reactive_container_type>(this->m_preactive));
+		//auto c2 = this->subscribe(&reactive_vector<_Ty, _Alloc>::observe_vector, std::weak_ptr<reactive_container_type>(dst.m_preactive));
+		//return std::make_pair(c1, c2);
 	}
+
+	void unbinding(reactive_vector_ptr& dst)
+	{
+		// 旧実装（コメントアウトで保持）
+		
+		dst.disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, this->m_preactive);
+		this->disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, dst.m_preactive);
+		
+
+		// 新実装: binding で weak_ptr を渡すようにしたため、ここも weak_ptr を使って切断する
+		//dst.disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, std::weak_ptr<reactive_container_type>(this->m_preactive));
+		//this->disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, std::weak_ptr<reactive_container_type>(dst.m_preactive));
+	}
+
 public:
 	friend void to_json(json& j, const reactive_vector_ptr& ptr)
 	{

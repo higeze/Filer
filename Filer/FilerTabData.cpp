@@ -5,7 +5,7 @@
 /****************/
 
 FilerTabData::FilerTabData(const std::wstring& path)
-	:TabData()
+	:TabData(), CanForward(false), CanBack(false)
 {
 	if (!path.empty()) {
 		auto spFile = CShellFileFactory::GetInstance()->CreateShellFilePtr(path);
