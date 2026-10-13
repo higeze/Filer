@@ -15,12 +15,14 @@ void CDeadlineTimer::run(std::function<void()> action, const std::chrono::millis
 			while (!m_stop.load()) {
 				auto abs_time = std::chrono::steady_clock::now() + ms;
 				auto status = m_cv.wait_until(lock, abs_time);
-				if (status == std::cv_status::timeout) { //timeout
-					if (m_action) {
-						m_action();
+				if (status == std::cv_status::timeout) { // timeout
+					auto act = m_action;
+					lock.unlock();
+					if (act) {
+						act();
 					}
 					break;
-				} else if (m_stop.load()) {//no_timeout. stop
+				} else if (m_stop.load()) { // no_timeout. stop
 					break;
 				}
 			}
@@ -32,7 +34,7 @@ void CDeadlineTimer::run(std::function<void()> action, const std::chrono::millis
 
 void CDeadlineTimer::run_oneshot(std::function<void()> action, const std::chrono::milliseconds& ms)
 {
-	//Thread started, not finished
+	// Thread started, not finished
 	if (m_future.valid() && m_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
 		std::lock_guard<std::mutex> guard(m_mtx);
 		m_action = action;
@@ -41,9 +43,15 @@ void CDeadlineTimer::run_oneshot(std::function<void()> action, const std::chrono
 		auto fun = [this, ms]()
 		{
 			std::this_thread::sleep_for(ms);
-			std::lock_guard<std::mutex> guard(m_mtx);
-			if (m_action && !m_stop.load()) {
-				m_action();
+			std::function<void()> act;
+			{
+				std::lock_guard<std::mutex> guard(m_mtx);
+				if (m_action && !m_stop.load()) {
+					act = m_action;
+				}
+			}
+			if (act) {
+				act();
 			}
 			return;
 		};

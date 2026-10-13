@@ -60,9 +60,9 @@ std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(CShellComPtr<I
 	auto parsed = ParseFileType(pParentFolder, parentIdl, childIdl);
 	switch (parsed.FileType) {
 	case shell::FileType::Drive:
-		return CDriveFolderManager::GetInstance()->GetDriveFolderByPath(parsed.FilePath);
+		return CDriveFolderManager::GetInstance()->GetDriveFolderByPath(parsed.FilePath)->Clone();
 	case shell::FileType::Known:
-		return CKnownFolderManager::GetInstance()->GetKnownFolderByPath(parsed.FilePath);
+		return CKnownFolderManager::GetInstance()->GetKnownFolderByPath(parsed.FilePath)->Clone();
 	case shell::FileType::Folder:
 		return std::make_shared<CShellFolder>(pParentFolder, parentIdl, std::forward<CIDL>(childIdl),
 			std::move(parsed.FilePath), std::move(parsed.FileName), std::move(parsed.FileExt));
