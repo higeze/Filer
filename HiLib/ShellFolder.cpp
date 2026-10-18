@@ -88,7 +88,6 @@ void CShellFolder::SetLockSize(const std::pair<ULARGE_INTEGER, FileSizeStatus>& 
 const std::wstring& CShellFolder::GetDispName() const
 {
 	if (!m_optDispName.has_value()) {
-		::OutputDebugStringW(std::format(L"IDLCount:{}\r\n", CIDL::GetItemIdListCount(m_childIdl.ptr())).c_str());
 		m_optDispName.emplace(shell::GetDisplayNameOf(GetParentFolderPtr()->GetShellFolderPtr(), m_childIdl.ptr(), SHGDN_NORMAL));
 	}
 	return m_optDispName.value();
@@ -433,36 +432,19 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL&& childIdl) 
 
 reactive_vector_ptr<std::shared_ptr<CShellFile>>& CShellFolder::GetFiles() const
 {
+	LOG_SCOPED_TIMER_THIS_1("CShellFolder::GetFiles");
 	if (Files->empty()) {
-		//Directory watcher
-		//m_spWatcher = std::make_shared<CDirectoryWatcher>(nullptr);
-
+		LOG_2("CShellThread::GetInstance()->GetTaskCount()", CShellThread::GetInstance()->GetTaskCount());
 		CShellThread::GetInstance()->Run([this]()->void {
 			{
-				LOG_SCOPED_TIMER_THIS_1("OpenFolder Enumeration");
+				LOG_SCOPED_TIMER_THIS_1("CShellFolder::GetFiles::Run");
 				try {
 
-					//{
-					//	LOG_SCOPED_TIMER_THIS_1("Single Enumeration");
-					//	CShellComPtr<IEnumIDList> enumIdl;
-					//	if (SUCCEEDED(Folder->GetShellFolderPtr().Call(&IShellFolder::EnumObjects, GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN | SHCONTF_FASTITEMS, &enumIdl)) && enumIdl) {
-					//		CIDL nextIdl;
-					//		ULONG ulRet(0);
-					//		while (true) {
-					//			SUCCEEDED(enumIdl.Call(&IEnumIDList::Next, 1, nextIdl.ptrptr(), &ulRet));
-					//			if (!nextIdl) { break; }
-					//			auto spFile = spFolder->CreateShExFileFolder(std::forward<CIDL>(nextIdl));
-					//			ItemsSource.emplace_back(spFile); 
-					//			nextIdl.Clear();
-					//		}
-					//	}
-					//}
-					//ItemsSource.clear();
-
+					std::vector<CIDL> idls;
+					CShellComPtr<IEnumIDList> enumIdl;
+					constexpr ULONG kBatchSize = 64;
 					{
-						LOG_SCOPED_TIMER_THIS_1("Multiple Enumeration");
-						CShellComPtr<IEnumIDList> enumIdl;
-						constexpr ULONG kBatchSize = 64;
+						LOG_SCOPED_TIMER_THIS_1("CShellFolder::GetFiles::Enum");
 						if (SUCCEEDED(GetShellFolderPtr().Call(&IShellFolder::EnumObjects, nullptr, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN | SHCONTF_FASTITEMS, &enumIdl)) && enumIdl) {
 							while (true) {
 								PIDLIST_RELATIVE pidls[kBatchSize] = {};
@@ -470,9 +452,7 @@ reactive_vector_ptr<std::shared_ptr<CShellFile>>& CShellFolder::GetFiles() const
 								HRESULT hr = enumIdl.Call(&IEnumIDList::Next, kBatchSize, pidls, &fetched);
 								for (ULONG i = 0; i < fetched; ++i)
 								{
-									CIDL nextIdl(pidls[i]);
-									auto spFile = CreateShExFileFolder(std::move(nextIdl));
-									Files.emplace_back(spFile);
+									idls.emplace_back(CIDL(pidls[i]));
 								}
 								if (hr == S_FALSE)
 									break;
@@ -482,14 +462,19 @@ reactive_vector_ptr<std::shared_ptr<CShellFile>>& CShellFolder::GetFiles() const
 							}
 						}
 					}
+					{
+						LOG_SCOPED_TIMER_THIS_1("CShellFolder::GetFiles::Create");
+						for (auto& idl : idls) {
+							auto spFile = CreateShExFileFolder(std::move(idl));
+							Files.emplace_back(spFile);
+						}
+					}
 
 				} catch (std::exception&) {
 					THROW_FILE_LINE_FUNC;
 				}
 			}
 		}).get();
-		::OutputDebugStringA(std::format("FolderCount:{}\r\n", shared_from_this().use_count()).c_str());
-
 	}
 	return Files;
 }

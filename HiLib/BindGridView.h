@@ -244,11 +244,12 @@ public:
 					m_allCells.get<row_tag>().erase(m_allRows[i].get());
 				}
 				m_allRows.idx_erase(m_allRows.begin() + m_frozenRowCount, m_allRows.end());
+				SetAllColumnFitMeasureValid(false);
 				//m_allCells.clear();
 				m_spCursorer->Clear();//TOOD Refactor
 				m_spCeller->Clear();
 				for (auto& tup : e.new_items) {
-					PushRow(std::make_shared<TRow>(this));
+					m_allRows.idx_push_back(std::make_shared<TRow>(this));
 				}
 				PostUpdate(Updates::All);
 				break;

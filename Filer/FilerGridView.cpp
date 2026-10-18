@@ -99,6 +99,10 @@ CFilerGridView::CFilerGridView(CD2DWControl* pParentControl)
 	m_spItemDragger = std::make_shared<CFileDragger>();
 
 	Folder.subscribe_old_new([this](auto old_value, auto new_value) {
+		if (old_value) {
+			old_value->QuitDirectoryWatch();
+			old_value->GetFiles().unbinding(ItemsSource);
+		}
 		if (new_value) {
 			bool isReload = old_value ? old_value->GetPath() == new_value->GetPath() : false;
 			if (!m_isForward && !m_isBack) {
@@ -109,7 +113,7 @@ CFilerGridView::CFilerGridView(CD2DWControl* pParentControl)
 					}
 					Forwards.clear();
 				}
-				m_spPreviousFolder = new_value;
+				m_spPreviousFolder = old_value;
 			} else if (m_isForward) {
 				Forwards.erase(std::prev(Forwards.cend()));
 
@@ -580,9 +584,9 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 	}
 
 	LOG_THIS_1("CFilerGridView::OpenFolder : " + wstr2str(spFolder->GetDispName()));
-	LOG_SCOPED_TIMER_THIS_1("OpenFolder Total");
+	LOG_SCOPED_TIMER_THIS_1("CFilerGridView::OpenFolder Total");
 	{
-		LOG_SCOPED_TIMER_THIS_1("OpenFolder Pre-Process");
+		LOG_SCOPED_TIMER_THIS_1("CFilerGridView::OpenFolder Pre-Process");
 
 		//Direct2DWrite
 		if (!isReload) {
@@ -602,15 +606,13 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 			//Update Map
 			std::unordered_map<std::shared_ptr<CColumn>, std::wstring> map;
 			bool isAllEmpty = std::all_of(m_allCols.begin(), m_allCols.end(), [](const auto& ptr) { return ptr->GetFilter().empty(); });
-			if (isAllEmpty) {
-				if (m_spPreviousFolder) {
+			if (m_spPreviousFolder) {
+				if (isAllEmpty) {
 					m_filterMap.erase(m_spPreviousFolder->GetPath());
-				}
-			} else {
-				for (const auto& colPtr : m_allCols) {
-					map.emplace(colPtr, colPtr->GetFilter());
-				}
-				if (m_spPreviousFolder) {
+				} else {
+					for (const auto& colPtr : m_allCols) {
+						map.emplace(colPtr, colPtr->GetFilter());
+					}
 					m_filterMap.insert_or_assign(m_spPreviousFolder->GetPath(), map);
 				}
 			}
@@ -632,100 +634,24 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 		GetItemsSource().clear();
 	}
 
+	{
+		LOG_SCOPED_TIMER_THIS_1("CFilerGridView::OpenFolder Updating");
+		Updating = true;
+		{
+			LOG_SCOPED_TIMER_THIS_1("CFilerGridView::OpenFolder::GetFiles");
+			spFolder->GetFiles();
+		}
+		{
+			LOG_SCOPED_TIMER_THIS_1("CFilerGridView::OpenFolder::binding");
+			spFolder->GetFiles().binding(ItemsSource);
 
-	Updating = true;
-	//auto files = spFolder->GetFiles();
-	//for(auto iter = files->cbegin(); iter != files->cend(); ++iter){
-	//	ItemsSource.emplace_back(*iter);
-	//}
-	::OutputDebugStringA(std::format("OpenFolder FolderCount:{}\r\n", Folder.get_shared_unconst().use_count()).c_str());
-	spFolder->GetFiles().binding(ItemsSource);
-	spFolder->StartDirectoryWatch();
-	//auto& Files = spFolder->GetFiles();
-	//ItemsSource.clear();
-	//for (size_t i = 0; i < Files->size(); i++) {
-	//	ItemsSource.push_back(adl_vector_item<std::shared_ptr<CShellFile>>::clone(Files.at(i)));
-	//	//bind_value(Files.at(i), ItemsSource.at(i));
-	//	::OutputDebugStringA(std::format("PushBack FolderCount:{} : {}\r\n", wstr2str(Files.at(i)->GetDispName()), Folder.get_shared_unconst().use_count()).c_str());
-	//}
-
-
-	::OutputDebugStringA(std::format("OpenFolder FolderCount:{}\r\n", Folder.get_shared_unconst().use_count()).c_str());
-
-
-	//(CShellThread::GetInstance()->Run([this, spFolder]()->void {
-	//	{
-	//		LOG_SCOPED_TIMER_THIS_1("OpenFolder Enumeration");
-	//		try {
-
-	//			//{
-	//			//	LOG_SCOPED_TIMER_THIS_1("Single Enumeration");
-	//			//	CShellComPtr<IEnumIDList> enumIdl;
-	//			//	if (SUCCEEDED(Folder->GetShellFolderPtr().Call(&IShellFolder::EnumObjects, GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN | SHCONTF_FASTITEMS, &enumIdl)) && enumIdl) {
-	//			//		CIDL nextIdl;
-	//			//		ULONG ulRet(0);
-	//			//		while (true) {
-	//			//			SUCCEEDED(enumIdl.Call(&IEnumIDList::Next, 1, nextIdl.ptrptr(), &ulRet));
-	//			//			if (!nextIdl) { break; }
-	//			//			auto spFile = spFolder->CreateShExFileFolder(std::forward<CIDL>(nextIdl));
-	//			//			ItemsSource.emplace_back(spFile); 
-	//			//			nextIdl.Clear();
-	//			//		}
-	//			//	}
-	//			//}
-	//			//ItemsSource.clear();
-
-	//			{
-	//				LOG_SCOPED_TIMER_THIS_1("Multiple Enumeration");
-	//				CShellComPtr<IEnumIDList> enumIdl;
-	//				constexpr ULONG kBatchSize = 64;
-	//				if (SUCCEEDED(Folder->GetShellFolderPtr().Call(&IShellFolder::EnumObjects, GetWndPtr()->m_hWnd, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN | SHCONTF_FASTITEMS | SHCONTF_ENABLE_ASYNC, &enumIdl)) && enumIdl) {
-	//					while (true) {
-	//						PIDLIST_RELATIVE pidls[kBatchSize] = {};
-	//						ULONG fetched = 0;
-	//						HRESULT hr = enumIdl.Call(&IEnumIDList::Next, kBatchSize, pidls, &fetched);
-	//						for (ULONG i = 0; i < fetched; ++i)
-	//						{
-	//							CIDL nextIdl(pidls[i]);
-	//							auto spFile = spFolder->CreateShExFileFolder(std::move(nextIdl));
-	//							ItemsSource.emplace_back(spFile);
-	//						}
-	//						if (hr == S_FALSE)
-	//							break;
-
-	//						if (FAILED(hr))
-	//							break;
-	//					}
-	//				}
-	//			}
-
-	//		} catch (std::exception&) {
-	//			THROW_FILE_LINE_FUNC;
-	//		}
-
-	//		//Set up Watcher
-	//		try {
-	//			if (::PathFileExists(spFolder->GetPath().c_str()) &&
-	//				!boost::iequals(Folder->GetDispExt(), L".zip")) {
-	//				m_spWatcher->QuitWatching();
-	//				m_spWatcher->StartWatching(spFolder->GetPath(), spFolder->GetAbsoluteIdl());
-	//			}
-	//			else {
-	//				m_spWatcher->QuitWatching();
-	//			}
-	//		}
-	//		catch (std::exception& e) {
-	//			GetWndPtr()->MessageBox(L"Watcher", L"Error", 0);
-	//			THROW_FILE_LINE_FUNC;
-	//		}
-
-	//	}
-	//}) | then([this]()->void { Updating = false; })).get();
-
-	Updating = false;
+		}
+		spFolder->StartDirectoryWatch();
+		Updating = false;
+	}
 
 	{
-		LOG_SCOPED_TIMER_THIS_1("OpenFolder Updating");
+		LOG_SCOPED_TIMER_THIS_1("CFilerGridView::OpenFolder PostProcess");
 
 		m_allCells.clear();
 
@@ -1116,9 +1042,8 @@ void CFilerGridView::OnCommandFind(const CommandEvent& e)
 
 void CFilerGridView::RowInserted(const CRowEventArgs& e)
 {
-	for (auto& spCol : m_allCols) {
-		spCol->SetIsFitMeasureValid(false);
-	};
+	SetAllColumnFitMeasureValid(false);
+
 	PostUpdate(Updates::ColumnVisible);
 	PostUpdate(Updates::RowVisible);
 	PostUpdate(Updates::Row);
@@ -1128,6 +1053,7 @@ void CFilerGridView::RowInserted(const CRowEventArgs& e)
 		PostUpdate(Updates::EnsureVisibleFocusedCell);
 	}
 	PostUpdate(Updates::Sort);
+	//PostUpdate(Updates::Filter);
 	UpdateFilter();
 	if (m_isNewFile) {
 		if (auto cols = FindColumns<CFileNameColumn<std::shared_ptr<CShellFile>>>(); !cols.empty()) {

@@ -57,32 +57,41 @@ shell::ParsedFileType CShellFileFactory::ParseFileType(
 
 std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(CShellComPtr<IShellFolder> pParentFolder, const CIDL& parentIdl, CIDL&& childIdl)
 {
+	std::shared_ptr<CShellFile> sp;	
 	auto parsed = ParseFileType(pParentFolder, parentIdl, childIdl);
 	switch (parsed.FileType) {
 	case shell::FileType::Drive:
-		return CDriveFolderManager::GetInstance()->GetDriveFolderByPath(parsed.FilePath)->Clone();
+		sp = CDriveFolderManager::GetInstance()->GetDriveFolderByPath(parsed.FilePath)->Clone();
+		break;
 	case shell::FileType::Known:
-		return CKnownFolderManager::GetInstance()->GetKnownFolderByPath(parsed.FilePath)->Clone();
+		sp = CKnownFolderManager::GetInstance()->GetKnownFolderByPath(parsed.FilePath)->Clone();
+		break;
 	case shell::FileType::Folder:
-		return std::make_shared<CShellFolder>(pParentFolder, parentIdl, std::forward<CIDL>(childIdl),
+		sp = std::make_shared<CShellFolder>(pParentFolder, parentIdl, std::forward<CIDL>(childIdl),
 			std::move(parsed.FilePath), std::move(parsed.FileName), std::move(parsed.FileExt));
+		break;
 	case shell::FileType::Zip:
-		return std::make_shared<CShellZipFolder>(pParentFolder, parentIdl, std::forward<CIDL>(childIdl),
+		sp = std::make_shared<CShellZipFolder>(pParentFolder, parentIdl, std::forward<CIDL>(childIdl),
 			std::move(parsed.FilePath), std::move(parsed.FileName), std::move(parsed.FileExt));
+		break;
 	case shell::FileType::Virtual:
 	case shell::FileType::File:
-		return std::make_shared<CShellFile>(pParentFolder, parentIdl, std::forward<CIDL>(childIdl),
+		sp = std::make_shared<CShellFile>(pParentFolder, parentIdl, std::forward<CIDL>(childIdl),
 			std::move(parsed.FilePath), std::move(parsed.FileName), std::move(parsed.FileExt));
+		break;
 	case shell::FileType::None:
 	default:
-		return std::make_shared<CShellInvalidFile>();
+		sp = std::make_shared<CShellInvalidFile>();
+		break;
 	}
+	return sp;
 }
 
 std::shared_ptr<CShellFile> CShellFileFactory::CreateShellFilePtr(const CIDL& parentIdl, CIDL&& childIdl)
 {
 	CShellComPtr<IShellFolder> pParentFolder = shell::DesktopBindToShellFolder(parentIdl);
-	return CreateShellFilePtr(pParentFolder, parentIdl, std::forward<CIDL>(childIdl));
+	auto sp = CreateShellFilePtr(pParentFolder, parentIdl, std::forward<CIDL>(childIdl));
+	return sp;
 }
 
 //static

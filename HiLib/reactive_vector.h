@@ -5,6 +5,7 @@
 #include "JsonSerializer.h"
 #include "Debug.h"
 #include <vector>
+#include <algorithm> // 追加
 
 class CFavorite;
 
@@ -13,6 +14,20 @@ struct adl_vector_item
 {
 	static T clone(const T& item) { return T(item); }
 	static void bind(T& src, T& dst) { return src.binding(dst); }
+};
+
+template<typename T>
+struct adl_vector
+{
+	static std::vector<T> clone(const std::vector<T>& items) { return std::vector<T>(items); }
+
+	static void bind(std::vector<T>& src, std::vector<T>& dst)
+	{
+		auto n = std::min(src.size(), dst.size());
+		for (size_t i = 0; i < n; ++i) {
+			adl_vector_item<T>::bind(src.at(i), dst.at(i));
+		}
+	}
 };
 
 template<typename V>
@@ -291,18 +306,19 @@ public:
 			this->insert(this->m_value.cbegin() + notify.new_starting_index, adl_vector_item<value_type>::clone(notify.new_items.at(0)));
 			break;
 		case notify_container_changed_action::reset:
-			this->clear();
-			for (size_t i = 0; i < notify.all_items.size(); i++) {
-				this->push_back(adl_vector_item<value_type>::clone(notify.all_items[i]));
-				bind_value(notify.all_items[i], this->m_value.at(i));
-			}
+			this->assign(adl_vector<value_type>::clone(notify.all_items));
+			adl_vector<value_type>::bind(notify.all_items, this->m_value);
 			break;
 		}
 	}
 
 	void observe_vector(notify_type& notify)
 	{
-		// 最初にロックして状態確認／初回更新
+		//if (this->m_value == notify.all_items) {
+		//	observe_vector_impl(notify);
+		//}
+
+		//最初にロックして状態確認／初回更新
 		{
 			std::lock_guard<std::mutex> lock(m_mtx);
 
@@ -570,56 +586,40 @@ public:
 
 	std::pair<sigslot::connection, sigslot::connection> binding(reactive_vector_ptr& dst)
 	{
-		// 旧実装（コメントアウトして残す）
-		
-		dst.disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, this->m_preactive);
-		this->disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, dst.m_preactive);
+		{
+			LOG_SCOPED_TIMER_THIS_1("reactive_vector_ptr::binding::disconnect");
 
-		dst.clear();
-		for (size_t i = 0; i < this->m_preactive->m_value.size(); i++) {
-			dst.push_back(adl_vector_item<_Ty>::clone(this->m_preactive->m_value.at(i)));
-			bind_value(this->get_unconst()->at(i), dst.get_unconst()->at(i));
+			dst.disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, this->m_preactive);
+			this->disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, dst.m_preactive);
 		}
 
-		return std::make_pair(
-			dst.subscribe(&reactive_vector<_Ty, _Alloc>::observe_vector, this->m_preactive),
-			this->subscribe(&reactive_vector<_Ty, _Alloc>::observe_vector, dst.m_preactive));
-		
-
-		// 新実装: disconnect/subscribe に shared_ptr ではなく weak_ptr を使う
-		// --- 切断（既存購読のクリーンアップ） ---
-		//std::weak_ptr<reactive_container_type> wp_this = this->m_preactive;
-		//std::weak_ptr<reactive_container_type> wp_dst = dst.m_preactive;
-		//dst.disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, wp_this);
-		//this->disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, wp_dst);
-
-		// --- 初期同期（要素コピーはそのまま行う） ---
-		//dst.clear();
-		//for (size_t i = 0; i < this->m_preactive->m_value.size(); i++) {
-		//	dst.push_back(adl_vector_item<_Ty>::clone(this->m_preactive->m_value.at(i)));
-		//	bind_value(this->get_unconst()->at(i), dst.get_unconst()->at(i));
-		//}
-
-		// --- 購読登録（弱参照を渡す） ---
-		// sigslot の connect は weak_ptr 互換型をトラッキングに使えるため、
-		// shared_ptr をそのまま渡すと内部で strong に保たれることがある。
-		// ここでは weak_ptr を渡して参照カウント増加を避ける。
-		//auto c1 = dst.subscribe(&reactive_vector<_Ty, _Alloc>::observe_vector, std::weak_ptr<reactive_container_type>(this->m_preactive));
-		//auto c2 = this->subscribe(&reactive_vector<_Ty, _Alloc>::observe_vector, std::weak_ptr<reactive_container_type>(dst.m_preactive));
-		//return std::make_pair(c1, c2);
+		{
+			LOG_SCOPED_TIMER_THIS_1("reactive_vector_ptr::binding::push_back");
+			dst.set(this->operator*());
+			//dst.clear();
+			//for (size_t i = 0; i < this->m_preactive->m_value.size(); i++) {
+			//	dst.push_back(adl_vector_item<_Ty>::clone(this->m_preactive->m_value.at(i)));
+			//}
+		}
+		{
+			LOG_SCOPED_TIMER_THIS_1("reactive_vector_ptr::binding::bind_value");
+			for (size_t i = 0; i < this->m_preactive->m_value.size(); i++) {
+				bind_value(this->get_unconst()->at(i), dst.get_unconst()->at(i));
+			}
+		}
+		{
+			LOG_SCOPED_TIMER_THIS_1("reactive_vector_ptr::binding::subscribe");
+			auto pair = std::make_pair(
+				dst.subscribe(&reactive_vector<_Ty, _Alloc>::observe_vector, this->m_preactive),
+				this->subscribe(&reactive_vector<_Ty, _Alloc>::observe_vector, dst.m_preactive));
+			return pair;
+		}
 	}
 
 	void unbinding(reactive_vector_ptr& dst)
 	{
-		// 旧実装（コメントアウトで保持）
-		
 		dst.disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, this->m_preactive);
 		this->disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, dst.m_preactive);
-		
-
-		// 新実装: binding で weak_ptr を渡すようにしたため、ここも weak_ptr を使って切断する
-		//dst.disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, std::weak_ptr<reactive_container_type>(this->m_preactive));
-		//this->disconnect(&reactive_vector<_Ty, _Alloc>::observe_vector, std::weak_ptr<reactive_container_type>(dst.m_preactive));
 	}
 
 public:

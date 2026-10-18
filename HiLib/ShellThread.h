@@ -19,6 +19,11 @@ public:
 
     ~CShellThread();
 
+    const size_t GetTaskCount() const
+    {
+        return m_tasks.size();
+    }
+
     template<class F, class... Args>
     inline auto Run(F&& f, Args&&... args)
         -> std::future<typename std::invoke_result_t<F, Args...>>

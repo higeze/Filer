@@ -302,3 +302,17 @@ struct adl_vector_item<std::shared_ptr<CShellFile>>
 	}
 };
 
+template<>
+struct adl_vector<std::shared_ptr<CShellFile>>
+{
+	static std::vector<std::shared_ptr<CShellFile>> clone(const std::vector<std::shared_ptr<CShellFile>>& item)
+	{
+		return std::vector<std::shared_ptr<CShellFile>>(item);
+	}
+
+	// ここを要素型の参照ではなく vector の参照を受けるシグネチャに合わせる
+	static void bind(std::vector<std::shared_ptr<CShellFile>>& src, std::vector<std::shared_ptr<CShellFile>>& dst)
+	{
+		// Do Nothing, Shared pointer binding is not necessary in this context
+	}
+};
