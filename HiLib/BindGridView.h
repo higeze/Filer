@@ -257,7 +257,7 @@ public:
 			default:
 				break;
 		}
-		//SubmitUpdate();
+		SubmitUpdate();
 	}
 
 	void subscribe_detail_column(const notify_type& e)

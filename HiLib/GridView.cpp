@@ -975,6 +975,10 @@ void CGridView::Normal_Paint(const PaintEvent& e)
 {
 	if (!Visible())return;
 
+	if (!m_setUpdate.empty()) {
+		SubmitUpdate();
+	}
+
 	GetWndPtr()->GetDirectPtr()->GetD2DDeviceContext()->PushAxisAlignedClip(GetRectInWnd(), D2D1_ANTIALIAS_MODE::D2D1_ANTIALIAS_MODE_ALIASED);
 
 	GetWndPtr()->GetDirectPtr()->FillSolidRectangle(GetNormalBackground(), GetRectInWnd());
@@ -1775,14 +1779,16 @@ void CGridView::OnKeyDown(const KeyDownEvent& e)
 { 
 	CD2DWControl::OnKeyDown(e);
 	if (!*e.HandledPtr) {
-		m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate();
+		m_pMachine->process_event(e); PostUpdate(Updates::Invalidate);
+		SubmitUpdate();
 	}
 }
 void CGridView::OnKeyTraceDown(const KeyTraceDownEvent& e)
 { 
 	CD2DWControl::OnKeyTraceDown(e);
 	if (!*e.HandledPtr) {
-		m_pMachine->process_event(e); PostUpdate(Updates::Invalidate); SubmitUpdate();
+		m_pMachine->process_event(e); PostUpdate(Updates::Invalidate);
+		SubmitUpdate();
 	}
 }
 
@@ -1790,7 +1796,8 @@ void CGridView::OnChar(const CharEvent& e)
 { 
 	CD2DWControl::OnChar(e);
 	if (!*e.HandledPtr) {
-		m_pMachine->process_event(e);  SubmitUpdate();
+		m_pMachine->process_event(e);
+		SubmitUpdate();
 	}
 }
 void CGridView::OnImeStartComposition(const ImeStartCompositionEvent& e) { m_pMachine->process_event(e);  SubmitUpdate(); }
