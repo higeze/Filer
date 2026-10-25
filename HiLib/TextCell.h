@@ -54,8 +54,9 @@ private:
 //protected:
 //	std::wstring m_text;
 
-public:
 	DECLARE_LAZY_COMPTR_GETTER(IDWriteTextLayout1, TextLayout)
+private:
+	mutable std::wstring m_textLayoutString;
 protected:
 	virtual const CComPtr<IDWriteTextLayout1> GetTextLayoutPtrCore() const;
 

@@ -12,6 +12,7 @@
 #include <format>
 #include "ThreadPool.h"
 #include "DirectoryWatcher.h"
+#include <filesystem>
 
 
 #include "KnownFolderManager.h"
@@ -425,10 +426,21 @@ std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(CIDL&& childIdl) 
 	return CShellFileFactory::GetInstance()->CreateShellFilePtr(GetShellFolderPtr(), GetAbsoluteIdl(), std::forward<CIDL>(childIdl));
 }
 
-//std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const CIDL& childIdl) const
-//{
-//	return CShellFileFactory::GetInstance()->CreateShellFilePtr(GetShellFolderPtr(), GetAbsoluteIdl(), childIdl);
-//}
+std::shared_ptr<CShellFile> CShellFolder::CreateShExFileFolder(const std::wstring&  fileName) const
+{
+	CIDL idl;
+	ULONG chEaten;
+	ULONG dwAttributes;
+	HRESULT hr = GetShellFolderPtr().Call(&IShellFolder::ParseDisplayName, nullptr, nullptr, const_cast<LPWSTR>(fileName.c_str()), &chEaten, idl.ptrptr(), &dwAttributes);
+	if (SUCCEEDED(hr) && idl) {
+		return CreateShExFileFolder(std::move(idl));
+	} else {
+		return std::make_shared<CShellInvalidFile>();
+	}
+
+	//std::filesystem::path combined = (std::filesystem::path(GetPath()) / std::filesystem::path(fileName));
+	//return CShellFileFactory::GetInstance()->CreateShellFilePtr(combined.wstring());
+}
 
 reactive_vector_ptr<std::shared_ptr<CShellFile>>& CShellFolder::GetFiles() const
 {
@@ -537,36 +549,13 @@ void CShellFolder::OnDirectoryWatch(const DirectoryWatchEvent& e) const
 	}
 }
 
-
 void CShellFolder::Added(const std::wstring& fileName) const
 {
 	LOG_THIS_1("Added " + wstr2str(fileName));
-	CIDL idl;
-	ULONG chEaten;
-	ULONG dwAttributes;
-	HRESULT hr = GetShellFolderPtr().Call(&IShellFolder::ParseDisplayName, nullptr, nullptr, const_cast<LPWSTR>(fileName.c_str()), &chEaten, idl.ptrptr(), &dwAttributes);
-	if (SUCCEEDED(hr) && idl) {
-		Files.push_back(CreateShExFileFolder(std::move(idl)));
-		//auto spRow = m_allRows.back();
-
-		//PostUpdate(Updates::ColumnVisible);
-		//PostUpdate(Updates::RowVisible);
-		//PostUpdate(Updates::Row);
-		//PostUpdate(Updates::Scrolls);
-		//PostUpdate(Updates::Invalidate);
-
-		//if (m_isNewFile) {
-		//	m_spCursorer->OnCursor(Cell(spRow, m_allCols.at(m_frozenColumnCount)));
-		//	PostUpdate(Updates::EnsureVisibleFocusedCell);
-		//}
-		//PostUpdate(Updates::Sort);
-		//UpdateFilter();
-		//if (m_isNewFile) {
-		//	if (auto cols = FindColumns<CFileNameColumn<std::shared_ptr<CShellFile>>>(); !cols.empty()) {
-		//		std::static_pointer_cast<CFileNameCell<std::shared_ptr<CShellFile>>>(Cell(spRow, cols.front()))->OnEdit(Event(GetWndPtr()));
-		//	}
-		//}
-		//m_isNewFile = false;
+	auto spFile = CreateShExFileFolder(fileName);
+	if (typeid(*spFile) != typeid(CShellInvalidFile)){
+		LOG_THIS_1("Added SUCCEEDED" + wstr2str(fileName));
+		Files.push_back(spFile);
 	} else {
 		LOG_THIS_1("Added FAILED " + wstr2str(fileName));
 	}
@@ -579,30 +568,14 @@ void CShellFolder::Modified(const std::wstring& fileName) const
 		[fileName](const std::shared_ptr<CShellFile>& value)->bool {
 			return value->GetPathName() == fileName;
 		});
-	//	auto iter = FindIfRowIterByFileNameExt(fileName);
 
-	if (iter == Files.get_unconst()->end()) {
-		LOG_THIS_1("Modified NoMatch " + wstr2str(fileName));
-		return;
+	if (iter == Files->end()) {
+		LOG_THIS_1("Modified FAILED NoMatch " + wstr2str(fileName));
 	} else {
-		//Because ItemIdList includes, size, last write time, etc., it is necessary to get new one.
-		ULONG chEaten;
-		ULONG dwAttributes;
-		CIDL newIdl;
-		HRESULT hRes = (*iter)->GetParentShellFolderPtr().Call(
-			&IShellFolder::ParseDisplayName, nullptr, nullptr, (LPWSTR)fileName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
-
-		if (SUCCEEDED(hRes) && newIdl) {
-			//std::get<std::shared_ptr<CShellFile>>(*iter) = m_spFolder->CreateShExFileFolder(newIdl);
-			Files.replace(iter, CreateShExFileFolder(std::move(newIdl)));
-			//m_allRows[iter - ItemsSource->cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
-			//PostUpdate(Updates::ColumnVisible);
-			//PostUpdate(Updates::RowVisible);
-			//PostUpdate(Updates::Row);
-			//PostUpdate(Updates::Scrolls);
-			//PostUpdate(Updates::Invalidate);
-			//PostUpdate(Updates::Sort);
-			//UpdateFilter();
+		auto spFile = CreateShExFileFolder(fileName);
+		if (typeid(*spFile) != typeid(CShellInvalidFile)) {
+			LOG_THIS_1("Modified SUCCEEDED" + wstr2str(fileName));
+			Files.replace(iter, spFile);
 		} else {
 			LOG_THIS_1("Modified FAILED " + wstr2str(fileName));
 		}
@@ -618,23 +591,11 @@ void CShellFolder::Removed(const std::wstring& fileName) const
 		});
 
 	if (iter == Files->cend()) {
-		LOG_THIS_1("Removed NoMatch " + wstr2str(fileName));
+		LOG_THIS_1("Removed FAILED NoMatch " + wstr2str(fileName));
 		return;
 	} else {
-
+		LOG_THIS_1("Removed SUCCEEDED " + wstr2str(fileName));
 		Files.erase(iter);
-
-		//m_spCursorer->OnCursorClear(this);
-		//m_spCeller->OnClear();
-
-		//PostUpdate(Updates::ColumnVisible);
-		//PostUpdate(Updates::RowVisible);
-		//PostUpdate(Updates::Row);
-		//PostUpdate(Updates::Scrolls);
-		//PostUpdate(Updates::Invalidate);
-		//PostUpdate(Updates::Sort);
-
-		//UpdateFilter();
 	}
 
 }
@@ -648,27 +609,14 @@ void CShellFolder::Renamed(const std::wstring& oldName, const std::wstring& newN
 
 	if (iter == Files.get_unconst()->end())
 	{
-		LOG_THIS_1("Renamed NoMatch " + wstr2str(oldName) + "=>" + wstr2str(newName));
+		LOG_THIS_1("Renamed FAILED NoMatch " + wstr2str(oldName) + "=>" + wstr2str(newName));
 	} else {
-		ULONG chEaten;
-		ULONG dwAttributes;
-		CIDL newIdl;
-
-		HRESULT hRes = (*iter)->GetParentShellFolderPtr().Call(&IShellFolder::ParseDisplayName, nullptr, nullptr, (LPWSTR)newName.c_str(), &chEaten, newIdl.ptrptr(), &dwAttributes);
-
-		if (SUCCEEDED(hRes) && newIdl) {
-			(*iter) = CreateShExFileFolder(std::move(newIdl));
-			//m_allRows[iter - Files->cbegin() + m_frozenRowCount]->SetIsMeasureValid(false);
-			//PostUpdate(Updates::ColumnVisible);
-			//PostUpdate(Updates::RowVisible);
-			//PostUpdate(Updates::Row);
-			//PostUpdate(Updates::Scrolls);
-			//PostUpdate(Updates::Invalidate);
-			//PostUpdate(Updates::Sort);
-			//UpdateFilter();
+		auto spFile = CreateShExFileFolder(newName);
+		if (typeid(*spFile) != typeid(CShellInvalidFile)) {
+			LOG_THIS_1("Renamed SUCCEEDED" + wstr2str(oldName) + "=>" + wstr2str(newName));
+			Files.replace(iter, spFile);
 		} else {
 			LOG_THIS_1("Renamed FAILED " + wstr2str(oldName) + "=>" + wstr2str(newName));
-			return Removed(oldName);
 		}
 	}
 }

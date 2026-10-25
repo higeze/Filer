@@ -630,8 +630,6 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 				}
 			}
 		}
-
-		GetItemsSource().clear();
 	}
 
 	{
@@ -657,13 +655,13 @@ void CFilerGridView::OpenFolder(const std::shared_ptr<CShellFolder>& spFolder, b
 
 		//GetHeaderColumnPtr()->SetIsFitMeasureValid(false);
 
-		PostUpdate(Updates::Sort);
-		PostUpdate(Updates::Filter);
-		PostUpdate(Updates::ColumnVisible);
-		PostUpdate(Updates::RowVisible);
-		//PostUpdate(Updates::Column);
-		PostUpdate(Updates::Row);
-		PostUpdate(Updates::Scrolls);
+		//PostUpdate(Updates::Sort);
+		//PostUpdate(Updates::Filter);
+		//PostUpdate(Updates::ColumnVisible);
+		//PostUpdate(Updates::RowVisible);
+		////PostUpdate(Updates::Column);
+		//PostUpdate(Updates::Row);
+		//PostUpdate(Updates::Scrolls);
 		PostUpdate(Updates::Invalidate);
 
 		//if (!isUpdate) {

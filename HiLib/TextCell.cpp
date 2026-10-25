@@ -19,11 +19,13 @@ void CTextCell::OnPropertyChanged(const wchar_t* name)
 		m_isFitMeasureValid = false;
 		m_isActMeasureValid = false;
 		m_pTextLayout = nullptr;
+		m_textLayoutString.clear();
 	}
 	else if (!_tcsicmp(L"size", name)) {
 		m_isFitMeasureValid = false;
 		m_isActMeasureValid = false;
 		m_pTextLayout = nullptr;
+		m_textLayoutString.clear();
 	}
 	//Notify to Row, Column and Sheet
 	m_pRow->OnCellPropertyChanged(this, name);
@@ -33,7 +35,8 @@ void CTextCell::OnPropertyChanged(const wchar_t* name)
 
 const CComPtr<IDWriteTextLayout1>& CTextCell::GetTextLayoutPtr() const
 {
-	if (!m_pTextLayout && !GetString().empty()) {
+	if (!GetString().empty() && m_textLayoutString != GetString()) {
+		m_textLayoutString = GetString();
 		m_pTextLayout = GetTextLayoutPtrCore();
 	}
 	return m_pTextLayout;
